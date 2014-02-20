@@ -203,7 +203,6 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   HasEVEX_K        = Rec->getValueAsBit("hasEVEX_K");
   HasEVEX_KZ       = Rec->getValueAsBit("hasEVEX_Z");
   HasEVEX_B        = Rec->getValueAsBit("hasEVEX_B");
-  HasREPPrefix     = Rec->getValueAsBit("hasREPPrefix");
   IsCodeGenOnly    = Rec->getValueAsBit("isCodeGenOnly");
   ForceDisassemble = Rec->getValueAsBit("ForceDisassemble");
 
@@ -433,7 +432,7 @@ InstructionContext RecognizableInstr::insnContext() const {
       insnContext = IC_ADSIZE;
     else if (OpPrefix == X86Local::XD)
       insnContext = IC_XD;
-    else if (OpPrefix == X86Local::XS || HasREPPrefix)
+    else if (OpPrefix == X86Local::XS)
       insnContext = IC_XS;
     else
       insnContext = IC;

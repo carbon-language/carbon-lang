@@ -3728,7 +3728,7 @@ def CLFLUSH : I<0xAE, MRM7m, (outs), (ins i8mem:$src),
 // was introduced with SSE2, it's backward compatible.
 def PAUSE : I<0x90, RawFrm, (outs), (ins),  
               "pause", [(int_x86_sse2_pause)], IIC_SSE_PAUSE>, 
-              REP, Requires<[HasSSE2]>;
+              OBXS, Requires<[HasSSE2]>;
 
 // Load, store, and memory fence
 def SFENCE : I<0xAE, MRM_F8, (outs), (ins),

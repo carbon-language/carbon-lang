@@ -158,6 +158,7 @@ class TA     { Map OpMap = TA; }
 class XOP8   { Map OpMap = XOP8; Prefix OpPrefix = PS; }
 class XOP9   { Map OpMap = XOP9; Prefix OpPrefix = PS; }
 class XOPA   { Map OpMap = XOPA; Prefix OpPrefix = PS; }
+class OBXS   { Prefix OpPrefix = XS; }
 class PS   : TB { Prefix OpPrefix = PS; }
 class PD   : TB { Prefix OpPrefix = PD; }
 class XD   : TB { Prefix OpPrefix = XD; }
