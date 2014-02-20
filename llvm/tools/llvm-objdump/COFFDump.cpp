@@ -233,6 +233,25 @@ static void printCOFFSymbolAddress(llvm::raw_ostream &Out,
     Out << format(" + 0x%04x", Disp);
 }
 
+static void
+printSEHTable(const COFFObjectFile *Obj, uint32_t TableVA, int Count) {
+  if (Count == 0)
+    return;
+
+  const pe32_header *PE32Header;
+  if (error(Obj->getPE32Header(PE32Header)))
+    return;
+  uint32_t ImageBase = PE32Header->ImageBase;
+  uintptr_t IntPtr = 0;
+  if (error(Obj->getVaPtr(TableVA, IntPtr)))
+    return;
+  const support::ulittle32_t *P = (const support::ulittle32_t *)IntPtr;
+  outs() << "SEH Table:";
+  for (int I = 0; I < Count; ++I)
+    outs() << format(" 0x%x", P[I] + ImageBase);
+  outs() << "\n\n";
+}
+
 static void printLoadConfiguration(const COFFObjectFile *Obj) {
   const coff_file_header *Header;
   if (error(Obj->getCOFFHeader(Header)))
@@ -249,6 +268,7 @@ static void printLoadConfiguration(const COFFObjectFile *Obj) {
     return;
   if (error(Obj->getRvaPtr(DataDir->RelativeVirtualAddress, IntPtr)))
     return;
+
   const coff_load_configuration32 *LoadConf =
       reinterpret_cast<const coff_load_configuration32 *>(IntPtr);
 
@@ -271,6 +291,8 @@ static void printLoadConfiguration(const COFFObjectFile *Obj) {
          << "\n  SEH Table: " << LoadConf->SEHandlerTable
          << "\n  SEH Count: " << LoadConf->SEHandlerCount
          << "\n\n";
+  printSEHTable(Obj, LoadConf->SEHandlerTable, LoadConf->SEHandlerCount);
+  outs() << "\n";
 }
 
 // Prints import tables. The import table is a table containing the list of

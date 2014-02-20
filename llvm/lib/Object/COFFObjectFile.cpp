@@ -381,15 +381,21 @@ error_code COFFObjectFile::initSymbolTablePtr() {
   return object_error::success;
 }
 
+// Returns the file offset for the given VA.
+error_code COFFObjectFile::getVaPtr(uint32_t Addr, uintptr_t &Res) const {
+  uint32_t ImageBase = PE32Header ? PE32Header->ImageBase : PE32PlusHeader->ImageBase;
+  return getRvaPtr(Addr - ImageBase, Res);
+}
+
 // Returns the file offset for the given RVA.
-error_code COFFObjectFile::getRvaPtr(uint32_t Rva, uintptr_t &Res) const {
+error_code COFFObjectFile::getRvaPtr(uint32_t Addr, uintptr_t &Res) const {
   for (section_iterator I = section_begin(), E = section_end(); I != E;
        ++I) {
     const coff_section *Section = getCOFFSection(I);
     uint32_t SectionStart = Section->VirtualAddress;
     uint32_t SectionEnd = Section->VirtualAddress + Section->VirtualSize;
-    if (SectionStart <= Rva && Rva < SectionEnd) {
-      uint32_t Offset = Rva - SectionStart;
+    if (SectionStart <= Addr && Addr < SectionEnd) {
+      uint32_t Offset = Addr - SectionStart;
       Res = uintptr_t(base()) + Section->PointerToRawData + Offset;
       return object_error::success;
     }
