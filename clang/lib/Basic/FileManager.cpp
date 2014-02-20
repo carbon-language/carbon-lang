@@ -30,19 +30,6 @@
 #include <set>
 #include <string>
 
-// FIXME: This is terrible, we need this for ::close.
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
-#include <unistd.h>
-#include <sys/uio.h>
-#else
-#include <io.h>
-#ifndef S_ISFIFO
-#define S_ISFIFO(x) (0)
-#endif
-#endif
-#if defined(LLVM_ON_UNIX)
-#include <limits.h>
-#endif
 using namespace clang;
 
 // FIXME: Enhance libsystem to support inode and other fields.
@@ -56,12 +43,6 @@ using namespace clang;
 /// represent a filename that doesn't exist on the disk.
 #define NON_EXISTENT_FILE reinterpret_cast<FileEntry*>((intptr_t)-1)
 
-
-FileEntry::~FileEntry() {
-  // If this FileEntry owns an open file descriptor that never got used, close
-  // it.
-  if (FD != -1) ::close(FD);
-}
 
 class FileManager::UniqueDirContainer {
   /// UniqueDirs - Cache from ID's to existing directories/files.
@@ -101,13 +82,19 @@ public:
 // Common logic.
 //===----------------------------------------------------------------------===//
 
-FileManager::FileManager(const FileSystemOptions &FSO)
-  : FileSystemOpts(FSO),
+FileManager::FileManager(const FileSystemOptions &FSO,
+                         IntrusiveRefCntPtr<vfs::FileSystem> FS)
+  : FS(FS), FileSystemOpts(FSO),
     UniqueRealDirs(*new UniqueDirContainer()),
     UniqueRealFiles(*new UniqueFileContainer()),
     SeenDirEntries(64), SeenFileEntries(64), NextFileUID(0) {
   NumDirLookups = NumFileLookups = 0;
   NumDirCacheMisses = NumFileCacheMisses = 0;
+
+  // If the caller doesn't provide a virtual file system, just grab the real
+  // file system.
+  if (!FS)
+    this->FS = vfs::getRealFileSystem();
 }
 
 FileManager::~FileManager() {
@@ -309,10 +296,9 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
   // FIXME: This will reduce the # syscalls.
 
   // Nope, there isn't.  Check to see if the file exists.
-  int FileDescriptor = -1;
+  vfs::File *F = 0;
   FileData Data;
-  if (getStatValue(InterndFileName, Data, true,
-                   openFile ? &FileDescriptor : 0)) {
+  if (getStatValue(InterndFileName, Data, true, openFile ? &F : 0)) {
     // There's no real file at the given path.
     if (!CacheFailure)
       SeenFileEntries.erase(Filename);
@@ -320,10 +306,7 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
     return 0;
   }
 
-  if (FileDescriptor != -1 && !openFile) {
-    close(FileDescriptor);
-    FileDescriptor = -1;
-  }
+  assert(openFile || !F && "undesired open file");
 
   // It exists.  See if we have already opened a file with the same inode.
   // This occurs when one dir is symlinked to another, for example.
@@ -333,8 +316,8 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
   NamedFileEnt.setValue(&UFE);
   if (UFE.getName()) { // Already have an entry with this inode, return it.
     // If the stat process opened the file, close it to avoid a FD leak.
-    if (FileDescriptor != -1)
-      close(FileDescriptor);
+    if (F)
+      delete F;
 
     return &UFE;
   }
@@ -347,7 +330,7 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
   UFE.ModTime = Data.ModTime;
   UFE.Dir     = DirInfo;
   UFE.UID     = NextFileUID++;
-  UFE.FD      = FileDescriptor;
+  UFE.File.reset(F);
   return &UFE;
 }
 
@@ -393,10 +376,8 @@ FileManager::getVirtualFile(StringRef Filename, off_t Size,
     // If we had already opened this file, close it now so we don't
     // leak the descriptor. We're not going to use the file
     // descriptor anyway, since this is a virtual file.
-    if (UFE->FD != -1) {
-      close(UFE->FD);
-      UFE->FD = -1;
-    }
+    if (UFE->File)
+      UFE->closeFile();
 
     // If we already have an entry with this inode, return it.
     if (UFE->getName())
@@ -414,7 +395,7 @@ FileManager::getVirtualFile(StringRef Filename, off_t Size,
   UFE->ModTime = ModificationTime;
   UFE->Dir     = DirInfo;
   UFE->UID     = NextFileUID++;
-  UFE->FD      = -1;
+  UFE->File.reset();
   return UFE;
 }
 
@@ -444,20 +425,18 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
 
   const char *Filename = Entry->getName();
   // If the file is already open, use the open file descriptor.
-  if (Entry->FD != -1) {
-    ec = llvm::MemoryBuffer::getOpenFile(Entry->FD, Filename, Result, FileSize);
+  if (Entry->File) {
+    ec = Entry->File->getBuffer(Filename, Result, FileSize);
     if (ErrorStr)
       *ErrorStr = ec.message();
-
-    close(Entry->FD);
-    Entry->FD = -1;
+    Entry->closeFile();
     return Result.take();
   }
 
   // Otherwise, open the file.
 
   if (FileSystemOpts.WorkingDir.empty()) {
-    ec = llvm::MemoryBuffer::getFile(Filename, Result, FileSize);
+    ec = FS->getBufferForFile(Filename, Result, FileSize);
     if (ec && ErrorStr)
       *ErrorStr = ec.message();
     return Result.take();
@@ -465,7 +444,7 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
 
   SmallString<128> FilePath(Entry->getName());
   FixupRelativePath(FilePath);
-  ec = llvm::MemoryBuffer::getFile(FilePath.str(), Result, FileSize);
+  ec = FS->getBufferForFile(FilePath.str(), Result, FileSize);
   if (ec && ErrorStr)
     *ErrorStr = ec.message();
   return Result.take();
@@ -476,7 +455,7 @@ getBufferForFile(StringRef Filename, std::string *ErrorStr) {
   OwningPtr<llvm::MemoryBuffer> Result;
   llvm::error_code ec;
   if (FileSystemOpts.WorkingDir.empty()) {
-    ec = llvm::MemoryBuffer::getFile(Filename, Result);
+    ec = FS->getBufferForFile(Filename, Result);
     if (ec && ErrorStr)
       *ErrorStr = ec.message();
     return Result.take();
@@ -484,7 +463,7 @@ getBufferForFile(StringRef Filename, std::string *ErrorStr) {
 
   SmallString<128> FilePath(Filename);
   FixupRelativePath(FilePath);
-  ec = llvm::MemoryBuffer::getFile(FilePath.c_str(), Result);
+  ec = FS->getBufferForFile(FilePath.c_str(), Result);
   if (ec && ErrorStr)
     *ErrorStr = ec.message();
   return Result.take();
@@ -496,26 +475,29 @@ getBufferForFile(StringRef Filename, std::string *ErrorStr) {
 /// false if it's an existent real file.  If FileDescriptor is NULL,
 /// do directory look-up instead of file look-up.
 bool FileManager::getStatValue(const char *Path, FileData &Data, bool isFile,
-                               int *FileDescriptor) {
+                               vfs::File **F) {
   // FIXME: FileSystemOpts shouldn't be passed in here, all paths should be
   // absolute!
   if (FileSystemOpts.WorkingDir.empty())
-    return FileSystemStatCache::get(Path, Data, isFile, FileDescriptor,
-                                    StatCache.get());
+    return FileSystemStatCache::get(Path, Data, isFile, F,StatCache.get(), *FS);
 
   SmallString<128> FilePath(Path);
   FixupRelativePath(FilePath);
 
-  return FileSystemStatCache::get(FilePath.c_str(), Data, isFile,
-                                  FileDescriptor, StatCache.get());
+  return FileSystemStatCache::get(FilePath.c_str(), Data, isFile, F,
+                                  StatCache.get(), *FS);
 }
 
 bool FileManager::getNoncachedStatValue(StringRef Path,
-                                        llvm::sys::fs::file_status &Result) {
+                                        vfs::Status &Result) {
   SmallString<128> FilePath(Path);
   FixupRelativePath(FilePath);
 
-  return llvm::sys::fs::status(FilePath.c_str(), Result);
+  llvm::ErrorOr<vfs::Status> S = FS->status(FilePath.c_str());
+  if (!S)
+    return true;
+  Result = *S;
+  return false;
 }
 
 void FileManager::invalidateCache(const FileEntry *Entry) {

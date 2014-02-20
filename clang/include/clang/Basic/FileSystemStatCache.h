@@ -24,6 +24,11 @@
 
 namespace clang {
 
+namespace vfs {
+class File;
+class FileSystem;
+}
+
 struct FileData {
   uint64_t Size;
   time_t ModTime;
@@ -57,10 +62,11 @@ public:
   /// If isFile is true, then this lookup should only return success for files
   /// (not directories).  If it is false this lookup should only return
   /// success for directories (not files).  On a successful file lookup, the
-  /// implementation can optionally fill in FileDescriptor with a valid
-  /// descriptor and the client guarantees that it will close it.
+  /// implementation can optionally fill in \p F with a valid \p File object and
+  /// the client guarantees that it will close it.
   static bool get(const char *Path, FileData &Data, bool isFile,
-                  int *FileDescriptor, FileSystemStatCache *Cache);
+                  vfs::File **F, FileSystemStatCache *Cache,
+                  vfs::FileSystem &FS);
 
   /// \brief Sets the next stat call cache in the chain of stat caches.
   /// Takes ownership of the given stat cache.
@@ -78,17 +84,16 @@ public:
   
 protected:
   virtual LookupResult getStat(const char *Path, FileData &Data, bool isFile,
-                               int *FileDescriptor) = 0;
+                               vfs::File **F, vfs::FileSystem &FS) = 0;
 
   LookupResult statChained(const char *Path, FileData &Data, bool isFile,
-                           int *FileDescriptor) {
+                           vfs::File **F, vfs::FileSystem &FS) {
     if (FileSystemStatCache *Next = getNextStatCache())
-      return Next->getStat(Path, Data, isFile, FileDescriptor);
+      return Next->getStat(Path, Data, isFile, F, FS);
 
     // If we hit the end of the list of stat caches to try, just compute and
     // return it without a cache.
-    return get(Path, Data, isFile, FileDescriptor, 0) ? CacheMissing
-                                                      : CacheExists;
+    return get(Path, Data, isFile, F, 0, FS) ? CacheMissing : CacheExists;
   }
 };
 
@@ -107,7 +112,7 @@ public:
   iterator end() const { return StatCalls.end(); }
 
   virtual LookupResult getStat(const char *Path, FileData &Data, bool isFile,
-                               int *FileDescriptor);
+                               vfs::File **F, vfs::FileSystem &FS);
 };
 
 } // end namespace clang

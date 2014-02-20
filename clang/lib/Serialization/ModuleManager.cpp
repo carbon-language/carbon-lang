@@ -89,7 +89,7 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
     New->InputFilesValidationTimestamp = 0;
     if (New->Kind == MK_Module) {
       std::string TimestampFilename = New->getTimestampFilename();
-      llvm::sys::fs::file_status Status;
+      vfs::Status Status;
       // A cached stat value would be fine as well.
       if (!FileMgr.getNoncachedStatValue(TimestampFilename, Status))
         New->InputFilesValidationTimestamp =
