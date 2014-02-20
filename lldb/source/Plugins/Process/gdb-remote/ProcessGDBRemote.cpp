@@ -1645,6 +1645,21 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 }
             }
 
+            // If the response is old style 'S' packet which does not provide us with thread information
+            // then update the thread list and choose the first one.
+            if (!thread_sp)
+            {
+                UpdateThreadIDList ();
+
+                if (!m_thread_ids.empty ())
+                {
+                    Mutex::Locker locker (m_thread_list_real.GetMutex ());
+                    thread_sp = m_thread_list_real.FindThreadByProtocolID (m_thread_ids.front (), false);
+                    if (thread_sp)
+                        gdb_thread = static_cast<ThreadGDBRemote *> (thread_sp.get ());
+                }
+            }
+
             if (thread_sp)
             {
                 // Clear the stop info just in case we don't set it to anything
