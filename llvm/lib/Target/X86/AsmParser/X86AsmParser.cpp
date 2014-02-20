@@ -2040,8 +2040,9 @@ X86Operand *X86AsmParser::ParseATTOperand() {
   }
 }
 
-bool X86AsmParser::HandleAVX512Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                                       const MCParsedAsmOperand &Op) {
+bool
+X86AsmParser::HandleAVX512Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                                  const MCParsedAsmOperand &Op) {
   if(STI.getFeatureBits() & X86::FeatureAVX512) {
     if (getLexer().is(AsmToken::LCurly)) {
       // Eat "{" and mark the current place.
@@ -2382,11 +2383,13 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
      }
 
     if (getLexer().isNot(AsmToken::EndOfStatement))
-      return ErrorAndEatStatement(getLexer().getLoc(), "unexpected token in argument list");
+      return ErrorAndEatStatement(getLexer().getLoc(),
+                                  "unexpected token in argument list");
    }
 
   // Consume the EndOfStatement or the prefix separator Slash
-  if (getLexer().is(AsmToken::EndOfStatement) || isPrefix && getLexer().is(AsmToken::Slash))
+  if (getLexer().is(AsmToken::EndOfStatement) ||
+      (isPrefix && getLexer().is(AsmToken::Slash)))
     Parser.Lex();
 
   if (ExtraImmOp && isParsingIntelSyntax())
