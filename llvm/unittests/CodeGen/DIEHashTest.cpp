@@ -594,4 +594,59 @@ TEST(DIEHashTest, MemberSdata) {
   uint64_t MD5Res = DIEHash().computeTypeSignature(A);
   ASSERT_EQ(0x9a216000dd3788a7ULL, MD5Res);
 }
+
+// Derived from:
+// struct A {
+//   const static float PI = 3.14;
+// };
+// A a;
+TEST(DIEHashTest, MemberBlock) {
+  DIE A(dwarf::DW_TAG_structure_type);
+  DIEInteger One(1);
+  DIEString AStr(&One, "A");
+  A.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &AStr);
+  A.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
+  A.addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
+  A.addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &One);
+
+  DIEInteger Four(4);
+  DIEString FStr(&One, "float");
+  DIE *FloatTyDIE = new DIE(dwarf::DW_TAG_base_type);
+  FloatTyDIE->addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Four);
+  FloatTyDIE->addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, &Four);
+  FloatTyDIE->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FStr);
+
+  DIEEntry FloatTy(FloatTyDIE);
+  DIE *PITyDIE = new DIE(dwarf::DW_TAG_const_type);
+  PITyDIE->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FloatTy);
+
+  DIEEntry PITy(PITyDIE);
+  DIE *PI = new DIE(dwarf::DW_TAG_member);
+  DIEString PIStr(&One, "PI");
+  DIEInteger Two(2);
+  PI->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &PIStr);
+  PI->addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
+  PI->addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &Two);
+  PI->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PITy);
+  PI->addValue(dwarf::DW_AT_external, dwarf::DW_FORM_flag_present, &One);
+  PI->addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, &One);
+
+  DIEBlock *PIBlock = new DIEBlock();
+  DIEInteger Blk1(0xc3);
+  DIEInteger Blk2(0xf5);
+  DIEInteger Blk3(0x48);
+  DIEInteger Blk4(0x40);
+
+  PIBlock->addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk1);
+  PIBlock->addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk2);
+  PIBlock->addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk3);
+  PIBlock->addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk4);
+
+  PI->addValue(dwarf::DW_AT_const_value, dwarf::DW_FORM_block1, PIBlock);
+
+  A.addChild(PI);
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(A);
+  ASSERT_EQ(0x493af53ad3d3f651ULL, MD5Res);
+}
 }

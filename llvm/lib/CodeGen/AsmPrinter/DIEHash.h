@@ -17,6 +17,7 @@
 
 namespace llvm {
 
+class AsmPrinter;
 class CompileUnit;
 
 /// \brief An object containing the capability of hashing and adding hash
@@ -84,6 +85,8 @@ class DIEHash {
   };
 
 public:
+  DIEHash(AsmPrinter *A = NULL) : AP(A) {}
+
   /// \brief Computes the ODR signature.
   uint64_t computeDIEODRSignature(const DIE &Die);
 
@@ -122,6 +125,10 @@ private:
   /// \brief Hashes the attributes in \param Attrs in order.
   void hashAttributes(const DIEAttrs &Attrs, dwarf::Tag Tag);
 
+  /// \brief Hashes the data in a block like DIEValue, e.g. DW_FORM_block or
+  /// DW_FORM_exprloc.
+  void hashBlockData(const SmallVectorImpl<DIEValue *> &Values);
+
   /// \brief Hashes an individual attribute.
   void hashAttribute(AttrEntry Attr, dwarf::Tag Tag);
 
@@ -143,6 +150,7 @@ private:
 
 private:
   MD5 Hash;
+  AsmPrinter *AP;
   DenseMap<const DIE *, unsigned> Numbering;
 };
 }

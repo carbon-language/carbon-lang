@@ -17,6 +17,7 @@
 #include "DIE.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Endian.h"
@@ -269,6 +270,15 @@ void DIEHash::hashDIEEntry(dwarf::Attribute Attribute, dwarf::Tag Tag,
   computeHash(Entry);
 }
 
+// Hash all of the values in a block like set of values. This assumes that
+// all of the data is going to be added as integers.
+void DIEHash::hashBlockData(const SmallVectorImpl<DIEValue *> &Values) {
+  for (SmallVectorImpl<DIEValue *>::const_iterator I = Values.begin(),
+                                                   E = Values.end();
+       I != E; ++I)
+    Hash.update((uint64_t)cast<DIEInteger>(*I)->getValue());
+}
+
 // Hash an individual attribute \param Attr based on the type of attribute and
 // the form.
 void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
@@ -320,6 +330,22 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
     addULEB128(Attribute);
     addULEB128(dwarf::DW_FORM_flag);
     addULEB128((int64_t)cast<DIEInteger>(Value)->getValue());
+    break;
+  case dwarf::DW_FORM_exprloc:
+  case dwarf::DW_FORM_block1:
+  case dwarf::DW_FORM_block2:
+  case dwarf::DW_FORM_block4:
+  case dwarf::DW_FORM_block:
+    addULEB128('A');
+    addULEB128(Attribute);
+    addULEB128(dwarf::DW_FORM_block);
+    if (isa<DIEBlock>(Value)) {
+      addULEB128(cast<DIEBlock>(Value)->ComputeSize(AP));
+      hashBlockData(cast<DIEBlock>(Value)->getValues());
+    } else {
+      addULEB128(cast<DIELoc>(Value)->ComputeSize(AP));
+      hashBlockData(cast<DIELoc>(Value)->getValues());
+    }
     break;
   default:
     llvm_unreachable("Add support for additional forms");

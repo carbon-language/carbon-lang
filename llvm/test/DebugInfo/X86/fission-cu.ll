@@ -1,4 +1,4 @@
-; RUN: llc -split-dwarf=Enable -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
+; RUN: llc -split-dwarf=Enable -generate-cu-hash -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
 ; RUN: llvm-dwarfdump -debug-dump=all %t | FileCheck %s
 ; RUN: llvm-readobj --relocations %t | FileCheck --check-prefix=OBJ %s
 
@@ -61,7 +61,7 @@
 ; CHECK: DW_AT_GNU_dwo_name [DW_FORM_strp] ( .debug_str[0x00000000] = "baz.dwo")
 ; CHECK: DW_AT_GNU_addr_base [DW_FORM_sec_offset]                   (0x00000000)
 ; CHECK: DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000008] = "/usr/local/google/home/echristo/tmp")
-; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8]  (0x0000000000000000)
+; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8]  (0x1f1f859683d49324)
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
 
 ; Check that the rest of the compile units have information.
@@ -73,7 +73,7 @@
 ; CHECK-NOT: DW_AT_low_pc
 ; CHECK-NOT: DW_AT_stmt_list
 ; CHECK-NOT: DW_AT_comp_dir
-; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8]  (0x0000000000000000)
+; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8]  (0x1f1f859683d49324)
 ; CHECK: DW_TAG_variable
 ; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000002) string = "a")
 ; CHECK: DW_AT_type [DW_FORM_ref4]       (cu + 0x{{[0-9a-f]*}} => {[[TYPE:0x[0-9a-f]*]]})

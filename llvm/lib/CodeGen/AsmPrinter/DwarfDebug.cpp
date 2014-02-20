@@ -1007,7 +1007,7 @@ void DwarfDebug::finalizeModuleInfo() {
         // This should be a unique identifier when we want to build .dwp files.
         uint64_t ID = 0;
         if (GenerateCUHash) {
-          DIEHash CUHash;
+          DIEHash CUHash(Asm);
           ID = CUHash.computeCUSignature(*TheU->getUnitDie());
         }
         TheU->addUInt(TheU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
