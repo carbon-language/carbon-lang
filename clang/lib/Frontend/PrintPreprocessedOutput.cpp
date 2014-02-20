@@ -138,11 +138,6 @@ public:
                                   const Module *Imported);
   virtual void Ident(SourceLocation Loc, const std::string &str);
   virtual void PragmaCaptured(SourceLocation Loc, StringRef Str);
-  virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
-                             const std::string &Str);
-  virtual void PragmaDetectMismatch(SourceLocation Loc,
-                                    const std::string &Name,
-                                    const std::string &Value);
   virtual void PragmaMessage(SourceLocation Loc, StringRef Namespace,
                              PragmaMessageKind Kind, StringRef Str);
   virtual void PragmaDebug(SourceLocation Loc, StringRef DebugType);
@@ -402,36 +397,6 @@ static void outputPrintable(llvm::raw_ostream& OS,
     }
 }
 
-void PrintPPOutputPPCallbacks::PragmaComment(SourceLocation Loc,
-                                             const IdentifierInfo *Kind,
-                                             const std::string &Str) {
-  startNewLineIfNeeded();
-  MoveToLine(Loc);
-  OS << "#pragma comment(" << Kind->getName();
-
-  if (!Str.empty()) {
-    OS << ", \"";
-    outputPrintable(OS, Str);
-    OS << '"';
-  }
-
-  OS << ')';
-  setEmittedDirectiveOnThisLine();
-}
-
-void PrintPPOutputPPCallbacks::PragmaDetectMismatch(SourceLocation Loc,
-                                                    const std::string &Name,
-                                                    const std::string &Value) {
-  startNewLineIfNeeded();
-  MoveToLine(Loc);
-  OS << "#pragma detect_mismatch(\"" << Name << '"';
-  outputPrintable(OS, Name);
-  OS << "\", \"";
-  outputPrintable(OS, Value);
-  OS << "\")";
-  setEmittedDirectiveOnThisLine();
-}
-
 void PrintPPOutputPPCallbacks::PragmaMessage(SourceLocation Loc,
                                              StringRef Namespace,
                                              PragmaMessageKind Kind,
@@ -615,7 +580,13 @@ struct UnknownPragmaHandler : public PragmaHandler {
         Callbacks->OS << ' ';
       std::string TokSpell = PP.getSpelling(PragmaTok);
       Callbacks->OS.write(&TokSpell[0], TokSpell.size());
-      PP.LexUnexpandedToken(PragmaTok);
+
+      // Expand macros in pragmas with -fms-extensions.  The assumption is that
+      // the majority of pragmas in such a file will be Microsoft pragmas.
+      if (PP.getLangOpts().MicrosoftExt)
+        PP.Lex(PragmaTok);
+      else
+        PP.LexUnexpandedToken(PragmaTok);
     }
     Callbacks->setEmittedDirectiveOnThisLine();
   }
