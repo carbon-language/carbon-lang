@@ -65,7 +65,7 @@ macro(add_public_tablegen_target target)
       add_dependencies(${target} ${LLVM_COMMON_DEPENDS})
     endif ()
     set_target_properties(${target} PROPERTIES FOLDER "Tablegenning")
-    list(APPEND LLVM_COMMON_DEPENDS ${target} intrinsics_gen)
+    list(APPEND LLVM_COMMON_DEPENDS ${target})
   endif( TABLEGEN_OUTPUT )
 endmacro()
 
