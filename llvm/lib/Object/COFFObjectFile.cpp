@@ -384,7 +384,8 @@ error_code COFFObjectFile::initSymbolTablePtr() {
 
 // Returns the file offset for the given VA.
 error_code COFFObjectFile::getVaPtr(uint64_t Addr, uintptr_t &Res) const {
-  uint64_t ImageBase = PE32Header ? PE32Header->ImageBase : PE32PlusHeader->ImageBase;
+  uint64_t ImageBase = PE32Header ? (uint64_t)PE32Header->ImageBase
+                                  : (uint64_t)PE32PlusHeader->ImageBase;
   uint64_t Rva = Addr - ImageBase;
   assert(Rva <= UINT32_MAX);
   return getRvaPtr((uint32_t)Rva, Res);
