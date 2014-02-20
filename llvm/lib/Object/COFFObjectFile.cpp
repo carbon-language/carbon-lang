@@ -19,6 +19,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cctype>
+#include <cstdint>
 
 using namespace llvm;
 using namespace object;
@@ -382,9 +383,11 @@ error_code COFFObjectFile::initSymbolTablePtr() {
 }
 
 // Returns the file offset for the given VA.
-error_code COFFObjectFile::getVaPtr(uint32_t Addr, uintptr_t &Res) const {
-  uint32_t ImageBase = PE32Header ? PE32Header->ImageBase : (uint32_t)PE32PlusHeader->ImageBase;
-  return getRvaPtr(Addr - ImageBase, Res);
+error_code COFFObjectFile::getVaPtr(uint64_t Addr, uintptr_t &Res) const {
+  uint64_t ImageBase = PE32Header ? PE32Header->ImageBase : PE32PlusHeader->ImageBase;
+  uint64_t Rva = Addr - ImageBase;
+  assert(Rva <= UINT32_MAX);
+  return getRvaPtr((uint32_t)Rva, Res);
 }
 
 // Returns the file offset for the given RVA.

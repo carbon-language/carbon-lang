@@ -397,7 +397,7 @@ public:
   error_code getSectionContents(const coff_section *Sec,
                                 ArrayRef<uint8_t> &Res) const;
 
-  error_code getVaPtr(uint32_t Rva, uintptr_t &Res) const;
+  error_code getVaPtr(uint64_t VA, uintptr_t &Res) const;
   error_code getRvaPtr(uint32_t Rva, uintptr_t &Res) const;
   error_code getHintName(uint32_t Rva, uint16_t &Hint, StringRef &Name) const;
 
