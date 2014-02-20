@@ -152,8 +152,10 @@ static void getUnderlyingObjectsForInstr(const MachineInstr *MI,
     // For now, ignore PseudoSourceValues which may alias LLVM IR values
     // because the code that uses this function has no way to cope with
     // such aliases.
-    if (!PSV->isAliased(MFI))
-      Objects.push_back(UnderlyingObjectsVector::value_type(V, false));
+    if (!PSV->isAliased(MFI)) {
+      bool MayAlias = PSV->mayAlias(MFI);
+      Objects.push_back(UnderlyingObjectsVector::value_type(V, MayAlias));
+    }
     return;
   }
 
