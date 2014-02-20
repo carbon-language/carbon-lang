@@ -260,7 +260,7 @@ struct coff_load_configuration32 {
   support::ulittle32_t ProcessAffinityMask;
   support::ulittle32_t ProcessHeapFlags;
   support::ulittle16_t CSDVersion;
-  char Reserved[4];
+  uint16_t Reserved;
   support::ulittle32_t EditList;
   support::ulittle32_t SecurityCookie;
   support::ulittle32_t SEHandlerTable;

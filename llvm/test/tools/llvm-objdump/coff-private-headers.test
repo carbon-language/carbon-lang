@@ -61,6 +61,6 @@ LOADCFG-NEXT:   Virtual Memory Threshold: 0
 LOADCFG-NEXT:   Process Affinity Mask: 0
 LOADCFG-NEXT:   Process Heap Flags: 0
 LOADCFG-NEXT:   CSD Version: 0
-LOADCFG-NEXT:   Security Cookie: 554696768
-LOADCFG-NEXT:   SEH Table: 65600
-LOADCFG-NEXT:   SEH Count: 0
+LOADCFG-NEXT:   Security Cookie: 4206616
+LOADCFG-NEXT:   SEH Table: 4202768
+LOADCFG-NEXT:   SEH Count: 1
