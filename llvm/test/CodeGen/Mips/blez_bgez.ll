@@ -1,5 +1,5 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s
-; RUN: llc -march=mips64el -mcpu=mips64 < %s | FileCheck %s
+; RUN: llc -march=mips64el < %s | FileCheck %s
 
 ; CHECK-LABEL: test_blez:
 ; CHECK: blez ${{[0-9]+}}, $BB

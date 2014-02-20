@@ -59,6 +59,20 @@ Mips16ConstantIslands(
   cl::desc("MIPS: mips16 constant islands enable."),
   cl::init(true));
 
+/// Select the Mips CPU for the given triple and cpu name.
+/// FIXME: Merge with the copy in MipsMCTargetDesc.cpp
+static inline StringRef selectMipsCPU(StringRef TT, StringRef CPU) {
+  if (CPU.empty()) {
+    Triple TheTriple(TT);
+    if (TheTriple.getArch() == Triple::mips ||
+        TheTriple.getArch() == Triple::mipsel)
+      CPU = "mips32";
+    else
+      CPU = "mips64";
+  }
+  return CPU;
+}
+
 void MipsSubtarget::anchor() { }
 
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
@@ -75,8 +89,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   RM(_RM), OverrideMode(NoOverride), TM(_TM), TargetTriple(TT)
 {
   std::string CPUName = CPU;
-  if (CPUName.empty())
-    CPUName = "mips32";
+  CPUName = selectMipsCPU(TT, CPUName);
 
   // Parse features string.
   ParseSubtargetFeatures(CPUName, FS);

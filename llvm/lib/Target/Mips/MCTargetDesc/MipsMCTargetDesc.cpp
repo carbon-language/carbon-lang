@@ -39,6 +39,20 @@
 
 using namespace llvm;
 
+/// Select the Mips CPU for the given triple and cpu name.
+/// FIXME: Merge with the copy in MipsSubtarget.cpp
+static inline StringRef selectMipsCPU(StringRef TT, StringRef CPU) {
+  if (CPU.empty()) {
+    Triple TheTriple(TT);
+    if (TheTriple.getArch() == Triple::mips ||
+        TheTriple.getArch() == Triple::mipsel)
+      CPU = "mips32";
+    else
+      CPU = "mips64";
+  }
+  return CPU;
+}
+
 static MCInstrInfo *createMipsMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitMipsMCInstrInfo(X);
@@ -53,15 +67,7 @@ static MCRegisterInfo *createMipsMCRegisterInfo(StringRef TT) {
 
 static MCSubtargetInfo *createMipsMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                   StringRef FS) {
-  if (CPU.empty()) {
-    Triple TheTriple(TT);
-    // FIXME: CodeGen picks mips32 in both cases.
-    if (TheTriple.getArch() == Triple::mips ||
-        TheTriple.getArch() == Triple::mipsel)
-      CPU = "mips32";
-    else
-      CPU = "mips64";
-  }
+  CPU = selectMipsCPU(TT, CPU);
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitMipsMCSubtargetInfo(X, TT, CPU, FS);
   return X;
