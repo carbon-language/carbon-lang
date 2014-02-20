@@ -549,4 +549,51 @@ TEST(DIEHashTest, MemberFuncFlag) {
   // The exact same hash GCC produces for this DIE.
   ASSERT_EQ(0x8f78211ddce3df10ULL, MD5Res);
 }
+
+// Derived from:
+// struct A {
+//   const static float PI = 3.14f;
+// };
+// A a;
+TEST(DIEHashTest, MemberBlock) {
+  DIE A(dwarf::DW_TAG_structure_type);
+  DIEInteger One(1);
+  DIEString AStr(&One, "A");
+  A.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &AStr);
+  A.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &One);
+  A.addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
+  A.addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &One);
+
+  DIEInteger Four(4);
+  DIEInteger Five(5);
+  DIEString FStr(&One, "int");
+  DIE *IntTyDIE = new DIE(dwarf::DW_TAG_base_type);
+  IntTyDIE->addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Four);
+  IntTyDIE->addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, &Five);
+  IntTyDIE->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FStr);
+
+  DIEEntry IntTy(IntTyDIE);
+  DIE *PITyDIE = new DIE(dwarf::DW_TAG_const_type);
+  PITyDIE->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntTy);
+
+  DIEEntry PITy(PITyDIE);
+  DIE *PI = new DIE(dwarf::DW_TAG_member);
+  DIEString PIStr(&One, "PI");
+  DIEInteger Two(2);
+  DIEInteger NegThree(-3);
+  PI->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &PIStr);
+  PI->addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, &One);
+  PI->addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, &Two);
+  PI->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PITy);
+  PI->addValue(dwarf::DW_AT_external, dwarf::DW_FORM_flag_present, &One);
+  PI->addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, &One);
+  PI->addValue(dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, &NegThree);
+
+  A.addChild(PI);
+
+  A.dump();
+
+  uint64_t MD5Res = DIEHash().computeTypeSignature(A);
+  ASSERT_EQ(0x9a216000dd3788a7ULL, MD5Res);
+}
 }

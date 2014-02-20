@@ -306,6 +306,7 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   case dwarf::DW_FORM_data4:
   case dwarf::DW_FORM_data8:
   case dwarf::DW_FORM_udata:
+  case dwarf::DW_FORM_sdata:
     addULEB128('A');
     addULEB128(Attribute);
     addULEB128(dwarf::DW_FORM_sdata);
