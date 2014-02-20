@@ -71,6 +71,8 @@ system("$my_debugger $debugger_options $debugger_script_file $executable_file > 
 # validate output.
 system("FileCheck", "-input-file", "$output_file", "$testcase_file");
 if ($?>>8 == 1) {
+    print "Debugger output was:\n";
+    system("cat", "$output_file");
     exit 1;
 }
 else {
