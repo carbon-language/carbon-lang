@@ -1,5 +1,6 @@
 import gc
 import os
+import tempfile
 
 from clang.cindex import CursorKind
 from clang.cindex import Cursor
@@ -93,15 +94,7 @@ def save_tu(tu):
 
     Returns the filename it was saved to.
     """
-
-    # FIXME Generate a temp file path using system APIs.
-    base = 'TEMP_FOR_TRANSLATIONUNIT_SAVE.c'
-    path = os.path.join(kInputsDir, base)
-
-    # Just in case.
-    if os.path.exists(path):
-        os.unlink(path)
-
+    _, path = tempfile.mkstemp()
     tu.save(path)
 
     return path
