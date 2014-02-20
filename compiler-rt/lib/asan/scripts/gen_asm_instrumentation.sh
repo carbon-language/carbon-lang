@@ -43,7 +43,7 @@ emit_call_report() {
 cat <<EOF
   cld
   emms
-  call $(func_report $1 $2)
+  call $(func_report $1 $2)@PLT
 EOF
 }
 
