@@ -434,10 +434,16 @@ ExprResult Sema::DefaultFunctionArrayConversion(Expr *E) {
   QualType Ty = E->getType();
   assert(!Ty.isNull() && "DefaultFunctionArrayConversion - missing type");
 
-  if (Ty->isFunctionType())
+  if (Ty->isFunctionType()) {
+    // If we are here, we are not calling a function but taking
+    // its address (which is not allowed in OpenCL v1.0 s6.8.a.3).
+    if (getLangOpts().OpenCL) {
+      Diag(E->getExprLoc(), diag::err_opencl_taking_function_address);
+      return ExprError();
+    }
     E = ImpCastExprToType(E, Context.getPointerType(Ty),
                           CK_FunctionToPointerDecay).take();
-  else if (Ty->isArrayType()) {
+  } else if (Ty->isArrayType()) {
     // In C90 mode, arrays only promote to pointers if the array expression is
     // an lvalue.  The relevant legalese is C90 6.2.2.1p3: "an lvalue that has
     // type 'array of type' is converted to an expression that has type 'pointer
@@ -633,6 +639,24 @@ ExprResult Sema::DefaultFunctionArrayLvalueConversion(Expr *E) {
   return Res;
 }
 
+/// CallExprUnaryConversions - a special case of an unary conversion
+/// performed on a function designator of a call expression.
+ExprResult Sema::CallExprUnaryConversions(Expr *E) {
+  QualType Ty = E->getType();
+  ExprResult Res = E;
+  // Only do implicit cast for a function type, but not for a pointer
+  // to function type.
+  if (Ty->isFunctionType()) {
+    Res = ImpCastExprToType(E, Context.getPointerType(Ty),
+                            CK_FunctionToPointerDecay).take();
+    if (Res.isInvalid())
+      return ExprError();
+  }
+  Res = DefaultLvalueConversion(Res.take());
+  if (Res.isInvalid())
+    return ExprError();
+  return Owned(Res.take());
+}
 
 /// UsualUnaryConversions - Performs various conversions that are common to most
 /// operators (C99 6.3). The conversions of array and function types are
@@ -4570,7 +4594,7 @@ Sema::BuildResolvedCallExpr(Expr *Fn, NamedDecl *NDecl,
     Result = ImpCastExprToType(Fn, Context.getPointerType(FDecl->getType()),
                                CK_BuiltinFnToFnPtr).take();
   } else {
-    Result = UsualUnaryConversions(Fn);
+    Result = CallExprUnaryConversions(Fn);
   }
   if (Result.isInvalid())
     return ExprError();
@@ -8807,6 +8831,12 @@ QualType Sema::CheckAddressOfOperand(ExprResult &OrigOp, SourceLocation OpLoc) {
 
   // Make sure to ignore parentheses in subsequent checks
   Expr *op = OrigOp.get()->IgnoreParens();
+
+  // OpenCL v1.0 s6.8.a.3: Pointers to functions are not allowed.
+  if (LangOpts.OpenCL && op->getType()->isFunctionType()) {
+    Diag(op->getExprLoc(), diag::err_opencl_taking_function_address);
+    return QualType();
+  }
 
   if (getLangOpts().C99) {
     // Implement C99-only parts of addressof rules.

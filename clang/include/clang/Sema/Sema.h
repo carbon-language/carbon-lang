@@ -7202,6 +7202,10 @@ public:
   // functions and arrays to their respective pointers (C99 6.3.2.1).
   ExprResult UsualUnaryConversions(Expr *E);
 
+  /// CallExprUnaryConversions - a special case of an unary conversion
+  /// performed on a function designator of a call expression.
+  ExprResult CallExprUnaryConversions(Expr *E);
+
   // DefaultFunctionArrayConversion - converts functions and arrays
   // to their respective pointers (C99 6.3.2.1).
   ExprResult DefaultFunctionArrayConversion(Expr *E);
