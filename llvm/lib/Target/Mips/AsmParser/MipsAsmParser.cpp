@@ -264,6 +264,12 @@ public:
         hasConsumedDollar(false) {
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
+
+    // Assert exactly one ABI was chosen.
+    assert((((STI.getFeatureBits() & Mips::FeatureO32) != 0) +
+            ((STI.getFeatureBits() & Mips::FeatureEABI) != 0) +
+            ((STI.getFeatureBits() & Mips::FeatureN32) != 0) +
+            ((STI.getFeatureBits() & Mips::FeatureN64) != 0)) == 1);
   }
 
   MCAsmParser &getParser() const { return Parser; }

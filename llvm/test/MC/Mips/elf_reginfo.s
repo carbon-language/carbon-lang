@@ -1,9 +1,9 @@
 # These *MUST* match the output of gas compiled with the same triple and
 # corresponding options (-mabi=64 -> -mattr=+n64 for example).
 
-# RUN: llvm-mc -filetype=obj -triple=mips64el-linux -mattr=+n64 %s -o - \
+# RUN: llvm-mc -filetype=obj -triple=mips64el-linux -mattr=-n64,+n64 %s -o - \
 # RUN: | llvm-readobj -s | FileCheck --check-prefix=CHECK_64 %s
-# RUN: llvm-mc -filetype=obj -triple=mipsel %s -mattr=+n32 -o - \
+# RUN: llvm-mc -filetype=obj -triple=mipsel %s -mattr=-o32,+n32 -o - \
 # RUN: | llvm-readobj -s | FileCheck --check-prefix=CHECK_32 %s
 
 # Check for register information sections.

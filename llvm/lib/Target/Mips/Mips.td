@@ -90,11 +90,11 @@ def FeatureMicroMips  : SubtargetFeature<"micromips", "InMicroMipsMode", "true",
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, MipsGenericItineraries, Features>;
 
-def : Proc<"mips32", [FeatureMips32]>;
-def : Proc<"mips32r2", [FeatureMips32r2]>;
-def : Proc<"mips64", [FeatureMips64]>;
-def : Proc<"mips64r2", [FeatureMips64r2]>;
-def : Proc<"mips16", [FeatureMips16]>;
+def : Proc<"mips32", [FeatureMips32, FeatureO32]>;
+def : Proc<"mips32r2", [FeatureMips32r2, FeatureO32]>;
+def : Proc<"mips64", [FeatureMips64, FeatureN64]>;
+def : Proc<"mips64r2", [FeatureMips64r2, FeatureN64]>;
+def : Proc<"mips16", [FeatureMips16, FeatureO32]>;
 
 def MipsAsmParser : AsmParser {
   let ShouldEmitMatchRegisterName = 0;

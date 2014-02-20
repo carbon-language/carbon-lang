@@ -7,10 +7,10 @@
 # RUN:   -mcpu=mips64r2 -arch=mips64 | FileCheck %s
 #
 # RUN: llvm-mc %s -triple=mipsel-unknown-linux -show-encoding \
-# RUN:   -mcpu=mips64r2 -arch=mips64 -mattr=+n32 | FileCheck %s
+# RUN:   -mcpu=mips64r2 -arch=mips64 -mattr=-n64,+n32 | FileCheck %s
 #
 # RUN: llvm-mc %s -triple=mipsel-unknown-linux -show-encoding \
-# RUN:   -mcpu=mips64r2 -arch=mips64 -mattr=+n64 | FileCheck %s
+# RUN:   -mcpu=mips64r2 -arch=mips64 -mattr=-n64,+n64 | FileCheck %s
 
     .text
 foo:

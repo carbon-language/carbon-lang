@@ -1,9 +1,9 @@
 ; RUN: llc -march=mipsel -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-O32
 ; RUN: llc -march=mipsel -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-O32
-; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n32 -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-N32
-; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n32 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-N32
-; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-N64
-; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-N64
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=-n64,n32 -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-N32
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=-n64,n32 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-N32
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=-n64,n64 -relocation-model=pic < %s | FileCheck %s -check-prefix=PIC-N64
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=-n64,n64 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-N64
 ; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32 -mattr=+mips16 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-MIPS16-1
 ; RUN: llc -mtriple=mipsel-linux-gnu -march=mipsel -mcpu=mips32 -mattr=+mips16 -relocation-model=static < %s | FileCheck %s -check-prefix=STATIC-MIPS16-2
 

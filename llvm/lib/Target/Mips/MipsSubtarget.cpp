@@ -109,9 +109,12 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
 
-  // Set MipsABI if it hasn't been set yet.
-  if (MipsABI == UnknownABI)
-    MipsABI = hasMips64() ? N64 : O32;
+  // Assert exactly one ABI was chosen.
+  assert(MipsABI != UnknownABI);
+  assert((((getFeatureBits() & Mips::FeatureO32) != 0) +
+          ((getFeatureBits() & Mips::FeatureEABI) != 0) +
+          ((getFeatureBits() & Mips::FeatureN32) != 0) +
+          ((getFeatureBits() & Mips::FeatureN64) != 0)) == 1);
 
   // Check if Architecture and ABI are compatible.
   assert(((!hasMips64() && (isABI_O32() || isABI_EABI())) ||
