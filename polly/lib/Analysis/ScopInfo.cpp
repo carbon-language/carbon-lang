@@ -536,7 +536,7 @@ void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
     // as a single instruction could then possibly perform multiple accesses.
     if (!I->first.isScalar()) {
       assert(!InstructionToAccess.count(I->second) &&
-           "Unexpected 1-to-N mapping on instruction to access map!");
+             "Unexpected 1-to-N mapping on instruction to access map!");
       InstructionToAccess[I->second] = MemAccs.back();
     }
   }
