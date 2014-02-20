@@ -528,9 +528,17 @@ void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
                                       E = AccFuncs->end();
        I != E; ++I) {
     MemAccs.push_back(new MemoryAccess(I->first, I->second, this));
-    assert(!InstructionToAccess.count(I->second) &&
+
+    // We do not track locations for scalar memory accesses at the moment.
+    //
+    // We do not have a use for this information at the moment. If we need this
+    // at some point, the "instruction -> access" mapping needs to be enhanced
+    // as a single instruction could then possibly perform multiple accesses.
+    if (!I->first.isScalar()) {
+      assert(!InstructionToAccess.count(I->second) &&
            "Unexpected 1-to-N mapping on instruction to access map!");
-    InstructionToAccess[I->second] = MemAccs.back();
+      InstructionToAccess[I->second] = MemAccs.back();
+    }
   }
 }
 
