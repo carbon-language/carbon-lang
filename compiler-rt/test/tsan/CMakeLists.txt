@@ -2,9 +2,10 @@ configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
 
-set(TSAN_TEST_DEPS
-  ${SANITIZER_COMMON_LIT_TEST_DEPS}
-  tsan)
+set(TSAN_TEST_DEPS ${SANITIZER_COMMON_LIT_TEST_DEPS})
+if(NOT COMPILER_RT_STANDALONE_BUILD)
+  list(APPEND TSAN_TEST_DEPS tsan)
+endif()
 
 if(COMPILER_RT_INCLUDE_TESTS)
   configure_lit_site_cfg(
