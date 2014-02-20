@@ -1500,42 +1500,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(EmitLValue(E->getArg(0)).getAddress());
   case Builtin::BI__noop:
     return RValue::get(0);
-  case Builtin::BI_InterlockedCompareExchange: {
-    AtomicCmpXchgInst *CXI = Builder.CreateAtomicCmpXchg(
-        EmitScalarExpr(E->getArg(0)),
-        EmitScalarExpr(E->getArg(2)),
-        EmitScalarExpr(E->getArg(1)),
-        SequentiallyConsistent);
-      CXI->setVolatile(true);
-      return RValue::get(CXI);
-  }
-  case Builtin::BI_InterlockedIncrement: {
-    AtomicRMWInst *RMWI = Builder.CreateAtomicRMW(
-      AtomicRMWInst::Add,
-      EmitScalarExpr(E->getArg(0)),
-      ConstantInt::get(Int32Ty, 1),
-      llvm::SequentiallyConsistent);
-    RMWI->setVolatile(true);
-    return RValue::get(Builder.CreateAdd(RMWI, ConstantInt::get(Int32Ty, 1)));
-  }
-  case Builtin::BI_InterlockedDecrement: {
-    AtomicRMWInst *RMWI = Builder.CreateAtomicRMW(
-      AtomicRMWInst::Sub,
-      EmitScalarExpr(E->getArg(0)),
-      ConstantInt::get(Int32Ty, 1),
-      llvm::SequentiallyConsistent);
-    RMWI->setVolatile(true);
-    return RValue::get(Builder.CreateSub(RMWI, ConstantInt::get(Int32Ty, 1)));
-  }
-  case Builtin::BI_InterlockedExchangeAdd: {
-    AtomicRMWInst *RMWI = Builder.CreateAtomicRMW(
-      AtomicRMWInst::Add,
-      EmitScalarExpr(E->getArg(0)),
-      EmitScalarExpr(E->getArg(1)),
-      llvm::SequentiallyConsistent);
-    RMWI->setVolatile(true);
-    return RValue::get(RMWI);
-  }
   }
 
   // If this is an alias for a lib function (e.g. __builtin_sin), emit
@@ -4523,14 +4487,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
 
   switch (BuiltinID) {
   default: return 0;
-  case X86::BI_mm_prefetch: {
-    Value *Address = EmitScalarExpr(E->getArg(0));
-    Value *RW = ConstantInt::get(Int32Ty, 0);
-    Value *Locality = EmitScalarExpr(E->getArg(1));
-    Value *Data = ConstantInt::get(Int32Ty, 1);
-    Value *F = CGM.getIntrinsic(Intrinsic::prefetch);
-    return Builder.CreateCall4(F, Address, RW, Locality, Data);
-  }
   case X86::BI__builtin_ia32_vec_init_v8qi:
   case X86::BI__builtin_ia32_vec_init_v4hi:
   case X86::BI__builtin_ia32_vec_init_v2si:
