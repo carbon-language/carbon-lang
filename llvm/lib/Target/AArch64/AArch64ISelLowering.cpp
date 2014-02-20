@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/CallingConv.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace llvm;
 
@@ -1282,7 +1283,8 @@ AArch64TargetLowering::SaveVarArgRegisters(CCState &CCInfo, SelectionDAG &DAG,
     FuncInfo->setVariadicFPRSize(FPRSaveSize);
   }
 
-  int StackIdx = MFI->CreateFixedObject(8, CCInfo.getNextStackOffset(), true);
+  unsigned StackOffset = RoundUpToAlignment(CCInfo.getNextStackOffset(), 8);
+  int StackIdx = MFI->CreateFixedObject(8, StackOffset, true);
 
   FuncInfo->setVariadicStackIdx(StackIdx);
   FuncInfo->setVariadicGPRIdx(GPRIdx);

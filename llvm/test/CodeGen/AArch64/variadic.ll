@@ -197,3 +197,45 @@ define void @test_va_copy() {
 ; CHECK: ret
 ; CHECK-NOFP: ret
 }
+
+%struct.s_3i = type { i32, i32, i32 }
+
+; This checks that, if the last named argument is not a multiple of 8 bytes,
+; and is allocated on the stack, that __va_list.__stack is initialised to the
+; first 8-byte aligned location above it.
+define void @test_va_odd_struct_on_stack(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e, i32 %f, i32 %g, [1 x i64], %struct.s_3i* byval nocapture readnone align 4 %h, ...) {
+; CHECK-LABEL: test_va_odd_struct_on_stack:
+
+; CHECK: sub sp, sp, #128
+; CHECK: mov x[[FPRBASE:[0-9]+]], sp
+; CHECK: str q7, [x[[FPRBASE]], #112]
+
+; CHECK-NOT: str x{{[0-9]+}},
+
+; CHECK-NOFP-NOT: str q7,
+; CHECK-NOT: str x7,
+
+; Omit the middle ones
+
+; CHECK: str q0, [sp]
+
+  %addr = bitcast %va_list* @var to i8*
+  call void @llvm.va_start(i8* %addr)
+; CHECK: add x[[VA_LIST:[0-9]+]], {{x[0-9]+}}, #:lo12:var
+; CHECK: movn [[VR_OFFS:w[0-9]+]], #127
+; CHECK: str [[VR_OFFS]], [x[[VA_LIST]], #28]
+; CHECK: str wzr, [x[[VA_LIST]], #24]
+; CHECK: add [[VR_TOP:x[0-9]+]], x[[FPRBASE]], #128
+; CHECK: str [[VR_TOP]], [x[[VA_LIST]], #16]
+; This constant would be #140 if it was not 8-byte aligned
+; CHECK: add [[STACK:x[0-9]+]], sp, #144
+; CHECK: str [[STACK]], [{{x[0-9]+}}, #:lo12:var]
+
+; CHECK-NOFP: add x[[VA_LIST:[0-9]+]], {{x[0-9]+}}, #:lo12:var
+; This constant would be #12 if it was not 8-byte aligned
+; CHECK-NOFP: add [[STACK:x[0-9]+]], sp, #16
+; CHECK-NOFP: str [[STACK]], [{{x[0-9]+}}, #:lo12:var]
+; CHECK-NOFP: str wzr, [x[[VA_LIST]], #28]
+; CHECK-NOFP: str wzr, [x[[VA_LIST]], #24]
+  ret void
+}
