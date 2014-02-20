@@ -73,7 +73,10 @@ else
 	# On non-Apple platforms, -arch becomes -m
 	ARCHFLAG := -m
 
-	# i386 becomes 32, and x86_64 becomes 64
+	# i386 becomes 32, and amd64 or x86_64 becomes 64
+	ifeq "$(ARCH)" "amd64"
+	    override ARCH := $(subst amd64,64,$(ARCH))
+	endif
 	ifeq "$(ARCH)" "x86_64"
 	    override ARCH := $(subst x86_64,64,$(ARCH))
 	endif
