@@ -11,13 +11,214 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ParsePragma.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/Scope.h"
 #include "llvm/ADT/StringSwitch.h"
 using namespace clang;
+
+namespace {
+
+struct PragmaAlignHandler : public PragmaHandler {
+  explicit PragmaAlignHandler() : PragmaHandler("align") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+struct PragmaGCCVisibilityHandler : public PragmaHandler {
+  explicit PragmaGCCVisibilityHandler() : PragmaHandler("visibility") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+struct PragmaOptionsHandler : public PragmaHandler {
+  explicit PragmaOptionsHandler() : PragmaHandler("options") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+struct PragmaPackHandler : public PragmaHandler {
+  explicit PragmaPackHandler() : PragmaHandler("pack") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+struct PragmaMSStructHandler : public PragmaHandler {
+  explicit PragmaMSStructHandler() : PragmaHandler("ms_struct") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+struct PragmaUnusedHandler : public PragmaHandler {
+  PragmaUnusedHandler() : PragmaHandler("unused") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+struct PragmaWeakHandler : public PragmaHandler {
+  explicit PragmaWeakHandler() : PragmaHandler("weak") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+struct PragmaRedefineExtnameHandler : public PragmaHandler {
+  explicit PragmaRedefineExtnameHandler() : PragmaHandler("redefine_extname") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+struct PragmaOpenCLExtensionHandler : public PragmaHandler {
+  PragmaOpenCLExtensionHandler() : PragmaHandler("EXTENSION") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+
+struct PragmaFPContractHandler : public PragmaHandler {
+  PragmaFPContractHandler() : PragmaHandler("FP_CONTRACT") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+struct PragmaNoOpenMPHandler : public PragmaHandler {
+  PragmaNoOpenMPHandler() : PragmaHandler("omp") { }
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+struct PragmaOpenMPHandler : public PragmaHandler {
+  PragmaOpenMPHandler() : PragmaHandler("omp") { }
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+/// PragmaCommentHandler - "\#pragma comment ...".
+struct PragmaCommentHandler : public PragmaHandler {
+  PragmaCommentHandler(Sema &Actions)
+    : PragmaHandler("comment"), Actions(Actions) {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+private:
+  Sema &Actions;
+};
+
+struct PragmaDetectMismatchHandler : public PragmaHandler {
+  PragmaDetectMismatchHandler(Sema &Actions)
+    : PragmaHandler("detect_mismatch"), Actions(Actions) {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+private:
+  Sema &Actions;
+};
+
+struct PragmaMSPointersToMembers : public PragmaHandler {
+  explicit PragmaMSPointersToMembers() : PragmaHandler("pointers_to_members") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+struct PragmaMSVtorDisp : public PragmaHandler {
+  explicit PragmaMSVtorDisp() : PragmaHandler("vtordisp") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
+}  // end namespace
+
+void Parser::initializePragmaHandlers() {
+  AlignHandler.reset(new PragmaAlignHandler());
+  PP.AddPragmaHandler(AlignHandler.get());
+
+  GCCVisibilityHandler.reset(new PragmaGCCVisibilityHandler());
+  PP.AddPragmaHandler("GCC", GCCVisibilityHandler.get());
+
+  OptionsHandler.reset(new PragmaOptionsHandler());
+  PP.AddPragmaHandler(OptionsHandler.get());
+
+  PackHandler.reset(new PragmaPackHandler());
+  PP.AddPragmaHandler(PackHandler.get());
+
+  MSStructHandler.reset(new PragmaMSStructHandler());
+  PP.AddPragmaHandler(MSStructHandler.get());
+
+  UnusedHandler.reset(new PragmaUnusedHandler());
+  PP.AddPragmaHandler(UnusedHandler.get());
+
+  WeakHandler.reset(new PragmaWeakHandler());
+  PP.AddPragmaHandler(WeakHandler.get());
+
+  RedefineExtnameHandler.reset(new PragmaRedefineExtnameHandler());
+  PP.AddPragmaHandler(RedefineExtnameHandler.get());
+
+  FPContractHandler.reset(new PragmaFPContractHandler());
+  PP.AddPragmaHandler("STDC", FPContractHandler.get());
+
+  if (getLangOpts().OpenCL) {
+    OpenCLExtensionHandler.reset(new PragmaOpenCLExtensionHandler());
+    PP.AddPragmaHandler("OPENCL", OpenCLExtensionHandler.get());
+
+    PP.AddPragmaHandler("OPENCL", FPContractHandler.get());
+  }
+  if (getLangOpts().OpenMP)
+    OpenMPHandler.reset(new PragmaOpenMPHandler());
+  else
+    OpenMPHandler.reset(new PragmaNoOpenMPHandler());
+  PP.AddPragmaHandler(OpenMPHandler.get());
+
+  if (getLangOpts().MicrosoftExt) {
+    MSCommentHandler.reset(new PragmaCommentHandler(Actions));
+    PP.AddPragmaHandler(MSCommentHandler.get());
+    MSDetectMismatchHandler.reset(new PragmaDetectMismatchHandler(Actions));
+    PP.AddPragmaHandler(MSDetectMismatchHandler.get());
+    MSPointersToMembers.reset(new PragmaMSPointersToMembers());
+    PP.AddPragmaHandler(MSPointersToMembers.get());
+    MSVtorDisp.reset(new PragmaMSVtorDisp());
+    PP.AddPragmaHandler(MSVtorDisp.get());
+  }
+}
+
+void Parser::resetPragmaHandlers() {
+  // Remove the pragma handlers we installed.
+  PP.RemovePragmaHandler(AlignHandler.get());
+  AlignHandler.reset();
+  PP.RemovePragmaHandler("GCC", GCCVisibilityHandler.get());
+  GCCVisibilityHandler.reset();
+  PP.RemovePragmaHandler(OptionsHandler.get());
+  OptionsHandler.reset();
+  PP.RemovePragmaHandler(PackHandler.get());
+  PackHandler.reset();
+  PP.RemovePragmaHandler(MSStructHandler.get());
+  MSStructHandler.reset();
+  PP.RemovePragmaHandler(UnusedHandler.get());
+  UnusedHandler.reset();
+  PP.RemovePragmaHandler(WeakHandler.get());
+  WeakHandler.reset();
+  PP.RemovePragmaHandler(RedefineExtnameHandler.get());
+  RedefineExtnameHandler.reset();
+
+  if (getLangOpts().OpenCL) {
+    PP.RemovePragmaHandler("OPENCL", OpenCLExtensionHandler.get());
+    OpenCLExtensionHandler.reset();
+    PP.RemovePragmaHandler("OPENCL", FPContractHandler.get());
+  }
+  PP.RemovePragmaHandler(OpenMPHandler.get());
+  OpenMPHandler.reset();
+
+  if (getLangOpts().MicrosoftExt) {
+    PP.RemovePragmaHandler(MSCommentHandler.get());
+    MSCommentHandler.reset();
+    PP.RemovePragmaHandler(MSDetectMismatchHandler.get());
+    MSDetectMismatchHandler.reset();
+    PP.RemovePragmaHandler(MSPointersToMembers.get());
+    MSPointersToMembers.reset();
+    PP.RemovePragmaHandler(MSVtorDisp.get());
+    MSVtorDisp.reset();
+  }
+
+  PP.RemovePragmaHandler("STDC", FPContractHandler.get());
+  FPContractHandler.reset();
+}
 
 /// \brief Handle the annotation token produced for #pragma unused(...)
 ///
