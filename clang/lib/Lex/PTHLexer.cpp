@@ -675,13 +675,13 @@ public:
   ~PTHStatCache() {}
 
   LookupResult getStat(const char *Path, FileData &Data, bool isFile,
-                       vfs::File **F, vfs::FileSystem &FS) {
+                       int *FileDescriptor) {
     // Do the lookup for the file's data in the PTH file.
     CacheTy::iterator I = Cache.find(Path);
 
     // If we don't get a hit in the PTH file just forward to 'stat'.
     if (I == Cache.end())
-      return statChained(Path, Data, isFile, F, FS);
+      return statChained(Path, Data, isFile, FileDescriptor);
 
     const PTHStatData &D = *I;
 

@@ -516,8 +516,8 @@ public:
   ~StatListener() {}
 
   LookupResult getStat(const char *Path, FileData &Data, bool isFile,
-                       vfs::File **F, vfs::FileSystem &FS) {
-    LookupResult Result = statChained(Path, Data, isFile, F, FS);
+                       int *FileDescriptor) {
+    LookupResult Result = statChained(Path, Data, isFile, FileDescriptor);
 
     if (Result == CacheMissing) // Failed 'stat'.
       PM.insert(PTHEntryKeyVariant(Path), PTHEntry());
