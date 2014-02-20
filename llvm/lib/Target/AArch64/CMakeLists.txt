@@ -26,6 +26,7 @@ add_llvm_target(AArch64CodeGen
   AArch64Subtarget.cpp
   AArch64TargetMachine.cpp
   AArch64TargetObjectFile.cpp
+  AArch64TargetTransformInfo.cpp
   )
 
 add_subdirectory(AsmParser)

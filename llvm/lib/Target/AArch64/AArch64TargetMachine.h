@@ -62,6 +62,8 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
   TargetPassConfig *createPassConfig(PassManagerBase &PM);
+
+  virtual void addAnalysisPasses(PassManagerBase &PM);
 };
 
 }

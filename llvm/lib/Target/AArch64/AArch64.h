@@ -33,6 +33,10 @@ FunctionPass *createAArch64CleanupLocalDynamicTLSPass();
 
 FunctionPass *createAArch64BranchFixupPass();
 
+/// \brief Creates an AArch64-specific Target Transformation Info pass.
+ImmutablePass *createAArch64TargetTransformInfoPass(
+                                                const AArch64TargetMachine *TM);
+
 void LowerAArch64MachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                       AArch64AsmPrinter &AP);
 

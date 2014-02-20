@@ -41,6 +41,14 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
   initAsmInfo();
 }
 
+void AArch64TargetMachine::addAnalysisPasses(PassManagerBase &PM) {
+  // Add first the target-independent BasicTTI pass, then our AArch64 pass. This
+  // allows the AArch64 pass to delegate to the target independent layer when
+  // appropriate.
+  PM.add(createBasicTargetTransformInfoPass(this));
+  PM.add(createAArch64TargetTransformInfoPass(this));
+}
+
 namespace {
 /// AArch64 Code Generator Pass Configuration Options.
 class AArch64PassConfig : public TargetPassConfig {
