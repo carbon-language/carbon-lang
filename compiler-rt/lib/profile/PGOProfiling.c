@@ -56,7 +56,10 @@ void llvm_pgo_register_writeout_function(writeout_fn fn) {
 }
 
 void llvm_pgo_writeout_files() {
-  OutputFile = fopen("pgo-data", "w");
+  const char *OutputName = getenv("LLVM_PROFILE_FILE");
+  if (OutputName == NULL || OutputName[0] == '\0')
+    OutputName = "default.profdata";
+  OutputFile = fopen(OutputName, "w");
   if (!OutputFile) return;
 
   while (writeout_fn_head) {
