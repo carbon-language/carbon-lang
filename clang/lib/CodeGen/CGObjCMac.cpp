@@ -2568,7 +2568,7 @@ llvm::Constant *CGObjCCommonMac::GetProtocolRef(const ObjCProtocolDecl *PD) {
 }
 
 /*
-// APPLE LOCAL radar 4585769 - Objective-C 1.0 extensions
+// Objective-C 1.0 extensions
 struct _objc_protocol {
 struct _objc_protocol_extension *isa;
 char *protocol_name;
