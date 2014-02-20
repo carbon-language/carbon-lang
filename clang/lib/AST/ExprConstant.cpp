@@ -3117,14 +3117,18 @@ static bool EvaluateDecl(EvalInfo &Info, const Decl *D) {
     Result.set(VD, Info.CurrentCall->Index);
     APValue &Val = Info.CurrentCall->createTemporary(VD, true);
 
-    if (!VD->getInit()) {
+    const Expr *InitE = VD->getInit();
+    if (!InitE) {
       Info.Diag(D->getLocStart(), diag::note_constexpr_uninitialized)
         << false << VD->getType();
       Val = APValue();
       return false;
     }
 
-    if (!EvaluateInPlace(Val, Info, Result, VD->getInit())) {
+    if (InitE->isValueDependent())
+      return false;
+
+    if (!EvaluateInPlace(Val, Info, Result, InitE)) {
       // Wipe out any partially-computed value, to allow tracking that this
       // evaluation failed.
       Val = APValue();
@@ -8028,8 +8032,8 @@ static bool Evaluate(APValue &Result, EvalInfo &Info, const Expr *E) {
 /// an object can indirectly refer to subobjects which were initialized earlier.
 static bool EvaluateInPlace(APValue &Result, EvalInfo &Info, const LValue &This,
                             const Expr *E, bool AllowNonLiteralTypes) {
-  if (E->isTypeDependent() || E->isValueDependent())
-    return false;
+  assert(!E->isValueDependent());
+
   if (!AllowNonLiteralTypes && !CheckLiteralType(Info, E, &This))
     return false;
 
