@@ -38,6 +38,7 @@
 #include "isl/constraint.h"
 #include "isl/set.h"
 #include "isl/map.h"
+#include "isl/union_map.h"
 #include "isl/aff.h"
 #include "isl/printer.h"
 #include "isl/local_space.h"
@@ -489,6 +490,14 @@ void MemoryAccess::setNewAccessRelation(isl_map *newAccess) {
 //===----------------------------------------------------------------------===//
 
 isl_map *ScopStmt::getScattering() const { return isl_map_copy(Scattering); }
+
+void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
+  assert(isl_set_is_subset(NewDomain, Domain) &&
+         "New domain is not a subset of old domain!");
+  isl_set_free(Domain);
+  Domain = NewDomain;
+  Scattering = isl_map_intersect_domain(Scattering, isl_set_copy(Domain));
+}
 
 void ScopStmt::setScattering(isl_map *NewScattering) {
   isl_map_free(Scattering);
@@ -952,6 +961,90 @@ __isl_give isl_union_set *Scop::getDomains() {
                                    isl_union_set_from_set((*SI)->getDomain()));
 
   return Domain;
+}
+
+__isl_give isl_union_map *Scop::getWrites() {
+  isl_union_map *Write = isl_union_map_empty(this->getParamSpace());
+
+  for (Scop::iterator SI = this->begin(), SE = this->end(); SI != SE; ++SI) {
+    ScopStmt *Stmt = *SI;
+
+    for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
+                                   ME = Stmt->memacc_end();
+         MI != ME; ++MI) {
+      if (!(*MI)->isWrite())
+        continue;
+
+      isl_set *Domain = Stmt->getDomain();
+      isl_map *AccessDomain = (*MI)->getAccessRelation();
+
+      AccessDomain = isl_map_intersect_domain(AccessDomain, Domain);
+      Write = isl_union_map_add_map(Write, AccessDomain);
+    }
+  }
+  return isl_union_map_coalesce(Write);
+}
+
+__isl_give isl_union_map *Scop::getReads() {
+  isl_union_map *Read = isl_union_map_empty(this->getParamSpace());
+
+  for (Scop::iterator SI = this->begin(), SE = this->end(); SI != SE; ++SI) {
+    ScopStmt *Stmt = *SI;
+
+    for (ScopStmt::memacc_iterator MI = Stmt->memacc_begin(),
+                                   ME = Stmt->memacc_end();
+         MI != ME; ++MI) {
+      if (!(*MI)->isRead())
+        continue;
+
+      isl_set *Domain = Stmt->getDomain();
+      isl_map *AccessDomain = (*MI)->getAccessRelation();
+
+      AccessDomain = isl_map_intersect_domain(AccessDomain, Domain);
+      Read = isl_union_map_add_map(Read, AccessDomain);
+    }
+  }
+  return isl_union_map_coalesce(Read);
+}
+
+__isl_give isl_union_map *Scop::getSchedule() {
+  isl_union_map *Schedule = isl_union_map_empty(this->getParamSpace());
+
+  for (Scop::iterator SI = this->begin(), SE = this->end(); SI != SE; ++SI) {
+    ScopStmt *Stmt = *SI;
+    Schedule = isl_union_map_add_map(Schedule, Stmt->getScattering());
+  }
+  return isl_union_map_coalesce(Schedule);
+}
+
+bool Scop::restrictDomains(__isl_take isl_union_set *Domain) {
+  bool Changed = false;
+  for (Scop::iterator SI = this->begin(), SE = this->end(); SI != SE; ++SI) {
+    ScopStmt *Stmt = *SI;
+    isl_union_set *StmtDomain = isl_union_set_from_set(Stmt->getDomain());
+
+    isl_union_set *NewStmtDomain = isl_union_set_intersect(
+        isl_union_set_copy(StmtDomain), isl_union_set_copy(Domain));
+
+    if (isl_union_set_is_subset(StmtDomain, NewStmtDomain)) {
+      isl_union_set_free(StmtDomain);
+      isl_union_set_free(NewStmtDomain);
+      continue;
+    }
+
+    Changed = true;
+
+    isl_union_set_free(StmtDomain);
+    NewStmtDomain = isl_union_set_coalesce(NewStmtDomain);
+
+    if (isl_union_set_is_empty(NewStmtDomain)) {
+      Stmt->restrictDomain(isl_set_empty(Stmt->getDomainSpace()));
+      isl_union_set_free(NewStmtDomain);
+    } else
+      Stmt->restrictDomain(isl_set_from_union_set(NewStmtDomain));
+  }
+  isl_union_set_free(Domain);
+  return Changed;
 }
 
 ScalarEvolution *Scop::getSE() const { return SE; }

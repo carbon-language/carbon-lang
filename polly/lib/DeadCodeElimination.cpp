@@ -20,15 +20,34 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/Dependences.h"
-#include "isl/aff_type.h"
-#include "isl/union_map.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
+#include "llvm/Support/CommandLine.h"
+#include "isl/set.h"
+#include "isl/map.h"
+#include "isl/union_map.h"
 
 using namespace llvm;
 using namespace polly;
 
 namespace {
+enum DcePrecision {
+  DCE_PRECISION_AUTO,
+  DCE_PRECISION_HULL,
+  DCE_PRECISION_FULL
+};
+
+cl::opt<DcePrecision> DcePrecision(
+    "polly-dce-precision", cl::desc("Precision of Polyhedral DCE"),
+    cl::values(
+        clEnumValN(DCE_PRECISION_FULL, "full",
+                   "Live set is not approximated at each iteration"),
+        clEnumValN(
+            DCE_PRECISION_HULL, "hull",
+            "Live set is approximated with an affine hull at each iteration"),
+        clEnumValN(DCE_PRECISION_AUTO, "auto", "Currently the same as hull"),
+        clEnumValEnd),
+    cl::init(DCE_PRECISION_AUTO));
 
 class DeadCodeElim : public ScopPass {
 
@@ -37,24 +56,68 @@ public:
   explicit DeadCodeElim() : ScopPass(ID) {}
 
   virtual bool runOnScop(Scop &S);
+
   void printScop(llvm::raw_ostream &OS) const;
   void getAnalysisUsage(AnalysisUsage &AU) const;
+
+private:
+  isl_union_set *getLastWrites(isl_union_map *Writes, isl_union_map *Schedule);
+  bool eliminateDeadCode(Scop &S);
 };
 }
 
 char DeadCodeElim::ID = 0;
 
-bool DeadCodeElim::runOnScop(Scop &S) {
-  Dependences *D = &getAnalysis<Dependences>();
+/// Return the set of iterations that contains the last write for each location.
+isl_union_set *DeadCodeElim::getLastWrites(__isl_take isl_union_map *Writes,
+                                           __isl_take isl_union_map *Schedule) {
+  isl_union_map *WriteIterations = isl_union_map_reverse(Writes);
+  isl_union_map *WriteTimes =
+      isl_union_map_apply_range(WriteIterations, isl_union_map_copy(Schedule));
 
-  int Kinds =
-      Dependences::TYPE_RAW | Dependences::TYPE_WAR | Dependences::TYPE_WAW;
+  isl_union_map *LastWriteTimes = isl_union_map_lexmax(WriteTimes);
+  isl_union_map *LastWriteIterations = isl_union_map_apply_range(
+      LastWriteTimes, isl_union_map_reverse(Schedule));
 
-  isl_union_map *Deps = D->getDependences(Kinds);
-
-  isl_union_map_free(Deps);
-  return false;
+  isl_union_set *Live = isl_union_map_range(LastWriteIterations);
+  return isl_union_set_coalesce(Live);
 }
+
+/// Performs polyhedral dead iteration elimination by:
+/// o Assuming that the last write to each location is live.
+/// o Following each RAW dependency from a live iteration backwards and adding
+///   that iteration to the live set.
+bool DeadCodeElim::eliminateDeadCode(Scop &S) {
+  isl_union_set *Live = this->getLastWrites(S.getWrites(), S.getSchedule());
+
+  Dependences *D = &getAnalysis<Dependences>();
+  isl_union_map *Dep = D->getDependences(Dependences::TYPE_RAW);
+  Dep = isl_union_map_reverse(Dep);
+
+  isl_union_set *OriginalDomain = S.getDomains();
+  while (true) {
+    isl_union_set *Extra;
+
+    Extra =
+        isl_union_set_apply(isl_union_set_copy(Live), isl_union_map_copy(Dep));
+
+    if (isl_union_set_is_subset(Extra, Live)) {
+      isl_union_set_free(Extra);
+      break;
+    }
+
+    Live = isl_union_set_union(Live, Extra);
+    if (DcePrecision != DCE_PRECISION_FULL)
+      Live = isl_union_set_affine_hull(Live);
+    Live = isl_union_set_intersect(Live, isl_union_set_copy(OriginalDomain));
+  }
+  isl_union_map_free(Dep);
+  isl_union_set_free(OriginalDomain);
+
+  return S.restrictDomains(isl_union_set_coalesce(Live));
+}
+
+bool DeadCodeElim::runOnScop(Scop &S) { return eliminateDeadCode(S); }
 
 void DeadCodeElim::printScop(raw_ostream &OS) const {}
 

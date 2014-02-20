@@ -44,6 +44,7 @@ struct isl_basic_map;
 struct isl_id;
 struct isl_set;
 struct isl_union_set;
+struct isl_union_map;
 struct isl_space;
 struct isl_constraint;
 
@@ -368,6 +369,11 @@ public:
   /// @return The induction variable at a certain dimension.
   const PHINode *getInductionVariableForDimension(unsigned Dimension) const;
 
+  /// @brief Restrict the domain of the statement.
+  ///
+  /// @param NewDomain The new statement domain.
+  void restrictDomain(__isl_take isl_set *NewDomain);
+
   /// @brief Get the loop for a dimension.
   ///
   /// @param Dimension The dimension of the induction variable
@@ -605,6 +611,20 @@ public:
 
   /// @brief Get a union set containing the iteration domains of all statements.
   __isl_give isl_union_set *getDomains();
+
+  /// @brief Get a union map of all writes performed in the SCoP.
+  __isl_give isl_union_map *getWrites();
+
+  /// @brief Get a union map of all reads performed in the SCoP.
+  __isl_give isl_union_map *getReads();
+
+  /// @brief Get the schedule of all the statements in the SCoP.
+  __isl_give isl_union_map *getSchedule();
+
+  /// @brief Intersects the domains of all statements in the SCoP.
+  ///
+  /// @return true if a change was made
+  bool restrictDomains(__isl_take isl_union_set *Domain);
 };
 
 /// @brief Print Scop scop to raw_ostream O.
