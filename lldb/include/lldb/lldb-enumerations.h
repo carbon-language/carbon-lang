@@ -46,7 +46,9 @@ namespace lldb {
         eLaunchFlagDisableSTDIO = (1u << 4),  ///< Disable stdio for inferior process (e.g. for a GUI app)
         eLaunchFlagLaunchInTTY  = (1u << 5),  ///< Launch the process in a new TTY if supported by the host 
         eLaunchFlagLaunchInShell= (1u << 6),   ///< Launch the process inside a shell to get shell expansion
-        eLaunchFlagLaunchInSeparateProcessGroup = (1u << 7) ///< Launch the process in a separate process group
+        eLaunchFlagLaunchInSeparateProcessGroup = (1u << 7), ///< Launch the process in a separate process group
+        eLaunchFlagsDontMonitorProcess = (1u << 8)  ///< If you are going to hand the process off (e.g. to debugserver)
+                                                    ///< set this flag so lldb & the handee don't race to reap it.
     } LaunchFlags;
         
     //----------------------------------------------------------------------

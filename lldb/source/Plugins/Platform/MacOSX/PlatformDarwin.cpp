@@ -763,6 +763,10 @@ PlatformDarwin::DebugProcess (ProcessLaunchInfo &launch_info,
     
     if (IsHost())
     {
+        // We are going to hand this process off to debugserver which will monitor the process itself.
+        // So don't also monitor it from lldb or we set up a race between debugserver & us for who will find out
+        // about the debugged process's death.
+        launch_info.GetFlags().Set(eLaunchFlagsDontMonitorProcess);
         process_sp = Platform::DebugProcess (launch_info, debugger, target, listener, error);
     }
     else

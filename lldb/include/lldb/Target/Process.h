@@ -815,9 +815,16 @@ public:
         return m_monitor_callback_baton;
     }
 
+    // If the LaunchInfo has a monitor callback, then arrange to monitor the process.
+    // Return true if the LaunchInfo has taken care of monitoring the process, and false if the
+    // caller might want to monitor the process themselves.
+    
     bool
     MonitorProcess () const
     {
+        if (GetFlags().Test(lldb::eLaunchFlagsDontMonitorProcess))
+            return true;
+        
         if (m_monitor_callback && ProcessIDIsValid())
         {
             Host::StartMonitoringChildProcess (m_monitor_callback,
