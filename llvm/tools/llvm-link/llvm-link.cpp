@@ -50,6 +50,10 @@ Verbose("v", cl::desc("Print information about actions taken"));
 static cl::opt<bool>
 DumpAsm("d", cl::desc("Print assembly as linked"), cl::Hidden);
 
+static cl::opt<bool>
+SuppressWarnings("suppress-warnings", cl::desc("Suppress all linking warnings"),
+                 cl::init(false));
+
 // LoadFile - Read the specified bitcode file in and return it.  This routine
 // searches the link path for the specified file to try to find it...
 //
@@ -86,7 +90,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  Linker L(Composite.get());
+  Linker L(Composite.get(), SuppressWarnings);
   for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
     OwningPtr<Module> M(LoadFile(argv[0], InputFilenames[i], Context));
     if (M.get() == 0) {

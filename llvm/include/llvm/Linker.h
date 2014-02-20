@@ -30,7 +30,7 @@ class Linker {
       PreserveSource = 1 // Preserve the source module.
     };
 
-    Linker(Module *M);
+    Linker(Module *M, bool SuppressWarnings=false);
     ~Linker();
 
     Module *getModule() const { return Composite; }
@@ -52,6 +52,8 @@ class Linker {
   private:
     Module *Composite;
     SmallPtrSet<StructType*, 32> IdentifiedStructTypes;
+
+    bool SuppressWarnings;
 };
 
 } // End llvm namespace
