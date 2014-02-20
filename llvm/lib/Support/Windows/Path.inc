@@ -1040,22 +1040,22 @@ bool home_directory(SmallVectorImpl<char> &result) {
 namespace windows {
 llvm::error_code UTF8ToUTF16(llvm::StringRef utf8,
                              llvm::SmallVectorImpl<wchar_t> &utf16) {
-  int len = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
-                                  utf8.begin(), utf8.size(),
-                                  utf16.begin(), 0);
+  if (!utf8.empty()) {
+    int len = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, utf8.begin(),
+                                    utf8.size(), utf16.begin(), 0);
 
-  if (len == 0)
-    return llvm::windows_error(::GetLastError());
+    if (len == 0)
+      return llvm::windows_error(::GetLastError());
 
-  utf16.reserve(len + 1);
-  utf16.set_size(len);
+    utf16.reserve(len + 1);
+    utf16.set_size(len);
 
-  len = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
-                              utf8.begin(), utf8.size(),
-                              utf16.begin(), utf16.size());
+    len = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, utf8.begin(),
+                                utf8.size(), utf16.begin(), utf16.size());
 
-  if (len == 0)
-    return llvm::windows_error(::GetLastError());
+    if (len == 0)
+      return llvm::windows_error(::GetLastError());
+  }
 
   // Make utf16 null terminated.
   utf16.push_back(0);
@@ -1066,26 +1066,24 @@ llvm::error_code UTF8ToUTF16(llvm::StringRef utf8,
 
 llvm::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
                              llvm::SmallVectorImpl<char> &utf8) {
-  // Get length.
-  int len = ::WideCharToMultiByte(CP_UTF8, 0,
-                                  utf16, utf16_len,
-                                  utf8.begin(), 0,
-                                  NULL, NULL);
+  if (utf16_len) {
+    // Get length.
+    int len = ::WideCharToMultiByte(CP_UTF8, 0, utf16, utf16_len, utf8.begin(),
+                                    0, NULL, NULL);
 
-  if (len == 0)
-    return llvm::windows_error(::GetLastError());
+    if (len == 0)
+      return llvm::windows_error(::GetLastError());
 
-  utf8.reserve(len);
-  utf8.set_size(len);
+    utf8.reserve(len);
+    utf8.set_size(len);
 
-  // Now do the actual conversion.
-  len = ::WideCharToMultiByte(CP_UTF8, 0,
-                              utf16, utf16_len,
-                              utf8.data(), utf8.size(),
-                              NULL, NULL);
+    // Now do the actual conversion.
+    len = ::WideCharToMultiByte(CP_UTF8, 0, utf16, utf16_len, utf8.data(),
+                                utf8.size(), NULL, NULL);
 
-  if (len == 0)
-    return llvm::windows_error(::GetLastError());
+    if (len == 0)
+      return llvm::windows_error(::GetLastError());
+  }
 
   // Make utf8 null terminated.
   utf8.push_back(0);
