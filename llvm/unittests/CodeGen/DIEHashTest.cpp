@@ -552,7 +552,7 @@ TEST(DIEHashTest, MemberFuncFlag) {
 
 // Derived from:
 // struct A {
-//   const static float PI = 3.14f;
+//   const static int PI = -3;
 // };
 // A a;
 TEST(DIEHashTest, MemberBlock) {
@@ -590,8 +590,6 @@ TEST(DIEHashTest, MemberBlock) {
   PI->addValue(dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, &NegThree);
 
   A.addChild(PI);
-
-  A.dump();
 
   uint64_t MD5Res = DIEHash().computeTypeSignature(A);
   ASSERT_EQ(0x9a216000dd3788a7ULL, MD5Res);
