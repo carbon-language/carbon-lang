@@ -138,7 +138,7 @@ bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R) {
     assert(!isa<PHINode>(U) && "Non synthesizable PHINode found in a SCoP!");
 
     // Use the def instruction as base address of the IRAccess, so that it will
-    // become the the name of the scalar access in the polyhedral form.
+    // become the name of the scalar access in the polyhedral form.
     IRAccess ScalarAccess(IRAccess::SCALARREAD, Inst, ZeroOffset, 1, true);
     AccFuncMap[UseParent].push_back(std::make_pair(ScalarAccess, U));
   }
