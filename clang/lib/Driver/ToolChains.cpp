@@ -1268,7 +1268,7 @@ void Generic_GCC::GCCInstallationDetector::print(raw_ostream &OS) const {
 
   for (MultilibSet::const_iterator I = Multilibs.begin(), E = Multilibs.end();
        I != E; ++I) {
-    OS << "Candidate multiilb: " << *I << "\n";
+    OS << "Candidate multilib: " << *I << "\n";
   }
 
   if (Multilibs.size() != 0 || !SelectedMultilib.isDefault())
