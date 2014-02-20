@@ -73,7 +73,7 @@ void DIEHash::addSLEB128(int64_t Value) {
   do {
     uint8_t Byte = Value & 0x7f;
     Value >>= 7;
-    More = !((((Value == 0 ) && ((Byte & 0x40) == 0)) ||
+    More = !((((Value == 0) && ((Byte & 0x40) == 0)) ||
               ((Value == -1) && ((Byte & 0x40) != 0))));
     if (More)
       Byte |= 0x80; // Mark this byte to show that more bytes will follow.
@@ -134,55 +134,55 @@ void DIEHash::collectAttributes(const DIE &Die, DIEAttrs &Attrs) {
                  << dwarf::AttributeString(Abbrevs.getData()[i].getAttribute())
                  << " added.\n");
     switch (Abbrevs.getData()[i].getAttribute()) {
-    COLLECT_ATTR(DW_AT_name);
-    COLLECT_ATTR(DW_AT_accessibility);
-    COLLECT_ATTR(DW_AT_address_class);
-    COLLECT_ATTR(DW_AT_allocated);
-    COLLECT_ATTR(DW_AT_artificial);
-    COLLECT_ATTR(DW_AT_associated);
-    COLLECT_ATTR(DW_AT_binary_scale);
-    COLLECT_ATTR(DW_AT_bit_offset);
-    COLLECT_ATTR(DW_AT_bit_size);
-    COLLECT_ATTR(DW_AT_bit_stride);
-    COLLECT_ATTR(DW_AT_byte_size);
-    COLLECT_ATTR(DW_AT_byte_stride);
-    COLLECT_ATTR(DW_AT_const_expr);
-    COLLECT_ATTR(DW_AT_const_value);
-    COLLECT_ATTR(DW_AT_containing_type);
-    COLLECT_ATTR(DW_AT_count);
-    COLLECT_ATTR(DW_AT_data_bit_offset);
-    COLLECT_ATTR(DW_AT_data_location);
-    COLLECT_ATTR(DW_AT_data_member_location);
-    COLLECT_ATTR(DW_AT_decimal_scale);
-    COLLECT_ATTR(DW_AT_decimal_sign);
-    COLLECT_ATTR(DW_AT_default_value);
-    COLLECT_ATTR(DW_AT_digit_count);
-    COLLECT_ATTR(DW_AT_discr);
-    COLLECT_ATTR(DW_AT_discr_list);
-    COLLECT_ATTR(DW_AT_discr_value);
-    COLLECT_ATTR(DW_AT_encoding);
-    COLLECT_ATTR(DW_AT_enum_class);
-    COLLECT_ATTR(DW_AT_endianity);
-    COLLECT_ATTR(DW_AT_explicit);
-    COLLECT_ATTR(DW_AT_is_optional);
-    COLLECT_ATTR(DW_AT_location);
-    COLLECT_ATTR(DW_AT_lower_bound);
-    COLLECT_ATTR(DW_AT_mutable);
-    COLLECT_ATTR(DW_AT_ordering);
-    COLLECT_ATTR(DW_AT_picture_string);
-    COLLECT_ATTR(DW_AT_prototyped);
-    COLLECT_ATTR(DW_AT_small);
-    COLLECT_ATTR(DW_AT_segment);
-    COLLECT_ATTR(DW_AT_string_length);
-    COLLECT_ATTR(DW_AT_threads_scaled);
-    COLLECT_ATTR(DW_AT_upper_bound);
-    COLLECT_ATTR(DW_AT_use_location);
-    COLLECT_ATTR(DW_AT_use_UTF8);
-    COLLECT_ATTR(DW_AT_variable_parameter);
-    COLLECT_ATTR(DW_AT_virtuality);
-    COLLECT_ATTR(DW_AT_visibility);
-    COLLECT_ATTR(DW_AT_vtable_elem_location);
-    COLLECT_ATTR(DW_AT_type);
+      COLLECT_ATTR(DW_AT_name);
+      COLLECT_ATTR(DW_AT_accessibility);
+      COLLECT_ATTR(DW_AT_address_class);
+      COLLECT_ATTR(DW_AT_allocated);
+      COLLECT_ATTR(DW_AT_artificial);
+      COLLECT_ATTR(DW_AT_associated);
+      COLLECT_ATTR(DW_AT_binary_scale);
+      COLLECT_ATTR(DW_AT_bit_offset);
+      COLLECT_ATTR(DW_AT_bit_size);
+      COLLECT_ATTR(DW_AT_bit_stride);
+      COLLECT_ATTR(DW_AT_byte_size);
+      COLLECT_ATTR(DW_AT_byte_stride);
+      COLLECT_ATTR(DW_AT_const_expr);
+      COLLECT_ATTR(DW_AT_const_value);
+      COLLECT_ATTR(DW_AT_containing_type);
+      COLLECT_ATTR(DW_AT_count);
+      COLLECT_ATTR(DW_AT_data_bit_offset);
+      COLLECT_ATTR(DW_AT_data_location);
+      COLLECT_ATTR(DW_AT_data_member_location);
+      COLLECT_ATTR(DW_AT_decimal_scale);
+      COLLECT_ATTR(DW_AT_decimal_sign);
+      COLLECT_ATTR(DW_AT_default_value);
+      COLLECT_ATTR(DW_AT_digit_count);
+      COLLECT_ATTR(DW_AT_discr);
+      COLLECT_ATTR(DW_AT_discr_list);
+      COLLECT_ATTR(DW_AT_discr_value);
+      COLLECT_ATTR(DW_AT_encoding);
+      COLLECT_ATTR(DW_AT_enum_class);
+      COLLECT_ATTR(DW_AT_endianity);
+      COLLECT_ATTR(DW_AT_explicit);
+      COLLECT_ATTR(DW_AT_is_optional);
+      COLLECT_ATTR(DW_AT_location);
+      COLLECT_ATTR(DW_AT_lower_bound);
+      COLLECT_ATTR(DW_AT_mutable);
+      COLLECT_ATTR(DW_AT_ordering);
+      COLLECT_ATTR(DW_AT_picture_string);
+      COLLECT_ATTR(DW_AT_prototyped);
+      COLLECT_ATTR(DW_AT_small);
+      COLLECT_ATTR(DW_AT_segment);
+      COLLECT_ATTR(DW_AT_string_length);
+      COLLECT_ATTR(DW_AT_threads_scaled);
+      COLLECT_ATTR(DW_AT_upper_bound);
+      COLLECT_ATTR(DW_AT_use_location);
+      COLLECT_ATTR(DW_AT_use_UTF8);
+      COLLECT_ATTR(DW_AT_variable_parameter);
+      COLLECT_ATTR(DW_AT_virtuality);
+      COLLECT_ATTR(DW_AT_visibility);
+      COLLECT_ATTR(DW_AT_vtable_elem_location);
+      COLLECT_ATTR(DW_AT_type);
     default:
       break;
     }
