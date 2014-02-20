@@ -6,8 +6,9 @@ include(SanitizerUtils)
 # Don't build sanitizers in the bootstrap build.
 if(NOT LLVM_USE_SANITIZER)
   # AddressSanitizer is supported on Linux and Mac OS X.
+  # FreeBSD port is work-in-progress.
   # 32-bit Windows support is experimental.
-  if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux")
+  if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux|FreeBSD")
     set(SUPPORTS_BUILDING_ASAN TRUE)
   elseif(CMAKE_SYSTEM_NAME MATCHES "Windows"
          AND MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -20,8 +21,9 @@ if(NOT LLVM_USE_SANITIZER)
     add_subdirectory(interception)
     add_subdirectory(sanitizer_common)
   endif()
-  if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux" AND NOT ANDROID)
+  if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux|FreeBSD" AND NOT ANDROID)
     # LSan, UBsan and profile can be built on Mac OS and Linux.
+    # FreeBSD port is work-in-progress.
     add_subdirectory(lsan)
     add_subdirectory(profile)
     add_subdirectory(ubsan)
