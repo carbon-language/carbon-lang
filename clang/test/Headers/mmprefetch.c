@@ -3,7 +3,7 @@
 #include <mmintrin.h>
 
 // Check to make sure that _mm_prefetch survives redeclaration.
-void _mm_prefetch(char const*, int);
+void _mm_prefetch(void const*, int);
 
 void f(char *a) {
   _mm_prefetch(a, 0);
