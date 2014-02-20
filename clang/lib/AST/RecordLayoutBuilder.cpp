@@ -2892,7 +2892,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
 
   const ASTRecordLayout *NewEntry = 0;
 
-  if (isMsLayout(D) && !D->getASTContext().getExternalSource()) {
+  if (isMsLayout(D)) {
     NewEntry = BuildMicrosoftASTRecordLayout(D);
   } else if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     EmptySubobjectMap EmptySubobjects(*this, RD);
