@@ -424,14 +424,16 @@ void DIETypeSignature::dump() const { print(dbgs()); }
 
 /// ComputeSize - calculate the size of the location expression.
 ///
-unsigned DIELoc::ComputeSize(AsmPrinter *AP) {
-  if (!Size) {
-    const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
-    for (unsigned i = 0, N = Values.size(); i < N; ++i)
-      Size += Values[i]->SizeOf(AP, AbbrevData[i].getForm());
-  }
+unsigned DIELoc::ComputeSize(AsmPrinter *AP) const {
+  if (Size)
+    return Size;
 
-  return Size;
+  unsigned Sz = 0;
+  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
+  for (unsigned i = 0, N = Values.size(); i < N; ++i)
+    Sz += Values[i]->SizeOf(AP, AbbrevData[i].getForm());
+
+  return Sz;
 }
 
 /// EmitValue - Emit location data.
@@ -479,14 +481,16 @@ void DIELoc::print(raw_ostream &O) const {
 
 /// ComputeSize - calculate the size of the block.
 ///
-unsigned DIEBlock::ComputeSize(AsmPrinter *AP) {
-  if (!Size) {
-    const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
-    for (unsigned i = 0, N = Values.size(); i < N; ++i)
-      Size += Values[i]->SizeOf(AP, AbbrevData[i].getForm());
-  }
+unsigned DIEBlock::ComputeSize(AsmPrinter *AP) const {
+  if (Size)
+    return Size;
 
-  return Size;
+  unsigned Sz = 0;
+  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
+  for (unsigned i = 0, N = Values.size(); i < N; ++i)
+    Sz += Values[i]->SizeOf(AP, AbbrevData[i].getForm());
+
+  return Sz;
 }
 
 /// EmitValue - Emit block data.

@@ -451,7 +451,11 @@ namespace llvm {
 
     /// ComputeSize - Calculate the size of the location expression.
     ///
-    unsigned ComputeSize(AsmPrinter *AP);
+    unsigned ComputeSize(AsmPrinter *AP) const;
+
+    /// setSize - Set the size of the location entry.
+    ///
+    void setSize(unsigned Sz) { Size = Sz; }
 
     /// BestForm - Choose the best form for data.
     ///
@@ -490,7 +494,11 @@ namespace llvm {
 
     /// ComputeSize - Calculate the size of the location expression.
     ///
-    unsigned ComputeSize(AsmPrinter *AP);
+    unsigned ComputeSize(AsmPrinter *AP) const;
+
+    /// setSize - Set the size of the block.
+    ///
+    void setSize(unsigned Sz) { Size = Sz; }
 
     /// BestForm - Choose the best form for data.
     ///

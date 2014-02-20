@@ -348,14 +348,14 @@ DIE *DwarfUnit::createAndAddDIE(unsigned Tag, DIE &Parent, DIDescriptor N) {
 /// addBlock - Add block data.
 ///
 void DwarfUnit::addBlock(DIE *Die, dwarf::Attribute Attribute, DIELoc *Loc) {
-  Loc->ComputeSize(Asm);
+  Loc->setSize(Loc->ComputeSize(Asm));
   DIELocs.push_back(Loc); // Memoize so we can call the destructor later on.
   Die->addValue(Attribute, Loc->BestForm(DD->getDwarfVersion()), Loc);
 }
 
 void DwarfUnit::addBlock(DIE *Die, dwarf::Attribute Attribute,
                          DIEBlock *Block) {
-  Block->ComputeSize(Asm);
+  Block->setSize(Block->ComputeSize(Asm));
   DIEBlocks.push_back(Block); // Memoize so we can call the destructor later on.
   Die->addValue(Attribute, Block->BestForm(), Block);
 }
