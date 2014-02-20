@@ -535,6 +535,21 @@ void pr9751() {
          0.0); // expected-warning{{format specifies}}
 }
 
+void pr18905() {
+  const char s1[] = "s\0%s"; // expected-note{{format string is defined here}}
+  const char s2[1] = "s"; // expected-note{{format string is defined here}}
+  const char s3[2] = "s\0%s"; // expected-warning{{initializer-string for char array is too long}}
+  const char s4[10] = "s";
+  const char s5[0] = "%s"; // expected-warning{{initializer-string for char array is too long}}
+                           // expected-note@-1{{format string is defined here}}
+
+  printf(s1); // expected-warning{{format string contains '\0' within the string body}}
+  printf(s2); // expected-warning{{format string is not null-terminated}}
+  printf(s3); // no-warning
+  printf(s4); // no-warning
+  printf(s5); // expected-warning{{format string is not null-terminated}}
+}
+
 void __attribute__((format(strfmon,1,2))) monformat(const char *fmt, ...);
 void __attribute__((format(strftime,1,0))) dateformat(const char *fmt);
 

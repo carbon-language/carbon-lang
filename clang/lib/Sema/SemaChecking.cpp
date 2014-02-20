@@ -3493,9 +3493,25 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
   // Str - The format string.  NOTE: this is NOT null-terminated!
   StringRef StrRef = FExpr->getString();
   const char *Str = StrRef.data();
-  unsigned StrLen = StrRef.size();
+  // Account for cases where the string literal is truncated in a declaration.
+  const ConstantArrayType *T = Context.getAsConstantArrayType(FExpr->getType());
+  assert(T && "String literal not of constant array type!");
+  size_t TypeSize = T->getSize().getZExtValue();
+  size_t StrLen = std::min(std::max(TypeSize, size_t(1)) - 1, StrRef.size());
   const unsigned numDataArgs = Args.size() - firstDataArg;
-  
+
+  // Emit a warning if the string literal is truncated and does not contain an
+  // embedded null character.
+  if (TypeSize <= StrRef.size() &&
+      StrRef.substr(0, TypeSize).find('\0') == StringRef::npos) {
+    CheckFormatHandler::EmitFormatDiagnostic(
+        *this, inFunctionCall, Args[format_idx],
+        PDiag(diag::warn_printf_format_string_not_null_terminated),
+        FExpr->getLocStart(),
+        /*IsStringLocation=*/true, OrigFormatExpr->getSourceRange());
+    return;
+  }
+
   // CHECK: empty format string?
   if (StrLen == 0 && numDataArgs > 0) {
     CheckFormatHandler::EmitFormatDiagnostic(
