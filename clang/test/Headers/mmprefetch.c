@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple=x86_64-unknown-unknown -fms-extensions -emit-llvm -verify %s
+// RUN: %clang_cc1 -triple=x86_64-unknown-unknown -fms-extensions -emit-llvm-only -verify %s
 
 #include <mmintrin.h>
 
