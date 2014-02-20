@@ -605,6 +605,13 @@ private:
     return Parser.Error(L, Msg, Ranges);
   }
 
+  bool ErrorAndEatStatement(SMLoc L, const Twine &Msg,
+          ArrayRef<SMRange> Ranges = None,
+          bool MatchingInlineAsm = false) {
+      Parser.eatToEndOfStatement();
+      return Error(L, Msg, Ranges, MatchingInlineAsm);
+  }
+
   X86Operand *ErrorOperand(SMLoc Loc, StringRef Msg) {
     Error(Loc, Msg);
     return 0;
@@ -651,6 +658,12 @@ private:
   /// word size (%si and %di, %esi and %edi, etc.). Order depends on
   /// the parsing mode (Intel vs. AT&T).
   bool doSrcDstMatch(X86Operand &Op1, X86Operand &Op2);
+
+  /// Parses AVX512 specific operand primitives: masked registers ({%k<NUM>}, {z})
+  /// and memory broadcasting ({1to<NUM>}) primitives, updating Operands vector if required.
+  /// \return \c true if no parsing errors occurred, \c false otherwise.
+  bool HandleAVX512Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                            const MCParsedAsmOperand &Op);
 
   bool is64BitMode() const {
     // FIXME: Can tablegen auto-generate this?
@@ -2027,6 +2040,72 @@ X86Operand *X86AsmParser::ParseATTOperand() {
   }
 }
 
+bool X86AsmParser::HandleAVX512Operand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                                       const MCParsedAsmOperand &Op) {
+  if(STI.getFeatureBits() & X86::FeatureAVX512) {
+    if (getLexer().is(AsmToken::LCurly)) {
+      // Eat "{" and mark the current place.
+      const SMLoc consumedToken = consumeToken();
+      // Distinguish {1to<NUM>} from {%k<NUM>}.
+      if(getLexer().is(AsmToken::Integer)) {
+        // Parse memory broadcasting ({1to<NUM>}).
+        if (getLexer().getTok().getIntVal() != 1)
+          return !ErrorAndEatStatement(getLexer().getLoc(),
+                                       "Expected 1to<NUM> at this point");
+        Parser.Lex();  // Eat "1" of 1to8
+        if (!getLexer().is(AsmToken::Identifier) ||
+            !getLexer().getTok().getIdentifier().startswith("to"))
+          return !ErrorAndEatStatement(getLexer().getLoc(),
+                                       "Expected 1to<NUM> at this point");
+        // Recognize only reasonable suffixes.
+        const char *BroadcastPrimitive =
+          StringSwitch<const char*>(getLexer().getTok().getIdentifier())
+            .Case("to8",  "{1to8}")
+            .Case("to16", "{1to16}")
+            .Default(0);
+        if (!BroadcastPrimitive)
+          return !ErrorAndEatStatement(getLexer().getLoc(),
+                                       "Invalid memory broadcast primitive.");
+        Parser.Lex();  // Eat "toN" of 1toN
+        if (!getLexer().is(AsmToken::RCurly))
+          return !ErrorAndEatStatement(getLexer().getLoc(),
+                                       "Expected } at this point");
+        Parser.Lex();  // Eat "}"
+        Operands.push_back(X86Operand::CreateToken(BroadcastPrimitive,
+                                                   consumedToken));
+        // No AVX512 specific primitives can pass
+        // after memory broadcasting, so return.
+        return true;
+      } else {
+        // Parse mask register {%k1}
+        Operands.push_back(X86Operand::CreateToken("{", consumedToken));
+        if (X86Operand *Op = ParseOperand()) {
+          Operands.push_back(Op);
+          if (!getLexer().is(AsmToken::RCurly))
+            return !ErrorAndEatStatement(getLexer().getLoc(),
+                                         "Expected } at this point");
+          Operands.push_back(X86Operand::CreateToken("}", consumeToken()));
+
+          // Parse "zeroing non-masked" semantic {z}
+          if (getLexer().is(AsmToken::LCurly)) {
+            Operands.push_back(X86Operand::CreateToken("{z}", consumeToken()));
+            if (!getLexer().is(AsmToken::Identifier) ||
+                getLexer().getTok().getIdentifier() != "z")
+              return !ErrorAndEatStatement(getLexer().getLoc(),
+                                           "Expected z at this point");
+            Parser.Lex();  // Eat the z
+            if (!getLexer().is(AsmToken::RCurly))
+              return !ErrorAndEatStatement(getLexer().getLoc(),
+                                           "Expected } at this point");
+            Parser.Lex();  // Eat the }
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
 /// ParseMemOperand: segment: disp(basereg, indexreg, scale).  The '%ds:' prefix
 /// has already been parsed if present.
 X86Operand *X86AsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
@@ -2285,73 +2364,30 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
     if (getLexer().is(AsmToken::Star))
       Operands.push_back(X86Operand::CreateToken("*", consumeToken()));
 
-    // Read the first operand.
-    if (X86Operand *Op = ParseOperand())
-      Operands.push_back(Op);
-    else {
-      Parser.eatToEndOfStatement();
-      return true;
-    }
-
-    while (getLexer().is(AsmToken::Comma)) {
-      Parser.Lex();  // Eat the comma.
-
-      // Parse and remember the operand.
-      if (X86Operand *Op = ParseOperand())
-        Operands.push_back(Op);
-      else {
-        Parser.eatToEndOfStatement();
-        return true;
-      }
-    }
-
-    if (STI.getFeatureBits() & X86::FeatureAVX512) {
-      // Parse mask register {%k1}
-      if (getLexer().is(AsmToken::LCurly)) {
-        Operands.push_back(X86Operand::CreateToken("{", consumeToken()));
-        if (X86Operand *Op = ParseOperand()) {
-          Operands.push_back(Op);
-          if (!getLexer().is(AsmToken::RCurly)) {
-            SMLoc Loc = getLexer().getLoc();
-            Parser.eatToEndOfStatement();
-            return Error(Loc, "Expected } at this point");
-          }
-          Operands.push_back(X86Operand::CreateToken("}", consumeToken()));
-        } else {
-          Parser.eatToEndOfStatement();
+    // Read the operands.
+    while(1) {
+      if (X86Operand *Op = ParseOperand()) {
+         Operands.push_back(Op);
+        if (!HandleAVX512Operand(Operands, *Op))
           return true;
-        }
+      } else {
+         Parser.eatToEndOfStatement();
+         return true;
       }
-      // TODO: add parsing of broadcasts {1to8}, {1to16}
-      // Parse "zeroing non-masked" semantic {z}
-      if (getLexer().is(AsmToken::LCurly)) {
-        Operands.push_back(X86Operand::CreateToken("{z}", consumeToken()));
-        if (!getLexer().is(AsmToken::Identifier) || getLexer().getTok().getIdentifier() != "z") {
-          SMLoc Loc = getLexer().getLoc();
-          Parser.eatToEndOfStatement();
-          return Error(Loc, "Expected z at this point");
-        }
-        Parser.Lex();  // Eat the z
-        if (!getLexer().is(AsmToken::RCurly)) {
-            SMLoc Loc = getLexer().getLoc();
-            Parser.eatToEndOfStatement();
-            return Error(Loc, "Expected } at this point");
-        }
-        Parser.Lex();  // Eat the }
-      }
-    }
+      // check for comma and eat it
+      if (getLexer().is(AsmToken::Comma))
+        Parser.Lex();
+      else
+        break;
+     }
 
-    if (getLexer().isNot(AsmToken::EndOfStatement)) {
-      SMLoc Loc = getLexer().getLoc();
-      Parser.eatToEndOfStatement();
-      return Error(Loc, "unexpected token in argument list");
-    }
-  }
+    if (getLexer().isNot(AsmToken::EndOfStatement))
+      return ErrorAndEatStatement(getLexer().getLoc(), "unexpected token in argument list");
+   }
 
-  if (getLexer().is(AsmToken::EndOfStatement))
-    Parser.Lex(); // Consume the EndOfStatement
-  else if (isPrefix && getLexer().is(AsmToken::Slash))
-    Parser.Lex(); // Consume the prefix separator Slash
+  // Consume the EndOfStatement or the prefix separator Slash
+  if (getLexer().is(AsmToken::EndOfStatement) || isPrefix && getLexer().is(AsmToken::Slash))
+    Parser.Lex();
 
   if (ExtraImmOp && isParsingIntelSyntax())
     Operands.push_back(X86Operand::CreateImm(ExtraImmOp, NameLoc, NameLoc));

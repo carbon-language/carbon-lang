@@ -956,11 +956,16 @@ let Predicates = [HasAVX512] in {
             (COPY_TO_REGCLASS (KMOVWkm addr:$src), VK8)>;
 
   def : Pat<(i1 (trunc (i32 GR32:$src))),
-            (COPY_TO_REGCLASS (KMOVWkr $src), VK1)>;
+            (COPY_TO_REGCLASS (KMOVWkr (AND32ri $src, (i32 1))), VK1)>;
 
   def : Pat<(i1 (trunc (i8 GR8:$src))),
-            (COPY_TO_REGCLASS
-             (KMOVWkr (SUBREG_TO_REG (i32 0), GR8:$src, sub_8bit)), VK1)>;
+       (COPY_TO_REGCLASS
+        (KMOVWkr (AND32ri (SUBREG_TO_REG (i32 0), GR8:$src, sub_8bit), (i32 1))),
+       VK1)>;
+  def : Pat<(i1 (trunc (i16 GR16:$src))),
+       (COPY_TO_REGCLASS
+        (KMOVWkr (AND32ri (SUBREG_TO_REG (i32 0), $src, sub_16bit), (i32 1))),
+       VK1)>;
             
   def : Pat<(i32 (zext VK1:$src)), (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16))>;
   def : Pat<(i8 (zext VK1:$src)),
