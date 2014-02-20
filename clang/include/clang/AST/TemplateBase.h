@@ -34,8 +34,7 @@ struct PrintingPolicy;
 class TypeSourceInfo;
 class ValueDecl;
 
-/// \brief Represents a template argument within a class template
-/// specialization.
+/// \brief Represents a template argument.
 class TemplateArgument {
 public:
   /// \brief The kind of template argument we're storing.
@@ -52,16 +51,19 @@ public:
     /// was provided for a non-type template parameter.
     NullPtr,
     /// The template argument is an integral value stored in an llvm::APSInt
-    /// that was provided for an integral non-type template parameter. 
+    /// that was provided for an integral non-type template parameter.
     Integral,
-    /// The template argument is a template name that was provided for a 
+    /// The template argument is a template name that was provided for a
     /// template template parameter.
     Template,
-    /// The template argument is a pack expansion of a template name that was 
+    /// The template argument is a pack expansion of a template name that was
     /// provided for a template template parameter.
     TemplateExpansion,
-    /// The template argument is a value- or type-dependent expression or a
-    /// non-dependent __uuidof expression stored in an Expr*.
+    /// The template argument is an expression, and we've not resolved it to one
+    /// of the other forms yet, either because it's dependent or because we're
+    /// representing a non-canonical template argument (for instance, in a
+    /// TemplateSpecializationType). Also used to represent a non-dependent
+    /// __uuidof expression (a Microsoft extension).
     Expression,
     /// The template argument is actually a parameter pack. Arguments are stored
     /// in the Args struct.

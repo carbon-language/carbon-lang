@@ -311,6 +311,18 @@ AST_MATCHER(Decl, isPrivate) {
   return Node.getAccess() == AS_private;
 }
 
+// FIXME: unify ClassTemplateSpecializationDecl and TemplateSpecializationType's
+// APIs for accessing the template argument list.
+inline llvm::ArrayRef<TemplateArgument>
+getTemplateSpecializationArgs(const ClassTemplateSpecializationDecl &D) {
+  return D.getTemplateArgs().asArray();
+}
+
+inline llvm::ArrayRef<TemplateArgument>
+getTemplateSpecializationArgs(const TemplateSpecializationType &T) {
+  return llvm::ArrayRef<TemplateArgument>(T.getArgs(), T.getNumArgs());
+}
+
 /// \brief Matches classTemplateSpecializations that have at least one
 /// TemplateArgument matching the given InnerMatcher.
 ///
@@ -323,9 +335,12 @@ AST_MATCHER(Decl, isPrivate) {
 /// classTemplateSpecializationDecl(hasAnyTemplateArgument(
 ///     refersToType(asString("int"))))
 ///   matches the specialization \c A<int>
-AST_MATCHER_P(ClassTemplateSpecializationDecl, hasAnyTemplateArgument,
-              internal::Matcher<TemplateArgument>, InnerMatcher) {
-  llvm::ArrayRef<TemplateArgument> List = Node.getTemplateArgs().asArray();
+AST_POLYMORPHIC_MATCHER_P(
+    hasAnyTemplateArgument,
+    AST_POLYMORPHIC_SUPPORTED_TYPES_2(ClassTemplateSpecializationDecl,
+                                      TemplateSpecializationType),
+    internal::Matcher<TemplateArgument>, InnerMatcher) {
+  llvm::ArrayRef<TemplateArgument> List = getTemplateSpecializationArgs(Node);
   return matchesFirstInRange(InnerMatcher, List.begin(), List.end(), Finder,
                              Builder);
 }
@@ -419,12 +434,15 @@ AST_MATCHER_P(Expr, ignoringParenImpCasts,
 /// classTemplateSpecializationDecl(hasTemplateArgument(
 ///     1, refersToType(asString("int"))))
 ///   matches the specialization \c A<bool, int>
-AST_MATCHER_P2(ClassTemplateSpecializationDecl, hasTemplateArgument,
-               unsigned, N, internal::Matcher<TemplateArgument>, InnerMatcher) {
-  const TemplateArgumentList &List = Node.getTemplateArgs();
+AST_POLYMORPHIC_MATCHER_P2(
+    hasTemplateArgument,
+    AST_POLYMORPHIC_SUPPORTED_TYPES_2(ClassTemplateSpecializationDecl,
+                                      TemplateSpecializationType),
+    unsigned, N, internal::Matcher<TemplateArgument>, InnerMatcher) {
+  llvm::ArrayRef<TemplateArgument> List = getTemplateSpecializationArgs(Node);
   if (List.size() <= N)
     return false;
-  return InnerMatcher.matches(List.get(N), Finder, Builder);
+  return InnerMatcher.matches(List[N], Finder, Builder);
 }
 
 /// \brief Matches a TemplateArgument that refers to a certain type.
@@ -445,7 +463,8 @@ AST_MATCHER_P(TemplateArgument, refersToType,
   return InnerMatcher.matches(Node.getAsType(), Finder, Builder);
 }
 
-/// \brief Matches a TemplateArgument that refers to a certain declaration.
+/// \brief Matches a canonical TemplateArgument that refers to a certain
+/// declaration.
 ///
 /// Given
 /// \code
@@ -461,6 +480,24 @@ AST_MATCHER_P(TemplateArgument, refersToDeclaration,
               internal::Matcher<Decl>, InnerMatcher) {
   if (Node.getKind() == TemplateArgument::Declaration)
     return InnerMatcher.matches(*Node.getAsDecl(), Finder, Builder);
+  return false;
+}
+
+/// \brief Matches a sugar TemplateArgument that refers to a certain expression.
+///
+/// Given
+/// \code
+///   template<typename T> struct A {};
+///   struct B { B* next; };
+///   A<&B::next> a;
+/// \endcode
+/// templateSpecializationType(hasAnyTemplateArgument(
+///   isExpr(hasDescendant(declRefExpr(to(fieldDecl(hasName("next"))))))))
+///   matches the specialization \c A<&B::next> with \c fieldDecl(...) matching
+///     \c B::next
+AST_MATCHER_P(TemplateArgument, isExpr, internal::Matcher<Expr>, InnerMatcher) {
+  if (Node.getKind() == TemplateArgument::Expression)
+    return InnerMatcher.matches(*Node.getAsExpr(), Finder, Builder);
   return false;
 }
 

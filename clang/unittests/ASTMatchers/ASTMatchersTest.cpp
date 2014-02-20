@@ -1530,6 +1530,19 @@ TEST(Matcher, MatchesDeclarationReferenceTemplateArgument) {
       "A<int> a;",
       classTemplateSpecializationDecl(hasAnyTemplateArgument(
           refersToDeclaration(decl())))));
+
+  EXPECT_TRUE(matches(
+      "struct B { int next; };"
+      "template<int(B::*next_ptr)> struct A {};"
+      "A<&B::next> a;",
+      templateSpecializationType(hasAnyTemplateArgument(isExpr(
+          hasDescendant(declRefExpr(to(fieldDecl(hasName("next"))))))))));
+
+  EXPECT_TRUE(notMatches(
+      "template <typename T> struct A {};"
+      "A<int> a;",
+      templateSpecializationType(hasAnyTemplateArgument(
+          refersToDeclaration(decl())))));
 }
 
 TEST(Matcher, MatchesSpecificArgument) {
@@ -1542,6 +1555,17 @@ TEST(Matcher, MatchesSpecificArgument) {
       "template<typename T, typename U> class A {};"
       "A<int, bool> a;",
       classTemplateSpecializationDecl(hasTemplateArgument(
+          1, refersToType(asString("int"))))));
+
+  EXPECT_TRUE(matches(
+      "template<typename T, typename U> class A {};"
+      "A<bool, int> a;",
+      templateSpecializationType(hasTemplateArgument(
+          1, refersToType(asString("int"))))));
+  EXPECT_TRUE(notMatches(
+      "template<typename T, typename U> class A {};"
+      "A<int, bool> a;",
+      templateSpecializationType(hasTemplateArgument(
           1, refersToType(asString("int"))))));
 }
 
