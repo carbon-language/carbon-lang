@@ -133,3 +133,16 @@ define <16 x i16> @trunc_v16i32_to_v16i16(<16 x i32> %x) {
   %1 = trunc <16 x i32> %x to <16 x i16>
   ret <16 x i16> %1
 }
+
+; CHECK-LABEL: trunc_i32_to_i1
+; CHECK: andl
+; CHECK: kmov
+; CHECK: kortest
+; CKECK: orl
+; CHECK: ret
+define i16 @trunc_i32_to_i1(i32 %a) {
+  %a_i = trunc i32 %a to i1
+  %maskv = insertelement <16 x i1> <i1 true, i1 false, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true, i1 true>, i1 %a_i, i32 0
+  %res = bitcast <16 x i1> %maskv to i16
+  ret i16 %res
+}
