@@ -76,9 +76,13 @@ macro(msan_compile obj_list source arch)
   get_filename_component(basename ${source} NAME)
   set(output_obj "${basename}.${arch}.o")
   get_target_flags_for_arch(${arch} TARGET_CFLAGS)
+  set(COMPILE_DEPS ${MSAN_UNITTEST_HEADERS})
+  if(NOT COMPILER_RT_STANDALONE_BUILD)
+    list(APPEND COMPILE_DEPS gtest msan)
+  endif()
   clang_compile(${output_obj} ${source}
                 CFLAGS ${ARGN} ${TARGET_CFLAGS}
-                DEPS gtest msan ${MSAN_UNITTEST_HEADERS})
+                DEPS ${COMPILE_DEPS})
   list(APPEND ${obj_list} ${output_obj})
 endmacro()
 
@@ -86,6 +90,9 @@ macro(msan_link_shared so_list so_name arch)
   parse_arguments(SOURCE "OBJECTS;LINKFLAGS;DEPS" "" ${ARGN})
   set(output_so "${CMAKE_CURRENT_BINARY_DIR}/${so_name}.${arch}.so")
   get_target_flags_for_arch(${arch} TARGET_LINKFLAGS)
+  if(NOT COMPILER_RT_STANDALONE_BUILD)
+    list(APPEND SOURCE_DEPS msan)
+  endif()
   clang_link_shared(${output_so}
                 OBJECTS ${SOURCE_OBJECTS}
                 LINKFLAGS ${TARGET_LINKFLAGS} ${SOURCE_LINKFLAGS}
@@ -97,10 +104,13 @@ endmacro()
 # of objects in ${ARGN}.
 macro(add_msan_test test_suite test_name arch)
   get_target_flags_for_arch(${arch} TARGET_LINK_FLAGS)
+  set(TEST_DEPS ${ARGN} ${MSAN_LOADABLE_SO})
+  if(NOT COMPILER_RT_STANDALONE_BUILD)
+    list(APPEND TEST_DEPS msan)
+  endif()
   add_compiler_rt_test(${test_suite} ${test_name}
                        OBJECTS ${ARGN}
-                       DEPS msan ${ARGN}
-                            ${MSAN_LOADABLE_SO}
+                       DEPS ${TEST_DEPS}
                        LINK_FLAGS ${MSAN_UNITTEST_LINK_FLAGS}
                                   ${TARGET_LINK_FLAGS}
                                   "-Wl,-rpath=${CMAKE_CURRENT_BINARY_DIR}")
@@ -128,7 +138,7 @@ macro(add_msan_tests_for_arch arch)
   msan_link_shared(MSAN_INST_LIBCXX "libcxx" ${arch}
                    OBJECTS ${MSAN_INST_LIBCXX_OBJECTS}
                    LINKFLAGS ${MSAN_LIBCXX_LINK_FLAGS}
-                   DEPS ${MSAN_INST_LIBCXX_OBJECTS} msan)
+                   DEPS ${MSAN_INST_LIBCXX_OBJECTS})
 
   # Instrumented tests.
   set(MSAN_INST_TEST_OBJECTS)
@@ -151,13 +161,13 @@ macro(add_msan_tests_for_arch arch)
   set(MSAN_LOADABLE_SO)
   msan_link_shared(MSAN_LOADABLE_SO "libmsan_loadable" ${arch}
                    OBJECTS ${MSAN_INST_LOADABLE_OBJECTS}
-                   DEPS ${MSAN_INST_LOADABLE_OBJECTS} msan)
+                   DEPS ${MSAN_INST_LOADABLE_OBJECTS})
 
   # Uninstrumented shared library tests.
   set(MSANDR_TEST_SO)
   msan_link_shared(MSANDR_TEST_SO "libmsandr_test" ${arch}
                    OBJECTS ${MSANDR_TEST_OBJECTS}
-                   DEPS ${MSANDR_TEST_OBJECTS} msan)
+                   DEPS ${MSANDR_TEST_OBJECTS})
 
   # Link everything together.
   add_msan_test(MsanUnitTests "Msan-${arch}-Test" ${arch}

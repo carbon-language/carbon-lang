@@ -74,14 +74,17 @@ macro(add_sanitizer_tests_for_arch arch)
   get_target_flags_for_arch(${arch} TARGET_FLAGS)
   set(SANITIZER_TEST_SOURCES ${SANITIZER_UNITTESTS}
                              ${COMPILER_RT_GTEST_SOURCE})
+  set(SANITIZER_TEST_COMPILE_DEPS ${SANITIZER_TEST_HEADERS})
+  if(NOT COMPILER_RT_STANDALONE_BUILD)
+    list(APPEND SANITIZER_TEST_COMPILE_DEPS gtest)
+  endif()
   set(SANITIZER_TEST_OBJECTS)
   foreach(source ${SANITIZER_TEST_SOURCES})
     get_filename_component(basename ${source} NAME)
     set(output_obj "${basename}.${arch}.o")
     clang_compile(${output_obj} ${source}
                   CFLAGS ${SANITIZER_TEST_CFLAGS_COMMON} ${TARGET_FLAGS}
-                  DEPS gtest ${SANITIZER_RUNTIME_LIBRARIES}
-                       ${SANITIZER_TEST_HEADERS})
+                  DEPS ${SANITIZER_TEST_COMPILE_DEPS})
     list(APPEND SANITIZER_TEST_OBJECTS ${output_obj})
   endforeach()
   get_sanitizer_common_lib_for_arch(${arch} SANITIZER_COMMON_LIB
@@ -102,7 +105,7 @@ macro(add_sanitizer_tests_for_arch arch)
     clang_compile(sanitizer_nolibc_test_main.${arch}.o
                   sanitizer_nolibc_test_main.cc
                   CFLAGS ${SANITIZER_TEST_CFLAGS_COMMON} ${TARGET_FLAGS}
-                  DEPS ${SANITIZER_RUNTIME_LIBRARIES} ${SANITIZER_TEST_HEADERS})
+                  DEPS ${SANITIZER_TEST_COMPILE_DEPS})
     add_compiler_rt_test(SanitizerUnitTests "Sanitizer-${arch}-Test-Nolibc"
                          OBJECTS sanitizer_nolibc_test_main.${arch}.o
                                  -Wl,-whole-archive
