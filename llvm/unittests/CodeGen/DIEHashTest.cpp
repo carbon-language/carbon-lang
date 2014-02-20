@@ -555,7 +555,7 @@ TEST(DIEHashTest, MemberFuncFlag) {
 //   const static int PI = -3;
 // };
 // A a;
-TEST(DIEHashTest, MemberBlock) {
+TEST(DIEHashTest, MemberSdata) {
   DIE A(dwarf::DW_TAG_structure_type);
   DIEInteger One(1);
   DIEString AStr(&One, "A");
