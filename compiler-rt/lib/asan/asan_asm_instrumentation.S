@@ -40,7 +40,7 @@ __sanitizer_sanitize_store1:
   pushl %eax
   cld
   emms
-  call __asan_report_store1
+  call __asan_report_store1@PLT
 .sanitize_store1_done:
   popfl
   popl %edx
@@ -73,7 +73,7 @@ __sanitizer_sanitize_load1:
   pushl %eax
   cld
   emms
-  call __asan_report_load1
+  call __asan_report_load1@PLT
 .sanitize_load1_done:
   popfl
   popl %edx
@@ -107,7 +107,7 @@ __sanitizer_sanitize_store2:
   pushl %eax
   cld
   emms
-  call __asan_report_store2
+  call __asan_report_store2@PLT
 .sanitize_store2_done:
   popfl
   popl %edx
@@ -141,7 +141,7 @@ __sanitizer_sanitize_load2:
   pushl %eax
   cld
   emms
-  call __asan_report_load2
+  call __asan_report_load2@PLT
 .sanitize_load2_done:
   popfl
   popl %edx
@@ -175,7 +175,7 @@ __sanitizer_sanitize_store4:
   pushl %eax
   cld
   emms
-  call __asan_report_store4
+  call __asan_report_store4@PLT
 .sanitize_store4_done:
   popfl
   popl %edx
@@ -209,7 +209,7 @@ __sanitizer_sanitize_load4:
   pushl %eax
   cld
   emms
-  call __asan_report_load4
+  call __asan_report_load4@PLT
 .sanitize_load4_done:
   popfl
   popl %edx
@@ -235,7 +235,7 @@ __sanitizer_sanitize_store8:
   pushl %eax
   cld
   emms
-  call __asan_report_store8
+  call __asan_report_store8@PLT
 .sanitize_store8_done:
   popfl
   popl %ecx
@@ -260,7 +260,7 @@ __sanitizer_sanitize_load8:
   pushl %eax
   cld
   emms
-  call __asan_report_load8
+  call __asan_report_load8@PLT
 .sanitize_load8_done:
   popfl
   popl %ecx
@@ -285,7 +285,7 @@ __sanitizer_sanitize_store16:
   pushl %eax
   cld
   emms
-  call __asan_report_store16
+  call __asan_report_store16@PLT
 .sanitize_store16_done:
   popfl
   popl %ecx
@@ -310,7 +310,7 @@ __sanitizer_sanitize_load16:
   pushl %eax
   cld
   emms
-  call __asan_report_load16
+  call __asan_report_load16@PLT
 .sanitize_load16_done:
   popfl
   popl %ecx
@@ -342,7 +342,7 @@ __sanitizer_sanitize_store1:
   andq $-16, %rsp
   cld
   emms
-  call __asan_report_store1
+  call __asan_report_store1@PLT
 .sanitize_store1_done:
   popfq
   popq %rcx
@@ -372,7 +372,7 @@ __sanitizer_sanitize_load1:
   andq $-16, %rsp
   cld
   emms
-  call __asan_report_load1
+  call __asan_report_load1@PLT
 .sanitize_load1_done:
   popfq
   popq %rcx
@@ -403,7 +403,7 @@ __sanitizer_sanitize_store2:
   andq $-16, %rsp
   cld
   emms
-  call __asan_report_store2
+  call __asan_report_store2@PLT
 .sanitize_store2_done:
   popfq
   popq %rcx
@@ -434,7 +434,7 @@ __sanitizer_sanitize_load2:
   andq $-16, %rsp
   cld
   emms
-  call __asan_report_load2
+  call __asan_report_load2@PLT
 .sanitize_load2_done:
   popfq
   popq %rcx
@@ -465,7 +465,7 @@ __sanitizer_sanitize_store4:
   andq $-16, %rsp
   cld
   emms
-  call __asan_report_store4
+  call __asan_report_store4@PLT
 .sanitize_store4_done:
   popfq
   popq %rcx
@@ -496,7 +496,7 @@ __sanitizer_sanitize_load4:
   andq $-16, %rsp
   cld
   emms
-  call __asan_report_load4
+  call __asan_report_load4@PLT
 .sanitize_load4_done:
   popfq
   popq %rcx
@@ -519,7 +519,7 @@ __sanitizer_sanitize_store8:
   andq $-16, %rsp
   cld
   emms
-  call __asan_report_store8
+  call __asan_report_store8@PLT
 .sanitize_store8_done:
   popfq
   popq %rax
@@ -541,7 +541,7 @@ __sanitizer_sanitize_load8:
   andq $-16, %rsp
   cld
   emms
-  call __asan_report_load8
+  call __asan_report_load8@PLT
 .sanitize_load8_done:
   popfq
   popq %rax
@@ -563,7 +563,7 @@ __sanitizer_sanitize_store16:
   andq $-16, %rsp
   cld
   emms
-  call __asan_report_store16
+  call __asan_report_store16@PLT
 .sanitize_store16_done:
   popfq
   popq %rax
@@ -585,7 +585,7 @@ __sanitizer_sanitize_load16:
   andq $-16, %rsp
   cld
   emms
-  call __asan_report_load16
+  call __asan_report_load16@PLT
 .sanitize_load16_done:
   popfq
   popq %rax
