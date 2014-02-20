@@ -19,12 +19,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#if __has_feature(memory_sanitizer)
   /* Returns a string describing a stack origin.
      Return NULL if the origin is invalid, or is not a stack origin. */
   const char *__msan_get_origin_descr_if_stack(uint32_t id);
-
 
   /* Set raw origin for the memory range. */
   void __msan_set_origin(const volatile void *a, size_t size, uint32_t origin);
@@ -134,27 +131,6 @@ extern "C" {
        deallocation of "ptr". */
   void __msan_malloc_hook(const volatile void *ptr, size_t size);
   void __msan_free_hook(const volatile void *ptr);
-
-#else  // __has_feature(memory_sanitizer)
-
-#define __msan_get_origin_descr_if_stack(id) ((const char*)0)
-#define __msan_set_origin(a, size, origin)
-#define __msan_get_origin(a) ((uint32_t)-1)
-#define __msan_get_track_origins() (0)
-#define __msan_get_umr_origin() ((uint32_t)-1)
-#define __msan_unpoison(a, size)
-#define __msan_poison(a, size)
-#define __msan_partial_poison(data, shadow, size)
-#define __msan_test_shadow(x, size) ((intptr_t)-1)
-#define __msan_set_exit_code(exit_code)
-#define __msan_set_expect_umr(expect_umr)
-#define __msan_print_shadow(x, size)
-#define __msan_print_param_shadow()
-#define __msan_has_dynamic_component() (0)
-#define __msan_allocated_memory(data, size)
-
-#endif   // __has_feature(memory_sanitizer)
-
 #ifdef __cplusplus
 }  // extern "C"
 #endif
