@@ -9,6 +9,7 @@ config.name = 'SanitizerCommon-Unit'
 
 # Setup test source and exec root. For unit tests, we define
 # it as build directory with sanitizer_common tests.
+# FIXME: De-hardcode this path.
 config.test_exec_root = os.path.join("@COMPILER_RT_BINARY_DIR@", "lib",
                                      "sanitizer_common", "tests")
 config.test_source_root = config.test_exec_root
