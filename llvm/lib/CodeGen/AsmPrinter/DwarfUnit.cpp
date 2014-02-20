@@ -794,7 +794,6 @@ void DwarfUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
 /// addConstantFPValue - Add constant value entry in variable DIE.
 void DwarfUnit::addConstantFPValue(DIE *Die, const MachineOperand &MO) {
   assert(MO.isFPImm() && "Invalid machine operand!");
-  // FIXME-echristo: Use a block here.
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
   APFloat FPImm = MO.getFPImm()->getValueAPF();
 
