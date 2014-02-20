@@ -91,3 +91,15 @@ test8 1,2 3
 
 // CHECK: .ascii "1,2,3"
 test8 1 2, 3
+
+.macro test10
+.ascii "$20"
+.endm
+
+test10
+// CHECK: .ascii "$20"
+
+test10 42
+// CHECK-ERRORS: 102:10: error: Wrong number of arguments
+// CHECK-ERRORS-NEXT: test10 42
+// CHECK-ERRORS-NEXT: ^
