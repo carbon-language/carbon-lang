@@ -19,7 +19,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cctype>
-#include <cstdint>
 
 using namespace llvm;
 using namespace object;
