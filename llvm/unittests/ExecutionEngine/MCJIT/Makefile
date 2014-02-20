@@ -9,7 +9,7 @@
 
 LEVEL = ../../..
 TESTNAME = MCJIT
-LINK_COMPONENTS := core jit mcjit native support
+LINK_COMPONENTS := core ipo jit mcjit native support
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest

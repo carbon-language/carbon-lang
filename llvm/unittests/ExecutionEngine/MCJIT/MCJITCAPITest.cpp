@@ -18,6 +18,7 @@
 #include "llvm-c/ExecutionEngine.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/Transforms/Scalar.h"
+#include "llvm-c/Transforms/PassManagerBuilder.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/Support/Host.h"
 #include "gtest/gtest.h"
@@ -26,6 +27,7 @@
 using namespace llvm;
 
 static bool didCallAllocateCodeSection;
+static bool didAllocateCompactUnwindSection;
 
 static uint8_t *roundTripAllocateCodeSection(void *object, uintptr_t size,
                                              unsigned alignment,
@@ -41,6 +43,8 @@ static uint8_t *roundTripAllocateDataSection(void *object, uintptr_t size,
                                              unsigned sectionID,
                                              const char *sectionName,
                                              LLVMBool isReadOnly) {
+  if (!strcmp(sectionName, "__compact_unwind"))
+    didAllocateCompactUnwindSection = true;
   return static_cast<SectionMemoryManager*>(object)->allocateDataSection(
     size, alignment, sectionID, sectionName, isReadOnly);
 }
@@ -135,6 +139,7 @@ protected:
   
   virtual void SetUp() {
     didCallAllocateCodeSection = false;
+    didAllocateCompactUnwindSection = false;
     Module = 0;
     Function = 0;
     Engine = 0;
@@ -160,6 +165,36 @@ protected:
     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(Function, "entry");
     LLVMBuilderRef builder = LLVMCreateBuilder();
     LLVMPositionBuilderAtEnd(builder, entry);
+    LLVMBuildRet(builder, LLVMConstInt(LLVMInt32Type(), 42, 0));
+    
+    LLVMVerifyModule(Module, LLVMAbortProcessAction, &Error);
+    LLVMDisposeMessage(Error);
+    
+    LLVMDisposeBuilder(builder);
+  }
+  
+  void buildFunctionThatUsesStackmap() {
+    Module = LLVMModuleCreateWithName("simple_module");
+    
+    LLVMSetTarget(Module, HostTriple.c_str());
+    
+    LLVMTypeRef stackmapParamTypes[] = { LLVMInt64Type(), LLVMInt32Type() };
+    LLVMValueRef stackmap = LLVMAddFunction(
+      Module, "llvm.experimental.stackmap",
+      LLVMFunctionType(LLVMVoidType(), stackmapParamTypes, 2, 1));
+    LLVMSetLinkage(stackmap, LLVMExternalLinkage);
+    
+    Function = LLVMAddFunction(
+      Module, "simple_function", LLVMFunctionType(LLVMInt32Type(), 0, 0, 0));
+    
+    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(Function, "entry");
+    LLVMBuilderRef builder = LLVMCreateBuilder();
+    LLVMPositionBuilderAtEnd(builder, entry);
+    LLVMValueRef stackmapArgs[] = {
+      LLVMConstInt(LLVMInt64Type(), 0, 0), LLVMConstInt(LLVMInt32Type(), 5, 0),
+      LLVMConstInt(LLVMInt32Type(), 42, 0)
+    };
+    LLVMBuildCall(builder, stackmap, stackmapArgs, 3, "");
     LLVMBuildRet(builder, LLVMConstInt(LLVMInt32Type(), 42, 0));
     
     LLVMVerifyModule(Module, LLVMAbortProcessAction, &Error);
@@ -248,6 +283,38 @@ protected:
     LLVMDisposePassManager(pass);
   }
   
+  void buildAndRunOptPasses() {
+    LLVMPassManagerBuilderRef passBuilder;
+    
+    passBuilder = LLVMPassManagerBuilderCreate();
+    LLVMPassManagerBuilderSetOptLevel(passBuilder, 2);
+    LLVMPassManagerBuilderSetSizeLevel(passBuilder, 0);
+    
+    LLVMPassManagerRef functionPasses =
+      LLVMCreateFunctionPassManagerForModule(Module);
+    LLVMPassManagerRef modulePasses =
+      LLVMCreatePassManager();
+    
+    LLVMAddTargetData(LLVMGetExecutionEngineTargetData(Engine), modulePasses);
+    
+    LLVMPassManagerBuilderPopulateFunctionPassManager(passBuilder,
+                                                      functionPasses);
+    LLVMPassManagerBuilderPopulateModulePassManager(passBuilder, modulePasses);
+    
+    LLVMPassManagerBuilderDispose(passBuilder);
+    
+    LLVMInitializeFunctionPassManager(functionPasses);
+    for (LLVMValueRef value = LLVMGetFirstFunction(Module);
+         value; value = LLVMGetNextFunction(value))
+      LLVMRunFunctionPassManager(functionPasses, value);
+    LLVMFinalizeFunctionPassManager(functionPasses);
+    
+    LLVMRunPassManager(modulePasses, Module);
+    
+    LLVMDisposePassManager(functionPasses);
+    LLVMDisposePassManager(modulePasses);
+  }
+  
   LLVMModuleRef Module;
   LLVMValueRef Function;
   LLVMValueRef Function2;
@@ -291,6 +358,29 @@ TEST_F(MCJITCAPITest, custom_memory_manager) {
   
   EXPECT_EQ(42, functionPointer.usable());
   EXPECT_TRUE(didCallAllocateCodeSection);
+}
+
+TEST_F(MCJITCAPITest, stackmap_creates_compact_unwind_on_darwin) {
+  SKIP_UNSUPPORTED_PLATFORM;
+  
+  buildFunctionThatUsesStackmap();
+  buildMCJITOptions();
+  useRoundTripSectionMemoryManager();
+  buildMCJITEngine();
+  buildAndRunOptPasses();
+  
+  union {
+    void *raw;
+    int (*usable)();
+  } functionPointer;
+  functionPointer.raw = LLVMGetPointerToGlobal(Engine, Function);
+  
+  EXPECT_EQ(42, functionPointer.usable());
+  EXPECT_TRUE(didCallAllocateCodeSection);
+  
+  EXPECT_TRUE(
+    Triple(HostTriple).getOS() != Triple::Darwin ||
+    didAllocateCompactUnwindSection);
 }
 
 TEST_F(MCJITCAPITest, reserve_allocation_space) {

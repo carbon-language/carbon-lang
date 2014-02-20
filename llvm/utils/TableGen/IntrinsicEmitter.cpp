@@ -666,6 +666,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
       OS << "      }\n";
     } else {
       OS << "      return AttributeSet();\n";
+      OS << "      }\n";
     }
   }
 
