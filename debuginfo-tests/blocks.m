@@ -8,11 +8,11 @@
 // DEBUGGER: break 31
 // DEBUGGER: r
 // DEBUGGER: p m2
+// CHECK: ${{[0-9]}} = 1
 // DEBUGGER: p dbTransaction
+// CHECK: ${{[0-9]}} = 0
 // DEBUGGER: p master
-// CHECK: $1 = 1
-// CHECK: $2 = 0
-// CHECK: $3 = 0
+// CHECK: ${{[0-9]}} = 0
 
 #include <Cocoa/Cocoa.h>
 

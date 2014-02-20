@@ -7,7 +7,7 @@
 // DEBUGGER: break 24
 // DEBUGGER: r
 // DEBUGGER: p result
-// CHECK: $1 = 42
+// CHECK: ${{[0-9]}} = 42
 
 void doBlock(void (^block)(void))
 {
