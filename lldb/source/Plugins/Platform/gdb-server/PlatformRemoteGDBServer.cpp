@@ -265,9 +265,6 @@ PlatformRemoteGDBServer::ConnectRemote (Args& args)
                     // If a working directory was set prior to connecting, send it down now
                     if (m_working_dir)
                         m_gdb_client.SetWorkingDir(m_working_dir.GetCString());
-#if 0
-                    m_gdb_client.TestPacketSpeed(10000);
-#endif
                 }
                 else
                 {
