@@ -145,6 +145,7 @@ void StatOutput(u64 *stat) {
   name[StatMtxAnnotations]               = "  Annotations                     ";
   name[StatMtxMBlock]                    = "  MBlock                          ";
   name[StatMtxJavaMBlock]                = "  JavaMBlock                      ";
+  name[StatMtxDeadlockDetector]          = "  DeadlockDetector                ";
   name[StatMtxFD]                        = "  FD                              ";
 
   Printf("Statistics:\n");

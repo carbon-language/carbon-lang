@@ -22,11 +22,10 @@
 
 namespace __tsan {
 
-static __sanitizer::DeadlockDetector<DDBV> g_dd;
 
-static void EnsureDeadlockDetectorID(ThreadState *thr, SyncVar *s) {
-  if (!g_dd.nodeBelongsToCurrentEpoch(s->deadlock_detector_id))
-    s->deadlock_detector_id = g_dd.newNode(reinterpret_cast<uptr>(s));
+static void EnsureDeadlockDetectorID(Context *ctx, SyncVar *s) {
+  if (!ctx->dd.nodeBelongsToCurrentEpoch(s->deadlock_detector_id))
+    s->deadlock_detector_id = ctx->dd.newNode(reinterpret_cast<uptr>(s));
 }
 
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
@@ -61,8 +60,9 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   if (s == 0)
     return;
   if (common_flags()->detect_deadlocks) {
-    if (g_dd.nodeBelongsToCurrentEpoch(s->deadlock_detector_id))
-      g_dd.removeNode(s->deadlock_detector_id);
+    Lock lk(&ctx->dd_mtx);
+    if (ctx->dd.nodeBelongsToCurrentEpoch(s->deadlock_detector_id))
+      ctx->dd.removeNode(s->deadlock_detector_id);
     s->deadlock_detector_id = 0;
   }
   if (IsAppMem(addr)) {
@@ -92,11 +92,12 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
 }
 
 void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
+  Context *ctx = CTX();
   DPrintf("#%d: MutexLock %zx rec=%d\n", thr->tid, addr, rec);
   CHECK_GT(rec, 0);
   if (IsAppMem(addr))
     MemoryReadAtomic(thr, pc, addr, kSizeLog1);
-  SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, addr, true);
+  SyncVar *s = ctx->synctab.GetOrCreateAndLock(thr, pc, addr, true);
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state, EventTypeLock, s->GetId());
   if (s->owner_tid == SyncVar::kInvalidTid) {
@@ -119,24 +120,25 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
   s->recursion += rec;
   thr->mset.Add(s->GetId(), true, thr->fast_state.epoch());
   if (common_flags()->detect_deadlocks) {
-    EnsureDeadlockDetectorID(thr, s);
-    if (g_dd.isHeld(&thr->deadlock_detector_tls, s->deadlock_detector_id)) {
+    Lock lk(&ctx->dd_mtx);
+    EnsureDeadlockDetectorID(ctx, s);
+    if (ctx->dd.isHeld(&thr->deadlock_detector_tls, s->deadlock_detector_id)) {
       // FIXME: add tests, handle the real recursive locks.
       Printf("ThreadSanitizer: reursive-lock\n");
     }
     // Printf("MutexLock: %zx\n", s->deadlock_detector_id);
     bool has_deadlock =
-        g_dd.onLock(&thr->deadlock_detector_tls, s->deadlock_detector_id);
+        ctx->dd.onLock(&thr->deadlock_detector_tls, s->deadlock_detector_id);
     if (has_deadlock) {
       uptr path[10];
-      uptr len = g_dd.findPathToHeldLock(&thr->deadlock_detector_tls,
+      uptr len = ctx->dd.findPathToHeldLock(&thr->deadlock_detector_tls,
                                          s->deadlock_detector_id, path,
                                          ARRAY_SIZE(path));
       CHECK_GT(len, 0U);  // Hm.. cycle of 10 locks? I'd like to see that.
       ThreadRegistryLock l(CTX()->thread_registry);
       ScopedReport rep(ReportTypeDeadlock);
       for (uptr i = 0; i < len; i++)
-        rep.AddMutex(reinterpret_cast<SyncVar*>(g_dd.getData(path[i])));
+        rep.AddMutex(reinterpret_cast<SyncVar*>(ctx->dd.getData(path[i])));
       StackTrace trace;
       trace.ObtainCurrent(thr, pc);
       rep.AddStack(&trace);
@@ -147,10 +149,11 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
 }
 
 int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
+  Context *ctx = CTX();
   DPrintf("#%d: MutexUnlock %zx all=%d\n", thr->tid, addr, all);
   if (IsAppMem(addr))
     MemoryReadAtomic(thr, pc, addr, kSizeLog1);
-  SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, addr, true);
+  SyncVar *s = ctx->synctab.GetOrCreateAndLock(thr, pc, addr, true);
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state, EventTypeUnlock, s->GetId());
   int rec = 0;
@@ -180,9 +183,10 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
   }
   thr->mset.Del(s->GetId(), true);
   if (common_flags()->detect_deadlocks) {
-    EnsureDeadlockDetectorID(thr, s);
+    Lock lk(&ctx->dd_mtx);
+    EnsureDeadlockDetectorID(ctx, s);
     // Printf("MutexUnlock: %zx\n", s->deadlock_detector_id);
-    g_dd.onUnlock(&thr->deadlock_detector_tls,
+    ctx->dd.onUnlock(&thr->deadlock_detector_tls,
                                  s->deadlock_detector_id);
   }
   s->mtx.Unlock();

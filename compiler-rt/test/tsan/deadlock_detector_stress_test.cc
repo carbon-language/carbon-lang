@@ -44,8 +44,8 @@ class LockTest {
     // CHECK: Starting Test1
     fprintf(stderr, "Expecting lock inversion: %p %p\n", A(0), A(1));
     // CHECK: Expecting lock inversion: [[A1:0x[a-f0-9]*]] [[A2:0x[a-f0-9]*]]
-    L(0); L(1); U(0); U(1);
-    L(1); L(0); U(0); U(1);
+    Lock_0_1();
+    Lock_1_0();
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock)
     // CHECK: path: [[M1:M[0-9]+]] => [[M2:M[0-9]+]] => [[M1]]
     // CHECK: Mutex [[M1]] ([[A1]]) created at:
@@ -59,9 +59,9 @@ class LockTest {
     // CHECK: Starting Test2
     fprintf(stderr, "Expecting lock inversion: %p %p %p\n", A(0), A(1), A(2));
     // CHECK: Expecting lock inversion: [[A1:0x[a-f0-9]*]] [[A2:0x[a-f0-9]*]] [[A3:0x[a-f0-9]*]]
-    L(0); L(1); U(0); U(1);
-    L(1); L(2); U(1); U(2);
-    L(2); L(0); U(0); U(2);
+    Lock2(0, 1);
+    Lock2(1, 2);
+    Lock2(2, 0);
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock)
     // CHECK: path: [[M1:M[0-9]+]] => [[M2:M[0-9]+]] => [[M3:M[0-9]+]] => [[M1]]
     // CHECK: Mutex [[M1]] ([[A1]]) created at:
@@ -76,11 +76,11 @@ class LockTest {
   void Test3() {
     fprintf(stderr, "Starting Test3\n");
     // CHECK: Starting Test3
-    L(0); L(1); U(0); U(1);
+    Lock_0_1();
     L(2);
     CreateAndDestroyManyLocks();
     U(2);
-    L(1); L(0); U(0); U(1);
+    Lock_1_0();
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock)
     // CHECK-NOT: WARNING: ThreadSanitizer:
   }
@@ -90,15 +90,27 @@ class LockTest {
   void Test4() {
     fprintf(stderr, "Starting Test4\n");
     // CHECK: Starting Test4
-    L(0); L(1); U(0); U(1);
+    Lock_0_1();
     L(2);
     CreateLockUnlockAndDestroyManyLocks();
     U(2);
-    L(1); L(0); U(0); U(1);
+    Lock_1_0();
+    // CHECK-NOT: WARNING: ThreadSanitizer:
+  }
+
+  void Test5() {
+    fprintf(stderr, "Starting Test5\n");
+    // CHECK: Starting Test5
+    RunThreads(&LockTest::Lock_0_1, &LockTest::Lock_1_0);
+    // CHECK: WARNING: ThreadSanitizer: lock-order-inversion
     // CHECK-NOT: WARNING: ThreadSanitizer:
   }
 
  private:
+  void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
+  void Lock_0_1() { Lock2(0, 1); }
+  void Lock_1_0() { Lock2(1, 0); }
+
   void CreateAndDestroyManyLocks() {
     PaddedLock create_many_locks_but_never_acquire[kDeadlockGraphSize];
   }
@@ -109,6 +121,30 @@ class LockTest {
       many_locks[i].unlock();
     }
   }
+
+  // LockTest Member function callback.
+  struct CB {
+    void (LockTest::*f)();
+    LockTest *lt;
+  };
+
+  // Thread function with CB.
+  static void *Thread(void *param) {
+    CB *cb = (CB*)param;
+    (cb->lt->*cb->f)();
+    return NULL;
+  }
+
+  void RunThreads(void (LockTest::*f1)(), void (LockTest::*f2)()) {
+    const int kNumThreads = 2;
+    pthread_t t[kNumThreads];
+    CB cb[2] = {{f1, this}, {f2, this}};
+    for (int i = 0; i < kNumThreads; i++)
+      pthread_create(&t[i], 0, Thread, &cb[i]);
+    for (int i = 0; i < kNumThreads; i++)
+      pthread_join(t[i], 0);
+  }
+
   static const size_t kDeadlockGraphSize = 4096;
   size_t n_;
   PaddedLock *locks_;
@@ -119,6 +155,7 @@ int main() {
   { LockTest t(5); t.Test2(); }
   { LockTest t(5); t.Test3(); }
   { LockTest t(5); t.Test4(); }
+  { LockTest t(5); t.Test5(); }
   fprintf(stderr, "DONE\n");
   // CHECK: DONE
 }

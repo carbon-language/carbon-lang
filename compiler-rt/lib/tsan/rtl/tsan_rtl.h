@@ -549,6 +549,9 @@ struct Context {
   // Number of fired suppressions may be large enough.
   InternalMmapVector<FiredSuppression> fired_suppressions;
 
+  __sanitizer::DeadlockDetector<DDBV> dd;
+  Mutex dd_mtx;
+
   Flags flags;
 
   u64 stat[StatCnt];

@@ -82,7 +82,9 @@ Context::Context()
       CreateThreadContext, kMaxTid, kThreadQuarantineSize))
   , racy_stacks(MBlockRacyStacks)
   , racy_addresses(MBlockRacyAddresses)
-  , fired_suppressions(8) {
+  , fired_suppressions(8)
+  , dd_mtx(MutexTypeDeadlockDetector, StatMtxDeadlockDetector) {
+  dd.clear();
 }
 
 // The objects are allocated in TLS, so one may rely on zero-initialization.
