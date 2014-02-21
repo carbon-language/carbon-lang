@@ -42,10 +42,9 @@ StringRef Binary::getFileName() const {
 }
 
 ErrorOr<Binary *> object::createBinary(MemoryBuffer *Source,
-                                       sys::fs::file_magic Type) {
+                                       LLVMContext *Context) {
   OwningPtr<MemoryBuffer> scopedSource(Source);
-  if (Type == sys::fs::file_magic::unknown)
-    Type = sys::fs::identify_magic(Source->getBuffer());
+  sys::fs::file_magic Type = sys::fs::identify_magic(Source->getBuffer());
 
   switch (Type) {
     case sys::fs::file_magic::archive:
@@ -67,11 +66,12 @@ ErrorOr<Binary *> object::createBinary(MemoryBuffer *Source,
     case sys::fs::file_magic::coff_object:
     case sys::fs::file_magic::coff_import_library:
     case sys::fs::file_magic::pecoff_executable:
-      return ObjectFile::createObjectFile(scopedSource.take(), true, Type);
+    case sys::fs::file_magic::bitcode:
+      return ObjectFile::createSymbolicFile(scopedSource.take(), true, Type,
+                                            Context);
     case sys::fs::file_magic::macho_universal_binary:
       return MachOUniversalBinary::create(scopedSource.take());
     case sys::fs::file_magic::unknown:
-    case sys::fs::file_magic::bitcode:
     case sys::fs::file_magic::windows_resource:
       // Unrecognized object file format.
       return object_error::invalid_file_type;

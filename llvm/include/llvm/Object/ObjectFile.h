@@ -15,7 +15,7 @@
 #define LLVM_OBJECT_OBJECTFILE_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Object/Binary.h"
+#include "llvm/Object/SymbolicFile.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
@@ -28,61 +28,8 @@ namespace object {
 
 class ObjectFile;
 
-union DataRefImpl {
-  // This entire union should probably be a
-  // char[max(8, sizeof(uintptr_t))] and require the impl to cast.
-  struct {
-    uint32_t a, b;
-  } d;
-  uintptr_t p;
-  DataRefImpl() {
-    std::memset(this, 0, sizeof(DataRefImpl));
-  }
-};
-
-template<class content_type>
-class content_iterator {
-  content_type Current;
-public:
-  content_iterator(content_type symb)
-    : Current(symb) {}
-
-  const content_type* operator->() const {
-    return &Current;
-  }
-
-  const content_type &operator*() const {
-    return Current;
-  }
-
-  bool operator==(const content_iterator &other) const {
-    return Current == other.Current;
-  }
-
-  bool operator!=(const content_iterator &other) const {
-    return !(*this == other);
-  }
-
-  content_iterator &operator++() { // preincrement
-    Current.moveNext();
-    return *this;
-  }
-};
-
-inline bool operator==(const DataRefImpl &a, const DataRefImpl &b) {
-  // Check bitwise identical. This is the only legal way to compare a union w/o
-  // knowing which member is in use.
-  return std::memcmp(&a, &b, sizeof(DataRefImpl)) == 0;
-}
-
-inline bool operator<(const DataRefImpl &a, const DataRefImpl &b) {
-  // Check bitwise identical. This is the only legal way to compare a union w/o
-  // knowing which member is in use.
-  return std::memcmp(&a, &b, sizeof(DataRefImpl)) < 0;
-}
-
 class SymbolRef;
-typedef content_iterator<SymbolRef> symbol_iterator;
+class symbol_iterator;
 
 /// RelocationRef - This is a value type class that represents a single
 /// relocation in the list of relocations in the object file.
@@ -172,13 +119,11 @@ public:
 
 /// SymbolRef - This is a value type class that represents a single symbol in
 /// the list of symbols in the object file.
-class SymbolRef {
+class SymbolRef : public BasicSymbolRef {
   friend class SectionRef;
-  DataRefImpl SymbolPimpl;
-  const ObjectFile *OwningObject;
 
 public:
-  SymbolRef() : OwningObject(NULL) { }
+  SymbolRef() : BasicSymbolRef() {}
 
   enum Type {
     ST_Unknown, // Type not specified
@@ -189,23 +134,7 @@ public:
     ST_Other
   };
 
-  enum Flags LLVM_ENUM_INT_TYPE(unsigned) {
-    SF_None            = 0,
-    SF_Undefined       = 1U << 0,  // Symbol is defined in another object file
-    SF_Global          = 1U << 1,  // Global symbol
-    SF_Weak            = 1U << 2,  // Weak symbol
-    SF_Absolute        = 1U << 3,  // Absolute symbol
-    SF_Common          = 1U << 4,  // Symbol has common linkage
-    SF_FormatSpecific  = 1U << 5   // Specific to the object file format
-                                   // (e.g. section symbols)
-  };
-
   SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner);
-
-  bool operator==(const SymbolRef &Other) const;
-  bool operator<(const SymbolRef &Other) const;
-
-  void moveNext();
 
   error_code getName(StringRef &Result) const;
   /// Returns the symbol virtual address (i.e. address at which it will be
@@ -217,9 +146,6 @@ public:
   error_code getSize(uint64_t &Result) const;
   error_code getType(SymbolRef::Type &Result) const;
 
-  /// Get symbol flags (bitwise OR of SymbolRef::Flags)
-  uint32_t getFlags() const;
-
   /// @brief Get section this symbol is defined in reference to. Result is
   /// end_sections() if it is undefined or is an absolute symbol.
   error_code getSection(section_iterator &Result) const;
@@ -227,7 +153,25 @@ public:
   /// @brief Get value of the symbol in the symbol table.
   error_code getValue(uint64_t &Val) const;
 
-  DataRefImpl getRawDataRefImpl() const;
+  const ObjectFile *getObject() const;
+};
+
+class symbol_iterator : public basic_symbol_iterator {
+public:
+  symbol_iterator(SymbolRef Sym) : basic_symbol_iterator(Sym) {}
+  symbol_iterator(const basic_symbol_iterator &B)
+      : basic_symbol_iterator(SymbolRef(B->getRawDataRefImpl(),
+                                        cast<ObjectFile>(B->getObject()))) {}
+
+  const SymbolRef *operator->() const {
+    const BasicSymbolRef &P = basic_symbol_iterator::operator *();
+    return static_cast<const SymbolRef*>(&P);
+  }
+
+  const SymbolRef &operator*() const {
+    const BasicSymbolRef &P = basic_symbol_iterator::operator *();
+    return static_cast<const SymbolRef&>(P);
+  }
 };
 
 /// LibraryRef - This is a value type class that represents a single library in
@@ -254,12 +198,10 @@ public:
 };
 typedef content_iterator<LibraryRef> library_iterator;
 
-const uint64_t UnknownAddressOrSize = ~0ULL;
-
 /// ObjectFile - This class is the base class for all object file types.
 /// Concrete instances of this object are created by createObjectFile, which
 /// figures out which type to create.
-class ObjectFile : public Binary {
+class ObjectFile : public SymbolicFile {
   virtual void anchor();
   ObjectFile() LLVM_DELETED_FUNCTION;
   ObjectFile(const ObjectFile &other) LLVM_DELETED_FUNCTION;
@@ -280,15 +222,14 @@ protected:
   // Implementations assume that the DataRefImpl is valid and has not been
   // modified externally. It's UB otherwise.
   friend class SymbolRef;
-  virtual void moveSymbolNext(DataRefImpl &Symb) const = 0;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const = 0;
+  virtual error_code printSymbolName(raw_ostream &OS, DataRefImpl Symb) const;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const = 0;
   virtual error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res)const=0;
   virtual error_code getSymbolAlignment(DataRefImpl Symb, uint32_t &Res) const;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const = 0;
   virtual error_code getSymbolType(DataRefImpl Symb,
                                    SymbolRef::Type &Res) const = 0;
-  virtual uint32_t getSymbolFlags(DataRefImpl Symb) const = 0;
   virtual error_code getSymbolSection(DataRefImpl Symb,
                                       section_iterator &Res) const = 0;
   virtual error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const = 0;
@@ -342,8 +283,8 @@ protected:
 
 public:
 
-  virtual symbol_iterator symbol_begin() const = 0;
-  virtual symbol_iterator symbol_end() const = 0;
+  symbol_iterator begin_symbols() const;
+  symbol_iterator end_symbols() const;
 
   virtual section_iterator section_begin() const = 0;
   virtual section_iterator section_end() const = 0;
@@ -391,59 +332,57 @@ public:
 
 // Inline function definitions.
 inline SymbolRef::SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner)
-  : SymbolPimpl(SymbolP)
-  , OwningObject(Owner) {}
+    : BasicSymbolRef(SymbolP, Owner) {}
 
-inline bool SymbolRef::operator==(const SymbolRef &Other) const {
-  return SymbolPimpl == Other.SymbolPimpl;
+inline symbol_iterator ObjectFile::begin_symbols() const {
+  basic_symbol_iterator I = symbol_begin_impl();
+  const BasicSymbolRef &Ref = *I;
+  const SymbolRef &Cast = static_cast<const SymbolRef&>(Ref);
+  return symbol_iterator(Cast);
 }
 
-inline bool SymbolRef::operator<(const SymbolRef &Other) const {
-  return SymbolPimpl < Other.SymbolPimpl;
-}
-
-inline void SymbolRef::moveNext() {
-  return OwningObject->moveSymbolNext(SymbolPimpl);
+inline symbol_iterator ObjectFile::end_symbols() const {
+  basic_symbol_iterator I = symbol_end_impl();
+  const BasicSymbolRef &Ref = *I;
+  const SymbolRef &Cast = static_cast<const SymbolRef&>(Ref);
+  return symbol_iterator(Cast);
 }
 
 inline error_code SymbolRef::getName(StringRef &Result) const {
-  return OwningObject->getSymbolName(SymbolPimpl, Result);
+  return getObject()->getSymbolName(getRawDataRefImpl(), Result);
 }
 
 inline error_code SymbolRef::getAddress(uint64_t &Result) const {
-  return OwningObject->getSymbolAddress(SymbolPimpl, Result);
+  return getObject()->getSymbolAddress(getRawDataRefImpl(), Result);
 }
 
 inline error_code SymbolRef::getFileOffset(uint64_t &Result) const {
-  return OwningObject->getSymbolFileOffset(SymbolPimpl, Result);
+  return getObject()->getSymbolFileOffset(getRawDataRefImpl(), Result);
 }
 
 inline error_code SymbolRef::getAlignment(uint32_t &Result) const {
-  return OwningObject->getSymbolAlignment(SymbolPimpl, Result);
+  return getObject()->getSymbolAlignment(getRawDataRefImpl(), Result);
 }
 
 inline error_code SymbolRef::getSize(uint64_t &Result) const {
-  return OwningObject->getSymbolSize(SymbolPimpl, Result);
-}
-
-inline uint32_t SymbolRef::getFlags() const {
-  return OwningObject->getSymbolFlags(SymbolPimpl);
+  return getObject()->getSymbolSize(getRawDataRefImpl(), Result);
 }
 
 inline error_code SymbolRef::getSection(section_iterator &Result) const {
-  return OwningObject->getSymbolSection(SymbolPimpl, Result);
+  return getObject()->getSymbolSection(getRawDataRefImpl(), Result);
 }
 
 inline error_code SymbolRef::getType(SymbolRef::Type &Result) const {
-  return OwningObject->getSymbolType(SymbolPimpl, Result);
+  return getObject()->getSymbolType(getRawDataRefImpl(), Result);
 }
 
 inline error_code SymbolRef::getValue(uint64_t &Val) const {
-  return OwningObject->getSymbolValue(SymbolPimpl, Val);
+  return getObject()->getSymbolValue(getRawDataRefImpl(), Val);
 }
 
-inline DataRefImpl SymbolRef::getRawDataRefImpl() const {
-  return SymbolPimpl;
+inline const ObjectFile *SymbolRef::getObject() const {
+  const SymbolicFile *O = BasicSymbolRef::getObject();
+  return cast<ObjectFile>(O);
 }
 
 
@@ -514,8 +453,8 @@ inline error_code SectionRef::isReadOnlyData(bool &Result) const {
 }
 
 inline error_code SectionRef::containsSymbol(SymbolRef S, bool &Result) const {
-  return OwningObject->sectionContainsSymbol(SectionPimpl, S.SymbolPimpl,
-                                             Result);
+  return OwningObject->sectionContainsSymbol(SectionPimpl,
+                                             S.getRawDataRefImpl(), Result);
 }
 
 inline relocation_iterator SectionRef::relocation_begin() const {

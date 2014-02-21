@@ -1163,20 +1163,20 @@ error_code MachOObjectFile::getLibraryPath(DataRefImpl LibData,
   report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
 }
 
-symbol_iterator MachOObjectFile::symbol_begin() const {
+basic_symbol_iterator MachOObjectFile::symbol_begin_impl() const {
   DataRefImpl DRI;
   if (!SymtabLoadCmd)
-    return symbol_iterator(SymbolRef(DRI, this));
+    return basic_symbol_iterator(SymbolRef(DRI, this));
 
   MachO::symtab_command Symtab = getSymtabLoadCommand();
   DRI.p = reinterpret_cast<uintptr_t>(getPtr(this, Symtab.symoff));
-  return symbol_iterator(SymbolRef(DRI, this));
+  return basic_symbol_iterator(SymbolRef(DRI, this));
 }
 
-symbol_iterator MachOObjectFile::symbol_end() const {
+basic_symbol_iterator MachOObjectFile::symbol_end_impl() const {
   DataRefImpl DRI;
   if (!SymtabLoadCmd)
-    return symbol_iterator(SymbolRef(DRI, this));
+    return basic_symbol_iterator(SymbolRef(DRI, this));
 
   MachO::symtab_command Symtab = getSymtabLoadCommand();
   unsigned SymbolTableEntrySize = is64Bit() ?
@@ -1185,7 +1185,7 @@ symbol_iterator MachOObjectFile::symbol_end() const {
   unsigned Offset = Symtab.symoff +
     Symtab.nsyms * SymbolTableEntrySize;
   DRI.p = reinterpret_cast<uintptr_t>(getPtr(this, Offset));
-  return symbol_iterator(SymbolRef(DRI, this));
+  return basic_symbol_iterator(SymbolRef(DRI, this));
 }
 
 section_iterator MachOObjectFile::section_begin() const {

@@ -355,8 +355,8 @@ protected:
 
 public:
   COFFObjectFile(MemoryBuffer *Object, error_code &EC, bool BufferOwned = true);
-  symbol_iterator symbol_begin() const LLVM_OVERRIDE;
-  symbol_iterator symbol_end() const LLVM_OVERRIDE;
+  basic_symbol_iterator symbol_begin_impl() const LLVM_OVERRIDE;
+  basic_symbol_iterator symbol_end_impl() const LLVM_OVERRIDE;
   library_iterator needed_library_begin() const LLVM_OVERRIDE;
   library_iterator needed_library_end() const LLVM_OVERRIDE;
   section_iterator section_begin() const LLVM_OVERRIDE;

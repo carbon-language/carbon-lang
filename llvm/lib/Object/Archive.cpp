@@ -182,12 +182,13 @@ error_code Archive::Child::getMemoryBuffer(OwningPtr<MemoryBuffer> &Result,
   return error_code::success();
 }
 
-error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result) const {
+error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result,
+                                       LLVMContext *Context) const {
   OwningPtr<Binary> ret;
   OwningPtr<MemoryBuffer> Buff;
   if (error_code ec = getMemoryBuffer(Buff))
     return ec;
-  ErrorOr<Binary *> BinaryOrErr = createBinary(Buff.take());
+  ErrorOr<Binary *> BinaryOrErr = createBinary(Buff.take(), Context);
   if (error_code EC = BinaryOrErr.getError())
     return EC;
   Result.reset(BinaryOrErr.get());

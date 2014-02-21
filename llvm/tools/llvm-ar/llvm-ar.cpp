@@ -696,18 +696,21 @@ static void writeSymbolTable(
     std::vector<std::pair<unsigned, unsigned> > &MemberOffsetRefs) {
   unsigned StartOffset = 0;
   unsigned MemberNum = 0;
-  std::vector<StringRef> SymNames;
-  std::vector<object::ObjectFile *> DeleteIt;
+  std::string NameBuf;
+  raw_string_ostream NameOS(NameBuf);
+  unsigned NumSyms = 0;
+  std::vector<object::SymbolicFile *> DeleteIt;
+  LLVMContext &Context = getGlobalContext();
   for (ArrayRef<NewArchiveIterator>::iterator I = Members.begin(),
                                               E = Members.end();
        I != E; ++I, ++MemberNum) {
     MemoryBuffer *MemberBuffer = Buffers[MemberNum];
-    ErrorOr<object::ObjectFile *> ObjOrErr =
-        object::ObjectFile::createObjectFile(MemberBuffer, false,
-                                             sys::fs::file_magic::unknown);
+    ErrorOr<object::SymbolicFile *> ObjOrErr =
+        object::SymbolicFile::createSymbolicFile(
+            MemberBuffer, false, sys::fs::file_magic::unknown, &Context);
     if (!ObjOrErr)
       continue;  // FIXME: check only for "not an object file" errors.
-    object::ObjectFile *Obj = ObjOrErr.get();
+    object::SymbolicFile *Obj = ObjOrErr.get();
 
     DeleteIt.push_back(Obj);
     if (!StartOffset) {
@@ -716,34 +719,29 @@ static void writeSymbolTable(
       print32BE(Out, 0);
     }
 
-    for (object::symbol_iterator I = Obj->symbol_begin(),
-                                 E = Obj->symbol_end();
+    for (object::basic_symbol_iterator I = Obj->symbol_begin(),
+                                       E = Obj->symbol_end();
          I != E; ++I) {
-      uint32_t Symflags = I->getFlags();;
+      uint32_t Symflags = I->getFlags();
       if (Symflags & object::SymbolRef::SF_FormatSpecific)
         continue;
       if (!(Symflags & object::SymbolRef::SF_Global))
         continue;
       if (Symflags & object::SymbolRef::SF_Undefined)
         continue;
-      StringRef Name;
-      failIfError(I->getName(Name));
-      SymNames.push_back(Name);
+      failIfError(I->printName(NameOS));
+      NameOS << '\0';
+      ++NumSyms;
       MemberOffsetRefs.push_back(std::make_pair(Out.tell(), MemberNum));
       print32BE(Out, 0);
     }
   }
-  for (std::vector<StringRef>::iterator I = SymNames.begin(),
-                                        E = SymNames.end();
-       I != E; ++I) {
-    Out << *I;
-    Out << '\0';
-  }
+  Out << NameOS.str();
 
-  for (std::vector<object::ObjectFile *>::iterator I = DeleteIt.begin(),
-                                                   E = DeleteIt.end();
+  for (std::vector<object::SymbolicFile *>::iterator I = DeleteIt.begin(),
+                                                     E = DeleteIt.end();
        I != E; ++I) {
-    object::ObjectFile *O = *I;
+    object::SymbolicFile *O = *I;
     delete O;
   }
 
@@ -757,7 +755,7 @@ static void writeSymbolTable(
   Out.seek(StartOffset - 12);
   printWithSpacePadding(Out, Pos - StartOffset, 10);
   Out.seek(StartOffset);
-  print32BE(Out, SymNames.size());
+  print32BE(Out, NumSyms);
   Out.seek(Pos);
 }
 

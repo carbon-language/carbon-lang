@@ -180,8 +180,8 @@ public:
 
   const Elf_Sym *getSymbol(DataRefImpl Symb) const;
 
-  symbol_iterator symbol_begin() const LLVM_OVERRIDE;
-  symbol_iterator symbol_end() const LLVM_OVERRIDE;
+  basic_symbol_iterator symbol_begin_impl() const LLVM_OVERRIDE;
+  basic_symbol_iterator symbol_end_impl() const LLVM_OVERRIDE;
 
   symbol_iterator dynamic_symbol_begin() const;
   symbol_iterator dynamic_symbol_end() const;
@@ -824,13 +824,13 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBuffer *Object, error_code &ec,
       EF(Object, ec) {}
 
 template <class ELFT>
-symbol_iterator ELFObjectFile<ELFT>::symbol_begin() const {
-  return symbol_iterator(SymbolRef(toDRI(EF.begin_symbols()), this));
+basic_symbol_iterator ELFObjectFile<ELFT>::symbol_begin_impl() const {
+  return basic_symbol_iterator(SymbolRef(toDRI(EF.begin_symbols()), this));
 }
 
 template <class ELFT>
-symbol_iterator ELFObjectFile<ELFT>::symbol_end() const {
-  return symbol_iterator(SymbolRef(toDRI(EF.end_symbols()), this));
+basic_symbol_iterator ELFObjectFile<ELFT>::symbol_end_impl() const {
+  return basic_symbol_iterator(SymbolRef(toDRI(EF.end_symbols()), this));
 }
 
 template <class ELFT>

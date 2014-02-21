@@ -20,6 +20,7 @@
 
 namespace llvm {
 
+class LLVMContext;
 class MemoryBuffer;
 class StringRef;
 
@@ -41,6 +42,8 @@ protected:
   enum {
     ID_Archive,
     ID_MachOUniversalBinary,
+    ID_IR, // LLVM IR
+
     // Object and children.
     ID_StartObjects,
     ID_COFF,
@@ -86,6 +89,10 @@ public:
     return TypeID > ID_StartObjects && TypeID < ID_EndObjects;
   }
 
+  bool isSymbolic() const {
+    return isIR() || isObject();
+  }
+
   bool isArchive() const {
     return TypeID == ID_Archive;
   }
@@ -106,6 +113,10 @@ public:
     return TypeID == ID_COFF;
   }
 
+  bool isIR() const {
+    return TypeID == ID_IR;
+  }
+
   bool isLittleEndian() const {
     return !(TypeID == ID_ELF32B || TypeID == ID_ELF64B ||
              TypeID == ID_MachO32B || TypeID == ID_MachO64B);
@@ -117,9 +128,7 @@ public:
 /// @param Source The data to create the Binary from. Ownership is transferred
 ///        to the Binary if successful. If an error is returned,
 ///        Source is destroyed by createBinary before returning.
-ErrorOr<Binary *> createBinary(MemoryBuffer *Source,
-                               sys::fs::file_magic Type =
-                                   sys::fs::file_magic::unknown);
+ErrorOr<Binary *> createBinary(MemoryBuffer *Source, LLVMContext *Context = 0);
 
 ErrorOr<Binary *> createBinary(StringRef Path);
 }

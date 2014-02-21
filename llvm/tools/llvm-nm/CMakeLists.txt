@@ -1,6 +1,4 @@
 set(LLVM_LINK_COMPONENTS
-  BitReader
-  Core
   Object
   Support
   )

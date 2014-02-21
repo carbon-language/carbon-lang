@@ -92,7 +92,8 @@ public:
     error_code getMemoryBuffer(OwningPtr<MemoryBuffer> &Result,
                                bool FullPath = false) const;
 
-    error_code getAsBinary(OwningPtr<Binary> &Result) const;
+    error_code getAsBinary(OwningPtr<Binary> &Result,
+                           LLVMContext *Context = 0) const;
   };
 
   class child_iterator {

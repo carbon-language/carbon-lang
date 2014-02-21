@@ -549,17 +549,17 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &EC,
   EC = object_error::success;
 }
 
-symbol_iterator COFFObjectFile::symbol_begin() const {
+basic_symbol_iterator COFFObjectFile::symbol_begin_impl() const {
   DataRefImpl Ret;
   Ret.p = reinterpret_cast<uintptr_t>(SymbolTable);
-  return symbol_iterator(SymbolRef(Ret, this));
+  return basic_symbol_iterator(SymbolRef(Ret, this));
 }
 
-symbol_iterator COFFObjectFile::symbol_end() const {
+basic_symbol_iterator COFFObjectFile::symbol_end_impl() const {
   // The symbol table ends where the string table begins.
   DataRefImpl Ret;
   Ret.p = reinterpret_cast<uintptr_t>(StringTable);
-  return symbol_iterator(SymbolRef(Ret, this));
+  return basic_symbol_iterator(SymbolRef(Ret, this));
 }
 
 library_iterator COFFObjectFile::needed_library_begin() const {
@@ -832,8 +832,8 @@ const coff_symbol *COFFObjectFile::getCOFFSymbol(symbol_iterator &It) const {
   return toSymb(It->getRawDataRefImpl());
 }
 
-const coff_relocation *COFFObjectFile::getCOFFRelocation(
-                                             relocation_iterator &It) const {
+const coff_relocation *
+COFFObjectFile::getCOFFRelocation(relocation_iterator &It) const {
   return toRel(It->getRawDataRefImpl());
 }
 

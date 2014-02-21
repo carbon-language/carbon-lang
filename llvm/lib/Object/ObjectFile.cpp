@@ -25,7 +25,16 @@ void ObjectFile::anchor() { }
 
 ObjectFile::ObjectFile(unsigned int Type, MemoryBuffer *Source,
                        bool BufferOwned)
-    : Binary(Type, Source, BufferOwned) {}
+    : SymbolicFile(Type, Source, BufferOwned) {}
+
+error_code ObjectFile::printSymbolName(raw_ostream &OS,
+                                       DataRefImpl Symb) const {
+  StringRef Name;
+  if (error_code EC = getSymbolName(Symb, Name))
+    return EC;
+  OS << Name;
+  return object_error::success;
+}
 
 error_code ObjectFile::getSymbolAlignment(DataRefImpl DRI,
                                           uint32_t &Result) const {

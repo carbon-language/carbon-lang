@@ -126,8 +126,8 @@ public:
   // TODO: Would be useful to have an iterator based version
   // of the load command interface too.
 
-  symbol_iterator symbol_begin() const LLVM_OVERRIDE;
-  symbol_iterator symbol_end() const LLVM_OVERRIDE;
+  basic_symbol_iterator symbol_begin_impl() const LLVM_OVERRIDE;
+  basic_symbol_iterator symbol_end_impl() const LLVM_OVERRIDE;
 
   section_iterator section_begin() const LLVM_OVERRIDE;
   section_iterator section_end() const LLVM_OVERRIDE;
