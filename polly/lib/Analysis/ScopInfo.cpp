@@ -500,6 +500,7 @@ void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
 }
 
 void ScopStmt::setScattering(isl_map *NewScattering) {
+  assert(NewScattering && "New scattering is NULL");
   isl_map_free(Scattering);
   Scattering = NewScattering;
 }
