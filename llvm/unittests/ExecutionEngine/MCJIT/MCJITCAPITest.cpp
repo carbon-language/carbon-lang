@@ -363,6 +363,10 @@ TEST_F(MCJITCAPITest, custom_memory_manager) {
 TEST_F(MCJITCAPITest, stackmap_creates_compact_unwind_on_darwin) {
   SKIP_UNSUPPORTED_PLATFORM;
   
+  // This test is also not supported on non-x86 platforms.
+  if (Triple(HostTriple).getArch() != Triple::x86_64)
+    return;
+  
   buildFunctionThatUsesStackmap();
   buildMCJITOptions();
   useRoundTripSectionMemoryManager();
@@ -378,6 +382,11 @@ TEST_F(MCJITCAPITest, stackmap_creates_compact_unwind_on_darwin) {
   EXPECT_EQ(42, functionPointer.usable());
   EXPECT_TRUE(didCallAllocateCodeSection);
   
+  // Up to this point, the test is specific only to X86-64. But this next
+  // expectation is only valid on Darwin because it assumes that unwind
+  // data is made available only through compact_unwind. It would be
+  // worthwhile to extend this to handle non-Darwin platforms, in which
+  // case you'd want to look for an eh_frame or something.
   EXPECT_TRUE(
     Triple(HostTriple).getOS() != Triple::Darwin ||
     didAllocateCompactUnwindSection);
