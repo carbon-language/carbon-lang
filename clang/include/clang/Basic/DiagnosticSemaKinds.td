@@ -2499,7 +2499,10 @@ def err_objc_bridged_related_invalid_class_name : Error<
 def err_objc_bridged_related_known_method : Error<
  "%0 must be explicitly converted to %1; use %select{%objcclass2|%objcinstance2}3 "
  "method for this conversion">;
-  
+
+def err_objc_attr_protocol_requires_definition : Error<
+  "attribute %0 can only be applied to @protocol definitions, not forward declarations">;
+
 // Function Parameter Semantic Analysis.
 def err_param_with_void_type : Error<"argument may not have 'void' type">;
 def err_void_only_param : Error<

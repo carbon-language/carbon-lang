@@ -141,3 +141,6 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 - (void)dunwich {}
 @end
 
+__attribute__((objc_protocol_requires_explicit_implementation))  // expected-error{{attribute 'objc_protocol_requires_explicit_implementation' can only be applied to @protocol definitions, not forward declarations}}
+@protocol NotDefined;
+

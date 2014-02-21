@@ -1643,8 +1643,14 @@ static void handleAttrWithMessage(Sema &S, Decl *D,
                                       Attr.getAttributeSpellingListIndex()));
 }
 
-static void handleObjCSuppresProtocolAttr(Sema &S, Decl *D,
+static void handleObjCSuppresProtocolAttr(Sema &S, ObjCProtocolDecl *D,
                                           const AttributeList &Attr) {
+  if (!D->isThisDeclarationADefinition()) {
+    S.Diag(Attr.getLoc(), diag::err_objc_attr_protocol_requires_definition)
+      << Attr.getName() << Attr.getRange();
+    return;
+  }
+
   D->addAttr(::new (S.Context)
           ObjCExplicitProtocolImplAttr(Attr.getRange(), S.Context,
                                        Attr.getAttributeSpellingListIndex()));
@@ -4191,7 +4197,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_ObjCRootClass:
     handleSimpleAttribute<ObjCRootClassAttr>(S, D, Attr); break;
   case AttributeList::AT_ObjCExplicitProtocolImpl:
-    handleObjCSuppresProtocolAttr(S, D, Attr);
+    handleObjCSuppresProtocolAttr(S, cast<ObjCProtocolDecl>(D), Attr);
     break;
   case AttributeList::AT_ObjCRequiresPropertyDefs:
     handleSimpleAttribute<ObjCRequiresPropertyDefsAttr>(S, D, Attr); break;
