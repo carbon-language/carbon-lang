@@ -1244,21 +1244,21 @@ def NoSanitizeAddress : InheritableAttr {
   let Spellings = [GCC<"no_address_safety_analysis">,
                    GCC<"no_sanitize_address">];
   let Subjects = SubjectList<[Function, FunctionTemplate], ErrorDiag>;
-  let Documentation = [Undocumented];
+  let Documentation = [NoSanitizeAddressDocs];
 }
 
 // Attribute to disable ThreadSanitizer checks.
 def NoSanitizeThread : InheritableAttr {
   let Spellings = [GNU<"no_sanitize_thread">];
   let Subjects = SubjectList<[Function, FunctionTemplate], ErrorDiag>;
-  let Documentation = [Undocumented];
+  let Documentation = [NoSanitizeThreadDocs];
 }
 
 // Attribute to disable MemorySanitizer checks.
 def NoSanitizeMemory : InheritableAttr {
   let Spellings = [GNU<"no_sanitize_memory">];
   let Subjects = SubjectList<[Function, FunctionTemplate], ErrorDiag>;
-  let Documentation = [Undocumented];
+  let Documentation = [NoSanitizeMemoryDocs];
 }
 
 // C/C++ Thread safety attributes (e.g. for deadlock, data race checking)

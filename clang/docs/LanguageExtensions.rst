@@ -1639,45 +1639,14 @@ in the analyzer's `list of source-level annotations
 Extensions for Dynamic Analysis
 ===============================
 
-.. _langext-address_sanitizer:
-
-AddressSanitizer
-----------------
-
 Use ``__has_feature(address_sanitizer)`` to check if the code is being built
 with :doc:`AddressSanitizer`.
-
-Use ``__attribute__((no_sanitize_address))``
-on a function declaration
-to specify that address safety instrumentation (e.g. AddressSanitizer) should
-not be applied to that function.
-
-.. _langext-thread_sanitizer:
-
-ThreadSanitizer
-----------------
 
 Use ``__has_feature(thread_sanitizer)`` to check if the code is being built
 with :doc:`ThreadSanitizer`.
 
-Use ``__attribute__((no_sanitize_thread))`` on a function declaration
-to specify that checks for data races on plain (non-atomic) memory accesses
-should not be inserted by ThreadSanitizer.
-The function is still instrumented by the tool to avoid false positives and
-provide meaningful stack traces.
-
-.. _langext-memory_sanitizer:
-
-MemorySanitizer
-----------------
 Use ``__has_feature(memory_sanitizer)`` to check if the code is being built
 with :doc:`MemorySanitizer`.
-
-Use ``__attribute__((no_sanitize_memory))`` on a function declaration
-to specify that checks for uninitialized memory should not be inserted 
-(e.g. by MemorySanitizer). The function may still be instrumented by the tool
-to avoid false positives in other places.
-
 
 Thread Safety Analysis
 ======================

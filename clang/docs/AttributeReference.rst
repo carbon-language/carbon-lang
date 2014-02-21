@@ -291,6 +291,44 @@ not ODR-equivalent.
 Query for this feature with ``__has_attribute(enable_if)``.
 
 
+no_sanitize_address (no_address_safety_analysis, gnu::no_address_safety_analysis, gnu::no_sanitize_address)
+-----------------------------------------------------------------------------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "X","X","",""
+
+Use ``__attribute__((no_sanitize_address))`` on a function declaration to
+specify that address safety instrumentation (e.g. AddressSanitizer) should
+not be applied to that function.
+
+
+no_sanitize_memory
+------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "X","","",""
+
+Use ``__attribute__((no_sanitize_memory))`` on a function declaration to
+specify that checks for uninitialized memory should not be inserted 
+(e.g. by MemorySanitizer). The function may still be instrumented by the tool
+to avoid false positives in other places.
+
+
+no_sanitize_thread
+------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "X","","",""
+
+Use ``__attribute__((no_sanitize_thread))`` on a function declaration to
+specify that checks for data races on plain (non-atomic) memory accesses should
+not be inserted by ThreadSanitizer. The function is still instrumented by the
+tool to avoid false positives and provide meaningful stack traces.
+
+
 objc_method_family
 ------------------
 .. csv-table:: Supported Syntaxes

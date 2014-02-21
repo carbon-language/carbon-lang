@@ -571,3 +571,35 @@ This attribute accepts a single parameter that must be one of the following:
 ``unknown``, ``consumed``, or ``unconsumed``.
   }];
 }
+
+def NoSanitizeAddressDocs : Documentation {
+  let Category = DocCatFunction;
+  // This function has multiple distinct spellings, and so it requires a custom
+  // heading to be specified. The most common spelling is sufficient.
+  let Heading = "no_sanitize_address";
+  let Content = [{
+Use ``__attribute__((no_sanitize_address))`` on a function declaration to
+specify that address safety instrumentation (e.g. AddressSanitizer) should
+not be applied to that function.
+  }];
+}
+
+def NoSanitizeThreadDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Use ``__attribute__((no_sanitize_thread))`` on a function declaration to
+specify that checks for data races on plain (non-atomic) memory accesses should
+not be inserted by ThreadSanitizer. The function is still instrumented by the
+tool to avoid false positives and provide meaningful stack traces.
+  }];
+}
+
+def NoSanitizeMemoryDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Use ``__attribute__((no_sanitize_memory))`` on a function declaration to
+specify that checks for uninitialized memory should not be inserted 
+(e.g. by MemorySanitizer). The function may still be instrumented by the tool
+to avoid false positives in other places.
+  }];
+}
