@@ -1770,7 +1770,7 @@ enum {
   VectorRetGetArgs01 =
       AddRetType | Add2ArgTypes | VectorizeRetType | VectorizeArgTypes,
   FpCmpzModifiers =
-      AddRetType | VectorizeRetType | Add1ArgType | InventFloatType,
+      AddRetType | VectorizeRetType | Add1ArgType | InventFloatType
 };
 
  struct NeonIntrinsicInfo {
@@ -2339,7 +2339,7 @@ static NeonIntrinsicInfo ARMSIMDIntrinsicMap [] = {
   NEONMAP0(vuzp_v),
   NEONMAP0(vuzpq_v),
   NEONMAP0(vzip_v),
-  NEONMAP0(vzipq_v),
+  NEONMAP0(vzipq_v)
 };
 
 #undef NEONMAP0
