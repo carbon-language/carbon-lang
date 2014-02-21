@@ -15,6 +15,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Object/IRObjectFile.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace object;
 
