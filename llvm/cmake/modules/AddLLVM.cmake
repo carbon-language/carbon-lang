@@ -127,6 +127,10 @@ function(add_llvm_symbol_exports target_name export_file)
     PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${native_export_file})
 
   add_dependencies(${target_name} ${target_name}_exports)
+
+  # Add dependency to *_exports later -- CMake issue 14747
+  list(APPEND LLVM_COMMON_DEPENDS ${target_name}_exports)
+  set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} PARENT_SCOPE)
 endfunction(add_llvm_symbol_exports)
 
 function(add_dead_strip target_name)
@@ -224,6 +228,9 @@ function(llvm_add_library name)
     llvm_update_compile_flags(${obj_name})
     set(ALL_FILES "$<TARGET_OBJECTS:${obj_name}>")
 
+    # Do add_dependencies(obj) later due to CMake issue 14747.
+    list(APPEND objlibs ${obj_name})
+
     set_target_properties(${obj_name} PROPERTIES FOLDER "Object Libraries")
   endif()
 
@@ -288,6 +295,12 @@ function(llvm_add_library name)
 
   if(LLVM_COMMON_DEPENDS)
     add_dependencies(${name} ${LLVM_COMMON_DEPENDS})
+    # Add dependencies also to objlibs.
+    # CMake issue 14747 --  add_dependencies() might be ignored to objlib's user.
+    foreach(objlib ${objlibs})
+      message("add_dependencies(${objlib} ${LLVM_COMMON_DEPENDS})")
+      add_dependencies(${objlib} ${LLVM_COMMON_DEPENDS})
+    endforeach()
   endif()
 endfunction()
 
