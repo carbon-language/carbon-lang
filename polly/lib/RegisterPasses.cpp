@@ -123,7 +123,7 @@ ExportJScop("polly-export",
 
 static cl::opt<bool> DeadCodeElim("polly-run-dce",
                                   cl::desc("Run the dead code elimination"),
-                                  cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                                  cl::Hidden, cl::init(true), cl::ZeroOrMore,
                                   cl::cat(PollyCategory));
 
 static cl::opt<bool>
