@@ -1,4 +1,5 @@
-; RUN: opt < %s -analyze -basicaa -da | FileCheck %s
+; RUN: opt < %s -analyze -basicaa -da -da-delinearize=false | FileCheck %s
+; RUN: opt < %s -analyze -basicaa -da -da-delinearize | FileCheck %s -check-prefix=DELIN
 
 ; ModuleID = 'GCD.bc'
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
@@ -21,6 +22,14 @@ entry:
 ; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - none!
+
+; DELIN: 'Dependence Analysis' for function 'gcd0'
+; DELIN: da analyze - none!
+; DELIN: da analyze - flow [=> *|<]!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - none!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc8
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc8 ]
@@ -74,6 +83,14 @@ entry:
 ; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - none!
+
+; DELIN: 'Dependence Analysis' for function 'gcd1'
+; DELIN: da analyze - none!
+; DELIN: da analyze - none!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - none!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc9
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc9 ]
@@ -129,6 +146,14 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - none!
 
+; DELIN: 'Dependence Analysis' for function 'gcd2'
+; DELIN: da analyze - none!
+; DELIN: da analyze - none!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - none!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - none!
+
 for.cond1.preheader:                              ; preds = %entry, %for.inc9
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc9 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc10, %for.inc9 ]
@@ -183,6 +208,14 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - none!
 
+; DELIN: 'Dependence Analysis' for function 'gcd3'
+; DELIN: da analyze - output [* *]!
+; DELIN: da analyze - flow [<> *]!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - input [* *]!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - none!
+
 for.cond1.preheader:                              ; preds = %entry, %for.inc7
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc7 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc8, %for.inc7 ]
@@ -234,6 +267,14 @@ entry:
 ; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - none!
+
+; DELIN: 'Dependence Analysis' for function 'gcd4'
+; DELIN: da analyze - output [* *]!
+; DELIN: da analyze - none!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - input [* *]!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - none!
 
 for.cond1.preheader:                              ; preds = %entry, %for.inc17
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc17 ]
@@ -297,6 +338,14 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - none!
 
+; DELIN: 'Dependence Analysis' for function 'gcd5'
+; DELIN: da analyze - output [* *]!
+; DELIN: da analyze - flow [<> *]!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - input [* *]!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - none!
+
 for.cond1.preheader:                              ; preds = %entry, %for.inc17
   %B.addr.04 = phi i32* [ %B, %entry ], [ %scevgep, %for.inc17 ]
   %i.03 = phi i64 [ 0, %entry ], [ %inc18, %for.inc17 ]
@@ -359,6 +408,14 @@ entry:
 ; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - output [* *]!
+
+; DELIN: 'Dependence Analysis' for function 'gcd6'
+; DELIN: da analyze - none!
+; DELIN: da analyze - none!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - none!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - output [* *]!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader
@@ -431,6 +488,14 @@ entry:
 ; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - output [* *]!
+
+; DELIN: 'Dependence Analysis' for function 'gcd7'
+; DELIN: da analyze - output [* *]!
+; DELIN: da analyze - flow [* *|<]!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - input [* *]!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - output [* *]!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader
@@ -516,6 +581,14 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - output [* *]!
 
+; DELIN: 'Dependence Analysis' for function 'gcd8'
+; DELIN: da analyze - output [* *]!
+; DELIN: da analyze - none!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - input [* *]!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - output [* *]!
+
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader
 
@@ -594,6 +667,14 @@ entry:
 ; CHECK: da analyze - input [* *]!
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - output [* *]!
+
+; DELIN: 'Dependence Analysis' for function 'gcd9'
+; DELIN: da analyze - output [* *]!
+; DELIN: da analyze - flow [* *|<]!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - input [* *]!
+; DELIN: da analyze - confused!
+; DELIN: da analyze - output [* *]!
 
 for.cond1.preheader.preheader:                    ; preds = %entry
   br label %for.cond1.preheader
