@@ -328,8 +328,9 @@ private:
   const VBTableGlobals &enumerateVBTables(const CXXRecordDecl *RD);
 
   /// \brief Generate a thunk for calling a virtual member function MD.
-  llvm::Function *EmitVirtualMemPtrThunk(const CXXMethodDecl *MD,
-                                         StringRef ThunkName);
+  llvm::Function *EmitVirtualMemPtrThunk(
+      const CXXMethodDecl *MD,
+      const MicrosoftVTableContext::MethodVFTableLocation &ML);
 
 public:
   virtual llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT);
@@ -1015,9 +1016,15 @@ MicrosoftCXXABI::enumerateVBTables(const CXXRecordDecl *RD) {
   return VBGlobals;
 }
 
-llvm::Function *
-MicrosoftCXXABI::EmitVirtualMemPtrThunk(const CXXMethodDecl *MD,
-                                        StringRef ThunkName) {
+llvm::Function *MicrosoftCXXABI::EmitVirtualMemPtrThunk(
+    const CXXMethodDecl *MD,
+    const MicrosoftVTableContext::MethodVFTableLocation &ML) {
+  // Calculate the mangled name.
+  SmallString<256> ThunkName;
+  llvm::raw_svector_ostream Out(ThunkName);
+  getMangleContext().mangleVirtualMemPtrThunk(MD, Out);
+  Out.flush();
+
   // If the thunk has been generated previously, just return it.
   if (llvm::GlobalValue *GV = CGM.getModule().getNamedValue(ThunkName))
     return cast<llvm::Function>(GV);
@@ -1041,9 +1048,14 @@ MicrosoftCXXABI::EmitVirtualMemPtrThunk(const CXXMethodDecl *MD,
   CodeGenFunction CGF(CGM);
   CGF.StartThunk(ThunkFn, MD, FnInfo);
 
-  // Get to the Callee.
+  // Load the vfptr and then callee from the vftable.  The callee should have
+  // adjusted 'this' so that the vfptr is at offset zero.
   llvm::Value *This = CGF.LoadCXXThis();
-  llvm::Value *Callee = getVirtualFunctionPointer(CGF, MD, This, ThunkTy);
+  llvm::Value *VTable =
+      CGF.GetVTablePtr(This, ThunkTy->getPointerTo()->getPointerTo());
+  llvm::Value *VFuncPtr =
+      CGF.Builder.CreateConstInBoundsGEP1_64(VTable, ML.Index, "vfn");
+  llvm::Value *Callee = CGF.Builder.CreateLoad(VFuncPtr);
 
   // Make the call and return the result.
   CGF.EmitCallAndReturnForThunk(MD, Callee, 0);
@@ -1523,13 +1535,10 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
                                "member function in virtual base class");
       FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
     } else {
-      SmallString<256> ThunkName;
-      llvm::raw_svector_ostream Out(ThunkName);
-      getMangleContext().mangleVirtualMemPtrThunk(MD, Out);
-      Out.flush();
-
-      llvm::Function *Thunk = EmitVirtualMemPtrThunk(MD, ThunkName.str());
+      llvm::Function *Thunk = EmitVirtualMemPtrThunk(MD, ML);
       FirstField = llvm::ConstantExpr::getBitCast(Thunk, CGM.VoidPtrTy);
+      // Include the vfptr adjustment if the method is in a non-primary vftable.
+      NonVirtualBaseAdjustment += ML.VFPtrOffset;
     }
   }
 

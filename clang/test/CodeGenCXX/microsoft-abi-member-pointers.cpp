@@ -560,6 +560,29 @@ int *load_data(A *a, int A::*mp) {
 }
 
 }
+
+namespace Test4 {
+
+struct A        { virtual void f(); };
+struct B        { virtual void g(); };
+struct C : A, B { virtual void g(); };
+
+void (C::*getmp())() {
+  return &C::g;
+}
+// CHECK-LABEL: define i64 @"\01?getmp@Test4@@YAP8C@1@AEXXZXZ"()
+// CHECK: store { i8*, i32 } { i8* bitcast (void (i8*)* @"\01??_9C@Test4@@$BA@AE" to i8*), i32 4 }, { i8*, i32 }* %{{.*}}
+//
+
+// CHECK-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_9C@Test4@@$BA@AE"(i8*)
+// CHECK-NOT:  getelementptr
+// CHECK:  load void (i8*)*** %{{.*}}
+// CHECK:  getelementptr inbounds void (i8*)** %{{.*}}, i64 0
+// CHECK-NOT:  getelementptr
+// CHECK:  call x86_thiscallcc void %
+
+}
+
 #else
 struct __virtual_inheritance A;
 #ifdef MEMFUN
