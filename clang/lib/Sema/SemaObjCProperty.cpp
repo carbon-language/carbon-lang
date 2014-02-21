@@ -1650,26 +1650,30 @@ static void DiagnoseUnimplementedAccessor(Sema &S,
 }
 
 void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
-                                      ObjCContainerDecl *CDecl) {
-  ObjCContainerDecl::PropertyMap NoNeedToImplPropMap;
-  ObjCInterfaceDecl *IDecl;
-  // Gather properties which need not be implemented in this class
-  // or category.
-  if (!(IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl)))
-    if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl)) {
-      // For categories, no need to implement properties declared in
-      // its primary class (and its super classes) if property is
-      // declared in one of those containers.
-      if ((IDecl = C->getClassInterface())) {
-        ObjCInterfaceDecl::PropertyDeclOrder PO;
-        IDecl->collectPropertiesToImplement(NoNeedToImplPropMap, PO);
-      }
-    }
-  if (IDecl)
-    CollectSuperClassPropertyImplementations(IDecl, NoNeedToImplPropMap);
-  
+                                           ObjCContainerDecl *CDecl,
+                                           bool SynthesizeProperties) {
   ObjCContainerDecl::PropertyMap PropMap;
-  CollectImmediateProperties(CDecl, PropMap, NoNeedToImplPropMap);
+  if (!SynthesizeProperties) {
+    ObjCContainerDecl::PropertyMap NoNeedToImplPropMap;
+    ObjCInterfaceDecl *IDecl;
+    // Gather properties which need not be implemented in this class
+    // or category.
+    if (!(IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl)))
+      if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl)) {
+        // For categories, no need to implement properties declared in
+        // its primary class (and its super classes) if property is
+        // declared in one of those containers.
+        if ((IDecl = C->getClassInterface())) {
+          ObjCInterfaceDecl::PropertyDeclOrder PO;
+          IDecl->collectPropertiesToImplement(NoNeedToImplPropMap, PO);
+        }
+      }
+    if (IDecl)
+      CollectSuperClassPropertyImplementations(IDecl, NoNeedToImplPropMap);
+    
+    CollectImmediateProperties(CDecl, PropMap, NoNeedToImplPropMap);
+  }
+
   if (PropMap.empty())
     return;
 

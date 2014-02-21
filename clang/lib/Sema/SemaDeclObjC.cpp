@@ -1927,12 +1927,13 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
   // Check and see if properties declared in the interface have either 1)
   // an implementation or 2) there is a @synthesize/@dynamic implementation
   // of the property in the @implementation.
-  if (const ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl))
-    if  (!(LangOpts.ObjCDefaultSynthProperties &&
-           LangOpts.ObjCRuntime.isNonFragile()) ||
-         IDecl->isObjCRequiresPropertyDefs())
-      DiagnoseUnimplementedProperties(S, IMPDecl, CDecl);
-      
+  if (const ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl)) {
+    bool SynthesizeProperties = LangOpts.ObjCDefaultSynthProperties &&
+                                LangOpts.ObjCRuntime.isNonFragile() &&
+                                !IDecl->isObjCRequiresPropertyDefs();
+    DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, SynthesizeProperties);
+  }
+
   SelectorSet ClsMap;
   for (ObjCImplementationDecl::classmeth_iterator
        I = IMPDecl->classmeth_begin(),
@@ -1978,7 +1979,8 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
            E = C->protocol_end(); PI != E; ++PI)
         CheckProtocolMethodDefs(*this, IMPDecl->getLocation(), *PI,
                                 IncompleteImpl, InsMap, ClsMap, CDecl);
-      DiagnoseUnimplementedProperties(S, IMPDecl, CDecl);
+      DiagnoseUnimplementedProperties(S, IMPDecl, CDecl,
+                                      /* SynthesizeProperties */ false);
     } 
   } else
     llvm_unreachable("invalid ObjCContainerDecl type.");

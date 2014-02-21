@@ -1228,10 +1228,11 @@ public:
   /// including in all categories except for category passed
   /// as argument.
   ObjCMethodDecl *lookupPropertyAccessor(const Selector Sel,
-                                         const ObjCCategoryDecl *Cat) const {
+                                         const ObjCCategoryDecl *Cat,
+                                         bool followsSuper = true) const {
     return lookupMethod(Sel, true/*isInstance*/,
                         false/*shallowCategoryLookup*/,
-                        true /* followsSuper */,
+                        followsSuper /* followsSuper */,
                         Cat);
   }
                           
