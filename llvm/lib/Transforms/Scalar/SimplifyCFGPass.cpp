@@ -145,7 +145,7 @@ static bool mergeEmptyReturnBlocks(Function &F) {
 /// iterativelySimplifyCFG - Call SimplifyCFG on all the blocks in the function,
 /// iterating until no more changes are made.
 static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
-                                   const DataLayout *TD) {
+                                   const DataLayout *DL) {
   bool Changed = false;
   bool LocalChange = true;
   while (LocalChange) {
@@ -154,7 +154,7 @@ static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
     // Loop over all of the basic blocks and remove them if they are unneeded...
     //
     for (Function::iterator BBIt = F.begin(); BBIt != F.end(); ) {
-      if (SimplifyCFG(BBIt++, TTI, TD)) {
+      if (SimplifyCFG(BBIt++, TTI, DL)) {
         LocalChange = true;
         ++NumSimpl;
       }
@@ -172,10 +172,10 @@ bool CFGSimplifyPass::runOnFunction(Function &F) {
     return false;
 
   const TargetTransformInfo &TTI = getAnalysis<TargetTransformInfo>();
-  const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
+  const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
   bool EverChanged = removeUnreachableBlocks(F);
   EverChanged |= mergeEmptyReturnBlocks(F);
-  EverChanged |= iterativelySimplifyCFG(F, TTI, TD);
+  EverChanged |= iterativelySimplifyCFG(F, TTI, DL);
 
   // If neither pass changed anything, we're done.
   if (!EverChanged) return false;
@@ -189,7 +189,7 @@ bool CFGSimplifyPass::runOnFunction(Function &F) {
     return true;
 
   do {
-    EverChanged = iterativelySimplifyCFG(F, TTI, TD);
+    EverChanged = iterativelySimplifyCFG(F, TTI, DL);
     EverChanged |= removeUnreachableBlocks(F);
   } while (EverChanged);
 

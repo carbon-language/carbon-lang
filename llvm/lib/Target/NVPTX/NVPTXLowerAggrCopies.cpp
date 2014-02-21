@@ -104,7 +104,7 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
   SmallVector<MemTransferInst *, 4> aggrMemcpys;
   SmallVector<MemSetInst *, 4> aggrMemsets;
 
-  DataLayout *TD = &getAnalysis<DataLayout>();
+  DataLayout *DL = &getAnalysis<DataLayout>();
   LLVMContext &Context = F.getParent()->getContext();
 
   //
@@ -120,7 +120,7 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
         if (load->hasOneUse() == false)
           continue;
 
-        if (TD->getTypeStoreSize(load->getType()) < MaxAggrCopySize)
+        if (DL->getTypeStoreSize(load->getType()) < MaxAggrCopySize)
           continue;
 
         User *use = *(load->use_begin());
@@ -166,7 +166,7 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
     StoreInst *store = dyn_cast<StoreInst>(*load->use_begin());
     Value *srcAddr = load->getOperand(0);
     Value *dstAddr = store->getOperand(1);
-    unsigned numLoads = TD->getTypeStoreSize(load->getType());
+    unsigned numLoads = DL->getTypeStoreSize(load->getType());
     Value *len = ConstantInt::get(Type::getInt32Ty(Context), numLoads);
 
     convertTransferToLoop(store, srcAddr, dstAddr, len, load->isVolatile(),

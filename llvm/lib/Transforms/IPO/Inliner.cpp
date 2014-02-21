@@ -124,7 +124,7 @@ static void AdjustCallerSSPLevel(Function *Caller, Function *Callee) {
 static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
                                  InlinedArrayAllocasTy &InlinedArrayAllocas,
                                  int InlineHistory, bool InsertLifetime,
-                                 const DataLayout *TD) {
+                                 const DataLayout *DL) {
   Function *Callee = CS.getCalledFunction();
   Function *Caller = CS.getCaller();
 
@@ -203,7 +203,7 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
       // If we don't have data layout information, and only one alloca is using
       // the target default, then we can't safely merge them because we can't
       // pick the greater alignment.
-      if (!TD && (!Align1 || !Align2) && Align1 != Align2)
+      if (!DL && (!Align1 || !Align2) && Align1 != Align2)
         continue;
       
       // The available alloca has to be in the right function, not in some other
@@ -225,8 +225,8 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
 
       if (Align1 != Align2) {
         if (!Align1 || !Align2) {
-          assert(TD && "DataLayout required to compare default alignments");
-          unsigned TypeAlign = TD->getABITypeAlignment(AI->getAllocatedType());
+          assert(DL && "DataLayout required to compare default alignments");
+          unsigned TypeAlign = DL->getABITypeAlignment(AI->getAllocatedType());
 
           Align1 = Align1 ? Align1 : TypeAlign;
           Align2 = Align2 ? Align2 : TypeAlign;
@@ -410,7 +410,7 @@ static bool InlineHistoryIncludes(Function *F, int InlineHistoryID,
 
 bool Inliner::runOnSCC(CallGraphSCC &SCC) {
   CallGraph &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
-  const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
+  const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
   const TargetLibraryInfo *TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
 
   SmallPtrSet<Function*, 8> SCCFunctions;
@@ -470,7 +470,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
 
   
   InlinedArrayAllocasTy InlinedArrayAllocas;
-  InlineFunctionInfo InlineInfo(&CG, TD);
+  InlineFunctionInfo InlineInfo(&CG, DL);
   
   // Now that we have all of the call sites, loop over them and inline them if
   // it looks profitable to do so.
@@ -519,7 +519,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
 
         // Attempt to inline the function.
         if (!InlineCallIfPossible(CS, InlineInfo, InlinedArrayAllocas,
-                                  InlineHistoryID, InsertLifetime, TD))
+                                  InlineHistoryID, InsertLifetime, DL))
           continue;
         ++NumInlined;
         

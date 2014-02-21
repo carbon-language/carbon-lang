@@ -162,7 +162,7 @@ private:
   ScatterMap Scattered;
   GatherList Gathered;
   unsigned ParallelLoopAccessMDKind;
-  const DataLayout *TDL;
+  const DataLayout *DL;
 };
 
 char Scalarizer::ID = 0;
@@ -240,7 +240,7 @@ bool Scalarizer::doInitialization(Module &M) {
 }
 
 bool Scalarizer::runOnFunction(Function &F) {
-  TDL = getAnalysisIfAvailable<DataLayout>();
+  DL = getAnalysisIfAvailable<DataLayout>();
   for (Function::iterator BBI = F.begin(), BBE = F.end(); BBI != BBE; ++BBI) {
     BasicBlock *BB = BBI;
     for (BasicBlock::iterator II = BB->begin(), IE = BB->end(); II != IE;) {
@@ -333,7 +333,7 @@ void Scalarizer::transferMetadata(Instruction *Op, const ValueVector &CV) {
 // the alignment of the vector, or 0 if the ABI default should be used.
 bool Scalarizer::getVectorLayout(Type *Ty, unsigned Alignment,
                                  VectorLayout &Layout) {
-  if (!TDL)
+  if (!DL)
     return false;
 
   // Make sure we're dealing with a vector.
@@ -343,15 +343,15 @@ bool Scalarizer::getVectorLayout(Type *Ty, unsigned Alignment,
 
   // Check that we're dealing with full-byte elements.
   Layout.ElemTy = Layout.VecTy->getElementType();
-  if (TDL->getTypeSizeInBits(Layout.ElemTy) !=
-      TDL->getTypeStoreSizeInBits(Layout.ElemTy))
+  if (DL->getTypeSizeInBits(Layout.ElemTy) !=
+      DL->getTypeStoreSizeInBits(Layout.ElemTy))
     return false;
 
   if (Alignment)
     Layout.VecAlign = Alignment;
   else
-    Layout.VecAlign = TDL->getABITypeAlignment(Layout.VecTy);
-  Layout.ElemSize = TDL->getTypeStoreSize(Layout.ElemTy);
+    Layout.VecAlign = DL->getABITypeAlignment(Layout.VecTy);
+  Layout.ElemSize = DL->getTypeStoreSize(Layout.ElemTy);
   return true;
 }
 

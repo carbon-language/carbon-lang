@@ -48,7 +48,7 @@ namespace {
       const DominatorTreeWrapperPass *DTWP =
           getAnalysisIfAvailable<DominatorTreeWrapperPass>();
       const DominatorTree *DT = DTWP ? &DTWP->getDomTree() : 0;
-      const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
+      const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
       const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
       SmallPtrSet<const Instruction*, 8> S1, S2, *ToSimplify = &S1, *Next = &S2;
       bool Changed = false;
@@ -65,7 +65,7 @@ namespace {
               continue;
             // Don't waste time simplifying unused instructions.
             if (!I->use_empty())
-              if (Value *V = SimplifyInstruction(I, TD, TLI, DT)) {
+              if (Value *V = SimplifyInstruction(I, DL, TLI, DT)) {
                 // Mark all uses for resimplification next time round the loop.
                 for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
                      UI != UE; ++UI)

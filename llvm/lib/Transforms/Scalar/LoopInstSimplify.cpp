@@ -72,7 +72,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DominatorTree *DT = DTWP ? &DTWP->getDomTree() : 0;
   LoopInfo *LI = &getAnalysis<LoopInfo>();
-  const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
+  const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
   const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
 
   SmallVector<BasicBlock*, 8> ExitBlocks;
@@ -114,7 +114,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
         // Don't bother simplifying unused instructions.
         if (!I->use_empty()) {
-          Value *V = SimplifyInstruction(I, TD, TLI, DT);
+          Value *V = SimplifyInstruction(I, DL, TLI, DT);
           if (V && LI->replacementPreservesLCSSAForm(I, V)) {
             // Mark all uses for resimplification next time round the loop.
             for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
