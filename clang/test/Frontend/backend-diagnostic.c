@@ -4,17 +4,17 @@
 // _PROMOTE_: Promote warning to error.
 // _IGNORE_: Drop backend warning.
 //
-// RUN: not %clang_cc1 %s -mllvm -warn-stack-size=0 -mllvm -no-integrated-as -S -o - -triple=i386-apple-darwin 2> %t.err
+// RUN: not %clang_cc1 %s -mllvm -warn-stack-size=0 -no-integrated-as -S -o - -triple=i386-apple-darwin 2> %t.err
 // RUN: FileCheck < %t.err %s --check-prefix=REGULAR --check-prefix=ASM
-// RUN: not %clang_cc1 %s -mllvm -warn-stack-size=0 -mllvm -no-integrated-as -S -o - -triple=i386-apple-darwin -Werror=frame-larger-than 2> %t.err
+// RUN: not %clang_cc1 %s -mllvm -warn-stack-size=0 -no-integrated-as -S -o - -triple=i386-apple-darwin -Werror=frame-larger-than 2> %t.err
 // RUN: FileCheck < %t.err %s --check-prefix=PROMOTE --check-prefix=ASM
-// RUN: not %clang_cc1 %s -mllvm -warn-stack-size=0 -mllvm -no-integrated-as -S -o - -triple=i386-apple-darwin -Wno-frame-larger-than 2> %t.err
+// RUN: not %clang_cc1 %s -mllvm -warn-stack-size=0 -no-integrated-as -S -o - -triple=i386-apple-darwin -Wno-frame-larger-than 2> %t.err
 // RUN: FileCheck < %t.err %s --check-prefix=IGNORE --check-prefix=ASM
 //
 // Currently the stack size reporting cannot be checked with -verify because
 //  no source location is attached to the diagnostic. Therefore do not emit
 // them for the -verify test for now.
-// RUN: %clang_cc1 %s -S -o - -triple=i386-apple-darwin -verify -mllvm -no-integrated-as
+// RUN: %clang_cc1 %s -S -o - -triple=i386-apple-darwin -verify -no-integrated-as
 
 extern void doIt(char *);
 
