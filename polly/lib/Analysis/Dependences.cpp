@@ -115,7 +115,7 @@ void Dependences::calculateDependences(Scop &S) {
 
   // The pointers below will be set by the subsequent calls to
   // isl_union_map_compute_flow.
-  WAW = WAW = WAR = NULL;
+  RAW = WAW = WAR = NULL;
 
   if (OptAnalysisType == VALUE_BASED_ANALYSIS) {
     isl_union_map_compute_flow(
