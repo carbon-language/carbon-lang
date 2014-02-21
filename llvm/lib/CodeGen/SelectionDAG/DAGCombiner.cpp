@@ -3818,6 +3818,24 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   if (VT.isVector()) {
     SDValue FoldedVOp = SimplifyVBinOp(N);
     if (FoldedVOp.getNode()) return FoldedVOp;
+
+    BuildVectorSDNode *N1CV = dyn_cast<BuildVectorSDNode>(N1);
+    // If setcc produces all-one true value then:
+    // (shl (and (setcc) N01CV) N1CV) -> (and (setcc) N01CV<<N1CV)
+    if (N1CV && N1CV->isConstant() &&
+        TLI.getBooleanContents(true) ==
+          TargetLowering::ZeroOrNegativeOneBooleanContent &&
+        N0.getOpcode() == ISD::AND) {
+      SDValue N00 = N0->getOperand(0);
+      SDValue N01 = N0->getOperand(1);
+      BuildVectorSDNode *N01CV = dyn_cast<BuildVectorSDNode>(N01);
+
+      if (N01CV && N01CV->isConstant() && N00.getOpcode() == ISD::SETCC) {
+        SDValue C = DAG.FoldConstantArithmetic(ISD::SHL, VT, N01CV, N1CV);
+        if (C.getNode())
+          return DAG.getNode(ISD::AND, SDLoc(N), VT, N00, C);
+      }
+    }
   }
 
   // fold (shl c1, c2) -> c1<<c2
