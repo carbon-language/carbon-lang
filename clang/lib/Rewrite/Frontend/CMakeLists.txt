@@ -13,17 +13,6 @@ add_clang_library(clangRewriteFrontend
   RewriteTest.cpp
   )
 
-add_dependencies(clangRewriteFrontend
-  ClangAttrClasses
-  ClangAttrList
-  ClangAttrParsedAttrList
-  ClangCommentNodes
-  ClangDeclNodes
-  ClangDiagnosticCommon
-  ClangDiagnosticFrontend
-  ClangStmtNodes
-  )
-
 target_link_libraries(clangRewriteFrontend
   clangAST
   clangBasic

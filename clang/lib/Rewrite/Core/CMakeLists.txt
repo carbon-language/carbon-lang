@@ -10,17 +10,6 @@ add_clang_library(clangRewriteCore
   TokenRewriter.cpp
   )
 
-add_dependencies(clangRewriteCore
-  ClangAttrClasses
-  ClangAttrList
-  ClangAttrParsedAttrList
-  ClangCommentNodes
-  ClangDeclNodes
-  ClangDiagnosticCommon
-  ClangDiagnosticFrontend
-  ClangStmtNodes
-  )
-
 target_link_libraries(clangRewriteCore
   clangAST
   clangBasic

@@ -268,6 +268,7 @@ function(clang_tablegen)
   if( CTG_TARGET )
     add_custom_target( ${CTG_TARGET} DEPENDS ${output_file} ${CTG_DEPENDS} )
     set_target_properties( ${CTG_TARGET} PROPERTIES FOLDER "Clang tablegenning")
+    set_property(GLOBAL APPEND PROPERTY CLANG_TABLEGEN_TARGETS ${CTG_TARGET})
   endif()
 endfunction(clang_tablegen)
 
@@ -405,6 +406,11 @@ mark_as_advanced(CLANG_EXECUTABLE_VERSION LIBCLANG_LIBRARY_VERSION)
 add_subdirectory(utils/TableGen)
 
 add_subdirectory(include)
+
+# All targets below may depend on all tablegen'd files.
+get_property(CLANG_TABLEGEN_TARGETS GLOBAL PROPERTY CLANG_TABLEGEN_TARGETS)
+list(APPEND LLVM_COMMON_DEPENDS ${CLANG_TABLEGEN_TARGETS})
+
 add_subdirectory(lib)
 add_subdirectory(tools)
 add_subdirectory(runtime)

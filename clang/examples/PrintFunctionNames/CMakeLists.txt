@@ -10,13 +10,3 @@ if( NOT WIN32 ) # Win32 mangles symbols differently, and
 endif()
 
 add_llvm_loadable_module(PrintFunctionNames PrintFunctionNames.cpp)
-
-add_dependencies(PrintFunctionNames
-  ClangAttrClasses
-  ClangAttrList
-  ClangCommentCommandList
-  ClangCommentNodes
-  ClangDeclNodes
-  ClangDiagnosticCommon
-  ClangStmtNodes
-  )

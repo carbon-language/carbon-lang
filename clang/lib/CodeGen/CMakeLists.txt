@@ -60,17 +60,6 @@ add_clang_library(clangCodeGen
   TargetInfo.cpp
   )
 
-add_dependencies(clangCodeGen
-  ClangARMNeon
-  ClangAttrClasses
-  ClangAttrList
-  ClangCommentNodes
-  ClangDeclNodes
-  ClangDiagnosticCommon
-  ClangDiagnosticFrontend
-  ClangStmtNodes
-  )
-
 target_link_libraries(clangCodeGen
   clangBasic
   clangAST

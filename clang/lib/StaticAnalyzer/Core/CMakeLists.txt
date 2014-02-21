@@ -41,15 +41,6 @@ add_clang_library(clangStaticAnalyzerCore
   SymbolManager.cpp
   )
 
-add_dependencies(clangStaticAnalyzerCore
-  ClangAttrClasses
-  ClangAttrList
-  ClangCommentNodes
-  ClangDeclNodes
-  ClangDiagnosticCommon
-  ClangStmtNodes
-  )
-
 target_link_libraries(clangStaticAnalyzerCore
   clangAST
   clangAnalysis

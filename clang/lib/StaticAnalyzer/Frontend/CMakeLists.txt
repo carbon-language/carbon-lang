@@ -10,16 +10,6 @@ add_clang_library(clangStaticAnalyzerFrontend
   FrontendActions.cpp
   )
 
-add_dependencies(clangStaticAnalyzerFrontend
-  ClangAttrClasses
-  ClangAttrList
-  ClangCommentNodes
-  ClangDeclNodes
-  ClangDiagnosticCommon
-  ClangDiagnosticFrontend
-  ClangStmtNodes
-  )
-
 target_link_libraries(clangStaticAnalyzerFrontend
   clangAST
   clangAnalysis

@@ -53,19 +53,6 @@ set(LIBRARIES
   clangTooling
   )
 
-set(GENERATED_HEADERS
-  ClangAttrClasses
-  ClangAttrList
-  ClangAttrParsedAttrList
-  ClangAttrVisitor
-  ClangCommentCommandList
-  ClangCommentNodes
-  ClangDiagnosticCommon
-  ClangDiagnosticFrontend
-  ClangDeclNodes
-  ClangStmtNodes
-  )
-
 option(LIBCLANG_BUILD_STATIC
   "Build libclang as a static library (in addition to a shared one)" OFF)
 
@@ -79,9 +66,11 @@ if(MSVC)
 endif()
 
 if( LLVM_ENABLE_PIC )
-  add_clang_library(libclang SHARED ${SOURCES})
+  add_clang_library(libclang SHARED
+    ${SOURCES}
+    DEPENDS clang-headers
+    )
   target_link_libraries(libclang ${LIBRARIES})
-  add_dependencies(libclang ${GENERATED_HEADERS} clang-headers)
 
   if(WIN32)
     set_target_properties(libclang
@@ -120,7 +109,6 @@ endif()
 if( (NOT LLVM_ENABLE_PIC OR LIBCLANG_BUILD_STATIC) AND NOT WIN32 )
   add_clang_library(${LIBCLANG_STATIC_TARGET_NAME} STATIC ${SOURCES})
   target_link_libraries(${LIBCLANG_STATIC_TARGET_NAME} ${LIBRARIES})
-  add_dependencies(${LIBCLANG_STATIC_TARGET_NAME} ${GENERATED_HEADERS} clang-headers)
 
   set_target_properties(${LIBCLANG_STATIC_TARGET_NAME}
     PROPERTIES

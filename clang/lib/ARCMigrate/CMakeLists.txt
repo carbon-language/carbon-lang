@@ -25,18 +25,6 @@ add_clang_library(clangARCMigrate
   Transforms.cpp
   )
 
-add_dependencies(clangARCMigrate
-  ClangAttrClasses
-  ClangAttrList
-  ClangAttrParsedAttrList
-  ClangCommentNodes
-  ClangDeclNodes
-  ClangDiagnosticCommon
-  ClangDiagnosticGroups
-  ClangDiagnosticSema
-  ClangStmtNodes
-  )
-
 target_link_libraries(clangARCMigrate
   clangAST
   clangAnalysis
