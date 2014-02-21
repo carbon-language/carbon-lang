@@ -25,6 +25,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
@@ -219,6 +220,13 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
 
 void BlockGenerator::copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
                                     ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
+
+  // We do not generate debug intrinsics as we did not investigate how to
+  // copy them correctly. At the current state, they just crash the code
+  // generation as the meta-data operands are not correctly copied.
+  if (isa<DbgInfoIntrinsic>(Inst))
+    return;
+
   Instruction *NewInst = Inst->clone();
 
   // Replace old operands with the new ones.
