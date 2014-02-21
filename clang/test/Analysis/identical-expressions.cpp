@@ -1287,6 +1287,17 @@ void test_identical_branches_while(bool b) {
   }
 }
 
+void test_identical_branches_while_2(bool b) {
+  int i = 10;
+  if (b) { // no-warning
+    while (func())
+      i--;
+  } else {
+    while (func())
+      i++;
+  }
+}
+
 void test_identical_branches_do_while(bool b) {
   int i = 10;
   if (b) { // expected-warning {{true and false branches are identical}}

@@ -361,8 +361,13 @@ static bool isIdenticalStmt(const ASTContext &Ctx, const Stmt *Stmt1,
     const WhileStmt *WStmt1 = cast<WhileStmt>(Stmt1);
     const WhileStmt *WStmt2 = cast<WhileStmt>(Stmt2);
 
-    return isIdenticalStmt(Ctx, WStmt1->getCond(), WStmt2->getCond(),
-                           IgnoreSideEffects);
+    if (!isIdenticalStmt(Ctx, WStmt1->getCond(), WStmt2->getCond(),
+                         IgnoreSideEffects))
+      return false;
+    if (!isIdenticalStmt(Ctx, WStmt1->getBody(), WStmt2->getBody(),
+                         IgnoreSideEffects))
+      return false;
+    return true;
   }
   case Stmt::IfStmtClass: {
     const IfStmt *IStmt1 = cast<IfStmt>(Stmt1);
