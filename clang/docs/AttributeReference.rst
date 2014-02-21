@@ -291,6 +291,71 @@ not ODR-equivalent.
 Query for this feature with ``__has_attribute(enable_if)``.
 
 
+format (gnu::format)
+--------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "X","X","",""
+
+Clang supports the ``format`` attribute, which indicates that the function
+accepts a ``printf`` or ``scanf``-like format string and corresponding
+arguments or a ``va_list`` that contains these arguments.
+
+Please see `GCC documentation about format attribute
+<http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html>`_ to find details
+about attribute syntax.
+
+Clang implements two kinds of checks with this attribute.
+
+#. Clang checks that the function with the ``format`` attribute is called with
+   a format string that uses format specifiers that are allowed, and that
+   arguments match the format string.  This is the ``-Wformat`` warning, it is
+   on by default.
+
+#. Clang checks that the format string argument is a literal string.  This is
+   the ``-Wformat-nonliteral`` warning, it is off by default.
+
+   Clang implements this mostly the same way as GCC, but there is a difference
+   for functions that accept a ``va_list`` argument (for example, ``vprintf``).
+   GCC does not emit ``-Wformat-nonliteral`` warning for calls to such
+   fuctions.  Clang does not warn if the format string comes from a function
+   parameter, where the function is annotated with a compatible attribute,
+   otherwise it warns.  For example:
+
+   .. code-block:: c
+
+     __attribute__((__format__ (__scanf__, 1, 3)))
+     void foo(const char* s, char *buf, ...) {
+       va_list ap;
+       va_start(ap, buf);
+
+       vprintf(s, ap); // warning: format string is not a string literal
+     }
+
+   In this case we warn because ``s`` contains a format string for a
+   ``scanf``-like function, but it is passed to a ``printf``-like function.
+
+   If the attribute is removed, clang still warns, because the format string is
+   not a string literal.
+
+   Another example:
+
+   .. code-block:: c
+
+     __attribute__((__format__ (__printf__, 1, 3)))
+     void foo(const char* s, char *buf, ...) {
+       va_list ap;
+       va_start(ap, buf);
+
+       vprintf(s, ap); // warning
+     }
+
+   In this case Clang does not warn because the format string ``s`` and
+   the corresponding arguments are annotated.  If the arguments are
+   incorrect, the caller of ``foo`` will receive a warning.
+
+
 no_sanitize_address (no_address_safety_analysis, gnu::no_address_safety_analysis, gnu::no_sanitize_address)
 -----------------------------------------------------------------------------------------------------------
 .. csv-table:: Supported Syntaxes
