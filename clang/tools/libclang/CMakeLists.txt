@@ -1,8 +1,3 @@
-set(LLVM_LINK_COMPONENTS
-  BitReader
-  Support
-  )
-
 set(SOURCES
   ARCMigrate.cpp
   BuildSystem.cpp
@@ -42,17 +37,6 @@ set(SOURCES
   ../../include/clang-c/Index.h
   )
 
-set(LIBRARIES
-  clangARCMigrate
-  clangAST
-  clangBasic
-  clangFrontend
-  clangIndex
-  clangLex
-  clangSema
-  clangTooling
-  )
-
 option(LIBCLANG_BUILD_STATIC
   "Build libclang as a static library (in addition to a shared one)" OFF)
 
@@ -66,22 +50,48 @@ if(MSVC)
 endif()
 
 if( LLVM_ENABLE_PIC )
-  add_clang_library(libclang SHARED
-    ${SOURCES}
-    DEPENDS clang-headers
-    )
-  target_link_libraries(libclang ${LIBRARIES})
+  set(ENABLE_SHARED SHARED)
+endif()
 
+if((NOT LLVM_ENABLE_PIC OR LIBCLANG_BUILD_STATIC) AND NOT WIN32)
+  set(ENABLE_STATIC STATIC)
+endif()
+
+if(WIN32)
+  set(output_name "libclang")
+else()
+  set(output_name "clang")
+endif()
+
+add_clang_library(libclang ${ENABLE_SHARED} ${ENABLE_STATIC}
+  OUTPUT_NAME ${output_name}
+  ${SOURCES}
+  DEPENDS clang-headers
+
+  LINK_LIBS
+  clangARCMigrate
+  clangAST
+  clangBasic
+  clangFrontend
+  clangIndex
+  clangLex
+  clangSema
+  clangTooling
+
+  LINK_COMPONENTS
+  BitReader
+  Support
+  )
+
+if(ENABLE_SHARED)
   if(WIN32)
     set_target_properties(libclang
       PROPERTIES
-      OUTPUT_NAME "libclang"
       VERSION ${LIBCLANG_LIBRARY_VERSION}
       DEFINE_SYMBOL _CINDEX_LIB_)
   else()
     set_target_properties(libclang
       PROPERTIES
-      OUTPUT_NAME "clang"
       VERSION ${LIBCLANG_LIBRARY_VERSION}
       DEFINE_SYMBOL _CINDEX_LIB_)
   endif()
@@ -99,18 +109,4 @@ if( LLVM_ENABLE_PIC )
       PROPERTIES
       INSTALL_NAME_DIR "@rpath")
   endif()
-
-
-  set(LIBCLANG_STATIC_TARGET_NAME libclang_static)
-else()
-  set(LIBCLANG_STATIC_TARGET_NAME libclang)
-endif()
-
-if( (NOT LLVM_ENABLE_PIC OR LIBCLANG_BUILD_STATIC) AND NOT WIN32 )
-  add_clang_library(${LIBCLANG_STATIC_TARGET_NAME} STATIC ${SOURCES})
-  target_link_libraries(${LIBCLANG_STATIC_TARGET_NAME} ${LIBRARIES})
-
-  set_target_properties(${LIBCLANG_STATIC_TARGET_NAME}
-    PROPERTIES
-    OUTPUT_NAME "clang")
 endif()
