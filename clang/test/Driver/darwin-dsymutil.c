@@ -43,3 +43,6 @@
 // RUN: FileCheck -check-prefix=CHECK-LOCATION < %t %s
 
 // CHECK-LOCATION: "x86_64-apple-darwin10" - "darwin::Dsymutil", inputs: ["bar/foo"], output: "bar/foo.dSYM"
+
+// Check that we don't crash when translating arguments for dsymutil.
+// RUN: %clang -m32 -arch x86_64 -g %s -###
