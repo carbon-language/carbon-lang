@@ -1505,7 +1505,6 @@ struct DependencyChecker : RecursiveASTVisitor<DependencyChecker> {
   }
 
   bool Matches(unsigned ParmDepth, SourceLocation Loc = SourceLocation()) {
-    llvm::errs() << "Found " << ParmDepth << " vs " << Depth << "\n";
     if (ParmDepth >= Depth) {
       Match = true;
       MatchLoc = Loc;
