@@ -160,8 +160,20 @@ private:
                                           const lldb_private::RegisterInfo *reg_info,
                                           const lldb_private::RegisterValue &value);
 
-    void
-    InvalidateFullUnwindPlan ();
+    //------------------------------------------------------------------
+    /// If the unwind has to the caller frame has failed, try something else
+    ///
+    /// If lldb is using an assembly language based UnwindPlan for a frame and
+    /// the unwind to the caller frame fails, try falling back to a generic
+    /// UnwindPlan (architecture default unwindplan) to see if that might work
+    /// better.  This is mostly helping to work around problems where the 
+    /// assembly language inspection fails on hand-written assembly code.
+    ///
+    /// @return
+    ///     Returns true if a fallback unwindplan was found & was installed.
+    //------------------------------------------------------------------
+    bool
+    TryFallbackUnwindPlan ();
 
     // Get the contents of a general purpose (address-size) register for this frame
     // (usually retrieved from the next frame)
@@ -191,8 +203,10 @@ private:
     // i.e. where THIS frame saved them
     ///
 
-    lldb::UnwindPlanSP m_fast_unwind_plan_sp;  // may be NULL
+    lldb::UnwindPlanSP m_fast_unwind_plan_sp;     // may be NULL
     lldb::UnwindPlanSP m_full_unwind_plan_sp;
+    lldb::UnwindPlanSP m_fallback_unwind_plan_sp; // may be NULL
+
     bool m_all_registers_available;               // Can we retrieve all regs or just nonvolatile regs?
     int m_frame_type;                             // enum FrameType
 

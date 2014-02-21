@@ -158,6 +158,12 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
 
     if (reg_ctx_sp.get() == NULL)
     {
+        // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
+        // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
+        if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+        {
+            return AddOneMoreFrame (abi);
+        }
         if (log)
             log->Printf ("%*sFrame %d did not get a RegisterContext, stopping.",
                          cur_idx < 100 ? cur_idx : 100, "", cur_idx);
@@ -166,6 +172,12 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
 
     if (!reg_ctx_sp->IsValid())
     {
+        // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
+        // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
+        if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+        {
+            return AddOneMoreFrame (abi);
+        }
         if (log)
         {
             log->Printf("%*sFrame %d invalid RegisterContext for this frame, stopping stack walk", 
@@ -175,6 +187,12 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
     }
     if (!reg_ctx_sp->GetCFA (cursor_sp->cfa))
     {
+        // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
+        // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
+        if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+        {
+            return AddOneMoreFrame (abi);
+        }
         if (log)
         {
             log->Printf("%*sFrame %d did not get CFA for this frame, stopping stack walk",
@@ -189,6 +207,12 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
         // these.
         if (reg_ctx_sp->IsTrapHandlerFrame() == false)
         {
+            // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
+            // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
+            if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+            {
+                return AddOneMoreFrame (abi);
+            }
             if (log)
             {
                 log->Printf("%*sFrame %d did not get a valid CFA for this frame, stopping stack walk",
@@ -199,6 +223,12 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
     }
     if (!reg_ctx_sp->ReadPC (cursor_sp->start_pc))
     {
+        // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
+        // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
+        if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+        {
+            return AddOneMoreFrame (abi);
+        }
         if (log)
         {
             log->Printf("%*sFrame %d did not get PC for this frame, stopping stack walk",
@@ -208,6 +238,12 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
     }
     if (abi && !abi->CodeAddressIsValid (cursor_sp->start_pc))
     {
+        // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
+        // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
+        if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+        {
+            return AddOneMoreFrame (abi);
+        }
         if (log)
         {
             log->Printf("%*sFrame %d did not get a valid PC, stopping stack walk",

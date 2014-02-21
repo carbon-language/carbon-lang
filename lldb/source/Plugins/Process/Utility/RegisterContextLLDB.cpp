@@ -50,6 +50,7 @@ RegisterContextLLDB::RegisterContextLLDB
     m_thread(thread),
     m_fast_unwind_plan_sp (),
     m_full_unwind_plan_sp (),
+    m_fallback_unwind_plan_sp (),
     m_all_registers_available(false),
     m_frame_type (-1),
     m_cfa (LLDB_INVALID_ADDRESS),
@@ -764,8 +765,10 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     {
         m_fast_unwind_plan_sp.reset();
         unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (m_current_offset_backed_up_one);
-        if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc))
+        if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc) && unwind_plan_sp->GetSourcedFromCompiler() == eLazyBoolYes)
+        {
             return unwind_plan_sp;
+        }
     }
 
     // Ask the DynamicLoader if the eh_frame CFI should be trusted in this frame even when it's frame zero
@@ -791,6 +794,15 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
         unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtNonCallSite (m_thread);
         if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc))
         {
+            if (unwind_plan_sp->GetSourcedFromCompiler() == eLazyBoolNo)
+            {
+                // We probably have an UnwindPlan created by inspecting assembly instructions, and we probably
+                // don't have any eh_frame instructions available.
+                // The assembly profilers work really well with compiler-generated functions but hand-written
+                // assembly can be problematic.  We'll set the architecture default UnwindPlan as our fallback
+                // UnwindPlan in case this doesn't work out when we try to unwind.
+                m_fallback_unwind_plan_sp = arch_default_unwind_plan_sp;
+            }
             UnwindLogMsgVerbose ("frame uses %s for full UnwindPlan", unwind_plan_sp->GetSourceName().GetCString());
             return unwind_plan_sp;
         }
@@ -808,6 +820,16 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     // We'd prefer to use an UnwindPlan intended for call sites when we're at a call site but if we've
     // struck out on that, fall back to using the non-call-site assembly inspection UnwindPlan if possible.
     unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtNonCallSite (m_thread);
+    if (unwind_plan_sp->GetSourcedFromCompiler() == eLazyBoolNo)
+    {
+        // We probably have an UnwindPlan created by inspecting assembly instructions, and we probably
+        // don't have any eh_frame instructions available.
+        // The assembly profilers work really well with compiler-generated functions but hand-written
+        // assembly can be problematic.  We'll set the architecture default UnwindPlan as our fallback
+        // UnwindPlan in case this doesn't work out when we try to unwind.
+        m_fallback_unwind_plan_sp = arch_default_unwind_plan_sp;
+    }
+
     if (IsUnwindPlanValidForCurrentPC(unwind_plan_sp, valid_offset))
     {
         UnwindLogMsgVerbose ("frame uses %s for full UnwindPlan", unwind_plan_sp->GetSourceName().GetCString());
@@ -1176,21 +1198,22 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
                               m_full_unwind_plan_sp->GetSourceName().GetCString());
 
                 // Throw away the full unwindplan; install the arch default unwindplan
-                InvalidateFullUnwindPlan();
-
-                // Now re-fetch the pc value we're searching for
-                uint32_t arch_default_pc_reg = LLDB_INVALID_REGNUM;
-                UnwindPlan::RowSP active_row = m_full_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
-                if (m_thread.GetRegisterContext()->ConvertBetweenRegisterKinds (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, m_full_unwind_plan_sp->GetRegisterKind(), arch_default_pc_reg)
-                    && arch_default_pc_reg != LLDB_INVALID_REGNUM
-                    && active_row
-                    && active_row->GetRegisterInfo (arch_default_pc_reg, unwindplan_regloc))
+                if (TryFallbackUnwindPlan())
                 {
-                    have_unwindplan_regloc = true;
-                }
-                else
-                {
-                    have_unwindplan_regloc = false;
+                    // Now re-fetch the pc value we're searching for
+                    uint32_t arch_default_pc_reg = LLDB_INVALID_REGNUM;
+                    UnwindPlan::RowSP active_row = m_full_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
+                    if (m_thread.GetRegisterContext()->ConvertBetweenRegisterKinds (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, m_full_unwind_plan_sp->GetRegisterKind(), arch_default_pc_reg)
+                        && arch_default_pc_reg != LLDB_INVALID_REGNUM
+                        && active_row
+                        && active_row->GetRegisterInfo (arch_default_pc_reg, unwindplan_regloc))
+                    {
+                        have_unwindplan_regloc = true;
+                    }
+                    else
+                    {
+                        have_unwindplan_regloc = false;
+                    }
                 }
             }
         }
@@ -1333,54 +1356,48 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
 }
 
 // If the Full unwindplan has been determined to be incorrect, this method will
-// replace it with the architecture's default unwindplna, if one is defined.
+// replace it with the architecture's default unwindplan, if one is defined.
 // It will also find the FuncUnwinders object for this function and replace the
 // Full unwind method for the function there so we don't use the errant Full unwindplan
 // again in the future of this debug session.
 // We're most likely doing this because the Full unwindplan was generated by assembly
 // instruction profiling and the profiler got something wrong.
 
-void
-RegisterContextLLDB::InvalidateFullUnwindPlan ()
+bool
+RegisterContextLLDB::TryFallbackUnwindPlan ()
 {
     UnwindPlan::Row::RegisterLocation unwindplan_regloc;
-    ExecutionContext exe_ctx (m_thread.shared_from_this());
-    Process *process = exe_ctx.GetProcessPtr();
-    ABI *abi = process ? process->GetABI().get() : NULL;
-    if (abi)
-    {
-        UnwindPlanSP original_full_unwind_plan_sp = m_full_unwind_plan_sp;
-        UnwindPlanSP arch_default_unwind_plan_sp;
-        arch_default_unwind_plan_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
-        abi->CreateDefaultUnwindPlan(*arch_default_unwind_plan_sp);
-        if (arch_default_unwind_plan_sp)
-        {
-            UnwindPlan::RowSP active_row = arch_default_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
-        
-            if (active_row && active_row->GetCFARegister() != LLDB_INVALID_REGNUM)
-            {
-                FuncUnwindersSP func_unwinders_sp;
-                if (m_sym_ctx_valid && m_current_pc.IsValid() && m_current_pc.GetModule())
-                {
-                    func_unwinders_sp = m_current_pc.GetModule()->GetObjectFile()->GetUnwindTable().GetFuncUnwindersContainingAddress (m_current_pc, m_sym_ctx);
-                    if (func_unwinders_sp)
-                    {
-                        func_unwinders_sp->InvalidateNonCallSiteUnwindPlan (m_thread);
-                    }
-                }
-                m_registers.clear();
-                m_full_unwind_plan_sp = arch_default_unwind_plan_sp;
-                addr_t cfa_regval = LLDB_INVALID_ADDRESS;
-                if (ReadGPRValue (arch_default_unwind_plan_sp->GetRegisterKind(), active_row->GetCFARegister(), cfa_regval))
-                {
-                    m_cfa = cfa_regval + active_row->GetCFAOffset ();
-                }
+    if (m_fallback_unwind_plan_sp.get() == NULL)
+        return false;
 
-                UnwindLogMsg ("full unwind plan '%s' has been replaced by architecture default unwind plan '%s' for this function from now on.",
-                              original_full_unwind_plan_sp->GetSourceName().GetCString(), arch_default_unwind_plan_sp->GetSourceName().GetCString());
+    UnwindPlanSP original_full_unwind_plan_sp = m_full_unwind_plan_sp;
+    UnwindPlan::RowSP active_row = m_fallback_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
+    
+    if (active_row && active_row->GetCFARegister() != LLDB_INVALID_REGNUM)
+    {
+        FuncUnwindersSP func_unwinders_sp;
+        if (m_sym_ctx_valid && m_current_pc.IsValid() && m_current_pc.GetModule())
+        {
+            func_unwinders_sp = m_current_pc.GetModule()->GetObjectFile()->GetUnwindTable().GetFuncUnwindersContainingAddress (m_current_pc, m_sym_ctx);
+            if (func_unwinders_sp)
+            {
+                func_unwinders_sp->InvalidateNonCallSiteUnwindPlan (m_thread);
             }
         }
+        m_registers.clear();
+        m_full_unwind_plan_sp = m_fallback_unwind_plan_sp;
+        addr_t cfa_regval = LLDB_INVALID_ADDRESS;
+        if (ReadGPRValue (m_fallback_unwind_plan_sp->GetRegisterKind(), active_row->GetCFARegister(), cfa_regval))
+        {
+            m_cfa = cfa_regval + active_row->GetCFAOffset ();
+        }
+
+        UnwindLogMsg ("full unwind plan '%s' has been replaced by architecture default unwind plan '%s' for this function from now on.",
+                      original_full_unwind_plan_sp->GetSourceName().GetCString(), m_fallback_unwind_plan_sp->GetSourceName().GetCString());
+        m_fallback_unwind_plan_sp.reset();
     }
+
+    return true;
 }
 
 // Retrieve a general purpose register value for THIS frame, as saved by the NEXT frame, i.e. the frame that
