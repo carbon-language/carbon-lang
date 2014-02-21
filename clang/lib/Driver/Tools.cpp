@@ -567,6 +567,11 @@ static void getARMFPUFeatures(const Driver &D, const Arg *A,
   } else if (FPU == "vfp4" || FPU == "vfpv4") {
     Features.push_back("+vfp4");
     Features.push_back("-neon");
+  } else if (FPU == "fp4-sp-d16" || FPU == "fpv4-sp-d16") {
+    Features.push_back("+vfp4");
+    Features.push_back("+d16");
+    Features.push_back("+fp-only-sp");
+    Features.push_back("-neon");
   } else if (FPU == "fp-armv8") {
     Features.push_back("+fp-armv8");
     Features.push_back("-neon");
