@@ -17,6 +17,7 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ErrorOr.h"
+#include "llvm/Support/SourceMgr.h"
 
 namespace llvm {
 class MemoryBuffer;
@@ -156,6 +157,17 @@ public:
   llvm::error_code openFileForRead(const Twine &Path,
                                    OwningPtr<File> &Result) LLVM_OVERRIDE;
 };
+
+/// \brief Get a globally unique ID for a virtual file or directory.
+llvm::sys::fs::UniqueID getNextVirtualUniqueID();
+
+/// \brief Gets a \p FileSystem for a virtual file system described in YAML
+/// format.
+///
+/// Takes ownership of \p Buffer.
+IntrusiveRefCntPtr<FileSystem>
+getVFSFromYAML(llvm::MemoryBuffer *Buffer, llvm::SourceMgr::DiagHandlerTy,
+               IntrusiveRefCntPtr<FileSystem> ExternalFS = getRealFileSystem());
 
 } // end namespace vfs
 } // end namespace clang
