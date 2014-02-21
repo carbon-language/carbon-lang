@@ -306,7 +306,7 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
     return 0;
   }
 
-  assert(openFile || !F && "undesired open file");
+  assert((openFile || !F) && "undesired open file");
 
   // It exists.  See if we have already opened a file with the same inode.
   // This occurs when one dir is symlinked to another, for example.
