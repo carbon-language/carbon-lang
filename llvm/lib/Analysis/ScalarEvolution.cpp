@@ -7255,46 +7255,37 @@ SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
 
   DEBUG(dbgs() << "(delinearize: " << *this << "\n");
 
-  // Currently we fail to delinearize when the stride of this SCEV is 1. We
-  // could decide to not fail in this case: we could just return 1 for the size
-  // of the subscript, and this same SCEV for the access function.
-  if (Step == One) {
-    DEBUG(dbgs() << "failed to delinearize " << *this << "\n)\n");
-    return this;
-  }
+  // When the stride of this SCEV is 1, do not compute the GCD: the size of this
+  // subscript is 1, and this same SCEV for the access function.
+  const SCEV *Remainder = Zero;
+  const SCEV *GCD = One;
 
   // Find the GCD and Remainder of the Start and Step coefficients of this SCEV.
-  const SCEV *Remainder = NULL;
-  const SCEV *GCD = SCEVGCD::findGCD(SE, Start, Step, &Remainder);
+  if (Step != One && !Step->isAllOnesValue())
+    GCD = SCEVGCD::findGCD(SE, Start, Step, &Remainder);
 
   DEBUG(dbgs() << "GCD: " << *GCD << "\n");
   DEBUG(dbgs() << "Remainder: " << *Remainder << "\n");
 
-  // Same remark as above: we currently fail the delinearization, although we
-  // can very well handle this special case.
-  if (GCD == One) {
-    DEBUG(dbgs() << "failed to delinearize " << *this << "\n)\n");
-    return this;
-  }
+  const SCEV *Quotient = Start;
+  if (GCD != One && !GCD->isAllOnesValue())
+    // As findGCD computed Remainder, GCD divides "Start - Remainder." The
+    // Quotient is then this SCEV without Remainder, scaled down by the GCD.  The
+    // Quotient is what will be used in the next subscript delinearization.
+    Quotient = SCEVDivision::divide(SE, SE.getMinusSCEV(Start, Remainder), GCD);
 
-  // As findGCD computed Remainder, GCD divides "Start - Remainder." The
-  // Quotient is then this SCEV without Remainder, scaled down by the GCD.  The
-  // Quotient is what will be used in the next subscript delinearization.
-  const SCEV *Quotient =
-      SCEVDivision::divide(SE, SE.getMinusSCEV(Start, Remainder), GCD);
   DEBUG(dbgs() << "Quotient: " << *Quotient << "\n");
 
-  const SCEV *Rem;
+  const SCEV *Rem = Quotient;
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Quotient))
     // Recursively call delinearize on the Quotient until there are no more
     // multiples that can be recognized.
     Rem = AR->delinearize(SE, Subscripts, Sizes);
-  else
-    Rem = Quotient;
 
   // Scale up the canonical induction variable IV by whatever remains from the
   // Step after division by the GCD: the GCD is the size of all the sub-array.
-  if (Step != GCD) {
+  if (Step != One && !Step->isAllOnesValue() && GCD != One &&
+      !GCD->isAllOnesValue() && Step != GCD) {
     Step = SCEVDivision::divide(SE, Step, GCD);
     IV = SE.getMulExpr(IV, Step);
   }
