@@ -3905,6 +3905,61 @@ static void handleCapabilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                                         Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleAssertCapabilityAttr(Sema &S, Decl *D,
+                                       const AttributeList &Attr) {
+  D->addAttr(::new (S.Context) AssertCapabilityAttr(Attr.getRange(), S.Context,
+                                                    Attr.getArgAsExpr(0),
+                                        Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleAcquireCapabilityAttr(Sema &S, Decl *D,
+                                        const AttributeList &Attr) {
+  SmallVector<Expr*, 1> Args;
+  if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
+    return;
+
+  // Check that all arguments are lockable objects.
+  checkAttrArgsAreLockableObjs(S, D, Attr, Args);
+  if (Args.empty())
+    return;
+
+  D->addAttr(::new (S.Context) AcquireCapabilityAttr(Attr.getRange(),
+                                                     S.Context,
+                                                     Args.data(), Args.size(),
+                                        Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleTryAcquireCapabilityAttr(Sema &S, Decl *D,
+                                           const AttributeList &Attr) {
+  SmallVector<Expr*, 2> Args;
+  if (!checkTryLockFunAttrCommon(S, D, Attr, Args))
+    return;
+
+  D->addAttr(::new (S.Context) TryAcquireCapabilityAttr(Attr.getRange(),
+                                                        S.Context,
+                                                        Attr.getArgAsExpr(0),
+                                                        Args.data(),
+                                                        Args.size(),
+                                        Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleReleaseCapabilityAttr(Sema &S, Decl *D,
+                                        const AttributeList &Attr) {
+  SmallVector<Expr*, 1> Args;
+  if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
+    return;
+
+  // Check that all arguments are lockable objects.
+  checkAttrArgsAreLockableObjs(S, D, Attr, Args);
+  if (Args.empty())
+    return;
+
+  D->addAttr(::new (S.Context) ReleaseCapabilityAttr(Attr.getRange(),
+                                                     S.Context,
+                                                     Args.data(), Args.size(),
+                                        Attr.getAttributeSpellingListIndex()));
+}
+
 static void handleRequiresCapabilityAttr(Sema &S, Decl *D,
                                          const AttributeList &Attr) {
   if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
@@ -4277,6 +4332,15 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleCapabilityAttr(S, D, Attr); break;
   case AttributeList::AT_RequiresCapability:
     handleRequiresCapabilityAttr(S, D, Attr); break;
+
+  case AttributeList::AT_AssertCapability:
+    handleAssertCapabilityAttr(S, D, Attr); break;
+  case AttributeList::AT_AcquireCapability:
+    handleAcquireCapabilityAttr(S, D, Attr); break;
+  case AttributeList::AT_ReleaseCapability:
+    handleReleaseCapabilityAttr(S, D, Attr); break;
+  case AttributeList::AT_TryAcquireCapability:
+    handleTryAcquireCapabilityAttr(S, D, Attr); break;
 
   // Consumed analysis attributes.
   case AttributeList::AT_Consumable:

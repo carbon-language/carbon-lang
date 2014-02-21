@@ -12752,6 +12752,13 @@ bool Sema::checkThisInStaticMemberFunctionAttributes(CXXMethodDecl *Method) {
     else if (RequiresCapabilityAttr *RC
                = dyn_cast<RequiresCapabilityAttr>(*A))
       Args = ArrayRef<Expr *>(RC->args_begin(), RC->args_size());
+    else if (AcquireCapabilityAttr *AC = dyn_cast<AcquireCapabilityAttr>(*A))
+      Args = ArrayRef<Expr *>(AC->args_begin(), AC->args_size());
+    else if (TryAcquireCapabilityAttr *AC
+             = dyn_cast<TryAcquireCapabilityAttr>(*A))
+             Args = ArrayRef<Expr *>(AC->args_begin(), AC->args_size());
+    else if (ReleaseCapabilityAttr *RC = dyn_cast<ReleaseCapabilityAttr>(*A))
+      Args = ArrayRef<Expr *>(RC->args_begin(), RC->args_size());
 
     if (Arg && !Finder.TraverseStmt(Arg))
       return true;

@@ -77,6 +77,37 @@ that appears to be capable of returning to its caller.
   }];
 }
 
+def AssertCapabilityDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Marks a function that dynamically tests whether a capability is held, and halts
+the program if it is not held.
+  }];
+}
+
+def AcquireCapabilityDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Marks a function as acquiring a capability.
+  }];
+}
+
+def TryAcquireCapabilityDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Marks a function that attemps to aquire a capability. This function may fail to
+actually acquire the capability; they accept a Boolean value determining
+whether acquiring the capability means success (true), or failing to acquire
+the capability means success (false).
+  }];
+}
+
+def ReleaseCapabilityDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Marks a function as releasing a capability.
+  }];
+}
 def EnableIfDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
