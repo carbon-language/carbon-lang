@@ -14,7 +14,7 @@
 
 #include "int_lib.h"
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 /* Returns: convert a to a double, rounding toward even. */
 
@@ -43,7 +43,7 @@ __floatuntidf(tu_int a)
          *  P = bit DBL_MANT_DIG-1 bits to the right of 1
          *  Q = bit DBL_MANT_DIG bits to the right of 1
          *  R = "or" of all bits to the right of Q
-	 */
+         */
         switch (sd)
         {
         case DBL_MANT_DIG + 1:
@@ -79,4 +79,4 @@ __floatuntidf(tu_int a)
     return fb.f;
 }
 
-#endif
+#endif /* CRT_HAS_128BIT */

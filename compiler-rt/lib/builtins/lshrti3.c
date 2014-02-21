@@ -14,7 +14,7 @@
 
 #include "int_lib.h"
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 /* Returns: logical a >> b */
 
@@ -42,4 +42,4 @@ __lshrti3(ti_int a, si_int b)
     return result.all;
 }
 
-#endif /* __x86_64 */ 
+#endif /* CRT_HAS_128BIT */

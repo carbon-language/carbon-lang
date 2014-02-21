@@ -14,7 +14,7 @@
 
 #include "int_lib.h"
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 /* Returns: the number of leading 0-bits */
 
@@ -30,4 +30,4 @@ __clzti2(ti_int a)
            ((si_int)f & ((si_int)(sizeof(di_int) * CHAR_BIT)));
 }
 
-#endif /* __x86_64 */
+#endif /* CRT_HAS_128BIT */

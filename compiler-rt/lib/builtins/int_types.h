@@ -56,8 +56,11 @@ typedef union
     }s;
 } udwords;
 
-#if __x86_64
+#if __LP64__
+#define CRT_HAS_128BIT
+#endif
 
+#ifdef CRT_HAS_128BIT
 typedef int      ti_int __attribute__ ((mode (TI)));
 typedef unsigned tu_int __attribute__ ((mode (TI)));
 
@@ -105,7 +108,7 @@ static inline tu_int make_tu(du_int h, du_int l) {
     return r.all;
 }
 
-#endif /* __x86_64 */
+#endif /* CRT_HAS_128BIT */
 
 typedef union
 {

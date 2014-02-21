@@ -14,7 +14,7 @@
 
 #include "int_lib.h"
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 /* Returns: convert a to a float, rounding toward even. */
 
@@ -81,4 +81,4 @@ __floattisf(ti_int a)
     return fb.f;
 }
 
-#endif
+#endif /* CRT_HAS_128BIT */

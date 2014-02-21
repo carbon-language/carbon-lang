@@ -14,7 +14,7 @@
 
 #include "int_lib.h"
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 /* Returns: a * b */
 
@@ -59,4 +59,4 @@ __muloti4(ti_int a, ti_int b, int* overflow)
     return result;
 }
 
-#endif
+#endif /* CRT_HAS_128BIT */

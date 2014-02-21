@@ -14,7 +14,7 @@
 
 #include "int_lib.h"
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 /* Returns: convert a to a signed long long, rounding toward zero. */
 
@@ -44,4 +44,4 @@ __fixxfti(long double a)
     return (r ^ s) - s;
 }
 
-#endif /* __x86_64 */
+#endif /* CRT_HAS_128BIT */

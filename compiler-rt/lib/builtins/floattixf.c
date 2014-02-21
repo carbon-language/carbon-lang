@@ -14,7 +14,7 @@
 
 #include "int_lib.h"
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 /* Returns: convert a to a long double, rounding toward even. */
 
@@ -47,7 +47,7 @@ __floattixf(ti_int a)
          *  P = bit LDBL_MANT_DIG-1 bits to the right of 1
          *  Q = bit LDBL_MANT_DIG bits to the right of 1
          *  R = "or" of all bits to the right of Q
-	      */
+         */
         switch (sd)
         {
         case LDBL_MANT_DIG + 1:
@@ -83,4 +83,4 @@ __floattixf(ti_int a)
     return fb.f;
 }
 
-#endif
+#endif /* CRT_HAS_128BIT */

@@ -14,7 +14,7 @@
 
 #include "int_lib.h"
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 /* Returns: convert a to a unsigned long long, rounding toward zero.
  *          Negative values all become zero.
@@ -46,4 +46,4 @@ __fixunsxfti(long double a)
     return r;
 }
 
-#endif
+#endif /* CRT_HAS_128BIT */

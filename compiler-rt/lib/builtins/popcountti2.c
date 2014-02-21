@@ -14,7 +14,7 @@
 
 #include "int_lib.h"
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 /* Returns: count of 1 bits */
 
@@ -41,4 +41,4 @@ __popcountti2(ti_int a)
     return (x + (x >> 8)) & 0xFF;  /* (8 significant bits) */
 }
 
-#endif
+#endif /* CRT_HAS_128BIT */

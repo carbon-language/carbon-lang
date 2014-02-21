@@ -14,7 +14,7 @@
 
 #include "int_lib.h"
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 /* Returns: -a */
 
@@ -27,4 +27,4 @@ __negti2(ti_int a)
     return -a;
 }
 
-#endif
+#endif /* CRT_HAS_128BIT */

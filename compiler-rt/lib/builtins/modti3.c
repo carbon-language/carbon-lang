@@ -14,7 +14,7 @@
 
 #include "int_lib.h"
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 tu_int __udivmodti4(tu_int a, tu_int b, tu_int* rem);
 
@@ -33,4 +33,4 @@ __modti3(ti_int a, ti_int b)
     return (r ^ s) - s;                /* negate if s == -1 */
 }
 
-#endif
+#endif /* CRT_HAS_128BIT */

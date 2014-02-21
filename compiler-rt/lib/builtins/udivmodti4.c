@@ -14,7 +14,7 @@
 
 #include "int_lib.h"
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 /* Effects: if rem != 0, *rem = a % b 
  * Returns: a / b 
@@ -253,4 +253,4 @@ __udivmodti4(tu_int a, tu_int b, tu_int* rem)
     return q.all;
 }
 
-#endif /* __x86_64 */
+#endif /* CRT_HAS_128BIT */
