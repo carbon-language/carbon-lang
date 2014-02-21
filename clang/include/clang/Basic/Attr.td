@@ -1555,7 +1555,7 @@ def ArgumentWithTypeTag : InheritableAttr {
               UnsignedArgument<"TypeTagIdx">,
               BoolArgument<"IsPointer">];
   let HasCustomParsing = 1;
-  let Documentation = [Undocumented];
+  let Documentation = [ArgumentWithTypeTagDocs, PointerWithTypeTagDocs];
 }
 
 def TypeTagForDatatype : InheritableAttr {
@@ -1566,7 +1566,7 @@ def TypeTagForDatatype : InheritableAttr {
               BoolArgument<"MustBeNull">];
 //  let Subjects = SubjectList<[Var], ErrorDiag>;
   let HasCustomParsing = 1;
-  let Documentation = [Undocumented];
+  let Documentation = [TypeTagForDatatypeDocs];
 }
 
 // Microsoft-related attributes

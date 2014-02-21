@@ -2693,6 +2693,7 @@ static void WriteDocumentation(const DocumentationData &Doc,
 
   // Determine the heading to be used for this attribute.
   std::string Heading = Doc.Documentation->getValueAsString("Heading");
+  bool CustomHeading = !Heading.empty();
   if (Heading.empty()) {
     // If there's only one spelling, we can simply use that.
     if (Spellings.size() == 1)
@@ -2745,7 +2746,7 @@ static void WriteDocumentation(const DocumentationData &Doc,
 
   // Print out the heading for the attribute. If there are alternate spellings,
   // then display those after the heading.
-  if (!Names.empty()) {
+  if (!CustomHeading && !Names.empty()) {
     Heading += " (";
     for (std::vector<std::string>::const_iterator I = Names.begin(),
          E = Names.end(); I != E; ++I) {
