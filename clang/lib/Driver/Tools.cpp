@@ -4733,10 +4733,26 @@ const char *arm::getARMCPUForMArch(const ArgList &Args,
   if (result)
     return result;
 
-  return
-    Triple.getEnvironment() == llvm::Triple::GNUEABIHF
-      ? "arm1176jzf-s"
-      : "arm7tdmi";
+  switch (Triple.getOS()) {
+  case llvm::Triple::NetBSD:
+    switch (Triple.getEnvironment()) {
+    case llvm::Triple::GNUEABIHF:
+    case llvm::Triple::GNUEABI:
+    case llvm::Triple::EABIHF:
+    case llvm::Triple::EABI:
+      return "arm926ej-s";
+    default:
+      return "strongarm";
+    }
+  default:
+    switch (Triple.getEnvironment()) {
+    case llvm::Triple::EABIHF:
+    case llvm::Triple::GNUEABIHF:
+      return "arm1176jzf-s";
+    default:
+      return "arm7tdmi";
+    }
+  }
 }
 
 /// getARMTargetCPU - Get the (LLVM) name of the ARM cpu we are targeting.
