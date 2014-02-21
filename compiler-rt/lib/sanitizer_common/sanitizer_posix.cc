@@ -178,7 +178,7 @@ void DumpProcessMap() {
   MemoryMappingLayout proc_maps(/*cache_enabled*/true);
   uptr start, end;
   const sptr kBufSize = 4095;
-  char *filename = (char*)MmapOrDie(kBufSize, __FUNCTION__);
+  char *filename = (char*)MmapOrDie(kBufSize, __func__);
   Report("Process memory map follows:\n");
   while (proc_maps.Next(&start, &end, /* file_offset */0,
                         filename, kBufSize, /* protection */0)) {
