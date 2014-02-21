@@ -1942,9 +1942,6 @@ void DwarfDebug::emitSectionLabels() {
         Asm, TLOF.getDwarfAbbrevDWOSection(), "section_abbrev_dwo");
   emitSectionSym(Asm, TLOF.getDwarfARangesSection());
 
-  if (const MCSection *MacroInfo = TLOF.getDwarfMacroInfoSection())
-    emitSectionSym(Asm, MacroInfo);
-
   DwarfLineSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
   emitSectionSym(Asm, TLOF.getDwarfLocSection());
