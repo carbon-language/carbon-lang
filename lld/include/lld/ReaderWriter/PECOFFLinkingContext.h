@@ -46,7 +46,8 @@ public:
         _terminalServerAware(true), _dynamicBaseEnabled(true),
         _createManifest(true), _embedManifest(false), _manifestId(1),
         _manifestLevel("'asInvoker'"), _manifestUiAccess("'false'"),
-        _isDll(false), _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
+        _isDll(false), _requireSEH(false), _noSEH(false),
+        _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
     setDeadStripping(true);
   }
 
@@ -194,6 +195,15 @@ public:
   void setIsDll(bool val) { _isDll = val; }
   bool isDll() const { return _isDll; }
 
+  void setSafeSEH(bool val) {
+    if (val)
+      _requireSEH = true;
+    else
+      _noSEH = true;
+  }
+  bool requireSEH() const { return _requireSEH; }
+  bool noSEH() const { return _noSEH; }
+
   StringRef getOutputSectionName(StringRef sectionName) const;
   bool addSectionRenaming(raw_ostream &diagnostics,
                           StringRef from, StringRef to);
@@ -287,6 +297,16 @@ private:
   std::string _manifestUiAccess;
   std::string _manifestDependency;
   bool _isDll;
+
+  // True if /SAFESEH option is specified. Valid only for x86. If true, LLD will
+  // produce an image with SEH table. If any modules were not compatible with
+  // SEH, LLD will exit with an error.
+  bool _requireSEH;
+
+  // True if /SAFESEH:no option is specified. Valid only for x86. If true, LLD
+  // will not produce an image with SEH table even if all input object files are
+  // compatible with SEH.
+  bool _noSEH;
 
   // The set to store /nodefaultlib arguments.
   std::set<std::string> _noDefaultLibs;

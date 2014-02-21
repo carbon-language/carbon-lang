@@ -443,6 +443,22 @@ TEST_F(WinLinkParserTest, NoEntryError) {
 }
 
 //
+// Tests for SEH.
+//
+
+TEST_F(WinLinkParserTest, SafeSEH) {
+  EXPECT_TRUE(parse("link.exe", "/safeseh", "a.obj", nullptr));
+  EXPECT_TRUE(_context.requireSEH());
+  EXPECT_FALSE(_context.noSEH());
+}
+
+TEST_F(WinLinkParserTest, NoSafeSEH) {
+  EXPECT_TRUE(parse("link.exe", "/safeseh:no", "a.obj", nullptr));
+  EXPECT_FALSE(_context.requireSEH());
+  EXPECT_TRUE(_context.noSEH());
+}
+
+//
 // Tests for boolean flags.
 //
 

@@ -78,6 +78,7 @@ defm tsaware  : B<"tsaware", "Create non-Terminal Server aware executable">;
 defm allowisolation : B<"allowisolation", "Set NO_ISOLATION bit">;
 defm dynamicbase : B<"dynamicbase",
      "Disable address space layout randomization">;
+defm safeseh : B<"safeseh", "Produce an image with Safe Exception Handler">;
 
 def help : F<"help">;
 def help_q : Flag<["/?", "-?"], "">, Alias<help>;
@@ -113,4 +114,3 @@ def tlbout : QF<"tlbout">;
 def verbose_all : QF<"verbose">;
 
 defm wx : QB<"wx">;
-defm safeseh : QB<"safeseh">;
