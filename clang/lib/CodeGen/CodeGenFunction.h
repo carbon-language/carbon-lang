@@ -2182,6 +2182,8 @@ public:
   llvm::Value *EmitCommonNeonBuiltinExpr(unsigned BuiltinID, const CallExpr *E,
                                          SmallVectorImpl<llvm::Value *> &Ops,
                                          llvm::Value *Align = 0);
+  llvm::Function *LookupNeonIntrinsic(unsigned IntrinsicID, unsigned Modifier,
+                                      llvm::Type *ArgTy, const CallExpr *E);
   llvm::Value *EmitNeonCall(llvm::Function *F,
                             SmallVectorImpl<llvm::Value*> &O,
                             const char *name,
