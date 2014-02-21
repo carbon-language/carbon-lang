@@ -7,15 +7,28 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is a skeleton that is meant to contain a dead code elimination pass
-// later on.
+// The polyhedral dead code elimination pass analyses a SCoP to eliminate
+// statement instances that can be proven dead.
+// As a consequence, the code generated for this SCoP may execute a statement
+// less often. This means, a statement may be executed only in certain loop
+// iterations or it may not even be part of the generated code at all.
 //
-// The idea of this pass is to loop over all statements and to remove statement
-// iterations that do not calculate any value that is read later on. We need to
-// make sure to forward RAR and WAR dependences.
+// This code:
 //
-// A case where this pass might be useful is
-// http://llvm.org/bugs/show_bug.cgi?id=5117
+//    for (i = 0; i < N; i++)
+//        arr[i] = 0;
+//    for (i = 0; i < N; i++)
+//        arr[i] = 10;
+//    for (i = 0; i < N; i++)
+//        arr[i] = i;
+//
+// is e.g. simplified to:
+//
+//    for (i = 0; i < N; i++)
+//        arr[i] = i;
+//
+// The idea and the algorithm used was first implemented by Sven Verdoolaege in
+// the 'ppcg' tool.
 //
 //===----------------------------------------------------------------------===//
 
