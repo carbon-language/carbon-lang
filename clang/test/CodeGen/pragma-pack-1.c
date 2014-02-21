@@ -53,12 +53,12 @@ struct S4
   int e;
 } s4;
 
-// CHECK: [[struct_ref:%[a-zA-Z0-9_.]+]] = type <{ [[struct_ref]]* }>
+// CHECK: [[struct_ref:%[a-zA-Z0-9_.]+]] = type { [[struct_ref]]* }
 // CHECK: [[struct_S:%[a-zA-Z0-9_.]+]] = type { [3 x i8], [[struct_T:%[a-zA-Z0-9_.]+]], [[struct_T2:%[a-zA-Z0-9_.]+]] }
 // CHECK: [[struct_T]] = type <{ i8, i32 }>
 // CHECK: [[struct_T2]] = type { i8, i32 }
 
-// CHECK: %struct.S3 = type <{ [3 x i8], i8, %struct.T3, [2 x i8], %struct.T32 }>
+// CHECK: %struct.S3 = type { [3 x i8], i8, %struct.T3, %struct.T32 }
 // CHECK: %struct.T3 = type <{ i8, i8, i32 }>
 // CHECK: %struct.T32 = type { i8, i32 }
 // CHECK: %struct.S4 = type { [3 x i8], %struct.T4, i32 }

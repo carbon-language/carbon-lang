@@ -11,7 +11,7 @@
 // CHECK-RECORD: *** Dumping IRgen Record Layout
 // CHECK-RECORD: Record: RecordDecl{{.*}}s0
 // CHECK-RECORD: Layout: <CGRecordLayout
-// CHECK-RECORD:   LLVMType:%struct.s0 = type <{ [3 x i8] }>
+// CHECK-RECORD:   LLVMType:%struct.s0 = type { [3 x i8] }
 // CHECK-RECORD:   IsZeroInitializable:1
 // CHECK-RECORD:   BitFields:[
 // CHECK-RECORD:     <CGBitFieldInfo Offset:0 Size:24 IsSigned:1 StorageSize:24 StorageAlignment:1>
@@ -51,7 +51,7 @@ unsigned long long test_0() {
 // CHECK-RECORD: *** Dumping IRgen Record Layout
 // CHECK-RECORD: Record: RecordDecl{{.*}}s1
 // CHECK-RECORD: Layout: <CGRecordLayout
-// CHECK-RECORD:   LLVMType:%struct.s1 = type <{ [3 x i8] }>
+// CHECK-RECORD:   LLVMType:%struct.s1 = type { [3 x i8] }
 // CHECK-RECORD:   IsZeroInitializable:1
 // CHECK-RECORD:   BitFields:[
 // CHECK-RECORD:     <CGBitFieldInfo Offset:0 Size:10 IsSigned:1 StorageSize:24 StorageAlignment:1>
@@ -99,7 +99,7 @@ unsigned long long test_1() {
 // CHECK-RECORD: *** Dumping IRgen Record Layout
 // CHECK-RECORD: Record: RecordDecl{{.*}}u2
 // CHECK-RECORD: Layout: <CGRecordLayout
-// CHECK-RECORD:   LLVMType:%union.u2 = type <{ i8 }>
+// CHECK-RECORD:   LLVMType:%union.u2 = type { i8 }
 // CHECK-RECORD:   IsZeroInitializable:1
 // CHECK-RECORD:   BitFields:[
 // CHECK-RECORD:     <CGBitFieldInfo Offset:0 Size:3 IsSigned:0 StorageSize:8 StorageAlignment:1>
@@ -271,7 +271,7 @@ _Bool test_6() {
 // CHECK-RECORD: *** Dumping IRgen Record Layout
 // CHECK-RECORD: Record: RecordDecl{{.*}}s7
 // CHECK-RECORD: Layout: <CGRecordLayout
-// CHECK-RECORD:   LLVMType:%struct.s7 = type { i32, i32, i32, i8, [3 x i8], [4 x i8], [12 x i8] }
+// CHECK-RECORD:   LLVMType:%struct.s7 = type { i32, i32, i32, i8, i32, [12 x i8] }
 // CHECK-RECORD:   IsZeroInitializable:1
 // CHECK-RECORD:   BitFields:[
 // CHECK-RECORD:     <CGBitFieldInfo Offset:0 Size:5 IsSigned:1 StorageSize:8 StorageAlignment:4>

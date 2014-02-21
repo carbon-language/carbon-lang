@@ -12,7 +12,7 @@ union Test2 {
   int : 6;
 } t2;
 
-// CHECK-LP64: %union.Test3 = type { [2 x i8] }
+// CHECK-LP64: %union.Test3 = type { i16 }
 union Test3 {
   int : 9;
 } t3;

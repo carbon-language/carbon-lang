@@ -39,7 +39,7 @@ namespace Test5 {
     char a;
   };
 
-  // CHECK: %"struct.Test5::B" = type { [9 x i8], i8, i8, [5 x i8] }
+  // CHECK: %"struct.Test5::B" = type {  %"struct.Test5::A.base", i8, i8, [5 x i8] }
   struct B : A {
     char b : 1;
     char c;

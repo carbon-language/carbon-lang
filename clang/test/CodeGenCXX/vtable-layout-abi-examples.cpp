@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm-only -fdump-vtable-layouts > %t 2>&1
+// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm-only -fdump-vtable-layouts > %t 2>/dev/null
 // RUN: FileCheck --check-prefix=CHECK-1 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-2 %s < %t
 // RUN: FileCheck --check-prefix=CHECK-3 %s < %t
