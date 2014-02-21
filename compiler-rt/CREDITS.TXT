@@ -22,3 +22,11 @@ D: Maintain Solaris & AuroraUX ports of Compiler-RT
 N: Howard Hinnant
 E: hhinnant@apple.com
 D: Architect and primary author of compiler-rt
+
+N: Matt Thomas
+E: matt@NetBSD.org
+D: ARM improvements.
+
+N: Joerg Sonnenberger
+E: joerg@NetBSD.org
+D: Maintains port.
