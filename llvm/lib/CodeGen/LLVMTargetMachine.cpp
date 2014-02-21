@@ -53,10 +53,6 @@ static cl::opt<cl::boolOrDefault>
 AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
            cl::init(cl::BOU_UNSET));
 
-static cl::opt<bool>
-NoIntegratedAssembler("no-integrated-as", cl::Hidden,             
-                      cl::desc("Disable integrated assembler"));
-
 static bool getVerboseAsm() {
   switch (AsmVerbose) {
   case cl::BOU_UNSET: return TargetMachine::getAsmVerbosityDefault();
@@ -77,7 +73,7 @@ void LLVMTargetMachine::initAsmInfo() {
          "Make sure you include the correct TargetSelect.h"
          "and that InitializeAllTargetMCs() is being invoked!");
 
-  if (NoIntegratedAssembler)
+  if (Options.DisableIntegratedAS)
     TmpAsmInfo->setUseIntegratedAssembler(false);
 
   AsmInfo = TmpAsmInfo;

@@ -58,6 +58,10 @@ TimeCompilations("time-compilations", cl::Hidden, cl::init(1u),
                  cl::value_desc("N"),
                  cl::desc("Repeat compilation N times for timing"));
 
+static cl::opt<bool>
+NoIntegratedAssembler("no-integrated-as", cl::Hidden,
+                      cl::desc("Disable integrated assembler"));
+
 // Determine optimization level.
 static cl::opt<char>
 OptLevel("O",
@@ -260,6 +264,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
   }
 
   TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
+  Options.DisableIntegratedAS = NoIntegratedAssembler;
 
   OwningPtr<TargetMachine>
     target(TheTarget->createTargetMachine(TheTriple.getTriple(),

@@ -42,17 +42,17 @@ namespace llvm {
   public:
     TargetOptions()
         : PrintMachineCode(false), NoFramePointerElim(false),
-          LessPreciseFPMADOption(false),
-          UnsafeFPMath(false), NoInfsFPMath(false),
-          NoNaNsFPMath(false), HonorSignDependentRoundingFPMathOption(false),
-          UseSoftFloat(false), NoZerosInBSS(false),
-          JITEmitDebugInfo(false), JITEmitDebugInfoToDisk(false),
-          GuaranteedTailCallOpt(false), DisableTailCalls(false),
-          StackAlignmentOverride(0),
+          LessPreciseFPMADOption(false), UnsafeFPMath(false),
+          NoInfsFPMath(false), NoNaNsFPMath(false),
+          HonorSignDependentRoundingFPMathOption(false), UseSoftFloat(false),
+          NoZerosInBSS(false), JITEmitDebugInfo(false),
+          JITEmitDebugInfoToDisk(false), GuaranteedTailCallOpt(false),
+          DisableTailCalls(false), StackAlignmentOverride(0),
           EnableFastISel(false), PositionIndependentExecutable(false),
-          EnableSegmentedStacks(false), UseInitArray(false), TrapFuncName(""),
-          FloatABIType(FloatABI::Default), AllowFPOpFusion(FPOpFusion::Standard)
-    {}
+          EnableSegmentedStacks(false), UseInitArray(false),
+          DisableIntegratedAS(false), TrapFuncName(""),
+          FloatABIType(FloatABI::Default),
+          AllowFPOpFusion(FPOpFusion::Standard) {}
 
     /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
     /// option is specified on the command line, and should enable debugging
@@ -157,6 +157,9 @@ namespace llvm {
     /// UseInitArray - Use .init_array instead of .ctors for static
     /// constructors.
     unsigned UseInitArray : 1;
+
+    /// Disable the integrated assembler.
+    unsigned DisableIntegratedAS : 1;
 
     /// getTrapFunctionName - If this returns a non-empty string, this means
     /// isel should lower Intrinsic::trap to a call to the specified function
