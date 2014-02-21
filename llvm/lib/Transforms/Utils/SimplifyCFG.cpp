@@ -90,7 +90,7 @@ namespace {
 
 class SimplifyCFGOpt {
   const TargetTransformInfo &TTI;
-  const DataLayout *const TD;
+  const DataLayout *const DL;
   Value *isValueEqualityComparison(TerminatorInst *TI);
   BasicBlock *GetValueEqualityComparisonCases(TerminatorInst *TI,
                                std::vector<ValueEqualityComparisonCase> &Cases);
@@ -109,8 +109,8 @@ class SimplifyCFGOpt {
   bool SimplifyCondBranch(BranchInst *BI, IRBuilder <>&Builder);
 
 public:
-  SimplifyCFGOpt(const TargetTransformInfo &TTI, const DataLayout *TD)
-      : TTI(TTI), TD(TD) {}
+  SimplifyCFGOpt(const TargetTransformInfo &TTI, const DataLayout *DL)
+      : TTI(TTI), DL(DL) {}
   bool run(BasicBlock *BB);
 };
 }
@@ -306,15 +306,15 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
 
 /// GetConstantInt - Extract ConstantInt from value, looking through IntToPtr
 /// and PointerNullValue. Return NULL if value is not a constant int.
-static ConstantInt *GetConstantInt(Value *V, const DataLayout *TD) {
+static ConstantInt *GetConstantInt(Value *V, const DataLayout *DL) {
   // Normal constant int.
   ConstantInt *CI = dyn_cast<ConstantInt>(V);
-  if (CI || !TD || !isa<Constant>(V) || !V->getType()->isPointerTy())
+  if (CI || !DL || !isa<Constant>(V) || !V->getType()->isPointerTy())
     return CI;
 
   // This is some kind of pointer constant. Turn it into a pointer-sized
   // ConstantInt if possible.
-  IntegerType *PtrTy = cast<IntegerType>(TD->getIntPtrType(V->getType()));
+  IntegerType *PtrTy = cast<IntegerType>(DL->getIntPtrType(V->getType()));
 
   // Null pointer means 0, see SelectionDAGBuilder::getValue(const Value*).
   if (isa<ConstantPointerNull>(V))
@@ -340,13 +340,13 @@ static ConstantInt *GetConstantInt(Value *V, const DataLayout *TD) {
 /// Values vector.
 static Value *
 GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
-                       const DataLayout *TD, bool isEQ, unsigned &UsedICmps) {
+                       const DataLayout *DL, bool isEQ, unsigned &UsedICmps) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) return 0;
 
   // If this is an icmp against a constant, handle this as one of the cases.
   if (ICmpInst *ICI = dyn_cast<ICmpInst>(I)) {
-    if (ConstantInt *C = GetConstantInt(I->getOperand(1), TD)) {
+    if (ConstantInt *C = GetConstantInt(I->getOperand(1), DL)) {
       Value *RHSVal;
       ConstantInt *RHSC;
 
@@ -405,11 +405,11 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
 
   unsigned NumValsBeforeLHS = Vals.size();
   unsigned UsedICmpsBeforeLHS = UsedICmps;
-  if (Value *LHS = GatherConstantCompares(I->getOperand(0), Vals, Extra, TD,
+  if (Value *LHS = GatherConstantCompares(I->getOperand(0), Vals, Extra, DL,
                                           isEQ, UsedICmps)) {
     unsigned NumVals = Vals.size();
     unsigned UsedICmpsBeforeRHS = UsedICmps;
-    if (Value *RHS = GatherConstantCompares(I->getOperand(1), Vals, Extra, TD,
+    if (Value *RHS = GatherConstantCompares(I->getOperand(1), Vals, Extra, DL,
                                             isEQ, UsedICmps)) {
       if (LHS == RHS)
         return LHS;
@@ -434,7 +434,7 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
   if (Extra == 0 || Extra == I->getOperand(0)) {
     Value *OldExtra = Extra;
     Extra = I->getOperand(0);
-    if (Value *RHS = GatherConstantCompares(I->getOperand(1), Vals, Extra, TD,
+    if (Value *RHS = GatherConstantCompares(I->getOperand(1), Vals, Extra, DL,
                                             isEQ, UsedICmps))
       return RHS;
     assert(Vals.size() == NumValsBeforeLHS);
@@ -472,14 +472,14 @@ Value *SimplifyCFGOpt::isValueEqualityComparison(TerminatorInst *TI) {
   } else if (BranchInst *BI = dyn_cast<BranchInst>(TI))
     if (BI->isConditional() && BI->getCondition()->hasOneUse())
       if (ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition()))
-        if (ICI->isEquality() && GetConstantInt(ICI->getOperand(1), TD))
+        if (ICI->isEquality() && GetConstantInt(ICI->getOperand(1), DL))
           CV = ICI->getOperand(0);
 
   // Unwrap any lossless ptrtoint cast.
-  if (TD && CV) {
+  if (DL && CV) {
     if (PtrToIntInst *PTII = dyn_cast<PtrToIntInst>(CV)) {
       Value *Ptr = PTII->getPointerOperand();
-      if (PTII->getType() == TD->getIntPtrType(Ptr->getType()))
+      if (PTII->getType() == DL->getIntPtrType(Ptr->getType()))
         CV = Ptr;
     }
   }
@@ -504,7 +504,7 @@ GetValueEqualityComparisonCases(TerminatorInst *TI,
   ICmpInst *ICI = cast<ICmpInst>(BI->getCondition());
   BasicBlock *Succ = BI->getSuccessor(ICI->getPredicate() == ICmpInst::ICMP_NE);
   Cases.push_back(ValueEqualityComparisonCase(GetConstantInt(ICI->getOperand(1),
-                                                             TD),
+                                                             DL),
                                               Succ));
   return BI->getSuccessor(ICI->getPredicate() == ICmpInst::ICMP_EQ);
 }
@@ -930,8 +930,8 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
       Builder.SetInsertPoint(PTI);
       // Convert pointer to int before we switch.
       if (CV->getType()->isPointerTy()) {
-        assert(TD && "Cannot switch on pointer without DataLayout");
-        CV = Builder.CreatePtrToInt(CV, TD->getIntPtrType(CV->getType()),
+        assert(DL && "Cannot switch on pointer without DataLayout");
+        CV = Builder.CreatePtrToInt(CV, DL->getIntPtrType(CV->getType()),
                                     "magicptr");
       }
 
@@ -1606,7 +1606,7 @@ static bool BlockIsSimpleEnoughToThreadThrough(BasicBlock *BB) {
 /// that is defined in the same block as the branch and if any PHI entries are
 /// constants, thread edges corresponding to that entry to be branches to their
 /// ultimate destination.
-static bool FoldCondBranchOnPHI(BranchInst *BI, const DataLayout *TD) {
+static bool FoldCondBranchOnPHI(BranchInst *BI, const DataLayout *DL) {
   BasicBlock *BB = BI->getParent();
   PHINode *PN = dyn_cast<PHINode>(BI->getCondition());
   // NOTE: we currently cannot transform this case if the PHI node is used
@@ -1675,7 +1675,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI, const DataLayout *TD) {
       }
 
       // Check for trivial simplification.
-      if (Value *V = SimplifyInstruction(N, TD)) {
+      if (Value *V = SimplifyInstruction(N, DL)) {
         TranslateMap[BBI] = V;
         delete N;   // Instruction folded away, don't need actual inst
       } else {
@@ -1696,7 +1696,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI, const DataLayout *TD) {
       }
 
     // Recurse, simplifying any other constants.
-    return FoldCondBranchOnPHI(BI, TD) | true;
+    return FoldCondBranchOnPHI(BI, DL) | true;
   }
 
   return false;
@@ -1704,7 +1704,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI, const DataLayout *TD) {
 
 /// FoldTwoEntryPHINode - Given a BB that starts with the specified two-entry
 /// PHI node, see if we can eliminate it.
-static bool FoldTwoEntryPHINode(PHINode *PN, const DataLayout *TD) {
+static bool FoldTwoEntryPHINode(PHINode *PN, const DataLayout *DL) {
   // Ok, this is a two entry PHI node.  Check to see if this is a simple "if
   // statement", which has a very simple dominance structure.  Basically, we
   // are trying to find the condition that is being branched on, which
@@ -1738,7 +1738,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const DataLayout *TD) {
 
   for (BasicBlock::iterator II = BB->begin(); isa<PHINode>(II);) {
     PHINode *PN = cast<PHINode>(II++);
-    if (Value *V = SimplifyInstruction(PN, TD)) {
+    if (Value *V = SimplifyInstruction(PN, DL)) {
       PN->replaceAllUsesWith(V);
       PN->eraseFromParent();
       continue;
@@ -2634,7 +2634,7 @@ static bool SimplifyIndirectBrOnSelect(IndirectBrInst *IBI, SelectInst *SI) {
 /// the PHI, merging the third icmp into the switch.
 static bool TryToSimplifyUncondBranchWithICmpInIt(
     ICmpInst *ICI, IRBuilder<> &Builder, const TargetTransformInfo &TTI,
-    const DataLayout *TD) {
+    const DataLayout *DL) {
   BasicBlock *BB = ICI->getParent();
 
   // If the block has any PHIs in it or the icmp has multiple uses, it is too
@@ -2662,12 +2662,12 @@ static bool TryToSimplifyUncondBranchWithICmpInIt(
     assert(VVal && "Should have a unique destination value");
     ICI->setOperand(0, VVal);
 
-    if (Value *V = SimplifyInstruction(ICI, TD)) {
+    if (Value *V = SimplifyInstruction(ICI, DL)) {
       ICI->replaceAllUsesWith(V);
       ICI->eraseFromParent();
     }
     // BB is now empty, so it is likely to simplify away.
-    return SimplifyCFG(BB, TTI, TD) | true;
+    return SimplifyCFG(BB, TTI, DL) | true;
   }
 
   // Ok, the block is reachable from the default dest.  If the constant we're
@@ -2683,7 +2683,7 @@ static bool TryToSimplifyUncondBranchWithICmpInIt(
     ICI->replaceAllUsesWith(V);
     ICI->eraseFromParent();
     // BB is now empty, so it is likely to simplify away.
-    return SimplifyCFG(BB, TTI, TD) | true;
+    return SimplifyCFG(BB, TTI, DL) | true;
   }
 
   // The use of the icmp has to be in the 'end' block, by the only PHI node in
@@ -2739,7 +2739,7 @@ static bool TryToSimplifyUncondBranchWithICmpInIt(
 /// SimplifyBranchOnICmpChain - The specified branch is a conditional branch.
 /// Check to see if it is branching on an or/and chain of icmp instructions, and
 /// fold it into a switch instruction if so.
-static bool SimplifyBranchOnICmpChain(BranchInst *BI, const DataLayout *TD,
+static bool SimplifyBranchOnICmpChain(BranchInst *BI, const DataLayout *DL,
                                       IRBuilder<> &Builder) {
   Instruction *Cond = dyn_cast<Instruction>(BI->getCondition());
   if (Cond == 0) return false;
@@ -2755,10 +2755,10 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const DataLayout *TD,
   unsigned UsedICmps = 0;
 
   if (Cond->getOpcode() == Instruction::Or) {
-    CompVal = GatherConstantCompares(Cond, Values, ExtraCase, TD, true,
+    CompVal = GatherConstantCompares(Cond, Values, ExtraCase, DL, true,
                                      UsedICmps);
   } else if (Cond->getOpcode() == Instruction::And) {
-    CompVal = GatherConstantCompares(Cond, Values, ExtraCase, TD, false,
+    CompVal = GatherConstantCompares(Cond, Values, ExtraCase, DL, false,
                                      UsedICmps);
     TrueWhenEqual = false;
   }
@@ -2820,9 +2820,9 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const DataLayout *TD,
   Builder.SetInsertPoint(BI);
   // Convert pointer to int before we switch.
   if (CompVal->getType()->isPointerTy()) {
-    assert(TD && "Cannot switch on pointer without DataLayout");
+    assert(DL && "Cannot switch on pointer without DataLayout");
     CompVal = Builder.CreatePtrToInt(CompVal,
-                                     TD->getIntPtrType(CompVal->getType()),
+                                     DL->getIntPtrType(CompVal->getType()),
                                      "magicptr");
   }
 
@@ -3453,7 +3453,7 @@ namespace {
                       ConstantInt *Offset,
              const SmallVectorImpl<std::pair<ConstantInt*, Constant*> >& Values,
                       Constant *DefaultValue,
-                      const DataLayout *TD);
+                      const DataLayout *DL);
 
     /// BuildLookup - Build instructions with Builder to retrieve the value at
     /// the position given by Index in the lookup table.
@@ -3461,7 +3461,7 @@ namespace {
 
     /// WouldFitInRegister - Return true if a table with TableSize elements of
     /// type ElementType would fit in a target-legal register.
-    static bool WouldFitInRegister(const DataLayout *TD,
+    static bool WouldFitInRegister(const DataLayout *DL,
                                    uint64_t TableSize,
                                    const Type *ElementType);
 
@@ -3500,7 +3500,7 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
                                      ConstantInt *Offset,
              const SmallVectorImpl<std::pair<ConstantInt*, Constant*> >& Values,
                                      Constant *DefaultValue,
-                                     const DataLayout *TD)
+                                     const DataLayout *DL)
     : SingleValue(0), BitMap(0), BitMapElementTy(0), Array(0) {
   assert(Values.size() && "Can't build lookup table without values!");
   assert(TableSize >= Values.size() && "Can't fit values in table!");
@@ -3546,7 +3546,7 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
   }
 
   // If the type is integer and the table fits in a register, build a bitmap.
-  if (WouldFitInRegister(TD, TableSize, ValueType)) {
+  if (WouldFitInRegister(DL, TableSize, ValueType)) {
     IntegerType *IT = cast<IntegerType>(ValueType);
     APInt TableInt(TableSize * IT->getBitWidth(), 0);
     for (uint64_t I = TableSize; I > 0; --I) {
@@ -3611,10 +3611,10 @@ Value *SwitchLookupTable::BuildLookup(Value *Index, IRBuilder<> &Builder) {
   llvm_unreachable("Unknown lookup table kind!");
 }
 
-bool SwitchLookupTable::WouldFitInRegister(const DataLayout *TD,
+bool SwitchLookupTable::WouldFitInRegister(const DataLayout *DL,
                                            uint64_t TableSize,
                                            const Type *ElementType) {
-  if (!TD)
+  if (!DL)
     return false;
   const IntegerType *IT = dyn_cast<IntegerType>(ElementType);
   if (!IT)
@@ -3625,7 +3625,7 @@ bool SwitchLookupTable::WouldFitInRegister(const DataLayout *TD,
   // Avoid overflow, fitsInLegalInteger uses unsigned int for the width.
   if (TableSize >= UINT_MAX/IT->getBitWidth())
     return false;
-  return TD->fitsInLegalInteger(TableSize * IT->getBitWidth());
+  return DL->fitsInLegalInteger(TableSize * IT->getBitWidth());
 }
 
 /// ShouldBuildLookupTable - Determine whether a lookup table should be built
@@ -3634,7 +3634,7 @@ bool SwitchLookupTable::WouldFitInRegister(const DataLayout *TD,
 static bool ShouldBuildLookupTable(SwitchInst *SI,
                                    uint64_t TableSize,
                                    const TargetTransformInfo &TTI,
-                                   const DataLayout *TD,
+                                   const DataLayout *DL,
                             const SmallDenseMap<PHINode*, Type*>& ResultTypes) {
   if (SI->getNumCases() > TableSize || TableSize >= UINT64_MAX / 10)
     return false; // TableSize overflowed, or mul below might overflow.
@@ -3650,7 +3650,7 @@ static bool ShouldBuildLookupTable(SwitchInst *SI,
 
     // Saturate this flag to false.
     AllTablesFitInRegister = AllTablesFitInRegister &&
-      SwitchLookupTable::WouldFitInRegister(TD, TableSize, Ty);
+      SwitchLookupTable::WouldFitInRegister(DL, TableSize, Ty);
 
     // If both flags saturate, we're done. NOTE: This *only* works with
     // saturating flags, and all flags have to saturate first due to the
@@ -3679,7 +3679,7 @@ static bool ShouldBuildLookupTable(SwitchInst *SI,
 static bool SwitchToLookupTable(SwitchInst *SI,
                                 IRBuilder<> &Builder,
                                 const TargetTransformInfo &TTI,
-                                const DataLayout* TD) {
+                                const DataLayout* DL) {
   assert(SI->getNumCases() > 1 && "Degenerate switch?");
 
   // Only build lookup table when we have a target that supports it.
@@ -3723,7 +3723,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
     typedef SmallVector<std::pair<PHINode*, Constant*>, 4> ResultsTy;
     ResultsTy Results;
     if (!GetCaseResults(SI, CaseVal, CI.getCaseSuccessor(), &CommonDest,
-                        Results, TD))
+                        Results, DL))
       return false;
 
     // Append the result from this case to the list for each phi.
@@ -3748,7 +3748,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   // If the table has holes, we need a constant result for the default case.
   SmallVector<std::pair<PHINode*, Constant*>, 4> DefaultResultsList;
   if (TableHasHoles && !GetCaseResults(SI, 0, SI->getDefaultDest(), &CommonDest,
-                                       DefaultResultsList, TD))
+                                       DefaultResultsList, DL))
     return false;
 
   for (size_t I = 0, E = DefaultResultsList.size(); I != E; ++I) {
@@ -3757,7 +3757,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
     DefaultResults[PHI] = Result;
   }
 
-  if (!ShouldBuildLookupTable(SI, TableSize, TTI, TD, ResultTypes))
+  if (!ShouldBuildLookupTable(SI, TableSize, TTI, DL, ResultTypes))
     return false;
 
   // Create the BB that does the lookups.
@@ -3801,7 +3801,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
     PHINode *PHI = PHIs[I];
 
     SwitchLookupTable Table(Mod, TableSize, MinCaseVal, ResultLists[PHI],
-                            DefaultResults[PHI], TD);
+                            DefaultResults[PHI], DL);
 
     Value *Result = Table.BuildLookup(TableIndex, Builder);
 
@@ -3842,12 +3842,12 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
     // see if that predecessor totally determines the outcome of this switch.
     if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
       if (SimplifyEqualityComparisonWithOnlyPredecessor(SI, OnlyPred, Builder))
-        return SimplifyCFG(BB, TTI, TD) | true;
+        return SimplifyCFG(BB, TTI, DL) | true;
 
     Value *Cond = SI->getCondition();
     if (SelectInst *Select = dyn_cast<SelectInst>(Cond))
       if (SimplifySwitchOnSelect(SI, Select))
-        return SimplifyCFG(BB, TTI, TD) | true;
+        return SimplifyCFG(BB, TTI, DL) | true;
 
     // If the block only contains the switch, see if we can fold the block
     // away into any preds.
@@ -3857,22 +3857,22 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
       ++BBI;
     if (SI == &*BBI)
       if (FoldValueComparisonIntoPredecessors(SI, Builder))
-        return SimplifyCFG(BB, TTI, TD) | true;
+        return SimplifyCFG(BB, TTI, DL) | true;
   }
 
   // Try to transform the switch into an icmp and a branch.
   if (TurnSwitchRangeIntoICmp(SI, Builder))
-    return SimplifyCFG(BB, TTI, TD) | true;
+    return SimplifyCFG(BB, TTI, DL) | true;
 
   // Remove unreachable cases.
   if (EliminateDeadSwitchCases(SI))
-    return SimplifyCFG(BB, TTI, TD) | true;
+    return SimplifyCFG(BB, TTI, DL) | true;
 
   if (ForwardSwitchConditionToPHI(SI))
-    return SimplifyCFG(BB, TTI, TD) | true;
+    return SimplifyCFG(BB, TTI, DL) | true;
 
-  if (SwitchToLookupTable(SI, Builder, TTI, TD))
-    return SimplifyCFG(BB, TTI, TD) | true;
+  if (SwitchToLookupTable(SI, Builder, TTI, DL))
+    return SimplifyCFG(BB, TTI, DL) | true;
 
   return false;
 }
@@ -3909,7 +3909,7 @@ bool SimplifyCFGOpt::SimplifyIndirectBr(IndirectBrInst *IBI) {
 
   if (SelectInst *SI = dyn_cast<SelectInst>(IBI->getAddress())) {
     if (SimplifyIndirectBrOnSelect(IBI, SI))
-      return SimplifyCFG(BB, TTI, TD) | true;
+      return SimplifyCFG(BB, TTI, DL) | true;
   }
   return Changed;
 }
@@ -3933,7 +3933,7 @@ bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI, IRBuilder<> &Builder){
       for (++I; isa<DbgInfoIntrinsic>(I); ++I)
         ;
       if (I->isTerminator() &&
-          TryToSimplifyUncondBranchWithICmpInIt(ICI, Builder, TTI, TD))
+          TryToSimplifyUncondBranchWithICmpInIt(ICI, Builder, TTI, DL))
         return true;
     }
 
@@ -3942,7 +3942,7 @@ bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI, IRBuilder<> &Builder){
   // predecessor and use logical operations to update the incoming value
   // for PHI nodes in common successor.
   if (FoldBranchToCommonDest(BI))
-    return SimplifyCFG(BB, TTI, TD) | true;
+    return SimplifyCFG(BB, TTI, DL) | true;
   return false;
 }
 
@@ -3957,7 +3957,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
     // switch.
     if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
       if (SimplifyEqualityComparisonWithOnlyPredecessor(BI, OnlyPred, Builder))
-        return SimplifyCFG(BB, TTI, TD) | true;
+        return SimplifyCFG(BB, TTI, DL) | true;
 
     // This block must be empty, except for the setcond inst, if it exists.
     // Ignore dbg intrinsics.
@@ -3967,26 +3967,26 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
       ++I;
     if (&*I == BI) {
       if (FoldValueComparisonIntoPredecessors(BI, Builder))
-        return SimplifyCFG(BB, TTI, TD) | true;
+        return SimplifyCFG(BB, TTI, DL) | true;
     } else if (&*I == cast<Instruction>(BI->getCondition())){
       ++I;
       // Ignore dbg intrinsics.
       while (isa<DbgInfoIntrinsic>(I))
         ++I;
       if (&*I == BI && FoldValueComparisonIntoPredecessors(BI, Builder))
-        return SimplifyCFG(BB, TTI, TD) | true;
+        return SimplifyCFG(BB, TTI, DL) | true;
     }
   }
 
   // Try to turn "br (X == 0 | X == 1), T, F" into a switch instruction.
-  if (SimplifyBranchOnICmpChain(BI, TD, Builder))
+  if (SimplifyBranchOnICmpChain(BI, DL, Builder))
     return true;
 
   // If this basic block is ONLY a compare and a branch, and if a predecessor
   // branches to us and one of our successors, fold the comparison into the
   // predecessor and use logical operations to pick the right destination.
   if (FoldBranchToCommonDest(BI))
-    return SimplifyCFG(BB, TTI, TD) | true;
+    return SimplifyCFG(BB, TTI, DL) | true;
 
   // We have a conditional branch to two blocks that are only reachable
   // from BI.  We know that the condbr dominates the two blocks, so see if
@@ -3995,7 +3995,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
   if (BI->getSuccessor(0)->getSinglePredecessor() != 0) {
     if (BI->getSuccessor(1)->getSinglePredecessor() != 0) {
       if (HoistThenElseCodeToIf(BI))
-        return SimplifyCFG(BB, TTI, TD) | true;
+        return SimplifyCFG(BB, TTI, DL) | true;
     } else {
       // If Successor #1 has multiple preds, we may be able to conditionally
       // execute Successor #0 if it branches to successor #1.
@@ -4003,7 +4003,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
       if (Succ0TI->getNumSuccessors() == 1 &&
           Succ0TI->getSuccessor(0) == BI->getSuccessor(1))
         if (SpeculativelyExecuteBB(BI, BI->getSuccessor(0)))
-          return SimplifyCFG(BB, TTI, TD) | true;
+          return SimplifyCFG(BB, TTI, DL) | true;
     }
   } else if (BI->getSuccessor(1)->getSinglePredecessor() != 0) {
     // If Successor #0 has multiple preds, we may be able to conditionally
@@ -4012,22 +4012,22 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
     if (Succ1TI->getNumSuccessors() == 1 &&
         Succ1TI->getSuccessor(0) == BI->getSuccessor(0))
       if (SpeculativelyExecuteBB(BI, BI->getSuccessor(1)))
-        return SimplifyCFG(BB, TTI, TD) | true;
+        return SimplifyCFG(BB, TTI, DL) | true;
   }
 
   // If this is a branch on a phi node in the current block, thread control
   // through this block if any PHI node entries are constants.
   if (PHINode *PN = dyn_cast<PHINode>(BI->getCondition()))
     if (PN->getParent() == BI->getParent())
-      if (FoldCondBranchOnPHI(BI, TD))
-        return SimplifyCFG(BB, TTI, TD) | true;
+      if (FoldCondBranchOnPHI(BI, DL))
+        return SimplifyCFG(BB, TTI, DL) | true;
 
   // Scan predecessor blocks for conditional branches.
   for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
     if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
       if (PBI != BI && PBI->isConditional())
         if (SimplifyCondBranchToCondBranch(PBI, BI))
-          return SimplifyCFG(BB, TTI, TD) | true;
+          return SimplifyCFG(BB, TTI, DL) | true;
 
   return false;
 }
@@ -4139,7 +4139,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
   // eliminate it, do so now.
   if (PHINode *PN = dyn_cast<PHINode>(BB->begin()))
     if (PN->getNumIncomingValues() == 2)
-      Changed |= FoldTwoEntryPHINode(PN, TD);
+      Changed |= FoldTwoEntryPHINode(PN, DL);
 
   Builder.SetInsertPoint(BB->getTerminator());
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
@@ -4171,6 +4171,6 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
 /// of the CFG.  It returns true if a modification was made.
 ///
 bool llvm::SimplifyCFG(BasicBlock *BB, const TargetTransformInfo &TTI,
-                       const DataLayout *TD) {
-  return SimplifyCFGOpt(TTI, TD).run(BB);
+                       const DataLayout *DL) {
+  return SimplifyCFGOpt(TTI, DL).run(BB);
 }

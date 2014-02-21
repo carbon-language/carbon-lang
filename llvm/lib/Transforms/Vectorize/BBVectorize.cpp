@@ -201,7 +201,7 @@ namespace {
       AA = &P->getAnalysis<AliasAnalysis>();
       DT = &P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
       SE = &P->getAnalysis<ScalarEvolution>();
-      TD = P->getAnalysisIfAvailable<DataLayout>();
+      DL = P->getAnalysisIfAvailable<DataLayout>();
       TTI = IgnoreTargetInfo ? 0 : &P->getAnalysis<TargetTransformInfo>();
     }
 
@@ -214,7 +214,7 @@ namespace {
     AliasAnalysis *AA;
     DominatorTree *DT;
     ScalarEvolution *SE;
-    DataLayout *TD;
+    DataLayout *DL;
     const TargetTransformInfo *TTI;
 
     // FIXME: const correct?
@@ -436,7 +436,7 @@ namespace {
       AA = &getAnalysis<AliasAnalysis>();
       DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
       SE = &getAnalysis<ScalarEvolution>();
-      TD = getAnalysisIfAvailable<DataLayout>();
+      DL = getAnalysisIfAvailable<DataLayout>();
       TTI = IgnoreTargetInfo ? 0 : &getAnalysis<TargetTransformInfo>();
 
       return vectorizeBB(BB);
@@ -634,11 +634,11 @@ namespace {
         int64_t Offset = IntOff->getSExtValue();
 
         Type *VTy = IPtr->getType()->getPointerElementType();
-        int64_t VTyTSS = (int64_t) TD->getTypeStoreSize(VTy);
+        int64_t VTyTSS = (int64_t) DL->getTypeStoreSize(VTy);
 
         Type *VTy2 = JPtr->getType()->getPointerElementType();
         if (VTy != VTy2 && Offset < 0) {
-          int64_t VTy2TSS = (int64_t) TD->getTypeStoreSize(VTy2);
+          int64_t VTy2TSS = (int64_t) DL->getTypeStoreSize(VTy2);
           OffsetInElmts = Offset/VTy2TSS;
           return (abs64(Offset) % VTy2TSS) == 0;
         }
@@ -821,7 +821,7 @@ namespace {
 
     // It is important to cleanup here so that future iterations of this
     // function have less work to do.
-    (void) SimplifyInstructionsInBlock(&BB, TD, AA->getTargetLibraryInfo());
+    (void) SimplifyInstructionsInBlock(&BB, DL, AA->getTargetLibraryInfo());
     return true;
   }
 
@@ -876,7 +876,7 @@ namespace {
     }
 
     // We can't vectorize memory operations without target data
-    if (TD == 0 && IsSimpleLoadStore)
+    if (DL == 0 && IsSimpleLoadStore)
       return false;
 
     Type *T1, *T2;
@@ -913,7 +913,7 @@ namespace {
     if (T2->isX86_FP80Ty() || T2->isPPC_FP128Ty() || T2->isX86_MMXTy())
       return false;
 
-    if ((!Config.VectorizePointers || TD == 0) &&
+    if ((!Config.VectorizePointers || DL == 0) &&
         (T1->getScalarType()->isPointerTy() ||
          T2->getScalarType()->isPointerTy()))
       return false;
@@ -977,7 +977,7 @@ namespace {
           // with the lower offset has an alignment suitable for the
           // vector type.
 
-          unsigned VecAlignment = TD->getPrefTypeAlignment(VType);
+          unsigned VecAlignment = DL->getPrefTypeAlignment(VType);
           if (BottomAlignment < VecAlignment)
             return false;
         }

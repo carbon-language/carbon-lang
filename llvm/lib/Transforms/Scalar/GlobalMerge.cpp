@@ -126,15 +126,15 @@ namespace {
     }
 
     struct GlobalCmp {
-      const DataLayout *TD;
+      const DataLayout *DL;
 
-      GlobalCmp(const DataLayout *td) : TD(td) { }
+      GlobalCmp(const DataLayout *DL) : DL(DL) { }
 
       bool operator()(const GlobalVariable *GV1, const GlobalVariable *GV2) {
         Type *Ty1 = cast<PointerType>(GV1->getType())->getElementType();
         Type *Ty2 = cast<PointerType>(GV2->getType())->getElementType();
 
-        return (TD->getTypeAllocSize(Ty1) < TD->getTypeAllocSize(Ty2));
+        return (DL->getTypeAllocSize(Ty1) < DL->getTypeAllocSize(Ty2));
       }
     };
   };
@@ -148,7 +148,7 @@ INITIALIZE_PASS(GlobalMerge, "global-merge",
 bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                           Module &M, bool isConst, unsigned AddrSpace) const {
   const TargetLowering *TLI = TM->getTargetLowering();
-  const DataLayout *TD = TLI->getDataLayout();
+  const DataLayout *DL = TLI->getDataLayout();
 
   // FIXME: Infer the maximum possible offset depending on the actual users
   // (these max offsets are different for the users inside Thumb or ARM
@@ -156,7 +156,7 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
   unsigned MaxOffset = TLI->getMaximalGlobalOffset();
 
   // FIXME: Find better heuristics
-  std::stable_sort(Globals.begin(), Globals.end(), GlobalCmp(TD));
+  std::stable_sort(Globals.begin(), Globals.end(), GlobalCmp(DL));
 
   Type *Int32Ty = Type::getInt32Ty(M.getContext());
 
@@ -167,7 +167,7 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
     std::vector<Constant*> Inits;
     for (j = i; j != e; ++j) {
       Type *Ty = Globals[j]->getType()->getElementType();
-      MergedSize += TD->getTypeAllocSize(Ty);
+      MergedSize += DL->getTypeAllocSize(Ty);
       if (MergedSize > MaxOffset) {
         break;
       }
@@ -242,7 +242,7 @@ bool GlobalMerge::doInitialization(Module &M) {
   DenseMap<unsigned, SmallVector<GlobalVariable*, 16> > Globals, ConstGlobals,
                                                         BSSGlobals;
   const TargetLowering *TLI = TM->getTargetLowering();
-  const DataLayout *TD = TLI->getDataLayout();
+  const DataLayout *DL = TLI->getDataLayout();
   unsigned MaxOffset = TLI->getMaximalGlobalOffset();
   bool Changed = false;
   setMustKeepGlobalVariables(M);
@@ -260,9 +260,9 @@ bool GlobalMerge::doInitialization(Module &M) {
     unsigned AddressSpace = PT->getAddressSpace();
 
     // Ignore fancy-aligned globals for now.
-    unsigned Alignment = TD->getPreferredAlignment(I);
+    unsigned Alignment = DL->getPreferredAlignment(I);
     Type *Ty = I->getType()->getElementType();
-    if (Alignment > TD->getABITypeAlignment(Ty))
+    if (Alignment > DL->getABITypeAlignment(Ty))
       continue;
 
     // Ignore all 'special' globals.
@@ -274,7 +274,7 @@ bool GlobalMerge::doInitialization(Module &M) {
     if (isMustKeepGlobalVariable(I))
       continue;
 
-    if (TD->getTypeAllocSize(Ty) < MaxOffset) {
+    if (DL->getTypeAllocSize(Ty) < MaxOffset) {
       if (TargetLoweringObjectFile::getKindForGlobal(I, TLI->getTargetMachine())
           .isBSSLocal())
         BSSGlobals[AddressSpace].push_back(I);

@@ -118,7 +118,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (Value *V = SimplifyMulInst(Op0, Op1, TD))
+  if (Value *V = SimplifyMulInst(Op0, Op1, DL))
     return ReplaceInstUsesWith(I, V);
 
   if (Value *V = SimplifyUsingDistributiveLaws(I))
@@ -429,7 +429,7 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
   if (isa<Constant>(Op0))
     std::swap(Op0, Op1);
 
-  if (Value *V = SimplifyFMulInst(Op0, Op1, I.getFastMathFlags(), TD))
+  if (Value *V = SimplifyFMulInst(Op0, Op1, I.getFastMathFlags(), DL))
     return ReplaceInstUsesWith(I, V);
 
   bool AllowReassociate = I.hasUnsafeAlgebra();
@@ -875,7 +875,7 @@ static size_t visitUDivOperand(Value *Op0, Value *Op1, const BinaryOperator &I,
 Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (Value *V = SimplifyUDivInst(Op0, Op1, TD))
+  if (Value *V = SimplifyUDivInst(Op0, Op1, DL))
     return ReplaceInstUsesWith(I, V);
 
   // Handle the integer div common cases
@@ -934,7 +934,7 @@ Instruction *InstCombiner::visitUDiv(BinaryOperator &I) {
 Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (Value *V = SimplifySDivInst(Op0, Op1, TD))
+  if (Value *V = SimplifySDivInst(Op0, Op1, DL))
     return ReplaceInstUsesWith(I, V);
 
   // Handle the integer div common cases
@@ -1020,7 +1020,7 @@ static Instruction *CvtFDivConstToReciprocal(Value *Dividend,
 Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (Value *V = SimplifyFDivInst(Op0, Op1, TD))
+  if (Value *V = SimplifyFDivInst(Op0, Op1, DL))
     return ReplaceInstUsesWith(I, V);
 
   if (isa<Constant>(Op0))
@@ -1182,7 +1182,7 @@ Instruction *InstCombiner::commonIRemTransforms(BinaryOperator &I) {
 Instruction *InstCombiner::visitURem(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (Value *V = SimplifyURemInst(Op0, Op1, TD))
+  if (Value *V = SimplifyURemInst(Op0, Op1, DL))
     return ReplaceInstUsesWith(I, V);
 
   if (Instruction *common = commonIRemTransforms(I))
@@ -1214,7 +1214,7 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
 Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (Value *V = SimplifySRemInst(Op0, Op1, TD))
+  if (Value *V = SimplifySRemInst(Op0, Op1, DL))
     return ReplaceInstUsesWith(I, V);
 
   // Handle the integer rem common cases
@@ -1285,7 +1285,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
 Instruction *InstCombiner::visitFRem(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (Value *V = SimplifyFRemInst(Op0, Op1, TD))
+  if (Value *V = SimplifyFRemInst(Op0, Op1, DL))
     return ReplaceInstUsesWith(I, V);
 
   // Handle cases involving: rem X, (select Cond, Y, Z)

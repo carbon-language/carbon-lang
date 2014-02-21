@@ -56,8 +56,8 @@ static Type *reduceToSingleValueType(Type *T) {
 }
 
 Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
-  unsigned DstAlign = getKnownAlignment(MI->getArgOperand(0), TD);
-  unsigned SrcAlign = getKnownAlignment(MI->getArgOperand(1), TD);
+  unsigned DstAlign = getKnownAlignment(MI->getArgOperand(0), DL);
+  unsigned SrcAlign = getKnownAlignment(MI->getArgOperand(1), DL);
   unsigned MinAlign = std::min(DstAlign, SrcAlign);
   unsigned CopyAlign = MI->getAlignment();
 
@@ -103,7 +103,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   if (StrippedDest != MI->getArgOperand(0)) {
     Type *SrcETy = cast<PointerType>(StrippedDest->getType())
                                     ->getElementType();
-    if (TD && SrcETy->isSized() && TD->getTypeStoreSize(SrcETy) == Size) {
+    if (DL && SrcETy->isSized() && DL->getTypeStoreSize(SrcETy) == Size) {
       // The SrcETy might be something like {{{double}}} or [1 x double].  Rip
       // down through these levels if so.
       SrcETy = reduceToSingleValueType(SrcETy);
@@ -152,7 +152,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
 }
 
 Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
-  unsigned Alignment = getKnownAlignment(MI->getDest(), TD);
+  unsigned Alignment = getKnownAlignment(MI->getDest(), DL);
   if (MI->getAlignment() < Alignment) {
     MI->setAlignment(ConstantInt::get(MI->getAlignmentType(),
                                              Alignment, false));
@@ -274,7 +274,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   default: break;
   case Intrinsic::objectsize: {
     uint64_t Size;
-    if (getObjectSize(II->getArgOperand(0), Size, TD, TLI))
+    if (getObjectSize(II->getArgOperand(0), Size, DL, TLI))
       return ReplaceInstUsesWith(CI, ConstantInt::get(CI.getType(), Size));
     return 0;
   }
@@ -504,7 +504,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::ppc_altivec_lvx:
   case Intrinsic::ppc_altivec_lvxl:
     // Turn PPC lvx -> load if the pointer is known aligned.
-    if (getOrEnforceKnownAlignment(II->getArgOperand(0), 16, TD) >= 16) {
+    if (getOrEnforceKnownAlignment(II->getArgOperand(0), 16, DL) >= 16) {
       Value *Ptr = Builder->CreateBitCast(II->getArgOperand(0),
                                          PointerType::getUnqual(II->getType()));
       return new LoadInst(Ptr);
@@ -513,7 +513,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::ppc_altivec_stvx:
   case Intrinsic::ppc_altivec_stvxl:
     // Turn stvx -> store if the pointer is known aligned.
-    if (getOrEnforceKnownAlignment(II->getArgOperand(1), 16, TD) >= 16) {
+    if (getOrEnforceKnownAlignment(II->getArgOperand(1), 16, DL) >= 16) {
       Type *OpPtrTy =
         PointerType::getUnqual(II->getArgOperand(0)->getType());
       Value *Ptr = Builder->CreateBitCast(II->getArgOperand(1), OpPtrTy);
@@ -524,7 +524,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_sse2_storeu_pd:
   case Intrinsic::x86_sse2_storeu_dq:
     // Turn X86 storeu -> store if the pointer is known aligned.
-    if (getOrEnforceKnownAlignment(II->getArgOperand(0), 16, TD) >= 16) {
+    if (getOrEnforceKnownAlignment(II->getArgOperand(0), 16, DL) >= 16) {
       Type *OpPtrTy =
         PointerType::getUnqual(II->getArgOperand(1)->getType());
       Value *Ptr = Builder->CreateBitCast(II->getArgOperand(0), OpPtrTy);
@@ -641,7 +641,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::arm_neon_vst2lane:
   case Intrinsic::arm_neon_vst3lane:
   case Intrinsic::arm_neon_vst4lane: {
-    unsigned MemAlign = getKnownAlignment(II->getArgOperand(0), TD);
+    unsigned MemAlign = getKnownAlignment(II->getArgOperand(0), DL);
     unsigned AlignArg = II->getNumArgOperands() - 1;
     ConstantInt *IntrAlign = dyn_cast<ConstantInt>(II->getArgOperand(AlignArg));
     if (IntrAlign && IntrAlign->getZExtValue() < MemAlign) {
@@ -747,7 +747,7 @@ Instruction *InstCombiner::visitInvokeInst(InvokeInst &II) {
 /// passed through the varargs area, we can eliminate the use of the cast.
 static bool isSafeToEliminateVarargsCast(const CallSite CS,
                                          const CastInst * const CI,
-                                         const DataLayout * const TD,
+                                         const DataLayout * const DL,
                                          const int ix) {
   if (!CI->isLosslessCast())
     return false;
@@ -763,7 +763,7 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
   Type* DstTy = cast<PointerType>(CI->getType())->getElementType();
   if (!SrcTy->isSized() || !DstTy->isSized())
     return false;
-  if (!TD || TD->getTypeAllocSize(SrcTy) != TD->getTypeAllocSize(DstTy))
+  if (!DL || DL->getTypeAllocSize(SrcTy) != DL->getTypeAllocSize(DstTy))
     return false;
   return true;
 }
@@ -772,7 +772,7 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
 // Currently we're only working with the checking functions, memcpy_chk,
 // mempcpy_chk, memmove_chk, memset_chk, strcpy_chk, stpcpy_chk, strncpy_chk,
 // strcat_chk and strncat_chk.
-Instruction *InstCombiner::tryOptimizeCall(CallInst *CI, const DataLayout *TD) {
+Instruction *InstCombiner::tryOptimizeCall(CallInst *CI, const DataLayout *DL) {
   if (CI->getCalledFunction() == 0) return 0;
 
   if (Value *With = Simplifier->optimizeCall(CI)) {
@@ -934,7 +934,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     for (CallSite::arg_iterator I = CS.arg_begin() + FTy->getNumParams(),
            E = CS.arg_end(); I != E; ++I, ++ix) {
       CastInst *CI = dyn_cast<CastInst>(*I);
-      if (CI && isSafeToEliminateVarargsCast(CS, CI, TD, ix)) {
+      if (CI && isSafeToEliminateVarargsCast(CS, CI, DL, ix)) {
         *I = CI->getOperand(0);
         Changed = true;
       }
@@ -951,7 +951,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
   // this.  None of these calls are seen as possibly dead so go ahead and
   // delete the instruction now.
   if (CallInst *CI = dyn_cast<CallInst>(CS.getInstruction())) {
-    Instruction *I = tryOptimizeCall(CI, TD);
+    Instruction *I = tryOptimizeCall(CI, DL);
     // If we changed something return the result, etc. Otherwise let
     // the fallthrough check.
     if (I) return EraseInstFromFunction(*I);
@@ -1043,12 +1043,12 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         CallerPAL.getParamAttributes(i + 1).hasAttribute(i + 1,
                                                          Attribute::ByVal)) {
       PointerType *ParamPTy = dyn_cast<PointerType>(ParamTy);
-      if (ParamPTy == 0 || !ParamPTy->getElementType()->isSized() || TD == 0)
+      if (ParamPTy == 0 || !ParamPTy->getElementType()->isSized() || DL == 0)
         return false;
 
       Type *CurElTy = ActTy->getPointerElementType();
-      if (TD->getTypeAllocSize(CurElTy) !=
-          TD->getTypeAllocSize(ParamPTy->getElementType()))
+      if (DL->getTypeAllocSize(CurElTy) !=
+          DL->getTypeAllocSize(ParamPTy->getElementType()))
         return false;
     }
   }

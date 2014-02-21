@@ -79,7 +79,7 @@ static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
 Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
                                                    AllocaInst &AI) {
   // This requires DataLayout to get the alloca alignment and size information.
-  if (!TD) return 0;
+  if (!DL) return 0;
 
   PointerType *PTy = cast<PointerType>(CI.getType());
 
@@ -91,8 +91,8 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   Type *CastElTy = PTy->getElementType();
   if (!AllocElTy->isSized() || !CastElTy->isSized()) return 0;
 
-  unsigned AllocElTyAlign = TD->getABITypeAlignment(AllocElTy);
-  unsigned CastElTyAlign = TD->getABITypeAlignment(CastElTy);
+  unsigned AllocElTyAlign = DL->getABITypeAlignment(AllocElTy);
+  unsigned CastElTyAlign = DL->getABITypeAlignment(CastElTy);
   if (CastElTyAlign < AllocElTyAlign) return 0;
 
   // If the allocation has multiple uses, only promote it if we are strictly
@@ -100,14 +100,14 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   // same, we open the door to infinite loops of various kinds.
   if (!AI.hasOneUse() && CastElTyAlign == AllocElTyAlign) return 0;
 
-  uint64_t AllocElTySize = TD->getTypeAllocSize(AllocElTy);
-  uint64_t CastElTySize = TD->getTypeAllocSize(CastElTy);
+  uint64_t AllocElTySize = DL->getTypeAllocSize(AllocElTy);
+  uint64_t CastElTySize = DL->getTypeAllocSize(CastElTy);
   if (CastElTySize == 0 || AllocElTySize == 0) return 0;
 
   // If the allocation has multiple uses, only promote it if we're not
   // shrinking the amount of memory being allocated.
-  uint64_t AllocElTyStoreSize = TD->getTypeStoreSize(AllocElTy);
-  uint64_t CastElTyStoreSize = TD->getTypeStoreSize(CastElTy);
+  uint64_t AllocElTyStoreSize = DL->getTypeStoreSize(AllocElTy);
+  uint64_t CastElTyStoreSize = DL->getTypeStoreSize(CastElTy);
   if (!AI.hasOneUse() && CastElTyStoreSize < AllocElTyStoreSize) return 0;
 
   // See if we can satisfy the modulus by pulling a scale out of the array
@@ -161,9 +161,9 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, Type *Ty,
                                              bool isSigned) {
   if (Constant *C = dyn_cast<Constant>(V)) {
     C = ConstantExpr::getIntegerCast(C, Ty, isSigned /*Sext or ZExt*/);
-    // If we got a constantexpr back, try to simplify it with TD info.
+    // If we got a constantexpr back, try to simplify it with DL info.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-      C = ConstantFoldConstantExpression(CE, TD, TLI);
+      C = ConstantFoldConstantExpression(CE, DL, TLI);
     return C;
   }
 
@@ -235,7 +235,7 @@ isEliminableCastPair(
   const CastInst *CI, ///< The first cast instruction
   unsigned opcode,       ///< The opcode of the second cast instruction
   Type *DstTy,     ///< The target type for the second cast instruction
-  DataLayout *TD         ///< The target data for pointer size
+  DataLayout *DL         ///< The target data for pointer size
 ) {
 
   Type *SrcTy = CI->getOperand(0)->getType();   // A from above
@@ -244,12 +244,12 @@ isEliminableCastPair(
   // Get the opcodes of the two Cast instructions
   Instruction::CastOps firstOp = Instruction::CastOps(CI->getOpcode());
   Instruction::CastOps secondOp = Instruction::CastOps(opcode);
-  Type *SrcIntPtrTy = TD && SrcTy->isPtrOrPtrVectorTy() ?
-    TD->getIntPtrType(SrcTy) : 0;
-  Type *MidIntPtrTy = TD && MidTy->isPtrOrPtrVectorTy() ?
-    TD->getIntPtrType(MidTy) : 0;
-  Type *DstIntPtrTy = TD && DstTy->isPtrOrPtrVectorTy() ?
-    TD->getIntPtrType(DstTy) : 0;
+  Type *SrcIntPtrTy = DL && SrcTy->isPtrOrPtrVectorTy() ?
+    DL->getIntPtrType(SrcTy) : 0;
+  Type *MidIntPtrTy = DL && MidTy->isPtrOrPtrVectorTy() ?
+    DL->getIntPtrType(MidTy) : 0;
+  Type *DstIntPtrTy = DL && DstTy->isPtrOrPtrVectorTy() ?
+    DL->getIntPtrType(DstTy) : 0;
   unsigned Res = CastInst::isEliminableCastPair(firstOp, secondOp, SrcTy, MidTy,
                                                 DstTy, SrcIntPtrTy, MidIntPtrTy,
                                                 DstIntPtrTy);
@@ -275,7 +275,7 @@ bool InstCombiner::ShouldOptimizeCast(Instruction::CastOps opc, const Value *V,
   // If this is another cast that can be eliminated, we prefer to have it
   // eliminated.
   if (const CastInst *CI = dyn_cast<CastInst>(V))
-    if (isEliminableCastPair(CI, opc, Ty, TD))
+    if (isEliminableCastPair(CI, opc, Ty, DL))
       return false;
 
   // If this is a vector sext from a compare, then we don't want to break the
@@ -295,7 +295,7 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
   // eliminate it now.
   if (CastInst *CSrc = dyn_cast<CastInst>(Src)) {   // A->B->C cast
     if (Instruction::CastOps opc =
-        isEliminableCastPair(CSrc, CI.getOpcode(), CI.getType(), TD)) {
+        isEliminableCastPair(CSrc, CI.getOpcode(), CI.getType(), DL)) {
       // The first cast (CSrc) is eliminable so we need to fix up or replace
       // the second cast (CI). CSrc will then have a good chance of being dead.
       return CastInst::Create(opc, CSrc->getOperand(0), CI.getType());
@@ -1405,11 +1405,11 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
   // trunc or zext to the intptr_t type, then inttoptr of it.  This allows the
   // cast to be exposed to other transforms.
 
-  if (TD) {
+  if (DL) {
     unsigned AS = CI.getAddressSpace();
     if (CI.getOperand(0)->getType()->getScalarSizeInBits() !=
-        TD->getPointerSizeInBits(AS)) {
-      Type *Ty = TD->getIntPtrType(CI.getContext(), AS);
+        DL->getPointerSizeInBits(AS)) {
+      Type *Ty = DL->getIntPtrType(CI.getContext(), AS);
       if (CI.getType()->isVectorTy()) // Handle vectors of pointers.
         Ty = VectorType::get(Ty, CI.getType()->getVectorNumElements());
 
@@ -1440,7 +1440,7 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
       return &CI;
     }
 
-    if (!TD)
+    if (!DL)
       return commonCastTransforms(CI);
 
     // If the GEP has a single use, and the base pointer is a bitcast, and the
@@ -1448,12 +1448,12 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
     // instructions into fewer.  This typically happens with unions and other
     // non-type-safe code.
     unsigned AS = GEP->getPointerAddressSpace();
-    unsigned OffsetBits = TD->getPointerSizeInBits(AS);
+    unsigned OffsetBits = DL->getPointerSizeInBits(AS);
     APInt Offset(OffsetBits, 0);
     BitCastInst *BCI = dyn_cast<BitCastInst>(GEP->getOperand(0));
     if (GEP->hasOneUse() &&
         BCI &&
-        GEP->accumulateConstantOffset(*TD, Offset)) {
+        GEP->accumulateConstantOffset(*DL, Offset)) {
       // Get the base pointer input of the bitcast, and the type it points to.
       Value *OrigBase = BCI->getOperand(0);
       SmallVector<Value*, 8> NewIndices;
@@ -1484,16 +1484,16 @@ Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
   // do a ptrtoint to intptr_t then do a trunc or zext.  This allows the cast
   // to be exposed to other transforms.
 
-  if (!TD)
+  if (!DL)
     return commonPointerCastTransforms(CI);
 
   Type *Ty = CI.getType();
   unsigned AS = CI.getPointerAddressSpace();
 
-  if (Ty->getScalarSizeInBits() == TD->getPointerSizeInBits(AS))
+  if (Ty->getScalarSizeInBits() == DL->getPointerSizeInBits(AS))
     return commonPointerCastTransforms(CI);
 
-  Type *PtrTy = TD->getIntPtrType(CI.getContext(), AS);
+  Type *PtrTy = DL->getIntPtrType(CI.getContext(), AS);
   if (Ty->isVectorTy()) // Handle vectors of pointers.
     PtrTy = VectorType::get(PtrTy, Ty->getVectorNumElements());
 

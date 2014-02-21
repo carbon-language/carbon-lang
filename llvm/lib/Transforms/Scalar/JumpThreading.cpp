@@ -76,7 +76,7 @@ namespace {
   /// revectored to the false side of the second if.
   ///
   class JumpThreading : public FunctionPass {
-    DataLayout *TD;
+    DataLayout *DL;
     TargetLibraryInfo *TLI;
     LazyValueInfo *LVI;
 #ifdef NDEBUG
@@ -152,7 +152,7 @@ bool JumpThreading::runOnFunction(Function &F) {
     return false;
 
   DEBUG(dbgs() << "Jump threading on function '" << F.getName() << "'\n");
-  TD = getAnalysisIfAvailable<DataLayout>();
+  DL = getAnalysisIfAvailable<DataLayout>();
   TLI = &getAnalysis<TargetLibraryInfo>();
   LVI = &getAnalysis<LazyValueInfo>();
 
@@ -493,7 +493,7 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
         Value *LHS = PN->getIncomingValue(i);
         Value *RHS = Cmp->getOperand(1)->DoPHITranslation(BB, PredBB);
 
-        Value *Res = SimplifyCmpInst(Cmp->getPredicate(), LHS, RHS, TD);
+        Value *Res = SimplifyCmpInst(Cmp->getPredicate(), LHS, RHS, DL);
         if (Res == 0) {
           if (!isa<Constant>(RHS))
             continue;
@@ -695,7 +695,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // Run constant folding to see if we can reduce the condition to a simple
   // constant.
   if (Instruction *I = dyn_cast<Instruction>(Condition)) {
-    Value *SimpleVal = ConstantFoldInstruction(I, TD, TLI);
+    Value *SimpleVal = ConstantFoldInstruction(I, DL, TLI);
     if (SimpleVal) {
       I->replaceAllUsesWith(SimpleVal);
       I->eraseFromParent();
@@ -1478,7 +1478,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   // At this point, the IR is fully up to date and consistent.  Do a quick scan
   // over the new instructions and zap any that are constants or dead.  This
   // frequently happens because of phi translation.
-  SimplifyInstructionsInBlock(NewBB, TD, TLI);
+  SimplifyInstructionsInBlock(NewBB, DL, TLI);
 
   // Threaded an edge!
   ++NumThreads;
@@ -1560,7 +1560,7 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
     // If this instruction can be simplified after the operands are updated,
     // just use the simplified value instead.  This frequently happens due to
     // phi translation.
-    if (Value *IV = SimplifyInstruction(New, TD)) {
+    if (Value *IV = SimplifyInstruction(New, DL)) {
       delete New;
       ValueMapping[BI] = IV;
     } else {

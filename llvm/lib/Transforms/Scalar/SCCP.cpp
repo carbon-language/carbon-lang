@@ -153,7 +153,7 @@ namespace {
 /// Constant Propagation.
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
-  const DataLayout *TD;
+  const DataLayout *DL;
   const TargetLibraryInfo *TLI;
   SmallPtrSet<BasicBlock*, 8> BBExecutable; // The BBs that are executable.
   DenseMap<Value*, LatticeVal> ValueState;  // The state each value is in.
@@ -205,8 +205,8 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
   typedef std::pair<BasicBlock*, BasicBlock*> Edge;
   DenseSet<Edge> KnownFeasibleEdges;
 public:
-  SCCPSolver(const DataLayout *td, const TargetLibraryInfo *tli)
-    : TD(td), TLI(tli) {}
+  SCCPSolver(const DataLayout *DL, const TargetLibraryInfo *tli)
+    : DL(DL), TLI(tli) {}
 
   /// MarkBlockExecutable - This method can be used by clients to mark all of
   /// the blocks that are known to be intrinsically live in the processed unit.
@@ -1067,7 +1067,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
   }
 
   // Transform load from a constant into a constant if possible.
-  if (Constant *C = ConstantFoldLoadFromConstPtr(Ptr, TD))
+  if (Constant *C = ConstantFoldLoadFromConstPtr(Ptr, DL))
     return markConstant(IV, &I, C);
 
   // Otherwise we cannot say for certain what value this load will produce.
@@ -1557,9 +1557,9 @@ bool SCCP::runOnFunction(Function &F) {
     return false;
 
   DEBUG(dbgs() << "SCCP on function '" << F.getName() << "'\n");
-  const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
+  const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
   const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
-  SCCPSolver Solver(TD, TLI);
+  SCCPSolver Solver(DL, TLI);
 
   // Mark the first block of the function as being executable.
   Solver.MarkBlockExecutable(F.begin());
@@ -1686,9 +1686,9 @@ static bool AddressIsTaken(const GlobalValue *GV) {
 }
 
 bool IPSCCP::runOnModule(Module &M) {
-  const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
+  const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
   const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
-  SCCPSolver Solver(TD, TLI);
+  SCCPSolver Solver(DL, TLI);
 
   // AddressTakenFunctions - This set keeps track of the address-taken functions
   // that are in the input.  As IPSCCP runs through and simplifies code,

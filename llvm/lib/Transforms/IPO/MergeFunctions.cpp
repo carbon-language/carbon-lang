@@ -108,12 +108,12 @@ public:
   static const ComparableFunction TombstoneKey;
   static DataLayout * const LookupOnly;
 
-  ComparableFunction(Function *Func, DataLayout *TD)
-    : Func(Func), Hash(profileFunction(Func)), TD(TD) {}
+  ComparableFunction(Function *Func, DataLayout *DL)
+    : Func(Func), Hash(profileFunction(Func)), DL(DL) {}
 
   Function *getFunc() const { return Func; }
   unsigned getHash() const { return Hash; }
-  DataLayout *getTD() const { return TD; }
+  DataLayout *getDataLayout() const { return DL; }
 
   // Drops AssertingVH reference to the function. Outside of debug mode, this
   // does nothing.
@@ -125,11 +125,11 @@ public:
 
 private:
   explicit ComparableFunction(unsigned Hash)
-    : Func(NULL), Hash(Hash), TD(NULL) {}
+    : Func(NULL), Hash(Hash), DL(NULL) {}
 
   AssertingVH<Function> Func;
   unsigned Hash;
-  DataLayout *TD;
+  DataLayout *DL;
 };
 
 const ComparableFunction ComparableFunction::EmptyKey = ComparableFunction(0);
@@ -164,9 +164,9 @@ namespace {
 /// side of claiming that two functions are different).
 class FunctionComparator {
 public:
-  FunctionComparator(const DataLayout *TD, const Function *F1,
+  FunctionComparator(const DataLayout *DL, const Function *F1,
                      const Function *F2)
-    : F1(F1), F2(F2), TD(TD) {}
+    : F1(F1), F2(F2), DL(DL) {}
 
   /// Test whether the two functions have equivalent behaviour.
   bool compare();
@@ -199,7 +199,7 @@ private:
   // The two functions undergoing comparison.
   const Function *F1, *F2;
 
-  const DataLayout *TD;
+  const DataLayout *DL;
 
   DenseMap<const Value *, const Value *> id_map;
   DenseSet<const Value *> seen_values;
@@ -214,9 +214,9 @@ bool FunctionComparator::isEquivalentType(Type *Ty1, Type *Ty2) const {
   PointerType *PTy1 = dyn_cast<PointerType>(Ty1);
   PointerType *PTy2 = dyn_cast<PointerType>(Ty2);
 
-  if (TD) {
-    if (PTy1 && PTy1->getAddressSpace() == 0) Ty1 = TD->getIntPtrType(Ty1);
-    if (PTy2 && PTy2->getAddressSpace() == 0) Ty2 = TD->getIntPtrType(Ty2);
+  if (DL) {
+    if (PTy1 && PTy1->getAddressSpace() == 0) Ty1 = DL->getIntPtrType(Ty1);
+    if (PTy2 && PTy2->getAddressSpace() == 0) Ty2 = DL->getIntPtrType(Ty2);
   }
 
   if (Ty1 == Ty2)
@@ -359,13 +359,13 @@ bool FunctionComparator::isEquivalentGEP(const GEPOperator *GEP1,
   if (AS != GEP2->getPointerAddressSpace())
     return false;
 
-  if (TD) {
+  if (DL) {
     // When we have target data, we can reduce the GEP down to the value in bytes
     // added to the address.
-    unsigned BitWidth = TD ? TD->getPointerSizeInBits(AS) : 1;
+    unsigned BitWidth = DL ? DL->getPointerSizeInBits(AS) : 1;
     APInt Offset1(BitWidth, 0), Offset2(BitWidth, 0);
-    if (GEP1->accumulateConstantOffset(*TD, Offset1) &&
-        GEP2->accumulateConstantOffset(*TD, Offset2)) {
+    if (GEP1->accumulateConstantOffset(*DL, Offset1) &&
+        GEP2->accumulateConstantOffset(*DL, Offset2)) {
       return Offset1 == Offset2;
     }
   }
@@ -606,7 +606,7 @@ private:
   FnSetType FnSet;
 
   /// DataLayout for more accurate GEP comparisons. May be NULL.
-  DataLayout *TD;
+  DataLayout *DL;
 
   /// Whether or not the target supports global aliases.
   bool HasGlobalAliases;
@@ -623,7 +623,7 @@ ModulePass *llvm::createMergeFunctionsPass() {
 
 bool MergeFunctions::runOnModule(Module &M) {
   bool Changed = false;
-  TD = getAnalysisIfAvailable<DataLayout>();
+  DL = getAnalysisIfAvailable<DataLayout>();
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage())
@@ -646,7 +646,7 @@ bool MergeFunctions::runOnModule(Module &M) {
       Function *F = cast<Function>(*I);
       if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
           !F->mayBeOverridden()) {
-        ComparableFunction CF = ComparableFunction(F, TD);
+        ComparableFunction CF = ComparableFunction(F, DL);
         Changed |= insert(CF);
       }
     }
@@ -661,7 +661,7 @@ bool MergeFunctions::runOnModule(Module &M) {
       Function *F = cast<Function>(*I);
       if (!F->isDeclaration() && !F->hasAvailableExternallyLinkage() &&
           F->mayBeOverridden()) {
-        ComparableFunction CF = ComparableFunction(F, TD);
+        ComparableFunction CF = ComparableFunction(F, DL);
         Changed |= insert(CF);
       }
     }
@@ -682,14 +682,14 @@ bool DenseMapInfo<ComparableFunction>::isEqual(const ComparableFunction &LHS,
     return false;
 
   // One of these is a special "underlying pointer comparison only" object.
-  if (LHS.getTD() == ComparableFunction::LookupOnly ||
-      RHS.getTD() == ComparableFunction::LookupOnly)
+  if (LHS.getDataLayout() == ComparableFunction::LookupOnly ||
+      RHS.getDataLayout() == ComparableFunction::LookupOnly)
     return false;
 
-  assert(LHS.getTD() == RHS.getTD() &&
+  assert(LHS.getDataLayout() == RHS.getDataLayout() &&
          "Comparing functions for different targets");
 
-  return FunctionComparator(LHS.getTD(), LHS.getFunc(),
+  return FunctionComparator(LHS.getDataLayout(), LHS.getFunc(),
                             RHS.getFunc()).compare();
 }
 

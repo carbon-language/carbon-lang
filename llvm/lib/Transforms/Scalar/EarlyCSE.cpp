@@ -262,7 +262,7 @@ namespace {
 /// cases.
 class EarlyCSE : public FunctionPass {
 public:
-  const DataLayout *TD;
+  const DataLayout *DL;
   const TargetLibraryInfo *TLI;
   DominatorTree *DT;
   typedef RecyclingAllocator<BumpPtrAllocator,
@@ -432,7 +432,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 
     // If the instruction can be simplified (e.g. X+0 = X) then replace it with
     // its simpler value.
-    if (Value *V = SimplifyInstruction(Inst, TD, TLI, DT)) {
+    if (Value *V = SimplifyInstruction(Inst, DL, TLI, DT)) {
       DEBUG(dbgs() << "EarlyCSE Simplify: " << *Inst << "  to: " << *V << '\n');
       Inst->replaceAllUsesWith(V);
       Inst->eraseFromParent();
@@ -557,7 +557,7 @@ bool EarlyCSE::runOnFunction(Function &F) {
 
   std::vector<StackNode *> nodesToProcess;
 
-  TD = getAnalysisIfAvailable<DataLayout>();
+  DL = getAnalysisIfAvailable<DataLayout>();
   TLI = &getAnalysis<TargetLibraryInfo>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 

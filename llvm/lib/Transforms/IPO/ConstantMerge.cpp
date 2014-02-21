@@ -51,7 +51,7 @@ namespace {
     // alignment to a concrete value.
     unsigned getAlignment(GlobalVariable *GV) const;
 
-    const DataLayout *TD;
+    const DataLayout *DL;
   };
 }
 
@@ -89,20 +89,20 @@ static bool IsBetterCanonical(const GlobalVariable &A,
 }
 
 bool ConstantMerge::hasKnownAlignment(GlobalVariable *GV) const {
-  return TD || GV->getAlignment() != 0;
+  return DL || GV->getAlignment() != 0;
 }
 
 unsigned ConstantMerge::getAlignment(GlobalVariable *GV) const {
   unsigned Align = GV->getAlignment();
   if (Align)
     return Align;
-  if (TD)
-    return TD->getPreferredAlignment(GV);
+  if (DL)
+    return DL->getPreferredAlignment(GV);
   return 0;
 }
 
 bool ConstantMerge::runOnModule(Module &M) {
-  TD = getAnalysisIfAvailable<DataLayout>();
+  DL = getAnalysisIfAvailable<DataLayout>();
 
   // Find all the globals that are marked "used".  These cannot be merged.
   SmallPtrSet<const GlobalValue*, 8> UsedGlobals;

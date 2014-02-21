@@ -48,7 +48,7 @@ namespace {
     Loop             *L;
     LoopInfo         *LI;
     ScalarEvolution  *SE;
-    const DataLayout *TD; // May be NULL
+    const DataLayout *DL; // May be NULL
 
     SmallVectorImpl<WeakVH> &DeadInsts;
 
@@ -60,7 +60,7 @@ namespace {
       L(Loop),
       LI(LPM->getAnalysisIfAvailable<LoopInfo>()),
       SE(SE),
-      TD(LPM->getAnalysisIfAvailable<DataLayout>()),
+      DL(LPM->getAnalysisIfAvailable<DataLayout>()),
       DeadInsts(Dead),
       Changed(false) {
       assert(LI && "IV simplification requires LoopInfo");

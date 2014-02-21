@@ -207,7 +207,7 @@ class MemorySanitizer : public FunctionPass {
                   StringRef BlacklistFile = StringRef())
       : FunctionPass(ID),
         TrackOrigins(TrackOrigins || ClTrackOrigins),
-        TD(0),
+        DL(0),
         WarningFn(0),
         BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile : BlacklistFile),
         WrapIndirectCalls(!ClWrapIndirectCalls.empty()) {}
@@ -222,7 +222,7 @@ class MemorySanitizer : public FunctionPass {
   /// \brief Track origins (allocation points) of uninitialized values.
   bool TrackOrigins;
 
-  DataLayout *TD;
+  DataLayout *DL;
   LLVMContext *C;
   Type *IntptrTy;
   Type *OriginTy;
@@ -399,12 +399,12 @@ void MemorySanitizer::initializeCallbacks(Module &M) {
 ///
 /// inserts a call to __msan_init to the module's constructor list.
 bool MemorySanitizer::doInitialization(Module &M) {
-  TD = getAnalysisIfAvailable<DataLayout>();
-  if (!TD)
+  DL = getAnalysisIfAvailable<DataLayout>();
+  if (!DL)
     return false;
   BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
   C = &(M.getContext());
-  unsigned PtrSize = TD->getPointerSizeInBits(/* AddressSpace */0);
+  unsigned PtrSize = DL->getPointerSizeInBits(/* AddressSpace */0);
   switch (PtrSize) {
     case 64:
       ShadowMask = kShadowMask64;
@@ -420,7 +420,7 @@ bool MemorySanitizer::doInitialization(Module &M) {
   }
 
   IRBuilder<> IRB(*C);
-  IntptrTy = IRB.getIntPtrTy(TD);
+  IntptrTy = IRB.getIntPtrTy(DL);
   OriginTy = IRB.getInt32Ty();
 
   ColdCallWeights = MDBuilder(*C).createBranchWeights(1, 1000);
@@ -650,7 +650,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   /// \brief Add MemorySanitizer instrumentation to a function.
   bool runOnFunction() {
     MS.initializeCallbacks(*F.getParent());
-    if (!MS.TD) return false;
+    if (!MS.DL) return false;
 
     // In the presence of unreachable blocks, we may see Phi nodes with
     // incoming nodes from such blocks. Since InstVisitor skips unreachable
@@ -710,7 +710,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     if (IntegerType *IT = dyn_cast<IntegerType>(OrigTy))
       return IT;
     if (VectorType *VT = dyn_cast<VectorType>(OrigTy)) {
-      uint32_t EltSize = MS.TD->getTypeSizeInBits(VT->getElementType());
+      uint32_t EltSize = MS.DL->getTypeSizeInBits(VT->getElementType());
       return VectorType::get(IntegerType::get(*MS.C, EltSize),
                              VT->getNumElements());
     }
@@ -722,7 +722,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       DEBUG(dbgs() << "getShadowTy: " << *ST << " ===> " << *Res << "\n");
       return Res;
     }
-    uint32_t TypeSize = MS.TD->getTypeSizeInBits(OrigTy);
+    uint32_t TypeSize = MS.DL->getTypeSizeInBits(OrigTy);
     return IntegerType::get(*MS.C, TypeSize);
   }
 
@@ -889,8 +889,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
           continue;
         }
         unsigned Size = AI->hasByValAttr()
-          ? MS.TD->getTypeAllocSize(AI->getType()->getPointerElementType())
-          : MS.TD->getTypeAllocSize(AI->getType());
+          ? MS.DL->getTypeAllocSize(AI->getType()->getPointerElementType())
+          : MS.DL->getTypeAllocSize(AI->getType());
         if (A == AI) {
           Value *Base = getShadowPtrForArgument(AI, EntryIRB, ArgOffset);
           if (AI->hasByValAttr()) {
@@ -900,7 +900,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
             unsigned ArgAlign = AI->getParamAlignment();
             if (ArgAlign == 0) {
               Type *EltType = A->getType()->getPointerElementType();
-              ArgAlign = MS.TD->getABITypeAlignment(EltType);
+              ArgAlign = MS.DL->getABITypeAlignment(EltType);
             }
             unsigned CopyAlign = std::min(ArgAlign, kShadowTLSAlignment);
             Value *Cpy = EntryIRB.CreateMemCpy(
@@ -1935,13 +1935,13 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       if (CS.paramHasAttr(i + 1, Attribute::ByVal)) {
         assert(A->getType()->isPointerTy() &&
                "ByVal argument is not a pointer!");
-        Size = MS.TD->getTypeAllocSize(A->getType()->getPointerElementType());
+        Size = MS.DL->getTypeAllocSize(A->getType()->getPointerElementType());
         unsigned Alignment = CS.getParamAlignment(i + 1);
         Store = IRB.CreateMemCpy(ArgShadowBase,
                                  getShadowPtr(A, Type::getInt8Ty(*MS.C), IRB),
                                  Size, Alignment);
       } else {
-        Size = MS.TD->getTypeAllocSize(A->getType());
+        Size = MS.DL->getTypeAllocSize(A->getType());
         Store = IRB.CreateAlignedStore(ArgShadow, ArgShadowBase,
                                        kShadowTLSAlignment);
       }
@@ -2024,7 +2024,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   void visitAllocaInst(AllocaInst &I) {
     setShadow(&I, getCleanShadow(&I));
     IRBuilder<> IRB(I.getNextNode());
-    uint64_t Size = MS.TD->getTypeAllocSize(I.getAllocatedType());
+    uint64_t Size = MS.DL->getTypeAllocSize(I.getAllocatedType());
     if (PoisonStack && ClPoisonStackWithCall) {
       IRB.CreateCall2(MS.MsanPoisonStackFn,
                       IRB.CreatePointerCast(&I, IRB.getInt8PtrTy()),
@@ -2223,7 +2223,7 @@ struct VarArgAMD64Helper : public VarArgHelper {
         FpOffset += 16;
         break;
       case AK_Memory:
-        uint64_t ArgSize = MS.TD->getTypeAllocSize(A->getType());
+        uint64_t ArgSize = MS.DL->getTypeAllocSize(A->getType());
         Base = getShadowPtrForVAArgument(A, IRB, OverflowOffset);
         OverflowOffset += DataLayout::RoundUpAlignment(ArgSize, 8);
       }

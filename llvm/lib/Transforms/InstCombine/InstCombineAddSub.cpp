@@ -919,7 +919,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
   if (Value *V = SimplifyAddInst(LHS, RHS, I.hasNoSignedWrap(),
-                                 I.hasNoUnsignedWrap(), TD))
+                                 I.hasNoUnsignedWrap(), DL))
     return ReplaceInstUsesWith(I, V);
 
   // (A*B)+(A*C) -> A*(B+C) etc
@@ -1193,7 +1193,7 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
-  if (Value *V = SimplifyFAddInst(LHS, RHS, I.getFastMathFlags(), TD))
+  if (Value *V = SimplifyFAddInst(LHS, RHS, I.getFastMathFlags(), DL))
     return ReplaceInstUsesWith(I, V);
 
   if (isa<Constant>(RHS)) {
@@ -1300,7 +1300,7 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
 ///
 Value *InstCombiner::OptimizePointerDifference(Value *LHS, Value *RHS,
                                                Type *Ty) {
-  assert(TD && "Must have target data info for this");
+  assert(DL && "Must have target data info for this");
 
   // If LHS is a gep based on RHS or RHS is a gep based on LHS, we can optimize
   // this.
@@ -1369,7 +1369,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   if (Value *V = SimplifySubInst(Op0, Op1, I.hasNoSignedWrap(),
-                                 I.hasNoUnsignedWrap(), TD))
+                                 I.hasNoUnsignedWrap(), DL))
     return ReplaceInstUsesWith(I, V);
 
   // (A*B)-(A*C) -> A*(B-C) etc
@@ -1518,7 +1518,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
   // Optimize pointer differences into the same array into a size.  Consider:
   //  &A[10] - &A[0]: we should compile this to "10".
-  if (TD) {
+  if (DL) {
     Value *LHSOp, *RHSOp;
     if (match(Op0, m_PtrToInt(m_Value(LHSOp))) &&
         match(Op1, m_PtrToInt(m_Value(RHSOp))))
@@ -1538,7 +1538,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  if (Value *V = SimplifyFSubInst(Op0, Op1, I.getFastMathFlags(), TD))
+  if (Value *V = SimplifyFSubInst(Op0, Op1, I.getFastMathFlags(), DL))
     return ReplaceInstUsesWith(I, V);
 
   if (isa<Constant>(Op0))

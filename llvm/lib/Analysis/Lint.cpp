@@ -102,7 +102,7 @@ namespace {
     Module *Mod;
     AliasAnalysis *AA;
     DominatorTree *DT;
-    DataLayout *TD;
+    DataLayout *DL;
     TargetLibraryInfo *TLI;
 
     std::string Messages;
@@ -176,7 +176,7 @@ bool Lint::runOnFunction(Function &F) {
   Mod = F.getParent();
   AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  TD = getAnalysisIfAvailable<DataLayout>();
+  DL = getAnalysisIfAvailable<DataLayout>();
   TLI = &getAnalysis<TargetLibraryInfo>();
   visit(F);
   dbgs() << MessagesStr.str();
@@ -247,7 +247,7 @@ void Lint::visitCallSite(CallSite CS) {
           Type *Ty =
             cast<PointerType>(Formal->getType())->getElementType();
           visitMemoryReference(I, Actual, AA->getTypeStoreSize(Ty),
-                               TD ? TD->getABITypeAlignment(Ty) : 0,
+                               DL ? DL->getABITypeAlignment(Ty) : 0,
                                Ty, MemRef::Read | MemRef::Write);
         }
       }
@@ -414,7 +414,7 @@ void Lint::visitMemoryReference(Instruction &I,
   // Only handles memory references that read/write something simple like an
   // alloca instruction or a global variable.
   int64_t Offset = 0;
-  if (Value *Base = GetPointerBaseWithConstantOffset(Ptr, Offset, TD)) {
+  if (Value *Base = GetPointerBaseWithConstantOffset(Ptr, Offset, DL)) {
     // OK, so the access is to a constant offset from Ptr.  Check that Ptr is
     // something we can handle and if so extract the size of this base object
     // along with its alignment.
@@ -423,21 +423,21 @@ void Lint::visitMemoryReference(Instruction &I,
 
     if (AllocaInst *AI = dyn_cast<AllocaInst>(Base)) {
       Type *ATy = AI->getAllocatedType();
-      if (TD && !AI->isArrayAllocation() && ATy->isSized())
-        BaseSize = TD->getTypeAllocSize(ATy);
+      if (DL && !AI->isArrayAllocation() && ATy->isSized())
+        BaseSize = DL->getTypeAllocSize(ATy);
       BaseAlign = AI->getAlignment();
-      if (TD && BaseAlign == 0 && ATy->isSized())
-        BaseAlign = TD->getABITypeAlignment(ATy);
+      if (DL && BaseAlign == 0 && ATy->isSized())
+        BaseAlign = DL->getABITypeAlignment(ATy);
     } else if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Base)) {
       // If the global may be defined differently in another compilation unit
       // then don't warn about funky memory accesses.
       if (GV->hasDefinitiveInitializer()) {
         Type *GTy = GV->getType()->getElementType();
-        if (TD && GTy->isSized())
-          BaseSize = TD->getTypeAllocSize(GTy);
+        if (DL && GTy->isSized())
+          BaseSize = DL->getTypeAllocSize(GTy);
         BaseAlign = GV->getAlignment();
-        if (TD && BaseAlign == 0 && GTy->isSized())
-          BaseAlign = TD->getABITypeAlignment(GTy);
+        if (DL && BaseAlign == 0 && GTy->isSized())
+          BaseAlign = DL->getABITypeAlignment(GTy);
       }
     }
 
@@ -450,8 +450,8 @@ void Lint::visitMemoryReference(Instruction &I,
 
     // Accesses that say that the memory is more aligned than it is are not
     // defined.
-    if (TD && Align == 0 && Ty && Ty->isSized())
-      Align = TD->getABITypeAlignment(Ty);
+    if (DL && Align == 0 && Ty && Ty->isSized())
+      Align = DL->getABITypeAlignment(Ty);
     Assert1(!BaseAlign || Align <= MinAlign(BaseAlign, Offset),
             "Undefined behavior: Memory reference address is misaligned", &I);
   }
@@ -542,22 +542,22 @@ static bool isZero(Value *V, DataLayout *DL) {
 }
 
 void Lint::visitSDiv(BinaryOperator &I) {
-  Assert1(!isZero(I.getOperand(1), TD),
+  Assert1(!isZero(I.getOperand(1), DL),
           "Undefined behavior: Division by zero", &I);
 }
 
 void Lint::visitUDiv(BinaryOperator &I) {
-  Assert1(!isZero(I.getOperand(1), TD),
+  Assert1(!isZero(I.getOperand(1), DL),
           "Undefined behavior: Division by zero", &I);
 }
 
 void Lint::visitSRem(BinaryOperator &I) {
-  Assert1(!isZero(I.getOperand(1), TD),
+  Assert1(!isZero(I.getOperand(1), DL),
           "Undefined behavior: Division by zero", &I);
 }
 
 void Lint::visitURem(BinaryOperator &I) {
-  Assert1(!isZero(I.getOperand(1), TD),
+  Assert1(!isZero(I.getOperand(1), DL),
           "Undefined behavior: Division by zero", &I);
 }
 
@@ -631,7 +631,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
   // TODO: Look through eliminable cast pairs.
   // TODO: Look through calls with unique return values.
   // TODO: Look through vector insert/extract/shuffle.
-  V = OffsetOk ? GetUnderlyingObject(V, TD) : V->stripPointerCasts();
+  V = OffsetOk ? GetUnderlyingObject(V, DL) : V->stripPointerCasts();
   if (LoadInst *L = dyn_cast<LoadInst>(V)) {
     BasicBlock::iterator BBI = L;
     BasicBlock *BB = L->getParent();
@@ -651,7 +651,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
       if (W != V)
         return findValueImpl(W, OffsetOk, Visited);
   } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
-    if (CI->isNoopCast(TD ? TD->getIntPtrType(V->getContext()) :
+    if (CI->isNoopCast(DL ? DL->getIntPtrType(V->getContext()) :
                             Type::getInt64Ty(V->getContext())))
       return findValueImpl(CI->getOperand(0), OffsetOk, Visited);
   } else if (ExtractValueInst *Ex = dyn_cast<ExtractValueInst>(V)) {
@@ -665,7 +665,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
       if (CastInst::isNoopCast(Instruction::CastOps(CE->getOpcode()),
                                CE->getOperand(0)->getType(),
                                CE->getType(),
-                               TD ? TD->getIntPtrType(V->getContext()) :
+                               DL ? DL->getIntPtrType(V->getContext()) :
                                     Type::getInt64Ty(V->getContext())))
         return findValueImpl(CE->getOperand(0), OffsetOk, Visited);
     } else if (CE->getOpcode() == Instruction::ExtractValue) {
@@ -678,10 +678,10 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
 
   // As a last resort, try SimplifyInstruction or constant folding.
   if (Instruction *Inst = dyn_cast<Instruction>(V)) {
-    if (Value *W = SimplifyInstruction(Inst, TD, TLI, DT))
+    if (Value *W = SimplifyInstruction(Inst, DL, TLI, DT))
       return findValueImpl(W, OffsetOk, Visited);
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (Value *W = ConstantFoldConstantExpression(CE, TD, TLI))
+    if (Value *W = ConstantFoldConstantExpression(CE, DL, TLI))
       if (W != V)
         return findValueImpl(W, OffsetOk, Visited);
   }
