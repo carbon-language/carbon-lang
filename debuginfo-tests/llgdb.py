@@ -84,6 +84,7 @@ for command in args.script:
 
     try:
         if re.match('^r|(run)$', cmd[0]):
+            import time, random; time.sleep(random.randint(0,10))
             error = lldb.SBError()
             launchinfo = lldb.SBLaunchInfo([])
             launchinfo.SetWorkingDirectory(os.getcwd())
@@ -123,10 +124,17 @@ NOTE: There are several resons why this may happen:
             print target.FindFirstType(cmd[1])
 
         elif re.match('^po$', cmd[0]) and len(cmd) > 1:
-            opts = lldb.SBExpressionOptions()
-            opts.SetFetchDynamicValue(True)
-            opts.SetCoerceResultToId(True)
-            print target.EvaluateExpression(' '.join(cmd[1:]), opts)
+            try:
+                opts = lldb.SBExpressionOptions()
+                opts.SetFetchDynamicValue(True)
+                opts.SetCoerceResultToId(True)
+                print target.EvaluateExpression(' '.join(cmd[1:]), opts)
+            except:
+                # FIXME: This is a fallback path for the lab.llvm.org
+                # buildbot running OS X 10.7; it should be removed.
+                thread = process.GetThreadAtIndex(0)
+                frame = thread.GetFrameAtIndex(0)
+                print frame.EvaluateExpression(' '.join(cmd[1:]))
 
         elif re.match('^p|(print)$', cmd[0]) and len(cmd) > 1:
             thread = process.GetThreadAtIndex(0)
