@@ -77,8 +77,11 @@ endfunction(llvm_map_components_to_libraries)
 # Map LINK_COMPONENTS to actual libnames.
 function(llvm_map_components_to_libnames out_libs)
   set( link_components ${ARGN} )
-  get_property(llvm_libs GLOBAL PROPERTY LLVM_LIBS)
-  string(TOUPPER "${llvm_libs}" capitalized_libs)
+  if(NOT LLVM_AVAILABLE_LIBS)
+    # Inside LLVM itself available libs are in a global property.
+    get_property(LLVM_AVAILABLE_LIBS GLOBAL PROPERTY LLVM_LIBS)
+  endif()
+  string(TOUPPER "${LLVM_AVAILABLE_LIBS}" capitalized_libs)
 
   # Expand some keywords:
   list(FIND LLVM_TARGETS_TO_BUILD "${LLVM_NATIVE_ARCH}" have_native_backend)
@@ -134,7 +137,7 @@ function(llvm_map_components_to_libnames out_libs)
     elseif( c STREQUAL "engine" )
       # already processed
     elseif( c STREQUAL "all" )
-      list(APPEND expanded_components ${llvm_libs})
+      list(APPEND expanded_components ${LLVM_AVAILABLE_LIBS})
     else( NOT idx LESS 0 )
       # Canonize the component name:
       string(TOUPPER "${c}" capitalized)
@@ -146,7 +149,7 @@ function(llvm_map_components_to_libnames out_libs)
           message(FATAL_ERROR "Library `${c}' not found in list of llvm libraries.")
         endif()
       else( lib_idx LESS 0 )
-        list(GET llvm_libs ${lib_idx} canonical_lib)
+        list(GET LLVM_AVAILABLE_LIBS ${lib_idx} canonical_lib)
         list(APPEND expanded_components ${canonical_lib})
       endif( lib_idx LESS 0 )
     endif( NOT idx LESS 0 )

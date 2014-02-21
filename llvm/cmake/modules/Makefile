@@ -30,7 +30,7 @@ $(PROJ_OBJ_DIR)/LLVMConfig.cmake: LLVMConfig.cmake.in $(LLVMBuildCMakeFrag)
 	  -e 's/@LLVM_VERSION_MINOR@/'"$(LLVM_VERSION_MINOR)"'/' \
 	  -e 's/@PACKAGE_VERSION@/'"$(LLVMVersion)"'/' \
 	  -e 's/@LLVM_COMMON_DEPENDS@//' \
-	  -e 's/"@llvm_libs@"/'"$(subst -l,,$(LLVMConfigLibs))"'/' \
+	  -e 's/@LLVM_AVAILABLE_LIBS@/'"$(subst -l,,$(LLVMConfigLibs))"'/' \
 	  -e 's/@LLVM_ALL_TARGETS@/'"$(ALL_TARGETS)"'/' \
 	  -e 's/@LLVM_TARGETS_TO_BUILD@/'"$(TARGETS_TO_BUILD)"'/' \
 	  -e 's/@LLVM_TARGETS_WITH_JIT@/'"$(TARGETS_WITH_JIT)"'/' \

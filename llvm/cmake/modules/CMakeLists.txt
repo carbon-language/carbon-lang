@@ -5,9 +5,9 @@ get_property(LLVM_EXPORTS GLOBAL PROPERTY LLVM_EXPORTS)
 export(TARGETS ${LLVM_EXPORTS}
   FILE ${llvm_cmake_builddir}/LLVMExports.cmake)
 
-get_property(llvm_libs GLOBAL PROPERTY LLVM_LIBS)
+get_property(LLVM_AVAILABLE_LIBS GLOBAL PROPERTY LLVM_LIBS)
 
-foreach(lib ${llvm_libs})
+foreach(lib ${LLVM_AVAILABLE_LIBS})
   get_property(llvm_lib_deps GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_${lib})
   set(all_llvm_lib_deps
     "${all_llvm_lib_deps}\nset_property(GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_${lib} ${llvm_lib_deps})")
