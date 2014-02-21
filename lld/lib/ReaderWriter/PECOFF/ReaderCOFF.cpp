@@ -68,6 +68,7 @@ public:
 
   error_code parse(StringMap &altNames);
   StringRef getLinkerDirectives() const { return _directives; }
+  bool isCompatibleWithSEH() const { return _compatibleWithSEH; }
 
   virtual const atom_collection<DefinedAtom> &defined() const {
     return _definedAtoms;
@@ -135,6 +136,9 @@ private:
 
   // The contents of .drectve section.
   StringRef _directives;
+
+  // True if the object has "@feat.00" symbol.
+  bool _compatibleWithSEH;
 
   // A map from symbol to its name. All symbols should be in this map except
   // unnamed ones.
@@ -317,10 +321,18 @@ error_code FileCOFF::readSymbolTable(vector<const coff_symbol *> &result) {
            "Cannot atomize IMAGE_SYM_DEBUG!");
     result.push_back(sym);
 
-    // Cache the name.
     StringRef name;
     if (error_code ec = _obj->getSymbolName(sym, name))
       return ec;
+
+    // Existence of the symbol @feat.00 indicates that object file is compatible
+    // with Safe Exception Handling.
+    if (name == "@feat.00") {
+      _compatibleWithSEH = true;
+      continue;
+    }
+
+    // Cache the name.
     _symbolName[sym] = name;
 
     // Symbol may be followed by auxiliary symbol table records. The aux
@@ -778,9 +790,8 @@ error_code FileCOFF::findSection(StringRef name, const coff_section *&result) {
       return error_code::success();
     }
   }
-  // Section was not found, but it's not an error. This method returns an
-  // error
-  // only when there's a read error.
+  // Section was not found, but it's not an error. This method returns
+  // an error only when there's a read error.
   return error_code::success();
 }
 
@@ -930,6 +941,7 @@ public:
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
             std::vector<std::unique_ptr<File>> &result) const {
     // Parse the memory buffer as PECOFF file.
+    const char *mbName = mb->getBufferIdentifier();
     error_code ec;
     std::unique_ptr<FileCOFF> file(new FileCOFF(std::move(mb), ec));
     if (ec)
@@ -943,6 +955,14 @@ public:
 
     if (error_code ec = file->parse(_context.alternateNames()))
       return ec;
+
+    // Check for /SAFESEH.
+    if (_context.requireSEH() && !file->isCompatibleWithSEH()) {
+      llvm::errs() << "/SAFESEH is specified, but " << mbName
+                   << " is not compatible with SEH.\n";
+      return llvm::object::object_error::parse_failed;
+    }
+
     result.push_back(std::move(file));
     return error_code::success();
   }

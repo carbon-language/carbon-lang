@@ -1,0 +1,9 @@
+# "hello.obj" does not have the symbol "@feat.00", so it's not
+# compatible with SEH.
+
+# RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t.obj
+# RUN: not lld -flavor link /safeseh /out:%t.exe /subsystem:console \
+# RUN:   -- %t.obj 2> %t.err
+# RUN: FileCheck %s < %t.err
+
+CHECK: /SAFESEH is specified, but {{.*}} is not compatible with SEH.
