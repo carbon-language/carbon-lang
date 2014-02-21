@@ -2542,8 +2542,8 @@ ScriptInterpreterPython::InitializePrivate ()
     Py_InitializeEx (0);
 
     // Initialize SWIG after setting up python
-    assert (g_swig_init_callback != NULL);
-    g_swig_init_callback ();
+    if (g_swig_init_callback)
+        g_swig_init_callback ();
 
     // Update the path python uses to search for modules to include the current directory.
 
