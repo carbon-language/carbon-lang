@@ -293,8 +293,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
   PM.add(TLI);
 
   // Add the target data from the target machine, if it exists, or the module.
-  if (const DataLayout *TD = Target.getDataLayout())
-    PM.add(new DataLayout(*TD));
+  if (const DataLayout *DL = Target.getDataLayout())
+    PM.add(new DataLayout(*DL));
   else
     PM.add(new DataLayout(mod));
 
