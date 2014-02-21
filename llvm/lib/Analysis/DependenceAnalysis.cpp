@@ -3189,8 +3189,8 @@ DependenceAnalysis::tryDelinearize(const SCEV *SrcSCEV, const SCEV *DstSCEV,
     return false;
 
   SmallVector<const SCEV *, 4> SrcSubscripts, DstSubscripts, SrcSizes, DstSizes;
-  SrcAR->delinearize(*SE, SrcSubscripts, SrcSizes);
-  DstAR->delinearize(*SE, DstSubscripts, DstSizes);
+  const SCEV *RemainderS = SrcAR->delinearize(*SE, SrcSubscripts, SrcSizes);
+  const SCEV *RemainderD = DstAR->delinearize(*SE, DstSubscripts, DstSizes);
 
   int size = SrcSubscripts.size();
   // Fail when there is only a subscript: that's a linearized access function.
@@ -3209,6 +3209,21 @@ DependenceAnalysis::tryDelinearize(const SCEV *SrcSCEV, const SCEV *DstSCEV,
   for (int i = 0; i < size; ++i)
     if (SrcSizes[i] != DstSizes[i])
       return false;
+
+  // When the difference in remainders is different than a constant it might be
+  // that the base address of the arrays is not the same.
+  const SCEV *DiffRemainders = SE->getMinusSCEV(RemainderS, RemainderD);
+  if (!isa<SCEVConstant>(DiffRemainders))
+    return false;
+
+  // Normalize the last dimension: integrate the size of the "scalar dimension"
+  // and the remainder of the delinearization.
+  DstSubscripts[size-1] = SE->getMulExpr(DstSubscripts[size-1],
+                                         DstSizes[size-1]);
+  SrcSubscripts[size-1] = SE->getMulExpr(SrcSubscripts[size-1],
+                                         SrcSizes[size-1]);
+  SrcSubscripts[size-1] = SE->getAddExpr(SrcSubscripts[size-1], RemainderS);
+  DstSubscripts[size-1] = SE->getAddExpr(DstSubscripts[size-1], RemainderD);
 
 #ifndef NDEBUG
   DEBUG(errs() << "\nSrcSubscripts: ");
