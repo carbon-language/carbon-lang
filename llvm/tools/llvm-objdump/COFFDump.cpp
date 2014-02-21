@@ -253,6 +253,13 @@ printSEHTable(const COFFObjectFile *Obj, uint32_t TableVA, int Count) {
 }
 
 static void printLoadConfiguration(const COFFObjectFile *Obj) {
+  // Skip if it's not executable.
+  const pe32_header *PE32Header;
+  if (error(Obj->getPE32Header(PE32Header)))
+    return;
+  if (!PE32Header)
+    return;
+
   const coff_file_header *Header;
   if (error(Obj->getCOFFHeader(Header)))
     return;
