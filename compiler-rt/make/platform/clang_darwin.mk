@@ -46,7 +46,7 @@ XCRunSdkPath = \
 ###
 
 CC       := $(call XCRun,clang)
-LD       := $(call XCRun,ld)
+LD       := $(shell $(CC) -print-prog-name=ld)
 AR       := $(call XCRun,ar)
 RANLIB   := $(call XCRun,ranlib)
 STRIP    := $(call XCRun,strip)
