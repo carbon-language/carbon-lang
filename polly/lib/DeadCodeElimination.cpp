@@ -44,23 +44,12 @@ using namespace llvm;
 using namespace polly;
 
 namespace {
-enum DcePrecision {
-  DCE_PRECISION_AUTO,
-  DCE_PRECISION_HULL,
-  DCE_PRECISION_FULL
-};
 
-cl::opt<DcePrecision> DcePrecision(
-    "polly-dce-precision", cl::desc("Precision of Polyhedral DCE"),
-    cl::values(
-        clEnumValN(DCE_PRECISION_FULL, "full",
-                   "Live set is not approximated at each iteration"),
-        clEnumValN(
-            DCE_PRECISION_HULL, "hull",
-            "Live set is approximated with an affine hull at each iteration"),
-        clEnumValN(DCE_PRECISION_AUTO, "auto", "Currently the same as hull"),
-        clEnumValEnd),
-    cl::init(DCE_PRECISION_AUTO));
+cl::opt<int> DCEPreciseSteps(
+    "polly-dce-precise-steps",
+    cl::desc(
+        "The number of precise steps between two approximating iterations"),
+    cl::init(2));
 
 class DeadCodeElim : public ScopPass {
 
@@ -75,7 +64,7 @@ public:
 
 private:
   isl_union_set *getLastWrites(isl_union_map *Writes, isl_union_map *Schedule);
-  bool eliminateDeadCode(Scop &S);
+  bool eliminateDeadCode(Scop &S, int PreciseSteps);
 };
 }
 
@@ -100,7 +89,11 @@ isl_union_set *DeadCodeElim::getLastWrites(__isl_take isl_union_map *Writes,
 /// o Assuming that the last write to each location is live.
 /// o Following each RAW dependency from a live iteration backwards and adding
 ///   that iteration to the live set.
-bool DeadCodeElim::eliminateDeadCode(Scop &S) {
+///
+/// To ensure the set of live iterations does not get too complex we always
+/// combine a certain number of precise steps with one approximating step that
+/// simplifies the life set with an affine hull.
+bool DeadCodeElim::eliminateDeadCode(Scop &S, int PreciseSteps) {
   isl_union_set *Live = this->getLastWrites(S.getWrites(), S.getSchedule());
 
   Dependences *D = &getAnalysis<Dependences>();
@@ -108,8 +101,10 @@ bool DeadCodeElim::eliminateDeadCode(Scop &S) {
   Dep = isl_union_map_reverse(Dep);
 
   isl_union_set *OriginalDomain = S.getDomains();
-  while (true) {
+  int Steps = 0;
+   while (true) {
     isl_union_set *Extra;
+    Steps++;
 
     Extra =
         isl_union_set_apply(isl_union_set_copy(Live), isl_union_map_copy(Dep));
@@ -120,8 +115,12 @@ bool DeadCodeElim::eliminateDeadCode(Scop &S) {
     }
 
     Live = isl_union_set_union(Live, Extra);
-    if (DcePrecision != DCE_PRECISION_FULL)
+
+    if (Steps > PreciseSteps) {
+      Steps = 0;
       Live = isl_union_set_affine_hull(Live);
+    }
+
     Live = isl_union_set_intersect(Live, isl_union_set_copy(OriginalDomain));
   }
   isl_union_map_free(Dep);
@@ -130,7 +129,9 @@ bool DeadCodeElim::eliminateDeadCode(Scop &S) {
   return S.restrictDomains(isl_union_set_coalesce(Live));
 }
 
-bool DeadCodeElim::runOnScop(Scop &S) { return eliminateDeadCode(S); }
+bool DeadCodeElim::runOnScop(Scop &S) {
+  return eliminateDeadCode(S, DCEPreciseSteps);
+}
 
 void DeadCodeElim::printScop(raw_ostream &OS) const {}
 

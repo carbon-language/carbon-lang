@@ -1,5 +1,4 @@
-; RUN: opt -S %loadPolly -basicaa -polly-dependences-analysis-type=value-based -polly-ast -analyze < %s | FileCheck %s
-; RUN: opt -S %loadPolly -basicaa -polly-dependences-analysis-type=value-based -polly-dce-precision=full -polly-dce -polly-ast -analyze < %s | FileCheck %s -check-prefix=CHECK-DCE
+; RUN: opt -S %loadPolly -basicaa -polly-dependences-analysis-type=value-based -polly-dce -polly-ast -analyze < %s | FileCheck %s -check-prefix=CHECK
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-pc-linux-gnu"
 ;
@@ -69,22 +68,12 @@ exit.4:
   ret void
 }
 
-; CHECK: for (int c1 = 0; c1 <= 199; c1 += 1)
+; CHECK: for (int c1 = 50; c1 <= 99; c1 += 1)
+; CHECK:   Stmt_for_body_1(c1);
+; CHECK: for (int c1 = 110; c1 <= 199; c1 += 1)
 ; CHECK:   Stmt_for_body_1(c1);
 ; CHECK: for (int c1 = 0; c1 <= 49; c1 += 1)
 ; CHECK:   Stmt_for_body_2(c1);
 ; CHECK: for (int c1 = 0; c1 <= 69; c1 += 1)
 ; CHECK:   Stmt_for_body_3(c1);
 ; CHECK: for (int c1 = 0; c1 <= 9; c1 += 1)
-; CHECK:   Stmt_for_body_4(c1);
-
-; CHECK-DCE: for (int c1 = 50; c1 <= 99; c1 += 1)
-; CHECK-DCE:   Stmt_for_body_1(c1);
-; CHECK-DCE: for (int c1 = 110; c1 <= 199; c1 += 1)
-; CHECK-DCE:   Stmt_for_body_1(c1);
-; CHECK-DCE: for (int c1 = 0; c1 <= 49; c1 += 1)
-; CHECK-DCE:   Stmt_for_body_2(c1);
-; CHECK-DCE: for (int c1 = 0; c1 <= 69; c1 += 1)
-; CHECK-DCE:   Stmt_for_body_3(c1);
-; CHECK-DCE: for (int c1 = 0; c1 <= 9; c1 += 1)
-; CHECK-DCE:   Stmt_for_body_4(c1);
