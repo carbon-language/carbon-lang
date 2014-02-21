@@ -197,7 +197,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (get_profile_data,              &RNBRemote::HandlePacket_GetProfileData, NULL, "qGetProfileData", "Return profiling data of the current target."));
     t.push_back (Packet (set_enable_profiling,          &RNBRemote::HandlePacket_SetEnableAsyncProfiling, NULL, "QSetEnableAsyncProfiling", "Enable or disable the profiling of current target."));
     t.push_back (Packet (watchpoint_support_info,       &RNBRemote::HandlePacket_WatchpointSupportInfo, NULL, "qWatchpointSupportInfo", "Return the number of supported hardware watchpoints"));
-
+    t.push_back (Packet (speed_test,                    &RNBRemote::HandlePacket_qSpeedTest, NULL, "qSpeedTest:", "Test the maximum speed at which packet can be sent/received."));
 }
 
 
@@ -3504,6 +3504,29 @@ RNBRemote::HandlePacket_SetEnableAsyncProfiling (const char *p)
     
     DNBProcessSetEnableAsyncProfiling(pid, enable, interval_usec, scan_type);
     return SendPacket ("OK");
+}
+
+
+rnb_err_t
+RNBRemote::HandlePacket_qSpeedTest (const char *p)
+{
+    p += strlen ("qSpeedTest:response_size:");
+    char *end = NULL;
+    errno = 0;
+    uint64_t response_size = ::strtoul (p, &end, 16);
+    if (errno != 0)
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Didn't find response_size value at right offset");
+    else if (*end == ';')
+    {
+        static char g_data[4*1024*1024+16] = "data:";
+        memset(g_data + 5, 'a', response_size);
+        g_data[response_size + 5] = '\0';
+        return SendPacket (g_data);
+    }
+    else
+    {
+        return SendPacket ("E79");
+    }
 }
 
 rnb_err_t

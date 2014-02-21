@@ -121,7 +121,7 @@ public:
         deallocate_memory,              // '_m'
         save_register_state,            // '_g'
         restore_register_state,         // '_G'
-        
+        speed_test,                     // 'qSpeedTest:'
         unknown_type
     } PacketEnum;
 
@@ -224,7 +224,7 @@ public:
     rnb_err_t HandlePacket_GetProfileData(const char *p);
     rnb_err_t HandlePacket_SetEnableAsyncProfiling(const char *p);
     rnb_err_t HandlePacket_WatchpointSupportInfo (const char *p);
-
+    rnb_err_t HandlePacket_qSpeedTest (const char *p);
     rnb_err_t HandlePacket_stop_process (const char *p);
 
     rnb_err_t SendStopReplyPacketForThread (nub_thread_t tid);
