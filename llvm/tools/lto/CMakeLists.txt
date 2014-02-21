@@ -22,7 +22,5 @@ endif()
 
 add_llvm_library(LTO ${ENABLE_SHARED} STATIC ${SOURCES})
 
-if( NOT CYGWIN )
-  install(FILES ${LLVM_MAIN_INCLUDE_DIR}/llvm-c/lto.h
-          DESTINATION include/llvm-c)
-endif()
+install(FILES ${LLVM_MAIN_INCLUDE_DIR}/llvm-c/lto.h
+  DESTINATION include/llvm-c)
