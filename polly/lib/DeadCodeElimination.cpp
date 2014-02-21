@@ -102,7 +102,7 @@ bool DeadCodeElim::eliminateDeadCode(Scop &S, int PreciseSteps) {
 
   isl_union_set *OriginalDomain = S.getDomains();
   int Steps = 0;
-   while (true) {
+  while (true) {
     isl_union_set *Extra;
     Steps++;
 
