@@ -874,7 +874,7 @@ void SelectionDAGBuilder::init(GCFunctionInfo *gfi, AliasAnalysis &aa,
   AA = &aa;
   GFI = gfi;
   LibInfo = li;
-  TD = DAG.getTarget().getDataLayout();
+  DL = DAG.getTarget().getDataLayout();
   Context = DAG.getContext();
   LPadToCallSiteMap.clear();
 }
@@ -3328,7 +3328,7 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
       unsigned Field = cast<Constant>(Idx)->getUniqueInteger().getZExtValue();
       if (Field) {
         // N = N + Offset
-        uint64_t Offset = TD->getStructLayout(StTy)->getElementOffset(Field);
+        uint64_t Offset = DL->getStructLayout(StTy)->getElementOffset(Field);
         N = DAG.getNode(ISD::ADD, getCurSDLoc(), N.getValueType(), N,
                         DAG.getConstant(Offset, N.getValueType()));
       }
@@ -3342,7 +3342,7 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
       if (const ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
         if (CI->isZero()) continue;
         uint64_t Offs =
-            TD->getTypeAllocSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
+            DL->getTypeAllocSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
         SDValue OffsVal;
         EVT PTy = TLI->getPointerTy(AS);
         unsigned PtrBits = PTy.getSizeInBits();
@@ -3359,7 +3359,7 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
 
       // N = N + Idx * ElementSize;
       APInt ElementSize = APInt(TLI->getPointerSizeInBits(AS),
-                                TD->getTypeAllocSize(Ty));
+                                DL->getTypeAllocSize(Ty));
       SDValue IdxN = getValue(Idx);
 
       // If the index is smaller or larger than intptr_t, truncate or extend
@@ -5355,7 +5355,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       return 0;
 
     SmallVector<Value *, 4> Allocas;
-    GetUnderlyingObjects(I.getArgOperand(1), Allocas, TD);
+    GetUnderlyingObjects(I.getArgOperand(1), Allocas, DL);
 
     for (SmallVectorImpl<Value*>::iterator Object = Allocas.begin(),
            E = Allocas.end(); Object != E; ++Object) {
@@ -5608,7 +5608,7 @@ static SDValue getMemCmpLoad(const Value *PtrVal, MVT LoadVT,
 
     if (const Constant *LoadCst =
           ConstantFoldLoadFromConstPtr(const_cast<Constant *>(LoadInput),
-                                       Builder.TD))
+                                       Builder.DL))
       return Builder.getValue(LoadCst);
   }
 
@@ -6104,7 +6104,7 @@ public:
   /// MVT::Other.
   EVT getCallOperandValEVT(LLVMContext &Context,
                            const TargetLowering &TLI,
-                           const DataLayout *TD) const {
+                           const DataLayout *DL) const {
     if (CallOperandVal == 0) return MVT::Other;
 
     if (isa<BasicBlock>(CallOperandVal))
@@ -6130,7 +6130,7 @@ public:
     // If OpTy is not a single value, it may be a struct/union that we
     // can tile with integers.
     if (!OpTy->isSingleValueType() && OpTy->isSized()) {
-      unsigned BitSize = TD->getTypeSizeInBits(OpTy);
+      unsigned BitSize = DL->getTypeSizeInBits(OpTy);
       switch (BitSize) {
       default: break;
       case 1:
@@ -6319,7 +6319,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
         OpInfo.CallOperand = getValue(OpInfo.CallOperandVal);
       }
 
-      OpVT = OpInfo.getCallOperandValEVT(*DAG.getContext(), *TLI, TD).
+      OpVT = OpInfo.getCallOperandValEVT(*DAG.getContext(), *TLI, DL).
         getSimpleVT();
     }
 
@@ -6794,11 +6794,11 @@ void SelectionDAGBuilder::visitVAStart(const CallInst &I) {
 
 void SelectionDAGBuilder::visitVAArg(const VAArgInst &I) {
   const TargetLowering *TLI = TM.getTargetLowering();
-  const DataLayout &TD = *TLI->getDataLayout();
+  const DataLayout &DL = *TLI->getDataLayout();
   SDValue V = DAG.getVAArg(TLI->getValueType(I.getType()), getCurSDLoc(),
                            getRoot(), getValue(I.getOperand(0)),
                            DAG.getSrcValue(I.getOperand(0)),
-                           TD.getABITypeAlignment(I.getType()));
+                           DL.getABITypeAlignment(I.getType()));
   setValue(&I, V);
   DAG.setRoot(V.getValue(1));
 }
@@ -7341,7 +7341,7 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
   SelectionDAG &DAG = SDB->DAG;
   SDLoc dl = SDB->getCurSDLoc();
   const TargetLowering *TLI = getTargetLowering();
-  const DataLayout *TD = TLI->getDataLayout();
+  const DataLayout *DL = TLI->getDataLayout();
   SmallVector<ISD::InputArg, 16> Ins;
 
   if (!FuncInfo->CanLowerReturn) {
@@ -7373,7 +7373,7 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
       Type *ArgTy = VT.getTypeForEVT(*DAG.getContext());
       ISD::ArgFlagsTy Flags;
       unsigned OriginalAlignment =
-        TD->getABITypeAlignment(ArgTy);
+        DL->getABITypeAlignment(ArgTy);
 
       if (F.getAttributes().hasAttribute(Idx, Attribute::ZExt))
         Flags.setZExt();
@@ -7397,7 +7397,7 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
       if (Flags.isByVal() || Flags.isInAlloca()) {
         PointerType *Ty = cast<PointerType>(I->getType());
         Type *ElementTy = Ty->getElementType();
-        Flags.setByValSize(TD->getTypeAllocSize(ElementTy));
+        Flags.setByValSize(DL->getTypeAllocSize(ElementTy));
         // For ByVal, alignment should be passed from FE.  BE will guess if
         // this info is not there but there are cases it cannot get right.
         unsigned FrameAlign;

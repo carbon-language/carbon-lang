@@ -93,11 +93,11 @@ static bool isEscapeSource(const Value *V) {
 
 /// getObjectSize - Return the size of the object specified by V, or
 /// UnknownSize if unknown.
-static uint64_t getObjectSize(const Value *V, const DataLayout &TD,
+static uint64_t getObjectSize(const Value *V, const DataLayout &DL,
                               const TargetLibraryInfo &TLI,
                               bool RoundToAlign = false) {
   uint64_t Size;
-  if (getObjectSize(V, Size, &TD, &TLI, RoundToAlign))
+  if (getObjectSize(V, Size, &DL, &TLI, RoundToAlign))
     return Size;
   return AliasAnalysis::UnknownSize;
 }
@@ -105,7 +105,7 @@ static uint64_t getObjectSize(const Value *V, const DataLayout &TD,
 /// isObjectSmallerThan - Return true if we can prove that the object specified
 /// by V is smaller than Size.
 static bool isObjectSmallerThan(const Value *V, uint64_t Size,
-                                const DataLayout &TD,
+                                const DataLayout &DL,
                                 const TargetLibraryInfo &TLI) {
   // Note that the meanings of the "object" are slightly different in the
   // following contexts:
@@ -138,7 +138,7 @@ static bool isObjectSmallerThan(const Value *V, uint64_t Size,
 
   // This function needs to use the aligned object size because we allow
   // reads a bit past the end given sufficient alignment.
-  uint64_t ObjectSize = getObjectSize(V, TD, TLI, /*RoundToAlign*/true);
+  uint64_t ObjectSize = getObjectSize(V, DL, TLI, /*RoundToAlign*/true);
 
   return ObjectSize != AliasAnalysis::UnknownSize && ObjectSize < Size;
 }
@@ -146,8 +146,8 @@ static bool isObjectSmallerThan(const Value *V, uint64_t Size,
 /// isObjectSize - Return true if we can prove that the object specified
 /// by V has size Size.
 static bool isObjectSize(const Value *V, uint64_t Size,
-                         const DataLayout &TD, const TargetLibraryInfo &TLI) {
-  uint64_t ObjectSize = getObjectSize(V, TD, TLI);
+                         const DataLayout &DL, const TargetLibraryInfo &TLI) {
+  uint64_t ObjectSize = getObjectSize(V, DL, TLI);
   return ObjectSize != AliasAnalysis::UnknownSize && ObjectSize == Size;
 }
 
@@ -200,7 +200,7 @@ namespace {
 /// represented in the result.
 static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
                                   ExtensionKind &Extension,
-                                  const DataLayout &TD, unsigned Depth) {
+                                  const DataLayout &DL, unsigned Depth) {
   assert(V->getType()->isIntegerTy() && "Not an integer value");
 
   // Limit our recursion depth.
@@ -217,23 +217,23 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
       case Instruction::Or:
         // X|C == X+C if all the bits in C are unset in X.  Otherwise we can't
         // analyze it.
-        if (!MaskedValueIsZero(BOp->getOperand(0), RHSC->getValue(), &TD))
+        if (!MaskedValueIsZero(BOp->getOperand(0), RHSC->getValue(), &DL))
           break;
         // FALL THROUGH.
       case Instruction::Add:
         V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, Extension,
-                                TD, Depth+1);
+                                DL, Depth+1);
         Offset += RHSC->getValue();
         return V;
       case Instruction::Mul:
         V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, Extension,
-                                TD, Depth+1);
+                                DL, Depth+1);
         Offset *= RHSC->getValue();
         Scale *= RHSC->getValue();
         return V;
       case Instruction::Shl:
         V = GetLinearExpression(BOp->getOperand(0), Scale, Offset, Extension,
-                                TD, Depth+1);
+                                DL, Depth+1);
         Offset <<= RHSC->getValue().getLimitedValue();
         Scale <<= RHSC->getValue().getLimitedValue();
         return V;
@@ -254,7 +254,7 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
     Extension = isa<SExtInst>(V) ? EK_SignExt : EK_ZeroExt;
 
     Value *Result = GetLinearExpression(CastOp, Scale, Offset, Extension,
-                                        TD, Depth+1);
+                                        DL, Depth+1);
     Scale = Scale.zext(OldWidth);
     Offset = Offset.zext(OldWidth);
 
@@ -282,7 +282,7 @@ static Value *GetLinearExpression(Value *V, APInt &Scale, APInt &Offset,
 static const Value *
 DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
                        SmallVectorImpl<VariableGEPIndex> &VarIndices,
-                       const DataLayout *TD) {
+                       const DataLayout *DL) {
   // Limit recursion depth to limit compile time in crazy cases.
   unsigned MaxLookup = 6;
 
@@ -313,7 +313,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       if (const Instruction *I = dyn_cast<Instruction>(V))
         // TODO: Get a DominatorTree and use it here.
         if (const Value *Simplified =
-              SimplifyInstruction(const_cast<Instruction *>(I), TD)) {
+              SimplifyInstruction(const_cast<Instruction *>(I), DL)) {
           V = Simplified;
           continue;
         }
@@ -328,7 +328,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
     // If we are lacking DataLayout information, we can't compute the offets of
     // elements computed by GEPs.  However, we can handle bitcast equivalent
     // GEPs.
-    if (TD == 0) {
+    if (DL == 0) {
       if (!GEPOp->hasAllZeroIndices())
         return V;
       V = GEPOp->getOperand(0);
@@ -347,30 +347,30 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
         unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
         if (FieldNo == 0) continue;
 
-        BaseOffs += TD->getStructLayout(STy)->getElementOffset(FieldNo);
+        BaseOffs += DL->getStructLayout(STy)->getElementOffset(FieldNo);
         continue;
       }
 
       // For an array/pointer, add the element offset, explicitly scaled.
       if (ConstantInt *CIdx = dyn_cast<ConstantInt>(Index)) {
         if (CIdx->isZero()) continue;
-        BaseOffs += TD->getTypeAllocSize(*GTI)*CIdx->getSExtValue();
+        BaseOffs += DL->getTypeAllocSize(*GTI)*CIdx->getSExtValue();
         continue;
       }
 
-      uint64_t Scale = TD->getTypeAllocSize(*GTI);
+      uint64_t Scale = DL->getTypeAllocSize(*GTI);
       ExtensionKind Extension = EK_NotExtended;
 
       // If the integer type is smaller than the pointer size, it is implicitly
       // sign extended to pointer size.
       unsigned Width = Index->getType()->getIntegerBitWidth();
-      if (TD->getPointerSizeInBits(AS) > Width)
+      if (DL->getPointerSizeInBits(AS) > Width)
         Extension = EK_SignExt;
 
       // Use GetLinearExpression to decompose the index into a C1*V+C2 form.
       APInt IndexScale(Width, 0), IndexOffset(Width, 0);
       Index = GetLinearExpression(Index, IndexScale, IndexOffset, Extension,
-                                  *TD, 0);
+                                  *DL, 0);
 
       // The GEP index scale ("Scale") scales C1*V+C2, yielding (C1*V+C2)*Scale.
       // This gives us an aggregate computation of (C1*Scale)*V + C2*Scale.
@@ -392,7 +392,7 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
 
       // Make sure that we have a scale that makes sense for this target's
       // pointer size.
-      if (unsigned ShiftBits = 64 - TD->getPointerSizeInBits(AS)) {
+      if (unsigned ShiftBits = 64 - DL->getPointerSizeInBits(AS)) {
         Scale <<= ShiftBits;
         Scale = (int64_t)Scale >> ShiftBits;
       }
