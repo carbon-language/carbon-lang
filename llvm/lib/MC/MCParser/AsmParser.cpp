@@ -833,7 +833,6 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
       } else if (MAI.doesAllowAtInName() && !MAI.useParensForSymbolVariant()) {
         Variant = MCSymbolRefExpr::VK_None;
       } else {
-        Variant = MCSymbolRefExpr::VK_None;
         return Error(SMLoc::getFromPointer(Split.second.begin()),
                      "invalid variant '" + Split.second + "'");
       }
