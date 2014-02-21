@@ -604,7 +604,7 @@ to avoid false positives in other places.
   }];
 }
 
-def TypeSafetyCat : DocumentationCategory<"Type Safety Checking"> {
+def DocCatTypeSafety : DocumentationCategory<"Type Safety Checking"> {
   let Content = [{
 Clang supports additional attributes to enable checking type safety properties
 that can't be enforced by the C type system.  Use cases include:
@@ -639,7 +639,7 @@ example:
 }
 
 def ArgumentWithTypeTagDocs : Documentation {
-  let Category = TypeSafetyCat;
+  let Category = DocCatTypeSafety;
   let Heading = "argument_with_type_tag";
   let Content = [{
 Use ``__attribute__((argument_with_type_tag(arg_kind, arg_idx,
@@ -661,7 +661,7 @@ For example:
 }
 
 def PointerWithTypeTagDocs : Documentation {
-  let Category = TypeSafetyCat;
+  let Category = DocCatTypeSafety;
   let Heading = "pointer_with_type_tag";
   let Content = [{
 Use ``__attribute__((pointer_with_type_tag(ptr_kind, ptr_idx, type_tag_idx)))``
@@ -678,7 +678,7 @@ For example:
 }
 
 def TypeTagForDatatypeDocs : Documentation {
-  let Category = TypeSafetyCat;
+  let Category = DocCatTypeSafety;
   let Content = [{
 Clang supports annotating type tags of two forms.
 
