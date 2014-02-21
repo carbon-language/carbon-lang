@@ -215,7 +215,7 @@
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 #endif
 
-#ifndef __cplusplus >= 201103L
+#ifndef __GXX_EXPERIMENTAL_CXX0X__
 #ifdef __linux__
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #else
