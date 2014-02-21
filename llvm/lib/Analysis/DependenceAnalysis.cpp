@@ -3193,9 +3193,22 @@ DependenceAnalysis::tryDelinearize(const SCEV *SrcSCEV, const SCEV *DstSCEV,
   DstAR->delinearize(*SE, DstSubscripts, DstSizes);
 
   int size = SrcSubscripts.size();
-  int dstSize = DstSubscripts.size();
-  if (size != dstSize || size < 2)
+  // Fail when there is only a subscript: that's a linearized access function.
+  if (size < 2)
     return false;
+
+  int dstSize = DstSubscripts.size();
+  // Fail when the number of subscripts in Src and Dst differ.
+  if (size != dstSize)
+    return false;
+
+  // Fail when the size of any of the subscripts in Src and Dst differs: the
+  // dependence analysis assumes that elements in the same array have same size.
+  // SCEV delinearization does not have a context based on which it would decide
+  // globally the size of subscripts that would best fit all the array accesses.
+  for (int i = 0; i < size; ++i)
+    if (SrcSizes[i] != DstSizes[i])
+      return false;
 
 #ifndef NDEBUG
   DEBUG(errs() << "\nSrcSubscripts: ");
