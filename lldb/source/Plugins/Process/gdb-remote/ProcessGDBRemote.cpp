@@ -2022,7 +2022,7 @@ ProcessGDBRemote::DoDestroy ()
 
                 if (packet_cmd == 'W' || packet_cmd == 'X')
                 {
-#if 0 && defined(__APPLE__)
+#if defined(__APPLE__)
                     // For Native processes on Mac OS X, we launch through the Host Platform, then hand the process off
                     // to debugserver, which becomes the parent process through "PT_ATTACH".  Then when we go to kill
                     // the process on Mac OS X we call ptrace(PT_KILL) to kill it, then we call waitpid which returns
