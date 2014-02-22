@@ -63,6 +63,27 @@ The semantics are as follows:
   a sequence equivalent to "movs pc, lr" will be used.
 
 
+acquire_capability (acquire_shared_capability, clang::acquire_capability, clang::acquire_shared_capability)
+-----------------------------------------------------------------------------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "X","X","",""
+
+Marks a function as acquiring a capability.
+
+
+assert_capability (assert_shared_capability, clang::assert_capability, clang::assert_shared_capability)
+-------------------------------------------------------------------------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "X","X","",""
+
+Marks a function that dynamically tests whether a capability is held, and halts
+the program if it is not held.
+
+
 availability
 ------------
 .. csv-table:: Supported Syntaxes
@@ -356,6 +377,52 @@ Clang implements two kinds of checks with this attribute.
    incorrect, the caller of ``foo`` will receive a warning.
 
 
+noduplicate (clang::noduplicate)
+--------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
+
+   "X","X","",""
+
+The ``noduplicate`` attribute can be placed on function declarations to control
+whether function calls to this function can be duplicated 
+or not as a result of optimizations. This is required for the implementation
+of functions with certain special requirements, like the OpenCL "barrier", 
+function that, depending on the hardware, might require to be run concurrently
+by all the threads that are currently executing in lockstep on the hardware.
+For example this attribute applied on the function "nodupfunc" 
+avoids that this code:
+
+.. code-block:: c
+
+  void nodupfunc() __attribute__((noduplicate));
+  // Setting it as a C++11 attribute is also valid
+  // void nodupfunc() [[clang::noduplicate]];
+  void foo();
+  void bar();
+
+  nodupfunc();
+  if (a > n) {
+    foo();
+  } else {
+    bar();
+  }
+
+gets possibly modified by some optimization into code similar to this:
+
+.. code-block:: c
+
+  if (a > n) {
+    nodupfunc();
+    foo();
+  } else {
+    nodupfunc();
+    bar();
+  }
+
+where the barrier call is duplicated and sunk into the two branches of the condition.
+
+
 no_sanitize_address (no_address_safety_analysis, gnu::no_address_safety_analysis, gnu::no_sanitize_address)
 -----------------------------------------------------------------------------------------------------------
 .. csv-table:: Supported Syntaxes
@@ -558,50 +625,29 @@ caveats to this use of name mangling:
 
 Query for this feature with ``__has_extension(attribute_overloadable)``.
 
-noduplicate
------------
+
+release_capability (release_shared_capability, clang::release_capability, clang::release_shared_capability)
+-----------------------------------------------------------------------------------------------------------
 .. csv-table:: Supported Syntaxes
    :header: "GNU", "C++11", "__declspec", "Keyword"
 
    "X","X","",""
 
-The ``noduplicate`` attribute can be placed on function declarations to control
-whether function calls to this function can be duplicated 
-or not as a result of optimizations. This is required for the implementation
-of functions with certain special requirements, like the OpenCL "barrier", 
-function that, depending on the hardware, might require to be run concurrently
-by all the threads that are currently executing in lockstep on the hardware.
-For example this attribute applied on the function "nodupfunc" 
-avoids that this code:
+Marks a function as releasing a capability.
 
-.. code-block:: c
 
-  void nodupfunc() __attribute__((noduplicate));
-  // Setting it as a C++11 attribute is also valid
-  // void nodupfunc() [[clang::noduplicate]];
-  void foo();
-  void bar();
+try_acquire_capability (try_acquire_shared_capability, clang::try_acquire_capability, clang::try_acquire_shared_capability)
+---------------------------------------------------------------------------------------------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "__declspec", "Keyword"
 
-  nodupfunc();
-  if (a > n) {
-    foo();
-  } else {
-    bar();
-  }
+   "X","X","",""
 
-gets possibly modified by some optimization into code similar to this:
+Marks a function that attemps to aquire a capability. This function may fail to
+actually acquire the capability; they accept a Boolean value determining
+whether acquiring the capability means success (true), or failing to acquire
+the capability means success (false).
 
-.. code-block:: c
-
-  if (a > n) {
-    nodupfunc();
-    foo();
-  } else {
-    nodupfunc();
-    bar();
-  }
-
-where the barrier call is duplicated and sunk into the two branches of the condition.
 
 Variable Attributes
 ===================

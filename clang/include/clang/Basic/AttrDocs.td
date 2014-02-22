@@ -79,6 +79,7 @@ that appears to be capable of returning to its caller.
 
 def AssertCapabilityDocs : Documentation {
   let Category = DocCatFunction;
+  let Heading = "assert_capability (assert_shared_capability, clang::assert_capability, clang::assert_shared_capability)";
   let Content = [{
 Marks a function that dynamically tests whether a capability is held, and halts
 the program if it is not held.
@@ -87,6 +88,7 @@ the program if it is not held.
 
 def AcquireCapabilityDocs : Documentation {
   let Category = DocCatFunction;
+  let Heading = "acquire_capability (acquire_shared_capability, clang::acquire_capability, clang::acquire_shared_capability)";
   let Content = [{
 Marks a function as acquiring a capability.
   }];
@@ -94,6 +96,7 @@ Marks a function as acquiring a capability.
 
 def TryAcquireCapabilityDocs : Documentation {
   let Category = DocCatFunction;
+  let Heading = "try_acquire_capability (try_acquire_shared_capability, clang::try_acquire_capability, clang::try_acquire_shared_capability)";
   let Content = [{
 Marks a function that attemps to aquire a capability. This function may fail to
 actually acquire the capability; they accept a Boolean value determining
@@ -104,6 +107,7 @@ the capability means success (false).
 
 def ReleaseCapabilityDocs : Documentation {
   let Category = DocCatFunction;
+  let Heading = "release_capability (release_shared_capability, clang::release_capability, clang::release_shared_capability)";
   let Content = [{
 Marks a function as releasing a capability.
   }];
