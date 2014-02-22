@@ -208,7 +208,7 @@ public:
     return *this;
   }
 
-  inline Self operator+(int Right) {
+  inline Self operator+(int Right) const {
     Self tmp = *this;
     tmp += Right;
     return tmp;
@@ -218,11 +218,11 @@ public:
     return operator+=(-Right);
   }
 
-  inline Self operator-(int Right) {
+  inline Self operator-(int Right) const {
     return operator+(-Right);
   }
 
-  inline int operator-(const Self& x) {
+  inline int operator-(const Self& x) const {
     assert(Term == x.Term && "Cannot work on iterators of different blocks!");
     int distance = idx - x.idx;
     return distance;
