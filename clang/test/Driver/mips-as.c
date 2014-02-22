@@ -4,7 +4,7 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS32-EB-AS %s
 // MIPS32-EB-AS: as{{(.exe)?}}" "-march" "mips32r2" "-mabi" "32" "-EB"
-// MIPS32-EB-AS-NOT: "-KPIC"
+// MIPS32-EB-AS-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-KPIC"
 //
 // RUN: %clang -target mips-linux-gnu -### \
 // RUN:   -no-integrated-as -fPIC -c %s 2>&1 \
@@ -81,7 +81,7 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-N16 %s
 // MIPS-N16: as{{(.exe)?}}"
-// MIPS-N16-NOT: "-mips16"
+// MIPS-N16-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-mips16"
 //
 // RUN: %clang -target mips-linux-gnu -mno-micromips -mmicromips -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
@@ -92,7 +92,7 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-NMICRO %s
 // MIPS-NMICRO: as{{(.exe)?}}"
-// MIPS-NMICRO-NOT: "-mmicromips"
+// MIPS-NMICRO-NOT: {{[A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-mmicromips"
 //
 // RUN: %clang -target mips-linux-gnu -mno-dsp -mdsp -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
@@ -103,7 +103,7 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-NDSP %s
 // MIPS-NDSP: as{{(.exe)?}}"
-// MIPS-NDSP-NOT: "-mdsp"
+// MIPS-NDSP-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-mdsp"
 //
 // RUN: %clang -target mips-linux-gnu -mno-dspr2 -mdspr2 -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
@@ -114,7 +114,7 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-NDSPR2 %s
 // MIPS-NDSPR2: as{{(.exe)?}}"
-// MIPS-NDSPR2-NOT: "-mdspr2"
+// MIPS-NDSPR2-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-mdspr2"
 //
 // RUN: %clang -target mips-linux-gnu -mnan=legacy -mnan=2008 -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
@@ -125,7 +125,7 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-NAN-LEGACY %s
 // MIPS-NAN-LEGACY: as{{(.exe)?}}"
-// MIPS-NAN-LEGACY-NOT: "-mnan={{.*}}"
+// MIPS-NAN-LEGACY-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-mnan={{.*}}"
 //
 // RUN: %clang -target mips-linux-gnu -mfp64 -mfp32 -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
@@ -146,4 +146,4 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-NMSA %s
 // MIPS-NMSA: as{{(.exe)?}}"
-// MIPS-NMSA-NOT: "-mmsa"
+// MIPS-NMSA-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-mmsa"
