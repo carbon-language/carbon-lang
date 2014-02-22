@@ -204,11 +204,11 @@ private:
 } // namespace {
 
 CGRecordLowering::CGRecordLowering(CodeGenTypes &Types, const RecordDecl *D)
-  : D(D), RD(dyn_cast<CXXRecordDecl>(D)),
+  : Types(Types), Context(Types.getContext()), D(D),
+    RD(dyn_cast<CXXRecordDecl>(D)),
     Layout(Types.getContext().getASTRecordLayout(D)),
-    IsZeroInitializable(true), IsZeroInitializableAsBase(true),
-    Packed(false), Types(Types), Context(Types.getContext()),
-    DataLayout(Types.getDataLayout()) {}
+    DataLayout(Types.getDataLayout()), IsZeroInitializable(true),
+    IsZeroInitializableAsBase(true), Packed(false) {}
 
 void CGRecordLowering::setBitFieldInfo(
     const FieldDecl *FD, CharUnits StartOffset, llvm::Type *StorageType) {
@@ -680,7 +680,6 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
 
   if (BaseTy) {
     CharUnits NonVirtualSize  = Layout.getNonVirtualSize();
-    CharUnits NonVirtualAlign = Layout.getNonVirtualAlignment();
 
     uint64_t AlignedNonVirtualTypeSizeInBits = 
       getContext().toBits(NonVirtualSize);
