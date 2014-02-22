@@ -115,6 +115,27 @@ Value *ClastExpCodeGen::codegen(const clast_name *e, Type *Ty) {
   return Builder.CreateSExtOrBitCast(I->second, Ty);
 }
 
+static APInt APInt_from_MPZ(const mpz_t mpz) {
+  uint64_t *p = NULL;
+  size_t sz;
+
+  p = (uint64_t *)mpz_export(p, &sz, -1, sizeof(uint64_t), 0, 0, mpz);
+
+  if (p) {
+    APInt A((unsigned)mpz_sizeinbase(mpz, 2), (unsigned)sz, p);
+    A = A.zext(A.getBitWidth() + 1);
+    free(p);
+
+    if (mpz_sgn(mpz) == -1)
+      return -A;
+    else
+      return A;
+  } else {
+    uint64_t val = 0;
+    return APInt(1, 1, &val);
+  }
+}
+
 Value *ClastExpCodeGen::codegen(const clast_term *e, Type *Ty) {
   APInt a = APInt_from_MPZ(e->val);
 

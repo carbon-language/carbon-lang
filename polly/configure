@@ -2453,7 +2453,7 @@ fi
 
 fi
 else
-  if test "xrequired" = "xrequired"; then :
+  if test "x" = "xrequired"; then :
   as_fn_error "gmp required but not found" "$LINENO" 5
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
@@ -2477,7 +2477,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 saved_CXXFLAGS=$CXXFLAGS
-CXXFLAGS="$CXXFLAGS $gmp_inc"
+CXXFLAGS="$CXXFLAGS"
 
   ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -2504,8 +2504,8 @@ else
 fi
 
   # Check for library and headers works
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for isl: isl/val.in $given_inc_path, and libisl in $given_lib_path" >&5
-$as_echo_n "checking for isl: isl/val.in $given_inc_path, and libisl in $given_lib_path... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for isl: isl/val.h in $given_inc_path, and libisl in $given_lib_path" >&5
+$as_echo_n "checking for isl: isl/val.h in $given_inc_path, and libisl in $given_lib_path... " >&6; }
 
   # try to compile a file that includes a header of the library
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext

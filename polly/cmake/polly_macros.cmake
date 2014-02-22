@@ -27,10 +27,10 @@ macro(add_polly_library name)
     endforeach(lib)
   endif( LLVM_USED_LIBS )
 
-  target_link_libraries( ${name} ${ISL_LIBRARY} ${GMP_LIBRARY})
+  target_link_libraries( ${name} ${ISL_LIBRARY})
 
   if (CLOOG_FOUND)
-    target_link_libraries( ${name} ${CLOOG_LIBRARY})
+    target_link_libraries( ${name} ${CLOOG_LIBRARY} ${GMP_LIBRARY})
   endif(CLOOG_FOUND)
 
   if (OPENSCOP_FOUND)

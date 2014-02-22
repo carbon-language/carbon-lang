@@ -75,11 +75,11 @@ dnl **************************************************************************
 dnl * Set the location of various third-party software packages
 dnl **************************************************************************
 dnl Find Gmp
-find_lib_and_headers([gmp], [gmp.h], [gmp], [required])
+find_lib_and_headers([gmp], [gmp.h], [gmp])
 
 dnl Find Isl
 saved_CXXFLAGS=$CXXFLAGS
-CXXFLAGS="$CXXFLAGS $gmp_inc"
+CXXFLAGS="$CXXFLAGS"
 find_lib_and_headers([isl], [isl/val.h], [isl], [required])
 CXXFLAGS=$saved_CXXFLAGS
 

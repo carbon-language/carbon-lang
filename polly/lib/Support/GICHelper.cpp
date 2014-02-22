@@ -21,25 +21,6 @@
 
 using namespace llvm;
 
-void polly::MPZ_from_APInt(mpz_t v, const APInt apint, bool is_signed) {
-  // There is no sign taken from the data, rop will simply be a positive
-  // integer. An application can handle any sign itself, and apply it for
-  // instance with mpz_neg.
-  APInt abs;
-  if (is_signed)
-    abs = apint.abs();
-  else
-    abs = apint;
-
-  const uint64_t *rawdata = abs.getRawData();
-  unsigned numWords = abs.getNumWords();
-
-  mpz_import(v, numWords, -1, sizeof(uint64_t), 0, 0, rawdata);
-
-  if (is_signed && apint.isNegative())
-    mpz_neg(v, v);
-}
-
 __isl_give isl_val *polly::isl_valFromAPInt(isl_ctx *Ctx, const APInt Int,
                                             bool IsSigned) {
   APInt Abs;
@@ -59,27 +40,6 @@ __isl_give isl_val *polly::isl_valFromAPInt(isl_ctx *Ctx, const APInt Int,
     v = isl_val_neg(v);
 
   return v;
-}
-
-APInt polly::APInt_from_MPZ(const mpz_t mpz) {
-  uint64_t *p = NULL;
-  size_t sz;
-
-  p = (uint64_t *)mpz_export(p, &sz, -1, sizeof(uint64_t), 0, 0, mpz);
-
-  if (p) {
-    APInt A((unsigned)mpz_sizeinbase(mpz, 2), (unsigned)sz, p);
-    A = A.zext(A.getBitWidth() + 1);
-    free(p);
-
-    if (mpz_sgn(mpz) == -1)
-      return -A;
-    else
-      return A;
-  } else {
-    uint64_t val = 0;
-    return APInt(1, 1, &val);
-  }
 }
 
 APInt polly::APIntFromVal(__isl_take isl_val *Val) {
