@@ -43,6 +43,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
@@ -305,17 +306,6 @@ private:
   SmallVector<AttributeItem, 64> Contents;
 
   const MCSection *AttributeSection;
-
-  // FIXME: this should be in a more generic place, but
-  // getULEBSize() is in MCAsmInfo and will be moved to MCDwarf
-  static size_t getULEBSize(int Value) {
-    size_t Size = 0;
-    do {
-      Value >>= 7;
-      Size += sizeof(int8_t); // Is this really necessary?
-    } while (Value);
-    return Size;
-  }
 
   AttributeItem *getAttributeItem(unsigned Attribute) {
     for (size_t i = 0; i < Contents.size(); ++i)
@@ -897,16 +887,16 @@ size_t ARMTargetELFStreamer::calculateContentSize() const {
     case AttributeItem::HiddenAttribute:
       break;
     case AttributeItem::NumericAttribute:
-      Result += getULEBSize(item.Tag);
-      Result += getULEBSize(item.IntValue);
+      Result += getULEB128Size(item.Tag);
+      Result += getULEB128Size(item.IntValue);
       break;
     case AttributeItem::TextAttribute:
-      Result += getULEBSize(item.Tag);
+      Result += getULEB128Size(item.Tag);
       Result += item.StringValue.size() + 1; // string + '\0'
       break;
     case AttributeItem::NumericAndTextAttributes:
-      Result += getULEBSize(item.Tag);
-      Result += getULEBSize(item.IntValue);
+      Result += getULEB128Size(item.Tag);
+      Result += getULEB128Size(item.IntValue);
       Result += item.StringValue.size() + 1; // string + '\0';
       break;
     }

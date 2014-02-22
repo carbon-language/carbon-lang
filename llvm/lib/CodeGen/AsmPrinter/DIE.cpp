@@ -24,6 +24,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Support/MD5.h"
 using namespace llvm;
 
@@ -256,10 +257,10 @@ unsigned DIEInteger::SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
   case dwarf::DW_FORM_ref8:  // Fall thru
   case dwarf::DW_FORM_ref_sig8:  // Fall thru
   case dwarf::DW_FORM_data8: return sizeof(int64_t);
-  case dwarf::DW_FORM_GNU_str_index: return MCAsmInfo::getULEB128Size(Integer);
-  case dwarf::DW_FORM_GNU_addr_index: return MCAsmInfo::getULEB128Size(Integer);
-  case dwarf::DW_FORM_udata: return MCAsmInfo::getULEB128Size(Integer);
-  case dwarf::DW_FORM_sdata: return MCAsmInfo::getSLEB128Size(Integer);
+  case dwarf::DW_FORM_GNU_str_index: return getULEB128Size(Integer);
+  case dwarf::DW_FORM_GNU_addr_index: return getULEB128Size(Integer);
+  case dwarf::DW_FORM_udata: return getULEB128Size(Integer);
+  case dwarf::DW_FORM_sdata: return getSLEB128Size(Integer);
   case dwarf::DW_FORM_addr:  return AP->getDataLayout().getPointerSize();
   default: llvm_unreachable("DIE Value form not supported yet");
   }
@@ -463,7 +464,7 @@ unsigned DIELoc::SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
   case dwarf::DW_FORM_block4: return Size + sizeof(int32_t);
   case dwarf::DW_FORM_block:
   case dwarf::DW_FORM_exprloc:
-    return Size + MCAsmInfo::getULEB128Size(Size);
+    return Size + getULEB128Size(Size);
   default: llvm_unreachable("Improper form for block");
   }
 }
@@ -516,7 +517,7 @@ unsigned DIEBlock::SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
   case dwarf::DW_FORM_block1: return Size + sizeof(int8_t);
   case dwarf::DW_FORM_block2: return Size + sizeof(int16_t);
   case dwarf::DW_FORM_block4: return Size + sizeof(int32_t);
-  case dwarf::DW_FORM_block:  return Size + MCAsmInfo::getULEB128Size(Size);
+  case dwarf::DW_FORM_block:  return Size + getULEB128Size(Size);
   default: llvm_unreachable("Improper form for block");
   }
 }

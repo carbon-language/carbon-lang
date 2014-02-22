@@ -157,8 +157,7 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
     }
     if (Discriminator != it->getDiscriminator()) {
       Discriminator = it->getDiscriminator();
-      unsigned Size =
-          MCOS->getContext().getAsmInfo()->getULEB128Size(Discriminator);
+      unsigned Size = getULEB128Size(Discriminator);
       MCOS->EmitIntValue(dwarf::DW_LNS_extended_op, 1);
       MCOS->EmitULEB128IntValue(Size + 1);
       MCOS->EmitIntValue(dwarf::DW_LNE_set_discriminator, 1);

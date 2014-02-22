@@ -31,6 +31,7 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
@@ -108,7 +109,7 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
   for (std::vector<unsigned>::const_iterator
          I = FilterIds.begin(), E = FilterIds.end(); I != E; ++I) {
     FilterOffsets.push_back(Offset);
-    Offset -= MCAsmInfo::getULEB128Size(*I);
+    Offset -= getULEB128Size(*I);
   }
 
   FirstActions.reserve(LandingPads.size());
@@ -132,14 +133,12 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
         unsigned SizePrevIds = PrevLPI->TypeIds.size();
         assert(Actions.size());
         PrevAction = Actions.size() - 1;
-        SizeAction =
-          MCAsmInfo::getSLEB128Size(Actions[PrevAction].NextAction) +
-          MCAsmInfo::getSLEB128Size(Actions[PrevAction].ValueForTypeID);
+        SizeAction = getSLEB128Size(Actions[PrevAction].NextAction) +
+                     getSLEB128Size(Actions[PrevAction].ValueForTypeID);
 
         for (unsigned j = NumShared; j != SizePrevIds; ++j) {
           assert(PrevAction != (unsigned)-1 && "PrevAction is invalid!");
-          SizeAction -=
-            MCAsmInfo::getSLEB128Size(Actions[PrevAction].ValueForTypeID);
+          SizeAction -= getSLEB128Size(Actions[PrevAction].ValueForTypeID);
           SizeAction += -Actions[PrevAction].NextAction;
           PrevAction = Actions[PrevAction].Previous;
         }
@@ -150,10 +149,10 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
         int TypeID = TypeIds[J];
         assert(-1 - TypeID < (int)FilterOffsets.size() && "Unknown filter id!");
         int ValueForTypeID = TypeID < 0 ? FilterOffsets[-1 - TypeID] : TypeID;
-        unsigned SizeTypeID = MCAsmInfo::getSLEB128Size(ValueForTypeID);
+        unsigned SizeTypeID = getSLEB128Size(ValueForTypeID);
 
         int NextAction = SizeAction ? -(SizeAction + SizeTypeID) : 0;
-        SizeAction = SizeTypeID + MCAsmInfo::getSLEB128Size(NextAction);
+        SizeAction = SizeTypeID + getSLEB128Size(NextAction);
         SizeSiteActions += SizeAction;
 
         ActionEntry Action = { ValueForTypeID, NextAction, PrevAction };
@@ -401,9 +400,9 @@ void DwarfException::EmitExceptionTable() {
   }
 
   for (unsigned i = 0, e = CallSites.size(); i < e; ++i) {
-    CallSiteTableLength += MCAsmInfo::getULEB128Size(CallSites[i].Action);
+    CallSiteTableLength += getULEB128Size(CallSites[i].Action);
     if (IsSJLJ)
-      CallSiteTableLength += MCAsmInfo::getULEB128Size(i);
+      CallSiteTableLength += getULEB128Size(i);
   }
 
   // Type infos.
@@ -488,15 +487,14 @@ void DwarfException::EmitExceptionTable() {
   // We chose another solution: don't output padding inside the table like GCC
   // does, instead output it before the table.
   unsigned SizeTypes = TypeInfos.size() * TypeFormatSize;
-  unsigned CallSiteTableLengthSize =
-    MCAsmInfo::getULEB128Size(CallSiteTableLength);
+  unsigned CallSiteTableLengthSize = getULEB128Size(CallSiteTableLength);
   unsigned TTypeBaseOffset =
     sizeof(int8_t) +                            // Call site format
     CallSiteTableLengthSize +                   // Call site table length size
     CallSiteTableLength +                       // Call site table length
     SizeActions +                               // Actions size
     SizeTypes;
-  unsigned TTypeBaseOffsetSize = MCAsmInfo::getULEB128Size(TTypeBaseOffset);
+  unsigned TTypeBaseOffsetSize = getULEB128Size(TTypeBaseOffset);
   unsigned TotalSize =
     sizeof(int8_t) +                            // LPStart format
     sizeof(int8_t) +                            // TType format

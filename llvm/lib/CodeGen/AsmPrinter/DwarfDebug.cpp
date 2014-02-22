@@ -38,6 +38,7 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/LEB128.h"
 #include "llvm/Support/MD5.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Timer.h"
@@ -1876,7 +1877,7 @@ unsigned DwarfFile::computeSizeAndOffset(DIE *Die, unsigned Offset) {
   Die->setOffset(Offset);
 
   // Start the size with the size of abbreviation code.
-  Offset += MCAsmInfo::getULEB128Size(Die->getAbbrevNumber());
+  Offset += getULEB128Size(Die->getAbbrevNumber());
 
   const SmallVectorImpl<DIEValue *> &Values = Die->getValues();
   const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
