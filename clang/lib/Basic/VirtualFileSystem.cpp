@@ -554,6 +554,7 @@ class VFSFromYAMLParser {
           Status("", "", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0,
                  0, file_type::directory_file, sys::fs::all_all));
     }
+    llvm_unreachable("unknown EntryKind in switch");
   }
 
 public:
