@@ -19,6 +19,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cctype>
+#include <limits>
 
 using namespace llvm;
 using namespace object;
@@ -50,6 +51,40 @@ static error_code getObject(const T *&Obj, const MemoryBuffer *M,
   }
   Obj = reinterpret_cast<const T *>(Addr);
   return object_error::success;
+}
+
+// Decode a string table entry in base 64 (//AAAAAA). Expects \arg Str without
+// prefixed slashes.
+static bool decodeBase64StringEntry(StringRef Str, uint32_t &Result) {
+  assert(Str.size() <= 6 && "String too long, possible overflow.");
+  if (Str.size() > 6)
+    return true;
+
+  uint64_t Value = 0;
+  while (!Str.empty()) {
+    unsigned CharVal;
+    if (Str[0] >= 'A' && Str[0] <= 'Z') // 0..25
+      CharVal = Str[0] - 'A';
+    else if (Str[0] >= 'a' && Str[0] <= 'z') // 26..51
+      CharVal = Str[0] - 'a' + 26;
+    else if (Str[0] >= '0' && Str[0] <= '9') // 52..61
+      CharVal = Str[0] - '0' + 52;
+    else if (Str[0] == '+') // 62
+      CharVal = Str[0] - '+' + 62;
+    else if (Str[0] == '/') // 63
+      CharVal = Str[0] - '/' + 63;
+    else
+      return true;
+
+    Value = (Value * 64) + CharVal;
+    Str = Str.substr(1);
+  }
+
+  if (Value > std::numeric_limits<uint32_t>::max())
+    return true;
+
+  Result = static_cast<uint32_t>(Value);
+  return false;
 }
 
 const coff_symbol *COFFObjectFile::toSymb(DataRefImpl Ref) const {
@@ -766,8 +801,13 @@ error_code COFFObjectFile::getSectionName(const coff_section *Sec,
   // Check for string table entry. First byte is '/'.
   if (Name[0] == '/') {
     uint32_t Offset;
-    if (Name.substr(1).getAsInteger(10, Offset))
-      return object_error::parse_failed;
+    if (Name[1] == '/') {
+      if (decodeBase64StringEntry(Name.substr(2), Offset))
+        return object_error::parse_failed;
+    } else {
+      if (Name.substr(1).getAsInteger(10, Offset))
+        return object_error::parse_failed;
+    }
     if (error_code EC = getString(Offset, Name))
       return EC;
   }

@@ -468,12 +468,35 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
   }
 }
 
+// Encode a string table entry offset in base 64, padded to 6 chars, and
+// prefixed with a double slash: '//AAAAAA', '//AAAAAB', ...
+// Buffer must be at least 8 bytes large. No terminating null appended.
+static void encodeBase64StringEntry(char* Buffer, uint64_t Value) {
+  assert(Value > 9999999 && Value <= 0xFFFFFFFFF &&
+         "Illegal section name encoding for value");
+
+  static const char Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                 "abcdefghijklmnopqrstuvwxyz"
+                                 "0123456789+/";
+
+  Buffer[0] = '/';
+  Buffer[1] = '/';
+
+  char* Ptr = Buffer + 7;
+  for (unsigned i = 0; i < 6; ++i) {
+    unsigned Rem = Value % 64;
+    Value /= 64;
+    *(Ptr--) = Alphabet[Rem];
+  }
+}
+
 /// making a section real involves assigned it a number and putting
 /// name into the string table if needed
 void WinCOFFObjectWriter::MakeSectionReal(COFFSection &S, size_t Number) {
   if (S.Name.size() > COFF::NameSize) {
     const unsigned Max6DecimalSize = 999999;
     const unsigned Max7DecimalSize = 9999999;
+    const uint64_t MaxBase64Size = 0xFFFFFFFFF; // 64^6, including 0
     uint64_t StringTableEntry = Strings.insert(S.Name.c_str());
 
     if (StringTableEntry <= Max6DecimalSize) {
@@ -484,8 +507,11 @@ void WinCOFFObjectWriter::MakeSectionReal(COFFSection &S, size_t Number) {
       char buffer[9] = { };
       std::sprintf(buffer, "/%d", unsigned(StringTableEntry));
       std::memcpy(S.Header.Name, buffer, 8);
+    } else if (StringTableEntry <= MaxBase64Size) {
+      // Starting with 10,000,000, offsets are encoded as base64.
+      encodeBase64StringEntry(S.Header.Name, StringTableEntry);
     } else {
-      report_fatal_error("COFF string table is greater than 9,999,999 bytes.");
+      report_fatal_error("COFF string table is greater than 64 GB.");
     }
   } else
     std::memcpy(S.Header.Name, S.Name.c_str(), S.Name.size());
