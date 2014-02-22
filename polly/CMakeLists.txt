@@ -79,6 +79,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
 # Add path for custom modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${POLLY_SOURCE_DIR}/cmake")
 
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 FIND_PACKAGE(Isl REQUIRED)
 FIND_PACKAGE(Pluto)
 
