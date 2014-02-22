@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "codegenprepare"
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"

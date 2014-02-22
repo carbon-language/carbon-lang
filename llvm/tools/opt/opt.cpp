@@ -22,6 +22,7 @@
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/Bitcode/BitcodeWriterPass.h"
 #include "llvm/CodeGen/CommandFlags.h"
+#include "llvm/InitializePasses.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LLVMContext.h"
@@ -340,6 +341,9 @@ int main(int argc, char **argv) {
   initializeInstCombine(Registry);
   initializeInstrumentation(Registry);
   initializeTarget(Registry);
+  // For codegen passes, only passes that do IR to IR transformation are
+  // supported. For now, just add CodeGenPrepare.
+  initializeCodeGenPreparePass(Registry);
 
   cl::ParseCommandLineOptions(argc, argv,
     "llvm .bc -> .bc modular optimizer and analysis printer\n");

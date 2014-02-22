@@ -1,6 +1,7 @@
 set(LLVM_LINK_COMPONENTS
   Analysis
   BitWriter
+  CodeGen
   Core
   IPA
   IPO

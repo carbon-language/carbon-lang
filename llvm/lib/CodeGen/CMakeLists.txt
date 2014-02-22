@@ -7,6 +7,7 @@ add_llvm_library(LLVMCodeGen
   CalcSpillWeights.cpp
   CallingConvLower.cpp
   CodeGen.cpp
+  CodeGenPrepare.cpp
   CriticalAntiDepBreaker.cpp
   DFAPacketizer.cpp
   DeadMachineInstructionElim.cpp

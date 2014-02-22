@@ -370,6 +370,10 @@ namespace llvm {
   createMachineFunctionPrinterPass(raw_ostream &OS,
                                    const std::string &Banner ="");
 
+  /// createCodeGenPreparePass - Transform the code to expose more pattern
+  /// matching during instruction selection.
+  FunctionPass *createCodeGenPreparePass(const TargetMachine *TM = 0);
+
   /// MachineLoopInfo - This pass is a loop analysis pass.
   extern char &MachineLoopInfoID;
 

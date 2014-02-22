@@ -22,6 +22,7 @@ using namespace llvm;
 void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeBasicTTIPass(Registry);
   initializeBranchFolderPassPass(Registry);
+  initializeCodeGenPreparePass(Registry);
   initializeDeadMachineInstructionElimPass(Registry);
   initializeEarlyIfConverterPass(Registry);
   initializeExpandPostRAPass(Registry);
