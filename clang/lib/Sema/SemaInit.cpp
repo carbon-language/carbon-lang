@@ -5232,10 +5232,13 @@ PerformConstructorInitialization(Sema &S,
       ConstructKind = CXXConstructExpr::CK_Delegating;
     }
 
-    // Only get the parenthesis range if it is a direct construction.
-    SourceRange parenRange =
-        Kind.getKind() == InitializationKind::IK_Direct ?
-        Kind.getParenRange() : SourceRange();
+    // Only get the parenthesis or brace range if it is a list initialization or
+    // direct construction.
+    SourceRange ParenOrBraceRange;
+    if (IsListInitialization)
+      ParenOrBraceRange = SourceRange(LBraceLoc, RBraceLoc);
+    else if (Kind.getKind() == InitializationKind::IK_Direct)
+      ParenOrBraceRange = Kind.getParenRange();
 
     // If the entity allows NRVO, mark the construction as elidable
     // unconditionally.
@@ -5247,7 +5250,7 @@ PerformConstructorInitialization(Sema &S,
                                         IsListInitialization,
                                         ConstructorInitRequiresZeroInit,
                                         ConstructKind,
-                                        parenRange);
+                                        ParenOrBraceRange);
     else
       CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
                                         Constructor,
@@ -5256,7 +5259,7 @@ PerformConstructorInitialization(Sema &S,
                                         IsListInitialization,
                                         ConstructorInitRequiresZeroInit,
                                         ConstructKind,
-                                        parenRange);
+                                        ParenOrBraceRange);
   }
   if (CurInit.isInvalid())
     return ExprError();

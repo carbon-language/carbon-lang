@@ -1506,7 +1506,7 @@ namespace PR17746 {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
 // CHECK-NEXT:          <key>line</key><integer>120</integer>
-// CHECK-NEXT:          <key>col</key><integer>19</integer>
+// CHECK-NEXT:          <key>col</key><integer>20</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1535,7 +1535,7 @@ namespace PR17746 {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
 // CHECK-NEXT:          <key>line</key><integer>120</integer>
-// CHECK-NEXT:          <key>col</key><integer>19</integer>
+// CHECK-NEXT:          <key>col</key><integer>20</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1787,7 +1787,7 @@ namespace PR17746 {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
 // CHECK-NEXT:          <key>line</key><integer>128</integer>
-// CHECK-NEXT:          <key>col</key><integer>32</integer>
+// CHECK-NEXT:          <key>col</key><integer>33</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
