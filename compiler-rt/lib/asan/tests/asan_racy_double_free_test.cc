@@ -7,7 +7,7 @@ void *x[N];
 
 void *Thread1(void *unused) {
   for (int i = 0; i < N; i++) {
-    fprintf(stderr, "%s %d\n", __func__, i);
+    fprintf(stderr, "%s %d\n", __FUNCTION__, i);
     free(x[i]);
   }
   return NULL;
@@ -15,7 +15,7 @@ void *Thread1(void *unused) {
 
 void *Thread2(void *unused) {
   for (int i = 0; i < N; i++) {
-    fprintf(stderr, "%s %d\n", __func__, i);
+    fprintf(stderr, "%s %d\n", __FUNCTION__, i);
     free(x[i]);
   }
   return NULL;

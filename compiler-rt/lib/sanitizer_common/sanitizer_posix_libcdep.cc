@@ -105,7 +105,7 @@ void SetAlternateSignalStack() {
   // TODO(glider): the mapped stack should have the MAP_STACK flag in the
   // future. It is not required by man 2 sigaltstack now (they're using
   // malloc()).
-  void* base = MmapOrDie(kAltStackSize, __func__);
+  void* base = MmapOrDie(kAltStackSize, __FUNCTION__);
   altstack.ss_sp = base;
   altstack.ss_flags = 0;
   altstack.ss_size = kAltStackSize;

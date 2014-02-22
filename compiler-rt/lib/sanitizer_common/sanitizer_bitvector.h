@@ -149,7 +149,7 @@ class TwoLevelBitVector {
       l2_[i0][i1].clear();
     }
     bool res = l2_[i0][i1].setBit(i2);
-    // Printf("%s: %zd => %zd %zd %zd; %d\n", __func__,
+    // Printf("%s: %zd => %zd %zd %zd; %d\n", __FUNCTION__,
     // idx, i0, i1, i2, res);
     return res;
   }
@@ -173,7 +173,7 @@ class TwoLevelBitVector {
     uptr i0 = idx0(idx);
     uptr i1 = idx1(idx);
     uptr i2 = idx2(idx);
-    // Printf("%s: %zd => %zd %zd %zd\n", __func__, idx, i0, i1, i2);
+    // Printf("%s: %zd => %zd %zd %zd\n", __FUNCTION__, idx, i0, i1, i2);
     return l1_[i0].getBit(i1) && l2_[i0][i1].getBit(i2);
   }
 

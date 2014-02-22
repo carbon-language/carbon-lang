@@ -79,7 +79,7 @@ AsanThread *AsanThread::Create(thread_callback_t start_routine,
                                void *arg) {
   uptr PageSize = GetPageSizeCached();
   uptr size = RoundUpTo(sizeof(AsanThread), PageSize);
-  AsanThread *thread = (AsanThread*)MmapOrDie(size, __func__);
+  AsanThread *thread = (AsanThread*)MmapOrDie(size, __FUNCTION__);
   thread->start_routine_ = start_routine;
   thread->arg_ = arg;
 

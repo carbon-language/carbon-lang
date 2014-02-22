@@ -68,7 +68,7 @@ bool IsInInterceptorScope() {
     if (offset >= 0 && __msan::flags()->report_umrs) {                       \
       GET_CALLER_PC_BP_SP;                                                   \
       (void) sp;                                                             \
-      Printf("UMR in %s at offset %d inside [%p, +%d) \n", __func__,         \
+      Printf("UMR in %s at offset %d inside [%p, +%d) \n", __FUNCTION__,     \
              offset, x, n);                                                  \
       __msan::PrintWarningWithOrigin(pc, bp,                                 \
                                      __msan_get_origin((char *)x + offset)); \

@@ -93,7 +93,7 @@ uptr ReadFileToBuffer(const char *file_name, char **buff,
     if (internal_iserror(openrv)) return 0;
     fd_t fd = openrv;
     UnmapOrDie(*buff, *buff_size);
-    *buff = (char*)MmapOrDie(size, __func__);
+    *buff = (char*)MmapOrDie(size, __FUNCTION__);
     *buff_size = size;
     // Read up to one page at a time.
     read_len = 0;
