@@ -109,7 +109,7 @@ struct CGRecordLowering {
         (unsigned)llvm::RoundUpToAlignment(NumBits, 8));
   }
   /// \brief Gets an llvm type of size NumBytes and alignment 1.
-  llvm::Type *CGRecordLowering::getByteArrayType(CharUnits NumBytes) {
+  llvm::Type *getByteArrayType(CharUnits NumBytes) {
     assert(!NumBytes.isZero() && "Empty byte arrays aren't allowed.");
     llvm::Type *Type = llvm::Type::getInt8Ty(Types.getLLVMContext());
     return NumBytes == CharUnits::One() ? Type :
