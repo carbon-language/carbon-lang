@@ -2,11 +2,11 @@
 
 const int AA = 5;
 
-int f1(enum {AA,BB} E) {
+int f1(enum {AA,BB} E) { // expected-warning {{will not be visible outside of this function}}
     return BB;
 }
 
-int f2(enum {AA=7,BB} E) {
+int f2(enum {AA=7,BB} E) { // expected-warning {{will not be visible outside of this function}}
     return AA;
 }
 

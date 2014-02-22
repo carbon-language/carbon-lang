@@ -25,3 +25,18 @@ namespace PR6375 {
 
   template void f<int>();
 }
+
+namespace EnumScoping {
+
+template <typename T>
+class C {
+  enum {
+    value = 42
+  };
+};
+
+void f(int i, C<int>::C c) {
+  int value;
+}
+
+}
