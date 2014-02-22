@@ -298,7 +298,6 @@ function(llvm_add_library name)
     # Add dependencies also to objlibs.
     # CMake issue 14747 --  add_dependencies() might be ignored to objlib's user.
     foreach(objlib ${objlibs})
-      message("add_dependencies(${objlib} ${LLVM_COMMON_DEPENDS})")
       add_dependencies(${objlib} ${LLVM_COMMON_DEPENDS})
     endforeach()
   endif()
