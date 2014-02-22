@@ -10,7 +10,7 @@ define <8 x i16> @foo(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-NEXT: .short	      32
 ; CHECK-NEXT: .short	      32
 ; CHECK-NEXT: .short	      32
-; CHECK-LABEL: foo
+; CHECK-LABEL: {{^_?foo:}}
 ; CHECK-NOT: psll
 entry:
   %icmp = icmp eq <8 x i16> %a, %b
