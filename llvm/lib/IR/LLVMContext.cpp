@@ -115,17 +115,12 @@ void *LLVMContext::getDiagnosticContext() const {
 }
 
 void LLVMContext::emitError(const Twine &ErrorStr) {
-  emitError(0U, ErrorStr);
+  diagnose(DiagnosticInfoInlineAsm(ErrorStr));
 }
 
 void LLVMContext::emitError(const Instruction *I, const Twine &ErrorStr) {
-  unsigned LocCookie = 0;
-  if (const MDNode *SrcLoc = I->getMetadata("srcloc")) {
-    if (SrcLoc->getNumOperands() != 0)
-      if (const ConstantInt *CI = dyn_cast<ConstantInt>(SrcLoc->getOperand(0)))
-        LocCookie = CI->getZExtValue();
-  }
-  return emitError(LocCookie, ErrorStr);
+  assert (I && "Invalid instruction");
+  diagnose(DiagnosticInfoInlineAsm(*I, ErrorStr));
 }
 
 void LLVMContext::diagnose(const DiagnosticInfo &DI) {
@@ -154,16 +149,7 @@ void LLVMContext::diagnose(const DiagnosticInfo &DI) {
 }
 
 void LLVMContext::emitError(unsigned LocCookie, const Twine &ErrorStr) {
-  // If there is no error handler installed, just print the error and exit.
-  if (pImpl->InlineAsmDiagHandler == 0) {
-    errs() << "error: " << ErrorStr << "\n";
-    exit(1);
-  }
-
-  // If we do have an error handler, we can report the error and keep going.
-  SMDiagnostic Diag("", SourceMgr::DK_Error, ErrorStr.str());
-
-  pImpl->InlineAsmDiagHandler(Diag, pImpl->InlineAsmDiagContext, LocCookie);
+  diagnose(DiagnosticInfoInlineAsm(LocCookie, ErrorStr));
 }
 
 //===----------------------------------------------------------------------===//
