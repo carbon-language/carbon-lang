@@ -785,6 +785,21 @@ struct ArrayFieldOfRecords {
 // CHECK-X64-NEXT:      | [sizeof=8, align=4
 // CHECK-X64-NEXT:      |  nvsize=8, nvalign=4]
 
+struct ArrayOfArrayFieldOfRecords {
+  A4 InlineElts[2][2];
+};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct ArrayOfArrayFieldOfRecords
+// CHECK-NEXT:    0 |   struct A4 [2][2] InlineElts
+// CHECK-NEXT:      | [sizeof=16, align=4
+// CHECK-NEXT:      |  nvsize=16, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct ArrayOfArrayFieldOfRecords
+// CHECK-X64-NEXT:    0 |   struct A4 [2][2] InlineElts
+// CHECK-X64-NEXT:      | [sizeof=16, align=4
+// CHECK-X64-NEXT:      |  nvsize=16, nvalign=4]
+
 int a[
 sizeof(TestF0)+
 sizeof(TestF1)+
@@ -806,4 +821,6 @@ sizeof(F3)+
 sizeof(F4)+
 sizeof(F5)+
 sizeof(F6)+
-sizeof(ArrayFieldOfRecords)];
+sizeof(ArrayFieldOfRecords)+
+sizeof(ArrayOfArrayFieldOfRecords)+
+0];
