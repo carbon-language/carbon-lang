@@ -3786,7 +3786,7 @@ static void handleX86ForceAlignArgPointerAttr(Sema &S, Decl *D,
 DLLImportAttr *Sema::mergeDLLImportAttr(Decl *D, SourceRange Range,
                                         unsigned AttrSpellingListIndex) {
   if (D->hasAttr<DLLExportAttr>()) {
-    Diag(Range.getBegin(), diag::warn_attribute_ignored) << "dllimport";
+    Diag(Range.getBegin(), diag::warn_attribute_ignored) << "'dllimport'";
     return NULL;
   }
 
@@ -3834,7 +3834,7 @@ static void handleDLLImportAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 DLLExportAttr *Sema::mergeDLLExportAttr(Decl *D, SourceRange Range,
                                         unsigned AttrSpellingListIndex) {
   if (DLLImportAttr *Import = D->getAttr<DLLImportAttr>()) {
-    Diag(Import->getLocation(), diag::warn_attribute_ignored) << "dllimport";
+    Diag(Import->getLocation(), diag::warn_attribute_ignored) << Import;
     D->dropAttr<DLLImportAttr>();
   }
 
