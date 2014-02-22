@@ -56,10 +56,10 @@ entry:
   %f2 = getelementptr %Foo* %b, i32 0, i32 1
   store i32 13, i32* %f1
   store i32 42, i32* %f2
-; CHECK: movl    $13, (%[[REG]])
-; CHECK: movl    $42, 4(%[[REG]])
+; CHECK-DAG: movl    $13, (%[[REG]])
+; CHECK-DAG: movl    $42, 4(%[[REG]])
   call x86_thiscallcc void @thiscall_with_inalloca(i8* null, %Foo* inalloca %b)
-; CHECK: xorl    %ecx, %ecx
+; CHECK-DAG: xorl    %ecx, %ecx
 ; CHECK: calll   _thiscall_with_inalloca
   ret void
 }
