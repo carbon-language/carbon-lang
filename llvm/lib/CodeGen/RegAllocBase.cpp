@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the RegAllocBase class which provides comon functionality
+// This file defines the RegAllocBase class which provides common functionality
 // for LiveIntervalUnion-based register allocators.
 //
 //===----------------------------------------------------------------------===//
