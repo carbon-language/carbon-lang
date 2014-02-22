@@ -2667,12 +2667,6 @@ public:
                                     ObjCInterfaceDecl *IDecl);
   void DefaultSynthesizeProperties(Scope *S, Decl *D);
 
-  /// CollectImmediateProperties - This routine collects all properties in
-  /// the class and its conforming protocols; but not those it its super class.
-  void CollectImmediateProperties(ObjCContainerDecl *CDecl,
-            llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& PropMap,
-            llvm::DenseMap<IdentifierInfo *, ObjCPropertyDecl*>& SuperPropMap);
-  
   /// IvarBacksCurrentMethodAccessor - This routine returns 'true' if 'IV' is
   /// an ivar synthesized for 'Method' and 'Method' is a property accessor
   /// declared in class 'IFace'.

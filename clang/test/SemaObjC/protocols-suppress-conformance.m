@@ -32,6 +32,19 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 @dynamic theWorstOfTimes;
 @end
 
+@interface ClassB_AlsoGood : ClassA <Protocol>
+@property (readonly) id theWorstOfTimes;
+@end
+
+// Default synthesis acts as if @dynamic
+// had been written for 'theWorstOfTimes' because
+// it is declared in ClassA.  This is okay, since
+// the author of ClassB_AlsoGood needs explicitly
+// write @property in the @interface.
+@implementation ClassB_AlsoGood // no-warning
+- (void) theBestOfTimes {}
+@end
+
 // Test that inherited protocols do not get the explicit conformance requirement.
 @protocol Inherited
 - (void) fairIsFoul;
