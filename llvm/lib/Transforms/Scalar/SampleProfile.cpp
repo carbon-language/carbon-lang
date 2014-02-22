@@ -50,6 +50,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cctype>
 
 using namespace llvm;
 
