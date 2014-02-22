@@ -673,6 +673,9 @@ _mm_storer_ps(float *__p, __m128 __a)
 #define _MM_HINT_NTA 0
 
 #ifndef _MSC_VER
+/* FIXME: We have to #define this because "sel" must be a constant integer, and
+   Sema doesn't do any form of constant propagation yet. */
+
 #define _mm_prefetch(a, sel) (__builtin_prefetch((void *)(a), 0, (sel)))
 #endif
 
