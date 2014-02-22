@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -verify -std=c++11 %s
-// expected-no-diagnostics
 template<typename T>
 void f0() {
   struct X;
@@ -180,4 +179,18 @@ namespace PR14373 {
     exec_func(Type());
     return 0;
   }
+}
+
+namespace PR18907 {
+template <typename>
+class C : public C<int> {}; // expected-error{{within its own definition}}
+
+template <typename X>
+void F() {
+  struct A : C<X> {};
+}
+
+struct B {
+  void f() { F<int>(); }
+};
 }

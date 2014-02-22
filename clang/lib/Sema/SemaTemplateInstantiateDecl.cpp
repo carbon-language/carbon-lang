@@ -1187,14 +1187,11 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   // DR1484 clarifies that the members of a local class are instantiated as part
   // of the instantiation of their enclosing entity.
   if (D->isCompleteDefinition() && D->isLocalClass()) {
-    if (SemaRef.InstantiateClass(D->getLocation(), Record, D, TemplateArgs,
-                                 TSK_ImplicitInstantiation,
-                                 /*Complain=*/true)) {
-      llvm_unreachable("InstantiateClass shouldn't fail here!");
-    } else {
-      SemaRef.InstantiateClassMembers(D->getLocation(), Record, TemplateArgs,
-                                      TSK_ImplicitInstantiation);
-    }
+    SemaRef.InstantiateClass(D->getLocation(), Record, D, TemplateArgs,
+                             TSK_ImplicitInstantiation,
+                             /*Complain=*/true);
+    SemaRef.InstantiateClassMembers(D->getLocation(), Record, TemplateArgs,
+                                    TSK_ImplicitInstantiation);
   }
   return Record;
 }
