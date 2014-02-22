@@ -1,11 +1,14 @@
-; RUN: opt -codegenprepare -S -o - %s | FileCheck %s
+; RUN: opt -codegenprepare -S -o - %s | FileCheck --check-prefix=OPT --check-prefix=FUNC %s
+; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-LLC --check-prefix=FUNC %s
 
 target datalayout = "e-p:32:32-p1:64:64-p2:64:64-p3:32:32-p4:32:32-p5:64:64-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64"
 target triple = "r600--"
 
-; CHECK-LABEL: @test
-; CHECK: mul
-; CHECK-NEXT: sext
+; FUNC-LABEL: @test
+; OPT: mul nsw i32
+; OPT-NEXT: sext
+; SI-LLC: V_MUL_LO_I32
+; SI-LLC-NOT: V_MUL_HI
 define void @test(i8 addrspace(1)* nocapture readonly %in, i32 %a, i8 %b) {
 entry:
   %0 = mul nsw i32 %a, 3
