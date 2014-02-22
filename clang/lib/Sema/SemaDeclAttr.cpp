@@ -4237,6 +4237,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleSimpleAttribute<PureAttr>(S, D, Attr); break;
   case AttributeList::AT_Cleanup:     handleCleanupAttr     (S, D, Attr); break;
   case AttributeList::AT_NoDebug:     handleNoDebugAttr     (S, D, Attr); break;
+  case AttributeList::AT_NoDuplicate:
+    handleSimpleAttribute<NoDuplicateAttr>(S, D, Attr); break;
   case AttributeList::AT_NoInline:
     handleSimpleAttribute<NoInlineAttr>(S, D, Attr); break;
   case AttributeList::AT_NoInstrumentFunction:  // Interacts with -pg.

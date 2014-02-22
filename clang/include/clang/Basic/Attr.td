@@ -803,6 +803,12 @@ def NoDebug : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+def NoDuplicate : InheritableAttr {
+  let Spellings = [GNU<"noduplicate">, CXX11<"clang", "noduplicate">];
+  let Subjects = SubjectList<[Function]>;
+  let Documentation = [NoDuplicateDocs];
+}
+
 def NoInline : InheritableAttr {
   let Spellings = [GCC<"noinline">, Declspec<"noinline">];
   let Subjects = SubjectList<[Function]>;

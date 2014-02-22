@@ -299,6 +299,49 @@ Query for this feature with ``__has_attribute(objc_method_family)``.
   }];
 }
 
+def NoDuplicateDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+The ``noduplicate`` attribute can be placed on function declarations to control
+whether function calls to this function can be duplicated 
+or not as a result of optimizations. This is required for the implementation
+of functions with certain special requirements, like the OpenCL "barrier", 
+function that, depending on the hardware, might require to be run concurrently
+by all the threads that are currently executing in lockstep on the hardware.
+For example this attribute applied on the function "nodupfunc" 
+avoids that this code:
+
+.. code-block:: c
+
+  void nodupfunc() __attribute__((noduplicate));
+  // Setting it as a C++11 attribute is also valid
+  // void nodupfunc() [[clang::noduplicate]];
+  void foo();
+  void bar();
+
+  nodupfunc();
+  if (a > n) {
+    foo();
+  } else {
+    bar();
+  }
+
+gets possibly modified by some optimization into code similar to this:
+
+.. code-block:: c
+
+  if (a > n) {
+    nodupfunc();
+    foo();
+  } else {
+    nodupfunc();
+    bar();
+  }
+
+where the barrier call is duplicated and sunk into the two branches of the condition.
+  }];
+}
+
 def ObjCRequiresSuperDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
