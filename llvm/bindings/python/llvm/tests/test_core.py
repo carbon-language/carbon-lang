@@ -1,20 +1,30 @@
 from .base import TestBase
-from ..core import OpCode
 from ..core import MemoryBuffer
 from ..core import PassRegistry
 from ..core import Context
 from ..core import Module
+from ..core import Enums
+from ..core import OpCode
 from ..bit_reader import parse_bitcode
 
 class TestCore(TestBase):
-    def test_opcode(self):
-        self.assertTrue(hasattr(OpCode, 'Ret'))
-        self.assertTrue(isinstance(OpCode.Ret, OpCode))
-        self.assertEqual(OpCode.Ret.value, 1)
+    def test_enumerations(self):
+        for enum_cls, enum_spec in Enums:
+            for enum_name, enum_value in enum_spec:
+                # First make sure that enum_cls has the name of the enum as an
+                # attribute. People will access these values as
+                # EnumCls.EnumName.
+                self.assertTrue(hasattr(enum_cls, enum_name))
+                v_attr = getattr(enum_cls, enum_name)
+                self.assertTrue(isinstance(v_attr, enum_cls))
 
-        op = OpCode.from_value(1)
-        self.assertTrue(isinstance(op, OpCode))
-        self.assertEqual(op, OpCode.Ret)
+                # Then make sure that the value returned for this attribute is
+                # correct in both ways.
+                self.assertEqual(v_attr.value, enum_value)
+
+                e = enum_cls.from_value(enum_value)
+                self.assertTrue(isinstance(e, enum_cls))
+                self.assertEqual(e, v_attr)
 
     def test_memory_buffer_create_from_file(self):
         source = self.get_test_file()
@@ -61,7 +71,7 @@ class TestCore(TestBase):
         target = "thumbv7-apple-ios5.0.0"
         m.target = target
         m.print_module_to_file("test2.ll")
-    
+
     def test_module_function_iteration(self):
         m = parse_bitcode(MemoryBuffer(filename=self.get_test_bc()))
         i = 0
@@ -81,19 +91,19 @@ class TestCore(TestBase):
     def test_function_basicblock_iteration(self):
         m = parse_bitcode(MemoryBuffer(filename=self.get_test_bc()))
         i = 0
-        
+
         bb_list = ['b1', 'b2', 'end']
-        
+
         f = m.first
         while f.name != "f6":
             f = f.next
-        
+
         # Forward
         for bb in f:
             self.assertEqual(bb.name, bb_list[i])
             bb.dump()
             i += 1
-        
+
         # Backwards
         for bb in reversed(f):
             i -= 1
@@ -103,12 +113,12 @@ class TestCore(TestBase):
     def test_basicblock_instruction_iteration(self):
         m = parse_bitcode(MemoryBuffer(filename=self.get_test_bc()))
         i = 0
-        
+
         inst_list = [('arg1', OpCode.ExtractValue),
                      ('arg2', OpCode.ExtractValue),
                      ('', OpCode.Call),
                      ('', OpCode.Ret)]
-        
+
         bb = m.first.first
 
         # Forward

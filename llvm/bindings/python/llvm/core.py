@@ -20,6 +20,7 @@ from ctypes import c_uint
 
 __all__ = [
     "lib",
+    "Enums",
     "OpCode",
     "MemoryBuffer",
     "Module",
@@ -32,42 +33,116 @@ __all__ = [
 ]
 
 lib = get_library()
+Enums = []
 
-class OpCode(object):
-    """Represents an individual OpCode enumeration."""
-
-    _value_map = {}
+class LLVMEnumeration(object):
+    """Represents an individual LLVM enumeration."""
 
     def __init__(self, name, value):
         self.name = name
         self.value = value
 
     def __repr__(self):
-        return 'OpCode.%s' % self.name
+        return '%s.%s' % (self.__class__.__name__,
+                          self.name)
 
-    @staticmethod
-    def from_value(value):
-        """Obtain an OpCode instance from a numeric value."""
-        result = OpCode._value_map.get(value, None)
+    @classmethod
+    def from_value(cls, value):
+        """Obtain an enumeration instance from a numeric value."""
+        result = cls._value_map.get(value, None)
 
         if result is None:
-            raise ValueError('Unknown OpCode: %d' % value)
+            raise ValueError('Unknown %s: %d' % (cls.__name__,
+                                                 value))
 
         return result
 
-    @staticmethod
-    def register(name, value):
-        """Registers a new OpCode enumeration.
+    @classmethod
+    def register(cls, name, value):
+        """Registers a new enumeration.
 
         This is called by this module for each enumeration defined in
         enumerations. You should not need to call this outside this module.
         """
-        if value in OpCode._value_map:
-            raise ValueError('OpCode value already registered: %d' % value)
+        if value in cls._value_map:
+            raise ValueError('%s value already registered: %d' % (cls.__name__,
+                                                                  value))
+        enum = cls(name, value)
+        cls._value_map[value] = enum
+        setattr(cls, name, enum)
+        #print cls, name, value
 
-        opcode = OpCode(name, value)
-        OpCode._value_map[value] = opcode
-        setattr(OpCode, name, opcode)
+class Attribute(LLVMEnumeration):
+    """Represents an individual Attribute enumeration."""
+
+    _value_map = {}
+
+    def __init__(self, name, value):
+        super(Attribute, self).__init__(name, value)
+
+class OpCode(LLVMEnumeration):
+    """Represents an individual OpCode enumeration."""
+
+    _value_map = {}
+
+    def __init__(self, name, value):
+        super(OpCode, self).__init__(name, value)
+
+class TypeKind(LLVMEnumeration):
+    """Represents an individual TypeKind enumeration."""
+
+    _value_map = {}
+
+    def __init__(self, name, value):
+        super(TypeKind, self).__init__(name, value)
+
+class Linkage(LLVMEnumeration):
+    """Represents an individual Linkage enumeration."""
+
+    _value_map = {}
+
+    def __init__(self, name, value):
+        super(Linkage, self).__init__(name, value)
+
+class Visibility(LLVMEnumeration):
+    """Represents an individual visibility enumeration."""
+
+    _value_map = {}
+
+    def __init__(self, name, value):
+        super(Visibility, self).__init__(name, value)
+
+class CallConv(LLVMEnumeration):
+    """Represents an individual calling convention enumeration."""
+
+    _value_map = {}
+
+    def __init__(self, name, value):
+        super(CallConv, self).__init__(name, value)
+
+class IntPredicate(LLVMEnumeration):
+    """Represents an individual IntPredicate enumeration."""
+
+    _value_map = {}
+
+    def __init__(self, name, value):
+        super(IntPredicate, self).__init__(name, value)
+
+class RealPredicate(LLVMEnumeration):
+    """Represents an individual RealPredicate enumeration."""
+
+    _value_map = {}
+
+    def __init__(self, name, value):
+        super(RealPredicate, self).__init__(name, value)
+
+class LandingPadClauseTy(LLVMEnumeration):
+    """Represents an individual LandingPadClauseTy enumeration."""
+
+    _value_map = {}
+
+    def __init__(self, name, value):
+        super(LandingPadClauseTy, self).__init__(name, value)
 
 class MemoryBuffer(LLVMObject):
     """Represents an opaque memory buffer."""
@@ -516,8 +591,25 @@ def register_library(library):
     library.LLVMGetInstructionOpcode.restype = c_uint
 
 def register_enumerations():
-    for name, value in enumerations.OpCodes:
-        OpCode.register(name, value)
+    if Enums:
+        return None
+    enums = [
+        (Attribute, enumerations.Attributes),
+        (OpCode, enumerations.OpCodes),
+        (TypeKind, enumerations.TypeKinds),
+        (Linkage, enumerations.Linkages),
+        (Visibility, enumerations.Visibility),
+        (CallConv, enumerations.CallConv),
+        (IntPredicate, enumerations.IntPredicate),
+        (RealPredicate, enumerations.RealPredicate),
+        (LandingPadClauseTy, enumerations.LandingPadClauseTy),
+    ]
+    s = set([])
+    for enum_class, enum_spec in enums:
+        for name, value in enum_spec:
+            print name, value
+            enum_class.register(name, value)
+    return enums
 
 def initialize_llvm():
     c = Context.GetGlobalContext()
@@ -536,5 +628,5 @@ def initialize_llvm():
     lib.LLVMInitializeTarget(p)
 
 register_library(lib)
-register_enumerations()
+Enums = register_enumerations()
 initialize_llvm()
