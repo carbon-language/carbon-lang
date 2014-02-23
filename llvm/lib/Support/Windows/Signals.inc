@@ -318,8 +318,7 @@ static void Cleanup() {
 
   if (FilesToRemove != NULL)
     while (!FilesToRemove->empty()) {
-      bool Existed;
-      llvm::sys::fs::remove(FilesToRemove->back(), Existed);
+      llvm::sys::fs::remove(FilesToRemove->back());
       FilesToRemove->pop_back();
     }
 
