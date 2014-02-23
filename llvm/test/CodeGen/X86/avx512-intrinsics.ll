@@ -507,3 +507,17 @@ define <8 x i64> @test_vpmuludq(<16 x i32> %a0, <16 x i32> %a1) {
   ret <8 x i64> %res
 }
 declare <8 x i64> @llvm.x86.avx512.mask.pmulu.dq.512(<16 x i32>, <16 x i32>, <8 x i64>, i8)
+
+define i8 @test_vptestmq(<8 x i64> %a0, <8 x i64> %a1) {
+  ; CHECK: vptestmq {{.*}}encoding: [0x62,0xf2,0xfd,0x48,0x27,0xc1]
+  %res = call i8 @llvm.x86.avx512.mask.ptestm.q.512(<8 x i64> %a0, <8 x i64> %a1, i8 -1)
+  ret i8 %res
+}
+declare i8 @llvm.x86.avx512.mask.ptestm.q.512(<8 x i64>, <8 x i64>, i8)
+
+define i16 @test_vptestmd(<16 x i32> %a0, <16 x i32> %a1) {
+  ; CHECK: vptestmd {{.*}}encoding: [0x62,0xf2,0x7d,0x48,0x27,0xc1]
+  %res = call i16 @llvm.x86.avx512.mask.ptestm.d.512(<16 x i32> %a0, <16 x i32> %a1, i16 -1)
+  ret i16 %res
+}
+declare i16 @llvm.x86.avx512.mask.ptestm.d.512(<16 x i32>, <16 x i32>, i16)

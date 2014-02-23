@@ -967,16 +967,19 @@ let Predicates = [HasAVX512] in {
         (KMOVWkr (AND32ri (SUBREG_TO_REG (i32 0), $src, sub_16bit), (i32 1))),
        VK1)>;
             
-  def : Pat<(i32 (zext VK1:$src)), (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16))>;
+  def : Pat<(i32 (zext VK1:$src)),
+            (AND32ri (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16)), (i32 1))>;
   def : Pat<(i8 (zext VK1:$src)),
             (EXTRACT_SUBREG
-             (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16)), sub_8bit)>;
+             (AND32ri (KMOVWrk
+                       (COPY_TO_REGCLASS VK1:$src, VK16)), (i32 1)), sub_8bit)>;
   def : Pat<(i64 (zext VK1:$src)),
-            (SUBREG_TO_REG (i64 0),
-             (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16)), sub_32bit)>;
+            (AND64ri8 (SUBREG_TO_REG (i64 0),
+             (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16)), sub_32bit), (i64 1))>;
   def : Pat<(i16 (zext VK1:$src)),
             (EXTRACT_SUBREG
-             (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16)), sub_16bit)>;
+             (AND32ri (KMOVWrk (COPY_TO_REGCLASS VK1:$src, VK16)), (i32 1)),
+              sub_16bit)>;
 }
 // With AVX-512 only, 8-bit mask is promoted to 16-bit mask.
 let Predicates = [HasAVX512] in {
@@ -2158,7 +2161,7 @@ defm VPTESTMDZ  : avx512_vptest<0x27, "vptestmd", VK16, VR512,  f512mem,
                               memopv16i32, X86testm, v16i32>, T8PD, EVEX_V512,
                               EVEX_CD8<32, CD8VF>;
 defm VPTESTMQZ  : avx512_vptest<0x27, "vptestmq", VK8, VR512,  f512mem,
-                              memopv8i64, X86testm, v8i64>, T8XS, EVEX_V512, VEX_W,
+                              memopv8i64, X86testm, v8i64>, T8PD, EVEX_V512, VEX_W,
                               EVEX_CD8<64, CD8VF>;
 
 let Predicates = [HasCDI] in {
@@ -2166,7 +2169,7 @@ defm VPTESTNMDZ  : avx512_vptest<0x27, "vptestnmd", VK16, VR512,  f512mem,
                               memopv16i32, X86testnm, v16i32>, T8XS, EVEX_V512,
                               EVEX_CD8<32, CD8VF>;
 defm VPTESTNMQZ  : avx512_vptest<0x27, "vptestnmq", VK8, VR512,  f512mem,
-                              memopv8i64, X86testnm, v8i64>, T8PD, EVEX_V512, VEX_W,
+                              memopv8i64, X86testnm, v8i64>, T8XS, EVEX_V512, VEX_W,
                               EVEX_CD8<64, CD8VF>;
 }
 
@@ -2176,7 +2179,7 @@ def : Pat <(i16 (int_x86_avx512_mask_ptestm_d_512 (v16i32 VR512:$src1),
 
 def : Pat <(i8 (int_x86_avx512_mask_ptestm_q_512 (v8i64 VR512:$src1),
                  (v8i64 VR512:$src2), (i8 -1))),
-                 (COPY_TO_REGCLASS (VPTESTMDZrr VR512:$src1, VR512:$src2), GR8)>;
+                 (COPY_TO_REGCLASS (VPTESTMQZrr VR512:$src1, VR512:$src2), GR8)>;
 //===----------------------------------------------------------------------===//
 // AVX-512  Shift instructions
 //===----------------------------------------------------------------------===//
