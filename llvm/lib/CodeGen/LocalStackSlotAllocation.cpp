@@ -377,18 +377,11 @@ bool LocalStackSlotPass::insertFrameReferenceRegisters(MachineFunction &Fn) {
       // processed all FrameRefs before this one, just check whether or not
       // the next FrameRef will be able to reuse this new register. If not,
       // then don't bother creating it.
-      bool CanReuse = false;
-      for (int refn = ref + 1; refn < e; ++refn) {
-        FrameRef &FRN = FrameReferenceInsns[refn];
-        MachineBasicBlock::iterator J = FRN.getMachineInstr();
-        MachineInstr *MIN = J;
-
-        CanReuse = lookupCandidateBaseReg(BaseOffset, FrameSizeAdjust,
-                                          FRN.getLocalOffset(), MIN, TRI);
-        break;
-      }
-
-      if (!CanReuse) {
+      if (ref + 1 >= e ||
+          !lookupCandidateBaseReg(
+              BaseOffset, FrameSizeAdjust,
+              FrameReferenceInsns[ref + 1].getLocalOffset(),
+              FrameReferenceInsns[ref + 1].getMachineInstr(), TRI)) {
         BaseOffset = PrevBaseOffset;
         continue;
       }
