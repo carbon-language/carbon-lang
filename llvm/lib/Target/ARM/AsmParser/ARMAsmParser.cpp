@@ -228,6 +228,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectiveMovSP(SMLoc L);
   bool parseDirectiveObjectArch(SMLoc L);
   bool parseDirectiveArchExtension(SMLoc L);
+  bool parseDirectiveAlign(SMLoc L);
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
@@ -8022,6 +8023,8 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveObjectArch(DirectiveID.getLoc());
   else if (IDVal == ".arch_extension")
     return parseDirectiveArchExtension(DirectiveID.getLoc());
+  else if (IDVal == ".align")
+    return parseDirectiveAlign(DirectiveID.getLoc());
   return true;
 }
 
@@ -9057,6 +9060,23 @@ bool ARMAsmParser::parseDirectiveObjectArch(SMLoc L) {
     Error(getLexer().getLoc(), "unexpected token");
     Parser.eatToEndOfStatement();
   }
+
+  return false;
+}
+
+/// parseDirectiveAlign
+///   ::= .align
+bool ARMAsmParser::parseDirectiveAlign(SMLoc L) {
+  // NOTE: if this is not the end of the statement, fall back to the target
+  // agnostic handling for this directive which will correctly handle this.
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return true;
+
+  // '.align' is target specifically handled to mean 2**2 byte alignment.
+  if (getStreamer().getCurrentSection().first->UseCodeAlign())
+    getStreamer().EmitCodeAlignment(4, 0);
+  else
+    getStreamer().EmitValueToAlignment(4, 0, 1, 0);
 
   return false;
 }
