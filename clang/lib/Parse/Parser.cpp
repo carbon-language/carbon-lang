@@ -118,18 +118,20 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
   // Detect common single-character typos and resume.
   if (IsCommonTypo(ExpectedTok, Tok)) {
     SourceLocation Loc = Tok.getLocation();
-    DiagnosticBuilder DB = Diag(Loc, DiagID);
-    DB << FixItHint::CreateReplacement(SourceRange(Loc),
-                                       getPunctuatorSpelling(ExpectedTok));
-    if (DiagID == diag::err_expected)
-      DB << ExpectedTok;
-    else if (DiagID == diag::err_expected_after)
-      DB << Msg << ExpectedTok;
-    else
-      DB << Msg;
-    ConsumeAnyToken();
+    {
+      DiagnosticBuilder DB = Diag(Loc, DiagID);
+      DB << FixItHint::CreateReplacement(
+                SourceRange(Loc), tok::getPunctuatorSpelling(ExpectedTok));
+      if (DiagID == diag::err_expected)
+        DB << ExpectedTok;
+      else if (DiagID == diag::err_expected_after)
+        DB << Msg << ExpectedTok;
+      else
+        DB << Msg;
+    }
 
     // Pretend there wasn't a problem.
+    ConsumeAnyToken();
     return false;
   }
 
