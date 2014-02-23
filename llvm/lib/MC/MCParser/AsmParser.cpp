@@ -361,6 +361,7 @@ private:
     DK_CFI_REGISTER, DK_CFI_WINDOW_SAVE,
     DK_MACROS_ON, DK_MACROS_OFF, DK_MACRO, DK_ENDM, DK_ENDMACRO, DK_PURGEM,
     DK_SLEB128, DK_ULEB128,
+    DK_ERR,
     DK_END
   };
 
@@ -470,6 +471,9 @@ private:
 
   // "end"
   bool parseDirectiveEnd(SMLoc DirectiveLoc);
+
+  // "err"
+  bool parseDirectiveErr(SMLoc DirectiveLoc);
 
   void initializeDirectiveKindMap();
 };
@@ -1526,6 +1530,8 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info) {
       return parseDirectivePurgeMacro(IDLoc);
     case DK_END:
       return parseDirectiveEnd(IDLoc);
+    case DK_ERR:
+      return parseDirectiveErr(IDLoc);
     }
 
     return Error(IDLoc, "unknown directive");
@@ -3931,6 +3937,15 @@ bool AsmParser::parseDirectiveEnd(SMLoc DirectiveLoc) {
   return false;
 }
 
+/// parseDirectiveErr
+/// ::= .err
+bool AsmParser::parseDirectiveErr(SMLoc Loc) {
+  if (!TheCondStack.empty())
+    if (TheCondStack.back().Ignore)
+      return false;
+  return Error(Loc, ".err encountered");
+}
+
 /// parseDirectiveEndIf
 /// ::= .endif
 bool AsmParser::parseDirectiveEndIf(SMLoc DirectiveLoc) {
@@ -4054,6 +4069,7 @@ void AsmParser::initializeDirectiveKindMap() {
   DirectiveKindMap[".endm"] = DK_ENDM;
   DirectiveKindMap[".endmacro"] = DK_ENDMACRO;
   DirectiveKindMap[".purgem"] = DK_PURGEM;
+  DirectiveKindMap[".err"] = DK_ERR;
 }
 
 MCAsmMacro *AsmParser::parseMacroLikeBody(SMLoc DirectiveLoc) {
