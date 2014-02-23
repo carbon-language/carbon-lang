@@ -6,6 +6,9 @@ add_clang_library(clangTidy
   ClangTidy.cpp
   ClangTidyModule.cpp
   ClangTidyDiagnosticConsumer.cpp
+
+  DEPENDS
+  ClangSACheckers
   )
 target_link_libraries(clangTidy
   clangAST
