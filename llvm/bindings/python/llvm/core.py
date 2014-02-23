@@ -70,7 +70,6 @@ class LLVMEnumeration(object):
         enum = cls(name, value)
         cls._value_map[value] = enum
         setattr(cls, name, enum)
-        #print cls, name, value
 
 class Attribute(LLVMEnumeration):
     """Represents an individual Attribute enumeration."""
@@ -200,7 +199,7 @@ class Module(LLVMObject):
     @classmethod
     def CreateWithName(cls, module_id):
         m = Module(lib.LLVMModuleCreateWithName(module_id))
-        c = Context.GetGlobalContext().take_ownership(m)
+        Context.GetGlobalContext().take_ownership(m)
         return m
 
     @property
@@ -604,7 +603,6 @@ def register_enumerations():
         (RealPredicate, enumerations.RealPredicate),
         (LandingPadClauseTy, enumerations.LandingPadClauseTy),
     ]
-    s = set([])
     for enum_class, enum_spec in enums:
         for name, value in enum_spec:
             print name, value
@@ -612,7 +610,7 @@ def register_enumerations():
     return enums
 
 def initialize_llvm():
-    c = Context.GetGlobalContext()
+    Context.GetGlobalContext()
     p = PassRegistry()
     lib.LLVMInitializeCore(p)
     lib.LLVMInitializeTransformUtils(p)
