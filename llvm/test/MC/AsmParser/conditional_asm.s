@@ -10,3 +10,12 @@
         .byte 0
     .endif
 .endif
+
+# CHECK: .byte 1
+# CHECK-NOT: .byte 0
+.ifne 32 - 32
+	.byte 0
+.else
+	.byte 1
+.endif
+
