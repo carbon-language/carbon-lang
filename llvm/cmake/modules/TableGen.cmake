@@ -52,22 +52,23 @@ function(tablegen project ofn)
     PROPERTY ADDITIONAL_MAKE_CLEAN_FILES ${ofn}.tmp ${ofn})
 
   set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} ${CMAKE_CURRENT_BINARY_DIR}/${ofn} PARENT_SCOPE)
-  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${ofn}
-    PROPERTIES GENERATED 1)
-endfunction(tablegen)
+  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${ofn} PROPERTIES
+    GENERATED 1)
+endfunction()
 
-macro(add_public_tablegen_target target)
-  # Creates a target for publicly exporting tablegen dependencies.
-  if( TABLEGEN_OUTPUT )
-    add_custom_target(${target}
-      DEPENDS ${TABLEGEN_OUTPUT})
-    if (LLVM_COMMON_DEPENDS)
-      add_dependencies(${target} ${LLVM_COMMON_DEPENDS})
-    endif ()
-    set_target_properties(${target} PROPERTIES FOLDER "Tablegenning")
-    list(APPEND LLVM_COMMON_DEPENDS ${target})
-  endif( TABLEGEN_OUTPUT )
-endmacro()
+# Creates a target for publicly exporting tablegen dependencies.
+function(add_public_tablegen_target target)
+  if(NOT TABLEGEN_OUTPUT)
+    message(FATAL_ERROR "Requires tablegen() definitions as TABLEGEN_OUTPUT.")
+  endif()
+  add_custom_target(${target}
+    DEPENDS ${TABLEGEN_OUTPUT})
+  if(LLVM_COMMON_DEPENDS)
+    add_dependencies(${target} ${LLVM_COMMON_DEPENDS})
+  endif()
+  set_target_properties(${target} PROPERTIES FOLDER "Tablegenning")
+  set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${target} PARENT_SCOPE)
+endfunction()
 
 if(CMAKE_CROSSCOMPILING)
   set(CX_NATIVE_TG_DIR "${CMAKE_BINARY_DIR}/native")
