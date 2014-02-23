@@ -70,15 +70,23 @@ New Compiler Flags
 ------------------
 
 The integrated assembler is now turned on by default on ARM (and Thumb),
-so the use of the option `-integrated-as` is now redundant on those
+so the use of the option `-fintegrated-as` is now redundant on those
 architectures. This is an important move to both *eat our own dog food*
 and to ease cross-compilation tremendously.
 
 We are aware of the problems that this may cause for code bases that
 rely on specific GNU syntax or extensions, and we're working towards
 getting them all fixed. Please, report bugs or feature requests if
-you find anything. In the meantime, use `-no-integrated-as` to revert
+you find anything. In the meantime, use `-fno-integrated-as` to revert
 back the call to GNU assembler.
+
+In order to provide better diagnostics, the integrated assembler validates
+inline assembly when the integrated assembler is enabled.  Because this is
+considered a feature of the compiler, it is controlled via the `fintegrated-as`
+and `fno-integrated-as` flags which enable and disable the integrated assembler
+respectively.  `-integrated-as` and `-no-integrated-as` are now considered
+legacy flags (but are available as an alias to prevent breaking existing users),
+and users are encouraged to switch to the equivalent new feature flag.
 
 C Language Changes in Clang
 ---------------------------
