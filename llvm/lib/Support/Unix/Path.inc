@@ -85,24 +85,22 @@ namespace {
 
     operator int() const {return FileDescriptor;}
   };
+}
 
-  error_code TempDir(SmallVectorImpl<char> &result) {
-    // FIXME: Don't use TMPDIR if program is SUID or SGID enabled.
-    const char *dir = 0;
-    (dir = std::getenv("TMPDIR" )) ||
-    (dir = std::getenv("TMP"    )) ||
-    (dir = std::getenv("TEMP"   )) ||
-    (dir = std::getenv("TEMPDIR")) ||
+static error_code TempDir(SmallVectorImpl<char> &result) {
+  // FIXME: Don't use TMPDIR if program is SUID or SGID enabled.
+  const char *dir = 0;
+  (dir = std::getenv("TMPDIR")) || (dir = std::getenv("TMP")) ||
+      (dir = std::getenv("TEMP")) || (dir = std::getenv("TEMPDIR")) ||
 #ifdef P_tmpdir
-    (dir = P_tmpdir) ||
+      (dir = P_tmpdir) ||
 #endif
-    (dir = "/tmp");
+      (dir = "/tmp");
 
-    result.clear();
-    StringRef d(dir);
-    result.append(d.begin(), d.end());
-    return error_code::success();
-  }
+  result.clear();
+  StringRef d(dir);
+  result.append(d.begin(), d.end());
+  return error_code::success();
 }
 
 static error_code createUniqueEntity(const Twine &Model, int &ResultFD,

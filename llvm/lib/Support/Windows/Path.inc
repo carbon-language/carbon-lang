@@ -44,31 +44,29 @@ using namespace llvm;
 using llvm::sys::windows::UTF8ToUTF16;
 using llvm::sys::windows::UTF16ToUTF8;
 
-namespace {
-  error_code TempDir(SmallVectorImpl<wchar_t> &result) {
-  retry_temp_dir:
-    DWORD len = ::GetTempPathW(result.capacity(), result.begin());
+static error_code TempDir(SmallVectorImpl<wchar_t> &result) {
+retry_temp_dir:
+  DWORD len = ::GetTempPathW(result.capacity(), result.begin());
 
-    if (len == 0)
-      return windows_error(::GetLastError());
+  if (len == 0)
+    return windows_error(::GetLastError());
 
-    if (len > result.capacity()) {
-      result.reserve(len);
-      goto retry_temp_dir;
-    }
-
-    result.set_size(len);
-    return error_code::success();
+  if (len > result.capacity()) {
+    result.reserve(len);
+    goto retry_temp_dir;
   }
 
-  bool is_separator(const wchar_t value) {
-    switch (value) {
-    case L'\\':
-    case L'/':
-      return true;
-    default:
-      return false;
-    }
+  result.set_size(len);
+  return error_code::success();
+}
+
+static bool is_separator(const wchar_t value) {
+  switch (value) {
+  case L'\\':
+  case L'/':
+    return true;
+  default:
+    return false;
   }
 }
 
