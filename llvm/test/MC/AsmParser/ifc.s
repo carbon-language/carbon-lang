@@ -63,3 +63,8 @@
 .else
 	.byte 0
 .endif
+
+# CHECK-NOT: .byte 0
+# CHECK: .byte 1
+.ifnc equal, equal ; .byte 0 ; .else ; .byte 1 ; .endif
+
