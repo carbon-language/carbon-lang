@@ -361,7 +361,7 @@ private:
     DK_CFI_REGISTER, DK_CFI_WINDOW_SAVE,
     DK_MACROS_ON, DK_MACROS_OFF, DK_MACRO, DK_ENDM, DK_ENDMACRO, DK_PURGEM,
     DK_SLEB128, DK_ULEB128,
-    DK_ERR,
+    DK_ERR, DK_ERROR,
     DK_END
   };
 
@@ -475,8 +475,8 @@ private:
   // "end"
   bool parseDirectiveEnd(SMLoc DirectiveLoc);
 
-  // "err"
-  bool parseDirectiveErr(SMLoc DirectiveLoc);
+  // ".err" or ".error"
+  bool parseDirectiveError(SMLoc DirectiveLoc, bool WithMessage);
 
   void initializeDirectiveKindMap();
 };
@@ -1537,7 +1537,9 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info) {
     case DK_END:
       return parseDirectiveEnd(IDLoc);
     case DK_ERR:
-      return parseDirectiveErr(IDLoc);
+      return parseDirectiveError(IDLoc, false);
+    case DK_ERROR:
+      return parseDirectiveError(IDLoc, true);
     }
 
     return Error(IDLoc, "unknown directive");
@@ -3982,13 +3984,34 @@ bool AsmParser::parseDirectiveEnd(SMLoc DirectiveLoc) {
   return false;
 }
 
-/// parseDirectiveErr
-/// ::= .err
-bool AsmParser::parseDirectiveErr(SMLoc Loc) {
-  if (!TheCondStack.empty())
-    if (TheCondStack.back().Ignore)
+/// parseDirectiveError
+///   ::= .err
+///   ::= .error [string]
+bool AsmParser::parseDirectiveError(SMLoc L, bool WithMessage) {
+  if (!TheCondStack.empty()) {
+    if (TheCondStack.back().Ignore) {
+      eatToEndOfStatement();
       return false;
-  return Error(Loc, ".err encountered");
+    }
+  }
+
+  if (!WithMessage)
+    return Error(L, ".err encountered");
+
+  StringRef Message = ".error directive invoked in source file";
+  if (Lexer.isNot(AsmToken::EndOfStatement)) {
+    if (Lexer.isNot(AsmToken::String)) {
+      TokError(".error argument must be a string");
+      eatToEndOfStatement();
+      return true;
+    }
+
+    Message = getTok().getStringContents();
+    Lex();
+  }
+
+  Error(L, Message);
+  return true;
 }
 
 /// parseDirectiveEndIf
@@ -4117,6 +4140,7 @@ void AsmParser::initializeDirectiveKindMap() {
   DirectiveKindMap[".endmacro"] = DK_ENDMACRO;
   DirectiveKindMap[".purgem"] = DK_PURGEM;
   DirectiveKindMap[".err"] = DK_ERR;
+  DirectiveKindMap[".error"] = DK_ERROR;
 }
 
 MCAsmMacro *AsmParser::parseMacroLikeBody(SMLoc DirectiveLoc) {

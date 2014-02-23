@@ -17,3 +17,14 @@
 	.endif
 // CHECK-NOT: error: .err encountered
 
+	.error "This is my error.  There are many like it, but this one is mine."
+// CHECK: error: This is my error.  There are many like it, but this one is mine.
+
+	.ifc one, two
+		.error "My error is my best friend."
+	.endif
+// CHECK-NOT: error: My error is my best friend.
+
+	.error
+// CHECK: error: .error directive invoked in source file
+
