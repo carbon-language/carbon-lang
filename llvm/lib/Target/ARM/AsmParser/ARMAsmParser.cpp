@@ -321,7 +321,7 @@ class ARMAsmParser : public MCTargetAsmParser {
                         const SmallVectorImpl<MCParsedAsmOperand*> &);
   void cvtThumbBranches(MCInst &Inst,
                         const SmallVectorImpl<MCParsedAsmOperand*> &);
-                        
+
   bool validateInstruction(MCInst &Inst,
                            const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
   bool processInstruction(MCInst &Inst,
@@ -3598,7 +3598,7 @@ parseMemBarrierOptOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       Error(Loc, "illegal expression");
       return MatchOperand_ParseFail;
     }
-    
+
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(MemBarrierID);
     if (!CE) {
       Error(Loc, "constant expression expected");
@@ -4197,7 +4197,7 @@ parseAM3Offset(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     isAdd = false;
     haveEaten = true;
   }
-  
+
   Tok = Parser.getTok();
   int Reg = tryParseRegister();
   if (Reg == -1) {
@@ -4270,7 +4270,7 @@ cvtThumbBranches(MCInst &Inst,
         break;
     }
   }
-  
+
   // now decide on encoding size based on branch target range
   switch(Inst.getOpcode()) {
     // classify tB as either t2B or t1B based on range of immediate operand
