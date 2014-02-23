@@ -102,7 +102,7 @@ void foo5() {
 
 // CHECK:      [indexDeclaration]: kind: c++-class-template | name: TS | {{.*}} | loc: 47:8
 // CHECK-NEXT: [indexDeclaration]: kind: struct-template-partial-spec | name: TS | USR: c:@SP>1#T@TS>#t0.0#I | {{.*}} | loc: 50:8
-// CHECK-NEXT: [indexDeclaration]: kind: typedef | name: MyInt | USR: c:index-refs.cpp@593@SP>1#T@TS>#t0.0#I@T@MyInt | {{.*}} | loc: 51:15 | semantic-container: [TS:50:8] | lexical-container: [TS:50:8]
+// CHECK-NEXT: [indexDeclaration]: kind: typedef | name: MyInt | USR: c:index-refs.cpp@SP>1#T@TS>#t0.0#I@T@MyInt | {{.*}} | loc: 51:15 | semantic-container: [TS:50:8] | lexical-container: [TS:50:8]
 /* when indexing implicit instantiations
   [indexDeclaration]: kind: struct-template-spec | name: TS | USR: c:@S@TS>#I | {{.*}} | loc: 50:8
   [indexDeclaration]: kind: typedef | name: MyInt | USR: c:index-refs.cpp@593@S@TS>#I@T@MyInt | {{.*}} | loc: 51:15 | semantic-container: [TS:50:8] | lexical-container: [TS:50:8]

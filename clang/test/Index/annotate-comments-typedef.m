@@ -45,5 +45,5 @@ struct Foo1 {
 /** About Foo1T */
 typedef struct Foo1 Foo1T;
 // FIXME: we don't attach this comment to 'struct Foo1'
-// CHECK: TypedefDecl=Foo1T:[[@LINE-2]]:21 (Definition) {{.*}} FullCommentAsHTML=[<p class="para-brief"> About Foo1T </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-2]]" column="21"><Name>Foo1T</Name><USR>c:annotate-comments-typedef.m@{{[0-9]+}}@T@Foo1T</USR><Declaration>typedef struct Foo1 Foo1T</Declaration><Abstract><Para> About Foo1T </Para></Abstract></Typedef>]
+// CHECK: TypedefDecl=Foo1T:[[@LINE-2]]:21 (Definition) {{.*}} FullCommentAsHTML=[<p class="para-brief"> About Foo1T </p>] FullCommentAsXML=[<Typedef file="{{[^"]+}}annotate-comments-typedef.m" line="[[@LINE-2]]" column="21"><Name>Foo1T</Name><USR>c:annotate-comments-typedef.m@T@Foo1T</USR><Declaration>typedef struct Foo1 Foo1T</Declaration><Abstract><Para> About Foo1T </Para></Abstract></Typedef>]
 
