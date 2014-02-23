@@ -5,6 +5,9 @@ set(LLVM_LINK_COMPONENTS
 
 add_clang_library(clangFrontendTool
   ExecuteCompilerInvocation.cpp
+
+  DEPENDS
+  ClangDriverOptions
   )
 
 target_link_libraries(clangFrontendTool

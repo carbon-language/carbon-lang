@@ -33,6 +33,9 @@ add_clang_library(clangFrontend
   TextDiagnosticPrinter.cpp
   VerifyDiagnosticConsumer.cpp
   Warnings.cpp
+
+  DEPENDS
+  ClangDriverOptions
   )
 
 target_link_libraries(clangFrontend
