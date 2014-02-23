@@ -947,7 +947,6 @@ def verify_pch : Flag<["-"], "verify-pch">, Group<Action_Group>, Flags<[CC1Optio
   HelpText<"Load and verify that a pre-compiled header file is not stale">;
 def init : Separate<["-"], "init">;
 def install__name : Separate<["-"], "install_name">;
-def integrated_as : Flag<["-"], "integrated-as">, Flags<[DriverOption]>;
 def iprefix : JoinedOrSeparate<["-"], "iprefix">, Group<clang_i_Group>, Flags<[CC1Option]>,
   HelpText<"Set the -iwithprefix/-iwithprefixbefore prefix">, MetaVarName<"<dir>">;
 def iquote : JoinedOrSeparate<["-"], "iquote">, Group<clang_i_Group>, Flags<[CC1Option]>,
@@ -1191,7 +1190,6 @@ def mwarn_nonportable_cfstrings : Flag<["-"], "mwarn-nonportable-cfstrings">, Gr
 def no_canonical_prefixes : Flag<["-"], "no-canonical-prefixes">, Flags<[HelpHidden]>,
   HelpText<"Use relative instead of canonical paths">;
 def no_cpp_precomp : Flag<["-"], "no-cpp-precomp">, Group<clang_ignored_f_Group>;
-def no_integrated_as : Flag<["-"], "no-integrated-as">, Flags<[CC1Option, DriverOption]>;
 def no_integrated_cpp : Flag<["-", "--"], "no-integrated-cpp">, Flags<[DriverOption]>;
 def no_pedantic : Flag<["-", "--"], "no-pedantic">, Group<pedantic_Group>;
 def no__dead__strip__inits__and__terms : Flag<["-"], "no_dead_strip_inits_and_terms">;
@@ -1326,6 +1324,15 @@ def x : JoinedOrSeparate<["-"], "x">, Flags<[DriverOption,CC1Option]>,
   HelpText<"Treat subsequent input files as having type <language>">,
   MetaVarName<"<language>">;
 def y : Joined<["-"], "y">;
+
+def fintegrated_as : Flag<["-"], "fintegrated-as">, Flags<[DriverOption]>,
+                     Group<f_Group>, HelpText<"Enable the integrated assembler">;
+def fno_integrated_as : Flag<["-"], "fno-integrated-as">,
+                        Flags<[CC1Option, DriverOption]>, Group<f_Group>,
+                        HelpText<"Disable the integrated assembler">;
+def : Flag<["-"], "integrated-as">, Alias<fintegrated_as>, Flags<[DriverOption]>;
+def : Flag<["-"], "no-integrated-as">, Alias<fno_integrated_as>,
+      Flags<[CC1Option, DriverOption]>;
 
 def working_directory : JoinedOrSeparate<["-"], "working-directory">, Flags<[CC1Option]>,
   HelpText<"Resolve file paths relative to the specified directory">;

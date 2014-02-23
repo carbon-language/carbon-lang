@@ -2521,7 +2521,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       Args.hasArg(options::OPT_dA))
     CmdArgs.push_back("-masm-verbose");
 
-  if (!Args.hasFlag(options::OPT_integrated_as, options::OPT_no_integrated_as,
+  if (!Args.hasFlag(options::OPT_fintegrated_as, options::OPT_fno_integrated_as,
                     IsIntegratedAssemblerDefault))
     CmdArgs.push_back("-no-integrated-as");
 
@@ -4904,12 +4904,12 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     SourceAction = SourceAction->getInputs()[0];
   }
 
-  // If -no_integrated_as is used add -Q to the darwin assember driver to make
+  // If -fno_integrated_as is used add -Q to the darwin assember driver to make
   // sure it runs its system assembler not clang's integrated assembler.
   // Applicable to darwin11+ and Xcode 4+.  darwin<10 lacked integrated-as.
   // FIXME: at run-time detect assembler capabilities or rely on version
   // information forwarded by -target-assembler-version (future)
-  if (Args.hasArg(options::OPT_no_integrated_as)) {
+  if (Args.hasArg(options::OPT_fno_integrated_as)) {
     const llvm::Triple &T(getToolChain().getTriple());
     if (!(T.isMacOSX() && T.isMacOSXVersionLT(10, 7)))
       CmdArgs.push_back("-Q");

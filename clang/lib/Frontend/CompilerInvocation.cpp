@@ -366,7 +366,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
                    (Opts.OptimizationLevel > 1 && !Opts.OptimizeSize));
   Opts.RerollLoops = Args.hasArg(OPT_freroll_loops);
 
-  Opts.DisableIntegratedAS = Args.hasArg(OPT_no_integrated_as);
+  Opts.DisableIntegratedAS = Args.hasArg(OPT_fno_integrated_as);
   Opts.Autolink = !Args.hasArg(OPT_fno_autolink);
   Opts.SampleProfileFile = Args.getLastArgValue(OPT_fprofile_sample_use_EQ);
   Opts.ProfileInstrGenerate = Args.hasArg(OPT_fprofile_instr_generate);
