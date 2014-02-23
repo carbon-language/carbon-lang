@@ -146,6 +146,9 @@ void Cloog::buildCloogOptions() {
   Options->save_domains = 1;
   Options->noscalars = 1;
 
+  // Compute simple hulls to reduce code generation time.
+  Options->sh = 1;
+
   // The last loop depth to optimize should be the last scattering dimension.
   // CLooG by default will continue to split the loops even after the last
   // scattering dimension. This splitting is problematic for the schedules
