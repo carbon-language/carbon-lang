@@ -273,32 +273,18 @@ error_code make_absolute(SmallVectorImpl<char> &path);
 /// @brief Create all the non-existent directories in path.
 ///
 /// @param path Directories to create.
-/// @param existed Set to true if \a path already existed, false otherwise.
-/// @returns errc::success if is_directory(path) and existed have been set,
-///          otherwise a platform specific error_code.
-error_code create_directories(const Twine &path, bool &existed);
-
-/// @brief Convenience function for clients that don't need to know if the
-///        directory existed or not.
-inline error_code create_directories(const Twine &Path) {
-  bool Existed;
-  return create_directories(Path, Existed);
-}
+/// @returns errc::success if is_directory(path), otherwise a platform
+///          specific error_code. If IgnoreExisting is false, also returns
+///          error if the directory already existed.
+error_code create_directories(const Twine &path, bool IgnoreExisting = true);
 
 /// @brief Create the directory in path.
 ///
 /// @param path Directory to create.
-/// @param existed Set to true if \a path already existed, false otherwise.
-/// @returns errc::success if is_directory(path) and existed have been set,
-///          otherwise a platform specific error_code.
-error_code create_directory(const Twine &path, bool &existed);
-
-/// @brief Convenience function for clients that don't need to know if the
-///        directory existed or not.
-inline error_code create_directory(const Twine &Path) {
-  bool Existed;
-  return create_directory(Path, Existed);
-}
+/// @returns errc::success if is_directory(path), otherwise a platform
+///          specific error_code. If IgnoreExisting is false, also returns
+///          error if the directory already existed.
+error_code create_directory(const Twine &path, bool IgnoreExisting = true);
 
 /// @brief Create a hard link from \a from to \a to.
 ///
@@ -318,18 +304,10 @@ error_code current_path(SmallVectorImpl<char> &result);
 /// @brief Remove path. Equivalent to POSIX remove().
 ///
 /// @param path Input path.
-/// @param existed Set to true if \a path existed, false if it did not.
-///                undefined otherwise.
-/// @returns errc::success if path has been removed and existed has been
-///          successfully set, otherwise a platform specific error_code.
-error_code remove(const Twine &path, bool &existed);
-
-/// @brief Convenience function for clients that don't need to know if the file
-///        existed or not.
-inline error_code remove(const Twine &Path) {
-  bool Existed;
-  return remove(Path, Existed);
-}
+/// @returns errc::success if path has been removed or didn't exist, otherwise a
+///          platform specific error code. If IgnoreNonExisting is false, also
+///          returns error if the file didn't exist.
+error_code remove(const Twine &path, bool IgnoreNonExisting = true);
 
 /// @brief Rename \a from to \a to. Files are renamed as if by POSIX rename().
 ///

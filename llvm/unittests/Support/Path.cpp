@@ -318,8 +318,10 @@ TEST_F(FileSystemTest, TempFiles) {
   ::close(FD2);
 
   // Remove Temp2.
-  ASSERT_NO_ERROR(fs::remove(Twine(TempPath2), TempFileExists));
-  EXPECT_TRUE(TempFileExists);
+  ASSERT_NO_ERROR(fs::remove(Twine(TempPath2)));
+  ASSERT_NO_ERROR(fs::remove(Twine(TempPath2)));
+  ASSERT_EQ(fs::remove(Twine(TempPath2), false),
+            errc::no_such_file_or_directory);
 
   error_code EC = fs::status(TempPath2.c_str(), B);
   EXPECT_EQ(EC, errc::no_such_file_or_directory);
@@ -344,12 +346,10 @@ TEST_F(FileSystemTest, TempFiles) {
 
   // Remove Temp1.
   ::close(FileDescriptor);
-  ASSERT_NO_ERROR(fs::remove(Twine(TempPath), TempFileExists));
-  EXPECT_TRUE(TempFileExists);
+  ASSERT_NO_ERROR(fs::remove(Twine(TempPath)));
 
   // Remove the hard link.
-  ASSERT_NO_ERROR(fs::remove(Twine(TempPath2), TempFileExists));
-  EXPECT_TRUE(TempFileExists);
+  ASSERT_NO_ERROR(fs::remove(Twine(TempPath2)));
 
   // Make sure Temp1 doesn't exist.
   ASSERT_NO_ERROR(fs::exists(Twine(TempPath), TempFileExists));
@@ -368,23 +368,30 @@ TEST_F(FileSystemTest, TempFiles) {
 #endif
 }
 
+TEST_F(FileSystemTest, CreateDir) {
+  ASSERT_NO_ERROR(fs::create_directory(Twine(TestDirectory) + "foo"));
+  ASSERT_NO_ERROR(fs::create_directory(Twine(TestDirectory) + "foo"));
+  ASSERT_EQ(fs::create_directory(Twine(TestDirectory) + "foo", false),
+            errc::file_exists);
+  ASSERT_NO_ERROR(fs::remove(Twine(TestDirectory) + "foo"));
+}
+
 TEST_F(FileSystemTest, DirectoryIteration) {
   error_code ec;
   for (fs::directory_iterator i(".", ec), e; i != e; i.increment(ec))
     ASSERT_NO_ERROR(ec);
 
   // Create a known hierarchy to recurse over.
-  bool existed;
-  ASSERT_NO_ERROR(fs::create_directories(Twine(TestDirectory)
-                  + "/recursive/a0/aa1", existed));
-  ASSERT_NO_ERROR(fs::create_directories(Twine(TestDirectory)
-                  + "/recursive/a0/ab1", existed));
-  ASSERT_NO_ERROR(fs::create_directories(Twine(TestDirectory)
-                  + "/recursive/dontlookhere/da1", existed));
-  ASSERT_NO_ERROR(fs::create_directories(Twine(TestDirectory)
-                  + "/recursive/z0/za1", existed));
-  ASSERT_NO_ERROR(fs::create_directories(Twine(TestDirectory)
-                  + "/recursive/pop/p1", existed));
+  ASSERT_NO_ERROR(
+      fs::create_directories(Twine(TestDirectory) + "/recursive/a0/aa1"));
+  ASSERT_NO_ERROR(
+      fs::create_directories(Twine(TestDirectory) + "/recursive/a0/ab1"));
+  ASSERT_NO_ERROR(fs::create_directories(Twine(TestDirectory) +
+                                         "/recursive/dontlookhere/da1"));
+  ASSERT_NO_ERROR(
+      fs::create_directories(Twine(TestDirectory) + "/recursive/z0/za1"));
+  ASSERT_NO_ERROR(
+      fs::create_directories(Twine(TestDirectory) + "/recursive/pop/p1"));
   typedef std::vector<std::string> v_t;
   v_t visited;
   for (fs::recursive_directory_iterator i(Twine(TestDirectory)

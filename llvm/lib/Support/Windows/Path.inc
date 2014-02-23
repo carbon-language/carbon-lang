@@ -264,7 +264,7 @@ error_code current_path(SmallVectorImpl<char> &result) {
   return UTF16ToUTF8(cur_path.begin(), cur_path.size(), result);
 }
 
-error_code create_directory(const Twine &path, bool &existed) {
+error_code create_directory(const Twine &path, bool IgnoreExisting) {
   SmallString<128> path_storage;
   SmallVector<wchar_t, 128> path_utf16;
 
@@ -274,12 +274,9 @@ error_code create_directory(const Twine &path, bool &existed) {
 
   if (!::CreateDirectoryW(path_utf16.begin(), NULL)) {
     error_code ec = windows_error(::GetLastError());
-    if (ec == windows_error::already_exists)
-      existed = true;
-    else
+    if (ec != windows_error::already_exists || !IgnoreExisting)
       return ec;
-  } else
-    existed = false;
+  }
 
   return error_code::success();
 }
@@ -303,43 +300,34 @@ error_code create_hard_link(const Twine &to, const Twine &from) {
   return error_code::success();
 }
 
-error_code remove(const Twine &path, bool &existed) {
+error_code remove(const Twine &path, bool IgnoreNonExisting) {
   SmallString<128> path_storage;
   SmallVector<wchar_t, 128> path_utf16;
 
-  file_status st;
-  error_code EC = status(path, st);
-  if (EC) {
-    if (EC == windows_error::file_not_found ||
-        EC == windows_error::path_not_found) {
-      existed = false;
-      return error_code::success();
-    }
-    return EC;
+  file_status ST;
+  if (error_code EC = status(path, ST)) {
+    if (EC != errc::no_such_file_or_directory || !IgnoreNonExisting)
+      return EC;
+    return error_code::success();
   }
 
   if (error_code ec = UTF8ToUTF16(path.toStringRef(path_storage),
                                   path_utf16))
     return ec;
 
-  if (st.type() == file_type::directory_file) {
+  if (ST.type() == file_type::directory_file) {
     if (!::RemoveDirectoryW(c_str(path_utf16))) {
-      error_code ec = windows_error(::GetLastError());
-      if (ec != windows_error::file_not_found)
-        return ec;
-      existed = false;
-    } else
-      existed = true;
-  } else {
-    if (!::DeleteFileW(c_str(path_utf16))) {
-      error_code ec = windows_error(::GetLastError());
-      if (ec != windows_error::file_not_found)
-        return ec;
-      existed = false;
-    } else
-      existed = true;
+      error_code EC = windows_error(::GetLastError());
+      if (EC != errc::no_such_file_or_directory || !IgnoreNonExisting)
+        return EC;
+    }
+    return error_code::success();
   }
-
+  if (!::DeleteFileW(c_str(path_utf16))) {
+    error_code EC = windows_error(::GetLastError());
+    if (EC != errc::no_such_file_or_directory || !IgnoreNonExisting)
+      return EC;
+  }
   return error_code::success();
 }
 

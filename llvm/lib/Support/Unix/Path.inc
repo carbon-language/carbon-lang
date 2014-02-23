@@ -164,12 +164,11 @@ retry_random_path:
   }
 
   case FS_Dir: {
-    bool Existed;
-    error_code EC = sys::fs::create_directory(ResultPath.begin(), Existed);
-    if (EC)
+    if (error_code EC = sys::fs::create_directory(ResultPath.begin(), false)) {
+      if (EC == errc::file_exists)
+        goto retry_random_path;
       return EC;
-    if (Existed)
-      goto retry_random_path;
+    }
     return error_code::success();
   }
   }
@@ -333,16 +332,14 @@ error_code current_path(SmallVectorImpl<char> &result) {
   return error_code::success();
 }
 
-error_code create_directory(const Twine &path, bool &existed) {
+error_code create_directory(const Twine &path, bool IgnoreExisting) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   if (::mkdir(p.begin(), S_IRWXU | S_IRWXG) == -1) {
-    if (errno != errc::file_exists)
+    if (errno != errc::file_exists || !IgnoreExisting)
       return error_code(errno, system_category());
-    existed = true;
-  } else
-    existed = false;
+  }
 
   return error_code::success();
 }
@@ -360,15 +357,14 @@ error_code create_hard_link(const Twine &to, const Twine &from) {
   return error_code::success();
 }
 
-error_code remove(const Twine &path, bool &existed) {
+error_code remove(const Twine &path, bool IgnoreNonExisting) {
   SmallString<128> path_storage;
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   struct stat buf;
   if (stat(p.begin(), &buf) != 0) {
-    if (errno != errc::no_such_file_or_directory)
+    if (errno != errc::no_such_file_or_directory || !IgnoreNonExisting)
       return error_code(errno, system_category());
-    existed = false;
     return error_code::success();
   }
 
@@ -381,11 +377,9 @@ error_code remove(const Twine &path, bool &existed) {
     return make_error_code(errc::operation_not_permitted);
 
   if (::remove(p.begin()) == -1) {
-    if (errno != errc::no_such_file_or_directory)
+    if (errno != errc::no_such_file_or_directory || !IgnoreNonExisting)
       return error_code(errno, system_category());
-    existed = false;
-  } else
-    existed = true;
+  }
 
   return error_code::success();
 }
