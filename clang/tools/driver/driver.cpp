@@ -331,13 +331,9 @@ int main(int argc_, const char **argv_) {
   }
 
   // Handle CCC_OVERRIDE_OPTIONS, used for editing a command line behind the
-  // scenes. Temporarily accept the old QA_OVERRIDE_GCC3_OPTIONS name
-  // for this, to ease the transition. FIXME: Remove support for that old name
-  // after a while.
+  // scenes.
   if (const char *OverrideStr = ::getenv("CCC_OVERRIDE_OPTIONS")) {
     // FIXME: Driver shouldn't take extra initial argument.
-    ApplyQAOverride(argv, OverrideStr, SavedStrings);
-  } else if (const char *OverrideStr = ::getenv("QA_OVERRIDE_GCC3_OPTIONS")) {
     ApplyQAOverride(argv, OverrideStr, SavedStrings);
   }
 
