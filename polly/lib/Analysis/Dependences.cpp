@@ -317,6 +317,7 @@ void Dependences::releaseMemory() {
 }
 
 isl_union_map *Dependences::getDependences(int Kinds) {
+  assert(hasValidDependences() && "No valid dependences available");
   isl_space *Space = isl_union_map_get_space(RAW);
   isl_union_map *Deps = isl_union_map_empty(Space);
 
@@ -332,6 +333,10 @@ isl_union_map *Dependences::getDependences(int Kinds) {
   Deps = isl_union_map_coalesce(Deps);
   Deps = isl_union_map_detect_equalities(Deps);
   return Deps;
+}
+
+bool Dependences::hasValidDependences() {
+  return (RAW != NULL) && (WAR != NULL) && (WAW != NULL);
 }
 
 void Dependences::getAnalysisUsage(AnalysisUsage &AU) const {

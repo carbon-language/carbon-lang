@@ -431,6 +431,9 @@ isl_union_map *IslScheduleOptimizer::getScheduleMap(isl_schedule *Schedule) {
 bool IslScheduleOptimizer::runOnScop(Scop &S) {
   Dependences *D = &getAnalysis<Dependences>();
 
+  if (!D->hasValidDependences())
+    return false;
+
   isl_schedule_free(LastSchedule);
   LastSchedule = NULL;
 

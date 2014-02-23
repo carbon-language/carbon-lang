@@ -91,6 +91,9 @@ public:
   ///              different kinds are 'ored' together.
   isl_union_map *getDependences(int Kinds);
 
+  /// @brief Report if valid dependences are available.
+  bool hasValidDependences();
+
   bool runOnScop(Scop &S);
   void printScop(raw_ostream &OS) const;
   virtual void releaseMemory();
