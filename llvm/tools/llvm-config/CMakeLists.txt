@@ -4,7 +4,7 @@ set(BUILDVARIABLES_SRCPATH ${CMAKE_CURRENT_SOURCE_DIR}/BuildVariables.inc.in)
 set(BUILDVARIABLES_OBJPATH ${CMAKE_CURRENT_BINARY_DIR}/BuildVariables.inc)
 
 # Compute the substitution values for various items.
-get_system_libs(LLVM_SYSTEM_LIBS_LIST)
+get_property(LLVM_SYSTEM_LIBS_LIST TARGET LLVMSupport PROPERTY LLVM_SYSTEM_LIBS)
 foreach(l ${LLVM_SYSTEM_LIBS_LIST})
   set(SYSTEM_LIBS ${SYSTEM_LIBS} "-l${l}")
 endforeach()
