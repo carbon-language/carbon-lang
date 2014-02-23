@@ -199,7 +199,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parsePrefix(ARMMCExpr::VariantKind &RefKind);
   bool parseMemRegOffsetShift(ARM_AM::ShiftOpc &ShiftType,
                               unsigned &ShiftAmount);
-  bool parseDirectiveWord(unsigned Size, SMLoc L);
+  bool parseLiteralValues(unsigned Size, SMLoc L);
   bool parseDirectiveThumb(SMLoc L);
   bool parseDirectiveARM(SMLoc L);
   bool parseDirectiveThumbFunc(SMLoc L);
@@ -7959,7 +7959,9 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getIdentifier();
   if (IDVal == ".word")
-    return parseDirectiveWord(4, DirectiveID.getLoc());
+    return parseLiteralValues(4, DirectiveID.getLoc());
+  else if (IDVal == ".short" || IDVal == ".hword")
+    return parseLiteralValues(2, DirectiveID.getLoc());
   else if (IDVal == ".thumb")
     return parseDirectiveThumb(DirectiveID.getLoc());
   else if (IDVal == ".arm")
@@ -8023,9 +8025,11 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
   return true;
 }
 
-/// parseDirectiveWord
-///  ::= .word [ expression (, expression)* ]
-bool ARMAsmParser::parseDirectiveWord(unsigned Size, SMLoc L) {
+/// parseLiteralValues
+///  ::= .hword expression [, expression]*
+///  ::= .short expression [, expression]*
+///  ::= .word expression [, expression]*
+bool ARMAsmParser::parseLiteralValues(unsigned Size, SMLoc L) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       const MCExpr *Value;
