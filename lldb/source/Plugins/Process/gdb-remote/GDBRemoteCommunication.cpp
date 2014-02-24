@@ -497,6 +497,13 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
                     for (int i = 0; i < repeat_count; ++i)
                         packet_str.push_back(char_to_repeat);
                 }
+                else if (*c == 0x7d)
+                {
+                    // 0x7d is the escape character.  The next character is to
+                    // be XOR'd with 0x20.
+                    char escapee = *++c ^ 0x20;
+                    packet_str.push_back(escapee);
+                }
                 else
                 {
                     packet_str.push_back(*c);
