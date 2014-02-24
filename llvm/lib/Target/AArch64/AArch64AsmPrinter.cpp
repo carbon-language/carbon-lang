@@ -296,6 +296,7 @@ bool AArch64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 // Force static initialization.
 extern "C" void LLVMInitializeAArch64AsmPrinter() {
-    RegisterAsmPrinter<AArch64AsmPrinter> X(TheAArch64Target);
+    RegisterAsmPrinter<AArch64AsmPrinter> X(TheAArch64leTarget);
+    RegisterAsmPrinter<AArch64AsmPrinter> Y(TheAArch64beTarget);
 }
 

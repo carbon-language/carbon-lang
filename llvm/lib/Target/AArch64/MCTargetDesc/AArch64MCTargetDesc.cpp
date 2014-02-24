@@ -61,7 +61,7 @@ static MCAsmInfo *createAArch64MCAsmInfo(const MCRegisterInfo &MRI,
                                          StringRef TT) {
   Triple TheTriple(TT);
 
-  MCAsmInfo *MAI = new AArch64ELFMCAsmInfo();
+  MCAsmInfo *MAI = new AArch64ELFMCAsmInfo(TT);
   unsigned Reg = MRI.getDwarfRegNum(AArch64::XSP, true);
   MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(0, Reg, 0);
   MAI->addInitialFrameState(Inst);
@@ -161,42 +161,61 @@ static MCInstrAnalysis *createAArch64MCInstrAnalysis(const MCInstrInfo *Info) {
 
 extern "C" void LLVMInitializeAArch64TargetMC() {
   // Register the MC asm info.
-  RegisterMCAsmInfoFn A(TheAArch64Target, createAArch64MCAsmInfo);
+  RegisterMCAsmInfoFn A(TheAArch64leTarget, createAArch64MCAsmInfo);
+  RegisterMCAsmInfoFn B(TheAArch64beTarget, createAArch64MCAsmInfo);
 
   // Register the MC codegen info.
-  TargetRegistry::RegisterMCCodeGenInfo(TheAArch64Target,
+  TargetRegistry::RegisterMCCodeGenInfo(TheAArch64leTarget,
+                                        createAArch64MCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(TheAArch64beTarget,
                                         createAArch64MCCodeGenInfo);
 
   // Register the MC instruction info.
-  TargetRegistry::RegisterMCInstrInfo(TheAArch64Target,
+  TargetRegistry::RegisterMCInstrInfo(TheAArch64leTarget,
+                                      createAArch64MCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheAArch64beTarget,
                                       createAArch64MCInstrInfo);
 
   // Register the MC register info.
-  TargetRegistry::RegisterMCRegInfo(TheAArch64Target,
+  TargetRegistry::RegisterMCRegInfo(TheAArch64leTarget,
+                                    createAArch64MCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheAArch64beTarget,
                                     createAArch64MCRegisterInfo);
 
   // Register the MC subtarget info.
   using AArch64_MC::createAArch64MCSubtargetInfo;
-  TargetRegistry::RegisterMCSubtargetInfo(TheAArch64Target,
+  TargetRegistry::RegisterMCSubtargetInfo(TheAArch64leTarget,
+                                          createAArch64MCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheAArch64beTarget,
                                           createAArch64MCSubtargetInfo);
 
   // Register the MC instruction analyzer.
-  TargetRegistry::RegisterMCInstrAnalysis(TheAArch64Target,
+  TargetRegistry::RegisterMCInstrAnalysis(TheAArch64leTarget,
+                                          createAArch64MCInstrAnalysis);
+  TargetRegistry::RegisterMCInstrAnalysis(TheAArch64beTarget,
                                           createAArch64MCInstrAnalysis);
 
   // Register the MC Code Emitter
-  TargetRegistry::RegisterMCCodeEmitter(TheAArch64Target,
+  TargetRegistry::RegisterMCCodeEmitter(TheAArch64leTarget,
+                                        createAArch64MCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheAArch64beTarget,
                                         createAArch64MCCodeEmitter);
 
   // Register the asm backend.
-  TargetRegistry::RegisterMCAsmBackend(TheAArch64Target,
-                                       createAArch64AsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheAArch64leTarget,
+                                       createAArch64leAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheAArch64beTarget,
+                                       createAArch64beAsmBackend);
 
   // Register the object streamer.
-  TargetRegistry::RegisterMCObjectStreamer(TheAArch64Target,
+  TargetRegistry::RegisterMCObjectStreamer(TheAArch64leTarget,
+                                           createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(TheAArch64beTarget,
                                            createMCStreamer);
 
   // Register the MCInstPrinter.
-  TargetRegistry::RegisterMCInstPrinter(TheAArch64Target,
+  TargetRegistry::RegisterMCInstPrinter(TheAArch64leTarget,
+                                        createAArch64MCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheAArch64beTarget,
                                         createAArch64MCInstPrinter);
 }

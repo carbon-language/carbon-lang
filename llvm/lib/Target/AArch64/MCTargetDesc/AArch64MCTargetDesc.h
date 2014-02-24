@@ -28,7 +28,8 @@ class StringRef;
 class Target;
 class raw_ostream;
 
-extern Target TheAArch64Target;
+extern Target TheAArch64leTarget;
+extern Target TheAArch64beTarget;
 
 namespace AArch64_MC {
   MCSubtargetInfo *createAArch64MCSubtargetInfo(StringRef TT, StringRef CPU,
@@ -41,11 +42,16 @@ MCCodeEmitter *createAArch64MCCodeEmitter(const MCInstrInfo &MCII,
                                           MCContext &Ctx);
 
 MCObjectWriter *createAArch64ELFObjectWriter(raw_ostream &OS,
-                                             uint8_t OSABI);
+                                             uint8_t OSABI,
+                                             bool IsLittleEndian);
 
-MCAsmBackend *createAArch64AsmBackend(const Target &T,
-                                      const MCRegisterInfo &MRI,
-                                      StringRef TT, StringRef CPU);
+MCAsmBackend *createAArch64leAsmBackend(const Target &T,
+                                        const MCRegisterInfo &MRI,
+                                        StringRef TT, StringRef CPU);
+
+MCAsmBackend *createAArch64beAsmBackend(const Target &T,
+                                        const MCRegisterInfo &MRI,
+                                        StringRef TT, StringRef CPU);
 
 } // End llvm namespace
 

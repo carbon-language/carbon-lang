@@ -23,23 +23,45 @@
 using namespace llvm;
 
 extern "C" void LLVMInitializeAArch64Target() {
-  RegisterTargetMachine<AArch64TargetMachine> X(TheAArch64Target);
+  RegisterTargetMachine<AArch64leTargetMachine> X(TheAArch64leTarget);
+  RegisterTargetMachine<AArch64beTargetMachine> Y(TheAArch64beTarget);
 }
 
 AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
                                            StringRef CPU, StringRef FS,
                                            const TargetOptions &Options,
                                            Reloc::Model RM, CodeModel::Model CM,
-                                           CodeGenOpt::Level OL)
+                                           CodeGenOpt::Level OL,
+                                           bool LittleEndian)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, CPU, FS),
+    Subtarget(TT, CPU, FS, LittleEndian),
     InstrInfo(Subtarget),
-    DL("e-m:e-i64:64-i128:128-n32:64-S128"),
+    DL(LittleEndian ?
+       "e-m:e-i64:64-i128:128-n32:64-S128" :
+       "E-m:e-i64:64-i128:128-n32:64-S128"),
     TLInfo(*this),
     TSInfo(*this),
     FrameLowering(Subtarget) {
   initAsmInfo();
 }
+
+void AArch64leTargetMachine::anchor() { }
+
+AArch64leTargetMachine::
+AArch64leTargetMachine(const Target &T, StringRef TT,
+                       StringRef CPU, StringRef FS, const TargetOptions &Options,
+                       Reloc::Model RM, CodeModel::Model CM,
+                       CodeGenOpt::Level OL)
+  : AArch64TargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
+
+void AArch64beTargetMachine::anchor() { }
+
+AArch64beTargetMachine::
+AArch64beTargetMachine(const Target &T, StringRef TT,
+                       StringRef CPU, StringRef FS, const TargetOptions &Options,
+                       Reloc::Model RM, CodeModel::Model CM,
+                       CodeGenOpt::Level OL)
+  : AArch64TargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
 
 void AArch64TargetMachine::addAnalysisPasses(PassManagerBase &PM) {
   // Add first the target-independent BasicTTI pass, then our AArch64 pass. This

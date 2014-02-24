@@ -2661,7 +2661,8 @@ void AArch64Operand::dump() const {
 
 /// Force static initialization.
 extern "C" void LLVMInitializeAArch64AsmParser() {
-  RegisterMCAsmParser<AArch64AsmParser> X(TheAArch64Target);
+  RegisterMCAsmParser<AArch64AsmParser> X(TheAArch64leTarget);
+  RegisterMCAsmParser<AArch64AsmParser> Y(TheAArch64beTarget);
 }
 
 #define GET_REGISTER_MATCHER

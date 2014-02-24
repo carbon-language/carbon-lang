@@ -19,32 +19,33 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   switch (Kind) {
   case UnknownArch: return "unknown";
 
-  case aarch64: return "aarch64";
-  case arm:     return "arm";
-  case hexagon: return "hexagon";
-  case mips:    return "mips";
-  case mipsel:  return "mipsel";
-  case mips64:  return "mips64";
-  case mips64el:return "mips64el";
-  case msp430:  return "msp430";
-  case ppc64:   return "powerpc64";
-  case ppc64le: return "powerpc64le";
-  case ppc:     return "powerpc";
-  case r600:    return "r600";
-  case sparc:   return "sparc";
-  case sparcv9: return "sparcv9";
-  case systemz: return "s390x";
-  case tce:     return "tce";
-  case thumb:   return "thumb";
-  case x86:     return "i386";
-  case x86_64:  return "x86_64";
-  case xcore:   return "xcore";
-  case nvptx:   return "nvptx";
-  case nvptx64: return "nvptx64";
-  case le32:    return "le32";
-  case amdil:   return "amdil";
-  case spir:    return "spir";
-  case spir64:  return "spir64";
+  case aarch64:     return "aarch64";
+  case aarch64_be:  return "aarch64_be";
+  case arm:         return "arm";
+  case hexagon:     return "hexagon";
+  case mips:        return "mips";
+  case mipsel:      return "mipsel";
+  case mips64:      return "mips64";
+  case mips64el:    return "mips64el";
+  case msp430:      return "msp430";
+  case ppc64:       return "powerpc64";
+  case ppc64le:     return "powerpc64le";
+  case ppc:         return "powerpc";
+  case r600:        return "r600";
+  case sparc:       return "sparc";
+  case sparcv9:     return "sparcv9";
+  case systemz:     return "s390x";
+  case tce:         return "tce";
+  case thumb:       return "thumb";
+  case x86:         return "i386";
+  case x86_64:      return "x86_64";
+  case xcore:       return "xcore";
+  case nvptx:       return "nvptx";
+  case nvptx64:     return "nvptx64";
+  case le32:        return "le32";
+  case amdil:       return "amdil";
+  case spir:        return "spir";
+  case spir64:      return "spir64";
   }
 
   llvm_unreachable("Invalid ArchType!");
@@ -55,40 +56,41 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
   default:
     return 0;
 
-  case aarch64: return "aarch64";
+  case aarch64:
+  case aarch64_be:  return "aarch64";
 
   case arm:
-  case thumb:   return "arm";
+  case thumb:       return "arm";
 
   case ppc64:
   case ppc64le:
-  case ppc:     return "ppc";
+  case ppc:         return "ppc";
 
   case mips:
   case mipsel:
   case mips64:
-  case mips64el:return "mips";
+  case mips64el:    return "mips";
 
-  case hexagon: return "hexagon";
+  case hexagon:     return "hexagon";
 
-  case r600:    return "r600";
+  case r600:        return "r600";
 
   case sparcv9:
-  case sparc:   return "sparc";
+  case sparc:       return "sparc";
 
-  case systemz: return "systemz";
+  case systemz:     return "systemz";
 
   case x86:
-  case x86_64:  return "x86";
+  case x86_64:      return "x86";
 
-  case xcore:   return "xcore";
+  case xcore:       return "xcore";
 
-  case nvptx:   return "nvptx";
-  case nvptx64: return "nvptx";
-  case le32:    return "le32";
-  case amdil:   return "amdil";
-  case spir:    return "spir";
-  case spir64:  return "spir";
+  case nvptx:       return "nvptx";
+  case nvptx64:     return "nvptx";
+  case le32:        return "le32";
+  case amdil:       return "amdil";
+  case spir:        return "spir";
+  case spir64:      return "spir";
   }
 }
 
@@ -163,6 +165,7 @@ const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
 Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
   return StringSwitch<Triple::ArchType>(Name)
     .Case("aarch64", aarch64)
+    .Case("aarch64_be", aarch64_be)
     .Case("arm", arm)
     .Case("mips", mips)
     .Case("mipsel", mipsel)
@@ -228,6 +231,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Cases("powerpc64", "ppu", Triple::ppc64)
     .Case("powerpc64le", Triple::ppc64le)
     .Case("aarch64", Triple::aarch64)
+    .Case("aarch64_be", Triple::aarch64_be)
     .Cases("arm", "xscale", Triple::arm)
     // FIXME: It would be good to replace these with explicit names for all the
     // various suffixes supported.
@@ -695,6 +699,7 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
     return 32;
 
   case llvm::Triple::aarch64:
+  case llvm::Triple::aarch64_be:
   case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
   case llvm::Triple::nvptx64:
@@ -726,6 +731,7 @@ Triple Triple::get32BitArchVariant() const {
   switch (getArch()) {
   case Triple::UnknownArch:
   case Triple::aarch64:
+  case Triple::aarch64_be:
   case Triple::msp430:
   case Triple::systemz:
   case Triple::ppc64le:
@@ -778,6 +784,7 @@ Triple Triple::get64BitArchVariant() const {
     break;
 
   case Triple::aarch64:
+  case Triple::aarch64_be:
   case Triple::spir64:
   case Triple::mips64:
   case Triple::mips64el:

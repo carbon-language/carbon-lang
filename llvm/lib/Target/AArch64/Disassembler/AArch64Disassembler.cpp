@@ -996,7 +996,9 @@ static MCDisassembler *createAArch64Disassembler(const Target &T,
 }
 
 extern "C" void LLVMInitializeAArch64Disassembler() {
-  TargetRegistry::RegisterMCDisassembler(TheAArch64Target,
+  TargetRegistry::RegisterMCDisassembler(TheAArch64leTarget,
+                                         createAArch64Disassembler);
+  TargetRegistry::RegisterMCDisassembler(TheAArch64beTarget,
                                          createAArch64Disassembler);
 }
 

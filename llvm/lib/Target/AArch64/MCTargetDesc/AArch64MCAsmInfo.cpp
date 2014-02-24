@@ -12,10 +12,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64MCAsmInfo.h"
+#include "llvm/ADT/Triple.h"
 
 using namespace llvm;
 
-AArch64ELFMCAsmInfo::AArch64ELFMCAsmInfo() {
+AArch64ELFMCAsmInfo::AArch64ELFMCAsmInfo(StringRef TT) {
+  Triple TheTriple(TT);
+  if (TheTriple.getArch() == Triple::aarch64_be)
+    IsLittleEndian = false;
+
   PointerSize = 8;
 
   // ".comm align is in bytes but .align is pow-2."

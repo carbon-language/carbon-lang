@@ -36,7 +36,8 @@ public:
   AArch64TargetMachine(const Target &T, StringRef TT, StringRef CPU,
                        StringRef FS, const TargetOptions &Options,
                        Reloc::Model RM, CodeModel::Model CM,
-                       CodeGenOpt::Level OL);
+                       CodeGenOpt::Level OL,
+                       bool LittleEndian);
 
   const AArch64InstrInfo *getInstrInfo() const {
     return &InstrInfo;
@@ -66,6 +67,28 @@ public:
   virtual void addAnalysisPasses(PassManagerBase &PM);
 };
 
-}
+// AArch64leTargetMachine - AArch64 little endian target machine.
+//
+class AArch64leTargetMachine : public AArch64TargetMachine {
+  virtual void anchor();
+public:
+  AArch64leTargetMachine(const Target &T, StringRef TT,
+                         StringRef CPU, StringRef FS, const TargetOptions &Options,
+                         Reloc::Model RM, CodeModel::Model CM,
+                         CodeGenOpt::Level OL);
+};
+
+// AArch64beTargetMachine - AArch64 big endian target machine.
+//
+class AArch64beTargetMachine : public AArch64TargetMachine {
+  virtual void anchor();
+public:
+  AArch64beTargetMachine(const Target &T, StringRef TT,
+                         StringRef CPU, StringRef FS, const TargetOptions &Options,
+                         Reloc::Model RM, CodeModel::Model CM,
+                         CodeGenOpt::Level OL);
+};
+
+} // End llvm namespace
 
 #endif

@@ -79,11 +79,12 @@ static uint64_t adjustFixupValue(unsigned Kind, uint64_t Value);
 namespace {
 
 class ELFAArch64AsmBackend : public AArch64AsmBackend {
-public:
   uint8_t OSABI;
+  bool IsLittle; // Big or little endian
+public:
   ELFAArch64AsmBackend(const Target &T, const StringRef TT,
-                       uint8_t _OSABI)
-    : AArch64AsmBackend(T, TT), OSABI(_OSABI) { }
+                       uint8_t _OSABI, bool isLittle)
+    : AArch64AsmBackend(T, TT), OSABI(_OSABI), IsLittle(isLittle) { }
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value,
@@ -200,7 +201,7 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createAArch64ELFObjectWriter(OS, OSABI);
+    return createAArch64ELFObjectWriter(OS, OSABI, IsLittle);
   }
 };
 
@@ -578,8 +579,15 @@ static uint64_t adjustFixupValue(unsigned Kind, uint64_t Value) {
 }
 
 MCAsmBackend *
-llvm::createAArch64AsmBackend(const Target &T, const MCRegisterInfo &MRI,
+llvm::createAArch64leAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                               StringRef TT, StringRef CPU) {
   Triple TheTriple(TT);
-  return new ELFAArch64AsmBackend(T, TT, TheTriple.getOS());
+  return new ELFAArch64AsmBackend(T, TT, TheTriple.getOS(), /*isLittle*/ true);
+}
+
+MCAsmBackend *
+llvm::createAArch64beAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+                              StringRef TT, StringRef CPU) {
+  Triple TheTriple(TT);
+  return new ELFAArch64AsmBackend(T, TT, TheTriple.getOS(), /*isLittle*/ false);
 }

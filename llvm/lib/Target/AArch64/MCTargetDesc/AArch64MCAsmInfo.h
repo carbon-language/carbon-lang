@@ -19,7 +19,7 @@
 namespace llvm {
 
 struct AArch64ELFMCAsmInfo : public MCAsmInfoELF {
-  explicit AArch64ELFMCAsmInfo();
+  explicit AArch64ELFMCAsmInfo(StringRef TT);
 private:
   virtual void anchor();
 };
