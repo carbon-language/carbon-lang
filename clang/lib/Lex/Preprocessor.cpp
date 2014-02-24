@@ -627,7 +627,7 @@ bool Preprocessor::HandleIdentifier(Token &Identifier) {
   // name of a macro.
   // FIXME: This warning is disabled in cases where it shouldn't be, like
   //   "#define constexpr constexpr", "int constexpr;"
-  if (II.isCXX11CompatKeyword() & !DisableMacroExpansion) {
+  if (II.isCXX11CompatKeyword() && !DisableMacroExpansion) {
     Diag(Identifier, diag::warn_cxx11_keyword) << II.getName();
     // Don't diagnose this keyword again in this translation unit.
     II.setIsCXX11CompatKeyword(false);
