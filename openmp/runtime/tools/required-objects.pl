@@ -92,12 +92,12 @@ sub dump_symbols($$$) {
 
 # --------------------------------------------------------------------------------------------------
 # Name:
-#     load_symbols -- Fullfill objects data structure with symbol names.
+#     load_symbols -- Fulfill objects data structure with symbol names.
 # Synopsis:
 #     load_symbols( $objects );
 # Arguments:
 #     $objects (in/out) -- Set of objects. On enter, it is expected that top-level hash has filled
-#         with object names only. On exit, it is completely fullfilled with lists of symbols
+#         with object names only. On exit, it is completely fulfilled with lists of symbols
 #         defined or referenced in each object file.
 # Returns:
 #     Nothing.
@@ -333,7 +333,7 @@ sub _required_extra_objects($$$$) {
 # Arguments:
 #     $base (in/out) -- A set of base objects to be searched for undefined symbols. On enter, it is
 #         expected that top-level hash has filled with object names only. On exit, it is completely
-#         fullfilled with lists of symbols defined and/or referenced in each object file.
+#         fulfilled with lists of symbols defined and/or referenced in each object file.
 #     $extra (in/out) -- A set of extra objects to be searched for defined symbols required to
 #         resolve undefined symbols in a set of base objects. Usage is similar to base objects.
 # Returns:

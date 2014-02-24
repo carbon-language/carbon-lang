@@ -176,7 +176,7 @@ Wipe "defaultlib" directive in all the library files:
     wipe-string.pl --wipe-regexp="-defaultlib:[A-Za-z0-9_.]+" *.lib
 
 (Be careful: the script does not analyze structure of library and object files, it just wipes
-U<strings>, so it wipes all the occurences of strings matching to specified regular expression.)
+U<strings>, so it wipes all the occurrences of strings matching to specified regular expression.)
 
 =cut
 

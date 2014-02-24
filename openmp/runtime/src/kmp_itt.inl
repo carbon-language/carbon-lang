@@ -515,7 +515,7 @@ __kmp_itt_task_finished(
 
         * __kmp_itt_lock_creating( lock ) should be called *before* the first lock operation
           (set/unset). It is not a real event shown to the user but just setting a name for
-          syncronization object. `lock' is an address of sync object, the same address should be
+          synchronization object. `lock' is an address of sync object, the same address should be
           used in all subsequent calls.
 
         * __kmp_itt_lock_acquiring() should be called before setting the lock.

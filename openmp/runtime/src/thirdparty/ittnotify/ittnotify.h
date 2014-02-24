@@ -2044,7 +2044,7 @@ void ITTAPI __itt_frame_end_v3(const __itt_domain *domain, __itt_id *id);
  * take the current timestamp as the end timestamp.
  * @param[in] domain The domain for this frame instance
  * @param[in] id The instance ID for this frame instance or NULL
- * @param[in] begin Timestamp of the beggining of the frame
+ * @param[in] begin Timestamp of the beginning of the frame
  * @param[in] end Timestamp of the end of the frame
  */
 void ITTAPI __itt_frame_submit_v3(const __itt_domain *domain, __itt_id *id,

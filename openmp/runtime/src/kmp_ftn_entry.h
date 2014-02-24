@@ -30,13 +30,13 @@
 #endif // __cplusplus
 
 /*
- * For compatiblity with the Gnu/MS Open MP codegen, omp_set_num_threads(),
+ * For compatibility with the Gnu/MS Open MP codegen, omp_set_num_threads(),
  * omp_set_nested(), and omp_set_dynamic() [in lowercase on MS, and w/o
  * a trailing underscore on Linux* OS] take call by value integer arguments.
  * + omp_set_max_active_levels()
  * + omp_set_schedule()
  *
- * For backward compatiblity with 9.1 and previous Intel compiler, these
+ * For backward compatibility with 9.1 and previous Intel compiler, these
  * entry points take call by reference integer arguments.
  */
 #ifdef KMP_GOMP_COMPAT

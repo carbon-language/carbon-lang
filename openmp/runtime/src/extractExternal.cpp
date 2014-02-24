@@ -301,7 +301,7 @@ void computeExternalSymbols(const char *fileName, set<string> *defined, set<stri
     }
 }
 
-/* For each occurence of an external symbol in the object file named by
+/* For each occurrence of an external symbol in the object file named by
    by <fileName> that is a member of <hide>, renames it by prefixing
    with "__kmp_external_", writing back the file in-place
 */

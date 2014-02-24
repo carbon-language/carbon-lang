@@ -428,7 +428,7 @@ ITT_STUBV(ITTAPI, void, sync_set_name,  (void *addr, const char    *objtype, con
  * @param[in] objname -   null-terminated object name string. If NULL, no name will be assigned
  *                        to the object -- you can use the __itt_sync_rename call later to assign
  *                        the name
- * @param[in] typelen, namelen -   a lenght of string for appropriate objtype and objname parameter
+ * @param[in] typelen, namelen -   a length of string for appropriate objtype and objname parameter
  * @param[in] attribute - one of [#__itt_attr_barrier, #__itt_attr_mutex] values which defines the
  *                        exact semantics of how prepare/acquired/releasing calls work.
  * @return __itt_err upon failure (name or namelen being null,name and namelen mismatched)

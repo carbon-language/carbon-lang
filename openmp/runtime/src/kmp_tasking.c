@@ -1643,7 +1643,7 @@ __kmp_execute_tasks( kmp_info_t *thread,
             __kmp_resume( __kmp_gtid_from_thread( other_thread ), NULL );
 
             // A sleeping thread should not have any tasks on it's queue.
-            // There is a slight possiblility that it resumes, steals a task from
+            // There is a slight possibility that it resumes, steals a task from
             // another thread, which spawns more tasks, all in the that it takes
             // this thread to check => don't write an assertion that the victim's
             // queue is empty.  Try stealing from a different thread.

@@ -544,7 +544,7 @@ sub question($;\$$) {
     my $a       = ( defined( $answer ) ? $$answer : undef );
 
     if ( ref( $choices ) eq "Regexp" ) {
-        # It is aready a regular expression, do nothing.
+        # It is already a regular expression, do nothing.
     } elsif ( defined( $choices ) ) {
         # Convert string to a regular expression.
         $choices = qr/[@{ [ quotemeta( $choices ) ] }]/i;
@@ -705,7 +705,7 @@ Look for all occurenses of "cp" in the PATH:
 
     my @cps = which( "cp", -all => 1 );
 
-Look for the first occurence of "icc" in the specified directories:
+Look for the first occurrence of "icc" in the specified directories:
 
     my $icc = which( "icc", -dirs => [ ".", "/usr/local/bin", "/usr/bin", "/bin" ] );
 
@@ -1163,7 +1163,7 @@ sub del_dir($@) {
 
 Change current directory.
 
-If any error occured, error issues and script exits.
+If any error occurred, error issues and script exits.
 
 =cut
 

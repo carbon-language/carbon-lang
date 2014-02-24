@@ -226,7 +226,7 @@ __kmp_str_buf_vprint(
             break;
         }; // if
 
-        // Error occured, buffer is too small.
+        // Error occurred, buffer is too small.
         if ( rc >= 0 ) {
             // C99-conforming implementation of vsnprintf returns required buffer size.
             size = buffer->used + rc + 1;
@@ -512,7 +512,7 @@ __kmp_str_format(           // Allocated string.
             break;
         }; // if
 
-        // Error occured, buffer is too small.
+        // Error occurred, buffer is too small.
         if ( rc >= 0 ) {
             // C99-conforming implementation of vsnprintf returns required buffer size.
             size = rc + 1;

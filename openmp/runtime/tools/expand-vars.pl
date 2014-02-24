@@ -262,7 +262,7 @@ variable before use. See examples.
 
 =head1 EXAMPLES
 
-Replace occurences of C<$year>, C<$month>, and C<$day> in C<input.txt> file with C<2007>, C<09>, C<01>
+Replace occurrences of C<$year>, C<$month>, and C<$day> in C<input.txt> file with C<2007>, C<09>, C<01>
 respectively and write result to C<output.txt> file:
 
     $ cat input.var

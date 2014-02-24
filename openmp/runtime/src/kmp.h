@@ -1179,7 +1179,7 @@ typedef struct kmpc_task_queue_t {
     kmp_int32                     tq_hiwat;             /*  high-water mark for tq_nfull and queue scheduling  */
     volatile kmp_int32            tq_flags;             /*  TQF_xxx  */
 
-        /* bookkeeping for oustanding thunks */
+        /* bookkeeping for outstanding thunks */
     struct kmpc_aligned_int32_t  *tq_th_thunks;         /*  per-thread array for # of regular thunks currently being executed */
     kmp_int32                     tq_nproc;             /*  number of thunks in the th_thunks array */
 
@@ -2305,7 +2305,7 @@ typedef int     (*launch_t)( int gtid );
 
 typedef struct KMP_ALIGN_CACHE kmp_base_team {
 /*
- * Syncronization Data
+ * Synchronization Data
  */
     KMP_ALIGN_CACHE kmp_ordered_team_t       t_ordered;
     kmp_balign_team_t        t_bar[ bs_last_barrier ];

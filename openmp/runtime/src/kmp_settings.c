@@ -210,7 +210,7 @@ __kmp_convert_to_seconds( char const * data )
     Here, multipliers are like __kmp_convert_to_seconds, but floating-point
     values are allowed, and the return value is in milliseconds.  The default
     multiplier is milliseconds.  Returns INT_MAX only if the value specified
-    matches "infinit*".  Returns -1 if specified string is invalid.
+    matches "infinite*".  Returns -1 if specified string is invalid.
 */
 int
 __kmp_convert_to_milliseconds( char const * data )
@@ -220,7 +220,7 @@ __kmp_convert_to_milliseconds( char const * data )
     double value;
 
     if (data == NULL) return (-1);
-    if ( __kmp_str_match( "infinit", -1, data)) return (INT_MAX);
+    if ( __kmp_str_match( "infinite", -1, data)) return (INT_MAX);
     value = (double) 0.0;
     mult = '\0';
     nvalues = sscanf (data, "%lf%c%c", &value, &mult, &extra);
@@ -442,7 +442,7 @@ __kmp_stg_parse_size(
                 #endif
             }; // if
         } else {
-            // If integer overflow occured, * out == KMP_SIZE_T_MAX. Cut it to size_max silently.
+            // If integer overflow occurred, * out == KMP_SIZE_T_MAX. Cut it to size_max silently.
             if ( * out < size_min ) {
                 * out = size_max;
             }
@@ -493,7 +493,7 @@ __kmp_stg_parse_int(
             uint = max;
         }; // if
     } else {
-        // If overflow occured msg contains error message and uint is very big. Cut tmp it
+        // If overflow occurred msg contains error message and uint is very big. Cut tmp it
         // to INT_MAX.
         if ( uint < (unsigned int)min ) {
             uint = min;

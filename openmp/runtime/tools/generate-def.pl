@@ -216,7 +216,7 @@ B<generate-def.pl> I<OPTION>... I<file>
 
 =item B<-D> I<name>[=I<value>]
 
-Define specified name. If I<value> is ommitted, I<name> is defined to 1. If I<value> is 0 or empty,
+Define specified name. If I<value> is omitted, I<name> is defined to 1. If I<value> is 0 or empty,
 name is B<not> defined.
 
 =item B<--output=>I<file>
@@ -284,7 +284,7 @@ Comments start with C<#> symbol and continue to the end of line.
     %ifndef name
     %endif
 
-A part of file surronded by C<%ifdef I<name>> and C<%endif> directives is a conditional part -- it
+A part of file surrounded by C<%ifdef I<name>> and C<%endif> directives is a conditional part -- it
 has effect only if I<name> is defined in the comman line by B<--define> option. C<%ifndef> is a
 negated version of C<%ifdef> -- conditional part has an effect only if I<name> is B<not> defined.
 

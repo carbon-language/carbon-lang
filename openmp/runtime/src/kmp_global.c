@@ -358,7 +358,7 @@ KMP_ALIGN_CACHE
 kmp_global_t __kmp_global = {{ 0 }};
 
 /* ----------------------------------------------- */
-/* GLOBAL SYNCRONIZATION LOCKS */
+/* GLOBAL SYNCHRONIZATION LOCKS */
 /* TODO verify the need for these locks and if they need to be global */
 KMP_ALIGN_CACHE
 

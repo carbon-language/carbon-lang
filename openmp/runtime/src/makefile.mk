@@ -1008,7 +1008,7 @@ endif
 
 # Copy object files, wiping out references to libirc library. Object files (ours and extracted
 # from libirc.lib) have "-defaultlib:libirc.lib" linker directive, so linker will require libirc.lib
-# regardless of absense of real dependency. Actually, this rule is required only on Windows* OS, but
+# regardless of absence of real dependency. Actually, this rule is required only on Windows* OS, but
 # there is no Windows* OS-specific commands, so I omit conditions to keep code shorter and be able test
 # the rule on Linux* OS.
 # Note: If we are not going to pick up objects from libirc, there is no point in wiping out
@@ -1227,7 +1227,7 @@ ifneq "$(os)" "lrb"
             tt-libs  += $(imp_file)
         endif
         ifneq "$(arch)" "32"
-            # To succesfully build with VS2008
+            # To successfully build with VS2008
             # tt-libs += bufferoverflowu.lib
             # Preventing "unresolved external symbol __security_cookie" (and
             # "... __security_check_cookie") linker errors on win_32e and win_64.

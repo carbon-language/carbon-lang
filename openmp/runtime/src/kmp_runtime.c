@@ -1987,7 +1987,7 @@ __kmp_barrier( enum barrier_type bt, int gtid, int is_split,
         }; // if
 
 #if USE_ITT_BUILD
-        // TODO: In case of split reduction barrier, master thread may send aquired event early,
+        // TODO: In case of split reduction barrier, master thread may send acquired event early,
         // before the final summation into the shared variable is done (final summation can be a
         // long operation for array reductions).
         if ( __itt_sync_create_ptr || KMP_ITT_DEBUG )
@@ -4366,7 +4366,7 @@ __kmp_expand_threads(int nWish, int nNeed) {
             added += newCapacity - __kmp_threads_capacity;
             *(volatile int*)&__kmp_threads_capacity = newCapacity;
             __kmp_release_bootstrap_lock(&__kmp_tp_cached_lock);
-            break; /* succeded, so we can exit the loop */
+            break; /* succeeded, so we can exit the loop */
         }
     }
     return added;
@@ -4458,7 +4458,7 @@ __kmp_register_root( int initial_thread )
 
 #ifdef KMP_ADJUST_BLOCKTIME
     /* Adjust blocktime to zero if necessary            */
-    /* Middle initialization might not have ocurred yet */
+    /* Middle initialization might not have occurred yet */
     if ( !__kmp_env_blocktime && ( __kmp_avail_proc > 0 ) ) {
         if ( __kmp_nth > __kmp_avail_proc ) {
             __kmp_zero_bt = TRUE;
@@ -4863,7 +4863,7 @@ __kmp_allocate_thread( kmp_root_t *root, kmp_team_t *team, int new_tid )
 
 #ifdef KMP_ADJUST_BLOCKTIME
         /* Adjust blocktime back to zero if necessar      y */
-        /* Middle initialization might not have ocurred yet */
+        /* Middle initialization might not have occurred yet */
         if ( !__kmp_env_blocktime && ( __kmp_avail_proc > 0 ) ) {
             if ( __kmp_nth > __kmp_avail_proc ) {
                 __kmp_zero_bt = TRUE;
@@ -5016,7 +5016,7 @@ __kmp_allocate_thread( kmp_root_t *root, kmp_team_t *team, int new_tid )
 
 #ifdef KMP_ADJUST_BLOCKTIME
     /* Adjust blocktime back to zero if necessary       */
-    /* Middle initialization might not have ocurred yet */
+    /* Middle initialization might not have occurred yet */
     if ( !__kmp_env_blocktime && ( __kmp_avail_proc > 0 ) ) {
         if ( __kmp_nth > __kmp_avail_proc ) {
             __kmp_zero_bt = TRUE;
@@ -5253,7 +5253,7 @@ __kmp_set_thread_affinity_mask_full_tmp( kmp_affin_mask_t *old_mask )
 //
 // __kmp_partition_places() is the heart of the OpenMP 4.0 affinity mechanism.
 // It calculats the worker + master thread's partition based upon the parent
-// thread's partition, and binds each worker to a thread in thier partition.
+// thread's partition, and binds each worker to a thread in their partition.
 // The master thread's partition should already include its current binding.
 //
 static void
@@ -6152,7 +6152,7 @@ __kmp_free_thread( kmp_info_t *this_th )
 
 #ifdef KMP_ADJUST_BLOCKTIME
     /* Adjust blocktime back to user setting or default if necessary */
-    /* Middle initialization might never have ocurred                */
+    /* Middle initialization might never have occurred                */
     if ( !__kmp_env_blocktime && ( __kmp_avail_proc > 0 ) ) {
         KMP_DEBUG_ASSERT( __kmp_avail_proc > 0 );
         if ( __kmp_nth <= __kmp_avail_proc ) {
@@ -6691,7 +6691,7 @@ __kmp_reap_thread(
     int is_root
 ) {
 
-    // It is assumed __kmp_forkjoin_lock is aquired.
+    // It is assumed __kmp_forkjoin_lock is acquired.
 
     int gtid;
 
@@ -6756,7 +6756,7 @@ __kmp_reap_thread(
 
 #ifdef KMP_ADJUST_BLOCKTIME
     /* Adjust blocktime back to user setting or default if necessary */
-    /* Middle initialization might never have ocurred                */
+    /* Middle initialization might never have occurred                */
     if ( !__kmp_env_blocktime && ( __kmp_avail_proc > 0 ) ) {
         KMP_DEBUG_ASSERT( __kmp_avail_proc > 0 );
         if ( __kmp_nth <= __kmp_avail_proc ) {

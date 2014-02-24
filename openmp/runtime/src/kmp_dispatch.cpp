@@ -260,7 +260,7 @@ compare_and_swap< kmp_int64 >( volatile kmp_int64 *p, kmp_int64 c, kmp_int64 s )
     Does NOT put threads to sleep.
 #if USE_ITT_BUILD
     Arguments:
-        obj -- is higher-level syncronization object to report to ittnotify. It is used to report
+        obj -- is higher-level synchronization object to report to ittnotify. It is used to report
             locks consistently. For example, if lock is acquired immediately, its address is
             reported to ittnotify via KMP_FSYNC_ACQUIRED(). However, it lock cannot be acquired
             immediately and lock routine calls to KMP_WAIT_YIELD(), the later should report the same

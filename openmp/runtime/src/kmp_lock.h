@@ -415,7 +415,7 @@ struct kmp_base_drdpa_lock {
 
     //
     // now_serving is used to store our ticket value while we hold the lock.
-    // It has a slighly different meaning in the DRDPA ticket locks (where
+    // It has a slightly different meaning in the DRDPA ticket locks (where
     // it is written by the acquiring thread) than it does in the simple
     // ticket locks (where it is written by the releasing thread).
     //

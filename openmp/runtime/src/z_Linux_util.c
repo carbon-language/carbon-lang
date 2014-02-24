@@ -227,7 +227,7 @@ __kmp_affinity_determine_capable(const char *env_var)
     // then we don't have to search for an appropriate size.
     gCode = syscall( __NR_sched_getaffinity, 0, KMP_CPU_SET_SIZE_LIMIT, buf );
     KA_TRACE(30, ( "__kmp_affinity_determine_capable: "
-       "intial getaffinity call returned %d errno = %d\n",
+       "initial getaffinity call returned %d errno = %d\n",
        gCode, errno));
 
     //if ((gCode < 0) && (errno == ENOSYS))
@@ -2281,7 +2281,7 @@ __kmp_get_load_balance( int max )
         ret_avg = averages[1];// 5 min
     } else if ( ( __kmp_load_balance_interval >= 600 ) && ( res == 3 ) ) {
         ret_avg = averages[2];// 15 min
-    } else {// Error occured
+    } else {// Error occurred
         return -1;
     }
 

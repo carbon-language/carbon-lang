@@ -484,7 +484,7 @@ __kmp_acquire_futex_lock_timed_template( kmp_futex_lock_t *lck, kmp_int32 gtid )
         KA_TRACE( 1000, ("__kmp_acquire_futex_lock: lck:%p, T#%d after futex_wait(0x%x)\n",
            lck, gtid, poll_val ) );
         //
-        // This thread has now done a succesful futex wait call and was
+        // This thread has now done a successful futex wait call and was
         // entered on the OS futex queue.  We must now perform a futex
         // wake call when releasing the lock, as we have no idea how many
         // other threads are in the queue.
@@ -2548,7 +2548,7 @@ __kmp_acquire_drdpa_lock_timed_template( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
 
         //
         // If we are oversubscribed,
-        // or ahve waited a bit (and KMP_LIBRARY=turnaround), then yield.
+        // or have waited a bit (and KMP_LIBRARY=turnaround), then yield.
         // CPU Pause is in the macros for yield.
         //
         KMP_YIELD(TCR_4(__kmp_nth)
@@ -2733,7 +2733,7 @@ __kmp_test_drdpa_lock( kmp_drdpa_lock_t *lck, kmp_int32 gtid )
             lck->lk.now_serving = ticket;               // non-volatile store
 
             //
-            // Since no threads are waiting, there is no possiblity that
+            // Since no threads are waiting, there is no possibility that
             // we would want to reconfigure the polling area.  We might
             // have the cleanup ticket value (which says that it is now
             // safe to deallocate old_polls), but we'll let a later thread

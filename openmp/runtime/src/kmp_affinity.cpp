@@ -320,7 +320,7 @@ __kmp_affinity_cmp_Address_child_num(const void *a, const void *b)
 // When sorting by labels, __kmp_affinity_assign_child_nums() must first be
 // called to renumber the labels from [0..n] and place them into the child_num
 // vector of the address object.  This is done in case the labels used for
-// the children at one node of the heirarchy differ from those used for
+// the children at one node of the hierarchy differ from those used for
 // another node at the same level.  Example:  suppose the machine has 2 nodes
 // with 2 packages each.  The first node contains packages 601 and 602, and
 // second node contains packages 603 and 604.  If we try to sort the table
@@ -1740,7 +1740,7 @@ __kmp_affinity_create_cpuinfo_map(AddrUnsPair **address2os, int *line,
 
     //
     // Scan of the file, and count the number of "processor" (osId) fields,
-    // and find the higest value of <n> for a node_<n> field.
+    // and find the highest value of <n> for a node_<n> field.
     //
     char buf[256];
     unsigned num_records = 0;
@@ -2512,7 +2512,7 @@ __kmp_create_masks(unsigned *maxIndex, unsigned *numUnique,
     KMP_CPU_SET(address2os[0].second, sum);
     for (i = 1; i < numAddrs; i++) {
         //
-        // If this thread is sufficiently close to the leader (withing the
+        // If this thread is sufficiently close to the leader (within the
         // granularity setting), then set the bit for this os thread in the
         // affinity mask for this group, and go on to the next thread.
         //
@@ -3368,7 +3368,7 @@ __kmp_aux_affinity_initialize(void)
     kmp_i18n_id_t msg_id = kmp_i18n_null;
 
     //
-    // For backward compatiblity, setting KMP_CPUINFO_FILE =>
+    // For backward compatibility, setting KMP_CPUINFO_FILE =>
     // KMP_TOPOLOGY_METHOD=cpuinfo
     //
     if ((__kmp_cpuinfo_file != NULL) &&
@@ -4055,7 +4055,7 @@ __kmp_affinity_set_place(int gtid)
       gtid, th->th.th_new_place, th->th.th_current_place));
 
     //
-    // Check that the new place is withing this thread's partition.
+    // Check that the new place is within this thread's partition.
     //
     KMP_DEBUG_ASSERT(th->th.th_affin_mask != NULL);
     KMP_DEBUG_ASSERT(th->th.th_new_place >= 0);
