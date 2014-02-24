@@ -101,7 +101,7 @@ DependencyGraphCallback::writeNodeReference(raw_ostream &OS,
 
 void DependencyGraphCallback::OutputGraphFile() {
   std::string Err;
-  llvm::raw_fd_ostream OS(OutputFile.c_str(), Err);
+  llvm::raw_fd_ostream OS(OutputFile.c_str(), Err, llvm::sys::fs::F_None);
   if (!Err.empty()) {
     PP->getDiagnostics().Report(diag::err_fe_error_opening)
       << OutputFile << Err;

@@ -2940,7 +2940,8 @@ static void updateModuleTimestamp(ModuleFile &MF) {
   // Overwrite the timestamp file contents so that file's mtime changes.
   std::string TimestampFilename = MF.getTimestampFilename();
   std::string ErrorInfo;
-  llvm::raw_fd_ostream OS(TimestampFilename.c_str(), ErrorInfo);
+  llvm::raw_fd_ostream OS(TimestampFilename.c_str(), ErrorInfo,
+                          llvm::sys::fs::F_None);
   if (!ErrorInfo.empty())
     return;
   OS << "Timestamp file\n";
