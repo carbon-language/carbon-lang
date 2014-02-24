@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     OutputFilename = "-";
 
   std::string ErrorInfo;
-  raw_fd_ostream Output(OutputFilename.data(), ErrorInfo);
+  raw_fd_ostream Output(OutputFilename.data(), ErrorInfo, sys::fs::F_None);
   if (!ErrorInfo.empty())
     exitWithError(ErrorInfo, OutputFilename);
 

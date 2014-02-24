@@ -47,7 +47,7 @@ public:
   /// tool_output_file - This constructor's arguments are passed to
   /// to raw_fd_ostream's constructor.
   tool_output_file(const char *filename, std::string &ErrorInfo,
-                   sys::fs::OpenFlags Flags = sys::fs::F_None);
+                   sys::fs::OpenFlags Flags);
 
   tool_output_file(const char *Filename, int FD);
 

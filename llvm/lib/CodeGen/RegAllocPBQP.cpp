@@ -595,7 +595,7 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
         rs << round;
         std::string graphFileName(fqn + "." + rs.str() + ".pbqpgraph");
         std::string tmp;
-        raw_fd_ostream os(graphFileName.c_str(), tmp);
+        raw_fd_ostream os(graphFileName.c_str(), tmp, sys::fs::F_None);
         DEBUG(dbgs() << "Dumping graph for round " << round << " to \""
               << graphFileName << "\"\n");
         problem->getGraph().dump(os);

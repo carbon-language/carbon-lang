@@ -80,7 +80,7 @@ namespace {
       errs() << "Writing '" << Filename << "'...";
       
       std::string ErrorInfo;
-      raw_fd_ostream File(Filename.c_str(), ErrorInfo);
+      raw_fd_ostream File(Filename.c_str(), ErrorInfo, sys::fs::F_None);
 
       if (ErrorInfo.empty())
         WriteGraph(File, (const Function*)&F);
@@ -114,7 +114,7 @@ namespace {
       errs() << "Writing '" << Filename << "'...";
 
       std::string ErrorInfo;
-      raw_fd_ostream File(Filename.c_str(), ErrorInfo);
+      raw_fd_ostream File(Filename.c_str(), ErrorInfo, sys::fs::F_None);
       
       if (ErrorInfo.empty())
         WriteGraph(File, (const Function*)&F, true);
