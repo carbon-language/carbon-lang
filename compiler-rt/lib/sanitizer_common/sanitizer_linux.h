@@ -68,8 +68,6 @@ class ThreadLister {
   int bytes_read_;
 };
 
-void AdjustStackSizeLinux(void *attr);
-
 // Exposed for testing.
 uptr ThreadDescriptorSize();
 uptr ThreadSelf();

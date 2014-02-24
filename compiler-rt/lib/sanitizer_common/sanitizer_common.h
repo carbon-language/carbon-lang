@@ -178,6 +178,7 @@ u32 GetUid();
 void ReExec();
 bool StackSizeIsUnlimited();
 void SetStackSizeLimitInBytes(uptr limit);
+void AdjustStackSize(void *attr);
 void PrepareForSandboxing();
 
 void InitTlsSize();

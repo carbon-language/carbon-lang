@@ -1052,7 +1052,7 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
     attr = &myattr;
   }
 
-  AdjustStackSizeLinux(attr);
+  AdjustStackSize(attr);
 
   ThreadParam p;
   p.callback = callback;

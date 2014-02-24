@@ -387,7 +387,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 }
 
 #ifndef SANITIZER_GO
-void AdjustStackSizeLinux(void *attr_) {
+void AdjustStackSize(void *attr_) {
   pthread_attr_t *attr = (pthread_attr_t *)attr_;
   uptr stackaddr = 0;
   size_t stacksize = 0;
