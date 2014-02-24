@@ -427,13 +427,13 @@ if ( $intel ) {
     };
 }; # if
 if ( $target_os eq "lin" or $target_os eq "mac" ) {
-    # check for gnu tools by default because touch-test.c is compiled with them.
-    push( @versions, [ "GNU C Compiler",     get_gnu_compiler_version( $gnu_compilers->{ $target_os }->{ c   } ) ] );
-    push( @versions, [ "GNU C++ Compiler",   get_gnu_compiler_version( $gnu_compilers->{ $target_os }->{ cpp } ) ] );
     if ( $clang ) {
         push( @versions, [ "Clang C Compiler",     get_clang_compiler_version( $clang_compilers->{ $target_os }->{ c   } ) ] );
         push( @versions, [ "Clang C++ Compiler",   get_clang_compiler_version( $clang_compilers->{ $target_os }->{ cpp } ) ] );
-    }; 
+    } else {
+        push( @versions, [ "GNU C Compiler",     get_gnu_compiler_version( $gnu_compilers->{ $target_os }->{ c   } ) ] );
+        push( @versions, [ "GNU C++ Compiler",   get_gnu_compiler_version( $gnu_compilers->{ $target_os }->{ cpp } ) ] );
+    }; # if
     # if intel fortran has been checked then gnu fortran is unnecessary
     # also, if user specifies clang as build compiler, then gfortran is assumed fortran compiler
     if ( $fortran and not $intel ) {
