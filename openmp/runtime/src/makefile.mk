@@ -411,7 +411,9 @@ ifeq "$(os)" "lrb"
 endif
 
 ifeq "$(os)" "mac"
-    ld-flags += -no-intel-extensions
+    ifeq "$(c)" "icc"
+        ld-flags += -no-intel-extensions
+    endif
     ld-flags += -single_module
     ld-flags += -current_version $(VERSION).0 -compatibility_version $(VERSION).0
 endif
