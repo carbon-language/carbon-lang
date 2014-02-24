@@ -1493,7 +1493,8 @@ public:
   /// undefined.  isBigEndian describes the endianness of the target.
   bool isConstantSplat(APInt &SplatValue, APInt &SplatUndef,
                        unsigned &SplatBitSize, bool &HasAnyUndefs,
-                       unsigned MinSplatBits = 0, bool isBigEndian = false);
+                       unsigned MinSplatBits = 0,
+                       bool isBigEndian = false) const;
 
   bool isConstant() const;
 

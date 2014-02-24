@@ -6483,7 +6483,7 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
                                         unsigned &SplatBitSize,
                                         bool &HasAnyUndefs,
                                         unsigned MinSplatBits,
-                                        bool isBigEndian) {
+                                        bool isBigEndian) const {
   EVT VT = getValueType(0);
   assert(VT.isVector() && "Expected a vector type");
   unsigned sz = VT.getSizeInBits();
