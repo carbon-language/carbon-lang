@@ -2043,24 +2043,6 @@ Usable as: Any Matcher
 </pre></td></tr>
 
 
-<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('forEach0')"><a name="forEach0Anchor">forEach</a></td><td>Matcher&lt;*&gt;</td></tr>
-<tr><td colspan="4" class="doc" id="forEach0"><pre>Matches AST nodes that have child AST nodes that match the
-provided matcher.
-
-Example matches X, Y (matcher = recordDecl(forEach(recordDecl(hasName("X")))
-  class X {};  Matches X, because X::X is a class of name X inside X.
-  class Y { class X {}; };
-  class Z { class Y { class X {}; }; };  Does not match Z.
-
-ChildT must be an AST base type.
-
-As opposed to 'has', 'forEach' will cause a match for each result that
-matches instead of only on the first one.
-
-Usable as: Any Matcher
-</pre></td></tr>
-
-
 <tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('forEachDescendant0')"><a name="forEachDescendant0Anchor">forEachDescendant</a></td><td>Matcher&lt;*&gt;</td></tr>
 <tr><td colspan="4" class="doc" id="forEachDescendant0"><pre>Matches AST nodes that have descendant AST nodes that match the
 provided matcher.
@@ -2085,16 +2067,19 @@ Usable as: Any Matcher
 </pre></td></tr>
 
 
-<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('has0')"><a name="has0Anchor">has</a></td><td>Matcher&lt;*&gt;</td></tr>
-<tr><td colspan="4" class="doc" id="has0"><pre>Matches AST nodes that have child AST nodes that match the
+<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('forEach0')"><a name="forEach0Anchor">forEach</a></td><td>Matcher&lt;*&gt;</td></tr>
+<tr><td colspan="4" class="doc" id="forEach0"><pre>Matches AST nodes that have child AST nodes that match the
 provided matcher.
 
-Example matches X, Y (matcher = recordDecl(has(recordDecl(hasName("X")))
+Example matches X, Y (matcher = recordDecl(forEach(recordDecl(hasName("X")))
   class X {};  Matches X, because X::X is a class of name X inside X.
   class Y { class X {}; };
   class Z { class Y { class X {}; }; };  Does not match Z.
 
 ChildT must be an AST base type.
+
+As opposed to 'has', 'forEach' will cause a match for each result that
+matches instead of only on the first one.
 
 Usable as: Any Matcher
 </pre></td></tr>
@@ -2124,6 +2109,21 @@ Example matches X, Y, Z
   class Z { class Y { class X {}; }; };
 
 DescendantT must be an AST base type.
+
+Usable as: Any Matcher
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt;*&gt;</td><td class="name" onclick="toggle('has0')"><a name="has0Anchor">has</a></td><td>Matcher&lt;*&gt;</td></tr>
+<tr><td colspan="4" class="doc" id="has0"><pre>Matches AST nodes that have child AST nodes that match the
+provided matcher.
+
+Example matches X, Y (matcher = recordDecl(has(recordDecl(hasName("X")))
+  class X {};  Matches X, because X::X is a class of name X inside X.
+  class Y { class X {}; };
+  class Z { class Y { class X {}; }; };  Does not match Z.
+
+ChildT must be an AST base type.
 
 Usable as: Any Matcher
 </pre></td></tr>
@@ -2403,6 +2403,10 @@ matches 'int x' in
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMemberCallExpr.html">CXXMemberCallExpr</a>&gt;</td><td class="name" onclick="toggle('onImplicitObjectArgument0')"><a name="onImplicitObjectArgument0Anchor">onImplicitObjectArgument</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Expr.html">Expr</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="onImplicitObjectArgument0"><pre></pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMemberCallExpr.html">CXXMemberCallExpr</a>&gt;</td><td class="name" onclick="toggle('on0')"><a name="on0Anchor">on</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Expr.html">Expr</a>&gt; InnerMatcher</td></tr>
 <tr><td colspan="4" class="doc" id="on0"><pre>Matches on the implicit object argument of a member call expression.
 
@@ -2414,12 +2418,14 @@ FIXME: Overload to allow directly matching types?
 </pre></td></tr>
 
 
-<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMemberCallExpr.html">CXXMemberCallExpr</a>&gt;</td><td class="name" onclick="toggle('onImplicitObjectArgument0')"><a name="onImplicitObjectArgument0Anchor">onImplicitObjectArgument</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Expr.html">Expr</a>&gt; InnerMatcher</td></tr>
-<tr><td colspan="4" class="doc" id="onImplicitObjectArgument0"><pre></pre></td></tr>
-
-
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMemberCallExpr.html">CXXMemberCallExpr</a>&gt;</td><td class="name" onclick="toggle('thisPointerType1')"><a name="thisPointerType1Anchor">thisPointerType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt; InnerMatcher</td></tr>
 <tr><td colspan="4" class="doc" id="thisPointerType1"><pre>Overloaded to match the type's declaration.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMemberCallExpr.html">CXXMemberCallExpr</a>&gt;</td><td class="name" onclick="toggle('thisPointerType0')"><a name="thisPointerType0Anchor">thisPointerType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="thisPointerType0"><pre>Matches if the expression's type either matches the specified
+matcher, or is a pointer to a type that matches the InnerMatcher.
 </pre></td></tr>
 
 
@@ -2488,6 +2494,24 @@ given matcher.
 Example matches y.x() (matcher = callExpr(callee(methodDecl(hasName("x")))))
   class Y { public: void x(); };
   void z() { Y y; y.x();
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CallExpr.html">CallExpr</a>&gt;</td><td class="name" onclick="toggle('callee0')"><a name="callee0Anchor">callee</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="callee0"><pre>Matches if the call expression's callee expression matches.
+
+Given
+  class Y { void x() { this-&gt;x(); x(); Y y; y.x(); } };
+  void f() { f(); }
+callExpr(callee(expr()))
+  matches this-&gt;x(), x(), y.x(), f()
+with callee(...)
+  matching this-&gt;x, x, y.x, f respectively
+
+Note: Callee cannot take the more general internal::Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Expr.html">Expr</a>&gt;
+because this introduces ambiguous overloads with calls to Callee taking a
+internal::Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;, as the matcher hierarchy is purely
+implemented in terms of implicit casts.
 </pre></td></tr>
 
 
@@ -2868,6 +2892,17 @@ Example matches x (matcher = expr(hasType(recordDecl(hasName("X")))))
  void y(X &amp;x) { x; X z; }
 
 Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Expr.html">Expr</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ValueDecl.html">ValueDecl</a>&gt;
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Expr.html">Expr</a>&gt;</td><td class="name" onclick="toggle('hasType0')"><a name="hasType0Anchor">hasType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="hasType0"><pre>Matches if the expression's or declaration's type matches a type
+matcher.
+
+Example matches x (matcher = expr(hasType(recordDecl(hasName("X")))))
+            and z (matcher = varDecl(hasType(recordDecl(hasName("X")))))
+ class X {};
+ void y(X &amp;x) { x; X z; }
 </pre></td></tr>
 
 
@@ -3318,8 +3353,33 @@ Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CallEx
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt;</td><td class="name" onclick="toggle('pointsTo0')"><a name="pointsTo0Anchor">pointsTo</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="pointsTo0"><pre>Matches if the matched type is a pointer type and the pointee type
+matches the specified matcher.
+
+Example matches y-&gt;x()
+    (matcher = callExpr(on(hasType(pointsTo(recordDecl(hasName("Y")))))))
+  class Y { public: void x(); };
+  void z() { Y *y; y-&gt;x(); }
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt;</td><td class="name" onclick="toggle('references1')"><a name="references1Anchor">references</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt; InnerMatcher</td></tr>
 <tr><td colspan="4" class="doc" id="references1"><pre>Overloaded to match the referenced type's declaration.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt;</td><td class="name" onclick="toggle('references0')"><a name="references0Anchor">references</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="references0"><pre>Matches if the matched type is a reference type and the referenced
+type matches the specified matcher.
+
+Example matches X &amp;x and const X &amp;y
+    (matcher = varDecl(hasType(references(recordDecl(hasName("X"))))))
+  class X {
+    void a(X b) {
+      X &amp;x = b;
+      const X &amp;y = b;
+  };
 </pre></td></tr>
 
 
@@ -3659,6 +3719,17 @@ Example matches x (matcher = expr(hasType(recordDecl(hasName("X")))))
  void y(X &amp;x) { x; X z; }
 
 Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Expr.html">Expr</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ValueDecl.html">ValueDecl</a>&gt;
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1ValueDecl.html">ValueDecl</a>&gt;</td><td class="name" onclick="toggle('hasType1')"><a name="hasType1Anchor">hasType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="hasType1"><pre>Matches if the expression's or declaration's type matches a type
+matcher.
+
+Example matches x (matcher = expr(hasType(recordDecl(hasName("X")))))
+            and z (matcher = varDecl(hasType(recordDecl(hasName("X")))))
+ class X {};
+ void y(X &amp;x) { x; X z; }
 </pre></td></tr>
 
 

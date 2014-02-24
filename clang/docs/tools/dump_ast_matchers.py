@@ -119,9 +119,9 @@ def add_matcher(result_type, name, args, comment, is_dyncast=False):
   # arguments.
   elif ('Matcher<' not in args or
         name in ['allOf', 'anyOf', 'anything', 'unless']):
-    narrowing_matchers[result_type + name] = matcher_html
+    narrowing_matchers[result_type + name + esc(args)] = matcher_html
   else:
-    traversal_matchers[result_type + name] = matcher_html
+    traversal_matchers[result_type + name + esc(args)] = matcher_html
 
 def act_on_decl(declaration, comment, allowed_types):
   """Parse the matcher out of the given declaration and comment.
