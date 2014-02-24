@@ -91,4 +91,4 @@ RUN: not llvm-cov test.c -gcda=test_file_checksum_fail.gcda
 # Bad function checksum on gcda
 RUN: not llvm-cov test.c -gcda=test_func_checksum_fail.gcda
 
-XFAIL: powerpc64, s390x, mips, sparc
+XFAIL: powerpc64, s390x, mips-, mips64-, sparc
