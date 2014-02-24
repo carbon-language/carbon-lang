@@ -74,7 +74,7 @@ bool ReplacementHandling::serializeReplacements(
 
     std::string ErrorInfo;
     raw_fd_ostream ReplacementsFile(ReplacementsFileName.c_str(), ErrorInfo,
-                                    fs::F_Binary);
+                                    fs::F_None);
     if (!ErrorInfo.empty()) {
       errs() << "Error opening file: " << ErrorInfo << "\n";
       Errors = true;

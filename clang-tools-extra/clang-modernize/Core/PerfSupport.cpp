@@ -52,7 +52,7 @@ void writePerfDataJSON(
 
   std::string ErrorInfo;
   llvm::raw_fd_ostream FileStream(SS.str().c_str(), ErrorInfo,
-                                  llvm::sys::fs::F_None);
+                                  llvm::sys::fs::F_Text);
   FileStream << "{\n";
   FileStream << "  \"Sources\" : [\n";
   for (SourcePerfData::const_iterator I = TimingResults.begin(),

@@ -247,7 +247,7 @@ bool writeFiles(const clang::Rewriter &Rewrites) {
 
     std::string ErrorInfo;
 
-    llvm::raw_fd_ostream FileStream(FileName, ErrorInfo, llvm::sys::fs::F_None);
+    llvm::raw_fd_ostream FileStream(FileName, ErrorInfo, llvm::sys::fs::F_Text);
     if (!ErrorInfo.empty()) {
       errs() << "Warning: Could not write to " << FileName << "\n";
       continue;
