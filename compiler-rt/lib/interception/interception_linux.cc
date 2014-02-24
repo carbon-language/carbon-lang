@@ -12,10 +12,10 @@
 // Linux-specific interception methods.
 //===----------------------------------------------------------------------===//
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 #include "interception.h"
 
-#include <dlfcn.h>   // for dlsym
+#include <dlfcn.h>   // for dlsym() and dlvsym()
 
 namespace __interception {
 bool GetRealFunctionAddress(const char *func_name, uptr *func_addr,
@@ -33,4 +33,4 @@ void *GetFuncAddrVer(const char *func_name, const char *ver) {
 }  // namespace __interception
 
 
-#endif  // __linux__
+#endif  // __linux__ || __FreeBSD__

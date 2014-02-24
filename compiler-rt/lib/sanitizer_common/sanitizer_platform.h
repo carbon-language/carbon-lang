@@ -13,7 +13,8 @@
 #ifndef SANITIZER_PLATFORM_H
 #define SANITIZER_PLATFORM_H
 
-#if !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32)
+#if !defined(__linux__) && !defined(__FreeBSD__) && \
+  !defined(__APPLE__) && !defined(_WIN32)
 # error "This operating system is not supported"
 #endif
 
@@ -21,6 +22,12 @@
 # define SANITIZER_LINUX   1
 #else
 # define SANITIZER_LINUX   0
+#endif
+
+#if defined(__FreeBSD__)
+# define SANITIZER_FREEBSD 1
+#else
+# define SANITIZER_FREEBSD 0
 #endif
 
 #if defined(__APPLE__)
