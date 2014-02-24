@@ -27,7 +27,7 @@ else()
 endif()
 
 # Top level target used to build all compiler-rt libraries.
-add_custom_target(compiler-rt)
+add_custom_target(compiler-rt ALL)
 
 if (NOT COMPILER_RT_STANDALONE_BUILD)
   # Compute the Clang version from the LLVM version.
@@ -219,7 +219,8 @@ pythonize_bool(COMPILER_RT_DEBUG)
 include(config-ix)
 
 if(COMPILER_RT_ENABLE_WERROR)
-  add_definitions(-Werror)
+  add_definitions_if(COMPILER_RT_HAS_WERROR_FLAG -Werror)
+  add_definitions_if(COMPILER_RT_HAS_WX_FLAG /WX)
 endif()
 
 # Provide some common commmandline flags for Sanitizer runtimes.
