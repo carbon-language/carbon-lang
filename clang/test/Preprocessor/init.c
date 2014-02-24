@@ -15,7 +15,7 @@
 // CXX1Y:#define __GXX_EXPERIMENTAL_CXX0X__ 1
 // CXX1Y:#define __GXX_RTTI 1
 // CXX1Y:#define __GXX_WEAK__ 1
-// CXX1Y:#define __cplusplus 201305L
+// CXX1Y:#define __cplusplus 201402L
 // CXX1Y:#define __private_extern__ extern
 //
 //
@@ -89,7 +89,7 @@
 //
 // GXX1Y:#define __GNUG__
 // GXX1Y:#define __GXX_WEAK__ 1
-// GXX1Y:#define __cplusplus 201305L
+// GXX1Y:#define __cplusplus 201402L
 // GXX1Y:#define __private_extern__ extern
 //
 //
