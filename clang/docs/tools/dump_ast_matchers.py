@@ -242,12 +242,17 @@ def act_on_decl(declaration, comment, allowed_types):
 
     # Parse Variadic operator matchers.
     m = re.match(
-        r"""^.*VariadicOperatorMatcherFunc\s*([a-zA-Z]*)\s*=\s*{.*};$""",
+        r"""^.*VariadicOperatorMatcherFunc\s*<\s*([^,]+),\s*([^\s>]+)\s*>\s*
+              ([a-zA-Z]*)\s*=\s*{.*};$""",
         declaration, flags=re.X)
     if m:
-      name = m.groups()[0]
-      add_matcher('*', name, 'Matcher<*>, ..., Matcher<*>', comment)
-      return
+      min_args, max_args, name = m.groups()[:3]
+      if max_args == '1':
+        add_matcher('*', name, 'Matcher<*>', comment)
+        return
+      elif max_args == 'UINT_MAX':
+        add_matcher('*', name, 'Matcher<*>, ..., Matcher<*>', comment)
+        return
 
 
     # Parse free standing matcher functions, like:

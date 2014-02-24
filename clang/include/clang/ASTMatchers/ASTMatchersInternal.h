@@ -1579,6 +1579,26 @@ TypeTraversePolymorphicMatcher<
   return Self(InnerMatchers);
 }
 
+// FIXME: unify ClassTemplateSpecializationDecl and TemplateSpecializationType's
+// APIs for accessing the template argument list.
+inline llvm::ArrayRef<TemplateArgument>
+getTemplateSpecializationArgs(const ClassTemplateSpecializationDecl &D) {
+  return D.getTemplateArgs().asArray();
+}
+
+inline llvm::ArrayRef<TemplateArgument>
+getTemplateSpecializationArgs(const TemplateSpecializationType &T) {
+  return llvm::ArrayRef<TemplateArgument>(T.getArgs(), T.getNumArgs());
+}
+
+struct NotEqualsBoundNodePredicate {
+  bool operator()(const internal::BoundNodesMap &Nodes) const {
+    return Nodes.getNode(ID) != Node;
+  }
+  std::string ID;
+  ast_type_traits::DynTypedNode Node;
+};
+
 } // end namespace internal
 } // end namespace ast_matchers
 } // end namespace clang
