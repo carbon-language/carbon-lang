@@ -451,7 +451,7 @@ void DumpModuleInfoAction::ExecuteAction() {
   if (!OutputFileName.empty() && OutputFileName != "-") {
     std::string ErrorInfo;
     OutFile.reset(new llvm::raw_fd_ostream(OutputFileName.str().c_str(),
-                                           ErrorInfo, llvm::sys::fs::F_None));
+                                           ErrorInfo, llvm::sys::fs::F_Text));
   }
   llvm::raw_ostream &Out = OutFile.get()? *OutFile.get() : llvm::outs();
 

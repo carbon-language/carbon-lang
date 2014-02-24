@@ -171,7 +171,7 @@ void DependencyFileCallback::OutputDependencyFile() {
   }
 
   std::string Err;
-  llvm::raw_fd_ostream OS(OutputFile.c_str(), Err, llvm::sys::fs::F_None);
+  llvm::raw_fd_ostream OS(OutputFile.c_str(), Err, llvm::sys::fs::F_Text);
   if (!Err.empty()) {
     PP->getDiagnostics().Report(diag::err_fe_error_opening)
       << OutputFile << Err;

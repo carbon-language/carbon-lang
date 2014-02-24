@@ -92,7 +92,7 @@ bool FixItRewriter::WriteFixedFiles(
       OS.reset(new llvm::raw_fd_ostream(fd, /*shouldClose=*/true));
     } else {
       OS.reset(new llvm::raw_fd_ostream(Filename.c_str(), Err,
-                                        llvm::sys::fs::F_Binary));
+                                        llvm::sys::fs::F_None));
     }
     if (!Err.empty()) {
       Diags.Report(clang::diag::err_fe_unable_to_open_output)

@@ -522,8 +522,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
       std::string Err;
       std::string Script = StringRef(*it).rsplit('.').first;
       Script += ".sh";
-      llvm::raw_fd_ostream ScriptOS(
-          Script.c_str(), Err, llvm::sys::fs::F_Excl | llvm::sys::fs::F_Binary);
+      llvm::raw_fd_ostream ScriptOS(Script.c_str(), Err, llvm::sys::fs::F_Excl);
       if (!Err.empty()) {
         Diag(clang::diag::note_drv_command_failed_diag_msg)
           << "Error generating run script: " + Script + " " + Err;

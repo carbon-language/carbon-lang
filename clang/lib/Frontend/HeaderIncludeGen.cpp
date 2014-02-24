@@ -56,7 +56,8 @@ void clang::AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders,
   if (!OutputPath.empty()) {
     std::string Error;
     llvm::raw_fd_ostream *OS = new llvm::raw_fd_ostream(
-        OutputPath.str().c_str(), Error, llvm::sys::fs::F_Append);
+        OutputPath.str().c_str(), Error,
+        llvm::sys::fs::F_Append | llvm::sys::fs::F_Text);
     if (!Error.empty()) {
       PP.getDiagnostics().Report(
         clang::diag::warn_fe_cc_print_header_failure) << Error;

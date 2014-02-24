@@ -337,7 +337,7 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
 
   // Open the file.
   std::string ErrMsg;
-  llvm::raw_fd_ostream o(OutputFile.c_str(), ErrMsg, llvm::sys::fs::F_None);
+  llvm::raw_fd_ostream o(OutputFile.c_str(), ErrMsg, llvm::sys::fs::F_Text);
   if (!ErrMsg.empty()) {
     llvm::errs() << "warning: could not create file: " << OutputFile << '\n';
     return;

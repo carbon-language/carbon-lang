@@ -2941,7 +2941,7 @@ static void updateModuleTimestamp(ModuleFile &MF) {
   std::string TimestampFilename = MF.getTimestampFilename();
   std::string ErrorInfo;
   llvm::raw_fd_ostream OS(TimestampFilename.c_str(), ErrorInfo,
-                          llvm::sys::fs::F_None);
+                          llvm::sys::fs::F_Text);
   if (!ErrorInfo.empty())
     return;
   OS << "Timestamp file\n";
