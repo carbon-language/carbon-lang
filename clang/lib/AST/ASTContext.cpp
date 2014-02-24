@@ -1764,7 +1764,7 @@ unsigned ASTContext::getPreferredTypeAlign(const Type *T) const {
   const TypedefType *TT = T->getAs<TypedefType>();
 
   // Double and long long should be naturally aligned if possible.
-  if (const ComplexType* CT = T->getAs<ComplexType>())
+  if (const ComplexType *CT = T->getAs<ComplexType>())
     T = CT->getElementType().getTypePtr();
   if (T->isSpecificBuiltinType(BuiltinType::Double) ||
       T->isSpecificBuiltinType(BuiltinType::LongLong) ||
