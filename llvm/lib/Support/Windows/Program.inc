@@ -437,13 +437,6 @@ error_code sys::ChangeStdoutToBinary(){
   return make_error_code(errc::success);
 }
 
-error_code sys::ChangeStderrToBinary(){
-  int result = _setmode( _fileno(stderr), _O_BINARY );
-  if (result == -1)
-    return error_code(errno, generic_category());
-  return make_error_code(errc::success);
-}
-
 bool llvm::sys::argumentsFitWithinSystemLimits(ArrayRef<const char*> Args) {
   // The documented max length of the command line passed to CreateProcess.
   static const size_t MaxCommandStringLength = 32768;

@@ -64,12 +64,11 @@ struct ProcessInfo {
   /// the program could not be found.
   std::string FindProgramByName(const std::string& name);
 
-  // These functions change the specified standard stream (stdin, stdout, or
-  // stderr) to binary mode. They return errc::success if the specified stream
+  // These functions change the specified standard stream (stdin or stdout) to
+  // binary mode. They return errc::success if the specified stream
   // was changed. Otherwise a platform dependent error is returned.
   error_code ChangeStdinToBinary();
   error_code ChangeStdoutToBinary();
-  error_code ChangeStderrToBinary();
 
   /// This function executes the program using the arguments provided.  The
   /// invoked program will inherit the stdin, stdout, and stderr file

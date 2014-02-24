@@ -434,11 +434,6 @@ error_code sys::ChangeStdoutToBinary(){
   return make_error_code(errc::success);
 }
 
-error_code sys::ChangeStderrToBinary(){
-  // Do nothing, as Unix doesn't differentiate between text and binary.
-  return make_error_code(errc::success);
-}
-
 bool llvm::sys::argumentsFitWithinSystemLimits(ArrayRef<const char*> Args) {
   static long ArgMax = sysconf(_SC_ARG_MAX);
 
