@@ -2123,9 +2123,6 @@ void CGObjCCommonMac::BuildRCRecordLayout(const llvm::StructLayout *RecLayout,
         ElCount *= CArray->getSize().getZExtValue();
         FQT = CArray->getElementType();
       }
-      
-      assert(!FQT->isUnionType() &&
-             "layout for array of unions not supported");
       if (FQT->isRecordType() && ElCount) {
         int OldIndex = RunSkipBlockVars.size() - 1;
         const RecordType *RT = FQT->getAs<RecordType>();
@@ -4594,9 +4591,6 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
         ElCount *= CArray->getSize().getZExtValue();
         FQT = CArray->getElementType();
       }
-
-      assert(!FQT->isUnionType() &&
-             "layout for array of unions not supported");
       if (FQT->isRecordType() && ElCount) {
         int OldIndex = IvarsInfo.size() - 1;
         int OldSkIndex = SkipIvars.size() -1;

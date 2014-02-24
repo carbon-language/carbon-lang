@@ -164,3 +164,11 @@ void test_empty_block() {
   };
  wrapperBlock();
 }
+
+// rdar://16111839
+typedef union { char ch[8];  } SS;
+typedef struct { SS s[4]; } CS;
+void test_union_in_layout() {
+  CS cs;
+  ^{ cs; };
+}
