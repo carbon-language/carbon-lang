@@ -555,7 +555,7 @@ const internal::VariadicDynCastAllOfMatcher<
 ///
 /// Example matches y
 /// \code
-///   class X { void y() };
+///   class X { void y(); };
 /// \endcode
 const internal::VariadicDynCastAllOfMatcher<Decl, CXXMethodDecl> methodDecl;
 
@@ -2654,6 +2654,20 @@ AST_MATCHER_P(CXXMethodDecl, ofClass,
 ///   matches A::x
 AST_MATCHER(CXXMethodDecl, isVirtual) {
   return Node.isVirtual();
+}
+
+/// \brief Matches if the given method declaration is pure.
+///
+/// Given
+/// \code
+///   class A {
+///    public:
+///     virtual void x() = 0;
+///   };
+/// \endcode
+///   matches A::x
+AST_MATCHER(CXXMethodDecl, isPure) {
+  return Node.isPure();
 }
 
 /// \brief Matches if the given method declaration is const.

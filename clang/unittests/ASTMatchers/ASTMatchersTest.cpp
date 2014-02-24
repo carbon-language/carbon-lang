@@ -1588,6 +1588,13 @@ TEST(Matcher, MatchesVirtualMethod) {
       methodDecl(isVirtual())));
 }
 
+TEST(Matcher, MatchesPureMethod) {
+  EXPECT_TRUE(matches("class X { virtual int f() = 0; };",
+      methodDecl(isPure(), hasName("::X::f"))));
+  EXPECT_TRUE(notMatches("class X { int f(); };",
+      methodDecl(isPure())));
+}
+
 TEST(Matcher, MatchesConstMethod) {
   EXPECT_TRUE(matches("struct A { void foo() const; };",
                       methodDecl(isConst())));
