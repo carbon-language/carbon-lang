@@ -474,6 +474,7 @@ bool TokenLexer::Lex(Token &Tok) {
   } else {
     // If this is not the first token, we may still need to pass through
     // leading whitespace if we've expanded a macro.
+    if (AtStartOfLine) Tok.setFlag(Token::StartOfLine);
     if (HasLeadingSpace) Tok.setFlag(Token::LeadingSpace);
   }
   AtStartOfLine = false;
