@@ -580,7 +580,10 @@ enum OpenFlags {
 
   /// F_Binary - The file should be opened in binary mode on platforms that
   /// make this distinction.
-  F_Binary = 4
+  F_Binary = 4,
+
+  /// Open the file for read and write.
+  F_RW = 8
 };
 
 inline OpenFlags operator|(OpenFlags A, OpenFlags B) {

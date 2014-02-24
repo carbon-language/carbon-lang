@@ -103,76 +103,6 @@ static error_code TempDir(SmallVectorImpl<char> &result) {
   return error_code::success();
 }
 
-static error_code createUniqueEntity(const Twine &Model, int &ResultFD,
-                                     SmallVectorImpl<char> &ResultPath,
-                                     bool MakeAbsolute, unsigned Mode,
-                                     FSEntity Type) {
-  SmallString<128> ModelStorage;
-  Model.toVector(ModelStorage);
-
-  if (MakeAbsolute) {
-    // Make model absolute by prepending a temp directory if it's not already.
-    bool absolute = sys::path::is_absolute(Twine(ModelStorage));
-    if (!absolute) {
-      SmallString<128> TDir;
-      if (error_code ec = TempDir(TDir)) return ec;
-      sys::path::append(TDir, Twine(ModelStorage));
-      ModelStorage.swap(TDir);
-    }
-  }
-
-  // From here on, DO NOT modify model. It may be needed if the randomly chosen
-  // path already exists.
-  ResultPath = ModelStorage;
-  // Null terminate.
-  ResultPath.push_back(0);
-  ResultPath.pop_back();
-
-retry_random_path:
-  // Replace '%' with random chars.
-  for (unsigned i = 0, e = ModelStorage.size(); i != e; ++i) {
-    if (ModelStorage[i] == '%')
-      ResultPath[i] = "0123456789abcdef"[sys::Process::GetRandomNumber() & 15];
-  }
-
-  // Try to open + create the file.
-  switch (Type) {
-  case FS_File: {
-    int RandomFD = ::open(ResultPath.begin(), O_RDWR | O_CREAT | O_EXCL, Mode);
-    if (RandomFD == -1) {
-      int SavedErrno = errno;
-      // If the file existed, try again, otherwise, error.
-      if (SavedErrno == errc::file_exists)
-        goto retry_random_path;
-      return error_code(SavedErrno, system_category());
-    }
-
-    ResultFD = RandomFD;
-    return error_code::success();
-  }
-
-  case FS_Name: {
-    bool Exists;
-    error_code EC = sys::fs::exists(ResultPath.begin(), Exists);
-    if (EC)
-      return EC;
-    if (Exists)
-      goto retry_random_path;
-    return error_code::success();
-  }
-
-  case FS_Dir: {
-    if (error_code EC = sys::fs::create_directory(ResultPath.begin(), false)) {
-      if (EC == errc::file_exists)
-        goto retry_random_path;
-      return EC;
-    }
-    return error_code::success();
-  }
-  }
-  llvm_unreachable("Invalid Type");
-}
-
 namespace llvm {
 namespace sys  {
 namespace fs {
@@ -755,7 +685,12 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
   assert((!(Flags & sys::fs::F_Excl) || !(Flags & sys::fs::F_Append)) &&
          "Cannot specify both 'excl' and 'append' file creation flags!");
 
-  int OpenFlags = O_WRONLY | O_CREAT;
+  int OpenFlags = O_CREAT;
+
+  if (Flags & F_RW)
+    OpenFlags |= O_RDWR;
+  else
+    OpenFlags |= O_WRONLY;
 
   if (Flags & F_Append)
     OpenFlags |= O_APPEND;

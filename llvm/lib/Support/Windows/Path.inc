@@ -44,20 +44,21 @@ using namespace llvm;
 using llvm::sys::windows::UTF8ToUTF16;
 using llvm::sys::windows::UTF16ToUTF8;
 
-static error_code TempDir(SmallVectorImpl<wchar_t> &result) {
+static error_code TempDir(SmallVectorImpl<char> &Result) {
+  SmallVector<wchar_t, 64> Res;
 retry_temp_dir:
-  DWORD len = ::GetTempPathW(result.capacity(), result.begin());
+  DWORD Len = ::GetTempPathW(Res.capacity(), Res.begin());
 
-  if (len == 0)
+  if (Len == 0)
     return windows_error(::GetLastError());
 
-  if (len > result.capacity()) {
-    result.reserve(len);
+  if (Len > Res.capacity()) {
+    Res.reserve(Len);
     goto retry_temp_dir;
   }
 
-  result.set_size(len);
-  return error_code::success();
+  Res.set_size(Len);
+  return UTF16ToUTF8(Res.begin(), Res.size(), Result);
 }
 
 static bool is_separator(const wchar_t value) {
@@ -68,128 +69,6 @@ static bool is_separator(const wchar_t value) {
   default:
     return false;
   }
-}
-
-// FIXME: mode should be used here and default to user r/w only,
-// it currently comes in as a UNIX mode.
-static error_code createUniqueEntity(const Twine &model, int &result_fd,
-                                     SmallVectorImpl<char> &result_path,
-                                     bool makeAbsolute, unsigned mode,
-                                     FSEntity Type) {
-  // Use result_path as temp storage.
-  result_path.set_size(0);
-  StringRef m = model.toStringRef(result_path);
-
-  SmallVector<wchar_t, 128> model_utf16;
-  if (error_code ec = UTF8ToUTF16(m, model_utf16)) return ec;
-
-  if (makeAbsolute) {
-    // Make model absolute by prepending a temp directory if it's not already.
-    bool absolute = sys::path::is_absolute(m);
-
-    if (!absolute) {
-      SmallVector<wchar_t, 64> temp_dir;
-      if (error_code ec = TempDir(temp_dir)) return ec;
-      // Handle c: by removing it.
-      if (model_utf16.size() > 2 && model_utf16[1] == L':') {
-        model_utf16.erase(model_utf16.begin(), model_utf16.begin() + 2);
-      }
-      model_utf16.insert(model_utf16.begin(), temp_dir.begin(), temp_dir.end());
-    }
-  }
-
-  // Replace '%' with random chars. From here on, DO NOT modify model. It may be
-  // needed if the randomly chosen path already exists.
-  SmallVector<wchar_t, 128> random_path_utf16;
-
-retry_random_path:
-  random_path_utf16.set_size(0);
-  for (SmallVectorImpl<wchar_t>::const_iterator i = model_utf16.begin(),
-                                                e = model_utf16.end();
-                                                i != e; ++i) {
-    if (*i == L'%') {
-      unsigned val = sys::Process::GetRandomNumber();
-      random_path_utf16.push_back(L"0123456789abcdef"[val & 15]);
-    }
-    else
-      random_path_utf16.push_back(*i);
-  }
-  // Make random_path_utf16 null terminated.
-  random_path_utf16.push_back(0);
-  random_path_utf16.pop_back();
-
-  HANDLE TempFileHandle = INVALID_HANDLE_VALUE;
-
-  switch (Type) {
-  case FS_File: {
-    // Try to create + open the path.
-    TempFileHandle =
-        ::CreateFileW(random_path_utf16.begin(), GENERIC_READ | GENERIC_WRITE,
-                      FILE_SHARE_READ, NULL,
-                      // Return ERROR_FILE_EXISTS if the file
-                      // already exists.
-                      CREATE_NEW, FILE_ATTRIBUTE_TEMPORARY, NULL);
-    if (TempFileHandle == INVALID_HANDLE_VALUE) {
-      // If the file existed, try again, otherwise, error.
-      error_code ec = windows_error(::GetLastError());
-      if (ec == windows_error::file_exists)
-        goto retry_random_path;
-
-      return ec;
-    }
-
-    // Convert the Windows API file handle into a C-runtime handle.
-    int fd = ::_open_osfhandle(intptr_t(TempFileHandle), 0);
-    if (fd == -1) {
-      ::CloseHandle(TempFileHandle);
-      ::DeleteFileW(random_path_utf16.begin());
-      // MSDN doesn't say anything about _open_osfhandle setting errno or
-      // GetLastError(), so just return invalid_handle.
-      return windows_error::invalid_handle;
-    }
-
-    result_fd = fd;
-    break;
-  }
-
-  case FS_Name: {
-    DWORD attributes = ::GetFileAttributesW(random_path_utf16.begin());
-    if (attributes != INVALID_FILE_ATTRIBUTES)
-      goto retry_random_path;
-    error_code EC = make_error_code(windows_error(::GetLastError()));
-    if (EC != windows_error::file_not_found &&
-        EC != windows_error::path_not_found)
-      return EC;
-    break;
-  }
-
-  case FS_Dir:
-    if (!::CreateDirectoryW(random_path_utf16.begin(), NULL)) {
-      error_code EC = windows_error(::GetLastError());
-      if (EC != windows_error::already_exists)
-        return EC;
-      goto retry_random_path;
-    }
-    break;
-  }
-
-  // Set result_path to the utf-8 representation of the path.
-  if (error_code ec = UTF16ToUTF8(random_path_utf16.begin(),
-                                  random_path_utf16.size(), result_path)) {
-    switch (Type) {
-    case FS_File:
-      ::CloseHandle(TempFileHandle);
-      ::DeleteFileW(random_path_utf16.begin());
-    case FS_Name:
-      break;
-    case FS_Dir:
-      ::RemoveDirectoryW(random_path_utf16.begin());
-      break;
-    }
-    return ec;
-  }
-
-  return error_code::success();
 }
 
 namespace llvm {
@@ -973,7 +852,11 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
   else
     CreationDisposition = CREATE_ALWAYS;
 
-  HANDLE H = ::CreateFileW(PathUTF16.begin(), GENERIC_WRITE,
+  DWORD Access = GENERIC_WRITE;
+  if (Flags & F_RW)
+    Access |= GENERIC_READ;
+
+  HANDLE H = ::CreateFileW(PathUTF16.begin(), Access,
                            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                            CreationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
 
