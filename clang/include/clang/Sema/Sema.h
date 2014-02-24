@@ -1328,11 +1328,6 @@ public:
   /// function to pin them on. ActOnFunctionDeclarator reads this list and patches
   /// them into the FunctionDecl.
   std::vector<NamedDecl*> DeclsInPrototypeScope;
-  /// Nonzero if we are currently parsing a function declarator. This is a counter
-  /// as opposed to a boolean so we can deal with nested function declarators
-  /// such as:
-  ///     void f(void (*g)(), ...)
-  unsigned InFunctionDeclarator;
 
   DeclGroupPtrTy ConvertDeclToDeclGroup(Decl *Ptr, Decl *OwnedType = 0);
 
