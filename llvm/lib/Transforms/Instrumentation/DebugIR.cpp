@@ -528,7 +528,7 @@ void DebugIR::writeDebugBitcode(const Module *M, int *fd) {
 
   if (!fd) {
     std::string Path = getPath();
-    Out.reset(new raw_fd_ostream(Path.c_str(), error, sys::fs::F_None));
+    Out.reset(new raw_fd_ostream(Path.c_str(), error, sys::fs::F_Text));
     DEBUG(dbgs() << "WRITING debug bitcode from Module " << M << " to file "
                  << Path << "\n");
   } else {

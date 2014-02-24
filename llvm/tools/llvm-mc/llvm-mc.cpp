@@ -211,7 +211,7 @@ static tool_output_file *GetOutputStream() {
 
   std::string Err;
   tool_output_file *Out =
-      new tool_output_file(OutputFilename.c_str(), Err, sys::fs::F_Binary);
+      new tool_output_file(OutputFilename.c_str(), Err, sys::fs::F_None);
   if (!Err.empty()) {
     errs() << Err << '\n';
     delete Out;

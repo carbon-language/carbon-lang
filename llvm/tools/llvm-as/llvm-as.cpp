@@ -70,7 +70,7 @@ static void WriteOutputFile(const Module *M) {
 
   std::string ErrorInfo;
   OwningPtr<tool_output_file> Out(new tool_output_file(
-      OutputFilename.c_str(), ErrorInfo, sys::fs::F_Binary));
+      OutputFilename.c_str(), ErrorInfo, sys::fs::F_None));
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
     exit(1);

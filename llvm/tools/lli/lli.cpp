@@ -273,7 +273,7 @@ public:
       sys::path::remove_filename(dir);
       sys::fs::create_directories(Twine(dir));
     }
-    raw_fd_ostream outfile(CacheName.c_str(), errStr, sys::fs::F_Binary);
+    raw_fd_ostream outfile(CacheName.c_str(), errStr, sys::fs::F_None);
     outfile.write(Obj->getBufferStart(), Obj->getBufferSize());
     outfile.close();
   }

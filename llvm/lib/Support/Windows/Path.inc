@@ -876,7 +876,7 @@ error_code openFileForWrite(const Twine &Name, int &ResultFD,
   if (Flags & F_Append)
     OpenFlags |= _O_APPEND;
 
-  if (!(Flags & F_Binary))
+  if (Flags & F_Text)
     OpenFlags |= _O_TEXT;
 
   int FD = ::_open_osfhandle(intptr_t(H), OpenFlags);

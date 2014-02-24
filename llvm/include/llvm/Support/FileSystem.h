@@ -578,9 +578,9 @@ enum OpenFlags {
   /// with F_Excl.
   F_Append = 2,
 
-  /// F_Binary - The file should be opened in binary mode on platforms that
-  /// make this distinction.
-  F_Binary = 4,
+  /// The file should be opened in text mode on platforms that make this
+  /// distinction.
+  F_Text = 4,
 
   /// Open the file for read and write.
   F_RW = 8

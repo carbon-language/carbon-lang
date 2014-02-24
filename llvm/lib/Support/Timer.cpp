@@ -66,8 +66,8 @@ raw_ostream *llvm::CreateInfoOutputFile() {
   // compensate for this, the test-suite Makefiles have code to delete the
   // info output file before running commands which write to it.
   std::string Error;
-  raw_ostream *Result =
-      new raw_fd_ostream(OutputFilename.c_str(), Error, sys::fs::F_Append);
+  raw_ostream *Result = new raw_fd_ostream(
+      OutputFilename.c_str(), Error, sys::fs::F_Append | sys::fs::F_Text);
   if (Error.empty())
     return Result;
   

@@ -192,7 +192,7 @@ static void emitDOTFile(const char *FileName, const MCFunction &f,
                         MCInstPrinter *IP) {
   // Start a new dot file.
   std::string Error;
-  raw_fd_ostream Out(FileName, Error, sys::fs::F_None);
+  raw_fd_ostream Out(FileName, Error, sys::fs::F_Text);
   if (!Error.empty()) {
     errs() << "llvm-objdump: warning: " << Error << '\n';
     return;
@@ -373,7 +373,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     }
     if (!YAMLCFG.empty()) {
       std::string Error;
-      raw_fd_ostream YAMLOut(YAMLCFG.c_str(), Error, sys::fs::F_None);
+      raw_fd_ostream YAMLOut(YAMLCFG.c_str(), Error, sys::fs::F_Text);
       if (!Error.empty()) {
         errs() << ToolName << ": warning: " << Error << '\n';
         return;

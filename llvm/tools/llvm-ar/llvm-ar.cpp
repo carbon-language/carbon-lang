@@ -322,7 +322,7 @@ static void doExtract(StringRef Name, object::Archive::child_iterator I) {
 
   int FD;
   failIfError(
-      sys::fs::openFileForWrite(Storage.c_str(), FD, sys::fs::F_Binary, Mode),
+      sys::fs::openFileForWrite(Storage.c_str(), FD, sys::fs::F_None, Mode),
       Storage.c_str());
 
   {

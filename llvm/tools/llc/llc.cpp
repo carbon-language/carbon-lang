@@ -150,8 +150,8 @@ static tool_output_file *GetOutputStream(const char *TargetName,
   // Open the file.
   std::string error;
   sys::fs::OpenFlags OpenFlags = sys::fs::F_None;
-  if (Binary)
-    OpenFlags |= sys::fs::F_Binary;
+  if (!Binary)
+    OpenFlags |= sys::fs::F_Text;
   tool_output_file *FDOut = new tool_output_file(OutputFilename.c_str(), error,
                                                  OpenFlags);
   if (!error.empty()) {

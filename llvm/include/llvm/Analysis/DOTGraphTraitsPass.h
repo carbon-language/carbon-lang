@@ -69,7 +69,7 @@ public:
 
     errs() << "Writing '" << Filename << "'...";
 
-    raw_fd_ostream File(Filename.c_str(), ErrorInfo, sys::fs::F_None);
+    raw_fd_ostream File(Filename.c_str(), ErrorInfo, sys::fs::F_Text);
     std::string GraphName = DOTGraphTraits<GraphT>::getGraphName(Graph);
     std::string Title = GraphName + " for '" + F.getName().str() + "' function";
 
@@ -132,7 +132,7 @@ public:
 
     errs() << "Writing '" << Filename << "'...";
 
-    raw_fd_ostream File(Filename.c_str(), ErrorInfo, sys::fs::F_None);
+    raw_fd_ostream File(Filename.c_str(), ErrorInfo, sys::fs::F_Text);
     std::string Title = DOTGraphTraits<GraphT>::getGraphName(Graph);
 
     if (ErrorInfo.empty())

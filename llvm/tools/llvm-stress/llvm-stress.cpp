@@ -705,7 +705,7 @@ int main(int argc, char **argv) {
 
   std::string ErrorInfo;
   Out.reset(new tool_output_file(OutputFilename.c_str(), ErrorInfo,
-                                 sys::fs::F_Binary));
+                                 sys::fs::F_None));
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
     return 1;

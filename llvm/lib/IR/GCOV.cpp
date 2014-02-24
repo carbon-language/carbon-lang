@@ -482,7 +482,7 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) {
     std::string CoveragePath = mangleCoveragePath(Filename,
                                                   Options.PreservePaths);
     std::string ErrorInfo;
-    raw_fd_ostream OS(CoveragePath.c_str(), ErrorInfo, sys::fs::F_None);
+    raw_fd_ostream OS(CoveragePath.c_str(), ErrorInfo, sys::fs::F_Text);
     if (!ErrorInfo.empty())
       errs() << ErrorInfo << "\n";
 

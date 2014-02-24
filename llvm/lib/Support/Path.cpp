@@ -201,9 +201,9 @@ retry_random_path:
   // Try to open + create the file.
   switch (Type) {
   case FS_File: {
-    if (error_code EC = sys::fs::openFileForWrite(
-            Twine(ResultPath.begin()), ResultFD,
-            sys::fs::F_RW | sys::fs::F_Excl | sys::fs::F_Binary, Mode)) {
+    if (error_code EC =
+            sys::fs::openFileForWrite(Twine(ResultPath.begin()), ResultFD,
+                                      sys::fs::F_RW | sys::fs::F_Excl, Mode)) {
       if (EC == errc::file_exists)
         goto retry_random_path;
       return EC;

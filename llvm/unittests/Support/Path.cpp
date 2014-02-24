@@ -501,7 +501,7 @@ TEST_F(FileSystemTest, Magic) {
     SmallString<128> file_pathname(TestDirectory);
     path::append(file_pathname, i->filename);
     std::string ErrMsg;
-    raw_fd_ostream file(file_pathname.c_str(), ErrMsg, sys::fs::F_Binary);
+    raw_fd_ostream file(file_pathname.c_str(), ErrMsg, sys::fs::F_None);
     ASSERT_FALSE(file.has_error());
     StringRef magic(i->magic_str, i->magic_str_len);
     file << magic;
@@ -521,7 +521,7 @@ TEST_F(FileSystemTest, CarriageReturn) {
   path::append(FilePathname, "test");
 
   {
-    raw_fd_ostream File(FilePathname.c_str(), ErrMsg, sys::fs::F_None);
+    raw_fd_ostream File(FilePathname.c_str(), ErrMsg, sys::fs::F_Text);
     EXPECT_EQ(ErrMsg, "");
     File << '\n';
   }
@@ -532,7 +532,7 @@ TEST_F(FileSystemTest, CarriageReturn) {
   }
 
   {
-    raw_fd_ostream File(FilePathname.c_str(), ErrMsg, sys::fs::F_Binary);
+    raw_fd_ostream File(FilePathname.c_str(), ErrMsg, sys::fs::F_None);
     EXPECT_EQ(ErrMsg, "");
     File << '\n';
   }

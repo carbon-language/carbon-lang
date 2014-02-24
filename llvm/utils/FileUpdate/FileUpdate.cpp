@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
            << "', contents changed.\n";
   std::string ErrorStr;
   tool_output_file OutStream(OutputFilename.c_str(), ErrorStr,
-                             sys::fs::F_Binary);
+                             sys::fs::F_None);
   if (!ErrorStr.empty()) {
     errs() << argv[0] << ": Unable to write output '"
            << OutputFilename << "': " << ErrorStr << '\n';
