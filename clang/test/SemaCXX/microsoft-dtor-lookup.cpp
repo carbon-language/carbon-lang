@@ -1,12 +1,11 @@
 // RUN: %clang_cc1 -triple %itanium_abi_triple -fsyntax-only %s
-// RUN: %clang_cc1 -triple %ms_abi_triple -verify -DMSVC_ABI %s
+// RUN: %clang_cc1 -triple %ms_abi_triple -verify %s
 
 namespace Test1 {
 
 // Should be accepted under the Itanium ABI (first RUN line) but rejected
 // under the Microsoft ABI (second RUN line), as Microsoft ABI requires
-// operator delete() lookups to be done at all virtual destructor declaration
-// points.
+// operator delete() lookups to be done when vtables are marked used.
 
 struct A {
   void operator delete(void *); // expected-note {{member found by ambiguous name lookup}}
@@ -23,6 +22,10 @@ struct C : A, B {
 struct VC : A, B {
   virtual ~VC(); // expected-error {{member 'operator delete' found in multiple base classes of different types}}
 };
+
+void f(VC vc) {
+  // This marks VC's vtable used.
+}
 
 }
 

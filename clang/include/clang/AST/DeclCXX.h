@@ -2307,8 +2307,12 @@ public:
                                    bool isImplicitlyDeclared);
   static CXXDestructorDecl *CreateDeserialized(ASTContext & C, unsigned ID);
 
-  void setOperatorDelete(FunctionDecl *OD) { OperatorDelete = OD; }
-  const FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
+  void setOperatorDelete(FunctionDecl *OD) {
+    cast<CXXDestructorDecl>(getFirstDecl())->OperatorDelete = OD;
+  }
+  const FunctionDecl *getOperatorDelete() const {
+    return cast<CXXDestructorDecl>(getFirstDecl())->OperatorDelete;
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

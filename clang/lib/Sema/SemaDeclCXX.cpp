@@ -4479,15 +4479,6 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
         }
       }
     }
-
-    if (Record->hasUserDeclaredDestructor()) {
-      // The Microsoft ABI requires that we perform the destructor body
-      // checks (i.e. operator delete() lookup) in any translataion unit, as
-      // any translation unit may need to emit a deleting destructor.
-      if (Context.getTargetInfo().getCXXABI().isMicrosoft() &&
-          !Record->getDestructor()->isDeleted())
-        CheckDestructor(Record->getDestructor());
-    }
   }
 
   // C++11 [dcl.constexpr]p8: A constexpr specifier for a non-static member
@@ -12344,6 +12335,18 @@ void Sema::MarkVTableUsed(SourceLocation Loc, CXXRecordDecl *Class,
     } else {
       // Otherwise, we can early exit.
       return;
+    }
+  } else {
+    // The Microsoft ABI requires that we perform the destructor body
+    // checks (i.e. operator delete() lookup) when the vtable is marked used, as
+    // the deleting destructor is emitted with the vtable, not with the
+    // destructor definition as in the Itanium ABI.
+    // If it has a definition, we do the check at that point instead.
+    if (Context.getTargetInfo().getCXXABI().isMicrosoft() &&
+        Class->hasUserDeclaredDestructor() &&
+        !Class->getDestructor()->isDefined() &&
+        !Class->getDestructor()->isDeleted()) {
+      CheckDestructor(Class->getDestructor());
     }
   }
 
