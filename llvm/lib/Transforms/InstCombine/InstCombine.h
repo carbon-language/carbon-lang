@@ -81,7 +81,7 @@ public:
 class LLVM_LIBRARY_VISIBILITY InstCombiner
                              : public FunctionPass,
                                public InstVisitor<InstCombiner, Instruction*> {
-  DataLayout *DL;
+  const DataLayout *DL;
   TargetLibraryInfo *TLI;
   bool MadeIRChange;
   LibCallSimplifier *Simplifier;
@@ -108,7 +108,7 @@ public:
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
-  DataLayout *getDataLayout() const { return DL; }
+  const DataLayout *getDataLayout() const { return DL; }
 
   TargetLibraryInfo *getTargetLibraryInfo() const { return TLI; }
 

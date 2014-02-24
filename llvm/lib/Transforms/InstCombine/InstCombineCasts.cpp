@@ -235,7 +235,7 @@ isEliminableCastPair(
   const CastInst *CI, ///< The first cast instruction
   unsigned opcode,       ///< The opcode of the second cast instruction
   Type *DstTy,     ///< The target type for the second cast instruction
-  DataLayout *DL         ///< The target data for pointer size
+  const DataLayout *DL ///< The target data for pointer size
 ) {
 
   Type *SrcTy = CI->getOperand(0)->getType();   // A from above

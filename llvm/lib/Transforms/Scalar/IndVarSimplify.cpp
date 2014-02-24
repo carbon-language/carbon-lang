@@ -71,7 +71,7 @@ namespace {
     LoopInfo        *LI;
     ScalarEvolution *SE;
     DominatorTree   *DT;
-    DataLayout      *DL;
+    const DataLayout *DL;
     TargetLibraryInfo *TLI;
 
     SmallVector<WeakVH, 16> DeadInsts;

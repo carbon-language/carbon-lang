@@ -102,7 +102,7 @@ namespace {
     Module *Mod;
     AliasAnalysis *AA;
     DominatorTree *DT;
-    DataLayout *DL;
+    const DataLayout *DL;
     TargetLibraryInfo *TLI;
 
     std::string Messages;
@@ -503,7 +503,7 @@ void Lint::visitShl(BinaryOperator &I) {
             "Undefined result: Shift count out of range", &I);
 }
 
-static bool isZero(Value *V, DataLayout *DL) {
+static bool isZero(Value *V, const DataLayout *DL) {
   // Assume undef could be zero.
   if (isa<UndefValue>(V))
     return true;

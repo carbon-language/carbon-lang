@@ -76,7 +76,7 @@ namespace {
   /// revectored to the false side of the second if.
   ///
   class JumpThreading : public FunctionPass {
-    DataLayout *DL;
+    const DataLayout *DL;
     TargetLibraryInfo *TLI;
     LazyValueInfo *LVI;
 #ifdef NDEBUG

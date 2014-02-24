@@ -108,12 +108,12 @@ public:
   static const ComparableFunction TombstoneKey;
   static DataLayout * const LookupOnly;
 
-  ComparableFunction(Function *Func, DataLayout *DL)
+  ComparableFunction(Function *Func, const DataLayout *DL)
     : Func(Func), Hash(profileFunction(Func)), DL(DL) {}
 
   Function *getFunc() const { return Func; }
   unsigned getHash() const { return Hash; }
-  DataLayout *getDataLayout() const { return DL; }
+  const DataLayout *getDataLayout() const { return DL; }
 
   // Drops AssertingVH reference to the function. Outside of debug mode, this
   // does nothing.
@@ -129,7 +129,7 @@ private:
 
   AssertingVH<Function> Func;
   unsigned Hash;
-  DataLayout *DL;
+  const DataLayout *DL;
 };
 
 const ComparableFunction ComparableFunction::EmptyKey = ComparableFunction(0);

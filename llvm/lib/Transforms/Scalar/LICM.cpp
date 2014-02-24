@@ -108,7 +108,7 @@ namespace {
     LoopInfo      *LI;       // Current LoopInfo
     DominatorTree *DT;       // Dominator Tree for the current Loop.
 
-    DataLayout *DL;          // DataLayout for constant folding.
+    const DataLayout *DL;    // DataLayout for constant folding.
     TargetLibraryInfo *TLI;  // TargetLibraryInfo for constant folding.
 
     // State that is updated as we process loops.

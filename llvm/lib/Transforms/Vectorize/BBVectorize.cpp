@@ -214,7 +214,7 @@ namespace {
     AliasAnalysis *AA;
     DominatorTree *DT;
     ScalarEvolution *SE;
-    DataLayout *DL;
+    const DataLayout *DL;
     const TargetTransformInfo *TTI;
 
     // FIXME: const correct?

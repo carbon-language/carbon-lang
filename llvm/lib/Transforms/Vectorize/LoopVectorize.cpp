@@ -219,7 +219,7 @@ class LoopVectorizationCostModel;
 class InnerLoopVectorizer {
 public:
   InnerLoopVectorizer(Loop *OrigLoop, ScalarEvolution *SE, LoopInfo *LI,
-                      DominatorTree *DT, DataLayout *DL,
+                      DominatorTree *DT, const DataLayout *DL,
                       const TargetLibraryInfo *TLI, unsigned VecWidth,
                       unsigned UnrollFactor)
       : OrigLoop(OrigLoop), SE(SE), LI(LI), DT(DT), DL(DL), TLI(TLI),
@@ -379,7 +379,7 @@ protected:
   /// Dominator Tree.
   DominatorTree *DT;
   /// Data Layout.
-  DataLayout *DL;
+  const DataLayout *DL;
   /// Target Library Info.
   const TargetLibraryInfo *TLI;
 
@@ -428,7 +428,7 @@ protected:
 class InnerLoopUnroller : public InnerLoopVectorizer {
 public:
   InnerLoopUnroller(Loop *OrigLoop, ScalarEvolution *SE, LoopInfo *LI,
-                    DominatorTree *DT, DataLayout *DL,
+                    DominatorTree *DT, const DataLayout *DL,
                     const TargetLibraryInfo *TLI, unsigned UnrollFactor) :
     InnerLoopVectorizer(OrigLoop, SE, LI, DT, DL, TLI, 1, UnrollFactor) { }
 
@@ -487,7 +487,7 @@ public:
   unsigned NumStores;
   unsigned NumPredStores;
 
-  LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, DataLayout *DL,
+  LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
                             DominatorTree *DT, TargetLibraryInfo *TLI)
       : NumLoads(0), NumStores(0), NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
         DT(DT), TLI(TLI), Induction(0), WidestIndTy(0), HasFunNoNaNAttr(false),
@@ -725,7 +725,7 @@ private:
   /// Scev analysis.
   ScalarEvolution *SE;
   /// DataLayout analysis.
-  DataLayout *DL;
+  const DataLayout *DL;
   /// Dominators.
   DominatorTree *DT;
   /// Target Library Info.
@@ -775,7 +775,7 @@ public:
   LoopVectorizationCostModel(Loop *L, ScalarEvolution *SE, LoopInfo *LI,
                              LoopVectorizationLegality *Legal,
                              const TargetTransformInfo &TTI,
-                             DataLayout *DL, const TargetLibraryInfo *TLI)
+                             const DataLayout *DL, const TargetLibraryInfo *TLI)
       : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI), DL(DL), TLI(TLI) {}
 
   /// Information about vectorization costs
@@ -848,7 +848,7 @@ private:
   /// Vector target information.
   const TargetTransformInfo &TTI;
   /// Target data layout information.
-  DataLayout *DL;
+  const DataLayout *DL;
   /// Target Library Info.
   const TargetLibraryInfo *TLI;
 };
@@ -1009,7 +1009,7 @@ struct LoopVectorize : public FunctionPass {
   }
 
   ScalarEvolution *SE;
-  DataLayout *DL;
+  const DataLayout *DL;
   LoopInfo *LI;
   TargetTransformInfo *TTI;
   DominatorTree *DT;
@@ -1283,7 +1283,7 @@ Value *InnerLoopVectorizer::getConsecutiveVector(Value* Val, int StartIdx,
 /// \brief Find the operand of the GEP that should be checked for consecutive
 /// stores. This ignores trailing indices that have no effect on the final
 /// pointer.
-static unsigned getGEPInductionOperand(DataLayout *DL,
+static unsigned getGEPInductionOperand(const DataLayout *DL,
                                        const GetElementPtrInst *Gep) {
   unsigned LastOperand = Gep->getNumOperands() - 1;
   unsigned GEPAllocSize = DL->getTypeAllocSize(
@@ -3298,7 +3298,7 @@ bool LoopVectorizationLegality::canVectorize() {
   return true;
 }
 
-static Type *convertPointerToIntegerType(DataLayout &DL, Type *Ty) {
+static Type *convertPointerToIntegerType(const DataLayout &DL, Type *Ty) {
   if (Ty->isPointerTy())
     return DL.getIntPtrType(Ty);
 
@@ -3310,7 +3310,7 @@ static Type *convertPointerToIntegerType(DataLayout &DL, Type *Ty) {
   return Ty;
 }
 
-static Type* getWiderType(DataLayout &DL, Type *Ty0, Type *Ty1) {
+static Type* getWiderType(const DataLayout &DL, Type *Ty0, Type *Ty1) {
   Ty0 = convertPointerToIntegerType(DL, Ty0);
   Ty1 = convertPointerToIntegerType(DL, Ty1);
   if (Ty0->getScalarSizeInBits() > Ty1->getScalarSizeInBits())
@@ -3508,7 +3508,7 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 ///\brief Remove GEPs whose indices but the last one are loop invariant and
 /// return the induction operand of the gep pointer.
 static Value *stripGetElementPtr(Value *Ptr, ScalarEvolution *SE,
-                                 DataLayout *DL, Loop *Lp) {
+                                 const DataLayout *DL, Loop *Lp) {
   GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Ptr);
   if (!GEP)
     return Ptr;
@@ -3544,7 +3544,7 @@ static Value *getUniqueCastUse(Value *Ptr, Loop *Lp, Type *Ty) {
 /// Looks for symbolic strides "a[i*stride]". Returns the symbolic stride as a
 /// pointer to the Value, or null otherwise.
 static Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE,
-                                   DataLayout *DL, Loop *Lp) {
+                                   const DataLayout *DL, Loop *Lp) {
   const PointerType *PtrTy = dyn_cast<PointerType>(Ptr->getType());
   if (!PtrTy || PtrTy->isAggregateType())
     return 0;
@@ -3679,7 +3679,7 @@ public:
   /// \brief Set of potential dependent memory accesses.
   typedef EquivalenceClasses<MemAccessInfo> DepCandidates;
 
-  AccessAnalysis(DataLayout *Dl, DepCandidates &DA) :
+  AccessAnalysis(const DataLayout *Dl, DepCandidates &DA) :
     DL(Dl), DepCands(DA), AreAllWritesIdentified(true),
     AreAllReadsIdentified(true), IsRTCheckNeeded(false) {}
 
@@ -3745,7 +3745,7 @@ private:
   /// Set of underlying objects already written to.
   SmallPtrSet<Value*, 16> WriteObjects;
 
-  DataLayout *DL;
+  const DataLayout *DL;
 
   /// Sets of potentially dependent accesses - members of one set share an
   /// underlying pointer. The set "CheckDeps" identfies which sets really need a
@@ -3772,7 +3772,7 @@ static bool hasComputableBounds(ScalarEvolution *SE, ValueToValueMap &Strides,
 
 /// \brief Check the stride of the pointer and ensure that it does not wrap in
 /// the address space.
-static int isStridedPtr(ScalarEvolution *SE, DataLayout *DL, Value *Ptr,
+static int isStridedPtr(ScalarEvolution *SE, const DataLayout *DL, Value *Ptr,
                         const Loop *Lp, ValueToValueMap &StridesMap);
 
 bool AccessAnalysis::canCheckPtrAtRT(
@@ -3992,7 +3992,7 @@ public:
   typedef PointerIntPair<Value *, 1, bool> MemAccessInfo;
   typedef SmallPtrSet<MemAccessInfo, 8> MemAccessInfoSet;
 
-  MemoryDepChecker(ScalarEvolution *Se, DataLayout *Dl, const Loop *L)
+  MemoryDepChecker(ScalarEvolution *Se, const DataLayout *Dl, const Loop *L)
       : SE(Se), DL(Dl), InnermostLoop(L), AccessIdx(0),
         ShouldRetryWithRuntimeCheck(false) {}
 
@@ -4030,7 +4030,7 @@ public:
 
 private:
   ScalarEvolution *SE;
-  DataLayout *DL;
+  const DataLayout *DL;
   const Loop *InnermostLoop;
 
   /// \brief Maps access locations (ptr, read/write) to program order.
@@ -4079,7 +4079,7 @@ static bool isInBoundsGep(Value *Ptr) {
 }
 
 /// \brief Check whether the access through \p Ptr has a constant stride.
-static int isStridedPtr(ScalarEvolution *SE, DataLayout *DL, Value *Ptr,
+static int isStridedPtr(ScalarEvolution *SE, const DataLayout *DL, Value *Ptr,
                         const Loop *Lp, ValueToValueMap &StridesMap) {
   const Type *Ty = Ptr->getType();
   assert(Ty->isPointerTy() && "Unexpected non-ptr");

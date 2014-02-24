@@ -96,7 +96,7 @@ struct ThreadSanitizer : public FunctionPass {
   bool addrPointsToConstantData(Value *Addr);
   int getMemoryAccessFuncIndex(Value *Addr);
 
-  DataLayout *DL;
+  const DataLayout *DL;
   Type *IntptrTy;
   SmallString<64> BlacklistFile;
   OwningPtr<SpecialCaseList> BL;

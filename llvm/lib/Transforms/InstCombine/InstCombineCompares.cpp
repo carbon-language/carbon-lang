@@ -503,7 +503,7 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
 /// If we can't emit an optimized form for this expression, this returns null.
 ///
 static Value *EvaluateGEPOffsetExpression(User *GEP, InstCombiner &IC) {
-  DataLayout &DL = *IC.getDataLayout();
+  const DataLayout &DL = *IC.getDataLayout();
   gep_type_iterator GTI = gep_type_begin(GEP);
 
   // Check to see if this gep only has a single variable index.  If so, and if

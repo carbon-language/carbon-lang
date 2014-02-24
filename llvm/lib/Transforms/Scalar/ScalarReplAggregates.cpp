@@ -87,7 +87,7 @@ namespace {
 
   private:
     bool HasDomTree;
-    DataLayout *DL;
+    const DataLayout *DL;
 
     /// DeadInsts - Keep track of instructions we have made dead, so that
     /// we can remove them after we are done working.

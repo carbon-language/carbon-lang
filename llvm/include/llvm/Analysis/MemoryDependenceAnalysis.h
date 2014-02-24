@@ -323,7 +323,7 @@ namespace llvm {
 
     /// Current AA implementation, just a cache.
     AliasAnalysis *AA;
-    DataLayout *DL;
+    const DataLayout *DL;
     DominatorTree *DT;
     OwningPtr<PredIteratorCache> PredCache;
   public:

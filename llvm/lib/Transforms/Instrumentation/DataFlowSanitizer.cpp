@@ -164,7 +164,7 @@ class DataFlowSanitizer : public ModulePass {
     WK_Custom
   };
 
-  DataLayout *DL;
+  const DataLayout *DL;
   Module *Mod;
   LLVMContext *Ctx;
   IntegerType *ShadowTy;

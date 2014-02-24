@@ -222,7 +222,7 @@ class MemorySanitizer : public FunctionPass {
   /// \brief Track origins (allocation points) of uninitialized values.
   bool TrackOrigins;
 
-  DataLayout *DL;
+  const DataLayout *DL;
   LLVMContext *C;
   Type *IntptrTy;
   Type *OriginTy;

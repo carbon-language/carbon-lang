@@ -141,7 +141,7 @@ protected:
     AliasAnalysis *AA;
     LoopInfo *LI;
     ScalarEvolution *SE;
-    DataLayout *DL;
+    const DataLayout *DL;
     TargetLibraryInfo *TLI;
     DominatorTree *DT;
 

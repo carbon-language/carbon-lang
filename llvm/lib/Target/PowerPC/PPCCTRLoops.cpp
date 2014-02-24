@@ -109,7 +109,7 @@ namespace {
     PPCTargetMachine *TM;
     LoopInfo *LI;
     ScalarEvolution *SE;
-    DataLayout *DL;
+    const DataLayout *DL;
     DominatorTree *DT;
     const TargetLibraryInfo *LibInfo;
   };
