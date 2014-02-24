@@ -166,6 +166,7 @@ public:
   virtual StringRef getARangeSection() = 0;
   virtual StringRef getDebugFrameSection() = 0;
   virtual const Section &getLineSection() = 0;
+  virtual const Section &getLineDWOSection() = 0;
   virtual StringRef getStringSection() = 0;
   virtual StringRef getRangeSection() = 0;
   virtual StringRef getPubNamesSection() = 0;
@@ -208,6 +209,7 @@ class DWARFContextInMemory : public DWARFContext {
   StringRef ARangeSection;
   StringRef DebugFrameSection;
   Section LineSection;
+  Section LineDWOSection;
   StringRef StringSection;
   StringRef RangeSection;
   StringRef PubNamesSection;
@@ -238,6 +240,7 @@ public:
   virtual StringRef getARangeSection() { return ARangeSection; }
   virtual StringRef getDebugFrameSection() { return DebugFrameSection; }
   virtual const Section &getLineSection() { return LineSection; }
+  virtual const Section &getLineDWOSection() { return LineDWOSection; }
   virtual StringRef getStringSection() { return StringSection; }
   virtual StringRef getRangeSection() { return RangeSection; }
   virtual StringRef getPubNamesSection() { return PubNamesSection; }

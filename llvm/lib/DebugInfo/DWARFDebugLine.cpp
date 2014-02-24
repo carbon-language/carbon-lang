@@ -18,14 +18,15 @@ using namespace dwarf;
 
 void DWARFDebugLine::Prologue::dump(raw_ostream &OS) const {
   OS << "Line table prologue:\n"
-     << format("   total_length: 0x%8.8x\n", TotalLength)
-     << format("        version: %u\n", Version)
-     << format("prologue_length: 0x%8.8x\n", PrologueLength)
-     << format("min_inst_length: %u\n", MinInstLength)
-     << format("default_is_stmt: %u\n", DefaultIsStmt)
-     << format("      line_base: %i\n", LineBase)
-     << format("     line_range: %u\n", LineRange)
-     << format("    opcode_base: %u\n", OpcodeBase);
+     << format("    total_length: 0x%8.8x\n", TotalLength)
+     << format("         version: %u\n", Version)
+     << format(" prologue_length: 0x%8.8x\n", PrologueLength)
+     << format(" min_inst_length: %u\n", MinInstLength)
+     << format(Version >= 4 ? "max_ops_per_inst: %u\n" : "", MaxOpsPerInst)
+     << format(" default_is_stmt: %u\n", DefaultIsStmt)
+     << format("       line_base: %i\n", LineBase)
+     << format("      line_range: %u\n", LineRange)
+     << format("     opcode_base: %u\n", OpcodeBase);
 
   for (uint32_t i = 0; i < StandardOpcodeLengths.size(); ++i)
     OS << format("standard_opcode_lengths[%s] = %u\n", LNStandardString(i+1),
@@ -172,12 +173,14 @@ DWARFDebugLine::parsePrologue(DataExtractor debug_line_data,
   prologue->clear();
   prologue->TotalLength = debug_line_data.getU32(offset_ptr);
   prologue->Version = debug_line_data.getU16(offset_ptr);
-  if (prologue->Version != 2)
+  if (prologue->Version < 2)
     return false;
 
   prologue->PrologueLength = debug_line_data.getU32(offset_ptr);
   const uint32_t end_prologue_offset = prologue->PrologueLength + *offset_ptr;
   prologue->MinInstLength = debug_line_data.getU8(offset_ptr);
+  if (prologue->Version >= 4)
+    prologue->MaxOpsPerInst = debug_line_data.getU8(offset_ptr);
   prologue->DefaultIsStmt = debug_line_data.getU8(offset_ptr);
   prologue->LineBase = debug_line_data.getU8(offset_ptr);
   prologue->LineRange = debug_line_data.getU8(offset_ptr);
@@ -220,10 +223,9 @@ DWARFDebugLine::parsePrologue(DataExtractor debug_line_data,
   return true;
 }
 
-bool
-DWARFDebugLine::parseStatementTable(DataExtractor debug_line_data, 
-                                    const RelocAddrMap *RMap,
-                                    uint32_t *offset_ptr, State &state) {
+bool DWARFDebugLine::parseStatementTable(DataExtractor debug_line_data,
+                                         const RelocAddrMap *RMap,
+                                         uint32_t *offset_ptr, State &state) {
   const uint32_t debug_line_offset = *offset_ptr;
 
   Prologue *prologue = &state.Prologue;

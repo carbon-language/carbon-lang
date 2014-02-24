@@ -136,6 +136,16 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
     }
   }
 
+  if (DumpType == DIDT_All || DumpType == DIDT_LineDwo) {
+    OS << "\n.debug_line.dwo contents:\n";
+    unsigned stmtOffset = 0;
+    DataExtractor lineData(getLineDWOSection().Data, isLittleEndian(),
+                           savedAddressByteSize);
+    DWARFDebugLine::DumpingState state(OS);
+    while (DWARFDebugLine::parsePrologue(lineData, &stmtOffset, &state.Prologue))
+      state.finalize();
+  }
+
   if (DumpType == DIDT_All || DumpType == DIDT_Str) {
     OS << "\n.debug_str contents:\n";
     DataExtractor strData(getStringSection(), isLittleEndian(), 0);
@@ -645,6 +655,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
             .Case("debug_gnu_pubtypes", &GnuPubTypesSection)
             .Case("debug_info.dwo", &InfoDWOSection.Data)
             .Case("debug_abbrev.dwo", &AbbrevDWOSection)
+            .Case("debug_line.dwo", &LineDWOSection.Data)
             .Case("debug_str.dwo", &StringDWOSection)
             .Case("debug_str_offsets.dwo", &StringOffsetDWOSection)
             .Case("debug_addr", &AddrSection)
