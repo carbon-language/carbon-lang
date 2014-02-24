@@ -1735,7 +1735,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         }
                     }
                     
-                    if (signo && did_exec == false)
+                    if (!handled && signo && did_exec == false)
                     {
                         if (signo == SIGTRAP)
                         {
