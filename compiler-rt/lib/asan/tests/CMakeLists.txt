@@ -48,8 +48,6 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   "-fsanitize-blacklist=${ASAN_BLACKLIST_FILE}"
   -mllvm -asan-stack=1
   -mllvm -asan-globals=1
-  -mllvm -asan-mapping-scale=0        # default will be used
-  -mllvm -asan-mapping-offset-log=-1  # default will be used
 )
 
 # Unit tests require libstdc++.
