@@ -13,6 +13,7 @@
 
 #include "polly/CodeGen/Utils.h"
 #include "polly/ScopInfo.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -26,6 +27,7 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *PassInfo) {
   DominatorTree &DT =
       PassInfo->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   RegionInfo &RI = PassInfo->getAnalysis<RegionInfo>();
+  LoopInfo &LI = PassInfo->getAnalysis<LoopInfo>();
 
   // Split the entry edge of the region and generate a new basic block on this
   // edge. This function also updates ScopInfo and RegionInfo.
@@ -58,6 +60,8 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *PassInfo) {
   SplitBlock->getTerminator()->eraseFromParent();
   Builder.SetInsertPoint(SplitBlock);
   Builder.CreateCondBr(Builder.getTrue(), StartBlock, R.getEntry());
+  if (Loop *L = LI.getLoopFor(SplitBlock))
+    L->addBasicBlockToLoop(StartBlock, LI.getBase());
   DT.addNewBlock(StartBlock, SplitBlock);
   Builder.SetInsertPoint(StartBlock);
 
