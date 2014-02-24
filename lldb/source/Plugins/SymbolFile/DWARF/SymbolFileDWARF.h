@@ -364,6 +364,7 @@ protected:
                                 const DWARFDebugInfoEntry *parent_die,
                                 bool skip_artificial,
                                 bool &is_static,
+                                bool &is_variadic,
                                 lldb_private::TypeList* type_list,
                                 std::vector<lldb_private::ClangASTType>& function_args,
                                 std::vector<clang::ParmVarDecl*>& function_param_decls,

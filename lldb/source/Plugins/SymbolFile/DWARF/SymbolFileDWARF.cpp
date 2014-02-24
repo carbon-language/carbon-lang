@@ -4199,6 +4199,7 @@ SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                                        const DWARFDebugInfoEntry *parent_die,
                                        bool skip_artificial,
                                        bool &is_static,
+                                       bool &is_variadic,
                                        TypeList* type_list,
                                        std::vector<ClangASTType>& function_param_types,
                                        std::vector<clang::ParmVarDecl*>& function_param_decls,
@@ -4348,6 +4349,10 @@ SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                 }
                 arg_idx++;
             }
+            break;
+
+        case DW_TAG_unspecified_parameters:
+            is_variadic = true;
             break;
 
         case DW_TAG_template_type_parameter:
@@ -6589,6 +6594,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                               die,
                                               skip_artificial,
                                               is_static,
+                                              is_variadic,
                                               type_list,
                                               function_param_types,
                                               function_param_decls,
