@@ -29,7 +29,7 @@
 
 using namespace __tsan;  // NOLINT
 
-const int kSigCount = 64;
+const int kSigCount = 65;
 
 struct my_siginfo_t {
   // The size is determined by looking at sizeof of real siginfo_t on linux.
@@ -1704,6 +1704,10 @@ void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
     my_siginfo_t *info, void *ctx) {
   ThreadState *thr = cur_thread();
   SignalContext *sctx = SigCtx(thr);
+  if (sig < 0 || sig >= kSigCount) {
+    VPrintf(1, "ThreadSanitizer: ignoring signal %d\n", sig);
+    return;
+  }
   // Don't mess with synchronous signals.
   const bool sync = is_sync_signal(sctx, sig);
   if (sync ||
