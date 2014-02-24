@@ -1761,13 +1761,18 @@ unsigned ASTContext::getPreferredTypeAlign(const Type *T) const {
   if (Target->getTriple().getArch() == llvm::Triple::xcore)
     return ABIAlign;  // Never overalign on XCore.
 
+  const TypedefType *TT = T->getAs<TypedefType>();
+
   // Double and long long should be naturally aligned if possible.
   if (const ComplexType* CT = T->getAs<ComplexType>())
     T = CT->getElementType().getTypePtr();
   if (T->isSpecificBuiltinType(BuiltinType::Double) ||
       T->isSpecificBuiltinType(BuiltinType::LongLong) ||
       T->isSpecificBuiltinType(BuiltinType::ULongLong))
-    return std::max(ABIAlign, (unsigned)getTypeSize(T));
+    // Don't increase the alignment if an alignment attribute was specified on a
+    // typedef declaration.
+    if (!TT || !TT->getDecl()->getMaxAlignment())
+      return std::max(ABIAlign, (unsigned)getTypeSize(T));
 
   return ABIAlign;
 }

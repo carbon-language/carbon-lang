@@ -21,6 +21,12 @@ char a1[__alignof__(struct struct_with_ueber_char) == 8? 1 : -1] = { 0 };
 char a2[__alignof__(a) == 1? : -1] = { 0 };
 char a3[sizeof(a) == 1? : -1] = { 0 };
 
+typedef long long __attribute__((aligned(1))) underaligned_longlong;
+char a4[__alignof__(underaligned_longlong) == 1 ?: -1] = {0};
+
+typedef long long __attribute__((aligned(1))) underaligned_complex_longlong;
+char a5[__alignof__(underaligned_complex_longlong) == 1 ?: -1] = {0};
+
 // rdar://problem/8335865
 int b __attribute__((aligned(2)));
 char b1[__alignof__(b) == 2 ?: -1] = {0};
