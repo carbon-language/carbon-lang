@@ -295,7 +295,7 @@ void MachOLinkingContext::addPasses(PassManager &pm) {
     pm.add(std::unique_ptr<Pass>(new mach_o::GOTPass));
     pm.add(std::unique_ptr<Pass>(new mach_o::StubsPass(*this)));
   }
-  pm.add(std::unique_ptr<Pass>(new LayoutPass()));
+  pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));
 }
 
 Writer &MachOLinkingContext::writer() const {

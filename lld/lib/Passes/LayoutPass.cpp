@@ -63,14 +63,21 @@ static std::string atomToDebugString(const Atom *atom) {
   return str;
 }
 
-static void showCycleDetectedError(AtomToAtomT &followOnNexts,
+static void showCycleDetectedError(const Registry &registry,
+                                   AtomToAtomT &followOnNexts,
                                    const DefinedAtom *atom) {
   const DefinedAtom *start = atom;
   llvm::dbgs() << "There's a cycle in a follow-on chain!\n";
   do {
     llvm::dbgs() << "  " << atomToDebugString(atom) << "\n";
     for (const Reference *ref : *atom) {
-      llvm::dbgs() << "  " << atomToDebugString(ref->target()) << "\n";
+      StringRef kindValStr;
+      if (!registry.referenceKindToString(ref->kindNamespace(), ref->kindArch(),
+                                          ref->kindValue(), kindValStr)) {
+        kindValStr = "<unknown>";
+      }
+      llvm::dbgs() << "    " << kindValStr
+                   << ": " << atomToDebugString(ref->target()) << "\n";
     }
     atom = followOnNexts[atom];
   } while (atom != start);
@@ -80,7 +87,8 @@ static void showCycleDetectedError(AtomToAtomT &followOnNexts,
 /// Exit if there's a cycle in a followon chain reachable from the
 /// given root atom. Uses the tortoise and hare algorithm to detect a
 /// cycle.
-static void checkNoCycleInFollowonChain(AtomToAtomT &followOnNexts,
+static void checkNoCycleInFollowonChain(const Registry &registry,
+                                        AtomToAtomT &followOnNexts,
                                         const DefinedAtom *root) {
   const DefinedAtom *tortoise = root;
   const DefinedAtom *hare = followOnNexts[root];
@@ -88,7 +96,7 @@ static void checkNoCycleInFollowonChain(AtomToAtomT &followOnNexts,
     if (!tortoise || !hare)
       return;
     if (tortoise == hare)
-      showCycleDetectedError(followOnNexts, tortoise);
+      showCycleDetectedError(registry, followOnNexts, tortoise);
     tortoise = followOnNexts[tortoise];
     hare = followOnNexts[followOnNexts[hare]];
   }
@@ -138,7 +146,7 @@ void LayoutPass::checkFollowonChain(MutableFile::DefinedAtomRange &range) {
   for (const auto &ai : _followOnRoots)
     roots.insert(ai.second);
   for (const DefinedAtom *root : roots)
-    checkNoCycleInFollowonChain(_followOnNexts, root);
+    checkNoCycleInFollowonChain(_registry, _followOnNexts, root);
 
   // Verify that all the atoms in followOnNexts have references to
   // their roots.
@@ -246,6 +254,8 @@ static bool compareAtoms(const LayoutPass::SortKey &lc,
   });
   return result;
 }
+
+LayoutPass::LayoutPass(const Registry &registry) : _registry(registry) {}
 
 // Returns the atom immediately followed by the given atom in the followon
 // chain.

@@ -262,7 +262,7 @@ bool CoreLinkingContext::validateImpl(raw_ostream &) {
 void CoreLinkingContext::addPasses(PassManager &pm) {
   for (StringRef name : _passNames) {
     if (name.equals("layout"))
-      pm.add(std::unique_ptr<Pass>((new LayoutPass())));
+      pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));
     else if (name.equals("GOT"))
       pm.add(std::unique_ptr<Pass>(new TestingGOTPass(*this)));
     else if (name.equals("stubs"))

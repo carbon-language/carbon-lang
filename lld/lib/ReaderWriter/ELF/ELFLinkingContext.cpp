@@ -54,7 +54,7 @@ bool ELFLinkingContext::isLittleEndian() const {
 
 void ELFLinkingContext::addPasses(PassManager &pm) {
   if (_runLayoutPass)
-    pm.add(std::unique_ptr<Pass>(new LayoutPass()));
+    pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));
   pm.add(std::unique_ptr<Pass>(new elf::ArrayOrderPass()));
 }
 

@@ -12,6 +12,7 @@
 
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
+#include "lld/ReaderWriter/Reader.h"
 
 #include "llvm/ADT/DenseMap.h"
 
@@ -38,6 +39,8 @@ public:
     uint64_t _override;
   };
 
+  LayoutPass(const Registry &registry);
+
   /// Sorts atoms in mergedFile by content type then by command line order.
   virtual void perform(std::unique_ptr<MutableFile> &mergedFile);
 
@@ -58,6 +61,8 @@ private:
 
   // Build a map of Atoms to ordinals for sorting the atoms
   void buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range);
+
+  const Registry &_registry;
 
   typedef llvm::DenseMap<const DefinedAtom *, const DefinedAtom *> AtomToAtomT;
   typedef llvm::DenseMap<const DefinedAtom *, uint64_t> AtomToOrdinalT;
