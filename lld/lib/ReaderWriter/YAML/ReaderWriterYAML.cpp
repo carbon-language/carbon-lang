@@ -1193,7 +1193,7 @@ public:
   virtual error_code writeFile(const lld::File &file, StringRef outPath) {
     // Create stream to path.
     std::string errorInfo;
-    llvm::raw_fd_ostream out(outPath.data(), errorInfo, llvm::sys::fs::F_None);
+    llvm::raw_fd_ostream out(outPath.data(), errorInfo, llvm::sys::fs::F_Text);
     if (!errorInfo.empty())
       return llvm::make_error_code(llvm::errc::no_such_file_or_directory);
 
