@@ -212,7 +212,7 @@ void ScopedReport::AddThread(const ThreadContext *tctx) {
   rt->id = tctx->tid;
   rt->pid = tctx->os_id;
   rt->running = (tctx->status == ThreadStatusRunning);
-  rt->name = tctx->name ? internal_strdup(tctx->name) : 0;
+  rt->name = internal_strdup(tctx->name);
   rt->parent_tid = tctx->parent_tid;
   rt->stack = 0;
 #ifdef TSAN_GO
