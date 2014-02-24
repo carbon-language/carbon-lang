@@ -44,7 +44,6 @@ set(LLVM_TEST_DEPENDS
           llvm-tblgen
           macho-dump
           opt
-          profile_rt-shared
           FileCheck
           count
           not
