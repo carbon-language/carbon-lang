@@ -331,6 +331,9 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   // Nuke dead stores.
   PM.add(createDeadStoreEliminationPass());
 
+  // More loops are countable try to vectorize them.
+  PM.add(createLoopVectorizePass(true, true));
+
   // Cleanup and simplify the code after the scalar optimizations.
   PM.add(createInstructionCombiningPass());
 
