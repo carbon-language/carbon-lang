@@ -272,7 +272,8 @@ int main(int argc, char **argv) {
 
     // Write new file to disk
     std::string ErrorInfo;
-    llvm::raw_fd_ostream FileStream(I->getKey().str().c_str(), ErrorInfo);
+    llvm::raw_fd_ostream FileStream(I->getKey().str().c_str(), ErrorInfo,
+                                    llvm::sys::fs::F_None);
     if (!ErrorInfo.empty()) {
       llvm::errs() << "Could not open " << I->getKey() << " for writing\n";
       continue;

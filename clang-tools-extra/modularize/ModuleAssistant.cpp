@@ -249,7 +249,7 @@ static bool writeModuleMap(llvm::StringRef ModuleMapPath,
 
   // Set up module map output file.
   std::string Error;
-  llvm::tool_output_file Out(FilePath.c_str(), Error);
+  llvm::tool_output_file Out(FilePath.c_str(), Error, llvm::sys::fs::F_None);
   if (!Error.empty()) {
     llvm::errs() << Argv0 << ": error opening " << FilePath << ":" << Error
                  << "\n";

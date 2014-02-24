@@ -214,7 +214,8 @@ int main(int Argc, const char **Argv) {
   } else {
     // Set up output file.
     std::string Error;
-    llvm::tool_output_file Out(OutputFileName.c_str(), Error);
+    llvm::tool_output_file Out(OutputFileName.c_str(), Error,
+                               llvm::sys::fs::F_None);
     if (!Error.empty()) {
       llvm::errs() << "pp-trace: error creating " << OutputFileName << ":"
                    << Error << "\n";
