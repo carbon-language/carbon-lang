@@ -2675,15 +2675,10 @@ GDBRemoteCommunicationClient::GetThreadStopInfo (lldb::tid_t tid, StringExtracto
 uint8_t
 GDBRemoteCommunicationClient::SendGDBStoppointTypePacket (GDBStoppointType type, bool insert,  addr_t addr, uint32_t length)
 {
-    switch (type)
-    {
-    case eBreakpointSoftware:   if (!m_supports_z0) return UINT8_MAX; break;
-    case eBreakpointHardware:   if (!m_supports_z1) return UINT8_MAX; break;
-    case eWatchpointWrite:      if (!m_supports_z2) return UINT8_MAX; break;
-    case eWatchpointRead:       if (!m_supports_z3) return UINT8_MAX; break;
-    case eWatchpointReadWrite:  if (!m_supports_z4) return UINT8_MAX; break;
-    }
-
+    // Check if the stub is known not to support this breakpoint type
+    if (!SupportsGDBStoppointPacket(type))
+        return UINT8_MAX;
+    // Construct the breakpoint packet
     char packet[64];
     const int packet_len = ::snprintf (packet, 
                                        sizeof(packet), 
@@ -2692,28 +2687,35 @@ GDBRemoteCommunicationClient::SendGDBStoppointTypePacket (GDBStoppointType type,
                                        type, 
                                        addr, 
                                        length);
-
+    // Check we havent overwritten the end of the packet buffer
     assert (packet_len + 1 < (int)sizeof(packet));
     StringExtractorGDBRemote response;
+    // Try to send the breakpoint packet, and check that it was correctly sent
     if (SendPacketAndWaitForResponse(packet, packet_len, response, true) == PacketResult::Success)
     {
+        // Receive and OK packet when the breakpoint successfully placed
         if (response.IsOKResponse())
             return 0;
-        else if (response.IsErrorResponse())
+
+        // Error while setting breakpoint, send back specific error
+        if (response.IsErrorResponse())
             return response.GetError();
-    }
-    else
-    {
-        switch (type)
+
+        // Empty packet informs us that breakpoint is not supported
+        if (response.IsUnsupportedResponse())
         {
+            // Disable this breakpoint type since it is unsupported
+            switch (type)
+            {
             case eBreakpointSoftware:   m_supports_z0 = false; break;
             case eBreakpointHardware:   m_supports_z1 = false; break;
             case eWatchpointWrite:      m_supports_z2 = false; break;
             case eWatchpointRead:       m_supports_z3 = false; break;
             case eWatchpointReadWrite:  m_supports_z4 = false; break;
+            }
         }
     }
-
+    // Signal generic faliure
     return UINT8_MAX;
 }
 
