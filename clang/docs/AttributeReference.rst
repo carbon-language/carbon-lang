@@ -385,13 +385,12 @@ noduplicate (clang::noduplicate)
    "X","X","",""
 
 The ``noduplicate`` attribute can be placed on function declarations to control
-whether function calls to this function can be duplicated 
-or not as a result of optimizations. This is required for the implementation
-of functions with certain special requirements, like the OpenCL "barrier", 
-function that, depending on the hardware, might require to be run concurrently
-by all the threads that are currently executing in lockstep on the hardware.
-For example this attribute applied on the function "nodupfunc" 
-avoids that this code:
+whether function calls to this function can be duplicated or not as a result of
+optimizations. This is required for the implementation of functions with
+certain special requirements, like the OpenCL "barrier" function, that might
+need to be run concurrently by all the threads that are executing in lockstep
+on the hardware. For example this attribute applied on the function
+"nodupfunc" in the code below avoids that:
 
 .. code-block:: c
 
@@ -408,7 +407,7 @@ avoids that this code:
     bar();
   }
 
-gets possibly modified by some optimization into code similar to this:
+gets possibly modified by some optimizations into code similar to this:
 
 .. code-block:: c
 
@@ -420,7 +419,8 @@ gets possibly modified by some optimization into code similar to this:
     bar();
   }
 
-where the barrier call is duplicated and sunk into the two branches of the condition.
+where the call to "nodupfunc" is duplicated and sunk into the two branches
+of the condition.
 
 
 no_sanitize_address (no_address_safety_analysis, gnu::no_address_safety_analysis, gnu::no_sanitize_address)
