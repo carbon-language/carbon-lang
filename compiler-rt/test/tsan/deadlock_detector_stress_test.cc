@@ -106,10 +106,29 @@ class LockTest {
     // CHECK-NOT: WARNING: ThreadSanitizer:
   }
 
+  void Test6() {
+    fprintf(stderr, "Starting Test6\n");
+    // CHECK: Starting Test6
+    // CHECK-NOT: WARNING: ThreadSanitizer:
+    RunThreads(&LockTest::Lock1_Loop_0, &LockTest::Lock1_Loop_1,
+               &LockTest::Lock1_Loop_2);
+  }
+
  private:
   void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
   void Lock_0_1() { Lock2(0, 1); }
   void Lock_1_0() { Lock2(1, 0); }
+  void Lock1_Loop(size_t i, size_t n_iter) {
+    for (size_t it = 0; it < n_iter; it++) {
+      // if ((it & (it - 1)) == 0) fprintf(stderr, "%zd", i);
+      L(i);
+      U(i);
+    }
+    // fprintf(stderr, "\n");
+  }
+  void Lock1_Loop_0() { Lock1_Loop(0, 100000); }
+  void Lock1_Loop_1() { Lock1_Loop(1, 100000); }
+  void Lock1_Loop_2() { Lock1_Loop(2, 100000); }
 
   void CreateAndDestroyManyLocks() {
     PaddedLock create_many_locks_but_never_acquire[kDeadlockGraphSize];
@@ -135,13 +154,14 @@ class LockTest {
     return NULL;
   }
 
-  void RunThreads(void (LockTest::*f1)(), void (LockTest::*f2)()) {
-    const int kNumThreads = 2;
+  void RunThreads(void (LockTest::*f1)(), void (LockTest::*f2)(),
+                  void (LockTest::*f3)() = 0) {
+    const int kNumThreads = 3;
     pthread_t t[kNumThreads];
-    CB cb[2] = {{f1, this}, {f2, this}};
-    for (int i = 0; i < kNumThreads; i++)
+    CB cb[kNumThreads] = {{f1, this}, {f2, this}, {f3, this}};
+    for (int i = 0; i < kNumThreads && cb[i].f; i++)
       pthread_create(&t[i], 0, Thread, &cb[i]);
-    for (int i = 0; i < kNumThreads; i++)
+    for (int i = 0; i < kNumThreads && cb[i].f; i++)
       pthread_join(t[i], 0);
   }
 
@@ -156,6 +176,7 @@ int main() {
   { LockTest t(5); t.Test3(); }
   { LockTest t(5); t.Test4(); }
   { LockTest t(5); t.Test5(); }
+  { LockTest t(5); t.Test6(); }
   fprintf(stderr, "DONE\n");
   // CHECK: DONE
 }
