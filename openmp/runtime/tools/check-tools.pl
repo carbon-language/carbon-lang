@@ -296,15 +296,14 @@ sub get_clang_compiler_version($) {
     $rc = run( [ $tool, "--version" ], $stdout, $stderr );
     if ( $rc >= 0 ) {
         my ( $ver, $bld );
-        if ( $target_os eq "mac" ) {
+        if ( $target_os eq "mac" and $stdout =~ m{^.*? (\d+\.\d+) \(.*-(\d+\.\d+\.\d+)\)}m ) {
             # Apple LLVM version 4.2 (clang-425.0.28) (based on LLVM 3.2svn)
-            $stdout =~ m{^.*? (\d+\.\d+) \(.*-(\d+\.\d+\.\d+)\)}m;
             ( $ver, $bld ) = ( $1, $2 );
         } else {
             if ( 0 ) {
-            } elsif ( $stdout =~ m{^.*? (\d+\.\d+) \((.*)\)}m ) {
+            } elsif ( $stdout =~ m{^.*? (\d+\.\d+)( \((.*)\))?}m ) {
                 # clang version 3.3 (tags/RELEASE_33/final)
-                ( $ver, $bld ) = ( $1, $2 );
+                ( $ver, $bld ) = ( $1, $3 );
             } 
         }; # if
         if ( defined( $ver ) ) {
