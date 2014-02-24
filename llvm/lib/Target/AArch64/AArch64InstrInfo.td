@@ -2537,7 +2537,6 @@ let mayLoad = 1 in {
   def LDRq_lit : A64I_LDRlitSimple<0b10, 0b1, FPR128>;
   }
 
-
   def LDRSWx_lit : A64I_LDRlit<0b10, 0b0,
                                (outs GPR64:$Rt),
                                (ins ldrlit_label:$Imm19),
