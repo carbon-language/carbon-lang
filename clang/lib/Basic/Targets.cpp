@@ -3367,6 +3367,9 @@ class AArch64TargetInfo : public TargetInfo {
 
 public:
   AArch64TargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
+    IntMaxType = SignedLong;
+    UIntMaxType = UnsignedLong;
+    Int64Type = SignedLong;
     BigEndian = false;
     LongWidth = LongAlign = 64;
     LongDoubleWidth = LongDoubleAlign = 128;

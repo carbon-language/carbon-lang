@@ -2203,7 +2203,7 @@ static StringRef mangleAArch64VectorBase(const BuiltinType *EltType) {
     return "Int16";
   case BuiltinType::Int:
     return "Int32";
-  case BuiltinType::LongLong:
+  case BuiltinType::Long:
     return "Int64";
   case BuiltinType::UChar:
     return "Uint8";
@@ -2211,7 +2211,7 @@ static StringRef mangleAArch64VectorBase(const BuiltinType *EltType) {
     return "Uint16";
   case BuiltinType::UInt:
     return "Uint32";
-  case BuiltinType::ULongLong:
+  case BuiltinType::ULong:
     return "Uint64";
   case BuiltinType::Half:
     return "Float16";
@@ -2246,7 +2246,7 @@ void CXXNameMangler::mangleAArch64NeonVectorType(const VectorType *T) {
     case BuiltinType::UShort:
       EltName = "Poly16";
       break;
-    case BuiltinType::ULongLong:
+    case BuiltinType::ULong:
       EltName = "Poly64";
       break;
     default:

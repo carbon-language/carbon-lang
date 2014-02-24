@@ -780,7 +780,7 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
       s.push_back('S'); // make chars explicitly signed
 
     if (type == 'l') // 64-bit long
-      s += "LLi";
+      s += "Wi";
     else if (type == 'k') // 128-bit long
       s = "LLLi";
     else
@@ -809,7 +809,7 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
     if (ck != ClassB && type == 'i')
       return quad ? "V4i" : "V2i";
     if (ck != ClassB && type == 'l')
-      return quad ? "V2LLi" : "V1LLi";
+      return quad ? "V2Wi" : "V1Wi";
 
     return quad ? "V16Sc" : "V8Sc";
   }
@@ -831,7 +831,7 @@ static std::string BuiltinTypeString(const char mod, StringRef typestr,
   if (ck != ClassB && type == 'i')
     return quad ? "V4i" : "V2i";
   if (ck != ClassB && type == 'l')
-    return quad ? "V2LLi" : "V1LLi";
+    return quad ? "V2Wi" : "V1Wi";
 
   return quad ? "V16Sc" : "V8Sc";
 }

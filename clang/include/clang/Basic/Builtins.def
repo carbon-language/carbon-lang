@@ -50,6 +50,7 @@
 //  L   -> long (e.g. Li for 'long int')
 //  LL  -> long long
 //  LLL -> __int128_t (e.g. LLLi)
+//  W   -> int64_t
 //  S   -> signed
 //  U   -> unsigned
 //  I   -> Required to constant fold to an integer constant expression.

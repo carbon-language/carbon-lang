@@ -7526,6 +7526,19 @@ static QualType DecodeTypeFromStr(const char *&Str, const ASTContext &Context,
       assert(HowLong <= 2 && "Can't have LLLL modifier");
       ++HowLong;
       break;
+    case 'W':
+      // This modifier represents int64 type.
+      assert(HowLong == 0 && "Can't use both 'L' and 'W' modifiers!");
+      switch (Context.getTargetInfo().getInt64Type()) {
+      default:
+        llvm_unreachable("Unexpected integer type");
+      case TargetInfo::SignedLong:
+        HowLong = 1;
+        break;
+      case TargetInfo::SignedLongLong:
+        HowLong = 2;
+        break;
+      }
     }
   }
 

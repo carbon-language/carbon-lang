@@ -374,13 +374,17 @@ static QualType getNeonEltType(NeonTypeFlags Flags, ASTContext &Context,
   case NeonTypeFlags::Int32:
     return Flags.isUnsigned() ? Context.UnsignedIntTy : Context.IntTy;
   case NeonTypeFlags::Int64:
-    return Flags.isUnsigned() ? Context.UnsignedLongLongTy : Context.LongLongTy;
+    if (IsAArch64)
+      return Flags.isUnsigned() ? Context.UnsignedLongTy : Context.LongTy;
+    else
+      return Flags.isUnsigned() ? Context.UnsignedLongLongTy
+                                : Context.LongLongTy;
   case NeonTypeFlags::Poly8:
     return IsAArch64 ? Context.UnsignedCharTy : Context.SignedCharTy;
   case NeonTypeFlags::Poly16:
     return IsAArch64 ? Context.UnsignedShortTy : Context.ShortTy;
   case NeonTypeFlags::Poly64:
-    return Context.UnsignedLongLongTy;
+    return Context.UnsignedLongTy;
   case NeonTypeFlags::Poly128:
     break;
   case NeonTypeFlags::Float16:
