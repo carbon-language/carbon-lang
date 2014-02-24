@@ -521,7 +521,7 @@ TEST_F(FileSystemTest, CarriageReturn) {
   path::append(FilePathname, "test");
 
   {
-    raw_fd_ostream File(FilePathname.c_str(), ErrMsg);
+    raw_fd_ostream File(FilePathname.c_str(), ErrMsg, sys::fs::F_None);
     EXPECT_EQ(ErrMsg, "");
     File << '\n';
   }
