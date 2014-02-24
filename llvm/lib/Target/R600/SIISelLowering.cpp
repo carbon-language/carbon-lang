@@ -177,9 +177,9 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   for (int I = MVT::v1f64; I <= MVT::v8f64; ++I) {
     MVT::SimpleValueType VT = static_cast<MVT::SimpleValueType>(I);
-    setOperationAction(ISD::FTRUNC, MVT::f64, Expand);
-    setOperationAction(ISD::FCEIL, MVT::f64, Expand);
-    setOperationAction(ISD::FFLOOR, MVT::f64, Expand);
+    setOperationAction(ISD::FTRUNC, VT, Expand);
+    setOperationAction(ISD::FCEIL, VT, Expand);
+    setOperationAction(ISD::FFLOOR, VT, Expand);
   }
 
   if (Subtarget->getGeneration() >= AMDGPUSubtarget::SEA_ISLANDS) {
