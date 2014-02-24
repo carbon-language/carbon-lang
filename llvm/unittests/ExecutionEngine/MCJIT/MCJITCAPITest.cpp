@@ -387,8 +387,12 @@ TEST_F(MCJITCAPITest, stackmap_creates_compact_unwind_on_darwin) {
   // data is made available only through compact_unwind. It would be
   // worthwhile to extend this to handle non-Darwin platforms, in which
   // case you'd want to look for an eh_frame or something.
+  //
+  // FIXME: Currently, MCJIT relies on a configure-time check to determine which
+  // sections to emit. The JIT client should have runtime control over this.
   EXPECT_TRUE(
     Triple(HostTriple).getOS() != Triple::Darwin ||
+    Triple(HostTriple).isMacOSXVersionLT(10, 7) ||
     didAllocateCompactUnwindSection);
 }
 
