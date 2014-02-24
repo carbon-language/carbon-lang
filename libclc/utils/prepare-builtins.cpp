@@ -76,8 +76,10 @@ int main(int argc, char **argv) {
   std::string ErrorInfo;
   OwningPtr<tool_output_file> Out
   (new tool_output_file(OutputFilename.c_str(), ErrorInfo,
-#if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR > 3)
+#if (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 4)
                         sys::fs::F_Binary));
+#elif LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR >= 5)
+                        sys::fs::F_None));
 #else
                         raw_fd_ostream::F_Binary));
 #endif
