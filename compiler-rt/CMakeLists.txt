@@ -40,6 +40,8 @@ if (NOT COMPILER_RT_STANDALONE_BUILD)
   set(COMPILER_RT_INSTALL_PATH lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION})
   option(COMPILER_RT_INCLUDE_TESTS "Generate and build compiler-rt unit tests."
          ${LLVM_INCLUDE_TESTS})
+ option(COMPILER_RT_ENABLE_WERROR "Fail and stop if warning is triggered"
+        ${LLVM_ENABLE_WERROR})
   # Use just-built Clang to compile/link tests.
   set(COMPILER_RT_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang)
   set(COMPILER_RT_TEST_COMPILER_ID Clang)
@@ -50,6 +52,7 @@ else()
   set(COMPILER_RT_INSTALL_PATH ${CMAKE_INSTALL_PREFIX} CACHE PATH
     "Path where built compiler-rt libraries should be installed.")
   option(COMPILER_RT_INCLUDE_TESTS "Generate and build compiler-rt unit tests." OFF)
+  option(COMPILER_RT_ENABLE_WERROR "Fail and stop if warning is triggered" OFF)
   # Use a host compiler to compile/link tests.
   set(COMPILER_RT_TEST_COMPILER ${CMAKE_C_COMPILER})
   set(COMPILER_RT_TEST_COMPILER_ID ${CMAKE_C_COMPILER_ID})
@@ -214,6 +217,10 @@ pythonize_bool(COMPILER_RT_DEBUG)
 # Setup Compiler Flags
 #================================
 include(config-ix)
+
+if(COMPILER_RT_ENABLE_WERROR)
+  add_definitions(-Werror)
+endif()
 
 # Provide some common commmandline flags for Sanitizer runtimes.
 append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FPIC_FLAG -fPIC)
