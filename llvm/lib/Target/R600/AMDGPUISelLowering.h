@@ -21,9 +21,13 @@
 namespace llvm {
 
 class AMDGPUMachineFunction;
+class AMDGPUSubtarget;
 class MachineRegisterInfo;
 
 class AMDGPUTargetLowering : public TargetLowering {
+protected:
+  const AMDGPUSubtarget *Subtarget;
+
 private:
   void ExtractVectorElements(SDValue Op, SelectionDAG &DAG,
                              SmallVectorImpl<SDValue> &Args,

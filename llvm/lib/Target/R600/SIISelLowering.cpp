@@ -14,6 +14,7 @@
 
 #include "SIISelLowering.h"
 #include "AMDGPU.h"
+#include "AMDGPUSubtarget.h"
 #include "AMDILIntrinsicInfo.h"
 #include "SIInstrInfo.h"
 #include "SIMachineFunctionInfo.h"
@@ -30,7 +31,6 @@ using namespace llvm;
 
 SITargetLowering::SITargetLowering(TargetMachine &TM) :
     AMDGPUTargetLowering(TM) {
-
   addRegisterClass(MVT::i1, &AMDGPU::SReg_64RegClass);
   addRegisterClass(MVT::i64, &AMDGPU::VSrc_64RegClass);
 
@@ -175,8 +175,20 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
     }
   }
 
-  setTargetDAGCombine(ISD::SELECT_CC);
+  for (int I = MVT::v1f64; I <= MVT::v8f64; ++I) {
+    MVT::SimpleValueType VT = static_cast<MVT::SimpleValueType>(I);
+    setOperationAction(ISD::FTRUNC, MVT::f64, Expand);
+    setOperationAction(ISD::FCEIL, MVT::f64, Expand);
+    setOperationAction(ISD::FFLOOR, MVT::f64, Expand);
+  }
 
+  if (Subtarget->getGeneration() >= AMDGPUSubtarget::SEA_ISLANDS) {
+    setOperationAction(ISD::FTRUNC, MVT::f64, Legal);
+    setOperationAction(ISD::FCEIL, MVT::f64, Legal);
+    setOperationAction(ISD::FFLOOR, MVT::f64, Legal);
+  }
+
+  setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::SETCC);
 
   setSchedulingPreference(Sched::RegPressure);

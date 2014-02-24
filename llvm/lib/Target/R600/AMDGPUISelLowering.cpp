@@ -45,6 +45,8 @@ static bool allocateStack(unsigned ValNo, MVT ValVT, MVT LocVT,
 AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   TargetLowering(TM, new TargetLoweringObjectFileELF()) {
 
+  Subtarget = &TM.getSubtarget<AMDGPUSubtarget>();
+
   // Initialize target lowering borrowed from AMDIL
   InitAMDILLowering();
 

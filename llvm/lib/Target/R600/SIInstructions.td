@@ -29,6 +29,9 @@ def SendMsgImm : Operand<i32> {
 def isSI : Predicate<"Subtarget.getGeneration() "
                       ">= AMDGPUSubtarget::SOUTHERN_ISLANDS">;
 
+def isCI : Predicate<"Subtarget.getGeneration() "
+                      ">= AMDGPUSubtarget::SEA_ISLANDS">;
+
 def WAIT_FLAG : InstFlag<"printWaitFlag">;
 
 let Predicates = [isSI] in {
@@ -2103,6 +2106,55 @@ def : MTBUF_StoreResource <i32, 1, TBUFFER_STORE_FORMAT_X>;
 def : MTBUF_StoreResource <v2i32, 2, TBUFFER_STORE_FORMAT_XY>;
 def : MTBUF_StoreResource <v4i32, 3, TBUFFER_STORE_FORMAT_XYZ>;
 def : MTBUF_StoreResource <v4i32, 4, TBUFFER_STORE_FORMAT_XYZW>;
+
+let Predicates = [isCI] in {
+
+// Sea island new arithmetic instructinos
+let neverHasSideEffects = 1 in {
+defm V_TRUNC_F64 : VOP1_64 <0x00000017, "V_TRUNC_F64",
+  [(set f64:$dst, (ftrunc f64:$src0))]
+>;
+defm V_CEIL_F64 : VOP1_64 <0x00000018, "V_CEIL_F64",
+  [(set f64:$dst, (fceil f64:$src0))]
+>;
+defm V_FLOOR_F64 : VOP1_64 <0x0000001A, "V_FLOOR_F64",
+  [(set f64:$dst, (ffloor f64:$src0))]
+>;
+
+defm V_RNDNE_F64 : VOP1_64 <0x00000019, "V_RNDNE_F64", []>;
+
+def V_QSAD_PK_U16_U8 : VOP3_32 <0x00000173, "V_QSAD_PK_U16_U8", []>;
+def V_MQSAD_U16_U8 : VOP3_32 <0x000000172, "V_MQSAD_U16_U8", []>;
+def V_MQSAD_U32_U8 : VOP3_32 <0x00000175, "V_MQSAD_U32_U8", []>;
+def V_MAD_U64_U32 : VOP3_64 <0x00000176, "V_MAD_U64_U32", []>;
+
+// XXX - Does this set VCC?
+def V_MAD_I64_I32 : VOP3_64 <0x00000177, "V_MAD_I64_I32", []>;
+} // End neverHasSideEffects = 1
+
+// Remaining instructions:
+// FLAT_*
+// S_CBRANCH_CDBGUSER
+// S_CBRANCH_CDBGSYS
+// S_CBRANCH_CDBGSYS_OR_USER
+// S_CBRANCH_CDBGSYS_AND_USER
+// S_DCACHE_INV_VOL
+// V_EXP_LEGACY_F32
+// V_LOG_LEGACY_F32
+// DS_NOP
+// DS_GWS_SEMA_RELEASE_ALL
+// DS_WRAP_RTN_B32
+// DS_CNDXCHG32_RTN_B64
+// DS_WRITE_B96
+// DS_WRITE_B128
+// DS_CONDXCHG32_RTN_B128
+// DS_READ_B96
+// DS_READ_B128
+// BUFFER_LOAD_DWORDX3
+// BUFFER_STORE_DWORDX3
+
+} // End Predicates = [isCI]
+
 
 /********** ====================== **********/
 /**********   Indirect adressing   **********/
