@@ -751,14 +751,18 @@ multiclass avx512_icmp_packed<bits<8> opc, string OpcodeStr, RegisterClass KRC,
 }
 
 defm VPCMPEQDZ : avx512_icmp_packed<0x76, "vpcmpeqd", VK16, VR512, i512mem, 
-                           memopv16i32, X86pcmpeqm, v16i32>, EVEX_V512;
+                           memopv16i32, X86pcmpeqm, v16i32>, EVEX_V512,
+                           EVEX_CD8<32, CD8VF>;
 defm VPCMPEQQZ : avx512_icmp_packed<0x29, "vpcmpeqq", VK8, VR512, i512mem, 
-                           memopv8i64, X86pcmpeqm, v8i64>, T8PD, EVEX_V512, VEX_W;
+                           memopv8i64, X86pcmpeqm, v8i64>, T8PD, EVEX_V512,
+                           VEX_W, EVEX_CD8<64, CD8VF>;
 
 defm VPCMPGTDZ : avx512_icmp_packed<0x66, "vpcmpgtd", VK16, VR512, i512mem, 
-                           memopv16i32, X86pcmpgtm, v16i32>, EVEX_V512;
+                           memopv16i32, X86pcmpgtm, v16i32>, EVEX_V512,
+                           EVEX_CD8<32, CD8VF>;
 defm VPCMPGTQZ : avx512_icmp_packed<0x37, "vpcmpgtq", VK8, VR512, i512mem, 
-                           memopv8i64, X86pcmpgtm, v8i64>, T8PD, EVEX_V512, VEX_W;
+                           memopv8i64, X86pcmpgtm, v8i64>, T8PD, EVEX_V512,
+                           VEX_W, EVEX_CD8<64, CD8VF>;
 
 def : Pat<(v8i1 (X86pcmpgtm (v8i32 VR256X:$src1), (v8i32 VR256X:$src2))),
             (COPY_TO_REGCLASS (VPCMPGTDZrr 
