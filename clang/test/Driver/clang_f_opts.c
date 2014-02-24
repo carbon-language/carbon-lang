@@ -148,3 +148,10 @@
 // RUN:     -fstrength-reduce -fno-strength-reduce                            \
 // RUN:     %s 2>&1 | FileCheck --check-prefix=IGNORE %s
 // IGNORE-NOT: error: unknown argument
+
+// RUN: %clang -### -fshort-wchar -fno-short-wchar %s 2>&1 | FileCheck -check-prefix=CHECK-WCHAR1 %s
+// RUN: %clang -### -fno-short-wchar -fshort-wchar %s 2>&1 | FileCheck -check-prefix=CHECK-WCHAR2 %s
+// CHECK-WCHAR1: -fno-short-wchar
+// CHECK-WCHAR1-NOT: -fshort-wchar
+// CHECK-WCHAR2: -fshort-wchar
+// CHECK-WCHAR2-NOT: -fno-short-wchar

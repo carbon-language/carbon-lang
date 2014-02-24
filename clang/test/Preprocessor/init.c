@@ -202,6 +202,12 @@
 // SHORTWCHAR: #define __WCHAR_TYPE__ unsigned short
 // SHORTWCHAR: #define __WCHAR_WIDTH__ 16
 //
+// RUN: %clang_cc1 -E -dM -fno-short-wchar < /dev/null | FileCheck -check-prefix SHORTWCHAR2 %s
+//
+// SHORTWCHAR2: #define __SIZEOF_WCHAR_T__ 4
+// SHORTWCHAR2: #define __WCHAR_WIDTH__ 32
+// Other definitions vary from platform to platform
+//
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=aarch64-none-none < /dev/null | FileCheck -check-prefix AARCH64 %s
 //
 // AARCH64:#define _LP64 1

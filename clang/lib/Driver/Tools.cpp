@@ -3575,7 +3575,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fshort-wchar default varies depending on platform; only
   // pass if specified.
-  if (Arg *A = Args.getLastArg(options::OPT_fshort_wchar))
+  if (Arg *A = Args.getLastArg(options::OPT_fshort_wchar,
+                               options::OPT_fno_short_wchar))
     A->render(Args, CmdArgs);
 
   // -fno-pascal-strings is default, only pass non-default.
