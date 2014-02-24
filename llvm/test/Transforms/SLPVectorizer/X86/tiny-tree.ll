@@ -138,3 +138,18 @@ for.body:                                         ; preds = %entry, %for.body
 for.end:                                          ; preds = %for.body, %entry
   ret void
 }
+
+
+; CHECK-LABEL: store_splat
+; CHECK: store <4 x float>
+define void @store_splat(float*, float) {
+  %3 = getelementptr inbounds float* %0, i64 0
+  store float %1, float* %3, align 4
+  %4 = getelementptr inbounds float* %0, i64 1
+  store float %1, float* %4, align 4
+  %5 = getelementptr inbounds float* %0, i64 2
+  store float %1, float* %5, align 4
+  %6 = getelementptr inbounds float* %0, i64 3
+  store float %1, float* %6, align 4
+  ret void
+}

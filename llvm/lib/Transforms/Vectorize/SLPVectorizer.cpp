@@ -1101,11 +1101,15 @@ bool BoUpSLP::isFullyVectorizableTinyTree() {
   if (VectorizableTree.size() != 2)
     return false;
 
-  // Gathering cost would be too much for tiny trees.
-  if (VectorizableTree[0].NeedToGather || VectorizableTree[1].NeedToGather) 
-    return false; 
+  // Handle splat stores.
+  if (!VectorizableTree[0].NeedToGather && isSplat(VectorizableTree[1].Scalars))
+    return true;
 
-  return true; 
+  // Gathering cost would be too much for tiny trees.
+  if (VectorizableTree[0].NeedToGather || VectorizableTree[1].NeedToGather)
+    return false;
+
+  return true;
 }
 
 int BoUpSLP::getTreeCost() {
