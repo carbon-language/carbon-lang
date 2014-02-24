@@ -166,7 +166,9 @@ llvm::sys::fs::UniqueID getNextVirtualUniqueID();
 ///
 /// Takes ownership of \p Buffer.
 IntrusiveRefCntPtr<FileSystem>
-getVFSFromYAML(llvm::MemoryBuffer *Buffer, llvm::SourceMgr::DiagHandlerTy,
+getVFSFromYAML(llvm::MemoryBuffer *Buffer,
+               llvm::SourceMgr::DiagHandlerTy DiagHandler,
+               void *DiagContext = 0,
                IntrusiveRefCntPtr<FileSystem> ExternalFS = getRealFileSystem());
 
 } // end namespace vfs

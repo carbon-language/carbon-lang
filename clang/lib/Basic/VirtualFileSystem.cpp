@@ -357,6 +357,7 @@ public:
   /// Takes ownership of \p Buffer.
   static VFSFromYAML *create(MemoryBuffer *Buffer,
                              SourceMgr::DiagHandlerTy DiagHandler,
+                             void *DiagContext,
                              IntrusiveRefCntPtr<FileSystem> ExternalFS);
 
   ErrorOr<Status> status(const Twine &Path) LLVM_OVERRIDE;
@@ -645,12 +646,13 @@ VFSFromYAML::~VFSFromYAML() { llvm::DeleteContainerPointers(Roots); }
 
 VFSFromYAML *VFSFromYAML::create(MemoryBuffer *Buffer,
                                  SourceMgr::DiagHandlerTy DiagHandler,
+                                 void *DiagContext,
                                  IntrusiveRefCntPtr<FileSystem> ExternalFS) {
 
   SourceMgr SM;
   yaml::Stream Stream(Buffer, SM);
 
-  SM.setDiagHandler(DiagHandler);
+  SM.setDiagHandler(DiagHandler, DiagContext);
   yaml::document_iterator DI = Stream.begin();
   yaml::Node *Root = DI->getRoot();
   if (DI == Stream.end() || !Root) {
@@ -753,8 +755,9 @@ error_code VFSFromYAML::openFileForRead(const Twine &Path,
 
 IntrusiveRefCntPtr<FileSystem>
 vfs::getVFSFromYAML(MemoryBuffer *Buffer, SourceMgr::DiagHandlerTy DiagHandler,
+                    void *DiagContext,
                     IntrusiveRefCntPtr<FileSystem> ExternalFS) {
-  return VFSFromYAML::create(Buffer, DiagHandler, ExternalFS);
+  return VFSFromYAML::create(Buffer, DiagHandler, DiagContext, ExternalFS);
 }
 
 UniqueID vfs::getNextVirtualUniqueID() {

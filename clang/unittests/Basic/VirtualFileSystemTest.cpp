@@ -218,28 +218,36 @@ TEST(VirtualFileSystemTest, MergedDirPermissions) {
   EXPECT_EQ(0200, Status->getPermissions());
 }
 
-static int NumDiagnostics = 0;
-static void CountingDiagHandler(const SMDiagnostic &, void *) {
-  ++NumDiagnostics;
-}
+class VFSFromYAMLTest : public ::testing::Test {
+public:
+  int NumDiagnostics;
+  void SetUp() {
+    NumDiagnostics = 0;
+  }
 
-static IntrusiveRefCntPtr<vfs::FileSystem>
-getFromYAMLRawString(StringRef Content,
-                     IntrusiveRefCntPtr<vfs::FileSystem> ExternalFS) {
-  MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(Content);
-  return getVFSFromYAML(Buffer, CountingDiagHandler, ExternalFS);
-}
+  static void CountingDiagHandler(const SMDiagnostic &, void *Context) {
+    VFSFromYAMLTest *Test = static_cast<VFSFromYAMLTest *>(Context);
+    ++Test->NumDiagnostics;
+  }
 
-static IntrusiveRefCntPtr<vfs::FileSystem> getFromYAMLString(
-    StringRef Content,
-    IntrusiveRefCntPtr<vfs::FileSystem> ExternalFS = new DummyFileSystem()) {
-  std::string VersionPlusContent("{\n  'version':0,\n");
-  VersionPlusContent += Content.slice(Content.find('{') + 1, StringRef::npos);
-  return getFromYAMLRawString(VersionPlusContent, ExternalFS);
-}
+  IntrusiveRefCntPtr<vfs::FileSystem>
+  getFromYAMLRawString(StringRef Content,
+                       IntrusiveRefCntPtr<vfs::FileSystem> ExternalFS) {
+    MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(Content);
+    return getVFSFromYAML(Buffer, CountingDiagHandler, this, ExternalFS);
+  }
 
-TEST(VirtualFileSystemTest, BasicVFSFromYAML) {
-  NumDiagnostics = 0;
+  IntrusiveRefCntPtr<vfs::FileSystem> getFromYAMLString(
+      StringRef Content,
+      IntrusiveRefCntPtr<vfs::FileSystem> ExternalFS = new DummyFileSystem()) {
+    std::string VersionPlusContent("{\n  'version':0,\n");
+    VersionPlusContent += Content.slice(Content.find('{') + 1, StringRef::npos);
+    return getFromYAMLRawString(VersionPlusContent, ExternalFS);
+  }
+
+};
+
+TEST_F(VFSFromYAMLTest, BasicVFSFromYAML) {
   IntrusiveRefCntPtr<vfs::FileSystem> FS;
   FS = getFromYAMLString("");
   EXPECT_EQ(NULL, FS.getPtr());
@@ -250,8 +258,7 @@ TEST(VirtualFileSystemTest, BasicVFSFromYAML) {
   EXPECT_EQ(3, NumDiagnostics);
 }
 
-TEST(VirtualFileSystemTest, MappedFiles) {
-  NumDiagnostics = 0;
+TEST_F(VFSFromYAMLTest, MappedFiles) {
   IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
   Lower->addRegularFile("/foo/bar/a");
   IntrusiveRefCntPtr<vfs::FileSystem> FS =
@@ -301,8 +308,7 @@ TEST(VirtualFileSystemTest, MappedFiles) {
   EXPECT_EQ(0, NumDiagnostics);
 }
 
-TEST(VirtualFileSystemTest, CaseInsensitive) {
-  NumDiagnostics = 0;
+TEST_F(VFSFromYAMLTest, CaseInsensitive) {
   IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
   Lower->addRegularFile("/foo/bar/a");
   IntrusiveRefCntPtr<vfs::FileSystem> FS =
@@ -338,8 +344,7 @@ TEST(VirtualFileSystemTest, CaseInsensitive) {
   EXPECT_EQ(0, NumDiagnostics);
 }
 
-TEST(VirtualFileSystemTest, CaseSensitive) {
-  NumDiagnostics = 0;
+TEST_F(VFSFromYAMLTest, CaseSensitive) {
   IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
   Lower->addRegularFile("/foo/bar/a");
   IntrusiveRefCntPtr<vfs::FileSystem> FS =
@@ -371,8 +376,7 @@ TEST(VirtualFileSystemTest, CaseSensitive) {
   EXPECT_EQ(0, NumDiagnostics);
 }
 
-TEST(VirtualFileSystemTest, IllegalVFSFile) {
-  NumDiagnostics = 0;
+TEST_F(VFSFromYAMLTest, IllegalVFSFile) {
   IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
 
   // invalid YAML at top-level
