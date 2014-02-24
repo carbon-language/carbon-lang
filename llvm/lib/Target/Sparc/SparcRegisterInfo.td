@@ -53,7 +53,7 @@ def ICC : SparcCtrlReg<"ICC">; // This represents icc and xcc in 64-bit code.
 def FCC : SparcCtrlReg<"FCC">;
 
 // Y register
-def Y : SparcCtrlReg<"Y">;
+def Y : SparcCtrlReg<"Y">, DwarfRegNum<[64]>;
 
 // Integer registers
 def G0 : Ri< 0, "G0">, DwarfRegNum<[0]>;
