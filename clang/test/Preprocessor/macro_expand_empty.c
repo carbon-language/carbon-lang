@@ -17,5 +17,5 @@ IDENTITY0()
 #define FOO() BAR() second
 #define BAR()
 first // CHECK: {{^}}first{{$}}
-FOO() // CHECK: second
+FOO() // CHECK: {{^}} second{{$}}
 third // CHECK: {{^}}third{{$}}
