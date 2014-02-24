@@ -69,6 +69,9 @@ defm WriteFDiv  : X86SchedWritePair; // Floating point division.
 defm WriteFSqrt : X86SchedWritePair; // Floating point square root.
 defm WriteFRcp  : X86SchedWritePair; // Floating point reciprocal.
 defm WriteFMA   : X86SchedWritePair; // Fused Multiply Add.
+defm WriteFShuffle  : X86SchedWritePair; // Floating point vector shuffles.
+defm WriteFBlend  : X86SchedWritePair; // Floating point vector blends.
+defm WriteFVarBlend  : X86SchedWritePair; // Fp vector variable blends.
 
 // FMA Scheduling helper class.
 class FMASC { X86FoldableSchedWrite Sched = WriteFAdd; }
@@ -77,22 +80,54 @@ class FMASC { X86FoldableSchedWrite Sched = WriteFAdd; }
 defm WriteVecALU   : X86SchedWritePair; // Vector integer ALU op, no logicals.
 defm WriteVecShift : X86SchedWritePair; // Vector integer shifts.
 defm WriteVecIMul  : X86SchedWritePair; // Vector integer multiply.
+defm WriteShuffle  : X86SchedWritePair; // Vector shuffles.
+defm WriteBlend  : X86SchedWritePair; // Vector blends.
+defm WriteVarBlend  : X86SchedWritePair; // Vector variable blends.
+defm WriteMPSAD : X86SchedWritePair; // Vector MPSAD.
 
 // Vector bitwise operations.
 // These are often used on both floating point and integer vectors.
 defm WriteVecLogic : X86SchedWritePair; // Vector and/or/xor.
-defm WriteShuffle  : X86SchedWritePair; // Vector shuffles and blends.
 
 // Conversion between integer and float.
 defm WriteCvtF2I : X86SchedWritePair; // Float -> Integer.
 defm WriteCvtI2F : X86SchedWritePair; // Integer -> Float.
 defm WriteCvtF2F : X86SchedWritePair; // Float -> Float size conversion.
 
+// Strings instructions.
+// Packed Compare Implicit Length Strings, Return Mask
+defm WritePCmpIStrM : X86SchedWritePair;
+// Packed Compare Explicit Length Strings, Return Mask
+defm WritePCmpEStrM : X86SchedWritePair;
+// Packed Compare Implicit Length Strings, Return Index
+defm WritePCmpIStrI : X86SchedWritePair;
+// Packed Compare Explicit Length Strings, Return Index
+defm WritePCmpEStrI : X86SchedWritePair;
+
+// AES instructions.
+defm WriteAESDecEnc : X86SchedWritePair; // Decryption, encryption.
+defm WriteAESIMC : X86SchedWritePair; // InvMixColumn.
+defm WriteAESKeyGen : X86SchedWritePair; // Key Generation.
+
+// Carry-less multiplication instructions.
+defm WriteCLMul : X86SchedWritePair;
+
 // Catch-all for expensive system instructions.
 def WriteSystem : SchedWrite;
 
+// AVX2.
+defm WriteFShuffle256 : X86SchedWritePair; // Fp 256-bit width vector shuffles.
+defm WriteShuffle256 : X86SchedWritePair; // 256-bit width vector shuffles.
+defm WriteVarVecShift : X86SchedWritePair; // Variable vector shifts.
+
 // Old microcoded instructions that nobody use.
 def WriteMicrocoded : SchedWrite;
+
+// Fence instructions.
+def WriteFence : SchedWrite;
+
+// Nop, not very useful expect it provides a model for nops!
+def WriteNop : SchedWrite;
 
 //===----------------------------------------------------------------------===//
 // Instruction Itinerary classes used for X86

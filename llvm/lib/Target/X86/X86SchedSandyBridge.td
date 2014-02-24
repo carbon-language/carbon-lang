@@ -118,6 +118,16 @@ defm : SBWriteResPair<WriteFSqrt,  SBPort0, 15>;
 defm : SBWriteResPair<WriteCvtF2I, SBPort1, 3>;
 defm : SBWriteResPair<WriteCvtI2F, SBPort1, 4>;
 defm : SBWriteResPair<WriteCvtF2F, SBPort1, 3>;
+defm : SBWriteResPair<WriteFShuffle,  SBPort5,  1>;
+defm : SBWriteResPair<WriteFBlend,  SBPort05,  1>;
+def : WriteRes<WriteFVarBlend, [SBPort0, SBPort5]> {
+  let Latency = 2;
+  let ResourceCycles = [1, 1];
+}
+def : WriteRes<WriteFVarBlendLd, [SBPort0, SBPort5, SBPort23]> {
+  let Latency = 6;
+  let ResourceCycles = [1, 1, 1];
+}
 
 // Vector integer operations.
 defm : SBWriteResPair<WriteVecShift, SBPort05,  1>;
@@ -125,7 +135,112 @@ defm : SBWriteResPair<WriteVecLogic, SBPort015, 1>;
 defm : SBWriteResPair<WriteVecALU,   SBPort15,  1>;
 defm : SBWriteResPair<WriteVecIMul,  SBPort0,   5>;
 defm : SBWriteResPair<WriteShuffle,  SBPort15,  1>;
+defm : SBWriteResPair<WriteBlend,  SBPort15,  1>;
+def : WriteRes<WriteVarBlend, [SBPort1, SBPort5]> {
+  let Latency = 2;
+  let ResourceCycles = [1, 1];
+}
+def : WriteRes<WriteVarBlendLd, [SBPort1, SBPort5, SBPort23]> {
+  let Latency = 6;
+  let ResourceCycles = [1, 1, 1];
+}
+def : WriteRes<WriteMPSAD, [SBPort0, SBPort1, SBPort5]> {
+  let Latency = 6;
+  let ResourceCycles = [1, 1, 1];
+}
+def : WriteRes<WriteMPSADLd, [SBPort0, SBPort1, SBPort5, SBPort23]> {
+  let Latency = 6;
+  let ResourceCycles = [1, 1, 1, 1];
+}
+
+// String instructions.
+// Packed Compare Implicit Length Strings, Return Mask
+def : WriteRes<WritePCmpIStrM, [SBPort015]> {
+  let Latency = 11;
+  let ResourceCycles = [3];
+}
+def : WriteRes<WritePCmpIStrMLd, [SBPort015, SBPort23]> {
+  let Latency = 11;
+  let ResourceCycles = [3, 1];
+}
+
+// Packed Compare Explicit Length Strings, Return Mask
+def : WriteRes<WritePCmpEStrM, [SBPort015]> {
+  let Latency = 11;
+  let ResourceCycles = [8];
+}
+def : WriteRes<WritePCmpEStrMLd, [SBPort015, SBPort23]> {
+  let Latency = 11;
+  let ResourceCycles = [7, 1];
+}
+
+// Packed Compare Implicit Length Strings, Return Index
+def : WriteRes<WritePCmpIStrI, [SBPort015]> {
+  let Latency = 3;
+  let ResourceCycles = [3];
+}
+def : WriteRes<WritePCmpIStrILd, [SBPort015, SBPort23]> {
+  let Latency = 3;
+  let ResourceCycles = [3, 1];
+}
+
+// Packed Compare Explicit Length Strings, Return Index
+def : WriteRes<WritePCmpEStrI, [SBPort015]> {
+  let Latency = 4;
+  let ResourceCycles = [8];
+}
+def : WriteRes<WritePCmpEStrILd, [SBPort015, SBPort23]> {
+  let Latency = 4;
+  let ResourceCycles = [7, 1];
+}
+
+// AES Instructions.
+def : WriteRes<WriteAESDecEnc, [SBPort015]> {
+  let Latency = 8;
+  let ResourceCycles = [2];
+}
+def : WriteRes<WriteAESDecEncLd, [SBPort015, SBPort23]> {
+  let Latency = 8;
+  let ResourceCycles = [2, 1];
+}
+
+def : WriteRes<WriteAESIMC, [SBPort015]> {
+  let Latency = 8;
+  let ResourceCycles = [2];
+}
+def : WriteRes<WriteAESIMCLd, [SBPort015, SBPort23]> {
+  let Latency = 8;
+  let ResourceCycles = [2, 1];
+}
+
+def : WriteRes<WriteAESKeyGen, [SBPort015]> {
+  let Latency = 8;
+  let ResourceCycles = [11];
+}
+def : WriteRes<WriteAESKeyGenLd, [SBPort015, SBPort23]> {
+  let Latency = 8;
+  let ResourceCycles = [10, 1];
+}
+
+// Carry-less multiplication instructions.
+def : WriteRes<WriteCLMul, [SBPort015]> {
+  let Latency = 14;
+  let ResourceCycles = [18];
+}
+def : WriteRes<WriteCLMulLd, [SBPort015, SBPort23]> {
+  let Latency = 14;
+  let ResourceCycles = [17, 1];
+}
+
 
 def : WriteRes<WriteSystem,     [SBPort015]> { let Latency = 100; }
 def : WriteRes<WriteMicrocoded, [SBPort015]> { let Latency = 100; }
+def : WriteRes<WriteFence, [SBPort23, SBPort4]>;
+def : WriteRes<WriteNop, []>;
+
+// AVX2 is not supported on that architecture, but we should define the basic
+// scheduling resources anyway.
+defm : SBWriteResPair<WriteFShuffle256, SBPort0,  1>;
+defm : SBWriteResPair<WriteShuffle256, SBPort0,  1>;
+defm : SBWriteResPair<WriteVarVecShift, SBPort0,  1>;
 } // SchedModel
