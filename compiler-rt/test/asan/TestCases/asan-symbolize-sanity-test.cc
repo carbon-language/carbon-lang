@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
   inc2(array, -1);  // BOOM
   // CHECK: ERROR: AddressSanitizer: heap-buffer-overflow
   // CHECK: READ of size 4 at 0x{{.*}}
-  // CHECK: #0 {{.*}} in inc2 {{.*}}shared-lib-test-so.cc:26
+  // CHECK: #0 {{.*}} in inc2 {{.*}}shared-lib-test-so.cc:25
   // CHECK: #1 {{.*}} in main {{.*}}asan-symbolize-sanity-test.cc:[[@LINE-4]]
   // CHECK: allocated by thread T{{.*}} here:
   // CHECK: #{{.*}} in {{(wrap_|__interceptor_)?}}malloc
