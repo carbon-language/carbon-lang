@@ -781,7 +781,13 @@ public:
     {
         
     }
-    
+
+    virtual void
+    Cancel ()
+    {
+        
+    }
+
     virtual void
     Interrupt ()
     {

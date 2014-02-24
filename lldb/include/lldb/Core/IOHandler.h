@@ -63,6 +63,16 @@ namespace lldb_private {
         virtual void
         Refresh () = 0;
 
+        // Called when an input reader should relinquish its control so another
+        // can be pushed onto the IO handler stack, or so the current IO
+        // handler can pop itself off the stack
+
+        virtual void
+        Cancel () = 0;
+
+        // Called when CTRL+C is pressed which usually causes
+        // Debugger::DispatchInputInterrupt to be called.
+        
         virtual void
         Interrupt () = 0;
         
@@ -395,6 +405,9 @@ namespace lldb_private {
         Refresh ();
 
         virtual void
+        Cancel ();
+
+        virtual void
         Interrupt ();
         
         virtual void
@@ -500,7 +513,10 @@ namespace lldb_private {
         
         virtual void
         Refresh ();
-        
+
+        virtual void
+        Cancel ();
+
         virtual void
         Interrupt ();
         

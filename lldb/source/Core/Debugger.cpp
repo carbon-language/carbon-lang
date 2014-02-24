@@ -846,7 +846,7 @@ Debugger::ClearIOHandlers ()
         {
             m_input_reader_stack.Pop();
             reader_sp->SetIsDone(true);
-            reader_sp->Interrupt();
+            reader_sp->Cancel();
         }
     }
 }

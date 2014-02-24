@@ -4824,12 +4824,20 @@ public:
     {
         
     }
+    
     virtual void
-    Interrupt ()
+    Cancel ()
     {
         size_t n = 1;
         char ch = 'q';
         m_pipe_write.Write (&ch, n);
+    }
+
+    virtual void
+    Interrupt ()
+    {
+        if (StateIsRunningState(m_process->GetState()))
+            m_process->Halt();
     }
     
     virtual void
@@ -4859,7 +4867,7 @@ Process::CancelWatchForSTDIN (bool exited)
     {
         if (exited)
             m_process_input_reader->SetIsDone(true);
-        m_process_input_reader->Interrupt();
+        m_process_input_reader->Cancel();
     }
 }
 
@@ -4903,7 +4911,7 @@ Process::PopProcessIOHandler ()
     IOHandlerSP io_handler_sp (m_process_input_reader);
     if (io_handler_sp)
     {
-        io_handler_sp->Interrupt();
+        io_handler_sp->Cancel();
         m_target.GetDebugger().PopIOHandler (io_handler_sp);
     }
 }

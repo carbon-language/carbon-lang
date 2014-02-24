@@ -588,6 +588,13 @@ IOHandlerEditline::Refresh ()
 }
 
 void
+IOHandlerEditline::Cancel ()
+{
+    if (m_editline_ap)
+        m_editline_ap->Interrupt ();
+}
+
+void
 IOHandlerEditline::Interrupt ()
 {
     if (m_editline_ap)
@@ -5279,6 +5286,10 @@ IOHandlerCursesGUI::Refresh ()
 {
 }
 
+void
+IOHandlerCursesGUI::Cancel ()
+{
+}
 
 void
 IOHandlerCursesGUI::Interrupt ()
