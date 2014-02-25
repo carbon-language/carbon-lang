@@ -1141,18 +1141,18 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 
 /// constructSubprogramArguments - Construct function argument DIEs.
 void DwarfUnit::constructSubprogramArguments(DIE &Buffer, DIArray Args) {
-    for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
-      DIDescriptor Ty = Args.getElement(i);
-      if (Ty.isUnspecifiedParameter()) {
-        assert(i == N-1 && "ellipsis must be the last argument");
-        createAndAddDIE(dwarf::DW_TAG_unspecified_parameters, Buffer);
-      } else {
-        DIE *Arg = createAndAddDIE(dwarf::DW_TAG_formal_parameter, Buffer);
-        addType(Arg, DIType(Ty));
-        if (DIType(Ty).isArtificial())
-          addFlag(Arg, dwarf::DW_AT_artificial);
-      }
+  for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
+    DIDescriptor Ty = Args.getElement(i);
+    if (Ty.isUnspecifiedParameter()) {
+      assert(i == N-1 && "Unspecified parameter must be the last argument");
+      createAndAddDIE(dwarf::DW_TAG_unspecified_parameters, Buffer);
+    } else {
+      DIE *Arg = createAndAddDIE(dwarf::DW_TAG_formal_parameter, Buffer);
+      addType(Arg, DIType(Ty));
+      if (DIType(Ty).isArtificial())
+        addFlag(Arg, dwarf::DW_AT_artificial);
     }
+  }
 }
 
 /// constructTypeDIE - Construct type DIE from DICompositeType.

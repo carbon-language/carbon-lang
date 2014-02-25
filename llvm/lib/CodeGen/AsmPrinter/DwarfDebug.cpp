@@ -403,22 +403,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit *SPCU,
         DIArray Args = SPTy.getTypeArray();
         uint16_t SPTag = SPTy.getTag();
         if (SPTag == dwarf::DW_TAG_subroutine_type)
-          // FIXME: Use DwarfUnit::constructSubprogramArguments() here.
-          for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
-            DIType ATy(Args.getElement(i));
-            if (ATy.isUnspecifiedParameter()) {
-              assert(i == N-1 && "ellipsis must be the last argument");
-              SPCU->createAndAddDIE(dwarf::DW_TAG_unspecified_parameters, *SPDie);
-            } else {
-              DIE *Arg =
-                SPCU->createAndAddDIE(dwarf::DW_TAG_formal_parameter, *SPDie);
-              SPCU->addType(Arg, ATy);
-              if (ATy.isArtificial())
-                SPCU->addFlag(Arg, dwarf::DW_AT_artificial);
-              if (ATy.isObjectPointer())
-                SPCU->addDIEEntry(SPDie, dwarf::DW_AT_object_pointer, Arg);
-            }
-          }
+          SPCU->constructSubprogramArguments(*SPDie, Args);
         DIE *SPDeclDie = SPDie;
         SPDie = SPCU->createAndAddDIE(dwarf::DW_TAG_subprogram,
                                       *SPCU->getUnitDie());
@@ -598,9 +583,8 @@ DIE *DwarfDebug::createScopeChildrenDIE(DwarfCompileUnit *TheCU,
             ObjectPointer = Arg;
         }
 
-    // Create the unspecified parameter that marks a function as variadic.
+    // If this is a variadic function, add an unspecified parameter.
     DISubprogram SP(Scope->getScopeNode());
-    assert(SP.Verify());
     DIArray FnArgs = SP.getType().getTypeArray();
     if (FnArgs.getElement(FnArgs.getNumElements()-1).isUnspecifiedParameter()) {
       DIE *Ellipsis = new DIE(dwarf::DW_TAG_unspecified_parameters);

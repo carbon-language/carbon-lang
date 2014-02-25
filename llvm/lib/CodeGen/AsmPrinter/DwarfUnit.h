@@ -452,6 +452,9 @@ public:
   /// constructVariableDIE - Construct a DIE for the given DbgVariable.
   DIE *constructVariableDIE(DbgVariable &DV, bool isScopeAbstract);
 
+  /// constructSubprogramArguments - Construct function argument DIEs.
+  void constructSubprogramArguments(DIE &Buffer, DIArray Args);
+
   /// Create a DIE with the given Tag, add the DIE to its parent, and
   /// call insertDIE if MD is not null.
   DIE *createAndAddDIE(unsigned Tag, DIE &Parent,
@@ -476,9 +479,6 @@ protected:
   DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);
 
 private:
-  /// constructSubprogramArguments - Construct function argument DIEs.
-  void constructSubprogramArguments(DIE &Buffer, DIArray Args);
-
   /// constructTypeDIE - Construct basic type die from DIBasicType.
   void constructTypeDIE(DIE &Buffer, DIBasicType BTy);
 

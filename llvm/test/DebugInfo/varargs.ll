@@ -1,17 +1,30 @@
 ; RUN: llc -O0 -filetype=obj -o %t.o %s
 ; RUN: llvm-dwarfdump -debug-dump=info %t.o | FileCheck %s
+; REQUIRES: object-emission
+;
+; Test debug info for variadic function arguments.
+; Created from tools/clang/tests/CodeGenCXX/debug-info-varargs.cpp
+;
+; The ... parameter of variadic should be emitted as
+; DW_TAG_unspecified_parameters.
 ;
 ; Normal variadic function.
+; void b(int c, ...);
 ;
 ; CHECK: DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name {{.*}} "b"
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_unspecified_parameters
 ;
 ; Variadic C++ member function.
+; struct A { void a(int c, ...); }
 ;
 ; CHECK: DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
+; CHECK: DW_AT_name {{.*}} "a"
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_formal_parameter
 ; CHECK-NOT: DW_TAG
@@ -20,6 +33,7 @@
 ; CHECK: DW_TAG_unspecified_parameters
 ;
 ; Variadic function pointer.
+; void (*fptr)(int, ...);
 ;
 ; CHECK: DW_TAG_subroutine_type
 ; CHECK-NOT: DW_TAG
@@ -27,12 +41,7 @@
 ; CHECK-NOT: DW_TAG
 ; CHECK: DW_TAG_unspecified_parameters
 ;
-; Test debug info for variadic function arguments.
-; Created from tools/clang/tests/CodeGenCXX/debug-info-varargs.cpp
-;
 ; ModuleID = 'llvm/tools/clang/test/CodeGenCXX/debug-info-varargs.cpp'
-target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-apple-macosx10.9.0"
 
 %struct.A = type { i8 }
 
