@@ -1,9 +1,6 @@
 // RUN: %clangxx_asan -O0 %s -o %t && not %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O3 %s -o %t && not %t 2>&1 | FileCheck %s
 
-// No waitid on Android.
-// XFAIL: android
-
 #include <assert.h>
 #include <sys/wait.h>
 #include <unistd.h>
