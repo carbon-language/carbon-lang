@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 DFSAN_DIR=$(dirname "$0")/../
 DFSAN_CUSTOM_TESTS=${DFSAN_DIR}/../../test/dfsan/custom.c

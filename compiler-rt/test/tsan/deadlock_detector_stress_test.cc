@@ -71,7 +71,7 @@ class PthreadRWLock {
 
 class LockTest {
  public:
-  LockTest(size_t n) : n_(n), locks_(new LockType[n]) { }
+  explicit LockTest(size_t n) : n_(n), locks_(new LockType[n]) { }
   ~LockTest() { delete [] locks_; }
   void L(size_t i) {
     assert(i < n_);
@@ -282,7 +282,7 @@ class LockTest {
   LockType *locks_;
 };
 
-int main () {
+int main() {
   { LockTest t(5); t.Test1(); }
   { LockTest t(5); t.Test2(); }
   { LockTest t(5); t.Test3(); }
