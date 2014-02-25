@@ -76,7 +76,7 @@ pad_sections_ex aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 // //AAmJa4 == 1000029 + 12 + (5 * (2 + (9 * 20 * 10 * 1000) + 1)) == 38*64^3 + 9*64^2 + 26*64 + 56
 //             v         |     |    v    ~~~~~~~~~~~~~~~~~~    v
-// seven_digit offset    v     v   "p0"         pad            NUL seperator
+// seven_digit offset    v     v   "p0"         pad            NUL separator
 //         "seven_digit\0"     # of pad sections
 //
 // "2F 2F 41 41 6D 4A 61 34" is "//AAmJa4", which decodes to "0 0 38 9 26 56".

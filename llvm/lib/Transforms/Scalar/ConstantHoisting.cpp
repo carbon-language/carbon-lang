@@ -454,7 +454,7 @@ bool ConstantHoisting::OptimizeConstants(Function &F) {
   // base constant.
   FindBaseConstants();
 
-  // Finaly hoist the base constant and emit materializating code for dependent
+  // Finally hoist the base constant and emit materializating code for dependent
   // constants.
   MadeChange |= EmitBaseConstants(F);
 
