@@ -2330,8 +2330,7 @@ private:
     if (!isa<Constant>(II.getLength())) {
       assert(!IsSplit);
       assert(BeginOffset >= NewAllocaBeginOffset);
-      II.setDest(
-          getAdjustedAllocaPtr(IRB, BeginOffset, II.getRawDest()->getType()));
+      II.setDest(getAdjustedAllocaPtr(IRB, BeginOffset, OldPtr->getType()));
       Type *CstTy = II.getAlignmentCst()->getType();
       II.setAlignment(ConstantInt::get(CstTy, getOffsetAlign(BeginOffset)));
 
@@ -2363,7 +2362,7 @@ private:
       Type *SizeTy = II.getLength()->getType();
       Constant *Size = ConstantInt::get(SizeTy, NewEndOffset - NewBeginOffset);
       CallInst *New = IRB.CreateMemSet(
-          getAdjustedAllocaPtr(IRB, NewBeginOffset, II.getRawDest()->getType()),
+          getAdjustedAllocaPtr(IRB, NewBeginOffset, OldPtr->getType()),
           II.getValue(), Size, getOffsetAlign(SliceOffset), II.isVolatile());
       (void)New;
       DEBUG(dbgs() << "          to: " << *New << "\n");
@@ -2470,19 +2469,18 @@ private:
     // memcpy, and so simply updating the pointers is the necessary for us to
     // update both source and dest of a single call.
     if (!IsSplittable) {
-      Value *OldOp = IsDest ? II.getRawDest() : II.getRawSource();
+      Value *AdjustedPtr =
+          getAdjustedAllocaPtr(IRB, BeginOffset, OldPtr->getType());
       if (IsDest)
-        II.setDest(
-            getAdjustedAllocaPtr(IRB, BeginOffset, II.getRawDest()->getType()));
+        II.setDest(AdjustedPtr);
       else
-        II.setSource(getAdjustedAllocaPtr(IRB, BeginOffset,
-                                          II.getRawSource()->getType()));
+        II.setSource(AdjustedPtr);
 
       Type *CstTy = II.getAlignmentCst()->getType();
       II.setAlignment(ConstantInt::get(CstTy, Align));
 
       DEBUG(dbgs() << "          to: " << II << "\n");
-      deleteIfTriviallyDead(OldOp);
+      deleteIfTriviallyDead(OldPtr);
       return false;
     }
     // For split transfer intrinsics we have an incredibly useful assurance:
@@ -2531,9 +2529,8 @@ private:
       // a single, simple GEP in most cases.
       OtherPtr = getAdjustedPtr(IRB, DL, OtherPtr, RelOffset, OtherPtrTy);
 
-      Value *OurPtr = getAdjustedAllocaPtr(
-          IRB, NewBeginOffset,
-          IsDest ? II.getRawDest()->getType() : II.getRawSource()->getType());
+      Value *OurPtr =
+          getAdjustedAllocaPtr(IRB, NewBeginOffset, OldPtr->getType());
       Type *SizeTy = II.getLength()->getType();
       Constant *Size = ConstantInt::get(SizeTy, NewEndOffset - NewBeginOffset);
 
@@ -2631,8 +2628,7 @@ private:
     ConstantInt *Size
       = ConstantInt::get(cast<IntegerType>(II.getArgOperand(0)->getType()),
                          NewEndOffset - NewBeginOffset);
-    Value *Ptr =
-        getAdjustedAllocaPtr(IRB, NewBeginOffset, II.getArgOperand(1)->getType());
+    Value *Ptr = getAdjustedAllocaPtr(IRB, NewBeginOffset, OldPtr->getType());
     Value *New;
     if (II.getIntrinsicID() == Intrinsic::lifetime_start)
       New = IRB.CreateLifetimeStart(Ptr, Size);
