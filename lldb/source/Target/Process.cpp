@@ -4837,7 +4837,7 @@ public:
     Interrupt ()
     {
         if (StateIsRunningState(m_process->GetState()))
-            m_process->Halt();
+            m_process->SendAsyncInterrupt();
     }
     
     virtual void
