@@ -3169,6 +3169,7 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
       Promotable = false;
       PHIUsers.clear();
       SelectUsers.clear();
+      break;
     }
   for (SmallPtrSetImpl<SelectInst *>::iterator I = SelectUsers.begin(),
                                                E = SelectUsers.end();
@@ -3177,6 +3178,7 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
       Promotable = false;
       PHIUsers.clear();
       SelectUsers.clear();
+      break;
     }
 
   if (Promotable) {
