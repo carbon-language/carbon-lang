@@ -299,9 +299,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
 
   // Add the target data from the target machine, if it exists, or the module.
   if (const DataLayout *DL = Target.getDataLayout())
-    PM.add(new DataLayoutPass(*DL));
-  else
-    PM.add(new DataLayoutPass(mod));
+    mod->setDataLayout(DL);
+  PM.add(new DataLayoutPass(mod));
 
   // Override default to generate verbose assembly.
   Target.setAsmVerbosityDefault(true);

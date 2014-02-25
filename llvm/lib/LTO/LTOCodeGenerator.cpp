@@ -482,7 +482,8 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   passes.add(createVerifierPass());
 
   // Add an appropriate DataLayout instance for this module...
-  passes.add(new DataLayoutPass(*TargetMach->getDataLayout()));
+  mergedModule->setDataLayout(TargetMach->getDataLayout());
+  passes.add(new DataLayoutPass(mergedModule));
 
   // Add appropriate TargetLibraryInfo for this module.
   passes.add(new TargetLibraryInfo(Triple(TargetMach->getTargetTriple())));
@@ -503,7 +504,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   PassManager codeGenPasses;
 
-  codeGenPasses.add(new DataLayoutPass(*TargetMach->getDataLayout()));
+  codeGenPasses.add(new DataLayoutPass(mergedModule));
 
   formatted_raw_ostream Out(out);
 

@@ -212,7 +212,8 @@ static LLVMBool LLVMTargetMachineEmit(LLVMTargetMachineRef T, LLVMModuleRef M,
     *ErrorMessage = strdup(error.c_str());
     return true;
   }
-  pass.add(new DataLayoutPass(*td));
+  Mod->setDataLayout(td);
+  pass.add(new DataLayoutPass(Mod));
 
   TargetMachine::CodeGenFileType ft;
   switch (codegen) {

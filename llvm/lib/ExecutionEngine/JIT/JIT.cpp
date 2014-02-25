@@ -26,6 +26,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -151,7 +152,8 @@ JIT::JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
   // Add target data
   MutexGuard locked(lock);
   FunctionPassManager &PM = jitstate->getPM(locked);
-  PM.add(new DataLayoutPass(*TM.getDataLayout()));
+  M->setDataLayout(TM.getDataLayout());
+  PM.add(new DataLayoutPass(M));
 
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
@@ -183,7 +185,8 @@ void JIT::addModule(Module *M) {
     jitstate = new JITState(M);
 
     FunctionPassManager &PM = jitstate->getPM(locked);
-    PM.add(new DataLayoutPass(*TM.getDataLayout()));
+    M->setDataLayout(TM.getDataLayout());
+    PM.add(new DataLayoutPass(M));
 
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
@@ -214,7 +217,8 @@ bool JIT::removeModule(Module *M) {
     jitstate = new JITState(Modules[0]);
 
     FunctionPassManager &PM = jitstate->getPM(locked);
-    PM.add(new DataLayoutPass(*TM.getDataLayout()));
+    M->setDataLayout(TM.getDataLayout());
+    PM.add(new DataLayoutPass(M));
 
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.

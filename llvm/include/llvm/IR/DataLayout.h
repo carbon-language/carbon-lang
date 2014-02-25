@@ -460,9 +460,9 @@ public:
 
   const DataLayout &getDataLayout() const { return DL; }
 
+  // For use with the C API. C++ code should always use the constructor that
+  // takes a module.
   explicit DataLayoutPass(const DataLayout &DL);
-
-  explicit DataLayoutPass(StringRef LayoutDescription);
 
   explicit DataLayoutPass(const Module *M);
 

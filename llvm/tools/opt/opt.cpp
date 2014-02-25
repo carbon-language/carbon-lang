@@ -430,11 +430,13 @@ int main(int argc, char **argv) {
 
   // Add an appropriate DataLayout instance for this module.
   const DataLayout *DL = M.get()->getDataLayout();
-  if (!DL && !DefaultDataLayout.empty())
-    DL = new DataLayout(DefaultDataLayout);
+  if (!DL && !DefaultDataLayout.empty()) {
+    M->setDataLayout(DefaultDataLayout);
+    DL = M.get()->getDataLayout();
+  }
 
   if (DL)
-    Passes.add(new DataLayoutPass(*DL));
+    Passes.add(new DataLayoutPass(M.get()));
 
   Triple ModuleTriple(M->getTargetTriple());
   TargetMachine *Machine = 0;
@@ -450,7 +452,7 @@ int main(int argc, char **argv) {
   if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {
     FPasses.reset(new FunctionPassManager(M.get()));
     if (DL)
-      FPasses->add(new DataLayoutPass(*DL));
+      FPasses->add(new DataLayoutPass(M.get()));
     if (TM.get())
       TM->addAnalysisPasses(*FPasses);
 

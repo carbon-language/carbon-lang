@@ -786,10 +786,6 @@ DataLayoutPass::DataLayoutPass(const DataLayout &DL)
   initializeDataLayoutPassPass(*PassRegistry::getPassRegistry());
 }
 
-DataLayoutPass::DataLayoutPass(StringRef Str) : ImmutablePass(ID), DL(Str) {
-  initializeDataLayoutPassPass(*PassRegistry::getPassRegistry());
-}
-
 DataLayoutPass::DataLayoutPass(const Module *M) : ImmutablePass(ID), DL(M) {
   initializeDataLayoutPassPass(*PassRegistry::getPassRegistry());
 }

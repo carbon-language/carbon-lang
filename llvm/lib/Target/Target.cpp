@@ -55,6 +55,8 @@ LLVMTargetDataRef LLVMCreateTargetData(const char *StringRep) {
 }
 
 void LLVMAddTargetData(LLVMTargetDataRef TD, LLVMPassManagerRef PM) {
+  // The DataLayoutPass must now be in sync with the module. Unfortunatelly we
+  // cannot enforce that from the C api.
   unwrap(PM)->add(new DataLayoutPass(*unwrap(TD)));
 }
 

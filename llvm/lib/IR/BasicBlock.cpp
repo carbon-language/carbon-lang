@@ -30,6 +30,10 @@ ValueSymbolTable *BasicBlock::getValueSymbolTable() {
   return 0;
 }
 
+const DataLayout *BasicBlock::getDataLayout() const {
+  return getParent()->getDataLayout();
+}
+
 LLVMContext &BasicBlock::getContext() const {
   return getType()->getContext();
 }

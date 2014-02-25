@@ -53,6 +53,8 @@ public:
   inline const BasicBlock *getParent() const { return Parent; }
   inline       BasicBlock *getParent()       { return Parent; }
 
+  const DataLayout *getDataLayout() const;
+
   /// removeFromParent - This method unlinks 'this' from the containing basic
   /// block, but does not delete it.
   ///
