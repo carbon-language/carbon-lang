@@ -54,21 +54,22 @@ class StdCXXDisassembleTestCase(TestBase):
             function = frame.GetFunction()
             self.runCmd("disassemble -n '%s'" % function.GetName())
 
+        lib_stdcxx = "FAILHORRIBLYHERE"
         # Iterate through the available modules, looking for stdc++ library...
         for i in range(target.GetNumModules()):
             module = target.GetModuleAtIndex(i)
             fs = module.GetFileSpec()
-            if (fs.GetFilename().startswith("libstdc++")):
+            if (fs.GetFilename().startswith("libstdc++") or fs.GetFilename().startswith("libc++")):
                 lib_stdcxx = str(fs)
                 break
 
         # At this point, lib_stdcxx is the full path to the stdc++ library and
         # module is the corresponding SBModule.
 
-        self.expect(fs.GetFilename(), "Libraray StdC++ is located", exe=False,
-            substrs = ["libstdc++"])
+        self.expect(lib_stdcxx, "Libraray StdC++ is located", exe=False,
+            substrs = ["lib"])
 
-        self.runCmd("image dump symtab %s" % str(fs))
+        self.runCmd("image dump symtab %s" % lib_stdcxx)
         raw_output = self.res.GetOutput()
         # Now, look for every 'Code' symbol and feed its load address into the
         # command: 'disassemble -s load_address -e end_address', where the
