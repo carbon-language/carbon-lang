@@ -209,6 +209,34 @@ TYPED_TEST(DenseMapTest, CopyConstructorTest) {
   EXPECT_EQ(this->getValue(), copyMap[this->getKey()]);
 }
 
+// Test copy constructor method where SmallDenseMap isn't small.
+TYPED_TEST(DenseMapTest, CopyConstructorNotSmallTest) {
+  for (int Key = 0; Key < 5; ++Key)
+    this->Map[this->getKey(Key)] = this->getValue(Key);
+  TypeParam copyMap(this->Map);
+
+  EXPECT_EQ(5u, copyMap.size());
+  for (int Key = 0; Key < 5; ++Key)
+    EXPECT_EQ(this->getValue(Key), copyMap[this->getKey(Key)]);
+}
+
+// Test copying from a default-constructed map.
+TYPED_TEST(DenseMapTest, CopyConstructorFromDefaultTest) {
+  TypeParam copyMap(this->Map);
+
+  EXPECT_TRUE(copyMap.empty());
+}
+
+// Test copying from an empty map where SmallDenseMap isn't small.
+TYPED_TEST(DenseMapTest, CopyConstructorFromEmptyTest) {
+  for (int Key = 0; Key < 5; ++Key)
+    this->Map[this->getKey(Key)] = this->getValue(Key);
+  this->Map.clear();
+  TypeParam copyMap(this->Map);
+
+  EXPECT_TRUE(copyMap.empty());
+}
+
 // Test assignment operator method
 TYPED_TEST(DenseMapTest, AssignmentTest) {
   this->Map[this->getKey()] = this->getValue();

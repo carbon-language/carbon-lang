@@ -830,7 +830,7 @@ public:
     Small = true;
     if (other.getNumBuckets() > InlineBuckets) {
       Small = false;
-      allocateBuckets(other.getNumBuckets());
+      new (getLargeRep()) LargeRep(allocateBuckets(other.getNumBuckets()));
     }
     this->BaseT::copyFrom(other);
   }
