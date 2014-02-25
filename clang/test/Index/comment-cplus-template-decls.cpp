@@ -27,7 +27,7 @@ template<typename T> struct A {
 };
 // CHECK: <Declaration>template &lt;typename T&gt; struct A {}</Declaration>
 // CHECK: <Declaration>A&lt;T&gt;()</Declaration>
-// CHECK: <Declaration>void ~A&lt;T&gt;()</Declaration>
+// CHECK: <Declaration>~A&lt;T&gt;()</Declaration>
 
 /**
  * \Brief Eee

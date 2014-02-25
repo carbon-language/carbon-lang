@@ -42,7 +42,7 @@ protected:
 // CHECK: <Declaration>class Test {}</Declaration>
 // CHECK: <Declaration>Test() : reserved(new Test::data())</Declaration>
 // CHECK: <Declaration>unsigned int getID() const</Declaration>
-// CHECK: <Declaration>void ~Test()</Declaration>
+// CHECK: <Declaration>~Test()</Declaration>
 // CHECK: <Declaration>Test::data *reserved</Declaration>
 
 

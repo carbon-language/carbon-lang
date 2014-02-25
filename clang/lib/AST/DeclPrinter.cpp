@@ -399,6 +399,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     if (D->isInlineSpecified())  Out << "inline ";
     if (D->isVirtualAsWritten()) Out << "virtual ";
     if (D->isModulePrivate())    Out << "__module_private__ ";
+    if (D->isConstexpr() && !D->isExplicitlyDefaulted()) Out << "constexpr ";
     if ((CDecl && CDecl->isExplicitSpecified()) ||
         (ConversionDecl && ConversionDecl->isExplicit()))
       Out << "explicit ";
@@ -449,6 +450,17 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
         Proto += " volatile";
       if (FT->isRestrict())
         Proto += " restrict";
+
+      switch (FT->getRefQualifier()) {
+      case RQ_None:
+        break;
+      case RQ_LValue:
+        Proto += " &";
+        break;
+      case RQ_RValue:
+        Proto += " &&";
+        break;
+      }
     }
 
     if (FT && FT->hasDynamicExceptionSpec()) {
@@ -537,8 +549,10 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
           }
         }
         Out << ")";
+        if (BMInitializer->isPackExpansion())
+          Out << "...";
       }
-    } else if (!ConversionDecl) {
+    } else if (!ConversionDecl && !isa<CXXDestructorDecl>(D)) {
       if (FT && FT->hasTrailingReturn()) {
         Out << "auto " << Proto << " -> ";
         Proto.clear();

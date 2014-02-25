@@ -734,7 +734,7 @@ class comment_to_xml_conversion_01 {
   /// Aaa.
   ~comment_to_xml_conversion_01();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:3: CXXDestructor=~comment_to_xml_conversion_01:{{.*}} FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="3"><Name>~comment_to_xml_conversion_01</Name><USR>c:@C@comment_to_xml_conversion_01@F@~comment_to_xml_conversion_01#</USR><Declaration>void ~comment_to_xml_conversion_01()</Declaration><Abstract><Para> Aaa.</Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:3: CXXDestructor=~comment_to_xml_conversion_01:{{.*}} FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="3"><Name>~comment_to_xml_conversion_01</Name><USR>c:@C@comment_to_xml_conversion_01@F@~comment_to_xml_conversion_01#</USR><Declaration>~comment_to_xml_conversion_01()</Declaration><Abstract><Para> Aaa.</Para></Abstract></Function>]
 
   /// \param aaa Blah blah.
   int comment_to_xml_conversion_02(int aaa);
