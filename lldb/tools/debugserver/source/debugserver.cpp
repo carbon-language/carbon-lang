@@ -63,6 +63,7 @@ static nub_launch_flavor_t g_launch_flavor = eLaunchFlavorDefault;
 int g_disable_aslr = 0;
 
 int g_isatty = 0;
+bool g_detach_on_error = false;
 
 #define RNBLogSTDOUT(fmt, ...) do { if (g_isatty) { fprintf(stdout, fmt, ## __VA_ARGS__); } else { _DNBLog(0, fmt, ## __VA_ARGS__); } } while (0)
 #define RNBLogSTDERR(fmt, ...) do { if (g_isatty) { fprintf(stderr, fmt, ## __VA_ARGS__); } else { _DNBLog(0, fmt, ## __VA_ARGS__); } } while (0)
@@ -571,8 +572,24 @@ RNBRunLoopInferiorExecuting (RNBRemote *remote)
                     // in its current state and listen for another connection...
                     if (ctx.ProcessStateRunning())
                     {
-                        DNBLog ("debugserver's event read thread is exiting, killing the inferior process.");
-                        DNBProcessKill (ctx.ProcessID());
+                        if (ctx.GetDetachOnError())
+                        {
+                            DNBLog ("debugserver's event read thread is exiting, detaching from the inferior process.");
+                            DNBProcessDetach (ctx.ProcessID());
+                        }
+                        else
+                        {
+                            DNBLog ("debugserver's event read thread is exiting, killing the inferior process.");
+                            DNBProcessKill (ctx.ProcessID());
+                        }
+                    }
+                    else
+                    {
+                        if (ctx.GetDetachOnError())
+                        {
+                            DNBLog ("debugserver's event read thread is exiting, detaching from the inferior process.");
+                            DNBProcessDetach (ctx.ProcessID());
+                        }
                     }
                 }
                 mode = eRNBRunLoopModeExit;
@@ -814,6 +831,7 @@ static struct option g_long_options[] =
     { "attach",             required_argument,  NULL,               'a' },
     { "arch",               required_argument,  NULL,               'A' },
     { "debug",              no_argument,        NULL,               'g' },
+    { "detach-on-error",    no_argument,        NULL,               'e' },
     { "verbose",            no_argument,        NULL,               'v' },
     { "lockdown",           no_argument,        &g_lockdown_opt,    1   },  // short option "-k"
     { "applist",            no_argument,        &g_applist_opt,     1   },  // short option "-t"
@@ -1011,6 +1029,9 @@ main (int argc, char *argv[])
                     }
                 }
                 break;
+                
+            case 'e':
+                g_detach_on_error = true;
 
             case 'W':
                 if (optarg && optarg[0])
@@ -1181,6 +1202,8 @@ main (int argc, char *argv[])
         }
     }
 
+    remote->Context().SetDetachOnError(g_detach_on_error);
+    
     remote->Initialize();
 
     // It is ok for us to set NULL as the logfile (this will disable any logging)

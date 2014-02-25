@@ -307,14 +307,16 @@ MachProcess::SetState(nub_state_t new_state)
 }
 
 void
-MachProcess::Clear()
+MachProcess::Clear(bool detaching)
 {
     // Clear any cached thread list while the pid and task are still valid
 
     m_task.Clear();
     // Now clear out all member variables
     m_pid = INVALID_NUB_PROCESS;
-    CloseChildFileDescriptors();
+    if (!detaching)
+        CloseChildFileDescriptors();
+        
     m_path.clear();
     m_args.clear();
     SetState(eStateUnloaded);
@@ -554,7 +556,8 @@ MachProcess::Detach()
     m_task.Clear();
 
     // Clear out any notion of the process we once were
-    Clear();
+    const bool detaching = true;
+    Clear(detaching);
 
     SetState(eStateDetached);
 

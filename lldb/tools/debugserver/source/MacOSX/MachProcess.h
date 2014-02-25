@@ -258,7 +258,7 @@ private:
         eMachProcessFlagsAttached = (1 << 0),
         eMachProcessFlagsUsingSBS = (1 << 1)
     };
-    void                    Clear ();
+    void                    Clear (bool detaching = false);
     void                    ReplyToAllExceptions ();
     void                    PrivateResume ();
 

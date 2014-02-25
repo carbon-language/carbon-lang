@@ -650,6 +650,10 @@ DNBProcessDetach (nub_process_t pid)
     MachProcessSP procSP;
     if (GetProcessSP (pid, procSP))
     {
+        const bool remove = true;
+        DNBLogThreaded("Disabling breakpoints and watchpoints, and detaching from %d.", pid);
+        procSP->DisableAllBreakpoints(remove);
+        procSP->DisableAllWatchpoints (remove);
         return procSP->Detach();
     }
     return false;

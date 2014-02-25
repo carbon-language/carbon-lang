@@ -57,7 +57,8 @@ public:
         m_pid_pthread(),
         m_launch_status(),
         m_arg_vec (),
-        m_env_vec ()
+        m_env_vec (),
+        m_detach_on_error(false)
     {
     }
 
@@ -116,6 +117,10 @@ public:
     const char *    GetSTDOUTPath() { return m_stdout.empty() ? NULL : m_stdout.c_str(); }
     const char *    GetSTDERRPath() { return m_stderr.empty() ? NULL : m_stderr.c_str(); }
     const char *    GetWorkingDirPath() { return m_working_dir.empty() ? NULL : m_working_dir.c_str(); }
+    
+    void            SetDetachOnError(bool detach) { m_detach_on_error = detach; }
+    bool            GetDetachOnError () { return m_detach_on_error; }
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from RNBContext can see and modify these
@@ -133,6 +138,7 @@ protected:
     std::vector<std::string> m_arg_vec;
     std::vector<std::string> m_env_vec; // This will be unparsed - entries FOO=value
     std::string     m_working_directory;
+    bool            m_detach_on_error;
 
     void    StartProcessStatusThread();
     void    StopProcessStatusThread();
