@@ -31,22 +31,22 @@ static void EnsureDeadlockDetectorID(Context *ctx, ThreadState *thr,
 
 static void DDUnlock(Context *ctx, ThreadState *thr, SyncVar *s) {
   if (!common_flags()->detect_deadlocks) return;
+  if (s->recursion != 0) return;
   Lock lk(&ctx->dd_mtx);
   EnsureDeadlockDetectorID(ctx, thr, s);
-  // Printf("MutexUnlock: %zx\n", s->deadlock_detector_id);
+  // Printf("T%d MutexUnlock: %zx; recursion %d\n", thr->tid,
+  //        s->deadlock_detector_id, s->recursion);
   ctx->dd.onUnlock(&thr->deadlock_detector_tls, s->deadlock_detector_id);
 }
 
 static void DDLock(Context *ctx, ThreadState *thr, SyncVar *s, uptr pc,
                    bool try_lock) {
   if (!common_flags()->detect_deadlocks) return;
+  if (s->recursion > 1) return;
   Lock lk(&ctx->dd_mtx);
   EnsureDeadlockDetectorID(ctx, thr, s);
-  if (ctx->dd.isHeld(&thr->deadlock_detector_tls, s->deadlock_detector_id)) {
-    // FIXME: add tests, handle the real recursive locks.
-    Printf("ThreadSanitizer: reursive-lock\n");
-  }
-  // Printf("MutexLock: %zx\n", s->deadlock_detector_id);
+  CHECK(!ctx->dd.isHeld(&thr->deadlock_detector_tls, s->deadlock_detector_id));
+  // Printf("T%d MutexLock:   %zx\n", thr->tid, s->deadlock_detector_id);
   bool has_deadlock = try_lock
       ? ctx->dd.onTryLock(&thr->deadlock_detector_tls,
                           s->deadlock_detector_id)

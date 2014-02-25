@@ -4,6 +4,8 @@
 // RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadRWLock
 // RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-RD
+// RUN: %clangxx_tsan %s -o %t -DLockType=PthreadRecursiveMutex
+// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-REC
 #include <pthread.h>
 #undef NDEBUG
 #include <assert.h>
@@ -11,12 +13,19 @@
 
 class PthreadMutex {
  public:
-  PthreadMutex() { assert(0 == pthread_mutex_init(&mu_, 0)); }
+  explicit PthreadMutex(bool recursive = false) {
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    if (recursive)
+      pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    assert(0 == pthread_mutex_init(&mu_, &attr));
+  }
   ~PthreadMutex() {
     assert(0 == pthread_mutex_destroy(&mu_));
     (void)padding_;
   }
   static bool supports_read_lock() { return false; }
+  static bool supports_recursive_lock() { return false; }
   void lock() { assert(0 == pthread_mutex_lock(&mu_)); }
   void unlock() { assert(0 == pthread_mutex_unlock(&mu_)); }
   bool try_lock() { return 0 == pthread_mutex_trylock(&mu_); }
@@ -29,6 +38,12 @@ class PthreadMutex {
   char padding_[64 - sizeof(pthread_mutex_t)];
 };
 
+class PthreadRecursiveMutex : public PthreadMutex {
+ public:
+  PthreadRecursiveMutex() : PthreadMutex(true) { }
+  static bool supports_recursive_lock() { return true; }
+};
+
 class PthreadSpinLock {
  public:
   PthreadSpinLock() { assert(0 == pthread_spin_init(&mu_, 0)); }
@@ -37,6 +52,7 @@ class PthreadSpinLock {
     (void)padding_;
   }
   static bool supports_read_lock() { return false; }
+  static bool supports_recursive_lock() { return false; }
   void lock() { assert(0 == pthread_spin_lock(&mu_)); }
   void unlock() { assert(0 == pthread_spin_unlock(&mu_)); }
   bool try_lock() { return 0 == pthread_spin_trylock(&mu_); }
@@ -57,6 +73,7 @@ class PthreadRWLock {
     (void)padding_;
   }
   static bool supports_read_lock() { return true; }
+  static bool supports_recursive_lock() { return false; }
   void lock() { assert(0 == pthread_rwlock_wrlock(&mu_)); }
   void unlock() { assert(0 == pthread_rwlock_unlock(&mu_)); }
   bool try_lock() { return 0 == pthread_rwlock_trywrlock(&mu_); }
@@ -224,6 +241,15 @@ class LockTest {
     // CHECK-RD: Have cycle: 2=>3
   }
 
+  void Test9() {
+    if (!LockType::supports_recursive_lock()) return;
+    fprintf(stderr, "Starting Test9\n");
+    // CHECK-REC: Starting Test9
+    L(0); L(0); L(0); L(1); U(1); U(0); U(0); U(0);
+    L(1); L(1); L(1); L(0); U(0); U(1); U(1); U(1);
+    // CHECK-REC: WARNING: ThreadSanitizer: lock-order-inversion
+  }
+
  private:
   void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
   void Lock_0_1() { Lock2(0, 1); }
@@ -291,6 +317,7 @@ int main() {
   { LockTest t(5); t.Test6(); }
   { LockTest t(10); t.Test7(); }
   { LockTest t(5); t.Test8(); }
+  { LockTest t(5); t.Test9(); }
   fprintf(stderr, "DONE\n");
   // CHECK: DONE
 }
