@@ -2261,6 +2261,8 @@ MicrosoftRecordLayoutBuilder::ElementInfo
 MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
     const FieldDecl *FD) {
   ElementInfo Info;
+  llvm::tie(Info.Size, Info.Alignment) =
+      Context.getTypeInfoInChars(FD->getType());
   // Respect align attributes.
   CharUnits FieldRequiredAlignment = 
       Context.toCharUnitsFromBits(FD->getMaxAlignment());
@@ -2269,19 +2271,11 @@ MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
       FD->getType()->getBaseElementTypeUnsafe()->getAs<RecordType>()) {
     const ASTRecordLayout &Layout = Context.getASTRecordLayout(RT->getDecl());
     // Get the element info for a layout, respecting pack.
-    Info = getAdjustedElementInfo(Layout, false);
-    // If the field is an array type, scale it's size properly.
-    for (const ConstantArrayType *CAT =
-         dyn_cast<ConstantArrayType>(FD->getType()); CAT; 
-         CAT = dyn_cast<ConstantArrayType>(CAT->getElementType()))
-      Info.Size = Info.Size * (int64_t)CAT->getSize().getZExtValue();
+    Info.Alignment = getAdjustedElementInfo(Layout, false).Alignment;
     // Capture required alignment as a side-effect.
     RequiredAlignment = std::max(RequiredAlignment,
                                  Layout.getRequiredAlignment());
-  }
-  else {
-    llvm::tie(Info.Size, Info.Alignment) =
-        Context.getTypeInfoInChars(FD->getType());
+  } else {
     if (FD->isBitField() && FD->getMaxAlignment() != 0)
       Info.Alignment = std::max(Info.Alignment, FieldRequiredAlignment);
     // Respect pragma pack.
