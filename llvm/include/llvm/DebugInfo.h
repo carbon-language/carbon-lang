@@ -553,6 +553,13 @@ public:
   bool Verify() const;
 };
 
+/// DIUnspecifiedParameter - This is a wrapper for unspecified parameters.
+class DIUnspecifiedParameter : public DIDescriptor {
+public:
+  explicit DIUnspecifiedParameter(const MDNode *N = 0) : DIDescriptor(N) {}
+  bool Verify() const;
+};
+
 /// DITemplateTypeParameter - This is a wrapper for template type parameter.
 class DITemplateTypeParameter : public DIDescriptor {
 public:

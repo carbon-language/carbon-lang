@@ -45,6 +45,7 @@ bool DIDescriptor::Verify() const {
           DILexicalBlockFile(DbgNode).Verify() ||
           DISubrange(DbgNode).Verify() || DIEnumerator(DbgNode).Verify() ||
           DIObjCProperty(DbgNode).Verify() ||
+          DIUnspecifiedParameter(DbgNode).Verify() ||
           DITemplateTypeParameter(DbgNode).Verify() ||
           DITemplateValueParameter(DbgNode).Verify() ||
           DIImportedEntity(DbgNode).Verify());
@@ -605,6 +606,11 @@ bool DILexicalBlock::Verify() const {
 /// \brief Verify that the file-scoped lexical block descriptor is well formed.
 bool DILexicalBlockFile::Verify() const {
   return isLexicalBlockFile() && DbgNode->getNumOperands() == 3;
+}
+
+/// \brief Verify that an unspecified parameter descriptor is well formed.
+bool DIUnspecifiedParameter::Verify() const {
+  return isUnspecifiedParameter() && DbgNode->getNumOperands() == 1;
 }
 
 /// \brief Verify that the template type parameter descriptor is well formed.
