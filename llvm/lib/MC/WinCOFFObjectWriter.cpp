@@ -468,11 +468,16 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
   }
 }
 
+// Maximum offsets for different string table entry encodings.
+static const unsigned Max6DecimalOffset = 999999;
+static const unsigned Max7DecimalOffset = 9999999;
+static const uint64_t MaxBase64Offset = 0xFFFFFFFFFULL; // 64^6, including 0
+
 // Encode a string table entry offset in base 64, padded to 6 chars, and
 // prefixed with a double slash: '//AAAAAA', '//AAAAAB', ...
 // Buffer must be at least 8 bytes large. No terminating null appended.
 static void encodeBase64StringEntry(char* Buffer, uint64_t Value) {
-  assert(Value > 9999999 && Value <= 0xFFFFFFFFF &&
+  assert(Value > Max7DecimalOffset && Value <= MaxBase64Offset &&
          "Illegal section name encoding for value");
 
   static const char Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -494,20 +499,17 @@ static void encodeBase64StringEntry(char* Buffer, uint64_t Value) {
 /// name into the string table if needed
 void WinCOFFObjectWriter::MakeSectionReal(COFFSection &S, size_t Number) {
   if (S.Name.size() > COFF::NameSize) {
-    const unsigned Max6DecimalSize = 999999;
-    const unsigned Max7DecimalSize = 9999999;
-    const uint64_t MaxBase64Size = 0xFFFFFFFFF; // 64^6, including 0
     uint64_t StringTableEntry = Strings.insert(S.Name.c_str());
 
-    if (StringTableEntry <= Max6DecimalSize) {
+    if (StringTableEntry <= Max6DecimalOffset) {
       std::sprintf(S.Header.Name, "/%d", unsigned(StringTableEntry));
-    } else if (StringTableEntry <= Max7DecimalSize) {
+    } else if (StringTableEntry <= Max7DecimalOffset) {
       // With seven digits, we have to skip the terminating null. Because
       // sprintf always appends it, we use a larger temporary buffer.
       char buffer[9] = { };
       std::sprintf(buffer, "/%d", unsigned(StringTableEntry));
       std::memcpy(S.Header.Name, buffer, 8);
-    } else if (StringTableEntry <= MaxBase64Size) {
+    } else if (StringTableEntry <= MaxBase64Offset) {
       // Starting with 10,000,000, offsets are encoded as base64.
       encodeBase64StringEntry(S.Header.Name, StringTableEntry);
     } else {
