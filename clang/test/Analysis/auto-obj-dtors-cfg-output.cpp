@@ -228,7 +228,7 @@ l1:
 // CHECK-NEXT:   7: b
 // CHECK-NEXT:   8: [B4.7] (ImplicitCastExpr, NoOp, const class A)
 // CHECK-NEXT:   9: [B4.8].operator int
-// CHECK:       10: [B4.9]()
+// CHECK:       10: [B4.8]
 // CHECK:       11: [B4.10] (ImplicitCastExpr, UserDefinedConversion, int)
 // CHECK:       12: [B4.11] (ImplicitCastExpr, IntegralToBoolean, _Bool)
 // CHECK-NEXT:   T: if [B4.12]
@@ -307,7 +307,7 @@ void test_if_implicit_scope() {
 // CHECK-NEXT:   7: b
 // CHECK-NEXT:   8: [B8.7] (ImplicitCastExpr, NoOp, const class A)
 // CHECK-NEXT:   9: [B8.8].operator int
-// CHECK:       10: [B8.9]()
+// CHECK:       10: [B8.8]
 // CHECK:       11: [B8.10] (ImplicitCastExpr, UserDefinedConversion, int)
 // CHECK:       12: [B8.11] (ImplicitCastExpr, IntegralToBoolean, _Bool)
 // CHECK-NEXT:   T: if [B8.12]
@@ -354,7 +354,7 @@ void test_if_jumps() {
 // CHECK-NEXT:   5: b
 // CHECK-NEXT:   6: [B4.5] (ImplicitCastExpr, NoOp, const class A)
 // CHECK-NEXT:   7: [B4.6].operator int
-// CHECK-NEXT:   8: [B4.7]()
+// CHECK-NEXT:   8: [B4.6]
 // CHECK-NEXT:   9: [B4.8] (ImplicitCastExpr, UserDefinedConversion, int)
 // CHECK:       10: [B4.9] (ImplicitCastExpr, IntegralToBoolean, _Bool)
 // CHECK-NEXT:   T: while [B4.10]
@@ -440,7 +440,7 @@ void test_while_implicit_scope() {
 // CHECK-NEXT:   5: b
 // CHECK-NEXT:   6: [B10.5] (ImplicitCastExpr, NoOp, const class A)
 // CHECK-NEXT:   7: [B10.6].operator int
-// CHECK-NEXT:   8: [B10.7]()
+// CHECK-NEXT:   8: [B10.6]
 // CHECK-NEXT:   9: [B10.8] (ImplicitCastExpr, UserDefinedConversion, int)
 // CHECK:       10: [B10.9] (ImplicitCastExpr, IntegralToBoolean, _Bool)
 // CHECK-NEXT:   T: while [B10.10]
@@ -586,7 +586,7 @@ void test_do_jumps() {
 // CHECK-NEXT:   7: b
 // CHECK-NEXT:   8: [B2.7] (ImplicitCastExpr, NoOp, const class A)
 // CHECK-NEXT:   9: [B2.8].operator int
-// CHECK:       10: [B2.9]()
+// CHECK:       10: [B2.8]
 // CHECK:       11: [B2.10] (ImplicitCastExpr, UserDefinedConversion, int)
 // CHECK-NEXT:   T: switch [B2.11]
 // CHECK-NEXT:   Preds (1): B4
@@ -624,7 +624,7 @@ void test_switch_implicit_scope() {
 // CHECK-NEXT:   7: b
 // CHECK-NEXT:   8: [B2.7] (ImplicitCastExpr, NoOp, const class A)
 // CHECK-NEXT:   9: [B2.8].operator int
-// CHECK:       10: [B2.9]()
+// CHECK:       10: [B2.8]
 // CHECK:       11: [B2.10] (ImplicitCastExpr, UserDefinedConversion, int)
 // CHECK-NEXT:   T: switch [B2.11]
 // CHECK-NEXT:   Preds (1): B9
@@ -710,7 +710,7 @@ void test_switch_jumps() {
 // CHECK-NEXT:   5: b
 // CHECK-NEXT:   6: [B4.5] (ImplicitCastExpr, NoOp, const class A)
 // CHECK-NEXT:   7: [B4.6].operator int
-// CHECK-NEXT:   8: [B4.7]()
+// CHECK-NEXT:   8: [B4.6]
 // CHECK-NEXT:   9: [B4.8] (ImplicitCastExpr, UserDefinedConversion, int)
 // CHECK:       10: [B4.9] (ImplicitCastExpr, IntegralToBoolean, _Bool)
 // CHECK-NEXT:   T: for (...; [B4.10]; )
@@ -796,7 +796,7 @@ void test_for_implicit_scope() {
 // CHECK-NEXT:   5: c
 // CHECK-NEXT:   6: [B10.5] (ImplicitCastExpr, NoOp, const class A)
 // CHECK-NEXT:   7: [B10.6].operator int
-// CHECK-NEXT:   8: [B10.7]()
+// CHECK-NEXT:   8: [B10.6]
 // CHECK-NEXT:   9: [B10.8] (ImplicitCastExpr, UserDefinedConversion, int)
 // CHECK:       10: [B10.9] (ImplicitCastExpr, IntegralToBoolean, _Bool)
 // CHECK-NEXT:   T: for (...; [B10.10]; )

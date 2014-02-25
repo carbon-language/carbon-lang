@@ -764,7 +764,7 @@ class comment_to_xml_conversion_01 {
   /// Aaa.
   operator bool();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:3: CXXConversion=operator _Bool:{{.*}} FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="3"><Name>operator _Bool</Name><USR>c:@C@comment_to_xml_conversion_01@F@operator _Bool#</USR><Declaration>bool operator _Bool()</Declaration><Abstract><Para> Aaa.</Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:3: CXXConversion=operator bool:{{.*}} FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="3"><Name>operator bool</Name><USR>c:@C@comment_to_xml_conversion_01@F@operator bool#</USR><Declaration>operator bool()</Declaration><Abstract><Para> Aaa.</Para></Abstract></Function>]
 
   /// Aaa.
   typedef int comment_to_xml_conversion_06;

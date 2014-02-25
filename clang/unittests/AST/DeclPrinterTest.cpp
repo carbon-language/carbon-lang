@@ -549,8 +549,7 @@ TEST(DeclPrinter, TestCXXConversionDecl1) {
     "  operator int();"
     "};",
     methodDecl(ofClass(hasName("A"))).bind("id"),
-    "int operator int()"));
-    // WRONG; Should be: "operator int();"
+    "operator int()"));
 }
 
 TEST(DeclPrinter, TestCXXConversionDecl2) {
@@ -559,8 +558,7 @@ TEST(DeclPrinter, TestCXXConversionDecl2) {
     "  operator bool();"
     "};",
     methodDecl(ofClass(hasName("A"))).bind("id"),
-    "bool operator _Bool()"));
-    // WRONG; Should be: "operator bool();"
+    "operator bool()"));
 }
 
 TEST(DeclPrinter, TestCXXConversionDecl3) {
@@ -570,8 +568,7 @@ TEST(DeclPrinter, TestCXXConversionDecl3) {
     "  operator Z();"
     "};",
     methodDecl(ofClass(hasName("A"))).bind("id"),
-    "Z operator Z()"));
-    // WRONG; Should be: "operator Z();"
+    "operator Z()"));
 }
 
 TEST(DeclPrinter, TestCXXMethodDecl_AllocationFunction1) {
