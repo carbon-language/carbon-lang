@@ -1139,22 +1139,6 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
     addSourceLine(&Buffer, DTy);
 }
 
-/// constructSubprogramArguments - Construct function argument DIEs.
-void DwarfUnit::constructSubprogramArguments(DIE &Buffer, DIArray Args) {
-    for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
-      DIDescriptor Ty = Args.getElement(i);
-      if (Ty.isUnspecifiedParameter()) {
-        assert(i == N-1 && "ellipsis must be the last argument");
-        createAndAddDIE(dwarf::DW_TAG_unspecified_parameters, Buffer);
-      } else {
-        DIE *Arg = createAndAddDIE(dwarf::DW_TAG_formal_parameter, Buffer);
-        addType(Arg, DIType(Ty));
-        if (DIType(Ty).isArtificial())
-          addFlag(Arg, dwarf::DW_AT_artificial);
-      }
-    }
-}
-
 /// constructTypeDIE - Construct type DIE from DICompositeType.
 void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   // Add name if not anonymous or intermediate type.
@@ -1178,12 +1162,19 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       addType(&Buffer, RTy);
 
     bool isPrototyped = true;
-    if (Elements.getNumElements() == 2 &&
-        Elements.getElement(1).isUnspecifiedParameter())
-      isPrototyped = false;
-
-    constructSubprogramArguments(Buffer, Elements);
-
+    // Add arguments.
+    for (unsigned i = 1, N = Elements.getNumElements(); i < N; ++i) {
+      DIDescriptor Ty = Elements.getElement(i);
+      if (Ty.isUnspecifiedParameter()) {
+        createAndAddDIE(dwarf::DW_TAG_unspecified_parameters, Buffer);
+        isPrototyped = false;
+      } else {
+        DIE *Arg = createAndAddDIE(dwarf::DW_TAG_formal_parameter, Buffer);
+        addType(Arg, DIType(Ty));
+        if (DIType(Ty).isArtificial())
+          addFlag(Arg, dwarf::DW_AT_artificial);
+      }
+    }
     // Add prototype flag if we're dealing with a C language and the
     // function has been prototyped.
     uint16_t Language = getLanguage();
@@ -1466,7 +1457,13 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
     // Add arguments. Do not add arguments for subprogram definition. They will
     // be handled while processing variables.
-    constructSubprogramArguments(*SPDie, Args);
+    for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
+      DIE *Arg = createAndAddDIE(dwarf::DW_TAG_formal_parameter, *SPDie);
+      DIType ATy(Args.getElement(i));
+      addType(Arg, ATy);
+      if (ATy.isArtificial())
+        addFlag(Arg, dwarf::DW_AT_artificial);
+    }
   }
 
   if (SP.isArtificial())

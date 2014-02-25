@@ -442,7 +442,7 @@ namespace llvm {
     /// through debug info anchors.
     void retainType(DIType T);
 
-    /// createUnspecifiedParameter - Create unspecified type descriptor
+    /// createUnspecifiedParameter - Create unspeicified type descriptor
     /// for a subroutine type.
     DIDescriptor createUnspecifiedParameter();
 
