@@ -1061,6 +1061,8 @@ void X86_32ABIInfo::rewriteWithInAlloca(CGFunctionInfo &FI) const {
   if (Ret.isIndirect() && !Ret.getInReg()) {
     CanQualType PtrTy = getContext().getPointerType(FI.getReturnType());
     addFieldToArgStruct(FrameFields, StackOffset, Ret, PtrTy);
+    // On Windows, the hidden sret parameter is always returned in eax.
+    Ret.setInAllocaSRet(IsWin32StructABI);
   }
 
   // Skip the 'this' parameter in ecx.

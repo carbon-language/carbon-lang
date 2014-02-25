@@ -14,13 +14,16 @@ A A::foo(A x) {
   return y;
 }
 
-// CHECK: define x86_thiscallcc void @"\01?foo@A@@QAE?AU1@U1@@Z"
+// CHECK-LABEL: define x86_thiscallcc %struct.A* @"\01?foo@A@@QAE?AU1@U1@@Z"
 // CHECK:       (%struct.A* %this, <{ %struct.A*, %struct.A }>* inalloca)
+// CHECK:   getelementptr inbounds <{ %struct.A*, %struct.A }>* %{{.*}}, i32 0, i32 0
+// CHECK:   load %struct.A**
+// CHECK:   ret %struct.A*
 
 int main() {
   A x;
   A y = x.foo(x);
 }
 
-// CHECK: call x86_thiscallcc void @"\01?foo@A@@QAE?AU1@U1@@Z"
+// CHECK: call x86_thiscallcc %struct.A* @"\01?foo@A@@QAE?AU1@U1@@Z"
 // CHECK:       (%struct.A* %{{[^,]*}}, <{ %struct.A*, %struct.A }>* inalloca %{{[^,]*}})

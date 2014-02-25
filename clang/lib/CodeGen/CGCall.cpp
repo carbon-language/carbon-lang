@@ -940,7 +940,15 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
     break;
 
   case ABIArgInfo::InAlloca:
-    resultType = llvm::Type::getVoidTy(getLLVMContext());
+    if (retAI.getInAllocaSRet()) {
+      // sret things on win32 aren't void, they return the sret pointer.
+      QualType ret = FI.getReturnType();
+      llvm::Type *ty = ConvertType(ret);
+      unsigned addressSpace = Context.getTargetAddressSpace(ret);
+      resultType = llvm::PointerType::get(ty, addressSpace);
+    } else {
+      resultType = llvm::Type::getVoidTy(getLLVMContext());
+    }
     break;
 
   case ABIArgInfo::Indirect: {
@@ -1779,7 +1787,17 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
 
   switch (RetAI.getKind()) {
   case ABIArgInfo::InAlloca:
-    // Do nothing; aggregrates get evaluated directly into the destination.
+    // Aggregrates get evaluated directly into the destination.  Sometimes we
+    // need to return the sret value in a register, though.
+    assert(hasAggregateEvaluationKind(RetTy));
+    if (RetAI.getInAllocaSRet()) {
+      llvm::Function::arg_iterator EI = CurFn->arg_end();
+      --EI;
+      llvm::Value *ArgStruct = EI;
+      llvm::Value *SRet =
+          Builder.CreateStructGEP(ArgStruct, RetAI.getInAllocaFieldIndex());
+      RV = Builder.CreateLoad(SRet, "sret");
+    }
     break;
 
   case ABIArgInfo::Indirect: {

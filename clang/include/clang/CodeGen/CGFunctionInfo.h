@@ -191,6 +191,18 @@ public:
     return UIntData;
   }
 
+  /// \brief Return true if this field of an inalloca struct should be returned
+  /// to implement a struct return calling convention.
+  bool getInAllocaSRet() const {
+    assert(TheKind == InAlloca && "Invalid kind!");
+    return BoolData0;
+  }
+
+  void setInAllocaSRet(bool SRet) {
+    assert(TheKind == InAlloca && "Invalid kind!");
+    BoolData0 = SRet;
+  }
+
   void dump() const;
 };
 
