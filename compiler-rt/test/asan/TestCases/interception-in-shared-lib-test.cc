@@ -2,7 +2,7 @@
 
 // RUN: %clangxx_asan -O0 %p/SharedLibs/shared-lib-test-so.cc \
 // RUN:     -shared -o %T/libinterception-in-shared-lib-test.so \
-// RUN:     -fPIC -Wl,--soname,libinterception-in-shared-lib-test.so
+// RUN:     -fPIC
 // RUN: %clangxx_asan -O0 %s -o %t -Wl,-R,\$ORIGIN -L%T -linterception-in-shared-lib-test && \
 // RUN:     not %t 2>&1 | FileCheck %s
 
