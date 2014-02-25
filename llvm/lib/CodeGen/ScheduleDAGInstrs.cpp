@@ -565,10 +565,10 @@ static bool MIsNeedChainEdge(AliasAnalysis *AA, const MachineFrameInfo *MFI,
   int64_t Overlapb = MMOb->getSize() + MMOb->getOffset() - MinOffset;
 
   AliasAnalysis::AliasResult AAResult = AA->alias(
-  AliasAnalysis::Location(MMOa->getValue(), Overlapa,
-                          UseTBAA ? MMOa->getTBAAInfo() : 0),
-  AliasAnalysis::Location(MMOb->getValue(), Overlapb,
-                          UseTBAA ? MMOb->getTBAAInfo() : 0));
+      AliasAnalysis::Location(MMOa->getValue(), Overlapa,
+                              UseTBAA ? MMOa->getTBAAInfo() : 0),
+      AliasAnalysis::Location(MMOb->getValue(), Overlapb,
+                              UseTBAA ? MMOb->getTBAAInfo() : 0));
 
   return (AAResult != AliasAnalysis::NoAlias);
 }
