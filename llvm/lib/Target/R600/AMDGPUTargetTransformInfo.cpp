@@ -110,9 +110,13 @@ void AMDGPUTTI::getUnrollingPreferences(Loop *L,
         // instructions that make it through to the code generator.  allocas
         // require us to use indirect addressing, which is slow and prone to
         // compiler bugs.  If this loop does an address calculation on an
-        // alloca ptr, then we want to unconditionally unroll the loop.  In most
-        // cases, this will make it possible for SROA to eliminate these allocas.
-        UP.Threshold = UINT_MAX;
+        // alloca ptr, then we want to use a higher than normal loop unroll
+	// threshold.  This will give SROA a better chance to eliminate these
+	// allocas.
+	//
+	// Don't use the maximum allowed value here as it will make some
+	// programs way too big.
+        UP.Threshold = 500;
       }
     }
   }
