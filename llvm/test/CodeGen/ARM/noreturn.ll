@@ -43,6 +43,23 @@ entry:
   unreachable
 }
 
+; Test case for uwtable
+define i32 @test4() uwtable {
+; CHECK-LABEL: @test4
+; CHECK: push
+entry:
+  tail call void @overflow() #0
+  unreachable
+}
+
+define i32 @test5() uwtable {
+; CHECK-LABEL: @test5
+; CHECK: push
+entry:
+  tail call void @overflow_with_unwind() #1
+  unreachable
+}
+
 ; Function Attrs: noreturn
 declare void @overflow_with_unwind() #1
 
