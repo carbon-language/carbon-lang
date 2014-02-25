@@ -29,6 +29,8 @@ void Token::dump(raw_ostream &os) const {
   CASE(kw_group)
   CASE(kw_output_format)
   CASE(kw_output_arch)
+  CASE(quotedString)
+  CASE(comma)
   CASE(l_paren)
   CASE(r_paren)
   CASE(unknown)
@@ -67,7 +69,12 @@ bool Lexer::canContinueName(char c) const {
   case '0': case '1': case '2': case '3': case '4': case '5': case '6':
   case '7': case '8': case '9':
   case '_': case '.': case '$': case '/': case '\\': case '~': case '=':
-  case '+': case ',': case '[': case ']': case '*': case '?': case '-':
+  case '+':
+  case '[':
+  case ']':
+  case '*':
+  case '?':
+  case '-':
   case ':':
     return true;
   default:
@@ -94,7 +101,23 @@ void Lexer::lex(Token &tok) {
     tok = Token(_buffer.substr(0, 1), Token::r_paren);
     _buffer = _buffer.drop_front();
     return;
+  case ',':
+    tok = Token(_buffer.substr(0, 1), Token::comma);
+    _buffer = _buffer.drop_front();
+    return;
   default:
+    // Quoted strings ?
+    if ((_buffer[0] == '\"') || (_buffer[0] == '\'')) {
+      char c = _buffer[0];
+      _buffer = _buffer.drop_front();
+      auto quotedStringEnd = _buffer.find(c);
+      if (quotedStringEnd == StringRef::npos || quotedStringEnd == 0)
+        break;
+      StringRef word = _buffer.substr(0, quotedStringEnd);
+      tok = Token(word, Token::quotedString);
+      _buffer = _buffer.drop_front(quotedStringEnd + 1);
+      return;
+    }
     /// keyword or identifer.
     if (!canStartName(_buffer[0]))
       break;
@@ -215,13 +238,26 @@ OutputFormat *Parser::parseOutputFormat() {
   if (!expectAndConsume(Token::l_paren, "expected ("))
     return nullptr;
 
-  if (_tok._kind != Token::identifier) {
-    error(_tok, "Expected identifier in OUTPUT_FORMAT.");
+  if (_tok._kind != Token::quotedString && _tok._kind != Token::identifier) {
+    error(_tok, "Expected identifier/string in OUTPUT_FORMAT.");
     return nullptr;
   }
 
   auto ret = new (_alloc) OutputFormat(_tok._range);
   consumeToken();
+
+  do {
+    if (isNextToken(Token::comma))
+      consumeToken();
+    else
+      break;
+    if (_tok._kind != Token::quotedString && _tok._kind != Token::identifier) {
+      error(_tok, "Expected identifier/string in OUTPUT_FORMAT.");
+      return nullptr;
+    }
+    ret->addOutputFormat(_tok._range);
+    consumeToken();
+  } while (isNextToken(Token::comma));
 
   if (!expectAndConsume(Token::r_paren, "expected )"))
     return nullptr;

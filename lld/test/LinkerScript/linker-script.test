@@ -2,7 +2,7 @@
 */
 
 OUTPUT_ARCH(i386:x86_64)
-OUTPUT_FORMAT(elf64-x86-64)
+OUTPUT_FORMAT("elf64-x86-64", "elf64-x86-64", "elf64-x86-64")
 GROUP ( /lib/x86_64-linux-gnu/libc.so.6 /usr/lib/x86_64-linux-gnu/libc_nonshared.a  AS_NEEDED ( /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ) )
 ENTRY(init)
 
@@ -13,7 +13,11 @@ CHECK: identifier: i386:x86_64
 CHECK: r_paren: )
 CHECK: kw_output_format: OUTPUT_FORMAT
 CHECK: l_paren: (
-CHECK: identifier: elf64-x86-64
+CHECK: quotedString: elf64-x86-64
+CHECK: comma: ,
+CHECK: quotedString: elf64-x86-64
+CHECK: comma: ,
+CHECK: quotedString: elf64-x86-64
 CHECK: r_paren: )
 CHECK: kw_group: GROUP
 CHECK: l_paren: (
@@ -29,7 +33,7 @@ CHECK: l_paren: (
 CHECK: identifier: init
 CHECK: r_paren: )
 CHECK: eof:
-CHECK: OUTPUT_FORMAT(elf64-x86-64)
+CHECK: OUTPUT_FORMAT(elf64-x86-64,elf64-x86-64,elf64-x86-64)
 CHECK: GROUP(/lib/x86_64-linux-gnu/libc.so.6 /usr/lib/x86_64-linux-gnu/libc_nonshared.a AS_NEEDED(/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2))
 CHECK: ENTRY(init)
 */
