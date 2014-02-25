@@ -2275,8 +2275,8 @@ private:
       Value *NewPtr = getAdjustedAllocaPtr(IRB, NewBeginOffset,
                                            V->getType()->getPointerTo());
       NewSI = IRB.CreateAlignedStore(
-          V, NewPtr, getOffsetTypeAlign(
-                         V->getType(), NewBeginOffset - NewAllocaBeginOffset),
+          V, NewPtr, getOffsetTypeAlign(V->getType(),
+                                        NewBeginOffset - NewAllocaBeginOffset),
           SI.isVolatile());
     }
     (void)NewSI;
