@@ -337,7 +337,7 @@ bool TempScopInfo::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfo>();
   SD = &getAnalysis<ScopDetection>();
   AA = &getAnalysis<AliasAnalysis>();
-  TD = &getAnalysis<DataLayout>();
+  TD = &getAnalysis<DataLayoutPass>().getDataLayout();
   ZeroOffset = SE->getConstant(TD->getIntPtrType(F.getContext()), 0);
 
   for (ScopDetection::iterator I = SD->begin(), E = SD->end(); I != E; ++I) {
@@ -351,7 +351,7 @@ bool TempScopInfo::runOnFunction(Function &F) {
 }
 
 void TempScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<DataLayout>();
+  AU.addRequired<DataLayoutPass>();
   AU.addRequiredTransitive<DominatorTreeWrapperPass>();
   AU.addRequiredTransitive<PostDominatorTree>();
   AU.addRequiredTransitive<LoopInfo>();
@@ -387,7 +387,7 @@ INITIALIZE_PASS_DEPENDENCY(LoopInfo);
 INITIALIZE_PASS_DEPENDENCY(PostDominatorTree);
 INITIALIZE_PASS_DEPENDENCY(RegionInfo);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
-INITIALIZE_PASS_DEPENDENCY(DataLayout);
+INITIALIZE_PASS_DEPENDENCY(DataLayoutPass);
 INITIALIZE_PASS_END(TempScopInfo, "polly-analyze-ir",
                     "Polly - Analyse the LLVM-IR in the detected regions",
                     false, false)

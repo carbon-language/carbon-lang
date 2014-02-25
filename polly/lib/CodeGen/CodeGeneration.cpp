@@ -380,7 +380,8 @@ public:
 }
 
 IntegerType *ClastStmtCodeGen::getIntPtrTy() {
-  return P->getAnalysis<DataLayout>().getIntPtrType(Builder.getContext());
+  return P->getAnalysis<DataLayoutPass>().getDataLayout().getIntPtrType(
+      Builder.getContext());
 }
 
 const std::vector<std::string> &ClastStmtCodeGen::getParallelLoops() {
@@ -1054,7 +1055,7 @@ public:
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<ScopDetection>();
     AU.addRequired<ScopInfo>();
-    AU.addRequired<DataLayout>();
+    AU.addRequired<DataLayoutPass>();
     AU.addRequired<LoopInfo>();
 
     AU.addPreserved<CloogInfo>();
@@ -1086,7 +1087,7 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfo);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
 INITIALIZE_PASS_DEPENDENCY(ScopDetection);
-INITIALIZE_PASS_DEPENDENCY(DataLayout);
+INITIALIZE_PASS_DEPENDENCY(DataLayoutPass);
 INITIALIZE_PASS_END(CodeGeneration, "polly-codegen",
                     "Polly - Create LLVM-IR from SCoPs", false, false)
 

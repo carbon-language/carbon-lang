@@ -69,7 +69,7 @@ class PollyIndVarSimplify : public LoopPass {
   LoopInfo *LI;
   ScalarEvolution *SE;
   DominatorTree *DT;
-  DataLayout *TD;
+  const DataLayout *TD;
 
   SmallVector<WeakVH, 16> DeadInsts;
   bool Changed;
@@ -1809,7 +1809,8 @@ bool PollyIndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  TD = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  TD = DLP ? &DLP->getDataLayout() : 0;
 
   DeadInsts.clear();
   Changed = false;

@@ -207,7 +207,8 @@ void OMPGenerator::createCallLoopEndNowait() {
 }
 
 IntegerType *OMPGenerator::getIntPtrTy() {
-  return P->getAnalysis<DataLayout>().getIntPtrType(Builder.getContext());
+  return P->getAnalysis<DataLayoutPass>().getDataLayout().getIntPtrType(
+      Builder.getContext());
 }
 
 Module *OMPGenerator::getModule() {
