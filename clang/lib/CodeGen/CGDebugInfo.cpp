@@ -765,6 +765,8 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   else if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(Ty)) {
     for (unsigned i = 0, e = FPT->getNumParams(); i != e; ++i)
       EltTys.push_back(getOrCreateType(FPT->getParamType(i), Unit));
+    if (FPT->isVariadic())
+      EltTys.push_back(DBuilder.createUnspecifiedParameter());
   }
 
   llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);
@@ -2437,6 +2439,20 @@ llvm::DICompositeType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
     llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(Elts);
     return DBuilder.createSubroutineType(F, EltTypeArray);
   }
+
+  // Variadic function.
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    if (FD->isVariadic()) {
+      SmallVector<llvm::Value *, 16> EltTys;
+      EltTys.push_back(getOrCreateType(FD->getReturnType(), F));
+      if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FnType))
+        for (unsigned i = 0, e = FPT->getNumParams(); i != e; ++i)
+          EltTys.push_back(getOrCreateType(FPT->getParamType(i), F));
+      EltTys.push_back(DBuilder.createUnspecifiedParameter());
+      llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);
+      return DBuilder.createSubroutineType(F, EltTypeArray);
+    }
+
   return llvm::DICompositeType(getOrCreateType(FnType, F));
 }
 
