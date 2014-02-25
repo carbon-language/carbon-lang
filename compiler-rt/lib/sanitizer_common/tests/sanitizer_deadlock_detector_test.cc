@@ -281,4 +281,34 @@ TEST(DeadlockDetector, MultipleEpochsTest) {
   RunMultipleEpochsTest<BV4>();
 }
 
+template <class BV>
+void RunCorrectEpochFlush() {
+  ScopedDD<BV> sdd;
+  DeadlockDetector<BV> &d = *sdd.dp;
+  DeadlockDetectorTLS<BV> &dtls = sdd.dtls;
+  vector<uptr> locks1;
+  for (uptr i = 0; i < d.size(); i++)
+    locks1.push_back(d.newNode(i));
+  EXPECT_EQ(d.testOnlyGetEpoch(), d.size());
+  d.onLock(&dtls, locks1[3]);
+  d.onLock(&dtls, locks1[4]);
+  d.onLock(&dtls, locks1[5]);
 
+  // We have a new epoch, old locks in dtls will have to be forgotten.
+  uptr l0 = d.newNode(0);
+  EXPECT_EQ(d.testOnlyGetEpoch(), d.size() * 2);
+  uptr l1 = d.newNode(0);
+  EXPECT_EQ(d.testOnlyGetEpoch(), d.size() * 2);
+  d.onLock(&dtls, l0);
+  d.onLock(&dtls, l1);
+  EXPECT_TRUE(d.testOnlyHasEdge(0, 1));
+  EXPECT_FALSE(d.testOnlyHasEdge(1, 0));
+  EXPECT_FALSE(d.testOnlyHasEdge(3, 0));
+  EXPECT_FALSE(d.testOnlyHasEdge(4, 0));
+  EXPECT_FALSE(d.testOnlyHasEdge(5, 0));
+}
+
+TEST(DeadlockDetector, CorrectEpochFlush) {
+  RunCorrectEpochFlush<BV1>();
+  RunCorrectEpochFlush<BV2>();
+}

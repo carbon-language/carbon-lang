@@ -22,10 +22,11 @@
 
 namespace __tsan {
 
-
-static void EnsureDeadlockDetectorID(Context *ctx, SyncVar *s) {
+static void EnsureDeadlockDetectorID(Context *ctx, ThreadState *thr,
+                                     SyncVar *s) {
   if (!ctx->dd.nodeBelongsToCurrentEpoch(s->deadlock_detector_id))
     s->deadlock_detector_id = ctx->dd.newNode(reinterpret_cast<uptr>(s));
+  ctx->dd.ensureCurrentEpoch(&thr->deadlock_detector_tls);
 }
 
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
@@ -121,7 +122,7 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
   thr->mset.Add(s->GetId(), true, thr->fast_state.epoch());
   if (common_flags()->detect_deadlocks) {
     Lock lk(&ctx->dd_mtx);
-    EnsureDeadlockDetectorID(ctx, s);
+    EnsureDeadlockDetectorID(ctx, thr, s);
     if (ctx->dd.isHeld(&thr->deadlock_detector_tls, s->deadlock_detector_id)) {
       // FIXME: add tests, handle the real recursive locks.
       Printf("ThreadSanitizer: reursive-lock\n");
@@ -184,7 +185,7 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
   thr->mset.Del(s->GetId(), true);
   if (common_flags()->detect_deadlocks) {
     Lock lk(&ctx->dd_mtx);
-    EnsureDeadlockDetectorID(ctx, s);
+    EnsureDeadlockDetectorID(ctx, thr, s);
     // Printf("MutexUnlock: %zx\n", s->deadlock_detector_id);
     ctx->dd.onUnlock(&thr->deadlock_detector_tls,
                                  s->deadlock_detector_id);

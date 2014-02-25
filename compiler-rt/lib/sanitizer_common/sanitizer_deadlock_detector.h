@@ -42,27 +42,28 @@ class DeadlockDetectorTLS {
     epoch_ = 0;
   }
 
+  void ensureCurrentEpoch(uptr current_epoch) {
+    if (epoch_ == current_epoch) return;
+    bv_.clear();
+    epoch_ = current_epoch;
+  }
+
   void addLock(uptr lock_id, uptr current_epoch) {
     // Printf("addLock: %zx %zx\n", lock_id, current_epoch);
-    CHECK_LE(epoch_, current_epoch);
-    if (current_epoch != epoch_)  {
-      bv_.clear();
-      epoch_ = current_epoch;
-    }
+    CHECK_EQ(epoch_, current_epoch);
     CHECK(bv_.setBit(lock_id));
   }
 
   void removeLock(uptr lock_id, uptr current_epoch) {
     // Printf("remLock: %zx %zx\n", lock_id, current_epoch);
-    CHECK_LE(epoch_, current_epoch);
-    if (current_epoch != epoch_)  {
-      bv_.clear();
-      epoch_ = current_epoch;
-    }
+    CHECK_EQ(epoch_, current_epoch);
     bv_.clearBit(lock_id);  // May already be cleared due to epoch update.
   }
 
-  const BV &getLocks() const { return bv_; }
+  const BV &getLocks(uptr current_epoch) const {
+    CHECK_EQ(epoch_, current_epoch);
+    return bv_;
+  }
 
  private:
   BV bv_;
@@ -127,12 +128,17 @@ class DeadlockDetector {
     g_.removeEdgesFrom(idx);
   }
 
-  // Handle the lock event, return true if there is a cycle.
+  void ensureCurrentEpoch(DeadlockDetectorTLS<BV> *dtls) {
+    dtls->ensureCurrentEpoch(current_epoch_);
+  }
+
+  // Handles the lock event, returns true if there is a cycle.
   // FIXME: handle RW locks, recusive locks, etc.
   bool onLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
+    ensureCurrentEpoch(dtls);
     uptr cur_idx = nodeToIndex(cur_node);
-    bool is_reachable = g_.isReachable(cur_idx, dtls->getLocks());
-    g_.addEdges(dtls->getLocks(), cur_idx);
+    bool is_reachable = g_.isReachable(cur_idx, dtls->getLocks(current_epoch_));
+    g_.addEdges(dtls->getLocks(current_epoch_), cur_idx);
     dtls->addLock(cur_idx, current_epoch_);
     return is_reachable;
   }
@@ -142,7 +148,7 @@ class DeadlockDetector {
   // or 0 on failure.
   uptr findPathToHeldLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node,
                           uptr *path, uptr path_size) {
-    tmp_bv_.copyFrom(dtls->getLocks());
+    tmp_bv_.copyFrom(dtls->getLocks(current_epoch_));
     uptr idx = nodeToIndex(cur_node);
     CHECK(tmp_bv_.clearBit(idx));
     uptr res = g_.findShortestPath(idx, tmp_bv_, path, path_size);
@@ -155,14 +161,17 @@ class DeadlockDetector {
 
   // Handle the unlock event.
   void onUnlock(DeadlockDetectorTLS<BV> *dtls, uptr node) {
+    ensureCurrentEpoch(dtls);
     dtls->removeLock(nodeToIndex(node), current_epoch_);
   }
 
   bool isHeld(DeadlockDetectorTLS<BV> *dtls, uptr node) const {
-    return dtls->getLocks().getBit(nodeToIndex(node));
+    return dtls->getLocks(current_epoch_).getBit(nodeToIndex(node));
   }
 
   uptr testOnlyGetEpoch() const { return current_epoch_; }
+  // idx1 and idx2 are raw indices to g_, not lock IDs.
+  bool testOnlyHasEdge(uptr idx1, uptr idx2) { return g_.hasEdge(idx1, idx2); }
 
   void Print() {
     for (uptr from = 0; from < size(); from++)
