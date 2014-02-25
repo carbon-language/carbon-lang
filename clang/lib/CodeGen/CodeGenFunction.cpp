@@ -518,7 +518,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
 
   // Pass inline keyword to optimizer if it appears explicitly on any
   // declaration. Also, in the case of -fno-inline attach NoInline
-  // attribute to all function that are not marked AlwaysInline or ForceInline.
+  // attribute to all function that are not marked AlwaysInline.
   if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
     if (!CGM.getCodeGenOpts().NoInline) {
       for (FunctionDecl::redecl_iterator RI = FD->redecls_begin(),
