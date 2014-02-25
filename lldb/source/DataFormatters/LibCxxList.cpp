@@ -33,20 +33,20 @@ public:
     ListEntry (const ListEntry& rhs) : m_entry_sp(rhs.m_entry_sp) {}
     ListEntry (ValueObject* entry) : m_entry_sp(entry ? entry->GetSP() : ValueObjectSP()) {}
     
-    ValueObjectSP
+    ListEntry
     next ()
     {
         if (!m_entry_sp)
-            return m_entry_sp;
-        return m_entry_sp->GetChildMemberWithName(ConstString("__next_"), true);
+            return ListEntry();
+        return ListEntry(m_entry_sp->GetChildMemberWithName(ConstString("__next_"), true));
     }
     
-    ValueObjectSP
+    ListEntry
     prev ()
     {
         if (!m_entry_sp)
-            return m_entry_sp;
-        return m_entry_sp->GetChildMemberWithName(ConstString("__prev_"), true);
+            return ListEntry();
+        return ListEntry(m_entry_sp->GetChildMemberWithName(ConstString("__prev_"), true));
     }
     
     uint64_t
@@ -61,6 +61,11 @@ public:
     null()
     {
         return (value() == 0);
+    }
+    
+    explicit operator bool ()
+    {
+        return GetEntry().get() != nullptr && null() == false;
     }
     
     ValueObjectSP
@@ -130,13 +135,13 @@ protected:
     void
     next ()
     {
-        m_entry.SetEntry(m_entry.next());
+        m_entry = m_entry.next();
     }
     
     void
     prev ()
     {
-        m_entry.SetEntry(m_entry.prev());
+        m_entry = m_entry.prev();
     }
 private:
     ListEntry m_entry;
@@ -161,17 +166,24 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::HasLoop()
 {
     if (g_use_loop_detect == false)
         return false;
+    // don't bother checking for a loop if we won't actually need to jump nodes
+    if (m_count < 2)
+        return false;
+    auto steps_left = m_count;
     ListEntry slow(m_head);
-    ListEntry fast1(m_head);
-    ListEntry fast2(m_head);
-    while (slow.next() && slow.next()->GetValueAsUnsigned(0) != m_node_address)
+    ListEntry fast(m_head);
+    while (steps_left-- > 0)
     {
-        auto slow_value = slow.value();
-        fast1.SetEntry(fast2.next());
-        fast2.SetEntry(fast1.next());
-        if (fast1.value() == slow_value || fast2.value() == slow_value)
+        slow = slow.next();
+        fast = fast.next();
+        if (fast.next())
+            fast = fast.next().next();
+        else
+            fast = nullptr;
+        if (!slow || !fast)
+            return false;
+        if (slow == fast)
             return true;
-        slow.SetEntry(slow.next());
     }
     return false;
 }
@@ -212,10 +224,10 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::CalculateNumChildren (
             return 0;
         uint64_t size = 2;
         ListEntry current(m_head);
-        while (current.next() && current.next()->GetValueAsUnsigned(0) != m_node_address)
+        while (current.next() && current.next().value() != m_node_address)
         {
             size++;
-            current.SetEntry(current.next());
+            current = current.next();
             if (size > m_list_capping_size)
                 break;
         }
