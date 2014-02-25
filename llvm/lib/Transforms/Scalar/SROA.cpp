@@ -51,10 +51,17 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/TimeValue.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
+
+#if __cplusplus >= 201103L && !defined(NDEBUG)
+// We only use this for a debug check in C++11
+#include <random>
+#endif
+
 using namespace llvm;
 
 STATISTIC(NumAllocasAnalyzed, "Number of allocas analyzed for replacement");
@@ -72,6 +79,11 @@ STATISTIC(NumVectorized, "Number of vectorized aggregates");
 /// forming SSA values through the SSAUpdater infrastructure.
 static cl::opt<bool>
 ForceSSAUpdater("force-ssa-updater", cl::init(false), cl::Hidden);
+
+/// Hidden option to enable randomly shuffling the slices to help uncover
+/// instability in their order.
+static cl::opt<bool> SROARandomShuffleSlices("sroa-random-shuffle-slices",
+                                             cl::init(false), cl::Hidden);
 
 namespace {
 /// \brief A custom IRBuilder inserter which prefixes all names if they are
@@ -689,6 +701,13 @@ AllocaSlices::AllocaSlices(const DataLayout &DL, AllocaInst &AI)
   Slices.erase(std::remove_if(Slices.begin(), Slices.end(),
                               std::mem_fun_ref(&Slice::isDead)),
                Slices.end());
+
+#if __cplusplus >= 201103L && !defined(NDEBUG)
+  if (SROARandomShuffleSlices) {
+    std::mt19937 MT(static_cast<unsigned>(sys::TimeValue::now().msec()));
+    std::shuffle(Slices.begin(), Slices.end(), MT);
+  }
+#endif
 
   // Sort the uses. This arranges for the offsets to be in ascending order,
   // and the sizes to be in descending order.
