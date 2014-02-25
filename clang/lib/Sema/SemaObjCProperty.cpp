@@ -1816,7 +1816,6 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
       if (!LookedUpGetterSetter) {
         GetterMethod = IMPDecl->getInstanceMethod(Property->getGetterName());
         SetterMethod = IMPDecl->getInstanceMethod(Property->getSetterName());
-        LookedUpGetterSetter = true;
       }
       if ((GetterMethod && !SetterMethod) || (!GetterMethod && SetterMethod)) {
         SourceLocation MethodLoc =
