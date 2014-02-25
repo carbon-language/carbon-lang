@@ -70,9 +70,9 @@ static bool decodeBase64StringEntry(StringRef Str, uint32_t &Result) {
     else if (Str[0] >= '0' && Str[0] <= '9') // 52..61
       CharVal = Str[0] - '0' + 52;
     else if (Str[0] == '+') // 62
-      CharVal = Str[0] - '+' + 62;
+      CharVal = 62;
     else if (Str[0] == '/') // 63
-      CharVal = Str[0] - '/' + 63;
+      CharVal = 63;
     else
       return true;
 
