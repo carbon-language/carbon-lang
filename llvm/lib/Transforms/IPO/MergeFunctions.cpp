@@ -606,7 +606,7 @@ private:
   FnSetType FnSet;
 
   /// DataLayout for more accurate GEP comparisons. May be NULL.
-  DataLayout *DL;
+  const DataLayout *DL;
 
   /// Whether or not the target supports global aliases.
   bool HasGlobalAliases;
