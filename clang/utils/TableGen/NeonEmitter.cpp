@@ -1436,7 +1436,7 @@ static void GenerateChecksForIntrinsic(const std::string &Name,
 
 /// UseMacro - Examine the prototype string to determine if the intrinsic
 /// should be defined as a preprocessor macro instead of an inline function.
-static bool UseMacro(const std::string &proto) {
+static bool UseMacro(const std::string &proto, StringRef typestr) {
   // If this builtin takes an immediate argument, we need to #define it rather
   // than use a standard declaration, so that SemaChecking can range check
   // the immediate passed by the user.
@@ -1447,6 +1447,12 @@ static bool UseMacro(const std::string &proto) {
   // from the pointer type.
   if (proto.find('p') != std::string::npos ||
       proto.find('c') != std::string::npos)
+    return true;
+
+  // It is not permitted to pass or return an __fp16 by value, so intrinsics
+  // taking a scalar float16_t must be implemented as macros.
+  if (typestr.find('h') != std::string::npos &&
+      proto.find('s') != std::string::npos)
     return true;
 
   return false;
@@ -1463,7 +1469,7 @@ static bool MacroArgUsedDirectly(const std::string &proto, unsigned i) {
 // Generate the string "(argtype a, argtype b, ...)"
 static std::string GenArgs(const std::string &proto, StringRef typestr,
                            const std::string &name) {
-  bool define = UseMacro(proto);
+  bool define = UseMacro(proto, typestr);
   char arg = 'a';
 
   std::string s;
@@ -1642,7 +1648,7 @@ static std::string GenOpString(const std::string &name, OpKind op,
                                const std::string &proto, StringRef typestr) {
   bool quad;
   unsigned nElts = GetNumElements(typestr, quad);
-  bool define = UseMacro(proto);
+  bool define = UseMacro(proto, typestr);
 
   std::string ts = TypeString(proto[0], typestr);
   std::string s;
@@ -2386,7 +2392,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
   // sret-like argument.
   bool sret = IsMultiVecProto(proto[0]);
 
-  bool define = UseMacro(proto);
+  bool define = UseMacro(proto, typestr);
 
   // Check if the prototype has a scalar operand with the type of the vector
   // elements.  If not, bitcasting the args will take care of arg checking.
@@ -2531,7 +2537,7 @@ static std::string GenIntrinsic(const std::string &name,
                                 StringRef outTypeStr, StringRef inTypeStr,
                                 OpKind kind, ClassKind classKind) {
   assert(!proto.empty() && "");
-  bool define = UseMacro(proto) && kind != OpUnavailable;
+  bool define = UseMacro(proto, outTypeStr) && kind != OpUnavailable;
   std::string s;
 
   // static always inline + return type

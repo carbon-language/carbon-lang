@@ -410,9 +410,11 @@ def VCREATE : NoTestOpInst<"vcreate", "dl", "csihfUcUsUiUlPcPsl", OP_CAST>;
 // E.3.19 Set all lanes to same value
 let InstName = "vmov" in {
 def VDUP_N   : WOpInst<"vdup_n", "ds",
-                       "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl", OP_DUP>;
+                       "UcUsUicsiPcPshfQUcQUsQUiQcQsQiQPcQPsQhQflUlQlQUl",
+                       OP_DUP>;
 def VMOV_N   : WOpInst<"vmov_n", "ds",
-                       "UcUsUicsiPcPsfQUcQUsQUiQcQsQiQPcQPsQflUlQlQUl", OP_DUP>;
+                       "UcUsUicsiPcPshfQUcQUsQUiQcQsQiQPcQPsQhQflUlQlQUl",
+                       OP_DUP>;
 }
 let InstName = "" in
 def VDUP_LANE: WOpInst<"vdup_lane", "dgi",
