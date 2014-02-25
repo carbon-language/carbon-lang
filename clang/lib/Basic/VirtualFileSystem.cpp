@@ -227,9 +227,6 @@ class Entry {
 
 public:
   virtual ~Entry();
-#if LLVM_HAS_RVALUE_REFERENCES
-  Entry(EntryKind K, std::string Name) : Kind(K), Name(std::move(Name)) {}
-#endif
   Entry(EntryKind K, StringRef Name) : Kind(K), Name(Name) {}
   StringRef getName() const { return Name; }
   EntryKind getKind() const { return Kind; }
@@ -242,8 +239,8 @@ class DirectoryEntry : public Entry {
 public:
   virtual ~DirectoryEntry();
 #if LLVM_HAS_RVALUE_REFERENCES
-  DirectoryEntry(std::string Name, std::vector<Entry *> Contents, Status S)
-      : Entry(EK_Directory, std::move(Name)), Contents(std::move(Contents)),
+  DirectoryEntry(StringRef Name, std::vector<Entry *> Contents, Status S)
+      : Entry(EK_Directory, Name), Contents(std::move(Contents)),
         S(std::move(S)) {}
 #endif
   DirectoryEntry(StringRef Name, ArrayRef<Entry *> Contents, const Status &S)
@@ -259,11 +256,6 @@ class FileEntry : public Entry {
   std::string ExternalContentsPath;
 
 public:
-#if LLVM_HAS_RVALUE_REFERENCES
-  FileEntry(std::string Name, std::string ExternalContentsPath)
-      : Entry(EK_File, std::move(Name)),
-        ExternalContentsPath(std::move(ExternalContentsPath)) {}
-#endif
   FileEntry(StringRef Name, StringRef ExternalContentsPath)
       : Entry(EK_File, Name), ExternalContentsPath(ExternalContentsPath) {}
   StringRef getExternalContentsPath() const { return ExternalContentsPath; }
@@ -318,8 +310,9 @@ public:
 ///
 /// and inherit their attributes from the external contents.
 ///
-/// In both cases, the 'name' field must be a single path component (containing
-/// no separators).
+/// In both cases, the 'name' field may contain multiple path components (e.g.
+/// /path/to/file). However, any directory that contains more than one child
+/// must be uniquely represented by a directory entry.
 class VFSFromYAML : public vfs::FileSystem {
   std::vector<Entry *> Roots; ///< The root(s) of the virtual file system.
   /// \brief The file system to use for external references.
@@ -482,10 +475,6 @@ class VFSFromYAMLParser {
         if (!parseScalarString(I->getValue(), Value, Buffer))
           return NULL;
         Name = Value;
-        if (sys::path::has_parent_path(Name)) {
-          error(I->getValue(), "unexpected path separator in name");
-          return NULL;
-        }
       } else if (Key == "type") {
         if (!parseScalarString(I->getValue(), Value, Buffer))
           return NULL;
@@ -546,16 +535,38 @@ class VFSFromYAMLParser {
     if (!checkMissingKeys(N, Keys))
       return NULL;
 
+    // Remove trailing slash(es)
+    StringRef Trimmed(Name);
+    while (Trimmed.size() > 1 && sys::path::is_separator(Trimmed.back()))
+      Trimmed = Trimmed.slice(0, Trimmed.size()-1);
+    // Get the last component
+    StringRef LastComponent = sys::path::filename(Trimmed);
+
+    Entry *Result = 0;
     switch (Kind) {
     case EK_File:
-      return new FileEntry(llvm_move(Name), llvm_move(ExternalContentsPath));
+      Result = new FileEntry(LastComponent, llvm_move(ExternalContentsPath));
+      break;
     case EK_Directory:
-      return new DirectoryEntry(
-          llvm_move(Name), llvm_move(EntryArrayContents),
+      Result = new DirectoryEntry(LastComponent, llvm_move(EntryArrayContents),
+          Status("", "", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0,
+                 0, file_type::directory_file, sys::fs::all_all));
+      break;
+    }
+
+    StringRef Parent = sys::path::parent_path(Trimmed);
+    if (Parent.empty())
+      return Result;
+
+    // if 'name' contains multiple components, create implicit directory entries
+    for (sys::path::reverse_iterator I = sys::path::rbegin(Parent),
+                                     E = sys::path::rend(Parent);
+         I != E; ++I) {
+      Result = new DirectoryEntry(*I, Result,
           Status("", "", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0,
                  0, file_type::directory_file, sys::fs::all_all));
     }
-    llvm_unreachable("unknown EntryKind in switch");
+    return Result;
   }
 
 public:

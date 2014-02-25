@@ -466,3 +466,64 @@ TEST_F(VFSFromYAMLTest, IllegalVFSFile) {
   EXPECT_EQ(NULL, FS.getPtr());
   EXPECT_EQ(24, NumDiagnostics);
 }
+
+TEST_F(VFSFromYAMLTest, MultiComponentPath) {
+  IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
+  Lower->addRegularFile("/other");
+
+  // file in roots
+  IntrusiveRefCntPtr<vfs::FileSystem> FS = getFromYAMLString(
+      "{ 'roots': [\n"
+      "  { 'type': 'file', 'name': '/path/to/file',\n"
+      "    'external-contents': '/other' }]\n"
+      "}", Lower);
+  ASSERT_TRUE(NULL != FS.getPtr());
+  EXPECT_EQ(errc::success, FS->status("/path/to/file").getError());
+  EXPECT_EQ(errc::success, FS->status("/path/to").getError());
+  EXPECT_EQ(errc::success, FS->status("/path").getError());
+  EXPECT_EQ(errc::success, FS->status("/").getError());
+
+  // at the start
+  FS = getFromYAMLString(
+      "{ 'roots': [\n"
+      "  { 'type': 'directory', 'name': '/path/to',\n"
+      "    'contents': [ { 'type': 'file', 'name': 'file',\n"
+      "                    'external-contents': '/other' }]}]\n"
+      "}", Lower);
+  ASSERT_TRUE(NULL != FS.getPtr());
+  EXPECT_EQ(errc::success, FS->status("/path/to/file").getError());
+  EXPECT_EQ(errc::success, FS->status("/path/to").getError());
+  EXPECT_EQ(errc::success, FS->status("/path").getError());
+  EXPECT_EQ(errc::success, FS->status("/").getError());
+
+  // at the end
+  FS = getFromYAMLString(
+      "{ 'roots': [\n"
+      "  { 'type': 'directory', 'name': '/',\n"
+      "    'contents': [ { 'type': 'file', 'name': 'path/to/file',\n"
+      "                    'external-contents': '/other' }]}]\n"
+      "}", Lower);
+  ASSERT_TRUE(NULL != FS.getPtr());
+  EXPECT_EQ(errc::success, FS->status("/path/to/file").getError());
+  EXPECT_EQ(errc::success, FS->status("/path/to").getError());
+  EXPECT_EQ(errc::success, FS->status("/path").getError());
+  EXPECT_EQ(errc::success, FS->status("/").getError());
+}
+
+TEST_F(VFSFromYAMLTest, TrailingSlashes) {
+  IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
+  Lower->addRegularFile("/other");
+
+  // file in roots
+  IntrusiveRefCntPtr<vfs::FileSystem> FS = getFromYAMLString(
+      "{ 'roots': [\n"
+      "  { 'type': 'directory', 'name': '/path/to////',\n"
+      "    'contents': [ { 'type': 'file', 'name': 'file',\n"
+      "                    'external-contents': '/other' }]}]\n"
+      "}", Lower);
+  ASSERT_TRUE(NULL != FS.getPtr());
+  EXPECT_EQ(errc::success, FS->status("/path/to/file").getError());
+  EXPECT_EQ(errc::success, FS->status("/path/to").getError());
+  EXPECT_EQ(errc::success, FS->status("/path").getError());
+  EXPECT_EQ(errc::success, FS->status("/").getError());
+}
