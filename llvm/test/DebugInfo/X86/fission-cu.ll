@@ -1,6 +1,7 @@
 ; RUN: llc -split-dwarf=Enable -generate-cu-hash -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
 ; RUN: llvm-dwarfdump -debug-dump=all %t | FileCheck %s
 ; RUN: llvm-readobj --relocations %t | FileCheck --check-prefix=OBJ %s
+; RUN: llvm-objdump -h %t | FileCheck --check-prefix=HDR %s
 
 @a = common global i32 0, align 4
 
@@ -110,5 +111,7 @@
 ; OBJ-NEXT: R_X86_64_32 .debug_addr
 ; OBJ-NEXT: R_X86_64_32 .debug_str
 ; OBJ-NEXT: }
+
+; HDR-NOT: .debug_aranges
 
 !9 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

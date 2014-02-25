@@ -1941,7 +1941,8 @@ void DwarfDebug::emitSectionLabels() {
   if (useSplitDwarf())
     DwarfAbbrevDWOSectionSym = emitSectionSym(
         Asm, TLOF.getDwarfAbbrevDWOSection(), "section_abbrev_dwo");
-  emitSectionSym(Asm, TLOF.getDwarfARangesSection());
+  if (GenerateARangeSection)
+    emitSectionSym(Asm, TLOF.getDwarfARangesSection());
 
   DwarfLineSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
