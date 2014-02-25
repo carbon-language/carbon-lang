@@ -48,7 +48,8 @@ namespace {
       const DominatorTreeWrapperPass *DTWP =
           getAnalysisIfAvailable<DominatorTreeWrapperPass>();
       const DominatorTree *DT = DTWP ? &DTWP->getDomTree() : 0;
-      const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
+      DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+      const DataLayout *DL = DLP ? &DLP->getDataLayout() : 0;
       const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
       SmallPtrSet<const Instruction*, 8> S1, S2, *ToSimplify = &S1, *Next = &S2;
       bool Changed = false;

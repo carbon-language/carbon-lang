@@ -172,7 +172,8 @@ bool CFGSimplifyPass::runOnFunction(Function &F) {
     return false;
 
   const TargetTransformInfo &TTI = getAnalysis<TargetTransformInfo>();
-  const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  const DataLayout *DL = DLP ? &DLP->getDataLayout() : 0;
   bool EverChanged = removeUnreachableBlocks(F);
   EverChanged |= mergeEmptyReturnBlocks(F);
   EverChanged |= iterativelySimplifyCFG(F, TTI, DL);

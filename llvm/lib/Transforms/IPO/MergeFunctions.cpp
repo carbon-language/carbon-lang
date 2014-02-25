@@ -623,7 +623,8 @@ ModulePass *llvm::createMergeFunctionsPass() {
 
 bool MergeFunctions::runOnModule(Module &M) {
   bool Changed = false;
-  DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage())

@@ -7376,7 +7376,8 @@ ScalarEvolution::ScalarEvolution()
 bool ScalarEvolution::runOnFunction(Function &F) {
   this->F = &F;
   LI = &getAnalysis<LoopInfo>();
-  DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
   TLI = &getAnalysis<TargetLibraryInfo>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   return false;

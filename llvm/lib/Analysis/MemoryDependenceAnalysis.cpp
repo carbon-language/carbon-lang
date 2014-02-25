@@ -87,7 +87,8 @@ void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool MemoryDependenceAnalysis::runOnFunction(Function &) {
   AA = &getAnalysis<AliasAnalysis>();
-  DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DT = DTWP ? &DTWP->getDomTree() : 0;

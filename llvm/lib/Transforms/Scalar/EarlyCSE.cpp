@@ -557,7 +557,8 @@ bool EarlyCSE::runOnFunction(Function &F) {
 
   std::vector<StackNode *> nodesToProcess;
 
-  DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
   TLI = &getAnalysis<TargetLibraryInfo>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 

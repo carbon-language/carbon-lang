@@ -234,7 +234,8 @@ bool IVUsers::runOnLoop(Loop *l, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolution>();
-  DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
 
   // Find all uses of induction variables in this loop, and categorize
   // them by stride.  Start by finding all of the PHI nodes in the header for

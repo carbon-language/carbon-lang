@@ -437,7 +437,7 @@ int main(int argc, char **argv) {
     DL = new DataLayout(DefaultDataLayout);
 
   if (DL)
-    Passes.add(DL);
+    Passes.add(new DataLayoutPass(*DL));
 
   Triple ModuleTriple(M->getTargetTriple());
   TargetMachine *Machine = 0;
@@ -453,7 +453,7 @@ int main(int argc, char **argv) {
   if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {
     FPasses.reset(new FunctionPassManager(M.get()));
     if (DL)
-      FPasses->add(new DataLayout(*DL));
+      FPasses->add(new DataLayoutPass(*DL));
     if (TM.get())
       TM->addAnalysisPasses(*FPasses);
 

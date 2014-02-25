@@ -171,7 +171,8 @@ bool PPCCTRLoops::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
   LibInfo = getAnalysisIfAvailable<TargetLibraryInfo>();
 
   bool MadeChange = false;

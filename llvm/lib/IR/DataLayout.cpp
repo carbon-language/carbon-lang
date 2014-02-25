@@ -35,9 +35,8 @@ using namespace llvm;
 
 // Handle the Pass registration stuff necessary to use DataLayout's.
 
-// Register the default SparcV9 implementation...
-INITIALIZE_PASS(DataLayout, "datalayout", "Data Layout", false, true)
-char DataLayout::ID = 0;
+INITIALIZE_PASS(DataLayoutPass, "datalayout", "Data Layout", false, true)
+char DataLayoutPass::ID = 0;
 
 //===----------------------------------------------------------------------===//
 // Support for StructLayout
@@ -178,8 +177,6 @@ static const LayoutAlignElem DefaultAlignments[] = {
 };
 
 void DataLayout::init(StringRef Desc) {
-  initializeDataLayoutPass(*PassRegistry::getPassRegistry());
-
   LayoutMap = 0;
   LittleEndian = false;
   StackNaturalAlign = 0;
@@ -347,19 +344,7 @@ void DataLayout::parseSpecifier(StringRef Desc) {
   }
 }
 
-/// Default ctor.
-///
-/// @note This has to exist, because this is a pass, but it should never be
-/// used.
-DataLayout::DataLayout() : ImmutablePass(ID) {
-  report_fatal_error("Bad DataLayout ctor used.  "
-                     "Tool did not specify a DataLayout to use?");
-}
-
-DataLayout::DataLayout(const Module *M)
-  : ImmutablePass(ID) {
-  init(M->getDataLayout());
-}
+DataLayout::DataLayout(const Module *M) { init(M->getDataLayout()); }
 
 void
 DataLayout::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
@@ -480,12 +465,6 @@ public:
 
 DataLayout::~DataLayout() {
   delete static_cast<StructLayoutMap*>(LayoutMap);
-}
-
-bool DataLayout::doFinalization(Module &M) {
-  delete static_cast<StructLayoutMap*>(LayoutMap);
-  LayoutMap = 0;
-  return false;
 }
 
 const StructLayout *DataLayout::getStructLayout(StructType *Ty) const {
@@ -777,4 +756,24 @@ unsigned DataLayout::getPreferredAlignment(const GlobalVariable *GV) const {
 /// requested alignment (if the global has one).
 unsigned DataLayout::getPreferredAlignmentLog(const GlobalVariable *GV) const {
   return Log2_32(getPreferredAlignment(GV));
+}
+
+DataLayoutPass::DataLayoutPass() : ImmutablePass(ID), DL("") {
+  report_fatal_error("Bad DataLayoutPass ctor used. Tool did not specify a "
+                     "DataLayout to use?");
+}
+
+DataLayoutPass::~DataLayoutPass() {}
+
+DataLayoutPass::DataLayoutPass(const DataLayout &DL)
+    : ImmutablePass(ID), DL(DL) {
+  initializeDataLayoutPassPass(*PassRegistry::getPassRegistry());
+}
+
+DataLayoutPass::DataLayoutPass(StringRef Str) : ImmutablePass(ID), DL(Str) {
+  initializeDataLayoutPassPass(*PassRegistry::getPassRegistry());
+}
+
+DataLayoutPass::DataLayoutPass(const Module *M) : ImmutablePass(ID), DL(M) {
+  initializeDataLayoutPassPass(*PassRegistry::getPassRegistry());
 }

@@ -1022,7 +1022,8 @@ struct LoopVectorize : public FunctionPass {
 
   virtual bool runOnFunction(Function &F) {
     SE = &getAnalysis<ScalarEvolution>();
-    DL = getAnalysisIfAvailable<DataLayout>();
+    DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+    DL = DLP ? &DLP->getDataLayout() : 0;
     LI = &getAnalysis<LoopInfo>();
     TTI = &getAnalysis<TargetTransformInfo>();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();

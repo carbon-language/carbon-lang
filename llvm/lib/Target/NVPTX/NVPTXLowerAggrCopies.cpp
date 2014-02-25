@@ -104,7 +104,7 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
   SmallVector<MemTransferInst *, 4> aggrMemcpys;
   SmallVector<MemSetInst *, 4> aggrMemsets;
 
-  const DataLayout *DL = &getAnalysis<DataLayout>();
+  const DataLayout *DL = &getAnalysis<DataLayoutPass>().getDataLayout();
   LLVMContext &Context = F.getParent()->getContext();
 
   //

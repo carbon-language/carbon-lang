@@ -1013,7 +1013,8 @@ bool LazyValueInfo::runOnFunction(Function &F) {
   if (PImpl)
     getCache(PImpl).clear();
 
-  DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
   TLI = &getAnalysis<TargetLibraryInfo>();
 
   // Fully lazy.

@@ -1141,7 +1141,8 @@ bool LoopReroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
   SE = &getAnalysis<ScalarEvolution>();
   TLI = &getAnalysis<TargetLibraryInfo>();
-  DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
   BasicBlock *Header = L->getHeader();

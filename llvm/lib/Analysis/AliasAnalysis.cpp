@@ -472,7 +472,8 @@ AliasAnalysis::~AliasAnalysis() {}
 /// AliasAnalysis interface before any other methods are called.
 ///
 void AliasAnalysis::InitializeAliasAnalysis(Pass *P) {
-  DL = P->getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = P->getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
   TLI = P->getAnalysisIfAvailable<TargetLibraryInfo>();
   AA = &P->getAnalysis<AliasAnalysis>();
 }

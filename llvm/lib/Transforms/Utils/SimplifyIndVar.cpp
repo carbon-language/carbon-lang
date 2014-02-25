@@ -60,9 +60,10 @@ namespace {
       L(Loop),
       LI(LPM->getAnalysisIfAvailable<LoopInfo>()),
       SE(SE),
-      DL(LPM->getAnalysisIfAvailable<DataLayout>()),
       DeadInsts(Dead),
       Changed(false) {
+      DataLayoutPass *DLP = LPM->getAnalysisIfAvailable<DataLayoutPass>();
+      DL = DLP ? &DLP->getDataLayout() : 0;
       assert(LI && "IV simplification requires LoopInfo");
     }
 

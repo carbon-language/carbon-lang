@@ -67,7 +67,8 @@ bool ConstantPropagation::runOnFunction(Function &F) {
       WorkList.insert(&*i);
   }
   bool Changed = false;
-  const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  const DataLayout *DL = DLP ? &DLP->getDataLayout() : 0;
   TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
 
   while (!WorkList.empty()) {

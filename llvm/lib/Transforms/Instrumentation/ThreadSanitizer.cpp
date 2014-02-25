@@ -224,9 +224,10 @@ void ThreadSanitizer::initializeCallbacks(Module &M) {
 }
 
 bool ThreadSanitizer::doInitialization(Module &M) {
-  DL = getAnalysisIfAvailable<DataLayout>();
-  if (!DL)
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  if (!DLP)
     return false;
+  DL = &DLP->getDataLayout();
   BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
 
   // Always insert a call to __tsan_init into the module's CTORs.

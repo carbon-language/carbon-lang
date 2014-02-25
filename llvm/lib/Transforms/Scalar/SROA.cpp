@@ -3623,11 +3623,12 @@ bool SROA::runOnFunction(Function &F) {
 
   DEBUG(dbgs() << "SROA function: " << F.getName() << "\n");
   C = &F.getContext();
-  DL = getAnalysisIfAvailable<DataLayout>();
-  if (!DL) {
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  if (!DLP) {
     DEBUG(dbgs() << "  Skipping SROA -- no target data!\n");
     return false;
   }
+  DL = &DLP->getDataLayout();
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DT = DTWP ? &DTWP->getDomTree() : 0;

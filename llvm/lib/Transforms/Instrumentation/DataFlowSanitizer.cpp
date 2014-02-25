@@ -343,9 +343,10 @@ FunctionType *DataFlowSanitizer::getCustomFunctionType(FunctionType *T) {
 }
 
 bool DataFlowSanitizer::doInitialization(Module &M) {
-  DL = getAnalysisIfAvailable<DataLayout>();
-  if (!DL)
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  if (!DLP)
     return false;
+  DL = &DLP->getDataLayout();
 
   Mod = &M;
   Ctx = &M.getContext();

@@ -31,7 +31,7 @@ public:
   NVPTXAllocaHoisting() : FunctionPass(ID) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<DataLayout>();
+    AU.addRequired<DataLayoutPass>();
     AU.addPreserved("stack-protector");
     AU.addPreserved<MachineFunctionAnalysis>();
   }

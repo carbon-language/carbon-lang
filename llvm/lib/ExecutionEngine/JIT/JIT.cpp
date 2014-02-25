@@ -151,7 +151,7 @@ JIT::JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
   // Add target data
   MutexGuard locked(lock);
   FunctionPassManager &PM = jitstate->getPM(locked);
-  PM.add(new DataLayout(*TM.getDataLayout()));
+  PM.add(new DataLayoutPass(*TM.getDataLayout()));
 
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
@@ -183,7 +183,7 @@ void JIT::addModule(Module *M) {
     jitstate = new JITState(M);
 
     FunctionPassManager &PM = jitstate->getPM(locked);
-    PM.add(new DataLayout(*TM.getDataLayout()));
+    PM.add(new DataLayoutPass(*TM.getDataLayout()));
 
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
@@ -214,7 +214,7 @@ bool JIT::removeModule(Module *M) {
     jitstate = new JITState(Modules[0]);
 
     FunctionPassManager &PM = jitstate->getPM(locked);
-    PM.add(new DataLayout(*TM.getDataLayout()));
+    PM.add(new DataLayoutPass(*TM.getDataLayout()));
 
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.

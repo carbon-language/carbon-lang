@@ -248,7 +248,7 @@ void initializeStripSymbolsPass(PassRegistry&);
 void initializeTailCallElimPass(PassRegistry&);
 void initializeTailDuplicatePassPass(PassRegistry&);
 void initializeTargetPassConfigPass(PassRegistry&);
-void initializeDataLayoutPass(PassRegistry&);
+void initializeDataLayoutPassPass(PassRegistry &);
 void initializeTargetTransformInfoAnalysisGroup(PassRegistry&);
 void initializeNoTTIPass(PassRegistry&);
 void initializeTargetLibraryInfoPass(PassRegistry&);

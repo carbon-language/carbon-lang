@@ -1214,7 +1214,8 @@ void InlineCostAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool InlineCostAnalysis::runOnSCC(CallGraphSCC &SCC) {
-  DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
   TTI = &getAnalysis<TargetTransformInfo>();
   return false;
 }

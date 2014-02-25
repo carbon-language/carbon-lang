@@ -48,7 +48,7 @@ namespace {
     virtual bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<DataLayout>();
+      AU.addRequired<DataLayoutPass>();
       AU.addRequired<TargetLibraryInfo>();
     }
 
@@ -166,7 +166,7 @@ bool BoundsChecking::instrument(Value *Ptr, Value *InstVal) {
 }
 
 bool BoundsChecking::runOnFunction(Function &F) {
-  DL = &getAnalysis<DataLayout>();
+  DL = &getAnalysis<DataLayoutPass>().getDataLayout();
   TLI = &getAnalysis<TargetLibraryInfo>();
 
   TrapBB = 0;

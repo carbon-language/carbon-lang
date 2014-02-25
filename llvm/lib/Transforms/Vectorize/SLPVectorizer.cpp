@@ -1795,7 +1795,8 @@ struct SLPVectorizer : public FunctionPass {
       return false;
 
     SE = &getAnalysis<ScalarEvolution>();
-    DL = getAnalysisIfAvailable<DataLayout>();
+    DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+    DL = DLP ? &DLP->getDataLayout() : 0;
     TTI = &getAnalysis<TargetTransformInfo>();
     AA = &getAnalysis<AliasAnalysis>();
     LI = &getAnalysis<LoopInfo>();

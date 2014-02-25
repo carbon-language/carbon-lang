@@ -36,7 +36,8 @@ namespace {
     virtual void initializePass() {
       // Note: NoAA does not call InitializeAliasAnalysis because it's
       // special and does not support chaining.
-      DL = getAnalysisIfAvailable<DataLayout>();
+      DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+      DL = DLP ? &DLP->getDataLayout() : 0;
     }
 
     virtual AliasResult alias(const Location &LocA, const Location &LocB) {

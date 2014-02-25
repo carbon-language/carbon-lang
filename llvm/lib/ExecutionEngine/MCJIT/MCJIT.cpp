@@ -142,7 +142,7 @@ ObjectBufferStream* MCJIT::emitObject(Module *M) {
 
   PassManager PM;
 
-  PM.add(new DataLayout(*TM->getDataLayout()));
+  PM.add(new DataLayoutPass(*TM->getDataLayout()));
 
   // The RuntimeDyld will take ownership of this shortly
   OwningPtr<ObjectBufferStream> CompiledObject(new ObjectBufferStream());

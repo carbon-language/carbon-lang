@@ -72,7 +72,8 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DominatorTree *DT = DTWP ? &DTWP->getDomTree() : 0;
   LoopInfo *LI = &getAnalysis<LoopInfo>();
-  const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  const DataLayout *DL = DLP ? &DLP->getDataLayout() : 0;
   const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
 
   SmallVector<BasicBlock*, 8> ExitBlocks;

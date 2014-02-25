@@ -253,7 +253,8 @@ struct NoTTI LLVM_FINAL : ImmutablePass, TargetTransformInfo {
     // it does not chain.
     TopTTI = this;
     PrevTTI = 0;
-    DL = getAnalysisIfAvailable<DataLayout>();
+    DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+    DL = DLP ? &DLP->getDataLayout() : 0;
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const LLVM_OVERRIDE {

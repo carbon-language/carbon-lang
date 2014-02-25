@@ -1557,7 +1557,8 @@ bool SCCP::runOnFunction(Function &F) {
     return false;
 
   DEBUG(dbgs() << "SCCP on function '" << F.getName() << "'\n");
-  const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
+  const DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  const DataLayout *DL = DLP ? &DLP->getDataLayout() : 0;
   const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
   SCCPSolver Solver(DL, TLI);
 
@@ -1686,7 +1687,8 @@ static bool AddressIsTaken(const GlobalValue *GV) {
 }
 
 bool IPSCCP::runOnModule(Module &M) {
-  const DataLayout *DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  const DataLayout *DL = DLP ? &DLP->getDataLayout() : 0;
   const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
   SCCPSolver Solver(DL, TLI);
 

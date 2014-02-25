@@ -221,7 +221,8 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
-  DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
   TLI = &getAnalysis<TargetLibraryInfo>();
 
   assert(L->isLCSSAForm(*DT) && "Loop is not in LCSSA form.");

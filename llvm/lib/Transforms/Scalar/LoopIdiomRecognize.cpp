@@ -182,7 +182,11 @@ namespace {
     }
 
     const DataLayout *getDataLayout() {
-      return DL ? DL : DL=getAnalysisIfAvailable<DataLayout>();
+      if (DL)
+        return DL;
+      DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+      DL = DLP ? &DLP->getDataLayout() : 0;
+      return DL;
     }
 
     DominatorTree *getDominatorTree() {

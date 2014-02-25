@@ -1113,7 +1113,7 @@ int main() {
 
   // Set up the optimizer pipeline.  Start with registering info about how the
   // target lays out data structures.
-  OurFPM.add(new DataLayout(*TheExecutionEngine->getDataLayout()));
+  OurFPM.add(new DataLayoutPass(*TheExecutionEngine->getDataLayout()));
   // Provide basic AliasAnalysis support for GVN.
   OurFPM.add(createBasicAliasAnalysisPass());
   // Promote allocas to registers.

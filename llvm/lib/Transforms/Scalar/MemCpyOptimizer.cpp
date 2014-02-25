@@ -1025,7 +1025,8 @@ bool MemCpyOpt::runOnFunction(Function &F) {
 
   bool MadeChange = false;
   MD = &getAnalysis<MemoryDependenceAnalysis>();
-  DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
   TLI = &getAnalysis<TargetLibraryInfo>();
 
   // If we don't have at least memset and memcpy, there is little point of doing

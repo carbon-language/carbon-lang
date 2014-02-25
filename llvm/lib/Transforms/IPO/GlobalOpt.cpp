@@ -1815,11 +1815,13 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     ++NumMarked;
     return true;
   } else if (!GV->getInitializer()->getType()->isSingleValueType()) {
-    if (DataLayout *DL = getAnalysisIfAvailable<DataLayout>())
-      if (GlobalVariable *FirstNewGV = SRAGlobal(GV, *DL)) {
+    if (DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>()) {
+      const DataLayout &DL = DLP->getDataLayout();
+      if (GlobalVariable *FirstNewGV = SRAGlobal(GV, DL)) {
         GVI = FirstNewGV;  // Don't skip the newly produced globals!
         return true;
       }
+    }
   } else if (GS.StoredType == GlobalStatus::StoredOnce) {
     // If the initial value for the global was an undef value, and if only
     // one other value was stored into it, we can just change the
@@ -3161,7 +3163,8 @@ bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
 bool GlobalOpt::runOnModule(Module &M) {
   bool Changed = false;
 
-  DL = getAnalysisIfAvailable<DataLayout>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : 0;
   TLI = &getAnalysis<TargetLibraryInfo>();
 
   // Try to find the llvm.globalctors list.
