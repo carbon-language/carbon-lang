@@ -527,8 +527,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
           Fn->addFnAttr(llvm::Attribute::InlineHint);
           break;
         }
-    } else if (!FD->hasAttr<AlwaysInlineAttr>() &&
-               !FD->hasAttr<ForceInlineAttr>())
+    } else if (!FD->hasAttr<AlwaysInlineAttr>())
       Fn->addFnAttr(llvm::Attribute::NoInline);
   }
 

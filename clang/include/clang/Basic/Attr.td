@@ -357,7 +357,7 @@ def AlignMac68k : InheritableAttr {
 }
 
 def AlwaysInline : InheritableAttr {
-  let Spellings = [GCC<"always_inline">];
+  let Spellings = [GCC<"always_inline">, Keyword<"__forceinline">];
   let Subjects = SubjectList<[Function]>;
   let Documentation = [Undocumented];
 }
@@ -1673,12 +1673,6 @@ def DLLImport : InheritableAttr, TargetSpecificAttr<TargetX86Win> {
   let Spellings = [Declspec<"dllimport">, GCC<"dllimport">];
   // Technically, the subjects for DllImport are Function and Var, but there is
   // custom semantic handling required when MicrosoftExt is true.
-  let Documentation = [Undocumented];
-}
-
-def ForceInline : InheritableAttr {
-  let Spellings = [Keyword<"__forceinline">];
-  let LangOpts = [MicrosoftExt];
   let Documentation = [Undocumented];
 }
 

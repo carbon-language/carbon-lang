@@ -4269,8 +4269,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_MSInheritance:
     handleMSInheritanceAttr(S, D, Attr); break;
-  case AttributeList::AT_ForceInline:
-    handleSimpleAttribute<ForceInlineAttr>(S, D, Attr); break;
   case AttributeList::AT_SelectAny:
     handleSimpleAttribute<SelectAnyAttr>(S, D, Attr); break;
 
