@@ -471,7 +471,7 @@ def Format : DiagGroup<"format",
                        [FormatExtraArgs, FormatZeroLength, NonNull,
                         FormatSecurity, FormatY2K, FormatInvalidSpecifier]>,
              DiagCategory<"Format String Issue">;
-def FormatNonLiteral : DiagGroup<"format-nonliteral", [FormatSecurity]>;
+def FormatNonLiteral : DiagGroup<"format-nonliteral">;
 def Format2 : DiagGroup<"format=2",
                         [FormatNonLiteral, FormatSecurity, FormatY2K]>;
 
