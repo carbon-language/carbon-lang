@@ -2164,13 +2164,13 @@ private:
     } else if (NewBeginOffset == NewAllocaBeginOffset &&
                canConvertValue(DL, NewAllocaTy, LI.getType())) {
       V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                LI.isVolatile(), "load");
+                                LI.isVolatile(), LI.getName());
     } else {
       Type *LTy = TargetTy->getPointerTo();
       V = IRB.CreateAlignedLoad(
           getAdjustedAllocaPtr(IRB, NewBeginOffset, LTy),
           getOffsetTypeAlign(TargetTy, NewBeginOffset - NewAllocaBeginOffset),
-          LI.isVolatile(), "load");
+          LI.isVolatile(), LI.getName());
       IsPtrAdjusted = true;
     }
     V = convertValue(DL, IRB, V, TargetTy);
