@@ -1317,6 +1317,28 @@ define void @PR15805(i1 %a, i1 %b) {
   ret void
 }
 
+define void @PR15805.1(i1 %a, i1 %b) {
+; Same as the normal PR15805, but rigged to place the use before the def inside
+; of looping unreachable code. This helps ensure that we aren't sensitive to the
+; order in which the uses of the alloca are visited.
+;
+; CHECK-LABEL: @PR15805.1(
+; CHECK-NOT: alloca
+; CHECK: ret void
+
+  %c = alloca i64, align 8
+  br label %exit
+
+loop:
+  %cond.in = select i1 undef, i64* %c, i64* %p.0.c
+  %p.0.c = select i1 undef, i64* %c, i64* %c
+  %cond = load i64* %cond.in, align 8
+  br i1 undef, label %loop, label %exit
+
+exit:
+  ret void
+}
+
 define void @PR16651.1(i8* %a) {
 ; This test case caused a crash due to the volatile memcpy in combination with
 ; lowering to integer loads and stores of a width other than that of the original

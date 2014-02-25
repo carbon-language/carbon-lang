@@ -1954,9 +1954,9 @@ class AllocaSliceRewriter : public InstVisitor<AllocaSliceRewriter, bool> {
   Use *OldUse;
   Instruction *OldPtr;
 
-  // Output members carrying state about the result of visiting and rewriting
-  // the slice of the alloca.
-  bool IsUsedByRewrittenSpeculatableInstructions;
+  // Track post-rewrite users which are PHI nodes and Selects.
+  SmallPtrSetImpl<PHINode *> &PHIUsers;
+  SmallPtrSetImpl<SelectInst *> &SelectUsers;
 
   // Utility IR builder, whose name prefix is setup for each visited use, and
   // the insertion point is set to point to the user.
@@ -1966,8 +1966,9 @@ public:
   AllocaSliceRewriter(const DataLayout &DL, AllocaSlices &S, SROA &Pass,
                       AllocaInst &OldAI, AllocaInst &NewAI,
                       uint64_t NewBeginOffset, uint64_t NewEndOffset,
-                      bool IsVectorPromotable = false,
-                      bool IsIntegerPromotable = false)
+                      bool IsVectorPromotable, bool IsIntegerPromotable,
+                      SmallPtrSetImpl<PHINode *> &PHIUsers,
+                      SmallPtrSetImpl<SelectInst *> &SelectUsers)
       : DL(DL), S(S), Pass(Pass), OldAI(OldAI), NewAI(NewAI),
         NewAllocaBeginOffset(NewBeginOffset), NewAllocaEndOffset(NewEndOffset),
         NewAllocaTy(NewAI.getAllocatedType()),
@@ -1980,7 +1981,7 @@ public:
                         DL.getTypeSizeInBits(NewAI.getAllocatedType()))
                   : 0),
         BeginOffset(), EndOffset(), IsSplittable(), IsSplit(), OldUse(),
-        OldPtr(), IsUsedByRewrittenSpeculatableInstructions(false),
+        OldPtr(), PHIUsers(PHIUsers), SelectUsers(SelectUsers),
         IRB(NewAI.getContext(), ConstantFolder()) {
     if (VecTy) {
       assert((DL.getTypeSizeInBits(ElementTy) % 8) == 0 &&
@@ -2011,20 +2012,6 @@ public:
     if (VecTy || IntTy)
       assert(CanSROA);
     return CanSROA;
-  }
-
-  /// \brief Query whether this slice is used by speculatable instructions after
-  /// rewriting.
-  ///
-  /// These instructions (PHIs and Selects currently) require the alloca slice
-  /// to run back through the rewriter. Thus, they are promotable, but not on
-  /// this iteration. This is distinct from a slice which is unpromotable for
-  /// some other reason, in which case we don't even want to perform the
-  /// speculation. This can be querried at any time and reflects whether (at
-  /// that point) a visit call has rewritten a speculatable instruction on the
-  /// current slice.
-  bool isUsedByRewrittenSpeculatableInstructions() const {
-    return IsUsedByRewrittenSpeculatableInstructions;
   }
 
 private:
@@ -2658,16 +2645,11 @@ private:
     DEBUG(dbgs() << "          to: " << PN << "\n");
     deleteIfTriviallyDead(OldPtr);
 
-    // Check whether we can speculate this PHI node, and if so remember that
-    // fact and queue it up for another iteration after the speculation
-    // occurs.
-    if (isSafePHIToSpeculate(PN, &DL)) {
-      Pass.SpeculatablePHIs.insert(&PN);
-      IsUsedByRewrittenSpeculatableInstructions = true;
-      return true;
-    }
-
-    return false; // PHIs can't be promoted on their own.
+    // PHIs can't be promoted on their own, but often can be speculated. We
+    // check the speculation outside of the rewriter so that we see the
+    // fully-rewritten alloca.
+    PHIUsers.insert(&PN);
+    return true;
   }
 
   bool visitSelectInst(SelectInst &SI) {
@@ -2687,16 +2669,11 @@ private:
     DEBUG(dbgs() << "          to: " << SI << "\n");
     deleteIfTriviallyDead(OldPtr);
 
-    // Check whether we can speculate this select instruction, and if so
-    // remember that fact and queue it up for another iteration after the
-    // speculation occurs.
-    if (isSafeSelectToSpeculate(SI, &DL)) {
-      Pass.SpeculatableSelects.insert(&SI);
-      IsUsedByRewrittenSpeculatableInstructions = true;
-      return true;
-    }
-
-    return false; // Selects can't be promoted on their own.
+    // Selects can't be promoted on their own, but often can be speculated. We
+    // check the speculation outside of the rewriter so that we see the
+    // fully-rewritten alloca.
+    SelectUsers.insert(&SI);
+    return true;
   }
 
 };
@@ -3132,17 +3109,17 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
                << "[" << BeginOffset << "," << EndOffset << ") to: " << *NewAI
                << "\n");
 
-  // Track the high watermark on several worklists that are only relevant for
+  // Track the high watermark on the worklist as it is only relevant for
   // promoted allocas. We will reset it to this point if the alloca is not in
   // fact scheduled for promotion.
   unsigned PPWOldSize = PostPromotionWorklist.size();
-  unsigned SPOldSize = SpeculatablePHIs.size();
-  unsigned SSOldSize = SpeculatableSelects.size();
   unsigned NumUses = 0;
+  SmallPtrSet<PHINode *, 8> PHIUsers;
+  SmallPtrSet<SelectInst *, 8> SelectUsers;
 
   AllocaSliceRewriter Rewriter(*DL, S, *this, AI, *NewAI, BeginOffset,
                                EndOffset, IsVectorPromotable,
-                               IsIntegerPromotable);
+                               IsIntegerPromotable, PHIUsers, SelectUsers);
   bool Promotable = true;
   for (ArrayRef<AllocaSlices::iterator>::const_iterator SUI = SplitUses.begin(),
                                                         SUE = SplitUses.end();
@@ -3163,33 +3140,53 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
   MaxUsesPerAllocaPartition =
       std::max<unsigned>(NumUses, MaxUsesPerAllocaPartition);
 
-  if (Promotable && !Rewriter.isUsedByRewrittenSpeculatableInstructions()) {
-    DEBUG(dbgs() << "  and queuing for promotion\n");
-    PromotableAllocas.push_back(NewAI);
-  } else if (NewAI != &AI ||
-             (Promotable &&
-              Rewriter.isUsedByRewrittenSpeculatableInstructions())) {
+  // Now that we've processed all the slices in the new partition, check if any
+  // PHIs or Selects would block promotion.
+  for (SmallPtrSetImpl<PHINode *>::iterator I = PHIUsers.begin(),
+                                            E = PHIUsers.end();
+       I != E; ++I)
+    if (!isSafePHIToSpeculate(**I, DL)) {
+      Promotable = false;
+      PHIUsers.clear();
+      SelectUsers.clear();
+    }
+  for (SmallPtrSetImpl<SelectInst *>::iterator I = SelectUsers.begin(),
+                                               E = SelectUsers.end();
+       I != E; ++I)
+    if (!isSafeSelectToSpeculate(**I, DL)) {
+      Promotable = false;
+      PHIUsers.clear();
+      SelectUsers.clear();
+    }
+
+  if (Promotable) {
+    if (PHIUsers.empty() && SelectUsers.empty()) {
+      // Promote the alloca.
+      PromotableAllocas.push_back(NewAI);
+    } else {
+      // If we have either PHIs or Selects to speculate, add them to those
+      // worklists and re-queue the new alloca so that we promote in on the
+      // next iteration.
+      for (SmallPtrSetImpl<PHINode *>::iterator I = PHIUsers.begin(),
+                                                E = PHIUsers.end();
+           I != E; ++I)
+        SpeculatablePHIs.insert(*I);
+      for (SmallPtrSetImpl<SelectInst *>::iterator I = SelectUsers.begin(),
+                                                   E = SelectUsers.end();
+           I != E; ++I)
+        SpeculatableSelects.insert(*I);
+      Worklist.insert(NewAI);
+    }
+  } else {
     // If we can't promote the alloca, iterate on it to check for new
     // refinements exposed by splitting the current alloca. Don't iterate on an
     // alloca which didn't actually change and didn't get promoted.
-    //
-    // Alternatively, if we could promote the alloca but have speculatable
-    // instructions then we will speculate them after finishing our processing
-    // of the original alloca. Mark the new one for re-visiting in the next
-    // iteration so the speculated operations can be rewritten.
-    //
-    // FIXME: We should actually track whether the rewriter changed anything.
-    Worklist.insert(NewAI);
-  }
+    if (NewAI != &AI)
+      Worklist.insert(NewAI);
 
-  // Drop any post-promotion work items if promotion didn't happen.
-  if (!Promotable) {
+    // Drop any post-promotion work items if promotion didn't happen.
     while (PostPromotionWorklist.size() > PPWOldSize)
       PostPromotionWorklist.pop_back();
-    while (SpeculatablePHIs.size() > SPOldSize)
-      SpeculatablePHIs.pop_back();
-    while (SpeculatableSelects.size() > SSOldSize)
-      SpeculatableSelects.pop_back();
   }
 
   return true;
