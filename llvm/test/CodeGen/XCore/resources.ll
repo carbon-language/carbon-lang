@@ -21,6 +21,7 @@ declare void @llvm.xcore.syncr.p1i8(i8 addrspace(1)* %r)
 declare void @llvm.xcore.settw.p1i8(i8 addrspace(1)* %r, i32 %value)
 declare void @llvm.xcore.setv.p1i8(i8 addrspace(1)* %r, i8* %p)
 declare void @llvm.xcore.setev.p1i8(i8 addrspace(1)* %r, i8* %p)
+declare void @llvm.xcore.edu.p1i8(i8 addrspace(1)* %r)
 declare void @llvm.xcore.eeu.p1i8(i8 addrspace(1)* %r)
 declare void @llvm.xcore.setclk.p1i8.p1i8(i8 addrspace(1)* %a, i8 addrspace(1)* %b)
 declare void @llvm.xcore.setrdy.p1i8.p1i8(i8 addrspace(1)* %a, i8 addrspace(1)* %b)
@@ -181,6 +182,13 @@ define void @setev(i8 addrspace(1)* %r, i8* %p) {
 ; CHECK: mov r11, r1
 ; CHECK-NEXT: setev res[r0], r11
 	call void @llvm.xcore.setev.p1i8(i8 addrspace(1)* %r, i8* %p)
+	ret void
+}
+
+define void @edu(i8 addrspace(1)* %r) {
+; CHECK-LABEL: edu:
+; CHECK: edu res[r0]
+	call void @llvm.xcore.edu.p1i8(i8 addrspace(1)* %r)
 	ret void
 }
 

@@ -1013,7 +1013,8 @@ def SETEV_1r : _F1R<0b001111, (outs), (ins GRRegs:$a),
 
 def DGETREG_1r : _F1R<0b001110, (outs GRRegs:$a), (ins), "dgetreg $a", []>;
 
-def EDU_1r : _F1R<0b000000, (outs), (ins GRRegs:$a), "edu res[$a]", []>;
+def EDU_1r : _F1R<0b000000, (outs), (ins GRRegs:$a), "edu res[$a]",
+                  [(int_xcore_edu GRRegs:$a)]>;
 
 def EEU_1r : _F1R<0b000001, (outs), (ins GRRegs:$a),
                "eeu res[$a]",
