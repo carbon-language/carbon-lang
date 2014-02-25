@@ -110,7 +110,7 @@ private:
 
   /// Alignments - Where the primitive type alignment data is stored.
   ///
-  /// @sa init().
+  /// @sa reset().
   /// @note Could support multiple size pointer alignments, e.g., 32-bit
   /// pointers vs. 64-bit pointers by extending LayoutAlignment, but for now,
   /// we don't.
@@ -161,30 +161,35 @@ private:
   /// malformed.
   void parseSpecifier(StringRef LayoutDescription);
 
+  // Free all internal data structures.
+  void clear();
+
 public:
-  /// Constructs a DataLayout from a specification string. See init().
-  explicit DataLayout(StringRef LayoutDescription) { init(LayoutDescription); }
+  /// Constructs a DataLayout from a specification string. See reset().
+  explicit DataLayout(StringRef LayoutDescription) : LayoutMap(0) {
+    reset(LayoutDescription);
+  }
 
   /// Initialize target data from properties stored in the module.
   explicit DataLayout(const Module *M);
 
-  DataLayout(const DataLayout &DL) { *this = DL; }
+  DataLayout(const DataLayout &DL) : LayoutMap(0) { *this = DL; }
 
   DataLayout &operator=(const DataLayout &DL) {
+    clear();
     LittleEndian = DL.isLittleEndian();
     StackNaturalAlign = DL.StackNaturalAlign;
     ManglingMode = DL.ManglingMode;
     LegalIntWidths = DL.LegalIntWidths;
     Alignments = DL.Alignments;
     Pointers = DL.Pointers;
-    LayoutMap = 0;
     return *this;
   }
 
   ~DataLayout();  // Not virtual, do not subclass this class
 
   /// Parse a data layout string (with fallback to default values).
-  void init(StringRef LayoutDescription);
+  void reset(StringRef LayoutDescription);
 
   /// Layout endianness...
   bool isLittleEndian() const { return LittleEndian; }

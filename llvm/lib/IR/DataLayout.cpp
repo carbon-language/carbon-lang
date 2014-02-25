@@ -176,7 +176,9 @@ static const LayoutAlignElem DefaultAlignments[] = {
   { AGGREGATE_ALIGN, 0, 0, 8 }   // struct
 };
 
-void DataLayout::init(StringRef Desc) {
+void DataLayout::reset(StringRef Desc) {
+  clear();
+
   LayoutMap = 0;
   LittleEndian = false;
   StackNaturalAlign = 0;
@@ -344,12 +346,12 @@ void DataLayout::parseSpecifier(StringRef Desc) {
   }
 }
 
-DataLayout::DataLayout(const Module *M) {
+DataLayout::DataLayout(const Module *M) : LayoutMap(0) {
   const DataLayout *Other = M->getDataLayout();
   if (Other)
     *this = *Other;
   else
-    init("");
+    reset("");
 }
 
 void
@@ -469,8 +471,16 @@ public:
 
 } // end anonymous namespace
 
+void DataLayout::clear() {
+  LegalIntWidths.clear();
+  Alignments.clear();
+  Pointers.clear();
+  delete static_cast<StructLayoutMap *>(LayoutMap);
+  LayoutMap = 0;
+}
+
 DataLayout::~DataLayout() {
-  delete static_cast<StructLayoutMap*>(LayoutMap);
+  clear();
 }
 
 const StructLayout *DataLayout::getStructLayout(StructType *Ty) const {

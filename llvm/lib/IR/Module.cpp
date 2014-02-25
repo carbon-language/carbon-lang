@@ -339,17 +339,21 @@ void Module::addModuleFlag(MDNode *Node) {
 }
 
 void Module::setDataLayout(StringRef Desc) {
+  DL.reset(Desc);
+
   if (Desc.empty()) {
     DataLayoutStr = "";
   } else {
-    DL.init(Desc);
     DataLayoutStr = DL.getStringRepresentation();
+    // DataLayoutStr is now equivalent to Desc, but since the representation
+    // is not unique, they may not be identical.
   }
 }
 
 void Module::setDataLayout(const DataLayout *Other) {
   if (!Other) {
     DataLayoutStr = "";
+    DL.reset("");
   } else {
     DL = *Other;
     DataLayoutStr = DL.getStringRepresentation();

@@ -108,6 +108,14 @@ TEST_F(IRBuilderTest, LandingPadName) {
   EXPECT_EQ(LP->getName(), "LP");
 }
 
+TEST_F(IRBuilderTest, DataLayout) {
+  OwningPtr<Module> M(new Module("test", Ctx));
+  M->setDataLayout("e-n32");
+  EXPECT_TRUE(M->getDataLayout()->isLegalInteger(32));
+  M->setDataLayout("e");
+  EXPECT_FALSE(M->getDataLayout()->isLegalInteger(32));
+}
+
 TEST_F(IRBuilderTest, GetIntTy) {
   IRBuilder<> Builder(BB);
   IntegerType *Ty1 = Builder.getInt1Ty();
