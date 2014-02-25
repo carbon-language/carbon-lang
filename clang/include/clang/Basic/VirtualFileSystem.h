@@ -126,7 +126,7 @@ IntrusiveRefCntPtr<FileSystem> getRealFileSystem();
 /// \brief A file system that allows overlaying one \p AbstractFileSystem on top
 /// of another.
 ///
-/// Consists of a stack of >=1 \p FileSytem objects, which are treated as being
+/// Consists of a stack of >=1 \p FileSystem objects, which are treated as being
 /// one merged file system. When there is a directory that exists in more than
 /// one file system, the \p OverlayFileSystem contains a directory containing
 /// the union of their contents.  The attributes (permissions, etc.) of the

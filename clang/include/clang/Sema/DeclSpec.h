@@ -831,8 +831,8 @@ private:
 
   // NOTE: VC++ treats enums as signed, avoid using ObjCPropertyAttributeKind
   unsigned PropertyAttributes : 12;
-  IdentifierInfo *GetterName;    // getter name of NULL if no getter
-  IdentifierInfo *SetterName;    // setter name of NULL if no setter
+  IdentifierInfo *GetterName;    // getter name or NULL if no getter
+  IdentifierInfo *SetterName;    // setter name or NULL if no setter
 };
 
 /// \brief Represents a C++ unqualified-id that has been parsed. 
