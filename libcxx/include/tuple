@@ -74,7 +74,7 @@ const unspecified ignore;
 
 template <class... T> tuple<V...>  make_tuple(T&&...); // constexpr in C++14
 template <class... T> tuple<ATypes...> forward_as_tuple(T&&...) noexcept; // constexpr in C++14
-template <class... T> tuple<T&...> tie(T&...) noexcept;
+template <class... T> tuple<T&...> tie(T&...) noexcept; // constexpr in C++14
 template <class... Tuples> tuple<CTypes...> tuple_cat(Tuples&&... tpls); // constexpr in C++14
   
 // 20.4.1.4, tuple helper classes:
@@ -796,7 +796,7 @@ constexpr _T1&& get(tuple<_Args...>&& __tup) noexcept
 // tie
 
 template <class ..._Tp>
-inline _LIBCPP_INLINE_VISIBILITY
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 tuple<_Tp&...>
 tie(_Tp&... __t) _NOEXCEPT
 {
