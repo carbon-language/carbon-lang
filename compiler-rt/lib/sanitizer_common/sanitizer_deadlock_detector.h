@@ -143,6 +143,18 @@ class DeadlockDetector {
     return is_reachable;
   }
 
+  // Handles the try_lock event, returns false.
+  // When a try_lock event happens (i.e. a try_lock call succeeds) we need
+  // to add this lock to the currently held locks, but we should not try to
+  // change the lock graph or to detect a cycle.  We may want to investigate
+  // whether a more aggressive strategy is possible for try_lock.
+  bool onTryLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
+    ensureCurrentEpoch(dtls);
+    uptr cur_idx = nodeToIndex(cur_node);
+    dtls->addLock(cur_idx, current_epoch_);
+    return false;
+  }
+
   // Finds a path between the lock 'cur_node' (which is currently held in dtls)
   // and some other currently held lock, returns the length of the path
   // or 0 on failure.
@@ -170,8 +182,13 @@ class DeadlockDetector {
   }
 
   uptr testOnlyGetEpoch() const { return current_epoch_; }
+  bool testOnlyHasEdge(uptr l1, uptr l2) {
+    return g_.hasEdge(nodeToIndex(l1), nodeToIndex(l2));
+  }
   // idx1 and idx2 are raw indices to g_, not lock IDs.
-  bool testOnlyHasEdge(uptr idx1, uptr idx2) { return g_.hasEdge(idx1, idx2); }
+  bool testOnlyHasEdgeRaw(uptr idx1, uptr idx2) {
+    return g_.hasEdge(idx1, idx2);
+  }
 
   void Print() {
     for (uptr from = 0; from < size(); from++)

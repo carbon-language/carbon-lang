@@ -301,14 +301,41 @@ void RunCorrectEpochFlush() {
   EXPECT_EQ(d.testOnlyGetEpoch(), d.size() * 2);
   d.onLock(&dtls, l0);
   d.onLock(&dtls, l1);
-  EXPECT_TRUE(d.testOnlyHasEdge(0, 1));
-  EXPECT_FALSE(d.testOnlyHasEdge(1, 0));
-  EXPECT_FALSE(d.testOnlyHasEdge(3, 0));
-  EXPECT_FALSE(d.testOnlyHasEdge(4, 0));
-  EXPECT_FALSE(d.testOnlyHasEdge(5, 0));
+  EXPECT_TRUE(d.testOnlyHasEdgeRaw(0, 1));
+  EXPECT_FALSE(d.testOnlyHasEdgeRaw(1, 0));
+  EXPECT_FALSE(d.testOnlyHasEdgeRaw(3, 0));
+  EXPECT_FALSE(d.testOnlyHasEdgeRaw(4, 0));
+  EXPECT_FALSE(d.testOnlyHasEdgeRaw(5, 0));
 }
 
 TEST(DeadlockDetector, CorrectEpochFlush) {
   RunCorrectEpochFlush<BV1>();
   RunCorrectEpochFlush<BV2>();
+}
+
+template <class BV>
+void RunTryLockTest() {
+  ScopedDD<BV> sdd;
+  DeadlockDetector<BV> &d = *sdd.dp;
+  DeadlockDetectorTLS<BV> &dtls = sdd.dtls;
+
+  uptr l0 = d.newNode(0);
+  uptr l1 = d.newNode(0);
+  uptr l2 = d.newNode(0);
+  EXPECT_FALSE(d.onLock(&dtls, l0));
+  EXPECT_FALSE(d.onTryLock(&dtls, l1));
+  EXPECT_FALSE(d.onLock(&dtls, l2));
+  EXPECT_TRUE(d.isHeld(&dtls, l0));
+  EXPECT_TRUE(d.isHeld(&dtls, l1));
+  EXPECT_TRUE(d.isHeld(&dtls, l2));
+  EXPECT_FALSE(d.testOnlyHasEdge(l0, l1));
+  EXPECT_TRUE(d.testOnlyHasEdge(l1, l2));
+  d.onUnlock(&dtls, l0);
+  d.onUnlock(&dtls, l1);
+  d.onUnlock(&dtls, l2);
+}
+
+TEST(DeadlockDetector, TryLockTest) {
+  RunTryLockTest<BV1>();
+  RunTryLockTest<BV2>();
 }

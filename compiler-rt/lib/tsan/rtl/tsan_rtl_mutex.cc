@@ -92,7 +92,7 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   DestroyAndFree(s);
 }
 
-void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
+void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec, bool try_lock) {
   Context *ctx = CTX();
   DPrintf("#%d: MutexLock %zx rec=%d\n", thr->tid, addr, rec);
   CHECK_GT(rec, 0);
@@ -128,8 +128,11 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec) {
       Printf("ThreadSanitizer: reursive-lock\n");
     }
     // Printf("MutexLock: %zx\n", s->deadlock_detector_id);
-    bool has_deadlock =
-        ctx->dd.onLock(&thr->deadlock_detector_tls, s->deadlock_detector_id);
+    bool has_deadlock = try_lock
+                            ? ctx->dd.onTryLock(&thr->deadlock_detector_tls,
+                                                s->deadlock_detector_id)
+                            : ctx->dd.onLock(&thr->deadlock_detector_tls,
+                                             s->deadlock_detector_id);
     if (has_deadlock) {
       uptr path[10];
       uptr len = ctx->dd.findPathToHeldLock(&thr->deadlock_detector_tls,

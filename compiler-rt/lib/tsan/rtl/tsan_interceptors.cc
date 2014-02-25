@@ -960,7 +960,7 @@ TSAN_INTERCEPTOR(int, pthread_mutex_trylock, void *m) {
   if (res == EOWNERDEAD)
     MutexRepair(thr, pc, (uptr)m);
   if (res == 0 || res == EOWNERDEAD)
-    MutexLock(thr, pc, (uptr)m);
+    MutexLock(thr, pc, (uptr)m, /*rec=*/1, /*try_lock=*/true);
   return res;
 }
 
@@ -1004,7 +1004,7 @@ TSAN_INTERCEPTOR(int, pthread_spin_trylock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_spin_trylock, m);
   int res = REAL(pthread_spin_trylock)(m);
   if (res == 0) {
-    MutexLock(thr, pc, (uptr)m);
+    MutexLock(thr, pc, (uptr)m, /*rec=*/1, /*try_lock=*/true);
   }
   return res;
 }

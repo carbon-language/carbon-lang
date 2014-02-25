@@ -14,6 +14,7 @@ class PaddedLock {
   }
   void lock() { assert(0 == pthread_mutex_lock(&mu_)); }
   void unlock() { assert(0 == pthread_mutex_unlock(&mu_)); }
+  bool try_lock() { return 0 == pthread_mutex_trylock(&mu_); }
 
  private:
   pthread_mutex_t mu_;
@@ -36,6 +37,11 @@ class LockTest {
   void *A(size_t i) {
     assert(i < n_);
     return &locks_[i];
+  }
+
+  bool T(size_t i) {
+    assert(i < n_);
+    return locks_[i].try_lock();
   }
 
   // Simple lock order onversion.
@@ -114,6 +120,34 @@ class LockTest {
                &LockTest::Lock1_Loop_2);
   }
 
+  void Test7() {
+    fprintf(stderr, "Starting Test7\n");
+    // CHECK: Starting Test7
+    L(0); T(1); U(1); U(0);
+    T(1); L(0); U(1); U(0);
+    // CHECK-NOT: WARNING: ThreadSanitizer:
+    fprintf(stderr, "No cycle: 0=>1\n");
+    // CHECK: No cycle: 0=>1
+
+    T(2); L(3); U(3); U(2);
+    L(3); T(2); U(3); U(2);
+    // CHECK-NOT: WARNING: ThreadSanitizer:
+    fprintf(stderr, "No cycle: 2=>3\n");
+    // CHECK: No cycle: 2=>3
+
+    T(4); L(5); U(4); U(5);
+    L(5); L(4); U(4); U(5);
+    // CHECK: WARNING: ThreadSanitizer: lock-order-inversion
+    fprintf(stderr, "Have cycle: 4=>5\n");
+    // CHECK: Have cycle: 4=>5
+
+    L(7); L(6); U(6); U(7);
+    T(6); L(7); U(6); U(7);
+    // CHECK: WARNING: ThreadSanitizer: lock-order-inversion
+    fprintf(stderr, "Have cycle: 6=>7\n");
+    // CHECK: Have cycle: 6=>7
+  }
+
  private:
   void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
   void Lock_0_1() { Lock2(0, 1); }
@@ -177,6 +211,7 @@ int main() {
   { LockTest t(5); t.Test4(); }
   { LockTest t(5); t.Test5(); }
   { LockTest t(5); t.Test6(); }
+  { LockTest t(10); t.Test7(); }
   fprintf(stderr, "DONE\n");
   // CHECK: DONE
 }
