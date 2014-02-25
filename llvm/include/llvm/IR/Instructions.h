@@ -1259,6 +1259,10 @@ public:
   Value *getArgOperand(unsigned i) const { return getOperand(i); }
   void setArgOperand(unsigned i, Value *v) { setOperand(i, v); }
 
+  /// \brief Wrappers for getting the \c Use of a call argument.
+  const Use &getArgOperandUse(unsigned i) const { return getOperandUse(i); }
+  Use &getArgOperandUse(unsigned i) { return getOperandUse(i); }
+
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
   CallingConv::ID getCallingConv() const {
@@ -2902,6 +2906,10 @@ public:
   ///
   Value *getArgOperand(unsigned i) const { return getOperand(i); }
   void setArgOperand(unsigned i, Value *v) { setOperand(i, v); }
+
+  /// \brief Wrappers for getting the \c Use of a call argument.
+  const Use &getArgOperandUse(unsigned i) const { return getOperandUse(i); }
+  Use &getArgOperandUse(unsigned i) { return getOperandUse(i); }
 
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
