@@ -200,6 +200,54 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   }
   switch (Opc) {
   default: break;
+  // We are selecting i64 ADD here instead of custom lower it during
+  // DAG legalization, so we can fold some i64 ADDs used for address
+  // calculation into the LOAD and STORE instructions.
+  case ISD::ADD: {
+    const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
+    if (N->getValueType(0) != MVT::i64 ||
+        ST.getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS)
+      break;
+
+    SDLoc DL(N);
+    SDValue LHS = N->getOperand(0);
+    SDValue RHS = N->getOperand(1);
+
+    SDValue Sub0 = CurDAG->getTargetConstant(AMDGPU::sub0, MVT::i32);
+    SDValue Sub1 = CurDAG->getTargetConstant(AMDGPU::sub1, MVT::i32);
+
+    SDNode *Lo0 = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+                                         DL, MVT::i32, LHS, Sub0);
+    SDNode *Hi0 = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+                                         DL, MVT::i32, LHS, Sub1);
+
+    SDNode *Lo1 = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+                                         DL, MVT::i32, RHS, Sub0);
+    SDNode *Hi1 = CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+                                         DL, MVT::i32, RHS, Sub1);
+
+    SDVTList VTList = CurDAG->getVTList(MVT::i32, MVT::Glue);
+
+    SmallVector<SDValue, 8> AddLoArgs;
+    AddLoArgs.push_back(SDValue(Lo0, 0));
+    AddLoArgs.push_back(SDValue(Lo1, 0));
+
+    SDNode *AddLo = CurDAG->getMachineNode(AMDGPU::S_ADD_I32, DL,
+                                           VTList, AddLoArgs);
+    SDValue Carry = SDValue(AddLo, 1);
+    SDNode *AddHi = CurDAG->getMachineNode(AMDGPU::S_ADDC_U32, DL,
+                                           MVT::i32, SDValue(Hi0, 0),
+                                           SDValue(Hi1, 0), Carry);
+
+    SDValue Args[5] = {
+      CurDAG->getTargetConstant(AMDGPU::SReg_64RegClassID, MVT::i32),
+      SDValue(AddLo,0),
+      Sub0,
+      SDValue(AddHi,0),
+      Sub1,
+    };
+    return CurDAG->SelectNodeTo(N, AMDGPU::REG_SEQUENCE, MVT::i64, Args, 5);
+  }
   case ISD::BUILD_VECTOR: {
     unsigned RegClassID;
     const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();

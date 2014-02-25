@@ -31,7 +31,6 @@ class SITargetLowering : public AMDGPUTargetLowering {
   SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerZERO_EXTEND(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerADD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
 
   SDValue ResourceDescriptorToi128(SDValue Op, SelectionDAG &DAG) const;
