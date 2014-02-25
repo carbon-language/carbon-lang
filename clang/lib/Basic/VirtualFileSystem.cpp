@@ -761,7 +761,7 @@ error_code VFSFromYAML::openFileForRead(const Twine &Path,
   if (!F) // FIXME: errc::not_a_file?
     return error_code(errc::invalid_argument, system_category());
 
-  return ExternalFS->openFileForRead(Path, Result);
+  return ExternalFS->openFileForRead(F->getExternalContentsPath(), Result);
 }
 
 IntrusiveRefCntPtr<FileSystem>

@@ -158,4 +158,9 @@ def warn_module_config_macro_undef : Warning<
   InGroup<ConfigMacros>;
 def note_module_def_undef_here : Note<
   "macro was %select{defined|#undef'd}0 here">;
+
+def err_missing_vfs_overlay_file : Error<
+  "virtual filesystem overlay file '%0' not found">, DefaultFatal;
+def err_invalid_vfs_overlay : Error<
+  "invalid virtual filesystem overlay file '%0'">, DefaultFatal;
 }

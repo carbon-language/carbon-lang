@@ -1,0 +1,4 @@
+module not_real {
+  header "not_real.h"
+  export *
+}
