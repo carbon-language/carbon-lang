@@ -49,6 +49,15 @@ struct nothrow_t {};
 // To make sure that C++ allocation/deallocation operators are overridden on
 // OS X we need to intercept them using their mangled names.
 #if !SANITIZER_MAC
+// FreeBSD prior v9.2 have wrong definition of 'size_t'.
+// http://svnweb.freebsd.org/base?view=revision&revision=232261
+#if SANITIZER_FREEBSD && SANITIZER_WORDSIZE == 32
+#include <sys/param.h>
+#if __FreeBSD_version <= 902001  // v9.2
+#define size_t unsigned
+#endif  // __FreeBSD_version
+#endif  // SANITIZER_FREEBSD && SANITIZER_WORDSIZE == 32
+
 INTERCEPTOR_ATTRIBUTE
 void *operator new(size_t size) { OPERATOR_NEW_BODY(FROM_NEW); }
 INTERCEPTOR_ATTRIBUTE
