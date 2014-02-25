@@ -29,13 +29,44 @@ static void EnsureDeadlockDetectorID(Context *ctx, ThreadState *thr,
   ctx->dd.ensureCurrentEpoch(&thr->deadlock_detector_tls);
 }
 
-static void DDUnlock(Context *ctx, ThreadState *thr,
-                                     SyncVar *s) {
+static void DDUnlock(Context *ctx, ThreadState *thr, SyncVar *s) {
   if (!common_flags()->detect_deadlocks) return;
   Lock lk(&ctx->dd_mtx);
   EnsureDeadlockDetectorID(ctx, thr, s);
   // Printf("MutexUnlock: %zx\n", s->deadlock_detector_id);
   ctx->dd.onUnlock(&thr->deadlock_detector_tls, s->deadlock_detector_id);
+}
+
+static void DDLock(Context *ctx, ThreadState *thr, SyncVar *s, uptr pc,
+                   bool try_lock) {
+  if (!common_flags()->detect_deadlocks) return;
+  Lock lk(&ctx->dd_mtx);
+  EnsureDeadlockDetectorID(ctx, thr, s);
+  if (ctx->dd.isHeld(&thr->deadlock_detector_tls, s->deadlock_detector_id)) {
+    // FIXME: add tests, handle the real recursive locks.
+    Printf("ThreadSanitizer: reursive-lock\n");
+  }
+  // Printf("MutexLock: %zx\n", s->deadlock_detector_id);
+  bool has_deadlock = try_lock
+      ? ctx->dd.onTryLock(&thr->deadlock_detector_tls,
+                          s->deadlock_detector_id)
+      : ctx->dd.onLock(&thr->deadlock_detector_tls,
+                       s->deadlock_detector_id);
+  if (has_deadlock) {
+    uptr path[10];
+    uptr len = ctx->dd.findPathToHeldLock(&thr->deadlock_detector_tls,
+                                          s->deadlock_detector_id, path,
+                                          ARRAY_SIZE(path));
+    CHECK_GT(len, 0U);  // Hm.. cycle of 10 locks? I'd like to see that.
+    ThreadRegistryLock l(CTX()->thread_registry);
+    ScopedReport rep(ReportTypeDeadlock);
+    for (uptr i = 0; i < len; i++)
+      rep.AddMutex(reinterpret_cast<SyncVar*>(ctx->dd.getData(path[i])));
+    StackTrace trace;
+    trace.ObtainCurrent(thr, pc);
+    rep.AddStack(&trace);
+    OutputReport(CTX(), rep);
+  }
 }
 
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
@@ -129,35 +160,7 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec, bool try_lock) {
   }
   s->recursion += rec;
   thr->mset.Add(s->GetId(), true, thr->fast_state.epoch());
-  if (common_flags()->detect_deadlocks) {
-    Lock lk(&ctx->dd_mtx);
-    EnsureDeadlockDetectorID(ctx, thr, s);
-    if (ctx->dd.isHeld(&thr->deadlock_detector_tls, s->deadlock_detector_id)) {
-      // FIXME: add tests, handle the real recursive locks.
-      Printf("ThreadSanitizer: reursive-lock\n");
-    }
-    // Printf("MutexLock: %zx\n", s->deadlock_detector_id);
-    bool has_deadlock = try_lock
-                            ? ctx->dd.onTryLock(&thr->deadlock_detector_tls,
-                                                s->deadlock_detector_id)
-                            : ctx->dd.onLock(&thr->deadlock_detector_tls,
-                                             s->deadlock_detector_id);
-    if (has_deadlock) {
-      uptr path[10];
-      uptr len = ctx->dd.findPathToHeldLock(&thr->deadlock_detector_tls,
-                                         s->deadlock_detector_id, path,
-                                         ARRAY_SIZE(path));
-      CHECK_GT(len, 0U);  // Hm.. cycle of 10 locks? I'd like to see that.
-      ThreadRegistryLock l(CTX()->thread_registry);
-      ScopedReport rep(ReportTypeDeadlock);
-      for (uptr i = 0; i < len; i++)
-        rep.AddMutex(reinterpret_cast<SyncVar*>(ctx->dd.getData(path[i])));
-      StackTrace trace;
-      trace.ObtainCurrent(thr, pc);
-      rep.AddStack(&trace);
-      OutputReport(CTX(), rep);
-    }
-  }
+  DDLock(ctx, thr, s, pc, try_lock);
   s->mtx.Unlock();
 }
 
@@ -200,7 +203,7 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
   return rec;
 }
 
-void MutexReadLock(ThreadState *thr, uptr pc, uptr addr) {
+void MutexReadLock(ThreadState *thr, uptr pc, uptr addr, bool try_lock) {
   DPrintf("#%d: MutexReadLock %zx\n", thr->tid, addr);
   StatInc(thr, StatMutexReadLock);
   if (IsAppMem(addr))
@@ -216,6 +219,7 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr) {
   AcquireImpl(thr, pc, &s->clock);
   s->last_lock = thr->fast_state.raw();
   thr->mset.Add(s->GetId(), false, thr->fast_state.epoch());
+  DDLock(CTX(), thr, s, pc, try_lock);
   s->mtx.ReadUnlock();
 }
 

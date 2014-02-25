@@ -3,7 +3,7 @@
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadSpinLock
 // RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadRWLock
-// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s
+// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-RD
 #include <pthread.h>
 #undef NDEBUG
 #include <assert.h>
@@ -16,9 +16,13 @@ class PthreadMutex {
     assert(0 == pthread_mutex_destroy(&mu_));
     (void)padding_;
   }
+  static bool supports_read_lock() { return false; }
   void lock() { assert(0 == pthread_mutex_lock(&mu_)); }
   void unlock() { assert(0 == pthread_mutex_unlock(&mu_)); }
   bool try_lock() { return 0 == pthread_mutex_trylock(&mu_); }
+  void rdlock() { assert(0); }
+  void rdunlock() { assert(0); }
+  bool try_rdlock() { assert(0); }
 
  private:
   pthread_mutex_t mu_;
@@ -32,9 +36,13 @@ class PthreadSpinLock {
     assert(0 == pthread_spin_destroy(&mu_));
     (void)padding_;
   }
+  static bool supports_read_lock() { return false; }
   void lock() { assert(0 == pthread_spin_lock(&mu_)); }
   void unlock() { assert(0 == pthread_spin_unlock(&mu_)); }
   bool try_lock() { return 0 == pthread_spin_trylock(&mu_); }
+  void rdlock() { assert(0); }
+  void rdunlock() { assert(0); }
+  bool try_rdlock() { assert(0); }
 
  private:
   pthread_spinlock_t mu_;
@@ -48,9 +56,13 @@ class PthreadRWLock {
     assert(0 == pthread_rwlock_destroy(&mu_));
     (void)padding_;
   }
+  static bool supports_read_lock() { return true; }
   void lock() { assert(0 == pthread_rwlock_wrlock(&mu_)); }
   void unlock() { assert(0 == pthread_rwlock_unlock(&mu_)); }
   bool try_lock() { return 0 == pthread_rwlock_trywrlock(&mu_); }
+  void rdlock() { assert(0 == pthread_rwlock_rdlock(&mu_)); }
+  void rdunlock() { assert(0 == pthread_rwlock_unlock(&mu_)); }
+  bool try_rdlock() { return 0 == pthread_rwlock_tryrdlock(&mu_); }
 
  private:
   pthread_rwlock_t mu_;
@@ -65,9 +77,20 @@ class LockTest {
     assert(i < n_);
     locks_[i].lock();
   }
+
   void U(size_t i) {
     assert(i < n_);
     locks_[i].unlock();
+  }
+
+  void RL(size_t i) {
+    assert(i < n_);
+    locks_[i].rdlock();
+  }
+
+  void RU(size_t i) {
+    assert(i < n_);
+    locks_[i].rdunlock();
   }
 
   void *A(size_t i) {
@@ -184,6 +207,23 @@ class LockTest {
     // CHECK: Have cycle: 6=>7
   }
 
+  void Test8() {
+    if (!LockType::supports_read_lock()) return;
+    fprintf(stderr, "Starting Test8\n");
+    // CHECK-RD: Starting Test8
+    RL(0); L(1); RU(0); U(1);
+    L(1); RL(0); RU(0); U(1);
+    // CHECK-RD: WARNING: ThreadSanitizer: lock-order-inversion
+    fprintf(stderr, "Have cycle: 0=>1\n");
+    // CHECK-RD: Have cycle: 0=>1
+
+    RL(2); RL(3); RU(2); RU(3);
+    RL(3); RL(2); RU(2); RU(3);
+    // CHECK-RD: WARNING: ThreadSanitizer: lock-order-inversion
+    fprintf(stderr, "Have cycle: 2=>3\n");
+    // CHECK-RD: Have cycle: 2=>3
+  }
+
  private:
   void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
   void Lock_0_1() { Lock2(0, 1); }
@@ -250,6 +290,7 @@ int main () {
   { LockTest t(5); t.Test5(); }
   { LockTest t(5); t.Test6(); }
   { LockTest t(10); t.Test7(); }
+  { LockTest t(5); t.Test8(); }
   fprintf(stderr, "DONE\n");
   // CHECK: DONE
 }
