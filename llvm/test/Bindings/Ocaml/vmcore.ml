@@ -85,11 +85,11 @@ let test_target () =
   end;
   
   begin group "layout";
-    let layout = "bogus" in
+    let layout = "e" in
     set_data_layout layout m;
     insist (layout = data_layout m)
   end
-  (* CHECK: target datalayout = "bogus"
+  (* CHECK: target datalayout = "e"
    * CHECK: target triple = "i686-apple-darwin8"
    *)
 
