@@ -182,6 +182,7 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setTargetDAGCombine(ISD::ADD);
 
   setMinFunctionAlignment(1);
+  setPrefFunctionAlignment(2);
 }
 
 bool XCoreTargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
