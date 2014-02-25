@@ -2428,8 +2428,9 @@ private:
     uint64_t NewBeginOffset = std::max(BeginOffset, NewAllocaBeginOffset);
     uint64_t NewEndOffset = std::min(EndOffset, NewAllocaEndOffset);
 
-    assert(II.getRawSource() == OldPtr || II.getRawDest() == OldPtr);
-    bool IsDest = II.getRawDest() == OldPtr;
+    bool IsDest = &II.getRawDestUse() == OldUse;
+    assert(IsDest && II.getRawDest() == OldPtr ||
+           (!IsDest && II.getRawSource() == OldPtr));
 
     // Compute the relative offset within the transfer.
     unsigned IntPtrWidth = DL.getPointerSizeInBits();
