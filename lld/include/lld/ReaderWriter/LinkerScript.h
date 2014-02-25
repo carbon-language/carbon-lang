@@ -37,7 +37,6 @@ public:
     eof,
     identifier,
     comma,
-    quotedString,
     l_paren,
     r_paren,
     kw_entry,

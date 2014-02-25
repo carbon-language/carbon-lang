@@ -13,11 +13,11 @@ CHECK: identifier: i386:x86_64
 CHECK: r_paren: )
 CHECK: kw_output_format: OUTPUT_FORMAT
 CHECK: l_paren: (
-CHECK: quotedString: elf64-x86-64
+CHECK: identifier: elf64-x86-64
 CHECK: comma: ,
-CHECK: quotedString: elf64-x86-64
+CHECK: identifier: elf64-x86-64
 CHECK: comma: ,
-CHECK: quotedString: elf64-x86-64
+CHECK: identifier: elf64-x86-64
 CHECK: r_paren: )
 CHECK: kw_group: GROUP
 CHECK: l_paren: (

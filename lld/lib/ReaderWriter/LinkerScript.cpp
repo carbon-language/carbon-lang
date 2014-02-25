@@ -29,7 +29,6 @@ void Token::dump(raw_ostream &os) const {
   CASE(kw_group)
   CASE(kw_output_format)
   CASE(kw_output_arch)
-  CASE(quotedString)
   CASE(comma)
   CASE(l_paren)
   CASE(r_paren)
@@ -106,7 +105,8 @@ void Lexer::lex(Token &tok) {
     _buffer = _buffer.drop_front();
     return;
   default:
-    // Quoted strings ?
+    // Handle quoted strings. They are treated as identifiers for
+    // simplicity.
     if ((_buffer[0] == '\"') || (_buffer[0] == '\'')) {
       char c = _buffer[0];
       _buffer = _buffer.drop_front();
@@ -114,7 +114,7 @@ void Lexer::lex(Token &tok) {
       if (quotedStringEnd == StringRef::npos || quotedStringEnd == 0)
         break;
       StringRef word = _buffer.substr(0, quotedStringEnd);
-      tok = Token(word, Token::quotedString);
+      tok = Token(word, Token::identifier);
       _buffer = _buffer.drop_front(quotedStringEnd + 1);
       return;
     }
@@ -238,8 +238,8 @@ OutputFormat *Parser::parseOutputFormat() {
   if (!expectAndConsume(Token::l_paren, "expected ("))
     return nullptr;
 
-  if (_tok._kind != Token::quotedString && _tok._kind != Token::identifier) {
-    error(_tok, "Expected identifier/string in OUTPUT_FORMAT.");
+  if (_tok._kind != Token::identifier) {
+    error(_tok, "Expected identifier in OUTPUT_FORMAT.");
     return nullptr;
   }
 
@@ -251,8 +251,8 @@ OutputFormat *Parser::parseOutputFormat() {
       consumeToken();
     else
       break;
-    if (_tok._kind != Token::quotedString && _tok._kind != Token::identifier) {
-      error(_tok, "Expected identifier/string in OUTPUT_FORMAT.");
+    if (_tok._kind != Token::identifier) {
+      error(_tok, "Expected identifier in OUTPUT_FORMAT.");
       return nullptr;
     }
     ret->addOutputFormat(_tok._range);
