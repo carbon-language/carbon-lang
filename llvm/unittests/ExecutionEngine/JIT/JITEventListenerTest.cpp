@@ -73,7 +73,7 @@ class JITEventListenerTest : public testing::Test {
 };
 
 // Tests on SystemZ disabled as we're running the old JIT
-#if !defined(__s390__)
+#if !defined(__s390__) && !defined(__aarch64__)
 Function *buildFunction(Module *M) {
   Function *Result = Function::Create(
       TypeBuilder<int32_t(int32_t), false>::get(getGlobalContext()),

@@ -52,7 +52,8 @@ extern "C" int32_t JITTest_AvailableExternallyFunction() {
 namespace {
 
 // Tests on ARM, PowerPC and SystemZ disabled as we're running the old jit
-#if !defined(__arm__) && !defined(__powerpc__) && !defined(__s390__)
+#if !defined(__arm__) && !defined(__powerpc__) && !defined(__s390__) \
+                      && !defined(__aarch64__)
 
 Function *makeReturnGlobal(std::string Name, GlobalVariable *G, Module *M) {
   std::vector<Type*> params;
@@ -438,7 +439,7 @@ TEST_F(JITTest, ModuleDeletion) {
 // too far away to call directly.  This #if can probably be removed when
 // http://llvm.org/PR5201 is fixed.
 #if !defined(__arm__) && !defined(__mips__) && \
-    !defined(__powerpc__) && !defined(__ppc__)
+    !defined(__powerpc__) && !defined(__ppc__) && !defined(__aarch64__)
 typedef int (*FooPtr) ();
 
 TEST_F(JITTest, NoStubs) {
@@ -514,7 +515,7 @@ TEST_F(JITTest, FunctionPointersOutliveTheirCreator) {
 
 // ARM does not have an implementation of replaceMachineCodeForFunction(),
 // so recompileAndRelinkFunction doesn't work.
-#if !defined(__arm__)
+#if !defined(__arm__) && !defined(__aarch64__)
 TEST_F(JITTest, FunctionIsRecompiledAndRelinked) {
   Function *F = Function::Create(TypeBuilder<int(void), false>::get(Context),
                                  GlobalValue::ExternalLinkage, "test", M);

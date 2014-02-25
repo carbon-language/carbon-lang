@@ -21,7 +21,8 @@ using namespace llvm;
 namespace {
 
 // ARM, PowerPC and SystemZ tests disabled pending fix for PR10783.
-#if !defined(__arm__) && !defined(__powerpc__) && !defined(__s390__)
+#if !defined(__arm__) && !defined(__powerpc__) && !defined(__s390__) \
+                      && !defined(__aarch64__)
 
 bool LoadAssemblyInto(Module *M, const char *assembly) {
   SMDiagnostic Error;
