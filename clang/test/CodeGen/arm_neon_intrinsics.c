@@ -1888,7 +1888,7 @@ poly16x4_t test_vdup_n_p16(poly16_t a) {
 }
 
 // CHECK: test_vdup_n_f16
-// CHECK: vdup.16
+// CHECK: vld1.16 {{{d[0-9]+\[\]}}}
 float16x4_t test_vdup_n_f16(float16_t *a) {
   return vdup_n_f16(*a);
 }
@@ -1948,7 +1948,7 @@ poly16x8_t test_vdupq_n_p16(poly16_t a) {
 }
 
 // CHECK: test_vdupq_n_f16
-// CHECK: vdup.16
+// CHECK: vld1.16 {{{d[0-9]+\[\], d[0-9]+\[\]}}}
 float16x8_t test_vdupq_n_f16(float16_t *a) {
   return vdupq_n_f16(*a);
 }
@@ -4881,7 +4881,7 @@ poly16x4_t test_vmov_n_p16(poly16_t a) {
 }
 
 // CHECK: test_vmov_n_f16
-// CHECK: vdup.16
+// CHECK: vld1.16 {{{d[0-9]+\[\]}}}
 float16x4_t test_vmov_n_f16(float16_t *a) {
   return vmov_n_f16(*a);
 }
@@ -4941,7 +4941,7 @@ poly16x8_t test_vmovq_n_p16(poly16_t a) {
 }
 
 // CHECK: test_vmovq_n_f16
-// CHECK: vdup.16
+// CHECK: vld1.16 {{{d[0-9]+\[\], d[0-9]+\[\]}}}
 float16x8_t test_vmovq_n_f16(float16_t *a) {
   return vmovq_n_f16(*a);
 }
