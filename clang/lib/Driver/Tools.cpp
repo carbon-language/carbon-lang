@@ -5972,6 +5972,11 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     }
   } else if (getToolChain().getArch() == llvm::Triple::sparc ||
              getToolChain().getArch() == llvm::Triple::sparcv9) {
+    if (getToolChain().getArch() == llvm::Triple::sparc)
+      CmdArgs.push_back("-Av8plusa");
+    else
+      CmdArgs.push_back("-Av9a");
+
     addAssemblerKPIC(Args, CmdArgs);
   }
 

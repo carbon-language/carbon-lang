@@ -128,3 +128,4 @@
 // RUN: %clang -mcpu=ultrasparc -target sparc64-unknown-freebsd8 %s -### 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-SPARC-CPU %s
 // CHECK-SPARC-CPU: cc1{{.*}}" "-target-cpu" "ultrasparc"
+// CHECK-SPARC-CPU: as{{.*}}" "-Av9a
