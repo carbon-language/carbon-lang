@@ -643,7 +643,7 @@ try_acquire_capability (try_acquire_shared_capability, clang::try_acquire_capabi
 
    "X","X","",""
 
-Marks a function that attemps to acquire a capability. This function may fail to
+Marks a function that attempts to acquire a capability. This function may fail to
 actually acquire the capability; they accept a Boolean value determining
 whether acquiring the capability means success (true), or failing to acquire
 the capability means success (false).
