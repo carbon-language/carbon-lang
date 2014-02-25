@@ -69,6 +69,8 @@
 // CHECK-ASAN-ANDROID-NOT: "-lc"
 // CHECK-ASAN-ANDROID: libclang_rt.asan-arm-android.so"
 // CHECK-ASAN-ANDROID-NOT: "-lpthread"
+// CHECK-ASAN-ANDROID: "-pie"
+// CHECK-ASAN-ANDROID-NOT: "-lpthread"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target arm-linux-androideabi -fsanitize=address \

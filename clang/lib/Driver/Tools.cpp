@@ -5992,6 +5992,9 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const toolchains::FreeBSD& ToolChain = 
     static_cast<const toolchains::FreeBSD&>(getToolChain());
   const Driver &D = ToolChain.getDriver();
+  const bool IsPIE =
+    !Args.hasArg(options::OPT_shared) &&
+    (Args.hasArg(options::OPT_pie) || ToolChain.isPIEDefault());
   ArgStringList CmdArgs;
 
   // Silence warning for "clang -g foo.o -o foo"
@@ -6005,7 +6008,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!D.SysRoot.empty())
     CmdArgs.push_back(Args.MakeArgString("--sysroot=" + D.SysRoot));
 
-  if (Args.hasArg(options::OPT_pie))
+  if (IsPIE)
     CmdArgs.push_back("-pie");
 
   if (Args.hasArg(options::OPT_static)) {
@@ -6055,7 +6058,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     if (!Args.hasArg(options::OPT_shared)) {
       if (Args.hasArg(options::OPT_pg))
         crt1 = "gcrt1.o";
-      else if (Args.hasArg(options::OPT_pie))
+      else if (IsPIE)
         crt1 = "Scrt1.o";
       else
         crt1 = "crt1.o";
@@ -6068,7 +6071,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     const char *crtbegin = NULL;
     if (Args.hasArg(options::OPT_static))
       crtbegin = "crtbeginT.o";
-    else if (Args.hasArg(options::OPT_shared) || Args.hasArg(options::OPT_pie))
+    else if (Args.hasArg(options::OPT_shared) || IsPIE)
       crtbegin = "crtbeginS.o";
     else
       crtbegin = "crtbegin.o";
@@ -6149,7 +6152,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
-    if (Args.hasArg(options::OPT_shared) || Args.hasArg(options::OPT_pie))
+    if (Args.hasArg(options::OPT_shared) || IsPIE)
       CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtendS.o")));
     else
       CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtend.o")));
@@ -6640,10 +6643,9 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const Driver &D = ToolChain.getDriver();
   const bool isAndroid =
     ToolChain.getTriple().getEnvironment() == llvm::Triple::Android;
-  const SanitizerArgs &Sanitize = ToolChain.getSanitizerArgs();
   const bool IsPIE =
     !Args.hasArg(options::OPT_shared) &&
-    (Args.hasArg(options::OPT_pie) || Sanitize.hasZeroBaseShadow());
+    (Args.hasArg(options::OPT_pie) || ToolChain.isPIEDefault());
 
   ArgStringList CmdArgs;
 
