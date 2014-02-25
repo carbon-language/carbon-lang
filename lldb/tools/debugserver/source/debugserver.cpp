@@ -63,7 +63,7 @@ static nub_launch_flavor_t g_launch_flavor = eLaunchFlavorDefault;
 int g_disable_aslr = 0;
 
 int g_isatty = 0;
-bool g_detach_on_error = false;
+bool g_detach_on_error = true;
 
 #define RNBLogSTDOUT(fmt, ...) do { if (g_isatty) { fprintf(stdout, fmt, ## __VA_ARGS__); } else { _DNBLog(0, fmt, ## __VA_ARGS__); } } while (0)
 #define RNBLogSTDERR(fmt, ...) do { if (g_isatty) { fprintf(stderr, fmt, ## __VA_ARGS__); } else { _DNBLog(0, fmt, ## __VA_ARGS__); } } while (0)
@@ -831,7 +831,7 @@ static struct option g_long_options[] =
     { "attach",             required_argument,  NULL,               'a' },
     { "arch",               required_argument,  NULL,               'A' },
     { "debug",              no_argument,        NULL,               'g' },
-    { "detach-on-error",    no_argument,        NULL,               'e' },
+    { "kill-on-error",      no_argument,        NULL,               'K' },
     { "verbose",            no_argument,        NULL,               'v' },
     { "lockdown",           no_argument,        &g_lockdown_opt,    1   },  // short option "-k"
     { "applist",            no_argument,        &g_applist_opt,     1   },  // short option "-t"
@@ -1030,8 +1030,8 @@ main (int argc, char *argv[])
                 }
                 break;
                 
-            case 'e':
-                g_detach_on_error = true;
+            case 'K':
+                g_detach_on_error = false;
 
             case 'W':
                 if (optarg && optarg[0])
@@ -1536,7 +1536,12 @@ main (int argc, char *argv[])
                         }
 
                         if (mode != eRNBRunLoopModeExit)
-                            RNBLogSTDOUT ("Got a connection, launched process %s.\n", argv_sub_zero);
+                        {
+                            const char *proc_name = "<unknown>";
+                            if (ctx.ArgumentCount() > 0)
+                                proc_name = ctx.ArgumentAtIndex(0);
+                            RNBLogSTDOUT ("Got a connection, launched process %s (pid = %d).\n", proc_name, ctx.ProcessID());
+                        }
                     }
                     else
                     {
