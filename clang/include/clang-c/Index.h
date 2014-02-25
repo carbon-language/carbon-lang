@@ -20,6 +20,7 @@
 
 #include "clang-c/Platform.h"
 #include "clang-c/CXString.h"
+#include "clang-c/BuildSystem.h"
 
 /**
  * \brief The version constants for the libclang API.

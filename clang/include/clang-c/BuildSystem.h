@@ -11,8 +11,8 @@
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
-#ifndef CLANG_BUILD_SYSTEM_H
-#define CLANG_BUILD_SYSTEM_H
+#ifndef CLANG_C_BUILD_SYSTEM_H
+#define CLANG_C_BUILD_SYSTEM_H
 
 #include "clang-c/Platform.h"
 #include "clang-c/CXString.h"
@@ -40,5 +40,5 @@ CINDEX_LINKAGE unsigned long long clang_getBuildSessionTimestamp(void);
 }
 #endif
 
-#endif /* CLANG_BUILD_SYSTEM_H */
+#endif /* CLANG_C_BUILD_SYSTEM_H */
 
