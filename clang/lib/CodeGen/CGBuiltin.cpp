@@ -1627,6 +1627,7 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
                                               const CallExpr *E) {
   switch (getTarget().getTriple().getArch()) {
   case llvm::Triple::aarch64:
+  case llvm::Triple::aarch64_be:
     return EmitAArch64BuiltinExpr(BuiltinID, E);
   case llvm::Triple::arm:
   case llvm::Triple::thumb:

@@ -4790,7 +4790,8 @@ static void HandleNeonVectorTypeAttr(QualType& CurType,
   llvm::Triple::ArchType Arch =
         S.Context.getTargetInfo().getTriple().getArch();
   if (!isPermittedNeonBaseType(CurType, VecKind,
-                               Arch == llvm::Triple::aarch64)) {
+                               (Arch == llvm::Triple::aarch64) ||
+                               (Arch == llvm::Triple::aarch64_be))) {
     S.Diag(Attr.getLoc(), diag::err_attribute_invalid_vector_type) << CurType;
     Attr.setInvalid();
     return;
