@@ -191,7 +191,6 @@ raw_ostream &operator<<(raw_ostream &OS, DeclarationName N) {
       return OS << *Rec->getDecl();
     LangOptions LO;
     LO.CPlusPlus = true;
-    LO.Bool = true;
     return OS << Type.getAsString(PrintingPolicy(LO));
   }
   case DeclarationName::CXXUsingDirective:
@@ -547,7 +546,6 @@ void DeclarationNameInfo::printName(raw_ostream &OS) const {
         OS << "operator ";
       LangOptions LO;
       LO.CPlusPlus = true;
-      LO.Bool = true;
       OS << TInfo->getType().getAsString(PrintingPolicy(LO));
     } else
       OS << Name;

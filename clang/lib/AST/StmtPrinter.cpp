@@ -1296,12 +1296,6 @@ void StmtPrinter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *Node) {
 }
 
 void StmtPrinter::VisitCXXMemberCallExpr(CXXMemberCallExpr *Node) {
-  // If we have a conversion operator call only print the argument.
-  CXXMethodDecl *MD = Node->getMethodDecl();
-  if (MD && isa<CXXConversionDecl>(MD)) {
-    PrintExpr(Node->getImplicitObjectArgument());
-    return;
-  }
   VisitCallExpr(cast<CallExpr>(Node));
 }
 
