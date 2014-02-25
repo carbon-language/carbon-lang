@@ -19,6 +19,7 @@
 #include <time.h>
 
 #include "clang-c/Platform.h"
+#include "clang-c/CXErrorCode.h"
 #include "clang-c/CXString.h"
 #include "clang-c/BuildSystem.h"
 
@@ -31,7 +32,7 @@
  * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
  */
 #define CINDEX_VERSION_MAJOR 0
-#define CINDEX_VERSION_MINOR 23
+#define CINDEX_VERSION_MINOR 24
 
 #define CINDEX_VERSION_ENCODE(major, minor) ( \
       ((major) * 10000)                       \
@@ -72,43 +73,6 @@ extern "C" {
  *
  * @{
  */
-
-/**
- * \brief Error codes returned by libclang routines.
- *
- * Zero (\c CXError_Success) is the only error code indicating success.  Other
- * error codes, including not yet assigned non-zero values, indicate errors.
- */
-enum CXErrorCode {
-  /**
-   * \brief No error.
-   */
-  CXError_Success = 0,
-
-  /**
-   * \brief A generic error code, no further details are available.
-   *
-   * Errors of this kind can get their own specific error codes in future
-   * libclang versions.
-   */
-  CXError_Failure = 1,
-
-  /**
-   * \brief libclang crashed while performing the requested operation.
-   */
-  CXError_Crashed = 2,
-
-  /**
-   * \brief The function detected that the arguments violate the function
-   * contract.
-   */
-  CXError_InvalidArguments = 3,
-
-  /**
-   * \brief An AST deserialization error has occurred.
-   */
-  CXError_ASTReadError = 4
-};
 
 /**
  * \brief An "index" that consists of a set of translation units that would
