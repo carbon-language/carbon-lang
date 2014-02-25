@@ -890,3 +890,50 @@ Clang implements two kinds of checks with this attribute.
    incorrect, the caller of ``foo`` will receive a warning.
   }];
 }
+
+def MSInheritanceDocs : Documentation {
+  let Category = DocCatType;
+  let Heading = "__single_inhertiance, __multiple_inheritance, __virtual_inheritance";
+  let Content = [{
+This collection of keywords is enabled under ``-fms-extensions`` and controls
+the pointer-to-member representation used on ``*-*-win32`` targets.
+
+The ``*-*-win32`` targets utilize a pointer-to-member representation which
+varies in size and alignment depending on the definition of the underlying
+class.
+
+However, this is problematic when a forward declaration is only available and
+no definition has been made yet.  In such cases, Clang is forced to utilize the
+most general representation that is available to it.
+
+These keywords make it possible to use a pointer-to-member representation other
+than the most general one regardless of whether or not the definition will ever
+be present in the current translation unit.
+
+This family of keywords belong between the ``class-key`` and ``class-name``:
+
+.. code-block:: c++
+
+  struct __single_inheritance S;
+  int S::*i;
+  struct S {};
+
+This keyword can be applied to class templates but only has an effect when used
+on full specializations:
+
+.. code-block:: c++
+
+  template <typename T, typename U> struct __single_inheritance A; // warning: inheritance model ignored on primary template
+  template <typename T> struct __multiple_inheritance A<T, T>; // warning: inheritance model ignored on partial specialization
+  template <> struct __single_inheritance A<int, float>;
+
+Note that choosing an inheritance model less general than strictly necessary is
+an error:
+
+.. code-block:: c++
+
+  struct __multiple_inheritance S; // error: inheritance model does not match definition
+  int S::*i;
+  struct S {};
+}];
+}

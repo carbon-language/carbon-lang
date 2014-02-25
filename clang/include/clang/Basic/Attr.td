@@ -1742,7 +1742,7 @@ def MSInheritance : InheritableAttr {
     return Inheritance <= Keyword_multiple_inheritance;
   }
   }];
-  let Documentation = [Undocumented];
+  let Documentation = [MSInheritanceDocs];
 }
 
 def MSVtorDisp : InheritableAttr {
