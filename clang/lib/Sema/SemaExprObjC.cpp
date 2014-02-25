@@ -67,10 +67,14 @@ ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
 
     // Create the aggregate string with the appropriate content and location
     // information.
-    S = StringLiteral::Create(Context, StrBuf,
-                              StringLiteral::Ascii, /*Pascal=*/false,
-                              Context.getPointerType(Context.CharTy),
-                              &StrLocs[0], StrLocs.size());
+    const ConstantArrayType *CAT = Context.getAsConstantArrayType(S->getType());
+    assert(CAT && "String literal not of constant array type!");
+    QualType StrTy = Context.getConstantArrayType(
+        CAT->getElementType(), llvm::APInt(32, StrBuf.size() + 1),
+        CAT->getSizeModifier(), CAT->getIndexTypeCVRQualifiers());
+    S = StringLiteral::Create(Context, StrBuf, StringLiteral::Ascii,
+                              /*Pascal=*/false, StrTy, &StrLocs[0],
+                              StrLocs.size());
   }
   
   return BuildObjCStringLiteral(AtLocs[0], S);

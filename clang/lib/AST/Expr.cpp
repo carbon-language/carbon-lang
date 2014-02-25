@@ -781,6 +781,9 @@ StringLiteral *StringLiteral::Create(const ASTContext &C, StringRef Str,
                                      StringKind Kind, bool Pascal, QualType Ty,
                                      const SourceLocation *Loc,
                                      unsigned NumStrs) {
+  assert(C.getAsConstantArrayType(Ty) &&
+         "StringLiteral must be of constant array type!");
+
   // Allocate enough space for the StringLiteral plus an array of locations for
   // any concatenated string tokens.
   void *Mem = C.Allocate(sizeof(StringLiteral)+
