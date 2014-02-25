@@ -2448,7 +2448,7 @@ private:
     uint64_t NewEndOffset = std::min(EndOffset, NewAllocaEndOffset);
 
     bool IsDest = &II.getRawDestUse() == OldUse;
-    assert(IsDest && II.getRawDest() == OldPtr ||
+    assert((IsDest && II.getRawDest() == OldPtr) ||
            (!IsDest && II.getRawSource() == OldPtr));
 
     // Compute the relative offset within the transfer.
