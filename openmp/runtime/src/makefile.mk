@@ -162,8 +162,8 @@ ifeq "$(c)" "gcc"
 endif
 
 ifeq "$(c)" "clang"
-    c-flags += -Wno-unused-value -Wno-switch
-    cxx-flags += -Wno-unused-value -Wno-switch
+    c-flags += -Wno-unused-value -Wno-switch -Wno-deprecated-register
+    cxx-flags += -Wno-unused-value -Wno-switch -Wno-deprecated-register
     ifeq "$(arch)" "32"
         c-flags += -m32 -msse
         cxx-flags += -m32 -msse
