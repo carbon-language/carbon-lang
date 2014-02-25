@@ -220,10 +220,8 @@ void CGRecordLowering::setBitFieldInfo(
   // Here we calculate the actual storage alignment of the bits.  E.g if we've
   // got an alignment >= 2 and the bitfield starts at offset 6 we've got an
   // alignment of 2.
-  Info.StorageAlignment = (unsigned)(
-      StartOffset % Layout.getAlignment() ?
-      1ll << llvm::countTrailingZeros((uint64_t)StartOffset.getQuantity()) :
-      Layout.getAlignment().getQuantity());
+  Info.StorageAlignment =
+      Layout.getAlignment().alignmentAtOffset(StartOffset).getQuantity();
   if (Info.Size > Info.StorageSize)
     Info.Size = Info.StorageSize;
   // Reverse the bit offsets for big endian machines. Because we represent
