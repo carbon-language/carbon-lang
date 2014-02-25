@@ -680,7 +680,7 @@ def QXTN2 : SOpInst<"vqmovn_high", "qhk", "silUsUiUl", OP_QXTN>;
 // Converting vectors
 def VCVT_HIGH_F16 : SOpInst<"vcvt_high_f16", "qhj", "f", OP_VCVT_NA_HI>;
 def VCVT_HIGH_F32_F16 : SOpInst<"vcvt_high_f32", "wk", "h", OP_VCVT_EX_HI>;
-def VCVT_F32_F64 : SInst<"vcvt_f32_f64", "fj", "d">;
+def VCVT_F32_F64 : SInst<"vcvt_f32_f64", "mj", "d">;
 def VCVT_HIGH_F32_F64 : SOpInst<"vcvt_high_f32", "qfj", "d", OP_VCVT_NA_HI>;
 def VCVT_F64_F32 : SInst<"vcvt_f64_f32", "wd", "f">;
 def VCVT_F64 : SInst<"vcvt_f64", "Fd",  "lUlQlQUl">;
