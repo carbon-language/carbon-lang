@@ -66,12 +66,6 @@ namespace {
     UnreachableCodeHandler(Sema &s) : S(s) {}
 
     void HandleUnreachable(SourceLocation L, SourceRange R1, SourceRange R2) {
-      // As a heuristic prune all diagnostics not in the main file.  Currently
-      // the majority of warnings in headers are false positives.  These
-      // are largely caused by configuration state, e.g. preprocessor
-      // defined code, etc.
-      if (!S.getSourceManager().isInMainFile(L))
-        return;
       S.Diag(L, diag::warn_unreachable) << R1 << R2;
     }
   };
@@ -79,6 +73,16 @@ namespace {
 
 /// CheckUnreachable - Check for unreachable code.
 static void CheckUnreachable(Sema &S, AnalysisDeclContext &AC) {
+  // As a heuristic prune all diagnostics not in the main file.  Currently
+  // the majority of warnings in headers are false positives.  These
+  // are largely caused by configuration state, e.g. preprocessor
+  // defined code, etc.
+  //
+  // Note that this is also a performance optimization.  Analyzing
+  // headers many times can be expensive.
+  if (!S.getSourceManager().isInMainFile(AC.getDecl()->getLocStart()))
+    return;
+
   UnreachableCodeHandler UC(S);
   reachable_code::FindUnreachableCode(AC, UC);
 }
