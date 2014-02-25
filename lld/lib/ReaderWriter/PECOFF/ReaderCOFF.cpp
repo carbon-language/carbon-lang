@@ -120,6 +120,8 @@ private:
                                     const coff_section *section,
                                     const vector<COFFDefinedFileAtom *> &atoms);
 
+  error_code getSectionContents(StringRef sectionName,
+                                ArrayRef<uint8_t> &result);
   error_code getReferenceArch(Reference::KindArch &result);
   error_code addRelocationReferenceToAtoms();
   error_code findSection(StringRef name, const coff_section *&result);
@@ -275,15 +277,11 @@ FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, error_code &ec)
   bin.take();
 
   // Read .drectve section if exists.
-  const coff_section *section = nullptr;
-  if ((ec = findSection(".drectve", section)))
+  ArrayRef<uint8_t> contents;
+  if ((ec = getSectionContents(".drectve", contents)))
     return;
-  if (section != nullptr) {
-    ArrayRef<uint8_t> contents;
-    if ((ec = _obj->getSectionContents(section, contents)))
-      return;
+  if (!contents.empty())
     _directives = ArrayRefToString(contents);
-  }
 }
 
 error_code FileCOFF::parse(StringMap &altNames) {
@@ -734,6 +732,19 @@ FileCOFF::addRelocationReference(const coff_relocation *rel,
       new COFFReference(targetAtom, offsetInAtom, rel->Type,
                         Reference::KindNamespace::COFF,
                         _referenceArch)));
+  return error_code::success();
+}
+
+// Read section contents.
+error_code FileCOFF::getSectionContents(StringRef sectionName,
+                                        ArrayRef<uint8_t> &result) {
+  const coff_section *section = nullptr;
+  if (error_code ec = findSection(sectionName, section))
+    return ec;
+  if (!section)
+    return error_code::success();
+  if (error_code ec = _obj->getSectionContents(section, result))
+    return ec;
   return error_code::success();
 }
 
