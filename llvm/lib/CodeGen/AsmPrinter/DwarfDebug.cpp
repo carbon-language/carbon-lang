@@ -582,7 +582,7 @@ DIE *DwarfDebug::createScopeChildrenDIE(DwarfCompileUnit *TheCU,
   DIE *ObjectPointer = NULL;
 
   // Collect arguments for current function.
-  if (LScopes.isCurrentFunctionScope(Scope))
+  if (LScopes.isCurrentFunctionScope(Scope)) {
     for (unsigned i = 0, N = CurrentFnArguments.size(); i < N; ++i)
       if (DbgVariable *ArgDV = CurrentFnArguments[i])
         if (DIE *Arg =
@@ -591,6 +591,16 @@ DIE *DwarfDebug::createScopeChildrenDIE(DwarfCompileUnit *TheCU,
           if (ArgDV->isObjectPointer())
             ObjectPointer = Arg;
         }
+
+    // Create the unspecified parameter that marks a function as variadic.
+    DISubprogram SP(Scope->getScopeNode());
+    assert(SP.Verify());
+    DIArray FnArgs = SP.getType().getTypeArray();
+    if (FnArgs.getElement(FnArgs.getNumElements()-1).isUnspecifiedParameter()) {
+      DIE *Ellipsis = new DIE(dwarf::DW_TAG_unspecified_parameters);
+      Children.push_back(Ellipsis);
+    }
+  }
 
   // Collect lexical scope children first.
   const SmallVectorImpl<DbgVariable *> &Variables =
