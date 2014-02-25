@@ -59,13 +59,13 @@
 // CHECK-MIPSEL: "{{[^" ]*}}ld{{[^" ]*}}"
 // CHECK-MIPSEL: "-dynamic-linker" "{{.*}}/libexec/ld-elf.so.1"
 // CHECK-MIPSEL-NOT: "--hash-style={{gnu|both}}"
-// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN: %clang %s -### 2>&1 \
 // RUN:     -target mips64-unknown-freebsd10.0 \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPS64 %s
 // CHECK-MIPS64: "{{[^" ]*}}ld{{[^" ]*}}"
 // CHECK-MIPS64: "-dynamic-linker" "{{.*}}/libexec/ld-elf.so.1"
 // CHECK-MIPS64-NOT: "--hash-style={{gnu|both}}"
-// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN: %clang %s -### 2>&1 \
 // RUN:     -target mips64el-unknown-freebsd10.0 \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPS64EL %s
 // CHECK-MIPS64EL: "{{[^" ]*}}ld{{[^" ]*}}"
@@ -97,30 +97,34 @@
 // CHECK-NORMAL: crt1.o
 // CHECK-NORMAL: crtbegin.o
 
-// RUN: %clang %s -### -o %t.o -target arm-unknown-freebsd10.0 -no-integrated-as 2>&1 \
+// RUN: %clang %s -### -target arm-unknown-freebsd10.0 -no-integrated-as 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-ARM %s
 // CHECK-ARM: clang{{.*}}" "-cc1"{{.*}}" "-fsjlj-exceptions"
 // CHECK-ARM: as{{.*}}" "-mfpu=softvfp"{{.*}}"-matpcs"
 // CHECK-ARM-EABI-NOT: as{{.*}}" "-mfpu=vfp"
 
-// RUN: %clang %s -### -o %t.o -target arm-gnueabi-freebsd10.0 -no-integrated-as 2>&1 \
+// RUN: %clang %s -### -target arm-gnueabi-freebsd10.0 -no-integrated-as 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-ARM-EABI %s
 // CHECK-ARM-EABI-NOT: clang{{.*}}" "-cc1"{{.*}}" "-fsjlj-exceptions"
 // CHECK-ARM-EABI: as{{.*}}" "-mfpu=softvfp" "-meabi=5"
 // CHECK-ARM-EABI-NOT: as{{.*}}" "-mfpu=vfp"
 // CHECK-ARM-EABI-NOT: as{{.*}}" "-matpcs"
 
-// RUN: %clang %s -### -o %t.o -target arm-gnueabihf-freebsd10.0 -no-integrated-as 2>&1 \
+// RUN: %clang %s -### -target arm-gnueabihf-freebsd10.0 -no-integrated-as 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-ARM-EABIHF %s
 // CHECK-ARM-EABIHF-NOT: clang{{.*}}" "-cc1"{{.*}}" "-fsjlj-exceptions"
 // CHECK-ARM-EABIHF: as{{.*}}" "-mfpu=vfp" "-meabi=5"
 // CHECK-ARM-EABIHF-NOT: as{{.*}}" "-mfpu=softvfp"
 // CHECK-ARM-EABIHF-NOT: as{{.*}}" "-matpcs"
 
-// RUN: %clang -target x86_64-pc-freebsd8 %s -### -flto -o %t.o 2>&1 \
+// RUN: %clang -target x86_64-pc-freebsd8 %s -### -flto 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-LTO %s
 // CHECK-LTO: ld{{.*}}" "-plugin{{.*}}LLVMgold.so
 
-// RUN: %clang -target sparc-unknown-freebsd8 %s -### -fpic -o %t.o 2>&1 \
+// RUN: %clang -target sparc-unknown-freebsd8 %s -### -fpic 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-SPARC-PIE %s
 // CHECK-SPARC-PIE: as{{.*}}" "-KPIC
+
+// RUN: %clang -mcpu=ultrasparc -target sparc64-unknown-freebsd8 %s -### 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-SPARC-CPU %s
+// CHECK-SPARC-CPU: cc1{{.*}}" "-target-cpu" "ultrasparc"

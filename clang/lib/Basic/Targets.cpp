@@ -4629,6 +4629,22 @@ public:
       Builder.defineMacro("__sparcv9__");
     }
   }
+
+  virtual bool setCPU(const std::string &Name) {
+    bool CPUKnown = llvm::StringSwitch<bool>(Name)
+      .Case("v9", true)
+      .Case("ultrasparc", true)
+      .Case("ultrasparc3", true)
+      .Case("niagara", true)
+      .Case("niagara2", true)
+      .Case("niagara3", true)
+      .Case("niagara4", true)
+      .Default(false);
+
+    // No need to store the CPU yet.  There aren't any CPU-specific
+    // macros to define.
+    return CPUKnown;
+  }
 };
 
 } // end anonymous namespace.

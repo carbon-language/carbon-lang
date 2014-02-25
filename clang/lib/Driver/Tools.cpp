@@ -1299,7 +1299,8 @@ static std::string getCPUName(const ArgList &Args, const llvm::Triple &T) {
   }
 
   case llvm::Triple::sparc:
-    if (const Arg *A = Args.getLastArg(options::OPT_march_EQ))
+  case llvm::Triple::sparcv9:
+    if (const Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
       return A->getValue();
     return "";
 
