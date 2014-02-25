@@ -29,6 +29,15 @@ static void EnsureDeadlockDetectorID(Context *ctx, ThreadState *thr,
   ctx->dd.ensureCurrentEpoch(&thr->deadlock_detector_tls);
 }
 
+static void DDUnlock(Context *ctx, ThreadState *thr,
+                                     SyncVar *s) {
+  if (!common_flags()->detect_deadlocks) return;
+  Lock lk(&ctx->dd_mtx);
+  EnsureDeadlockDetectorID(ctx, thr, s);
+  // Printf("MutexUnlock: %zx\n", s->deadlock_detector_id);
+  ctx->dd.onUnlock(&thr->deadlock_detector_tls, s->deadlock_detector_id);
+}
+
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
                  bool rw, bool recursive, bool linker_init) {
   Context *ctx = CTX();
@@ -186,13 +195,7 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
     }
   }
   thr->mset.Del(s->GetId(), true);
-  if (common_flags()->detect_deadlocks) {
-    Lock lk(&ctx->dd_mtx);
-    EnsureDeadlockDetectorID(ctx, thr, s);
-    // Printf("MutexUnlock: %zx\n", s->deadlock_detector_id);
-    ctx->dd.onUnlock(&thr->deadlock_detector_tls,
-                                 s->deadlock_detector_id);
-  }
+  DDUnlock(ctx, thr, s);
   s->mtx.Unlock();
   return rec;
 }
@@ -230,6 +233,7 @@ void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
     PrintCurrentStack(thr, pc);
   }
   ReleaseImpl(thr, pc, &s->read_clock);
+  DDUnlock(CTX(), thr, s);
   s->mtx.Unlock();
   thr->mset.Del(s->GetId(), false);
 }
@@ -267,6 +271,7 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
     PrintCurrentStack(thr, pc);
   }
   thr->mset.Del(s->GetId(), write);
+  DDUnlock(CTX(), thr, s);
   s->mtx.Unlock();
 }
 

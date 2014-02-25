@@ -1,4 +1,8 @@
-// RUN: %clangxx_tsan %s -o %t
+// RUN: %clangxx_tsan %s -o %t -DLockType=PthreadMutex
+// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_tsan %s -o %t -DLockType=PthreadSpinLock
+// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_tsan %s -o %t -DLockType=PthreadRWLock
 // RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #undef NDEBUG
@@ -37,8 +41,22 @@ class PthreadSpinLock {
   char padding_[64 - sizeof(pthread_spinlock_t)];
 };
 
+class PthreadRWLock {
+ public:
+  PthreadRWLock() { assert(0 == pthread_rwlock_init(&mu_, 0)); }
+  ~PthreadRWLock() {
+    assert(0 == pthread_rwlock_destroy(&mu_));
+    (void)padding_;
+  }
+  void lock() { assert(0 == pthread_rwlock_wrlock(&mu_)); }
+  void unlock() { assert(0 == pthread_rwlock_unlock(&mu_)); }
+  bool try_lock() { return 0 == pthread_rwlock_trywrlock(&mu_); }
 
-template <class LockType>
+ private:
+  pthread_rwlock_t mu_;
+  char padding_[64 - sizeof(pthread_rwlock_t)];
+};
+
 class LockTest {
  public:
   LockTest(size_t n) : n_(n), locks_(new LockType[n]) { }
@@ -184,7 +202,9 @@ class LockTest {
 
   void CreateAndDestroyManyLocks() {
     LockType create_many_locks_but_never_acquire[kDeadlockGraphSize];
+    (void)create_many_locks_but_never_acquire;
   }
+
   void CreateLockUnlockAndDestroyManyLocks() {
     LockType many_locks[kDeadlockGraphSize];
     for (size_t i = 0; i < kDeadlockGraphSize; i++) {
@@ -222,20 +242,14 @@ class LockTest {
   LockType *locks_;
 };
 
-template <class LockType>
-void RunAllTests() {
-  { LockTest<LockType> t(5); t.Test1(); }
-  { LockTest<LockType> t(5); t.Test2(); }
-  { LockTest<LockType> t(5); t.Test3(); }
-  { LockTest<LockType> t(5); t.Test4(); }
-  { LockTest<LockType> t(5); t.Test5(); }
-  { LockTest<LockType> t(5); t.Test6(); }
-  { LockTest<LockType> t(10); t.Test7(); }
-}
-
 int main () {
-  RunAllTests<PthreadMutex>();
-  RunAllTests<PthreadSpinLock>();
+  { LockTest t(5); t.Test1(); }
+  { LockTest t(5); t.Test2(); }
+  { LockTest t(5); t.Test3(); }
+  { LockTest t(5); t.Test4(); }
+  { LockTest t(5); t.Test5(); }
+  { LockTest t(5); t.Test6(); }
+  { LockTest t(10); t.Test7(); }
   fprintf(stderr, "DONE\n");
   // CHECK: DONE
 }
