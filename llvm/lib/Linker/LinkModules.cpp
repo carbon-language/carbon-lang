@@ -1200,14 +1200,14 @@ bool ModuleLinker::run() {
 
   // Inherit the target data from the source module if the destination module
   // doesn't have one already.
-  if (DstM->getDataLayout().empty() && !SrcM->getDataLayout().empty())
+  if (!DstM->getDataLayout() && SrcM->getDataLayout())
     DstM->setDataLayout(SrcM->getDataLayout());
 
   // Copy the target triple from the source to dest if the dest's is empty.
   if (DstM->getTargetTriple().empty() && !SrcM->getTargetTriple().empty())
     DstM->setTargetTriple(SrcM->getTargetTriple());
 
-  if (!SrcM->getDataLayout().empty() && !DstM->getDataLayout().empty() &&
+  if (SrcM->getDataLayout() && DstM->getDataLayout() &&
       SrcM->getDataLayout() != DstM->getDataLayout()) {
     if (!SuppressWarnings) {
       errs() << "WARNING: Linking two modules of different data layouts!\n";

@@ -1252,8 +1252,9 @@ void AssemblyWriter::printModule(const Module *M) {
       M->getModuleIdentifier().find('\n') == std::string::npos)
     Out << "; ModuleID = '" << M->getModuleIdentifier() << "'\n";
 
-  if (!M->getDataLayout().empty())
-    Out << "target datalayout = \"" << M->getDataLayout() << "\"\n";
+  const std::string &DL = M->getDataLayoutStr();
+  if (!DL.empty())
+    Out << "target datalayout = \"" << DL << "\"\n";
   if (!M->getTargetTriple().empty())
     Out << "target triple = \"" << M->getTargetTriple() << "\"\n";
 

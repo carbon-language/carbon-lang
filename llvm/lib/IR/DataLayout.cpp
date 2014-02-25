@@ -344,7 +344,13 @@ void DataLayout::parseSpecifier(StringRef Desc) {
   }
 }
 
-DataLayout::DataLayout(const Module *M) { init(M->getDataLayout()); }
+DataLayout::DataLayout(const Module *M) {
+  const DataLayout *Other = M->getDataLayout();
+  if (Other)
+    *this = *Other;
+  else
+    init("");
+}
 
 void
 DataLayout::setAlignment(AlignTypeEnum align_type, unsigned abi_align,

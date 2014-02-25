@@ -429,11 +429,8 @@ int main(int argc, char **argv) {
   Passes.add(TLI);
 
   // Add an appropriate DataLayout instance for this module.
-  DataLayout *DL = 0;
-  const std::string &ModuleDataLayout = M.get()->getDataLayout();
-  if (!ModuleDataLayout.empty())
-    DL = new DataLayout(ModuleDataLayout);
-  else if (!DefaultDataLayout.empty())
+  const DataLayout *DL = M.get()->getDataLayout();
+  if (!DL && !DefaultDataLayout.empty())
     DL = new DataLayout(DefaultDataLayout);
 
   if (DL)

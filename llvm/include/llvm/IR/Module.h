@@ -16,6 +16,7 @@
 #define LLVM_IR_MODULE_H
 
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -199,8 +200,15 @@ private:
   OwningPtr<GVMaterializer> Materializer;  ///< Used to materialize GlobalValues
   std::string ModuleID;           ///< Human readable identifier for the module
   std::string TargetTriple;       ///< Platform target triple Module compiled on
-  std::string DataLayout;         ///< Target data description
   void *NamedMDSymTab;            ///< NamedMDNode names.
+
+  // We need to keep the string because the C API expects us to own the string
+  // representation.
+  // Since we have it, we also use an empty string to represent a module without
+  // a DataLayout. If it has a DataLayout, these variables are in sync and the
+  // string is just a cache of getDataLayout()->getStringRepresentation().
+  std::string DataLayoutStr;
+  DataLayout DL;
 
   friend class Constant;
 
@@ -222,10 +230,12 @@ public:
   /// @returns the module identifier as a string
   const std::string &getModuleIdentifier() const { return ModuleID; }
 
-  /// Get the data layout string for the module's target platform.  This encodes
-  /// the type sizes and alignments expected by this module.
-  /// @returns the data layout as a string
-  const std::string &getDataLayout() const { return DataLayout; }
+  /// Get the data layout string for the module's target platform. This is
+  /// equivalent to getDataLayout()->getStringRepresentation().
+  const std::string &getDataLayoutStr() const { return DataLayoutStr; }
+
+  /// Get the data layout for the module's target platform.
+  const DataLayout *getDataLayout() const;
 
   /// Get the target triple which is a string describing the target host.
   /// @returns a string containing the target triple.
@@ -247,7 +257,8 @@ public:
   void setModuleIdentifier(StringRef ID) { ModuleID = ID; }
 
   /// Set the data layout
-  void setDataLayout(StringRef DL) { DataLayout = DL; }
+  void setDataLayout(StringRef Desc);
+  void setDataLayout(const DataLayout *Other);
 
   /// Set the target triple.
   void setTargetTriple(StringRef T) { TargetTriple = T; }

@@ -530,9 +530,9 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
   if (!M->getTargetTriple().empty())
     WriteStringRecord(bitc::MODULE_CODE_TRIPLE, M->getTargetTriple(),
                       0/*TODO*/, Stream);
-  if (!M->getDataLayout().empty())
-    WriteStringRecord(bitc::MODULE_CODE_DATALAYOUT, M->getDataLayout(),
-                      0/*TODO*/, Stream);
+  const std::string &DL = M->getDataLayoutStr();
+  if (!DL.empty())
+    WriteStringRecord(bitc::MODULE_CODE_DATALAYOUT, DL, 0 /*TODO*/, Stream);
   if (!M->getModuleInlineAsm().empty())
     WriteStringRecord(bitc::MODULE_CODE_ASM, M->getModuleInlineAsm(),
                       0/*TODO*/, Stream);
