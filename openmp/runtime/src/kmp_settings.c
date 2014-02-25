@@ -210,7 +210,7 @@ __kmp_convert_to_seconds( char const * data )
     Here, multipliers are like __kmp_convert_to_seconds, but floating-point
     values are allowed, and the return value is in milliseconds.  The default
     multiplier is milliseconds.  Returns INT_MAX only if the value specified
-    matches "infinite*".  Returns -1 if specified string is invalid.
+    matches "infinit*".  Returns -1 if specified string is invalid.
 */
 int
 __kmp_convert_to_milliseconds( char const * data )
@@ -220,7 +220,7 @@ __kmp_convert_to_milliseconds( char const * data )
     double value;
 
     if (data == NULL) return (-1);
-    if ( __kmp_str_match( "infinite", -1, data)) return (INT_MAX);
+    if ( __kmp_str_match( "infinit", -1, data)) return (INT_MAX);
     value = (double) 0.0;
     mult = '\0';
     nvalues = sscanf (data, "%lf%c%c", &value, &mult, &extra);
