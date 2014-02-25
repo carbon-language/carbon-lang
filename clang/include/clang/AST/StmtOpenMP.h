@@ -42,6 +42,7 @@ class OMPExecutableDirective : public Stmt {
   llvm::MutableArrayRef<OMPClause *> Clauses;
   /// \brief Associated statement (if any) and expressions.
   llvm::MutableArrayRef<Stmt *> StmtAndExpressions;
+
 protected:
   /// \brief Build instance of directive of class \a K.
   ///
@@ -54,11 +55,14 @@ protected:
   OMPExecutableDirective(const T *, StmtClass SC, OpenMPDirectiveKind K,
                          SourceLocation StartLoc, SourceLocation EndLoc,
                          unsigned NumClauses, unsigned NumberOfExpressions)
-    : Stmt(SC), Kind(K), StartLoc(StartLoc), EndLoc(EndLoc),
-      Clauses(reinterpret_cast<OMPClause **>(static_cast<T *>(this) + 1),
-              NumClauses),
-      StmtAndExpressions(reinterpret_cast<Stmt **>(Clauses.end()),
-                         NumberOfExpressions) { }
+      : Stmt(SC), Kind(K), StartLoc(StartLoc), EndLoc(EndLoc),
+        Clauses(reinterpret_cast<OMPClause **>(
+                    reinterpret_cast<char *>(this) +
+                    llvm::RoundUpToAlignment(sizeof(T),
+                                             llvm::alignOf<OMPClause *>())),
+                NumClauses),
+        StmtAndExpressions(reinterpret_cast<Stmt **>(Clauses.end()),
+                           NumberOfExpressions) {}
 
   /// \brief Sets the list of variables for this clause.
   ///
@@ -70,9 +74,7 @@ protected:
   ///
   /// /param S Associated statement.
   ///
-  void setAssociatedStmt(Stmt *S) {
-    StmtAndExpressions[0] = S;
-  }
+  void setAssociatedStmt(Stmt *S) { StmtAndExpressions[0] = S; }
 
 public:
   /// \brief Returns starting location of directive kind.
@@ -104,9 +106,7 @@ public:
   }
 
   /// \brief Returns statement associated with the directive.
-  Stmt *getAssociatedStmt() const {
-    return StmtAndExpressions[0];
-  }
+  Stmt *getAssociatedStmt() const { return StmtAndExpressions[0]; }
 
   OpenMPDirectiveKind getDirectiveKind() const { return Kind; }
 
@@ -141,16 +141,17 @@ class OMPParallelDirective : public OMPExecutableDirective {
   ///
   OMPParallelDirective(SourceLocation StartLoc, SourceLocation EndLoc,
                        unsigned N)
-    : OMPExecutableDirective(this, OMPParallelDirectiveClass, OMPD_parallel,
-                             StartLoc, EndLoc, N, 1) { }
+      : OMPExecutableDirective(this, OMPParallelDirectiveClass, OMPD_parallel,
+                               StartLoc, EndLoc, N, 1) {}
 
   /// \brief Build an empty directive.
   ///
   /// \param N Number of clauses.
   ///
   explicit OMPParallelDirective(unsigned N)
-    : OMPExecutableDirective(this, OMPParallelDirectiveClass, OMPD_parallel,
-                             SourceLocation(), SourceLocation(), N, 1) { }
+      : OMPExecutableDirective(this, OMPParallelDirectiveClass, OMPD_parallel,
+                               SourceLocation(), SourceLocation(), N, 1) {}
+
 public:
   /// \brief Creates directive with a list of \a Clauses.
   ///
@@ -160,11 +161,9 @@ public:
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement associated with the directive.
   ///
-  static OMPParallelDirective *Create(const ASTContext &C,
-                                      SourceLocation StartLoc,
-                                      SourceLocation EndLoc,
-                                      ArrayRef<OMPClause *> Clauses,
-                                      Stmt *AssociatedStmt);
+  static OMPParallelDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         ArrayRef<OMPClause *> Clauses, Stmt *AssociatedStmt);
 
   /// \brief Creates an empty directive with the place for \a N clauses.
   ///
@@ -179,6 +178,6 @@ public:
   }
 };
 
-}  // end namespace clang
+} // end namespace clang
 
 #endif
