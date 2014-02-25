@@ -28,6 +28,7 @@ void Token::dump(raw_ostream &os) const {
   CASE(kw_entry)
   CASE(kw_group)
   CASE(kw_output_format)
+  CASE(kw_output_arch)
   CASE(l_paren)
   CASE(r_paren)
   CASE(unknown)
@@ -67,6 +68,7 @@ bool Lexer::canContinueName(char c) const {
   case '7': case '8': case '9':
   case '_': case '.': case '$': case '/': case '\\': case '~': case '=':
   case '+': case ',': case '[': case ']': case '*': case '?': case '-':
+  case ':':
     return true;
   default:
     return false;
@@ -107,11 +109,12 @@ void Lexer::lex(Token &tok) {
       break;
     StringRef word = _buffer.substr(0, end);
     Token::Kind kind = llvm::StringSwitch<Token::Kind>(word)
-      .Case("OUTPUT_FORMAT", Token::kw_output_format)
-      .Case("GROUP", Token::kw_group)
-      .Case("AS_NEEDED", Token::kw_as_needed)
-      .Case("ENTRY", Token::kw_entry)
-      .Default(Token::identifier);
+                           .Case("OUTPUT_FORMAT", Token::kw_output_format)
+                           .Case("OUTPUT_ARCH", Token::kw_output_arch)
+                           .Case("GROUP", Token::kw_group)
+                           .Case("AS_NEEDED", Token::kw_as_needed)
+                           .Case("ENTRY", Token::kw_entry)
+                           .Default(Token::identifier);
     tok = Token(word, kind);
     _buffer = _buffer.drop_front(end);
     return;
@@ -172,6 +175,13 @@ LinkerScript *Parser::parse() {
       _script._commands.push_back(outputFormat);
       break;
     }
+    case Token::kw_output_arch: {
+      auto outputArch = parseOutputArch();
+      if (!outputArch)
+        return nullptr;
+      _script._commands.push_back(outputArch);
+      break;
+    }
     case Token::kw_group: {
       auto group = parseGroup();
       if (!group)
@@ -211,6 +221,27 @@ OutputFormat *Parser::parseOutputFormat() {
   }
 
   auto ret = new (_alloc) OutputFormat(_tok._range);
+  consumeToken();
+
+  if (!expectAndConsume(Token::r_paren, "expected )"))
+    return nullptr;
+
+  return ret;
+}
+
+// Parse OUTPUT_ARCH(ident)
+OutputArch *Parser::parseOutputArch() {
+  assert(_tok._kind == Token::kw_output_arch && "Expected OUTPUT_ARCH!");
+  consumeToken();
+  if (!expectAndConsume(Token::l_paren, "expected ("))
+    return nullptr;
+
+  if (_tok._kind != Token::identifier) {
+    error(_tok, "Expected identifier in OUTPUT_ARCH.");
+    return nullptr;
+  }
+
+  auto ret = new (_alloc) OutputArch(_tok._range);
   consumeToken();
 
   if (!expectAndConsume(Token::r_paren, "expected )"))

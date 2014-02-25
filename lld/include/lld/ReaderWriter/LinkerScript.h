@@ -38,6 +38,7 @@ public:
     kw_entry,
     kw_group,
     kw_output_format,
+    kw_output_arch,
     kw_as_needed
   };
 
@@ -75,11 +76,7 @@ private:
 
 class Command {
 public:
-  enum class Kind {
-    Entry,
-    OutputFormat,
-    Group,
-  };
+  enum class Kind { Entry, OutputFormat, OutputArch, Group, };
 
   Kind getKind() const { return _kind; }
 
@@ -111,6 +108,25 @@ public:
 
 private:
   StringRef _format;
+};
+
+class OutputArch : public Command {
+public:
+  explicit OutputArch(StringRef arch)
+      : Command(Kind::OutputArch), _arch(arch) {}
+
+  static bool classof(const Command *c) {
+    return c->getKind() == Kind::OutputArch;
+  }
+
+  virtual void dump(raw_ostream &os) const {
+    os << "OUTPUT_arch(" << getArch() << ")\n";
+  }
+
+  StringRef getArch() const { return _arch; }
+
+private:
+  StringRef _arch;
 };
 
 struct Path {
@@ -212,6 +228,7 @@ private:
   }
 
   OutputFormat *parseOutputFormat();
+  OutputArch *parseOutputArch();
   Group *parseGroup();
   bool parseAsNeeded(std::vector<Path> &paths);
   Entry *parseEntry();
