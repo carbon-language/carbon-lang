@@ -157,12 +157,61 @@ the *selector value* respectively.
 The ``landingpad`` instruction takes a reference to the personality function to
 be used for this ``try``/``catch`` sequence. The remainder of the instruction is
 a list of *cleanup*, *catch*, and *filter* clauses. The exception is tested
-against the clauses sequentially from first to last. The selector value is a
-positive number if the exception matched a type info, a negative number if it
-matched a filter, and zero if it matched a cleanup. If nothing is matched, the
-behavior of the program is `undefined`_. If a type info matched, then the
-selector value is the index of the type info in the exception table, which can
-be obtained using the `llvm.eh.typeid.for`_ intrinsic.
+against the clauses sequentially from first to last. The clauses have the
+following meanings:
+
+-  ``catch <type> @ExcType``
+
+   - This clause means that the landingpad block should be entered if the
+     exception being thrown is of type ``@ExcType`` or a subtype of
+     ``@ExcType``. For C++, ``@ExcType`` is a pointer to the ``std::type_info``
+     object (an RTTI object) representing the C++ exception type.
+
+   - If ``@ExcType`` is ``null``, any exception matches, so the landingpad
+     should always be entered. This is used for C++ catch-all blocks ("``catch
+     (...)``").
+
+   - When this clause is matched, the selector value will be equal to the value
+     returned by "``@llvm.eh.typeid.for(i8* @ExcType)``". This will always be a
+     positive value.
+
+-  ``filter <type> [<type> @ExcType1, ..., <type> @ExcTypeN]``
+
+   - This clause means that the landingpad should be entered if the exception
+     being thrown does *not* match any of the types in the list (which, for C++,
+     are again specified as ``std::type_info`` pointers).
+
+   - C++ front-ends use this to implement C++ exception specifications, such as
+     "``void foo() throw (ExcType1, ..., ExcTypeN) { ... }``".
+
+   - When this clause is matched, the selector value will be negative.
+
+   - The array argument to ``filter`` may be empty; for example, "``[0 x i8**]
+     undef``". This means that the landingpad should always be entered. (Note
+     that such a ``filter`` would not be equivalent to "``catch i8* null``",
+     because ``filter`` and ``catch`` produce negative and positive selector
+     values respectively.)
+
+-  ``cleanup``
+
+   - This clause means that the landingpad should always be entered.
+
+   - C++ front-ends use this for calling objects' destructors.
+
+   - When this clause is matched, the selector value will be zero.
+
+   - The runtime may treat "``cleanup``" differently from "``catch <type>
+     null``".
+
+     In C++, if an unhandled exception occurs, the language runtime will call
+     ``std::terminate()``, but it is implementation-defined whether the runtime
+     unwinds the stack and calls object destructors first. For example, the GNU
+     C++ unwinder does not call object destructors when an unhandled exception
+     occurs. The reason for this is to improve debuggability: it ensures that
+     ``std::terminate()`` is called from the context of the ``throw``, so that
+     this context is not lost by unwinding the stack. A runtime will typically
+     implement this by searching for a matching non-``cleanup`` clause, and
+     aborting if it does not find one, before entering any landingpad blocks.
 
 Once the landing pad has the type info selector, the code branches to the code
 for the first catch. The catch then checks the value of the type info selector
