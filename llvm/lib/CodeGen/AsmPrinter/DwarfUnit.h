@@ -476,6 +476,9 @@ protected:
   DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);
 
 private:
+  /// constructSubprogramArguments - Construct function argument DIEs.
+  void constructSubprogramArguments(DIE &Buffer, DIArray Args);
+
   /// constructTypeDIE - Construct basic type die from DIBasicType.
   void constructTypeDIE(DIE &Buffer, DIBasicType BTy);
 
