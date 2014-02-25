@@ -1223,7 +1223,7 @@ static void speculateSelectInstLoads(SelectInst &SI) {
 /// This will return the BasePtr if that is valid, or build a new GEP
 /// instruction using the IRBuilder if GEP-ing is needed.
 static Value *buildGEP(IRBuilderTy &IRB, Value *BasePtr,
-                       SmallVectorImpl<Value *> &Indices) {
+                       SmallVectorImpl<Value *> &Indices, Twine NamePrefix) {
   if (Indices.empty())
     return BasePtr;
 
@@ -1232,7 +1232,7 @@ static Value *buildGEP(IRBuilderTy &IRB, Value *BasePtr,
   if (Indices.size() == 1 && cast<ConstantInt>(Indices.back())->isZero())
     return BasePtr;
 
-  return IRB.CreateInBoundsGEP(BasePtr, Indices, "idx");
+  return IRB.CreateInBoundsGEP(BasePtr, Indices, NamePrefix + "sroa_idx");
 }
 
 /// \brief Get a natural GEP off of the BasePtr walking through Ty toward
@@ -1246,9 +1246,10 @@ static Value *buildGEP(IRBuilderTy &IRB, Value *BasePtr,
 /// indicated by Indices to have the correct offset.
 static Value *getNaturalGEPWithType(IRBuilderTy &IRB, const DataLayout &DL,
                                     Value *BasePtr, Type *Ty, Type *TargetTy,
-                                    SmallVectorImpl<Value *> &Indices) {
+                                    SmallVectorImpl<Value *> &Indices,
+                                    Twine NamePrefix) {
   if (Ty == TargetTy)
-    return buildGEP(IRB, BasePtr, Indices);
+    return buildGEP(IRB, BasePtr, Indices, NamePrefix);
 
   // See if we can descend into a struct and locate a field with the correct
   // type.
@@ -1275,7 +1276,7 @@ static Value *getNaturalGEPWithType(IRBuilderTy &IRB, const DataLayout &DL,
   if (ElementTy != TargetTy)
     Indices.erase(Indices.end() - NumLayers, Indices.end());
 
-  return buildGEP(IRB, BasePtr, Indices);
+  return buildGEP(IRB, BasePtr, Indices, NamePrefix);
 }
 
 /// \brief Recursively compute indices for a natural GEP.
@@ -1285,9 +1286,10 @@ static Value *getNaturalGEPWithType(IRBuilderTy &IRB, const DataLayout &DL,
 static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &DL,
                                        Value *Ptr, Type *Ty, APInt &Offset,
                                        Type *TargetTy,
-                                       SmallVectorImpl<Value *> &Indices) {
+                                       SmallVectorImpl<Value *> &Indices,
+                                       Twine NamePrefix) {
   if (Offset == 0)
-    return getNaturalGEPWithType(IRB, DL, Ptr, Ty, TargetTy, Indices);
+    return getNaturalGEPWithType(IRB, DL, Ptr, Ty, TargetTy, Indices, NamePrefix);
 
   // We can't recurse through pointer types.
   if (Ty->isPointerTy())
@@ -1307,7 +1309,7 @@ static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &DL,
     Offset -= NumSkippedElements * ElementSize;
     Indices.push_back(IRB.getInt(NumSkippedElements));
     return getNaturalGEPRecursively(IRB, DL, Ptr, VecTy->getElementType(),
-                                    Offset, TargetTy, Indices);
+                                    Offset, TargetTy, Indices, NamePrefix);
   }
 
   if (ArrayType *ArrTy = dyn_cast<ArrayType>(Ty)) {
@@ -1320,7 +1322,7 @@ static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &DL,
     Offset -= NumSkippedElements * ElementSize;
     Indices.push_back(IRB.getInt(NumSkippedElements));
     return getNaturalGEPRecursively(IRB, DL, Ptr, ElementTy, Offset, TargetTy,
-                                    Indices);
+                                    Indices, NamePrefix);
   }
 
   StructType *STy = dyn_cast<StructType>(Ty);
@@ -1339,7 +1341,7 @@ static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &DL,
 
   Indices.push_back(IRB.getInt32(Index));
   return getNaturalGEPRecursively(IRB, DL, Ptr, ElementTy, Offset, TargetTy,
-                                  Indices);
+                                  Indices, NamePrefix);
 }
 
 /// \brief Get a natural GEP from a base pointer to a particular offset and
@@ -1354,7 +1356,8 @@ static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &DL,
 /// If no natural GEP can be constructed, this function returns null.
 static Value *getNaturalGEPWithOffset(IRBuilderTy &IRB, const DataLayout &DL,
                                       Value *Ptr, APInt Offset, Type *TargetTy,
-                                      SmallVectorImpl<Value *> &Indices) {
+                                      SmallVectorImpl<Value *> &Indices,
+                                      Twine NamePrefix) {
   PointerType *Ty = cast<PointerType>(Ptr->getType());
 
   // Don't consider any GEPs through an i8* as natural unless the TargetTy is
@@ -1373,7 +1376,7 @@ static Value *getNaturalGEPWithOffset(IRBuilderTy &IRB, const DataLayout &DL,
   Offset -= NumSkippedElements * ElementSize;
   Indices.push_back(IRB.getInt(NumSkippedElements));
   return getNaturalGEPRecursively(IRB, DL, Ptr, ElementTy, Offset, TargetTy,
-                                  Indices);
+                                  Indices, NamePrefix);
 }
 
 /// \brief Compute an adjusted pointer from Ptr by Offset bytes where the
@@ -1391,8 +1394,9 @@ static Value *getNaturalGEPWithOffset(IRBuilderTy &IRB, const DataLayout &DL,
 /// properties. The algorithm tries to fold as many constant indices into
 /// a single GEP as possible, thus making each GEP more independent of the
 /// surrounding code.
-static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &DL,
-                             Value *Ptr, APInt Offset, Type *PointerTy) {
+static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &DL, Value *Ptr,
+                             APInt Offset, Type *PointerTy,
+                             Twine NamePrefix) {
   // Even though we don't look through PHI nodes, we could be called on an
   // instruction in an unreachable block, which may be on a cycle.
   SmallPtrSet<Value *, 4> Visited;
@@ -1426,7 +1430,7 @@ static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &DL,
     // See if we can perform a natural GEP here.
     Indices.clear();
     if (Value *P = getNaturalGEPWithOffset(IRB, DL, Ptr, Offset, TargetTy,
-                                           Indices)) {
+                                           Indices, NamePrefix)) {
       if (P->getType() == PointerTy) {
         // Zap any offset pointer that we ended up computing in previous rounds.
         if (OffsetPtr && OffsetPtr->use_empty())
@@ -1461,19 +1465,19 @@ static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &DL,
   if (!OffsetPtr) {
     if (!Int8Ptr) {
       Int8Ptr = IRB.CreateBitCast(Ptr, IRB.getInt8PtrTy(),
-                                  "raw_cast");
+                                  NamePrefix + "sroa_raw_cast");
       Int8PtrOffset = Offset;
     }
 
     OffsetPtr = Int8PtrOffset == 0 ? Int8Ptr :
       IRB.CreateInBoundsGEP(Int8Ptr, IRB.getInt(Int8PtrOffset),
-                            "raw_idx");
+                            NamePrefix + "sroa_raw_idx");
   }
   Ptr = OffsetPtr;
 
   // On the off chance we were targeting i8*, guard the bitcast here.
   if (Ptr->getType() != PointerTy)
-    Ptr = IRB.CreateBitCast(Ptr, PointerTy, "cast");
+    Ptr = IRB.CreateBitCast(Ptr, PointerTy, NamePrefix + "sroa_cast");
 
   return Ptr;
 }
@@ -2046,9 +2050,35 @@ private:
   Value *getAdjustedAllocaPtr(IRBuilderTy &IRB, uint64_t Offset,
                               Type *PointerTy) {
     assert(Offset >= NewAllocaBeginOffset);
+#ifndef NDEBUG
+    StringRef OldName = OldPtr->getName();
+    // Skip through the last '.sroa.' component of the name.
+    size_t LastSROAPrefix = OldName.rfind(".sroa.");
+    if (LastSROAPrefix != StringRef::npos) {
+      OldName = OldName.substr(LastSROAPrefix + strlen(".sroa."));
+      // Look for an SROA slice index.
+      size_t IndexEnd = OldName.find_first_not_of("0123456789");
+      if (IndexEnd != StringRef::npos && OldName[IndexEnd] == '.') {
+        // Strip the index and look for the offset.
+        OldName = OldName.substr(IndexEnd + 1);
+        size_t OffsetEnd = OldName.find_first_not_of("0123456789");
+        if (OffsetEnd != StringRef::npos && OldName[OffsetEnd] == '.')
+          // Strip the offset.
+          OldName = OldName.substr(OffsetEnd + 1);
+      }
+    }
+    // Strip any SROA suffixes as well.
+    OldName = OldName.substr(0, OldName.find(".sroa_"));
+#endif
     return getAdjustedPtr(IRB, DL, &NewAI, APInt(DL.getPointerSizeInBits(),
                                                  Offset - NewAllocaBeginOffset),
-                          PointerTy);
+                          PointerTy,
+#ifndef NDEBUG
+                          Twine(OldName) + "."
+#else
+                          Twine()
+#endif
+                          );
   }
 
   /// \brief Compute suitable alignment to access an offset into the new alloca.
@@ -2527,7 +2557,8 @@ private:
 
       // Compute the other pointer, folding as much as possible to produce
       // a single, simple GEP in most cases.
-      OtherPtr = getAdjustedPtr(IRB, DL, OtherPtr, RelOffset, OtherPtrTy);
+      OtherPtr = getAdjustedPtr(IRB, DL, OtherPtr, RelOffset, OtherPtrTy,
+                                OtherPtr->getName() + ".");
 
       Value *OurPtr =
           getAdjustedAllocaPtr(IRB, NewBeginOffset, OldPtr->getType());
@@ -2569,7 +2600,8 @@ private:
       OtherPtrTy = SubIntTy->getPointerTo();
     }
 
-    Value *SrcPtr = getAdjustedPtr(IRB, DL, OtherPtr, RelOffset, OtherPtrTy);
+    Value *SrcPtr = getAdjustedPtr(IRB, DL, OtherPtr, RelOffset, OtherPtrTy,
+                                   OtherPtr->getName() + ".");
     Value *DstPtr = &NewAI;
     if (!IsDest)
       std::swap(SrcPtr, DstPtr);
