@@ -573,7 +573,7 @@ A *use-declaration* specifies one of the other modules that the module is allowe
     use B
   }
 
-When compiling a source file that implements a module, use the option ``-fmodule-name=``module-id to indicate that the source file is logically part of that module.
+When compiling a source file that implements a module, use the option ``-fmodule-name=module-id`` to indicate that the source file is logically part of that module.
 
 The compiler at present only applies restrictions to the module directly being built.
 
