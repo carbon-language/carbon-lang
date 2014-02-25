@@ -98,7 +98,7 @@ def TryAcquireCapabilityDocs : Documentation {
   let Category = DocCatFunction;
   let Heading = "try_acquire_capability (try_acquire_shared_capability, clang::try_acquire_capability, clang::try_acquire_shared_capability)";
   let Content = [{
-Marks a function that attemps to acquire a capability. This function may fail to
+Marks a function that attempts to acquire a capability. This function may fail to
 actually acquire the capability; they accept a Boolean value determining
 whether acquiring the capability means success (true), or failing to acquire
 the capability means success (false).
