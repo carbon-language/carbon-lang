@@ -5,10 +5,10 @@
 #include <assert.h>
 #include <stdio.h>
 
-class PaddedLock {
+class PthreadMutex {
  public:
-  PaddedLock() { assert(0 == pthread_mutex_init(&mu_, 0)); }
-  ~PaddedLock() {
+  PthreadMutex() { assert(0 == pthread_mutex_init(&mu_, 0)); }
+  ~PthreadMutex() {
     assert(0 == pthread_mutex_destroy(&mu_));
     (void)padding_;
   }
@@ -21,9 +21,27 @@ class PaddedLock {
   char padding_[64 - sizeof(pthread_mutex_t)];
 };
 
+class PthreadSpinLock {
+ public:
+  PthreadSpinLock() { assert(0 == pthread_spin_init(&mu_, 0)); }
+  ~PthreadSpinLock() {
+    assert(0 == pthread_spin_destroy(&mu_));
+    (void)padding_;
+  }
+  void lock() { assert(0 == pthread_spin_lock(&mu_)); }
+  void unlock() { assert(0 == pthread_spin_unlock(&mu_)); }
+  bool try_lock() { return 0 == pthread_spin_trylock(&mu_); }
+
+ private:
+  pthread_spinlock_t mu_;
+  char padding_[64 - sizeof(pthread_spinlock_t)];
+};
+
+
+template <class LockType>
 class LockTest {
  public:
-  LockTest(size_t n) : n_(n), locks_(new PaddedLock[n]) { }
+  LockTest(size_t n) : n_(n), locks_(new LockType[n]) { }
   ~LockTest() { delete [] locks_; }
   void L(size_t i) {
     assert(i < n_);
@@ -165,10 +183,10 @@ class LockTest {
   void Lock1_Loop_2() { Lock1_Loop(2, 100000); }
 
   void CreateAndDestroyManyLocks() {
-    PaddedLock create_many_locks_but_never_acquire[kDeadlockGraphSize];
+    LockType create_many_locks_but_never_acquire[kDeadlockGraphSize];
   }
   void CreateLockUnlockAndDestroyManyLocks() {
-    PaddedLock many_locks[kDeadlockGraphSize];
+    LockType many_locks[kDeadlockGraphSize];
     for (size_t i = 0; i < kDeadlockGraphSize; i++) {
       many_locks[i].lock();
       many_locks[i].unlock();
@@ -201,17 +219,23 @@ class LockTest {
 
   static const size_t kDeadlockGraphSize = 4096;
   size_t n_;
-  PaddedLock *locks_;
+  LockType *locks_;
 };
 
-int main() {
-  { LockTest t(5); t.Test1(); }
-  { LockTest t(5); t.Test2(); }
-  { LockTest t(5); t.Test3(); }
-  { LockTest t(5); t.Test4(); }
-  { LockTest t(5); t.Test5(); }
-  { LockTest t(5); t.Test6(); }
-  { LockTest t(10); t.Test7(); }
+template <class LockType>
+void RunAllTests() {
+  { LockTest<LockType> t(5); t.Test1(); }
+  { LockTest<LockType> t(5); t.Test2(); }
+  { LockTest<LockType> t(5); t.Test3(); }
+  { LockTest<LockType> t(5); t.Test4(); }
+  { LockTest<LockType> t(5); t.Test5(); }
+  { LockTest<LockType> t(5); t.Test6(); }
+  { LockTest<LockType> t(10); t.Test7(); }
+}
+
+int main () {
+  RunAllTests<PthreadMutex>();
+  RunAllTests<PthreadSpinLock>();
   fprintf(stderr, "DONE\n");
   // CHECK: DONE
 }
