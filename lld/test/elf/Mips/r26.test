@@ -43,7 +43,7 @@
 # EXE-NEXT:   400194:  00 00 00 00  nop
 #
 # Jump to 'loc' label address
-# EXE-NEXT:   400198:  6c 00 10 0c  jal     4194736
+# EXE-NEXT:   400198:  68 00 10 0c  jal     4194720
 # EXE-NEXT:   40019c:  00 00 00 00  nop
 #
 # EXE: loc:
