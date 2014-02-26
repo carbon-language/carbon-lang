@@ -535,6 +535,20 @@ bool ARMBaseInstrInfo::isPredicable(MachineInstr *MI) const {
   return true;
 }
 
+template<> bool IsCPSRDead<MachineInstr>(MachineInstr* MI) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || MO.isUndef() || MO.isUse())
+      continue;
+    if (MO.getReg() != ARM::CPSR)
+      continue;
+    if (!MO.isDead())
+      return false;
+  }
+  // all definitions of CPSR are dead
+  return true;
+}
+
 /// FIXME: Works around a gcc miscompilation with -fstrict-aliasing.
 LLVM_ATTRIBUTE_NOINLINE
 static unsigned getNumJTEntries(const std::vector<MachineJumpTableEntry> &JT,

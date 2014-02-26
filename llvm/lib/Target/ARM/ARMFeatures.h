@@ -16,6 +16,9 @@
 
 #include "ARM.h"
 
+template<typename InstrType> // could be MachineInstr or MCInst
+bool IsCPSRDead(InstrType *Instr);
+
 namespace llvm {
 
 template<typename InstrType> // could be MachineInstr or MCInst
@@ -26,25 +29,12 @@ inline bool isV8EligibleForIT(InstrType *Instr) {
   case ARM::tADC:
   case ARM::tADDi3:
   case ARM::tADDi8:
-  case ARM::tADDrSPi:
   case ARM::tADDrr:
   case ARM::tAND:
   case ARM::tASRri:
   case ARM::tASRrr:
   case ARM::tBIC:
-  case ARM::tCMNz:
-  case ARM::tCMPi8:
-  case ARM::tCMPr:
   case ARM::tEOR:
-  case ARM::tLDRBi:
-  case ARM::tLDRBr:
-  case ARM::tLDRHi:
-  case ARM::tLDRHr:
-  case ARM::tLDRSB:
-  case ARM::tLDRSH:
-  case ARM::tLDRi:
-  case ARM::tLDRr:
-  case ARM::tLDRspi:
   case ARM::tLSLri:
   case ARM::tLSLrr:
   case ARM::tLSRri:
@@ -56,6 +46,24 @@ inline bool isV8EligibleForIT(InstrType *Instr) {
   case ARM::tROR:
   case ARM::tRSB:
   case ARM::tSBC:
+  case ARM::tSUBi3:
+  case ARM::tSUBi8:
+  case ARM::tSUBrr:
+    // Outside of an IT block, these set CPSR.
+    return IsCPSRDead(Instr);
+  case ARM::tADDrSPi:
+  case ARM::tCMNz:
+  case ARM::tCMPi8:
+  case ARM::tCMPr:
+  case ARM::tLDRBi:
+  case ARM::tLDRBr:
+  case ARM::tLDRHi:
+  case ARM::tLDRHr:
+  case ARM::tLDRSB:
+  case ARM::tLDRSH:
+  case ARM::tLDRi:
+  case ARM::tLDRr:
+  case ARM::tLDRspi:
   case ARM::tSTRBi:
   case ARM::tSTRBr:
   case ARM::tSTRHi:
@@ -63,9 +71,6 @@ inline bool isV8EligibleForIT(InstrType *Instr) {
   case ARM::tSTRi:
   case ARM::tSTRr:
   case ARM::tSTRspi:
-  case ARM::tSUBi3:
-  case ARM::tSUBi8:
-  case ARM::tSUBrr:
   case ARM::tTST:
     return true;
 // there are some "conditionally deprecated" opcodes

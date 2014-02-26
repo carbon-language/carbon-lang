@@ -7850,6 +7850,10 @@ unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
   return Match_Success;
 }
 
+template<> inline bool IsCPSRDead<MCInst>(MCInst* Instr) {
+  return true; // In an assembly source, no need to second-guess
+}
+
 static const char *getSubtargetFeatureName(unsigned Val);
 bool ARMAsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
