@@ -871,79 +871,109 @@ void AsmPrinter::EmitFunctionBody() {
   OutStreamer.AddBlankLine();
 }
 
+/// Emit a dwarf register operation.
+static void emitDwarfRegOp(const AsmPrinter &AP, int Reg) {
+  assert(Reg >= 0);
+  if (Reg < 32) {
+    AP.OutStreamer.AddComment(dwarf::
+                              OperationEncodingString(dwarf::DW_OP_reg0 + Reg));
+    AP.EmitInt8(dwarf::DW_OP_reg0 + Reg);
+  } else {
+    AP.OutStreamer.AddComment("DW_OP_regx");
+    AP.EmitInt8(dwarf::DW_OP_regx);
+    AP.OutStreamer.AddComment(Twine(Reg));
+    AP.EmitULEB128(Reg);
+  }
+}
+
+/// Emit an (double-)indirect dwarf register operation.
+static void emitDwarfRegOpIndirect(const AsmPrinter &AP,
+                                   int Reg, unsigned Offset, bool Deref) {
+  assert(Reg >= 0);
+  if (Reg < 32) {
+    AP.OutStreamer.AddComment(dwarf::
+                              OperationEncodingString(dwarf::DW_OP_breg0 + Reg));
+    AP.EmitInt8(dwarf::DW_OP_breg0 + Reg);
+  } else {
+    AP.OutStreamer.AddComment("DW_OP_bregx");
+    AP.EmitInt8(dwarf::DW_OP_bregx);
+    AP.OutStreamer.AddComment(Twine(Reg));
+    AP.EmitULEB128(Reg);
+  }
+  AP.EmitSLEB128(Offset);
+  if (Deref)
+    AP.EmitInt8(dwarf::DW_OP_deref);
+}
+
+/// Emit a dwarf register operation for describing
+/// - a small value occupying only part of a register or
+/// - a small register representing only part of a value.
+static void emitDwarfRegOpPiece(const AsmPrinter &AP,
+                                int Reg, unsigned Size, unsigned Offset) {
+  assert(Reg >= 0);
+  assert(Size > 0);
+
+  emitDwarfRegOp(AP, Reg);
+  // Emit Mask
+  if (Offset > 0) {
+    AP.OutStreamer.AddComment("DW_OP_bit_piece");
+    AP.EmitInt8(dwarf::DW_OP_bit_piece);
+    AP.OutStreamer.AddComment(Twine(Size));
+    AP.EmitULEB128(Size);
+    AP.OutStreamer.AddComment(Twine(Offset));
+    AP.EmitULEB128(Offset);
+  } else {
+    AP.OutStreamer.AddComment("DW_OP_piece");
+    AP.EmitInt8(dwarf::DW_OP_piece);
+    unsigned ByteSize = Size / 8; // Assuming 8 bits per byte.
+    AP.OutStreamer.AddComment(Twine(ByteSize));
+    AP.EmitULEB128(ByteSize);
+  }
+}
+
 /// EmitDwarfRegOp - Emit dwarf register operation.
 void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
                                 bool Indirect) const {
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
   int Reg = TRI->getDwarfRegNum(MLoc.getReg(), false);
-  bool isSubRegister = Reg < 0;
-  unsigned Idx = 0;
 
-  for (MCSuperRegIterator SR(MLoc.getReg(), TRI); SR.isValid() && Reg < 0;
-       ++SR) {
-    Reg = TRI->getDwarfRegNum(*SR, false);
-    if (Reg >= 0)
-      Idx = TRI->getSubRegIndex(*SR, MLoc.getReg());
-  }
-
-  // FIXME: Handle cases like a super register being encoded as
-  // DW_OP_reg 32 DW_OP_piece 4 DW_OP_reg 33
-
-  // FIXME: We have no reasonable way of handling errors in here. The
-  // caller might be in the middle of an dwarf expression. We should
-  // probably assert that Reg >= 0 once debug info generation is more mature.
   if (Reg < 0) {
+    // Walk up the super-register chain until we find a valid number.
+    for (MCSuperRegIterator SR(MLoc.getReg(), TRI); SR.isValid(); ++SR) {
+      Reg = TRI->getDwarfRegNum(*SR, false);
+      if (Reg >= 0) {
+        unsigned Idx = TRI->getSubRegIndex(*SR, MLoc.getReg());
+        unsigned Size = TRI->getSubRegIdxSize(Idx);
+        unsigned Offset = TRI->getSubRegIdxOffset(Idx);
+        emitDwarfRegOpPiece(*this, Reg, Size, Offset);
+
+        if (MLoc.isIndirect())
+          EmitInt8(dwarf::DW_OP_deref);
+
+        if (Indirect)
+          EmitInt8(dwarf::DW_OP_deref);
+
+        return;
+      }
+
+      // FIXME: Handle cases like a super register being encoded as
+      // DW_OP_reg 32 DW_OP_piece 4 DW_OP_reg 33
+
+    }
+    // FIXME: We have no reasonable way of handling errors in here. The
+    // caller might be in the middle of an dwarf expression. We should
+    // probably assert that Reg >= 0 once debug info generation is more mature.
     OutStreamer.AddComment("nop (invalid dwarf register number)");
     EmitInt8(dwarf::DW_OP_nop);
     return;
   }
 
-  if (MLoc.isIndirect() || Indirect) {
-    if (Reg < 32) {
-      OutStreamer.AddComment(
-        dwarf::OperationEncodingString(dwarf::DW_OP_breg0 + Reg));
-      EmitInt8(dwarf::DW_OP_breg0 + Reg);
-    } else {
-      OutStreamer.AddComment("DW_OP_bregx");
-      EmitInt8(dwarf::DW_OP_bregx);
-      OutStreamer.AddComment(Twine(Reg));
-      EmitULEB128(Reg);
-    }
-    EmitSLEB128(!MLoc.isIndirect() ? 0 : MLoc.getOffset());
-    if (MLoc.isIndirect() && Indirect)
-      EmitInt8(dwarf::DW_OP_deref);
-  } else {
-    if (Reg < 32) {
-      OutStreamer.AddComment(
-        dwarf::OperationEncodingString(dwarf::DW_OP_reg0 + Reg));
-      EmitInt8(dwarf::DW_OP_reg0 + Reg);
-    } else {
-      OutStreamer.AddComment("DW_OP_regx");
-      EmitInt8(dwarf::DW_OP_regx);
-      OutStreamer.AddComment(Twine(Reg));
-      EmitULEB128(Reg);
-    }
-  }
-
-  // Emit Mask
-  if (isSubRegister) {
-    unsigned Size = TRI->getSubRegIdxSize(Idx);
-    unsigned Offset = TRI->getSubRegIdxOffset(Idx);
-    if (Offset > 0) {
-      OutStreamer.AddComment("DW_OP_bit_piece");
-      EmitInt8(dwarf::DW_OP_bit_piece);
-      OutStreamer.AddComment(Twine(Size));
-      EmitULEB128(Size);
-      OutStreamer.AddComment(Twine(Offset));
-      EmitULEB128(Offset);
-    } else {
-      OutStreamer.AddComment("DW_OP_piece");
-      EmitInt8(dwarf::DW_OP_piece);
-      unsigned ByteSize = Size / 8; // Assuming 8 bits per byte.
-      OutStreamer.AddComment(Twine(ByteSize));
-      EmitULEB128(ByteSize);
-    }
-  }
+  if (MLoc.isIndirect())
+    emitDwarfRegOpIndirect(*this, Reg, MLoc.getOffset(), Indirect);
+  else if (Indirect)
+    emitDwarfRegOpIndirect(*this, Reg, 0, false);
+  else
+    emitDwarfRegOp(*this, Reg);
 }
 
 bool AsmPrinter::doFinalization(Module &M) {
