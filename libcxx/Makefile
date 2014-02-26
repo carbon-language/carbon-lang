@@ -33,7 +33,8 @@ clean::
 # The installheaders target is used by clang's runtime/libcxx makefile.
 installheaders::
 	mkdir -p $(HEADER_DIR)/c++/v1/ext
-	(cd $(SRCDIRS)/include && tar cf - --exclude=support .) | \
+	(cd $(SRCDIRS)/include && \
+	  tar cf - --exclude=support --exclude=CMakeLists.txt .) | \
 	  (cd $(HEADER_DIR)/c++/v1 && tar xf -)
 	chmod 755 $(HEADER_DIR)/c++/v1
 	chmod 644 $(HEADER_DIR)/c++/v1/*
