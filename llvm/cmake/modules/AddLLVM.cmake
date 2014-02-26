@@ -314,6 +314,13 @@ function(llvm_add_library name)
       ${lib_deps}
       ${llvm_libs}
       )
+  elseif(ARG_SHARED AND BUILD_SHARED_LIBS)
+    # FIXME: It may be PRIVATE since SO knows its dependent libs.
+    target_link_libraries(${name} PUBLIC
+      ${ARG_LINK_LIBS}
+      ${lib_deps}
+      ${llvm_libs}
+      )
   else()
     # MODULE|SHARED
     target_link_libraries(${name} PRIVATE
