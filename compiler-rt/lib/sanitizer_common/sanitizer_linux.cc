@@ -732,7 +732,18 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
 // their location and message format might change in the future, so we'd really
 // like to avoid that.
 void AndroidLogWrite(const char *buffer) {
-  __android_log_write(ANDROID_LOG_INFO, NULL, buffer);
+  char *copy = internal_strdup(buffer);
+  char *p = copy;
+  char *q;
+  // __android_log_write has an implicit message length limit.
+  // Print one line at a time.
+  do {
+    q = internal_strchr(p, '\n');
+    if (q) *q = '\0';
+    __android_log_write(ANDROID_LOG_INFO, NULL, p);
+    if (q) p = q + 1;
+  } while (q);
+  InternalFree(copy);
 }
 
 void GetExtraActivationFlags(char *buf, uptr size) {
