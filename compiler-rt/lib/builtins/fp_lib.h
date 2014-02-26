@@ -83,6 +83,8 @@ static inline void wideMultiply(rep_t a, rep_t b, rep_t *hi, rep_t *lo) {
     // Sum terms contributing to hi with the carry from lo
     *hi = hiWord(plohi) + hiWord(philo) + hiWord(r1) + phihi;
 }
+#undef loWord
+#undef hiWord
 
 #else
 #error Either SINGLE_PRECISION or DOUBLE_PRECISION must be defined.
