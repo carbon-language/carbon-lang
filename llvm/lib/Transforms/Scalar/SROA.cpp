@@ -2169,8 +2169,7 @@ private:
       Pass.DeadInsts.insert(I);
   }
 
-  Value *rewriteVectorizedLoadInst(uint64_t NewBeginOffset,
-                                   uint64_t NewEndOffset) {
+  Value *rewriteVectorizedLoadInst() {
     unsigned BeginIndex = getIndex(NewBeginOffset);
     unsigned EndIndex = getIndex(NewEndOffset);
     assert(EndIndex > BeginIndex && "Empty vector!");
@@ -2180,8 +2179,7 @@ private:
     return extractVector(IRB, V, BeginIndex, EndIndex, "vec");
   }
 
-  Value *rewriteIntegerLoad(LoadInst &LI, uint64_t NewBeginOffset,
-                            uint64_t NewEndOffset) {
+  Value *rewriteIntegerLoad(LoadInst &LI) {
     assert(IntTy && "We cannot insert an integer to the alloca");
     assert(!LI.isVolatile());
     Value *V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
@@ -2205,9 +2203,9 @@ private:
     bool IsPtrAdjusted = false;
     Value *V;
     if (VecTy) {
-      V = rewriteVectorizedLoadInst(NewBeginOffset, NewEndOffset);
+      V = rewriteVectorizedLoadInst();
     } else if (IntTy && LI.getType()->isIntegerTy()) {
-      V = rewriteIntegerLoad(LI, NewBeginOffset, NewEndOffset);
+      V = rewriteIntegerLoad(LI);
     } else if (NewBeginOffset == NewAllocaBeginOffset &&
                canConvertValue(DL, NewAllocaTy, LI.getType())) {
       V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
@@ -2254,9 +2252,7 @@ private:
     return !LI.isVolatile() && !IsPtrAdjusted;
   }
 
-  bool rewriteVectorizedStoreInst(Value *V, StoreInst &SI, Value *OldOp,
-                                  uint64_t NewBeginOffset,
-                                  uint64_t NewEndOffset) {
+  bool rewriteVectorizedStoreInst(Value *V, StoreInst &SI, Value *OldOp) {
     if (V->getType() != VecTy) {
       unsigned BeginIndex = getIndex(NewBeginOffset);
       unsigned EndIndex = getIndex(NewEndOffset);
@@ -2282,8 +2278,7 @@ private:
     return true;
   }
 
-  bool rewriteIntegerStore(Value *V, StoreInst &SI,
-                           uint64_t NewBeginOffset, uint64_t NewEndOffset) {
+  bool rewriteIntegerStore(Value *V, StoreInst &SI) {
     assert(IntTy && "We cannot extract an integer from the alloca");
     assert(!SI.isVolatile());
     if (DL.getTypeSizeInBits(V->getType()) != IntTy->getBitWidth()) {
@@ -2329,10 +2324,9 @@ private:
     }
 
     if (VecTy)
-      return rewriteVectorizedStoreInst(V, SI, OldOp, NewBeginOffset,
-                                        NewEndOffset);
+      return rewriteVectorizedStoreInst(V, SI, OldOp);
     if (IntTy && V->getType()->isIntegerTy())
-      return rewriteIntegerStore(V, SI, NewBeginOffset, NewEndOffset);
+      return rewriteIntegerStore(V, SI);
 
     StoreInst *NewSI;
     if (NewBeginOffset == NewAllocaBeginOffset &&
