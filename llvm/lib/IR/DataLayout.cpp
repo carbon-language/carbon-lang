@@ -585,6 +585,30 @@ std::string DataLayout::getStringRepresentation() const {
   return OS.str();
 }
 
+unsigned DataLayout::getPointerABIAlignment(unsigned AS) const {
+  DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
+  if (val == Pointers.end()) {
+    val = Pointers.find(0);
+  }
+  return val->second.ABIAlign;
+}
+
+unsigned DataLayout::getPointerPrefAlignment(unsigned AS) const {
+  DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
+  if (val == Pointers.end()) {
+    val = Pointers.find(0);
+  }
+  return val->second.PrefAlign;
+}
+
+unsigned DataLayout::getPointerSize(unsigned AS) const {
+  DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
+  if (val == Pointers.end()) {
+    val = Pointers.find(0);
+  }
+  return val->second.TypeByteWidth;
+}
+
 unsigned DataLayout::getPointerTypeSizeInBits(Type *Ty) const {
   assert(Ty->isPtrOrPtrVectorTy() &&
          "This should only be called with a pointer or pointer vector type");

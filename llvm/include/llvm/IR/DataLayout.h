@@ -281,34 +281,18 @@ public:
   /// Layout pointer alignment
   /// FIXME: The defaults need to be removed once all of
   /// the backends/clients are updated.
-  unsigned getPointerABIAlignment(unsigned AS = 0) const {
-    DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
-    if (val == Pointers.end()) {
-      val = Pointers.find(0);
-    }
-    return val->second.ABIAlign;
-  }
+  unsigned getPointerABIAlignment(unsigned AS = 0) const;
 
   /// Return target's alignment for stack-based pointers
   /// FIXME: The defaults need to be removed once all of
   /// the backends/clients are updated.
-  unsigned getPointerPrefAlignment(unsigned AS = 0) const {
-    DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
-    if (val == Pointers.end()) {
-      val = Pointers.find(0);
-    }
-    return val->second.PrefAlign;
-  }
+  unsigned getPointerPrefAlignment(unsigned AS = 0) const;
+
   /// Layout pointer size
   /// FIXME: The defaults need to be removed once all of
   /// the backends/clients are updated.
-  unsigned getPointerSize(unsigned AS = 0) const {
-    DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
-    if (val == Pointers.end()) {
-      val = Pointers.find(0);
-    }
-    return val->second.TypeByteWidth;
-  }
+  unsigned getPointerSize(unsigned AS = 0) const;
+
   /// Layout pointer size, in bits
   /// FIXME: The defaults need to be removed once all of
   /// the backends/clients are updated.
