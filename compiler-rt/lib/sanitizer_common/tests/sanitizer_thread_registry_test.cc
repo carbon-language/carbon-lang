@@ -48,7 +48,7 @@ static uptr get_uid(u32 tid) {
 
 static bool HasName(ThreadContextBase *tctx, void *arg) {
   char *name = (char*)arg;
-  return (tctx->name && 0 == internal_strcmp(tctx->name, name));
+  return (0 == internal_strcmp(tctx->name, name));
 }
 
 static bool HasUid(ThreadContextBase *tctx, void *arg) {
