@@ -2136,22 +2136,16 @@ private:
                           );
   }
 
-  /// \brief Compute suitable alignment to access an offset into the new alloca.
-  unsigned getOffsetAlign(uint64_t Offset) {
+  /// \brief Compute suitable alignment to access this slice of the *new* alloca.
+  ///
+  /// You can optionally pass a type to this routine and if that type's ABI
+  /// alignment is itself suitable, this will return zero.
+  unsigned getSliceAlign(Type *Ty = 0) {
     unsigned NewAIAlign = NewAI.getAlignment();
     if (!NewAIAlign)
       NewAIAlign = DL.getABITypeAlignment(NewAI.getAllocatedType());
-    return MinAlign(NewAIAlign, Offset);
-  }
-
-  /// \brief Compute suitable alignment to access a type at an offset of the
-  /// new alloca.
-  ///
-  /// \returns zero if the type's ABI alignment is a suitable alignment,
-  /// otherwise returns the maximal suitable alignment.
-  unsigned getOffsetTypeAlign(Type *Ty, uint64_t Offset) {
-    unsigned Align = getOffsetAlign(Offset);
-    return Align == DL.getABITypeAlignment(Ty) ? 0 : Align;
+    unsigned Align = MinAlign(NewAIAlign, NewBeginOffset - NewAllocaBeginOffset);
+    return (Ty && Align == DL.getABITypeAlignment(Ty)) ? 0 : Align;
   }
 
   unsigned getIndex(uint64_t Offset) {
@@ -2212,10 +2206,9 @@ private:
                                 LI.isVolatile(), LI.getName());
     } else {
       Type *LTy = TargetTy->getPointerTo();
-      V = IRB.CreateAlignedLoad(
-          getAdjustedAllocaPtr(IRB, NewBeginOffset, LTy),
-          getOffsetTypeAlign(TargetTy, NewBeginOffset - NewAllocaBeginOffset),
-          LI.isVolatile(), LI.getName());
+      V = IRB.CreateAlignedLoad(getAdjustedAllocaPtr(IRB, NewBeginOffset, LTy),
+                                getSliceAlign(TargetTy), LI.isVolatile(),
+                                LI.getName());
       IsPtrAdjusted = true;
     }
     V = convertValue(DL, IRB, V, TargetTy);
@@ -2338,10 +2331,8 @@ private:
     } else {
       Value *NewPtr = getAdjustedAllocaPtr(IRB, NewBeginOffset,
                                            V->getType()->getPointerTo());
-      NewSI = IRB.CreateAlignedStore(
-          V, NewPtr, getOffsetTypeAlign(V->getType(),
-                                        NewBeginOffset - NewAllocaBeginOffset),
-          SI.isVolatile());
+      NewSI = IRB.CreateAlignedStore(V, NewPtr, getSliceAlign(V->getType()),
+                                     SI.isVolatile());
     }
     (void)NewSI;
     Pass.DeadInsts.insert(&SI);
@@ -2396,8 +2387,7 @@ private:
       assert(NewBeginOffset == BeginOffset);
       II.setDest(getAdjustedAllocaPtr(IRB, NewBeginOffset, OldPtr->getType()));
       Type *CstTy = II.getAlignmentCst()->getType();
-      II.setAlignment(ConstantInt::get(
-          CstTy, getOffsetAlign(NewBeginOffset - NewAllocaBeginOffset)));
+      II.setAlignment(ConstantInt::get(CstTy, getSliceAlign()));
 
       deleteIfTriviallyDead(OldPtr);
       return false;
@@ -2408,8 +2398,6 @@ private:
 
     Type *AllocaTy = NewAI.getAllocatedType();
     Type *ScalarTy = AllocaTy->getScalarType();
-
-    uint64_t SliceOffset = NewBeginOffset - NewAllocaBeginOffset;
 
     // If this doesn't map cleanly onto the alloca type, and that type isn't
     // a single value type, just emit a memset.
@@ -2423,7 +2411,7 @@ private:
       Constant *Size = ConstantInt::get(SizeTy, NewEndOffset - NewBeginOffset);
       CallInst *New = IRB.CreateMemSet(
           getAdjustedAllocaPtr(IRB, NewBeginOffset, OldPtr->getType()),
-          II.getValue(), Size, getOffsetAlign(SliceOffset), II.isVolatile());
+          II.getValue(), Size, getSliceAlign(), II.isVolatile());
       (void)New;
       DEBUG(dbgs() << "          to: " << *New << "\n");
       return false;
@@ -2509,11 +2497,9 @@ private:
     APInt RelOffset(IntPtrWidth, NewBeginOffset - BeginOffset);
 
     unsigned Align = II.getAlignment();
-    uint64_t SliceOffset = NewBeginOffset - NewAllocaBeginOffset;
     if (Align > 1)
-      Align =
-          MinAlign(RelOffset.zextOrTrunc(64).getZExtValue(),
-                   MinAlign(II.getAlignment(), getOffsetAlign(SliceOffset)));
+      Align = MinAlign(RelOffset.zextOrTrunc(64).getZExtValue(),
+                       MinAlign(II.getAlignment(), getSliceAlign()));
 
     // For unsplit intrinsics, we simply modify the source and destination
     // pointers in place. This isn't just an optimization, it is a matter of
