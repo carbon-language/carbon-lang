@@ -409,9 +409,13 @@ error_code COFFObjectFile::initSymbolTablePtr() {
       getObject(StringTable, Data, StringTableAddr, StringTableSize))
     return EC;
 
+  // Treat table sizes < 4 as empty because contrary to the PECOFF spec, some
+  // tools like cvtres write a size of 0 for an empty table instead of 4.
+  if (StringTableSize < 4)
+      StringTableSize = 4;
+
   // Check that the string table is null terminated if has any in it.
-  if (StringTableSize < 4 ||
-      (StringTableSize > 4 && StringTable[StringTableSize - 1] != 0))
+  if (StringTableSize > 4 && StringTable[StringTableSize - 1] != 0)
     return  object_error::parse_failed;
   return object_error::success;
 }
