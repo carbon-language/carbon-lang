@@ -19,9 +19,8 @@ add_clang_library(clangParse
   ParseTemplate.cpp
   ParseTentative.cpp
   Parser.cpp
-  )
 
-target_link_libraries(clangParse
+  LINK_LIBS
   clangBasic
   clangAST
   clangLex

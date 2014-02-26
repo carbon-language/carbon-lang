@@ -8,9 +8,8 @@ add_clang_library(clangRewriteCore
   RewriteRope.cpp
   Rewriter.cpp
   TokenRewriter.cpp
-  )
 
-target_link_libraries(clangRewriteCore
+  LINK_LIBS
   clangAST
   clangBasic
   clangLex

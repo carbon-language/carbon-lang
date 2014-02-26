@@ -36,9 +36,8 @@ add_clang_library(clangFrontend
 
   DEPENDS
   ClangDriverOptions
-  )
 
-target_link_libraries(clangFrontend
+  LINK_LIBS
   clangAST
   clangBasic
   clangDriver

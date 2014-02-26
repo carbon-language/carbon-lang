@@ -24,9 +24,8 @@ add_clang_library(clangAnalysis
   ScanfFormatString.cpp
   ThreadSafety.cpp
   UninitializedValues.cpp
-  )
 
-target_link_libraries(clangAnalysis
+  LINK_LIBS
   clangBasic
   clangAST
   )

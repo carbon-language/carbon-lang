@@ -20,9 +20,8 @@ add_clang_library(clangSerialization
   ADDITIONAL_HEADERS
   ASTCommon.h
   ASTReaderInternals.h
-  )
 
-target_link_libraries(clangSerialization
+  LINK_LIBS
   clangAST
   clangBasic
   clangLex

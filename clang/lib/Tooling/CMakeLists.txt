@@ -9,9 +9,8 @@ add_clang_library(clangTooling
   Refactoring.cpp
   RefactoringCallbacks.cpp
   Tooling.cpp
-  )
 
-target_link_libraries(clangTooling
+  LINK_LIBS
   clangAST
   clangASTMatchers
   clangBasic

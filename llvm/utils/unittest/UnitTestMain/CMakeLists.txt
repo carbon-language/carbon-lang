@@ -1,9 +1,7 @@
 add_llvm_library(gtest_main
   TestMain.cpp
-  )
 
-# Depends on llvm::cl
-target_link_libraries(gtest_main
+  LINK_LIBS
   gtest
-  LLVMSupport
+  LLVMSupport # Depends on llvm::cl
   )

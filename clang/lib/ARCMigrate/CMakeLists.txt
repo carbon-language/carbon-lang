@@ -23,9 +23,8 @@ add_clang_library(clangARCMigrate
   TransZeroOutPropsInDealloc.cpp
   TransformActions.cpp
   Transforms.cpp
-  )
 
-target_link_libraries(clangARCMigrate
+  LINK_LIBS
   clangAST
   clangAnalysis
   clangBasic

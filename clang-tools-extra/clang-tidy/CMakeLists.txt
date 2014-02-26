@@ -9,8 +9,8 @@ add_clang_library(clangTidy
 
   DEPENDS
   ClangSACheckers
-  )
-target_link_libraries(clangTidy
+
+  LINK_LIBS
   clangAST
   clangASTMatchers
   clangBasic

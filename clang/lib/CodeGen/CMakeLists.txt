@@ -61,9 +61,8 @@ add_clang_library(clangCodeGen
 
   DEPENDS
   intrinsics_gen
-  )
 
-target_link_libraries(clangCodeGen
+  LINK_LIBS
   clangBasic
   clangAST
   clangFrontend

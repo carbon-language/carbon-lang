@@ -48,9 +48,8 @@ add_clang_library(clangSema
   SemaTemplateVariadic.cpp
   SemaType.cpp
   TypeLocBuilder.cpp
-  )
 
-target_link_libraries(clangSema
+  LINK_LIBS
   clangAST
   clangAnalysis
   clangBasic

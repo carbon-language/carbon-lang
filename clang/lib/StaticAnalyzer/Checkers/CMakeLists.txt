@@ -77,9 +77,8 @@ add_clang_library(clangStaticAnalyzerCheckers
 
   DEPENDS
   ClangSACheckers
-  )
 
-target_link_libraries(clangStaticAnalyzerCheckers
+  LINK_LIBS
   clangAST
   clangAnalysis
   clangBasic

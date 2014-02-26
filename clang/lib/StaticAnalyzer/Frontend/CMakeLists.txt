@@ -8,9 +8,8 @@ add_clang_library(clangStaticAnalyzerFrontend
   AnalysisConsumer.cpp
   CheckerRegistration.cpp
   FrontendActions.cpp
-  )
 
-target_link_libraries(clangStaticAnalyzerFrontend
+  LINK_LIBS
   clangAST
   clangAnalysis
   clangBasic

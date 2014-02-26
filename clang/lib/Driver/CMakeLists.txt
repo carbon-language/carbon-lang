@@ -24,8 +24,7 @@ add_clang_library(clangDriver
   DEPENDS
   ClangCC1AsOptions
   ClangDriverOptions
-  )
 
-target_link_libraries(clangDriver
+  LINK_LIBS
   clangBasic
   )

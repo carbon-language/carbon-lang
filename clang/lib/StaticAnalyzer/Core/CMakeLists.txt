@@ -39,9 +39,8 @@ add_clang_library(clangStaticAnalyzerCore
   Store.cpp
   SubEngine.cpp
   SymbolManager.cpp
-  )
 
-target_link_libraries(clangStaticAnalyzerCore
+  LINK_LIBS
   clangAST
   clangAnalysis
   clangBasic

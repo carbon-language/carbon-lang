@@ -57,9 +57,8 @@ add_clang_library(clangAST
   TypePrinter.cpp
   VTableBuilder.cpp
   VTTBuilder.cpp
-  )
 
-target_link_libraries(clangAST
+  LINK_LIBS
   clangBasic
   clangLex
   )
