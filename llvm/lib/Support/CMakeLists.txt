@@ -142,5 +142,13 @@ if( NOT MSVC )
     endif()
   endif( MINGW )
 endif( NOT MSVC )
-target_link_libraries(LLVMSupport ${cmake_2_8_12_INTERFACE} ${system_libs})
+
+
+if(POLICY CMP0022 AND BUILD_SHARED_LIBS)
+  # FIXME: Should this be really PUBLIC?
+  target_link_libraries(LLVMSupport PUBLIC ${system_libs})
+else()
+  target_link_libraries(LLVMSupport ${cmake_2_8_12_INTERFACE} ${system_libs})
+endif()
+
 set_property(TARGET LLVMSupport PROPERTY LLVM_SYSTEM_LIBS "${system_libs}")
