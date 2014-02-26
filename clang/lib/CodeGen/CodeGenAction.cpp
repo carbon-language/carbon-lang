@@ -320,7 +320,7 @@ BackendConsumer::InlineAsmDiagHandler(const llvm::DiagnosticInfoInlineAsm &D) {
   std::string Message = D.getMsgStr().str();
 
   // If this problem has clang-level source location information, report the
-  // issue as being a prbolem in the source with a note showing the instantiated
+  // issue as being a problem in the source with a note showing the instantiated
   // code.
   SourceLocation LocCookie =
       SourceLocation::getFromRawEncoding(D.getLocCookie());
