@@ -58,6 +58,9 @@ add_clang_library(clangCodeGen
   MicrosoftCXXABI.cpp
   ModuleBuilder.cpp
   TargetInfo.cpp
+
+  DEPENDS
+  intrinsics_gen
   )
 
 target_link_libraries(clangCodeGen
