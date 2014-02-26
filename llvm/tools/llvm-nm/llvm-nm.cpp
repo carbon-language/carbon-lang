@@ -462,30 +462,6 @@ static char getNMTypeChar(SymbolicFile *Obj, basic_symbol_iterator I) {
   return Ret;
 }
 
-static void getDynamicSymbolIterators(SymbolicFile *Obj,
-                                      basic_symbol_iterator &Begin,
-                                      basic_symbol_iterator &End) {
-  if (ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(Obj)) {
-    Begin = ELF->dynamic_symbol_begin();
-    End = ELF->dynamic_symbol_end();
-    return;
-  }
-  if (ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(Obj)) {
-    Begin = ELF->dynamic_symbol_begin();
-    End = ELF->dynamic_symbol_end();
-    return;
-  }
-  if (ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(Obj)) {
-    Begin = ELF->dynamic_symbol_begin();
-    End = ELF->dynamic_symbol_end();
-    return;
-  }
-  ELF64BEObjectFile *ELF = cast<ELF64BEObjectFile>(Obj);
-  Begin = ELF->dynamic_symbol_begin();
-  End = ELF->dynamic_symbol_end();
-  return;
-}
-
 static void dumpSymbolNamesFromObject(SymbolicFile *Obj) {
   basic_symbol_iterator IBegin = Obj->symbol_begin();
   basic_symbol_iterator IEnd = Obj->symbol_end();
@@ -494,7 +470,10 @@ static void dumpSymbolNamesFromObject(SymbolicFile *Obj) {
       error("File format has no dynamic symbol table", Obj->getFileName());
       return;
     }
-    getDynamicSymbolIterators(Obj, IBegin, IEnd);
+    std::pair<symbol_iterator, symbol_iterator> IDyn =
+        getELFDynamicSymbolIterators(Obj);
+    IBegin = IDyn.first;
+    IEnd = IDyn.second;
   }
   std::string NameBuffer;
   raw_string_ostream OS(NameBuffer);

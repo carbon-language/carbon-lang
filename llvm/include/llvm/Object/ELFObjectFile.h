@@ -1015,6 +1015,25 @@ static inline error_code getELFRelocationAddend(const RelocationRef R,
   llvm_unreachable("Object passed to getELFRelocationAddend() is not ELF");
 }
 
+static inline std::pair<symbol_iterator, symbol_iterator>
+getELFDynamicSymbolIterators(SymbolicFile *Obj) {
+  if (const ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(Obj))
+    return std::make_pair(ELF->dynamic_symbol_begin(),
+                          ELF->dynamic_symbol_end());
+  if (const ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(Obj))
+    return std::make_pair(ELF->dynamic_symbol_begin(),
+                          ELF->dynamic_symbol_end());
+  if (const ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(Obj))
+    return std::make_pair(ELF->dynamic_symbol_begin(),
+                          ELF->dynamic_symbol_end());
+  if (const ELF64BEObjectFile *ELF = cast<ELF64BEObjectFile>(Obj))
+    return std::make_pair(ELF->dynamic_symbol_begin(),
+                          ELF->dynamic_symbol_end());
+
+  llvm_unreachable(
+      "Object passed to getELFDynamicSymbolIterators() is not ELF");
+}
+
 /// This is a generic interface for retrieving GNU symbol version
 /// information from an ELFObjectFile.
 static inline error_code GetELFSymbolVersion(const ObjectFile *Obj,
