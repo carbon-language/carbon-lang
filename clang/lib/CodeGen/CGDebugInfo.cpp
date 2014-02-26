@@ -52,9 +52,9 @@ CGDebugInfo::~CGDebugInfo() {
          "Region stack mismatch, stack not empty!");
 }
 
-
-SaveAndRestoreLocation::SaveAndRestoreLocation(CodeGenFunction &CGF, CGBuilderTy &B)
-  : DI(CGF.getDebugInfo()), Builder(B) {
+SaveAndRestoreLocation::SaveAndRestoreLocation(CodeGenFunction &CGF,
+                                               CGBuilderTy &B)
+    : DI(CGF.getDebugInfo()), Builder(B) {
   if (DI) {
     SavedLoc = DI->getLocation();
     DI->CurLoc = SourceLocation();
@@ -1475,8 +1475,8 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
       (DebugKind <= CodeGenOptions::LimitedDebugInfo &&
        // Emit only a forward declaration unless the type is required.
        ((!RD->isCompleteDefinitionRequired() && CGM.getLangOpts().CPlusPlus) ||
-        // If the class is dynamic, only emit a declaration. A definition will be
-        // emitted whenever the vtable is emitted.
+        // If the class is dynamic, only emit a declaration. A definition will
+        // be emitted whenever the vtable is emitted.
         (CXXDecl && CXXDecl->hasDefinition() && CXXDecl->isDynamicClass())))) {
     if (!T)
       T = getOrCreateRecordFwdDecl(
