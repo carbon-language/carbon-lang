@@ -1188,10 +1188,6 @@ class CallInst : public Instruction {
   inline CallInst(Value *Func, ArrayRef<Value *> Args,
                   const Twine &NameStr, BasicBlock *InsertAtEnd);
 
-  CallInst(Value *F, Value *Actual, const Twine &NameStr,
-           Instruction *InsertBefore);
-  CallInst(Value *F, Value *Actual, const Twine &NameStr,
-           BasicBlock *InsertAtEnd);
   explicit CallInst(Value *F, const Twine &NameStr,
                     Instruction *InsertBefore);
   CallInst(Value *F, const Twine &NameStr, BasicBlock *InsertAtEnd);
