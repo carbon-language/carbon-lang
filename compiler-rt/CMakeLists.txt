@@ -237,6 +237,12 @@ if(COMPILER_RT_ENABLE_WERROR)
   add_definitions_if(COMPILER_RT_HAS_WX_FLAG /WX)
 endif()
 
+# Emulate C99 and C++11's __func__ for MSVC prior to 2013 CTP.
+CHECK_SYMBOL_EXISTS(__func__ "" COMPILER_RT_HAS_FUNC)
+if(NOT COMPILER_RT_HAS_FUNC)
+  list(APPEND SANITIZER_COMMON_CFLAGS -D__func__=__FUNCTION__)
+endif()
+
 # Provide some common commmandline flags for Sanitizer runtimes.
 append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FPIC_FLAG -fPIC)
 append_if(SANITIZER_COMMON_CFLAGS COMPILER_RT_HAS_FNO_BUILTIN_FLAG -fno-builtin)

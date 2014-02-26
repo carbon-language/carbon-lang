@@ -11,9 +11,6 @@ macro(clang_compile object_file source)
   if(NOT COMPILER_RT_STANDALONE_BUILD)
     list(APPEND SOURCE_DEPS clang)
   endif()
-  if (MSVC)
-    list(APPEND SOURCE_CFLAGS -D__func__=__FUNCTION__)
-  endif()
   add_custom_command(
     OUTPUT ${object_file}
     COMMAND ${COMPILER_RT_TEST_COMPILER} ${SOURCE_CFLAGS} -c -o "${object_file}"
