@@ -87,18 +87,18 @@ define void @test_simplify7() {
 ; CHECK-IPRINTF-LABEL: @test_simplify7(
   %fmt = getelementptr [3 x i8]* @percent_d, i32 0, i32 0
   call i32 (i8*, ...)* @printf(i8* %fmt, i32 187)
-; CHECK-NEXT-IPRINTF: call i32 (i8*, ...)* @iprintf(i8* getelementptr inbounds ([3 x i8]* @percent_d, i32 0, i32 0), i32 187)
+; CHECK-IPRINTF-NEXT: call i32 (i8*, ...)* @iprintf(i8* getelementptr inbounds ([3 x i8]* @percent_d, i32 0, i32 0), i32 187)
   ret void
-; CHECK-NEXT-IPRINTF: ret void
+; CHECK-IPRINTF-NEXT: ret void
 }
 
 define void @test_no_simplify1() {
 ; CHECK-IPRINTF-LABEL: @test_no_simplify1(
   %fmt = getelementptr [3 x i8]* @percent_f, i32 0, i32 0
   call i32 (i8*, ...)* @printf(i8* %fmt, double 1.87)
-; CHECK-NEXT-IPRINTF: call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8]* @percent_f, i32 0, i32 0), double 1.870000e+00)
+; CHECK-IPRINTF-NEXT: call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([3 x i8]* @percent_f, i32 0, i32 0), double 1.870000e+00)
   ret void
-; CHECK-NEXT-IPRINTF: ret void
+; CHECK-IPRINTF-NEXT: ret void
 }
 
 define void @test_no_simplify2(i8* %fmt, double %d) {
