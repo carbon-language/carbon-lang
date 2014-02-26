@@ -132,7 +132,8 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
 
   // Preserve a copy of the original STI because the parser may modify it.  For
   // example, when switching between arm and thumb mode. If the target needs to
-  // emit code to return to the original state it can do so in emitInlineAsmEnd().
+  // emit code to return to the original state it can do so in
+  // emitInlineAsmEnd().
   MCSubtargetInfo STIOrig = *STI;
 
   OwningPtr<MCTargetAsmParser>
