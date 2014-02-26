@@ -888,7 +888,7 @@ static void emitDwarfRegOp(const AsmPrinter &AP, int Reg) {
 
 /// Emit an (double-)indirect dwarf register operation.
 static void emitDwarfRegOpIndirect(const AsmPrinter &AP,
-                                   int Reg, unsigned Offset, bool Deref) {
+                                   int Reg, int Offset, bool Deref) {
   assert(Reg >= 0);
   if (Reg < 32) {
     AP.OutStreamer.AddComment(dwarf::
