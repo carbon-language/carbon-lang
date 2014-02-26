@@ -385,7 +385,9 @@ PEHeaderChunk<PEHeader>::PEHeaderChunk(const PECOFFLinkingContext &ctx)
   // executables and DLLs. We are not very sure if the following bits must
   // be set, but regular binaries seem to have these bits, so we follow
   // them.
-  uint16_t dllCharacteristics = llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NO_SEH;
+  uint16_t dllCharacteristics = 0;
+  if (ctx.noSEH())
+    dllCharacteristics |= llvm::COFF::IMAGE_DLL_CHARACTERISTICS_NO_SEH;
   if (ctx.isTerminalServerAware())
     dllCharacteristics |=
         llvm::COFF::IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE;
