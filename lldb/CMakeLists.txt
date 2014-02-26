@@ -210,7 +210,6 @@ macro(add_lldb_library name)
   target_link_libraries(${name} ${LLVM_USED_LIBS})
   llvm_config(${name} ${LLVM_LINK_COMPONENTS})
   target_link_libraries(${name} ${LLVM_COMMON_LIBS})
-  link_system_libs(${name})
   if (LLVM_COMMON_DEPENDS)
     add_dependencies(${name} ${LLVM_COMMON_DEPENDS})
   endif()
@@ -235,7 +234,6 @@ macro(add_lldb_executable name)
   add_executable(${name} ${ALL_FILES})
   #target_link_libraries(${name} ${CLANG_USED_LIBS})
   #llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
-  #link_system_libs( ${name} )
   #if (LLVM_COMMON_DEPENDS)
   #add_dependencies(${name} ${LLVM_COMMON_DEPENDS})
   #endif()
@@ -270,16 +268,6 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   ${CORE_FOUNDATION_LIBRARY} ${CORE_SERVICES_LIBRARY} ${SECURITY_LIBRARY}
   ${DEBUG_SYMBOLS_LIBRARY})
 endif()
-
-# On FreeBSD, link libexecinfo because libc is missing  backtrace()
-if (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-  list(APPEND system_libs execinfo ncurses panel)
-endif()
-
-if (CMAKE_SYSTEM_NAME MATCHES "Linux")
-  list(APPEND system_libs ncurses panel)
-endif()
-
 
 # Disable RTTI by default
 if(NOT LLDB_REQUIRES_RTTI)
