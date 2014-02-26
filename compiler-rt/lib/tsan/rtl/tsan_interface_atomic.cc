@@ -35,7 +35,7 @@ using namespace __tsan;  // NOLINT
     if (thr->ignore_interceptors) \
       return NoTsanAtomic##func(__VA_ARGS__); \
     AtomicStatInc(thr, sizeof(*a), mo, StatAtomic##func); \
-    ScopedAtomic sa(thr, callpc, a, mo, __FUNCTION__); \
+    ScopedAtomic sa(thr, callpc, a, mo, __func__); \
     return Atomic##func(thr, pc, __VA_ARGS__); \
 /**/
 

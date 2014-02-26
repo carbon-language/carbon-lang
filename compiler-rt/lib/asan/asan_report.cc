@@ -835,7 +835,7 @@ void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
   if (callback) {
     error_message_buffer_size = 1 << 16;
     error_message_buffer =
-        (char*)MmapOrDie(error_message_buffer_size, __FUNCTION__);
+        (char*)MmapOrDie(error_message_buffer_size, __func__);
     error_message_buffer_pos = 0;
   }
 }
