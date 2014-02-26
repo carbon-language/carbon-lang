@@ -573,8 +573,9 @@ public:
                                            QualType T) {
     return NULLPtr;
   }
-  
-  virtual llvm::GlobalVariable *GetClassGlobal(const std::string &Name) {
+
+  llvm::GlobalVariable *GetClassGlobal(const std::string &Name,
+                                       bool Weak = false) LLVM_OVERRIDE {
     return 0;
   }
 };
