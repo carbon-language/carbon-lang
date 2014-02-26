@@ -23,3 +23,9 @@ CHECK:   Security Cookie: 0
 CHECK:   SEH Table: 4210688
 CHECK:   SEH Count: 1
 CHECK: SEH Table: 0x{{[0-9a-f]+}}
+
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /force /nodefaultlib \
+# RUN:   /safeseh:no -- %t.obj
+# RUN: llvm-objdump -private-headers %t.exe | FileCheck -check-prefix=NOSEH %s
+
+NOSEH-NOT: SEH Table:
