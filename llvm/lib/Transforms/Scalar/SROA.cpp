@@ -2494,14 +2494,10 @@ private:
     assert((IsDest && II.getRawDest() == OldPtr) ||
            (!IsDest && II.getRawSource() == OldPtr));
 
-    // Compute the relative offset within the transfer.
-    unsigned IntPtrWidth = DL.getPointerSizeInBits();
-    APInt RelOffset(IntPtrWidth, NewBeginOffset - BeginOffset);
-
-    unsigned Align = II.getAlignment();
-    if (Align > 1)
-      Align = MinAlign(RelOffset.zextOrTrunc(64).getZExtValue(),
-                       MinAlign(II.getAlignment(), getSliceAlign()));
+    unsigned MinAlignment = II.getAlignment();
+    if (MinAlignment == 0)
+      MinAlignment = 1; // Fix the '0' alignment used by memcpy and memmove.
+    MinAlignment = MinAlign(MinAlignment, getSliceAlign());
 
     // For unsplit intrinsics, we simply modify the source and destination
     // pointers in place. This isn't just an optimization, it is a matter of
@@ -2517,8 +2513,10 @@ private:
       else
         II.setSource(AdjustedPtr);
 
-      Type *CstTy = II.getAlignmentCst()->getType();
-      II.setAlignment(ConstantInt::get(CstTy, Align));
+      if (II.getAlignment() > MinAlignment) {
+        Type *CstTy = II.getAlignmentCst()->getType();
+        II.setAlignment(ConstantInt::get(CstTy, MinAlignment));
+      }
 
       DEBUG(dbgs() << "          to: " << II << "\n");
       deleteIfTriviallyDead(OldPtr);
@@ -2563,12 +2561,20 @@ private:
       Pass.Worklist.insert(AI);
     }
 
+    // Compute the relative offset for the other pointer within the transfer.
+    unsigned IntPtrWidth = DL.getPointerSizeInBits();
+    APInt OtherOffset(IntPtrWidth, NewBeginOffset - BeginOffset);
+
+    // Factor the offset other pointer's alignment into the requinerd minimum.
+    MinAlignment =
+        MinAlign(MinAlignment, OtherOffset.zextOrTrunc(64).getZExtValue());
+
     if (EmitMemCpy) {
       Type *OtherPtrTy = OtherPtr->getType();
 
       // Compute the other pointer, folding as much as possible to produce
       // a single, simple GEP in most cases.
-      OtherPtr = getAdjustedPtr(IRB, DL, OtherPtr, RelOffset, OtherPtrTy,
+      OtherPtr = getAdjustedPtr(IRB, DL, OtherPtr, OtherOffset, OtherPtrTy,
                                 OtherPtr->getName() + ".");
 
       Value *OurPtr = getNewAllocaSlicePtr(IRB, OldPtr->getType());
@@ -2577,17 +2583,11 @@ private:
 
       CallInst *New = IRB.CreateMemCpy(IsDest ? OurPtr : OtherPtr,
                                        IsDest ? OtherPtr : OurPtr,
-                                       Size, Align, II.isVolatile());
+                                       Size, MinAlignment, II.isVolatile());
       (void)New;
       DEBUG(dbgs() << "          to: " << *New << "\n");
       return false;
     }
-
-    // Note that we clamp the alignment to 1 here as a 0 alignment for a memcpy
-    // is equivalent to 1, but that isn't true if we end up rewriting this as
-    // a load or store.
-    if (!Align)
-      Align = 1;
 
     bool IsWholeAlloca = NewBeginOffset == NewAllocaBeginOffset &&
                          NewEndOffset == NewAllocaEndOffset;
@@ -2610,7 +2610,7 @@ private:
       OtherPtrTy = SubIntTy->getPointerTo();
     }
 
-    Value *SrcPtr = getAdjustedPtr(IRB, DL, OtherPtr, RelOffset, OtherPtrTy,
+    Value *SrcPtr = getAdjustedPtr(IRB, DL, OtherPtr, OtherOffset, OtherPtrTy,
                                    OtherPtr->getName() + ".");
     Value *DstPtr = &NewAI;
     if (!IsDest)
@@ -2628,7 +2628,7 @@ private:
       uint64_t Offset = NewBeginOffset - NewAllocaBeginOffset;
       Src = extractInteger(DL, IRB, Src, SubIntTy, Offset, "extract");
     } else {
-      Src = IRB.CreateAlignedLoad(SrcPtr, Align, II.isVolatile(),
+      Src = IRB.CreateAlignedLoad(SrcPtr, MinAlignment, II.isVolatile(),
                                   "copyload");
     }
 
@@ -2646,7 +2646,7 @@ private:
     }
 
     StoreInst *Store = cast<StoreInst>(
-      IRB.CreateAlignedStore(Src, DstPtr, Align, II.isVolatile()));
+        IRB.CreateAlignedStore(Src, DstPtr, MinAlignment, II.isVolatile()));
     (void)Store;
     DEBUG(dbgs() << "          to: " << *Store << "\n");
     return !II.isVolatile();
