@@ -2102,9 +2102,12 @@ private:
     llvm_unreachable("No rewrite rule for this instruction!");
   }
 
-  Value *getAdjustedAllocaPtr(IRBuilderTy &IRB, uint64_t Offset,
-                              Type *PointerTy) {
-    assert(Offset >= NewAllocaBeginOffset);
+  Value *getNewAllocaSlicePtr(IRBuilderTy &IRB, Type *PointerTy) {
+    // Note that the offset computation can use BeginOffset or NewBeginOffset
+    // interchangeably for unsplit slices.
+    assert(IsSplit || BeginOffset == NewBeginOffset);
+    uint64_t Offset = NewBeginOffset - NewAllocaBeginOffset;
+
 #ifndef NDEBUG
     StringRef OldName = OldPtr->getName();
     // Skip through the last '.sroa.' component of the name.
@@ -2125,9 +2128,9 @@ private:
     // Strip any SROA suffixes as well.
     OldName = OldName.substr(0, OldName.find(".sroa_"));
 #endif
-    return getAdjustedPtr(IRB, DL, &NewAI, APInt(DL.getPointerSizeInBits(),
-                                                 Offset - NewAllocaBeginOffset),
-                          PointerTy,
+
+    return getAdjustedPtr(IRB, DL, &NewAI,
+                          APInt(DL.getPointerSizeInBits(), Offset), PointerTy,
 #ifndef NDEBUG
                           Twine(OldName) + "."
 #else
@@ -2206,7 +2209,7 @@ private:
                                 LI.isVolatile(), LI.getName());
     } else {
       Type *LTy = TargetTy->getPointerTo();
-      V = IRB.CreateAlignedLoad(getAdjustedAllocaPtr(IRB, NewBeginOffset, LTy),
+      V = IRB.CreateAlignedLoad(getNewAllocaSlicePtr(IRB, LTy),
                                 getSliceAlign(TargetTy), LI.isVolatile(),
                                 LI.getName());
       IsPtrAdjusted = true;
@@ -2329,8 +2332,7 @@ private:
       NewSI = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment(),
                                      SI.isVolatile());
     } else {
-      Value *NewPtr = getAdjustedAllocaPtr(IRB, NewBeginOffset,
-                                           V->getType()->getPointerTo());
+      Value *NewPtr = getNewAllocaSlicePtr(IRB, V->getType()->getPointerTo());
       NewSI = IRB.CreateAlignedStore(V, NewPtr, getSliceAlign(V->getType()),
                                      SI.isVolatile());
     }
@@ -2385,7 +2387,7 @@ private:
     if (!isa<Constant>(II.getLength())) {
       assert(!IsSplit);
       assert(NewBeginOffset == BeginOffset);
-      II.setDest(getAdjustedAllocaPtr(IRB, NewBeginOffset, OldPtr->getType()));
+      II.setDest(getNewAllocaSlicePtr(IRB, OldPtr->getType()));
       Type *CstTy = II.getAlignmentCst()->getType();
       II.setAlignment(ConstantInt::get(CstTy, getSliceAlign()));
 
@@ -2410,8 +2412,8 @@ private:
       Type *SizeTy = II.getLength()->getType();
       Constant *Size = ConstantInt::get(SizeTy, NewEndOffset - NewBeginOffset);
       CallInst *New = IRB.CreateMemSet(
-          getAdjustedAllocaPtr(IRB, NewBeginOffset, OldPtr->getType()),
-          II.getValue(), Size, getSliceAlign(), II.isVolatile());
+          getNewAllocaSlicePtr(IRB, OldPtr->getType()), II.getValue(), Size,
+          getSliceAlign(), II.isVolatile());
       (void)New;
       DEBUG(dbgs() << "          to: " << *New << "\n");
       return false;
@@ -2509,8 +2511,7 @@ private:
     // memcpy, and so simply updating the pointers is the necessary for us to
     // update both source and dest of a single call.
     if (!IsSplittable) {
-      Value *AdjustedPtr =
-          getAdjustedAllocaPtr(IRB, BeginOffset, OldPtr->getType());
+      Value *AdjustedPtr = getNewAllocaSlicePtr(IRB, OldPtr->getType());
       if (IsDest)
         II.setDest(AdjustedPtr);
       else
@@ -2570,8 +2571,7 @@ private:
       OtherPtr = getAdjustedPtr(IRB, DL, OtherPtr, RelOffset, OtherPtrTy,
                                 OtherPtr->getName() + ".");
 
-      Value *OurPtr =
-          getAdjustedAllocaPtr(IRB, NewBeginOffset, OldPtr->getType());
+      Value *OurPtr = getNewAllocaSlicePtr(IRB, OldPtr->getType());
       Type *SizeTy = II.getLength()->getType();
       Constant *Size = ConstantInt::get(SizeTy, NewEndOffset - NewBeginOffset);
 
@@ -2664,7 +2664,7 @@ private:
     ConstantInt *Size
       = ConstantInt::get(cast<IntegerType>(II.getArgOperand(0)->getType()),
                          NewEndOffset - NewBeginOffset);
-    Value *Ptr = getAdjustedAllocaPtr(IRB, NewBeginOffset, OldPtr->getType());
+    Value *Ptr = getNewAllocaSlicePtr(IRB, OldPtr->getType());
     Value *New;
     if (II.getIntrinsicID() == Intrinsic::lifetime_start)
       New = IRB.CreateLifetimeStart(Ptr, Size);
@@ -2689,8 +2689,7 @@ private:
     PtrBuilder.SetInsertPoint(OldPtr);
     PtrBuilder.SetCurrentDebugLocation(OldPtr->getDebugLoc());
 
-    Value *NewPtr =
-        getAdjustedAllocaPtr(PtrBuilder, BeginOffset, OldPtr->getType());
+    Value *NewPtr = getNewAllocaSlicePtr(PtrBuilder, OldPtr->getType());
     // Replace the operands which were using the old pointer.
     std::replace(PN.op_begin(), PN.op_end(), cast<Value>(OldPtr), NewPtr);
 
@@ -2711,7 +2710,7 @@ private:
     assert(BeginOffset >= NewAllocaBeginOffset && "Selects are unsplittable");
     assert(EndOffset <= NewAllocaEndOffset && "Selects are unsplittable");
 
-    Value *NewPtr = getAdjustedAllocaPtr(IRB, BeginOffset, OldPtr->getType());
+    Value *NewPtr = getNewAllocaSlicePtr(IRB, OldPtr->getType());
     // Replace the operands which were using the old pointer.
     if (SI.getOperand(1) == OldPtr)
       SI.setOperand(1, NewPtr);
