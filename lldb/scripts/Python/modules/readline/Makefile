@@ -20,7 +20,7 @@ LINK_LIBS_IN_SHARED = 1
 SHARED_LIBRARY = 1
 LOADABLE_MODULE = 1
 
-PYTHON_INCLUDES = $(shell python-config --includes)
+PYTHON_INC_DIR = $(shell python-config --includes)
 
 # Include all archives in the shared lib
 USEDLIBS :=
@@ -32,7 +32,7 @@ LINK_COMPONENTS :=
 include $(LEVEL)/Makefile.common
 
 # include python headers
-CXXFLAGS += $(PYTHON_INCLUDES)
+CPP.Flags += $(PYTHON_INC_DIR)
 
 ifeq ($(HOST_OS),Darwin)
     LLVMLibsOptions += -Wl,-all_load
