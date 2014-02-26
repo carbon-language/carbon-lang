@@ -88,36 +88,44 @@ class PthreadRWLock {
 
 class LockTest {
  public:
-  explicit LockTest(size_t n) : n_(n), locks_(new LockType[n]) { }
-  ~LockTest() { delete [] locks_; }
+  explicit LockTest(size_t n)
+      : n_(n), locks_(new LockType*[n]) {
+    for (size_t i = 0; i < n_; i++)
+      locks_[i] = new LockType;
+  }
+  ~LockTest() {
+    for (size_t i = 0; i < n_; i++)
+      delete locks_[i];
+    delete [] locks_;
+  }
   void L(size_t i) {
     assert(i < n_);
-    locks_[i].lock();
+    locks_[i]->lock();
   }
 
   void U(size_t i) {
     assert(i < n_);
-    locks_[i].unlock();
+    locks_[i]->unlock();
   }
 
   void RL(size_t i) {
     assert(i < n_);
-    locks_[i].rdlock();
+    locks_[i]->rdlock();
   }
 
   void RU(size_t i) {
     assert(i < n_);
-    locks_[i].rdunlock();
+    locks_[i]->rdunlock();
   }
 
   void *A(size_t i) {
     assert(i < n_);
-    return &locks_[i];
+    return locks_[i];
   }
 
   bool T(size_t i) {
     assert(i < n_);
-    return locks_[i].try_lock();
+    return locks_[i]->try_lock();
   }
 
   // Simple lock order onversion.
@@ -263,11 +271,12 @@ class LockTest {
     // fprintf(stderr, "\n");
   }
   void Lock1_Loop_0() { Lock1_Loop(0, 100000); }
-  void Lock1_Loop_1() { Lock1_Loop(1, 100000); }
-  void Lock1_Loop_2() { Lock1_Loop(2, 100000); }
+  void Lock1_Loop_1() { Lock1_Loop(10, 100000); }
+  void Lock1_Loop_2() { Lock1_Loop(20, 100000); }
 
   void CreateAndDestroyManyLocks() {
     LockType create_many_locks_but_never_acquire[kDeadlockGraphSize];
+    (void)create_many_locks_but_never_acquire;
     (void)create_many_locks_but_never_acquire;
   }
 
@@ -305,7 +314,7 @@ class LockTest {
 
   static const size_t kDeadlockGraphSize = 4096;
   size_t n_;
-  LockType *locks_;
+  LockType **locks_;
 };
 
 int main() {
@@ -314,7 +323,7 @@ int main() {
   { LockTest t(5); t.Test3(); }
   { LockTest t(5); t.Test4(); }
   { LockTest t(5); t.Test5(); }
-  { LockTest t(5); t.Test6(); }
+  { LockTest t(100); t.Test6(); }
   { LockTest t(10); t.Test7(); }
   { LockTest t(5); t.Test8(); }
   { LockTest t(5); t.Test9(); }
