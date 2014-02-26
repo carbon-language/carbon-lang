@@ -25,8 +25,3 @@ extern "C"
 void inc2(int *a, int index) {
   a[index]++;
 }
-
-extern "C"
-void my_memset(void *p, size_t sz) {
-  memset(p, 0, sz);
-}
