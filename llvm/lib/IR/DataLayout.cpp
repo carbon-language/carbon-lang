@@ -390,7 +390,7 @@ static bool comparePointerAlignElem(const PointerAlignElem &A,
 }
 
 DataLayout::PointersTy::iterator
-DataLayout::findPoiterLowerBound(uint32_t AddressSpace) {
+DataLayout::findPointerLowerBound(uint32_t AddressSpace) {
   return std::lower_bound(Pointers.begin(), Pointers.end(), AddressSpace,
                           comparePointerAlignElem);
 }
@@ -399,7 +399,7 @@ void DataLayout::setPointerAlignment(uint32_t AddrSpace, unsigned ABIAlign,
                                      unsigned PrefAlign,
                                      uint32_t TypeByteWidth) {
   assert(ABIAlign <= PrefAlign && "Preferred alignment worse than ABI!");
-  PointersTy::iterator I = findPoiterLowerBound(AddrSpace);
+  PointersTy::iterator I = findPointerLowerBound(AddrSpace);
   if (I == Pointers.end() || I->AddressSpace != AddrSpace) {
     Pointers.insert(I, PointerAlignElem::get(AddrSpace, ABIAlign, PrefAlign,
                                              TypeByteWidth));
@@ -597,27 +597,27 @@ std::string DataLayout::getStringRepresentation() const {
 }
 
 unsigned DataLayout::getPointerABIAlignment(unsigned AS) const {
-  PointersTy::const_iterator I = findPoiterLowerBound(AS);
+  PointersTy::const_iterator I = findPointerLowerBound(AS);
   if (I == Pointers.end() || I->AddressSpace != AS) {
-    I = findPoiterLowerBound(0);
+    I = findPointerLowerBound(0);
     assert(I->AddressSpace == 0);
   }
   return I->ABIAlign;
 }
 
 unsigned DataLayout::getPointerPrefAlignment(unsigned AS) const {
-  PointersTy::const_iterator I = findPoiterLowerBound(AS);
+  PointersTy::const_iterator I = findPointerLowerBound(AS);
   if (I == Pointers.end() || I->AddressSpace != AS) {
-    I = findPoiterLowerBound(0);
+    I = findPointerLowerBound(0);
     assert(I->AddressSpace == 0);
   }
   return I->PrefAlign;
 }
 
 unsigned DataLayout::getPointerSize(unsigned AS) const {
-  PointersTy::const_iterator I = findPoiterLowerBound(AS);
+  PointersTy::const_iterator I = findPointerLowerBound(AS);
   if (I == Pointers.end() || I->AddressSpace != AS) {
-    I = findPoiterLowerBound(0);
+    I = findPointerLowerBound(0);
     assert(I->AddressSpace == 0);
   }
   return I->TypeByteWidth;

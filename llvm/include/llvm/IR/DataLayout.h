@@ -118,11 +118,12 @@ private:
   typedef SmallVector<PointerAlignElem, 8> PointersTy;
   PointersTy Pointers;
 
-  PointersTy::const_iterator findPoiterLowerBound(uint32_t AddressSpace) const {
-    return const_cast<DataLayout *>(this)->findPoiterLowerBound(AddressSpace);
+  PointersTy::const_iterator
+  findPointerLowerBound(uint32_t AddressSpace) const {
+    return const_cast<DataLayout *>(this)->findPointerLowerBound(AddressSpace);
   }
 
-  PointersTy::iterator findPoiterLowerBound(uint32_t AddressSpace);
+  PointersTy::iterator findPointerLowerBound(uint32_t AddressSpace);
 
   /// InvalidAlignmentElem - This member is a signal that a requested alignment
   /// type and bit width were not found in the SmallVector.
