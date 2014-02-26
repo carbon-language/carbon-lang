@@ -437,7 +437,7 @@ class match_results
 public:
     typedef sub_match<BidirectionalIterator>                  value_type;
     typedef const value_type&                                 const_reference;
-    typedef const_reference                                   reference;
+    typedef value_type&                                       reference;
     typedef /implementation-defined/                          const_iterator;
     typedef const_iterator                                    iterator;
     typedef typename iterator_traits<BidirectionalIterator>::difference_type difference_type;
@@ -5263,7 +5263,7 @@ private:
 public:
     _BidirectionalIterator __position_start_;
     typedef const value_type&                                 const_reference;
-    typedef const_reference                                   reference;
+    typedef value_type&                                       reference;
     typedef typename __container_type::const_iterator         const_iterator;
     typedef const_iterator                                    iterator;
     typedef typename iterator_traits<_BidirectionalIterator>::difference_type difference_type;

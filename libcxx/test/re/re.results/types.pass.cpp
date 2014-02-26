@@ -35,7 +35,7 @@ test()
     typedef std::match_results<CharT*> MR;
     static_assert((std::is_same<typename MR::value_type, std::sub_match<CharT*> >::value), "");
     static_assert((std::is_same<typename MR::const_reference, const std::sub_match<CharT*>& >::value), "");
-    static_assert((std::is_same<typename MR::reference, const std::sub_match<CharT*>& >::value), "");
+    static_assert((std::is_same<typename MR::reference, std::sub_match<CharT*>& >::value), "");
     static_assert((!std::is_same<typename MR::const_iterator, void>::value), "");
     static_assert((std::is_same<typename MR::difference_type, std::ptrdiff_t>::value), "");
     static_assert((std::is_same<typename MR::size_type, std::size_t>::value), "");
