@@ -8123,6 +8123,13 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
       return;
   }
 
+  // dllimport cannot be used on variable definitions.
+  if (VDecl->hasAttr<DLLImportAttr>() && !VDecl->isStaticDataMember()) {
+    Diag(VDecl->getLocation(), diag::err_attribute_dllimport_data_definition);
+    VDecl->setInvalidDecl();
+    return;
+  }
+
   if (VDecl->isLocalVarDecl() && VDecl->hasExternalStorage()) {
     // C99 6.7.8p5. C++ has no such restriction, but that is a defect.
     Diag(VDecl->getLocation(), diag::err_block_extern_cant_init);

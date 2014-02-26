@@ -2055,6 +2055,8 @@ def err_attribute_selectany_non_extern_data : Error<
 def warn_attribute_invalid_on_definition : Warning<
   "'%0' attribute cannot be specified on a definition">,
   InGroup<IgnoredAttributes>;
+def err_attribute_dllimport_data_definition : Error<
+  "definition of dllimport data">;
 def err_attribute_weakref_not_static : Error<
   "weakref declaration must have internal linkage">;
 def err_attribute_weakref_not_global_context : Error<

@@ -85,8 +85,8 @@ __declspec(dllexport) __declspec(dllimport) extern int PrecedenceExternGlobal2B;
 __attribute__((dllimport, dllexport))       int PrecedenceGlobal1A; // expected-warning{{'dllimport' attribute ignored}}
 __declspec(dllimport) __declspec(dllexport) int PrecedenceGlobal1B; // expected-warning{{'dllimport' attribute ignored}}
 
-__attribute__((dllexport, dllimport))       int PrecedenceGlobal2A; // expected-warning{{'dllimport' attribute cannot be specified on a definition}}
-__declspec(dllexport) __declspec(dllimport) int PrecedenceGlobal2B; // expected-warning{{'dllimport' attribute cannot be specified on a definition}}
+__attribute__((dllexport, dllimport))       int PrecedenceGlobal2A; // expected-warning{{'dllimport' attribute ignored}}
+__declspec(dllexport) __declspec(dllimport) int PrecedenceGlobal2B; // expected-warning{{'dllimport' attribute ignored}}
 
 __declspec(dllexport) extern int PrecedenceExternGlobalRedecl1;
 __declspec(dllimport) extern int PrecedenceExternGlobalRedecl1; // expected-warning{{'dllimport' attribute ignored}}
@@ -95,7 +95,7 @@ __declspec(dllimport) extern int PrecedenceExternGlobalRedecl2; // expected-warn
 __declspec(dllexport) extern int PrecedenceExternGlobalRedecl2;
 
 __declspec(dllexport) extern int PrecedenceGlobalRedecl1;
-__declspec(dllimport)        int PrecedenceGlobalRedecl1; // expected-warning{{'dllimport' attribute cannot be specified on a definition}}
+__declspec(dllimport)        int PrecedenceGlobalRedecl1; // expected-warning{{'dllimport' attribute ignored}}
 
 __declspec(dllimport) extern int PrecedenceGlobalRedecl2; // expected-warning{{'dllimport' attribute ignored}}
 __declspec(dllexport)        int PrecedenceGlobalRedecl2;

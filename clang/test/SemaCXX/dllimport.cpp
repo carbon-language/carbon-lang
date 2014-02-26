@@ -32,16 +32,17 @@ enum __declspec(dllimport) Enum {}; // expected-warning{{'dllimport' attribute o
 // Import declaration.
 __declspec(dllimport) extern int ExternGlobalDecl;
 
-// dllimport implies a declaration. FIXME: This should not warn.
-__declspec(dllimport) int GlobalDecl; // expected-warning{{'dllimport' attribute cannot be specified on a definition}}
+// dllimport implies a declaration.
+__declspec(dllimport) int GlobalDecl;
 
 // Not allowed on definitions.
-__declspec(dllimport) int GlobalInit1 = 1; // expected-warning{{'dllimport' attribute cannot be specified on a definition}}
-int __declspec(dllimport) GlobalInit2 = 1; // expected-warning{{'dllimport' attribute cannot be specified on a definition}}
+__declspec(dllimport) extern int ExternGlobalInit = 1; // expected-error{{definition of dllimport data}}
+__declspec(dllimport) int GlobalInit1 = 1; // expected-error{{definition of dllimport data}}
+int __declspec(dllimport) GlobalInit2 = 1; // expected-error{{definition of dllimport data}}
 
 // Declare, then reject definition.
 __declspec(dllimport) extern int ExternGlobalDeclInit;
-int ExternGlobalDeclInit = 1; // expected-warning{{'dllimport' attribute cannot be specified on a definition}}
+int ExternGlobalDeclInit = 1; // expected-error{{definition of dllimport data}}
 
 // Redeclarations
 __declspec(dllimport) extern int GlobalRedecl1;
@@ -49,7 +50,10 @@ __declspec(dllimport) extern int GlobalRedecl1;
 
 // Import in local scope.
 void functionScope() {
+  __declspec(dllimport)        int LocalVarDecl;
+  __declspec(dllimport)        int LocalVarDef = 1; // expected-error{{definition of dllimport data}}
   __declspec(dllimport) extern int ExternLocalVarDecl;
+  __declspec(dllimport) extern int ExternLocalVarDef = 1; // expected-error{{definition of dllimport data}}
 }
 
 
