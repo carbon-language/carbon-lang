@@ -1,11 +1,10 @@
 # If we are not building as a part of LLVM, build lld as a standalone project,
 # using LLVM as an external library.
 
-
+cmake_minimum_required(VERSION 2.8)
 
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   project(lld)
-  cmake_minimum_required(VERSION 2.8)
 
   set(LLD_PATH_TO_LLVM_SOURCE "" CACHE PATH
     "Path to LLVM source code. Not necessary if using an installed LLVM.")
