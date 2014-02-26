@@ -1902,6 +1902,16 @@ static void RemoveNestAttribute(Function *F) {
   }
 }
 
+/// Return true if this is a calling convention that we'd like to change.  The
+/// idea here is that we don't want to mess with the convention if the user
+/// explicitly requested something with performance implications like coldcc,
+/// GHC, or anyregcc.
+static bool isProfitableToMakeFastCC(Function *F) {
+  CallingConv::ID CC = F->getCallingConv();
+  // FIXME: Is it worth transforming x86_stdcallcc and x86_fastcallcc?
+  return CC == CallingConv::C || CC == CallingConv::X86_ThisCall;
+}
+
 bool GlobalOpt::OptimizeFunctions(Module &M) {
   bool Changed = false;
   // Optimize functions.
@@ -1916,11 +1926,10 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
       Changed = true;
       ++NumFnDeleted;
     } else if (F->hasLocalLinkage()) {
-      if (F->getCallingConv() == CallingConv::C && !F->isVarArg() &&
-          !F->hasAddressTaken()) {
-        // If this function has C calling conventions, is not a varargs
-        // function, and is only called directly, promote it to use the Fast
-        // calling convention.
+      if (isProfitableToMakeFastCC(F) && !F->isVarArg() && !F->hasAddressTaken()) {
+        // If this function has a calling convention worth changing, is not a
+        // varargs function, and is only called directly, promote it to use the
+        // Fast calling convention.
         F->setCallingConv(CallingConv::Fast);
         ChangeCalleesToFastCall(F);
         ++NumFastCallFns;
