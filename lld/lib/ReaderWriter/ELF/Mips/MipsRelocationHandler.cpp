@@ -163,6 +163,10 @@ void MipsTargetRelocationHandler::applyPairedRelocations(
 error_code MipsTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
+  if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
+    return error_code::success();
+  assert(ref.kindArch() == Reference::KindArch::Mips);
+
   AtomLayout *gpAtom = _mipsTargetLayout.getGP();
   uint64_t gpAddr = gpAtom ? gpAtom->_virtualAddr : 0;
 
@@ -171,9 +175,6 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   uint64_t targetVAddress = writer.addressOfAtom(ref.target());
   uint64_t relocVAddress = atom._virtualAddr + ref.offsetInAtom();
 
-  if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
-    return error_code::success();
-  assert(ref.kindArch() == Reference::KindArch::Mips);
   switch (ref.kindValue()) {
   case R_MIPS_NONE:
     break;
