@@ -621,6 +621,7 @@ SystemRuntimeMacOSX::PopulateQueuesUsingLibBTR (lldb::addr_t queues_buffer, uint
 {
     Error error;
     DataBufferHeap data (queues_buffer_size, 0);
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYSTEM_RUNTIME));
     if (m_process->ReadMemory (queues_buffer, data.GetBytes(), queues_buffer_size, error) == queues_buffer_size && error.Success())
     {
         // We've read the information out of inferior memory; free it on the next call we make
@@ -648,11 +649,8 @@ SystemRuntimeMacOSX::PopulateQueuesUsingLibBTR (lldb::addr_t queues_buffer, uint
             offset_t    start_of_this_item = offset;
 
             uint32_t    offset_to_next = extractor.GetU32 (&offset);
-            /* on 64-bit architectures, the pointer will be 8-byte aligned so there's 4 bytes of
-             * padding between these fields. 
-             */
-            if (m_process->GetAddressByteSize() == 8)
-                offset += 4;
+
+            offset += 4; // Skip over the 4 bytes of reserved space
             addr_t      queue = extractor.GetPointer (&offset);
             uint64_t    serialnum = extractor.GetU64 (&offset);
             uint32_t    running_work_items_count = extractor.GetU32 (&offset);
@@ -666,6 +664,9 @@ SystemRuntimeMacOSX::PopulateQueuesUsingLibBTR (lldb::addr_t queues_buffer, uint
 
             offset_t    start_of_next_item = start_of_this_item + offset_to_next;
             offset = start_of_next_item;
+
+            if (log)
+                log->Printf ("SystemRuntimeMacOSX::PopulateQueuesUsingLibBTR added queue with dispatch_queue_t 0x%" PRIx64 ", serial number 0x%" PRIx64 ", running items %d, pending items %d, name '%s'", queue, serialnum, running_work_items_count, pending_work_items_count, queue_label);
 
             QueueSP queue_sp (new Queue (m_process->shared_from_this(), serialnum, queue_label));
             queue_sp->SetNumRunningWorkItems (running_work_items_count);
