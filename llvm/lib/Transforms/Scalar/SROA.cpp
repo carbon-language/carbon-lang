@@ -2393,10 +2393,11 @@ private:
     // pointer to the new alloca.
     if (!isa<Constant>(II.getLength())) {
       assert(!IsSplit);
-      assert(BeginOffset >= NewAllocaBeginOffset);
-      II.setDest(getAdjustedAllocaPtr(IRB, BeginOffset, OldPtr->getType()));
+      assert(NewBeginOffset == BeginOffset);
+      II.setDest(getAdjustedAllocaPtr(IRB, NewBeginOffset, OldPtr->getType()));
       Type *CstTy = II.getAlignmentCst()->getType();
-      II.setAlignment(ConstantInt::get(CstTy, getOffsetAlign(BeginOffset)));
+      II.setAlignment(ConstantInt::get(
+          CstTy, getOffsetAlign(NewBeginOffset - NewAllocaBeginOffset)));
 
       deleteIfTriviallyDead(OldPtr);
       return false;
