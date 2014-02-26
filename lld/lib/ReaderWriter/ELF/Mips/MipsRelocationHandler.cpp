@@ -46,12 +46,16 @@ void reloc32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
 
 /// \brief R_MIPS_26
 /// local   : ((A | ((P + 4) & 0x3F000000)) + S) >> 2
+void reloc26loc(uint8_t *location, uint64_t P, uint64_t S, int32_t A) {
+  uint32_t result = ((A << 2) | ((P + 4) & 0x3f000000)) + S;
+  applyReloc(location, result >> 2, 0x03ffffff);
+}
+
+/// \brief LLD_R_MIPS_GLOBAL_26
 /// external: (sign–extend(A) + S) >> 2
-void reloc26(uint8_t *location, uint64_t P, uint64_t S, bool isLocal) {
-  int32_t A = (*(uint32_t*)location & 0x03FFFFFFU) << 2;
-  uint32_t result = isLocal ? (A | ((P + 4) & 0x3F000000)) : signExtend<28>(A);
-  result = (result + S) >> 2;
-  applyReloc(location, result, 0x03ffffff);
+void reloc26ext(uint8_t *location, uint64_t S, int32_t A) {
+  uint32_t result = signExtend<28>(A << 2) + S;
+  applyReloc(location, result >> 2, 0x03ffffff);
 }
 
 /// \brief R_MIPS_HI16
@@ -183,7 +187,7 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     reloc32(location, relocVAddress, targetVAddress, ref.addend());
     break;
   case R_MIPS_26:
-    reloc26(location, relocVAddress, targetVAddress, true);
+    reloc26loc(location, relocVAddress, targetVAddress, ref.addend());
     break;
   case R_MIPS_HI16:
     savePairedRelocation(atom, ref);
@@ -212,7 +216,7 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     relocGOT16(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
     break;
   case LLD_R_MIPS_GLOBAL_26:
-    reloc26(location, relocVAddress, targetVAddress, false);
+    reloc26ext(location, targetVAddress, ref.addend());
     break;
   case LLD_R_MIPS_HI16:
     relocLldHi16(location, targetVAddress);
