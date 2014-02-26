@@ -19,10 +19,10 @@ device=
 lib=
 
 function usage {
-    echo "usage: $0 [--revert] [--device device-id] [--lib path] [--extra_options options]"
+    echo "usage: $0 [--revert] [--device device-id] [--lib path] [--extra-options options]"
     echo "  --revert: Uninstall ASan from the device."
     echo "  --lib: Path to ASan runtime library."
-    echo "  --extra_options: Extra ASAN_OPTIONS."
+    echo "  --extra-options: Extra ASAN_OPTIONS."
     echo "  --device: Install to the given device. Use 'adb devices' to find"
     echo "            device-id."
     echo
