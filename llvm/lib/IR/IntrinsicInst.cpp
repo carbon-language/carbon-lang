@@ -1,4 +1,4 @@
-//===-- InstrinsicInst.cpp - Intrinsic Instruction Wrappers -----*- C++ -*-===//
+//===-- InstrinsicInst.cpp - Intrinsic Instruction Wrappers ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
