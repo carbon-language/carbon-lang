@@ -1,7 +1,7 @@
 ; RUN: opt < %s -sroa -S | FileCheck %s
 ; RUN: opt < %s -sroa -force-ssa-updater -S | FileCheck %s
 
-target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-n8:16:32:64"
+target datalayout = "e-p:64:64:64-p1:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-n8:16:32:64"
 
 declare void @llvm.lifetime.start(i64, i8* nocapture)
 declare void @llvm.lifetime.end(i64, i8* nocapture)
@@ -404,6 +404,7 @@ entry:
 }
 
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
+declare void @llvm.memcpy.p1i8.p0i8.i32(i8 addrspace(1)* nocapture, i8* nocapture, i32, i32, i1) nounwind
 declare void @llvm.memmove.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 
@@ -1146,6 +1147,24 @@ entry:
   %cast1 = bitcast { [16 x i8 ] }* %gep to i8*
   %cast2 = bitcast { [16 x i8 ] }* %a to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %cast1, i8* %cast2, i32 16, i32 8, i1 true)
+  ret void
+; CHECK: ret
+}
+
+define void @PR14105_as1({ [16 x i8] } addrspace(1)* %ptr) {
+; Make sure this the right address space pointer is used for type check.
+; CHECK-LABEL: @PR14105_as1(
+
+entry:
+  %a = alloca { [16 x i8] }, align 8
+; CHECK: alloca [16 x i8], align 8
+
+  %gep = getelementptr inbounds { [16 x i8] } addrspace(1)* %ptr, i64 -1
+; CHECK-NEXT: getelementptr inbounds { [16 x i8] } addrspace(1)* %ptr, i16 -1, i32 0, i64 0
+
+  %cast1 = bitcast { [16 x i8 ] } addrspace(1)* %gep to i8 addrspace(1)*
+  %cast2 = bitcast { [16 x i8 ] }* %a to i8*
+  call void @llvm.memcpy.p1i8.p0i8.i32(i8 addrspace(1)* %cast1, i8* %cast2, i32 16, i32 8, i1 true)
   ret void
 ; CHECK: ret
 }

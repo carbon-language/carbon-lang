@@ -150,6 +150,53 @@ entry:
 ; CHECK-NEXT: ret
 }
 
+declare void @llvm.memcpy.p0i8.p1i8.i32(i8* nocapture, i8 addrspace(1)* nocapture, i32, i32, i1) nounwind
+
+; Same as test4 with a different sized address  space pointer source.
+define i32 @test4_as1(<4 x i32> %x, <4 x i32> %y, <4 x i32> addrspace(1)* %z) {
+; CHECK-LABEL: @test4_as1(
+entry:
+	%a = alloca [2 x <4 x i32>]
+; CHECK-NOT: alloca
+
+  %a.x = getelementptr inbounds [2 x <4 x i32>]* %a, i64 0, i64 0
+  store <4 x i32> %x, <4 x i32>* %a.x
+  %a.y = getelementptr inbounds [2 x <4 x i32>]* %a, i64 0, i64 1
+  store <4 x i32> %y, <4 x i32>* %a.y
+; CHECK-NOT: store
+
+  %a.y.cast = bitcast <4 x i32>* %a.y to i8*
+  %z.cast = bitcast <4 x i32> addrspace(1)* %z to i8 addrspace(1)*
+  call void @llvm.memcpy.p0i8.p1i8.i32(i8* %a.y.cast, i8 addrspace(1)* %z.cast, i32 16, i32 1, i1 false)
+; CHECK-NOT: memcpy
+
+  %a.tmp1 = getelementptr inbounds [2 x <4 x i32>]* %a, i64 0, i64 0, i64 2
+  %a.tmp1.cast = bitcast i32* %a.tmp1 to i8*
+  %z.tmp1 = getelementptr inbounds <4 x i32> addrspace(1)* %z, i16 0, i16 2
+  %z.tmp1.cast = bitcast i32 addrspace(1)* %z.tmp1 to i8 addrspace(1)*
+  call void @llvm.memcpy.p0i8.p1i8.i32(i8* %a.tmp1.cast, i8 addrspace(1)* %z.tmp1.cast, i32 4, i32 1, i1 false)
+  %tmp1 = load i32* %a.tmp1
+  %a.tmp2 = getelementptr inbounds [2 x <4 x i32>]* %a, i64 0, i64 1, i64 3
+  %tmp2 = load i32* %a.tmp2
+  %a.tmp3 = getelementptr inbounds [2 x <4 x i32>]* %a, i64 0, i64 1, i64 0
+  %tmp3 = load i32* %a.tmp3
+; CHECK-NOT: memcpy
+; CHECK:      %[[load:.*]] = load <4 x i32> addrspace(1)* %z
+; CHECK-NEXT: %[[gep:.*]] = getelementptr inbounds <4 x i32> addrspace(1)* %z, i64 0, i64 2
+; CHECK-NEXT: %[[element_load:.*]] = load i32 addrspace(1)* %[[gep]]
+; CHECK-NEXT: %[[insert:.*]] = insertelement <4 x i32> %x, i32 %[[element_load]], i32 2
+; CHECK-NEXT: extractelement <4 x i32> %[[insert]], i32 2
+; CHECK-NEXT: extractelement <4 x i32> %[[load]], i32 3
+; CHECK-NEXT: extractelement <4 x i32> %[[load]], i32 0
+
+  %tmp4 = add i32 %tmp1, %tmp2
+  %tmp5 = add i32 %tmp3, %tmp4
+  ret i32 %tmp5
+; CHECK-NEXT: add
+; CHECK-NEXT: add
+; CHECK-NEXT: ret
+}
+
 define i32 @test5(<4 x i32> %x, <4 x i32> %y, <4 x i32>* %z) {
 ; CHECK-LABEL: @test5(
 ; The same as the above, but with reversed source and destination for the

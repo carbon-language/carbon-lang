@@ -1401,7 +1401,7 @@ static Value *getNaturalGEPWithOffset(IRBuilderTy &IRB, const DataLayout &DL,
 
   // Don't consider any GEPs through an i8* as natural unless the TargetTy is
   // an i8.
-  if (Ty == IRB.getInt8PtrTy() && TargetTy->isIntegerTy(8))
+  if (Ty == IRB.getInt8PtrTy(Ty->getAddressSpace()) && TargetTy->isIntegerTy(8))
     return 0;
 
   Type *ElementTy = Ty->getElementType();
@@ -1503,8 +1503,9 @@ static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &DL, Value *Ptr,
 
   if (!OffsetPtr) {
     if (!Int8Ptr) {
-      Int8Ptr = IRB.CreateBitCast(Ptr, IRB.getInt8PtrTy(),
-                                  NamePrefix + "sroa_raw_cast");
+      Int8Ptr = IRB.CreateBitCast(
+          Ptr, IRB.getInt8PtrTy(PointerTy->getPointerAddressSpace()),
+          NamePrefix + "sroa_raw_cast");
       Int8PtrOffset = Offset;
     }
 
@@ -2559,15 +2560,16 @@ private:
       Pass.Worklist.insert(AI);
     }
 
+    Type *OtherPtrTy = OtherPtr->getType();
+    unsigned OtherAS = OtherPtrTy->getPointerAddressSpace();
+
     // Compute the relative offset for the other pointer within the transfer.
-    unsigned IntPtrWidth = DL.getPointerSizeInBits();
+    unsigned IntPtrWidth = DL.getPointerSizeInBits(OtherAS);
     APInt OtherOffset(IntPtrWidth, NewBeginOffset - BeginOffset);
     unsigned OtherAlign = MinAlign(II.getAlignment() ? II.getAlignment() : 1,
                                    OtherOffset.zextOrTrunc(64).getZExtValue());
 
     if (EmitMemCpy) {
-      Type *OtherPtrTy = OtherPtr->getType();
-
       // Compute the other pointer, folding as much as possible to produce
       // a single, simple GEP in most cases.
       OtherPtr = getAdjustedPtr(IRB, DL, OtherPtr, OtherOffset, OtherPtrTy,
@@ -2594,16 +2596,19 @@ private:
     IntegerType *SubIntTy
       = IntTy ? Type::getIntNTy(IntTy->getContext(), Size*8) : 0;
 
-    Type *OtherPtrTy = NewAI.getType();
+    // Reset the other pointer type to match the register type we're going to
+    // use, but using the address space of the original other pointer.
     if (VecTy && !IsWholeAlloca) {
       if (NumElements == 1)
         OtherPtrTy = VecTy->getElementType();
       else
         OtherPtrTy = VectorType::get(VecTy->getElementType(), NumElements);
 
-      OtherPtrTy = OtherPtrTy->getPointerTo();
+      OtherPtrTy = OtherPtrTy->getPointerTo(OtherAS);
     } else if (IntTy && !IsWholeAlloca) {
-      OtherPtrTy = SubIntTy->getPointerTo();
+      OtherPtrTy = SubIntTy->getPointerTo(OtherAS);
+    } else {
+      OtherPtrTy = NewAllocaTy->getPointerTo(OtherAS);
     }
 
     Value *SrcPtr = getAdjustedPtr(IRB, DL, OtherPtr, OtherOffset, OtherPtrTy,
