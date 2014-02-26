@@ -550,7 +550,6 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
     PacketResult packet_result = PacketResult::ErrorSendFailed;
     Mutex::Locker locker;
     Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
-    size_t response_len = 0;
     if (GetSequenceMutex (locker))
     {
         packet_result = SendPacketAndWaitForResponseNoLock (payload, payload_length, response);
@@ -588,7 +587,6 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
 
                             // Swap the response buffer to avoid malloc and string copy
                             response.GetStringRef().swap (m_async_response.GetStringRef());
-                            response_len = response.GetStringRef().size();
                             packet_result = m_async_result;
                         }
                         else
