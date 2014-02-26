@@ -115,7 +115,14 @@ private:
   /// pointers vs. 64-bit pointers by extending LayoutAlignment, but for now,
   /// we don't.
   SmallVector<LayoutAlignElem, 16> Alignments;
-  DenseMap<unsigned, PointerAlignElem> Pointers;
+  typedef SmallVector<PointerAlignElem, 8> PointersTy;
+  PointersTy Pointers;
+
+  PointersTy::const_iterator findPoiterLowerBound(uint32_t AddressSpace) const {
+    return const_cast<DataLayout *>(this)->findPoiterLowerBound(AddressSpace);
+  }
+
+  PointersTy::iterator findPoiterLowerBound(uint32_t AddressSpace);
 
   /// InvalidAlignmentElem - This member is a signal that a requested alignment
   /// type and bit width were not found in the SmallVector.

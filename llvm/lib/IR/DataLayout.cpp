@@ -374,18 +374,29 @@ DataLayout::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
                                             pref_align, bit_width));
 }
 
+static bool comparePointerAlignElem(const PointerAlignElem &A,
+                                    uint32_t AddressSpace) {
+  return A.AddressSpace < AddressSpace;
+}
+
+DataLayout::PointersTy::iterator
+DataLayout::findPoiterLowerBound(uint32_t AddressSpace) {
+  return std::lower_bound(Pointers.begin(), Pointers.end(), AddressSpace,
+                          comparePointerAlignElem);
+}
+
 void DataLayout::setPointerAlignment(uint32_t AddrSpace, unsigned ABIAlign,
                                      unsigned PrefAlign,
                                      uint32_t TypeByteWidth) {
   assert(ABIAlign <= PrefAlign && "Preferred alignment worse than ABI!");
-  DenseMap<unsigned,PointerAlignElem>::iterator val = Pointers.find(AddrSpace);
-  if (val == Pointers.end()) {
-    Pointers[AddrSpace] =
-        PointerAlignElem::get(AddrSpace, ABIAlign, PrefAlign, TypeByteWidth);
+  PointersTy::iterator I = findPoiterLowerBound(AddrSpace);
+  if (I == Pointers.end() || I->AddressSpace != AddrSpace) {
+    Pointers.insert(I, PointerAlignElem::get(AddrSpace, ABIAlign, PrefAlign,
+                                             TypeByteWidth));
   } else {
-    val->second.ABIAlign = ABIAlign;
-    val->second.PrefAlign = PrefAlign;
-    val->second.TypeByteWidth = TypeByteWidth;
+    I->ABIAlign = ABIAlign;
+    I->PrefAlign = PrefAlign;
+    I->TypeByteWidth = TypeByteWidth;
   }
 }
 
@@ -529,19 +540,9 @@ std::string DataLayout::getStringRepresentation() const {
     break;
   }
 
-  SmallVector<unsigned, 8> addrSpaces;
-  // Lets get all of the known address spaces and sort them
-  // into increasing order so that we can emit the string
-  // in a cleaner format.
-  for (DenseMap<unsigned, PointerAlignElem>::const_iterator
-      pib = Pointers.begin(), pie = Pointers.end();
-      pib != pie; ++pib) {
-    addrSpaces.push_back(pib->first);
-  }
-  std::sort(addrSpaces.begin(), addrSpaces.end());
-  for (SmallVectorImpl<unsigned>::iterator asb = addrSpaces.begin(),
-      ase = addrSpaces.end(); asb != ase; ++asb) {
-    const PointerAlignElem &PI = Pointers.find(*asb)->second;
+  for (PointersTy::const_iterator I = Pointers.begin(), E = Pointers.end();
+       I != E; ++I) {
+    const PointerAlignElem &PI = *I;
 
     // Skip default.
     if (PI.AddressSpace == 0 && PI.ABIAlign == 8 && PI.PrefAlign == 8 &&
@@ -586,27 +587,30 @@ std::string DataLayout::getStringRepresentation() const {
 }
 
 unsigned DataLayout::getPointerABIAlignment(unsigned AS) const {
-  DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
-  if (val == Pointers.end()) {
-    val = Pointers.find(0);
+  PointersTy::const_iterator I = findPoiterLowerBound(AS);
+  if (I == Pointers.end() || I->AddressSpace != AS) {
+    I = findPoiterLowerBound(0);
+    assert(I->AddressSpace == 0);
   }
-  return val->second.ABIAlign;
+  return I->ABIAlign;
 }
 
 unsigned DataLayout::getPointerPrefAlignment(unsigned AS) const {
-  DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
-  if (val == Pointers.end()) {
-    val = Pointers.find(0);
+  PointersTy::const_iterator I = findPoiterLowerBound(AS);
+  if (I == Pointers.end() || I->AddressSpace != AS) {
+    I = findPoiterLowerBound(0);
+    assert(I->AddressSpace == 0);
   }
-  return val->second.PrefAlign;
+  return I->PrefAlign;
 }
 
 unsigned DataLayout::getPointerSize(unsigned AS) const {
-  DenseMap<unsigned, PointerAlignElem>::const_iterator val = Pointers.find(AS);
-  if (val == Pointers.end()) {
-    val = Pointers.find(0);
+  PointersTy::const_iterator I = findPoiterLowerBound(AS);
+  if (I == Pointers.end() || I->AddressSpace != AS) {
+    I = findPoiterLowerBound(0);
+    assert(I->AddressSpace == 0);
   }
-  return val->second.TypeByteWidth;
+  return I->TypeByteWidth;
 }
 
 unsigned DataLayout::getPointerTypeSizeInBits(Type *Ty) const {
