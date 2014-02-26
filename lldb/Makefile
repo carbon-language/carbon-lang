@@ -14,7 +14,7 @@ ifndef LLDB_LEVEL
 
 IS_TOP_LEVEL := 1
 LLDB_LEVEL := .
-DIRS := include source lib tools
+DIRS := include scripts source lib tools
 
 PARALLEL_DIRS :=
 endif

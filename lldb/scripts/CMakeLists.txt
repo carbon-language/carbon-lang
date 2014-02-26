@@ -18,3 +18,6 @@ ADD_CUSTOM_TARGET(swig_wrapper ALL echo -n
 if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
   install(SCRIPT lldb_python_module.cmake -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\" -DCMAKE_BUILD_DIR=\"${CMAKE_BUILD_DIR}\")
 endif()
+
+# build Python modules
+add_subdirectory(Python/modules)
