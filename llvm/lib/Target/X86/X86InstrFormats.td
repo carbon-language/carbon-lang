@@ -227,16 +227,20 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
 
   OperandSize OpSize = OpSizeFixed; // Does this instruction's encoding change
                                     // based on operand size of the mode
+  bits<2> OpSizeBits = OpSize.Value;
   bit hasAdSizePrefix = 0;  // Does this inst have a 0x67 prefix?
 
   Prefix OpPrefix = NoPrfx; // Which prefix byte does this inst have?
+  bits<3> OpPrefixBits = OpPrefix.Value;
   Map OpMap = OB;           // Which opcode map does this inst have?
+  bits<3> OpMapBits = OpMap.Value;
   bit hasREX_WPrefix  = 0;  // Does this inst require the REX.W prefix?
   FPFormat FPForm = NotFP;  // What flavor of FP instruction is this?
   bit hasLockPrefix = 0;    // Does this inst have a 0xF0 prefix?
   Domain ExeDomain = d;
   bit hasREPPrefix = 0;     // Does this inst have a REP prefix?
   Encoding OpEnc = EncNormal; // Encoding used by this instruction
+  bits<2> OpEncBits = OpEnc.Value;
   bit hasVEX_WPrefix = 0;   // Does this inst set the VEX_W field?
   bit hasVEX_4V = 0;        // Does this inst require the VEX.VVVV field?
   bit hasVEX_4VOp3 = 0;     // Does this inst require the VEX.VVVV field to
@@ -257,17 +261,17 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
 
   // TSFlags layout should be kept in sync with X86InstrInfo.h.
   let TSFlags{6-0}   = FormBits;
-  let TSFlags{8-7}   = OpSize.Value;
+  let TSFlags{8-7}   = OpSizeBits;
   let TSFlags{9}     = hasAdSizePrefix;
-  let TSFlags{12-10} = OpPrefix.Value;
-  let TSFlags{15-13} = OpMap.Value;
+  let TSFlags{12-10} = OpPrefixBits;
+  let TSFlags{15-13} = OpMapBits;
   let TSFlags{16}    = hasREX_WPrefix;
   let TSFlags{20-17} = ImmT.Value;
   let TSFlags{23-21} = FPForm.Value;
   let TSFlags{24}    = hasLockPrefix;
   let TSFlags{25}    = hasREPPrefix;
   let TSFlags{27-26} = ExeDomain.Value;
-  let TSFlags{29-28} = OpEnc.Value;
+  let TSFlags{29-28} = OpEncBits;
   let TSFlags{37-30} = Opcode;
   let TSFlags{38}    = hasVEX_WPrefix;
   let TSFlags{39}    = hasVEX_4V;
