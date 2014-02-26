@@ -1,5 +1,5 @@
 #!/bin/bash -e
-#===- lib/asan/scripts/asan_device_setup.py -----------------------------------===#
+#===- lib/asan/scripts/asan_device_setup -----------------------------------===#
 #
 #                     The LLVM Compiler Infrastructure
 #
