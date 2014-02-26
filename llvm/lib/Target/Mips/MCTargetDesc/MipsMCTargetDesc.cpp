@@ -42,7 +42,7 @@ using namespace llvm;
 /// Select the Mips CPU for the given triple and cpu name.
 /// FIXME: Merge with the copy in MipsSubtarget.cpp
 static inline StringRef selectMipsCPU(StringRef TT, StringRef CPU) {
-  if (CPU.empty()) {
+  if (CPU.empty() || CPU == "generic") {
     Triple TheTriple(TT);
     if (TheTriple.getArch() == Triple::mips ||
         TheTriple.getArch() == Triple::mipsel)
