@@ -380,16 +380,16 @@ void Sema::CheckExtraCXXDefaultArguments(Declarator &D) {
         MightBeFunction = false;
         continue;
       }
-      for (unsigned argIdx = 0, e = chunk.Fun.NumArgs; argIdx != e; ++argIdx) {
-        ParmVarDecl *Param =
-          cast<ParmVarDecl>(chunk.Fun.ArgInfo[argIdx].Param);
+      for (unsigned argIdx = 0, e = chunk.Fun.NumParams; argIdx != e;
+           ++argIdx) {
+        ParmVarDecl *Param = cast<ParmVarDecl>(chunk.Fun.Params[argIdx].Param);
         if (Param->hasUnparsedDefaultArg()) {
-          CachedTokens *Toks = chunk.Fun.ArgInfo[argIdx].DefaultArgTokens;
+          CachedTokens *Toks = chunk.Fun.Params[argIdx].DefaultArgTokens;
           Diag(Param->getLocation(), diag::err_param_default_argument_nonfunc)
             << SourceRange((*Toks)[1].getLocation(),
                            Toks->back().getLocation());
           delete Toks;
-          chunk.Fun.ArgInfo[argIdx].DefaultArgTokens = 0;
+          chunk.Fun.Params[argIdx].DefaultArgTokens = 0;
         } else if (Param->getDefaultArg()) {
           Diag(Param->getLocation(), diag::err_param_default_argument_nonfunc)
             << Param->getDefaultArg()->getSourceRange();
@@ -6294,9 +6294,9 @@ bool Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
 
 static inline bool
 FTIHasSingleVoidArgument(DeclaratorChunk::FunctionTypeInfo &FTI) {
-  return (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
-          FTI.ArgInfo[0].Param &&
-          cast<ParmVarDecl>(FTI.ArgInfo[0].Param)->getType()->isVoidType());
+  return (FTI.NumParams == 1 && !FTI.isVariadic && FTI.Params[0].Ident == 0 &&
+          FTI.Params[0].Param &&
+          cast<ParmVarDecl>(FTI.Params[0].Param)->getType()->isVoidType());
 }
 
 /// CheckDestructorDeclarator - Called by ActOnDeclarator to check
@@ -6377,11 +6377,11 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
   }
   
   // Make sure we don't have any parameters.
-  if (FTI.NumArgs > 0 && !FTIHasSingleVoidArgument(FTI)) {
+  if (FTI.NumParams > 0 && !FTIHasSingleVoidArgument(FTI)) {
     Diag(D.getIdentifierLoc(), diag::err_destructor_with_params);
 
     // Delete the parameters.
-    FTI.freeArgs();
+    FTI.freeParams();
     D.setInvalidType();
   }
 
@@ -6451,7 +6451,7 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
     Diag(D.getIdentifierLoc(), diag::err_conv_function_with_params);
 
     // Delete the parameters.
-    D.getFunctionTypeInfo().freeArgs();
+    D.getFunctionTypeInfo().freeParams();
     D.setInvalidType();
   } else if (Proto->isVariadic()) {
     Diag(D.getIdentifierLoc(), diag::err_conv_function_variadic);

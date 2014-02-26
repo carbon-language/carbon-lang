@@ -308,8 +308,8 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
     PrototypeScope.reset(new ParseScope(this, Scope::FunctionPrototypeScope |
                                         Scope::FunctionDeclarationScope |
                                         Scope::DeclScope));
-    for (unsigned i = 0; i != FTI.NumArgs; ++i) {
-      ParmVarDecl *Param = cast<ParmVarDecl>(FTI.ArgInfo[i].Param);
+    for (unsigned i = 0; i != FTI.NumParams; ++i) {
+      ParmVarDecl *Param = cast<ParmVarDecl>(FTI.Params[i].Param);
       Actions.ActOnReenterCXXMethodParameter(getCurScope(), Param);
     }
   }

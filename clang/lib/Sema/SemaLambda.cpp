@@ -898,13 +898,13 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
 
     ExplicitResultType = FTI.hasTrailingReturnType();
 
-    if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
-        cast<ParmVarDecl>(FTI.ArgInfo[0].Param)->getType()->isVoidType()) {
+    if (FTI.NumParams == 1 && !FTI.isVariadic && FTI.Params[0].Ident == 0 &&
+        cast<ParmVarDecl>(FTI.Params[0].Param)->getType()->isVoidType()) {
       // Empty arg list, don't push any params.
     } else {
-      Params.reserve(FTI.NumArgs);
-      for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
-        Params.push_back(cast<ParmVarDecl>(FTI.ArgInfo[i].Param));
+      Params.reserve(FTI.NumParams);
+      for (unsigned i = 0, e = FTI.NumParams; i != e; ++i)
+        Params.push_back(cast<ParmVarDecl>(FTI.Params[i].Param));
     }
 
     // Check for unexpanded parameter packs in the method type.

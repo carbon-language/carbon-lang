@@ -1179,20 +1179,20 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
         for (unsigned i = 0; ; ++i) {
           // C99 6.9.1p6: those declarators shall declare only identifiers from
           // the identifier list.
-          if (i == FTI.NumArgs) {
+          if (i == FTI.NumParams) {
             Diag(ParmDeclarator.getIdentifierLoc(), diag::err_no_matching_param)
               << ParmDeclarator.getIdentifier();
             break;
           }
 
-          if (FTI.ArgInfo[i].Ident == ParmDeclarator.getIdentifier()) {
+          if (FTI.Params[i].Ident == ParmDeclarator.getIdentifier()) {
             // Reject redefinitions of parameters.
-            if (FTI.ArgInfo[i].Param) {
+            if (FTI.Params[i].Param) {
               Diag(ParmDeclarator.getIdentifierLoc(),
                    diag::err_param_redefinition)
                  << ParmDeclarator.getIdentifier();
             } else {
-              FTI.ArgInfo[i].Param = Param;
+              FTI.Params[i].Param = Param;
             }
             break;
           }

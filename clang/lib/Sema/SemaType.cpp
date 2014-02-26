@@ -2343,11 +2343,11 @@ static void warnAboutAmbiguousFunction(Sema &S, Declarator &D,
     return;
 
   // An initializer for a non-class type can have at most one argument.
-  if (!RT->isRecordType() && FTI.NumArgs > 1)
+  if (!RT->isRecordType() && FTI.NumParams > 1)
     return;
 
   // An initializer for a reference must have exactly one argument.
-  if (RT->isReferenceType() && FTI.NumArgs != 1)
+  if (RT->isReferenceType() && FTI.NumParams != 1)
     return;
 
   // Only warn if this declarator is declaring a function at block scope, and
@@ -2367,9 +2367,9 @@ static void warnAboutAmbiguousFunction(Sema &S, Declarator &D,
   SourceRange ParenRange(DeclType.Loc, DeclType.EndLoc);
 
   S.Diag(DeclType.Loc,
-         FTI.NumArgs ? diag::warn_parens_disambiguated_as_function_declaration
-                     : diag::warn_empty_parens_are_function_decl)
-    << ParenRange;
+         FTI.NumParams ? diag::warn_parens_disambiguated_as_function_declaration
+                       : diag::warn_empty_parens_are_function_decl)
+      << ParenRange;
 
   // If the declaration looks like:
   //   T var1,
@@ -2390,11 +2390,11 @@ static void warnAboutAmbiguousFunction(Sema &S, Declarator &D,
     }
   }
 
-  if (FTI.NumArgs > 0) {
+  if (FTI.NumParams > 0) {
     // For a declaration with parameters, eg. "T var(T());", suggest adding parens
     // around the first parameter to turn the declaration into a variable
     // declaration.
-    SourceRange Range = FTI.ArgInfo[0].Param->getSourceRange();
+    SourceRange Range = FTI.Params[0].Param->getSourceRange();
     SourceLocation B = Range.getBegin();
     SourceLocation E = S.PP.getLocForEndOfToken(Range.getEnd());
     // FIXME: Maybe we should suggest adding braces instead of parens
@@ -2851,14 +2851,14 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
 
       FunctionType::ExtInfo EI(getCCForDeclaratorChunk(S, D, FTI, chunkIndex));
 
-      if (!FTI.NumArgs && !FTI.isVariadic && !LangOpts.CPlusPlus) {
+      if (!FTI.NumParams && !FTI.isVariadic && !LangOpts.CPlusPlus) {
         // Simple void foo(), where the incoming T is the result type.
         T = Context.getFunctionNoProtoType(T, EI);
       } else {
         // We allow a zero-parameter variadic function in C if the
         // function is marked with the "overloadable" attribute. Scan
         // for this attribute now.
-        if (!FTI.NumArgs && FTI.isVariadic && !LangOpts.CPlusPlus) {
+        if (!FTI.NumParams && FTI.isVariadic && !LangOpts.CPlusPlus) {
           bool Overloadable = false;
           for (const AttributeList *Attrs = D.getAttributes();
                Attrs; Attrs = Attrs->getNext()) {
@@ -2872,10 +2872,11 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
             S.Diag(FTI.getEllipsisLoc(), diag::err_ellipsis_first_arg);
         }
 
-        if (FTI.NumArgs && FTI.ArgInfo[0].Param == 0) {
+        if (FTI.NumParams && FTI.Params[0].Param == 0) {
           // C99 6.7.5.3p3: Reject int(x,y,z) when it's not a function
           // definition.
-          S.Diag(FTI.ArgInfo[0].IdentLoc, diag::err_ident_list_in_fn_declaration);
+          S.Diag(FTI.Params[0].IdentLoc,
+                 diag::err_ident_list_in_fn_declaration);
           D.setInvalidType(true);
           // Recover by creating a K&R-style function type.
           T = Context.getFunctionNoProtoType(T, EI);
@@ -2894,14 +2895,14 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         // Otherwise, we have a function with an argument list that is
         // potentially variadic.
         SmallVector<QualType, 16> ArgTys;
-        ArgTys.reserve(FTI.NumArgs);
+        ArgTys.reserve(FTI.NumParams);
 
         SmallVector<bool, 16> ConsumedParameters;
-        ConsumedParameters.reserve(FTI.NumArgs);
+        ConsumedParameters.reserve(FTI.NumParams);
         bool HasAnyConsumedParameters = false;
 
-        for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-          ParmVarDecl *Param = cast<ParmVarDecl>(FTI.ArgInfo[i].Param);
+        for (unsigned i = 0, e = FTI.NumParams; i != e; ++i) {
+          ParmVarDecl *Param = cast<ParmVarDecl>(FTI.Params[i].Param);
           QualType ArgTy = Param->getType();
           assert(!ArgTy.isNull() && "Couldn't parse type?");
 
@@ -2912,14 +2913,13 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
             // If this is something like 'float(int, void)', reject it.  'void'
             // is an incomplete type (C99 6.2.5p19) and function decls cannot
             // have arguments of incomplete type.
-            if (FTI.NumArgs != 1 || FTI.isVariadic) {
+            if (FTI.NumParams != 1 || FTI.isVariadic) {
               S.Diag(DeclType.Loc, diag::err_void_only_param);
               ArgTy = Context.IntTy;
               Param->setType(ArgTy);
-            } else if (FTI.ArgInfo[i].Ident) {
+            } else if (FTI.Params[i].Ident) {
               // Reject, but continue to parse 'int(void abc)'.
-              S.Diag(FTI.ArgInfo[i].IdentLoc,
-                   diag::err_param_with_void_type);
+              S.Diag(FTI.Params[i].IdentLoc, diag::err_param_with_void_type);
               ArgTy = Context.IntTy;
               Param->setType(ArgTy);
             } else {
@@ -3735,7 +3735,7 @@ namespace {
       TL.setLParenLoc(FTI.getLParenLoc());
       TL.setRParenLoc(FTI.getRParenLoc());
       for (unsigned i = 0, e = TL.getNumParams(), tpi = 0; i != e; ++i) {
-        ParmVarDecl *Param = cast<ParmVarDecl>(FTI.ArgInfo[i].Param);
+        ParmVarDecl *Param = cast<ParmVarDecl>(FTI.Params[i].Param);
         TL.setParam(tpi++, Param);
       }
       // FIXME: exception specs

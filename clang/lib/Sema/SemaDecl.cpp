@@ -6890,13 +6890,13 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     // single void argument.
     // We let through "const void" here because Sema::GetTypeForDeclarator
     // already checks for that case.
-    if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
-        FTI.ArgInfo[0].Param &&
-        cast<ParmVarDecl>(FTI.ArgInfo[0].Param)->getType()->isVoidType()) {
+    if (FTI.NumParams == 1 && !FTI.isVariadic && FTI.Params[0].Ident == 0 &&
+        FTI.Params[0].Param &&
+        cast<ParmVarDecl>(FTI.Params[0].Param)->getType()->isVoidType()) {
       // Empty arg list, don't push any params.
-    } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
-      for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-        ParmVarDecl *Param = cast<ParmVarDecl>(FTI.ArgInfo[i].Param);
+    } else if (FTI.NumParams > 0 && FTI.Params[0].Param != 0) {
+      for (unsigned i = 0, e = FTI.NumParams; i != e; ++i) {
+        ParmVarDecl *Param = cast<ParmVarDecl>(FTI.Params[i].Param);
         assert(Param->getDeclContext() != NewFD && "Was set before ?");
         Param->setDeclContext(NewFD);
         Params.push_back(Param);
@@ -9340,16 +9340,15 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
   // Verify 6.9.1p6: 'every identifier in the identifier list shall be declared'
   // for a K&R function.
   if (!FTI.hasPrototype) {
-    for (int i = FTI.NumArgs; i != 0; /* decrement in loop */) {
+    for (int i = FTI.NumParams; i != 0; /* decrement in loop */) {
       --i;
-      if (FTI.ArgInfo[i].Param == 0) {
+      if (FTI.Params[i].Param == 0) {
         SmallString<256> Code;
-        llvm::raw_svector_ostream(Code) << "  int "
-                                        << FTI.ArgInfo[i].Ident->getName()
-                                        << ";\n";
-        Diag(FTI.ArgInfo[i].IdentLoc, diag::ext_param_not_declared)
-          << FTI.ArgInfo[i].Ident
-          << FixItHint::CreateInsertion(LocAfterDecls, Code.str());
+        llvm::raw_svector_ostream(Code)
+            << "  int " << FTI.Params[i].Ident->getName() << ";\n";
+        Diag(FTI.Params[i].IdentLoc, diag::ext_param_not_declared)
+            << FTI.Params[i].Ident
+            << FixItHint::CreateInsertion(LocAfterDecls, Code.str());
 
         // Implicitly declare the argument as type 'int' for lack of a better
         // type.
@@ -9357,14 +9356,14 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
         DeclSpec DS(attrs);
         const char* PrevSpec; // unused
         unsigned DiagID; // unused
-        DS.SetTypeSpecType(DeclSpec::TST_int, FTI.ArgInfo[i].IdentLoc,
-                           PrevSpec, DiagID, Context.getPrintingPolicy());
+        DS.SetTypeSpecType(DeclSpec::TST_int, FTI.Params[i].IdentLoc, PrevSpec,
+                           DiagID, Context.getPrintingPolicy());
         // Use the identifier location for the type source range.
-        DS.SetRangeStart(FTI.ArgInfo[i].IdentLoc);
-        DS.SetRangeEnd(FTI.ArgInfo[i].IdentLoc);
+        DS.SetRangeStart(FTI.Params[i].IdentLoc);
+        DS.SetRangeEnd(FTI.Params[i].IdentLoc);
         Declarator ParamD(DS, Declarator::KNRTypeListContext);
-        ParamD.SetIdentifier(FTI.ArgInfo[i].Ident, FTI.ArgInfo[i].IdentLoc);
-        FTI.ArgInfo[i].Param = ActOnParamDeclarator(S, ParamD);
+        ParamD.SetIdentifier(FTI.Params[i].Ident, FTI.Params[i].IdentLoc);
+        FTI.Params[i].Param = ActOnParamDeclarator(S, ParamD);
       }
     }
   }
