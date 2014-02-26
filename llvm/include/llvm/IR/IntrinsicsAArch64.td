@@ -110,22 +110,22 @@ def int_aarch64_neon_vminnmv :
 // Vector Table Lookup.
 def int_aarch64_neon_vtbl1 :
   Intrinsic<[llvm_anyvector_ty],
-            [llvm_anyvector_ty, LLVMMatchType<0>], [IntrNoMem]>;
+            [llvm_v16i8_ty, LLVMMatchType<0>], [IntrNoMem]>;
 
 def int_aarch64_neon_vtbl2 :
   Intrinsic<[llvm_anyvector_ty],
-            [llvm_anyvector_ty, LLVMMatchType<1>, LLVMMatchType<0>],
+            [llvm_v16i8_ty, llvm_v16i8_ty, LLVMMatchType<0>],
             [IntrNoMem]>;
 
 def int_aarch64_neon_vtbl3 :
   Intrinsic<[llvm_anyvector_ty],
-            [llvm_anyvector_ty, LLVMMatchType<1>, LLVMMatchType<1>,
+            [llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty,
             LLVMMatchType<0>], [IntrNoMem]>;
 
 def int_aarch64_neon_vtbl4 :
   Intrinsic<[llvm_anyvector_ty],
-            [llvm_anyvector_ty, LLVMMatchType<1>, LLVMMatchType<1>,
-            LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
+            [llvm_v16i8_ty, llvm_v16i8_ty, llvm_v16i8_ty,
+            llvm_v16i8_ty, LLVMMatchType<0>], [IntrNoMem]>;
 
 // Vector Table Extension.
 // Some elements of the destination vector may not be updated, so the original
@@ -133,23 +133,23 @@ def int_aarch64_neon_vtbl4 :
 // arguments after that are the table.
 def int_aarch64_neon_vtbx1 :
   Intrinsic<[llvm_anyvector_ty],
-            [LLVMMatchType<0>, llvm_anyvector_ty, LLVMMatchType<0>],
+            [LLVMMatchType<0>, llvm_v16i8_ty, LLVMMatchType<0>],
             [IntrNoMem]>;
 
 def int_aarch64_neon_vtbx2 :
   Intrinsic<[llvm_anyvector_ty],
-            [LLVMMatchType<0>, llvm_anyvector_ty, LLVMMatchType<1>,
-            LLVMMatchType<0>], [IntrNoMem]>;
+            [LLVMMatchType<0>, llvm_v16i8_ty, llvm_v16i8_ty,
+             LLVMMatchType<0>], [IntrNoMem]>;
 
 def int_aarch64_neon_vtbx3 :
   Intrinsic<[llvm_anyvector_ty],
-            [LLVMMatchType<0>, llvm_anyvector_ty, LLVMMatchType<1>,
-            LLVMMatchType<1>, LLVMMatchType<0>], [IntrNoMem]>;
+            [LLVMMatchType<0>, llvm_v16i8_ty, llvm_v16i8_ty,
+             llvm_v16i8_ty, LLVMMatchType<0>], [IntrNoMem]>;
 
 def int_aarch64_neon_vtbx4 :
   Intrinsic<[llvm_anyvector_ty],
-            [LLVMMatchType<0>, llvm_anyvector_ty,  LLVMMatchType<1>,
-            LLVMMatchType<1>,  LLVMMatchType<1>, LLVMMatchType<0>],
+            [LLVMMatchType<0>, llvm_v16i8_ty, llvm_v16i8_ty,
+             llvm_v16i8_ty, llvm_v16i8_ty, LLVMMatchType<0>],
             [IntrNoMem]>;
 
 // Vector Load/store
