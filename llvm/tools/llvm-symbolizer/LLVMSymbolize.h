@@ -102,6 +102,7 @@ private:
   bool getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,
                               std::string &Name, uint64_t &Addr,
                               uint64_t &Size) const;
+  void addSymbol(const symbol_iterator &Sym);
   ObjectFile *Module;
   OwningPtr<DIContext> DebugInfoContext;
 

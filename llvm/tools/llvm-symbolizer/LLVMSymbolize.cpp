@@ -14,6 +14,7 @@
 #include "LLVMSymbolize.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
+#include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compression.h"
@@ -54,36 +55,49 @@ ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
     : Module(Obj), DebugInfoContext(DICtx) {
   for (symbol_iterator si = Module->symbol_begin(), se = Module->symbol_end();
        si != se; ++si) {
-    SymbolRef::Type SymbolType;
-    if (error(si->getType(SymbolType)))
-      continue;
-    if (SymbolType != SymbolRef::ST_Function &&
-        SymbolType != SymbolRef::ST_Data)
-      continue;
-    uint64_t SymbolAddress;
-    if (error(si->getAddress(SymbolAddress)) ||
-        SymbolAddress == UnknownAddressOrSize)
-      continue;
-    uint64_t SymbolSize;
-    // Getting symbol size is linear for Mach-O files, so assume that symbol
-    // occupies the memory range up to the following symbol.
-    if (isa<MachOObjectFile>(Obj))
-      SymbolSize = 0;
-    else if (error(si->getSize(SymbolSize)) ||
-             SymbolSize == UnknownAddressOrSize)
-      continue;
-    StringRef SymbolName;
-    if (error(si->getName(SymbolName)))
-      continue;
-    // Mach-O symbol table names have leading underscore, skip it.
-    if (Module->isMachO() && SymbolName.size() > 0 && SymbolName[0] == '_')
-      SymbolName = SymbolName.drop_front();
-    // FIXME: If a function has alias, there are two entries in symbol table
-    // with same address size. Make sure we choose the correct one.
-    SymbolMapTy &M = SymbolType == SymbolRef::ST_Function ? Functions : Objects;
-    SymbolDesc SD = { SymbolAddress, SymbolSize };
-    M.insert(std::make_pair(SD, SymbolName));
+    addSymbol(si);
   }
+  bool NoSymbolTable = (Module->symbol_begin() == Module->symbol_end());
+  if (NoSymbolTable && Module->isELF()) {
+    // Fallback to dynamic symbol table, if regular symbol table is stripped.
+    std::pair<symbol_iterator, symbol_iterator> IDyn =
+        getELFDynamicSymbolIterators(Module);
+    for (symbol_iterator si = IDyn.first, se = IDyn.second; si != se; ++si) {
+      addSymbol(si);
+    }
+  }
+}
+
+void ModuleInfo::addSymbol(const symbol_iterator &Sym) {
+  SymbolRef::Type SymbolType;
+  if (error(Sym->getType(SymbolType)))
+    return;
+  if (SymbolType != SymbolRef::ST_Function &&
+      SymbolType != SymbolRef::ST_Data)
+    return;
+  uint64_t SymbolAddress;
+  if (error(Sym->getAddress(SymbolAddress)) ||
+      SymbolAddress == UnknownAddressOrSize)
+    return;
+  uint64_t SymbolSize;
+  // Getting symbol size is linear for Mach-O files, so assume that symbol
+  // occupies the memory range up to the following symbol.
+  if (isa<MachOObjectFile>(Module))
+    SymbolSize = 0;
+  else if (error(Sym->getSize(SymbolSize)) ||
+           SymbolSize == UnknownAddressOrSize)
+    return;
+  StringRef SymbolName;
+  if (error(Sym->getName(SymbolName)))
+    return;
+  // Mach-O symbol table names have leading underscore, skip it.
+  if (Module->isMachO() && SymbolName.size() > 0 && SymbolName[0] == '_')
+    SymbolName = SymbolName.drop_front();
+  // FIXME: If a function has alias, there are two entries in symbol table
+  // with same address size. Make sure we choose the correct one.
+  SymbolMapTy &M = SymbolType == SymbolRef::ST_Function ? Functions : Objects;
+  SymbolDesc SD = { SymbolAddress, SymbolSize };
+  M.insert(std::make_pair(SD, SymbolName));
 }
 
 bool ModuleInfo::getNameFromSymbolTable(SymbolRef::Type Type, uint64_t Address,

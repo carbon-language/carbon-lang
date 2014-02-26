@@ -77,3 +77,9 @@ BINARY_C:       main
 BINARY_C-NEXT: /tmp/dbginfo{{[/\\]}}llvm-symbolizer-test.c:10
 BINARY_C:      _start
 BINARY_C:      {{g$}}
+
+RUN: echo "0x1f1" > %t.input6
+RUN: llvm-symbolizer --obj %p/Inputs/shared-object-stripped.elf-i386 < %t.input6 \
+RUN:   | FileCheck %s --check-prefix=STRIPPED
+
+STRIPPED:  global_func
