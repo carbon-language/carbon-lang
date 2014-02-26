@@ -2009,8 +2009,14 @@ class AllocaSliceRewriter : public InstVisitor<AllocaSliceRewriter, bool> {
   // integer type will be stored here for easy access during rewriting.
   IntegerType *IntTy;
 
-  // The offset of the slice currently being rewritten.
+  // The original offset of the slice currently being rewritten relative to
+  // the original alloca.
   uint64_t BeginOffset, EndOffset;
+  // The new offsets of the slice currently being rewritten relative to the
+  // original alloca.
+  uint64_t NewBeginOffset, NewEndOffset;
+
+  uint64_t SliceSize;
   bool IsSplittable;
   bool IsSplit;
   Use *OldUse;
@@ -2027,12 +2033,14 @@ class AllocaSliceRewriter : public InstVisitor<AllocaSliceRewriter, bool> {
 public:
   AllocaSliceRewriter(const DataLayout &DL, AllocaSlices &S, SROA &Pass,
                       AllocaInst &OldAI, AllocaInst &NewAI,
-                      uint64_t NewBeginOffset, uint64_t NewEndOffset,
-                      bool IsVectorPromotable, bool IsIntegerPromotable,
+                      uint64_t NewAllocaBeginOffset,
+                      uint64_t NewAllocaEndOffset, bool IsVectorPromotable,
+                      bool IsIntegerPromotable,
                       SmallPtrSetImpl<PHINode *> &PHIUsers,
                       SmallPtrSetImpl<SelectInst *> &SelectUsers)
       : DL(DL), S(S), Pass(Pass), OldAI(OldAI), NewAI(NewAI),
-        NewAllocaBeginOffset(NewBeginOffset), NewAllocaEndOffset(NewEndOffset),
+        NewAllocaBeginOffset(NewAllocaBeginOffset),
+        NewAllocaEndOffset(NewAllocaEndOffset),
         NewAllocaTy(NewAI.getAllocatedType()),
         VecTy(IsVectorPromotable ? cast<VectorType>(NewAllocaTy) : 0),
         ElementTy(VecTy ? VecTy->getElementType() : 0),
@@ -2061,6 +2069,14 @@ public:
     IsSplittable = I->isSplittable();
     IsSplit =
         BeginOffset < NewAllocaBeginOffset || EndOffset > NewAllocaEndOffset;
+
+    // Compute the intersecting offset range.
+    assert(BeginOffset < NewAllocaEndOffset);
+    assert(EndOffset > NewAllocaBeginOffset);
+    NewBeginOffset = std::max(BeginOffset, NewAllocaBeginOffset);
+    NewEndOffset = std::min(EndOffset, NewAllocaEndOffset);
+
+    SliceSize = NewEndOffset - NewBeginOffset;
 
     OldUse = I->getUse();
     OldPtr = cast<Instruction>(OldUse->get());
@@ -2184,15 +2200,7 @@ private:
     Value *OldOp = LI.getOperand(0);
     assert(OldOp == OldPtr);
 
-    // Compute the intersecting offset range.
-    assert(BeginOffset < NewAllocaEndOffset);
-    assert(EndOffset > NewAllocaBeginOffset);
-    uint64_t NewBeginOffset = std::max(BeginOffset, NewAllocaBeginOffset);
-    uint64_t NewEndOffset = std::min(EndOffset, NewAllocaEndOffset);
-
-    uint64_t Size = NewEndOffset - NewBeginOffset;
-
-    Type *TargetTy = IsSplit ? Type::getIntNTy(LI.getContext(), Size * 8)
+    Type *TargetTy = IsSplit ? Type::getIntNTy(LI.getContext(), SliceSize * 8)
                              : LI.getType();
     bool IsPtrAdjusted = false;
     Value *V;
@@ -2218,7 +2226,7 @@ private:
       assert(!LI.isVolatile());
       assert(LI.getType()->isIntegerTy() &&
              "Only integer type loads and stores are split");
-      assert(Size < DL.getTypeStoreSize(LI.getType()) &&
+      assert(SliceSize < DL.getTypeStoreSize(LI.getType()) &&
              "Split load isn't smaller than original load");
       assert(LI.getType()->getIntegerBitWidth() ==
              DL.getTypeStoreSizeInBits(LI.getType()) &&
@@ -2308,21 +2316,14 @@ private:
       if (AllocaInst *AI = dyn_cast<AllocaInst>(V->stripInBoundsOffsets()))
         Pass.PostPromotionWorklist.insert(AI);
 
-    // Compute the intersecting offset range.
-    assert(BeginOffset < NewAllocaEndOffset);
-    assert(EndOffset > NewAllocaBeginOffset);
-    uint64_t NewBeginOffset = std::max(BeginOffset, NewAllocaBeginOffset);
-    uint64_t NewEndOffset = std::min(EndOffset, NewAllocaEndOffset);
-
-    uint64_t Size = NewEndOffset - NewBeginOffset;
-    if (Size < DL.getTypeStoreSize(V->getType())) {
+    if (SliceSize < DL.getTypeStoreSize(V->getType())) {
       assert(!SI.isVolatile());
       assert(V->getType()->isIntegerTy() &&
              "Only integer type loads and stores are split");
       assert(V->getType()->getIntegerBitWidth() ==
              DL.getTypeStoreSizeInBits(V->getType()) &&
              "Non-byte-multiple bit width");
-      IntegerType *NarrowTy = Type::getIntNTy(SI.getContext(), Size * 8);
+      IntegerType *NarrowTy = Type::getIntNTy(SI.getContext(), SliceSize * 8);
       V = extractInteger(DL, IRB, V, NarrowTy, NewBeginOffset,
                          "extract");
     }
@@ -2413,11 +2414,6 @@ private:
     Type *AllocaTy = NewAI.getAllocatedType();
     Type *ScalarTy = AllocaTy->getScalarType();
 
-    // Compute the intersecting offset range.
-    assert(BeginOffset < NewAllocaEndOffset);
-    assert(EndOffset > NewAllocaBeginOffset);
-    uint64_t NewBeginOffset = std::max(BeginOffset, NewAllocaBeginOffset);
-    uint64_t NewEndOffset = std::min(EndOffset, NewAllocaEndOffset);
     uint64_t SliceOffset = NewBeginOffset - NewAllocaBeginOffset;
 
     // If this doesn't map cleanly onto the alloca type, and that type isn't
@@ -2508,12 +2504,6 @@ private:
     // them into two categories: split intrinsics and unsplit intrinsics.
 
     DEBUG(dbgs() << "    original: " << II << "\n");
-
-    // Compute the intersecting offset range.
-    assert(BeginOffset < NewAllocaEndOffset);
-    assert(EndOffset > NewAllocaBeginOffset);
-    uint64_t NewBeginOffset = std::max(BeginOffset, NewAllocaBeginOffset);
-    uint64_t NewEndOffset = std::min(EndOffset, NewAllocaEndOffset);
 
     bool IsDest = &II.getRawDestUse() == OldUse;
     assert((IsDest && II.getRawDest() == OldPtr) ||
@@ -2686,12 +2676,6 @@ private:
            II.getIntrinsicID() == Intrinsic::lifetime_end);
     DEBUG(dbgs() << "    original: " << II << "\n");
     assert(II.getArgOperand(1) == OldPtr);
-
-    // Compute the intersecting offset range.
-    assert(BeginOffset < NewAllocaEndOffset);
-    assert(EndOffset > NewAllocaBeginOffset);
-    uint64_t NewBeginOffset = std::max(BeginOffset, NewAllocaBeginOffset);
-    uint64_t NewEndOffset = std::min(EndOffset, NewAllocaEndOffset);
 
     // Record this instruction for deletion.
     Pass.DeadInsts.insert(&II);
