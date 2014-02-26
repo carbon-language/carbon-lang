@@ -104,7 +104,9 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
         V = *CSV_I;
         DV = V.getAs<DefinedSVal>();
         assert(++CSV_I == CSV->end());
-        if (!DV)
+        // FIXME: Handle (some_union){ some_other_union_val }, which turns into
+        // a LazyCompoundVal inside a CompoundVal.
+        if (!V.getAs<Loc>())
           continue;
         // Retrieve the corresponding expression.
         if (const CompoundLiteralExpr *CE = dyn_cast<CompoundLiteralExpr>(ArgE))
