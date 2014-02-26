@@ -76,17 +76,17 @@ TEST(AddressSanitizer, MemSetOOBTest) {
 // Strictly speaking we are not guaranteed to find such two pointers,
 // but given the structure of asan's allocator we will.
 static bool AllocateTwoAdjacentArrays(char **x1, char **x2, size_t size) {
-  vector<char *> v;
+  vector<uintptr_t> v;
   bool res = false;
   for (size_t i = 0; i < 1000U && !res; i++) {
-    v.push_back(new char[size]);
+    v.push_back(reinterpret_cast<uintptr_t>(new char[size]));
     if (i == 0) continue;
     sort(v.begin(), v.end());
     for (size_t j = 1; j < v.size(); j++) {
       assert(v[j] > v[j-1]);
       if ((size_t)(v[j] - v[j-1]) < size * 2) {
-        *x2 = v[j];
-        *x1 = v[j-1];
+        *x2 = reinterpret_cast<char*>(v[j]);
+        *x1 = reinterpret_cast<char*>(v[j-1]);
         res = true;
         break;
       }
@@ -94,9 +94,10 @@ static bool AllocateTwoAdjacentArrays(char **x1, char **x2, size_t size) {
   }
 
   for (size_t i = 0; i < v.size(); i++) {
-    if (res && v[i] == *x1) continue;
-    if (res && v[i] == *x2) continue;
-    delete [] v[i];
+    char *p = reinterpret_cast<char *>(v[i]);
+    if (res && p == *x1) continue;
+    if (res && p == *x2) continue;
+    delete [] p;
   }
   return res;
 }
