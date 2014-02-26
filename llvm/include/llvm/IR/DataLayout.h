@@ -193,6 +193,9 @@ public:
     return *this;
   }
 
+  bool operator==(const DataLayout &Other) const;
+  bool operator!=(const DataLayout &Other) const { return !(*this == Other); }
+
   ~DataLayout();  // Not virtual, do not subclass this class
 
   /// Parse a data layout string (with fallback to default values).

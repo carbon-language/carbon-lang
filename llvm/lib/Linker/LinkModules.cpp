@@ -1208,7 +1208,7 @@ bool ModuleLinker::run() {
     DstM->setTargetTriple(SrcM->getTargetTriple());
 
   if (SrcM->getDataLayout() && DstM->getDataLayout() &&
-      SrcM->getDataLayout() != DstM->getDataLayout()) {
+      *SrcM->getDataLayout() != *DstM->getDataLayout()) {
     if (!SuppressWarnings) {
       errs() << "WARNING: Linking two modules of different data layouts!\n";
     }

@@ -354,6 +354,16 @@ DataLayout::DataLayout(const Module *M) : LayoutMap(0) {
     reset("");
 }
 
+bool DataLayout::operator==(const DataLayout &Other) const {
+  bool Ret = LittleEndian == Other.LittleEndian &&
+             StackNaturalAlign == Other.StackNaturalAlign &&
+             ManglingMode == Other.ManglingMode &&
+             LegalIntWidths == Other.LegalIntWidths &&
+             Alignments == Other.Alignments && Pointers == Pointers;
+  assert(Ret == (getStringRepresentation() == Other.getStringRepresentation()));
+  return Ret;
+}
+
 void
 DataLayout::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
                          unsigned pref_align, uint32_t bit_width) {
