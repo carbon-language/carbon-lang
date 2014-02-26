@@ -1405,3 +1405,19 @@ entry:
   ret void
 }
 
+define void @test24(i8* %src, i8* %dst) {
+; CHECK-LABEL: @test24(
+; CHECK: alloca i64, align 16
+; CHECK: load volatile i64* %{{[^,]*}}, align 1
+; CHECK: store volatile i64 %{{[^,]*}}, i64* %{{[^,]*}}, align 16
+; CHECK: load volatile i64* %{{[^,]*}}, align 16
+; CHECK: store volatile i64 %{{[^,]*}}, i64* %{{[^,]*}}, align 1
+
+entry:
+  %a = alloca i64, align 16
+  %ptr = bitcast i64* %a to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %ptr, i8* %src, i32 8, i32 1, i1 true)
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dst, i8* %ptr, i32 8, i32 1, i1 true)
+  ret void
+}
+

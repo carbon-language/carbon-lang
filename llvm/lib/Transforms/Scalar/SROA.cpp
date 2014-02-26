@@ -2494,10 +2494,7 @@ private:
     assert((IsDest && II.getRawDest() == OldPtr) ||
            (!IsDest && II.getRawSource() == OldPtr));
 
-    unsigned MinAlignment = II.getAlignment();
-    if (MinAlignment == 0)
-      MinAlignment = 1; // Fix the '0' alignment used by memcpy and memmove.
-    MinAlignment = MinAlign(MinAlignment, getSliceAlign());
+    unsigned SliceAlign = getSliceAlign();
 
     // For unsplit intrinsics, we simply modify the source and destination
     // pointers in place. This isn't just an optimization, it is a matter of
@@ -2513,9 +2510,10 @@ private:
       else
         II.setSource(AdjustedPtr);
 
-      if (II.getAlignment() > MinAlignment) {
+      if (II.getAlignment() > SliceAlign) {
         Type *CstTy = II.getAlignmentCst()->getType();
-        II.setAlignment(ConstantInt::get(CstTy, MinAlignment));
+        II.setAlignment(
+            ConstantInt::get(CstTy, MinAlign(II.getAlignment(), SliceAlign)));
       }
 
       DEBUG(dbgs() << "          to: " << II << "\n");
@@ -2564,10 +2562,8 @@ private:
     // Compute the relative offset for the other pointer within the transfer.
     unsigned IntPtrWidth = DL.getPointerSizeInBits();
     APInt OtherOffset(IntPtrWidth, NewBeginOffset - BeginOffset);
-
-    // Factor the offset other pointer's alignment into the requinerd minimum.
-    MinAlignment =
-        MinAlign(MinAlignment, OtherOffset.zextOrTrunc(64).getZExtValue());
+    unsigned OtherAlign = MinAlign(II.getAlignment() ? II.getAlignment() : 1,
+                                   OtherOffset.zextOrTrunc(64).getZExtValue());
 
     if (EmitMemCpy) {
       Type *OtherPtrTy = OtherPtr->getType();
@@ -2581,9 +2577,9 @@ private:
       Type *SizeTy = II.getLength()->getType();
       Constant *Size = ConstantInt::get(SizeTy, NewEndOffset - NewBeginOffset);
 
-      CallInst *New = IRB.CreateMemCpy(IsDest ? OurPtr : OtherPtr,
-                                       IsDest ? OtherPtr : OurPtr,
-                                       Size, MinAlignment, II.isVolatile());
+      CallInst *New = IRB.CreateMemCpy(
+          IsDest ? OurPtr : OtherPtr, IsDest ? OtherPtr : OurPtr, Size,
+          MinAlign(SliceAlign, OtherAlign), II.isVolatile());
       (void)New;
       DEBUG(dbgs() << "          to: " << *New << "\n");
       return false;
@@ -2612,9 +2608,13 @@ private:
 
     Value *SrcPtr = getAdjustedPtr(IRB, DL, OtherPtr, OtherOffset, OtherPtrTy,
                                    OtherPtr->getName() + ".");
+    unsigned SrcAlign = OtherAlign;
     Value *DstPtr = &NewAI;
-    if (!IsDest)
+    unsigned DstAlign = SliceAlign;
+    if (!IsDest) {
       std::swap(SrcPtr, DstPtr);
+      std::swap(SrcAlign, DstAlign);
+    }
 
     Value *Src;
     if (VecTy && !IsWholeAlloca && !IsDest) {
@@ -2628,7 +2628,7 @@ private:
       uint64_t Offset = NewBeginOffset - NewAllocaBeginOffset;
       Src = extractInteger(DL, IRB, Src, SubIntTy, Offset, "extract");
     } else {
-      Src = IRB.CreateAlignedLoad(SrcPtr, MinAlignment, II.isVolatile(),
+      Src = IRB.CreateAlignedLoad(SrcPtr, SrcAlign, II.isVolatile(),
                                   "copyload");
     }
 
@@ -2646,7 +2646,7 @@ private:
     }
 
     StoreInst *Store = cast<StoreInst>(
-        IRB.CreateAlignedStore(Src, DstPtr, MinAlignment, II.isVolatile()));
+        IRB.CreateAlignedStore(Src, DstPtr, DstAlign, II.isVolatile()));
     (void)Store;
     DEBUG(dbgs() << "          to: " << *Store << "\n");
     return !II.isVolatile();
