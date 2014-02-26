@@ -1,4 +1,4 @@
-; RUN: llc < %s  -mcpu=cortex-a15 | FileCheck %s
+; RUN: llc < %s -march=arm -mcpu=cortex-a15 | FileCheck %s
 
 ; CHECK: a
 define i32 @a(i32 %x) {
