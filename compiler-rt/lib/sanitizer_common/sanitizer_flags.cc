@@ -42,6 +42,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->use_sigaltstack = false;
   f->detect_deadlocks = false;
   f->clear_shadow_mmap_threshold = 64 * 1024;
+  f->color = "auto";
 }
 
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
@@ -66,6 +67,7 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   ParseFlag(str, &f->detect_deadlocks, "detect_deadlocks");
   ParseFlag(str, &f->clear_shadow_mmap_threshold,
             "clear_shadow_mmap_threshold");
+  ParseFlag(str, &f->color, "color");
 
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)

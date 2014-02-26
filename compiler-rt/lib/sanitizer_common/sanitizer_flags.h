@@ -76,6 +76,8 @@ struct CommonFlags {
   // Large shadow regions are zero-filled using mmap(NORESERVE) instead of
   // memset. This is the threshold size in bytes.
   uptr clear_shadow_mmap_threshold;
+  // Colorize reports: (always|never|auto).
+  const char *color;
 };
 
 inline CommonFlags *common_flags() {

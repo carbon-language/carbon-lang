@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common.h"
+#include "sanitizer_flags.h"
 
 namespace __sanitizer {
 
@@ -33,5 +34,11 @@ bool PrintsToTtyCached() {
     cached = 1;
   }
   return prints_to_tty;
+}
+
+bool ColorizeReports() {
+  const char *flag = common_flags()->color;
+  return internal_strcmp(flag, "always") == 0 ||
+         (internal_strcmp(flag, "auto") == 0 && PrintsToTtyCached());
 }
 }  // namespace __sanitizer
