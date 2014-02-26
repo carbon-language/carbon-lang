@@ -10009,6 +10009,37 @@ static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG,
                      DAG.getConstant(SSECC, MVT::i8));
 }
 
+/// \brief Try to turn a VSETULT into a VSETULE by modifying its second
+/// operand \p Op1.  If non-trivial (for example because it's not constant)
+/// return an empty value.
+static SDValue ChangeVSETULTtoVSETULE(SDValue Op1, SelectionDAG &DAG)
+{
+  BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(Op1.getNode());
+  if (!BV)
+    return SDValue();
+
+  MVT VT = Op1.getSimpleValueType();
+  MVT EVT = VT.getVectorElementType();
+  unsigned n = VT.getVectorNumElements();
+  SmallVector<SDValue, 8> ULTOp1;
+
+  for (unsigned i = 0; i < n; ++i) {
+    ConstantSDNode *Elt = dyn_cast<ConstantSDNode>(BV->getOperand(i));
+    if (!Elt || Elt->isOpaque() || Elt->getValueType(0) != EVT)
+      return SDValue();
+
+    // Avoid underflow.
+    APInt Val = Elt->getAPIntValue();
+    if (Val == 0)
+      return SDValue();
+
+    ULTOp1.push_back(DAG.getConstant(Val - 1, EVT));
+  }
+
+  return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Op1), VT, ULTOp1.data(),
+                     ULTOp1.size());
+}
+
 static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
                            SelectionDAG &DAG) {
   SDValue Op0 = Op.getOperand(0);
@@ -10080,6 +10111,7 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
   // operations may be required for some comparisons.
   unsigned Opc;
   bool Swap = false, Invert = false, FlipSigns = false, MinMax = false;
+  bool Subus = false;
 
   switch (SetCCOpcode) {
   default: llvm_unreachable("Unexpected SETCC condition");
@@ -10112,6 +10144,40 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
     }
 
     if (MinMax) { Swap = false; Invert = false; FlipSigns = false; }
+  }
+
+  bool hasSubus = Subtarget->hasSSE2() && (VET == MVT::i8 || VET == MVT::i16);
+  if (!MinMax && hasSubus) {
+    // As another special case, use PSUBUS[BW] when it's profitable. E.g. for
+    // Op0 u<= Op1:
+    //   t = psubus Op0, Op1
+    //   pcmpeq t, <0..0>
+    switch (SetCCOpcode) {
+    default: break;
+    case ISD::SETULT: {
+      // If the comparison is against a constant we can turn this into a
+      // setule.  With psubus, setule does not require a swap.  This is
+      // beneficial because the constant in the register is no longer
+      // destructed as the destination so it can be hoisted out of a loop.
+      // Only do this pre-AVX since vpcmp* is no longer destructive.
+      if (Subtarget->hasAVX())
+        break;
+      SDValue ULEOp1 = ChangeVSETULTtoVSETULE(Op1, DAG);
+      if (ULEOp1.getNode()) {
+        Op1 = ULEOp1;
+        Subus = true; Invert = false; Swap = false;
+      }
+      break;
+    }
+    // Psubus is better than flip-sign because it requires no inversion.
+    case ISD::SETUGE: Subus = true; Invert = false; Swap = true;  break;
+    case ISD::SETULE: Subus = true; Invert = false; Swap = false; break;
+    }
+
+    if (Subus) {
+      Opc = X86ISD::SUBUS;
+      FlipSigns = false;
+    }
   }
 
   if (Swap)
@@ -10203,6 +10269,10 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
 
   if (MinMax)
     Result = DAG.getNode(X86ISD::PCMPEQ, dl, VT, Op0, Result);
+
+  if (Subus)
+    Result = DAG.getNode(X86ISD::PCMPEQ, dl, VT, Result,
+                         getZeroVector(VT, Subtarget, DAG, dl));
 
   return Result;
 }
