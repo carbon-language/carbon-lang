@@ -809,18 +809,6 @@ class RIi64_NOREX<bits<8> o, Format f, dag outs, dag ins, string asm,
   let CodeSize = 3;
 }
 
-class RSSI<bits<8> o, Format F, dag outs, dag ins, string asm,
-           list<dag> pattern, InstrItinClass itin = NoItinerary>
-      : SSI<o, F, outs, ins, asm, pattern, itin>, REX_W;
-class RSDI<bits<8> o, Format F, dag outs, dag ins, string asm,
-           list<dag> pattern, InstrItinClass itin = NoItinerary>
-      : SDI<o, F, outs, ins, asm, pattern, itin>, REX_W;
-class RPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
-           list<dag> pattern, InstrItinClass itin = NoItinerary>
-      : PDI<o, F, outs, ins, asm, pattern, itin>, REX_W;
-class VRPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
-           list<dag> pattern, InstrItinClass itin = NoItinerary>
-      : VPDI<o, F, outs, ins, asm, pattern, itin>, VEX_W;
 class RS2I<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern, InstrItinClass itin = NoItinerary>
       : S2I<o, F, outs, ins, asm, pattern, itin>, REX_W;
