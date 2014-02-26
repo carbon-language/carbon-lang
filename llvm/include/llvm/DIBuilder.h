@@ -95,8 +95,8 @@ namespace llvm {
     /// @param Lang     Source programming language, eg. dwarf::DW_LANG_C99
     /// @param File     File name
     /// @param Dir      Directory
-    /// @param Producer String identify producer of debugging information.
-    ///                 Usuall this is a compiler version string.
+    /// @param Producer Identify the producer of debugging information and code.
+    ///                 Usually this is a compiler version string.
     /// @param isOptimized A boolean flag which indicates whether optimization
     ///                    is ON or not.
     /// @param Flags    This string lists command line options. This string is
