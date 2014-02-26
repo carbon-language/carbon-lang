@@ -185,7 +185,7 @@ public:
 
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
-    llvm::dbgs().indent(Offset*2) << "BasicBlockPass Manager\n";
+    dbgs().indent(Offset*2) << "BasicBlockPass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       BasicBlockPass *BP = getContainedPass(Index);
       BP->dumpPassStructure(Offset + 1);
@@ -346,7 +346,7 @@ public:
 
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
-    llvm::dbgs().indent(Offset*2) << "ModulePass Manager\n";
+    dbgs().indent(Offset*2) << "ModulePass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       ModulePass *MP = getContainedPass(Index);
       MP->dumpPassStructure(Offset + 1);
@@ -1132,7 +1132,7 @@ void PMDataManager::dumpLastUses(Pass *P, unsigned Offset) const{
 
   for (SmallVectorImpl<Pass *>::iterator I = LUses.begin(),
          E = LUses.end(); I != E; ++I) {
-    llvm::dbgs() << "--" << std::string(Offset*2, ' ');
+    dbgs() << "--" << std::string(Offset*2, ' ');
     (*I)->dumpPassStructure(0);
   }
 }

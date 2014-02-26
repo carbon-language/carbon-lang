@@ -454,7 +454,7 @@ void DwarfUnit::addRegisterOp(DIELoc *TheDie, unsigned Reg) {
   }
 
   if (DWReg < 0) {
-    DEBUG(llvm::dbgs() << "Invalid Dwarf register number.\n");
+    DEBUG(dbgs() << "Invalid Dwarf register number.\n");
     addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_nop);
     return;
   }

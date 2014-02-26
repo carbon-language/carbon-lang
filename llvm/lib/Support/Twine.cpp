@@ -163,9 +163,9 @@ void Twine::printRepr(raw_ostream &OS) const {
 }
 
 void Twine::dump() const {
-  print(llvm::dbgs());
+  print(dbgs());
 }
 
 void Twine::dumpRepr() const {
-  printRepr(llvm::dbgs());
+  printRepr(dbgs());
 }
