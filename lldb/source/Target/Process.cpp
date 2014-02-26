@@ -4793,7 +4793,16 @@ public:
                             // Consume the interrupt byte
                             n = 1;
                             m_pipe_read.Read (&ch, n);
-                            SetIsDone(true);
+                            switch (ch)
+                            {
+                                case 'q':
+                                    SetIsDone(true);
+                                    break;
+                                case 'i':
+                                    if (StateIsRunningState(m_process->GetState()))
+                                        m_process->Halt();
+                                    break;
+                            }
                         }
                     }
                 }
@@ -4829,15 +4838,28 @@ public:
     Cancel ()
     {
         size_t n = 1;
-        char ch = 'q';
+        char ch = 'q';  // Send 'q' for quit
         m_pipe_write.Write (&ch, n);
     }
 
     virtual void
     Interrupt ()
     {
+#ifdef _MSC_VER
+        // Windows doesn't support pipes, so we will send an async interrupt
+        // event to stop the process
         if (StateIsRunningState(m_process->GetState()))
             m_process->SendAsyncInterrupt();
+#else
+        // Do only things that are safe to do in an interrupt context (like in
+        // a SIGINT handler), like write 1 byte to a file descriptor. This will
+        // interrupt the IOHandlerProcessSTDIO::Run() and we can look at the byte
+        // that was written to the pipe and then call m_process->Halt() from a
+        // much safer location in code.
+        size_t n = 1;
+        char ch = 'i'; // Send 'i' for interrupt
+        m_pipe_write.Write (&ch, n);
+#endif
     }
     
     virtual void
