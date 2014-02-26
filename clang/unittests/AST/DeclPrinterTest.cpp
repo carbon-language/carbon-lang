@@ -519,6 +519,7 @@ TEST(DeclPrinter, TestCXXConstructorDecl11) {
     "};",
     constructorDecl(ofClass(hasName("A"))).bind("id"),
     "A<T...>(T &&ts...) : T(ts)..."));
+    // WRONG; Should be: "A(T&&... ts) : T(ts)..."
 }
 
 TEST(DeclPrinter, TestCXXDestructorDecl1) {

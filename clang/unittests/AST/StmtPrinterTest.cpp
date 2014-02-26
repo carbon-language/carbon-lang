@@ -64,11 +64,10 @@ public:
   }
 };
 
-::testing::AssertionResult PrintedStmtMatches(
-                                        StringRef Code,
-                                        const std::vector<std::string> &Args,
-                                        const DeclarationMatcher &NodeMatch,
-                                        StringRef ExpectedPrinted) {
+template <typename T>
+::testing::AssertionResult
+PrintedStmtMatches(StringRef Code, const std::vector<std::string> &Args,
+                   const T &NodeMatch, StringRef ExpectedPrinted) {
 
   PrintMatch Printer;
   MatchFinder Finder;
@@ -96,6 +95,15 @@ public:
   return ::testing::AssertionSuccess();
 }
 
+::testing::AssertionResult
+PrintedStmtCXX98Matches(StringRef Code, const StatementMatcher &NodeMatch,
+                        StringRef ExpectedPrinted) {
+  std::vector<std::string> Args;
+  Args.push_back("-std=c++98");
+  Args.push_back("-Wno-unused-value");
+  return PrintedStmtMatches(Code, Args, NodeMatch, ExpectedPrinted);
+}
+
 ::testing::AssertionResult PrintedStmtCXX98Matches(
                                               StringRef Code,
                                               StringRef ContainingFunction,
@@ -108,6 +116,15 @@ public:
                             functionDecl(hasName(ContainingFunction),
                                          has(compoundStmt(has(stmt().bind("id"))))),
                             ExpectedPrinted);
+}
+
+::testing::AssertionResult
+PrintedStmtCXX11Matches(StringRef Code, const StatementMatcher &NodeMatch,
+                        StringRef ExpectedPrinted) {
+  std::vector<std::string> Args;
+  Args.push_back("-std=c++11");
+  Args.push_back("-Wno-unused-value");
+  return PrintedStmtMatches(Code, Args, NodeMatch, ExpectedPrinted);
 }
 
 ::testing::AssertionResult PrintedStmtMSMatches(
@@ -163,4 +180,33 @@ TEST(StmtPrinter, TestFloatingPointLiteral) {
     "A",
     "1.F , -1.F , 1. , -1. , 1.L , -1.L"));
     // Should be: with semicolon
+}
+
+TEST(StmtPrinter, TestCXXConversionDeclImplicit) {
+  ASSERT_TRUE(PrintedStmtCXX98Matches(
+    "struct A {"
+      "operator void *();"
+      "A operator&(A);"
+    "};"
+    "void bar(void *);"
+    "void foo(A a, A b) {"
+    "  bar(a & b);"
+    "}",
+    memberCallExpr(anything()).bind("id"),
+    "a & b"));
+}
+
+TEST(StmtPrinter, TestCXXConversionDeclExplicit) {
+  ASSERT_TRUE(PrintedStmtCXX11Matches(
+    "struct A {"
+      "operator void *();"
+      "A operator&(A);"
+    "};"
+    "void bar(void *);"
+    "void foo(A a, A b) {"
+    "  auto x = (a & b).operator void *();"
+    "}",
+    memberCallExpr(anything()).bind("id"),
+    "(a & b)"));
+    // WRONG; Should be: (a & b).operator void *()
 }
