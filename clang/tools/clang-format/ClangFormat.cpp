@@ -65,9 +65,10 @@ static cl::opt<std::string>
           cl::init("file"), cl::cat(ClangFormatCategory));
 static cl::opt<std::string>
 FallbackStyle("fallback-style",
-              cl::desc("The name of the predefined style used as a fallback in "
-                       "case clang-format is invoked with -style=file, but can "
-                       "not find the .clang-format file to use."),
+              cl::desc("The name of the predefined style used as a\n"
+                       "fallback in case clang-format is invoked with\n"
+                       "-style=file, but can not find the .clang-format\n"
+                       "file to use."),
               cl::init("LLVM"), cl::cat(ClangFormatCategory));
 
 static cl::opt<std::string>
