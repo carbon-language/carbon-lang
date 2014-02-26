@@ -7941,6 +7941,10 @@ private:
                             SourceLocation Loc, SourceRange range,
                             llvm::SmallBitVector &CheckedVarArgs);
 
+  void CheckAbsoluteValueFunction(const CallExpr *Call,
+                                  const FunctionDecl *FDecl,
+                                  IdentifierInfo *FnInfo);
+
   void CheckMemaccessArguments(const CallExpr *Call,
                                unsigned BId,
                                IdentifierInfo *FnName);

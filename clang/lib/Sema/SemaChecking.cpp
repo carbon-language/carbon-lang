@@ -851,6 +851,8 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall,
   if (!FnInfo)
     return false;
 
+  CheckAbsoluteValueFunction(TheCall, FDecl, FnInfo);
+
   unsigned CMId = FDecl->getMemoryFunctionKind();
   if (CMId == 0)
     return false;
@@ -3580,6 +3582,328 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
                                                  Context.getTargetInfo()))
       H.DoneProcessing();
   } // TODO: handle other formats
+}
+
+//===--- CHECK: Warn on use of wrong absolute value function. -------------===//
+
+// Returns the related absolute value function that is larger, of 0 if one
+// does not exist.
+static unsigned getLargerAbsoluteValueFunction(unsigned AbsFunction) {
+  switch (AbsFunction) {
+  default:
+    return 0;
+
+  case Builtin::BI__builtin_abs:
+    return Builtin::BI__builtin_labs;
+  case Builtin::BI__builtin_labs:
+    return Builtin::BI__builtin_llabs;
+  case Builtin::BI__builtin_llabs:
+    return 0;
+
+  case Builtin::BI__builtin_fabsf:
+    return Builtin::BI__builtin_fabs;
+  case Builtin::BI__builtin_fabs:
+    return Builtin::BI__builtin_fabsl;
+  case Builtin::BI__builtin_fabsl:
+    return 0;
+
+  case Builtin::BI__builtin_cabsf:
+    return Builtin::BI__builtin_cabs;
+  case Builtin::BI__builtin_cabs:
+    return Builtin::BI__builtin_cabsl;
+  case Builtin::BI__builtin_cabsl:
+    return 0;
+
+  case Builtin::BIabs:
+    return Builtin::BIlabs;
+  case Builtin::BIlabs:
+    return Builtin::BIllabs;
+  case Builtin::BIllabs:
+    return 0;
+
+  case Builtin::BIfabsf:
+    return Builtin::BIfabs;
+  case Builtin::BIfabs:
+    return Builtin::BIfabsl;
+  case Builtin::BIfabsl:
+    return 0;
+
+  case Builtin::BIcabsf:
+   return Builtin::BIcabs;
+  case Builtin::BIcabs:
+    return Builtin::BIcabsl;
+  case Builtin::BIcabsl:
+    return 0;
+  }
+}
+
+// Returns the argument type of the absolute value function.
+static QualType getAbsoluteValueArgumentType(ASTContext &Context,
+                                             unsigned AbsType) {
+  if (AbsType == 0)
+    return QualType();
+
+  ASTContext::GetBuiltinTypeError Error = ASTContext::GE_None;
+  QualType BuiltinType = Context.GetBuiltinType(AbsType, Error);
+  if (Error != ASTContext::GE_None)
+    return QualType();
+
+  const FunctionProtoType *FT = BuiltinType->getAs<FunctionProtoType>();
+  if (!FT)
+    return QualType();
+
+  if (FT->getNumParams() != 1)
+    return QualType();
+
+  return FT->getParamType(0);
+}
+
+// Returns the best absolute value function, or zero, based on type and
+// current absolute value function.
+static unsigned getBestAbsFunction(ASTContext &Context, QualType ArgType,
+                                   unsigned AbsFunctionKind) {
+  unsigned BestKind = 0;
+  uint64_t ArgSize = Context.getTypeSize(ArgType);
+  for (unsigned Kind = AbsFunctionKind; Kind != 0;
+       Kind = getLargerAbsoluteValueFunction(Kind)) {
+    QualType ParamType = getAbsoluteValueArgumentType(Context, Kind);
+    if (Context.getTypeSize(ParamType) >= ArgSize) {
+      if (BestKind == 0)
+        BestKind = Kind;
+      else if (Context.hasSameType(ParamType, ArgType)) {
+        BestKind = Kind;
+        break;
+      }
+    }
+  }
+  return BestKind;
+}
+
+enum AbsoluteValueKind {
+  AVK_Integer,
+  AVK_Floating,
+  AVK_Complex
+};
+
+static AbsoluteValueKind getAbsoluteValueKind(QualType T) {
+  if (T->isIntegralOrEnumerationType())
+    return AVK_Integer;
+  if (T->isRealFloatingType())
+    return AVK_Floating;
+  if (T->isAnyComplexType())
+    return AVK_Complex;
+
+  llvm_unreachable("Type not integer, floating, or complex");
+}
+
+// Changes the absolute value function to a different type.  Preserves whether
+// the function is a builtin.
+static unsigned changeAbsFunction(unsigned AbsKind,
+                                  AbsoluteValueKind ValueKind) {
+  switch (ValueKind) {
+  case AVK_Integer:
+    switch (AbsKind) {
+    default:
+      return 0;
+    case Builtin::BI__builtin_fabsf:
+    case Builtin::BI__builtin_fabs:
+    case Builtin::BI__builtin_fabsl:
+    case Builtin::BI__builtin_cabsf:
+    case Builtin::BI__builtin_cabs:
+    case Builtin::BI__builtin_cabsl:
+      return Builtin::BI__builtin_abs;
+    case Builtin::BIfabsf:
+    case Builtin::BIfabs:
+    case Builtin::BIfabsl:
+    case Builtin::BIcabsf:
+    case Builtin::BIcabs:
+    case Builtin::BIcabsl:
+      return Builtin::BIabs;
+    }
+  case AVK_Floating:
+    switch (AbsKind) {
+    default:
+      return 0;
+    case Builtin::BI__builtin_abs:
+    case Builtin::BI__builtin_labs:
+    case Builtin::BI__builtin_llabs:
+    case Builtin::BI__builtin_cabsf:
+    case Builtin::BI__builtin_cabs:
+    case Builtin::BI__builtin_cabsl:
+      return Builtin::BI__builtin_fabsf;
+    case Builtin::BIabs:
+    case Builtin::BIlabs:
+    case Builtin::BIllabs:
+    case Builtin::BIcabsf:
+    case Builtin::BIcabs:
+    case Builtin::BIcabsl:
+      return Builtin::BIfabsf;
+    }
+  case AVK_Complex:
+    switch (AbsKind) {
+    default:
+      return 0;
+    case Builtin::BI__builtin_abs:
+    case Builtin::BI__builtin_labs:
+    case Builtin::BI__builtin_llabs:
+    case Builtin::BI__builtin_fabsf:
+    case Builtin::BI__builtin_fabs:
+    case Builtin::BI__builtin_fabsl:
+      return Builtin::BI__builtin_cabsf;
+    case Builtin::BIabs:
+    case Builtin::BIlabs:
+    case Builtin::BIllabs:
+    case Builtin::BIfabsf:
+    case Builtin::BIfabs:
+    case Builtin::BIfabsl:
+      return Builtin::BIcabsf;
+    }
+  }
+  llvm_unreachable("Unable to convert function");
+}
+
+unsigned getAbsoluteValueFunctionKind(const FunctionDecl *FDecl) {
+  const IdentifierInfo *FnInfo = FDecl->getIdentifier();
+  if (!FnInfo)
+    return 0;
+
+  switch (FDecl->getBuiltinID()) {
+  default:
+    return 0;
+  case Builtin::BI__builtin_abs:
+  case Builtin::BI__builtin_fabs:
+  case Builtin::BI__builtin_fabsf:
+  case Builtin::BI__builtin_fabsl:
+  case Builtin::BI__builtin_labs:
+  case Builtin::BI__builtin_llabs:
+  case Builtin::BI__builtin_cabs:
+  case Builtin::BI__builtin_cabsf:
+  case Builtin::BI__builtin_cabsl:
+  case Builtin::BIabs:
+  case Builtin::BIlabs:
+  case Builtin::BIllabs:
+  case Builtin::BIfabs:
+  case Builtin::BIfabsf:
+  case Builtin::BIfabsl:
+  case Builtin::BIcabs:
+  case Builtin::BIcabsf:
+  case Builtin::BIcabsl:
+    return FDecl->getBuiltinID();
+  }
+  llvm_unreachable("Unknown Builtin type");
+}
+
+// If the replacement is valid, emit a note with replacement function.
+// Additionally, suggest including the proper header if not already included.
+static void emitReplacement(Sema &S, SourceLocation Loc, SourceRange Range,
+                            unsigned AbsKind) {
+  std::string AbsName = S.Context.BuiltinInfo.GetName(AbsKind);
+
+  // Look up absolute value function in TU scope.
+  DeclarationName DN(&S.Context.Idents.get(AbsName));
+  LookupResult R(S, DN, Loc, Sema::LookupAnyName);
+  S.LookupName(R, S.TUScope);
+
+  // Skip notes if multiple results found in lookup.
+  if (!R.empty() && !R.isSingleResult())
+    return;
+
+  FunctionDecl *FD = 0;
+  bool FoundFunction = R.isSingleResult();
+  // When one result is found, see if it is the correct function.
+  if (R.isSingleResult()) {
+    FD = dyn_cast<FunctionDecl>(R.getFoundDecl());
+    if (!FD || FD->getBuiltinID() != AbsKind)
+      return;
+  }
+
+  // Look for local name conflict, prepend "::" as necessary.
+  R.clear();
+  S.LookupName(R, S.getCurScope());
+
+  if (!FoundFunction) {
+    if (!R.empty()) {
+      AbsName = "::" + AbsName;
+    }
+  } else { // FoundFunction
+    if (R.isSingleResult()) {
+      if (R.getFoundDecl() != FD) {
+        AbsName = "::" + AbsName;
+      }
+    } else if (!R.empty()) {
+      AbsName = "::" + AbsName;
+    }
+  }
+
+  S.Diag(Loc, diag::note_replace_abs_function)
+      << AbsName << FixItHint::CreateReplacement(Range, AbsName);
+
+  if (!FoundFunction) {
+    S.Diag(Loc, diag::note_please_include_header)
+        << S.Context.BuiltinInfo.getHeaderName(AbsKind)
+        << S.Context.BuiltinInfo.GetName(AbsKind);
+  }
+}
+
+// Warn when using the wrong abs() function.
+void Sema::CheckAbsoluteValueFunction(const CallExpr *Call,
+                                      const FunctionDecl *FDecl,
+                                      IdentifierInfo *FnInfo) {
+  if (Call->getNumArgs() != 1)
+    return;
+
+  unsigned AbsKind = getAbsoluteValueFunctionKind(FDecl);
+  if (AbsKind == 0)
+    return;
+
+  QualType ArgType = Call->getArg(0)->IgnoreParenImpCasts()->getType();
+  QualType ParamType = Call->getArg(0)->getType();
+
+  // Unsigned types can not be negative.  Suggest to drop the absolute value
+  // function.
+  if (ArgType->isUnsignedIntegerType()) {
+    Diag(Call->getExprLoc(), diag::warn_unsigned_abs) << ArgType << ParamType;
+    Diag(Call->getExprLoc(), diag::note_remove_abs)
+        << FDecl
+        << FixItHint::CreateRemoval(Call->getCallee()->getSourceRange());
+    return;
+  }
+
+  AbsoluteValueKind ArgValueKind = getAbsoluteValueKind(ArgType);
+  AbsoluteValueKind ParamValueKind = getAbsoluteValueKind(ParamType);
+
+  // The argument and parameter are the same kind.  Check if they are the right
+  // size.
+  if (ArgValueKind == ParamValueKind) {
+    if (Context.getTypeSize(ArgType) <= Context.getTypeSize(ParamType))
+      return;
+
+    unsigned NewAbsKind = getBestAbsFunction(Context, ArgType, AbsKind);
+    Diag(Call->getExprLoc(), diag::warn_abs_too_small)
+        << FDecl << ArgType << ParamType;
+
+    if (NewAbsKind == 0)
+      return;
+
+    emitReplacement(*this, Call->getExprLoc(),
+                    Call->getCallee()->getSourceRange(), NewAbsKind);
+    return;
+  }
+
+  // ArgValueKind != ParamValueKind
+  // The wrong type of absolute value function was used.  Attempt to find the
+  // proper one.
+  unsigned NewAbsKind = changeAbsFunction(AbsKind, ArgValueKind);
+  NewAbsKind = getBestAbsFunction(Context, ArgType, NewAbsKind);
+  if (NewAbsKind == 0)
+    return;
+
+  Diag(Call->getExprLoc(), diag::warn_wrong_absolute_value_type)
+      << FDecl << ParamValueKind << ArgValueKind;
+
+  emitReplacement(*this, Call->getExprLoc(),
+                  Call->getCallee()->getSourceRange(), NewAbsKind);
+  return;
 }
 
 //===--- CHECK: Standard memory functions ---------------------------------===//
@@ -7518,3 +7842,4 @@ void Sema::CheckArgumentWithTypeTag(const ArgumentWithTypeTagAttr *Attr,
         << ArgumentExpr->getSourceRange()
         << TypeTagExpr->getSourceRange();
 }
+

@@ -30,6 +30,21 @@ def warn_duplicate_enum_values : Warning<
   "been assigned">, InGroup<DiagGroup<"duplicate-enum">>, DefaultIgnore;
 def note_duplicate_element : Note<"element %0 also has value %1">;
 
+// Absolute value functions
+def warn_unsigned_abs : Warning<
+  "taking the absolute value of unsigned type %0 has no effect">,
+  InGroup<AbsoluteValue>;
+def note_remove_abs : Note<
+  "remove the call to %0 since unsigned values cannot be negative">;
+def warn_abs_too_small : Warning<
+  "absolute value function %0 given an argument of type %1 but has parameter "
+  "of type %2 which may cause truncation of value">, InGroup<AbsoluteValue>;
+def warn_wrong_absolute_value_type : Warning<
+  "using %select{integer|floating point|complex}1 absolute value function %0 "
+  "when argument is of %select{integer|floating point|complex}2 type">,
+  InGroup<AbsoluteValue>;
+def note_replace_abs_function : Note<"use function '%0' instead">;
+
 def warn_infinite_recursive_function : Warning<
   "all paths through this function will call itself">,
   InGroup<InfiniteRecursion>, DefaultIgnore;
