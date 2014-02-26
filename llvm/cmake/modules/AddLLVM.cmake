@@ -289,7 +289,12 @@ function(llvm_add_library name)
     endif()
   endif()
 
-  target_link_libraries(${name} ${ARG_LINK_LIBS})
+  if(ARG_STATIC)
+    target_link_libraries(${name} ${cmake_2_8_12_INTERFACE} ${ARG_LINK_LIBS})
+  else()
+    # MODULE|SHARED
+    target_link_libraries(${name} ${cmake_2_8_12_PRIVATE} ${ARG_LINK_LIBS})
+  endif()
 
   llvm_config(${name} ${ARG_LINK_COMPONENTS} ${LLVM_LINK_COMPONENTS})
 
@@ -330,7 +335,7 @@ macro(add_llvm_library name)
   # name, but using get_property(... SET) doesn't suffice to determine if a
   # property has been set to an empty value.
   get_property(lib_deps GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_${name})
-  target_link_libraries(${name} ${lib_deps})
+  target_link_libraries(${name} ${cmake_2_8_12_INTERFACE} ${lib_deps})
 endmacro(add_llvm_library name)
 
 macro(add_llvm_loadable_module name)

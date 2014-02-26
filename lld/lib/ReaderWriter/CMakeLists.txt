@@ -15,7 +15,7 @@ add_lld_library(lldReaderWriter
   FileArchive.cpp
   )
 
-target_link_libraries(lldReaderWriter
+target_link_libraries(lldReaderWriter ${cmake_2_8_12_INTERFACE}
   lldCore
   lldPasses
   )
