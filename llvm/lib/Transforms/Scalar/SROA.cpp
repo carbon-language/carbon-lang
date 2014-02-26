@@ -356,7 +356,7 @@ private:
                  bool IsSplittable = false) {
     // Completely skip uses which have a zero size or start either before or
     // past the end of the allocation.
-    if (Size == 0 || Offset.isNegative() || Offset.uge(AllocSize)) {
+    if (Size == 0 || Offset.uge(AllocSize)) {
       DEBUG(dbgs() << "WARNING: Ignoring " << Size << " byte use @" << Offset
                    << " which has zero size or starts outside of the "
                    << AllocSize << " byte alloca:\n"
@@ -480,8 +480,7 @@ private:
     // risk of overflow.
     // FIXME: We should instead consider the pointer to have escaped if this
     // function is being instrumented for addressing bugs or race conditions.
-    if (Offset.isNegative() || Size > AllocSize ||
-        Offset.ugt(AllocSize - Size)) {
+    if (Size > AllocSize || Offset.ugt(AllocSize - Size)) {
       DEBUG(dbgs() << "WARNING: Ignoring " << Size << " byte store @" << Offset
                    << " which extends past the end of the " << AllocSize
                    << " byte alloca:\n"
@@ -500,7 +499,7 @@ private:
     assert(II.getRawDest() == *U && "Pointer use is not the destination?");
     ConstantInt *Length = dyn_cast<ConstantInt>(II.getLength());
     if ((Length && Length->getValue() == 0) ||
-        (IsOffsetKnown && !Offset.isNegative() && Offset.uge(AllocSize)))
+        (IsOffsetKnown && Offset.uge(AllocSize)))
       // Zero-length mem transfer intrinsics can be ignored entirely.
       return markAsDead(II);
 
@@ -532,7 +531,7 @@ private:
     // if already added to our partitions.
     // FIXME: Yet another place we really should bypass this when
     // instrumenting for ASan.
-    if (!Offset.isNegative() && Offset.uge(AllocSize)) {
+    if (Offset.uge(AllocSize)) {
       SmallDenseMap<Instruction *, unsigned>::iterator MTPI = MemTransferSliceMap.find(&II);
       if (MTPI != MemTransferSliceMap.end())
         S.Slices[MTPI->second].kill();
@@ -667,8 +666,7 @@ private:
     // themselves which should be replaced with undef.
     // FIXME: This should instead be escaped in the event we're instrumenting
     // for address sanitization.
-    if ((Offset.isNegative() && (-Offset).uge(PHISize)) ||
-        (!Offset.isNegative() && Offset.uge(AllocSize))) {
+    if (Offset.uge(AllocSize)) {
       S.DeadOperands.push_back(U);
       return;
     }
@@ -708,8 +706,7 @@ private:
     // themselves which should be replaced with undef.
     // FIXME: This should instead be escaped in the event we're instrumenting
     // for address sanitization.
-    if ((Offset.isNegative() && Offset.uge(SelectSize)) ||
-        (!Offset.isNegative() && Offset.uge(AllocSize))) {
+    if (Offset.uge(AllocSize)) {
       S.DeadOperands.push_back(U);
       return;
     }

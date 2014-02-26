@@ -1393,3 +1393,15 @@ entry:
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %cast1, i8* %cast0, i32 4, i32 1, i1 false)
   ret void
 }
+
+define void @PR18615() {
+; CHECK-LABEL: @PR18615(
+; CHECK-NOT: alloca
+; CHECK: ret void
+entry:
+  %f = alloca i8
+  %gep = getelementptr i8* %f, i64 -1
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* undef, i8* %gep, i32 1, i32 1, i1 false)
+  ret void
+}
+
