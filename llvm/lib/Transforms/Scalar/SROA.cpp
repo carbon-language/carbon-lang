@@ -1290,6 +1290,9 @@ static Value *getNaturalGEPWithType(IRBuilderTy &IRB, const DataLayout &DL,
   if (Ty == TargetTy)
     return buildGEP(IRB, BasePtr, Indices, NamePrefix);
 
+  // Pointer size to use for the indices.
+  unsigned PtrSize = DL.getPointerTypeSizeInBits(BasePtr->getType());
+
   // See if we can descend into a struct and locate a field with the correct
   // type.
   unsigned NumLayers = 0;
@@ -1297,11 +1300,13 @@ static Value *getNaturalGEPWithType(IRBuilderTy &IRB, const DataLayout &DL,
   do {
     if (ElementTy->isPointerTy())
       break;
-    if (SequentialType *SeqTy = dyn_cast<SequentialType>(ElementTy)) {
-      ElementTy = SeqTy->getElementType();
-      // Note that we use the default address space as this index is over an
-      // array or a vector, not a pointer.
-      Indices.push_back(IRB.getInt(APInt(DL.getPointerSizeInBits(0), 0)));
+
+    if (ArrayType *ArrayTy = dyn_cast<ArrayType>(ElementTy)) {
+      ElementTy = ArrayTy->getElementType();
+      Indices.push_back(IRB.getIntN(PtrSize, 0));
+    } else if (VectorType *VectorTy = dyn_cast<VectorType>(ElementTy)) {
+      ElementTy = VectorTy->getElementType();
+      Indices.push_back(IRB.getInt32(0));
     } else if (StructType *STy = dyn_cast<StructType>(ElementTy)) {
       if (STy->element_begin() == STy->element_end())
         break; // Nothing left to descend into.
