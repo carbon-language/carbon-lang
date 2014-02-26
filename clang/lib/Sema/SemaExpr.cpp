@@ -7867,10 +7867,22 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
       return ResultTy;
   }
 
-  bool LHSIsNull = LHS.get()->isNullPointerConstant(Context,
-                                              Expr::NPC_ValueDependentIsNull);
-  bool RHSIsNull = RHS.get()->isNullPointerConstant(Context,
-                                              Expr::NPC_ValueDependentIsNull);
+  const Expr::NullPointerConstantKind LHSNullKind =
+      LHS.get()->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull);
+  const Expr::NullPointerConstantKind RHSNullKind =
+      RHS.get()->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull);
+  bool LHSIsNull = LHSNullKind != Expr::NPCK_NotNull;
+  bool RHSIsNull = RHSNullKind != Expr::NPCK_NotNull;
+
+  if (!IsRelational && LHSIsNull != RHSIsNull) {
+    bool IsEquality = Opc == BO_EQ;
+    if (RHSIsNull)
+      DiagnoseAlwaysNonNullPointer(LHS.get(), RHSNullKind, IsEquality,
+                                   RHS.get()->getSourceRange());
+    else
+      DiagnoseAlwaysNonNullPointer(RHS.get(), LHSNullKind, IsEquality,
+                                   LHS.get()->getSourceRange());
+  }
 
   // All of the following pointer-related warnings are GCC extensions, except
   // when handling null pointer constants. 

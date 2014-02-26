@@ -45,9 +45,15 @@ int main()
   +oneT<int>;  // expected-warning {{expression result unused}}
   -oneT<int>;  //expected-error {{invalid argument type}}
   oneT<int> == 0;   // expected-warning {{equality comparison result unused}} \
-                    // expected-note {{use '=' to turn this equality comparison into an assignment}}
-  0 == oneT<int>;   // expected-warning {{equality comparison result unused}}
-  0 != oneT<int>;    // expected-warning {{inequality comparison result unused}}
+                    // expected-note {{use '=' to turn this equality comparison into an assignment}} \
+                    // expected-warning {{comparison of function 'oneT<int>' equal to a null pointer is always false}} \
+                    // expected-note {{prefix with the address-of operator to silence this warning}}
+  0 == oneT<int>;   // expected-warning {{equality comparison result unused}} \
+                    // expected-warning {{comparison of function 'oneT<int>' equal to a null pointer is always false}} \
+                    // expected-note {{prefix with the address-of operator to silence this warning}}
+  0 != oneT<int>;   // expected-warning {{inequality comparison result unused}} \
+                    // expected-warning {{comparison of function 'oneT<int>' not equal to a null pointer is always true}} \
+                    // expected-note {{prefix with the address-of operator to silence this warning}}
   (false ? one : oneT<int>);   // expected-warning {{expression result unused}}
   void (*p1)(int); p1 = oneT<int>;
   
@@ -69,7 +75,9 @@ int main()
   two < two; //expected-error 2 {{reference to overloaded function could not be resolved; did you mean to call it with no arguments?}} expected-error {{invalid operands to binary expression ('void' and 'void')}}
   twoT<int> < twoT<int>; //expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}} {{cannot resolve overloaded function 'twoT' from context}}
   oneT<int> == 0;   // expected-warning {{equality comparison result unused}} \
-                    // expected-note {{use '=' to turn this equality comparison into an assignment}}
+                    // expected-note {{use '=' to turn this equality comparison into an assignment}} \
+                    // expected-warning {{comparison of function 'oneT<int>' equal to a null pointer is always false}} \
+                    // expected-note {{prefix with the address-of operator to silence this warning}}
 
 }
 

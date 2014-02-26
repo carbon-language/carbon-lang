@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fblocks -std=c++11 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wno-tautological-pointer-compare -fblocks -std=c++11 -verify %s
 
 void foo() {
   int a;

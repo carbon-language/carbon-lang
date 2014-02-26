@@ -5690,35 +5690,10 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
       return DiagnoseImpCast(S, E, T, CC,
                              diag::warn_impcast_objective_c_literal_to_bool);
     }
-    if (Source->isFunctionType()) {
-      // Warn on function to bool. Checks free functions and static member
-      // functions. Weakly imported functions are excluded from the check,
-      // since it's common to test their value to check whether the linker
-      // found a definition for them.
-      ValueDecl *D = 0;
-      if (DeclRefExpr* R = dyn_cast<DeclRefExpr>(E)) {
-        D = R->getDecl();
-      } else if (MemberExpr *M = dyn_cast<MemberExpr>(E)) {
-        D = M->getMemberDecl();
-      }
-
-      if (D && !D->isWeak()) {
-        if (FunctionDecl* F = dyn_cast<FunctionDecl>(D)) {
-          S.Diag(E->getExprLoc(), diag::warn_impcast_function_to_bool)
-            << F << E->getSourceRange() << SourceRange(CC);
-          S.Diag(E->getExprLoc(), diag::note_function_to_bool_silence)
-            << FixItHint::CreateInsertion(E->getExprLoc(), "&");
-          QualType ReturnType;
-          UnresolvedSet<4> NonTemplateOverloads;
-          S.tryExprAsCall(*E, ReturnType, NonTemplateOverloads);
-          if (!ReturnType.isNull() 
-              && ReturnType->isSpecificBuiltinType(BuiltinType::Bool))
-            S.Diag(E->getExprLoc(), diag::note_function_to_bool_call)
-              << FixItHint::CreateInsertion(
-                 S.getPreprocessor().getLocForEndOfToken(E->getLocEnd()), "()");
-          return;
-        }
-      }
+    if (Source->isPointerType() || Source->canDecayToPointerType()) {
+      // Warn on pointer to bool conversion that is always true.
+      S.DiagnoseAlwaysNonNullPointer(E, Expr::NPCK_NotNull, /*IsEqual*/ false,
+                                     SourceRange(CC));
     }
   }
 
@@ -6054,6 +6029,125 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
 }
 
 } // end anonymous namespace
+
+enum {
+  AddressOf,
+  FunctionPointer,
+  ArrayPointer
+};
+
+/// \brief Diagnose pointers that are always non-null.
+/// \param E the expression containing the pointer
+/// \param NullKind NPCK_NotNull if E is a cast to bool, otherwise, E is
+/// compared to a null pointer
+/// \param IsEqual True when the comparison is equal to a null pointer
+/// \param Range Extra SourceRange to highlight in the diagnostic
+void Sema::DiagnoseAlwaysNonNullPointer(Expr *E,
+                                        Expr::NullPointerConstantKind NullKind,
+                                        bool IsEqual, SourceRange Range) {
+
+  // Don't warn inside macros.
+  if (E->getExprLoc().isMacroID())
+      return;
+  E = E->IgnoreImpCasts();
+
+  const bool IsCompare = NullKind != Expr::NPCK_NotNull;
+
+  bool IsAddressOf = false;
+
+  if (UnaryOperator *UO = dyn_cast<UnaryOperator>(E)) {
+    if (UO->getOpcode() != UO_AddrOf)
+      return;
+    IsAddressOf = true;
+    E = UO->getSubExpr();
+  }
+
+  // Expect to find a single Decl.  Skip anything more complicated.
+  ValueDecl *D = 0;
+  if (DeclRefExpr *R = dyn_cast<DeclRefExpr>(E)) {
+    D = R->getDecl();
+  } else if (MemberExpr *M = dyn_cast<MemberExpr>(E)) {
+    D = M->getMemberDecl();
+  }
+
+  // Weak Decls can be null.
+  if (!D || D->isWeak())
+    return;
+
+  QualType T = D->getType();
+  const bool IsArray = T->isArrayType();
+  const bool IsFunction = T->isFunctionType();
+
+  if (IsAddressOf) {
+    // Address of function is used to silence the function warning.
+    if (IsFunction)
+      return;
+    // Address of reference can be null.
+    if (T->isReferenceType())
+      return;
+  }
+
+  // Found nothing.
+  if (!IsAddressOf && !IsFunction && !IsArray)
+    return;
+
+  // Pretty print the expression for the diagnostic.
+  std::string Str;
+  llvm::raw_string_ostream S(Str);
+  E->printPretty(S, 0, getPrintingPolicy());
+
+  unsigned DiagID = IsCompare ? diag::warn_null_pointer_compare
+                              : diag::warn_impcast_pointer_to_bool;
+  unsigned DiagType;
+  if (IsAddressOf)
+    DiagType = AddressOf;
+  else if (IsFunction)
+    DiagType = FunctionPointer;
+  else if (IsArray)
+    DiagType = ArrayPointer;
+  else
+    llvm_unreachable("Could not determine diagnostic.");
+  Diag(E->getExprLoc(), DiagID) << DiagType << S.str() << E->getSourceRange()
+                                << Range << IsEqual;
+
+  if (!IsFunction)
+    return;
+
+  // Suggest '&' to silence the function warning.
+  Diag(E->getExprLoc(), diag::note_function_warning_silence)
+      << FixItHint::CreateInsertion(E->getLocStart(), "&");
+
+  // Check to see if '()' fixit should be emitted.
+  QualType ReturnType;
+  UnresolvedSet<4> NonTemplateOverloads;
+  tryExprAsCall(*E, ReturnType, NonTemplateOverloads);
+  if (ReturnType.isNull())
+    return;
+
+  if (IsCompare) {
+    // There are two cases here.  If there is null constant, the only suggest
+    // for a pointer return type.  If the null is 0, then suggest if the return
+    // type is a pointer or an integer type.
+    if (!ReturnType->isPointerType()) {
+      if (NullKind == Expr::NPCK_ZeroExpression ||
+          NullKind == Expr::NPCK_ZeroLiteral) {
+        if (!ReturnType->isIntegerType())
+          return;
+      } else {
+        return;
+      }
+    }
+  } else { // !IsCompare
+    // For function to bool, only suggest if the function pointer has bool
+    // return type.
+    if (!ReturnType->isSpecificBuiltinType(BuiltinType::Bool))
+      return;
+  }
+  Diag(E->getExprLoc(), diag::note_function_to_function_call)
+      << FixItHint::CreateInsertion(
+             getPreprocessor().getLocForEndOfToken(E->getLocEnd()), "()");
+}
+
 
 /// Diagnoses "dangerous" implicit conversions within the given
 /// expression (which is a full expression).  Implements -Wconversion

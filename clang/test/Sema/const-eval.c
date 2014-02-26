@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -triple i686-linux %s
+// RUN: %clang_cc1 -fsyntax-only -verify -triple i686-linux %s -Wno-tautological-pointer-compare
 
 #define EVAL_EXPR(testno, expr) int test##testno = sizeof(struct{char qq[expr];});
 int x;

@@ -15,7 +15,7 @@ bool b4 = !E;
 bool b5 = !F;
 
 // --  pointer, 
-bool b6 = !&b4;
+bool b6 = !&b4; // expected-warning{{address of 'b4' will always evaluate to 'true'}}
 void f();
 bool b61 = !&f;
 
