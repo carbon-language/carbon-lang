@@ -2375,9 +2375,6 @@ def : Insert_Element <i32, v4i32, 1, sub1>;
 def : Insert_Element <i32, v4i32, 2, sub2>;
 def : Insert_Element <i32, v4i32, 3, sub3>;
 
-def : Vector4_Build <v4f32, f32>;
-def : Vector4_Build <v4i32, i32>;
-
 def : Extract_Element <f32, v2f32, 0, sub0>;
 def : Extract_Element <f32, v2f32, 1, sub1>;
 
