@@ -3389,6 +3389,10 @@ void LSRInstance::GenerateICmpZeroScales(LSRUse &LU, unsigned LUIdx,
     int64_t NewBaseOffset = (uint64_t)Base.BaseOffset * Factor;
     if (NewBaseOffset / Factor != Base.BaseOffset)
       continue;
+    // If the offset will be truncated at this use, check that it is in bounds.
+    if (!IntTy->isPointerTy() &&
+        !ConstantInt::isValueValidForType(IntTy, NewBaseOffset))
+      continue;
 
     // Check that multiplying with the use offset doesn't overflow.
     int64_t Offset = LU.MinOffset;
@@ -3396,6 +3400,10 @@ void LSRInstance::GenerateICmpZeroScales(LSRUse &LU, unsigned LUIdx,
       continue;
     Offset = (uint64_t)Offset * Factor;
     if (Offset / Factor != LU.MinOffset)
+      continue;
+    // If the offset will be truncated at this use, check that it is in bounds.
+    if (!IntTy->isPointerTy() &&
+        !ConstantInt::isValueValidForType(IntTy, Offset))
       continue;
 
     Formula F = Base;
@@ -3430,6 +3438,10 @@ void LSRInstance::GenerateICmpZeroScales(LSRUse &LU, unsigned LUIdx,
         continue;
       F.UnfoldedOffset = (uint64_t)F.UnfoldedOffset * Factor;
       if (F.UnfoldedOffset / Factor != Base.UnfoldedOffset)
+        continue;
+      // If the offset will be truncated, check that it is in bounds.
+      if (!IntTy->isPointerTy() &&
+          !ConstantInt::isValueValidForType(IntTy, F.UnfoldedOffset))
         continue;
     }
 
