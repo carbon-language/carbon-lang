@@ -586,7 +586,8 @@ DIE *DwarfDebug::createScopeChildrenDIE(DwarfCompileUnit *TheCU,
     // If this is a variadic function, add an unspecified parameter.
     DISubprogram SP(Scope->getScopeNode());
     DIArray FnArgs = SP.getType().getTypeArray();
-    if (FnArgs.getElement(FnArgs.getNumElements()-1).isUnspecifiedParameter()) {
+    if (FnArgs.getElement(FnArgs.getNumElements() - 1)
+            .isUnspecifiedParameter()) {
       DIE *Ellipsis = new DIE(dwarf::DW_TAG_unspecified_parameters);
       Children.push_back(Ellipsis);
     }
@@ -758,7 +759,6 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   NewCU->addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                  DIUnit.getLanguage());
   NewCU->addString(Die, dwarf::DW_AT_name, FN);
-
 
   if (!useSplitDwarf()) {
     NewCU->initStmtList(DwarfLineSectionSym);
