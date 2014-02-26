@@ -34,11 +34,23 @@ struct GPR
     uint32_t ss;
 };
 
+struct FPR_i386
+{
+    int32_t cwd;
+    int32_t swd;
+    int32_t twd;
+    int32_t fip;
+    int32_t fcs;
+    int32_t foo;
+    int32_t fos;
+    int32_t st_space [20];
+};
+
 struct UserArea
 {
     GPR      regs;          // General purpose registers.
     int32_t  fpvalid;       // True if FPU is being used.
-    FXSAVE   i387;          // FPU registers.
+    FPR_i386   i387;        // FPU registers.
     uint32_t tsize;         // Text segment size.
     uint32_t dsize;         // Data segment size.
     uint32_t ssize;         // Stack segment size.
