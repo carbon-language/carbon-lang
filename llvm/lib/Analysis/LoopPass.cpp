@@ -368,8 +368,8 @@ void LoopPass::assignPassManager(PMStack &PMS,
 
 // Containing function has Attribute::OptimizeNone and transformation
 // passes should skip it.
-bool LoopPass::skipOptnoneFunction(Loop *L) const {
-  Function *F = L->getHeader()->getParent();
+bool LoopPass::skipOptnoneFunction(const Loop *L) const {
+  const Function *F = L->getHeader()->getParent();
   if (F && F->hasFnAttribute(Attribute::OptimizeNone)) {
     // FIXME: Report this to dbgs() only once per function.
     DEBUG(dbgs() << "Skipping pass '" << getPassName()

@@ -311,7 +311,7 @@ public:
 protected:
   /// skipOptnoneFunction - This function has Attribute::OptimizeNone
   /// and most transformation passes should skip it.
-  bool skipOptnoneFunction(Function &F) const;
+  bool skipOptnoneFunction(const Function &F) const;
 };
 
 
@@ -360,7 +360,7 @@ public:
 protected:
   /// skipOptnoneFunction - Containing function has Attribute::OptimizeNone
   /// and most transformation passes should skip it.
-  bool skipOptnoneFunction(BasicBlock &BB) const;
+  bool skipOptnoneFunction(const BasicBlock &BB) const;
 };
 
 /// If the user specifies the -time-passes argument on an LLVM tool command line
