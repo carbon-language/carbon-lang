@@ -52,7 +52,7 @@ void reloc26loc(uint8_t *location, uint64_t P, uint64_t S, int32_t A) {
 }
 
 /// \brief LLD_R_MIPS_GLOBAL_26
-/// external: (sign–extend(A) + S) >> 2
+/// external: (sign-extend(A) + S) >> 2
 void reloc26ext(uint8_t *location, uint64_t S, int32_t A) {
   uint32_t result = signExtend<28>(A << 2) + S;
   applyReloc(location, result >> 2, 0x03ffffff);
