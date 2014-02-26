@@ -1,0 +1,25 @@
+# RUN: yaml2obj %p/Inputs/seh.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /force /nodefaultlib \
+# RUN:   -- %t.obj
+# RUN: llvm-objdump -private-headers %t.exe | FileCheck %s
+
+CHECK: Load configuration:
+CHECK:   Timestamp: 0
+CHECK:   Major Version: 0
+CHECK:   Minor Version: 0
+CHECK:   GlobalFlags Clear: 0
+CHECK:   GlobalFlags Set: 0
+CHECK:   Critical Section Default Timeout: 0
+CHECK:   Decommit Free Block Threshold: 0
+CHECK:   Decommit Total Free Threshold: 0
+CHECK:   Lock Prefix Table: 0
+CHECK:   Maximum Allocation Size: 0
+CHECK:   Virtual Memory Threshold: 0
+CHECK:   Process Affinity Mask: 0
+CHECK:   Process Heap Flags: 0
+CHECK:   CSD Version: 0
+CHECK:   Security Cookie: 0
+CHECK:   SEH Table: 4210688
+CHECK:   SEH Count: 1
+CHECK: SEH Table: 0x{{[0-9a-f]+}}

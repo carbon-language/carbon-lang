@@ -22,6 +22,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/FileUtilities.h"
@@ -48,6 +49,7 @@ using llvm::object::coff_aux_weak_external;
 using llvm::object::coff_relocation;
 using llvm::object::coff_section;
 using llvm::object::coff_symbol;
+using llvm::support::ulittle32_t;
 
 using namespace lld;
 
@@ -100,6 +102,7 @@ private:
                                   vector<const DefinedAtom *> &result);
 
   error_code cacheSectionAttributes();
+  error_code maybeCreateSXDataAtoms();
 
   error_code
   AtomizeDefinedSymbolsInSection(const coff_section *section,
@@ -277,11 +280,11 @@ FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, error_code &ec)
   bin.take();
 
   // Read .drectve section if exists.
-  ArrayRef<uint8_t> contents;
-  if ((ec = getSectionContents(".drectve", contents)))
+  ArrayRef<uint8_t> directives;
+  if ((ec = getSectionContents(".drectve", directives)))
     return;
-  if (!contents.empty())
-    _directives = ArrayRefToString(contents);
+  if (!directives.empty())
+    _directives = ArrayRefToString(directives);
 }
 
 error_code FileCOFF::parse(StringMap &altNames) {
@@ -301,6 +304,8 @@ error_code FileCOFF::parse(StringMap &altNames) {
   if (error_code ec = createDefinedSymbols(symbols, altNames, _definedAtoms._atoms))
     return ec;
   if (error_code ec = addRelocationReferenceToAtoms())
+    return ec;
+  if (error_code ec = maybeCreateSXDataAtoms())
     return ec;
   return error_code::success();
 }
@@ -789,6 +794,51 @@ error_code FileCOFF::addRelocationReferenceToAtoms() {
   return error_code::success();
 }
 
+// Read .sxdata section if exists. .sxdata is a x86-only section that contains a
+// vector of symbol offsets. The symbols pointed by this section are SEH handler
+// functions contained in the same object file. The linker needs to construct a
+// SEH table and emit it to executable.
+//
+// On x86, exception handler addresses are in stack, so they are vulnerable to
+// stack overflow attack. In order to protect against it, Windows runtime uses
+// the SEH table to check if a SEH handler address in stack is a real address of
+// a handler created by compiler.
+//
+// What we want to emit from the linker is a vector of SEH handler VAs, but here
+// we have a vector of offsets to the symbol table. So we convert the latter to
+// the former.
+error_code FileCOFF::maybeCreateSXDataAtoms() {
+  ArrayRef<uint8_t> sxdata;
+  if (error_code ec = getSectionContents(".sxdata", sxdata))
+    return ec;
+  if (sxdata.empty())
+    return error_code::success();
+
+  std::vector<uint8_t> atomContent =
+      *new (_alloc) std::vector<uint8_t>((size_t)sxdata.size());
+  auto *atom = new (_alloc) COFFDefinedAtom(
+      *this, "", ".sxdata", Atom::scopeTranslationUnit, DefinedAtom::typeData,
+      false /*isComdat*/, DefinedAtom::permR__, DefinedAtom::mergeNo,
+      atomContent, _ordinal++);
+
+  const ulittle32_t *symbolIndex =
+      reinterpret_cast<const ulittle32_t *>(sxdata.data());
+  int numSymbols = sxdata.size() / sizeof(uint32_t);
+
+  for (int i = 0; i < numSymbols; ++i) {
+    Atom *handlerFunc;
+    if (error_code ec = getAtomBySymbolIndex(symbolIndex[i], handlerFunc))
+      return ec;
+    int offsetInAtom = i * sizeof(uint32_t);
+    atom->addReference(std::unique_ptr<COFFReference>(new COFFReference(
+        handlerFunc, offsetInAtom, llvm::COFF::IMAGE_REL_I386_DIR32,
+        Reference::KindNamespace::COFF, _referenceArch)));
+  }
+
+  _definedAtoms._atoms.push_back(atom);
+  return error_code::success();
+}
+
 /// Find a section by name.
 error_code FileCOFF::findSection(StringRef name, const coff_section *&result) {
   for (auto si = _obj->section_begin(), se = _obj->section_end(); si != se;
@@ -974,6 +1024,11 @@ public:
                    << " is not compatible with SEH.\n";
       return llvm::object::object_error::parse_failed;
     }
+
+    // In order to emit SEH table, all input files need to be compatible with
+    // SEH. Disable SEH if the file being read is not compatible.
+    if (!file->isCompatibleWithSEH())
+      _context.setSafeSEH(false);
 
     result.push_back(std::move(file));
     return error_code::success();

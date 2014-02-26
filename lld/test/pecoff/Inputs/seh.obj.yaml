@@ -1,0 +1,343 @@
+---
+header:
+  Machine:         IMAGE_FILE_MACHINE_I386
+  Characteristics: [  ]
+sections:
+  - Name:            .drectve
+    Characteristics: [ IMAGE_SCN_LNK_INFO, IMAGE_SCN_LNK_REMOVE ]
+    Alignment:       1
+    SectionData:     2020202F44454641554C544C49423A22757569642E6C696222202F44454641554C544C49423A22757569642E6C696222202F4641494C49464D49534D415443483A225F4D53435F5645523D3138303022202F4641494C49464D49534D415443483A225F4954455241544F525F44454255475F4C4556454C3D3022202F4641494C49464D49534D415443483A2252756E74696D654C6962726172793D4D445F44796E616D696352656C6561736522202F44454641554C544C49423A226D73766370727422202F44454641554C544C49423A224D535643525422202F44454641554C544C49423A224F4C444E414D45532220
+  - Name:            '.debug$S'
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_DISCARDABLE, IMAGE_SCN_MEM_READ ]
+    Alignment:       1
+    SectionData:     04000000F1000000600000002200011100000000433A5C63796777696E5C686F6D655C727569755C7365682E6F626A003A003C11012200000700120000000D520100120000000D5201004D6963726F736F667420285229204F7074696D697A696E6720436F6D70696C657200
+  - Name:            .rdata
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_LNK_COMDAT, IMAGE_SCN_MEM_READ ]
+    Alignment:       1
+    SectionData:     00
+  - Name:            .rdata
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_LNK_COMDAT, IMAGE_SCN_MEM_READ ]
+    Alignment:       1
+    SectionData:     01
+  - Name:            .rdata
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ ]
+    Alignment:       4
+    SectionData:     54726967676572696E672053454820657863657074696F6E0D0A0000457865637574696E6720534548205F5F65786365707420626C6F636B20696E20666F6F0D0A000000457865637574696E6720534548205F5F65786365707420626C6F636B0D0A00
+  - Name:            '.text$mn'
+    Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
+    Alignment:       16
+    SectionData:     558BEC516800000000FF150000000083C404C745FC000000008B45FCC700140000008BE55DC3CCCCCCCCCCCCCCCCCCCC558BEC51E8000000008D4DFFE8000000008BE55DC3CCCCCCCCCCCCCCCCCCCCCC558BEC6AFE6800000000680000000064A1000000005083EC08535657A1000000003145F833C5508D45F064A3000000008965E8C745FC00000000E800000000C745FCFEFFFFFFEB1EB801000000C38B65E86800000000FF150000000083C404C745FCFEFFFFFF8B4DF064890D00000000595F5E5B8BE55DC3CCCCCCCCCCCCCCCC558BEC6AFE6800000000680000000064A1000000005083EC08535657A1000000003145F833C5508D45F064A3000000008965E8C745FC00000000E800000000E800000000C745FCFEFFFFFFEB1EB801000000C38B65E86800000000FF150000000083C404C745FCFEFFFFFF33C08B4DF064890D00000000595F5E5B8BE55DC3
+    Relocations:
+      - VirtualAddress:  5
+        SymbolName:      '$SG73531'
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  11
+        SymbolName:      __imp__printf
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  53
+        SymbolName:      '?TestCPPEX@@YAXXZ'
+        Type:            IMAGE_REL_I386_REL32
+      - VirtualAddress:  61
+        SymbolName:      '??1TestClass@@QAE@XZ'
+        Type:            IMAGE_REL_I386_REL32
+      - VirtualAddress:  86
+        SymbolName:      '__sehtable$?foo@@YAXXZ'
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  91
+        SymbolName:      __except_handler4
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  109
+        SymbolName:      ___security_cookie
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  139
+        SymbolName:      '?TestExceptions@@YAXXZ'
+        Type:            IMAGE_REL_I386_REL32
+      - VirtualAddress:  162
+        SymbolName:      '$SG73539'
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  168
+        SymbolName:      __imp__printf
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  214
+        SymbolName:      '__sehtable$_main'
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  219
+        SymbolName:      __except_handler4
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  237
+        SymbolName:      ___security_cookie
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  267
+        SymbolName:      '?foo@@YAXXZ'
+        Type:            IMAGE_REL_I386_REL32
+      - VirtualAddress:  272
+        SymbolName:      '?TestExceptions@@YAXXZ'
+        Type:            IMAGE_REL_I386_REL32
+      - VirtualAddress:  295
+        SymbolName:      '$SG73543'
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  301
+        SymbolName:      __imp__printf
+        Type:            IMAGE_REL_I386_DIR32
+  - Name:            '.text$mn'
+    Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_LNK_COMDAT, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
+    Alignment:       16
+    SectionData:     558BEC51894DFC6800000000FF150000000083C4048BE55DC3
+    Relocations:
+      - VirtualAddress:  8
+        SymbolName:      '??_C@_0BI@BBHGNMOG@Destroying?5TestClass?$CB?$AN?6?$AA@'
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  14
+        SymbolName:      __imp__printf
+        Type:            IMAGE_REL_I386_DIR32
+  - Name:            '.xdata$x'
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ ]
+    Alignment:       8
+    SectionData:     FEFFFFFF00000000D8FFFFFF00000000FEFFFFFF000000000000000000000000FEFFFFFF00000000D8FFFFFF00000000FEFFFFFF0000000000000000
+    Relocations:
+      - VirtualAddress:  20
+        SymbolName:      '$LN5'
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  24
+        SymbolName:      '$LN6'
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  52
+        SymbolName:      '$LN5'
+        Type:            IMAGE_REL_I386_DIR32
+      - VirtualAddress:  56
+        SymbolName:      '$LN6'
+        Type:            IMAGE_REL_I386_DIR32
+  - Name:            .rdata
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_LNK_COMDAT, IMAGE_SCN_MEM_READ ]
+    Alignment:       4
+    SectionData:     44657374726F79696E672054657374436C617373210D0A00
+  - Name:            .sxdata
+    Characteristics: [ IMAGE_SCN_LNK_INFO ]
+    Alignment:       4
+    SectionData:     1B000000
+symbols:
+  - Name:            '@comp.id'
+    Value:           14766605
+    SectionNumber:   65535
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            '@feat.00'
+    Value:           2147484049
+    SectionNumber:   65535
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            .drectve
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   F00000000000000000000000000000000000
+  - Name:            '.debug$S'
+    Value:           0
+    SectionNumber:   2
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   6C0000000000000000000000000000000000
+  - Name:            .rdata
+    Value:           0
+    SectionNumber:   3
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   010000000000000000000000000002000000
+  - Name:            '?value@?$integral_constant@_N$0A@@std@@2_NB'
+    Value:           0
+    SectionNumber:   3
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            .rdata
+    Value:           0
+    SectionNumber:   4
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   010000000000000096300777000002000000
+  - Name:            '?value@?$integral_constant@_N$00@std@@2_NB'
+    Value:           0
+    SectionNumber:   4
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            .rdata
+    Value:           0
+    SectionNumber:   5
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   63000000000000004E69FDA6000000000000
+  - Name:            '$SG73531'
+    Value:           0
+    SectionNumber:   5
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            '$SG73539'
+    Value:           28
+    SectionNumber:   5
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            '$SG73543'
+    Value:           68
+    SectionNumber:   5
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            '.text$mn'
+    Value:           0
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   4F01000011000000394E4F94000000000000
+  - Name:            '.text$mn'
+    Value:           0
+    SectionNumber:   7
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   19000000020000002DFF8C0C000002000000
+  - Name:            __imp__printf
+    Value:           0
+    SectionNumber:   0
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            '??1TestClass@@QAE@XZ'
+    Value:           0
+    SectionNumber:   7
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            '?TestCPPEX@@YAXXZ'
+    Value:           0
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            '?TestExceptions@@YAXXZ'
+    Value:           48
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            '?foo@@YAXXZ'
+    Value:           80
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            _main
+    Value:           208
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            __except_handler4
+    Value:           0
+    SectionNumber:   0
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            '$LN5'
+    Value:           152
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_LABEL
+  - Name:            '$LN7'
+    Value:           157
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_LABEL
+  - Name:            '$LN6'
+    Value:           158
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_LABEL
+  - Name:            '$LN5'
+    Value:           285
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_LABEL
+  - Name:            '$LN7'
+    Value:           290
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_LABEL
+  - Name:            '$LN6'
+    Value:           291
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_LABEL
+  - Name:            '.xdata$x'
+    Value:           0
+    SectionNumber:   8
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   3C00000004000000E076DCAC000000000000
+  - Name:            '__sehtable$?foo@@YAXXZ'
+    Value:           32
+    SectionNumber:   8
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            '__sehtable$_main'
+    Value:           0
+    SectionNumber:   8
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            .rdata
+    Value:           0
+    SectionNumber:   9
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   180000000000000039E9484D000002000000
+  - Name:            '??_C@_0BI@BBHGNMOG@Destroying?5TestClass?$CB?$AN?6?$AA@'
+    Value:           0
+    SectionNumber:   9
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            ___security_cookie
+    Value:           0
+    SectionNumber:   0
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            .sxdata
+    Value:           0
+    SectionNumber:   10
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   040000000000000000000000000000000000
+...

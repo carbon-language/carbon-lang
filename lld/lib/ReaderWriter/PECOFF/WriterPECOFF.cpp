@@ -985,6 +985,9 @@ void PECOFFWriter::build(const File &linkedFile) {
     if (section->getSectionName() == ".edata")
       dataDirectory->setField(DataDirectoryIndex::EXPORT_TABLE,
                               section->getVirtualAddress(), section->size());
+    if (section->getSectionName() == ".loadcfg")
+      dataDirectory->setField(DataDirectoryIndex::LOAD_CONFIG_TABLE,
+                              section->getVirtualAddress(), section->size());
   }
 
   // Now that we know the size and file offset of sections. Set the file

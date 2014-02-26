@@ -12,6 +12,7 @@
 #include "GroupedSectionsPass.h"
 #include "IdataPass.h"
 #include "LinkerGeneratedSymbolFile.h"
+#include "LoadConfigPass.h"
 #include "SetSubsystemPass.h"
 
 #include "lld/Core/PassManager.h"
@@ -263,6 +264,7 @@ void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new pecoff::EdataPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass(*this)));
   pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));
+  pm.add(std::unique_ptr<Pass>(new pecoff::LoadConfigPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::GroupedSectionsPass()));
 }
 
