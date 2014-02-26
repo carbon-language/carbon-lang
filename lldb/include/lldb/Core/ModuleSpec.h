@@ -370,7 +370,6 @@ public:
             if (dumped_something)
                 strm.PutCString(", ");
             strm.Printf("object_mod_time = 0x%" PRIx64, m_object_mod_time.GetAsSecondsSinceJan1_1970());
-            dumped_something = true;
         }
     }
 
