@@ -116,6 +116,8 @@ static int format_get_value_size(char convSpecifier,
       return lengthModifier[1] == 'h' ? sizeof(char) : sizeof(short);
     case 'l':
       return lengthModifier[1] == 'l' ? sizeof(long long) : sizeof(long);
+    case 'q':
+      return sizeof(long long);
     case 'L':
       return sizeof(long long);
     case 'j':

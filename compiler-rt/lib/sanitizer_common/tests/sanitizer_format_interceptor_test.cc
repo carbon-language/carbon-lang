@@ -111,6 +111,7 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   testScanf("ab%u%dc", 2, I, I);
   testScanf("%ld", 1, L);
   testScanf("%llu", 1, LL);
+  testScanf("%qd", 1, LL);
   testScanf("a %hd%hhx", 2, S, C);
   testScanf("%c", 1, C);
 
