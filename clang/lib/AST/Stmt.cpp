@@ -803,7 +803,7 @@ CXXForRangeStmt::CXXForRangeStmt(DeclStmt *Range, DeclStmt *BeginEndStmt,
 Expr *CXXForRangeStmt::getRangeInit() {
   DeclStmt *RangeStmt = getRangeStmt();
   VarDecl *RangeDecl = dyn_cast_or_null<VarDecl>(RangeStmt->getSingleDecl());
-  assert(RangeDecl &&& "for-range should have a single var decl");
+  assert(RangeDecl && "for-range should have a single var decl");
   return RangeDecl->getInit();
 }
 
