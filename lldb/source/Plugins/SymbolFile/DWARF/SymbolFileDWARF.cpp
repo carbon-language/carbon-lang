@@ -525,7 +525,7 @@ SymbolFileDWARF::GetClangASTContext ()
     if (!m_is_external_ast_source)
     {
         m_is_external_ast_source = true;
-        llvm::OwningPtr<clang::ExternalASTSource> ast_source_ap (
+        llvm::IntrusiveRefCntPtr<clang::ExternalASTSource> ast_source_ap (
             new ClangExternalASTSourceCallbacks (SymbolFileDWARF::CompleteTagDecl,
                                                  SymbolFileDWARF::CompleteObjCInterfaceDecl,
                                                  SymbolFileDWARF::FindExternalVisibleDeclsByName,

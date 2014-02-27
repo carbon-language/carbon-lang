@@ -347,7 +347,7 @@ ClangASTContext::HasExternalSource ()
 }
 
 void
-ClangASTContext::SetExternalSource (llvm::OwningPtr<ExternalASTSource> &ast_source_ap)
+ClangASTContext::SetExternalSource (llvm::IntrusiveRefCntPtr<ExternalASTSource> &ast_source_ap)
 {
     ASTContext *ast = getASTContext();
     if (ast)
@@ -365,7 +365,7 @@ ClangASTContext::RemoveExternalSource ()
     
     if (ast)
     {
-        llvm::OwningPtr<ExternalASTSource> empty_ast_source_ap;
+        llvm::IntrusiveRefCntPtr<ExternalASTSource> empty_ast_source_ap;
         ast->setExternalSource (empty_ast_source_ap);
         ast->getTranslationUnitDecl()->setHasExternalLexicalStorage(false);
         //ast->getTranslationUnitDecl()->setHasExternalVisibleStorage(false);

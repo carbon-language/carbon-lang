@@ -308,7 +308,7 @@ void
 SymbolFileDWARFDebugMap::InitializeObject()
 {
     // Install our external AST source callbacks so we can complete Clang types.
-    llvm::OwningPtr<clang::ExternalASTSource> ast_source_ap (
+    llvm::IntrusiveRefCntPtr<clang::ExternalASTSource> ast_source_ap (
         new ClangExternalASTSourceCallbacks (SymbolFileDWARFDebugMap::CompleteTagDecl,
                                              SymbolFileDWARFDebugMap::CompleteObjCInterfaceDecl,
                                              NULL,
