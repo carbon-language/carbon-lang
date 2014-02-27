@@ -94,6 +94,9 @@
 #undef _KERNEL
 
 #undef INLINE  // to avoid clashes with sanitizers' definitions
+#endif
+
+#if SANITIZER_FREEBSD || SANITIZER_IOS
 #undef IOC_DIRMASK
 #endif
 
