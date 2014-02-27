@@ -87,10 +87,6 @@ Here's the short story for getting up and running quickly with LLVM:
    * ``make check-all`` --- This run the regression tests to ensure everything
      is in working order.
 
-   * ``make update`` --- This command is used to update all the svn repositories
-     at once, rather then having to ``cd`` into the individual repositories and
-     running ``svn update``.
-
    * It is also possible to use CMake instead of the makefiles. With CMake it is
      possible to generate project files for several IDEs: Xcode, Eclipse CDT4,
      CodeBlocks, Qt-Creator (use the CodeBlocks generator), KDevelop3.
