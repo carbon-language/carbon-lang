@@ -13,15 +13,46 @@
 <!--#include virtual="menu.html.incl"-->
 <div id="content">
   <!--*********************************************************************-->
-  <h1>"compiler-rt" Runtime Library</h1>
+  <h1>"compiler-rt" runtime libraries</h1>
   <!--*********************************************************************-->
   
-  <p>The compiler-rt project is a simple library that provides an implementation
-     of the low-level target-specific hooks required by code generation and
-     other runtime components.  For example, when compiling for a 32-bit target,
+  <p>The compiler-rt project consists of:
+  <ul>
+  <li>
+    <p><b>builtins</b> - a simple library that provides an implementation
+    of the low-level target-specific hooks required by code generation and
+    other runtime components.  For example, when compiling for a 32-bit target,
     converting a double to a 64-bit unsigned integer is compiling into a runtime
-    call to the "__fixunsdfdi" function.  The compiler-rt library provides
-    optimized implementations of this and other low-level routines.</p>
+    call to the "__fixunsdfdi" function.  The builtins library provides
+    optimized implementations of this and other low-level routines, either in
+    target-independent C form, or as a heavily-optimized assembly.</p>
+    <p>builtins provides full support for the libgcc interfaces on supported
+    targets and high performance hand tuned implementations of commonly used
+    functions like __floatundidf in assembly that are dramatically faster than
+    the libgcc implementations. It should be very easy to bring builtins to
+    support a new target by adding the new routines needed by that target.</p>
+  </li>
+  <li>
+    <b>sanitizer runtimes</b> - runtime libraries that are required to run
+    the code with sanitizer instrumentation. This includes runtimes for:
+    <ul>
+    <li><a href="http://clang.llvm.org/docs/AddressSanitizer.html">AddressSanitizer</a></li>
+    <li><a href="http://clang.llvm.org/docs/ThreadSanitizer.html">ThreadSanitizer</a></li>
+    <li><a href="http://clang.llvm.org/docs/UsersManual.html#opt-fsanitize-undefined">UndefinedBehaviorSanitizer</a></li>
+    <li><a href="http://clang.llvm.org/docs/MemorySanitizer.html">MemorySanitizer</a></li>
+    <li><a href="http://clang.llvm.org/docs/LeakSanitizer.html">LeakSanitizer</a></li>
+    <li><a href="http://clang.llvm.org/docs/DataFlowSanitizer.html">DataFlowSanitizer</a></li>
+    </ul>
+  </li>
+  <li>
+    <b>profile</b> - library which is used to collect coverage information.
+  </li>
+  <li>
+    <b>BlocksRuntime</b> - a target-independent implementation of Apple "Blocks"
+    runtime interfaces.
+  </li>
+  </ul>
+  </p>
 
   <p>All of the code in the compiler-rt project is <a 
      href="http://llvm.org/docs/DeveloperPolicy.html#license">dual licensed</a>
@@ -34,89 +65,24 @@
   <p>Currently compiler-rt is primarily used by
     the <a href="http://clang.llvm.org">Clang</a>
     and <a href="http://llvm.org">LLVM</a> projects as the implementation for
-    the runtime compiler support libraries. The library currently provides both
-    the low-level target-specific hooks required by code generation, as well as
-    additional modules for supporting the runtime requirements of features like
-    code coverage, profiling, or address sanitizer (ASAN) instrumentation.</p>
-
-  <p>For more information on using compiler-rt with Clang, please see the Clang
+    the runtime compiler support libraries. For more information on using
+    compiler-rt with Clang, please see the Clang
     <a href="http://clang.llvm.org/get_started.html">Getting Started</a>
     page.</p>
   
   <!--=====================================================================-->
-  <h2 id="goals">Goals</h2>
-  <!--=====================================================================-->
-  
-  <p>Different targets require different routines.  The compiler-rt project aims
-     to implement these routines in both target-independent C form as well as
-     providing heavily optimized assembly versions of the routines in some
-     cases.  It should be very easy to bring compiler-rt to support a new
-     target by adding the new routines needed by that target.</p>
-     
-  <p>Where it make sense, the compiler-rt project aims to implement interfaces
-     that are drop-in compatible with the libgcc interfaces.</p>
-
-  <!--=====================================================================-->
-  <h2 id="features">Features</h2>
-  <!--=====================================================================-->
-
-   <p>The current feature set of compiler-rt is:</p>
-
-   <ul>
-    <li>Full support for the libgcc interfaces on supported targets.</li>
-    <li>High performance hand tuned implementations of commonly used functions
-        like __floatundidf in assembly that are dramatically faster than the
-        libgcc implementations.</li>
-    <li>A target-independent implementation of the Apple "Blocks" runtime
-        interfaces.</li>
-   </ul>
-
-  <!--=====================================================================-->
   <h2 id="requirements">Platform Support</h2>
   <!--=====================================================================-->
 
-   <p>Compiler-RT is known to work on the following platforms:</p>
+   <p><b>builtins</b> is known to work on the following platforms:</p>
+   <ul>
+   <li>Machine Architectures: i386, X86-64, SPARC64, ARM, PowerPC, PowerPC 64.</li>
+   <li>OS: AuroraUX, DragonFlyBSD, FreeBSD, NetBSD, Linux, Darwin.</li>
+   </ul>
 
-   <li>Machine Architectures:
-    <ul>
-     <li>i386</li>
-     <li>X86-64</li>
-     <li>SPARC64</li>
-     <li>ARM</li>
-     <li>PowerPC</li>
-     <li>PowerPC 64</li>
-    </ul></li>
-
-   <table cellpadding="3" summary="Known Compiler-RT platforms">
-   <tr>
-     <th>OS</th>
-     <th>Arch</th>
-   </tr>
-   <tr>
-     <td>AuroraUX</td>
-     <td>All<sup>
-   </tr>
-   <tr>
-     <td>DragonFlyBSD</td>
-     <td>All<sup>
-   </tr>
-   <tr>
-     <td>FreeBSD</td>
-     <td>All<sup>
-   </tr>
-   <tr>
-     <td>NetBSD</td>
-     <td>All<sup>
-   </tr>
-   <tr>
-     <td>Linux</td>
-     <td>All<sup>
-   </tr>
-   <tr>
-     <td>Darwin</td>
-     <td>All<sup>
-   </tr>
-   </table>
+   <p>Most sanitizer runtimes are supported only on Linux x86-64. See tool-specific
+   pages in <a href="http://clang.llvm.org/docs/index.html">Clang docs</a> for more
+   details.</p>
 
   <!--=====================================================================-->
   <h2 id="dir-structure">Source Structure</h2>
@@ -129,37 +95,42 @@
        Of course, some architectures have additional functions,
        so the optimized library may have functions not found in the generic version.</p>
 
-   <ul>   
-    <li> lib/ Is a generic portable implementations.</li>
-    <li> lib/(arch) has optimized version for the supported architectures.</li>
+   <ul>
+    <li> include/ contains headers that can be included in user programs (for example,
+         users may directly call certain function from sanitizer runtimes).</li>
+    <li> lib/ contains libraries implementations. </li>
+    <li> lib/builtins is a generic portable implementation of <b>builtins</b> routines.</li>
+    <li> lib/builtins/(arch) has optimized versions of some routines
+         for the supported architectures.</li>
+    <li> test/ contains test suites for compiler-rt runtimes.</li>
    </ul>
     
   <!--=====================================================================-->
   <h2>Get it and get involved!</h2>
   <!--=====================================================================-->
   
-  <p>To check out the code, use:</p>
-  
+  <p>Generally, you need to build LLVM/Clang in order to build compiler-rt. You can
+  either follow the Clang's
+  <a href="http://clang.llvm.org/get_started.html">Getting Started</a> page, or
+  <a href="http://llvm.org/docs/CMake.html#quick-start">build LLVM</a>
+  separately to get llvm-config binary, and then run:
+
   <ul>
   <li>svn co http://llvm.org/svn/llvm-project/compiler-rt/trunk compiler-rt</li>
   <li>mkdir build</li>
   <li>cd build</li>
-  <li>cmake ../compiler-rt</li>
+  <li>cmake ../compiler-rt -DLLVM_CONFIG_PATH=/path/to/llvm-config</li>
   <li>make</li>
   </ul>
 
-  <p>To run the Compiler-RT Test Suit (recommended):</p>
+  <p>Tests for sanitizer runtimes are ported to
+  <a href="http://llvm.org/docs/CommandGuide/lit.html">llvm-lit</a> and are
+  run by <b>make check-all</b> command in LLVM/Clang/compiler-rt build tree.</p>
 
-  <ul>
-  <li>ctest</li>
-  </ul>
+  <p>compiler-rt libraries are installed to the system with <b>make install</b>
+  command in either LLVM/Clang/compiler-rt or standalone
+  compiler-rt build tree.</p>
 
-  <p>To Install:</p>
-
-  <ul>
-  <li>make install</li>
-  </ul>
-  
   <p>compiler-rt doesn't have its own mailing list, if you have questions please
      email the <a
     href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">llvmdev</a> mailing
