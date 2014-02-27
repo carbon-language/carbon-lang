@@ -445,17 +445,13 @@ namespace llvm {
   /// DIELoc - Represents an expression location.
   //
   class DIELoc : public DIEValue, public DIE {
-    unsigned Size;                // Size in bytes excluding size header.
+    mutable unsigned Size;                // Size in bytes excluding size header.
   public:
     DIELoc() : DIEValue(isLoc), DIE(0), Size(0) {}
 
     /// ComputeSize - Calculate the size of the location expression.
     ///
     unsigned ComputeSize(AsmPrinter *AP) const;
-
-    /// setSize - Set the size of the location entry.
-    ///
-    void setSize(unsigned Sz) { Size = Sz; }
 
     /// BestForm - Choose the best form for data.
     ///
@@ -488,17 +484,13 @@ namespace llvm {
   /// DIEBlock - Represents a block of values.
   //
   class DIEBlock : public DIEValue, public DIE {
-    unsigned Size;                // Size in bytes excluding size header.
+    mutable unsigned Size;                // Size in bytes excluding size header.
   public:
     DIEBlock() : DIEValue(isBlock), DIE(0), Size(0) {}
 
     /// ComputeSize - Calculate the size of the location expression.
     ///
     unsigned ComputeSize(AsmPrinter *AP) const;
-
-    /// setSize - Set the size of the block.
-    ///
-    void setSize(unsigned Sz) { Size = Sz; }
 
     /// BestForm - Choose the best form for data.
     ///
