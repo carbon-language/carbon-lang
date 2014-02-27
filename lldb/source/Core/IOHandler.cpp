@@ -2113,13 +2113,11 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                     
                 default:
                 {
-                    bool handled = false;
                     for (size_t i=0; i<num_submenus; ++i)
                     {
                         Menu *menu = submenus[i].get();
                         if (menu->GetKeyValue() == key)
                         {
-                            handled = true;
                             SetSelectedSubmenuIndex(i);
                             window.GetParent()->RemoveSubWindow(&window);
                             if (menu->Action() == MenuActionResult::Quit)

@@ -329,7 +329,6 @@ BreakpointLocation::ConditionSaysStop (ExecutionContext &exe_ctx, Error &error)
     {
         if (!result_variable_sp)
         {
-            ret = false;
             error.SetErrorString("Expression did not return a result");
             return false;
         }
