@@ -1903,6 +1903,23 @@ TSAN_INTERCEPTOR(int, fork, int fake) {
   return pid;
 }
 
+TSAN_INTERCEPTOR(int, vfork, int fake) {
+  // Some programs (e.g. openjdk) call close for all file descriptors
+  // in the child process. Under tsan it leads to false positives, because
+  // address space is shared, so the parent process also thinks that
+  // the descriptors are closed (while they are actually not).
+  // This leads to false positives due to missed synchronization.
+  // Strictly saying this is undefined behavior, because vfork child is not
+  // allowed to call any functions other than exec/exit. But this is what
+  // openjdk does, so we want to handle it.
+  // We could disable interceptors in the child process. But it's not possible
+  // to simply intercept and wrap vfork, because vfork child is not allowed
+  // to return from the function that calls vfork, and that's exactly what
+  // we would do. So this would require some assembly trickery as well.
+  // Instead we simply turn vfork into fork.
+  return WRAP(fork)(fake);
+}
+
 static int OnExit(ThreadState *thr) {
   int status = Finalize(thr);
   REAL(fflush)(0);
@@ -2289,6 +2306,7 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(munlockall);
 
   TSAN_INTERCEPT(fork);
+  TSAN_INTERCEPT(vfork);
   TSAN_INTERCEPT(dlopen);
   TSAN_INTERCEPT(dlclose);
   TSAN_INTERCEPT(on_exit);
