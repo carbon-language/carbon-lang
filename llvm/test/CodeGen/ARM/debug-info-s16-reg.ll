@@ -1,9 +1,11 @@
 ; RUN: llc < %s - | FileCheck %s
 ; Radar 9309221
 ; Test dwarf reg no for s16
-;CHECK: DW_OP_regx for S register
+;CHECK: super-register
+;CHECK-NEXT: DW_OP_regx
 ;CHECK-NEXT: ascii
-;CHECK-NEXT: DW_OP_bit_piece 32 0
+;CHECK-NEXT: DW_OP_piece
+;CHECK-NEXT: 4
 
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:32:64-v128:32:128-a0:0:32-n32"
 target triple = "thumbv7-apple-macosx10.6.7"

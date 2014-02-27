@@ -12,7 +12,10 @@ target triple = "thumbv7-apple-macosx10.6.7"
 ;CHECK-NEXT: Lset[[N:[0-9]+]] = Ltmp{{[0-9]+}}-Ltmp[[M:[0-9]+]]        @ Loc expr size
 ;CHECK-NEXT:        .short  Lset[[N]]
 ;CHECK-NEXT: Ltmp[[M]]:
-;CHECK-NEXT:        .byte   144                     @ DW_OP_regx for S register
+;CHECK-NEXT:        .byte   144                     @ super-register
+;CHECK-NEXT:                                        @ DW_OP_regx
+;CHECK-NEXT:        .ascii
+;CHECK-NEXT:        .byte   {{[0-9]+}}              @ DW_OP_{{.*}}piece
 
 define void @_Z3foov() optsize ssp {
 entry:

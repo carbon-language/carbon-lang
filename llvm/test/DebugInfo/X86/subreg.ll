@@ -3,9 +3,10 @@
 ; We are testing that a value in a 16 bit register gets reported as
 ; being in its superregister.
 
-; CHECK: .byte   80                      # DW_OP_reg0
-; CHECK: .byte   147                     # DW_OP_piece
-; CHECK: .byte   2                       # 2
+; CHECK: .byte   80                      # super-register
+; CHECK-NEXT:                            # DW_OP_reg0
+; CHECK-NEXT: .byte   147                # DW_OP_piece
+; CHECK-NEXT: .byte   2                  # 2
 
 define i16 @f(i16 signext %zzz) nounwind {
 entry:
