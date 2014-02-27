@@ -49,7 +49,8 @@ public:
   
   const Stmt *findDeadCode(const CFGBlock *Block);
   
-  void reportDeadCode(const Stmt *S,
+  void reportDeadCode(const CFGBlock *B,
+                      const Stmt *S,
                       clang::reachable_code::Callback &CB);
 };
 }
@@ -153,7 +154,7 @@ unsigned DeadCodeScan::scanBackwards(const clang::CFGBlock *Start,
     }
 
     if (isDeadCodeRoot(Block)) {
-      reportDeadCode(S, CB);
+      reportDeadCode(Block, S, CB);
       count += clang::reachable_code::ScanReachableFromBlock(Block, Reachable);
     }
     else {
@@ -170,11 +171,11 @@ unsigned DeadCodeScan::scanBackwards(const clang::CFGBlock *Start,
     llvm::array_pod_sort(DeferredLocs.begin(), DeferredLocs.end(), SrcCmp);
     for (DeferredLocsTy::iterator I = DeferredLocs.begin(),
           E = DeferredLocs.end(); I != E; ++I) {
-      const CFGBlock *block = I->first;
-      if (Reachable[block->getBlockID()])
+      const CFGBlock *Block = I->first;
+      if (Reachable[Block->getBlockID()])
         continue;
-      reportDeadCode(I->second, CB);
-      count += clang::reachable_code::ScanReachableFromBlock(block, Reachable);
+      reportDeadCode(Block, I->second, CB);
+      count += clang::reachable_code::ScanReachableFromBlock(Block, Reachable);
     }
   }
     
@@ -246,8 +247,43 @@ static SourceLocation GetUnreachableLoc(const Stmt *S,
   return S->getLocStart();
 }
 
-void DeadCodeScan::reportDeadCode(const Stmt *S,
+static bool bodyEndsWithNoReturn(const CFGBlock *B) {
+  for (CFGBlock::const_reverse_iterator I = B->rbegin(), E = B->rend();
+       I != E; ++I) {
+    if (Optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
+      if (const CallExpr *CE = dyn_cast<CallExpr>(CS->getStmt())) {
+        QualType CalleeType = CE->getCallee()->getType();
+        if (getFunctionExtInfo(*CalleeType).getNoReturn())
+          return true;
+      }
+      break;
+    }
+  }
+  return false;
+}
+
+static bool isBreakPrecededByNoReturn(const CFGBlock *B,
+                                      const Stmt *S) {
+  if (!isa<BreakStmt>(S) || B->pred_empty())
+    return false;
+
+  assert(B->empty());
+  assert(B->pred_size() == 1);
+  const CFGBlock::AdjacentBlock &AB = *B->pred_begin();
+  const CFGBlock *Pred = AB.getPossiblyUnreachableBlock();
+  assert(!AB.isReachable() && Pred);
+  return bodyEndsWithNoReturn(Pred);
+}
+
+void DeadCodeScan::reportDeadCode(const CFGBlock *B,
+                                  const Stmt *S,
                                   clang::reachable_code::Callback &CB) {
+  // Suppress idiomatic cases of calling a noreturn function just
+  // before executing a 'break'.  If there is other code after the 'break'
+  // in the block then don't suppress the warning.
+  if (isBreakPrecededByNoReturn(B, S))
+    return;
+
   SourceRange R1, R2;
   SourceLocation Loc = GetUnreachableLoc(S, R1, R2);
   CB.HandleUnreachable(Loc, R1, R2);

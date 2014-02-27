@@ -143,3 +143,24 @@ void test_mul_and_zero(int x) {
   if (x * 0) calledFun(); // expected-warning {{will never be executed}}
   if (0 * x) calledFun(); // expected-warning {{will never be executed}}
 }
+
+void raze() __attribute__((noreturn));
+void warn_here();
+
+int test_break_preceded_by_noreturn(int i) {
+  switch (i) {
+    case 1:
+      raze();
+      break; // no-warning
+    case 2:
+      raze();
+      break; // no-warning
+      warn_here(); // expected-warning {{will never be executed}}
+    case 3:
+      return 1;
+      break; // expected-warning {{will never be executed}}
+    default:
+      break;
+  }
+  return i;
+}
