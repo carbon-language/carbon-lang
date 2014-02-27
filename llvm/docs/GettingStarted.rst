@@ -220,92 +220,32 @@ Unix utilities. Specifically:
 .. _below:
 .. _check here:
 
-Broken versions of GCC and other tools
---------------------------------------
+Host C++ Toolchain, both Compiler and Standard Library
+------------------------------------------------------
 
 LLVM is very demanding of the host C++ compiler, and as such tends to expose
-bugs in the compiler.  In particular, several versions of GCC crash when trying
-to compile LLVM.  We routinely use GCC 4.2 (and higher) or Clang.  Other
-versions of GCC will probably work as well.  GCC versions listed here are known
-to not work.  If you are using one of these versions, please try to upgrade your
-GCC to something more recent.  If you run into a problem with a version of GCC
-not listed here, please `let us know <mailto:llvmdev@cs.uiuc.edu>`_.  Please use
-the "``gcc -v``" command to find out which version of GCC you are using.
+bugs in the compiler. We are also planning to follow improvements and
+developments in the C++ language and library reasonably closely. As such, we
+require a modern host C++ toolchain, both compiler and standard library, in
+order to build LLVM.
 
-**GCC versions prior to 3.0**: GCC 2.96.x and before had several problems in the
-STL that effectively prevent it from compiling LLVM.
+For the most popular host toolchains we check for specific minimum versions in
+our build systems:
 
-**GCC 3.2.2 and 3.2.3**: These versions of GCC fails to compile LLVM with a
-bogus template error.  This was fixed in later GCCs.
+* Clang 3.1
+* GCC 4.7
+* Visual Studio 2012
 
-**GCC 3.3.2**: This version of GCC suffered from a `serious bug
-<http://gcc.gnu.org/PR13392>`_ which causes it to crash in the
-"``convert_from_eh_region_ranges_1``" GCC function.
+Anything older than these toolchains *may* work, but will require forcing the
+build system with a special option and is not really a supported host platform.
+Also note that older versions of these compilers have often crashed or
+miscompiled LLVM.
 
-**Cygwin GCC 3.3.3**: The version of GCC 3.3.3 commonly shipped with Cygwin does
-not work.
+For less widely used host toolchains such as ICC or xlC, be aware that a very
+recent version may be required to support all of the C++ features used in LLVM.
 
-**SuSE GCC 3.3.3**: The version of GCC 3.3.3 shipped with SuSE 9.1 (and possibly
-others) does not compile LLVM correctly (it appears that exception handling is
-broken in some cases).  Please download the FSF 3.3.3 or upgrade to a newer
-version of GCC.
-
-**GCC 3.4.0 on linux/x86 (32-bit)**: GCC miscompiles portions of the code
-generator, causing an infinite loop in the llvm-gcc build when built with
-optimizations enabled (i.e. a release build).
-
-**GCC 3.4.2 on linux/x86 (32-bit)**: GCC miscompiles portions of the code
-generator at -O3, as with 3.4.0.  However gcc 3.4.2 (unlike 3.4.0) correctly
-compiles LLVM at -O2.  A work around is to build release LLVM builds with
-"``make ENABLE_OPTIMIZED=1 OPTIMIZE_OPTION=-O2 ...``"
-
-**GCC 3.4.x on X86-64/amd64**: GCC `miscompiles portions of LLVM
-<http://llvm.org/PR1056>`__.
-
-**GCC 3.4.4 (CodeSourcery ARM 2005q3-2)**: this compiler miscompiles LLVM when
-building with optimizations enabled.  It appears to work with "``make
-ENABLE_OPTIMIZED=1 OPTIMIZE_OPTION=-O1``" or build a debug build.
-
-**IA-64 GCC 4.0.0**: The IA-64 version of GCC 4.0.0 is known to miscompile LLVM.
-
-**Apple Xcode 2.3**: GCC crashes when compiling LLVM at -O3 (which is the
-default with ENABLE_OPTIMIZED=1.  To work around this, build with
-"``ENABLE_OPTIMIZED=1 OPTIMIZE_OPTION=-O2``".
-
-**GCC 4.1.1**: GCC fails to build LLVM with template concept check errors
-compiling some files.  At the time of this writing, GCC mainline (4.2) did not
-share the problem.
-
-**GCC 4.1.1 on X86-64/amd64**: GCC `miscompiles portions of LLVM
-<http://llvm.org/PR1063>`__ when compiling llvm itself into 64-bit code.  LLVM
-will appear to mostly work but will be buggy, e.g. failing portions of its
-testsuite.
-
-**GCC 4.1.2 on OpenSUSE**: Seg faults during libstdc++ build and on x86_64
-platforms compiling md5.c gets a mangled constant.
-
-**GCC 4.1.2 (20061115 (prerelease) (Debian 4.1.1-21)) on Debian**: Appears to
-miscompile parts of LLVM 2.4. One symptom is ValueSymbolTable complaining about
-symbols remaining in the table on destruction.
-
-**GCC 4.1.2 20071124 (Red Hat 4.1.2-42)**: Suffers from the same symptoms as the
-previous one. It appears to work with ENABLE_OPTIMIZED=0 (the default).
-
-**Cygwin GCC 4.3.2 20080827 (beta) 2**: Users `reported
-<http://llvm.org/PR4145>`_ various problems related with link errors when using
-this GCC version.
-
-**Debian GCC 4.3.2 on X86**: Crashes building some files in LLVM 2.6.
-
-**GCC 4.3.3 (Debian 4.3.3-10) on ARM**: Miscompiles parts of LLVM 2.6 when
-optimizations are turned on. The symptom is an infinite loop in
-``FoldingSetImpl::RemoveNode`` while running the code generator.
-
-**SUSE 11 GCC 4.3.4**: Miscompiles LLVM, causing crashes in ValueHandle logic.
-
-**GCC 4.3.5 and GCC 4.4.5 on ARM**: These can miscompile ``value >> 1`` even at
-``-O0``. A test failure in ``test/Assembler/alignstack.ll`` is one symptom of
-the problem.
+We track certain versions of software that are *known* to fail when used as
+part of the host toolchain. These even include linkers at times.
 
 **GCC 4.6.3 on ARM**: Miscompiles ``llvm-readobj`` at ``-O3``. A test failure
 in ``test/Object/readobj-shared-object.test`` is one symptom of the problem.
