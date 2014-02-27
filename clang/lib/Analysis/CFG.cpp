@@ -1880,9 +1880,10 @@ CFGBlock *CFGBuilder::VisitIfStmt(IfStmt *I) {
   // See if this is a known constant.
   const TryResult &KnownVal = tryEvaluateBool(I->getCond());
 
-  // Now add the successors.
-  addSuccessor(Block, KnownVal.isFalse() ? NULL : ThenBlock);
-  addSuccessor(Block, KnownVal.isTrue()? NULL : ElseBlock);
+  // Add the successors.  If we know that specific branches are
+  // unreachable, inform addSuccessor() of that knowledge.
+  addSuccessor(Block, ThenBlock, /* isReachable = */ !KnownVal.isFalse());
+  addSuccessor(Block, ElseBlock, /* isReachable = */ !KnownVal.isTrue());
 
   // Add the condition as the last statement in the new block.  This may create
   // new blocks as the condition may contain control-flow.  Any newly created
