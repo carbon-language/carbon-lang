@@ -83,7 +83,6 @@ error_code FileSystem::getBufferForFile(const llvm::Twine &Name,
 /// \brief Wrapper around a raw file descriptor.
 class RealFile : public File {
   int FD;
-  Status S;
   friend class RealFileSystem;
   RealFile(int FD) : FD(FD) {
     assert(FD >= 0 && "Invalid or inactive file descriptor");
@@ -96,21 +95,15 @@ public:
                        int64_t FileSize = -1,
                        bool RequiresNullTerminator = true) LLVM_OVERRIDE;
   error_code close() LLVM_OVERRIDE;
-  void setName(StringRef Name) LLVM_OVERRIDE;
 };
 RealFile::~RealFile() { close(); }
 
 ErrorOr<Status> RealFile::status() {
   assert(FD != -1 && "cannot stat closed file");
-  if (!S.isStatusKnown()) {
-    file_status RealStatus;
-    if (error_code EC = sys::fs::status(FD, RealStatus))
-      return EC;
-    Status NewS(RealStatus);
-    NewS.setName(S.getName());
-    S = llvm_move(NewS);
-  }
-  return S;
+  file_status RealStatus;
+  if (error_code EC = sys::fs::status(FD, RealStatus))
+    return EC;
+  return Status(RealStatus);
 }
 
 error_code RealFile::getBuffer(const Twine &Name,
@@ -138,10 +131,6 @@ error_code RealFile::close() {
   return error_code::success();
 }
 
-void RealFile::setName(StringRef Name) {
-  S.setName(Name);
-}
-
 /// \brief The file system according to your operating system.
 class RealFileSystem : public FileSystem {
 public:
@@ -165,7 +154,6 @@ error_code RealFileSystem::openFileForRead(const Twine &Name,
   if (error_code EC = sys::fs::openFileForRead(Name, FD))
     return EC;
   Result.reset(new RealFile(FD));
-  Result->setName(Name.str());
   return error_code::success();
 }
 
@@ -279,10 +267,7 @@ public:
         UseName(UseName) {}
   StringRef getExternalContentsPath() const { return ExternalContentsPath; }
   /// \brief whether to use the external path as the name for this file.
-  bool useExternalName(bool GlobalUseExternalName) const {
-    return UseName == NK_NotSet ? GlobalUseExternalName
-                                : (UseName == NK_External);
-  }
+  NameKind useName() const { return UseName; }
   static bool classof(const Entry *E) { return E->getKind() == EK_File; }
 };
 
@@ -785,7 +770,8 @@ ErrorOr<Status> VFSFromYAML::status(const Twine &Path) {
   if (FileEntry *F = dyn_cast<FileEntry>(*Result)) {
     ErrorOr<Status> S = ExternalFS->status(F->getExternalContentsPath());
     assert(!S || S->getName() == F->getExternalContentsPath());
-    if (S && !F->useExternalName(UseExternalNames))
+    if (S && (F->useName() == FileEntry::NK_Virtual ||
+              (F->useName() == FileEntry::NK_NotSet && !UseExternalNames)))
       S->setName(PathStr);
     return S;
   } else { // directory
@@ -806,14 +792,7 @@ error_code VFSFromYAML::openFileForRead(const Twine &Path,
   if (!F) // FIXME: errc::not_a_file?
     return error_code(errc::invalid_argument, system_category());
 
-  if (error_code EC = ExternalFS->openFileForRead(F->getExternalContentsPath(),
-                                                  Result))
-    return EC;
-
-  if (!F->useExternalName(UseExternalNames))
-    Result->setName(Path.str());
-
-  return error_code::success();
+  return ExternalFS->openFileForRead(F->getExternalContentsPath(), Result);
 }
 
 IntrusiveRefCntPtr<FileSystem>

@@ -32,7 +32,6 @@ void FileSystemStatCache::anchor() { }
 
 static void copyStatusToFileData(const vfs::Status &Status,
                                  FileData &Data) {
-  Data.Name = Status.getName();
   Data.Size = Status.getSize();
   Data.ModTime = Status.getLastModificationTime().toEpochTime();
   Data.UniqueID = Status.getUniqueID();

@@ -688,7 +688,6 @@ public:
     if (!D.HasData)
       return CacheMissing;
 
-    Data.Name = Path;
     Data.Size = D.Size;
     Data.ModTime = D.ModTime;
     Data.UniqueID = D.UniqueID;

@@ -59,7 +59,7 @@ public:
 /// If the 'File' member is valid, then this FileEntry has an open file
 /// descriptor for the file.
 class FileEntry {
-  std::string Name;           // Name of the file.
+  const char *Name;           // Name of the file.
   off_t Size;                 // File size in bytes.
   time_t ModTime;             // Modification time of file.
   const DirectoryEntry *Dir;  // Directory file lives in.
@@ -81,7 +81,8 @@ class FileEntry {
 
 public:
   FileEntry()
-      : UniqueID(0, 0), IsNamedPipe(false), InPCH(false), IsValid(false)
+      : Name(0), UniqueID(0, 0), IsNamedPipe(false), InPCH(false),
+        IsValid(false)
   {}
 
   // FIXME: this is here to allow putting FileEntry in std::map.  Once we have
@@ -91,7 +92,7 @@ public:
     assert(!isValid() && "Cannot copy an initialized FileEntry");
   }
 
-  const char *getName() const { return Name.c_str(); }
+  const char *getName() const { return Name; }
   bool isValid() const { return IsValid; }
   off_t getSize() const { return Size; }
   unsigned getUID() const { return UID; }
