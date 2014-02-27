@@ -16,6 +16,10 @@ N: Daniel Dunbar
 E: daniel@zuster.org
 D: Makefile build
 
+N: Timur Iskhodzhanov
+E: timurrrr@google.com
+D: AddressSanitizer for Windows
+
 N: Howard Hinnant
 E: howard.hinnant@gmail.com
 D: builtins library
