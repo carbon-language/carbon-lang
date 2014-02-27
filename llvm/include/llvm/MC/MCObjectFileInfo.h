@@ -366,6 +366,10 @@ public:
     return Env;
   }
 
+  Reloc::Model getRelocM() const {
+    return RelocM;
+  }
+
 private:
   Environment Env;
   Reloc::Model RelocM;
