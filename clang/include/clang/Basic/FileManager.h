@@ -66,6 +66,7 @@ class FileEntry {
   llvm::sys::fs::UniqueID UniqueID;
   bool IsNamedPipe;
   bool InPCH;
+  bool IsValid;               // Is this \c FileEntry initialized and valid?
 
   /// \brief The open file, if it is owned by the \p FileEntry.
   mutable OwningPtr<vfs::File> File;
@@ -77,11 +78,13 @@ class FileEntry {
 
 public:
   FileEntry(llvm::sys::fs::UniqueID UniqueID, bool IsNamedPipe, bool InPCH)
-      : Name(0), UniqueID(UniqueID), IsNamedPipe(IsNamedPipe), InPCH(InPCH)
+      : Name(0), UniqueID(UniqueID), IsNamedPipe(IsNamedPipe), InPCH(InPCH),
+        IsValid(false)
   {}
   // Add a default constructor for use with llvm::StringMap
   FileEntry()
-      : Name(0), UniqueID(0, 0), IsNamedPipe(false), InPCH(false)
+      : Name(0), UniqueID(0, 0), IsNamedPipe(false), InPCH(false),
+        IsValid(false)
   {}
 
   FileEntry(const FileEntry &FE) {
@@ -95,6 +98,7 @@ public:
   }
 
   const char *getName() const { return Name; }
+  bool isValid() const { return IsValid; }
   off_t getSize() const { return Size; }
   unsigned getUID() const { return UID; }
   const llvm::sys::fs::UniqueID &getUniqueID() const { return UniqueID; }

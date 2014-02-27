@@ -130,7 +130,7 @@ void LogDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
     FileID FID = SM.getMainFileID();
     if (!FID.isInvalid()) {
       const FileEntry *FE = SM.getFileEntryForID(FID);
-      if (FE && FE->getName())
+      if (FE && FE->isValid())
         MainFilename = FE->getName();
     }
   }
@@ -157,7 +157,7 @@ void LogDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
       FileID FID = SM.getFileID(Info.getLocation());
       if (!FID.isInvalid()) {
         const FileEntry *FE = SM.getFileEntryForID(FID);
-        if (FE && FE->getName())
+        if (FE && FE->isValid())
           DE.Filename = FE->getName();
       }
     } else {

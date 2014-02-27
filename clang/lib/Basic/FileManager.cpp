@@ -314,7 +314,7 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
       UniqueRealFiles.getFile(Data.UniqueID, Data.IsNamedPipe, Data.InPCH);
 
   NamedFileEnt.setValue(&UFE);
-  if (UFE.getName()) { // Already have an entry with this inode, return it.
+  if (UFE.isValid()) { // Already have an entry with this inode, return it.
     // If the stat process opened the file, close it to avoid a FD leak.
     if (F)
       delete F;
@@ -331,6 +331,7 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
   UFE.Dir     = DirInfo;
   UFE.UID     = NextFileUID++;
   UFE.File.reset(F);
+  UFE.IsValid = true;
   return &UFE;
 }
 
@@ -380,7 +381,7 @@ FileManager::getVirtualFile(StringRef Filename, off_t Size,
       UFE->closeFile();
 
     // If we already have an entry with this inode, return it.
-    if (UFE->getName())
+    if (UFE->isValid())
       return UFE;
   }
 

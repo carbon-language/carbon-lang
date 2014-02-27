@@ -787,7 +787,7 @@ void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
     FileID FID = SM.getFileID(Loc);
     if (!FID.isInvalid()) {
       const FileEntry* FE = SM.getFileEntryForID(FID);
-      if (FE && FE->getName()) {
+      if (FE && FE->isValid()) {
         OS << FE->getName();
         if (FE->isInPCH())
           OS << " (in PCH)";
