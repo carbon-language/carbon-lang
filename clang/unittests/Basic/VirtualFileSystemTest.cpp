@@ -290,8 +290,7 @@ TEST_F(VFSFromYAMLTest, MappedFiles) {
   // file
   ErrorOr<vfs::Status> S = O->status("/file1");
   ASSERT_EQ(errc::success, S.getError());
-  EXPECT_EQ("/file1", S->getName());
-  EXPECT_EQ("/foo/bar/a", S->getExternalName());
+  EXPECT_EQ("/foo/bar/a", S->getName());
 
   ErrorOr<vfs::Status> SLower = O->status("/foo/bar/a");
   EXPECT_EQ("/foo/bar/a", SLower->getName());
@@ -465,6 +464,57 @@ TEST_F(VFSFromYAMLTest, IllegalVFSFile) {
   FS = getFromYAMLRawString("{ 'version':100000, 'roots':[] }", Lower);
   EXPECT_EQ(NULL, FS.getPtr());
   EXPECT_EQ(24, NumDiagnostics);
+}
+
+TEST_F(VFSFromYAMLTest, UseExternalName) {
+  IntrusiveRefCntPtr<DummyFileSystem> Lower(new DummyFileSystem());
+  Lower->addRegularFile("/external/file");
+
+  IntrusiveRefCntPtr<vfs::FileSystem> FS = getFromYAMLString(
+      "{ 'roots': [\n"
+      "  { 'type': 'file', 'name': '/A',\n"
+      "    'external-contents': '/external/file'\n"
+      "  },\n"
+      "  { 'type': 'file', 'name': '/B',\n"
+      "    'use-external-name': true,\n"
+      "    'external-contents': '/external/file'\n"
+      "  },\n"
+      "  { 'type': 'file', 'name': '/C',\n"
+      "    'use-external-name': false,\n"
+      "    'external-contents': '/external/file'\n"
+      "  }\n"
+      "] }", Lower);
+  ASSERT_TRUE(NULL != FS.getPtr());
+
+  // default true
+  EXPECT_EQ("/external/file", FS->status("/A")->getName());
+  // explicit
+  EXPECT_EQ("/external/file", FS->status("/B")->getName());
+  EXPECT_EQ("/C", FS->status("/C")->getName());
+
+  // global configuration
+  FS = getFromYAMLString(
+      "{ 'use-external-names': false,\n"
+      "  'roots': [\n"
+      "  { 'type': 'file', 'name': '/A',\n"
+      "    'external-contents': '/external/file'\n"
+      "  },\n"
+      "  { 'type': 'file', 'name': '/B',\n"
+      "    'use-external-name': true,\n"
+      "    'external-contents': '/external/file'\n"
+      "  },\n"
+      "  { 'type': 'file', 'name': '/C',\n"
+      "    'use-external-name': false,\n"
+      "    'external-contents': '/external/file'\n"
+      "  }\n"
+      "] }", Lower);
+  ASSERT_TRUE(NULL != FS.getPtr());
+
+  // default
+  EXPECT_EQ("/A", FS->status("/A")->getName());
+  // explicit
+  EXPECT_EQ("/external/file", FS->status("/B")->getName());
+  EXPECT_EQ("/C", FS->status("/C")->getName());
 }
 
 TEST_F(VFSFromYAMLTest, MultiComponentPath) {

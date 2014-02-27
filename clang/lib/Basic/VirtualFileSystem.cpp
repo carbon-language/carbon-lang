@@ -35,8 +35,8 @@ Status::Status(const file_status &Status)
 Status::Status(StringRef Name, StringRef ExternalName, UniqueID UID,
                sys::TimeValue MTime, uint32_t User, uint32_t Group,
                uint64_t Size, file_type Type, perms Perms)
-    : Name(Name), ExternalName(ExternalName), UID(UID), MTime(MTime),
-      User(User), Group(Group), Size(Size), Type(Type), Perms(Perms) {}
+    : Name(Name), UID(UID), MTime(MTime), User(User), Group(Group), Size(Size),
+      Type(Type), Perms(Perms) {}
 
 bool Status::equivalent(const Status &Other) const {
   return getUniqueID() == Other.getUniqueID();
@@ -145,7 +145,6 @@ ErrorOr<Status> RealFileSystem::status(const Twine &Path) {
     return EC;
   Status Result(RealStatus);
   Result.setName(Path.str());
-  Result.setExternalName(Path.str());
   return Result;
 }
 
@@ -253,12 +252,22 @@ public:
 };
 
 class FileEntry : public Entry {
-  std::string ExternalContentsPath;
-
 public:
-  FileEntry(StringRef Name, StringRef ExternalContentsPath)
-      : Entry(EK_File, Name), ExternalContentsPath(ExternalContentsPath) {}
+  enum NameKind {
+    NK_NotSet,
+    NK_External,
+    NK_Virtual
+  };
+private:
+  std::string ExternalContentsPath;
+  NameKind UseName;
+public:
+  FileEntry(StringRef Name, StringRef ExternalContentsPath, NameKind UseName)
+      : Entry(EK_File, Name), ExternalContentsPath(ExternalContentsPath),
+        UseName(UseName) {}
   StringRef getExternalContentsPath() const { return ExternalContentsPath; }
+  /// \brief whether to use the external path as the name for this file.
+  NameKind useName() const { return UseName; }
   static bool classof(const Entry *E) { return E->getKind() == EK_File; }
 };
 
@@ -280,6 +289,7 @@ public:
 ///
 /// All configuration options are optional.
 ///   'case-sensitive': <boolean, default=true>
+///   'use-external-names': <boolean, default=true>
 ///
 /// Virtual directories are represented as
 /// \verbatim
@@ -304,6 +314,7 @@ public:
 /// {
 ///   'type': 'file',
 ///   'name': <string>,
+///   'use-external-name': <boolean> # Optional
 ///   'external-contents': <path to external file>)
 /// }
 /// \endverbatim
@@ -324,14 +335,18 @@ class VFSFromYAML : public vfs::FileSystem {
   /// \brief Whether to perform case-sensitive comparisons.
   ///
   /// Currently, case-insensitive matching only works correctly with ASCII.
-  bool CaseSensitive; ///< Whether to perform case-sensitive comparisons.
+  bool CaseSensitive;
+
+  /// \brief Whether to use to use the value of 'external-contents' for the
+  /// names of files.  This global value is overridable on a per-file basis.
+  bool UseExternalNames;
   /// @}
 
   friend class VFSFromYAMLParser;
 
 private:
   VFSFromYAML(IntrusiveRefCntPtr<FileSystem> ExternalFS)
-      : ExternalFS(ExternalFS), CaseSensitive(true) {}
+      : ExternalFS(ExternalFS), CaseSensitive(true), UseExternalNames(true) {}
 
   /// \brief Looks up \p Path in \c Roots.
   ErrorOr<Entry *> lookupPath(const Twine &Path);
@@ -446,7 +461,8 @@ class VFSFromYAMLParser {
       KeyStatusPair("name", true),
       KeyStatusPair("type", true),
       KeyStatusPair("contents", false),
-      KeyStatusPair("external-contents", false)
+      KeyStatusPair("external-contents", false),
+      KeyStatusPair("use-external-name", false),
     };
 
     DenseMap<StringRef, KeyStatus> Keys(
@@ -456,6 +472,7 @@ class VFSFromYAMLParser {
     std::vector<Entry *> EntryArrayContents;
     std::string ExternalContentsPath;
     std::string Name;
+    FileEntry::NameKind UseExternalName = FileEntry::NK_NotSet;
     EntryKind Kind;
 
     for (yaml::MappingNode::iterator I = M->begin(), E = M->end(); I != E;
@@ -519,6 +536,11 @@ class VFSFromYAMLParser {
         if (!parseScalarString(I->getValue(), Value, Buffer))
           return NULL;
         ExternalContentsPath = Value;
+      } else if (Key == "use-external-name") {
+        bool Val;
+        if (!parseScalarBool(I->getValue(), Val))
+          return NULL;
+        UseExternalName = Val ? FileEntry::NK_External : FileEntry::NK_Virtual;
       } else {
         llvm_unreachable("key missing from Keys");
       }
@@ -535,6 +557,12 @@ class VFSFromYAMLParser {
     if (!checkMissingKeys(N, Keys))
       return NULL;
 
+    // check invalid configuration
+    if (Kind == EK_Directory && UseExternalName != FileEntry::NK_NotSet) {
+      error(N, "'use-external-name' is not supported for directories");
+      return NULL;
+    }
+
     // Remove trailing slash(es)
     StringRef Trimmed(Name);
     while (Trimmed.size() > 1 && sys::path::is_separator(Trimmed.back()))
@@ -545,7 +573,8 @@ class VFSFromYAMLParser {
     Entry *Result = 0;
     switch (Kind) {
     case EK_File:
-      Result = new FileEntry(LastComponent, llvm_move(ExternalContentsPath));
+      Result = new FileEntry(LastComponent, llvm_move(ExternalContentsPath),
+                             UseExternalName);
       break;
     case EK_Directory:
       Result = new DirectoryEntry(LastComponent, llvm_move(EntryArrayContents),
@@ -583,6 +612,7 @@ public:
     KeyStatusPair Fields[] = {
       KeyStatusPair("version", true),
       KeyStatusPair("case-sensitive", false),
+      KeyStatusPair("use-external-names", false),
       KeyStatusPair("roots", true),
     };
 
@@ -634,6 +664,9 @@ public:
         }
       } else if (Key == "case-sensitive") {
         if (!parseScalarBool(I->getValue(), FS->CaseSensitive))
+          return false;
+      } else if (Key == "use-external-names") {
+        if (!parseScalarBool(I->getValue(), FS->UseExternalNames))
           return false;
       } else {
         llvm_unreachable("key missing from Keys");
@@ -736,17 +769,15 @@ ErrorOr<Status> VFSFromYAML::status(const Twine &Path) {
   std::string PathStr(Path.str());
   if (FileEntry *F = dyn_cast<FileEntry>(*Result)) {
     ErrorOr<Status> S = ExternalFS->status(F->getExternalContentsPath());
-    if (S) {
-      assert(S->getName() == S->getExternalName() &&
-             S->getName() == F->getExternalContentsPath());
+    assert(!S || S->getName() == F->getExternalContentsPath());
+    if (S && (F->useName() == FileEntry::NK_Virtual ||
+              (F->useName() == FileEntry::NK_NotSet && !UseExternalNames)))
       S->setName(PathStr);
-    }
     return S;
   } else { // directory
     DirectoryEntry *DE = cast<DirectoryEntry>(*Result);
     Status S = DE->getStatus();
     S.setName(PathStr);
-    S.setExternalName(PathStr);
     return S;
   }
 }
