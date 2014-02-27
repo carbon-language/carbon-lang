@@ -109,7 +109,7 @@ int test_enum_cases(enum Cases C) {
     case C3:
       return 1;
     default: {
-      int i = 0; // expected-warning{{will never be executed}}
+      int i = 0; // no-warning
       ++i;
       return i;
     }
@@ -164,3 +164,26 @@ int test_break_preceded_by_noreturn(int i) {
   }
   return i;
 }
+
+// Don't warn about unreachable 'default' cases, as that is covered
+// by -Wcovered-switch-default.
+typedef enum { Value1 = 1 } MyEnum;
+void unreachable_default(MyEnum e) {
+  switch (e) {
+    case Value1:
+    calledFun();
+    break;
+  default:
+    calledFun(); // no-warning
+    break;
+  }
+}
+void unreachable_in_default(MyEnum e) {
+  switch (e) {
+  default:
+    raze();
+    calledFun(); // expected-warning {{will never be executed}}
+    break;
+  }
+}
+

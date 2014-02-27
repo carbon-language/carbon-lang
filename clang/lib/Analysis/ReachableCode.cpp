@@ -284,6 +284,12 @@ void DeadCodeScan::reportDeadCode(const CFGBlock *B,
   if (isBreakPrecededByNoReturn(B, S))
     return;
 
+  // Was this an unreachable 'default' case?  Such cases are covered
+  // by -Wcovered-switch-default, if the user so desires.
+  const Stmt *Label = B->getLabel();
+  if (Label && isa<DefaultStmt>(Label))
+    return;
+
   SourceRange R1, R2;
   SourceLocation Loc = GetUnreachableLoc(S, R1, R2);
   CB.HandleUnreachable(Loc, R1, R2);
