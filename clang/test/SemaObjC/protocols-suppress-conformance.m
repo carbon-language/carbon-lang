@@ -4,7 +4,7 @@
 // to be explicitly implemented in the adopting class.
 __attribute__((objc_protocol_requires_explicit_implementation))
 @protocol Protocol
-- (void) theBestOfTimes; // expected-note {{method 'theBestOfTimes' declared here}}
+- (void) theBestOfTimes; // expected-note 2 {{method 'theBestOfTimes' declared here}}
 @property (readonly) id theWorstOfTimes; // expected-note {{property declared here}}
 @end
 
@@ -122,7 +122,6 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 @interface Shoggoth_Explicit : Lovecraft <ProtocolB_Explicit> @end
 @interface Shoggoth_2_Explicit : Lovecraft_2 <ProtocolB_Explicit> @end
 
-
 @implementation MyObject
 - (void)innsmouth {}
 - (void)rlyeh {}
@@ -154,6 +153,22 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 - (void)dunwich {}
 @end
 
+// Categories adopting a protocol with explicit conformance need to implement that protocol.
+@interface Parent
+- (void) theBestOfTimes;
+@property (readonly) id theWorstOfTimes;
+@end
+
+@interface Derived : Parent
+@end
+
+@interface Derived (MyCat) <Protocol>
+@end
+
+@implementation Derived (MyCat) // expected-warning {{method 'theBestOfTimes' in protocol 'Protocol' not implemented}}
+@end
+
 __attribute__((objc_protocol_requires_explicit_implementation))  // expected-error{{attribute 'objc_protocol_requires_explicit_implementation' can only be applied to @protocol definitions, not forward declarations}}
 @protocol NotDefined;
+
 
