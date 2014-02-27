@@ -24,6 +24,15 @@ class XCoreSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
   explicit XCoreSelectionDAGInfo(const XCoreTargetMachine &TM);
   ~XCoreSelectionDAGInfo();
+
+  virtual SDValue
+  EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
+                          SDValue Chain,
+                          SDValue Op1, SDValue Op2,
+                          SDValue Op3, unsigned Align, bool isVolatile,
+                          bool AlwaysInline,
+                          MachinePointerInfo DstPtrInfo,
+                          MachinePointerInfo SrcPtrInfo) const;
 };
 
 }

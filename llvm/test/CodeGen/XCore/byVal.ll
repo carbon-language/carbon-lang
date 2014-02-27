@@ -20,7 +20,7 @@ entry:
 ; CHECK: ldaw r5, sp[1]
 ; CHECK: ldc r2, 40
 ; CHECK: mov r0, r5
-; CHECK: bl memcpy
+; CHECK: bl __memcpy_4
 ; CHECK: mov r0, r5
 ; CHECK: bl f1
 ; CHECK: mov r0, r4
