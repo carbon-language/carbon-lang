@@ -3,8 +3,8 @@
 %0 = type { i32, i32, i32, i32 }
 %1 = type { i32, i32, i32, i32, i32 }
 
-; Structs of 4 words are returned in registers
-define internal %0 @ReturnBigStruct() nounwind readnone {
+; Structs of 4 words can be returned in registers
+define internal fastcc %0 @ReturnBigStruct() nounwind readnone {
 entry:
   %0 = insertvalue %0 zeroinitializer, i32 12, 0
   %1 = insertvalue %0 %0, i32 24, 1
@@ -19,39 +19,8 @@ entry:
 ; CHECK: ldc r3, 24601
 ; CHECK: retsp 0
 
-; Structs of more than 4 words are partially returned in memory so long as the
-; function is not variadic.
-define { i32, i32, i32, i32, i32} @f(i32, i32, i32, i32, i32) nounwind readnone {
-; CHECK-LABEL: f:
-; CHECK: ldc [[REGISTER:r[0-9]+]], 5
-; CHECK-NEXT: stw [[REGISTER]], sp[2]
-; CHECK-NEXT: retsp 0
-body:
-  ret { i32, i32, i32, i32, i32} { i32 undef, i32 undef, i32 undef, i32 undef, i32 5}
-}
-
-@x = external global i32
-@y = external global i32
-
-; Check we call a function returning more than 4 words correctly.
-define i32 @g() nounwind {
-; CHECK-LABEL: g:
-; CHECK: entsp 3
-; CHECK: ldc [[REGISTER:r[0-9]+]], 0
-; CHECK: stw [[REGISTER]], sp[1]
-; CHECK: bl f
-; CHECK-NEXT: ldw r0, sp[2]
-; CHECK-NEXT: retsp 3
-;
-body:
-  %0 = call { i32, i32, i32, i32, i32 } @f(i32 0, i32 0, i32 0, i32 0, i32 0)
-  %1 = extractvalue { i32, i32, i32, i32, i32 } %0, 4
-  ret i32 %1
-}
-
-; Variadic functions return structs bigger than 4 words via a hidden
-; sret-parameter
-define internal %1 @ReturnBigStruct2(i32 %dummy, ...) nounwind readnone {
+; Structs bigger than 4 words are returned via a hidden hidden sret-parameter
+define internal fastcc %1 @ReturnBigStruct2() nounwind readnone {
 entry:
   %0 = insertvalue %1 zeroinitializer, i32 12, 0
   %1 = insertvalue %1 %0, i32 24, 1

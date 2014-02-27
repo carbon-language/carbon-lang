@@ -68,10 +68,6 @@ def SDT_XCoreStwsp    : SDTypeProfile<0, 2, [SDTCisInt<1>]>;
 def XCoreStwsp        : SDNode<"XCoreISD::STWSP", SDT_XCoreStwsp,
                                [SDNPHasChain, SDNPMayStore]>;
 
-def SDT_XCoreLdwsp    : SDTypeProfile<1, 1, [SDTCisInt<1>]>;
-def XCoreLdwsp        : SDNode<"XCoreISD::LDWSP", SDT_XCoreLdwsp,
-                               [SDNPHasChain, SDNPMayLoad]>;
-
 // These are target-independent nodes, but have target-specific formats.
 def SDT_XCoreCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
 def SDT_XCoreCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>,
@@ -585,12 +581,10 @@ def STWSP_lru6 : _FLRU6<0b010101, (outs), (ins RRegs:$a, i32imm:$b),
 
 let mayLoad=1 in {
 def LDWSP_ru6 : _FRU6<0b010111, (outs RRegs:$a), (ins i32imm:$b),
-                      "ldw $a, sp[$b]",
-                      [(set RRegs:$a, (XCoreLdwsp immU6:$b))]>;
+                      "ldw $a, sp[$b]", []>;
 
 def LDWSP_lru6 : _FLRU6<0b010111, (outs RRegs:$a), (ins i32imm:$b),
-                        "ldw $a, sp[$b]",
-                        [(set RRegs:$a, (XCoreLdwsp immU16:$b))]>;
+                        "ldw $a, sp[$b]", []>;
 }
 
 let neverHasSideEffects = 1 in {
