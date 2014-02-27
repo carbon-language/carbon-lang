@@ -55,6 +55,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/IR/Constants.h"
 
 using namespace llvm;
 
@@ -294,6 +295,7 @@ void SILowerControlFlowPass::Branch(MachineInstr &MI) {
 void SILowerControlFlowPass::Kill(MachineInstr &MI) {
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc DL = MI.getDebugLoc();
+  const MachineOperand &Op = MI.getOperand(0);
 
   // Kill is only allowed in pixel / geometry shaders
   assert(MBB.getParent()->getInfo<SIMachineFunctionInfo>()->ShaderType ==
@@ -301,10 +303,19 @@ void SILowerControlFlowPass::Kill(MachineInstr &MI) {
          MBB.getParent()->getInfo<SIMachineFunctionInfo>()->ShaderType ==
          ShaderType::GEOMETRY);
 
-  // Clear this pixel from the exec mask if the operand is negative
-  BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CMPX_LE_F32_e32), AMDGPU::VCC)
-          .addImm(0)
-          .addOperand(MI.getOperand(0));
+  // Clear this thread from the exec mask if the operand is negative
+  if ((Op.isImm() || Op.isFPImm())) {
+    // Constant operand: Set exec mask to 0 or do nothing
+    if (Op.isImm() ? (Op.getImm() & 0x80000000) :
+        Op.getFPImm()->isNegative()) {
+      BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_MOV_B64), AMDGPU::EXEC)
+              .addImm(0);
+    }
+  } else {
+    BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CMPX_LE_F32_e32), AMDGPU::VCC)
+           .addImm(0)
+           .addOperand(Op);
+  }
 
   MI.eraseFromParent();
 }

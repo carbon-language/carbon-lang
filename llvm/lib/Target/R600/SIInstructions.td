@@ -1333,7 +1333,7 @@ def SI_END_CF : InstSI <
 
 def SI_KILL : InstSI <
   (outs),
-  (ins VReg_32:$src),
+  (ins VSrc_32:$src),
   "SI_KILL $src",
   [(int_AMDGPU_kill f32:$src)]
 >;
@@ -1425,7 +1425,7 @@ def : Pat<
 
 def : Pat <
   (int_AMDGPU_kilp),
-  (SI_KILL (V_MOV_B32_e32 0xbf800000))
+  (SI_KILL 0xbf800000)
 >;
 
 /* int_SI_vs_load_input */
