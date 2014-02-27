@@ -146,3 +146,16 @@ macro(add_compiler_rt_resource_file target_name file_name)
   # Install in Clang resource directory.
   install(FILES ${file_name} DESTINATION ${COMPILER_RT_INSTALL_PATH})
 endmacro()
+
+macro(add_compiler_rt_script name)
+  set(dst ${COMPILER_RT_EXEC_OUTPUT_DIR}/${name})
+  set(src ${CMAKE_CURRENT_SOURCE_DIR}/${name})
+  add_custom_command(OUTPUT ${dst}
+    DEPENDS ${src}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${src} ${dst}
+    COMMENT "Copying ${name}...")
+  add_custom_target(${name} DEPENDS ${dst})
+  install(FILES ${dst}
+    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+    DESTINATION ${COMPILER_RT_INSTALL_PATH}/bin)
+endmacro(add_compiler_rt_script src name)

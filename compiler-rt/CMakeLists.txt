@@ -51,6 +51,7 @@ if (NOT COMPILER_RT_STANDALONE_BUILD)
          ${PACKAGE_VERSION})
   # Setup the paths where compiler-rt runtimes and headers should be stored.
   set(COMPILER_RT_OUTPUT_DIR ${LLVM_LIBRARY_OUTPUT_INTDIR}/clang/${CLANG_VERSION})
+  set(COMPILER_RT_EXEC_OUTPUT_DIR ${LLVM_RUNTIME_OUTPUT_INTDIR})
   set(COMPILER_RT_INSTALL_PATH lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION})
   option(COMPILER_RT_INCLUDE_TESTS "Generate and build compiler-rt unit tests."
          ${LLVM_INCLUDE_TESTS})
@@ -63,6 +64,8 @@ else()
   # Take output dir and install path from the user.
   set(COMPILER_RT_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH
     "Path where built compiler-rt libraries should be stored.")
+  set(COMPILER_RT_EXEC_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin CACHE PATH
+    "Path where built compiler-rt executables should be stored.")
   set(COMPILER_RT_INSTALL_PATH ${CMAKE_INSTALL_PREFIX} CACHE PATH
     "Path where built compiler-rt libraries should be installed.")
   option(COMPILER_RT_INCLUDE_TESTS "Generate and build compiler-rt unit tests." OFF)
