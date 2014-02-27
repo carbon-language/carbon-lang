@@ -74,6 +74,7 @@ namespace llvm {
     SmallVector<Value *, 4> AllGVs;
     SmallVector<Value *, 4> AllImportedModules;
 
+    // Private use for multiple types of template parameters.
     DITemplateValueParameter
     createTemplateValueParameter(unsigned Tag, DIDescriptor Scope,
                                  StringRef Name, DIType Ty, Value *Val,
