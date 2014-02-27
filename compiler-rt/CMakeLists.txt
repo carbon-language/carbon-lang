@@ -238,9 +238,8 @@ if(COMPILER_RT_ENABLE_WERROR)
 endif()
 
 # Emulate C99 and C++11's __func__ for MSVC prior to 2013 CTP.
-CHECK_SYMBOL_EXISTS(__func__ "" COMPILER_RT_HAS_FUNC)
-if(NOT COMPILER_RT_HAS_FUNC)
-  list(APPEND SANITIZER_COMMON_CFLAGS -D__func__=__FUNCTION__)
+if(NOT COMPILER_RT_HAS_FUNC_SYMBOL)
+  add_definitions(__func__=__FUNCTION__)
 endif()
 
 # Provide some common commmandline flags for Sanitizer runtimes.

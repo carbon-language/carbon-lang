@@ -1,4 +1,5 @@
 include(CheckCXXCompilerFlag)
+include(CheckSymbolExists)
 
 # CodeGen options.
 check_cxx_compiler_flag(-fPIC                COMPILER_RT_HAS_FPIC_FLAG)
@@ -34,3 +35,6 @@ check_cxx_compiler_flag("-Werror -Wno-variadic-macros"    COMPILER_RT_HAS_WNO_VA
 
 check_cxx_compiler_flag(/WX COMPILER_RT_HAS_WX_FLAG)
 check_cxx_compiler_flag(/wd4722 COMPILER_RT_HAS_WD4722_FLAG)
+
+# Symbols.
+check_symbol_exists(__func__ "" COMPILER_RT_HAS_FUNC_SYMBOL)
