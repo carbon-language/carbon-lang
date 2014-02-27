@@ -29,6 +29,7 @@ test_one(unsigned N, unsigned M)
     std::random_shuffle(array, array+N);
     std::nth_element(array, array+M, array+N);
     assert(array[M] == M);
+    std::nth_element(array, array+N, array+N); // begin, end, end
     delete [] array;
 }
 

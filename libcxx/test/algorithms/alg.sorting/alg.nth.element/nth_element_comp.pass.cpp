@@ -42,6 +42,7 @@ test_one(unsigned N, unsigned M)
     std::random_shuffle(array, array+N);
     std::nth_element(array, array+M, array+N, std::greater<int>());
     assert(array[M] == N-M-1);
+    std::nth_element(array, array+N, array+N, std::greater<int>()); // begin, end, end
     delete [] array;
 }
 
