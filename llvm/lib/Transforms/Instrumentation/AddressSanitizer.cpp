@@ -673,7 +673,7 @@ static bool isInterestingPointerComparisonOrSubtraction(Instruction *I) {
     if (!Cmp->isRelational())
       return false;
   } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
-    if (!BO->getOpcode() == Instruction::Sub)
+    if (BO->getOpcode() != Instruction::Sub)
       return false;
   } else {
     return false;
@@ -1285,7 +1285,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
           if (!TempsToInstrument.insert(Addr))
             continue;  // We've seen this temp in the current BB.
         }
-      } else if (ClInstrumentAtomics &&
+      } else if (ClInvalidPointerPairs &&
                  isInterestingPointerComparisonOrSubtraction(BI)) {
         PointerComparisonsOrSubtracts.push_back(BI);
         continue;
