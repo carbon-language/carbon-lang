@@ -3387,11 +3387,12 @@ void MicrosoftVTableContext::computeVTableRelatedInformation(
 
   const VTableLayout::AddressPointsMapTy EmptyAddressPointsMap;
 
-  VPtrInfoVector &VFPtrs = VFPtrLocations[RD];
-  computeVTablePaths(/*ForVBTables=*/false, RD, VFPtrs);
+  VPtrInfoVector *VFPtrs = new VPtrInfoVector();
+  computeVTablePaths(/*ForVBTables=*/false, RD, *VFPtrs);
+  VFPtrLocations[RD] = VFPtrs;
 
   MethodVFTableLocationsTy NewMethodLocations;
-  for (VPtrInfoVector::iterator I = VFPtrs.begin(), E = VFPtrs.end();
+  for (VPtrInfoVector::iterator I = VFPtrs->begin(), E = VFPtrs->end();
        I != E; ++I) {
     VFTableBuilder Builder(*this, RD, *I);
 
@@ -3530,7 +3531,7 @@ MicrosoftVTableContext::getVFPtrOffsets(const CXXRecordDecl *RD) {
   computeVTableRelatedInformation(RD);
 
   assert(VFPtrLocations.count(RD) && "Couldn't find vfptr locations");
-  return VFPtrLocations[RD];
+  return *VFPtrLocations[RD];
 }
 
 const VTableLayout &

@@ -485,7 +485,7 @@ private:
     MethodVFTableLocationsTy;
   MethodVFTableLocationsTy MethodVFTableLocations;
 
-  typedef llvm::DenseMap<const CXXRecordDecl *, VPtrInfoVector>
+  typedef llvm::DenseMap<const CXXRecordDecl *, VPtrInfoVector *>
     VFPtrLocationsMapTy;
   VFPtrLocationsMapTy VFPtrLocations;
 
