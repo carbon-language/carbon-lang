@@ -675,12 +675,12 @@ public:
   /// Allow the target to reverse allocation order of local live ranges. This
   /// will generally allocate shorter local live ranges first. For targets with
   /// many registers, this could reduce regalloc compile time by a large
-  /// factor. It should still achieve optimal coloring; however, it can change
-  /// register eviction decisions. It is disabled by default for two reasons:
+  /// factor. It is disabled by default for three reasons:
   /// (1) Top-down allocation is simpler and easier to debug for targets that
   /// don't benefit from reversing the order.
   /// (2) Bottom-up allocation could result in poor evicition decisions on some
   /// targets affecting the performance of compiled code.
+  /// (3) Bottom-up allocation is no longer guaranteed to optimally color.
   virtual bool reverseLocalAssignment() const { return false; }
 
   /// requiresRegisterScavenging - returns true if the target requires (and can
