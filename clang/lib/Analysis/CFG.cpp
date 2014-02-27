@@ -483,8 +483,16 @@ private:
   void prependAutomaticObjDtorsWithTerminator(CFGBlock *Blk,
       LocalScope::const_iterator B, LocalScope::const_iterator E);
 
-  void addSuccessor(CFGBlock *B, CFGBlock *S) {
-    B->addSuccessor(S, cfg->getBumpVectorContext());
+  void addSuccessor(CFGBlock *B, CFGBlock *S, bool IsReachable = true) {
+    B->addSuccessor(CFGBlock::AdjacentBlock(S, IsReachable),
+                    cfg->getBumpVectorContext());
+  }
+
+  /// Add a reachable successor to a block, with the alternate variant that is
+  /// unreachable.
+  void addSuccessor(CFGBlock *B, CFGBlock *ReachableBlock, CFGBlock *AltBlock) {
+    B->addSuccessor(CFGBlock::AdjacentBlock(ReachableBlock, AltBlock),
+                    cfg->getBumpVectorContext());
   }
 
   /// Try and evaluate an expression to an integer constant.
@@ -3495,13 +3503,37 @@ bool CFGImplicitDtor::isNoReturn(ASTContext &astContext) const {
 }
 
 //===----------------------------------------------------------------------===//
-// Filtered walking of the CFG.
+// CFGBlock operations.
 //===----------------------------------------------------------------------===//
+
+CFGBlock::AdjacentBlock::AdjacentBlock(CFGBlock *B, bool IsReachable)
+  : ReachableBlock(IsReachable ? B : 0),
+    UnreachableBlock(!IsReachable ? B : 0,
+                     B && IsReachable ? AB_Normal : AB_Unreachable) {}
+
+CFGBlock::AdjacentBlock::AdjacentBlock(CFGBlock *B, CFGBlock *AlternateBlock)
+  : ReachableBlock(B),
+    UnreachableBlock(B == AlternateBlock ? 0 : AlternateBlock,
+                     B == AlternateBlock ? AB_Alternate : AB_Normal) {}
+
+void CFGBlock::addSuccessor(AdjacentBlock Succ,
+                            BumpVectorContext &C) {
+  if (CFGBlock *B = Succ.getReachableBlock())
+    B->Preds.push_back(CFGBlock::AdjacentBlock(this, Succ.isReachable()), C);
+
+  if (CFGBlock *UnreachableB = Succ.getPossiblyUnreachableBlock())
+    UnreachableB->Preds.push_back(CFGBlock::AdjacentBlock(this, false), C);
+
+  Succs.push_back(Succ, C);
+}
 
 bool CFGBlock::FilterEdge(const CFGBlock::FilterOptions &F,
         const CFGBlock *From, const CFGBlock *To) {
 
-  if (To && F.IgnoreDefaultsWithCoveredEnums) {
+  if (F.IgnoreNullPredecessors && !From)
+    return true;
+
+  if (To && From && F.IgnoreDefaultsWithCoveredEnums) {
     // If the 'To' has no label or is labeled but the label isn't a
     // CaseStmt then filter this edge.
     if (const SwitchStmt *S =
@@ -3963,7 +3995,16 @@ static void print_block(raw_ostream &OS, const CFG* cfg,
         if (i % 10 == 8)
           OS << "\n     ";
 
-        OS << " B" << (*I)->getBlockID();
+        CFGBlock *B = *I;
+        bool Reachable = true;
+        if (!B) {
+          Reachable = false;
+          B = I->getPossiblyUnreachableBlock();
+        }
+
+        OS << " B" << B->getBlockID();
+        if (!Reachable)
+          OS << "(Unreachable)";
       }
       
       if (ShowColors)

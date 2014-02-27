@@ -412,9 +412,64 @@ class CFGBlock {
   ///   of the CFG.
   unsigned BlockID;
 
+public:
+  /// This class represents a potential adjacent block in the CFG.  It encodes
+  /// whether or not the block is actually reachable, or can be proved to be
+  /// trivially unreachable.  For some cases it allows one to encode scenarios
+  /// where a block was substituted because the original (now alternate) block
+  /// is unreachable.
+  class AdjacentBlock {
+    enum Kind {
+      AB_Normal,
+      AB_Unreachable,
+      AB_Alternate
+    };
+
+    CFGBlock *ReachableBlock;
+    llvm::PointerIntPair<CFGBlock*, 2> UnreachableBlock;
+
+  public:
+    /// Construct an AdjacentBlock with a possibly unreachable block.
+    AdjacentBlock(CFGBlock *B, bool IsReachable);
+    
+    /// Construct an AdjacentBlock with a reachable block and an alternate
+    /// unreachable block.
+    AdjacentBlock(CFGBlock *B, CFGBlock *AlternateBlock);
+
+    /// Get the reachable block, if one exists.
+    CFGBlock *getReachableBlock() const {
+      return ReachableBlock;
+    }
+
+    /// Get the potentially unreachable block.
+    CFGBlock *getPossiblyUnreachableBlock() const {
+      return UnreachableBlock.getPointer();
+    }
+
+    /// Provide an implicit conversion to CFGBlock* so that
+    /// AdjacentBlock can be substituted for CFGBlock*.
+    operator CFGBlock*() const {
+      return getReachableBlock();
+    }
+
+    CFGBlock& operator *() const {
+      return *getReachableBlock();
+    }
+
+    CFGBlock* operator ->() const {
+      return getReachableBlock();
+    }
+
+    bool isReachable() const {
+      Kind K = (Kind) UnreachableBlock.getInt();
+      return K == AB_Normal || K == AB_Alternate;
+    }
+  };
+
+private:
   /// Predecessors/Successors - Keep track of the predecessor / successor
   /// CFG blocks.
-  typedef BumpVector<CFGBlock*> AdjacentBlocks;
+  typedef BumpVector<AdjacentBlock> AdjacentBlocks;
   AdjacentBlocks Preds;
   AdjacentBlocks Succs;
 
@@ -504,9 +559,11 @@ public:
   class FilterOptions {
   public:
     FilterOptions() {
+      IgnoreNullPredecessors = 1;
       IgnoreDefaultsWithCoveredEnums = 0;
     }
 
+    unsigned IgnoreNullPredecessors : 1;
     unsigned IgnoreDefaultsWithCoveredEnums : 1;
   };
 
@@ -588,11 +645,8 @@ public:
     OS << "BB#" << getBlockID();
   }
 
-  void addSuccessor(CFGBlock *Block, BumpVectorContext &C) {
-    if (Block)
-      Block->Preds.push_back(this, C);
-    Succs.push_back(Block, C);
-  }
+  /// Adds a (potentially unreachable) successor block to the current block.
+  void addSuccessor(AdjacentBlock Succ, BumpVectorContext &C);
 
   void appendStmt(Stmt *statement, BumpVectorContext &C) {
     Elements.push_back(CFGStmt(statement), C);
