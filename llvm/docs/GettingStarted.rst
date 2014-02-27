@@ -163,29 +163,20 @@ for the software package that LLVM depends on. The Version column provides
 "known to work" versions of the package. The Notes column describes how LLVM
 uses the package and provides other details.
 
-+--------------------------------------------------------------+-----------------+---------------------------------------------+
-| Package                                                      | Version         | Notes                                       |
-+==============================================================+=================+=============================================+
-| `GNU Make <http://savannah.gnu.org/projects/make>`_          | 3.79, 3.79.1    | Makefile/build processor                    |
-+--------------------------------------------------------------+-----------------+---------------------------------------------+
-| `GCC <http://gcc.gnu.org/>`_                                 | 3.4.2           | C/C++ compiler\ :sup:`1`                    |
-+--------------------------------------------------------------+-----------------+---------------------------------------------+
-| `TeXinfo <http://www.gnu.org/software/texinfo/>`_            | 4.5             | For building the CFE                        |
-+--------------------------------------------------------------+-----------------+---------------------------------------------+
-| `SVN <http://subversion.tigris.org/project_packages.html>`_  | >=1.3           | Subversion access to LLVM\ :sup:`2`         |
-+--------------------------------------------------------------+-----------------+---------------------------------------------+
-| `python <http://www.python.org/>`_                           | >=2.5           | Automated test suite\ :sup:`3`              |
-+--------------------------------------------------------------+-----------------+---------------------------------------------+
-| `GNU M4 <http://savannah.gnu.org/projects/m4>`_              | 1.4             | Macro processor for configuration\ :sup:`4` |
-+--------------------------------------------------------------+-----------------+---------------------------------------------+
-| `GNU Autoconf <http://www.gnu.org/software/autoconf/>`_      | 2.60            | Configuration script builder\ :sup:`4`      |
-+--------------------------------------------------------------+-----------------+---------------------------------------------+
-| `GNU Automake <http://www.gnu.org/software/automake/>`_      | 1.9.6           | aclocal macro generator\ :sup:`4`           |
-+--------------------------------------------------------------+-----------------+---------------------------------------------+
-| `libtool <http://savannah.gnu.org/projects/libtool>`_        | 1.5.22          | Shared library manager\ :sup:`4`            |
-+--------------------------------------------------------------+-----------------+---------------------------------------------+
-| `zlib <http://zlib.net>`_                                    | >=1.2.3.4       | Compression library\ :sup:`5`               |
-+--------------------------------------------------------------+-----------------+---------------------------------------------+
+=========================================================== ============ ==========================================
+Package                                                     Version      Notes
+=========================================================== ============ ==========================================
+`GNU Make <http://savannah.gnu.org/projects/make>`_         3.79, 3.79.1 Makefile/build processor
+`GCC <http://gcc.gnu.org/>`_                                3.4.2        C/C++ compiler\ :sup:`1`
+`TeXinfo <http://www.gnu.org/software/texinfo/>`_           4.5          For building the CFE
+`SVN <http://subversion.tigris.org/project_packages.html>`_ >=1.3        Subversion access to LLVM\ :sup:`2`
+`python <http://www.python.org/>`_                          >=2.5        Automated test suite\ :sup:`3`
+`GNU M4 <http://savannah.gnu.org/projects/m4>`_             1.4          Macro processor for configuration\ :sup:`4`
+`GNU Autoconf <http://www.gnu.org/software/autoconf/>`_     2.60         Configuration script builder\ :sup:`4`
+`GNU Automake <http://www.gnu.org/software/automake/>`_     1.9.6        aclocal macro generator\ :sup:`4`
+`libtool <http://savannah.gnu.org/projects/libtool>`_       1.5.22       Shared library manager\ :sup:`4`
+`zlib <http://zlib.net>`_                                   >=1.2.3.4    Compression library\ :sup:`5`
+=========================================================== ============ ==========================================
 
 .. note::
 
