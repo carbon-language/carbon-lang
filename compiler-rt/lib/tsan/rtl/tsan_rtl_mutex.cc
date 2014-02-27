@@ -32,8 +32,6 @@ static void EnsureDeadlockDetectorID(Context *ctx, ThreadState *thr,
 static void DDUnlock(Context *ctx, ThreadState *thr, SyncVar *s) {
   if (!common_flags()->detect_deadlocks) return;
   if (s->recursion != 0) return;
-  Lock lk(&ctx->dd_mtx);
-  EnsureDeadlockDetectorID(ctx, thr, s);
   // Printf("T%d MutexUnlock: %zx; recursion %d\n", thr->tid,
   //        s->deadlock_detector_id, s->recursion);
   ctx->dd.onUnlock(&thr->deadlock_detector_tls, s->deadlock_detector_id);

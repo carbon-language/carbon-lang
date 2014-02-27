@@ -269,9 +269,8 @@ void RunMultipleEpochsTest() {
   EXPECT_EQ(d.testOnlyGetEpoch(), 4 * d.size());
 
   // Can not handle the locks from the previous epoch.
-  // The user should update the lock id.
+  // The caller should update the lock id.
   EXPECT_DEATH(d.onLock(&dtls, l0), "CHECK failed.*current_epoch_");
-  EXPECT_DEATH(d.onUnlock(&dtls, l1), "CHECK failed.*current_epoch_");
 }
 
 TEST(DeadlockDetector, MultipleEpochsTest) {
