@@ -55,7 +55,7 @@ namespace llvm {
   class DIBuilder {
     private:
     Module &M;
-    LLVMContext & VMContext;
+    LLVMContext &VMContext;
 
     MDNode *TempEnumTypes;
     MDNode *TempRetainTypes;
