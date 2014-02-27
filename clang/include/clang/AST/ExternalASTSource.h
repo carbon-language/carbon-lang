@@ -53,7 +53,7 @@ enum ExternalLoadResult {
 /// sources can resolve types and declarations from abstract IDs into
 /// actual type and declaration nodes, and read parts of declaration
 /// contexts.
-class ExternalASTSource {
+class ExternalASTSource : public RefCountedBase<ExternalASTSource> {
   /// \brief Whether this AST source also provides information for
   /// semantic analysis.
   bool SemaSource;

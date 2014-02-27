@@ -75,7 +75,7 @@ private:
   IntrusiveRefCntPtr<ASTContext>          Ctx;
   IntrusiveRefCntPtr<TargetOptions>       TargetOpts;
   IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts;
-  ASTReader *Reader;
+  IntrusiveRefCntPtr<ASTReader> Reader;
   bool HadModuleLoaderFatalFailure;
 
   struct ASTWriterData;

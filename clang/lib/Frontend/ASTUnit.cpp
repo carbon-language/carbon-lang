@@ -718,8 +718,6 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   HeaderSearch &HeaderInfo = *AST->HeaderInfo.get();
   unsigned Counter;
 
-  OwningPtr<ASTReader> Reader;
-
   AST->PP = new Preprocessor(PPOpts,
                              AST->getDiagnostics(), AST->ASTFileLangOpts,
                              /*Target=*/0, AST->getSourceManager(), HeaderInfo, 
@@ -742,21 +740,17 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   bool disableValid = false;
   if (::getenv("LIBCLANG_DISABLE_PCH_VALIDATION"))
     disableValid = true;
-  Reader.reset(new ASTReader(PP, Context,
+  AST->Reader = new ASTReader(PP, Context,
                              /*isysroot=*/"",
                              /*DisableValidation=*/disableValid,
-                             AllowPCHWithCompilerErrors));
-  
-  // Recover resources if we crash before exiting this method.
-  llvm::CrashRecoveryContextCleanupRegistrar<ASTReader>
-    ReaderCleanup(Reader.get());
+                             AllowPCHWithCompilerErrors);
 
-  Reader->setListener(new ASTInfoCollector(*AST->PP, Context,
+  AST->Reader->setListener(new ASTInfoCollector(*AST->PP, Context,
                                            AST->ASTFileLangOpts,
                                            AST->TargetOpts, AST->Target, 
                                            Counter));
 
-  switch (Reader->ReadAST(Filename, serialization::MK_MainFile,
+  switch (AST->Reader->ReadAST(Filename, serialization::MK_MainFile,
                           SourceLocation(), ASTReader::ARR_None)) {
   case ASTReader::Success:
     break;
@@ -771,21 +765,14 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
     return NULL;
   }
 
-  AST->OriginalSourceFile = Reader->getOriginalSourceFile();
+  AST->OriginalSourceFile = AST->Reader->getOriginalSourceFile();
 
   PP.setCounterValue(Counter);
 
   // Attach the AST reader to the AST context as an external AST
   // source, so that declarations will be deserialized from the
   // AST file as needed.
-  ASTReader *ReaderPtr = Reader.get();
-  OwningPtr<ExternalASTSource> Source(Reader.take());
-
-  // Unregister the cleanup for ASTReader.  It will get cleaned up
-  // by the ASTUnit cleanup.
-  ReaderCleanup.unregister();
-
-  Context.setExternalSource(Source);
+  Context.setExternalSource(AST->Reader);
 
   // Create an AST consumer, even though it isn't used.
   AST->Consumer.reset(new ASTConsumer);
@@ -793,8 +780,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   // Create a semantic analysis object and tell the AST reader about it.
   AST->TheSema.reset(new Sema(PP, Context, *AST->Consumer));
   AST->TheSema->Initialize();
-  ReaderPtr->InitializeSema(*AST->TheSema);
-  AST->Reader = ReaderPtr;
+  AST->Reader->InitializeSema(*AST->TheSema);
 
   // Tell the diagnostic client that we have started a source file.
   AST->getDiagnostics().getClient()->BeginSourceFile(Context.getLangOpts(),&PP);
@@ -1173,7 +1159,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
 
   if (OverrideMainBuffer) {
     std::string ModName = getPreambleFile(this);
-    TranslateStoredDiagnostics(Clang->getModuleManager(), ModName,
+    TranslateStoredDiagnostics(Clang->getModuleManager().getPtr(), ModName,
                                getSourceManager(), PreambleDiagnostics,
                                StoredDiagnostics);
   }

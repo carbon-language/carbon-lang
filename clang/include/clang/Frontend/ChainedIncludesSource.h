@@ -24,13 +24,13 @@ class ChainedIncludesSource : public ExternalSemaSource {
 public:
   virtual ~ChainedIncludesSource();
 
-  static ChainedIncludesSource *create(CompilerInstance &CI);
+  static IntrusiveRefCntPtr<ChainedIncludesSource> create(CompilerInstance &CI);
 
   ExternalSemaSource &getFinalReader() const { return *FinalReader; }
 
 private:
   std::vector<CompilerInstance *> CIs;
-  OwningPtr<ExternalSemaSource> FinalReader;
+  IntrusiveRefCntPtr<ExternalSemaSource> FinalReader;
 
   
 protected:

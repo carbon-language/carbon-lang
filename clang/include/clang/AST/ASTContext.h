@@ -416,7 +416,7 @@ public:
   SelectorTable &Selectors;
   Builtin::Context &BuiltinInfo;
   mutable DeclarationNameTable DeclarationNames;
-  OwningPtr<ExternalASTSource> ExternalSource;
+  IntrusiveRefCntPtr<ExternalASTSource> ExternalSource;
   ASTMutationListener *Listener;
 
   /// \brief Contains parents of a node.
@@ -811,11 +811,13 @@ public:
   /// The external AST source provides the ability to load parts of
   /// the abstract syntax tree as needed from some external storage,
   /// e.g., a precompiled header.
-  void setExternalSource(OwningPtr<ExternalASTSource> &Source);
+  void setExternalSource(IntrusiveRefCntPtr<ExternalASTSource> Source);
 
   /// \brief Retrieve a pointer to the external AST source associated
   /// with this AST context, if any.
-  ExternalASTSource *getExternalSource() const { return ExternalSource.get(); }
+  ExternalASTSource *getExternalSource() const {
+    return ExternalSource.getPtr();
+  }
 
   /// \brief Attach an AST mutation listener to the AST context.
   ///

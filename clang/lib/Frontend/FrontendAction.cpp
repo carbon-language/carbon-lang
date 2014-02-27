@@ -316,12 +316,11 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     
     if (!CI.getPreprocessorOpts().ChainedIncludes.empty()) {
       // Convert headers to PCH and chain them.
-      OwningPtr<ExternalASTSource> source;
-      source.reset(ChainedIncludesSource::create(CI));
+      IntrusiveRefCntPtr<ChainedIncludesSource> source;
+      source = ChainedIncludesSource::create(CI);
       if (!source)
         goto failure;
-      CI.setModuleManager(static_cast<ASTReader*>(
-         &static_cast<ChainedIncludesSource*>(source.get())->getFinalReader()));
+      CI.setModuleManager(static_cast<ASTReader*>(&source->getFinalReader()));
       CI.getASTContext().setExternalSource(source);
 
     } else if (!CI.getPreprocessorOpts().ImplicitPCHInclude.empty()) {
@@ -361,7 +360,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   // provides the layouts from that file.
   if (!CI.getFrontendOpts().OverrideRecordLayoutsFile.empty() && 
       CI.hasASTContext() && !CI.getASTContext().getExternalSource()) {
-    OwningPtr<ExternalASTSource> 
+    IntrusiveRefCntPtr<ExternalASTSource> 
       Override(new LayoutOverrideSource(
                      CI.getFrontendOpts().OverrideRecordLayoutsFile));
     CI.getASTContext().setExternalSource(Override);

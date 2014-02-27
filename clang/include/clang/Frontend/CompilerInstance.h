@@ -102,8 +102,8 @@ class CompilerInstance : public ModuleLoader {
   /// \brief The frontend timer
   OwningPtr<llvm::Timer> FrontendTimer;
 
-  /// \brief Non-owning reference to the ASTReader, if one exists.
-  ASTReader *ModuleManager;
+  /// \brief The ASTReader, if one exists.
+  IntrusiveRefCntPtr<ASTReader> ModuleManager;
 
   /// \brief The set of top-level modules that has already been loaded,
   /// along with the module map
@@ -454,8 +454,8 @@ public:
   /// @name Module Management
   /// {
 
-  ASTReader *getModuleManager() const { return ModuleManager; }
-  void setModuleManager(ASTReader *Reader) { ModuleManager = Reader; }
+  IntrusiveRefCntPtr<ASTReader> getModuleManager() const;
+  void setModuleManager(IntrusiveRefCntPtr<ASTReader> Reader);
 
   /// }
   /// @name Code Completion

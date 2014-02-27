@@ -62,12 +62,13 @@ ChainedIncludesSource::~ChainedIncludesSource() {
     delete CIs[i];
 }
 
-ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
+IntrusiveRefCntPtr<ChainedIncludesSource>
+ChainedIncludesSource::create(CompilerInstance &CI) {
 
   std::vector<std::string> &includes = CI.getPreprocessorOpts().ChainedIncludes;
   assert(!includes.empty() && "No '-chain-include' in options!");
 
-  OwningPtr<ChainedIncludesSource> source(new ChainedIncludesSource());
+  IntrusiveRefCntPtr<ChainedIncludesSource> source(new ChainedIncludesSource());
   InputKind IK = CI.getFrontendOpts().Inputs[0].getKind();
 
   SmallVector<llvm::MemoryBuffer *, 4> serialBufs;
@@ -137,13 +138,12 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
       
       serialBufNames.push_back(pchName);
 
-      OwningPtr<ExternalASTSource> Reader;
-
-      Reader.reset(createASTReader(*Clang, pchName, bufs, serialBufNames, 
-        Clang->getASTConsumer().GetASTDeserializationListener()));
+      IntrusiveRefCntPtr<ASTReader> Reader;
+      Reader = createASTReader(*Clang, pchName, bufs, serialBufNames, 
+        Clang->getASTConsumer().GetASTDeserializationListener());
       if (!Reader)
         return 0;
-      Clang->setModuleManager(static_cast<ASTReader*>(Reader.get()));
+      Clang->setModuleManager(Reader);
       Clang->getASTContext().setExternalSource(Reader);
     }
     
@@ -162,13 +162,13 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
   assert(!serialBufs.empty());
   std::string pchName = includes.back() + ".pch-final";
   serialBufNames.push_back(pchName);
-  OwningPtr<ASTReader> Reader;
-  Reader.reset(createASTReader(CI, pchName, serialBufs, serialBufNames));
+  IntrusiveRefCntPtr<ASTReader> Reader;
+  Reader = createASTReader(CI, pchName, serialBufs, serialBufNames);
   if (!Reader)
     return 0;
 
-  source->FinalReader.reset(Reader.take());
-  return source.take();
+  source->FinalReader = Reader;
+  return source;
 }
 
 //===----------------------------------------------------------------------===//
