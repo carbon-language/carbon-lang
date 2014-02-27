@@ -2648,24 +2648,16 @@ static SDValue LowerF128Store(SDValue Op, SelectionDAG &DAG) {
                      &OutChains[0], 2);
 }
 
-static SDValue LowerFNEG(SDValue Op, SelectionDAG &DAG,
-                         const SparcTargetLowering &TLI,
-                         bool is64Bit) {
-  if (Op.getValueType() == MVT::f64)
-    return LowerF64Op(Op, DAG, ISD::FNEG);
-  if (Op.getValueType() == MVT::f128)
-    return TLI.LowerF128Op(Op, DAG, ((is64Bit) ? "_Qp_neg" : "_Q_neg"), 1);
-  return Op;
-}
+static SDValue LowerFNEGorFABS(SDValue Op, SelectionDAG &DAG, bool isV9) {
+  assert((Op.getOpcode() == ISD::FNEG || Op.getOpcode() == ISD::FABS) && "invalid");
 
-static SDValue LowerFABS(SDValue Op, SelectionDAG &DAG, bool isV9) {
   if (Op.getValueType() == MVT::f64)
-    return LowerF64Op(Op, DAG, ISD::FABS);
+    return LowerF64Op(Op, DAG, Op.getOpcode());
   if (Op.getValueType() != MVT::f128)
     return Op;
 
-  // Lower fabs on f128 to fabs on f64
-  // fabs f128 => fabs f64:sub_even64, fmov f64:sub_odd64
+  // Lower fabs/fneg on f128 to fabs/fneg on f64
+  // fabs/fneg f128 => fabs/fneg f64:sub_even64, fmov f64:sub_odd64
 
   SDLoc dl(Op);
   SDValue SrcReg128 = Op.getOperand(0);
@@ -2676,7 +2668,7 @@ static SDValue LowerFABS(SDValue Op, SelectionDAG &DAG, bool isV9) {
   if (isV9)
     Hi64 = DAG.getNode(Op.getOpcode(), dl, MVT::f64, Hi64);
   else
-    Hi64 = LowerF64Op(Hi64, DAG, ISD::FABS);
+    Hi64 = LowerF64Op(Hi64, DAG, Op.getOpcode());
 
   SDValue DstReg128 = SDValue(DAG.getMachineNode(TargetOpcode::IMPLICIT_DEF,
                                                  dl, MVT::f128), 0);
@@ -2797,7 +2789,6 @@ SDValue SparcTargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 
   bool hasHardQuad = Subtarget->hasHardQuad();
-  bool is64Bit     = Subtarget->is64Bit();
   bool isV9        = Subtarget->isV9();
 
   switch (Op.getOpcode()) {
@@ -2840,8 +2831,8 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const {
                                        getLibcallName(RTLIB::DIV_F128), 2);
   case ISD::FSQRT:              return LowerF128Op(Op, DAG,
                                        getLibcallName(RTLIB::SQRT_F128),1);
-  case ISD::FNEG:               return LowerFNEG(Op, DAG, *this, is64Bit);
-  case ISD::FABS:               return LowerFABS(Op, DAG, isV9);
+  case ISD::FABS:
+  case ISD::FNEG:               return LowerFNEGorFABS(Op, DAG, isV9);
   case ISD::FP_EXTEND:          return LowerF128_FPEXTEND(Op, DAG, *this);
   case ISD::FP_ROUND:           return LowerF128_FPROUND(Op, DAG, *this);
   case ISD::ADDC:

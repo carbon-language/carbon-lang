@@ -232,3 +232,14 @@ entry:
   store  i32 %3, i32* %4, align 8
   ret void
 }
+
+; SOFT-LABEL:     f128_neg
+; SOFT:           fnegs
+
+define void @f128_neg(fp128* noalias sret %scalar.result, fp128* byval %a) {
+entry:
+  %0 = load fp128* %a, align 8
+  %1 = fsub fp128 0xL00000000000000008000000000000000, %0
+  store fp128 %1, fp128* %scalar.result, align 8
+  ret void
+}
