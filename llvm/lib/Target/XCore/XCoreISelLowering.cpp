@@ -1078,6 +1078,24 @@ XCoreTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   }
 }
 
+/// LowerCallResult - Lower the result values of a call into the
+/// appropriate copies out of appropriate physical registers / memory locations.
+static SDValue
+LowerCallResult(SDValue Chain, SDValue InFlag,
+                const SmallVectorImpl<CCValAssign> &RVLocs,
+                SDLoc dl, SelectionDAG &DAG,
+                SmallVectorImpl<SDValue> &InVals) {
+  // Copy all of the result registers out of their specified physreg.
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    Chain = DAG.getCopyFromReg(Chain, dl, RVLocs[i].getLocReg(),
+                                 RVLocs[i].getValVT(), InFlag).getValue(1);
+    InFlag = Chain.getValue(2);
+    InVals.push_back(Chain.getValue(0));
+  }
+
+  return Chain;
+}
+
 /// LowerCCCCallTo - functions arguments are copied from virtual
 /// regs to (physical regs)/(stack frame), CALLSEQ_START and
 /// CALLSEQ_END are emitted.
@@ -1200,37 +1218,15 @@ XCoreTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
                              InFlag, dl);
   InFlag = Chain.getValue(1);
 
-  // Handle result values, copying them out of physregs into vregs that we
-  // return.
-  return LowerCallResult(Chain, InFlag, CallConv, isVarArg,
-                         Ins, dl, DAG, InVals);
-}
-
-/// LowerCallResult - Lower the result values of a call into the
-/// appropriate copies out of appropriate physical registers.
-SDValue
-XCoreTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
-                                     CallingConv::ID CallConv, bool isVarArg,
-                                     const SmallVectorImpl<ISD::InputArg> &Ins,
-                                     SDLoc dl, SelectionDAG &DAG,
-                                     SmallVectorImpl<SDValue> &InVals) const {
-
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), RVLocs, *DAG.getContext());
+  CCState RetCCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+                    getTargetMachine(), RVLocs, *DAG.getContext());
+  RetCCInfo.AnalyzeCallResult(Ins, RetCC_XCore);
 
-  CCInfo.AnalyzeCallResult(Ins, RetCC_XCore);
-
-  // Copy all of the result registers out of their specified physreg.
-  for (unsigned i = 0; i != RVLocs.size(); ++i) {
-    Chain = DAG.getCopyFromReg(Chain, dl, RVLocs[i].getLocReg(),
-                                 RVLocs[i].getValVT(), InFlag).getValue(1);
-    InFlag = Chain.getValue(2);
-    InVals.push_back(Chain.getValue(0));
-  }
-
-  return Chain;
+  // Handle result values, copying them out of physregs into vregs that we
+  // return.
+  return LowerCallResult(Chain, InFlag, RVLocs, dl, DAG, InVals);
 }
 
 //===----------------------------------------------------------------------===//
