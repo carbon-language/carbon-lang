@@ -2560,9 +2560,46 @@ private:
                   const CXXRecordDecl *LastVBase,
                   BasesSetVectorTy &VisitedBases);
 
+  void CheckBadVirtualInheritanceHierarchy() {
+    // We fail at this-adjustment for virtual methods inherited from
+    // non-virtual bases that overrides a method in a virtual base.
+    if (Context.getLangOpts().DumpVTableLayouts)
+      return;
+    for (CXXRecordDecl::base_class_const_iterator BI =
+        MostDerivedClass->bases_begin(), BE = MostDerivedClass->bases_end();
+        BI != BE; ++BI) {
+      const CXXRecordDecl *Base = BI->getType()->getAsCXXRecordDecl();
+      if (BI->isVirtual())
+        continue;
+      for (CXXRecordDecl::method_iterator I = Base->method_begin(),
+          E = Base->method_end(); I != E; ++I) {
+        const CXXMethodDecl *Method = *I;
+        if (!Method->isVirtual())
+          continue;
+        if (isa<CXXDestructorDecl>(Method))
+          continue;
+        OverriddenMethodsSetTy OverriddenMethods;
+        ComputeAllOverriddenMethods(Method, OverriddenMethods);
+        for (OverriddenMethodsSetTy::const_iterator I =
+            OverriddenMethods.begin(),
+            E = OverriddenMethods.end(); I != E; ++I) {
+          const CXXMethodDecl *Overridden = *I;
+          if (Base->isVirtuallyDerivedFrom(Overridden->getParent())) {
+            ErrorUnsupported("classes with non-virtual base "
+                "classes that override methods in virtual bases",
+                BI->getLocStart());
+            return;
+          }
+        }
+      }
+    }
+  }
+
   void LayoutVFTable() {
     // FIXME: add support for RTTI when we have proper LLVM support for symbols
     // pointing to the middle of a section.
+
+    CheckBadVirtualInheritanceHierarchy();
 
     BasesSetVectorTy VisitedBases;
     AddMethods(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 0, 0,
