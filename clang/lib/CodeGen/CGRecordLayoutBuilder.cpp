@@ -631,8 +631,6 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
 
   Builder.lower(false);
 
-  Ty->setBody(Builder.FieldTypes, Builder.Packed);
-
   // If we're in C++, compute the base subobject type.
   llvm::StructType *BaseTy = 0;
   if (isa<CXXRecordDecl>(D) && !D->isUnion() && !D->hasAttr<FinalAttr>()) {
@@ -645,6 +643,11 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
       addRecordTypeName(D, BaseTy, ".base");
     }
   }
+
+  // Fill in the struct *after* computing the base type.  Filling in the body
+  // signifies that the type is no longer opaque and record layout is complete,
+  // but we may need to recursively layout D while laying D out as a base type.
+  Ty->setBody(Builder.FieldTypes, Builder.Packed);
 
   CGRecordLayout *RL =
     new CGRecordLayout(Ty, BaseTy, Builder.IsZeroInitializable,
