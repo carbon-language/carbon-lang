@@ -137,6 +137,8 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->strict_memcmp, "strict_memcmp");
   ParseFlag(str, &f->strict_init_order, "strict_init_order");
   ParseFlag(str, &f->start_deactivated, "start_deactivated");
+  ParseFlag(str, &f->detect_invalid_pointer_pairs,
+            "detect_invalid_pointer_pairs");
 }
 
 void InitializeFlags(Flags *f, const char *env) {
@@ -182,6 +184,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->strict_memcmp = true;
   f->strict_init_order = false;
   f->start_deactivated = false;
+  f->detect_invalid_pointer_pairs = 0;
 
   // Override from compile definition.
   ParseFlagsFromString(f, MaybeUseAsanDefaultOptionsCompileDefiniton());

@@ -114,6 +114,10 @@ struct Flags {
   // them to original values when the first instrumented module is loaded into
   // the process. This is mainly intended to be used on Android.
   bool start_deactivated;
+  // If non-zero, try to detect operations like <, <=, >, >= and - on invalid
+  // pointer pairs (e.g. when pointers belong to different objects).
+  // The bigger the value the harder we try.
+  int detect_invalid_pointer_pairs;
 };
 
 extern Flags asan_flags_dont_use_directly;

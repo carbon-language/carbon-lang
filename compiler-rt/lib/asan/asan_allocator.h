@@ -43,6 +43,7 @@ class AsanChunkView {
   uptr UsedSize();  // Size requested by the user.
   uptr AllocTid();
   uptr FreeTid();
+  bool Eq(const AsanChunkView &c) const { return chunk_ == c.chunk_; }
   void GetAllocStack(StackTrace *stack);
   void GetFreeStack(StackTrace *stack);
   bool AddrIsInside(uptr addr, uptr access_size, sptr *offset) {

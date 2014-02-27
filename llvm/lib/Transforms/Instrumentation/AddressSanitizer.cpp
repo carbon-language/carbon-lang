@@ -81,6 +81,8 @@ static const char *const kAsanPoisonGlobalsName = "__asan_before_dynamic_init";
 static const char *const kAsanUnpoisonGlobalsName = "__asan_after_dynamic_init";
 static const char *const kAsanInitName = "__asan_init_v3";
 static const char *const kAsanCovName = "__sanitizer_cov";
+static const char *const kAsanPtrCmp = "__sanitizer_ptr_cmp";
+static const char *const kAsanPtrSub = "__sanitizer_ptr_sub";
 static const char *const kAsanHandleNoReturnName = "__asan_handle_no_return";
 static const int         kMaxAsanStackMallocSizeClass = 10;
 static const char *const kAsanStackMallocNameTemplate = "__asan_stack_malloc_";
@@ -138,6 +140,9 @@ static cl::opt<bool> ClInitializers("asan-initialization-order",
        cl::desc("Handle C++ initializer order"), cl::Hidden, cl::init(false));
 static cl::opt<bool> ClMemIntrin("asan-memintrin",
        cl::desc("Handle memset/memcpy/memmove"), cl::Hidden, cl::init(true));
+static cl::opt<bool> ClInvalidPointerPairs("asan-detect-invalid-pointer-pair",
+       cl::desc("Instrument <, <=, >, >=, - with pointer operands"),
+       cl::Hidden, cl::init(true));
 static cl::opt<unsigned> ClRealignStack("asan-realign-stack",
        cl::desc("Realign stack to the value of this flag (power of two)"),
        cl::Hidden, cl::init(32));
@@ -300,6 +305,7 @@ struct AddressSanitizer : public FunctionPass {
     return "AddressSanitizerFunctionPass";
   }
   void instrumentMop(Instruction *I);
+  void instrumentPointerComparisonOrSubtraction(Instruction *I);
   void instrumentAddress(Instruction *OrigIns, Instruction *InsertBefore,
                          Value *Addr, uint32_t TypeSize, bool IsWrite,
                          Value *SizeArgument);
@@ -342,6 +348,7 @@ struct AddressSanitizer : public FunctionPass {
   Function *AsanInitFunction;
   Function *AsanHandleNoReturnFunc;
   Function *AsanCovFunction;
+  Function *AsanPtrCmpFunction, *AsanPtrSubFunction;
   OwningPtr<SpecialCaseList> BL;
   // This array is indexed by AccessIsWrite and log2(AccessSize).
   Function *AsanErrorCallback[2][kNumberOfAccessSizes];
@@ -654,11 +661,46 @@ static Value *isInterestingMemoryAccess(Instruction *I, bool *IsWrite) {
   return NULL;
 }
 
+static bool isPointerOperand(Value *V) {
+  return V->getType()->isPointerTy() || isa<PtrToIntInst>(V);
+}
+
+// This is a rough heuristic; it may cause both false positives and
+// false negatives. The proper implementation requires cooperation with
+// the frontend.
+static bool isInterestingPointerComparisonOrSubtraction(Instruction *I) {
+  if (ICmpInst *Cmp = dyn_cast<ICmpInst>(I)) {
+    if (!Cmp->isRelational())
+      return false;
+  } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
+    if (!BO->getOpcode() == Instruction::Sub)
+      return false;
+  } else {
+    return false;
+  }
+  if (!isPointerOperand(I->getOperand(0)) ||
+      !isPointerOperand(I->getOperand(1)))
+      return false;
+  return true;
+}
+
 bool AddressSanitizer::GlobalIsLinkerInitialized(GlobalVariable *G) {
   // If a global variable does not have dynamic initialization we don't
   // have to instrument it.  However, if a global does not have initializer
   // at all, we assume it has dynamic initializer (in other TU).
   return G->hasInitializer() && !DynamicallyInitializedGlobals.Contains(G);
+}
+
+void
+AddressSanitizer::instrumentPointerComparisonOrSubtraction(Instruction *I) {
+  IRBuilder<> IRB(I);
+  Function *F = isa<ICmpInst>(I) ? AsanPtrCmpFunction : AsanPtrSubFunction;
+  Value *Param[2] = {I->getOperand(0), I->getOperand(1)};
+  for (int i = 0; i < 2; i++) {
+    if (Param[i]->getType()->isPointerTy())
+      Param[i] = IRB.CreatePointerCast(Param[i], IntptrTy);
+  }
+  IRB.CreateCall2(F, Param[0], Param[1]);
 }
 
 void AddressSanitizer::instrumentMop(Instruction *I) {
@@ -1080,6 +1122,10 @@ void AddressSanitizer::initializeCallbacks(Module &M) {
       kAsanHandleNoReturnName, IRB.getVoidTy(), NULL));
   AsanCovFunction = checkInterfaceFunction(M.getOrInsertFunction(
       kAsanCovName, IRB.getVoidTy(), NULL));
+  AsanPtrCmpFunction = checkInterfaceFunction(M.getOrInsertFunction(
+      kAsanPtrCmp, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+  AsanPtrSubFunction = checkInterfaceFunction(M.getOrInsertFunction(
+      kAsanPtrSub, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
   // We insert an empty inline asm after __asan_report* to avoid callback merge.
   EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
                             StringRef(""), StringRef(""),
@@ -1221,6 +1267,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   SmallVector<Instruction*, 16> ToInstrument;
   SmallVector<Instruction*, 8> NoReturnCalls;
   SmallVector<BasicBlock*, 16> AllBlocks;
+  SmallVector<Instruction*, 16> PointerComparisonsOrSubtracts;
   int NumAllocas = 0;
   bool IsWrite;
 
@@ -1238,6 +1285,10 @@ bool AddressSanitizer::runOnFunction(Function &F) {
           if (!TempsToInstrument.insert(Addr))
             continue;  // We've seen this temp in the current BB.
         }
+      } else if (ClInstrumentAtomics &&
+                 isInterestingPointerComparisonOrSubtraction(BI)) {
+        PointerComparisonsOrSubtracts.push_back(BI);
+        continue;
       } else if (isa<MemIntrinsic>(BI) && ClMemIntrin) {
         // ok, take it.
       } else {
@@ -1293,6 +1344,11 @@ bool AddressSanitizer::runOnFunction(Function &F) {
     Instruction *CI = NoReturnCalls[i];
     IRBuilder<> IRB(CI);
     IRB.CreateCall(AsanHandleNoReturnFunc);
+  }
+
+  for (size_t i = 0, n = PointerComparisonsOrSubtracts.size(); i != n; i++) {
+    instrumentPointerComparisonOrSubtraction(PointerComparisonsOrSubtracts[i]);
+    NumInstrumented++;
   }
 
   bool res = NumInstrumented > 0 || ChangedStack || !NoReturnCalls.empty();

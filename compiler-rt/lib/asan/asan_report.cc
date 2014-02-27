@@ -716,6 +716,34 @@ void ReportBadParamsToAnnotateContiguousContainer(uptr beg, uptr end,
   ReportErrorSummary("bad-__sanitizer_annotate_contiguous_container", stack);
 }
 
+// ----------------------- CheckForInvalidPointerPair ----------- {{{1
+static NOINLINE void
+ReportInvalidPointerPair(uptr pc, uptr bp, uptr sp, uptr a1, uptr a2) {
+  ScopedInErrorReport in_report;
+  Decorator d;
+  Printf("%s", d.Warning());
+  Report("ERROR: AddressSanitizer: invalid-pointer-pair: %p %p\n", a1, a2);
+  Printf("%s", d.EndWarning());
+  GET_STACK_TRACE_FATAL(pc, bp);
+  stack.Print();
+  DescribeAddress(a1, 1);
+  DescribeAddress(a2, 1);
+  ReportErrorSummary("invalid-pointer-pair", &stack);
+}
+
+static INLINE void CheckForInvalidPointerPair(void *p1, void *p2) {
+  if (!flags()->detect_invalid_pointer_pairs) return;
+  uptr a1 = reinterpret_cast<uptr>(p1);
+  uptr a2 = reinterpret_cast<uptr>(p2);
+  AsanChunkView chunk1 = FindHeapChunkByAddress(a1);
+  AsanChunkView chunk2 = FindHeapChunkByAddress(a2);
+  bool valid1 = chunk1.IsValid();
+  bool valid2 = chunk2.IsValid();
+  if ((valid1 != valid2) || (valid1 && valid2 && !chunk1.Eq(chunk2))) {
+    GET_CALLER_PC_BP_SP;                                              \
+    return ReportInvalidPointerPair(pc, bp, sp, a1, a2);
+  }
+}
 // ----------------------- Mac-specific reports ----------------- {{{1
 
 void WarnMacFreeUnallocated(
@@ -843,6 +871,17 @@ void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
 void __asan_describe_address(uptr addr) {
   DescribeAddress(addr, 1);
 }
+
+extern "C" {
+SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_ptr_sub(void *a, void *b) {
+  CheckForInvalidPointerPair(a, b);
+}
+SANITIZER_INTERFACE_ATTRIBUTE
+void __sanitizer_ptr_cmp(void *a, void *b) {
+  CheckForInvalidPointerPair(a, b);
+}
+}  // extern "C"
 
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS
 // Provide default implementation of __asan_on_error that does nothing
