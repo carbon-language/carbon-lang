@@ -87,6 +87,7 @@ namespace llvm {
     public:
     explicit DIBuilder(Module &M);
     enum ComplexAddrKind { OpPlus=1, OpDeref };
+    enum DebugEmissionKind { FullDebug=1, LineTablesOnly };
 
     /// finalize - Construct any deferred debug info descriptors.
     void finalize();
@@ -111,7 +112,8 @@ namespace llvm {
                                     StringRef Dir, StringRef Producer,
                                     bool isOptimized, StringRef Flags,
                                     unsigned RV,
-                                    StringRef SplitName = StringRef());
+                                    StringRef SplitName = StringRef(),
+                                    DebugEmissionKind Kind = FullDebug);
 
     /// createFile - Create a file descriptor to hold debugging information
     /// for a file.

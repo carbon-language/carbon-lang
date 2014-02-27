@@ -30,7 +30,7 @@ attributes #2 = { nounwind readonly ssp }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!25}
 
-!0 = metadata !{i32 524305, metadata !1, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !23, metadata !24, null, metadata !""} ; [ DW_TAG_compile_unit ] [/tmp//g.c] [DW_LANG_C89]
+!0 = metadata !{i32 524305, metadata !1, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !23, metadata !24, null, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/tmp//g.c] [DW_LANG_C89]
 !1 = metadata !{metadata !"g.c", metadata !"/tmp/"}
 !2 = metadata !{null}
 !3 = metadata !{i32 524334, metadata !1, null, metadata !"bar", metadata !"bar", metadata !"", i32 5, metadata !4, i1 true, i1 true, i32 0, i32 0, null, i1 false, i1 true, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ] [line 5] [local] [def] [scope 0] [bar]

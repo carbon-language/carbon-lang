@@ -97,7 +97,9 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
                                            StringRef Directory,
                                            StringRef Producer, bool isOptimized,
                                            StringRef Flags, unsigned RunTimeVer,
-                                           StringRef SplitName) {
+                                           StringRef SplitName,
+                                           DebugEmissionKind Kind) {
+
   assert(((Lang <= dwarf::DW_LANG_Python && Lang >= dwarf::DW_LANG_C89) ||
           (Lang <= dwarf::DW_LANG_hi_user && Lang >= dwarf::DW_LANG_lo_user)) &&
          "Invalid Language tag");
@@ -127,7 +129,8 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
     TempSubprograms,
     TempGVs,
     TempImportedModules,
-    MDString::get(VMContext, SplitName)
+    MDString::get(VMContext, SplitName),
+    ConstantInt::get(Type::getInt32Ty(VMContext), Kind)
   };
 
   MDNode *CUNode = MDNode::get(VMContext, Elts);

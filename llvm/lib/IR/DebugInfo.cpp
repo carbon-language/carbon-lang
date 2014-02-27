@@ -382,7 +382,7 @@ bool DICompileUnit::Verify() const {
   if (getFilename().empty())
     return false;
 
-  return DbgNode->getNumOperands() == 13;
+  return DbgNode->getNumOperands() == 14;
 }
 
 /// Verify - Verify that an ObjC property is well formed.

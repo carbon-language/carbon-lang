@@ -9,7 +9,7 @@ entry:
 
 !0 = metadata !{i32 524334, metadata !10, metadata !1, metadata !"foo", metadata !"foo", metadata !"foo", i32 3, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 false, i32 ()* @foo, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 524329, metadata !10} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 524305, metadata !10, i32 12, metadata !"clang version 2.8 (trunk 112062)", i1 true, metadata !"", i32 0, metadata !11, metadata !11, metadata !12, metadata !13, null, metadata !""} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 524305, metadata !10, i32 12, metadata !"clang version 2.8 (trunk 112062)", i1 true, metadata !"", i32 0, metadata !11, metadata !11, metadata !12, metadata !13, null, metadata !"", i32 1} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 524309, metadata !10, metadata !1, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 524324, metadata !10, metadata !1, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
