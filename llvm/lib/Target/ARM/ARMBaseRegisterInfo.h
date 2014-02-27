@@ -172,6 +172,8 @@ public:
                                  unsigned MIFlags = MachineInstr::NoFlags)const;
 
   /// Code Generation virtual methods...
+  virtual bool mayOverrideLocalAssignment() const;
+
   virtual bool requiresRegisterScavenging(const MachineFunction &MF) const;
 
   virtual bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const;

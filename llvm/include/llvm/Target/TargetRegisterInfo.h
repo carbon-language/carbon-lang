@@ -683,6 +683,12 @@ public:
   /// (3) Bottom-up allocation is no longer guaranteed to optimally color.
   virtual bool reverseLocalAssignment() const { return false; }
 
+  /// Allow the target to override register assignment heuristics based on the
+  /// live range size. If this returns false, then local live ranges are always
+  /// assigned in order regardless of their size. This is a temporary hook for
+  /// debugging downstream codegen failures exposed by regalloc.
+  virtual bool mayOverrideLocalAssignment() const { return true; }
+
   /// requiresRegisterScavenging - returns true if the target requires (and can
   /// make use of) the register scavenger.
   virtual bool requiresRegisterScavenging(const MachineFunction &MF) const {

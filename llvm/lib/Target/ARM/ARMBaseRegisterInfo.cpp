@@ -408,6 +408,11 @@ emitLoadConstPool(MachineBasicBlock &MBB,
     .setMIFlags(MIFlags);
 }
 
+bool ARMBaseRegisterInfo::mayOverrideLocalAssignment() const {
+  // The native linux build hits a downstream codegen bug when this is enabled.
+  return STI.isTargetDarwin();
+}
+
 bool ARMBaseRegisterInfo::
 requiresRegisterScavenging(const MachineFunction &MF) const {
   return true;
