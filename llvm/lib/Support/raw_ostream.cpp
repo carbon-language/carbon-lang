@@ -430,15 +430,16 @@ void format_object_base::home() {
 /// occurs, information about the error is put into ErrorInfo, and the
 /// stream should be immediately destroyed; the string will be empty
 /// if no error occurred.
-raw_fd_ostream::raw_fd_ostream(StringRef Filename, std::string &ErrorInfo,
+raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
                                sys::fs::OpenFlags Flags)
     : Error(false), UseAtomicWrites(false), pos(0) {
+  assert(Filename != 0 && "Filename is null");
   ErrorInfo.clear();
 
   // Handle "-" as stdout. Note that when we do this, we consider ourself
   // the owner of stdout. This means that we can do things like close the
   // file descriptor when we're done and set the "binary" flag globally.
-  if (Filename == "-") {
+  if (Filename[0] == '-' && Filename[1] == 0) {
     FD = STDOUT_FILENO;
     // If user requested binary then put stdout into binary mode if
     // possible.
