@@ -917,7 +917,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
     uint64_t Value = 0;
     for (unsigned b = 0, be = BI->getNumBits(); b != be; ++b) {
       if (BitInit *B = dyn_cast<BitInit>(BI->getBit(b)))
-      Value |= (uint64_t)B->getValue() << b;
+        Value |= (uint64_t)B->getValue() << b;
     }
     OS << "  " << Value << ",\n";
   }
