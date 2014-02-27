@@ -5,7 +5,7 @@
 // DEBUGGER: break 62
 // DEBUGGER: r
 // DEBUGGER: p a
-// CHECK: ${{[0-9]+}} = {
+// CHECK: ${{[0-9]+}} =
 // LLDB does not print artificial members.
 // CHECK:  {{(_vptr\$A =)?.*}}m_int = 12
 
