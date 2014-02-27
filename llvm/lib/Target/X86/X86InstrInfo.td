@@ -1156,23 +1156,31 @@ let Defs = [RCX,RDI], Uses = [RAX,RCX,RDI,EFLAGS] in
 def STOSQ : RI<0xAB, RawFrmDst, (outs dstidx64:$dst), (ins),
                "stosq\t{%rax, $dst|$dst, rax}", [], IIC_STOS>;
 
-def SCAS8 : I<0xAE, RawFrmDst, (outs), (ins dstidx8:$dst),
+// These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
+let Defs = [EDI,EFLAGS], Uses = [AL,EDI,EFLAGS] in
+def SCASB : I<0xAE, RawFrmDst, (outs), (ins dstidx8:$dst),
               "scasb\t{$dst, %al|al, $dst}", [], IIC_SCAS>;
-def SCAS16 : I<0xAF, RawFrmDst, (outs), (ins dstidx16:$dst),
-               "scasw\t{$dst, %ax|ax, $dst}", [], IIC_SCAS>, OpSize16;
-def SCAS32 : I<0xAF, RawFrmDst, (outs), (ins dstidx32:$dst),
-               "scas{l|d}\t{$dst, %eax|eax, $dst}", [], IIC_SCAS>, OpSize32;
-def SCAS64 : RI<0xAF, RawFrmDst, (outs), (ins dstidx64:$dst),
-                "scasq\t{$dst, %rax|rax, $dst}", [], IIC_SCAS>;
+let Defs = [EDI,EFLAGS], Uses = [AX,EDI,EFLAGS] in
+def SCASW : I<0xAF, RawFrmDst, (outs), (ins dstidx16:$dst),
+              "scasw\t{$dst, %ax|ax, $dst}", [], IIC_SCAS>, OpSize16;
+let Defs = [EDI,EFLAGS], Uses = [EAX,EDI,EFLAGS] in
+def SCASL : I<0xAF, RawFrmDst, (outs), (ins dstidx32:$dst),
+              "scas{l|d}\t{$dst, %eax|eax, $dst}", [], IIC_SCAS>, OpSize32;
+let Defs = [EDI,EFLAGS], Uses = [RAX,EDI,EFLAGS] in
+def SCASQ : RI<0xAF, RawFrmDst, (outs), (ins dstidx64:$dst),
+               "scasq\t{$dst, %rax|rax, $dst}", [], IIC_SCAS>;
 
-def CMPS8 : I<0xA6, RawFrmDstSrc, (outs), (ins dstidx8:$dst, srcidx8:$src),
+// These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
+let Defs = [EDI,ESI,EFLAGS], Uses = [EDI,ESI,EFLAGS] in {
+def CMPSB : I<0xA6, RawFrmDstSrc, (outs), (ins dstidx8:$dst, srcidx8:$src),
               "cmpsb\t{$dst, $src|$src, $dst}", [], IIC_CMPS>;
-def CMPS16 : I<0xA7, RawFrmDstSrc, (outs), (ins dstidx16:$dst, srcidx16:$src),
-               "cmpsw\t{$dst, $src|$src, $dst}", [], IIC_CMPS>, OpSize16;
-def CMPS32 : I<0xA7, RawFrmDstSrc, (outs), (ins dstidx32:$dst, srcidx32:$src),
-               "cmps{l|d}\t{$dst, $src|$src, $dst}", [], IIC_CMPS>, OpSize32;
-def CMPS64 : RI<0xA7, RawFrmDstSrc, (outs), (ins dstidx64:$dst, srcidx64:$src),
-                "cmpsq\t{$dst, $src|$src, $dst}", [], IIC_CMPS>;
+def CMPSW : I<0xA7, RawFrmDstSrc, (outs), (ins dstidx16:$dst, srcidx16:$src),
+              "cmpsw\t{$dst, $src|$src, $dst}", [], IIC_CMPS>, OpSize16;
+def CMPSL : I<0xA7, RawFrmDstSrc, (outs), (ins dstidx32:$dst, srcidx32:$src),
+              "cmps{l|d}\t{$dst, $src|$src, $dst}", [], IIC_CMPS>, OpSize32;
+def CMPSQ : RI<0xA7, RawFrmDstSrc, (outs), (ins dstidx64:$dst, srcidx64:$src),
+               "cmpsq\t{$dst, $src|$src, $dst}", [], IIC_CMPS>;
+}
 } // SchedRW
 
 //===----------------------------------------------------------------------===//
@@ -1793,23 +1801,41 @@ def REPNE_PREFIX : I<0xF2, RawFrm, (outs),  (ins), "repne", []>;
 
 // String manipulation instructions
 let SchedRW = [WriteMicrocoded] in {
+// These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
+let Defs = [AL,ESI], Uses = [ESI,EFLAGS] in
 def LODSB : I<0xAC, RawFrmSrc, (outs), (ins srcidx8:$src),
               "lodsb\t{$src, %al|al, $src}", [], IIC_LODS>;
+let Defs = [AX,ESI], Uses = [ESI,EFLAGS] in
 def LODSW : I<0xAD, RawFrmSrc, (outs), (ins srcidx16:$src),
               "lodsw\t{$src, %ax|ax, $src}", [], IIC_LODS>, OpSize16;
+let Defs = [EAX,ESI], Uses = [ESI,EFLAGS] in
 def LODSL : I<0xAD, RawFrmSrc, (outs), (ins srcidx32:$src),
               "lods{l|d}\t{$src, %eax|eax, $src}", [], IIC_LODS>, OpSize32;
+let Defs = [RAX,ESI], Uses = [ESI,EFLAGS] in
 def LODSQ : RI<0xAD, RawFrmSrc, (outs), (ins srcidx64:$src),
                "lodsq\t{$src, %rax|rax, $src}", [], IIC_LODS>;
 }
 
 let SchedRW = [WriteSystem] in {
+// These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
+let Defs = [ESI], Uses = [DX,ESI,EFLAGS] in {
 def OUTSB : I<0x6E, RawFrmSrc, (outs), (ins srcidx8:$src),
              "outsb\t{$src, %dx|dx, $src}", [], IIC_OUTS>;
 def OUTSW : I<0x6F, RawFrmSrc, (outs), (ins srcidx16:$src),
               "outsw\t{$src, %dx|dx, $src}", [], IIC_OUTS>, OpSize16;
 def OUTSL : I<0x6F, RawFrmSrc, (outs), (ins srcidx32:$src),
               "outs{l|d}\t{$src, %dx|dx, $src}", [], IIC_OUTS>, OpSize32;
+}
+
+// These uses the DF flag in the EFLAGS register to inc or dec EDI and ESI
+let Defs = [EDI], Uses = [DX,EDI,EFLAGS] in {
+def INSB : I<0x6C, RawFrmDst, (outs dstidx8:$dst), (ins),
+             "insb\t{%dx, $dst|$dst, dx}", [], IIC_INS>;
+def INSW : I<0x6D, RawFrmDst, (outs dstidx16:$dst), (ins),
+             "insw\t{%dx, $dst|$dst, dx}", [], IIC_INS>,  OpSize16;
+def INSL : I<0x6D, RawFrmDst, (outs dstidx32:$dst), (ins),
+             "ins{l|d}\t{%dx, $dst|$dst, dx}", [], IIC_INS>, OpSize32;
+}
 }
 
 // Flag instructions
@@ -2498,14 +2524,14 @@ def : InstAlias<"stos {%rax, $dst|$dst, rax}", (STOSQ dstidx64:$dst), 0>, Requir
 // scas aliases. Accept the destination being omitted because it's implicit
 // in the mnemonic, or the mnemonic suffix being omitted because it's implicit
 // in the destination.
-def : InstAlias<"scasb $dst", (SCAS8 dstidx8:$dst),  0>;
-def : InstAlias<"scasw $dst", (SCAS16 dstidx16:$dst), 0>;
-def : InstAlias<"scas{l|d} $dst", (SCAS32 dstidx32:$dst), 0>;
-def : InstAlias<"scasq $dst", (SCAS64 dstidx64:$dst), 0>, Requires<[In64BitMode]>;
-def : InstAlias<"scas {$dst, %al|al, $dst}", (SCAS8 dstidx8:$dst),  0>;
-def : InstAlias<"scas {$dst, %ax|ax, $dst}", (SCAS16 dstidx16:$dst), 0>;
-def : InstAlias<"scas {$dst, %eax|eax, $dst}", (SCAS32 dstidx32:$dst), 0>;
-def : InstAlias<"scas {$dst, %rax|rax, $dst}", (SCAS64 dstidx64:$dst), 0>, Requires<[In64BitMode]>;
+def : InstAlias<"scasb $dst", (SCASB dstidx8:$dst),  0>;
+def : InstAlias<"scasw $dst", (SCASW dstidx16:$dst), 0>;
+def : InstAlias<"scas{l|d} $dst", (SCASL dstidx32:$dst), 0>;
+def : InstAlias<"scasq $dst", (SCASQ dstidx64:$dst), 0>, Requires<[In64BitMode]>;
+def : InstAlias<"scas {$dst, %al|al, $dst}", (SCASB dstidx8:$dst),  0>;
+def : InstAlias<"scas {$dst, %ax|ax, $dst}", (SCASW dstidx16:$dst), 0>;
+def : InstAlias<"scas {$dst, %eax|eax, $dst}", (SCASL dstidx32:$dst), 0>;
+def : InstAlias<"scas {$dst, %rax|rax, $dst}", (SCASQ dstidx64:$dst), 0>, Requires<[In64BitMode]>;
 
 // div and idiv aliases for explicit A register.
 def : InstAlias<"div{b}\t{$src, %al|al, $src}", (DIV8r  GR8 :$src)>;
