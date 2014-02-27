@@ -1770,6 +1770,34 @@ void XCoreTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
                                         KnownZero.getBitWidth() - 1);
     }
     break;
+  case ISD::INTRINSIC_W_CHAIN:
+    {
+      unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
+      switch (IntNo) {
+      case Intrinsic::xcore_getts:
+        // High bits are known to be zero.
+        KnownZero = APInt::getHighBitsSet(KnownZero.getBitWidth(),
+                                          KnownZero.getBitWidth() - 16);
+        break;
+      case Intrinsic::xcore_int:
+      case Intrinsic::xcore_inct:
+        // High bits are known to be zero.
+        KnownZero = APInt::getHighBitsSet(KnownZero.getBitWidth(),
+                                          KnownZero.getBitWidth() - 8);
+        break;
+      case Intrinsic::xcore_testct:
+        // Result is either 0 or 1.
+        KnownZero = APInt::getHighBitsSet(KnownZero.getBitWidth(),
+                                          KnownZero.getBitWidth() - 1);
+        break;
+      case Intrinsic::xcore_testwct:
+        // Result is in the range 0 - 4.
+        KnownZero = APInt::getHighBitsSet(KnownZero.getBitWidth(),
+                                          KnownZero.getBitWidth() - 3);
+        break;
+      }
+    }
+    break;
   }
 }
 
