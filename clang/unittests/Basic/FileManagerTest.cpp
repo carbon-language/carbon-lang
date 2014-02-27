@@ -30,6 +30,7 @@ private:
     FileData Data;
     memset(&Data, 0, sizeof(FileData));
     llvm::sys::fs::UniqueID ID(1, INode);
+    Data.Name = Path;
     Data.UniqueID = ID;
     Data.IsDirectory = !IsFile;
     StatCalls[Path] = Data;

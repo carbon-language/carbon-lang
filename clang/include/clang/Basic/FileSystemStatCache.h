@@ -29,7 +29,9 @@ class File;
 class FileSystem;
 }
 
+// FIXME: should probably replace this with vfs::Status
 struct FileData {
+  std::string Name;
   uint64_t Size;
   time_t ModTime;
   llvm::sys::fs::UniqueID UniqueID;

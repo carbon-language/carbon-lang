@@ -90,6 +90,8 @@ public:
                                      bool RequiresNullTerminator = true) = 0;
   /// \brief Closes the file.
   virtual llvm::error_code close() = 0;
+  /// \brief Sets the name to use for this file.
+  virtual void setName(StringRef Name) = 0;
 };
 
 /// \brief The virtual file system interface.
