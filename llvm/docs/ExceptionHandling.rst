@@ -142,7 +142,7 @@ continuation points:
 #. where to continue if the call raises an exception, either by a throw or the
    unwinding of a throw
 
-The term used to define a the place where an ``invoke`` continues after an
+The term used to define the place where an ``invoke`` continues after an
 exception is called a *landing pad*. LLVM landing pads are conceptually
 alternative function entry points where an exception structure reference and a
 type info index are passed in as arguments. The landing pad saves the exception
