@@ -17,59 +17,53 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
-#include "gtest/gtest.h"
 
 namespace clang {
 namespace tidy {
+namespace test {
 
-template <typename T> class ClangTidyTest : public ::testing::Test {
-protected:
-  ClangTidyTest() : Check(new T), Context(&Errors) {}
-
-  std::string runCheckOn(StringRef Code) {
-    ClangTidyDiagnosticConsumer DiagConsumer(Context);
-    Check->setContext(&Context);
-    EXPECT_TRUE(
-        tooling::runToolOnCode(new TestPPAction(*Check, &Context), Code));
-    ast_matchers::MatchFinder Finder;
-    Check->registerMatchers(&Finder);
-    OwningPtr<tooling::FrontendActionFactory> Factory(
-        tooling::newFrontendActionFactory(&Finder));
-    EXPECT_TRUE(tooling::runToolOnCode(Factory->create(), Code));
-    DiagConsumer.finish();
-    tooling::Replacements Fixes;
-    for (SmallVector<ClangTidyError, 16>::const_iterator I = Errors.begin(),
-                                                         E = Errors.end();
-         I != E; ++I)
-      Fixes.insert(I->Fix.begin(), I->Fix.end());
-    return tooling::applyAllReplacements(Code, Fixes);
-  }
-
-  void expectNoChanges(StringRef Code) { EXPECT_EQ(Code, runCheckOn(Code)); }
+class TestPPAction : public PreprocessOnlyAction {
+public:
+  TestPPAction(ClangTidyCheck &Check, ClangTidyContext *Context)
+      : Check(Check), Context(Context) {}
 
 private:
-  class TestPPAction : public PreprocessOnlyAction {
-  public:
-    TestPPAction(ClangTidyCheck &Check, ClangTidyContext *Context)
-        : Check(Check), Context(Context) {}
+  bool BeginSourceFileAction(CompilerInstance &Compiler,
+                             llvm::StringRef file_name) LLVM_OVERRIDE {
+    Context->setSourceManager(&Compiler.getSourceManager());
+    Check.registerPPCallbacks(Compiler);
+    return true;
+  }
 
-  private:
-    virtual bool BeginSourceFileAction(CompilerInstance &Compiler,
-                                       llvm::StringRef file_name) {
-      Context->setSourceManager(&Compiler.getSourceManager());
-      Check.registerPPCallbacks(Compiler);
-      return true;
-    }
-
-    ClangTidyCheck &Check;
-    ClangTidyContext *Context;
-  };
-
-  OwningPtr<ClangTidyCheck> Check;
-  SmallVector<ClangTidyError, 16> Errors;
-  ClangTidyContext Context;
+  ClangTidyCheck &Check;
+  ClangTidyContext *Context;
 };
 
+template <typename T> std::string runCheckOnCode(StringRef Code) {
+  T Check;
+  SmallVector<ClangTidyError, 16> Errors;
+  ClangTidyContext Context(&Errors);
+  ClangTidyDiagnosticConsumer DiagConsumer(Context);
+  Check.setContext(&Context);
+
+  if (!tooling::runToolOnCode(new TestPPAction(Check, &Context), Code))
+    return "";
+  ast_matchers::MatchFinder Finder;
+  Check.registerMatchers(&Finder);
+  OwningPtr<tooling::FrontendActionFactory> Factory(
+      tooling::newFrontendActionFactory(&Finder));
+  if (!tooling::runToolOnCode(Factory->create(), Code))
+    return "";
+  DiagConsumer.finish();
+  tooling::Replacements Fixes;
+  for (SmallVector<ClangTidyError, 16>::const_iterator I = Errors.begin(),
+                                                       E = Errors.end();
+       I != E; ++I)
+    Fixes.insert(I->Fix.begin(), I->Fix.end());
+  return tooling::applyAllReplacements(Code, Fixes);
+}
+
+} // namespace test
 } // namespace tidy
 } // namespace clang
 

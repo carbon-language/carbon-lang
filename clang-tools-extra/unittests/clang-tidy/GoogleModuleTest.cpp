@@ -1,30 +1,36 @@
 #include "ClangTidyTest.h"
 #include "google/GoogleTidyModule.h"
+#include "gtest/gtest.h"
 
 namespace clang {
 namespace tidy {
+namespace test {
 
-typedef ClangTidyTest<ExplicitConstructorCheck> ExplicitConstructorCheckTest;
+#define EXPECT_NO_CHANGES(Check, Code)                                         \
+  EXPECT_EQ(Code, runCheckOnCode<Check>(Code))
 
-TEST_F(ExplicitConstructorCheckTest, SingleArgumentConstructorsOnly) {
-  expectNoChanges("class C { C(); };");
-  expectNoChanges("class C { C(int i, int j); };");
+TEST(ExplicitConstructorCheckTest, SingleArgumentConstructorsOnly) {
+  EXPECT_NO_CHANGES(ExplicitConstructorCheck, "class C { C(); };");
+  EXPECT_NO_CHANGES(ExplicitConstructorCheck, "class C { C(int i, int j); };");
 }
 
-TEST_F(ExplicitConstructorCheckTest, Basic) {
+TEST(ExplicitConstructorCheckTest, Basic) {
   EXPECT_EQ("class C { explicit C(int i); };",
-            runCheckOn("class C { C(int i); };"));
+            runCheckOnCode<ExplicitConstructorCheck>("class C { C(int i); };"));
 }
 
-TEST_F(ExplicitConstructorCheckTest, DefaultParameters) {
+TEST(ExplicitConstructorCheckTest, DefaultParameters) {
   EXPECT_EQ("class C { explicit C(int i, int j = 0); };",
-            runCheckOn("class C { C(int i, int j = 0); };"));
+            runCheckOnCode<ExplicitConstructorCheck>(
+                "class C { C(int i, int j = 0); };"));
 }
 
-TEST_F(ExplicitConstructorCheckTest, OutOfLineDefinitions) {
+TEST(ExplicitConstructorCheckTest, OutOfLineDefinitions) {
   EXPECT_EQ("class C { explicit C(int i); }; C::C(int i) {}",
-            runCheckOn("class C { C(int i); }; C::C(int i) {}"));
+            runCheckOnCode<ExplicitConstructorCheck>(
+                "class C { C(int i); }; C::C(int i) {}"));
 }
 
+} // namespace test
 } // namespace tidy
 } // namespace clang
