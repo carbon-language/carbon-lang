@@ -6746,6 +6746,7 @@ llvm::Value *CGObjCNonFragileABIMac::GetClass(CodeGenFunction &CGF,
   if (ID->isWeakImported()) {
     std::string ClassName(getClassSymbolPrefix() + ID->getNameAsString());
     llvm::GlobalVariable *ClassGV = GetClassGlobal(ClassName, true);
+    (void)ClassGV;
     assert(ClassGV->getLinkage() == llvm::GlobalValue::ExternalWeakLinkage);
   }
   
