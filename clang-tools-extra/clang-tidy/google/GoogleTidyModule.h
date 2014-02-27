@@ -21,8 +21,9 @@ namespace tidy {
 /// http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml#Explicit_Constructors
 class ExplicitConstructorCheck : public ClangTidyCheck {
 public:
-  virtual void registerMatchers(ast_matchers::MatchFinder *Finder);
-  virtual void check(const ast_matchers::MatchFinder::MatchResult &Result);
+  void registerMatchers(ast_matchers::MatchFinder *Finder) LLVM_OVERRIDE;
+  void
+  check(const ast_matchers::MatchFinder::MatchResult &Result) LLVM_OVERRIDE;
 };
 
 } // namespace tidy

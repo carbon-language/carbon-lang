@@ -24,8 +24,7 @@ using namespace clang::ast_matchers;
 namespace clang {
 namespace tidy {
 
-void
-NamespaceCommentCheck::registerMatchers(ast_matchers::MatchFinder *Finder) {
+void NamespaceCommentCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(namespaceDecl().bind("namespace"), this);
 }
 
@@ -55,15 +54,13 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
 namespace {
 class IncludeOrderPPCallbacks : public PPCallbacks {
 public:
-  explicit IncludeOrderPPCallbacks(IncludeOrderCheck &Check)
-      : Check(Check) {}
+  explicit IncludeOrderPPCallbacks(IncludeOrderCheck &Check) : Check(Check) {}
 
-  virtual void InclusionDirective(SourceLocation HashLoc,
-                                  const Token &IncludeTok, StringRef FileName,
-                                  bool IsAngled, CharSourceRange FilenameRange,
-                                  const FileEntry *File, StringRef SearchPath,
-                                  StringRef RelativePath,
-                                  const Module *Imported) {
+  void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
+                          StringRef FileName, bool IsAngled,
+                          CharSourceRange FilenameRange, const FileEntry *File,
+                          StringRef SearchPath, StringRef RelativePath,
+                          const Module *Imported) LLVM_OVERRIDE {
     // FIXME: This is a dummy implementation to show how to get at preprocessor
     // information. Implement a real include order check.
     Check.diag(HashLoc, "This is an include");
@@ -81,9 +78,8 @@ void IncludeOrderCheck::registerPPCallbacks(CompilerInstance &Compiler) {
 
 class LLVMModule : public ClangTidyModule {
 public:
-  virtual ~LLVMModule() {}
-
-  virtual void addCheckFactories(ClangTidyCheckFactories &CheckFactories) {
+  void
+  addCheckFactories(ClangTidyCheckFactories &CheckFactories) LLVM_OVERRIDE {
     CheckFactories.addCheckFactory(
         "llvm-include-order", new ClangTidyCheckFactory<IncludeOrderCheck>());
     CheckFactories.addCheckFactory(

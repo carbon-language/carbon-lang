@@ -116,11 +116,11 @@ public:
   // FIXME: The concept of converting between FixItHints and Replacements is
   // more generic and should be pulled out into a more useful Diagnostics
   // library.
-  virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                const Diagnostic &Info) LLVM_OVERRIDE;
+  void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
+                        const Diagnostic &Info) LLVM_OVERRIDE;
 
   // Flushes the internal diagnostics buffer to the ClangTidyContext.
-  virtual void finish() LLVM_OVERRIDE;
+  void finish() LLVM_OVERRIDE;
 
 private:
   void addFixes(const Diagnostic &Info, ClangTidyError &Error);

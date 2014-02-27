@@ -64,9 +64,8 @@ class AnalyzerDiagnosticConsumer : public ento::PathDiagnosticConsumer {
 public:
   AnalyzerDiagnosticConsumer(ClangTidyContext &Context) : Context(Context) {}
 
-  virtual void
-  FlushDiagnosticsImpl(std::vector<const ento::PathDiagnostic *> &Diags,
-                       FilesMade *filesMade) LLVM_OVERRIDE {
+  void FlushDiagnosticsImpl(std::vector<const ento::PathDiagnostic *> &Diags,
+                            FilesMade *filesMade) LLVM_OVERRIDE {
     for (std::vector<const ento::PathDiagnostic *>::iterator I = Diags.begin(),
                                                              E = Diags.end();
          I != E; ++I) {
@@ -89,14 +88,9 @@ public:
     }
   }
 
-  virtual StringRef getName() const { return "ClangTidyDiags"; }
-
-  virtual bool supportsLogicalOpControlFlow() const LLVM_OVERRIDE {
-    return true;
-  }
-  virtual bool supportsCrossFileDiagnostics() const LLVM_OVERRIDE {
-    return true;
-  }
+  StringRef getName() const LLVM_OVERRIDE { return "ClangTidyDiags"; }
+  bool supportsLogicalOpControlFlow() const LLVM_OVERRIDE { return true; }
+  bool supportsCrossFileDiagnostics() const LLVM_OVERRIDE { return true; }
 
 private:
   ClangTidyContext &Context;

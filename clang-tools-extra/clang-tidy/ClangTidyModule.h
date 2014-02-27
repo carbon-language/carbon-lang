@@ -36,13 +36,16 @@ public:
 /// For example, if have a clang-tidy check like:
 /// \code
 /// class MyTidyCheck : public ClangTidyCheck {
-///   virtual void registerMatchers(ast_matchers::MatchFinder *Finder) { .. }
+///   void registerMatchers(ast_matchers::MatchFinder *Finder) LLVM_OVERRIDE {
+///     ..
+///   }
 /// };
 /// \endcode
 /// you can register it with:
 /// \code
 /// class MyModule : public ClangTidyModule {
-///   virtual void addCheckFactories(ClangTidyCheckFactories &CheckFactories) {
+///   void
+///   addCheckFactories(ClangTidyCheckFactories &CheckFactories) LLVM_OVERRIDE {
 ///     CheckFactories.addCheckFactory(
 ///         "myproject-my-check", new ClangTidyCheckFactory<MyTidyCheck>());
 ///   }
@@ -50,7 +53,7 @@ public:
 /// \endcode
 template <typename T> class ClangTidyCheckFactory : public CheckFactoryBase {
 public:
-  virtual ClangTidyCheck *createCheck() { return new T; }
+  ClangTidyCheck *createCheck() LLVM_OVERRIDE { return new T; }
 };
 
 class ClangTidyCheckFactories;
