@@ -12,7 +12,7 @@
 // RUN: %clangxx_asan %s -o %t
 // RUN: %t 0 3
 // RUN: %t 2 3
-// RUN: ASAN_OPTIONS=verbosity=2 %t 2 2 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=verbosity=2147483647 %t 2 2 2>&1 | FileCheck %s
 // CHECK: __tls_get_addr
 // CHECK: __tls_get_addr
 // CHECK: __tls_get_addr

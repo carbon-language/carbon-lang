@@ -75,26 +75,29 @@ void DTLS_on_tls_get_addr(void *arg_void, void *res) {
     return;
   uptr tls_size = 0;
   uptr tls_beg = reinterpret_cast<uptr>(res) - arg->offset;
-  // Don't do anything fancy in this function, in particular don't print.
-  // Some versions of libstdc++ are miscompiled and call this function
-  // with mis-aligned stack:
+  // This function uses the fancy 2147483647 verbosity level,
+  // because printing in this function crashes with some versions of libstdc++
+  // because of the following bug:
   // http://gcc.gnu.org/bugzilla/show_bug.cgi?id=58066
-  // Printf uses SSE instructions that crash with mis-aligned accesses.
-  // VPrintf(2, "__tls_get_addr: %p {%p,%p} => %p; tls_beg: %p; sp: %p\n", arg,
-  //        arg->dso_id, arg->offset, res, tls_beg, &tls_beg);
+  // The bug leads to mis-aligned stack in this function, and subsequently
+  // SSE instructions in Printf crash.
+  // But there is a test that searches for printfs from this function.
+  // The bug can affect any code, so do as less as possible here.
+  VPrintf(2147483647, "__tls_get_addr: %p {%p,%p} => %p; tls_beg: %p; sp: %p\n",
+      arg, arg->dso_id, arg->offset, res, tls_beg, &tls_beg);
   if (dtls.last_memalign_ptr == tls_beg) {
     tls_size = dtls.last_memalign_size;
-    // VPrintf(2, "__tls_get_addr: glibc <=2.18 suspected; tls={%p,%p}\n",
-    //        tls_beg, tls_size);
+    VPrintf(2147483647, "__tls_get_addr: glibc <=2.18 suspected; tls={%p,%p}\n",
+        tls_beg, tls_size);
   } else if ((tls_beg % 4096) == sizeof(Glibc_2_19_tls_header)) {
     // We may want to check gnu_get_libc_version().
     Glibc_2_19_tls_header *header = (Glibc_2_19_tls_header *)tls_beg - 1;
     tls_size = header->size;
     tls_beg = header->start;
-    //VPrintf(2, "__tls_get_addr: glibc >=2.19 suspected; tls={%p %p}\n",
-    //        tls_beg, tls_size);
+    VPrintf(2147483647, "__tls_get_addr: glibc >=2.19 suspected; tls={%p %p}\n",
+        tls_beg, tls_size);
   } else {
-    //VPrintf(2, "__tls_get_addr: Can't guess glibc version\n");
+    VPrintf(2147483647, "__tls_get_addr: Can't guess glibc version\n");
     // This may happen inside the DTOR of main thread, so just ignore it.
     tls_size = 0;
   }
@@ -103,7 +106,7 @@ void DTLS_on_tls_get_addr(void *arg_void, void *res) {
 }
 
 void DTLS_on_libc_memalign(void *ptr, uptr size) {
-  // VPrintf(2, "DTLS_on_libc_memalign: %p %p\n", ptr, size);
+  VPrintf(2147483647, "DTLS_on_libc_memalign: %p %p\n", ptr, size);
   dtls.last_memalign_ptr = reinterpret_cast<uptr>(ptr);
   dtls.last_memalign_size = size;
 }
