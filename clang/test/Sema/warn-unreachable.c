@@ -170,7 +170,7 @@ int test_break_preceded_by_noreturn(int i) {
 typedef enum { Value1 = 1 } MyEnum;
 void unreachable_default(MyEnum e) {
   switch (e) {
-    case Value1:
+  case Value1:
     calledFun();
     break;
   default:
