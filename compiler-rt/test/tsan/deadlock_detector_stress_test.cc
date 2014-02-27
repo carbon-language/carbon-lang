@@ -341,6 +341,54 @@ class LockTest {
     }
   }
 
+  void Test12() {
+    if (test_number > 0 && test_number != 12) return;
+    if (!LockType::supports_read_lock()) return;
+    fprintf(stderr, "Starting Test12: 4 threads read lock/unlock 4 shared mutexes, one under another\n");
+    // CHECK-RD: Starting Test12
+    Init(500);
+    // CHECK-RD-NOT: WARNING: ThreadSanitizer:
+    RunThreads(&LockTest::Test12_Thread, &LockTest::Test12_Thread,
+               &LockTest::Test12_Thread, &LockTest::Test12_Thread);
+  }
+  void Test12_Thread() {
+    for (int i = 0; i < iter_count; i++) {
+      RL(000);
+      RL(100);
+      RL(200);
+      RL(300);
+      RU(300);
+      RU(200);
+      RU(100);
+      RU(000);
+    }
+  }
+
+  void Test13() {
+    if (test_number > 0 && test_number != 13) return;
+    if (!LockType::supports_read_lock()) return;
+    fprintf(stderr, "Starting Test13: 4 threads read lock/unlock 4 shared mutexes, all under another shared mutex\n");
+    // CHECK-RD: Starting Test13
+    Init(500);
+    // CHECK-RD-NOT: WARNING: ThreadSanitizer:
+    RunThreads(&LockTest::Test13_Thread, &LockTest::Test13_Thread,
+               &LockTest::Test13_Thread, &LockTest::Test13_Thread);
+  }
+  void Test13_Thread() {
+    for (int i = 0; i < iter_count; i++) {
+      RL(0);
+      RL(100);
+      RU(100);
+      RL(200);
+      RU(200);
+      RL(300);
+      RU(300);
+      RL(400);
+      RU(400);
+      RU(0);
+    }
+  }
+
  private:
   void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
   void Lock_0_1() { Lock2(0, 1); }
@@ -416,6 +464,8 @@ int main(int argc, char **argv) {
   LockTest().Test9();
   LockTest().Test10();
   LockTest().Test11();
+  LockTest().Test12();
+  LockTest().Test13();
   fprintf(stderr, "ALL-DONE\n");
   // CHECK: ALL-DONE
 }
