@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple %itanium_abi_triple %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i686-linux-gnu %s -emit-llvm -o - | FileCheck %s
 
 class A {
   // append has to have the same prototype as fn1 to tickle the bug.
