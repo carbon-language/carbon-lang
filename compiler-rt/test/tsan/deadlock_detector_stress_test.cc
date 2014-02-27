@@ -316,7 +316,7 @@ class LockTest {
   void Test11() {
     if (test_number > 0 && test_number != 11) return;
     fprintf(stderr, "Starting Test11: 4 threads lock/unlock 4 private mutexes, all under another private mutex\n");
-    // CHECK: Starting Test10
+    // CHECK: Starting Test11
     Init(500);
     // CHECK-NOT: WARNING: ThreadSanitizer:
     RunThreads(&LockTest::Test11_Thread1, &LockTest::Test11_Thread2,
