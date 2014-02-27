@@ -180,6 +180,8 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::ADD);
+  setTargetDAGCombine(ISD::INTRINSIC_VOID);
+  setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
 
   setMinFunctionAlignment(1);
   setPrefFunctionAlignment(2);
@@ -1566,6 +1568,46 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
   SDLoc dl(N);
   switch (N->getOpcode()) {
   default: break;
+  case ISD::INTRINSIC_VOID:
+    switch (cast<ConstantSDNode>(N->getOperand(1))->getZExtValue()) {
+    case Intrinsic::xcore_outt:
+    case Intrinsic::xcore_outct:
+    case Intrinsic::xcore_chkct: {
+      SDValue OutVal = N->getOperand(3);
+      // These instructions ignore the high bits.
+      if (OutVal.hasOneUse()) {
+        unsigned BitWidth = OutVal.getValueSizeInBits();
+        APInt DemandedMask = APInt::getLowBitsSet(BitWidth, 8);
+        APInt KnownZero, KnownOne;
+        TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
+                                              !DCI.isBeforeLegalizeOps());
+        const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+        if (TLO.ShrinkDemandedConstant(OutVal, DemandedMask) ||
+            TLI.SimplifyDemandedBits(OutVal, DemandedMask, KnownZero, KnownOne,
+                                     TLO))
+          DCI.CommitTargetLoweringOpt(TLO);
+      }
+      break;
+    }
+    case Intrinsic::xcore_setpt: {
+      SDValue Time = N->getOperand(3);
+      // This instruction ignores the high bits.
+      if (Time.hasOneUse()) {
+        unsigned BitWidth = Time.getValueSizeInBits();
+        APInt DemandedMask = APInt::getLowBitsSet(BitWidth, 16);
+        APInt KnownZero, KnownOne;
+        TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
+                                              !DCI.isBeforeLegalizeOps());
+        const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+        if (TLO.ShrinkDemandedConstant(Time, DemandedMask) ||
+            TLI.SimplifyDemandedBits(Time, DemandedMask, KnownZero, KnownOne,
+                                     TLO))
+          DCI.CommitTargetLoweringOpt(TLO);
+      }
+      break;
+    }
+    }
+    break;
   case XCoreISD::LADD: {
     SDValue N0 = N->getOperand(0);
     SDValue N1 = N->getOperand(1);
