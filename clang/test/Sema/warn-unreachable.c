@@ -187,3 +187,16 @@ void unreachable_in_default(MyEnum e) {
   }
 }
 
+// Don't warn about trivial dead returns.
+int trivial_dead_return() {
+  raze();
+  // Use the '()' to test that we unwrap such stuff
+  // when looking for dead code.
+  return ((0)); // no-warning
+}
+
+MyEnum trival_dead_return_enum() {
+  raze();
+  return Value1; // no-warning
+}
+

@@ -262,6 +262,12 @@ static bool bodyEndsWithNoReturn(const CFGBlock *B) {
   return false;
 }
 
+static bool bodyEndsWithNoReturn(const CFGBlock::AdjacentBlock &AB) {
+  const CFGBlock *Pred = AB.getPossiblyUnreachableBlock();
+  assert(!AB.isReachable() && Pred);
+  return bodyEndsWithNoReturn(Pred);
+}
+
 static bool isBreakPrecededByNoReturn(const CFGBlock *B,
                                       const Stmt *S) {
   if (!isa<BreakStmt>(S) || B->pred_empty())
@@ -269,10 +275,53 @@ static bool isBreakPrecededByNoReturn(const CFGBlock *B,
 
   assert(B->empty());
   assert(B->pred_size() == 1);
-  const CFGBlock::AdjacentBlock &AB = *B->pred_begin();
-  const CFGBlock *Pred = AB.getPossiblyUnreachableBlock();
-  assert(!AB.isReachable() && Pred);
-  return bodyEndsWithNoReturn(Pred);
+  return bodyEndsWithNoReturn(*B->pred_begin());
+}
+
+static bool isEnumConstant(const Expr *Ex) {
+  const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Ex);
+  if (!DR)
+    return false;
+  return isa<EnumConstantDecl>(DR->getDecl());
+}
+
+static bool isTrivialExpression(const Expr *Ex) {
+  return isa<IntegerLiteral>(Ex) || isa<StringLiteral>(Ex) ||
+         isEnumConstant(Ex);
+}
+
+static bool isTrivialReturnPrecededByNoReturn(const CFGBlock *B,
+                                              const Stmt *S) {
+  if (B->pred_empty())
+    return false;
+
+  const Expr *Ex = dyn_cast<Expr>(S);
+  if (!Ex)
+    return false;
+
+  Ex = Ex->IgnoreParenCasts();
+
+  if (!isTrivialExpression(Ex))
+    return false;
+
+  // Look to see if the block ends with a 'return', and see if 'S'
+  // is a substatement.  The 'return' may not be the last element in
+  // the block because of destructors.
+  assert(!B->empty());
+  for (CFGBlock::const_reverse_iterator I = B->rbegin(), E = B->rend();
+       I != E; ++I) {
+    if (Optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
+      if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(CS->getStmt())) {
+        const Expr *RE = RS->getRetValue();
+        if (RE && RE->IgnoreParenCasts() == Ex)
+          break;
+      }
+      return false;
+    }
+  }
+
+  assert(B->pred_size() == 1);
+  return bodyEndsWithNoReturn(*B->pred_begin());
 }
 
 void DeadCodeScan::reportDeadCode(const CFGBlock *B,
@@ -282,6 +331,10 @@ void DeadCodeScan::reportDeadCode(const CFGBlock *B,
   // before executing a 'break'.  If there is other code after the 'break'
   // in the block then don't suppress the warning.
   if (isBreakPrecededByNoReturn(B, S))
+    return;
+
+  // Suppress trivial 'return' statements that are dead.
+  if (isTrivialReturnPrecededByNoReturn(B, S))
     return;
 
   // Was this an unreachable 'default' case?  Such cases are covered
