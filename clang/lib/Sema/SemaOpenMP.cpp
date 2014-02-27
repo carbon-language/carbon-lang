@@ -699,6 +699,10 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
     Res = ActOnOpenMPParallelDirective(ClausesWithImplicit, AStmt,
                                        StartLoc, EndLoc);
     break;
+  case OMPD_simd:
+    Res = ActOnOpenMPSimdDirective(ClausesWithImplicit, AStmt,
+                                   StartLoc, EndLoc);
+    break;
   case OMPD_threadprivate:
   case OMPD_task:
     llvm_unreachable("OpenMP Directive is not allowed");
@@ -719,6 +723,29 @@ StmtResult Sema::ActOnOpenMPParallelDirective(ArrayRef<OMPClause *> Clauses,
 
   return Owned(OMPParallelDirective::Create(Context, StartLoc, EndLoc,
                                             Clauses, AStmt));
+}
+
+StmtResult Sema::ActOnOpenMPSimdDirective(ArrayRef<OMPClause *> Clauses,
+                                          Stmt *AStmt,
+                                          SourceLocation StartLoc,
+                                          SourceLocation EndLoc) {
+  Stmt *CStmt = AStmt;
+  while (CapturedStmt *CS = dyn_cast_or_null<CapturedStmt>(CStmt))
+    CStmt = CS->getCapturedStmt();
+  while (AttributedStmt *AS = dyn_cast_or_null<AttributedStmt>(CStmt))
+    CStmt = AS->getSubStmt();
+  ForStmt *For = dyn_cast<ForStmt>(CStmt);
+  if (!For) {
+    Diag(CStmt->getLocStart(), diag::err_omp_not_for)
+      << getOpenMPDirectiveName(OMPD_simd);
+    return StmtError();
+  }
+
+  // FIXME: Checking loop canonical form, collapsing etc.
+
+  getCurFunction()->setHasBranchProtectedScope();
+  return Owned(OMPSimdDirective::Create(Context, StartLoc, EndLoc,
+                                        Clauses, AStmt));
 }
 
 OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,

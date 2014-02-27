@@ -125,6 +125,15 @@ bool clang::isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
       break;
     }
     break;
+  case OMPD_simd:
+    switch (CKind) {
+#define OPENMP_SIMD_CLAUSE(Name) \
+    case OMPC_##Name: return true;
+#include "clang/Basic/OpenMPKinds.def"
+    default:
+      break;
+    }
+    break;
   case OMPD_unknown:
   case OMPD_threadprivate:
   case OMPD_task:

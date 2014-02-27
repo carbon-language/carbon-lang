@@ -60,6 +60,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
     Diag(Tok, diag::err_omp_unknown_directive);
     break;
   case OMPD_parallel:
+  case OMPD_simd:
   case OMPD_task:
   case NUM_OPENMP_DIRECTIVES:
     Diag(Tok, diag::err_omp_unexpected_directive)
@@ -114,7 +115,8 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
     }
     SkipUntil(tok::annot_pragma_openmp_end);
     break;
-  case OMPD_parallel: {
+  case OMPD_parallel:
+  case OMPD_simd: {
     ConsumeToken();
 
     Actions.StartOpenMPDSABlock(DKind, DirName, Actions.getCurScope());

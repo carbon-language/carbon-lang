@@ -607,6 +607,7 @@ public:
   ExprResult TransformAddressOfOperand(Expr *E);
   ExprResult TransformDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E,
                                                 bool IsAddressOfOperand);
+  StmtResult TransformOMPExecutableDirective(OMPExecutableDirective *S);
 
 // FIXME: We use LLVM_ATTRIBUTE_NOINLINE because inlining causes a ridiculous
 // amount of stack usage with clang.
@@ -1286,16 +1287,17 @@ public:
     return getSema().BuildObjCAtThrowStmt(AtLoc, Operand);
   }
 
-  /// \brief Build a new OpenMP parallel directive.
+  /// \brief Build a new OpenMP executable directive.
   ///
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
-  StmtResult RebuildOMPParallelDirective(ArrayRef<OMPClause *> Clauses,
-                                         Stmt *AStmt,
-                                         SourceLocation StartLoc,
-                                         SourceLocation EndLoc) {
-    return getSema().ActOnOpenMPParallelDirective(Clauses, AStmt,
-                                                  StartLoc, EndLoc);
+  StmtResult RebuildOMPExecutableDirective(OpenMPDirectiveKind Kind,
+                                           ArrayRef<OMPClause *> Clauses,
+                                           Stmt *AStmt,
+                                           SourceLocation StartLoc,
+                                           SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPExecutableDirective(Kind, Clauses, AStmt,
+                                                    StartLoc, EndLoc);
   }
 
   /// \brief Build a new OpenMP 'if' clause.
@@ -6248,9 +6250,8 @@ StmtResult TreeTransform<Derived>::TransformSEHHandler(Stmt *Handler) {
 
 template<typename Derived>
 StmtResult
-TreeTransform<Derived>::TransformOMPParallelDirective(OMPParallelDirective *D) {
-  DeclarationNameInfo DirName;
-  getSema().StartOpenMPDSABlock(OMPD_parallel, DirName, 0);
+TreeTransform<Derived>::TransformOMPExecutableDirective(
+                                 OMPExecutableDirective *D) {
 
   // Transform the clauses
   llvm::SmallVector<OMPClause *, 16> TClauses;
@@ -6261,7 +6262,6 @@ TreeTransform<Derived>::TransformOMPParallelDirective(OMPParallelDirective *D) {
     if (*I) {
       OMPClause *Clause = getDerived().TransformOMPClause(*I);
       if (!Clause) {
-        getSema().EndOpenMPDSABlock(0);
         return StmtError();
       }
       TClauses.push_back(Clause);
@@ -6271,21 +6271,38 @@ TreeTransform<Derived>::TransformOMPParallelDirective(OMPParallelDirective *D) {
     }
   }
   if (!D->getAssociatedStmt()) {
-    getSema().EndOpenMPDSABlock(0);
     return StmtError();
   }
   StmtResult AssociatedStmt =
     getDerived().TransformStmt(D->getAssociatedStmt());
   if (AssociatedStmt.isInvalid()) {
-    getSema().EndOpenMPDSABlock(0);
     return StmtError();
   }
 
-  StmtResult Res = getDerived().RebuildOMPParallelDirective(TClauses,
-                                                            AssociatedStmt.take(),
-                                                            D->getLocStart(),
-                                                            D->getLocEnd());
-  getSema().EndOpenMPDSABlock(Res.get());
+  return getDerived().RebuildOMPExecutableDirective(D->getDirectiveKind(),
+                                                    TClauses,
+                                                    AssociatedStmt.take(),
+                                                    D->getLocStart(),
+                                                    D->getLocEnd());
+}
+
+template<typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformOMPParallelDirective(OMPParallelDirective *D) {
+  DeclarationNameInfo DirName;
+  getSema().StartOpenMPDSABlock(OMPD_parallel, DirName, 0);
+  StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
+  getDerived().getSema().EndOpenMPDSABlock(Res.get());
+  return Res;
+}
+
+template<typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformOMPSimdDirective(OMPSimdDirective *D) {
+  DeclarationNameInfo DirName;
+  getSema().StartOpenMPDSABlock(OMPD_simd, DirName, 0);
+  StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
+  getDerived().getSema().EndOpenMPDSABlock(Res.get());
   return Res;
 }
 

@@ -1217,10 +1217,39 @@ OMPParallelDirective *OMPParallelDirective::Create(
 }
 
 OMPParallelDirective *OMPParallelDirective::CreateEmpty(const ASTContext &C,
-                                                        unsigned N,
+                                                        unsigned NumClauses,
                                                         EmptyShell) {
   unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPParallelDirective),
                                            llvm::alignOf<OMPClause *>());
-  void *Mem = C.Allocate(Size + sizeof(OMPClause *) * N + sizeof(Stmt *));
-  return new (Mem) OMPParallelDirective(N);
+  void *Mem = C.Allocate(Size + sizeof(OMPClause *) * NumClauses +
+                         sizeof(Stmt *));
+  return new (Mem) OMPParallelDirective(NumClauses);
 }
+
+OMPSimdDirective *OMPSimdDirective::Create(const ASTContext &C,
+                                           SourceLocation StartLoc,
+                                           SourceLocation EndLoc,
+                                           ArrayRef<OMPClause *> Clauses,
+                                           Stmt *AssociatedStmt) {
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPSimdDirective),
+                                           llvm::alignOf<OMPClause *>());
+  void *Mem = C.Allocate(Size + sizeof(OMPClause *) * Clauses.size() +
+                         sizeof(Stmt *));
+  OMPSimdDirective *Dir = new (Mem) OMPSimdDirective(StartLoc, EndLoc,
+                                                     1, Clauses.size());
+  Dir->setClauses(Clauses);
+  Dir->setAssociatedStmt(AssociatedStmt);
+  return Dir;
+}
+
+OMPSimdDirective *OMPSimdDirective::CreateEmpty(const ASTContext &C,
+                                                unsigned NumClauses,
+                                                unsigned CollapsedNum,
+                                                EmptyShell) {
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPSimdDirective),
+                                           llvm::alignOf<OMPClause *>());
+  void *Mem = C.Allocate(Size + sizeof(OMPClause *) * NumClauses +
+                         sizeof(Stmt *));
+  return new (Mem) OMPSimdDirective(CollapsedNum, NumClauses);
+}
+
