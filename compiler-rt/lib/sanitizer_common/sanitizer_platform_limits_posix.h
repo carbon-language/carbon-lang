@@ -631,6 +631,9 @@ namespace __sanitizer {
 #define IOC_NRMASK ((1 << IOC_NRBITS) - 1)
 #define IOC_TYPEMASK ((1 << IOC_TYPEBITS) - 1)
 #define IOC_SIZEMASK ((1 << IOC_SIZEBITS) - 1)
+#if defined(IOC_DIRMASK)
+#undef IOC_DIRMASK
+#endif
 #define IOC_DIRMASK ((1 << IOC_DIRBITS) - 1)
 #define IOC_NRSHIFT 0
 #define IOC_TYPESHIFT (IOC_NRSHIFT + IOC_NRBITS)
