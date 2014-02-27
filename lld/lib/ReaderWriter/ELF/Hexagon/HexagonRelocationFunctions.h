@@ -20,12 +20,12 @@ typedef struct {
   bool isDuplex;
 } Instruction;
 
-#include "HexagonV4Encodings.h"
+#include "HexagonEncodings.h"
 
 #define FINDV4BITMASK(INSN)                                                    \
   findBitMask((uint32_t) * ((llvm::support::ulittle32_t *) INSN),              \
-              insn_encodings_v4,                                               \
-              sizeof(insn_encodings_v4) / sizeof(Instruction))
+              insn_encodings,                                                  \
+              sizeof(insn_encodings) / sizeof(Instruction))
 
 /// \brief finds the scatter Bits that need to be used to apply relocations
 inline uint32_t
