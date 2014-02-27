@@ -1,4 +1,4 @@
-// RUN: not %clang_cc1 -triple i686-pc-win32 -emit-llvm -fno-rtti %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -triple i686-pc-win32 -emit-llvm-only -fno-rtti %s 2>&1 | FileCheck %s
 
 // CHECK: error: v-table layout for classes with non-virtual base classes that override methods in virtual bases is not supported yet
 
