@@ -27,6 +27,7 @@
 #include "llvm/Support/Allocator.h"
 // FIXME: Enhance libsystem to support inode and other fields in stat.
 #include <sys/types.h>
+#include <map>
 
 #ifdef _MSC_VER
 typedef unsigned short mode_t;
@@ -76,26 +77,14 @@ class FileEntry {
     File.reset(0); // rely on destructor to close File
   }
 
+  FileEntry(const FileEntry &) LLVM_DELETED_FUNCTION;
+  void operator=(const FileEntry &) LLVM_DELETED_FUNCTION;
+
 public:
-  FileEntry(llvm::sys::fs::UniqueID UniqueID, bool IsNamedPipe, bool InPCH)
-      : Name(0), UniqueID(UniqueID), IsNamedPipe(IsNamedPipe), InPCH(InPCH),
-        IsValid(false)
-  {}
-  // Add a default constructor for use with llvm::StringMap
   FileEntry()
       : Name(0), UniqueID(0, 0), IsNamedPipe(false), InPCH(false),
         IsValid(false)
   {}
-
-  FileEntry(const FileEntry &FE) {
-    memcpy(this, &FE, sizeof(FE));
-    assert(!File && "Cannot copy a file-owning FileEntry");
-  }
-
-  void operator=(const FileEntry &FE) {
-    memcpy(this, &FE, sizeof(FE));
-    assert(!File && "Cannot assign a file-owning FileEntry");
-  }
 
   const char *getName() const { return Name; }
   bool isValid() const { return IsValid; }
@@ -128,14 +117,11 @@ class FileManager : public RefCountedBase<FileManager> {
   IntrusiveRefCntPtr<vfs::FileSystem> FS;
   FileSystemOptions FileSystemOpts;
 
-  class UniqueDirContainer;
-  class UniqueFileContainer;
-
   /// \brief Cache for existing real directories.
-  UniqueDirContainer &UniqueRealDirs;
+  std::map<llvm::sys::fs::UniqueID, DirectoryEntry> UniqueRealDirs;
 
   /// \brief Cache for existing real files.
-  UniqueFileContainer &UniqueRealFiles;
+  std::map<llvm::sys::fs::UniqueID, FileEntry> UniqueRealFiles;
 
   /// \brief The virtual directories that we have allocated.
   ///
