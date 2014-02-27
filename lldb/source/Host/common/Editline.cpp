@@ -640,29 +640,40 @@ Editline::GetCharFromInputFileCallback (EditLine *e, char *c)
     Editline *editline = GetClientData (e);
     if (editline && editline->m_got_eof == false)
     {
-        char ch = ::fgetc(editline->GetInputFile());
-        if (ch == '\x04')
+        while (1)
         {
-            // Only turn a CTRL+D into a EOF if we receive the
-            // CTRL+D an empty line, otherwise it will forward
-            // delete the character at the cursor
-            const LineInfo *line_info = ::el_line(e);
-            if (line_info != NULL &&
-                line_info->buffer == line_info->cursor &&
-                line_info->cursor == line_info->lastchar)
+            errno = 0;
+            char ch = ::fgetc(editline->GetInputFile());
+            if (ch == '\x04')
             {
-                ch = EOF;
+                // Only turn a CTRL+D into a EOF if we receive the
+                // CTRL+D an empty line, otherwise it will forward
+                // delete the character at the cursor
+                const LineInfo *line_info = ::el_line(e);
+                if (line_info != NULL &&
+                    line_info->buffer == line_info->cursor &&
+                    line_info->cursor == line_info->lastchar)
+                {
+                    ch = EOF;
+                    errno = 0;
+                }
             }
-        }
-    
-        if (ch == EOF)
-        {
-            editline->m_got_eof = true;
-        }
-        else
-        {
-            *c = ch;
-            return 1;
+        
+            if (ch == EOF)
+            {
+                if (errno == EINTR)
+                    continue;
+                else
+                {
+                    editline->m_got_eof = true;
+                    break;
+                }
+            }
+            else
+            {
+                *c = ch;
+                return 1;
+            }
         }
     }
     return 0;
