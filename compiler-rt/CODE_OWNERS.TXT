@@ -17,7 +17,7 @@ E: daniel@zuster.org
 D: Makefile build
 
 N: Howard Hinnant
-E: hhinnant@apple.com
+E: howard.hinnant@gmail.com
 D: builtins library
 
 N: Sergey Matveev
