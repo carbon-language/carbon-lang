@@ -43,41 +43,6 @@ using namespace clang;
 /// represent a filename that doesn't exist on the disk.
 #define NON_EXISTENT_FILE reinterpret_cast<FileEntry*>((intptr_t)-1)
 
-
-class FileManager::UniqueDirContainer {
-  /// UniqueDirs - Cache from ID's to existing directories/files.
-  std::map<llvm::sys::fs::UniqueID, DirectoryEntry> UniqueDirs;
-
-public:
-  /// getDirectory - Return an existing DirectoryEntry with the given
-  /// ID's if there is already one; otherwise create and return a
-  /// default-constructed DirectoryEntry.
-  DirectoryEntry &getDirectory(const llvm::sys::fs::UniqueID &UniqueID) {
-    return UniqueDirs[UniqueID];
-  }
-
-  size_t size() const { return UniqueDirs.size(); }
-};
-
-class FileManager::UniqueFileContainer {
-  /// UniqueFiles - Cache from ID's to existing directories/files.
-  std::set<FileEntry> UniqueFiles;
-
-public:
-  /// getFile - Return an existing FileEntry with the given ID's if
-  /// there is already one; otherwise create and return a
-  /// default-constructed FileEntry.
-  FileEntry &getFile(llvm::sys::fs::UniqueID UniqueID, bool IsNamedPipe,
-                     bool InPCH) {
-    return const_cast<FileEntry &>(
-        *UniqueFiles.insert(FileEntry(UniqueID, IsNamedPipe, InPCH)).first);
-  }
-
-  size_t size() const { return UniqueFiles.size(); }
-
-  void erase(const FileEntry *Entry) { UniqueFiles.erase(*Entry); }
-};
-
 //===----------------------------------------------------------------------===//
 // Common logic.
 //===----------------------------------------------------------------------===//
@@ -85,8 +50,6 @@ public:
 FileManager::FileManager(const FileSystemOptions &FSO,
                          IntrusiveRefCntPtr<vfs::FileSystem> FS)
   : FS(FS), FileSystemOpts(FSO),
-    UniqueRealDirs(*new UniqueDirContainer()),
-    UniqueRealFiles(*new UniqueFileContainer()),
     SeenDirEntries(64), SeenFileEntries(64), NextFileUID(0) {
   NumDirLookups = NumFileLookups = 0;
   NumDirCacheMisses = NumFileCacheMisses = 0;
@@ -98,8 +61,6 @@ FileManager::FileManager(const FileSystemOptions &FSO,
 }
 
 FileManager::~FileManager() {
-  delete &UniqueRealDirs;
-  delete &UniqueRealFiles;
   for (unsigned i = 0, e = VirtualFileEntries.size(); i != e; ++i)
     delete VirtualFileEntries[i];
   for (unsigned i = 0, e = VirtualDirectoryEntries.size(); i != e; ++i)
@@ -243,8 +204,7 @@ const DirectoryEntry *FileManager::getDirectory(StringRef DirName,
   // same inode (this occurs on Unix-like systems when one dir is
   // symlinked to another, for example) or the same path (on
   // Windows).
-  DirectoryEntry &UDE =
-      UniqueRealDirs.getDirectory(Data.UniqueID);
+  DirectoryEntry &UDE = UniqueRealDirs[Data.UniqueID];
 
   NamedDirEnt.setValue(&UDE);
   if (!UDE.getName()) {
@@ -310,8 +270,7 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
 
   // It exists.  See if we have already opened a file with the same inode.
   // This occurs when one dir is symlinked to another, for example.
-  FileEntry &UFE =
-      UniqueRealFiles.getFile(Data.UniqueID, Data.IsNamedPipe, Data.InPCH);
+  FileEntry &UFE = UniqueRealFiles[Data.UniqueID];
 
   NamedFileEnt.setValue(&UFE);
   if (UFE.isValid()) { // Already have an entry with this inode, return it.
@@ -322,14 +281,15 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
     return &UFE;
   }
 
-  // Otherwise, we don't have this directory yet, add it.
-  // FIXME: Change the name to be a char* that points back to the
-  // 'SeenFileEntries' key.
+  // Otherwise, we don't have this file yet, add it.
   UFE.Name    = InterndFileName;
   UFE.Size = Data.Size;
   UFE.ModTime = Data.ModTime;
   UFE.Dir     = DirInfo;
   UFE.UID     = NextFileUID++;
+  UFE.UniqueID = Data.UniqueID;
+  UFE.IsNamedPipe = Data.IsNamedPipe;
+  UFE.InPCH = Data.InPCH;
   UFE.File.reset(F);
   UFE.IsValid = true;
   return &UFE;
@@ -370,7 +330,7 @@ FileManager::getVirtualFile(StringRef Filename, off_t Size,
   if (getStatValue(InterndFileName, Data, true, 0) == 0) {
     Data.Size = Size;
     Data.ModTime = ModificationTime;
-    UFE = &UniqueRealFiles.getFile(Data.UniqueID, Data.IsNamedPipe, Data.InPCH);
+    UFE = &UniqueRealFiles[Data.UniqueID];
 
     NamedFileEnt.setValue(UFE);
 
@@ -383,6 +343,10 @@ FileManager::getVirtualFile(StringRef Filename, off_t Size,
     // If we already have an entry with this inode, return it.
     if (UFE->isValid())
       return UFE;
+
+    UFE->UniqueID = Data.UniqueID;
+    UFE->IsNamedPipe = Data.IsNamedPipe;
+    UFE->InPCH = Data.InPCH;
   }
 
   if (!UFE) {
@@ -509,7 +473,7 @@ void FileManager::invalidateCache(const FileEntry *Entry) {
   // FileEntry invalidation should not block future optimizations in the file
   // caches. Possible alternatives are cache truncation (invalidate last N) or
   // invalidation of the whole cache.
-  UniqueRealFiles.erase(Entry);
+  UniqueRealFiles.erase(Entry->getUniqueID());
 }
 
 
