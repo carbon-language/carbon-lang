@@ -9,7 +9,16 @@
 #include <pthread.h>
 #undef NDEBUG
 #include <assert.h>
+#include <stdlib.h>
 #include <stdio.h>
+
+#ifndef LockType
+#define LockType PthreadMutex
+#endif
+
+// You can optionally pass [test_number [iter_count]] on command line.
+static int test_number = -1;
+static int iter_count = 100000;
 
 class PthreadMutex {
  public:
@@ -88,8 +97,10 @@ class PthreadRWLock {
 
 class LockTest {
  public:
-  explicit LockTest(size_t n)
-      : n_(n), locks_(new LockType*[n]) {
+  LockTest() : n_(), locks_() {}
+  void Init(size_t n) {
+    n_ = n;
+    locks_ = new LockType*[n_];
     for (size_t i = 0; i < n_; i++)
       locks_[i] = new LockType;
   }
@@ -130,8 +141,10 @@ class LockTest {
 
   // Simple lock order onversion.
   void Test1() {
+    if (test_number > 0 && test_number != 1) return;
     fprintf(stderr, "Starting Test1\n");
     // CHECK: Starting Test1
+    Init(5);
     fprintf(stderr, "Expecting lock inversion: %p %p\n", A(0), A(1));
     // CHECK: Expecting lock inversion: [[A1:0x[a-f0-9]*]] [[A2:0x[a-f0-9]*]]
     Lock_0_1();
@@ -145,8 +158,10 @@ class LockTest {
 
   // Simple lock order inversion with 3 locks.
   void Test2() {
+    if (test_number > 0 && test_number != 2) return;
     fprintf(stderr, "Starting Test2\n");
     // CHECK: Starting Test2
+    Init(5);
     fprintf(stderr, "Expecting lock inversion: %p %p %p\n", A(0), A(1), A(2));
     // CHECK: Expecting lock inversion: [[A1:0x[a-f0-9]*]] [[A2:0x[a-f0-9]*]] [[A3:0x[a-f0-9]*]]
     Lock2(0, 1);
@@ -164,8 +179,10 @@ class LockTest {
   // between. Since the new locks are not used we should still detect the
   // deadlock.
   void Test3() {
+    if (test_number > 0 && test_number != 3) return;
     fprintf(stderr, "Starting Test3\n");
     // CHECK: Starting Test3
+    Init(5);
     Lock_0_1();
     L(2);
     CreateAndDestroyManyLocks();
@@ -178,8 +195,10 @@ class LockTest {
   // lock l0=>l1; then create and use lots of locks; then lock l1=>l0.
   // The deadlock epoch should have changed and we should not report anything.
   void Test4() {
+    if (test_number > 0 && test_number != 4) return;
     fprintf(stderr, "Starting Test4\n");
     // CHECK: Starting Test4
+    Init(5);
     Lock_0_1();
     L(2);
     CreateLockUnlockAndDestroyManyLocks();
@@ -189,24 +208,30 @@ class LockTest {
   }
 
   void Test5() {
+    if (test_number > 0 && test_number != 5) return;
     fprintf(stderr, "Starting Test5\n");
     // CHECK: Starting Test5
+    Init(5);
     RunThreads(&LockTest::Lock_0_1, &LockTest::Lock_1_0);
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion
     // CHECK-NOT: WARNING: ThreadSanitizer:
   }
 
   void Test6() {
-    fprintf(stderr, "Starting Test6\n");
+    if (test_number > 0 && test_number != 6) return;
+    fprintf(stderr, "Starting Test6: 3 threads lock/unlock private mutexes\n");
     // CHECK: Starting Test6
+    Init(100);
     // CHECK-NOT: WARNING: ThreadSanitizer:
     RunThreads(&LockTest::Lock1_Loop_0, &LockTest::Lock1_Loop_1,
                &LockTest::Lock1_Loop_2);
   }
 
   void Test7() {
+    if (test_number > 0 && test_number != 7) return;
     fprintf(stderr, "Starting Test7\n");
     // CHECK: Starting Test7
+    Init(10);
     L(0); T(1); U(1); U(0);
     T(1); L(0); U(1); U(0);
     // CHECK-NOT: WARNING: ThreadSanitizer:
@@ -233,8 +258,10 @@ class LockTest {
   }
 
   void Test8() {
+    if (test_number > 0 && test_number != 8) return;
     if (!LockType::supports_read_lock()) return;
     fprintf(stderr, "Starting Test8\n");
+    Init(5);
     // CHECK-RD: Starting Test8
     RL(0); L(1); RU(0); U(1);
     L(1); RL(0); RU(0); U(1);
@@ -250,9 +277,11 @@ class LockTest {
   }
 
   void Test9() {
+    if (test_number > 0 && test_number != 9) return;
     if (!LockType::supports_recursive_lock()) return;
     fprintf(stderr, "Starting Test9\n");
     // CHECK-REC: Starting Test9
+    Init(5);
     L(0); L(0); L(0); L(1); U(1); U(0); U(0); U(0);
     L(1); L(1); L(1); L(0); U(0); U(1); U(1); U(1);
     // CHECK-REC: WARNING: ThreadSanitizer: lock-order-inversion
@@ -270,9 +299,9 @@ class LockTest {
     }
     // fprintf(stderr, "\n");
   }
-  void Lock1_Loop_0() { Lock1_Loop(0, 100000); }
-  void Lock1_Loop_1() { Lock1_Loop(10, 100000); }
-  void Lock1_Loop_2() { Lock1_Loop(20, 100000); }
+  void Lock1_Loop_0() { Lock1_Loop(0, iter_count); }
+  void Lock1_Loop_1() { Lock1_Loop(10, iter_count); }
+  void Lock1_Loop_2() { Lock1_Loop(20, iter_count); }
 
   void CreateAndDestroyManyLocks() {
     LockType create_many_locks_but_never_acquire[kDeadlockGraphSize];
@@ -317,17 +346,21 @@ class LockTest {
   LockType **locks_;
 };
 
-int main() {
-  { LockTest t(5); t.Test1(); }
-  { LockTest t(5); t.Test2(); }
-  { LockTest t(5); t.Test3(); }
-  { LockTest t(5); t.Test4(); }
-  { LockTest t(5); t.Test5(); }
-  { LockTest t(100); t.Test6(); }
-  { LockTest t(10); t.Test7(); }
-  { LockTest t(5); t.Test8(); }
-  { LockTest t(5); t.Test9(); }
-  fprintf(stderr, "DONE\n");
-  // CHECK: DONE
+int main(int argc, char **argv) {
+  if (argc > 1)
+    test_number = atoi(argv[1]);
+  if (argc > 2)
+    iter_count = atoi(argv[2]);
+  LockTest().Test1();
+  LockTest().Test2();
+  LockTest().Test3();
+  LockTest().Test4();
+  LockTest().Test5();
+  LockTest().Test6();
+  LockTest().Test7();
+  LockTest().Test8();
+  LockTest().Test9();
+  fprintf(stderr, "ALL-DONE\n");
+  // CHECK: ALL-DONE
 }
 
