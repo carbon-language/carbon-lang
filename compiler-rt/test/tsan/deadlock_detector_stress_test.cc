@@ -287,6 +287,32 @@ class LockTest {
     // CHECK-REC: WARNING: ThreadSanitizer: lock-order-inversion
   }
 
+  void Test10() {
+    if (test_number > 0 && test_number != 10) return;
+    fprintf(stderr, "Starting Test10: 4 threads lock/unlock 4 private mutexes, one under another\n");
+    // CHECK: Starting Test10
+    Init(100);
+    // CHECK-NOT: WARNING: ThreadSanitizer:
+    RunThreads(&LockTest::Test10_Thread1, &LockTest::Test10_Thread2,
+               &LockTest::Test10_Thread3, &LockTest::Test10_Thread4);
+  }
+  void Test10_Thread1() { Test10_Thread(0); }
+  void Test10_Thread2() { Test10_Thread(10); }
+  void Test10_Thread3() { Test10_Thread(20); }
+  void Test10_Thread4() { Test10_Thread(30); }
+  void Test10_Thread(size_t m) {
+    for (int i = 0; i < iter_count; i++) {
+      L(m + 0);
+      L(m + 1);
+      L(m + 2);
+      L(m + 3);
+      U(m + 3);
+      U(m + 2);
+      U(m + 1);
+      U(m + 0);
+    }
+  }
+
  private:
   void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
   void Lock_0_1() { Lock2(0, 1); }
@@ -331,10 +357,10 @@ class LockTest {
   }
 
   void RunThreads(void (LockTest::*f1)(), void (LockTest::*f2)(),
-                  void (LockTest::*f3)() = 0) {
-    const int kNumThreads = 3;
+                  void (LockTest::*f3)() = 0, void (LockTest::*f4)() = 0) {
+    const int kNumThreads = 4;
     pthread_t t[kNumThreads];
-    CB cb[kNumThreads] = {{f1, this}, {f2, this}, {f3, this}};
+    CB cb[kNumThreads] = {{f1, this}, {f2, this}, {f3, this}, {f4, this}};
     for (int i = 0; i < kNumThreads && cb[i].f; i++)
       pthread_create(&t[i], 0, Thread, &cb[i]);
     for (int i = 0; i < kNumThreads && cb[i].f; i++)
@@ -360,6 +386,7 @@ int main(int argc, char **argv) {
   LockTest().Test7();
   LockTest().Test8();
   LockTest().Test9();
+  LockTest().Test10();
   fprintf(stderr, "ALL-DONE\n");
   // CHECK: ALL-DONE
 }
