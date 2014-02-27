@@ -500,8 +500,10 @@ def warn_pragma_pack_pop_identifer_and_alignment : Warning<
   "specifying both a name and alignment to 'pop' is undefined">;
 def warn_pragma_pop_failed : Warning<"#pragma %0(pop, ...) failed: %1">,
   InGroup<IgnoredPragmas>;
-def warn_pragma_ms_struct_failed : Warning<"#pramga ms_struct can not be used with dynamic classes or structures">,
-  InGroup<IgnoredPragmas>;
+def warn_cxx_ms_struct :
+  Warning<"ms_struct may not produce MSVC-compatible layouts for classes "
+          "with base classes or virtual functions">,
+  DefaultError, InGroup<IncompatibleMSStruct>;
 
 def warn_pragma_unused_undeclared_var : Warning<
   "undeclared variable %0 used as an argument for '#pragma unused'">,

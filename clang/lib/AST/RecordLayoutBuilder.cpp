@@ -1502,6 +1502,10 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   // __attribute__((packed))) always uses the next available bit
   // offset.
 
+  // In an ms_struct struct, the alignment of a fundamental type is
+  // always equal to its size.  This is necessary in order to mimic
+  // the i386 alignment rules on targets which might not fully align
+  // all types (e.g. Darwin PPC32, where alignof(long long) == 4).
 
   // First, some simple bookkeeping to perform for ms_struct structs.
   if (IsMsStruct) {

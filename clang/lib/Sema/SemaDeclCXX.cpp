@@ -4520,11 +4520,18 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     }
   }
 
-  // Check to see if we're trying to lay out a struct using the ms_struct
-  // attribute that is dynamic.
-  if (Record->isMsStruct(Context) && Record->isDynamicClass()) {
-    Diag(Record->getLocation(), diag::warn_pragma_ms_struct_failed);
-    Record->dropAttr<MsStructAttr>();
+  // ms_struct is a request to use the same ABI rules as MSVC.  Check
+  // whether this class uses any C++ features that are implemented
+  // completely differently in MSVC, and if so, emit a diagnostic.
+  // That diagnostic defaults to an error, but we allow projects to
+  // map it down to a warning (or ignore it).  It's a fairly common
+  // practice among users of the ms_struct pragma to mass-annotate
+  // headers, sweeping up a bunch of types that the project doesn't
+  // really rely on MSVC-compatible layout for.  We must therefore
+  // support "ms_struct except for C++ stuff" as a secondary ABI.
+  if (Record->isMsStruct(Context) &&
+      (Record->isPolymorphic() || Record->getNumBases())) {
+    Diag(Record->getLocation(), diag::warn_cxx_ms_struct);
   }
 
   // Declare inheriting constructors. We do this eagerly here because:
