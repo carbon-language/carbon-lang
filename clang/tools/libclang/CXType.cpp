@@ -871,4 +871,38 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
   return cxstring::createDup(encoding);
 }
 
+int clang_Type_getNumTemplateArguments(CXType CT) {
+  QualType T = GetQualType(CT);
+  if (T.isNull())
+    return -1;
+  const CXXRecordDecl *RecordDecl = T->getAsCXXRecordDecl();
+  if (!RecordDecl)
+    return -1;
+  const ClassTemplateSpecializationDecl *TemplateDecl =
+      dyn_cast<ClassTemplateSpecializationDecl>(RecordDecl);
+  if (!TemplateDecl)
+    return -1;
+  return TemplateDecl->getTemplateArgs().size();
+}
+
+CXType clang_Type_getTemplateArgumentAsType(CXType CT, unsigned i) {
+  QualType T = GetQualType(CT);
+  if (T.isNull())
+    return MakeCXType(QualType(), GetTU(CT));
+  const CXXRecordDecl *RecordDecl = T->getAsCXXRecordDecl();
+  if (!RecordDecl)
+    return MakeCXType(QualType(), GetTU(CT));
+  const ClassTemplateSpecializationDecl *TemplateDecl =
+      dyn_cast<ClassTemplateSpecializationDecl>(RecordDecl);
+  if (!TemplateDecl)
+    return MakeCXType(QualType(), GetTU(CT));
+  const TemplateArgumentList &TA = TemplateDecl->getTemplateArgs();
+  if (TA.size() <= i)
+    return MakeCXType(QualType(), GetTU(CT));
+  const TemplateArgument &A = TA.get(i);
+  if (A.getKind() != TemplateArgument::Type)
+    return MakeCXType(QualType(), GetTU(CT));
+  return MakeCXType(A.getAsType(), GetTU(CT));
+}
+
 } // end: extern "C"

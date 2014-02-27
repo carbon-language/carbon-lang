@@ -1263,14 +1263,29 @@ static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
     }
     /* Print the argument types if they exist. */
     {
-      int numArgs = clang_Cursor_getNumArguments(cursor);
-      if (numArgs != -1 && numArgs != 0) {
+      int NumArgs = clang_Cursor_getNumArguments(cursor);
+      if (NumArgs != -1 && NumArgs != 0) {
         int i;
         printf(" [args=");
-        for (i = 0; i < numArgs; ++i) {
+        for (i = 0; i < NumArgs; ++i) {
           CXType T = clang_getCursorType(clang_Cursor_getArgument(cursor, i));
           if (T.kind != CXType_Invalid) {
             PrintTypeAndTypeKind(T, " [%s] [%s]");
+          }
+        }
+        printf("]");
+      }
+    }
+    /* Print the template argument types if they exist. */
+    {
+      int NumTArgs = clang_Type_getNumTemplateArguments(T);
+      if (NumTArgs != -1 && NumTArgs != 0) {
+        int i;
+        printf(" [templateargs/%d=", NumTArgs);
+        for (i = 0; i < NumTArgs; ++i) {
+          CXType TArg = clang_Type_getTemplateArgumentAsType(T, i);
+          if (TArg.kind != CXType_Invalid) {
+            PrintTypeAndTypeKind(TArg, " [type=%s] [typekind=%s]");
           }
         }
         printf("]");
