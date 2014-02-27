@@ -770,13 +770,6 @@ MCStreamer *createELFStreamer(MCContext &Ctx, MCAsmBackend &TAB,
                               raw_ostream &OS, MCCodeEmitter *CE, bool RelaxAll,
                               bool NoExecStack);
 
-/// createPureStreamer - Create a machine code streamer which will generate
-/// "pure" MC object files, for use with MC-JIT and testing tools.
-///
-/// Takes ownership of \p TAB and \p CE.
-MCStreamer *createPureStreamer(MCContext &Ctx, MCAsmBackend &TAB,
-                               raw_ostream &OS, MCCodeEmitter *CE);
-
 } // end namespace llvm
 
 #endif

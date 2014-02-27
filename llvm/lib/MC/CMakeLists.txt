@@ -33,7 +33,6 @@ add_llvm_library(LLVMMC
   MCObjectStreamer.cpp
   MCObjectSymbolizer.cpp
   MCObjectWriter.cpp
-  MCPureStreamer.cpp
   MCRegisterInfo.cpp
   MCRelocationInfo.cpp
   MCSection.cpp

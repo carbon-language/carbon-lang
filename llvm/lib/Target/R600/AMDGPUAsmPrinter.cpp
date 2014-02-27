@@ -50,8 +50,6 @@ AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
   DisasmEnabled = TM.getSubtarget<AMDGPUSubtarget>().dumpCode();
 }
 
-/// We need to override this function so we can avoid
-/// the call to EmitFunctionHeader(), which the MCPureStreamer can't handle.
 bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
 
