@@ -2873,7 +2873,7 @@ void DwarfDebug::emitDebugRanges() {
     }
 
     // Now emit a range for the CU itself.
-    if (useCURanges()) {
+    if (useCURanges() && TheCU->getRanges().size()) {
       Asm->OutStreamer.EmitLabel(
           Asm->GetTempSymbol("cu_ranges", TheCU->getUniqueID()));
       const SmallVectorImpl<RangeSpan> &Ranges = TheCU->getRanges();
