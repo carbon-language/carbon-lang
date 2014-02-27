@@ -382,10 +382,12 @@ void CGDebugInfo::CreateCompileUnit() {
 
   // Create new compile unit.
   // FIXME - Eliminate TheCU.
-  TheCU = DBuilder.createCompileUnit(LangTag, Filename, getCurrentDirname(),
-                                     Producer, LO.Optimize,
-                                     CGM.getCodeGenOpts().DwarfDebugFlags,
-                                     RuntimeVers, SplitDwarfFilename);
+  TheCU = DBuilder.createCompileUnit(
+      LangTag, Filename, getCurrentDirname(), Producer, LO.Optimize,
+      CGM.getCodeGenOpts().DwarfDebugFlags, RuntimeVers, SplitDwarfFilename,
+      DebugKind == CodeGenOptions::DebugLineTablesOnly
+          ? llvm::DIBuilder::LineTablesOnly
+          : llvm::DIBuilder::FullDebug);
 }
 
 /// CreateType - Get the Basic type from the cache or create a new

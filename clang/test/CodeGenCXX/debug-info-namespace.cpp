@@ -43,7 +43,7 @@ using B::i;
 // This should work even if 'i' and 'func' were declarations & not definitions,
 // but it doesn't yet.
 
-// CHECK: [[CU:![0-9]*]] = {{.*}}[[MODULES:![0-9]*]], metadata !""} ; [ DW_TAG_compile_unit ]
+// CHECK: [[CU:![0-9]*]] = {{.*}}[[MODULES:![0-9]*]], metadata !"", i32 1} ; [ DW_TAG_compile_unit ]
 // CHECK: [[FILE:![0-9]*]] {{.*}}debug-info-namespace.cpp"
 // CHECK: [[FOO:![0-9]*]] {{.*}} ; [ DW_TAG_structure_type ] [foo] [line 5, size 0, align 0, offset 0] [decl] [from ]
 // CHECK: [[FOOCPP:![0-9]*]] = metadata !{metadata !"foo.cpp", {{.*}}
@@ -72,7 +72,7 @@ using B::i;
 // CHECK: [[M12]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[M11]], i32 {{[0-9]*}}, metadata !"Y"} ; [ DW_TAG_imported_module ]
 // CHECK: [[M13]] = metadata !{i32 {{[0-9]*}}, metadata [[CTXT]], metadata [[I]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_declaration ]
 
-// CHECK-GMLT: [[CU:![0-9]*]] = {{.*}}[[MODULES:![0-9]*]], metadata !""} ; [ DW_TAG_compile_unit ]
+// CHECK-GMLT: [[CU:![0-9]*]] = {{.*}}[[MODULES:![0-9]*]], metadata !"", i32 2} ; [ DW_TAG_compile_unit ]
 // CHECK-GMLT: [[MODULES]] = metadata !{}
 
 // CHECK-NOLIMIT: ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [def] [from ]
