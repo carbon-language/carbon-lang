@@ -67,10 +67,17 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     exports.insert(desc.ordinal);
   }
 
+  // Check for /align.
   std::bitset<64> alignment(_sectionDefaultAlignment);
   if (alignment.count() != 1) {
     diagnostics << "Section alignment must be a power of 2, but got "
                 << _sectionDefaultAlignment << "\n";
+    return false;
+  }
+
+  // /safeseh is only valid for x86.
+  if (getMachineType() != llvm::COFF::IMAGE_FILE_MACHINE_I386 && noSEH()) {
+    diagnostics << "/SAFESEH:NO is only valid for x86.\n";
     return false;
   }
 
