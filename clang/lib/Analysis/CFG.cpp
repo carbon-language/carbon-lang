@@ -2742,8 +2742,8 @@ CFGBlock *CFGBuilder::VisitSwitchStmt(SwitchStmt *Terminator) {
   SwitchAlwaysHasSuccessor |= switchExclusivelyCovered;
   SwitchAlwaysHasSuccessor |= Terminator->isAllEnumCasesCovered() &&
                               Terminator->getSwitchCaseList();
-  addSuccessor(SwitchTerminatedBlock,
-               SwitchAlwaysHasSuccessor ? 0 : DefaultCaseBlock);
+  addSuccessor(SwitchTerminatedBlock, DefaultCaseBlock,
+               !SwitchAlwaysHasSuccessor);
 
   // Add the terminator and condition in the switch block.
   SwitchTerminatedBlock->setTerminator(Terminator);
@@ -2844,10 +2844,9 @@ CFGBlock *CFGBuilder::VisitCaseStmt(CaseStmt *CS) {
   // Add this block to the list of successors for the block with the switch
   // statement.
   assert(SwitchTerminatedBlock);
-  addSuccessor(SwitchTerminatedBlock,
+  addSuccessor(SwitchTerminatedBlock, CaseBlock,
                shouldAddCase(switchExclusivelyCovered, switchCond,
-                             CS, *Context)
-               ? CaseBlock : 0);
+                             CS, *Context));
 
   // We set Block to NULL to allow lazy creation of a new block (if necessary)
   Block = NULL;
@@ -4034,12 +4033,24 @@ static void print_block(raw_ostream &OS, const CFG* cfg,
         if (i % 10 == 8)
           OS << "\n    ";
 
-        if (*I)
-          OS << " B" << (*I)->getBlockID();
-        else
-          OS  << " NULL";
+        CFGBlock *B = *I;
+
+        bool Reachable = true;
+        if (!B) {
+          Reachable = false;
+          B = I->getPossiblyUnreachableBlock();
+        }
+
+        if (B) {
+          OS << " B" << B->getBlockID();
+          if (!Reachable)
+            OS << "(Unreachable)";
+        }
+        else {
+          OS << " NULL";
+        }
       }
-      
+
       if (ShowColors)
         OS.resetColor();
       OS << '\n';
