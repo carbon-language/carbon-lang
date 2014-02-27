@@ -2604,7 +2604,7 @@ ProcessGDBRemote::LaunchAndConnectToDebugserver (const ProcessInfo &process_info
 
 #if defined (__APPLE__) && defined (__arm__)
         // On iOS, still do a local connection using a random port
-        const char *hostname = "localhost";
+        const char *hostname = "127.0.0.1";
         uint16_t port = get_random_port ();
 #else
         // Set hostname being NULL to do the reverse connect where debugserver

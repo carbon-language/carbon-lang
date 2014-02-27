@@ -452,7 +452,7 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
     // to actually have a hostname as far as the remote lldb that is connecting
     // to this lldb-platform is concerned
     response.PutCString ("hostname:");
-    response.PutCStringAsRawHex8("localhost");
+    response.PutCStringAsRawHex8("127.0.0.1");
     response.PutChar(';');
 #else   // #if defined(__arm__)
     if (Host::GetHostname (s))
@@ -945,7 +945,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
             // Spawn a debugserver and try to get the port it listens to.
             ProcessLaunchInfo debugserver_launch_info;
             if (hostname.empty())
-                hostname = "localhost";
+                hostname = "127.0.0.1";
             Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
             if (log)
                 log->Printf("Launching debugserver with: %s:%u...\n", hostname.c_str(), port);

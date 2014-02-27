@@ -745,7 +745,7 @@ ConnectRemote (RNBRemote *remote,
         else
         {
             if (port != 0)
-                RNBLogSTDOUT ("Listening to port %i for a connection from %s...\n", port, host ? host : "localhost");
+                RNBLogSTDOUT ("Listening to port %i for a connection from %s...\n", port, host ? host : "127.0.0.1");
             if (unix_socket_name && unix_socket_name[0])
             {
                 if (remote->Comm().Listen(host, port, PortWasBoundCallbackUnixSocket, unix_socket_name) != rnb_success)
@@ -1266,7 +1266,7 @@ main (int argc, char *argv[])
             int items_scanned = ::sscanf (argv[0], "%i", &port);
             if (items_scanned == 1)
             {
-                host = "localhost";
+                host = "127.0.0.1";
                 DNBLogDebug("host = '%s'  port = %i", host.c_str(), port);
             }
             else if (argv[0][0] == '/')

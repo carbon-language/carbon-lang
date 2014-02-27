@@ -722,19 +722,27 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
         {
             // No host and port given, so lets listen on our end and make the debugserver
             // connect to us..
-            error = StartListenThread ("localhost", 0);
+            error = StartListenThread ("127.0.0.1", 0);
             if (error.Fail())
                 return error;
 
             ConnectionFileDescriptor *connection = (ConnectionFileDescriptor *)GetConnection ();
-            out_port = connection->GetBoundPort(3);
-            assert (out_port != 0);
-            char port_cstr[32];
-            snprintf(port_cstr, sizeof(port_cstr), "localhost:%i", out_port);
-            // Send the host and port down that debugserver and specify an option
-            // so that it connects back to the port we are listening to in this process
-            debugserver_args.AppendArgument("--reverse-connect");
-            debugserver_args.AppendArgument(port_cstr);
+            // Wait for 10 seconds to resolve the bound port
+            out_port = connection->GetBoundPort(10);
+            if (out_port > 0)
+            {
+                char port_cstr[32];
+                snprintf(port_cstr, sizeof(port_cstr), "127.0.0.1:%i", out_port);
+                // Send the host and port down that debugserver and specify an option
+                // so that it connects back to the port we are listening to in this process
+                debugserver_args.AppendArgument("--reverse-connect");
+                debugserver_args.AppendArgument(port_cstr);
+            }
+            else
+            {
+                error.SetErrorString ("failed to bind to port 0 on 127.0.0.1");
+                return error;
+            }
         }
 
         

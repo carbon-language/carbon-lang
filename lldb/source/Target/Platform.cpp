@@ -744,7 +744,7 @@ const char *
 Platform::GetHostname ()
 {
     if (IsHost())
-        return "localhost";
+        return "127.0.0.1";
 
     if (m_name.empty())        
         return NULL;
