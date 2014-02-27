@@ -83,7 +83,7 @@ Context::Context()
   , racy_stacks(MBlockRacyStacks)
   , racy_addresses(MBlockRacyAddresses)
   , fired_suppressions(8)
-  , dd_mtx(MutexTypeDeadlockDetector, StatMtxDeadlockDetector) {
+  , dd_mtx(MutexTypeDDetector, StatMtxDeadlockDetector) {
   dd.clear();
 }
 
