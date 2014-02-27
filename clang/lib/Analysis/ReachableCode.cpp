@@ -337,12 +337,6 @@ void DeadCodeScan::reportDeadCode(const CFGBlock *B,
   if (isTrivialReturnPrecededByNoReturn(B, S))
     return;
 
-  // Was this an unreachable 'default' case?  Such cases are covered
-  // by -Wcovered-switch-default, if the user so desires.
-  const Stmt *Label = B->getLabel();
-  if (Label && isa<DefaultStmt>(Label))
-    return;
-
   SourceRange R1, R2;
   SourceLocation Loc = GetUnreachableLoc(S, R1, R2);
   CB.HandleUnreachable(Loc, R1, R2);
@@ -374,8 +368,32 @@ unsigned ScanReachableFromBlock(const CFGBlock *Start,
     
     // Look at the successors and mark then reachable.
     for (CFGBlock::const_succ_iterator I = item->succ_begin(), 
-         E = item->succ_end(); I != E; ++I)
-      if (const CFGBlock *B = *I) {
+         E = item->succ_end(); I != E; ++I) {
+      const CFGBlock *B = *I;
+      if (!B) {
+        //
+        // For switch statements, treat all cases as being reachable.
+        // There are many cases where a switch can contain values that
+        // are not in an enumeration but they are still reachable because
+        // other values are possible.
+        //
+        // Note that this is quite conservative.  If one saw:
+        //
+        //  switch (1) {
+        //    case 2: ...
+        //
+        // we should be able to say that 'case 2' is unreachable.  To do
+        // this we can either put more heuristics here, or possibly retain
+        // that information in the CFG itself.
+        //
+        if (const CFGBlock *UB = I->getPossiblyUnreachableBlock()) {
+          const Stmt *Label = UB->getLabel();
+          if (Label && isa<SwitchCase>(Label)) {
+            B = UB;
+          }
+        }
+      }
+      if (B) {
         unsigned blockID = B->getBlockID();
         if (!Reachable[blockID]) {
           Reachable.set(blockID);
@@ -383,6 +401,7 @@ unsigned ScanReachableFromBlock(const CFGBlock *Start,
           ++count;
         }
       }
+    }
   }
   return count;
 }

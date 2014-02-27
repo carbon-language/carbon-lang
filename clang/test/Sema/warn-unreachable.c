@@ -173,6 +173,9 @@ void unreachable_default(MyEnum e) {
   case Value1:
     calledFun();
     break;
+  case 2: // expected-warning {{case value not in enumerated type 'MyEnum'}}
+    calledFun();
+    break;
   default:
     calledFun(); // no-warning
     break;
