@@ -265,3 +265,16 @@ void fallthrough_in_local_class() {
   };
 }
 
+namespace PR18983 {
+  void fatal() __attribute__((noreturn));
+  int num();
+  void test() {
+    switch (num()) {
+    case 1:
+      fatal();
+      // Don't issue a warning.
+    case 2:
+      break;
+    }
+  }
+}
