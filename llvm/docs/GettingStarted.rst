@@ -167,15 +167,13 @@ uses the package and provides other details.
 Package                                                     Version      Notes
 =========================================================== ============ ==========================================
 `GNU Make <http://savannah.gnu.org/projects/make>`_         3.79, 3.79.1 Makefile/build processor
-`GCC <http://gcc.gnu.org/>`_                                3.4.2        C/C++ compiler\ :sup:`1`
-`TeXinfo <http://www.gnu.org/software/texinfo/>`_           4.5          For building the CFE
-`SVN <http://subversion.tigris.org/project_packages.html>`_ >=1.3        Subversion access to LLVM\ :sup:`2`
-`python <http://www.python.org/>`_                          >=2.5        Automated test suite\ :sup:`3`
-`GNU M4 <http://savannah.gnu.org/projects/m4>`_             1.4          Macro processor for configuration\ :sup:`4`
-`GNU Autoconf <http://www.gnu.org/software/autoconf/>`_     2.60         Configuration script builder\ :sup:`4`
-`GNU Automake <http://www.gnu.org/software/automake/>`_     1.9.6        aclocal macro generator\ :sup:`4`
-`libtool <http://savannah.gnu.org/projects/libtool>`_       1.5.22       Shared library manager\ :sup:`4`
-`zlib <http://zlib.net>`_                                   >=1.2.3.4    Compression library\ :sup:`5`
+`GCC <http://gcc.gnu.org/>`_                                >=4.7.0      C/C++ compiler\ :sup:`1`
+`python <http://www.python.org/>`_                          >=2.5        Automated test suite\ :sup:`2`
+`GNU M4 <http://savannah.gnu.org/projects/m4>`_             1.4          Macro processor for configuration\ :sup:`3`
+`GNU Autoconf <http://www.gnu.org/software/autoconf/>`_     2.60         Configuration script builder\ :sup:`3`
+`GNU Automake <http://www.gnu.org/software/automake/>`_     1.9.6        aclocal macro generator\ :sup:`3`
+`libtool <http://savannah.gnu.org/projects/libtool>`_       1.5.22       Shared library manager\ :sup:`3`
+`zlib <http://zlib.net>`_                                   >=1.2.3.4    Compression library\ :sup:`4`
 =========================================================== ============ ==========================================
 
 .. note::
@@ -183,9 +181,6 @@ Package                                                     Version      Notes
    #. Only the C and C++ languages are needed so there's no need to build the
       other languages for LLVM's purposes. See `below` for specific version
       info.
-   #. You only need Subversion if you intend to build from the latest LLVM
-      sources. If you're working from a release distribution, you don't need
-      Subversion.
    #. Only needed if you want to run the automated test suite in the
       ``llvm/test`` directory.
    #. If you want to make changes to the configure scripts, you will need GNU
