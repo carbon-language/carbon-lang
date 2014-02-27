@@ -84,6 +84,8 @@ public:
 	virtual void
 	TestStep (int counter, ActionWanted &next_action)
     {
+        char temp_source_path[PATH_MAX] = "/tmp/main.XXXXXX.cpp";
+
         switch (counter)
         {
             case 0:
@@ -97,6 +99,47 @@ public:
                     m_time_create_target();
                     
                     m_time_set_bp_main();
+
+                    int fd = mkstemps(temp_source_path, 4);
+
+                    if (fd >= 0)
+                    {
+                        const char *source_content = R"(
+#include <stdio.h>
+#include <stdint.h>
+#include <vector>
+                        
+namespace {
+    struct Foo
+    {
+        int i; int j;
+    };
+    void doit (const Foo &foo)
+    {
+        printf ("doit(%i)\n", foo.i);
+    }
+}
+                        
+int main (int argc, char const *argv[], char const *envp[])
+{
+    std::vector<int> ints;
+    for (int i=0;i<10;++i)
+    ints.push_back(i);
+    printf ("hello world\n");
+    Foo foo = { 12, 13 };
+    doit (foo);
+    return 0;
+}
+)";
+                        write (fd, source_content, strlen(source_content));
+                        close(fd);
+                    }
+                    else
+                    {
+                        const char *error_cstr = strerror(errno);
+                        fprintf (stderr, "error: failed to created temporary source file: '%s' (%s)", temp_source_path, error_cstr);
+                        exit(2);
+                    }
 
                     m_time_launch_stop_main.Start();
                     const char *clang_argv[] = {
@@ -116,10 +159,8 @@ public:
                         "-target-linker-version", "132.10.1",
                         "-v",
                         "-g",
-                        "-resource-dir", "/tmp/clang-176809/llvm-build/build/Debug/bin/../lib/clang/3.3",
                         "-O0",
                         "-fdeprecated-macro",
-                        "-fdebug-compilation-dir", "/tmp/clang-176809/llvm-build/build/Debug/bin",
                         "-ferror-limit", "19",
                         "-fmessage-length", "298",
                         "-stack-protector", "1",
@@ -127,7 +168,6 @@ public:
                         "-fblocks",
                         "-fobjc-runtime=macosx-10.8.0",
                         "-fobjc-dispatch-method=mixed",
-                        "-fobjc-default-synthesize-properties",
                         "-fencode-extended-block-signature",
                         "-fcxx-exceptions",
                         "-fexceptions",
@@ -137,18 +177,18 @@ public:
                         "-vectorize-loops",
                         "-o", "/tmp/main.o",
                         "-x", "c++",
-                        "/tmp/main.cpp",
+                        NULL,
                         NULL };
+                    clang_argv[sizeof(clang_argv)/sizeof(const char *)-2] = temp_source_path;
                     SBLaunchInfo launch_info(clang_argv);
                     Launch (launch_info);
+                    next_action.None(); // Don't continue or do anything, just wait for next event...
                 }
                 break;
             case 1:
-                puts("stop");
-                m_time_launch_stop_main.Stop();
-                m_time_total.Stop();
-            case 2:
                 {
+                    m_time_launch_stop_main.Stop();
+                    m_time_total.Stop();
                     SBFrame frame (m_thread.GetFrameAtIndex(0));
 
                     // Time the first expression evaluation
@@ -163,7 +203,7 @@ public:
                     next_action.Continue();
                 }
                 break;
-            case 3:
+            case 2:
                 {
                     SBFrame frame (m_thread.GetFrameAtIndex(21));
                     SBValue result;
@@ -171,7 +211,6 @@ public:
                     {
                         m_expr_frame_non_zero(frame);
                     }
-                    m_target.BreakpointCreateByName("DeclContext::lookup");
                     next_action.Continue();
                 }
                 break;

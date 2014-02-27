@@ -32,6 +32,7 @@ public:
             eStepOut,
             eRelaunch,
             eCallNext,
+            eNone,
 			eKill
 		} type;
 		lldb::SBThread thread;
@@ -44,6 +45,13 @@ public:
         {
         }
         
+        void
+        None ()
+        {
+            type = Type::eNone;
+            thread = lldb::SBThread();
+        }
+
         void
         Continue()
         {
