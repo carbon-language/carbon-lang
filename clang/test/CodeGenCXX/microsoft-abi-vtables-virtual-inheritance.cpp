@@ -312,9 +312,7 @@ struct Z : Y, virtual B {
   // MANGLING-DAG: @"\01??_7Z@Test9@@6BX@1@@"
   // MANGLING-DAG: @"\01??_7Z@Test9@@6BY@1@@"
 
-  // FIXME this one is wrong:
-  // INCORRECT MANGLING-DAG: @"\01??_7Z@Test9@@6BB@@@"
-  // MANGLING-DAG-SHOULD-BE: @"\01??_7Z@Test9@@6B@"
+  // MANGLING-DAG: @"\01??_7Z@Test9@@6B@"
 };
 
 Z z;
@@ -347,11 +345,8 @@ struct W : Z, D, virtual A, virtual B {
   // MANGLING-DAG: @"\01??_7W@Test9@@6BD@@@"
   // MANGLING-DAG: @"\01??_7W@Test9@@6BX@1@@"
 
-  // FIXME: these two are wrong:
-  // INCORRECT MANGLING-DAG: @"\01??_7W@Test9@@6BB@@@"
-  // MANGLING-DAG-SHOULD-BE: @"\01??_7W@Test9@@6B@"
-  // INCORRECT MANGLING-DAG: @"\01??_7W@Test9@@6BY@1@Z@1@@"
-  // MANGLING-DAG-SHOULD-BE: @"\01??_7W@Test9@@6BY@1@@"
+  // MANGLING-DAG: @"\01??_7W@Test9@@6B@"
+  // MANGLING-DAG: @"\01??_7W@Test9@@6BY@1@@"
 };
 
 W w;
@@ -399,11 +394,8 @@ struct T : Z, D, virtual A, virtual B {
   // MANGLING-DAG: @"\01??_7T@Test9@@6BD@@@"
   // MANGLING-DAG: @"\01??_7T@Test9@@6BX@1@@"
 
-  // FIXME: these two are wrong:
-  // INCORRECT MANGLING-DAG: @"\01??_7T@Test9@@6BB@@@"
-  // MANGLING-DAG-SHOULD-BE: @"\01??_7T@Test9@@6B@"
-  // INCORRECT MANGLING-DAG: @"\01??_7T@Test9@@6BY@1@Z@1@@"
-  // MANGLING-DAG-SHOULD-BE: @"\01??_7T@Test9@@6BY@1@@"
+  // MANGLING-DAG: @"\01??_7T@Test9@@6B@"
+  // MANGLING-DAG: @"\01??_7T@Test9@@6BY@1@@"
 
   virtual void f();
   virtual void g();
@@ -436,10 +428,7 @@ struct Y { virtual void g(); };
 
 struct Z : virtual X, Y {
   // MANGLING-DAG: @"\01??_7Z@Test11@@6BY@1@@"
-
-  // FIXME this one is wrong:
-  // MANGLING-DAG-SHOULD-BE: @"\01??_7Z@Test11@@6BX@1@@"
-  // INCORRECT MANGLING-DAG: @"\01??_7Z@Test11@@6BA@@@"
+  // MANGLING-DAG: @"\01??_7Z@Test11@@6BX@1@@"
 };
 
 Z z;
@@ -592,4 +581,24 @@ struct V : Z {
 };
 
 V v;
+}
+
+namespace pr17748 {
+struct A {
+  virtual void f() {}
+};
+
+struct B : virtual A {
+  B() {}
+};
+
+struct C : virtual B, A {
+  C() {}
+};
+C c;
+
+// MANGLING-DAG: @"\01??_7A@pr17748@@6B@"
+// MANGLING-DAG: @"\01??_7B@pr17748@@6B@"
+// MANGLING-DAG: @"\01??_7C@pr17748@@6BA@1@@"
+// MANGLING-DAG: @"\01??_7C@pr17748@@6BB@1@@"
 }

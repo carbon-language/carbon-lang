@@ -29,7 +29,7 @@ namespace {
 
 /// Holds all the vbtable globals for a given class.
 struct VBTableGlobals {
-  const VBTableVector *VBTables;
+  const VPtrInfoVector *VBTables;
   SmallVector<llvm::GlobalVariable *, 2> Globals;
 };
 
@@ -201,10 +201,10 @@ public:
   void emitVirtualInheritanceTables(const CXXRecordDecl *RD);
 
   llvm::GlobalVariable *
-  getAddrOfVBTable(const VBTableInfo &VBT, const CXXRecordDecl *RD,
+  getAddrOfVBTable(const VPtrInfo &VBT, const CXXRecordDecl *RD,
                    llvm::GlobalVariable::LinkageTypes Linkage);
 
-  void emitVBTableDefinition(const VBTableInfo &VBT, const CXXRecordDecl *RD,
+  void emitVBTableDefinition(const VPtrInfo &VBT, const CXXRecordDecl *RD,
                              llvm::GlobalVariable *GV) const;
 
   void setThunkLinkage(llvm::Function *Thunk, bool ForVTable) {
@@ -541,14 +541,14 @@ void MicrosoftCXXABI::EmitVBPtrStores(CodeGenFunction &CGF,
 
   const VBTableGlobals &VBGlobals = enumerateVBTables(RD);
   for (unsigned I = 0, E = VBGlobals.VBTables->size(); I != E; ++I) {
-    const VBTableInfo *VBT = (*VBGlobals.VBTables)[I];
+    const VPtrInfo *VBT = (*VBGlobals.VBTables)[I];
     llvm::GlobalVariable *GV = VBGlobals.Globals[I];
     const ASTRecordLayout &SubobjectLayout =
-        CGM.getContext().getASTRecordLayout(VBT->BaseWithVBPtr);
+        CGM.getContext().getASTRecordLayout(VBT->BaseWithVPtr);
     CharUnits Offs = VBT->NonVirtualOffset;
     Offs += SubobjectLayout.getVBPtrOffset();
-    if (VBT->getVBaseWithVBPtr())
-      Offs += Layout.getVBaseClassOffset(VBT->getVBaseWithVBPtr());
+    if (VBT->getVBaseWithVPtr())
+      Offs += Layout.getVBaseClassOffset(VBT->getVBaseWithVPtr());
     llvm::Value *VBPtr =
         CGF.Builder.CreateConstInBoundsGEP1_64(ThisInt8Ptr, Offs.getQuantity());
     VBPtr = CGF.Builder.CreateBitCast(VBPtr, GV->getType()->getPointerTo(0),
@@ -840,17 +840,17 @@ void MicrosoftCXXABI::EmitDestructorCall(CodeGenFunction &CGF,
 void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
                                             const CXXRecordDecl *RD) {
   MicrosoftVTableContext &VFTContext = CGM.getMicrosoftVTableContext();
-  MicrosoftVTableContext::VFPtrListTy VFPtrs = VFTContext.getVFPtrOffsets(RD);
+  VPtrInfoVector VFPtrs = VFTContext.getVFPtrOffsets(RD);
   llvm::GlobalVariable::LinkageTypes Linkage = CGM.getVTableLinkage(RD);
 
-  for (MicrosoftVTableContext::VFPtrListTy::iterator I = VFPtrs.begin(),
-       E = VFPtrs.end(); I != E; ++I) {
-    llvm::GlobalVariable *VTable = getAddrOfVTable(RD, I->VFPtrFullOffset);
+  for (VPtrInfoVector::iterator I = VFPtrs.begin(), E = VFPtrs.end(); I != E;
+       ++I) {
+    llvm::GlobalVariable *VTable = getAddrOfVTable(RD, (*I)->FullOffsetInMDC);
     if (VTable->hasInitializer())
       continue;
 
     const VTableLayout &VTLayout =
-        VFTContext.getVFTableLayout(RD, I->VFPtrFullOffset);
+        VFTContext.getVFTableLayout(RD, (*I)->FullOffsetInMDC);
     llvm::Constant *Init = CGVT.CreateVTableInitializer(
         RD, VTLayout.vtable_component_begin(),
         VTLayout.getNumVTableComponents(), VTLayout.vtable_thunk_begin(),
@@ -877,10 +877,10 @@ llvm::Value *MicrosoftCXXABI::getVTableAddressPointInStructor(
 }
 
 static void mangleVFTableName(MicrosoftMangleContext &MangleContext,
-                              const CXXRecordDecl *RD, const VFPtrInfo &VFPtr,
+                              const CXXRecordDecl *RD, const VPtrInfo *VFPtr,
                               SmallString<256> &Name) {
   llvm::raw_svector_ostream Out(Name);
-  MangleContext.mangleCXXVFTable(RD, VFPtr.PathToMangle, Out);
+  MangleContext.mangleCXXVFTable(RD, VFPtr->MangledPath, Out);
 }
 
 llvm::Constant *MicrosoftCXXABI::getVTableAddressPointForConstExpr(
@@ -906,8 +906,7 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
   llvm::GlobalVariable *&VTable = I->second;
 
   MicrosoftVTableContext &VTContext = CGM.getMicrosoftVTableContext();
-  const MicrosoftVTableContext::VFPtrListTy &VFPtrs =
-      VTContext.getVFPtrOffsets(RD);
+  const VPtrInfoVector &VFPtrs = VTContext.getVFPtrOffsets(RD);
 
   if (DeferredVFTables.insert(RD)) {
     // We haven't processed this record type before.
@@ -928,12 +927,12 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
   }
 
   for (size_t J = 0, F = VFPtrs.size(); J != F; ++J) {
-    if (VFPtrs[J].VFPtrFullOffset != VPtrOffset)
+    if (VFPtrs[J]->FullOffsetInMDC != VPtrOffset)
       continue;
 
     llvm::ArrayType *ArrayType = llvm::ArrayType::get(
         CGM.Int8PtrTy,
-        VTContext.getVFTableLayout(RD, VFPtrs[J].VFPtrFullOffset)
+        VTContext.getVFTableLayout(RD, VFPtrs[J]->FullOffsetInMDC)
             .getNumVTableComponents());
 
     SmallString<256> Name;
@@ -1007,8 +1006,8 @@ MicrosoftCXXABI::enumerateVBTables(const CXXRecordDecl *RD) {
   // Cache the globals for all vbtables so we don't have to recompute the
   // mangled names.
   llvm::GlobalVariable::LinkageTypes Linkage = CGM.getVTableLinkage(RD);
-  for (VBTableVector::const_iterator I = VBGlobals.VBTables->begin(),
-                                     E = VBGlobals.VBTables->end();
+  for (VPtrInfoVector::const_iterator I = VBGlobals.VBTables->begin(),
+                                      E = VBGlobals.VBTables->end();
        I != E; ++I) {
     VBGlobals.Globals.push_back(getAddrOfVBTable(**I, RD, Linkage));
   }
@@ -1066,15 +1065,14 @@ llvm::Function *MicrosoftCXXABI::EmitVirtualMemPtrThunk(
 void MicrosoftCXXABI::emitVirtualInheritanceTables(const CXXRecordDecl *RD) {
   const VBTableGlobals &VBGlobals = enumerateVBTables(RD);
   for (unsigned I = 0, E = VBGlobals.VBTables->size(); I != E; ++I) {
-    const VBTableInfo *VBT = (*VBGlobals.VBTables)[I];
+    const VPtrInfo *VBT = (*VBGlobals.VBTables)[I];
     llvm::GlobalVariable *GV = VBGlobals.Globals[I];
     emitVBTableDefinition(*VBT, RD, GV);
   }
 }
 
 llvm::GlobalVariable *
-MicrosoftCXXABI::getAddrOfVBTable(const VBTableInfo &VBT,
-                                  const CXXRecordDecl *RD,
+MicrosoftCXXABI::getAddrOfVBTable(const VPtrInfo &VBT, const CXXRecordDecl *RD,
                                   llvm::GlobalVariable::LinkageTypes Linkage) {
   SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
@@ -1095,7 +1093,7 @@ MicrosoftCXXABI::getAddrOfVBTable(const VBTableInfo &VBT,
   return GV;
 }
 
-void MicrosoftCXXABI::emitVBTableDefinition(const VBTableInfo &VBT,
+void MicrosoftCXXABI::emitVBTableDefinition(const VPtrInfo &VBT,
                                             const CXXRecordDecl *RD,
                                             llvm::GlobalVariable *GV) const {
   const CXXRecordDecl *ReusingBase = VBT.ReusingBase;
@@ -1104,7 +1102,7 @@ void MicrosoftCXXABI::emitVBTableDefinition(const VBTableInfo &VBT,
          "should only emit vbtables for classes with vbtables");
 
   const ASTRecordLayout &BaseLayout =
-    CGM.getContext().getASTRecordLayout(VBT.BaseWithVBPtr);
+      CGM.getContext().getASTRecordLayout(VBT.BaseWithVPtr);
   const ASTRecordLayout &DerivedLayout =
     CGM.getContext().getASTRecordLayout(RD);
 
@@ -1124,9 +1122,9 @@ void MicrosoftCXXABI::emitVBTableDefinition(const VBTableInfo &VBT,
 
     // Make it relative to the subobject vbptr.
     CharUnits CompleteVBPtrOffset = VBT.NonVirtualOffset + VBPtrOffset;
-    if (VBT.getVBaseWithVBPtr())
+    if (VBT.getVBaseWithVPtr())
       CompleteVBPtrOffset +=
-          DerivedLayout.getVBaseClassOffset(VBT.getVBaseWithVBPtr());
+          DerivedLayout.getVBaseClassOffset(VBT.getVBaseWithVPtr());
     Offset -= CompleteVBPtrOffset;
 
     unsigned VBIndex = Context.getVBTableIndex(ReusingBase, VBase);
