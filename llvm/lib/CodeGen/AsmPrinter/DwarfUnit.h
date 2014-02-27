@@ -21,6 +21,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/DebugInfo.h"
+#include "llvm/DIBuilder.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSection.h"
 
@@ -249,7 +250,11 @@ public:
   bool hasContent() const { return !UnitDie->getChildren().empty(); }
 
   /// addRange - Add an address range to the list of ranges for this unit.
-  void addRange(RangeSpan Range) { CURanges.push_back(Range); }
+  void addRange(RangeSpan Range) {
+    // Only add a range for this unit if we're emitting full debug.
+    if (getCUNode().getEmissionKind() == DIBuilder::FullDebug)
+      CURanges.push_back(Range);
+  }
 
   /// getRanges - Get the list of ranges for this unit.
   const SmallVectorImpl<RangeSpan> &getRanges() const { return CURanges; }
