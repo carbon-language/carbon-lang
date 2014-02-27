@@ -42,6 +42,9 @@ namespace llvm {
       // cp relative address
       CPRelativeWrapper,
 
+      // Load word from stack
+      LDWSP,
+
       // Store word to stack
       STWSP,
 
