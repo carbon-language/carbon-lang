@@ -190,7 +190,17 @@ POSIXThread::GetRegisterContext()
                         reg_interface = new RegisterContextFreeBSD_x86_64(target_arch);
                         break;
                     case llvm::Triple::Linux:
-                        reg_interface = new RegisterContextLinux_x86_64(target_arch);
+                        if (Host::GetArchitecture().GetAddressByteSize() == 4)
+                        {
+                            // 32-bit hosts run with a RegisterContextLinux_i386 context.
+                            reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_i386(target_arch));
+                        }
+                        else
+                        {
+                            assert((Host::GetArchitecture().GetAddressByteSize() == 8) && "Register setting path assumes this is a 64-bit host");
+                            // X86_64 hosts know how to work with 64-bit and 32-bit EXEs using the x86_64 register context.
+                            reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_x86_64(target_arch));
+                        }
                         break;
                     default:
                         assert(false && "OS not supported");

@@ -24,7 +24,9 @@
     (LLVM_EXTENSION offsetof(YMM, regname))
 
 // Number of bytes needed to represent a FPR.
+#if !defined(FPR_SIZE)
 #define FPR_SIZE(reg) sizeof(((FXSAVE*)NULL)->reg)
+#endif
 
 // Number of bytes needed to represent the i'th FP register.
 #define FP_SIZE sizeof(((MMSReg*)NULL)->bytes)

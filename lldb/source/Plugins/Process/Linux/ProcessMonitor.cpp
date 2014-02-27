@@ -168,9 +168,9 @@ PtraceWrapper(int req, lldb::pid_t pid, void *addr, void *data, size_t data_size
 
     errno = 0;
     if (req == PTRACE_GETREGSET || req == PTRACE_SETREGSET)
-        result = ptrace(static_cast<__ptrace_request>(req), pid, *(unsigned int *)addr, data);
+        result = ptrace(static_cast<__ptrace_request>(req), static_cast<pid_t>(pid), *(unsigned int *)addr, data);
     else
-        result = ptrace(static_cast<__ptrace_request>(req), pid, addr, data);
+        result = ptrace(static_cast<__ptrace_request>(req), static_cast<pid_t>(pid), addr, data);
 
     if (log)
         log->Printf("ptrace(%s, %" PRIu64 ", %p, %p, %zu)=%lX called from file %s line %d",
