@@ -742,7 +742,7 @@ CFGBlock *CFGBuilder::createBlock(bool add_successor) {
 CFGBlock *CFGBuilder::createNoReturnBlock() {
   CFGBlock *B = createBlock(false);
   B->setHasNoReturnElement();
-  addSuccessor(B, &cfg->getExit());
+  addSuccessor(B, &cfg->getExit(), Succ);
   return B;
 }
 
