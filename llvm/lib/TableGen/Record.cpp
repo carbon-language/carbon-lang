@@ -152,7 +152,7 @@ Init *BitsRecTy::convertValue(UnsetInit *UI) {
 
 Init *BitsRecTy::convertValue(BitInit *UI) {
   if (Size != 1) return 0;  // Can only convert single bit.
-          return BitsInit::get(UI);
+  return BitsInit::get(UI);
 }
 
 /// canFitInBitfield - Return true if the number of bits is large enough to hold
