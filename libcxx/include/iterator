@@ -327,6 +327,7 @@ template <class C> auto crend(const C& c) -> decltype(std::rend(c));          //
 */
 
 #include <__config>
+#include <__functional_base>
 #include <type_traits>
 #include <cstddef>
 #include <iosfwd>
@@ -549,7 +550,7 @@ public:
         : __t(__u.base()), current(__u.base()) {}
     _LIBCPP_INLINE_VISIBILITY _Iter base() const {return current;}
     _LIBCPP_INLINE_VISIBILITY reference operator*() const {__t = current; return *--__t;}
-    _LIBCPP_INLINE_VISIBILITY pointer  operator->() const {return &(operator*());}
+    _LIBCPP_INLINE_VISIBILITY pointer  operator->() const {return _VSTD::addressof(operator*());}
     _LIBCPP_INLINE_VISIBILITY reverse_iterator& operator++() {--current; return *this;}
     _LIBCPP_INLINE_VISIBILITY reverse_iterator  operator++(int)
         {reverse_iterator __tmp(*this); --current; return __tmp;}
