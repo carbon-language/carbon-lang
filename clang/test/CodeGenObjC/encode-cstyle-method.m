@@ -8,4 +8,4 @@
 @implementation Foo
 - (id)test:(id )one, id two {return two; } @end
 
-// CHECK-LP64: internal global [11 x i8] c"@24@0:8@16
+// CHECK-LP64: private global [11 x i8] c"@24@0:8@16

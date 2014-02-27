@@ -4,8 +4,8 @@
 typedef int (^fp)();
 fp f() { auto x = []{ return 3; }; return x; }
 
-// MRC: @"\01L_OBJC_METH_VAR_NAME{{.*}}" = internal global [5 x i8] c"copy\00"
-// MRC: @"\01L_OBJC_METH_VAR_NAME{{.*}}" = internal global [12 x i8] c"autorelease\00"
+// MRC: @"\01L_OBJC_METH_VAR_NAME{{.*}}" = private global [5 x i8] c"copy\00"
+// MRC: @"\01L_OBJC_METH_VAR_NAME{{.*}}" = private global [12 x i8] c"autorelease\00"
 // MRC-LABEL: define i32 ()* @_Z1fv(
 // MRC-LABEL: define internal i32 ()* @"_ZZ1fvENK3$_0cvU13block_pointerFivEEv"
 // MRC: store i8* bitcast (i8** @_NSConcreteStackBlock to i8*)
