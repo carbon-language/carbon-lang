@@ -2569,6 +2569,7 @@ llvm::Constant *CGObjCCommonMac::GetProtocolRef(const ObjCProtocolDecl *PD) {
 
 static void assertPrivateName(const llvm::GlobalValue *GV) {
   StringRef NameRef = GV->getName();
+  (void)NameRef;
   assert(NameRef[0] == '\01' && (NameRef[1] == 'L' || NameRef[1] == 'l'));
   assert(GV->getVisibility() == llvm::GlobalValue::DefaultVisibility);
   assert(GV->getLinkage() == llvm::GlobalValue::PrivateLinkage);
