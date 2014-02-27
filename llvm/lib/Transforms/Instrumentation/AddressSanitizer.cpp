@@ -142,7 +142,7 @@ static cl::opt<bool> ClMemIntrin("asan-memintrin",
        cl::desc("Handle memset/memcpy/memmove"), cl::Hidden, cl::init(true));
 static cl::opt<bool> ClInvalidPointerPairs("asan-detect-invalid-pointer-pair",
        cl::desc("Instrument <, <=, >, >=, - with pointer operands"),
-       cl::Hidden, cl::init(true));
+       cl::Hidden, cl::init(false));
 static cl::opt<unsigned> ClRealignStack("asan-realign-stack",
        cl::desc("Realign stack to the value of this flag (power of two)"),
        cl::Hidden, cl::init(32));
