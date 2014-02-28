@@ -30,7 +30,7 @@
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_asm.h"
 #include "sanitizer_common/sanitizer_common.h"
-#include "sanitizer_common/sanitizer_deadlock_detector.h"
+#include "sanitizer_common/sanitizer_deadlock_detector_interface.h"
 #include "sanitizer_common/sanitizer_libignore.h"
 #include "sanitizer_common/sanitizer_suppressions.h"
 #include "sanitizer_common/sanitizer_thread_registry.h"
@@ -390,8 +390,6 @@ class Shadow : public FastState {
 
 struct SignalContext;
 
-typedef TwoLevelBitVector<> DDBV;  // DeadlockDetector's bit vector.
-
 struct JmpBuf {
   uptr sp;
   uptr mangled_sp;
@@ -453,7 +451,8 @@ struct ThreadState {
   ThreadContext *tctx;
 
   InternalDeadlockDetector internal_deadlock_detector;
-  __sanitizer::DeadlockDetectorTLS<DDBV> deadlock_detector_tls;
+  DDPhysicalThread *dd_pt;
+  DDLogicalThread *dd_lt;
 
   bool in_signal_handler;
   SignalContext *signal_ctx;
@@ -548,9 +547,7 @@ struct Context {
   Vector<RacyAddress> racy_addresses;
   // Number of fired suppressions may be large enough.
   InternalMmapVector<FiredSuppression> fired_suppressions;
-
-  __sanitizer::DeadlockDetector<DDBV> dd;
-  Mutex dd_mtx;
+  DDetector *dd;
 
   Flags flags;
 
@@ -583,6 +580,7 @@ class ScopedReport {
                        const MutexSet *mset);
   void AddThread(const ThreadContext *tctx);
   void AddMutex(const SyncVar *s);
+  u64 AddMutex(u64 id);
   void AddLocation(uptr addr, uptr size);
   void AddSleep(u32 stack_id);
   void SetCount(int count);
@@ -596,7 +594,7 @@ class ScopedReport {
   // at best it will cause deadlocks on internal mutexes.
   ScopedIgnoreInterceptors ignore_interceptors_;
 
-  void AddMutex(u64 id);
+  void AddDeadMutex(u64 id);
 
   ScopedReport(const ScopedReport&);
   void operator = (const ScopedReport&);

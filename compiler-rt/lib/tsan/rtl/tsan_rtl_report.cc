@@ -181,23 +181,9 @@ void ScopedReport::AddMemoryAccess(uptr addr, Shadow s,
   mop->stack = SymbolizeStack(*stack);
   for (uptr i = 0; i < mset->Size(); i++) {
     MutexSet::Desc d = mset->Get(i);
-    u64 uid = 0;
-    uptr addr = SyncVar::SplitId(d.id, &uid);
-    SyncVar *s = ctx_->synctab.GetIfExistsAndLock(addr, false);
-    // Check that the mutex is still alive.
-    // Another mutex can be created at the same address,
-    // so check uid as well.
-    if (s && s->CheckId(uid)) {
-      ReportMopMutex mtx = {s->uid, d.write};
-      mop->mset.PushBack(mtx);
-      AddMutex(s);
-    } else {
-      ReportMopMutex mtx = {d.id, d.write};
-      mop->mset.PushBack(mtx);
-      AddMutex(d.id);
-    }
-    if (s)
-      s->mtx.ReadUnlock();
+    u64 mid = this->AddMutex(d.id);
+    ReportMopMutex mtx = {mid, d.write};
+    mop->mset.PushBack(mtx);
   }
 }
 
@@ -286,7 +272,26 @@ void ScopedReport::AddMutex(const SyncVar *s) {
 #endif
 }
 
-void ScopedReport::AddMutex(u64 id) {
+u64 ScopedReport::AddMutex(u64 id) {
+  u64 uid = 0;
+  u64 mid = id;
+  uptr addr = SyncVar::SplitId(id, &uid);
+  SyncVar *s = ctx_->synctab.GetIfExistsAndLock(addr, false);
+  // Check that the mutex is still alive.
+  // Another mutex can be created at the same address,
+  // so check uid as well.
+  if (s && s->CheckId(uid)) {
+    mid = s->uid;
+    AddMutex(s);
+  } else {
+    AddDeadMutex(id);
+  }
+  if (s)
+    s->mtx.ReadUnlock();
+  return mid;
+}
+
+void ScopedReport::AddDeadMutex(u64 id) {
   for (uptr i = 0; i < rep_->mutexes.Size(); i++) {
     if (rep_->mutexes[i]->id == id)
       return;

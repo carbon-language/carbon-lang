@@ -5,6 +5,7 @@ set(SANITIZER_SOURCES
   sanitizer_allocator.cc
   sanitizer_common.cc
   sanitizer_coverage.cc
+  sanitizer_deadlock_detector1.cc
   sanitizer_flags.cc
   sanitizer_libc.cc
   sanitizer_libignore.cc
@@ -52,6 +53,7 @@ set(SANITIZER_HEADERS
   sanitizer_common_interceptors_format.inc
   sanitizer_common_syscalls.inc
   sanitizer_deadlock_detector.h
+  sanitizer_deadlock_detector_interface.h
   sanitizer_flags.h
   sanitizer_internal_defs.h
   sanitizer_lfstack.h

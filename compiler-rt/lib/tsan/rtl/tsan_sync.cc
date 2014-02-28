@@ -58,14 +58,16 @@ SyncVar* SyncTab::GetIfExistsAndLock(uptr addr, bool write_lock) {
 }
 
 SyncVar* SyncTab::Create(ThreadState *thr, uptr pc, uptr addr) {
+  Context *ctx = CTX();
   StatInc(thr, StatSyncCreated);
   void *mem = internal_alloc(MBlockSync, sizeof(SyncVar));
   const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
   SyncVar *res = new(mem) SyncVar(addr, uid);
-  res->deadlock_detector_id = 0;
 #ifndef TSAN_GO
   res->creation_stack_id = CurrentStackId(thr, pc);
 #endif
+  if (flags()->detect_deadlocks)
+    ctx->dd->MutexInit(&res->dd, res->creation_stack_id, res->GetId());
   return res;
 }
 

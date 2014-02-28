@@ -17,6 +17,7 @@ SRCS="
 	../rtl/tsan_sync.cc
 	../../sanitizer_common/sanitizer_allocator.cc
 	../../sanitizer_common/sanitizer_common.cc
+	../../sanitizer_common/sanitizer_deadlock_detector1.cc
 	../../sanitizer_common/sanitizer_flags.cc
 	../../sanitizer_common/sanitizer_libc.cc
 	../../sanitizer_common/sanitizer_printf.cc

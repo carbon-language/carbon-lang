@@ -83,13 +83,14 @@ struct OnStartedArgs {
 };
 
 void ThreadContext::OnStarted(void *arg) {
+  Context *ctx = CTX();
   OnStartedArgs *args = static_cast<OnStartedArgs*>(arg);
   thr = args->thr;
   // RoundUp so that one trace part does not contain events
   // from different threads.
   epoch0 = RoundUp(epoch1 + 1, kTracePartSize);
   epoch1 = (u64)-1;
-  new(thr) ThreadState(CTX(), tid, unique_id,
+  new(thr) ThreadState(ctx, tid, unique_id,
       epoch0, args->stk_addr, args->stk_size, args->tls_addr, args->tls_size);
 #ifndef TSAN_GO
   thr->shadow_stack = &ThreadTrace(thr->tid)->shadow_stack[0];
@@ -106,6 +107,10 @@ void ThreadContext::OnStarted(void *arg) {
 #ifndef TSAN_GO
   AllocatorThreadStart(thr);
 #endif
+  if (flags()->detect_deadlocks) {
+    thr->dd_pt = ctx->dd->CreatePhysicalThread();
+    thr->dd_lt = ctx->dd->CreateLogicalThread(unique_id);
+  }
   thr->fast_synch_epoch = epoch0;
   AcquireImpl(thr, 0, &sync);
   thr->fast_state.SetHistorySize(flags()->history_size);
@@ -122,6 +127,7 @@ void ThreadContext::OnStarted(void *arg) {
 }
 
 void ThreadContext::OnFinished() {
+  Context *ctx = CTX();
   if (!detached) {
     thr->fast_state.IncrementEpoch();
     // Can't increment epoch w/o writing to the trace as well.
@@ -130,11 +136,15 @@ void ThreadContext::OnFinished() {
   }
   epoch1 = thr->fast_state.epoch();
 
+  if (flags()->detect_deadlocks) {
+    ctx->dd->DestroyPhysicalThread(thr->dd_pt);
+    ctx->dd->DestroyLogicalThread(thr->dd_lt);
+  }
 #ifndef TSAN_GO
   AllocatorThreadFinish(thr);
 #endif
   thr->~ThreadState();
-  StatAggregate(CTX()->stat, thr->stat);
+  StatAggregate(ctx->stat, thr->stat);
   thr = 0;
 }
 
