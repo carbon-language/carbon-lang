@@ -7249,6 +7249,9 @@ public:
   /// function, issuing a diagnostic if not.
   void checkVariadicArgument(const Expr *E, VariadicCallType CT);
 
+  /// Check to see if a given expression could have '.c_str()' called on it.
+  bool hasCStrMethod(const Expr *E);
+
   /// GatherArgumentsForCall - Collector argument expressions for various
   /// form of call prototypes.
   bool GatherArgumentsForCall(SourceLocation CallLoc, FunctionDecl *FDecl,
