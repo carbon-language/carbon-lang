@@ -142,6 +142,9 @@ void LLVMContext::diagnose(const DiagnosticInfo &DI) {
   case DS_Warning:
     errs() << "warning: " << MsgStorage << "\n";
     break;
+  case DS_Remark:
+    errs() << "remark: " << MsgStorage << "\n";
+    break;
   case DS_Note:
     errs() << "note: " << MsgStorage << "\n";
     break;

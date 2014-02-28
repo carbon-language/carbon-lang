@@ -31,6 +31,9 @@ class Value;
 enum DiagnosticSeverity {
   DS_Error,
   DS_Warning,
+  DS_Remark,
+  // A note attaches additional information to one of the previous diagnostic
+  // types.
   DS_Note
 };
 

@@ -40,7 +40,7 @@ typedef bool lto_bool_t;
  * @{
  */
 
-#define LTO_API_VERSION 9
+#define LTO_API_VERSION 10
 
 /**
  * \since prior to LTO_API_VERSION=3
@@ -299,9 +299,10 @@ lto_module_get_linkeropt(lto_module_t mod, unsigned int index);
  * \since LTO_API_VERSION=7
  */
 typedef enum {
-  LTO_DS_ERROR,
-  LTO_DS_WARNING,
-  LTO_DS_NOTE
+  LTO_DS_ERROR = 0,
+  LTO_DS_WARNING = 1,
+  LTO_DS_REMARK = 3, // Added in LTO_API_VERSION=10.
+  LTO_DS_NOTE = 2
 } lto_codegen_diagnostic_severity_t;
 
 /**

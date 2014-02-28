@@ -562,6 +562,9 @@ void LTOCodeGenerator::DiagnosticHandler2(const DiagnosticInfo &DI) {
   case DS_Warning:
     Severity = LTO_DS_WARNING;
     break;
+  case DS_Remark:
+    Severity = LTO_DS_REMARK;
+    break;
   case DS_Note:
     Severity = LTO_DS_NOTE;
     break;
