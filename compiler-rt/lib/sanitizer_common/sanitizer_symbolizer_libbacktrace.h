@@ -11,6 +11,8 @@
 // run-time libraries.
 // Header for libbacktrace symbolizer.
 //===----------------------------------------------------------------------===//
+#ifndef SANITIZER_SYMBOLIZER_LIBBACKTRACE_H
+#define SANITIZER_SYMBOLIZER_LIBBACKTRACE_H
 
 #include "sanitizer_platform.h"
 #include "sanitizer_common.h"
@@ -45,3 +47,4 @@ class LibbacktraceSymbolizer {
 };
 
 }  // namespace __sanitizer
+#endif  // SANITIZER_SYMBOLIZER_LIBBACKTRACE_H
