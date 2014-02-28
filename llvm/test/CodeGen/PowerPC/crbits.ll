@@ -2,10 +2,6 @@
 target datalayout = "E-m:e-i64:64-n32:64"
 target triple = "powerpc64-unknown-linux-gnu"
 
-; FIXME: For a number of these we load (1, 0) for the isel into two registers,
-; whereas if we reverse the condition, we could use only one register (using ZERO
-; for 0 in the isel).
-
 ; Function Attrs: nounwind readnone
 define zeroext i1 @test1(float %v1, float %v2) #0 {
 entry:
@@ -18,12 +14,11 @@ entry:
 ; CHECK-DAG: fcmpu {{[0-9]+}}, 1, 2
 ; CHECK-DAG: li [[REG1:[0-9]+]], 1
 ; CHECK-DAG: lfs [[REG2:[0-9]+]],
-; CHECK-DAG: li [[REG3:[0-9]+]], 0
 ; CHECK-DAG: fcmpu {{[0-9]+}}, 2, [[REG2]]
 ; CHECK: crnor
 ; CHECK: crnor
-; CHECK: crand [[REG4:[0-9]+]],
-; CHECK: isel 3, [[REG1]], [[REG3]], [[REG4]]
+; CHECK: crnand [[REG4:[0-9]+]],
+; CHECK: isel 3, 0, [[REG1]], [[REG4]]
 ; CHECK: blr
 }
 
@@ -39,12 +34,11 @@ entry:
 ; CHECK-DAG: fcmpu {{[0-9]+}}, 1, 2
 ; CHECK-DAG: li [[REG1:[0-9]+]], 1
 ; CHECK-DAG: lfs [[REG2:[0-9]+]],
-; CHECK-DAG: li [[REG3:[0-9]+]], 0
 ; CHECK-DAG: fcmpu {{[0-9]+}}, 2, [[REG2]]
 ; CHECK: crnor
 ; CHECK: crnor
-; CHECK: crxor [[REG4:[0-9]+]],
-; CHECK: isel 3, [[REG1]], [[REG3]], [[REG4]]
+; CHECK: creqv [[REG4:[0-9]+]],
+; CHECK: isel 3, 0, [[REG1]], [[REG4]]
 ; CHECK: blr
 }
 
@@ -62,13 +56,12 @@ entry:
 ; CHECK-DAG: fcmpu {{[0-9]+}}, 1, 2
 ; CHECK-DAG: li [[REG1:[0-9]+]], 1
 ; CHECK-DAG: lfs [[REG2:[0-9]+]],
-; CHECK-DAG: li [[REG3:[0-9]+]], 0
 ; CHECK-DAG: fcmpu {{[0-9]+}}, 2, [[REG2]]
 ; CHECK: crnor
 ; CHECK: crnor
 ; CHECK: crandc
-; CHECK: crxor [[REG4:[0-9]+]],
-; CHECK: isel 3, [[REG1]], [[REG3]], [[REG4]]
+; CHECK: creqv [[REG4:[0-9]+]],
+; CHECK: isel 3, 0, [[REG1]], [[REG4]]
 ; CHECK: blr
 }
 
@@ -96,11 +89,10 @@ entry:
 ; CHECK-LABEL: @test5
 ; CHECK-DAG: and [[REG1:[0-9]+]], 3, 4
 ; CHECK-DAG: cmpwi {{[0-9]+}}, 5, -2
-; CHECK: li [[REG3:[0-9]+]], 1
-; CHECK: andi. {{[0-9]+}}, [[REG1]], 1
-; CHECK: li [[REG4:[0-9]+]], 0
-; CHECK: crorc [[REG5:[0-9]+]],
-; CHECK: isel 3, [[REG3]], [[REG4]], [[REG5]]
+; CHECK-DAG: li [[REG3:[0-9]+]], 1
+; CHECK-DAG: andi. {{[0-9]+}}, [[REG1]], 1
+; CHECK-DAG: crandc [[REG5:[0-9]+]],
+; CHECK: isel 3, 0, [[REG3]], [[REG5]]
 ; CHECK: blr
 }
 
@@ -116,12 +108,11 @@ entry:
 ; CHECK-DAG: andi. {{[0-9]+}}, 3, 1
 ; CHECK-DAG: cmpwi {{[0-9]+}}, 5, -2
 ; CHECK-DAG: cror [[REG1:[0-9]+]], 1, 1
-; CHECK: andi. {{[0-9]+}}, 4, 1
-; CHECK: li [[REG2:[0-9]+]], 1
-; CHECK: li [[REG3:[0-9]+]], 0
-; CHECK: crorc [[REG4:[0-9]+]], 1,
-; CHECK: crand [[REG5:[0-9]+]], [[REG4]], [[REG1]]
-; CHECK: isel 3, [[REG2]], [[REG3]], [[REG5]]
+; CHECK-DAG: andi. {{[0-9]+}}, 4, 1
+; CHECK-DAG: li [[REG2:[0-9]+]], 1
+; CHECK-DAG: crorc [[REG4:[0-9]+]], 1,
+; CHECK-DAG: crnand [[REG5:[0-9]+]], [[REG4]], [[REG1]]
+; CHECK: isel 3, 0, [[REG2]], [[REG5]]
 ; CHECK: blr
 }
 
@@ -163,10 +154,9 @@ entry:
 ; CHECK-LABEL: @test10
 ; CHECK-DAG: cmpwi {{[0-9]+}}, 3, 0
 ; CHECK-DAG: cmpwi {{[0-9]+}}, 4, 0
-; CHECK-DAG: li [[REG1:[0-9]+]], 0
 ; CHECK-DAG: li [[REG2:[0-9]+]], 1
-; CHECK: crandc [[REG3:[0-9]+]],
-; CHECK: isel 3, [[REG2]], [[REG1]], [[REG3]]
+; CHECK-DAG: crorc [[REG3:[0-9]+]],
+; CHECK: isel 3, 0, [[REG2]], [[REG3]]
 ; CHECK: blr
 }
 
