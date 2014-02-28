@@ -768,31 +768,34 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
         
         error = Host::LaunchProcess(launch_info);
         
-        if (named_pipe_path[0])
+        if (error.Success() && launch_info.GetProcessID() != LLDB_INVALID_PROCESS_ID)
         {
-            File name_pipe_file;
-            error = name_pipe_file.Open(named_pipe_path, File::eOpenOptionRead);
-            if (error.Success())
+            if (named_pipe_path[0])
             {
-                char port_cstr[256];
-                port_cstr[0] = '\0';
-                size_t num_bytes = sizeof(port_cstr);
-                error = name_pipe_file.Read(port_cstr, num_bytes);
-                assert (error.Success());
-                assert (num_bytes > 0 && port_cstr[num_bytes-1] == '\0');
-                out_port = Args::StringToUInt32(port_cstr, 0);
-                name_pipe_file.Close();
+                File name_pipe_file;
+                error = name_pipe_file.Open(named_pipe_path, File::eOpenOptionRead);
+                if (error.Success())
+                {
+                    char port_cstr[256];
+                    port_cstr[0] = '\0';
+                    size_t num_bytes = sizeof(port_cstr);
+                    error = name_pipe_file.Read(port_cstr, num_bytes);
+                    assert (error.Success());
+                    assert (num_bytes > 0 && port_cstr[num_bytes-1] == '\0');
+                    out_port = Args::StringToUInt32(port_cstr, 0);
+                    name_pipe_file.Close();
+                }
+                Host::Unlink(named_pipe_path);
             }
-            Host::Unlink(named_pipe_path);
-        }
-        else if (listen)
-        {
-            
-        }
-        else
-        {
-            // Make sure we actually connect with the debugserver...
-            JoinListenThread();
+            else if (listen)
+            {
+                
+            }
+            else
+            {
+                // Make sure we actually connect with the debugserver...
+                JoinListenThread();
+            }
         }
     }
     else
