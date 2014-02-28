@@ -389,6 +389,17 @@ class LockTest {
     }
   }
 
+  void Test14() {
+    if (test_number > 0 && test_number != 14) return;
+    fprintf(stderr, "Starting Test14: create lots of locks in 4 threads\n");
+    Init(10);
+    // CHECK-RD: Starting Test14
+    RunThreads(&LockTest::CreateAndDestroyLocksLoop,
+               &LockTest::CreateAndDestroyLocksLoop,
+               &LockTest::CreateAndDestroyLocksLoop,
+               &LockTest::CreateAndDestroyLocksLoop);
+  }
+
  private:
   void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
   void Lock_0_1() { Lock2(0, 1); }
@@ -406,9 +417,17 @@ class LockTest {
   void Lock1_Loop_2() { Lock1_Loop(20, iter_count); }
 
   void CreateAndDestroyManyLocks() {
-    LockType create_many_locks_but_never_acquire[kDeadlockGraphSize];
+    LockType *create_many_locks_but_never_acquire =
+        new LockType[kDeadlockGraphSize];
     (void)create_many_locks_but_never_acquire;
-    (void)create_many_locks_but_never_acquire;
+    delete [] create_many_locks_but_never_acquire;
+  }
+
+  void CreateAndDestroyLocksLoop() {
+    for (size_t it = 0; it <= iter_count; it++) {
+      LockType some_locks[10];
+      (void)some_locks;
+    }
   }
 
   void CreateLockUnlockAndDestroyManyLocks() {
@@ -466,6 +485,7 @@ int main(int argc, char **argv) {
   LockTest().Test11();
   LockTest().Test12();
   LockTest().Test13();
+  LockTest().Test14();
   fprintf(stderr, "ALL-DONE\n");
   // CHECK: ALL-DONE
 }
