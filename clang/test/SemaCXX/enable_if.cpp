@@ -4,6 +4,10 @@ typedef int (*fp)(int);
 int surrogate(int);
 
 struct X {
+  X() = default;  // expected-note{{candidate constructor not viable: requires 0 arguments, but 1 was provided}}
+  X(const X&) = default;  // expected-note{{candidate constructor not viable: no known conversion from 'bool' to 'const X' for 1st argument}}
+  X(bool b) __attribute__((enable_if(b, "chosen when 'b' is true")));  // expected-note{{candidate disabled: chosen when 'b' is true}}
+
   void f(int n) __attribute__((enable_if(n == 0, "chosen when 'n' is zero")));
   void f(int n) __attribute__((enable_if(n == 1, "chosen when 'n' is one")));  // expected-note{{member declaration nearly matches}} expected-note{{candidate disabled: chosen when 'n' is one}}
 
@@ -25,6 +29,9 @@ void X::f(int n) __attribute__((enable_if(n == 0, "chosen when 'n' is zero")))  
 void X::f(int n) __attribute__((enable_if(n == 2, "chosen when 'n' is two")))  // expected-error{{out-of-line definition of 'f' does not match any declaration in 'X'}} expected-note{{candidate disabled: chosen when 'n' is two}}
 {
 }
+
+X x1(true);
+X x2(false); // expected-error{{no matching constructor for initialization of 'X'}}
 
 __attribute__((deprecated)) constexpr int old() { return 0; }  // expected-note2{{'old' has been explicitly marked deprecated here}}
 void deprec1(int i) __attribute__((enable_if(old() == 0, "chosen when old() is zero")));  // expected-warning{{'old' is deprecated}}

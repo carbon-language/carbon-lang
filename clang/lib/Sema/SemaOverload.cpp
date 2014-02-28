@@ -5646,7 +5646,8 @@ EnableIfAttr *Sema::CheckEnableIf(FunctionDecl *Function, ArrayRef<Expr *> Args,
   bool InitializationFailed = false;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     if (i == 0 && !MissingImplicitThis && isa<CXXMethodDecl>(Function) &&
-        !cast<CXXMethodDecl>(Function)->isStatic()) {
+        !cast<CXXMethodDecl>(Function)->isStatic() &&
+        !isa<CXXConstructorDecl>(Function)) {
       CXXMethodDecl *Method = cast<CXXMethodDecl>(Function);
       ExprResult R =
         PerformObjectArgumentInitialization(Args[0], /*Qualifier=*/0,
