@@ -198,7 +198,8 @@ static error_code getSectionContents(const COFFObjectFile *Obj,
                                      ArrayRef<uint8_t> &Contents,
                                      uint64_t &Addr) {
   SymbolRef Sym;
-  if (error_code ec = resolveSymbol(Rels, Offset, Sym)) return ec;
+  if (error_code EC = resolveSymbol(Rels, Offset, Sym))
+    return EC;
   const coff_section *Section;
   if (error_code EC = resolveSectionAndAddress(Obj, Sym, Section, Addr))
     return EC;
