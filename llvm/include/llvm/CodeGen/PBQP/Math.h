@@ -20,418 +20,268 @@ typedef float PBQPNum;
 
 /// \brief PBQP Vector class.
 class Vector {
-  friend class VectorComparator;
-public:
+  public:
 
-  /// \brief Construct a PBQP vector of the given size.
-  explicit Vector(unsigned Length)
-    : Length(Length), Data(new PBQPNum[Length]) {
-    // llvm::dbgs() << "Constructing PBQP::Vector "
-    //              << this << " (length " << Length << ")\n";
-  }
+    /// \brief Construct a PBQP vector of the given size.
+    explicit Vector(unsigned length) :
+      length(length), data(new PBQPNum[length]) {
+      }
 
-  /// \brief Construct a PBQP vector with initializer.
-  Vector(unsigned Length, PBQPNum InitVal)
-    : Length(Length), Data(new PBQPNum[Length]) {
-    // llvm::dbgs() << "Constructing PBQP::Vector "
-    //              << this << " (length " << Length << ", fill "
-    //              << InitVal << ")\n";
-    std::fill(Data, Data + Length, InitVal);
-  }
+    /// \brief Construct a PBQP vector with initializer.
+    Vector(unsigned length, PBQPNum initVal) :
+      length(length), data(new PBQPNum[length]) {
+        std::fill(data, data + length, initVal);
+      }
 
-  /// \brief Copy construct a PBQP vector.
-  Vector(const Vector &V)
-    : Length(V.Length), Data(new PBQPNum[Length]) {
-    // llvm::dbgs() << "Copy-constructing PBQP::Vector " << this
-    //              << " from PBQP::Vector " << &V << "\n";
-    std::copy(V.Data, V.Data + Length, Data);
-  }
+    /// \brief Copy construct a PBQP vector.
+    Vector(const Vector &v) :
+      length(v.length), data(new PBQPNum[length]) {
+        std::copy(v.data, v.data + length, data);
+      }
 
-  /// \brief Move construct a PBQP vector.
-  Vector(Vector &&V)
-    : Length(V.Length), Data(V.Data) {
-    V.Length = 0;
-    V.Data = nullptr;
-  }
+    /// \brief Destroy this vector, return its memory.
+    ~Vector() { delete[] data; }
 
-  /// \brief Destroy this vector, return its memory.
-  ~Vector() {
-    // llvm::dbgs() << "Deleting PBQP::Vector " << this << "\n";
-    delete[] Data;
-  }
+    /// \brief Assignment operator.
+    Vector& operator=(const Vector &v) {
+      delete[] data;
+      length = v.length;
+      data = new PBQPNum[length];
+      std::copy(v.data, v.data + length, data);
+      return *this;
+    }
 
-  /// \brief Copy-assignment operator.
-  Vector& operator=(const Vector &V) {
-    // llvm::dbgs() << "Assigning to PBQP::Vector " << this
-    //              << " from PBQP::Vector " << &V << "\n";
-    delete[] Data;
-    Length = V.Length;
-    Data = new PBQPNum[Length];
-    std::copy(V.Data, V.Data + Length, Data);
-    return *this;
-  }
+    /// \brief Return the length of the vector
+    unsigned getLength() const {
+      return length;
+    }
 
-  /// \brief Move-assignment operator.
-  Vector& operator=(Vector &&V) {
-    delete[] Data;
-    Length = V.Length;
-    Data = V.Data;
-    V.Length = 0;
-    V.Data = nullptr;
-    return *this;
-  }
+    /// \brief Element access.
+    PBQPNum& operator[](unsigned index) {
+      assert(index < length && "Vector element access out of bounds.");
+      return data[index];
+    }
 
-  /// \brief Comparison operator.
-  bool operator==(const Vector &V) const {
-    assert(Length != 0 && Data != nullptr && "Invalid vector");
-    if (Length != V.Length)
-      return false;
-    return std::equal(Data, Data + Length, V.Data);
-  }
+    /// \brief Const element access.
+    const PBQPNum& operator[](unsigned index) const {
+      assert(index < length && "Vector element access out of bounds.");
+      return data[index];
+    }
 
-  /// \brief Return the length of the vector
-  unsigned getLength() const {
-    assert(Length != 0 && Data != nullptr && "Invalid vector");
-    return Length;
-  }
+    /// \brief Add another vector to this one.
+    Vector& operator+=(const Vector &v) {
+      assert(length == v.length && "Vector length mismatch.");
+      std::transform(data, data + length, v.data, data, std::plus<PBQPNum>()); 
+      return *this;
+    }
 
-  /// \brief Element access.
-  PBQPNum& operator[](unsigned Index) {
-    assert(Length != 0 && Data != nullptr && "Invalid vector");
-    assert(Index < Length && "Vector element access out of bounds.");
-    return Data[Index];
-  }
+    /// \brief Subtract another vector from this one.
+    Vector& operator-=(const Vector &v) {
+      assert(length == v.length && "Vector length mismatch.");
+      std::transform(data, data + length, v.data, data, std::minus<PBQPNum>()); 
+      return *this;
+    }
 
-  /// \brief Const element access.
-  const PBQPNum& operator[](unsigned Index) const {
-    assert(Length != 0 && Data != nullptr && "Invalid vector");
-    assert(Index < Length && "Vector element access out of bounds.");
-    return Data[Index];
-  }
+    /// \brief Returns the index of the minimum value in this vector
+    unsigned minIndex() const {
+      return std::min_element(data, data + length) - data;
+    }
 
-  /// \brief Add another vector to this one.
-  Vector& operator+=(const Vector &V) {
-    assert(Length != 0 && Data != nullptr && "Invalid vector");
-    assert(Length == V.Length && "Vector length mismatch.");
-    std::transform(Data, Data + Length, V.Data, Data, std::plus<PBQPNum>());
-    return *this;
-  }
-
-  /// \brief Subtract another vector from this one.
-  Vector& operator-=(const Vector &V) {
-    assert(Length != 0 && Data != nullptr && "Invalid vector");
-    assert(Length == V.Length && "Vector length mismatch.");
-    std::transform(Data, Data + Length, V.Data, Data, std::minus<PBQPNum>());
-    return *this;
-  }
-
-  /// \brief Returns the index of the minimum value in this vector
-  unsigned minIndex() const {
-    assert(Length != 0 && Data != nullptr && "Invalid vector");
-    return std::min_element(Data, Data + Length) - Data;
-  }
-
-private:
-  unsigned Length;
-  PBQPNum *Data;
-};
-
-class VectorComparator {
-public:
-  bool operator()(const Vector &A, const Vector &B) {
-    if (A.Length < B.Length)
-      return true;
-    if (B.Length < A.Length)
-      return false;
-    char *AData = reinterpret_cast<char*>(A.Data);
-    char *BData = reinterpret_cast<char*>(B.Data);
-    return std::lexicographical_compare(AData,
-                                        AData + A.Length * sizeof(PBQPNum),
-                                        BData,
-                                        BData + A.Length * sizeof(PBQPNum));
-  }
+  private:
+    unsigned length;
+    PBQPNum *data;
 };
 
 /// \brief Output a textual representation of the given vector on the given
 ///        output stream.
 template <typename OStream>
-OStream& operator<<(OStream &OS, const Vector &V) {
-  assert((V.getLength() != 0) && "Zero-length vector badness.");
+OStream& operator<<(OStream &os, const Vector &v) {
+  assert((v.getLength() != 0) && "Zero-length vector badness.");
 
-  OS << "[ " << V[0];
-  for (unsigned i = 1; i < V.getLength(); ++i)
-    OS << ", " << V[i];
-  OS << " ]";
+  os << "[ " << v[0];
+  for (unsigned i = 1; i < v.getLength(); ++i) {
+    os << ", " << v[i];
+  }
+  os << " ]";
 
-  return OS;
-}
+  return os;
+} 
 
 
 /// \brief PBQP Matrix class
 class Matrix {
-private:
-  friend class MatrixComparator;
-public:
+  public:
 
-  /// \brief Construct a PBQP Matrix with the given dimensions.
-  Matrix(unsigned Rows, unsigned Cols) :
-    Rows(Rows), Cols(Cols), Data(new PBQPNum[Rows * Cols]) {
-  }
+    /// \brief Construct a PBQP Matrix with the given dimensions.
+    Matrix(unsigned rows, unsigned cols) :
+      rows(rows), cols(cols), data(new PBQPNum[rows * cols]) {
+    }
 
-  /// \brief Construct a PBQP Matrix with the given dimensions and initial
-  /// value.
-  Matrix(unsigned Rows, unsigned Cols, PBQPNum InitVal)
-    : Rows(Rows), Cols(Cols), Data(new PBQPNum[Rows * Cols]) {
-    std::fill(Data, Data + (Rows * Cols), InitVal);
-  }
+    /// \brief Construct a PBQP Matrix with the given dimensions and initial
+    /// value.
+    Matrix(unsigned rows, unsigned cols, PBQPNum initVal) :
+      rows(rows), cols(cols), data(new PBQPNum[rows * cols]) {
+        std::fill(data, data + (rows * cols), initVal);
+    }
 
-  /// \brief Copy construct a PBQP matrix.
-  Matrix(const Matrix &M)
-    : Rows(M.Rows), Cols(M.Cols), Data(new PBQPNum[Rows * Cols]) {
-    std::copy(M.Data, M.Data + (Rows * Cols), Data);
-  }
+    /// \brief Copy construct a PBQP matrix.
+    Matrix(const Matrix &m) :
+      rows(m.rows), cols(m.cols), data(new PBQPNum[rows * cols]) {
+        std::copy(m.data, m.data + (rows * cols), data);  
+    }
 
-  /// \brief Move construct a PBQP matrix.
-  Matrix(Matrix &&M)
-    : Rows(M.Rows), Cols(M.Cols), Data(M.Data) {
-    M.Rows = M.Cols = 0;
-    M.Data = nullptr;
-  }
+    /// \brief Destroy this matrix, return its memory.
+    ~Matrix() { delete[] data; }
 
-  /// \brief Destroy this matrix, return its memory.
-  ~Matrix() { delete[] Data; }
+    /// \brief Assignment operator.
+    Matrix& operator=(const Matrix &m) {
+      delete[] data;
+      rows = m.rows; cols = m.cols;
+      data = new PBQPNum[rows * cols];
+      std::copy(m.data, m.data + (rows * cols), data);
+      return *this;
+    }
 
-  /// \brief Copy-assignment operator.
-  Matrix& operator=(const Matrix &M) {
-    delete[] Data;
-    Rows = M.Rows; Cols = M.Cols;
-    Data = new PBQPNum[Rows * Cols];
-    std::copy(M.Data, M.Data + (Rows * Cols), Data);
-    return *this;
-  }
+    /// \brief Return the number of rows in this matrix.
+    unsigned getRows() const { return rows; }
 
-  /// \brief Move-assignment operator.
-  Matrix& operator=(Matrix &&M) {
-    delete[] Data;
-    Rows = M.Rows;
-    Cols = M.Cols;
-    Data = M.Data;
-    M.Rows = M.Cols = 0;
-    M.Data = nullptr;
-    return *this;
-  }
+    /// \brief Return the number of cols in this matrix.
+    unsigned getCols() const { return cols; }
 
-  /// \brief Comparison operator.
-  bool operator==(const Matrix &M) const {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    if (Rows != M.Rows || Cols != M.Cols)
-      return false;
-    return std::equal(Data, Data + (Rows * Cols), M.Data);
-  }
+    /// \brief Matrix element access.
+    PBQPNum* operator[](unsigned r) {
+      assert(r < rows && "Row out of bounds.");
+      return data + (r * cols);
+    }
 
-  /// \brief Return the number of rows in this matrix.
-  unsigned getRows() const {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    return Rows;
-  }
+    /// \brief Matrix element access.
+    const PBQPNum* operator[](unsigned r) const {
+      assert(r < rows && "Row out of bounds.");
+      return data + (r * cols);
+    }
 
-  /// \brief Return the number of cols in this matrix.
-  unsigned getCols() const {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    return Cols;
-  }
+    /// \brief Returns the given row as a vector.
+    Vector getRowAsVector(unsigned r) const {
+      Vector v(cols);
+      for (unsigned c = 0; c < cols; ++c)
+        v[c] = (*this)[r][c];
+      return v; 
+    }
 
-  /// \brief Matrix element access.
-  PBQPNum* operator[](unsigned R) {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    assert(R < Rows && "Row out of bounds.");
-    return Data + (R * Cols);
-  }
+    /// \brief Returns the given column as a vector.
+    Vector getColAsVector(unsigned c) const {
+      Vector v(rows);
+      for (unsigned r = 0; r < rows; ++r)
+        v[r] = (*this)[r][c];
+      return v;
+    }
 
-  /// \brief Matrix element access.
-  const PBQPNum* operator[](unsigned R) const {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    assert(R < Rows && "Row out of bounds.");
-    return Data + (R * Cols);
-  }
+    /// \brief Reset the matrix to the given value.
+    Matrix& reset(PBQPNum val = 0) {
+      std::fill(data, data + (rows * cols), val);
+      return *this;
+    }
 
-  /// \brief Returns the given row as a vector.
-  Vector getRowAsVector(unsigned R) const {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    Vector V(Cols);
-    for (unsigned C = 0; C < Cols; ++C)
-      V[C] = (*this)[R][C];
-    return V;
-  }
+    /// \brief Set a single row of this matrix to the given value.
+    Matrix& setRow(unsigned r, PBQPNum val) {
+      assert(r < rows && "Row out of bounds.");
+      std::fill(data + (r * cols), data + ((r + 1) * cols), val);
+      return *this;
+    }
 
-  /// \brief Returns the given column as a vector.
-  Vector getColAsVector(unsigned C) const {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    Vector V(Rows);
-    for (unsigned R = 0; R < Rows; ++R)
-      V[R] = (*this)[R][C];
-    return V;
-  }
+    /// \brief Set a single column of this matrix to the given value.
+    Matrix& setCol(unsigned c, PBQPNum val) {
+      assert(c < cols && "Column out of bounds.");
+      for (unsigned r = 0; r < rows; ++r)
+        (*this)[r][c] = val;
+      return *this;
+    }
 
-  /// \brief Reset the matrix to the given value.
-  Matrix& reset(PBQPNum Val = 0) {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    std::fill(Data, Data + (Rows * Cols), Val);
-    return *this;
-  }
+    /// \brief Matrix transpose.
+    Matrix transpose() const {
+      Matrix m(cols, rows);
+      for (unsigned r = 0; r < rows; ++r)
+        for (unsigned c = 0; c < cols; ++c)
+          m[c][r] = (*this)[r][c];
+      return m;
+    }
 
-  /// \brief Set a single row of this matrix to the given value.
-  Matrix& setRow(unsigned R, PBQPNum Val) {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    assert(R < Rows && "Row out of bounds.");
-    std::fill(Data + (R * Cols), Data + ((R + 1) * Cols), Val);
-    return *this;
-  }
+    /// \brief Returns the diagonal of the matrix as a vector.
+    ///
+    /// Matrix must be square.
+    Vector diagonalize() const {
+      assert(rows == cols && "Attempt to diagonalize non-square matrix.");
 
-  /// \brief Set a single column of this matrix to the given value.
-  Matrix& setCol(unsigned C, PBQPNum Val) {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    assert(C < Cols && "Column out of bounds.");
-    for (unsigned R = 0; R < Rows; ++R)
-      (*this)[R][C] = Val;
-    return *this;
-  }
+      Vector v(rows);
+      for (unsigned r = 0; r < rows; ++r)
+        v[r] = (*this)[r][r];
+      return v;
+    } 
 
-  /// \brief Matrix transpose.
-  Matrix transpose() const {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    Matrix M(Cols, Rows);
-    for (unsigned r = 0; r < Rows; ++r)
-      for (unsigned c = 0; c < Cols; ++c)
-        M[c][r] = (*this)[r][c];
-    return M;
-  }
+    /// \brief Add the given matrix to this one.
+    Matrix& operator+=(const Matrix &m) {
+      assert(rows == m.rows && cols == m.cols &&
+          "Matrix dimensions mismatch.");
+      std::transform(data, data + (rows * cols), m.data, data,
+          std::plus<PBQPNum>());
+      return *this;
+    }
 
-  /// \brief Returns the diagonal of the matrix as a vector.
-  ///
-  /// Matrix must be square.
-  Vector diagonalize() const {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    assert(Rows == Cols && "Attempt to diagonalize non-square matrix.");
-    Vector V(Rows);
-    for (unsigned r = 0; r < Rows; ++r)
-      V[r] = (*this)[r][r];
-    return V;
-  }
+    /// \brief Returns the minimum of the given row
+    PBQPNum getRowMin(unsigned r) const {
+      assert(r < rows && "Row out of bounds");
+      return *std::min_element(data + (r * cols), data + ((r + 1) * cols));
+    }
 
-  /// \brief Add the given matrix to this one.
-  Matrix& operator+=(const Matrix &M) {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    assert(Rows == M.Rows && Cols == M.Cols &&
-           "Matrix dimensions mismatch.");
-    std::transform(Data, Data + (Rows * Cols), M.Data, Data,
-                   std::plus<PBQPNum>());
-    return *this;
-  }
+    /// \brief Returns the minimum of the given column
+    PBQPNum getColMin(unsigned c) const {
+      PBQPNum minElem = (*this)[0][c];
+      for (unsigned r = 1; r < rows; ++r)
+        if ((*this)[r][c] < minElem) minElem = (*this)[r][c];
+      return minElem;
+    }
 
-  Matrix operator+(const Matrix &M) {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    Matrix Tmp(*this);
-    Tmp += M;
-    return Tmp;
-  }
+    /// \brief Subtracts the given scalar from the elements of the given row.
+    Matrix& subFromRow(unsigned r, PBQPNum val) {
+      assert(r < rows && "Row out of bounds");
+      std::transform(data + (r * cols), data + ((r + 1) * cols),
+          data + (r * cols),
+          std::bind2nd(std::minus<PBQPNum>(), val));
+      return *this;
+    }
 
-  /// \brief Returns the minimum of the given row
-  PBQPNum getRowMin(unsigned R) const {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    assert(R < Rows && "Row out of bounds");
-    return *std::min_element(Data + (R * Cols), Data + ((R + 1) * Cols));
-  }
+    /// \brief Subtracts the given scalar from the elements of the given column.
+    Matrix& subFromCol(unsigned c, PBQPNum val) {
+      for (unsigned r = 0; r < rows; ++r)
+        (*this)[r][c] -= val;
+      return *this;
+    }
 
-  /// \brief Returns the minimum of the given column
-  PBQPNum getColMin(unsigned C) const {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    PBQPNum MinElem = (*this)[0][C];
-    for (unsigned R = 1; R < Rows; ++R)
-      if ((*this)[R][C] < MinElem)
-        MinElem = (*this)[R][C];
-    return MinElem;
-  }
+    /// \brief Returns true if this is a zero matrix.
+    bool isZero() const {
+      return find_if(data, data + (rows * cols),
+          std::bind2nd(std::not_equal_to<PBQPNum>(), 0)) ==
+        data + (rows * cols);
+    }
 
-  /// \brief Subtracts the given scalar from the elements of the given row.
-  Matrix& subFromRow(unsigned R, PBQPNum Val) {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    assert(R < Rows && "Row out of bounds");
-    std::transform(Data + (R * Cols), Data + ((R + 1) * Cols),
-                   Data + (R * Cols),
-                   std::bind2nd(std::minus<PBQPNum>(), Val));
-    return *this;
-  }
-
-  /// \brief Subtracts the given scalar from the elements of the given column.
-  Matrix& subFromCol(unsigned C, PBQPNum Val) {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    for (unsigned R = 0; R < Rows; ++R)
-      (*this)[R][C] -= Val;
-    return *this;
-  }
-
-  /// \brief Returns true if this is a zero matrix.
-  bool isZero() const {
-    assert(Rows != 0 && Cols != 0 && Data != nullptr && "Invalid matrix");
-    return find_if(Data, Data + (Rows * Cols),
-                   std::bind2nd(std::not_equal_to<PBQPNum>(), 0)) ==
-      Data + (Rows * Cols);
-  }
-
-private:
-  unsigned Rows, Cols;
-  PBQPNum *Data;
-};
-
-class MatrixComparator {
-public:
-  bool operator()(const Matrix &A, const Matrix &B) {
-    if (A.Rows < B.Rows)
-      return true;
-    if (B.Rows < A.Rows)
-      return false;
-    if (A.Cols < B.Cols)
-      return true;
-    if (B.Cols < A.Cols)
-      return false;
-    char *AData = reinterpret_cast<char*>(A.Data);
-    char *BData = reinterpret_cast<char*>(B.Data);
-    return std::lexicographical_compare(
-             AData, AData + (A.Rows * A.Cols * sizeof(PBQPNum)),
-             BData, BData + (A.Rows * A.Cols * sizeof(PBQPNum)));
-  }
+  private:
+    unsigned rows, cols;
+    PBQPNum *data;
 };
 
 /// \brief Output a textual representation of the given matrix on the given
 ///        output stream.
 template <typename OStream>
-OStream& operator<<(OStream &OS, const Matrix &M) {
-  assert((M.getRows() != 0) && "Zero-row matrix badness.");
-  for (unsigned i = 0; i < M.getRows(); ++i)
-    OS << M.getRowAsVector(i);
-  return OS;
+OStream& operator<<(OStream &os, const Matrix &m) {
+
+  assert((m.getRows() != 0) && "Zero-row matrix badness.");
+
+  for (unsigned i = 0; i < m.getRows(); ++i) {
+    os << m.getRowAsVector(i);
+  }
+
+  return os;
 }
-
-template <typename Metadata>
-class MDVector : public Vector {
-public:
-  MDVector(const Vector &v) : Vector(v), md(*this) { }
-  MDVector(Vector &&v) : Vector(std::move(v)), md(*this) { }
-  const Metadata& getMetadata() const { return md; }
-private:
-  Metadata md;
-};
-
-template <typename Metadata>
-class MDMatrix : public Matrix {
-public:
-  MDMatrix(const Matrix &m) : Matrix(m), md(*this) { }
-  MDMatrix(Matrix &&m) : Matrix(std::move(m)), md(*this) { }
-  const Metadata& getMetadata() const { return md; }
-private:
-  Metadata md;
-};
 
 }
 

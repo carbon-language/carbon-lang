@@ -17,9 +17,9 @@
 #define LLVM_CODEGEN_REGALLOCPBQP_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/PBQP/RegAllocSolver.h"
+#include "llvm/CodeGen/PBQP/Graph.h"
+#include "llvm/CodeGen/PBQP/Solution.h"
 #include <map>
 #include <set>
 
@@ -31,29 +31,28 @@ namespace llvm {
   class TargetRegisterInfo;
   template<class T> class OwningPtr;
 
-  typedef PBQP::RegAlloc::Graph PBQPRAGraph;
-
   /// This class wraps up a PBQP instance representing a register allocation
   /// problem, plus the structures necessary to map back from the PBQP solution
   /// to a register allocation solution. (i.e. The PBQP-node <--> vreg map,
   /// and the PBQP option <--> storage location map).
+
   class PBQPRAProblem {
   public:
 
     typedef SmallVector<unsigned, 16> AllowedSet;
 
-    PBQPRAGraph& getGraph() { return graph; }
+    PBQP::Graph& getGraph() { return graph; }
 
-    const PBQPRAGraph& getGraph() const { return graph; }
+    const PBQP::Graph& getGraph() const { return graph; }
 
     /// Record the mapping between the given virtual register and PBQP node,
     /// and the set of allowed pregs for the vreg.
     ///
     /// If you are extending
     /// PBQPBuilder you are unlikely to need this: Nodes and options for all
-    /// vregs will already have been set up for you by the base class.
+    /// vregs will already have been set up for you by the base class. 
     template <typename AllowedRegsItr>
-    void recordVReg(unsigned vreg, PBQPRAGraph::NodeId nodeId,
+    void recordVReg(unsigned vreg, PBQP::Graph::NodeId nodeId,
                     AllowedRegsItr arBegin, AllowedRegsItr arEnd) {
       assert(node2VReg.find(nodeId) == node2VReg.end() && "Re-mapping node.");
       assert(vreg2Node.find(vreg) == vreg2Node.end() && "Re-mapping vreg.");
@@ -65,10 +64,10 @@ namespace llvm {
     }
 
     /// Get the virtual register corresponding to the given PBQP node.
-    unsigned getVRegForNode(PBQPRAGraph::NodeId nodeId) const;
+    unsigned getVRegForNode(PBQP::Graph::NodeId nodeId) const;
 
     /// Get the PBQP node corresponding to the given virtual register.
-    PBQPRAGraph::NodeId getNodeForVReg(unsigned vreg) const;
+    PBQP::Graph::NodeId getNodeForVReg(unsigned vreg) const;
 
     /// Returns true if the given PBQP option represents a physical register,
     /// false otherwise.
@@ -93,16 +92,16 @@ namespace llvm {
 
   private:
 
-    typedef std::map<PBQPRAGraph::NodeId, unsigned>  Node2VReg;
-    typedef DenseMap<unsigned, PBQPRAGraph::NodeId> VReg2Node;
+    typedef std::map<PBQP::Graph::NodeId, unsigned>  Node2VReg;
+    typedef DenseMap<unsigned, PBQP::Graph::NodeId> VReg2Node;
     typedef DenseMap<unsigned, AllowedSet> AllowedSetMap;
 
-    PBQPRAGraph graph;
+    PBQP::Graph graph;
     Node2VReg node2VReg;
     VReg2Node vreg2Node;
 
     AllowedSetMap allowedSets;
-
+    
   };
 
   /// Builds PBQP instances to represent register allocation problems. Includes
@@ -115,7 +114,7 @@ namespace llvm {
   public:
 
     typedef std::set<unsigned> RegSet;
-
+ 
     /// Default constructor.
     PBQPBuilder() {}
 
@@ -140,12 +139,12 @@ namespace llvm {
   /// Extended builder which adds coalescing constraints to a problem.
   class PBQPBuilderWithCoalescing : public PBQPBuilder {
   public:
-
+ 
     /// Build a PBQP instance to represent the register allocation problem for
     /// the given MachineFunction.
     virtual PBQPRAProblem *build(MachineFunction *mf, const LiveIntervals *lis,
                                  const MachineBlockFrequencyInfo *mbfi,
-                                 const RegSet &vregs);
+                                 const RegSet &vregs);   
 
   private:
 

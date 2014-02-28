@@ -26,7 +26,7 @@ namespace PBQP {
   class Solution {
   private:
 
-    typedef std::map<GraphBase::NodeId, unsigned> SelectionsMap;
+    typedef std::map<Graph::NodeId, unsigned> SelectionsMap;
     SelectionsMap selections;
 
     unsigned r0Reductions, r1Reductions, r2Reductions, rNReductions;
@@ -72,14 +72,14 @@ namespace PBQP {
     /// \brief Set the selection for a given node.
     /// @param nodeId Node id.
     /// @param selection Selection for nodeId.
-    void setSelection(GraphBase::NodeId nodeId, unsigned selection) {
+    void setSelection(Graph::NodeId nodeId, unsigned selection) {
       selections[nodeId] = selection;
     }
 
     /// \brief Get a node's selection.
     /// @param nodeId Node id.
     /// @return The selection for nodeId;
-    unsigned getSelection(GraphBase::NodeId nodeId) const {
+    unsigned getSelection(Graph::NodeId nodeId) const {
       SelectionsMap::const_iterator sItr = selections.find(nodeId);
       assert(sItr != selections.end() && "No selection for node.");
       return sItr->second;
