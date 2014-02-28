@@ -1235,12 +1235,10 @@ dnl=== SECTION 4: Check for programs we need and that they are the right version
 dnl===
 dnl===-----------------------------------------------------------------------===
 
-AC_PROG_NM
-AC_SUBST(NM)
-
 dnl Check for the tools that the makefiles require
 AC_CHECK_GNU_MAKE
 AC_PROG_LN_S
+AC_PATH_PROG(NM, [nm], [nm])
 AC_PATH_PROG(CMP, [cmp], [cmp])
 AC_PATH_PROG(CP, [cp], [cp])
 AC_PATH_PROG(DATE, [date], [date])
@@ -1386,11 +1384,15 @@ AC_LINK_EXPORT_DYNAMIC
 dnl Determine whether the linker supports the --version-script option.
 AC_LINK_VERSION_SCRIPT
 
-dnl Check for libtool and the library that has dlopen function (which must come
-dnl before the AC_PROG_LIBTOOL check in order to enable dlopening libraries with
-dnl libtool).
-AC_LIBTOOL_DLOPEN
-AC_LIB_LTDL
+AC_CHECK_HEADERS([errno.h])
+
+case "$llvm_cv_os_type" in
+  Cygwin|MingW|Win32) llvm_shlib_ext=.dll ;;
+  Darwin) llvm_shlib_ext=.dylib ;;
+  *) llvm_shlib_ext=.so ;;
+esac
+
+AC_DEFINE_UNQUOTED([LTDL_SHLIB_EXT], ["$llvm_shlib_ext"], [The shared library extension])
 
 AC_MSG_CHECKING([tool compatibility])
 
@@ -1900,7 +1902,7 @@ AC_CHECK_FUNCS([__dso_handle])
 
 dnl Propagate the shared library extension that the libltdl checks did to
 dnl the Makefiles so we can use it there too
-AC_SUBST(SHLIBEXT,$libltdl_cv_shlibext)
+AC_SUBST(SHLIBEXT,$llvm_shlib_ext)
 
 dnl Translate the various configuration directories and other basic
 dnl information into substitutions that will end up in Makefile.config.in

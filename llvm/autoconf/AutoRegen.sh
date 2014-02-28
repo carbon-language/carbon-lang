@@ -17,7 +17,6 @@ clean() {
 want_autoconf_version='2\.60'
 want_autoheader_version=$want_autoconf_version
 want_aclocal_version='1\.9\.6'
-want_libtool_version='1\.5\.22'
 ### END NOTE #########################################################
 
 outfile=configure
@@ -26,7 +25,6 @@ configfile=configure.ac
 want_autoconf_version_clean=$(clean $want_autoconf_version)
 want_autoheader_version_clean=$(clean $want_autoheader_version)
 want_aclocal_version_clean=$(clean $want_aclocal_version)
-want_libtool_version_clean=$(clean $want_libtool_version)
 
 test -d autoconf && test -f autoconf/$configfile && cd autoconf
 test -f $configfile || die "Can't find 'autoconf' dir; please cd into it first"
@@ -36,8 +34,6 @@ aclocal --version | grep '^aclocal.*'$want_aclocal_version > /dev/null
 test $? -eq 0 || die "Your aclocal was not detected as being $want_aclocal_version_clean"
 autoheader --version | grep '^autoheader.*'$want_autoheader_version > /dev/null
 test $? -eq 0 || die "Your autoheader was not detected as being $want_autoheader_version_clean"
-libtool --version | grep $want_libtool_version > /dev/null
-test $? -eq 0 || die "Your libtool was not detected as being $want_libtool_version_clean"
 echo ""
 echo "### NOTE: ############################################################"
 echo "### If you get *any* warnings from autoconf below you MUST fix the"

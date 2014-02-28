@@ -1017,12 +1017,6 @@ AC_LINK_EXPORT_DYNAMIC
 dnl Determine whether the linker supports the --version-script option.
 AC_LINK_VERSION_SCRIPT
 
-dnl Check for libtool and the library that has dlopen function (which must come
-dnl before the AC_PROG_LIBTOOL check in order to enable dlopening libraries with
-dnl libtool).
-AC_LIBTOOL_DLOPEN
-AC_LIB_LTDL
-
 AC_MSG_CHECKING([tool compatibility])
 
 dnl Ensure that compilation tools are GCC or a GNU compatible compiler such as

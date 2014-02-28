@@ -33,24 +33,6 @@
 /* Directory where gcc is installed. */
 #undef GCC_INSTALL_PREFIX
 
-/* Define to 1 if you have the `argz_append' function. */
-#undef HAVE_ARGZ_APPEND
-
-/* Define to 1 if you have the `argz_create_sep' function. */
-#undef HAVE_ARGZ_CREATE_SEP
-
-/* Define to 1 if you have the <argz.h> header file. */
-#undef HAVE_ARGZ_H
-
-/* Define to 1 if you have the `argz_insert' function. */
-#undef HAVE_ARGZ_INSERT
-
-/* Define to 1 if you have the `argz_next' function. */
-#undef HAVE_ARGZ_NEXT
-
-/* Define to 1 if you have the `argz_stringify' function. */
-#undef HAVE_ARGZ_STRINGIFY
-
 /* Define to 1 if you have the `backtrace' function. */
 #undef HAVE_BACKTRACE
 
@@ -59,9 +41,6 @@
 
 /* Define if the neat program is available */
 #undef HAVE_CIRCO
-
-/* Define to 1 if you have the `closedir' function. */
-#undef HAVE_CLOSEDIR
 
 /* Define to 1 if you have the <CrashReporterClient.h> header file. */
 #undef HAVE_CRASHREPORTERCLIENT_H
@@ -92,12 +71,6 @@
    */
 #undef HAVE_DIRENT_H
 
-/* Define if you have the GNU dld library. */
-#undef HAVE_DLD
-
-/* Define to 1 if you have the `dlerror' function. */
-#undef HAVE_DLERROR
-
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
@@ -110,14 +83,8 @@
 /* Define if the dotty program is available */
 #undef HAVE_DOTTY
 
-/* Define if you have the _dyld_func_lookup function. */
-#undef HAVE_DYLD
-
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
-
-/* Define to 1 if the system has the type `error_t'. */
-#undef HAVE_ERROR_T
 
 /* Define to 1 if you have the <execinfo.h> header file. */
 #undef HAVE_EXECINFO_H
@@ -203,9 +170,6 @@
 /* Set to 1 if the isnan function is found in <math.h> */
 #undef HAVE_ISNAN_IN_MATH_H
 
-/* Define if you have the libdl library or equivalent. */
-#undef HAVE_LIBDL
-
 /* Define if libedit is available on this platform. */
 #undef HAVE_LIBEDIT
 
@@ -255,9 +219,6 @@
 /* Define to 1 if you have the <mach/mach.h> header file. */
 #undef HAVE_MACH_MACH_H
 
-/* Define to 1 if you have the <mach-o/dyld.h> header file. */
-#undef HAVE_MACH_O_DYLD_H
-
 /* Define if mallinfo() is available on this platform. */
 #undef HAVE_MALLINFO
 
@@ -301,9 +262,6 @@
 /* Define if the neat program is available */
 #undef HAVE_NEATO
 
-/* Define to 1 if you have the `opendir' function. */
-#undef HAVE_OPENDIR
-
 /* Define to 1 if you have the `posix_spawn' function. */
 #undef HAVE_POSIX_SPAWN
 
@@ -312,9 +270,6 @@
 
 /* Define to 1 if you have the `pread' function. */
 #undef HAVE_PREAD
-
-/* Define if libtool can extract symbol lists from object files. */
-#undef HAVE_PRELOADED_SYMBOLS
 
 /* Define to have the %a format string */
 #undef HAVE_PRINTF_A
@@ -333,9 +288,6 @@
 
 /* Define to 1 if srand48/lrand48/drand48 exist in <stdlib.h> */
 #undef HAVE_RAND48
-
-/* Define to 1 if you have the `readdir' function. */
-#undef HAVE_READDIR
 
 /* Define to 1 if you have the `realpath' function. */
 #undef HAVE_REALPATH
@@ -363,9 +315,6 @@
 
 /* Define to 1 if you have the `setrlimit' function. */
 #undef HAVE_SETRLIMIT
-
-/* Define if you have the shl_load function. */
-#undef HAVE_SHL_LOAD
 
 /* Define to 1 if you have the `siglongjmp' function. */
 #undef HAVE_SIGLONGJMP
@@ -642,25 +591,12 @@
 /* Minor version of the LLVM API */
 #undef LLVM_VERSION_MINOR
 
-/* Define if the OS needs help to load dependent libraries for dlopen(). */
-#undef LTDL_DLOPEN_DEPLIBS
-
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#undef LTDL_OBJDIR
-
-/* Define to the extension used for shared libraries, say, ".so". */
+/* The shared library extension */
 #undef LTDL_SHLIB_EXT
-
-/* Define to the system default library search path. */
-#undef LTDL_SYSSEARCHPATH
 
 /* Define if /dev/zero should be used when mapping RWX memory, or undefine if
    its not necessary */
 #undef NEED_DEV_ZERO_FOR_MMAP
-
-/* Define if dlsym() requires a leading underscore in symbol names. */
-#undef NEED_USCORE
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -697,12 +633,6 @@
 
 /* Type of 1st arg on ELM Callback */
 #undef WIN32_ELMCB_PCSTR
-
-/* Define to empty if `const' does not conform to ANSI C. */
-#undef const
-
-/* Define to a type to use for `error_t' if it is not otherwise available. */
-#undef error_t
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t
