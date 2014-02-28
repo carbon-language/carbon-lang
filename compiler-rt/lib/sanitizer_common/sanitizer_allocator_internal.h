@@ -47,10 +47,10 @@ typedef SizeClassAllocatorLocalCache<PrimaryInternalAllocator>
 // LargeMmapAllocator.
 struct CrashOnMapUnmap {
   void OnMap(uptr p, uptr size) const {
-    RAW_CHECK_MSG(0, "Unexpected mmap in InternalAllocator!");
+    RAW_CHECK_MSG(0, "Unexpected mmap in InternalAllocator!\n");
   }
   void OnUnmap(uptr p, uptr size) const {
-    RAW_CHECK_MSG(0, "Unexpected munmap in InternalAllocator!");
+    RAW_CHECK_MSG(0, "Unexpected munmap in InternalAllocator!\n");
   }
 };
 
