@@ -182,7 +182,7 @@ Package                                                     Version      Notes
    #. If you want to make changes to the configure scripts, you will need GNU
       autoconf (2.60), and consequently, GNU M4 (version 1.4 or higher). You
       will also need automake (1.9.6). We only use aclocal from that package.
-   #. Optional, adds compression/uncompression capabilities to selected LLVM
+#.Optional, adds compression / uncompression capabilities to selected LLVM
       tools.
 
 Additionally, your compilation host is expected to have the usual plethora of
@@ -297,15 +297,17 @@ initial host in a bootstrap, and then using Clang (and potentially libc++).
 The first step is to get a recent GCC toolchain installed. The most common
 distribution on which users have struggled with the version requirements is
 Ubuntu Precise, 12.04 LTS. For this distribution, one easy option is to install
-the `toolchain testing PPA
-<https://launchpad.net/~ubuntu-toolchain-r/+archive/test>`__ and use it to
-install a modern GCC. There is a really nice discussions of this on the `ask
-ubuntu stack exchange
-<http://askubuntu.com/questions/271388/how-to-install-gcc-4-8-in-ubuntu-12-04-from-the-terminal>`__.
-However, not all users can use PPAs and there are many other distros, so it may
-be necessory (or just useful, if you're here you *are* doing compiler
-development after all) to build and install GCC from source. It is also quite
-easy to do these days.
+the `toolchain testing PPA`_ and use it to install a modern GCC. There is
+a really nice discussions of this on the `ask ubuntu stack exchange`_. However,
+not all users can use PPAs and there are many other distributions, so it may be
+necessary (or just useful, if you're here you *are* doing compiler development
+after all) to build and install GCC from source. It is also quite easy to do
+these days.
+
+.. _toolchain testing PPA:
+  https://launchpad.net/~ubuntu-toolchain-r/+archive/test
+.. _ask ubuntu stack exchange:
+  http://askubuntu.com/questions/271388/how-to-install-gcc-4-8-in-ubuntu-12-04-from-the-terminal
 
 Easy steps for installing GCC 4.8.2:
 
@@ -322,9 +324,11 @@ Easy steps for installing GCC 4.8.2:
   make -j$(nproc)
   make install
 
-For more details, check out the `excellent GCC wiki entry
-<http://gcc.gnu.org/wiki/InstallingGCC>`__, where I got most of this information
-from.
+For more details, check out the excellent `GCC wiki entry`_, where I got most
+of this information from.
+
+.. _GCC wiki entry:
+  http://gcc.gnu.org/wiki/InstallingGCC
 
 Once you have a GCC toolchain, use it as your host compiler. Things should
 generally "just work". You may need to pass a special linker flag,
@@ -556,9 +560,8 @@ Then, your .git/config should have [imap] sections.
         pass = himitsu!
         port = 993
         sslverify = false
-  ; in English
-        folder = "[Gmail]/Drafts"
-  ; example for Japanese, "Modified UTF-7" encoded.
+  ;
+in English folder = "[Gmail]/Drafts"; example for Japanese, "Modified UTF-7" encoded.
         folder = "[Gmail]/&Tgtm+DBN-"
   ; example for Traditional Chinese
         folder = "[Gmail]/&g0l6Pw-"
