@@ -90,8 +90,9 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   // (7) The LocationContext is the same as the predecessor.
   // (8) Expressions that are *not* lvalue expressions.
   // (9) The PostStmt isn't for a non-consumed Stmt or Expr.
-  // (10) The successor is not a CallExpr StmtPoint (so that we would
-  //      be able to find it when retrying a call with no inlining).
+  // (10) The successor is neither a CallExpr StmtPoint nor a CallEnter or 
+  //      PreImplicitCall (so that we would be able to find it when retrying a 
+  //      call with no inlining).
   // FIXME: It may be safe to reclaim PreCall and PostCall nodes as well.
 
   // Conditions 1 and 2.
@@ -152,6 +153,10 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
   if (Optional<StmtPoint> SP = SuccLoc.getAs<StmtPoint>())
     if (CallEvent::isCallStmt(SP->getStmt()))
       return false;
+
+  // Condition 10, continuation.
+  if (SuccLoc.getAs<CallEnter>() || SuccLoc.getAs<PreImplicitCall>())
+    return false;
 
   return true;
 }
