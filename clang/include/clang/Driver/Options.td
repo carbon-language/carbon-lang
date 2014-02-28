@@ -1090,6 +1090,8 @@ def mpopcntd : Flag<["-"], "mpopcntd">, Group<m_ppc_Features_Group>;
 def mno_popcntd : Flag<["-"], "mno-popcntd">, Group<m_ppc_Features_Group>;
 def mqpx : Flag<["-"], "mqpx">, Group<m_ppc_Features_Group>;
 def mno_qpx : Flag<["-"], "mno-qpx">, Group<m_ppc_Features_Group>;
+def mcrbits : Flag<["-"], "mcrbits">, Group<m_ppc_Features_Group>;
+def mno_crbits : Flag<["-"], "mno-crbits">, Group<m_ppc_Features_Group>;
 
 def faltivec : Flag<["-"], "faltivec">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable AltiVec vector initializer syntax">;
