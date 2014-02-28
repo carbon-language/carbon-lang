@@ -5,5 +5,6 @@ add_llvm_library(LLVMMipsDesc
   MipsMCExpr.cpp
   MipsMCTargetDesc.cpp
   MipsELFObjectWriter.cpp
+  MipsNaClELFStreamer.cpp
   MipsTargetStreamer.cpp
   )
