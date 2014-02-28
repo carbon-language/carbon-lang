@@ -52,8 +52,8 @@ namespace PPC {
 
     // When dealing with individual condition-register bits, we have simple set
     // and unset predicates.
-    PRED_BIT_SET =   -1,
-    PRED_BIT_UNSET = -2
+    PRED_BIT_SET =   1024,
+    PRED_BIT_UNSET = 1025
   };
   
   /// Invert the specified predicate.  != -> ==, < -> >=.
