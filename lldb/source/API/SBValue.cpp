@@ -1569,8 +1569,9 @@ SBValue::GetData ()
     if (value_sp)
     {
         DataExtractorSP data_sp(new DataExtractor());
-        value_sp->GetData(*data_sp);
-        if (data_sp->GetByteSize() > 0)
+        Error error;
+        value_sp->GetData(*data_sp, error);
+        if (error.Success())
             *sb_data = data_sp;
     }
     if (log)

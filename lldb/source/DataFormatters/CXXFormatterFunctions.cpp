@@ -576,7 +576,11 @@ bool
 lldb_private::formatters::Char16SummaryProvider (ValueObject& valobj, Stream& stream)
 {
     DataExtractor data;
-    valobj.GetData(data);
+    Error error;
+    valobj.GetData(data, error);
+    
+    if (error.Fail())
+        return false;
     
     std::string value;
     valobj.GetValueAsCString(lldb::eFormatUnicode16, value);
@@ -590,7 +594,11 @@ bool
 lldb_private::formatters::Char32SummaryProvider (ValueObject& valobj, Stream& stream)
 {
     DataExtractor data;
-    valobj.GetData(data);
+    Error error;
+    valobj.GetData(data, error);
+    
+    if (error.Fail())
+        return false;
     
     std::string value;
     valobj.GetValueAsCString(lldb::eFormatUnicode32, value);
@@ -604,7 +612,11 @@ bool
 lldb_private::formatters::WCharSummaryProvider (ValueObject& valobj, Stream& stream)
 {
     DataExtractor data;
-    valobj.GetData(data);
+    Error error;
+    valobj.GetData(data, error);
+    
+    if (error.Fail())
+        return false;
     
     clang::ASTContext* ast = valobj.GetClangType().GetASTContext();
     
@@ -1144,7 +1156,10 @@ lldb_private::formatters::NSAttributedStringSummaryProvider (ValueObject& valobj
     if (!child_ptr_sp)
         return false;
     DataExtractor data;
-    child_ptr_sp->GetData(data);
+    Error error;
+    child_ptr_sp->GetData(data, error);
+    if (error.Fail())
+        return false;
     ValueObjectSP child_sp(child_ptr_sp->CreateValueObjectFromData("string_data", data, exe_ctx, type));
     child_sp->GetValueAsUnsigned(0);
     if (child_sp)
@@ -1218,7 +1233,10 @@ lldb_private::formatters::ObjCSELSummaryProvider (ValueObject& valobj, Stream& s
     else
     {
         DataExtractor data;
-        valobj.GetData(data);
+        Error error;
+        valobj.GetData(data, error);
+        if (error.Fail())
+            return false;
         valobj_sp = ValueObject::CreateValueObjectFromData("text", data, exe_ctx, charstar);
     }
     

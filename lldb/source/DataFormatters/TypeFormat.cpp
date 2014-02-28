@@ -64,7 +64,10 @@ TypeFormatImpl_Format::FormatObject (ValueObject *valobj,
             const RegisterInfo *reg_info = value.GetRegisterInfo();
             if (reg_info)
             {
-                valobj->GetData(data);
+                Error error;
+                valobj->GetData(data, error);
+                if (error.Fail())
+                    return false;
                 
                 StreamString reg_sstr;
                 data.Dump (&reg_sstr,
@@ -105,7 +108,12 @@ TypeFormatImpl_Format::FormatObject (ValueObject *valobj,
                     }
                 }
                 else
-                    valobj->GetData(data);
+                {
+                    Error error;
+                    valobj->GetData(data, error);
+                    if (error.Fail())
+                        return false;
+                }
                 
                 StreamString sstr;
                 clang_type.DumpTypeValue (&sstr,                         // The stream to use for display
@@ -203,7 +211,10 @@ TypeFormatImpl_EnumType::FormatObject (ValueObject *valobj,
     if (valobj_enum_type.IsValid() == false)
         return false;
     DataExtractor data;
-    valobj->GetData(data);
+    Error error;
+    valobj->GetData(data, error);
+    if (error.Fail())
+        return false;
     ExecutionContext exe_ctx (valobj->GetExecutionContextRef());
     StreamString sstr;
     valobj_enum_type.DumpTypeValue(&sstr,

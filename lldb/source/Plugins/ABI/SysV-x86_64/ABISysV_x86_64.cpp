@@ -562,7 +562,13 @@ ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
         const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoByName("rax", 0);
 
         DataExtractor data;
-        size_t num_bytes = new_value_sp->GetData(data);
+        Error data_error;
+        size_t num_bytes = new_value_sp->GetData(data, data_error);
+        if (data_error.Fail())
+        {
+            error.SetErrorStringWithFormat("Couldn't convert return value to raw data: %s", data_error.AsCString());
+            return error;
+        }
         lldb::offset_t offset = 0;
         if (num_bytes <= 8)
         {
@@ -589,8 +595,14 @@ ABISysV_x86_64::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueOb
                 const RegisterInfo *xmm0_info = reg_ctx->GetRegisterInfoByName("xmm0", 0);
                 RegisterValue xmm0_value;
                 DataExtractor data;
-                size_t num_bytes = new_value_sp->GetData(data);
-
+                Error data_error;
+                size_t num_bytes = new_value_sp->GetData(data, data_error);
+                if (data_error.Fail())
+                {
+                    error.SetErrorStringWithFormat("Couldn't convert return value to raw data: %s", data_error.AsCString());
+                    return error;
+                }
+                
                 unsigned char buffer[16];
                 ByteOrder byte_order = data.GetByteOrder();
                 

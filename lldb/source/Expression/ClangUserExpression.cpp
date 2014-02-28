@@ -709,7 +709,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
         
         if (!materialize_error.Success())
         {
-            error_stream.Printf("Couldn't materialize struct: %s\n", materialize_error.AsCString());
+            error_stream.Printf("Couldn't materialize: %s\n", materialize_error.AsCString());
             return false;
         }
     }

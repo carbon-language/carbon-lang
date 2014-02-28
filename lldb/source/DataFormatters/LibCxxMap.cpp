@@ -366,7 +366,13 @@ lldb_private::formatters::LibcxxStdMapSyntheticFrontEnd::GetChildAtIndex (size_t
     // at this point we have a valid 
     // we need to copy current_sp into a new object otherwise we will end up with all items named __value_
     DataExtractor data;
-    iterated_sp->GetData(data);
+    Error error;
+    iterated_sp->GetData(data, error);
+    if (error.Fail())
+    {
+        m_tree = NULL;
+        return lldb::ValueObjectSP();
+    }
     StreamString name;
     name.Printf("[%zu]",idx);
     return (m_children[idx] = ValueObject::CreateValueObjectFromData(name.GetData(), data, m_backend.GetExecutionContextRef(), m_element_type));

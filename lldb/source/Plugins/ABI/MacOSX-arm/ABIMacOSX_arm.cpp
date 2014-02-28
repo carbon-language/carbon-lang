@@ -522,7 +522,13 @@ ABIMacOSX_arm::SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObj
     if (clang_type.IsIntegerType (is_signed) || clang_type.IsPointerType())
     {
         DataExtractor data;
-        size_t num_bytes = new_value_sp->GetData(data);
+        Error data_error;
+        size_t num_bytes = new_value_sp->GetData(data, data_error);
+        if (data_error.Fail())
+        {
+            error.SetErrorStringWithFormat("Couldn't convert return value to raw data: %s", data_error.AsCString());
+            return error;
+        }
         lldb::offset_t offset = 0;
         if (num_bytes <= 8)
         {

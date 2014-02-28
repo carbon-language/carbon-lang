@@ -793,7 +793,7 @@ public:
 					uint32_t item_count = 1);
     
     virtual uint64_t
-    GetData (DataExtractor& data);
+    GetData (DataExtractor& data, Error &error);
     
     virtual bool
     SetData (DataExtractor &data, Error &error);

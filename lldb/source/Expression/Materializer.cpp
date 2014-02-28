@@ -443,10 +443,26 @@ public:
             return;
         }
         
+        Error valobj_error = valobj_sp->GetError();
+        
+        if (valobj_error.Fail())
+        {
+            err.SetErrorStringWithFormat("couldn't get the value of variable %s: %s", m_variable_sp->GetName().AsCString(), valobj_error.AsCString());
+            return;
+        }
+        
         if (m_is_reference)
         {
             DataExtractor valobj_extractor;
-            valobj_sp->GetData(valobj_extractor);
+            Error extract_error;
+            valobj_sp->GetData(valobj_extractor, extract_error);
+            
+            if (!extract_error.Success())
+            {
+                err.SetErrorStringWithFormat("couldn't read contents of reference variable %s: %s", m_variable_sp->GetName().AsCString(), extract_error.AsCString());
+                return;
+            }
+            
             lldb::offset_t offset = 0;
             lldb::addr_t reference_addr = valobj_extractor.GetAddress(&offset);
             
@@ -478,8 +494,14 @@ public:
             else
             {
                 DataExtractor data;
-                valobj_sp->GetData(data);
-                
+                Error extract_error;
+                valobj_sp->GetData(data, extract_error);
+                if (!extract_error.Success())
+                {
+                    err.SetErrorStringWithFormat("couldn't get the value of %s: %s", m_variable_sp->GetName().AsCString(), extract_error.AsCString());
+                    return;
+                }
+                    
                 if (m_temporary_allocation != LLDB_INVALID_ADDRESS)
                 {
                     err.SetErrorStringWithFormat("trying to create a temporary region for %s but one exists", m_variable_sp->GetName().AsCString());
