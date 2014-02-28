@@ -1418,7 +1418,8 @@ class Process :
     public ExecutionContextScope,
     public PluginInterface
 {
-    friend class ClangFunction; // For WaitForStateChangeEventsPrivate
+    friend class ClangFunction;     // For WaitForStateChangeEventsPrivate
+    friend class Debugger;          // For PopProcessIOHandler
     friend class ProcessEventData;
     friend class StopInfo;
     friend class Target;
@@ -3582,12 +3583,6 @@ public:
     void
     SetSTDIOFileDescriptor (int file_descriptor);
 
-    void
-    WatchForSTDIN (IOHandler &io_handler);
-    
-    void
-    CancelWatchForSTDIN (bool exited);
-    
     //------------------------------------------------------------------
     // Add a permanent region of memory that should never be read or 
     // written to. This can be used to ensure that memory reads or writes
@@ -3874,15 +3869,12 @@ protected:
     static void
     STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_len);
     
-    void
+    bool
     PushProcessIOHandler ();
     
-    void 
+    bool
     PopProcessIOHandler ();
     
-    void
-    ResetProcessIOHandler ();
-        
     Error
     HaltForDestroyOrDetach(lldb::EventSP &exit_event_sp);
     

@@ -1523,7 +1523,6 @@ Process::SetExitStatus (int status, const char *cstr)
     DidExit ();
 
     SetPrivateState (eStateExited);
-    CancelWatchForSTDIN (true);
     return true;
 }
 
@@ -3738,9 +3737,14 @@ Process::Destroy ()
         }
         m_stdio_communication.StopReadThread();
         m_stdio_communication.Disconnect();
+
         if (m_process_input_reader)
+        {
+            m_process_input_reader->SetIsDone(true);
+            m_process_input_reader->Cancel();
             m_process_input_reader.reset();
-        
+        }
+
         // If we exited when we were waiting for a process to stop, then
         // forward the event here so we don't lose the event
         if (exit_event_sp)
@@ -4116,6 +4120,7 @@ Process::HandlePrivateEvent (EventSP &event_sp)
 
     if (should_broadcast)
     {
+        const bool is_hijacked = IsHijackedForEvent(eBroadcastBitStateChanged);
         if (log)
         {
             log->Printf ("Process::%s (pid = %" PRIu64 ") broadcasting new state %s (old state %s) to %s",
@@ -4123,7 +4128,7 @@ Process::HandlePrivateEvent (EventSP &event_sp)
                          GetID(), 
                          StateAsCString(new_state), 
                          StateAsCString (GetState ()),
-                         IsHijackedForEvent(eBroadcastBitStateChanged) ? "hijacked" : "public");
+                         is_hijacked ? "hijacked" : "public");
         }
         Process::ProcessEventData::SetUpdateStateOnRemoval(event_sp.get());
         if (StateIsRunningState (new_state))
@@ -4133,8 +4138,43 @@ Process::HandlePrivateEvent (EventSP &event_sp)
             if (!GetTarget().GetDebugger().IsForwardingEvents())
                 PushProcessIOHandler ();
         }
-        else if (!Process::ProcessEventData::GetRestartedFromEvent(event_sp.get()))
-            PopProcessIOHandler ();
+        else if (StateIsStoppedState(new_state, false))
+        {
+            if (!Process::ProcessEventData::GetRestartedFromEvent(event_sp.get()))
+            {
+                // If the lldb_private::Debugger is handling the events, we don't
+                // want to pop the process IOHandler here, we want to do it when
+                // we receive the stopped event so we can carefully control when
+                // the process IOHandler is popped because when we stop we want to
+                // display some text stating how and why we stopped, then maybe some
+                // process/thread/frame info, and then we want the "(lldb) " prompt
+                // to show up. If we pop the process IOHandler here, then we will
+                // cause the command interpreter to become the top IOHandler after
+                // the process pops off and it will update its prompt right away...
+                // See the Debugger.cpp file where it calls the function as
+                // "process_sp->PopProcessIOHandler()" to see where I am talking about.
+                // Otherwise we end up getting overlapping "(lldb) " prompts and
+                // garbled output.
+                //
+                // If we aren't handling the events in the debugger (which is indicated
+                // by "m_target.GetDebugger().IsHandlingEvents()" returning false) or we
+                // are hijacked, then we always pop the process IO handler manually.
+                // Hijacking happens when the internal process state thread is running
+                // thread plans, or when commands want to run in synchronous mode
+                // and they call "process->WaitForProcessToStop()". An example of something
+                // that will hijack the events is a simple expression:
+                //
+                //  (lldb) expr (int)puts("hello")
+                //
+                // This will cause the internal process state thread to resume and halt
+                // the process (and _it_ will hijack the eBroadcastBitStateChanged
+                // events) and we do need the IO handler to be pushed and popped
+                // correctly.
+                
+                if (is_hijacked || m_target.GetDebugger().IsHandlingEvents() == false)
+                    PopProcessIOHandler ();
+            }
+        }
 
         BroadcastEvent (event_sp);
     }
@@ -4680,13 +4720,6 @@ Process::STDIOReadThreadBytesReceived (void *baton, const void *src, size_t src_
     process->AppendSTDOUT (static_cast<const char *>(src), src_len);
 }
 
-void
-Process::ResetProcessIOHandler ()
-{   
-    m_process_input_reader.reset();
-}
-
-
 class IOHandlerProcessSTDIO :
     public IOHandler
 {
@@ -4878,22 +4911,6 @@ protected:
 };
 
 void
-Process::WatchForSTDIN (IOHandler &io_handler)
-{
-}
-
-void
-Process::CancelWatchForSTDIN (bool exited)
-{
-    if (m_process_input_reader)
-    {
-        if (exited)
-            m_process_input_reader->SetIsDone(true);
-        m_process_input_reader->Cancel();
-    }
-}
-
-void
 Process::SetSTDIOFileDescriptor (int fd)
 {
     // First set up the Read Thread for reading/handling process I/O
@@ -4916,7 +4933,7 @@ Process::SetSTDIOFileDescriptor (int fd)
     }
 }
 
-void
+bool
 Process::PushProcessIOHandler ()
 {
     IOHandlerSP io_handler_sp (m_process_input_reader);
@@ -4924,18 +4941,18 @@ Process::PushProcessIOHandler ()
     {
         io_handler_sp->SetIsDone(false);
         m_target.GetDebugger().PushIOHandler (io_handler_sp);
+        return true;
     }
+    return false;
 }
 
-void
+bool
 Process::PopProcessIOHandler ()
 {
     IOHandlerSP io_handler_sp (m_process_input_reader);
     if (io_handler_sp)
-    {
-        io_handler_sp->Cancel();
-        m_target.GetDebugger().PopIOHandler (io_handler_sp);
-    }
+        return m_target.GetDebugger().PopIOHandler (io_handler_sp);
+    return false;
 }
 
 // The process needs to know about installed plug-ins

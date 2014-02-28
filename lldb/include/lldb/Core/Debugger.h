@@ -352,6 +352,13 @@ public:
 
     void
     CancelForwardEvents (const lldb::ListenerSP &listener_sp);
+    
+    bool
+    IsHandlingEvents () const
+    {
+        return IS_VALID_LLDB_HOST_THREAD(m_event_handler_thread);
+    }
+
 protected:
 
     friend class CommandInterpreter;
@@ -420,7 +427,6 @@ protected:
     lldb::thread_t m_event_handler_thread;
     lldb::thread_t m_io_handler_thread;
     lldb::ListenerSP m_forward_listener_sp;
-    bool m_event_handler_thread_alive;
     void
     InstanceInitialize ();
     

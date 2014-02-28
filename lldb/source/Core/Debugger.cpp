@@ -629,8 +629,7 @@ Debugger::Debugger (lldb::LogOutputCallback log_callback, void *baton) :
     m_instance_name (),
     m_loaded_plugins (),
     m_event_handler_thread (LLDB_INVALID_HOST_THREAD),
-    m_io_handler_thread (LLDB_INVALID_HOST_THREAD),
-    m_event_handler_thread_alive(false)
+    m_io_handler_thread (LLDB_INVALID_HOST_THREAD)
 {
     char instance_cstr[256];
     snprintf(instance_cstr, sizeof(instance_cstr), "debugger_%d", (int)GetID());
@@ -960,13 +959,17 @@ Debugger::PushIOHandler (const IOHandlerSP& reader_sp)
     // Got the current top input reader...
     IOHandlerSP top_reader_sp (m_input_reader_stack.Top());
     
-    // Push our new input reader
-    m_input_reader_stack.Push (reader_sp);
+    // Don't push the same IO handler twice...
+    if (reader_sp.get() != top_reader_sp.get())
+    {
+        // Push our new input reader
+        m_input_reader_stack.Push (reader_sp);
 
-    // Interrupt the top input reader to it will exit its Run() function
-    // and let this new input reader take over
-    if (top_reader_sp)
-        top_reader_sp->Deactivate();
+        // Interrupt the top input reader to it will exit its Run() function
+        // and let this new input reader take over
+        if (top_reader_sp)
+            top_reader_sp->Deactivate();
+    }
 }
 
 bool
@@ -985,6 +988,7 @@ Debugger::PopIOHandler (const IOHandlerSP& pop_reader_sp)
         if (!pop_reader_sp || pop_reader_sp.get() == reader_sp.get())
         {
             reader_sp->Deactivate();
+            reader_sp->Cancel();
             m_input_reader_stack.Pop ();
             
             reader_sp = m_input_reader_stack.Top();
@@ -2769,36 +2773,30 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
     const uint32_t event_type = event_sp->GetType();
     ProcessSP process_sp = Process::ProcessEventData::GetProcessFromEvent(event_sp.get());
     
+    StreamString output_stream;
+    StreamString error_stream;
     const bool gui_enabled = IsForwardingEvents();
-    bool top_io_handler_hid = false;
-    if (gui_enabled == false)
-        top_io_handler_hid = HideTopIOHandler();
 
-    assert (process_sp);
+    if (!gui_enabled)
+    {
+        bool pop_process_io_handler = false;
+        assert (process_sp);
     
-    if (event_type & Process::eBroadcastBitSTDOUT)
-    {
-        // The process has stdout available, get it and write it out to the
-        // appropriate place.
-        if (top_io_handler_hid)
-            GetProcessSTDOUT (process_sp.get(), NULL);
-    }
-    else if (event_type & Process::eBroadcastBitSTDERR)
-    {
-        // The process has stderr available, get it and write it out to the
-        // appropriate place.
-        if (top_io_handler_hid)
-            GetProcessSTDERR (process_sp.get(), NULL);
-    }
-    else if (event_type & Process::eBroadcastBitStateChanged)
-    {
-        // Drain all stout and stderr so we don't see any output come after
-        // we print our prompts
-        if (top_io_handler_hid)
+        if (event_type & Process::eBroadcastBitSTDOUT || event_type & Process::eBroadcastBitStateChanged)
         {
-            StreamFileSP stream_sp (GetOutputFile());
-            GetProcessSTDOUT (process_sp.get(), stream_sp.get());
-            GetProcessSTDERR (process_sp.get(), NULL);
+            GetProcessSTDOUT (process_sp.get(), &output_stream);
+        }
+        
+        if (event_type & Process::eBroadcastBitSTDERR || event_type & Process::eBroadcastBitStateChanged)
+        {
+            GetProcessSTDERR (process_sp.get(), &error_stream);
+        }
+    
+        if (event_type & Process::eBroadcastBitStateChanged)
+        {
+
+            // Drain all stout and stderr so we don't see any output come after
+            // we print our prompts
             // Something changed in the process;  get the event and report the process's current status and location to
             // the user.
             StateType event_state = Process::ProcessEventData::GetStateFromEvent (event_sp.get());
@@ -2815,9 +2813,12 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
                 case eStateStepping:
                 case eStateDetached:
                     {
-                        stream_sp->Printf("Process %" PRIu64 " %s\n",
-                                          process_sp->GetID(),
-                                          StateAsCString (event_state));
+                        output_stream.Printf("Process %" PRIu64 " %s\n",
+                                             process_sp->GetID(),
+                                             StateAsCString (event_state));
+                        
+                        if (event_state == eStateDetached)
+                            pop_process_io_handler = true;
                     }
                     break;
                     
@@ -2826,7 +2827,8 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
                     break;
                     
                 case eStateExited:
-                    process_sp->GetStatus(*stream_sp);
+                    process_sp->GetStatus(output_stream);
+                    pop_process_io_handler = true;
                     break;
                     
                 case eStateStopped:
@@ -2842,20 +2844,20 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
                             if (num_reasons == 1)
                             {
                                 const char *reason = Process::ProcessEventData::GetRestartedReasonAtIndex (event_sp.get(), 0);
-                                stream_sp->Printf("Process %" PRIu64 " stopped and restarted: %s\n",
-                                                  process_sp->GetID(),
-                                                  reason ? reason : "<UNKNOWN REASON>");
+                                output_stream.Printf("Process %" PRIu64 " stopped and restarted: %s\n",
+                                                     process_sp->GetID(),
+                                                     reason ? reason : "<UNKNOWN REASON>");
                             }
                             else
                             {
-                                stream_sp->Printf("Process %" PRIu64 " stopped and restarted, reasons:\n",
-                                                   process_sp->GetID());
+                                output_stream.Printf("Process %" PRIu64 " stopped and restarted, reasons:\n",
+                                                     process_sp->GetID());
                                 
 
                                 for (size_t i = 0; i < num_reasons; i++)
                                 {
                                     const char *reason = Process::ProcessEventData::GetRestartedReasonAtIndex (event_sp.get(), i);
-                                    stream_sp->Printf("\t%s\n", reason ? reason : "<UNKNOWN REASON>");
+                                    output_stream.Printf("\t%s\n", reason ? reason : "<UNKNOWN REASON>");
                                 }
                             }
                         }
@@ -2929,8 +2931,8 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
                             const uint32_t start_frame = 0;
                             const uint32_t num_frames = 1;
                             const uint32_t num_frames_with_source = 1;
-                            process_sp->GetStatus(*stream_sp);
-                            process_sp->GetThreadStatus (*stream_sp,
+                            process_sp->GetStatus(output_stream);
+                            process_sp->GetThreadStatus (output_stream,
                                                          only_threads_with_stop_reason,
                                                          start_frame,
                                                          num_frames,
@@ -2940,20 +2942,46 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
                         {
                             uint32_t target_idx = GetTargetList().GetIndexOfTarget(process_sp->GetTarget().shared_from_this());
                             if (target_idx != UINT32_MAX)
-                                stream_sp->Printf ("Target %d: (", target_idx);
+                                output_stream.Printf ("Target %d: (", target_idx);
                             else
-                                stream_sp->Printf ("Target <unknown index>: (");
-                            process_sp->GetTarget().Dump (stream_sp.get(), eDescriptionLevelBrief);
-                            stream_sp->Printf (") stopped.\n");
+                                output_stream.Printf ("Target <unknown index>: (");
+                            process_sp->GetTarget().Dump (&output_stream, eDescriptionLevelBrief);
+                            output_stream.Printf (") stopped.\n");
                         }
+                        
+                        // Pop the process IO handler
+                        pop_process_io_handler = true;
                     }
                     break;
             }
         }
-    }
     
-    if (top_io_handler_hid)
-        RefreshTopIOHandler();
+        if (output_stream.GetSize() || error_stream.GetSize())
+        {
+            StreamFileSP error_stream_sp (GetOutputFile());
+            bool top_io_handler_hid = HideTopIOHandler();
+
+            if (output_stream.GetSize())
+            {
+                StreamFileSP output_stream_sp (GetOutputFile());
+                if (output_stream_sp)
+                    output_stream_sp->Write (output_stream.GetData(), output_stream.GetSize());
+            }
+
+            if (error_stream.GetSize())
+            {
+                StreamFileSP error_stream_sp (GetErrorFile());
+                if (error_stream_sp)
+                    error_stream_sp->Write (error_stream.GetData(), error_stream.GetSize());
+            }
+
+            if (top_io_handler_hid)
+                RefreshTopIOHandler();
+        }
+
+        if (pop_process_io_handler)
+            process_sp->PopProcessIOHandler();
+    }
 }
 
 void
