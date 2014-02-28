@@ -238,7 +238,7 @@ function(llvm_add_library name)
     # static
     set(name_static "${name}_static")
     if(ARG_OUTPUT_NAME)
-      set(output_name OUTPUT_NAME "${ARG_OUTPUT_NAME}_static")
+      set(output_name OUTPUT_NAME "${ARG_OUTPUT_NAME}")
     endif()
     # DEPENDS has been appended to LLVM_COMMON_LIBS.
     llvm_add_library(${name_static} STATIC
