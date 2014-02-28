@@ -11,4 +11,5 @@ LLDB_LEVEL := ../../../..
 LIBRARYNAME := lldbPluginSystemRuntimeMacOSX
 BUILD_ARCHIVE = 1
 
+CPP.Flags += -I$(PROJ_SRC_DIR)/../../LanguageRuntime/ObjC/AppleObjCRuntime
 include $(LLDB_LEVEL)/Makefile
