@@ -121,24 +121,24 @@ unlikely to be supported by our host compilers.
 * Atomic operations and the C++11 memory model: N2429_
 
 .. _N2118: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2118.html
-.. _N2439: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2439.htm
-.. _N1720: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1720.html
+.. _N2439: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2439.htm
+.. _N1720: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1720.html
 .. _N1984: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1984.pdf
-.. _N1737: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1737.pdf
-.. _N2541: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2541.htm
-.. _N2927: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2927.pdf
-.. _N2343: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2343.pdf
-.. _N1757: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1757.html
+.. _N1737: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1737.pdf
+.. _N2541: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2541.htm
+.. _N2927: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2009/n2927.pdf
+.. _N2343: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2343.pdf
+.. _N1757: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1757.html
 .. _N1987: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1987.htm
-.. _N2431: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2431.pdf
-.. _N2347: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2347.pdf
-.. _N2764: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2764.pdf
-.. _N2657: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2657.htm
-.. _N2930: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2930.html
-.. _N2928: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2928.htm
-.. _N3206: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n3206.htm
-.. _N3272: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n3272.htm
-.. _N2429: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2429.htm
+.. _N2431: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2431.pdf
+.. _N2347: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2347.pdf
+.. _N2764: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2764.pdf
+.. _N2657: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2657.htm
+.. _N2930: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2009/n2930.html
+.. _N2928: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2009/n2928.htm
+.. _N3206: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3206.htm
+.. _N3272: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3272.htm
+.. _N2429: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2429.htm
 
 The supported features in the C++11 standard libraries are less well tracked,
 but also much greater. Most of the standard libraries implement most of C++11's
