@@ -59,7 +59,7 @@ public:
 /// If the 'File' member is valid, then this FileEntry has an open file
 /// descriptor for the file.
 class FileEntry {
-  const char *Name;           // Name of the file.
+  std::string Name;           // Name of the file.
   off_t Size;                 // File size in bytes.
   time_t ModTime;             // Modification time of file.
   const DirectoryEntry *Dir;  // Directory file lives in.
@@ -81,18 +81,19 @@ class FileEntry {
 
 public:
   FileEntry()
-      : Name(0), UniqueID(0, 0), IsNamedPipe(false), InPCH(false),
-        IsValid(false)
+      : UniqueID(0, 0), IsNamedPipe(false), InPCH(false), IsValid(false)
   {}
 
   // FIXME: this is here to allow putting FileEntry in std::map.  Once we have
   // emplace, we shouldn't need a copy constructor anymore.
-  FileEntry(const FileEntry &FE) {
-    memcpy(this, &FE, sizeof(FE));
+  /// Intentionally does not copy fields that are not set in an uninitialized
+  /// \c FileEntry.
+  FileEntry(const FileEntry &FE) : UniqueID(FE.UniqueID),
+      IsNamedPipe(FE.IsNamedPipe), InPCH(FE.InPCH), IsValid(FE.IsValid) {
     assert(!isValid() && "Cannot copy an initialized FileEntry");
   }
 
-  const char *getName() const { return Name; }
+  const char *getName() const { return Name.c_str(); }
   bool isValid() const { return IsValid; }
   off_t getSize() const { return Size; }
   unsigned getUID() const { return UID; }

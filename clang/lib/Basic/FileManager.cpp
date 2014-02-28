@@ -282,7 +282,7 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
   }
 
   // Otherwise, we don't have this file yet, add it.
-  UFE.Name    = InterndFileName;
+  UFE.Name    = Data.Name;
   UFE.Size = Data.Size;
   UFE.ModTime = Data.ModTime;
   UFE.Dir     = DirInfo;

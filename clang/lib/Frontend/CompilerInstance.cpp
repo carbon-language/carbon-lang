@@ -886,7 +886,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
 
   // Note that this module is part of the module build stack, so that we
   // can detect cycles in the module graph.
-  Instance.createFileManager(); // FIXME: Adopt file manager from importer?
+  Instance.setFileManager(&ImportingInstance.getFileManager());
   Instance.createSourceManager(Instance.getFileManager());
   SourceManager &SourceMgr = Instance.getSourceManager();
   SourceMgr.setModuleBuildStack(

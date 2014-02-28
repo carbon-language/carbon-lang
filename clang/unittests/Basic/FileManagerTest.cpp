@@ -28,10 +28,13 @@ private:
 
   void InjectFileOrDirectory(const char *Path, ino_t INode, bool IsFile) {
     FileData Data;
-    memset(&Data, 0, sizeof(FileData));
-    llvm::sys::fs::UniqueID ID(1, INode);
-    Data.UniqueID = ID;
+    Data.Name = Path;
+    Data.Size = 0;
+    Data.ModTime = 0;
+    Data.UniqueID = llvm::sys::fs::UniqueID(1, INode);
     Data.IsDirectory = !IsFile;
+    Data.IsNamedPipe = false;
+    Data.InPCH = false;
     StatCalls[Path] = Data;
   }
 
