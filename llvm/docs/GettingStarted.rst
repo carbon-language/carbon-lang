@@ -433,6 +433,7 @@ you can checkout it from the '``tags``' directory (instead of '``trunk``'). The
 following releases are located in the following subdirectories of the '``tags``'
 directory:
 
+* Release 3.4: **RELEASE_34/final**
 * Release 3.3: **RELEASE_33/final**
 * Release 3.2: **RELEASE_32/final**
 * Release 3.1: **RELEASE_31/final**
