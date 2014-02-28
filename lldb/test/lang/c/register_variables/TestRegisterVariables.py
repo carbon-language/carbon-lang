@@ -16,7 +16,7 @@ class RegisterVariableTestCase(TestBase):
         self.buildDsym()
         self.const_variable()
 
-    @skipIfLinux # This test works with gcc, but fails with newer version of clang on Linux due to a clang issue. Fails for icc as well. Bug number TDB.
+    @expectedFailureClang
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test expressions on register values."""
