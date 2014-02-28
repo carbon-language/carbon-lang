@@ -2641,6 +2641,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
 
       switch(ObjectVT.getSimpleVT().SimpleTy) {
       default: llvm_unreachable("Unhandled argument type!");
+      case MVT::i1:
       case MVT::i32:
       case MVT::f32:
         VecArgOffset += 4;
@@ -2764,6 +2765,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
 
     switch (ObjectVT.getSimpleVT().SimpleTy) {
     default: llvm_unreachable("Unhandled argument type!");
+    case MVT::i1:
     case MVT::i32:
       if (!isPPC64) {
         if (GPR_idx != Num_GPR_Regs) {
@@ -4399,6 +4401,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
 
     switch (Arg.getSimpleValueType().SimpleTy) {
     default: llvm_unreachable("Unexpected ValueType for argument!");
+    case MVT::i1:
     case MVT::i32:
     case MVT::i64:
       if (GPR_idx != NumGPRs) {
