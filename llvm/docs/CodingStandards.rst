@@ -96,6 +96,7 @@ The ultimate definition of this set is what build bots with those respective
 toolchains accept. Don't argue with the build bots.
 
 Each toolchain provides a good reference for what it accepts:
+
 * Clang: http://clang.llvm.org/cxx_status.html
 * GCC: http://gcc.gnu.org/projects/cxx0x.html
 * MSVC: http://msdn.microsoft.com/en-us/library/hh567368.aspx
