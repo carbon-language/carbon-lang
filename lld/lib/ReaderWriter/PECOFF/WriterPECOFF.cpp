@@ -976,6 +976,9 @@ void PECOFFWriter::build(const File &linkedFile) {
     }
     if (section->getSectionName() == ".data")
       peHeader->setBaseOfData(section->getVirtualAddress());
+    if (section->getSectionName() == ".pdata")
+      dataDirectory->setField(DataDirectoryIndex::EXCEPTION_TABLE,
+                              section->getVirtualAddress(), section->size());
     if (section->getSectionName() == ".idata.a")
       dataDirectory->setField(DataDirectoryIndex::IAT,
                               section->getVirtualAddress(), section->size());

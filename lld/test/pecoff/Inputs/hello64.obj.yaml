@@ -1,0 +1,186 @@
+---
+header:
+  Machine:         IMAGE_FILE_MACHINE_AMD64
+  Characteristics: [  ]
+sections:
+  - Name:            .drectve
+    Characteristics: [ IMAGE_SCN_LNK_INFO, IMAGE_SCN_LNK_REMOVE ]
+    Alignment:       1
+    SectionData:     2020202F44454641554C544C49423A224C4942434D5422202F44454641554C544C49423A224F4C444E414D45532220
+  - Name:            '.debug$S'
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_DISCARDABLE, IMAGE_SCN_MEM_READ ]
+    Alignment:       1
+    SectionData:     04000000F1000000620000002400011100000000433A5C63796777696E5C686F6D655C727569755C68656C6C6F2E6F626A003A003C1100620000D0001100000066EE00001100000066EE00004D6963726F736F667420285229204F7074696D697A696E6720436F6D70696C6572000000
+  - Name:            .data
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE ]
+    Alignment:       8
+    SectionData:     48656C6C6F20776F726C640A0000000048656C6C6F207374646F75740A00000048656C6C6F207374646572720A00
+  - Name:            .text
+    Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
+    Alignment:       16
+    SectionData:     4883EC28488D0D00000000E800000000E800000000B930000000486BC9014803C1488D1500000000488BC8E800000000E800000000B930000000486BC9024803C1488D1500000000488BC8E80000000033C04883C428C3
+    Relocations:
+      - VirtualAddress:  7
+        SymbolName:      '$SG2923'
+        Type:            IMAGE_REL_AMD64_REL32
+      - VirtualAddress:  12
+        SymbolName:      printf
+        Type:            IMAGE_REL_AMD64_REL32
+      - VirtualAddress:  17
+        SymbolName:      __iob_func
+        Type:            IMAGE_REL_AMD64_REL32
+      - VirtualAddress:  36
+        SymbolName:      '$SG2924'
+        Type:            IMAGE_REL_AMD64_REL32
+      - VirtualAddress:  44
+        SymbolName:      fprintf
+        Type:            IMAGE_REL_AMD64_REL32
+      - VirtualAddress:  49
+        SymbolName:      __iob_func
+        Type:            IMAGE_REL_AMD64_REL32
+      - VirtualAddress:  68
+        SymbolName:      '$SG2925'
+        Type:            IMAGE_REL_AMD64_REL32
+      - VirtualAddress:  76
+        SymbolName:      fprintf
+        Type:            IMAGE_REL_AMD64_REL32
+  - Name:            .xdata
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ ]
+    Alignment:       4
+    SectionData:     0104010004420000
+  - Name:            .pdata
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ ]
+    Alignment:       4
+    SectionData:     000000005700000000000000
+    Relocations:
+      - VirtualAddress:  0
+        SymbolName:      '$LN3'
+        Type:            IMAGE_REL_AMD64_ADDR32NB
+      - VirtualAddress:  4
+        SymbolName:      '$LN3'
+        Type:            IMAGE_REL_AMD64_ADDR32NB
+      - VirtualAddress:  8
+        SymbolName:      '$unwind$main'
+        Type:            IMAGE_REL_AMD64_ADDR32NB
+symbols:
+  - Name:            '@comp.id'
+    Value:           13561446
+    SectionNumber:   65535
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            '@feat.00'
+    Value:           2147484048
+    SectionNumber:   65535
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            .drectve
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   2F0000000000000000000000000000000000
+  - Name:            '.debug$S'
+    Value:           0
+    SectionNumber:   2
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   700000000000000000000000000000000000
+  - Name:            .data
+    Value:           0
+    SectionNumber:   3
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   2E00000000000000F46EC63A000000000000
+  - Name:            '$SG2923'
+    Value:           0
+    SectionNumber:   3
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            '$SG2924'
+    Value:           16
+    SectionNumber:   3
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            '$SG2925'
+    Value:           32
+    SectionNumber:   3
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            .text
+    Value:           0
+    SectionNumber:   4
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   5700000008000000F1D53755000000000000
+  - Name:            __iob_func
+    Value:           0
+    SectionNumber:   0
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            fprintf
+    Value:           0
+    SectionNumber:   0
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            printf
+    Value:           0
+    SectionNumber:   0
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            main
+    Value:           0
+    SectionNumber:   4
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            '$LN3'
+    Value:           0
+    SectionNumber:   4
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_LABEL
+  - Name:            .xdata
+    Value:           0
+    SectionNumber:   5
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   0800000000000000D139C50F000000000000
+  - Name:            '$unwind$main'
+    Value:           0
+    SectionNumber:   5
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+  - Name:            .pdata
+    Value:           0
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    NumberOfAuxSymbols: 1
+    AuxiliaryData:   0C00000003000000DFFAE35F000000000000
+  - Name:            '$pdata$main'
+    Value:           0
+    SectionNumber:   6
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+...

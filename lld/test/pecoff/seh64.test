@@ -1,0 +1,7 @@
+# RUN: yaml2obj %p/Inputs/hello64.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link /machine:x64 /out:%t.exe /subsystem:console /force \
+# RUN:   /nodefaultlib -- %t.obj
+# RUN: llvm-readobj -file-headers %t.exe | FileCheck %s
+
+CHECK: ExceptionTableRVA: 0x3000
