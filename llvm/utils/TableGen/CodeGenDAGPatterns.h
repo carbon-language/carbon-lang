@@ -809,7 +809,7 @@ private:
   void ParseNodeInfo();
   void ParseNodeTransforms();
   void ParseComplexPatterns();
-  void ParsePatternFragments();
+  void ParsePatternFragments(bool OutFrags = false);
   void ParseDefaultOperands();
   void ParseInstructions();
   void ParsePatterns();

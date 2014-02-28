@@ -560,6 +560,12 @@ class PatFrag<dag ops, dag frag, code pred = [{}],
   SDNodeXForm OperandTransform = xform;
 }
 
+// OutPatFrag is a pattern fragment that is used as part of an output pattern
+// (not an input pattern). These do not have predicates or transforms, but are
+// used to avoid repeated subexpressions in output patterns.
+class OutPatFrag<dag ops, dag frag>
+ : PatFrag<ops, frag, [{}], NOOP_SDNodeXForm>;
+
 // PatLeaf's are pattern fragments that have no operands.  This is just a helper
 // to define immediates and other common things concisely.
 class PatLeaf<dag frag, code pred = [{}], SDNodeXForm xform = NOOP_SDNodeXForm>

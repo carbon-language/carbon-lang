@@ -1232,8 +1232,10 @@ SubstituteFormalArguments(std::map<std::string, TreePatternNode*> &ArgMap) {
     TreePatternNode *Child = getChild(i);
     if (Child->isLeaf()) {
       Init *Val = Child->getLeafValue();
-      if (isa<DefInit>(Val) &&
-          cast<DefInit>(Val)->getDef()->getName() == "node") {
+      // Note that, when substituting into an output pattern, Val might be an
+      // UnsetInit.
+      if (isa<UnsetInit>(Val) || (isa<DefInit>(Val) &&
+          cast<DefInit>(Val)->getDef()->getName() == "node")) {
         // We found a use of a formal argument, replace it with its value.
         TreePatternNode *NewChild = ArgMap[Child->getName()];
         assert(NewChild && "Couldn't find formal argument!");
@@ -2135,6 +2137,7 @@ CodeGenDAGPatterns::CodeGenDAGPatterns(RecordKeeper &R) :
   ParsePatternFragments();
   ParseDefaultOperands();
   ParseInstructions();
+  ParsePatternFragments(/*OutFrags*/true);
   ParsePatterns();
 
   // Generate variants.  For example, commutative patterns can match
@@ -2208,13 +2211,18 @@ void CodeGenDAGPatterns::ParseComplexPatterns() {
 /// inline fragments together as necessary, so that there are no references left
 /// inside a pattern fragment to a pattern fragment.
 ///
-void CodeGenDAGPatterns::ParsePatternFragments() {
+void CodeGenDAGPatterns::ParsePatternFragments(bool OutFrags) {
   std::vector<Record*> Fragments = Records.getAllDerivedDefinitions("PatFrag");
 
   // First step, parse all of the fragments.
   for (unsigned i = 0, e = Fragments.size(); i != e; ++i) {
+    if (OutFrags != Fragments[i]->isSubClassOf("OutPatFrag"))
+      continue;
+
     DagInit *Tree = Fragments[i]->getValueAsDag("Fragment");
-    TreePattern *P = new TreePattern(Fragments[i], Tree, true, *this);
+    TreePattern *P =
+      new TreePattern(Fragments[i], Tree,
+                      !Fragments[i]->isSubClassOf("OutPatFrag"), *this);
     PatternFragments[Fragments[i]] = P;
 
     // Validate the argument list, converting it to set, to discard duplicates.
@@ -2270,6 +2278,9 @@ void CodeGenDAGPatterns::ParsePatternFragments() {
   // Now that we've parsed all of the tree fragments, do a closure on them so
   // that there are not references to PatFrags left inside of them.
   for (unsigned i = 0, e = Fragments.size(); i != e; ++i) {
+    if (OutFrags != Fragments[i]->isSubClassOf("OutPatFrag"))
+      continue;
+
     TreePattern *ThePat = PatternFragments[Fragments[i]];
     ThePat->InlinePatternFragments();
 
