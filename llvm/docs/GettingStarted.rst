@@ -298,10 +298,10 @@ The first step is to get a recent GCC toolchain installed. The most common
 distribution on which users have struggled with the version requirements is
 Ubuntu Precise, 12.04 LTS. For this distribution, one easy option is to install
 the `toolchain testing PPA
-<https://launchpad.net/~ubuntu-toolchain-r/+archive/test>` and use it to
+<https://launchpad.net/~ubuntu-toolchain-r/+archive/test>`__ and use it to
 install a modern GCC. There is a really nice discussions of this on the `ask
 ubuntu stack exchange
-<http://askubuntu.com/questions/271388/how-to-install-gcc-4-8-in-ubuntu-12-04-from-the-terminal>`.
+<http://askubuntu.com/questions/271388/how-to-install-gcc-4-8-in-ubuntu-12-04-from-the-terminal>`__.
 However, not all users can use PPAs and there are many other distros, so it may
 be necessory (or just useful, if you're here you *are* doing compiler
 development after all) to build and install GCC from source. It is also quite
@@ -323,7 +323,7 @@ Easy steps for installing GCC 4.8.2:
   make install
 
 For more details, check out the `excellent GCC wiki entry
-<http://gcc.gnu.org/wiki/InstallingGCC>`, where I got most of this information
+<http://gcc.gnu.org/wiki/InstallingGCC>`__, where I got most of this information
 from.
 
 Once you have a GCC toolchain, use it as your host compiler. Things should
