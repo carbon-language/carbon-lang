@@ -224,10 +224,8 @@ static void printCOFFSymbolAddress(llvm::raw_ostream &Out,
                                    const std::vector<RelocationRef> &Rels,
                                    uint64_t Offset, uint32_t Disp) {
   StringRef Sym;
-  if (error_code EC = resolveSymbolName(Rels, Offset, Sym)) {
-    error(EC);
-    return ;
-  }
+  if (error(resolveSymbolName(Rels, Offset, Sym)))
+    return;
   Out << Sym;
   if (Disp > 0)
     Out << format(" + 0x%04x", Disp);
