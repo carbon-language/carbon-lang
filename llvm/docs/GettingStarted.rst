@@ -278,11 +278,11 @@ of writing, this breaks LLD build.
 Getting a Modern Host C++ Toolchain
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This section mostly applies to Linux and older BSDs. On Mac OS X, you should have
-a sufficiently modern Xcode, or you will likely need to upgrade until you do.
-On Windows, just use Visual Studio 2012 as the host compiler, it is explicitly
-supported and widely available. FreeBSD 10.0 and newer have a modern Clang as
-the system compiler.
+This section mostly applies to Linux and older BSDs. On Mac OS X, you should
+have a sufficiently modern Xcode, or you will likely need to upgrade until you
+do. On Windows, just use Visual Studio 2012 as the host compiler, it is
+explicitly supported and widely available. FreeBSD 10.0 and newer have a modern
+Clang as the system compiler.
 
 However, some Linux distributions and some other or older BSDs sometimes have
 extremely old versions of GCC. These steps attempt to help you upgrade you
