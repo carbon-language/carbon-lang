@@ -113,7 +113,8 @@ ProcessFreeBSD::EnablePluginLogging(Stream *strm, Args &command)
 // Constructors and destructors.
 
 ProcessFreeBSD::ProcessFreeBSD(Target& target, Listener &listener)
-    : ProcessPOSIX(target, listener)
+    : ProcessPOSIX(target, listener),
+      m_resume_signo(0)
 {
 }
 
@@ -147,9 +148,6 @@ ProcessFreeBSD::DoResume()
 {
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
-    // FreeBSD's ptrace() uses 0 to indicate "no signal is to be sent."
-    int resume_signal = 0;
-
     SetPrivateState(eStateRunning);
 
     Mutex::Locker lock(m_thread_list.GetMutex());
@@ -174,9 +172,9 @@ ProcessFreeBSD::DoResume()
     if (log)
         log->Printf("process %lu resuming (%s)", GetID(), do_step ? "step" : "continue");
     if (do_step)
-        m_monitor->SingleStep(GetID(), resume_signal);
+        m_monitor->SingleStep(GetID(), m_resume_signo);
     else
-        m_monitor->Resume(GetID(), resume_signal);
+        m_monitor->Resume(GetID(), m_resume_signo);
 
     return Error();
 }
@@ -228,6 +226,7 @@ ProcessFreeBSD::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_th
 Error
 ProcessFreeBSD::WillResume()
 {
+    m_resume_signo = 0;
     m_suspend_tids.clear();
     m_run_tids.clear();
     m_step_tids.clear();
