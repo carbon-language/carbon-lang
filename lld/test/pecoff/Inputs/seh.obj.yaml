@@ -114,7 +114,7 @@ sections:
   - Name:            .sxdata
     Characteristics: [ IMAGE_SCN_LNK_INFO ]
     Alignment:       4
-    SectionData:     1B000000
+    SectionData:     1B0000001A000000
 symbols:
   - Name:            '@comp.id'
     Value:           14766605

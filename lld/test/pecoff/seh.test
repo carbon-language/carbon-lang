@@ -21,8 +21,8 @@ CHECK:   Process Heap Flags: 0
 CHECK:   CSD Version: 0
 CHECK:   Security Cookie: 0
 CHECK:   SEH Table: 4210688
-CHECK:   SEH Count: 1
-CHECK: SEH Table: 0x{{[0-9a-f]+}}
+CHECK:   SEH Count: 2
+CHECK: SEH Table: 0x{{[0-9a-f]+}} 0x{{[0-9a-f]+}}
 
 # RUN: lld -flavor link /out:%t.exe /subsystem:console /force /nodefaultlib \
 # RUN:   /safeseh:no -- %t.obj
