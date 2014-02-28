@@ -815,7 +815,7 @@ sys_error(
                 // not issue warning if strerror_r() returns `int' instead of expected `char *'.
             message = __kmp_str_format( "%s", err_msg );
 
-        #else // OS X*
+        #else // OS X*, FreeBSD etc.
 
             // XSI version of strerror_r.
 

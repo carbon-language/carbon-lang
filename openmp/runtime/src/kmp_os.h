@@ -63,9 +63,10 @@
 /* ---------------------- Operating system recognition ------------------- */
 
 #define KMP_OS_LINUX    0
+#define KMP_OS_FREEBSD  0
 #define KMP_OS_DARWIN   0
 #define KMP_OS_WINDOWS    0
-#define KMP_OS_UNIX     0  /* disjunction of KMP_OS_LINUX with KMP_OS_DARWIN */
+#define KMP_OS_UNIX     0  /* disjunction of KMP_OS_LINUX, KMP_OS_DARWIN etc. */
 
 #define KMP_ARCH_X86        0
 #define KMP_ARCH_X86_64	    0
@@ -85,11 +86,16 @@
 # define KMP_OS_LINUX 1
 #endif
 
-#if (1 != KMP_OS_LINUX + KMP_OS_DARWIN + KMP_OS_WINDOWS)
+#if ( defined __FreeBSD__ )
+# undef KMP_OS_FREEBSD
+# define KMP_OS_FREEBSD 1
+#endif
+
+#if (1 != KMP_OS_LINUX + KMP_OS_FREEBSD + KMP_OS_DARWIN + KMP_OS_WINDOWS)
 # error Unknown OS
 #endif
 
-#if KMP_OS_LINUX || KMP_OS_DARWIN
+#if KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_DARWIN
 # undef KMP_OS_UNIX
 # define KMP_OS_UNIX 1
 #endif
@@ -498,7 +504,7 @@ extern kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
 # define KMP_XCHG_REAL64(p, v)                  __kmp_xchg_real64( (p), (v) );
 
 
-#elif (KMP_ASM_INTRINS && (KMP_OS_LINUX || KMP_OS_DARWIN)) || !(KMP_ARCH_X86 || KMP_ARCH_X86_64)
+#elif (KMP_ASM_INTRINS && (KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_DARWIN)) || !(KMP_ARCH_X86 || KMP_ARCH_X86_64)
 
 /* cast p to correct type so that proper intrinsic will be used */
 # define KMP_TEST_THEN_INC32(p)                 __sync_fetch_and_add( (kmp_int32 *)(p), 1 )
@@ -780,7 +786,7 @@ typedef void    (*microtask_t)( int *gtid, int *npr, ... );
 // Warning levels
 enum kmp_warnings_level {
     kmp_warnings_off = 0,		/* No warnings */
-    kmp_warnings_low,			/* Minimal warmings (default) */
+    kmp_warnings_low,			/* Minimal warnings (default) */
     kmp_warnings_explicit = 6,		/* Explicitly set to ON - more warnings */
     kmp_warnings_verbose		/* reserved */
 };

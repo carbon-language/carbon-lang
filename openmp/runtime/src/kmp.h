@@ -88,7 +88,7 @@
 #include "kmp_lock.h"
 #include "kmp_i18n.h"
 
-#define KMP_HANDLE_SIGNALS (KMP_OS_LINUX || KMP_OS_WINDOWS || KMP_OS_DARWIN)
+#define KMP_HANDLE_SIGNALS (KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN)
 
 #ifdef KMP_SETVERSION
 /*  from factory/Include, to get VERSION_STRING embedded for 'what'  */
@@ -460,6 +460,15 @@ typedef int PACKED_REDUCTION_METHOD_T;
  * Only Linux* OS and Windows* OS support thread affinity.
  */
 #if KMP_OS_LINUX || KMP_OS_WINDOWS
+# define KMP_AFFINITY_SUPPORTED 1
+#elif KMP_OS_DARWIN || KMP_OS_FREEBSD
+// affinity not supported
+# define KMP_AFFINITY_SUPPORTED 0
+#else
+# error "Unknown or unsupported OS"
+#endif
+
+#if KMP_AFFINITY_SUPPORTED
 
 extern size_t __kmp_affin_mask_size;
 # define KMP_AFFINITY_CAPABLE() (__kmp_affin_mask_size > 0)
@@ -719,11 +728,7 @@ extern kmp_affin_mask_t *__kmp_affinity_get_fullMask();
 # endif /* KMP_OS_LINUX */
 extern char const * __kmp_cpuinfo_file;
 
-#elif KMP_OS_DARWIN
-    // affinity not supported
-#else
-    #error "Unknown or unsupported OS"
-#endif /* KMP_OS_LINUX || KMP_OS_WINDOWS */
+#endif /* KMP_AFFINITY_SUPPORTED */
 
 #if OMP_40_ENABLED
 
@@ -944,10 +949,12 @@ extern unsigned int __kmp_place_core_offset;
 #elif KMP_OS_LINUX
 #  define KMP_INIT_WAIT  1024U          /* initial number of spin-tests   */
 #  define KMP_NEXT_WAIT   512U          /* susequent number of spin-tests */
-#elif KMP_OS_DARWIN
-/* TODO: tune for KMP_OS_DARWIN */
+#elif KMP_OS_DARWIN || KMP_OS_FREEBSD
+/* TODO: tune for OS */
 #  define KMP_INIT_WAIT  1024U          /* initial number of spin-tests   */
 #  define KMP_NEXT_WAIT   512U          /* susequent number of spin-tests */
+#else
+#  error "Unknown or unsupported OS"
 #endif
 
 #if KMP_ARCH_X86 || KMP_ARCH_X86_64
@@ -2971,7 +2978,7 @@ extern void __kmp_initialize_system_tick( void );  /* Initialize timer tick valu
 extern void __kmp_runtime_initialize( void );  /* machine specific initialization */
 extern void __kmp_runtime_destroy( void );
 
-#if KMP_OS_LINUX || KMP_OS_WINDOWS
+#if KMP_AFFINITY_SUPPORTED
 extern char *__kmp_affinity_print_mask(char *buf, int buf_len, kmp_affin_mask_t *mask);
 extern void __kmp_affinity_initialize(void);
 extern void __kmp_affinity_uninitialize(void);
@@ -2989,7 +2996,7 @@ extern int __kmp_aux_unset_affinity_mask_proc(int proc, void **mask);
 extern int __kmp_aux_get_affinity_mask_proc(int proc, void **mask);
 extern void __kmp_balanced_affinity( int tid, int team_size );
 
-#endif /* KMP_OS_LINUX || KMP_OS_WINDOWS */
+#endif /* KMP_AFFINITY_SUPPORTED */
 
 #if KMP_OS_LINUX && (KMP_ARCH_X86 || KMP_ARCH_X86_64 || KMP_ARCH_ARM)
 

@@ -26,6 +26,9 @@ ifndef omp_os
   ifeq ($(OS), Linux)
     export omp_os=linux
   endif
+  ifeq ($(OS), FreeBSD)
+    export omp_os=freebsd
+  endif
   ifeq ($(OS), Darwin)
     export omp_os=macos
   endif

@@ -170,6 +170,9 @@ sub target_options() {
     if ( 0 ) {
     } elsif ( $operating_system eq "GNU/Linux" ) {
         $_host_os = "lin";
+    } elsif ( $operating_system eq "FreeBSD" ) {
+        # Host OS resembles Linux.
+        $_host_os = "lin";
     } elsif ( $operating_system eq "Darwin" ) {
         $_host_os = "mac";
     } elsif ( $operating_system eq "MS Windows" ) {

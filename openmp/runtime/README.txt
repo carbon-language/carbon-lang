@@ -78,6 +78,7 @@ Intel(R) Many Integrated Core Architecture
               |   icc/icl     |    gcc      |   clang    |
 --------------|---------------|--------------------------|
 | Linux* OS   |   Yes(1,5)    |  Yes(2,4)   | Yes(4,6,7) |
+| FreeBSD*    |   No          |  No         | Yes(4,6,7) |
 | OS X*       |   Yes(1,3,4)  |  No         | Yes(4,6,7) |
 | Windows* OS |   Yes(1,4)    |  No         | No         |
 ----------------------------------------------------------

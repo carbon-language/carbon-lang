@@ -222,7 +222,7 @@ FTN_GET_LIBRARY (void)
 int FTN_STDCALL
 FTN_SET_AFFINITY( void **mask )
 {
-    #if defined(KMP_STUB) || !(KMP_OS_WINDOWS || KMP_OS_LINUX)
+    #if defined(KMP_STUB) || !KMP_AFFINITY_SUPPORTED
         return -1;
     #else
         if ( ! TCR_4(__kmp_init_middle) ) {
@@ -235,7 +235,7 @@ FTN_SET_AFFINITY( void **mask )
 int FTN_STDCALL
 FTN_GET_AFFINITY( void **mask )
 {
-    #if defined(KMP_STUB) || !(KMP_OS_WINDOWS || KMP_OS_LINUX)
+    #if defined(KMP_STUB) || !KMP_AFFINITY_SUPPORTED
         return -1;
     #else
         if ( ! TCR_4(__kmp_init_middle) ) {
@@ -248,7 +248,7 @@ FTN_GET_AFFINITY( void **mask )
 int FTN_STDCALL
 FTN_GET_AFFINITY_MAX_PROC( void )
 {
-    #if defined(KMP_STUB) || !(KMP_OS_WINDOWS || KMP_OS_LINUX)
+    #if defined(KMP_STUB) || !KMP_AFFINITY_SUPPORTED
         return 0;
     #else
         //
@@ -273,7 +273,7 @@ FTN_GET_AFFINITY_MAX_PROC( void )
 void FTN_STDCALL
 FTN_CREATE_AFFINITY_MASK( void **mask )
 {
-    #if defined(KMP_STUB) || !(KMP_OS_WINDOWS || KMP_OS_LINUX)
+    #if defined(KMP_STUB) || !KMP_AFFINITY_SUPPORTED
         *mask = NULL;
     #else
         //
@@ -290,7 +290,7 @@ FTN_CREATE_AFFINITY_MASK( void **mask )
 void FTN_STDCALL
 FTN_DESTROY_AFFINITY_MASK( void **mask )
 {
-    #if defined(KMP_STUB) || !(KMP_OS_WINDOWS || KMP_OS_LINUX)
+    #if defined(KMP_STUB) || !KMP_AFFINITY_SUPPORTED
         // Nothing
     #else
         //
@@ -312,7 +312,7 @@ FTN_DESTROY_AFFINITY_MASK( void **mask )
 int FTN_STDCALL
 FTN_SET_AFFINITY_MASK_PROC( int KMP_DEREF proc, void **mask )
 {
-    #if defined(KMP_STUB) || !(KMP_OS_WINDOWS || KMP_OS_LINUX)
+    #if defined(KMP_STUB) || !KMP_AFFINITY_SUPPORTED
         return -1;
     #else
         if ( ! TCR_4(__kmp_init_middle) ) {
@@ -325,7 +325,7 @@ FTN_SET_AFFINITY_MASK_PROC( int KMP_DEREF proc, void **mask )
 int FTN_STDCALL
 FTN_UNSET_AFFINITY_MASK_PROC( int KMP_DEREF proc, void **mask )
 {
-    #if defined(KMP_STUB) || !(KMP_OS_WINDOWS || KMP_OS_LINUX)
+    #if defined(KMP_STUB) || !KMP_AFFINITY_SUPPORTED
         return -1;
     #else
         if ( ! TCR_4(__kmp_init_middle) ) {
@@ -338,7 +338,7 @@ FTN_UNSET_AFFINITY_MASK_PROC( int KMP_DEREF proc, void **mask )
 int FTN_STDCALL
 FTN_GET_AFFINITY_MASK_PROC( int KMP_DEREF proc, void **mask )
 {
-    #if defined(KMP_STUB) || !(KMP_OS_WINDOWS || KMP_OS_LINUX)
+    #if defined(KMP_STUB) || !KMP_AFFINITY_SUPPORTED
         return -1;
     #else
         if ( ! TCR_4(__kmp_init_middle) ) {
@@ -408,7 +408,7 @@ xexpand(FTN_GET_THREAD_NUM)( void )
     #else
         int gtid;
 
-        #if KMP_OS_DARWIN
+        #if KMP_OS_DARWIN || KMP_OS_FREEBSD
             gtid = __kmp_entry_gtid();
         #elif KMP_OS_WINDOWS
             if (!__kmp_init_parallel ||

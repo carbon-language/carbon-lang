@@ -4558,11 +4558,11 @@ __kmp_register_root( int initial_thread )
     KMP_DEBUG_ASSERT( root->r.r_hot_team->t.t_bar[ bs_forkjoin_barrier ].b_arrived == KMP_INIT_BARRIER_STATE );
 
 
-#if KMP_OS_WINDOWS || KMP_OS_LINUX
+#if KMP_AFFINITY_SUPPORTED
     if ( TCR_4(__kmp_init_middle) ) {
         __kmp_affinity_set_init_mask( gtid, TRUE );
     }
-#endif /* KMP_OS_WINDOWS || KMP_OS_LINUX */
+#endif /* KMP_AFFINITY_SUPPORTED */
 
     __kmp_root_counter ++;
 
@@ -8150,9 +8150,9 @@ __kmp_cleanup( void )
     }
 
     if (TCR_4(__kmp_init_middle)) {
-#if KMP_OS_WINDOWS || KMP_OS_LINUX
+#if KMP_AFFINITY_SUPPORTED
         __kmp_affinity_uninitialize();
-#endif /* KMP_OS_WINDOWS || KMP_OS_LINUX */
+#endif /* KMP_AFFINITY_SUPPORTED */
         TCW_4(__kmp_init_middle, FALSE);
     }
 
@@ -8452,7 +8452,7 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
 
         #if KMP_ARCH_X86_64
 
-            #if KMP_OS_LINUX || KMP_OS_WINDOWS || KMP_OS_DARWIN
+            #if KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN
                 #if KMP_MIC
                     #define REDUCTION_TEAMSIZE_CUTOFF 8
                 #else // KMP_MIC
@@ -8471,7 +8471,7 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
                 }
             #else
                 #error "Unknown or unsupported OS"
-            #endif // KMP_OS_LINUX || KMP_OS_WINDOWS || KMP_OS_DARWIN
+            #endif // KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN
 
         #elif KMP_ARCH_X86 || KMP_ARCH_ARM
 

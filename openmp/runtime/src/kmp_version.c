@@ -169,7 +169,7 @@ __kmp_print_version_1( void )
             & buffer,
             "%sthread affinity support: %s\n",
             KMP_VERSION_PREF_STR,
-            #if KMP_OS_WINDOWS || KMP_OS_LINUX
+            #if KMP_AFFINITY_SUPPORTED
                 (
                     KMP_AFFINITY_CAPABLE()
                     ?

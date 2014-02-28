@@ -139,11 +139,11 @@ $values{ processor } = $values{ machine };
 
 # hardware_platform.
 if ( 0 ) {
-} elsif ( $^O eq "linux" ) {
+} elsif ( $^O eq "linux" or $^O eq "freebsd" ) {
     if ( 0 ) {
     } elsif ( $values{ machine } =~ m{\Ai[3456]86\z} ) {
         $values{ hardware_platform } = "i386";
-    } elsif ( $values{ machine } =~ m{\Ax86_64\z} ) {
+    } elsif ( $values{ machine } =~ m{\A(x86_64|amd64)\z} ) {
         $values{ hardware_platform } = "x86_64";
     } elsif ( $values{ machine } =~ m{\Aarmv7\D*\z} ) {
         $values{ hardware_platform } = "arm";
@@ -370,8 +370,10 @@ if ( 0 ) {
     # $values{ operating_system_update  } = $os_name[ 1 ];
 } elsif ( $values{ kernel_name } =~ m{\ACYGWIN_NT-} ) {
     $values{ operating_system } = "MS Windows";
+} elsif ( $values{ kernel_name } =~ m{\AFreeBSD} ) {
+    $values{ operating_system } = "FreeBSD";
 } else {
-    die "Unsuppoprted kernel_name (\"$values{ kernel_name }\") returned by POSIX::uname(); stopped";
+    die "Unsupported kernel_name (\"$values{ kernel_name }\") returned by POSIX::uname(); stopped";
 }; # if
 
 # host_name and domain_name

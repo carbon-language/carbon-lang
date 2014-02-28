@@ -355,10 +355,14 @@ ifeq "$(os)" "lin"
         # to remove dependency on libgcc_s:
         ifeq "$(c)" "gcc"
             ld-flags-dll += -static-libgcc
-            ld-flags-extra += -Wl,-ldl
+            ifneq "$(omp_os)" "freebsd"
+                ld-flags-extra += -Wl,-ldl
+            endif
         endif
         ifeq "$(c)" "clang"
-            ld-flags-extra += -Wl,-ldl
+            ifneq "$(omp_os)" "freebsd"
+                ld-flags-extra += -Wl,-ldl
+            endif
         endif
         ifeq "$(arch)" "32"
             ifeq "$(filter gcc clang,$(c))" ""
@@ -1247,7 +1251,7 @@ ifneq "$(os)" "lrb"
         # On Linux* OS and OS X* the test is good enough because GNU compiler knows nothing
         # about libirc and Intel compiler private lib directories, but we will grep verbose linker
         # output just in case.
-        tt-c        = gcc
+        tt-c        = cc
         ifeq "$(os)" "lin"    # GCC on OS X* does not recognize -pthread.
             tt-c-flags  += -pthread
         endif
@@ -1261,12 +1265,12 @@ ifneq "$(os)" "lrb"
             # Explicitly add dl library to avoid failure.
             tt-ld-flags += -ldl
         endif
-        ifeq "$(os)" "lin"
-            tt-ld-flags-v += -Wl,--verbose
-            tt-env        += LD_LIBRARY_PATH=".:$(LD_LIBRARY_PATH)"
-        else # mac
+        ifeq "$(os)" "mac"
             tt-ld-flags-v += -Wl,-t
             tt-env        += DYLD_LIBRARY_PATH=".:$(DYLD_LIBRARY_PATH)"
+        else # lin
+            tt-ld-flags-v += -Wl,--verbose
+            tt-env        += LD_LIBRARY_PATH=".:$(LD_LIBRARY_PATH)"
         endif
     endif
     tt-c-flags += $(tt-c-flags-rt)
@@ -1429,6 +1433,12 @@ ifneq "$(filter %-dyna win-%,$(os)-$(LINK_TYPE))" ""
         else
             td_exp += uuid
         endif
+    endif
+    ifeq "$(omp_os)" "freebsd"
+        td_exp =
+        td_exp += libc.so.7
+        td_exp += libthr.so.3
+        td_exp += libunwind.so.5
     endif
 
     test-deps/.test : $(lib_file) $(tools_dir)check-depends.pl test-deps/.dir .rebuild

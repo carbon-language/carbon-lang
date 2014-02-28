@@ -22,7 +22,9 @@
 #include "kmp_i18n.h"
 #include "kmp_io.h"
 
-#include <alloca.h>
+#if !KMP_OS_FREEBSD
+# include <alloca.h>
+#endif
 #include <unistd.h>
 #include <math.h>               // HUGE_VAL.
 #include <sys/time.h>
@@ -48,6 +50,9 @@
 #elif KMP_OS_DARWIN
 # include <sys/sysctl.h>
 # include <mach/mach.h>
+#elif KMP_OS_FREEBSD
+# include <sys/sysctl.h>
+# include <pthread_np.h>
 #endif
 
 
@@ -596,7 +601,7 @@ static kmp_int32
 __kmp_set_stack_info( int gtid, kmp_info_t *th )
 {
     int            stack_data;
-#if KMP_OS_LINUX
+#if KMP_OS_LINUX || KMP_OS_FREEBSD
     /* Linux* OS only -- no pthread_getattr_np support on OS X* */
     pthread_attr_t attr;
     int            status;
@@ -611,8 +616,13 @@ __kmp_set_stack_info( int gtid, kmp_info_t *th )
         /* Fetch the real thread attributes */
         status = pthread_attr_init( &attr );
         KMP_CHECK_SYSFAIL( "pthread_attr_init", status );
+#if KMP_OS_FREEBSD
+        status = pthread_attr_get_np( pthread_self(), &attr );
+        KMP_CHECK_SYSFAIL( "pthread_attr_get_np", status );
+#else
         status = pthread_getattr_np( pthread_self(), &attr );
         KMP_CHECK_SYSFAIL( "pthread_getattr_np", status );
+#endif
         status = pthread_attr_getstack( &attr, &addr, &size );
         KMP_CHECK_SYSFAIL( "pthread_attr_getstack", status );
         KA_TRACE( 60, ( "__kmp_set_stack_info: T#%d pthread_attr_getstack returned size: %lu, "
@@ -629,16 +639,14 @@ __kmp_set_stack_info( int gtid, kmp_info_t *th )
         TCW_PTR(th->th.th_info.ds.ds_stacksize, size);
         TCW_4(th->th.th_info.ds.ds_stackgrow, FALSE);
         return TRUE;
-    } else {
-#endif /* KMP_OS_LINUX */
-        /* Use incremental refinement starting from initial conservative estimate */
-        TCW_PTR(th->th.th_info.ds.ds_stacksize, 0);
-        TCW_PTR(th -> th.th_info.ds.ds_stackbase, &stack_data);
-        TCW_4(th->th.th_info.ds.ds_stackgrow, TRUE);
-        return FALSE;
-#if KMP_OS_LINUX
     }
-#endif /* KMP_OS_LINUX */
+#endif /* KMP_OS_LINUX || KMP_OS_FREEBSD */
+
+    /* Use incremental refinement starting from initial conservative estimate */
+    TCW_PTR(th->th.th_info.ds.ds_stacksize, 0);
+    TCW_PTR(th -> th.th_info.ds.ds_stackbase, &stack_data);
+    TCW_4(th->th.th_info.ds.ds_stackgrow, TRUE);
+    return FALSE;
 }
 
 static void*
@@ -663,12 +671,8 @@ __kmp_launch_worker( void *thr )
     __kmp_itt_thread_name( gtid );
 #endif /* USE_ITT_BUILD */
 
-#if KMP_OS_LINUX
+#if KMP_AFFINITY_SUPPORTED
     __kmp_affinity_set_init_mask( gtid, FALSE );
-#elif KMP_OS_DARWIN
-    // affinity not supported
-#else
-    #error "Unknown or unsupported OS"
 #endif
 
 #ifdef KMP_CANCEL_THREADS
@@ -696,7 +700,7 @@ __kmp_launch_worker( void *thr )
     KMP_CHECK_SYSFAIL( "pthread_sigmask", status );
 #endif /* KMP_BLOCK_SIGNALS */
 
-#if KMP_OS_LINUX
+#if KMP_OS_LINUX || KMP_OS_FREEBSD
     if ( __kmp_stkoffset > 0 && gtid > 0 ) {
         padding = alloca( gtid * __kmp_stkoffset );
     }
@@ -2000,6 +2004,16 @@ __kmp_get_xproc( void ) {
             KMP_INFORM( AssumedNumCPU );
         }; // if
 
+    #elif KMP_OS_FREEBSD
+
+        int mib[] = { CTL_HW, HW_NCPU };
+        size_t len = sizeof( r );
+        if ( sysctl( mib, 2, &r, &len, NULL, 0 ) < 0 ) {
+            r = 0;
+            KMP_WARNING( CantGetNumAvailCPU );
+            KMP_INFORM( AssumedNumCPU );
+        }
+
     #else
 
         #error "Unknown or unsupported OS."
@@ -2121,12 +2135,8 @@ __kmp_runtime_destroy( void )
     if ( status != 0 && status != EBUSY ) {
         KMP_SYSFAIL( "pthread_cond_destroy", status );
     }
-    #if KMP_OS_LINUX
+    #if KMP_AFFINITY_SUPPORTED
         __kmp_affinity_uninitialize();
-    #elif KMP_OS_DARWIN
-        // affinity not supported
-    #else
-        #error "Unknown or unsupported OS"
     #endif
 
     __kmp_init_runtime = FALSE;
@@ -2242,6 +2252,11 @@ __kmp_is_address_mapped( void * addr ) {
             // Memory successfully read.
             found = 1;
         }; // if
+
+    #elif KMP_OS_FREEBSD
+
+        // FIXME(FreeBSD): Implement this.
+        found = 1;
 
     #else
 

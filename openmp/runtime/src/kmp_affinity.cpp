@@ -21,7 +21,7 @@
 #include "kmp_str.h"
 
 
-#if KMP_OS_WINDOWS || KMP_OS_LINUX
+#if KMP_AFFINITY_SUPPORTED
 
 //
 // Print the affinity mask to the character array in a pretty format.
@@ -4543,9 +4543,4 @@ void __kmp_balanced_affinity( int tid, int nthreads )
 
 # endif /* KMP_MIC */
 
-#elif KMP_OS_DARWIN
-    // affinity not supported
-#else
-    #error "Unknown or unsupported OS"
-#endif // KMP_OS_WINDOWS || KMP_OS_LINUX
-
+#endif // KMP_AFFINITY_SUPPORTED
