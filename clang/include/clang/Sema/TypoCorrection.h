@@ -305,13 +305,16 @@ public:
 class FunctionCallFilterCCC : public CorrectionCandidateCallback {
 public:
   FunctionCallFilterCCC(Sema &SemaRef, unsigned NumArgs,
-                        bool HasExplicitTemplateArgs);
+                        bool HasExplicitTemplateArgs,
+                        bool AllowNonStaticMethods = true);
 
   virtual bool ValidateCandidate(const TypoCorrection &candidate);
 
  private:
   unsigned NumArgs;
   bool HasExplicitTemplateArgs;
+  bool AllowNonStaticMethods;
+  DeclContext *CurContext;
 };
 
 // @brief Callback class that effectively disabled typo correction

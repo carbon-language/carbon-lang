@@ -234,3 +234,12 @@ class Baz {
                      // expected-error {{expected member name or ';' after declaration specifiers}}
 };
 }
+
+namespace PR18852 {
+void func() {
+  struct foo {
+    void bar() {}
+  };
+  bar();  // expected-error-re {{use of undeclared identifier 'bar'{{$}}}}
+}
+}
