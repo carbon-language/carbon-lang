@@ -114,6 +114,18 @@ SBExpressionOptions::SetTryAllThreads (bool run_others)
 }
 
 bool
+SBExpressionOptions::GetStopOthers () const
+{
+    return m_opaque_ap->GetStopOthers ();
+}
+
+void
+SBExpressionOptions::SetStopOthers (bool run_others)
+{
+    m_opaque_ap->SetStopOthers (run_others);
+}
+
+bool
 SBExpressionOptions::GetTrapExceptions () const
 {
     return m_opaque_ap->GetTrapExceptions ();

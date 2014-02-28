@@ -425,17 +425,6 @@ ThreadPlanCallFunction::StopOthers ()
     return m_stop_other_threads;
 }
 
-void
-ThreadPlanCallFunction::SetStopOthers (bool new_value)
-{
-    if (m_subplan_sp)
-    {
-        ThreadPlanRunToAddress *address_plan = static_cast<ThreadPlanRunToAddress *>(m_subplan_sp.get());
-        address_plan->SetStopOthers(new_value);
-    }
-    m_stop_other_threads = new_value;
-}
-
 StateType
 ThreadPlanCallFunction::GetPlanRunState ()
 {

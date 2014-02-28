@@ -52,9 +52,6 @@ public:
     virtual bool
     StopOthers ();
     
-    virtual void
-    SetStopOthers (bool new_value);
-
     virtual lldb::StateType
     GetPlanRunState ();
 

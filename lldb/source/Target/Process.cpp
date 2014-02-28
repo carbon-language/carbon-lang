@@ -5118,7 +5118,12 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         TimeValue final_timeout = one_thread_timeout;
         
         uint32_t timeout_usec = options.GetTimeoutUsec();
-        if (options.GetTryAllThreads())
+        if (!options.GetStopOthers())
+        {
+            before_first_timeout = false;
+            final_timeout.OffsetWithMicroSeconds(timeout_usec);
+        }
+        else if (options.GetTryAllThreads())
         {
             // If we are running all threads then we take half the time to run all threads, bounded by
             // .25 sec.
