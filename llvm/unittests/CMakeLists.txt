@@ -1,6 +1,12 @@
 add_custom_target(UnitTests)
 set_target_properties(UnitTests PROPERTIES FOLDER "Tests")
 
+if (APPLE)
+  set(CMAKE_INSTALL_RPATH "@executable_path/../../lib")
+else(UNIX)
+  set(CMAKE_INSTALL_RPATH "\$ORIGIN/../../lib")
+endif()
+
 function(add_llvm_unittest test_dirname)
   add_unittest(UnitTests ${test_dirname} ${ARGN})
 endfunction()
