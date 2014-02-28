@@ -28,6 +28,7 @@ Using Clang as a Compiler
    LeakSanitizer
    SanitizerSpecialCaseList
    Modules
+   MSVCCompatibility
    FAQ
 
 Using Clang as a Library
