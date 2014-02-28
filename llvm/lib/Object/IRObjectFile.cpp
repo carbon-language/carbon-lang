@@ -13,6 +13,7 @@
 
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Object/IRObjectFile.h"
 #include "llvm/Support/raw_ostream.h"
@@ -27,6 +28,13 @@ IRObjectFile::IRObjectFile(MemoryBuffer *Object, error_code &EC,
     return;
 
   M.reset(MOrErr.get());
+
+  // If we have a DataLayout, setup a mangler.
+  const DataLayout *DL = M->getDataLayout();
+  if (!DL)
+    return;
+
+  Mang.reset(new Mangler(DL));
 }
 
 static const GlobalValue &getGV(DataRefImpl &Symb) {
@@ -86,9 +94,13 @@ void IRObjectFile::moveSymbolNext(DataRefImpl &Symb) const {
 
 error_code IRObjectFile::printSymbolName(raw_ostream &OS,
                                          DataRefImpl Symb) const {
-  // FIXME: This should use the Mangler.
   const GlobalValue &GV = getGV(Symb);
-  OS << GV.getName();
+
+  if (Mang)
+    Mang->getNameWithPrefix(OS, &GV, false);
+  else
+    OS << GV.getName();
+
   return object_error::success;
 }
 

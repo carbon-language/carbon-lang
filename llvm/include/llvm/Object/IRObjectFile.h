@@ -17,12 +17,14 @@
 #include "llvm/Object/SymbolicFile.h"
 
 namespace llvm {
+class Mangler;
 class Module;
 class GlobalValue;
 
 namespace object {
 class IRObjectFile : public SymbolicFile {
   OwningPtr<Module> M;
+  OwningPtr<Mangler> Mang;
 public:
   IRObjectFile(MemoryBuffer *Object, error_code &EC, LLVMContext &Context,
                bool BufferOwned);
