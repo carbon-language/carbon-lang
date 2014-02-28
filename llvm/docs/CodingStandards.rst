@@ -14,9 +14,9 @@ absolute requirements to be followed in all instances, coding standards are
 particularly important for large-scale code bases that follow a library-based
 design (like LLVM).
 
-This document intentionally does not prescribe fixed standards for religious
-issues such as brace placement and space usage.  For issues like this, follow
-the golden rule:
+While this document may provide guidance for some mechanical formatting issues,
+whitespace, or other "microscopic details", these are not fixed standards.
+Always follow the golden rule:
 
 .. _Golden Rule:
 
