@@ -18,6 +18,7 @@ define void @loop_no_const_reload(<2 x i64>*  %in, <2 x i64>* %out, i32 %n) {
 ; Constant is no longer clobbered so no need to reload it in the loop.
 
 ; CHECK-NOT: movdqa {{%xmm[0-9]+}}, {{%xmm[0-9]+}}
+
 entry:
   %cmp9 = icmp eq i32 %n, 0
   br i1 %cmp9, label %for.end, label %for.body
