@@ -1496,7 +1496,7 @@ public:
     MoreHelp->clear();
 
     // Halt the program since help information was printed
-    exit(1);
+    exit(0);
   }
 };
 
@@ -1732,7 +1732,7 @@ public:
 
     if (OverrideVersionPrinter != 0) {
       (*OverrideVersionPrinter)();
-      exit(1);
+      exit(0);
     }
     print();
 
@@ -1746,7 +1746,7 @@ public:
         (*I)();
     }
 
-    exit(1);
+    exit(0);
   }
 };
 } // End anonymous namespace

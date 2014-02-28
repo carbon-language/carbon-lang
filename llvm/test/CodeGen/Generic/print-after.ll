@@ -1,4 +1,4 @@
-; RUN: not llc --help-hidden 2>&1 | FileCheck %s
+; RUN: llc --help-hidden 2>&1 | FileCheck %s
 
 ; CHECK: -print-after
 ; CHECK-NOT: -print-after-all
