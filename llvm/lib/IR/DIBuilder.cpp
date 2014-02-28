@@ -148,7 +148,7 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 static DIImportedEntity
 createImportedModule(LLVMContext &C, DIScope Context, DIDescriptor NS,
                      unsigned Line, StringRef Name,
-                     SmallVectorImpl<TrackingVH<MDNode>> &AllImportedModules) {
+                     SmallVectorImpl<TrackingVH<MDNode> > &AllImportedModules) {
   const MDNode *R;
   if (Name.empty()) {
     Value *Elts[] = {
