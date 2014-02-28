@@ -43,3 +43,23 @@ static_assert(__LINE__ == 123456, "");
 #define M(x, ...) __VA_ARGS__
 constexpr int x = { M(1'2,3'4) };
 static_assert(x == 34, "");
+
+namespace UCNs {
+  // UCNs can appear before digit separators but not after.
+  int a = 0\u1234'5; // expected-error {{invalid suffix '\u1234'5' on integer constant}}
+  int b = 0'\u12345; // '; // expected-error {{expected ';'}}
+  constexpr int c {M(0\u1234'0,0'1)};
+  constexpr int d {M(00'\u1234,0'1)};
+  static_assert(c == 1, "");
+  static_assert(d == 0, "");
+}
+
+namespace UTF8 {
+  // extended characters can appear before digit separators but not after.
+  int a = 0ሴ'5; // expected-error {{invalid suffix 'ሴ'5' on integer constant}}
+  int b = 0'ሴ5; // '; // expected-error {{expected ';'}}
+  constexpr int c {M(0ሴ'0,0'1)};
+  constexpr int d {M(00'ሴ,0'1)};
+  static_assert(c == 1, "");
+  static_assert(d == 0, "");
+}
