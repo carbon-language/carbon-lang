@@ -84,9 +84,9 @@ ConditionValueKindStrings[] = {
 };
 
 // Mapping strings.
-static const char *MappingStrings[] = { "0",           "MAP_IGNORE",
-                                        "MAP_WARNING", "MAP_ERROR",
-                                        "MAP_FATAL" };
+static const char *MappingStrings[] = { "0",          "MAP_IGNORE",
+                                        "MAP_REMARK", "MAP_WARNING",
+                                        "MAP_ERROR",  "MAP_FATAL" };
 
 // PPCallbacksTracker functions.
 
