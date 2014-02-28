@@ -403,7 +403,7 @@ class LockTest {
   void Test15() {
     if (test_number > 0 && test_number != 15) return;
     if (!LockType::supports_read_lock()) return;
-    fprintf(stderr, "Starting Test15: 4 threads read lock/unlock 4 shared mutexes, all under another shared mutex\n");
+    fprintf(stderr, "Starting Test15: recursive rlock\n");
     // DISABLEDCHECK-RD: Starting Test15
     Init(5);
     RL(0); RL(0); RU(0); RU(0);  // Recusrive reader lock.
@@ -499,4 +499,3 @@ int main(int argc, char **argv) {
   fprintf(stderr, "ALL-DONE\n");
   // CHECK: ALL-DONE
 }
-

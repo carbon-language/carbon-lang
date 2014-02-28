@@ -42,6 +42,8 @@ class DeadlockDetectorTLS {
     epoch_ = 0;
   }
 
+  bool empty() const { return bv_.empty(); }
+
   void ensureCurrentEpoch(uptr current_epoch) {
     if (epoch_ == current_epoch) return;
     bv_.clear();
@@ -157,6 +159,18 @@ class DeadlockDetector {
     return false;
   }
 
+  // Returns true iff dtls is empty (no locks are currently held) and we can
+  // add the node to the currently held locks w/o chanding the global state.
+  // This operation is thread-safe as it only touches the dtls.
+  bool onFirstLock(DeadlockDetectorTLS<BV> *dtls, uptr node) {
+    if (!dtls->empty()) return false;
+    if (dtls->getEpoch() && dtls->getEpoch() == nodeToEpoch(node)) {
+      dtls->addLock(nodeToIndexUnchecked(node), nodeToEpoch(node));
+      return true;
+    }
+    return false;
+  }
+
   // Finds a path between the lock 'cur_node' (which is currently held in dtls)
   // and some other currently held lock, returns the length of the path
   // or 0 on failure.
@@ -173,8 +187,8 @@ class DeadlockDetector {
     return res;
   }
 
-  // Handle the unlock event. This operation is thread-safe
-  // as it only touches the dtls.
+  // Handle the unlock event.
+  // This operation is thread-safe as it only touches the dtls.
   void onUnlock(DeadlockDetectorTLS<BV> *dtls, uptr node) {
     if (dtls->getEpoch() == nodeToEpoch(node))
       dtls->removeLock(nodeToIndexUnchecked(node));

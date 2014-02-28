@@ -338,3 +338,41 @@ TEST(DeadlockDetector, TryLockTest) {
   RunTryLockTest<BV1>();
   RunTryLockTest<BV2>();
 }
+
+template <class BV>
+void RunOnFirstLockTest() {
+  ScopedDD<BV> sdd;
+  DeadlockDetector<BV> &d = *sdd.dp;
+  DeadlockDetectorTLS<BV> &dtls = sdd.dtls;
+
+  uptr l0 = d.newNode(0);
+  uptr l1 = d.newNode(0);
+  EXPECT_FALSE(d.onFirstLock(&dtls, l0));  // dtls has old epoch.
+  d.onLock(&dtls, l0);
+  d.onUnlock(&dtls, l0);
+
+  EXPECT_TRUE(d.onFirstLock(&dtls, l0));  // Ok, same ecpoch, first lock.
+  EXPECT_FALSE(d.onFirstLock(&dtls, l1));  // Second lock.
+  d.onLock(&dtls, l1);
+  d.onUnlock(&dtls, l1);
+  d.onUnlock(&dtls, l0);
+
+  EXPECT_TRUE(d.onFirstLock(&dtls, l0));  // Ok
+  d.onUnlock(&dtls, l0);
+
+  vector<uptr> locks1;
+  for (uptr i = 0; i < d.size(); i++)
+    locks1.push_back(d.newNode(i));
+
+  EXPECT_TRUE(d.onFirstLock(&dtls, l0));  // Epoch has changed, but not in dtls.
+
+  uptr l3 = d.newNode(0);
+  d.onLock(&dtls, l3);
+  d.onUnlock(&dtls, l3);
+
+  EXPECT_FALSE(d.onFirstLock(&dtls, l0));  // Epoch has changed in dtls.
+}
+
+TEST(DeadlockDetector, onFirstLockTest) {
+  RunOnFirstLockTest<BV2>();
+}

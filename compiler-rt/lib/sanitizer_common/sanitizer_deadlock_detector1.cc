@@ -95,6 +95,8 @@ void DDetectorImpl::MutexEnsureID(DDLogicalThread *lt, DDMutex *m) {
 
 DDReport *DDetectorImpl::MutexLock(DDPhysicalThread *pt, DDLogicalThread *lt,
     DDMutex *m, bool writelock, bool trylock) {
+  if (dd.onFirstLock(&lt->dd, m->id))
+    return 0;
   SpinMutexLock lk(&mtx);
   MutexEnsureID(lt, m);
   CHECK(!dd.isHeld(&lt->dd, m->id));
