@@ -150,7 +150,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   // We only support LOAD/STORE and vector manipulation ops for vectors
   // with > 4 elements.
   MVT VecTypes[] = {
-    MVT::v8i32, MVT::v8f32
+    MVT::v8i32, MVT::v8f32, MVT::v16i32, MVT::v16f32
   };
 
   const size_t NumVecTypes = array_lengthof(VecTypes);
