@@ -576,11 +576,14 @@ public:
     IMPL I, E;
     const FilterOptions F;
     const CFGBlock *From;
-   public:
+  public:
     explicit FilteredCFGBlockIterator(const IMPL &i, const IMPL &e,
-              const CFGBlock *from,
-              const FilterOptions &f)
-      : I(i), E(e), F(f), From(from) {}
+                                      const CFGBlock *from,
+                                      const FilterOptions &f)
+        : I(i), E(e), F(f), From(from) {
+      while (hasMore() && Filter(*I))
+        ++I;
+    }
 
     bool hasMore() const { return I != E; }
 

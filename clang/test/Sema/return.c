@@ -275,3 +275,10 @@ int test34(int x) {
     return 5;
   }
 }
+
+// PR18999
+int test35() {
+lbl:
+  if (1)
+    goto lbl;
+}
