@@ -218,34 +218,34 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
     
     if (s && s[0])
     {
-        if (strstr(s, "listen://"))
+        if (strstr(s, "listen://") == s)
         {
             // listen://HOST:PORT
             return SocketListen (s + strlen("listen://"), error_ptr);
         }
-        else if (strstr(s, "accept://"))
+        else if (strstr(s, "accept://") == s)
         {
             // unix://SOCKNAME
             return NamedSocketAccept (s + strlen("accept://"), error_ptr);
         }
-        else if (strstr(s, "unix-accept://"))
+        else if (strstr(s, "unix-accept://") == s)
         {
             // unix://SOCKNAME
             return NamedSocketAccept (s + strlen("unix-accept://"), error_ptr);
         }
-        else if (strstr(s, "connect://"))
+        else if (strstr(s, "connect://") == s)
         {
             return ConnectTCP (s + strlen("connect://"), error_ptr);
         }
-        else if (strstr(s, "tcp-connect://"))
+        else if (strstr(s, "tcp-connect://") == s)
         {
             return ConnectTCP (s + strlen("tcp-connect://"), error_ptr);
         }
-        else if (strstr(s, "udp://"))
+        else if (strstr(s, "udp://") == s)
         {
             return ConnectUDP (s + strlen("udp://"), error_ptr);
         }
-        else if (strstr(s, "fd://"))
+        else if (strstr(s, "fd://") == s)
         {
             // Just passing a native file descriptor within this current process
             // that is already opened (possibly from a service or other source).
@@ -299,7 +299,7 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
             m_fd_send = m_fd_recv = -1;
             return eConnectionStatusError;
         }
-        else if (strstr(s, "file://"))
+        else if (strstr(s, "file://") == s)
         {
             // file:///PATH
             const char *path = s + strlen("file://");
