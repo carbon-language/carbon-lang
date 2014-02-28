@@ -18,6 +18,8 @@ namespace integral {
   int e = 0'b1010; // expected-error {{digit 'b' in octal constant}}
   int f = 0b'1010; // expected-error {{invalid digit 'b' in octal}}
   int g = 123'ms; // expected-error {{digit separator cannot appear at end of digit sequence}}
+  int h = 0x1e+1; // expected-error {{invalid suffix '+1' on integer constant}}
+  int i = 0x1'e+1; // ok, 'e+' is not recognized after a digit separator
 
   int z = 0'123'_foo; //'; // expected-error {{cannot appear at end of digit seq}}
 }
