@@ -110,3 +110,7 @@ extern "C" int printf(const char *format, ...);
 // CHECK-NEXT: ParmVarDecl{{.*}}format{{.*}}'const char *'
 // CHECK-NEXT: FormatAttr{{.*}}printf 1 2 Implicit
 }
+
+int __attribute__((cdecl)) TestOne(void), TestTwo(void);
+// CHECK: FunctionDecl{{.*}}TestOne{{.*}}__attribute__((cdecl))
+// CHECK: FunctionDecl{{.*}}TestTwo{{.*}}__attribute__((cdecl))
