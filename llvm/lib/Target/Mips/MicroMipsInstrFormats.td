@@ -303,7 +303,7 @@ class SYS_FM_MM : MMArch {
   bits<32> Inst;
   let Inst{31-26} = 0x0;
   let Inst{25-16} = code_;
-  let Inst{15-6}  = 0x22d;
+  let Inst{15-6}  = 0x22b;
   let Inst{5-0}   = 0x3c;
 }
 
