@@ -1101,7 +1101,8 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context, StringRef Name,
   if (isDefinition)
     AllSubprograms.push_back(Node);
   DISubprogram S(Node);
-  assert(S.isSubprogram() && "createFunction should return a valid DISubprogram");
+  assert(S.isSubprogram() &&
+         "createFunction should return a valid DISubprogram");
   return S;
 }
 
