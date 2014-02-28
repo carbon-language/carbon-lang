@@ -400,6 +400,15 @@ class LockTest {
                &LockTest::CreateAndDestroyLocksLoop);
   }
 
+  void Test15() {
+    if (test_number > 0 && test_number != 15) return;
+    if (!LockType::supports_read_lock()) return;
+    fprintf(stderr, "Starting Test15: 4 threads read lock/unlock 4 shared mutexes, all under another shared mutex\n");
+    // DISABLEDCHECK-RD: Starting Test15
+    Init(5);
+    RL(0); RL(0); RU(0); RU(0);  // Recusrive reader lock.
+  }
+
  private:
   void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
   void Lock_0_1() { Lock2(0, 1); }
@@ -486,6 +495,7 @@ int main(int argc, char **argv) {
   LockTest().Test12();
   LockTest().Test13();
   LockTest().Test14();
+  // LockTest().Test15();  FIXME: this is broken for PthreadRWLock
   fprintf(stderr, "ALL-DONE\n");
   // CHECK: ALL-DONE
 }
