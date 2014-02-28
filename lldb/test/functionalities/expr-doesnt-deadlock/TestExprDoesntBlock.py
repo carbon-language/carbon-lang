@@ -24,7 +24,7 @@ class ExprDoesntDeadlockTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureFreeBSD('llvm.org/pr17946')
-    # @skipIfLinux # llvm.org/pr15258: disabled due to assertion failure in ProcessMonitor::GetCrashReasonForSIGSEGV:
+    @expectedFailureLinux('llvm.org/pr15258') # disabled due to assertion failure in ProcessMonitor::GetCrashReasonForSIGSEGV:
     def test_with_dwarf_and_run_command(self):
         """Test that expr will time out and allow other threads to run if it blocks."""
         self.buildDwarf()
