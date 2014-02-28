@@ -116,6 +116,12 @@ boolop_loops 9
 50
 26
 
+do_fallthrough 4
+1
+10
+2
+8
+
 no_usable_data 5
 1
 1

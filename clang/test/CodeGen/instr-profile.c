@@ -417,6 +417,19 @@ void boolop_loops() {
   // PGOUSE-NOT: br {{.*}} !prof ![0-9]+
 }
 
+void do_fallthrough() {
+  for (int i = 0; i < 10; ++i) {
+    int j = 0;
+    do {
+      // The number of exits out of this do-loop via the break statement
+      // exceeds the counter value for the loop (which does not include the
+      // fallthrough count). Make sure that does not violate any assertions.
+      if (i < 8) break;
+      j++;
+    } while (j < 2);
+  }
+}
+
 // PGOGEN-LABEL: @no_usable_data()
 // PGOUSE-LABEL: @no_usable_data()
 // PGOGEN: store {{.*}} @[[NOC]], i64 0, i64 0
@@ -510,6 +523,7 @@ int main(int argc, const char *argv[]) {
   big_switch();
   boolean_operators();
   boolop_loops();
+  do_fallthrough();
   no_usable_data();
   return 0;
 }
