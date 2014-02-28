@@ -150,11 +150,6 @@ set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD ""
 option(BUILD_SHARED_LIBS
   "Build all libraries as shared libraries instead of static" OFF)
 
-option(LLVM_ENABLE_CBE_PRINTF_A "Set to ON if CBE is enabled for printf %a output" ON)
-if(LLVM_ENABLE_CBE_PRINTF_A)
-  set(ENABLE_CBE_PRINTF_A 1)
-endif()
-
 option(LLVM_ENABLE_TIMESTAMPS "Enable embedding timestamp information in build" ON)
 if(LLVM_ENABLE_TIMESTAMPS)
   set(ENABLE_TIMESTAMPS 1)
