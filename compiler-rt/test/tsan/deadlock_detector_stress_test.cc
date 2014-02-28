@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #ifndef LockType
 #define LockType PthreadMutex
@@ -412,7 +413,7 @@ class LockTest {
  private:
   void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
   void Lock_0_1() { Lock2(0, 1); }
-  void Lock_1_0() { Lock2(1, 0); }
+  void Lock_1_0() { sleep(1); Lock2(1, 0); }
   void Lock1_Loop(size_t i, size_t n_iter) {
     for (size_t it = 0; it < n_iter; it++) {
       // if ((it & (it - 1)) == 0) fprintf(stderr, "%zd", i);
