@@ -69,6 +69,13 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
 void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   AMDGPUMCInstLower MCInstLowering(OutContext);
 
+#ifdef _DEBUG
+  StringRef Err;
+  if (!TM.getInstrInfo()->verifyInstruction(MI, Err)) {
+    errs() << "Warning: Illegal instruction detected: " << Err << "\n";
+    MI->dump();
+  }
+#endif
   if (MI->isBundle()) {
     const MachineBasicBlock *MBB = MI->getParent();
     MachineBasicBlock::const_instr_iterator I = MI;
