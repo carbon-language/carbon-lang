@@ -15,6 +15,7 @@
 #define DEBUG_TYPE "mips-asm-printer"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
+#include "MCTargetDesc/MipsMCNaCl.h"
 #include "Mips.h"
 #include "MipsAsmPrinter.h"
 #include "MipsInstrInfo.h"
@@ -27,6 +28,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DataLayout.h"
@@ -72,6 +74,11 @@ bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
         StubsNeeded[Symbol] = Signature;
     }
   MCP = MF.getConstantPool();
+
+  // In NaCl, all indirect jump targets must be aligned to bundle size.
+  if (Subtarget->isTargetNaCl())
+    NaClAlignIndirectJumpTargets(MF);
+
   AsmPrinter::runOnMachineFunction(MF);
   return true;
 }
@@ -270,6 +277,12 @@ const char *MipsAsmPrinter::getCurrentABIString() const {
 
 void MipsAsmPrinter::EmitFunctionEntryLabel() {
   MipsTargetStreamer &TS = getTargetStreamer();
+
+  // NaCl sandboxing requires that indirect call instructions are masked.
+  // This means that function entry points should be bundle-aligned.
+  if (Subtarget->isTargetNaCl())
+    EmitAlignment(std::max(MF->getAlignment(), MIPS_NACL_BUNDLE_ALIGN));
+
   if (Subtarget->inMicroMipsMode())
     TS.emitDirectiveSetMicroMips();
   // leave out until FSF available gas has micromips changes
@@ -904,6 +917,28 @@ void MipsAsmPrinter::EmitEndOfAsmFile(Module &M) {
 void MipsAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
                                            raw_ostream &OS) {
   // TODO: implement
+}
+
+// Align all targets of indirect branches on bundle size.  Used only if target
+// is NaCl.
+void MipsAsmPrinter::NaClAlignIndirectJumpTargets(MachineFunction &MF) {
+  // Align all blocks that are jumped to through jump table.
+  if (MachineJumpTableInfo *JtInfo = MF.getJumpTableInfo()) {
+    const std::vector<MachineJumpTableEntry> &JT = JtInfo->getJumpTables();
+    for (unsigned I = 0; I < JT.size(); ++I) {
+      const std::vector<MachineBasicBlock*> &MBBs = JT[I].MBBs;
+
+      for (unsigned J = 0; J < MBBs.size(); ++J)
+        MBBs[J]->setAlignment(MIPS_NACL_BUNDLE_ALIGN);
+    }
+  }
+
+  // If basic block address is taken, block can be target of indirect branch.
+  for (MachineFunction::iterator MBB = MF.begin(), E = MF.end();
+                                 MBB != E; ++MBB) {
+    if (MBB->hasAddressTaken())
+      MBB->setAlignment(MIPS_NACL_BUNDLE_ALIGN);
+  }
 }
 
 // Force static initialization.

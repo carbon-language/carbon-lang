@@ -11,9 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MipsMCTargetDesc.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MipsMCAsmInfo.h"
+#include "MipsMCNaCl.h"
+#include "MipsMCTargetDesc.h"
 #include "MipsTargetStreamer.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCCodeGenInfo.h"
@@ -109,8 +110,12 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     raw_ostream &OS, MCCodeEmitter *Emitter,
                                     const MCSubtargetInfo &STI,
                                     bool RelaxAll, bool NoExecStack) {
-  MCStreamer *S =
-      createELFStreamer(Context, MAB, OS, Emitter, RelaxAll, NoExecStack);
+  MCStreamer *S;
+  if (!Triple(TT).isOSNaCl())
+    S = createELFStreamer(Context, MAB, OS, Emitter, RelaxAll, NoExecStack);
+  else
+    S = createMipsNaClELFStreamer(Context, MAB, OS, Emitter, RelaxAll,
+                                  NoExecStack);
   new MipsTargetELFStreamer(*S, STI);
   return S;
 }

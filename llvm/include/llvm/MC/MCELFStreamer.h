@@ -84,13 +84,13 @@ public:
 
   virtual void FinishImpl();
 
-private:
-  virtual void EmitInstToFragment(const MCInst &Inst, const MCSubtargetInfo &);
-  virtual void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo &);
-
   virtual void EmitBundleAlignMode(unsigned AlignPow2);
   virtual void EmitBundleLock(bool AlignToEnd);
   virtual void EmitBundleUnlock();
+
+private:
+  virtual void EmitInstToFragment(const MCInst &Inst, const MCSubtargetInfo &);
+  virtual void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo &);
 
   void fixSymbolsInTLSFixups(const MCExpr *expr);
 
