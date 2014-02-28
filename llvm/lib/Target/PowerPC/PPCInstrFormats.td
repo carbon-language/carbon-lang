@@ -163,6 +163,19 @@ class BForm_3<bits<6> opcode, bit aa, bit lk,
   let Inst{31}    = lk;
 }
 
+class BForm_4<bits<6> opcode, bits<5> bo, bit aa, bit lk,
+              dag OOL, dag IOL, string asmstr>
+  : I<opcode, OOL, IOL, asmstr, IIC_BrB> {
+  bits<5> BI;
+  bits<14> BD;
+
+  let Inst{6-10}  = bo;
+  let Inst{11-15} = BI;
+  let Inst{16-29} = BD;
+  let Inst{30}    = aa;
+  let Inst{31}    = lk;
+}
+
 // 1.7.3 SC-Form
 class SCForm<bits<6> opcode, bits<1> xo,
                      dag OOL, dag IOL, string asmstr, InstrItinClass itin,
@@ -677,6 +690,12 @@ class XLForm_2_br<bits<6> opcode, bits<10> xo, bit lk,
   let BH = 0;
 }
 
+class XLForm_2_br2<bits<6> opcode, bits<10> xo, bits<5> bo, bit lk,
+                   dag OOL, dag IOL, string asmstr, InstrItinClass itin, list<dag> pattern>
+  : XLForm_2<opcode, xo, lk, OOL, IOL, asmstr, itin, pattern> {
+  let BO = bo;
+  let BH = 0;
+}
 
 class XLForm_2_ext<bits<6> opcode, bits<10> xo, bits<5> bo,  bits<5> bi, bit lk,
                   dag OOL, dag IOL, string asmstr, InstrItinClass itin, list<dag> pattern>

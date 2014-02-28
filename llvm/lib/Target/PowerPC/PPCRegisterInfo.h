@@ -69,6 +69,10 @@ public:
                        unsigned FrameIndex) const;
   void lowerCRRestore(MachineBasicBlock::iterator II,
                       unsigned FrameIndex) const;
+  void lowerCRBitSpilling(MachineBasicBlock::iterator II,
+                          unsigned FrameIndex) const;
+  void lowerCRBitRestore(MachineBasicBlock::iterator II,
+                         unsigned FrameIndex) const;
   void lowerVRSAVESpilling(MachineBasicBlock::iterator II,
                            unsigned FrameIndex) const;
   void lowerVRSAVERestore(MachineBasicBlock::iterator II,

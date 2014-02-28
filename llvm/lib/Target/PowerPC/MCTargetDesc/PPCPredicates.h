@@ -48,7 +48,12 @@ namespace PPC {
     PRED_GT_PLUS  = (1 << 5) | 15,
     PRED_NE_PLUS  = (2 << 5) |  7,
     PRED_UN_PLUS  = (3 << 5) | 15,
-    PRED_NU_PLUS  = (3 << 5) |  7
+    PRED_NU_PLUS  = (3 << 5) |  7,
+
+    // When dealing with individual condition-register bits, we have simple set
+    // and unset predicates.
+    PRED_BIT_SET =   -1,
+    PRED_BIT_UNSET = -2
   };
   
   /// Invert the specified predicate.  != -> ==, < -> >=.

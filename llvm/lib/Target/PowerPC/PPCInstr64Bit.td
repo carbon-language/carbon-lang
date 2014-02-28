@@ -85,9 +85,16 @@ let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
     def BCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", IIC_BrB,
                              []>,
         Requires<[In64BitMode]>;
-    def BCCTR8 : XLForm_2_br<19, 528, 0, (outs), (ins pred:$cond),
-                             "b${cond:cc}ctr${cond:pm} ${cond:reg}", IIC_BrB,
-                             []>,
+    def BCCCTR8 : XLForm_2_br<19, 528, 0, (outs), (ins pred:$cond),
+                              "b${cond:cc}ctr${cond:pm} ${cond:reg}", IIC_BrB,
+                              []>,
+        Requires<[In64BitMode]>;
+
+    def BCCTR8  : XLForm_2_br2<19, 528, 12, 0, (outs), (ins crbitrc:$bi),
+                               "bcctr 12, $bi, 0", IIC_BrB, []>,
+        Requires<[In64BitMode]>;
+    def BCCTR8n : XLForm_2_br2<19, 528, 4, 0, (outs), (ins crbitrc:$bi),
+                               "bcctr 4, $bi, 0", IIC_BrB, []>,
         Requires<[In64BitMode]>;
   }
 }
@@ -145,11 +152,19 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
                               "bctrl", IIC_BrB, [(PPCbctrl)]>,
                  Requires<[In64BitMode]>;
 
-    let isCodeGenOnly = 1 in
-    def BCCTRL8 : XLForm_2_br<19, 528, 1, (outs), (ins pred:$cond),
-                              "b${cond:cc}ctrl${cond:pm} ${cond:reg}", IIC_BrB,
-                              []>,
-        Requires<[In64BitMode]>;
+    let isCodeGenOnly = 1 in {
+      def BCCCTRL8 : XLForm_2_br<19, 528, 1, (outs), (ins pred:$cond),
+                                 "b${cond:cc}ctrl${cond:pm} ${cond:reg}", IIC_BrB,
+                                 []>,
+          Requires<[In64BitMode]>;
+
+      def BCCTRL8  : XLForm_2_br2<19, 528, 12, 1, (outs), (ins crbitrc:$bi),
+                                  "bcctrl 12, $bi, 0", IIC_BrB, []>,
+          Requires<[In64BitMode]>;
+      def BCCTRL8n : XLForm_2_br2<19, 528, 4, 1, (outs), (ins crbitrc:$bi),
+                                  "bcctrl 4, $bi, 0", IIC_BrB, []>,
+          Requires<[In64BitMode]>;
+    }
   }
 }
 } // Interpretation64Bit
@@ -614,6 +629,16 @@ defm RLWINM8 : MForm_2r<21, (outs g8rc:$rA),
                         "rlwinm", "$rA, $rS, $SH, $MB, $ME", IIC_IntGeneral,
                         []>;
 
+let isCommutable = 1 in {
+// RLWIMI can be commuted if the rotate amount is zero.
+let Interpretation64Bit = 1, isCodeGenOnly = 1 in
+defm RLWIMI8 : MForm_2r<20, (outs g8rc:$rA),
+                        (ins g8rc:$rSi, g8rc:$rS, u5imm:$SH, u5imm:$MB,
+                        u5imm:$ME), "rlwimi", "$rA, $rS, $SH, $MB, $ME",
+                        IIC_IntRotate, []>, PPC970_DGroup_Cracked,
+                        RegConstraint<"$rSi = $rA">, NoEncode<"$rSi">;
+}
+
 let isSelect = 1 in
 def ISEL8   : AForm_4<31, 15,
                      (outs g8rc:$rT), (ins g8rc_nox0:$rA, g8rc:$rB, crbitrc:$cond),
@@ -1019,6 +1044,14 @@ def : Pat<(i64 (anyext i32:$in)),
           (INSERT_SUBREG (i64 (IMPLICIT_DEF)), $in, sub_32)>;
 def : Pat<(i32 (trunc i64:$in)),
           (EXTRACT_SUBREG $in, sub_32)>;
+
+// Implement the 'not' operation with the NOR instruction.
+// (we could use the default xori pattern, but nor has lower latency on some
+// cores (such as the A2)).
+def i64not : OutPatFrag<(ops node:$in),
+                        (NOR8 $in, $in)>;
+def        : Pat<(not i64:$in),
+                 (i64not $in)>;
 
 // Extending loads with i64 targets.
 def : Pat<(zextloadi1 iaddr:$src),

@@ -452,6 +452,127 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
   MBB.erase(II);
 }
 
+static unsigned getCRFromCRBit(unsigned SrcReg) {
+  unsigned Reg = 0;
+  if (SrcReg == PPC::CR0LT || SrcReg == PPC::CR0GT ||
+      SrcReg == PPC::CR0EQ || SrcReg == PPC::CR0UN)
+    Reg = PPC::CR0;
+  else if (SrcReg == PPC::CR1LT || SrcReg == PPC::CR1GT ||
+           SrcReg == PPC::CR1EQ || SrcReg == PPC::CR1UN)
+    Reg = PPC::CR1;
+  else if (SrcReg == PPC::CR2LT || SrcReg == PPC::CR2GT ||
+           SrcReg == PPC::CR2EQ || SrcReg == PPC::CR2UN)
+    Reg = PPC::CR2;
+  else if (SrcReg == PPC::CR3LT || SrcReg == PPC::CR3GT ||
+           SrcReg == PPC::CR3EQ || SrcReg == PPC::CR3UN)
+    Reg = PPC::CR3;
+  else if (SrcReg == PPC::CR4LT || SrcReg == PPC::CR4GT ||
+           SrcReg == PPC::CR4EQ || SrcReg == PPC::CR4UN)
+    Reg = PPC::CR4;
+  else if (SrcReg == PPC::CR5LT || SrcReg == PPC::CR5GT ||
+           SrcReg == PPC::CR5EQ || SrcReg == PPC::CR5UN)
+    Reg = PPC::CR5;
+  else if (SrcReg == PPC::CR6LT || SrcReg == PPC::CR6GT ||
+           SrcReg == PPC::CR6EQ || SrcReg == PPC::CR6UN)
+    Reg = PPC::CR6;
+  else if (SrcReg == PPC::CR7LT || SrcReg == PPC::CR7GT ||
+           SrcReg == PPC::CR7EQ || SrcReg == PPC::CR7UN)
+    Reg = PPC::CR7;
+
+  assert(Reg != 0 && "Invalid CR bit register");
+  return Reg;
+}
+
+void PPCRegisterInfo::lowerCRBitSpilling(MachineBasicBlock::iterator II,
+                                         unsigned FrameIndex) const {
+  // Get the instruction.
+  MachineInstr &MI = *II;       // ; SPILL_CRBIT <SrcReg>, <offset>
+  // Get the instruction's basic block.
+  MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction &MF = *MBB.getParent();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  DebugLoc dl = MI.getDebugLoc();
+
+  bool LP64 = Subtarget.isPPC64();
+  const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
+  const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+
+  unsigned Reg = MF.getRegInfo().createVirtualRegister(LP64 ? G8RC : GPRC);
+  unsigned SrcReg = MI.getOperand(0).getReg();
+
+  BuildMI(MBB, II, dl, TII.get(TargetOpcode::KILL),
+          getCRFromCRBit(SrcReg))
+          .addReg(SrcReg, getKillRegState(MI.getOperand(0).isKill()));
+
+  BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::MFOCRF8 : PPC::MFOCRF), Reg)
+          .addReg(getCRFromCRBit(SrcReg));
+    
+  // If the saved register wasn't CR0LT, shift the bits left so that the bit to
+  // store is the first one. Mask all but that bit.
+  unsigned Reg1 = Reg;
+  Reg = MF.getRegInfo().createVirtualRegister(LP64 ? G8RC : GPRC);
+
+  // rlwinm rA, rA, ShiftBits, 0, 0.
+  BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::RLWINM8 : PPC::RLWINM), Reg)
+    .addReg(Reg1, RegState::Kill)
+    .addImm(getEncodingValue(SrcReg))
+    .addImm(0).addImm(0);
+
+  addFrameReference(BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::STW8 : PPC::STW))
+                    .addReg(Reg, RegState::Kill),
+                    FrameIndex);
+
+  // Discard the pseudo instruction.
+  MBB.erase(II);
+}
+
+void PPCRegisterInfo::lowerCRBitRestore(MachineBasicBlock::iterator II,
+                                      unsigned FrameIndex) const {
+  // Get the instruction.
+  MachineInstr &MI = *II;       // ; <DestReg> = RESTORE_CRBIT <offset>
+  // Get the instruction's basic block.
+  MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction &MF = *MBB.getParent();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  DebugLoc dl = MI.getDebugLoc();
+
+  bool LP64 = Subtarget.isPPC64();
+  const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
+  const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+
+  unsigned Reg = MF.getRegInfo().createVirtualRegister(LP64 ? G8RC : GPRC);
+  unsigned DestReg = MI.getOperand(0).getReg();
+  assert(MI.definesRegister(DestReg) &&
+    "RESTORE_CRBIT does not define its destination");
+
+  addFrameReference(BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::LWZ8 : PPC::LWZ),
+                              Reg), FrameIndex);
+
+  BuildMI(MBB, II, dl, TII.get(TargetOpcode::IMPLICIT_DEF), DestReg);
+
+  unsigned RegO = MF.getRegInfo().createVirtualRegister(LP64 ? G8RC : GPRC);
+  BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::MFOCRF8 : PPC::MFOCRF), RegO)
+          .addReg(getCRFromCRBit(DestReg));
+
+  unsigned ShiftBits = getEncodingValue(DestReg);
+  // rlwimi r11, r10, 32-ShiftBits, ..., ...
+  BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::RLWIMI8 : PPC::RLWIMI), RegO)
+           .addReg(RegO, RegState::Kill).addReg(Reg, RegState::Kill)
+           .addImm(ShiftBits ? 32-ShiftBits : 0)
+           .addImm(ShiftBits).addImm(ShiftBits);
+           
+  BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::MTOCRF8 : PPC::MTOCRF),
+          getCRFromCRBit(DestReg))
+            .addReg(RegO, RegState::Kill)
+	    // Make sure we have a use dependency all the way through this
+	    // sequence of instructions. We can't have the other bits in the CR
+	    // modified in between the mfocrf and the mtocrf.
+            .addReg(getCRFromCRBit(DestReg), RegState::Implicit);
+
+  // Discard the pseudo instruction.
+  MBB.erase(II);
+}
+
 void PPCRegisterInfo::lowerVRSAVESpilling(MachineBasicBlock::iterator II,
                                           unsigned FrameIndex) const {
   // Get the instruction.
@@ -594,6 +715,12 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     return;
   } else if (OpC == PPC::RESTORE_CR) {
     lowerCRRestore(II, FrameIndex);
+    return;
+  } else if (OpC == PPC::SPILL_CRBIT) {
+    lowerCRBitSpilling(II, FrameIndex);
+    return;
+  } else if (OpC == PPC::RESTORE_CRBIT) {
+    lowerCRBitRestore(II, FrameIndex);
     return;
   } else if (OpC == PPC::SPILL_VRSAVE) {
     lowerVRSAVESpilling(II, FrameIndex);

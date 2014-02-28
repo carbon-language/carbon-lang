@@ -149,6 +149,9 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
     case PPC::PRED_NU:
       O << "nu";
       return;
+    case PPC::PRED_BIT_SET:
+    case PPC::PRED_BIT_UNSET:
+      llvm_unreachable("Invalid use of bit predicate code");
     }
     llvm_unreachable("Invalid predicate code");
   }
@@ -184,6 +187,9 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
     case PPC::PRED_NU_PLUS:
       O << "+";
       return;
+    case PPC::PRED_BIT_SET:
+    case PPC::PRED_BIT_UNSET:
+      llvm_unreachable("Invalid use of bit predicate code");
     }
     llvm_unreachable("Invalid predicate code");
   }

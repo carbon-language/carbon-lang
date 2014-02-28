@@ -740,6 +740,9 @@ bool PPCFastISel::PPCEmitCmp(const Value *SrcValue1, const Value *SrcValue2,
     return false;
   MVT SrcVT = SrcEVT.getSimpleVT();
 
+  if (SrcVT == MVT::i1 && PPCSubTarget.useCRBits())
+    return false;
+
   // See if operand 2 is an immediate encodeable in the compare.
   // FIXME: Operands are not in canonical order at -O0, so an immediate
   // operand in position 1 is a lost opportunity for now.  We are
@@ -1203,7 +1206,7 @@ bool PPCFastISel::processCallArgs(SmallVectorImpl<Value*> &Args,
 
     // Skip vector arguments for now, as well as long double and
     // uint128_t, and anything that isn't passed in a register.
-    if (ArgVT.isVector() || ArgVT.getSizeInBits() > 64 ||
+    if (ArgVT.isVector() || ArgVT.getSizeInBits() > 64 || ArgVT == MVT::i1 ||
         !VA.isRegLoc() || VA.needsCustom())
       return false;
 
@@ -1995,6 +1998,15 @@ unsigned PPCFastISel::PPCMaterialize64BitInt(int64_t Imm,
 // Materialize an integer constant into a register, and return
 // the register number (or zero if we failed to handle it).
 unsigned PPCFastISel::PPCMaterializeInt(const Constant *C, MVT VT) {
+  // If we're using CR bit registers for i1 values, handle that as a special
+  // case first.
+  if (VT == MVT::i1 && PPCSubTarget.useCRBits()) {
+    const ConstantInt *CI = cast<ConstantInt>(C);
+    unsigned ImmReg = createResultReg(&PPC::CRBITRCRegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(CI->isZero() ? PPC::CRUNSET : PPC::CRSET), ImmReg);
+    return ImmReg;
+  }
 
   if (VT != MVT::i64 && VT != MVT::i32 && VT != MVT::i16 &&
       VT != MVT::i8 && VT != MVT::i1) 
@@ -2159,6 +2171,15 @@ unsigned PPCFastISel::FastEmit_i(MVT Ty, MVT VT, unsigned Opc, uint64_t Imm) {
   
   if (Opc != ISD::Constant)
     return 0;
+
+  // If we're using CR bit registers for i1 values, handle that as a special
+  // case first.
+  if (VT == MVT::i1 && PPCSubTarget.useCRBits()) {
+    unsigned ImmReg = createResultReg(&PPC::CRBITRCRegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(Imm == 0 ? PPC::CRUNSET : PPC::CRSET), ImmReg);
+    return ImmReg;
+  }
 
   if (VT != MVT::i64 && VT != MVT::i32 && VT != MVT::i16 &&
       VT != MVT::i8 && VT != MVT::i1) 

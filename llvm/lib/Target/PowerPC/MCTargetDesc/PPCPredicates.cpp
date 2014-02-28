@@ -42,6 +42,10 @@ PPC::Predicate PPC::InvertPredicate(PPC::Predicate Opcode) {
   case PPC::PRED_LE_PLUS: return PPC::PRED_GT_MINUS;
   case PPC::PRED_NU_PLUS: return PPC::PRED_UN_MINUS;
   case PPC::PRED_UN_PLUS: return PPC::PRED_NU_MINUS;
+
+  // Simple predicates for single condition-register bits.
+  case PPC::PRED_BIT_SET:   return PPC::PRED_BIT_UNSET;
+  case PPC::PRED_BIT_UNSET: return PPC::PRED_BIT_SET;
   }
   llvm_unreachable("Unknown PPC branch opcode!");
 }
@@ -72,6 +76,10 @@ PPC::Predicate PPC::getSwappedPredicate(PPC::Predicate Opcode) {
   case PPC::PRED_LE_PLUS: return PPC::PRED_GE_PLUS;
   case PPC::PRED_NU_PLUS: return PPC::PRED_NU_PLUS;
   case PPC::PRED_UN_PLUS: return PPC::PRED_UN_PLUS;
+
+  case PPC::PRED_BIT_SET:
+  case PPC::PRED_BIT_UNSET:
+    llvm_unreachable("Invalid use of bit predicate code");
   }
   llvm_unreachable("Unknown PPC branch opcode!");
 }

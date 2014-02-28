@@ -115,6 +115,9 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
         MachineBasicBlock *Dest = 0;
         if (I->getOpcode() == PPC::BCC && !I->getOperand(2).isImm())
           Dest = I->getOperand(2).getMBB();
+        else if ((I->getOpcode() == PPC::BC || I->getOpcode() == PPC::BCn) &&
+                 !I->getOperand(1).isImm())
+          Dest = I->getOperand(1).getMBB();
         else if ((I->getOpcode() == PPC::BDNZ8 || I->getOpcode() == PPC::BDNZ ||
                   I->getOpcode() == PPC::BDZ8  || I->getOpcode() == PPC::BDZ) &&
                  !I->getOperand(0).isImm())
@@ -166,6 +169,12 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
           // Jump over the uncond branch inst (i.e. $PC+8) on opposite condition.
           BuildMI(MBB, I, dl, TII->get(PPC::BCC))
             .addImm(PPC::InvertPredicate(Pred)).addReg(CRReg).addImm(2);
+        } else if (I->getOpcode() == PPC::BC) {
+          unsigned CRBit = I->getOperand(0).getReg();
+          BuildMI(MBB, I, dl, TII->get(PPC::BCn)).addReg(CRBit).addImm(2);
+        } else if (I->getOpcode() == PPC::BCn) {
+          unsigned CRBit = I->getOperand(0).getReg();
+          BuildMI(MBB, I, dl, TII->get(PPC::BC)).addReg(CRBit).addImm(2);
         } else if (I->getOpcode() == PPC::BDNZ) {
           BuildMI(MBB, I, dl, TII->get(PPC::BDZ)).addImm(2);
         } else if (I->getOpcode() == PPC::BDNZ8) {

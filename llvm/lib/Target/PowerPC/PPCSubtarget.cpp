@@ -31,12 +31,24 @@
 using namespace llvm;
 
 PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
-                           const std::string &FS, bool is64Bit)
+                           const std::string &FS, bool is64Bit,
+                           CodeGenOpt::Level OptLevel)
   : PPCGenSubtargetInfo(TT, CPU, FS)
   , IsPPC64(is64Bit)
   , TargetTriple(TT) {
   initializeEnvironment();
-  resetSubtargetFeatures(CPU, FS);
+
+  std::string FullFS = FS;
+
+  // At -O2 and above, track CR bits as individual registers.
+  if (OptLevel >= CodeGenOpt::Default) {
+    if (!FullFS.empty())
+      FullFS = "+crbits," + FullFS;
+    else
+      FullFS = "+crbits";
+  }
+
+  resetSubtargetFeatures(CPU, FullFS);
 }
 
 /// SetJITMode - This is called to inform the subtarget info that we are
@@ -73,6 +85,7 @@ void PPCSubtarget::initializeEnvironment() {
   HasMFOCRF = false;
   Has64BitSupport = false;
   Use64BitRegs = false;
+  UseCRBits = false;
   HasAltivec = false;
   HasQPX = false;
   HasFCPSGN = false;

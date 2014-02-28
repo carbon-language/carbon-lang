@@ -204,17 +204,16 @@ def VRRC : RegisterClass<"PPC", [v16i8,v8i16,v4i32,v4f32], 128,
                              V12, V13, V14, V15, V16, V17, V18, V19, V31, V30,
                              V29, V28, V27, V26, V25, V24, V23, V22, V21, V20)>;
 
-def CRBITRC : RegisterClass<"PPC", [i32], 32,
-  (add CR0LT, CR0GT, CR0EQ, CR0UN,
-       CR1LT, CR1GT, CR1EQ, CR1UN,
-       CR2LT, CR2GT, CR2EQ, CR2UN,
+def CRBITRC : RegisterClass<"PPC", [i1], 32,
+  (add CR2LT, CR2GT, CR2EQ, CR2UN,
        CR3LT, CR3GT, CR3EQ, CR3UN,
        CR4LT, CR4GT, CR4EQ, CR4UN,
        CR5LT, CR5GT, CR5EQ, CR5UN,
        CR6LT, CR6GT, CR6EQ, CR6UN,
-       CR7LT, CR7GT, CR7EQ, CR7UN)>
-{
-  let CopyCost = -1;
+       CR7LT, CR7GT, CR7EQ, CR7UN,
+       CR1LT, CR1GT, CR1EQ, CR1UN,
+       CR0LT, CR0GT, CR0EQ, CR0UN)> {
+  let Size = 32;
 }
 
 def CRRC : RegisterClass<"PPC", [i32], 32, (add CR0, CR1, CR5, CR6,
