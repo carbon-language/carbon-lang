@@ -31,6 +31,7 @@ LogDiagnosticPrinter::~LogDiagnosticPrinter() {
 static StringRef getLevelName(DiagnosticsEngine::Level Level) {
   switch (Level) {
   case DiagnosticsEngine::Ignored: return "ignored";
+  case DiagnosticsEngine::Remark:  return "remark";
   case DiagnosticsEngine::Note:    return "note";
   case DiagnosticsEngine::Warning: return "warning";
   case DiagnosticsEngine::Error:   return "error";

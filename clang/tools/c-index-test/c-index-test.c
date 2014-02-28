@@ -3736,6 +3736,7 @@ static const char *getDiagnosticCodeStr(enum CXLoadDiag_Error error) {
 static const char *getSeverityString(enum CXDiagnosticSeverity severity) {
   switch (severity) {
     case CXDiagnostic_Note: return "note";
+    case CXDiagnostic_Remark: return "remark";
     case CXDiagnostic_Error: return "error";
     case CXDiagnostic_Fatal: return "fatal";
     case CXDiagnostic_Ignored: return "ignored";

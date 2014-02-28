@@ -15,6 +15,7 @@
 // Define the diagnostic mappings.
 class DiagMapping;
 def MAP_IGNORE  : DiagMapping;
+def MAP_REMARK  : DiagMapping;
 def MAP_WARNING : DiagMapping;
 def MAP_ERROR   : DiagMapping;
 def MAP_FATAL   : DiagMapping;
@@ -22,6 +23,7 @@ def MAP_FATAL   : DiagMapping;
 // Define the diagnostic classes.
 class DiagClass;
 def CLASS_NOTE      : DiagClass;
+def CLASS_REMARK    : DiagClass;
 def CLASS_WARNING   : DiagClass;
 def CLASS_EXTENSION : DiagClass;
 def CLASS_ERROR     : DiagClass;
@@ -84,6 +86,7 @@ class AccessControl {
 // FIXME: ExtWarn and Extension should also be SFINAEFailure by default.
 class Error<string str>     : Diagnostic<str, CLASS_ERROR, MAP_ERROR>, SFINAEFailure;
 class Warning<string str>   : Diagnostic<str, CLASS_WARNING, MAP_WARNING>;
+class Remark<string str>    : Diagnostic<str, CLASS_REMARK, MAP_IGNORE>;
 class Extension<string str> : Diagnostic<str, CLASS_EXTENSION, MAP_IGNORE>;
 class ExtWarn<string str>   : Diagnostic<str, CLASS_EXTENSION, MAP_WARNING>;
 class Note<string str>      : Diagnostic<str, CLASS_NOTE, MAP_FATAL/*ignored*/>;

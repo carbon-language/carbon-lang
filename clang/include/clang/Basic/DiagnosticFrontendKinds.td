@@ -29,6 +29,7 @@ def note_fe_backend_frame_larger_than: Note<"%0">, CatBackend;
 
 def warn_fe_backend_plugin: Warning<"%0">, CatBackend, InGroup<BackendPlugin>;
 def err_fe_backend_plugin: Error<"%0">, CatBackend;
+def remark_fe_backend_plugin: Remark<"%0">, CatBackend, InGroup<RemarkBackendPlugin>;
 def note_fe_backend_plugin: Note<"%0">, CatBackend;
 
 def err_fe_invalid_code_complete_file : Error<

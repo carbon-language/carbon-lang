@@ -44,6 +44,7 @@ static char getCharForLevel(DiagnosticsEngine::Level Level) {
   switch (Level) {
   case DiagnosticsEngine::Ignored: return ' ';
   case DiagnosticsEngine::Note:    return '-';
+  case DiagnosticsEngine::Remark:  return 'R';
   case DiagnosticsEngine::Warning: return 'W';
   case DiagnosticsEngine::Error:   return 'E';
   case DiagnosticsEngine::Fatal:   return 'F';

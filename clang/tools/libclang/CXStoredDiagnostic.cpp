@@ -31,6 +31,7 @@ CXDiagnosticSeverity CXStoredDiagnostic::getSeverity() const {
   switch (Diag.getLevel()) {
     case DiagnosticsEngine::Ignored: return CXDiagnostic_Ignored;
     case DiagnosticsEngine::Note:    return CXDiagnostic_Note;
+    case DiagnosticsEngine::Remark:  return CXDiagnostic_Remark;
     case DiagnosticsEngine::Warning: return CXDiagnostic_Warning;
     case DiagnosticsEngine::Error:   return CXDiagnostic_Error;
     case DiagnosticsEngine::Fatal:   return CXDiagnostic_Fatal;

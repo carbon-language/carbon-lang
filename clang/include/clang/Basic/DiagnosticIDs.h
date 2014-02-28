@@ -56,16 +56,17 @@ namespace clang {
     };
 
     /// Enum values that allow the client to map NOTEs, WARNINGs, and EXTENSIONs
-    /// to either MAP_IGNORE (nothing), MAP_WARNING (emit a warning), MAP_ERROR
-    /// (emit as an error).  It allows clients to map errors to
-    /// MAP_ERROR/MAP_DEFAULT or MAP_FATAL (stop emitting diagnostics after this
-    /// one).
+    /// to either MAP_IGNORE (nothing), MAP_REMARK (emit a remark), MAP_WARNING
+    /// (emit a warning), MAP_ERROR (emit as an error).  It allows clients to
+    /// map errors to MAP_ERROR/MAP_DEFAULT or MAP_FATAL (stop emitting
+    /// diagnostics after this one).
     enum Mapping {
       // NOTE: 0 means "uncomputed".
       MAP_IGNORE  = 1,     ///< Map this diagnostic to nothing, ignore it.
-      MAP_WARNING = 2,     ///< Map this diagnostic to a warning.
-      MAP_ERROR   = 3,     ///< Map this diagnostic to an error.
-      MAP_FATAL   = 4      ///< Map this diagnostic to a fatal error.
+      MAP_REMARK  = 2,     ///< Map this diagnostic to a remark.
+      MAP_WARNING = 3,     ///< Map this diagnostic to a warning.
+      MAP_ERROR   = 4,     ///< Map this diagnostic to an error.
+      MAP_FATAL   = 5      ///< Map this diagnostic to a fatal error.
     };
   }
 
@@ -113,7 +114,7 @@ class DiagnosticIDs : public RefCountedBase<DiagnosticIDs> {
 public:
   /// \brief The level of the diagnostic, after it has been through mapping.
   enum Level {
-    Ignored, Note, Warning, Error, Fatal
+    Ignored, Note, Remark, Warning, Error, Fatal
   };
 
 private:

@@ -112,11 +112,11 @@ Options to Control Error and Warning Messages
 
 .. option:: -w
 
-  Disable all warnings.
+  Disable all diagnostics.
 
 .. option:: -Weverything
 
-  :ref:`Enable all warnings. <diagnostics_enable_everything>`
+  :ref:`Enable all diagnostics. <diagnostics_enable_everything>`
 
 .. option:: -pedantic
 
@@ -582,6 +582,7 @@ All diagnostics are mapped into one of these 5 classes:
 
 -  Ignored
 -  Note
+-  Remark
 -  Warning
 -  Error
 -  Fatal
@@ -722,11 +723,12 @@ is treated as a system header.
 
 .. _diagnostics_enable_everything:
 
-Enabling All Warnings
-^^^^^^^^^^^^^^^^^^^^^
+Enabling All Diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In addition to the traditional ``-W`` flags, one can enable **all**
-warnings by passing :option:`-Weverything`. This works as expected with
+diagnostics by passing :option:`-Weverything`. This works as expected
+with
 :option:`-Werror`, and also includes the warnings from :option:`-pedantic`.
 
 Note that when combined with :option:`-w` (which disables all warnings), that

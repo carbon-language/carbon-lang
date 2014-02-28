@@ -30,9 +30,10 @@ namespace {
 // Diagnostic classes.
 enum {
   CLASS_NOTE       = 0x01,
-  CLASS_WARNING    = 0x02,
-  CLASS_EXTENSION  = 0x03,
-  CLASS_ERROR      = 0x04
+  CLASS_REMARK     = 0x02,
+  CLASS_WARNING    = 0x03,
+  CLASS_EXTENSION  = 0x04,
+  CLASS_ERROR      = 0x05
 };
 
 struct StaticDiagInfoRec {
@@ -409,6 +410,9 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   case diag::MAP_IGNORE:
     Result = DiagnosticIDs::Ignored;
     break;
+  case diag::MAP_REMARK:
+    Result = DiagnosticIDs::Remark;
+    break;
   case diag::MAP_WARNING:
     Result = DiagnosticIDs::Warning;
     break;
@@ -424,6 +428,11 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   if (Diag.EnableAllWarnings && Result == DiagnosticIDs::Ignored &&
       !MappingInfo.isUser())
     Result = DiagnosticIDs::Warning;
+
+  // Diagnostics of class REMARK are either printed as remarks or in case they
+  // have been added to -Werror they are printed as errors.
+  if (DiagClass == CLASS_REMARK && Result == DiagnosticIDs::Warning)
+    Result = DiagnosticIDs::Remark;
 
   // Ignore -pedantic diagnostics inside __extension__ blocks.
   // (The diagnostics controlled by -pedantic are the extension diagnostics

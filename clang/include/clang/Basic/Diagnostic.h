@@ -142,6 +142,7 @@ public:
   enum Level {
     Ignored = DiagnosticIDs::Ignored,
     Note = DiagnosticIDs::Note,
+    Remark = DiagnosticIDs::Remark,
     Warning = DiagnosticIDs::Warning,
     Error = DiagnosticIDs::Error,
     Fatal = DiagnosticIDs::Fatal

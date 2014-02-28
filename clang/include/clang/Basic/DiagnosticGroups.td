@@ -637,3 +637,4 @@ def SourceUsesOpenMP : DiagGroup<"source-uses-openmp">;
 def BackendInlineAsm : DiagGroup<"inline-asm">;
 def BackendFrameLargerThan : DiagGroup<"frame-larger-than">;
 def BackendPlugin : DiagGroup<"backend-plugin">;
+def RemarkBackendPlugin : DiagGroup<"remark-backend-plugin">;

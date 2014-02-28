@@ -459,6 +459,9 @@ PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
   MoveToLine(Loc);
   OS << "#pragma " << Namespace << " diagnostic ";
   switch (Map) {
+  case diag::MAP_REMARK:
+    OS << "remark";
+    break;
   case diag::MAP_WARNING:
     OS << "warning";
     break;

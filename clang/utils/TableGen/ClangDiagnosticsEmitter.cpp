@@ -472,6 +472,11 @@ static bool isError(const Record &Diag) {
   return ClsName == "CLASS_ERROR";
 }
 
+static bool isRemark(const Record &Diag) {
+  const std::string &ClsName = Diag.getValueAsDef("Class")->getName();
+  return ClsName == "CLASS_REMARK";
+}
+
 /// ClangDiagsDefsEmitter - The top-level class emits .def files containing
 /// declarations of Clang diagnostics.
 namespace clang {
@@ -515,6 +520,14 @@ void EmitClangDiagsDefs(RecordKeeper &Records, raw_ostream &OS,
         const std::string &GroupName = GroupRec->getValueAsString("GroupName");
         PrintFatalError(R.getLoc(), "Error " + R.getName() +
                       " cannot be in a warning group [" + GroupName + "]");
+      }
+    }
+
+    // Check that all remarks have an associated diagnostic group.
+    if (isRemark(R)) {
+      if (!isa<DefInit>(R.getValueInit("Group"))) {
+        PrintFatalError(R.getLoc(), "Error " + R.getName() +
+                                        " not in any diagnostic group");
       }
     }
 

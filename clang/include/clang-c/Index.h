@@ -653,6 +653,12 @@ enum CXDiagnosticSeverity {
   CXDiagnostic_Note    = 1,
 
   /**
+   * \brief This diagnostic is a remark that provides additional information
+   * for the user.
+   */
+  CXDiagnostic_Remark = 5,
+
+  /**
    * \brief This diagnostic indicates suspicious code that may not be
    * wrong.
    */
