@@ -158,6 +158,11 @@ being aware of:
   missing. Fortunately, they are rarely needed.
 * The locale support is incomplete.
 
+Your best option if you cannot test on a Linux system is to minimize your use
+of these features, and watch the Linux build bots to find out if your usage
+triggered a bug. For example if you hit a type trait which doesn't work, we can
+then add support to LLVM's traits header to emulate it.
+
 .. _the libstdc++ manual:
   http://gcc.gnu.org/onlinedocs/gcc-4.7.3/libstdc++/manual/manual/status.html#status.iso.2011
 
