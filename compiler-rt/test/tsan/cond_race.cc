@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
 
 struct Ctx {
   pthread_mutex_t m;
@@ -31,6 +32,8 @@ int main() {
   while (!c->done)
     pthread_cond_wait(&c->c, &c->m);
   pthread_mutex_unlock(&c->m);
+  // w/o this sleep, it can be reported as use-after-free
+  sleep(1);
   delete c;
   pthread_join(th, 0);
 }
