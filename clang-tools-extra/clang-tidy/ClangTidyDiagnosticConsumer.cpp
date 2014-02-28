@@ -39,7 +39,20 @@ ClangTidyError::ClangTidyError(StringRef CheckName,
 
 DiagnosticBuilder ClangTidyContext::diag(
     StringRef CheckName, SourceLocation Loc, StringRef Description,
-    DiagnosticIDs::Level Level /* = DiagnosticsEngine::Warning*/) {
+    DiagnosticIDs::Level Level /* = DiagnosticIDs::Warning*/) {
+  assert(Loc.isValid());
+  bool Invalid;
+  const char *CharacterData =
+      DiagEngine->getSourceManager().getCharacterData(Loc, &Invalid);
+  if (!Invalid) {
+    const char *P = CharacterData;
+    while (*P != '\0' && *P != '\r' && *P != '\n')
+      ++P;
+    StringRef RestOfLine(CharacterData, P - CharacterData + 1);
+    // FIXME: Handle /\bNOLINT\b(\([^)]*\))?/ as cpplint.py does.
+    if (RestOfLine.find("NOLINT") != StringRef::npos)
+      Level = DiagnosticIDs::Ignored;
+  }
   unsigned ID = DiagEngine->getDiagnosticIDs()->getCustomDiagID(
       Level, (Description + " [" + CheckName + "]").str());
   if (CheckNamesByDiagnosticID.count(ID) == 0)
