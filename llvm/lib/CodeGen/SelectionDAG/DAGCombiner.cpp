@@ -5808,7 +5808,7 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
   // creates this pattern) and before operation legalization after which
   // we need to be more careful about the vector instructions that we generate.
   if (N0.getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
-      LegalTypes && !LegalOperations && N0->hasOneUse()) {
+      LegalTypes && !LegalOperations && N0->hasOneUse() && VT != MVT::i1) {
 
     EVT VecTy = N0.getOperand(0).getValueType();
     EVT ExTy = N0.getValueType();
