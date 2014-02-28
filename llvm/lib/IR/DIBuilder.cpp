@@ -69,7 +69,10 @@ void DIBuilder::finalize() {
   DIArray GVs = getOrCreateArray(AllGVs);
   DIType(TempGVs).replaceAllUsesWith(GVs);
 
-  DIArray IMs = getOrCreateArray(AllImportedModules);
+  SmallVector<Value *, 16> RetainValuesI;
+  for (unsigned I = 0, E = AllImportedModules.size(); I < E; I++)
+    RetainValuesI.push_back(AllImportedModules[I]);
+  DIArray IMs = getOrCreateArray(RetainValuesI);
   DIType(TempImportedModules).replaceAllUsesWith(IMs);
 }
 
@@ -145,7 +148,7 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 static DIImportedEntity
 createImportedModule(LLVMContext &C, DIScope Context, DIDescriptor NS,
                      unsigned Line, StringRef Name,
-                     SmallVectorImpl<Value *> &AllImportedModules) {
+                     SmallVectorImpl<TrackingVH<MDNode>> &AllImportedModules) {
   const MDNode *R;
   if (Name.empty()) {
     Value *Elts[] = {
@@ -167,7 +170,7 @@ createImportedModule(LLVMContext &C, DIScope Context, DIDescriptor NS,
   }
   DIImportedEntity M(R);
   assert(M.Verify() && "Imported module should be valid");
-  AllImportedModules.push_back(M);
+  AllImportedModules.push_back(TrackingVH<MDNode>(M));
   return M;
 }
 
@@ -197,7 +200,7 @@ DIImportedEntity DIBuilder::createImportedDeclaration(DIScope Context,
   };
   DIImportedEntity M(MDNode::get(VMContext, Elts));
   assert(M.Verify() && "Imported module should be valid");
-  AllImportedModules.push_back(M);
+  AllImportedModules.push_back(TrackingVH<MDNode>(M));
   return M;
 }
 

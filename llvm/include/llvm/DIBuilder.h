@@ -72,7 +72,7 @@ namespace llvm {
     SmallVector<TrackingVH<MDNode>, 4> AllRetainTypes;
     SmallVector<Value *, 4> AllSubprograms;
     SmallVector<Value *, 4> AllGVs;
-    SmallVector<Value *, 4> AllImportedModules;
+    SmallVector<TrackingVH<MDNode>, 4> AllImportedModules;
 
     // Private use for multiple types of template parameters.
     DITemplateValueParameter
