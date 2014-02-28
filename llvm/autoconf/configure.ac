@@ -592,12 +592,12 @@ esac
 dnl --enable-cxx11 : check whether or not to use -std=c++11 on the command line
 AC_ARG_ENABLE(cxx11,
               AS_HELP_STRING([--enable-cxx11],
-                             [Use c++11 if available (default is NO)]),,
+                             [Use c++11 if available (default is YES)]),,
                              enableval=default)
 case "$enableval" in
   yes) AC_SUBST(ENABLE_CXX11,[1]) ;;
   no)  AC_SUBST(ENABLE_CXX11,[0]) ;;
-  default) AC_SUBST(ENABLE_CXX11,[0]);;
+  default) AC_SUBST(ENABLE_CXX11,[1]);;
   *) AC_MSG_ERROR([Invalid setting for --enable-cxx11. Use "yes" or "no"]) ;;
 esac
 
