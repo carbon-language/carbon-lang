@@ -105,8 +105,5 @@ if(ENABLE_SHARED)
 
     set_property(TARGET libclang APPEND_STRING PROPERTY
                  LINK_FLAGS ${LIBCLANG_LINK_FLAGS})
-    set_target_properties(libclang
-      PROPERTIES
-      INSTALL_NAME_DIR "@rpath")
   endif()
 endif()
