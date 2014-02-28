@@ -1401,10 +1401,6 @@ dnl Propagate the shared library extension that the libltdl checks did to
 dnl the Makefiles so we can use it there too
 AC_SUBST(SHLIBEXT,$libltdl_cv_shlibext)
 
-dnl Propagate the run-time library path variable that the libltdl
-dnl checks found to the Makefiles so we can use it there too
-AC_SUBST(SHLIBPATH_VAR,$libltdl_cv_shlibpath_var)
-
 # Translate the various configuration directories and other basic
 # information into substitutions that will end up in Makefile.config.in
 # that these configured values can be used by the makefiles

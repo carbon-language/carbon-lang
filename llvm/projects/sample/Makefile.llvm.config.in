@@ -262,9 +262,6 @@ ENABLE_TIMESTAMPS := @ENABLE_TIMESTAMPS@
 # Enable JIT for this platform
 TARGET_HAS_JIT = @TARGET_HAS_JIT@
 
-# Environment variable to set to change the runtime shared library search path.
-SHLIBPATH_VAR = @SHLIBPATH_VAR@
-
 # Shared library extension for host platform.
 SHLIBEXT = @SHLIBEXT@
 

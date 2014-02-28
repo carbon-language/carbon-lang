@@ -52,9 +52,6 @@ ifeq ($(ENABLE_SHARED), 1)
     # we'll never install unittests.
     LD.Flags += $(RPATH) -Wl,$(SharedLibDir)
   endif
-  # Also set {DYLD,LD}_LIBRARY_PATH because OSX ignores the rpath most
-  # of the time.
-  Run.Shared := $(SHLIBPATH_VAR)="$(SharedLibDir)$${$(SHLIBPATH_VAR):+:}$$$(SHLIBPATH_VAR)"
 endif
 
 $(LLVMUnitTestExe): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
@@ -67,6 +64,6 @@ $(LLVMUnitTestExe): $(ObjectsO) $(ProjLibsPaths) $(LLVMLibsPaths)
 all:: $(LLVMUnitTestExe)
 
 unitcheck:: $(LLVMUnitTestExe)
-	$(Run.Shared) $(LLVMUnitTestExe)
+	$(LLVMUnitTestExe)
 
 endif

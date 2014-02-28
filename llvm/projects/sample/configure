@@ -771,7 +771,6 @@ HAVE_LIBZ
 HUGE_VAL_SANITY
 MMAP_FILE
 SHLIBEXT
-SHLIBPATH_VAR
 LLVM_PREFIX
 LLVM_BINDIR
 LLVM_DATADIR
@@ -10383,7 +10382,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10386 "configure"
+#line 10385 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21265,9 +21264,6 @@ done
 SHLIBEXT=$libltdl_cv_shlibext
 
 
-SHLIBPATH_VAR=$libltdl_cv_shlibpath_var
-
-
 # Translate the various configuration directories and other basic
 # information into substitutions that will end up in Makefile.config.in
 # that these configured values can be used by the makefiles
@@ -22392,7 +22388,6 @@ HAVE_LIBZ!$HAVE_LIBZ$ac_delim
 HUGE_VAL_SANITY!$HUGE_VAL_SANITY$ac_delim
 MMAP_FILE!$MMAP_FILE$ac_delim
 SHLIBEXT!$SHLIBEXT$ac_delim
-SHLIBPATH_VAR!$SHLIBPATH_VAR$ac_delim
 LLVM_PREFIX!$LLVM_PREFIX$ac_delim
 LLVM_BINDIR!$LLVM_BINDIR$ac_delim
 LLVM_DATADIR!$LLVM_DATADIR$ac_delim
@@ -22412,7 +22407,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 92; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 91; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
