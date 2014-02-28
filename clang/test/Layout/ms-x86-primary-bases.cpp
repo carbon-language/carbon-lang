@@ -170,11 +170,11 @@ struct AX : B0X, B1X { int a; AX() : a(0xf000000A) {} virtual void f() { printf(
 // CHECK: *** Dumping AST Record Layout
 // CHECK: *** Dumping AST Record Layout
 // CHECK-NEXT:    0 | struct AX
-// CHECK-NEXT:    8 |   struct B0X (base)
-// CHECK-NEXT:    8 |     int a
 // CHECK-NEXT:    0 |   struct B1X (primary base)
 // CHECK-NEXT:    0 |     (B1X vftable pointer)
 // CHECK-NEXT:    4 |     int a
+// CHECK-NEXT:    8 |   struct B0X (base)
+// CHECK-NEXT:    8 |     int a
 // CHECK-NEXT:   12 |   int a
 // CHECK-NEXT:      | [sizeof=16, align=4
 // CHECK-NEXT:      |  nvsize=16, nvalign=4]
@@ -182,11 +182,11 @@ struct AX : B0X, B1X { int a; AX() : a(0xf000000A) {} virtual void f() { printf(
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct AX
-// CHECK-X64-NEXT:   16 |   struct B0X (base)
-// CHECK-X64-NEXT:   16 |     int a
 // CHECK-X64-NEXT:    0 |   struct B1X (primary base)
 // CHECK-X64-NEXT:    0 |     (B1X vftable pointer)
 // CHECK-X64-NEXT:    8 |     int a
+// CHECK-X64-NEXT:   16 |   struct B0X (base)
+// CHECK-X64-NEXT:   16 |     int a
 // CHECK-X64-NEXT:   20 |   int a
 // CHECK-X64-NEXT:      | [sizeof=24, align=8
 // CHECK-X64-NEXT:      |  nvsize=24, nvalign=8]
@@ -195,21 +195,21 @@ struct BX : B0X, B1X { int a; BX() : a(0xf000000B) {} virtual void g() { printf(
 
 // CHECK: *** Dumping AST Record Layout
 // CHECK-NEXT:    0 | struct BX
-// CHECK-NEXT:    8 |   struct B0X (base)
-// CHECK-NEXT:    8 |     int a
 // CHECK-NEXT:    0 |   struct B1X (primary base)
 // CHECK-NEXT:    0 |     (B1X vftable pointer)
 // CHECK-NEXT:    4 |     int a
+// CHECK-NEXT:    8 |   struct B0X (base)
+// CHECK-NEXT:    8 |     int a
 // CHECK-NEXT:   12 |   int a
 // CHECK-NEXT:      | [sizeof=16, align=4
 // CHECK-NEXT:      |  nvsize=16, nvalign=4]
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct BX
-// CHECK-X64-NEXT:   16 |   struct B0X (base)
-// CHECK-X64-NEXT:   16 |     int a
 // CHECK-X64-NEXT:    0 |   struct B1X (primary base)
 // CHECK-X64-NEXT:    0 |     (B1X vftable pointer)
 // CHECK-X64-NEXT:    8 |     int a
+// CHECK-X64-NEXT:   16 |   struct B0X (base)
+// CHECK-X64-NEXT:   16 |     int a
 // CHECK-X64-NEXT:   20 |   int a
 // CHECK-X64-NEXT:      | [sizeof=24, align=8
 // CHECK-X64-NEXT:      |  nvsize=24, nvalign=8]

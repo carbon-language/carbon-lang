@@ -200,12 +200,12 @@ struct G : B2, B6, virtual B1 { int a; G() : a(0xf0000010) {} };
 // CHECK: *** Dumping AST Record Layout
 // CHECK: *** Dumping AST Record Layout
 // CHECK-NEXT:    0 | struct G
-// CHECK-NEXT:    8 |   struct B2 (base)
-// CHECK-NEXT:    8 |     (B2 vbtable pointer)
-// CHECK-NEXT:   12 |     int a
 // CHECK-NEXT:    0 |   struct B6 (primary base)
 // CHECK-NEXT:    0 |     (B6 vftable pointer)
 // CHECK-NEXT:    4 |     int a
+// CHECK-NEXT:    8 |   struct B2 (base)
+// CHECK-NEXT:    8 |     (B2 vbtable pointer)
+// CHECK-NEXT:   12 |     int a
 // CHECK-NEXT:   16 |   int a
 // CHECK-NEXT:   20 |   struct B1 (virtual base)
 // CHECK-NEXT:   20 |     char a
@@ -214,12 +214,12 @@ struct G : B2, B6, virtual B1 { int a; G() : a(0xf0000010) {} };
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct G
-// CHECK-X64-NEXT:   16 |   struct B2 (base)
-// CHECK-X64-NEXT:   16 |     (B2 vbtable pointer)
-// CHECK-X64-NEXT:   24 |     int a
 // CHECK-X64-NEXT:    0 |   struct B6 (primary base)
 // CHECK-X64-NEXT:    0 |     (B6 vftable pointer)
 // CHECK-X64-NEXT:    8 |     int a
+// CHECK-X64-NEXT:   16 |   struct B2 (base)
+// CHECK-X64-NEXT:   16 |     (B2 vbtable pointer)
+// CHECK-X64-NEXT:   24 |     int a
 // CHECK-X64-NEXT:   32 |   int a
 // CHECK-X64-NEXT:   40 |   struct B1 (virtual base)
 // CHECK-X64-NEXT:   40 |     char a

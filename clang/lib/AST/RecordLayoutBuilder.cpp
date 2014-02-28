@@ -3102,19 +3102,34 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
     OS << '(' << *RD << " vftable pointer)\n";
   }
 
-  // Dump (non-virtual) bases
+  // Collect nvbases.
+  SmallVector<const CXXRecordDecl *, 4> Bases;
   for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-         E = RD->bases_end(); I != E; ++I) {
+                                                E = RD->bases_end();
+       I != E; ++I) {
     assert(!I->getType()->isDependentType() &&
            "Cannot layout class with dependent bases.");
-    if (I->isVirtual())
-      continue;
+    if (!I->isVirtual())
+      Bases.push_back(I->getType()->getAsCXXRecordDecl());
+  }
 
-    const CXXRecordDecl *Base =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+  // Sort nvbases by offset.
+  struct BaseOffsetComparator {
+    const ASTRecordLayout &RL;
+    BaseOffsetComparator(const ASTRecordLayout &RL) : RL(RL) {}
+    bool operator()(const CXXRecordDecl *L, const CXXRecordDecl *R) const {
+      return RL.getBaseClassOffset(L) < RL.getBaseClassOffset(R);
+    }
+  };
+  BaseOffsetComparator Cmp(Layout);
+  std::stable_sort(Bases.begin(), Bases.end(), Cmp);
 
+  // Dump (non-virtual) bases
+  for (SmallVectorImpl<const CXXRecordDecl *>::iterator I = Bases.begin(),
+                                                        E = Bases.end();
+       I != E; ++I) {
+    const CXXRecordDecl *Base = *I;
     CharUnits BaseOffset = Offset + Layout.getBaseClassOffset(Base);
-
     DumpCXXRecordLayout(OS, Base, C, BaseOffset, IndentLevel,
                         Base == PrimaryBase ? "(primary base)" : "(base)",
                         /*IncludeVirtualBases=*/false);

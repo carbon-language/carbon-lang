@@ -470,12 +470,12 @@ int main() {
 // CHECK: %struct.DV = type { %struct.BV }
 
 // CHECK:       0 | struct EV
-// CHECK-NEXT:  4 |   struct CV (base)
-// CHECK-NEXT:  4 |     (CV vbtable pointer)
 // CHECK-NEXT:  0 |   struct DV (primary base)
 // CHECK-NEXT:  0 |     struct BV (primary base)
 // CHECK-NEXT:  0 |       struct AV (primary base)
 // CHECK-NEXT:  0 |         (AV vftable pointer)
+// CHECK-NEXT:  4 |   struct CV (base)
+// CHECK-NEXT:  4 |     (CV vbtable pointer)
 // CHECK-NEXT:  8 |   (vtordisp for vbase BV)
 // CHECK-NEXT: 12 |   struct BV (virtual base)
 // CHECK-NEXT: 12 |     struct AV (primary base)
