@@ -1926,7 +1926,8 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
       Changed = true;
       ++NumFnDeleted;
     } else if (F->hasLocalLinkage()) {
-      if (isProfitableToMakeFastCC(F) && !F->isVarArg() && !F->hasAddressTaken()) {
+      if (isProfitableToMakeFastCC(F) && !F->isVarArg() &&
+          !F->hasAddressTaken()) {
         // If this function has a calling convention worth changing, is not a
         // varargs function, and is only called directly, promote it to use the
         // Fast calling convention.
