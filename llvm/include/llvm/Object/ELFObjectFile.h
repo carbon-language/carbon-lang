@@ -992,8 +992,8 @@ unsigned ELFObjectFile<ELFT>::getArch() const {
 
 /// FIXME: Maybe we should have a base ElfObjectFile that is not a template
 /// and make these member functions?
-static inline error_code getELFRelocationAddend(const RelocationRef R,
-                                                int64_t &Addend) {
+inline error_code getELFRelocationAddend(const RelocationRef R,
+                                         int64_t &Addend) {
   const ObjectFile *Obj = R.getObjectFile();
   DataRefImpl DRI = R.getRawDataRefImpl();
   // Little-endian 32-bit
@@ -1015,7 +1015,7 @@ static inline error_code getELFRelocationAddend(const RelocationRef R,
   llvm_unreachable("Object passed to getELFRelocationAddend() is not ELF");
 }
 
-static inline std::pair<symbol_iterator, symbol_iterator>
+inline std::pair<symbol_iterator, symbol_iterator>
 getELFDynamicSymbolIterators(SymbolicFile *Obj) {
   if (const ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(Obj))
     return std::make_pair(ELF->dynamic_symbol_begin(),
@@ -1036,10 +1036,9 @@ getELFDynamicSymbolIterators(SymbolicFile *Obj) {
 
 /// This is a generic interface for retrieving GNU symbol version
 /// information from an ELFObjectFile.
-static inline error_code GetELFSymbolVersion(const ObjectFile *Obj,
-                                             const SymbolRef &Sym,
-                                             StringRef &Version,
-                                             bool &IsDefault) {
+inline error_code GetELFSymbolVersion(const ObjectFile *Obj,
+                                      const SymbolRef &Sym, StringRef &Version,
+                                      bool &IsDefault) {
   // Little-endian 32-bit
   if (const ELF32LEObjectFile *ELFObj = dyn_cast<ELF32LEObjectFile>(Obj))
     return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
