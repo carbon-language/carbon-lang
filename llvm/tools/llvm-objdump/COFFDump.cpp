@@ -182,10 +182,10 @@ static error_code resolveSymbol(const std::vector<RelocationRef> &Rels,
       return EC;
     if (Ofs == Offset) {
       Sym = *I->getSymbol();
-      break;
+      return object_error::success;
     }
   }
-  return object_error::success;
+  return object_error::parse_failed;
 }
 
 // Given a vector of relocations for a section and an offset into this section
@@ -225,11 +225,13 @@ static void printCOFFSymbolAddress(llvm::raw_ostream &Out,
                                    const std::vector<RelocationRef> &Rels,
                                    uint64_t Offset, uint32_t Disp) {
   StringRef Sym;
-  if (error(resolveSymbolName(Rels, Offset, Sym)))
-    return;
-  Out << Sym;
-  if (Disp > 0)
-    Out << format(" + 0x%04x", Disp);
+  if (!resolveSymbolName(Rels, Offset, Sym)) {
+    Out << Sym;
+    if (Disp > 0)
+      Out << format(" + 0x%04x", Disp);
+  } else {
+    Out << format("0x%04x", Disp);
+  }
 }
 
 static void
