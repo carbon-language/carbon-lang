@@ -64,6 +64,24 @@ class ASTDeserializationListener;
 /// \brief Utility class for loading a ASTContext from an AST file.
 ///
 class ASTUnit : public ModuleLoader {
+public:
+  struct StandaloneFixIt {
+    std::pair<unsigned, unsigned> RemoveRange;
+    std::pair<unsigned, unsigned> InsertFromRange;
+    std::string CodeToInsert;
+    bool BeforePreviousInsertions;
+  };
+
+  struct StandaloneDiagnostic {
+    unsigned ID;
+    DiagnosticsEngine::Level Level;
+    std::string Message;
+    std::string Filename;
+    unsigned LocOffset;
+    std::vector<std::pair<unsigned, unsigned> > Ranges;
+    std::vector<StandaloneFixIt> FixIts;
+  };
+
 private:
   IntrusiveRefCntPtr<LangOptions>         LangOpts;
   IntrusiveRefCntPtr<DiagnosticsEngine>   Diagnostics;
@@ -136,7 +154,7 @@ private:
   std::string OriginalSourceFile;
 
   /// \brief The set of diagnostics produced when creating the preamble.
-  SmallVector<StoredDiagnostic, 4> PreambleDiagnostics;
+  SmallVector<StandaloneDiagnostic, 4> PreambleDiagnostics;
 
   /// \brief The set of diagnostics produced when creating this
   /// translation unit.
@@ -295,9 +313,9 @@ private:
                              const char **ArgBegin, const char **ArgEnd,
                              ASTUnit &AST, bool CaptureDiagnostics);
 
-  void TranslateStoredDiagnostics(ASTReader *MMan, StringRef ModName,
+  void TranslateStoredDiagnostics(FileManager &FileMgr,
                                   SourceManager &SrcMan,
-                      const SmallVectorImpl<StoredDiagnostic> &Diags,
+                      const SmallVectorImpl<StandaloneDiagnostic> &Diags,
                             SmallVectorImpl<StoredDiagnostic> &Out);
 
   void clearFileLevelDecls();
