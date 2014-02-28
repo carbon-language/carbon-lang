@@ -106,7 +106,9 @@ of the features that are expected to work. Features not on this list are
 unlikely to be supported by our host compilers.
 
 * Rvalue references: N2118_
+
   * But *not* Rvalue references for ``*this`` or member qualifiers (N2439_)
+
 * Static assert: N1720_
 * ``auto`` type deduction: N1984_, N1737_
 * Trailing return types: N2541_
