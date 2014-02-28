@@ -5600,16 +5600,33 @@ void openbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                      const ArgList &Args,
                                      const char *LinkingOutput) const {
   ArgStringList CmdArgs;
+  bool NeedsKPIC = false;
 
-  // When building 32-bit code on OpenBSD/amd64, we have to explicitly
-  // instruct as in the base system to assemble 32-bit code.
-  if (getToolChain().getArch() == llvm::Triple::x86)
+  switch (getToolChain().getArch()) {
+  case llvm::Triple::x86:
+    // When building 32-bit code on OpenBSD/amd64, we have to explicitly
+    // instruct as in the base system to assemble 32-bit code.
     CmdArgs.push_back("--32");
-  else if (getToolChain().getArch() == llvm::Triple::ppc) {
+    break;
+
+  case llvm::Triple::ppc:
     CmdArgs.push_back("-mppc");
     CmdArgs.push_back("-many");
-  } else if (getToolChain().getArch() == llvm::Triple::mips64 ||
-             getToolChain().getArch() == llvm::Triple::mips64el) {
+    break;
+
+  case llvm::Triple::sparc:
+    CmdArgs.push_back("-32");
+    NeedsKPIC = true;
+    break;
+
+  case llvm::Triple::sparcv9:
+    CmdArgs.push_back("-64");
+    CmdArgs.push_back("-Av9a");
+    NeedsKPIC = true;
+    break;
+
+  case llvm::Triple::mips64:
+  case llvm::Triple::mips64el: {
     StringRef CPUName;
     StringRef ABIName;
     getMipsCPUAndABI(Args, getToolChain().getTriple(), CPUName, ABIName);
@@ -5622,8 +5639,16 @@ void openbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("-EL");
 
-    addAssemblerKPIC(Args, CmdArgs);
+    NeedsKPIC = true;
+    break;
   }
+
+  default:
+    break;
+  }
+
+  if (NeedsKPIC)
+    addAssemblerKPIC(Args, CmdArgs);
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
                        options::OPT_Xassembler);

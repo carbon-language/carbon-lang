@@ -39,6 +39,10 @@
 // RUN:   | FileCheck -check-prefix=CHECK-AMD64-M32 %s
 // RUN: %clang -target powerpc-unknown-openbsd -### -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-POWERPC %s
+// RUN: %clang -target sparc-unknown-openbsd -### -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-SPARC %s
+// RUN: %clang -target sparc64-unknown-openbsd -### -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-SPARC64 %s
 // RUN: %clang -target mips64-unknown-openbsd -### -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-MIPS64 %s
 // RUN: %clang -target mips64-unknown-openbsd -fPIC -### -no-integrated-as -c %s 2>&1 \
@@ -49,6 +53,8 @@
 // RUN:   | FileCheck -check-prefix=CHECK-MIPS64EL-PIC %s
 // CHECK-AMD64-M32: as{{.*}}" "--32"
 // CHECK-POWERPC: as{{.*}}" "-mppc" "-many"
+// CHECK-SPARC: as{{.*}}" "-32"
+// CHECK-SPARC64: as{{.*}}" "-64" "-Av9a"
 // CHECK-MIPS64: as{{.*}}" "-mabi" "64" "-EB"
 // CHECK-MIPS64-PIC: as{{.*}}" "-mabi" "64" "-EB" "-KPIC"
 // CHECK-MIPS64EL: as{{.*}}" "-mabi" "64" "-EL"
