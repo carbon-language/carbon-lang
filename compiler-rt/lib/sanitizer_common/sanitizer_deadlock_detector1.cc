@@ -132,6 +132,7 @@ DDReport *DDetectorImpl::MutexUnlock(DDPhysicalThread *pt, DDLogicalThread *lt,
 
 void DDetectorImpl::MutexDestroy(DDPhysicalThread *pt, DDLogicalThread *lt,
     DDMutex *m) {
+  if (!m->id) return;
   SpinMutexLock lk(&mtx);
   if (dd.nodeBelongsToCurrentEpoch(m->id))
     dd.removeNode(m->id);
