@@ -306,9 +306,9 @@ Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstance
     const size_t actual_pid_count = (pid_data_size / sizeof(struct kinfo_proc));
 
     bool all_users = match_info.GetMatchAllUsers();
-    const lldb::pid_t our_pid = getpid();
+    const ::pid_t our_pid = getpid();
     const uid_t our_uid = getuid();
-    for (int i = 0; i < actual_pid_count; i++)
+    for (size_t i = 0; i < actual_pid_count; i++)
     {
         const struct kinfo_proc &kinfo = kinfos[i];
         const bool kinfo_user_matches = (all_users ||
