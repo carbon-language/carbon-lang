@@ -20,7 +20,7 @@
 
 /* Effects: aborts if a + b overflows */
 
-ti_int
+COMPILER_RT_ABI ti_int
 __addvti3(ti_int a, ti_int b)
 {
     ti_int s = a + b;

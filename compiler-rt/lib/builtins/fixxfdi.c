@@ -27,7 +27,7 @@
  * 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
  */
 
-di_int
+COMPILER_RT_ABI di_int
 __fixxfdi(long double a)
 {
     long_double_bits fb;

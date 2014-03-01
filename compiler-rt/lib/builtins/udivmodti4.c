@@ -22,7 +22,7 @@
 
 /* Translated from Figure 3-40 of The PowerPC Compiler Writer's Guide */
 
-tu_int
+COMPILER_RT_ABI tu_int
 __udivmodti4(tu_int a, tu_int b, tu_int* rem)
 {
     const unsigned n_udword_bits = sizeof(du_int) * CHAR_BIT;

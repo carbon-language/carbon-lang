@@ -20,7 +20,8 @@
 
 ARM_EABI_FNALIAS(d2iz, fixdfsi)
 
-int __fixdfsi(fp_t a) {
+COMPILER_RT_ABI int
+__fixdfsi(fp_t a) {
     
     // Break a into sign, exponent, significand
     const rep_t aRep = toRep(a);

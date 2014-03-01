@@ -20,7 +20,7 @@
 
 /* Effects: aborts if a * b overflows */
 
-ti_int
+COMPILER_RT_ABI ti_int
 __mulvti3(ti_int a, ti_int b)
 {
     const int N = (int)(sizeof(ti_int) * CHAR_BIT);

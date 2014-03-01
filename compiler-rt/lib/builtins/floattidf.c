@@ -24,9 +24,7 @@
 
 /* seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm */ 
 
-si_int __clzti2(ti_int a);
-
-double
+COMPILER_RT_ABI double
 __floattidf(ti_int a)
 {
     if (a == 0)

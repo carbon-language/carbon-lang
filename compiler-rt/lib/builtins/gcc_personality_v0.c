@@ -46,11 +46,11 @@ struct _Unwind_Exception {
     uintptr_t                private_2;    
 };
 
-extern const uint8_t*    _Unwind_GetLanguageSpecificData(_Unwind_Context_t c);
-extern void              _Unwind_SetGR(_Unwind_Context_t c, int i, uintptr_t n);
-extern void              _Unwind_SetIP(_Unwind_Context_t, uintptr_t new_value);
-extern uintptr_t         _Unwind_GetIP(_Unwind_Context_t context);
-extern uintptr_t         _Unwind_GetRegionStart(_Unwind_Context_t context);
+COMPILER_RT_ABI  const uint8_t*    _Unwind_GetLanguageSpecificData(_Unwind_Context_t c);
+COMPILER_RT_ABI  void              _Unwind_SetGR(_Unwind_Context_t c, int i, uintptr_t n);
+COMPILER_RT_ABI  void              _Unwind_SetIP(_Unwind_Context_t, uintptr_t new_value);
+COMPILER_RT_ABI  uintptr_t         _Unwind_GetIP(_Unwind_Context_t context);
+COMPILER_RT_ABI  uintptr_t         _Unwind_GetRegionStart(_Unwind_Context_t context);
 
 
 /*
@@ -182,11 +182,13 @@ static uintptr_t readEncodedPointer(const uint8_t** data, uint8_t encoding)
  */
 #if __arm__
 // the setjump-longjump based exceptions personality routine has a different name
-_Unwind_Reason_Code __gcc_personality_sj0(int version, _Unwind_Action actions,
+COMPILER_RT_ABI _Unwind_Reason_Code
+__gcc_personality_sj0(int version, _Unwind_Action actions,
          uint64_t exceptionClass, struct _Unwind_Exception* exceptionObject,
          _Unwind_Context_t context)
 #else
-_Unwind_Reason_Code __gcc_personality_v0(int version, _Unwind_Action actions,
+COMPILER_RT_ABI _Unwind_Reason_Code
+__gcc_personality_v0(int version, _Unwind_Action actions,
          uint64_t exceptionClass, struct _Unwind_Exception* exceptionObject,
          _Unwind_Context_t context)
 #endif

@@ -16,6 +16,7 @@
 
 ARM_EABI_FNALIAS(dneg, negdf2)
 
-fp_t __negdf2(fp_t a) {
+COMPILER_RT_ABI fp_t
+__negdf2(fp_t a) {
     return fromRep(toRep(a) ^ signBit);
 }

@@ -18,7 +18,7 @@
 
 /* Returns: a ^ b */
 
-long double
+COMPILER_RT_ABI long double
 __powixf2(long double a, si_int b)
 {
     const int recip = b < 0;

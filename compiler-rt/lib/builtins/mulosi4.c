@@ -18,7 +18,7 @@
 
 /* Effects: sets *overflow to 1  if a * b overflows */
 
-si_int
+COMPILER_RT_ABI si_int
 __mulosi4(si_int a, si_int b, int* overflow)
 {
     const int N = (int)(sizeof(si_int) * CHAR_BIT);

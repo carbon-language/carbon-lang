@@ -16,11 +16,9 @@
 
 #ifdef CRT_HAS_128BIT
 
-tu_int __udivmodti4(tu_int a, tu_int b, tu_int* rem);
-
 /*Returns: a % b */
 
-ti_int
+COMPILER_RT_ABI ti_int
 __modti3(ti_int a, ti_int b)
 {
     const int bits_in_tword_m1 = (int)(sizeof(ti_int) * CHAR_BIT) - 1;

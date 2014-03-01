@@ -21,7 +21,7 @@
  *           if (a >  b) returns 2
  */
 
-si_int
+COMPILER_RT_ABI si_int
 __cmpti2(ti_int a, ti_int b)
 {
     twords x;

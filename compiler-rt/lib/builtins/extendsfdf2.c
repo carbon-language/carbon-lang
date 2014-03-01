@@ -68,7 +68,8 @@ static inline dst_t dstFromRep(dst_rep_t x) {
 
 ARM_EABI_FNALIAS(f2d, extendsfdf2)
 
-dst_t __extendsfdf2(src_t a) {
+COMPILER_RT_ABI dst_t
+__extendsfdf2(src_t a) {
     
     // Various constants whose values follow from the type parameters.
     // Any reasonable optimizer will fold and propagate all of these.

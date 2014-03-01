@@ -14,8 +14,6 @@
 
 #include "int_lib.h"
 
-extern COMPILER_RT_ABI di_int __divdi3(di_int a, di_int b);
-
 /* Returns: a / b, *rem = a % b  */
 
 COMPILER_RT_ABI di_int

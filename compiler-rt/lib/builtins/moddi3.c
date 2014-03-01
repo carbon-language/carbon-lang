@@ -14,8 +14,6 @@
 
 #include "int_lib.h"
 
-COMPILER_RT_ABI du_int __udivmoddi4(du_int a, du_int b, du_int* rem);
-
 /* Returns: a % b */
 
 COMPILER_RT_ABI di_int

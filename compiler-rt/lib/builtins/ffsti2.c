@@ -20,7 +20,7 @@
  * the value zero if a is zero. The least significant bit is index one.
  */
 
-si_int
+COMPILER_RT_ABI si_int
 __ffsti2(ti_int a)
 {
     twords x;

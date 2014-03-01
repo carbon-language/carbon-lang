@@ -17,7 +17,7 @@
 
 /* Returns: the product of a + ib and c + id */
 
-float _Complex
+COMPILER_RT_ABI float _Complex
 __mulsc3(float __a, float __b, float __c, float __d)
 {
     float __ac = __a * __c;

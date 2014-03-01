@@ -25,7 +25,7 @@
 /* gggg gggg gggg gggg gggg gggg gggg gggg | gggg gggg gggg gggg seee eeee eeee eeee |
  * 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
  */
-long double
+COMPILER_RT_ABI long double
 __floatundixf(du_int a)
 {
     if (a == 0)

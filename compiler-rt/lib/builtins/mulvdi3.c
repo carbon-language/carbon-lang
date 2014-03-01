@@ -18,7 +18,7 @@
 
 /* Effects: aborts if a * b overflows */
 
-di_int
+COMPILER_RT_ABI di_int
 __mulvdi3(di_int a, di_int b)
 {
     const int N = (int)(sizeof(di_int) * CHAR_BIT);

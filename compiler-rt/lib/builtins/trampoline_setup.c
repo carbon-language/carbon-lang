@@ -21,8 +21,9 @@ extern void __clear_cache(void* start, void* end);
  */
 
 #if __ppc__ && !defined(__powerpc64__)
-void __trampoline_setup(uint32_t* trampOnStack, int trampSizeAllocated, 
-                                const void* realFunc, void* localsPtr)
+COMPILER_RT_ABI void
+__trampoline_setup(uint32_t* trampOnStack, int trampSizeAllocated, 
+                   const void* realFunc, void* localsPtr)
 {
     /* should never happen, but if compiler did not allocate */
     /* enough space on stack for the trampoline, abort */

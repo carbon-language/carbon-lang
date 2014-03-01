@@ -20,7 +20,7 @@
 
 /* Effects: aborts if abs(x) < 0 */
 
-ti_int
+COMPILER_RT_ABI ti_int
 __absvti2(ti_int a)
 {
     const int N = (int)(sizeof(ti_int) * CHAR_BIT);

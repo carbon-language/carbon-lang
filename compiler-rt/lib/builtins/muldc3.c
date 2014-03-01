@@ -17,7 +17,7 @@
 
 /* Returns: the product of a + ib and c + id */
 
-double _Complex
+COMPILER_RT_ABI double _Complex
 __muldc3(double __a, double __b, double __c, double __d)
 {
     double __ac = __a * __c;

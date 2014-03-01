@@ -17,7 +17,8 @@
 
 ARM_EABI_FNALIAS(fadd, addsf3)
 
-fp_t __addsf3(fp_t a, fp_t b) {
+COMPILER_RT_ABI fp_t
+__addsf3(fp_t a, fp_t b) {
 
     rep_t aRep = toRep(a);
     rep_t bRep = toRep(b);

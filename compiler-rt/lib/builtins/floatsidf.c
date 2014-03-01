@@ -20,7 +20,8 @@
 
 ARM_EABI_FNALIAS(i2d, floatsidf)
 
-fp_t __floatsidf(int a) {
+COMPILER_RT_ABI fp_t
+__floatsidf(int a) {
     
     const int aWidth = sizeof a * CHAR_BIT;
     

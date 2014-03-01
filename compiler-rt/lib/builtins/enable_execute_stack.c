@@ -36,7 +36,8 @@
  * that means changing the protection on those page(s) to rwx. 
  */
 
-void __enable_execute_stack(void* addr)
+COMPILER_RT_ABI void
+__enable_execute_stack(void* addr)
 {
 
 #if __APPLE__
@@ -55,5 +56,3 @@ void __enable_execute_stack(void* addr)
 	size_t length = endPage - startPage;
 	(void) mprotect((void *)startPage, length, PROT_READ | PROT_WRITE | PROT_EXEC);
 }
-
-

@@ -21,7 +21,8 @@
 
 ARM_EABI_FNALIAS(fdiv, divsf3)
 
-fp_t __divsf3(fp_t a, fp_t b) {
+COMPILER_RT_ABI fp_t
+__divsf3(fp_t a, fp_t b) {
     
     const unsigned int aExponent = toRep(a) >> significandBits & maxExponent;
     const unsigned int bExponent = toRep(b) >> significandBits & maxExponent;

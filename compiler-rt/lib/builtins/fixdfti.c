@@ -25,7 +25,7 @@
 
 /* seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm */
 
-ti_int
+COMPILER_RT_ABI ti_int
 __fixdfti(double a)
 {
     double_bits fb;

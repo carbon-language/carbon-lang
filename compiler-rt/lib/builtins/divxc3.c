@@ -18,7 +18,7 @@
 
 /* Returns: the quotient of (a + ib) / (c + id) */
 
-long double _Complex
+COMPILER_RT_ABI long double _Complex
 __divxc3(long double __a, long double __b, long double __c, long double __d)
 {
     int __ilogbw = 0;

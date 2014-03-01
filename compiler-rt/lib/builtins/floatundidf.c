@@ -29,7 +29,6 @@ ARM_EABI_FNALIAS(ul2d, floatundidf)
  * as a side-effect of this computation.
  */
 
-
 COMPILER_RT_ABI double
 __floatundidf(du_int a)
 {

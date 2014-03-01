@@ -26,9 +26,7 @@
  * 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
  */
 
-si_int __clzti2(ti_int a);
-
-long double
+COMPILER_RT_ABI long double
 __floattixf(ti_int a)
 {
     if (a == 0)

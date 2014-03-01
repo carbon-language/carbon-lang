@@ -18,7 +18,7 @@
 
 /* Effects: aborts if a * b overflows */
 
-si_int
+COMPILER_RT_ABI si_int
 __mulvsi3(si_int a, si_int b)
 {
     const int N = (int)(sizeof(si_int) * CHAR_BIT);

@@ -20,7 +20,7 @@
 
 /* Precondition: a != 0 */
 
-si_int
+COMPILER_RT_ABI si_int
 __ctzti2(ti_int a)
 {
     twords x;

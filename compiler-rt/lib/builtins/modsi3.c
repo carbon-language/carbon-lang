@@ -14,8 +14,6 @@
 
 #include "int_lib.h"
 
-su_int COMPILER_RT_ABI __divsi3(si_int a, si_int b);
-
 /* Returns: a % b */
 
 COMPILER_RT_ABI si_int

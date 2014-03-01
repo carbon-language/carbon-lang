@@ -18,7 +18,7 @@
 
 /* Returns: count of 1 bits */
 
-si_int
+COMPILER_RT_ABI si_int
 __popcountti2(ti_int a)
 {
     tu_int x3 = (tu_int)a;

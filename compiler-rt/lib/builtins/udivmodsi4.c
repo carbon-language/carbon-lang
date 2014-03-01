@@ -14,9 +14,6 @@
 
 #include "int_lib.h"
 
-extern su_int COMPILER_RT_ABI __udivsi3(su_int n, su_int d);
-
-
 /* Returns: a / b, *rem = a % b  */
 
 COMPILER_RT_ABI su_int

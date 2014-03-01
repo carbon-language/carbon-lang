@@ -30,7 +30,7 @@
  * 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
  */
 
-su_int
+COMPILER_RT_ABI su_int
 __fixunsxfsi(long double a)
 {
     long_double_bits fb;

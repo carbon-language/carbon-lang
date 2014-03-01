@@ -30,7 +30,7 @@
  * 1mmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
  */
 
-du_int
+COMPILER_RT_ABI du_int
 __fixunsxfdi(long double a)
 {
     long_double_bits fb;

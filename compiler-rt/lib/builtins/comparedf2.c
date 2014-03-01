@@ -47,7 +47,8 @@ enum LE_RESULT {
     LE_UNORDERED =  1
 };
 
-enum LE_RESULT __ledf2(fp_t a, fp_t b) {
+COMPILER_RT_ABI enum LE_RESULT
+__ledf2(fp_t a, fp_t b) {
     
     const srep_t aInt = toRep(a);
     const srep_t bInt = toRep(b);
@@ -86,7 +87,8 @@ enum GE_RESULT {
     GE_UNORDERED = -1   // Note: different from LE_UNORDERED
 };
 
-enum GE_RESULT __gedf2(fp_t a, fp_t b) {
+COMPILER_RT_ABI enum GE_RESULT
+__gedf2(fp_t a, fp_t b) {
     
     const srep_t aInt = toRep(a);
     const srep_t bInt = toRep(b);
@@ -108,7 +110,8 @@ enum GE_RESULT __gedf2(fp_t a, fp_t b) {
 
 ARM_EABI_FNALIAS(dcmpun, unorddf2)
 
-int __unorddf2(fp_t a, fp_t b) {
+COMPILER_RT_ABI int
+__unorddf2(fp_t a, fp_t b) {
     const rep_t aAbs = toRep(a) & absMask;
     const rep_t bAbs = toRep(b) & absMask;
     return aAbs > infRep || bAbs > infRep;
@@ -116,19 +119,23 @@ int __unorddf2(fp_t a, fp_t b) {
 
 // The following are alternative names for the preceeding routines.
 
-enum LE_RESULT __eqdf2(fp_t a, fp_t b) {
+COMPILER_RT_ABI enum LE_RESULT
+__eqdf2(fp_t a, fp_t b) {
     return __ledf2(a, b);
 }
 
-enum LE_RESULT __ltdf2(fp_t a, fp_t b) {
+COMPILER_RT_ABI enum LE_RESULT
+__ltdf2(fp_t a, fp_t b) {
     return __ledf2(a, b);
 }
 
-enum LE_RESULT __nedf2(fp_t a, fp_t b) {
+COMPILER_RT_ABI enum LE_RESULT
+__nedf2(fp_t a, fp_t b) {
     return __ledf2(a, b);
 }
 
-enum GE_RESULT __gtdf2(fp_t a, fp_t b) {
+COMPILER_RT_ABI enum GE_RESULT
+__gtdf2(fp_t a, fp_t b) {
     return __gedf2(a, b);
 }
 

@@ -25,7 +25,7 @@
 
 /* seee eeee emmm mmmm mmmm mmmm mmmm mmmm */
 
-ti_int
+COMPILER_RT_ABI ti_int
 __fixsfti(float a)
 {
     float_bits fb;

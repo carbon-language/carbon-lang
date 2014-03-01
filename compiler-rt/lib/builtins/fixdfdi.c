@@ -25,7 +25,7 @@
 
 ARM_EABI_FNALIAS(d2lz, fixdfdi)
 
-di_int
+COMPILER_RT_ABI di_int
 __fixdfdi(double a)
 {
     double_bits fb;

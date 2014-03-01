@@ -20,7 +20,8 @@
 
 ARM_EABI_FNALIAS(ui2d, floatunsidf)
 
-fp_t __floatunsidf(unsigned int a) {
+COMPILER_RT_ABI fp_t
+__floatunsidf(unsigned int a) {
     
     const int aWidth = sizeof a * CHAR_BIT;
     

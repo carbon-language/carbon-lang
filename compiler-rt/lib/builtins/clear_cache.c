@@ -24,7 +24,8 @@
  * specified range.
  */
 
-void __clear_cache(void* start, void* end)
+COMPILER_RT_ABI void
+__clear_cache(void* start, void* end)
 {
 #if __i386__ || __x86_64__
 /*

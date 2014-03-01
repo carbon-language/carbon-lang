@@ -18,7 +18,7 @@
 
 /* Effects: sets *overflow to 1  if a * b overflows */
 
-di_int
+COMPILER_RT_ABI di_int
 __mulodi4(di_int a, di_int b, int* overflow)
 {
     const int N = (int)(sizeof(di_int) * CHAR_BIT);

@@ -28,7 +28,7 @@
 
 /* seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm */
 
-tu_int
+COMPILER_RT_ABI tu_int
 __fixunsdfti(double a)
 {
     double_bits fb;

@@ -143,4 +143,7 @@ static inline void wideRightShiftWithSticky(rep_t *hi, rep_t *lo, unsigned int c
     }
 }
 
+COMPILER_RT_ABI fp_t __adddf3(fp_t a, fp_t b);
+COMPILER_RT_ABI fp_t __addsf3(fp_t a, fp_t b);
+
 #endif // FP_LIB_HEADER
