@@ -32,12 +32,16 @@ struct MCProcResourceDesc {
 
   // Number of resources that may be buffered.
   //
-  // Buffered resources (BufferSize > 0 || BufferSize == -1) may be consumed at
-  // some indeterminate cycle after dispatch (e.g. for instructions that may
-  // issue out-of-order). Unbuffered resources (BufferSize == 0) always consume
-  // their resource some fixed number of cycles after dispatch (e.g. for
-  // instruction interlocking that may stall the pipeline). If BufferSize==1,
-  // the latency between producer and consumer is modeled as a stall.
+  // Buffered resources (BufferSize != 0) may be consumed at some indeterminate
+  // cycle after dispatch. This should be used for out-of-order cpus when
+  // instructions that use this resource can be buffered in a reservaton
+  // station.
+  //
+  // Unbuffered resources (BufferSize == 0) always consume their resource some
+  // fixed number of cycles after dispatch. If a resource is unbuffered, then
+  // the scheduler will avoid scheduling instructions with conflicting resources
+  // in the same cycle. This is for in-order cpus, or the in-order portion of
+  // an out-of-order cpus.
   int BufferSize;
 
   bool operator==(const MCProcResourceDesc &Other) const {
