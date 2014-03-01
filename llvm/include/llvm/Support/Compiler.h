@@ -80,21 +80,13 @@
 /// * {true,false}_type
 /// * is_constructible
 /// * etc...
-#if defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1700)
 #define LLVM_HAS_CXX11_TYPETRAITS 1
-#else
-#define LLVM_HAS_CXX11_TYPETRAITS 0
-#endif
 
 /// \macro LLVM_HAS_CXX11_STDLIB
 /// \brief Does the compiler have the C++11 standard library.
 ///
 /// Implies LLVM_HAS_RVALUE_REFERENCES, LLVM_HAS_CXX11_TYPETRAITS
-#if defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1700)
 #define LLVM_HAS_CXX11_STDLIB 1
-#else
-#define LLVM_HAS_CXX11_STDLIB 0
-#endif
 
 /// \macro LLVM_HAS_VARIADIC_TEMPLATES
 /// \brief Does this compiler support variadic templates.
