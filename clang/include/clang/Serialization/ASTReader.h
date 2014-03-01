@@ -1895,7 +1895,6 @@ public:
   /// \param II The name of the macro.
   /// \param M The module file.
   /// \param GMacID The global macro ID that is associated with this identifier.
-  /// \param ImportLoc The location where the module is imported.
   void addPendingMacroFromModule(IdentifierInfo *II,
                                  ModuleFile *M,
                                  serialization::GlobalMacroID GMacID,
