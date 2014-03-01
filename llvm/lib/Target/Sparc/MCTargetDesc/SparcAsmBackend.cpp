@@ -200,9 +200,14 @@ namespace {
     }
 
     bool writeNopData(uint64_t Count, MCObjectWriter *OW) const {
-      // FIXME: Zero fill for now.
-      for (uint64_t i = 0; i != Count; ++i)
-        OW->Write8(0);
+      // Cannot emit NOP with size not multiple of 32 bits.
+      if (Count % 4 != 0)
+        return false;
+
+      uint64_t NumNops = Count / 4;
+      for (uint64_t i = 0; i != NumNops; ++i)
+        OW->Write32(0x01000000);
+
       return true;
     }
 
