@@ -68,12 +68,6 @@
 #define LLVM_HAS_RVALUE_REFERENCE_THIS 0
 #endif
 
-/// \macro LLVM_HAS_CXX11_STDLIB
-/// \brief Does the compiler have the C++11 standard library.
-///
-/// Implies LLVM_HAS_RVALUE_REFERENCES, LLVM_HAS_CXX11_TYPETRAITS
-#define LLVM_HAS_CXX11_STDLIB 1
-
 /// \macro LLVM_HAS_VARIADIC_TEMPLATES
 /// \brief Does this compiler support variadic templates.
 ///
