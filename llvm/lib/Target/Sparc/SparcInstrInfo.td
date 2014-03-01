@@ -29,7 +29,8 @@ def Is64Bit : Predicate<"Subtarget.is64Bit()">;
 
 // HasV9 - This predicate is true when the target processor supports V9
 // instructions.  Note that the machine may be running in 32-bit mode.
-def HasV9   : Predicate<"Subtarget.isV9()">;
+def HasV9   : Predicate<"Subtarget.isV9()">,
+              AssemblerPredicate<"FeatureV9">;
 
 // HasNoV9 - This predicate is true when the target doesn't have V9
 // instructions.  Use of this is just a hack for the isel not having proper

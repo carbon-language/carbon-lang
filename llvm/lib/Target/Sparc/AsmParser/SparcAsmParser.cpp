@@ -419,7 +419,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return Error(ErrorLoc, "invalid operand for instruction");
   }
   case Match_MnemonicFail:
-    return Error(IDLoc, "invalid instruction");
+    return Error(IDLoc, "invalid instruction mnemonic");
   }
   return true;
 }
@@ -448,11 +448,7 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                  SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands)
 {
-  // Check if we have valid mnemonic.
-  if (!mnemonicIsValid(Name, 0)) {
-    Parser.eatToEndOfStatement();
-    return Error(NameLoc, "Unknown instruction");
-  }
+
   // First operand in MCInst is instruction mnemonic.
   Operands.push_back(SparcOperand::CreateToken(Name, NameLoc));
 
