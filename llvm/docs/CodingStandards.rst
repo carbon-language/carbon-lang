@@ -56,14 +56,13 @@ choice.
 C++ Standard Versions
 ---------------------
 
-LLVM and Clang are currently written using C++98/03 conforming code, with
-selective use of C++11 features when they are present in the toolchain.
-Projects like LLD and LLDB are already heavily using C++11 features.
-
-However, LLVM and Clange are also in the process of switching to use C++11 as
-the base line for standards conformance. Once completed, the same standard
-baseline will be used for LLVM, Clang, and LLD. LLDB is pushing forward much
-more aggressively and has their own baseline.
+LLVM, Clang, and LLD are currently written using C++11 conforming code,
+although we restrict ourselves to features which are available in the major
+toolchains supported as host compilers. The LLDB project is even more
+aggressive in the set of host compilers supported and thus uses still more
+features. Regardless of the supported features, code is expected to (when
+reasonable) be standard, portable, and modern C++11 code. We avoid unnecessary
+vendor-specific extensions, etc.
 
 C++ Standard Library
 --------------------
@@ -85,15 +84,12 @@ avoided. Also, there is much more detailed information on these subjects in the
 Supported C++11 Language and Library Features
 -------------------------------------------
 
-.. warning::
-  This section is written to reflect the expected state **AFTER** the
-  transition to C++11 is complete for the LLVM source tree.
-
 While LLVM, Clang, and LLD use C++11, not all features are available in all of
 the toolchains which we support. The set of features supported for use in LLVM
 is the intersection of those supported in MSVC 2012, GCC 4.7, and Clang 3.1.
 The ultimate definition of this set is what build bots with those respective
-toolchains accept. Don't argue with the build bots.
+toolchains accept. Don't argue with the build bots. However, we have some
+guidance below to help you know what to expect.
 
 Each toolchain provides a good reference for what it accepts:
 
@@ -158,10 +154,13 @@ being aware of:
   missing. Fortunately, they are rarely needed.
 * The locale support is incomplete.
 
-Your best option if you cannot test on a Linux system is to minimize your use
-of these features, and watch the Linux build bots to find out if your usage
-triggered a bug. For example if you hit a type trait which doesn't work, we can
-then add support to LLVM's traits header to emulate it.
+Other than these areas you should assume the standard library is available and
+working as expected until some build bot tells you otherwise. If you're in an
+uncertain area of one of the above points, but you cannot test on a Linux
+system, your best approach is to minimize your use of these features, and watch
+the Linux build bots to find out if your usage triggered a bug. For example, if
+you hit a type trait which doesn't work we can then add support to LLVM's
+traits header to emulate it.
 
 .. _the libstdc++ manual:
   http://gcc.gnu.org/onlinedocs/gcc-4.7.3/libstdc++/manual/manual/status.html#status.iso.2011
