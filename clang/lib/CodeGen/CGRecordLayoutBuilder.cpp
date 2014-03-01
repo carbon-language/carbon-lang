@@ -277,6 +277,7 @@ void CGRecordLowering::lower(bool NVBaseType) {
 }
 
 void CGRecordLowering::lowerUnion() {
+  CharUnits LayoutSize = Layout.getSize();
   llvm::Type *StorageType = 0;
   // Compute zero-initializable status.
   if (!D->field_empty() && !isZeroInitializable(*D->field_begin()))
@@ -293,7 +294,10 @@ void CGRecordLowering::lowerUnion() {
       // Skip 0 sized bitfields.
       if (Field->getBitWidthValue(Context) == 0)
         continue;
-      setBitFieldInfo(*Field, CharUnits::Zero(), getStorageType(*Field));
+      llvm::Type *FieldType = getStorageType(*Field);
+      if (LayoutSize < getSize(FieldType))
+        FieldType = getByteArrayType(LayoutSize);
+      setBitFieldInfo(*Field, CharUnits::Zero(), FieldType);
     }
     Fields[*Field] = 0;
     llvm::Type *FieldType = getStorageType(*Field);
@@ -304,7 +308,6 @@ void CGRecordLowering::lowerUnion() {
         getSize(FieldType) > getSize(StorageType)))
       StorageType = FieldType;
   }
-  CharUnits LayoutSize = Layout.getSize();
   // If we have no storage type just pad to the appropriate size and return.
   if (!StorageType)
     return appendPaddingBytes(LayoutSize);

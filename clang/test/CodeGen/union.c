@@ -44,3 +44,16 @@ typedef union T0 { unsigned int : 0; } T0;
 T0 t0;
 
 union { int large_bitfield: 31; char c } u2;
+
+struct dt_t_s {
+  union {
+    long long u : 56;
+  } __attribute__((packed));
+};
+struct {
+  struct {
+    struct {
+      struct dt_t_s t;
+    };
+  };
+} a;
