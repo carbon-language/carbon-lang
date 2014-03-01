@@ -80,6 +80,7 @@ error_code FileSystem::getBufferForFile(const llvm::Twine &Name,
 // RealFileSystem implementation
 //===-----------------------------------------------------------------------===/
 
+namespace {
 /// \brief Wrapper around a raw file descriptor.
 class RealFile : public File {
   int FD;
@@ -98,6 +99,7 @@ public:
   error_code close() LLVM_OVERRIDE;
   void setName(StringRef Name) LLVM_OVERRIDE;
 };
+} // end anonymous namespace
 RealFile::~RealFile() { close(); }
 
 ErrorOr<Status> RealFile::status() {
@@ -142,6 +144,7 @@ void RealFile::setName(StringRef Name) {
   S.setName(Name);
 }
 
+namespace {
 /// \brief The file system according to your operating system.
 class RealFileSystem : public FileSystem {
 public:
@@ -149,6 +152,7 @@ public:
   error_code openFileForRead(const Twine &Path,
                              OwningPtr<File> &Result) LLVM_OVERRIDE;
 };
+} // end anonymous namespace
 
 ErrorOr<Status> RealFileSystem::status(const Twine &Path) {
   sys::fs::file_status RealStatus;
