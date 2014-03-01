@@ -2,8 +2,6 @@
 ; (even when the output is assembly).
 ; FIXME: SPARC doesn't use the integrated assembler by default in all cases
 ; so we only test that -filetype=obj tries to parse the assembly.
-; FIXME: SPARC seems to accept directives that don't exist
-; XFAIL: *
 
 ; SKIP: not llc -march=sparc < %s > /dev/null 2> %t1
 ; SKIP: FileCheck %s < %t1
