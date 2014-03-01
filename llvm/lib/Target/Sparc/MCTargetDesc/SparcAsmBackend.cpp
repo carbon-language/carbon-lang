@@ -11,8 +11,10 @@
 #include "MCTargetDesc/SparcFixupKinds.h"
 #include "MCTargetDesc/SparcMCTargetDesc.h"
 #include "llvm/MC/MCELFObjectWriter.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
@@ -154,6 +156,8 @@ namespace {
       switch ((Sparc::Fixups)Fixup.getKind()) {
       default: break;
       case Sparc::fixup_sparc_wplt30:
+        if (Target.getSymA()->getSymbol().isTemporary())
+          return;
       case Sparc::fixup_sparc_tls_gd_hi22:
       case Sparc::fixup_sparc_tls_gd_lo10:
       case Sparc::fixup_sparc_tls_gd_add:

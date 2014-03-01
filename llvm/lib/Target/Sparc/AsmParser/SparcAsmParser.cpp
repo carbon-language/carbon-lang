@@ -12,9 +12,11 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Support/TargetRegistry.h"
 
@@ -66,7 +68,7 @@ class SparcAsmParser : public MCTargetAsmParser {
                StringRef Name);
 
   OperandMatchResultTy
-  parseSparcAsmOperand(SparcOperand *&Operand);
+  parseSparcAsmOperand(SparcOperand *&Operand, bool isCall = false);
 
   // returns true if Tok is matched to a register and returns register in RegNo.
   bool matchRegisterName(const AsmToken &Tok, unsigned &RegNo,
@@ -623,7 +625,7 @@ parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   }
 
   SparcOperand *Op = 0;
-  ResTy = parseSparcAsmOperand(Op);
+  ResTy = parseSparcAsmOperand(Op, (Mnemonic == "call"));
   if (ResTy != MatchOperand_Success || !Op)
     return MatchOperand_ParseFail;
 
@@ -634,7 +636,7 @@ parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
 }
 
 SparcAsmParser::OperandMatchResultTy
-SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op)
+SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op, bool isCall)
 {
 
   SMLoc S = Parser.getTok().getLoc();
@@ -695,6 +697,10 @@ SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op)
 
       const MCExpr *Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
                                                   getContext());
+      if (isCall &&
+          getContext().getObjectFileInfo()->getRelocM() == Reloc::PIC_)
+        Res = SparcMCExpr::Create(SparcMCExpr::VK_Sparc_WPLT30, Res,
+                                  getContext());
       Op = SparcOperand::CreateImm(Res, S, E);
     }
     break;
@@ -813,6 +819,31 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
   return false;
 }
 
+static bool hasGOTReference(const MCExpr *Expr) {
+  switch (Expr->getKind()) {
+  case MCExpr::Target:
+    if (const SparcMCExpr *SE = dyn_cast<SparcMCExpr>(Expr))
+      return hasGOTReference(SE->getSubExpr());
+    break;
+
+  case MCExpr::Constant:
+    break;
+
+  case MCExpr::Binary: {
+    const MCBinaryExpr *BE = cast<MCBinaryExpr>(Expr);
+    return hasGOTReference(BE->getLHS()) || hasGOTReference(BE->getRHS());
+  }
+
+  case MCExpr::SymbolRef: {
+    const MCSymbolRefExpr &SymRef = *cast<MCSymbolRefExpr>(Expr);
+    return (SymRef.getSymbol().getName() == "_GLOBAL_OFFSET_TABLE_");
+  }
+
+  case MCExpr::Unary:
+    return hasGOTReference(cast<MCUnaryExpr>(Expr)->getSubExpr());
+  }
+  return false;
+}
 
 bool SparcAsmParser::matchSparcAsmModifiers(const MCExpr *&EVal,
                                             SMLoc &EndLoc)
@@ -836,6 +867,23 @@ bool SparcAsmParser::matchSparcAsmModifiers(const MCExpr *&EVal,
   const MCExpr *subExpr;
   if (Parser.parseParenExpression(subExpr, EndLoc))
     return false;
+
+  bool isPIC = getContext().getObjectFileInfo()->getRelocM() == Reloc::PIC_;
+
+  switch(VK) {
+  default: break;
+  case SparcMCExpr::VK_Sparc_LO:
+    VK =  (hasGOTReference(subExpr)
+           ? SparcMCExpr::VK_Sparc_PC10
+           : (isPIC ? SparcMCExpr::VK_Sparc_GOT10 : VK));
+    break;
+  case SparcMCExpr::VK_Sparc_HI:
+    VK =  (hasGOTReference(subExpr)
+           ? SparcMCExpr::VK_Sparc_PC22
+           : (isPIC ? SparcMCExpr::VK_Sparc_GOT22 : VK));
+    break;
+  }
+
   EVal = SparcMCExpr::Create(VK, subExpr, getContext());
   return true;
 }
