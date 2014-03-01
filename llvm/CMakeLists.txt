@@ -198,7 +198,7 @@ else( MSVC )
   option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." ON)
 endif()
 
-option(LLVM_ENABLE_CXX11 "Compile with C++11 enabled." ON)
+option(LLVM_ENABLE_CXX1Y "Compile with C++1y enabled." OFF)
 option(LLVM_ENABLE_LIBCXX "Use libc++ if available." OFF)
 option(LLVM_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
 option(LLVM_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
