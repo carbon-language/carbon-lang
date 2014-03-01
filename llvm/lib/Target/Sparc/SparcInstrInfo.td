@@ -106,6 +106,7 @@ def brtarget : Operand<OtherVT> {
 
 def calltarget : Operand<i32> {
   let EncoderMethod = "getCallTargetOpValue";
+  let DecoderMethod = "DecodeCall";
 }
 
 // Operand for printing out a condition code.
@@ -577,8 +578,8 @@ let Uses = [FCC] in
 // This is the only Format 1 instruction
 let Uses = [O6],
     hasDelaySlot = 1, isCall = 1 in {
-  def CALL : InstSP<(outs), (ins calltarget:$dst, variable_ops),
-                    "call $dst", []> {
+  def CALL : InstSP<(outs), (ins calltarget:$disp, variable_ops),
+                    "call $disp", []> {
     bits<30> disp;
     let op = 1;
     let Inst{29-0} = disp;

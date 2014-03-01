@@ -190,6 +190,8 @@ static DecodeStatus DecodeStoreDFP(MCInst &Inst, unsigned insn,
                                    uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeStoreQFP(MCInst &Inst, unsigned insn,
                                    uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeCall(MCInst &Inst, unsigned insn,
+                               uint64_t Address, const void *Decoder);
 
 #include "SparcGenDisassemblerTables.inc"
 
@@ -335,4 +337,23 @@ static DecodeStatus DecodeStoreQFP(MCInst &Inst, unsigned insn,
                                    uint64_t Address, const void *Decoder) {
   return DecodeMem(Inst, insn, Address, Decoder, false,
                    DecodeQFPRegsRegisterClass);
+}
+
+static bool tryAddingSymbolicOperand(int64_t Value,  bool isBranch,
+                                     uint64_t Address, uint64_t Offset,
+                                     uint64_t Width, MCInst &MI,
+                                     const void *Decoder) {
+  const MCDisassembler *Dis = static_cast<const MCDisassembler*>(Decoder);
+  return Dis->tryAddingSymbolicOperand(MI, Value, Address, isBranch,
+                                       Offset, Width);
+}
+
+static DecodeStatus DecodeCall(MCInst &MI, unsigned insn,
+                               uint64_t Address, const void *Decoder) {
+  unsigned tgt = fieldFromInstruction(insn, 0, 30);
+  tgt <<= 2;
+  if (!tryAddingSymbolicOperand(tgt+Address, false, Address,
+                                0, 30, MI, Decoder))
+    MI.addOperand(MCOperand::CreateImm(tgt));
+  return MCDisassembler::Success;
 }
