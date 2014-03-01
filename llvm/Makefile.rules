@@ -319,8 +319,10 @@ ifeq ($(ENABLE_LIBCPP),1)
   LD.Flags +=  -stdlib=libc++
 endif
 
-ifeq ($(ENABLE_CXX11),1)
-  CXX.Flags += -std=c++11
+ifeq ($(ENABLE_CXX1Y),1)
+  CXX.Flags += -std=c++1y
+else
+	CXX.Flags += -std=c++11
 endif
 
 ifeq ($(ENABLE_WERROR),1)

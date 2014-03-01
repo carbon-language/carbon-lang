@@ -684,7 +684,7 @@ BUILD_EXEEXT
 BUILD_CXX
 CVSBUILD
 ENABLE_LIBCPP
-ENABLE_CXX11
+ENABLE_CXX1Y
 ENABLE_SPLIT_DWARF
 ENABLE_CLANG_ARCMT
 ENABLE_CLANG_STATIC_ANALYZER
@@ -1402,7 +1402,7 @@ Optional Features:
   --enable-compiler-version-checks
                           Check the version of the host compiler (default is
                           YES)
-  --enable-cxx11          Use c++11 if available (default is YES)
+  --enable-cxx1y          Use c++1y if available (default is NO)
   --enable-split-dwarf    Use split-dwarf if available (default is NO)
   --enable-clang-arcmt    Enable building of clang ARCMT (default is YES)
   --enable-clang-static-analyzer
@@ -4804,22 +4804,22 @@ echo "$as_me: error: Invalid setting for --enable-compiler-version-checks. Use \
     ;;
 esac
 
-# Check whether --enable-cxx11 was given.
-if test "${enable_cxx11+set}" = set; then
-  enableval=$enable_cxx11;
+# Check whether --enable-cxx1y was given.
+if test "${enable_cxx1y+set}" = set; then
+  enableval=$enable_cxx1y;
 else
   enableval=default
 fi
 
 case "$enableval" in
-  yes) ENABLE_CXX11=1
+  yes) ENABLE_CXX1Y=1
  ;;
-  no)  ENABLE_CXX11=0
+  no)  ENABLE_CXX1Y=0
  ;;
-  default) ENABLE_CXX11=1
+  default) ENABLE_CXX1Y=0
 ;;
-  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-cxx11. Use \"yes\" or \"no\"" >&5
-echo "$as_me: error: Invalid setting for --enable-cxx11. Use \"yes\" or \"no\"" >&2;}
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-cxx1y. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-cxx1y. Use \"yes\" or \"no\"" >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
 
@@ -20165,7 +20165,7 @@ BUILD_EXEEXT!$BUILD_EXEEXT$ac_delim
 BUILD_CXX!$BUILD_CXX$ac_delim
 CVSBUILD!$CVSBUILD$ac_delim
 ENABLE_LIBCPP!$ENABLE_LIBCPP$ac_delim
-ENABLE_CXX11!$ENABLE_CXX11$ac_delim
+ENABLE_CXX1Y!$ENABLE_CXX1Y$ac_delim
 ENABLE_SPLIT_DWARF!$ENABLE_SPLIT_DWARF$ac_delim
 ENABLE_CLANG_ARCMT!$ENABLE_CLANG_ARCMT$ac_delim
 ENABLE_CLANG_STATIC_ANALYZER!$ENABLE_CLANG_STATIC_ANALYZER$ac_delim

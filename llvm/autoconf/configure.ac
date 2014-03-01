@@ -589,16 +589,16 @@ bypass these sanity checks.])])
     ;;
 esac
 
-dnl --enable-cxx11 : check whether or not to use -std=c++11 on the command line
-AC_ARG_ENABLE(cxx11,
-              AS_HELP_STRING([--enable-cxx11],
-                             [Use c++11 if available (default is YES)]),,
+dnl --enable-cxx1y : check whether or not to use -std=c++1y on the command line
+AC_ARG_ENABLE(cxx1y,
+              AS_HELP_STRING([--enable-cxx1y],
+                             [Use c++1y if available (default is NO)]),,
                              enableval=default)
 case "$enableval" in
-  yes) AC_SUBST(ENABLE_CXX11,[1]) ;;
-  no)  AC_SUBST(ENABLE_CXX11,[0]) ;;
-  default) AC_SUBST(ENABLE_CXX11,[1]);;
-  *) AC_MSG_ERROR([Invalid setting for --enable-cxx11. Use "yes" or "no"]) ;;
+  yes) AC_SUBST(ENABLE_CXX1Y,[1]) ;;
+  no)  AC_SUBST(ENABLE_CXX1Y,[0]) ;;
+  default) AC_SUBST(ENABLE_CXX1Y,[0]);;
+  *) AC_MSG_ERROR([Invalid setting for --enable-cxx1y. Use "yes" or "no"]) ;;
 esac
 
 dnl --enable-fission : check whether or not to use -gsplit-dwarf on the command

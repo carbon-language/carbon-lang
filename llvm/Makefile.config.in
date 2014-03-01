@@ -244,8 +244,9 @@ RDYNAMIC := @RDYNAMIC@
 #ENABLE_LIBCPP = 0
 ENABLE_LIBCPP = @ENABLE_LIBCPP@
 
-# When ENABLE_CXX11 is enabled, LLVM uses c++11 mode by default to build.
-ENABLE_CXX11 = @ENABLE_CXX11@
+# When ENABLE_CXX1Y is enabled, LLVM uses c++1y mode by default to build.
+# Otherwise it uses the baseline c++11.
+ENABLE_CXX1Y = @ENABLE_CXX1Y@
 
 # When ENABLE_SPLIT_DWARF is enabled, LLVM uses -gfission to build in debug mode.
 ENABLE_SPLIT_DWARF = @ENABLE_SPLIT_DWARF@
