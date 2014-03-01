@@ -68,17 +68,6 @@
 #define LLVM_HAS_RVALUE_REFERENCE_THIS 0
 #endif
 
-/// \macro LLVM_HAS_CXX11_TYPETRAITS
-/// \brief Does the compiler have the C++11 type traits.
-///
-/// #include <type_traits>
-///
-/// * enable_if
-/// * {true,false}_type
-/// * is_constructible
-/// * etc...
-#define LLVM_HAS_CXX11_TYPETRAITS 1
-
 /// \macro LLVM_HAS_CXX11_STDLIB
 /// \brief Does the compiler have the C++11 standard library.
 ///
