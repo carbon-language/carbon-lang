@@ -75,3 +75,6 @@
 
         ! CHECK: or %g0, 255, %g3     ! encoding: [0x86,0x10,0x20,0xff]
         mov 0xff, %g3
+
+        ! CHECK: restore              ! encoding: [0x81,0xe8,0x00,0x00]
+        restore %g0, %g0, %g0

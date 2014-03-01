@@ -20,6 +20,14 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+// The generated AsmMatcher SparcGenAsmWriter uses "Sparc" as the target
+// namespace. But SPARC backend uses "SP" as its namespace.
+namespace llvm {
+namespace Sparc {
+  using namespace SP;
+}
+}
+
 #define GET_INSTRUCTION_NAME
 #define PRINT_ALIAS_INSTR
 #include "SparcGenAsmWriter.inc"

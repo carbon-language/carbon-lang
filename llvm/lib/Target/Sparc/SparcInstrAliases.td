@@ -140,3 +140,6 @@ def : InstAlias<"mov $rs2, $rd", (ORrr IntRegs:$rd, G0, IntRegs:$rs2)>;
 
 // mov simm13, rd -> or %g0, simm13, rd
 def : InstAlias<"mov $simm13, $rd", (ORri IntRegs:$rd, G0, i32imm:$simm13)>;
+
+// restore -> restore %g0, %g0, %g0
+def : InstAlias<"restore", (RESTORErr G0, G0, G0)>;

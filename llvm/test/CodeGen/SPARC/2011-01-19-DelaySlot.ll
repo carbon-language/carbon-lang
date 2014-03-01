@@ -141,7 +141,8 @@ entry:
 ;CHECK-LABEL:  restore_or_imm:
 ;CHECK:  or %o0, 20, %i0
 ;CHECK:  ret
-;CHECK:  restore %g0, %g0, %g0
+;CHECK-NOT:  restore %g0, %g0, %g0
+;CHECK:  restore
   %0 = tail call i32 @bar(i32 %a) nounwind
   %1 = or i32 %0, 20
   ret i32 %1
@@ -174,7 +175,8 @@ define i32 @restore_sethi_large(i32 %a) {
 entry:
 ;CHECK-LABEL: restore_sethi_large:
 ;CHECK: sethi  4000, %i0
-;CHECK: restore %g0, %g0, %g0
+;CHECK-NOT: restore %g0, %g0, %g0
+;CHECK:     restore
   %0 = tail call i32 @bar(i32 %a) nounwind
   %1 = icmp ne i32 %0, 0
   %2 = select i1 %1, i32 4096000, i32 0

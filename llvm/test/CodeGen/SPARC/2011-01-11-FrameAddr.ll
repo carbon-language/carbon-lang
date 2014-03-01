@@ -21,7 +21,8 @@ entry:
 ;SPARC64:       save %sp, -128, %sp
 ;SPARC64:       add  %fp, 2047, %i0
 ;SPARC64:       ret
-;SPARC64:       restore %g0, %g0, %g0
+;SPARC64-NOT:   restore %g0, %g0, %g0
+;SPARC64:       restore
 
   %0 = tail call i8* @llvm.frameaddress(i32 0)
   ret i8* %0
