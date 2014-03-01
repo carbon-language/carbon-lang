@@ -186,13 +186,11 @@ public:
   /// graph remains valid for the module. It is also relatively expensive.
   LazyCallGraph(const LazyCallGraph &G);
 
-#if LLVM_HAS_RVALUE_REFERENCES
   /// \brief Move constructor.
   ///
   /// This is a deep move. It leaves G in an undefined but destroyable state.
   /// Any other operation on G is likely to fail.
   LazyCallGraph(LazyCallGraph &&G);
-#endif
 
   iterator begin() { return iterator(*this, EntryNodes); }
   iterator end() { return iterator(*this, EntryNodes, iterator::IsAtEndT()); }
@@ -236,10 +234,8 @@ private:
   /// \brief Helper to copy a node from another graph into this one.
   Node *copyInto(const Node &OtherN);
 
-#if LLVM_HAS_RVALUE_REFERENCES
   /// \brief Helper to move a node from another graph into this one.
   Node *moveInto(Node &&OtherN);
-#endif
 };
 
 /// \brief A node in the call graph.
@@ -262,10 +258,8 @@ class LazyCallGraph::Node {
   /// \brief Constructor used when copying a node from one graph to another.
   Node(LazyCallGraph &G, const Node &OtherN);
 
-#if LLVM_HAS_RVALUE_REFERENCES
   /// \brief Constructor used when moving a node from one graph to another.
   Node(LazyCallGraph &G, Node &&OtherN);
-#endif
 
 public:
   typedef LazyCallGraph::iterator iterator;

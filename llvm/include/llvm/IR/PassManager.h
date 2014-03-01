@@ -106,7 +106,6 @@ public:
         PreservedPassIDs.erase(*I);
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   /// \brief Intersect this set with a temporary other set in place.
   ///
   /// This is a mutating operation on this preserved set, removing all
@@ -124,7 +123,6 @@ public:
       if (!Arg.PreservedPassIDs.count(*I))
         PreservedPassIDs.erase(*I);
   }
-#endif
 
   /// \brief Query whether a pass is marked as preserved by this set.
   template <typename PassT> bool preserved() const {
