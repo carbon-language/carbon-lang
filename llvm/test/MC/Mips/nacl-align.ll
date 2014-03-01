@@ -1,5 +1,5 @@
 ; RUN: llc -filetype=asm -mtriple=mipsel-none-nacl -relocation-model=static \
-; RUN:     -O3 < %s
+; RUN:     -O3 < %s | FileCheck %s
 
 
 ; This test tests that NaCl functions are bundle-aligned.
