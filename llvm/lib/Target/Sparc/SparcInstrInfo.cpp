@@ -89,6 +89,8 @@ static bool IsIntegerCC(unsigned CC)
 static SPCC::CondCodes GetOppositeBranchCondition(SPCC::CondCodes CC)
 {
   switch(CC) {
+  case SPCC::ICC_A:    return SPCC::ICC_N;
+  case SPCC::ICC_N:    return SPCC::ICC_A;
   case SPCC::ICC_NE:   return SPCC::ICC_E;
   case SPCC::ICC_E:    return SPCC::ICC_NE;
   case SPCC::ICC_G:    return SPCC::ICC_LE;
@@ -104,6 +106,8 @@ static SPCC::CondCodes GetOppositeBranchCondition(SPCC::CondCodes CC)
   case SPCC::ICC_VC:   return SPCC::ICC_VS;
   case SPCC::ICC_VS:   return SPCC::ICC_VC;
 
+  case SPCC::FCC_A:    return SPCC::FCC_N;
+  case SPCC::FCC_N:    return SPCC::FCC_A;
   case SPCC::FCC_U:    return SPCC::FCC_O;
   case SPCC::FCC_O:    return SPCC::FCC_U;
   case SPCC::FCC_G:    return SPCC::FCC_ULE;

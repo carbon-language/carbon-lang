@@ -51,11 +51,9 @@ class F2_1<bits<3> op2Val, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{29-25} = rd;
 }
 
-class F2_2<bits<3> op2Val, dag outs, dag ins, string asmstr,
+class F2_2<bits<3> op2Val, bit annul, dag outs, dag ins, string asmstr,
            list<dag> pattern> : F2<outs, ins, asmstr, pattern> {
   bits<4>   cond;
-  bit       annul = 0;     // currently unused
-
   let op2         = op2Val;
 
   let Inst{29}    = annul;

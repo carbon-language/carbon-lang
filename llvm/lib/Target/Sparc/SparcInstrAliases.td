@@ -46,6 +46,10 @@ multiclass int_cond_alias<string cond, int condVal> {
   def : InstAlias<!strconcat(!strconcat("b", cond), " $imm"),
                   (BCOND brtarget:$imm, condVal)>;
 
+  // b<cond>,a $imm
+  def : InstAlias<!strconcat(!strconcat("b", cond), ",a $imm"),
+                  (BCONDA brtarget:$imm, condVal)>;
+
   // b<cond> %xcc, $imm
   def : InstAlias<!strconcat(!strconcat("b", cond), " %xcc, $imm"),
                   (BPXCC brtarget:$imm, condVal)>, Requires<[Is64Bit]>;
@@ -75,6 +79,10 @@ multiclass fp_cond_alias<string cond, int condVal> {
   // fb<cond> $imm
   def : InstAlias<!strconcat(!strconcat("fb", cond), " $imm"),
                   (FBCOND brtarget:$imm, condVal), 0>;
+
+  // fb<cond>,a $imm
+  def : InstAlias<!strconcat(!strconcat("fb", cond), ",a $imm"),
+                  (FBCONDA brtarget:$imm, condVal), 0>;
 
   defm : cond_mov_alias<cond, condVal, " %fcc0",
                         MOVFCCrr, MOVFCCri,

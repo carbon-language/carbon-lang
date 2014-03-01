@@ -70,6 +70,9 @@ class SparcAsmParser : public MCTargetAsmParser {
   OperandMatchResultTy
   parseSparcAsmOperand(SparcOperand *&Operand, bool isCall = false);
 
+  OperandMatchResultTy
+  parseBranchModifiers(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+
   // returns true if Tok is matched to a register and returns register in RegNo.
   bool matchRegisterName(const AsmToken &Tok, unsigned &RegNo,
                          unsigned &RegKind);
@@ -454,6 +457,13 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
+    if (getLexer().is(AsmToken::Comma)) {
+      if (parseBranchModifiers(Operands) != MatchOperand_Success) {
+        SMLoc Loc = getLexer().getLoc();
+        Parser.eatToEndOfStatement();
+        return Error(Loc, "unexpected token");
+      }
+    }
     if (parseOperand(Operands, Name) != MatchOperand_Success) {
       SMLoc Loc = getLexer().getLoc();
       Parser.eatToEndOfStatement();
@@ -703,6 +713,27 @@ SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op, bool isCall)
   }
   }
   return (Op) ? MatchOperand_Success : MatchOperand_ParseFail;
+}
+
+SparcAsmParser::OperandMatchResultTy SparcAsmParser::
+parseBranchModifiers(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+
+  // parse (,a|,pn|,pt)+
+
+  while (getLexer().is(AsmToken::Comma)) {
+
+    Parser.Lex(); // Eat the comma
+
+    if (!getLexer().is(AsmToken::Identifier))
+      return MatchOperand_ParseFail;
+    StringRef modName = Parser.getTok().getString();
+    if (modName == "a" || modName == "pn" || modName == "pt") {
+      Operands.push_back(SparcOperand::CreateToken(modName,
+                                                   Parser.getTok().getLoc()));
+      Parser.Lex(); // eat the identifier.
+    }
+  }
+  return MatchOperand_Success;
 }
 
 bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,

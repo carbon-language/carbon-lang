@@ -552,7 +552,7 @@ defm RESTORE : F3_12np<"restore", 0b111101>;
 
 // unconditional branch class.
 class BranchAlways<dag ins, string asmstr, list<dag> pattern>
-  : F2_2<0b010, (outs), ins, asmstr, pattern> {
+  : F2_2<0b010, 0, (outs), ins, asmstr, pattern> {
   let isBranch     = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
@@ -564,7 +564,15 @@ let cond = 8 in
 
 // conditional branch class:
 class BranchSP<dag ins, string asmstr, list<dag> pattern>
- : F2_2<0b010, (outs), ins, asmstr, pattern> {
+ : F2_2<0b010, 0, (outs), ins, asmstr, pattern> {
+  let isBranch = 1;
+  let isTerminator = 1;
+  let hasDelaySlot = 1;
+}
+
+// conditional branch with annul class:
+class BranchSPA<dag ins, string asmstr, list<dag> pattern>
+ : F2_2<0b010, 1, (outs), ins, asmstr, pattern> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
@@ -583,26 +591,39 @@ let isTerminator = 1, isBarrier = 1,  hasDelaySlot = 1, isBranch =1,
                    [(brind ADDRri:$ptr)]>;
 }
 
-let Uses = [ICC] in
+let Uses = [ICC] in {
   def BCOND : BranchSP<(ins brtarget:$imm22, CCOp:$cond),
                          "b$cond $imm22",
                         [(SPbricc bb:$imm22, imm:$cond)]>;
+  def BCONDA : BranchSPA<(ins brtarget:$imm22, CCOp:$cond),
+                         "b$cond,a $imm22", []>;
+}
 
 // Section B.22 - Branch on Floating-point Condition Codes Instructions, p. 121
 
 // floating-point conditional branch class:
 class FPBranchSP<dag ins, string asmstr, list<dag> pattern>
- : F2_2<0b110, (outs), ins, asmstr, pattern> {
+ : F2_2<0b110, 0, (outs), ins, asmstr, pattern> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
 }
 
-let Uses = [FCC] in
+// floating-point conditional branch with annul class:
+class FPBranchSPA<dag ins, string asmstr, list<dag> pattern>
+ : F2_2<0b110, 1, (outs), ins, asmstr, pattern> {
+  let isBranch = 1;
+  let isTerminator = 1;
+  let hasDelaySlot = 1;
+}
+
+let Uses = [FCC] in {
   def FBCOND  : FPBranchSP<(ins brtarget:$imm22, CCOp:$cond),
                               "fb$cond $imm22",
                               [(SPbrfcc bb:$imm22, imm:$cond)]>;
-
+  def FBCONDA : FPBranchSPA<(ins brtarget:$imm22, CCOp:$cond),
+                             "fb$cond,a $imm22", []>;
+}
 
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
