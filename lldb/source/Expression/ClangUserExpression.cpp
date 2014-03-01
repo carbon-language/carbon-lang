@@ -763,6 +763,12 @@ ClangUserExpression::Execute (Stream &error_stream,
     // expression, it's quite convenient to have these logs come out with the STEP log as well.
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
+    if (!exe_ctx.HasThreadScope())
+    {
+        error_stream.Printf("ClangUserExpression::Execute called with no thread selected.");
+        return eExecutionSetupError;
+    }
+        
     if (m_jit_start_addr != LLDB_INVALID_ADDRESS || m_can_interpret)
     {
         lldb::addr_t struct_address = LLDB_INVALID_ADDRESS;
