@@ -56,15 +56,8 @@
 #define LLVM_MSC_PREREQ(version) 0
 #endif
 
-/// \brief Does the compiler support r-value references?
-/// This implies that <utility> provides the one-argument std::move;  it
-/// does not imply the existence of any other C++ library features.
-#if __has_feature(cxx_rvalue_references) || \
-    defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1600)
+/// \brief We require the host compiler to support r-value references.
 #define LLVM_HAS_RVALUE_REFERENCES 1
-#else
-#define LLVM_HAS_RVALUE_REFERENCES 0
-#endif
 
 /// \brief Does the compiler support r-value reference *this?
 ///
