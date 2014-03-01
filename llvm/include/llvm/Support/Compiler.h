@@ -56,9 +56,6 @@
 #define LLVM_MSC_PREREQ(version) 0
 #endif
 
-/// \brief We require the host compiler to support r-value references.
-#define LLVM_HAS_RVALUE_REFERENCES 1
-
 /// \brief Does the compiler support r-value reference *this?
 ///
 /// Sadly, this is separate from just r-value reference support because GCC
