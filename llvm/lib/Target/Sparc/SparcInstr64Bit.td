@@ -297,14 +297,6 @@ def : Pat<(store (i64 0), ADDRri:$dst), (STXri ADDRri:$dst, (i64 G0))>;
 // 64-bit Conditionals.
 //===----------------------------------------------------------------------===//
 
-// Conditional branch class on %xcc:
-class XBranchSP<dag ins, string asmstr, list<dag> pattern>
-  : F2_3<0b001, 0b10, (outs), ins, asmstr, pattern> {
-  let isBranch = 1;
-  let isTerminator = 1;
-  let hasDelaySlot = 1;
-}
-
 //
 // Flag-setting instructions like subcc and addcc set both icc and xcc flags.
 // The icc flags correspond to the 32-bit result, and the xcc are for the
@@ -315,10 +307,8 @@ class XBranchSP<dag ins, string asmstr, list<dag> pattern>
 
 let Predicates = [Is64Bit] in {
 
-let Uses = [ICC] in
-def BPXCC : XBranchSP<(ins brtarget:$imm19, CCOp:$cond),
-                     "b$cond %xcc, $imm19",
-                     [(SPbrxcc bb:$imm19, imm:$cond)]>;
+let Uses = [ICC], cc = 0b10 in
+  defm BPX : IPredBranch<"%xcc", [(SPbrxcc bb:$imm19, imm:$cond)]>;
 
 // Conditional moves on %xcc.
 let Uses = [ICC], Constraints = "$f = $rd" in {

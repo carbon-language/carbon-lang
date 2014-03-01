@@ -118,6 +118,10 @@ void SparcInstPrinter::printCCOperand(const MCInst *MI, int opNum,
   default: break;
   case SP::FBCOND:
   case SP::FBCONDA:
+  case SP::BPFCC:
+  case SP::BPFCCA:
+  case SP::BPFCCNT:
+  case SP::BPFCCANT:
   case SP::MOVFCCrr:
   case SP::MOVFCCri:
   case SP::FMOVS_FCC:

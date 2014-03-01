@@ -50,9 +50,54 @@ multiclass int_cond_alias<string cond, int condVal> {
   def : InstAlias<!strconcat(!strconcat("b", cond), ",a $imm"),
                   (BCONDA brtarget:$imm, condVal)>;
 
+  // b<cond> %icc, $imm
+  def : InstAlias<!strconcat(!strconcat("b", cond), " %icc, $imm"),
+                  (BPICC brtarget:$imm, condVal)>, Requires<[HasV9]>;
+
+  // b<cond>,pt %icc, $imm
+  def : InstAlias<!strconcat(!strconcat("b", cond), ",pt %icc, $imm"),
+                  (BPICC brtarget:$imm, condVal)>, Requires<[HasV9]>;
+
+  // b<cond>,a %icc, $imm
+  def : InstAlias<!strconcat(!strconcat("b", cond), ",a %icc, $imm"),
+                  (BPICCA brtarget:$imm, condVal)>, Requires<[HasV9]>;
+
+  // b<cond>,a,pt %icc, $imm
+  def : InstAlias<!strconcat(!strconcat("b", cond), ",a,pt %icc, $imm"),
+                  (BPICCA brtarget:$imm, condVal)>, Requires<[HasV9]>;
+
+  // b<cond>,pn %icc, $imm
+  def : InstAlias<!strconcat(!strconcat("b", cond), ",pn %icc, $imm"),
+                  (BPICCNT brtarget:$imm, condVal)>, Requires<[HasV9]>;
+
+  // b<cond>,a,pn %icc, $imm
+  def : InstAlias<!strconcat(!strconcat("b", cond), ",a,pn %icc, $imm"),
+                  (BPICCANT brtarget:$imm, condVal)>, Requires<[HasV9]>;
+
   // b<cond> %xcc, $imm
   def : InstAlias<!strconcat(!strconcat("b", cond), " %xcc, $imm"),
                   (BPXCC brtarget:$imm, condVal)>, Requires<[Is64Bit]>;
+
+  // b<cond>,pt %xcc, $imm
+  def : InstAlias<!strconcat(!strconcat("b", cond), ",pt %xcc, $imm"),
+                  (BPXCC brtarget:$imm, condVal)>, Requires<[Is64Bit]>;
+
+  // b<cond>,a %xcc, $imm
+  def : InstAlias<!strconcat(!strconcat("b", cond), ",a %xcc, $imm"),
+                  (BPXCCA brtarget:$imm, condVal)>, Requires<[Is64Bit]>;
+
+  // b<cond>,a,pt %xcc, $imm
+  def : InstAlias<!strconcat(!strconcat("b", cond), ",a,pt %xcc, $imm"),
+                  (BPXCCA brtarget:$imm, condVal)>, Requires<[Is64Bit]>;
+
+  // b<cond>,pn %xcc, $imm
+  def : InstAlias<!strconcat(!strconcat("b", cond), ",pn %xcc, $imm"),
+                  (BPXCCNT brtarget:$imm, condVal)>, Requires<[Is64Bit]>;
+
+  // b<cond>,a,pn %xcc, $imm
+  def : InstAlias<!strconcat(!strconcat("b", cond), ",a,pn %xcc, $imm"),
+                  (BPXCCANT brtarget:$imm, condVal)>, Requires<[Is64Bit]>;
+
 
   defm : cond_mov_alias<cond, condVal, " %icc",
                             MOVICCrr, MOVICCri,
@@ -84,6 +129,30 @@ multiclass fp_cond_alias<string cond, int condVal> {
   def : InstAlias<!strconcat(!strconcat("fb", cond), ",a $imm"),
                   (FBCONDA brtarget:$imm, condVal), 0>;
 
+  // fb<cond> %fcc0, $imm
+  def : InstAlias<!strconcat(!strconcat("fb", cond), " %fcc0, $imm"),
+                  (BPFCC brtarget:$imm, condVal)>, Requires<[HasV9]>;
+
+  // fb<cond>,pt %fcc0, $imm
+  def : InstAlias<!strconcat(!strconcat("fb", cond), ",pt %fcc0, $imm"),
+                  (BPFCC brtarget:$imm, condVal)>, Requires<[HasV9]>;
+
+  // fb<cond>,a %fcc0, $imm
+  def : InstAlias<!strconcat(!strconcat("fb", cond), ",a %fcc0, $imm"),
+                  (BPFCCA brtarget:$imm, condVal)>, Requires<[HasV9]>;
+
+  // fb<cond>,a,pt %fcc0, $imm
+  def : InstAlias<!strconcat(!strconcat("fb", cond), ",a,pt %fcc0, $imm"),
+                  (BPFCCA brtarget:$imm, condVal)>, Requires<[HasV9]>;
+
+  // fb<cond>,pn %fcc0, $imm
+  def : InstAlias<!strconcat(!strconcat("fb", cond), ",pn %fcc0, $imm"),
+                  (BPFCCNT brtarget:$imm, condVal)>, Requires<[HasV9]>;
+
+  // fb<cond>,a,pn %fcc0, $imm
+  def : InstAlias<!strconcat(!strconcat("fb", cond), ",a,pn %fcc0, $imm"),
+                  (BPFCCANT brtarget:$imm, condVal)>, Requires<[HasV9]>;
+
   defm : cond_mov_alias<cond, condVal, " %fcc0",
                         MOVFCCrr, MOVFCCri,
                         FMOVS_FCC, FMOVD_FCC>, Requires<[HasV9]>;
@@ -111,6 +180,8 @@ defm : int_cond_alias<"neg",  0b0110>;
 defm : int_cond_alias<"vc",   0b1111>;
 defm : int_cond_alias<"vs",   0b0111>;
 
+defm : fp_cond_alias<"a",     0b0000>;
+defm : fp_cond_alias<"n",     0b1000>;
 defm : fp_cond_alias<"u",     0b0111>;
 defm : fp_cond_alias<"g",     0b0110>;
 defm : fp_cond_alias<"ug",    0b0101>;

@@ -76,6 +76,8 @@ private:
                                 unsigned) const;
   unsigned getBranchTargetOpValue(const MachineInstr &MI,
                                   unsigned) const;
+  unsigned getBranchPredTargetOpValue(const MachineInstr &MI,
+                                      unsigned) const;
 
   void emitWord(unsigned Word);
 
@@ -194,6 +196,12 @@ unsigned SparcCodeEmitter::getCallTargetOpValue(const MachineInstr &MI,
 
 unsigned SparcCodeEmitter::getBranchTargetOpValue(const MachineInstr &MI,
                                                   unsigned opIdx) const {
+  const MachineOperand MO = MI.getOperand(opIdx);
+  return getMachineOpValue(MI, MO);
+}
+
+unsigned SparcCodeEmitter::getBranchPredTargetOpValue(const MachineInstr &MI,
+                                                      unsigned opIdx) const {
   const MachineOperand MO = MI.getOperand(opIdx);
   return getMachineOpValue(MI, MO);
 }

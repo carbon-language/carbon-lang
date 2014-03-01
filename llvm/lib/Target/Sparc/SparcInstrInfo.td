@@ -105,6 +105,10 @@ def brtarget : Operand<OtherVT> {
   let EncoderMethod = "getBranchTargetOpValue";
 }
 
+def bprtarget : Operand<OtherVT> {
+  let EncoderMethod = "getBranchPredTargetOpValue";
+}
+
 def calltarget : Operand<i32> {
   let EncoderMethod = "getCallTargetOpValue";
   let DecoderMethod = "DecodeCall";
@@ -562,21 +566,35 @@ class BranchAlways<dag ins, string asmstr, list<dag> pattern>
 let cond = 8 in
   def BA : BranchAlways<(ins brtarget:$imm22), "ba $imm22", [(br bb:$imm22)]>;
 
+
+let isBranch = 1, isTerminator = 1, hasDelaySlot = 1 in {
+
 // conditional branch class:
 class BranchSP<dag ins, string asmstr, list<dag> pattern>
- : F2_2<0b010, 0, (outs), ins, asmstr, pattern> {
-  let isBranch = 1;
-  let isTerminator = 1;
-  let hasDelaySlot = 1;
-}
+ : F2_2<0b010, 0, (outs), ins, asmstr, pattern>;
 
 // conditional branch with annul class:
 class BranchSPA<dag ins, string asmstr, list<dag> pattern>
- : F2_2<0b010, 1, (outs), ins, asmstr, pattern> {
-  let isBranch = 1;
-  let isTerminator = 1;
-  let hasDelaySlot = 1;
+ : F2_2<0b010, 1, (outs), ins, asmstr, pattern>;
+
+// Conditional branch class on %icc|%xcc with predication:
+multiclass IPredBranch<string regstr, list<dag> CCPattern> {
+  def CC    : F2_3<0b001, 0, 1, (outs), (ins bprtarget:$imm19, CCOp:$cond),
+                  !strconcat("b$cond ", !strconcat(regstr, ", $imm19")),
+                   CCPattern>;
+  def CCA   : F2_3<0b001, 1, 1, (outs), (ins bprtarget:$imm19, CCOp:$cond),
+                  !strconcat("b$cond,a ", !strconcat(regstr, ", $imm19")),
+                   []>;
+  def CCNT  : F2_3<0b001, 0, 0, (outs), (ins bprtarget:$imm19, CCOp:$cond),
+                   !strconcat("b$cond,pn ", !strconcat(regstr, ", $imm19")),
+                   []>;
+  def CCANT : F2_3<0b001, 1, 0, (outs), (ins bprtarget:$imm19, CCOp:$cond),
+                   !strconcat("b$cond,a,pn ", !strconcat(regstr, ", $imm19")),
+                   []>;
 }
+
+} // let isBranch = 1, isTerminator = 1, hasDelaySlot = 1
+
 
 // Indirect branch instructions.
 let isTerminator = 1, isBarrier = 1,  hasDelaySlot = 1, isBranch =1,
@@ -597,25 +615,35 @@ let Uses = [ICC] in {
                         [(SPbricc bb:$imm22, imm:$cond)]>;
   def BCONDA : BranchSPA<(ins brtarget:$imm22, CCOp:$cond),
                          "b$cond,a $imm22", []>;
+
+  let Predicates = [HasV9], cc = 0b00 in
+    defm BPI : IPredBranch<"%icc", []>;
 }
 
 // Section B.22 - Branch on Floating-point Condition Codes Instructions, p. 121
 
+let isBranch = 1, isTerminator = 1, hasDelaySlot = 1 in {
+
 // floating-point conditional branch class:
 class FPBranchSP<dag ins, string asmstr, list<dag> pattern>
- : F2_2<0b110, 0, (outs), ins, asmstr, pattern> {
-  let isBranch = 1;
-  let isTerminator = 1;
-  let hasDelaySlot = 1;
-}
+ : F2_2<0b110, 0, (outs), ins, asmstr, pattern>;
 
 // floating-point conditional branch with annul class:
 class FPBranchSPA<dag ins, string asmstr, list<dag> pattern>
- : F2_2<0b110, 1, (outs), ins, asmstr, pattern> {
-  let isBranch = 1;
-  let isTerminator = 1;
-  let hasDelaySlot = 1;
+ : F2_2<0b110, 1, (outs), ins, asmstr, pattern>;
+
+// Conditional branch class on %fcc0-%fcc3 with predication:
+multiclass FPredBranch {
+  def CC    : F2_3<0b101, 0, 1, (outs), (ins bprtarget:$imm19, CCOp:$cond),
+                  "fb$cond %fcc0, $imm19", []>;
+  def CCA   : F2_3<0b101, 1, 1, (outs), (ins bprtarget:$imm19, CCOp:$cond),
+                  "fb$cond,a %fcc0, $imm19", []>;
+  def CCNT  : F2_3<0b101, 0, 0, (outs), (ins bprtarget:$imm19, CCOp:$cond),
+                  "fb$cond,pn %fcc0, $imm19", []>;
+  def CCANT : F2_3<0b101, 1, 0, (outs), (ins bprtarget:$imm19, CCOp:$cond),
+                  "fb$cond,a,pn %fcc0, $imm19", []>;
 }
+} // let isBranch = 1, isTerminator = 1, hasDelaySlot = 1
 
 let Uses = [FCC] in {
   def FBCOND  : FPBranchSP<(ins brtarget:$imm22, CCOp:$cond),
@@ -623,6 +651,9 @@ let Uses = [FCC] in {
                               [(SPbrfcc bb:$imm22, imm:$cond)]>;
   def FBCONDA : FPBranchSPA<(ins brtarget:$imm22, CCOp:$cond),
                              "fb$cond,a $imm22", []>;
+
+  let Predicates = [HasV9], cc = 0b00 in
+    defm BPF : FPredBranch;
 }
 
 // Section B.24 - Call and Link Instruction, p. 125
