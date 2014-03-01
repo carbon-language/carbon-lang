@@ -2725,8 +2725,7 @@ bool CodeGenPrepare::OptimizeSelectInst(SelectInst *SI) {
   return true;
 }
 
-
-bool isBroadcastShuffle(ShuffleVectorInst *SVI) {
+static bool isBroadcastShuffle(ShuffleVectorInst *SVI) {
   SmallVector<int, 16> Mask(SVI->getShuffleMask());
   int SplatElem = -1;
   for (unsigned i = 0; i < Mask.size(); ++i) {
