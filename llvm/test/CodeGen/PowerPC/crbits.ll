@@ -124,9 +124,37 @@ entry:
 
 ; CHECK-LABEL: @test7
 ; CHECK: andi. {{[0-9]+}}, 3, 1
-; CHECK: isel [[REG1:[0-9]+]], 4, 5, 1
-; CHECK: extsw 3, [[REG1]]
+; CHECK: isel 3, 4, 5, 1
 ; CHECK: blr
+}
+
+define signext i32 @exttest7(i32 signext %a) #0 {
+entry:
+  %cmp = icmp eq i32 %a, 5
+  %cond = select i1 %cmp, i32 7, i32 8
+  ret i32 %cond
+
+; CHECK-LABEL: @exttest7
+; CHECK-DAG: cmplwi {{[0-9]+}}, 3, 5
+; CHECK-DAG: li [[REG1:[0-9]+]], 8
+; CHECK-DAG: li [[REG2:[0-9]+]], 7
+; CHECK: isel 3, [[REG2]], [[REG1]],
+; CHECK-NOT: rldicl
+; CHECK: blr
+}
+
+define zeroext i32 @exttest8() #0 {
+entry:
+  %v0 = load i64* undef, align 8
+  %sub = sub i64 80, %v0
+  %div = lshr i64 %sub, 1
+  %conv13 = trunc i64 %div to i32
+  %cmp14 = icmp ugt i32 %conv13, 80
+  %.conv13 = select i1 %cmp14, i32 0, i32 %conv13
+  ret i32 %.conv13
+; CHECK-LABEL: @exttest8
+; This is a don't-crash test: %conv13 is both one of the possible select output
+; values and also an input to the conditional feeding it.
 }
 
 ; Function Attrs: nounwind readnone
