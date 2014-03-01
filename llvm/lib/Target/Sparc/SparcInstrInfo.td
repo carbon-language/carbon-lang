@@ -466,6 +466,15 @@ def XNORri  : F3_2<2, 0b000111,
                    (outs IntRegs:$rd), (ins IntRegs:$rs1, simm13Op:$simm13),
                    "xnor $rs1, $simm13, $rd", []>;
 
+let Defs = [ICC] in {
+  defm ANDCC  : F3_12np<"andcc",  0b010001>;
+  defm ANDNCC : F3_12np<"andncc", 0b010101>;
+  defm ORCC   : F3_12np<"orcc",   0b010010>;
+  defm ORNCC  : F3_12np<"orncc",  0b010110>;
+  defm XORCC  : F3_12np<"xorcc",  0b010011>;
+  defm XNORCC : F3_12np<"xnorcc", 0b010111>;
+}
+
 // Section B.12 - Shift Instructions, p. 107
 defm SLL : F3_12<"sll", 0b100101, shl, IntRegs, i32, simm13Op>;
 defm SRL : F3_12<"srl", 0b100110, srl, IntRegs, i32, simm13Op>;
@@ -484,6 +493,9 @@ let Predicates = [Is32Bit], isCodeGenOnly = 1 in
 let Defs = [ICC] in
   defm ADDCC  : F3_12<"addcc", 0b010000, addc, IntRegs, i32, simm13Op>;
 
+let Uses = [ICC] in
+  defm ADDC   : F3_12np<"addx", 0b001000>;
+
 let Uses = [ICC], Defs = [ICC] in
   defm ADDE  : F3_12<"addxcc", 0b011000, adde, IntRegs, i32, simm13Op>;
 
@@ -494,6 +506,9 @@ let Uses = [ICC], Defs = [ICC] in
 
 let Defs = [ICC] in
   defm SUBCC  : F3_12  <"subcc", 0b010100, subc, IntRegs, i32, simm13Op>;
+
+let Uses = [ICC] in
+  defm SUBC   : F3_12np <"subx", 0b001100>;
 
 let Defs = [ICC], rd = 0 in {
   def CMPrr   : F3_1<2, 0b010100,
@@ -512,10 +527,20 @@ let Defs = [Y] in {
   defm SMUL : F3_12  <"smul", 0b001011, mul, IntRegs, i32, simm13Op>;
 }
 
+let Defs = [Y, ICC] in {
+  defm UMULCC : F3_12np<"umulcc", 0b011010>;
+  defm SMULCC : F3_12np<"smulcc", 0b011011>;
+}
+
 // Section B.19 - Divide Instructions, p. 115
 let Defs = [Y] in {
   defm UDIV : F3_12np<"udiv", 0b001110>;
   defm SDIV : F3_12np<"sdiv", 0b001111>;
+}
+
+let Defs = [Y, ICC] in {
+  defm UDIVCC : F3_12np<"udivcc", 0b011110>;
+  defm SDIVCC : F3_12np<"sdivcc", 0b011111>;
 }
 
 // Section B.20 - SAVE and RESTORE, p. 117
@@ -971,6 +996,16 @@ let Predicates = [HasV9], Constraints = "$swap = $rd" in
                  "cas [$rs1], $rs2, $rd",
                  [(set i32:$rd,
                      (atomic_cmp_swap iPTR:$rs1, i32:$rs2, i32:$swap))]>;
+
+let Defs = [ICC] in {
+defm TADDCC   : F3_12np<"taddcc",   0b100000>;
+defm TSUBCC   : F3_12np<"tsubcc",   0b100001>;
+
+let hasSideEffects = 1 in {
+  defm TADDCCTV : F3_12np<"taddcctv", 0b100010>;
+  defm TSUBCCTV : F3_12np<"tsubcctv", 0b100011>;
+}
+}
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

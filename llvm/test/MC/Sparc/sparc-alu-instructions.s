@@ -78,3 +78,51 @@
 
         ! CHECK: restore              ! encoding: [0x81,0xe8,0x00,0x00]
         restore %g0, %g0, %g0
+
+        ! CHECK: addx %g2, %g1, %g3              ! encoding: [0x86,0x40,0x80,0x01]
+        addx %g2, %g1, %g3
+
+        ! CHECK:  subx %g2, %g1, %g3              ! encoding: [0x86,0x60,0x80,0x01]
+        subx %g2, %g1, %g3
+
+        ! CHECK:  umulcc %g2, %g1, %g3            ! encoding: [0x86,0xd0,0x80,0x01]
+        umulcc %g2, %g1, %g3
+
+        ! CHECK:  smulcc %g2, %g1, %g3            ! encoding: [0x86,0xd8,0x80,0x01]
+        smulcc %g2, %g1, %g3
+
+        ! CHECK:  udivcc %g2, %g1, %g3            ! encoding: [0x86,0xf0,0x80,0x01]
+        udivcc %g2, %g1, %g3
+
+        ! CHECK:  sdivcc %g2, %g1, %g3            ! encoding: [0x86,0xf8,0x80,0x01]
+        sdivcc %g2, %g1, %g3
+
+        ! CHECK:  andcc %g2, %g1, %g3             ! encoding: [0x86,0x88,0x80,0x01]
+        andcc %g2, %g1, %g3
+
+        ! CHECK:  andncc %g2, %g1, %g3            ! encoding: [0x86,0xa8,0x80,0x01]
+        andncc %g2, %g1, %g3
+
+        ! CHECK:  orcc %g2, %g1, %g3              ! encoding: [0x86,0x90,0x80,0x01]
+        orcc %g2, %g1, %g3
+
+        ! CHECK:  orncc %g2, %g1, %g3             ! encoding: [0x86,0xb0,0x80,0x01]
+        orncc %g2, %g1, %g3
+
+        ! CHECK:  xorcc %g2, %g1, %g3             ! encoding: [0x86,0x98,0x80,0x01]
+        xorcc %g2, %g1, %g3
+
+        ! CHECK:  xnorcc %g2, %g1, %g3            ! encoding: [0x86,0xb8,0x80,0x01]
+        xnorcc %g2, %g1, %g3
+
+        ! CHECK:  taddcc %g2, %g1, %g3            ! encoding: [0x87,0x00,0x80,0x01]
+        taddcc %g2, %g1, %g3
+
+        ! CHECK:  tsubcc %g2, %g1, %g3            ! encoding: [0x87,0x08,0x80,0x01]
+        tsubcc %g2, %g1, %g3
+
+        ! CHECK:  taddcctv %g2, %g1, %g3          ! encoding: [0x87,0x10,0x80,0x01]
+        taddcctv %g2, %g1, %g3
+
+        ! CHECK:  tsubcctv %g2, %g1, %g3          ! encoding: [0x87,0x18,0x80,0x01]
+        tsubcctv %g2, %g1, %g3
