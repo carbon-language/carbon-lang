@@ -40,7 +40,7 @@ foo:
         .cfi_endproc
 
         .type   AGlobalVar,@object      ! @AGlobalVar
-        .section        .bss
+        .section        .bss,#alloc,#write
         .globl  AGlobalVar
         .align  8
 AGlobalVar:

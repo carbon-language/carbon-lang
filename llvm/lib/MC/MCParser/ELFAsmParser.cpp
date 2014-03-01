@@ -151,6 +151,7 @@ public:
 private:
   bool ParseSectionName(StringRef &SectionName);
   bool ParseSectionArguments(bool IsPush);
+  unsigned parseSunStyleSectionFlags();
 };
 
 }
@@ -322,6 +323,36 @@ static unsigned parseSectionFlags(StringRef flagsStr, bool *UseLastGroup) {
   return flags;
 }
 
+unsigned ELFAsmParser::parseSunStyleSectionFlags() {
+  unsigned flags = 0;
+  while (getLexer().is(AsmToken::Hash)) {
+    Lex(); // Eat the #.
+
+    if (!getLexer().is(AsmToken::Identifier))
+      return -1U;
+
+    StringRef flagId = getTok().getIdentifier();
+    if (flagId == "alloc")
+      flags |= ELF::SHF_ALLOC;
+    else if (flagId == "execinstr")
+      flags |= ELF::SHF_EXECINSTR;
+    else if (flagId == "write")
+      flags |= ELF::SHF_WRITE;
+    else if (flagId == "tls")
+      flags |= ELF::SHF_TLS;
+    else
+      return -1U;
+
+    Lex(); // Eat the flag.
+
+    if (!getLexer().is(AsmToken::Comma))
+        break;
+    Lex(); // Eat the comma.
+  }
+  return flags;
+}
+
+
 bool ELFAsmParser::ParseDirectivePushSection(StringRef s, SMLoc loc) {
   getStreamer().PushSection();
 
@@ -374,14 +405,20 @@ bool ELFAsmParser::ParseSectionArguments(bool IsPush) {
         goto EndStmt;
       Lex();
     }
-   
-    if (getLexer().isNot(AsmToken::String))
-      return TokError("expected string in directive");
 
-    StringRef FlagsStr = getTok().getStringContents();
-    Lex();
+    unsigned extraFlags;
 
-    unsigned extraFlags = parseSectionFlags(FlagsStr, &UseLastGroup);
+    if (getLexer().isNot(AsmToken::String)) {
+      if (!getContext().getAsmInfo()->usesSunStyleELFSectionSwitchSyntax()
+          || getLexer().isNot(AsmToken::Hash))
+        return TokError("expected string in directive");
+      extraFlags = parseSunStyleSectionFlags();
+    } else {
+      StringRef FlagsStr = getTok().getStringContents();
+      Lex();
+      extraFlags = parseSectionFlags(FlagsStr, &UseLastGroup);
+    }
+
     if (extraFlags == -1U)
       return TokError("unknown flag");
     Flags |= extraFlags;
