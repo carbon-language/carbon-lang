@@ -42,13 +42,8 @@ namespace llvm {
 class ConstantRange {
   APInt Lower, Upper;
 
-#if LLVM_HAS_RVALUE_REFERENCES
   // If we have move semantics, pass APInts by value and move them into place.
   typedef APInt APIntMoveTy;
-#else
-  // Otherwise pass by const ref to save one copy.
-  typedef const APInt &APIntMoveTy;
-#endif
 
 public:
   /// Initialize a full (the default) or empty set for the specified bit width.

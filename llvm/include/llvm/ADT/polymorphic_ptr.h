@@ -40,9 +40,7 @@ template <typename T> class polymorphic_ptr {
 public:
   polymorphic_ptr(T *ptr = 0) : ptr(ptr) {}
   polymorphic_ptr(const polymorphic_ptr &arg) : ptr(arg ? arg->clone() : 0) {}
-#if LLVM_HAS_RVALUE_REFERENCES
   polymorphic_ptr(polymorphic_ptr &&arg) : ptr(arg.take()) {}
-#endif
   ~polymorphic_ptr() { delete ptr; }
 
   polymorphic_ptr &operator=(polymorphic_ptr arg) {

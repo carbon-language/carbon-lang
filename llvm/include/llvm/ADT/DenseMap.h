@@ -161,7 +161,6 @@ public:
     return std::make_pair(iterator(TheBucket, getBucketsEnd(), true), true);
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   // Inserts key,value pair into the map if the key isn't already in the map.
   // If the key is already in the map, it returns false and doesn't update the
   // value.
@@ -177,8 +176,7 @@ public:
                                  TheBucket);
     return std::make_pair(iterator(TheBucket, getBucketsEnd(), true), true);
   }
-#endif
-  
+
   /// insert - Range insertion of pairs.
   template<typename InputIt>
   void insert(InputIt I, InputIt E) {
@@ -218,7 +216,6 @@ public:
     return FindAndConstruct(Key).second;
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   value_type& FindAndConstruct(KeyT &&Key) {
     BucketT *TheBucket;
     if (LookupBucketFor(Key, TheBucket))
@@ -230,7 +227,6 @@ public:
   ValueT &operator[](KeyT &&Key) {
     return FindAndConstruct(std::move(Key)).second;
   }
-#endif
 
   /// isPointerIntoBucketsArray - Return true if the specified pointer points
   /// somewhere into the DenseMap's array of buckets (i.e. either to a key or
@@ -403,7 +399,6 @@ private:
     return TheBucket;
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   BucketT *InsertIntoBucket(const KeyT &Key, ValueT &&Value,
                             BucketT *TheBucket) {
     TheBucket = InsertIntoBucketImpl(Key, TheBucket);
@@ -420,7 +415,6 @@ private:
     new (&TheBucket->second) ValueT(std::move(Value));
     return TheBucket;
   }
-#endif
 
   BucketT *InsertIntoBucketImpl(const KeyT &Key, BucketT *TheBucket) {
     // If the load of the hash table is more than 3/4, or if fewer than 1/8 of
@@ -555,12 +549,10 @@ public:
     copyFrom(other);
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   DenseMap(DenseMap &&other) : BaseT() {
     init(0);
     swap(other);
   }
-#endif
 
   template<typename InputIt>
   DenseMap(const InputIt &I, const InputIt &E) {
@@ -585,7 +577,6 @@ public:
     return *this;
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   DenseMap& operator=(DenseMap &&other) {
     this->destroyAll();
     operator delete(Buckets);
@@ -593,7 +584,6 @@ public:
     swap(other);
     return *this;
   }
-#endif
 
   void copyFrom(const DenseMap& other) {
     this->destroyAll();
@@ -719,12 +709,10 @@ public:
     copyFrom(other);
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   SmallDenseMap(SmallDenseMap &&other) : BaseT() {
     init(0);
     swap(other);
   }
-#endif
 
   template<typename InputIt>
   SmallDenseMap(const InputIt &I, const InputIt &E) {
@@ -814,7 +802,6 @@ public:
     return *this;
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   SmallDenseMap& operator=(SmallDenseMap &&other) {
     this->destroyAll();
     deallocateBuckets();
@@ -822,7 +809,6 @@ public:
     swap(other);
     return *this;
   }
-#endif
 
   void copyFrom(const SmallDenseMap& other) {
     this->destroyAll();

@@ -20,10 +20,7 @@
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Compiler.h"
 #include <cassert>
-
-#if LLVM_HAS_RVALUE_REFERENCES
 #include <utility>
-#endif
 
 namespace llvm {
 
@@ -42,7 +39,6 @@ public:
       new (storage.buffer) T(*O);
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   Optional(T &&y) : hasVal(true) {
     new (storage.buffer) T(std::forward<T>(y));
   }
@@ -70,7 +66,6 @@ public:
     }
     return *this;
   }
-#endif
 
   static inline Optional create(const T* y) {
     return y ? Optional(*y) : Optional();

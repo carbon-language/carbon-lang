@@ -659,7 +659,6 @@ mapped_file_region::~mapped_file_region() {
     ::UnmapViewOfFile(Mapping);
 }
 
-#if LLVM_HAS_RVALUE_REFERENCES
 mapped_file_region::mapped_file_region(mapped_file_region &&other)
   : Mode(other.Mode)
   , Size(other.Size)
@@ -671,7 +670,6 @@ mapped_file_region::mapped_file_region(mapped_file_region &&other)
   other.FileHandle = INVALID_HANDLE_VALUE;
   other.FileDescriptor = 0;
 }
-#endif
 
 mapped_file_region::mapmode mapped_file_region::flags() const {
   assert(Mapping && "Mapping failed but used anyway!");

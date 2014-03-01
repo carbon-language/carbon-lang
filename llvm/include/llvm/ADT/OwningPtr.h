@@ -32,14 +32,12 @@ class OwningPtr {
 public:
   explicit OwningPtr(T *P = 0) : Ptr(P) {}
 
-#if LLVM_HAS_RVALUE_REFERENCES
   OwningPtr(OwningPtr &&Other) : Ptr(Other.take()) {}
 
   OwningPtr &operator=(OwningPtr &&Other) {
     reset(Other.take());
     return *this;
   }
-#endif
 
   ~OwningPtr() {
     delete Ptr;
@@ -96,14 +94,12 @@ class OwningArrayPtr {
 public:
   explicit OwningArrayPtr(T *P = 0) : Ptr(P) {}
 
-#if LLVM_HAS_RVALUE_REFERENCES
   OwningArrayPtr(OwningArrayPtr &&Other) : Ptr(Other.take()) {}
 
   OwningArrayPtr &operator=(OwningArrayPtr &&Other) {
     reset(Other.take());
     return *this;
   }
-#endif
 
   ~OwningArrayPtr() {
     delete [] Ptr;

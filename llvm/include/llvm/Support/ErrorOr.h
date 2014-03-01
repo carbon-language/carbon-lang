@@ -26,7 +26,6 @@
 #endif
 
 namespace llvm {
-#if LLVM_HAS_CXX11_TYPETRAITS && LLVM_HAS_RVALUE_REFERENCES
 template<class T, class V>
 typename std::enable_if< std::is_constructible<T, V>::value
                        , typename std::remove_reference<V>::type>::type &&
@@ -40,12 +39,6 @@ typename std::enable_if< !std::is_constructible<T, V>::value
 moveIfMoveConstructible(V &Val) {
   return Val;
 }
-#else
-template<class T, class V>
-V &moveIfMoveConstructible(V &Val) {
-  return Val;
-}
-#endif
 
 /// \brief Stores a reference that can be changed.
 template <typename T>
@@ -143,7 +136,6 @@ public:
     return *this;
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   ErrorOr(ErrorOr &&Other) {
     moveConstruct(std::move(Other));
   }
@@ -163,7 +155,6 @@ public:
     moveAssign(std::move(Other));
     return *this;
   }
-#endif
 
   ~ErrorOr() {
     if (!HasError)
@@ -223,7 +214,6 @@ private:
     new (this) ErrorOr(Other);
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   template <class OtherT>
   void moveConstruct(ErrorOr<OtherT> &&Other) {
     if (!Other.HasError) {
@@ -245,7 +235,6 @@ private:
     this->~ErrorOr();
     new (this) ErrorOr(std::move(Other));
   }
-#endif
 
   pointer toPointer(pointer Val) {
     return Val;

@@ -538,12 +538,10 @@ mapped_file_region::~mapped_file_region() {
     ::munmap(Mapping, Size);
 }
 
-#if LLVM_HAS_RVALUE_REFERENCES
 mapped_file_region::mapped_file_region(mapped_file_region &&other)
   : Mode(other.Mode), Size(other.Size), Mapping(other.Mapping) {
   other.Mapping = 0;
 }
-#endif
 
 mapped_file_region::mapmode mapped_file_region::flags() const {
   assert(Mapping && "Mapping failed but used anyway!");

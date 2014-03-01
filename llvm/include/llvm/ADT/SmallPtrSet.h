@@ -62,10 +62,8 @@ protected:
 
   // Helpers to copy and move construct a SmallPtrSet.
   SmallPtrSetImplBase(const void **SmallStorage, const SmallPtrSetImplBase &that);
-#if LLVM_HAS_RVALUE_REFERENCES
   SmallPtrSetImplBase(const void **SmallStorage, unsigned SmallSize,
                   SmallPtrSetImplBase &&that);
-#endif
   explicit SmallPtrSetImplBase(const void **SmallStorage, unsigned SmallSize) :
     SmallArray(SmallStorage), CurArray(SmallStorage), CurArraySize(SmallSize) {
     assert(SmallSize && (SmallSize & (SmallSize-1)) == 0 &&
@@ -139,9 +137,7 @@ protected:
   void swap(SmallPtrSetImplBase &RHS);
 
   void CopyFrom(const SmallPtrSetImplBase &RHS);
-#if LLVM_HAS_RVALUE_REFERENCES
   void MoveFrom(unsigned SmallSize, SmallPtrSetImplBase &&RHS);
-#endif
 };
 
 /// SmallPtrSetIteratorImpl - This is the common base class shared between all
@@ -247,11 +243,9 @@ protected:
   // Constructors that forward to the base.
   SmallPtrSetImpl(const void **SmallStorage, const SmallPtrSetImpl &that)
       : SmallPtrSetImplBase(SmallStorage, that) {}
-#if LLVM_HAS_RVALUE_REFERENCES
   SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize,
                   SmallPtrSetImpl &&that)
       : SmallPtrSetImplBase(SmallStorage, SmallSize, std::move(that)) {}
-#endif
   explicit SmallPtrSetImpl(const void **SmallStorage, unsigned SmallSize)
       : SmallPtrSetImplBase(SmallStorage, SmallSize) {}
 
@@ -304,10 +298,8 @@ class SmallPtrSet : public SmallPtrSetImpl<PtrType> {
 public:
   SmallPtrSet() : BaseT(SmallStorage, SmallSizePowTwo) {}
   SmallPtrSet(const SmallPtrSet &that) : BaseT(SmallStorage, that) {}
-#if LLVM_HAS_RVALUE_REFERENCES
   SmallPtrSet(SmallPtrSet &&that)
       : BaseT(SmallStorage, SmallSizePowTwo, std::move(that)) {}
-#endif
 
   template<typename It>
   SmallPtrSet(It I, It E) : BaseT(SmallStorage, SmallSizePowTwo) {
@@ -321,14 +313,12 @@ public:
     return *this;
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   SmallPtrSet<PtrType, SmallSize>&
   operator=(SmallPtrSet<PtrType, SmallSize> &&RHS) {
     if (&RHS != this)
       this->MoveFrom(SmallSizePowTwo, std::move(RHS));
     return *this;
   }
-#endif
 
   /// swap - Swaps the elements of two sets.
   void swap(SmallPtrSet<PtrType, SmallSize> &RHS) {

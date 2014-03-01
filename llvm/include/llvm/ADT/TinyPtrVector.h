@@ -70,7 +70,6 @@ public:
     return *this;
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   TinyPtrVector(TinyPtrVector &&RHS) : Val(RHS.Val) {
     RHS.Val = (EltTy)0;
   }
@@ -98,7 +97,6 @@ public:
     RHS.Val = (EltTy)0;
     return *this;
   }
-#endif
 
   // implicit conversion operator to ArrayRef.
   operator ArrayRef<EltTy>() const {

@@ -664,10 +664,8 @@ private:
 public:
   typedef char char_type;
 
-#if LLVM_HAS_RVALUE_REFERENCES
   mapped_file_region(mapped_file_region&&);
   mapped_file_region &operator =(mapped_file_region&&);
-#endif
 
   /// Construct a mapped_file_region at \a path starting at \a offset of length
   /// \a length and with access \a mode.

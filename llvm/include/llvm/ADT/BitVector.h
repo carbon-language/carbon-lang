@@ -98,12 +98,10 @@ public:
     std::memcpy(Bits, RHS.Bits, Capacity * sizeof(BitWord));
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   BitVector(BitVector &&RHS)
     : Bits(RHS.Bits), Size(RHS.Size), Capacity(RHS.Capacity) {
     RHS.Bits = 0;
   }
-#endif
 
   ~BitVector() {
     std::free(Bits);
@@ -461,7 +459,6 @@ public:
     return *this;
   }
 
-#if LLVM_HAS_RVALUE_REFERENCES
   const BitVector &operator=(BitVector &&RHS) {
     if (this == &RHS) return *this;
 
@@ -474,7 +471,6 @@ public:
 
     return *this;
   }
-#endif
 
   void swap(BitVector &RHS) {
     std::swap(Bits, RHS.Bits);

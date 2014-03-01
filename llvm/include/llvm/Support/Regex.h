@@ -52,13 +52,11 @@ namespace llvm {
       std::swap(error, regex.error);
       return *this;
     }
-#if LLVM_HAS_RVALUE_REFERENCES
     Regex(Regex &&regex) {
       preg = regex.preg;
       error = regex.error;
       regex.preg = NULL;
     }
-#endif
     ~Regex();
 
     /// isValid - returns the error encountered during regex compilation, or

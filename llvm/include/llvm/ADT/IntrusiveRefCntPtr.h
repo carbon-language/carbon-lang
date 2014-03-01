@@ -123,7 +123,6 @@ namespace llvm {
       retain();
     }
 
-#if LLVM_HAS_RVALUE_REFERENCES
     IntrusiveRefCntPtr(IntrusiveRefCntPtr&& S) : Obj(S.Obj) {
       S.Obj = 0;
     }
@@ -132,7 +131,6 @@ namespace llvm {
     IntrusiveRefCntPtr(IntrusiveRefCntPtr<X>&& S) : Obj(S.getPtr()) {
       S.Obj = 0;
     }
-#endif
 
     template <class X>
     IntrusiveRefCntPtr(const IntrusiveRefCntPtr<X>& S)
