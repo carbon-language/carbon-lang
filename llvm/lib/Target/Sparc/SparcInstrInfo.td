@@ -387,28 +387,38 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1,
 }
 
 // Section B.1 - Load Integer Instructions, p. 90
-defm LDSB : Load<"ldsb", 0b001001, sextloadi8,  IntRegs, i32>;
-defm LDSH : Load<"ldsh", 0b001010, sextloadi16, IntRegs, i32>;
-defm LDUB : Load<"ldub", 0b000001, zextloadi8,  IntRegs, i32>;
-defm LDUH : Load<"lduh", 0b000010, zextloadi16, IntRegs, i32>;
-defm LD   : Load<"ld",   0b000000, load,        IntRegs, i32>;
+let DecoderMethod = "DecodeLoadInt" in {
+  defm LDSB : Load<"ldsb", 0b001001, sextloadi8,  IntRegs, i32>;
+  defm LDSH : Load<"ldsh", 0b001010, sextloadi16, IntRegs, i32>;
+  defm LDUB : Load<"ldub", 0b000001, zextloadi8,  IntRegs, i32>;
+  defm LDUH : Load<"lduh", 0b000010, zextloadi16, IntRegs, i32>;
+  defm LD   : Load<"ld",   0b000000, load,        IntRegs, i32>;
+}
 
 // Section B.2 - Load Floating-point Instructions, p. 92
-defm LDF   : Load<"ld",  0b100000, load, FPRegs,  f32>;
-defm LDDF  : Load<"ldd", 0b100011, load, DFPRegs, f64>;
-defm LDQF  : Load<"ldq", 0b100010, load, QFPRegs, f128>,
-             Requires<[HasV9, HasHardQuad]>;
+let DecoderMethod = "DecodeLoadFP" in
+  defm LDF   : Load<"ld",  0b100000, load, FPRegs,  f32>;
+let DecoderMethod = "DecodeLoadDFP" in
+  defm LDDF  : Load<"ldd", 0b100011, load, DFPRegs, f64>;
+let DecoderMethod = "DecodeLoadQFP" in
+  defm LDQF  : Load<"ldq", 0b100010, load, QFPRegs, f128>,
+               Requires<[HasV9, HasHardQuad]>;
 
 // Section B.4 - Store Integer Instructions, p. 95
-defm STB   : Store<"stb", 0b000101, truncstorei8,  IntRegs, i32>;
-defm STH   : Store<"sth", 0b000110, truncstorei16, IntRegs, i32>;
-defm ST    : Store<"st",  0b000100, store,         IntRegs, i32>;
+let DecoderMethod = "DecodeStoreInt" in {
+  defm STB   : Store<"stb", 0b000101, truncstorei8,  IntRegs, i32>;
+  defm STH   : Store<"sth", 0b000110, truncstorei16, IntRegs, i32>;
+  defm ST    : Store<"st",  0b000100, store,         IntRegs, i32>;
+}
 
 // Section B.5 - Store Floating-point Instructions, p. 97
-defm STF   : Store<"st",  0b100100, store,         FPRegs,  f32>;
-defm STDF  : Store<"std", 0b100111, store,         DFPRegs, f64>;
-defm STQF  : Store<"stq", 0b100110, store,         QFPRegs, f128>,
-             Requires<[HasV9, HasHardQuad]>;
+let DecoderMethod = "DecodeStoreFP" in
+  defm STF   : Store<"st",  0b100100, store,         FPRegs,  f32>;
+let DecoderMethod = "DecodeStoreDFP" in
+  defm STDF  : Store<"std", 0b100111, store,         DFPRegs, f64>;
+let DecoderMethod = "DecodeStoreQFP" in
+  defm STQF  : Store<"stq", 0b100110, store,         QFPRegs, f128>,
+               Requires<[HasV9, HasHardQuad]>;
 
 // Section B.9 - SETHI Instruction, p. 104
 def SETHIi: F2_1<0b100,

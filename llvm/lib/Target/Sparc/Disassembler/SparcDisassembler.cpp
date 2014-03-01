@@ -174,6 +174,22 @@ static DecodeStatus DecodeQFPRegsRegisterClass(MCInst &Inst,
   return MCDisassembler::Success;
 }
 
+static DecodeStatus DecodeLoadInt(MCInst &Inst, unsigned insn, uint64_t Address,
+                                  const void *Decoder);
+static DecodeStatus DecodeLoadFP(MCInst &Inst, unsigned insn, uint64_t Address,
+                                 const void *Decoder);
+static DecodeStatus DecodeLoadDFP(MCInst &Inst, unsigned insn, uint64_t Address,
+                                  const void *Decoder);
+static DecodeStatus DecodeLoadQFP(MCInst &Inst, unsigned insn, uint64_t Address,
+                                  const void *Decoder);
+static DecodeStatus DecodeStoreInt(MCInst &Inst, unsigned insn,
+                                   uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeStoreFP(MCInst &Inst, unsigned insn,
+                                  uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeStoreDFP(MCInst &Inst, unsigned insn,
+                                   uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeStoreQFP(MCInst &Inst, unsigned insn,
+                                   uint64_t Address, const void *Decoder);
 
 #include "SparcGenDisassemblerTables.inc"
 
@@ -225,4 +241,98 @@ SparcDisassembler::getInstruction(MCInst &instr,
   }
 
   return MCDisassembler::Fail;
+}
+
+
+typedef DecodeStatus (*DecodeFunc)(MCInst &MI, unsigned insn, uint64_t Address,
+                                   const void *Decoder);
+
+static DecodeStatus DecodeMem(MCInst &MI, unsigned insn, uint64_t Address,
+                              const void *Decoder,
+                              bool isLoad, DecodeFunc DecodeRD) {
+  unsigned rd = fieldFromInstruction(insn, 25, 5);
+  unsigned rs1 = fieldFromInstruction(insn, 14, 5);
+  bool isImm = fieldFromInstruction(insn, 13, 1);
+  unsigned rs2 = 0;
+  unsigned simm13 = 0;
+  if (isImm)
+    simm13 = SignExtend32<13>(fieldFromInstruction(insn, 0, 13));
+  else
+    rs2 = fieldFromInstruction(insn, 0, 5);
+
+  DecodeStatus status;
+  if (isLoad) {
+    status = DecodeRD(MI, rd, Address, Decoder);
+    if (status != MCDisassembler::Success)
+      return status;
+  }
+
+  // Decode rs1.
+  status = DecodeIntRegsRegisterClass(MI, rs1, Address, Decoder);
+  if (status != MCDisassembler::Success)
+    return status;
+
+  // Decode imm|rs2.
+  if (isImm)
+    MI.addOperand(MCOperand::CreateImm(simm13));
+  else {
+    status = DecodeIntRegsRegisterClass(MI, rs2, Address, Decoder);
+    if (status != MCDisassembler::Success)
+      return status;
+  }
+
+  if (!isLoad) {
+    status = DecodeRD(MI, rd, Address, Decoder);
+    if (status != MCDisassembler::Success)
+      return status;
+  }
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeLoadInt(MCInst &Inst, unsigned insn, uint64_t Address,
+                                  const void *Decoder) {
+  return DecodeMem(Inst, insn, Address, Decoder, true,
+                   DecodeIntRegsRegisterClass);
+}
+
+static DecodeStatus DecodeLoadFP(MCInst &Inst, unsigned insn, uint64_t Address,
+                                 const void *Decoder) {
+  return DecodeMem(Inst, insn, Address, Decoder, true,
+                   DecodeFPRegsRegisterClass);
+}
+
+static DecodeStatus DecodeLoadDFP(MCInst &Inst, unsigned insn, uint64_t Address,
+                                  const void *Decoder) {
+  return DecodeMem(Inst, insn, Address, Decoder, true,
+                   DecodeDFPRegsRegisterClass);
+}
+
+static DecodeStatus DecodeLoadQFP(MCInst &Inst, unsigned insn, uint64_t Address,
+                                  const void *Decoder) {
+  return DecodeMem(Inst, insn, Address, Decoder, true,
+                   DecodeQFPRegsRegisterClass);
+}
+
+static DecodeStatus DecodeStoreInt(MCInst &Inst, unsigned insn,
+                                   uint64_t Address, const void *Decoder) {
+  return DecodeMem(Inst, insn, Address, Decoder, false,
+                   DecodeIntRegsRegisterClass);
+}
+
+static DecodeStatus DecodeStoreFP(MCInst &Inst, unsigned insn, uint64_t Address,
+                                  const void *Decoder) {
+  return DecodeMem(Inst, insn, Address, Decoder, false,
+                   DecodeFPRegsRegisterClass);
+}
+
+static DecodeStatus DecodeStoreDFP(MCInst &Inst, unsigned insn,
+                                   uint64_t Address, const void *Decoder) {
+  return DecodeMem(Inst, insn, Address, Decoder, false,
+                   DecodeDFPRegsRegisterClass);
+}
+
+static DecodeStatus DecodeStoreQFP(MCInst &Inst, unsigned insn,
+                                   uint64_t Address, const void *Decoder) {
+  return DecodeMem(Inst, insn, Address, Decoder, false,
+                   DecodeQFPRegsRegisterClass);
 }
