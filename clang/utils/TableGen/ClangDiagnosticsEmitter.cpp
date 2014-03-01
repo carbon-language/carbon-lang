@@ -761,17 +761,6 @@ struct RecordIndexElement
 
   std::string Name;
 };
-
-struct RecordIndexElementSorter :
-  public std::binary_function<RecordIndexElement, RecordIndexElement, bool> {
-
-  bool operator()(RecordIndexElement const &Lhs,
-                  RecordIndexElement const &Rhs) const {
-    return Lhs.Name < Rhs.Name;
-  }
-
-};
-
 } // end anonymous namespace.
 
 namespace clang {
@@ -786,7 +775,9 @@ void EmitClangDiagsIndexName(RecordKeeper &Records, raw_ostream &OS) {
     Index.push_back(RecordIndexElement(R));
   }
 
-  std::sort(Index.begin(), Index.end(), RecordIndexElementSorter());
+  std::sort(Index.begin(), Index.end(),
+            [](const RecordIndexElement &Lhs,
+               const RecordIndexElement &Rhs) { return Lhs.Name < Rhs.Name; });
 
   for (unsigned i = 0, e = Index.size(); i != e; ++i) {
     const RecordIndexElement &R = Index[i];

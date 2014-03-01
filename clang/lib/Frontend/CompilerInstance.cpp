@@ -778,23 +778,6 @@ static void doCompileMapModule(void *UserData) {
   Data.Instance.ExecuteAction(Data.CreateModuleAction);
 }
 
-namespace {
-  /// \brief Function object that checks with the given macro definition should
-  /// be removed, because it is one of the ignored macros.
-  class RemoveIgnoredMacro {
-    const HeaderSearchOptions &HSOpts;
-
-  public:
-    explicit RemoveIgnoredMacro(const HeaderSearchOptions &HSOpts)
-      : HSOpts(HSOpts) { }
-
-    bool operator()(const std::pair<std::string, bool> &def) const {
-      StringRef MacroDef = def.first;
-      return HSOpts.ModulesIgnoreMacros.count(MacroDef.split('=').first) > 0;
-    }
-  };
-}
-
 /// \brief Compile a module file for the given module, using the options 
 /// provided by the importing compiler instance.
 static void compileModule(CompilerInstance &ImportingInstance,
@@ -839,10 +822,13 @@ static void compileModule(CompilerInstance &ImportingInstance,
   // Remove any macro definitions that are explicitly ignored by the module.
   // They aren't supposed to affect how the module is built anyway.
   const HeaderSearchOptions &HSOpts = Invocation->getHeaderSearchOpts();
-  PPOpts.Macros.erase(std::remove_if(PPOpts.Macros.begin(), PPOpts.Macros.end(),
-                                     RemoveIgnoredMacro(HSOpts)),
-                      PPOpts.Macros.end());
-
+  PPOpts.Macros.erase(
+      std::remove_if(PPOpts.Macros.begin(), PPOpts.Macros.end(),
+                     [&HSOpts](const std::pair<std::string, bool> &def) {
+        StringRef MacroDef = def.first;
+        return HSOpts.ModulesIgnoreMacros.count(MacroDef.split('=').first) > 0;
+      }),
+      PPOpts.Macros.end());
 
   // Note the name of the module we're building.
   Invocation->getLangOpts()->CurrentModule = Module->getTopLevelModuleName();

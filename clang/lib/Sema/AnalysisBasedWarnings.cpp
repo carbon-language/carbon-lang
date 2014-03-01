@@ -1089,24 +1089,6 @@ static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC,
 
 }
 
-namespace {
-typedef std::pair<const Stmt *,
-                  sema::FunctionScopeInfo::WeakObjectUseMap::const_iterator>
-        StmtUsesPair;
-
-class StmtUseSorter {
-  const SourceManager &SM;
-
-public:
-  explicit StmtUseSorter(const SourceManager &SM) : SM(SM) { }
-
-  bool operator()(const StmtUsesPair &LHS, const StmtUsesPair &RHS) {
-    return SM.isBeforeInTranslationUnit(LHS.first->getLocStart(),
-                                        RHS.first->getLocStart());
-  }
-};
-}
-
 static bool isInLoop(const ASTContext &Ctx, const ParentMap &PM,
                      const Stmt *S) {
   assert(S);
@@ -1141,6 +1123,8 @@ static void diagnoseRepeatedUseOfWeak(Sema &S,
   typedef sema::FunctionScopeInfo::WeakObjectProfileTy WeakObjectProfileTy;
   typedef sema::FunctionScopeInfo::WeakObjectUseMap WeakObjectUseMap;
   typedef sema::FunctionScopeInfo::WeakUseVector WeakUseVector;
+  typedef std::pair<const Stmt *, WeakObjectUseMap::const_iterator>
+  StmtUsesPair;
 
   ASTContext &Ctx = S.getASTContext();
 
@@ -1199,8 +1183,12 @@ static void diagnoseRepeatedUseOfWeak(Sema &S,
     return;
 
   // Sort by first use so that we emit the warnings in a deterministic order.
+  SourceManager &SM = S.getSourceManager();
   std::sort(UsesByStmt.begin(), UsesByStmt.end(),
-            StmtUseSorter(S.getSourceManager()));
+            [&SM](const StmtUsesPair &LHS, const StmtUsesPair &RHS) {
+    return SM.isBeforeInTranslationUnit(LHS.first->getLocStart(),
+                                        RHS.first->getLocStart());
+  });
 
   // Classify the current code body for better warning text.
   // This enum should stay in sync with the cases in
@@ -1281,19 +1269,7 @@ static void diagnoseRepeatedUseOfWeak(Sema &S,
   }
 }
 
-
 namespace {
-struct SLocSort {
-  bool operator()(const UninitUse &a, const UninitUse &b) {
-    // Prefer a more confident report over a less confident one.
-    if (a.getKind() != b.getKind())
-      return a.getKind() > b.getKind();
-    SourceLocation aLoc = a.getUser()->getLocStart();
-    SourceLocation bLoc = b.getUser()->getLocStart();
-    return aLoc.getRawEncoding() < bLoc.getRawEncoding();
-  }
-};
-
 class UninitValsDiagReporter : public UninitVariablesHandler {
   Sema &S;
   typedef SmallVector<UninitUse, 2> UsesVec;
@@ -1352,8 +1328,14 @@ public:
         // Sort the uses by their SourceLocations.  While not strictly
         // guaranteed to produce them in line/column order, this will provide
         // a stable ordering.
-        std::sort(vec->begin(), vec->end(), SLocSort());
-        
+        std::sort(vec->begin(), vec->end(),
+                  [](const UninitUse &a, const UninitUse &b) {
+          // Prefer a more confident report over a less confident one.
+          if (a.getKind() != b.getKind())
+            return a.getKind() > b.getKind();
+          return a.getUser()->getLocStart() < b.getUser()->getLocStart();
+        });
+
         for (UsesVec::iterator vi = vec->begin(), ve = vec->end(); vi != ve;
              ++vi) {
           // If we have self-init, downgrade all uses to 'may be uninitialized'.

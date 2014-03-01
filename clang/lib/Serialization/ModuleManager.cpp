@@ -134,22 +134,6 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
   return NewModule? NewlyLoaded : AlreadyLoaded;
 }
 
-namespace {
-  /// \brief Predicate that checks whether a module file occurs within
-  /// the given set.
-  class IsInModuleFileSet : public std::unary_function<ModuleFile *, bool> {
-    llvm::SmallPtrSet<ModuleFile *, 4> &Removed;
-
-  public:
-    IsInModuleFileSet(llvm::SmallPtrSet<ModuleFile *, 4> &Removed)
-    : Removed(Removed) { }
-
-    bool operator()(ModuleFile *MF) const {
-      return Removed.count(MF);
-    }
-  };
-}
-
 void ModuleManager::removeModules(ModuleIterator first, ModuleIterator last,
                                   ModuleMap *modMap) {
   if (first == last)
@@ -159,7 +143,9 @@ void ModuleManager::removeModules(ModuleIterator first, ModuleIterator last,
   llvm::SmallPtrSet<ModuleFile *, 4> victimSet(first, last);
 
   // Remove any references to the now-destroyed modules.
-  IsInModuleFileSet checkInSet(victimSet);
+  std::function<bool(ModuleFile *)> checkInSet = [&](ModuleFile *MF) {
+    return victimSet.count(MF);
+  };
   for (unsigned i = 0, n = Chain.size(); i != n; ++i) {
     Chain[i]->ImportedBy.remove_if(checkInSet);
   }

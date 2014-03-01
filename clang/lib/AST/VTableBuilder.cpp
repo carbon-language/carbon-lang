@@ -1907,21 +1907,6 @@ void ItaniumVTableBuilder::LayoutVTablesForVirtualBases(
   }
 }
 
-struct ItaniumThunkInfoComparator {
-  bool operator() (const ThunkInfo &LHS, const ThunkInfo &RHS) {
-    assert(LHS.Method == 0);
-    assert(RHS.Method == 0);
-
-    if (LHS.This != RHS.This)
-      return LHS.This < RHS.This;
-
-    if (LHS.Return != RHS.Return)
-      return LHS.Return < RHS.Return;
-
-    return false;
-  }
-};
-
 /// dumpLayout - Dump the vtable layout.
 void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
   // FIXME: write more tests that actually use the dumpLayout output to prevent
@@ -2169,7 +2154,13 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
 
       ThunkInfoVectorTy ThunksVector = Thunks[MD];
       std::sort(ThunksVector.begin(), ThunksVector.end(),
-                ItaniumThunkInfoComparator());
+                [](const ThunkInfo &LHS, const ThunkInfo &RHS) {
+        assert(LHS.Method == 0 && RHS.Method == 0);
+
+        if (LHS.This != RHS.This)
+          return LHS.This < RHS.This;
+        return LHS.Return < RHS.Return;
+      });
 
       Out << "Thunks for '" << MethodName << "' (" << ThunksVector.size();
       Out << (ThunksVector.size() == 1 ? " entry" : " entries") << ").\n";
@@ -2256,17 +2247,6 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
 
   Out << '\n';
 }
-
-struct VTableThunksComparator {
-  bool operator()(const VTableLayout::VTableThunkTy &LHS,
-                  const VTableLayout::VTableThunkTy &RHS) {
-    if (LHS.first == RHS.first) {
-      assert(LHS.second == RHS.second &&
-             "Different thunks should have unique indices!");
-    }
-    return LHS.first < RHS.first;
-  }
-};
 }
 
 VTableLayout::VTableLayout(uint64_t NumVTableComponents,
@@ -2287,7 +2267,12 @@ VTableLayout::VTableLayout(uint64_t NumVTableComponents,
             this->VTableThunks.get());
   std::sort(this->VTableThunks.get(),
             this->VTableThunks.get() + NumVTableThunks,
-            VTableThunksComparator());
+            [](const VTableLayout::VTableThunkTy &LHS,
+               const VTableLayout::VTableThunkTy &RHS) {
+    assert((LHS.first != RHS.first || LHS.second == RHS.second) &&
+           "Different thunks should have unique indices!");
+    return LHS.first < RHS.first;
+  });
 }
 
 VTableLayout::~VTableLayout() { }
@@ -3047,22 +3032,6 @@ static void PrintBasePath(const VPtrInfo::BasePath &Path, raw_ostream &Out) {
   }
 }
 
-namespace {
-struct MicrosoftThunkInfoStableSortComparator {
-  bool operator() (const ThunkInfo &LHS, const ThunkInfo &RHS) {
-    if (LHS.This != RHS.This)
-      return LHS.This < RHS.This;
-
-    if (LHS.Return != RHS.Return)
-      return LHS.Return < RHS.Return;
-
-    // Keep different thunks with the same adjustments in the order they
-    // were put into the vector.
-    return false;
-  }
-};
-}
-
 static void dumpMicrosoftThunkAdjustment(const ThunkInfo &TI, raw_ostream &Out,
                                          bool ContinueFirstLine) {
   const ReturnAdjustment &R = TI.Return;
@@ -3197,7 +3166,13 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
 
       ThunkInfoVectorTy ThunksVector = Thunks[MD];
       std::stable_sort(ThunksVector.begin(), ThunksVector.end(),
-                       MicrosoftThunkInfoStableSortComparator());
+                       [](const ThunkInfo &LHS, const ThunkInfo &RHS) {
+        // Keep different thunks with the same adjustments in the order they
+        // were put into the vector.
+        if (LHS.This != RHS.This)
+          return LHS.This < RHS.This;
+        return LHS.Return < RHS.Return;
+      });
 
       Out << "Thunks for '" << MethodName << "' (" << ThunksVector.size();
       Out << (ThunksVector.size() == 1 ? " entry" : " entries") << ").\n";

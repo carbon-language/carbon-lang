@@ -416,17 +416,6 @@ static bool compare(const PathDiagnostic &X, const PathDiagnostic &Y) {
   return b.getValue();
 }
 
-namespace {
-struct CompareDiagnostics {
-  // Compare if 'X' is "<" than 'Y'.
-  bool operator()(const PathDiagnostic *X, const PathDiagnostic *Y) const {
-    if (X == Y)
-      return false;
-    return compare(*X, *Y);
-  }
-};
-}
-
 void PathDiagnosticConsumer::FlushDiagnostics(
                                      PathDiagnosticConsumer::FilesMade *Files) {
   if (flushed)
@@ -444,8 +433,11 @@ void PathDiagnosticConsumer::FlushDiagnostics(
   // Sort the diagnostics so that they are always emitted in a deterministic
   // order.
   if (!BatchDiags.empty())
-    std::sort(BatchDiags.begin(), BatchDiags.end(), CompareDiagnostics());
-  
+    std::sort(BatchDiags.begin(), BatchDiags.end(),
+              [](const PathDiagnostic *X, const PathDiagnostic *Y) {
+      return X != Y && compare(*X, *Y);
+    });
+
   FlushDiagnosticsImpl(BatchDiags, Files);
 
   // Delete the flushed diagnostics.

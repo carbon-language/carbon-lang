@@ -3825,22 +3825,6 @@ void Sema::CodeCompleteCase(Scope *S) {
                             Results.data(),Results.size());
 }
 
-namespace {
-  struct IsBetterOverloadCandidate {
-    Sema &S;
-    SourceLocation Loc;
-    
-  public:
-    explicit IsBetterOverloadCandidate(Sema &S, SourceLocation Loc)
-      : S(S), Loc(Loc) { }
-    
-    bool 
-    operator()(const OverloadCandidate &X, const OverloadCandidate &Y) const {
-      return isBetterOverloadCandidate(S, X, Y, Loc);
-    }
-  };
-}
-
 static bool anyNullArguments(ArrayRef<Expr *> Args) {
   if (Args.size() && !Args.data())
     return true;
@@ -3902,9 +3886,12 @@ void Sema::CodeCompleteCall(Scope *S, Expr *FnIn, ArrayRef<Expr *> Args) {
   
   if (!CandidateSet.empty()) {
     // Sort the overload candidate set by placing the best overloads first.
-    std::stable_sort(CandidateSet.begin(), CandidateSet.end(),
-                     IsBetterOverloadCandidate(*this, Loc));
-  
+    std::stable_sort(
+        CandidateSet.begin(), CandidateSet.end(),
+        [&](const OverloadCandidate &X, const OverloadCandidate &Y) {
+          return isBetterOverloadCandidate(*this, X, Y, Loc);
+        });
+
     // Add the remaining viable overload candidates as code-completion reslults.
     for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
                                      CandEnd = CandidateSet.end();

@@ -951,19 +951,6 @@ static void addRangedDeclsInContainer(DeclIt *DI_current, DeclIt DE_current,
   }
 }
 
-namespace {
-  struct ContainerDeclsSort {
-    SourceManager &SM;
-    ContainerDeclsSort(SourceManager &sm) : SM(sm) {}
-    bool operator()(Decl *A, Decl *B) {
-      SourceLocation L_A = A->getLocStart();
-      SourceLocation L_B = B->getLocStart();
-      assert(L_A.isValid() && L_B.isValid());
-      return SM.isBeforeInTranslationUnit(L_A, L_B);
-    }
-  };
-}
-
 bool CursorVisitor::VisitObjCContainerDecl(ObjCContainerDecl *D) {
   // FIXME: Eventually convert back to just 'VisitDeclContext()'.  Essentially
   // an @implementation can lexically contain Decls that are not properly
@@ -1006,7 +993,12 @@ bool CursorVisitor::VisitObjCContainerDecl(ObjCContainerDecl *D) {
 
   // Now sort the Decls so that they appear in lexical order.
   std::sort(DeclsInContainer.begin(), DeclsInContainer.end(),
-            ContainerDeclsSort(SM));
+            [&SM](Decl *A, Decl *B) {
+    SourceLocation L_A = A->getLocStart();
+    SourceLocation L_B = B->getLocStart();
+    assert(L_A.isValid() && L_B.isValid());
+    return SM.isBeforeInTranslationUnit(L_A, L_B);
+  });
 
   // Now visit the decls.
   for (SmallVectorImpl<Decl*>::iterator I = DeclsInContainer.begin(),

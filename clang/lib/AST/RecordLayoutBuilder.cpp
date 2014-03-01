@@ -3070,16 +3070,6 @@ static void PrintIndentNoOffset(raw_ostream &OS, unsigned IndentLevel) {
   OS.indent(IndentLevel * 2);
 }
 
-namespace {
-struct BaseOffsetComparator {
-  const ASTRecordLayout &RL;
-  BaseOffsetComparator(const ASTRecordLayout &RL) : RL(RL) {}
-  bool operator()(const CXXRecordDecl *L, const CXXRecordDecl *R) const {
-    return RL.getBaseClassOffset(L) < RL.getBaseClassOffset(R);
-  }
-};
-}
-
 static void DumpCXXRecordLayout(raw_ostream &OS,
                                 const CXXRecordDecl *RD, const ASTContext &C,
                                 CharUnits Offset,
@@ -3124,8 +3114,10 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
   }
 
   // Sort nvbases by offset.
-  BaseOffsetComparator Cmp(Layout);
-  std::stable_sort(Bases.begin(), Bases.end(), Cmp);
+  std::stable_sort(Bases.begin(), Bases.end(),
+                   [&](const CXXRecordDecl *L, const CXXRecordDecl *R) {
+    return Layout.getBaseClassOffset(L) < Layout.getBaseClassOffset(R);
+  });
 
   // Dump (non-virtual) bases
   for (SmallVectorImpl<const CXXRecordDecl *>::iterator I = Bases.begin(),

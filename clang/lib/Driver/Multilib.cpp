@@ -338,20 +338,11 @@ MultilibSet::filterCopy(const MultilibSet::FilterCallback &F,
   return Copy;
 }
 
-namespace {
-// Wrapper for FilterCallback to make operator() nonvirtual so it
-// can be passed by value to std::remove_if
-class FilterWrapper {
-  const MultilibSet::FilterCallback &F;
-public:
-  FilterWrapper(const MultilibSet::FilterCallback &F) : F(F) {}
-  bool operator()(const Multilib &M) const { return F(M); }
-};
-} // end anonymous namespace
-
 void MultilibSet::filterInPlace(const MultilibSet::FilterCallback &F,
                                 multilib_list &Ms) {
-  Ms.erase(std::remove_if(Ms.begin(), Ms.end(), FilterWrapper(F)), Ms.end());
+  Ms.erase(std::remove_if(Ms.begin(), Ms.end(),
+                          [&F](const Multilib &M) { return F(M); }),
+           Ms.end());
 }
 
 raw_ostream &clang::driver::operator<<(raw_ostream &OS, const MultilibSet &MS) {
