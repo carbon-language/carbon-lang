@@ -26,9 +26,9 @@ __modti3(ti_int a, ti_int b)
     b = (b ^ s) - s;                   /* negate if s == -1 */
     s = a >> bits_in_tword_m1;         /* s = a < 0 ? -1 : 0 */
     a = (a ^ s) - s;                   /* negate if s == -1 */
-    ti_int r;
-    __udivmodti4(a, b, (tu_int*)&r);
-    return (r ^ s) - s;                /* negate if s == -1 */
+    tu_int r;
+    __udivmodti4(a, b, &r);
+    return ((ti_int)r ^ s) - s;                /* negate if s == -1 */
 }
 
 #endif /* CRT_HAS_128BIT */

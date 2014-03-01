@@ -24,7 +24,7 @@ __moddi3(di_int a, di_int b)
     b = (b ^ s) - s;                   /* negate if s == -1 */
     s = a >> bits_in_dword_m1;         /* s = a < 0 ? -1 : 0 */
     a = (a ^ s) - s;                   /* negate if s == -1 */
-    di_int r;
-    __udivmoddi4(a, b, (du_int*)&r);
-    return (r ^ s) - s;                /* negate if s == -1 */
+    du_int r;
+    __udivmoddi4(a, b, &r);
+    return ((di_int)r ^ s) - s;                /* negate if s == -1 */
 }
