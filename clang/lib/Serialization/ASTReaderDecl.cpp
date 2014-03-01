@@ -412,7 +412,7 @@ void ASTDeclReader::VisitDecl(Decl *D) {
           
           // Note that this declaration was hidden because its owning module is 
           // not yet visible.
-          Reader.HiddenNamesMap[Owner].push_back(D);
+          Reader.HiddenNamesMap[Owner].HiddenDecls.push_back(D);
         }
       }
     }

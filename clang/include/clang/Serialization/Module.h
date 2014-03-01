@@ -171,6 +171,9 @@ public:
   /// If module A depends on and imports module B, both modules will have the
   /// same DirectImportLoc, but different ImportLoc (B's ImportLoc will be a
   /// source location inside module A).
+  ///
+  /// WARNING: This is largely useless. It doesn't tell you when a module was
+  /// made visible, just when the first submodule of that module was imported.
   SourceLocation DirectImportLoc;
 
   /// \brief The source location where this module was first imported.

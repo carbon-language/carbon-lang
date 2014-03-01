@@ -198,6 +198,40 @@ Command-line parameters
 ``-fmodule-map-file=<file>``
   Load the given module map file if a header from its directory or one of its subdirectories is loaded.
 
+Module Semantics
+================
+
+Modules are modeled as if each submodule were a separate translation unit, and a module import makes names from the other translation unit visible. Each submodule starts with a new preprocessor state and an empty translation unit.
+
+.. note::
+
+  This behavior is currently only approximated when building a module. Entities within a submodule that has already been built are visible when building later submodules in that module. This can lead to fragile modules that depend on the build order used for the submodules of the module, and should not be relied upon.
+
+As an example, in C, this implies that if two structs are defined in different submodules with the same name, those two types are distinct types (but may be *compatible* types if their definitions match. In C++, two structs defined with the same name in different submodules are the *same* type, and must be equivalent under C++'s One Definition Rule.
+
+.. note::
+
+  Clang currently only performs minimal checking for violations of the One Definition Rule.
+
+Macros
+------
+
+The C and C++ preprocessor assumes that the input text is a single linear buffer, but with modules this is not the case. It is possible to import two modules that have conflicting definitions for a macro (or where one ``#define``\s a macro and the other ``#undef``\ines it). The rules for handling macro definitions in the presence of modules are as follows:
+
+* Each definition and undefinition of a macro is considered to be a distinct entity.
+* Such entities are *visible* if they are from the current submodule or translation unit, or if they were exported from a submodule that has been imported.
+* A ``#define X`` or ``#undef X`` directive *overrides* all definitions of ``X`` that are visible at the point of the directive.
+* A ``#define`` or ``#undef`` directive is *active* if it is visible and no visible directive overrides it.
+* A set of macro directives is *consistent* if it consists of only ``#undef`` directives, or if all ``#define`` directives in the set define the macro name to the same sequence of tokens (following the usual rules for macro redefinitions).
+* If a macro name is used and the set of active directives is not consistent, the program is ill-formed. Otherwise, the (unique) meaning of the macro name is used.
+
+For example, suppose:
+
+* ``<stdio.h>`` defines a macro ``getc`` (and exports its ``#define``)
+* ``<cstdio>`` imports the ``<stdio.h>`` module and undefines the macro (and exports its ``#undef``)
+  
+The ``#undef`` overrides the ``#define``, and a source file that imports both modules *in any order* will not see ``getc`` defined as a macro.
+
 Module Map Language
 ===================
 

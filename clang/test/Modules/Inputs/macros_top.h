@@ -14,3 +14,9 @@
 
 #define TOP_RIGHT_UNDEF int
 
+#define TOP_OTHER_UNDEF1 42
+#undef TOP_OTHER_UNDEF2
+#define TOP_OTHER_REDEF1 1
+#define TOP_OTHER_REDEF2 2
+
+#define TOP_OTHER_DEF_RIGHT_UNDEF void

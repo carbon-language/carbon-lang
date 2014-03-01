@@ -64,6 +64,7 @@ class ASTUnit; // FIXME: Layering violation and egregious hack.
 class Attr;
 class Decl;
 class DeclContext;
+class DefMacroDirective;
 class DiagnosticOptions;
 class NestedNameSpecifier;
 class CXXBaseSpecifier;
@@ -471,18 +472,22 @@ private:
   /// global submodule ID to produce a local ID.
   GlobalSubmoduleMapType GlobalSubmoduleMap;
 
+  /// \brief Information on a macro definition or undefinition that is visible
+  /// at the end of a submodule.
+  struct ModuleMacroInfo;
+
   /// \brief An entity that has been hidden.
   class HiddenName {
   public:
     enum NameKind {
       Declaration,
-      MacroVisibility
+      Macro
     } Kind;
 
   private:
     union {
       Decl *D;
-      MacroDirective *MD;
+      ModuleMacroInfo *MMI;
     };
 
     IdentifierInfo *Id;
@@ -490,8 +495,8 @@ private:
   public:
     HiddenName(Decl *D) : Kind(Declaration), D(D), Id() { }
 
-    HiddenName(IdentifierInfo *II, MacroDirective *MD)
-      : Kind(MacroVisibility), MD(MD), Id(II) { }
+    HiddenName(IdentifierInfo *II, ModuleMacroInfo *MMI)
+      : Kind(Macro), MMI(MMI), Id(II) { }
 
     NameKind getKind() const { return Kind; }
 
@@ -500,15 +505,21 @@ private:
       return D;
     }
 
-    std::pair<IdentifierInfo *, MacroDirective *> getMacro() const {
-      assert(getKind() == MacroVisibility && "Hidden name is not a macro!");
-      return std::make_pair(Id, MD);
+    std::pair<IdentifierInfo *, ModuleMacroInfo *> getMacro() const {
+      assert(getKind() == Macro && "Hidden name is not a macro!");
+      return std::make_pair(Id, MMI);
     }
 };
 
+  typedef llvm::SmallDenseMap<IdentifierInfo*,
+                              ModuleMacroInfo*> HiddenMacrosMap;
+
   /// \brief A set of hidden declarations.
-  typedef SmallVector<HiddenName, 2> HiddenNames;
-  
+  struct HiddenNames {
+    SmallVector<Decl*, 2> HiddenDecls;
+    HiddenMacrosMap HiddenMacros;
+  };
+
   typedef llvm::DenseMap<Module *, HiddenNames> HiddenNamesMapType;
 
   /// \brief A mapping from each of the hidden submodules to the deserialized
@@ -564,8 +575,8 @@ private:
     ModuleFile *M;
 
     struct ModuleMacroDataTy {
-      serialization::GlobalMacroID GMacID;
-      unsigned ImportLoc;
+      uint32_t MacID;
+      serialization::SubmoduleID *Overrides;
     };
     struct PCHMacroDataTy {
       uint64_t MacroDirectivesOffset;
@@ -577,10 +588,10 @@ private:
     };
 
     PendingMacroInfo(ModuleFile *M,
-                     serialization::GlobalMacroID GMacID,
-                     SourceLocation ImportLoc) : M(M) {
-      ModuleMacroData.GMacID = GMacID;
-      ModuleMacroData.ImportLoc = ImportLoc.getRawEncoding();
+                     uint32_t MacID,
+                     serialization::SubmoduleID *Overrides) : M(M) {
+      ModuleMacroData.MacID = MacID;
+      ModuleMacroData.Overrides = Overrides;
     }
 
     PendingMacroInfo(ModuleFile *M, uint64_t MacroDirectivesOffset) : M(M) {
@@ -1253,14 +1264,14 @@ public:
   /// \param ImportLoc The location at which the import occurs.
   ///
   /// \param Complain Whether to complain about conflicting module imports.
-  void makeModuleVisible(Module *Mod, 
+  void makeModuleVisible(Module *Mod,
                          Module::NameVisibilityKind NameVisibility,
                          SourceLocation ImportLoc,
                          bool Complain);
-  
+
   /// \brief Make the names within this set of hidden names visible.
   void makeNamesVisible(const HiddenNames &Names, Module *Owner);
-  
+
   /// \brief Set the AST callbacks listener.
   void setListener(ASTReaderListener *listener) {
     Listener.reset(listener);
@@ -1687,13 +1698,26 @@ public:
   serialization::IdentifierID getGlobalIdentifierID(ModuleFile &M,
                                                     unsigned LocalID);
 
+  ModuleMacroInfo *getModuleMacro(const PendingMacroInfo &PMInfo);
+
   void resolvePendingMacro(IdentifierInfo *II, const PendingMacroInfo &PMInfo);
 
   void installPCHMacroDirectives(IdentifierInfo *II,
                                  ModuleFile &M, uint64_t Offset);
 
-  void installImportedMacro(IdentifierInfo *II, MacroDirective *MD,
+  void installImportedMacro(IdentifierInfo *II, ModuleMacroInfo *MMI,
                             Module *Owner);
+
+  typedef llvm::SmallVector<DefMacroDirective*, 1> AmbiguousMacros;
+  llvm::DenseMap<IdentifierInfo*, AmbiguousMacros> AmbiguousMacroDefs;
+
+  void
+  removeOverriddenMacros(IdentifierInfo *II, AmbiguousMacros &Ambig,
+                         llvm::ArrayRef<serialization::SubmoduleID> Overrides);
+
+  AmbiguousMacros *
+  removeOverriddenMacros(IdentifierInfo *II,
+                         llvm::ArrayRef<serialization::SubmoduleID> Overrides);
 
   /// \brief Retrieve the macro with the given ID.
   MacroInfo *getMacro(serialization::MacroID ID);
@@ -1875,7 +1899,7 @@ public:
   void addPendingMacroFromModule(IdentifierInfo *II,
                                  ModuleFile *M,
                                  serialization::GlobalMacroID GMacID,
-                                 SourceLocation ImportLoc);
+                                 llvm::ArrayRef<serialization::SubmoduleID>);
 
   /// \brief Add a macro to deserialize its macro directive history from a PCH.
   ///

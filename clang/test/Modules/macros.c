@@ -11,10 +11,8 @@
 // FIXME: expected-note@Inputs/macros_left.h:11{{previous definition is here}}
 // FIXME: expected-note@Inputs/macros_right.h:12{{previous definition is here}}
 // expected-note@Inputs/macros_right.h:12{{expanding this definition of 'LEFT_RIGHT_DIFFERENT'}}
-// expected-note@Inputs/macros_top.h:13{{other definition of 'TOP_RIGHT_REDEF'}}
 // expected-note@Inputs/macros_right.h:13{{expanding this definition of 'LEFT_RIGHT_DIFFERENT2'}}
 // expected-note@Inputs/macros_left.h:14{{other definition of 'LEFT_RIGHT_DIFFERENT'}}
-// expected-note@Inputs/macros_right.h:17{{expanding this definition of 'TOP_RIGHT_REDEF'}}
 
 @import macros;
 
@@ -79,8 +77,8 @@ void f() {
 #  error TOP should be visible
 #endif
 
-#ifndef TOP_LEFT_UNDEF
-#  error TOP_LEFT_UNDEF should still be defined
+#ifdef TOP_LEFT_UNDEF
+#  error TOP_LEFT_UNDEF should not be defined
 #endif
 
 void test1() {
@@ -112,7 +110,7 @@ void test2() {
   int i;
   float f;
   double d;
-  TOP_RIGHT_REDEF *fp = &f; // expected-warning{{ambiguous expansion of macro 'TOP_RIGHT_REDEF'}}
+  TOP_RIGHT_REDEF *fp = &f; // ok, right's definition overrides top's definition
   
   LEFT_RIGHT_IDENTICAL *ip = &i;
   LEFT_RIGHT_DIFFERENT *ip2 = &i; // expected-warning{{ambiguous expansion of macro 'LEFT_RIGHT_DIFFERENT'}}
@@ -134,6 +132,33 @@ void test3() {
 
 @import macros_right.undef;
 
-#ifndef TOP_RIGHT_UNDEF
-# error TOP_RIGHT_UNDEF should still be defined
+// FIXME: When macros_right.undef is built, macros_top is visible because
+// the state from building macros_right leaks through, so macros_right.undef
+// undefines macros_top's macro.
+#ifdef TOP_RIGHT_UNDEF
+# error TOP_RIGHT_UNDEF should not be defined
 #endif
+
+@import macros_other;
+
+#ifndef TOP_OTHER_UNDEF1
+# error TOP_OTHER_UNDEF1 should still be defined
+#endif
+
+#ifndef TOP_OTHER_UNDEF2
+# error TOP_OTHER_UNDEF2 should still be defined
+#endif
+
+#ifndef TOP_OTHER_REDEF1
+# error TOP_OTHER_REDEF1 should still be defined
+#endif
+int n1 = TOP_OTHER_REDEF1; // expected-warning{{ambiguous expansion of macro 'TOP_OTHER_REDEF1'}}
+// expected-note@macros_top.h:19 {{expanding this definition}}
+// expected-note@macros_other.h:4 {{other definition}}
+
+#ifndef TOP_OTHER_REDEF2
+# error TOP_OTHER_REDEF2 should still be defined
+#endif
+int n2 = TOP_OTHER_REDEF2; // ok
+
+int n3 = TOP_OTHER_DEF_RIGHT_UNDEF; // ok

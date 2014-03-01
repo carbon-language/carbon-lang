@@ -33,6 +33,7 @@ module macros_right {
   }
 }
 module macros { header "macros.h" }
+module macros_other { header "macros_other.h" }
 module category_top { header "category_top.h" }
 module category_left { 
   header "category_left.h" 

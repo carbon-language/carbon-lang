@@ -2962,80 +2962,91 @@ class ASTIdentifierTableTrait {
     return false;
   }
 
-  DefMacroDirective *getFirstPublicSubmoduleMacro(MacroDirective *MD,
-                                                  SubmoduleID &ModID) {
+  typedef llvm::SmallVectorImpl<SubmoduleID> OverriddenList;
+
+  MacroDirective *
+  getFirstPublicSubmoduleMacro(MacroDirective *MD, SubmoduleID &ModID) {
     ModID = 0;
-    if (DefMacroDirective *DefMD = getPublicSubmoduleMacro(MD, ModID))
-      if (!shouldIgnoreMacro(DefMD, IsModule, PP))
-        return DefMD;
+    llvm::SmallVector<SubmoduleID, 1> Overridden;
+    if (MacroDirective *NextMD = getPublicSubmoduleMacro(MD, ModID, Overridden))
+      if (!shouldIgnoreMacro(NextMD, IsModule, PP))
+        return NextMD;
     return 0;
   }
 
-  DefMacroDirective *getNextPublicSubmoduleMacro(DefMacroDirective *MD,
-                                                 SubmoduleID &ModID) {
-    if (DefMacroDirective *
-          DefMD = getPublicSubmoduleMacro(MD->getPrevious(), ModID))
-      if (!shouldIgnoreMacro(DefMD, IsModule, PP))
-        return DefMD;
+  MacroDirective *
+  getNextPublicSubmoduleMacro(MacroDirective *MD, SubmoduleID &ModID,
+                              OverriddenList &Overridden) {
+    if (MacroDirective *NextMD =
+            getPublicSubmoduleMacro(MD->getPrevious(), ModID, Overridden))
+      if (!shouldIgnoreMacro(NextMD, IsModule, PP))
+        return NextMD;
     return 0;
   }
 
   /// \brief Traverses the macro directives history and returns the latest
-  /// macro that is public and not undefined in the same submodule.
-  /// A macro that is defined in submodule A and undefined in submodule B,
+  /// public macro definition or undefinition that is not in ModID.
+  /// A macro that is defined in submodule A and undefined in submodule B
   /// will still be considered as defined/exported from submodule A.
-  DefMacroDirective *getPublicSubmoduleMacro(MacroDirective *MD,
-                                             SubmoduleID &ModID) {
+  /// ModID is updated to the module containing the returned directive.
+  ///
+  /// FIXME: This process breaks down if a module defines a macro, imports
+  ///        another submodule that changes the macro, then changes the
+  ///        macro again itself.
+  MacroDirective *getPublicSubmoduleMacro(MacroDirective *MD,
+                                          SubmoduleID &ModID,
+                                          OverriddenList &Overridden) {
     if (!MD)
       return 0;
 
+    Overridden.clear();
     SubmoduleID OrigModID = ModID;
-    bool isUndefined = false;
-    Optional<bool> isPublic;
+    Optional<bool> IsPublic;
     for (; MD; MD = MD->getPrevious()) {
       SubmoduleID ThisModID = getSubmoduleID(MD);
       if (ThisModID == 0) {
-        isUndefined = false;
-        isPublic = Optional<bool>();
+        IsPublic = Optional<bool>();
         continue;
       }
-      if (ThisModID != ModID){
+      if (ThisModID != ModID) {
         ModID = ThisModID;
-        isUndefined = false;
-        isPublic = Optional<bool>();
+        IsPublic = Optional<bool>();
       }
+
+      // If this is a definition from a submodule import, that submodule's
+      // definition is overridden by the definition or undefinition that we
+      // started with.
+      // FIXME: This should only apply to macros defined in OrigModID.
+      // We can't do that currently, because a #include of a different submodule
+      // of the same module just leaks through macros instead of providing new
+      // DefMacroDirectives for them.
+      if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD))
+        if (SubmoduleID SourceID = DefMD->getInfo()->getOwningModuleID())
+          Overridden.push_back(SourceID);
+
       // We are looking for a definition in a different submodule than the one
       // that we started with. If a submodule has re-definitions of the same
       // macro, only the last definition will be used as the "exported" one.
       if (ModID == OrigModID)
         continue;
 
-      if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD)) {
-        if (!isUndefined && (!isPublic.hasValue() || isPublic.getValue()))
-          return DefMD;
-        continue;
+      // The latest visibility directive for a name in a submodule affects all
+      // the directives that come before it.
+      if (VisibilityMacroDirective *VisMD =
+              dyn_cast<VisibilityMacroDirective>(MD)) {
+        if (!IsPublic.hasValue())
+          IsPublic = VisMD->isPublic();
+      } else if (!IsPublic.hasValue() || IsPublic.getValue()) {
+        // FIXME: If we find an imported macro, we should include its list of
+        // overrides in our export.
+        return MD;
       }
-
-      if (isa<UndefMacroDirective>(MD)) {
-        isUndefined = true;
-        continue;
-      }
-
-      VisibilityMacroDirective *VisMD = cast<VisibilityMacroDirective>(MD);
-      if (!isPublic.hasValue())
-        isPublic = VisMD->isPublic();
     }
 
     return 0;
   }
 
   SubmoduleID getSubmoduleID(MacroDirective *MD) {
-    if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD)) {
-      MacroInfo *MI = DefMD->getInfo();
-      if (unsigned ID = MI->getOwningModuleID())
-        return ID;
-      return Writer.inferSubmoduleIDFromLocation(MI->getDefinitionLoc());
-    }
     return Writer.inferSubmoduleIDFromLocation(MD->getLocation());
   }
 
@@ -3066,11 +3077,18 @@ public:
         DataLen += 4; // MacroDirectives offset.
         if (IsModule) {
           SubmoduleID ModID;
-          for (DefMacroDirective *
-                 DefMD = getFirstPublicSubmoduleMacro(Macro, ModID);
-                 DefMD; DefMD = getNextPublicSubmoduleMacro(DefMD, ModID)) {
-            DataLen += 4; // MacroInfo ID.
+          llvm::SmallVector<SubmoduleID, 4> Overridden;
+          for (MacroDirective *
+                 MD = getFirstPublicSubmoduleMacro(Macro, ModID);
+                 MD; MD = getNextPublicSubmoduleMacro(MD, ModID, Overridden)) {
+            // Previous macro's overrides.
+            if (!Overridden.empty())
+              DataLen += 4 * (1 + Overridden.size());
+            DataLen += 4; // MacroInfo ID or ModuleID.
           }
+          // Previous macro's overrides.
+          if (!Overridden.empty())
+            DataLen += 4 * (1 + Overridden.size());
           DataLen += 4;
         }
       }
@@ -3094,6 +3112,15 @@ public:
     // the mapping from persistent IDs to strings.
     Writer.SetIdentifierOffset(II, Out.tell());
     Out.write(II->getNameStart(), KeyLen);
+  }
+
+  static void emitMacroOverrides(raw_ostream &Out,
+                                 llvm::ArrayRef<SubmoduleID> Overridden) {
+    if (!Overridden.empty()) {
+      clang::io::Emit32(Out, Overridden.size() | 0x80000000U);
+      for (unsigned I = 0, N = Overridden.size(); I != N; ++I)
+        clang::io::Emit32(Out, Overridden[I]);
+    }
   }
 
   void EmitData(raw_ostream& Out, IdentifierInfo* II,
@@ -3123,13 +3150,22 @@ public:
       if (IsModule) {
         // Write the IDs of macros coming from different submodules.
         SubmoduleID ModID;
-        for (DefMacroDirective *
-               DefMD = getFirstPublicSubmoduleMacro(Macro, ModID);
-               DefMD; DefMD = getNextPublicSubmoduleMacro(DefMD, ModID)) {
-          MacroID InfoID = Writer.getMacroID(DefMD->getInfo());
-          assert(InfoID);
-          clang::io::Emit32(Out, InfoID);
+        llvm::SmallVector<SubmoduleID, 4> Overridden;
+        for (MacroDirective *
+               MD = getFirstPublicSubmoduleMacro(Macro, ModID);
+               MD; MD = getNextPublicSubmoduleMacro(MD, ModID, Overridden)) {
+          MacroID InfoID = 0;
+          emitMacroOverrides(Out, Overridden);
+          if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD)) {
+            InfoID = Writer.getMacroID(DefMD->getInfo());
+            assert(InfoID);
+            clang::io::Emit32(Out, InfoID << 1);
+          } else {
+            assert(isa<UndefMacroDirective>(MD));
+            clang::io::Emit32(Out, (ModID << 1) | 1);
+          }
         }
+        emitMacroOverrides(Out, Overridden);
         clang::io::Emit32(Out, 0);
       }
     }

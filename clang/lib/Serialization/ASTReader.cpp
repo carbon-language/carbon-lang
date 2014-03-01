@@ -579,11 +579,34 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
     }
 
     if (F.Kind == MK_Module) {
+      // Macro definitions are stored from newest to oldest, so reverse them
+      // before registering them.
+      llvm::SmallVector<unsigned, 8> MacroSizes;
       for (SmallVectorImpl<uint32_t>::iterator
-             I = LocalMacroIDs.begin(), E = LocalMacroIDs.end(); I != E; ++I) {
-        MacroID MacID = Reader.getGlobalMacroID(F, *I);
-        Reader.addPendingMacroFromModule(II, &F, MacID, F.DirectImportLoc);
+             I = LocalMacroIDs.begin(), E = LocalMacroIDs.end(); I != E; /**/) {
+        unsigned Size = 1;
+
+        static const uint32_t HasOverridesFlag = 0x80000000U;
+        if (I + 1 != E && (I[1] & HasOverridesFlag))
+          Size += 1 + (I[1] & ~HasOverridesFlag);
+
+        MacroSizes.push_back(Size);
+        I += Size;
       }
+
+      SmallVectorImpl<uint32_t>::iterator I = LocalMacroIDs.end();
+      for (SmallVectorImpl<unsigned>::reverse_iterator SI = MacroSizes.rbegin(),
+                                                       SE = MacroSizes.rend();
+           SI != SE; ++SI) {
+        I -= *SI;
+
+        uint32_t LocalMacroID = *I;
+        llvm::ArrayRef<uint32_t> Overrides;
+        if (*SI != 1)
+          Overrides = llvm::makeArrayRef(&I[2], *SI - 2);
+        Reader.addPendingMacroFromModule(II, &F, LocalMacroID, Overrides);
+      }
+      assert(I == LocalMacroIDs.begin());
     } else {
       Reader.addPendingMacroFromPCH(II, &F, MacroDirectivesOffset);
     }
@@ -1323,12 +1346,19 @@ HeaderFileInfoTrait::ReadData(internal_key_ref key, const unsigned char *d,
   return HFI;
 }
 
-void ASTReader::addPendingMacroFromModule(IdentifierInfo *II,
-                                          ModuleFile *M,
-                                          GlobalMacroID GMacID,
-                                          SourceLocation ImportLoc) {
+void
+ASTReader::addPendingMacroFromModule(IdentifierInfo *II, ModuleFile *M,
+                                     GlobalMacroID GMacID,
+                                     llvm::ArrayRef<SubmoduleID> Overrides) {
   assert(NumCurrentElementsDeserializing > 0 &&"Missing deserialization guard");
-  PendingMacroIDs[II].push_back(PendingMacroInfo(M, GMacID, ImportLoc));
+  SubmoduleID *OverrideData = 0;
+  if (!Overrides.empty()) {
+    OverrideData = new (Context) SubmoduleID[Overrides.size() + 1];
+    OverrideData[0] = Overrides.size();
+    for (unsigned I = 0; I != Overrides.size(); ++I)
+      OverrideData[I + 1] = getGlobalSubmoduleID(*M, Overrides[I]);
+  }
+  PendingMacroIDs[II].push_back(PendingMacroInfo(M, GMacID, OverrideData));
 }
 
 void ASTReader::addPendingMacroFromPCH(IdentifierInfo *II,
@@ -1477,6 +1507,59 @@ void ASTReader::markIdentifierUpToDate(IdentifierInfo *II) {
     IdentifierGeneration[II] = CurrentGeneration;
 }
 
+struct ASTReader::ModuleMacroInfo {
+  SubmoduleID SubModID;
+  MacroInfo *MI;
+  SubmoduleID *Overrides;
+  // FIXME: Remove this.
+  ModuleFile *F;
+
+  bool isDefine() const { return MI; }
+
+  SubmoduleID getSubmoduleID() const { return SubModID; }
+
+  llvm::ArrayRef<SubmoduleID> getOverriddenSubmodules() const {
+    if (!Overrides)
+      return llvm::ArrayRef<SubmoduleID>();
+    return llvm::makeArrayRef(Overrides + 1, *Overrides);
+  }
+
+  DefMacroDirective *import(Preprocessor &PP, SourceLocation ImportLoc) const {
+    if (!MI)
+      return 0;
+    return PP.AllocateDefMacroDirective(MI, ImportLoc, /*isImported=*/true);
+  }
+};
+
+ASTReader::ModuleMacroInfo *
+ASTReader::getModuleMacro(const PendingMacroInfo &PMInfo) {
+  ModuleMacroInfo Info;
+
+  uint32_t ID = PMInfo.ModuleMacroData.MacID;
+  if (ID & 1) {
+    // Macro undefinition.
+    Info.SubModID = getGlobalSubmoduleID(*PMInfo.M, ID >> 1);
+    Info.MI = 0;
+  } else {
+    // Macro definition.
+    GlobalMacroID GMacID = getGlobalMacroID(*PMInfo.M, ID >> 1);
+    assert(GMacID);
+
+    // If this macro has already been loaded, don't do so again.
+    // FIXME: This is highly dubious. Multiple macro definitions can have the
+    // same MacroInfo (and hence the same GMacID) due to #pragma push_macro etc.
+    if (MacrosLoaded[GMacID - NUM_PREDEF_MACRO_IDS])
+      return 0;
+
+    Info.MI = getMacro(GMacID);
+    Info.SubModID = Info.MI->getOwningModuleID();
+  }
+  Info.Overrides = PMInfo.ModuleMacroData.Overrides;
+  Info.F = PMInfo.M;
+
+  return new (Context) ModuleMacroInfo(Info);
+}
+
 void ASTReader::resolvePendingMacro(IdentifierInfo *II,
                                     const PendingMacroInfo &PMInfo) {
   assert(II);
@@ -1486,42 +1569,21 @@ void ASTReader::resolvePendingMacro(IdentifierInfo *II,
                               PMInfo.PCHMacroData.MacroDirectivesOffset);
     return;
   }
-  
+
   // Module Macro.
 
-  GlobalMacroID GMacID = PMInfo.ModuleMacroData.GMacID;
-  SourceLocation ImportLoc =
-      SourceLocation::getFromRawEncoding(PMInfo.ModuleMacroData.ImportLoc);
-
-  assert(GMacID);
-  // If this macro has already been loaded, don't do so again.
-  if (MacrosLoaded[GMacID - NUM_PREDEF_MACRO_IDS])
+  ModuleMacroInfo *MMI = getModuleMacro(PMInfo);
+  if (!MMI)
     return;
 
-  MacroInfo *MI = getMacro(GMacID);
-  SubmoduleID SubModID = MI->getOwningModuleID();
-  MacroDirective *MD = PP.AllocateDefMacroDirective(MI, ImportLoc,
-                                                    /*isImported=*/true);
-
-  // Determine whether this macro definition is visible.
-  bool Hidden = false;
-  Module *Owner = 0;
-  if (SubModID) {
-    if ((Owner = getSubmodule(SubModID))) {
-      if (Owner->NameVisibility == Module::Hidden) {
-        // The owning module is not visible, and this macro definition
-        // should not be, either.
-        Hidden = true;
-
-        // Note that this macro definition was hidden because its owning
-        // module is not yet visible.
-        HiddenNamesMap[Owner].push_back(HiddenName(II, MD));
-      }
-    }
+  Module *Owner = getSubmodule(MMI->getSubmoduleID());
+  if (Owner && Owner->NameVisibility == Module::Hidden) {
+    // Macros in the owning module are hidden. Just remember this macro to
+    // install if we make this module visible.
+    HiddenNamesMap[Owner].HiddenMacros.insert(std::make_pair(II, MMI));
+  } else {
+    installImportedMacro(II, MMI, Owner);
   }
-
-  if (!Hidden)
-    installImportedMacro(II, MD, Owner);
 }
 
 void ASTReader::installPCHMacroDirectives(IdentifierInfo *II,
@@ -1606,31 +1668,138 @@ static bool areDefinedInSystemModules(MacroInfo *PrevMI, MacroInfo *NewMI,
   return PrevInSystem && NewInSystem;
 }
 
-void ASTReader::installImportedMacro(IdentifierInfo *II, MacroDirective *MD,
-                                     Module *Owner) {
-  assert(II && MD);
+void ASTReader::removeOverriddenMacros(IdentifierInfo *II,
+                                       AmbiguousMacros &Ambig,
+                                       llvm::ArrayRef<SubmoduleID> Overrides) {
+  for (unsigned OI = 0, ON = Overrides.size(); OI != ON; ++OI) {
+    SubmoduleID OwnerID = Overrides[OI];
 
-  DefMacroDirective *DefMD = cast<DefMacroDirective>(MD);
+    // If this macro is not yet visible, remove it from the hidden names list.
+    Module *Owner = getSubmodule(OwnerID);
+    HiddenNames &Hidden = HiddenNamesMap[Owner];
+    HiddenMacrosMap::iterator HI = Hidden.HiddenMacros.find(II);
+    if (HI != Hidden.HiddenMacros.end()) {
+      removeOverriddenMacros(II, Ambig, HI->second->getOverriddenSubmodules());
+      Hidden.HiddenMacros.erase(HI);
+    }
+
+    // If this macro is already in our list of conflicts, remove it from there.
+    for (unsigned AI = 0, AN = Ambig.size(); AI != AN; ++AI)
+      if (Ambig[AI]->getInfo()->getOwningModuleID() == OwnerID)
+        Ambig.erase(Ambig.begin() + AI);
+  }
+}
+
+ASTReader::AmbiguousMacros *
+ASTReader::removeOverriddenMacros(IdentifierInfo *II,
+                                  llvm::ArrayRef<SubmoduleID> Overrides) {
   MacroDirective *Prev = PP.getMacroDirective(II);
-  if (Prev) {
-    MacroDirective::DefInfo PrevDef = Prev->getDefinition();
-    MacroInfo *PrevMI = PrevDef.getMacroInfo();
-    MacroInfo *NewMI = DefMD->getInfo();
-    if (NewMI != PrevMI && !PrevMI->isIdenticalTo(*NewMI, PP,
-                                                  /*Syntactically=*/true)) {
-      // Before marking the macros as ambiguous, check if this is a case where
-      // both macros are in system headers. If so, we trust that the system
-      // did not get it wrong. This also handles cases where Clang's own
-      // headers have a different spelling of certain system macros:
-      //   #define LONG_MAX __LONG_MAX__ (clang's limits.h)
-      //   #define LONG_MAX 0x7fffffffffffffffL (system's limits.h)
-      if (!areDefinedInSystemModules(PrevMI, NewMI, Owner, *this)) {
-        PrevDef.getDirective()->setAmbiguous(true);
-        DefMD->setAmbiguous(true);
-      }
+  if (!Prev && Overrides.empty())
+    return 0;
+
+  DefMacroDirective *PrevDef = Prev ? Prev->getDefinition().getDirective() : 0;
+  if (PrevDef && PrevDef->isAmbiguous()) {
+    // We had a prior ambiguity. Check whether we resolve it (or make it worse).
+    AmbiguousMacros &Ambig = AmbiguousMacroDefs[II];
+    Ambig.push_back(PrevDef);
+
+    removeOverriddenMacros(II, Ambig, Overrides);
+
+    if (!Ambig.empty())
+      return &Ambig;
+
+    AmbiguousMacroDefs.erase(II);
+  } else {
+    // There's no ambiguity yet. Maybe we're introducing one.
+    llvm::SmallVector<DefMacroDirective*, 1> Ambig;
+    if (PrevDef)
+      Ambig.push_back(PrevDef);
+
+    removeOverriddenMacros(II, Ambig, Overrides);
+
+    if (!Ambig.empty()) {
+      AmbiguousMacros &Result = AmbiguousMacroDefs[II];
+      Result.swap(Ambig);
+      return &Result;
     }
   }
-  
+
+  // We ended up with no ambiguity.
+  return 0;
+}
+
+void ASTReader::installImportedMacro(IdentifierInfo *II, ModuleMacroInfo *MMI,
+                                     Module *Owner) {
+  assert(II && Owner);
+
+  SourceLocation ImportLoc = Owner->MacroVisibilityLoc;
+  if (ImportLoc.isInvalid()) {
+    // FIXME: If we made macros from this module visible but didn't provide a
+    // source location for the import, we don't have a location for the macro.
+    // Use the location at which the containing module file was first imported
+    // for now.
+    ImportLoc = MMI->F->DirectImportLoc;
+  }
+
+  llvm::SmallVectorImpl<DefMacroDirective*> *Prev =
+      removeOverriddenMacros(II, MMI->getOverriddenSubmodules());
+
+
+  // Create a synthetic macro definition corresponding to the import (or null
+  // if this was an undefinition of the macro).
+  DefMacroDirective *MD = MMI->import(PP, ImportLoc);
+
+  // If there's no ambiguity, just install the macro.
+  if (!Prev) {
+    if (MD)
+      PP.appendMacroDirective(II, MD);
+    else
+      PP.appendMacroDirective(II, PP.AllocateUndefMacroDirective(ImportLoc));
+    return;
+  }
+  assert(!Prev->empty());
+
+  if (!MD) {
+    // We imported a #undef that didn't remove all prior definitions. The most
+    // recent prior definition remains, and we install it in the place of the
+    // imported directive.
+    MacroInfo *NewMI = Prev->back()->getInfo();
+    Prev->pop_back();
+    MD = PP.AllocateDefMacroDirective(NewMI, ImportLoc, /*Imported*/true);
+  }
+
+  // We're introducing a macro definition that creates or adds to an ambiguity.
+  // We can resolve that ambiguity if this macro is token-for-token identical to
+  // all of the existing definitions.
+  MacroInfo *NewMI = MD->getInfo();
+  assert(NewMI && "macro definition with no MacroInfo?");
+  while (!Prev->empty()) {
+    MacroInfo *PrevMI = Prev->back()->getInfo();
+    assert(PrevMI && "macro definition with no MacroInfo?");
+
+    // Before marking the macros as ambiguous, check if this is a case where
+    // both macros are in system headers. If so, we trust that the system
+    // did not get it wrong. This also handles cases where Clang's own
+    // headers have a different spelling of certain system macros:
+    //   #define LONG_MAX __LONG_MAX__ (clang's limits.h)
+    //   #define LONG_MAX 0x7fffffffffffffffL (system's limits.h)
+    //
+    // FIXME: Remove the defined-in-system-headers check. clang's limits.h
+    // overrides the system limits.h's macros, so there's no conflict here.
+    if (NewMI != PrevMI &&
+        !PrevMI->isIdenticalTo(*NewMI, PP, /*Syntactically=*/true) &&
+        !areDefinedInSystemModules(PrevMI, NewMI, Owner, *this))
+      break;
+
+    // The previous definition is the same as this one (or both are defined in
+    // system modules so we can assume they're equivalent); we don't need to
+    // track it any more.
+    Prev->pop_back();
+  }
+
+  if (!Prev->empty())
+    MD->setAmbiguous(true);
+
   PP.appendMacroDirective(II, MD);
 }
 
@@ -2828,30 +2997,25 @@ static void moveMethodToBackOfGlobalList(Sema &S, ObjCMethodDecl *Method) {
 }
 
 void ASTReader::makeNamesVisible(const HiddenNames &Names, Module *Owner) {
-  for (unsigned I = 0, N = Names.size(); I != N; ++I) {
-    switch (Names[I].getKind()) {
-    case HiddenName::Declaration: {
-      Decl *D = Names[I].getDecl();
-      bool wasHidden = D->Hidden;
-      D->Hidden = false;
+  for (unsigned I = 0, N = Names.HiddenDecls.size(); I != N; ++I) {
+    Decl *D = Names.HiddenDecls[I];
+    bool wasHidden = D->Hidden;
+    D->Hidden = false;
 
-      if (wasHidden && SemaObj) {
-        if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(D)) {
-          moveMethodToBackOfGlobalList(*SemaObj, Method);
-        }
+    if (wasHidden && SemaObj) {
+      if (ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(D)) {
+        moveMethodToBackOfGlobalList(*SemaObj, Method);
       }
-      break;
-    }
-    case HiddenName::MacroVisibility: {
-      std::pair<IdentifierInfo *, MacroDirective *> Macro = Names[I].getMacro();
-      installImportedMacro(Macro.first, Macro.second, Owner);
-      break;
-    }
     }
   }
+
+  for (HiddenMacrosMap::const_iterator I = Names.HiddenMacros.begin(),
+                                       E = Names.HiddenMacros.end();
+       I != E; ++I)
+    installImportedMacro(I->first, I->second, Owner);
 }
 
-void ASTReader::makeModuleVisible(Module *Mod, 
+void ASTReader::makeModuleVisible(Module *Mod,
                                   Module::NameVisibilityKind NameVisibility,
                                   SourceLocation ImportLoc,
                                   bool Complain) {
@@ -2866,15 +3030,18 @@ void ASTReader::makeModuleVisible(Module *Mod,
       // there is nothing more to do.
       continue;
     }
-    
+
     if (!Mod->isAvailable()) {
       // Modules that aren't available cannot be made visible.
       continue;
     }
 
     // Update the module's name visibility.
+    if (NameVisibility >= Module::MacrosVisible &&
+        Mod->NameVisibility < Module::MacrosVisible)
+      Mod->MacroVisibilityLoc = ImportLoc;
     Mod->NameVisibility = NameVisibility;
-    
+
     // If we've already deserialized any names from this module,
     // mark them as visible.
     HiddenNamesMapType::iterator Hidden = HiddenNamesMap.find(Mod);
@@ -7457,14 +7624,14 @@ void ASTReader::finishPendingActions() {
       SmallVector<PendingMacroInfo, 2> GlobalIDs;
       GlobalIDs.swap(PendingMacroIDs.begin()[I].second);
       // Initialize the macro history from chained-PCHs ahead of module imports.
-      for (unsigned IDIdx = 0, NumIDs = GlobalIDs.size(); IDIdx !=  NumIDs;
+      for (unsigned IDIdx = 0, NumIDs = GlobalIDs.size(); IDIdx != NumIDs;
            ++IDIdx) {
         const PendingMacroInfo &Info = GlobalIDs[IDIdx];
         if (Info.M->Kind != MK_Module)
           resolvePendingMacro(II, Info);
       }
       // Handle module imports.
-      for (unsigned IDIdx = 0, NumIDs = GlobalIDs.size(); IDIdx !=  NumIDs;
+      for (unsigned IDIdx = 0, NumIDs = GlobalIDs.size(); IDIdx != NumIDs;
            ++IDIdx) {
         const PendingMacroInfo &Info = GlobalIDs[IDIdx];
         if (Info.M->Kind == MK_Module)

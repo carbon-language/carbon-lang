@@ -144,7 +144,7 @@ MacroDirective::DefInfo MacroDirective::getDefinition() {
       isPublic = VisMD->isPublic();
   }
 
-  return DefInfo();
+  return DefInfo(0, UndefLoc, !isPublic.hasValue() || isPublic.getValue());
 }
 
 const MacroDirective::DefInfo

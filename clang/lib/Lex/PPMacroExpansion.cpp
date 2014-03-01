@@ -293,11 +293,11 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     for (MacroDirective::DefInfo PrevDef = Def.getPreviousDefinition();
          PrevDef && !PrevDef.isUndefined();
          PrevDef = PrevDef.getPreviousDefinition()) {
-      if (PrevDef.getDirective()->isAmbiguous()) {
-        Diag(PrevDef.getMacroInfo()->getDefinitionLoc(),
-             diag::note_pp_ambiguous_macro_other)
-          << Identifier.getIdentifierInfo();
-      }
+      Diag(PrevDef.getMacroInfo()->getDefinitionLoc(),
+           diag::note_pp_ambiguous_macro_other)
+        << Identifier.getIdentifierInfo();
+      if (!PrevDef.getDirective()->isAmbiguous())
+        break;
     }
   }
 
