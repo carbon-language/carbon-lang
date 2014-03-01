@@ -581,7 +581,6 @@ TEST_F(FileSystemTest, FileMapping) {
 
   // Unmap temp file
 
-#if LLVM_HAS_RVALUE_REFERENCES
   fs::mapped_file_region m(Twine(TempPath),
                              fs::mapped_file_region::readonly,
                              0,
@@ -591,6 +590,5 @@ TEST_F(FileSystemTest, FileMapping) {
   const char *Data = m.const_data();
   fs::mapped_file_region mfrrv(llvm_move(m));
   EXPECT_EQ(mfrrv.const_data(), Data);
-#endif
 }
 } // anonymous namespace

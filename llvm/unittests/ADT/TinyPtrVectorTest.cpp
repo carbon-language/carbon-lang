@@ -157,170 +157,136 @@ TYPED_TEST(TinyPtrVectorTest, CopyAndMoveCtorTest) {
   this->expectValues(Copy2, this->testArray(42));
   this->expectValues(this->V2, this->testArray(0));
 
-#if LLVM_HAS_RVALUE_REFERENCES
   TypeParam Move(std::move(Copy2));
   this->expectValues(Move, this->testArray(42));
   this->expectValues(Copy2, this->testArray(0));
-#endif
 }
 
 TYPED_TEST(TinyPtrVectorTest, CopyAndMoveTest) {
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(0));
   this->expectValues(this->V2, this->testArray(0));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(0));
-#endif
 
   this->setVectors(this->testArray(1), this->testArray(0));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(0));
   this->expectValues(this->V2, this->testArray(0));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(1), this->testArray(0));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(0));
-#endif
 
   this->setVectors(this->testArray(2), this->testArray(0));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(0));
   this->expectValues(this->V2, this->testArray(0));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(2), this->testArray(0));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(0));
-#endif
 
   this->setVectors(this->testArray(42), this->testArray(0));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(0));
   this->expectValues(this->V2, this->testArray(0));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(42), this->testArray(0));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(0));
-#endif
 
   this->setVectors(this->testArray(0), this->testArray(1));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(1));
   this->expectValues(this->V2, this->testArray(1));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(0), this->testArray(1));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(1));
-#endif
 
   this->setVectors(this->testArray(0), this->testArray(2));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(2));
   this->expectValues(this->V2, this->testArray(2));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(0), this->testArray(2));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(2));
-#endif
 
   this->setVectors(this->testArray(0), this->testArray(42));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(42));
   this->expectValues(this->V2, this->testArray(42));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(0), this->testArray(42));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(42));
-#endif
 
   this->setVectors(this->testArray(1), this->testArray(1));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(1));
   this->expectValues(this->V2, this->testArray(1));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(1));
-#endif
 
   this->setVectors(this->testArray(1), this->testArray(2));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(2));
   this->expectValues(this->V2, this->testArray(2));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(1), this->testArray(2));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(2));
-#endif
 
   this->setVectors(this->testArray(1), this->testArray(42));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(42));
   this->expectValues(this->V2, this->testArray(42));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(1), this->testArray(42));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(42));
-#endif
 
   this->setVectors(this->testArray(2), this->testArray(1));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(1));
   this->expectValues(this->V2, this->testArray(1));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(2), this->testArray(1));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(1));
-#endif
 
   this->setVectors(this->testArray(2), this->testArray(2));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(2));
   this->expectValues(this->V2, this->testArray(2));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(2), this->testArray(2));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(2));
-#endif
 
   this->setVectors(this->testArray(2), this->testArray(42));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(42));
   this->expectValues(this->V2, this->testArray(42));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(2), this->testArray(42));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(42));
-#endif
 
   this->setVectors(this->testArray(42), this->testArray(1));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(1));
   this->expectValues(this->V2, this->testArray(1));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(42), this->testArray(1));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(1));
-#endif
 
   this->setVectors(this->testArray(42), this->testArray(2));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(2));
   this->expectValues(this->V2, this->testArray(2));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(42), this->testArray(2));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(2));
-#endif
 
   this->setVectors(this->testArray(42), this->testArray(42));
   this->V = this->V2;
   this->expectValues(this->V, this->testArray(42));
   this->expectValues(this->V2, this->testArray(42));
-#if LLVM_HAS_RVALUE_REFERENCES
   this->setVectors(this->testArray(42), this->testArray(42));
   this->V = std::move(this->V2);
   this->expectValues(this->V, this->testArray(42));
-#endif
 }
 
 TYPED_TEST(TinyPtrVectorTest, EraseTest) {

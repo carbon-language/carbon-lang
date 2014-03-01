@@ -169,7 +169,6 @@ TEST_F(OptionalTest, NullCopyConstructionTest) {
   EXPECT_EQ(0u, NonDefaultConstructible::Destructions);
 }
 
-#if LLVM_HAS_RVALUE_REFERENCES
 struct MoveOnly {
   static unsigned MoveConstructions;
   static unsigned Destructions;
@@ -278,7 +277,6 @@ TEST_F(OptionalTest, MoveOnlyAssigningAssignment) {
   EXPECT_EQ(1u, MoveOnly::MoveAssignments);
   EXPECT_EQ(1u, MoveOnly::Destructions);
 }
-#endif
 
 } // end anonymous namespace
 
