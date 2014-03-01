@@ -1724,17 +1724,6 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
   return true;
 }
 
-namespace {
-  struct OffsetCompare {
-    bool operator()(const MachineInstr *LHS, const MachineInstr *RHS) const {
-      int LOffset = getMemoryOpOffset(LHS);
-      int ROffset = getMemoryOpOffset(RHS);
-      assert(LHS == RHS || LOffset != ROffset);
-      return LOffset > ROffset;
-    }
-  };
-}
-
 bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
                                  SmallVectorImpl<MachineInstr *> &Ops,
                                  unsigned Base, bool isLd,
@@ -1742,7 +1731,13 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
   bool RetVal = false;
 
   // Sort by offset (in reverse order).
-  std::sort(Ops.begin(), Ops.end(), OffsetCompare());
+  std::sort(Ops.begin(), Ops.end(),
+            [](const MachineInstr *LHS, const MachineInstr *RHS) {
+    int LOffset = getMemoryOpOffset(LHS);
+    int ROffset = getMemoryOpOffset(RHS);
+    assert(LHS == RHS || LOffset != ROffset);
+    return LOffset > ROffset;
+  });
 
   // The loads / stores of the same base are in order. Scan them from first to
   // last and check for the following:

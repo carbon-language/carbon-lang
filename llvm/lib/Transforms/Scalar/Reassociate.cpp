@@ -1547,19 +1547,6 @@ Value *Reassociate::OptimizeAdd(Instruction *I,
   return 0;
 }
 
-namespace {
-  /// \brief Predicate tests whether a ValueEntry's op is in a map.
-  struct IsValueInMap {
-    const DenseMap<Value *, unsigned> &Map;
-
-    IsValueInMap(const DenseMap<Value *, unsigned> &Map) : Map(Map) {}
-
-    bool operator()(const ValueEntry &Entry) {
-      return Map.find(Entry.Op) != Map.end();
-    }
-  };
-}
-
 /// \brief Build up a vector of value/power pairs factoring a product.
 ///
 /// Given a series of multiplication operands, build a vector of factors and

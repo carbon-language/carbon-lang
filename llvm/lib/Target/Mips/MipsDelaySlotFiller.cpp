@@ -65,20 +65,6 @@ namespace {
   typedef MachineBasicBlock::reverse_iterator ReverseIter;
   typedef SmallDenseMap<MachineBasicBlock*, MachineInstr*, 2> BB2BrMap;
 
-  /// \brief A functor comparing edge weight of two blocks.
-  struct CmpWeight {
-    CmpWeight(const MachineBasicBlock &S,
-              const MachineBranchProbabilityInfo &P) : Src(S), Prob(P) {}
-
-    bool operator()(const MachineBasicBlock *Dst0,
-                    const MachineBasicBlock *Dst1) const {
-      return Prob.getEdgeWeight(&Src, Dst0) < Prob.getEdgeWeight(&Src, Dst1);
-    }
-
-    const MachineBasicBlock &Src;
-    const MachineBranchProbabilityInfo &Prob;
-  };
-
   class RegDefsUses {
   public:
     RegDefsUses(TargetMachine &TM);
@@ -640,8 +626,12 @@ MachineBasicBlock *Filler::selectSuccBB(MachineBasicBlock &B) const {
     return NULL;
 
   // Select the successor with the larget edge weight.
-  CmpWeight Cmp(B, getAnalysis<MachineBranchProbabilityInfo>());
-  MachineBasicBlock *S = *std::max_element(B.succ_begin(), B.succ_end(), Cmp);
+  auto &Prob = getAnalysis<MachineBranchProbabilityInfo>();
+  MachineBasicBlock *S = *std::max_element(B.succ_begin(), B.succ_end(),
+                                           [&](const MachineBasicBlock *Dst0,
+                                               const MachineBasicBlock *Dst1) {
+    return Prob.getEdgeWeight(&B, Dst0) < Prob.getEdgeWeight(&B, Dst1);
+  });
   return S->isLandingPad() ? NULL : S;
 }
 

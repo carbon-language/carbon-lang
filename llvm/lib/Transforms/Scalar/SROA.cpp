@@ -3255,18 +3255,6 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
   return true;
 }
 
-namespace {
-struct IsSliceEndLessOrEqualTo {
-  uint64_t UpperBound;
-
-  IsSliceEndLessOrEqualTo(uint64_t UpperBound) : UpperBound(UpperBound) {}
-
-  bool operator()(const AllocaSlices::iterator &I) {
-    return I->endOffset() <= UpperBound;
-  }
-};
-}
-
 static void
 removeFinishedSplitUses(SmallVectorImpl<AllocaSlices::iterator> &SplitUses,
                         uint64_t &MaxSplitUseEndOffset, uint64_t Offset) {
@@ -3278,7 +3266,9 @@ removeFinishedSplitUses(SmallVectorImpl<AllocaSlices::iterator> &SplitUses,
 
   size_t SplitUsesOldSize = SplitUses.size();
   SplitUses.erase(std::remove_if(SplitUses.begin(), SplitUses.end(),
-                                 IsSliceEndLessOrEqualTo(Offset)),
+                                 [Offset](const AllocaSlices::iterator &I) {
+                    return I->endOffset() <= Offset;
+                  }),
                   SplitUses.end());
   if (SplitUsesOldSize == SplitUses.size())
     return;
@@ -3616,20 +3606,6 @@ bool SROA::promoteAllocas(Function &F) {
   return true;
 }
 
-namespace {
-  /// \brief A predicate to test whether an alloca belongs to a set.
-  class IsAllocaInSet {
-    typedef SmallPtrSet<AllocaInst *, 4> SetType;
-    const SetType &Set;
-
-  public:
-    typedef AllocaInst *argument_type;
-
-    IsAllocaInSet(const SetType &Set) : Set(Set) {}
-    bool operator()(AllocaInst *AI) const { return Set.count(AI); }
-  };
-}
-
 bool SROA::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
@@ -3665,11 +3641,14 @@ bool SROA::runOnFunction(Function &F) {
       // Remove the deleted allocas from various lists so that we don't try to
       // continue processing them.
       if (!DeletedAllocas.empty()) {
-        Worklist.remove_if(IsAllocaInSet(DeletedAllocas));
-        PostPromotionWorklist.remove_if(IsAllocaInSet(DeletedAllocas));
+        std::function<bool(AllocaInst *)> IsInSet = [&](AllocaInst *AI) {
+          return DeletedAllocas.count(AI);
+        };
+        Worklist.remove_if(IsInSet);
+        PostPromotionWorklist.remove_if(IsInSet);
         PromotableAllocas.erase(std::remove_if(PromotableAllocas.begin(),
                                                PromotableAllocas.end(),
-                                               IsAllocaInSet(DeletedAllocas)),
+                                               IsInSet),
                                 PromotableAllocas.end());
         DeletedAllocas.clear();
       }

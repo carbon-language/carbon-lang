@@ -125,20 +125,12 @@ static ManagedStatic<OptionCatSet> RegisteredOptionCategories;
 // Initialise the general option category.
 OptionCategory llvm::cl::GeneralCategory("General options");
 
-struct HasName {
-  HasName(StringRef Name) : Name(Name) {}
-  bool operator()(const OptionCategory *Category) const {
-    return Name == Category->getName();
-  }
-  StringRef Name;
-};
-
-void OptionCategory::registerCategory()
-{
+void OptionCategory::registerCategory() {
   assert(std::count_if(RegisteredOptionCategories->begin(),
                        RegisteredOptionCategories->end(),
-                       HasName(getName())) == 0 &&
-         "Duplicate option categories");
+                       [this](const OptionCategory *Category) {
+                         return getName() == Category->getName();
+                       }) == 0 && "Duplicate option categories");
 
   RegisteredOptionCategories->insert(this);
 }

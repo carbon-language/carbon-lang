@@ -124,19 +124,6 @@ namespace {
       AU.setPreservesCFG();
       FunctionPass::getAnalysisUsage(AU);
     }
-
-    struct GlobalCmp {
-      const DataLayout *DL;
-
-      GlobalCmp(const DataLayout *DL) : DL(DL) { }
-
-      bool operator()(const GlobalVariable *GV1, const GlobalVariable *GV2) {
-        Type *Ty1 = cast<PointerType>(GV1->getType())->getElementType();
-        Type *Ty2 = cast<PointerType>(GV2->getType())->getElementType();
-
-        return (DL->getTypeAllocSize(Ty1) < DL->getTypeAllocSize(Ty2));
-      }
-    };
   };
 } // end anonymous namespace
 
@@ -156,7 +143,13 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
   unsigned MaxOffset = TLI->getMaximalGlobalOffset();
 
   // FIXME: Find better heuristics
-  std::stable_sort(Globals.begin(), Globals.end(), GlobalCmp(DL));
+  std::stable_sort(Globals.begin(), Globals.end(),
+                   [DL](const GlobalVariable *GV1, const GlobalVariable *GV2) {
+    Type *Ty1 = cast<PointerType>(GV1->getType())->getElementType();
+    Type *Ty2 = cast<PointerType>(GV2->getType())->getElementType();
+
+    return (DL->getTypeAllocSize(Ty1) < DL->getTypeAllocSize(Ty2));
+  });
 
   Type *Int32Ty = Type::getInt32Ty(M.getContext());
 

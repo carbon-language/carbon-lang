@@ -702,22 +702,6 @@ bool DSE::HandleFree(CallInst *F) {
   return MadeChange;
 }
 
-namespace {
-  struct CouldRef {
-    typedef Value *argument_type;
-    const CallSite CS;
-    AliasAnalysis *AA;
-
-    bool operator()(Value *I) {
-      // See if the call site touches the value.
-      AliasAnalysis::ModRefResult A =
-        AA->getModRefInfo(CS, I, getPointerSize(I, *AA));
-
-      return A == AliasAnalysis::ModRef || A == AliasAnalysis::Ref;
-    }
-  };
-}
-
 /// handleEndBlock - Remove dead stores to stack-allocated locations in the
 /// function end block.  Ex:
 /// %A = alloca i32
@@ -819,7 +803,13 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
       // If the call might load from any of our allocas, then any store above
       // the call is live.
-      CouldRef Pred = { CS, AA };
+      std::function<bool(Value *)> Pred = [&](Value *I) {
+        // See if the call site touches the value.
+        AliasAnalysis::ModRefResult A =
+            AA->getModRefInfo(CS, I, getPointerSize(I, *AA));
+
+        return A == AliasAnalysis::ModRef || A == AliasAnalysis::Ref;
+      };
       DeadStackObjects.remove_if(Pred);
 
       // If all of the allocas were clobbered by the call then we're not going
@@ -863,20 +853,6 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
   return MadeChange;
 }
 
-namespace {
-  struct CouldAlias {
-    typedef Value *argument_type;
-    const AliasAnalysis::Location &LoadedLoc;
-    AliasAnalysis *AA;
-
-    bool operator()(Value *I) {
-      // See if the loaded location could alias the stack location.
-      AliasAnalysis::Location StackLoc(I, getPointerSize(I, *AA));
-      return !AA->isNoAlias(StackLoc, LoadedLoc);
-    }
-  };
-}
-
 /// RemoveAccessedObjects - Check to see if the specified location may alias any
 /// of the stack objects in the DeadStackObjects set.  If so, they become live
 /// because the location is being loaded.
@@ -896,6 +872,10 @@ void DSE::RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
   }
 
   // Remove objects that could alias LoadedLoc.
-  CouldAlias Pred = { LoadedLoc, AA };
+  std::function<bool(Value *)> Pred = [&](Value *I) {
+    // See if the loaded location could alias the stack location.
+    AliasAnalysis::Location StackLoc(I, getPointerSize(I, *AA));
+    return !AA->isNoAlias(StackLoc, LoadedLoc);
+  };
   DeadStackObjects.remove_if(Pred);
 }

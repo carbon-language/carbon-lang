@@ -475,16 +475,6 @@ void addMember(std::vector<NewArchiveIterator> &Members, T I, StringRef Name,
     Members[Pos] = NI;
 }
 
-namespace {
-class HasName {
-  StringRef Name;
-
-public:
-  HasName(StringRef Name) : Name(Name) {}
-  bool operator()(StringRef Path) { return Name == sys::path::filename(Path); }
-};
-}
-
 enum InsertAction {
   IA_AddOldMember,
   IA_AddNewMeber,
@@ -500,8 +490,9 @@ computeInsertAction(ArchiveOperation Operation,
   if (Operation == QuickAppend || Members.empty())
     return IA_AddOldMember;
 
-  std::vector<std::string>::iterator MI =
-      std::find_if(Members.begin(), Members.end(), HasName(Name));
+  std::vector<std::string>::iterator MI = std::find_if(
+      Members.begin(), Members.end(),
+      [Name](StringRef Path) { return Name == sys::path::filename(Path); });
 
   if (MI == Members.end())
     return IA_AddOldMember;

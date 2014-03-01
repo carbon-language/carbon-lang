@@ -1705,16 +1705,6 @@ void CodeGenRegBank::computeRegUnitSets() {
   }
 }
 
-struct LessUnits {
-  const CodeGenRegBank &RegBank;
-  LessUnits(const CodeGenRegBank &RB): RegBank(RB) {}
-
-  bool operator()(unsigned ID1, unsigned ID2) {
-    return RegBank.getRegPressureSet(ID1).Units.size()
-      < RegBank.getRegPressureSet(ID2).Units.size();
-  }
-};
-
 void CodeGenRegBank::computeDerivedInfo() {
   computeComposites();
   computeSubRegIndexLaneMasks();
@@ -1737,7 +1727,10 @@ void CodeGenRegBank::computeDerivedInfo() {
     RegUnitSetOrder.push_back(Idx);
 
   std::stable_sort(RegUnitSetOrder.begin(), RegUnitSetOrder.end(),
-                   LessUnits(*this));
+                   [this](unsigned ID1, unsigned ID2) {
+    return getRegPressureSet(ID1).Units.size() <
+           getRegPressureSet(ID2).Units.size();
+  });
   for (unsigned Idx = 0, EndIdx = RegUnitSets.size(); Idx != EndIdx; ++Idx) {
     RegUnitSets[RegUnitSetOrder[Idx]].Order = Idx;
   }

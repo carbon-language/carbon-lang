@@ -409,23 +409,6 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
   return BestSucc;
 }
 
-namespace {
-/// \brief Predicate struct to detect blocks already placed.
-class IsBlockPlaced {
-  const BlockChain &PlacedChain;
-  const BlockToChainMapType &BlockToChain;
-
-public:
-  IsBlockPlaced(const BlockChain &PlacedChain,
-                const BlockToChainMapType &BlockToChain)
-      : PlacedChain(PlacedChain), BlockToChain(BlockToChain) {}
-
-  bool operator()(MachineBasicBlock *BB) const {
-    return BlockToChain.lookup(BB) == &PlacedChain;
-  }
-};
-}
-
 /// \brief Select the best block from a worklist.
 ///
 /// This looks through the provided worklist as a list of candidate basic
@@ -444,7 +427,9 @@ MachineBasicBlock *MachineBlockPlacement::selectBestCandidateBlock(
   // FIXME: If this shows up on profiles, it could be folded (at the cost of
   // some code complexity) into the loop below.
   WorkList.erase(std::remove_if(WorkList.begin(), WorkList.end(),
-                                IsBlockPlaced(Chain, BlockToChain)),
+                                [&](MachineBasicBlock *BB) {
+                   return BlockToChain.lookup(BB) == &Chain;
+                 }),
                  WorkList.end());
 
   MachineBasicBlock *BestBlock = 0;

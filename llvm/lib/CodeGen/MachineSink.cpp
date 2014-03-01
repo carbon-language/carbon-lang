@@ -98,16 +98,6 @@ namespace {
     bool PerformTrivialForwardCoalescing(MachineInstr *MI,
                                          MachineBasicBlock *MBB);
   };
-
-  // SuccessorSorter - Sort Successors according to their loop depth. 
-  struct SuccessorSorter {
-    SuccessorSorter(MachineLoopInfo *LoopInfo) : LI(LoopInfo) {}
-    bool operator()(const MachineBasicBlock *LHS,
-                    const MachineBasicBlock *RHS) const {
-      return LI->getLoopDepth(LHS) < LI->getLoopDepth(RHS);
-    }
-    MachineLoopInfo *LI;
-  };
 } // end anonymous namespace
 
 char MachineSinking::ID = 0;
@@ -553,7 +543,12 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
       // we should sink to.
       // We give successors with smaller loop depth higher priority.
       SmallVector<MachineBasicBlock*, 4> Succs(MBB->succ_begin(), MBB->succ_end());
-      std::stable_sort(Succs.begin(), Succs.end(), SuccessorSorter(LI));
+      // Sort Successors according to their loop depth.
+      std::stable_sort(
+          Succs.begin(), Succs.end(),
+          [this](const MachineBasicBlock *LHS, const MachineBasicBlock *RHS) {
+            return LI->getLoopDepth(LHS) < LI->getLoopDepth(RHS);
+          });
       for (SmallVectorImpl<MachineBasicBlock *>::iterator SI = Succs.begin(),
              E = Succs.end(); SI != E; ++SI) {
         MachineBasicBlock *SuccBlock = *SI;

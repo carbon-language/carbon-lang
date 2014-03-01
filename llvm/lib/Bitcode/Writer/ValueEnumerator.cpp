@@ -173,29 +173,19 @@ void ValueEnumerator::print(raw_ostream &OS, const ValueMapType &Map,
   }
 }
 
-// Optimize constant ordering.
-namespace {
-  struct CstSortPredicate {
-    ValueEnumerator &VE;
-    explicit CstSortPredicate(ValueEnumerator &ve) : VE(ve) {}
-    bool operator()(const std::pair<const Value*, unsigned> &LHS,
-                    const std::pair<const Value*, unsigned> &RHS) {
-      // Sort by plane.
-      if (LHS.first->getType() != RHS.first->getType())
-        return VE.getTypeID(LHS.first->getType()) <
-               VE.getTypeID(RHS.first->getType());
-      // Then by frequency.
-      return LHS.second > RHS.second;
-    }
-  };
-}
-
 /// OptimizeConstants - Reorder constant pool for denser encoding.
 void ValueEnumerator::OptimizeConstants(unsigned CstStart, unsigned CstEnd) {
   if (CstStart == CstEnd || CstStart+1 == CstEnd) return;
 
-  CstSortPredicate P(*this);
-  std::stable_sort(Values.begin()+CstStart, Values.begin()+CstEnd, P);
+  std::stable_sort(Values.begin() + CstStart, Values.begin() + CstEnd,
+                   [this](const std::pair<const Value *, unsigned> &LHS,
+                          const std::pair<const Value *, unsigned> &RHS) {
+    // Sort by plane.
+    if (LHS.first->getType() != RHS.first->getType())
+      return getTypeID(LHS.first->getType()) < getTypeID(RHS.first->getType());
+    // Then by frequency.
+    return LHS.second > RHS.second;
+  });
 
   // Ensure that integer and vector of integer constants are at the start of the
   // constant pool.  This is important so that GEP structure indices come before

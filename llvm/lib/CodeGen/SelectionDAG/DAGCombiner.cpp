@@ -8197,14 +8197,6 @@ struct LoadedSlice {
 };
 }
 
-/// \brief Sorts LoadedSlice according to their offset.
-struct LoadedSliceSorter {
-  bool operator()(const LoadedSlice &LHS, const LoadedSlice &RHS) {
-    assert(LHS.Origin == RHS.Origin && "Different bases not implemented.");
-    return LHS.getOffsetFromBase() < RHS.getOffsetFromBase();
-  }
-};
-
 /// \brief Check that all bits set in \p UsedBits form a dense region, i.e.,
 /// \p UsedBits looks like 0..0 1..1 0..0.
 static bool areUsedBitsDense(const APInt &UsedBits) {
@@ -8248,7 +8240,11 @@ static void adjustCostForPairing(SmallVectorImpl<LoadedSlice> &LoadedSlices,
 
   // Sort the slices so that elements that are likely to be next to each
   // other in memory are next to each other in the list.
-  std::sort(LoadedSlices.begin(), LoadedSlices.end(), LoadedSliceSorter());
+  std::sort(LoadedSlices.begin(), LoadedSlices.end(),
+            [](const LoadedSlice &LHS, const LoadedSlice &RHS) {
+    assert(LHS.Origin == RHS.Origin && "Different bases not implemented.");
+    return LHS.getOffsetFromBase() < RHS.getOffsetFromBase();
+  });
   const TargetLowering &TLI = LoadedSlices[0].DAG->getTargetLoweringInfo();
   // First (resp. Second) is the first (resp. Second) potentially candidate
   // to be placed in a paired load.
@@ -8852,17 +8848,6 @@ struct MemOpLink {
   unsigned SequenceNum;
 };
 
-/// Sorts store nodes in a link according to their offset from a shared
-// base ptr.
-struct ConsecutiveMemoryChainSorter {
-  bool operator()(MemOpLink LHS, MemOpLink RHS) {
-    return
-        LHS.OffsetFromBase < RHS.OffsetFromBase ||
-        (LHS.OffsetFromBase == RHS.OffsetFromBase &&
-         LHS.SequenceNum > RHS.SequenceNum);
-  }
-};
-
 bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   EVT MemVT = St->getMemoryVT();
   int64_t ElementSizeBytes = MemVT.getSizeInBits()/8;
@@ -8981,7 +8966,11 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
   // Sort the memory operands according to their distance from the base pointer.
   std::sort(StoreNodes.begin(), StoreNodes.end(),
-            ConsecutiveMemoryChainSorter());
+            [](MemOpLink LHS, MemOpLink RHS) {
+    return LHS.OffsetFromBase < RHS.OffsetFromBase ||
+           (LHS.OffsetFromBase == RHS.OffsetFromBase &&
+            LHS.SequenceNum > RHS.SequenceNum);
+  });
 
   // Scan the memory operations on the chain and find the first non-consecutive
   // store memory address.

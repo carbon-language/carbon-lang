@@ -288,15 +288,6 @@ public:
   }
 };
 
-namespace {
-/// Sort ClassInfo pointers independently of pointer value.
-struct LessClassInfoPtr {
-  bool operator()(const ClassInfo *LHS, const ClassInfo *RHS) const {
-    return *LHS < *RHS;
-  }
-};
-}
-
 /// MatchableInfo - Helper class for storing the necessary information for an
 /// instruction or alias which is capable of being matched.
 struct MatchableInfo {
@@ -1288,7 +1279,7 @@ void AsmMatcherInfo::buildOperandMatchInfo() {
 
   /// Map containing a mask with all operands indices that can be found for
   /// that class inside a instruction.
-  typedef std::map<ClassInfo*, unsigned, LessClassInfoPtr> OpClassMaskTy;
+  typedef std::map<ClassInfo *, unsigned, less_ptr<ClassInfo>> OpClassMaskTy;
   OpClassMaskTy OpClassMask;
 
   for (std::vector<MatchableInfo*>::const_iterator it =

@@ -125,20 +125,6 @@ class StackColoring : public MachineFunctionPass {
   /// once the coloring is done.
   SmallVector<MachineInstr*, 8> Markers;
 
-  /// SlotSizeSorter - A Sort utility for arranging stack slots according
-  /// to their size.
-  struct SlotSizeSorter {
-    MachineFrameInfo *MFI;
-    SlotSizeSorter(MachineFrameInfo *mfi) : MFI(mfi) { }
-    bool operator()(int LHS, int RHS) {
-      // We use -1 to denote a uninteresting slot. Place these slots at the end.
-      if (LHS == -1) return false;
-      if (RHS == -1) return true;
-      // Sort according to size.
-      return MFI->getObjectSize(LHS) > MFI->getObjectSize(RHS);
-  }
-};
-
 public:
   static char ID;
   StackColoring() : MachineFunctionPass(ID) {
@@ -767,7 +753,13 @@ bool StackColoring::runOnMachineFunction(MachineFunction &Func) {
   // Sort the slots according to their size. Place unused slots at the end.
   // Use stable sort to guarantee deterministic code generation.
   std::stable_sort(SortedSlots.begin(), SortedSlots.end(),
-                   SlotSizeSorter(MFI));
+                   [this](int LHS, int RHS) {
+    // We use -1 to denote a uninteresting slot. Place these slots at the end.
+    if (LHS == -1) return false;
+    if (RHS == -1) return true;
+    // Sort according to size.
+    return MFI->getObjectSize(LHS) > MFI->getObjectSize(RHS);
+  });
 
   bool Changed = true;
   while (Changed) {

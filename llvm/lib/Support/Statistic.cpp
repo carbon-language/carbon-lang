@@ -84,20 +84,6 @@ void Statistic::RegisterStatistic() {
   }
 }
 
-namespace {
-
-struct NameCompare {
-  bool operator()(const Statistic *LHS, const Statistic *RHS) const {
-    int Cmp = std::strcmp(LHS->getName(), RHS->getName());
-    if (Cmp != 0) return Cmp < 0;
-
-    // Secondary key is the description.
-    return std::strcmp(LHS->getDesc(), RHS->getDesc()) < 0;
-  }
-};
-
-}
-
 // Print information when destroyed, iff command line option is specified.
 StatisticInfo::~StatisticInfo() {
   llvm::PrintStatistics();
@@ -124,7 +110,14 @@ void llvm::PrintStatistics(raw_ostream &OS) {
   }
 
   // Sort the fields by name.
-  std::stable_sort(Stats.Stats.begin(), Stats.Stats.end(), NameCompare());
+  std::stable_sort(Stats.Stats.begin(), Stats.Stats.end(),
+                   [](const Statistic *LHS, const Statistic *RHS) {
+    if (int Cmp = std::strcmp(LHS->getName(), RHS->getName()))
+      return Cmp < 0;
+
+    // Secondary key is the description.
+    return std::strcmp(LHS->getDesc(), RHS->getDesc()) < 0;
+  });
 
   // Print out the statistics header...
   OS << "===" << std::string(73, '-') << "===\n"

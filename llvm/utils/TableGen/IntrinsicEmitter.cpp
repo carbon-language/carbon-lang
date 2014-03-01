@@ -131,20 +131,6 @@ void IntrinsicEmitter::EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "#endif\n\n";
 }
 
-struct IntrinsicNameSorter {
-  IntrinsicNameSorter(const std::vector<CodeGenIntrinsic> &I)
-  : Ints(I) {}
-
-  // Sort in reverse order of intrinsic name so "abc.def" appears after
-  // "abd.def.ghi" in the overridden name matcher
-  bool operator()(unsigned i, unsigned j) {
-    return Ints[i].Name > Ints[j].Name;
-  }
-
-private:
-  const std::vector<CodeGenIntrinsic> &Ints;
-};
-
 void IntrinsicEmitter::
 EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
                      raw_ostream &OS) {
@@ -158,15 +144,17 @@ EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "  StringRef NameR(Name+6, Len-6);   // Skip over 'llvm.'\n";
   OS << "  switch (Name[5]) {                  // Dispatch on first letter.\n";
   OS << "  default: break;\n";
-  IntrinsicNameSorter Sorter(Ints);
   // Emit the intrinsic matching stuff by first letter.
   for (std::map<char, std::vector<unsigned> >::iterator I = IntMapping.begin(),
        E = IntMapping.end(); I != E; ++I) {
     OS << "  case '" << I->first << "':\n";
     std::vector<unsigned> &IntList = I->second;
 
-    // Sort intrinsics in reverse order of their names
-    std::sort(IntList.begin(), IntList.end(), Sorter);
+    // Sort in reverse order of intrinsic name so "abc.def" appears after
+    // "abd.def.ghi" in the overridden name matcher
+    std::sort(IntList.begin(), IntList.end(), [&](unsigned i, unsigned j) {
+      return Ints[i].Name > Ints[j].Name;
+    });
 
     // Emit all the overloaded intrinsics first, build a table of the
     // non-overloaded ones.

@@ -289,17 +289,6 @@ GetInstByName(const char *Name,
   return I->second;
 }
 
-namespace {
-/// SortInstByName - Sorting predicate to sort instructions by name.
-///
-struct SortInstByName {
-  bool operator()(const CodeGenInstruction *Rec1,
-                  const CodeGenInstruction *Rec2) const {
-    return Rec1->TheDef->getName() < Rec2->TheDef->getName();
-  }
-};
-}
-
 /// \brief Return all of the instructions defined by the target, ordered by
 /// their enum value.
 void CodeGenTarget::ComputeInstrsByEnum() const {
@@ -346,8 +335,10 @@ void CodeGenTarget::ComputeInstrsByEnum() const {
 
   // All of the instructions are now in random order based on the map iteration.
   // Sort them by name.
-  std::sort(InstrsByEnum.begin()+EndOfPredefines, InstrsByEnum.end(),
-            SortInstByName());
+  std::sort(InstrsByEnum.begin() + EndOfPredefines, InstrsByEnum.end(),
+            [](const CodeGenInstruction *Rec1, const CodeGenInstruction *Rec2) {
+    return Rec1->TheDef->getName() < Rec2->TheDef->getName();
+  });
 }
 
 
