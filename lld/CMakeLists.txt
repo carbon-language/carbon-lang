@@ -108,7 +108,7 @@ endif()
 if (NOT MSVC)
   # gcc and clang require the -std=c++0x or -std=c++11 flag.
   if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang" AND
-      NOT ("${CMAKE_CXX_FLAGS}" MATCHES ".*-std=(c|gnu)\\+\\+(0x|11).*"))
+      NOT ("${CMAKE_CXX_FLAGS}" MATCHES ".*-std=(c|gnu)\\+\\+(0x|11|1y).*"))
     message(FATAL_ERROR
       "lld requires c++11. Clang and gcc require -std=c++0x or -std=c++11 to "
       "enter this mode. Please set CMAKE_CXX_FLAGS accordingly.")
