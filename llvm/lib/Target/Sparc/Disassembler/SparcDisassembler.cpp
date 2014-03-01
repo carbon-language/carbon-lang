@@ -192,6 +192,8 @@ static DecodeStatus DecodeStoreQFP(MCInst &Inst, unsigned insn,
                                    uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeCall(MCInst &Inst, unsigned insn,
                                uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeSIMM13(MCInst &Inst, unsigned insn,
+                                 uint64_t Address, const void *Decoder);
 
 #include "SparcGenDisassemblerTables.inc"
 
@@ -355,5 +357,12 @@ static DecodeStatus DecodeCall(MCInst &MI, unsigned insn,
   if (!tryAddingSymbolicOperand(tgt+Address, false, Address,
                                 0, 30, MI, Decoder))
     MI.addOperand(MCOperand::CreateImm(tgt));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeSIMM13(MCInst &MI, unsigned insn,
+                                 uint64_t Address, const void *Decoder) {
+  unsigned tgt = SignExtend32<13>(fieldFromInstruction(insn, 0, 13));
+  MI.addOperand(MCOperand::CreateImm(tgt));
   return MCDisassembler::Success;
 }

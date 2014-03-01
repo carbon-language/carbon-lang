@@ -109,6 +109,10 @@ def calltarget : Operand<i32> {
   let DecoderMethod = "DecodeCall";
 }
 
+def simm13Op : Operand<i32> {
+  let DecoderMethod = "DecodeSIMM13";
+}
+
 // Operand for printing out a condition code.
 let PrintMethod = "printCCOperand" in
   def CCOp : Operand<i32>;
@@ -247,7 +251,7 @@ multiclass F3_12np<string OpcStr, bits<6> Op3Val> {
                  (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2),
                  !strconcat(OpcStr, " $rs1, $rs2, $rd"), []>;
   def ri  : F3_2<2, Op3Val,
-                 (outs IntRegs:$rd), (ins IntRegs:$rs1, i32imm:$simm13),
+                 (outs IntRegs:$rd), (ins IntRegs:$rs1, simm13Op:$simm13),
                  !strconcat(OpcStr, " $rs1, $simm13, $rd"), []>;
 }
 
@@ -433,42 +437,42 @@ let rd = 0, imm22 = 0 in
   def NOP : F2_1<0b100, (outs), (ins), "nop", []>;
 
 // Section B.11 - Logical Instructions, p. 106
-defm AND    : F3_12<"and", 0b000001, and, IntRegs, i32, i32imm>;
+defm AND    : F3_12<"and", 0b000001, and, IntRegs, i32, simm13Op>;
 
 def ANDNrr  : F3_1<2, 0b000101,
                    (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2),
                    "andn $rs1, $rs2, $rd",
                    [(set i32:$rd, (and i32:$rs1, (not i32:$rs2)))]>;
 def ANDNri  : F3_2<2, 0b000101,
-                   (outs IntRegs:$rd), (ins IntRegs:$rs1, i32imm:$simm13),
+                   (outs IntRegs:$rd), (ins IntRegs:$rs1, simm13Op:$simm13),
                    "andn $rs1, $simm13, $rd", []>;
 
-defm OR     : F3_12<"or", 0b000010, or, IntRegs, i32, i32imm>;
+defm OR     : F3_12<"or", 0b000010, or, IntRegs, i32, simm13Op>;
 
 def ORNrr   : F3_1<2, 0b000110,
                    (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2),
                    "orn $rs1, $rs2, $rd",
                    [(set i32:$rd, (or i32:$rs1, (not i32:$rs2)))]>;
 def ORNri   : F3_2<2, 0b000110,
-                   (outs IntRegs:$rd), (ins IntRegs:$rs1, i32imm:$simm13),
+                   (outs IntRegs:$rd), (ins IntRegs:$rs1, simm13Op:$simm13),
                    "orn $rs1, $simm13, $rd", []>;
-defm XOR    : F3_12<"xor", 0b000011, xor, IntRegs, i32, i32imm>;
+defm XOR    : F3_12<"xor", 0b000011, xor, IntRegs, i32, simm13Op>;
 
 def XNORrr  : F3_1<2, 0b000111,
                    (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2),
                    "xnor $rs1, $rs2, $rd",
                    [(set i32:$rd, (not (xor i32:$rs1, i32:$rs2)))]>;
 def XNORri  : F3_2<2, 0b000111,
-                   (outs IntRegs:$rd), (ins IntRegs:$rs1, i32imm:$simm13),
+                   (outs IntRegs:$rd), (ins IntRegs:$rs1, simm13Op:$simm13),
                    "xnor $rs1, $simm13, $rd", []>;
 
 // Section B.12 - Shift Instructions, p. 107
-defm SLL : F3_12<"sll", 0b100101, shl, IntRegs, i32, i32imm>;
-defm SRL : F3_12<"srl", 0b100110, srl, IntRegs, i32, i32imm>;
-defm SRA : F3_12<"sra", 0b100111, sra, IntRegs, i32, i32imm>;
+defm SLL : F3_12<"sll", 0b100101, shl, IntRegs, i32, simm13Op>;
+defm SRL : F3_12<"srl", 0b100110, srl, IntRegs, i32, simm13Op>;
+defm SRA : F3_12<"sra", 0b100111, sra, IntRegs, i32, simm13Op>;
 
 // Section B.13 - Add Instructions, p. 108
-defm ADD   : F3_12<"add", 0b000000, add, IntRegs, i32, i32imm>;
+defm ADD   : F3_12<"add", 0b000000, add, IntRegs, i32, simm13Op>;
 
 // "LEA" forms of add (patterns to make tblgen happy)
 let Predicates = [Is32Bit], isCodeGenOnly = 1 in
@@ -478,18 +482,18 @@ let Predicates = [Is32Bit], isCodeGenOnly = 1 in
                      [(set iPTR:$dst, ADDRri:$addr)]>;
 
 let Defs = [ICC] in
-  defm ADDCC  : F3_12<"addcc", 0b010000, addc, IntRegs, i32, i32imm>;
+  defm ADDCC  : F3_12<"addcc", 0b010000, addc, IntRegs, i32, simm13Op>;
 
 let Uses = [ICC], Defs = [ICC] in
-  defm ADDE  : F3_12<"addxcc", 0b011000, adde, IntRegs, i32, i32imm>;
+  defm ADDE  : F3_12<"addxcc", 0b011000, adde, IntRegs, i32, simm13Op>;
 
 // Section B.15 - Subtract Instructions, p. 110
-defm SUB    : F3_12  <"sub"  , 0b000100, sub, IntRegs, i32, i32imm>;
+defm SUB    : F3_12  <"sub"  , 0b000100, sub, IntRegs, i32, simm13Op>;
 let Uses = [ICC], Defs = [ICC] in
-  defm SUBE   : F3_12  <"subxcc" , 0b011100, sube, IntRegs, i32, i32imm>;
+  defm SUBE   : F3_12  <"subxcc" , 0b011100, sube, IntRegs, i32, simm13Op>;
 
 let Defs = [ICC] in
-  defm SUBCC  : F3_12  <"subcc", 0b010100, subc, IntRegs, i32, i32imm>;
+  defm SUBCC  : F3_12  <"subcc", 0b010100, subc, IntRegs, i32, simm13Op>;
 
 let Defs = [ICC], rd = 0 in {
   def CMPrr   : F3_1<2, 0b010100,
@@ -497,7 +501,7 @@ let Defs = [ICC], rd = 0 in {
                      "cmp $rs1, $rs2",
                      [(SPcmpicc i32:$rs1, i32:$rs2)]>;
   def CMPri   : F3_2<2, 0b010100,
-                     (outs), (ins IntRegs:$rs1, i32imm:$simm13),
+                     (outs), (ins IntRegs:$rs1, simm13Op:$simm13),
                      "cmp $rs1, $simm13",
                      [(SPcmpicc i32:$rs1, (i32 simm13:$simm13))]>;
 }
@@ -505,7 +509,7 @@ let Defs = [ICC], rd = 0 in {
 // Section B.18 - Multiply Instructions, p. 113
 let Defs = [Y] in {
   defm UMUL : F3_12np<"umul", 0b001010>;
-  defm SMUL : F3_12  <"smul", 0b001011, mul, IntRegs, i32, i32imm>;
+  defm SMUL : F3_12  <"smul", 0b001011, mul, IntRegs, i32, simm13Op>;
 }
 
 // Section B.19 - Divide Instructions, p. 115
@@ -607,11 +611,11 @@ let Uses = [Y], rs1 = 0, rs2 = 0 in
 // Section B.29 - Write State Register Instructions
 let Defs = [Y], rd = 0 in {
   def WRYrr : F3_1<2, 0b110000,
-                   (outs), (ins IntRegs:$b, IntRegs:$c),
-                   "wr $b, $c, %y", []>;
+                   (outs), (ins IntRegs:$rs1, IntRegs:$rs2),
+                   "wr $rs1, $rs2, %y", []>;
   def WRYri : F3_2<2, 0b110000,
-                   (outs), (ins IntRegs:$b, i32imm:$c),
-                   "wr $b, $c, %y", []>;
+                   (outs), (ins IntRegs:$rs1, simm13Op:$simm13),
+                   "wr $rs1, $simm13, %y", []>;
 }
 // Convert Integer to Floating-point Instructions, p. 141
 def FITOS : F3_3u<2, 0b110100, 0b011000100,
@@ -946,7 +950,7 @@ let hasSideEffects =1, rd = 0, rs1 = 0b01111, rs2 = 0 in
   def STBAR : F3_1<2, 0b101000, (outs), (ins), "stbar", []>;
 
 let Predicates = [HasV9], hasSideEffects = 1, rd = 0, rs1 = 0b01111 in
- def MEMBARi : F3_2<2, 0b101000, (outs), (ins i32imm:$simm13),
+ def MEMBARi : F3_2<2, 0b101000, (outs), (ins simm13Op:$simm13),
                     "membar $simm13", []>;
 
 let Constraints = "$val = $dst" in {
