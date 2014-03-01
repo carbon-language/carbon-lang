@@ -321,8 +321,8 @@ let isBarrier = 1, isTerminator = 1, rd = 0b1000, rs1 = 0, simm13 = 5 in
   def TA5 : F3_2<0b10, 0b111010, (outs), (ins), "ta 5", [(trap)]>;
 
 let rd = 0 in
-  def UNIMP : F2_1<0b000, (outs), (ins i32imm:$val),
-                  "unimp $val", []>;
+  def UNIMP : F2_1<0b000, (outs), (ins i32imm:$imm22),
+                  "unimp $imm22", []>;
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded after
 // instruction selection into a branch sequence.  This has to handle all
