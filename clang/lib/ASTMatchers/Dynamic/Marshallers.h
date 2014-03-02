@@ -637,7 +637,7 @@ public:
       *LeastDerivedKind = Kind;
     return true;
   }
-  bool isPolymorphic() const LLVM_OVERRIDE { return true; }
+  bool isPolymorphic() const override { return true; }
 
 private:
   const unsigned MinCount;
