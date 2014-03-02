@@ -110,7 +110,7 @@ ErrorOr<Status> RealFile::status() {
       return EC;
     Status NewS(RealStatus);
     NewS.setName(S.getName());
-    S = llvm_move(NewS);
+    S = std::move(NewS);
   }
   return S;
 }
@@ -592,11 +592,11 @@ class VFSFromYAMLParser {
     Entry *Result = 0;
     switch (Kind) {
     case EK_File:
-      Result = new FileEntry(LastComponent, llvm_move(ExternalContentsPath),
+      Result = new FileEntry(LastComponent, std::move(ExternalContentsPath),
                              UseExternalName);
       break;
     case EK_Directory:
-      Result = new DirectoryEntry(LastComponent, llvm_move(EntryArrayContents),
+      Result = new DirectoryEntry(LastComponent, std::move(EntryArrayContents),
           Status("", "", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0,
                  0, file_type::directory_file, sys::fs::all_all));
       break;

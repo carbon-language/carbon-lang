@@ -261,7 +261,7 @@ public:
     if (pool.Diagnostics.empty()) return;
 
     if (Diagnostics.empty()) {
-      Diagnostics = llvm_move(pool.Diagnostics);
+      Diagnostics = std::move(pool.Diagnostics);
     } else {
       Diagnostics.append(pool.pool_begin(), pool.pool_end());
     }
