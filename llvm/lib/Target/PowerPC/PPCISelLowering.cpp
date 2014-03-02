@@ -8292,6 +8292,8 @@ PPCTargetLowering::getConstraintType(const std::string &Constraint) const {
       // suboptimal.
       return C_Memory;
     }
+  } else if (Constraint == "wc") { // individual CR bits.
+    return C_RegisterClass;
   }
   return TargetLowering::getConstraintType(Constraint);
 }
@@ -8309,7 +8311,11 @@ PPCTargetLowering::getSingleConstraintMatchWeight(
   if (CallOperandVal == NULL)
     return CW_Default;
   Type *type = CallOperandVal->getType();
+
   // Look at the constraint type.
+  if (StringRef(constraint) == "wc" && type->isIntegerTy(1))
+    return CW_Register; // an individual CR bit.
+
   switch (*constraint) {
   default:
     weight = TargetLowering::getSingleConstraintMatchWeight(info, constraint);
@@ -8365,6 +8371,8 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     case 'y':   // crrc
       return std::make_pair(0U, &PPC::CRRCRegClass);
     }
+  } else if (Constraint == "wc") { // an individual CR bit.
+    return std::make_pair(0U, &PPC::CRBITRCRegClass);
   }
 
   std::pair<unsigned, const TargetRegisterClass*> R =
