@@ -204,7 +204,7 @@ struct PassModel;
 template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 struct PassModel<IRUnitT, AnalysisManagerT, PassT,
                  true> : PassConcept<IRUnitT, AnalysisManagerT> {
-  PassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
+  PassModel(PassT Pass) : Pass(std::move(Pass)) {}
   virtual PassModel *clone() { return new PassModel(Pass); }
   virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) {
     return Pass.run(IR, AM);
@@ -218,7 +218,7 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT,
 template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 struct PassModel<IRUnitT, AnalysisManagerT, PassT,
                  false> : PassConcept<IRUnitT, AnalysisManagerT> {
-  PassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
+  PassModel(PassT Pass) : Pass(std::move(Pass)) {}
   virtual PassModel *clone() { return new PassModel(Pass); }
   virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) {
     return Pass.run(IR);
@@ -280,7 +280,7 @@ struct AnalysisResultModel;
 template <typename IRUnitT, typename PassT, typename ResultT>
 struct AnalysisResultModel<IRUnitT, PassT, ResultT,
                            false> : AnalysisResultConcept<IRUnitT> {
-  AnalysisResultModel(ResultT Result) : Result(llvm_move(Result)) {}
+  AnalysisResultModel(ResultT Result) : Result(std::move(Result)) {}
   virtual AnalysisResultModel *clone() {
     return new AnalysisResultModel(Result);
   }
@@ -302,7 +302,7 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT,
 template <typename IRUnitT, typename PassT, typename ResultT>
 struct AnalysisResultModel<IRUnitT, PassT, ResultT,
                            true> : AnalysisResultConcept<IRUnitT> {
-  AnalysisResultModel(ResultT Result) : Result(llvm_move(Result)) {}
+  AnalysisResultModel(ResultT Result) : Result(std::move(Result)) {}
   virtual AnalysisResultModel *clone() {
     return new AnalysisResultModel(Result);
   }
@@ -347,7 +347,7 @@ template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
                          true> : AnalysisPassConcept<IRUnitT,
                                                      AnalysisManagerT> {
-  AnalysisPassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
+  AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
   virtual AnalysisPassModel *clone() { return new AnalysisPassModel(Pass); }
 
   // FIXME: Replace PassT::Result with type traits when we use C++11.
@@ -370,7 +370,7 @@ template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
                          false> : AnalysisPassConcept<IRUnitT,
                                                      AnalysisManagerT> {
-  AnalysisPassModel(PassT Pass) : Pass(llvm_move(Pass)) {}
+  AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
   virtual AnalysisPassModel *clone() { return new AnalysisPassModel(Pass); }
 
   // FIXME: Replace PassT::Result with type traits when we use C++11.
@@ -403,7 +403,7 @@ public:
   PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM = 0);
 
   template <typename ModulePassT> void addPass(ModulePassT Pass) {
-    Passes.push_back(new ModulePassModel<ModulePassT>(llvm_move(Pass)));
+    Passes.push_back(new ModulePassModel<ModulePassT>(std::move(Pass)));
   }
 
   static StringRef name() { return "ModulePassManager"; }
@@ -428,7 +428,7 @@ public:
   explicit FunctionPassManager() {}
 
   template <typename FunctionPassT> void addPass(FunctionPassT Pass) {
-    Passes.push_back(new FunctionPassModel<FunctionPassT>(llvm_move(Pass)));
+    Passes.push_back(new FunctionPassModel<FunctionPassT>(std::move(Pass)));
   }
 
   PreservedAnalyses run(Function *F, FunctionAnalysisManager *AM = 0);
@@ -519,7 +519,7 @@ public:
     assert(!AnalysisPasses.count(PassT::ID()) &&
            "Registered the same analysis pass twice!");
     typedef detail::AnalysisPassModel<IRUnitT, DerivedT, PassT> PassModelT;
-    AnalysisPasses[PassT::ID()] = new PassModelT(llvm_move(Pass));
+    AnalysisPasses[PassT::ID()] = new PassModelT(std::move(Pass));
   }
 
   /// \brief Invalidate a specific analysis pass for an IR module.
@@ -783,7 +783,7 @@ template <typename FunctionPassT>
 class ModuleToFunctionPassAdaptor {
 public:
   explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass)
-      : Pass(llvm_move(Pass)) {}
+      : Pass(std::move(Pass)) {}
 
   /// \brief Runs the function pass across every function in the module.
   PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM) {
@@ -804,7 +804,7 @@ public:
 
       // Then intersect the preserved set so that invalidation of module
       // analyses will eventually occur when the module pass completes.
-      PA.intersect(llvm_move(PassPA));
+      PA.intersect(std::move(PassPA));
     }
 
     // By definition we preserve the proxy. This precludes *any* invalidation
@@ -826,7 +826,7 @@ private:
 template <typename FunctionPassT>
 ModuleToFunctionPassAdaptor<FunctionPassT>
 createModuleToFunctionPassAdaptor(FunctionPassT Pass) {
-  return ModuleToFunctionPassAdaptor<FunctionPassT>(llvm_move(Pass));
+  return ModuleToFunctionPassAdaptor<FunctionPassT>(std::move(Pass));
 }
 
 }

@@ -588,7 +588,7 @@ TEST_F(FileSystemTest, FileMapping) {
                              EC);
   ASSERT_NO_ERROR(EC);
   const char *Data = m.const_data();
-  fs::mapped_file_region mfrrv(llvm_move(m));
+  fs::mapped_file_region mfrrv(std::move(m));
   EXPECT_EQ(mfrrv.const_data(), Data);
 }
 } // anonymous namespace

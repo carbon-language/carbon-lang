@@ -1617,11 +1617,11 @@ std::string Node::getVerbatimTag() const {
     if (Raw.find_last_of('!') == 0) {
       Ret = Doc->getTagMap().find("!")->second;
       Ret += Raw.substr(1);
-      return llvm_move(Ret);
+      return std::move(Ret);
     } else if (Raw.startswith("!!")) {
       Ret = Doc->getTagMap().find("!!")->second;
       Ret += Raw.substr(2);
-      return llvm_move(Ret);
+      return std::move(Ret);
     } else {
       StringRef TagHandle = Raw.substr(0, Raw.find_last_of('!') + 1);
       std::map<StringRef, StringRef>::const_iterator It =
@@ -1635,7 +1635,7 @@ std::string Node::getVerbatimTag() const {
         setError(Twine("Unknown tag handle ") + TagHandle, T);
       }
       Ret += Raw.substr(Raw.find_last_of('!') + 1);
-      return llvm_move(Ret);
+      return std::move(Ret);
     }
   }
 

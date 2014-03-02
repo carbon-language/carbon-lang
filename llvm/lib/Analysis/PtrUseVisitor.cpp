@@ -23,7 +23,7 @@ void detail::PtrUseVisitorBase::enqueueUsers(Instruction &I) {
         UseToVisit::UseAndIsOffsetKnownPair(&UI.getUse(), IsOffsetKnown),
         Offset
       };
-      Worklist.push_back(llvm_move(NewU));
+      Worklist.push_back(std::move(NewU));
     }
   }
 }

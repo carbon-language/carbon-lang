@@ -143,7 +143,7 @@ TEST(SmallPtrSetTest, CopyAndMoveTest) {
   s3.insert(&buf[5]);
   s3.insert(&buf[6]);
   s3.insert(&buf[7]);
-  s1 = llvm_move(s3);
+  s1 = std::move(s3);
   EXPECT_EQ(8U, s1.size());
   EXPECT_TRUE(s3.empty());
   for (int i = 0; i < 8; ++i)

@@ -219,7 +219,7 @@ public:
       U = ToVisit.UseAndIsOffsetKnown.getPointer();
       IsOffsetKnown = ToVisit.UseAndIsOffsetKnown.getInt();
       if (IsOffsetKnown)
-        Offset = llvm_move(ToVisit.Offset);
+        Offset = std::move(ToVisit.Offset);
 
       Instruction *I = cast<Instruction>(U->getUser());
       static_cast<DerivedT*>(this)->visit(I);

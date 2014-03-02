@@ -78,10 +78,6 @@
 # define LLVM_HAS_VARIADIC_TEMPLATES 0
 #endif
 
-/// llvm_move - Expands to ::std::move. This is a hold-over from when we did
-/// not support R-value references.
-#define llvm_move(value) (::std::move(value))
-
 /// Expands to '&' if r-value references are supported.
 ///
 /// This can be used to provide l-value/r-value overrides of member functions.

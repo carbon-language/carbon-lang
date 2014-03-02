@@ -470,11 +470,11 @@ void DwarfDebug::addScopeRangeList(DwarfCompileUnit *TheCU, DIE *ScopeDIE,
        RI != RE; ++RI) {
     RangeSpan Span(getLabelBeforeInsn(RI->first),
                    getLabelAfterInsn(RI->second));
-    List.addRange(llvm_move(Span));
+    List.addRange(std::move(Span));
   }
 
   // Add the range list to the set of ranges to be emitted.
-  TheCU->addRangeList(llvm_move(List));
+  TheCU->addRangeList(std::move(List));
 }
 
 // Construct new DW_TAG_lexical_block for this scope and attach
@@ -1800,7 +1800,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
 
   // Add the range of this function to the list of ranges for the CU.
   RangeSpan Span(FunctionBeginSym, FunctionEndSym);
-  TheCU->addRange(llvm_move(Span));
+  TheCU->addRange(std::move(Span));
 
   // Clear debug info
   for (ScopeVariablesMap::iterator I = ScopeVariables.begin(),

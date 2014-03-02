@@ -285,8 +285,8 @@ protected:
         bool FoundVal = LookupBucketFor(B->first, DestBucket);
         (void)FoundVal; // silence warning.
         assert(!FoundVal && "Key already in new map?");
-        DestBucket->first = llvm_move(B->first);
-        new (&DestBucket->second) ValueT(llvm_move(B->second));
+        DestBucket->first = std::move(B->first);
+        new (&DestBucket->second) ValueT(std::move(B->second));
         incrementNumEntries();
 
         // Free the value.
@@ -753,10 +753,10 @@ public:
         // Swap separately and handle any assymetry.
         std::swap(LHSB->first, RHSB->first);
         if (hasLHSValue) {
-          new (&RHSB->second) ValueT(llvm_move(LHSB->second));
+          new (&RHSB->second) ValueT(std::move(LHSB->second));
           LHSB->second.~ValueT();
         } else if (hasRHSValue) {
-          new (&LHSB->second) ValueT(llvm_move(RHSB->second));
+          new (&LHSB->second) ValueT(std::move(RHSB->second));
           RHSB->second.~ValueT();
         }
       }
@@ -772,7 +772,7 @@ public:
     SmallDenseMap &LargeSide = Small ? RHS : *this;
 
     // First stash the large side's rep and move the small side across.
-    LargeRep TmpRep = llvm_move(*LargeSide.getLargeRep());
+    LargeRep TmpRep = std::move(*LargeSide.getLargeRep());
     LargeSide.getLargeRep()->~LargeRep();
     LargeSide.Small = true;
     // This is similar to the standard move-from-old-buckets, but the bucket
@@ -782,11 +782,11 @@ public:
     for (unsigned i = 0, e = InlineBuckets; i != e; ++i) {
       BucketT *NewB = &LargeSide.getInlineBuckets()[i],
               *OldB = &SmallSide.getInlineBuckets()[i];
-      new (&NewB->first) KeyT(llvm_move(OldB->first));
+      new (&NewB->first) KeyT(std::move(OldB->first));
       OldB->first.~KeyT();
       if (!KeyInfoT::isEqual(NewB->first, EmptyKey) &&
           !KeyInfoT::isEqual(NewB->first, TombstoneKey)) {
-        new (&NewB->second) ValueT(llvm_move(OldB->second));
+        new (&NewB->second) ValueT(std::move(OldB->second));
         OldB->second.~ValueT();
       }
     }
@@ -794,7 +794,7 @@ public:
     // The hard part of moving the small buckets across is done, just move
     // the TmpRep into its new home.
     SmallSide.Small = false;
-    new (SmallSide.getLargeRep()) LargeRep(llvm_move(TmpRep));
+    new (SmallSide.getLargeRep()) LargeRep(std::move(TmpRep));
   }
 
   SmallDenseMap& operator=(const SmallDenseMap& other) {
@@ -852,8 +852,8 @@ public:
             !KeyInfoT::isEqual(P->first, TombstoneKey)) {
           assert(size_t(TmpEnd - TmpBegin) < InlineBuckets &&
                  "Too many inline buckets!");
-          new (&TmpEnd->first) KeyT(llvm_move(P->first));
-          new (&TmpEnd->second) ValueT(llvm_move(P->second));
+          new (&TmpEnd->first) KeyT(std::move(P->first));
+          new (&TmpEnd->second) ValueT(std::move(P->second));
           ++TmpEnd;
           P->second.~ValueT();
         }
@@ -868,7 +868,7 @@ public:
       return;
     }
 
-    LargeRep OldRep = llvm_move(*getLargeRep());
+    LargeRep OldRep = std::move(*getLargeRep());
     getLargeRep()->~LargeRep();
     if (AtLeast <= InlineBuckets) {
       Small = true;

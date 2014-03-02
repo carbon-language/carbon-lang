@@ -57,7 +57,7 @@ TEST(polymorphic_ptr_test, Basic) {
   EXPECT_EQ(s, p.get());
   EXPECT_EQ(42, p->x);
 
-  polymorphic_ptr<S> p2((llvm_move(p)));
+  polymorphic_ptr<S> p2((std::move(p)));
   EXPECT_FALSE((bool)p);
   EXPECT_TRUE(!p);
   EXPECT_TRUE((bool)p2);

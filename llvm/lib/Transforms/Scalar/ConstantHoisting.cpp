@@ -229,7 +229,7 @@ void ConstantHoisting::FindAndMakeBaseConstant(ConstantMapType::iterator S,
     ConstantInfo::RebasedConstantInfo RCI;
     RCI.OriginalConstant = I->first;
     RCI.Offset = ConstantInt::get(Ty, Diff);
-    RCI.Uses = llvm_move(I->second.Uses);
+    RCI.Uses = std::move(I->second.Uses);
     CI.RebasedConstants.push_back(RCI);
   }
   Constants.push_back(CI);

@@ -31,7 +31,7 @@ PreservedAnalyses ModulePassManager::run(Module *M, ModuleAnalysisManager *AM) {
     PreservedAnalyses PassPA = Passes[Idx]->run(M, AM);
     if (AM)
       AM->invalidate(M, PassPA);
-    PA.intersect(llvm_move(PassPA));
+    PA.intersect(std::move(PassPA));
   }
 
   if (DebugPM)
@@ -89,7 +89,7 @@ PreservedAnalyses FunctionPassManager::run(Function *F, FunctionAnalysisManager 
     PreservedAnalyses PassPA = Passes[Idx]->run(F, AM);
     if (AM)
       AM->invalidate(F, PassPA);
-    PA.intersect(llvm_move(PassPA));
+    PA.intersect(std::move(PassPA));
   }
 
   if (DebugPM)
