@@ -28,13 +28,13 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
-#include "llvm/Support/Atomic.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/system_error.h"
+#include <atomic>
 #include <sys/stat.h>
 using namespace clang;
 
@@ -1883,8 +1883,8 @@ void BuryPointer(const void *Ptr) {
   // is what we want in such case.
   static const size_t kGraveYardMaxSize = 16;
   LLVM_ATTRIBUTE_UNUSED static const void *GraveYard[kGraveYardMaxSize];
-  static llvm::sys::cas_flag GraveYardSize;
-  llvm::sys::cas_flag Idx = llvm::sys::AtomicIncrement(&GraveYardSize) - 1;
+  static std::atomic<unsigned> GraveYardSize;
+  unsigned Idx = GraveYardSize++;
   if (Idx >= kGraveYardMaxSize)
     return;
   GraveYard[Idx] = Ptr;
