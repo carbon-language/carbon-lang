@@ -1040,6 +1040,19 @@ def V9FCMPQ  : F3_3c<2, 0b110101, 0b001010011,
                 "fcmpq $rd, $rs1, $rs2", []>,
                  Requires<[HasHardQuad]>;
 
+let hasSideEffects = 1 in {
+  def V9FCMPES  : F3_3c<2, 0b110101, 0b001010101,
+                   (outs FCCRegs:$rd), (ins FPRegs:$rs1, FPRegs:$rs2),
+                   "fcmpes $rd, $rs1, $rs2", []>;
+  def V9FCMPED  : F3_3c<2, 0b110101, 0b001010110,
+                   (outs FCCRegs:$rd), (ins DFPRegs:$rs1, DFPRegs:$rs2),
+                   "fcmped $rd, $rs1, $rs2", []>;
+  def V9FCMPEQ  : F3_3c<2, 0b110101, 0b001010111,
+                   (outs FCCRegs:$rd), (ins QFPRegs:$rs1, QFPRegs:$rs2),
+                   "fcmpeq $rd, $rs1, $rs2", []>,
+                   Requires<[HasHardQuad]>;
+}
+
 // Floating point conditional move instrucitons with %fcc0-%fcc3.
 let Predicates = [HasV9] in {
   let Constraints = "$f = $rd", intcc = 0 in {

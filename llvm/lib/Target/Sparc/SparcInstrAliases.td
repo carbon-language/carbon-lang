@@ -260,3 +260,10 @@ def : InstAlias<"fcmps $rs1, $rs2", (V9FCMPS FCC0, FPRegs:$rs1, FPRegs:$rs2)>;
 def : InstAlias<"fcmpd $rs1, $rs2", (V9FCMPD FCC0, DFPRegs:$rs1, DFPRegs:$rs2)>;
 def : InstAlias<"fcmpq $rs1, $rs2", (V9FCMPQ FCC0, QFPRegs:$rs1, QFPRegs:$rs2)>,
                 Requires<[HasHardQuad]>;
+
+def : InstAlias<"fcmpes $rs1, $rs2", (V9FCMPES FCC0, FPRegs:$rs1, FPRegs:$rs2)>;
+def : InstAlias<"fcmped $rs1, $rs2", (V9FCMPED FCC0, DFPRegs:$rs1,
+                                                     DFPRegs:$rs2)>;
+def : InstAlias<"fcmpeq $rs1, $rs2", (V9FCMPEQ FCC0, QFPRegs:$rs1,
+                                                     QFPRegs:$rs2)>,
+                Requires<[HasHardQuad]>;

@@ -69,9 +69,8 @@ bool SparcInstPrinter::printSparcAliasInstr(const MCInst *MI, raw_ostream &O)
       return true;
     }
   }
-  case SP::V9FCMPS:
-  case SP::V9FCMPD:
-  case SP::V9FCMPQ: {
+  case SP::V9FCMPS:  case SP::V9FCMPD:  case SP::V9FCMPQ:
+  case SP::V9FCMPES: case SP::V9FCMPED: case SP::V9FCMPEQ: {
     if (isV9()
         || (MI->getNumOperands() != 3)
         || (!MI->getOperand(0).isReg())
@@ -80,9 +79,12 @@ bool SparcInstPrinter::printSparcAliasInstr(const MCInst *MI, raw_ostream &O)
     // if V8, skip printing %fcc0.
     switch(MI->getOpcode()) {
     default:
-    case SP::V9FCMPS: O << "\tfcmps "; break;
-    case SP::V9FCMPD: O << "\tfcmpd "; break;
-    case SP::V9FCMPQ: O << "\tfcmpq "; break;
+    case SP::V9FCMPS:  O << "\tfcmps "; break;
+    case SP::V9FCMPD:  O << "\tfcmpd "; break;
+    case SP::V9FCMPQ:  O << "\tfcmpq "; break;
+    case SP::V9FCMPES: O << "\tfcmpes "; break;
+    case SP::V9FCMPED: O << "\tfcmped "; break;
+    case SP::V9FCMPEQ: O << "\tfcmpeq "; break;
     }
     printOperand(MI, 1, O);
     O << ", ";
