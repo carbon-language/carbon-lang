@@ -255,7 +255,7 @@ public:
   /// @returns The value, or nullptr if failed() == true.
   Node *getValue();
 
-  virtual void skip() LLVM_OVERRIDE {
+  virtual void skip() override {
     getKey()->skip();
     getValue()->skip();
   }
@@ -369,7 +369,7 @@ public:
 
   iterator end() { return iterator(); }
 
-  virtual void skip() LLVM_OVERRIDE {
+  virtual void skip() override {
     yaml::skip(*this);
   }
 
@@ -430,7 +430,7 @@ public:
 
   iterator end() { return iterator(); }
 
-  virtual void skip() LLVM_OVERRIDE {
+  virtual void skip() override {
     yaml::skip(*this);
   }
 

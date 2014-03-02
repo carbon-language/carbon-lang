@@ -784,7 +784,8 @@ namespace llvm {
     SDValue BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain, SDValue StackSlot,
                       SelectionDAG &DAG) const;
 
-    virtual bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const LLVM_OVERRIDE;
+    virtual bool isNoopAddrSpaceCast(unsigned SrcAS,
+                                     unsigned DestAS) const override;
 
     /// \brief Reset the operation actions based on target options.
     virtual void resetOperationActions();

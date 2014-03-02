@@ -221,7 +221,7 @@ public:
                       const SmallVectorImpl<SDValue> &OutVals,
                       SDLoc dl, SelectionDAG &DAG) const;
 
-  virtual unsigned getByValTypeAlignment(Type *Ty) const LLVM_OVERRIDE;
+  virtual unsigned getByValTypeAlignment(Type *Ty) const override;
 
   SDValue LowerCall(CallLoweringInfo &CLI,
                     SmallVectorImpl<SDValue> &InVals) const;
@@ -346,7 +346,7 @@ public:
   getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const;
 
   virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info, const CallInst &I,
-                                  unsigned Intrinsic) const LLVM_OVERRIDE;
+                                  unsigned Intrinsic) const override;
 
 protected:
   std::pair<const TargetRegisterClass*, uint8_t>

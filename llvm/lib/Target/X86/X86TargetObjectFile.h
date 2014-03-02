@@ -23,33 +23,30 @@ namespace llvm {
     const MCExpr *
     getTTypeGlobalReference(const GlobalValue *GV, unsigned Encoding,
                             Mangler &Mang, const TargetMachine &TM,
-                            MachineModuleInfo *MMI, MCStreamer &Streamer) const
-        LLVM_OVERRIDE;
+                            MachineModuleInfo *MMI,
+                            MCStreamer &Streamer) const override;
 
     // getCFIPersonalitySymbol - The symbol that gets passed to
     // .cfi_personality.
     MCSymbol *getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
                                       const TargetMachine &TM,
-                                      MachineModuleInfo *MMI) const
-        LLVM_OVERRIDE;
+                                      MachineModuleInfo *MMI) const override;
   };
 
   /// X86LinuxTargetObjectFile - This implementation is used for linux x86
   /// and x86-64.
   class X86LinuxTargetObjectFile : public TargetLoweringObjectFileELF {
-    void Initialize(MCContext &Ctx, const TargetMachine &TM) LLVM_OVERRIDE;
+    void Initialize(MCContext &Ctx, const TargetMachine &TM) override;
 
     /// \brief Describe a TLS variable address within debug info.
-    const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const
-        LLVM_OVERRIDE;
+    const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const override;
   };
 
   /// \brief This implementation is used for Windows targets on x86 and x86-64.
   class X86WindowsTargetObjectFile : public TargetLoweringObjectFileCOFF {
-    const MCExpr *getExecutableRelativeSymbol(const ConstantExpr *CE,
-                                              Mangler &Mang,
-                                              const TargetMachine &TM) const
-        LLVM_OVERRIDE;
+    const MCExpr *
+    getExecutableRelativeSymbol(const ConstantExpr *CE, Mangler &Mang,
+                                const TargetMachine &TM) const override;
   };
 
 } // end namespace llvm

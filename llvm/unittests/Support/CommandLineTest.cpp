@@ -147,7 +147,7 @@ TEST(CommandLineTest, UseOptionCategory) {
 }
 
 class StrDupSaver : public cl::StringSaver {
-  const char *SaveString(const char *Str) LLVM_OVERRIDE {
+  const char *SaveString(const char *Str) override {
     return strdup(Str);
   }
 };

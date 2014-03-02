@@ -28,13 +28,12 @@ class IRObjectFile : public SymbolicFile {
 public:
   IRObjectFile(MemoryBuffer *Object, error_code &EC, LLVMContext &Context,
                bool BufferOwned);
-  void moveSymbolNext(DataRefImpl &Symb) const LLVM_OVERRIDE;
-  error_code printSymbolName(raw_ostream &OS, DataRefImpl Symb) const
-      LLVM_OVERRIDE;
-  uint32_t getSymbolFlags(DataRefImpl Symb) const LLVM_OVERRIDE;
+  void moveSymbolNext(DataRefImpl &Symb) const override;
+  error_code printSymbolName(raw_ostream &OS, DataRefImpl Symb) const override;
+  uint32_t getSymbolFlags(DataRefImpl Symb) const override;
   const GlobalValue &getSymbolGV(DataRefImpl Symb) const;
-  basic_symbol_iterator symbol_begin_impl() const LLVM_OVERRIDE;
-  basic_symbol_iterator symbol_end_impl() const LLVM_OVERRIDE;
+  basic_symbol_iterator symbol_begin_impl() const override;
+  basic_symbol_iterator symbol_end_impl() const override;
 
   static inline bool classof(const Binary *v) {
     return v->isIR();

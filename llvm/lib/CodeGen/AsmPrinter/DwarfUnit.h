@@ -573,7 +573,7 @@ public:
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
   void addLabelAddress(DIE *Die, dwarf::Attribute Attribute, MCSymbol *Label);
 
-  DwarfCompileUnit &getCU() LLVM_OVERRIDE { return *this; }
+  DwarfCompileUnit &getCU() override { return *this; }
 };
 
 class DwarfTypeUnit : public DwarfUnit {
@@ -592,13 +592,13 @@ public:
 
   /// Emit the header for this unit, not including the initial length field.
   void emitHeader(const MCSection *ASection, const MCSymbol *ASectionSym) const
-      LLVM_OVERRIDE;
-  unsigned getHeaderSize() const LLVM_OVERRIDE {
+      override;
+  unsigned getHeaderSize() const override {
     return DwarfUnit::getHeaderSize() + sizeof(uint64_t) + // Type Signature
            sizeof(uint32_t);                               // Type DIE Offset
   }
   void initSection(const MCSection *Section);
-  DwarfCompileUnit &getCU() LLVM_OVERRIDE { return CU; }
+  DwarfCompileUnit &getCU() override { return CU; }
 };
 } // end llvm namespace
 #endif

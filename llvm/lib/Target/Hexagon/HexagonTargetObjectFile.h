@@ -19,7 +19,7 @@ namespace llvm {
     const MCSectionELF *SmallDataSection;
     const MCSectionELF *SmallBSSSection;
   public:
-    void Initialize(MCContext &Ctx, const TargetMachine &TM) LLVM_OVERRIDE;
+    void Initialize(MCContext &Ctx, const TargetMachine &TM) override;
 
     /// IsGlobalInSmallSection - Return true if this global address should be
     /// placed into small data/bss section.
@@ -31,9 +31,8 @@ namespace llvm {
 
     bool IsSmallDataEnabled () const;
     const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
-                                            SectionKind Kind, Mangler &Mang,
-                                            const TargetMachine &TM) const
-        LLVM_OVERRIDE;
+                                        SectionKind Kind, Mangler &Mang,
+                                        const TargetMachine &TM) const override;
   };
 
 } // namespace llvm

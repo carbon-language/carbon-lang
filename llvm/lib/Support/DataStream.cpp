@@ -58,7 +58,7 @@ public:
   virtual ~DataFileStreamer() {
     close(Fd);
   }
-  virtual size_t GetBytes(unsigned char *buf, size_t len) LLVM_OVERRIDE {
+  virtual size_t GetBytes(unsigned char *buf, size_t len) override {
     NumStreamFetches++;
     return read(Fd, buf, len);
   }

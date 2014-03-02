@@ -30,39 +30,36 @@ public:
                        const SystemZSubtarget &sti);
 
   // Override TargetFrameLowering.
-  virtual bool isFPCloseToIncomingSP() const LLVM_OVERRIDE { return false; }
-  virtual const SpillSlot *getCalleeSavedSpillSlots(unsigned &NumEntries) const
-    LLVM_OVERRIDE;
+  virtual bool isFPCloseToIncomingSP() const override { return false; }
+  virtual const SpillSlot *
+    getCalleeSavedSpillSlots(unsigned &NumEntries) const override;
   virtual void
     processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                         RegScavenger *RS) const LLVM_OVERRIDE;
+                                         RegScavenger *RS) const override;
   virtual bool
     spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MBBI,
                               const std::vector<CalleeSavedInfo> &CSI,
                               const TargetRegisterInfo *TRI) const
-    LLVM_OVERRIDE;
+    override;
   virtual bool
     restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MBBII,
                                 const std::vector<CalleeSavedInfo> &CSI,
-                                const TargetRegisterInfo *TRI) const
-    LLVM_OVERRIDE;
+                                const TargetRegisterInfo *TRI) const override;
   virtual void processFunctionBeforeFrameFinalized(MachineFunction &MF,
                                                    RegScavenger *RS) const;
-  virtual void emitPrologue(MachineFunction &MF) const LLVM_OVERRIDE;
+  virtual void emitPrologue(MachineFunction &MF) const override;
   virtual void emitEpilogue(MachineFunction &MF,
-                            MachineBasicBlock &MBB) const LLVM_OVERRIDE;
-  virtual bool hasFP(const MachineFunction &MF) const LLVM_OVERRIDE;
+                            MachineBasicBlock &MBB) const override;
+  virtual bool hasFP(const MachineFunction &MF) const override;
   virtual int getFrameIndexOffset(const MachineFunction &MF,
-                                  int FI) const LLVM_OVERRIDE;
-  virtual bool hasReservedCallFrame(const MachineFunction &MF) const
-    LLVM_OVERRIDE;
+                                  int FI) const override;
+  virtual bool hasReservedCallFrame(const MachineFunction &MF) const override;
   virtual void
   eliminateCallFramePseudoInstr(MachineFunction &MF,
                                 MachineBasicBlock &MBB,
-                                MachineBasicBlock::iterator MI) const
-    LLVM_OVERRIDE;
+                                MachineBasicBlock::iterator MI) const override;
 
   // Return the number of bytes in the callee-allocated part of the frame.
   uint64_t getAllocatedStackSize(const MachineFunction &MF) const;

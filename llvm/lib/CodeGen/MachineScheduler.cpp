@@ -2454,27 +2454,27 @@ public:
 
   virtual void initPolicy(MachineBasicBlock::iterator Begin,
                           MachineBasicBlock::iterator End,
-                          unsigned NumRegionInstrs) LLVM_OVERRIDE;
+                          unsigned NumRegionInstrs) override;
 
-  virtual bool shouldTrackPressure() const LLVM_OVERRIDE {
+  virtual bool shouldTrackPressure() const override {
     return RegionPolicy.ShouldTrackPressure;
   }
 
-  virtual void initialize(ScheduleDAGMI *dag) LLVM_OVERRIDE;
+  virtual void initialize(ScheduleDAGMI *dag) override;
 
-  virtual SUnit *pickNode(bool &IsTopNode) LLVM_OVERRIDE;
+  virtual SUnit *pickNode(bool &IsTopNode) override;
 
-  virtual void schedNode(SUnit *SU, bool IsTopNode) LLVM_OVERRIDE;
+  virtual void schedNode(SUnit *SU, bool IsTopNode) override;
 
-  virtual void releaseTopNode(SUnit *SU) LLVM_OVERRIDE {
+  virtual void releaseTopNode(SUnit *SU) override {
     Top.releaseTopNode(SU);
   }
 
-  virtual void releaseBottomNode(SUnit *SU) LLVM_OVERRIDE {
+  virtual void releaseBottomNode(SUnit *SU) override {
     Bot.releaseBottomNode(SU);
   }
 
-  virtual void registerRoots() LLVM_OVERRIDE;
+  virtual void registerRoots() override;
 
 protected:
   void checkAcyclicLatency();
@@ -3047,14 +3047,14 @@ public:
 
   virtual void initPolicy(MachineBasicBlock::iterator Begin,
                           MachineBasicBlock::iterator End,
-                          unsigned NumRegionInstrs) LLVM_OVERRIDE {
+                          unsigned NumRegionInstrs) override {
     /* no configurable policy */
   };
 
   /// PostRA scheduling does not track pressure.
-  virtual bool shouldTrackPressure() const LLVM_OVERRIDE { return false; }
+  virtual bool shouldTrackPressure() const override { return false; }
 
-  virtual void initialize(ScheduleDAGMI *Dag) LLVM_OVERRIDE {
+  virtual void initialize(ScheduleDAGMI *Dag) override {
     DAG = Dag;
     SchedModel = DAG->getSchedModel();
     TRI = DAG->TRI;
@@ -3073,22 +3073,22 @@ public:
     }
   }
 
-  virtual void registerRoots() LLVM_OVERRIDE;
+  virtual void registerRoots() override;
 
-  virtual SUnit *pickNode(bool &IsTopNode) LLVM_OVERRIDE;
+  virtual SUnit *pickNode(bool &IsTopNode) override;
 
-  virtual void scheduleTree(unsigned SubtreeID) LLVM_OVERRIDE {
+  virtual void scheduleTree(unsigned SubtreeID) override {
     llvm_unreachable("PostRA scheduler does not support subtree analysis.");
   }
 
-  virtual void schedNode(SUnit *SU, bool IsTopNode) LLVM_OVERRIDE;
+  virtual void schedNode(SUnit *SU, bool IsTopNode) override;
 
-  virtual void releaseTopNode(SUnit *SU) LLVM_OVERRIDE {
+  virtual void releaseTopNode(SUnit *SU) override {
     Top.releaseTopNode(SU);
   }
 
   // Only called for roots.
-  virtual void releaseBottomNode(SUnit *SU) LLVM_OVERRIDE {
+  virtual void releaseBottomNode(SUnit *SU) override {
     BotRoots.push_back(SU);
   }
 

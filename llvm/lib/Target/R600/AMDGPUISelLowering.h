@@ -83,12 +83,12 @@ protected:
 public:
   AMDGPUTargetLowering(TargetMachine &TM);
 
-  virtual bool isFAbsFree(EVT VT) const LLVM_OVERRIDE;
-  virtual bool isFNegFree(EVT VT) const LLVM_OVERRIDE;
-  virtual bool isTruncateFree(EVT Src, EVT Dest) const LLVM_OVERRIDE;
-  virtual bool isTruncateFree(Type *Src, Type *Dest) const LLVM_OVERRIDE;
-  virtual MVT getVectorIdxTy() const LLVM_OVERRIDE;
-  virtual bool isLoadBitCastBeneficial(EVT, EVT) const LLVM_OVERRIDE;
+  virtual bool isFAbsFree(EVT VT) const override;
+  virtual bool isFNegFree(EVT VT) const override;
+  virtual bool isTruncateFree(EVT Src, EVT Dest) const override;
+  virtual bool isTruncateFree(Type *Src, Type *Dest) const override;
+  virtual MVT getVectorIdxTy() const override;
+  virtual bool isLoadBitCastBeneficial(EVT, EVT) const override;
   virtual SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,
                               bool isVarArg,
                               const SmallVectorImpl<ISD::OutputArg> &Outs,

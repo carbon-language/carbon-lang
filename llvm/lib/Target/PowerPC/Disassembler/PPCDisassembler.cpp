@@ -32,7 +32,7 @@ public:
                                       const MemoryObject &region,
                                       uint64_t address,
                                       raw_ostream &vStream,
-                                      raw_ostream &cStream) const LLVM_OVERRIDE;
+                                      raw_ostream &cStream) const override;
 };
 } // end anonymous namespace
 

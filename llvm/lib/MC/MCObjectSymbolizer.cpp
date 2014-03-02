@@ -37,11 +37,10 @@ public:
   MCMachObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,
                          const MachOObjectFile *MOOF);
 
-  StringRef findExternalFunctionAt(uint64_t Addr) LLVM_OVERRIDE;
+  StringRef findExternalFunctionAt(uint64_t Addr) override;
 
-  void tryAddingPcLoadReferenceComment(raw_ostream &cStream,
-                                       int64_t Value,
-                                       uint64_t Address) LLVM_OVERRIDE;
+  void tryAddingPcLoadReferenceComment(raw_ostream &cStream, int64_t Value,
+                                       uint64_t Address) override;
 };
 } // End unnamed namespace
 

@@ -52,7 +52,7 @@ public:
     initializePPCTTIPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void initializePass() LLVM_OVERRIDE {
+  virtual void initializePass() override {
     pushTTIStack(this);
   }
 
@@ -60,7 +60,7 @@ public:
     popTTIStack();
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const LLVM_OVERRIDE {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
     TargetTransformInfo::getAnalysisUsage(AU);
   }
 
@@ -68,7 +68,7 @@ public:
   static char ID;
 
   /// Provide necessary pointer adjustments for the two base classes.
-  virtual void *getAdjustedAnalysisPointer(const void *ID) LLVM_OVERRIDE {
+  virtual void *getAdjustedAnalysisPointer(const void *ID) override {
     if (ID == &TargetTransformInfo::ID)
       return (TargetTransformInfo*)this;
     return this;
@@ -77,32 +77,32 @@ public:
   /// \name Scalar TTI Implementations
   /// @{
   virtual PopcntSupportKind
-  getPopcntSupport(unsigned TyWidth) const LLVM_OVERRIDE;
+  getPopcntSupport(unsigned TyWidth) const override;
   virtual void getUnrollingPreferences(
-    Loop *L, UnrollingPreferences &UP) const LLVM_OVERRIDE;
+    Loop *L, UnrollingPreferences &UP) const override;
 
   /// @}
 
   /// \name Vector TTI Implementations
   /// @{
 
-  virtual unsigned getNumberOfRegisters(bool Vector) const LLVM_OVERRIDE;
-  virtual unsigned getRegisterBitWidth(bool Vector) const LLVM_OVERRIDE;
-  virtual unsigned getMaximumUnrollFactor() const LLVM_OVERRIDE;
+  virtual unsigned getNumberOfRegisters(bool Vector) const override;
+  virtual unsigned getRegisterBitWidth(bool Vector) const override;
+  virtual unsigned getMaximumUnrollFactor() const override;
   virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty,
                                           OperandValueKind,
-                                          OperandValueKind) const LLVM_OVERRIDE;
+                                          OperandValueKind) const override;
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
-                                  int Index, Type *SubTp) const LLVM_OVERRIDE;
+                                  int Index, Type *SubTp) const override;
   virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
-                                    Type *Src) const LLVM_OVERRIDE;
+                                    Type *Src) const override;
   virtual unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                      Type *CondTy) const LLVM_OVERRIDE;
+                                      Type *CondTy) const override;
   virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
-                                      unsigned Index) const LLVM_OVERRIDE;
+                                      unsigned Index) const override;
   virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
                                    unsigned Alignment,
-                                   unsigned AddressSpace) const LLVM_OVERRIDE;
+                                   unsigned AddressSpace) const override;
 
   /// @}
 };

@@ -29,11 +29,11 @@ public:
   StringRefMemoryObject(StringRef Bytes, uint64_t Base = 0)
     : Bytes(Bytes), Base(Base) {}
 
-  uint64_t getBase() const LLVM_OVERRIDE { return Base; }
-  uint64_t getExtent() const LLVM_OVERRIDE { return Bytes.size(); }
+  uint64_t getBase() const override { return Base; }
+  uint64_t getExtent() const override { return Bytes.size(); }
 
-  int readByte(uint64_t Addr, uint8_t *Byte) const LLVM_OVERRIDE;
-  int readBytes(uint64_t Addr, uint64_t Size, uint8_t *Buf) const LLVM_OVERRIDE;
+  int readByte(uint64_t Addr, uint8_t *Byte) const override;
+  int readBytes(uint64_t Addr, uint64_t Size, uint8_t *Buf) const override;
 };
 
 }

@@ -31,48 +31,47 @@ public:
                                   SDValue Size, unsigned Align,
                                   bool IsVolatile, bool AlwaysInline,
                                   MachinePointerInfo DstPtrInfo,
-                                  MachinePointerInfo SrcPtrInfo) const
-    LLVM_OVERRIDE;
+                                  MachinePointerInfo SrcPtrInfo) const override;
 
   virtual SDValue
   EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc DL,
                           SDValue Chain, SDValue Dst, SDValue Byte,
                           SDValue Size, unsigned Align, bool IsVolatile,
-                          MachinePointerInfo DstPtrInfo) const LLVM_OVERRIDE;
+                          MachinePointerInfo DstPtrInfo) const override;
 
   virtual std::pair<SDValue, SDValue>
   EmitTargetCodeForMemcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                           SDValue Src1, SDValue Src2, SDValue Size,
                           MachinePointerInfo Op1PtrInfo,
-                          MachinePointerInfo Op2PtrInfo) const LLVM_OVERRIDE;
+                          MachinePointerInfo Op2PtrInfo) const override;
 
   virtual std::pair<SDValue, SDValue>
   EmitTargetCodeForMemchr(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                           SDValue Src, SDValue Char, SDValue Length,
-                          MachinePointerInfo SrcPtrInfo) const LLVM_OVERRIDE;
+                          MachinePointerInfo SrcPtrInfo) const override;
 
   virtual std::pair<SDValue, SDValue>
   EmitTargetCodeForStrcpy(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                           SDValue Dest, SDValue Src,
                           MachinePointerInfo DestPtrInfo,
                           MachinePointerInfo SrcPtrInfo,
-                          bool isStpcpy) const LLVM_OVERRIDE;
+                          bool isStpcpy) const override;
 
   virtual std::pair<SDValue, SDValue>
   EmitTargetCodeForStrcmp(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                           SDValue Src1, SDValue Src2,
                           MachinePointerInfo Op1PtrInfo,
-                          MachinePointerInfo Op2PtrInfo) const LLVM_OVERRIDE;
+                          MachinePointerInfo Op2PtrInfo) const override;
 
   virtual std::pair<SDValue, SDValue>
   EmitTargetCodeForStrlen(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
-                          SDValue Src, MachinePointerInfo SrcPtrInfo) const
-    LLVM_OVERRIDE;
+                          SDValue Src,
+                          MachinePointerInfo SrcPtrInfo) const override;
 
   virtual std::pair<SDValue, SDValue>
   EmitTargetCodeForStrnlen(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                            SDValue Src, SDValue MaxLength,
-                           MachinePointerInfo SrcPtrInfo) const LLVM_OVERRIDE;
+                           MachinePointerInfo SrcPtrInfo) const override;
 };
 
 }

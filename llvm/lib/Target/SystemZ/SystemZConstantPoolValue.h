@@ -39,11 +39,11 @@ public:
     Create(const GlobalValue *GV, SystemZCP::SystemZCPModifier Modifier);
 
   // Override MachineConstantPoolValue.
-  virtual unsigned getRelocationInfo() const LLVM_OVERRIDE;
+  virtual unsigned getRelocationInfo() const override;
   virtual int getExistingMachineCPValue(MachineConstantPool *CP,
-                                        unsigned Alignment) LLVM_OVERRIDE;
-  virtual void addSelectionDAGCSEId(FoldingSetNodeID &ID) LLVM_OVERRIDE;
-  virtual void print(raw_ostream &O) const LLVM_OVERRIDE;
+                                        unsigned Alignment) override;
+  virtual void addSelectionDAGCSEId(FoldingSetNodeID &ID) override;
+  virtual void print(raw_ostream &O) const override;
 
   // Access SystemZ-specific fields.
   const GlobalValue *getGlobalValue() const { return GV; }

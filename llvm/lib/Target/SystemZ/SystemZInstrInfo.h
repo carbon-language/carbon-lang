@@ -134,60 +134,58 @@ public:
 
   // Override TargetInstrInfo.
   virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
-                                       int &FrameIndex) const LLVM_OVERRIDE;
+                                       int &FrameIndex) const override;
   virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
-                                      int &FrameIndex) const LLVM_OVERRIDE;
+                                      int &FrameIndex) const override;
   virtual bool isStackSlotCopy(const MachineInstr *MI, int &DestFrameIndex,
-                               int &SrcFrameIndex) const LLVM_OVERRIDE;
+                               int &SrcFrameIndex) const override;
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB,
                              MachineBasicBlock *&TBB,
                              MachineBasicBlock *&FBB,
                              SmallVectorImpl<MachineOperand> &Cond,
-                             bool AllowModify) const LLVM_OVERRIDE;
-  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const LLVM_OVERRIDE;
+                             bool AllowModify) const override;
+  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const override;
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                                 const SmallVectorImpl<MachineOperand> &Cond,
-                                DebugLoc DL) const LLVM_OVERRIDE;
+                                DebugLoc DL) const override;
   bool analyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
-                      unsigned &SrcReg2, int &Mask, int &Value) const
-    LLVM_OVERRIDE;
+                      unsigned &SrcReg2, int &Mask, int &Value) const override;
   bool optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
                             unsigned SrcReg2, int Mask, int Value,
-                            const MachineRegisterInfo *MRI) const LLVM_OVERRIDE;
-  virtual bool isPredicable(MachineInstr *MI) const LLVM_OVERRIDE;
-  virtual bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
-                                   unsigned ExtraPredCycles,
-                                   const BranchProbability &Probability) const
-    LLVM_OVERRIDE;
-  virtual bool isProfitableToIfCvt(MachineBasicBlock &TMBB,
-                                   unsigned NumCyclesT,
-                                   unsigned ExtraPredCyclesT,
-                                   MachineBasicBlock &FMBB,
-                                   unsigned NumCyclesF,
-                                   unsigned ExtraPredCyclesF,
-                                   const BranchProbability &Probability) const
-    LLVM_OVERRIDE;
+                            const MachineRegisterInfo *MRI) const override;
+  virtual bool isPredicable(MachineInstr *MI) const override;
+  virtual bool
+    isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
+                        unsigned ExtraPredCycles,
+                        const BranchProbability &Probability) const override;
+  virtual bool
+    isProfitableToIfCvt(MachineBasicBlock &TMBB,
+                        unsigned NumCyclesT,
+                        unsigned ExtraPredCyclesT,
+                        MachineBasicBlock &FMBB,
+                        unsigned NumCyclesF,
+                        unsigned ExtraPredCyclesF,
+                        const BranchProbability &Probability) const override;
   virtual bool
     PredicateInstruction(MachineInstr *MI,
-                         const SmallVectorImpl<MachineOperand> &Pred) const
-    LLVM_OVERRIDE;
+                    const SmallVectorImpl<MachineOperand> &Pred) const override;
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg,
-                           bool KillSrc) const LLVM_OVERRIDE;
+                           bool KillSrc) const override;
   virtual void
     storeRegToStackSlot(MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator MBBI,
                         unsigned SrcReg, bool isKill, int FrameIndex,
                         const TargetRegisterClass *RC,
-                        const TargetRegisterInfo *TRI) const LLVM_OVERRIDE;
+                        const TargetRegisterInfo *TRI) const override;
   virtual void
     loadRegFromStackSlot(MachineBasicBlock &MBB,
                          MachineBasicBlock::iterator MBBI,
                          unsigned DestReg, int FrameIdx,
                          const TargetRegisterClass *RC,
-                         const TargetRegisterInfo *TRI) const LLVM_OVERRIDE;
+                         const TargetRegisterInfo *TRI) const override;
   virtual MachineInstr *
     convertToThreeAddress(MachineFunction::iterator &MFI,
                           MachineBasicBlock::iterator &MBBI,
@@ -201,10 +199,9 @@ public:
                           const SmallVectorImpl<unsigned> &Ops,
                           MachineInstr* LoadMI) const;
   virtual bool
-    expandPostRAPseudo(MachineBasicBlock::iterator MBBI) const LLVM_OVERRIDE;
+    expandPostRAPseudo(MachineBasicBlock::iterator MBBI) const override;
   virtual bool
-    ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const
-    LLVM_OVERRIDE;
+    ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
 
   // Return the SystemZRegisterInfo, which this class owns.
   const SystemZRegisterInfo &getRegisterInfo() const { return RI; }

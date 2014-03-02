@@ -43,7 +43,7 @@ public:
     initializeBasicTTIPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void initializePass() LLVM_OVERRIDE {
+  virtual void initializePass() override {
     pushTTIStack(this);
   }
 
@@ -51,7 +51,7 @@ public:
     popTTIStack();
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const LLVM_OVERRIDE {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
     TargetTransformInfo::getAnalysisUsage(AU);
   }
 
@@ -59,64 +59,64 @@ public:
   static char ID;
 
   /// Provide necessary pointer adjustments for the two base classes.
-  virtual void *getAdjustedAnalysisPointer(const void *ID) LLVM_OVERRIDE {
+  virtual void *getAdjustedAnalysisPointer(const void *ID) override {
     if (ID == &TargetTransformInfo::ID)
       return (TargetTransformInfo*)this;
     return this;
   }
 
-  virtual bool hasBranchDivergence() const LLVM_OVERRIDE;
+  virtual bool hasBranchDivergence() const override;
 
   /// \name Scalar TTI Implementations
   /// @{
 
-  virtual bool isLegalAddImmediate(int64_t imm) const LLVM_OVERRIDE;
-  virtual bool isLegalICmpImmediate(int64_t imm) const LLVM_OVERRIDE;
+  virtual bool isLegalAddImmediate(int64_t imm) const override;
+  virtual bool isLegalICmpImmediate(int64_t imm) const override;
   virtual bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV,
                                      int64_t BaseOffset, bool HasBaseReg,
-                                     int64_t Scale) const LLVM_OVERRIDE;
+                                     int64_t Scale) const override;
   virtual int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV,
                                    int64_t BaseOffset, bool HasBaseReg,
-                                   int64_t Scale) const LLVM_OVERRIDE;
-  virtual bool isTruncateFree(Type *Ty1, Type *Ty2) const LLVM_OVERRIDE;
-  virtual bool isTypeLegal(Type *Ty) const LLVM_OVERRIDE;
-  virtual unsigned getJumpBufAlignment() const LLVM_OVERRIDE;
-  virtual unsigned getJumpBufSize() const LLVM_OVERRIDE;
-  virtual bool shouldBuildLookupTables() const LLVM_OVERRIDE;
-  virtual bool haveFastSqrt(Type *Ty) const LLVM_OVERRIDE;
+                                   int64_t Scale) const override;
+  virtual bool isTruncateFree(Type *Ty1, Type *Ty2) const override;
+  virtual bool isTypeLegal(Type *Ty) const override;
+  virtual unsigned getJumpBufAlignment() const override;
+  virtual unsigned getJumpBufSize() const override;
+  virtual bool shouldBuildLookupTables() const override;
+  virtual bool haveFastSqrt(Type *Ty) const override;
   virtual void getUnrollingPreferences(
-    Loop *L, UnrollingPreferences &UP) const LLVM_OVERRIDE;
+    Loop *L, UnrollingPreferences &UP) const override;
 
   /// @}
 
   /// \name Vector TTI Implementations
   /// @{
 
-  virtual unsigned getNumberOfRegisters(bool Vector) const LLVM_OVERRIDE;
-  virtual unsigned getMaximumUnrollFactor() const LLVM_OVERRIDE;
-  virtual unsigned getRegisterBitWidth(bool Vector) const LLVM_OVERRIDE;
+  virtual unsigned getNumberOfRegisters(bool Vector) const override;
+  virtual unsigned getMaximumUnrollFactor() const override;
+  virtual unsigned getRegisterBitWidth(bool Vector) const override;
   virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty,
                                           OperandValueKind,
-                                          OperandValueKind) const LLVM_OVERRIDE;
+                                          OperandValueKind) const override;
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
-                                  int Index, Type *SubTp) const LLVM_OVERRIDE;
+                                  int Index, Type *SubTp) const override;
   virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
-                                    Type *Src) const LLVM_OVERRIDE;
-  virtual unsigned getCFInstrCost(unsigned Opcode) const LLVM_OVERRIDE;
+                                    Type *Src) const override;
+  virtual unsigned getCFInstrCost(unsigned Opcode) const override;
   virtual unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                      Type *CondTy) const LLVM_OVERRIDE;
+                                      Type *CondTy) const override;
   virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
-                                      unsigned Index) const LLVM_OVERRIDE;
+                                      unsigned Index) const override;
   virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
                                    unsigned Alignment,
-                                   unsigned AddressSpace) const LLVM_OVERRIDE;
+                                   unsigned AddressSpace) const override;
   virtual unsigned getIntrinsicInstrCost(
-    Intrinsic::ID, Type *RetTy, ArrayRef<Type*> Tys) const LLVM_OVERRIDE;
-  virtual unsigned getNumberOfParts(Type *Tp) const LLVM_OVERRIDE;
+    Intrinsic::ID, Type *RetTy, ArrayRef<Type*> Tys) const override;
+  virtual unsigned getNumberOfParts(Type *Tp) const override;
   virtual unsigned getAddressComputationCost(
-    Type *Ty, bool IsComplex) const LLVM_OVERRIDE;
+    Type *Ty, bool IsComplex) const override;
   virtual unsigned getReductionCost(unsigned Opcode, Type *Ty,
-                                    bool IsPairwise) const LLVM_OVERRIDE;
+                                    bool IsPairwise) const override;
 
   /// @}
 };

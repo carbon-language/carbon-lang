@@ -55,11 +55,11 @@ public:
     initializeAMDGPUTTIPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void initializePass() LLVM_OVERRIDE { pushTTIStack(this); }
+  virtual void initializePass() override { pushTTIStack(this); }
 
   virtual void finalizePass() { popTTIStack(); }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const LLVM_OVERRIDE {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
     TargetTransformInfo::getAnalysisUsage(AU);
   }
 
@@ -67,13 +67,13 @@ public:
   static char ID;
 
   /// Provide necessary pointer adjustments for the two base classes.
-  virtual void *getAdjustedAnalysisPointer(const void *ID) LLVM_OVERRIDE {
+  virtual void *getAdjustedAnalysisPointer(const void *ID) override {
     if (ID == &TargetTransformInfo::ID)
       return (TargetTransformInfo *)this;
     return this;
   }
 
-  virtual bool hasBranchDivergence() const LLVM_OVERRIDE;
+  virtual bool hasBranchDivergence() const override;
 
   virtual void getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const;
 

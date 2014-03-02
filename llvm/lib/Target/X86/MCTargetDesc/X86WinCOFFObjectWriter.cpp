@@ -31,7 +31,7 @@ namespace {
 
     virtual unsigned getRelocType(const MCValue &Target,
                                   const MCFixup &Fixup,
-                                  bool IsCrossSection) const LLVM_OVERRIDE;
+                                  bool IsCrossSection) const override;
   };
 }
 

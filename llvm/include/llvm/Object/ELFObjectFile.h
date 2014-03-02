@@ -55,64 +55,54 @@ public:
 protected:
   ELFFile<ELFT> EF;
 
-  void moveSymbolNext(DataRefImpl &Symb) const LLVM_OVERRIDE;
-  error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const
-      LLVM_OVERRIDE;
-  error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res) const
-      LLVM_OVERRIDE;
-  error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const
-      LLVM_OVERRIDE;
-  error_code getSymbolAlignment(DataRefImpl Symb, uint32_t &Res) const
-      LLVM_OVERRIDE;
-  error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const LLVM_OVERRIDE;
-  uint32_t getSymbolFlags(DataRefImpl Symb) const LLVM_OVERRIDE;
-  error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const
-      LLVM_OVERRIDE;
-  error_code getSymbolSection(DataRefImpl Symb, section_iterator &Res) const
-      LLVM_OVERRIDE;
+  void moveSymbolNext(DataRefImpl &Symb) const override;
+  error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const override;
+  error_code getSymbolFileOffset(DataRefImpl Symb,
+                                 uint64_t &Res) const override;
+  error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const override;
+  error_code getSymbolAlignment(DataRefImpl Symb, uint32_t &Res) const override;
+  error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const override;
+  uint32_t getSymbolFlags(DataRefImpl Symb) const override;
+  error_code getSymbolType(DataRefImpl Symb,
+                           SymbolRef::Type &Res) const override;
+  error_code getSymbolSection(DataRefImpl Symb,
+                              section_iterator &Res) const override;
   error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const;
 
-  error_code getLibraryNext(DataRefImpl Data, LibraryRef &Result) const
-      LLVM_OVERRIDE;
-  error_code getLibraryPath(DataRefImpl Data, StringRef &Res) const
-      LLVM_OVERRIDE;
+  error_code getLibraryNext(DataRefImpl Data,
+                            LibraryRef &Result) const override;
+  error_code getLibraryPath(DataRefImpl Data, StringRef &Res) const override;
 
-  void moveSectionNext(DataRefImpl &Sec) const LLVM_OVERRIDE;
-  error_code getSectionName(DataRefImpl Sec, StringRef &Res) const
-      LLVM_OVERRIDE;
-  error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const
-      LLVM_OVERRIDE;
-  error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const LLVM_OVERRIDE;
+  void moveSectionNext(DataRefImpl &Sec) const override;
+  error_code getSectionName(DataRefImpl Sec, StringRef &Res) const override;
+  error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const override;
+  error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const override;
   error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const;
-  error_code getSectionAlignment(DataRefImpl Sec, uint64_t &Res) const
-      LLVM_OVERRIDE;
-  error_code isSectionText(DataRefImpl Sec, bool &Res) const LLVM_OVERRIDE;
+  error_code getSectionAlignment(DataRefImpl Sec, uint64_t &Res) const override;
+  error_code isSectionText(DataRefImpl Sec, bool &Res) const override;
   error_code isSectionData(DataRefImpl Sec, bool &Res) const;
-  error_code isSectionBSS(DataRefImpl Sec, bool &Res) const LLVM_OVERRIDE;
-  error_code isSectionRequiredForExecution(DataRefImpl Sec, bool &Res) const
-      LLVM_OVERRIDE;
+  error_code isSectionBSS(DataRefImpl Sec, bool &Res) const override;
+  error_code isSectionRequiredForExecution(DataRefImpl Sec,
+                                           bool &Res) const override;
   error_code isSectionVirtual(DataRefImpl Sec, bool &Res) const;
-  error_code isSectionZeroInit(DataRefImpl Sec, bool &Res) const LLVM_OVERRIDE;
+  error_code isSectionZeroInit(DataRefImpl Sec, bool &Res) const override;
   error_code isSectionReadOnlyData(DataRefImpl Sec, bool &Res) const;
   error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
-                                   bool &Result) const LLVM_OVERRIDE;
+                                   bool &Result) const override;
   relocation_iterator section_rel_begin(DataRefImpl Sec) const;
-  relocation_iterator section_rel_end(DataRefImpl Sec) const LLVM_OVERRIDE;
-  section_iterator getRelocatedSection(DataRefImpl Sec) const LLVM_OVERRIDE;
+  relocation_iterator section_rel_end(DataRefImpl Sec) const override;
+  section_iterator getRelocatedSection(DataRefImpl Sec) const override;
 
-  void moveRelocationNext(DataRefImpl &Rel) const LLVM_OVERRIDE;
-  error_code getRelocationAddress(DataRefImpl Rel, uint64_t &Res) const
-      LLVM_OVERRIDE;
-  error_code getRelocationOffset(DataRefImpl Rel, uint64_t &Res) const
-      LLVM_OVERRIDE;
-  symbol_iterator getRelocationSymbol(DataRefImpl Rel) const LLVM_OVERRIDE;
+  void moveRelocationNext(DataRefImpl &Rel) const override;
+  error_code getRelocationAddress(DataRefImpl Rel,
+                                  uint64_t &Res) const override;
+  error_code getRelocationOffset(DataRefImpl Rel, uint64_t &Res) const override;
+  symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
   error_code getRelocationType(DataRefImpl Rel, uint64_t &Res) const;
   error_code getRelocationTypeName(DataRefImpl Rel,
-                                   SmallVectorImpl<char> &Result) const
-      LLVM_OVERRIDE;
+                                  SmallVectorImpl<char> &Result) const override;
   error_code getRelocationValueString(DataRefImpl Rel,
-                                      SmallVectorImpl<char> &Result) const
-      LLVM_OVERRIDE;
+                                  SmallVectorImpl<char> &Result) const override;
 
   uint64_t getROffset(DataRefImpl Rel) const;
   StringRef getRelocationTypeName(uint32_t Type) const;
@@ -180,27 +170,27 @@ public:
 
   const Elf_Sym *getSymbol(DataRefImpl Symb) const;
 
-  basic_symbol_iterator symbol_begin_impl() const LLVM_OVERRIDE;
-  basic_symbol_iterator symbol_end_impl() const LLVM_OVERRIDE;
+  basic_symbol_iterator symbol_begin_impl() const override;
+  basic_symbol_iterator symbol_end_impl() const override;
 
   symbol_iterator dynamic_symbol_begin() const;
   symbol_iterator dynamic_symbol_end() const;
 
-  section_iterator section_begin() const LLVM_OVERRIDE;
-  section_iterator section_end() const LLVM_OVERRIDE;
+  section_iterator section_begin() const override;
+  section_iterator section_end() const override;
 
-  library_iterator needed_library_begin() const LLVM_OVERRIDE;
-  library_iterator needed_library_end() const LLVM_OVERRIDE;
+  library_iterator needed_library_begin() const override;
+  library_iterator needed_library_end() const override;
 
   error_code getRelocationAddend(DataRefImpl Rel, int64_t &Res) const;
   error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
                               bool &IsDefault) const;
 
 
-  uint8_t getBytesInAddress() const LLVM_OVERRIDE;
-  StringRef getFileFormatName() const LLVM_OVERRIDE;
-  unsigned getArch() const LLVM_OVERRIDE;
-  StringRef getLoadName() const LLVM_OVERRIDE;
+  uint8_t getBytesInAddress() const override;
+  StringRef getFileFormatName() const override;
+  unsigned getArch() const override;
+  StringRef getLoadName() const override;
 
   const ELFFile<ELFT> *getELFFile() const { return &EF; }
 

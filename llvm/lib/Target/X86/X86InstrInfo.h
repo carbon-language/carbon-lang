@@ -342,7 +342,7 @@ public:
                                        unsigned NumLoads) const;
 
   virtual bool shouldScheduleAdjacent(MachineInstr* First,
-                                      MachineInstr *Second) const LLVM_OVERRIDE;
+                                      MachineInstr *Second) const override;
 
   virtual void getNoopForMachoTarget(MCInst &NopInst) const;
 

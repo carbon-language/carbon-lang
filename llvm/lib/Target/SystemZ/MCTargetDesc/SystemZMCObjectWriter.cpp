@@ -26,12 +26,12 @@ protected:
   // Override MCELFObjectTargetWriter.
   virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                 bool IsPCRel, bool IsRelocWithSymbol,
-                                int64_t Addend) const LLVM_OVERRIDE;
+                                int64_t Addend) const override;
   virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
                                          const MCValue &Target,
                                          const MCFragment &F,
                                          const MCFixup &Fixup,
-                                         bool IsPCRel) const LLVM_OVERRIDE;
+                                         bool IsPCRel) const override;
 };
 } // end anonymouse namespace
 

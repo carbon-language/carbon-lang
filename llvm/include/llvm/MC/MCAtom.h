@@ -145,8 +145,8 @@ public:
 
   /// \name Atom type specific split/truncate logic.
   /// @{
-  MCTextAtom *split(uint64_t SplitPt) LLVM_OVERRIDE;
-  void     truncate(uint64_t TruncPt) LLVM_OVERRIDE;
+  MCTextAtom *split(uint64_t SplitPt) override;
+  void     truncate(uint64_t TruncPt) override;
   /// @}
 
   // Class hierarchy.
@@ -179,8 +179,8 @@ public:
 
   /// \name Atom type specific split/truncate logic.
   /// @{
-  MCDataAtom *split(uint64_t SplitPt) LLVM_OVERRIDE;
-  void     truncate(uint64_t TruncPt) LLVM_OVERRIDE;
+  MCDataAtom *split(uint64_t SplitPt) override;
+  void     truncate(uint64_t TruncPt) override;
   /// @}
 
   // Class hierarchy.

@@ -149,16 +149,16 @@ namespace {
 struct AllocaCaptureTracker : public CaptureTracker {
   AllocaCaptureTracker() : Captured(false) {}
 
-  void tooManyUses() LLVM_OVERRIDE { Captured = true; }
+  void tooManyUses() override { Captured = true; }
 
-  bool shouldExplore(Use *U) LLVM_OVERRIDE {
+  bool shouldExplore(Use *U) override {
     Value *V = U->getUser();
     if (isa<CallInst>(V) || isa<InvokeInst>(V))
       UsesAlloca.insert(V);
     return true;
   }
 
-  bool captured(Use *U) LLVM_OVERRIDE {
+  bool captured(Use *U) override {
     if (isa<ReturnInst>(U->getUser()))
       return false;
     Captured = true;

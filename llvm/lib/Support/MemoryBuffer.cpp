@@ -91,12 +91,12 @@ public:
     init(InputData.begin(), InputData.end(), RequiresNullTerminator);
   }
 
-  virtual const char *getBufferIdentifier() const LLVM_OVERRIDE {
+  virtual const char *getBufferIdentifier() const override {
      // The name is stored after the class itself.
     return reinterpret_cast<const char*>(this + 1);
   }
 
-  virtual BufferKind getBufferKind() const LLVM_OVERRIDE {
+  virtual BufferKind getBufferKind() const override {
     return MemoryBuffer_Malloc;
   }
 };
@@ -207,12 +207,12 @@ public:
     }
   }
 
-  virtual const char *getBufferIdentifier() const LLVM_OVERRIDE {
+  virtual const char *getBufferIdentifier() const override {
     // The name is stored after the class itself.
     return reinterpret_cast<const char *>(this + 1);
   }
 
-  virtual BufferKind getBufferKind() const LLVM_OVERRIDE {
+  virtual BufferKind getBufferKind() const override {
     return MemoryBuffer_MMap;
   }
 };

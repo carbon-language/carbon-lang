@@ -290,7 +290,7 @@ public:
   void enterRegion(MachineBasicBlock *bb,
                    MachineBasicBlock::iterator begin,
                    MachineBasicBlock::iterator end,
-                   unsigned regioninstrs) LLVM_OVERRIDE;
+                   unsigned regioninstrs) override;
 
   /// Implement ScheduleDAGInstrs interface for scheduling a sequence of
   /// reorderable instructions.
@@ -304,8 +304,8 @@ public:
 
   const SUnit *getNextClusterSucc() const { return NextClusterSucc; }
 
-  void viewGraph(const Twine &Name, const Twine &Title) LLVM_OVERRIDE;
-  void viewGraph() LLVM_OVERRIDE;
+  void viewGraph(const Twine &Name, const Twine &Title) override;
+  void viewGraph() override;
 
 protected:
   // Top-Level entry points for the schedule() driver...
@@ -423,7 +423,7 @@ public:
   void enterRegion(MachineBasicBlock *bb,
                    MachineBasicBlock::iterator begin,
                    MachineBasicBlock::iterator end,
-                   unsigned regioninstrs) LLVM_OVERRIDE;
+                   unsigned regioninstrs) override;
 
   /// Implement ScheduleDAGInstrs interface for scheduling a sequence of
   /// reorderable instructions.

@@ -46,7 +46,7 @@ public:
 
   virtual ~NVPTXTargetObjectFile();
 
-  void Initialize(MCContext &ctx, const TargetMachine &TM) LLVM_OVERRIDE {
+  void Initialize(MCContext &ctx, const TargetMachine &TM) override {
     TargetLoweringObjectFile::Initialize(ctx, TM);
     TextSection = new NVPTXSection(MCSection::SV_ELF, SectionKind::getText());
     DataSection =
@@ -87,14 +87,13 @@ public:
         new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
   }
 
-  const MCSection *getSectionForConstant(SectionKind Kind) const LLVM_OVERRIDE {
+  const MCSection *getSectionForConstant(SectionKind Kind) const override {
     return ReadOnlySection;
   }
 
   const MCSection *getExplicitSectionGlobal(const GlobalValue *GV,
-                                            SectionKind Kind, Mangler &Mang,
-                                            const TargetMachine &TM) const
-      LLVM_OVERRIDE {
+                                       SectionKind Kind, Mangler &Mang,
+                                       const TargetMachine &TM) const override {
     return DataSection;
   }
 

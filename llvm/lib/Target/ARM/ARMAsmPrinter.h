@@ -49,7 +49,7 @@ public:
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }
 
-  virtual const char *getPassName() const LLVM_OVERRIDE {
+  virtual const char *getPassName() const override {
     return "ARM Assembly / Object Emitter";
   }
 
@@ -58,28 +58,27 @@ public:
 
   virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                                unsigned AsmVariant, const char *ExtraCode,
-                               raw_ostream &O) LLVM_OVERRIDE;
+                               raw_ostream &O) override;
   virtual bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNum,
                                      unsigned AsmVariant, const char *ExtraCode,
-                                     raw_ostream &O) LLVM_OVERRIDE;
+                                     raw_ostream &O) override;
 
   virtual void emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
-                                const MCSubtargetInfo *EndInfo) const
-      LLVM_OVERRIDE;
+                                const MCSubtargetInfo *EndInfo) const override;
 
   void EmitJumpTable(const MachineInstr *MI);
   void EmitJump2Table(const MachineInstr *MI);
-  virtual void EmitInstruction(const MachineInstr *MI) LLVM_OVERRIDE;
-  virtual bool runOnMachineFunction(MachineFunction &F) LLVM_OVERRIDE;
+  virtual void EmitInstruction(const MachineInstr *MI) override;
+  virtual bool runOnMachineFunction(MachineFunction &F) override;
 
-  virtual void EmitConstantPool() LLVM_OVERRIDE {
+  virtual void EmitConstantPool() override {
     // we emit constant pools customly!
   }
-  virtual void EmitFunctionBodyEnd() LLVM_OVERRIDE;
-  virtual void EmitFunctionEntryLabel() LLVM_OVERRIDE;
-  virtual void EmitStartOfAsmFile(Module &M) LLVM_OVERRIDE;
-  virtual void EmitEndOfAsmFile(Module &M) LLVM_OVERRIDE;
-  virtual void EmitXXStructor(const Constant *CV) LLVM_OVERRIDE;
+  virtual void EmitFunctionBodyEnd() override;
+  virtual void EmitFunctionEntryLabel() override;
+  virtual void EmitStartOfAsmFile(Module &M) override;
+  virtual void EmitEndOfAsmFile(Module &M) override;
+  virtual void EmitXXStructor(const Constant *CV) override;
 
   // lowerOperand - Convert a MachineOperand into the equivalent MCOperand.
   bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp);
@@ -98,7 +97,7 @@ private:
                                    const MachineInstr *MI);
 
 public:
-  virtual unsigned getISAEncoding() LLVM_OVERRIDE {
+  virtual unsigned getISAEncoding() override {
     // ARM/Darwin adds ISA to the DWARF info for each function.
     if (!Subtarget->isTargetMachO())
       return 0;
@@ -118,7 +117,7 @@ public:
   /// EmitMachineConstantPoolValue - Print a machine constantpool value to
   /// the .s file.
   virtual void
-    EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) LLVM_OVERRIDE;
+    EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) override;
 };
 } // end namespace llvm
 

@@ -117,7 +117,7 @@ public:
   virtual bool addPreRegAlloc();
   virtual bool addPostRegAlloc();
 
-  virtual FunctionPass *createTargetRegisterAllocator(bool) LLVM_OVERRIDE;
+  virtual FunctionPass *createTargetRegisterAllocator(bool) override;
   virtual void addFastRegAlloc(FunctionPass *RegAllocPass);
   virtual void addOptimizedRegAlloc(FunctionPass *RegAllocPass);
 };

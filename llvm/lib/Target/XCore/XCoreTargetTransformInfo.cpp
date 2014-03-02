@@ -42,7 +42,7 @@ public:
     initializeXCoreTTIPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void initializePass() LLVM_OVERRIDE {
+  virtual void initializePass() override {
     pushTTIStack(this);
   }
 
@@ -50,19 +50,19 @@ public:
     popTTIStack();
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const LLVM_OVERRIDE {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
     TargetTransformInfo::getAnalysisUsage(AU);
   }
 
   static char ID;
 
-  virtual void *getAdjustedAnalysisPointer(const void *ID) LLVM_OVERRIDE {
+  virtual void *getAdjustedAnalysisPointer(const void *ID) override {
     if (ID == &TargetTransformInfo::ID)
       return (TargetTransformInfo*)this;
     return this;
   }
 
-  unsigned getNumberOfRegisters(bool Vector) const LLVM_OVERRIDE {
+  unsigned getNumberOfRegisters(bool Vector) const override {
     if (Vector) {
        return 0;
     }

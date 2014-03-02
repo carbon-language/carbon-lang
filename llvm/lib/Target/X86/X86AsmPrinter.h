@@ -33,26 +33,26 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
   }
 
-  virtual const char *getPassName() const LLVM_OVERRIDE {
+  virtual const char *getPassName() const override {
     return "X86 Assembly / Object Emitter";
   }
 
   const X86Subtarget &getSubtarget() const { return *Subtarget; }
 
-  virtual void EmitStartOfAsmFile(Module &M) LLVM_OVERRIDE;
+  virtual void EmitStartOfAsmFile(Module &M) override;
 
-  virtual void EmitEndOfAsmFile(Module &M) LLVM_OVERRIDE;
+  virtual void EmitEndOfAsmFile(Module &M) override;
 
-  virtual void EmitInstruction(const MachineInstr *MI) LLVM_OVERRIDE;
+  virtual void EmitInstruction(const MachineInstr *MI) override;
 
   virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                                unsigned AsmVariant, const char *ExtraCode,
-                               raw_ostream &OS) LLVM_OVERRIDE;
+                               raw_ostream &OS) override;
   virtual bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                      unsigned AsmVariant, const char *ExtraCode,
-                                     raw_ostream &OS) LLVM_OVERRIDE;
+                                     raw_ostream &OS) override;
 
-  virtual bool runOnMachineFunction(MachineFunction &F) LLVM_OVERRIDE;
+  virtual bool runOnMachineFunction(MachineFunction &F) override;
 };
 
 } // end namespace llvm

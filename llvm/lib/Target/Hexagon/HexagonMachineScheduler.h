@@ -99,7 +99,7 @@ public:
 
   /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
   /// time to do some work.
-  virtual void schedule() LLVM_OVERRIDE;
+  virtual void schedule() override;
   /// Perform platform specific DAG postprocessing.
   void postprocessDAG();
 };
@@ -206,15 +206,15 @@ public:
   ConvergingVLIWScheduler():
     DAG(0), SchedModel(0), Top(TopQID, "TopQ"), Bot(BotQID, "BotQ") {}
 
-  virtual void initialize(ScheduleDAGMI *dag) LLVM_OVERRIDE;
+  virtual void initialize(ScheduleDAGMI *dag) override;
 
-  virtual SUnit *pickNode(bool &IsTopNode) LLVM_OVERRIDE;
+  virtual SUnit *pickNode(bool &IsTopNode) override;
 
-  virtual void schedNode(SUnit *SU, bool IsTopNode) LLVM_OVERRIDE;
+  virtual void schedNode(SUnit *SU, bool IsTopNode) override;
 
-  virtual void releaseTopNode(SUnit *SU) LLVM_OVERRIDE;
+  virtual void releaseTopNode(SUnit *SU) override;
 
-  virtual void releaseBottomNode(SUnit *SU) LLVM_OVERRIDE;
+  virtual void releaseBottomNode(SUnit *SU) override;
 
   unsigned ReportPackets() {
     return Top.ResourceModel->getTotalPackets() +

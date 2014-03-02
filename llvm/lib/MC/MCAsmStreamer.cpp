@@ -114,7 +114,7 @@ public:
     return CommentStream;
   }
 
-  void emitRawComment(const Twine &T, bool TabPrefix = true) LLVM_OVERRIDE;
+  void emitRawComment(const Twine &T, bool TabPrefix = true) override;
 
   /// AddBlankLine - Emit a blank line to a .s file to pretty it up.
   virtual void AddBlankLine() {

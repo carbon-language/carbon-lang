@@ -406,7 +406,7 @@ public:
   bool hasSinCos() const;
 
   /// Enable the MachineScheduler pass for all X86 subtargets.
-  bool enableMachineScheduler() const LLVM_OVERRIDE { return true; }
+  bool enableMachineScheduler() const override { return true; }
 
   /// enablePostRAScheduler - run for Atom optimization.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,

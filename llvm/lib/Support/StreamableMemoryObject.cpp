@@ -24,20 +24,20 @@ public:
     assert(LastChar >= FirstChar && "Invalid start/end range");
   }
 
-  virtual uint64_t getBase() const LLVM_OVERRIDE { return 0; }
-  virtual uint64_t getExtent() const LLVM_OVERRIDE {
+  virtual uint64_t getBase() const override { return 0; }
+  virtual uint64_t getExtent() const override {
     return LastChar - FirstChar;
   }
-  virtual int readByte(uint64_t address, uint8_t* ptr) const LLVM_OVERRIDE;
+  virtual int readByte(uint64_t address, uint8_t* ptr) const override;
   virtual int readBytes(uint64_t address,
                         uint64_t size,
-                        uint8_t *buf) const LLVM_OVERRIDE;
+                        uint8_t *buf) const override;
   virtual const uint8_t *getPointer(uint64_t address,
-                                    uint64_t size) const LLVM_OVERRIDE;
-  virtual bool isValidAddress(uint64_t address) const LLVM_OVERRIDE {
+                                    uint64_t size) const override;
+  virtual bool isValidAddress(uint64_t address) const override {
     return validAddress(address);
   }
-  virtual bool isObjectEnd(uint64_t address) const LLVM_OVERRIDE {
+  virtual bool isObjectEnd(uint64_t address) const override {
     return objectEnd(address);
   }
 

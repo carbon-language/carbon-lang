@@ -40,27 +40,25 @@ public:
   SystemZRegisterInfo(SystemZTargetMachine &tm);
 
   // Override TargetRegisterInfo.h.
-  virtual bool requiresRegisterScavenging(const MachineFunction &MF) const
-    LLVM_OVERRIDE {
+  virtual bool
+  requiresRegisterScavenging(const MachineFunction &MF) const override {
     return true;
   }
-  virtual bool requiresFrameIndexScavenging(const MachineFunction &MF) const
-    LLVM_OVERRIDE {
+  virtual bool
+  requiresFrameIndexScavenging(const MachineFunction &MF) const override {
     return true;
   }
-  virtual bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const
-    LLVM_OVERRIDE {
+  virtual bool
+  trackLivenessAfterRegAlloc(const MachineFunction &MF) const override {
     return true;
   }
-  virtual const uint16_t *getCalleeSavedRegs(const MachineFunction *MF = 0)
-    const LLVM_OVERRIDE;
-  virtual BitVector getReservedRegs(const MachineFunction &MF)
-    const LLVM_OVERRIDE;
+  virtual const uint16_t *
+  getCalleeSavedRegs(const MachineFunction *MF = 0) const override;
+  virtual BitVector getReservedRegs(const MachineFunction &MF) const override;
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                    int SPAdj, unsigned FIOperandNum,
-                                   RegScavenger *RS) const LLVM_OVERRIDE;
-  virtual unsigned getFrameRegister(const MachineFunction &MF) const
-    LLVM_OVERRIDE;
+                                   RegScavenger *RS) const override;
+  virtual unsigned getFrameRegister(const MachineFunction &MF) const override;
 };
 
 } // end namespace llvm

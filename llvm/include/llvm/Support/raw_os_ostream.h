@@ -26,11 +26,11 @@ class raw_os_ostream : public raw_ostream {
   std::ostream &OS;
 
   /// write_impl - See raw_ostream::write_impl.
-  virtual void write_impl(const char *Ptr, size_t Size) LLVM_OVERRIDE;
+  virtual void write_impl(const char *Ptr, size_t Size) override;
 
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
-  virtual uint64_t current_pos() const LLVM_OVERRIDE;
+  virtual uint64_t current_pos() const override;
 
 public:
   raw_os_ostream(std::ostream &O) : OS(O) {}

@@ -22,7 +22,7 @@ public:
       : DWARFUnit(DA, IS, AS, RS, SS, SOS, AOS, M, LE) {}
   void dump(raw_ostream &OS);
   // VTable anchor.
-  ~DWARFCompileUnit() LLVM_OVERRIDE;
+  ~DWARFCompileUnit() override;
 };
 
 }

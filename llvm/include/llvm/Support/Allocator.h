@@ -79,8 +79,8 @@ class MallocSlabAllocator : public SlabAllocator {
 public:
   MallocSlabAllocator() : Allocator() { }
   virtual ~MallocSlabAllocator();
-  virtual MemSlab *Allocate(size_t Size) LLVM_OVERRIDE;
-  virtual void Deallocate(MemSlab *Slab) LLVM_OVERRIDE;
+  virtual MemSlab *Allocate(size_t Size) override;
+  virtual void Deallocate(MemSlab *Slab) override;
 };
 
 /// BumpPtrAllocator - This allocator is useful for containers that need

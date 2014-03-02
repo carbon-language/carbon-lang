@@ -689,7 +689,7 @@ namespace {
         free(Dup);
       }
     }
-    const char *SaveString(const char *Str) LLVM_OVERRIDE {
+    const char *SaveString(const char *Str) override {
       char *Dup = strdup(Str);
       Dups.push_back(Dup);
       return Dup;
