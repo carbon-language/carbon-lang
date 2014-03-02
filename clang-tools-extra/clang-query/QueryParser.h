@@ -22,16 +22,16 @@ class QuerySession;
 
 class QueryParser {
 public:
-  /// Parse \param Line as a query.
+  /// Parse \a Line as a query.
   ///
   /// \return A QueryRef representing the query, which may be an InvalidQuery.
   static QueryRef parse(StringRef Line);
 
-  /// Compute a list of completions for \param Line assuming a cursor at
-  /// \param Pos characters past the start of \param Line, ordered from most
+  /// Compute a list of completions for \a Line assuming a cursor at
+  /// \param Pos characters past the start of \a Line, ordered from most
   /// likely to least likely.
   ///
-  /// \return A vector of completions for \param Line.
+  /// \return A vector of completions for \a Line.
   static std::vector<llvm::LineEditor::Completion> complete(StringRef Line,
                                                             size_t Pos);
 
