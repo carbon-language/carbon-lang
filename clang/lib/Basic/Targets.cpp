@@ -788,6 +788,7 @@ public:
         case 'f':// VSX vector register to hold vector float data
         case 's':// VSX vector register to hold scalar float data
         case 'a':// Any VSX register
+        case 'c':// An individual CR bit
           break;
         default:
           return false;
@@ -862,6 +863,20 @@ public:
     // End FIXME.
     }
     return true;
+  }
+  virtual std::string convertConstraint(const char *&Constraint) const {
+    std::string R;
+    switch (*Constraint) {
+    case 'e':
+    case 'w':
+      // Two-character constraint; add "^" hint for later parsing.
+      R = std::string("^") + std::string(Constraint, 2);
+      Constraint++;
+      break;
+    default:
+      return TargetInfo::convertConstraint(Constraint);
+    }
+    return R;
   }
   virtual const char *getClobbers() const {
     return "";
