@@ -211,44 +211,46 @@ class F4_1<bits<6> op3, dag outs, dag ins,
             string asmstr, list<dag> pattern>
       : F4<op3, outs, ins, asmstr, pattern> {
 
-  bits<3> cc;
+  bit    intcc;
+  bits<2> cc;
   bits<4> cond;
   bits<5> rs2;
 
   let Inst{4-0}   = rs2;
-  let Inst{11}    = cc{0};
-  let Inst{12}    = cc{1};
+  let Inst{12-11} = cc;
   let Inst{13}    = 0;
   let Inst{17-14} = cond;
-  let Inst{18}    = cc{2};
+  let Inst{18}    = intcc;
 
 }
 
 class F4_2<bits<6> op3, dag outs, dag ins,
             string asmstr, list<dag> pattern>
       : F4<op3, outs, ins, asmstr, pattern> {
-  bits<3>  cc;
+  bit      intcc;
+  bits<2>  cc;
   bits<4>  cond;
   bits<11> simm11;
 
   let Inst{10-0}  = simm11;
-  let Inst{11}    = cc{0};
-  let Inst{12}    = cc{1};
+  let Inst{12-11} = cc;
   let Inst{13}    = 1;
   let Inst{17-14} = cond;
-  let Inst{18}    = cc{2};
+  let Inst{18}    = intcc;
 }
 
 class F4_3<bits<6> op3, bits<6> opf_low, dag outs, dag ins,
            string asmstr, list<dag> pattern>
       : F4<op3, outs, ins, asmstr, pattern> {
   bits<4> cond;
-  bits<3> opf_cc;
+  bit     intcc;
+  bits<2> opf_cc;
   bits<5> rs2;
 
   let Inst{18}     = 0;
   let Inst{17-14}  = cond;
-  let Inst{13-11}  = opf_cc;
+  let Inst{13}     = intcc;
+  let Inst{12-11}  = opf_cc;
   let Inst{10-5}   = opf_low;
   let Inst{4-0}    = rs2;
 }

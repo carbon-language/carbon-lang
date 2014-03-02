@@ -312,7 +312,7 @@ let Uses = [ICC], cc = 0b10 in
 
 // Conditional moves on %xcc.
 let Uses = [ICC], Constraints = "$f = $rd" in {
-let cc = 0b110 in {
+let intcc = 1, cc = 0b10 in {
 def MOVXCCrr : F4_1<0b101100, (outs IntRegs:$rd),
                       (ins IntRegs:$rs2, IntRegs:$f, CCOp:$cond),
                       "mov$cond %xcc, $rs2, $rd",
@@ -325,7 +325,7 @@ def MOVXCCri : F4_2<0b101100, (outs IntRegs:$rd),
                        (SPselectxcc simm11:$simm11, i32:$f, imm:$cond))]>;
 } // cc
 
-let opf_cc = 0b110 in {
+let intcc = 1, opf_cc = 0b10 in {
 def FMOVS_XCC : F4_3<0b110101, 0b000001, (outs FPRegs:$rd),
                       (ins FPRegs:$rs2, FPRegs:$f, CCOp:$cond),
                       "fmovs$cond %xcc, $rs2, $rd",

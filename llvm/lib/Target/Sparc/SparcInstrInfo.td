@@ -634,14 +634,18 @@ class FPBranchSPA<dag ins, string asmstr, list<dag> pattern>
 
 // Conditional branch class on %fcc0-%fcc3 with predication:
 multiclass FPredBranch {
-  def CC    : F2_3<0b101, 0, 1, (outs), (ins bprtarget:$imm19, CCOp:$cond),
-                  "fb$cond %fcc0, $imm19", []>;
-  def CCA   : F2_3<0b101, 1, 1, (outs), (ins bprtarget:$imm19, CCOp:$cond),
-                  "fb$cond,a %fcc0, $imm19", []>;
-  def CCNT  : F2_3<0b101, 0, 0, (outs), (ins bprtarget:$imm19, CCOp:$cond),
-                  "fb$cond,pn %fcc0, $imm19", []>;
-  def CCANT : F2_3<0b101, 1, 0, (outs), (ins bprtarget:$imm19, CCOp:$cond),
-                  "fb$cond,a,pn %fcc0, $imm19", []>;
+  def CC    : F2_3<0b101, 0, 1, (outs), (ins bprtarget:$imm19, CCOp:$cond,
+                                         FCCRegs:$cc),
+                  "fb$cond $cc, $imm19", []>;
+  def CCA   : F2_3<0b101, 1, 1, (outs), (ins bprtarget:$imm19, CCOp:$cond,
+                                         FCCRegs:$cc),
+                  "fb$cond,a $cc, $imm19", []>;
+  def CCNT  : F2_3<0b101, 0, 0, (outs), (ins bprtarget:$imm19, CCOp:$cond,
+                                         FCCRegs:$cc),
+                  "fb$cond,pn $cc, $imm19", []>;
+  def CCANT : F2_3<0b101, 1, 0, (outs), (ins bprtarget:$imm19, CCOp:$cond,
+                                         FCCRegs:$cc),
+                  "fb$cond,a,pn $cc, $imm19", []>;
 }
 } // let isBranch = 1, isTerminator = 1, hasDelaySlot = 1
 
@@ -651,10 +655,11 @@ let Uses = [FCC0] in {
                               [(SPbrfcc bb:$imm22, imm:$cond)]>;
   def FBCONDA : FPBranchSPA<(ins brtarget:$imm22, CCOp:$cond),
                              "fb$cond,a $imm22", []>;
-
-  let Predicates = [HasV9], cc = 0b00 in
-    defm BPF : FPredBranch;
 }
+
+let Predicates = [HasV9] in
+  defm BPF : FPredBranch;
+
 
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
@@ -916,7 +921,7 @@ let Uses = [O6], isCall = 1, hasDelaySlot = 1 in
 // V9 Conditional Moves.
 let Predicates = [HasV9], Constraints = "$f = $rd" in {
   // Move Integer Register on Condition (MOVcc) p. 194 of the V9 manual.
-  let Uses = [ICC], cc = 0b100 in {
+  let Uses = [ICC], intcc = 1, cc = 0b00 in {
     def MOVICCrr
       : F4_1<0b101100, (outs IntRegs:$rd),
              (ins IntRegs:$rs2, IntRegs:$f, CCOp:$cond),
@@ -931,7 +936,7 @@ let Predicates = [HasV9], Constraints = "$f = $rd" in {
                     (SPselecticc simm11:$simm11, i32:$f, imm:$cond))]>;
   }
 
-  let Uses = [FCC0], cc = 0b000 in {
+  let Uses = [FCC0], intcc = 0, cc = 0b00 in {
     def MOVFCCrr
       : F4_1<0b101100, (outs IntRegs:$rd),
              (ins IntRegs:$rs2, IntRegs:$f, CCOp:$cond),
@@ -945,7 +950,7 @@ let Predicates = [HasV9], Constraints = "$f = $rd" in {
                     (SPselectfcc simm11:$simm11, i32:$f, imm:$cond))]>;
   }
 
-  let Uses = [ICC], opf_cc = 0b100 in {
+  let Uses = [ICC], intcc = 1, opf_cc = 0b00 in {
     def FMOVS_ICC
       : F4_3<0b110101, 0b000001, (outs FPRegs:$rd),
              (ins FPRegs:$rs2, FPRegs:$f, CCOp:$cond),
@@ -964,7 +969,7 @@ let Predicates = [HasV9], Constraints = "$f = $rd" in {
                Requires<[HasHardQuad]>;
   }
 
-  let Uses = [FCC0], opf_cc = 0b000 in {
+  let Uses = [FCC0], intcc = 0, opf_cc = 0b00 in {
     def FMOVS_FCC
       : F4_3<0b110101, 0b000001, (outs FPRegs:$rd),
              (ins FPRegs:$rs2, FPRegs:$f, CCOp:$cond),
@@ -1025,7 +1030,6 @@ def V9FCMPQ  : F3_3c<2, 0b110101, 0b001010011,
                 (outs FCCRegs:$rd), (ins QFPRegs:$rs1, QFPRegs:$rs2),
                 "fcmpq $rd, $rs1, $rs2", []>,
                  Requires<[HasHardQuad]>;
-
 
 // POPCrr - This does a ctpop of a 64-bit register.  As such, we have to clear
 // the top 32-bits before using it.  To do this clearing, we use a SRLri X,0.

@@ -131,27 +131,27 @@ multiclass fp_cond_alias<string cond, int condVal> {
 
   // fb<cond> %fcc0, $imm
   def : InstAlias<!strconcat(!strconcat("fb", cond), " %fcc0, $imm"),
-                  (BPFCC brtarget:$imm, condVal)>, Requires<[HasV9]>;
+                  (BPFCC brtarget:$imm, condVal, FCC0)>, Requires<[HasV9]>;
 
   // fb<cond>,pt %fcc0, $imm
   def : InstAlias<!strconcat(!strconcat("fb", cond), ",pt %fcc0, $imm"),
-                  (BPFCC brtarget:$imm, condVal)>, Requires<[HasV9]>;
+                  (BPFCC brtarget:$imm, condVal, FCC0)>, Requires<[HasV9]>;
 
   // fb<cond>,a %fcc0, $imm
   def : InstAlias<!strconcat(!strconcat("fb", cond), ",a %fcc0, $imm"),
-                  (BPFCCA brtarget:$imm, condVal)>, Requires<[HasV9]>;
+                  (BPFCCA brtarget:$imm, condVal, FCC0)>, Requires<[HasV9]>;
 
   // fb<cond>,a,pt %fcc0, $imm
   def : InstAlias<!strconcat(!strconcat("fb", cond), ",a,pt %fcc0, $imm"),
-                  (BPFCCA brtarget:$imm, condVal)>, Requires<[HasV9]>;
+                  (BPFCCA brtarget:$imm, condVal, FCC0)>, Requires<[HasV9]>;
 
   // fb<cond>,pn %fcc0, $imm
   def : InstAlias<!strconcat(!strconcat("fb", cond), ",pn %fcc0, $imm"),
-                  (BPFCCNT brtarget:$imm, condVal)>, Requires<[HasV9]>;
+                  (BPFCCNT brtarget:$imm, condVal, FCC0)>, Requires<[HasV9]>;
 
   // fb<cond>,a,pn %fcc0, $imm
   def : InstAlias<!strconcat(!strconcat("fb", cond), ",a,pn %fcc0, $imm"),
-                  (BPFCCANT brtarget:$imm, condVal)>, Requires<[HasV9]>;
+                  (BPFCCANT brtarget:$imm, condVal, FCC0)>, Requires<[HasV9]>;
 
   defm : cond_mov_alias<cond, condVal, " %fcc0",
                         MOVFCCrr, MOVFCCri,
