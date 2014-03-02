@@ -134,10 +134,10 @@ Version Version::getFromString(llvm::StringRef VersionStr) {
   llvm::StringRef MajorStr, MinorStr;
   Version V;
 
-  llvm::tie(MajorStr, MinorStr) = VersionStr.split('.');
+  std::tie(MajorStr, MinorStr) = VersionStr.split('.');
   if (!MinorStr.empty()) {
     llvm::StringRef Ignore;
-    llvm::tie(MinorStr, Ignore) = MinorStr.split('.');
+    std::tie(MinorStr, Ignore) = MinorStr.split('.');
     if (MinorStr.getAsInteger(10, V.Minor))
       return Version();
   }

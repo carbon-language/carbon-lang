@@ -363,7 +363,7 @@ Replacement IncludeDirectives::addAngledInclude(const clang::FileEntry *File,
     return Replacement();
 
   unsigned Offset, NLFlags;
-  llvm::tie(Offset, NLFlags) = angledIncludeInsertionOffset(FID);
+  std::tie(Offset, NLFlags) = angledIncludeInsertionOffset(FID);
 
   StringRef EOL = guessEOL(Sources, FID);
   llvm::SmallString<32> InsertionText;

@@ -213,7 +213,7 @@ static CompilerVersions handleSupportedCompilers(const char *ProgName,
                                                         E = Compilers.end();
        I != E; ++I) {
     llvm::StringRef Compiler, VersionStr;
-    llvm::tie(Compiler, VersionStr) = I->split('-');
+    std::tie(Compiler, VersionStr) = I->split('-');
     Version *V = llvm::StringSwitch<Version *>(Compiler)
         .Case("clang", &RequiredVersions.Clang)
         .Case("gcc", &RequiredVersions.Gcc).Case("icc", &RequiredVersions.Icc)
