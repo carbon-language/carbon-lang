@@ -332,7 +332,7 @@ std::string ScopDetection::formatInvalidAlias(AliasSet &AS) const {
 
   std::vector<Value *> Pointers;
 
-  for (auto I: AS)
+  for (auto I : AS)
     Pointers.push_back(I.getValue());
 
   std::sort(Pointers.begin(), Pointers.end());
@@ -607,7 +607,7 @@ static bool regionWithoutLoops(Region &R, LoopInfo *LI) {
 static unsigned eraseAllChildren(std::set<const Region *> &Regs,
                                  const Region *R) {
   unsigned Count = 0;
-  for (auto SubRegion: *R) {
+  for (auto SubRegion : *R) {
     if (Regs.find(SubRegion) != Regs.end()) {
       ++Count;
       Regs.erase(SubRegion);
@@ -633,7 +633,7 @@ void ScopDetection::findScops(Region &R) {
 
   InvalidRegions[&R] = LastFailure;
 
-  for (auto SubRegion: R)
+  for (auto SubRegion : R)
     findScops(*SubRegion);
 
   // Try to expand regions.
@@ -644,10 +644,10 @@ void ScopDetection::findScops(Region &R) {
 
   std::vector<Region *> ToExpand;
 
-  for (auto SubRegion: R)
+  for (auto SubRegion : R)
     ToExpand.push_back(SubRegion);
 
-  for (auto CurrentRegion: ToExpand) {
+  for (auto CurrentRegion : ToExpand) {
     // Skip invalid regions. Regions may become invalid, if they are element of
     // an already expanded region.
     if (ValidRegions.find(CurrentRegion) == ValidRegions.end())
@@ -800,7 +800,7 @@ void ScopDetection::getDebugLocation(const Region *R, unsigned &LineBegin,
 }
 
 void ScopDetection::printLocations(llvm::Function &F) {
-  for (auto R: *this) {
+  for (auto R : *this) {
     unsigned LineEntry, LineExit;
     std::string FileName;
 
@@ -846,7 +846,7 @@ void polly::ScopDetection::verifyAnalysis() const {
   if (!VerifyScops)
     return;
 
-  for (auto R: ValidRegions)
+  for (auto R : ValidRegions)
     verifyRegion(*R);
 }
 
@@ -862,7 +862,7 @@ void ScopDetection::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void ScopDetection::print(raw_ostream &OS, const Module *) const {
-  for (auto R: ValidRegions)
+  for (auto R : ValidRegions)
     OS << "Valid Region for Scop: " << R->getNameStr() << '\n';
 
   OS << "\n";
