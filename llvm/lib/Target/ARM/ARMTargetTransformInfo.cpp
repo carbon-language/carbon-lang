@@ -32,7 +32,7 @@ void initializeARMTTIPass(PassRegistry &);
 
 namespace {
 
-class ARMTTI LLVM_FINAL : public ImmutablePass, public TargetTransformInfo {
+class ARMTTI final : public ImmutablePass, public TargetTransformInfo {
   const ARMBaseTargetMachine *TM;
   const ARMSubtarget *ST;
   const ARMTargetLowering *TLI;

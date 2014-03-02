@@ -25,7 +25,7 @@ using namespace llvm;
 
 namespace {
 
-class BasicTTI LLVM_FINAL : public ImmutablePass, public TargetTransformInfo {
+class BasicTTI final : public ImmutablePass, public TargetTransformInfo {
   const TargetMachine *TM;
 
   /// Estimate the overhead of scalarizing an instruction. Insert and Extract

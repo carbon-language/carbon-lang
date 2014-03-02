@@ -32,7 +32,7 @@ void initializeAArch64TTIPass(PassRegistry &);
 
 namespace {
 
-class AArch64TTI LLVM_FINAL : public ImmutablePass, public TargetTransformInfo {
+class AArch64TTI final : public ImmutablePass, public TargetTransformInfo {
   const AArch64TargetMachine *TM;
   const AArch64Subtarget *ST;
   const AArch64TargetLowering *TLI;

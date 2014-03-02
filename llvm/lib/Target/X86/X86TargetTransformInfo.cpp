@@ -33,7 +33,7 @@ void initializeX86TTIPass(PassRegistry &);
 
 namespace {
 
-class X86TTI LLVM_FINAL : public ImmutablePass, public TargetTransformInfo {
+class X86TTI final : public ImmutablePass, public TargetTransformInfo {
   const X86Subtarget *ST;
   const X86TargetLowering *TLI;
 

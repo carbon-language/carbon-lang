@@ -35,7 +35,7 @@ void initializeAMDGPUTTIPass(PassRegistry &);
 
 namespace {
 
-class AMDGPUTTI LLVM_FINAL : public ImmutablePass, public TargetTransformInfo {
+class AMDGPUTTI final : public ImmutablePass, public TargetTransformInfo {
   const AMDGPUTargetMachine *TM;
   const AMDGPUSubtarget *ST;
   const AMDGPUTargetLowering *TLI;

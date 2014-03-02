@@ -241,7 +241,7 @@ unsigned TargetTransformInfo::getReductionCost(unsigned Opcode, Type *Ty,
 
 namespace {
 
-struct NoTTI LLVM_FINAL : ImmutablePass, TargetTransformInfo {
+struct NoTTI final : ImmutablePass, TargetTransformInfo {
   const DataLayout *DL;
 
   NoTTI() : ImmutablePass(ID), DL(0) {

@@ -31,7 +31,7 @@ void initializeXCoreTTIPass(PassRegistry &);
 
 namespace {
 
-class XCoreTTI LLVM_FINAL : public ImmutablePass, public TargetTransformInfo {
+class XCoreTTI final : public ImmutablePass, public TargetTransformInfo {
 public:
   XCoreTTI() : ImmutablePass(ID) {
     llvm_unreachable("This pass cannot be directly constructed");

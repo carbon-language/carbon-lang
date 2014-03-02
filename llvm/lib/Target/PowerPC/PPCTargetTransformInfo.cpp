@@ -32,7 +32,7 @@ void initializePPCTTIPass(PassRegistry &);
 
 namespace {
 
-class PPCTTI LLVM_FINAL : public ImmutablePass, public TargetTransformInfo {
+class PPCTTI final : public ImmutablePass, public TargetTransformInfo {
   const PPCTargetMachine *TM;
   const PPCSubtarget *ST;
   const PPCTargetLowering *TLI;
