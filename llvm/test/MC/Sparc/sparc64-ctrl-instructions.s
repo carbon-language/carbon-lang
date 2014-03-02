@@ -146,20 +146,20 @@
         movo   %fcc0, %g1, %g2
 
 
-        ! CHECK fmovsne %icc, %f1, %f2          ! encoding: [0x85,0xaa,0x60,0x21]
-        ! CHECK fmovse %icc, %f1, %f2           ! encoding: [0x85,0xa8,0x60,0x21]
-        ! CHECK fmovsg %icc, %f1, %f2           ! encoding: [0x85,0xaa,0xa0,0x21]
-        ! CHECK fmovsle %icc, %f1, %f2          ! encoding: [0x85,0xa8,0xa0,0x21]
-        ! CHECK fmovsge %icc, %f1, %f2          ! encoding: [0x85,0xaa,0xe0,0x21]
-        ! CHECK fmovsl %icc, %f1, %f2           ! encoding: [0x85,0xa8,0xe0,0x21]
-        ! CHECK fmovsgu %icc, %f1, %f2          ! encoding: [0x85,0xab,0x20,0x21]
-        ! CHECK fmovsleu %icc, %f1, %f2         ! encoding: [0x85,0xa9,0x20,0x21]
-        ! CHECK fmovscc %icc, %f1, %f2          ! encoding: [0x85,0xab,0x60,0x21]
-        ! CHECK fmovscs %icc, %f1, %f2          ! encoding: [0x85,0xa9,0x60,0x21]
-        ! CHECK fmovspos %icc, %f1, %f2         ! encoding: [0x85,0xab,0xa0,0x21]
-        ! CHECK fmovsneg %icc, %f1, %f2         ! encoding: [0x85,0xa9,0xa0,0x21]
-        ! CHECK fmovsvc %icc, %f1, %f2          ! encoding: [0x85,0xab,0xe0,0x21]
-        ! CHECK fmovsvs %icc, %f1, %f2          ! encoding: [0x85,0xa9,0xe0,0x21]
+        ! CHECK: fmovsne %icc, %f1, %f2          ! encoding: [0x85,0xaa,0x60,0x21]
+        ! CHECK: fmovse %icc, %f1, %f2           ! encoding: [0x85,0xa8,0x60,0x21]
+        ! CHECK: fmovsg %icc, %f1, %f2           ! encoding: [0x85,0xaa,0xa0,0x21]
+        ! CHECK: fmovsle %icc, %f1, %f2          ! encoding: [0x85,0xa8,0xa0,0x21]
+        ! CHECK: fmovsge %icc, %f1, %f2          ! encoding: [0x85,0xaa,0xe0,0x21]
+        ! CHECK: fmovsl %icc, %f1, %f2           ! encoding: [0x85,0xa8,0xe0,0x21]
+        ! CHECK: fmovsgu %icc, %f1, %f2          ! encoding: [0x85,0xab,0x20,0x21]
+        ! CHECK: fmovsleu %icc, %f1, %f2         ! encoding: [0x85,0xa9,0x20,0x21]
+        ! CHECK: fmovscc %icc, %f1, %f2          ! encoding: [0x85,0xab,0x60,0x21]
+        ! CHECK: fmovscs %icc, %f1, %f2          ! encoding: [0x85,0xa9,0x60,0x21]
+        ! CHECK: fmovspos %icc, %f1, %f2         ! encoding: [0x85,0xab,0xa0,0x21]
+        ! CHECK: fmovsneg %icc, %f1, %f2         ! encoding: [0x85,0xa9,0xa0,0x21]
+        ! CHECK: fmovsvc %icc, %f1, %f2          ! encoding: [0x85,0xab,0xe0,0x21]
+        ! CHECK: fmovsvs %icc, %f1, %f2          ! encoding: [0x85,0xa9,0xe0,0x21]
         fmovsne  %icc, %f1, %f2
         fmovse   %icc, %f1, %f2
         fmovsg   %icc, %f1, %f2
@@ -175,20 +175,20 @@
         fmovsvc  %icc, %f1, %f2
         fmovsvs  %icc, %f1, %f2
 
-        ! CHECK fmovsne %xcc, %f1, %f2          ! encoding: [0x85,0xaa,0x70,0x21]
-        ! CHECK fmovse %xcc, %f1, %f2           ! encoding: [0x85,0xa8,0x70,0x21]
-        ! CHECK fmovsg %xcc, %f1, %f2           ! encoding: [0x85,0xaa,0xb0,0x21]
-        ! CHECK fmovsle %xcc, %f1, %f2          ! encoding: [0x85,0xa8,0xb0,0x21]
-        ! CHECK fmovsge %xcc, %f1, %f2          ! encoding: [0x85,0xaa,0xf0,0x21]
-        ! CHECK fmovsl %xcc, %f1, %f2           ! encoding: [0x85,0xa8,0xf0,0x21]
-        ! CHECK fmovsgu %xcc, %f1, %f2          ! encoding: [0x85,0xab,0x30,0x21]
-        ! CHECK fmovsleu %xcc, %f1, %f2         ! encoding: [0x85,0xa9,0x30,0x21]
-        ! CHECK fmovscc %xcc, %f1, %f2          ! encoding: [0x85,0xab,0x70,0x21]
-        ! CHECK fmovscs %xcc, %f1, %f2          ! encoding: [0x85,0xa9,0x70,0x21]
-        ! CHECK fmovspos %xcc, %f1, %f2         ! encoding: [0x85,0xab,0xb0,0x21]
-        ! CHECK fmovsneg %xcc, %f1, %f2         ! encoding: [0x85,0xa9,0xb0,0x21]
-        ! CHECK fmovsvc %xcc, %f1, %f2          ! encoding: [0x85,0xab,0xf0,0x21]
-        ! CHECK fmovsvs %xcc, %f1, %f2          ! encoding: [0x85,0xa9,0xf0,0x21]
+        ! CHECK: fmovsne %xcc, %f1, %f2          ! encoding: [0x85,0xaa,0x70,0x21]
+        ! CHECK: fmovse %xcc, %f1, %f2           ! encoding: [0x85,0xa8,0x70,0x21]
+        ! CHECK: fmovsg %xcc, %f1, %f2           ! encoding: [0x85,0xaa,0xb0,0x21]
+        ! CHECK: fmovsle %xcc, %f1, %f2          ! encoding: [0x85,0xa8,0xb0,0x21]
+        ! CHECK: fmovsge %xcc, %f1, %f2          ! encoding: [0x85,0xaa,0xf0,0x21]
+        ! CHECK: fmovsl %xcc, %f1, %f2           ! encoding: [0x85,0xa8,0xf0,0x21]
+        ! CHECK: fmovsgu %xcc, %f1, %f2          ! encoding: [0x85,0xab,0x30,0x21]
+        ! CHECK: fmovsleu %xcc, %f1, %f2         ! encoding: [0x85,0xa9,0x30,0x21]
+        ! CHECK: fmovscc %xcc, %f1, %f2          ! encoding: [0x85,0xab,0x70,0x21]
+        ! CHECK: fmovscs %xcc, %f1, %f2          ! encoding: [0x85,0xa9,0x70,0x21]
+        ! CHECK: fmovspos %xcc, %f1, %f2         ! encoding: [0x85,0xab,0xb0,0x21]
+        ! CHECK: fmovsneg %xcc, %f1, %f2         ! encoding: [0x85,0xa9,0xb0,0x21]
+        ! CHECK: fmovsvc %xcc, %f1, %f2          ! encoding: [0x85,0xab,0xf0,0x21]
+        ! CHECK: fmovsvs %xcc, %f1, %f2          ! encoding: [0x85,0xa9,0xf0,0x21]
         fmovsne  %xcc, %f1, %f2
         fmovse   %xcc, %f1, %f2
         fmovsg   %xcc, %f1, %f2
@@ -204,20 +204,20 @@
         fmovsvc  %xcc, %f1, %f2
         fmovsvs  %xcc, %f1, %f2
 
-        ! CHECK fmovsu %fcc0, %f1, %f2          ! encoding: [0x85,0xa9,0xc0,0x21]
-        ! CHECK fmovsg %fcc0, %f1, %f2          ! encoding: [0x85,0xa9,0x80,0x21]
-        ! CHECK fmovsug %fcc0, %f1, %f2         ! encoding: [0x85,0xa9,0x40,0x21]
-        ! CHECK fmovsl %fcc0, %f1, %f2          ! encoding: [0x85,0xa9,0x00,0x21]
-        ! CHECK fmovsul %fcc0, %f1, %f2         ! encoding: [0x85,0xa8,0xc0,0x21]
-        ! CHECK fmovslg %fcc0, %f1, %f2         ! encoding: [0x85,0xa8,0x80,0x21]
-        ! CHECK fmovsne %fcc0, %f1, %f2         ! encoding: [0x85,0xa8,0x40,0x21]
-        ! CHECK fmovse %fcc0, %f1, %f2          ! encoding: [0x85,0xaa,0x40,0x21]
-        ! CHECK fmovsue %fcc0, %f1, %f2         ! encoding: [0x85,0xaa,0x80,0x21]
-        ! CHECK fmovsge %fcc0, %f1, %f2         ! encoding: [0x85,0xaa,0xc0,0x21]
-        ! CHECK fmovsuge %fcc0, %f1, %f2        ! encoding: [0x85,0xab,0x00,0x21]
-        ! CHECK fmovsle %fcc0, %f1, %f2         ! encoding: [0x85,0xab,0x40,0x21]
-        ! CHECK fmovsule %fcc0, %f1, %f2        ! encoding: [0x85,0xab,0x80,0x21]
-        ! CHECK fmovso %fcc0, %f1, %f2          ! encoding: [0x85,0xab,0xc0,0x21]
+        ! CHECK: fmovsu %fcc0, %f1, %f2          ! encoding: [0x85,0xa9,0xc0,0x21]
+        ! CHECK: fmovsg %fcc0, %f1, %f2          ! encoding: [0x85,0xa9,0x80,0x21]
+        ! CHECK: fmovsug %fcc0, %f1, %f2         ! encoding: [0x85,0xa9,0x40,0x21]
+        ! CHECK: fmovsl %fcc0, %f1, %f2          ! encoding: [0x85,0xa9,0x00,0x21]
+        ! CHECK: fmovsul %fcc0, %f1, %f2         ! encoding: [0x85,0xa8,0xc0,0x21]
+        ! CHECK: fmovslg %fcc0, %f1, %f2         ! encoding: [0x85,0xa8,0x80,0x21]
+        ! CHECK: fmovsne %fcc0, %f1, %f2         ! encoding: [0x85,0xa8,0x40,0x21]
+        ! CHECK: fmovse %fcc0, %f1, %f2          ! encoding: [0x85,0xaa,0x40,0x21]
+        ! CHECK: fmovsue %fcc0, %f1, %f2         ! encoding: [0x85,0xaa,0x80,0x21]
+        ! CHECK: fmovsge %fcc0, %f1, %f2         ! encoding: [0x85,0xaa,0xc0,0x21]
+        ! CHECK: fmovsuge %fcc0, %f1, %f2        ! encoding: [0x85,0xab,0x00,0x21]
+        ! CHECK: fmovsle %fcc0, %f1, %f2         ! encoding: [0x85,0xab,0x40,0x21]
+        ! CHECK: fmovsule %fcc0, %f1, %f2        ! encoding: [0x85,0xab,0x80,0x21]
+        ! CHECK: fmovso %fcc0, %f1, %f2          ! encoding: [0x85,0xab,0xc0,0x21]
         fmovsu   %fcc0, %f1, %f2
         fmovsg   %fcc0, %f1, %f2
         fmovsug  %fcc0, %f1, %f2
@@ -1111,3 +1111,28 @@
         ! CHECK-NEXT:                                        !   fixup A - offset: 0, value: .BB0, kind: fixup_sparc_br19
         fbo,a,pn %fcc0, .BB0
 
+        ! CHECK: movu %fcc1, %g1, %g2            ! encoding: [0x85,0x61,0xc8,0x01]
+        movu %fcc1, %g1, %g2
+
+        ! CHECK: fmovsg %fcc2, %f1, %f2          ! encoding: [0x85,0xa9,0x90,0x21]
+        fmovsg %fcc2, %f1, %f2
+
+        ! CHECK:             fbug %fcc3, .BB0                ! encoding: [0x0b,0b01111AAA,A,A]
+        ! CHECK-NEXT:                                        ! fixup A - offset: 0, value: .BB0, kind: fixup_sparc_br19
+        fbug %fcc3, .BB0
+
+        ! CHECK:             fbu %fcc3, .BB0                 ! encoding: [0x0f,0b01111AAA,A,A]
+        ! CHECK-NEXT:                                        ! fixup A - offset: 0, value: .BB0, kind: fixup_sparc_br19
+        fbu,pt %fcc3, .BB0
+
+        ! CHECK:             fbl,a %fcc3, .BB0               ! encoding: [0x29,0b01111AAA,A,A]
+        ! CHECK-NEXT:                                        ! fixup A - offset: 0, value: .BB0, kind: fixup_sparc_br19
+        fbl,a %fcc3, .BB0
+
+        ! CHECK:             fbue,pn %fcc3, .BB0             ! encoding: [0x15,0b01110AAA,A,A]
+        ! CHECK-NEXT:                                        !   fixup A - offset: 0, value: .BB0, kind: fixup_sparc_br19
+        fbue,pn %fcc3, .BB0
+
+        ! CHECK:             fbne,a,pn %fcc3, .BB0           ! encoding: [0x23,0b01110AAA,A,A]
+        ! CHECK-NEXT:                                        !   fixup A - offset: 0, value: .BB0, kind: fixup_sparc_br19
+        fbne,a,pn %fcc3, .BB0

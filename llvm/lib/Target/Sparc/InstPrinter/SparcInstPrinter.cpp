@@ -146,11 +146,12 @@ void SparcInstPrinter::printCCOperand(const MCInst *MI, int opNum,
   case SP::BPFCCA:
   case SP::BPFCCNT:
   case SP::BPFCCANT:
-  case SP::MOVFCCrr:
-  case SP::MOVFCCri:
-  case SP::FMOVS_FCC:
-  case SP::FMOVD_FCC:
-  case SP::FMOVQ_FCC:  // Make sure CC is a fp conditional flag.
+  case SP::MOVFCCrr:  case SP::V9MOVFCCrr:
+  case SP::MOVFCCri:  case SP::V9MOVFCCri:
+  case SP::FMOVS_FCC: case SP::V9FMOVS_FCC:
+  case SP::FMOVD_FCC: case SP::V9FMOVD_FCC:
+  case SP::FMOVQ_FCC: case SP::V9FMOVQ_FCC:
+    // Make sure CC is a fp conditional flag.
     CC = (CC < 16) ? (CC + 16) : CC;
     break;
   }

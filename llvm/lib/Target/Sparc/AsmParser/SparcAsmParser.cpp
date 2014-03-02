@@ -68,8 +68,7 @@ class SparcAsmParser : public MCTargetAsmParser {
                StringRef Name);
 
   OperandMatchResultTy
-  parseSparcAsmOperand(SparcOperand *&Operand, bool isCall = false,
-                       bool createTokenForFCC = true);
+  parseSparcAsmOperand(SparcOperand *&Operand, bool isCall = false);
 
   OperandMatchResultTy
   parseBranchModifiers(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
@@ -633,9 +632,7 @@ parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
 
   SparcOperand *Op = 0;
 
-  bool createTokenForFCC = !(Mnemonic == "fcmps" || Mnemonic == "fcmpd"
-                             || Mnemonic == "fcmpq");
-  ResTy = parseSparcAsmOperand(Op, (Mnemonic == "call"), createTokenForFCC);
+  ResTy = parseSparcAsmOperand(Op, (Mnemonic == "call"));
   if (ResTy != MatchOperand_Success || !Op)
     return MatchOperand_ParseFail;
 
@@ -646,8 +643,7 @@ parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
 }
 
 SparcAsmParser::OperandMatchResultTy
-SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op, bool isCall,
-                                     bool createTokenForFCC)
+SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op, bool isCall)
 {
 
   SMLoc S = Parser.getTok().getLoc();
@@ -680,13 +676,6 @@ SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op, bool isCall,
         else
           Op = SparcOperand::CreateToken("%icc", S);
         break;
-
-      case Sparc::FCC0:
-        if (createTokenForFCC) {
-          assert(name == "fcc0" && "Cannot handle %fcc other than %fcc0 yet");
-          Op = SparcOperand::CreateToken("%fcc0", S);
-          break;
-        }
       }
       break;
     }

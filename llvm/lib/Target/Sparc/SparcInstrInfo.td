@@ -1019,7 +1019,7 @@ let Predicates = [HasV9] in {
                    Requires<[HasHardQuad]>;
 }
 
-// Floating-point compare instruction with %fcc0-%fcc1
+// Floating-point compare instruction with %fcc0-%fcc3.
 def V9FCMPS  : F3_3c<2, 0b110101, 0b001010001,
                (outs FCCRegs:$rd), (ins FPRegs:$rs1, FPRegs:$rs2),
                "fcmps $rd, $rs1, $rs2", []>;
@@ -1030,6 +1030,34 @@ def V9FCMPQ  : F3_3c<2, 0b110101, 0b001010011,
                 (outs FCCRegs:$rd), (ins QFPRegs:$rs1, QFPRegs:$rs2),
                 "fcmpq $rd, $rs1, $rs2", []>,
                  Requires<[HasHardQuad]>;
+
+// Floating point conditional move instrucitons with %fcc0-%fcc3.
+let Predicates = [HasV9] in {
+  let Constraints = "$f = $rd", intcc = 0 in {
+    def V9MOVFCCrr
+      : F4_1<0b101100, (outs IntRegs:$rd),
+             (ins FCCRegs:$cc, IntRegs:$rs2, IntRegs:$f, CCOp:$cond),
+             "mov$cond $cc, $rs2, $rd", []>;
+    def V9MOVFCCri
+      : F4_2<0b101100, (outs IntRegs:$rd),
+             (ins FCCRegs:$cc, i32imm:$simm11, IntRegs:$f, CCOp:$cond),
+             "mov$cond $cc, $simm11, $rd", []>;
+    def V9FMOVS_FCC
+      : F4_3<0b110101, 0b000001, (outs FPRegs:$rd),
+             (ins FCCRegs:$opf_cc, FPRegs:$rs2, FPRegs:$f, CCOp:$cond),
+             "fmovs$cond $opf_cc, $rs2, $rd", []>;
+    def V9FMOVD_FCC
+      : F4_3<0b110101, 0b000010, (outs DFPRegs:$rd),
+             (ins FCCRegs:$opf_cc, DFPRegs:$rs2, DFPRegs:$f, CCOp:$cond),
+             "fmovd$cond $opf_cc, $rs2, $rd", []>;
+    def V9FMOVQ_FCC
+      : F4_3<0b110101, 0b000011, (outs QFPRegs:$rd),
+             (ins FCCRegs:$opf_cc, QFPRegs:$rs2, QFPRegs:$f, CCOp:$cond),
+             "fmovq$cond $opf_cc, $rs2, $rd", []>,
+             Requires<[HasHardQuad]>;
+  } // Constraints = "$f = $rd", ...
+} // let Predicates = [hasV9]
+
 
 // POPCrr - This does a ctpop of a 64-bit register.  As such, we have to clear
 // the top 32-bits before using it.  To do this clearing, we use a SRLri X,0.
