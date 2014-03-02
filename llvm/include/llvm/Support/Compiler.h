@@ -106,26 +106,6 @@
 #define LLVM_DELETED_FUNCTION
 #endif
 
-/// LLVM_FINAL - Expands to 'final' if the compiler supports it.
-/// Use to mark classes or virtual methods as final.
-#if __has_feature(cxx_override_control) || \
-    (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GNUC_PREREQ(4, 7)) || \
-    LLVM_MSC_PREREQ(1700)
-#define LLVM_FINAL final
-#else
-#define LLVM_FINAL
-#endif
-
-/// LLVM_OVERRIDE - Expands to 'override' if the compiler supports it.
-/// Use to mark virtual methods as overriding a base class method.
-#if __has_feature(cxx_override_control) || \
-    (defined(__GXX_EXPERIMENTAL_CXX0X__) && __GNUC_PREREQ(4, 7)) || \
-    LLVM_MSC_PREREQ(1700)
-#define LLVM_OVERRIDE override
-#else
-#define LLVM_OVERRIDE
-#endif
-
 #if __has_feature(cxx_constexpr) || defined(__GXX_EXPERIMENTAL_CXX0X__)
 # define LLVM_CONSTEXPR constexpr
 #else
