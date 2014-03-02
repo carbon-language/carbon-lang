@@ -45,7 +45,7 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
 class GoogleModule : public ClangTidyModule {
 public:
   void
-  addCheckFactories(ClangTidyCheckFactories &CheckFactories) LLVM_OVERRIDE {
+  addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     CheckFactories.addCheckFactory(
         "google-explicit-constructor",
         new ClangTidyCheckFactory<ExplicitConstructorCheck>());

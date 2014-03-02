@@ -65,7 +65,7 @@ public:
   AnalyzerDiagnosticConsumer(ClangTidyContext &Context) : Context(Context) {}
 
   void FlushDiagnosticsImpl(std::vector<const ento::PathDiagnostic *> &Diags,
-                            FilesMade *filesMade) LLVM_OVERRIDE {
+                            FilesMade *filesMade) override {
     for (std::vector<const ento::PathDiagnostic *>::iterator I = Diags.begin(),
                                                              E = Diags.end();
          I != E; ++I) {
@@ -88,9 +88,9 @@ public:
     }
   }
 
-  StringRef getName() const LLVM_OVERRIDE { return "ClangTidyDiags"; }
-  bool supportsLogicalOpControlFlow() const LLVM_OVERRIDE { return true; }
-  bool supportsCrossFileDiagnostics() const LLVM_OVERRIDE { return true; }
+  StringRef getName() const override { return "ClangTidyDiags"; }
+  bool supportsLogicalOpControlFlow() const override { return true; }
+  bool supportsCrossFileDiagnostics() const override { return true; }
 
 private:
   ClangTidyContext &Context;
@@ -265,7 +265,7 @@ void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,
   public:
     ActionFactory(ClangTidyASTConsumerFactory *ConsumerFactory)
         : ConsumerFactory(ConsumerFactory) {}
-    FrontendAction *create() LLVM_OVERRIDE {
+    FrontendAction *create() override {
       return new Action(ConsumerFactory);
     }
 
@@ -274,7 +274,7 @@ void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,
     public:
       Action(ClangTidyASTConsumerFactory *Factory) : Factory(Factory) {}
       ASTConsumer *CreateASTConsumer(CompilerInstance &Compiler,
-                                     StringRef File) LLVM_OVERRIDE {
+                                     StringRef File) override {
         return Factory->CreateASTConsumer(Compiler, File);
       }
 

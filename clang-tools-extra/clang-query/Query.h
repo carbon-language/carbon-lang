@@ -52,7 +52,7 @@ typedef llvm::IntrusiveRefCntPtr<Query> QueryRef;
 /// Any query which resulted in a parse error.  The error message is in ErrStr.
 struct InvalidQuery : Query {
   InvalidQuery(const Twine &ErrStr) : Query(QK_Invalid), ErrStr(ErrStr.str()) {}
-  bool run(llvm::raw_ostream &OS, QuerySession &QS) const LLVM_OVERRIDE;
+  bool run(llvm::raw_ostream &OS, QuerySession &QS) const override;
 
   std::string ErrStr;
 
@@ -62,7 +62,7 @@ struct InvalidQuery : Query {
 /// No-op query (i.e. a blank line).
 struct NoOpQuery : Query {
   NoOpQuery() : Query(QK_NoOp) {}
-  bool run(llvm::raw_ostream &OS, QuerySession &QS) const LLVM_OVERRIDE;
+  bool run(llvm::raw_ostream &OS, QuerySession &QS) const override;
 
   static bool classof(const Query *Q) { return Q->Kind == QK_NoOp; }
 };
@@ -70,7 +70,7 @@ struct NoOpQuery : Query {
 /// Query for "help".
 struct HelpQuery : Query {
   HelpQuery() : Query(QK_Help) {}
-  bool run(llvm::raw_ostream &OS, QuerySession &QS) const LLVM_OVERRIDE;
+  bool run(llvm::raw_ostream &OS, QuerySession &QS) const override;
 
   static bool classof(const Query *Q) { return Q->Kind == QK_Help; }
 };
@@ -79,7 +79,7 @@ struct HelpQuery : Query {
 struct MatchQuery : Query {
   MatchQuery(const ast_matchers::dynamic::DynTypedMatcher &Matcher)
       : Query(QK_Match), Matcher(Matcher) {}
-  bool run(llvm::raw_ostream &OS, QuerySession &QS) const LLVM_OVERRIDE;
+  bool run(llvm::raw_ostream &OS, QuerySession &QS) const override;
 
   ast_matchers::dynamic::DynTypedMatcher Matcher;
 
@@ -100,7 +100,7 @@ template <> struct SetQueryKind<OutputKind> {
 template <typename T> struct SetQuery : Query {
   SetQuery(T QuerySession::*Var, T Value)
       : Query(SetQueryKind<T>::value), Var(Var), Value(Value) {}
-  bool run(llvm::raw_ostream &OS, QuerySession &QS) const LLVM_OVERRIDE {
+  bool run(llvm::raw_ostream &OS, QuerySession &QS) const override {
     QS.*Var = Value;
     return true;
   }

@@ -60,7 +60,7 @@ public:
                           StringRef FileName, bool IsAngled,
                           CharSourceRange FilenameRange, const FileEntry *File,
                           StringRef SearchPath, StringRef RelativePath,
-                          const Module *Imported) LLVM_OVERRIDE {
+                          const Module *Imported) override {
     // FIXME: This is a dummy implementation to show how to get at preprocessor
     // information. Implement a real include order check.
     Check.diag(HashLoc, "This is an include");
@@ -79,7 +79,7 @@ void IncludeOrderCheck::registerPPCallbacks(CompilerInstance &Compiler) {
 class LLVMModule : public ClangTidyModule {
 public:
   void
-  addCheckFactories(ClangTidyCheckFactories &CheckFactories) LLVM_OVERRIDE {
+  addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     CheckFactories.addCheckFactory(
         "llvm-include-order", new ClangTidyCheckFactory<IncludeOrderCheck>());
     CheckFactories.addCheckFactory(

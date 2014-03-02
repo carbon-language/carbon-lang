@@ -18,7 +18,7 @@
 #define CLANG_MODERNIZE_LOOP_CONVERT_H
 
 #include "Core/Transform.h"
-#include "llvm/Support/Compiler.h" // For LLVM_OVERRIDE
+#include "llvm/Support/Compiler.h" // For override
 
 // Forward decl for private implementation.
 struct TUTrackingInfo;
@@ -32,10 +32,10 @@ public:
 
   /// \see Transform::run().
   virtual int apply(const clang::tooling::CompilationDatabase &Database,
-                    const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
+                    const std::vector<std::string> &SourcePaths) override;
 
   virtual bool handleBeginSource(clang::CompilerInstance &CI,
-                                 llvm::StringRef Filename) LLVM_OVERRIDE;
+                                 llvm::StringRef Filename) override;
 private:
   llvm::OwningPtr<TUTrackingInfo> TUInfo;
 };

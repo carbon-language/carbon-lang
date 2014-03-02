@@ -37,7 +37,7 @@ public:
   ActionFactory(MatchFinder &Finder, Transform &Owner)
   : Finder(Finder), Owner(Owner) {}
 
-  virtual FrontendAction *create() LLVM_OVERRIDE {
+  virtual FrontendAction *create() override {
     return new FactoryAdaptor(Finder, Owner);
   }
 
@@ -52,14 +52,14 @@ private:
     }
 
     virtual bool BeginSourceFileAction(CompilerInstance &CI,
-                                       StringRef Filename) LLVM_OVERRIDE {
+                                       StringRef Filename) override {
       if (!ASTFrontendAction::BeginSourceFileAction(CI, Filename))
         return false;
 
       return Owner.handleBeginSource(CI, Filename);
     }
 
-    virtual void EndSourceFileAction() LLVM_OVERRIDE {
+    virtual void EndSourceFileAction() override {
       Owner.handleEndSource();
       return ASTFrontendAction::EndSourceFileAction();
     }

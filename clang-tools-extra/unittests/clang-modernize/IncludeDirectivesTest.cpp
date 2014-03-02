@@ -83,7 +83,7 @@ public:
 
 private:
   virtual bool BeginSourceFileAction(CompilerInstance &CI,
-                                     StringRef FileName) LLVM_OVERRIDE {
+                                     StringRef FileName) override {
     if (!PreprocessOnlyAction::BeginSourceFileAction(CI, FileName))
       return false;
     VFHelper.mapVirtualFiles(CI.getSourceManager());
@@ -95,7 +95,7 @@ private:
     return true;
   }
 
-  virtual void EndSourceFileAction() LLVM_OVERRIDE {
+  virtual void EndSourceFileAction() override {
     const tooling::Replacement &Replace =
         FileIncludes->addAngledInclude(FileToModify, Include);
     if (Replace.isApplicable())

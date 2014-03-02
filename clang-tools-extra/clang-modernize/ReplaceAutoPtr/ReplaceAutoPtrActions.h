@@ -30,7 +30,7 @@ public:
 
   /// \brief Entry point to the callback called when matches are made.
   virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result)
-      LLVM_OVERRIDE;
+      override;
 
 private:
   /// \brief Locates the \c auto_ptr token when it is referred by a \c TypeLoc.
@@ -89,7 +89,7 @@ public:
 
   /// \brief Entry point to the callback called when matches are made.
   virtual void run(const clang::ast_matchers::MatchFinder::MatchResult &Result)
-      LLVM_OVERRIDE;
+      override;
 
 private:
   unsigned &AcceptedChanges;

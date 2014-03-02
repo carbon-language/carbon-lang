@@ -260,7 +260,7 @@ The check should be registered in the corresponding module with a distinct name:
   class MyModule : public ClangTidyModule {
    public:
     virtual void
-    addCheckFactories(ClangTidyCheckFactories &CheckFactories) LLVM_OVERRIDE {
+    addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
       CheckFactories.addCheckFactory(
           "my-explicit-constructor",
           new ClangTidyCheckFactory<ExplicitConstructorCheck>());

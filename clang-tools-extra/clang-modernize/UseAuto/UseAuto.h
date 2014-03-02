@@ -35,7 +35,7 @@ public:
 
   /// \see Transform::run().
   virtual int apply(const clang::tooling::CompilationDatabase &Database,
-                    const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
+                    const std::vector<std::string> &SourcePaths) override;
 };
 
 #endif // CLANG_MODERNIZE_USE_AUTO_H

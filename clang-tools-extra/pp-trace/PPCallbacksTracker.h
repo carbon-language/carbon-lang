@@ -83,12 +83,12 @@ public:
   void FileChanged(clang::SourceLocation Loc,
                    clang::PPCallbacks::FileChangeReason Reason,
                    clang::SrcMgr::CharacteristicKind FileType,
-                   clang::FileID PrevFID = clang::FileID()) LLVM_OVERRIDE;
+                   clang::FileID PrevFID = clang::FileID()) override;
   void FileSkipped(const clang::FileEntry &ParentFile,
                    const clang::Token &FilenameTok,
-                   clang::SrcMgr::CharacteristicKind FileType) LLVM_OVERRIDE;
+                   clang::SrcMgr::CharacteristicKind FileType) override;
   bool FileNotFound(llvm::StringRef FileName,
-                    llvm::SmallVectorImpl<char> &RecoveryPath) LLVM_OVERRIDE;
+                    llvm::SmallVectorImpl<char> &RecoveryPath) override;
   void InclusionDirective(clang::SourceLocation HashLoc,
                           const clang::Token &IncludeTok,
                           llvm::StringRef FileName, bool IsAngled,
@@ -96,61 +96,61 @@ public:
                           const clang::FileEntry *File,
                           llvm::StringRef SearchPath,
                           llvm::StringRef RelativePath,
-                          const clang::Module *Imported) LLVM_OVERRIDE;
+                          const clang::Module *Imported) override;
   void moduleImport(clang::SourceLocation ImportLoc, clang::ModuleIdPath Path,
-                    const clang::Module *Imported) LLVM_OVERRIDE;
-  void EndOfMainFile() LLVM_OVERRIDE;
-  void Ident(clang::SourceLocation Loc, const std::string &str) LLVM_OVERRIDE;
+                    const clang::Module *Imported) override;
+  void EndOfMainFile() override;
+  void Ident(clang::SourceLocation Loc, const std::string &str) override;
   void PragmaDirective(clang::SourceLocation Loc,
-                       clang::PragmaIntroducerKind Introducer) LLVM_OVERRIDE;
+                       clang::PragmaIntroducerKind Introducer) override;
   void PragmaComment(clang::SourceLocation Loc,
                      const clang::IdentifierInfo *Kind,
-                     const std::string &Str) LLVM_OVERRIDE;
+                     const std::string &Str) override;
   void PragmaDetectMismatch(clang::SourceLocation Loc, const std::string &Name,
-                            const std::string &Value) LLVM_OVERRIDE;
+                            const std::string &Value) override;
   void PragmaDebug(clang::SourceLocation Loc,
-                   llvm::StringRef DebugType) LLVM_OVERRIDE;
+                   llvm::StringRef DebugType) override;
   void PragmaMessage(clang::SourceLocation Loc, llvm::StringRef Namespace,
                      clang::PPCallbacks::PragmaMessageKind Kind,
-                     llvm::StringRef Str) LLVM_OVERRIDE;
+                     llvm::StringRef Str) override;
   void PragmaDiagnosticPush(clang::SourceLocation Loc,
-                            llvm::StringRef Namespace) LLVM_OVERRIDE;
+                            llvm::StringRef Namespace) override;
   void PragmaDiagnosticPop(clang::SourceLocation Loc,
-                           llvm::StringRef Namespace) LLVM_OVERRIDE;
+                           llvm::StringRef Namespace) override;
   void PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace,
                         clang::diag::Mapping mapping,
-                        llvm::StringRef Str) LLVM_OVERRIDE;
+                        llvm::StringRef Str) override;
   void PragmaOpenCLExtension(clang::SourceLocation NameLoc,
                              const clang::IdentifierInfo *Name,
                              clang::SourceLocation StateLoc,
-                             unsigned State) LLVM_OVERRIDE;
+                             unsigned State) override;
   void PragmaWarning(clang::SourceLocation Loc, llvm::StringRef WarningSpec,
-                     llvm::ArrayRef<int> Ids) LLVM_OVERRIDE;
-  void PragmaWarningPush(clang::SourceLocation Loc, int Level) LLVM_OVERRIDE;
-  void PragmaWarningPop(clang::SourceLocation Loc) LLVM_OVERRIDE;
+                     llvm::ArrayRef<int> Ids) override;
+  void PragmaWarningPush(clang::SourceLocation Loc, int Level) override;
+  void PragmaWarningPop(clang::SourceLocation Loc) override;
   void MacroExpands(const clang::Token &MacroNameTok,
                     const clang::MacroDirective *MD, clang::SourceRange Range,
-                    const clang::MacroArgs *Args) LLVM_OVERRIDE;
+                    const clang::MacroArgs *Args) override;
   void MacroDefined(const clang::Token &MacroNameTok,
-                    const clang::MacroDirective *MD) LLVM_OVERRIDE;
+                    const clang::MacroDirective *MD) override;
   void MacroUndefined(const clang::Token &MacroNameTok,
-                      const clang::MacroDirective *MD) LLVM_OVERRIDE;
+                      const clang::MacroDirective *MD) override;
   void Defined(const clang::Token &MacroNameTok,
                const clang::MacroDirective *MD,
-               clang::SourceRange Range) LLVM_OVERRIDE;
-  void SourceRangeSkipped(clang::SourceRange Range) LLVM_OVERRIDE;
+               clang::SourceRange Range) override;
+  void SourceRangeSkipped(clang::SourceRange Range) override;
   void If(clang::SourceLocation Loc, clang::SourceRange ConditionRange,
-          ConditionValueKind ConditionValue) LLVM_OVERRIDE;
+          ConditionValueKind ConditionValue) override;
   void Elif(clang::SourceLocation Loc, clang::SourceRange ConditionRange,
-            ConditionValueKind ConditionValue, clang::SourceLocation IfLoc) LLVM_OVERRIDE;
+            ConditionValueKind ConditionValue, clang::SourceLocation IfLoc) override;
   void Ifdef(clang::SourceLocation Loc, const clang::Token &MacroNameTok,
-             const clang::MacroDirective *MD) LLVM_OVERRIDE;
+             const clang::MacroDirective *MD) override;
   void Ifndef(clang::SourceLocation Loc, const clang::Token &MacroNameTok,
-              const clang::MacroDirective *MD) LLVM_OVERRIDE;
+              const clang::MacroDirective *MD) override;
   void Else(clang::SourceLocation Loc,
-            clang::SourceLocation IfLoc) LLVM_OVERRIDE;
+            clang::SourceLocation IfLoc) override;
   void Endif(clang::SourceLocation Loc,
-             clang::SourceLocation IfLoc) LLVM_OVERRIDE;
+             clang::SourceLocation IfLoc) override;
 
   // Helper functions.
 

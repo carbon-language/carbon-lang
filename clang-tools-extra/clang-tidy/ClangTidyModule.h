@@ -36,7 +36,7 @@ public:
 /// For example, if have a clang-tidy check like:
 /// \code
 /// class MyTidyCheck : public ClangTidyCheck {
-///   void registerMatchers(ast_matchers::MatchFinder *Finder) LLVM_OVERRIDE {
+///   void registerMatchers(ast_matchers::MatchFinder *Finder) override {
 ///     ..
 ///   }
 /// };
@@ -45,7 +45,7 @@ public:
 /// \code
 /// class MyModule : public ClangTidyModule {
 ///   void
-///   addCheckFactories(ClangTidyCheckFactories &CheckFactories) LLVM_OVERRIDE {
+///   addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
 ///     CheckFactories.addCheckFactory(
 ///         "myproject-my-check", new ClangTidyCheckFactory<MyTidyCheck>());
 ///   }
@@ -53,7 +53,7 @@ public:
 /// \endcode
 template <typename T> class ClangTidyCheckFactory : public CheckFactoryBase {
 public:
-  ClangTidyCheck *createCheck() LLVM_OVERRIDE { return new T; }
+  ClangTidyCheck *createCheck() override { return new T; }
 };
 
 class ClangTidyCheckFactories;

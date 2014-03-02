@@ -59,12 +59,12 @@ public:
 
   /// \see Transform::apply().
   virtual int apply(const clang::tooling::CompilationDatabase &Database,
-                    const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
+                    const std::vector<std::string> &SourcePaths) override;
 
 private:
   /// \brief Setups the \c IncludeDirectives for the replacer.
   virtual bool handleBeginSource(clang::CompilerInstance &CI,
-                                 llvm::StringRef Filename) LLVM_OVERRIDE;
+                                 llvm::StringRef Filename) override;
 
   llvm::OwningPtr<IncludeDirectives> IncludeManager;
   ConstructorParamReplacer *Replacer;

@@ -18,7 +18,7 @@
 #define CLANG_MODERNIZE_USE_NULLPTR_H
 
 #include "Core/Transform.h"
-#include "llvm/Support/Compiler.h" // For LLVM_OVERRIDE
+#include "llvm/Support/Compiler.h" // For override
 
 /// \brief Subclass of Transform that transforms null pointer constants into
 /// C++11's nullptr keyword where possible.
@@ -29,7 +29,7 @@ public:
 
   /// \see Transform::run().
   virtual int apply(const clang::tooling::CompilationDatabase &Database,
-                    const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
+                    const std::vector<std::string> &SourcePaths) override;
 };
 
 #endif // CLANG_MODERNIZE_USE_NULLPTR_H

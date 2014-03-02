@@ -83,7 +83,7 @@ public:
   void setName(StringRef Name);
 
 private:
-  void run(const ast_matchers::MatchFinder::MatchResult &Result) LLVM_OVERRIDE;
+  void run(const ast_matchers::MatchFinder::MatchResult &Result) override;
   ClangTidyContext *Context;
   std::string CheckName;
 };

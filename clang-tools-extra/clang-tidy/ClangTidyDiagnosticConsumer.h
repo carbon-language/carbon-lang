@@ -117,10 +117,10 @@ public:
   // more generic and should be pulled out into a more useful Diagnostics
   // library.
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                        const Diagnostic &Info) LLVM_OVERRIDE;
+                        const Diagnostic &Info) override;
 
   // Flushes the internal diagnostics buffer to the ClangTidyContext.
-  void finish() LLVM_OVERRIDE;
+  void finish() override;
 
 private:
   void addFixes(const Diagnostic &Info, ClangTidyError &Error);

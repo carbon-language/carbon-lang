@@ -20,7 +20,7 @@ namespace tidy {
 /// see: http://llvm.org/docs/CodingStandards.html#include-style
 class IncludeOrderCheck : public ClangTidyCheck {
 public:
-  void registerPPCallbacks(CompilerInstance &Compiler) LLVM_OVERRIDE;
+  void registerPPCallbacks(CompilerInstance &Compiler) override;
 };
 
 /// \brief Checks that long namespaces have a closing comment.
@@ -28,9 +28,9 @@ public:
 /// see: http://llvm.org/docs/CodingStandards.html#namespace-indentation
 class NamespaceCommentCheck : public ClangTidyCheck {
 public:
-  void registerMatchers(ast_matchers::MatchFinder *Finder) LLVM_OVERRIDE;
+  void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void
-  check(const ast_matchers::MatchFinder::MatchResult &Result) LLVM_OVERRIDE;
+  check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
 } // namespace tidy

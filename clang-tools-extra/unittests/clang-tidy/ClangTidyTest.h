@@ -29,7 +29,7 @@ public:
 
 private:
   bool BeginSourceFileAction(CompilerInstance &Compiler,
-                             llvm::StringRef file_name) LLVM_OVERRIDE {
+                             llvm::StringRef file_name) override {
     Context->setSourceManager(&Compiler.getSourceManager());
     Check.registerPPCallbacks(Compiler);
     return true;

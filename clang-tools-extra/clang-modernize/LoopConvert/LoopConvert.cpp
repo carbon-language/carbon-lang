@@ -77,7 +77,7 @@ struct LoopConvertFactory : TransformFactory {
     Since.Msvc = Version(11);
   }
 
-  Transform *createTransform(const TransformOptions &Opts) LLVM_OVERRIDE {
+  Transform *createTransform(const TransformOptions &Opts) override {
     return new LoopConvertTransform(Opts);
   }
 };
