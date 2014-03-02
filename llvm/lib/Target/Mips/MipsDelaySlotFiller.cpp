@@ -500,8 +500,8 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
     // Bundle the NOP to the instruction with the delay slot.
     const MipsInstrInfo *TII =
       static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
-    BuildMI(MBB, llvm::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
-    MIBundleBuilder(MBB, I, llvm::next(llvm::next(I)));
+    BuildMI(MBB, std::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
+    MIBundleBuilder(MBB, I, std::next(I, 2));
   }
 
   return Changed;
@@ -551,8 +551,8 @@ bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot) const {
   if (!searchRange(MBB, ReverseIter(Slot), MBB.rend(), RegDU, MemDU, Filler))
     return false;
 
-  MBB.splice(llvm::next(Slot), &MBB, llvm::next(Filler).base());
-  MIBundleBuilder(MBB, Slot, llvm::next(llvm::next(Slot)));
+  MBB.splice(std::next(Slot), &MBB, std::next(Filler).base());
+  MIBundleBuilder(MBB, Slot, std::next(Slot, 2));
   ++UsefulSlots;
   return true;
 }
@@ -568,11 +568,11 @@ bool Filler::searchForward(MachineBasicBlock &MBB, Iter Slot) const {
 
   RegDU.setCallerSaved(*Slot);
 
-  if (!searchRange(MBB, llvm::next(Slot), MBB.end(), RegDU, NM, Filler))
+  if (!searchRange(MBB, std::next(Slot), MBB.end(), RegDU, NM, Filler))
     return false;
 
-  MBB.splice(llvm::next(Slot), &MBB, Filler);
-  MIBundleBuilder(MBB, Slot, llvm::next(llvm::next(Slot)));
+  MBB.splice(std::next(Slot), &MBB, Filler);
+  MIBundleBuilder(MBB, Slot, std::next(Slot, 2));
   ++UsefulSlots;
   return true;
 }

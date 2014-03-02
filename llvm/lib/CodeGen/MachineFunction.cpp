@@ -139,7 +139,7 @@ void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
   // Figure out the block number this should have.
   unsigned BlockNo = 0;
   if (MBBI != begin())
-    BlockNo = prior(MBBI)->getNumber()+1;
+    BlockNo = std::prev(MBBI)->getNumber() + 1;
 
   for (; MBBI != E; ++MBBI, ++BlockNo) {
     if (MBBI->getNumber() != (int)BlockNo) {
@@ -346,7 +346,7 @@ void MachineFunction::print(raw_ostream &OS, SlotIndexes *Indexes) const {
       OS << PrintReg(I->first, TRI);
       if (I->second)
         OS << " in " << PrintReg(I->second, TRI);
-      if (llvm::next(I) != E)
+      if (std::next(I) != E)
         OS << ", ";
     }
     OS << '\n';

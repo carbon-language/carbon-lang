@@ -632,7 +632,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
         addReg(JumpTarget.getReg(), RegState::Kill);
     }
 
-    MachineInstr *NewMI = prior(MBBI);
+    MachineInstr *NewMI = std::prev(MBBI);
     for (unsigned i = 1, e = MBBI->getNumOperands(); i != e; ++i)
       NewMI->addOperand(MBBI->getOperand(i));
 
@@ -1017,7 +1017,7 @@ static void emitAlignedDPRCS2Spills(MachineBasicBlock &MBB,
   }
 
   // The last spill instruction inserted should kill the scratch register r4.
-  llvm::prior(MI)->addRegisterKilled(ARM::R4, TRI);
+  std::prev(MI)->addRegisterKilled(ARM::R4, TRI);
 }
 
 /// Skip past the code inserted by emitAlignedDPRCS2Spills, and return an
@@ -1127,7 +1127,7 @@ static void emitAlignedDPRCS2Restores(MachineBasicBlock &MBB,
                    .addReg(ARM::R4).addImm(2*(NextReg-R4BaseReg)));
 
   // Last store kills r4.
-  llvm::prior(MI)->addRegisterKilled(ARM::R4, TRI);
+  std::prev(MI)->addRegisterKilled(ARM::R4, TRI);
 }
 
 bool ARMFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,

@@ -175,7 +175,7 @@ void RegScavenger::forward() {
     Tracking = true;
   } else {
     assert(MBBI != MBB->end() && "Already past the end of the basic block!");
-    MBBI = llvm::next(MBBI);
+    MBBI = std::next(MBBI);
   }
   assert(MBBI != MBB->end() && "Already at the end of the basic block!");
 
@@ -415,7 +415,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
            "Cannot scavenge register without an emergency spill slot!");
     TII->storeRegToStackSlot(*MBB, I, SReg, true, Scavenged[SI].FrameIndex,
                              RC, TRI);
-    MachineBasicBlock::iterator II = prior(I);
+    MachineBasicBlock::iterator II = std::prev(I);
 
     unsigned FIOperandNum = getFrameIndexOperandNum(II);
     TRI->eliminateFrameIndex(II, SPAdj, FIOperandNum, this);
@@ -423,13 +423,13 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
     // Restore the scavenged register before its use (or first terminator).
     TII->loadRegFromStackSlot(*MBB, UseMI, SReg, Scavenged[SI].FrameIndex,
                               RC, TRI);
-    II = prior(UseMI);
+    II = std::prev(UseMI);
 
     FIOperandNum = getFrameIndexOperandNum(II);
     TRI->eliminateFrameIndex(II, SPAdj, FIOperandNum, this);
   }
 
-  Scavenged[SI].Restore = prior(UseMI);
+  Scavenged[SI].Restore = std::prev(UseMI);
 
   // Doing this here leads to infinite regress.
   // Scavenged[SI].Reg = SReg;

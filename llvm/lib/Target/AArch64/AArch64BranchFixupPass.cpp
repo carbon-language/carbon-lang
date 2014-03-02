@@ -238,10 +238,10 @@ static bool BBHasFallthrough(MachineBasicBlock *MBB) {
   // Get the next machine basic block in the function.
   MachineFunction::iterator MBBI = MBB;
   // Can't fall off end of function.
-  if (llvm::next(MBBI) == MBB->getParent()->end())
+  if (std::next(MBBI) == MBB->getParent()->end())
     return false;
 
-  MachineBasicBlock *NextBB = llvm::next(MBBI);
+  MachineBasicBlock *NextBB = std::next(MBBI);
   for (MachineBasicBlock::succ_iterator I = MBB->succ_begin(),
        E = MBB->succ_end(); I != E; ++I)
     if (*I == NextBB)
@@ -528,7 +528,7 @@ AArch64BranchFixup::fixupConditionalBr(ImmBranch &Br) {
 
   ++NumCBrFixed;
   if (BMI != MI) {
-    if (llvm::next(MachineBasicBlock::iterator(MI)) == prior(MBB->end()) &&
+    if (std::next(MachineBasicBlock::iterator(MI)) == std::prev(MBB->end()) &&
         BMI->getOpcode() == AArch64::Bimm) {
       // Last MI in the BB is an unconditional branch. We can swap destinations:
       // b.eq L1 (temporarily b.ne L1 after first change)
@@ -575,7 +575,7 @@ AArch64BranchFixup::fixupConditionalBr(ImmBranch &Br) {
   //   b L1
   // splitbb/fallthroughbb:
   //   [old b L2/real continuation]
-  MachineBasicBlock *NextBB = llvm::next(MachineFunction::iterator(MBB));
+  MachineBasicBlock *NextBB = std::next(MachineFunction::iterator(MBB));
 
   DEBUG(dbgs() << "  Insert B to BB#"
                << MI->getOperand(CondBrMBBOperand).getMBB()->getNumber()

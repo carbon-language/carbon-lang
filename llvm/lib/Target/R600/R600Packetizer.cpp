@@ -311,7 +311,7 @@ public:
       substitutePV(MI, PV);
       MachineBasicBlock::iterator It = VLIWPacketizerList::addToPacket(MI);
       if (isTransSlot) {
-        endPacket(llvm::next(It)->getParent(), llvm::next(It));
+        endPacket(std::next(It)->getParent(), std::next(It));
       }
       return It;
     }
@@ -371,20 +371,20 @@ bool R600Packetizer::runOnMachineFunction(MachineFunction &Fn) {
       // instruction stream until we find the nearest boundary.
       MachineBasicBlock::iterator I = RegionEnd;
       for(;I != MBB->begin(); --I, --RemainingCount) {
-        if (TII->isSchedulingBoundary(llvm::prior(I), MBB, Fn))
+        if (TII->isSchedulingBoundary(std::prev(I), MBB, Fn))
           break;
       }
       I = MBB->begin();
 
       // Skip empty scheduling regions.
       if (I == RegionEnd) {
-        RegionEnd = llvm::prior(RegionEnd);
+        RegionEnd = std::prev(RegionEnd);
         --RemainingCount;
         continue;
       }
       // Skip regions with one instruction.
-      if (I == llvm::prior(RegionEnd)) {
-        RegionEnd = llvm::prior(RegionEnd);
+      if (I == std::prev(RegionEnd)) {
+        RegionEnd = std::prev(RegionEnd);
         continue;
       }
 

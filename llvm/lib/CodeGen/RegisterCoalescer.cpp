@@ -801,9 +801,9 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
 
   MachineBasicBlock *MBB = CopyMI->getParent();
   MachineBasicBlock::iterator MII =
-    llvm::next(MachineBasicBlock::iterator(CopyMI));
+    std::next(MachineBasicBlock::iterator(CopyMI));
   TII->reMaterialize(*MBB, MII, DstReg, SrcIdx, DefMI, *TRI);
-  MachineInstr *NewMI = prior(MII);
+  MachineInstr *NewMI = std::prev(MII);
 
   LIS->ReplaceMachineInstrInMaps(CopyMI, NewMI);
   CopyMI->eraseFromParent();

@@ -161,7 +161,7 @@ StackMaps::parseRegisterLiveOutMask(const uint32_t *Mask) const {
   std::sort(LiveOuts.begin(), LiveOuts.end());
   for (LiveOutVec::iterator I = LiveOuts.begin(), E = LiveOuts.end();
        I != E; ++I) {
-    for (LiveOutVec::iterator II = next(I); II != E; ++II) {
+    for (LiveOutVec::iterator II = std::next(I); II != E; ++II) {
       if (I->RegNo != II->RegNo) {
         // Skip all the now invalid entries.
         I = --II;
@@ -192,7 +192,7 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
 
   if (recordResult) {
     assert(PatchPointOpers(&MI).hasDef() && "Stackmap has no return value.");
-    parseOperand(MI.operands_begin(), llvm::next(MI.operands_begin()),
+    parseOperand(MI.operands_begin(), std::next(MI.operands_begin()),
                  Locations, LiveOuts);
   }
 
@@ -232,7 +232,7 @@ void StackMaps::recordStackMap(const MachineInstr &MI) {
   assert(MI.getOpcode() == TargetOpcode::STACKMAP && "expected stackmap");
 
   int64_t ID = MI.getOperand(0).getImm();
-  recordStackMapOpers(MI, ID, llvm::next(MI.operands_begin(), 2),
+  recordStackMapOpers(MI, ID, std::next(MI.operands_begin(), 2),
                       MI.operands_end());
 }
 
@@ -243,7 +243,7 @@ void StackMaps::recordPatchPoint(const MachineInstr &MI) {
   int64_t ID = opers.getMetaOper(PatchPointOpers::IDPos).getImm();
 
   MachineInstr::const_mop_iterator MOI =
-    llvm::next(MI.operands_begin(), opers.getStackMapStartIdx());
+    std::next(MI.operands_begin(), opers.getStackMapStartIdx());
   recordStackMapOpers(MI, ID, MOI, MI.operands_end(),
                       opers.isAnyReg() && opers.hasDef());
 

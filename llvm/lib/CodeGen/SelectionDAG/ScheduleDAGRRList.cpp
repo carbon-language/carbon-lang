@@ -1708,7 +1708,7 @@ public:
     assert(SU->NodeQueueId != 0 && "Not in queue!");
     std::vector<SUnit *>::iterator I = std::find(Queue.begin(), Queue.end(),
                                                  SU);
-    if (I != prior(Queue.end()))
+    if (I != std::prev(Queue.end()))
       std::swap(*I, Queue.back());
     Queue.pop_back();
     SU->NodeQueueId = 0;
@@ -1738,12 +1738,12 @@ protected:
 template<class SF>
 static SUnit *popFromQueueImpl(std::vector<SUnit*> &Q, SF &Picker) {
   std::vector<SUnit *>::iterator Best = Q.begin();
-  for (std::vector<SUnit *>::iterator I = llvm::next(Q.begin()),
+  for (std::vector<SUnit *>::iterator I = std::next(Q.begin()),
          E = Q.end(); I != E; ++I)
     if (Picker(*Best, *I))
       Best = I;
   SUnit *V = *Best;
-  if (Best != prior(Q.end()))
+  if (Best != std::prev(Q.end()))
     std::swap(*Best, Q.back());
   Q.pop_back();
   return V;

@@ -255,7 +255,7 @@ sink3AddrInstruction(MachineInstr *MI, unsigned SavedReg,
   ++KillPos;
 
   unsigned NumVisited = 0;
-  for (MachineBasicBlock::iterator I = llvm::next(OldPos); I != KillPos; ++I) {
+  for (MachineBasicBlock::iterator I = std::next(OldPos); I != KillPos; ++I) {
     MachineInstr *OtherMI = I;
     // DBG_VALUE cannot be counted against the limit.
     if (OtherMI->isDebugValue())
@@ -417,7 +417,7 @@ static bool isKilled(MachineInstr &MI, unsigned Reg,
     MachineRegisterInfo::def_iterator Begin = MRI->def_begin(Reg);
     // If there are multiple defs, we can't do a simple analysis, so just
     // go with what the kill flag says.
-    if (llvm::next(Begin) != MRI->def_end())
+    if (std::next(Begin) != MRI->def_end())
       return true;
     DefMI = &*Begin;
     bool IsSrcPhys, IsDstPhys;
@@ -647,7 +647,7 @@ TwoAddressInstructionPass::convertInstTo3Addr(MachineBasicBlock::iterator &mi,
   if (!Sunk) {
     DistanceMap.insert(std::make_pair(NewMI, Dist));
     mi = NewMI;
-    nmi = llvm::next(mi);
+    nmi = std::next(mi);
   }
 
   // Update source and destination register maps.
@@ -816,7 +816,7 @@ rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
 
   // Move the copies connected to MI down as well.
   MachineBasicBlock::iterator Begin = MI;
-  MachineBasicBlock::iterator AfterMI = llvm::next(Begin);
+  MachineBasicBlock::iterator AfterMI = std::next(Begin);
 
   MachineBasicBlock::iterator End = AfterMI;
   while (End->isCopy() && Defs.count(End->getOperand(1).getReg())) {
@@ -876,7 +876,7 @@ rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
   }
 
   // Move debug info as well.
-  while (Begin != MBB->begin() && llvm::prior(Begin)->isDebugValue())
+  while (Begin != MBB->begin() && std::prev(Begin)->isDebugValue())
     --Begin;
 
   nmi = End;
@@ -891,7 +891,7 @@ rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
       LIS->handleMove(CopyMI);
       InsertPos = CopyMI;
     }
-    End = llvm::next(MachineBasicBlock::iterator(MI));
+    End = std::next(MachineBasicBlock::iterator(MI));
   }
 
   // Copies following MI may have been moved as well.
@@ -1060,15 +1060,15 @@ rescheduleKillAboveMI(MachineBasicBlock::iterator &mi,
 
   // Move the old kill above MI, don't forget to move debug info as well.
   MachineBasicBlock::iterator InsertPos = mi;
-  while (InsertPos != MBB->begin() && llvm::prior(InsertPos)->isDebugValue())
+  while (InsertPos != MBB->begin() && std::prev(InsertPos)->isDebugValue())
     --InsertPos;
   MachineBasicBlock::iterator From = KillMI;
-  MachineBasicBlock::iterator To = llvm::next(From);
-  while (llvm::prior(From)->isDebugValue())
+  MachineBasicBlock::iterator To = std::next(From);
+  while (std::prev(From)->isDebugValue())
     --From;
   MBB->splice(InsertPos, MBB, From, To);
 
-  nmi = llvm::prior(InsertPos); // Backtrack so we process the moved instr.
+  nmi = std::prev(InsertPos); // Backtrack so we process the moved instr.
   DistanceMap.erase(DI);
 
   // Update live variables
@@ -1534,7 +1534,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &Func) {
     Processed.clear();
     for (MachineBasicBlock::iterator mi = MBB->begin(), me = MBB->end();
          mi != me; ) {
-      MachineBasicBlock::iterator nmi = llvm::next(mi);
+      MachineBasicBlock::iterator nmi = std::next(mi);
       if (mi->isDebugValue()) {
         mi = nmi;
         continue;
@@ -1689,7 +1689,7 @@ eliminateRegSequence(MachineBasicBlock::iterator &MBBI) {
   }
 
   MachineBasicBlock::iterator EndMBBI =
-      llvm::next(MachineBasicBlock::iterator(MI));
+      std::next(MachineBasicBlock::iterator(MI));
 
   if (!DefEmitted) {
     DEBUG(dbgs() << "Turned: " << *MI << " into an IMPLICIT_DEF");

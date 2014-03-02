@@ -130,7 +130,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
           MachineRegisterInfo::use_iterator nextI;
           for (MachineRegisterInfo::use_iterator I = MRI->use_begin(Reg),
                E = MRI->use_end(); I!=E; I=nextI) {
-            nextI = llvm::next(I);  // I is invalidated by the setReg
+            nextI = std::next(I);  // I is invalidated by the setReg
             MachineOperand& Use = I.getOperand();
             MachineInstr *UseMI = Use.getParent();
             if (UseMI==MI)

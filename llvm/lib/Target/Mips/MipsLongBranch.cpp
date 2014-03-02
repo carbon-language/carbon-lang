@@ -134,7 +134,7 @@ void MipsLongBranch::splitMBB(MachineBasicBlock *MBB) {
       (!LastBr->isConditionalBranch() && !LastBr->isUnconditionalBranch()))
     return;
 
-  ReverseIter FirstBr = getNonDebugInstr(llvm::next(LastBr), End);
+  ReverseIter FirstBr = getNonDebugInstr(std::next(LastBr), End);
 
   // MBB has only one branch instruction if FirstBr is not a branch
   // instruction.
@@ -154,7 +154,7 @@ void MipsLongBranch::splitMBB(MachineBasicBlock *MBB) {
   NewMBB->removeSuccessor(Tgt);
   MBB->addSuccessor(NewMBB);
   MBB->addSuccessor(Tgt);
-  MF->insert(llvm::next(MachineFunction::iterator(MBB)), NewMBB);
+  MF->insert(std::next(MachineFunction::iterator(MBB)), NewMBB);
 
   NewMBB->splice(NewMBB->end(), MBB, (++LastBr).base(), MBB->end());
 }

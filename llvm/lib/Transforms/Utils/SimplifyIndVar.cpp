@@ -300,7 +300,7 @@ Instruction *SimplifyIndvar::splitOverflowIntrinsic(Instruction *IVUser,
     return IVUser;
 
   BasicBlock *ContinueBB = Branch->getSuccessor(1);
-  if (llvm::next(pred_begin(ContinueBB)) != pred_end(ContinueBB))
+  if (std::next(pred_begin(ContinueBB)) != pred_end(ContinueBB))
     return IVUser;
 
   // Check if all users of the add are provably NSW.

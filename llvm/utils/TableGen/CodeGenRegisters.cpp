@@ -1271,7 +1271,7 @@ static void computeUberSets(std::vector<UberRegSet> &UberSets,
     assert(USetID && "register number 0 is invalid");
 
     AllocatableRegs.insert((*Regs.begin())->EnumValue);
-    for (CodeGenRegister::Set::const_iterator I = llvm::next(Regs.begin()),
+    for (CodeGenRegister::Set::const_iterator I = std::next(Regs.begin()),
            E = Regs.end(); I != E; ++I) {
       AllocatableRegs.insert((*I)->EnumValue);
       UberSetIDs.join(USetID, (*I)->EnumValue);
@@ -1311,7 +1311,7 @@ static void computeUberSets(std::vector<UberRegSet> &UberSets,
 static void computeUberWeights(std::vector<UberRegSet> &UberSets,
                                CodeGenRegBank &RegBank) {
   // Skip the first unallocatable set.
-  for (std::vector<UberRegSet>::iterator I = llvm::next(UberSets.begin()),
+  for (std::vector<UberRegSet>::iterator I = std::next(UberSets.begin()),
          E = UberSets.end(); I != E; ++I) {
 
     // Initialize all unit weights in this set, and remember the max units/reg.
@@ -1552,7 +1552,7 @@ void CodeGenRegBank::computeRegUnitSets() {
     // Find an existing RegUnitSet.
     std::vector<RegUnitSet>::const_iterator SetI =
       findRegUnitSet(RegUnitSets, RegUnitSets.back());
-    if (SetI != llvm::prior(RegUnitSets.end()))
+    if (SetI != std::prev(RegUnitSets.end()))
       RegUnitSets.pop_back();
   }
 
@@ -1617,7 +1617,7 @@ void CodeGenRegBank::computeRegUnitSets() {
       // Find an existing RegUnitSet, or add the union to the unique sets.
       std::vector<RegUnitSet>::const_iterator SetI =
         findRegUnitSet(RegUnitSets, RegUnitSets.back());
-      if (SetI != llvm::prior(RegUnitSets.end()))
+      if (SetI != std::prev(RegUnitSets.end()))
         RegUnitSets.pop_back();
       else {
         DEBUG(dbgs() << "UnitSet " << RegUnitSets.size()-1

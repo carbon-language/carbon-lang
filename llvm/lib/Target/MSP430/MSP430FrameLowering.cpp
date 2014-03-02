@@ -71,7 +71,7 @@ void MSP430FrameLowering::emitPrologue(MachineFunction &MF) const {
       .addReg(MSP430::SPW);
 
     // Mark the FramePtr as live-in in every block except the entry.
-    for (MachineFunction::iterator I = llvm::next(MF.begin()), E = MF.end();
+    for (MachineFunction::iterator I = std::next(MF.begin()), E = MF.end();
          I != E; ++I)
       I->addLiveIn(MSP430::FPW);
 
@@ -138,7 +138,7 @@ void MSP430FrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Skip the callee-saved pop instructions.
   while (MBBI != MBB.begin()) {
-    MachineBasicBlock::iterator PI = prior(MBBI);
+    MachineBasicBlock::iterator PI = std::prev(MBBI);
     unsigned Opc = PI->getOpcode();
     if (Opc != MSP430::POP16r && !PI->isTerminator())
       break;

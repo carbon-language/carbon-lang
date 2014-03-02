@@ -143,9 +143,9 @@ protected:
       if (hasDef) {
         MachineInstrSpan MIS(miItr);
 
-        tii->storeRegToStackSlot(*mi->getParent(), llvm::next(miItr), NewVReg,
+        tii->storeRegToStackSlot(*mi->getParent(), std::next(miItr), NewVReg,
                                  true, ss, trc, tri);
-        lis->InsertMachineInstrRangeInMaps(llvm::next(miItr), MIS.end());
+        lis->InsertMachineInstrRangeInMaps(std::next(miItr), MIS.end());
       }
     }
   }

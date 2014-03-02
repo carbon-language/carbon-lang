@@ -1294,7 +1294,7 @@ void LSRUse::print(raw_ostream &OS) const {
   for (SmallVectorImpl<int64_t>::const_iterator I = Offsets.begin(),
        E = Offsets.end(); I != E; ++I) {
     OS << *I;
-    if (llvm::next(I) != E)
+    if (std::next(I) != E)
       OS << ',';
   }
   OS << '}';
@@ -1561,7 +1561,7 @@ struct IVChain {
   // begin - return the first increment in the chain.
   const_iterator begin() const {
     assert(!Incs.empty());
-    return llvm::next(Incs.begin());
+    return std::next(Incs.begin());
   }
   const_iterator end() const {
     return Incs.end();
@@ -2337,7 +2337,7 @@ void LSRInstance::CollectInterestingTypesAndFactors() {
   for (SmallSetVector<const SCEV *, 4>::const_iterator
        I = Strides.begin(), E = Strides.end(); I != E; ++I)
     for (SmallSetVector<const SCEV *, 4>::const_iterator NewStrideIter =
-         llvm::next(I); NewStrideIter != E; ++NewStrideIter) {
+         std::next(I); NewStrideIter != E; ++NewStrideIter) {
       const SCEV *OldStride = *I;
       const SCEV *NewStride = *NewStrideIter;
 
@@ -2737,7 +2737,7 @@ void LSRInstance::CollectChains() {
         Instruction *IVOpInst = cast<Instruction>(*IVOpIter);
         if (UniqueOperands.insert(IVOpInst))
           ChainInstruction(I, IVOpInst, ChainUsersVec);
-        IVOpIter = findIVOperand(llvm::next(IVOpIter), IVOpEnd, L, SE);
+        IVOpIter = findIVOperand(std::next(IVOpIter), IVOpEnd, L, SE);
       }
     } // Continue walking down the instructions.
   } // Continue walking down the domtree.
@@ -2828,7 +2828,7 @@ void LSRInstance::GenerateIVChain(const IVChain &Chain, SCEVExpander &Rewriter,
         || SE.getSCEV(IVSrc) == Head.IncExpr) {
       break;
     }
-    IVOpIter = findIVOperand(llvm::next(IVOpIter), IVOpEnd, L, SE);
+    IVOpIter = findIVOperand(std::next(IVOpIter), IVOpEnd, L, SE);
   }
   if (IVOpIter == IVOpEnd) {
     // Gracefully give up on this chain.
@@ -3220,10 +3220,10 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
         continue;
 
       // Collect all operands except *J.
-      SmallVector<const SCEV *, 8> InnerAddOps
-        (((const SmallVector<const SCEV *, 8> &)AddOps).begin(), J);
-      InnerAddOps.append
-        (llvm::next(J), ((const SmallVector<const SCEV *, 8> &)AddOps).end());
+      SmallVector<const SCEV *, 8> InnerAddOps(
+          ((const SmallVector<const SCEV *, 8> &)AddOps).begin(), J);
+      InnerAddOps.append(std::next(J),
+                         ((const SmallVector<const SCEV *, 8> &)AddOps).end());
 
       // Don't leave just a constant behind in a register if the constant could
       // be folded into an immediate field.
@@ -3625,8 +3625,9 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
       // Conservatively examine offsets between this orig reg a few selected
       // other orig regs.
       ImmMapTy::const_iterator OtherImms[] = {
-        Imms.begin(), prior(Imms.end()),
-        Imms.lower_bound((Imms.begin()->first + prior(Imms.end())->first) / 2)
+        Imms.begin(), std::prev(Imms.end()),
+        Imms.lower_bound((Imms.begin()->first + std::prev(Imms.end())->first) /
+                         2)
       };
       for (size_t i = 0, e = array_lengthof(OtherImms); i != e; ++i) {
         ImmMapTy::const_iterator M = OtherImms[i];
@@ -4292,7 +4293,7 @@ LSRInstance::HoistInsertPosition(BasicBlock::iterator IP,
       // instead of at the end, so that it can be used for other expansions.
       if (IDom == Inst->getParent() &&
           (!BetterPos || !DT.dominates(Inst, BetterPos)))
-        BetterPos = llvm::next(BasicBlock::iterator(Inst));
+        BetterPos = std::next(BasicBlock::iterator(Inst));
     }
     if (!AllDominate)
       break;

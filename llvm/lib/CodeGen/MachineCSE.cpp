@@ -229,7 +229,7 @@ bool MachineCSE::hasLivePhysRegDefUses(const MachineInstr *MI,
   // Next, collect all defs into PhysDefs.  If any is already in PhysRefs
   // (which currently contains only uses), set the PhysUseDef flag.
   PhysUseDef = false;
-  MachineBasicBlock::const_iterator I = MI; I = llvm::next(I);
+  MachineBasicBlock::const_iterator I = MI; I = std::next(I);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg() || !MO.isDef())
@@ -280,7 +280,7 @@ bool MachineCSE::PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
     }
     CrossMBB = true;
   }
-  MachineBasicBlock::const_iterator I = CSMI; I = llvm::next(I);
+  MachineBasicBlock::const_iterator I = CSMI; I = std::next(I);
   MachineBasicBlock::const_iterator E = MI;
   MachineBasicBlock::const_iterator EE = CSMBB->end();
   unsigned LookAheadLeft = LookAheadLimit;

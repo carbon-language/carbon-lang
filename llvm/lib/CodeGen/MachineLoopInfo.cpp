@@ -50,11 +50,11 @@ MachineBasicBlock *MachineLoop::getTopBlock() {
   MachineBasicBlock *TopMBB = getHeader();
   MachineFunction::iterator Begin = TopMBB->getParent()->begin();
   if (TopMBB != Begin) {
-    MachineBasicBlock *PriorMBB = prior(MachineFunction::iterator(TopMBB));
+    MachineBasicBlock *PriorMBB = std::prev(MachineFunction::iterator(TopMBB));
     while (contains(PriorMBB)) {
       TopMBB = PriorMBB;
       if (TopMBB == Begin) break;
-      PriorMBB = prior(MachineFunction::iterator(TopMBB));
+      PriorMBB = std::prev(MachineFunction::iterator(TopMBB));
     }
   }
   return TopMBB;
@@ -63,12 +63,12 @@ MachineBasicBlock *MachineLoop::getTopBlock() {
 MachineBasicBlock *MachineLoop::getBottomBlock() {
   MachineBasicBlock *BotMBB = getHeader();
   MachineFunction::iterator End = BotMBB->getParent()->end();
-  if (BotMBB != prior(End)) {
-    MachineBasicBlock *NextMBB = llvm::next(MachineFunction::iterator(BotMBB));
+  if (BotMBB != std::prev(End)) {
+    MachineBasicBlock *NextMBB = std::next(MachineFunction::iterator(BotMBB));
     while (contains(NextMBB)) {
       BotMBB = NextMBB;
-      if (BotMBB == llvm::next(MachineFunction::iterator(BotMBB))) break;
-      NextMBB = llvm::next(MachineFunction::iterator(BotMBB));
+      if (BotMBB == std::next(MachineFunction::iterator(BotMBB))) break;
+      NextMBB = std::next(MachineFunction::iterator(BotMBB));
     }
   }
   return BotMBB;

@@ -2562,7 +2562,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
 static MachineBasicBlock *emitBlockAfter(MachineBasicBlock *MBB) {
   MachineFunction &MF = *MBB->getParent();
   MachineBasicBlock *NewMBB = MF.CreateMachineBasicBlock(MBB->getBasicBlock());
-  MF.insert(llvm::next(MachineFunction::iterator(MBB)), NewMBB);
+  MF.insert(std::next(MachineFunction::iterator(MBB)), NewMBB);
   return NewMBB;
 }
 
@@ -2572,8 +2572,7 @@ static MachineBasicBlock *splitBlockAfter(MachineInstr *MI,
                                           MachineBasicBlock *MBB) {
   MachineBasicBlock *NewMBB = emitBlockAfter(MBB);
   NewMBB->splice(NewMBB->begin(), MBB,
-                 llvm::next(MachineBasicBlock::iterator(MI)),
-                 MBB->end());
+                 std::next(MachineBasicBlock::iterator(MI)), MBB->end());
   NewMBB->transferSuccessorsAndUpdatePHIs(MBB);
   return NewMBB;
 }

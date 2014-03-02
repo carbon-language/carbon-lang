@@ -57,7 +57,7 @@ ARMHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
           (LastMCID.TSFlags & ARMII::DomainMask) == ARMII::DomainGeneral) {
         MachineBasicBlock::iterator I = LastMI;
         if (I != LastMI->getParent()->begin()) {
-          I = llvm::prior(I);
+          I = std::prev(I);
           DefMI = &*I;
         }
       }

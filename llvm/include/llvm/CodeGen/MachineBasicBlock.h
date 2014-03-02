@@ -503,7 +503,7 @@ public:
   ///
   /// If I points to a bundle of instructions, they are all erased.
   iterator erase(iterator I) {
-    return erase(I, llvm::next(I));
+    return erase(I, std::next(I));
   }
 
   /// Remove an instruction from the instruction list and delete it.
@@ -542,7 +542,7 @@ public:
   void splice(iterator Where, MachineBasicBlock *Other, iterator From) {
     // The range splice() doesn't allow noop moves, but this one does.
     if (Where != From)
-      splice(Where, Other, From, llvm::next(From));
+      splice(Where, Other, From, std::next(From));
   }
 
   /// Take a block of instructions from MBB 'Other' in the range [From, To),
@@ -750,11 +750,11 @@ public:
   MachineInstrSpan(MachineBasicBlock::iterator I)
     : MBB(*I->getParent()),
       I(I),
-      B(I == MBB.begin() ? MBB.end() : llvm::prior(I)),
-      E(llvm::next(I)) {}
+      B(I == MBB.begin() ? MBB.end() : std::prev(I)),
+      E(std::next(I)) {}
 
   MachineBasicBlock::iterator begin() {
-    return B == MBB.end() ? MBB.begin() : llvm::next(B);
+    return B == MBB.end() ? MBB.begin() : std::next(B);
   }
   MachineBasicBlock::iterator end() { return E; }
   bool empty() { return begin() == end(); }

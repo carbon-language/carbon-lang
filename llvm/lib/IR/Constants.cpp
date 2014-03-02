@@ -1047,7 +1047,7 @@ bool ConstantExpr::isGEPWithNoNotionalOverIndexing() const {
   if (getOpcode() != Instruction::GetElementPtr) return false;
 
   gep_type_iterator GEPI = gep_type_begin(this), E = gep_type_end(this);
-  User::const_op_iterator OI = llvm::next(this->op_begin());
+  User::const_op_iterator OI = std::next(this->op_begin());
 
   // Skip the first index, as it has no static limit.
   ++GEPI;

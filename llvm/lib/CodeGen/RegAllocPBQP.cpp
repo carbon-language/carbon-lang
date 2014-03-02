@@ -264,8 +264,8 @@ PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
     const LiveInterval &l1 = lis->getInterval(vr1);
     const PBQPRAProblem::AllowedSet &vr1Allowed = p->getAllowedSet(vr1);
 
-    for (RegSet::const_iterator vr2Itr = llvm::next(vr1Itr);
-         vr2Itr != vrEnd; ++vr2Itr) {
+    for (RegSet::const_iterator vr2Itr = std::next(vr1Itr); vr2Itr != vrEnd;
+         ++vr2Itr) {
       unsigned vr2 = *vr2Itr;
       const LiveInterval &l2 = lis->getInterval(vr2);
       const PBQPRAProblem::AllowedSet &vr2Allowed = p->getAllowedSet(vr2);

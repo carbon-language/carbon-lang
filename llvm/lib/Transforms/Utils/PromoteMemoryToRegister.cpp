@@ -485,7 +485,7 @@ static void promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
       LI->replaceAllUsesWith(UndefValue::get(LI->getType()));
     else
       // Otherwise, there was a store before this load, the load takes its value.
-      LI->replaceAllUsesWith(llvm::prior(I)->second->getOperand(0));
+      LI->replaceAllUsesWith(std::prev(I)->second->getOperand(0));
 
     if (AST && LI->getType()->isPointerTy())
       AST->deleteValue(LI);

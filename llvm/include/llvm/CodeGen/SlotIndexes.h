@@ -545,7 +545,7 @@ namespace llvm {
         std::lower_bound(idx2MBBMap.begin(), idx2MBBMap.end(), start);
 
       if (itr == idx2MBBMap.end()) {
-        itr = prior(itr);
+        itr = std::prev(itr);
         return itr->second;
       }
 
@@ -553,7 +553,7 @@ namespace llvm {
       if (itr->first < end)
         return 0;
 
-      itr = prior(itr);
+      itr = std::prev(itr);
 
       if (itr->first <= start)
         return itr->second;
@@ -581,11 +581,11 @@ namespace llvm {
       if (Late) {
         // Insert mi's index immediately before the following instruction.
         nextItr = getIndexAfter(mi).listEntry();
-        prevItr = prior(nextItr);
+        prevItr = std::prev(nextItr);
       } else {
         // Insert mi's index immediately after the preceding instruction.
         prevItr = getIndexBefore(mi).listEntry();
-        nextItr = llvm::next(prevItr);
+        nextItr = std::next(prevItr);
       }
 
       // Get a number for the new instr, or 0 if there's no room currently.
@@ -638,7 +638,7 @@ namespace llvm {
     /// Add the given MachineBasicBlock into the maps.
     void insertMBBInMaps(MachineBasicBlock *mbb) {
       MachineFunction::iterator nextMBB =
-        llvm::next(MachineFunction::iterator(mbb));
+        std::next(MachineFunction::iterator(mbb));
 
       IndexListEntry *startEntry = 0;
       IndexListEntry *endEntry = 0;

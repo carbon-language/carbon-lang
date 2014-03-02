@@ -429,7 +429,7 @@ TailCallElim::FindTRECandidate(Instruction *TI,
   // lower the call to fabs into inline code.
   if (BB == &F->getEntryBlock() &&
       FirstNonDbg(BB->front()) == CI &&
-      FirstNonDbg(llvm::next(BB->begin())) == TI &&
+      FirstNonDbg(std::next(BB->begin())) == TI &&
       CI->getCalledFunction() &&
       !TTI->isLoweredToCall(CI->getCalledFunction())) {
     // A single-block function with just a call and a return. Check that

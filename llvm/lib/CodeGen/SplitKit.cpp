@@ -509,7 +509,7 @@ SlotIndex SplitEditor::enterIntvAfter(SlotIndex Idx) {
   assert(MI && "enterIntvAfter called with invalid index");
 
   VNInfo *VNI = defFromParent(OpenIdx, ParentVNI, Idx, *MI->getParent(),
-                              llvm::next(MachineBasicBlock::iterator(MI)));
+                              std::next(MachineBasicBlock::iterator(MI)));
   return VNI->def;
 }
 
@@ -570,7 +570,7 @@ SlotIndex SplitEditor::leaveIntvAfter(SlotIndex Idx) {
   }
 
   VNInfo *VNI = defFromParent(0, ParentVNI, Boundary, *MI->getParent(),
-                              llvm::next(MachineBasicBlock::iterator(MI)));
+                              std::next(MachineBasicBlock::iterator(MI)));
   return VNI->def;
 }
 

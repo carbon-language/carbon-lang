@@ -51,15 +51,15 @@ TEST(ilistTest, SpliceOne) {
   List.splice(List.begin(), List, List.begin());
   EXPECT_EQ(1u, List.size());
   EXPECT_EQ(1, List.front().Value);
-  EXPECT_TRUE(llvm::next(List.begin()) == List.end());
+  EXPECT_TRUE(std::next(List.begin()) == List.end());
 
   // Altenative noop. Move the first element behind itself.
   List.push_back(2);
   List.push_back(3);
-  List.splice(llvm::next(List.begin()), List, List.begin());
+  List.splice(std::next(List.begin()), List, List.begin());
   EXPECT_EQ(3u, List.size());
   EXPECT_EQ(1, List.front().Value);
-  EXPECT_EQ(2, llvm::next(List.begin())->Value);
+  EXPECT_EQ(2, std::next(List.begin())->Value);
   EXPECT_EQ(3, List.back().Value);
 }
 

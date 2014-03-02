@@ -182,7 +182,7 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
 
   int FramePtrOffsetInBlock = 0;
   unsigned adjustedGPRCS1Size = GPRCS1Size;
-  if (tryFoldSPUpdateIntoPushPop(STI, MF, prior(MBBI), NumBytes)) {
+  if (tryFoldSPUpdateIntoPushPop(STI, MF, std::prev(MBBI), NumBytes)) {
     FramePtrOffsetInBlock = NumBytes;
     adjustedGPRCS1Size += NumBytes;
     NumBytes = 0;
@@ -365,8 +365,8 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
     } else {
       if (MBBI->getOpcode() == ARM::tBX_RET &&
           &MBB.front() != MBBI &&
-          prior(MBBI)->getOpcode() == ARM::tPOP) {
-        MachineBasicBlock::iterator PMBBI = prior(MBBI);
+          std::prev(MBBI)->getOpcode() == ARM::tPOP) {
+        MachineBasicBlock::iterator PMBBI = std::prev(MBBI);
         if (!tryFoldSPUpdateIntoPushPop(STI, MF, PMBBI, NumBytes))
           emitSPUpdate(MBB, PMBBI, TII, dl, *RegInfo, NumBytes);
       } else if (!tryFoldSPUpdateIntoPushPop(STI, MF, MBBI, NumBytes))

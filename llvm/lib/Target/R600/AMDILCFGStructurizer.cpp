@@ -1238,7 +1238,7 @@ int AMDGPUCFGStructurizer::handleJumpintoIfImp(MachineBasicBlock *HeadMBB,
 
       numClonedBlock += Num;
       Num += serialPatternMatch(*HeadMBB->succ_begin());
-      Num += serialPatternMatch(*llvm::next(HeadMBB->succ_begin()));
+      Num += serialPatternMatch(*std::next(HeadMBB->succ_begin()));
       Num += ifPatternMatch(HeadMBB);
       assert(Num > 0);
 
@@ -1767,7 +1767,7 @@ void AMDGPUCFGStructurizer::removeRedundantConditionalBranch(
   if (MBB->succ_size() != 2)
     return;
   MachineBasicBlock *MBB1 = *MBB->succ_begin();
-  MachineBasicBlock *MBB2 = *llvm::next(MBB->succ_begin());
+  MachineBasicBlock *MBB2 = *std::next(MBB->succ_begin());
   if (MBB1 != MBB2)
     return;
 

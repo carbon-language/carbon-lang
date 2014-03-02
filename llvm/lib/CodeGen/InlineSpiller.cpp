@@ -1014,7 +1014,7 @@ static void dumpMachineInstrRangeWithSlotIndex(MachineBasicBlock::iterator B,
   char NextLine = '\n';
   char SlotIndent = '\t';
 
-  if (llvm::next(B) == E) {
+  if (std::next(B) == E) {
     NextLine = ' ';
     SlotIndent = ' ';
   }
@@ -1171,12 +1171,12 @@ void InlineSpiller::insertSpill(unsigned NewVReg, bool isKill,
   MachineBasicBlock &MBB = *MI->getParent();
 
   MachineInstrSpan MIS(MI);
-  TII.storeRegToStackSlot(MBB, llvm::next(MI), NewVReg, isKill, StackSlot,
+  TII.storeRegToStackSlot(MBB, std::next(MI), NewVReg, isKill, StackSlot,
                           MRI.getRegClass(NewVReg), &TRI);
 
-  LIS.InsertMachineInstrRangeInMaps(llvm::next(MI), MIS.end());
+  LIS.InsertMachineInstrRangeInMaps(std::next(MI), MIS.end());
 
-  DEBUG(dumpMachineInstrRangeWithSlotIndex(llvm::next(MI), MIS.end(), LIS,
+  DEBUG(dumpMachineInstrRangeWithSlotIndex(std::next(MI), MIS.end(), LIS,
                                            "spill"));
   ++NumSpills;
 }

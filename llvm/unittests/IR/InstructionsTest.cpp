@@ -65,9 +65,9 @@ TEST(InstructionsTest, BranchInst) {
   EXPECT_EQ(1U, b0->getNumOperands());
 
   EXPECT_NE(b0->op_begin(), b0->op_end());
-  EXPECT_EQ(b0->op_end(), llvm::next(b0->op_begin()));
+  EXPECT_EQ(b0->op_end(), std::next(b0->op_begin()));
 
-  EXPECT_EQ(b0->op_end(), llvm::next(b0->op_begin()));
+  EXPECT_EQ(b0->op_end(), std::next(b0->op_begin()));
 
   IntegerType* Int1 = IntegerType::get(C, 1);
   Constant* One = ConstantInt::get(Int1, 1, true);

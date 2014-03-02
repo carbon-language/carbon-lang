@@ -945,7 +945,7 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
   MachineBasicBlock::instr_iterator MII = MBB.instr_begin(),E = MBB.instr_end();
   MachineBasicBlock::instr_iterator NextMII;
   for (; MII != E; MII = NextMII) {
-    NextMII = llvm::next(MII);
+    NextMII = std::next(MII);
 
     MachineInstr *MI = &*MII;
     if (MI->isBundle()) {
@@ -962,7 +962,7 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
 
     if (ReduceMI(MBB, MI, LiveCPSR, IsSelfLoop)) {
       Modified = true;
-      MachineBasicBlock::instr_iterator I = prior(NextMII);
+      MachineBasicBlock::instr_iterator I = std::prev(NextMII);
       MI = &*I;
       // Removing and reinserting the first instruction in a bundle will break
       // up the bundle. Fix the bundling if it was broken.

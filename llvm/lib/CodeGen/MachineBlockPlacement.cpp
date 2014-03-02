@@ -494,11 +494,11 @@ void MachineBlockPlacement::buildChain(
 
   MachineBasicBlock *LoopHeaderBB = BB;
   markChainSuccessors(Chain, LoopHeaderBB, BlockWorkList, BlockFilter);
-  BB = *llvm::prior(Chain.end());
+  BB = *std::prev(Chain.end());
   for (;;) {
     assert(BB);
     assert(BlockToChain[BB] == &Chain);
-    assert(*llvm::prior(Chain.end()) == BB);
+    assert(*std::prev(Chain.end()) == BB);
 
     // Look for the best viable successor if there is one to place immediately
     // after this block.
@@ -529,7 +529,7 @@ void MachineBlockPlacement::buildChain(
                  << " to " << getBlockNum(BestSucc) << "\n");
     markChainSuccessors(SuccChain, LoopHeaderBB, BlockWorkList, BlockFilter);
     Chain.merge(BestSucc, &SuccChain);
-    BB = *llvm::prior(Chain.end());
+    BB = *std::prev(Chain.end());
   }
 
   DEBUG(dbgs() << "Finished forming chain for header block "
@@ -634,7 +634,7 @@ MachineBlockPlacement::findBestLoopExit(MachineFunction &F,
     BlockChain &Chain = *BlockToChain[*I];
     // Ensure that this block is at the end of a chain; otherwise it could be
     // mid-way through an inner loop or a successor of an analyzable branch.
-    if (*I != *llvm::prior(Chain.end()))
+    if (*I != *std::prev(Chain.end()))
       continue;
 
     // Now walk the successors. We need to establish whether this has a viable
@@ -741,7 +741,7 @@ void MachineBlockPlacement::rotateLoop(BlockChain &LoopChain,
        PI != PE; ++PI) {
     BlockChain *PredChain = BlockToChain[*PI];
     if (!LoopBlockSet.count(*PI) &&
-        (!PredChain || *PI == *llvm::prior(PredChain->end()))) {
+        (!PredChain || *PI == *std::prev(PredChain->end()))) {
       ViableTopFallthrough = true;
       break;
     }
@@ -751,7 +751,7 @@ void MachineBlockPlacement::rotateLoop(BlockChain &LoopChain,
   // bottom is a viable exiting block. If so, bail out as rotating will
   // introduce an unnecessary branch.
   if (ViableTopFallthrough) {
-    MachineBasicBlock *Bottom = *llvm::prior(LoopChain.end());
+    MachineBasicBlock *Bottom = *std::prev(LoopChain.end());
     for (MachineBasicBlock::succ_iterator SI = Bottom->succ_begin(),
                                           SE = Bottom->succ_end();
          SI != SE; ++SI) {
@@ -767,7 +767,7 @@ void MachineBlockPlacement::rotateLoop(BlockChain &LoopChain,
   if (ExitIt == LoopChain.end())
     return;
 
-  std::rotate(LoopChain.begin(), llvm::next(ExitIt), LoopChain.end());
+  std::rotate(LoopChain.begin(), std::next(ExitIt), LoopChain.end());
 }
 
 /// \brief Forms basic block chains from the natural loop structures.
@@ -887,7 +887,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
       if (!TII->AnalyzeBranch(*BB, TBB, FBB, Cond) || !FI->canFallThrough())
         break;
 
-      MachineFunction::iterator NextFI(llvm::next(FI));
+      MachineFunction::iterator NextFI(std::next(FI));
       MachineBasicBlock *NextBB = NextFI;
       // Ensure that the layout successor is a viable block, as we know that
       // fallthrough is a possibility.
@@ -981,7 +981,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
     // Update the terminator of the previous block.
     if (BI == FunctionChain.begin())
       continue;
-    MachineBasicBlock *PrevBB = llvm::prior(MachineFunction::iterator(*BI));
+    MachineBasicBlock *PrevBB = std::prev(MachineFunction::iterator(*BI));
 
     // FIXME: It would be awesome of updateTerminator would just return rather
     // than assert when the branch cannot be analyzed in order to remove this
@@ -1053,7 +1053,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
   const BranchProbability ColdProb(1, 5); // 20%
   BlockFrequency EntryFreq = MBFI->getBlockFreq(F.begin());
   BlockFrequency WeightedEntryFreq = EntryFreq * ColdProb;
-  for (BlockChain::iterator BI = llvm::next(FunctionChain.begin()),
+  for (BlockChain::iterator BI = std::next(FunctionChain.begin()),
                             BE = FunctionChain.end();
        BI != BE; ++BI) {
     // Don't align non-looping basic blocks. These are unlikely to execute
@@ -1079,7 +1079,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
 
     // Check for the existence of a non-layout predecessor which would benefit
     // from aligning this block.
-    MachineBasicBlock *LayoutPred = *llvm::prior(BI);
+    MachineBasicBlock *LayoutPred = *std::prev(BI);
 
     // Force alignment if all the predecessors are jumps. We already checked
     // that the block isn't cold above.
@@ -1101,7 +1101,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
 
 bool MachineBlockPlacement::runOnMachineFunction(MachineFunction &F) {
   // Check for single-block functions and skip them.
-  if (llvm::next(F.begin()) == F.end())
+  if (std::next(F.begin()) == F.end())
     return false;
 
   MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
@@ -1169,7 +1169,7 @@ INITIALIZE_PASS_END(MachineBlockPlacementStats, "block-placement-stats",
 
 bool MachineBlockPlacementStats::runOnMachineFunction(MachineFunction &F) {
   // Check for single-block functions and skip them.
-  if (llvm::next(F.begin()) == F.end())
+  if (std::next(F.begin()) == F.end())
     return false;
 
   MBPI = &getAnalysis<MachineBranchProbabilityInfo>();

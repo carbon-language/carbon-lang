@@ -784,7 +784,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
   MachineInstr *DbgMI = NULL;
   for (MachineBasicBlock::iterator MII = RegionEnd, MIE = RegionBegin;
        MII != MIE; --MII) {
-    MachineInstr *MI = prior(MII);
+    MachineInstr *MI = std::prev(MII);
     if (MI && DbgMI) {
       DbgValues.push_back(std::make_pair(DbgMI, MI));
       DbgMI = NULL;
@@ -800,7 +800,8 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
     if (RPTracker) {
       PressureDiff *PDiff = PDiffs ? &(*PDiffs)[SU->NodeNum] : 0;
       RPTracker->recede(/*LiveUses=*/0, PDiff);
-      assert(RPTracker->getPos() == prior(MII) && "RPTracker can't find MI");
+      assert(RPTracker->getPos() == std::prev(MII) &&
+             "RPTracker can't find MI");
     }
 
     assert((CanHandleTerminators || (!MI->isTerminator() && !MI->isLabel())) &&
@@ -1427,7 +1428,7 @@ public:
 
   const SDep *backtrack() {
     DFSStack.pop_back();
-    return DFSStack.empty() ? 0 : llvm::prior(DFSStack.back().second);
+    return DFSStack.empty() ? 0 : std::prev(DFSStack.back().second);
   }
 
   const SUnit *getCurr() const { return DFSStack.back().first; }

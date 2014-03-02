@@ -385,8 +385,8 @@ bool StackSlotColoring::RemoveDeadStores(MachineBasicBlock* MBB) {
       toErase.push_back(I);
       continue;
     }
-        
-    MachineBasicBlock::iterator NextMI = llvm::next(I);
+
+    MachineBasicBlock::iterator NextMI = std::next(I);
     if (NextMI == MBB->end()) continue;
 
     unsigned LoadReg = 0;

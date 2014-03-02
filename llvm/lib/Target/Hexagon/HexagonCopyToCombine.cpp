@@ -300,7 +300,7 @@ bool HexagonCopyToCombine::isSafeToMoveTogether(MachineInstr *I1,
     MachineBasicBlock::iterator I(I1), End(I2);
     // At O3 we got better results (dhrystone) by being more conservative here.
     if (!ShouldCombineAggressively)
-      End = llvm::next(MachineBasicBlock::iterator(I2));
+      End = std::next(MachineBasicBlock::iterator(I2));
     IsImmUseReg = I1->getOperand(1).isImm() || I1->getOperand(1).isGlobal();
     unsigned I1UseReg = IsImmUseReg ? 0 : I1->getOperand(1).getReg();
     // Track killed operands. If we move across an instruction that kills our
@@ -464,7 +464,7 @@ bool HexagonCopyToCombine::runOnMachineFunction(MachineFunction &MF) {
 /// false if the combine must be inserted at the returned instruction.
 MachineInstr *HexagonCopyToCombine::findPairable(MachineInstr *I1,
                                                  bool &DoInsertAtI1) {
-  MachineBasicBlock::iterator I2 = llvm::next(MachineBasicBlock::iterator(I1));
+  MachineBasicBlock::iterator I2 = std::next(MachineBasicBlock::iterator(I1));
   unsigned I1DestReg = I1->getOperand(0).getReg();
 
   for (MachineBasicBlock::iterator End = I1->getParent()->end(); I2 != End;

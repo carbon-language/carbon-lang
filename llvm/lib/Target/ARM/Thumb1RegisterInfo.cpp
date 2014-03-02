@@ -421,7 +421,7 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
         MI.getOperand(FrameRegIdx+1).ChangeToImmediate(Mask);
       }
       Offset = (Offset - Mask * Scale);
-      MachineBasicBlock::iterator NII = llvm::next(II);
+      MachineBasicBlock::iterator NII = std::next(II);
       emitThumbRegPlusImmediate(MBB, NII, dl, DestReg, DestReg, Offset, TII,
                                 *this);
     } else {

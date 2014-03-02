@@ -141,41 +141,6 @@ inline mapped_iterator<ItTy, FuncTy> map_iterator(const ItTy &I, FuncTy F) {
   return mapped_iterator<ItTy, FuncTy>(I, F);
 }
 
-
-// next/prior - These functions unlike std::advance do not modify the
-// passed iterator but return a copy.
-//
-// next(myIt) returns copy of myIt incremented once
-// next(myIt, n) returns copy of myIt incremented n times
-// prior(myIt) returns copy of myIt decremented once
-// prior(myIt, n) returns copy of myIt decremented n times
-
-template <typename ItTy, typename Dist>
-inline ItTy next(ItTy it, Dist n)
-{
-  std::advance(it, n);
-  return it;
-}
-
-template <typename ItTy>
-inline ItTy next(ItTy it)
-{
-  return ++it;
-}
-
-template <typename ItTy, typename Dist>
-inline ItTy prior(ItTy it, Dist n)
-{
-  std::advance(it, -n);
-  return it;
-}
-
-template <typename ItTy>
-inline ItTy prior(ItTy it)
-{
-  return --it;
-}
-
 //===----------------------------------------------------------------------===//
 //     Extra additions to <utility>
 //===----------------------------------------------------------------------===//

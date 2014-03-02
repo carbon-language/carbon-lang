@@ -312,9 +312,9 @@ MLxExpansion::ExpandFPMLxInstruction(MachineBasicBlock &MBB, MachineInstr *MI,
       dbgs() << "Expanding: " << *MI;
       dbgs() << "  to:\n";
       MachineBasicBlock::iterator MII = MI;
-      MII = llvm::prior(MII);
+      MII = std::prev(MII);
       MachineInstr &MI2 = *MII;
-      MII = llvm::prior(MII);
+      MII = std::prev(MII);
       MachineInstr &MI1 = *MII;
       dbgs() << "    " << MI1;
       dbgs() << "    " << MI2;

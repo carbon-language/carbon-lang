@@ -383,7 +383,7 @@ void BranchFolder::MaintainLiveIns(MachineBasicBlock *CurMBB,
   if (RS) {
     RS->enterBasicBlock(CurMBB);
     if (!CurMBB->empty())
-      RS->forward(prior(CurMBB->end()));
+      RS->forward(std::prev(CurMBB->end()));
     BitVector RegsLiveAtExit(TRI->getNumRegs());
     RS->getRegsUsed(RegsLiveAtExit, false);
     for (unsigned int i = 0, e = TRI->getNumRegs(); i != e; i++)
@@ -462,7 +462,7 @@ static unsigned EstimateRuntime(MachineBasicBlock::iterator I,
 static void FixTail(MachineBasicBlock *CurMBB, MachineBasicBlock *SuccBB,
                     const TargetInstrInfo *TII) {
   MachineFunction *MF = CurMBB->getParent();
-  MachineFunction::iterator I = llvm::next(MachineFunction::iterator(CurMBB));
+  MachineFunction::iterator I = std::next(MachineFunction::iterator(CurMBB));
   MachineBasicBlock *TBB = 0, *FBB = 0;
   SmallVector<MachineOperand, 4> Cond;
   DebugLoc dl;  // FIXME: this is nowhere
@@ -600,12 +600,11 @@ unsigned BranchFolder::ComputeSameTails(unsigned CurHash,
   unsigned maxCommonTailLength = 0U;
   SameTails.clear();
   MachineBasicBlock::iterator TrialBBI1, TrialBBI2;
-  MPIterator HighestMPIter = prior(MergePotentials.end());
-  for (MPIterator CurMPIter = prior(MergePotentials.end()),
+  MPIterator HighestMPIter = std::prev(MergePotentials.end());
+  for (MPIterator CurMPIter = std::prev(MergePotentials.end()),
                   B = MergePotentials.begin();
-       CurMPIter != B && CurMPIter->getHash() == CurHash;
-       --CurMPIter) {
-    for (MPIterator I = prior(CurMPIter); I->getHash() == CurHash ; --I) {
+       CurMPIter != B && CurMPIter->getHash() == CurHash; --CurMPIter) {
+    for (MPIterator I = std::prev(CurMPIter); I->getHash() == CurHash; --I) {
       unsigned CommonTailLen;
       if (ProfitableToMerge(CurMPIter->getBlock(), I->getBlock(),
                             minCommonTailLength,
@@ -634,9 +633,9 @@ void BranchFolder::RemoveBlocksWithHash(unsigned CurHash,
                                         MachineBasicBlock *SuccBB,
                                         MachineBasicBlock *PredBB) {
   MPIterator CurMPIter, B;
-  for (CurMPIter = prior(MergePotentials.end()), B = MergePotentials.begin();
-       CurMPIter->getHash() == CurHash;
-       --CurMPIter) {
+  for (CurMPIter = std::prev(MergePotentials.end()),
+      B = MergePotentials.begin();
+       CurMPIter->getHash() == CurHash; --CurMPIter) {
     // Put the unconditional branch back, if we need one.
     MachineBasicBlock *CurMBB = CurMPIter->getBlock();
     if (SuccBB && CurMBB != PredBB)
@@ -868,12 +867,12 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
   // a compile-time infinite loop repeatedly doing and undoing the same
   // transformations.)
 
-  for (MachineFunction::iterator I = llvm::next(MF.begin()), E = MF.end();
+  for (MachineFunction::iterator I = std::next(MF.begin()), E = MF.end();
        I != E; ++I) {
     if (I->pred_size() < 2) continue;
     SmallPtrSet<MachineBasicBlock *, 8> UniquePreds;
     MachineBasicBlock *IBB = I;
-    MachineBasicBlock *PredBB = prior(I);
+    MachineBasicBlock *PredBB = std::prev(I);
     MergePotentials.clear();
     for (MachineBasicBlock::pred_iterator P = I->pred_begin(),
            E2 = I->pred_end();
@@ -905,7 +904,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
             continue;
           // This is the QBB case described above
           if (!FBB)
-            FBB = llvm::next(MachineFunction::iterator(PBB));
+            FBB = std::next(MachineFunction::iterator(PBB));
         }
 
         // Failing case: the only way IBB can be reached from PBB is via
@@ -955,7 +954,7 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
 
     // Reinsert an unconditional branch if needed. The 1 below can occur as a
     // result of removing blocks in TryTailMergeBlocks.
-    PredBB = prior(I);     // this may have been changed in TryTailMergeBlocks
+    PredBB = std::prev(I);     // this may have been changed in TryTailMergeBlocks
     if (MergePotentials.size() == 1 &&
         MergePotentials.begin()->getBlock() != PredBB)
       FixTail(MergePotentials.begin()->getBlock(), IBB, TII);
@@ -974,7 +973,7 @@ bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
   // Make sure blocks are numbered in order
   MF.RenumberBlocks();
 
-  for (MachineFunction::iterator I = llvm::next(MF.begin()), E = MF.end();
+  for (MachineFunction::iterator I = std::next(MF.begin()), E = MF.end();
        I != E; ) {
     MachineBasicBlock *MBB = I++;
     MadeChange |= OptimizeBlock(MBB);
@@ -1095,7 +1094,7 @@ ReoptimizeBlock:
 
   // Check to see if we can simplify the terminator of the block before this
   // one.
-  MachineBasicBlock &PrevBB = *prior(MachineFunction::iterator(MBB));
+  MachineBasicBlock &PrevBB = *std::prev(MachineFunction::iterator(MBB));
 
   MachineBasicBlock *PriorTBB = 0, *PriorFBB = 0;
   SmallVector<MachineOperand, 4> PriorCond;
@@ -1394,7 +1393,8 @@ ReoptimizeBlock:
           // B elsewhere
           // next:
           if (CurFallsThru) {
-            MachineBasicBlock *NextBB = llvm::next(MachineFunction::iterator(MBB));
+            MachineBasicBlock *NextBB =
+                std::next(MachineFunction::iterator(MBB));
             CurCond.clear();
             TII->InsertBranch(*MBB, NextBB, 0, CurCond, DebugLoc());
           }

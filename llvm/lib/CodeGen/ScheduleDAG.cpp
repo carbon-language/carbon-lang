@@ -301,8 +301,8 @@ void SUnit::biasCriticalPath() {
 
   SUnit::pred_iterator BestI = Preds.begin();
   unsigned MaxDepth = BestI->getSUnit()->getDepth();
-  for (SUnit::pred_iterator
-         I = llvm::next(BestI), E = Preds.end(); I != E; ++I) {
+  for (SUnit::pred_iterator I = std::next(BestI), E = Preds.end(); I != E;
+       ++I) {
     if (I->getKind() == SDep::Data && I->getSUnit()->getDepth() > MaxDepth)
       BestI = I;
   }

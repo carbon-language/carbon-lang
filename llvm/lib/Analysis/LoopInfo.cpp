@@ -527,8 +527,8 @@ void UnloopUpdater::removeBlocksFromAncestors() {
 /// nested within unloop.
 void UnloopUpdater::updateSubloopParents() {
   while (!Unloop->empty()) {
-    Loop *Subloop = *llvm::prior(Unloop->end());
-    Unloop->removeChildLoop(llvm::prior(Unloop->end()));
+    Loop *Subloop = *std::prev(Unloop->end());
+    Unloop->removeChildLoop(std::prev(Unloop->end()));
 
     assert(SubloopParents.count(Subloop) && "DFS failed to visit subloop");
     if (Loop *Parent = SubloopParents[Subloop])
@@ -652,7 +652,7 @@ void LoopInfo::updateUnloop(Loop *Unloop) {
 
     // Move all of the subloops to the top-level.
     while (!Unloop->empty())
-      LI.addTopLevelLoop(Unloop->removeChildLoop(llvm::prior(Unloop->end())));
+      LI.addTopLevelLoop(Unloop->removeChildLoop(std::prev(Unloop->end())));
 
     return;
   }

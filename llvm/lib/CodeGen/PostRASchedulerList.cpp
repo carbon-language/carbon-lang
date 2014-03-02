@@ -306,7 +306,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     MachineBasicBlock::iterator Current = MBB->end();
     unsigned Count = MBB->size(), CurrentCount = Count;
     for (MachineBasicBlock::iterator I = Current; I != MBB->begin(); ) {
-      MachineInstr *MI = llvm::prior(I);
+      MachineInstr *MI = std::prev(I);
       --Count;
       // Calls are not scheduling boundaries before register allocation, but
       // post-ra we don't gain anything by scheduling across calls since we
@@ -648,13 +648,13 @@ void SchedulePostRATDList::EmitSchedule() {
     // Update the Begin iterator, as the first instruction in the block
     // may have been scheduled later.
     if (i == 0)
-      RegionBegin = prior(RegionEnd);
+      RegionBegin = std::prev(RegionEnd);
   }
 
   // Reinsert any remaining debug_values.
   for (std::vector<std::pair<MachineInstr *, MachineInstr *> >::iterator
          DI = DbgValues.end(), DE = DbgValues.begin(); DI != DE; --DI) {
-    std::pair<MachineInstr *, MachineInstr *> P = *prior(DI);
+    std::pair<MachineInstr *, MachineInstr *> P = *std::prev(DI);
     MachineInstr *DbgValue = P.first;
     MachineBasicBlock::iterator OrigPrivMI = P.second;
     BB->splice(++OrigPrivMI, BB, DbgValue);

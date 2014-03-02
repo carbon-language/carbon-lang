@@ -207,7 +207,7 @@ void mergeSPUpdatesUp(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
                       unsigned StackPtr, uint64_t *NumBytes = NULL) {
   if (MBBI == MBB.begin()) return;
 
-  MachineBasicBlock::iterator PI = prior(MBBI);
+  MachineBasicBlock::iterator PI = std::prev(MBBI);
   unsigned Opc = PI->getOpcode();
   if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
        Opc == X86::ADD32ri || Opc == X86::ADD32ri8 ||
@@ -235,7 +235,7 @@ void mergeSPUpdatesDown(MachineBasicBlock &MBB,
 
   if (MBBI == MBB.end()) return;
 
-  MachineBasicBlock::iterator NI = llvm::next(MBBI);
+  MachineBasicBlock::iterator NI = std::next(MBBI);
   if (NI == MBB.end()) return;
 
   unsigned Opc = NI->getOpcode();
@@ -268,8 +268,8 @@ static int mergeSPUpdates(MachineBasicBlock &MBB,
       (!doMergeWithPrevious && MBBI == MBB.end()))
     return 0;
 
-  MachineBasicBlock::iterator PI = doMergeWithPrevious ? prior(MBBI) : MBBI;
-  MachineBasicBlock::iterator NI = doMergeWithPrevious ? 0 : llvm::next(MBBI);
+  MachineBasicBlock::iterator PI = doMergeWithPrevious ? std::prev(MBBI) : MBBI;
+  MachineBasicBlock::iterator NI = doMergeWithPrevious ? 0 : std::next(MBBI);
   unsigned Opc = PI->getOpcode();
   int Offset = 0;
 
@@ -537,7 +537,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     }
 
     // Mark the FramePtr as live-in in every block except the entry.
-    for (MachineFunction::iterator I = llvm::next(MF.begin()), E = MF.end();
+    for (MachineFunction::iterator I = std::next(MF.begin()), E = MF.end();
          I != E; ++I)
       I->addLiveIn(FramePtr);
   } else {
@@ -783,7 +783,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Skip the callee-saved pop instructions.
   while (MBBI != MBB.begin()) {
-    MachineBasicBlock::iterator PI = prior(MBBI);
+    MachineBasicBlock::iterator PI = std::prev(MBBI);
     unsigned Opc = PI->getOpcode();
 
     if (Opc != X86::POP32r && Opc != X86::POP64r && Opc != X86::DBG_VALUE &&
@@ -885,7 +885,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
         addReg(JumpTarget.getReg(), RegState::Kill);
     }
 
-    MachineInstr *NewMI = prior(MBBI);
+    MachineInstr *NewMI = std::prev(MBBI);
     NewMI->copyImplicitOps(MF, MBBI);
 
     // Delete the pseudo instruction TCRETURN.
@@ -1555,7 +1555,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // sure we restore the stack pointer immediately after the call, there may
     // be spill code inserted between the CALL and ADJCALLSTACKUP instructions.
     MachineBasicBlock::iterator B = MBB.begin();
-    while (I != B && !llvm::prior(I)->isCall())
+    while (I != B && !std::prev(I)->isCall())
       --I;
     MBB.insert(I, New);
   }

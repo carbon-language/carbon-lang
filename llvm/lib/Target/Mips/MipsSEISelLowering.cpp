@@ -2621,7 +2621,7 @@ emitBPOSGE32(MachineInstr *MI, MachineBasicBlock *BB) const{
   const TargetRegisterClass *RC = &Mips::GPR32RegClass;
   DebugLoc DL = MI->getDebugLoc();
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator It = llvm::next(MachineFunction::iterator(BB));
+  MachineFunction::iterator It = std::next(MachineFunction::iterator(BB));
   MachineFunction *F = BB->getParent();
   MachineBasicBlock *FBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *TBB = F->CreateMachineBasicBlock(LLVM_BB);
@@ -2631,7 +2631,7 @@ emitBPOSGE32(MachineInstr *MI, MachineBasicBlock *BB) const{
   F->insert(It, Sink);
 
   // Transfer the remainder of BB and its successor edges to Sink.
-  Sink->splice(Sink->begin(), BB, llvm::next(MachineBasicBlock::iterator(MI)),
+  Sink->splice(Sink->begin(), BB, std::next(MachineBasicBlock::iterator(MI)),
                BB->end());
   Sink->transferSuccessorsAndUpdatePHIs(BB);
 
@@ -2686,7 +2686,7 @@ emitMSACBranchPseudo(MachineInstr *MI, MachineBasicBlock *BB,
   const TargetRegisterClass *RC = &Mips::GPR32RegClass;
   DebugLoc DL = MI->getDebugLoc();
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator It = llvm::next(MachineFunction::iterator(BB));
+  MachineFunction::iterator It = std::next(MachineFunction::iterator(BB));
   MachineFunction *F = BB->getParent();
   MachineBasicBlock *FBB = F->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *TBB = F->CreateMachineBasicBlock(LLVM_BB);
@@ -2696,7 +2696,7 @@ emitMSACBranchPseudo(MachineInstr *MI, MachineBasicBlock *BB,
   F->insert(It, Sink);
 
   // Transfer the remainder of BB and its successor edges to Sink.
-  Sink->splice(Sink->begin(), BB, llvm::next(MachineBasicBlock::iterator(MI)),
+  Sink->splice(Sink->begin(), BB, std::next(MachineBasicBlock::iterator(MI)),
                BB->end());
   Sink->transferSuccessorsAndUpdatePHIs(BB);
 

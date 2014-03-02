@@ -2188,7 +2188,7 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
         return false;
 
       // The first index must be zero.
-      ConstantInt *CI = dyn_cast<ConstantInt>(*llvm::next(CE->op_begin()));
+      ConstantInt *CI = dyn_cast<ConstantInt>(*std::next(CE->op_begin()));
       if (!CI || !CI->isZero()) return false;
 
       // The remaining indices must be compile-time known integers within the

@@ -244,7 +244,7 @@ void ConstantHoisting::FindBaseConstants() {
   // Simple linear scan through the sorted constant map for viable merge
   // candidates.
   ConstantMapType::iterator MinValItr = ConstantMap.begin();
-  for (ConstantMapType::iterator I = llvm::next(ConstantMap.begin()),
+  for (ConstantMapType::iterator I = std::next(ConstantMap.begin()),
        E = ConstantMap.end(); I != E; ++I) {
     if (MinValItr->first->getType() == I->first->getType()) {
       // Check if the constant is in range of an add with immediate.
@@ -315,7 +315,7 @@ FindConstantInsertionPoint(Function &F, const ConstantInfo &CI) const {
   while (BBs.size() >= 2) {
     BasicBlock *BB, *BB1, *BB2;
     BB1 = *BBs.begin();
-    BB2 = *llvm::next(BBs.begin());
+    BB2 = *std::next(BBs.begin());
     BB = DT->findNearestCommonDominator(BB1, BB2);
     if (BB == Entry)
       return getMatInsertPt(&Entry->front(), DT);

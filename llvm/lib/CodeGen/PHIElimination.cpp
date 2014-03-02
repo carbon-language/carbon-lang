@@ -186,7 +186,7 @@ bool PHIElimination::EliminatePHINodes(MachineFunction &MF,
   // Get an iterator to the first instruction after the last PHI node (this may
   // also be the end of the basic block).
   MachineBasicBlock::iterator LastPHIIt =
-    prior(MBB.SkipPHIsAndLabels(MBB.begin()));
+    std::prev(MBB.SkipPHIsAndLabels(MBB.begin()));
 
   while (MBB.front().isPHI())
     LowerPHINode(MBB, LastPHIIt);
@@ -222,7 +222,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator LastPHIIt) {
   ++NumLowered;
 
-  MachineBasicBlock::iterator AfterPHIsIt = llvm::next(LastPHIIt);
+  MachineBasicBlock::iterator AfterPHIsIt = std::next(LastPHIIt);
 
   // Unlink the PHI node from the basic block, but don't delete the PHI yet.
   MachineInstr *MPhi = MBB.remove(MBB.begin());
@@ -267,7 +267,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
 
   // Update live variable information if there is any.
   if (LV) {
-    MachineInstr *PHICopy = prior(AfterPHIsIt);
+    MachineInstr *PHICopy = std::prev(AfterPHIsIt);
 
     if (IncomingReg) {
       LiveVariables::VarInfo &VI = LV->getVarInfo(IncomingReg);
@@ -306,7 +306,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
 
   // Update LiveIntervals for the new copy or implicit def.
   if (LIS) {
-    MachineInstr *NewInstr = prior(AfterPHIsIt);
+    MachineInstr *NewInstr = std::prev(AfterPHIsIt);
     SlotIndex DestCopyIndex = LIS->InsertMachineInstrInMaps(NewInstr);
 
     SlotIndex MBBStartIndex = LIS->getMBBStartIdx(&MBB);
@@ -444,7 +444,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
           }
         } else {
           // We just inserted this copy.
-          KillInst = prior(InsertPos);
+          KillInst = std::prev(InsertPos);
         }
       }
       assert(KillInst->readsRegister(SrcReg) && "Cannot find kill instruction");
@@ -504,7 +504,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
               }
             } else {
               // We just inserted this copy.
-              KillInst = prior(InsertPos);
+              KillInst = std::prev(InsertPos);
             }
           }
           assert(KillInst->readsRegister(SrcReg) &&

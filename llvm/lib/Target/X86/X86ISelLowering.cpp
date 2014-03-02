@@ -14445,7 +14445,7 @@ static MachineBasicBlock *EmitXBegin(MachineInstr *MI, MachineBasicBlock *MBB,
 
   // Transfer the remainder of BB and its successor edges to sinkMBB.
   sinkMBB->splice(sinkMBB->begin(), MBB,
-                  llvm::next(MachineBasicBlock::iterator(MI)), MBB->end());
+                  std::next(MachineBasicBlock::iterator(MI)), MBB->end());
   sinkMBB->transferSuccessorsAndUpdatePHIs(MBB);
 
   // thisMBB:
@@ -14679,7 +14679,7 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
 
   // Transfer the remainder of BB and its successor edges to sinkMBB.
   sinkMBB->splice(sinkMBB->begin(), MBB,
-                  llvm::next(MachineBasicBlock::iterator(MI)), MBB->end());
+                  std::next(MachineBasicBlock::iterator(MI)), MBB->end());
   sinkMBB->transferSuccessorsAndUpdatePHIs(MBB);
 
   // thisMBB:
@@ -14965,7 +14965,7 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
 
   // Transfer the remainder of BB and its successor edges to sinkMBB.
   sinkMBB->splice(sinkMBB->begin(), MBB,
-                  llvm::next(MachineBasicBlock::iterator(MI)), MBB->end());
+                  std::next(MachineBasicBlock::iterator(MI)), MBB->end());
   sinkMBB->transferSuccessorsAndUpdatePHIs(MBB);
 
   // thisMBB:
@@ -15361,8 +15361,7 @@ X86TargetLowering::EmitVAARG64WithCustomInserter(
 
     // Transfer the remainder of MBB and its successor edges to endMBB.
     endMBB->splice(endMBB->begin(), thisMBB,
-                    llvm::next(MachineBasicBlock::iterator(MI)),
-                    thisMBB->end());
+                   std::next(MachineBasicBlock::iterator(MI)), thisMBB->end());
     endMBB->transferSuccessorsAndUpdatePHIs(thisMBB);
 
     // Make offsetMBB and overflowMBB successors of thisMBB
@@ -15532,8 +15531,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
 
   // Transfer the remainder of MBB and its successor edges to EndMBB.
   EndMBB->splice(EndMBB->begin(), MBB,
-                 llvm::next(MachineBasicBlock::iterator(MI)),
-                 MBB->end());
+                 std::next(MachineBasicBlock::iterator(MI)), MBB->end());
   EndMBB->transferSuccessorsAndUpdatePHIs(MBB);
 
   // The original block will now fall through to the XMM save block.
@@ -15595,7 +15593,7 @@ static bool checkAndUpdateEFLAGSKill(MachineBasicBlock::iterator SelectItr,
                                      MachineBasicBlock* BB,
                                      const TargetRegisterInfo* TRI) {
   // Scan forward through BB for a use/def of EFLAGS.
-  MachineBasicBlock::iterator miI(llvm::next(SelectItr));
+  MachineBasicBlock::iterator miI(std::next(SelectItr));
   for (MachineBasicBlock::iterator miE = BB->end(); miI != miE; ++miI) {
     const MachineInstr& mi = *miI;
     if (mi.readsRegister(X86::EFLAGS))
@@ -15660,8 +15658,7 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
 
   // Transfer the remainder of BB and its successor edges to sinkMBB.
   sinkMBB->splice(sinkMBB->begin(), BB,
-                  llvm::next(MachineBasicBlock::iterator(MI)),
-                  BB->end());
+                  std::next(MachineBasicBlock::iterator(MI)), BB->end());
   sinkMBB->transferSuccessorsAndUpdatePHIs(BB);
 
   // Add the true and fallthrough blocks as its successors.
@@ -15741,8 +15738,8 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
   MF->insert(MBBIter, mallocMBB);
   MF->insert(MBBIter, continueMBB);
 
-  continueMBB->splice(continueMBB->begin(), BB, llvm::next
-                      (MachineBasicBlock::iterator(MI)), BB->end());
+  continueMBB->splice(continueMBB->begin(), BB,
+                      std::next(MachineBasicBlock::iterator(MI)), BB->end());
   continueMBB->transferSuccessorsAndUpdatePHIs(BB);
 
   // Add code to the main basic block to check if the stack limit has been hit,
@@ -15983,7 +15980,7 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
 
   // Transfer the remainder of BB and its successor edges to sinkMBB.
   sinkMBB->splice(sinkMBB->begin(), MBB,
-                  llvm::next(MachineBasicBlock::iterator(MI)), MBB->end());
+                  std::next(MachineBasicBlock::iterator(MI)), MBB->end());
   sinkMBB->transferSuccessorsAndUpdatePHIs(MBB);
 
   // thisMBB:

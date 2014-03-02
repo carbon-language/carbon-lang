@@ -284,8 +284,7 @@ static CallInst *FindPotentialTailCall(BasicBlock *BB, ReturnInst *RI,
   const unsigned MaxSearch = 4;
   bool NoInterposingChain = true;
 
-  for (BasicBlock::reverse_iterator I = llvm::next(BB->rbegin()),
-                                    E = BB->rend();
+  for (BasicBlock::reverse_iterator I = std::next(BB->rbegin()), E = BB->rend();
        I != E && SearchCounter < MaxSearch; ++I) {
     Instruction *Inst = &*I;
 

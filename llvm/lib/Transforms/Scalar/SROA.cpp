@@ -2232,7 +2232,7 @@ private:
              DL.getTypeStoreSizeInBits(LI.getType()) &&
              "Non-byte-multiple bit width");
       // Move the insertion point just past the load so that we can refer to it.
-      IRB.SetInsertPoint(llvm::next(BasicBlock::iterator(&LI)));
+      IRB.SetInsertPoint(std::next(BasicBlock::iterator(&LI)));
       // Create a placeholder value with the same type as LI to use as the
       // basis for the new value. This allows us to replace the uses of LI with
       // the computed value, and then replace the placeholder with LI, leaving
@@ -3295,7 +3295,7 @@ bool SROA::splitAlloca(AllocaInst &AI, AllocaSlices &S) {
 
   uint64_t BeginOffset = S.begin()->beginOffset();
 
-  for (AllocaSlices::iterator SI = S.begin(), SJ = llvm::next(SI), SE = S.end();
+  for (AllocaSlices::iterator SI = S.begin(), SJ = std::next(SI), SE = S.end();
        SI != SE; SI = SJ) {
     uint64_t MaxEndOffset = SI->endOffset();
 
@@ -3623,7 +3623,7 @@ bool SROA::runOnFunction(Function &F) {
   DT = DTWP ? &DTWP->getDomTree() : 0;
 
   BasicBlock &EntryBB = F.getEntryBlock();
-  for (BasicBlock::iterator I = EntryBB.begin(), E = llvm::prior(EntryBB.end());
+  for (BasicBlock::iterator I = EntryBB.begin(), E = std::prev(EntryBB.end());
        I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
       Worklist.insert(AI);

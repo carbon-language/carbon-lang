@@ -498,8 +498,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS,
   // chain interposes between I and the return.
   if (I->mayHaveSideEffects() || I->mayReadFromMemory() ||
       !isSafeToSpeculativelyExecute(I))
-    for (BasicBlock::const_iterator BBI = prior(prior(ExitBB->end())); ;
-         --BBI) {
+    for (BasicBlock::const_iterator BBI = std::prev(ExitBB->end(), 2);; --BBI) {
       if (&*BBI == I)
         break;
       // Debug info intrinsics do not get in the way of tail call optimization.

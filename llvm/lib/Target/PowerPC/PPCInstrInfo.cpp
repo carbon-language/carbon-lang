@@ -1428,7 +1428,7 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
   CmpInstr->eraseFromParent();
 
   MachineBasicBlock::iterator MII = MI;
-  BuildMI(*MI->getParent(), llvm::next(MII), MI->getDebugLoc(),
+  BuildMI(*MI->getParent(), std::next(MII), MI->getDebugLoc(),
           get(TargetOpcode::COPY), CRReg)
     .addReg(PPC::CR0, MIOpC != NewOpC ? RegState::Kill : 0);
 

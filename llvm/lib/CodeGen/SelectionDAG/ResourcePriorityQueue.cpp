@@ -603,7 +603,7 @@ SUnit *ResourcePriorityQueue::pop() {
   std::vector<SUnit *>::iterator Best = Queue.begin();
   if (!DisableDFASched) {
     signed BestCost = SUSchedulingCost(*Best);
-    for (std::vector<SUnit *>::iterator I = llvm::next(Queue.begin()),
+    for (std::vector<SUnit *>::iterator I = std::next(Queue.begin()),
            E = Queue.end(); I != E; ++I) {
 
       if (SUSchedulingCost(*I) > BestCost) {
@@ -614,14 +614,14 @@ SUnit *ResourcePriorityQueue::pop() {
   }
   // Use default TD scheduling mechanism.
   else {
-    for (std::vector<SUnit *>::iterator I = llvm::next(Queue.begin()),
+    for (std::vector<SUnit *>::iterator I = std::next(Queue.begin()),
        E = Queue.end(); I != E; ++I)
       if (Picker(*Best, *I))
         Best = I;
   }
 
   SUnit *V = *Best;
-  if (Best != prior(Queue.end()))
+  if (Best != std::prev(Queue.end()))
     std::swap(*Best, Queue.back());
 
   Queue.pop_back();
@@ -633,7 +633,7 @@ SUnit *ResourcePriorityQueue::pop() {
 void ResourcePriorityQueue::remove(SUnit *SU) {
   assert(!Queue.empty() && "Queue is empty!");
   std::vector<SUnit *>::iterator I = std::find(Queue.begin(), Queue.end(), SU);
-  if (I != prior(Queue.end()))
+  if (I != std::prev(Queue.end()))
     std::swap(*I, Queue.back());
 
   Queue.pop_back();

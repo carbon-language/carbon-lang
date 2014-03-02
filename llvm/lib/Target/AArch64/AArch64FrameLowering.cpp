@@ -237,7 +237,7 @@ AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
 
 
     // Delete the pseudo instruction TC_RETURN.
-    MachineInstr *NewMI = prior(MBBI);
+    MachineInstr *NewMI = std::prev(MBBI);
     MBB.erase(MBBI);
     MBBI = NewMI;
 

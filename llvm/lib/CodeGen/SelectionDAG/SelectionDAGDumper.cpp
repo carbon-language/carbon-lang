@@ -357,7 +357,7 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
       for (MachineSDNode::mmo_iterator i = MN->memoperands_begin(),
            e = MN->memoperands_end(); i != e; ++i) {
         OS << **i;
-        if (llvm::next(i) != e)
+        if (std::next(i) != e)
           OS << " ";
       }
       OS << ">";

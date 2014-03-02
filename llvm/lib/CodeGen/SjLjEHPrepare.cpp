@@ -173,7 +173,7 @@ void SjLjEHPrepare::substituteLPadValues(LandingPadInst *LPI, Value *ExnVal,
   Type *LPadType = LPI->getType();
   Value *LPadVal = UndefValue::get(LPadType);
   IRBuilder<> Builder(
-      llvm::next(BasicBlock::iterator(cast<Instruction>(SelVal))));
+      std::next(BasicBlock::iterator(cast<Instruction>(SelVal))));
   LPadVal = Builder.CreateInsertValue(LPadVal, ExnVal, 0, "lpad.val");
   LPadVal = Builder.CreateInsertValue(LPadVal, SelVal, 1, "lpad.val");
 

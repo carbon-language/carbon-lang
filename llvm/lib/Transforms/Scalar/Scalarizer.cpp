@@ -269,7 +269,7 @@ Scatterer Scalarizer::scatter(Instruction *Point, Value *V) {
     // Put the scattered form of an instruction directly after the
     // instruction.
     BasicBlock *BB = VOp->getParent();
-    return Scatterer(BB, llvm::next(BasicBlock::iterator(VOp)),
+    return Scatterer(BB, std::next(BasicBlock::iterator(VOp)),
                      V, &Scattered[V]);
   }
   // In the fallback case, just put the scattered before Point and

@@ -408,8 +408,8 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler) {
         RegionEnd != MBB->begin(); RegionEnd = Scheduler.begin()) {
 
       // Avoid decrementing RegionEnd for blocks with no terminator.
-      if (RegionEnd != MBB->end()
-          || isSchedBoundary(llvm::prior(RegionEnd), MBB, MF, TII, IsPostRA)) {
+      if (RegionEnd != MBB->end() ||
+          isSchedBoundary(std::prev(RegionEnd), MBB, MF, TII, IsPostRA)) {
         --RegionEnd;
         // Count the boundary instruction.
         --RemainingInstrs;
@@ -420,7 +420,7 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler) {
       unsigned NumRegionInstrs = 0;
       MachineBasicBlock::iterator I = RegionEnd;
       for(;I != MBB->begin(); --I, --RemainingInstrs, ++NumRegionInstrs) {
-        if (isSchedBoundary(llvm::prior(I), MBB, MF, TII, IsPostRA))
+        if (isSchedBoundary(std::prev(I), MBB, MF, TII, IsPostRA))
           break;
       }
       // Notify the scheduler of the region, even if we may skip scheduling
@@ -428,7 +428,7 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler) {
       Scheduler.enterRegion(MBB, I, RegionEnd, NumRegionInstrs);
 
       // Skip empty scheduling regions (0 or 1 schedulable instructions).
-      if (I == RegionEnd || I == llvm::prior(RegionEnd)) {
+      if (I == RegionEnd || I == std::prev(RegionEnd)) {
         // Close the current region. Bundle the terminator if needed.
         // This invalidates 'RegionEnd' and 'I'.
         Scheduler.exitRegion();
@@ -770,13 +770,13 @@ void ScheduleDAGMI::placeDebugValues() {
 
   for (std::vector<std::pair<MachineInstr *, MachineInstr *> >::iterator
          DI = DbgValues.end(), DE = DbgValues.begin(); DI != DE; --DI) {
-    std::pair<MachineInstr *, MachineInstr *> P = *prior(DI);
+    std::pair<MachineInstr *, MachineInstr *> P = *std::prev(DI);
     MachineInstr *DbgValue = P.first;
     MachineBasicBlock::iterator OrigPrevMI = P.second;
     if (&*RegionBegin == DbgValue)
       ++RegionBegin;
     BB->splice(++OrigPrevMI, BB, DbgValue);
-    if (OrigPrevMI == llvm::prior(RegionEnd))
+    if (OrigPrevMI == std::prev(RegionEnd))
       RegionEnd = DbgValue;
   }
   DbgValues.clear();
@@ -816,8 +816,7 @@ void ScheduleDAGMILive::enterRegion(MachineBasicBlock *bb,
   ScheduleDAGMI::enterRegion(bb, begin, end, regioninstrs);
 
   // For convenience remember the end of the liveness region.
-  LiveRegionEnd =
-    (RegionEnd == bb->end()) ? RegionEnd : llvm::next(RegionEnd);
+  LiveRegionEnd = (RegionEnd == bb->end()) ? RegionEnd : std::next(RegionEnd);
 
   SUPressureDiffs.clear();
 
@@ -1446,19 +1445,19 @@ void CopyConstrain::constrainLocalCopy(SUnit *CopySU, ScheduleDAGMILive *DAG) {
   // Check if GlobalLI contains a hole in the vicinity of LocalLI.
   if (GlobalSegment != GlobalLI->begin()) {
     // Two address defs have no hole.
-    if (SlotIndex::isSameInstr(llvm::prior(GlobalSegment)->end,
+    if (SlotIndex::isSameInstr(std::prev(GlobalSegment)->end,
                                GlobalSegment->start)) {
       return;
     }
     // If the prior global segment may be defined by the same two-address
     // instruction that also defines LocalLI, then can't make a hole here.
-    if (SlotIndex::isSameInstr(llvm::prior(GlobalSegment)->start,
+    if (SlotIndex::isSameInstr(std::prev(GlobalSegment)->start,
                                LocalLI->beginIndex())) {
       return;
     }
     // If GlobalLI has a prior segment, it must be live into the EBB. Otherwise
     // it would be a disconnected component in the live range.
-    assert(llvm::prior(GlobalSegment)->start < LocalLI->beginIndex() &&
+    assert(std::prev(GlobalSegment)->start < LocalLI->beginIndex() &&
            "Disconnected LRG within the scheduling region.");
   }
   MachineInstr *GlobalDef = LIS->getInstructionFromIndex(GlobalSegment->start);

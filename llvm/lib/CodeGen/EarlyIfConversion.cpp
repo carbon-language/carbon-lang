@@ -461,7 +461,7 @@ void SSAIfConv::replacePHIInstrs() {
     DEBUG(dbgs() << "If-converting " << *PI.PHI);
     unsigned DstReg = PI.PHI->getOperand(0).getReg();
     TII->insertSelect(*Head, FirstTerm, HeadDL, DstReg, Cond, PI.TReg, PI.FReg);
-    DEBUG(dbgs() << "          --> " << *llvm::prior(FirstTerm));
+    DEBUG(dbgs() << "          --> " << *std::prev(FirstTerm));
     PI.PHI->eraseFromParent();
     PI.PHI = 0;
   }
@@ -482,7 +482,7 @@ void SSAIfConv::rewritePHIOperands() {
     unsigned PHIDst = PI.PHI->getOperand(0).getReg();
     unsigned DstReg = MRI->createVirtualRegister(MRI->getRegClass(PHIDst));
     TII->insertSelect(*Head, FirstTerm, HeadDL, DstReg, Cond, PI.TReg, PI.FReg);
-    DEBUG(dbgs() << "          --> " << *llvm::prior(FirstTerm));
+    DEBUG(dbgs() << "          --> " << *std::prev(FirstTerm));
 
     // Rewrite PHI operands TPred -> (DstReg, Head), remove FPred.
     for (unsigned i = PI.PHI->getNumOperands(); i != 1; i -= 2) {

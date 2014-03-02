@@ -1391,7 +1391,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     Value *V = expand(SE.getAddRecExpr(NewOps, S->getLoop(),
                                        S->getNoWrapFlags(SCEV::FlagNW)));
     BasicBlock::iterator NewInsertPt =
-      llvm::next(BasicBlock::iterator(cast<Instruction>(V)));
+      std::next(BasicBlock::iterator(cast<Instruction>(V)));
     BuilderType::InsertPointGuard Guard(Builder);
     while (isa<PHINode>(NewInsertPt) || isa<DbgInfoIntrinsic>(NewInsertPt) ||
            isa<LandingPadInst>(NewInsertPt))
@@ -1619,7 +1619,7 @@ Value *SCEVExpander::expand(const SCEV *S) {
       while (InsertPt != Builder.GetInsertPoint()
              && (isInsertedInstruction(InsertPt)
                  || isa<DbgInfoIntrinsic>(InsertPt))) {
-        InsertPt = llvm::next(BasicBlock::iterator(InsertPt));
+        InsertPt = std::next(BasicBlock::iterator(InsertPt));
       }
       break;
     }

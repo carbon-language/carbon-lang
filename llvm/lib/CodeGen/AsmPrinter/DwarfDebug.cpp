@@ -1592,7 +1592,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
             // Terminate old register assignments that don't reach MI;
             MachineFunction::const_iterator PrevMBB = Prev->getParent();
-            if (PrevMBB != I && (!AtBlockEntry || llvm::next(PrevMBB) != I) &&
+            if (PrevMBB != I && (!AtBlockEntry || std::next(PrevMBB) != I) &&
                 isDbgValueInDefinedReg(Prev)) {
               // Previous register assignment needs to terminate at the end of
               // its basic block.
@@ -1603,7 +1603,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
                 DEBUG(dbgs() << "Dropping DBG_VALUE for empty range:\n"
                              << "\t" << *Prev << "\n");
                 History.pop_back();
-              } else if (llvm::next(PrevMBB) != PrevMBB->getParent()->end())
+              } else if (std::next(PrevMBB) != PrevMBB->getParent()->end())
                 // Terminate after LastMI.
                 History.push_back(LastMI);
             }

@@ -86,7 +86,7 @@ static SetVector<BasicBlock *> buildExtractionBlockSet(IteratorT BBBegin,
   }
 
 #ifndef NDEBUG
-  for (SetVector<BasicBlock *>::iterator I = llvm::next(Result.begin()),
+  for (SetVector<BasicBlock *>::iterator I = std::next(Result.begin()),
                                          E = Result.end();
        I != E; ++I)
     for (pred_iterator PI = pred_begin(*I), PE = pred_end(*I);

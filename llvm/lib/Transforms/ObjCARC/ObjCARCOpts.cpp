@@ -958,7 +958,7 @@ static void GenerateARCBBTerminatorAnnotation(const char *Name, BasicBlock *BB,
                                         /*isVarArg=*/false);
   Constant *Callee = M->getOrInsertFunction(Name, FTy);
 
-  IRBuilder<> Builder(BB, llvm::prior(BB->end()));
+  IRBuilder<> Builder(BB, std::prev(BB->end()));
 
   Value *PtrName;
   StringRef Tmp = Ptr->getName();
@@ -1874,7 +1874,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
         if (isa<InvokeInst>(Inst))
           S.InsertReverseInsertPt(BB->getFirstInsertionPt());
         else
-          S.InsertReverseInsertPt(llvm::next(BasicBlock::iterator(Inst)));
+          S.InsertReverseInsertPt(std::next(BasicBlock::iterator(Inst)));
         S.SetSeq(S_Use);
         ANNOTATE_BOTTOMUP(Inst, Ptr, Seq, S_Use);
       } else if (Seq == S_Release && IsUser(Class)) {
@@ -1888,7 +1888,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
         if (isa<InvokeInst>(Inst))
           S.InsertReverseInsertPt(BB->getFirstInsertionPt());
         else
-          S.InsertReverseInsertPt(llvm::next(BasicBlock::iterator(Inst)));
+          S.InsertReverseInsertPt(std::next(BasicBlock::iterator(Inst)));
       }
       break;
     case S_Stop:
@@ -1945,7 +1945,7 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
 
   // Visit all the instructions, bottom-up.
   for (BasicBlock::iterator I = BB->end(), E = BB->begin(); I != E; --I) {
-    Instruction *Inst = llvm::prior(I);
+    Instruction *Inst = std::prev(I);
 
     // Invoke instructions are visited as part of their successors (below).
     if (isa<InvokeInst>(Inst))
@@ -2691,12 +2691,12 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
     // within the same block. Theoretically, we could do memdep-style non-local
     // analysis too, but that would want caching. A better approach would be to
     // use the technique that EarlyCSE uses.
-    inst_iterator Current = llvm::prior(I);
+    inst_iterator Current = std::prev(I);
     BasicBlock *CurrentBB = Current.getBasicBlockIterator();
     for (BasicBlock::iterator B = CurrentBB->begin(),
                               J = Current.getInstructionIterator();
          J != B; --J) {
-      Instruction *EarlierInst = &*llvm::prior(J);
+      Instruction *EarlierInst = &*std::prev(J);
       InstructionClass EarlierClass = GetInstructionClass(EarlierInst);
       switch (EarlierClass) {
       case IC_LoadWeak:

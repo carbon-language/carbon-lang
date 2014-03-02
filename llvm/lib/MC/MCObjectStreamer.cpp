@@ -53,7 +53,7 @@ MCFragment *MCObjectStreamer::getCurrentFragment() const {
   assert(getCurrentSectionData() && "No current section!");
 
   if (CurInsertionPoint != getCurrentSectionData()->getFragmentList().begin())
-    return prior(CurInsertionPoint);
+    return std::prev(CurInsertionPoint);
 
   return 0;
 }

@@ -484,7 +484,7 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
     return;
 
   // Merge succeeded, update records.
-  Merges.push_back(prior(Loc));
+  Merges.push_back(std::prev(Loc));
 
   // In gathering loads together, we may have moved the imp-def of a register
   // past one of its uses. This is OK, since we know better than the rest of
@@ -812,7 +812,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
   // Try merging with the previous instruction.
   MachineBasicBlock::iterator BeginMBBI = MBB.begin();
   if (MBBI != BeginMBBI) {
-    MachineBasicBlock::iterator PrevMBBI = prior(MBBI);
+    MachineBasicBlock::iterator PrevMBBI = std::prev(MBBI);
     while (PrevMBBI != BeginMBBI && PrevMBBI->isDebugValue())
       --PrevMBBI;
     if (Mode == ARM_AM::ia &&
@@ -831,7 +831,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLSMultiple(MachineBasicBlock &MBB,
   // Try merging with the next instruction.
   MachineBasicBlock::iterator EndMBBI = MBB.end();
   if (!DoMerge && MBBI != EndMBBI) {
-    MachineBasicBlock::iterator NextMBBI = llvm::next(MBBI);
+    MachineBasicBlock::iterator NextMBBI = std::next(MBBI);
     while (NextMBBI != EndMBBI && NextMBBI->isDebugValue())
       ++NextMBBI;
     if ((Mode == ARM_AM::ia || Mode == ARM_AM::ib) &&
@@ -959,7 +959,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   // Try merging with the previous instruction.
   MachineBasicBlock::iterator BeginMBBI = MBB.begin();
   if (MBBI != BeginMBBI) {
-    MachineBasicBlock::iterator PrevMBBI = prior(MBBI);
+    MachineBasicBlock::iterator PrevMBBI = std::prev(MBBI);
     while (PrevMBBI != BeginMBBI && PrevMBBI->isDebugValue())
       --PrevMBBI;
     if (isMatchingDecrement(PrevMBBI, Base, Bytes, Limit, Pred, PredReg)) {
@@ -978,7 +978,7 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   // Try merging with the next instruction.
   MachineBasicBlock::iterator EndMBBI = MBB.end();
   if (!DoMerge && MBBI != EndMBBI) {
-    MachineBasicBlock::iterator NextMBBI = llvm::next(MBBI);
+    MachineBasicBlock::iterator NextMBBI = std::next(MBBI);
     while (NextMBBI != EndMBBI && NextMBBI->isDebugValue())
       ++NextMBBI;
     if (!isAM5 &&
@@ -1122,7 +1122,7 @@ void ARMLoadStoreOpt::AdvanceRS(MachineBasicBlock &MBB, MemOpQueue &MemOps) {
   }
 
   if (Loc != MBB.begin())
-    RS->forward(prior(Loc));
+    RS->forward(std::prev(Loc));
 }
 
 static int getMemoryOpOffset(const MachineInstr *MI) {
@@ -1232,7 +1232,7 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
                   getKillRegState(OddDeadKill)  | getUndefRegState(OddUndef));
         ++NumSTRD2STM;
       }
-      NewBBI = llvm::prior(MBBI);
+      NewBBI = std::prev(MBBI);
     } else {
       // Split into two instructions.
       unsigned NewOpc = (isLd)
@@ -1254,7 +1254,7 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
                       OddReg, OddDeadKill, false,
                       BaseReg, false, BaseUndef, false, OffUndef,
                       Pred, PredReg, TII, isT2);
-        NewBBI = llvm::prior(MBBI);
+        NewBBI = std::prev(MBBI);
         InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc,
                       EvenReg, EvenDeadKill, false,
                       BaseReg, BaseKill, BaseUndef, OffKill, OffUndef,
@@ -1274,7 +1274,7 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
                       EvenReg, EvenDeadKill, EvenUndef,
                       BaseReg, false, BaseUndef, false, OffUndef,
                       Pred, PredReg, TII, isT2);
-        NewBBI = llvm::prior(MBBI);
+        NewBBI = std::prev(MBBI);
         InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc2,
                       OddReg, OddDeadKill, OddUndef,
                       BaseReg, BaseKill, BaseUndef, OffKill, OffUndef,
@@ -1419,7 +1419,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
         // Find a scratch register.
         unsigned Scratch = RS->FindUnusedReg(&ARM::GPRRegClass);
         // Process the load / store instructions.
-        RS->forward(prior(MBBI));
+        RS->forward(std::prev(MBBI));
 
         // Merge ops.
         Merges.clear();
@@ -1441,13 +1441,13 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
               ++NumMerges;
 
         // RS may be pointing to an instruction that's deleted.
-        RS->skipTo(prior(MBBI));
+        RS->skipTo(std::prev(MBBI));
       } else if (NumMemOps == 1) {
         // Try folding preceding/trailing base inc/dec into the single
         // load/store.
         if (MergeBaseUpdateLoadStore(MBB, MemOps[0].MBBI, TII, Advance, MBBI)) {
           ++NumMerges;
-          RS->forward(prior(MBBI));
+          RS->forward(std::prev(MBBI));
         }
       }
 
@@ -1490,7 +1490,7 @@ bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
       (MBBI->getOpcode() == ARM::BX_RET ||
        MBBI->getOpcode() == ARM::tBX_RET ||
        MBBI->getOpcode() == ARM::MOVPCLR)) {
-    MachineInstr *PrevMI = prior(MBBI);
+    MachineInstr *PrevMI = std::prev(MBBI);
     unsigned Opcode = PrevMI->getOpcode();
     if (Opcode == ARM::LDMIA_UPD || Opcode == ARM::LDMDA_UPD ||
         Opcode == ARM::LDMDB_UPD || Opcode == ARM::LDMIB_UPD ||

@@ -123,7 +123,7 @@ FunctionAnalysisManager::getResultImpl(void *PassID, Function *F) {
   if (Inserted) {
     FunctionAnalysisResultListT &ResultList = FunctionAnalysisResultLists[F];
     ResultList.push_back(std::make_pair(PassID, lookupPass(PassID).run(F, this)));
-    RI->second = llvm::prior(ResultList.end());
+    RI->second = std::prev(ResultList.end());
   }
 
   return *RI->second->second;

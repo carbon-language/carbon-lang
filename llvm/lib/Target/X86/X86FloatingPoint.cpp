@@ -432,7 +432,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
 
     MachineInstr *PrevMI = 0;
     if (I != BB.begin())
-      PrevMI = prior(I);
+      PrevMI = std::prev(I);
 
     ++NumFP;  // Keep track of # of pseudo instrs
     DEBUG(dbgs() << "\nFPInst:\t" << *MI);
@@ -475,10 +475,10 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
       } else {
         MachineBasicBlock::iterator Start = I;
         // Rewind to first instruction newly inserted.
-        while (Start != BB.begin() && prior(Start) != PrevI) --Start;
+        while (Start != BB.begin() && std::prev(Start) != PrevI) --Start;
         dbgs() << "Inserted instructions:\n\t";
         Start->print(dbgs(), &MF.getTarget());
-        while (++Start != llvm::next(I)) {}
+        while (++Start != std::next(I)) {}
       }
       dumpStack();
     );
@@ -905,7 +905,7 @@ void FPS::adjustLiveRegs(unsigned Mask, MachineBasicBlock::iterator I) {
 
   // Kill registers by popping.
   if (Kills && I != MBB->begin()) {
-    MachineBasicBlock::iterator I2 = llvm::prior(I);
+    MachineBasicBlock::iterator I2 = std::prev(I);
     while (StackTop) {
       unsigned KReg = getStackEntry(0);
       if (!(Kills & (1 << KReg)))

@@ -158,8 +158,8 @@ bool SparcInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
         continue;
       }
 
-      while (llvm::next(I) != MBB.end())
-        llvm::next(I)->eraseFromParent();
+      while (std::next(I) != MBB.end())
+        std::next(I)->eraseFromParent();
 
       Cond.clear();
       FBB = 0;

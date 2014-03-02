@@ -207,7 +207,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
   case AMDGPU::RAT_WRITE_CACHELESS_32_eg:
   case AMDGPU::RAT_WRITE_CACHELESS_64_eg:
   case AMDGPU::RAT_WRITE_CACHELESS_128_eg: {
-    unsigned EOP = (llvm::next(I)->getOpcode() == AMDGPU::RETURN) ? 1 : 0;
+    unsigned EOP = (std::next(I)->getOpcode() == AMDGPU::RETURN) ? 1 : 0;
 
     BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(MI->getOpcode()))
             .addOperand(MI->getOperand(0))
@@ -457,9 +457,9 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
     // Instruction is left unmodified if its not the last one of its type
     bool isLastInstructionOfItsType = true;
     unsigned InstExportType = MI->getOperand(1).getImm();
-    for (MachineBasicBlock::iterator NextExportInst = llvm::next(I),
+    for (MachineBasicBlock::iterator NextExportInst = std::next(I),
          EndBlock = BB->end(); NextExportInst != EndBlock;
-         NextExportInst = llvm::next(NextExportInst)) {
+         NextExportInst = std::next(NextExportInst)) {
       if (NextExportInst->getOpcode() == AMDGPU::EG_ExportSwz ||
           NextExportInst->getOpcode() == AMDGPU::R600_ExportSwz) {
         unsigned CurrentInstExportType = NextExportInst->getOperand(1)
@@ -470,7 +470,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
         }
       }
     }
-    bool EOP = (llvm::next(I)->getOpcode() == AMDGPU::RETURN)? 1 : 0;
+    bool EOP = (std::next(I)->getOpcode() == AMDGPU::RETURN) ? 1 : 0;
     if (!EOP && !isLastInstructionOfItsType)
       return BB;
     unsigned CfInst = (MI->getOpcode() == AMDGPU::EG_ExportSwz)? 84 : 40;

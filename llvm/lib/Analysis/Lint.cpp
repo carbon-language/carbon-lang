@@ -603,7 +603,7 @@ void Lint::visitInsertElementInst(InsertElementInst &I) {
 void Lint::visitUnreachableInst(UnreachableInst &I) {
   // This isn't undefined behavior, it's merely suspicious.
   Assert1(&I == I.getParent()->begin() ||
-          prior(BasicBlock::iterator(&I))->mayHaveSideEffects(),
+          std::prev(BasicBlock::iterator(&I))->mayHaveSideEffects(),
           "Unusual: unreachable immediately preceded by instruction without "
           "side effects", &I);
 }

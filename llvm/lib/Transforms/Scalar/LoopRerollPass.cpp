@@ -190,12 +190,12 @@ protected:
 
       iterator begin() {
         assert(Valid && "Using invalid reduction");
-        return llvm::next(Instructions.begin());
+        return std::next(Instructions.begin());
       }
 
       const_iterator begin() const {
         assert(Valid && "Using invalid reduction");
-        return llvm::next(Instructions.begin());
+        return std::next(Instructions.begin());
       }
 
       iterator end() { return Instructions.end(); }
@@ -561,7 +561,7 @@ bool LoopReroll::findScaleFromMul(Instruction *RealIV, uint64_t &Scale,
     return false;
   const SCEVAddRecExpr *RealIVSCEV = cast<SCEVAddRecExpr>(SE->getSCEV(RealIV));
   Instruction *User1 = cast<Instruction>(*RealIV->use_begin()),
-              *User2 = cast<Instruction>(*llvm::next(RealIV->use_begin()));
+              *User2 = cast<Instruction>(*std::next(RealIV->use_begin()));
   if (!SE->isSCEVable(User1->getType()) || !SE->isSCEVable(User2->getType()))
     return false;
   const SCEVAddRecExpr *User1SCEV =

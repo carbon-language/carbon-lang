@@ -680,7 +680,7 @@ bool DSE::HandleFree(CallInst *F) {
       if (!AA->isMustAlias(F->getArgOperand(0), DepPointer))
         break;
 
-      Instruction *Next = llvm::next(BasicBlock::iterator(Dependency));
+      Instruction *Next = std::next(BasicBlock::iterator(Dependency));
 
       // DCE instructions only used to calculate that store
       DeleteDeadInstruction(Dependency, *MD, TLI);
@@ -761,7 +761,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
               for (SmallVectorImpl<Value *>::iterator I = Pointers.begin(),
                    E = Pointers.end(); I != E; ++I) {
                 dbgs() << **I;
-                if (llvm::next(I) != E)
+                if (std::next(I) != E)
                   dbgs() << ", ";
               }
               dbgs() << '\n');

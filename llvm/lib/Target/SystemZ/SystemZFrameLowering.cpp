@@ -378,8 +378,8 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
     // Mark the FramePtr as live at the beginning of every block except
     // the entry block.  (We'll have marked R11 as live on entry when
     // saving the GPRs.)
-    for (MachineFunction::iterator
-           I = llvm::next(MF.begin()), E = MF.end(); I != E; ++I)
+    for (MachineFunction::iterator I = std::next(MF.begin()), E = MF.end();
+         I != E; ++I)
       I->addLiveIn(SystemZ::R11D);
   }
 

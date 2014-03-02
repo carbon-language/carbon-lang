@@ -165,7 +165,7 @@ bool ObjCARCAPElim::runOnModule(Module &M) {
     if (F->isDeclaration())
       continue;
     // Only look at functions with one basic block.
-    if (llvm::next(F->begin()) != F->end())
+    if (std::next(F->begin()) != F->end())
       continue;
     // Ok, a single-block constructor function definition. Try to optimize it.
     Changed |= OptimizeBB(F->begin());
