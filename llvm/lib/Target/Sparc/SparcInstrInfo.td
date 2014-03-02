@@ -38,7 +38,12 @@ def HasV9   : Predicate<"Subtarget.isV9()">,
 def HasNoV9 : Predicate<"!Subtarget.isV9()">;
 
 // HasVIS - This is true when the target processor has VIS extensions.
-def HasVIS : Predicate<"Subtarget.isVIS()">;
+def HasVIS : Predicate<"Subtarget.isVIS()">,
+             AssemblerPredicate<"FeatureVIS">;
+def HasVIS2 : Predicate<"Subtarget.isVIS2()">,
+             AssemblerPredicate<"FeatureVIS2">;
+def HasVIS3 : Predicate<"Subtarget.isVIS3()">,
+             AssemblerPredicate<"FeatureVIS3">;
 
 // HasHardQuad - This is true when the target processor supports quad floating
 // point instructions.
@@ -1184,4 +1189,5 @@ def : Pat<(atomic_store ADDRri:$dst, i32:$val), (STri ADDRri:$dst, $val)>;
 
 
 include "SparcInstr64Bit.td"
+include "SparcInstrVIS.td"
 include "SparcInstrAliases.td"

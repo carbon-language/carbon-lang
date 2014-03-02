@@ -29,6 +29,12 @@ def FeatureV8Deprecated
 def FeatureVIS
   : SubtargetFeature<"vis", "IsVIS", "true",
                      "Enable UltraSPARC Visual Instruction Set extensions">;
+def FeatureVIS2
+  : SubtargetFeature<"vis2", "IsVIS2", "true",
+                     "Enable Visual Instruction Set extensions II">;
+def FeatureVIS3
+  : SubtargetFeature<"vis3", "IsVIS3", "true",
+                     "Enable Visual Instruction Set extensions III">;
 
 def FeatureHardQuad
   : SubtargetFeature<"hard-quad-float", "HasHardQuad", "true",
@@ -69,12 +75,17 @@ def : Proc<"sparclite86x",    []>;
 def : Proc<"sparclet",        []>;
 def : Proc<"tsc701",          []>;
 def : Proc<"v9",              [FeatureV9]>;
-def : Proc<"ultrasparc",      [FeatureV9, FeatureV8Deprecated]>;
-def : Proc<"ultrasparc3",     [FeatureV9, FeatureV8Deprecated]>;
-def : Proc<"niagara",         [FeatureV9, FeatureV8Deprecated]>;
-def : Proc<"niagara2",        [FeatureV9, FeatureV8Deprecated, UsePopc]>;
-def : Proc<"niagara3",        [FeatureV9, FeatureV8Deprecated, UsePopc]>;
-def : Proc<"niagara4",        [FeatureV9, FeatureV8Deprecated, UsePopc]>;
+def : Proc<"ultrasparc",      [FeatureV9, FeatureV8Deprecated, FeatureVIS]>;
+def : Proc<"ultrasparc3",     [FeatureV9, FeatureV8Deprecated, FeatureVIS,
+                               FeatureVIS2]>;
+def : Proc<"niagara",         [FeatureV9, FeatureV8Deprecated, FeatureVIS,
+                               FeatureVIS2]>;
+def : Proc<"niagara2",        [FeatureV9, FeatureV8Deprecated, UsePopc,
+                               FeatureVIS, FeatureVIS2]>;
+def : Proc<"niagara3",        [FeatureV9, FeatureV8Deprecated, UsePopc,
+                               FeatureVIS, FeatureVIS2]>;
+def : Proc<"niagara4",        [FeatureV9, FeatureV8Deprecated, UsePopc,
+                               FeatureVIS, FeatureVIS2, FeatureVIS3]>;
 
 
 //===----------------------------------------------------------------------===//

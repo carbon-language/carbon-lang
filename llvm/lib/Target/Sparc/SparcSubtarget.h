@@ -27,7 +27,7 @@ class SparcSubtarget : public SparcGenSubtargetInfo {
   virtual void anchor();
   bool IsV9;
   bool V8DeprecatedInsts;
-  bool IsVIS;
+  bool IsVIS, IsVIS2, IsVIS3;
   bool Is64Bit;
   bool HasHardQuad;
   bool UsePopc;
@@ -38,6 +38,8 @@ public:
 
   bool isV9() const { return IsV9; }
   bool isVIS() const { return IsVIS; }
+  bool isVIS2() const { return IsVIS2; }
+  bool isVIS3() const { return IsVIS3; }
   bool useDeprecatedV8Instructions() const { return V8DeprecatedInsts; }
   bool hasHardQuad() const { return HasHardQuad; }
   bool usePopc() const { return UsePopc; }
