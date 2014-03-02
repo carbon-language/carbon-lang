@@ -68,7 +68,8 @@ class SparcAsmParser : public MCTargetAsmParser {
                StringRef Name);
 
   OperandMatchResultTy
-  parseSparcAsmOperand(SparcOperand *&Operand, bool isCall = false);
+  parseSparcAsmOperand(SparcOperand *&Operand, bool isCall = false,
+                       bool createTokenForFCC = true);
 
   OperandMatchResultTy
   parseBranchModifiers(SmallVectorImpl<MCParsedAsmOperand*> &Operands);
@@ -631,7 +632,10 @@ parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   }
 
   SparcOperand *Op = 0;
-  ResTy = parseSparcAsmOperand(Op, (Mnemonic == "call"));
+
+  bool createTokenForFCC = !(Mnemonic == "fcmps" || Mnemonic == "fcmpd"
+                             || Mnemonic == "fcmpq");
+  ResTy = parseSparcAsmOperand(Op, (Mnemonic == "call"), createTokenForFCC);
   if (ResTy != MatchOperand_Success || !Op)
     return MatchOperand_ParseFail;
 
@@ -642,7 +646,8 @@ parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
 }
 
 SparcAsmParser::OperandMatchResultTy
-SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op, bool isCall)
+SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op, bool isCall,
+                                     bool createTokenForFCC)
 {
 
   SMLoc S = Parser.getTok().getLoc();
@@ -677,9 +682,11 @@ SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op, bool isCall)
         break;
 
       case Sparc::FCC0:
-        assert(name == "fcc0" && "Cannot handle %fcc other than %fcc0 yet");
-        Op = SparcOperand::CreateToken("%fcc0", S);
-        break;
+        if (createTokenForFCC) {
+          assert(name == "fcc0" && "Cannot handle %fcc other than %fcc0 yet");
+          Op = SparcOperand::CreateToken("%fcc0", S);
+          break;
+        }
       }
       break;
     }
@@ -783,7 +790,7 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
         && !name.substr(3).getAsInteger(10, intVal)
         && intVal < 4) {
       // FIXME: check 64bit and  handle %fcc1 - %fcc3
-      RegNo = Sparc::FCC0;
+      RegNo = Sparc::FCC0 + intVal;
       RegKind = SparcOperand::rk_CCReg;
       return true;
     }

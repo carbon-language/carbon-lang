@@ -32,6 +32,10 @@ namespace Sparc {
 #define PRINT_ALIAS_INSTR
 #include "SparcGenAsmWriter.inc"
 
+bool SparcInstPrinter::isV9() const {
+  return (STI.getFeatureBits() & Sparc::FeatureV9) != 0;
+}
+
 void SparcInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const
 {
   OS << '%' << StringRef(getRegisterName(RegNo)).lower();
@@ -64,6 +68,26 @@ bool SparcInstPrinter::printSparcAliasInstr(const MCInst *MI, raw_ostream &O)
       O << "\tcall "; printMemOperand(MI, 1, O);
       return true;
     }
+  }
+  case SP::V9FCMPS:
+  case SP::V9FCMPD:
+  case SP::V9FCMPQ: {
+    if (isV9()
+        || (MI->getNumOperands() != 3)
+        || (!MI->getOperand(0).isReg())
+        || (MI->getOperand(0).getReg() != SP::FCC0))
+      return false;
+    // if V8, skip printing %fcc0.
+    switch(MI->getOpcode()) {
+    default:
+    case SP::V9FCMPS: O << "\tfcmps "; break;
+    case SP::V9FCMPD: O << "\tfcmpd "; break;
+    case SP::V9FCMPQ: O << "\tfcmpq "; break;
+    }
+    printOperand(MI, 1, O);
+    O << ", ";
+    printOperand(MI, 2, O);
+    return true;
   }
   }
 }

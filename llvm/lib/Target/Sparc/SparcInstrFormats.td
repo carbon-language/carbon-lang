@@ -153,7 +153,6 @@ class F3_3c<bits<2> opVal, bits<6> op3val, bits<9> opfval, dag outs, dag ins,
 
   let op         = opVal;
   let op3        = op3val;
-  let rd         = 0;
 
   let Inst{13-5} = opfval;   // fp opcode
   let Inst{4-0}  = rs2;

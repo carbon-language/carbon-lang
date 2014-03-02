@@ -153,7 +153,7 @@ static MCInstPrinter *createSparcMCInstPrinter(const Target &T,
                                               const MCInstrInfo &MII,
                                               const MCRegisterInfo &MRI,
                                               const MCSubtargetInfo &STI) {
-  return new SparcInstPrinter(MAI, MII, MRI);
+  return new SparcInstPrinter(MAI, MII, MRI, STI);
 }
 
 extern "C" void LLVMInitializeSparcTargetMC() {

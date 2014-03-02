@@ -113,6 +113,9 @@ static const unsigned QFPRegDecoderTable[] = {
   SP::Q6,  SP::Q14,  ~0U,  ~0U,
   SP::Q7,  SP::Q15,  ~0U,  ~0U } ;
 
+static const unsigned FCCRegDecoderTable[] = {
+  SP::FCC0, SP::FCC1, SP::FCC2, SP::FCC3 };
+
 static DecodeStatus DecodeIntRegsRegisterClass(MCInst &Inst,
                                                unsigned RegNo,
                                                uint64_t Address,
@@ -173,6 +176,16 @@ static DecodeStatus DecodeQFPRegsRegisterClass(MCInst &Inst,
   Inst.addOperand(MCOperand::CreateReg(Reg));
   return MCDisassembler::Success;
 }
+
+static DecodeStatus DecodeFCCRegsRegisterClass(MCInst &Inst, unsigned RegNo,
+                                               uint64_t Address,
+                                               const void *Decoder) {
+  if (RegNo > 3)
+    return MCDisassembler::Fail;
+  Inst.addOperand(MCOperand::CreateReg(FCCRegDecoderTable[RegNo]));
+  return MCDisassembler::Success;
+}
+
 
 static DecodeStatus DecodeLoadInt(MCInst &Inst, unsigned insn, uint64_t Address,
                                   const void *Decoder);

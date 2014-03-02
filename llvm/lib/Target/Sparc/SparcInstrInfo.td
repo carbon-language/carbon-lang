@@ -864,7 +864,7 @@ def FDIVQ  : F3_3<2, 0b110100, 0b001001111,
 // This behavior is modeled with a forced noop after the instruction in
 // DelaySlotFiller.
 
-let Defs = [FCC0] in {
+let Defs = [FCC0], rd = 0, isCodeGenOnly = 1 in {
   def FCMPS  : F3_3c<2, 0b110101, 0b001010001,
                    (outs), (ins FPRegs:$rs1, FPRegs:$rs2),
                    "fcmps $rs1, $rs2",
@@ -1013,6 +1013,19 @@ let Predicates = [HasV9] in {
                    [(set f128:$rd, (fabs f128:$rs2))]>,
                    Requires<[HasHardQuad]>;
 }
+
+// Floating-point compare instruction with %fcc0-%fcc1
+def V9FCMPS  : F3_3c<2, 0b110101, 0b001010001,
+               (outs FCCRegs:$rd), (ins FPRegs:$rs1, FPRegs:$rs2),
+               "fcmps $rd, $rs1, $rs2", []>;
+def V9FCMPD  : F3_3c<2, 0b110101, 0b001010010,
+                (outs FCCRegs:$rd), (ins DFPRegs:$rs1, DFPRegs:$rs2),
+                "fcmpd $rd, $rs1, $rs2", []>;
+def V9FCMPQ  : F3_3c<2, 0b110101, 0b001010011,
+                (outs FCCRegs:$rd), (ins QFPRegs:$rs1, QFPRegs:$rs2),
+                "fcmpq $rd, $rs1, $rs2", []>,
+                 Requires<[HasHardQuad]>;
+
 
 // POPCrr - This does a ctpop of a 64-bit register.  As such, we have to clear
 // the top 32-bits before using it.  To do this clearing, we use a SRLri X,0.

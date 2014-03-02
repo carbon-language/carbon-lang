@@ -96,12 +96,19 @@
         fdivd %f0, %f4, %f8
         fdivq %f0, %f4, %f8
 
-        ! CHECK: fcmps %f0, %f4                  ! encoding: [0x81,0xa8,0x0a,0x24]
-        ! CHECK: fcmpd %f0, %f4                  ! encoding: [0x81,0xa8,0x0a,0x44]
-        ! CHECK: fcmpq %f0, %f4                  ! encoding: [0x81,0xa8,0x0a,0x64]
+        ! CHECK: fcmps %fcc0, %f0, %f4                  ! encoding: [0x81,0xa8,0x0a,0x24]
+        ! CHECK: fcmpd %fcc0, %f0, %f4                  ! encoding: [0x81,0xa8,0x0a,0x44]
+        ! CHECK: fcmpq %fcc0, %f0, %f4                  ! encoding: [0x81,0xa8,0x0a,0x64]
         fcmps %f0, %f4
         fcmpd %f0, %f4
         fcmpq %f0, %f4
+
+        ! CHECK: fcmps %fcc2, %f0, %f4                  ! encoding: [0x85,0xa8,0x0a,0x24]
+        ! CHECK: fcmpd %fcc2, %f0, %f4                  ! encoding: [0x85,0xa8,0x0a,0x44]
+        ! CHECK: fcmpq %fcc2, %f0, %f4                  ! encoding: [0x85,0xa8,0x0a,0x64]
+        fcmps %fcc2, %f0, %f4
+        fcmpd %fcc2, %f0, %f4
+        fcmpq %fcc2, %f0, %f4
 
         ! CHECK: fxtos %f0, %f4                  ! encoding: [0x89,0xa0,0x10,0x80]
         ! CHECK: fxtod %f0, %f4                  ! encoding: [0x89,0xa0,0x11,0x00]

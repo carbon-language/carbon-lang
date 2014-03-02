@@ -120,13 +120,13 @@
 # CHECK: fdivq %f0, %f4, %f8
 0x91 0xa0 0x09 0xe4
 
-# CHECK: fcmps %f0, %f4
+# CHECK: fcmps %fcc0, %f0, %f4
 0x81 0xa8 0x0a 0x24
 
-# CHECK: fcmpd %f0, %f4
+# CHECK: fcmpd %fcc0, %f0, %f4
 0x81 0xa8 0x0a 0x44
 
-# CHECK: fcmpq %f0, %f4
+# CHECK: fcmpq %fcc0, %f0, %f4
 0x81 0xa8 0x0a 0x64
 
 # CHECK: fxtos %f0, %f4

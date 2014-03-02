@@ -228,3 +228,9 @@ def : MnemonicAlias<"addccc", "addxcc">, Requires<[HasV9]>;
 
 def : MnemonicAlias<"subc", "subx">, Requires<[HasV9]>;
 def : MnemonicAlias<"subccc", "subxcc">, Requires<[HasV9]>;
+
+
+def : InstAlias<"fcmps $rs1, $rs2", (V9FCMPS FCC0, FPRegs:$rs1, FPRegs:$rs2)>;
+def : InstAlias<"fcmpd $rs1, $rs2", (V9FCMPD FCC0, DFPRegs:$rs1, DFPRegs:$rs2)>;
+def : InstAlias<"fcmpq $rs1, $rs2", (V9FCMPQ FCC0, QFPRegs:$rs1, QFPRegs:$rs2)>,
+                Requires<[HasHardQuad]>;
