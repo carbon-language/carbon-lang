@@ -915,23 +915,23 @@ class CallEventManager {
 
   template <typename T, typename Arg>
   T *create(Arg A, ProgramStateRef St, const LocationContext *LCtx) {
-    LLVM_STATIC_ASSERT(sizeof(T) == sizeof(CallEventTemplateTy),
-                       "CallEvent subclasses are not all the same size");
+    static_assert(sizeof(T) == sizeof(CallEventTemplateTy),
+                  "CallEvent subclasses are not all the same size");
     return new (allocate()) T(A, St, LCtx);
   }
 
   template <typename T, typename Arg1, typename Arg2>
   T *create(Arg1 A1, Arg2 A2, ProgramStateRef St, const LocationContext *LCtx) {
-    LLVM_STATIC_ASSERT(sizeof(T) == sizeof(CallEventTemplateTy),
-                       "CallEvent subclasses are not all the same size");
+    static_assert(sizeof(T) == sizeof(CallEventTemplateTy),
+                  "CallEvent subclasses are not all the same size");
     return new (allocate()) T(A1, A2, St, LCtx);
   }
 
   template <typename T, typename Arg1, typename Arg2, typename Arg3>
   T *create(Arg1 A1, Arg2 A2, Arg3 A3, ProgramStateRef St,
             const LocationContext *LCtx) {
-    LLVM_STATIC_ASSERT(sizeof(T) == sizeof(CallEventTemplateTy),
-                       "CallEvent subclasses are not all the same size");
+    static_assert(sizeof(T) == sizeof(CallEventTemplateTy),
+                  "CallEvent subclasses are not all the same size");
     return new (allocate()) T(A1, A2, A3, St, LCtx);
   }
 
@@ -939,8 +939,8 @@ class CallEventManager {
             typename Arg4>
   T *create(Arg1 A1, Arg2 A2, Arg3 A3, Arg4 A4, ProgramStateRef St,
             const LocationContext *LCtx) {
-    LLVM_STATIC_ASSERT(sizeof(T) == sizeof(CallEventTemplateTy),
-                       "CallEvent subclasses are not all the same size");
+    static_assert(sizeof(T) == sizeof(CallEventTemplateTy),
+                  "CallEvent subclasses are not all the same size");
     return new (allocate()) T(A1, A2, A3, A4, St, LCtx);
   }
 
