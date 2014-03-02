@@ -226,8 +226,9 @@ bool ChecksFilter::IsCheckEnabled(StringRef Name) {
   return EnableChecks.match(Name) && !DisableChecks.match(Name);
 }
 
-DiagnosticBuilder ClangTidyCheck::diag(SourceLocation Loc, StringRef Message) {
-  return Context->diag(CheckName, Loc, Message);
+DiagnosticBuilder ClangTidyCheck::diag(SourceLocation Loc, StringRef Message,
+                                       DiagnosticIDs::Level Level) {
+  return Context->diag(CheckName, Loc, Message, Level);
 }
 
 void ClangTidyCheck::run(const ast_matchers::MatchFinder::MatchResult &Result) {

@@ -76,7 +76,8 @@ public:
   void setContext(ClangTidyContext *Ctx) { Context = Ctx; }
 
   /// \brief Add a diagnostic with the check's name.
-  DiagnosticBuilder diag(SourceLocation Loc, StringRef Description);
+  DiagnosticBuilder diag(SourceLocation Loc, StringRef Description,
+                         DiagnosticIDs::Level Level = DiagnosticIDs::Warning);
 
   /// \brief Sets the check name. Intended to be used by the clang-tidy
   /// framework. Can be called only once.
