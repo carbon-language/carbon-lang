@@ -385,7 +385,8 @@ let usesCustomInserter = 1, Uses = [FCC0] in {
 }
 
 // JMPL Instruction.
-let isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
+let isTerminator = 1, hasDelaySlot = 1, isBarrier = 1,
+    DecoderMethod = "DecodeJMPL" in {
   def JMPLrr: F3_1<2, 0b111000, (outs IntRegs:$dst), (ins MEMrr:$addr),
                   "jmpl $addr, $dst", []>;
   def JMPLri: F3_2<2, 0b111000, (outs IntRegs:$dst), (ins MEMri:$addr),

@@ -61,7 +61,15 @@ bool SparcInstPrinter::printSparcAliasInstr(const MCInst *MI, raw_ostream &O)
       return false;
     switch (MI->getOperand(0).getReg()) {
     default: return false;
-    case SP::G0: // jmp $addr
+    case SP::G0: // jmp $addr | ret | retl
+      if (MI->getOperand(2).isImm() &&
+          MI->getOperand(2).getImm() == 8) {
+        switch(MI->getOperand(1).getReg()) {
+        default: break;
+        case SP::I7: O << "\tret"; return true;
+        case SP::O7: O << "\tretl"; return true;
+        }
+      }
       O << "\tjmp "; printMemOperand(MI, 1, O);
       return true;
     case SP::O7: // call $addr
