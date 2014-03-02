@@ -221,7 +221,7 @@ bool Parser::parseVersion(int &major, int &minor) {
   if (_tok._kind != Kind::identifier)
     return false;
   StringRef v1, v2;
-  llvm::tie(v1, v2) = _tok._range.split('.');
+  std::tie(v1, v2) = _tok._range.split('.');
   if (v1.getAsInteger(10, major))
     return false;
   if (v2.empty()) {

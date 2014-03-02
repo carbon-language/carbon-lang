@@ -97,7 +97,7 @@ static std::vector<StringRef> splitPathList(StringRef str) {
   std::vector<StringRef> ret;
   while (!str.empty()) {
     StringRef path;
-    llvm::tie(path, str) = str.split(';');
+    std::tie(path, str) = str.split(';');
     ret.push_back(path);
   }
   return ret;
@@ -107,7 +107,7 @@ static std::vector<StringRef> splitPathList(StringRef str) {
 // "<string>=<string>".
 static bool parseAlternateName(StringRef arg, StringRef &weak, StringRef &def,
                                raw_ostream &diagnostics) {
-  llvm::tie(weak, def) = arg.split('=');
+  std::tie(weak, def) = arg.split('=');
   if (weak.empty() || def.empty()) {
     diagnostics << "Error: malformed /alternatename option: " << arg << "\n";
     return false;
@@ -120,7 +120,7 @@ static bool parseAlternateName(StringRef arg, StringRef &weak, StringRef &def,
 static bool parseMemoryOption(StringRef arg, uint64_t &reserve,
                               uint64_t &commit) {
   StringRef reserveStr, commitStr;
-  llvm::tie(reserveStr, commitStr) = arg.split(',');
+  std::tie(reserveStr, commitStr) = arg.split(',');
   if (reserveStr.getAsInteger(0, reserve))
     return false;
   if (!commitStr.empty() && commitStr.getAsInteger(0, commit))
@@ -132,7 +132,7 @@ static bool parseMemoryOption(StringRef arg, uint64_t &reserve,
 // "<integer>[.<integer>]".
 static bool parseVersion(StringRef arg, uint32_t &major, uint32_t &minor) {
   StringRef majorVersion, minorVersion;
-  llvm::tie(majorVersion, minorVersion) = arg.split('.');
+  std::tie(majorVersion, minorVersion) = arg.split('.');
   if (minorVersion.empty())
     minorVersion = "0";
   if (majorVersion.getAsInteger(0, major))
@@ -168,7 +168,7 @@ static bool parseSubsystem(StringRef arg,
                            llvm::Optional<uint32_t> &minor,
                            raw_ostream &diagnostics) {
   StringRef subsystemStr, osVersion;
-  llvm::tie(subsystemStr, osVersion) = arg.split(',');
+  std::tie(subsystemStr, osVersion) = arg.split(',');
   if (!osVersion.empty()) {
     uint32_t v1, v2;
     if (!parseVersion(osVersion, v1, v2))
@@ -208,7 +208,7 @@ static bool parseSection(StringRef option, std::string &section,
                          llvm::Optional<uint32_t> &flags,
                          llvm::Optional<uint32_t> &mask) {
   StringRef flagString;
-  llvm::tie(section, flagString) = option.split(",");
+  std::tie(section, flagString) = option.split(",");
 
   bool negative = false;
   if (flagString.startswith("!")) {
@@ -294,14 +294,14 @@ static bool parseManifestUac(StringRef option,
     if (option.startswith_lower("level=")) {
       option = option.substr(strlen("level="));
       StringRef value;
-      llvm::tie(value, option) = option.split(" ");
+      std::tie(value, option) = option.split(" ");
       level = value.str();
       continue;
     }
     if (option.startswith_lower("uiaccess=")) {
       option = option.substr(strlen("uiaccess="));
       StringRef value;
-      llvm::tie(value, option) = option.split(" ");
+      std::tie(value, option) = option.split(" ");
       uiAccess = value.str();
       continue;
     }
@@ -314,7 +314,7 @@ static bool parseExport(StringRef option,
                         PECOFFLinkingContext::ExportDesc &ret) {
   StringRef name;
   StringRef rest;
-  llvm::tie(name, rest) = option.split(",");
+  std::tie(name, rest) = option.split(",");
   if (name.empty())
     return false;
   ret.name = name;
@@ -323,7 +323,7 @@ static bool parseExport(StringRef option,
     if (rest.empty())
       return true;
     StringRef arg;
-    llvm::tie(arg, rest) = rest.split(",");
+    std::tie(arg, rest) = rest.split(",");
     if (arg.equals_lower("noname")) {
       if (ret.ordinal < 0)
         return false;
@@ -404,7 +404,7 @@ static void quoteAndPrintXml(raw_ostream &out, StringRef str) {
     if (str.empty())
       return;
     StringRef line;
-    llvm::tie(line, str) = str.split("\n");
+    std::tie(line, str) = str.split("\n");
     if (line.empty())
       continue;
     out << '\"';
@@ -542,7 +542,7 @@ handleFailIfMismatchOption(StringRef option,
                            std::map<StringRef, StringRef> &mustMatch,
                            raw_ostream &diagnostics) {
   StringRef key, value;
-  llvm::tie(key, value) = option.split('=');
+  std::tie(key, value) = option.split('=');
   if (key.empty() || value.empty()) {
     diagnostics << "error: malformed /failifmismatch option: " << option << "\n";
     return true;
@@ -815,7 +815,7 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
     case OPT_merge: {
       // Parse /merge:<from>=<to>.
       StringRef from, to;
-      llvm::tie(from, to) = StringRef(inputArg->getValue()).split('=');
+      std::tie(from, to) = StringRef(inputArg->getValue()).split('=');
       if (from.empty() || to.empty()) {
         diagnostics << "error: malformed /merge option: "
                     << inputArg->getValue() << "\n";

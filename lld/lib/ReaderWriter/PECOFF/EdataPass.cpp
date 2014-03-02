@@ -144,7 +144,7 @@ void EdataPass::perform(std::unique_ptr<MutableFile> &file) {
     return;
 
   int ordinalBase, maxOrdinal;
-  llvm::tie(ordinalBase, maxOrdinal) = getOrdinalBase(entries);
+  std::tie(ordinalBase, maxOrdinal) = getOrdinalBase(entries);
 
   std::vector<TableEntry> namedEntries;
   for (TableEntry &e : entries)
