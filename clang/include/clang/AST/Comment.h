@@ -699,7 +699,7 @@ private:
   unsigned ParamIndex;
 
 public:
-  enum LLVM_ENUM_INT_TYPE(unsigned) {
+  enum : unsigned {
     InvalidParamIndex = ~0U,
     VarArgParamIndex = ~0U/*InvalidParamIndex*/ - 1U
   };
