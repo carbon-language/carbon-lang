@@ -1136,6 +1136,18 @@ let hasSideEffects = 1 in {
 }
 }
 
+multiclass TRAP<string regStr> {
+  def rr : TRAPSPrr<0b111010, (outs), (ins IntRegs:$rs1, IntRegs:$rs2,
+                                       CCOp:$cond),
+              !strconcat(!strconcat("t$cond ", regStr), ", $rs1 + $rs2"), []>;
+  def ri : TRAPSPri<0b111010, (outs), (ins IntRegs:$rs1, i32imm:$imm,
+                                      CCOp:$cond),
+              !strconcat(!strconcat("t$cond ", regStr), ", $rs1 + $imm"), []>;
+}
+
+let hasSideEffects = 1, Uses = [ICC], cc = 0b00 in
+  defm TICC : TRAP<"%icc">;
+
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//

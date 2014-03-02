@@ -542,6 +542,9 @@ def ATOMIC_SWAP_64 : Pseudo<(outs I64Regs:$rd),
                             [(set i64:$rd,
                                   (atomic_swap_64 iPTR:$addr, i64:$rs2))]>;
 
+let Predicates = [Is64Bit], hasSideEffects = 1, Uses = [ICC], cc = 0b10 in
+ defm TXCC : TRAP<"%xcc">;
+
 // Global addresses, constant pool entries
 let Predicates = [Is64Bit] in {
 

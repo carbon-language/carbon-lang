@@ -136,6 +136,59 @@ multiclass int_cond_alias<string cond, int condVal> {
                   (FMOVQ_XCC QFPRegs:$rd, QFPRegs:$rs2, condVal)>,
                   Requires<[Is64Bit, HasHardQuad]>;
 
+  // t<cond> %icc, rs1 + rs2
+  def : InstAlias<!strconcat(!strconcat("t", cond), " %icc, $rs1 + $rs2"),
+                  (TICCrr IntRegs:$rs1, IntRegs:$rs2, condVal)>,
+                  Requires<[HasV9]>;
+
+  // t<cond> %icc,  rs => t<cond> %icc, G0 + rs
+  def : InstAlias<!strconcat(!strconcat("t", cond), " %icc, $rs2"),
+                  (TICCrr G0, IntRegs:$rs2, condVal)>,
+                  Requires<[HasV9]>;
+
+  // t<cond> %xcc, rs1 + rs2
+  def : InstAlias<!strconcat(!strconcat("t", cond), " %xcc, $rs1 + $rs2"),
+                  (TXCCrr IntRegs:$rs1, IntRegs:$rs2, condVal)>,
+                  Requires<[HasV9]>;
+
+  // t<cond> %xcc, rs => t<cond> %xcc, G0 + rs
+  def : InstAlias<!strconcat(!strconcat("t", cond), " %xcc, $rs2"),
+                  (TXCCrr G0, IntRegs:$rs2, condVal)>,
+                  Requires<[HasV9]>;
+
+  // t<cond> rs1 + rs2 => t<cond> %icc, rs1 + rs2
+  def : InstAlias<!strconcat(!strconcat("t", cond), " $rs1 + $rs2"),
+                  (TICCrr IntRegs:$rs1, IntRegs:$rs2, condVal)>;
+
+  // t<cond> rs=> t<cond> %icc,  G0 + rs2
+  def : InstAlias<!strconcat(!strconcat("t", cond), " $rs2"),
+                  (TICCrr G0, IntRegs:$rs2, condVal)>;
+
+  // t<cond> %icc, rs1 + imm
+  def : InstAlias<!strconcat(!strconcat("t", cond), " %icc, $rs1 + $imm"),
+                  (TICCri IntRegs:$rs1, i32imm:$imm, condVal)>,
+                  Requires<[HasV9]>;
+  // t<cond> %icc, imm => t<cond> %icc, G0 + imm
+  def : InstAlias<!strconcat(!strconcat("t", cond), " %icc, $imm"),
+                  (TICCri G0, i32imm:$imm, condVal)>,
+                  Requires<[HasV9]>;
+  // t<cond> %xcc, rs1 + imm
+  def : InstAlias<!strconcat(!strconcat("t", cond), " %xcc, $rs1 + $imm"),
+                  (TXCCri IntRegs:$rs1, i32imm:$imm, condVal)>,
+                  Requires<[HasV9]>;
+  // t<cond> %xcc, imm => t<cond> %xcc, G0 + imm
+  def : InstAlias<!strconcat(!strconcat("t", cond), " %xcc, $imm"),
+                  (TXCCri G0, i32imm:$imm, condVal)>,
+                  Requires<[HasV9]>;
+
+  // t<cond> rs1 + imm => t<cond> %icc, rs1 + imm
+  def : InstAlias<!strconcat(!strconcat("t", cond), " $rs1 + $imm"),
+                  (TICCri IntRegs:$rs1, i32imm:$imm, condVal)>;
+
+  // t<cond> imm => t<cond> %icc, G0 + imm
+  def : InstAlias<!strconcat(!strconcat("t", cond), " $imm"),
+                  (TICCri G0, i32imm:$imm, condVal)>;
+
 }
 
 
@@ -177,7 +230,8 @@ multiclass fp_cond_alias<string cond, int condVal> {
 
   // fb<cond>,a,pn %fcc0, $imm
   def : InstAlias<!strconcat(!strconcat("fb", cond), ",a,pn $cc, $imm"),
-                  (BPFCCANT brtarget:$imm, condVal, FCCRegs:$cc)>, Requires<[HasV9]>;
+                  (BPFCCANT brtarget:$imm, condVal, FCCRegs:$cc)>,
+                  Requires<[HasV9]>;
 
   defm : fpcond_mov_alias<cond, condVal,
                           V9MOVFCCrr, V9MOVFCCri,

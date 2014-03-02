@@ -297,3 +297,34 @@ class F4_4i<bits<6> op3, bits<3> rcond, dag outs, dag ins,
   let Inst{12-10} = rcond;
   let Inst{9-0}   = simm10;
 }
+
+
+class TRAPSP<bits<6> op3Val, bit isimm, dag outs, dag ins, string asmstr,
+       list<dag> pattern>: F3<outs, ins, asmstr, pattern> {
+
+   bits<4> cond;
+   bits<2> cc;
+
+   let op = 0b10;
+   let rd{4} = 0;
+   let rd{3-0} = cond;
+   let op3 = op3Val;
+   let Inst{13} = isimm;
+   let Inst{12-11} = cc;
+
+}
+
+class TRAPSPrr<bits<6> op3Val, dag outs, dag ins, string asmstr,
+    list<dag> pattern>: TRAPSP<op3Val, 0, outs, ins, asmstr, pattern> {
+   bits<5> rs2;
+
+   let Inst{10-5} = 0;
+   let Inst{4-0}  = rs2;
+}
+class TRAPSPri<bits<6> op3Val, dag outs, dag ins, string asmstr,
+    list<dag> pattern>: TRAPSP<op3Val, 1, outs, ins, asmstr, pattern> {
+   bits<8> imm;
+
+   let Inst{10-8} = 0;
+   let Inst{7-0}  = imm;
+}
