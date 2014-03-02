@@ -21,6 +21,7 @@ set(ADTSources
   IntrusiveRefCntPtrTest.cpp
   MapVectorTest.cpp
   OptionalTest.cpp
+  OwningPtrTest.cpp
   PackedVectorTest.cpp
   PointerUnionTest.cpp
   SCCIteratorTest.cpp
