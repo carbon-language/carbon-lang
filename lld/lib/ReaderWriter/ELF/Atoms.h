@@ -698,7 +698,7 @@ public:
     }
   }
 
-  virtual uint64_t size() const LLVM_OVERRIDE {
+  virtual uint64_t size() const override {
     return _symbol->st_size;
   }
 

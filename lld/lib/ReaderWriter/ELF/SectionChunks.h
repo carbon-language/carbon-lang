@@ -1345,17 +1345,17 @@ public:
     this->_msize = this->_fsize;
   }
 
-  virtual void doPreFlight() LLVM_OVERRIDE {
+  virtual void doPreFlight() override {
     // TODO: Generate a proper binary search table.
   }
 
-  virtual void finalize() LLVM_OVERRIDE {
+  virtual void finalize() override {
     MergedSections<ELFT> *s = _layout.findOutputSection(".eh_frame");
     _ehFrameAddr = s ? s->virtualAddr() : 0;
   }
 
   virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
-                     llvm::FileOutputBuffer &buffer) LLVM_OVERRIDE {
+                     llvm::FileOutputBuffer &buffer) override {
     uint8_t *chunkBuffer = buffer.getBufferStart();
     uint8_t *dest = chunkBuffer + this->fileOffset();
     int pos = 0;

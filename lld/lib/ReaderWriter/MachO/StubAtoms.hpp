@@ -54,7 +54,7 @@ public:
     return Type::Unknown;
   }
 
-  virtual uint64_t size() const LLVM_OVERRIDE {
+  virtual uint64_t size() const override {
     return 0;
   }
 
