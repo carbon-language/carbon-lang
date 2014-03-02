@@ -235,6 +235,7 @@ For API clients and LLVM developers.
    HowToUseAttributes
    NVPTXUsage
    StackMaps
+   InAlloca
 
 :doc:`WritingAnLLVMPass`
    Information on how to write LLVM transformations and analyses.

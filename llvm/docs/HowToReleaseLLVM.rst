@@ -361,6 +361,7 @@ Below are the rules regarding patching the release branch:
 
 #. For dot releases all patches must mantain both API and ABI compatibility with
    the previous major release.  Only bugfixes will be accepted.
+
 Release Final Tasks
 -------------------
 

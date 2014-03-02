@@ -82,7 +82,7 @@ avoided. Also, there is much more detailed information on these subjects in the
   http://llvm.org/docs/ProgrammersManual.html
 
 Supported C++11 Language and Library Features
--------------------------------------------
+---------------------------------------------
 
 While LLVM, Clang, and LLD use C++11, not all features are available in all of
 the toolchains which we support. The set of features supported for use in LLVM
