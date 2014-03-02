@@ -676,7 +676,7 @@ SparcAsmParser::parseSparcAsmOperand(SparcOperand *&Op, bool isCall)
           Op = SparcOperand::CreateToken("%icc", S);
         break;
 
-      case Sparc::FCC:
+      case Sparc::FCC0:
         assert(name == "fcc0" && "Cannot handle %fcc other than %fcc0 yet");
         Op = SparcOperand::CreateToken("%fcc0", S);
         break;
@@ -783,7 +783,7 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
         && !name.substr(3).getAsInteger(10, intVal)
         && intVal < 4) {
       // FIXME: check 64bit and  handle %fcc1 - %fcc3
-      RegNo = Sparc::FCC;
+      RegNo = Sparc::FCC0;
       RegKind = SparcOperand::rk_CCReg;
       return true;
     }

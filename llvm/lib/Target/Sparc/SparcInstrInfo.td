@@ -354,7 +354,7 @@ let Uses = [ICC], usesCustomInserter = 1 in {
             [(set f128:$dst, (SPselecticc f128:$T, f128:$F, imm:$Cond))]>;
 }
 
-let usesCustomInserter = 1, Uses = [FCC] in {
+let usesCustomInserter = 1, Uses = [FCC0] in {
 
   def SELECT_CC_Int_FCC
    : Pseudo<(outs IntRegs:$dst), (ins IntRegs:$T, IntRegs:$F, i32imm:$Cond),
@@ -645,7 +645,7 @@ multiclass FPredBranch {
 }
 } // let isBranch = 1, isTerminator = 1, hasDelaySlot = 1
 
-let Uses = [FCC] in {
+let Uses = [FCC0] in {
   def FBCOND  : FPBranchSP<(ins brtarget:$imm22, CCOp:$cond),
                               "fb$cond $imm22",
                               [(SPbrfcc bb:$imm22, imm:$cond)]>;
@@ -864,7 +864,7 @@ def FDIVQ  : F3_3<2, 0b110100, 0b001001111,
 // This behavior is modeled with a forced noop after the instruction in
 // DelaySlotFiller.
 
-let Defs = [FCC] in {
+let Defs = [FCC0] in {
   def FCMPS  : F3_3c<2, 0b110101, 0b001010001,
                    (outs), (ins FPRegs:$rs1, FPRegs:$rs2),
                    "fcmps $rs1, $rs2",
@@ -931,7 +931,7 @@ let Predicates = [HasV9], Constraints = "$f = $rd" in {
                     (SPselecticc simm11:$simm11, i32:$f, imm:$cond))]>;
   }
 
-  let Uses = [FCC], cc = 0b000 in {
+  let Uses = [FCC0], cc = 0b000 in {
     def MOVFCCrr
       : F4_1<0b101100, (outs IntRegs:$rd),
              (ins IntRegs:$rs2, IntRegs:$f, CCOp:$cond),
@@ -964,7 +964,7 @@ let Predicates = [HasV9], Constraints = "$f = $rd" in {
                Requires<[HasHardQuad]>;
   }
 
-  let Uses = [FCC], opf_cc = 0b000 in {
+  let Uses = [FCC0], opf_cc = 0b000 in {
     def FMOVS_FCC
       : F4_3<0b110101, 0b000001, (outs FPRegs:$rd),
              (ins FPRegs:$rs2, FPRegs:$f, CCOp:$cond),

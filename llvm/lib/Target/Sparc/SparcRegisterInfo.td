@@ -16,7 +16,8 @@ class SparcReg<bits<16> Enc, string n> : Register<n> {
   let Namespace = "SP";
 }
 
-class SparcCtrlReg<string n>: Register<n> {
+class SparcCtrlReg<bits<16> Enc, string n>: Register<n> {
+  let HWEncoding = Enc;
   let Namespace = "SP";
 }
 
@@ -49,11 +50,12 @@ class Rq<bits<16> Enc, string n, list<Register> subregs> : SparcReg<Enc, n> {
 }
 
 // Control Registers
-def ICC : SparcCtrlReg<"ICC">; // This represents icc and xcc in 64-bit code.
-def FCC : SparcCtrlReg<"FCC">;
+def ICC : SparcCtrlReg<0, "ICC">; // This represents icc and xcc in 64-bit code.
+foreach I = 0-3 in
+  def FCC#I : SparcCtrlReg<I, "FCC"#I>;
 
 // Y register
-def Y : SparcCtrlReg<"Y">, DwarfRegNum<[64]>;
+def Y : SparcCtrlReg<0, "Y">, DwarfRegNum<[64]>;
 
 // Integer registers
 def G0 : Ri< 0, "G0">, DwarfRegNum<[0]>;
@@ -204,3 +206,6 @@ def FPRegs : RegisterClass<"SP", [f32], 32, (sequence "F%u", 0, 31)>;
 def DFPRegs : RegisterClass<"SP", [f64], 64, (sequence "D%u", 0, 31)>;
 
 def QFPRegs : RegisterClass<"SP", [f128], 128, (sequence "Q%u", 0, 15)>;
+
+// Floating point control register classes.
+def FCCRegs : RegisterClass<"SP", [i1], 1, (sequence "FCC%u", 0, 3)>;
