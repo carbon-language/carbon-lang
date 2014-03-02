@@ -332,8 +332,8 @@ std::string ScopDetection::formatInvalidAlias(AliasSet &AS) const {
 
   std::vector<Value *> Pointers;
 
-  for (AliasSet::iterator AI = AS.begin(), AE = AS.end(); AI != AE; ++AI)
-    Pointers.push_back(AI.getPointer());
+  for (auto I: AS)
+    Pointers.push_back(I.getValue());
 
   std::sort(Pointers.begin(), Pointers.end());
 
@@ -607,12 +607,12 @@ static bool regionWithoutLoops(Region &R, LoopInfo *LI) {
 static unsigned eraseAllChildren(std::set<const Region *> &Regs,
                                  const Region *R) {
   unsigned Count = 0;
-  for (Region::const_iterator I = R->begin(), E = R->end(); I != E; ++I) {
-    if (Regs.find(*I) != Regs.end()) {
+  for (auto SubRegion: *R) {
+    if (Regs.find(SubRegion) != Regs.end()) {
       ++Count;
-      Regs.erase(*I);
+      Regs.erase(SubRegion);
     } else {
-      Count += eraseAllChildren(Regs, *I);
+      Count += eraseAllChildren(Regs, SubRegion);
     }
   }
   return Count;
@@ -633,8 +633,8 @@ void ScopDetection::findScops(Region &R) {
 
   InvalidRegions[&R] = LastFailure;
 
-  for (Region::iterator I = R.begin(), E = R.end(); I != E; ++I)
-    findScops(**I);
+  for (auto SubRegion: R)
+    findScops(*SubRegion);
 
   // Try to expand regions.
   //
@@ -644,14 +644,10 @@ void ScopDetection::findScops(Region &R) {
 
   std::vector<Region *> ToExpand;
 
-  for (Region::iterator I = R.begin(), E = R.end(); I != E; ++I)
-    ToExpand.push_back(*I);
+  for (auto SubRegion: R)
+    ToExpand.push_back(SubRegion);
 
-  for (std::vector<Region *>::iterator RI = ToExpand.begin(),
-                                       RE = ToExpand.end();
-       RI != RE; ++RI) {
-    Region *CurrentRegion = *RI;
-
+  for (auto CurrentRegion: ToExpand) {
     // Skip invalid regions. Regions may become invalid, if they are element of
     // an already expanded region.
     if (ValidRegions.find(CurrentRegion) == ValidRegions.end())
@@ -804,11 +800,11 @@ void ScopDetection::getDebugLocation(const Region *R, unsigned &LineBegin,
 }
 
 void ScopDetection::printLocations(llvm::Function &F) {
-  for (iterator RI = begin(), RE = end(); RI != RE; ++RI) {
+  for (auto R: *this) {
     unsigned LineEntry, LineExit;
     std::string FileName;
 
-    getDebugLocation(*RI, LineEntry, LineExit, FileName);
+    getDebugLocation(R, LineEntry, LineExit, FileName);
     DiagnosticScopFound Diagnostic(F, FileName, LineEntry, LineExit);
     F.getContext().diagnose(Diagnostic);
   }
@@ -850,10 +846,8 @@ void polly::ScopDetection::verifyAnalysis() const {
   if (!VerifyScops)
     return;
 
-  for (RegionSet::const_iterator I = ValidRegions.begin(),
-                                 E = ValidRegions.end();
-       I != E; ++I)
-    verifyRegion(**I);
+  for (auto R: ValidRegions)
+    verifyRegion(*R);
 }
 
 void ScopDetection::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -868,10 +862,8 @@ void ScopDetection::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void ScopDetection::print(raw_ostream &OS, const Module *) const {
-  for (RegionSet::const_iterator I = ValidRegions.begin(),
-                                 E = ValidRegions.end();
-       I != E; ++I)
-    OS << "Valid Region for Scop: " << (*I)->getNameStr() << '\n';
+  for (auto R: ValidRegions)
+    OS << "Valid Region for Scop: " << R->getNameStr() << '\n';
 
   OS << "\n";
 }
