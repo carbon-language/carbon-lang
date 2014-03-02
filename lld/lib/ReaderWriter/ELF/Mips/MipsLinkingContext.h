@@ -32,7 +32,7 @@ typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ElELFType;
 
 template <class ELFType> class MipsTargetLayout;
 
-class MipsLinkingContext LLVM_FINAL : public ELFLinkingContext {
+class MipsLinkingContext final : public ELFLinkingContext {
 public:
   MipsLinkingContext(llvm::Triple triple);
 

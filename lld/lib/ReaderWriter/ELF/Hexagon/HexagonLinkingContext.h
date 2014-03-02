@@ -20,7 +20,7 @@ namespace elf {
 
 typedef llvm::object::ELFType<llvm::support::little, 2, false> HexagonELFType;
 
-class HexagonLinkingContext LLVM_FINAL : public ELFLinkingContext {
+class HexagonLinkingContext final : public ELFLinkingContext {
 public:
   HexagonLinkingContext(llvm::Triple triple);
 

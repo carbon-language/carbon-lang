@@ -19,7 +19,7 @@
 
 namespace lld {
 namespace elf {
-class X86LinkingContext LLVM_FINAL : public ELFLinkingContext {
+class X86LinkingContext final : public ELFLinkingContext {
 public:
   X86LinkingContext(llvm::Triple triple)
       : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(

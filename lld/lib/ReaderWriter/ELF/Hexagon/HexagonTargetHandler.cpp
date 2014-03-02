@@ -235,7 +235,7 @@ protected:
   /// @}
 };
 
-class DynamicGOTPLTPass LLVM_FINAL : public GOTPLTPass<DynamicGOTPLTPass> {
+class DynamicGOTPLTPass final : public GOTPLTPass<DynamicGOTPLTPass> {
 public:
   DynamicGOTPLTPass(const elf::HexagonLinkingContext &ctx) : GOTPLTPass(ctx) {
     _got0 = new (_file._alloc) HexagonGOTPLT0Atom(_file);

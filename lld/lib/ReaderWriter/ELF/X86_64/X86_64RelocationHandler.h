@@ -19,7 +19,7 @@ class X86_64LinkingContext;
 
 template <class ELFT> class X86_64TargetLayout;
 
-class X86_64TargetRelocationHandler LLVM_FINAL
+class X86_64TargetRelocationHandler final
     : public TargetRelocationHandler<X86_64ELFType> {
 public:
   X86_64TargetRelocationHandler(const X86_64LinkingContext &context,

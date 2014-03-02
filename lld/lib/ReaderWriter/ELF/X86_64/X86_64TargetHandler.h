@@ -28,7 +28,7 @@ public:
       : TargetLayout<ELFT>(context) {}
 };
 
-class X86_64TargetHandler LLVM_FINAL
+class X86_64TargetHandler final
     : public DefaultTargetHandler<X86_64ELFType> {
 public:
   X86_64TargetHandler(X86_64LinkingContext &context);

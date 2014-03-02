@@ -20,7 +20,7 @@
 namespace lld {
 namespace elf {
 
-class PPCLinkingContext LLVM_FINAL : public ELFLinkingContext {
+class PPCLinkingContext final : public ELFLinkingContext {
 public:
   PPCLinkingContext(llvm::Triple triple)
       : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(

@@ -25,7 +25,7 @@ class COFFDefinedAtom;
 /// example, if atom X has a reference to atom Y with offsetInAtom=8, that
 /// means that the address starting at 8th byte of the content of atom X needs
 /// to be fixed up so that the address points to atom Y's address.
-class COFFReference LLVM_FINAL : public Reference {
+class COFFReference final : public Reference {
 public:
   COFFReference(const Atom *target, uint32_t offsetInAtom, uint16_t relocType,
                 Reference::KindNamespace ns = Reference::KindNamespace::COFF,

@@ -20,7 +20,7 @@ namespace elf {
 
 /// \brief TargetLayout for Mips
 template <class ELFType>
-class MipsTargetLayout LLVM_FINAL : public TargetLayout<ELFType> {
+class MipsTargetLayout final : public TargetLayout<ELFType> {
 public:
   MipsTargetLayout(const MipsLinkingContext &ctx)
       : TargetLayout<ELFType>(ctx),
@@ -67,7 +67,7 @@ public:
 };
 
 /// \brief TargetHandler for Mips
-class MipsTargetHandler LLVM_FINAL
+class MipsTargetHandler final
     : public DefaultTargetHandler<Mips32ElELFType> {
 public:
   MipsTargetHandler(MipsLinkingContext &context);

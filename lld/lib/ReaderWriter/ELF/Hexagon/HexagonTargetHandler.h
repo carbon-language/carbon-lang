@@ -24,7 +24,7 @@ class HexagonLinkingContext;
 
 /// \brief TargetLayout for Hexagon
 template <class HexagonELFType>
-class HexagonTargetLayout LLVM_FINAL : public TargetLayout<HexagonELFType> {
+class HexagonTargetLayout final : public TargetLayout<HexagonELFType> {
 public:
   enum HexagonSectionOrder {
     ORDER_SDATA = 205
@@ -103,7 +103,7 @@ private:
 };
 
 /// \brief TargetHandler for Hexagon
-class HexagonTargetHandler LLVM_FINAL :
+class HexagonTargetHandler final :
     public DefaultTargetHandler<HexagonELFType> {
 public:
   HexagonTargetHandler(HexagonLinkingContext &targetInfo);

@@ -26,7 +26,7 @@ public:
   X86TargetLayout(X86LinkingContext &context) : TargetLayout<ELFT>(context) {}
 };
 
-class X86TargetRelocationHandler LLVM_FINAL
+class X86TargetRelocationHandler final
     : public TargetRelocationHandler<X86ELFType> {
 public:
   X86TargetRelocationHandler(X86LinkingContext &context,
@@ -44,7 +44,7 @@ protected:
   X86TargetLayout<X86ELFType> &_x86TargetLayout;
 };
 
-class X86TargetHandler LLVM_FINAL
+class X86TargetHandler final
     : public DefaultTargetHandler<X86ELFType> {
 public:
   X86TargetHandler(X86LinkingContext &context);

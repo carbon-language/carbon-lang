@@ -23,7 +23,7 @@ public:
   PPCTargetLayout(PPCLinkingContext &context) : TargetLayout<ELFT>(context) {}
 };
 
-class PPCTargetRelocationHandler LLVM_FINAL
+class PPCTargetRelocationHandler final
     : public TargetRelocationHandler<PPCELFType> {
 public:
   PPCTargetRelocationHandler(PPCLinkingContext &context,
@@ -39,7 +39,7 @@ protected:
   PPCTargetLayout<PPCELFType> &_ppcTargetLayout;
 };
 
-class PPCTargetHandler LLVM_FINAL
+class PPCTargetHandler final
     : public DefaultTargetHandler<PPCELFType> {
 public:
   PPCTargetHandler(PPCLinkingContext &context);

@@ -19,7 +19,7 @@ namespace elf {
 class HexagonLinkingContext;
 class HexagonTargetHandler;
 
-class HexagonTargetRelocationHandler LLVM_FINAL :
+class HexagonTargetRelocationHandler final :
     public TargetRelocationHandler<HexagonELFType> {
 public:
   HexagonTargetRelocationHandler(HexagonLinkingContext &context,

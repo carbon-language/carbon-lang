@@ -294,7 +294,7 @@ protected:
 /// entry, that entry is statically bound.
 ///
 /// TLS always assumes module 1 and attempts to remove indirection.
-class StaticRelocationPass LLVM_FINAL
+class StaticRelocationPass final
     : public RelocationPass<StaticRelocationPass> {
 public:
   StaticRelocationPass(const elf::X86_64LinkingContext &ctx)
@@ -327,7 +327,7 @@ public:
   }
 };
 
-class DynamicRelocationPass LLVM_FINAL
+class DynamicRelocationPass final
     : public RelocationPass<DynamicRelocationPass> {
 public:
   DynamicRelocationPass(const elf::X86_64LinkingContext &ctx)

@@ -16,7 +16,7 @@ namespace elf {
 
 class MipsTargetHandler;
 
-class MipsTargetRelocationHandler LLVM_FINAL
+class MipsTargetRelocationHandler final
     : public TargetRelocationHandler<Mips32ElELFType> {
 public:
   MipsTargetRelocationHandler(MipsLinkingContext &context,
