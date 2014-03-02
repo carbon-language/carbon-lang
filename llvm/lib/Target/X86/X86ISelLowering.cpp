@@ -7697,7 +7697,8 @@ static SDValue LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG) {
 
 /// Extract one bit from mask vector, like v16i1 or v8i1.
 /// AVX-512 feature.
-static SDValue ExtractBitFromMaskVector(SDValue Op, SelectionDAG &DAG) {
+SDValue
+X86TargetLowering::ExtractBitFromMaskVector(SDValue Op, SelectionDAG &DAG) const {
   SDValue Vec = Op.getOperand(0);
   SDLoc dl(Vec);
   MVT VecVT = Vec.getSimpleValueType();
@@ -7717,7 +7718,8 @@ static SDValue ExtractBitFromMaskVector(SDValue Op, SelectionDAG &DAG) {
   }
 
   unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
-  unsigned MaxSift = VecVT.getSizeInBits() - 1;
+  const TargetRegisterClass* rc = getRegClassFor(VecVT);
+  unsigned MaxSift = rc->getSize()*8 - 1;
   Vec = DAG.getNode(X86ISD::VSHLI, dl, VecVT, Vec,
                     DAG.getConstant(MaxSift - IdxVal, MVT::i8));
   Vec = DAG.getNode(X86ISD::VSRLI, dl, VecVT, Vec,

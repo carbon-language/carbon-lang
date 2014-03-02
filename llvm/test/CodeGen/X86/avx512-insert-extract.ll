@@ -91,7 +91,7 @@ define float @test9(<8 x float> %x, i32 %ind) nounwind {
 ;CHECK-LABEL: test10
 ;CHECK: vmovd
 ;CHECK: vpermd %zmm
-;CHEKK: vmovdz  %xmm0, %eax
+;CHECK: vmovd  %xmm0, %eax
 ;CHECK: ret
 define i32 @test10(<16 x i32> %x, i32 %ind) nounwind {
   %e = extractelement <16 x i32> %x, i32 %ind
@@ -100,8 +100,8 @@ define i32 @test10(<16 x i32> %x, i32 %ind) nounwind {
 
 ;CHECK-LABEL: test11
 ;CHECK: vpcmpltud
-;CKECK: kshiftlw $11
-;CKECK: kshiftrw $15
+;CHECK: kshiftlw $11
+;CHECK: kshiftrw $15
 ;CHECK: kortestw
 ;CHECK: je
 ;CHECK: ret
@@ -119,8 +119,8 @@ define <16 x i32> @test11(<16 x i32>%a, <16 x i32>%b) {
 
 ;CHECK-LABEL: test12
 ;CHECK: vpcmpgtq
-;CKECK: kshiftlw $15
-;CKECK: kshiftrw $15
+;CHECK: kshiftlw $15
+;CHECK: kshiftrw $15
 ;CHECK: kortestw
 ;CHECK: ret
 
@@ -135,7 +135,7 @@ define i64 @test12(<16 x i64>%a, <16 x i64>%b, i64 %a1, i64 %b1) {
 ;CHECK-LABEL: test13
 ;CHECK: cmpl
 ;CHECK: sbbl
-;CKECK: orl $65532
+;CHECK: orl $65532
 ;CHECK: ret
 define i16 @test13(i32 %a, i32 %b) {
   %cmp_res = icmp ult i32 %a, %b
@@ -144,5 +144,17 @@ define i16 @test13(i32 %a, i32 %b) {
   ret i16 %res
 }
 
+;CHECK-LABEL: test14
+;CHECK: vpcmpgtq
+;CHECK: kshiftlw $11
+;CHECK: kshiftrw $15
+;CHECK: kortestw
+;CHECK: ret
 
+define i64 @test14(<8 x i64>%a, <8 x i64>%b, i64 %a1, i64 %b1) {
 
+  %cmpvector_func.i = icmp slt <8 x i64> %a, %b
+  %extract24vector_func.i = extractelement <8 x i1> %cmpvector_func.i, i32 4
+  %res = select i1 %extract24vector_func.i, i64 %a1, i64 %b1
+  ret i64 %res
+}

@@ -1213,6 +1213,11 @@ def : Pat<(v16i1 (insert_subvector undef, (v8i1 VK8:$src), (iPTR 0))),
 def : Pat<(v8i1 (extract_subvector (v16i1 VK16:$src), (iPTR 8))),
           (v8i1 (COPY_TO_REGCLASS (KSHIFTRWri VK16:$src, (i8 8)), VK8))>;
 
+def : Pat<(v8i1 (X86vshli VK8:$src, (i8 imm:$imm))),
+          (v8i1 (COPY_TO_REGCLASS (KSHIFTLWri (COPY_TO_REGCLASS VK8:$src, VK16), (I8Imm $imm)), VK8))>;
+
+def : Pat<(v8i1 (X86vsrli VK8:$src, (i8 imm:$imm))),
+          (v8i1 (COPY_TO_REGCLASS (KSHIFTRWri (COPY_TO_REGCLASS VK8:$src, VK16), (I8Imm $imm)), VK8))>;
 //===----------------------------------------------------------------------===//
 // AVX-512 - Aligned and unaligned load and store
 //

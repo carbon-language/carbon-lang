@@ -466,10 +466,10 @@ def VR256X : RegisterClass<"X86", [v32i8, v16i16, v8i32, v4i64, v8f32, v4f64],
 // The size of the all masked registers is 16 bit because we have only one
 // KMOVW istruction that can store this register in memory, and it writes 2 bytes
 def VK1     : RegisterClass<"X86", [i1],    16, (sequence "K%u", 0, 7)>;
-def VK8     : RegisterClass<"X86", [v8i1],  16, (sequence "K%u", 0, 7)>;
-def VK16    : RegisterClass<"X86", [v16i1], 16, (add VK8)>;
+def VK8     : RegisterClass<"X86", [v8i1],  16, (add VK1)> {let Size = 16;}
+def VK16    : RegisterClass<"X86", [v16i1], 16, (add VK8)> {let Size = 16;}
 
-def VK1WM   : RegisterClass<"X86", [i1],    16, (sub VK1, K0)>;
-def VK8WM   : RegisterClass<"X86", [v8i1],  16, (sub VK8, K0)>;
+def VK1WM   : RegisterClass<"X86", [i1],    16, (sub VK1, K0)> {let Size = 16;}
+def VK8WM   : RegisterClass<"X86", [v8i1],  16, (sub VK8, K0)> {let Size = 16;}
 def VK16WM  : RegisterClass<"X86", [v16i1], 16, (add VK8WM)>;
 
