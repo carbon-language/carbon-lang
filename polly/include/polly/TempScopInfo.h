@@ -111,7 +111,7 @@ typedef std::map<const Loop *, const SCEV *> LoopBoundMapType;
 /// Mapping BBs to its condition constrains
 typedef std::map<const BasicBlock *, BBCond> BBCondMapType;
 
-typedef std::vector<std::pair<IRAccess, Instruction *> > AccFuncSetType;
+typedef std::vector<std::pair<IRAccess, Instruction *>> AccFuncSetType;
 typedef std::map<const BasicBlock *, AccFuncSetType> AccFuncMapType;
 
 //===---------------------------------------------------------------------===//

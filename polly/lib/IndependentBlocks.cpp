@@ -154,7 +154,7 @@ void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
   // Depth first traverse the operand tree (or operand dag, because we will
   // stop at PHINodes, so there are no cycle).
   typedef Instruction::op_iterator ChildIt;
-  std::vector<std::pair<Instruction *, ChildIt> > WorkStack;
+  std::vector<std::pair<Instruction *, ChildIt>> WorkStack;
 
   WorkStack.push_back(std::make_pair(Inst, Inst->op_begin()));
   DenseSet<Instruction *> VisitedSet;
