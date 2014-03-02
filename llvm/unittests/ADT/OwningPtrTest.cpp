@@ -174,4 +174,82 @@ TEST_F(OwningPtrTest, Swap) {
   EXPECT_EQ(2u, TrackDestructor::Destructions);
 }
 
+TEST_F(OwningPtrTest, UniqueToOwningConstruction) {
+  TrackDestructor::ResetCounts();
+  {
+    std::unique_ptr<TrackDestructor> A(new TrackDestructor(3));
+    OwningPtr<TrackDestructor> B = std::move(A);
+    EXPECT_FALSE(A);
+    EXPECT_TRUE(!A);
+    EXPECT_FALSE(A.get());
+    EXPECT_TRUE((bool)B);
+    EXPECT_FALSE(!B);
+    EXPECT_TRUE(B.get());
+    EXPECT_TRUE(B.isValid());
+    EXPECT_EQ(3, (*B).val);
+    EXPECT_EQ(3, B->val);
+    EXPECT_EQ(0u, TrackDestructor::Destructions);
+  }
+  EXPECT_EQ(1u, TrackDestructor::Destructions);
+}
+
+TEST_F(OwningPtrTest, UniqueToOwningAssignment) {
+  TrackDestructor::ResetCounts();
+  {
+    std::unique_ptr<TrackDestructor> A(new TrackDestructor(3));
+    OwningPtr<TrackDestructor> B(new TrackDestructor(4));
+    B = std::move(A);
+    EXPECT_FALSE(A);
+    EXPECT_TRUE(!A);
+    EXPECT_FALSE(A.get());
+    EXPECT_TRUE((bool)B);
+    EXPECT_FALSE(!B);
+    EXPECT_TRUE(B.get());
+    EXPECT_TRUE(B.isValid());
+    EXPECT_EQ(3, (*B).val);
+    EXPECT_EQ(3, B->val);
+    EXPECT_EQ(1u, TrackDestructor::Destructions);
+  }
+  EXPECT_EQ(2u, TrackDestructor::Destructions);
+}
+
+TEST_F(OwningPtrTest, TakeUniqueConstruction) {
+  TrackDestructor::ResetCounts();
+  {
+    OwningPtr<TrackDestructor> A(new TrackDestructor(3));
+    std::unique_ptr<TrackDestructor> B = A.take_unique();
+    EXPECT_FALSE(A);
+    EXPECT_TRUE(!A);
+    EXPECT_FALSE(A.get());
+    EXPECT_FALSE(A.isValid());
+    EXPECT_TRUE((bool)B);
+    EXPECT_FALSE(!B);
+    EXPECT_TRUE(B.get());
+    EXPECT_EQ(3, (*B).val);
+    EXPECT_EQ(3, B->val);
+    EXPECT_EQ(0u, TrackDestructor::Destructions);
+  }
+  EXPECT_EQ(1u, TrackDestructor::Destructions);
+}
+
+#if LLVM_HAS_RVALUE_REFERENCE_THIS
+TEST_F(OwningPtrTest, OwningToUniqueConstruction) {
+  TrackDestructor::ResetCounts();
+  {
+    OwningPtr<TrackDestructor> A(new TrackDestructor(3));
+    std::unique_ptr<TrackDestructor> B = std::move(A);
+    EXPECT_FALSE(A);
+    EXPECT_TRUE(!A);
+    EXPECT_FALSE(A.get());
+    EXPECT_FALSE(A.isValid());
+    EXPECT_TRUE((bool)B);
+    EXPECT_FALSE(!B);
+    EXPECT_TRUE(B.get());
+    EXPECT_EQ(3, (*B).val);
+    EXPECT_EQ(3, B->val);
+    EXPECT_EQ(0u, TrackDestructor::Destructions);
+  }
+  EXPECT_EQ(1u, TrackDestructor::Destructions);
+}
+#endif
 }

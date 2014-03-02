@@ -17,6 +17,7 @@
 #include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstddef>
+#include <memory>
 
 namespace llvm {
 
@@ -39,6 +40,17 @@ public:
     return *this;
   }
 
+  OwningPtr(std::unique_ptr<T> &&Other) : Ptr(Other.release()) {}
+
+  OwningPtr &operator=(std::unique_ptr<T> &&Other) {
+    reset(Other.release());
+    return *this;
+  }
+
+#if LLVM_HAS_RVALUE_REFERENCE_THIS
+  operator std::unique_ptr<T>() && { return std::unique_ptr<T>(take()); }
+#endif
+
   ~OwningPtr() {
     delete Ptr;
   }
@@ -60,6 +72,8 @@ public:
     Ptr = 0;
     return Tmp;
   }
+
+  std::unique_ptr<T> take_unique() { return std::unique_ptr<T>(take()); }
 
   T &operator*() const {
     assert(Ptr && "Cannot dereference null pointer");
