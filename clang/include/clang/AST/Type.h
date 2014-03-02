@@ -506,8 +506,8 @@ struct SplitQualType {
   SplitQualType getSingleStepDesugaredType() const; // end of this file
 
   // Make std::tie work.
-  operator std::pair<const Type *,Qualifiers>() const {
-    return std::pair<const Type *,Qualifiers>(Ty, Quals);
+  std::pair<const Type *,Qualifiers> asPair() const {
+    return std::pair<const Type *, Qualifiers>(Ty, Quals);
   }
 
   friend bool operator==(SplitQualType a, SplitQualType b) {
