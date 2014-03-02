@@ -120,7 +120,7 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
       return;
     
     ProgramStateRef state_precedesLowerBound, state_withinLowerBound;
-    llvm::tie(state_precedesLowerBound, state_withinLowerBound) =
+    std::tie(state_precedesLowerBound, state_withinLowerBound) =
       state->assume(*lowerBoundToCheck);
 
     // Are we constrained enough to definitely precede the lower bound?
@@ -152,7 +152,7 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
       break;
   
     ProgramStateRef state_exceedsUpperBound, state_withinUpperBound;
-    llvm::tie(state_exceedsUpperBound, state_withinUpperBound) =
+    std::tie(state_exceedsUpperBound, state_withinUpperBound) =
       state->assume(*upperboundToCheck);
 
     // If we are under constrained and the index variables are tainted, report.

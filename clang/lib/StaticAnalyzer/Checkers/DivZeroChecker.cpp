@@ -68,7 +68,7 @@ void DivZeroChecker::checkPreStmt(const BinaryOperator *B,
   // Check for divide by zero.
   ConstraintManager &CM = C.getConstraintManager();
   ProgramStateRef stateNotZero, stateZero;
-  llvm::tie(stateNotZero, stateZero) = CM.assumeDual(C.getState(), *DV);
+  std::tie(stateNotZero, stateZero) = CM.assumeDual(C.getState(), *DV);
 
   if (!stateNotZero) {
     assert(stateZero);

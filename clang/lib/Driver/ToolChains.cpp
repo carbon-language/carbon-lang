@@ -475,7 +475,7 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
       if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
         StringRef first, second;
         StringRef isysroot = A->getValue();
-        llvm::tie(first, second) = isysroot.split(StringRef("SDKs/iPhoneOS"));
+        std::tie(first, second) = isysroot.split(StringRef("SDKs/iPhoneOS"));
         if (second != "")
           iOSTarget = second.substr(0,3);
       }

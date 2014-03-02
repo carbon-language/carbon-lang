@@ -241,8 +241,7 @@ void CallAndMessageChecker::checkPreStmt(const CallExpr *CE,
   }
 
   ProgramStateRef StNonNull, StNull;
-  llvm::tie(StNonNull, StNull) =
-      State->assume(L.castAs<DefinedOrUnknownSVal>());
+  std::tie(StNonNull, StNull) = State->assume(L.castAs<DefinedOrUnknownSVal>());
 
   if (StNull && !StNonNull) {
     if (!BT_call_null)
@@ -297,7 +296,7 @@ void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
     }
 
     ProgramStateRef StNonNull, StNull;
-    llvm::tie(StNonNull, StNull) =
+    std::tie(StNonNull, StNull) =
         State->assume(V.castAs<DefinedOrUnknownSVal>());
 
     if (StNull && !StNonNull) {
@@ -402,7 +401,7 @@ void CallAndMessageChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
 
     ProgramStateRef state = C.getState();
     ProgramStateRef notNilState, nilState;
-    llvm::tie(notNilState, nilState) = state->assume(receiverVal);
+    std::tie(notNilState, nilState) = state->assume(receiverVal);
 
     // Handle receiver must be nil.
     if (nilState && !notNilState) {

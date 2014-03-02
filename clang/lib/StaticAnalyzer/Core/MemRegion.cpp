@@ -1386,7 +1386,7 @@ void BlockDataRegion::LazyInitializeReferencedVars() {
 
   AnalysisDeclContext *AC = getCodeRegion()->getAnalysisDeclContext();
   AnalysisDeclContext::referenced_decls_iterator I, E;
-  llvm::tie(I, E) = AC->getReferencedBlockVars(BC->getDecl());
+  std::tie(I, E) = AC->getReferencedBlockVars(BC->getDecl());
 
   if (I == E) {
     ReferencedVars = (void*) 0x1;
@@ -1406,7 +1406,7 @@ void BlockDataRegion::LazyInitializeReferencedVars() {
   for ( ; I != E; ++I) {
     const VarRegion *VR = 0;
     const VarRegion *OriginalVR = 0;
-    llvm::tie(VR, OriginalVR) = getCaptureRegions(*I);
+    std::tie(VR, OriginalVR) = getCaptureRegions(*I);
     assert(VR);
     assert(OriginalVR);
     BV->push_back(VR, BC);

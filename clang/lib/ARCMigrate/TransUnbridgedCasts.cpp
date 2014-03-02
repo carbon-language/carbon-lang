@@ -283,7 +283,7 @@ private:
     SourceLocation Loc = E->getExprLoc();
     assert(Loc.isMacroID());
     SourceLocation MacroBegin, MacroEnd;
-    llvm::tie(MacroBegin, MacroEnd) = SM.getImmediateExpansionRange(Loc);
+    std::tie(MacroBegin, MacroEnd) = SM.getImmediateExpansionRange(Loc);
     SourceRange SubRange = E->getSubExpr()->IgnoreParenImpCasts()->getSourceRange();
     SourceLocation InnerBegin = SM.getImmediateMacroCallerLoc(SubRange.getBegin());
     SourceLocation InnerEnd = SM.getImmediateMacroCallerLoc(SubRange.getEnd());

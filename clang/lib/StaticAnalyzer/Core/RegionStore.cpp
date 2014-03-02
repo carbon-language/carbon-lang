@@ -1626,7 +1626,7 @@ RegionStoreManager::getBindingForFieldOrElementCommon(RegionBindingsConstRef B,
   // Lazy binding?
   Store lazyBindingStore = NULL;
   const SubRegion *lazyBindingRegion = NULL;
-  llvm::tie(lazyBindingStore, lazyBindingRegion) = findLazyBinding(B, R, R);
+  std::tie(lazyBindingStore, lazyBindingRegion) = findLazyBinding(B, R, R);
   if (lazyBindingRegion)
     return getLazyBinding(lazyBindingRegion,
                           getRegionBindings(lazyBindingStore));

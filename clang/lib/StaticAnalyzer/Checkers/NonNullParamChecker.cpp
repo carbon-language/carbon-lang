@@ -122,7 +122,7 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
 
     ConstraintManager &CM = C.getConstraintManager();
     ProgramStateRef stateNotNull, stateNull;
-    llvm::tie(stateNotNull, stateNull) = CM.assumeDual(state, *DV);
+    std::tie(stateNotNull, stateNull) = CM.assumeDual(state, *DV);
 
     if (stateNull && !stateNotNull) {
       // Generate an error node.  Check for a null node in case

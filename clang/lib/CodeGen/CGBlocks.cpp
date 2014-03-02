@@ -300,8 +300,8 @@ static void initializeForBlockHeader(CodeGenModule &CGM, CGBlockInfo &info,
 
   // The header is basically a 'struct { void *; int; int; void *; void *; }'.
   CharUnits ptrSize, ptrAlign, intSize, intAlign;
-  llvm::tie(ptrSize, ptrAlign) = C.getTypeInfoInChars(C.VoidPtrTy);
-  llvm::tie(intSize, intAlign) = C.getTypeInfoInChars(C.IntTy);
+  std::tie(ptrSize, ptrAlign) = C.getTypeInfoInChars(C.VoidPtrTy);
+  std::tie(intSize, intAlign) = C.getTypeInfoInChars(C.IntTy);
 
   // Are there crazy embedded platforms where this isn't true?
   assert(intSize <= ptrSize && "layout assumptions horribly violated");

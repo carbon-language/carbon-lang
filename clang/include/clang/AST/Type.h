@@ -505,7 +505,7 @@ struct SplitQualType {
 
   SplitQualType getSingleStepDesugaredType() const; // end of this file
 
-  // Make llvm::tie work.
+  // Make std::tie work.
   operator std::pair<const Type *,Qualifiers>() const {
     return std::pair<const Type *,Qualifiers>(Ty, Quals);
   }

@@ -552,7 +552,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
 
   // Are they equal?
   ProgramStateRef stateTrue, stateFalse;
-  llvm::tie(stateTrue, stateFalse) = state->assume(ArgIsNull);
+  std::tie(stateTrue, stateFalse) = state->assume(ArgIsNull);
 
   if (stateTrue && !stateFalse) {
     ExplodedNode *N = C.generateSink(stateTrue);
@@ -858,7 +858,7 @@ static ProgramStateRef checkCollectionNonNil(CheckerContext &C,
     return State;
 
   ProgramStateRef StNonNil, StNil;
-  llvm::tie(StNonNil, StNil) = State->assume(*KnownCollection);
+  std::tie(StNonNil, StNil) = State->assume(*KnownCollection);
   if (StNil && !StNonNil) {
     // The collection is nil. This path is infeasible.
     return NULL;

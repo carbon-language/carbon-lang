@@ -113,7 +113,7 @@ void UnixAPIChecker::CheckOpen(CheckerContext &C, const CallExpr *CE) const {
 
   // Check if maskedFlags is non-zero.
   ProgramStateRef trueState, falseState;
-  llvm::tie(trueState, falseState) = state->assume(maskedFlags);
+  std::tie(trueState, falseState) = state->assume(maskedFlags);
 
   // Only emit an error if the value of 'maskedFlags' is properly
   // constrained;
@@ -193,7 +193,7 @@ static bool IsZeroByteAllocation(ProgramStateRef state,
                                 const SVal argVal,
                                 ProgramStateRef *trueState,
                                 ProgramStateRef *falseState) {
-  llvm::tie(*trueState, *falseState) =
+  std::tie(*trueState, *falseState) =
     state->assume(argVal.castAs<DefinedSVal>());
   
   return (*falseState && !*trueState);

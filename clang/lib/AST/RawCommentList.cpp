@@ -95,10 +95,9 @@ StringRef RawComment::getRawTextSlow(const SourceManager &SourceMgr) const {
   unsigned BeginOffset;
   unsigned EndOffset;
 
-  llvm::tie(BeginFileID, BeginOffset) =
+  std::tie(BeginFileID, BeginOffset) =
       SourceMgr.getDecomposedLoc(Range.getBegin());
-  llvm::tie(EndFileID, EndOffset) =
-      SourceMgr.getDecomposedLoc(Range.getEnd());
+  std::tie(EndFileID, EndOffset) = SourceMgr.getDecomposedLoc(Range.getEnd());
 
   const unsigned Length = EndOffset - BeginOffset;
   if (Length < 2)

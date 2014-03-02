@@ -219,7 +219,7 @@ private:
     assert(RegionLoc.isFileID());
     FileID RegionFID;
     unsigned RegionOffset;
-    llvm::tie(RegionFID, RegionOffset) = SM.getDecomposedLoc(RegionLoc);
+    std::tie(RegionFID, RegionOffset) = SM.getDecomposedLoc(RegionLoc);
 
     if (RegionFID != FID) {
       if (isParsedOnceInclude(FE)) {
@@ -375,7 +375,7 @@ public:
 
     FileID FID;
     unsigned Offset;
-    llvm::tie(FID, Offset) = SM.getDecomposedLoc(Loc);
+    std::tie(FID, Offset) = SM.getDecomposedLoc(Loc);
     // Don't skip bodies from main files; this may be revisited.
     if (SM.getMainFileID() == FID)
       return false;
@@ -717,7 +717,7 @@ static void indexPreprocessingRecord(ASTUnit &Unit, IndexingContext &IdxCtx) {
   // FIXME: Only deserialize inclusion directives.
 
   PreprocessingRecord::iterator I, E;
-  llvm::tie(I, E) = Unit.getLocalPreprocessingEntities();
+  std::tie(I, E) = Unit.getLocalPreprocessingEntities();
 
   bool isModuleFile = Unit.isModuleFile();
   for (; I != E; ++I) {

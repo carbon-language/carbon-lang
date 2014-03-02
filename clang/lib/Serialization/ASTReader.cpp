@@ -2571,7 +2571,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       F.SLocEntryOffsets = (const uint32_t *)Blob.data();
       F.LocalNumSLocEntries = Record[0];
       unsigned SLocSpaceSize = Record[1];
-      llvm::tie(F.SLocEntryBaseID, F.SLocEntryBaseOffset) =
+      std::tie(F.SLocEntryBaseID, F.SLocEntryBaseOffset) =
           SourceMgr.AllocateLoadedSLocEntries(F.LocalNumSLocEntries,
                                               SLocSpaceSize);
       // Make our entry in the range map. BaseID is negative and growing, so

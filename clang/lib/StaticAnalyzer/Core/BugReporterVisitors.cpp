@@ -115,7 +115,7 @@ BugReporterVisitor::getDefaultEndPath(BugReporterContext &BRC,
     PathDiagnosticLocation::createEndOfPath(EndPathNode,BRC.getSourceManager());
 
   BugReport::ranges_iterator Beg, End;
-  llvm::tie(Beg, End) = BR.getRanges();
+  std::tie(Beg, End) = BR.getRanges();
 
   // Only add the statement itself as a range if we didn't specify any
   // special ranges for this report.

@@ -1308,7 +1308,7 @@ CFGBuilder::VisitLogicalOperator(BinaryOperator *B,
   do {
     if (BinaryOperator *B_RHS = dyn_cast<BinaryOperator>(RHS))
       if (B_RHS->isLogicalOp()) {
-        llvm::tie(RHSBlock, ExitBlock) =
+        std::tie(RHSBlock, ExitBlock) =
           VisitLogicalOperator(B_RHS, Term, TrueBlock, FalseBlock);
         break;
       }
@@ -2094,7 +2094,7 @@ CFGBlock *CFGBuilder::VisitForStmt(ForStmt *F) {
     if (BinaryOperator *Cond =
             dyn_cast_or_null<BinaryOperator>(C ? C->IgnoreParens() : 0))
       if (Cond->isLogicalOp()) {
-        llvm::tie(EntryConditionBlock, ExitConditionBlock) =
+        std::tie(EntryConditionBlock, ExitConditionBlock) =
           VisitLogicalOperator(Cond, F, BodyBlock, LoopSuccessor);
         break;
       }
@@ -2410,9 +2410,8 @@ CFGBlock *CFGBuilder::VisitWhileStmt(WhileStmt *W) {
     // more optimal CFG representation.
     if (BinaryOperator *Cond = dyn_cast<BinaryOperator>(C->IgnoreParens()))
       if (Cond->isLogicalOp()) {
-        llvm::tie(EntryConditionBlock, ExitConditionBlock) =
-          VisitLogicalOperator(Cond, W, BodyBlock,
-                               LoopSuccessor);
+        std::tie(EntryConditionBlock, ExitConditionBlock) =
+            VisitLogicalOperator(Cond, W, BodyBlock, LoopSuccessor);
         break;
       }
 

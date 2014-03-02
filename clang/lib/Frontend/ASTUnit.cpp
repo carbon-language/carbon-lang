@@ -2673,7 +2673,7 @@ void ASTUnit::addFileLevelDecl(Decl *D) {
   assert(SM.isLocalSourceLocation(FileLoc));
   FileID FID;
   unsigned Offset;
-  llvm::tie(FID, Offset) = SM.getDecomposedLoc(FileLoc);
+  std::tie(FID, Offset) = SM.getDecomposedLoc(FileLoc);
   if (FID.isInvalid())
     return;
 
@@ -2856,7 +2856,7 @@ bool ASTUnit::visitLocalTopLevelDecls(void *context, DeclVisitorFn Fn) {
     serialization::ModuleFile &
       Mod = Reader->getModuleManager().getPrimaryModule();
     ASTReader::ModuleDeclIterator MDI, MDE;
-    llvm::tie(MDI, MDE) = Reader->getModuleFileLevelDecls(Mod);
+    std::tie(MDI, MDE) = Reader->getModuleFileLevelDecls(Mod);
     for (; MDI != MDE; ++MDI) {
       if (!Fn(context, *MDI))
         return false;

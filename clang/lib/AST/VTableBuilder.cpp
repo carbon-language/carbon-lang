@@ -2823,7 +2823,7 @@ static void GroupNewVirtualOverloads(
 
     VisitedGroupIndicesTy::iterator J;
     bool Inserted;
-    llvm::tie(J, Inserted) = VisitedGroupIndices.insert(
+    std::tie(J, Inserted) = VisitedGroupIndices.insert(
         std::make_pair(MD->getDeclName(), Groups.size()));
     if (Inserted)
       Groups.push_back(MethodGroup());

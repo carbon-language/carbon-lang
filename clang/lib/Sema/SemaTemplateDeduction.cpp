@@ -783,7 +783,7 @@ DeduceTemplateArguments(Sema &S,
       S.collectUnexpandedParameterPacks(Pattern, Unexpanded);
       for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
         unsigned Depth, Index;
-        llvm::tie(Depth, Index) = getDepthAndIndex(Unexpanded[I]);
+        std::tie(Depth, Index) = getDepthAndIndex(Unexpanded[I]);
         if (Depth == 0 && !SawIndices[Index]) {
           SawIndices[Index] = true;
           PackIndices.push_back(Index);
@@ -1863,7 +1863,7 @@ DeduceTemplateArguments(Sema &S,
       S.collectUnexpandedParameterPacks(Pattern, Unexpanded);
       for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
         unsigned Depth, Index;
-        llvm::tie(Depth, Index) = getDepthAndIndex(Unexpanded[I]);
+        std::tie(Depth, Index) = getDepthAndIndex(Unexpanded[I]);
         if (Depth == 0 && !SawIndices[Index]) {
           SawIndices[Index] = true;
           PackIndices.push_back(Index);
@@ -3415,7 +3415,7 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
       collectUnexpandedParameterPacks(ParamPattern, Unexpanded);
       for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
         unsigned Depth, Index;
-        llvm::tie(Depth, Index) = getDepthAndIndex(Unexpanded[I]);
+        std::tie(Depth, Index) = getDepthAndIndex(Unexpanded[I]);
         if (Depth == 0 && !SawIndices[Index]) {
           SawIndices[Index] = true;
           PackIndices.push_back(Index);

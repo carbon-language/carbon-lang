@@ -2265,7 +2265,7 @@ MicrosoftRecordLayoutBuilder::ElementInfo
 MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
     const FieldDecl *FD) {
   ElementInfo Info;
-  llvm::tie(Info.Size, Info.Alignment) =
+  std::tie(Info.Size, Info.Alignment) =
       Context.getTypeInfoInChars(FD->getType());
   // Respect align attributes.
   CharUnits FieldRequiredAlignment = 

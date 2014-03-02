@@ -162,7 +162,7 @@ void ExprEngine::removeDeadOnEndOfFunction(NodeBuilderContext& BC,
   // Find the last statement in the function and the corresponding basic block.
   const Stmt *LastSt = 0;
   const CFGBlock *Blk = 0;
-  llvm::tie(LastSt, Blk) = getLastStmt(Pred);
+  std::tie(LastSt, Blk) = getLastStmt(Pred);
   if (!Blk || !LastSt) {
     Dst.Add(Pred);
     return;
@@ -231,7 +231,7 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
   // Find the last statement in the function and the corresponding basic block.
   const Stmt *LastSt = 0;
   const CFGBlock *Blk = 0;
-  llvm::tie(LastSt, Blk) = getLastStmt(CEBNode);
+  std::tie(LastSt, Blk) = getLastStmt(CEBNode);
 
   // Generate a CallEvent /before/ cleaning the state, so that we can get the
   // correct value for 'this' (if necessary).

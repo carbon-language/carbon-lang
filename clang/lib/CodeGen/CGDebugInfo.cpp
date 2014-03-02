@@ -793,7 +793,7 @@ llvm::DIType CGDebugInfo::createFieldType(StringRef name,
   uint64_t sizeInBits = 0;
   unsigned alignInBits = 0;
   if (!type->isIncompleteArrayType()) {
-    llvm::tie(sizeInBits, alignInBits) = CGM.getContext().getTypeInfo(type);
+    std::tie(sizeInBits, alignInBits) = CGM.getContext().getTypeInfo(type);
 
     if (sizeInBitsOverride)
       sizeInBits = sizeInBitsOverride;

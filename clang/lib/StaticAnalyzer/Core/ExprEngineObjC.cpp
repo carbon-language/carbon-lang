@@ -165,7 +165,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
             recVal.castAs<DefinedOrUnknownSVal>();
 
         ProgramStateRef notNilState, nilState;
-        llvm::tie(notNilState, nilState) = State->assume(receiverVal);
+        std::tie(notNilState, nilState) = State->assume(receiverVal);
         
         // There are three cases: can be nil or non-nil, must be nil, must be
         // non-nil. We ignore must be nil, and merge the rest two into non-nil.

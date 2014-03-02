@@ -372,7 +372,7 @@ void TransferFunctions::VisitBinaryOperator(BinaryOperator *B) {
 
 void TransferFunctions::VisitBlockExpr(BlockExpr *BE) {
   AnalysisDeclContext::referenced_decls_iterator I, E;
-  llvm::tie(I, E) =
+  std::tie(I, E) =
     LV.analysisContext.getReferencedBlockVars(BE->getBlockDecl());
   for ( ; I != E ; ++I) {
     const VarDecl *VD = *I;

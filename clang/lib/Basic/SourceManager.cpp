@@ -1890,7 +1890,7 @@ void SourceManager::associateFileChunkWithMacroArgExp(
 
     FileID SpellFID; // Current FileID in the spelling range.
     unsigned SpellRelativeOffs;
-    llvm::tie(SpellFID, SpellRelativeOffs) = getDecomposedLoc(SpellLoc);
+    std::tie(SpellFID, SpellRelativeOffs) = getDecomposedLoc(SpellLoc);
     while (1) {
       const SLocEntry &Entry = getSLocEntry(SpellFID);
       unsigned SpellFIDBeginOffs = Entry.getOffset();
@@ -1969,7 +1969,7 @@ SourceManager::getMacroArgExpandedLocation(SourceLocation Loc) const {
 
   FileID FID;
   unsigned Offset;
-  llvm::tie(FID, Offset) = getDecomposedLoc(Loc);
+  std::tie(FID, Offset) = getDecomposedLoc(Loc);
   if (FID.isInvalid())
     return Loc;
 

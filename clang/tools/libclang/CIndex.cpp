@@ -314,7 +314,7 @@ bool CursorVisitor::visitDeclsFromFileRegion(FileID File,
     if (Outer.isInvalid())
       return false;
 
-    llvm::tie(File, Offset) = SM.getDecomposedExpansionLoc(Outer);
+    std::tie(File, Offset) = SM.getDecomposedExpansionLoc(Outer);
     Length = 0;
     Unit->findFileRegionDecls(File, Offset, Length, Decls);
   }

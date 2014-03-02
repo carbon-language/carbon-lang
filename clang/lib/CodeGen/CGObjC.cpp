@@ -619,8 +619,8 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
   // Evaluate the ivar's size and alignment.
   ObjCIvarDecl *ivar = propImpl->getPropertyIvarDecl();
   QualType ivarType = ivar->getType();
-  llvm::tie(IvarSize, IvarAlignment)
-    = CGM.getContext().getTypeInfoInChars(ivarType);
+  std::tie(IvarSize, IvarAlignment) =
+      CGM.getContext().getTypeInfoInChars(ivarType);
 
   // If we have a copy property, we always have to use getProperty/setProperty.
   // TODO: we could actually use setProperty and an expression for non-atomics.

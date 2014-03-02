@@ -263,7 +263,7 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     configList.split(configVals, ",");
     for (unsigned i = 0, e = configVals.size(); i != e; ++i) {
       StringRef key, val;
-      llvm::tie(key, val) = configVals[i].split("=");
+      std::tie(key, val) = configVals[i].split("=");
       if (val.empty()) {
         Diags.Report(SourceLocation(),
                      diag::err_analyzer_config_no_value) << configVals[i];

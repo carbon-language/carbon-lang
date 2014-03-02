@@ -1914,7 +1914,7 @@ ScalarExprEmitter::VisitUnaryExprOrTypeTraitExpr(
 
       QualType eltType;
       llvm::Value *numElts;
-      llvm::tie(numElts, eltType) = CGF.getVLASize(VAT);
+      std::tie(numElts, eltType) = CGF.getVLASize(VAT);
 
       llvm::Value *size = numElts;
 
@@ -2537,7 +2537,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &op) {
   if (const VariableArrayType *vla
         = CGF.getContext().getAsVariableArrayType(elementType)) {
     llvm::Value *numElements;
-    llvm::tie(numElements, elementType) = CGF.getVLASize(vla);
+    std::tie(numElements, elementType) = CGF.getVLASize(vla);
 
     divisor = numElements;
 
@@ -2826,11 +2826,11 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
 
   switch (E->getLHS()->getType().getObjCLifetime()) {
   case Qualifiers::OCL_Strong:
-    llvm::tie(LHS, RHS) = CGF.EmitARCStoreStrong(E, Ignore);
+    std::tie(LHS, RHS) = CGF.EmitARCStoreStrong(E, Ignore);
     break;
 
   case Qualifiers::OCL_Autoreleasing:
-    llvm::tie(LHS,RHS) = CGF.EmitARCStoreAutoreleasing(E);
+    std::tie(LHS, RHS) = CGF.EmitARCStoreAutoreleasing(E);
     break;
 
   case Qualifiers::OCL_Weak:

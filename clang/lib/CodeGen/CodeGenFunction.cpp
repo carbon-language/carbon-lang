@@ -1186,7 +1186,7 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
                                           getContext().getAsArrayType(Ty))) {
       QualType eltType;
       llvm::Value *numElts;
-      llvm::tie(numElts, eltType) = getVLASize(vlaType);
+      std::tie(numElts, eltType) = getVLASize(vlaType);
 
       SizeVal = numElts;
       CharUnits eltSize = getContext().getTypeSizeInChars(eltType);

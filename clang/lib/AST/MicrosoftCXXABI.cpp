@@ -169,7 +169,7 @@ std::pair<uint64_t, unsigned> MicrosoftCXXABI::getMemberPointerWidthAndAlign(
   assert(Target.getTriple().getArch() == llvm::Triple::x86 ||
          Target.getTriple().getArch() == llvm::Triple::x86_64);
   unsigned Ptrs, Ints;
-  llvm::tie(Ptrs, Ints) = getMSMemberPointerSlots(MPT);
+  std::tie(Ptrs, Ints) = getMSMemberPointerSlots(MPT);
   // The nominal struct is laid out with pointers followed by ints and aligned
   // to a pointer width if any are present and an int width otherwise.
   unsigned PtrSize = Target.getPointerWidth(0);

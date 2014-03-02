@@ -154,7 +154,7 @@ namespace {
       SmallVector<DeclContext*,4> queue;
       while (true) {
         DeclContext::udir_iterator I, End;
-        for (llvm::tie(I, End) = DC->getUsingDirectives(); I != End; ++I) {
+        for (std::tie(I, End) = DC->getUsingDirectives(); I != End; ++I) {
           UsingDirectiveDecl *UD = *I;
           DeclContext *NS = UD->getNominatedNamespace();
           if (visited.insert(NS)) {
@@ -768,7 +768,7 @@ CppNamespaceLookup(Sema &S, LookupResult &R, ASTContext &Context,
   // Perform direct name lookup into the namespaces nominated by the
   // using directives whose common ancestor is this namespace.
   UnqualUsingDirectiveSet::const_iterator UI, UEnd;
-  llvm::tie(UI, UEnd) = UDirs.getNamespacesFor(NS);
+  std::tie(UI, UEnd) = UDirs.getNamespacesFor(NS);
 
   for (; UI != UEnd; ++UI)
     if (LookupDirect(S, R, UI->getNominatedNamespace()))
@@ -980,7 +980,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
     if (Ctx) {
       DeclContext *OuterCtx;
       bool SearchAfterTemplateScope;
-      llvm::tie(OuterCtx, SearchAfterTemplateScope) = findOuterContext(S);
+      std::tie(OuterCtx, SearchAfterTemplateScope) = findOuterContext(S);
       if (SearchAfterTemplateScope)
         OutsideOfTemplateParamDC = OuterCtx;
 
@@ -1123,7 +1123,7 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
     if (Ctx) {
       DeclContext *OuterCtx;
       bool SearchAfterTemplateScope;
-      llvm::tie(OuterCtx, SearchAfterTemplateScope) = findOuterContext(S);
+      std::tie(OuterCtx, SearchAfterTemplateScope) = findOuterContext(S);
       if (SearchAfterTemplateScope)
         OutsideOfTemplateParamDC = OuterCtx;
 
@@ -1516,7 +1516,7 @@ static bool LookupQualifiedNameInUsingDirectives(Sema &S, LookupResult &R,
       continue;
     }
 
-    for (llvm::tie(I,E) = ND->getUsingDirectives(); I != E; ++I) {
+    for (std::tie(I, E) = ND->getUsingDirectives(); I != E; ++I) {
       NamespaceDecl *Nom = (*I)->getNominatedNamespace();
       if (Visited.insert(Nom))
         Queue.push_back(Nom);
@@ -3087,7 +3087,7 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
   if (QualifiedNameLookup) {
     ShadowContextRAII Shadow(Visited);
     DeclContext::udir_iterator I, E;
-    for (llvm::tie(I, E) = Ctx->getUsingDirectives(); I != E; ++I) {
+    for (std::tie(I, E) = Ctx->getUsingDirectives(); I != E; ++I) {
       LookupVisibleDecls((*I)->getNominatedNamespace(), Result,
                          QualifiedNameLookup, InBaseClass, Consumer, Visited);
     }
@@ -3273,7 +3273,7 @@ static void LookupVisibleDecls(Scope *S, LookupResult &Result,
     // Lookup visible declarations in any namespaces found by using
     // directives.
     UnqualUsingDirectiveSet::const_iterator UI, UEnd;
-    llvm::tie(UI, UEnd) = UDirs.getNamespacesFor(Entity);
+    std::tie(UI, UEnd) = UDirs.getNamespacesFor(Entity);
     for (; UI != UEnd; ++UI)
       LookupVisibleDecls(const_cast<DeclContext *>(UI->getNominatedNamespace()),
                          Result, /*QualifiedNameLookup=*/false,

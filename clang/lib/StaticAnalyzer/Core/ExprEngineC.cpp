@@ -555,7 +555,7 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
     } else {
       DefinedOrUnknownSVal DefinedRHS = RHSVal.castAs<DefinedOrUnknownSVal>();
       ProgramStateRef StTrue, StFalse;
-      llvm::tie(StTrue, StFalse) = N->getState()->assume(DefinedRHS);
+      std::tie(StTrue, StFalse) = N->getState()->assume(DefinedRHS);
       if (StTrue) {
         if (StFalse) {
           // We can't constrain the value to 0 or 1.

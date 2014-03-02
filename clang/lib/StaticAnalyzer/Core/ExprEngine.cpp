@@ -1466,7 +1466,7 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
     DefinedSVal V = X.castAs<DefinedSVal>();
 
     ProgramStateRef StTrue, StFalse;
-    tie(StTrue, StFalse) = PrevState->assume(V);
+    std::tie(StTrue, StFalse) = PrevState->assume(V);
 
     // Process the true branch.
     if (builder.isFeasible(true)) {
@@ -2196,7 +2196,7 @@ void ExprEngine::evalEagerlyAssumeBinOpBifurcation(ExplodedNodeSet &Dst,
         geteagerlyAssumeBinOpBifurcationTags();
 
       ProgramStateRef StateTrue, StateFalse;
-      tie(StateTrue, StateFalse) = state->assume(*SEV);
+      std::tie(StateTrue, StateFalse) = state->assume(*SEV);
 
       // First assume that the condition is true.
       if (StateTrue) {

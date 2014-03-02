@@ -114,7 +114,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
   DefinedSVal sizeD = sizeV.castAs<DefinedSVal>();
 
   ProgramStateRef stateNotZero, stateZero;
-  llvm::tie(stateNotZero, stateZero) = state->assume(sizeD);
+  std::tie(stateNotZero, stateZero) = state->assume(sizeD);
 
   if (stateZero && !stateNotZero) {
     reportBug(VLA_Zero, SE, stateZero, C);

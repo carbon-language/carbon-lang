@@ -109,7 +109,7 @@ InputArgList *Driver::ParseArgStrings(ArrayRef<const char *> ArgList) {
 
   unsigned IncludedFlagsBitmask;
   unsigned ExcludedFlagsBitmask;
-  llvm::tie(IncludedFlagsBitmask, ExcludedFlagsBitmask) =
+  std::tie(IncludedFlagsBitmask, ExcludedFlagsBitmask) =
     getIncludeExcludeOptionFlagMasks();
 
   unsigned MissingArgIndex, MissingArgCount;
@@ -619,7 +619,7 @@ int Driver::ExecuteCompilation(const Compilation &C,
 void Driver::PrintHelp(bool ShowHidden) const {
   unsigned IncludedFlagsBitmask;
   unsigned ExcludedFlagsBitmask;
-  llvm::tie(IncludedFlagsBitmask, ExcludedFlagsBitmask) =
+  std::tie(IncludedFlagsBitmask, ExcludedFlagsBitmask) =
     getIncludeExcludeOptionFlagMasks();
 
   ExcludedFlagsBitmask |= options::NoDriverOption;

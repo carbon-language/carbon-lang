@@ -799,7 +799,7 @@ namespace {
         MultiLevelTemplateArgumentList &TemplateArgs
           = const_cast<MultiLevelTemplateArgumentList &>(this->TemplateArgs);
         unsigned Depth, Index;
-        llvm::tie(Depth, Index) = getDepthAndIndex(PartialPack);
+        std::tie(Depth, Index) = getDepthAndIndex(PartialPack);
         if (TemplateArgs.hasTemplateArgument(Depth, Index)) {
           Result = TemplateArgs(Depth, Index);
           TemplateArgs.setArgument(Depth, Index, TemplateArgument());
@@ -818,7 +818,7 @@ namespace {
         MultiLevelTemplateArgumentList &TemplateArgs
         = const_cast<MultiLevelTemplateArgumentList &>(this->TemplateArgs);
         unsigned Depth, Index;
-        llvm::tie(Depth, Index) = getDepthAndIndex(PartialPack);
+        std::tie(Depth, Index) = getDepthAndIndex(PartialPack);
         TemplateArgs.setArgument(Depth, Index, Arg);
       }
     }

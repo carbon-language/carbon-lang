@@ -796,7 +796,7 @@ Token *Preprocessor::cacheMacroExpandedTokens(TokenLexer *tokLexer,
     for (unsigned i = 0, e = MacroExpandingLexersStack.size(); i != e; ++i) {
       TokenLexer *prevLexer;
       size_t tokIndex;
-      llvm::tie(prevLexer, tokIndex) = MacroExpandingLexersStack[i];
+      std::tie(prevLexer, tokIndex) = MacroExpandingLexersStack[i];
       prevLexer->Tokens = MacroExpandedTokens.data() + tokIndex;
     }
   }

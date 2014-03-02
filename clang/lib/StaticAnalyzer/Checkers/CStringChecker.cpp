@@ -226,7 +226,7 @@ ProgramStateRef CStringChecker::checkNonNull(CheckerContext &C,
     return NULL;
 
   ProgramStateRef stateNull, stateNonNull;
-  llvm::tie(stateNull, stateNonNull) = assumeZero(C, state, l, S->getType());
+  std::tie(stateNull, stateNonNull) = assumeZero(C, state, l, S->getType());
 
   if (stateNull && !stateNonNull) {
     if (!Filter.CheckCStringNullArg)
@@ -446,7 +446,7 @@ ProgramStateRef CStringChecker::CheckOverlap(CheckerContext &C,
 
   // Are the two values the same?
   SValBuilder &svalBuilder = C.getSValBuilder();  
-  llvm::tie(stateTrue, stateFalse) =
+  std::tie(stateTrue, stateFalse) =
     state->assume(svalBuilder.evalEQ(state, *firstLoc, *secondLoc));
 
   if (stateTrue && !stateFalse) {
@@ -468,7 +468,7 @@ ProgramStateRef CStringChecker::CheckOverlap(CheckerContext &C,
   if (!reverseTest)
     return state;
 
-  llvm::tie(stateTrue, stateFalse) = state->assume(*reverseTest);
+  std::tie(stateTrue, stateFalse) = state->assume(*reverseTest);
   if (stateTrue) {
     if (stateFalse) {
       // If we don't know which one comes first, we can't perform this test.
@@ -513,7 +513,7 @@ ProgramStateRef CStringChecker::CheckOverlap(CheckerContext &C,
   if (!OverlapTest)
     return state;
 
-  llvm::tie(stateTrue, stateFalse) = state->assume(*OverlapTest);
+  std::tie(stateTrue, stateFalse) = state->assume(*OverlapTest);
 
   if (stateTrue && !stateFalse) {
     // Overlap!
@@ -584,7 +584,7 @@ ProgramStateRef CStringChecker::checkAdditionOverflow(CheckerContext &C,
                                                 *maxMinusRightNL, cmpTy);
 
     ProgramStateRef stateOverflow, stateOkay;
-    llvm::tie(stateOverflow, stateOkay) =
+    std::tie(stateOverflow, stateOkay) =
       state->assume(willOverflow.castAs<DefinedOrUnknownSVal>());
 
     if (stateOverflow && !stateOkay) {
@@ -919,7 +919,7 @@ void CStringChecker::evalCopyCommon(CheckerContext &C,
   QualType sizeTy = Size->getType();
 
   ProgramStateRef stateZeroSize, stateNonZeroSize;
-  llvm::tie(stateZeroSize, stateNonZeroSize) =
+  std::tie(stateZeroSize, stateNonZeroSize) =
     assumeZero(C, state, sizeVal, sizeTy);
 
   // Get the value of the Dest.
@@ -1076,7 +1076,7 @@ void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) const {
   QualType sizeTy = Size->getType();
 
   ProgramStateRef stateZeroSize, stateNonZeroSize;
-  llvm::tie(stateZeroSize, stateNonZeroSize) =
+  std::tie(stateZeroSize, stateNonZeroSize) =
     assumeZero(C, state, sizeVal, sizeTy);
 
   // If the size can be zero, the result will be 0 in that case, and we don't
@@ -1102,7 +1102,7 @@ void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) const {
     // See if they are the same.
     DefinedOrUnknownSVal SameBuf = svalBuilder.evalEQ(state, LV, RV);
     ProgramStateRef StSameBuf, StNotSameBuf;
-    llvm::tie(StSameBuf, StNotSameBuf) = state->assume(SameBuf);
+    std::tie(StSameBuf, StNotSameBuf) = state->assume(SameBuf);
 
     // If the two arguments might be the same buffer, we know the result is 0,
     // and we only need to check one size.
@@ -1160,7 +1160,7 @@ void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
     SVal maxlenVal = state->getSVal(maxlenExpr, LCtx);
 
     ProgramStateRef stateZeroSize, stateNonZeroSize;
-    llvm::tie(stateZeroSize, stateNonZeroSize) =
+    std::tie(stateZeroSize, stateNonZeroSize) =
       assumeZero(C, state, maxlenVal, maxlenExpr->getType());
 
     // If the size can be zero, the result will be 0 in that case, and we don't
@@ -1214,10 +1214,10 @@ void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
       ProgramStateRef stateStringTooLong, stateStringNotTooLong;
 
       // Check if the strLength is greater than the maxlen.
-      llvm::tie(stateStringTooLong, stateStringNotTooLong) =
-          state->assume(C.getSValBuilder().evalBinOpNN(
-              state, BO_GT, *strLengthNL, *maxlenValNL, cmpTy)
-                            .castAs<DefinedOrUnknownSVal>());
+      std::tie(stateStringTooLong, stateStringNotTooLong) = state->assume(
+          C.getSValBuilder()
+              .evalBinOpNN(state, BO_GT, *strLengthNL, *maxlenValNL, cmpTy)
+              .castAs<DefinedOrUnknownSVal>());
 
       if (stateStringTooLong && !stateStringNotTooLong) {
         // If the string is longer than maxlen, return maxlen.
@@ -1381,7 +1381,7 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
       // Check if the max number to copy is less than the length of the src.
       // If the bound is equal to the source length, strncpy won't null-
       // terminate the result!
-      llvm::tie(stateSourceTooLong, stateSourceNotTooLong) = state->assume(
+      std::tie(stateSourceTooLong, stateSourceNotTooLong) = state->assume(
           svalBuilder.evalBinOpNN(state, BO_GE, *strLengthNL, *lenValNL, cmpTy)
               .castAs<DefinedOrUnknownSVal>());
 
@@ -1428,7 +1428,7 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
         // case strncpy will do no work at all. Our bounds check uses n-1
         // as the last element accessed, so n == 0 is problematic.
         ProgramStateRef StateZeroSize, StateNonZeroSize;
-        llvm::tie(StateZeroSize, StateNonZeroSize) =
+        std::tie(StateZeroSize, StateNonZeroSize) =
           assumeZero(C, state, *lenValNL, sizeTy);
 
         // If the size is known to be zero, we're done.
@@ -1721,7 +1721,7 @@ void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
   SValBuilder &svalBuilder = C.getSValBuilder();
   DefinedOrUnknownSVal SameBuf = svalBuilder.evalEQ(state, LV, RV);
   ProgramStateRef StSameBuf, StNotSameBuf;
-  llvm::tie(StSameBuf, StNotSameBuf) = state->assume(SameBuf);
+  std::tie(StSameBuf, StNotSameBuf) = state->assume(SameBuf);
 
   // If the two arguments might be the same buffer, we know the result is 0,
   // and we only need to check one size.

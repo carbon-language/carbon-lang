@@ -980,7 +980,7 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
 
   // The explicit NULL case, no operation is performed.
   ProgramStateRef notNullState, nullState;
-  llvm::tie(notNullState, nullState) = State->assume(location);
+  std::tie(notNullState, nullState) = State->assume(location);
   if (nullState && !notNullState)
     return 0;
 
@@ -1505,9 +1505,9 @@ ProgramStateRef MallocChecker::ReallocMem(CheckerContext &C,
                        svalBuilder.makeIntValWithPtrWidth(0, false));
 
   ProgramStateRef StatePtrIsNull, StatePtrNotNull;
-  llvm::tie(StatePtrIsNull, StatePtrNotNull) = state->assume(PtrEQ);
+  std::tie(StatePtrIsNull, StatePtrNotNull) = state->assume(PtrEQ);
   ProgramStateRef StateSizeIsZero, StateSizeNotZero;
-  llvm::tie(StateSizeIsZero, StateSizeNotZero) = state->assume(SizeZero);
+  std::tie(StateSizeIsZero, StateSizeNotZero) = state->assume(SizeZero);
   // We only assume exceptional states if they are definitely true; if the
   // state is under-constrained, assume regular realloc behavior.
   bool PrtIsNull = StatePtrIsNull && !StatePtrNotNull;
@@ -1666,7 +1666,7 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
   PathDiagnosticLocation LocUsedForUniqueing;
   const ExplodedNode *AllocNode = 0;
   const MemRegion *Region = 0;
-  llvm::tie(AllocNode, Region) = getAllocationSite(N, Sym, C);
+  std::tie(AllocNode, Region) = getAllocationSite(N, Sym, C);
   
   ProgramPoint P = AllocNode->getLocation();
   const Stmt *AllocationStmt = 0;

@@ -2904,7 +2904,7 @@ TrimmedGraph::TrimmedGraph(const ExplodedGraph *OriginalGraph,
 
     PriorityMapTy::iterator PriorityEntry;
     bool IsNew;
-    llvm::tie(PriorityEntry, IsNew) =
+    std::tie(PriorityEntry, IsNew) =
       PriorityMap.insert(std::make_pair(Node, Priority));
     ++Priority;
 
@@ -2933,7 +2933,7 @@ bool TrimmedGraph::popNextReportGraph(ReportGraph &GraphWrapper) {
     return false;
 
   const ExplodedNode *OrigN;
-  llvm::tie(OrigN, GraphWrapper.Index) = ReportNodes.pop_back_val();
+  std::tie(OrigN, GraphWrapper.Index) = ReportNodes.pop_back_val();
   assert(PriorityMap.find(OrigN) != PriorityMap.end() &&
          "error node not accessible from root");
 
@@ -3454,7 +3454,7 @@ void BugReporter::FlushReport(BugReport *exampleReport,
     PathDiagnosticPiece *piece =
       new PathDiagnosticEventPiece(L, exampleReport->getDescription());
     BugReport::ranges_iterator Beg, End;
-    llvm::tie(Beg, End) = exampleReport->getRanges();
+    std::tie(Beg, End) = exampleReport->getRanges();
     for ( ; Beg != End; ++Beg)
       piece->addRange(*Beg);
     D->setEndOfPath(piece);

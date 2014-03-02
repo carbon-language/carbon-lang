@@ -1666,7 +1666,7 @@ private:
     void writeLoc(SourceLocation Loc) {
       FileID FID;
       unsigned Offset;
-      llvm::tie(FID, Offset) = SourceMgr.getDecomposedLoc(Loc);
+      std::tie(FID, Offset) = SourceMgr.getDecomposedLoc(Loc);
       assert(!FID.isInvalid());
       SmallString<200> Path =
           StringRef(SourceMgr.getFileEntryForID(FID)->getName());
