@@ -222,7 +222,7 @@ namespace COFF {
     uint32_t Characteristics;
   };
 
-  enum SectionCharacteristics LLVM_ENUM_INT_TYPE(uint32_t) {
+  enum SectionCharacteristics : uint32_t {
     SC_Invalid = 0xffffffff,
 
     IMAGE_SCN_TYPE_NO_PAD            = 0x00000008,

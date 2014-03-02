@@ -254,7 +254,7 @@ namespace llvm {
   /// SUnit - Scheduling unit. This is a node in the scheduling DAG.
   class SUnit {
   private:
-    enum LLVM_ENUM_INT_TYPE(unsigned) { BoundaryID = ~0u };
+    enum : unsigned { BoundaryID = ~0u };
 
     SDNode *Node;                       // Representative node.
     MachineInstr *Instr;                // Alternatively, a MachineInstr.

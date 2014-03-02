@@ -28,7 +28,7 @@ template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
 
 
-enum LLVMConstants LLVM_ENUM_INT_TYPE(uint32_t) {
+enum LLVMConstants : uint32_t {
   DEBUG_METADATA_VERSION = 1  // Current debug info version number.
 };
 

@@ -41,7 +41,7 @@ template <typename PointerTy, unsigned IntBits, typename IntType=unsigned,
           typename PtrTraits = PointerLikeTypeTraits<PointerTy> >
 class PointerIntPair {
   intptr_t Value;
-  enum LLVM_ENUM_INT_TYPE(uintptr_t) {
+  enum : uintptr_t {
     /// PointerBitMask - The bits that come from the pointer.
     PointerBitMask =
       ~(uintptr_t)(((intptr_t)1 << PtrTraits::NumLowBitsAvailable)-1),

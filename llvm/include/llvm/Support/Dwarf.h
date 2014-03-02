@@ -24,7 +24,7 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 // Debug info constants.
 
-enum LLVM_ENUM_INT_TYPE(uint32_t) {
+enum : uint32_t {
   LLVMDebugVersion = (12 << 16),    // Current version of debug information.
   LLVMDebugVersion11 = (11 << 16),  // Constant for version 11.
   LLVMDebugVersion10 = (10 << 16),  // Constant for version 10.
@@ -47,7 +47,7 @@ namespace dwarf {
 // Do not mix the following two enumerations sets.  DW_TAG_invalid changes the
 // enumeration base type.
 
-enum LLVMConstants LLVM_ENUM_INT_TYPE(uint32_t) {
+enum LLVMConstants : uint32_t {
   // llvm mock tags
   DW_TAG_invalid = ~0U, // Tag for invalid results.
 
@@ -68,7 +68,7 @@ enum LLVMConstants LLVM_ENUM_INT_TYPE(uint32_t) {
 const uint32_t DW_CIE_ID = UINT32_MAX;
 const uint64_t DW64_CIE_ID = UINT64_MAX;
 
-enum Tag LLVM_ENUM_INT_TYPE(uint16_t) {
+enum Tag : uint16_t {
   DW_TAG_array_type = 0x01,
   DW_TAG_class_type = 0x02,
   DW_TAG_entry_point = 0x03,
@@ -175,7 +175,7 @@ inline bool isType(Tag T) {
   }
 }
 
-enum Attribute LLVM_ENUM_INT_TYPE(uint16_t) {
+enum Attribute : uint16_t {
   // Attributes
   DW_AT_sibling = 0x01,
   DW_AT_location = 0x02,
@@ -341,7 +341,7 @@ enum Attribute LLVM_ENUM_INT_TYPE(uint16_t) {
   DW_AT_APPLE_property = 0x3fed
 };
 
-enum Form LLVM_ENUM_INT_TYPE(uint16_t) {
+enum Form : uint16_t {
   // Attribute form encodings
   DW_FORM_addr = 0x01,
   DW_FORM_block2 = 0x03,

@@ -365,24 +365,6 @@
 # define LLVM_STATIC_ASSERT(expr, msg)
 #endif
 
-/// \macro LLVM_ENUM_INT_TYPE
-/// \brief Expands to colon followed by the given integral type on compilers
-/// which support C++11 strong enums.  This can be used to make enums unsigned
-/// with MSVC.
-#if __has_feature(cxx_strong_enums) || LLVM_MSC_PREREQ(1600)
-# define LLVM_ENUM_INT_TYPE(intty) : intty
-#else
-# define LLVM_ENUM_INT_TYPE(intty)
-#endif
-
-/// \brief Does the compiler support C++11 semantics for strongly typed forward
-/// declared enums?
-#if __has_feature(cxx_strong_enums) || LLVM_MSC_PREREQ(1700)
-#define LLVM_HAS_STRONG_ENUMS 1
-#else
-#define LLVM_HAS_STRONG_ENUMS 0
-#endif
-
 /// \brief Does the compiler support generalized initializers (using braced
 /// lists and std::initializer_list).  While clang may claim it supports general
 /// initializers, if we're using MSVC's headers, we might not have a usable

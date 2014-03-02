@@ -75,7 +75,7 @@ class BasicSymbolRef {
 
 public:
   // FIXME: should we add a SF_Text?
-  enum Flags LLVM_ENUM_INT_TYPE(unsigned) {
+  enum Flags : unsigned {
     SF_None = 0,
     SF_Undefined = 1U << 0,      // Symbol is defined in another object file
     SF_Global = 1U << 1,         // Global symbol

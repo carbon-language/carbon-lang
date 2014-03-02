@@ -247,7 +247,7 @@ class RAGreedy : public MachineFunctionPass,
   /// class.
   SmallVector<GlobalSplitCandidate, 32> GlobalCand;
 
-  enum LLVM_ENUM_INT_TYPE(unsigned) { NoCand = ~0u };
+  enum : unsigned { NoCand = ~0u };
 
   /// Candidate map. Each edge bundle is assigned to a GlobalCand entry, or to
   /// NoCand which indicates the stack interval.

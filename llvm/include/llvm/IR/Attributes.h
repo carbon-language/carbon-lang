@@ -202,7 +202,7 @@ public:
 /// index `1'.
 class AttributeSet {
 public:
-  enum AttrIndex LLVM_ENUM_INT_TYPE(unsigned) {
+  enum AttrIndex : unsigned {
     ReturnIndex = 0U,
     FunctionIndex = ~0U
   };

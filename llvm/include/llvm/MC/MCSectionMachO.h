@@ -41,7 +41,7 @@ public:
 
   /// These are the section type and attributes fields.  A MachO section can
   /// have only one Type, but can have any of the attributes specified.
-  enum LLVM_ENUM_INT_TYPE(uint32_t) {
+  enum : uint32_t {
     // TypeAndAttributes bitmasks.
     SECTION_TYPE       = 0x000000FFU,
     SECTION_ATTRIBUTES = 0xFFFFFF00U,
