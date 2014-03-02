@@ -209,6 +209,8 @@ static DecodeStatus DecodeSIMM13(MCInst &Inst, unsigned insn,
                                  uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeJMPL(MCInst &Inst, unsigned insn, uint64_t Address,
                                const void *Decoder);
+static DecodeStatus DecodeReturn(MCInst &MI, unsigned insn, uint64_t Address,
+                                 const void *Decoder);
 
 #include "SparcGenDisassemblerTables.inc"
 
@@ -406,6 +408,34 @@ static DecodeStatus DecodeJMPL(MCInst &MI, unsigned insn, uint64_t Address,
     return status;
 
   // Decode RS1 | SIMM13.
+  if (isImm)
+    MI.addOperand(MCOperand::CreateImm(simm13));
+  else {
+    status = DecodeIntRegsRegisterClass(MI, rs2, Address, Decoder);
+    if (status != MCDisassembler::Success)
+      return status;
+  }
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeReturn(MCInst &MI, unsigned insn, uint64_t Address,
+                                 const void *Decoder) {
+
+  unsigned rs1 = fieldFromInstruction(insn, 14, 5);
+  unsigned isImm = fieldFromInstruction(insn, 13, 1);
+  unsigned rs2 = 0;
+  unsigned simm13 = 0;
+  if (isImm)
+    simm13 = SignExtend32<13>(fieldFromInstruction(insn, 0, 13));
+  else
+    rs2 = fieldFromInstruction(insn, 0, 5);
+
+  // Decode RS1.
+  DecodeStatus status = DecodeIntRegsRegisterClass(MI, rs1, Address, Decoder);
+  if (status != MCDisassembler::Success)
+    return status;
+
+  // Decode RS2 | SIMM13.
   if (isImm)
     MI.addOperand(MCOperand::CreateImm(simm13));
   else {

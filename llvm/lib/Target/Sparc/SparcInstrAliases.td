@@ -249,6 +249,8 @@ def : InstAlias<"mov $simm13, $rd", (ORri IntRegs:$rd, G0, i32imm:$simm13)>;
 // restore -> restore %g0, %g0, %g0
 def : InstAlias<"restore", (RESTORErr G0, G0, G0)>;
 
+def : MnemonicAlias<"return", "rett">, Requires<[HasV9]>;
+
 def : MnemonicAlias<"addc", "addx">, Requires<[HasV9]>;
 def : MnemonicAlias<"addccc", "addxcc">, Requires<[HasV9]>;
 

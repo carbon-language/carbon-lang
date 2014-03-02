@@ -1214,3 +1214,6 @@
         fmovrsnz  %g1, %f2, %f3
         fmovrsgz  %g1, %f2, %f3
         fmovrsgez %g1, %f2, %f3
+
+        ! CHECK:  rett %i7+8   ! encoding: [0x81,0xcf,0xe0,0x08]
+        return %i7 + 8

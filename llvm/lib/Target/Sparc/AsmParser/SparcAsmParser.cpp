@@ -446,6 +446,9 @@ ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc)
   return Error(StartLoc, "invalid register name");
 }
 
+static void applyMnemonicAliases(StringRef &Mnemonic, unsigned Features,
+                                 unsigned VariantID);
+
 bool SparcAsmParser::
 ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                  SMLoc NameLoc,
@@ -454,6 +457,9 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
 
   // First operand in MCInst is instruction mnemonic.
   Operands.push_back(SparcOperand::CreateToken(Name, NameLoc));
+
+  // apply mnemonic aliases, if any, so that we can parse operands correctly.
+  applyMnemonicAliases(Name, getAvailableFeatures(), 0);
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.

@@ -274,3 +274,5 @@
         ! CHECK-NEXT:                                        !   fixup A - offset: 0, value: .BB0, kind: fixup_sparc_br22
         fbo,a .BB0
 
+        ! CHECK:  rett %i7+8   ! encoding: [0x81,0xcf,0xe0,0x08]
+        rett %i7 + 8

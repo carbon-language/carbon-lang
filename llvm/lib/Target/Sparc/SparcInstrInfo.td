@@ -406,6 +406,14 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1,
                   "jmp %i7+$val", []>;
 }
 
+let isReturn = 1, isTerminator = 1, hasDelaySlot = 1,
+     isBarrier = 1, rd = 0, DecoderMethod = "DecodeReturn" in {
+  def RETTrr : F3_1<2, 0b111001, (outs), (ins MEMrr:$addr),
+                       "rett $addr", []>;
+  def RETTri : F3_2<2, 0b111001, (outs), (ins MEMri:$addr),
+                       "rett $addr", []>;
+}
+
 // Section B.1 - Load Integer Instructions, p. 90
 let DecoderMethod = "DecodeLoadInt" in {
   defm LDSB : Load<"ldsb", 0b001001, sextloadi8,  IntRegs, i32>;
