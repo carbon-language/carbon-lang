@@ -457,11 +457,84 @@ Indent Code Consistently
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Okay, in your first year of programming you were told that indentation is
-important.  If you didn't believe and internalize this then, now is the time.
-Just do it.
+important. If you didn't believe and internalize this then, now is the time.
+Just do it. With the introduction of C++11, there are some new formatting
+challenges that merit some suggestions to help have consistent, maintainable,
+and tool-friendly formatting and indentation.
 
-Compiler Issues
----------------
+Format Lambdas Like Blocks Of Code
+""""""""""""""""""""""""""""""""""
+
+When formatting a multi-line lambda, format it like a block of code, that's
+what it is. If there is only one multi-line lambda in a statement, and there
+are no expressions lexically after it in the statement, drop the indent to the
+standard two space indent for a block of code, as if it were an if-block opened
+by the preceding part of the statement:
+
+.. code-block:: c++
+
+  std::sort(foo.begin(), foo.end(), [&](Foo a, Foo b) -> bool {
+    if (a.blah < b.blah)
+      return true;
+    if (a.baz < b.baz)
+      return true;
+    return a.bam < b.bam;
+  });
+
+If there are multiple multi-line lambdas in a statement, or there is anything
+interesting after the lambda in the statement, indent the block two spaces from
+the indent of the ``[]``:
+
+.. code-block:: c++
+
+  dyn_switch(V->stripPointerCasts(),
+             [] (PHINode *PN) {
+               // process phis...
+             },
+             [] (SelectInst *SI) {
+               // process selects...
+             },
+             [] (LoadInst *LI) {
+               // process loads...
+             },
+             [] (AllocaInst *AI) {
+               // process allocas...
+             });
+
+Braced Initializer Lists
+""""""""""""""""""""""""
+
+With C++11, there are significantly more uses of braced lists to perform
+initialization. These allow you to easily construct aggregate temporaries in
+expressions among other niceness. They now have a natural way of ending up
+nested within each other and within function calls in order to build up
+aggregates (such as option structs) from local variables. To make matters
+worse, we also have many more uses of braces in an expression context that are
+*not* performing initialization.
+
+The historically common formatting of braced initialization of aggregate
+variables does not mix cleanly with deep nesting, general expression contexts,
+function arguments, and lambdas. We suggest new code use a simple rule for
+formatting braced initialization lists: act as-if the braces were parentheses
+in a function call. The formatting rules exactly match those already well
+understood for formatting nested function calls. Examples:
+
+.. code-block:: c++
+
+  foo({a, b, c}, {1, 2, 3});
+
+  llvm::Constant *Mask[] = {
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), 0),
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), 1),
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), 2)};
+
+This formatting scheme also makes it particularly easy to get predictable,
+consistent, and automatic formatting with tools like `Clang Format`_.
+
+.. _Clang Format: http://clang.llvm.org/docs/ClangFormat.html
+
+Language and Compiler Issues
+----------------------------
 
 Treat Compiler Warnings Like Errors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -579,6 +652,55 @@ So, the rule for LLVM is to always use the ``class`` keyword, unless **all**
 members are public and the type is a C++ `POD
 <http://en.wikipedia.org/wiki/Plain_old_data_structure>`_ type, in which case
 ``struct`` is allowed.
+
+Do not use Braced Initializer Lists to Call a Constructor
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In C++11 there is a "generalized initialization syntax" which allows calling
+constructors using braced initializer lists. Do not use these to call
+constructors with any interesting logic or if you care that you're calling some
+*particular* constructor. Those should look like function calls using
+parentheses rather than like aggregate initialization. Similarly, if you need
+to explicitly name the type and call its constructor to create a temporary,
+don't use a braced initializer list. Instead, use a braced initializer list
+(without any type for temporaries) when doing aggregate initialization or
+something notionally equivalent. Examples:
+
+.. code-block:: c++
+
+  class Foo {
+  public:
+    // Construct a Foo by reading data from the disk in the whizbang format, ...
+    Foo(std::string filename);
+
+    // Construct a Foo by looking up the Nth element of some global data ...
+    Foo(int N);
+
+    // ...
+  };
+
+  // The Foo constructor call is very deliberate, no braces.
+  std::fill(foo.begin(), foo.end(), Foo("name"));
+
+  // The pair is just being constructed like an aggregate, use braces.
+  bar_map.insert({my_key, my_value});
+
+If you use a braced initializer list when initializing a variable, use an equals before the open curly brace:
+
+.. code-block:: c++
+
+  int data[] = {0, 1, 2, 3};
+
+Use ``auto`` Type Deduction to Make Code More Readable
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Some are advocating a policy of "almost always ``auto``" in C++11, however LLVM
+uses a more moderate stance. Use ``auto`` if and only if it makes the code more
+readable or easier to maintain. Don't "almost always" use ``auto``, but do use
+``auto`` with initializers like ``cast<Foo>(...)`` or other places where the
+type is already obvious from the context. Another time when ``auto`` works well
+for these purposes is when the type would have been abstracted away anyways,
+often behind a container's typedef such as ``std::vector<T>::iterator``.
 
 Style Issues
 ============
