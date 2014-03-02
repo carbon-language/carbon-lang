@@ -333,19 +333,6 @@
 #define LLVM_EXPLICIT
 #endif
 
-/// \macro LLVM_STATIC_ASSERT
-/// \brief Expands to C/C++'s static_assert on compilers which support it.
-#if __has_feature(cxx_static_assert) || \
-    defined(__GXX_EXPERIMENTAL_CXX0X__) || LLVM_MSC_PREREQ(1600)
-# define LLVM_STATIC_ASSERT(expr, msg) static_assert(expr, msg)
-#elif __has_feature(c_static_assert)
-# define LLVM_STATIC_ASSERT(expr, msg) _Static_assert(expr, msg)
-#elif __has_extension(c_static_assert)
-# define LLVM_STATIC_ASSERT(expr, msg) LLVM_EXTENSION _Static_assert(expr, msg)
-#else
-# define LLVM_STATIC_ASSERT(expr, msg)
-#endif
-
 /// \brief Does the compiler support generalized initializers (using braced
 /// lists and std::initializer_list).  While clang may claim it supports general
 /// initializers, if we're using MSVC's headers, we might not have a usable

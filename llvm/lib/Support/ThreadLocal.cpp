@@ -27,7 +27,7 @@ using namespace sys;
 ThreadLocalImpl::ThreadLocalImpl() : data() { }
 ThreadLocalImpl::~ThreadLocalImpl() { }
 void ThreadLocalImpl::setInstance(const void* d) {
-  LLVM_STATIC_ASSERT(sizeof(d) <= sizeof(data), "size too big");
+  static_assert(sizeof(d) <= sizeof(data), "size too big");
   void **pd = reinterpret_cast<void**>(&data);
   *pd = const_cast<void*>(d);
 }
@@ -51,7 +51,7 @@ namespace llvm {
 using namespace sys;
 
 ThreadLocalImpl::ThreadLocalImpl() : data() {
-  LLVM_STATIC_ASSERT(sizeof(pthread_key_t) <= sizeof(data), "size too big");
+  static_assert(sizeof(pthread_key_t) <= sizeof(data), "size too big");
   pthread_key_t* key = reinterpret_cast<pthread_key_t*>(&data);
   int errorcode = pthread_key_create(key, NULL);
   assert(errorcode == 0);
