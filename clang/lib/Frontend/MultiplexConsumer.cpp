@@ -107,7 +107,7 @@ public:
   virtual void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
                                             const ObjCPropertyDecl *OrigProp,
                                             const ObjCCategoryDecl *ClassExt);
-  void DeclarationMarkedUsed(const Decl *D) LLVM_OVERRIDE;
+  void DeclarationMarkedUsed(const Decl *D) override;
 
 private:
   std::vector<ASTMutationListener*> Listeners;

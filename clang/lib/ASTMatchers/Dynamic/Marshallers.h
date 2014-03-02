@@ -393,9 +393,9 @@ public:
         DerivedKind(ast_type_traits::ASTNodeKind::getFromNodeKind<DerivedT>()) {
   }
 
-  bool isConvertibleTo(ast_type_traits::ASTNodeKind Kind, unsigned *Specificity,
-                       ast_type_traits::ASTNodeKind *LeastDerivedKind) const
-      LLVM_OVERRIDE {
+  bool
+  isConvertibleTo(ast_type_traits::ASTNodeKind Kind, unsigned *Specificity,
+                ast_type_traits::ASTNodeKind *LeastDerivedKind) const override {
     // If Kind is not a base of DerivedKind, either DerivedKind is a base of
     // Kind (in which case the match will always succeed) or Kind and
     // DerivedKind are unrelated (in which case it will always fail), so set

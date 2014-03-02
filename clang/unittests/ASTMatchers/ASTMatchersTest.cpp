@@ -665,7 +665,7 @@ public:
       : Id(Id), ExpectedCount(ExpectedCount), Count(0),
         ExpectedName(ExpectedName) {}
 
-  void onEndOfTranslationUnit() LLVM_OVERRIDE {
+  void onEndOfTranslationUnit() override {
     if (ExpectedCount != -1)
       EXPECT_EQ(ExpectedCount, Count);
     if (!ExpectedName.empty())

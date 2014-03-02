@@ -147,9 +147,9 @@ public:
   /// \brief Pushes a file system on top of the stack.
   void pushOverlay(IntrusiveRefCntPtr<FileSystem> FS);
 
-  llvm::ErrorOr<Status> status(const Twine &Path) LLVM_OVERRIDE;
+  llvm::ErrorOr<Status> status(const Twine &Path) override;
   llvm::error_code openFileForRead(const Twine &Path,
-                                   OwningPtr<File> &Result) LLVM_OVERRIDE;
+                                   OwningPtr<File> &Result) override;
 };
 
 /// \brief Get a globally unique ID for a virtual file or directory.

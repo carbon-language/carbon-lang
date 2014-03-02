@@ -361,11 +361,11 @@ public:
 
   virtual void
   addMinVersionArgs(const llvm::opt::ArgList &Args,
-                    llvm::opt::ArgStringList &CmdArgs) const LLVM_OVERRIDE;
+                    llvm::opt::ArgStringList &CmdArgs) const override;
 
   virtual void
   addStartObjectFileArgs(const llvm::opt::ArgList &Args,
-                         llvm::opt::ArgStringList &CmdArgs) const LLVM_OVERRIDE;
+                         llvm::opt::ArgStringList &CmdArgs) const override;
 
   virtual bool isKernelStatic() const {
     return !isTargetIPhoneOS() || isIPhoneOSVersionLT(6, 0);
@@ -478,19 +478,19 @@ public:
 
   virtual void
   AddLinkRuntimeLibArgs(const llvm::opt::ArgList &Args,
-                        llvm::opt::ArgStringList &CmdArgs) const LLVM_OVERRIDE;
+                        llvm::opt::ArgStringList &CmdArgs) const override;
 
   virtual void
   AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
-                                   llvm::opt::ArgStringList &CmdArgs) const LLVM_OVERRIDE;
+                      llvm::opt::ArgStringList &CmdArgs) const override;
 
   virtual void
   AddCCKextLibArgs(const llvm::opt::ArgList &Args,
-                   llvm::opt::ArgStringList &CmdArgs) const LLVM_OVERRIDE;
+                   llvm::opt::ArgStringList &CmdArgs) const override;
 
   virtual void
   AddLinkARCArgs(const llvm::opt::ArgList &Args,
-                 llvm::opt::ArgStringList &CmdArgs) const LLVM_OVERRIDE;
+                 llvm::opt::ArgStringList &CmdArgs) const override;
   /// }
 };
 

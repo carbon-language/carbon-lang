@@ -2495,7 +2495,7 @@ public:
   explicit MemInitializerValidatorCCC(CXXRecordDecl *ClassDecl)
       : ClassDecl(ClassDecl) {}
 
-  bool ValidateCandidate(const TypoCorrection &candidate) LLVM_OVERRIDE {
+  bool ValidateCandidate(const TypoCorrection &candidate) override {
     if (NamedDecl *ND = candidate.getCorrectionDecl()) {
       if (FieldDecl *Member = dyn_cast<FieldDecl>(ND))
         return Member->getDeclContext()->getRedeclContext()->Equals(ClassDecl);
@@ -4104,7 +4104,7 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
     NonAbstractTypeDiagnoser(unsigned DiagID, AbstractDiagSelID SelID)
       : TypeDiagnoser(DiagID == 0), DiagID(DiagID), SelID(SelID) { }
 
-    void diagnose(Sema &S, SourceLocation Loc, QualType T) LLVM_OVERRIDE {
+    void diagnose(Sema &S, SourceLocation Loc, QualType T) override {
       if (Suppressed) return;
       if (SelID == -1)
         S.Diag(Loc, DiagID) << T;
@@ -6941,7 +6941,7 @@ namespace {
 // Callback to only accept typo corrections that are namespaces.
 class NamespaceValidatorCCC : public CorrectionCandidateCallback {
 public:
-  bool ValidateCandidate(const TypoCorrection &candidate) LLVM_OVERRIDE {
+  bool ValidateCandidate(const TypoCorrection &candidate) override {
     if (NamedDecl *ND = candidate.getCorrectionDecl())
       return isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND);
     return false;
@@ -7379,7 +7379,7 @@ public:
       : HasTypenameKeyword(HasTypenameKeyword),
         IsInstantiation(IsInstantiation), RequireMember(RequireMember) {}
 
-  bool ValidateCandidate(const TypoCorrection &Candidate) LLVM_OVERRIDE {
+  bool ValidateCandidate(const TypoCorrection &Candidate) override {
     NamedDecl *ND = Candidate.getCorrectionDecl();
 
     // Keywords are not valid here.
@@ -8823,7 +8823,7 @@ class RefBuilder: public ExprBuilder {
   QualType VarType;
 
 public:
-  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+  virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(S.BuildDeclRefExpr(Var, VarType, VK_LValue, Loc).take());
   }
 
@@ -8833,7 +8833,7 @@ public:
 
 class ThisBuilder: public ExprBuilder {
 public:
-  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+  virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(S.ActOnCXXThis(Loc).takeAs<Expr>());
   }
 };
@@ -8845,7 +8845,7 @@ class CastBuilder: public ExprBuilder {
   const CXXCastPath &Path;
 
 public:
-  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+  virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(S.ImpCastExprToType(Builder.build(S, Loc), Type,
                                              CK_UncheckedDerivedToBase, Kind,
                                              &Path).take());
@@ -8860,7 +8860,7 @@ class DerefBuilder: public ExprBuilder {
   const ExprBuilder &Builder;
 
 public:
-  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+  virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(
         S.CreateBuiltinUnaryOp(Loc, UO_Deref, Builder.build(S, Loc)).take());
   }
@@ -8876,7 +8876,7 @@ class MemberBuilder: public ExprBuilder {
   LookupResult &MemberLookup;
 
 public:
-  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+  virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(S.BuildMemberReferenceExpr(
         Builder.build(S, Loc), Type, Loc, IsArrow, SS, SourceLocation(), 0,
         MemberLookup, 0).take());
@@ -8892,7 +8892,7 @@ class MoveCastBuilder: public ExprBuilder {
   const ExprBuilder &Builder;
 
 public:
-  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+  virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(CastForMoving(S, Builder.build(S, Loc)));
   }
 
@@ -8903,7 +8903,7 @@ class LvalueConvBuilder: public ExprBuilder {
   const ExprBuilder &Builder;
 
 public:
-  virtual Expr *build(Sema &S, SourceLocation Loc) const LLVM_OVERRIDE {
+  virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(
         S.DefaultLvalueConversion(Builder.build(S, Loc)).take());
   }
@@ -8916,8 +8916,7 @@ class SubscriptBuilder: public ExprBuilder {
   const ExprBuilder &Index;
 
 public:
-  virtual Expr *build(Sema &S, SourceLocation Loc) const
-      LLVM_OVERRIDE {
+  virtual Expr *build(Sema &S, SourceLocation Loc) const override {
     return assertNotNull(S.CreateBuiltinArraySubscriptExpr(
         Base.build(S, Loc), Loc, Index.build(S, Loc), Loc).take());
   }

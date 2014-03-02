@@ -1273,7 +1273,7 @@ public:
   /// GetClassGlobal - Return the global variable for the Objective-C
   /// class of the given name.
   llvm::GlobalVariable *GetClassGlobal(const std::string &Name,
-                                       bool Weak = false) LLVM_OVERRIDE {
+                                       bool Weak = false) override {
     llvm_unreachable("CGObjCMac::GetClassGlobal");
   }
 };
@@ -1375,7 +1375,7 @@ private:
   /// GetClassGlobal - Return the global variable for the Objective-C
   /// class of the given name.
   llvm::GlobalVariable *GetClassGlobal(const std::string &Name,
-                                       bool Weak = false) LLVM_OVERRIDE;
+                                       bool Weak = false) override;
 
   /// EmitClassRef - Return a Value*, of type ObjCTypes.ClassPtrTy,
   /// for the given class reference.

@@ -256,7 +256,7 @@ TEST(MultilibTest, SetRegexFilter) {
 TEST(MultilibTest, SetFilterObject) {
   // Filter object
   struct StartsWithP : public MultilibSet::FilterCallback {
-    bool operator()(const Multilib &M) const LLVM_OVERRIDE {
+    bool operator()(const Multilib &M) const override {
       return StringRef(M.gccSuffix()).startswith("/p");
     }
   };

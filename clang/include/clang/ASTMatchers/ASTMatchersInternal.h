@@ -420,15 +420,15 @@ public:
         InnerMatcher(Other), AllowBind(AllowBind) {}
 
   bool matches(const ast_type_traits::DynTypedNode DynNode,
-               ASTMatchFinder *Finder, BoundNodesTreeBuilder *Builder) const
-      LLVM_OVERRIDE {
+               ASTMatchFinder *Finder,
+               BoundNodesTreeBuilder *Builder) const override {
     if (const T *Node = DynNode.get<T>()) {
       return InnerMatcher.matches(*Node, Finder, Builder);
     }
     return false;
   }
 
-  llvm::Optional<DynTypedMatcher> tryBind(StringRef ID) const LLVM_OVERRIDE {
+  llvm::Optional<DynTypedMatcher> tryBind(StringRef ID) const override {
     if (!AllowBind)
       return llvm::Optional<DynTypedMatcher>();
     return DynTypedMatcher(BindableMatcher<T>(InnerMatcher).bind(ID));
@@ -534,7 +534,7 @@ public:
   explicit HasOverloadedOperatorNameMatcher(const StringRef Name)
       : SingleNodeMatcherInterface<T>(), Name(Name) {}
 
-  virtual bool matchesNode(const T &Node) const LLVM_OVERRIDE {
+  virtual bool matchesNode(const T &Node) const override {
     return matchesSpecialized(Node);
   }
 

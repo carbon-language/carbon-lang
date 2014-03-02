@@ -281,7 +281,7 @@ namespace {
   class StringSetSaver : public llvm::cl::StringSaver {
   public:
     StringSetSaver(std::set<std::string> &Storage) : Storage(Storage) {}
-    const char *SaveString(const char *Str) LLVM_OVERRIDE {
+    const char *SaveString(const char *Str) override {
       return SaveStringInSet(Storage, Str);
     }
   private:

@@ -575,7 +575,7 @@ public:
   }
 
   llvm::GlobalVariable *GetClassGlobal(const std::string &Name,
-                                       bool Weak = false) LLVM_OVERRIDE {
+                                       bool Weak = false) override {
     return 0;
   }
 };

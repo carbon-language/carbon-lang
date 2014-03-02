@@ -106,7 +106,7 @@ namespace {
       }
     }
 
-    virtual void HandleTagDeclRequiredDefinition(const TagDecl *D) LLVM_OVERRIDE {
+    virtual void HandleTagDeclRequiredDefinition(const TagDecl *D) override {
       if (Diags.hasErrorOccurred())
         return;
 

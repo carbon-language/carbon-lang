@@ -381,7 +381,7 @@ public:
   }
 
   virtual void
-  AddDiagnosticConsumer(PathDiagnosticConsumer *Consumer) LLVM_OVERRIDE {
+  AddDiagnosticConsumer(PathDiagnosticConsumer *Consumer) override {
     PathConsumers.push_back(Consumer);
   }
 

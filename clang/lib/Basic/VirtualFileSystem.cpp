@@ -92,12 +92,12 @@ class RealFile : public File {
 
 public:
   ~RealFile();
-  ErrorOr<Status> status() LLVM_OVERRIDE;
+  ErrorOr<Status> status() override;
   error_code getBuffer(const Twine &Name, OwningPtr<MemoryBuffer> &Result,
                        int64_t FileSize = -1,
-                       bool RequiresNullTerminator = true) LLVM_OVERRIDE;
-  error_code close() LLVM_OVERRIDE;
-  void setName(StringRef Name) LLVM_OVERRIDE;
+                       bool RequiresNullTerminator = true) override;
+  error_code close() override;
+  void setName(StringRef Name) override;
 };
 } // end anonymous namespace
 RealFile::~RealFile() { close(); }
@@ -148,9 +148,9 @@ namespace {
 /// \brief The file system according to your operating system.
 class RealFileSystem : public FileSystem {
 public:
-  ErrorOr<Status> status(const Twine &Path) LLVM_OVERRIDE;
+  ErrorOr<Status> status(const Twine &Path) override;
   error_code openFileForRead(const Twine &Path,
-                             OwningPtr<File> &Result) LLVM_OVERRIDE;
+                             OwningPtr<File> &Result) override;
 };
 } // end anonymous namespace
 
@@ -387,9 +387,9 @@ public:
                              void *DiagContext,
                              IntrusiveRefCntPtr<FileSystem> ExternalFS);
 
-  ErrorOr<Status> status(const Twine &Path) LLVM_OVERRIDE;
+  ErrorOr<Status> status(const Twine &Path) override;
   error_code openFileForRead(const Twine &Path,
-                             OwningPtr<File> &Result) LLVM_OVERRIDE;
+                             OwningPtr<File> &Result) override;
 };
 
 /// \brief A helper class to hold the common YAML parsing state.

@@ -1526,7 +1526,7 @@ class FilterNonExistent : public MultilibSet::FilterCallback {
   std::string Base;
 public:
   FilterNonExistent(std::string Base) : Base(Base) {}
-  bool operator()(const Multilib &M) const LLVM_OVERRIDE {
+  bool operator()(const Multilib &M) const override {
     return !llvm::sys::fs::exists(Base + M.gccSuffix() + "/crtbegin.o");
   }
 };

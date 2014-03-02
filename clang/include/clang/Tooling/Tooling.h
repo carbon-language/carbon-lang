@@ -339,14 +339,14 @@ inline FrontendActionFactory *newFrontendActionFactory(
 
     protected:
       virtual bool BeginSourceFileAction(CompilerInstance &CI,
-                                         StringRef Filename) LLVM_OVERRIDE {
+                                         StringRef Filename) override {
         if (!clang::ASTFrontendAction::BeginSourceFileAction(CI, Filename))
           return false;
         if (Callbacks != NULL)
           return Callbacks->handleBeginSource(CI, Filename);
         return true;
       }
-      virtual void EndSourceFileAction() LLVM_OVERRIDE {
+      virtual void EndSourceFileAction() override {
         if (Callbacks != NULL)
           Callbacks->handleEndSource();
         clang::ASTFrontendAction::EndSourceFileAction();

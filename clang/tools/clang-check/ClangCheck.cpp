@@ -152,7 +152,7 @@ public:
   }
 
   virtual CommandLineArguments
-  Adjust(const CommandLineArguments &Args) LLVM_OVERRIDE {
+  Adjust(const CommandLineArguments &Args) override {
     CommandLineArguments Return(Args);
 
     CommandLineArguments::iterator I;

@@ -177,7 +177,7 @@ TEST(ToolInvocation, TestVirtualModulesCompilation) {
 struct VerifyEndCallback : public SourceFileCallbacks {
   VerifyEndCallback() : BeginCalled(0), EndCalled(0), Matched(false) {}
   virtual bool handleBeginSource(CompilerInstance &CI,
-                                 StringRef Filename) LLVM_OVERRIDE {
+                                 StringRef Filename) override {
     ++BeginCalled;
     return true;
   }
@@ -243,7 +243,7 @@ struct CheckSyntaxOnlyAdjuster: public ArgumentsAdjuster {
   CheckSyntaxOnlyAdjuster(bool &Found, bool &Ran) : Found(Found), Ran(Ran) { }
 
   virtual CommandLineArguments
-  Adjust(const CommandLineArguments &Args) LLVM_OVERRIDE {
+  Adjust(const CommandLineArguments &Args) override {
     Ran = true;
     for (unsigned I = 0, E = Args.size(); I != E; ++I) {
       if (Args[I] == "-fsyntax-only") {

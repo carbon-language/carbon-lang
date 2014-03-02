@@ -47,7 +47,7 @@ public:
     }
   }
 
-  void onEndOfTranslationUnit() LLVM_OVERRIDE {
+  void onEndOfTranslationUnit() override {
     if (FindResultReviewer)
       FindResultReviewer->onEndOfTranslationUnit();
   }
