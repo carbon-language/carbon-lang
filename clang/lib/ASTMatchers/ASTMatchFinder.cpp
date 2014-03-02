@@ -272,8 +272,8 @@ private:
   // traversal should continue after this function returns.
   template <typename T>
   bool traverse(const T &Node) {
-    TOOLING_COMPILE_ASSERT(IsBaseType<T>::value,
-                           traverse_can_only_be_instantiated_with_base_type);
+    static_assert(IsBaseType<T>::value,
+                  "traverse can only be instantiated with base type");
     if (!match(Node))
       return false;
     return baseTraverse(Node);
