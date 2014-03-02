@@ -18,9 +18,6 @@
 #include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceLocation.h"
-#if !LLVM_HAS_STRONG_ENUMS
-#include "clang/Basic/TokenKinds.h"
-#endif
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -38,11 +35,9 @@ namespace clang {
   class Preprocessor;
   class DiagnosticErrorTrap;
   class StoredDiagnostic;
-#if LLVM_HAS_STRONG_ENUMS
   namespace tok {
   enum TokenKind : unsigned short;
   }
-#endif
 
 /// \brief Annotates a diagnostic with some code that should be
 /// inserted, removed, or replaced to fix the problem.
