@@ -236,6 +236,17 @@ TEST(runToolOnCode, TestSkipFunctionBody) {
                              "int skipMeNot() { an_error_here }"));
 }
 
+TEST(runToolOnCodeWithArgs, TestNoDepFile) {
+  llvm::SmallString<32> DepFilePath;
+  ASSERT_FALSE(
+      llvm::sys::fs::createTemporaryFile("depfile", "d", DepFilePath));
+  EXPECT_TRUE(runToolOnCodeWithArgs(
+      new SkipBodyAction, "",
+      { "-MMD", "-MT", DepFilePath.str(), "-MF", DepFilePath.str() }));
+  EXPECT_FALSE(llvm::sys::fs::exists(DepFilePath.str()));
+  EXPECT_FALSE(llvm::sys::fs::remove(DepFilePath.str()));
+}
+
 struct CheckSyntaxOnlyAdjuster: public ArgumentsAdjuster {
   bool &Found;
   bool &Ran;

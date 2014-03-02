@@ -99,6 +99,7 @@ static clang::CompilerInvocation *newInvocation(
       *Diagnostics);
   Invocation->getFrontendOpts().DisableFree = false;
   Invocation->getCodeGenOpts().DisableFree = false;
+  Invocation->getDependencyOutputOpts() = DependencyOutputOptions();
   return Invocation;
 }
 
