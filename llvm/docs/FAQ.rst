@@ -184,14 +184,6 @@ This is `a bug in GCC <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=13392>`_,
 and affects projects other than LLVM.  Try upgrading or downgrading your GCC.
 
 
-Compiling LLVM with GCC succeeds, but the resulting tools do not work, what can be wrong?
------------------------------------------------------------------------------------------
-Several versions of GCC have shown a weakness in miscompiling the LLVM
-codebase.  Please consult your compiler version (``gcc --version``) to find
-out whether it is `broken <GettingStarted.html#brokengcc>`_.  If so, your only
-option is to upgrade GCC to a known good version.
-
-
 After Subversion update, rebuilding gives the error "No rule to make target".
 -----------------------------------------------------------------------------
 If the error is of the form:
