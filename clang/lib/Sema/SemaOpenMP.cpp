@@ -203,8 +203,8 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
     // TODO
     if (DVar.DKind == OMPD_task) {
       DSAVarData DVarTemp;
-      for (StackTy::reverse_iterator I = llvm::next(Iter),
-                                     EE = llvm::prior(Stack.rend());
+      for (StackTy::reverse_iterator I = std::next(Iter),
+                                     EE = std::prev(Stack.rend());
            I != EE; ++I) {
         // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
         // in a Construct, implicitly determined, p.6]
@@ -231,7 +231,7 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
   //  For constructs other than task, if no default clause is present, these
   //  variables inherit their data-sharing attributes from the enclosing
   //  context.
-  return getDSA(llvm::next(Iter), D);
+  return getDSA(std::next(Iter), D);
 }
 
 void DSAStackTy::addDSA(VarDecl *D, DeclRefExpr *E, OpenMPClauseKind A) {
@@ -286,7 +286,7 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D) {
   // inside the construct are private.
   OpenMPDirectiveKind Kind = getCurrentDirective();
   if (Kind != OMPD_parallel) {
-    if (isOpenMPLocal(D, llvm::next(Stack.rbegin())) && D->isLocalVarDecl() &&
+    if (isOpenMPLocal(D, std::next(Stack.rbegin())) && D->isLocalVarDecl() &&
         (D->getStorageClass() == SC_Auto ||
          D->getStorageClass() == SC_None))
       DVar.CKind = OMPC_private;
@@ -351,13 +351,13 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D) {
 }
 
 DSAStackTy::DSAVarData DSAStackTy::getImplicitDSA(VarDecl *D) {
-  return getDSA(llvm::next(Stack.rbegin()), D);
+  return getDSA(std::next(Stack.rbegin()), D);
 }
 
 DSAStackTy::DSAVarData DSAStackTy::hasDSA(VarDecl *D, OpenMPClauseKind CKind,
                                           OpenMPDirectiveKind DKind) {
-  for (StackTy::reverse_iterator I = llvm::next(Stack.rbegin()),
-                                 E = llvm::prior(Stack.rend());
+  for (StackTy::reverse_iterator I = std::next(Stack.rbegin()),
+                                 E = std::prev(Stack.rend());
        I != E; ++I) {
     if (DKind != OMPD_unknown && DKind != I->Directive) continue;
     DSAVarData DVar = getDSA(I, D);

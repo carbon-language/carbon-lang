@@ -1192,7 +1192,7 @@ SpellingNamesAreCommon(const std::vector<FlattenedSpelling>& Spellings) {
   std::string FirstName = NormalizeNameForSpellingComparison(
     Spellings.front().name());
   for (std::vector<FlattenedSpelling>::const_iterator
-       I = llvm::next(Spellings.begin()), E = Spellings.end(); I != E; ++I) {
+       I = std::next(Spellings.begin()), E = Spellings.end(); I != E; ++I) {
     std::string Name = NormalizeNameForSpellingComparison(I->name());
     if (Name != FirstName)
       return false;
