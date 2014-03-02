@@ -6903,6 +6903,14 @@ def err_module_private_declaration : Error<
   "declaration of %0 must be imported from module '%1' before it is required">;
 def err_module_private_definition : Error<
   "definition of %0 must be imported from module '%1' before it is required">;
+def err_module_import_in_extern_c : Error<
+  "import of C++ module '%0' appears within extern \"C\" language linkage "
+  "specification">;
+def note_module_import_in_extern_c : Note<
+  "extern \"C\" language linkage specification begins here">;
+def err_module_import_not_at_top_level : Error<
+  "import of module '%0' appears within %1">;
+def note_module_import_not_at_top_level : Note<"%0 begins here">;
 }
 
 let CategoryName = "Documentation Issue" in {

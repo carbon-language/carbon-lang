@@ -272,6 +272,10 @@ public:
   /// ParseTopLevelDecl - Parse one top-level declaration. Returns true if
   /// the EOF was encountered.
   bool ParseTopLevelDecl(DeclGroupPtrTy &Result);
+  bool ParseTopLevelDecl() {
+    DeclGroupPtrTy Result;
+    return ParseTopLevelDecl(Result);
+  }
 
   /// ConsumeToken - Consume the current 'peek token' and lex the next one.
   /// This does not work with special tokens: string literals, code completion

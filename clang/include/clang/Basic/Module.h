@@ -128,7 +128,12 @@ public:
   /// \brief Whether this is a "system" module (which assumes that all
   /// headers in it are system headers).
   unsigned IsSystem : 1;
-  
+
+  /// \brief Whether this is an 'extern "C"' module (which implicitly puts all
+  /// headers in it within an 'extern "C"' block, and allows the module to be
+  /// imported within such a block).
+  unsigned IsExternC : 1;
+
   /// \brief Whether we should infer submodules for this module based on 
   /// the headers.
   ///

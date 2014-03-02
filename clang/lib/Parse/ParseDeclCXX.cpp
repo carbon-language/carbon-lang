@@ -313,11 +313,42 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
 
   BalancedDelimiterTracker T(*this, tok::l_brace);
   T.consumeOpen();
-  while (Tok.isNot(tok::r_brace) && !isEofOrEom()) {
-    ParsedAttributesWithRange attrs(AttrFactory);
-    MaybeParseCXX11Attributes(attrs);
-    MaybeParseMicrosoftAttributes(attrs);
-    ParseExternalDeclaration(attrs);
+
+  unsigned NestedModules = 0;
+  while (true) {
+    switch (Tok.getKind()) {
+    case tok::annot_module_begin:
+      ++NestedModules;
+      ParseTopLevelDecl();
+      continue;
+
+    case tok::annot_module_end:
+      if (!NestedModules)
+        break;
+      --NestedModules;
+      ParseTopLevelDecl();
+      continue;
+
+    case tok::annot_module_include:
+      ParseTopLevelDecl();
+      continue;
+
+    case tok::eof:
+      break;
+
+    case tok::r_brace:
+      if (!NestedModules)
+        break;
+      // Fall through.
+    default:
+      ParsedAttributesWithRange attrs(AttrFactory);
+      MaybeParseCXX11Attributes(attrs);
+      MaybeParseMicrosoftAttributes(attrs);
+      ParseExternalDeclaration(attrs);
+      continue;
+    }
+
+    break;
   }
 
   T.consumeClose();

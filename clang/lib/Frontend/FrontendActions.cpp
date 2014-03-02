@@ -130,19 +130,25 @@ operator+=(SmallVectorImpl<char> &Includes, StringRef RHS) {
 
 static void addHeaderInclude(StringRef HeaderName,
                              SmallVectorImpl<char> &Includes,
-                             const LangOptions &LangOpts) {
+                             const LangOptions &LangOpts,
+                             bool IsExternC) {
+  if (IsExternC)
+    Includes += "extern \"C\" {\n";
   if (LangOpts.ObjC1)
     Includes += "#import \"";
   else
     Includes += "#include \"";
   Includes += HeaderName;
   Includes += "\"\n";
+  if (IsExternC)
+    Includes += "}\n";
 }
 
 static void addHeaderInclude(const FileEntry *Header,
                              SmallVectorImpl<char> &Includes,
-                             const LangOptions &LangOpts) {
-  addHeaderInclude(Header->getName(), Includes, LangOpts);
+                             const LangOptions &LangOpts,
+                             bool IsExternC) {
+  addHeaderInclude(Header->getName(), Includes, LangOpts, IsExternC);
 }
 
 /// \brief Collect the set of header includes needed to construct the given 
@@ -165,7 +171,7 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
   for (unsigned I = 0, N = Module->NormalHeaders.size(); I != N; ++I) {
     const FileEntry *Header = Module->NormalHeaders[I];
     Module->addTopHeader(Header);
-    addHeaderInclude(Header, Includes, LangOpts);
+    addHeaderInclude(Header, Includes, LangOpts, Module->IsExternC);
   }
   // Note that Module->PrivateHeaders will not be a TopHeader.
 
@@ -173,7 +179,7 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
     Module->addTopHeader(UmbrellaHeader);
     if (Module->Parent) {
       // Include the umbrella header for submodules.
-      addHeaderInclude(UmbrellaHeader, Includes, LangOpts);
+      addHeaderInclude(UmbrellaHeader, Includes, LangOpts, Module->IsExternC);
     }
   } else if (const DirectoryEntry *UmbrellaDir = Module->getUmbrellaDir()) {
     // Add all of the headers we find in this subdirectory.
@@ -199,7 +205,7 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
       }
       
       // Include this header umbrella header for submodules.
-      addHeaderInclude(Dir->path(), Includes, LangOpts);
+      addHeaderInclude(Dir->path(), Includes, LangOpts, Module->IsExternC);
     }
   }
   
@@ -267,7 +273,8 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   // Collect the set of #includes we need to build the module.
   SmallString<256> HeaderContents;
   if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader())
-    addHeaderInclude(UmbrellaHeader, HeaderContents, CI.getLangOpts());
+    addHeaderInclude(UmbrellaHeader, HeaderContents, CI.getLangOpts(),
+                     Module->IsExternC);
   collectModuleHeaderIncludes(CI.getLangOpts(), FileMgr,
     CI.getPreprocessor().getHeaderSearchInfo().getModuleMap(),
     Module, HeaderContents);

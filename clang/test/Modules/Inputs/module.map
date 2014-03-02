@@ -1,3 +1,6 @@
+module c_library [extern_c] { header "c-header.h" }
+module cxx_library { header "cxx-header.h" requires cplusplus }
+module c_library_bad [extern_c] { header "c-header-bad.h" }
 module diamond_top { header "diamond_top.h" }
 module diamond_left { 
   header "diamond_left.h" 

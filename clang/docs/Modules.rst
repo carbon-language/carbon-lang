@@ -245,7 +245,7 @@ As an example, the module map file for the C standard library might look a bit l
 
 .. parsed-literal::
 
-  module std [system] {
+  module std [system] [extern_c] {
     module complex {
       header "complex.h"
       export *
@@ -325,7 +325,9 @@ The ``framework`` qualifier specifies that this module corresponds to a Darwin-s
     Resources/                Subdirectory containing additional resources
     Name                      Symbolic link to the shared library for the framework
 
-The ``system`` attribute specifies that the module is a system module. When a system module is rebuilt, all of the module's header will be considered system headers, which suppresses warnings. This is equivalent to placing ``#pragma GCC system_header`` in each of the module's headers. The form of attributes is described in the section Attributes_, below.
+The ``system`` attribute specifies that the module is a system module. When a system module is rebuilt, all of the module's headers will be considered system headers, which suppresses warnings. This is equivalent to placing ``#pragma GCC system_header`` in each of the module's headers. The form of attributes is described in the section Attributes_, below.
+
+The ``extern_c`` attribute specifies that the module contains C code that can be used from within C++. When such a module is built for use in C++ code, all of the module's headers will be treated as if they were contained within an implicit ``extern "C"`` block. An import for a module with this attribute can appear within an ``extern "C"`` block. No other restrictions are lifted, however: the module currently cannot be imported within an ``extern "C"`` block in a namespace.
 
 Modules can have a number of different kinds of members, each of which is described below:
 
