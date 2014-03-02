@@ -145,43 +145,6 @@ inline mapped_iterator<ItTy, FuncTy> map_iterator(const ItTy &I, FuncTy F) {
 //     Extra additions to <utility>
 //===----------------------------------------------------------------------===//
 
-// tie - this function ties two objects and returns a temporary object
-// that is assignable from a std::pair. This can be used to make code
-// more readable when using values returned from functions bundled in
-// a std::pair. Since an example is worth 1000 words:
-//
-// typedef std::map<int, int> Int2IntMap;
-//
-// Int2IntMap myMap;
-// Int2IntMap::iterator where;
-// bool inserted;
-// tie(where, inserted) = myMap.insert(std::make_pair(123,456));
-//
-// if (inserted)
-//   // do stuff
-// else
-//   // do other stuff
-template <typename T1, typename T2>
-struct tier {
-  typedef T1 &first_type;
-  typedef T2 &second_type;
-
-  first_type first;
-  second_type second;
-
-  tier(first_type f, second_type s) : first(f), second(s) { }
-  tier& operator=(const std::pair<T1, T2>& p) {
-    first = p.first;
-    second = p.second;
-    return *this;
-  }
-};
-
-template <typename T1, typename T2>
-inline tier<T1, T2> tie(T1& f, T2& s) {
-  return tier<T1, T2>(f, s);
-}
-
 /// \brief Function object to check whether the first component of a std::pair
 /// compares less than the first component of another std::pair.
 struct less_first {

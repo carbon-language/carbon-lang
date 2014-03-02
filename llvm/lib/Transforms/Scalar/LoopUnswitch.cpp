@@ -225,7 +225,7 @@ bool LUAnalysisCache::countLoop(const Loop *L, const TargetTransformInfo &TTI) {
 
   LoopPropsMapIt PropsIt;
   bool Inserted;
-  llvm::tie(PropsIt, Inserted) =
+  std::tie(PropsIt, Inserted) =
       LoopsProperties.insert(std::make_pair(L, LoopProperties()));
 
   LoopProperties &Props = PropsIt->second;

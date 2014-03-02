@@ -114,7 +114,7 @@ void LiveRangeCalc::updateLiveIns() {
     MachineBasicBlock *MBB = I->DomNode->getBlock();
     assert(I->Value && "No live-in value found");
     SlotIndex Start, End;
-    tie(Start, End) = Indexes->getMBBRange(MBB);
+    std::tie(Start, End) = Indexes->getMBBRange(MBB);
 
     if (I->Kill.isValid())
       // Value is killed inside this block.
@@ -212,7 +212,7 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
        }
 
        SlotIndex Start, End;
-       tie(Start, End) = Indexes->getMBBRange(Pred);
+       std::tie(Start, End) = Indexes->getMBBRange(Pred);
 
        // First time we see Pred.  Try to determine the live-out value, but set
        // it as null if Pred is live-through with an unknown value.
@@ -247,7 +247,7 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
     for (SmallVectorImpl<unsigned>::const_iterator I = WorkList.begin(),
          E = WorkList.end(); I != E; ++I) {
        SlotIndex Start, End;
-       tie(Start, End) = Indexes->getMBBRange(*I);
+       std::tie(Start, End) = Indexes->getMBBRange(*I);
        // Trim the live range in KillMBB.
        if (*I == KillMBBNum && Kill.isValid())
          End = Kill;
@@ -342,7 +342,7 @@ void LiveRangeCalc::updateSSA() {
         ++Changes;
         assert(Alloc && "Need VNInfo allocator to create PHI-defs");
         SlotIndex Start, End;
-        tie(Start, End) = Indexes->getMBBRange(MBB);
+        std::tie(Start, End) = Indexes->getMBBRange(MBB);
         LiveRange &LR = I->LR;
         VNInfo *VNI = LR.getNextValue(Start, *Alloc);
         I->Value = VNI;

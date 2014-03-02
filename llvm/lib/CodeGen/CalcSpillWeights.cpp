@@ -130,7 +130,7 @@ VirtRegAuxInfo::calculateSpillWeightAndHint(LiveInterval &li) {
 
       // Calculate instr weight.
       bool reads, writes;
-      tie(reads, writes) = mi->readsWritesVirtualRegister(li.reg);
+      std::tie(reads, writes) = mi->readsWritesVirtualRegister(li.reg);
       weight = LiveIntervals::getSpillWeight(
         writes, reads, &MBFI, mi);
 

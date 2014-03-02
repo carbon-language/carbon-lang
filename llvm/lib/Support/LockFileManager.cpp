@@ -42,7 +42,7 @@ LockFileManager::readLockFile(StringRef LockFileName) {
 
   StringRef Hostname;
   StringRef PIDStr;
-  tie(Hostname, PIDStr) = getToken(MB->getBuffer(), " ");
+  std::tie(Hostname, PIDStr) = getToken(MB->getBuffer(), " ");
   PIDStr = PIDStr.substr(PIDStr.find_first_not_of(" "));
   int PID;
   if (!PIDStr.getAsInteger(10, PID))

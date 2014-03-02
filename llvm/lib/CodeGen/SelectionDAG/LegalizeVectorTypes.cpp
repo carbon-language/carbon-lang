@@ -636,7 +636,7 @@ void DAGTypeLegalizer::SplitVecRes_BITCAST(SDNode *N, SDValue &Lo,
   // We know the result is a vector.  The input may be either a vector or a
   // scalar value.
   EVT LoVT, HiVT;
-  llvm::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
+  std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
   SDLoc dl(N);
 
   SDValue InOp = N->getOperand(0);
@@ -691,7 +691,7 @@ void DAGTypeLegalizer::SplitVecRes_BUILD_VECTOR(SDNode *N, SDValue &Lo,
                                                 SDValue &Hi) {
   EVT LoVT, HiVT;
   SDLoc dl(N);
-  llvm::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
+  std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
   unsigned LoNumElts = LoVT.getVectorNumElements();
   SmallVector<SDValue, 8> LoOps(N->op_begin(), N->op_begin()+LoNumElts);
   Lo = DAG.getNode(ISD::BUILD_VECTOR, dl, LoVT, &LoOps[0], LoOps.size());
@@ -712,7 +712,7 @@ void DAGTypeLegalizer::SplitVecRes_CONCAT_VECTORS(SDNode *N, SDValue &Lo,
   }
 
   EVT LoVT, HiVT;
-  llvm::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
+  std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
 
   SmallVector<SDValue, 8> LoOps(N->op_begin(), N->op_begin()+NumSubvectors);
   Lo = DAG.getNode(ISD::CONCAT_VECTORS, dl, LoVT, &LoOps[0], LoOps.size());
@@ -728,7 +728,7 @@ void DAGTypeLegalizer::SplitVecRes_EXTRACT_SUBVECTOR(SDNode *N, SDValue &Lo,
   SDLoc dl(N);
 
   EVT LoVT, HiVT;
-  llvm::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
+  std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
 
   Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, LoVT, Vec, Idx);
   uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
@@ -752,7 +752,7 @@ void DAGTypeLegalizer::SplitVecRes_InregOp(SDNode *N, SDValue &Lo,
   SDLoc dl(N);
 
   EVT LoVT, HiVT;
-  llvm::tie(LoVT, HiVT) =
+  std::tie(LoVT, HiVT) =
     DAG.GetSplitDestVTs(cast<VTSDNode>(N->getOperand(1))->getVT());
 
   Lo = DAG.getNode(N->getOpcode(), dl, LHSLo.getValueType(), LHSLo,
@@ -816,7 +816,7 @@ void DAGTypeLegalizer::SplitVecRes_SCALAR_TO_VECTOR(SDNode *N, SDValue &Lo,
                                                     SDValue &Hi) {
   EVT LoVT, HiVT;
   SDLoc dl(N);
-  llvm::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
+  std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
   Lo = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, LoVT, N->getOperand(0));
   Hi = DAG.getUNDEF(HiVT);
 }
@@ -826,7 +826,7 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo,
   assert(ISD::isUNINDEXEDLoad(LD) && "Indexed load during type legalization!");
   EVT LoVT, HiVT;
   SDLoc dl(LD);
-  llvm::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(LD->getValueType(0));
+  std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(LD->getValueType(0));
 
   ISD::LoadExtType ExtType = LD->getExtensionType();
   SDValue Ch = LD->getChain();
@@ -840,7 +840,7 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo,
   const MDNode *TBAAInfo = LD->getTBAAInfo();
 
   EVT LoMemVT, HiMemVT;
-  llvm::tie(LoMemVT, HiMemVT) = DAG.GetSplitDestVTs(MemoryVT);
+  std::tie(LoMemVT, HiMemVT) = DAG.GetSplitDestVTs(MemoryVT);
 
   Lo = DAG.getLoad(ISD::UNINDEXED, ExtType, LoVT, dl, Ch, Ptr, Offset,
                    LD->getPointerInfo(), LoMemVT, isVolatile, isNonTemporal,
@@ -871,12 +871,12 @@ void DAGTypeLegalizer::SplitVecRes_SETCC(SDNode *N, SDValue &Lo, SDValue &Hi) {
 
   EVT LoVT, HiVT;
   SDLoc DL(N);
-  llvm::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
+  std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
 
   // Split the input.
   SDValue LL, LH, RL, RH;
-  llvm::tie(LL, LH) = DAG.SplitVectorOperand(N, 0);
-  llvm::tie(RL, RH) = DAG.SplitVectorOperand(N, 1);
+  std::tie(LL, LH) = DAG.SplitVectorOperand(N, 0);
+  std::tie(RL, RH) = DAG.SplitVectorOperand(N, 1);
 
   Lo = DAG.getNode(N->getOpcode(), DL, LoVT, LL, RL, N->getOperand(2));
   Hi = DAG.getNode(N->getOpcode(), DL, HiVT, LH, RH, N->getOperand(2));
@@ -887,7 +887,7 @@ void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo,
   // Get the dest types - they may not match the input types, e.g. int_to_fp.
   EVT LoVT, HiVT;
   SDLoc dl(N);
-  llvm::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
+  std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
 
   // If the input also splits, handle it directly for a compile time speedup.
   // Otherwise split it by hand.
@@ -895,7 +895,7 @@ void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo,
   if (getTypeAction(InVT) == TargetLowering::TypeSplitVector)
     GetSplitVector(N->getOperand(0), Lo, Hi);
   else
-    llvm::tie(Lo, Hi) = DAG.SplitVectorOperand(N, 0);
+    std::tie(Lo, Hi) = DAG.SplitVectorOperand(N, 0);
 
   if (N->getOpcode() == ISD::FP_ROUND) {
     Lo = DAG.getNode(N->getOpcode(), dl, LoVT, Lo, N->getOperand(1));
@@ -924,7 +924,7 @@ void DAGTypeLegalizer::SplitVecRes_ExtendOp(SDNode *N, SDValue &Lo,
   EVT SrcVT = N->getOperand(0).getValueType();
   EVT DestVT = N->getValueType(0);
   EVT LoVT, HiVT;
-  llvm::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(DestVT);
+  std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(DestVT);
 
   // We can do better than a generic split operation if the extend is doing
   // more than just doubling the width of the elements and the following are
@@ -950,7 +950,7 @@ void DAGTypeLegalizer::SplitVecRes_ExtendOp(SDNode *N, SDValue &Lo,
     EVT SplitSrcVT =
         EVT::getVectorVT(Ctx, SrcVT.getVectorElementType(), NumElements / 2);
     EVT SplitLoVT, SplitHiVT;
-    llvm::tie(SplitLoVT, SplitHiVT) = DAG.GetSplitDestVTs(NewSrcVT);
+    std::tie(SplitLoVT, SplitHiVT) = DAG.GetSplitDestVTs(NewSrcVT);
     if (TLI.isTypeLegal(SrcVT) && !TLI.isTypeLegal(SplitSrcVT) &&
         TLI.isTypeLegal(NewSrcVT) && TLI.isTypeLegal(SplitLoVT)) {
       DEBUG(dbgs() << "Split vector extend via incremental extend:";
@@ -959,7 +959,7 @@ void DAGTypeLegalizer::SplitVecRes_ExtendOp(SDNode *N, SDValue &Lo,
       SDValue NewSrc =
           DAG.getNode(N->getOpcode(), dl, NewSrcVT, N->getOperand(0));
       // Get the low and high halves of the new, extended one step, vector.
-      llvm::tie(Lo, Hi) = DAG.SplitVector(NewSrc, dl);
+      std::tie(Lo, Hi) = DAG.SplitVector(NewSrc, dl);
       // Extend those vector halves the rest of the way.
       Lo = DAG.getNode(N->getOpcode(), dl, LoVT, Lo);
       Hi = DAG.getNode(N->getOpcode(), dl, HiVT, Hi);
@@ -1172,13 +1172,13 @@ SDValue DAGTypeLegalizer::SplitVecOp_VSELECT(SDNode *N, unsigned OpNo) {
          "Lo and Hi have differing types");
 
   EVT LoOpVT, HiOpVT;
-  llvm::tie(LoOpVT, HiOpVT) = DAG.GetSplitDestVTs(Src0VT);
+  std::tie(LoOpVT, HiOpVT) = DAG.GetSplitDestVTs(Src0VT);
   assert(LoOpVT == HiOpVT && "Asymmetric vector split?");
 
   SDValue LoOp0, HiOp0, LoOp1, HiOp1, LoMask, HiMask;
-  llvm::tie(LoOp0, HiOp0) = DAG.SplitVector(Src0, DL);
-  llvm::tie(LoOp1, HiOp1) = DAG.SplitVector(Src1, DL);
-  llvm::tie(LoMask, HiMask) = DAG.SplitVector(Mask, DL);
+  std::tie(LoOp0, HiOp0) = DAG.SplitVector(Src0, DL);
+  std::tie(LoOp1, HiOp1) = DAG.SplitVector(Src1, DL);
+  std::tie(LoMask, HiMask) = DAG.SplitVector(Mask, DL);
 
   SDValue LoSelect =
     DAG.getNode(ISD::VSELECT, DL, LoOpVT, LoMask, LoOp0, LoOp1);
@@ -1293,7 +1293,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
   GetSplitVector(N->getOperand(1), Lo, Hi);
 
   EVT LoMemVT, HiMemVT;
-  llvm::tie(LoMemVT, HiMemVT) = DAG.GetSplitDestVTs(MemoryVT);
+  std::tie(LoMemVT, HiMemVT) = DAG.GetSplitDestVTs(MemoryVT);
 
   unsigned IncrementSize = LoMemVT.getSizeInBits()/8;
 
@@ -1382,7 +1382,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_TRUNCATE(SDNode *N) {
 
   // Extract the halves of the input via extract_subvector.
   SDValue InLoVec, InHiVec;
-  llvm::tie(InLoVec, InHiVec) = DAG.SplitVector(InVec, DL);
+  std::tie(InLoVec, InHiVec) = DAG.SplitVector(InVec, DL);
   // Truncate them to 1/2 the element size.
   EVT HalfElementVT = EVT::getIntegerVT(*DAG.getContext(), InElementSize/2);
   EVT HalfVT = EVT::getVectorVT(*DAG.getContext(), HalfElementVT,

@@ -1143,7 +1143,7 @@ public:
   /// low/high part.
   std::pair<SDValue, SDValue> SplitVector(const SDValue &N, const SDLoc &DL) {
     EVT LoVT, HiVT;
-    llvm::tie(LoVT, HiVT) = GetSplitDestVTs(N.getValueType());
+    std::tie(LoVT, HiVT) = GetSplitDestVTs(N.getValueType());
     return SplitVector(N, DL, LoVT, HiVT);
   }
 

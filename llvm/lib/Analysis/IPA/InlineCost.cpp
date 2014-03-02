@@ -525,9 +525,9 @@ bool CallAnalyzer::visitCmpInst(CmpInst &I) {
   // a common base.
   Value *LHSBase, *RHSBase;
   APInt LHSOffset, RHSOffset;
-  llvm::tie(LHSBase, LHSOffset) = ConstantOffsetPtrs.lookup(LHS);
+  std::tie(LHSBase, LHSOffset) = ConstantOffsetPtrs.lookup(LHS);
   if (LHSBase) {
-    llvm::tie(RHSBase, RHSOffset) = ConstantOffsetPtrs.lookup(RHS);
+    std::tie(RHSBase, RHSOffset) = ConstantOffsetPtrs.lookup(RHS);
     if (RHSBase && LHSBase == RHSBase) {
       // We have common bases, fold the icmp to a constant based on the
       // offsets.
@@ -575,9 +575,9 @@ bool CallAnalyzer::visitSub(BinaryOperator &I) {
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
   Value *LHSBase, *RHSBase;
   APInt LHSOffset, RHSOffset;
-  llvm::tie(LHSBase, LHSOffset) = ConstantOffsetPtrs.lookup(LHS);
+  std::tie(LHSBase, LHSOffset) = ConstantOffsetPtrs.lookup(LHS);
   if (LHSBase) {
-    llvm::tie(RHSBase, RHSOffset) = ConstantOffsetPtrs.lookup(RHS);
+    std::tie(RHSBase, RHSOffset) = ConstantOffsetPtrs.lookup(RHS);
     if (RHSBase && LHSBase == RHSBase) {
       // We have common bases, fold the subtract to a constant based on the
       // offsets.

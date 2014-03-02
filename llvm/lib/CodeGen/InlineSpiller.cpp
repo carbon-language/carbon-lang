@@ -476,7 +476,7 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
   // Check if a cached value already exists.
   SibValueMap::iterator SVI;
   bool Inserted;
-  tie(SVI, Inserted) =
+  std::tie(SVI, Inserted) =
     SibValues.insert(std::make_pair(UseVNI, SibValueInfo(UseReg, UseVNI)));
   if (!Inserted) {
     DEBUG(dbgs() << "Cached value " << PrintReg(UseReg) << ':'
@@ -495,7 +495,7 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
   do {
     unsigned Reg;
     VNInfo *VNI;
-    tie(Reg, VNI) = WorkList.pop_back_val();
+    std::tie(Reg, VNI) = WorkList.pop_back_val();
     DEBUG(dbgs() << "  " << PrintReg(Reg) << ':' << VNI->id << '@' << VNI->def
                  << ":\t");
 
@@ -554,7 +554,7 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
       for (unsigned i = 0, e = NonPHIs.size(); i != e; ++i) {
         VNInfo *NonPHI = NonPHIs[i];
         // Known value? Try an insertion.
-        tie(SVI, Inserted) =
+        std::tie(SVI, Inserted) =
           SibValues.insert(std::make_pair(NonPHI, SibValueInfo(Reg, NonPHI)));
         // Add all the PHIs as dependents of NonPHI.
         for (unsigned pi = 0, pe = PHIs.size(); pi != pe; ++pi)
@@ -587,8 +587,8 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
                      << SrcVNI->id << '@' << SrcVNI->def
                      << " kill=" << unsigned(SVI->second.KillsSource) << '\n');
         // Known sibling source value? Try an insertion.
-        tie(SVI, Inserted) = SibValues.insert(std::make_pair(SrcVNI,
-                                                 SibValueInfo(SrcReg, SrcVNI)));
+        std::tie(SVI, Inserted) = SibValues.insert(
+            std::make_pair(SrcVNI, SibValueInfo(SrcReg, SrcVNI)));
         // This is the first time we see Src, add it to the worklist.
         if (Inserted)
           WorkList.push_back(std::make_pair(SrcReg, SrcVNI));
@@ -745,7 +745,7 @@ void InlineSpiller::eliminateRedundantSpills(LiveInterval &SLI, VNInfo *VNI) {
 
   do {
     LiveInterval *LI;
-    tie(LI, VNI) = WorkList.pop_back_val();
+    std::tie(LI, VNI) = WorkList.pop_back_val();
     unsigned Reg = LI->reg;
     DEBUG(dbgs() << "Checking redundant spills for "
                  << VNI->id << '@' << VNI->def << " in " << *LI << '\n');
@@ -804,7 +804,7 @@ void InlineSpiller::markValueUsed(LiveInterval *LI, VNInfo *VNI) {
   SmallVector<std::pair<LiveInterval*, VNInfo*>, 8> WorkList;
   WorkList.push_back(std::make_pair(LI, VNI));
   do {
-    tie(LI, VNI) = WorkList.pop_back_val();
+    std::tie(LI, VNI) = WorkList.pop_back_val();
     if (!UsedValues.insert(VNI))
       continue;
 

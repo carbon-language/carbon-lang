@@ -334,7 +334,7 @@ static bool matchVectorSplittingReduction(const ExtractElementInst *ReduxRoot,
 
     Value *NextRdxOp;
     ShuffleVectorInst *Shuffle;
-    tie(NextRdxOp, Shuffle) = getShuffleAndOtherOprd(BinOp);
+    std::tie(NextRdxOp, Shuffle) = getShuffleAndOtherOprd(BinOp);
 
     // Check the current reduction operation and the shuffle use the same value.
     if (Shuffle == 0)

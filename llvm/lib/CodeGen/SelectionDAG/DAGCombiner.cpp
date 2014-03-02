@@ -4472,12 +4472,12 @@ static
 std::pair<SDValue, SDValue> SplitVSETCC(const SDNode *N, SelectionDAG &DAG) {
   SDLoc DL(N);
   EVT LoVT, HiVT;
-  llvm::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
+  std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(N->getValueType(0));
 
   // Split the inputs.
   SDValue Lo, Hi, LL, LH, RL, RH;
-  llvm::tie(LL, LH) = DAG.SplitVectorOperand(N, 0);
-  llvm::tie(RL, RH) = DAG.SplitVectorOperand(N, 1);
+  std::tie(LL, LH) = DAG.SplitVectorOperand(N, 0);
+  std::tie(RL, RH) = DAG.SplitVectorOperand(N, 1);
 
   Lo = DAG.getNode(N->getOpcode(), DL, LoVT, LL, RL, N->getOperand(2));
   Hi = DAG.getNode(N->getOpcode(), DL, HiVT, LH, RH, N->getOperand(2));
@@ -4535,9 +4535,9 @@ SDValue DAGCombiner::visitVSELECT(SDNode *N) {
       return SDValue();
 
     SDValue Lo, Hi, CCLo, CCHi, LL, LH, RL, RH;
-    llvm::tie(CCLo, CCHi) = SplitVSETCC(N0.getNode(), DAG);
-    llvm::tie(LL, LH) = DAG.SplitVectorOperand(N, 1);
-    llvm::tie(RL, RH) = DAG.SplitVectorOperand(N, 2);
+    std::tie(CCLo, CCHi) = SplitVSETCC(N0.getNode(), DAG);
+    std::tie(LL, LH) = DAG.SplitVectorOperand(N, 1);
+    std::tie(RL, RH) = DAG.SplitVectorOperand(N, 2);
 
     Lo = DAG.getNode(N->getOpcode(), DL, LL.getValueType(), CCLo, LL, RL);
     Hi = DAG.getNode(N->getOpcode(), DL, LH.getValueType(), CCHi, LH, RH);

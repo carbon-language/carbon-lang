@@ -1145,7 +1145,7 @@ void TargetLoweringBase::computeRegisterProperties() {
   for (unsigned i = 0; i != MVT::LAST_VALUETYPE; ++i) {
     const TargetRegisterClass* RRC;
     uint8_t Cost;
-    tie(RRC, Cost) =  findRepresentativeClass((MVT::SimpleValueType)i);
+    std::tie(RRC, Cost) = findRepresentativeClass((MVT::SimpleValueType)i);
     RepRegClassForVT[i] = RRC;
     RepRegClassCostForVT[i] = Cost;
   }

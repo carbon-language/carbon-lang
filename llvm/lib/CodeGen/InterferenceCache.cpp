@@ -121,7 +121,7 @@ bool InterferenceCache::Entry::valid(LiveIntervalUnion *LIUArray,
 
 void InterferenceCache::Entry::update(unsigned MBBNum) {
   SlotIndex Start, Stop;
-  tie(Start, Stop) = Indexes->getMBBRange(MBBNum);
+  std::tie(Start, Stop) = Indexes->getMBBRange(MBBNum);
 
   // Use advanceTo only when possible.
   if (PrevPos != Start) {
@@ -198,7 +198,7 @@ void InterferenceCache::Entry::update(unsigned MBBNum) {
     BI = &Blocks[MBBNum];
     if (BI->Tag == Tag)
       return;
-    tie(Start, Stop) = Indexes->getMBBRange(MBBNum);
+    std::tie(Start, Stop) = Indexes->getMBBRange(MBBNum);
   }
 
   // Check for last interference in block.

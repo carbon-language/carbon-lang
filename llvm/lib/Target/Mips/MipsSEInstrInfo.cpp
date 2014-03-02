@@ -481,7 +481,8 @@ void MipsSEInstrInfo::expandCvtFPInt(MachineBasicBlock &MBB,
   DebugLoc DL = I->getDebugLoc();
   bool DstIsLarger, SrcIsLarger;
 
-  tie(DstIsLarger, SrcIsLarger) = compareOpndSize(CvtOpc, *MBB.getParent());
+  std::tie(DstIsLarger, SrcIsLarger) =
+      compareOpndSize(CvtOpc, *MBB.getParent());
 
   if (DstIsLarger)
     TmpReg = getRegisterInfo().getSubReg(DstReg, Mips::sub_lo);

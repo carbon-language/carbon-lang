@@ -44,7 +44,7 @@ ModuleAnalysisManager::ResultConceptT &
 ModuleAnalysisManager::getResultImpl(void *PassID, Module *M) {
   ModuleAnalysisResultMapT::iterator RI;
   bool Inserted;
-  llvm::tie(RI, Inserted) = ModuleAnalysisResults.insert(std::make_pair(
+  std::tie(RI, Inserted) = ModuleAnalysisResults.insert(std::make_pair(
       PassID, polymorphic_ptr<detail::AnalysisResultConcept<Module *> >()));
 
   // If we don't have a cached result for this module, look up the pass and run
@@ -115,7 +115,7 @@ FunctionAnalysisManager::ResultConceptT &
 FunctionAnalysisManager::getResultImpl(void *PassID, Function *F) {
   FunctionAnalysisResultMapT::iterator RI;
   bool Inserted;
-  llvm::tie(RI, Inserted) = FunctionAnalysisResults.insert(std::make_pair(
+  std::tie(RI, Inserted) = FunctionAnalysisResults.insert(std::make_pair(
       std::make_pair(PassID, F), FunctionAnalysisResultListT::iterator()));
 
   // If we don't have a cached result for this function, look up the pass and

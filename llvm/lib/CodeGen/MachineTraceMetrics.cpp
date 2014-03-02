@@ -944,7 +944,7 @@ static bool pushDepHeight(const DataDep &Dep,
   // Update Heights[DefMI] to be the maximum height seen.
   MIHeightMap::iterator I;
   bool New;
-  tie(I, New) = Heights.insert(std::make_pair(Dep.DefMI, UseHeight));
+  std::tie(I, New) = Heights.insert(std::make_pair(Dep.DefMI, UseHeight));
   if (New)
     return true;
 

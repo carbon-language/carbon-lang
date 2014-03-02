@@ -556,7 +556,7 @@ private:
     // they both point to the same alloca.
     bool Inserted;
     SmallDenseMap<Instruction *, unsigned>::iterator MTPI;
-    llvm::tie(MTPI, Inserted) =
+    std::tie(MTPI, Inserted) =
         MemTransferSliceMap.insert(std::make_pair(&II, S.Slices.size()));
     unsigned PrevIdx = MTPI->second;
     if (!Inserted) {
@@ -615,7 +615,7 @@ private:
     Size = 0;
     do {
       Instruction *I, *UsedI;
-      llvm::tie(UsedI, I) = Uses.pop_back_val();
+      std::tie(UsedI, I) = Uses.pop_back_val();
 
       if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         Size = std::max(Size, DL.getTypeStoreSize(LI->getType()));

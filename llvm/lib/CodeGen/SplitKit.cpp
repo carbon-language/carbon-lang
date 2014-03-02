@@ -188,7 +188,7 @@ bool SplitAnalysis::calcLiveBlockInfo() {
     BlockInfo BI;
     BI.MBB = MFI;
     SlotIndex Start, Stop;
-    tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
+    std::tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
 
     // If the block contains no uses, the range must be live through. At one
     // point, RegisterCoalescer could create dangling ranges that ended
@@ -888,7 +888,7 @@ bool SplitEditor::transferValues() {
       // LiveInBlocks.
       MachineFunction::iterator MBB = LIS.getMBBFromIndex(Start);
       SlotIndex BlockStart, BlockEnd;
-      tie(BlockStart, BlockEnd) = LIS.getSlotIndexes()->getMBBRange(MBB);
+      std::tie(BlockStart, BlockEnd) = LIS.getSlotIndexes()->getMBBRange(MBB);
 
       // The first block may be live-in, or it may have its own def.
       if (Start != BlockStart) {
@@ -1183,7 +1183,7 @@ void SplitEditor::splitLiveThroughBlock(unsigned MBBNum,
                                         unsigned IntvIn, SlotIndex LeaveBefore,
                                         unsigned IntvOut, SlotIndex EnterAfter){
   SlotIndex Start, Stop;
-  tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(MBBNum);
+  std::tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(MBBNum);
 
   DEBUG(dbgs() << "BB#" << MBBNum << " [" << Start << ';' << Stop
                << ") intf " << LeaveBefore << '-' << EnterAfter
@@ -1286,7 +1286,7 @@ void SplitEditor::splitLiveThroughBlock(unsigned MBBNum,
 void SplitEditor::splitRegInBlock(const SplitAnalysis::BlockInfo &BI,
                                   unsigned IntvIn, SlotIndex LeaveBefore) {
   SlotIndex Start, Stop;
-  tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
+  std::tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
 
   DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " [" << Start << ';' << Stop
                << "), uses " << BI.FirstInstr << '-' << BI.LastInstr
@@ -1378,7 +1378,7 @@ void SplitEditor::splitRegInBlock(const SplitAnalysis::BlockInfo &BI,
 void SplitEditor::splitRegOutBlock(const SplitAnalysis::BlockInfo &BI,
                                    unsigned IntvOut, SlotIndex EnterAfter) {
   SlotIndex Start, Stop;
-  tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
+  std::tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
 
   DEBUG(dbgs() << "BB#" << BI.MBB->getNumber() << " [" << Start << ';' << Stop
                << "), uses " << BI.FirstInstr << '-' << BI.LastInstr

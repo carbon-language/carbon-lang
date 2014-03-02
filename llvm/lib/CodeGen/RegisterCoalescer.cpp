@@ -952,7 +952,7 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
 
     SmallVector<unsigned,8> Ops;
     bool Reads, Writes;
-    tie(Reads, Writes) = UseMI->readsWritesVirtualRegister(SrcReg, &Ops);
+    std::tie(Reads, Writes) = UseMI->readsWritesVirtualRegister(SrcReg, &Ops);
 
     // If SrcReg wasn't read, it may still be the case that DstReg is live-in
     // because SrcReg is a sub-register.

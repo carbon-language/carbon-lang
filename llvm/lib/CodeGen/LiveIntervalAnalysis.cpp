@@ -459,7 +459,7 @@ void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,
 
   MachineBasicBlock *KillMBB = Indexes->getMBBFromIndex(Kill);
   SlotIndex MBBStart, MBBEnd;
-  tie(MBBStart, MBBEnd) = Indexes->getMBBRange(KillMBB);
+  std::tie(MBBStart, MBBEnd) = Indexes->getMBBRange(KillMBB);
 
   // If VNI isn't live out from KillMBB, the value is trivially pruned.
   if (LRQ.endPoint() < MBBEnd) {
@@ -486,7 +486,7 @@ void LiveIntervals::pruneValue(LiveInterval *LI, SlotIndex Kill,
       MachineBasicBlock *MBB = *I;
 
       // Check if VNI is live in to MBB.
-      tie(MBBStart, MBBEnd) = Indexes->getMBBRange(MBB);
+      std::tie(MBBStart, MBBEnd) = Indexes->getMBBRange(MBB);
       LiveQueryResult LRQ = LI->Query(MBBStart);
       if (LRQ.valueIn() != VNI) {
         // This block isn't part of the VNI segment. Prune the search.
