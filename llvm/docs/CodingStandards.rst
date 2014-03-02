@@ -481,6 +481,10 @@ by the preceding part of the statement:
     return a.bam < b.bam;
   });
 
+To take best advantage of this formatting, if you are designing an API which
+accepts a continuation or single callable argument (be it a functor, or
+a ``std::function``), it should be the last argument if at all possible.
+
 If there are multiple multi-line lambdas in a statement, or there is anything
 interesting after the lambda in the statement, indent the block two spaces from
 the indent of the ``[]``:
