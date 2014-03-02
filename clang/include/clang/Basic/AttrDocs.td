@@ -656,6 +656,8 @@ def NoSanitizeAddressDocs : Documentation {
   // heading to be specified. The most common spelling is sufficient.
   let Heading = "no_sanitize_address (no_address_safety_analysis, gnu::no_address_safety_analysis, gnu::no_sanitize_address)";
   let Content = [{
+.. _langext-address_sanitizer:
+
 Use ``__attribute__((no_sanitize_address))`` on a function declaration to
 specify that address safety instrumentation (e.g. AddressSanitizer) should
 not be applied to that function.
@@ -665,6 +667,8 @@ not be applied to that function.
 def NoSanitizeThreadDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
+.. _langext-thread_sanitizer:
+
 Use ``__attribute__((no_sanitize_thread))`` on a function declaration to
 specify that checks for data races on plain (non-atomic) memory accesses should
 not be inserted by ThreadSanitizer. The function is still instrumented by the
@@ -675,6 +679,8 @@ tool to avoid false positives and provide meaningful stack traces.
 def NoSanitizeMemoryDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
+.. _langext-memory_sanitizer:
+
 Use ``__attribute__((no_sanitize_memory))`` on a function declaration to
 specify that checks for uninitialized memory should not be inserted 
 (e.g. by MemorySanitizer). The function may still be instrumented by the tool

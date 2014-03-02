@@ -430,6 +430,8 @@ no_sanitize_address (no_address_safety_analysis, gnu::no_address_safety_analysis
 
    "X","X","",""
 
+.. _langext-address_sanitizer:
+
 Use ``__attribute__((no_sanitize_address))`` on a function declaration to
 specify that address safety instrumentation (e.g. AddressSanitizer) should
 not be applied to that function.
@@ -441,6 +443,8 @@ no_sanitize_memory
    :header: "GNU", "C++11", "__declspec", "Keyword"
 
    "X","","",""
+
+.. _langext-memory_sanitizer:
 
 Use ``__attribute__((no_sanitize_memory))`` on a function declaration to
 specify that checks for uninitialized memory should not be inserted 
@@ -454,6 +458,8 @@ no_sanitize_thread
    :header: "GNU", "C++11", "__declspec", "Keyword"
 
    "X","","",""
+
+.. _langext-thread_sanitizer:
 
 Use ``__attribute__((no_sanitize_thread))`` on a function declaration to
 specify that checks for data races on plain (non-atomic) memory accesses should
