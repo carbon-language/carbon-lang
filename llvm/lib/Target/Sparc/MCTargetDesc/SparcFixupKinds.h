@@ -26,6 +26,10 @@ namespace llvm {
       /// branches on icc/xcc
       fixup_sparc_br19,
 
+      /// fixup_sparc_bpr  - 16-bit fixup for bpr
+      fixup_sparc_br16_2,
+      fixup_sparc_br16_14,
+
       /// fixup_sparc_hi22  - 22-bit fixup corresponding to %hi(foo)
       /// for sethi
       fixup_sparc_hi22,

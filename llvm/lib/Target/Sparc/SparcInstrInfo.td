@@ -109,6 +109,10 @@ def bprtarget : Operand<OtherVT> {
   let EncoderMethod = "getBranchPredTargetOpValue";
 }
 
+def bprtarget16 : Operand<OtherVT> {
+  let EncoderMethod = "getBranchOnRegTargetOpValue";
+}
+
 def calltarget : Operand<i32> {
   let EncoderMethod = "getCallTargetOpValue";
   let DecoderMethod = "DecodeCall";

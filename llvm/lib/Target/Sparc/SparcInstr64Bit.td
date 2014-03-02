@@ -344,6 +344,84 @@ def FMOVQ_XCC : F4_3<0b110101, 0b000011, (outs QFPRegs:$rd),
 } // opf_cc
 } // Uses, Constraints
 
+// Branch On integer register with Prediction (BPr).
+let isBranch = 1, isTerminator = 1, hasDelaySlot = 1 in
+multiclass BranchOnReg<bits<3> cond, string OpcStr> {
+  def napt : F2_4<cond, 0, 1, (outs), (ins I64Regs:$rs1, bprtarget16:$imm16),
+             !strconcat(OpcStr, " $rs1, $imm16"), []>;
+  def apt  : F2_4<cond, 1, 1, (outs), (ins I64Regs:$rs1, bprtarget16:$imm16),
+             !strconcat(OpcStr, ",a $rs1, $imm16"), []>;
+  def napn  : F2_4<cond, 0, 0, (outs), (ins I64Regs:$rs1, bprtarget16:$imm16),
+             !strconcat(OpcStr, ",pn $rs1, $imm16"), []>;
+  def apn : F2_4<cond, 1, 0, (outs), (ins I64Regs:$rs1, bprtarget16:$imm16),
+             !strconcat(OpcStr, ",a,pn $rs1, $imm16"), []>;
+}
+
+multiclass bpr_alias<string OpcStr, Instruction NAPT, Instruction APT> {
+  def : InstAlias<!strconcat(OpcStr, ",pt $rs1, $imm16"),
+                  (NAPT I64Regs:$rs1, bprtarget16:$imm16)>;
+  def : InstAlias<!strconcat(OpcStr, ",a,pt $rs1, $imm16"),
+                  (APT I64Regs:$rs1, bprtarget16:$imm16)>;
+}
+
+defm BPZ   : BranchOnReg<0b001, "brz">;
+defm BPLEZ : BranchOnReg<0b010, "brlez">;
+defm BPLZ  : BranchOnReg<0b011, "brlz">;
+defm BPNZ  : BranchOnReg<0b101, "brnz">;
+defm BPGZ  : BranchOnReg<0b110, "brgz">;
+defm BPGEZ : BranchOnReg<0b111, "brgez">;
+
+defm : bpr_alias<"brz",   BPZnapt,   BPZapt  >;
+defm : bpr_alias<"brlez", BPLEZnapt, BPLEZapt>;
+defm : bpr_alias<"brlz",  BPLZnapt,  BPLZapt >;
+defm : bpr_alias<"brnz",  BPNZnapt,  BPNZapt >;
+defm : bpr_alias<"brgz",  BPGZnapt,  BPGZapt >;
+defm : bpr_alias<"brgez", BPGEZnapt, BPGEZapt>;
+
+// Move integer register on register condition (MOVr).
+multiclass MOVR< bits<3> rcond,  string OpcStr> {
+  def rr : F4_4r<0b101111, 0b00000, rcond, (outs I64Regs:$rd),
+                   (ins I64Regs:$rs1, IntRegs:$rs2),
+                   !strconcat(OpcStr, " $rs1, $rs2, $rd"), []>;
+
+  def ri : F4_4i<0b101111, rcond, (outs I64Regs:$rd),
+                   (ins I64Regs:$rs1, i64imm:$simm10),
+                   !strconcat(OpcStr, " $rs1, $simm10, $rd"), []>;
+}
+
+defm MOVRRZ  : MOVR<0b001, "movrz">;
+defm MOVRLEZ : MOVR<0b010, "movrlez">;
+defm MOVRLZ  : MOVR<0b011, "movrlz">;
+defm MOVRNZ  : MOVR<0b101, "movrnz">;
+defm MOVRGZ  : MOVR<0b110, "movrgz">;
+defm MOVRGEZ : MOVR<0b111, "movrgez">;
+
+// Move FP register on integer register condition (FMOVr).
+multiclass FMOVR<bits<3> rcond, string OpcStr> {
+
+  def S : F4_4r<0b110101, 0b00101, rcond,
+                (outs FPRegs:$rd), (ins I64Regs:$rs1, FPRegs:$rs2),
+                !strconcat(!strconcat("fmovrs", OpcStr)," $rs1, $rs2, $rd"),
+                []>;
+  def D : F4_4r<0b110101, 0b00110, rcond,
+                (outs FPRegs:$rd), (ins I64Regs:$rs1, FPRegs:$rs2),
+                !strconcat(!strconcat("fmovrd", OpcStr)," $rs1, $rs2, $rd"),
+                []>;
+  def Q : F4_4r<0b110101, 0b00111, rcond,
+                (outs FPRegs:$rd), (ins I64Regs:$rs1, FPRegs:$rs2),
+                !strconcat(!strconcat("fmovrq", OpcStr)," $rs1, $rs2, $rd"),
+                []>, Requires<[HasHardQuad]>;
+}
+
+let Predicates = [HasV9] in {
+  defm FMOVRZ   : FMOVR<0b001, "z">;
+  defm FMOVRLEZ : FMOVR<0b010, "lez">;
+  defm FMOVRLZ  : FMOVR<0b011, "lz">;
+  defm FMOVRNZ  : FMOVR<0b101, "nz">;
+  defm FMOVRGZ  : FMOVR<0b110, "gz">;
+  defm FMOVRGEZ : FMOVR<0b111, "gez">;
+}
+
 //===----------------------------------------------------------------------===//
 // 64-bit Floating Point Conversions.
 //===----------------------------------------------------------------------===//

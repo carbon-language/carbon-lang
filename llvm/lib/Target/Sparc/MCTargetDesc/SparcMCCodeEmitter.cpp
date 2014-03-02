@@ -64,6 +64,10 @@ public:
   unsigned getBranchPredTargetOpValue(const MCInst &MI, unsigned OpNo,
                                       SmallVectorImpl<MCFixup> &Fixups,
                                       const MCSubtargetInfo &STI) const;
+  unsigned getBranchOnRegTargetOpValue(const MCInst &MI, unsigned OpNo,
+                                       SmallVectorImpl<MCFixup> &Fixups,
+                                       const MCSubtargetInfo &STI) const;
+
 };
 } // end anonymous namespace
 
@@ -192,6 +196,22 @@ getBranchPredTargetOpValue(const MCInst &MI, unsigned OpNo,
                                    (MCFixupKind)Sparc::fixup_sparc_br19));
   return 0;
 }
+unsigned SparcMCCodeEmitter::
+getBranchOnRegTargetOpValue(const MCInst &MI, unsigned OpNo,
+                           SmallVectorImpl<MCFixup> &Fixups,
+                           const MCSubtargetInfo &STI) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+  if (MO.isReg() || MO.isImm())
+    return getMachineOpValue(MI, MO, Fixups, STI);
+
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                                   (MCFixupKind)Sparc::fixup_sparc_br16_2));
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
+                                   (MCFixupKind)Sparc::fixup_sparc_br16_14));
+
+  return 0;
+}
+
 
 
 #include "SparcGenMCCodeEmitter.inc"

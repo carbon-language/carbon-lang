@@ -224,7 +224,6 @@ defm : fp_cond_alias<"le",    0b1101>;
 defm : fp_cond_alias<"ule",   0b1110>;
 defm : fp_cond_alias<"o",     0b1111>;
 
-
 // Instruction aliases for JMPL.
 
 // jmp addr -> jmpl addr, %g0
