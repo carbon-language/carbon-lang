@@ -1576,19 +1576,15 @@ __kmp_stg_print_abort_delay( kmp_str_buf_t * buffer, char const * name, void * d
 
 static void
 __kmp_stg_parse_cpuinfo_file( char const * name, char const * value, void * data ) {
-    #if KMP_OS_LINUX || KMP_OS_WINDOWS
+    #if KMP_AFFINITY_SUPPORTED
         __kmp_stg_parse_str( name, value, & __kmp_cpuinfo_file );
         K_DIAG( 1, ( "__kmp_cpuinfo_file == %s\n", __kmp_cpuinfo_file ) );
-    #elif !KMP_AFFINITY_SUPPORTED
-        // affinity not supported
-    #else
-        #error "Unknown or unsupported OS"
     #endif
 } //__kmp_stg_parse_cpuinfo_file
 
 static void
 __kmp_stg_print_cpuinfo_file( kmp_str_buf_t * buffer, char const * name, void * data ) {
-    #if KMP_OS_LINUX || KMP_OS_WINDOWS
+    #if KMP_AFFINITY_SUPPORTED
         if( __kmp_env_format ) {
             KMP_STR_BUF_PRINT_NAME;
         } else {
@@ -1727,7 +1723,7 @@ __kmp_stg_print_foreign_threads_threadprivate( kmp_str_buf_t * buffer, char cons
 // KMP_AFFINITY, GOMP_CPU_AFFINITY, KMP_TOPOLOGY_METHOD
 // -------------------------------------------------------------------------------------------------
 
-#if KMP_OS_LINUX || KMP_OS_WINDOWS
+#if KMP_AFFINITY_SUPPORTED
 //
 // Parse the proc id list.  Return TRUE if successful, FALSE otherwise.
 //
@@ -3068,11 +3064,7 @@ __kmp_stg_print_topology_method( kmp_str_buf_t * buffer, char const * name,
 # endif /* KMP_DEBUG */
 } // __kmp_stg_print_topology_method
 
-#elif !KMP_AFFINITY_SUPPORTED
-    // affinity not supported
-#else
-    #error "Unknown or unsupported OS"
-#endif /* KMP_OS_LINUX || KMP_OS_WINDOWS */
+#endif /* KMP_AFFINITY_SUPPORTED */
 
 
 #if OMP_40_ENABLED
@@ -3118,9 +3110,9 @@ __kmp_stg_parse_proc_bind( char const * name, char const * value, void * data )
     if ( __kmp_match_str( "disabled", buf, &next ) ) {
         buf = next;
         SKIP_WS( buf );
-# if KMP_OS_LINUX || KMP_OS_WINDOWS
+# if KMP_AFFINITY_SUPPORTED
         __kmp_affinity_type = affinity_disabled;
-# endif /* KMP_OS_LINUX || KMP_OS_WINDOWS */
+# endif /* KMP_AFFINITY_SUPPORTED */
         __kmp_nested_proc_bind.used = 1;
         __kmp_nested_proc_bind.bind_types[0] = proc_bind_disabled;
     }
@@ -3128,9 +3120,9 @@ __kmp_stg_parse_proc_bind( char const * name, char const * value, void * data )
       || __kmp_match_str( "false", buf, &next ) ) {
         buf = next;
         SKIP_WS( buf );
-# if KMP_OS_LINUX || KMP_OS_WINDOWS
+# if KMP_AFFINITY_SUPPORTED
         __kmp_affinity_type = affinity_none;
-# endif /* KMP_OS_LINUX || KMP_OS_WINDOWS */
+# endif /* KMP_AFFINITY_SUPPORTED */
         __kmp_nested_proc_bind.used = 1;
         __kmp_nested_proc_bind.bind_types[0] = proc_bind_false;
     }
@@ -4413,7 +4405,7 @@ static kmp_setting_t __kmp_stg_table[] = {
     { "KMP_ALL_THREADPRIVATE",             __kmp_stg_parse_all_threadprivate,  __kmp_stg_print_all_threadprivate,  NULL, 0, 0 },
     { "KMP_FOREIGN_THREADS_THREADPRIVATE", __kmp_stg_parse_foreign_threads_threadprivate, __kmp_stg_print_foreign_threads_threadprivate,     NULL, 0, 0 },
 
-#if KMP_OS_LINUX || KMP_OS_WINDOWS
+#if KMP_AFFINITY_SUPPORTED
     { "KMP_AFFINITY",                      __kmp_stg_parse_affinity,           __kmp_stg_print_affinity,           NULL, 0, 0 },
 # ifdef KMP_GOMP_COMPAT
     { "GOMP_CPU_AFFINITY",                 __kmp_stg_parse_gomp_cpu_affinity,  NULL, /* no print */                NULL, 0, 0 },
@@ -4441,7 +4433,7 @@ static kmp_setting_t __kmp_stg_table[] = {
 
 #else
     #error "Unknown or unsupported OS"
-#endif // KMP_OS_LINUX || KMP_OS_WINDOWS
+#endif // KMP_AFFINITY_SUPPORTED
 
     { "KMP_INIT_AT_FORK",                  __kmp_stg_parse_init_at_fork,       __kmp_stg_print_init_at_fork,       NULL, 0, 0 },
     { "KMP_SCHEDULE",                      __kmp_stg_parse_schedule,           __kmp_stg_print_schedule,           NULL, 0, 0 },
@@ -4641,7 +4633,7 @@ __kmp_stg_init( void
 
         }
 
-#if KMP_OS_LINUX || KMP_OS_WINDOWS
+#if KMP_AFFINITY_SUPPORTED
         { // Initialize KMP_AFFINITY, GOMP_CPU_AFFINITY, and OMP_PROC_BIND data.
 
             kmp_setting_t * kmp_affinity = __kmp_stg_find( "KMP_AFFINITY"  );  // 1st priority.
@@ -4686,11 +4678,9 @@ __kmp_stg_init( void
             rivals[ i ++ ] = NULL;
         }
 
-#elif !KMP_AFFINITY_SUPPORTED
+#else
     // KMP_AFFINITY not supported, so OMP_PROC_BIND has no rivals.
     // OMP_PLACES not supported yet.
-#else
-    #error "Unknown or unsupported OS"
 #endif
 
         { // Initialize KMP_DETERMINISTIC_REDUCTION and KMP_FORCE_REDUCTION data.

@@ -2374,7 +2374,7 @@ __kmp_fork_team_threads( kmp_root_t *root, kmp_team_t *team,
             }
         }
 
-#if OMP_40_ENABLED && (KMP_OS_WINDOWS || KMP_OS_LINUX)
+#if OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
         __kmp_partition_places( team );
 #endif
 
@@ -3090,7 +3090,7 @@ __kmp_join_call(ident_t *loc, int gtid
     __kmp_pop_current_task_from_thread( master_th );
     #endif // OMP_30_ENABLED
 
-#if OMP_40_ENABLED && (KMP_OS_WINDOWS || KMP_OS_LINUX)
+#if OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
     //
     // Restore master thread's partition.
     //
@@ -4718,7 +4718,7 @@ __kmp_initialize_info( kmp_info_t *this_thr, kmp_team_t *team, int tid, int gtid
     this_thr->th.th_set_nproc       = 0;
 #if OMP_40_ENABLED
     this_thr->th.th_set_proc_bind   = proc_bind_default;
-# if (KMP_OS_WINDOWS || KMP_OS_LINUX)
+# if KMP_AFFINITY_SUPPORTED
     this_thr->th.th_new_place       = this_thr->th.th_current_place;
 # endif
 #endif
@@ -4981,7 +4981,7 @@ __kmp_allocate_thread( kmp_root_t *root, kmp_team_t *team, int new_tid )
     new_thr->th.th_spin_here = FALSE;
     new_thr->th.th_next_waiting = 0;
 
-#if OMP_40_ENABLED && (KMP_OS_WINDOWS || KMP_OS_LINUX)
+#if OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
     new_thr->th.th_current_place = KMP_PLACE_UNDEFINED;
     new_thr->th.th_new_place = KMP_PLACE_UNDEFINED;
     new_thr->th.th_first_place = KMP_PLACE_UNDEFINED;
@@ -5224,7 +5224,7 @@ __kmp_initialize_team(
     KF_TRACE( 10, ( "__kmp_initialize_team: exit: team=%p\n", team ) );
 }
 
-#if KMP_OS_LINUX
+#if KMP_OS_LINUX && KMP_AFFINITY_SUPPORTED
 /* Sets full mask for thread and returns old mask, no changes to structures. */
 static void
 __kmp_set_thread_affinity_mask_full_tmp( kmp_affin_mask_t *old_mask )
@@ -5248,7 +5248,7 @@ __kmp_set_thread_affinity_mask_full_tmp( kmp_affin_mask_t *old_mask )
 }
 #endif
 
-#if OMP_40_ENABLED && (KMP_OS_WINDOWS || KMP_OS_LINUX)
+#if OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
 
 //
 // __kmp_partition_places() is the heart of the OpenMP 4.0 affinity mechanism.
@@ -5534,7 +5534,7 @@ __kmp_partition_places( kmp_team_t *team )
     KA_TRACE( 20, ("__kmp_partition_places: exit T#%d\n", team->t.t_id ) );
 }
 
-#endif /* OMP_40_ENABLED && (KMP_OS_WINDOWS || KMP_OS_LINUX) */
+#endif /* OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED */
 
 /* allocate a new team data structure to use.  take one off of the free pool if available */
 kmp_team_t *
@@ -5664,14 +5664,14 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
 
 #if OMP_40_ENABLED
             team->t.t_proc_bind = new_proc_bind;
-# if KMP_OS_WINDOWS || KMP_OS_LINUX
+# if KMP_AFFINITY_SUPPORTED
             __kmp_partition_places( team );
 # endif
 #endif
 
         }
         else if ( team -> t.t_nproc < new_nproc ) {
-#if KMP_OS_LINUX
+#if KMP_OS_LINUX && KMP_AFFINITY_SUPPORTED
             kmp_affin_mask_t *old_mask;
             if ( KMP_AFFINITY_CAPABLE() ) {
                 KMP_CPU_ALLOC(old_mask);
@@ -5698,7 +5698,7 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
                                          );
             }
 
-#if KMP_OS_LINUX
+#if KMP_OS_LINUX && KMP_AFFINITY_SUPPORTED
             /* Temporarily set full mask for master thread before
                creation of workers. The reason is that workers inherit
                the affinity from master, so if a lot of workers are
@@ -5729,7 +5729,7 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
                 }
             }
 
-#if KMP_OS_LINUX
+#if KMP_OS_LINUX && KMP_AFFINITY_SUPPORTED
             if ( KMP_AFFINITY_CAPABLE() ) {
                 /* Restore initial master thread's affinity mask */
                 __kmp_set_system_affinity( old_mask, TRUE );
@@ -5773,7 +5773,7 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
 
 #if OMP_40_ENABLED
             team->t.t_proc_bind = new_proc_bind;
-# if KMP_OS_WINDOWS || KMP_OS_LINUX
+# if KMP_AFFINITY_SUPPORTED
             __kmp_partition_places( team );
 # endif
 #endif
@@ -5812,7 +5812,7 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
 #endif
 
 #if OMP_40_ENABLED
-# if (KMP_OS_WINDOWS || KMP_OS_LINUX)
+# if KMP_AFFINITY_SUPPORTED
             if ( team->t.t_proc_bind == new_proc_bind ) {
                 KA_TRACE( 200, ("__kmp_allocate_team: reusing hot team #%d bindings: proc_bind = %d, partition = [%d,%d]\n",
                   team->t.t_id, new_proc_bind, team->t.t_first_place,
@@ -5826,7 +5826,7 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
             if ( team->t.t_proc_bind != new_proc_bind ) {
                 team->t.t_proc_bind = new_proc_bind;
             }
-# endif /* (KMP_OS_WINDOWS || KMP_OS_LINUX) */
+# endif /* KMP_AFFINITY_SUPPORTED */
 #endif /* OMP_40_ENABLED */
         }
 
@@ -6479,7 +6479,7 @@ __kmp_fork_barrier( int gtid, int tid )
 
 #endif /* OMP_30_ENABLED */
 
-#if OMP_40_ENABLED && (KMP_OS_WINDOWS || KMP_OS_LINUX)
+#if OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
     kmp_proc_bind_t proc_bind = team->t.t_proc_bind;
     if ( proc_bind == proc_bind_intel ) {
 #endif
@@ -6491,7 +6491,7 @@ __kmp_fork_barrier( int gtid, int tid )
             __kmp_balanced_affinity( tid, team->t.t_nproc );
         }
 #endif
-#if OMP_40_ENABLED && (KMP_OS_WINDOWS || KMP_OS_LINUX)
+#if OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
     }
     else if ( ( proc_bind != proc_bind_false )
               && ( proc_bind != proc_bind_disabled )) {
@@ -6784,12 +6784,12 @@ __kmp_reap_thread(
         }; // if
     #endif
 
-#if (KMP_OS_WINDOWS || KMP_OS_LINUX)
+#if KMP_AFFINITY_SUPPORTED
     if ( thread->th.th_affin_mask != NULL ) {
         KMP_CPU_FREE( thread->th.th_affin_mask );
         thread->th.th_affin_mask = NULL;
     }; // if
-#endif /* (KMP_OS_WINDOWS || KMP_OS_LINUX) */
+#endif /* KMP_AFFINITY_SUPPORTED */
 
     __kmp_reap_team( thread->th.th_serial_team );
     thread->th.th_serial_team = NULL;
@@ -7583,7 +7583,7 @@ __kmp_do_middle_initialize( void )
     //
     prev_dflt_team_nth = __kmp_dflt_team_nth;
 
-#if KMP_OS_WINDOWS || KMP_OS_LINUX
+#if KMP_AFFINITY_SUPPORTED
     //
     // __kmp_affinity_initialize() will try to set __kmp_ncores to the
     // number of cores on the machine.
@@ -7599,7 +7599,7 @@ __kmp_do_middle_initialize( void )
             __kmp_affinity_set_init_mask( i, TRUE );
         }
     }
-#endif /* KMP_OS_WINDOWS || KMP_OS_LINUX */
+#endif /* KMP_AFFINITY_SUPPORTED */
 
     KMP_ASSERT( __kmp_xproc > 0 );
     if ( __kmp_avail_proc == 0 ) {
@@ -8180,10 +8180,10 @@ __kmp_cleanup( void )
 
     __kmp_cleanup_user_locks();
 
-    #if KMP_OS_LINUX || KMP_OS_WINDOWS
+    #if KMP_AFFINITY_SUPPORTED
         KMP_INTERNAL_FREE( (void *) __kmp_cpuinfo_file );
         __kmp_cpuinfo_file = NULL;
-    #endif /* KMP_OS_LINUX || KMP_OS_WINDOWS */
+    #endif /* KMP_AFFINITY_SUPPORTED */
 
    #if KMP_USE_ADAPTIVE_LOCKS
    #if KMP_DEBUG_ADAPTIVE_LOCKS
@@ -8475,7 +8475,7 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
 
         #elif KMP_ARCH_X86 || KMP_ARCH_ARM
 
-            #if KMP_OS_LINUX || KMP_OS_WINDOWS
+            #if KMP_AFFINITY_SUPPORTED
 
                 // basic tuning
 

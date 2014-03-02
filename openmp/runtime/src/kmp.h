@@ -754,10 +754,10 @@ typedef struct kmp_nested_proc_bind_t {
 
 extern kmp_nested_proc_bind_t __kmp_nested_proc_bind;
 
-# if (KMP_OS_WINDOWS || KMP_OS_LINUX)
+# if KMP_AFFINITY_SUPPORTED
 #  define KMP_PLACE_ALL       (-1)
 #  define KMP_PLACE_UNDEFINED (-2)
-# endif /* (KMP_OS_WINDOWS || KMP_OS_LINUX) */
+# endif /* KMP_AFFINITY_SUPPORTED */
 
 extern int __kmp_affinity_num_places;
 
@@ -2153,7 +2153,7 @@ typedef struct KMP_ALIGN_CACHE kmp_base_info {
     kmp_internal_control_t  th_fixed_icvs;            /* Initial ICVs for the thread */
 
 
-#if KMP_OS_WINDOWS || KMP_OS_LINUX
+#if KMP_AFFINITY_SUPPORTED
     kmp_affin_mask_t  *th_affin_mask; /* thread's current affinity mask */
 #endif
 
@@ -2165,7 +2165,7 @@ typedef struct KMP_ALIGN_CACHE kmp_base_info {
 #if OMP_40_ENABLED
     int                     th_set_nth_teams; /* number of threads in parallel nested in teams construct */
     kmp_proc_bind_t         th_set_proc_bind; /* if != proc_bind_default, use request for next fork */
-# if (KMP_OS_WINDOWS || KMP_OS_LINUX)
+# if KMP_AFFINITY_SUPPORTED
     int                     th_current_place; /* place currently bound to */
     int                     th_new_place;     /* place to bind to in par reg */
     int                     th_first_place;   /* first place in partition */
@@ -2383,12 +2383,12 @@ typedef struct KMP_ALIGN_CACHE kmp_base_team {
     int                      t_active_level; /* nested active parallel level */
     kmp_r_sched_t            t_sched;        /* run-time schedule for the team */
 #endif // OMP_30_ENABLED
-#if OMP_40_ENABLED && (KMP_OS_WINDOWS || KMP_OS_LINUX)
+#if OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
     int                      t_first_place;  /* first & last place in      */
     int                      t_last_place;   /* parent thread's partition. */
                                              /* Restore these values to    */
                                              /* master after par region.   */
-#endif // OMP_40_ENABLED && (KMP_OS_WINDOWS || KMP_OS_LINUX)
+#endif // OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
 #if KMP_MIC
     int                      t_size_changed; /* team size was changed?: 0 - no, 1 - yes, -1 - changed via omp_set_num_threads() call */
 #endif

@@ -110,7 +110,7 @@ __kmp_print_cond( char *buffer, kmp_cond_align_t *cond )
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
 
-#if KMP_OS_LINUX
+#if KMP_OS_LINUX && KMP_AFFINITY_SUPPORTED
 
 /*
  * Affinity support
@@ -440,7 +440,7 @@ __kmp_change_thread_affinity_mask( int gtid, kmp_affin_mask_t *new_mask,
     }
 }
 
-#endif // KMP_OS_LINUX
+#endif // KMP_OS_LINUX && KMP_AFFINITY_SUPPORTED
 
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
