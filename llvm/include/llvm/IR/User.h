@@ -121,10 +121,10 @@ public:
   inline op_iterator       op_end()         { return OperandList+NumOperands; }
   inline const_op_iterator op_end()   const { return OperandList+NumOperands; }
   inline op_range operands() {
-    return {op_begin(), op_end()};
+    return op_range(op_begin(), op_end());
   }
   inline const_op_range operands() const {
-    return {op_begin(), op_end()};
+    return const_op_range(op_begin(), op_end());
   }
 
   /// Convenience iterator for directly iterating over the Values in the
@@ -166,7 +166,7 @@ public:
     return value_op_iterator(op_end());
   }
   inline iterator_range<value_op_iterator> operand_values() {
-    return {value_op_begin(), value_op_end()};
+    return iterator_range<value_op_iterator>(value_op_begin(), value_op_end());
   }
 
   // dropAllReferences() - This function is in charge of "letting go" of all
