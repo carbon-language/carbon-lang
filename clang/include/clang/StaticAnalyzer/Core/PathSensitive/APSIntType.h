@@ -11,6 +11,7 @@
 #define LLVM_CLANG_SA_CORE_APSINTTYPE_H
 
 #include "llvm/ADT/APSInt.h"
+#include <tuple>
 
 namespace clang {
 namespace ento {
