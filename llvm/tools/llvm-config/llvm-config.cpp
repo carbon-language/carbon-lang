@@ -345,27 +345,29 @@ int main(int argc, char **argv) {
     ComputeLibsForComponents(Components, RequiredLibs,
                              /*IncludeNonInstalled=*/IsInDevelopmentTree);
 
-    for (unsigned i = 0, e = RequiredLibs.size(); i != e; ++i) {
-      StringRef Lib = RequiredLibs[i];
-      if (i)
-        OS << ' ';
+    if (PrintLibs || PrintLibNames || PrintLibFiles) {
+      for (unsigned i = 0, e = RequiredLibs.size(); i != e; ++i) {
+        StringRef Lib = RequiredLibs[i];
+        if (i)
+          OS << ' ';
 
-      if (PrintLibNames) {
-        OS << Lib;
-      } else if (PrintLibFiles) {
-        OS << ActiveLibDir << '/' << Lib;
-      } else if (PrintLibs) {
-        // If this is a typical library name, include it using -l.
-        if (Lib.startswith("lib") && Lib.endswith(".a")) {
-          OS << "-l" << Lib.slice(3, Lib.size()-2);
-          continue;
+        if (PrintLibNames) {
+          OS << Lib;
+        } else if (PrintLibFiles) {
+          OS << ActiveLibDir << '/' << Lib;
+        } else if (PrintLibs) {
+          // If this is a typical library name, include it using -l.
+          if (Lib.startswith("lib") && Lib.endswith(".a")) {
+            OS << "-l" << Lib.slice(3, Lib.size()-2);
+            continue;
+          }
+
+          // Otherwise, print the full path.
+          OS << ActiveLibDir << '/' << Lib;
         }
-
-        // Otherwise, print the full path.
-        OS << ActiveLibDir << '/' << Lib;
       }
+      OS << '\n';
     }
-    OS << '\n';
 
     // Print SYSTEM_LIBS after --libs.
     // FIXME: Each LLVM component may have its dependent system libs.
