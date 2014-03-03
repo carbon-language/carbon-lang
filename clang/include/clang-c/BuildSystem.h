@@ -62,13 +62,15 @@ clang_VirtualFileOverlay_addFileMapping(CXVirtualFileOverlay,
  * \brief Write out the \c CXVirtualFileOverlay object to a char buffer.
  *
  * \param options is reserved, always pass 0.
- * \param out_buffer pointer to receive the CXString object, which should be
- * disposed using \c clang_disposeString().
+ * \param out_buffer_ptr pointer to receive the buffer pointer, which should be
+ * disposed using \c free().
+ * \param out_buffer_size pointer to receive the buffer size.
  * \returns 0 for success, non-zero to indicate an error.
  */
 CINDEX_LINKAGE enum CXErrorCode
 clang_VirtualFileOverlay_writeToBuffer(CXVirtualFileOverlay, unsigned options,
-                                       CXString *out_buffer);
+                                       char **out_buffer_ptr,
+                                       unsigned *out_buffer_size);
 
 /**
  * \brief Dispose a \c CXVirtualFileOverlay object.

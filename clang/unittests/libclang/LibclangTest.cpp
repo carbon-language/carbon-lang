@@ -51,10 +51,12 @@ struct TestVFO {
   ~TestVFO() {
     if (!Contents)
       return;
-    CXString Buf;
-    clang_VirtualFileOverlay_writeToBuffer(VFO, 0, &Buf);
-    EXPECT_STREQ(Contents, clang_getCString(Buf));
-    clang_disposeString(Buf);
+    char *BufPtr;
+    unsigned BufSize;
+    clang_VirtualFileOverlay_writeToBuffer(VFO, 0, &BufPtr, &BufSize);
+    std::string BufStr(BufPtr, BufSize);
+    EXPECT_STREQ(Contents, BufStr.c_str());
+    free(BufPtr);
     clang_VirtualFileOverlay_dispose(VFO);
   }
 };

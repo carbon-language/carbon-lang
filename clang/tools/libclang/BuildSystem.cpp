@@ -162,9 +162,10 @@ private:
 }
 
 enum CXErrorCode
-clang_VirtualFileOverlay_writeToBuffer(CXVirtualFileOverlay VFO,
-                                       unsigned, CXString *out_buffer) {
-  if (!VFO || !out_buffer)
+clang_VirtualFileOverlay_writeToBuffer(CXVirtualFileOverlay VFO, unsigned,
+                                       char **out_buffer_ptr,
+                                       unsigned *out_buffer_size) {
+  if (!VFO || !out_buffer_ptr || !out_buffer_size)
     return CXError_InvalidArguments;
 
   llvm::SmallVector<EntryTy, 16> Entries;
@@ -186,7 +187,10 @@ clang_VirtualFileOverlay_writeToBuffer(CXVirtualFileOverlay VFO,
   JSONVFSPrinter Printer(OS);
   Printer.print(Entries);
 
-  *out_buffer = cxstring::createDup(OS.str());
+  StringRef Data = OS.str();
+  *out_buffer_ptr = (char*)malloc(Data.size());
+  *out_buffer_size = Data.size();
+  memcpy(*out_buffer_ptr, Data.data(), Data.size());
   return CXError_Success;
 }
 
