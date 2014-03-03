@@ -1032,6 +1032,12 @@ sigcont_handler (int signo)
 int
 main (int argc, char const *argv[], const char *envp[])
 {
+#ifdef _MSC_VER
+	// disable buffering on windows
+	setvbuf(stdout, NULL, _IONBF, 0);
+	setvbuf(stdin , NULL, _IONBF, 0);
+#endif
+
     SBDebugger::Initialize();
     
     SBHostOS::ThreadCreated ("<lldb.driver.main-thread>");

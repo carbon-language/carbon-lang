@@ -317,8 +317,6 @@ el_set (EditLine *el, int code, ...)
             clientData = va_arg(vl, void*);
         }
         break;
-//    default:
-//        assert( !"Not Implemented!" );
     }
     return 0;
 }
@@ -326,7 +324,7 @@ el_set (EditLine *el, int code, ...)
 void
 el_end (EditLine *el)
 {
-    assert( !"Not implemented!" );
+    //assert( !"Not implemented!" );
 }
 
 void
@@ -345,7 +343,6 @@ el_getc (EditLine *, char *)
 void
 el_push (EditLine *, const char *)
 {
-//    assert( !"Not implemented!" );
 }
 
 void
@@ -398,7 +395,6 @@ el_resize (EditLine *)
 const LineInfo *
 el_line (EditLine *el)
 {
-    assert( !"Not implemented!" );
     return 0;
 }
 
@@ -425,14 +421,14 @@ history_init (void)
 void
 history_end (History *)
 {
-    assert( !"Not implemented!" );
+//    assert( !"Not implemented!" );
 }
 
 int
 history (History *, HistEvent *, int op, ...)
 {
-    // perform operation 'op' on the history list with optional argumetns as needed by
-    // the operation.
+    // perform operation 'op' on the history list with
+    // optional arguments as needed by the operation.
     return 0;
 }
 

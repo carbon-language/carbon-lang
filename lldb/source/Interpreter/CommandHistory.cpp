@@ -137,7 +137,7 @@ CommandHistory::Dump (Stream& stream,
         if (!hist_item.empty())
         {
             stream.Indent();
-            stream.Printf ("%4zu: %s\n", counter, hist_item.c_str());
+            stream.Printf("%4" PRId64 ": %s\n", counter, hist_item.c_str());
         }
     }
 }

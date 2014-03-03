@@ -1708,7 +1708,7 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                 break;
                 
             case eValueObjectRepresentationStyleChildrenCount:
-                strm.Printf("%zu", GetNumChildren());
+                strm.Printf("%" PRIu64 "", (uint64_t)GetNumChildren());
                 cstr = strm.GetString().c_str();
                 break;
                 
@@ -2064,7 +2064,7 @@ ValueObject::GetSyntheticArrayMemberFromPointer (size_t index, bool can_create)
     if (IsPointerType ())
     {
         char index_str[64];
-        snprintf(index_str, sizeof(index_str), "[%zu]", index);
+        snprintf(index_str, sizeof(index_str), "[%" PRIu64 "]", (uint64_t)index);
         ConstString index_const_str(index_str);
         // Check if we have already created a synthetic array member in this
         // valid object. If we have we will re-use it.
@@ -2107,7 +2107,7 @@ ValueObject::GetSyntheticArrayMemberFromArray (size_t index, bool can_create)
     if (IsArrayType ())
     {
         char index_str[64];
-        snprintf(index_str, sizeof(index_str), "[%zu]", index);
+        snprintf(index_str, sizeof(index_str), "[%" PRIu64 "]", (uint64_t)index);
         ConstString index_const_str(index_str);
         // Check if we have already created a synthetic array member in this
         // valid object. If we have we will re-use it.

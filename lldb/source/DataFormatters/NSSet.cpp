@@ -305,7 +305,7 @@ lldb_private::formatters::NSSetISyntheticFrontEnd::GetChildAtIndex (size_t idx)
                 assert(false && "pointer size is not 4 nor 8 - get out of here ASAP");
         }
         StreamString idx_name;
-        idx_name.Printf("[%zu]",idx);
+        idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);
         
         DataExtractor data(buffer.GetBytes(),
                            buffer.GetByteSize(),
@@ -473,7 +473,7 @@ lldb_private::formatters::NSSetMSyntheticFrontEnd::GetChildAtIndex (size_t idx)
                 assert(false && "pointer size is not 4 nor 8 - get out of here ASAP");
         }
         StreamString idx_name;
-        idx_name.Printf("[%zu]",idx);
+        idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);
         
         DataExtractor data(buffer.GetBytes(),
                            buffer.GetByteSize(),
@@ -519,7 +519,7 @@ lldb_private::formatters::NSOrderedSetSyntheticFrontEnd::GetChildAtIndex (size_t
             if (retval_sp)
             {
                 StreamString idx_name;
-                idx_name.Printf("[%zu]",idx);
+                idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);
                 retval_sp->SetName(ConstString(idx_name.GetData()));
             }
             m_children[idx] = retval_sp;

@@ -81,7 +81,7 @@ lldb_private::formatters::LibcxxStdUnorderedMapSyntheticFrontEnd::GetChildAtInde
     if (!val_hash.first)
         return lldb::ValueObjectSP();
     StreamString stream;
-    stream.Printf("[%zu]",idx);
+    stream.Printf("[%" PRIu64 "]", (uint64_t)idx);
     DataExtractor data;
     Error error;
     val_hash.first->GetData(data, error);

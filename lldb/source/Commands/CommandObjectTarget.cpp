@@ -1763,7 +1763,7 @@ LookupFunctionInModule (CommandInterpreter &interpreter,
         if (num_matches)
         {
             strm.Indent ();
-            strm.Printf("%zu match%s found in ", num_matches, num_matches > 1 ? "es" : "");
+            strm.Printf("%" PRIu64 " match%s found in ", (uint64_t)num_matches, num_matches > 1 ? "es" : "");
             DumpFullpath (strm, &module->GetFileSpec(), 0);
             strm.PutCString(":\n");
             DumpSymbolContextList (interpreter.GetExecutionContext().GetBestExecutionContextScope(), strm, sc_list, verbose);
@@ -1794,7 +1794,7 @@ LookupTypeInModule (CommandInterpreter &interpreter,
         if (num_matches)
         {
             strm.Indent ();
-            strm.Printf("%zu match%s found in ", num_matches, num_matches > 1 ? "es" : "");
+            strm.Printf("%" PRIu64 " match%s found in ", (uint64_t)num_matches, num_matches > 1 ? "es" : "");
             DumpFullpath (strm, &module->GetFileSpec(), 0);
             strm.PutCString(":\n");
             for (TypeSP type_sp : type_list.Types())
@@ -2200,7 +2200,7 @@ protected:
                 const size_t num_modules = target->GetImages().GetSize();
                 if (num_modules > 0)
                 {
-                    result.GetOutputStream().Printf("Dumping symbol table for %zu modules.\n", num_modules);
+                    result.GetOutputStream().Printf("Dumping symbol table for %" PRIu64 " modules.\n", (uint64_t)num_modules);
                     for (size_t image_idx = 0; image_idx<num_modules; ++image_idx)
                     {
                         if (num_dumped > 0)
@@ -2333,7 +2333,7 @@ protected:
                 const size_t num_modules = target->GetImages().GetSize();
                 if (num_modules > 0)
                 {
-                    result.GetOutputStream().Printf("Dumping sections for %zu modules.\n", num_modules);
+                    result.GetOutputStream().Printf("Dumping sections for %" PRIu64 " modules.\n", (uint64_t)num_modules);
                     for (size_t image_idx = 0;  image_idx<num_modules; ++image_idx)
                     {
                         num_dumped++;
@@ -2441,7 +2441,7 @@ protected:
                 const size_t num_modules = target_modules.GetSize();
                 if (num_modules > 0)
                 {
-                    result.GetOutputStream().Printf("Dumping debug symbols for %zu modules.\n", num_modules);
+                    result.GetOutputStream().Printf("Dumping debug symbols for %" PRIu64 " modules.\n", (uint64_t)num_modules);
                     for (uint32_t image_idx = 0;  image_idx<num_modules; ++image_idx)
                     {
                         if (DumpModuleSymbolVendor (result.GetOutputStream(), target_modules.GetModulePointerAtIndexUnlocked(image_idx)))
@@ -3402,9 +3402,9 @@ protected:
                             ref_count = module_sp.use_count() - 1;
                         }
                         if (width)
-                            strm.Printf("{%*zu}", width, ref_count);
+                            strm.Printf("{%*" PRIu64 "}", width, ref_count);
                         else
-                            strm.Printf("{%zu}", ref_count);
+                            strm.Printf("{%" PRIu64 "}", (uint64_t)ref_count);
                     }
                     break;
 

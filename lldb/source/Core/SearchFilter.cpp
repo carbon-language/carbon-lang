@@ -592,7 +592,7 @@ SearchFilterByModuleList::GetDescription (Stream *s)
     }
     else
     {
-        s->Printf (", modules(%zu) = ", num_modules);
+        s->Printf(", modules(%" PRIu64 ") = ", (uint64_t)num_modules);
         for (size_t i = 0; i < num_modules; i++)
         {
             if (s->GetVerbose())

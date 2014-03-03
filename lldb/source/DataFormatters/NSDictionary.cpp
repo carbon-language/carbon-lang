@@ -210,9 +210,9 @@ lldb::ValueObjectSP
 lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
     StreamString idx_name;
-    idx_name.Printf("[%zu]",idx);
+    idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);
     StreamString key_fetcher_expr;
-    key_fetcher_expr.Printf("(id)[(NSArray*)[(id)0x%" PRIx64 " allKeys] objectAtIndex:%zu]",m_backend.GetPointerValue(),idx);
+    key_fetcher_expr.Printf("(id)[(NSArray*)[(id)0x%" PRIx64 " allKeys] objectAtIndex:%" PRIu64 "]", m_backend.GetPointerValue(), (uint64_t)idx);
     StreamString value_fetcher_expr;
     value_fetcher_expr.Printf("(id)[(id)0x%" PRIx64 " objectForKey:(%s)]",m_backend.GetPointerValue(),key_fetcher_expr.GetData());
     StreamString object_fetcher_expr;
@@ -403,7 +403,7 @@ lldb_private::formatters::NSDictionaryISyntheticFrontEnd::GetChildAtIndex (size_
         }
         
         StreamString idx_name;
-        idx_name.Printf("[%zu]",idx);
+        idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);
         DataExtractor data(buffer_sp, m_order, m_ptr_size);
         dict_item.valobj_sp = ValueObject::CreateValueObjectFromData(idx_name.GetData(), data, m_exe_ctx_ref, m_pair_type);
     }
@@ -567,7 +567,7 @@ lldb_private::formatters::NSDictionaryMSyntheticFrontEnd::GetChildAtIndex (size_
         }
         
         StreamString idx_name;
-        idx_name.Printf("[%zu]",idx);
+        idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);
         DataExtractor data(buffer_sp, m_order, m_ptr_size);
         dict_item.valobj_sp = ValueObject::CreateValueObjectFromData(idx_name.GetData(), data, m_exe_ctx_ref, m_pair_type);
     }

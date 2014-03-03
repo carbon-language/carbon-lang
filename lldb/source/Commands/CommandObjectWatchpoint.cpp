@@ -397,7 +397,7 @@ protected:
         {
             // No watchpoint selected; enable all currently set watchpoints.
             target->EnableAllWatchpoints();
-            result.AppendMessageWithFormat("All watchpoints enabled. (%zu watchpoints)\n", num_watchpoints);
+            result.AppendMessageWithFormat("All watchpoints enabled. (%" PRId64 " watchpoints)\n", num_watchpoints);
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
         }
         else
@@ -476,7 +476,7 @@ protected:
             // No watchpoint selected; disable all currently set watchpoints.
             if (target->DisableAllWatchpoints())
             {
-                result.AppendMessageWithFormat("All watchpoints disabled. (%zu watchpoints)\n", num_watchpoints);
+                result.AppendMessageWithFormat("All watchpoints disabled. (%" PRId64 " watchpoints)\n", num_watchpoints);
                 result.SetStatus(eReturnStatusSuccessFinishNoResult);
             }
             else
@@ -564,7 +564,7 @@ protected:
             else
             {
                 target->RemoveAllWatchpoints();
-                result.AppendMessageWithFormat("All watchpoints removed. (%zu watchpoints)\n", num_watchpoints);
+                result.AppendMessageWithFormat("All watchpoints removed. (%" PRId64 " watchpoints)\n", num_watchpoints);
             }
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
@@ -706,7 +706,7 @@ protected:
         if (command.GetArgumentCount() == 0)
         {
             target->IgnoreAllWatchpoints(m_options.m_ignore_count);
-            result.AppendMessageWithFormat("All watchpoints ignored. (%zu watchpoints)\n", num_watchpoints);
+            result.AppendMessageWithFormat("All watchpoints ignored. (%" PRId64 " watchpoints)\n", num_watchpoints);
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
         else
@@ -1099,7 +1099,7 @@ protected:
         }
         else
         {
-            result.AppendErrorWithFormat("Watchpoint creation failed (addr=0x%" PRIx64 ", size=%zu, variable expression='%s').\n",
+            result.AppendErrorWithFormat("Watchpoint creation failed (addr=0x%" PRIx64 ", size=%" PRId64 ", variable expression='%s').\n",
                                          addr, size, command.GetArgumentAtIndex(0));
             if (error.AsCString(NULL))
                 result.AppendError(error.AsCString());
@@ -1308,7 +1308,7 @@ protected:
         }
         else
         {
-            result.AppendErrorWithFormat("Watchpoint creation failed (addr=0x%" PRIx64 ", size=%zu).\n",
+            result.AppendErrorWithFormat("Watchpoint creation failed (addr=0x%" PRIx64 ", size=%" PRId64 ").\n",
                                          addr, size);
             if (error.AsCString(NULL))
                 result.AppendError(error.AsCString());

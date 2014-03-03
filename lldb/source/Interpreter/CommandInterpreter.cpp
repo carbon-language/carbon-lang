@@ -2494,16 +2494,16 @@ CommandInterpreter::HandleCommands (const StringList &commands,
                 error_msg = "<unknown error>.\n";
             if (stop_on_error)
             {
-                result.AppendErrorWithFormat("Aborting reading of commands after command #%zu: '%s' failed with %s",
-                                         idx, cmd, error_msg);
+                result.AppendErrorWithFormat("Aborting reading of commands after command #%" PRIu64 ": '%s' failed with %s",
+                                                (uint64_t)idx, cmd, error_msg);
                 result.SetStatus (eReturnStatusFailed);
                 m_debugger.SetAsyncExecution (old_async_execution);
                 return;
             }
             else if (print_results)
             {
-                result.AppendMessageWithFormat ("Command #%zu '%s' failed with %s",
-                                                idx + 1, 
+                result.AppendMessageWithFormat ("Command #%" PRIu64 " '%s' failed with %s",
+                                                (uint64_t)idx + 1,
                                                 cmd, 
                                                 error_msg);
             }
@@ -2527,10 +2527,10 @@ CommandInterpreter::HandleCommands (const StringList &commands,
                 // status in our real result before returning.  This is an error if the continue was not the
                 // last command in the set of commands to be run.
                 if (idx != num_lines - 1)
-                    result.AppendErrorWithFormat("Aborting reading of commands after command #%zu: '%s' continued the target.\n", 
-                                                 idx + 1, cmd);
+                    result.AppendErrorWithFormat("Aborting reading of commands after command #%" PRIu64 ": '%s' continued the target.\n", 
+                                                 (uint64_t)idx + 1, cmd);
                 else
-                    result.AppendMessageWithFormat ("Command #%zu '%s' continued the target.\n", idx + 1, cmd);
+                    result.AppendMessageWithFormat("Command #%" PRIu64 " '%s' continued the target.\n", (uint64_t)idx + 1, cmd);
                     
                 result.SetStatus(tmp_result.GetStatus());
                 m_debugger.SetAsyncExecution (old_async_execution);

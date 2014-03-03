@@ -443,8 +443,8 @@ ThreadPlanStepRange::NextRangeBreakpointExplainsStop (lldb::StopInfoSP stop_info
             }
         }
         if (log)
-            log->Printf ("ThreadPlanStepRange::NextRangeBreakpointExplainsStop - Hit next range breakpoint which has %zu owners - explains stop: %u.",
-                        num_owners,
+            log->Printf ("ThreadPlanStepRange::NextRangeBreakpointExplainsStop - Hit next range breakpoint which has %" PRIu64 " owners - explains stop: %u.",
+                        (uint64_t)num_owners,
                         explains_stop);
         ClearNextBranchBreakpoint();
         return  explains_stop;

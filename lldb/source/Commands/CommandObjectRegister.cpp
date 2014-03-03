@@ -202,7 +202,7 @@ protected:
                     }
                     else
                     {
-                        result.AppendErrorWithFormat ("invalid register set index: %zu\n", set_idx);
+                        result.AppendErrorWithFormat("invalid register set index: %" PRIu64 "\n", (uint64_t)set_idx);
                         result.SetStatus (eReturnStatusFailed);
                         break;
                     }

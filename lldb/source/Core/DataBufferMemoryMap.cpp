@@ -89,7 +89,7 @@ DataBufferMemoryMap::Clear()
     {
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_MMAP));
         if (log)
-            log->Printf("DataBufferMemoryMap::Clear() m_mmap_addr = %p, m_mmap_size = %zu", m_mmap_addr, m_mmap_size);
+            log->Printf("DataBufferMemoryMap::Clear() m_mmap_addr = %p, m_mmap_size = %" PRIu64 "", m_mmap_addr, (uint64_t)m_mmap_size);
 #ifdef _WIN32
         UnmapViewOfFile(m_mmap_addr);
 #else
@@ -311,8 +311,8 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
                     
                     if (log)
                     {
-                        log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec() m_mmap_addr = %p, m_mmap_size = %zu, error = %s",
-                                    m_mmap_addr, m_mmap_size, error.AsCString());
+                        log->Printf("DataBufferMemoryMap::MemoryMapFromFileSpec() m_mmap_addr = %p, m_mmap_size = %" PRIu64 ", error = %s",
+                                    m_mmap_addr, (uint64_t)m_mmap_size, error.AsCString());
                     }
                 }
             }

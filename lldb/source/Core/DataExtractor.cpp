@@ -1516,7 +1516,7 @@ DataExtractor::Dump (Stream *s,
                 s->Printf ("%s", GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset) ? "true" : "false");
             else
             {
-                s->Printf("error: unsupported byte size (%zu) for boolean format", item_byte_size);
+                s->Printf("error: unsupported byte size (%" PRIu64 ") for boolean format", (uint64_t)item_byte_size);
                 return offset;
             }
             break;
@@ -1725,7 +1725,7 @@ DataExtractor::Dump (Stream *s,
                 }
                 else
                 {
-                    s->Printf("error: unsupported byte size (%zu) for complex integer format", item_byte_size);
+                    s->Printf("error: unsupported byte size (%" PRIu64 ") for complex integer format", (uint64_t)item_byte_size);
                     return offset;
                 }
             }
@@ -1757,7 +1757,7 @@ DataExtractor::Dump (Stream *s,
             }
             else
             {
-                s->Printf("error: unsupported byte size (%zu) for complex float format", item_byte_size);
+                s->Printf("error: unsupported byte size (%" PRIu64 ") for complex float format", (uint64_t)item_byte_size);
                 return offset;
             }
             break;
@@ -1909,7 +1909,7 @@ DataExtractor::Dump (Stream *s,
                     }
                     else
                     {
-                        s->Printf("error: unsupported byte size (%zu) for float format", item_byte_size);
+                        s->Printf("error: unsupported byte size (%" PRIu64 ") for float format", (uint64_t)item_byte_size);
                         return offset;
                     }
                     ss.flush();
@@ -1973,7 +1973,7 @@ DataExtractor::Dump (Stream *s,
             }
             else
             {
-                s->Printf("error: unsupported byte size (%zu) for hex float format", item_byte_size);
+                s->Printf("error: unsupported byte size (%" PRIu64 ") for hex float format", (uint64_t)item_byte_size);
                 return offset;
             }
             break;

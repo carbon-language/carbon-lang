@@ -1794,7 +1794,7 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, size_t by
             if (!success)
                 error.SetErrorStringWithFormat ("'%s' is not a valid unsigned integer string value", value_str);
             else if (!UIntValueIsValidForSize (uval64, byte_size))
-                error.SetErrorStringWithFormat ("value 0x%" PRIx64 " is too large to fit in a %zu byte unsigned integer value", uval64, byte_size);
+                error.SetErrorStringWithFormat("value 0x%" PRIx64 " is too large to fit in a %" PRIu64 " byte unsigned integer value", uval64, (uint64_t)byte_size);
             else
             {
                 m_type = Scalar::GetValueTypeForUnsignedIntegerWithByteSize (byte_size);
@@ -1804,14 +1804,14 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, size_t by
                 case e_ulong:       m_data.ulong = (ulong_t)uval64;         break;
                 case e_ulonglong:   m_data.ulonglong = (ulonglong_t)uval64; break;
                 default:
-                    error.SetErrorStringWithFormat ("unsupported unsigned integer byte size: %zu", byte_size);
+                    error.SetErrorStringWithFormat("unsupported unsigned integer byte size: %" PRIu64 "", (uint64_t)byte_size);
                     break;
                 }
             }
         }
         else
         {
-            error.SetErrorStringWithFormat ("unsupported unsigned integer byte size: %zu", byte_size);
+            error.SetErrorStringWithFormat("unsupported unsigned integer byte size: %" PRIu64 "", (uint64_t)byte_size);
             return error;
         }
         break;
@@ -1823,7 +1823,7 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, size_t by
             if (!success)
                 error.SetErrorStringWithFormat ("'%s' is not a valid signed integer string value", value_str);
             else if (!SIntValueIsValidForSize (sval64, byte_size))
-                error.SetErrorStringWithFormat ("value 0x%" PRIx64 " is too large to fit in a %zu byte signed integer value", sval64, byte_size);
+                error.SetErrorStringWithFormat("value 0x%" PRIx64 " is too large to fit in a %" PRIu64 " byte signed integer value", sval64, (uint64_t)byte_size);
             else
             {
                 m_type = Scalar::GetValueTypeForSignedIntegerWithByteSize (byte_size);
@@ -1833,14 +1833,14 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, size_t by
                 case e_slong:       m_data.slong = (slong_t)sval64;         break;
                 case e_slonglong:   m_data.slonglong = (slonglong_t)sval64; break;
                 default:
-                    error.SetErrorStringWithFormat ("unsupported signed integer byte size: %zu", byte_size);
+                    error.SetErrorStringWithFormat("unsupported signed integer byte size: %" PRIu64 "", (uint64_t)byte_size);
                     break;
                 }
             }
         }
         else
         {
-            error.SetErrorStringWithFormat ("unsupported signed integer byte size: %zu", byte_size);
+            error.SetErrorStringWithFormat("unsupported signed integer byte size: %" PRIu64 "", (uint64_t)byte_size);
             return error;
         }
         break;
@@ -1869,7 +1869,7 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, size_t by
         }
         else
         {
-            error.SetErrorStringWithFormat ("unsupported float byte size: %zu", byte_size);
+            error.SetErrorStringWithFormat("unsupported float byte size: %" PRIu64 "", (uint64_t)byte_size);
             return error;
         }
         break;
@@ -1908,7 +1908,7 @@ Scalar::SetValueFromData (DataExtractor &data, lldb::Encoding encoding, size_t b
             case 4: operator=((uint32_t)data.GetU32(&offset)); break;
             case 8: operator=((uint64_t)data.GetU64(&offset)); break;
             default:
-                error.SetErrorStringWithFormat ("unsupported unsigned integer byte size: %zu", byte_size);
+                error.SetErrorStringWithFormat("unsupported unsigned integer byte size: %" PRIu64 "", (uint64_t)byte_size);
                 break;
             }
         }
@@ -1924,7 +1924,7 @@ Scalar::SetValueFromData (DataExtractor &data, lldb::Encoding encoding, size_t b
             case 4: operator=((int32_t)data.GetU32(&offset)); break;
             case 8: operator=((int64_t)data.GetU64(&offset)); break;
             default:
-                error.SetErrorStringWithFormat ("unsupported signed integer byte size: %zu", byte_size);
+                error.SetErrorStringWithFormat("unsupported signed integer byte size: %" PRIu64 "", (uint64_t)byte_size);
                 break;
             }
         }
@@ -1940,7 +1940,7 @@ Scalar::SetValueFromData (DataExtractor &data, lldb::Encoding encoding, size_t b
             else if (byte_size == sizeof (long double))
                 operator=((long double)data.GetLongDouble(&offset));
             else
-                error.SetErrorStringWithFormat ("unsupported float byte size: %zu", byte_size);
+                error.SetErrorStringWithFormat("unsupported float byte size: %" PRIu64 "", (uint64_t)byte_size);
         }
         break;
     }

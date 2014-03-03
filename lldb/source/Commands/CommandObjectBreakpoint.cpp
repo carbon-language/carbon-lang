@@ -1078,7 +1078,7 @@ protected:
         {
             // No breakpoint selected; enable all currently set breakpoints.
             target->EnableAllBreakpoints ();
-            result.AppendMessageWithFormat ("All breakpoints enabled. (%zu breakpoints)\n", num_breakpoints);
+            result.AppendMessageWithFormat ("All breakpoints enabled. (%" PRId64 " breakpoints)\n", num_breakpoints);
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
         else
@@ -1197,7 +1197,7 @@ protected:
         {
             // No breakpoint selected; disable all currently set breakpoints.
             target->DisableAllBreakpoints ();
-            result.AppendMessageWithFormat ("All breakpoints disabled. (%zu breakpoints)\n", num_breakpoints);
+            result.AppendMessageWithFormat ("All breakpoints disabled. (%" PRId64 " breakpoints)\n", num_breakpoints);
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }
         else
@@ -1699,7 +1699,7 @@ protected:
             else
             {
                 target->RemoveAllBreakpoints ();
-                result.AppendMessageWithFormat ("All breakpoints removed. (%zu %s)\n", num_breakpoints, num_breakpoints > 1 ? "breakpoints" : "breakpoint");
+                result.AppendMessageWithFormat ("All breakpoints removed. (%" PRId64 " %s)\n", num_breakpoints, num_breakpoints > 1 ? "breakpoints" : "breakpoint");
             }
             result.SetStatus (eReturnStatusSuccessFinishNoResult);
         }

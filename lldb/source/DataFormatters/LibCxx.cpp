@@ -143,9 +143,7 @@ lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEnd::GetChildAtIndex (si
     DataBufferSP buffer_sp(new DataBufferHeap(m_bool_type.GetByteSize(),0));
     if (bit_set && buffer_sp && buffer_sp->GetBytes())
         *(buffer_sp->GetBytes()) = 1; // regardless of endianness, anything non-zero is true
-    StreamString name; name.Printf("[%zu]",idx);
-    DataExtractor data(buffer_sp, process_sp->GetByteOrder(), process_sp->GetAddressByteSize());
-    retval_sp = ValueObject::CreateValueObjectFromData(name.GetData(), data, m_exe_ctx_ref, m_bool_type);
+    StreamString name; name.Printf("[%" PRIu64 "]", (uint64_t)idx);
     if (retval_sp)
         m_children[idx] = retval_sp;
     return retval_sp;
@@ -499,7 +497,7 @@ lldb_private::formatters::LibcxxStdVectorSyntheticFrontEnd::GetChildAtIndex (siz
     uint64_t offset = idx * m_element_size;
     offset = offset + m_start->GetValueAsUnsigned(0);
     StreamString name;
-    name.Printf("[%zu]",idx);
+    name.Printf("[%" PRIu64 "]", (uint64_t)idx);
     ValueObjectSP child_sp = ValueObject::CreateValueObjectFromAddress(name.GetData(), offset, m_backend.GetExecutionContextRef(), m_element_type);
     m_children[idx] = child_sp;
     return child_sp;

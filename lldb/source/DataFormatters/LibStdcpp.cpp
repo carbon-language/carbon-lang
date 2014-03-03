@@ -93,7 +93,7 @@ lldb_private::formatters::LibstdcppVectorBoolSyntheticFrontEnd::GetChildAtIndex 
         target.EvaluateExpression("(bool)true", NULL, retval_sp);
     else
         target.EvaluateExpression("(bool)false", NULL, retval_sp);
-    StreamString name; name.Printf("[%zu]",idx);
+    StreamString name; name.Printf("[%" PRIu64 "]", (uint64_t)idx);
     if (retval_sp)
         retval_sp->SetName(ConstString(name.GetData()));
     return retval_sp;

@@ -255,7 +255,7 @@ CommandObjectArgs::DoExecute (Args& args, CommandReturnObject &result)
 
     for (arg_index = 0; arg_index < num_args; ++arg_index)
     {
-        result.GetOutputStream ().Printf ("%zu (%s): ", arg_index, args.GetArgumentAtIndex (arg_index));
+        result.GetOutputStream ().Printf ("%" PRIu64 " (%s): ", (uint64_t)arg_index, args.GetArgumentAtIndex (arg_index));
         value_list.GetValueAtIndex (arg_index)->Dump (&result.GetOutputStream ());
         result.GetOutputStream ().Printf("\n");
     }

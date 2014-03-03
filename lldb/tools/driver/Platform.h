@@ -10,6 +10,8 @@
 #ifndef lldb_Platform_h_
 #define lldb_Platform_h_
 
+#include "lldb/Host/HostGetOpt.h"
+
 #if defined( _MSC_VER )
 
     // this will stop signal.h being included
@@ -19,7 +21,6 @@
     #include <eh.h>
     #include <inttypes.h>
     #include "lldb/Host/windows/Windows.h"
-    #include "lldb/Host/HostGetOpt.h"
 
     struct timeval
     {
@@ -91,7 +92,6 @@
 
     #include <inttypes.h>
 
-    #include <getopt.h>
     #include <libgen.h>
     #include <sys/ioctl.h>
     #include <termios.h>

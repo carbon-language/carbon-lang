@@ -42,7 +42,7 @@ lldb::thread_t
 SBHostOS::ThreadCreate
 (
     const char *name,
-    thread_func_t thread_function,
+    lldb::thread_func_t thread_function,
     void *thread_arg,
     SBError *error_ptr
 )
@@ -77,7 +77,7 @@ SBHostOS::ThreadDetach (lldb::thread_t thread, SBError *error_ptr)
 }
 
 bool
-SBHostOS::ThreadJoin (lldb::thread_t thread, thread_result_t *result, SBError *error_ptr)
+SBHostOS::ThreadJoin (lldb::thread_t thread, lldb::thread_result_t *result, SBError *error_ptr)
 {
     return Host::ThreadJoin (thread, result, error_ptr ? error_ptr->get() : NULL);
 }

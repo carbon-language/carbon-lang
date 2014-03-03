@@ -128,7 +128,7 @@ lldb_private::formatters::NSArrayMSyntheticFrontEnd::GetChildAtIndex (size_t idx
         pyhs_idx -= (m_data_32 ? m_data_32->_size : m_data_64->_size);
     object_at_idx += (pyhs_idx * m_ptr_size);
     StreamString idx_name;
-    idx_name.Printf("[%zu]",idx);
+    idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);
     lldb::ValueObjectSP retval_sp = ValueObject::CreateValueObjectFromAddress(idx_name.GetData(),
                                                                               object_at_idx,
                                                                               m_exe_ctx_ref,
@@ -278,7 +278,7 @@ lldb_private::formatters::NSArrayISyntheticFrontEnd::GetChildAtIndex (size_t idx
     if (error.Fail())
         return lldb::ValueObjectSP();
     StreamString idx_name;
-    idx_name.Printf("[%zu]",idx);
+    idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);
     lldb::ValueObjectSP retval_sp = ValueObject::CreateValueObjectFromAddress(idx_name.GetData(), object_at_idx, m_exe_ctx_ref, m_id_type);
     m_children.push_back(retval_sp);
     return retval_sp;
@@ -342,7 +342,7 @@ lldb::ValueObjectSP
 lldb_private::formatters::NSArrayCodeRunningSyntheticFrontEnd::GetChildAtIndex (size_t idx)
 {
     StreamString idx_name;
-    idx_name.Printf("[%zu]",idx);
+    idx_name.Printf("[%" PRIu64 "]", (uint64_t)idx);
     lldb::ValueObjectSP valobj_sp = CallSelectorOnObject(m_backend,"id","objectAtIndex:",idx);
     if (valobj_sp)
         valobj_sp->SetName(ConstString(idx_name.GetData()));

@@ -910,15 +910,15 @@ SymbolContextSpecifier::GetDescription (Stream *s, lldb::DescriptionLevel level)
         s->Printf ("File: %s", path_str);
         if (m_type == eLineStartSpecified)
         {
-            s->Printf (" from line %zu", m_start_line);
+            s->Printf (" from line %" PRId64 "", m_start_line);
             if (m_type == eLineEndSpecified)
-                s->Printf ("to line %zu", m_end_line);
+                s->Printf ("to line %" PRId64 "", m_end_line);
             else
                 s->Printf ("to end");
         }
         else if (m_type == eLineEndSpecified)
         {
-            s->Printf (" from start to line %zu", m_end_line);
+            s->Printf (" from start to line %" PRId64 "", m_end_line);
         }
         s->Printf (".\n");
     }
@@ -926,16 +926,16 @@ SymbolContextSpecifier::GetDescription (Stream *s, lldb::DescriptionLevel level)
     if (m_type == eLineStartSpecified)
     {
         s->Indent();
-        s->Printf ("From line %zu", m_start_line);
+        s->Printf ("From line %" PRId64 "", m_start_line);
         if (m_type == eLineEndSpecified)
-            s->Printf ("to line %zu", m_end_line);
+            s->Printf ("to line %" PRId64 "", m_end_line);
         else
             s->Printf ("to end");
         s->Printf (".\n");
     }
     else if (m_type == eLineEndSpecified)
     {
-        s->Printf ("From start to line %zu.\n", m_end_line);
+        s->Printf ("From start to line %" PRId64 ".\n", m_end_line);
     }
     
     if (m_type == eFunctionSpecified)

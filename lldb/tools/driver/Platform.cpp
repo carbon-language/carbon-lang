@@ -15,10 +15,6 @@
 
 #include "Platform.h"
 
-// index one of the variable arguments
-//  presuming "(EditLine *el, ..." is first in the argument list
-#define GETARG( Y, X ) ( (void* ) *( ( (int**) &(Y) ) + (X) ) )
-
 // the control handler or SIGINT handler
 static sighandler_t _ctrlHandler = NULL;
 
@@ -42,14 +38,16 @@ ioctl (int d, int request, ...)
     // request the console windows size
     case ( TIOCGWINSZ ):
         {
-            // locate the window size structure on stack
-            winsize *ws = (winsize*) GETARG( d, 2 );
+            va_list vl;
+            va_start(vl,request);
+	     // locate the window size structure on stack
+	     winsize *ws = va_arg(vl, winsize*);
             // get screen buffer information
             CONSOLE_SCREEN_BUFFER_INFO info;
-            GetConsoleScreenBufferInfo( GetStdHandle( STD_OUTPUT_HANDLE ), &info );
-            // fill in the columns
-            ws->ws_col = info.dwMaximumWindowSize.X;
-            //
+            if ( GetConsoleScreenBufferInfo( GetStdHandle( STD_OUTPUT_HANDLE ), &info ) == TRUE )
+                // fill in the columns
+                ws->ws_col = info.dwMaximumWindowSize.X;
+            va_end(vl);
             return 0;
         }
         break;
