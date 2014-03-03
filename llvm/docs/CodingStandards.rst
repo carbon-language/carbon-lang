@@ -109,6 +109,9 @@ unlikely to be supported by our host compilers.
 * ``auto`` type deduction: N1984_, N1737_
 * Trailing return types: N2541_
 * Lambdas: N2927_
+
+  * But *not* ``std::function``, until Clang implements `MSVC-compatible RTTI`_.
+
 * ``decltype``: N2343_
 * Nested closing right angle brackets: N1757_
 * Extern templates: N1987_
@@ -138,6 +141,7 @@ unlikely to be supported by our host compilers.
 .. _N3206: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3206.htm
 .. _N3272: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3272.htm
 .. _N2429: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2429.htm
+.. _MSVC-compatible RTTI: http://llvm.org/PR18951
 
 The supported features in the C++11 standard libraries are less well tracked,
 but also much greater. Most of the standard libraries implement most of C++11's
