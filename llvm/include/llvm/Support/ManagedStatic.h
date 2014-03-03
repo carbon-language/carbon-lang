@@ -14,9 +14,9 @@
 #ifndef LLVM_SUPPORT_MANAGED_STATIC_H
 #define LLVM_SUPPORT_MANAGED_STATIC_H
 
-#include "llvm/Support/Atomic.h"
 #include "llvm/Support/Threading.h"
 #include "llvm/Support/Valgrind.h"
+#include <atomic>
 
 namespace llvm {
 
@@ -64,7 +64,8 @@ public:
   // Accessors.
   C &operator*() {
     void* tmp = Ptr;
-    if (llvm_is_multithreaded()) sys::MemoryFence();
+    if (llvm_is_multithreaded())
+      std::atomic_thread_fence(std::memory_order_seq_cst);
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
     TsanHappensAfter(this);
 
@@ -72,7 +73,8 @@ public:
   }
   C *operator->() {
     void* tmp = Ptr;
-    if (llvm_is_multithreaded()) sys::MemoryFence();
+    if (llvm_is_multithreaded())
+      std::atomic_thread_fence(std::memory_order_seq_cst);
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
     TsanHappensAfter(this);
 
@@ -80,7 +82,8 @@ public:
   }
   const C &operator*() const {
     void* tmp = Ptr;
-    if (llvm_is_multithreaded()) sys::MemoryFence();
+    if (llvm_is_multithreaded())
+      std::atomic_thread_fence(std::memory_order_seq_cst);
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
     TsanHappensAfter(this);
 
@@ -88,7 +91,8 @@ public:
   }
   const C *operator->() const {
     void* tmp = Ptr;
-    if (llvm_is_multithreaded()) sys::MemoryFence();
+    if (llvm_is_multithreaded())
+      std::atomic_thread_fence(std::memory_order_seq_cst);
     if (!tmp) RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
     TsanHappensAfter(this);
 

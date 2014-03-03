@@ -81,14 +81,14 @@ raw_ostream *llvm::CreateInfoOutputFile() {
 static TimerGroup *DefaultTimerGroup = 0;
 static TimerGroup *getDefaultTimerGroup() {
   TimerGroup *tmp = DefaultTimerGroup;
-  sys::MemoryFence();
+  std::atomic_thread_fence(std::memory_order_seq_cst);
   if (tmp) return tmp;
   
   llvm_acquire_global_lock();
   tmp = DefaultTimerGroup;
   if (!tmp) {
     tmp = new TimerGroup("Miscellaneous Ungrouped Timers");
-    sys::MemoryFence();
+    std::atomic_thread_fence(std::memory_order_seq_cst);
     DefaultTimerGroup = tmp;
   }
   llvm_release_global_lock();
