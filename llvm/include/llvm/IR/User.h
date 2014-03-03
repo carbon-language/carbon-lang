@@ -19,6 +19,7 @@
 #ifndef LLVM_IR_USER_H
 #define LLVM_IR_USER_H
 
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -112,11 +113,19 @@ public:
   //
   typedef Use*       op_iterator;
   typedef const Use* const_op_iterator;
+  typedef iterator_range<op_iterator> op_range;
+  typedef iterator_range<const_op_iterator> const_op_range;
 
   inline op_iterator       op_begin()       { return OperandList; }
   inline const_op_iterator op_begin() const { return OperandList; }
   inline op_iterator       op_end()         { return OperandList+NumOperands; }
   inline const_op_iterator op_end()   const { return OperandList+NumOperands; }
+  inline op_range operands() {
+    return {op_begin(), op_end()};
+  }
+  inline const_op_range operands() const {
+    return {op_begin(), op_end()};
+  }
 
   /// Convenience iterator for directly iterating over the Values in the
   /// OperandList
@@ -155,6 +164,9 @@ public:
   }
   inline value_op_iterator value_op_end() {
     return value_op_iterator(op_end());
+  }
+  inline iterator_range<value_op_iterator> operand_values() {
+    return {value_op_begin(), value_op_end()};
   }
 
   // dropAllReferences() - This function is in charge of "letting go" of all

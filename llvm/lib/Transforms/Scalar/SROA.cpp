@@ -3447,9 +3447,8 @@ bool SROA::runOnAlloca(AllocaInst &AI) {
                                         DE = S.dead_user_end();
        DI != DE; ++DI) {
     // Free up everything used by this instruction.
-    for (User::op_iterator DOI = (*DI)->op_begin(), DOE = (*DI)->op_end();
-         DOI != DOE; ++DOI)
-      clobberUse(*DOI);
+    for (Use &DeadOp : (*DI)->operands())
+      clobberUse(DeadOp);
 
     // Now replace the uses of this instruction.
     (*DI)->replaceAllUsesWith(UndefValue::get((*DI)->getType()));
@@ -3498,10 +3497,10 @@ void SROA::deleteDeadInstructions(SmallPtrSet<AllocaInst*, 4> &DeletedAllocas) {
 
     I->replaceAllUsesWith(UndefValue::get(I->getType()));
 
-    for (User::op_iterator OI = I->op_begin(), E = I->op_end(); OI != E; ++OI)
-      if (Instruction *U = dyn_cast<Instruction>(*OI)) {
+    for (Use &Operand : I->operands())
+      if (Instruction *U = dyn_cast<Instruction>(Operand)) {
         // Zero out the operand and see if it becomes trivially dead.
-        *OI = 0;
+        Operand = 0;
         if (isInstructionTriviallyDead(U))
           DeadInsts.insert(U);
       }

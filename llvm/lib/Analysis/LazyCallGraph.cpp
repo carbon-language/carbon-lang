@@ -40,11 +40,9 @@ static void findCallees(
       continue;
     }
 
-    for (User::value_op_iterator OI = C->value_op_begin(),
-                                 OE = C->value_op_end();
-         OI != OE; ++OI)
-      if (Visited.insert(cast<Constant>(*OI)))
-        Worklist.push_back(cast<Constant>(*OI));
+    for (Value *Op : C->operand_values())
+      if (Visited.insert(cast<Constant>(Op)))
+        Worklist.push_back(cast<Constant>(Op));
   }
 }
 
@@ -56,10 +54,8 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F) : G(G), F(F) {
   for (Function::iterator BBI = F.begin(), BBE = F.end(); BBI != BBE; ++BBI)
     for (BasicBlock::iterator II = BBI->begin(), IE = BBI->end(); II != IE;
          ++II)
-      for (User::value_op_iterator OI = II->value_op_begin(),
-                                   OE = II->value_op_end();
-           OI != OE; ++OI)
-        if (Constant *C = dyn_cast<Constant>(*OI))
+      for (Value *Op : II->operand_values())
+        if (Constant *C = dyn_cast<Constant>(Op))
           if (Visited.insert(C))
             Worklist.push_back(C);
 
