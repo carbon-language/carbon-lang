@@ -763,7 +763,7 @@ ClangUserExpression::Execute (Stream &error_stream,
     // expression, it's quite convenient to have these logs come out with the STEP log as well.
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
-    if (!exe_ctx.HasThreadScope())
+    if (!exe_ctx.HasThreadScope() && !m_can_interpret)
     {
         error_stream.Printf("ClangUserExpression::Execute called with no thread selected.");
         return eExecutionSetupError;
