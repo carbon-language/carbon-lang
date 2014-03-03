@@ -732,6 +732,27 @@ type is already obvious from the context. Another time when ``auto`` works well
 for these purposes is when the type would have been abstracted away anyways,
 often behind a container's typedef such as ``std::vector<T>::iterator``.
 
+Beware unnecessary copies with ``auto``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The convenience of ``auto`` makes it easy to forget that its default behavior
+is a copy.  Particularly in range-based ``for`` loops, careless copies are
+expensive.
+
+As a rule of thumb, use ``const auto &`` unless you need to mutate or copy the
+result.
+
+.. code-block:: c++
+
+  // Typically there's no reason to mutate or modify Val.
+  for (const auto &Val : Container) { observe(Val); }
+
+  // Remove the const if you need to modify Val.
+  for (auto &Val : Container) { Val.change(); }
+
+  // Remove the reference if you really want a new copy.
+  for (auto Val : Container) { Val.change(); saveSomewhere(Val); }
+
 Style Issues
 ============
 
