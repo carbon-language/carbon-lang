@@ -73,14 +73,9 @@ add_polly_library(LLVMPollyLib
   ${POLLY_PLUTO_FILES}
   )
 
-target_link_libraries(LLVMPollyLib
-  LLVMSupport
-  LLVMScalarOpts
-  LLVMTransformUtils
-  LLVMipo
+add_polly_loadable_module(LLVMPolly
+  PollyModule.cpp
 )
-
-add_polly_loadable_module(LLVMPolly)
 
 if (TARGET intrinsics_gen)
   # Check if we are building as part of an LLVM build
