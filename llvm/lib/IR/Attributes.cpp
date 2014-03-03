@@ -18,6 +18,7 @@
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/Type.h"
+#include "llvm/Support/Atomic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"

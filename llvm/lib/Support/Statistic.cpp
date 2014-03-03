@@ -76,7 +76,7 @@ void Statistic::RegisterStatistic() {
       StatInfo->addStatistic(this);
 
     TsanHappensBefore(this);
-    std::atomic_thread_fence(std::memory_order_seq_cst);
+    sys::MemoryFence();
     // Remember we have been registered.
     TsanIgnoreWritesBegin();
     Initialized = true;

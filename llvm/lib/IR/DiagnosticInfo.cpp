@@ -19,14 +19,14 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Metadata.h"
-#include <atomic>
+#include "llvm/Support/Atomic.h"
 #include <string>
 
 using namespace llvm;
 
 int llvm::getNextAvailablePluginDiagnosticKind() {
-  static std::atomic<int> PluginKindID(DK_FirstPluginKind);
-  return ++PluginKindID;
+  static sys::cas_flag PluginKindID = DK_FirstPluginKind;
+  return (int)sys::AtomicIncrement(&PluginKindID);
 }
 
 DiagnosticInfoInlineAsm::DiagnosticInfoInlineAsm(const Instruction &I,

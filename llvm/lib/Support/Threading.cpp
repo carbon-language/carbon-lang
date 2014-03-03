@@ -13,8 +13,8 @@
 
 #include "llvm/Support/Threading.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/Atomic.h"
 #include "llvm/Support/Mutex.h"
-#include <atomic>
 #include <cassert>
 
 using namespace llvm;
@@ -31,7 +31,7 @@ bool llvm::llvm_start_multithreaded() {
 
   // We fence here to ensure that all initialization is complete BEFORE we
   // return from llvm_start_multithreaded().
-  std::atomic_thread_fence(std::memory_order_seq_cst);
+  sys::MemoryFence();
   return true;
 #else
   return false;
@@ -44,7 +44,7 @@ void llvm::llvm_stop_multithreaded() {
 
   // We fence here to insure that all threaded operations are complete BEFORE we
   // return from llvm_stop_multithreaded().
-  std::atomic_thread_fence(std::memory_order_seq_cst);
+  sys::MemoryFence();
 
   multithreaded_mode = false;
   delete global_lock;

@@ -13,6 +13,7 @@
 
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/Atomic.h"
 #include <cassert>
 using namespace llvm;
 
@@ -27,7 +28,7 @@ void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
       void* tmp = Creator ? Creator() : 0;
 
       TsanHappensBefore(this);
-      std::atomic_thread_fence(std::memory_order_seq_cst);
+      sys::MemoryFence();
 
       // This write is racy against the first read in the ManagedStatic
       // accessors. The race is benign because it does a second read after a

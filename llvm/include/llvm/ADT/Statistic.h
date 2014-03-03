@@ -26,8 +26,8 @@
 #ifndef LLVM_ADT_STATISTIC_H
 #define LLVM_ADT_STATISTIC_H
 
+#include "llvm/Support/Atomic.h"
 #include "llvm/Support/Valgrind.h"
-#include <atomic>
 
 namespace llvm {
 class raw_ostream;
@@ -36,10 +36,10 @@ class Statistic {
 public:
   const char *Name;
   const char *Desc;
-  std::atomic<unsigned> Value;
+  volatile llvm::sys::cas_flag Value;
   bool Initialized;
 
-  unsigned getValue() const { return Value; }
+  llvm::sys::cas_flag getValue() const { return Value; }
   const char *getName() const { return Name; }
   const char *getDesc() const { return Desc; }
 
@@ -63,54 +63,48 @@ public:
     // atomic operation to update the value safely in the presence of
     // concurrent accesses, but not to read the return value, so the
     // return value is not thread safe.
-    ++Value;
+    sys::AtomicIncrement(&Value);
     return init();
   }
 
   unsigned operator++(int) {
     init();
-    unsigned OldValue = Value++;
+    unsigned OldValue = Value;
+    sys::AtomicIncrement(&Value);
     return OldValue;
   }
 
   const Statistic &operator--() {
-    --Value;
+    sys::AtomicDecrement(&Value);
     return init();
   }
 
   unsigned operator--(int) {
     init();
-    unsigned OldValue = Value--;
+    unsigned OldValue = Value;
+    sys::AtomicDecrement(&Value);
     return OldValue;
   }
 
   const Statistic &operator+=(const unsigned &V) {
     if (!V) return *this;
-    Value += V;
+    sys::AtomicAdd(&Value, V);
     return init();
   }
 
   const Statistic &operator-=(const unsigned &V) {
     if (!V) return *this;
-    Value -= V;
+    sys::AtomicAdd(&Value, -V);
     return init();
   }
 
   const Statistic &operator*=(const unsigned &V) {
-    unsigned Original, Result;
-    do {
-      Original = Value;
-      Result = Original * V;
-    } while (!Value.compare_exchange_strong(Original, Result));
+    sys::AtomicMul(&Value, V);
     return init();
   }
 
   const Statistic &operator/=(const unsigned &V) {
-    unsigned Original, Result;
-    do {
-      Original = Value;
-      Result = Original / V;
-    } while (!Value.compare_exchange_strong(Original, Result));
+    sys::AtomicDiv(&Value, V);
     return init();
   }
 
@@ -157,7 +151,7 @@ public:
 protected:
   Statistic &init() {
     bool tmp = Initialized;
-    std::atomic_thread_fence(std::memory_order_seq_cst);
+    sys::MemoryFence();
     if (!tmp) RegisterStatistic();
     TsanHappensAfter(this);
     return *this;
@@ -168,7 +162,7 @@ protected:
 // STATISTIC - A macro to make definition of statistics really simple.  This
 // automatically passes the DEBUG_TYPE of the file into the statistic.
 #define STATISTIC(VARNAME, DESC) \
-  static llvm::Statistic VARNAME = { DEBUG_TYPE, DESC, {}, 0 }
+  static llvm::Statistic VARNAME = { DEBUG_TYPE, DESC, 0, 0 }
 
 /// \brief Enable the collection and printing of statistics.
 void EnableStatistics();

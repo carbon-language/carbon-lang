@@ -24,8 +24,8 @@
 #include "Pass.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/PassRegistry.h"
+#include "llvm/Support/Atomic.h"
 #include "llvm/Support/Valgrind.h"
-#include <atomic>
 #include <vector>
 
 namespace llvm {
@@ -147,21 +147,21 @@ private:
 };
 
 #define CALL_ONCE_INITIALIZATION(function) \
-  static std::atomic<int> initialized; \
-  int old_val = 0; \
-  if (initialized.compare_exchange_strong(old_val, 1)) { \
+  static volatile sys::cas_flag initialized = 0; \
+  sys::cas_flag old_val = sys::CompareAndSwap(&initialized, 1, 0); \
+  if (old_val == 0) { \
     function(Registry); \
-    std::atomic_thread_fence(std::memory_order_seq_cst); \
+    sys::MemoryFence(); \
     TsanIgnoreWritesBegin(); \
     TsanHappensBefore(&initialized); \
     initialized = 2; \
     TsanIgnoreWritesEnd(); \
   } else { \
-    int tmp = initialized.load(); \
-    std::atomic_thread_fence(std::memory_order_seq_cst); \
+    sys::cas_flag tmp = initialized; \
+    sys::MemoryFence(); \
     while (tmp != 2) { \
-      tmp = initialized.load(); \
-      std::atomic_thread_fence(std::memory_order_seq_cst); \
+      tmp = initialized; \
+      sys::MemoryFence(); \
     } \
   } \
   TsanHappensAfter(&initialized);
