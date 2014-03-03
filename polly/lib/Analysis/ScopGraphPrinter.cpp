@@ -139,18 +139,16 @@ struct DOTGraphTraits<ScopDetection *> : public DOTGraphTraits<RegionNode *> {
       O.indent(2 * (depth + 1)) << "color = " << color << "\n";
     }
 
-    for (Region::const_iterator RI = R->begin(), RE = R->end(); RI != RE; ++RI)
-      printRegionCluster(SD, *RI, O, depth + 1);
+    for (const auto &SubRegion : *R)
+      printRegionCluster(SD, SubRegion, O, depth + 1);
 
     RegionInfo *RI = R->getRegionInfo();
 
-    for (Region::const_block_iterator BI = R->block_begin(),
-                                      BE = R->block_end();
-         BI != BE; ++BI)
-      if (RI->getRegionFor(*BI) == R)
+    for (const auto &BB : R->blocks())
+      if (RI->getRegionFor(BB) == R)
         O.indent(2 * (depth + 1))
             << "Node"
-            << static_cast<void *>(RI->getTopLevelRegion()->getBBNode(*BI))
+            << static_cast<void *>(RI->getTopLevelRegion()->getBBNode(BB))
             << ";\n";
 
     O.indent(2 * depth) << "}\n";

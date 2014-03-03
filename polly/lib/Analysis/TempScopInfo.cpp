@@ -79,11 +79,7 @@ void TempScop::printDetail(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI,
                            const Region *CurR, unsigned ind) const {
 
   // FIXME: Print other details rather than memory accesses.
-  typedef Region::const_block_iterator bb_iterator;
-  for (bb_iterator I = CurR->block_begin(), E = CurR->block_end(); I != E;
-       ++I) {
-    BasicBlock *CurBlock = *I;
-
+  for (const auto &CurBlock : CurR->blocks()) {
     AccFuncMapType::const_iterator AccSetIt = AccFuncMap.find(CurBlock);
 
     // Ignore trivial blocks that do not contain any memory access.
@@ -200,9 +196,8 @@ void TempScopInfo::buildLoopBounds(TempScop &Scop) {
   Region &R = Scop.getMaxRegion();
   unsigned MaxLoopDepth = 0;
 
-  for (Region::block_iterator I = R.block_begin(), E = R.block_end(); I != E;
-       ++I) {
-    Loop *L = LI->getLoopFor(*I);
+  for (auto const &BB : R.blocks()) {
+    Loop *L = LI->getLoopFor(BB);
 
     if (!L || !R.contains(L))
       continue;
@@ -307,10 +302,9 @@ void TempScopInfo::buildCondition(BasicBlock *BB, BasicBlock *RegionEntry) {
 TempScop *TempScopInfo::buildTempScop(Region &R) {
   TempScop *TScop = new TempScop(R, LoopBounds, BBConds, AccFuncMap);
 
-  for (Region::block_iterator I = R.block_begin(), E = R.block_end(); I != E;
-       ++I) {
-    buildAccessFunctions(R, **I);
-    buildCondition(*I, R.getEntry());
+  for (const auto &BB : R.blocks()) {
+    buildAccessFunctions(R, *BB);
+    buildCondition(BB, R.getEntry());
   }
 
   buildLoopBounds(*TScop);

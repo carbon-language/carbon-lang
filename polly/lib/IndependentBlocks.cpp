@@ -264,9 +264,8 @@ bool IndependentBlocks::createIndependentBlocks(BasicBlock *BB,
 bool IndependentBlocks::createIndependentBlocks(const Region *R) {
   bool Changed = false;
 
-  for (Region::const_block_iterator SI = R->block_begin(), SE = R->block_end();
-       SI != SE; ++SI)
-    Changed |= createIndependentBlocks(*SI, R);
+  for (const auto &BB : R->blocks())
+    Changed |= createIndependentBlocks(BB, R);
 
   return Changed;
 }
@@ -275,9 +274,8 @@ bool IndependentBlocks::eliminateDeadCode(const Region *R) {
   std::vector<Instruction *> WorkList;
 
   // Find all trivially dead instructions.
-  for (Region::const_block_iterator SI = R->block_begin(), SE = R->block_end();
-       SI != SE; ++SI)
-    for (BasicBlock::iterator I = (*SI)->begin(), E = (*SI)->end(); I != E; ++I)
+  for (const auto &BB : R->blocks())
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       if (isInstructionTriviallyDead(I))
         WorkList.push_back(I);
 
@@ -353,9 +351,8 @@ bool IndependentBlocks::splitExitBlock(Region *R) {
 bool IndependentBlocks::translateScalarToArray(const Region *R) {
   bool Changed = false;
 
-  for (Region::const_block_iterator SI = R->block_begin(), SE = R->block_end();
-       SI != SE; ++SI)
-    Changed |= translateScalarToArray(*SI, R);
+  for (const auto &BB : R->blocks())
+    Changed |= translateScalarToArray(BB, R);
 
   return Changed;
 }
@@ -495,9 +492,8 @@ bool IndependentBlocks::isIndependentBlock(const Region *R,
 }
 
 bool IndependentBlocks::areAllBlocksIndependent(const Region *R) const {
-  for (Region::const_block_iterator SI = R->block_begin(), SE = R->block_end();
-       SI != SE; ++SI)
-    if (!isIndependentBlock(R, *SI))
+  for (const auto &BB : R->blocks())
+    if (!isIndependentBlock(R, BB))
       return false;
 
   return true;

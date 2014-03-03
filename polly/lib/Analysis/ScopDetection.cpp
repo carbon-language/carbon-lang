@@ -380,13 +380,9 @@ bool ScopDetection::isInvariant(const Value &Val, const Region &Reg) const {
   if (isa<PHINode>(*I))
     return false;
 
-  // Check that all operands of the instruction are
-  // themselves invariant.
-  const Instruction::const_op_iterator OE = I->op_end();
-  for (Instruction::const_op_iterator OI = I->op_begin(); OI != OE; ++OI) {
-    if (!isInvariant(**OI, Reg))
+  for (const auto &Operand : I->operands())
+    if (!isInvariant(*Operand, Reg))
       return false;
-  }
 
   // When the instruction is a load instruction, check that no write to memory
   // in the region aliases with the load.
@@ -395,11 +391,9 @@ bool ScopDetection::isInvariant(const Value &Val, const Region &Reg) const {
     const Region::const_block_iterator BE = Reg.block_end();
     // Check if any basic block in the region can modify the location pointed to
     // by 'Loc'.  If so, 'Val' is (likely) not invariant in the region.
-    for (Region::const_block_iterator BI = Reg.block_begin(); BI != BE; ++BI) {
-      const BasicBlock &BB = **BI;
-      if (AA->canBasicBlockModify(BB, Loc))
+    for (const auto &BB : Reg.blocks())
+      if (AA->canBasicBlockModify(*BB, Loc))
         return false;
-    }
   }
 
   return true;
@@ -592,9 +586,8 @@ Region *ScopDetection::expandRegion(Region &R) {
   return LastValidRegion;
 }
 static bool regionWithoutLoops(Region &R, LoopInfo *LI) {
-  for (Region::block_iterator I = R.block_begin(), E = R.block_end(); I != E;
-       ++I)
-    if (R.contains(LI->getLoopFor(*I)))
+  for (const auto &BB : R.blocks())
+    if (R.contains(LI->getLoopFor(BB)))
       return false;
 
   return true;
@@ -671,22 +664,18 @@ void ScopDetection::findScops(Region &R) {
 bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
   Region &R = Context.CurRegion;
 
-  for (Region::block_iterator I = R.block_begin(), E = R.block_end(); I != E;
-       ++I) {
-    Loop *L = LI->getLoopFor(*I);
-    if (L && L->getHeader() == *I && !isValidLoop(L, Context))
+  for (const auto &BB : R.blocks()) {
+    Loop *L = LI->getLoopFor(BB);
+    if (L && L->getHeader() == BB && !isValidLoop(L, Context))
       return false;
   }
 
-  for (Region::block_iterator I = R.block_begin(), E = R.block_end(); I != E;
-       ++I)
-    if (!isValidCFG(**I, Context))
+  for (const auto &BB : R.blocks())
+    if (!isValidCFG(*BB, Context))
       return false;
 
-  for (Region::block_iterator BI = R.block_begin(), E = R.block_end(); BI != E;
-       ++BI)
-    for (BasicBlock::iterator I = (*BI)->begin(), E = --(*BI)->end(); I != E;
-         ++I)
+  for (const auto &BB : R.blocks())
+    for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; ++I)
       if (!isValidInstruction(*I, Context))
         return false;
 
@@ -779,9 +768,8 @@ void ScopDetection::getDebugLocation(const Region *R, unsigned &LineBegin,
   LineBegin = -1;
   LineEnd = 0;
 
-  for (Region::const_block_iterator RI = R->block_begin(), RE = R->block_end();
-       RI != RE; ++RI)
-    for (BasicBlock::iterator BI = (*RI)->begin(), BE = (*RI)->end(); BI != BE;
+  for (const auto &BB : R->blocks())
+    for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;
          ++BI) {
       DebugLoc DL = BI->getDebugLoc();
       if (DL.isUnknown())
