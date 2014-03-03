@@ -7,7 +7,7 @@ import lldb
 import lldbutil
 from lldbtest import *
 
-class ExprCommandWithTimeoutsTestCase(TestBase):
+class ExprCommandThatRestartsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
@@ -43,7 +43,7 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
 
         
     def call_function(self):
-        """Test calling function with timeout."""
+        """Test calling function that hits a signal and restarts."""
         exe_name = "a.out"
         exe = os.path.join(os.getcwd(), exe_name)
 
