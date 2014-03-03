@@ -82,13 +82,15 @@ template <class T> class tuple_size; // undefined
 template <class... T> class tuple_size<tuple<T...>>;
 template <intsize_t I, class T> class tuple_element; // undefined
 template <intsize_t I, class... T> class tuple_element<I, tuple<T...>>;
+template <size_t _Ip, class ..._Tp>
+  using tuple_element_t = typename tuple_element <_Ip, _Tp...>::type; // C++14
 
 // 20.4.1.5, element access:
 template <intsize_t I, class... T>
     typename tuple_element<I, tuple<T...>>::type&
     get(tuple<T...>&) noexcept; // constexpr in C++14
 template <intsize_t I, class... T>
-    typename tuple_element<I, tuple<T...>>::type const&
+    typename const tuple_element<I, tuple<T...>>::type &
     get(const tuple<T...>&) noexcept; // constexpr in C++14
 template <intsize_t I, class... T>
     typename tuple_element<I, tuple<T...>>::type&&
@@ -151,6 +153,11 @@ class _LIBCPP_TYPE_VIS_ONLY tuple_element<_Ip, tuple<_Tp...> >
 public:
     typedef typename tuple_element<_Ip, __tuple_types<_Tp...> >::type type;
 };
+
+#if _LIBCPP_STD_VER > 11
+template <size_t _Ip, class ..._Tp>
+using tuple_element_t = typename tuple_element <_Ip, _Tp...>::type;
+#endif
 
 // __tuple_leaf
 

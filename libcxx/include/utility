@@ -101,30 +101,30 @@ constexpr piecewise_construct_t piecewise_construct = piecewise_construct_t();
 template <class T> class tuple_size;
 template <size_t I, class T> class tuple_element;
 
-template <class T1, class T2> struct tuple_size<std::pair<T1, T2> >;
-template <class T1, class T2> struct tuple_element<0, std::pair<T1, T2> >;
-template <class T1, class T2> struct tuple_element<1, std::pair<T1, T2> >;
+template <class T1, class T2> struct tuple_size<pair<T1, T2> >;
+template <class T1, class T2> struct tuple_element<0, pair<T1, T2> >;
+template <class T1, class T2> struct tuple_element<1, pair<T1, T2> >;
 
 template<size_t I, class T1, class T2>
-    typename tuple_element<I, std::pair<T1, T2> >::type&
-    get(std::pair<T1, T2>&) noexcept; // constexpr in C++14
+    typename tuple_element<I, pair<T1, T2> >::type&
+    get(pair<T1, T2>&) noexcept; // constexpr in C++14
 
 template<size_t I, class T1, class T2>
-    const typename const tuple_element<I, std::pair<T1, T2> >::type&
-    get(const std::pair<T1, T2>&) noexcept; // constexpr in C++14
+    const typename const tuple_element<I, pair<T1, T2> >::type&
+    get(const pair<T1, T2>&) noexcept; // constexpr in C++14
 
 template<size_t I, class T1, class T2>
-    typename tuple_element<I, std::pair<T1, T2> >::type&&
-    get(std::pair<T1, T2>&&) noexcept; // constexpr in C++14
+    typename tuple_element<I, pair<T1, T2> >::type&&
+    get(pair<T1, T2>&&) noexcept; // constexpr in C++14
 
 template<class T1, class T2>
-    constexpr T1& get(std::pair<T1, T2>&) noexcept; // C++14
+    constexpr T1& get(pair<T1, T2>&) noexcept; // C++14
 
 template<size_t I, class T1, class T2>
-    constexpr T1 const& get(std::pair<T1, T2> const &) noexcept; // C++14
+    constexpr T1 const& get(pair<T1, T2> const &) noexcept; // C++14
 
 template<size_t I, class T1, class T2>
-    constexpr T1&& get(std::pair<T1, T2>&&) noexcept; // C++14
+    constexpr T1&& get(pair<T1, T2>&&) noexcept; // C++14
 
 // C++14
 
