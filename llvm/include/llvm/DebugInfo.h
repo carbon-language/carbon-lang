@@ -522,6 +522,7 @@ public:
   DIScope getContext() const { return getFieldAs<DIScope>(2); }
   unsigned getLineNumber() const { return getUnsignedField(3); }
   unsigned getColumnNumber() const { return getUnsignedField(4); }
+  unsigned getDiscriminator() const { return getUnsignedField(5); }
   bool Verify() const;
 };
 

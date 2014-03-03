@@ -1825,6 +1825,7 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
   StringRef Fn;
   StringRef Dir;
   unsigned Src = 1;
+  unsigned Discriminator = 0;
   if (S) {
     DIDescriptor Scope(S);
 
@@ -1848,13 +1849,15 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
       DILexicalBlock DB(S);
       Fn = DB.getFilename();
       Dir = DB.getDirectory();
+      Discriminator = DB.getDiscriminator();
     } else
       llvm_unreachable("Unexpected scope info");
 
     Src = getOrCreateSourceID(
         Fn, Dir, Asm->OutStreamer.getContext().getDwarfCompileUnitID());
   }
-  Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, Flags, 0, 0, Fn);
+  Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, Flags, 0,
+                                         Discriminator, Fn);
 }
 
 //===----------------------------------------------------------------------===//

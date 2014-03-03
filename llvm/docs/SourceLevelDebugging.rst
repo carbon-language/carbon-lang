@@ -319,6 +319,7 @@ Block descriptors
     metadata,;; Reference to context descriptor
     i32,     ;; Line number
     i32,     ;; Column number
+    i32,     ;; DWARF path discriminator value
     i32      ;; Unique ID to identify blocks from a template function
   }
 
@@ -724,7 +725,8 @@ Compiled to LLVM, this function would be represented like this:
   !15 = metadata !{i32 786688, metadata !16, metadata !"Z", metadata !5, i32 5,
                    metadata !11, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [Z] \
                      [line 5]
-  !16 = metadata !{i32 786443, metadata !1, metadata !4, i32 4, i32 0, i32 0} \
+  !16 = metadata !{i32 786443, metadata !1, metadata !4, i32 4, i32 0, i32 0,
+                   i32 0} \
                    ; [ DW_TAG_lexical_block ] [/private/tmp/t.c]
   !17 = metadata !{i32 5, i32 0, metadata !16, null}
   !18 = metadata !{i32 6, i32 0, metadata !16, null}
@@ -776,7 +778,8 @@ scope information for the variable ``Z``.
 
 .. code-block:: llvm
 
-  !16 = metadata !{i32 786443, metadata !1, metadata !4, i32 4, i32 0, i32 0}
+  !16 = metadata !{i32 786443, metadata !1, metadata !4, i32 4, i32 0, i32 0,
+                   i32 0}
                    ; [ DW_TAG_lexical_block ] [/private/tmp/t.c]
   !17 = metadata !{i32 5, i32 0, metadata !16, null}
 

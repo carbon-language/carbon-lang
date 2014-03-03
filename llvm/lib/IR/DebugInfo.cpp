@@ -600,7 +600,7 @@ bool DISubrange::Verify() const {
 
 /// \brief Verify that the lexical block descriptor is well formed.
 bool DILexicalBlock::Verify() const {
-  return isLexicalBlock() && DbgNode->getNumOperands() == 6;
+  return isLexicalBlock() && DbgNode->getNumOperands() == 7;
 }
 
 /// \brief Verify that the file-scoped lexical block descriptor is well formed.
