@@ -887,7 +887,13 @@ File::CalculateInteractiveAndTerminal ()
     {
         m_is_interactive = eLazyBoolNo;
         m_is_real_terminal = eLazyBoolNo;
-#ifndef _MSC_VER
+#ifdef _MSC_VER
+        if (_isatty(fd))
+        {
+            m_is_interactive = eLazyBoolYes;
+            m_is_real_terminal = eLazyBoolYes;
+        }
+#else
         if (isatty(fd))
         {
             m_is_interactive = eLazyBoolYes;
