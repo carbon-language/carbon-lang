@@ -26,6 +26,12 @@
 @interface R8380046 () <Prot8380046>
 @end
 
+@class NSString;
+
+void test() {
+  NSString *s = @"objc str";
+}
+
 // CHECK: local-symbols.m:6:12: ObjCInterfaceDecl=Foo:6:12 Extent=[6:1 - 10:5]
 // CHECK: local-symbols.m:7:6: ObjCIvarDecl=x:7:6 (Definition) Extent=[7:3 - 7:7]
 // CHECK: local-symbols.m:7:3: TypeRef=id:0:0 Extent=[7:3 - 7:5]
@@ -42,3 +48,4 @@
 // CHECK: local-symbols.m:26:12: ObjCClassRef=R8380046:23:12 Extent=[26:12 - 26:20]
 // CHECK: local-symbols.m:26:25: ObjCProtocolRef=Prot8380046:20:11 Extent=[26:25 - 26:36]
 
+// CHECK: local-symbols.m:32:17: ObjCStringLiteral="objc str" Extent=[32:17 - 32:28]
