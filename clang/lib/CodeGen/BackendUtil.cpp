@@ -14,6 +14,7 @@
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/Utils.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/BitcodeWriterPass.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"

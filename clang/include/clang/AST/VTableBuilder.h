@@ -20,6 +20,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/ABI.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SetVector.h"
 #include <utility>
 
