@@ -45,9 +45,6 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/PBQP/Graph.h"
-#include "llvm/CodeGen/PBQP/HeuristicSolver.h"
-#include "llvm/CodeGen/PBQP/Heuristics/Briggs.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/IR/Module.h"
@@ -157,13 +154,13 @@ char RegAllocPBQP::ID = 0;
 
 } // End anonymous namespace.
 
-unsigned PBQPRAProblem::getVRegForNode(PBQP::Graph::NodeId node) const {
+unsigned PBQPRAProblem::getVRegForNode(PBQPRAGraph::NodeId node) const {
   Node2VReg::const_iterator vregItr = node2VReg.find(node);
   assert(vregItr != node2VReg.end() && "No vreg for node.");
   return vregItr->second;
 }
 
-PBQP::Graph::NodeId PBQPRAProblem::getNodeForVReg(unsigned vreg) const {
+PBQPRAGraph::NodeId PBQPRAProblem::getNodeForVReg(unsigned vreg) const {
   VReg2Node::const_iterator nodeItr = vreg2Node.find(vreg);
   assert(nodeItr != vreg2Node.end() && "No node for vreg.");
   return nodeItr->second;
@@ -195,7 +192,7 @@ PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
   const TargetRegisterInfo *tri = mf->getTarget().getRegisterInfo();
 
   OwningPtr<PBQPRAProblem> p(new PBQPRAProblem());
-  PBQP::Graph &g = p->getGraph();
+  PBQPRAGraph &g = p->getGraph();
   RegSet pregs;
 
   // Collect the set of preg intervals, record that they're used in the MF.
@@ -245,17 +242,19 @@ PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
       vrAllowed.push_back(preg);
     }
 
-    // Construct the node.
-    PBQP::Graph::NodeId node =
-      g.addNode(PBQP::Vector(vrAllowed.size() + 1, 0));
-
-    // Record the mapping and allowed set in the problem.
-    p->recordVReg(vreg, node, vrAllowed.begin(), vrAllowed.end());
+    PBQP::Vector nodeCosts(vrAllowed.size() + 1, 0);
 
     PBQP::PBQPNum spillCost = (vregLI->weight != 0.0) ?
         vregLI->weight : std::numeric_limits<PBQP::PBQPNum>::min();
 
-    addSpillCosts(g.getNodeCosts(node), spillCost);
+    addSpillCosts(nodeCosts, spillCost);
+
+    // Construct the node.
+    PBQPRAGraph::NodeId nId = g.addNode(std::move(nodeCosts));
+
+    // Record the mapping and allowed set in the problem.
+    p->recordVReg(vreg, nId, vrAllowed.begin(), vrAllowed.end());
+
   }
 
   for (RegSet::const_iterator vr1Itr = vregs.begin(), vrEnd = vregs.end();
@@ -272,11 +271,11 @@ PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
 
       assert(!l2.empty() && "Empty interval in vreg set?");
       if (l1.overlaps(l2)) {
-        PBQP::Graph::EdgeId edge =
-          g.addEdge(p->getNodeForVReg(vr1), p->getNodeForVReg(vr2),
-                    PBQP::Matrix(vr1Allowed.size()+1, vr2Allowed.size()+1, 0));
+        PBQP::Matrix edgeCosts(vr1Allowed.size()+1, vr2Allowed.size()+1, 0);
+        addInterferenceCosts(edgeCosts, vr1Allowed, vr2Allowed, tri);
 
-        addInterferenceCosts(g.getEdgeCosts(edge), vr1Allowed, vr2Allowed, tri);
+        g.addEdge(p->getNodeForVReg(vr1), p->getNodeForVReg(vr2),
+                  std::move(edgeCosts));
       }
     }
   }
@@ -316,7 +315,7 @@ PBQPRAProblem *PBQPBuilderWithCoalescing::build(MachineFunction *mf,
                                                 const RegSet &vregs) {
 
   OwningPtr<PBQPRAProblem> p(PBQPBuilder::build(mf, lis, mbfi, vregs));
-  PBQP::Graph &g = p->getGraph();
+  PBQPRAGraph &g = p->getGraph();
 
   const TargetMachine &tm = mf->getTarget();
   CoalescerPair cp(*tm.getRegisterInfo());
@@ -362,28 +361,32 @@ PBQPRAProblem *PBQPBuilderWithCoalescing::build(MachineFunction *mf,
         }
         if (pregOpt < allowed.size()) {
           ++pregOpt; // +1 to account for spill option.
-          PBQP::Graph::NodeId node = p->getNodeForVReg(src);
-          addPhysRegCoalesce(g.getNodeCosts(node), pregOpt, cBenefit);
+          PBQPRAGraph::NodeId node = p->getNodeForVReg(src);
+          llvm::dbgs() << "Reading node costs for node " << node << "\n";
+          llvm::dbgs() << "Source node: " << &g.getNodeCosts(node) << "\n";
+          PBQP::Vector newCosts(g.getNodeCosts(node));
+          addPhysRegCoalesce(newCosts, pregOpt, cBenefit);
+          g.setNodeCosts(node, newCosts);
         }
       } else {
         const PBQPRAProblem::AllowedSet *allowed1 = &p->getAllowedSet(dst);
         const PBQPRAProblem::AllowedSet *allowed2 = &p->getAllowedSet(src);
-        PBQP::Graph::NodeId node1 = p->getNodeForVReg(dst);
-        PBQP::Graph::NodeId node2 = p->getNodeForVReg(src);
-        PBQP::Graph::EdgeId edge = g.findEdge(node1, node2);
+        PBQPRAGraph::NodeId node1 = p->getNodeForVReg(dst);
+        PBQPRAGraph::NodeId node2 = p->getNodeForVReg(src);
+        PBQPRAGraph::EdgeId edge = g.findEdge(node1, node2);
         if (edge == g.invalidEdgeId()) {
-          edge = g.addEdge(node1, node2, PBQP::Matrix(allowed1->size() + 1,
-                                                      allowed2->size() + 1,
-                                                      0));
+          PBQP::Matrix costs(allowed1->size() + 1, allowed2->size() + 1, 0);
+          addVirtRegCoalesce(costs, *allowed1, *allowed2, cBenefit);
+          g.addEdge(node1, node2, costs);
         } else {
-          if (g.getEdgeNode1(edge) == node2) {
+          if (g.getEdgeNode1Id(edge) == node2) {
             std::swap(node1, node2);
             std::swap(allowed1, allowed2);
           }
+          PBQP::Matrix costs(g.getEdgeCosts(edge));
+          addVirtRegCoalesce(costs, *allowed1, *allowed2, cBenefit);
+          g.setEdgeCosts(edge, costs);
         }
-
-        addVirtRegCoalesce(g.getEdgeCosts(edge), *allowed1, *allowed2,
-                           cBenefit);
       }
     }
   }
@@ -471,14 +474,12 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAProblem &problem,
   // Clear the existing allocation.
   vrm->clearAllVirt();
 
-  const PBQP::Graph &g = problem.getGraph();
+  const PBQPRAGraph &g = problem.getGraph();
   // Iterate over the nodes mapping the PBQP solution to a register
   // assignment.
-  for (PBQP::Graph::NodeItr nodeItr = g.nodesBegin(),
-                            nodeEnd = g.nodesEnd();
-       nodeItr != nodeEnd; ++nodeItr) {
-    unsigned vreg = problem.getVRegForNode(*nodeItr);
-    unsigned alloc = solution.getSelection(*nodeItr);
+  for (auto NId : g.nodeIds()) {
+    unsigned vreg = problem.getVRegForNode(NId);
+    unsigned alloc = solution.getSelection(NId);
 
     if (problem.isPRegOption(vreg, alloc)) {
       unsigned preg = problem.getPRegForOption(vreg, alloc);
@@ -603,8 +604,7 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
 #endif
 
       PBQP::Solution solution =
-        PBQP::HeuristicSolver<PBQP::Heuristics::Briggs>::solve(
-          problem->getGraph());
+        PBQP::RegAlloc::solve(problem->getGraph());
 
       pbqpAllocComplete = mapPBQPToRegAlloc(*problem, solution);
 
