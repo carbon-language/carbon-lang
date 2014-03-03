@@ -166,4 +166,12 @@ or create a symbolic link so it updates automatically.
   <Type Name="llvm::Triple">
     <DisplayString>{Data}</DisplayString>
   </Type>
+  
+  <Type Name="llvm::Optional&lt;*&gt;">
+    <DisplayString Condition="!hasVal">empty</DisplayString>
+    <DisplayString Condition="hasVal">{*(($T1 *)(unsigned char *)storage.buffer)}</DisplayString>
+    <Expand>
+      <Item Name="[underlying]" Condition="hasVal">*(($T1 *)(unsigned char *)storage.buffer)</Item>
+    </Expand>
+  </Type>
 </AutoVisualizer>
