@@ -170,6 +170,40 @@ public:
 
 } // unnamed namespace
 
+TEST(DeclPrinter, TestTypedef1) {
+  ASSERT_TRUE(PrintedDeclCXX98Matches(
+    "typedef int A;",
+    "A",
+    "typedef int A"));
+    // Should be: with semicolon
+}
+
+TEST(DeclPrinter, TestTypedef2) {
+  ASSERT_TRUE(PrintedDeclCXX98Matches(
+    "typedef const char *A;",
+    "A",
+    "typedef const char *A"));
+    // Should be: with semicolon
+}
+
+TEST(DeclPrinter, TestTypedef3) {
+  ASSERT_TRUE(PrintedDeclCXX98Matches(
+    "template <typename Y> class X {};"
+    "typedef X<int> A;",
+    "A",
+    "typedef X<int> A"));
+    // Should be: with semicolon
+}
+
+TEST(DeclPrinter, TestTypedef4) {
+  ASSERT_TRUE(PrintedDeclCXX98Matches(
+    "namespace X { class Y {}; }"
+    "typedef X::Y A;",
+    "A",
+    "typedef X::Y A"));
+    // Should be: with semicolon
+}
+
 TEST(DeclPrinter, TestNamespace1) {
   ASSERT_TRUE(PrintedDeclCXX98Matches(
     "namespace A { int B; }",
