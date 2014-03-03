@@ -35,7 +35,7 @@ int main()
     random_access_iterator<const char*>b(s);
     random_access_iterator<const char*>e(s+10);
     while ( b != e )
-    	test ( b++ );
+        test ( b++ );
 }
 #else
 int main () {}
