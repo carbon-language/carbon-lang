@@ -1,29 +1,66 @@
-add_subdirectory(Analysis)
-add_subdirectory(CodeGen)
-add_subdirectory(Exchange)
-add_subdirectory(Support)
-add_subdirectory(JSON)
+# build a monolithic libLLVMPollyLib.$shlibext
+# and a thin module LLVMPolly.moduleext that links to that shared library
 
-set(MODULE TRUE)
 set(LLVM_NO_RTTI 1)
-
-if (SCOPLIB_FOUND)
-  set(POLLY_SCOPLIB_FILES Pocc.cpp)
-endif (SCOPLIB_FOUND)
 
 if (PLUTO_FOUND)
   set(POLLY_PLUTO_FILES Pluto.cpp)
 endif (PLUTO_FOUND)
 
-set(LLVM_USED_LIBS
-  LLVMPollyAnalysis
-  LLVMPollyCodeGen
-  LLVMPollyExchange
-  LLVMPollySupport
-  LLVMPollyJSON
-  )
+set(POLLY_JSON_FILES
+    JSON/json_reader.cpp
+    JSON/json_value.cpp
+    JSON/json_writer.cpp
+)
 
-add_polly_loadable_module(LLVMPolly
+if (CLOOG_FOUND)
+  set(CLOOG_FILES
+      CodeGen/Cloog.cpp
+      CodeGen/CodeGeneration.cpp)
+endif (CLOOG_FOUND)
+
+set(ISL_CODEGEN_FILES
+    CodeGen/IslAst.cpp
+    CodeGen/IslCodeGeneration.cpp)
+
+if (GPU_CODEGEN)
+  set (GPGPU_CODEGEN_FILES
+       CodeGen/PTXGenerator.cpp)
+endif (GPU_CODEGEN)
+
+if (OPENSCOP_FOUND)
+  set(POLLY_OPENSCOP_FILES
+      Exchange/OpenScopImporter.cpp
+      Exchange/OpenScopExporter.cpp)
+endif (OPENSCOP_FOUND)
+
+if (SCOPLIB_FOUND)
+  set(POLLY_SCOPLIB_FILES
+      Pocc.cpp
+      Exchange/ScopLib.cpp
+      Exchange/ScopLibExporter.cpp
+      Exchange/ScopLibImporter.cpp)
+endif (SCOPLIB_FOUND)
+
+add_polly_library(LLVMPollyLib
+  Analysis/Dependences.cpp
+  Analysis/ScopDetection.cpp
+  Analysis/ScopInfo.cpp
+  Analysis/ScopGraphPrinter.cpp
+  Analysis/ScopPass.cpp
+  Analysis/TempScopInfo.cpp
+  CodeGen/BlockGenerators.cpp
+  ${CLOOG_FILES}
+  ${ISL_CODEGEN_FILES}
+  CodeGen/LoopGenerators.cpp
+  CodeGen/Utils.cpp
+  ${GPGPU_CODEGEN_FILES}
+  Support/GICHelper.cpp
+  Support/SCEVValidator.cpp
+  Support/ScopHelper.cpp
+  Exchange/JSONExporter.cpp
+  ${POLLY_JSON_FILES}
+  ${POLLY_OPENSCOP_FILES}
   Canonicalization.cpp
   CodePreparation.cpp
   DeadCodeElimination.cpp
@@ -36,18 +73,21 @@ add_polly_loadable_module(LLVMPolly
   ${POLLY_PLUTO_FILES}
   )
 
+target_link_libraries(LLVMPollyLib
+  LLVMSupport
+  LLVMScalarOpts
+  LLVMTransformUtils
+  LLVMipo
+)
+
+add_polly_loadable_module(LLVMPolly)
+
 if (TARGET intrinsics_gen)
   # Check if we are building as part of an LLVM build
   add_dependencies(LLVMPolly intrinsics_gen)
 endif()
 
-add_dependencies(LLVMPolly
-  LLVMPollyAnalysis
-  LLVMPollyCodeGen
-  LLVMPollyExchange
-  LLVMPollySupport
-  LLVMPollyJSON
-  )
+target_link_libraries(LLVMPolly LLVMPollyLib)
 
 set_target_properties(LLVMPolly
   PROPERTIES
