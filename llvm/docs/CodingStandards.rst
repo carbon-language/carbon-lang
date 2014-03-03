@@ -650,12 +650,38 @@ members public by default.
 
 Unfortunately, not all compilers follow the rules and some will generate
 different symbols based on whether ``class`` or ``struct`` was used to declare
-the symbol.  This can lead to problems at link time.
+the symbol (e.g., MSVC).  This can lead to problems at link time.
 
-So, the rule for LLVM is to always use the ``class`` keyword, unless **all**
-members are public and the type is a C++ `POD
-<http://en.wikipedia.org/wiki/Plain_old_data_structure>`_ type, in which case
-``struct`` is allowed.
+* All declarations and definitions of a given ``class`` or ``struct`` must use
+  the same keyword.  For example:
+
+.. code-block:: c++
+
+  class Foo;
+
+  // Breaks mangling in MSVC.
+  struct Foo { int Data; };
+
+* As a rule of thumb, ``struct`` should be kept to structures where *all*
+  members are declared public.
+
+.. code-block:: c++
+
+  // Foo feels like a class... this is strange.
+  struct Foo {
+  private:
+    int Data;
+  public:
+    Foo() : Data(0) { }
+    int getData() const { return Data; }
+    void setData(int D) { Data = D; }
+  };
+
+  // Bar isn't POD, but it does look like a struct.
+  struct Bar {
+    int Data;
+    Foo() : Data(0) { }
+  };
 
 Do not use Braced Initializer Lists to Call a Constructor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
