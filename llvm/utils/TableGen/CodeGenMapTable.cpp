@@ -384,7 +384,7 @@ unsigned MapTableEmitter::emitBinSearchTable(raw_ostream &OS) {
           OutStr += TargetName;
           OutStr += "::";
           OutStr += ColInstrs[j]->getName();
-        } else { OutStr += ", -1";}
+        } else { OutStr += ", (uint16_t)-1U";}
       }
 
       if (RelExists) {
