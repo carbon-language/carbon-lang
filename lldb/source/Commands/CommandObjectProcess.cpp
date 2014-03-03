@@ -911,7 +911,6 @@ protected:
     DoExecute (Args& command, CommandReturnObject &result)
     {
         Process *process = m_exe_ctx.GetProcessPtr();
-        result.AppendMessageWithFormat ("Detaching from process %" PRIu64 "\n", process->GetID());
         // FIXME: This will be a Command Option:
         bool keep_stopped;
         if (m_options.m_keep_stopped == eLazyBoolCalculate)
