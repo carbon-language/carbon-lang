@@ -215,8 +215,8 @@ In this case we need to override two methods:
   ...
   class ExplicitConstructorCheck : public ClangTidyCheck {
   public:
-    void registerMatchers(ast_matchers::MatchFinder *Finder);
-    void check(ast_matchers::MatchFinder::MatchResult &Result);
+    void registerMatchers(ast_matchers::MatchFinder *Finder) override;
+    void check(ast_matchers::MatchFinder::MatchResult &Result) override;
   };
 
 In the ``registerMatchers`` method we create an AST Matcher (see `AST Matchers`_
@@ -259,8 +259,7 @@ The check should be registered in the corresponding module with a distinct name:
 
   class MyModule : public ClangTidyModule {
    public:
-    virtual void
-    addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+    void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
       CheckFactories.addCheckFactory(
           "my-explicit-constructor",
           new ClangTidyCheckFactory<ExplicitConstructorCheck>());
