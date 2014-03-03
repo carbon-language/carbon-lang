@@ -635,7 +635,7 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
         if (!CheckIfWatchpointsExhausted(this, error))
         {
             if (!OptionGroupWatchpoint::IsWatchSizeSupported(size))
-                error.SetErrorStringWithFormat("watch size of %" PRId64 " is not supported", size);
+                error.SetErrorStringWithFormat("watch size of %" PRIu64 " is not supported", (uint64_t)size);
         }
         wp_sp.reset();
     }

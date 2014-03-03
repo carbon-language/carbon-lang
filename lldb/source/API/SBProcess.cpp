@@ -338,11 +338,11 @@ SBProcess::PutSTDIN (const char *src, size_t src_len)
     }
     
     if (log)
-        log->Printf("SBProcess(%p)::PutSTDIN (src=\"%s\", src_len=%d) => %" PRId64,
+        log->Printf("SBProcess(%p)::PutSTDIN (src=\"%s\", src_len=%" PRIu64 ") => %" PRIu64,
                      process_sp.get(), 
                      src, 
-                     (uint32_t) src_len, 
-                     ret_val);
+                     (uint64_t) src_len,
+                     (uint64_t) ret_val);
 
     return ret_val;
 }

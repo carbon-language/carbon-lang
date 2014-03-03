@@ -3402,7 +3402,7 @@ protected:
                             ref_count = module_sp.use_count() - 1;
                         }
                         if (width)
-                            strm.Printf("{%*" PRIu64 "}", width, ref_count);
+                            strm.Printf("{%*" PRIu64 "}", width, (uint64_t)ref_count);
                         else
                             strm.Printf("{%" PRIu64 "}", (uint64_t)ref_count);
                     }

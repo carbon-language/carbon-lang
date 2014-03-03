@@ -635,7 +635,7 @@ DynamicRegisterInfo::Dump () const
     s.Printf("%p: DynamicRegisterInfo contains %" PRIu64 " registers:\n", this, (uint64_t)num_regs);
     for (size_t i=0; i<num_regs; ++i)
     {
-        s.Printf("[%3" PRId64 "] name = %-10s", i, m_regs[i].name);
+        s.Printf("[%3" PRIu64 "] name = %-10s", (uint64_t)i, m_regs[i].name);
         s.Printf(", size = %2u, offset = %4u, encoding = %u, format = %-10s",
                  m_regs[i].byte_size,
                  m_regs[i].byte_offset,

@@ -4934,6 +4934,14 @@ Process::SetSTDIOFileDescriptor (int fd)
 }
 
 bool
+Process::ProcessIOHandlerIsActive ()
+{
+    IOHandlerSP io_handler_sp (m_process_input_reader);
+    if (io_handler_sp)
+        return m_target.GetDebugger().IsTopIOHandler (io_handler_sp);
+    return false;
+}
+bool
 Process::PushProcessIOHandler ()
 {
     IOHandlerSP io_handler_sp (m_process_input_reader);

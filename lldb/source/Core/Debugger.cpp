@@ -2959,7 +2959,10 @@ Debugger::HandleProcessEvent (const EventSP &event_sp)
         if (output_stream.GetSize() || error_stream.GetSize())
         {
             StreamFileSP error_stream_sp (GetOutputFile());
-            bool top_io_handler_hid = HideTopIOHandler();
+            bool top_io_handler_hid = false;
+            
+            if (process_sp->ProcessIOHandlerIsActive() == false)
+                top_io_handler_hid = HideTopIOHandler();
 
             if (output_stream.GetSize())
             {

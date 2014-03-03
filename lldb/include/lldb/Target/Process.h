@@ -1419,7 +1419,7 @@ class Process :
     public PluginInterface
 {
     friend class ClangFunction;     // For WaitForStateChangeEventsPrivate
-    friend class Debugger;          // For PopProcessIOHandler
+    friend class Debugger;          // For PopProcessIOHandler and ProcessIOHandlerIsActive
     friend class ProcessEventData;
     friend class StopInfo;
     friend class Target;
@@ -3874,6 +3874,9 @@ protected:
     
     bool
     PopProcessIOHandler ();
+    
+    bool
+    ProcessIOHandlerIsActive ();
     
     Error
     HaltForDestroyOrDetach(lldb::EventSP &exit_event_sp);

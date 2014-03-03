@@ -1363,7 +1363,7 @@ DWARFExpression::Evaluate
         if (log && log->GetVerbose())
         {
             size_t count = stack.size();
-            log->Printf("Stack before operation has %" PRId64 " values:", count);
+            log->Printf("Stack before operation has %" PRIu64 " values:", (uint64_t)count);
             for (size_t i=0; i<count; ++i)
             {
                 StreamString new_value;
@@ -2832,7 +2832,7 @@ DWARFExpression::Evaluate
     else if (log && log->GetVerbose())
     {
         size_t count = stack.size();
-        log->Printf("Stack after operation has %" PRId64 " values:", count);
+        log->Printf("Stack after operation has %" PRIu64 " values:", (uint64_t)count);
         for (size_t i=0; i<count; ++i)
         {
             StreamString new_value;

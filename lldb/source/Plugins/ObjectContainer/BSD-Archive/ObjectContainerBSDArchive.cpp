@@ -461,7 +461,7 @@ ObjectContainerBSDArchive::Dump (Stream *s) const
     s->Indent();
     const size_t num_archs = GetNumArchitectures();
     const size_t num_objects = GetNumObjects();
-    s->Printf("ObjectContainerBSDArchive, num_archs = %" PRId64 ", num_objects = %" PRId64 "", num_archs, num_objects);
+    s->Printf("ObjectContainerBSDArchive, num_archs = %" PRIu64 ", num_objects = %" PRIu64 "", (uint64_t)num_archs, (uint64_t)num_objects);
     uint32_t i;
     ArchSpec arch;
     s->IndentMore();

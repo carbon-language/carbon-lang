@@ -122,7 +122,7 @@ SBData::GetByteSize ()
         value = m_opaque_sp->GetByteSize();
     if (log)
         log->Printf ("SBData::GetByteSize () => "
-                     "( %" PRId64 " )", value);
+                     "( %" PRIu64 " )", (uint64_t)value);
     return value;
 }
 
@@ -479,8 +479,8 @@ SBData::ReadRawData (lldb::SBError& error,
             error.SetErrorString("unable to read data");
     }
     if (log)
-        log->Printf("SBData::ReadRawData (error=%p,offset=%" PRIu64 ",buf=%p,size=%" PRId64 ") => "
-                     "(%p)", error.get(), offset, buf, size, ok);
+        log->Printf("SBData::ReadRawData (error=%p,offset=%" PRIu64 ",buf=%p,size=%" PRIu64 ") => "
+                     "(%p)", error.get(), offset, buf, (uint64_t)size, ok);
     return ok ? size : 0;
 }
 
@@ -497,8 +497,8 @@ SBData::SetData (lldb::SBError& error,
     else
         m_opaque_sp->SetData(buf, size, endian);
     if (log)
-        log->Printf("SBData::SetData (error=%p,buf=%p,size=%" PRId64 ",endian=%d,addr_size=%c) => "
-                     "(%p)", error.get(), buf, size, endian, addr_size, m_opaque_sp.get());
+        log->Printf("SBData::SetData (error=%p,buf=%p,size=%" PRIu64 ",endian=%d,addr_size=%c) => "
+                     "(%p)", error.get(), buf, (uint64_t)size, endian, addr_size, m_opaque_sp.get());
 }
 
 bool
@@ -647,8 +647,8 @@ SBData::SetDataFromUInt64Array (uint64_t* array, size_t array_len)
     if (!array || array_len == 0)
     {
         if (log)
-            log->Printf("SBData::SetDataFromUInt64Array (array=%p, array_len = %" PRId64 ") => "
-                         "false", array, array_len);
+            log->Printf("SBData::SetDataFromUInt64Array (array=%p, array_len = %" PRIu64 ") => "
+                         "false", array, (uint64_t)array_len);
         return false;
     }
 
@@ -662,8 +662,8 @@ SBData::SetDataFromUInt64Array (uint64_t* array, size_t array_len)
         m_opaque_sp->SetData(buffer_sp);
     
     if (log)
-        log->Printf("SBData::SetDataFromUInt64Array (array=%p, array_len = %" PRId64 ") => "
-                     "true", array, array_len);
+        log->Printf("SBData::SetDataFromUInt64Array (array=%p, array_len = %" PRIu64 ") => "
+                     "true", array, (uint64_t)array_len);
     
     return true;
 }
@@ -676,8 +676,8 @@ SBData::SetDataFromUInt32Array (uint32_t* array, size_t array_len)
     if (!array || array_len == 0)
     {
         if (log)
-            log->Printf("SBData::SetDataFromUInt32Array (array=%p, array_len = %" PRId64 ") => "
-                         "false", array, array_len);
+            log->Printf("SBData::SetDataFromUInt32Array (array=%p, array_len = %" PRIu64 ") => "
+                         "false", array, (uint64_t)array_len);
         return false;
     }
     
@@ -691,8 +691,8 @@ SBData::SetDataFromUInt32Array (uint32_t* array, size_t array_len)
         m_opaque_sp->SetData(buffer_sp);
     
     if (log)
-        log->Printf("SBData::SetDataFromUInt32Array (array=%p, array_len = %" PRId64 ") => "
-                     "true", array, array_len);
+        log->Printf("SBData::SetDataFromUInt32Array (array=%p, array_len = %" PRIu64 ") => "
+                     "true", array, (uint64_t)array_len);
     
     return true;
 }
@@ -705,8 +705,8 @@ SBData::SetDataFromSInt64Array (int64_t* array, size_t array_len)
     if (!array || array_len == 0)
     {
         if (log)
-            log->Printf("SBData::SetDataFromSInt64Array (array=%p, array_len = %" PRId64 ") => "
-                         "false", array, array_len);
+            log->Printf("SBData::SetDataFromSInt64Array (array=%p, array_len = %" PRIu64 ") => "
+                         "false", array, (uint64_t)array_len);
         return false;
     }
     
@@ -720,8 +720,8 @@ SBData::SetDataFromSInt64Array (int64_t* array, size_t array_len)
         m_opaque_sp->SetData(buffer_sp);
     
     if (log)
-        log->Printf("SBData::SetDataFromSInt64Array (array=%p, array_len = %" PRId64 ") => "
-                     "true", array, array_len);
+        log->Printf("SBData::SetDataFromSInt64Array (array=%p, array_len = %" PRIu64 ") => "
+                     "true", array, (uint64_t)array_len);
     
     return true;
 }
@@ -734,8 +734,8 @@ SBData::SetDataFromSInt32Array (int32_t* array, size_t array_len)
     if (!array || array_len == 0)
     {
         if (log)
-            log->Printf("SBData::SetDataFromSInt32Array (array=%p, array_len = %" PRId64 ") => "
-                         "false", array, array_len);
+            log->Printf("SBData::SetDataFromSInt32Array (array=%p, array_len = %" PRIu64 ") => "
+                         "false", array, (uint64_t)array_len);
         return false;
     }
     
@@ -749,8 +749,8 @@ SBData::SetDataFromSInt32Array (int32_t* array, size_t array_len)
         m_opaque_sp->SetData(buffer_sp);
     
     if (log)
-        log->Printf("SBData::SetDataFromSInt32Array (array=%p, array_len = %" PRId64 ") => "
-                     "true", array, array_len);
+        log->Printf("SBData::SetDataFromSInt32Array (array=%p, array_len = %" PRIu64 ") => "
+                     "true", array, (uint64_t)array_len);
     
     return true;
 }
@@ -763,8 +763,8 @@ SBData::SetDataFromDoubleArray (double* array, size_t array_len)
     if (!array || array_len == 0)
     {
         if (log)
-            log->Printf("SBData::SetDataFromDoubleArray (array=%p, array_len = %" PRId64 ") => "
-                         "false", array, array_len);
+            log->Printf("SBData::SetDataFromDoubleArray (array=%p, array_len = %" PRIu64 ") => "
+                         "false", array, (uint64_t)array_len);
         return false;
     }
     
@@ -778,8 +778,8 @@ SBData::SetDataFromDoubleArray (double* array, size_t array_len)
         m_opaque_sp->SetData(buffer_sp);
     
     if (log)
-        log->Printf("SBData::SetDataFromDoubleArray (array=%p, array_len = %" PRId64 ") => "
-                     "true", array, array_len);
+        log->Printf("SBData::SetDataFromDoubleArray (array=%p, array_len = %" PRIu64 ") => "
+                     "true", array, (uint64_t)array_len);
     
     return true;
 }
