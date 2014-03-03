@@ -1,4 +1,4 @@
-//===------ ModuleInitializers.cpp - Initialize the Polly Module          --===//
+//===------ ModuleInitializers.cpp - Initialize the Polly Module ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
