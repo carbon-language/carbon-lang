@@ -11,7 +11,7 @@ int foo() {
 
 // CHECK: serialized-diags-stable.c:[[@LINE+5]]:13: error: redefinition of 'bar' as different kind of symbol [] [Semantic Issue]
 // CHECK-NEXT: Number FIXITs = 0
-// CHECK-NEXT: +-/Volumes/Lore/llvm-public/clang/test/Misc/serialized-diags-stable.c:[[@LINE+2]]:6: note: previous definition is here [] []
+// CHECK-NEXT: +-serialized-diags-stable.c:[[@LINE+2]]:6: note: previous definition is here [] []
 // CHECK-NEXT: Number FIXITs = 0
 void bar() {}
 typedef int bar;
