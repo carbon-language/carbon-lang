@@ -20,6 +20,7 @@
 #include "lld/Core/InputGraph.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/CoreLinkingContext.h"
+#include "llvm/ADT/OwningPtr.h"
 
 #include <map>
 

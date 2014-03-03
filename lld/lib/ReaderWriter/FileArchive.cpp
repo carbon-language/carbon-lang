@@ -11,6 +11,7 @@
 #include "lld/Core/LLVM.h"
 
 #include "llvm/ADT/Hashing.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"

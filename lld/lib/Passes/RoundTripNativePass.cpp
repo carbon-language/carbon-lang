@@ -14,6 +14,7 @@
 #include "lld/ReaderWriter/Simple.h"
 #include "lld/ReaderWriter/Writer.h"
 
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
 

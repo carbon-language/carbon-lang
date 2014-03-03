@@ -10,6 +10,7 @@
 #include "lld/Core/InputGraph.h"
 
 #include "lld/Core/Resolver.h"
+#include "llvm/ADT/OwningPtr.h"
 
 using namespace lld;
 
