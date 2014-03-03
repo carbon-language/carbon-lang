@@ -18,10 +18,12 @@ define void @const_v16i8() nounwind {
   ; MIPS32-AE: ldi.b [[R1:\$w[0-9]+]], 1
 
   store volatile <16 x i8> <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 31>, <16 x i8>*@v16i8
-  ; MIPS32-AE: ld.b  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32-AE: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; MIPS32-AE: ld.b  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <16 x i8> <i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6>, <16 x i8>*@v16i8
-  ; MIPS32-AE: ld.b  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32-AE: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; MIPS32-AE: ld.b  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <16 x i8> <i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0, i8 1, i8 0>, <16 x i8>*@v16i8
   ; MIPS32-BE: ldi.h [[R1:\$w[0-9]+]], 256
@@ -35,7 +37,8 @@ define void @const_v16i8() nounwind {
   ; MIPS32-AE-DAG: fill.w [[R1:\$w[0-9]+]], [[R2]]
 
   store volatile <16 x i8> <i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8>, <16 x i8>*@v16i8
-  ; MIPS32-AE: ld.b  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32-AE: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; MIPS32-AE: ld.b  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
   ; MIPS32-AE: .size const_v16i8
@@ -51,7 +54,8 @@ define void @const_v8i16() nounwind {
   ; MIPS32-AE: ldi.h [[R1:\$w[0-9]+]], 1
 
   store volatile <8 x i16> <i16 1, i16 1, i16 1, i16 2, i16 1, i16 1, i16 1, i16 31>, <8 x i16>*@v8i16
-  ; MIPS32-AE: ld.h  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32-AE: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; MIPS32-AE: ld.h  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <8 x i16> <i16 1028, i16 1028, i16 1028, i16 1028, i16 1028, i16 1028, i16 1028, i16 1028>, <8 x i16>*@v8i16
   ; MIPS32-AE: ldi.b [[R1:\$w[0-9]+]], 4
@@ -64,7 +68,8 @@ define void @const_v8i16() nounwind {
   ; MIPS32-AE-DAG: fill.w [[R1:\$w[0-9]+]], [[R2]]
 
   store volatile <8 x i16> <i16 1, i16 2, i16 3, i16 4, i16 1, i16 2, i16 3, i16 4>, <8 x i16>*@v8i16
-  ; MIPS32-AE: ld.h  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32-AE: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; MIPS32-AE: ld.h  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
   ; MIPS32-AE: .size const_v8i16
@@ -80,7 +85,8 @@ define void @const_v4i32() nounwind {
   ; MIPS32-AE: ldi.w [[R1:\$w[0-9]+]], 1
 
   store volatile <4 x i32> <i32 1, i32 1, i32 1, i32 31>, <4 x i32>*@v4i32
-  ; MIPS32-AE: ld.w  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32-AE: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; MIPS32-AE: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <4 x i32> <i32 16843009, i32 16843009, i32 16843009, i32 16843009>, <4 x i32>*@v4i32
   ; MIPS32-AE: ldi.b [[R1:\$w[0-9]+]], 1
@@ -89,10 +95,12 @@ define void @const_v4i32() nounwind {
   ; MIPS32-AE: ldi.h [[R1:\$w[0-9]+]], 1
 
   store volatile <4 x i32> <i32 1, i32 2, i32 1, i32 2>, <4 x i32>*@v4i32
-  ; MIPS32-AE: ld.w  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32-AE: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; MIPS32-AE: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <4 x i32> <i32 3, i32 4, i32 5, i32 6>, <4 x i32>*@v4i32
-  ; MIPS32-AE: ld.w  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32-AE: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; MIPS32-AE: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
   ; MIPS32-AE: .size const_v4i32
@@ -117,10 +125,12 @@ define void @const_v2i64() nounwind {
   ; MIPS32-AE: ldi.d [[R1:\$w[0-9]+]], 1
 
   store volatile <2 x i64> <i64 1, i64 31>, <2 x i64>*@v2i64
-  ; MIPS32-AE: ld.w  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32-AE: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; MIPS32-AE: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   store volatile <2 x i64> <i64 3, i64 4>, <2 x i64>*@v2i64
-  ; MIPS32-AE: ld.w  [[R1:\$w[0-9]+]], %lo(
+  ; MIPS32-AE: addiu [[G_PTR:\$[0-9]+]], {{.*}}, %lo($
+  ; MIPS32-AE: ld.w  [[R1:\$w[0-9]+]], 0([[G_PTR]])
 
   ret void
   ; MIPS32-AE: .size const_v2i64

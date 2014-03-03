@@ -37,7 +37,8 @@ define void @lshr_v4i32(<4 x i32>* %c) nounwind {
   %2 = lshr <4 x i32> <i32 -2, i32 -4, i32 -8, i32 -16>,
                       <i32 0, i32 1, i32 2, i32 3>
   ; CHECK-NOT: srl
-  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], %lo
+  ; CHECK-DAG: addiu [[CPOOL:\$[0-9]+]], {{.*}}, %lo($
+  ; CHECK-DAG: ld.w [[R1:\$w[0-9]+]], 0([[CPOOL]])
   ; CHECK-NOT: srl
   store volatile <4 x i32> %2, <4 x i32>* %c
   ; CHECK-DAG: st.w [[R1]], 0($4)

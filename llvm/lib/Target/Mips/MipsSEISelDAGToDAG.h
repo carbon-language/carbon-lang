@@ -40,6 +40,10 @@ private:
   SDNode *selectAddESubE(unsigned MOp, SDValue InFlag, SDValue CmpLHS,
                          SDLoc DL, SDNode *Node) const;
 
+  bool selectAddrFrameIndex(SDValue Addr, SDValue &Base, SDValue &Offset) const;
+  bool selectAddrFrameIndexOffset(SDValue Addr, SDValue &Base, SDValue &Offset,
+                                  unsigned OffsetBits) const;
+
   virtual bool selectAddrRegImm(SDValue Addr, SDValue &Base,
                                 SDValue &Offset) const;
 
@@ -52,11 +56,17 @@ private:
   virtual bool selectIntAddr(SDValue Addr, SDValue &Base,
                              SDValue &Offset) const;
 
+  virtual bool selectAddrRegImm10(SDValue Addr, SDValue &Base,
+                                  SDValue &Offset) const;
+
   virtual bool selectAddrRegImm12(SDValue Addr, SDValue &Base,
                                   SDValue &Offset) const;
 
   virtual bool selectIntAddrMM(SDValue Addr, SDValue &Base,
                                SDValue &Offset) const;
+
+  virtual bool selectIntAddrMSA(SDValue Addr, SDValue &Base,
+                                SDValue &Offset) const;
 
   /// \brief Select constant vector splats.
   virtual bool selectVSplat(SDNode *N, APInt &Imm) const;

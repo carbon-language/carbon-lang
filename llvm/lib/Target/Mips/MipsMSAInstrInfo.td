@@ -94,8 +94,6 @@ def uimm8 : Operand<i32> {
 
 def simm5 : Operand<i32>;
 
-def simm10 : Operand<i32>;
-
 def vsplat_uimm1 : Operand<vAny> {
   let PrintMethod = "printUnsignedImm8";
 }
@@ -2292,7 +2290,7 @@ class INSVE_D_DESC : MSA_INSVE_DESC_BASE<"insve.d", int_mips_insve_d,
 
 class LD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                    ValueType TyNode, RegisterOperand ROWD,
-                   Operand MemOpnd = mem_msa, ComplexPattern Addr = addrRegImm,
+                   Operand MemOpnd = mem_msa, ComplexPattern Addr = addrimm10,
                    InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
   dag InOperandList = (ins MemOpnd:$addr);
@@ -2622,7 +2620,7 @@ class SRLRI_D_DESC : MSA_BIT_D_X_DESC_BASE<"srlri.d", int_mips_srlri_d,
 
 class ST_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                    ValueType TyNode, RegisterOperand ROWD,
-                   Operand MemOpnd = mem_msa, ComplexPattern Addr = addrRegImm,
+                   Operand MemOpnd = mem_msa, ComplexPattern Addr = addrimm10,
                    InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs);
   dag InOperandList = (ins ROWD:$wd, MemOpnd:$addr);
@@ -3494,39 +3492,16 @@ class MSAPat<dag pattern, dag result, list<Predicate> pred = [HasMSA]> :
 def : MSAPat<(extractelt (v4i32 MSA128W:$ws), immZExt4:$idx),
              (COPY_S_W MSA128W:$ws, immZExt4:$idx)>;
 
-def : MSAPat<(v16i8 (load addr:$addr)), (LD_B addr:$addr)>;
-def : MSAPat<(v8i16 (load addr:$addr)), (LD_H addr:$addr)>;
-def : MSAPat<(v4i32 (load addr:$addr)), (LD_W addr:$addr)>;
-def : MSAPat<(v2i64 (load addr:$addr)), (LD_D addr:$addr)>;
-def : MSAPat<(v8f16 (load addr:$addr)), (LD_H addr:$addr)>;
-def : MSAPat<(v4f32 (load addr:$addr)), (LD_W addr:$addr)>;
-def : MSAPat<(v2f64 (load addr:$addr)), (LD_D addr:$addr)>;
+def : MSAPat<(v8f16 (load addrimm10:$addr)), (LD_H addrimm10:$addr)>;
+def : MSAPat<(v4f32 (load addrimm10:$addr)), (LD_W addrimm10:$addr)>;
+def : MSAPat<(v2f64 (load addrimm10:$addr)), (LD_D addrimm10:$addr)>;
 
-def : MSAPat<(v8f16 (load addrRegImm:$addr)), (LD_H addrRegImm:$addr)>;
-def : MSAPat<(v4f32 (load addrRegImm:$addr)), (LD_W addrRegImm:$addr)>;
-def : MSAPat<(v2f64 (load addrRegImm:$addr)), (LD_D addrRegImm:$addr)>;
-
-def : MSAPat<(store (v16i8 MSA128B:$ws), addr:$addr),
-             (ST_B MSA128B:$ws, addr:$addr)>;
-def : MSAPat<(store (v8i16 MSA128H:$ws), addr:$addr),
-             (ST_H MSA128H:$ws, addr:$addr)>;
-def : MSAPat<(store (v4i32 MSA128W:$ws), addr:$addr),
-             (ST_W MSA128W:$ws, addr:$addr)>;
-def : MSAPat<(store (v2i64 MSA128D:$ws), addr:$addr),
-             (ST_D MSA128D:$ws, addr:$addr)>;
-def : MSAPat<(store (v8f16 MSA128H:$ws), addr:$addr),
-             (ST_H MSA128H:$ws, addr:$addr)>;
-def : MSAPat<(store (v4f32 MSA128W:$ws), addr:$addr),
-             (ST_W MSA128W:$ws, addr:$addr)>;
-def : MSAPat<(store (v2f64 MSA128D:$ws), addr:$addr),
-             (ST_D MSA128D:$ws, addr:$addr)>;
-
-def ST_FH : MSAPat<(store (v8f16 MSA128H:$ws), addrRegImm:$addr),
-                   (ST_H MSA128H:$ws, addrRegImm:$addr)>;
-def ST_FW : MSAPat<(store (v4f32 MSA128W:$ws), addrRegImm:$addr),
-                   (ST_W MSA128W:$ws, addrRegImm:$addr)>;
-def ST_FD : MSAPat<(store (v2f64 MSA128D:$ws), addrRegImm:$addr),
-                   (ST_D MSA128D:$ws, addrRegImm:$addr)>;
+def ST_FH : MSAPat<(store (v8f16 MSA128H:$ws), addrimm10:$addr),
+                   (ST_H MSA128H:$ws, addrimm10:$addr)>;
+def ST_FW : MSAPat<(store (v4f32 MSA128W:$ws), addrimm10:$addr),
+                   (ST_W MSA128W:$ws, addrimm10:$addr)>;
+def ST_FD : MSAPat<(store (v2f64 MSA128D:$ws), addrimm10:$addr),
+                   (ST_D MSA128D:$ws, addrimm10:$addr)>;
 
 class MSA_FABS_PSEUDO_DESC_BASE<RegisterOperand ROWD,
                                 RegisterOperand ROWS = ROWD,

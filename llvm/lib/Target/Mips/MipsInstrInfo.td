@@ -247,6 +247,8 @@ def calltarget  : Operand<iPTR> {
   let EncoderMethod = "getJumpTargetOpValue";
 }
 
+def simm10 : Operand<i32>;
+
 def simm16      : Operand<i32> {
   let DecoderMethod= "DecodeSimm16";
 }
@@ -314,6 +316,7 @@ def mem : mem_generic;
 
 // MSA specific address operand
 def mem_msa : mem_generic {
+  let MIOperandInfo = (ops ptr_rc, simm10);
   let EncoderMethod = "getMSAMemEncoding";
 }
 
@@ -405,6 +408,8 @@ def addrRegReg :
 
 def addrDefault :
   ComplexPattern<iPTR, 2, "selectAddrDefault", [frameindex]>;
+
+def addrimm10 : ComplexPattern<iPTR, 2, "selectIntAddrMSA", [frameindex]>;
 
 //===----------------------------------------------------------------------===//
 // Instructions specific format

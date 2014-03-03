@@ -248,18 +248,49 @@ SDNode *MipsSEDAGToDAGISel::selectAddESubE(unsigned MOp, SDValue InFlag,
                               SDValue(AddCarry, 0));
 }
 
-/// ComplexPattern used on MipsInstrInfo
-/// Used on Mips Load/Store instructions
-bool MipsSEDAGToDAGISel::selectAddrRegImm(SDValue Addr, SDValue &Base,
-                                          SDValue &Offset) const {
-  EVT ValTy = Addr.getValueType();
-
-  // if Address is FI, get the TargetFrameIndex.
+/// Match frameindex
+bool MipsSEDAGToDAGISel::selectAddrFrameIndex(SDValue Addr, SDValue &Base,
+                                              SDValue &Offset) const {
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
+    EVT ValTy = Addr.getValueType();
+
     Base   = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
     Offset = CurDAG->getTargetConstant(0, ValTy);
     return true;
   }
+  return false;
+}
+
+/// Match frameindex+offset and frameindex|offset
+bool MipsSEDAGToDAGISel::selectAddrFrameIndexOffset(SDValue Addr, SDValue &Base,
+                                                    SDValue &Offset,
+                                                    unsigned OffsetBits) const {
+  if (CurDAG->isBaseWithConstantOffset(Addr)) {
+    ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1));
+    if (isIntN(OffsetBits, CN->getSExtValue())) {
+      EVT ValTy = Addr.getValueType();
+
+      // If the first operand is a FI, get the TargetFI Node
+      if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>
+                                  (Addr.getOperand(0)))
+        Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
+      else
+        Base = Addr.getOperand(0);
+
+      Offset = CurDAG->getTargetConstant(CN->getZExtValue(), ValTy);
+      return true;
+    }
+  }
+  return false;
+}
+
+/// ComplexPattern used on MipsInstrInfo
+/// Used on Mips Load/Store instructions
+bool MipsSEDAGToDAGISel::selectAddrRegImm(SDValue Addr, SDValue &Base,
+                                          SDValue &Offset) const {
+  // if Address is FI, get the TargetFrameIndex.
+  if (selectAddrFrameIndex(Addr, Base, Offset))
+    return true;
 
   // on PIC code Load GA
   if (Addr.getOpcode() == MipsISD::Wrapper) {
@@ -275,21 +306,8 @@ bool MipsSEDAGToDAGISel::selectAddrRegImm(SDValue Addr, SDValue &Base,
   }
 
   // Addresses of the form FI+const or FI|const
-  if (CurDAG->isBaseWithConstantOffset(Addr)) {
-    ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1));
-    if (isInt<16>(CN->getSExtValue())) {
-
-      // If the first operand is a FI, get the TargetFI Node
-      if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>
-                                  (Addr.getOperand(0)))
-        Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
-      else
-        Base = Addr.getOperand(0);
-
-      Offset = CurDAG->getTargetConstant(CN->getZExtValue(), ValTy);
-      return true;
-    }
-  }
+  if (selectAddrFrameIndexOffset(Addr, Base, Offset, 16))
+    return true;
 
   // Operand is a result from an ADD.
   if (Addr.getOpcode() == ISD::ADD) {
@@ -343,27 +361,25 @@ bool MipsSEDAGToDAGISel::selectIntAddr(SDValue Addr, SDValue &Base,
     selectAddrDefault(Addr, Base, Offset);
 }
 
+bool MipsSEDAGToDAGISel::selectAddrRegImm10(SDValue Addr, SDValue &Base,
+                                            SDValue &Offset) const {
+  if (selectAddrFrameIndex(Addr, Base, Offset))
+    return true;
+
+  if (selectAddrFrameIndexOffset(Addr, Base, Offset, 10))
+    return true;
+
+  return false;
+}
+
 /// Used on microMIPS Load/Store unaligned instructions (12-bit offset)
 bool MipsSEDAGToDAGISel::selectAddrRegImm12(SDValue Addr, SDValue &Base,
                                             SDValue &Offset) const {
-  EVT ValTy = Addr.getValueType();
+  if (selectAddrFrameIndex(Addr, Base, Offset))
+    return true;
 
-  // Addresses of the form FI+const or FI|const
-  if (CurDAG->isBaseWithConstantOffset(Addr)) {
-    ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1));
-    if (isInt<12>(CN->getSExtValue())) {
-
-      // If the first operand is a FI then get the TargetFI Node
-      if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>
-                                  (Addr.getOperand(0)))
-        Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
-      else
-        Base = Addr.getOperand(0);
-
-      Offset = CurDAG->getTargetConstant(CN->getZExtValue(), ValTy);
-      return true;
-    }
-  }
+  if (selectAddrFrameIndexOffset(Addr, Base, Offset, 12))
+    return true;
 
   return false;
 }
@@ -372,6 +388,17 @@ bool MipsSEDAGToDAGISel::selectIntAddrMM(SDValue Addr, SDValue &Base,
                                          SDValue &Offset) const {
   return selectAddrRegImm12(Addr, Base, Offset) ||
     selectAddrDefault(Addr, Base, Offset);
+}
+
+bool MipsSEDAGToDAGISel::selectIntAddrMSA(SDValue Addr, SDValue &Base,
+                                          SDValue &Offset) const {
+  if (selectAddrRegImm10(Addr, Base, Offset))
+    return true;
+
+  if (selectAddrDefault(Addr, Base, Offset))
+    return true;
+
+  return false;
 }
 
 // Select constant vector splats.

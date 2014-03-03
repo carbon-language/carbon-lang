@@ -73,6 +73,10 @@ private:
   virtual bool selectIntAddrMM(SDValue Addr, SDValue &Base,
                                SDValue &Offset) const;
 
+  /// Match addr+simm10 and addr
+  virtual bool selectIntAddrMSA(SDValue Addr, SDValue &Base,
+                                SDValue &Offset) const;
+
   virtual bool selectAddr16(SDNode *Parent, SDValue N, SDValue &Base,
                             SDValue &Offset, SDValue &Alias);
 
