@@ -1,5 +1,7 @@
 #pragma once
 
+#include "lldb/lldb-dll-export.h"
+
 // from getopt.h
 #define no_argument       0
 #define required_argument 1
@@ -19,13 +21,13 @@ struct option
 int getopt( int argc, char * const argv[], const char *optstring );
 
 // from getopt.h
-extern char * optarg;
-extern int    optind;
+extern LLDB_API char * optarg;
+extern LLDB_API int    optind;
 extern int    opterr;
 extern int    optopt;
 
 // defined in unistd.h
-extern int    optreset;
+extern LLDB_API int    optreset;
 
 int getopt_long
 (
@@ -36,7 +38,7 @@ int getopt_long
     int *longindex
 );
 
-int getopt_long_only
+LLDB_API int getopt_long_only
 (
     int argc,
     char * const *argv,

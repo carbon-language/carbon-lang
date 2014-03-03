@@ -1,4 +1,4 @@
-#include "lldb/Host/windows/GetOptInc.h"
+#include "lldb/Host/windows/getopt/GetOptInc.h"
 
 // getopt.cpp
 #include <errno.h>
@@ -9,7 +9,7 @@ int opterr = 1;     /* if error message should be printed */
 int optind = 1;     /* index into parent argv vector */
 int optopt = '?';   /* character checked for validity */
 int optreset;       /* reset getopt */
-char    *optarg;    /* argument associated with option */
+char *optarg;       /* argument associated with option */
 
 #define PRINT_ERROR ((opterr) && (*options != ':'))
 
