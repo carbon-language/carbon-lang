@@ -18,6 +18,7 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/Optional.h"
 #include <string>
+#include <tuple>
 
 namespace clang {
 
