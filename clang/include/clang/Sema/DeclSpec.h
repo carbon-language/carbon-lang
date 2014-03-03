@@ -709,21 +709,11 @@ public:
   void addAttributes(AttributeList *AL) {
     Attrs.addAll(AL);
   }
-  void setAttributes(AttributeList *AL) {
-    Attrs.set(AL);
-  }
 
   bool hasAttributes() const { return !Attrs.empty(); }
 
   ParsedAttributes &getAttributes() { return Attrs; }
   const ParsedAttributes &getAttributes() const { return Attrs; }
-
-  /// \brief Return the current attribute list and remove them from
-  /// the DeclSpec so that it doesn't own them.
-  ParsedAttributes takeAttributes() {
-    // The non-const "copy" constructor clears the operand automatically.
-    return Attrs;
-  }
 
   void takeAttributesFrom(ParsedAttributes &attrs) {
     Attrs.takeAllFrom(attrs);

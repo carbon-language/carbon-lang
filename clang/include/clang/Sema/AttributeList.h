@@ -705,10 +705,7 @@ public:
     : pool(factory), list(0) {
   }
 
-  ParsedAttributes(ParsedAttributes &attrs)
-    : pool(attrs.pool), list(attrs.list) {
-    attrs.list = 0;
-  }
+  ParsedAttributes(const ParsedAttributes &) = delete;
 
   AttributePool &getPool() const { return pool; }
 
