@@ -326,7 +326,7 @@ void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {
   FileManager Files((FileSystemOptions()));
   LangOptions LangOpts; // FIXME: use langopts from each original file
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
-  DiagOpts->ShowColors = llvm::sys::Process::StandardErrHasColors();
+  DiagOpts->ShowColors = llvm::sys::Process::StandardOutHasColors();
   DiagnosticConsumer *DiagPrinter =
       new TextDiagnosticPrinter(llvm::outs(), &*DiagOpts);
   DiagnosticsEngine Diags(IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
