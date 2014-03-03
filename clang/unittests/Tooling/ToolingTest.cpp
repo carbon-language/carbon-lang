@@ -240,9 +240,9 @@ TEST(runToolOnCodeWithArgs, TestNoDepFile) {
   llvm::SmallString<32> DepFilePath;
   ASSERT_FALSE(
       llvm::sys::fs::createTemporaryFile("depfile", "d", DepFilePath));
-  EXPECT_TRUE(runToolOnCodeWithArgs(
-      new SkipBodyAction, "",
-      { "-MMD", "-MT", DepFilePath.str(), "-MF", DepFilePath.str() }));
+  std::vector<std::string> Args = { "-MMD", "-MT", DepFilePath.str(), "-MF",
+                                    DepFilePath.str() };
+  EXPECT_TRUE(runToolOnCodeWithArgs(new SkipBodyAction, "", Args));
   EXPECT_FALSE(llvm::sys::fs::exists(DepFilePath.str()));
   EXPECT_FALSE(llvm::sys::fs::remove(DepFilePath.str()));
 }
