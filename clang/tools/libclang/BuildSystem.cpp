@@ -197,3 +197,61 @@ clang_VirtualFileOverlay_writeToBuffer(CXVirtualFileOverlay VFO, unsigned,
 void clang_VirtualFileOverlay_dispose(CXVirtualFileOverlay VFO) {
   delete VFO;
 }
+
+
+struct CXModuleMapDescriptorImpl {
+  std::string ModuleName;
+  std::string UmbrellaHeader;
+};
+
+CXModuleMapDescriptor clang_ModuleMapDescriptor_create(unsigned) {
+  return new CXModuleMapDescriptorImpl();
+}
+
+enum CXErrorCode
+clang_ModuleMapDescriptor_setFrameworkModuleName(CXModuleMapDescriptor MMD,
+                                                 const char *name) {
+  if (!MMD || !name)
+    return CXError_InvalidArguments;
+
+  MMD->ModuleName = name;
+  return CXError_Success;
+}
+
+enum CXErrorCode
+clang_ModuleMapDescriptor_setUmbrellaHeader(CXModuleMapDescriptor MMD,
+                                            const char *name) {
+  if (!MMD || !name)
+    return CXError_InvalidArguments;
+
+  MMD->UmbrellaHeader = name;
+  return CXError_Success;
+}
+
+enum CXErrorCode
+clang_ModuleMapDescriptor_writeToBuffer(CXModuleMapDescriptor MMD, unsigned,
+                                       char **out_buffer_ptr,
+                                       unsigned *out_buffer_size) {
+  if (!MMD || !out_buffer_ptr || !out_buffer_size)
+    return CXError_InvalidArguments;
+
+  llvm::SmallString<256> Buf;
+  llvm::raw_svector_ostream OS(Buf);
+  OS << "framework module " << MMD->ModuleName << " {\n";
+  OS << "  umbrella header \"";
+  OS.write_escaped(MMD->UmbrellaHeader) << "\"\n";
+  OS << '\n';
+  OS << "  export *\n";
+  OS << "  module * { export * }\n";
+  OS << "}\n";
+
+  StringRef Data = OS.str();
+  *out_buffer_ptr = (char*)malloc(Data.size());
+  *out_buffer_size = Data.size();
+  memcpy(*out_buffer_ptr, Data.data(), Data.size());
+  return CXError_Success;
+}
+
+void clang_ModuleMapDescriptor_dispose(CXModuleMapDescriptor MMD) {
+  delete MMD;
+}

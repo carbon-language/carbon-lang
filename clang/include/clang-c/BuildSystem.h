@@ -78,6 +78,55 @@ clang_VirtualFileOverlay_writeToBuffer(CXVirtualFileOverlay, unsigned options,
 CINDEX_LINKAGE void clang_VirtualFileOverlay_dispose(CXVirtualFileOverlay);
 
 /**
+ * \brief Object encapsulating information about a module.map file.
+ */
+typedef struct CXModuleMapDescriptorImpl *CXModuleMapDescriptor;
+
+/**
+ * \brief Create a \c CXModuleMapDescriptor object.
+ * Must be disposed with \c clang_ModuleMapDescriptor_dispose().
+ *
+ * \param options is reserved, always pass 0.
+ */
+CINDEX_LINKAGE CXModuleMapDescriptor
+clang_ModuleMapDescriptor_create(unsigned options);
+
+/**
+ * \brief Sets the framework module name that the module.map describes.
+ * \returns 0 for success, non-zero to indicate an error.
+ */
+CINDEX_LINKAGE enum CXErrorCode
+clang_ModuleMapDescriptor_setFrameworkModuleName(CXModuleMapDescriptor,
+                                                 const char *name);
+
+/**
+ * \brief Sets the umbrealla header name that the module.map describes.
+ * \returns 0 for success, non-zero to indicate an error.
+ */
+CINDEX_LINKAGE enum CXErrorCode
+clang_ModuleMapDescriptor_setUmbrellaHeader(CXModuleMapDescriptor,
+                                            const char *name);
+
+/**
+ * \brief Write out the \c CXModuleMapDescriptor object to a char buffer.
+ *
+ * \param options is reserved, always pass 0.
+ * \param out_buffer_ptr pointer to receive the buffer pointer, which should be
+ * disposed using \c free().
+ * \param out_buffer_size pointer to receive the buffer size.
+ * \returns 0 for success, non-zero to indicate an error.
+ */
+CINDEX_LINKAGE enum CXErrorCode
+clang_ModuleMapDescriptor_writeToBuffer(CXModuleMapDescriptor, unsigned options,
+                                       char **out_buffer_ptr,
+                                       unsigned *out_buffer_size);
+
+/**
+ * \brief Dispose a \c CXModuleMapDescriptor object.
+ */
+CINDEX_LINKAGE void clang_ModuleMapDescriptor_dispose(CXModuleMapDescriptor);
+
+/**
  * @}
  */
 

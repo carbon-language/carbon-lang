@@ -141,3 +141,26 @@ TEST(libclang, VirtualFileOverlay) {
     T.map("/path/virtual/dir/in/subdir/foo4.h", "/real/foo4.h");
   }
 }
+
+TEST(libclang, ModuleMapDescriptor) {
+  const char *Contents =
+    "framework module TestFrame {\n"
+    "  umbrella header \"TestFrame.h\"\n"
+    "\n"
+    "  export *\n"
+    "  module * { export * }\n"
+    "}\n";
+
+  CXModuleMapDescriptor MMD = clang_ModuleMapDescriptor_create(0);
+
+  clang_ModuleMapDescriptor_setFrameworkModuleName(MMD, "TestFrame");
+  clang_ModuleMapDescriptor_setUmbrellaHeader(MMD, "TestFrame.h");
+
+  char *BufPtr;
+  unsigned BufSize;
+  clang_ModuleMapDescriptor_writeToBuffer(MMD, 0, &BufPtr, &BufSize);
+  std::string BufStr(BufPtr, BufSize);
+  EXPECT_STREQ(Contents, BufStr.c_str());
+  free(BufPtr);
+  clang_ModuleMapDescriptor_dispose(MMD);
+}
