@@ -438,8 +438,8 @@ void Region::print(raw_ostream &OS, bool print_tree, unsigned level,
     OS.indent(level*2 + 2);
 
     if (Style == PrintBB) {
-      for (const_block_iterator I = block_begin(), E = block_end(); I != E; ++I)
-        OS << (*I)->getName() << ", "; // TODO: remove the last ","
+      for (const auto &BB : blocks())
+        OS << BB->getName() << ", "; // TODO: remove the last ","
     } else if (Style == PrintRN) {
       for (const_element_iterator I = element_begin(), E = element_end(); I!=E; ++I)
         OS << **I << ", "; // TODO: remove the last ",

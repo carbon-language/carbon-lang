@@ -121,11 +121,10 @@ struct DOTGraphTraits<RegionInfo*> : public DOTGraphTraits<RegionNode*> {
 
     RegionInfo *RI = R->getRegionInfo();
 
-    for (Region::const_block_iterator BI = R->block_begin(),
-         BE = R->block_end(); BI != BE; ++BI)
-      if (RI->getRegionFor(*BI) == R)
+    for (const auto &BB : R->blocks())
+      if (RI->getRegionFor(BB) == R)
         O.indent(2 * (depth + 1)) << "Node"
-          << static_cast<const void*>(RI->getTopLevelRegion()->getBBNode(*BI))
+          << static_cast<const void*>(RI->getTopLevelRegion()->getBBNode(BB))
           << ";\n";
 
     O.indent(2 * depth) << "}\n";

@@ -829,11 +829,7 @@ void StructurizeCFG::createFlow() {
 /// no longer dominate all their uses. Not sure if this is really nessasary
 void StructurizeCFG::rebuildSSA() {
   SSAUpdater Updater;
-  for (Region::block_iterator I = ParentRegion->block_begin(),
-                              E = ParentRegion->block_end();
-       I != E; ++I) {
-
-    BasicBlock *BB = *I;
+  for (const auto &BB : ParentRegion->blocks())
     for (BasicBlock::iterator II = BB->begin(), IE = BB->end();
          II != IE; ++II) {
 
@@ -864,7 +860,6 @@ void StructurizeCFG::rebuildSSA() {
         Updater.RewriteUseAfterInsertions(*I);
       }
     }
-  }
 }
 
 /// \brief Run the transformation for each region found

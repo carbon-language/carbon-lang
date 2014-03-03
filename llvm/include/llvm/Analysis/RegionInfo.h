@@ -27,6 +27,7 @@
 #ifndef LLVM_ANALYSIS_REGIONINFO_H
 #define LLVM_ANALYSIS_REGIONINFO_H
 
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/Analysis/PostDominators.h"
@@ -544,6 +545,21 @@ public:
   }
   const_block_iterator block_end() const {
     return const_block_iterator();
+  }
+
+  typedef iterator_range<block_iterator> block_range;
+  typedef iterator_range<const_block_iterator> const_block_range;
+
+  /// @brief Returns a range view of the basic blocks in the region.
+  inline block_range blocks() {
+    return block_range(block_begin(), block_end());
+  }
+
+  /// @brief Returns a range view of the basic blocks in the region.
+  ///
+  /// This is the 'const' version of the range view.
+  inline const_block_range blocks() const {
+    return const_block_range(block_begin(), block_end());
   }
   //@}
 
