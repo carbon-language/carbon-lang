@@ -138,6 +138,8 @@ template <class Iterator>
 reverse_iterator<Iterator>
 operator+(typename reverse_iterator<Iterator>::difference_type n, const reverse_iterator<Iterator>& x);
 
+template <class Iterator> reverse_iterator<Iterator> make_reverse_iterator(Iterator i); // C++14
+
 template <class Container>
 class back_insert_iterator
 {
@@ -632,6 +634,15 @@ operator+(typename reverse_iterator<_Iter>::difference_type __n, const reverse_i
 {
     return reverse_iterator<_Iter>(__x.base() - __n);
 }
+
+#if _LIBCPP_STD_VER > 11
+template <class _Iter>
+inline _LIBCPP_INLINE_VISIBILITY
+reverse_iterator<_Iter> make_reverse_iterator(_Iter __i)
+{
+    return reverse_iterator<_Iter>(__i);
+}
+#endif
 
 template <class _Container>
 class _LIBCPP_TYPE_VIS_ONLY back_insert_iterator
