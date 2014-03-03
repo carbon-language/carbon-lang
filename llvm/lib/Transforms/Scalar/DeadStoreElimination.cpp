@@ -871,10 +871,9 @@ void DSE::RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
   }
 
   // Remove objects that could alias LoadedLoc.
-  std::function<bool(Value *)> Pred = [&](Value *I) {
+  DeadStackObjects.remove_if([&](Value *I) {
     // See if the loaded location could alias the stack location.
     AliasAnalysis::Location StackLoc(I, getPointerSize(I, *AA));
     return !AA->isNoAlias(StackLoc, LoadedLoc);
-  };
-  DeadStackObjects.remove_if(Pred);
+  });
 }
