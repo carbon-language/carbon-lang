@@ -190,9 +190,8 @@ class RAGreedy : public MachineFunctionPass,
     void setBrokenHints(unsigned NHints) { BrokenHints = NHints; }
 
     bool operator<(const EvictionCost &O) const {
-      if (BrokenHints != O.BrokenHints)
-        return BrokenHints < O.BrokenHints;
-      return MaxWeight < O.MaxWeight;
+      return std::tie(BrokenHints, MaxWeight) <
+             std::tie(O.BrokenHints, O.MaxWeight);
     }
   };
 

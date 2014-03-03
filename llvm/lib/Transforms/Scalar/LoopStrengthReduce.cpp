@@ -979,21 +979,11 @@ void Cost::Lose() {
 
 /// operator< - Choose the lower cost.
 bool Cost::operator<(const Cost &Other) const {
-  if (NumRegs != Other.NumRegs)
-    return NumRegs < Other.NumRegs;
-  if (AddRecCost != Other.AddRecCost)
-    return AddRecCost < Other.AddRecCost;
-  if (NumIVMuls != Other.NumIVMuls)
-    return NumIVMuls < Other.NumIVMuls;
-  if (NumBaseAdds != Other.NumBaseAdds)
-    return NumBaseAdds < Other.NumBaseAdds;
-  if (ScaleCost != Other.ScaleCost)
-    return ScaleCost < Other.ScaleCost;
-  if (ImmCost != Other.ImmCost)
-    return ImmCost < Other.ImmCost;
-  if (SetupCost != Other.SetupCost)
-    return SetupCost < Other.SetupCost;
-  return false;
+  return std::tie(NumRegs, AddRecCost, NumIVMuls, NumBaseAdds, ScaleCost,
+                  ImmCost, SetupCost) <
+         std::tie(Other.NumRegs, Other.AddRecCost, Other.NumIVMuls,
+                  Other.NumBaseAdds, Other.ScaleCost, Other.ImmCost,
+                  Other.SetupCost);
 }
 
 void Cost::print(raw_ostream &OS) const {

@@ -334,14 +334,10 @@ struct ExprMapKeyType {
            this->indices == that.indices;
   }
   bool operator<(const ExprMapKeyType & that) const {
-    if (this->opcode != that.opcode) return this->opcode < that.opcode;
-    if (this->operands != that.operands) return this->operands < that.operands;
-    if (this->subclassdata != that.subclassdata)
-      return this->subclassdata < that.subclassdata;
-    if (this->subclassoptionaldata != that.subclassoptionaldata)
-      return this->subclassoptionaldata < that.subclassoptionaldata;
-    if (this->indices != that.indices) return this->indices < that.indices;
-    return false;
+    return std::tie(opcode, operands, subclassdata, subclassoptionaldata,
+                    indices) <
+           std::tie(that.opcode, that.operands, that.subclassdata,
+                    that.subclassoptionaldata, that.indices);
   }
 
   bool operator!=(const ExprMapKeyType& that) const {
@@ -369,17 +365,10 @@ struct InlineAsmKeyType {
            this->asm_dialect == that.asm_dialect;
   }
   bool operator<(const InlineAsmKeyType& that) const {
-    if (this->asm_string != that.asm_string)
-      return this->asm_string < that.asm_string;
-    if (this->constraints != that.constraints)
-      return this->constraints < that.constraints;
-    if (this->has_side_effects != that.has_side_effects)
-      return this->has_side_effects < that.has_side_effects;
-    if (this->is_align_stack != that.is_align_stack)
-      return this->is_align_stack < that.is_align_stack;
-    if (this->asm_dialect != that.asm_dialect)
-      return this->asm_dialect < that.asm_dialect;
-    return false;
+    return std::tie(asm_string, constraints, has_side_effects, is_align_stack,
+                    asm_dialect) <
+           std::tie(that.asm_string, that.constraints, that.has_side_effects,
+                    that.is_align_stack, that.asm_dialect);
   }
 
   bool operator!=(const InlineAsmKeyType& that) const {

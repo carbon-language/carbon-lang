@@ -135,8 +135,7 @@ public:
   }
   bool operator!=(const UniqueID &Other) const { return !(*this == Other); }
   bool operator<(const UniqueID &Other) const {
-    return Device < Other.Device ||
-           (Device == Other.Device && File < Other.File);
+    return std::tie(Device, File) < std::tie(Other.Device, Other.File);
   }
   uint64_t getDevice() const { return Device; }
   uint64_t getFile() const { return File; }

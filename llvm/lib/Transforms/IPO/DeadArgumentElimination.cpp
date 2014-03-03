@@ -62,12 +62,7 @@ namespace {
 
       /// Make RetOrArg comparable, so we can put it into a map.
       bool operator<(const RetOrArg &O) const {
-        if (F != O.F)
-          return F < O.F;
-        else if (Idx != O.Idx)
-          return Idx < O.Idx;
-        else
-          return IsArg < O.IsArg;
+        return std::tie(F, Idx, IsArg) < std::tie(O.F, O.Idx, O.IsArg);
       }
 
       /// Make RetOrArg comparable, so we can easily iterate the multimap.

@@ -120,7 +120,7 @@ public:
     return !operator==(O);
   }
   bool operator<(const SDValue &O) const {
-    return Node < O.Node || (Node == O.Node && ResNo < O.ResNo);
+    return std::tie(Node, ResNo) < std::tie(O.Node, O.ResNo);
   }
 
   SDValue getValue(unsigned R) const {

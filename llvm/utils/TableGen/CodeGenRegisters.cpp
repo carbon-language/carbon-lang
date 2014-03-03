@@ -782,11 +782,8 @@ namespace llvm {
 bool CodeGenRegisterClass::Key::
 operator<(const CodeGenRegisterClass::Key &B) const {
   assert(Members && B.Members);
-  if (*Members != *B.Members)
-    return *Members < *B.Members;
-  if (SpillSize != B.SpillSize)
-    return SpillSize < B.SpillSize;
-  return SpillAlignment < B.SpillAlignment;
+  return std::tie(*Members, SpillSize, SpillAlignment) <
+         std::tie(*B.Members, B.SpillSize, B.SpillAlignment);
 }
 
 // Returns true if RC is a strict subclass.
