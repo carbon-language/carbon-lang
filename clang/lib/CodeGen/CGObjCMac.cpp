@@ -2660,6 +2660,7 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
 
   if (Entry) {
     // Already created, fix the linkage and update the initializer.
+    Entry->setLinkage(llvm::GlobalValue::PrivateLinkage);
     Entry->setInitializer(Init);
   } else {
     Entry =
@@ -6357,7 +6358,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
 
   if (Entry) {
     // Already created, fix the linkage and update the initializer.
-    assert(Entry->getLinkage() == llvm::GlobalValue::WeakAnyLinkage);
+    Entry->setLinkage(llvm::GlobalValue::WeakAnyLinkage);
     Entry->setInitializer(Init);
   } else {
     Entry =
