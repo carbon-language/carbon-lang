@@ -7,5 +7,4 @@ add_lldb_library(lldbHostWindows
   Condition.cpp
   Windows.cpp
   EditLineWin.cpp
-  GetOptInc.cpp
   )

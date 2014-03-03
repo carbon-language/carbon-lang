@@ -14,7 +14,11 @@ include_directories(
   )
 endif ()
 
-add_subdirectory(API)
+# Need to export the API in the liblldb.dll for Windows
+# The lldbAPI source files are added directly in liblldb
+if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" )
+  add_subdirectory(API)
+endif ()
 add_subdirectory(Breakpoint)
 add_subdirectory(Commands)
 add_subdirectory(Core)
@@ -28,7 +32,6 @@ add_subdirectory(Target)
 add_subdirectory(Utility)
 
 set( LLDB_USED_LIBS
-  lldbAPI
   lldbBreakpoint
   lldbCommands
   lldbDataFormatters
@@ -76,6 +79,14 @@ set( LLDB_USED_LIBS
   lldbPluginObjectFilePECOFF
   lldbPluginOSPython
   )
+
+# Need to export the API in the liblldb.dll for Windows
+# The lldbAPI source files are added directly in liblldb
+if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" )
+  list(APPEND LLDB_USED_LIBS
+    lldbAPI
+    )
+endif ()
 
 # Windows-only libraries
 if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
@@ -171,29 +182,102 @@ set( LLVM_LINK_COMPONENTS
   option
   )
 
-set_source_files_properties(${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp PROPERTIES GENERATED 1)
 
-if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
-  set(SHARED_LIBRARY 1)
-endif()
-
-if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+if ( NOT LLDB_DISABLE_PYTHON )
+  set_source_files_properties(${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp PROPERTIES GENERATED 1)
   set(LLDB_WRAP_PYTHON ${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp)
 endif()
+set(SHARED_LIBRARY 1)
 
+if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
+add_definitions( -DEXPORT_LIBLLDB )
+endif()
+
+# Need to export the API in the liblldb.dll for Windows
+# The lldbAPI source files are added directly in liblldb
+if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
+add_lldb_library(liblldb
+  lldb.cpp
+  lldb-log.cpp
+  API/SBAddress.cpp
+  API/SBBlock.cpp
+  API/SBBreakpoint.cpp
+  API/SBBreakpointLocation.cpp
+  API/SBBroadcaster.cpp
+  API/SBCommandInterpreter.cpp
+  API/SBCommandReturnObject.cpp
+  API/SBCommunication.cpp
+  API/SBCompileUnit.cpp
+  API/SBData.cpp
+  API/SBDebugger.cpp
+  API/SBDeclaration.cpp
+  API/SBError.cpp
+  API/SBEvent.cpp
+  API/SBExpressionOptions.cpp
+  API/SBFileSpec.cpp
+  API/SBFileSpecList.cpp
+  API/SBFrame.cpp
+  API/SBFunction.cpp
+  API/SBHostOS.cpp
+  API/SBInstruction.cpp
+  API/SBInstructionList.cpp
+  API/SBLineEntry.cpp
+  API/SBListener.cpp
+  API/SBModule.cpp
+  API/SBModuleSpec.cpp
+  API/SBPlatform.cpp
+  API/SBProcess.cpp
+  API/SBQueue.cpp
+  API/SBQueueItem.cpp
+  API/SBSection.cpp
+  API/SBSourceManager.cpp
+  API/SBStream.cpp
+  API/SBStringList.cpp
+  API/SBSymbol.cpp
+  API/SBSymbolContext.cpp
+  API/SBSymbolContextList.cpp
+  API/SBTarget.cpp
+  API/SBThread.cpp
+  API/SBType.cpp
+  API/SBTypeCategory.cpp
+  API/SBTypeFilter.cpp
+  API/SBTypeFormat.cpp
+  API/SBTypeNameSpecifier.cpp
+  API/SBTypeSummary.cpp
+  API/SBTypeSynthetic.cpp
+  API/SBValue.cpp
+  API/SBValueList.cpp
+  API/SBWatchpoint.cpp
+  Host/Windows/getopt/GetOptInc.cpp
+  ${LLDB_WRAP_PYTHON}
+  ${LLDB_VERS_GENERATED_FILE}
+  )
+else ()
 add_lldb_library(liblldb
   lldb.cpp
   lldb-log.cpp
   ${LLDB_WRAP_PYTHON}
   ${LLDB_VERS_GENERATED_FILE}
   )
+endif ()
+
+if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
+set_target_properties(liblldb
+  PROPERTIES
+  OUTPUT_NAME liblldb
+  VERSION ${LLDB_VERSION}
+  )
+else()
 set_target_properties(liblldb
   PROPERTIES
   OUTPUT_NAME lldb
   VERSION ${LLDB_VERSION}
   )
+endif()
+
 if (LLDB_WRAP_PYTHON OR LLDB_VERS_GENERATED_FILE)
   add_dependencies(liblldb
+    swig_wrapper
     ${LLDB_WRAP_PYTHON}
     ${LLDB_VERS_GENERATED_FILE}
     )

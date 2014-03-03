@@ -21,62 +21,65 @@
 #include "lldb/lldb-types.h"
 #include "lldb/lldb-versioning.h"
 
-// Forward Declarations
+#ifdef SWIG
+#define LLDB_API
+#endif
 
+// Forward Declarations
 namespace lldb {
 
-class SBAddress;
-class SBBlock;
-class SBBreakpoint;
-class SBBreakpointLocation;
-class SBBroadcaster;
-class SBCommand;
-class SBCommandInterpreter;
-class SBCommandPluginInterface;
-class SBCommandReturnObject;
-class SBCommunication;
-class SBCompileUnit;
-class SBData;
-class SBDebugger;
-class SBDeclaration;
-class SBError;
-class SBEvent;
-class SBEventList;
-class SBExpressionOptions;
-class SBFileSpec;
-class SBFileSpecList;
-class SBFrame;
-class SBFunction;
-class SBHostOS;
-class SBInstruction;
-class SBInstructionList;
-class SBLineEntry;
-class SBListener;
-class SBModule;
-class SBModuleSpec;
-class SBModuleSpecList;
-class SBProcess;
-class SBSourceManager;
-class SBStream;
-class SBStringList;
-class SBSymbol;
-class SBSymbolContext;
-class SBSymbolContextList;
-class SBTarget;
-class SBThread;
-class SBType;
-class SBTypeCategory;
-class SBTypeFilter;
-class SBTypeFormat;
-class SBTypeNameSpecifier;
-class SBTypeSummary;
+class LLDB_API SBAddress;
+class LLDB_API SBBlock;
+class LLDB_API SBBreakpoint;
+class LLDB_API SBBreakpointLocation;
+class LLDB_API SBBroadcaster;
+class LLDB_API SBCommand;
+class LLDB_API SBCommandInterpreter;
+class LLDB_API SBCommandPluginInterface;
+class LLDB_API SBCommandReturnObject;
+class LLDB_API SBCommunication;
+class LLDB_API SBCompileUnit;
+class LLDB_API SBData;
+class LLDB_API SBDebugger;
+class LLDB_API SBDeclaration;
+class LLDB_API SBError;
+class LLDB_API SBEvent;
+class LLDB_API SBEventList;
+class LLDB_API SBExpressionOptions;
+class LLDB_API SBFileSpec;
+class LLDB_API SBFileSpecList;
+class LLDB_API SBFrame;
+class LLDB_API SBFunction;
+class LLDB_API SBHostOS;
+class LLDB_API SBInstruction;
+class LLDB_API SBInstructionList;
+class LLDB_API SBLineEntry;
+class LLDB_API SBListener;
+class LLDB_API SBModule;
+class LLDB_API SBModuleSpec;
+class LLDB_API SBModuleSpecList;
+class LLDB_API SBProcess;
+class LLDB_API SBSourceManager;
+class LLDB_API SBStream;
+class LLDB_API SBStringList;
+class LLDB_API SBSymbol;
+class LLDB_API SBSymbolContext;
+class LLDB_API SBSymbolContextList;
+class LLDB_API SBTarget;
+class LLDB_API SBThread;
+class LLDB_API SBType;
+class LLDB_API SBTypeCategory;
+class LLDB_API SBTypeFilter;
+class LLDB_API SBTypeFormat;
+class LLDB_API SBTypeNameSpecifier;
+class LLDB_API SBTypeSummary;
 #ifndef LLDB_DISABLE_PYTHON
-class SBTypeSynthetic;    
+class LLDB_API SBTypeSynthetic;
 #endif
-class SBTypeList;
-class SBValue;
-class SBValueList;
-class SBWatchpoint;
+class LLDB_API SBTypeList;
+class LLDB_API SBValue;
+class LLDB_API SBValueList;
+class LLDB_API SBWatchpoint;
 
 }
 

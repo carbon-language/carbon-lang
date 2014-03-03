@@ -11,6 +11,7 @@
 #define LLDB_lldb_defines_h_
 
 #include "lldb/lldb-types.h"
+#include "lldb/lldb-dll-export.h"
 
 #if !defined(UINT32_MAX)
     #define UINT32_MAX 4294967295U

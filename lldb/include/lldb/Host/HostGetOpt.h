@@ -15,6 +15,6 @@
 
 #else
 
-#include <lldb/Host/windows/GetOptInc.h>
+#include <lldb/Host/windows/getopt/GetOptInc.h>
 
 #endif
