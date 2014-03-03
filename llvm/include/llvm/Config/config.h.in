@@ -591,6 +591,9 @@
 /* Minor version of the LLVM API */
 #undef LLVM_VERSION_MINOR
 
+/* Patch version of the LLVM API */
+#undef LLVM_VERSION_PATCH
+
 /* The shared library extension */
 #undef LTDL_SHLIB_EXT
 
