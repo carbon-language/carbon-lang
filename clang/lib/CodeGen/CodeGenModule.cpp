@@ -3000,7 +3000,15 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
 
     ImportedModules.insert(Import->getImportedModule());
     break;
- }
+  }
+
+  case Decl::ClassTemplateSpecialization: {
+    const ClassTemplateSpecializationDecl *Spec =
+        cast<ClassTemplateSpecializationDecl>(D);
+    if (DebugInfo &&
+        Spec->getSpecializationKind() == TSK_ExplicitInstantiationDefinition)
+      DebugInfo->completeTemplateDefinition(*Spec);
+  }
 
   default:
     // Make sure we handled everything we should, every other kind is a

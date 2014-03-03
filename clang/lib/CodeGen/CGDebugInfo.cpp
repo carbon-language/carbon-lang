@@ -1458,28 +1458,53 @@ void CGDebugInfo::completeClassData(const RecordDecl *RD) {
   TypeCache[TyPtr] = Res;
 }
 
+static bool hasExplicitMemberDefinition(CXXRecordDecl::method_iterator I,
+                                        CXXRecordDecl::method_iterator End) {
+  for (; I != End; ++I)
+    if (FunctionDecl *Tmpl = I->getInstantiatedFromMemberFunction())
+      if (!Tmpl->isImplicit() && Tmpl->hasBody())
+        return true;
+  return false;
+}
+
+static bool shouldOmitDefinition(CodeGenOptions::DebugInfoKind DebugKind,
+                                 const RecordDecl *RD,
+                                 const LangOptions &LangOpts) {
+  if (DebugKind > CodeGenOptions::LimitedDebugInfo)
+    return false;
+
+  if (!LangOpts.CPlusPlus)
+    return false;
+
+  if (!RD->isCompleteDefinitionRequired())
+    return true;
+
+  const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
+
+  if (!CXXDecl)
+    return false;
+
+  if (CXXDecl->hasDefinition() && CXXDecl->isDynamicClass())
+    return true;
+
+  TemplateSpecializationKind Spec = TSK_Undeclared;
+  if (const ClassTemplateSpecializationDecl *SD =
+          dyn_cast<ClassTemplateSpecializationDecl>(RD))
+    Spec = SD->getSpecializationKind();
+
+  if (Spec == TSK_ExplicitInstantiationDeclaration &&
+      hasExplicitMemberDefinition(CXXDecl->method_begin(),
+                                  CXXDecl->method_end()))
+    return true;
+
+  return false;
+}
+
 /// CreateType - get structure or union type.
 llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   RecordDecl *RD = Ty->getDecl();
-  const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
-  // Always emit declarations for types that aren't required to be complete when
-  // in limit-debug-info mode. If the type is later found to be required to be
-  // complete this declaration will be upgraded to a definition by
-  // `completeRequiredType`.
-  // If the type is dynamic, only emit the definition in TUs that require class
-  // data. This is handled by `completeClassData`.
   llvm::DICompositeType T(getTypeOrNull(QualType(Ty, 0)));
-  // If we've already emitted the type, just use that, even if it's only a
-  // declaration. The completeType, completeRequiredType, and completeClassData
-  // callbacks will handle promoting the declaration to a definition.
-  if (T ||
-      // Under -fno-standalone-debug:
-      (DebugKind <= CodeGenOptions::LimitedDebugInfo &&
-       // Emit only a forward declaration unless the type is required.
-       ((!RD->isCompleteDefinitionRequired() && CGM.getLangOpts().CPlusPlus) ||
-        // If the class is dynamic, only emit a declaration. A definition will
-        // be emitted whenever the vtable is emitted.
-        (CXXDecl && CXXDecl->hasDefinition() && CXXDecl->isDynamicClass())))) {
+  if (T || shouldOmitDefinition(DebugKind, RD, CGM.getLangOpts())) {
     if (!T)
       T = getOrCreateRecordFwdDecl(
           Ty, getContextDescriptor(cast<Decl>(RD->getDeclContext())));
@@ -2012,6 +2037,14 @@ llvm::DIType CGDebugInfo::getCompletedTypeOrNull(QualType Ty) {
 
   // Verify that any cached debug info still exists.
   return llvm::DIType(cast_or_null<llvm::MDNode>(V));
+}
+
+void CGDebugInfo::completeTemplateDefinition(
+    const ClassTemplateSpecializationDecl &SD) {
+  completeClassData(&SD);
+  // In case this type has no member function definitions being emitted, ensure
+  // it is retained
+  RetainedTypes.push_back(CGM.getContext().getRecordType(&SD).getAsOpaquePtr());
 }
 
 /// getCachedInterfaceTypeOrNull - Get the type from the interface

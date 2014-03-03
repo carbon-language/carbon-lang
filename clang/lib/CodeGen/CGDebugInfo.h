@@ -288,6 +288,8 @@ public:
   void completeRequiredType(const RecordDecl *RD);
   void completeClassData(const RecordDecl *RD);
 
+  void completeTemplateDefinition(const ClassTemplateSpecializationDecl &SD);
+
 private:
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
   void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
