@@ -3366,6 +3366,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(DefaultModuleCache));
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_fmodules_user_build_path)) {
+    A->claim();
+    if (HaveModules) {
+      A->render(Args, CmdArgs);
+    }
+  }
+
   // Pass through all -fmodules-ignore-macro arguments.
   Args.AddAllArgs(CmdArgs, options::OPT_fmodules_ignore_macro);
   Args.AddLastArg(CmdArgs, options::OPT_fmodules_prune_interval);

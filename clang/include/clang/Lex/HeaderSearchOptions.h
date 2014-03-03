@@ -89,6 +89,9 @@ public:
   /// \brief The directory used for the module cache.
   std::string ModuleCachePath;
 
+  /// \brief The directory used for a user build.
+  std::string ModuleUserBuildPath;
+
   /// \brief Whether we should disable the use of the hash string within the
   /// module cache.
   ///
