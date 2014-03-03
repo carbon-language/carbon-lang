@@ -40,9 +40,9 @@ public:
     return *this;
   }
 
-  OwningPtr(std::unique_ptr<T> &&Other) : Ptr(Other.release()) {}
+  OwningPtr(std::unique_ptr<T> Other) : Ptr(Other.release()) {}
 
-  OwningPtr &operator=(std::unique_ptr<T> &&Other) {
+  OwningPtr &operator=(std::unique_ptr<T> Other) {
     reset(Other.release());
     return *this;
   }
