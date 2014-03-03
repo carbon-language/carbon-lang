@@ -143,11 +143,10 @@ void ModuleManager::removeModules(ModuleIterator first, ModuleIterator last,
   llvm::SmallPtrSet<ModuleFile *, 4> victimSet(first, last);
 
   // Remove any references to the now-destroyed modules.
-  std::function<bool(ModuleFile *)> checkInSet = [&](ModuleFile *MF) {
-    return victimSet.count(MF);
-  };
   for (unsigned i = 0, n = Chain.size(); i != n; ++i) {
-    Chain[i]->ImportedBy.remove_if(checkInSet);
+    Chain[i]->ImportedBy.remove_if([&](ModuleFile *MF) {
+      return victimSet.count(MF);
+    });
   }
 
   // Delete the modules and erase them from the various structures.
