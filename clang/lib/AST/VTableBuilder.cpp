@@ -2156,10 +2156,7 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
       std::sort(ThunksVector.begin(), ThunksVector.end(),
                 [](const ThunkInfo &LHS, const ThunkInfo &RHS) {
         assert(LHS.Method == 0 && RHS.Method == 0);
-
-        if (LHS.This != RHS.This)
-          return LHS.This < RHS.This;
-        return LHS.Return < RHS.Return;
+        return std::tie(LHS.This, LHS.Return) < std::tie(RHS.This, RHS.Return);
       });
 
       Out << "Thunks for '" << MethodName << "' (" << ThunksVector.size();
@@ -3169,9 +3166,7 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
                        [](const ThunkInfo &LHS, const ThunkInfo &RHS) {
         // Keep different thunks with the same adjustments in the order they
         // were put into the vector.
-        if (LHS.This != RHS.This)
-          return LHS.This < RHS.This;
-        return LHS.Return < RHS.Return;
+        return std::tie(LHS.This, LHS.Return) < std::tie(RHS.This, RHS.Return);
       });
 
       Out << "Thunks for '" << MethodName << "' (" << ThunksVector.size();

@@ -58,11 +58,8 @@ struct MatchKey {
   BoundNodesTreeBuilder BoundNodes;
 
   bool operator<(const MatchKey &Other) const {
-    if (MatcherID != Other.MatcherID)
-      return MatcherID < Other.MatcherID;
-    if (Node != Other.Node)
-      return Node < Other.Node;
-    return BoundNodes < Other.BoundNodes;
+    return std::tie(MatcherID, Node, BoundNodes) <
+           std::tie(Other.MatcherID, Other.Node, Other.BoundNodes);
   }
 };
 

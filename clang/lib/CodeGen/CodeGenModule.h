@@ -99,10 +99,8 @@ namespace CodeGen {
     }
     
     bool operator<(const OrderGlobalInits &RHS) const {
-      if (priority < RHS.priority)
-        return true;
-      
-      return priority == RHS.priority && lex_order < RHS.lex_order;
+      return std::tie(priority, lex_order) <
+             std::tie(RHS.priority, RHS.lex_order);
     }
   };
 

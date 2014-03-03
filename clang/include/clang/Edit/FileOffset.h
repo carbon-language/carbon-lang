@@ -41,20 +41,16 @@ public:
     return !(LHS == RHS);
   }
   friend bool operator<(FileOffset LHS, FileOffset RHS) {
-    if (LHS.FID != RHS.FID)
-      return LHS.FID < RHS.FID;
-    return LHS.Offs < RHS.Offs;
+    return std::tie(LHS.FID, LHS.Offs) < std::tie(RHS.FID, RHS.Offs);
   }
   friend bool operator>(FileOffset LHS, FileOffset RHS) {
-    if (LHS.FID != RHS.FID)
-      return LHS.FID > RHS.FID;
-    return LHS.Offs > RHS.Offs;
+    return RHS < LHS;
   }
   friend bool operator>=(FileOffset LHS, FileOffset RHS) {
-    return LHS > RHS || LHS == RHS;
+    return !(LHS < RHS);
   }
   friend bool operator<=(FileOffset LHS, FileOffset RHS) {
-    return LHS < RHS || LHS == RHS;
+    return !(RHS < LHS);
   }
 };
 

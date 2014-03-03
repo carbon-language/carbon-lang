@@ -97,13 +97,8 @@ public:
   /// Unsigned integers are considered to be better conversion types than
   /// signed integers of the same width.
   bool operator<(const APSIntType &Other) const {
-    if (BitWidth < Other.BitWidth)
-      return true;
-    if (BitWidth > Other.BitWidth)
-      return false;
-    if (!IsUnsigned && Other.IsUnsigned)
-      return true;
-    return false;
+    return std::tie(BitWidth, IsUnsigned) <
+           std::tie(Other.BitWidth, Other.IsUnsigned);
   }
 };
     
