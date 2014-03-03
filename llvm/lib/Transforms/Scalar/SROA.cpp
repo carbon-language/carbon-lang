@@ -3640,7 +3640,7 @@ bool SROA::runOnFunction(Function &F) {
       // Remove the deleted allocas from various lists so that we don't try to
       // continue processing them.
       if (!DeletedAllocas.empty()) {
-        std::function<bool(AllocaInst *)> IsInSet = [&](AllocaInst *AI) {
+        auto IsInSet = [&](AllocaInst *AI) {
           return DeletedAllocas.count(AI);
         };
         Worklist.remove_if(IsInSet);

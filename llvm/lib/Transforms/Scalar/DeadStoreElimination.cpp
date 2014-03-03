@@ -803,14 +803,13 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 
       // If the call might load from any of our allocas, then any store above
       // the call is live.
-      std::function<bool(Value *)> Pred = [&](Value *I) {
+      DeadStackObjects.remove_if([&](Value *I) {
         // See if the call site touches the value.
         AliasAnalysis::ModRefResult A =
             AA->getModRefInfo(CS, I, getPointerSize(I, *AA));
 
         return A == AliasAnalysis::ModRef || A == AliasAnalysis::Ref;
-      };
-      DeadStackObjects.remove_if(Pred);
+      });
 
       // If all of the allocas were clobbered by the call then we're not going
       // to find anything else to process.
