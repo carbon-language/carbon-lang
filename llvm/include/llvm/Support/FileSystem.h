@@ -39,6 +39,7 @@
 #include <iterator>
 #include <stack>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #ifdef HAVE_SYS_STAT_H
