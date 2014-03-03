@@ -281,11 +281,12 @@ template <class ForwardIterator, class OutputIterator>
 
 template <class RandomAccessIterator>
     void
-    random_shuffle(RandomAccessIterator first, RandomAccessIterator last);
+    random_shuffle(RandomAccessIterator first, RandomAccessIterator last); // deprecated in C++14
 
 template <class RandomAccessIterator, class RandomNumberGenerator>
     void
-    random_shuffle(RandomAccessIterator first, RandomAccessIterator last, RandomNumberGenerator& rand);
+    random_shuffle(RandomAccessIterator first, RandomAccessIterator last,
+                   RandomNumberGenerator& rand);  // deprecated in C++14
 
 template<class RandomAccessIterator, class UniformRandomNumberGenerator>
     void shuffle(RandomAccessIterator first, RandomAccessIterator last,
