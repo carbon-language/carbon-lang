@@ -376,6 +376,11 @@ FunctionPass *createSampleProfileLoaderPass(StringRef Name);
 //
 FunctionPass *createScalarizerPass();
 
+//===----------------------------------------------------------------------===//
+//
+// AddDiscriminators - Add DWARF path discriminators to the IR.
+FunctionPass *createAddDiscriminatorsPass();
+
 } // End llvm namespace
 
 #endif

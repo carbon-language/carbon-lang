@@ -701,6 +701,27 @@ public:
   StringRef getFilename() const { return getScope().getFilename(); }
   StringRef getDirectory() const { return getScope().getDirectory(); }
   bool Verify() const;
+  bool atSameLineAs(const DILocation &Other) const {
+    return (getLineNumber() == Other.getLineNumber() &&
+            getFilename() == Other.getFilename());
+  }
+  /// getDiscriminator - DWARF discriminators are used to distinguish
+  /// identical file locations for instructions that are on different
+  /// basic blocks. If two instructions are inside the same lexical block
+  /// and are in different basic blocks, we create a new lexical block
+  /// with identical location as the original but with a different
+  /// discriminator value (lib/Transforms/Util/AddDiscriminators.cpp
+  /// for details).
+  unsigned getDiscriminator() const {
+    // Since discriminators are associated with lexical blocks, make
+    // sure this location is a lexical block before retrieving its
+    // value.
+    return getScope().isLexicalBlock()
+               ? getFieldAs<DILexicalBlock>(2).getDiscriminator()
+               : 0;
+  }
+  unsigned computeNewDiscriminator(LLVMContext &Ctx);
+  DILocation copyWithNewScope(LLVMContext &Ctx, DILexicalBlock NewScope);
 };
 
 class DIObjCProperty : public DIDescriptor {

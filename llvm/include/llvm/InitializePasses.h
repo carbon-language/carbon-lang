@@ -63,6 +63,7 @@ void initializeCodeGen(PassRegistry&);
 void initializeTarget(PassRegistry&);
 
 void initializeAAEvalPass(PassRegistry&);
+void initializeAddDiscriminatorsPass(PassRegistry&);
 void initializeADCEPass(PassRegistry&);
 void initializeAliasAnalysisAnalysisGroup(PassRegistry&);
 void initializeAliasAnalysisCounterPass(PassRegistry&);

@@ -352,7 +352,12 @@ public:
   /// for an index.  The ValueHandle ensures that ScopeINlinedAtIdx stays up
   /// to date.
   std::vector<std::pair<DebugRecVH, DebugRecVH> > ScopeInlinedAtRecords;
-  
+
+  /// DiscriminatorTable - This table maps file:line locations to an
+  /// integer representing the next DWARF path discriminator to assign to
+  /// instructions in different blocks at the same location.
+  DenseMap<std::pair<const char *, unsigned>, unsigned> DiscriminatorTable;
+
   /// IntrinsicIDCache - Cache of intrinsic name (string) to numeric ID mappings
   /// requested in this context
   typedef DenseMap<const Function*, unsigned> IntrinsicIDCacheTy;

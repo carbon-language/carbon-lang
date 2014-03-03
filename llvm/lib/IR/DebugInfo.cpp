@@ -22,6 +22,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
+#include "LLVMContextImpl.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
@@ -816,6 +817,29 @@ DIArray DICompileUnit::getImportedEntities() const {
     return DIArray();
 
   return DIArray(getNodeField(DbgNode, 11));
+}
+
+/// copyWithNewScope - Return a copy of this location, replacing the
+/// current scope with the given one.
+DILocation DILocation::copyWithNewScope(LLVMContext &Ctx,
+                                        DILexicalBlock NewScope) {
+  SmallVector<Value *, 10> Elts;
+  assert(Verify());
+  for (unsigned I = 0; I < DbgNode->getNumOperands(); ++I) {
+    if (I != 2)
+      Elts.push_back(DbgNode->getOperand(I));
+    else
+      Elts.push_back(NewScope);
+  }
+  MDNode *NewDIL = MDNode::get(Ctx, Elts);
+  return DILocation(NewDIL);
+}
+
+/// computeNewDiscriminator - Generate a new discriminator value for this
+/// file and line location.
+unsigned DILocation::computeNewDiscriminator(LLVMContext &Ctx) {
+  std::pair<const char *, unsigned> Key(getFilename().data(), getLineNumber());
+  return ++Ctx.pImpl->DiscriminatorTable[Key];
 }
 
 /// fixupSubprogramName - Replace contains special characters used
