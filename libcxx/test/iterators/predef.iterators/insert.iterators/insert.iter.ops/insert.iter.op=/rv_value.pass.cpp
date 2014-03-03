@@ -56,6 +56,7 @@ struct do_nothing
 int main()
 {
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    {
     typedef std::unique_ptr<int, do_nothing> Ptr;
     typedef std::vector<Ptr> C;
     C c1;
@@ -91,5 +92,6 @@ int main()
         c2.push_back(Ptr(x+i));
     insert3at(c2, c2.begin()+3, Ptr(x+3), Ptr(x+4), Ptr(x+5));
     test(std::move(c1), 3, Ptr(x+3), Ptr(x+4), Ptr(x+5), c2);
+    }
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 }

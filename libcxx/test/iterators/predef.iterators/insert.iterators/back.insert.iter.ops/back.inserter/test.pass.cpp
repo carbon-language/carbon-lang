@@ -16,6 +16,7 @@
 #include <iterator>
 #include <vector>
 #include <cassert>
+#include "nasty_containers.hpp"
 
 template <class C>
 void
@@ -30,4 +31,5 @@ test(C c)
 int main()
 {
     test(std::vector<int>());
+    test(nasty_vector<int>());
 }

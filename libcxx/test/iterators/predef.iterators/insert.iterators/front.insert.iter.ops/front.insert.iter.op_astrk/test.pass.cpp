@@ -16,6 +16,7 @@
 #include <iterator>
 #include <list>
 #include <cassert>
+#include "nasty_containers.hpp"
 
 template <class C>
 void
@@ -29,4 +30,5 @@ test(C c)
 int main()
 {
     test(std::list<int>());
+    test(nasty_list<int>());
 }
