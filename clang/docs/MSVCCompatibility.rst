@@ -40,8 +40,8 @@ ABI features
 
 The status of major ABI-impacting C++ features:
 
-* Record layout: :good:`Mostly complete`.  We've attacked this with a fuzzer,
-  and most of the remaining failures involve ``#pragma pack``,
+* Record layout: :good:`Mostly complete`.  We've tested this with a fuzzer, and
+  most of the remaining failures involve ``#pragma pack``,
   ``__declspec(align(N))``, or other pragmas.
 
 * Class inheritance: :good:`Mostly complete`.  This covers all of the standard
@@ -96,8 +96,8 @@ The status of major ABI-impacting C++ features:
 Template instantiation and name lookup
 ======================================
 
-In addition to the usual `dependent name lookup FAQs `_, Clang is often unable
-to parse certain invalid C++ constructs that MSVC allows.  As of this writing,
+In addition to the usual `dependent name lookup FAQs`_, Clang is often unable to
+parse certain invalid C++ constructs that MSVC allows.  As of this writing,
 Clang will reject code with missing ``typename`` annotations:
 
 .. _dependent name lookup FAQs:
