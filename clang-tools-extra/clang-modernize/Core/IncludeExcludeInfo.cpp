@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "IncludeExcludeInfo.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
