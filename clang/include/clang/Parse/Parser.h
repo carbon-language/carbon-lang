@@ -1797,7 +1797,7 @@ private:
   /// \brief Starting with a scope specifier, identifier, or
   /// template-id that refers to the current class, determine whether
   /// this is a constructor declarator.
-  bool isConstructorDeclarator();
+  bool isConstructorDeclarator(bool Unqualified);
 
   /// \brief Specifies the context in which type-id/expression
   /// disambiguation will occur.
