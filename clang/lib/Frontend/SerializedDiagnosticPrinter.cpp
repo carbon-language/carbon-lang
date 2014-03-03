@@ -174,7 +174,7 @@ private:
                                   const SourceManager &SM);
 
   /// \brief The version of the diagnostics file.
-  enum { Version = 1 };
+  enum { Version = 2 };
 
   /// \brief Language options, which can differ from one clone of this client
   /// to another.
@@ -566,6 +566,21 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                           &Info);
 }
 
+static serialized_diags::Level getStableLevel(DiagnosticsEngine::Level Level) {
+  switch (Level) {
+#define CASE(X) case DiagnosticsEngine::X: return serialized_diags::X;
+  CASE(Ignored)
+  CASE(Note)
+  CASE(Remark)
+  CASE(Warning)
+  CASE(Error)
+  CASE(Fatal)
+#undef CASE
+  }
+
+  llvm_unreachable("invalid diagnostic level");
+}
+
 void SDiagsWriter::EmitDiagnosticMessage(SourceLocation Loc,
                                          PresumedLoc PLoc,
                                          DiagnosticsEngine::Level Level,
@@ -579,7 +594,7 @@ void SDiagsWriter::EmitDiagnosticMessage(SourceLocation Loc,
   // Emit the RECORD_DIAG record.
   Record.clear();
   Record.push_back(RECORD_DIAG);
-  Record.push_back(Level);
+  Record.push_back(getStableLevel(Level));
   AddLocToRecord(Loc, SM, PLoc, Record);
 
   if (const Diagnostic *Info = D.dyn_cast<const Diagnostic*>()) {

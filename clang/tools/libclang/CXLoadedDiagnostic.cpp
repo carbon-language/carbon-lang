@@ -67,13 +67,19 @@ CXLoadedDiagnostic::~CXLoadedDiagnostic() {}
 //===----------------------------------------------------------------------===//
 
 CXDiagnosticSeverity CXLoadedDiagnostic::getSeverity() const {
-  // FIXME: possibly refactor with logic in CXStoredDiagnostic.
-  switch (severity) {
-    case DiagnosticsEngine::Ignored: return CXDiagnostic_Ignored;
-    case DiagnosticsEngine::Note:    return CXDiagnostic_Note;
-    case DiagnosticsEngine::Warning: return CXDiagnostic_Warning;
-    case DiagnosticsEngine::Error:   return CXDiagnostic_Error;
-    case DiagnosticsEngine::Fatal:   return CXDiagnostic_Fatal;
+  // FIXME: Fail more softly if the diagnostic level is unknown?
+  assert(severity == static_cast<serialized_diags::Level>(severity) &&
+         "unknown serialized diagnostic level");
+
+  switch (static_cast<serialized_diags::Level>(severity)) {
+#define CASE(X) case serialized_diags::X: return CXDiagnostic_##X;
+  CASE(Ignored)
+  CASE(Note)
+  CASE(Warning)
+  CASE(Error)
+  CASE(Fatal)
+  CASE(Remark)
+#undef CASE
   }
   
   llvm_unreachable("Invalid diagnostic level");
@@ -175,7 +181,7 @@ void CXLoadedDiagnostic::decodeLocation(CXSourceLocation location,
 // Deserialize diagnostics.
 //===----------------------------------------------------------------------===//
 
-enum { MaxSupportedVersion = 1 };
+enum { MaxSupportedVersion = 2 };
 typedef SmallVector<uint64_t, 64> RecordData;
 enum LoadResult { Failure = 1, Success = 0 };
 enum StreamResult { Read_EndOfStream,

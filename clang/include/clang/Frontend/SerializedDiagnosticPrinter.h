@@ -46,6 +46,19 @@ enum RecordIDs {
   RECORD_LAST = RECORD_FIXIT
 };
 
+/// A stable version of DiagnosticIDs::Level.
+///
+/// Do not change the order of values in this enum, and please increment the
+/// serialized diagnostics version number when you add to it.
+enum Level {
+  Ignored = 0,
+  Note,
+  Warning,
+  Error,
+  Fatal,
+  Remark
+};
+
 /// \brief Returns a DiagnosticConsumer that serializes diagnostics to
 ///  a bitcode file.
 ///
