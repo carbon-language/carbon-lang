@@ -1038,6 +1038,7 @@ def B       : UncondBranch<BEQ>;
 
 def JAL  : MMRel, JumpLink<"jal", calltarget>, FJ<3>;
 def JALR : MMRel, JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM;
+def JALX  : MMRel, JumpLink<"jalx", calltarget>, FJ<0x1D>;
 def JALRPseudo : JumpLinkRegPseudo<GPR32Opnd, JALR, RA>;
 def BGEZAL : MMRel, BGEZAL_FT<"bgezal", brtarget, GPR32Opnd>, BGEZAL_FM<0x11>;
 def BLTZAL : MMRel, BGEZAL_FT<"bltzal", brtarget, GPR32Opnd>, BGEZAL_FM<0x10>;

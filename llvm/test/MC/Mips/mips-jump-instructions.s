@@ -101,11 +101,15 @@ end_of_code:
 # CHECK32:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK32:   jr $7                # encoding: [0x08,0x00,0xe0,0x00]
 # CHECK32:   nop                  # encoding: [0x00,0x00,0x00,0x00]
+# CHECK32:lab:
 # CHECK32:   jr $7                # encoding: [0x08,0x00,0xe0,0x00]
 # CHECK32:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK32:   jalr  $25            # encoding: [0x09,0xf8,0x20,0x03]
 # CHECK32:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK32:   jalr  $4, $25        # encoding: [0x09,0x20,0x20,0x03]
+# CHECK32:   nop                  # encoding: [0x00,0x00,0x00,0x00]
+# CHECK32:   jalx    lab          # encoding: [A,A,A,0b011101AA]
+# CHECK32:                        #   fixup A - offset: 0, value: lab, kind: fixup_Mips_26
 # CHECK32:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 
 # CHECK64:   j 1328               # encoding: [0x4c,0x01,0x00,0x08]
@@ -120,13 +124,16 @@ end_of_code:
 # CHECK64:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK64:   jr $7                # encoding: [0x08,0x00,0xe0,0x00]
 # CHECK64:   nop                  # encoding: [0x00,0x00,0x00,0x00]
+# CHECK64:lab:
 # CHECK64:   jr $7                # encoding: [0x08,0x00,0xe0,0x00]
 # CHECK64:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK64:   jalr  $25            # encoding: [0x09,0xf8,0x20,0x03]
 # CHECK64:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 # CHECK64:   jalr  $4, $25        # encoding: [0x09,0x20,0x20,0x03]
 # CHECK64:   nop                  # encoding: [0x00,0x00,0x00,0x00]
-
+# CHECK64:   jalx    lab          # encoding: [A,A,A,0b011101AA]
+# CHECK64:                        #   fixup A - offset: 0, value: lab, kind: fixup_Mips_26
+# CHECK64:   nop                  # encoding: [0x00,0x00,0x00,0x00]
 
    j 1328
    nop
@@ -140,9 +147,12 @@ end_of_code:
    nop
    jr $7
    nop
+lab:
    j $7
    nop
    jal  $25
    nop
    jal  $4,$25
+   nop
+   jalx lab
    nop
