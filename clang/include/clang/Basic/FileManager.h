@@ -77,13 +77,21 @@ class FileEntry {
     File.reset(0); // rely on destructor to close File
   }
 
-  FileEntry(const FileEntry &FE) LLVM_DELETED_FUNCTION;
   void operator=(const FileEntry &) LLVM_DELETED_FUNCTION;
 
 public:
   FileEntry()
       : UniqueID(0, 0), IsNamedPipe(false), InPCH(false), IsValid(false)
   {}
+
+  // FIXME: this is here to allow putting FileEntry in std::map.  Once we have
+  // emplace, we shouldn't need a copy constructor anymore.
+  /// Intentionally does not copy fields that are not set in an uninitialized
+  /// \c FileEntry.
+  FileEntry(const FileEntry &FE) : UniqueID(FE.UniqueID),
+      IsNamedPipe(FE.IsNamedPipe), InPCH(FE.InPCH), IsValid(FE.IsValid) {
+    assert(!isValid() && "Cannot copy an initialized FileEntry");
+  }
 
   const char *getName() const { return Name.c_str(); }
   bool isValid() const { return IsValid; }
