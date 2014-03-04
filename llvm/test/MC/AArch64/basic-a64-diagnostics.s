@@ -2478,13 +2478,13 @@
         ldp x2, x5, [sp, #4]
         ldp x5, x6, [x9, #512]
         stp x7, x8, [x10, #-520]
-// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp x2, x5, [sp, #4]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp x5, x6, [x9, #512]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp x7, x8, [x10, #-520]
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2516,10 +2516,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, d4, [xzr]
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp d5, d6, [x0, #512]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp d7, d8, [x0, #-520]
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2530,13 +2530,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, q2, [sp]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldp q3, q5, [sp, #8]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         stp q20, q25, [x5, #1024]
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldp q30, q15, [x23, #-1040]
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2581,13 +2581,13 @@
         ldp x2, x5, [sp], #4
         ldp x5, x6, [x9], #512
         stp x7, x8, [x10], #-520
-// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp x2, x5, [sp], #4
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp x5, x6, [x9], #512
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp x7, x8, [x10], #-520
 // CHECK-ERROR-NEXT:                            ^
 
@@ -2619,10 +2619,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, d4, [xzr], #0
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp d5, d6, [x0], #512
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp d7, d8, [x0], #-520
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2633,13 +2633,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, q2, [sp], #0
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldp q3, q5, [sp], #8
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         stp q20, q25, [x5], #1024
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldp q30, q15, [x23], #-1040
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2684,13 +2684,13 @@
         ldp x2, x5, [sp, #4]!
         ldp x5, x6, [x9, #512]!
         stp x7, x8, [x10, #-520]!
-// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp x2, x5, [sp, #4]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp x5, x6, [x9, #512]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp x7, x8, [x10, #-520]!
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2722,10 +2722,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, d4, [xzr, #0]!
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldp d5, d6, [x0, #512]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stp d7, d8, [x0, #-520]!
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2736,13 +2736,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldp d3, q2, [sp, #0]!
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldp q3, q5, [sp, #8]!
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         stp q20, q25, [x5, #1024]!
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldp q30, q15, [x23, #-1040]!
 // CHECK-ERROR-NEXT:                       ^
 
@@ -2773,13 +2773,13 @@
         ldnp x2, x5, [sp, #4]
         ldnp x5, x6, [x9, #512]
         stnp x7, x8, [x10, #-520]
-// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldnp x2, x5, [sp, #4]
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldnp x5, x6, [x9, #512]
 // CHECK-ERROR-NEXT:                           ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stnp x7, x8, [x10, #-520]
 // CHECK-ERROR-NEXT:                            ^
 
@@ -2811,10 +2811,10 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldnp d3, d4, [xzr]
 // CHECK-ERROR-NEXT:                      ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         ldnp d5, d6, [x0, #512]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 508]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 8 in range [-512, 504]
 // CHECK-ERROR-NEXT:         stnp d7, d8, [x0, #-520]
 // CHECK-ERROR-NEXT:                     ^
 
@@ -2825,13 +2825,13 @@
 // CHECK-ERROR: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         ldnp d3, q2, [sp]
 // CHECK-ERROR-NEXT:                 ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldnp q3, q5, [sp, #8]
 // CHECK-ERROR-NEXT:                     ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         stnp q20, q25, [x5, #1024]
 // CHECK-ERROR-NEXT:                       ^
-// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1016]
+// CHECK-ERROR-NEXT: error: expected integer multiple of 16 in range [-1024, 1008]
 // CHECK-ERROR-NEXT:         ldnp q30, q15, [x23, #-1040]
 // CHECK-ERROR-NEXT:                       ^
 

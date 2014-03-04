@@ -2509,10 +2509,10 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                  "expected integer multiple of 4 in range [-256, 252]");
   case Match_LoadStoreSImm7_8:
     return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
-                 "expected integer multiple of 8 in range [-512, 508]");
+                 "expected integer multiple of 8 in range [-512, 504]");
   case Match_LoadStoreSImm7_16:
     return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
-                 "expected integer multiple of 16 in range [-1024, 1016]");
+                 "expected integer multiple of 16 in range [-1024, 1008]");
   case Match_LoadStoreSImm9:
     return Error(((AArch64Operand*)Operands[ErrorInfo])->getStartLoc(),
                  "expected integer in range [-256, 255]");
