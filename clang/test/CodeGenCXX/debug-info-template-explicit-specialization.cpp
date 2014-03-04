@@ -38,7 +38,10 @@ void e<T>::f() {
 }
 extern template class e<int>;
 e<int> ei;
-// CHECK: ; [ DW_TAG_structure_type ] [e<int>] {{.*}} [decl]
+// There's no guarantee that the out of line definition will appear before the
+// explicit template instantiation definition, so conservatively emit the type
+// definition here.
+// CHECK: ; [ DW_TAG_structure_type ] [e<int>] {{.*}} [def]
 
 template <typename T>
 struct f {
@@ -49,11 +52,7 @@ template <typename T>
 void f<T>::g() {
 }
 f<int> fi;
-// Is this right? We don't seem to emit a def for 'f<int>::g' (even if it is
-// called in this translation unit) so I guess if we're relying on its
-// definition to be wherever the explicit instantiation definition is, we can do
-// the same for the debug info.
-// CHECK: ; [ DW_TAG_structure_type ] [f<int>] {{.*}} [decl]
+// CHECK: ; [ DW_TAG_structure_type ] [f<int>] {{.*}} [def]
 
 template <typename T>
 struct g {
@@ -70,3 +69,12 @@ struct h {
 };
 template class h<int>;
 // CHECK: ; [ DW_TAG_structure_type ] [h<int>] {{.*}} [def]
+
+template <typename T>
+struct i {
+  void f() {}
+};
+template<> void i<int>::f();
+extern template class i<int>;
+i<int> ii;
+// CHECK: ; [ DW_TAG_structure_type ] [i<int>] {{.*}} [def]

@@ -1462,7 +1462,8 @@ static bool hasExplicitMemberDefinition(CXXRecordDecl::method_iterator I,
                                         CXXRecordDecl::method_iterator End) {
   for (; I != End; ++I)
     if (FunctionDecl *Tmpl = I->getInstantiatedFromMemberFunction())
-      if (!Tmpl->isImplicit() && Tmpl->hasBody())
+      if (!Tmpl->isImplicit() && Tmpl->isThisDeclarationADefinition() &&
+          !I->getMemberSpecializationInfo()->isExplicitSpecialization())
         return true;
   return false;
 }
