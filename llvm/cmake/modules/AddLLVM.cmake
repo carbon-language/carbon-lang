@@ -456,7 +456,7 @@ macro(add_llvm_target target_name)
   include_directories(BEFORE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR})
-  add_llvm_library(LLVM${target_name} ${ARGN} ${TABLEGEN_OUTPUT})
+  add_llvm_library(LLVM${target_name} ${ARGN})
   set( CURRENT_LLVM_TARGET LLVM${target_name} )
 endmacro(add_llvm_target)
 
