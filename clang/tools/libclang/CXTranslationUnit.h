@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_CXTRANSLATIONUNIT_H
 #define LLVM_CLANG_CXTRANSLATIONUNIT_H
 
-#include "CXString.h"
 #include "CLog.h"
+#include "CXString.h"
 #include "clang-c/Index.h"
 
 namespace clang {

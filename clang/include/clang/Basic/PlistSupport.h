@@ -10,10 +10,10 @@
 #ifndef LLVM_CLANG_PLISTSUPPORT_H
 #define LLVM_CLANG_PLISTSUPPORT_H
 
-#include "llvm/Support/raw_ostream.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace clang {
 namespace markup {

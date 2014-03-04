@@ -13,9 +13,9 @@
 
 #include "clang/Driver/Multilib.h"
 #include "clang/Basic/LLVM.h"
-#include "gtest/gtest.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSwitch.h"
+#include "gtest/gtest.h"
 
 using namespace clang::driver;
 using namespace clang;
