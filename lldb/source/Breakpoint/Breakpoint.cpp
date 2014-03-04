@@ -541,7 +541,7 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
     
     if (!m_kind_description.empty())
     {
-        if (eDescriptionLevelBrief)
+        if (level == eDescriptionLevelBrief)
         {
             s->PutCString (GetBreakpointKind());
             return;
