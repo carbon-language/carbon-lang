@@ -137,6 +137,24 @@ define float @extract_v4f32_elt0() nounwind {
   ; MIPS32: .size extract_v4f32_elt0
 }
 
+define float @extract_v4f32_elt2() nounwind {
+  ; MIPS32: extract_v4f32_elt2:
+
+  %1 = load <4 x float>* @v4f32
+  ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
+
+  %2 = fadd <4 x float> %1, %1
+  ; MIPS32-DAG: fadd.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = extractelement <4 x float> %2, i32 2
+  ; Element 2 can be obtained by splatting it across the vector and extracting
+  ; $w0:sub_lo
+  ; MIPS32-DAG: splati.w $w0, [[R1]][2]
+
+  ret float %3
+  ; MIPS32: .size extract_v4f32_elt2
+}
+
 define double @extract_v2f64() nounwind {
   ; MIPS32: extract_v2f64:
 

@@ -2755,7 +2755,7 @@ emitCOPY_FW(MachineInstr *MI, MachineBasicBlock *BB) const{
   else {
     unsigned Wt = RegInfo.createVirtualRegister(&Mips::MSA128WRegClass);
 
-    BuildMI(*BB, MI, DL, TII->get(Mips::SPLATI_W), Wt).addReg(Ws).addImm(1);
+    BuildMI(*BB, MI, DL, TII->get(Mips::SPLATI_W), Wt).addReg(Ws).addImm(Lane);
     BuildMI(*BB, MI, DL, TII->get(Mips::COPY), Fd).addReg(Wt, 0, Mips::sub_lo);
   }
 
