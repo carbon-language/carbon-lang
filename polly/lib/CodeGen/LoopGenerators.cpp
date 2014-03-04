@@ -48,7 +48,8 @@ using namespace polly;
 //       always executed at least once, we can get rid of this branch.
 Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
                          PollyIRBuilder &Builder, Pass *P, BasicBlock *&ExitBB,
-                         ICmpInst::Predicate Predicate) {
+                         ICmpInst::Predicate Predicate,
+                         LoopAnnotator *Annotator, bool Parallel) {
 
   DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LoopInfo &LI = P->getAnalysis<LoopInfo>();
@@ -64,6 +65,12 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   BasicBlock *HeaderBB = BasicBlock::Create(Context, "polly.loop_header", F);
   BasicBlock *PreHeaderBB =
       BasicBlock::Create(Context, "polly.loop_preheader", F);
+
+  if (Annotator) {
+    Annotator->Begin(HeaderBB);
+    if (Parallel)
+      Annotator->SetCurrentParallel();
+  }
 
   // Update LoopInfo
   Loop *OuterLoop = LI.getLoopFor(BeforeBB);

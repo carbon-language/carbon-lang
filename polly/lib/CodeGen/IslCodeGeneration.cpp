@@ -539,8 +539,9 @@ Value *IslExprBuilder::create(__isl_take isl_ast_expr *Expr) {
 
 class IslNodeBuilder {
 public:
-  IslNodeBuilder(PollyIRBuilder &Builder, Pass *P)
-      : Builder(Builder), ExprBuilder(Builder, IDToValue, P), P(P) {}
+  IslNodeBuilder(PollyIRBuilder &Builder, LoopAnnotator &Annotator, Pass *P)
+      : Builder(Builder), Annotator(Annotator),
+        ExprBuilder(Builder, IDToValue, P), P(P) {}
 
   void addParameters(__isl_take isl_set *Context);
   void create(__isl_take isl_ast_node *Node);
@@ -548,6 +549,7 @@ public:
 
 private:
   PollyIRBuilder &Builder;
+  LoopAnnotator &Annotator;
   IslExprBuilder ExprBuilder;
   Pass *P;
 
@@ -778,6 +780,9 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For) {
   BasicBlock *ExitBlock;
   Value *IV;
   CmpInst::Predicate Predicate;
+  bool Parallel;
+
+  Parallel = isInnermostParallel(For);
 
   Body = isl_ast_node_for_get_body(For);
 
@@ -809,10 +814,13 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For) {
   if (MaxType != ValueInc->getType())
     ValueInc = Builder.CreateSExt(ValueInc, MaxType);
 
-  IV = createLoop(ValueLB, ValueUB, ValueInc, Builder, P, ExitBlock, Predicate);
+  IV = createLoop(ValueLB, ValueUB, ValueInc, Builder, P, ExitBlock, Predicate,
+                  &Annotator, Parallel);
   IDToValue[IteratorID] = IV;
 
   create(Body);
+
+  Annotator.End();
 
   IDToValue.erase(IteratorID);
 
@@ -1032,9 +1040,12 @@ public:
 
     BasicBlock *StartBlock = executeScopConditionally(S, this);
     isl_ast_node *Ast = AstInfo.getAst();
-    PollyIRBuilder Builder(StartBlock->begin());
+    LoopAnnotator Annotator;
+    PollyIRBuilder Builder(StartBlock->getContext(), llvm::ConstantFolder(),
+                           polly::IRInserter(Annotator));
+    Builder.SetInsertPoint(StartBlock->begin());
 
-    IslNodeBuilder NodeBuilder(Builder, this);
+    IslNodeBuilder NodeBuilder(Builder, Annotator, this);
 
     // Build condition that evaluates at run-time if all assumptions taken
     // for the scop hold. If we detect some assumptions do not hold, the

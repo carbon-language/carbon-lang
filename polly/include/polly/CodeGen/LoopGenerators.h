@@ -38,10 +38,14 @@ using namespace llvm;
 ///                   to update analysis information.
 /// @param ExitBlock  The block the loop will exit to.
 /// @param Predicate  The predicate used to generate the upper loop bound.
+/// @param Annotator  This function can (optionally) take a LoopAnnotator which
+///                   tracks the loop structure.
+/// @param Parallel   If this loop should be marked parallel in the Annotator.
 /// @return Value*    The newly created induction variable for this loop.
 Value *createLoop(Value *LowerBound, Value *UpperBound, Value *Stride,
                   PollyIRBuilder &Builder, Pass *P, BasicBlock *&ExitBlock,
-                  ICmpInst::Predicate Predicate);
+                  ICmpInst::Predicate Predicate,
+                  LoopAnnotator *Annotator = NULL, bool Parallel = false);
 
 class OMPGenerator {
 public:

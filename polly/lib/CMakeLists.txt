@@ -53,6 +53,7 @@ add_polly_library(LLVMPollyLib
   ${CLOOG_FILES}
   ${ISL_CODEGEN_FILES}
   CodeGen/LoopGenerators.cpp
+  CodeGen/IRBuilder.cpp
   CodeGen/Utils.cpp
   ${GPGPU_CODEGEN_FILES}
   Support/GICHelper.cpp
