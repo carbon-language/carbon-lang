@@ -81,7 +81,7 @@ signal_handler(int signo)
 static void
 display_usage (const char *progname)
 {
-    fprintf(stderr, "Usage:\n  %s [--log-file log-file-path] [--log-flags flags] [--lldb-command command]* [--platform platform_name] HOST:PORT "
+    fprintf(stderr, "Usage:\n  %s [--log-file log-file-path] [--log-flags flags] [--lldb-command command]* [--platform platform_name] [[HOST]:PORT] "
             "[-- PROGRAM ARG1 ARG2 ...]\n", progname);
     exit(0);
 }
@@ -331,14 +331,27 @@ main (int argc, char *argv[])
         std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
         if (conn_ap.get())
         {
-            std::string connect_url ("listen://");
-            connect_url.append(host_and_port);
+            std::string final_host_and_port;
 
-            printf ("Listening for a connection on %s...\n", host_and_port);
+            // If host_and_port starts with ':', default the host to be "localhost" and expect the remainder to be the port.
+            if (host_and_port[0] == ':')
+                final_host_and_port.append ("localhost");
+            final_host_and_port.append (host_and_port);
+
+            std::string connect_url ("listen://");
+            connect_url.append (final_host_and_port);
+
+            printf ("Listening for a connection on %s...\n", final_host_and_port.c_str ());
             if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
             {
                 printf ("Connection established.\n");
                 gdb_server.SetConnection (conn_ap.release());
+            }
+            else
+            {
+                fprintf (stderr, "failed to connect to '%s': %s\n", final_host_and_port.c_str (), error.AsCString ());
+                display_usage (progname);
+                exit (1);
             }
         }
 
@@ -365,6 +378,12 @@ main (int argc, char *argv[])
                 fprintf(stderr, "error: handshake with client failed\n");
             }
         }
+    }
+    else
+    {
+        fprintf (stderr, "no connection information provided, unable to run\n");
+        display_usage (progname);
+        exit (1);
     }
 
     terminate_lldb_gdbserver ();
