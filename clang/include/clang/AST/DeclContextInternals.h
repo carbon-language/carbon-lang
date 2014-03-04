@@ -46,10 +46,8 @@ struct StoredDeclsList {
 public:
   StoredDeclsList() {}
 
-  StoredDeclsList(const StoredDeclsList &RHS) : Data(RHS.Data) {
-    if (DeclsTy *RHSVec = RHS.getAsVector())
-      Data = DeclsAndHasExternalTy(new DeclsTy(*RHSVec),
-                                   RHS.hasExternalDecls());
+  StoredDeclsList(StoredDeclsList &&RHS) : Data(RHS.Data) {
+    RHS.Data = (NamedDecl *)0;
   }
 
   ~StoredDeclsList() {
@@ -58,12 +56,11 @@ public:
       delete Vector;
   }
 
-  StoredDeclsList &operator=(const StoredDeclsList &RHS) {
+  StoredDeclsList &operator=(StoredDeclsList &&RHS) {
     if (DeclsTy *Vector = getAsVector())
       delete Vector;
     Data = RHS.Data;
-    if (DeclsTy *RHSVec = RHS.getAsVector())
-      Data = DeclsAndHasExternalTy(new DeclsTy(*RHSVec), hasExternalDecls());
+    RHS.Data = (NamedDecl *)0;
     return *this;
   }
 
