@@ -2511,11 +2511,8 @@ private:
   }
 
   /// ComputeThisOffset - Returns the 'this' argument offset for the given
-  /// method in the given subobject, relative to the beginning of the
-  /// MostDerivedClass.
-  CharUnits ComputeThisOffset(const CXXMethodDecl *MD,
-                              BaseSubobject Base,
-                              FinalOverriders::OverriderInfo Overrider);
+  /// method, relative to the beginning of the MostDerivedClass.
+  CharUnits ComputeThisOffset(FinalOverriders::OverriderInfo Overrider);
 
   void CalculateVtordispAdjustment(FinalOverriders::OverriderInfo Overrider,
                                    CharUnits ThisOffset, ThisAdjustment &TA);
@@ -2686,14 +2683,13 @@ static bool BaseInSet(const CXXBaseSpecifier *Specifier,
 }
 
 CharUnits
-VFTableBuilder::ComputeThisOffset(const CXXMethodDecl *MD,
-                                  BaseSubobject Base,
-                                  FinalOverriders::OverriderInfo Overrider) {
+VFTableBuilder::ComputeThisOffset(FinalOverriders::OverriderInfo Overrider) {
   InitialOverriddenDefinitionCollector Collector;
-  visitAllOverriddenMethods(MD, Collector);
+  visitAllOverriddenMethods(Overrider.Method, Collector);
 
   CXXBasePaths Paths;
-  Base.getBase()->lookupInBases(BaseInSet, &Collector.Bases, Paths);
+  Overrider.Method->getParent()->lookupInBases(BaseInSet, &Collector.Bases,
+                                               Paths);
 
   // This will hold the smallest this offset among overridees of MD.
   // This implies that an offset of a non-virtual base will dominate an offset
@@ -2705,7 +2701,7 @@ VFTableBuilder::ComputeThisOffset(const CXXMethodDecl *MD,
   for (CXXBasePaths::paths_iterator I = Paths.begin(), E = Paths.end();
        I != E; ++I) {
     const CXXBasePath &Path = (*I);
-    CharUnits ThisOffset = Base.getBaseOffset();
+    CharUnits ThisOffset = Overrider.Offset;
     CharUnits LastVBaseOffset;
 
     // For each path from the overrider to the parents of the overridden methods,
@@ -2736,16 +2732,16 @@ VFTableBuilder::ComputeThisOffset(const CXXMethodDecl *MD,
       }
     }
 
-    if (isa<CXXDestructorDecl>(MD)) {
+    if (isa<CXXDestructorDecl>(Overrider.Method)) {
       if (LastVBaseOffset.isZero()) {
         // If a "Base" class has at least one non-virtual base with a virtual
         // destructor, the "Base" virtual destructor will take the address
         // of the "Base" subobject as the "this" argument.
-        return Base.getBaseOffset();
+        ThisOffset = Overrider.Offset;
       } else {
         // A virtual destructor of a virtual base takes the address of the
         // virtual base subobject as the "this" argument.
-        return LastVBaseOffset;
+        ThisOffset = LastVBaseOffset;
       }
     }
 
@@ -2920,7 +2916,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
       MethodInfo &OverriddenMethodInfo = OverriddenMDIterator->second;
 
       // Create a this-adjusting thunk if needed.
-      CharUnits TI = ComputeThisOffset(MD, Base, Overrider);
+      CharUnits TI = ComputeThisOffset(Overrider);
       if (TI != WhichVFPtr.FullOffsetInMDC) {
         ThisAdjustmentOffset.NonVirtual =
             (TI - WhichVFPtr.FullOffsetInMDC).getQuantity();
