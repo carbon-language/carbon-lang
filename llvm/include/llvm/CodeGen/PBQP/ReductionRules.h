@@ -158,7 +158,6 @@ namespace PBQP {
   template <typename GraphT, typename StackT>
   Solution backpropagate(GraphT& G, StackT stack) {
     typedef GraphBase::NodeId NodeId;
-    typedef GraphBase::EdgeId EdgeId;
     typedef typename GraphT::Matrix Matrix;
     typedef typename GraphT::RawVector RawVector;
 
