@@ -37,16 +37,14 @@ namespace llvm {
 class Value;
 class User;
 class Use;
-template<typename>
-struct simplify_type;
+template <typename> struct simplify_type;
 
 // Use** is only 4-byte aligned.
-template<>
-class PointerLikeTypeTraits<Use**> {
+template <> class PointerLikeTypeTraits<Use **> {
 public:
-  static inline void *getAsVoidPointer(Use** P) { return P; }
+  static inline void *getAsVoidPointer(Use **P) { return P; }
   static inline Use **getFromVoidPointer(void *P) {
-    return static_cast<Use**>(P);
+    return static_cast<Use **>(P);
   }
   enum { NumLowBitsAvailable = 2 };
 };
@@ -76,28 +74,24 @@ public:
 
   // A type for the word following an array of hung-off Uses in memory, which is
   // a pointer back to their User with the bottom bit set.
-  typedef PointerIntPair<User*, 1, unsigned> UserRef;
+  typedef PointerIntPair<User *, 1, unsigned> UserRef;
 
 private:
   Use(const Use &U) LLVM_DELETED_FUNCTION;
 
   /// Destructor - Only for zap()
   ~Use() {
-    if (Val) removeFromList();
+    if (Val)
+      removeFromList();
   }
 
-  enum PrevPtrTag { zeroDigitTag
-                  , oneDigitTag
-                  , stopTag
-                  , fullStopTag };
+  enum PrevPtrTag { zeroDigitTag, oneDigitTag, stopTag, fullStopTag };
 
   /// Constructor
-  Use(PrevPtrTag tag) : Val(0) {
-    Prev.setInt(tag);
-  }
+  Use(PrevPtrTag tag) : Val(0) { Prev.setInt(tag); }
 
 public:
-  operator Value*() const { return Val; }
+  operator Value *() const { return Val; }
   Value *get() const { return Val; }
 
   /// \brief Returns the User that contains this Use.
@@ -117,7 +111,7 @@ public:
     return *this;
   }
 
-        Value *operator->()       { return Val; }
+  Value *operator->() { return Val; }
   const Value *operator->() const { return Val; }
 
   Use *getNext() const { return Next; }
@@ -133,25 +127,25 @@ public:
   static void zap(Use *Start, const Use *Stop, bool del = false);
 
 private:
-  const Use* getImpliedUser() const;
+  const Use *getImpliedUser() const;
 
   Value *Val;
   Use *Next;
-  PointerIntPair<Use**, 2, PrevPtrTag> Prev;
+  PointerIntPair<Use **, 2, PrevPtrTag> Prev;
 
-  void setPrev(Use **NewPrev) {
-    Prev.setPointer(NewPrev);
-  }
+  void setPrev(Use **NewPrev) { Prev.setPointer(NewPrev); }
   void addToList(Use **List) {
     Next = *List;
-    if (Next) Next->setPrev(&Next);
+    if (Next)
+      Next->setPrev(&Next);
     setPrev(List);
     *List = this;
   }
   void removeFromList() {
     Use **StrippedPrev = Prev.getPointer();
     *StrippedPrev = Next;
-    if (Next) Next->setPrev(StrippedPrev);
+    if (Next)
+      Next->setPrev(StrippedPrev);
   }
 
   friend class Value;
@@ -159,20 +153,14 @@ private:
 
 /// \brief Allow clients to treat uses just like values when using
 /// casting operators.
-template<> struct simplify_type<Use> {
-  typedef Value* SimpleType;
-  static SimpleType getSimplifiedValue(Use &Val) {
-    return Val.get();
-  }
+template <> struct simplify_type<Use> {
+  typedef Value *SimpleType;
+  static SimpleType getSimplifiedValue(Use &Val) { return Val.get(); }
 };
-template<> struct simplify_type<const Use> {
-  typedef /*const*/ Value* SimpleType;
-  static SimpleType getSimplifiedValue(const Use &Val) {
-    return Val.get();
-  }
+template <> struct simplify_type<const Use> {
+  typedef /*const*/ Value *SimpleType;
+  static SimpleType getSimplifiedValue(const Use &Val) { return Val.get(); }
 };
-
-
 
 template<typename UserTy>  // UserTy == 'User' or 'const User'
 class value_use_iterator : public std::iterator<std::forward_iterator_tag,

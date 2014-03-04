@@ -40,10 +40,9 @@ void Use::swap(Use &RHS) {
 
 User *Use::getUser() const {
   const Use *End = getImpliedUser();
-  const UserRef *ref = reinterpret_cast<const UserRef*>(End);
-  return ref->getInt()
-    ? ref->getPointer()
-    : reinterpret_cast<User*>(const_cast<Use*>(End));
+  const UserRef *ref = reinterpret_cast<const UserRef *>(End);
+  return ref->getInt() ? ref->getPointer()
+                       : reinterpret_cast<User *>(const_cast<Use *>(End));
 }
 
 // Sets up the waymarking algoritm's tags for a series of Uses. See the
@@ -51,31 +50,28 @@ User *Use::getUser() const {
 //
 //   http://www.llvm.org/docs/ProgrammersManual.html#UserLayout
 //
-Use *Use::initTags(Use * const Start, Use *Stop) {
+Use *Use::initTags(Use *const Start, Use *Stop) {
   ptrdiff_t Done = 0;
   while (Done < 20) {
     if (Start == Stop--)
       return Start;
-    static const PrevPtrTag tags[20] = { fullStopTag, oneDigitTag, stopTag,
-                                         oneDigitTag, oneDigitTag, stopTag,
-                                         zeroDigitTag, oneDigitTag, oneDigitTag,
-                                         stopTag, zeroDigitTag, oneDigitTag,
-                                         zeroDigitTag, oneDigitTag, stopTag,
-                                         oneDigitTag, oneDigitTag, oneDigitTag,
-                                         oneDigitTag, stopTag
-                                       };
-    new(Stop) Use(tags[Done++]);
+    static const PrevPtrTag tags[20] = {
+        fullStopTag,  oneDigitTag,  stopTag,      oneDigitTag, oneDigitTag,
+        stopTag,      zeroDigitTag, oneDigitTag,  oneDigitTag, stopTag,
+        zeroDigitTag, oneDigitTag,  zeroDigitTag, oneDigitTag, stopTag,
+        oneDigitTag,  oneDigitTag,  oneDigitTag,  oneDigitTag, stopTag};
+    new (Stop) Use(tags[Done++]);
   }
 
   ptrdiff_t Count = Done;
   while (Start != Stop) {
     --Stop;
     if (!Count) {
-      new(Stop) Use(stopTag);
+      new (Stop) Use(stopTag);
       ++Done;
       Count = Done;
     } else {
-      new(Stop) Use(PrevPtrTag(Count & 1));
+      new (Stop) Use(PrevPtrTag(Count & 1));
       Count >>= 1;
       ++Done;
     }
@@ -97,29 +93,29 @@ const Use *Use::getImpliedUser() const {
   while (true) {
     unsigned Tag = (Current++)->Prev.getInt();
     switch (Tag) {
-      case zeroDigitTag:
-      case oneDigitTag:
-        continue;
+    case zeroDigitTag:
+    case oneDigitTag:
+      continue;
 
-      case stopTag: {
-        ++Current;
-        ptrdiff_t Offset = 1;
-        while (true) {
-          unsigned Tag = Current->Prev.getInt();
-          switch (Tag) {
-            case zeroDigitTag:
-            case oneDigitTag:
-              ++Current;
-              Offset = (Offset << 1) + Tag;
-              continue;
-            default:
-              return Current + Offset;
-          }
+    case stopTag: {
+      ++Current;
+      ptrdiff_t Offset = 1;
+      while (true) {
+        unsigned Tag = Current->Prev.getInt();
+        switch (Tag) {
+        case zeroDigitTag:
+        case oneDigitTag:
+          ++Current;
+          Offset = (Offset << 1) + Tag;
+          continue;
+        default:
+          return Current + Offset;
         }
       }
+    }
 
-      case fullStopTag:
-        return Current;
+    case fullStopTag:
+      return Current;
     }
   }
 }
