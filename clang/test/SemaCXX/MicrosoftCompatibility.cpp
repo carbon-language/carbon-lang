@@ -3,6 +3,7 @@
 
 typedef unsigned short char16_t;
 typedef unsigned int char32_t;
+struct _Atomic {};
 
 typename decltype(3) a; // expected-warning {{expected a qualified name after 'typename'}}
 
