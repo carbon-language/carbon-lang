@@ -213,6 +213,26 @@ set(arm_SOURCES
   arm/switch32.S
   arm/switch8.S
   arm/switchu8.S
+  arm/sync_fetch_and_add_4.S
+  arm/sync_fetch_and_add_8.S
+  arm/sync_fetch_and_and_4.S
+  arm/sync_fetch_and_and_8.S
+  arm/sync_fetch_and_max_4.S
+  arm/sync_fetch_and_max_8.S
+  arm/sync_fetch_and_min_4.S
+  arm/sync_fetch_and_min_8.S
+  arm/sync_fetch_and_nand_4.S
+  arm/sync_fetch_and_nand_8.S
+  arm/sync_fetch_and_or_4.S
+  arm/sync_fetch_and_or_8.S
+  arm/sync_fetch_and_sub_4.S
+  arm/sync_fetch_and_sub_8.S
+  arm/sync_fetch_and_umax_4.S
+  arm/sync_fetch_and_umax_8.S
+  arm/sync_fetch_and_umin_4.S
+  arm/sync_fetch_and_umin_8.S
+  arm/sync_fetch_and_xor_4.S
+  arm/sync_fetch_and_xor_8.S
   arm/sync_synchronize.S
   arm/truncdfsf2vfp.S
   arm/udivmodsi4.S

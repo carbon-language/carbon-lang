@@ -9,7 +9,7 @@
 
 ModuleName := builtins
 SubDirs := 
-OnlyArchs := armv5 armv6 armv7 armv7k armv7m armv7em armv7s
+OnlyArchs := armv5 armv6 armv6m armv7 armv7k armv7m armv7em armv7s
 
 AsmSources := $(foreach file,$(wildcard $(Dir)/*.S),$(notdir $(file)))
 Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))
