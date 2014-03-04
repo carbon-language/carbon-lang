@@ -1,4 +1,4 @@
-//======-- llvm/Support/NoFolder.h - Constant folding helper -*- C++ -*-======//
+//===- NoFolder.h - Constant folding helper ---------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,8 +19,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_NOFOLDER_H
-#define LLVM_SUPPORT_NOFOLDER_H
+#ifndef LLVM_IR_NOFOLDER_H
+#define LLVM_IR_NOFOLDER_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/IR/Constants.h"

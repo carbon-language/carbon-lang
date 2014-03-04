@@ -20,10 +20,10 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/NoFolder.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/NoFolder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #define DEBUG_TYPE "xcore-lower-thread-local"
