@@ -14,27 +14,26 @@
 namespace llvm {
 
 void Use::swap(Use &RHS) {
-  Value *V1(Val);
-  Value *V2(RHS.Val);
-  if (V1 != V2) {
-    if (V1) {
-      removeFromList();
-    }
+  if (Val == RHS.Val)
+    return;
 
-    if (V2) {
-      RHS.removeFromList();
-      Val = V2;
-      V2->addUse(*this);
-    } else {
-      Val = 0;
-    }
+  if (Val)
+    removeFromList();
 
-    if (V1) {
-      RHS.Val = V1;
-      V1->addUse(RHS);
-    } else {
-      RHS.Val = 0;
-    }
+  Value *OldVal = Val;
+  if (RHS.Val) {
+    RHS.removeFromList();
+    Val = RHS.Val;
+    Val->addUse(*this);
+  } else {
+    Val = 0;
+  }
+
+  if (OldVal) {
+    RHS.Val = OldVal;
+    RHS.Val->addUse(RHS);
+  } else {
+    RHS.Val = 0;
   }
 }
 
