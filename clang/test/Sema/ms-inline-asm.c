@@ -50,3 +50,28 @@ void rdar15318432(void) {
     and ecx, ~15
   }
 }
+
+static int global;
+
+int t2(int *arr, int i) {
+  __asm {
+    mov eax, arr;
+    mov eax, arr[0];
+    mov eax, arr[1 + 2];
+    mov eax, arr[1 + (2 * 5) - 3 + 1<<1];
+  }
+
+  // expected-error@+1 {{cannot use base register with variable reference}}
+  __asm mov eax, arr[ebp + 1 + (2 * 5) - 3 + 1<<1]
+  // expected-error@+1 {{cannot use index register with variable reference}}
+  __asm mov eax, arr[esi * 4]
+  // expected-error@+1 {{cannot use more than one symbol in memory operand}}
+  __asm mov eax, arr[i]
+  // expected-error@+1 {{cannot use more than one symbol in memory operand}}
+  __asm mov eax, global[i]
+
+  // FIXME: Why don't we diagnose this?
+  // expected-Xerror@+1 {{cannot reference multiple local variables in assembly operand}}
+  //__asm mov eax, [arr + i];
+  return 0;
+}
