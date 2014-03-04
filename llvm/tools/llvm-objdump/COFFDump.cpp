@@ -277,9 +277,7 @@ static void printLoadConfiguration(const COFFObjectFile *Obj) {
   if (error(Obj->getRvaPtr(DataDir->RelativeVirtualAddress, IntPtr)))
     return;
 
-  const coff_load_configuration32 *LoadConf =
-      reinterpret_cast<const coff_load_configuration32 *>(IntPtr);
-
+  auto *LoadConf = reinterpret_cast<const coff_load_configuration32 *>(IntPtr);
   outs() << "Load configuration:"
          << "\n  Timestamp: " << LoadConf->TimeDateStamp
          << "\n  Major Version: " << LoadConf->MajorVersion
@@ -515,8 +513,8 @@ static void printRuntimeFunctionRels(const COFFObjectFile *Obj,
   if (UnwindInfoOffset > XContents.size())
     return;
 
-  const Win64EH::UnwindInfo *UI = reinterpret_cast<const Win64EH::UnwindInfo *>(
-      XContents.data() + UnwindInfoOffset);
+  auto *UI = reinterpret_cast<const Win64EH::UnwindInfo *>(XContents.data() +
+                                                           UnwindInfoOffset);
   printWin64EHUnwindInfo(UI);
 }
 
