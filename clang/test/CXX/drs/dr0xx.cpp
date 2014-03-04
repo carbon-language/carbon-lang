@@ -141,6 +141,21 @@ namespace dr12 { // dr12: sup 239
   }
 }
 
+namespace dr13 { // dr13: no
+  extern "C" void f(int);
+  void g(char);
+
+  template<typename T> struct A {
+    A(void (*fp)(T));
+  };
+  template<typename T> int h(void (T));
+
+  A<int> a1(f); // FIXME: We should reject this.
+  A<char> a2(g);
+  int a3 = h(f); // FIXME: We should reject this.
+  int a4 = h(g);
+}
+
 namespace dr14 { // dr14: yes
   namespace X { extern "C" int dr14_f(); }
   namespace Y { extern "C" int dr14_f(); }
@@ -949,6 +964,22 @@ namespace dr90 { // dr90: yes
 namespace dr91 { // dr91: yes
   union U { friend int f(U); };
   int k = f(U());
+}
+
+namespace dr92 { // dr92: yes
+  void f() throw(int, float);
+  void (*p)() throw(int) = &f; // expected-error {{target exception specification is not superset of source}}
+  void (*q)() throw(int);
+  void (**pp)() throw() = &q; // expected-error {{exception specifications are not allowed}}
+
+  void g(void() throw());
+  void h() {
+    g(f); // expected-error {{is not superset}}
+    g(q); // expected-error {{is not superset}}
+  }
+
+  template<void() throw()> struct X {};
+  X<&f> xp; // ok
 }
 
 // dr93: na

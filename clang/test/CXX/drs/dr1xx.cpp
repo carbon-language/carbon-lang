@@ -594,6 +594,8 @@ namespace dr155 { // dr155: dup 632
   struct S { int n; } s = { { 1 } }; // expected-warning {{braces around scalar initializer}}
 }
 
+// dr158 FIXME write codegen test
+
 namespace dr159 { // dr159: 3.5
   namespace X { void f(); }
   void f();

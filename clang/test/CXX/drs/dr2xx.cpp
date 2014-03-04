@@ -216,8 +216,22 @@ namespace dr221 { // dr221: yes
   }
 }
 
-// dr222 is a mystery -- it lists no changes to the standard, and yet was
-// apparently both voted into the WP and acted upon by the editor.
+namespace dr222 { // dr222: dup 637
+  void f(int a, int b, int c, int *x) {
+#pragma clang diagnostic push
+#pragma clang diagnostic warning "-Wunsequenced"
+    void((a += b) += c);
+    void((a += b) + (a += c)); // expected-warning {{multiple unsequenced modifications to 'a'}}
+
+    x[a++] = a; // expected-warning {{unsequenced modification and access to 'a'}}
+
+    a = b = 0; // ok, read and write of 'b' are sequenced
+
+    a = (b = a++); // expected-warning {{multiple unsequenced modifications to 'a'}}
+    a = (b = ++a);
+#pragma clang diagnostic pop
+  }
+}
 
 // dr223: na
 
@@ -361,6 +375,13 @@ namespace dr229 { // dr229: yes
   template<typename T> void f();
   template<typename T> void f<T*>() {} // expected-error {{function template partial specialization}}
   template<> void f<int>() {}
+}
+
+namespace dr230 { // dr230: yes
+  struct S {
+    S() { f(); } // expected-warning {{call to pure virtual member function}}
+    virtual void f() = 0; // expected-note {{declared here}}
+  };
 }
 
 namespace dr231 { // dr231: yes
