@@ -10,6 +10,7 @@
 #ifndef LLVM_SUPPORT_CRASHRECOVERYCONTEXT_H
 #define LLVM_SUPPORT_CRASHRECOVERYCONTEXT_H
 
+#include <functional>
 #include <string>
 
 namespace llvm {
@@ -75,6 +76,7 @@ public:
   /// make as little assumptions as possible about the program state when
   /// RunSafely has returned false. Clients can use getBacktrace() to retrieve
   /// the backtrace of the crash on failures.
+  bool RunSafely(std::function<void()> Fn);
   bool RunSafely(void (*Fn)(void*), void *UserData);
 
   /// \brief Execute the provide callback function (with the given arguments) in
@@ -83,6 +85,8 @@ public:
   ///
   /// See RunSafely() and llvm_execute_on_thread().
   bool RunSafelyOnThread(void (*Fn)(void*), void *UserData,
+                         unsigned RequestedStackSize = 0);
+  bool RunSafelyOnThread(std::function<void()> Fn,
                          unsigned RequestedStackSize = 0);
 
   /// \brief Explicitly trigger a crash recovery in the current process, and
