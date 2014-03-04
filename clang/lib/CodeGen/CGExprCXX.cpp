@@ -18,8 +18,8 @@
 #include "CGObjCRuntime.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/Support/CallSite.h"
 
 using namespace clang;
 using namespace CodeGen;

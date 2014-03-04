@@ -22,9 +22,9 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InlineAsm.h"
-#include "llvm/Support/CallSite.h"
 using namespace clang;
 using namespace CodeGen;
 

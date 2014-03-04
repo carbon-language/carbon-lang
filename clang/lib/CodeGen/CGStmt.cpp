@@ -20,10 +20,10 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Intrinsics.h"
-#include "llvm/Support/CallSite.h"
 using namespace clang;
 using namespace CodeGen;
 

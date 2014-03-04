@@ -18,9 +18,9 @@
 #include "CodeGenModule.h"
 #include "clang/AST/DeclObjC.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/CallSite.h"
 #include <algorithm>
 #include <cstdio>
 
