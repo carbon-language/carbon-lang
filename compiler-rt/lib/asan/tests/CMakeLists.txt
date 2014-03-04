@@ -69,11 +69,9 @@ if(NOT ANDROID)
 endif()
 
 set(ASAN_UNITTEST_NOINST_LINKFLAGS
-  ${ASAN_UNITTEST_COMMON_LINKFLAGS}
-  -ldl -lm)
-if(NOT ANDROID)
-  list(APPEND ASAN_UNITTEST_NOINST_LINKFLAGS -lpthread)
-endif()
+  ${ASAN_UNITTEST_COMMON_LINKFLAGS} -lm)
+append_if(ASAN_UNITTEST_NOINST_LINKFLAGS COMPILER_RT_HAS_LIBDL -ldl)
+append_if(ASAN_UNITTEST_NOINST_LINKFLAGS COMPILER_RT_HAS_LIBPTHREAD -lpthread)
 
 # Compile source for the given architecture, using compiler
 # options in ${ARGN}, and add it to the object list.

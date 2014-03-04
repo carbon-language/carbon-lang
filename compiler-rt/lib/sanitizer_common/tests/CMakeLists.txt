@@ -41,7 +41,9 @@ set(SANITIZER_TEST_CFLAGS_COMMON
   -Wall -Werror -Werror=sign-compare)
 
 set(SANITIZER_TEST_LINK_FLAGS_COMMON
-  -lstdc++ -ldl)
+  -lstdc++)
+append_if(SANITIZER_TEST_LINK_FLAGS_COMMON COMPILER_RT_HAS_LIBDL -ldl)
+append_if(SANITIZER_TEST_LINK_FLAGS_COMMON COMPILER_RT_HAS_LIBPTHREAD -lpthread)
 
 include_directories(..)
 include_directories(../..)
@@ -96,7 +98,7 @@ macro(add_sanitizer_tests_for_arch arch)
                                ${SANITIZER_COMMON_LIB_NAME}
                        DEPS ${SANITIZER_TEST_OBJECTS} ${SANITIZER_COMMON_LIB}
                        LINK_FLAGS ${SANITIZER_TEST_LINK_FLAGS_COMMON}
-                                  -lpthread ${TARGET_FLAGS})
+                                  ${TARGET_FLAGS})
 
   if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND "${arch}" STREQUAL "x86_64")
     # Test that the libc-independent part of sanitizer_common is indeed

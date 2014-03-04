@@ -23,11 +23,11 @@ set(MSAN_LIBCXX_CFLAGS
   -mno-omit-leaf-frame-pointer)
 set(MSAN_LIBCXX_LINK_FLAGS
   -nodefaultlibs
-  -lpthread
   -lrt
   -lc
   -lstdc++
   -fsanitize=memory)
+append_if(MSAN_LIBCXX_LINK_FLAGS COMPILER_RT_HAS_LIBPTHREAD -lpthread)
 
 # Unittest sources and build flags.
 set(MSAN_UNITTEST_SOURCES msan_test.cc msan_test_main.cc)
@@ -61,10 +61,10 @@ set(MSAN_UNITTEST_INSTRUMENTED_CFLAGS
 )
 set(MSAN_UNITTEST_LINK_FLAGS
   -fsanitize=memory
-  -ldl
   # FIXME: we build libcxx without cxxabi and need libstdc++ to provide it.
   -lstdc++
 )
+append_if(MSAN_UNITTEST_LINK_FLAGS COMPILER_RT_HAS_LIBDL -ldl)
 set(MSAN_LOADABLE_LINK_FLAGS
   -fsanitize=memory
   -shared
