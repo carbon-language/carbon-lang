@@ -3,6 +3,7 @@
 // RUN: ASAN_OPTIONS=malloc_context_size=0:fast_unwind_on_malloc=1 not %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os
 // RUN: ASAN_OPTIONS=malloc_context_size=1:fast_unwind_on_malloc=0 not %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os
 // RUN: ASAN_OPTIONS=malloc_context_size=1:fast_unwind_on_malloc=1 not %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os
+// RUN: ASAN_OPTIONS=malloc_context_size=2 not %t 2>&1 | FileCheck %s --check-prefix=TWO
 
 int main() {
   char *x = new char[20];
@@ -24,4 +25,9 @@ int main() {
   // CHECK-NOT: #1 0x{{.*}}
 
   // CHECK: SUMMARY: AddressSanitizer: heap-use-after-free
+
+  // TWO: previously allocated by thread T{{.*}} here:
+  // TWO-NEXT: #0 0x{{.*}}
+  // TWO-NEXT: #1 0x{{.*}} in main {{.*}}malloc_context_size.cc
+  // TWO: SUMMARY: AddressSanitizer: heap-use-after-free
 }

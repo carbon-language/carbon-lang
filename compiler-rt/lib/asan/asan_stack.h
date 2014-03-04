@@ -19,48 +19,64 @@
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 
+namespace __asan {
+
 // Get the stack trace with the given pc and bp.
 // The pc will be in the position 0 of the resulting stack trace.
 // The bp may refer to the current frame or to the caller's frame.
+ALWAYS_INLINE
+void GetStackTraceWithPcBpAndContext(StackTrace *stack, uptr max_depth, uptr pc,
+                                     uptr bp, void *context, bool fast) {
 #if SANITIZER_WINDOWS
-#define GET_STACK_TRACE_WITH_PC_BP_AND_CONTEXT(max_s, pc, bp, context, fast) \
-  StackTrace stack;                                                          \
-  stack.Unwind(max_s, pc, bp, context, 0, 0, fast)
+  stack->Unwind(max_depth, pc, bp, context, 0, 0, fast);
 #else
-#define GET_STACK_TRACE_WITH_PC_BP_AND_CONTEXT(max_s, pc, bp, context, fast)   \
-  StackTrace stack;                                                            \
-  {                                                                            \
-    AsanThread *t;                                                             \
-    stack.size = 0;                                                            \
-    if (asan_inited) {                                                         \
-      if ((t = GetCurrentThread()) && !t->isUnwinding()) {                     \
-        uptr stack_top = t->stack_top();                                       \
-        uptr stack_bottom = t->stack_bottom();                                 \
-        ScopedUnwinding unwind_scope(t);                                       \
-        stack.Unwind(max_s, pc, bp, context, stack_top, stack_bottom, fast);   \
-      } else if (t == 0 && !fast) {                                            \
-        /* If GetCurrentThread() has failed, try to do slow unwind anyways. */ \
-        stack.Unwind(max_s, pc, bp, context, 0, 0, false);                     \
-      }                                                                        \
-    }                                                                          \
+  AsanThread *t;
+  stack->size = 0;
+  if (asan_inited) {
+    if ((t = GetCurrentThread()) && !t->isUnwinding()) {
+      uptr stack_top = t->stack_top();
+      uptr stack_bottom = t->stack_bottom();
+      ScopedUnwinding unwind_scope(t);
+      stack->Unwind(max_depth, pc, bp, context, stack_top, stack_bottom, fast);
+    } else if (t == 0 && !fast) {
+      /* If GetCurrentThread() has failed, try to do slow unwind anyways. */
+      stack->Unwind(max_depth, pc, bp, context, 0, 0, false);
+    }
   }
 #endif  // SANITIZER_WINDOWS
+}
+
+}  // namespace __asan
 
 // NOTE: A Rule of thumb is to retrieve stack trace in the interceptors
 // as early as possible (in functions exposed to the user), as we generally
 // don't want stack trace to contain functions from ASan internals.
 
 #define GET_STACK_TRACE(max_size, fast)                                        \
-  GET_STACK_TRACE_WITH_PC_BP_AND_CONTEXT(max_size, StackTrace::GetCurrentPc(), \
-                                         GET_CURRENT_FRAME(), 0, fast)
+  StackTrace stack;                                                            \
+  if (max_size <= 2) {                                                         \
+    stack.size = max_size;                                                     \
+    if (max_size > 0) {                                                        \
+      stack.top_frame_bp = GET_CURRENT_FRAME();                                \
+      stack.trace[0] = StackTrace::GetCurrentPc();                             \
+    }                                                                          \
+    if (max_size > 1)                                                          \
+      stack.trace[1] = GET_CALLER_PC();                                        \
+  } else {                                                                     \
+    GetStackTraceWithPcBpAndContext(&stack, max_size,                          \
+                                    StackTrace::GetCurrentPc(),                \
+                                    GET_CURRENT_FRAME(), 0, fast);             \
+  }
 
-#define GET_STACK_TRACE_FATAL(pc, bp)                               \
-  GET_STACK_TRACE_WITH_PC_BP_AND_CONTEXT(kStackTraceMax, pc, bp, 0, \
-                                         common_flags()->fast_unwind_on_fatal)
+#define GET_STACK_TRACE_FATAL(pc, bp)                                          \
+  StackTrace stack;                                                            \
+  GetStackTraceWithPcBpAndContext(&stack, kStackTraceMax, pc, bp, 0,           \
+                                  common_flags()->fast_unwind_on_fatal)
 
-#define GET_STACK_TRACE_SIGNAL(pc, bp, context)                           \
-  GET_STACK_TRACE_WITH_PC_BP_AND_CONTEXT(kStackTraceMax, pc, bp, context, \
-                                         common_flags()->fast_unwind_on_fatal)
+#define GET_STACK_TRACE_SIGNAL(pc, bp, context)                                \
+  StackTrace stack;                                                            \
+  GetStackTraceWithPcBpAndContext(&stack, kStackTraceMax, pc, bp, context,     \
+                                  common_flags()->fast_unwind_on_fatal)
 
 #define GET_STACK_TRACE_FATAL_HERE                                \
   GET_STACK_TRACE(kStackTraceMax, common_flags()->fast_unwind_on_fatal)
