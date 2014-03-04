@@ -576,6 +576,13 @@ IRMemoryMap::ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t si
     
     uint64_t offset = process_address - allocation.m_process_start;
     
+    if (offset > allocation.m_size)
+    {
+        error.SetErrorToGenericError();
+        error.SetErrorString("Couldn't read: data is not in the allocation");
+        return;
+    }
+    
     lldb::ProcessSP process_sp;
     
     switch (allocation.m_policy)
@@ -591,6 +598,13 @@ IRMemoryMap::ReadMemory (uint8_t *bytes, lldb::addr_t process_address, size_t si
             error.SetErrorString("Couldn't read: data buffer is empty");
             return;
         }
+        if (allocation.m_data.GetByteSize() < offset + size)
+        {
+            error.SetErrorToGenericError();
+            error.SetErrorString("Couldn't read: not enough underlying data");
+            return;
+        }
+
         ::memcpy (bytes, allocation.m_data.GetBytes() + offset, size);
         break;
     case eAllocationPolicyMirror:
