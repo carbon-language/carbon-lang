@@ -110,9 +110,10 @@ ANDROID_COMMON_FLAGS := -target arm-linux-androideabi \
 	--sysroot=$(LLVM_ANDROID_TOOLCHAIN_DIR)/sysroot \
 	-B$(LLVM_ANDROID_TOOLCHAIN_DIR)
 CFLAGS.asan-arm-android := $(CFLAGS) -fPIC -fno-builtin \
-	$(ANDROID_COMMON_FLAGS) -fno-rtti
+	$(ANDROID_COMMON_FLAGS) -fno-rtti \
+	-I$(ProjSrcRoot)/third_party/android/include
 LDFLAGS.asan-arm-android := $(LDFLAGS) $(ANDROID_COMMON_FLAGS) -ldl -lm -llog \
-	-Wl,-soname=libclang_rt.asan-arm-android.so -Wl,-z,defs
+	-lstdc++ -Wl,-soname=libclang_rt.asan-arm-android.so -Wl,-z,defs
 
 # Use our stub SDK as the sysroot to support more portable building. For now we
 # just do this for the core module, because the stub SDK doesn't have
