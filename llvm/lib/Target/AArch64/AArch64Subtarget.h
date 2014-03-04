@@ -29,11 +29,6 @@ class GlobalValue;
 class AArch64Subtarget : public AArch64GenSubtargetInfo {
   virtual void anchor();
 protected:
-  enum ARMProcFamilyEnum {Others, CortexA53, CortexA57};
-
-  /// ARMProcFamily - ARM processor family: Cortex-A53, Cortex-A57, and others.
-  ARMProcFamilyEnum ARMProcFamily;
-
   bool HasFPARMv8;
   bool HasNEON;
   bool HasCrypto;

@@ -350,39 +350,33 @@ multiclass addsub_exts<bit sf, bit op, bit S, string asmop,
                     outs, (ins exts.GPR:$Rn, GPR32:$Rm, UXTB_operand:$Imm3),
                     !strconcat(asmop, "$Rn, $Rm, $Imm3"),
                     [(opfrag exts.ty:$Rn, (shl exts.uxtb, UXTB_operand:$Imm3))],
-                    NoItinerary>,
-                 Sched<[WriteALU, ReadALU, ReadALU]>;
+                    NoItinerary>;
     def w_uxth : A64I_addsubext<sf, op, S, 0b00, 0b001,
                     outs, (ins exts.GPR:$Rn, GPR32:$Rm, UXTH_operand:$Imm3),
                     !strconcat(asmop, "$Rn, $Rm, $Imm3"),
                     [(opfrag exts.ty:$Rn, (shl exts.uxth, UXTH_operand:$Imm3))],
-                    NoItinerary>,
-                 Sched<[WriteALU, ReadALU, ReadALU]>;
+                    NoItinerary>;
     def w_uxtw : A64I_addsubext<sf, op, S, 0b00, 0b010,
                     outs, (ins exts.GPR:$Rn, GPR32:$Rm, UXTW_operand:$Imm3),
                     !strconcat(asmop, "$Rn, $Rm, $Imm3"),
                     [(opfrag exts.ty:$Rn, (shl exts.uxtw, UXTW_operand:$Imm3))],
-                    NoItinerary>,
-                 Sched<[WriteALU, ReadALU, ReadALU]>;
+                    NoItinerary>;
 
     def w_sxtb : A64I_addsubext<sf, op, S, 0b00, 0b100,
                     outs, (ins exts.GPR:$Rn, GPR32:$Rm, SXTB_operand:$Imm3),
                     !strconcat(asmop, "$Rn, $Rm, $Imm3"),
                     [(opfrag exts.ty:$Rn, (shl exts.sxtb, SXTB_operand:$Imm3))],
-                    NoItinerary>,
-                 Sched<[WriteALU, ReadALU, ReadALU]>;
+                    NoItinerary>;
     def w_sxth : A64I_addsubext<sf, op, S, 0b00, 0b101,
                     outs, (ins exts.GPR:$Rn, GPR32:$Rm, SXTH_operand:$Imm3),
                     !strconcat(asmop, "$Rn, $Rm, $Imm3"),
                     [(opfrag exts.ty:$Rn, (shl exts.sxth, SXTH_operand:$Imm3))],
-                    NoItinerary>,
-                 Sched<[WriteALU, ReadALU, ReadALU]>;
+                    NoItinerary>;
     def w_sxtw : A64I_addsubext<sf, op, S, 0b00, 0b110,
                     outs, (ins exts.GPR:$Rn, GPR32:$Rm, SXTW_operand:$Imm3),
                     !strconcat(asmop, "$Rn, $Rm, $Imm3"),
                     [(opfrag exts.ty:$Rn, (shl exts.sxtw, SXTW_operand:$Imm3))],
-                    NoItinerary>,
-                 Sched<[WriteALU, ReadALU, ReadALU]>;
+                    NoItinerary>;
 }
 
 // These two could be merge in with the above, but their patterns aren't really
@@ -394,32 +388,30 @@ multiclass addsub_xxtx<bit op, bit S, string asmop, SDPatternOperator opfrag,
                    (ins GPR64xsp:$Rn, GPR64:$Rm, UXTX_operand:$Imm3),
                    !strconcat(asmop, "$Rn, $Rm, $Imm3"),
                    [(opfrag i64:$Rn, (shl i64:$Rm, UXTX_operand:$Imm3))],
-                   NoItinerary>,
-                 Sched<[WriteALU, ReadALU, ReadALU]>;
+                   NoItinerary>;
 
     def x_sxtx : A64I_addsubext<0b1, op, S, 0b00, 0b111,
                    outs,
                    (ins GPR64xsp:$Rn, GPR64:$Rm, SXTX_operand:$Imm3),
                    !strconcat(asmop, "$Rn, $Rm, $Imm3"),
                    [/* No Pattern: same as uxtx */],
-                   NoItinerary>,
-                 Sched<[WriteALU, ReadALU, ReadALU]>;
+                   NoItinerary>;
 }
 
 multiclass addsub_wxtx<bit op, bit S, string asmop, dag outs> {
     def w_uxtx : A64I_addsubext<0b0, op, S, 0b00, 0b011,
-                   outs, (ins GPR32wsp:$Rn, GPR32:$Rm, UXTX_operand:$Imm3),
-                   !strconcat(asmop, "$Rn, $Rm, $Imm3"),
-                   [/* No pattern: probably same as uxtw */],
-                   NoItinerary>,
-                 Sched<[WriteALU, ReadALU, ReadALU]>;
+                              outs,
+                              (ins GPR32wsp:$Rn, GPR32:$Rm, UXTX_operand:$Imm3),
+                              !strconcat(asmop, "$Rn, $Rm, $Imm3"),
+                              [/* No pattern: probably same as uxtw */],
+                              NoItinerary>;
 
     def w_sxtx : A64I_addsubext<0b0, op, S, 0b00, 0b111,
-                   outs, (ins GPR32wsp:$Rn, GPR32:$Rm, SXTX_operand:$Imm3),
-                   !strconcat(asmop, "$Rn, $Rm, $Imm3"),
-                   [/* No Pattern: probably same as uxtw */],
-                   NoItinerary>,
-                 Sched<[WriteALU, ReadALU, ReadALU]>;
+                              outs,
+                              (ins GPR32wsp:$Rn, GPR32:$Rm, SXTX_operand:$Imm3),
+                              !strconcat(asmop, "$Rn, $Rm, $Imm3"),
+                              [/* No Pattern: probably same as uxtw */],
+                              NoItinerary>;
 }
 
 class SetRD<RegisterClass RC, SDPatternOperator op>
@@ -665,8 +657,7 @@ multiclass addsubimm_varieties<string prefix, bit sf, bit op, bits<2> shift,
                          (ins GPRsp:$Rn, imm_operand:$Imm12),
                          !strconcat(asmop, "\t$Rd, $Rn, $Imm12"),
                          [(set Ty:$Rd, (add Ty:$Rn, imm_operand:$Imm12))],
-                         NoItinerary>,
-           Sched<[WriteALU, ReadALU]>;
+                         NoItinerary>;
 
 
   // S variants can read SP but would write to ZR
@@ -675,8 +666,7 @@ multiclass addsubimm_varieties<string prefix, bit sf, bit op, bits<2> shift,
                          (ins GPRsp:$Rn, imm_operand:$Imm12),
                          !strconcat(asmop, "s\t$Rd, $Rn, $Imm12"),
                          [(set Ty:$Rd, (addc Ty:$Rn, imm_operand:$Imm12))],
-                         NoItinerary>,
-           Sched<[WriteALU, ReadALU]> {
+                         NoItinerary> {
     let Defs = [NZCV];
   }
 
@@ -688,8 +678,7 @@ multiclass addsubimm_varieties<string prefix, bit sf, bit op, bits<2> shift,
                             !strconcat(cmpasmop, " $Rn, $Imm12"),
                             [(set NZCV,
                                   (A64cmp Ty:$Rn, cmp_imm_operand:$Imm12))],
-                            NoItinerary>,
-           Sched<[WriteALU, ReadALU]> {
+                            NoItinerary> {
     let Rd = 0b11111;
     let Defs = [NZCV];
     let isCompare = 1;
@@ -751,7 +740,7 @@ defm MOVww : MOVsp<GPR32wsp, Rwsp, ADDwwi_lsl0_s>;
 // Contains: ADD, ADDS, SUB, SUBS + aliases CMN, CMP, NEG, NEGS
 
 //===-------------------------------
-// 1. The "shifted register" operands. Shared with logical insts.
+// 1. The "shifed register" operands. Shared with logical insts.
 //===-------------------------------
 
 multiclass shift_operands<string prefix, string form> {
@@ -811,8 +800,7 @@ multiclass addsub_shifts<string prefix, bit sf, bit op, bit s, bit commutable,
                        [(set GPR:$Rd, (opfrag ty:$Rn, (shl ty:$Rm,
                             !cast<Operand>("lsl_operand_" # ty):$Imm6))
                        )],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU]>;
+                       NoItinerary>;
 
   def _lsr : A64I_addsubshift<sf, op, s, 0b01,
                        (outs GPR:$Rd),
@@ -822,8 +810,7 @@ multiclass addsub_shifts<string prefix, bit sf, bit op, bit s, bit commutable,
                        [(set ty:$Rd, (opfrag ty:$Rn, (srl ty:$Rm,
                             !cast<Operand>("lsr_operand_" # ty):$Imm6))
                        )],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU]>;
+                       NoItinerary>;
 
   def _asr : A64I_addsubshift<sf, op, s, 0b10,
                        (outs GPR:$Rd),
@@ -833,8 +820,7 @@ multiclass addsub_shifts<string prefix, bit sf, bit op, bit s, bit commutable,
                        [(set ty:$Rd, (opfrag ty:$Rn, (sra ty:$Rm,
                             !cast<Operand>("asr_operand_" # ty):$Imm6))
                        )],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU]>;
+                       NoItinerary>;
   }
 
   def _noshift
@@ -920,8 +906,7 @@ multiclass cmp_shifts<string prefix, bit sf, bit op, bit commutable,
                        [(set NZCV, (opfrag ty:$Rn, (shl ty:$Rm,
                             !cast<Operand>("lsl_operand_" # ty):$Imm6))
                        )],
-                       NoItinerary>,
-             Sched<[WriteCMP, ReadCMP, ReadCMP]>;
+                       NoItinerary>;
 
   def _lsr : A64I_addsubshift<sf, op, 0b1, 0b01,
                        (outs),
@@ -931,8 +916,7 @@ multiclass cmp_shifts<string prefix, bit sf, bit op, bit commutable,
                        [(set NZCV, (opfrag ty:$Rn, (srl ty:$Rm,
                             !cast<Operand>("lsr_operand_" # ty):$Imm6))
                        )],
-                       NoItinerary>,
-             Sched<[WriteCMP, ReadCMP, ReadCMP]>;
+                       NoItinerary>;
 
   def _asr : A64I_addsubshift<sf, op, 0b1, 0b10,
                        (outs),
@@ -942,8 +926,7 @@ multiclass cmp_shifts<string prefix, bit sf, bit op, bit commutable,
                        [(set NZCV, (opfrag ty:$Rn, (sra ty:$Rm,
                             !cast<Operand>("asr_operand_" # ty):$Imm6))
                        )],
-                       NoItinerary>,
-             Sched<[WriteCMP, ReadCMP, ReadCMP]>;
+                       NoItinerary>;
   }
 
   def _noshift
@@ -970,14 +953,12 @@ multiclass A64I_addsubcarrySizes<bit op, bit s, string asmop> {
     def www : A64I_addsubcarry<0b0, op, s, 0b000000,
                                (outs GPR32:$Rd), (ins GPR32:$Rn, GPR32:$Rm),
                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                               [], NoItinerary>,
-              Sched<[WriteALU, ReadALU, ReadALU]>;
+                               [], NoItinerary>;
 
     def xxx : A64I_addsubcarry<0b1, op, s, 0b000000,
                                (outs GPR64:$Rd), (ins GPR64:$Rn, GPR64:$Rm),
                                !strconcat(asmop, "\t$Rd, $Rn, $Rm"),
-                               [], NoItinerary>,
-              Sched<[WriteALU, ReadALU, ReadALU]>;
+                               [], NoItinerary>;
   }
 }
 
@@ -1063,16 +1044,14 @@ multiclass A64I_bitfieldSizes<bits<2> opc, string asmop> {
   def wwii : A64I_bitfield<0b0, opc, 0b0, (outs GPR32:$Rd),
                     (ins GPR32:$Rn, bitfield32_imm:$ImmR, bitfield32_imm:$ImmS),
                     !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
-                    [], NoItinerary>,
-             Sched<[WriteALU, ReadALU]> {
+                    [], NoItinerary> {
     let DecoderMethod = "DecodeBitfieldInstruction";
   }
 
   def xxii : A64I_bitfield<0b1, opc, 0b1, (outs GPR64:$Rd),
                     (ins GPR64:$Rn, bitfield64_imm:$ImmR, bitfield64_imm:$ImmS),
                     !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
-                    [], NoItinerary>,
-             Sched<[WriteALU, ReadALU]> {
+                    [], NoItinerary> {
     let DecoderMethod = "DecodeBitfieldInstruction";
   }
 }
@@ -1085,8 +1064,7 @@ defm UBFM : A64I_bitfieldSizes<0b10, "ubfm">;
 def BFMwwii :
   A64I_bitfield<0b0, 0b01, 0b0, (outs GPR32:$Rd),
         (ins GPR32:$src, GPR32:$Rn, bitfield32_imm:$ImmR, bitfield32_imm:$ImmS),
-        "bfm\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary>,
-  Sched<[WriteALU, ReadALU]> {
+        "bfm\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary> {
   let DecoderMethod = "DecodeBitfieldInstruction";
   let Constraints = "$src = $Rd";
 }
@@ -1094,8 +1072,7 @@ def BFMwwii :
 def BFMxxii :
   A64I_bitfield<0b1, 0b01, 0b1, (outs GPR64:$Rd),
         (ins GPR64:$src, GPR64:$Rn, bitfield64_imm:$ImmR, bitfield64_imm:$ImmS),
-        "bfm\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary>,
-  Sched<[WriteALU, ReadALU]> {
+        "bfm\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary> {
   let DecoderMethod = "DecodeBitfieldInstruction";
   let Constraints = "$src = $Rd";
 }
@@ -1117,8 +1094,7 @@ class A64I_bf_ext<bit sf, bits<2> opc, RegisterClass GPRDest, ValueType dty,
   : A64I_bitfield<sf, opc, sf,
                   (outs GPRDest:$Rd), (ins GPR32:$Rn),
                   !strconcat(asmop, "\t$Rd, $Rn"),
-                  [(set dty:$Rd, pattern)], NoItinerary>,
-    Sched<[WriteALU, ReadALU]> {
+                  [(set dty:$Rd, pattern)], NoItinerary> {
   let ImmR = 0b000000;
   let ImmS = imms;
 }
@@ -1172,8 +1148,7 @@ multiclass A64I_shift<bits<2> opc, string asmop, SDNode opnode> {
                     (outs GPR32:$Rd), (ins GPR32:$Rn, bitfield32_imm:$ImmR),
                     !strconcat(asmop, "\t$Rd, $Rn, $ImmR"),
                     [(set i32:$Rd, (opnode i32:$Rn, bitfield32_imm:$ImmR))],
-                    NoItinerary>,
-            Sched<[WriteALU, ReadALU]> {
+                    NoItinerary> {
     let ImmS = 31;
   }
 
@@ -1181,8 +1156,7 @@ multiclass A64I_shift<bits<2> opc, string asmop, SDNode opnode> {
                     (outs GPR64:$Rd), (ins GPR64:$Rn, bitfield64_imm:$ImmR),
                     !strconcat(asmop, "\t$Rd, $Rn, $ImmR"),
                     [(set i64:$Rd, (opnode i64:$Rn, bitfield64_imm:$ImmR))],
-                    NoItinerary>,
-            Sched<[WriteALU, ReadALU]> {
+                    NoItinerary> {
     let ImmS = 63;
   }
 
@@ -1223,8 +1197,7 @@ class A64I_bitfield_lsl<bit sf, RegisterClass GPR, ValueType ty,
   : A64I_bitfield<sf, 0b10, sf, (outs GPR:$Rd), (ins GPR:$Rn, operand:$FullImm),
                   "lsl\t$Rd, $Rn, $FullImm",
                   [(set ty:$Rd, (shl ty:$Rn, operand:$FullImm))],
-                  NoItinerary>,
-    Sched<[WriteALU, ReadALU]> {
+                  NoItinerary> {
   bits<12> FullImm;
   let ImmR = FullImm{5-0};
   let ImmS = FullImm{11-6};
@@ -1271,8 +1244,7 @@ multiclass A64I_bitfield_extract<bits<2> opc, string asmop, SDNode op> {
                        (ins GPR32:$Rn, bitfield32_imm:$ImmR, bfx32_width:$ImmS),
                        !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
                        [(set i32:$Rd, (op i32:$Rn, imm:$ImmR, imm:$ImmS))],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU]> {
+                       NoItinerary> {
     // As above, no disassembler allowed.
     let isAsmParserOnly = 1;
   }
@@ -1281,8 +1253,7 @@ multiclass A64I_bitfield_extract<bits<2> opc, string asmop, SDNode op> {
                        (ins GPR64:$Rn, bitfield64_imm:$ImmR, bfx64_width:$ImmS),
                        !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
                        [(set i64:$Rd, (op i64:$Rn, imm:$ImmR, imm:$ImmS))],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU]> {
+                       NoItinerary> {
     // As above, no disassembler allowed.
     let isAsmParserOnly = 1;
   }
@@ -1293,18 +1264,16 @@ defm UBFX :  A64I_bitfield_extract<0b10, "ubfx", A64Ubfx>;
 
 // Again, variants based on BFM modify Rd so need it as an input too.
 def BFXILwwii : A64I_bitfield<0b0, 0b01, 0b0, (outs GPR32:$Rd),
-                          (ins GPR32:$src, GPR32:$Rn, bitfield32_imm:$ImmR, bfx32_width:$ImmS),
-                          "bfxil\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary>,
-                Sched<[WriteALU, ReadALU]> {
+           (ins GPR32:$src, GPR32:$Rn, bitfield32_imm:$ImmR, bfx32_width:$ImmS),
+           "bfxil\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary> {
   // As above, no disassembler allowed.
   let isAsmParserOnly = 1;
   let Constraints = "$src = $Rd";
 }
 
 def BFXILxxii : A64I_bitfield<0b1, 0b01, 0b1, (outs GPR64:$Rd),
-                          (ins GPR64:$src, GPR64:$Rn, bitfield64_imm:$ImmR, bfx64_width:$ImmS),
-                          "bfxil\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary>,
-                Sched<[WriteALU, ReadALU]> {
+           (ins GPR64:$src, GPR64:$Rn, bitfield64_imm:$ImmR, bfx64_width:$ImmS),
+           "bfxil\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary> {
   // As above, no disassembler allowed.
   let isAsmParserOnly = 1;
   let Constraints = "$src = $Rd";
@@ -1384,8 +1353,7 @@ multiclass A64I_bitfield_insert<bits<2> opc, string asmop> {
   def wwii : A64I_bitfield<0b0, opc, 0b0, (outs GPR32:$Rd),
                            (ins GPR32:$Rn, bfi32_lsb:$ImmR, bfi32_width:$ImmS),
                            !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
-                           [], NoItinerary>,
-             Sched<[WriteALU, ReadALU]> {
+                           [], NoItinerary> {
     // As above, no disassembler allowed.
     let isAsmParserOnly = 1;
   }
@@ -1393,8 +1361,7 @@ multiclass A64I_bitfield_insert<bits<2> opc, string asmop> {
   def xxii : A64I_bitfield<0b1, opc, 0b1, (outs GPR64:$Rd),
                            (ins GPR64:$Rn, bfi64_lsb:$ImmR, bfi64_width:$ImmS),
                            !strconcat(asmop, "\t$Rd, $Rn, $ImmR, $ImmS"),
-                           [], NoItinerary>,
-             Sched<[WriteALU, ReadALU]> {
+                           [], NoItinerary> {
     // As above, no disassembler allowed.
     let isAsmParserOnly = 1;
   }
@@ -1406,8 +1373,7 @@ defm UBFIZ :  A64I_bitfield_insert<0b10, "ubfiz">;
 
 def BFIwwii : A64I_bitfield<0b0, 0b01, 0b0, (outs GPR32:$Rd),
                 (ins GPR32:$src, GPR32:$Rn, bfi32_lsb:$ImmR, bfi32_width:$ImmS),
-                "bfi\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary>,
-              Sched<[WriteALU, ReadALU]> {
+                "bfi\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary> {
   // As above, no disassembler allowed.
   let isAsmParserOnly = 1;
   let Constraints = "$src = $Rd";
@@ -1415,8 +1381,7 @@ def BFIwwii : A64I_bitfield<0b0, 0b01, 0b0, (outs GPR32:$Rd),
 
 def BFIxxii : A64I_bitfield<0b1, 0b01, 0b1, (outs GPR64:$Rd),
                 (ins GPR64:$src, GPR64:$Rn, bfi64_lsb:$ImmR, bfi64_width:$ImmS),
-                "bfi\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary>,
-              Sched<[WriteALU, ReadALU]> {
+                "bfi\t$Rd, $Rn, $ImmR, $ImmS", [], NoItinerary> {
   // As above, no disassembler allowed.
   let isAsmParserOnly = 1;
   let Constraints = "$src = $Rd";
@@ -1453,16 +1418,14 @@ multiclass cmpbr_sizes<bit op, string asmop, ImmLeaf SETOP> {
                      (ins GPR64:$Rt, bcc_target:$Label),
                      !strconcat(asmop,"\t$Rt, $Label"),
                      [(A64br_cc (A64cmp i64:$Rt, 0), SETOP, bb:$Label)],
-                     NoItinerary>,
-          Sched<[WriteBr, ReadBr]>;
+                     NoItinerary>;
 
   def w : A64I_cmpbr<0b0, op,
                      (outs),
                      (ins GPR32:$Rt, bcc_target:$Label),
                      !strconcat(asmop,"\t$Rt, $Label"),
                      [(A64br_cc (A64cmp i32:$Rt, 0), SETOP, bb:$Label)],
-                     NoItinerary>,
-          Sched<[WriteBr, ReadBr]>;
+                     NoItinerary>;
   }
 }
 
@@ -1493,8 +1456,7 @@ def cond_code : Operand<i32>, ImmLeaf<i32, [{
 def Bcc : A64I_condbr<0b0, 0b0, (outs),
                 (ins cond_code:$Cond, bcc_target:$Label),
                 "b.$Cond $Label", [(A64br_cc NZCV, (i32 imm:$Cond), bb:$Label)],
-                NoItinerary>,
-          Sched<[WriteBr]> {
+                NoItinerary> {
   let Uses = [NZCV];
   let isBranch = 1;
   let isTerminator = 1;
@@ -1540,8 +1502,7 @@ class A64I_condcmpimmImpl<bit sf, bit op, RegisterClass GPR, string asmop>
   : A64I_condcmpimm<sf, op, 0b0, 0b0, 0b1, (outs),
                 (ins GPR:$Rn, uimm5:$UImm5, uimm4:$NZCVImm, cond_code_op:$Cond),
                 !strconcat(asmop, "\t$Rn, $UImm5, $NZCVImm, $Cond"),
-                [], NoItinerary>,
-    Sched<[WriteCMP, ReadCMP]> {
+                [], NoItinerary> {
   let Defs = [NZCV];
 }
 
@@ -1607,8 +1568,7 @@ multiclass A64I_condselSizes<bit op, bits<2> op2, string asmop,
                             (ins GPR32:$Rn, GPR32:$Rm, cond_code_op:$Cond),
                             !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Cond"),
                             [(set i32:$Rd, (select i32:$Rn, i32:$Rm))],
-                            NoItinerary>,
-               Sched<[WriteCMP, ReadCMP]>;
+                            NoItinerary>;
 
 
     def xxxc : A64I_condsel<0b1, op, 0b0, op2,
@@ -1616,8 +1576,7 @@ multiclass A64I_condselSizes<bit op, bits<2> op2, string asmop,
                             (ins GPR64:$Rn, GPR64:$Rm, cond_code_op:$Cond),
                             !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Cond"),
                             [(set i64:$Rd, (select i64:$Rn, i64:$Rm))],
-                            NoItinerary>,
-               Sched<[WriteCMP, ReadCMP]>;
+                            NoItinerary>;
   }
 }
 
@@ -1727,8 +1686,7 @@ class A64I_dp_1src_impl<bit sf, bits<6> opcode, string asmop,
                    (outs GPRrc:$Rd),
                    (ins GPRrc:$Rn),
                    patterns,
-                   itin>,
-      Sched<[WriteALU, ReadALU]>;
+                   itin>;
 
 multiclass A64I_dp_1src <bits<6> opcode, string asmop> {
   let hasSideEffects = 0 in {
@@ -1784,8 +1742,7 @@ class dp_2src_impl<bit sf, bits<6> opcode, string asmop, list<dag> patterns,
                    (outs GPRsp:$Rd),
                    (ins GPRsp:$Rn, GPRsp:$Rm),
                    patterns,
-                   itin>,
-	  Sched<[WriteALU, ReadALU, ReadALU]>;
+                   itin>;
 
 multiclass dp_2src_crc<bit c, string asmop> {
   def B_www : dp_2src_impl<0b0, {0, 1, 0, c, 0, 0},
@@ -1836,17 +1793,13 @@ multiclass dp_2src <bits<6> opcode, string asmop, SDPatternOperator op> {
 defm CRC32  : dp_2src_crc<0b0, "crc32">;
 defm CRC32C : dp_2src_crc<0b1, "crc32c">;
 
-let SchedRW = [WriteDiv, ReadDiv, ReadDiv] in {
-  defm UDIV : dp_2src<0b000010, "udiv", udiv>;
-  defm SDIV : dp_2src<0b000011, "sdiv", sdiv>;
-}
+defm UDIV : dp_2src<0b000010, "udiv", udiv>;
+defm SDIV : dp_2src<0b000011, "sdiv", sdiv>;
 
-let SchedRW = [WriteALUs, ReadALU, ReadALU] in {
-  defm LSLV : dp_2src_zext<0b001000, "lsl", shl>;
-  defm LSRV : dp_2src_zext<0b001001, "lsr", srl>;
-  defm ASRV : dp_2src_zext<0b001010, "asr", sra>;
-  defm RORV : dp_2src_zext<0b001011, "ror", rotr>;
-}
+defm LSLV : dp_2src_zext<0b001000, "lsl", shl>;
+defm LSRV : dp_2src_zext<0b001001, "lsr", srl>;
+defm ASRV : dp_2src_zext<0b001010, "asr", sra>;
+defm RORV : dp_2src_zext<0b001011, "ror", rotr>;
 
 // Extra patterns for an incoming 64-bit value for a 32-bit
 // operation. Since the LLVM operations are undefined (as in C) if the
@@ -1879,8 +1832,7 @@ class A64I_dp3_4operand<bit sf, bits<6> opcode, RegisterClass AccReg,
   : A64I_dp3<sf, opcode,
              (outs AccReg:$Rd), (ins SrcReg:$Rn, SrcReg:$Rm, AccReg:$Ra),
              !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Ra"),
-             [(set AccTy:$Rd, pattern)], NoItinerary>,
-    Sched<[WriteMAC, ReadMAC, ReadMAC, ReadMAC]> {
+             [(set AccTy:$Rd, pattern)], NoItinerary> {
   RegisterClass AccGPR = AccReg;
   RegisterClass SrcGPR = SrcReg;
 }
@@ -1910,15 +1862,13 @@ let isCommutable = 1, PostEncoderMethod = "fixMulHigh" in {
                           (ins GPR64:$Rn, GPR64:$Rm),
                           "umulh\t$Rd, $Rn, $Rm",
                           [(set i64:$Rd, (mulhu i64:$Rn, i64:$Rm))],
-                          NoItinerary>,
-                 Sched<[WriteMAC, ReadMAC, ReadMAC]>;
+                          NoItinerary>;
 
   def SMULHxxx : A64I_dp3<0b1, 0b000100, (outs GPR64:$Rd),
                           (ins GPR64:$Rn, GPR64:$Rm),
                           "smulh\t$Rd, $Rn, $Rm",
                           [(set i64:$Rd, (mulhs i64:$Rn, i64:$Rm))],
-                          NoItinerary>,
-                 Sched<[WriteMAC, ReadMAC, ReadMAC]>;
+                          NoItinerary>;
 }
 
 multiclass A64I_dp3_3operand<string asmop, A64I_dp3_4operand INST,
@@ -1966,8 +1916,7 @@ def uimm16 : Operand<i32> {
 
 class A64I_exceptImpl<bits<3> opc, bits<2> ll, string asmop>
   : A64I_exception<opc, 0b000, ll, (outs), (ins uimm16:$UImm16),
-                   !strconcat(asmop, "\t$UImm16"), [], NoItinerary>,
-    Sched<[WriteBr]> {
+                   !strconcat(asmop, "\t$UImm16"), [], NoItinerary> {
   let isBranch = 1;
   let isTerminator = 1;
 }
@@ -1998,16 +1947,14 @@ def EXTRwwwi : A64I_extract<0b0, 0b000, 0b0,
                             "extr\t$Rd, $Rn, $Rm, $LSB",
                             [(set i32:$Rd,
                                   (A64Extr i32:$Rn, i32:$Rm, imm:$LSB))],
-                            NoItinerary>,
-               Sched<[WriteALU, ReadALU, ReadALU]>;
+                            NoItinerary>;
 def EXTRxxxi : A64I_extract<0b1, 0b000, 0b1,
                             (outs GPR64:$Rd),
                             (ins GPR64:$Rn, GPR64:$Rm, bitfield64_imm:$LSB),
                             "extr\t$Rd, $Rn, $Rm, $LSB",
                             [(set i64:$Rd,
                                   (A64Extr i64:$Rn, i64:$Rm, imm:$LSB))],
-                            NoItinerary>,
-               Sched<[WriteALU, ReadALU, ReadALU]>;
+                            NoItinerary>;
 
 def : InstAlias<"ror $Rd, $Rs, $LSB",
                (EXTRwwwi GPR32:$Rd, GPR32:$Rs, GPR32:$Rs, bitfield32_imm:$LSB)>;
@@ -2054,14 +2001,12 @@ def fpz64movi : Operand<i64>,
 multiclass A64I_fpcmpSignal<bits<2> type, bit imm, dag ins, dag pattern> {
   def _quiet : A64I_fpcmp<0b0, 0b0, type, 0b00, {0b0, imm, 0b0, 0b0, 0b0},
                           (outs), ins, "fcmp\t$Rn, $Rm", [pattern],
-                          NoItinerary>,
-               Sched<[WriteFPALU, ReadFPALU, ReadFPALU]> {
+                          NoItinerary> {
     let Defs = [NZCV];
   }
 
   def _sig : A64I_fpcmp<0b0, 0b0, type, 0b00, {0b1, imm, 0b0, 0b0, 0b0},
-                        (outs), ins, "fcmpe\t$Rn, $Rm", [], NoItinerary>,
-             Sched<[WriteFPALU, ReadFPALU, ReadFPALU]> {
+                        (outs), ins, "fcmpe\t$Rn, $Rm", [], NoItinerary> {
     let Defs = [NZCV];
   }
 }
@@ -2090,8 +2035,7 @@ class A64I_fpccmpImpl<bits<2> type, bit op, RegisterClass FPR, string asmop>
                 (outs),
                 (ins FPR:$Rn, FPR:$Rm, uimm4:$NZCVImm, cond_code_op:$Cond),
                 !strconcat(asmop, "\t$Rn, $Rm, $NZCVImm, $Cond"),
-                [], NoItinerary>,
-    Sched<[WriteFPALU, ReadFPALU, ReadFPALU]> {
+                [], NoItinerary> {
   let Defs = [NZCV];
 }
 
@@ -2109,10 +2053,9 @@ let Uses = [NZCV] in {
   def FCSELsssc : A64I_fpcondsel<0b0, 0b0, 0b00, (outs FPR32:$Rd),
                                  (ins FPR32:$Rn, FPR32:$Rm, cond_code_op:$Cond),
                                  "fcsel\t$Rd, $Rn, $Rm, $Cond",
-                                 [(set f32:$Rd,
+                                 [(set f32:$Rd, 
                                        (simple_select f32:$Rn, f32:$Rm))],
-                                 NoItinerary>,
-                  Sched<[WriteFPALU, ReadFPALU, ReadFPALU]>;
+                                 NoItinerary>;
 
 
   def FCSELdddc : A64I_fpcondsel<0b0, 0b0, 0b01, (outs FPR64:$Rd),
@@ -2120,8 +2063,7 @@ let Uses = [NZCV] in {
                                  "fcsel\t$Rd, $Rn, $Rm, $Cond",
                                  [(set f64:$Rd,
                                        (simple_select f64:$Rn, f64:$Rm))],
-                                 NoItinerary>,
-                  Sched<[WriteFPALU, ReadFPALU, ReadFPALU]>;
+                                 NoItinerary>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2139,22 +2081,18 @@ multiclass A64I_fpdp1sizes<bits<6> opcode, string asmstr,
   def ss : A64I_fpdp1<0b0, 0b0, 0b00, opcode, (outs FPR32:$Rd), (ins FPR32:$Rn),
                      !strconcat(asmstr, "\t$Rd, $Rn"),
                      [(set f32:$Rd, (opnode f32:$Rn))],
-                     NoItinerary>,
-           Sched<[WriteFPALU, ReadFPALU]>;
+                     NoItinerary>;
 
   def dd : A64I_fpdp1<0b0, 0b0, 0b01, opcode, (outs FPR64:$Rd), (ins FPR64:$Rn),
                      !strconcat(asmstr, "\t$Rd, $Rn"),
                      [(set f64:$Rd, (opnode f64:$Rn))],
-                     NoItinerary>,
-           Sched<[WriteFPALU, ReadFPALU]>;
+                     NoItinerary>;
 }
 
 defm FMOV   : A64I_fpdp1sizes<0b000000, "fmov">;
 defm FABS   : A64I_fpdp1sizes<0b000001, "fabs", fabs>;
 defm FNEG   : A64I_fpdp1sizes<0b000010, "fneg", fneg>;
-let SchedRW = [WriteFPSqrt, ReadFPSqrt] in {
-  defm FSQRT  : A64I_fpdp1sizes<0b000011, "fsqrt", fsqrt>;
-}
+defm FSQRT  : A64I_fpdp1sizes<0b000011, "fsqrt", fsqrt>;
 
 defm FRINTN : A64I_fpdp1sizes<0b001000, "frintn">;
 defm FRINTP : A64I_fpdp1sizes<0b001001, "frintp", fceil>;
@@ -2183,8 +2121,7 @@ class A64I_fpdp1_fcvt<FCVTRegType DestReg, FCVTRegType SrcReg, SDNode opnode>
                {0,0,0,1, DestReg.t1, DestReg.t0},
                (outs DestReg.Class:$Rd), (ins SrcReg.Class:$Rn),
                "fcvt\t$Rd, $Rn",
-               [(set DestReg.VT:$Rd, (opnode SrcReg.VT:$Rn))], NoItinerary>,
-    Sched<[WriteFPALU, ReadFPALU]>;
+               [(set DestReg.VT:$Rd, (opnode SrcReg.VT:$Rn))], NoItinerary>;
 
 def FCVTds : A64I_fpdp1_fcvt<FCVT64, FCVT32, fextend>;
 def FCVThs : A64I_fpdp1_fcvt<FCVT16, FCVT32, fround>;
@@ -2209,22 +2146,18 @@ multiclass A64I_fpdp2sizes<bits<4> opcode, string asmstr,
                       (ins FPR32:$Rn, FPR32:$Rm),
                       !strconcat(asmstr, "\t$Rd, $Rn, $Rm"),
                       [(set f32:$Rd, (opnode f32:$Rn, f32:$Rm))],
-                      NoItinerary>,
-            Sched<[WriteFPALU, ReadFPALU, ReadFPALU]>;
+                      NoItinerary>;
 
   def ddd : A64I_fpdp2<0b0, 0b0, 0b01, opcode,
                       (outs FPR64:$Rd),
                       (ins FPR64:$Rn, FPR64:$Rm),
                       !strconcat(asmstr, "\t$Rd, $Rn, $Rm"),
                       [(set f64:$Rd, (opnode f64:$Rn, f64:$Rm))],
-                      NoItinerary>,
-            Sched<[WriteFPALU, ReadFPALU, ReadFPALU]>;
+                      NoItinerary>;
 }
 
 let isCommutable = 1 in {
-  let SchedRW = [WriteFPMul, ReadFPMul, ReadFPMul] in {
-    defm FMUL   : A64I_fpdp2sizes<0b0000, "fmul", fmul>;
-  }
+  defm FMUL   : A64I_fpdp2sizes<0b0000, "fmul", fmul>;
   defm FADD   : A64I_fpdp2sizes<0b0010, "fadd", fadd>;
 
   // No patterns for these.
@@ -2233,16 +2166,12 @@ let isCommutable = 1 in {
   defm FMAXNM : A64I_fpdp2sizes<0b0110, "fmaxnm", FPNoBinop>;
   defm FMINNM : A64I_fpdp2sizes<0b0111, "fminnm", FPNoBinop>;
 
-  let SchedRW = [WriteFPMul, ReadFPMul, ReadFPMul] in {
-    defm FNMUL  : A64I_fpdp2sizes<0b1000, "fnmul",
-                                  PatFrag<(ops node:$lhs, node:$rhs),
-                                          (fneg (fmul node:$lhs, node:$rhs))> >;
-  }
+  defm FNMUL  : A64I_fpdp2sizes<0b1000, "fnmul",
+                                PatFrag<(ops node:$lhs, node:$rhs),
+                                        (fneg (fmul node:$lhs, node:$rhs))> >;
 }
 
-let SchedRW = [WriteFPDiv, ReadFPDiv, ReadFPDiv] in {
-  defm FDIV : A64I_fpdp2sizes<0b0001, "fdiv", fdiv>;
-}
+defm FDIV : A64I_fpdp2sizes<0b0001, "fdiv", fdiv>;
 defm FSUB : A64I_fpdp2sizes<0b0011, "fsub", fsub>;
 
 //===----------------------------------------------------------------------===//
@@ -2263,8 +2192,7 @@ class A64I_fpdp3Impl<string asmop, RegisterClass FPR, ValueType VT,
                (ins FPR:$Rn, FPR:$Rm, FPR:$Ra),
                !strconcat(asmop,"\t$Rd, $Rn, $Rm, $Ra"),
                [(set VT:$Rd, (fmakind VT:$Rn, VT:$Rm, VT:$Ra))],
-               NoItinerary>,
-    Sched<[WriteFPMAC, ReadFPMAC, ReadFPMAC, ReadFPMAC]>;
+               NoItinerary>;
 
 def FMADDssss  : A64I_fpdp3Impl<"fmadd",  FPR32, f32, 0b00, 0b0, 0b0, fma>;
 def FMSUBssss  : A64I_fpdp3Impl<"fmsub",  FPR32, f32, 0b00, 0b0, 0b1, fmsub>;
@@ -2343,15 +2271,14 @@ class cvtfix_i64_op<ValueType FloatVT>
 // worth going for a multiclass here. Oh well.
 
 class A64I_fptofix<bit sf, bits<2> type, bits<3> opcode,
-                   RegisterClass GPR, RegisterClass FPR,
-                   ValueType DstTy, ValueType SrcTy,
+                   RegisterClass GPR, RegisterClass FPR, 
+                   ValueType DstTy, ValueType SrcTy, 
                    Operand scale_op, string asmop, SDNode cvtop>
   : A64I_fpfixed<sf, 0b0, type, 0b11, opcode,
                  (outs GPR:$Rd), (ins FPR:$Rn, scale_op:$Scale),
                  !strconcat(asmop, "\t$Rd, $Rn, $Scale"),
                  [(set DstTy:$Rd, (cvtop (fmul SrcTy:$Rn, scale_op:$Scale)))],
-                 NoItinerary>,
-    Sched<[WriteFPALU, ReadFPALU]>;
+                 NoItinerary>;
 
 def FCVTZSwsi : A64I_fptofix<0b0, 0b00, 0b000, GPR32, FPR32, i32, f32,
                              cvtfix_i32_op<f32>, "fcvtzs", fp_to_sint>;
@@ -2380,8 +2307,7 @@ class A64I_fixtofp<bit sf, bits<2> type, bits<3> opcode,
                  (outs FPR:$Rd), (ins GPR:$Rn, scale_op:$Scale),
                  !strconcat(asmop, "\t$Rd, $Rn, $Scale"),
                  [(set DstTy:$Rd, (fdiv (cvtop SrcTy:$Rn), scale_op:$Scale))],
-                 NoItinerary>,
-    Sched<[WriteFPALU, ReadFPALU]>;
+                 NoItinerary>;
 
 def SCVTFswi : A64I_fixtofp<0b0, 0b00, 0b010, FPR32, GPR32, f32, i32,
                             cvtfix_i32_op<f32>, "scvtf", sint_to_fp>;
@@ -2408,8 +2334,7 @@ def UCVTFdxi : A64I_fixtofp<0b1, 0b01, 0b011, FPR64, GPR64, f64, i64,
 class A64I_fpintI<bit sf, bits<2> type, bits<2> rmode, bits<3> opcode,
                    RegisterClass DestPR, RegisterClass SrcPR, string asmop>
   : A64I_fpint<sf, 0b0, type, rmode, opcode, (outs DestPR:$Rd), (ins SrcPR:$Rn),
-               !strconcat(asmop, "\t$Rd, $Rn"), [], NoItinerary>,
-    Sched<[WriteFPALU, ReadFPALU]>;
+               !strconcat(asmop, "\t$Rd, $Rn"), [], NoItinerary>;
 
 multiclass A64I_fptointRM<bits<2> rmode, bit o2, string asmop> {
   def Sws : A64I_fpintI<0b0, 0b00, rmode, {o2, 0, 0},
@@ -2495,13 +2420,11 @@ def lane1 : Operand<i32> {
 let DecoderMethod =  "DecodeFMOVLaneInstruction" in {
   def FMOVxv : A64I_fpint<0b1, 0b0, 0b10, 0b01, 0b110,
                           (outs GPR64:$Rd), (ins VPR128:$Rn, lane1:$Lane),
-                          "fmov\t$Rd, $Rn.d[$Lane]", [], NoItinerary>,
-               Sched<[WriteFPALU, ReadFPALU]>;
+                          "fmov\t$Rd, $Rn.d[$Lane]", [], NoItinerary>;
 
   def FMOVvx : A64I_fpint<0b1, 0b0, 0b10, 0b01, 0b111,
                           (outs VPR128:$Rd), (ins GPR64:$Rn, lane1:$Lane),
-                          "fmov\t$Rd.d[$Lane], $Rn", [], NoItinerary>,
-               Sched<[WriteFPALU, ReadFPALU]>;
+                          "fmov\t$Rd.d[$Lane], $Rn", [], NoItinerary>;
 }
 
 let Predicates = [HasFPARMv8] in {
@@ -2548,8 +2471,7 @@ class A64I_fpimm_impl<bits<2> type, RegisterClass Reg, ValueType VT,
                (ins fmov_operand:$Imm8),
                "fmov\t$Rd, $Imm8",
                [(set VT:$Rd, fmov_operand:$Imm8)],
-               NoItinerary>,
-    Sched<[WriteFPALU]>;
+               NoItinerary>;
 
 def FMOVsi : A64I_fpimm_impl<0b00, FPR32, f32, fmov32_operand>;
 def FMOVdi : A64I_fpimm_impl<0b01, FPR64, f64, fmov64_operand>;
@@ -2598,8 +2520,7 @@ defm prefetch : namedimm<"prefetch", "A64PRFM::PRFMMapper">;
 class A64I_LDRlitSimple<bits<2> opc, bit v, RegisterClass OutReg,
                       list<dag> patterns = []>
    : A64I_LDRlit<opc, v, (outs OutReg:$Rt), (ins ldrlit_label:$Imm19),
-                 "ldr\t$Rt, $Imm19", patterns, NoItinerary>,
-     Sched<[WriteLd]>;
+                 "ldr\t$Rt, $Imm19", patterns, NoItinerary>;
 
 let mayLoad = 1 in {
   def LDRw_lit : A64I_LDRlitSimple<0b00, 0b0, GPR32>;
@@ -2620,14 +2541,12 @@ let mayLoad = 1 in {
                                (outs GPR64:$Rt),
                                (ins ldrlit_label:$Imm19),
                                "ldrsw\t$Rt, $Imm19",
-                               [], NoItinerary>,
-                   Sched<[WriteLd]>;
+                               [], NoItinerary>;
 
   def PRFM_lit : A64I_LDRlit<0b11, 0b0,
                              (outs), (ins prefetch_op:$Rt, ldrlit_label:$Imm19),
                              "prfm\t$Rt, $Imm19",
-                             [], NoItinerary>,
-                 Sched<[WriteLd]>;
+                             [], NoItinerary>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2719,23 +2638,19 @@ class A64I_LRexs_impl<bits<2> size, bits<3> opcode, string asm, dag outs,
 multiclass A64I_LRex<string asmstr, bits<3> opcode> {
   def _byte:  A64I_LRexs_impl<0b00, opcode, !strconcat(asmstr, "b"),
                             (outs GPR32:$Rt), (ins GPR64xsp0:$Rn),
-                            [], NoItinerary>,
-              Sched<[WriteLd]>;
+                            [], NoItinerary>;
 
   def _hword:  A64I_LRexs_impl<0b01, opcode, !strconcat(asmstr, "h"),
                             (outs GPR32:$Rt), (ins GPR64xsp0:$Rn),
-                            [], NoItinerary>,
-               Sched<[WriteLd]>;
+                            [], NoItinerary>;
 
   def _word:  A64I_LRexs_impl<0b10, opcode, asmstr,
                             (outs GPR32:$Rt), (ins GPR64xsp0:$Rn),
-                            [], NoItinerary>,
-              Sched<[WriteLd]>;
+                            [], NoItinerary>;
 
   def _dword: A64I_LRexs_impl<0b11, opcode, asmstr,
                             (outs GPR64:$Rt), (ins GPR64xsp0:$Rn),
-                            [], NoItinerary>,
-              Sched<[WriteLd]>;
+                            [], NoItinerary>;
 }
 
 defm LDXR  : A64I_LRex<"ldxr",  0b000>;
@@ -2861,14 +2776,12 @@ multiclass A64I_LPex<string asmstr, bits<3> opcode> {
   def _word:  A64I_LPexs_impl<0b10, opcode, asmstr,
                             (outs GPR32:$Rt, GPR32:$Rt2),
                             (ins GPR64xsp0:$Rn),
-                            [], NoItinerary>,
-              Sched<[WriteLd]>;
+                            [], NoItinerary>;
 
   def _dword: A64I_LPexs_impl<0b11, opcode, asmstr,
                             (outs GPR64:$Rt, GPR64:$Rt2),
                             (ins GPR64xsp0:$Rn),
-                            [], NoItinerary>,
-              Sched<[WriteLd]>;
+                            [], NoItinerary>;
 }
 
 defm LDXP  : A64I_LPex<"ldxp", 0b010>;
@@ -3091,8 +3004,7 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
   def _LDR : A64I_LSunsigimm<size, v, {high_opc, 0b1},
                       (outs GPR:$Rt), (ins GPR64xsp:$Rn, params.uimm12:$UImm12),
                       "ldr" #  asmsuffix # "\t$Rt, [$Rn, $UImm12]",
-                      [], NoItinerary>,
-             Sched<[WriteLd, ReadLd]> {
+                      [], NoItinerary> {
     let mayLoad = 1;
   }
   def : InstAlias<"ldr" # asmsuffix # " $Rt, [$Rn]",
@@ -3104,15 +3016,13 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
                             (outs GPR:$Rt),
                             (ins GPR64xsp:$Rn, GPR32:$Rm, params.regextWm:$Ext),
                             "ldr" # asmsuffix # "\t$Rt, [$Rn, $Rm, $Ext]",
-                            [], NoItinerary>,
-                            Sched<[WriteLd, ReadLd, ReadLd]>;
+                            [], NoItinerary>;
 
     def _Xm_RegOffset_LDR : A64I_LSregoff<size, v, {high_opc, 0b1}, 0b1,
                             (outs GPR:$Rt),
                             (ins GPR64xsp:$Rn, GPR64:$Rm, params.regextXm:$Ext),
                             "ldr" # asmsuffix # "\t$Rt, [$Rn, $Rm, $Ext]",
-                            [], NoItinerary>,
-                            Sched<[WriteLd, ReadLd, ReadLd]>;
+                            [], NoItinerary>;
   }
   def : InstAlias<"ldr" # asmsuffix # " $Rt, [$Rn, $Rm]",
         (!cast<Instruction>(prefix # "_Xm_RegOffset_LDR") GPR:$Rt, GPR64xsp:$Rn,
@@ -3148,8 +3058,7 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
   def _LDUR : A64I_LSunalimm<size, v, {high_opc, 0b1},
                              (outs GPR:$Rt), (ins GPR64xsp:$Rn, simm9:$SImm9),
                              "ldur" # asmsuffix # "\t$Rt, [$Rn, $SImm9]",
-                             [], NoItinerary>,
-              Sched<[WriteLd, ReadLd]> {
+                             [], NoItinerary> {
     let mayLoad = 1;
   }
   def : InstAlias<"ldur" # asmsuffix # " $Rt, [$Rn]",
@@ -3172,8 +3081,7 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
                                     (outs GPR:$Rt, GPR64xsp:$Rn_wb),
                                     (ins GPR64xsp:$Rn, simm9:$SImm9),
                                     "ldr" # asmsuffix # "\t$Rt, [$Rn], $SImm9",
-                                    [], NoItinerary>,
-                     Sched<[WriteLd, ReadLd]> {
+                                    [], NoItinerary> {
     let mayLoad = 1;
     let Constraints = "$Rn = $Rn_wb";
     let DecoderMethod = "DecodeSingleIndexedInstruction";
@@ -3196,8 +3104,7 @@ multiclass A64I_LDRSTR_unsigned<string prefix, bits<2> size, bit v,
                                     (outs GPR:$Rt, GPR64xsp:$Rn_wb),
                                     (ins GPR64xsp:$Rn, simm9:$SImm9),
                                     "ldr" # asmsuffix # "\t$Rt, [$Rn, $SImm9]!",
-                                    [], NoItinerary>,
-                    Sched<[WriteLd, ReadLd]> {
+                                    [], NoItinerary> {
     let mayLoad = 1;
     let Constraints = "$Rn = $Rn_wb";
     let DecoderMethod = "DecodeSingleIndexedInstruction";
@@ -3257,8 +3164,7 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                           (outs GPR32:$Rt),
                           (ins GPR64xsp:$Rn, params.uimm12:$UImm12),
                           "ldrs" # asmopcode # "\t$Rt, [$Rn, $UImm12]",
-                          [], NoItinerary>,
-          Sched<[WriteLd, ReadLd]> {
+                          [], NoItinerary> {
     let mayLoad = 1;
   }
   def : InstAlias<"ldrs" # asmopcode # " $Rt, [$Rn]",
@@ -3268,8 +3174,7 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                           (outs GPR64:$Rt),
                           (ins GPR64xsp:$Rn, params.uimm12:$UImm12),
                           "ldrs" # asmopcode # "\t$Rt, [$Rn, $UImm12]",
-                          [], NoItinerary>,
-          Sched<[WriteLd, ReadLd]> {
+                          [], NoItinerary> {
     let mayLoad = 1;
   }
   def : InstAlias<"ldrs" # asmopcode # " $Rt, [$Rn]",
@@ -3281,29 +3186,25 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                             (outs GPR32:$Rt),
                             (ins GPR64xsp:$Rn, GPR32:$Rm, params.regextWm:$Ext),
                             "ldrs" # asmopcode # "\t$Rt, [$Rn, $Rm, $Ext]",
-                            [], NoItinerary>,
-                         Sched<[WriteLd, ReadLd, ReadLd]>;
+                            [], NoItinerary>;
 
     def w_Xm_RegOffset : A64I_LSregoff<size, 0b0, 0b11, 0b1,
                             (outs GPR32:$Rt),
                             (ins GPR64xsp:$Rn, GPR64:$Rm, params.regextXm:$Ext),
                             "ldrs" # asmopcode # "\t$Rt, [$Rn, $Rm, $Ext]",
-                            [], NoItinerary>,
-                         Sched<[WriteLd, ReadLd, ReadLd]>;
+                            [], NoItinerary>;
 
     def x_Wm_RegOffset : A64I_LSregoff<size, 0b0, 0b10, 0b0,
                             (outs GPR64:$Rt),
                             (ins GPR64xsp:$Rn, GPR32:$Rm, params.regextWm:$Ext),
                             "ldrs" # asmopcode # "\t$Rt, [$Rn, $Rm, $Ext]",
-                            [], NoItinerary>,
-                         Sched<[WriteLd, ReadLd, ReadLd]>;
+                            [], NoItinerary>;
 
     def x_Xm_RegOffset : A64I_LSregoff<size, 0b0, 0b10, 0b1,
                             (outs GPR64:$Rt),
                             (ins GPR64xsp:$Rn, GPR64:$Rm, params.regextXm:$Ext),
                             "ldrs" # asmopcode # "\t$Rt, [$Rn, $Rm, $Ext]",
-                            [], NoItinerary>,
-                         Sched<[WriteLd, ReadLd, ReadLd]>;
+                            [], NoItinerary>;
   }
   def : InstAlias<"ldrs" # asmopcode # " $Rt, [$Rn, $Rm]",
         (!cast<Instruction>(prefix # "w_Xm_RegOffset") GPR32:$Rt, GPR64xsp:$Rn,
@@ -3320,15 +3221,13 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                              (outs GPR32:$Rt),
                              (ins GPR64xsp:$Rn, simm9:$SImm9),
                              "ldurs" # asmopcode # "\t$Rt, [$Rn, $SImm9]",
-                             [], NoItinerary>,
-              Sched<[WriteLd, ReadLd]>;
+                             [], NoItinerary>;
 
     def x_U : A64I_LSunalimm<size, 0b0, 0b10,
                              (outs GPR64:$Rt),
                              (ins GPR64xsp:$Rn, simm9:$SImm9),
                              "ldurs" # asmopcode # "\t$Rt, [$Rn, $SImm9]",
-                             [], NoItinerary>,
-              Sched<[WriteLd, ReadLd]>;
+                             [], NoItinerary>;
 
 
     // Post-indexed
@@ -3336,8 +3235,7 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                                  (outs GPR32:$Rt, GPR64xsp:$Rn_wb),
                                  (ins GPR64xsp:$Rn, simm9:$SImm9),
                                  "ldrs" # asmopcode # "\t$Rt, [$Rn], $SImm9",
-                                 [], NoItinerary>,
-                    Sched<[WriteLd, ReadLd]> {
+                                 [], NoItinerary> {
       let Constraints = "$Rn = $Rn_wb";
       let DecoderMethod = "DecodeSingleIndexedInstruction";
     }
@@ -3346,8 +3244,7 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                                    (outs GPR64:$Rt, GPR64xsp:$Rn_wb),
                                    (ins GPR64xsp:$Rn, simm9:$SImm9),
                                    "ldrs" # asmopcode # "\t$Rt, [$Rn], $SImm9",
-                                   [], NoItinerary>,
-                    Sched<[WriteLd, ReadLd]> {
+                                   [], NoItinerary> {
       let Constraints = "$Rn = $Rn_wb";
       let DecoderMethod = "DecodeSingleIndexedInstruction";
     }
@@ -3357,8 +3254,7 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                                  (outs GPR32:$Rt, GPR64xsp:$Rn_wb),
                                  (ins GPR64xsp:$Rn, simm9:$SImm9),
                                  "ldrs" # asmopcode # "\t$Rt, [$Rn, $SImm9]!",
-                                 [], NoItinerary>,
-                   Sched<[WriteLd, ReadLd]> {
+                                 [], NoItinerary> {
       let Constraints = "$Rn = $Rn_wb";
       let DecoderMethod = "DecodeSingleIndexedInstruction";
     }
@@ -3367,8 +3263,7 @@ multiclass A64I_LDR_signed<bits<2> size, string asmopcode, AddrParams params,
                                  (outs GPR64:$Rt, GPR64xsp:$Rn_wb),
                                  (ins GPR64xsp:$Rn, simm9:$SImm9),
                                  "ldrs" # asmopcode # "\t$Rt, [$Rn, $SImm9]!",
-                                 [], NoItinerary>,
-                   Sched<[WriteLd, ReadLd]> {
+                                 [], NoItinerary> {
       let Constraints = "$Rn = $Rn_wb";
       let DecoderMethod = "DecodeSingleIndexedInstruction";
     }
@@ -3386,8 +3281,7 @@ def LDRSWx
                     (outs GPR64:$Rt),
                     (ins GPR64xsp:$Rn, word_uimm12:$UImm12),
                     "ldrsw\t$Rt, [$Rn, $UImm12]",
-                    [], NoItinerary>,
-      Sched<[WriteLd, ReadLd]> {
+                    [], NoItinerary> {
   let mayLoad = 1;
 }
 def : InstAlias<"ldrsw $Rt, [$Rn]", (LDRSWx GPR64:$Rt, GPR64xsp:$Rn, 0)>;
@@ -3397,15 +3291,13 @@ let mayLoad = 1 in {
                              (outs GPR64:$Rt),
                              (ins GPR64xsp:$Rn, GPR32:$Rm, word_Wm_regext:$Ext),
                              "ldrsw\t$Rt, [$Rn, $Rm, $Ext]",
-                             [], NoItinerary>,
-                            Sched<[WriteLd, ReadLd, ReadLd]>;
+                             [], NoItinerary>;
 
   def LDRSWx_Xm_RegOffset : A64I_LSregoff<0b10, 0b0, 0b10, 0b1,
                              (outs GPR64:$Rt),
                              (ins GPR64xsp:$Rn, GPR64:$Rm, word_Xm_regext:$Ext),
                              "ldrsw\t$Rt, [$Rn, $Rm, $Ext]",
-                             [], NoItinerary>,
-                            Sched<[WriteLd, ReadLd, ReadLd]>;
+                             [], NoItinerary>;
 }
 def : InstAlias<"ldrsw $Rt, [$Rn, $Rm]",
                 (LDRSWx_Xm_RegOffset GPR64:$Rt, GPR64xsp:$Rn, GPR64:$Rm, 2)>;
@@ -3416,8 +3308,7 @@ def LDURSWx
                     (outs GPR64:$Rt),
                     (ins GPR64xsp:$Rn, simm9:$SImm9),
                     "ldursw\t$Rt, [$Rn, $SImm9]",
-                    [], NoItinerary>,
-      Sched<[WriteLd, ReadLd]> {
+                    [], NoItinerary> {
   let mayLoad = 1;
 }
 def : InstAlias<"ldursw $Rt, [$Rn]", (LDURSWx GPR64:$Rt, GPR64xsp:$Rn, 0)>;
@@ -3427,8 +3318,7 @@ def LDRSWx_PostInd
                     (outs GPR64:$Rt, GPR64xsp:$Rn_wb),
                     (ins GPR64xsp:$Rn, simm9:$SImm9),
                     "ldrsw\t$Rt, [$Rn], $SImm9",
-                    [], NoItinerary>,
-      Sched<[WriteLd, ReadLd]> {
+                    [], NoItinerary> {
   let mayLoad = 1;
   let Constraints = "$Rn = $Rn_wb";
   let DecoderMethod = "DecodeSingleIndexedInstruction";
@@ -3438,8 +3328,7 @@ def LDRSWx_PreInd : A64I_LSpreind<0b10, 0b0, 0b10,
                                  (outs GPR64:$Rt, GPR64xsp:$Rn_wb),
                                  (ins GPR64xsp:$Rn, simm9:$SImm9),
                                  "ldrsw\t$Rt, [$Rn, $SImm9]!",
-                                 [], NoItinerary>,
-                    Sched<[WriteLd, ReadLd]> {
+                                 [], NoItinerary> {
   let mayLoad = 1;
   let Constraints = "$Rn = $Rn_wb";
   let DecoderMethod = "DecodeSingleIndexedInstruction";
@@ -3452,8 +3341,7 @@ def LDRSWx_PreInd : A64I_LSpreind<0b10, 0b0, 0b10,
 def PRFM : A64I_LSunsigimm<0b11, 0b0, 0b10, (outs),
                  (ins prefetch_op:$Rt, GPR64xsp:$Rn, dword_uimm12:$UImm12),
                  "prfm\t$Rt, [$Rn, $UImm12]",
-                 [], NoItinerary>,
-           Sched<[WritePreLd, ReadPreLd]> {
+                 [], NoItinerary> {
   let mayLoad = 1;
 }
 def : InstAlias<"prfm $Rt, [$Rn]",
@@ -3464,14 +3352,12 @@ let mayLoad = 1 in {
                                         (ins prefetch_op:$Rt, GPR64xsp:$Rn,
                                              GPR32:$Rm, dword_Wm_regext:$Ext),
                                         "prfm\t$Rt, [$Rn, $Rm, $Ext]",
-                                        [], NoItinerary>,
-                          Sched<[WritePreLd, ReadPreLd]>;
+                                        [], NoItinerary>;
   def PRFM_Xm_RegOffset : A64I_LSregoff<0b11, 0b0, 0b10, 0b1, (outs),
                                         (ins prefetch_op:$Rt, GPR64xsp:$Rn,
                                              GPR64:$Rm, dword_Xm_regext:$Ext),
                                         "prfm\t$Rt, [$Rn, $Rm, $Ext]",
-                                        [], NoItinerary>,
-                          Sched<[WritePreLd, ReadPreLd]>;
+                                        [], NoItinerary>;
 }
 
 def : InstAlias<"prfm $Rt, [$Rn, $Rm]",
@@ -3482,8 +3368,7 @@ def : InstAlias<"prfm $Rt, [$Rn, $Rm]",
 def PRFUM : A64I_LSunalimm<0b11, 0b0, 0b10, (outs),
                          (ins prefetch_op:$Rt, GPR64xsp:$Rn, simm9:$SImm9),
                          "prfum\t$Rt, [$Rn, $SImm9]",
-                         [], NoItinerary>,
-            Sched<[WritePreLd, ReadPreLd]> {
+                         [], NoItinerary> {
   let mayLoad = 1;
 }
 def : InstAlias<"prfum $Rt, [$Rn]",
@@ -3503,8 +3388,7 @@ multiclass A64I_LDTRSTTR<bits<2> size, string asmsuffix, RegisterClass GPR,
   def _UnPriv_STR : A64I_LSunpriv<size, 0b0, 0b00,
                               (outs), (ins GPR:$Rt, GPR64xsp:$Rn, simm9:$SImm9),
                               "sttr" # asmsuffix # "\t$Rt, [$Rn, $SImm9]",
-                              [], NoItinerary>,
-                    Sched<[WriteLd, ReadLd]> {
+                              [], NoItinerary> {
     let mayStore = 1;
   }
 
@@ -3514,8 +3398,7 @@ multiclass A64I_LDTRSTTR<bits<2> size, string asmsuffix, RegisterClass GPR,
   def _UnPriv_LDR : A64I_LSunpriv<size, 0b0, 0b01,
                                (outs GPR:$Rt), (ins GPR64xsp:$Rn, simm9:$SImm9),
                                "ldtr" # asmsuffix # "\t$Rt, [$Rn, $SImm9]",
-                               [], NoItinerary>,
-                    Sched<[WriteLd, ReadLd]> {
+                               [], NoItinerary> {
     let mayLoad = 1;
   }
 
@@ -3544,15 +3427,13 @@ multiclass A64I_LDTR_signed<bits<2> size, string asmopcode, string prefix> {
                           (outs GPR32:$Rt),
                           (ins GPR64xsp:$Rn, simm9:$SImm9),
                           "ldtrs" # asmopcode # "\t$Rt, [$Rn, $SImm9]",
-                          [], NoItinerary>,
-            Sched<[WriteLd, ReadLd]>;
+                          [], NoItinerary>;
 
     def x : A64I_LSunpriv<size, 0b0, 0b10,
                           (outs GPR64:$Rt),
                           (ins GPR64xsp:$Rn, simm9:$SImm9),
                           "ldtrs" # asmopcode # "\t$Rt, [$Rn, $SImm9]",
-                          [], NoItinerary>,
-            Sched<[WriteLd, ReadLd]>;
+                          [], NoItinerary>;
   }
 
   def : InstAlias<"ldtrs" # asmopcode # " $Rt, [$Rn]",
@@ -3573,8 +3454,7 @@ def LDTRSWx : A64I_LSunpriv<0b10, 0b0, 0b10,
                             (outs GPR64:$Rt),
                             (ins GPR64xsp:$Rn, simm9:$SImm9),
                             "ldtrsw\t$Rt, [$Rn, $SImm9]",
-                            [], NoItinerary>,
-              Sched<[WriteLd, ReadLd]> {
+                            [], NoItinerary> {
   let mayLoad = 1;
 }
 def : InstAlias<"ldtrsw $Rt, [$Rn]", (LDTRSWx GPR64:$Rt, GPR64xsp:$Rn, 0)>;
@@ -3636,8 +3516,7 @@ multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
                           Operand simm7, string prefix> {
   def _STR : A64I_LSPoffset<opc, v, 0b0, (outs),
                     (ins SomeReg:$Rt, SomeReg:$Rt2, GPR64xsp:$Rn, simm7:$SImm7),
-                    "stp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary>,
-             Sched<[WriteLd, ReadLd]> {
+                    "stp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary> {
     let mayStore = 1;
     let DecoderMethod = "DecodeLDSTPairInstruction";
   }
@@ -3648,8 +3527,7 @@ multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
   def _LDR : A64I_LSPoffset<opc, v, 0b1,
                             (outs SomeReg:$Rt, SomeReg:$Rt2),
                             (ins GPR64xsp:$Rn, simm7:$SImm7),
-                            "ldp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary>,
-             Sched<[WriteLd, ReadLd]> {
+                            "ldp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary> {
     let mayLoad = 1;
     let DecoderMethod = "DecodeLDSTPairInstruction";
   }
@@ -3675,8 +3553,7 @@ multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
                         (outs SomeReg:$Rt, SomeReg:$Rt2, GPR64xsp:$Rn_wb),
                         (ins GPR64xsp:$Rn, simm7:$SImm7),
                         "ldp\t$Rt, $Rt2, [$Rn], $SImm7",
-                        [], NoItinerary>,
-                     Sched<[WriteLd, ReadLd]> {
+                        [], NoItinerary> {
     let mayLoad = 1;
     let Constraints = "$Rn = $Rn_wb";
     let DecoderMethod = "DecodeLDSTPairInstruction";
@@ -3695,8 +3572,7 @@ multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
                               (outs SomeReg:$Rt, SomeReg:$Rt2, GPR64xsp:$Rn_wb),
                               (ins GPR64xsp:$Rn, simm7:$SImm7),
                               "ldp\t$Rt, $Rt2, [$Rn, $SImm7]!",
-                              [], NoItinerary>,
-                    Sched<[WriteLd, ReadLd]> {
+                              [], NoItinerary> {
     let mayLoad = 1;
     let Constraints = "$Rn = $Rn_wb";
     let DecoderMethod = "DecodeLDSTPairInstruction";
@@ -3715,8 +3591,7 @@ multiclass A64I_LSPsimple<bits<2> opc, bit v, RegisterClass SomeReg,
   def _NonTemp_LDR : A64I_LSPnontemp<opc, v, 0b1,
                             (outs SomeReg:$Rt, SomeReg:$Rt2),
                             (ins GPR64xsp:$Rn, simm7:$SImm7),
-                            "ldnp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary>,
-                     Sched<[WriteLd, ReadLd]> {
+                            "ldnp\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary> {
     let mayLoad = 1;
     let DecoderMethod = "DecodeLDSTPairInstruction";
   }
@@ -3741,8 +3616,7 @@ defm LSFPPair128 : A64I_LSPsimple<0b10, 0b1, FPR128, qword_simm7,
 def LDPSWx : A64I_LSPoffset<0b01, 0b0, 0b1,
                            (outs GPR64:$Rt, GPR64:$Rt2),
                            (ins GPR64xsp:$Rn, word_simm7:$SImm7),
-                           "ldpsw\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary>,
-             Sched<[WriteLd, ReadLd]> {
+                           "ldpsw\t$Rt, $Rt2, [$Rn, $SImm7]", [], NoItinerary> {
   let mayLoad = 1;
   let DecoderMethod = "DecodeLDSTPairInstruction";
 }
@@ -3763,8 +3637,7 @@ def LDPSWx_PreInd : A64I_LSPpreind<0b01, 0b0, 0b1,
                                    (outs GPR64:$Rt, GPR64:$Rt2, GPR64:$Rn_wb),
                                    (ins GPR64xsp:$Rn, word_simm7:$SImm7),
                                    "ldpsw\t$Rt, $Rt2, [$Rn, $SImm7]!",
-                                   [], NoItinerary>,
-                    Sched<[WriteLd, ReadLd]> {
+                                   [], NoItinerary> {
   let mayLoad = 1;
   let Constraints = "$Rn = $Rn_wb";
   let DecoderMethod = "DecodeLDSTPairInstruction";
@@ -3809,16 +3682,14 @@ multiclass A64I_logimmSizes<bits<2> opc, string asmop, SDNode opnode> {
                          !strconcat(asmop, "\t$Rd, $Rn, $Imm"),
                          [(set i32:$Rd,
                                (opnode i32:$Rn, logical_imm32_operand:$Imm))],
-                         NoItinerary>,
-            Sched<[WriteALU, ReadALU]>;
+                         NoItinerary>;
 
   def xxi : A64I_logicalimm<0b1, opc, (outs GPR64xsp:$Rd),
                          (ins GPR64:$Rn, logical_imm64_operand:$Imm),
                          !strconcat(asmop, "\t$Rd, $Rn, $Imm"),
                          [(set i64:$Rd,
                                (opnode i64:$Rn, logical_imm64_operand:$Imm))],
-                         NoItinerary>,
-            Sched<[WriteALU, ReadALU]>;
+                         NoItinerary>;
 }
 
 defm AND : A64I_logimmSizes<0b00, "and", and>;
@@ -3829,14 +3700,12 @@ let Defs = [NZCV] in {
   def ANDSwwi : A64I_logicalimm<0b0, 0b11, (outs GPR32:$Rd),
                                 (ins GPR32:$Rn, logical_imm32_operand:$Imm),
                                 "ands\t$Rd, $Rn, $Imm",
-                                [], NoItinerary>,
-                Sched<[WriteALU, ReadALU]>;
+                                [], NoItinerary>;
 
   def ANDSxxi : A64I_logicalimm<0b1, 0b11, (outs GPR64:$Rd),
                                 (ins GPR64:$Rn, logical_imm64_operand:$Imm),
                                 "ands\t$Rd, $Rn, $Imm",
-                                [], NoItinerary>,
-                Sched<[WriteALU, ReadALU]>;
+                                [], NoItinerary>;
 }
 
 
@@ -3881,8 +3750,7 @@ multiclass logical_shifts<string prefix, bit sf, bits<2> opc,
                        [(set ty:$Rd, (opfrag ty:$Rn, (shl ty:$Rm,
                             !cast<Operand>("lsl_operand_" # ty):$Imm6))
                        )],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU, ReadALU]>;
+                       NoItinerary>;
 
   def _lsr : A64I_logicalshift<sf, opc, 0b01, N,
                        (outs GPR:$Rd),
@@ -3892,8 +3760,7 @@ multiclass logical_shifts<string prefix, bit sf, bits<2> opc,
                        [(set ty:$Rd, (opfrag ty:$Rn, (srl ty:$Rm,
                             !cast<Operand>("lsr_operand_" # ty):$Imm6))
                        )],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU, ReadALU]>;
+                       NoItinerary>;
 
   def _asr : A64I_logicalshift<sf, opc, 0b10, N,
                        (outs GPR:$Rd),
@@ -3903,8 +3770,7 @@ multiclass logical_shifts<string prefix, bit sf, bits<2> opc,
                        [(set ty:$Rd, (opfrag ty:$Rn, (sra ty:$Rm,
                             !cast<Operand>("asr_operand_" # ty):$Imm6))
                        )],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU, ReadALU]>;
+                       NoItinerary>;
 
   def _ror : A64I_logicalshift<sf, opc, 0b11, N,
                        (outs GPR:$Rd),
@@ -3914,8 +3780,7 @@ multiclass logical_shifts<string prefix, bit sf, bits<2> opc,
                        [(set ty:$Rd, (opfrag ty:$Rn, (rotr ty:$Rm,
                             !cast<Operand>("ror_operand_" # ty):$Imm6))
                        )],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU, ReadALU]>;
+                       NoItinerary>;
   }
 
   def _noshift
@@ -3970,8 +3835,7 @@ multiclass tst_shifts<string prefix, bit sf, ValueType ty, RegisterClass GPR> {
                        [(set NZCV, (A64setcc (and ty:$Rn, (shl ty:$Rm,
                            !cast<Operand>("lsl_operand_" # ty):$Imm6)),
                                           0, signed_cond))],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU, ReadALU]>;
+                       NoItinerary>;
 
 
   def _lsr : A64I_logicalshift<sf, 0b11, 0b01, 0b0,
@@ -3982,8 +3846,7 @@ multiclass tst_shifts<string prefix, bit sf, ValueType ty, RegisterClass GPR> {
                        [(set NZCV, (A64setcc (and ty:$Rn, (srl ty:$Rm,
                            !cast<Operand>("lsr_operand_" # ty):$Imm6)),
                                           0, signed_cond))],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU, ReadALU]>;
+                       NoItinerary>;
 
   def _asr : A64I_logicalshift<sf, 0b11, 0b10, 0b0,
                        (outs),
@@ -3993,8 +3856,7 @@ multiclass tst_shifts<string prefix, bit sf, ValueType ty, RegisterClass GPR> {
                        [(set NZCV, (A64setcc (and ty:$Rn, (sra ty:$Rm,
                            !cast<Operand>("asr_operand_" # ty):$Imm6)),
                                           0, signed_cond))],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU, ReadALU]>;
+                       NoItinerary>;
 
   def _ror : A64I_logicalshift<sf, 0b11, 0b11, 0b0,
                        (outs),
@@ -4004,8 +3866,7 @@ multiclass tst_shifts<string prefix, bit sf, ValueType ty, RegisterClass GPR> {
                        [(set NZCV, (A64setcc (and ty:$Rn, (rotr ty:$Rm,
                            !cast<Operand>("ror_operand_" # ty):$Imm6)),
                                           0, signed_cond))],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU, ReadALU]>;
+                       NoItinerary>;
   }
 
   def _noshift : InstAlias<"tst $Rn, $Rm",
@@ -4028,8 +3889,7 @@ multiclass mvn_shifts<string prefix, bit sf, ValueType ty, RegisterClass GPR> {
                        "mvn\t$Rd, $Rm, $Imm6",
                        [(set ty:$Rd, (not (shl ty:$Rm,
                          !cast<Operand>("lsl_operand_" # ty):$Imm6)))],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU, ReadALU]>;
+                       NoItinerary>;
 
 
   def _lsr : A64I_logicalshift<sf, 0b01, 0b01, 0b1,
@@ -4039,8 +3899,7 @@ multiclass mvn_shifts<string prefix, bit sf, ValueType ty, RegisterClass GPR> {
                        "mvn\t$Rd, $Rm, $Imm6",
                        [(set ty:$Rd, (not (srl ty:$Rm,
                          !cast<Operand>("lsr_operand_" # ty):$Imm6)))],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU, ReadALU]>;
+                       NoItinerary>;
 
   def _asr : A64I_logicalshift<sf, 0b01, 0b10, 0b1,
                        (outs GPR:$Rd),
@@ -4049,8 +3908,7 @@ multiclass mvn_shifts<string prefix, bit sf, ValueType ty, RegisterClass GPR> {
                        "mvn\t$Rd, $Rm, $Imm6",
                        [(set ty:$Rd, (not (sra ty:$Rm,
                          !cast<Operand>("asr_operand_" # ty):$Imm6)))],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU, ReadALU]>;
+                       NoItinerary>;
 
   def _ror : A64I_logicalshift<sf, 0b01, 0b11, 0b1,
                        (outs GPR:$Rd),
@@ -4059,8 +3917,7 @@ multiclass mvn_shifts<string prefix, bit sf, ValueType ty, RegisterClass GPR> {
                        "mvn\t$Rd, $Rm, $Imm6",
                        [(set ty:$Rd, (not (rotr ty:$Rm,
                          !cast<Operand>("lsl_operand_" # ty):$Imm6)))],
-                       NoItinerary>,
-             Sched<[WriteALU, ReadALU, ReadALU]>;
+                       NoItinerary>;
   }
 
   def _noshift : InstAlias<"mvn $Rn, $Rm",
@@ -4115,8 +3972,7 @@ multiclass A64I_movwSizes<bits<2> opc, string asmop, dag ins32bit,
 
   def wii : A64I_movw<0b0, opc, (outs GPR32:$Rd), ins32bit,
                       !strconcat(asmop, "\t$Rd, $FullImm"),
-                      [], NoItinerary>,
-            Sched<[WriteALU]> {
+                      [], NoItinerary> {
     bits<18> FullImm;
     let UImm16 = FullImm{15-0};
     let Shift = FullImm{17-16};
@@ -4124,8 +3980,7 @@ multiclass A64I_movwSizes<bits<2> opc, string asmop, dag ins32bit,
 
   def xii : A64I_movw<0b1, opc, (outs GPR64:$Rd), ins64bit,
                       !strconcat(asmop, "\t$Rd, $FullImm"),
-                      [], NoItinerary>,
-            Sched<[WriteALU]> {
+                      [], NoItinerary> {
     bits<18> FullImm;
     let UImm16 = FullImm{15-0};
     let Shift = FullImm{17-16};
@@ -4233,12 +4088,10 @@ def adrp_label : Operand<i64> {
 
 let hasSideEffects = 0 in {
   def ADRxi : A64I_PCADR<0b0, (outs GPR64:$Rd), (ins adr_label:$Label),
-                         "adr\t$Rd, $Label", [], NoItinerary>,
-              Sched<[WriteALUs]>;
+                         "adr\t$Rd, $Label", [], NoItinerary>;
 
   def ADRPxi : A64I_PCADR<0b1, (outs GPR64:$Rd), (ins adrp_label:$Label),
-                          "adrp\t$Rd, $Label", [], NoItinerary>,
-               Sched<[WriteALUs]>;
+                          "adrp\t$Rd, $Label", [], NoItinerary>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -4524,16 +4377,14 @@ let isBranch = 1, isTerminator = 1 in {
                         "tbz\t$Rt, $Imm, $Label",
                         [(A64br_cc (A64cmp (and i64:$Rt, tstb64_pat:$Imm), 0),
                                    A64eq, bb:$Label)],
-                        NoItinerary>,
-               Sched<[WriteBr]>;
+                        NoItinerary>;
 
   def TBNZxii : A64I_TBimm<0b1, (outs),
                         (ins GPR64:$Rt, uimm6:$Imm, tbimm_target:$Label),
                         "tbnz\t$Rt, $Imm, $Label",
                         [(A64br_cc (A64cmp (and i64:$Rt, tstb64_pat:$Imm), 0),
                                    A64ne, bb:$Label)],
-                        NoItinerary>,
-                Sched<[WriteBr]>;
+                        NoItinerary>;
 
 
   // Note, these instructions overlap with the above 64-bit patterns. This is
@@ -4545,8 +4396,7 @@ let isBranch = 1, isTerminator = 1 in {
                         "tbz\t$Rt, $Imm, $Label",
                         [(A64br_cc (A64cmp (and i32:$Rt, tstb32_pat:$Imm), 0),
                                    A64eq, bb:$Label)],
-                        NoItinerary>,
-               Sched<[WriteBr]> {
+                        NoItinerary> {
     let Imm{5} = 0b0;
   }
 
@@ -4555,8 +4405,7 @@ let isBranch = 1, isTerminator = 1 in {
                         "tbnz\t$Rt, $Imm, $Label",
                         [(A64br_cc (A64cmp (and i32:$Rt, tstb32_pat:$Imm), 0),
                                    A64ne, bb:$Label)],
-                        NoItinerary>,
-                Sched<[WriteBr]> {
+                        NoItinerary> {
     let Imm{5} = 0b0;
   }
 }
@@ -4591,8 +4440,7 @@ def blimm_target : Operand<i64> {
 class A64I_BimmImpl<bit op, string asmop, list<dag> patterns, Operand lbl_type>
   : A64I_Bimm<op, (outs), (ins lbl_type:$Label),
               !strconcat(asmop, "\t$Label"), patterns,
-              NoItinerary>,
-    Sched<[WriteBr]>;
+              NoItinerary>;
 
 let isBranch = 1 in {
   def Bimm : A64I_BimmImpl<0b0, "b", [(br bb:$Label)], bimm_target> {
@@ -4600,12 +4448,10 @@ let isBranch = 1 in {
     let isBarrier = 1;
   }
 
-  let SchedRW = [WriteBrL] in {
-    def BLimm : A64I_BimmImpl<0b1, "bl",
-                              [(AArch64Call tglobaladdr:$Label)], blimm_target> {
-      let isCall = 1;
-      let Defs = [X30];
-    }
+  def BLimm : A64I_BimmImpl<0b1, "bl",
+                            [(AArch64Call tglobaladdr:$Label)], blimm_target> {
+    let isCall = 1;
+    let Defs = [X30];
   }
 }
 
@@ -4622,8 +4468,7 @@ class A64I_BregImpl<bits<4> opc,
                     dag outs, dag ins, string asmstr, list<dag> patterns,
                     InstrItinClass itin = NoItinerary>
   : A64I_Breg<opc, 0b11111, 0b000000, 0b00000,
-              outs, ins, asmstr, patterns, itin>,
-    Sched<[WriteBr]> {
+              outs, ins, asmstr, patterns, itin> {
   let isBranch         = 1;
   let isIndirectBranch = 1;
 }
@@ -4639,13 +4484,11 @@ let isBranch = 1 in {
     let isTerminator = 1;
   }
 
-  let SchedRW = [WriteBrL] in {
-    def BLRx : A64I_BregImpl<0b0001, (outs), (ins GPR64:$Rn),
-                             "blr\t$Rn", [(AArch64Call i64:$Rn)]> {
-      let isBarrier = 0;
-      let isCall = 1;
-      let Defs = [X30];
-    }
+  def BLRx : A64I_BregImpl<0b0001, (outs), (ins GPR64:$Rn),
+                           "blr\t$Rn", [(AArch64Call i64:$Rn)]> {
+    let isBarrier = 0;
+    let isCall = 1;
+    let Defs = [X30];
   }
 
   def RETx : A64I_BregImpl<0b0010, (outs), (ins GPR64:$Rn),
