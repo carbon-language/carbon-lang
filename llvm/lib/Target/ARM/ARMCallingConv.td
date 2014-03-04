@@ -65,7 +65,7 @@ def FastCC_ARM_APCS : CallingConv<[
   CCIfType<[f32], CCAssignToReg<[S0, S1, S2, S3, S4, S5, S6, S7, S8,
                                  S9, S10, S11, S12, S13, S14, S15]>>,
 
-  // CPRCs may be allocated to co-processor registers or the stack – they
+  // CPRCs may be allocated to co-processor registers or the stack - they
   // may never be allocated to core registers. 
   CCIfType<[f32], CCAssignToStackWithShadow<4, 4, [Q0, Q1, Q2, Q3]>>,
   CCIfType<[f64], CCAssignToStackWithShadow<8, 4, [Q0, Q1, Q2, Q3]>>,
