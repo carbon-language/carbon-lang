@@ -97,7 +97,8 @@ private:
 // matches for certain names.
 //
 // typedef PollyBuilderInserter<false> IRInserter;
-// typedef llvm::IRBuilder<false, llvm::ConstantFolder, IRInserter> PollyIRBuilder;
+// typedef llvm::IRBuilder<false, llvm::ConstantFolder, IRInserter>
+// PollyIRBuilder;
 typedef PollyBuilderInserter<true> IRInserter;
 typedef llvm::IRBuilder<true, llvm::ConstantFolder, IRInserter> PollyIRBuilder;
 }
