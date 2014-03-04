@@ -36,10 +36,7 @@ uptr StackTrace::GetCurrentPc() {
 void StackTrace::FastUnwindStack(uptr pc, uptr bp,
                                  uptr stack_top, uptr stack_bottom,
                                  uptr max_depth) {
-  if (max_depth == 0) {
-    size = 0;
-    return;
-  }
+  CHECK_GE(max_depth, 2);
   trace[0] = pc;
   size = 1;
   uptr *frame = (uptr *)bp;

@@ -223,9 +223,8 @@ _Unwind_Reason_Code Unwind_Trace(struct _Unwind_Context *ctx, void *param) {
 }
 
 void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
+  CHECK_GE(max_depth, 2);
   size = 0;
-  if (max_depth == 0)
-    return;
   UnwindTraceArg arg = {this, Min(max_depth + 1, kStackTraceMax)};
   _Unwind_Backtrace(Unwind_Trace, &arg);
   // We need to pop a few frames so that pc is on top.
@@ -239,13 +238,11 @@ void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
 
 void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
                                             uptr max_depth) {
+  CHECK_GE(max_depth, 2);
   if (!unwind_backtrace_signal_arch) {
     SlowUnwindStack(pc, max_depth);
     return;
   }
-
-  size = 0;
-  if (max_depth == 0) return;
 
   void *map = acquire_my_map_info_list();
   CHECK(map);
@@ -256,8 +253,9 @@ void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
                                           /* ignore_depth */ 0, max_depth);
   release_my_map_info_list(map);
   if (res < 0) return;
-  CHECK((uptr)res <= kStackTraceMax);
+  CHECK_LE((uptr)res, kStackTraceMax);
 
+  size = 0;
   // +2 compensate for libcorkscrew unwinder returning addresses of call
   // instructions instead of raw return addresses.
   for (sptr i = 0; i < res; ++i)

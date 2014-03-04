@@ -66,6 +66,17 @@ void StackTrace::PrintStack(const uptr *addr, uptr size) {
 void StackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, void *context,
                         uptr stack_top, uptr stack_bottom,
                         bool request_fast_unwind) {
+  top_frame_bp = (max_depth > 0) ? bp : 0;
+  // Avoid doing any work for small max_depth.
+  if (max_depth == 0) {
+    size = 0;
+    return;
+  }
+  if (max_depth == 1) {
+    size = 1;
+    trace[0] = pc;
+    return;
+  }
   if (!WillUseFastUnwind(request_fast_unwind)) {
     if (context)
       SlowUnwindStackWithContext(pc, context, max_depth);
@@ -74,8 +85,6 @@ void StackTrace::Unwind(uptr max_depth, uptr pc, uptr bp, void *context,
   } else {
     FastUnwindStack(pc, bp, stack_top, stack_bottom, max_depth);
   }
-
-  top_frame_bp = size ? bp : 0;
 }
 
 }  // namespace __sanitizer

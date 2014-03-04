@@ -417,6 +417,7 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 }
 
 void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
+  CHECK_GE(max_depth, 2);
   // FIXME: CaptureStackBackTrace might be too slow for us.
   // FIXME: Compare with StackWalk64.
   // FIXME: Look at LLVMUnhandledExceptionFilter in Signals.inc
