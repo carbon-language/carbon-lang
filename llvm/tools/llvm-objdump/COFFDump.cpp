@@ -413,50 +413,7 @@ static bool getPDataSection(const COFFObjectFile *Obj,
   return false;
 }
 
-static void printRuntimeFunction(const COFFObjectFile *Obj,
-                                 const RuntimeFunction &RF,
-                                 uint64_t SectionOffset,
-                                 const std::vector<RelocationRef> &Rels) {
-  outs() << "Function Table:\n";
-
-  outs() << "  Start Address: ";
-  printCOFFSymbolAddress(outs(), Rels,
-                         SectionOffset +
-                             /*offsetof(RuntimeFunction, StartAddress)*/ 0,
-                         RF.StartAddress);
-  outs() << "\n";
-
-  outs() << "  End Address: ";
-  printCOFFSymbolAddress(outs(), Rels,
-                         SectionOffset +
-                             /*offsetof(RuntimeFunction, EndAddress)*/ 4,
-                         RF.EndAddress);
-  outs() << "\n";
-
-  outs() << "  Unwind Info Address: ";
-  printCOFFSymbolAddress(outs(), Rels,
-                         SectionOffset +
-                             /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
-                         RF.UnwindInfoOffset);
-  outs() << "\n";
-
-  ArrayRef<uint8_t> XContents;
-  uint64_t UnwindInfoOffset = 0;
-  if (error(getSectionContents(
-          Obj, Rels, SectionOffset +
-                         /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
-          XContents, UnwindInfoOffset)))
-    return;
-  if (XContents.empty())
-    return;
-
-  UnwindInfoOffset += RF.UnwindInfoOffset;
-  if (UnwindInfoOffset > XContents.size())
-    return;
-
-  const Win64EH::UnwindInfo *UI = reinterpret_cast<const Win64EH::UnwindInfo *>(
-      XContents.data() + UnwindInfoOffset);
-
+static void printWin64EHUnwindInfo(const Win64EH::UnwindInfo *UI) {
   // The casts to int are required in order to output the value as number.
   // Without the casts the value would be interpreted as char data (which
   // results in garbage output).
@@ -494,6 +451,51 @@ static void printRuntimeFunction(const COFFObjectFile *Obj,
 
   outs() << "\n\n";
   outs().flush();
+}
+
+static void printRuntimeFunction(const COFFObjectFile *Obj,
+                                 const RuntimeFunction &RF,
+                                 uint64_t SectionOffset,
+                                 const std::vector<RelocationRef> &Rels) {
+  outs() << "Function Table:\n";
+  outs() << "  Start Address: ";
+  printCOFFSymbolAddress(outs(), Rels,
+                         SectionOffset +
+                             /*offsetof(RuntimeFunction, StartAddress)*/ 0,
+                         RF.StartAddress);
+  outs() << "\n";
+
+  outs() << "  End Address: ";
+  printCOFFSymbolAddress(outs(), Rels,
+                         SectionOffset +
+                             /*offsetof(RuntimeFunction, EndAddress)*/ 4,
+                         RF.EndAddress);
+  outs() << "\n";
+
+  outs() << "  Unwind Info Address: ";
+  printCOFFSymbolAddress(outs(), Rels,
+                         SectionOffset +
+                             /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
+                         RF.UnwindInfoOffset);
+  outs() << "\n";
+
+  ArrayRef<uint8_t> XContents;
+  uint64_t UnwindInfoOffset = 0;
+  if (error(getSectionContents(
+          Obj, Rels, SectionOffset +
+                         /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
+          XContents, UnwindInfoOffset)))
+    return;
+  if (XContents.empty())
+    return;
+
+  UnwindInfoOffset += RF.UnwindInfoOffset;
+  if (UnwindInfoOffset > XContents.size())
+    return;
+
+  const Win64EH::UnwindInfo *UI = reinterpret_cast<const Win64EH::UnwindInfo *>(
+      XContents.data() + UnwindInfoOffset);
+  printWin64EHUnwindInfo(UI);
 }
 
 void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
