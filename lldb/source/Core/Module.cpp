@@ -131,16 +131,16 @@ namespace lldb {
 
 Module::Module (const ModuleSpec &module_spec) :
     m_mutex (Mutex::eMutexTypeRecursive),
-    m_mod_time (module_spec.GetFileSpec().GetModificationTime()),
-    m_arch (module_spec.GetArchitecture()),
+    m_mod_time (),
+    m_arch (),
     m_uuid (),
-    m_file (module_spec.GetFileSpec()),
-    m_platform_file(module_spec.GetPlatformFileSpec()),
+    m_file (),
+    m_platform_file(),
     m_remote_install_file(),
-    m_symfile_spec (module_spec.GetSymbolFileSpec()),
-    m_object_name (module_spec.GetObjectName()),
-    m_object_offset (module_spec.GetObjectOffset()),
-    m_object_mod_time (module_spec.GetObjectModificationTime()),
+    m_symfile_spec (),
+    m_object_name (),
+    m_object_offset (),
+    m_object_mod_time (),
     m_objfile_sp (),
     m_symfile_ap (),
     m_ast (),
@@ -163,11 +163,40 @@ Module::Module (const ModuleSpec &module_spec) :
     if (log)
         log->Printf ("%p Module::Module((%s) '%s%s%s%s')",
                      this,
-                     m_arch.GetArchitectureName(),
-                     m_file.GetPath().c_str(),
-                     m_object_name.IsEmpty() ? "" : "(",
-                     m_object_name.IsEmpty() ? "" : m_object_name.AsCString(""),
-                     m_object_name.IsEmpty() ? "" : ")");
+                     module_spec.GetArchitecture().GetArchitectureName(),
+                     module_spec.GetFileSpec().GetPath().c_str(),
+                     module_spec.GetObjectName().IsEmpty() ? "" : "(",
+                     module_spec.GetObjectName().IsEmpty() ? "" : module_spec.GetObjectName().AsCString(""),
+                     module_spec.GetObjectName().IsEmpty() ? "" : ")");
+    
+    // First extract all module specifications from the file using the local
+    // file path. If there are no specifications, then don't fill anything in
+    ModuleSpecList modules_specs;
+    if (ObjectFile::GetModuleSpecifications(module_spec.GetFileSpec(), 0, 0, modules_specs) == 0)
+        return;
+    
+    // Now make sure that one of the module specifications matches what we just
+    // extract. We might have a module specification that specifies a file "/usr/lib/dyld"
+    // with UUID XXX, but we might have a local version of "/usr/lib/dyld" that has
+    // UUID YYY and we don't want those to match. If they don't match, just don't
+    // fill any ivars in so we don't accidentally grab the wrong file later since
+    // they don't match...
+    ModuleSpec matching_module_spec;
+    if (modules_specs.FindMatchingModuleSpec(module_spec, matching_module_spec) == 0)
+        return;
+    m_mod_time = module_spec.GetFileSpec().GetModificationTime();
+    if (module_spec.GetArchitecture().IsValid())
+        m_arch = module_spec.GetArchitecture();
+    else
+        m_arch = matching_module_spec.GetArchitecture();
+    m_mod_time = module_spec.GetFileSpec().GetModificationTime();
+    m_file = module_spec.GetFileSpec();
+    m_platform_file = module_spec.GetPlatformFileSpec();
+    m_symfile_spec = module_spec.GetSymbolFileSpec();
+    m_object_name = module_spec.GetObjectName();
+    m_object_offset = module_spec.GetObjectOffset();
+    m_object_mod_time = module_spec.GetObjectModificationTime();
+    
 }
 
 Module::Module(const FileSpec& file_spec, 
