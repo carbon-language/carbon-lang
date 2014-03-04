@@ -94,7 +94,7 @@ static unsigned getNumUsedSlots(const UnwindCode &UnwindCode) {
 // slots is provided.
 static void printUnwindCode(ArrayRef<UnwindCode> UCs) {
   assert(UCs.size() >= getNumUsedSlots(UCs[0]));
-  outs() <<  format("    0x%02x: ", unsigned(UCs[0].u.CodeOffset))
+  outs() <<  format("      0x%02x: ", unsigned(UCs[0].u.CodeOffset))
          << getUnwindCodeTypeName(UCs[0].getUnwindOp());
   switch (UCs[0].getUnwindOp()) {
   case UOP_PushNonVol:
@@ -415,8 +415,8 @@ static void printWin64EHUnwindInfo(const Win64EH::UnwindInfo *UI) {
   // The casts to int are required in order to output the value as number.
   // Without the casts the value would be interpreted as char data (which
   // results in garbage output).
-  outs() << "  Version: " << static_cast<int>(UI->getVersion()) << "\n";
-  outs() << "  Flags: " << static_cast<int>(UI->getFlags());
+  outs() << "    Version: " << static_cast<int>(UI->getVersion()) << "\n";
+  outs() << "    Flags: " << static_cast<int>(UI->getFlags());
   if (UI->getFlags()) {
     if (UI->getFlags() & UNW_ExceptionHandler)
       outs() << " UNW_ExceptionHandler";
@@ -426,15 +426,15 @@ static void printWin64EHUnwindInfo(const Win64EH::UnwindInfo *UI) {
       outs() << " UNW_ChainInfo";
   }
   outs() << "\n";
-  outs() << "  Size of prolog: " << static_cast<int>(UI->PrologSize) << "\n";
-  outs() << "  Number of Codes: " << static_cast<int>(UI->NumCodes) << "\n";
+  outs() << "    Size of prolog: " << static_cast<int>(UI->PrologSize) << "\n";
+  outs() << "    Number of Codes: " << static_cast<int>(UI->NumCodes) << "\n";
   // Maybe this should move to output of UOP_SetFPReg?
   if (UI->getFrameRegister()) {
-    outs() << "  Frame register: "
+    outs() << "    Frame register: "
            << getUnwindRegisterName(UI->getFrameRegister()) << "\n";
-    outs() << "  Frame offset: " << 16 * UI->getFrameOffset() << "\n";
+    outs() << "    Frame offset: " << 16 * UI->getFrameOffset() << "\n";
   } else {
-    outs() << "  No frame pointer used\n";
+    outs() << "    No frame pointer used\n";
   }
   if (UI->getFlags() & (UNW_ExceptionHandler | UNW_TerminateHandler)) {
     // FIXME: Output exception handler data
@@ -443,11 +443,11 @@ static void printWin64EHUnwindInfo(const Win64EH::UnwindInfo *UI) {
   }
 
   if (UI->NumCodes)
-    outs() << "  Unwind Codes:\n";
+    outs() << "    Unwind Codes:\n";
 
   printAllUnwindCodes(ArrayRef<UnwindCode>(&UI->UnwindCodes[0], UI->NumCodes));
 
-  outs() << "\n\n";
+  outs() << "\n";
   outs().flush();
 }
 
@@ -460,7 +460,7 @@ static void printRuntimeFunction(const COFFObjectFile *Obj,
   outs() << "Function Table:\n"
          << format("  Start Address: 0x%04x\n", RF.StartAddress)
          << format("  End Address: 0x%04x\n", RF.EndAddress)
-         << format("  Unwind Info Address: 0x%04x\n\n", RF.UnwindInfoOffset);
+         << format("  Unwind Info Address: 0x%04x\n", RF.UnwindInfoOffset);
   uintptr_t addr;
   if (Obj->getRvaPtr(RF.UnwindInfoOffset, addr))
     return;
