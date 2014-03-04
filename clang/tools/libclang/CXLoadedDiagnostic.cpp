@@ -68,10 +68,11 @@ CXLoadedDiagnostic::~CXLoadedDiagnostic() {}
 
 CXDiagnosticSeverity CXLoadedDiagnostic::getSeverity() const {
   // FIXME: Fail more softly if the diagnostic level is unknown?
-  assert(severity == static_cast<serialized_diags::Level>(severity) &&
+  auto severityAsLevel = static_cast<serialized_diags::Level>(severity);
+  assert(severity == static_cast<unsigned>(severityAsLevel) &&
          "unknown serialized diagnostic level");
 
-  switch (static_cast<serialized_diags::Level>(severity)) {
+  switch (severityAsLevel) {
 #define CASE(X) case serialized_diags::X: return CXDiagnostic_##X;
   CASE(Ignored)
   CASE(Note)
