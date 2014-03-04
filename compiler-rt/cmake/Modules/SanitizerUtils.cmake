@@ -12,21 +12,24 @@ set(SANITIZER_LINT_SCRIPT
 # symbol names that should be exported as well.
 #   add_sanitizer_rt_symbols(<name> <files with extra symbols to export>)
 macro(add_sanitizer_rt_symbols name)
-  get_target_property(libfile ${name} LOCATION)
-  set(symsfile "${libfile}.syms")
-  add_custom_command(OUTPUT ${symsfile}
+  set(stamp ${CMAKE_CURRENT_BINARY_DIR}/${name}.syms-stamp)
+  add_custom_command(OUTPUT ${stamp}
     COMMAND ${PYTHON_EXECUTABLE}
-      ${SANITIZER_GEN_DYNAMIC_LIST} ${libfile} ${ARGN}
-      > ${symsfile}
+      ${SANITIZER_GEN_DYNAMIC_LIST} $<TARGET_FILE:${name}> ${ARGN}
+      > $<TARGET_FILE:${name}>.syms
+    COMMAND ${CMAKE_COMMAND} -E touch ${stamp}
     DEPENDS ${name} ${SANITIZER_GEN_DYNAMIC_LIST} ${ARGN}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Generating exported symbols for ${name}"
     VERBATIM)
   add_custom_target(${name}-symbols ALL
-    DEPENDS ${symsfile}
+    DEPENDS ${stamp}
     SOURCES ${SANITIZER_GEN_DYNAMIC_LIST} ${ARGN})
 
-  if(TRUE)
+  if(NOT CMAKE_VERSION VERSION_LESS 3.0)
+    install(FILES $<TARGET_FILE:${name}>.syms
+            DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
+  else()
     # Per-config install location.
     if(CMAKE_CONFIGURATION_TYPES)
       foreach(c ${CMAKE_CONFIGURATION_TYPES})
