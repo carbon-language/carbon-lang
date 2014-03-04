@@ -733,8 +733,12 @@ VFSFromYAML *VFSFromYAML::create(MemoryBuffer *Buffer,
 }
 
 ErrorOr<Entry *> VFSFromYAML::lookupPath(const Twine &Path_) {
-  SmallVector<char, 256> Storage;
-  StringRef Path = Path_.toNullTerminatedStringRef(Storage);
+  SmallString<256> Path;
+  Path_.toVector(Path);
+
+  // Handle relative paths
+  if (error_code EC = sys::fs::make_absolute(Path))
+    return EC;
 
   if (Path.empty())
     return error_code(errc::invalid_argument, system_category());
@@ -753,7 +757,10 @@ ErrorOr<Entry *> VFSFromYAML::lookupPath(const Twine &Path_) {
 ErrorOr<Entry *> VFSFromYAML::lookupPath(sys::path::const_iterator Start,
                                          sys::path::const_iterator End,
                                          Entry *From) {
-  // FIXME: handle . and ..
+  if (Start->equals("."))
+    ++Start;
+
+  // FIXME: handle ..
   if (CaseSensitive ? !Start->equals(From->getName())
                     : !Start->equals_lower(From->getName()))
     // failure to match
