@@ -1,4 +1,10 @@
-// RUN: %clang_cc1 -S -emit-llvm -triple %itanium_abi_triple -g %s -o - -fno-standalone-debug | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -g %s -o - -fno-standalone-debug | FileCheck %s
+
+// Run again with -gline-tables-only and verify we don't crash.  We won't output
+// type info at all.
+// RUN: %clang_cc1 -emit-llvm -triple %itanium_abi_triple -g %s -o - -gline-tables-only | FileCheck %s -check-prefix LINES-ONLY
+
+// LINES-ONLY-NOT: DW_TAG_structure_type
 
 template <typename T>
 struct a {
