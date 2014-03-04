@@ -950,8 +950,8 @@ ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
     return CD->getClassInterface();
   if (ObjCImplDecl *IMD = dyn_cast<ObjCImplDecl>(getDeclContext()))
     return IMD->getClassInterface();
-
-  assert(!isa<ObjCProtocolDecl>(getDeclContext()) && "It's a protocol method");
+  if (isa<ObjCProtocolDecl>(getDeclContext()))
+    return 0;
   llvm_unreachable("unknown method context");
 }
 
