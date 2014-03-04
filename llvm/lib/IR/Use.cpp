@@ -6,19 +6,12 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file implements the algorithm for finding the User of a Use.
-//
-//===----------------------------------------------------------------------===//
 
+#include "llvm/IR/Use.h"
 #include "llvm/IR/Value.h"
 #include <new>
 
 namespace llvm {
-
-//===----------------------------------------------------------------------===//
-//                         Use swap Implementation
-//===----------------------------------------------------------------------===//
 
 void Use::swap(Use &RHS) {
   Value *V1(Val);
@@ -45,47 +38,19 @@ void Use::swap(Use &RHS) {
   }
 }
 
-//===----------------------------------------------------------------------===//
-//                         Use getImpliedUser Implementation
-//===----------------------------------------------------------------------===//
-
-const Use *Use::getImpliedUser() const {
-  const Use *Current = this;
-
-  while (true) {
-    unsigned Tag = (Current++)->Prev.getInt();
-    switch (Tag) {
-      case zeroDigitTag:
-      case oneDigitTag:
-        continue;
-
-      case stopTag: {
-        ++Current;
-        ptrdiff_t Offset = 1;
-        while (true) {
-          unsigned Tag = Current->Prev.getInt();
-          switch (Tag) {
-            case zeroDigitTag:
-            case oneDigitTag:
-              ++Current;
-              Offset = (Offset << 1) + Tag;
-              continue;
-            default:
-              return Current + Offset;
-          }
-        }
-      }
-
-      case fullStopTag:
-        return Current;
-    }
-  }
+User *Use::getUser() const {
+  const Use *End = getImpliedUser();
+  const UserRef *ref = reinterpret_cast<const UserRef*>(End);
+  return ref->getInt()
+    ? ref->getPointer()
+    : reinterpret_cast<User*>(const_cast<Use*>(End));
 }
 
-//===----------------------------------------------------------------------===//
-//                         Use initTags Implementation
-//===----------------------------------------------------------------------===//
-
+// Sets up the waymarking algoritm's tags for a series of Uses. See the
+// algorithm details here:
+//
+//   http://www.llvm.org/docs/ProgrammersManual.html#UserLayout
+//
 Use *Use::initTags(Use * const Start, Use *Stop) {
   ptrdiff_t Done = 0;
   while (Done < 20) {
@@ -119,10 +84,6 @@ Use *Use::initTags(Use * const Start, Use *Stop) {
   return Start;
 }
 
-//===----------------------------------------------------------------------===//
-//                         Use zap Implementation
-//===----------------------------------------------------------------------===//
-
 void Use::zap(Use *Start, const Use *Stop, bool del) {
   while (Start != Stop)
     (--Stop)->~Use();
@@ -130,16 +91,37 @@ void Use::zap(Use *Start, const Use *Stop, bool del) {
     ::operator delete(Start);
 }
 
-//===----------------------------------------------------------------------===//
-//                         Use getUser Implementation
-//===----------------------------------------------------------------------===//
+const Use *Use::getImpliedUser() const {
+  const Use *Current = this;
 
-User *Use::getUser() const {
-  const Use *End = getImpliedUser();
-  const UserRef *ref = reinterpret_cast<const UserRef*>(End);
-  return ref->getInt()
-    ? ref->getPointer()
-    : reinterpret_cast<User*>(const_cast<Use*>(End));
+  while (true) {
+    unsigned Tag = (Current++)->Prev.getInt();
+    switch (Tag) {
+      case zeroDigitTag:
+      case oneDigitTag:
+        continue;
+
+      case stopTag: {
+        ++Current;
+        ptrdiff_t Offset = 1;
+        while (true) {
+          unsigned Tag = Current->Prev.getInt();
+          switch (Tag) {
+            case zeroDigitTag:
+            case oneDigitTag:
+              ++Current;
+              Offset = (Offset << 1) + Tag;
+              continue;
+            default:
+              return Current + Offset;
+          }
+        }
+      }
+
+      case fullStopTag:
+        return Current;
+    }
+  }
 }
 
 } // End llvm namespace

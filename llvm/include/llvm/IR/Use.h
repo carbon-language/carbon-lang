@@ -6,20 +6,20 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This defines the Use class.  The Use class represents the operand of an
-// instruction or some other User instance which refers to a Value.  The Use
-// class keeps the "use list" of the referenced value up to date.
-//
-// Pointer tagging is used to efficiently find the User corresponding
-// to a Use without having to store a User pointer in every Use. A
-// User is preceded in memory by all the Uses corresponding to its
-// operands, and the low bits of one of the fields (Prev) of the Use
-// class are used to encode offsets to be able to find that User given
-// a pointer to any Use. For details, see:
-//
-//   http://www.llvm.org/docs/ProgrammersManual.html#UserLayout
-//
+/// \file
+///
+/// This defines the Use class.  The Use class represents the operand of an
+/// instruction or some other User instance which refers to a Value.  The Use
+/// class keeps the "use list" of the referenced value up to date.
+///
+/// Pointer tagging is used to efficiently find the User corresponding to a Use
+/// without having to store a User pointer in every Use. A User is preceded in
+/// memory by all the Uses corresponding to its operands, and the low bits of
+/// one of the fields (Prev) of the Use class are used to encode offsets to be
+/// able to find that User given a pointer to any Use. For details, see:
+///
+///   http://www.llvm.org/docs/ProgrammersManual.html#UserLayout
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_IR_USE_H
@@ -51,15 +51,26 @@ public:
   enum { NumLowBitsAvailable = 2 };
 };
 
-//===----------------------------------------------------------------------===//
-//                                  Use Class
-//===----------------------------------------------------------------------===//
-
-/// Use is here to make keeping the "use" list of a Value up-to-date really
-/// easy.
+/// \brief A Use represents the edge between a Value definition and its users.
+///
+/// This is notionally a two-dimensional linked list. It supports traversing
+/// all of the uses for a particular value definition. It also supports jumping
+/// directly to the used value when we arrive from the User's operands, and
+/// jumping directly to the User when we arrive from the Value's uses.
+///
+/// The pointer to the used Value is explicit, and the pointer to the User is
+/// implicit. The implicit pointer is found via a waymarking algorithm
+/// described in the programmer's manual:
+///
+///   http://www.llvm.org/docs/ProgrammersManual.html#UserLayout
+///
+/// This is essentially the single most memory intensive object in LLVM because
+/// of the number of uses in the system. At the same time, the constant time
+/// operations it allows are essential to many optimizations having reasonable
+/// time complexity.
 class Use {
 public:
-  /// swap - provide a fast substitute to std::swap<Use>
+  /// \brief Provide a fast substitute to std::swap<Use>
   /// that also works with less standard-compliant compilers
   void swap(Use &RHS);
 
@@ -86,15 +97,13 @@ private:
   }
 
 public:
-  /// Normally Use will just implicitly convert to a Value* that it holds.
   operator Value*() const { return Val; }
-  
-  /// If implicit conversion to Value* doesn't work, the get() method returns
-  /// the Value*.
   Value *get() const { return Val; }
-  
-  /// getUser - This returns the User that contains this Use.  For an
-  /// instruction operand, for example, this will return the instruction.
+
+  /// \brief Returns the User that contains this Use.
+  ///
+  /// For an instruction operand, for example, this will return the
+  /// instruction.
   User *getUser() const;
 
   inline void set(Value *Val);
@@ -113,18 +122,19 @@ public:
 
   Use *getNext() const { return Next; }
 
-  
-  /// initTags - initialize the waymarking tags on an array of Uses, so that
-  /// getUser() can find the User from any of those Uses.
+  /// \brief Initializes the waymarking tags on an array of Uses.
+  ///
+  /// This sets up the array of Uses such that getUser() can find the User from
+  /// any of those Uses.
   static Use *initTags(Use *Start, Use *Stop);
 
-  /// zap - This is used to destroy Use operands when the number of operands of
+  /// \brief Destroys Use operands when the number of operands of
   /// a User changes.
   static void zap(Use *Start, const Use *Stop, bool del = false);
 
 private:
   const Use* getImpliedUser() const;
-  
+
   Value *Val;
   Use *Next;
   PointerIntPair<Use**, 2, PrevPtrTag> Prev;
@@ -147,8 +157,8 @@ private:
   friend class Value;
 };
 
-// simplify_type - Allow clients to treat uses just like values when using
-// casting operators.
+/// \brief Allow clients to treat uses just like values when using
+/// casting operators.
 template<> struct simplify_type<Use> {
   typedef Value* SimpleType;
   static SimpleType getSimplifiedValue(Use &Val) {
@@ -186,7 +196,7 @@ public:
     return !operator==(x);
   }
 
-  /// atEnd - return true if this iterator is equal to use_end() on the value.
+  /// \brief Returns true if this iterator is equal to use_end() on the value.
   bool atEnd() const { return U == 0; }
 
   // Iterator traversal: forward iteration only
@@ -208,16 +218,16 @@ public:
   UserTy *operator->() const { return operator*(); }
 
   Use &getUse() const { return *U; }
-  
-  /// getOperandNo - Return the operand # of this use in its User.  Defined in
-  /// User.h
+
+  /// \brief Return the operand # of this use in its User.
   ///
+  /// Defined in User.h
   unsigned getOperandNo() const;
 };
 
 // Create wrappers for C Binding types (see CBindingWrapping.h).
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Use, LLVMUseRef)
 
-} // End llvm namespace
+}
 
 #endif
