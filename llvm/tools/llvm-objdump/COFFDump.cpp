@@ -451,7 +451,7 @@ static void printWin64EHUnwindInfo(const Win64EH::UnwindInfo *UI) {
   outs().flush();
 }
 
-/// Prints out the given RuntumeFunction struct for x64, assuming that Obj is
+/// Prints out the given RuntimeFunction struct for x64, assuming that Obj is
 /// pointing to an executable file.
 static void printRuntimeFunction(const COFFObjectFile *Obj,
                                  const RuntimeFunction &RF) {
@@ -467,8 +467,8 @@ static void printRuntimeFunction(const COFFObjectFile *Obj,
   printWin64EHUnwindInfo(reinterpret_cast<const Win64EH::UnwindInfo *>(addr));
 }
 
-/// Prints out the given RuntumeFunction struct for x64, assuming that Obj is
-/// pointing to an object file. Unlike executable, fields in RuntumeFunction
+/// Prints out the given RuntimeFunction struct for x64, assuming that Obj is
+/// pointing to an object file. Unlike executable, fields in RuntimeFunction
 /// struct are filled with zeros, but instead there are relocations pointing to
 /// them so that the linker will fill targets' RVAs to the fields at link
 /// time. This function interprets the relocations to find the data to be used
