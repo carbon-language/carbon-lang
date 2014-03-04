@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
-#if SANITIZER_LINUX || SANITIZER_MAC
+#if SANITIZER_POSIX
 
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
@@ -269,4 +269,4 @@ bool GetCodeRangeForFile(const char *module, uptr *start, uptr *end) {
 
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_LINUX || SANITIZER_MAC
+#endif  // SANITIZER_POSIX

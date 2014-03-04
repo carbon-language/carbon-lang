@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_platform.h"
-#if SANITIZER_LINUX
+#if SANITIZER_FREEBSD || SANITIZER_LINUX
 
 #include "sanitizer_common/sanitizer_tls_get_addr.h"
 #include "asan_allocator.h"
@@ -153,4 +153,4 @@ INTERCEPTOR(void, malloc_stats, void) {
   __asan_print_accumulated_stats();
 }
 
-#endif  // SANITIZER_LINUX
+#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX

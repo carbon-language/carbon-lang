@@ -546,8 +546,8 @@ namespace __sanitizer {
     void (*gl_closedir)(void *dirp);
     struct dirent *(*gl_readdir)(void *dirp);
     void *(*gl_opendir)(const char*);
-    int (*gl_lstat)(const char*, struct stat*);
-    int (*gl_stat)(const char*, struct stat*);
+    int (*gl_lstat)(const char*, void* /* struct stat* */);
+    int (*gl_stat)(const char*, void* /* struct stat* */);
   };
 # endif  // SANITIZER_FREEBSD
 

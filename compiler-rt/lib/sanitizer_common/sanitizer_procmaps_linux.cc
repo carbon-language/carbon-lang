@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
-#if SANITIZER_LINUX
+#if SANITIZER_FREEBSD || SANITIZER_LINUX
 #include "sanitizer_common.h"
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
@@ -252,4 +252,4 @@ void GetMemoryProfile(fill_profile_f cb, uptr *stats, uptr stats_size) {
 
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_LINUX
+#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX

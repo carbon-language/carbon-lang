@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_platform.h"
-#if SANITIZER_LINUX || SANITIZER_MAC
+#if SANITIZER_POSIX
 
 #include "asan_internal.h"
 #include "asan_interceptors.h"
@@ -84,4 +84,4 @@ void PlatformTSDDtor(void *tsd) {
 }
 }  // namespace __asan
 
-#endif  // SANITIZER_LINUX || SANITIZER_MAC
+#endif  // SANITIZER_POSIX

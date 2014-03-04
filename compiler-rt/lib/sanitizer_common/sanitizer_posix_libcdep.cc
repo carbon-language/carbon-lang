@@ -14,7 +14,7 @@
 
 #include "sanitizer_platform.h"
 
-#if SANITIZER_LINUX || SANITIZER_MAC
+#if SANITIZER_POSIX
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
 #include "sanitizer_platform_limits_posix.h"
@@ -54,7 +54,7 @@ void DisableCoreDumper() {
 bool StackSizeIsUnlimited() {
   struct rlimit rlim;
   CHECK_EQ(0, getrlimit(RLIMIT_STACK, &rlim));
-  return (rlim.rlim_cur == (uptr)-1);
+  return ((uptr)rlim.rlim_cur == (uptr)-1);
 }
 
 void SetStackSizeLimitInBytes(uptr limit) {
@@ -106,7 +106,7 @@ void SetAlternateSignalStack() {
   // future. It is not required by man 2 sigaltstack now (they're using
   // malloc()).
   void* base = MmapOrDie(kAltStackSize, __func__);
-  altstack.ss_sp = base;
+  altstack.ss_sp = (char*) base;
   altstack.ss_flags = 0;
   altstack.ss_size = kAltStackSize;
   CHECK_EQ(0, sigaltstack(&altstack, 0));
@@ -147,4 +147,4 @@ void InstallDeadlySignalHandlers(SignalHandlerType handler) {
 
 }  // namespace __sanitizer
 
-#endif
+#endif  // SANITIZER_POSIX
