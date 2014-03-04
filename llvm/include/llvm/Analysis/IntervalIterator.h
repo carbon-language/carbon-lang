@@ -34,8 +34,8 @@
 #define LLVM_ANALYSIS_INTERVALITERATOR_H
 
 #include "llvm/Analysis/IntervalPartition.h"
+#include "llvm/IR/CFG.h"
 #include "llvm/IR/Function.h"
-#include "llvm/Support/CFG.h"
 #include <algorithm>
 #include <set>
 #include <vector>

@@ -14,7 +14,7 @@
 
 #include "llvm/Analysis/Interval.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/Support/CFG.h"
+#include "llvm/IR/CFG.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 

@@ -16,7 +16,7 @@
 #define LLVM_ANALYSIS_CFG_H
 
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/Support/CFG.h"
+#include "llvm/IR/CFG.h"
 
 namespace llvm {
 

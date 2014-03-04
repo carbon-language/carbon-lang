@@ -24,7 +24,7 @@
 #include "ObjCARC.h"
 #include "DependencyAnalysis.h"
 #include "ProvenanceAnalysis.h"
-#include "llvm/Support/CFG.h"
+#include "llvm/IR/CFG.h"
 
 using namespace llvm;
 using namespace llvm::objcarc;

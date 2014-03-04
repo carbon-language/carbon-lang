@@ -15,12 +15,12 @@
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;

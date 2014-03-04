@@ -38,6 +38,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/DIBuilder.h"
 #include "llvm/DebugInfo.h"
+#include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Dominators.h"
@@ -45,7 +46,6 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Metadata.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
 #include <queue>

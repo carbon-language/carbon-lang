@@ -18,7 +18,7 @@
 // FIXME: Move to this file: BasicBlock::removePredecessor, BB::splitBasicBlock
 
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/Support/CFG.h"
+#include "llvm/IR/CFG.h"
 
 namespace llvm {
 

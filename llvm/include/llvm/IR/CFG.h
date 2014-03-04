@@ -1,4 +1,4 @@
-//===-- llvm/Support/CFG.h - Process LLVM structures as graphs --*- C++ -*-===//
+//===- CFG.h - Process LLVM structures as graphs ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_CFG_H
-#define LLVM_SUPPORT_CFG_H
+#ifndef LLVM_IR_CFG_H
+#define LLVM_IR_CFG_H
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/IR/Function.h"
