@@ -11,13 +11,13 @@
 #define INSTCOMBINE_INSTCOMBINE_H
 
 #include "InstCombineWorklist.h"
+#include "llvm/Analysis/TargetFolder.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/InstVisitor.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/TargetFolder.h"
 #include "llvm/Transforms/Utils/SimplifyLibCalls.h"
 
 namespace llvm {

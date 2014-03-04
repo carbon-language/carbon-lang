@@ -1,4 +1,4 @@
-//====-- llvm/Support/TargetFolder.h - Constant folding helper -*- C++ -*-====//
+//====- TargetFolder.h - Constant folding helper ---------------*- C++ -*-====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_TARGETFOLDER_H
-#define LLVM_SUPPORT_TARGETFOLDER_H
+#ifndef LLVM_ANALYSIS_TARGETFOLDER_H
+#define LLVM_ANALYSIS_TARGETFOLDER_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Analysis/ConstantFolding.h"
