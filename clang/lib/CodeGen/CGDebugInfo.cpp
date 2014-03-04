@@ -3341,7 +3341,8 @@ void CGDebugInfo::finalize() {
   // up the final type in the type cache.
   for (std::vector<void *>::const_iterator RI = RetainedTypes.begin(),
          RE = RetainedTypes.end(); RI != RE; ++RI)
-    DBuilder.retainType(llvm::DIType(cast<llvm::MDNode>(TypeCache[*RI])));
+    if (llvm::Value *V = TypeCache[*RI])
+      DBuilder.retainType(llvm::DIType(cast<llvm::MDNode>(V)));
 
   DBuilder.finalize();
 }
