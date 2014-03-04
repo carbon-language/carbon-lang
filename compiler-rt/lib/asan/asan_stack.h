@@ -59,9 +59,9 @@ void GetStackTraceWithPcBpAndContext(StackTrace *stack, uptr max_depth, uptr pc,
     if (max_size > 0) {                                                        \
       stack.top_frame_bp = GET_CURRENT_FRAME();                                \
       stack.trace[0] = StackTrace::GetCurrentPc();                             \
+      if (max_size > 1)                                                        \
+        stack.trace[1] = GET_CALLER_PC();                                      \
     }                                                                          \
-    if (max_size > 1)                                                          \
-      stack.trace[1] = GET_CALLER_PC();                                        \
   } else {                                                                     \
     GetStackTraceWithPcBpAndContext(&stack, max_size,                          \
                                     StackTrace::GetCurrentPc(),                \

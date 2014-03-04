@@ -102,4 +102,26 @@ TEST_F(FastUnwindTest, OneFrameStackTrace) {
   EXPECT_EQ((uptr)&fake_stack[0], trace.top_frame_bp);
 }
 
+TEST_F(FastUnwindTest, ZeroFramesStackTrace) {
+  if (!TryFastUnwind(0))
+    return;
+  EXPECT_EQ(0U, trace.size);
+  EXPECT_EQ(0U, trace.top_frame_bp);
+}
+
+TEST(SlowUnwindTest, ShortStackTrace) {
+  if (StackTrace::WillUseFastUnwind(false))
+    return;
+  StackTrace stack;
+  uptr pc = StackTrace::GetCurrentPc();
+  uptr bp = GET_CURRENT_FRAME();
+  stack.Unwind(0, pc, bp, 0, 0, 0, false);
+  EXPECT_EQ(0U, stack.size);
+  EXPECT_EQ(0U, stack.top_frame_bp);
+  stack.Unwind(1, pc, bp, 0, 0, 0, false);
+  EXPECT_EQ(1U, stack.size);
+  EXPECT_EQ(pc, stack.trace[0]);
+  EXPECT_EQ(bp, stack.top_frame_bp);
+}
+
 }  // namespace __sanitizer
