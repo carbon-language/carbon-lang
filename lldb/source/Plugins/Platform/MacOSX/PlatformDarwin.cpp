@@ -305,79 +305,14 @@ PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &m
                      module_spec.GetSymbolFileSpec().GetFilename().AsCString());
 
     std::string cache_path(GetLocalCacheDirectory());
-    // Only search for a locally cached file if we have a valid cache path
-    if (!cache_path.empty())
-    {
-        std::string module_path (module_spec.GetFileSpec().GetPath());
-        cache_path.append(module_path);
-        FileSpec module_cache_spec(cache_path.c_str(),false);
+    std::string module_path (module_spec.GetFileSpec().GetPath());
+    cache_path.append(module_path);
+    FileSpec module_cache_spec(cache_path.c_str(),false);
     
-        // if rsync is supported, always bring in the file - rsync will be very efficient
-        // when files are the same on the local and remote end of the connection
-        if (this->GetSupportsRSync())
-        {
-            Error err = BringInRemoteFile (this, module_spec, module_cache_spec);
-            if (err.Fail())
-                return err;
-            if (module_cache_spec.Exists())
-            {
-                Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
-                if (log)
-                    log->Printf("[%s] module %s/%s was rsynced and is now there",
-                                 (IsHost() ? "host" : "remote"),
-                                 module_spec.GetFileSpec().GetDirectory().AsCString(),
-                                 module_spec.GetFileSpec().GetFilename().AsCString());
-                ModuleSpec local_spec(module_cache_spec, module_spec.GetArchitecture());
-                module_sp.reset(new Module(local_spec));
-                module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
-                return Error();
-            }
-        }
-        
-        // try to find the module in the cache
-        if (module_cache_spec.Exists())
-        {
-            // get the local and remote MD5 and compare
-            if (m_remote_platform_sp)
-            {
-                // when going over the *slow* GDB remote transfer mechanism we first check
-                // the hashes of the files - and only do the actual transfer if they differ
-                uint64_t high_local,high_remote,low_local,low_remote;
-                Host::CalculateMD5 (module_cache_spec, low_local, high_local);
-                m_remote_platform_sp->CalculateMD5(module_spec.GetFileSpec(), low_remote, high_remote);
-                if (low_local != low_remote || high_local != high_remote)
-                {
-                    // bring in the remote file
-                    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
-                    if (log)
-                        log->Printf("[%s] module %s/%s needs to be replaced from remote copy",
-                                     (IsHost() ? "host" : "remote"),
-                                     module_spec.GetFileSpec().GetDirectory().AsCString(),
-                                     module_spec.GetFileSpec().GetFilename().AsCString());
-                    Error err = BringInRemoteFile (this, module_spec, module_cache_spec);
-                    if (err.Fail())
-                        return err;
-                }
-            }
-            
-            ModuleSpec local_spec(module_cache_spec, module_spec.GetArchitecture());
-            module_sp.reset(new Module(local_spec));
-            module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
-            Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
-                if (log)
-                    log->Printf("[%s] module %s/%s was found in the cache",
-                                 (IsHost() ? "host" : "remote"),
-                                 module_spec.GetFileSpec().GetDirectory().AsCString(),
-                                 module_spec.GetFileSpec().GetFilename().AsCString());
-            return Error();
-        }
-        
-        // bring in the remote module file
-        if (log)
-            log->Printf("[%s] module %s/%s needs to come in remotely",
-                         (IsHost() ? "host" : "remote"),
-                         module_spec.GetFileSpec().GetDirectory().AsCString(),
-                         module_spec.GetFileSpec().GetFilename().AsCString());
+    // if rsync is supported, always bring in the file - rsync will be very efficient
+    // when files are the same on the local and remote end of the connection
+    if (this->GetSupportsRSync())
+    {
         Error err = BringInRemoteFile (this, module_spec, module_cache_spec);
         if (err.Fail())
             return err;
@@ -385,7 +320,7 @@ PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &m
         {
             Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
             if (log)
-                log->Printf("[%s] module %s/%s is now cached and fine",
+                log->Printf("[%s] module %s/%s was rsynced and is now there",
                              (IsHost() ? "host" : "remote"),
                              module_spec.GetFileSpec().GetDirectory().AsCString(),
                              module_spec.GetFileSpec().GetFilename().AsCString());
@@ -394,11 +329,76 @@ PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &m
             module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
             return Error();
         }
-        else
-            return Error("unable to obtain valid module file");
+    }
+
+    if (module_spec.GetFileSpec().Exists() && !module_sp)
+    {
+        module_sp.reset(new Module(module_spec));
+        return Error();
+    }
+    
+    // try to find the module in the cache
+    if (module_cache_spec.Exists())
+    {
+        // get the local and remote MD5 and compare
+        if (m_remote_platform_sp)
+        {
+            // when going over the *slow* GDB remote transfer mechanism we first check
+            // the hashes of the files - and only do the actual transfer if they differ
+            uint64_t high_local,high_remote,low_local,low_remote;
+            Host::CalculateMD5 (module_cache_spec, low_local, high_local);
+            m_remote_platform_sp->CalculateMD5(module_spec.GetFileSpec(), low_remote, high_remote);
+            if (low_local != low_remote || high_local != high_remote)
+            {
+                // bring in the remote file
+                Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
+                if (log)
+                    log->Printf("[%s] module %s/%s needs to be replaced from remote copy",
+                                 (IsHost() ? "host" : "remote"),
+                                 module_spec.GetFileSpec().GetDirectory().AsCString(),
+                                 module_spec.GetFileSpec().GetFilename().AsCString());
+                Error err = BringInRemoteFile (this, module_spec, module_cache_spec);
+                if (err.Fail())
+                    return err;
+            }
+        }
+        
+        ModuleSpec local_spec(module_cache_spec, module_spec.GetArchitecture());
+        module_sp.reset(new Module(local_spec));
+        module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
+        Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
+            if (log)
+                log->Printf("[%s] module %s/%s was found in the cache",
+                             (IsHost() ? "host" : "remote"),
+                             module_spec.GetFileSpec().GetDirectory().AsCString(),
+                             module_spec.GetFileSpec().GetFilename().AsCString());
+        return Error();
+    }
+    
+    // bring in the remote module file
+    if (log)
+        log->Printf("[%s] module %s/%s needs to come in remotely",
+                     (IsHost() ? "host" : "remote"),
+                     module_spec.GetFileSpec().GetDirectory().AsCString(),
+                     module_spec.GetFileSpec().GetFilename().AsCString());
+    Error err = BringInRemoteFile (this, module_spec, module_cache_spec);
+    if (err.Fail())
+        return err;
+    if (module_cache_spec.Exists())
+    {
+        Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
+        if (log)
+            log->Printf("[%s] module %s/%s is now cached and fine",
+                         (IsHost() ? "host" : "remote"),
+                         module_spec.GetFileSpec().GetDirectory().AsCString(),
+                         module_spec.GetFileSpec().GetFilename().AsCString());
+        ModuleSpec local_spec(module_cache_spec, module_spec.GetArchitecture());
+        module_sp.reset(new Module(local_spec));
+        module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
+        return Error();
     }
     else
-        return Error("no cache path");
+        return Error("unable to obtain valid module file");
 }
 
 Error
