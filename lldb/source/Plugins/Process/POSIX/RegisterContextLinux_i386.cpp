@@ -83,8 +83,9 @@ struct UserArea
 };
 
 #define DR_SIZE sizeof(UserArea::u_debugreg[0])
+#define DR_0_OFFSET 0xFC
 #define DR_OFFSET(reg_index) \
-    (LLVM_EXTENSION offsetof(UserArea, u_debugreg[reg_index]))
+    (DR_0_OFFSET + (reg_index * 4))
 #define FPR_SIZE(reg) sizeof(((FPR_i386*)NULL)->reg)
 
 //---------------------------------------------------------------------------

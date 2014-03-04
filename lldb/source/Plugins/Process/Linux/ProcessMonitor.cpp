@@ -532,11 +532,7 @@ WriteRegOperation::Execute(ProcessMonitor *monitor)
     void* buf;
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
 
-#if __WORDSIZE == 32
-    buf = (void*) m_value.GetAsUInt32();
-#else
     buf = (void*) m_value.GetAsUInt64();
-#endif
 
     if (log)
         log->Printf ("ProcessMonitor::%s() reg %s: %p", __FUNCTION__, m_reg_name, buf);
