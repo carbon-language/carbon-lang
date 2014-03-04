@@ -11,9 +11,8 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_QUERY_QUERY_PARSER_H
 
 #include "Query.h"
-
-#include <stddef.h>
 #include "llvm/LineEditor/LineEditor.h"
+#include <stddef.h>
 
 namespace clang {
 namespace query {

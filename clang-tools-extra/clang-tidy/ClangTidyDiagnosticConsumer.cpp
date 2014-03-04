@@ -17,7 +17,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangTidyDiagnosticConsumer.h"
-
 #include "llvm/ADT/SmallString.h"
 
 namespace clang {

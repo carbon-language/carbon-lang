@@ -10,8 +10,8 @@
 #include "QueryParser.h"
 #include "Query.h"
 #include "QuerySession.h"
-#include "gtest/gtest.h"
 #include "llvm/LineEditor/LineEditor.h"
+#include "gtest/gtest.h"
 
 using namespace clang;
 using namespace clang::query;
