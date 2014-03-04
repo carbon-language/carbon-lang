@@ -257,6 +257,20 @@ class MipsAsmParser : public MCTargetAsmParser {
   // Example: INSERT.B $w0[n], $1 => 16 > n >= 0
   bool validateMSAIndex(int Val, int RegKind);
 
+  void setFeatureBits(unsigned Feature, StringRef FeatureString) {
+    if (!(STI.getFeatureBits() & Feature)) {
+      setAvailableFeatures(ComputeAvailableFeatures(
+                           STI.ToggleFeature(FeatureString)));
+    }
+  }
+
+  void clearFeatureBits(unsigned Feature, StringRef FeatureString) {
+    if (STI.getFeatureBits() & Feature) {
+     setAvailableFeatures(ComputeAvailableFeatures(
+                           STI.ToggleFeature(FeatureString)));
+    }
+  }
+
 public:
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
                 const MCInstrInfo &MII)
@@ -2438,6 +2452,13 @@ bool MipsAsmParser::parseDirectiveSet() {
   } else if (Tok.getString() == "micromips") {
     getTargetStreamer().emitDirectiveSetMicroMips();
     Parser.eatToEndOfStatement();
+    return false;
+  } else if (Tok.getString() == "mips32r2") {
+    Parser.Lex(); // Eat token.
+    if (getLexer().isNot(AsmToken::EndOfStatement))
+      return reportParseError("unexpected token in .set directive");
+    setFeatureBits(Mips::FeatureMips32r2,"mips32r2");
+    getTargetStreamer().emitDirectiveSetMips32R2();
     return false;
   } else {
     // It is just an identifier, look for an assignment.

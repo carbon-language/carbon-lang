@@ -1,4 +1,4 @@
-# RUN: llvm-mc -show-encoding -triple mips-unknown-unknown %s | FileCheck %s
+# RUN: llvm-mc -show-encoding -mcpu=mips32 -triple mips-unknown-unknown %s | FileCheck %s
 #
 # CHECK:  .text
 # CHECK:  $BB0_2:
@@ -49,3 +49,12 @@ $BB0_4:
 # CHECK:                               #   fixup A - offset: 0, value: ($tmp7)@ABS_HI, kind: fixup_Mips_HI16
     abs.s  f6,FPU_MASK
     lui $1, %hi($tmp7)
+
+# CHECK:    .set mips32r2
+# CHECK:    ldxc1   $f0, $zero($5)     # encoding: [0x4c,0xa0,0x00,0x01]
+# CHECK:    luxc1   $f0, $6($5)        # encoding: [0x4c,0xa6,0x00,0x05]
+# CHECK:    lwxc1   $f6, $2($5)        # encoding: [0x4c,0xa2,0x01,0x80]
+     .set mips32r2
+    ldxc1   $f0, $zero($5)
+    luxc1   $f0, $6($5)
+    lwxc1   $f6, $2($5)

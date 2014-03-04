@@ -97,6 +97,10 @@ void MipsTargetAsmStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
      << StringRef(MipsInstPrinter::getRegisterName(ReturnReg)).lower() << '\n';
 }
 
+void MipsTargetAsmStreamer::emitDirectiveSetMips32R2() {
+  OS << "\t.set\tmips32r2\n";
+}
+
 // Print a 32 bit hex number with all numbers.
 static void printHex32(unsigned Value, raw_ostream &OS) {
   OS << "0x";
@@ -301,4 +305,8 @@ void MipsTargetELFStreamer::emitMask(unsigned CPUBitmask,
 void MipsTargetELFStreamer::emitFMask(unsigned FPUBitmask,
                                       int FPUTopSavedRegOff) {
   // FIXME: implement.
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetMips32R2() {
+  // No action required for ELF output.
 }
