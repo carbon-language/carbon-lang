@@ -10,7 +10,8 @@
 // <string>
 
 // basic_string<charT,traits,Allocator>&
-//   append(const basic_string<charT,traits>& str, size_type pos, size_type n);
+//   append(const basic_string<charT,traits>& str, size_type pos, size_type n = npos);
+//  the "= npos" was added for C++14
 
 #include <string>
 #include <stdexcept>
@@ -25,6 +26,23 @@ test(S s, S str, typename S::size_type pos, typename S::size_type n, S expected)
     try
     {
         s.append(str, pos, n);
+        assert(s.__invariants());
+        assert(pos <= str.size());
+        assert(s == expected);
+    }
+    catch (std::out_of_range&)
+    {
+        assert(pos > str.size());
+    }
+}
+
+template <class S>
+void
+test_npos(S s, S str, typename S::size_type pos, S expected)
+{
+    try
+    {
+        s.append(str, pos);
         assert(s.__invariants());
         assert(pos <= str.size());
         assert(s == expected);
@@ -87,4 +105,14 @@ int main()
          S("123456789012345678906789012345"));
     }
 #endif
+    {
+    typedef std::string S;
+    test_npos(S(), S(), 0, S());
+    test_npos(S(), S(), 1, S());
+    test_npos(S(), S("12345"), 0, S("12345"));
+    test_npos(S(), S("12345"), 1, S("2345"));
+    test_npos(S(), S("12345"), 3, S("45"));
+    test_npos(S(), S("12345"), 5, S(""));
+    test_npos(S(), S("12345"), 6, S("not happening"));
+    }
 }

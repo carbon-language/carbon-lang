@@ -161,7 +161,7 @@ public:
     basic_string& operator+=(initializer_list<value_type>);
 
     basic_string& append(const basic_string& str);
-    basic_string& append(const basic_string& str, size_type pos, size_type n);
+    basic_string& append(const basic_string& str, size_type pos, size_type n=npos); //C++14
     basic_string& append(const value_type* s, size_type n);
     basic_string& append(const value_type* s);
     basic_string& append(size_type n, value_type c);
@@ -178,7 +178,7 @@ public:
 
     basic_string& assign(const basic_string& str);
     basic_string& assign(basic_string&& str);
-    basic_string& assign(const basic_string& str, size_type pos, size_type n);
+    basic_string& assign(const basic_string& str, size_type pos, size_type n=npos); // C++14
     basic_string& assign(const value_type* s, size_type n);
     basic_string& assign(const value_type* s);
     basic_string& assign(size_type n, value_type c);
@@ -189,7 +189,7 @@ public:
     basic_string& insert(size_type pos1, const basic_string& str);
     basic_string& insert(size_type pos1, const basic_string& str,
                          size_type pos2, size_type n);
-    basic_string& insert(size_type pos, const value_type* s, size_type n);
+    basic_string& insert(size_type pos, const value_type* s, size_type n=npos); //C++14
     basic_string& insert(size_type pos, const value_type* s);
     basic_string& insert(size_type pos, size_type n, value_type c);
     iterator      insert(const_iterator p, value_type c);
@@ -204,7 +204,7 @@ public:
 
     basic_string& replace(size_type pos1, size_type n1, const basic_string& str);
     basic_string& replace(size_type pos1, size_type n1, const basic_string& str,
-                          size_type pos2, size_type n2);
+                          size_type pos2, size_type n2=npos); // C++14
     basic_string& replace(size_type pos, size_type n1, const value_type* s, size_type n2);
     basic_string& replace(size_type pos, size_type n1, const value_type* s);
     basic_string& replace(size_type pos, size_type n1, size_type n2, value_type c);
@@ -261,7 +261,7 @@ public:
     int compare(const basic_string& str) const noexcept;
     int compare(size_type pos1, size_type n1, const basic_string& str) const;
     int compare(size_type pos1, size_type n1, const basic_string& str,
-                size_type pos2, size_type n2) const;
+                size_type pos2, size_type n2=npos) const; // C++14
     int compare(const value_type* s) const noexcept;
     int compare(size_type pos1, size_type n1, const value_type* s) const;
     int compare(size_type pos1, size_type n1, const value_type* s, size_type n2) const;
@@ -1426,7 +1426,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     basic_string& append(const basic_string& __str);
-    basic_string& append(const basic_string& __str, size_type __pos, size_type __n);
+    basic_string& append(const basic_string& __str, size_type __pos, size_type __n=npos);
     basic_string& append(const value_type* __s, size_type __n);
     basic_string& append(const value_type* __s);
     basic_string& append(size_type __n, value_type __c);
@@ -1465,7 +1465,7 @@ public:
     basic_string& assign(basic_string&& str)
         {*this = _VSTD::move(str); return *this;}
 #endif
-    basic_string& assign(const basic_string& __str, size_type __pos, size_type __n);
+    basic_string& assign(const basic_string& __str, size_type __pos, size_type __n=npos);
     basic_string& assign(const value_type* __s, size_type __n);
     basic_string& assign(const value_type* __s);
     basic_string& assign(size_type __n, value_type __c);
@@ -1491,7 +1491,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     basic_string& insert(size_type __pos1, const basic_string& __str);
-    basic_string& insert(size_type __pos1, const basic_string& __str, size_type __pos2, size_type __n);
+    basic_string& insert(size_type __pos1, const basic_string& __str, size_type __pos2, size_type __n=npos);
     basic_string& insert(size_type __pos, const value_type* __s, size_type __n);
     basic_string& insert(size_type __pos, const value_type* __s);
     basic_string& insert(size_type __pos, size_type __n, value_type __c);
@@ -1527,7 +1527,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     basic_string& replace(size_type __pos1, size_type __n1, const basic_string& __str);
-    basic_string& replace(size_type __pos1, size_type __n1, const basic_string& __str, size_type __pos2, size_type __n2);
+    basic_string& replace(size_type __pos1, size_type __n1, const basic_string& __str, size_type __pos2, size_type __n2=npos);
     basic_string& replace(size_type __pos, size_type __n1, const value_type* __s, size_type __n2);
     basic_string& replace(size_type __pos, size_type __n1, const value_type* __s);
     basic_string& replace(size_type __pos, size_type __n1, size_type __n2, value_type __c);
@@ -1619,7 +1619,7 @@ public:
     int compare(const basic_string& __str) const _NOEXCEPT;
     _LIBCPP_INLINE_VISIBILITY
     int compare(size_type __pos1, size_type __n1, const basic_string& __str) const;
-    int compare(size_type __pos1, size_type __n1, const basic_string& __str, size_type __pos2, size_type __n2) const;
+    int compare(size_type __pos1, size_type __n1, const basic_string& __str, size_type __pos2, size_type __n2=npos) const;
     int compare(const value_type* __s) const _NOEXCEPT;
     int compare(size_type __pos1, size_type __n1, const value_type* __s) const;
     int compare(size_type __pos1, size_type __n1, const value_type* __s, size_type __n2) const;

@@ -11,7 +11,8 @@
 
 // basic_string<charT,traits,Allocator>&
 //   replace(size_type pos1, size_type n1, const basic_string<charT,traits,Allocator>& str,
-//           size_type pos2, size_type n2);
+//           size_type pos2, size_type n2=npos);
+//  the "=npos" was added in C++14
 
 #include <string>
 #include <stdexcept>
@@ -44,6 +45,32 @@ test(S s, typename S::size_type pos1, typename S::size_type n1,
         assert(s == s0);
     }
 }
+
+template <class S>
+void
+test_npos(S s, typename S::size_type pos1, typename S::size_type n1,
+     S str, typename S::size_type pos2,
+     S expected)
+{
+    typename S::size_type old_size = s.size();
+    S s0 = s;
+    try
+    {
+        s.replace(pos1, n1, str, pos2);
+        assert(s.__invariants());
+        assert(pos1 <= old_size && pos2 <= str.size());
+        assert(s == expected);
+        typename S::size_type xlen = std::min(n1, old_size - pos1);
+        typename S::size_type rlen = std::min(S::npos, str.size() - pos2);
+        assert(s.size() == old_size - xlen + rlen);
+    }
+    catch (std::out_of_range&)
+    {
+        assert(pos1 > old_size || pos2 > str.size());
+        assert(s == s0);
+    }
+}
+
 
 template <class S>
 void test0()
@@ -5796,6 +5823,24 @@ void test54()
     test(S("abcdefghijklmnopqrst"), 21, 0, S("12345678901234567890"), 21, 0, S("can't happen"));
 }
 
+template <class S>
+void test55()
+{
+    test_npos(S("abcdefghij"), 9, 1, S("12345678901234567890"), 10, S("abcdefghi1234567890"));
+    test_npos(S("abcdefghij"), 9, 1, S("12345678901234567890"), 19, S("abcdefghi0"));
+    test_npos(S("abcdefghij"), 9, 1, S("12345678901234567890"), 20, S("abcdefghi"));
+    test_npos(S("abcdefghij"), 9, 1, S("12345678901234567890"), 20, S("abcdefghi"));
+    test_npos(S("abcdefghij"), 9, 1, S("12345678901234567890"), 21, S("can't happen"));
+    test_npos(S("abcdefghij"), 9, 2, S(""), 0, S("abcdefghi"));
+    test_npos(S("abcdefghij"), 9, 2, S(""), 1, S("can't happen"));
+    test_npos(S("abcdefghij"), 9, 2, S("12345"), 0, S("abcdefghi12345"));
+    test_npos(S("abcdefghij"), 9, 2, S("12345"), 1, S("abcdefghi2345"));
+    test_npos(S("abcdefghij"), 9, 2, S("12345"), 2, S("abcdefghi345"));
+    test_npos(S("abcdefghij"), 9, 2, S("12345"), 4, S("abcdefghi5"));
+    test_npos(S("abcdefghij"), 9, 2, S("12345"), 5, S("abcdefghi"));
+    test_npos(S("abcdefghij"), 9, 2, S("12345"), 6, S("can't happen"));
+}
+
 int main()
 {
     {
@@ -5855,6 +5900,7 @@ int main()
     test52<S>();
     test53<S>();
     test54<S>();
+    test55<S>();
     }
 #if __cplusplus >= 201103L
     {
@@ -5914,6 +5960,7 @@ int main()
     test52<S>();
     test53<S>();
     test54<S>();
+    test55<S>();
     }
 #endif
 }

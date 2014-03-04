@@ -10,7 +10,8 @@
 // <string>
 
 // int compare(size_type pos1, size_type n1, const basic_string& str,
-//             size_type pos2, size_type n2) const;
+//             size_type pos2, size_type n2=npos) const;
+//  the "=npos" was added in C++14
 
 #include <string>
 #include <stdexcept>
@@ -35,6 +36,23 @@ test(const S& s, typename S::size_type pos1, typename S::size_type n1,
     try
     {
         assert(sign(s.compare(pos1, n1, str, pos2, n2)) == sign(x));
+        assert(pos1 <= s.size());
+        assert(pos2 <= str.size());
+    }
+    catch (std::out_of_range&)
+    {
+        assert(pos1 > s.size() || pos2 > str.size());
+    }
+}
+
+template <class S>
+void
+test_npos(const S& s, typename S::size_type pos1, typename S::size_type n1,
+     const S& str, typename S::size_type pos2, int x)
+{
+    try
+    {
+        assert(sign(s.compare(pos1, n1, str, pos2)) == sign(x));
         assert(pos1 <= s.size());
         assert(pos2 <= str.size());
     }
@@ -5795,6 +5813,16 @@ void test54()
     test(S("abcdefghijklmnopqrst"), 21, 0, S("abcdefghijklmnopqrst"), 21, 0, 0);
 }
 
+template<class S>
+void test55()
+{
+    test_npos(S(""), 0, 0, S(""), 0, 0);
+    test_npos(S(""), 0, 0, S("abcde"), 0, -5);
+    test_npos(S("abcde"), 0, 0, S("abcdefghij"), 0, -10);
+    test_npos(S("abcde"), 0, 0, S("abcdefghij"), 1, -9);
+    test_npos(S("abcde"), 0, 0, S("abcdefghij"), 5, -5);
+}
+
 int main()
 {
     {
@@ -5854,6 +5882,7 @@ int main()
     test52<S>();
     test53<S>();
     test54<S>();
+    test55<S>();
     }
 #if __cplusplus >= 201103L
     {
@@ -5913,6 +5942,7 @@ int main()
     test52<S>();
     test53<S>();
     test54<S>();
+    test55<S>();
     }
 #endif
 }

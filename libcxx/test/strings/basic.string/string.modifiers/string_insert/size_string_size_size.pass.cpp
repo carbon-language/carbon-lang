@@ -11,7 +11,8 @@
 
 // basic_string<charT,traits,Allocator>&
 //   insert(size_type pos1, const basic_string<charT,traits,Allocator>& str,
-//          size_type pos2, size_type n);
+//          size_type pos2, size_type n=npos);
+// the "=npos" was added in C++14
 
 #include <string>
 #include <stdexcept>
@@ -39,6 +40,27 @@ test(S s, typename S::size_type pos1, S str, typename S::size_type pos2,
         assert(s == s0);
     }
 }
+
+template <class S>
+void
+test_npos(S s, typename S::size_type pos1, S str, typename S::size_type pos2, S expected)
+{
+    typename S::size_type old_size = s.size();
+    S s0 = s;
+    try
+    {
+        s.insert(pos1, str, pos2);
+        assert(s.__invariants());
+        assert(pos1 <= old_size && pos2 <= str.size());
+        assert(s == expected);
+    }
+    catch (std::out_of_range&)
+    {
+        assert(pos1 > old_size || pos2 > str.size());
+        assert(s == s0);
+    }
+}
+
 
 template <class S>
 void test0()
@@ -1670,6 +1692,23 @@ void test29()
     test(S("abcdefghijklmnopqrst"), 21, S("12345678901234567890"), 21, 0, S("can't happen"));
 }
 
+template <class S>
+void test30()
+{
+    test_npos(S(""), 0, S("12345678901234567890"),  0, S("12345678901234567890"));
+    test_npos(S(""), 0, S("12345678901234567890"),  1, S( "2345678901234567890"));
+    test_npos(S(""), 0, S("12345678901234567890"),  2, S(  "345678901234567890"));
+    test_npos(S(""), 0, S("12345678901234567890"),  3, S(   "45678901234567890"));
+    test_npos(S(""), 0, S("12345678901234567890"),  5, S(     "678901234567890"));
+    test_npos(S(""), 0, S("12345678901234567890"), 10, S(          "1234567890"));
+    test_npos(S(""), 0, S("12345678901234567890"), 21, S("can't happen"));
+    test_npos(S("abcdefghijklmnopqrst"), 10, S("12345"), 0, S("abcdefghij12345klmnopqrst"));
+    test_npos(S("abcdefghijklmnopqrst"), 10, S("12345"), 1, S("abcdefghij2345klmnopqrst"));
+    test_npos(S("abcdefghijklmnopqrst"), 10, S("12345"), 3, S("abcdefghij45klmnopqrst"));
+    test_npos(S("abcdefghijklmnopqrst"), 10, S("12345"), 5, S("abcdefghijklmnopqrst"));
+    test_npos(S("abcdefghijklmnopqrst"), 10, S("12345"), 6, S("can't happen"));
+}
+
 int main()
 {
     {
@@ -1704,6 +1743,7 @@ int main()
     test27<S>();
     test28<S>();
     test29<S>();
+    test30<S>();
     }
 #if __cplusplus >= 201103L
     {
@@ -1738,6 +1778,7 @@ int main()
     test27<S>();
     test28<S>();
     test29<S>();
+    test30<S>();
     }
 #endif
 }
