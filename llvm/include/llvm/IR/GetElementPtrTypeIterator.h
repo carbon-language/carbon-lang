@@ -1,4 +1,4 @@
-//===- llvm/Support/GetElementPtrTypeIterator.h -----------------*- C++ -*-===//
+//===- GetElementPtrTypeIterator.h ------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_GETELEMENTPTRTYPEITERATOR_H
-#define LLVM_SUPPORT_GETELEMENTPTRTYPEITERATOR_H
+#ifndef LLVM_IR_GETELEMENTPTRTYPEITERATOR_H
+#define LLVM_IR_GETELEMENTPTRTYPEITERATOR_H
 
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/User.h"
