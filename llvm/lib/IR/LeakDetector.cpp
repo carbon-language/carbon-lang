@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/LeakDetector.h"
+#include "llvm/IR/LeakDetector.h"
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Value.h"

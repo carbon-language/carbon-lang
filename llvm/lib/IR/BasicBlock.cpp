@@ -19,8 +19,8 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/LeakDetector.h"
 #include "llvm/IR/Type.h"
-#include "llvm/Support/LeakDetector.h"
 #include <algorithm>
 using namespace llvm;
 

@@ -1,4 +1,4 @@
-//===-- llvm/Support/LeakDetector.h - Provide leak detection ----*- C++ -*-===//
+//===- LeakDetector.h - Provide leak detection ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,8 +19,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_LEAKDETECTOR_H
-#define LLVM_SUPPORT_LEAKDETECTOR_H
+#ifndef LLVM_IR_LEAKDETECTOR_H
+#define LLVM_IR_LEAKDETECTOR_H
 
 #include <string>
 

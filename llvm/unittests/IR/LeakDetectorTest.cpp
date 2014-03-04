@@ -1,4 +1,4 @@
-//===- llvm/unittest/LeakDetector/LeakDetector.cpp - LeakDetector tests ---===//
+//===- LeakDetectorTest.cpp -----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/IR/LeakDetector.h"
 #include "gtest/gtest.h"
-#include "llvm/Support/LeakDetector.h"
 
 using namespace llvm;
 
