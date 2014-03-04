@@ -58,7 +58,7 @@ using namespace llvm;
 /// run time.
 class RuntimeDebugBuilder {
 public:
-  RuntimeDebugBuilder(IRBuilder<> &Builder) : Builder(Builder) {}
+  RuntimeDebugBuilder(PollyIRBuilder &Builder) : Builder(Builder) {}
 
   /// @brief Print a string to stdout.
   ///
@@ -71,7 +71,7 @@ public:
   void createIntPrinter(Value *V);
 
 private:
-  IRBuilder<> &Builder;
+  PollyIRBuilder &Builder;
 
   /// @brief Add a call to the fflush function with no file pointer given.
   ///
@@ -138,8 +138,8 @@ void RuntimeDebugBuilder::createIntPrinter(Value *V) {
 /// @brief Calculate the Value of a certain isl_ast_expr
 class IslExprBuilder {
 public:
-  IslExprBuilder(IRBuilder<> &Builder, std::map<isl_id *, Value *> &IDToValue,
-                 Pass *P)
+  IslExprBuilder(PollyIRBuilder &Builder,
+                 std::map<isl_id *, Value *> &IDToValue, Pass *P)
       : Builder(Builder), IDToValue(IDToValue) {}
 
   Value *create(__isl_take isl_ast_expr *Expr);
@@ -147,7 +147,7 @@ public:
   IntegerType *getType(__isl_keep isl_ast_expr *Expr);
 
 private:
-  IRBuilder<> &Builder;
+  PollyIRBuilder &Builder;
   std::map<isl_id *, Value *> &IDToValue;
 
   Value *createOp(__isl_take isl_ast_expr *Expr);
@@ -539,7 +539,7 @@ Value *IslExprBuilder::create(__isl_take isl_ast_expr *Expr) {
 
 class IslNodeBuilder {
 public:
-  IslNodeBuilder(IRBuilder<> &Builder, Pass *P)
+  IslNodeBuilder(PollyIRBuilder &Builder, Pass *P)
       : Builder(Builder), ExprBuilder(Builder, IDToValue, P), P(P) {}
 
   void addParameters(__isl_take isl_set *Context);
@@ -547,7 +547,7 @@ public:
   IslExprBuilder &getExprBuilder() { return ExprBuilder; }
 
 private:
-  IRBuilder<> &Builder;
+  PollyIRBuilder &Builder;
   IslExprBuilder ExprBuilder;
   Pass *P;
 
@@ -1032,7 +1032,7 @@ public:
 
     BasicBlock *StartBlock = executeScopConditionally(S, this);
     isl_ast_node *Ast = AstInfo.getAst();
-    IRBuilder<> Builder(StartBlock->begin());
+    PollyIRBuilder Builder(StartBlock->begin());
 
     IslNodeBuilder NodeBuilder(Builder, this);
 

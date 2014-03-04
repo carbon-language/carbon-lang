@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 #ifndef POLLY_LOOP_GENERATORS_H
 #define POLLY_LOOP_GENERATORS_H
-#include "llvm/IR/IRBuilder.h"
+#include "polly/CodeGen/IRBuilder.h"
 #include "llvm/ADT/SetVector.h"
 
 #include <map>
@@ -40,14 +40,14 @@ using namespace llvm;
 /// @param Predicate  The predicate used to generate the upper loop bound.
 /// @return Value*    The newly created induction variable for this loop.
 Value *createLoop(Value *LowerBound, Value *UpperBound, Value *Stride,
-                  IRBuilder<> &Builder, Pass *P, BasicBlock *&ExitBlock,
+                  PollyIRBuilder &Builder, Pass *P, BasicBlock *&ExitBlock,
                   ICmpInst::Predicate Predicate);
 
 class OMPGenerator {
 public:
   typedef std::map<Value *, Value *> ValueToValueMapTy;
 
-  OMPGenerator(IRBuilder<> &Builder, Pass *P) : Builder(Builder), P(P) {}
+  OMPGenerator(PollyIRBuilder &Builder, Pass *P) : Builder(Builder), P(P) {}
 
   /// @brief Create an OpenMP parallel loop.
   ///
@@ -73,7 +73,7 @@ public:
                             BasicBlock::iterator *LoopBody);
 
 private:
-  IRBuilder<> &Builder;
+  PollyIRBuilder &Builder;
   Pass *P;
 
   IntegerType *getIntPtrTy();

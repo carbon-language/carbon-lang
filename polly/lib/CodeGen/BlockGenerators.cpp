@@ -65,7 +65,7 @@ bool polly::canSynthesize(const Instruction *I, const llvm::LoopInfo *LI,
 namespace {
 class IslGenerator {
 public:
-  IslGenerator(IRBuilder<> &Builder, std::vector<Value *> &IVS)
+  IslGenerator(PollyIRBuilder &Builder, std::vector<Value *> &IVS)
       : Builder(Builder), IVS(IVS) {}
   Value *generateIslVal(__isl_take isl_val *Val);
   Value *generateIslAff(__isl_take isl_aff *Aff);
@@ -77,7 +77,7 @@ private:
     class IslGenerator *Generator;
   } IslGenInfo;
 
-  IRBuilder<> &Builder;
+  PollyIRBuilder &Builder;
   std::vector<Value *> &IVS;
   static int mergeIslAffValues(__isl_take isl_set *Set, __isl_take isl_aff *Aff,
                                void *User);
@@ -155,7 +155,7 @@ Value *IslGenerator::generateIslPwAff(__isl_take isl_pw_aff *PwAff) {
   return User.Result;
 }
 
-BlockGenerator::BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P)
+BlockGenerator::BlockGenerator(PollyIRBuilder &B, ScopStmt &Stmt, Pass *P)
     : Builder(B), Statement(Stmt), P(P), SE(P->getAnalysis<ScalarEvolution>()) {
 }
 
@@ -395,7 +395,7 @@ void BlockGenerator::copyBB(ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
     copyInstruction(II, BBMap, GlobalMap, LTS);
 }
 
-VectorBlockGenerator::VectorBlockGenerator(IRBuilder<> &B,
+VectorBlockGenerator::VectorBlockGenerator(PollyIRBuilder &B,
                                            VectorValueMapT &GlobalMaps,
                                            std::vector<LoopToScevMapT> &VLTS,
                                            ScopStmt &Stmt,

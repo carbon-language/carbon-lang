@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/CodeGen/Utils.h"
+#include "polly/CodeGen/IRBuilder.h"
 #include "polly/ScopInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/IR/IRBuilder.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
@@ -23,7 +23,7 @@ using namespace llvm;
 BasicBlock *polly::executeScopConditionally(Scop &S, Pass *PassInfo) {
   BasicBlock *StartBlock, *SplitBlock, *NewBlock;
   Region &R = S.getRegion();
-  IRBuilder<> Builder(R.getEntry());
+  PollyIRBuilder Builder(R.getEntry());
   DominatorTree &DT =
       PassInfo->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   RegionInfo &RI = PassInfo->getAnalysis<RegionInfo>();

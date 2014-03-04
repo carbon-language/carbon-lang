@@ -16,7 +16,7 @@
 #ifndef POLLY_BLOCK_GENERATORS_H
 #define POLLY_BLOCK_GENERATORS_H
 
-#include "llvm/IR/IRBuilder.h"
+#include "polly/CodeGen/IRBuilder.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 
@@ -70,19 +70,19 @@ public:
   ///                  original code new Values they should be replaced with.
   /// @param P         A reference to the pass this function is called from.
   ///                  The pass is needed to update other analysis.
-  static void generate(IRBuilder<> &Builder, ScopStmt &Stmt,
+  static void generate(PollyIRBuilder &Builder, ScopStmt &Stmt,
                        ValueMapT &GlobalMap, LoopToScevMapT &LTS, Pass *P) {
     BlockGenerator Generator(Builder, Stmt, P);
     Generator.copyBB(GlobalMap, LTS);
   }
 
 protected:
-  IRBuilder<> &Builder;
+  PollyIRBuilder &Builder;
   ScopStmt &Statement;
   Pass *P;
   ScalarEvolution &SE;
 
-  BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P);
+  BlockGenerator(PollyIRBuilder &B, ScopStmt &Stmt, Pass *P);
 
   /// @brief Get the new version of a Value.
   ///
@@ -208,7 +208,7 @@ public:
   ///                   loop containing the statemenet.
   /// @param P          A reference to the pass this function is called from.
   ///                   The pass is needed to update other analysis.
-  static void generate(IRBuilder<> &B, ScopStmt &Stmt,
+  static void generate(PollyIRBuilder &B, ScopStmt &Stmt,
                        VectorValueMapT &GlobalMaps,
                        std::vector<LoopToScevMapT> &VLTS,
                        __isl_keep isl_map *Schedule, Pass *P) {
@@ -246,7 +246,7 @@ private:
   // dimension of the innermost loop containing the statemenet.
   isl_map *Schedule;
 
-  VectorBlockGenerator(IRBuilder<> &B, VectorValueMapT &GlobalMaps,
+  VectorBlockGenerator(PollyIRBuilder &B, VectorValueMapT &GlobalMaps,
                        std::vector<LoopToScevMapT> &VLTS, ScopStmt &Stmt,
                        __isl_keep isl_map *Schedule, Pass *P);
 

@@ -47,7 +47,7 @@ using namespace polly;
 // TODO: We currently always create the GuardBB. If we can prove the loop is
 //       always executed at least once, we can get rid of this branch.
 Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
-                         IRBuilder<> &Builder, Pass *P, BasicBlock *&ExitBB,
+                         PollyIRBuilder &Builder, Pass *P, BasicBlock *&ExitBB,
                          ICmpInst::Predicate Predicate) {
 
   DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();

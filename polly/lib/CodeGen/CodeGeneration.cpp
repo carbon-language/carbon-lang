@@ -82,7 +82,7 @@ typedef DenseMap<const char *, Value *> CharMapT;
 
 /// Class to generate LLVM-IR that calculates the value of a clast_expr.
 class ClastExpCodeGen {
-  IRBuilder<> &Builder;
+  PollyIRBuilder &Builder;
   const CharMapT &IVS;
 
   Value *codegen(const clast_name *e, Type *Ty);
@@ -98,7 +98,7 @@ public:
   // @param IVMAP A Map that translates strings describing the induction
   //              variables to the Values* that represent these variables
   //              on the LLVM side.
-  ClastExpCodeGen(IRBuilder<> &B, CharMapT &IVMap);
+  ClastExpCodeGen(PollyIRBuilder &B, CharMapT &IVMap);
 
   // Generates code to calculate a given clast expression.
   //
@@ -216,7 +216,7 @@ Value *ClastExpCodeGen::codegen(const clast_reduction *r, Type *Ty) {
   return old;
 }
 
-ClastExpCodeGen::ClastExpCodeGen(IRBuilder<> &B, CharMapT &IVMap)
+ClastExpCodeGen::ClastExpCodeGen(PollyIRBuilder &B, CharMapT &IVMap)
     : Builder(B), IVS(IVMap) {}
 
 Value *ClastExpCodeGen::codegen(const clast_expr *e, Type *Ty) {
@@ -244,7 +244,7 @@ private:
   Pass *P;
 
   // The Builder specifies the current location to code generate at.
-  IRBuilder<> &Builder;
+  PollyIRBuilder &Builder;
 
   // Map the Values from the old code to their counterparts in the new code.
   ValueMapT ValueMap;
@@ -375,7 +375,7 @@ private:
 public:
   void codegen(const clast_root *r);
 
-  ClastStmtCodeGen(Scop *scop, IRBuilder<> &B, Pass *P);
+  ClastStmtCodeGen(Scop *scop, PollyIRBuilder &B, Pass *P);
 };
 }
 
@@ -1006,7 +1006,7 @@ void ClastStmtCodeGen::codegen(const clast_root *r) {
     codegen(stmt->next);
 }
 
-ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, IRBuilder<> &B, Pass *P)
+ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, PollyIRBuilder &B, Pass *P)
     : S(scop), P(P), Builder(B), ExpGen(Builder, ClastVars) {}
 
 namespace {
@@ -1028,7 +1028,7 @@ public:
 
     BasicBlock *StartBlock = executeScopConditionally(S, this);
 
-    IRBuilder<> Builder(StartBlock->begin());
+    PollyIRBuilder Builder(StartBlock->begin());
 
     ClastStmtCodeGen CodeGen(&S, Builder, this);
     CloogInfo &C = getAnalysis<CloogInfo>();
