@@ -16,7 +16,7 @@
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/Support/PatternMatch.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;

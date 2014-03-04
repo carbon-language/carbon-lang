@@ -15,7 +15,7 @@
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/PatternMatch.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 
 using namespace llvm;

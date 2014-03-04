@@ -26,9 +26,9 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/PatternMatch.h"
 #include <cstring>
 using namespace llvm;
 using namespace llvm::PatternMatch;

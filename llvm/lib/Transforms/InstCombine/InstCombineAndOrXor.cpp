@@ -14,8 +14,8 @@
 #include "InstCombine.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/ConstantRange.h"
-#include "llvm/Support/PatternMatch.h"
 #include "llvm/Transforms/Utils/CmpInstAnalysis.h"
 using namespace llvm;
 using namespace PatternMatch;

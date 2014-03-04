@@ -1,4 +1,4 @@
-//===-- llvm/Support/PatternMatch.h - Match on the LLVM IR ------*- C++ -*-===//
+//===- PatternMatch.h - Match on the LLVM IR --------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,8 +26,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_PATTERNMATCH_H
-#define LLVM_SUPPORT_PATTERNMATCH_H
+#ifndef LLVM_IR_PATTERNMATCH_H
+#define LLVM_IR_PATTERNMATCH_H
 
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"

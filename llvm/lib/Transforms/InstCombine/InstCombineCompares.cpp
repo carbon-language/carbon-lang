@@ -18,8 +18,8 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/ConstantRange.h"
-#include "llvm/Support/PatternMatch.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 using namespace llvm;
 using namespace PatternMatch;

@@ -20,9 +20,9 @@
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Support/NoFolder.h"
-#include "llvm/Support/PatternMatch.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;

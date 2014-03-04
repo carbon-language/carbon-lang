@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstCombine.h"
-#include "llvm/Support/PatternMatch.h"
+#include "llvm/IR/PatternMatch.h"
 using namespace llvm;
 using namespace PatternMatch;
 
