@@ -19,6 +19,7 @@ set(LLVM_TEST_DEPENDS
           UnitTests
           BugpointPasses
           LLVMHello
+          bugpoint
           llc
           lli
           lli-child-target
