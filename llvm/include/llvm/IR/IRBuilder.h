@@ -23,9 +23,9 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/ConstantFolder.h"
-#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
   class MDNode;

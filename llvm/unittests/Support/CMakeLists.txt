@@ -35,7 +35,6 @@ add_llvm_unittest(SupportTests
   ThreadLocalTest.cpp
   TimeValueTest.cpp
   UnicodeTest.cpp
-  ValueHandleTest.cpp
   YAMLIOTest.cpp
   YAMLParserTest.cpp
   formatted_raw_ostream_test.cpp

@@ -15,8 +15,8 @@
 #define JIT_H
 
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/PassManager.h"
-#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
 

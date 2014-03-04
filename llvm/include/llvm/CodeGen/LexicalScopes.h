@@ -22,8 +22,8 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/DebugLoc.h"
-#include "llvm/Support/ValueHandle.h"
 #include <utility>
 namespace llvm {
 

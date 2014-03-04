@@ -1,4 +1,4 @@
-//===- llvm/Support/ValueHandle.h - Value Smart Pointer classes -*- C++ -*-===//
+//===- ValueHandle.h - Value Smart Pointer classes --------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_VALUEHANDLE_H
-#define LLVM_SUPPORT_VALUEHANDLE_H
+#ifndef LLVM_IR_VALUEHANDLE_H
+#define LLVM_IR_VALUEHANDLE_H
 
 #include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/PointerIntPair.h"

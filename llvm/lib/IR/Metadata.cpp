@@ -22,9 +22,9 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/LeakDetector.h"
-#include "llvm/Support/ValueHandle.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

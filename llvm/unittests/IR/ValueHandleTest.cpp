@@ -1,4 +1,4 @@
-//===- llvm/unittest/Support/ValueHandleTest.cpp - ValueHandle tests --------===//
+//===- ValueHandleTest.cpp - ValueHandle tests ----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/ValueHandle.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"

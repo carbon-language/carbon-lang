@@ -61,7 +61,7 @@ typedef StringMapEntry<Value*> ValueName;
 /// Every value has a "use list" that keeps track of which other Values are
 /// using this Value.  A Value can also have an arbitrary number of ValueHandle
 /// objects that watch it and listen to RAUW and Destroy events.  See
-/// llvm/Support/ValueHandle.h for details.
+/// llvm/IR/ValueHandle.h for details.
 ///
 /// @brief LLVM Value Representation
 class Value {

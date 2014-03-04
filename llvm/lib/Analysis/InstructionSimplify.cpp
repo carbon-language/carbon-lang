@@ -30,8 +30,8 @@
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/PatternMatch.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/ConstantRange.h"
-#include "llvm/Support/ValueHandle.h"
 using namespace llvm;
 using namespace llvm::PatternMatch;
 

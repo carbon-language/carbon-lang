@@ -57,9 +57,9 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/IncludeFile.h"
-#include "llvm/Support/ValueHandle.h"
 #include <map>
 
 namespace llvm {
