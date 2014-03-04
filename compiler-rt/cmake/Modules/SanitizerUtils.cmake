@@ -25,7 +25,20 @@ macro(add_sanitizer_rt_symbols name)
   add_custom_target(${name}-symbols ALL
     DEPENDS ${symsfile}
     SOURCES ${SANITIZER_GEN_DYNAMIC_LIST} ${ARGN})
-  install(FILES ${symsfile} DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
+
+  if(TRUE)
+    # Per-config install location.
+    if(CMAKE_CONFIGURATION_TYPES)
+      foreach(c ${CMAKE_CONFIGURATION_TYPES})
+        get_target_property(libfile ${name} LOCATION_${c})
+        install(FILES ${libfile}.syms CONFIGURATIONS ${c}
+          DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
+      endforeach()
+    else()
+      get_target_property(libfile ${name} LOCATION_${CMAKE_BUILD_TYPE})
+      install(FILES ${libfile}.syms DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
+    endif()
+  endif()
 endmacro()
 
 # Add target to check code style for sanitizer runtimes.
