@@ -493,7 +493,7 @@ public:
   unsigned getMaxArgs() const;
   bool diagnoseAppertainsTo(class Sema &S, const Decl *D) const;
   bool diagnoseLangOpts(class Sema &S) const;
-  bool existsInTarget(llvm::Triple T) const;
+  bool existsInTarget(const llvm::Triple &T) const;
   bool isKnownToGCC() const;
 
   /// \brief If the parsed attribute has a semantic equivalent, and it would

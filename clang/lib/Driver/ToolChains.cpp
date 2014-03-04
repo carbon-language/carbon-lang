@@ -2757,7 +2757,7 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
 /// a target-triple directory in the library and header search paths.
 /// Unfortunately, this triple does not align with the vanilla target triple,
 /// so we provide a rough mapping here.
-static std::string getMultiarchTriple(const llvm::Triple TargetTriple,
+static std::string getMultiarchTriple(const llvm::Triple &TargetTriple,
                                       StringRef SysRoot) {
   // For most architectures, just use whatever we have rather than trying to be
   // clever.

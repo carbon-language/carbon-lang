@@ -2132,7 +2132,7 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
   SmallVector<StringRef, 4> ClobberRefs;
 
   // We need an actual supported target.
-  llvm::Triple TheTriple = Actions.Context.getTargetInfo().getTriple();
+  const llvm::Triple &TheTriple = Actions.Context.getTargetInfo().getTriple();
   llvm::Triple::ArchType ArchTy = TheTriple.getArch();
   const std::string &TT = TheTriple.getTriple();
   const llvm::Target *TheTarget = 0;

@@ -2237,7 +2237,7 @@ static std::string GenerateLangOptRequirements(const Record &R,
 }
 
 static void GenerateDefaultTargetRequirements(raw_ostream &OS) {
-  OS << "static bool defaultTargetRequirements(llvm::Triple) {\n";
+  OS << "static bool defaultTargetRequirements(const llvm::Triple &) {\n";
   OS << "  return true;\n";
   OS << "}\n\n";
 }
@@ -2313,7 +2313,7 @@ static std::string GenerateTargetRequirements(const Record &Attr,
   if (I != CustomTargetSet.end())
     return *I;
 
-  OS << "static bool " << FnName << "(llvm::Triple T) {\n";
+  OS << "static bool " << FnName << "(const llvm::Triple &T) {\n";
   OS << "  llvm::Triple::ArchType Arch = T.getArch();\n";
   if (UsesOS)
     OS << "  llvm::Triple::OSType OS = T.getOS();\n";

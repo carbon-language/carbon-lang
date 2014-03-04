@@ -64,7 +64,7 @@ static bool isExternC(const NamedDecl *ND) {
 static StdOrFastCC getStdOrFastCallMangling(const ASTContext &Context,
                                             const NamedDecl *ND) {
   const TargetInfo &TI = Context.getTargetInfo();
-  llvm::Triple Triple = TI.getTriple();
+  const llvm::Triple &Triple = TI.getTriple();
   if (!Triple.isOSWindows() || Triple.getArch() != llvm::Triple::x86)
     return SOF_OTHER;
 

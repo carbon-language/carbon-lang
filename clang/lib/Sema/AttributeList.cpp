@@ -155,7 +155,7 @@ struct ParsedAttrInfo {
   bool (*DiagAppertainsToDecl)(Sema &S, const AttributeList &Attr,
                                const Decl *);
   bool (*DiagLangOpts)(Sema &S, const AttributeList &Attr);
-  bool (*ExistsInTarget)(llvm::Triple T);
+  bool (*ExistsInTarget)(const llvm::Triple &T);
   unsigned (*SpellingIndexToSemanticSpelling)(const AttributeList &Attr);
 };
 
@@ -195,7 +195,7 @@ bool AttributeList::isTypeAttr() const {
   return getInfo(*this).IsType;
 }
 
-bool AttributeList::existsInTarget(llvm::Triple T) const {
+bool AttributeList::existsInTarget(const llvm::Triple &T) const {
   return getInfo(*this).ExistsInTarget(T);
 }
 

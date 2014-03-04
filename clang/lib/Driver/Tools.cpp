@@ -5983,7 +5983,7 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   } else if (getToolChain().getArch() == llvm::Triple::arm ||
              getToolChain().getArch() == llvm::Triple::thumb) {
     const Driver &D = getToolChain().getDriver();
-    llvm::Triple Triple = getToolChain().getTriple();
+    const llvm::Triple &Triple = getToolChain().getTriple();
     StringRef FloatABI = arm::getARMFloatABI(D, Args, Triple);
 
     if (FloatABI == "hard") {
@@ -6591,7 +6591,7 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                    SplitDebugName(Args, Inputs));
 }
 
-static void AddLibgcc(llvm::Triple Triple, const Driver &D,
+static void AddLibgcc(const llvm::Triple &Triple, const Driver &D,
                       ArgStringList &CmdArgs, const ArgList &Args) {
   bool isAndroid = Triple.getEnvironment() == llvm::Triple::Android;
   bool StaticLibgcc = Args.hasArg(options::OPT_static_libgcc) ||
