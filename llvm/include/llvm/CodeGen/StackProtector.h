@@ -19,8 +19,8 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/ADT/ValueMap.h"
 #include "llvm/IR/Dominators.h"
+#include "llvm/IR/ValueMap.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetLowering.h"
 

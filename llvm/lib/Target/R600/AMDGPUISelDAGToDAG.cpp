@@ -16,12 +16,12 @@
 #include "AMDGPURegisterInfo.h"
 #include "R600InstrInfo.h"
 #include "SIISelLowering.h"
-#include "llvm/ADT/ValueMap.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/IR/ValueMap.h"
 #include "llvm/Support/Compiler.h"
 #include <list>
 #include <queue>

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/ValueMap.h"
+#include "llvm/IR/ValueMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/Constants.h"

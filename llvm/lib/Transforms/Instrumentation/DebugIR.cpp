@@ -18,7 +18,7 @@
 
 #define DEBUG_TYPE "debug-ir"
 
-#include "llvm/ADT/ValueMap.h"
+#include "llvm/IR/ValueMap.h"
 #include "DebugIR.h"
 #include "llvm/DIBuilder.h"
 #include "llvm/DebugInfo.h"

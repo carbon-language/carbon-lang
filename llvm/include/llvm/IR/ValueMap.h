@@ -1,4 +1,4 @@
-//===- llvm/ADT/ValueMap.h - Safe map from Values to data -------*- C++ -*-===//
+//===- ValueMap.h - Safe map from Values to data ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -23,8 +23,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_VALUEMAP_H
-#define LLVM_ADT_VALUEMAP_H
+#ifndef LLVM_IR_VALUEMAP_H
+#define LLVM_IR_VALUEMAP_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/ValueHandle.h"

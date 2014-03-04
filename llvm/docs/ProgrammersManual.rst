@@ -1318,7 +1318,7 @@ type used.
 
 .. _dss_valuemap:
 
-llvm/ADT/ValueMap.h
+llvm/IR/ValueMap.h
 ^^^^^^^^^^^^^^^^^^^
 
 ValueMap is a wrapper around a :ref:`DenseMap <dss_densemap>` mapping

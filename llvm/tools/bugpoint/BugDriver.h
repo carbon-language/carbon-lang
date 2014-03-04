@@ -16,7 +16,7 @@
 #ifndef BUGDRIVER_H
 #define BUGDRIVER_H
 
-#include "llvm/ADT/ValueMap.h"
+#include "llvm/IR/ValueMap.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <string>
 #include <vector>

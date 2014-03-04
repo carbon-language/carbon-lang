@@ -15,7 +15,7 @@
 #ifndef LLVM_TRANSFORMS_UTILS_VALUEMAPPER_H
 #define LLVM_TRANSFORMS_UTILS_VALUEMAPPER_H
 
-#include "llvm/ADT/ValueMap.h"
+#include "llvm/IR/ValueMap.h"
 
 namespace llvm {
   class Value;
