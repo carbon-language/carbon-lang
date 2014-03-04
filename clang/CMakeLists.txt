@@ -473,14 +473,5 @@ if( CLANG_INCLUDE_DOCS )
   add_subdirectory(docs)
 endif()
 
-# Workaround for MSVS10 to avoid the Dialog Hell
-# FIXME: This could be removed with future version of CMake.
-if( CLANG_BUILT_STANDALONE AND MSVC_VERSION EQUAL 1600 )
-  set(CLANG_SLN_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/Clang.sln")
-  if( EXISTS "${CLANG_SLN_FILENAME}" )
-    file(APPEND "${CLANG_SLN_FILENAME}" "\n# This should be regenerated!\n")
-  endif()
-endif()
-
 set(CLANG_ORDER_FILE "" CACHE FILEPATH
   "Order file to use when compiling clang in order to improve startup time.")
