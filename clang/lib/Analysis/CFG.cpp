@@ -1634,8 +1634,8 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(AbstractConditionalOperator *C,
 
   // See if this is a known constant.
   const TryResult& KnownVal = tryEvaluateBool(C->getCond());
-  addSuccessor(Block, KnownVal.isFalse() ? NULL : LHSBlock);
-  addSuccessor(Block, KnownVal.isTrue() ? NULL : RHSBlock);
+  addSuccessor(Block, LHSBlock, !KnownVal.isFalse());
+  addSuccessor(Block, RHSBlock, !KnownVal.isTrue());
   Block->setTerminator(C);
   Expr *condExpr = C->getCond();
 
@@ -3408,7 +3408,7 @@ CFGBlock *CFGBuilder::VisitConditionalOperatorForTemporaryDtors(
   const TryResult &KnownVal = tryEvaluateBool(E->getCond());
 
   if (LHSBlock) {
-    addSuccessor(Block, KnownVal.isFalse() ? NULL : LHSBlock);
+    addSuccessor(Block, LHSBlock, !KnownVal.isFalse());
   } else if (KnownVal.isFalse()) {
     addSuccessor(Block, NULL);
   } else {
@@ -3418,7 +3418,8 @@ CFGBlock *CFGBuilder::VisitConditionalOperatorForTemporaryDtors(
 
   if (!RHSBlock)
     RHSBlock = ConfluenceBlock;
-  addSuccessor(Block, KnownVal.isTrue() ? NULL : RHSBlock);
+
+  addSuccessor(Block, RHSBlock, !KnownVal.isTrue());
 
   return Block;
 }
