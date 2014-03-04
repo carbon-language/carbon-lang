@@ -10,7 +10,6 @@
 #ifndef LLVM_SUPPORT_CRASHRECOVERYCONTEXT_H
 #define LLVM_SUPPORT_CRASHRECOVERYCONTEXT_H
 
-#include <functional>
 #include <string>
 
 namespace llvm {
@@ -47,6 +46,17 @@ class CrashRecoveryContext {
   void *Impl;
   CrashRecoveryContextCleanup *head;
 
+  /// An adaptor to convert an arbitrary functor into a void(void*), void* pair.
+  template<typename T> struct FunctorAdaptor {
+    T Fn;
+    static void invoke(void *Data) {
+      return static_cast<FunctorAdaptor<T>*>(Data)->Fn();
+    }
+    typedef void Callback(void*);
+    Callback *fn() { return &invoke; }
+    void *arg() { return this; }
+  };
+
 public:
   CrashRecoveryContext() : Impl(0), head(0) {}
   ~CrashRecoveryContext();
@@ -76,8 +86,12 @@ public:
   /// make as little assumptions as possible about the program state when
   /// RunSafely has returned false. Clients can use getBacktrace() to retrieve
   /// the backtrace of the crash on failures.
-  bool RunSafely(std::function<void()> Fn);
   bool RunSafely(void (*Fn)(void*), void *UserData);
+  template<typename Functor>
+  bool RunSafely(Functor Fn) {
+    FunctorAdaptor<Functor> Adaptor = { Fn };
+    return RunSafely(Adaptor.fn(), Adaptor.arg());
+  }
 
   /// \brief Execute the provide callback function (with the given arguments) in
   /// a protected context which is run in another thread (optionally with a
@@ -86,8 +100,11 @@ public:
   /// See RunSafely() and llvm_execute_on_thread().
   bool RunSafelyOnThread(void (*Fn)(void*), void *UserData,
                          unsigned RequestedStackSize = 0);
-  bool RunSafelyOnThread(std::function<void()> Fn,
-                         unsigned RequestedStackSize = 0);
+  template<typename Functor>
+  bool RunSafelyOnThread(Functor Fn, unsigned RequestedStackSize = 0) {
+    FunctorAdaptor<Functor> Adaptor = { Fn };
+    return RunSafelyOnThread(Adaptor.fn(), Adaptor.arg(), RequestedStackSize);
+  }
 
   /// \brief Explicitly trigger a crash recovery in the current process, and
   /// return failure from RunSafely(). This function does not return.

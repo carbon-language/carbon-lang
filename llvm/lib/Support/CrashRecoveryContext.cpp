@@ -302,10 +302,6 @@ void CrashRecoveryContext::Disable() {
 #endif
 
 bool CrashRecoveryContext::RunSafely(void (*Fn)(void*), void *UserData) {
-  return RunSafely([&]() { Fn(UserData); });
-}
-
-bool CrashRecoveryContext::RunSafely(std::function<void()> Fn) {
   // If crash recovery is disabled, do nothing.
   if (gCrashRecoveryEnabled) {
     assert(!Impl && "Crash recovery context already initialized!");
@@ -317,7 +313,7 @@ bool CrashRecoveryContext::RunSafely(std::function<void()> Fn) {
     }
   }
 
-  Fn();
+  Fn(UserData);
   return true;
 }
 
@@ -336,14 +332,10 @@ const std::string &CrashRecoveryContext::getBacktrace() const {
 
 //
 
-bool CrashRecoveryContext::RunSafelyOnThread(void (*Fn)(void*), void *UserData,
-                                             unsigned RequestedStackSize) {
-  return RunSafelyOnThread([&]() { Fn(UserData); }, RequestedStackSize);
-}
-
 namespace {
 struct RunSafelyOnThreadInfo {
-  std::function<void()> Fn;
+  void (*Fn)(void*);
+  void *Data;
   CrashRecoveryContext *CRC;
   bool Result;
 };
@@ -352,12 +344,11 @@ struct RunSafelyOnThreadInfo {
 static void RunSafelyOnThread_Dispatch(void *UserData) {
   RunSafelyOnThreadInfo *Info =
     reinterpret_cast<RunSafelyOnThreadInfo*>(UserData);
-  Info->Result = Info->CRC->RunSafely(Info->Fn);
+  Info->Result = Info->CRC->RunSafely(Info->Fn, Info->Data);
 }
-
-bool CrashRecoveryContext::RunSafelyOnThread(std::function<void()> Fn,
+bool CrashRecoveryContext::RunSafelyOnThread(void (*Fn)(void*), void *UserData,
                                              unsigned RequestedStackSize) {
-  RunSafelyOnThreadInfo Info = { Fn, this, false };
+  RunSafelyOnThreadInfo Info = { Fn, UserData, this, false };
   llvm_execute_on_thread(RunSafelyOnThread_Dispatch, &Info, RequestedStackSize);
   if (CrashRecoveryContextImpl *CRC = (CrashRecoveryContextImpl *)Impl)
     CRC->setSwitchedThread();
