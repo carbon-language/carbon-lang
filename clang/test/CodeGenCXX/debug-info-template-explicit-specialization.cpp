@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -S -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -S -emit-llvm -g %s -o - -triple=x86_64-unknown-unknown | FileCheck %s
 
 template <typename T>
 struct a {
