@@ -46,10 +46,11 @@
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/Format.h"
 
+using llvm::COFF::DataDirectoryIndex;
+using llvm::object::coff_runtime_function_x64;
 using llvm::support::ulittle16_t;
 using llvm::support::ulittle32_t;
 using llvm::support::ulittle64_t;
-using llvm::COFF::DataDirectoryIndex;
 
 namespace lld {
 namespace pecoff {
@@ -566,10 +567,10 @@ void AtomChunk::applyRelocations64(uint8_t *buffer,
         *relocSite64 = targetAddr;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_ADDR32:
-        *relocSite32 = targetAddr;
+        *relocSite32 = targetAddr + imageBase;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_ADDR32NB:
-        *relocSite32 = targetAddr - imageBase;
+        *relocSite32 = targetAddr;
         break;
       case llvm::COFF::IMAGE_REL_AMD64_REL32:
         *relocSite32 = targetAddr - atomRva[atom] + ref->offsetInAtom() + 4;
@@ -837,6 +838,8 @@ private:
   void applyAllRelocations(uint8_t *bufferStart);
   void printAllAtomAddresses() const;
   void reorderSEHTableEntries(uint8_t *bufferStart);
+  void reorderSEHTableEntriesX86(uint8_t *bufferStart);
+  void reorderSEHTableEntriesX64(uint8_t *bufferStart);
 
   void addChunk(Chunk *chunk);
   void addSectionChunk(SectionChunk *chunk, SectionHeaderTableChunk *table);
@@ -1069,12 +1072,20 @@ void PECOFFWriter::printAllAtomAddresses() const {
       chunk->printAtomAddresses(_ctx.getBaseAddress());
 }
 
+void PECOFFWriter::reorderSEHTableEntries(uint8_t *bufferStart) {
+  auto machineType = _ctx.getMachineType();
+  if (machineType == llvm::COFF::IMAGE_FILE_MACHINE_I386)
+    reorderSEHTableEntriesX86(bufferStart);
+  if (machineType == llvm::COFF::IMAGE_FILE_MACHINE_AMD64)
+    reorderSEHTableEntriesX64(bufferStart);
+}
+
 /// It seems that the entries in .sxdata must be sorted. This function is called
 /// after a COFF file image is created in memory and before it is written to
 /// disk. It is safe to reorder entries at this stage because the contents of
 /// the entries are RVAs and there's no reference to a .sxdata entry other than
 /// to the beginning of the section.
-void PECOFFWriter::reorderSEHTableEntries(uint8_t *bufferStart) {
+void PECOFFWriter::reorderSEHTableEntriesX86(uint8_t *bufferStart) {
   for (std::unique_ptr<Chunk> &chunk : _chunks) {
     if (SectionChunk *section = dyn_cast<SectionChunk>(chunk.get())) {
       if (section->getSectionName() == ".sxdata") {
@@ -1083,6 +1094,25 @@ void PECOFFWriter::reorderSEHTableEntries(uint8_t *bufferStart) {
         ulittle32_t *end = begin + numEntries;
         std::sort(begin, end);
       }
+    }
+  }
+}
+
+/// The entries in .pdata must be sorted according to its BeginAddress field
+/// value. It's safe to do it because of the same reason as .sxdata.
+void PECOFFWriter::reorderSEHTableEntriesX64(uint8_t *bufferStart) {
+  for (std::unique_ptr<Chunk> &chunk : _chunks) {
+    if (SectionChunk *section = dyn_cast<SectionChunk>(chunk.get())) {
+      if (section->getSectionName() != ".pdata")
+        continue;
+      int numEntries = section->size() / sizeof(coff_runtime_function_x64);
+      coff_runtime_function_x64 *begin =
+          (coff_runtime_function_x64 *)(bufferStart + section->fileOffset());
+      coff_runtime_function_x64 *end = begin + numEntries;
+      std::sort(begin, end, [](const coff_runtime_function_x64 &lhs,
+                               const coff_runtime_function_x64 &rhs) {
+        return lhs.BeginAddress < rhs.BeginAddress;
+      });
     }
   }
 }
