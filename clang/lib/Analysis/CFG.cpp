@@ -3519,10 +3519,10 @@ CFGBlock::AdjacentBlock::AdjacentBlock(CFGBlock *B, CFGBlock *AlternateBlock)
 void CFGBlock::addSuccessor(AdjacentBlock Succ,
                             BumpVectorContext &C) {
   if (CFGBlock *B = Succ.getReachableBlock())
-    B->Preds.push_back(CFGBlock::AdjacentBlock(this, Succ.isReachable()), C);
+    B->Preds.push_back(AdjacentBlock(this, Succ.isReachable()), C);
 
   if (CFGBlock *UnreachableB = Succ.getPossiblyUnreachableBlock())
-    UnreachableB->Preds.push_back(CFGBlock::AdjacentBlock(this, false), C);
+    UnreachableB->Preds.push_back(AdjacentBlock(this, false), C);
 
   Succs.push_back(Succ, C);
 }
