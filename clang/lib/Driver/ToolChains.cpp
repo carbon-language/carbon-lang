@@ -1669,6 +1669,9 @@ bool Generic_GCC::GCCInstallationDetector::findMIPSMultilibs(
       .includeSuffix("/64")
       .flag("+mabi=64").flag("-mabi=n32").flag("-m32");
 
+    Multilib BigEndian = Multilib()
+      .flag("+EB").flag("-EL");
+
     Multilib LittleEndian = Multilib()
       .gccSuffix("/el")
       .osSuffix("/el")
@@ -1705,7 +1708,7 @@ bool Generic_GCC::GCCInstallationDetector::findMIPSMultilibs(
       .FilterOut("/mips32/64")
       .FilterOut("^/64")
       .FilterOut("/mips16/64")
-      .Maybe(LittleEndian)
+      .Either(BigEndian, LittleEndian)
       .Maybe(SoftFloat)
       .Maybe(FP64)
       .Maybe(Nan2008)
@@ -1747,6 +1750,9 @@ bool Generic_GCC::GCCInstallationDetector::findMIPSMultilibs(
     Multilib DefaultFloat = Multilib()
       .flag("-msoft-float").flag("-mnan=2008");
 
+    Multilib BigEndian = Multilib()
+      .flag("+EB").flag("-EL");
+
     Multilib LittleEndian = Multilib()
       .gccSuffix("/el")
       .osSuffix("/el")
@@ -1764,7 +1770,7 @@ bool Generic_GCC::GCCInstallationDetector::findMIPSMultilibs(
       .Either(SoftFloat, Nan2008, DefaultFloat)
       .FilterOut("/micromips/nan2008")
       .FilterOut("/mips16/nan2008")
-      .Maybe(LittleEndian)
+      .Either(BigEndian, LittleEndian)
       .Maybe(MAbi64)
       .FilterOut("/mips16.*/64")
       .FilterOut("/micromips.*/64")
@@ -1795,21 +1801,6 @@ bool Generic_GCC::GCCInstallationDetector::findMIPSMultilibs(
       .FilterOut(NonExistent);
   }
 
-  Multilibs.clear();
-
-  // Decide which MultilibSet matches best for the given path
-  // (we do this rather than combining them all because there is a
-  //  a bit of overlap in the directories that each specifies)
-  if (TargetTriple.getEnvironment() == llvm::Triple::Android)
-    Multilibs.combineWith(AndroidMipsMultilibs);
-  else if (DebianMipsMultilibs.size() == 3) {
-    Multilibs.combineWith(DebianMipsMultilibs);
-    BiarchSibling = Multilib();
-  } else if (FSFMipsMultilibs.size() > CSMipsMultilibs.size())
-    Multilibs.combineWith(FSFMipsMultilibs);
-  else
-    Multilibs.combineWith(CSMipsMultilibs);
-
   llvm::Triple::ArchType TargetArch = TargetTriple.getArch();
 
   Multilib::flags_list Flags;
@@ -1835,7 +1826,31 @@ bool Generic_GCC::GCCInstallationDetector::findMIPSMultilibs(
   addMultilibFlag(isMipsEL(TargetArch), "EL", Flags);
   addMultilibFlag(isMipsEB(TargetArch), "EB", Flags);
 
-  return Multilibs.select(Flags, SelectedMultilib);
+  if (TargetTriple.getEnvironment() == llvm::Triple::Android) {
+    // Select Android toolchain. It's the only choice in that case.
+    Multilibs.clear();
+    Multilibs.combineWith(AndroidMipsMultilibs);
+    return Multilibs.select(Flags, SelectedMultilib);
+  }
+
+  // Sort candidates. Toolchain that best meets the directories goes first.
+  // Then select the first toolchains matches command line flags.
+  MultilibSet *candidates[] = { &DebianMipsMultilibs, &FSFMipsMultilibs,
+                                &CSMipsMultilibs };
+  std::sort(
+      std::begin(candidates), std::end(candidates),
+      [](MultilibSet *a, MultilibSet *b) { return a->size() > b->size(); });
+  for (const auto &candidate : candidates) {
+    Multilibs.clear();
+    Multilibs.combineWith(*candidate);
+    if (Multilibs.select(Flags, SelectedMultilib)) {
+      if (candidate == &DebianMipsMultilibs)
+        BiarchSibling = Multilib();
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool Generic_GCC::GCCInstallationDetector::findBiarchMultilibs(
