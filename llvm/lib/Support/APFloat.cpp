@@ -683,6 +683,20 @@ APFloat::operator=(const APFloat &rhs)
   return *this;
 }
 
+APFloat &
+APFloat::operator=(APFloat &&rhs) {
+  freeSignificand();
+
+  semantics = rhs.semantics;
+  significand = rhs.significand;
+  exponent = rhs.exponent;
+  category = rhs.category;
+  sign = rhs.sign;
+
+  rhs.semantics = &Bogus;
+  return *this;
+}
+
 bool
 APFloat::isDenormal() const {
   return isFiniteNonZero() && (exponent == semantics->minExponent) &&
@@ -804,6 +818,10 @@ APFloat::APFloat(const fltSemantics &ourSemantics, StringRef text) {
 APFloat::APFloat(const APFloat &rhs) {
   initialize(rhs.semantics);
   assign(rhs);
+}
+
+APFloat::APFloat(APFloat &&rhs) : semantics(&Bogus) {
+  *this = std::move(rhs);
 }
 
 APFloat::~APFloat()
