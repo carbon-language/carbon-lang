@@ -453,10 +453,32 @@ static void printWin64EHUnwindInfo(const Win64EH::UnwindInfo *UI) {
   outs().flush();
 }
 
+/// Prints out the given RuntumeFunction struct for x64, assuming that Obj is
+/// pointing to an executable file.
 static void printRuntimeFunction(const COFFObjectFile *Obj,
-                                 const RuntimeFunction &RF,
-                                 uint64_t SectionOffset,
-                                 const std::vector<RelocationRef> &Rels) {
+                                 const RuntimeFunction &RF) {
+  if (!RF.StartAddress)
+    return;
+  outs() << "Function Table:\n"
+         << format("  Start Address: 0x%04x\n", RF.StartAddress)
+         << format("  End Address: 0x%04x\n", RF.EndAddress)
+         << format("  Unwind Info Address: : 0x%04x\n\n", RF.UnwindInfoOffset);
+  uintptr_t addr;
+  if (Obj->getRvaPtr(RF.UnwindInfoOffset, addr))
+    return;
+  printWin64EHUnwindInfo(reinterpret_cast<const Win64EH::UnwindInfo *>(addr));
+}
+
+/// Prints out the given RuntumeFunction struct for x64, assuming that Obj is
+/// pointing to an object file. Unlike executable, fields in RuntumeFunction
+/// struct are filled with zeros, but instead there are relocations pointing to
+/// them so that the linker will fill targets' RVAs to the fields at link
+/// time. This function interprets the relocations to find the data to be used
+/// in the resulting executable.
+static void printRuntimeFunctionRels(const COFFObjectFile *Obj,
+                                     const RuntimeFunction &RF,
+                                     uint64_t SectionOffset,
+                                     const std::vector<RelocationRef> &Rels) {
   outs() << "Function Table:\n";
   outs() << "  Start Address: ";
   printCOFFSymbolAddress(outs(), Rels,
@@ -516,10 +538,17 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
     return;
   ArrayRef<RuntimeFunction> RFs(RFStart, NumRFs);
 
+  bool IsExecutable = Rels.empty();
+  if (IsExecutable) {
+    for (const RuntimeFunction &RF : RFs)
+      printRuntimeFunction(Obj, RF);
+    return;
+  }
+
   for (const RuntimeFunction &RF : RFs) {
     uint64_t SectionOffset =
         std::distance(RFs.begin(), &RF) * sizeof(RuntimeFunction);
-    printRuntimeFunction(Obj, RF, SectionOffset, Rels);
+    printRuntimeFunctionRels(Obj, RF, SectionOffset, Rels);
   }
 }
 
