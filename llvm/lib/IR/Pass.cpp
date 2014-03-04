@@ -16,9 +16,9 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRPrintingPasses.h"
+#include "llvm/IR/LegacyPassNameParser.h"
 #include "llvm/PassRegistry.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 

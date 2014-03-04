@@ -1,4 +1,4 @@
-//===- llvm/Support/PassNameParser.h ----------------------------*- C++ -*-===//
+//===- LegacyPassNameParser.h -----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,10 +18,13 @@
 // includes passes that have a PassType that are compatible with the filter
 // (which is the template argument).
 //
+// Note that this is part of the legacy pass manager infrastructure and will be
+// (eventually) going away.
+//
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_PASSNAMEPARSER_H
-#define LLVM_SUPPORT_PASSNAMEPARSER_H
+#ifndef LLVM_IR_LEGACYPASSNAMEPARSER_H
+#define LLVM_IR_LEGACYPASSNAMEPARSER_H
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Pass.h"
