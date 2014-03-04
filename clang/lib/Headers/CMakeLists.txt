@@ -10,6 +10,7 @@ set(files
   float.h
   fma4intrin.h
   fmaintrin.h
+  ia32intrin.h
   immintrin.h
   iso646.h
   Intrin.h
