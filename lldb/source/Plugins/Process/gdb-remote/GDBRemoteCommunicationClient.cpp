@@ -66,6 +66,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_prepare_for_reg_writing_reply (eLazyBoolCalculate),
     m_supports_p (eLazyBoolCalculate),
     m_supports_QSaveRegisterState (eLazyBoolCalculate),
+    m_supports_qXfer_auxv_read (eLazyBoolCalculate),
     m_supports_qXfer_libraries_read (eLazyBoolCalculate),
     m_supports_qXfer_libraries_svr4_read (eLazyBoolCalculate),
     m_supports_augmented_libraries_svr4_read (eLazyBoolCalculate),
@@ -187,6 +188,16 @@ GDBRemoteCommunicationClient::GetQXferLibrariesReadSupported ()
     return (m_supports_qXfer_libraries_read == eLazyBoolYes);
 }
 
+bool
+GDBRemoteCommunicationClient::GetQXferAuxvReadSupported ()
+{
+    if (m_supports_qXfer_auxv_read == eLazyBoolCalculate)
+    {
+        GetRemoteQSupported();
+    }
+    return (m_supports_qXfer_auxv_read == eLazyBoolYes);
+}
+
 uint64_t
 GDBRemoteCommunicationClient::GetRemoteMaxPacketSize()
 {
@@ -294,6 +305,7 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_memory_region_info = eLazyBoolCalculate;
     m_prepare_for_reg_writing_reply = eLazyBoolCalculate;
     m_attach_or_wait_reply = eLazyBoolCalculate;
+    m_supports_qXfer_auxv_read = eLazyBoolCalculate;
     m_supports_qXfer_libraries_read = eLazyBoolCalculate;
     m_supports_qXfer_libraries_svr4_read = eLazyBoolCalculate;
     m_supports_augmented_libraries_svr4_read = eLazyBoolCalculate;
@@ -320,8 +332,9 @@ void
 GDBRemoteCommunicationClient::GetRemoteQSupported ()
 {
     // Clear out any capabilities we expect to see in the qSupported response
-    m_supports_qXfer_libraries_svr4_read = eLazyBoolNo;
+    m_supports_qXfer_auxv_read = eLazyBoolNo;
     m_supports_qXfer_libraries_read = eLazyBoolNo;
+    m_supports_qXfer_libraries_svr4_read = eLazyBoolNo;
     m_supports_augmented_libraries_svr4_read = eLazyBoolNo;
     m_max_packet_size = UINT64_MAX;  // It's supposed to always be there, but if not, we assume no limit
 
@@ -331,6 +344,8 @@ GDBRemoteCommunicationClient::GetRemoteQSupported ()
                                      /*send_async=*/false) == PacketResult::Success)
     {
         const char *response_cstr = response.GetStringRef().c_str();
+        if (::strstr (response_cstr, "qXfer:auxv:read+"))
+            m_supports_qXfer_auxv_read = eLazyBoolYes;
         if (::strstr (response_cstr, "qXfer:libraries-svr4:read+"))
             m_supports_qXfer_libraries_svr4_read = eLazyBoolYes;
         if (::strstr (response_cstr, "augmented-libraries-svr4-read"))
@@ -502,11 +517,8 @@ GDBRemoteCommunicationClient::SendPacketsAndConcatenateResponses
         {
             return PacketResult::ErrorReplyInvalid;
         }
-        // Skip past m or l
-        const char *s = this_string.c_str() + 1;
-
-        // Concatenate the result so far
-        response_string += s;
+        // Concatenate the result so far (skipping 'm' or 'l')
+        response_string.append(this_string, 1, std::string::npos);
         if (first_char == 'l')
             // We're done
             return PacketResult::Success;

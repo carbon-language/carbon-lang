@@ -299,6 +299,9 @@ protected:
     bool
     ParseRegisters(lldb_private::ScriptInterpreterObject *registers_array);
 
+    virtual const lldb::DataBufferSP
+    GetAuxvData();
+
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.
     //------------------------------------------------------------------

@@ -384,6 +384,9 @@ public:
     SetCurrentThreadForRun (uint64_t tid);
 
     bool
+    GetQXferAuxvReadSupported ();
+
+    bool
     GetQXferLibrariesReadSupported ();
 
     bool
@@ -525,6 +528,7 @@ protected:
     lldb_private::LazyBool m_prepare_for_reg_writing_reply;
     lldb_private::LazyBool m_supports_p;
     lldb_private::LazyBool m_supports_QSaveRegisterState;
+    lldb_private::LazyBool m_supports_qXfer_auxv_read;
     lldb_private::LazyBool m_supports_qXfer_libraries_read;
     lldb_private::LazyBool m_supports_qXfer_libraries_svr4_read;
     lldb_private::LazyBool m_supports_augmented_libraries_svr4_read;

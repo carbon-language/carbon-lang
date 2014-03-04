@@ -3060,6 +3060,19 @@ ProcessGDBRemote::GetDynamicLoader ()
     return m_dyld_ap.get();
 }
 
+const DataBufferSP
+ProcessGDBRemote::GetAuxvData()
+{
+    DataBufferSP buf;
+    if (m_gdb_comm.GetQXferAuxvReadSupported())
+    {
+        std::string response_string;
+        if (m_gdb_comm.SendPacketsAndConcatenateResponses("qXfer:auxv:read::", response_string) == GDBRemoteCommunication::PacketResult::Success)
+            buf.reset(new DataBufferHeap(response_string.c_str(), response_string.length()));
+    }
+    return buf;
+}
+
 
 class CommandObjectProcessGDBRemotePacketHistory : public CommandObjectParsed
 {
