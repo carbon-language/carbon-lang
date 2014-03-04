@@ -540,7 +540,7 @@ namespace PBQP {
     }
 
     /// \brief Print a representation of this graph in DOT format.
-    /// @param os Output stream to print on.
+    /// @param OS Output stream to print on.
     template <typename OStream>
     void printDot(OStream &OS) {
       OS << "graph {\n";
