@@ -29,8 +29,8 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/PredIteratorCache.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/PredIteratorCache.h"
 using namespace llvm;
 
 STATISTIC(NumCacheNonLocal, "Number of fully cached non-local responses");

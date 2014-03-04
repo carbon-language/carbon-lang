@@ -1,4 +1,4 @@
-//===- llvm/Support/PredIteratorCache.h - pred_iterator Cache ---*- C++ -*-===//
+//===- PredIteratorCache.h - pred_iterator Cache ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,8 +16,8 @@
 #include "llvm/IR/CFG.h"
 #include "llvm/Support/Allocator.h"
 
-#ifndef LLVM_SUPPORT_PREDITERATORCACHE_H
-#define LLVM_SUPPORT_PREDITERATORCACHE_H
+#ifndef LLVM_IR_PREDITERATORCACHE_H
+#define LLVM_IR_PREDITERATORCACHE_H
 
 namespace llvm {
 
