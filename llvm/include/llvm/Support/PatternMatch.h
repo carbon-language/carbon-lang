@@ -29,11 +29,11 @@
 #ifndef LLVM_SUPPORT_PATTERNMATCH_H
 #define LLVM_SUPPORT_PATTERNMATCH_H
 
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Operator.h"
-#include "llvm/Support/CallSite.h"
 
 namespace llvm {
 namespace PatternMatch {

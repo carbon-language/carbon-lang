@@ -55,9 +55,9 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/CallSite.h"
 #include "llvm/Support/IncludeFile.h"
 #include "llvm/Support/ValueHandle.h"
 #include <map>

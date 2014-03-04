@@ -1,4 +1,4 @@
-//===-- llvm/Support/CallSite.h - Abstract Call & Invoke instrs -*- C++ -*-===//
+//===- CallSite.h - Abstract Call & Invoke instrs ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -23,8 +23,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_CALLSITE_H
-#define LLVM_SUPPORT_CALLSITE_H
+#ifndef LLVM_IR_CALLSITE_H
+#define LLVM_IR_CALLSITE_H
 
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/IR/Attributes.h"

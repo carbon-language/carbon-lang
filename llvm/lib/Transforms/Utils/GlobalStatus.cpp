@@ -9,9 +9,9 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 
 using namespace llvm;

@@ -13,9 +13,9 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
