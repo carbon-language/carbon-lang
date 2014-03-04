@@ -83,6 +83,88 @@ class BlockingMutex {
   uptr owner_;  // for debugging
 };
 
+// Reader-writer spin mutex.
+class RWMutex {
+ public:
+  RWMutex() {
+    atomic_store(&state_, kUnlocked, memory_order_relaxed);
+  }
+
+  ~RWMutex() {
+    CHECK_EQ(atomic_load(&state_, memory_order_relaxed), kUnlocked);
+  }
+
+  void Lock() {
+    uptr cmp = kUnlocked;
+    if (atomic_compare_exchange_strong(&state_, &cmp, kWriteLock,
+                                       memory_order_acquire))
+      return;
+    LockSlow();
+  }
+
+  void Unlock() {
+    uptr prev = atomic_fetch_sub(&state_, kWriteLock, memory_order_release);
+    DCHECK_NE(prev & kWriteLock, 0);
+    (void)prev;
+  }
+
+  void ReadLock() {
+    uptr prev = atomic_fetch_add(&state_, kReadLock, memory_order_acquire);
+    if ((prev & kWriteLock) == 0)
+      return;
+    ReadLockSlow();
+  }
+
+  void ReadUnlock() {
+    uptr prev = atomic_fetch_sub(&state_, kReadLock, memory_order_release);
+    DCHECK_EQ(prev & kWriteLock, 0);
+    DCHECK_GT(prev & ~kWriteLock, 0);
+    (void)prev;
+  }
+
+  void CheckLocked() {
+    CHECK_NE(atomic_load(&state_, memory_order_relaxed), kUnlocked);
+  }
+
+ private:
+  atomic_uintptr_t state_;
+
+  enum {
+    kUnlocked = 0,
+    kWriteLock = 1,
+    kReadLock = 2
+  };
+
+  void NOINLINE LockSlow() {
+    for (int i = 0;; i++) {
+      if (i < 10)
+        proc_yield(10);
+      else
+        internal_sched_yield();
+      uptr cmp = atomic_load(&state_, memory_order_relaxed);
+      if (cmp == kUnlocked &&
+          atomic_compare_exchange_weak(&state_, &cmp, kWriteLock,
+                                       memory_order_acquire))
+          return;
+    }
+  }
+
+  void NOINLINE ReadLockSlow() {
+    for (int i = 0;; i++) {
+      if (i < 10)
+        proc_yield(10);
+      else
+        internal_sched_yield();
+      uptr  prev = atomic_load(&state_, memory_order_acquire);
+      if ((prev & kWriteLock) == 0)
+        return;
+    }
+  }
+
+  RWMutex(const RWMutex&);
+  void operator = (const RWMutex&);
+};
+
 template<typename MutexType>
 class GenericScopedLock {
  public:
@@ -123,6 +205,8 @@ class GenericScopedReadLock {
 
 typedef GenericScopedLock<StaticSpinMutex> SpinMutexLock;
 typedef GenericScopedLock<BlockingMutex> BlockingMutexLock;
+typedef GenericScopedLock<RWMutex> RWMutexLock;
+typedef GenericScopedReadLock<RWMutex> RWMutexReadLock;
 
 }  // namespace __sanitizer
 

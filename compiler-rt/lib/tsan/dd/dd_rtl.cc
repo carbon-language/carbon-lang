@@ -9,16 +9,19 @@
 
 #include "dd_rtl.h"
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 
 namespace __dsan {
 
-static Context ctx0;
-static Context * const ctx = &ctx0;
+static Context *ctx;
 
 void Initialize() {
+  static u64 ctx_mem[sizeof(Context) / sizeof(u64) + 1];
+  ctx = new(ctx_mem) Context();
+
   InitializeInterceptors();
   //common_flags()->allow_addr2line = true;
   common_flags()->symbolize = true;
@@ -37,9 +40,9 @@ void ThreadDestroy(Thread *thr) {
 
 static u32 CurrentStackTrace(Thread *thr) {
   StackTrace trace;
-  thr->in_symbolizer = true;
+  thr->ignore_interceptors = true;
   trace.Unwind(1000, 0, 0, 0, 0, 0, false);
-  thr->in_symbolizer = false;
+  thr->ignore_interceptors = false;
   const uptr skip = 4;
   if (trace.size <= skip)
     return 0;
@@ -49,39 +52,9 @@ static u32 CurrentStackTrace(Thread *thr) {
 static void PrintStackTrace(Thread *thr, u32 stk) {
   uptr size = 0;
   const uptr *trace = StackDepotGet(stk, &size);
-  thr->in_symbolizer = true;
+  thr->ignore_interceptors = true;
   StackTrace::PrintStack(trace, size);
-  thr->in_symbolizer = false;
-}
-
-static Mutex *FindMutex(Thread *thr, uptr m) {
-  SpinMutexLock l(&ctx->mutex_mtx);
-  for (Mutex *mtx = ctx->mutex_list; mtx; mtx = mtx->link) {
-    if (mtx->addr == m)
-      return mtx;
-  }
-  Mutex *mtx = (Mutex*)InternalAlloc(sizeof(*mtx));
-  internal_memset(mtx, 0, sizeof(*mtx));
-  mtx->addr = m;
-  ctx->dd->MutexInit(&mtx->dd, CurrentStackTrace(thr), ctx->mutex_seq++);
-  mtx->link = ctx->mutex_list;
-  ctx->mutex_list = mtx;
-  return mtx;
-}
-
-static Mutex *FindMutexAndRemove(uptr m) {
-  SpinMutexLock l(&ctx->mutex_mtx);
-  Mutex **prev = &ctx->mutex_list;
-  for (;;) {
-    Mutex *mtx = *prev;
-    if (mtx == 0)
-      return 0;
-    if (mtx->addr == m) {
-      *prev = mtx->link;
-      return mtx;
-    }
-    prev = &mtx->link;
-  }
+  thr->ignore_interceptors = false;
 }
 
 static void ReportDeadlock(Thread *thr, DDReport *rep) {
@@ -96,30 +69,34 @@ static void ReportDeadlock(Thread *thr, DDReport *rep) {
 }
 
 void MutexLock(Thread *thr, uptr m, bool writelock, bool trylock) {
-  if (thr->in_symbolizer)
+  if (thr->ignore_interceptors)
     return;
-  Mutex *mtx = FindMutex(thr, m);
-  DDReport *rep = ctx->dd->MutexLock(thr->dd_pt, thr->dd_lt, &mtx->dd,
-      writelock, trylock);
+  DDReport *rep = 0;
+  {
+    MutexHashMap::Handle h(&ctx->mutex_map, m);
+    if (h.created())
+      ctx->dd->MutexInit(&h->dd, CurrentStackTrace(thr), m);
+    rep = ctx->dd->MutexLock(thr->dd_pt, thr->dd_lt, &h->dd,
+                             writelock, trylock);
+  }
   if (rep)
     ReportDeadlock(thr, rep);
 }
 
 void MutexUnlock(Thread *thr, uptr m, bool writelock) {
-  if (thr->in_symbolizer)
+  if (thr->ignore_interceptors)
     return;
-  Mutex *mtx = FindMutex(thr, m);
-  ctx->dd->MutexUnlock(thr->dd_pt, thr->dd_lt, &mtx->dd, writelock);
+  MutexHashMap::Handle h(&ctx->mutex_map, m);
+  ctx->dd->MutexUnlock(thr->dd_pt, thr->dd_lt, &h->dd, writelock);
 }
 
 void MutexDestroy(Thread *thr, uptr m) {
-  if (thr->in_symbolizer)
+  if (thr->ignore_interceptors)
     return;
-  Mutex *mtx = FindMutexAndRemove(m);
-  if (mtx == 0)
+  MutexHashMap::Handle h(&ctx->mutex_map, m, true);
+  if (!h.exists())
     return;
-  ctx->dd->MutexDestroy(thr->dd_pt, thr->dd_lt, &mtx->dd);
-  InternalFree(mtx);
+  ctx->dd->MutexDestroy(thr->dd_pt, thr->dd_lt, &h->dd);
 }
 
 }  // namespace __dsan

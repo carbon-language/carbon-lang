@@ -12,13 +12,12 @@
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_deadlock_detector_interface.h"
 #include "sanitizer_common/sanitizer_allocator_internal.h"
+#include "sanitizer_common/sanitizer_addrhashmap.h"
 #include "sanitizer_common/sanitizer_mutex.h"
 
 namespace __dsan {
 
 struct Mutex {
-  Mutex *link;
-  uptr addr;
   DDMutex dd;
 };
 
@@ -26,15 +25,15 @@ struct Thread {
   DDPhysicalThread *dd_pt;
   DDLogicalThread *dd_lt;
 
-  bool in_symbolizer;
+  bool ignore_interceptors;
 };
+
+typedef AddrHashMap<Mutex, 1000003> MutexHashMap;
 
 struct Context {
   DDetector *dd;
 
-  SpinMutex mutex_mtx;
-  Mutex *mutex_list;
-  u64 mutex_seq;
+  MutexHashMap mutex_map;
 };
 
 void InitializeInterceptors();
