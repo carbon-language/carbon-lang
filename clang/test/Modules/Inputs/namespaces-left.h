@@ -1,4 +1,12 @@
+namespace RedeclAcrossImport {
+  enum E { e };
+}
+
 @import namespaces_top;
+
+namespace RedeclAcrossImport {
+  E x = e;
+}
 
 float &global(float);
 float &global2(float);
