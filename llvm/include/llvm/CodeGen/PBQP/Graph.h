@@ -312,7 +312,6 @@ namespace PBQP {
     /// \brief Set a node's cost vector.
     /// @param NId Node to update.
     /// @param Costs New costs to set.
-    /// @return Node cost vector.
     template <typename OtherVectorT>
     void setNodeCosts(NodeId NId, OtherVectorT Costs) {
       VectorPtr AllocatedCosts = CostAlloc.getVector(std::move(Costs));
