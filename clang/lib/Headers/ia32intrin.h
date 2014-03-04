@@ -32,14 +32,14 @@
 static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
 __readeflags(void)
 {
-  unsigned long long res = 0;
+  unsigned long long __res = 0;
   __asm__ __volatile__ ("pushf\n\t"
                         "popq %0\n"
-                        :"=r"(res)
+                        :"=r"(__res)
                         :
                         :
                        );
-  return res;
+  return __res;
 }
 
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
@@ -57,14 +57,14 @@ __writeeflags(unsigned long long __f)
 static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
 __readeflags(void)
 {
-  unsigned int res = 0;
+  unsigned int __res = 0;
   __asm__ __volatile__ ("pushf\n\t"
                         "popl %0\n"
-                        :"=r"(res)
+                        :"=r"(__res)
                         :
                         :
                        );
-  return res;
+  return __res;
 }
 
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
