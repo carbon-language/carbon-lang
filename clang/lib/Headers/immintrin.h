@@ -48,7 +48,7 @@
 #include <smmintrin.h>
 #endif
 
-#if defined (__AES__)
+#if defined (__AES__) || defined (__PCLMUL__)
 #include <wmmintrin.h>
 #endif
 
