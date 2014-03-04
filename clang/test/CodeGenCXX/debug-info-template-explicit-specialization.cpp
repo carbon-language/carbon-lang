@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -S -emit-llvm -g %s -o - -fno-standalone-debug | FileCheck %s
+// RUN: %clang_cc1 -S -emit-llvm -triple %itanium_abi_triple -g %s -o - -fno-standalone-debug | FileCheck %s
 
 template <typename T>
 struct a {
