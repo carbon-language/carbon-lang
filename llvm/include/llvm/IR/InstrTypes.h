@@ -51,7 +51,7 @@ protected:
   virtual BasicBlock *getSuccessorV(unsigned idx) const = 0;
   virtual unsigned getNumSuccessorsV() const = 0;
   virtual void setSuccessorV(unsigned idx, BasicBlock *B) = 0;
-  virtual TerminatorInst *clone_impl() const = 0;
+  TerminatorInst *clone_impl() const override = 0;
 public:
 
   /// getNumSuccessors - Return the number of successors that this terminator

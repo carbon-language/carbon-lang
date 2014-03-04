@@ -84,7 +84,7 @@ public:
     : format_object_base(fmt), Val(val) {
   }
 
-  virtual int snprint(char *Buffer, unsigned BufferSize) const {
+  int snprint(char *Buffer, unsigned BufferSize) const override {
     return snprintf(Buffer, BufferSize, Fmt, Val);
   }
 };
@@ -102,7 +102,7 @@ public:
   : format_object_base(fmt), Val1(val1), Val2(val2) {
   }
 
-  virtual int snprint(char *Buffer, unsigned BufferSize) const {
+  int snprint(char *Buffer, unsigned BufferSize) const override {
     return snprintf(Buffer, BufferSize, Fmt, Val1, Val2);
   }
 };
@@ -121,7 +121,7 @@ public:
     : format_object_base(fmt), Val1(val1), Val2(val2), Val3(val3) {
   }
 
-  virtual int snprint(char *Buffer, unsigned BufferSize) const {
+  int snprint(char *Buffer, unsigned BufferSize) const override {
     return snprintf(Buffer, BufferSize, Fmt, Val1, Val2, Val3);
   }
 };
@@ -142,7 +142,7 @@ public:
     : format_object_base(fmt), Val1(val1), Val2(val2), Val3(val3), Val4(val4) {
   }
 
-  virtual int snprint(char *Buffer, unsigned BufferSize) const {
+  int snprint(char *Buffer, unsigned BufferSize) const override {
     return snprintf(Buffer, BufferSize, Fmt, Val1, Val2, Val3, Val4);
   }
 };
@@ -165,7 +165,7 @@ public:
       Val5(val5) {
   }
 
-  virtual int snprint(char *Buffer, unsigned BufferSize) const {
+  int snprint(char *Buffer, unsigned BufferSize) const override {
     return snprintf(Buffer, BufferSize, Fmt, Val1, Val2, Val3, Val4, Val5);
   }
 };

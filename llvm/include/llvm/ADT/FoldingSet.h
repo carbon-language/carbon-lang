@@ -396,20 +396,20 @@ template<class T> class FoldingSet : public FoldingSetImpl {
 private:
   /// GetNodeProfile - Each instantiatation of the FoldingSet needs to provide a
   /// way to convert nodes into a unique specifier.
-  virtual void GetNodeProfile(Node *N, FoldingSetNodeID &ID) const {
+  void GetNodeProfile(Node *N, FoldingSetNodeID &ID) const override {
     T *TN = static_cast<T *>(N);
     FoldingSetTrait<T>::Profile(*TN, ID);
   }
   /// NodeEquals - Instantiations may optionally provide a way to compare a
   /// node with a specified ID.
-  virtual bool NodeEquals(Node *N, const FoldingSetNodeID &ID, unsigned IDHash,
-                          FoldingSetNodeID &TempID) const {
+  bool NodeEquals(Node *N, const FoldingSetNodeID &ID, unsigned IDHash,
+                  FoldingSetNodeID &TempID) const override {
     T *TN = static_cast<T *>(N);
     return FoldingSetTrait<T>::Equals(*TN, ID, IDHash, TempID);
   }
   /// ComputeNodeHash - Instantiations may optionally provide a way to compute a
   /// hash value directly from a node.
-  virtual unsigned ComputeNodeHash(Node *N, FoldingSetNodeID &TempID) const {
+  unsigned ComputeNodeHash(Node *N, FoldingSetNodeID &TempID) const override {
     T *TN = static_cast<T *>(N);
     return FoldingSetTrait<T>::ComputeHash(*TN, TempID);
   }
@@ -473,20 +473,19 @@ private:
 
   /// GetNodeProfile - Each instantiatation of the FoldingSet needs to provide a
   /// way to convert nodes into a unique specifier.
-  virtual void GetNodeProfile(FoldingSetImpl::Node *N,
-                              FoldingSetNodeID &ID) const {
+  void GetNodeProfile(FoldingSetImpl::Node *N,
+                      FoldingSetNodeID &ID) const override {
     T *TN = static_cast<T *>(N);
     ContextualFoldingSetTrait<T, Ctx>::Profile(*TN, ID, Context);
   }
-  virtual bool NodeEquals(FoldingSetImpl::Node *N,
-                          const FoldingSetNodeID &ID, unsigned IDHash,
-                          FoldingSetNodeID &TempID) const {
+  bool NodeEquals(FoldingSetImpl::Node *N, const FoldingSetNodeID &ID,
+                  unsigned IDHash, FoldingSetNodeID &TempID) const override {
     T *TN = static_cast<T *>(N);
     return ContextualFoldingSetTrait<T, Ctx>::Equals(*TN, ID, IDHash, TempID,
                                                      Context);
   }
-  virtual unsigned ComputeNodeHash(FoldingSetImpl::Node *N,
-                                   FoldingSetNodeID &TempID) const {
+  unsigned ComputeNodeHash(FoldingSetImpl::Node *N,
+                           FoldingSetNodeID &TempID) const override {
     T *TN = static_cast<T *>(N);
     return ContextualFoldingSetTrait<T, Ctx>::ComputeHash(*TN, TempID, Context);
   }

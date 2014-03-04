@@ -750,29 +750,29 @@ public:
   llvm::error_code error();
 
 private:
-  virtual bool outputting();
-  virtual bool mapTag(StringRef, bool);
-  virtual void beginMapping();
-  virtual void endMapping();
-  virtual bool preflightKey(const char *, bool, bool, bool &, void *&);
-  virtual void postflightKey(void *);
-  virtual unsigned beginSequence();
-  virtual void endSequence();
-  virtual bool preflightElement(unsigned index, void *&);
-  virtual void postflightElement(void *);
-  virtual unsigned beginFlowSequence();
-  virtual bool preflightFlowElement(unsigned , void *&);
-  virtual void postflightFlowElement(void *);
-  virtual void endFlowSequence();
-  virtual void beginEnumScalar();
-  virtual bool matchEnumScalar(const char*, bool);
-  virtual void endEnumScalar();
-  virtual bool beginBitSetScalar(bool &);
-  virtual bool bitSetMatch(const char *, bool );
-  virtual void endBitSetScalar();
-  virtual void scalarString(StringRef &);
-  virtual void setError(const Twine &message);
-  virtual bool canElideEmptySequence();
+  bool outputting() override;
+  bool mapTag(StringRef, bool) override;
+  void beginMapping() override;
+  void endMapping() override;
+  bool preflightKey(const char *, bool, bool, bool &, void *&) override;
+  void postflightKey(void *) override;
+  unsigned beginSequence() override;
+  void endSequence() override;
+  bool preflightElement(unsigned index, void *&) override;
+  void postflightElement(void *) override;
+  unsigned beginFlowSequence() override;
+  bool preflightFlowElement(unsigned , void *&) override;
+  void postflightFlowElement(void *) override;
+  void endFlowSequence() override;
+  void beginEnumScalar() override;
+  bool matchEnumScalar(const char*, bool) override;
+  void endEnumScalar() override;
+  bool beginBitSetScalar(bool &) override;
+  bool bitSetMatch(const char *, bool ) override;
+  void endBitSetScalar() override;
+  void scalarString(StringRef &) override;
+  void setError(const Twine &message) override;
+  bool canElideEmptySequence() override;
 
   class HNode {
     virtual void anchor();
@@ -785,7 +785,7 @@ private:
   };
 
   class EmptyHNode : public HNode {
-    virtual void anchor();
+    void anchor() override;
   public:
     EmptyHNode(Node *n) : HNode(n) { }
     static inline bool classof(const HNode *n) {
@@ -795,7 +795,7 @@ private:
   };
 
   class ScalarHNode : public HNode {
-    virtual void anchor();
+    void anchor() override;
   public:
     ScalarHNode(Node *n, StringRef s) : HNode(n), _value(s) { }
 
@@ -875,29 +875,29 @@ public:
   Output(llvm::raw_ostream &, void *Ctxt=NULL);
   virtual ~Output();
 
-  virtual bool outputting();
-  virtual bool mapTag(StringRef, bool);
-  virtual void beginMapping();
-  virtual void endMapping();
-  virtual bool preflightKey(const char *key, bool, bool, bool &, void *&);
-  virtual void postflightKey(void *);
-  virtual unsigned beginSequence();
-  virtual void endSequence();
-  virtual bool preflightElement(unsigned, void *&);
-  virtual void postflightElement(void *);
-  virtual unsigned beginFlowSequence();
-  virtual bool preflightFlowElement(unsigned, void *&);
-  virtual void postflightFlowElement(void *);
-  virtual void endFlowSequence();
-  virtual void beginEnumScalar();
-  virtual bool matchEnumScalar(const char*, bool);
-  virtual void endEnumScalar();
-  virtual bool beginBitSetScalar(bool &);
-  virtual bool bitSetMatch(const char *, bool );
-  virtual void endBitSetScalar();
-  virtual void scalarString(StringRef &);
-  virtual void setError(const Twine &message);
-  virtual bool canElideEmptySequence();
+  bool outputting() override;
+  bool mapTag(StringRef, bool) override;
+  void beginMapping() override;
+  void endMapping() override;
+  bool preflightKey(const char *key, bool, bool, bool &, void *&) override;
+  void postflightKey(void *) override;
+  unsigned beginSequence() override;
+  void endSequence() override;
+  bool preflightElement(unsigned, void *&) override;
+  void postflightElement(void *) override;
+  unsigned beginFlowSequence() override;
+  bool preflightFlowElement(unsigned, void *&) override;
+  void postflightFlowElement(void *) override;
+  void endFlowSequence() override;
+  void beginEnumScalar() override;
+  bool matchEnumScalar(const char*, bool) override;
+  void endEnumScalar() override;
+  bool beginBitSetScalar(bool &) override;
+  bool bitSetMatch(const char *, bool ) override;
+  void endBitSetScalar() override;
+  void scalarString(StringRef &) override;
+  void setError(const Twine &message) override;
+  bool canElideEmptySequence() override;
 public:
   // These are only used by operator<<. They could be private
   // if that templated operator could be made a friend.

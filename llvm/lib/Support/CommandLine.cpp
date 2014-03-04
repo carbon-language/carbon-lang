@@ -1507,7 +1507,7 @@ public:
   using HelpPrinter::operator= ;
 
 protected:
-  virtual void printOptions(StrOptionPairVector &Opts, size_t MaxArgLen) {
+  void printOptions(StrOptionPairVector &Opts, size_t MaxArgLen) override {
     std::vector<OptionCategory *> SortedCategories;
     std::map<OptionCategory *, std::vector<Option *> > CategorizedOptions;
 

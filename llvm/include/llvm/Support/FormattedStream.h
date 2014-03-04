@@ -129,25 +129,23 @@ public:
 
   /// getLine - Return the line number
   unsigned getLine() { return Position.second; }
-  
-  raw_ostream &resetColor() {
+
+  raw_ostream &resetColor() override {
     TheStream->resetColor();
     return *this;
   }
-  
-  raw_ostream &reverseColor() {
+
+  raw_ostream &reverseColor() override {
     TheStream->reverseColor();
     return *this;
   }
-  
-  raw_ostream &changeColor(enum Colors Color,
-                           bool Bold,
-                           bool BG) {
+
+  raw_ostream &changeColor(enum Colors Color, bool Bold, bool BG) override {
     TheStream->changeColor(Color, Bold, BG);
     return *this;
   }
-  
-  bool is_displayed() const {
+
+  bool is_displayed() const override {
     return TheStream->is_displayed();
   }
 
