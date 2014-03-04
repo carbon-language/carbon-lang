@@ -107,10 +107,12 @@ void test_get(ssize_t fun(const char *, char *, size_t), const char *attr_list,
   // Try every attribute, until we see one we can access. Attribute names are
   // null-separated strings in attr_list.
   size_t attr_list_len = argz_count(attr_list, attr_list_size);
-  char **attrs = (char **)malloc((attr_list_len + 1) * sizeof(char *));
+  size_t argv_size = (attr_list_len + 1) * sizeof(char *);
+  char **attrs = (char **)malloc(argv_size);
   argz_extract(attr_list, attr_list_size, attrs);
-  size_t i;
-  for (i = 0; (i < attr_list_len) && attrs[i]; i++) {
+  // TODO(smatveev): we need proper argz_* interceptors
+  __msan_unpoison(attrs, argv_size);
+  for (size_t i = 0; (i < attr_list_len) && attrs[i]; i++) {
     if (test_get_single_attr(fun, attrs[i]))
       return;
   }
