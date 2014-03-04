@@ -2538,6 +2538,21 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
         } else if (!D->isCompleteDefinition()) {
           // We have a forward declaration of this type, so adopt that forward
           // declaration rather than building a new one.
+            
+          // If one or both can be completed from external storage then try one
+          // last time to complete and compare them before doing this.
+            
+          if (FoundRecord->hasExternalLexicalStorage() &&
+              !FoundRecord->isCompleteDefinition())
+            FoundRecord->getASTContext().getExternalSource()->CompleteType(FoundRecord);
+          if (D->hasExternalLexicalStorage())
+            D->getASTContext().getExternalSource()->CompleteType(D);
+            
+          if (FoundRecord->isCompleteDefinition() &&
+              D->isCompleteDefinition() &&
+              !IsStructuralMatch(D, FoundRecord))
+            continue;
+              
           AdoptDecl = FoundRecord;
           continue;
         } else if (!SearchName) {
