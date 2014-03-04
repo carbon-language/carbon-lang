@@ -2449,6 +2449,9 @@ static void *init_cond(void *c, bool force = false) {
   // the aux object to them.
   // Note: the code assumes that PTHREAD_COND_INITIALIZER initializes
   // first word of pthread_cond_t to zero.
+  // It's all relevant only for linux.
+  if (!SI_LINUX_NOT_ANDROID)
+    return c;
   atomic_uintptr_t *p = (atomic_uintptr_t*)c;
   uptr cond = atomic_load(p, memory_order_acquire);
   if (!force && cond != 0)
