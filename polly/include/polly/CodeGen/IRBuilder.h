@@ -91,12 +91,14 @@ private:
   class LoopAnnotator *Annotator;
 };
 
-#ifdef NDEBUG
-typedef PollyBuilderInserter<false> IRInserter;
-typedef llvm::IRBuilder<false, llvm::ConstantFolder, IRInserter> PollyIRBuilder;
-#else
+// TODO: We should not name instructions in NDEBUG builds.
+//
+// We currently always name instructions, as the polly test suite currently
+// matches for certain names.
+//
+// typedef PollyBuilderInserter<false> IRInserter;
+// typedef llvm::IRBuilder<false, llvm::ConstantFolder, IRInserter> PollyIRBuilder;
 typedef PollyBuilderInserter<true> IRInserter;
 typedef llvm::IRBuilder<true, llvm::ConstantFolder, IRInserter> PollyIRBuilder;
-#endif
 }
 #endif
