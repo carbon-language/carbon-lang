@@ -12,14 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstPrinter/MipsInstPrinter.h"
+#include "MipsMCTargetDesc.h"
 #include "MipsTargetObjectFile.h"
 #include "MipsTargetStreamer.h"
-#include "MipsMCTargetDesc.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCSectionELF.h"
-#include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"

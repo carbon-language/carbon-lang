@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <string.h>
 #include "Mips16HardFloatInfo.h"
+#include <string.h>
 
 namespace llvm {
 

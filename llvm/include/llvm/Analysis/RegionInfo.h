@@ -27,8 +27,8 @@
 #ifndef LLVM_ANALYSIS_REGIONINFO_H
 #define LLVM_ANALYSIS_REGIONINFO_H
 
-#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Support/Allocator.h"

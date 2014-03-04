@@ -17,12 +17,12 @@
 #include "llvm-c/Core.h"
 #include "llvm-c/ExecutionEngine.h"
 #include "llvm-c/Target.h"
-#include "llvm-c/Transforms/Scalar.h"
 #include "llvm-c/Transforms/PassManagerBuilder.h"
+#include "llvm-c/Transforms/Scalar.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Host.h"
 #include "gtest/gtest.h"
-#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 

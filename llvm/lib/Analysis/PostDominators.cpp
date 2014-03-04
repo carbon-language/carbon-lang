@@ -16,10 +16,10 @@
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
-#include "llvm/Support/GenericDomTreeConstruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/GenericDomTreeConstruction.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

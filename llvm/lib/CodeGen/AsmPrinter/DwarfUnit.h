@@ -20,8 +20,8 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/DebugInfo.h"
 #include "llvm/DIBuilder.h"
+#include "llvm/DebugInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSection.h"
 

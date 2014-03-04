@@ -11,8 +11,8 @@
 
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCContext.h"

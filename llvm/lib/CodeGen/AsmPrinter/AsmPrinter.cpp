@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "DwarfDebug.h"
 #include "DwarfException.h"
+#include "WinCodeViewLineTables.h"
 #include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
@@ -51,7 +52,6 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
-#include "WinCodeViewLineTables.h"
 using namespace llvm;
 
 static const char *const DWARFGroupName = "DWARF Emission";

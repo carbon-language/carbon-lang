@@ -27,7 +27,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
-
 #include <algorithm>    // std::sort
 
 using namespace llvm;

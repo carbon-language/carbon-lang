@@ -10,8 +10,8 @@
 #ifndef LLVM_ADT_STRINGREF_H
 #define LLVM_ADT_STRINGREF_H
 
-#include "llvm/Support/type_traits.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/type_traits.h"
 #include <algorithm>
 #include <cassert>
 #include <cstring>

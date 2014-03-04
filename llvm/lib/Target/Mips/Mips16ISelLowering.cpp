@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "mips-lower"
-#include <string>
 #include "Mips16ISelLowering.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "MipsRegisterInfo.h"
@@ -20,6 +19,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include <string>
 
 using namespace llvm;
 

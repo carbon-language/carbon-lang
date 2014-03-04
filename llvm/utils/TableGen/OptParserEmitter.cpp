@@ -13,8 +13,8 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
-#include <cstring>
 #include <cctype>
+#include <cstring>
 #include <map>
 
 using namespace llvm;

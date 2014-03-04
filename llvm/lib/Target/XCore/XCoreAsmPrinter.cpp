@@ -14,12 +14,12 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "XCore.h"
-#include "XCoreTargetStreamer.h"
 #include "InstPrinter/XCoreInstPrinter.h"
 #include "XCoreInstrInfo.h"
 #include "XCoreMCInstLower.h"
 #include "XCoreSubtarget.h"
 #include "XCoreTargetMachine.h"
+#include "XCoreTargetStreamer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/AsmPrinter.h"

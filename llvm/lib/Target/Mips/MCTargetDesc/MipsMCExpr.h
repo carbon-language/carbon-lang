@@ -10,9 +10,9 @@
 #ifndef MIPSMCEXPR_H
 #define MIPSMCEXPR_H
 
+#include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCValue.h"
-#include "llvm/MC/MCAsmLayout.h"
 
 namespace llvm {
 

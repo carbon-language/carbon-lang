@@ -15,8 +15,8 @@
 #include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/RegionPass.h"
-#include "llvm/Pass.h"
 #include "llvm/IR/Function.h"
+#include "llvm/Pass.h"
 #include <string>
 
 using namespace llvm;
