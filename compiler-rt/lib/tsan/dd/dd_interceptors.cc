@@ -66,3 +66,13 @@ void InitializeInterceptors() {
 }
 
 }  // namespace __dsan
+
+#if DYNAMIC
+static void __local_dsan_init() __attribute__((constructor));
+void __local_dsan_init() {
+  __dsan::Initialize();
+}
+#else
+__attribute__((section(".preinit_array"), used))
+void (*__local_dsan_preinit)(void) = __dsan::Initialize;
+#endif

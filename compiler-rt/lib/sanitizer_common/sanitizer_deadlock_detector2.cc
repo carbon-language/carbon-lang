@@ -12,30 +12,23 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_deadlock_detector_interface.h"
-#include "sanitizer_deadlock_detector.h"
 #include "sanitizer_allocator_internal.h"
 #include "sanitizer_placement_new.h"
-#include "sanitizer_mutex.h"
+//#include "sanitizer_mutex.h"
 
-#if SANITIZER_DEADLOCK_DETECTOR_VERSION == 1
+#if SANITIZER_DEADLOCK_DETECTOR_VERSION == 2
 
 namespace __sanitizer {
 
-typedef TwoLevelBitVector<> DDBV;  // DeadlockDetector's bit vector.
-
 struct DDPhysicalThread {
+  DDReport rep;
 };
 
 struct DDLogicalThread {
   u64 ctx;
-  DeadlockDetectorTLS<DDBV> dd;
-  DDReport rep;
 };
 
 struct DDetectorImpl : public DDetector {
-  SpinMutex mtx;
-  DeadlockDetector<DDBV> dd;
-
   DDetectorImpl();
 
   virtual DDPhysicalThread* CreatePhysicalThread();
@@ -51,8 +44,6 @@ struct DDetectorImpl : public DDetector {
       DDMutex *m, bool writelock);
   virtual void MutexDestroy(DDPhysicalThread *pt, DDLogicalThread *lt,
       DDMutex *m);
-
-  void MutexEnsureID(DDLogicalThread *lt, DDMutex *m);
 };
 
 DDetector *DDetector::Create() {
@@ -61,20 +52,24 @@ DDetector *DDetector::Create() {
 }
 
 DDetectorImpl::DDetectorImpl() {
-  dd.clear();
 }
 
 DDPhysicalThread* DDetectorImpl::CreatePhysicalThread() {
-  return 0;
+  void *mem = InternalAlloc(sizeof(DDPhysicalThread));
+  DDPhysicalThread *pt = new(mem) DDPhysicalThread();
+  return pt;
 }
 
 void DDetectorImpl::DestroyPhysicalThread(DDPhysicalThread *pt) {
+  pt->~DDPhysicalThread();
+  InternalFree(pt);
 }
 
 DDLogicalThread* DDetectorImpl::CreateLogicalThread(u64 ctx) {
-  DDLogicalThread *lt = (DDLogicalThread*)InternalAlloc(sizeof(*lt));
+  void *mem = InternalAlloc(sizeof(
+  DDLogicalThread));
+  DDLogicalThread *lt = new(mem) DDLogicalThread();
   lt->ctx = ctx;
-  lt->dd.clear();
   return lt;
 }
 
@@ -89,14 +84,9 @@ void DDetectorImpl::MutexInit(DDMutex *m, u32 stk, u64 ctx) {
   m->ctx = ctx;
 }
 
-void DDetectorImpl::MutexEnsureID(DDLogicalThread *lt, DDMutex *m) {
-  if (!dd.nodeBelongsToCurrentEpoch(m->id))
-    m->id = dd.newNode(reinterpret_cast<uptr>(m));
-  dd.ensureCurrentEpoch(&lt->dd);
-}
-
 DDReport *DDetectorImpl::MutexLock(DDPhysicalThread *pt, DDLogicalThread *lt,
     DDMutex *m, bool writelock, bool trylock) {
+    /*
   if (dd.onFirstLock(&lt->dd, m->id))
     return 0;
   SpinMutexLock lk(&mtx);
@@ -124,24 +114,26 @@ DDReport *DDetectorImpl::MutexLock(DDPhysicalThread *pt, DDLogicalThread *lt,
     }
   }
   return rep;
+  */
+  return 0;
 }
 
 DDReport *DDetectorImpl::MutexUnlock(DDPhysicalThread *pt, DDLogicalThread *lt,
     DDMutex *m, bool writelock) {
-  // Printf("T%d MutexUnlock: %zx; recursion %d\n", thr->tid,
-  //        s->deadlock_detector_id, s->recursion);
-  dd.onUnlock(&lt->dd, m->id);
+  //dd.onUnlock(&lt->dd, m->id);
   return 0;
 }
 
 void DDetectorImpl::MutexDestroy(DDPhysicalThread *pt, DDLogicalThread *lt,
     DDMutex *m) {
+    /*
   if (!m->id) return;
   SpinMutexLock lk(&mtx);
   if (dd.nodeBelongsToCurrentEpoch(m->id))
     dd.removeNode(m->id);
   m->id = 0;
+  */
 }
 
 }  // namespace __sanitizer
-#endif  // #if SANITIZER_DEADLOCK_DETECTOR_VERSION == 1
+#endif  // #if SANITIZER_DEADLOCK_DETECTOR_VERSION == 2

@@ -16,6 +16,8 @@
 #ifndef SANITIZER_DEADLOCK_DETECTOR_INTERFACE_H
 #define SANITIZER_DEADLOCK_DETECTOR_INTERFACE_H
 
+#define SANITIZER_DEADLOCK_DETECTOR_VERSION 1
+
 #include "sanitizer_internal_defs.h"
 
 namespace __sanitizer {

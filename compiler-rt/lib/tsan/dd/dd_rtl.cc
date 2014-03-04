@@ -100,6 +100,3 @@ void MutexDestroy(Thread *thr, uptr m) {
 }
 
 }  // namespace __dsan
-
-__attribute__((section(".preinit_array"), used))
-void (*__local_dsan_preinit)(void) = __dsan::Initialize;

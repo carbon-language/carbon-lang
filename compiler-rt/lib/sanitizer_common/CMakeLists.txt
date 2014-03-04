@@ -6,6 +6,7 @@ set(SANITIZER_SOURCES
   sanitizer_common.cc
   sanitizer_coverage.cc
   sanitizer_deadlock_detector1.cc
+  sanitizer_deadlock_detector2.cc
   sanitizer_flags.cc
   sanitizer_libc.cc
   sanitizer_libignore.cc

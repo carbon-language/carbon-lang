@@ -36,6 +36,7 @@ struct Context {
   MutexHashMap mutex_map;
 };
 
+void Initialize();
 void InitializeInterceptors();
 
 void ThreadInit(Thread *thr);
