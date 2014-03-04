@@ -125,11 +125,9 @@ namespace PBQP {
       delete ZXECosts;
 
     EdgeId YZEId = G.findEdge(YNId, ZNId);
-    bool AddedEdge = false;
 
     if (YZEId == G.invalidEdgeId()) {
       YZEId = G.addEdge(YNId, ZNId, Delta);
-      AddedEdge = true;
     } else {
       const Matrix &YZECosts = G.getEdgeCosts(YZEId);
       if (YNId == G.getEdgeNode1Id(YZEId)) {
