@@ -41,15 +41,6 @@ set(ADTSources
   polymorphic_ptr_test.cpp
  )
 
-# They cannot be compiled on MSVC9 due to its bug.
-if(MSVC AND MSVC_VERSION LESS 1600)
-  set(LLVM_OPTIONAL_SOURCES
-    DenseMapTest.cpp
-    SmallVectorTest.cpp
-    )
-  list(REMOVE_ITEM ADTSources ${LLVM_OPTIONAL_SOURCES})
-endif()
-
 add_llvm_unittest(ADTTests
   ${ADTSources}
   )
