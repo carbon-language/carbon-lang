@@ -9,7 +9,6 @@ add_llvm_library(LLVMSupport
   circular_raw_ostream.cpp
   CommandLine.cpp
   Compression.cpp
-  ConstantRange.cpp
   ConvertUTF.c
   ConvertUTFWrapper.cpp
   CrashRecoveryContext.cpp

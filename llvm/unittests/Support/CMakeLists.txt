@@ -11,7 +11,6 @@ add_llvm_unittest(SupportTests
   Casting.cpp
   CommandLineTest.cpp
   CompressionTest.cpp
-  ConstantRangeTest.cpp
   ConvertUTFTest.cpp
   DataExtractorTest.cpp
   EndianTest.cpp

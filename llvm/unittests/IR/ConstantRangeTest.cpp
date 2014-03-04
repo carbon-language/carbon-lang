@@ -1,4 +1,4 @@
-//===- llvm/unittest/Support/ConstantRangeTest.cpp - ConstantRange tests --===//
+//===- ConstantRangeTest.cpp - ConstantRange tests ------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/ConstantRange.h"
+#include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Instructions.h"
 #include "gtest/gtest.h"
 

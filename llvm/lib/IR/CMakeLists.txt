@@ -4,6 +4,7 @@ add_llvm_library(LLVMCore
   AutoUpgrade.cpp
   BasicBlock.cpp
   ConstantFold.cpp
+  ConstantRange.cpp
   Constants.cpp
   Core.cpp
   DiagnosticInfo.cpp

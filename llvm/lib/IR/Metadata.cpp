@@ -19,11 +19,11 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueHandle.h"
-#include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;
 

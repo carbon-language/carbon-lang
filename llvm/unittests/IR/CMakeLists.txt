@@ -8,6 +8,7 @@ set(LLVM_LINK_COMPONENTS
 
 set(IRSources
   AttributesTest.cpp
+  ConstantRangeTest.cpp
   ConstantsTest.cpp
   DominatorTreeTest.cpp
   IRBuilderTest.cpp
