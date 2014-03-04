@@ -2431,52 +2431,93 @@ INTERCEPTOR(int, pthread_mutex_unlock, void *m) {
 #endif
 
 #if SANITIZER_INTERCEPT_PTHREAD_COND
+// nptl implementation of pthread_cond has 2 versions (2.2.5 and 2.3.2).
+// pthread_cond_t has different size in the different versions.
+// We can't simply always call new REAL functions from interceptors,
+// because they will corrupt memory after pthread_cond_t (old cond is smaller).
+// We can't simply always call old REAL functions from interceptors,
+// because they do not support all the features (e.g. waiting against
+// CLOCK_REALTIME).
+// Proper handling would require to have 2 versions of interceptors as well.
+// But this is messy, in particular requires linker scripts when sanitizer
+// runtime is linked into a shared library.
+// Instead we do the following trick.
+static void *init_cond(void *c, bool force = false) {
+  // sizeof(pthread_cond_t) >= sizeof(uptr) in both versions.
+  // So we allocate additional memory on the side large enough to hold
+  // any pthread_cond_t object. Always call new REAL functions, but pass
+  // the aux object to them.
+  // Note: the code assumes that PTHREAD_COND_INITIALIZER initializes
+  // first word of pthread_cond_t to zero.
+  atomic_uintptr_t *p = (atomic_uintptr_t*)c;
+  uptr cond = atomic_load(p, memory_order_acquire);
+  if (!force && cond != 0)
+    return (void*)cond;
+  void *newcond = WRAP(malloc)(pthread_cond_t_sz);
+  internal_memset(newcond, 0, pthread_cond_t_sz);
+  if (atomic_compare_exchange_strong(p, &cond, (uptr)newcond,
+      memory_order_acq_rel))
+    return newcond;
+  WRAP(free)(newcond);
+  return (void*)cond;
+}
+
 INTERCEPTOR(int, pthread_cond_init, void *c, void *a) {
+  void *cond = init_cond(c, true);
   void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_init, c, a);
-  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, c, 1);
-  return REAL(pthread_cond_init)(c, a);
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_init, cond, a);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, c, sizeof(uptr));
+  return REAL(pthread_cond_init)(cond, a);
 }
 
 INTERCEPTOR(int, pthread_cond_wait, void *c, void *m) {
+  void *cond = init_cond(c);
   void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_wait, c, m);
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_wait, cond, m);
   COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, 1);
-  int res = REAL(pthread_cond_wait)(c, m);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, sizeof(uptr));
+  int res = REAL(pthread_cond_wait)(cond, m);
   COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m);
   return res;
 }
 
 INTERCEPTOR(int, pthread_cond_timedwait, void *c, void *m, void *abstime) {
+  void *cond = init_cond(c);
   void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_timedwait, c, m, abstime);
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_timedwait, cond, m, abstime);
   COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, 1);
-  int res = REAL(pthread_cond_timedwait)(c, m, abstime);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, sizeof(uptr));
+  int res = REAL(pthread_cond_timedwait)(cond, m, abstime);
   COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m);
   return res;
 }
 
 INTERCEPTOR(int, pthread_cond_signal, void *c) {
+  void *cond = init_cond(c);
   void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_signal, c);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, 1);
-  return REAL(pthread_cond_signal)(c);
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_signal, cond);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, sizeof(uptr));
+  return REAL(pthread_cond_signal)(cond);
 }
 
 INTERCEPTOR(int, pthread_cond_broadcast, void *c) {
+  void *cond = init_cond(c);
   void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_broadcast, c);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, 1);
-  return REAL(pthread_cond_broadcast)(c);
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_broadcast, cond);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, sizeof(uptr));
+  return REAL(pthread_cond_broadcast)(cond);
 }
 
 INTERCEPTOR(int, pthread_cond_destroy, void *c) {
+  void *cond = init_cond(c);
   void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_destroy, c);
-  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, c, 1);
-  return REAL(pthread_cond_destroy)(c);
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_destroy, cond);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, c, sizeof(uptr));
+  int res = REAL(pthread_cond_destroy)(cond);
+  // Free our aux cond and zero the pointer to not leave dangling pointers.
+  WRAP(free)(cond);
+  atomic_store((atomic_uintptr_t*)c, 0, memory_order_relaxed);
+  return res;
 }
 
 #define INIT_PTHREAD_COND \
