@@ -24,6 +24,8 @@
 #ifndef __X86INTRIN_H
 #define __X86INTRIN_H
 
+#include <ia32intrin.h>
+
 #include <immintrin.h>
 
 #ifdef __3dNOW__
