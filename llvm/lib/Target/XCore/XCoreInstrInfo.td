@@ -718,10 +718,10 @@ def BLACP_u10 : _FU10<0b111000, (outs), (ins i32imm:$a), "bla cp[$a]", []>;
 def BLACP_lu10 : _FLU10<0b111000, (outs), (ins i32imm:$a), "bla cp[$a]", []>;
 
 def BLRF_u10 : _FU10<0b110100, (outs), (ins pcrel_imm:$a), "bl $a",
-                     [(XCoreBranchLink immU10:$a)]>;
+                     []>;
 
 def BLRF_lu10 : _FLU10<0b110100, (outs), (ins pcrel_imm:$a), "bl $a",
-                       [(XCoreBranchLink immU20:$a)]>;
+                       [(XCoreBranchLink tglobaladdr:$a)]>;
 
 def BLRB_u10 : _FU10<0b110101, (outs), (ins pcrel_imm_neg:$a), "bl $a", []>;
 
@@ -1113,7 +1113,6 @@ def WAITEU_0R : _F0R<0b0000001100, (outs), (ins),
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
 
-def : Pat<(XCoreBranchLink tglobaladdr:$addr), (BLRF_lu10 tglobaladdr:$addr)>;
 def : Pat<(XCoreBranchLink texternalsym:$addr), (BLRF_lu10 texternalsym:$addr)>;
 
 /// sext_inreg
