@@ -24,7 +24,7 @@
 #include <vector>
 //#include <iostream>
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/InstIterator.h"
+#include "llvm/IR/InstIterator.h"
 
 using namespace llvm;
 
