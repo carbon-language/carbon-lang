@@ -176,6 +176,19 @@ INLINE bool atomic_compare_exchange_strong(volatile atomic_uintptr_t *a,
   return false;
 }
 
+INLINE bool atomic_compare_exchange_strong(volatile atomic_uint32_t *a,
+                                           u32 *cmp,
+                                           u32 xchg,
+                                           memory_order mo) {
+  u32 cmpv = *cmp;
+  u32 prev = (u32)_InterlockedCompareExchange(
+      (volatile long*)&a->val_dont_use, (long)xchg, (long)cmpv);
+  if (prev == cmpv)
+    return true;
+  *cmp = prev;
+  return false;
+}
+
 template<typename T>
 INLINE bool atomic_compare_exchange_weak(volatile T *a,
                                          typename T::Type *cmp,
