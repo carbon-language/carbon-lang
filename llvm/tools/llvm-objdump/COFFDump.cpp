@@ -378,27 +378,20 @@ static void printExportTable(const COFFObjectFile *Obj) {
   }
 }
 
-void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
-  const coff_file_header *Header;
-  if (error(Obj->getCOFFHeader(Header))) return;
-
-  if (Header->Machine != COFF::IMAGE_FILE_MACHINE_AMD64) {
-    errs() << "Unsupported image machine type "
-              "(currently only AMD64 is supported).\n";
-    return;
-  }
-
-  const coff_section *Pdata = 0;
-
+// Given the COFF object file, this function returns the relocations for .pdata
+// and the pointer to "runtime function" structs.
+static bool getPDataSection(const COFFObjectFile *Obj,
+                            std::vector<RelocationRef> &Rels,
+                            const RuntimeFunction *&RFStart, int &NumRFs) {
   for (section_iterator SI = Obj->section_begin(), SE = Obj->section_end();
        SI != SE; ++SI) {
     StringRef Name;
-    if (error(SI->getName(Name))) continue;
+    if (error(SI->getName(Name)))
+      continue;
+    if (Name != ".pdata")
+      continue;
 
-    if (Name != ".pdata") continue;
-
-    Pdata = Obj->getCOFFSection(SI);
-    std::vector<RelocationRef> Rels;
+    const coff_section *Pdata = Obj->getCOFFSection(SI);
     for (relocation_iterator RI = SI->relocation_begin(),
                              RE = SI->relocation_end();
          RI != RE; ++RI)
@@ -408,98 +401,123 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
     std::sort(Rels.begin(), Rels.end(), RelocAddressLess);
 
     ArrayRef<uint8_t> Contents;
-    if (error(Obj->getSectionContents(Pdata, Contents))) continue;
-    if (Contents.empty()) continue;
+    if (error(Obj->getSectionContents(Pdata, Contents)))
+      continue;
+    if (Contents.empty())
+      continue;
 
-    ArrayRef<RuntimeFunction> RFs(
-                  reinterpret_cast<const RuntimeFunction *>(Contents.data()),
-                                  Contents.size() / sizeof(RuntimeFunction));
-    for (const RuntimeFunction &RF : RFs) {
-      const uint64_t SectionOffset =
-          std::distance(RFs.begin(), &RF) * sizeof(RuntimeFunction);
+    RFStart = reinterpret_cast<const RuntimeFunction *>(Contents.data());
+    NumRFs = Contents.size() / sizeof(RuntimeFunction);
+    return true;
+  }
+  return false;
+}
 
-      outs() << "Function Table:\n";
+static void printRuntimeFunction(const COFFObjectFile *Obj,
+                                 const RuntimeFunction &RF,
+                                 uint64_t SectionOffset,
+                                 const std::vector<RelocationRef> &Rels) {
+  outs() << "Function Table:\n";
 
-      outs() << "  Start Address: ";
-      printCOFFSymbolAddress(outs(), Rels,
-                             SectionOffset +
-                                 /*offsetof(RuntimeFunction, StartAddress)*/ 0,
-                             RF.StartAddress);
-      outs() << "\n";
+  outs() << "  Start Address: ";
+  printCOFFSymbolAddress(outs(), Rels,
+                         SectionOffset +
+                             /*offsetof(RuntimeFunction, StartAddress)*/ 0,
+                         RF.StartAddress);
+  outs() << "\n";
 
-      outs() << "  End Address: ";
-      printCOFFSymbolAddress(outs(), Rels,
-                             SectionOffset +
-                                 /*offsetof(RuntimeFunction, EndAddress)*/ 4,
-                             RF.EndAddress);
-      outs() << "\n";
+  outs() << "  End Address: ";
+  printCOFFSymbolAddress(outs(), Rels,
+                         SectionOffset +
+                             /*offsetof(RuntimeFunction, EndAddress)*/ 4,
+                         RF.EndAddress);
+  outs() << "\n";
 
-      outs() << "  Unwind Info Address: ";
-      printCOFFSymbolAddress(
-          outs(), Rels, SectionOffset +
-                            /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
-          RF.UnwindInfoOffset);
-      outs() << "\n";
+  outs() << "  Unwind Info Address: ";
+  printCOFFSymbolAddress(outs(), Rels,
+                         SectionOffset +
+                             /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
+                         RF.UnwindInfoOffset);
+  outs() << "\n";
 
-      ArrayRef<uint8_t> XContents;
-      uint64_t UnwindInfoOffset = 0;
-      if (error(getSectionContents(Obj, Rels, SectionOffset +
-                              /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
-                                   XContents, UnwindInfoOffset))) continue;
-      if (XContents.empty()) continue;
+  ArrayRef<uint8_t> XContents;
+  uint64_t UnwindInfoOffset = 0;
+  if (error(getSectionContents(
+          Obj, Rels, SectionOffset +
+                         /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
+          XContents, UnwindInfoOffset)))
+    return;
+  if (XContents.empty())
+    return;
 
-      UnwindInfoOffset += RF.UnwindInfoOffset;
-      if (UnwindInfoOffset > XContents.size())
-        continue;
+  UnwindInfoOffset += RF.UnwindInfoOffset;
+  if (UnwindInfoOffset > XContents.size())
+    return;
 
-      const Win64EH::UnwindInfo *UI =
-                            reinterpret_cast<const Win64EH::UnwindInfo *>
-                              (XContents.data() + UnwindInfoOffset);
+  const Win64EH::UnwindInfo *UI = reinterpret_cast<const Win64EH::UnwindInfo *>(
+      XContents.data() + UnwindInfoOffset);
 
-      // The casts to int are required in order to output the value as number.
-      // Without the casts the value would be interpreted as char data (which
-      // results in garbage output).
-      outs() << "  Version: " << static_cast<int>(UI->getVersion()) << "\n";
-      outs() << "  Flags: " << static_cast<int>(UI->getFlags());
-      if (UI->getFlags()) {
-          if (UI->getFlags() & UNW_ExceptionHandler)
-            outs() << " UNW_ExceptionHandler";
-          if (UI->getFlags() & UNW_TerminateHandler)
-            outs() << " UNW_TerminateHandler";
-          if (UI->getFlags() & UNW_ChainInfo)
-            outs() << " UNW_ChainInfo";
-      }
-      outs() << "\n";
-      outs() << "  Size of prolog: "
-             << static_cast<int>(UI->PrologSize) << "\n";
-      outs() << "  Number of Codes: "
-             << static_cast<int>(UI->NumCodes) << "\n";
-      // Maybe this should move to output of UOP_SetFPReg?
-      if (UI->getFrameRegister()) {
-        outs() << "  Frame register: "
-                << getUnwindRegisterName(UI->getFrameRegister())
-                << "\n";
-        outs() << "  Frame offset: "
-                << 16 * UI->getFrameOffset()
-                << "\n";
-      } else {
-        outs() << "  No frame pointer used\n";
-      }
-      if (UI->getFlags() & (UNW_ExceptionHandler | UNW_TerminateHandler)) {
-        // FIXME: Output exception handler data
-      } else if (UI->getFlags() & UNW_ChainInfo) {
-        // FIXME: Output chained unwind info
-      }
+  // The casts to int are required in order to output the value as number.
+  // Without the casts the value would be interpreted as char data (which
+  // results in garbage output).
+  outs() << "  Version: " << static_cast<int>(UI->getVersion()) << "\n";
+  outs() << "  Flags: " << static_cast<int>(UI->getFlags());
+  if (UI->getFlags()) {
+    if (UI->getFlags() & UNW_ExceptionHandler)
+      outs() << " UNW_ExceptionHandler";
+    if (UI->getFlags() & UNW_TerminateHandler)
+      outs() << " UNW_TerminateHandler";
+    if (UI->getFlags() & UNW_ChainInfo)
+      outs() << " UNW_ChainInfo";
+  }
+  outs() << "\n";
+  outs() << "  Size of prolog: " << static_cast<int>(UI->PrologSize) << "\n";
+  outs() << "  Number of Codes: " << static_cast<int>(UI->NumCodes) << "\n";
+  // Maybe this should move to output of UOP_SetFPReg?
+  if (UI->getFrameRegister()) {
+    outs() << "  Frame register: "
+           << getUnwindRegisterName(UI->getFrameRegister()) << "\n";
+    outs() << "  Frame offset: " << 16 * UI->getFrameOffset() << "\n";
+  } else {
+    outs() << "  No frame pointer used\n";
+  }
+  if (UI->getFlags() & (UNW_ExceptionHandler | UNW_TerminateHandler)) {
+    // FIXME: Output exception handler data
+  } else if (UI->getFlags() & UNW_ChainInfo) {
+    // FIXME: Output chained unwind info
+  }
 
-      if (UI->NumCodes)
-        outs() << "  Unwind Codes:\n";
+  if (UI->NumCodes)
+    outs() << "  Unwind Codes:\n";
 
-      printAllUnwindCodes(ArrayRef<UnwindCode>(&UI->UnwindCodes[0],
-                          UI->NumCodes));
+  printAllUnwindCodes(ArrayRef<UnwindCode>(&UI->UnwindCodes[0], UI->NumCodes));
 
-      outs() << "\n\n";
-      outs().flush();
-    }
+  outs() << "\n\n";
+  outs().flush();
+}
+
+void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
+  const coff_file_header *Header;
+  if (error(Obj->getCOFFHeader(Header)))
+    return;
+
+  if (Header->Machine != COFF::IMAGE_FILE_MACHINE_AMD64) {
+    errs() << "Unsupported image machine type "
+              "(currently only AMD64 is supported).\n";
+    return;
+  }
+
+  std::vector<RelocationRef> Rels;
+  const RuntimeFunction *RFStart;
+  int NumRFs;
+  if (!getPDataSection(Obj, Rels, RFStart, NumRFs))
+    return;
+  ArrayRef<RuntimeFunction> RFs(RFStart, NumRFs);
+
+  for (const RuntimeFunction &RF : RFs) {
+    uint64_t SectionOffset =
+        std::distance(RFs.begin(), &RF) * sizeof(RuntimeFunction);
+    printRuntimeFunction(Obj, RF, SectionOffset, Rels);
   }
 }
 
