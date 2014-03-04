@@ -1,4 +1,4 @@
-//===-- llvm/Support/ConstantFolder.h - Constant folding helper -*- C++ -*-===//
+//===- ConstantFolder.h - Constant folding helper ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_CONSTANTFOLDER_H
-#define LLVM_SUPPORT_CONSTANTFOLDER_H
+#ifndef LLVM_IR_CONSTANTFOLDER_H
+#define LLVM_IR_CONSTANTFOLDER_H
 
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/InstrTypes.h"

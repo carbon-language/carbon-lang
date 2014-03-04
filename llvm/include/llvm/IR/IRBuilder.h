@@ -19,13 +19,13 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/ConstantFolder.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/CBindingWrapping.h"
-#include "llvm/Support/ConstantFolder.h"
 
 namespace llvm {
   class MDNode;
