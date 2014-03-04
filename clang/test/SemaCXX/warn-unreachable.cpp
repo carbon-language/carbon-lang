@@ -107,3 +107,26 @@ template <> void funcToSpecialize<int>() {
   dead(); // expected-warning {{will never be executed}}
 }
 
+// Handle 'try' code dominating a dead return.
+enum PR19040_test_return_t
+{ PR19040_TEST_FAILURE };
+namespace PR19040_libtest
+{
+  class A {
+  public:
+    ~A ();
+  };
+}
+PR19040_test_return_t PR19040_fn1 ()
+{
+    try
+    {
+        throw PR19040_libtest::A ();
+    } catch (...)
+    {
+        return PR19040_TEST_FAILURE;
+    }
+    return PR19040_TEST_FAILURE; // expected-warning {{will never be executed}}
+}
+
+

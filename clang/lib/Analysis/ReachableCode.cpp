@@ -263,6 +263,11 @@ static bool bodyEndsWithNoReturn(const CFGBlock *B) {
 }
 
 static bool bodyEndsWithNoReturn(const CFGBlock::AdjacentBlock &AB) {
+  // If the predecessor is a normal CFG edge, then by definition
+  // the predecessor did not end with a 'noreturn'.
+  if (AB.getReachableBlock())
+    return false;
+
   const CFGBlock *Pred = AB.getPossiblyUnreachableBlock();
   assert(!AB.isReachable() && Pred);
   return bodyEndsWithNoReturn(Pred);
