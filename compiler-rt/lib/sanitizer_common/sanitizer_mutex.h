@@ -95,7 +95,7 @@ class RWMutex {
   }
 
   void Lock() {
-    uptr cmp = kUnlocked;
+    u32 cmp = kUnlocked;
     if (atomic_compare_exchange_strong(&state_, &cmp, kWriteLock,
                                        memory_order_acquire))
       return;
@@ -103,20 +103,20 @@ class RWMutex {
   }
 
   void Unlock() {
-    uptr prev = atomic_fetch_sub(&state_, kWriteLock, memory_order_release);
+    u32 prev = atomic_fetch_sub(&state_, kWriteLock, memory_order_release);
     DCHECK_NE(prev & kWriteLock, 0);
     (void)prev;
   }
 
   void ReadLock() {
-    uptr prev = atomic_fetch_add(&state_, kReadLock, memory_order_acquire);
+    u32 prev = atomic_fetch_add(&state_, kReadLock, memory_order_acquire);
     if ((prev & kWriteLock) == 0)
       return;
     ReadLockSlow();
   }
 
   void ReadUnlock() {
-    uptr prev = atomic_fetch_sub(&state_, kReadLock, memory_order_release);
+    u32 prev = atomic_fetch_sub(&state_, kReadLock, memory_order_release);
     DCHECK_EQ(prev & kWriteLock, 0);
     DCHECK_GT(prev & ~kWriteLock, 0);
     (void)prev;
@@ -127,7 +127,7 @@ class RWMutex {
   }
 
  private:
-  atomic_uintptr_t state_;
+  atomic_uint32_t state_;
 
   enum {
     kUnlocked = 0,
@@ -141,7 +141,7 @@ class RWMutex {
         proc_yield(10);
       else
         internal_sched_yield();
-      uptr cmp = atomic_load(&state_, memory_order_relaxed);
+      u32 cmp = atomic_load(&state_, memory_order_relaxed);
       if (cmp == kUnlocked &&
           atomic_compare_exchange_weak(&state_, &cmp, kWriteLock,
                                        memory_order_acquire))
@@ -155,7 +155,7 @@ class RWMutex {
         proc_yield(10);
       else
         internal_sched_yield();
-      uptr  prev = atomic_load(&state_, memory_order_acquire);
+      u32 prev = atomic_load(&state_, memory_order_acquire);
       if ((prev & kWriteLock) == 0)
         return;
     }
