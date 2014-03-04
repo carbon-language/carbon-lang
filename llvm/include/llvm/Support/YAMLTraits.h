@@ -1,4 +1,4 @@
-//===- llvm/Supporrt/YAMLTraits.h -------------------------------*- C++ -*-===//
+//===- llvm/Support/YAMLTraits.h --------------------------------*- C++ -*-===//
 //
 //                             The LLVM Linker
 //
