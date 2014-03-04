@@ -2431,50 +2431,63 @@ INTERCEPTOR(int, pthread_mutex_unlock, void *m) {
 #endif
 
 #if SANITIZER_INTERCEPT_PTHREAD_COND
+INTERCEPTOR(int, pthread_cond_init, void *c, void *a) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_init, c, a);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, c, 1);
+  return REAL(pthread_cond_init)(c, a);
+}
+
 INTERCEPTOR(int, pthread_cond_wait, void *c, void *m) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_wait, c, m);
   COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, pthread_cond_t_sz);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, 1);
   int res = REAL(pthread_cond_wait)(c, m);
   COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m);
   return res;
 }
 
-INTERCEPTOR(int, pthread_cond_init, void *c, void *a) {
+INTERCEPTOR(int, pthread_cond_timedwait, void *c, void *m, void *abstime) {
   void *ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_init, c, a);
-  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, c, pthread_cond_t_sz);
-  return REAL(pthread_cond_init)(c, a);
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_timedwait, c, m, abstime);
+  COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, 1);
+  int res = REAL(pthread_cond_timedwait)(c, m, abstime);
+  COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m);
+  return res;
 }
 
 INTERCEPTOR(int, pthread_cond_signal, void *c) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_signal, c);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, pthread_cond_t_sz);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, 1);
   return REAL(pthread_cond_signal)(c);
 }
 
 INTERCEPTOR(int, pthread_cond_broadcast, void *c) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_broadcast, c);
-  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, pthread_cond_t_sz);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, c, 1);
   return REAL(pthread_cond_broadcast)(c);
 }
 
-#define INIT_PTHREAD_COND_WAIT \
-  INTERCEPT_FUNCTION_VER(pthread_cond_wait, "GLIBC_2.3.2")
-#define INIT_PTHREAD_COND_INIT \
-  INTERCEPT_FUNCTION_VER(pthread_cond_init, "GLIBC_2.3.2")
-#define INIT_PTHREAD_COND_SIGNAL \
-  INTERCEPT_FUNCTION_VER(pthread_cond_signal, "GLIBC_2.3.2")
-#define INIT_PTHREAD_COND_BROADCAST \
-  INTERCEPT_FUNCTION_VER(pthread_cond_broadcast, "GLIBC_2.3.2")
+INTERCEPTOR(int, pthread_cond_destroy, void *c) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_destroy, c);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, c, 1);
+  return REAL(pthread_cond_destroy)(c);
+}
+
+#define INIT_PTHREAD_COND \
+  INTERCEPT_FUNCTION_VER(pthread_cond_init, "GLIBC_2.3.2"); \
+  INTERCEPT_FUNCTION_VER(pthread_cond_signal, "GLIBC_2.3.2"); \
+  INTERCEPT_FUNCTION_VER(pthread_cond_broadcast, "GLIBC_2.3.2"); \
+  INTERCEPT_FUNCTION_VER(pthread_cond_wait, "GLIBC_2.3.2"); \
+  INTERCEPT_FUNCTION_VER(pthread_cond_timedwait, "GLIBC_2.3.2"); \
+  INTERCEPT_FUNCTION_VER(pthread_cond_destroy, "GLIBC_2.3.2")
 #else
-#define INIT_PTHREAD_COND_WAIT
-#define INIT_PTHREAD_COND_INIT
-#define INIT_PTHREAD_COND_SIGNAL
-#define INIT_PTHREAD_COND_BROADCAST
+#define INIT_PTHREAD_COND
 #endif
 
 #if SANITIZER_INTERCEPT_GETMNTENT || SANITIZER_INTERCEPT_GETMNTENT_R
@@ -3385,10 +3398,7 @@ INTERCEPTOR(int, capset, void *hdrp, const void *datap) {
   INIT__EXIT;                              \
   INIT_PTHREAD_MUTEX_LOCK;                 \
   INIT_PTHREAD_MUTEX_UNLOCK;               \
-  INIT_PTHREAD_COND_WAIT;                  \
-  INIT_PTHREAD_COND_INIT;                  \
-  INIT_PTHREAD_COND_SIGNAL;                \
-  INIT_PTHREAD_COND_BROADCAST;             \
+  INIT_PTHREAD_COND;                       \
   INIT_GETMNTENT;                          \
   INIT_GETMNTENT_R;                        \
   INIT_STATFS;                             \

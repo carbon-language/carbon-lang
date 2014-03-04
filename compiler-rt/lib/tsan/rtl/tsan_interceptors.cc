@@ -1095,23 +1095,6 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_unlock, void *m) {
   return res;
 }
 
-TSAN_INTERCEPTOR(int, pthread_cond_destroy, void *c) {
-  SCOPED_TSAN_INTERCEPTOR(pthread_cond_destroy, c);
-  MemoryWrite(thr, pc, (uptr)c, kSizeLog1);
-  int res = REAL(pthread_cond_destroy)(c);
-  return res;
-}
-
-TSAN_INTERCEPTOR(int, pthread_cond_timedwait, void *c, void *m,
-    void *abstime) {
-  SCOPED_TSAN_INTERCEPTOR(pthread_cond_timedwait, c, m, abstime);
-  MutexUnlock(thr, pc, (uptr)m);
-  MemoryRead(thr, pc, (uptr)c, kSizeLog1);
-  int res = REAL(pthread_cond_timedwait)(c, m, abstime);
-  MutexLock(thr, pc, (uptr)m);
-  return res;
-}
-
 TSAN_INTERCEPTOR(int, pthread_barrier_init, void *b, void *a, unsigned count) {
   SCOPED_TSAN_INTERCEPTOR(pthread_barrier_init, b, a, count);
   MemoryWrite(thr, pc, (uptr)b, kSizeLog1);
@@ -2215,9 +2198,6 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(pthread_rwlock_trywrlock);
   TSAN_INTERCEPT(pthread_rwlock_timedwrlock);
   TSAN_INTERCEPT(pthread_rwlock_unlock);
-
-  INTERCEPT_FUNCTION_VER(pthread_cond_destroy, "GLIBC_2.3.2");
-  INTERCEPT_FUNCTION_VER(pthread_cond_timedwait, "GLIBC_2.3.2");
 
   TSAN_INTERCEPT(pthread_barrier_init);
   TSAN_INTERCEPT(pthread_barrier_destroy);
