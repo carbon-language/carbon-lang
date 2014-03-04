@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IR/Use.h"
+#include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
 #include <new>
 
@@ -42,6 +43,10 @@ User *Use::getUser() const {
   const UserRef *ref = reinterpret_cast<const UserRef *>(End);
   return ref->getInt() ? ref->getPointer()
                        : reinterpret_cast<User *>(const_cast<Use *>(End));
+}
+
+unsigned Use::getOperandNo() const {
+  return this - getUser()->op_begin();
 }
 
 // Sets up the waymarking algoritm's tags for a series of Uses. See the

@@ -116,6 +116,9 @@ public:
 
   Use *getNext() const { return Next; }
 
+  /// \brief Return the operand # of this use in its User.
+  unsigned getOperandNo() const;
+
   /// \brief Initializes the waymarking tags on an array of Uses.
   ///
   /// This sets up the array of Uses such that getUser() can find the User from
@@ -208,9 +211,8 @@ public:
   Use &getUse() const { return *U; }
 
   /// \brief Return the operand # of this use in its User.
-  ///
-  /// Defined in User.h
-  unsigned getOperandNo() const;
+  /// FIXME: Replace all callers with a direct call to Use::getOperandNo.
+  unsigned getOperandNo() const { return U->getOperandNo(); }
 };
 
 // Create wrappers for C Binding types (see CBindingWrapping.h).
