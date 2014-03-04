@@ -118,22 +118,23 @@ private:
 
 public:
   APValue() : Kind(Uninitialized) {}
-  explicit APValue(const APSInt &I) : Kind(Uninitialized) {
-    MakeInt(); setInt(I);
+  explicit APValue(APSInt I) : Kind(Uninitialized) {
+    MakeInt(); setInt(std::move(I));
   }
-  explicit APValue(const APFloat &F) : Kind(Uninitialized) {
-    MakeFloat(); setFloat(F);
+  explicit APValue(APFloat F) : Kind(Uninitialized) {
+    MakeFloat(); setFloat(std::move(F));
   }
   explicit APValue(const APValue *E, unsigned N) : Kind(Uninitialized) {
     MakeVector(); setVector(E, N);
   }
-  APValue(const APSInt &R, const APSInt &I) : Kind(Uninitialized) {
-    MakeComplexInt(); setComplexInt(R, I);
+  APValue(APSInt R, APSInt I) : Kind(Uninitialized) {
+    MakeComplexInt(); setComplexInt(std::move(R), std::move(I));
   }
-  APValue(const APFloat &R, const APFloat &I) : Kind(Uninitialized) {
-    MakeComplexFloat(); setComplexFloat(R, I);
+  APValue(APFloat R, APFloat I) : Kind(Uninitialized) {
+    MakeComplexFloat(); setComplexFloat(std::move(R), std::move(I));
   }
   APValue(const APValue &RHS);
+  APValue(APValue &&RHS) : Kind(Uninitialized) { swap(RHS); }
   APValue(LValueBase B, const CharUnits &O, NoLValuePath N, unsigned CallIndex)
       : Kind(Uninitialized) {
     MakeLValue(); setLValue(B, O, N, CallIndex);
@@ -343,13 +344,13 @@ public:
     return ((const AddrLabelDiffData*)(const char*)Data.buffer)->RHSExpr;
   }
 
-  void setInt(const APSInt &I) {
+  void setInt(APSInt I) {
     assert(isInt() && "Invalid accessor");
-    *(APSInt*)(char*)Data.buffer = I;
+    *(APSInt *)(char *)Data.buffer = std::move(I);
   }
-  void setFloat(const APFloat &F) {
+  void setFloat(APFloat F) {
     assert(isFloat() && "Invalid accessor");
-    *(APFloat*)(char*)Data.buffer = F;
+    *(APFloat *)(char *)Data.buffer = std::move(F);
   }
   void setVector(const APValue *E, unsigned N) {
     assert(isVector() && "Invalid accessor");
@@ -358,19 +359,19 @@ public:
     for (unsigned i = 0; i != N; ++i)
       ((Vec*)(char*)Data.buffer)->Elts[i] = E[i];
   }
-  void setComplexInt(const APSInt &R, const APSInt &I) {
+  void setComplexInt(APSInt R, APSInt I) {
     assert(R.getBitWidth() == I.getBitWidth() &&
            "Invalid complex int (type mismatch).");
     assert(isComplexInt() && "Invalid accessor");
-    ((ComplexAPSInt*)(char*)Data.buffer)->Real = R;
-    ((ComplexAPSInt*)(char*)Data.buffer)->Imag = I;
+    ((ComplexAPSInt *)(char *)Data.buffer)->Real = std::move(R);
+    ((ComplexAPSInt *)(char *)Data.buffer)->Imag = std::move(I);
   }
-  void setComplexFloat(const APFloat &R, const APFloat &I) {
+  void setComplexFloat(APFloat R, APFloat I) {
     assert(&R.getSemantics() == &I.getSemantics() &&
            "Invalid complex float (type mismatch).");
     assert(isComplexFloat() && "Invalid accessor");
-    ((ComplexAPFloat*)(char*)Data.buffer)->Real = R;
-    ((ComplexAPFloat*)(char*)Data.buffer)->Imag = I;
+    ((ComplexAPFloat *)(char *)Data.buffer)->Real = std::move(R);
+    ((ComplexAPFloat *)(char *)Data.buffer)->Imag = std::move(I);
   }
   void setLValue(LValueBase B, const CharUnits &O, NoLValuePath,
                  unsigned CallIndex);
