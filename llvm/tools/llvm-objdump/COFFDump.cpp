@@ -414,28 +414,31 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
     ArrayRef<RuntimeFunction> RFs(
                   reinterpret_cast<const RuntimeFunction *>(Contents.data()),
                                   Contents.size() / sizeof(RuntimeFunction));
-    for (const RuntimeFunction *I = RFs.begin(), *E = RFs.end(); I < E; ++I) {
-      const uint64_t SectionOffset = std::distance(RFs.begin(), I)
-                                     * sizeof(RuntimeFunction);
+    for (const RuntimeFunction &RF : RFs) {
+      const uint64_t SectionOffset =
+          std::distance(RFs.begin(), &RF) * sizeof(RuntimeFunction);
 
       outs() << "Function Table:\n";
 
       outs() << "  Start Address: ";
-      printCOFFSymbolAddress(outs(), Rels, SectionOffset +
-                             /*offsetof(RuntimeFunction, StartAddress)*/ 0,
-                             I->StartAddress);
+      printCOFFSymbolAddress(outs(), Rels,
+                             SectionOffset +
+                                 /*offsetof(RuntimeFunction, StartAddress)*/ 0,
+                             RF.StartAddress);
       outs() << "\n";
 
       outs() << "  End Address: ";
-      printCOFFSymbolAddress(outs(), Rels, SectionOffset +
-                             /*offsetof(RuntimeFunction, EndAddress)*/ 4,
-                             I->EndAddress);
+      printCOFFSymbolAddress(outs(), Rels,
+                             SectionOffset +
+                                 /*offsetof(RuntimeFunction, EndAddress)*/ 4,
+                             RF.EndAddress);
       outs() << "\n";
 
       outs() << "  Unwind Info Address: ";
-      printCOFFSymbolAddress(outs(), Rels, SectionOffset +
-                             /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
-                             I->UnwindInfoOffset);
+      printCOFFSymbolAddress(
+          outs(), Rels, SectionOffset +
+                            /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
+          RF.UnwindInfoOffset);
       outs() << "\n";
 
       ArrayRef<uint8_t> XContents;
@@ -445,8 +448,9 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
                                    XContents, UnwindInfoOffset))) continue;
       if (XContents.empty()) continue;
 
-      UnwindInfoOffset += I->UnwindInfoOffset;
-      if (UnwindInfoOffset > XContents.size()) continue;
+      UnwindInfoOffset += RF.UnwindInfoOffset;
+      if (UnwindInfoOffset > XContents.size())
+        continue;
 
       const Win64EH::UnwindInfo *UI =
                             reinterpret_cast<const Win64EH::UnwindInfo *>
