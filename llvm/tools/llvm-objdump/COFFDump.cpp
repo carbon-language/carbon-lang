@@ -460,7 +460,7 @@ static void printRuntimeFunction(const COFFObjectFile *Obj,
   outs() << "Function Table:\n"
          << format("  Start Address: 0x%04x\n", RF.StartAddress)
          << format("  End Address: 0x%04x\n", RF.EndAddress)
-         << format("  Unwind Info Address: : 0x%04x\n\n", RF.UnwindInfoOffset);
+         << format("  Unwind Info Address: 0x%04x\n\n", RF.UnwindInfoOffset);
   uintptr_t addr;
   if (Obj->getRvaPtr(RF.UnwindInfoOffset, addr))
     return;

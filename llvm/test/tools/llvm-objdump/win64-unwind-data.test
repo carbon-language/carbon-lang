@@ -57,7 +57,7 @@ OBJ-NEXT:     0x00: UOP_PushMachFrame w/o error code
 EXE: Function Table:
 EXE:   Start Address: 0x1000
 EXE:   End Address: 0x101b
-EXE:   Unwind Info Address: : 0x2000
+EXE:   Unwind Info Address: 0x2000
 EXE:   Version: 1
 EXE:   Flags: 1 UNW_ExceptionHandler
 EXE:   Size of prolog: 18
@@ -75,7 +75,7 @@ EXE:     0x00: UOP_PushMachFrame w/o error code
 EXE: Function Table:
 EXE:   Start Address: 0x1012
 EXE:   End Address: 0x1012
-EXE:   Unwind Info Address: : 0x201c
+EXE:   Unwind Info Address: 0x201c
 EXE:   Version: 1
 EXE:   Flags: 4 UNW_ChainInfo
 EXE:   Size of prolog: 0
@@ -85,7 +85,7 @@ EXE:   No frame pointer used
 EXE: Function Table:
 EXE:   Start Address: 0x101b
 EXE:   End Address: 0x101c
-EXE:   Unwind Info Address: : 0x202c
+EXE:   Unwind Info Address: 0x202c
 EXE:   Version: 1
 EXE:   Flags: 0
 EXE:   Size of prolog: 0
@@ -95,7 +95,7 @@ EXE:   No frame pointer used
 EXE: Function Table:
 EXE:   Start Address: 0x101c
 EXE:   End Address: 0x1039
-EXE:   Unwind Info Address: : 0x2034
+EXE:   Unwind Info Address: 0x2034
 EXE:   Version: 1
 EXE:   Flags: 0
 EXE:   Size of prolog: 14
