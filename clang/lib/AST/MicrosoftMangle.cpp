@@ -562,6 +562,13 @@ isTemplate(const NamedDecl *ND, const TemplateArgumentList *&TemplateArgs) {
     return Spec->getSpecializedTemplate();
   }
 
+  // Check if we have a variable template.
+  if (const VarTemplateSpecializationDecl *Spec =
+          dyn_cast<VarTemplateSpecializationDecl>(ND)) {
+    TemplateArgs = &Spec->getTemplateArgs();
+    return Spec->getSpecializedTemplate();
+  }
+
   return 0;
 }
 
@@ -585,7 +592,6 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       return;
     }
 
-    // We have a class template.
     // Here comes the tricky thing: if we need to mangle something like
     //   void foo(A::X<Y>, B::X<Y>),
     // the X<Y> part is aliased. However, if you need to mangle
