@@ -1252,6 +1252,16 @@ void LLVMSetVisibility(LLVMValueRef Global, LLVMVisibility Viz) {
     ->setVisibility(static_cast<GlobalValue::VisibilityTypes>(Viz));
 }
 
+LLVMDLLStorageClass LLVMGetDLLStorageClass(LLVMValueRef Global) {
+  return static_cast<LLVMDLLStorageClass>(
+      unwrap<GlobalValue>(Global)->getDLLStorageClass());
+}
+
+void LLVMSetDLLStorageClass(LLVMValueRef Global, LLVMDLLStorageClass Class) {
+  unwrap<GlobalValue>(Global)->setDLLStorageClass(
+      static_cast<GlobalValue::DLLStorageClassTypes>(Class));
+}
+
 /*--.. Operations on global variables, load and store instructions .........--*/
 
 unsigned LLVMGetAlignment(LLVMValueRef V) {

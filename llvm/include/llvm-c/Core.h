@@ -300,6 +300,12 @@ typedef enum {
 } LLVMVisibility;
 
 typedef enum {
+  LLVMDefaultStorageClass   = 0,
+  LLVMDLLImportStorageClass = 1, /**< Function to be imported from DLL. */
+  LLVMDLLExportStorageClass = 2  /**< Function to be accessible from DLL. */
+} LLVMDLLStorageClass;
+
+typedef enum {
   LLVMCCallConv           = 0,
   LLVMFastCallConv        = 8,
   LLVMColdCallConv        = 9,
@@ -1689,6 +1695,8 @@ const char *LLVMGetSection(LLVMValueRef Global);
 void LLVMSetSection(LLVMValueRef Global, const char *Section);
 LLVMVisibility LLVMGetVisibility(LLVMValueRef Global);
 void LLVMSetVisibility(LLVMValueRef Global, LLVMVisibility Viz);
+LLVMDLLStorageClass LLVMGetDLLStorageClass(LLVMValueRef Global);
+void LLVMSetDLLStorageClass(LLVMValueRef Global, LLVMDLLStorageClass Class);
 
 /**
  * @defgroup LLVMCCoreValueWithAlignment Values with alignment
