@@ -190,7 +190,7 @@ JITLoaderGDB::ReadJITDescriptor(bool all_entries)
                 log->Printf(
                     "JITLoaderGDB::%s registering JIT entry at 0x%" PRIx64
                     " (%" PRIu64 " bytes)",
-                    __FUNCTION__, symbolfile_addr, symbolfile_size);
+                    __FUNCTION__, symbolfile_addr, (uint64_t) symbolfile_size);
 
             char jit_name[64];
             snprintf(jit_name, 64, "JIT(0x%" PRIx64 ")", symbolfile_addr);

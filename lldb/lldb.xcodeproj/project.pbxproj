@@ -632,6 +632,11 @@
 		AF25AB27188F685C0030DEC3 /* AppleGetQueuesHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF25AB25188F685C0030DEC3 /* AppleGetQueuesHandler.h */; };
 		AF26703A1852D01E00B6CC36 /* Queue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2670381852D01E00B6CC36 /* Queue.cpp */; };
 		AF26703B1852D01E00B6CC36 /* QueueList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2670391852D01E00B6CC36 /* QueueList.cpp */; };
+		AF2BCA6318C7EFBF005B4526 /* JITLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2BCA6118C7EFBF005B4526 /* JITLoader.cpp */; };
+		AF2BCA6418C7EFBF005B4526 /* JITLoaderList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2BCA6218C7EFBF005B4526 /* JITLoaderList.cpp */; };
+		AF2BCA6C18C7EFDE005B4526 /* JITLoaderGDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2BCA6918C7EFDE005B4526 /* JITLoaderGDB.cpp */; };
+		AF2BCA6D18C7EFDE005B4526 /* JITLoaderGDB.h in Headers */ = {isa = PBXBuildFile; fileRef = AF2BCA6A18C7EFDE005B4526 /* JITLoaderGDB.h */; };
+		AF2BCA6E18C7EFDE005B4526 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = AF2BCA6B18C7EFDE005B4526 /* Makefile */; };
 		AF37E10A17C861F20061E18E /* ProcessRunLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF37E10917C861F20061E18E /* ProcessRunLock.cpp */; };
 		AF45FDE518A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF45FDE318A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp */; };
 		AF45FDE618A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF45FDE418A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h */; };
@@ -1817,6 +1822,13 @@
 		AF25AB25188F685C0030DEC3 /* AppleGetQueuesHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleGetQueuesHandler.h; sourceTree = "<group>"; };
 		AF2670381852D01E00B6CC36 /* Queue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Queue.cpp; path = source/Target/Queue.cpp; sourceTree = "<group>"; };
 		AF2670391852D01E00B6CC36 /* QueueList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = QueueList.cpp; path = source/Target/QueueList.cpp; sourceTree = "<group>"; };
+		AF2BCA6118C7EFBF005B4526 /* JITLoader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = JITLoader.cpp; path = source/Core/JITLoader.cpp; sourceTree = "<group>"; };
+		AF2BCA6218C7EFBF005B4526 /* JITLoaderList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = JITLoaderList.cpp; path = source/Core/JITLoaderList.cpp; sourceTree = "<group>"; };
+		AF2BCA6618C7EFDE005B4526 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		AF2BCA6818C7EFDE005B4526 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		AF2BCA6918C7EFDE005B4526 /* JITLoaderGDB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JITLoaderGDB.cpp; sourceTree = "<group>"; };
+		AF2BCA6A18C7EFDE005B4526 /* JITLoaderGDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JITLoaderGDB.h; sourceTree = "<group>"; };
+		AF2BCA6B18C7EFDE005B4526 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		AF37E10917C861F20061E18E /* ProcessRunLock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessRunLock.cpp; sourceTree = "<group>"; };
 		AF45FDE318A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleGetThreadItemInfoHandler.cpp; sourceTree = "<group>"; };
 		AF45FDE418A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleGetThreadItemInfoHandler.h; sourceTree = "<group>"; };
@@ -2011,6 +2023,7 @@
 				260C897210F57C5600BB2B04 /* Disassembler */,
 				260C897810F57C5600BB2B04 /* DynamicLoader */,
 				26D9FDCA12F785120003F2EE /* Instruction */,
+				AF2BCA6518C7EFDE005B4526 /* JITLoader */,
 				4CCA643A13B40B82003BDF98 /* LanguageRuntime */,
 				260C897E10F57C5600BB2B04 /* ObjectContainer */,
 				260C898210F57C5600BB2B04 /* ObjectFile */,
@@ -2743,6 +2756,8 @@
 				260A63161861008E00FECF8E /* IOHandler.h */,
 				260A63181861009E00FECF8E /* IOHandler.cpp */,
 				26BC7D6510F1B77400F91463 /* IOStreamMacros.h */,
+				AF2BCA6118C7EFBF005B4526 /* JITLoader.cpp */,
+				AF2BCA6218C7EFBF005B4526 /* JITLoaderList.cpp */,
 				26BC7D6610F1B77400F91463 /* Language.h */,
 				26BC7E7D10F1B85900F91463 /* Language.cpp */,
 				26BC7D6710F1B77400F91463 /* Listener.h */,
@@ -3649,6 +3664,26 @@
 			path = MacOSX;
 			sourceTree = "<group>";
 		};
+		AF2BCA6518C7EFDE005B4526 /* JITLoader */ = {
+			isa = PBXGroup;
+			children = (
+				AF2BCA6618C7EFDE005B4526 /* CMakeLists.txt */,
+				AF2BCA6718C7EFDE005B4526 /* GDB */,
+			);
+			path = JITLoader;
+			sourceTree = "<group>";
+		};
+		AF2BCA6718C7EFDE005B4526 /* GDB */ = {
+			isa = PBXGroup;
+			children = (
+				AF2BCA6818C7EFDE005B4526 /* CMakeLists.txt */,
+				AF2BCA6918C7EFDE005B4526 /* JITLoaderGDB.cpp */,
+				AF2BCA6A18C7EFDE005B4526 /* JITLoaderGDB.h */,
+				AF2BCA6B18C7EFDE005B4526 /* Makefile */,
+			);
+			path = GDB;
+			sourceTree = "<group>";
+		};
 		EDC6D49114E5C15C001B75F8 /* launcherXPCService */ = {
 			isa = PBXGroup;
 			children = (
@@ -3745,6 +3780,7 @@
 				26CA97A2172B1FD5005DC71B /* RegisterContextThreadMemory.h in Headers */,
 				26FFC19C14FC072100087D58 /* DYLDRendezvous.h in Headers */,
 				AF1F7B08189C904B0087DB9C /* AppleGetPendingItemsHandler.h in Headers */,
+				AF2BCA6D18C7EFDE005B4526 /* JITLoaderGDB.h in Headers */,
 				26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */,
 				AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */,
 				2694E99E14FC0BB30076DE67 /* PlatformFreeBSD.h in Headers */,
@@ -4338,6 +4374,7 @@
 				2689008713353E2200698AC0 /* ScriptInterpreter.cpp in Sources */,
 				2689008813353E2200698AC0 /* ScriptInterpreterNone.cpp in Sources */,
 				2689008913353E2200698AC0 /* ScriptInterpreterPython.cpp in Sources */,
+				AF2BCA6418C7EFBF005B4526 /* JITLoaderList.cpp in Sources */,
 				260A63191861009E00FECF8E /* IOHandler.cpp in Sources */,
 				2689008D13353E4200698AC0 /* DynamicLoaderMacOSXDYLD.cpp in Sources */,
 				2689008E13353E4200698AC0 /* DynamicLoaderStatic.cpp in Sources */,
@@ -4539,6 +4576,7 @@
 				26A527C114E24F5F00F3A14A /* ProcessMachCore.cpp in Sources */,
 				26A527C314E24F5F00F3A14A /* ThreadMachCore.cpp in Sources */,
 				4C6649A314EEE81000B0316F /* StreamCallback.cpp in Sources */,
+				AF2BCA6E18C7EFDE005B4526 /* Makefile in Sources */,
 				B299580B14F2FA1400050A04 /* DisassemblerLLVMC.cpp in Sources */,
 				26B7564E14F89356008D9CB3 /* PlatformiOSSimulator.cpp in Sources */,
 				26FFC19914FC072100087D58 /* AuxVector.cpp in Sources */,
@@ -4558,11 +4596,13 @@
 				49DCF6FE170E6B4A0092F75E /* IRMemoryMap.cpp in Sources */,
 				260CC64D15D0440D002BF2E0 /* OptionValueEnumeration.cpp in Sources */,
 				260CC64E15D0440D002BF2E0 /* OptionValueFileSpec.cpp in Sources */,
+				AF2BCA6C18C7EFDE005B4526 /* JITLoaderGDB.cpp in Sources */,
 				260CC64F15D0440D002BF2E0 /* OptionValueFileSpecLIst.cpp in Sources */,
 				490A36C0180F0E6F00BA31F8 /* PlatformWindows.cpp in Sources */,
 				260CC65015D0440D002BF2E0 /* OptionValueFormat.cpp in Sources */,
 				260CC65115D0440D002BF2E0 /* OptionValueSInt64.cpp in Sources */,
 				260CC65215D0440D002BF2E0 /* OptionValueString.cpp in Sources */,
+				AF2BCA6318C7EFBF005B4526 /* JITLoader.cpp in Sources */,
 				260CC65315D0440D002BF2E0 /* OptionValueUInt64.cpp in Sources */,
 				260CC65415D0440D002BF2E0 /* OptionValueUUID.cpp in Sources */,
 				94BA8B6D176F8C9B005A91B5 /* Range.cpp in Sources */,
