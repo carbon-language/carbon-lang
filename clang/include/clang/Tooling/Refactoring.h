@@ -83,16 +83,16 @@ public:
 
   /// \brief Creates a Replacement of the range [Start, Start+Length) with
   /// ReplacementText.
-  Replacement(SourceManager &Sources, SourceLocation Start, unsigned Length,
+  Replacement(const SourceManager &Sources, SourceLocation Start, unsigned Length,
               StringRef ReplacementText);
 
   /// \brief Creates a Replacement of the given range with ReplacementText.
-  Replacement(SourceManager &Sources, const CharSourceRange &Range,
+  Replacement(const SourceManager &Sources, const CharSourceRange &Range,
               StringRef ReplacementText);
 
   /// \brief Creates a Replacement of the node with ReplacementText.
   template <typename Node>
-  Replacement(SourceManager &Sources, const Node &NodeToReplace,
+  Replacement(const SourceManager &Sources, const Node &NodeToReplace,
               StringRef ReplacementText);
 
   /// \brief Returns whether this replacement can be applied to a file.
@@ -115,9 +115,10 @@ public:
   std::string toString() const;
 
  private:
-  void setFromSourceLocation(SourceManager &Sources, SourceLocation Start,
+  void setFromSourceLocation(const SourceManager &Sources, SourceLocation Start,
                              unsigned Length, StringRef ReplacementText);
-  void setFromSourceRange(SourceManager &Sources, const CharSourceRange &Range,
+  void setFromSourceRange(const SourceManager &Sources,
+                          const CharSourceRange &Range,
                           StringRef ReplacementText);
 
   std::string FilePath;
@@ -230,8 +231,8 @@ private:
 };
 
 template <typename Node>
-Replacement::Replacement(SourceManager &Sources, const Node &NodeToReplace,
-                         StringRef ReplacementText) {
+Replacement::Replacement(const SourceManager &Sources,
+                         const Node &NodeToReplace, StringRef ReplacementText) {
   const CharSourceRange Range =
       CharSourceRange::getTokenRange(NodeToReplace->getSourceRange());
   setFromSourceRange(Sources, Range, ReplacementText);

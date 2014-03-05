@@ -35,12 +35,13 @@ Replacement::Replacement(StringRef FilePath, unsigned Offset, unsigned Length,
     : FilePath(FilePath), ReplacementRange(Offset, Length),
       ReplacementText(ReplacementText) {}
 
-Replacement::Replacement(SourceManager &Sources, SourceLocation Start,
+Replacement::Replacement(const SourceManager &Sources, SourceLocation Start,
                          unsigned Length, StringRef ReplacementText) {
   setFromSourceLocation(Sources, Start, Length, ReplacementText);
 }
 
-Replacement::Replacement(SourceManager &Sources, const CharSourceRange &Range,
+Replacement::Replacement(const SourceManager &Sources,
+                         const CharSourceRange &Range,
                          StringRef ReplacementText) {
   setFromSourceRange(Sources, Range, ReplacementText);
 }
@@ -99,7 +100,7 @@ bool operator==(const Replacement &LHS, const Replacement &RHS) {
          LHS.getReplacementText() == RHS.getReplacementText();
 }
 
-void Replacement::setFromSourceLocation(SourceManager &Sources,
+void Replacement::setFromSourceLocation(const SourceManager &Sources,
                                         SourceLocation Start, unsigned Length,
                                         StringRef ReplacementText) {
   const std::pair<FileID, unsigned> DecomposedLocation =
@@ -121,7 +122,8 @@ void Replacement::setFromSourceLocation(SourceManager &Sources,
 // FIXME: This should go into the Lexer, but we need to figure out how
 // to handle ranges for refactoring in general first - there is no obvious
 // good way how to integrate this into the Lexer yet.
-static int getRangeSize(SourceManager &Sources, const CharSourceRange &Range) {
+static int getRangeSize(const SourceManager &Sources,
+                        const CharSourceRange &Range) {
   SourceLocation SpellingBegin = Sources.getSpellingLoc(Range.getBegin());
   SourceLocation SpellingEnd = Sources.getSpellingLoc(Range.getEnd());
   std::pair<FileID, unsigned> Start = Sources.getDecomposedLoc(SpellingBegin);
@@ -133,7 +135,7 @@ static int getRangeSize(SourceManager &Sources, const CharSourceRange &Range) {
   return End.second - Start.second;
 }
 
-void Replacement::setFromSourceRange(SourceManager &Sources,
+void Replacement::setFromSourceRange(const SourceManager &Sources,
                                      const CharSourceRange &Range,
                                      StringRef ReplacementText) {
   setFromSourceLocation(Sources, Sources.getSpellingLoc(Range.getBegin()),
