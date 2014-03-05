@@ -74,9 +74,9 @@ else()
   set(COMPILER_RT_TEST_COMPILER ${CMAKE_C_COMPILER})
   set(COMPILER_RT_TEST_COMPILER_ID ${CMAKE_C_COMPILER_ID})
 
-  set(LLVM_CONFIG_PATH "" CACHE PATH "Path to llvm-config binary")
   if (NOT LLVM_CONFIG_PATH)
-    find_program(LLVM_CONFIG_PATH "llvm-config")
+    find_program(LLVM_CONFIG_PATH "llvm-config"
+                 DOC "Path to llvm-config binary")
     if (NOT LLVM_CONFIG_PATH)
       message(FATAL_ERROR "llvm-config not found: specify LLVM_CONFIG_PATH")
     endif()
