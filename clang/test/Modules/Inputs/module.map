@@ -290,3 +290,9 @@ module recursive_visibility_b {
 module recursive_visibility_c {
   header "recursive_visibility_c.h"
 }
+module recursive1 {
+  header "recursive1.h"
+}
+module recursive2 {
+  header "recursive2.h"
+}
