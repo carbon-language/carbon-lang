@@ -816,3 +816,111 @@ namespace dr368 { // dr368: yes
 }
 
 // dr370: na
+
+namespace dr372 { // dr372: no
+  namespace example1 {
+    template<typename T> struct X {
+    protected:
+      typedef T Type; // expected-note 2{{protected}}
+    };
+    template<typename T> struct Y {};
+
+    // FIXME: These two are valid; deriving from T1<T> gives Z1 access to
+    // the protected member T1<T>::Type.
+    template<typename T,
+             template<typename> class T1,
+             template<typename> class T2> struct Z1 :
+      T1<T>,
+      T2<typename T1<T>::Type> {}; // expected-error {{protected}}
+
+    template<typename T,
+             template<typename> class T1,
+             template<typename> class T2> struct Z2 :
+      T2<typename T1<T>::Type>, // expected-error {{protected}}
+      T1<T> {};
+
+    Z1<int, X, Y> z1; // expected-note {{instantiation of}}
+    Z2<int, X, Y> z2; // expected-note {{instantiation of}}
+  }
+
+  namespace example2 {
+    struct X {
+    private:
+      typedef int Type; // expected-note {{private}}
+    };
+    template<typename T> struct A {
+      typename T::Type t; // expected-error {{private}}
+    };
+    A<X> ax; // expected-note {{instantiation of}}
+  }
+
+  namespace example3 {
+    struct A {
+    protected:
+      typedef int N; // expected-note 2{{protected}}
+    };
+
+    template<typename T> struct B {};
+    template<typename U> struct C : U, B<typename U::N> {}; // expected-error {{protected}}
+    template<typename U> struct D : B<typename U::N>, U {}; // expected-error {{protected}}
+
+    C<A> x; // expected-note {{instantiation of}}
+    D<A> y; // expected-note {{instantiation of}}
+  }
+
+  namespace example4 {
+    class A {
+      class B {};
+      friend class X;
+    };
+
+    struct X : A::B {
+      A::B mx;
+      class Y {
+        A::B my;
+      };
+    };
+  }
+}
+
+namespace dr373 { // dr373: no
+  // FIXME: This is valid.
+  namespace X { int dr373; } // expected-note 2{{here}}
+  struct dr373 { // expected-note {{here}}
+    void f() {
+      using namespace dr373::X; // expected-error {{no namespace named 'X' in 'dr373::dr373'}}
+      int k = dr373; // expected-error {{does not refer to a value}}
+
+      namespace Y = dr373::X; // expected-error {{no namespace named 'X' in 'dr373::dr373'}}
+      k = Y::dr373;
+    }
+  };
+}
+
+namespace dr374 { // dr374: yes c++11
+  namespace N {
+    template<typename T> void f();
+    template<typename T> struct A { void f(); };
+  }
+  template<> void N::f<char>() {}
+  template<> void N::A<char>::f() {}
+  template<> struct N::A<int> {};
+#if __cplusplus < 201103L
+  // expected-error@-4 {{extension}} expected-note@-7 {{here}}
+  // expected-error@-4 {{extension}} expected-note@-7 {{here}}
+  // expected-error@-4 {{extension}} expected-note@-8 {{here}}
+#endif
+}
+
+// dr375: dup 345
+// dr376: na
+
+namespace dr377 { // dr377: yes
+  enum E { // expected-error {{enumeration values exceed range of largest integer}}
+    a = -__LONG_LONG_MAX__ - 1, // expected-error 0-1{{extension}}
+    b = 2 * (unsigned long long)__LONG_LONG_MAX__ // expected-error 0-2{{extension}}
+  };
+}
+
+// dr378: dup 276
+// dr379: na

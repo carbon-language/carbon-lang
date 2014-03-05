@@ -12452,7 +12452,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
               << EnumVal.toString(10)
               << EltTy;
           else
-            Diag(IdLoc, diag::warn_enumerator_too_large)
+            Diag(IdLoc, diag::ext_enumerator_increment_too_large)
               << EnumVal.toString(10);
         } else {
           EltTy = T;
@@ -12850,7 +12850,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
         BestWidth = Context.getTargetInfo().getLongLongWidth();
 
         if (NumNegativeBits > BestWidth || NumPositiveBits >= BestWidth)
-          Diag(Enum->getLocation(), diag::warn_enum_too_large);
+          Diag(Enum->getLocation(), diag::ext_enum_too_large);
         BestType = Context.LongLongTy;
       }
     }

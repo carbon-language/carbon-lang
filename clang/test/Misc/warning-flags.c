@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (111):
+CHECK: Warnings without flags (109):
 CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_expected_semi_decl_list
 CHECK-NEXT:   ext_explicit_specialization_storage_class
@@ -69,9 +69,7 @@ CHECK-NEXT:   warn_drv_objc_gc_unsupported
 CHECK-NEXT:   warn_drv_pch_not_first_include
 CHECK-NEXT:   warn_dup_category_def
 CHECK-NEXT:   warn_duplicate_protocol_def
-CHECK-NEXT:   warn_enum_too_large
 CHECK-NEXT:   warn_enum_value_overflow
-CHECK-NEXT:   warn_enumerator_too_large
 CHECK-NEXT:   warn_exception_caught_by_earlier_handler
 CHECK-NEXT:   warn_excess_initializers
 CHECK-NEXT:   warn_excess_initializers_in_char_array_initializer
