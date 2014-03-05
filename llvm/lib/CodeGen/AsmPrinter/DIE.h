@@ -184,7 +184,8 @@ public:
 };
 
 //===--------------------------------------------------------------------===//
-/// DIEValue - A debug information entry value.
+/// DIEValue - A debug information entry value. Some of these roughly correlate
+/// to DWARF attribute classes.
 ///
 class DIEValue {
   virtual void anchor();
