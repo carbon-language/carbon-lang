@@ -344,7 +344,7 @@ namespace {
 
     void tooManyUses() override { Captured = true; }
 
-    bool captured(Use *U) override {
+    bool captured(const Use *U) override {
       CallSite CS(U->getUser());
       if (!CS.getInstruction()) { Captured = true; return true; }
 

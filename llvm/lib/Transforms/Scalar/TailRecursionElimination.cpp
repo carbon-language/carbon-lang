@@ -151,14 +151,14 @@ struct AllocaCaptureTracker : public CaptureTracker {
 
   void tooManyUses() override { Captured = true; }
 
-  bool shouldExplore(Use *U) override {
+  bool shouldExplore(const Use *U) override {
     Value *V = U->getUser();
     if (isa<CallInst>(V) || isa<InvokeInst>(V))
       UsesAlloca.insert(V);
     return true;
   }
 
-  bool captured(Use *U) override {
+  bool captured(const Use *U) override {
     if (isa<ReturnInst>(U->getUser()))
       return false;
     Captured = true;
