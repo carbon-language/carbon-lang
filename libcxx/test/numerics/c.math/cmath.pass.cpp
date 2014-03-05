@@ -190,8 +190,8 @@ void test_fabs()
     static_assert((std::is_same<decltype(std::fabs((unsigned long long)0)), double>::value), "");
     static_assert((std::is_same<decltype(std::fabs((double)0)), double>::value), "");
     static_assert((std::is_same<decltype(std::fabs((long double)0)), long double>::value), "");
-    static_assert((std::is_same<decltype(std::fabsf(0)), float>::value), "");
-    static_assert((std::is_same<decltype(std::fabsl(0)), long double>::value), "");
+    static_assert((std::is_same<decltype(std::fabsf(0.0f)), float>::value), "");
+    static_assert((std::is_same<decltype(std::fabsl(0.0L)), long double>::value), "");
     assert(std::fabs(-1) == 1);
 }
 

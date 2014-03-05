@@ -1208,11 +1208,7 @@ fdim(_A1 __x, _A2 __y) _NOEXCEPT
 
 // fma
 
-inline _LIBCPP_INLINE_VISIBILITY float fmaf(float __x, float __y, float __z) _NOEXCEPT {return (float)((double)__x*__y + __z);}
-#ifndef FP_FAST_FMAF
-#define FP_FAST_FMAF
-#endif
-
+using ::fmaf;
 using ::fma;
 
 inline _LIBCPP_INLINE_VISIBILITY float       fma(float __x, float __y, float __z) _NOEXCEPT                   {return fmaf(__x, __y, __z);}
