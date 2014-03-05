@@ -8,5 +8,8 @@
 // Verify that simply including <altivec.h> does not generate any code
 // (i.e. all inline routines in the header are marked "static")
 
-// CHECK-NOT: .text
-
+// CHECK: .text
+// CHECK-NEXT: .file
+// CHECK-NEXT: {{^$}}
+// CHECK-NEXT: .ident{{.*$}}
+// CHECK-NOT: .
