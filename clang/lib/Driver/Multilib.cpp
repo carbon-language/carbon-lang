@@ -340,9 +340,7 @@ MultilibSet::filterCopy(const MultilibSet::FilterCallback &F,
 
 void MultilibSet::filterInPlace(const MultilibSet::FilterCallback &F,
                                 multilib_list &Ms) {
-  Ms.erase(std::remove_if(Ms.begin(), Ms.end(),
-                          [&F](const Multilib &M) { return F(M); }),
-           Ms.end());
+  Ms.erase(std::remove_if(Ms.begin(), Ms.end(), std::cref(F)), Ms.end());
 }
 
 raw_ostream &clang::driver::operator<<(raw_ostream &OS, const MultilibSet &MS) {
