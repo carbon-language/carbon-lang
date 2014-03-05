@@ -4,7 +4,7 @@
 // to be explicitly implemented in the adopting class.
 __attribute__((objc_protocol_requires_explicit_implementation))
 @protocol Protocol
-- (void) theBestOfTimes; // expected-note 2 {{method 'theBestOfTimes' declared here}}
+- (void) theBestOfTimes; // expected-note {{method 'theBestOfTimes' declared here}}
 @property (readonly) id theWorstOfTimes; // expected-note {{property declared here}}
 @end
 
@@ -16,12 +16,11 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 @property (readonly) id theWorstOfTimes;
 @end
 
-// This class subclasses ClassA (which adopts 'Protocol'),
-// but does not provide the needed implementation.
+// This class subclasses ClassA (which also adopts 'Protocol').
 @interface ClassB : ClassA <Protocol>
 @end
 
-@implementation ClassB // expected-warning {{method 'theBestOfTimes' in protocol 'Protocol' not implemented}} expected-warning {{property 'theWorstOfTimes' requires method 'theWorstOfTimes' to be defined - use @synthesize, @dynamic or provide a method implementation in this class implementation}}
+@implementation ClassB // expected-warning {{property 'theWorstOfTimes' requires method 'theWorstOfTimes' to be defined - use @synthesize, @dynamic or provide a method implementation in this class implementation}}
 @end
 
 @interface ClassB_Good : ClassA <Protocol>
@@ -171,4 +170,39 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 __attribute__((objc_protocol_requires_explicit_implementation))  // expected-error{{attribute 'objc_protocol_requires_explicit_implementation' can only be applied to @protocol definitions, not forward declarations}}
 @protocol NotDefined;
 
+// Another complete hierarchy.
+ __attribute__((objc_protocol_requires_explicit_implementation))
+@protocol Ex2FooBar
+- (void)methodA;
+@end
+
+ __attribute__((objc_protocol_requires_explicit_implementation))
+@protocol Ex2ProtocolA
+- (void)methodB; // expected-note {{method 'methodB' declared here}}
+@end
+
+ __attribute__((objc_protocol_requires_explicit_implementation))
+@protocol Ex2ProtocolB <Ex2ProtocolA>
+- (void)methodA; // expected-note {{method 'methodA' declared here}}
+@end
+
+// NOT required
+@protocol Ex2ProtocolC <Ex2ProtocolA>
+- (void)methodB;
+- (void)methodA;
+@end
+
+@interface Ex2ClassA <Ex2ProtocolC, Ex2FooBar>
+@end
+@implementation Ex2ClassA
+- (void)methodB {}
+- (void)methodA {}
+@end
+
+@interface Ex2ClassB : Ex2ClassA <Ex2ProtocolB>
+@end
+
+@implementation Ex2ClassB // expected-warning {{method 'methodB' in protocol 'Ex2ProtocolA' not implemented}}\
+                          // expected-warning {{method 'methodA' in protocol 'Ex2ProtocolB' not implemented}}
+@end
 
