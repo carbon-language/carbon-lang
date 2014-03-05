@@ -1193,6 +1193,8 @@ bool llvm::canConstantFoldCallTo(const Function *F) {
   case Intrinsic::ctpop:
   case Intrinsic::ctlz:
   case Intrinsic::cttz:
+  case Intrinsic::fma:
+  case Intrinsic::fmuladd:
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::uadd_with_overflow:
   case Intrinsic::ssub_with_overflow:
@@ -1615,5 +1617,30 @@ llvm::ConstantFoldCall(Function *F, ArrayRef<Constant *> Operands,
     }
     return 0;
   }
+
+  if (Operands.size() != 3)
+    return 0;
+
+  if (const ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {
+    if (const ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
+      if (const ConstantFP *Op3 = dyn_cast<ConstantFP>(Operands[2])) {
+        switch (F->getIntrinsicID()) {
+        default: break;
+        case Intrinsic::fma:
+        case Intrinsic::fmuladd: {
+          APFloat V = Op1->getValueAPF();
+          APFloat::opStatus s = V.fusedMultiplyAdd(Op2->getValueAPF(),
+                                                   Op3->getValueAPF(),
+                                                   APFloat::rmNearestTiesToEven);
+          if (s != APFloat::opInvalidOp)
+            return ConstantFP::get(Ty->getContext(), V);
+
+          return 0;
+        }
+        }
+      }
+    }
+  }
+
   return 0;
 }
