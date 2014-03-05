@@ -100,12 +100,17 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   if (Subtarget->useCRBits()) {
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
-    setOperationAction(ISD::SINT_TO_FP, MVT::i1, Promote);
-    AddPromotedToType (ISD::SINT_TO_FP, MVT::i1,
-                       isPPC64 ? MVT::i64 : MVT::i32);
-    setOperationAction(ISD::UINT_TO_FP, MVT::i1, Promote);
-    AddPromotedToType (ISD::UINT_TO_FP, MVT::i1, 
-                       isPPC64 ? MVT::i64 : MVT::i32);
+    if (isPPC64 || Subtarget->hasFPCVT()) {
+      setOperationAction(ISD::SINT_TO_FP, MVT::i1, Promote);
+      AddPromotedToType (ISD::SINT_TO_FP, MVT::i1,
+                         isPPC64 ? MVT::i64 : MVT::i32);
+      setOperationAction(ISD::UINT_TO_FP, MVT::i1, Promote);
+      AddPromotedToType (ISD::UINT_TO_FP, MVT::i1, 
+                         isPPC64 ? MVT::i64 : MVT::i32);
+    } else {
+      setOperationAction(ISD::SINT_TO_FP, MVT::i1, Custom);
+      setOperationAction(ISD::UINT_TO_FP, MVT::i1, Custom);
+    }
 
     // PowerPC does not support direct load / store of condition registers
     setOperationAction(ISD::LOAD, MVT::i1, Custom);
@@ -4971,6 +4976,11 @@ SDValue PPCTargetLowering::LowerINT_TO_FP(SDValue Op,
   // Don't handle ppc_fp128 here; let it be lowered to a libcall.
   if (Op.getValueType() != MVT::f32 && Op.getValueType() != MVT::f64)
     return SDValue();
+
+  if (Op.getOperand(0).getValueType() == MVT::i1)
+    return DAG.getNode(ISD::SELECT, dl, Op.getValueType(), Op.getOperand(0),
+                       DAG.getConstantFP(1.0, Op.getValueType()),
+                       DAG.getConstantFP(0.0, Op.getValueType()));
 
   assert((Op.getOpcode() == ISD::SINT_TO_FP || PPCSubTarget.hasFPCVT()) &&
          "UINT_TO_FP is supported only with FPCVT");
