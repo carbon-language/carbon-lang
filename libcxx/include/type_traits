@@ -91,6 +91,7 @@ namespace std
     template <class T> struct is_empty;
     template <class T> struct is_polymorphic;
     template <class T> struct is_abstract;
+    template <class T> struct is_final; // C++14
 
     template <class T, class... Args> struct is_constructible;
     template <class T>                struct is_default_constructible;
@@ -758,6 +759,13 @@ struct __libcpp_abstract : public integral_constant<bool, sizeof(__is_abstract_i
 template <class _Tp> struct __libcpp_abstract<_Tp, false> : public false_type {};
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_abstract : public __libcpp_abstract<_Tp> {};
+
+// is_final
+
+#if __has_feature(is_final)
+template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY 
+is_final : public integral_constant<bool, __is_final(_Tp)> {};
+#endif
 
 // is_base_of
 
