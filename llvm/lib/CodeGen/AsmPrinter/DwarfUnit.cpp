@@ -231,6 +231,16 @@ void DwarfUnit::addExpr(DIELoc *Die, dwarf::Form Form, const MCExpr *Expr) {
   Die->addValue((dwarf::Attribute)0, Form, Value);
 }
 
+/// addLocationList - Add a Dwarf loclistptr attribute data and value.
+///
+void DwarfUnit::addLocationList(DIE *Die, dwarf::Attribute Attribute,
+                                unsigned Index) {
+  DIEValue *Value = new (DIEValueAllocator) DIELocList(Index);
+  dwarf::Form Form = DD->getDwarfVersion() >= 4 ? dwarf::DW_FORM_sec_offset
+                                                : dwarf::DW_FORM_data4;
+  Die->addValue(Attribute, Form, Value);
+}
+
 /// addLabel - Add a Dwarf label attribute data and value.
 ///
 void DwarfUnit::addLabel(DIE *Die, dwarf::Attribute Attribute, dwarf::Form Form,
@@ -1796,8 +1806,7 @@ DIE *DwarfUnit::constructVariableDIE(DbgVariable &DV, bool isScopeAbstract) {
 
   unsigned Offset = DV.getDotDebugLocOffset();
   if (Offset != ~0U) {
-    addSectionLabel(VariableDie, dwarf::DW_AT_location,
-                    Asm->GetTempSymbol("debug_loc", Offset));
+    addLocationList(VariableDie, dwarf::DW_AT_location, Offset);
     DV.setDIE(VariableDie);
     return VariableDie;
   }

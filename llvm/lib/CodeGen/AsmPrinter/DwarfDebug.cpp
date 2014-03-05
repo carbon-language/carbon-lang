@@ -2032,17 +2032,6 @@ void DwarfDebug::emitDIE(DIE *Die) {
       }
       break;
     }
-    case dwarf::DW_AT_location: {
-      if (DIELabel *L = dyn_cast<DIELabel>(Values[i])) {
-        if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-          Asm->EmitSectionOffset(L->getValue(), DwarfDebugLocSectionSym);
-        else
-          Asm->EmitLabelDifference(L->getValue(), DwarfDebugLocSectionSym, 4);
-      } else {
-        Values[i]->EmitValue(Asm, Form);
-      }
-      break;
-    }
     case dwarf::DW_AT_accessibility: {
       if (Asm->isVerbose()) {
         DIEInteger *V = cast<DIEInteger>(Values[i]);

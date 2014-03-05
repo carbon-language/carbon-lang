@@ -202,7 +202,8 @@ public:
     isEntry,
     isTypeSignature,
     isBlock,
-    isLoc
+    isLoc,
+    isLocList,
   };
 
 protected:
@@ -541,6 +542,37 @@ public:
   virtual void print(raw_ostream &O) const;
 #endif
 };
+
+//===--------------------------------------------------------------------===//
+/// DIELocList - Represents a pointer to a location list in the debug_loc
+/// section.
+//
+class DIELocList : public DIEValue {
+  // Index into the .debug_loc vector.
+  size_t Index;
+
+public:
+  DIELocList(size_t I) : DIEValue(isLocList), Index(I) {}
+
+  /// getValue - Grab the current index out.
+  size_t getValue() const { return Index; }
+
+  /// EmitValue - Emit location data.
+  ///
+  virtual void EmitValue(AsmPrinter *AP, dwarf::Form Form) const;
+
+  /// SizeOf - Determine size of location data in bytes.
+  ///
+  virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const;
+
+  // Implement isa/cast/dyncast.
+  static bool classof(const DIEValue *E) { return E->getType() == isLocList; }
+
+#ifndef NDEBUG
+  virtual void print(raw_ostream &O) const;
+#endif
+};
+
 } // end llvm namespace
 
 #endif

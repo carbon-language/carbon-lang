@@ -524,3 +524,34 @@ void DIEBlock::print(raw_ostream &O) const {
   DIE::print(O, 5);
 }
 #endif
+
+//===----------------------------------------------------------------------===//
+// DIELocList Implementation
+//===----------------------------------------------------------------------===//
+
+unsigned DIELocList::SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
+  if (Form == dwarf::DW_FORM_data4)
+    return 4;
+  if (Form == dwarf::DW_FORM_sec_offset)
+    return 4;
+  return AP->getDataLayout().getPointerSize();
+}
+
+/// EmitValue - Emit label value.
+///
+void DIELocList::EmitValue(AsmPrinter *AP, dwarf::Form Form) const {
+  MCSymbol *Label = AP->GetTempSymbol("debug_loc", Index);
+  MCSymbol *DwarfDebugLocSectionSym = AP->getDwarfDebug()->getDebugLocSym();
+
+  if (AP->MAI->doesDwarfUseRelocationsAcrossSections())
+    AP->EmitSectionOffset(Label, DwarfDebugLocSectionSym);
+  else
+    AP->EmitLabelDifference(Label, DwarfDebugLocSectionSym, 4);
+}
+
+#ifndef NDEBUG
+void DIELocList::print(raw_ostream &O) const {
+  O << "LocList: " << Index;
+
+}
+#endif
