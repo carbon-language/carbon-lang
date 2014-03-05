@@ -86,7 +86,7 @@ int main()
         };
         C c(a, a + sizeof(a)/sizeof(a[0]));
         C *p = &c;
-		c = *p;
+        c = *p;
         assert(c.size() == 4);
         assert(std::is_permutation(c.begin(), c.end(), a));
     }

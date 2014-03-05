@@ -49,5 +49,10 @@ int main()
         assert(l.size() == 0);
         assert(std::distance(l.begin(), l.end()) == 0);
     }
+    {
+        std::list<int> l = {};
+        assert(l.size() == 0);
+        assert(std::distance(l.begin(), l.end()) == 0);
+    }
 #endif
 }

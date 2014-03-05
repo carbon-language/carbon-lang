@@ -65,5 +65,14 @@ int main()
         assert(c.load_factor() == 0);
         assert(c.max_load_factor() == 1);
     }
+    {
+        std::unordered_map<int, int> c = {};
+        assert(c.bucket_count() == 0);
+        assert(c.size() == 0);
+        assert(c.empty());
+        assert(std::distance(c.begin(), c.end()) == 0);
+        assert(c.load_factor() == 0);
+        assert(c.max_load_factor() == 1);
+    }
 #endif
 }

@@ -1208,7 +1208,7 @@ public:
     deque()
         _NOEXCEPT_(is_nothrow_default_constructible<allocator_type>::value)
         {}
-    _LIBCPP_INLINE_VISIBILITY deque(const allocator_type& __a) : __base(__a) {}
+    _LIBCPP_INLINE_VISIBILITY explicit deque(const allocator_type& __a) : __base(__a) {}
     explicit deque(size_type __n);
 #if _LIBCPP_STD_VER > 11
     explicit deque(size_type __n, const _Allocator& __a);

@@ -31,5 +31,11 @@ int main()
         C c;
         assert(c.empty());
     }
+    {
+        typedef int T;
+        typedef std::forward_list<T> C;
+        C c = {};
+        assert(c.empty());
+    }
 #endif
 }
