@@ -41,8 +41,8 @@ namespace llvm {
 class Constant : public User {
   void operator=(const Constant &) LLVM_DELETED_FUNCTION;
   Constant(const Constant &) LLVM_DELETED_FUNCTION;
-  virtual void anchor();
-  
+  void anchor() override;
+
 protected:
   Constant(Type *ty, ValueTy vty, Use *Ops, unsigned NumOps)
     : User(ty, vty, Ops, NumOps) {}

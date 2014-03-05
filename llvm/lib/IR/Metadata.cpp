@@ -78,8 +78,8 @@ public:
   /// the list.
   void setAsFirstOperand(unsigned V) { this->setValPtrInt(V); }
 
-  virtual void deleted();
-  virtual void allUsesReplacedWith(Value *NV);
+  void deleted() override;
+  void allUsesReplacedWith(Value *NV) override;
 };
 } // end namespace llvm.
 

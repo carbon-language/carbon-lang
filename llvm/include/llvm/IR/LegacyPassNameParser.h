@@ -68,7 +68,7 @@ public:
 
   // Implement the PassRegistrationListener callbacks used to populate our map
   //
-  virtual void passRegistered(const PassInfo *P) {
+  void passRegistered(const PassInfo *P) override {
     if (ignorablePass(P) || !Opt) return;
     if (findOption(P->getPassArgument()) != getNumOptions()) {
       errs() << "Two passes with the same argument (-"
@@ -77,11 +77,11 @@ public:
     }
     addLiteralOption(P->getPassArgument(), P, P->getPassName());
   }
-  virtual void passEnumerate(const PassInfo *P) { passRegistered(P); }
+  void passEnumerate(const PassInfo *P) override { passRegistered(P); }
 
   // printOptionInfo - Print out information about this option.  Override the
   // default implementation to sort the table before we print...
-  virtual void printOptionInfo(const cl::Option &O, size_t GlobalWidth) const {
+  void printOptionInfo(const cl::Option &O, size_t GlobalWidth) const override {
     PassNameParser *PNP = const_cast<PassNameParser*>(this);
     array_pod_sort(PNP->Values.begin(), PNP->Values.end(), ValLessThan);
     cl::parser<const PassInfo*>::printOptionInfo(O, GlobalWidth);
@@ -107,7 +107,9 @@ private:
   Filter filter;
 
 public:
-  bool ignorablePassImpl(const PassInfo *P) const { return !filter(*P); }
+  bool ignorablePassImpl(const PassInfo *P) const override {
+    return !filter(*P);
+  }
 };
 
 ///===----------------------------------------------------------------------===//

@@ -127,7 +127,7 @@ public:
     : P(p), V(0), M(&m) {} // When P is run on M
 
   /// print - Emit information about this stack frame to OS.
-  virtual void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const override;
 };
 
 
@@ -414,7 +414,7 @@ public:
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
   bool runOnFunction(Function &F);
-  bool runOnModule(Module &M);
+  bool runOnModule(Module &M) override;
 
   /// cleanup - After running all passes, clean up pass manager cache.
   void cleanup();
@@ -426,7 +426,7 @@ public:
 
   /// doInitialization - Run all of the initializers for the function passes.
   ///
-  bool doInitialization(Module &M);
+  bool doInitialization(Module &M) override;
 
   /// doFinalization - Overrides ModulePass doFinalization for global
   /// finalization tasks
@@ -435,20 +435,20 @@ public:
   
   /// doFinalization - Run all of the finalizers for the function passes.
   ///
-  bool doFinalization(Module &M);
+  bool doFinalization(Module &M) override;
 
-  virtual PMDataManager *getAsPMDataManager() { return this; }
-  virtual Pass *getAsPass() { return this; }
+  PMDataManager *getAsPMDataManager() override { return this; }
+  Pass *getAsPass() override { return this; }
 
   /// Pass Manager itself does not invalidate any analysis info.
-  void getAnalysisUsage(AnalysisUsage &Info) const {
+  void getAnalysisUsage(AnalysisUsage &Info) const override{
     Info.setPreservesAll();
   }
 
   // Print passes managed by this manager
-  void dumpPassStructure(unsigned Offset);
+  void dumpPassStructure(unsigned Offset) override;
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "Function Pass Manager";
   }
 
@@ -458,7 +458,7 @@ public:
     return FP;
   }
 
-  virtual PassManagerType getPassManagerType() const {
+  PassManagerType getPassManagerType() const override {
     return PMT_FunctionPassManager;
   }
 };

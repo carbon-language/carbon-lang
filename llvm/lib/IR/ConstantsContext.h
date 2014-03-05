@@ -32,7 +32,7 @@ struct ConstantTraits;
 /// UnaryConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement unary constant exprs.
 class UnaryConstantExpr : public ConstantExpr {
-  virtual void anchor();
+  void anchor() override;
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
   // allocate space for exactly one operand
@@ -49,7 +49,7 @@ public:
 /// BinaryConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement binary constant exprs.
 class BinaryConstantExpr : public ConstantExpr {
-  virtual void anchor();
+  void anchor() override;
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
   // allocate space for exactly two operands
@@ -70,7 +70,7 @@ public:
 /// SelectConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement select constant exprs.
 class SelectConstantExpr : public ConstantExpr {
-  virtual void anchor();
+  void anchor() override;
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
   // allocate space for exactly three operands
@@ -91,7 +91,7 @@ public:
 /// Constants.cpp, and is used behind the scenes to implement
 /// extractelement constant exprs.
 class ExtractElementConstantExpr : public ConstantExpr {
-  virtual void anchor();
+  void anchor() override;
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
   // allocate space for exactly two operands
@@ -112,7 +112,7 @@ public:
 /// Constants.cpp, and is used behind the scenes to implement
 /// insertelement constant exprs.
 class InsertElementConstantExpr : public ConstantExpr {
-  virtual void anchor();
+  void anchor() override;
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
   // allocate space for exactly three operands
@@ -134,7 +134,7 @@ public:
 /// Constants.cpp, and is used behind the scenes to implement
 /// shufflevector constant exprs.
 class ShuffleVectorConstantExpr : public ConstantExpr {
-  virtual void anchor();
+  void anchor() override;
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
   // allocate space for exactly three operands
@@ -159,7 +159,7 @@ public:
 /// Constants.cpp, and is used behind the scenes to implement
 /// extractvalue constant exprs.
 class ExtractValueConstantExpr : public ConstantExpr {
-  virtual void anchor();
+  void anchor() override;
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
   // allocate space for exactly one operand
@@ -185,7 +185,7 @@ public:
 /// Constants.cpp, and is used behind the scenes to implement
 /// insertvalue constant exprs.
 class InsertValueConstantExpr : public ConstantExpr {
-  virtual void anchor();
+  void anchor() override;
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
   // allocate space for exactly one operand
@@ -212,7 +212,7 @@ public:
 /// GetElementPtrConstantExpr - This class is private to Constants.cpp, and is
 /// used behind the scenes to implement getelementpr constant exprs.
 class GetElementPtrConstantExpr : public ConstantExpr {
-  virtual void anchor();
+  void anchor() override;
   GetElementPtrConstantExpr(Constant *C, ArrayRef<Constant*> IdxList,
                             Type *DestTy);
 public:
@@ -233,7 +233,7 @@ public:
 // behind the scenes to implement ICmp and FCmp constant expressions. This is
 // needed in order to store the predicate value for these instructions.
 class CompareConstantExpr : public ConstantExpr {
-  virtual void anchor();
+  void anchor() override;
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
 public:
   // allocate space for exactly two operands

@@ -109,7 +109,7 @@ public:
 };
 
 class AlignAttributeImpl : public EnumAttributeImpl {
-  virtual void anchor();
+  void anchor() override;
   unsigned Align;
 
 public:

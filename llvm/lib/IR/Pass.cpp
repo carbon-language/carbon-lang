@@ -252,7 +252,7 @@ namespace {
     VectorType &CFGOnlyList;
     GetCFGOnlyPasses(VectorType &L) : CFGOnlyList(L) {}
 
-    void passEnumerate(const PassInfo *P) {
+    void passEnumerate(const PassInfo *P) override {
       if (P->isCFGOnlyPass())
         CFGOnlyList.push_back(P->getTypeInfo());
     }

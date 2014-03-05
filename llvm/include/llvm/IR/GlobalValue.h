@@ -281,7 +281,7 @@ public:
 /// @}
 
   /// Override from Constant class.
-  virtual void destroyConstant();
+  void destroyConstant() override;
 
   /// isDeclaration - Return true if the primary definition of this global 
   /// value is outside of the current translation unit.

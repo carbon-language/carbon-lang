@@ -49,7 +49,7 @@ struct ConvertConstantType;
 /// represents both boolean and integral constants.
 /// @brief Class for constant integers.
 class ConstantInt : public Constant {
-  virtual void anchor();
+  void anchor() override;
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   ConstantInt(const ConstantInt &) LLVM_DELETED_FUNCTION;
   ConstantInt(IntegerType *Ty, const APInt& V);
@@ -231,7 +231,7 @@ public:
 ///
 class ConstantFP : public Constant {
   APFloat Val;
-  virtual void anchor();
+  void anchor() override;
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   ConstantFP(const ConstantFP &) LLVM_DELETED_FUNCTION;
   friend class LLVMContextImpl;
@@ -308,7 +308,7 @@ protected:
 public:
   static ConstantAggregateZero *get(Type *Ty);
 
-  virtual void destroyConstant();
+  void destroyConstant() override;
 
   /// getSequentialElement - If this CAZ has array or vector type, return a zero
   /// with the right element type.
@@ -356,8 +356,8 @@ public:
     return cast<ArrayType>(Value::getType());
   }
 
-  virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
+  void destroyConstant() override;
+  void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {
@@ -414,8 +414,8 @@ public:
     return cast<StructType>(Value::getType());
   }
 
-  virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
+  void destroyConstant() override;
+  void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {
@@ -461,8 +461,8 @@ public:
   /// elements have the same value, return that value. Otherwise return NULL.
   Constant *getSplatValue() const;
 
-  virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
+  void destroyConstant() override;
+  void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {
@@ -497,7 +497,7 @@ public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantPointerNull *get(PointerType *T);
 
-  virtual void destroyConstant();
+  void destroyConstant() override;
 
   /// getType - Specialize the getType() method to always return an PointerType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -624,7 +624,7 @@ public:
   /// host endianness of the data elements.
   StringRef getRawDataValues() const;
 
-  virtual void destroyConstant();
+  void destroyConstant() override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   ///
@@ -645,7 +645,7 @@ private:
 class ConstantDataArray : public ConstantDataSequential {
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   ConstantDataArray(const ConstantDataArray &) LLVM_DELETED_FUNCTION;
-  virtual void anchor();
+  void anchor() override;
   friend class ConstantDataSequential;
   explicit ConstantDataArray(Type *ty, const char *Data)
     : ConstantDataSequential(ty, ConstantDataArrayVal, Data) {}
@@ -697,7 +697,7 @@ public:
 class ConstantDataVector : public ConstantDataSequential {
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   ConstantDataVector(const ConstantDataVector &) LLVM_DELETED_FUNCTION;
-  virtual void anchor();
+  void anchor() override;
   friend class ConstantDataSequential;
   explicit ConstantDataVector(Type *ty, const char *Data)
   : ConstantDataSequential(ty, ConstantDataVectorVal, Data) {}
@@ -769,8 +769,8 @@ public:
   Function *getFunction() const { return (Function*)Op<0>().get(); }
   BasicBlock *getBasicBlock() const { return (BasicBlock*)Op<1>().get(); }
 
-  virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
+  void destroyConstant() override;
+  void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Value *V) {
@@ -1099,8 +1099,8 @@ public:
   /// would make it harder to remove ConstantExprs altogether.
   Instruction *getAsInstruction();
 
-  virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
+  void destroyConstant() override;
+  void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Value *V) {
@@ -1164,7 +1164,7 @@ public:
   /// index.
   UndefValue *getElementValue(unsigned Idx) const;
 
-  virtual void destroyConstant();
+  void destroyConstant() override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {

@@ -62,25 +62,25 @@ public:
   DiagnosticPrinterRawOStream(raw_ostream &Stream) : Stream(Stream) {};
 
   // Simple types.
-  virtual DiagnosticPrinter &operator<<(char C);
-  virtual DiagnosticPrinter &operator<<(unsigned char C);
-  virtual DiagnosticPrinter &operator<<(signed char C);
-  virtual DiagnosticPrinter &operator<<(StringRef Str);
-  virtual DiagnosticPrinter &operator<<(const char *Str);
-  virtual DiagnosticPrinter &operator<<(const std::string &Str);
-  virtual DiagnosticPrinter &operator<<(unsigned long N);
-  virtual DiagnosticPrinter &operator<<(long N);
-  virtual DiagnosticPrinter &operator<<(unsigned long long N);
-  virtual DiagnosticPrinter &operator<<(long long N);
-  virtual DiagnosticPrinter &operator<<(const void *P);
-  virtual DiagnosticPrinter &operator<<(unsigned int N);
-  virtual DiagnosticPrinter &operator<<(int N);
-  virtual DiagnosticPrinter &operator<<(double N);
-  virtual DiagnosticPrinter &operator<<(const Twine &Str);
+  DiagnosticPrinter &operator<<(char C) override;
+  DiagnosticPrinter &operator<<(unsigned char C) override;
+  DiagnosticPrinter &operator<<(signed char C) override;
+  DiagnosticPrinter &operator<<(StringRef Str) override;
+  DiagnosticPrinter &operator<<(const char *Str) override;
+  DiagnosticPrinter &operator<<(const std::string &Str) override;
+  DiagnosticPrinter &operator<<(unsigned long N) override;
+  DiagnosticPrinter &operator<<(long N) override;
+  DiagnosticPrinter &operator<<(unsigned long long N) override;
+  DiagnosticPrinter &operator<<(long long N) override;
+  DiagnosticPrinter &operator<<(const void *P) override;
+  DiagnosticPrinter &operator<<(unsigned int N) override;
+  DiagnosticPrinter &operator<<(int N) override;
+  DiagnosticPrinter &operator<<(double N) override;
+  DiagnosticPrinter &operator<<(const Twine &Str) override;
 
   // IR related types.
-  virtual DiagnosticPrinter &operator<<(const Value &V);
-  virtual DiagnosticPrinter &operator<<(const Module &M);
+  DiagnosticPrinter &operator<<(const Value &V) override;
+  DiagnosticPrinter &operator<<(const Module &M) override;
 };
 } // End namespace llvm
 

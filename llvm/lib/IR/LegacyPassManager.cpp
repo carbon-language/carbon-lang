@@ -164,27 +164,27 @@ public:
 
   /// Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the function, and if so, return true.
-  bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
   /// Pass Manager itself does not invalidate any analysis info.
-  void getAnalysisUsage(AnalysisUsage &Info) const {
+  void getAnalysisUsage(AnalysisUsage &Info) const override {
     Info.setPreservesAll();
   }
 
-  bool doInitialization(Module &M);
+  bool doInitialization(Module &M) override;
   bool doInitialization(Function &F);
-  bool doFinalization(Module &M);
+  bool doFinalization(Module &M) override;
   bool doFinalization(Function &F);
 
-  virtual PMDataManager *getAsPMDataManager() { return this; }
-  virtual Pass *getAsPass() { return this; }
+  PMDataManager *getAsPMDataManager() override { return this; }
+  Pass *getAsPass() override { return this; }
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "BasicBlock Pass Manager";
   }
 
   // Print passes managed by this manager
-  void dumpPassStructure(unsigned Offset) {
+  void dumpPassStructure(unsigned Offset) override {
     dbgs().indent(Offset*2) << "BasicBlockPass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       BasicBlockPass *BP = getContainedPass(Index);
@@ -199,7 +199,7 @@ public:
     return BP;
   }
 
-  virtual PassManagerType getPassManagerType() const {
+  PassManagerType getPassManagerType() const override {
     return PMT_BasicBlockPassManager;
   }
 };
@@ -234,7 +234,8 @@ public:
   }
 
   /// createPrinterPass - Get a function printer pass.
-  Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const {
+  Pass *createPrinterPass(raw_ostream &O,
+                          const std::string &Banner) const override {
     return createPrintFunctionPass(O, Banner);
   }
 
@@ -248,21 +249,21 @@ public:
 
   /// doInitialization - Run all of the initializers for the function passes.
   ///
-  bool doInitialization(Module &M);
+  bool doInitialization(Module &M) override;
 
   /// doFinalization - Run all of the finalizers for the function passes.
   ///
-  bool doFinalization(Module &M);
+  bool doFinalization(Module &M) override;
 
 
-  virtual PMDataManager *getAsPMDataManager() { return this; }
-  virtual Pass *getAsPass() { return this; }
-  virtual PassManagerType getTopLevelPassManagerType() {
+  PMDataManager *getAsPMDataManager() override { return this; }
+  Pass *getAsPass() override { return this; }
+  PassManagerType getTopLevelPassManagerType() override {
     return PMT_FunctionPassManager;
   }
 
   /// Pass Manager itself does not invalidate any analysis info.
-  void getAnalysisUsage(AnalysisUsage &Info) const {
+  void getAnalysisUsage(AnalysisUsage &Info) const override {
     Info.setPreservesAll();
   }
 
@@ -303,7 +304,8 @@ public:
   }
 
   /// createPrinterPass - Get a module printer pass.
-  Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const {
+  Pass *createPrinterPass(raw_ostream &O,
+                          const std::string &Banner) const override {
     return createPrintModulePass(O, Banner);
   }
 
@@ -323,29 +325,29 @@ public:
   bool doFinalization();
 
   /// Pass Manager itself does not invalidate any analysis info.
-  void getAnalysisUsage(AnalysisUsage &Info) const {
+  void getAnalysisUsage(AnalysisUsage &Info) const override {
     Info.setPreservesAll();
   }
 
   /// Add RequiredPass into list of lower level passes required by pass P.
   /// RequiredPass is run on the fly by Pass Manager when P requests it
   /// through getAnalysis interface.
-  virtual void addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass);
+  void addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) override;
 
   /// Return function pass corresponding to PassInfo PI, that is
   /// required by module pass MP. Instantiate analysis pass, by using
   /// its runOnFunction() for function F.
-  virtual Pass* getOnTheFlyPass(Pass *MP, AnalysisID PI, Function &F);
+  Pass* getOnTheFlyPass(Pass *MP, AnalysisID PI, Function &F) override;
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "Module Pass Manager";
   }
 
-  virtual PMDataManager *getAsPMDataManager() { return this; }
-  virtual Pass *getAsPass() { return this; }
+  PMDataManager *getAsPMDataManager() override { return this; }
+  Pass *getAsPass() override { return this; }
 
   // Print passes managed by this manager
-  void dumpPassStructure(unsigned Offset) {
+  void dumpPassStructure(unsigned Offset) override {
     dbgs().indent(Offset*2) << "ModulePass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       ModulePass *MP = getContainedPass(Index);
@@ -363,7 +365,7 @@ public:
     return static_cast<ModulePass *>(PassVector[N]);
   }
 
-  virtual PassManagerType getPassManagerType() const {
+  PassManagerType getPassManagerType() const override {
     return PMT_ModulePassManager;
   }
 
@@ -403,7 +405,8 @@ public:
   }
 
   /// createPrinterPass - Get a module printer pass.
-  Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const {
+  Pass *createPrinterPass(raw_ostream &O,
+                          const std::string &Banner) const override {
     return createPrintModulePass(O, Banner);
   }
 
@@ -423,13 +426,13 @@ public:
   bool doFinalization();
 
   /// Pass Manager itself does not invalidate any analysis info.
-  void getAnalysisUsage(AnalysisUsage &Info) const {
+  void getAnalysisUsage(AnalysisUsage &Info) const override {
     Info.setPreservesAll();
   }
 
-  virtual PMDataManager *getAsPMDataManager() { return this; }
-  virtual Pass *getAsPass() { return this; }
-  virtual PassManagerType getTopLevelPassManagerType() {
+  PMDataManager *getAsPMDataManager() override { return this; }
+  Pass *getAsPass() override { return this; }
+  PassManagerType getTopLevelPassManagerType() override {
     return PMT_ModulePassManager;
   }
 

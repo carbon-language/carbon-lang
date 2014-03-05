@@ -49,12 +49,12 @@ public:
   PrintModulePassWrapper(raw_ostream &OS, const std::string &Banner)
       : ModulePass(ID), P(OS, Banner) {}
 
-  bool runOnModule(Module &M) {
+  bool runOnModule(Module &M) override {
     P.run(&M);
     return false;
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
   }
 };
@@ -69,12 +69,12 @@ public:
       : FunctionPass(ID), P(OS, Banner) {}
 
   // This pass just prints a banner followed by the function as it's processed.
-  bool runOnFunction(Function &F) {
+  bool runOnFunction(Function &F) override {
     P.run(&F);
     return false;
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
   }
 };
@@ -89,12 +89,12 @@ public:
   PrintBasicBlockPass(raw_ostream &Out, const std::string &Banner)
       : BasicBlockPass(ID), Out(Out), Banner(Banner) {}
 
-  bool runOnBasicBlock(BasicBlock &BB) {
+  bool runOnBasicBlock(BasicBlock &BB) override {
     Out << Banner << BB;
     return false;
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override{
     AU.setPreservesAll();
   }
 };

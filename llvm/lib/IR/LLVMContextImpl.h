@@ -225,9 +225,9 @@ public:
   MDNode *get() const {
     return cast_or_null<MDNode>(getValPtr());
   }
-  
-  virtual void deleted();
-  virtual void allUsesReplacedWith(Value *VNew);
+
+  void deleted() override;
+  void allUsesReplacedWith(Value *VNew) override;
 };
   
 class LLVMContextImpl {

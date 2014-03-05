@@ -2403,21 +2403,21 @@ struct VerifierLegacyPass : public FunctionPass {
     initializeVerifierLegacyPassPass(*PassRegistry::getPassRegistry());
   }
 
-  bool runOnFunction(Function &F) {
+  bool runOnFunction(Function &F) override {
     if (!V.verify(F) && FatalErrors)
       report_fatal_error("Broken function found, compilation aborted!");
 
     return false;
   }
 
-  bool doFinalization(Module &M) {
+  bool doFinalization(Module &M) override {
     if (!V.verify(M) && FatalErrors)
       report_fatal_error("Broken module found, compilation aborted!");
 
     return false;
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
   }
 };

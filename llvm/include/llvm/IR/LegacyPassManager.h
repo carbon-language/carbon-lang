@@ -55,7 +55,7 @@ public:
   /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
   /// will be destroyed as well, so there is no need to delete the pass.  This
   /// implies that all passes MUST be allocated with 'new'.
-  void add(Pass *P);
+  void add(Pass *P) override;
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
@@ -80,7 +80,7 @@ public:
   /// PassManager_X is destroyed, the pass will be destroyed as well, so
   /// there is no need to delete the pass.
   /// This implies that all passes MUST be allocated with 'new'.
-  void add(Pass *P);
+  void add(Pass *P) override;
 
   /// run - Execute all of the passes scheduled for execution.  Keep
   /// track of whether any of the passes modifies the function, and if
