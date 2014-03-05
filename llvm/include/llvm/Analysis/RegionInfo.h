@@ -648,7 +648,7 @@ class RegionInfo : public FunctionPass {
   // Calculate - detecte all regions in function and build the region tree.
   void Calculate(Function& F);
 
-  void releaseMemory();
+  void releaseMemory() override;
 
   // updateStatistics - Update statistic about created regions.
   void updateStatistics(Region *R);
@@ -665,10 +665,10 @@ public:
 
   /// @name FunctionPass interface
   //@{
-  virtual bool runOnFunction(Function &F);
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-  virtual void print(raw_ostream &OS, const Module *) const;
-  virtual void verifyAnalysis() const;
+  bool runOnFunction(Function &F) override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  void print(raw_ostream &OS, const Module *) const override;
+  void verifyAnalysis() const override;
   //@}
 
   /// @brief Get the smallest region that contains a BasicBlock.

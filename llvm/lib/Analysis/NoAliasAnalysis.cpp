@@ -30,49 +30,47 @@ namespace {
       initializeNoAAPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    }
+    void getAnalysisUsage(AnalysisUsage &AU) const override {}
 
-    virtual void initializePass() {
+    void initializePass() override {
       // Note: NoAA does not call InitializeAliasAnalysis because it's
       // special and does not support chaining.
       DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
       DL = DLP ? &DLP->getDataLayout() : 0;
     }
 
-    virtual AliasResult alias(const Location &LocA, const Location &LocB) {
+    AliasResult alias(const Location &LocA, const Location &LocB) override {
       return MayAlias;
     }
 
-    virtual ModRefBehavior getModRefBehavior(ImmutableCallSite CS) {
+    ModRefBehavior getModRefBehavior(ImmutableCallSite CS) override {
       return UnknownModRefBehavior;
     }
-    virtual ModRefBehavior getModRefBehavior(const Function *F) {
+    ModRefBehavior getModRefBehavior(const Function *F) override {
       return UnknownModRefBehavior;
     }
 
-    virtual bool pointsToConstantMemory(const Location &Loc,
-                                        bool OrLocal) {
+    bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override {
       return false;
     }
-    virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
-                                       const Location &Loc) {
+    ModRefResult getModRefInfo(ImmutableCallSite CS,
+                               const Location &Loc) override {
       return ModRef;
     }
-    virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                                       ImmutableCallSite CS2) {
+    ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                               ImmutableCallSite CS2) override {
       return ModRef;
     }
 
-    virtual void deleteValue(Value *V) {}
-    virtual void copyValue(Value *From, Value *To) {}
-    virtual void addEscapingUse(Use &U) {}
-    
+    void deleteValue(Value *V) override {}
+    void copyValue(Value *From, Value *To) override {}
+    void addEscapingUse(Use &U) override {}
+
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
     /// specified pass info.
-    virtual void *getAdjustedAnalysisPointer(const void *ID) {
+    void *getAdjustedAnalysisPointer(const void *ID) override {
       if (ID == &AliasAnalysis::ID)
         return (AliasAnalysis*)this;
       return this;

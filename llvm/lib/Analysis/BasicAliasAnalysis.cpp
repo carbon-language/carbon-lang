@@ -444,17 +444,16 @@ namespace {
       initializeBasicAliasAnalysisPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual void initializePass() {
+    void initializePass() override {
       InitializeAliasAnalysis(this);
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<TargetLibraryInfo>();
     }
 
-    virtual AliasResult alias(const Location &LocA,
-                              const Location &LocB) {
+    AliasResult alias(const Location &LocA, const Location &LocB) override {
       assert(AliasCache.empty() && "AliasCache must be cleared after use!");
       assert(notDifferentParent(LocA.Ptr, LocB.Ptr) &&
              "BasicAliasAnalysis doesn't support interprocedural queries.");
@@ -469,32 +468,32 @@ namespace {
       return Alias;
     }
 
-    virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
-                                       const Location &Loc);
+    ModRefResult getModRefInfo(ImmutableCallSite CS,
+                               const Location &Loc) override;
 
-    virtual ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                                       ImmutableCallSite CS2) {
+    ModRefResult getModRefInfo(ImmutableCallSite CS1,
+                               ImmutableCallSite CS2) override {
       // The AliasAnalysis base class has some smarts, lets use them.
       return AliasAnalysis::getModRefInfo(CS1, CS2);
     }
 
     /// pointsToConstantMemory - Chase pointers until we find a (constant
     /// global) or not.
-    virtual bool pointsToConstantMemory(const Location &Loc, bool OrLocal);
+    bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override;
 
     /// getModRefBehavior - Return the behavior when calling the given
     /// call site.
-    virtual ModRefBehavior getModRefBehavior(ImmutableCallSite CS);
+    ModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
 
     /// getModRefBehavior - Return the behavior when calling the given function.
     /// For use when the call site is not known.
-    virtual ModRefBehavior getModRefBehavior(const Function *F);
+    ModRefBehavior getModRefBehavior(const Function *F) override;
 
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
     /// specified pass info.
-    virtual void *getAdjustedAnalysisPointer(const void *ID) {
+    void *getAdjustedAnalysisPointer(const void *ID) override {
       if (ID == &AliasAnalysis::ID)
         return (AliasAnalysis*)this;
       return this;

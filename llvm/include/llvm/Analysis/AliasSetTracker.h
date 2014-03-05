@@ -282,8 +282,8 @@ class AliasSetTracker {
   /// notified whenever a Value is deleted.
   class ASTCallbackVH : public CallbackVH {
     AliasSetTracker *AST;
-    virtual void deleted();
-    virtual void allUsesReplacedWith(Value *);
+    void deleted() override;
+    void allUsesReplacedWith(Value *) override;
   public:
     ASTCallbackVH(Value *V, AliasSetTracker *AST = 0);
     ASTCallbackVH &operator=(Value *V);

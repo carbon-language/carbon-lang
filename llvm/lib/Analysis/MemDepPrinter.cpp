@@ -44,17 +44,17 @@ namespace {
       initializeMemDepPrinterPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnFunction(Function &F);
+    bool runOnFunction(Function &F) override;
 
-    void print(raw_ostream &OS, const Module * = 0) const;
+    void print(raw_ostream &OS, const Module * = 0) const override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequiredTransitive<AliasAnalysis>();
       AU.addRequiredTransitive<MemoryDependenceAnalysis>();
       AU.setPreservesAll();
     }
 
-    virtual void releaseMemory() {
+    void releaseMemory() override {
       Deps.clear();
       F = 0;
     }

@@ -49,7 +49,7 @@ public:
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
-  bool runOnModule(Module &M);
+  bool runOnModule(Module &M) override;
 
   using ModulePass::doInitialization;
   using ModulePass::doFinalization;
@@ -58,21 +58,21 @@ public:
   bool doFinalization(CallGraph &CG);
 
   /// Pass Manager itself does not invalidate any analysis info.
-  void getAnalysisUsage(AnalysisUsage &Info) const {
+  void getAnalysisUsage(AnalysisUsage &Info) const override {
     // CGPassManager walks SCC and it needs CallGraph.
     Info.addRequired<CallGraphWrapperPass>();
     Info.setPreservesAll();
   }
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "CallGraph Pass Manager";
   }
 
-  virtual PMDataManager *getAsPMDataManager() { return this; }
-  virtual Pass *getAsPass() { return this; }
+  PMDataManager *getAsPMDataManager() override { return this; }
+  Pass *getAsPass() override { return this; }
 
   // Print passes managed by this manager
-  void dumpPassStructure(unsigned Offset) {
+  void dumpPassStructure(unsigned Offset) override {
     errs().indent(Offset*2) << "Call Graph SCC Pass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       Pass *P = getContainedPass(Index);
@@ -86,7 +86,7 @@ public:
     return static_cast<Pass *>(PassVector[N]);
   }
 
-  virtual PassManagerType getPassManagerType() const { 
+  PassManagerType getPassManagerType() const override {
     return PMT_CallGraphPassManager; 
   }
   
@@ -590,12 +590,12 @@ namespace {
     static char ID;
     PrintCallGraphPass(const std::string &B, raw_ostream &o)
       : CallGraphSCCPass(ID), Banner(B), Out(o) {}
-    
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
     }
-    
-    bool runOnSCC(CallGraphSCC &SCC) {
+
+    bool runOnSCC(CallGraphSCC &SCC) override {
       Out << Banner;
       for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I)
         (*I)->getFunction()->print(Out);

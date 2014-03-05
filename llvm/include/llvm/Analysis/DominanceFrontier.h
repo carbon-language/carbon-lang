@@ -51,7 +51,7 @@ public:
   ///
   bool isPostDominator() const { return IsPostDominators; }
 
-  virtual void releaseMemory() { Frontiers.clear(); }
+  void releaseMemory() override { Frontiers.clear(); }
 
   // Accessor interface:
   typedef DomSetMapType::iterator iterator;
@@ -142,7 +142,7 @@ public:
 
   /// print - Convert to human readable form
   ///
-  virtual void print(raw_ostream &OS, const Module* = 0) const;
+  void print(raw_ostream &OS, const Module* = 0) const override;
 
   /// dump - Dump the dominance frontier to dbgs().
   void dump() const;
@@ -167,7 +167,7 @@ public:
     return Roots[0];
   }
 
-  virtual bool runOnFunction(Function &) {
+  bool runOnFunction(Function &) override {
     Frontiers.clear();
     DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     Roots = DT.getRoots();
@@ -176,7 +176,7 @@ public:
     return false;
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
     AU.addRequired<DominatorTreeWrapperPass>();
   }

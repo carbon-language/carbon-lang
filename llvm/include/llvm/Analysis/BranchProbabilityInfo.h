@@ -45,9 +45,9 @@ public:
     initializeBranchProbabilityInfoPass(*PassRegistry::getPassRegistry());
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const;
-  bool runOnFunction(Function &F);
-  void print(raw_ostream &OS, const Module *M = 0) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnFunction(Function &F) override;
+  void print(raw_ostream &OS, const Module *M = 0) const override;
 
   /// \brief Get an edge's probability, relative to other out-edges of the Src.
   ///

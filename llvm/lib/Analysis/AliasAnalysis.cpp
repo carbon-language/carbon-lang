@@ -370,9 +370,9 @@ namespace {
     CapturesBefore(const Instruction *I, DominatorTree *DT)
       : BeforeHere(I), DT(DT), Captured(false) {}
 
-    void tooManyUses() { Captured = true; }
+    void tooManyUses() override { Captured = true; }
 
-    bool shouldExplore(Use *U) {
+    bool shouldExplore(Use *U) override {
       Instruction *I = cast<Instruction>(U->getUser());
       BasicBlock *BB = I->getParent();
       // We explore this usage only if the usage can reach "BeforeHere".
@@ -388,7 +388,7 @@ namespace {
       return true;
     }
 
-    bool captured(Use *U) {
+    bool captured(Use *U) override {
       Instruction *I = cast<Instruction>(U->getUser());
       BasicBlock *BB = I->getParent();
       // Same logic as in shouldExplore.

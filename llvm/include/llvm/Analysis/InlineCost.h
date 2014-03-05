@@ -108,8 +108,8 @@ public:
   ~InlineCostAnalysis();
 
   // Pass interface implementation.
-  void getAnalysisUsage(AnalysisUsage &AU) const;
-  bool runOnSCC(CallGraphSCC &SCC);
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnSCC(CallGraphSCC &SCC) override;
 
   /// \brief Get an InlineCost object representing the cost of inlining this
   /// callsite.

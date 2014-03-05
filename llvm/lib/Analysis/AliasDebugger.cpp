@@ -43,7 +43,7 @@ namespace {
       initializeAliasDebuggerPass(*PassRegistry::getPassRegistry());
     }
 
-    bool runOnModule(Module &M) {
+    bool runOnModule(Module &M) override {
       InitializeAliasAnalysis(this);                 // set up super class
 
       for(Module::global_iterator I = M.global_begin(),
@@ -76,7 +76,7 @@ namespace {
       return false;
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AliasAnalysis::getAnalysisUsage(AU);
       AU.setPreservesAll();                         // Does not transform code
     }
@@ -85,7 +85,7 @@ namespace {
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
     /// specified pass info.
-    virtual void *getAdjustedAnalysisPointer(AnalysisID PI) {
+    void *getAdjustedAnalysisPointer(AnalysisID PI) override {
       if (PI == &AliasAnalysis::ID)
         return (AliasAnalysis*)this;
       return this;
@@ -94,7 +94,7 @@ namespace {
     //------------------------------------------------
     // Implement the AliasAnalysis API
     //
-    AliasResult alias(const Location &LocA, const Location &LocB) {
+    AliasResult alias(const Location &LocA, const Location &LocB) override {
       assert(Vals.find(LocA.Ptr) != Vals.end() &&
              "Never seen value in AA before");
       assert(Vals.find(LocB.Ptr) != Vals.end() &&
@@ -103,26 +103,26 @@ namespace {
     }
 
     ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const Location &Loc) {
+                               const Location &Loc) override {
       assert(Vals.find(Loc.Ptr) != Vals.end() && "Never seen value in AA before");
       return AliasAnalysis::getModRefInfo(CS, Loc);
     }
 
     ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                               ImmutableCallSite CS2) {
+                               ImmutableCallSite CS2) override {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
-    
-    bool pointsToConstantMemory(const Location &Loc, bool OrLocal) {
+
+    bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override {
       assert(Vals.find(Loc.Ptr) != Vals.end() && "Never seen value in AA before");
       return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
     }
 
-    virtual void deleteValue(Value *V) {
+    void deleteValue(Value *V) override {
       assert(Vals.find(V) != Vals.end() && "Never seen value in AA before");
       AliasAnalysis::deleteValue(V);
     }
-    virtual void copyValue(Value *From, Value *To) {
+    void copyValue(Value *From, Value *To) override {
       Vals.insert(To);
       AliasAnalysis::copyValue(From, To);
     }

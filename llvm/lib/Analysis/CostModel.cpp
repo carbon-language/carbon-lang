@@ -53,9 +53,9 @@ namespace {
     unsigned getInstructionCost(const Instruction *I) const;
 
   private:
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual bool runOnFunction(Function &F);
-    virtual void print(raw_ostream &OS, const Module*) const;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
+    bool runOnFunction(Function &F) override;
+    void print(raw_ostream &OS, const Module*) const override;
 
     /// The function that we analyze.
     Function *F;

@@ -74,13 +74,13 @@ namespace {
       }
     }
 
-    bool runOnModule(Module &M) {
+    bool runOnModule(Module &M) override {
       this->M = &M;
       InitializeAliasAnalysis(this);
       return false;
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AliasAnalysis::getAnalysisUsage(AU);
       AU.addRequired<AliasAnalysis>();
       AU.setPreservesAll();
@@ -90,25 +90,25 @@ namespace {
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
     /// specified pass info.
-    virtual void *getAdjustedAnalysisPointer(AnalysisID PI) {
+    void *getAdjustedAnalysisPointer(AnalysisID PI) override {
       if (PI == &AliasAnalysis::ID)
         return (AliasAnalysis*)this;
       return this;
     }
     
     // FIXME: We could count these too...
-    bool pointsToConstantMemory(const Location &Loc, bool OrLocal) {
+    bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override {
       return getAnalysis<AliasAnalysis>().pointsToConstantMemory(Loc, OrLocal);
     }
 
     // Forwarding functions: just delegate to a real AA implementation, counting
     // the number of responses...
-    AliasResult alias(const Location &LocA, const Location &LocB);
+    AliasResult alias(const Location &LocA, const Location &LocB) override;
 
     ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const Location &Loc);
+                               const Location &Loc) override;
     ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                               ImmutableCallSite CS2) {
+                               ImmutableCallSite CS2) override {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
   };

@@ -38,17 +38,17 @@ namespace llvm {
     ~LibCallAliasAnalysis();
     
     ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const Location &Loc);
-    
+                               const Location &Loc) override;
+ 
     ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                               ImmutableCallSite CS2) {
+                               ImmutableCallSite CS2) override {
       // TODO: Could compare two direct calls against each other if we cared to.
       return AliasAnalysis::getModRefInfo(CS1, CS2);
     }
-    
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    
-    virtual bool runOnFunction(Function &F) {
+
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
+
+    bool runOnFunction(Function &F) override {
       InitializeAliasAnalysis(this);                 // set up super class
       return false;
     }
@@ -57,7 +57,7 @@ namespace llvm {
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
     /// specified pass info.
-    virtual void *getAdjustedAnalysisPointer(const void *PI) {
+    void *getAdjustedAnalysisPointer(const void *PI) override {
       if (PI == &AliasAnalysis::ID)
         return (AliasAnalysis*)this;
       return this;

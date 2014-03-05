@@ -627,12 +627,12 @@ namespace {
       initializeAliasSetPrinterPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
       AU.addRequired<AliasAnalysis>();
     }
 
-    virtual bool runOnFunction(Function &F) {
+    bool runOnFunction(Function &F) override {
       Tracker = new AliasSetTracker(getAnalysis<AliasAnalysis>());
 
       for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)

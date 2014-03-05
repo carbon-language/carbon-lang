@@ -33,11 +33,11 @@ public:
   PrintLoopPass(const std::string &B, raw_ostream &o)
       : LoopPass(ID), Banner(B), Out(o) {}
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
   }
 
-  bool runOnLoop(Loop *L, LPPassManager &) {
+  bool runOnLoop(Loop *L, LPPassManager &) override {
     Out << Banner;
     for (Loop::block_iterator b = L->block_begin(), be = L->block_end();
          b != be;

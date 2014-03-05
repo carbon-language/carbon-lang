@@ -35,9 +35,9 @@ namespace {
     explicit SimpleCaptureTracker(bool ReturnCaptures)
       : ReturnCaptures(ReturnCaptures), Captured(false) {}
 
-    void tooManyUses() { Captured = true; }
+    void tooManyUses() override { Captured = true; }
 
-    bool captured(Use *U) {
+    bool captured(Use *U) override {
       if (isa<ReturnInst>(U->getUser()) && !ReturnCaptures)
         return false;
 

@@ -207,8 +207,8 @@ namespace llvm {
     /// notified whenever a Value is deleted.
     class SCEVCallbackVH : public CallbackVH {
       ScalarEvolution *SE;
-      virtual void deleted();
-      virtual void allUsesReplacedWith(Value *New);
+      void deleted() override;
+      void allUsesReplacedWith(Value *New) override;
     public:
       SCEVCallbackVH(Value *V, ScalarEvolution *SE = 0);
     };
@@ -894,11 +894,11 @@ namespace llvm {
     /// indirect operand.
     bool hasOperand(const SCEV *S, const SCEV *Op) const;
 
-    virtual bool runOnFunction(Function &F);
-    virtual void releaseMemory();
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual void print(raw_ostream &OS, const Module* = 0) const;
-    virtual void verifyAnalysis() const;
+    bool runOnFunction(Function &F) override;
+    void releaseMemory() override;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
+    void print(raw_ostream &OS, const Module* = 0) const override;
+    void verifyAnalysis() const override;
 
   private:
     /// Compute the backedge taken count knowing the interval difference, the

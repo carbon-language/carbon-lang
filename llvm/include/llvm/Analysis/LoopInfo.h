@@ -654,15 +654,15 @@ public:
 
   /// runOnFunction - Calculate the natural loop information.
   ///
-  virtual bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
-  virtual void verifyAnalysis() const;
+  void verifyAnalysis() const override;
 
-  virtual void releaseMemory() { LI.releaseMemory(); }
+  void releaseMemory() override { LI.releaseMemory(); }
 
-  virtual void print(raw_ostream &O, const Module* M = 0) const;
+  void print(raw_ostream &O, const Module* M = 0) const override;
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   /// removeLoop - This removes the specified top-level loop from this loop info
   /// object.  The loop is not deleted, as it will presumably be inserted into

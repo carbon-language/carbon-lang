@@ -281,7 +281,7 @@ template <typename IRUnitT, typename PassT, typename ResultT>
 struct AnalysisResultModel<IRUnitT, PassT, ResultT,
                            false> : AnalysisResultConcept<IRUnitT> {
   AnalysisResultModel(ResultT Result) : Result(std::move(Result)) {}
-  virtual AnalysisResultModel *clone() {
+  AnalysisResultModel *clone() override {
     return new AnalysisResultModel(Result);
   }
 
@@ -290,7 +290,7 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT,
   // FIXME: We should actually use two different concepts for analysis results
   // rather than two different models, and avoid the indirect function call for
   // ones that use the trivial behavior.
-  virtual bool invalidate(IRUnitT, const PreservedAnalyses &PA) {
+  bool invalidate(IRUnitT, const PreservedAnalyses &PA) override {
     return !PA.preserved(PassT::ID());
   }
 

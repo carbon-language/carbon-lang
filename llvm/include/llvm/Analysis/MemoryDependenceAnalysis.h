@@ -332,15 +332,15 @@ namespace llvm {
     static char ID;
 
     /// Pass Implementation stuff.  This doesn't do any analysis eagerly.
-    bool runOnFunction(Function &);
+    bool runOnFunction(Function &) override;
 
     /// Clean up memory in between runs
-    void releaseMemory();
+    void releaseMemory() override;
 
     /// getAnalysisUsage - Does not modify anything.  It uses Value Numbering
     /// and Alias Analysis.
     ///
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
 
     /// getDependency - Return the instruction on which a memory operation
     /// depends.  See the class comment for more details.  It is illegal to call

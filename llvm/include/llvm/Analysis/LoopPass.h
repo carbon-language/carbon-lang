@@ -32,7 +32,8 @@ public:
 
   /// getPrinterPass - Get a pass to print the function corresponding
   /// to a Loop.
-  Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const;
+  Pass *createPrinterPass(raw_ostream &O,
+                          const std::string &Banner) const override;
 
   // runOnLoop - This method should be implemented by the subclass to perform
   // whatever action is necessary for the specified Loop.
@@ -56,14 +57,13 @@ public:
   // LPPassManager passes. In such case, pop LPPassManager from the
   // stack. This will force assignPassManager() to create new
   // LPPassManger as expected.
-  void preparePassManager(PMStack &PMS);
+  void preparePassManager(PMStack &PMS) override;
 
   /// Assign pass manager to manage this pass
-  virtual void assignPassManager(PMStack &PMS,
-                                 PassManagerType PMT);
+  void assignPassManager(PMStack &PMS, PassManagerType PMT) override;
 
   ///  Return what kind of Pass Manager can manage this pass.
-  virtual PassManagerType getPotentialPassManagerType() const {
+  PassManagerType getPotentialPassManagerType() const override {
     return PMT_LoopPassManager;
   }
 
@@ -95,21 +95,21 @@ public:
 
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
-  bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
   /// Pass Manager itself does not invalidate any analysis info.
   // LPPassManager needs LoopInfo.
-  void getAnalysisUsage(AnalysisUsage &Info) const;
+  void getAnalysisUsage(AnalysisUsage &Info) const override;
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "Loop Pass Manager";
   }
 
-  virtual PMDataManager *getAsPMDataManager() { return this; }
-  virtual Pass *getAsPass() { return this; }
+  PMDataManager *getAsPMDataManager() override { return this; }
+  Pass *getAsPass() override { return this; }
 
   /// Print passes managed by this manager
-  void dumpPassStructure(unsigned Offset);
+  void dumpPassStructure(unsigned Offset) override;
 
   LoopPass *getContainedPass(unsigned N) {
     assert(N < PassVector.size() && "Pass number out of range!");
@@ -117,7 +117,7 @@ public:
     return LP;
   }
 
-  virtual PassManagerType getPassManagerType() const {
+  PassManagerType getPassManagerType() const override {
     return PMT_LoopPassManager;
   }
 

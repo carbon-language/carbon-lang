@@ -49,9 +49,9 @@ public:
   Delinearization() : FunctionPass(ID) {
     initializeDelinearizationPass(*PassRegistry::getPassRegistry());
   }
-  virtual bool runOnFunction(Function &F);
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-  virtual void print(raw_ostream &O, const Module *M = 0) const;
+  bool runOnFunction(Function &F) override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  void print(raw_ostream &O, const Module *M = 0) const override;
 };
 
 } // end anonymous namespace

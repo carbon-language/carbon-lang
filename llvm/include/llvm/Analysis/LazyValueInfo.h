@@ -69,10 +69,10 @@ public:
   void eraseBlock(BasicBlock *BB);
   
   // Implementation boilerplate.
-  
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-  virtual void releaseMemory();
-  virtual bool runOnFunction(Function &F);
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  void releaseMemory() override;
+  bool runOnFunction(Function &F) override;
 };
 
 }  // end namespace llvm

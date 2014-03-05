@@ -410,8 +410,8 @@ namespace llvm {
     friend class ScalarEvolution;
 
     // Implement CallbackVH.
-    virtual void deleted();
-    virtual void allUsesReplacedWith(Value *New);
+    void deleted() override;
+    void allUsesReplacedWith(Value *New) override;
 
     /// SE - The parent ScalarEvolution value. This is used to update
     /// the parent's maps when the value associated with a SCEVUnknown

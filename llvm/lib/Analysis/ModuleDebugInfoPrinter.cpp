@@ -33,12 +33,12 @@ namespace {
       initializeModuleDebugInfoPrinterPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
     }
-    virtual void print(raw_ostream &O, const Module *M) const;
+    void print(raw_ostream &O, const Module *M) const override;
   };
 }
 

@@ -43,16 +43,16 @@ namespace {
     /// an analysis interface through multiple inheritance.  If needed, it
     /// should override this to adjust the this pointer as needed for the
     /// specified pass info.
-    virtual void *getAdjustedAnalysisPointer(AnalysisID PI) {
+    void *getAdjustedAnalysisPointer(AnalysisID PI) override {
       if (PI == &AliasAnalysis::ID)
         return (AliasAnalysis*)this;
       return this;
     }
 
   private:
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual bool runOnFunction(Function &F);
-    virtual AliasResult alias(const Location &LocA, const Location &LocB);
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
+    bool runOnFunction(Function &F) override;
+    AliasResult alias(const Location &LocA, const Location &LocB) override;
 
     Value *GetBaseValue(const SCEV *S);
   };

@@ -381,11 +381,11 @@ public:
   // Implementation of the ModulePass interface needed here.
   //
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-  virtual bool runOnModule(Module &M);
-  virtual void releaseMemory();
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnModule(Module &M) override;
+  void releaseMemory() override;
 
-  void print(raw_ostream &o, const Module *) const;
+  void print(raw_ostream &o, const Module *) const override;
   void dump() const;
 };
 

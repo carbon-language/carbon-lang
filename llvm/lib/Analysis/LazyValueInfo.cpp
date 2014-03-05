@@ -302,9 +302,9 @@ namespace {
       
     LVIValueHandle(Value *V, LazyValueInfoCache *P)
       : CallbackVH(V), Parent(P) { }
-      
-    void deleted();
-    void allUsesReplacedWith(Value *V) {
+
+    void deleted() override;
+    void allUsesReplacedWith(Value *V) override {
       deleted();
     }
   };

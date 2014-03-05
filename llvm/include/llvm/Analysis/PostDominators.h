@@ -32,9 +32,9 @@ struct PostDominatorTree : public FunctionPass {
 
   ~PostDominatorTree();
 
-  virtual bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
   }
 
@@ -85,11 +85,11 @@ struct PostDominatorTree : public FunctionPass {
     DT->getDescendants(R, Result);
   }
 
-  virtual void releaseMemory() {
+  void releaseMemory() override {
     DT->releaseMemory();
   }
 
-  virtual void print(raw_ostream &OS, const Module*) const;
+  void print(raw_ostream &OS, const Module*) const override;
 };
 
 FunctionPass* createPostDomTree();

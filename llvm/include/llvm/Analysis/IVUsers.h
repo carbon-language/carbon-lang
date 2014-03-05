@@ -86,7 +86,7 @@ private:
 
   /// Deleted - Implementation of CallbackVH virtual function to
   /// receive notification when the User is deleted.
-  virtual void deleted();
+  void deleted() override;
 };
 
 template<> struct ilist_traits<IVStrideUse>
@@ -129,11 +129,11 @@ class IVUsers : public LoopPass {
   /// we are interested in.
   ilist<IVStrideUse> IVUses;
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
+  bool runOnLoop(Loop *L, LPPassManager &LPM) override;
 
-  virtual void releaseMemory();
+  void releaseMemory() override;
 
 public:
   static char ID; // Pass ID, replacement for typeid
@@ -169,7 +169,7 @@ public:
     return Processed.count(Inst);
   }
 
-  void print(raw_ostream &OS, const Module* = 0) const;
+  void print(raw_ostream &OS, const Module* = 0) const override;
 
   /// dump - This method is used for debugging.
   void dump() const;

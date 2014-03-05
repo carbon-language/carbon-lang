@@ -37,7 +37,8 @@ public:
 
   /// createPrinterPass - Get a pass that prints the Module
   /// corresponding to a CallGraph.
-  Pass *createPrinterPass(raw_ostream &O, const std::string &Banner) const;
+  Pass *createPrinterPass(raw_ostream &O,
+                          const std::string &Banner) const override;
 
   using llvm::Pass::doInitialization;
   using llvm::Pass::doFinalization;
@@ -65,18 +66,17 @@ public:
   }
 
   /// Assign pass manager to manager this pass
-  virtual void assignPassManager(PMStack &PMS,
-                                 PassManagerType PMT);
+  void assignPassManager(PMStack &PMS, PassManagerType PMT) override;
 
   ///  Return what kind of Pass Manager can manage this pass.
-  virtual PassManagerType getPotentialPassManagerType() const {
+  PassManagerType getPotentialPassManagerType() const override {
     return PMT_CallGraphPassManager;
   }
 
   /// getAnalysisUsage - For this class, we declare that we require and preserve
   /// the call graph.  If the derived class implements this method, it should
   /// always explicitly call the implementation here.
-  virtual void getAnalysisUsage(AnalysisUsage &Info) const;
+  void getAnalysisUsage(AnalysisUsage &Info) const override;
 };
 
 /// CallGraphSCC - This is a single SCC that a CallGraphSCCPass is run on. 

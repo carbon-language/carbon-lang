@@ -189,11 +189,11 @@ public:
   PrintRegionPass(const std::string &B, raw_ostream &o)
       : RegionPass(ID), Banner(B), Out(o) {}
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
   }
 
-  virtual bool runOnRegion(Region *R, RGPassManager &RGM) {
+  bool runOnRegion(Region *R, RGPassManager &RGM) override {
     Out << Banner;
     for (const auto &BB : R->blocks())
       BB->print(Out);

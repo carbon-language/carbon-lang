@@ -37,10 +37,10 @@ public:
 
   ~BlockFrequencyInfo();
 
-  void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  bool runOnFunction(Function &F);
-  void print(raw_ostream &O, const Module *M) const;
+  bool runOnFunction(Function &F) override;
+  void print(raw_ostream &O, const Module *M) const override;
   const Function *getFunction() const;
   void view() const;
 

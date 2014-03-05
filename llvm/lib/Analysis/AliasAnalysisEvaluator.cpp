@@ -56,12 +56,12 @@ namespace {
       initializeAAEvalPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<AliasAnalysis>();
       AU.setPreservesAll();
     }
 
-    bool doInitialization(Module &M) {
+    bool doInitialization(Module &M) override {
       NoAlias = MayAlias = PartialAlias = MustAlias = 0;
       NoModRef = Mod = Ref = ModRef = 0;
 
@@ -73,8 +73,8 @@ namespace {
       return false;
     }
 
-    bool runOnFunction(Function &F);
-    bool doFinalization(Module &M);
+    bool runOnFunction(Function &F) override;
+    bool doFinalization(Module &M) override;
   };
 }
 
