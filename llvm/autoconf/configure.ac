@@ -614,7 +614,7 @@ case "$enableval" in
   *) AC_MSG_ERROR([Invalid setting for --enable-cxx1y. Use "yes" or "no"]) ;;
 esac
 
-dnl --enable-fission : check whether or not to use -gsplit-dwarf on the command
+dnl --enable-split-dwarf : check whether or not to use -gsplit-dwarf on the command
 dnl line
 AC_ARG_ENABLE(split-dwarf,
               AS_HELP_STRING([--enable-split-dwarf],
