@@ -114,6 +114,7 @@ if ( CMAKE_SYSTEM_NAME MATCHES "FreeBSD" )
     lldbPluginProcessFreeBSD
     lldbPluginProcessPOSIX
     lldbPluginProcessElfCore
+    lldbPluginJITLoaderGDB
     )
 endif ()
 

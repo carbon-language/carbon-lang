@@ -113,7 +113,8 @@ ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
   USEDLIBS += lldbHostFreeBSD.a \
               lldbPluginProcessPOSIX.a \
               lldbPluginProcessFreeBSD.a \
-              lldbPluginProcessElfCore.a
+              lldbPluginProcessElfCore.a \
+              lldbPluginJITLoaderGDB.a
 endif
 
 include $(LEVEL)/Makefile.common
