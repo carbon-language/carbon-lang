@@ -44,8 +44,7 @@ public:
 /// you can register it with:
 /// \code
 /// class MyModule : public ClangTidyModule {
-///   void
-///   addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+///   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
 ///     CheckFactories.addCheckFactory(
 ///         "myproject-my-check", new ClangTidyCheckFactory<MyTidyCheck>());
 ///   }

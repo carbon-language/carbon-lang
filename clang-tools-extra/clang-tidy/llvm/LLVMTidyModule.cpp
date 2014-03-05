@@ -78,8 +78,7 @@ void IncludeOrderCheck::registerPPCallbacks(CompilerInstance &Compiler) {
 
 class LLVMModule : public ClangTidyModule {
 public:
-  void
-  addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+  void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     CheckFactories.addCheckFactory(
         "llvm-include-order", new ClangTidyCheckFactory<IncludeOrderCheck>());
     CheckFactories.addCheckFactory(

@@ -266,9 +266,7 @@ void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,
   public:
     ActionFactory(ClangTidyASTConsumerFactory *ConsumerFactory)
         : ConsumerFactory(ConsumerFactory) {}
-    FrontendAction *create() override {
-      return new Action(ConsumerFactory);
-    }
+    FrontendAction *create() override { return new Action(ConsumerFactory); }
 
   private:
     class Action : public ASTFrontendAction {
