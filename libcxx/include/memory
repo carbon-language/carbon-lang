@@ -479,6 +479,8 @@ public:
     template<class Y> weak_ptr(shared_ptr<Y> const& r) noexcept;
     weak_ptr(weak_ptr const& r) noexcept;
     template<class Y> weak_ptr(weak_ptr<Y> const& r) noexcept;
+    weak_ptr(weak_ptr&& r) noexcept;                      // C++14
+    template<class Y> weak_ptr(weak_ptr<Y>&& r) noexcept; // C++14
 
     // destructor
     ~weak_ptr();
@@ -487,6 +489,8 @@ public:
     weak_ptr& operator=(weak_ptr const& r) noexcept;
     template<class Y> weak_ptr& operator=(weak_ptr<Y> const& r) noexcept;
     template<class Y> weak_ptr& operator=(shared_ptr<Y> const& r) noexcept;
+    weak_ptr& operator=(weak_ptr&& r) noexcept;                      // C++14
+    template<class Y> weak_ptr& operator=(weak_ptr<Y>&& r) noexcept; // C++14
 
     // modifiers
     void swap(weak_ptr& r) noexcept;

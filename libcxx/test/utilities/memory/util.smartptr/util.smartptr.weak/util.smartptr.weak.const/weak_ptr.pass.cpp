@@ -12,6 +12,7 @@
 // weak_ptr
 
 // weak_ptr(const weak_ptr& r);
+// weak_ptr(weak_ptr &&r)
 
 #include <memory>
 #include <type_traits>
@@ -51,6 +52,12 @@ struct C
 
 int C::count = 0;
 
+template <class T>
+std::weak_ptr<T> source (std::shared_ptr<T> p) { return std::weak_ptr<T>(p); }
+
+template <class T>
+void sink (std::weak_ptr<T> &&) {}
+
 int main()
 {
     {
@@ -87,6 +94,16 @@ int main()
         assert(pA.use_count() == 0);
         assert(B::count == 0);
         assert(A::count == 0);
+    }
+    assert(B::count == 0);
+    assert(A::count == 0);
+
+    {
+        std::shared_ptr<A> ps(new A);
+        std::weak_ptr<A> pA = source(ps);
+        assert(pA.use_count() == 1);
+        assert(A::count == 1);
+        sink(std::move(pA)); // kill off the weak pointer
     }
     assert(B::count == 0);
     assert(A::count == 0);

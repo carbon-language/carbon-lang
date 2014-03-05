@@ -59,4 +59,20 @@ int main()
     }
     assert(B::count == 0);
     assert(A::count == 0);
+
+    {
+        const std::shared_ptr<A> ps(new A);
+        std::weak_ptr<A> pA(ps);
+        {
+            std::weak_ptr<A> pB;
+            pB = std::move(pA);
+            assert(B::count == 1);
+            assert(A::count == 1);
+            assert(pB.use_count() == 1);
+        }
+        assert(B::count == 1);
+        assert(A::count == 1);
+    }
+    assert(B::count == 0);
+    assert(A::count == 0);
 }
