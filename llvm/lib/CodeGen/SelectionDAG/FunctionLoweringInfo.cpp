@@ -118,7 +118,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       // Look for inline asm that clobbers the SP register.
       if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
         ImmutableCallSite CS(I);
-        if (const InlineAsm *IA = dyn_cast<InlineAsm>(CS.getCalledValue())) {
+        if (isa<InlineAsm>(CS.getCalledValue())) {
           unsigned SP = TLI->getStackPointerRegisterToSaveRestore();
           std::vector<TargetLowering::AsmOperandInfo> Ops =
             TLI->ParseConstraints(CS);
