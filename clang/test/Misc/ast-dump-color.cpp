@@ -59,7 +59,7 @@ int TestExpr __attribute__((guarded_by(mu1)));
 //CHECK: {{^}}[[Blue]]|   `-[[RESET]][[YELLOW]]ParagraphComment[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]col:4[[RESET]], [[Yellow]]col:11[[RESET]]>{{$}}
 //CHECK: {{^}}[[Blue]]|     `-[[RESET]][[YELLOW]]TextComment[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]col:4[[RESET]], [[Yellow]]col:11[[RESET]]> Text=" Comment"{{$}}
 //CHECK: {{^}}[[Blue]]|-[[RESET]][[GREEN]]CXXRecordDecl[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]line:18:1[[RESET]], [[Yellow]]line:25:1[[RESET]]> class[[CYAN]] Mutex[[RESET]] definition{{$}}
-//CHECK: {{^}}[[Blue]]| |-[[RESET]][[BLUE]]CapabilityAttr[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]line:18:22[[RESET]]> capability ""{{$}}
+//CHECK: {{^}}[[Blue]]| |-[[RESET]][[BLUE]]CapabilityAttr[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]line:18:22[[RESET]]> capability "mutex"{{$}}
 //CHECK: {{^}}[[Blue]]| |-[[RESET]][[GREEN]]CXXRecordDecl[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]col:1[[RESET]], [[Yellow]]col:33[[RESET]]> class[[CYAN]] Mutex[[RESET]]{{$}}
 //CHECK: {{^}}[[Blue]]| |-[[RESET]][[GREEN]]FieldDecl[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]line:20:3[[RESET]], [[Yellow]]col:7[[RESET]]>[[CYAN]] var1[[RESET]] [[Green]]'int'[[RESET]]{{$}}
 //CHECK: {{^}}[[Blue]]| | `-[[RESET]][[YELLOW]]FullComment[[RESET]][[Yellow]] 0x{{[0-9a-fA-F]*}}[[RESET]] <[[Yellow]]line:19:6[[RESET]], [[Yellow]]col:16[[RESET]]>{{$}}
