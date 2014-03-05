@@ -29,7 +29,7 @@ LEVEL := $(LLDB_LEVEL)/../..
 include $(LEVEL)/Makefile.common
 
 # Set common LLDB build flags.
-CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/include 
+CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/include
 CPP.Flags += -I$(PROJ_OBJ_DIR)/$(LLDB_LEVEL)/include
 CPP.Flags += -I$(LLVM_SRC_ROOT)/tools/clang/include
 CPP.Flags += -I$(LLVM_OBJ_ROOT)/tools/clang/include
