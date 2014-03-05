@@ -2059,6 +2059,38 @@ TEST(MemorySanitizer, fcvt) {
   EXPECT_NOT_POISONED(b);
 }
 
+TEST(MemorySanitizer, memchr) {
+  char x[10];
+  break_optimization(x);
+  EXPECT_POISONED(x[0]);
+  x[2] = '2';
+  void *res;
+  EXPECT_UMR(res = memchr(x, '2', 10));
+  EXPECT_NOT_POISONED(res);
+  x[0] = '0';
+  x[1] = '1';
+  res = memchr(x, '2', 10);
+  EXPECT_EQ(&x[2], res);
+  EXPECT_UMR(res = memchr(x, '3', 10));
+  EXPECT_NOT_POISONED(res);
+}
+
+TEST(MemorySanitizer, memrchr) {
+  char x[10];
+  break_optimization(x);
+  EXPECT_POISONED(x[0]);
+  x[9] = '9';
+  void *res;
+  EXPECT_UMR(res = memrchr(x, '9', 10));
+  EXPECT_NOT_POISONED(res);
+  x[0] = '0';
+  x[1] = '1';
+  res = memrchr(x, '0', 2);
+  EXPECT_EQ(&x[0], res);
+  EXPECT_UMR(res = memrchr(x, '7', 10));
+  EXPECT_NOT_POISONED(res);
+}
+
 TEST(MemorySanitizer, frexp) {
   int x;
   x = *GetPoisoned<int>();

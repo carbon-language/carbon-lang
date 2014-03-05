@@ -163,6 +163,34 @@ INTERCEPTOR(int, strncasecmp, const char *s1, const char *s2, SIZE_T n) {
 #define INIT_STRNCASECMP
 #endif
 
+#if SANITIZER_INTERCEPT_MEMCHR
+INTERCEPTOR(void*, memchr, const void *s, int c, SIZE_T n) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, memchr, s, c, n);
+  void *res = REAL(memchr)(s, c, n);
+  uptr len = res ? (char*)res - (char*)s + 1 : n;
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, s, len);
+  return res;
+}
+
+#define INIT_MEMCHR COMMON_INTERCEPT_FUNCTION(memchr)
+#else
+#define INIT_MEMCHR
+#endif
+
+#if SANITIZER_INTERCEPT_MEMRCHR
+INTERCEPTOR(void*, memrchr, const void *s, int c, SIZE_T n) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, memrchr, s, c, n);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, s, n);
+  return REAL(memrchr)(s, c, n);
+}
+
+#define INIT_MEMRCHR COMMON_INTERCEPT_FUNCTION(memrchr)
+#else
+#define INIT_MEMRCHR
+#endif
+
 #if SANITIZER_INTERCEPT_FREXP
 INTERCEPTOR(double, frexp, double x, int *exp) {
   void *ctx;
@@ -3362,6 +3390,8 @@ INTERCEPTOR(int, capset, void *hdrp, const void *datap) {
   INIT_STRNCMP;                            \
   INIT_STRCASECMP;                         \
   INIT_STRNCASECMP;                        \
+  INIT_MEMCHR;                             \
+  INIT_MEMRCHR;                            \
   INIT_READ;                               \
   INIT_PREAD;                              \
   INIT_PREAD64;                            \
