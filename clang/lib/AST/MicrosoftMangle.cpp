@@ -87,6 +87,7 @@ class MicrosoftMangleContextImpl : public MicrosoftMangleContext {
   typedef std::pair<const DeclContext *, IdentifierInfo *> DiscriminatorKeyTy;
   llvm::DenseMap<DiscriminatorKeyTy, unsigned> Discriminator;
   llvm::DenseMap<const NamedDecl*, unsigned> Uniquifier;
+  llvm::DenseMap<const CXXRecordDecl *, unsigned> LambdaIds;
 
 public:
   MicrosoftMangleContextImpl(ASTContext &Context, DiagnosticsEngine &Diags)
@@ -146,6 +147,16 @@ public:
       discriminator = ++Discriminator[std::make_pair(DC, ND->getIdentifier())];
     disc = discriminator;
     return true;
+  }
+
+  unsigned getLambdaId(const CXXRecordDecl *RD) {
+    assert(RD->isLambda() && "RD must be a lambda!");
+    assert(!RD->isExternallyVisible() && "RD must not be visible!");
+    assert(RD->getLambdaManglingNumber() == 0 &&
+           "RD must not have a mangling number!");
+    std::pair<llvm::DenseMap<const CXXRecordDecl *, unsigned>::iterator, bool>
+        Result = LambdaIds.insert(std::make_pair(RD, LambdaIds.size()));
+    return Result.first->second;
   }
 
 private:
@@ -704,6 +715,23 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
         break;
       }
 
+      if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(TD)) {
+        if (Record->isLambda()) {
+          llvm::SmallString<10> Name("<lambda_");
+          unsigned LambdaId;
+          if (Record->getLambdaManglingNumber())
+            LambdaId = Record->getLambdaManglingNumber();
+          else
+            LambdaId = Context.getLambdaId(Record);
+
+          Name += llvm::utostr(LambdaId);
+          Name += ">";
+
+          mangleSourceName(Name);
+          break;
+        }
+      }
+
       llvm::SmallString<64> Name("<unnamed-type-");
       if (TD->hasDeclaratorForAnonDecl()) {
         // Anonymous types with no tag or typedef get the name of their
@@ -712,7 +740,7 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       } else {
         // Otherwise, number the types using a $S prefix.
         Name += "$S";
-        Name += llvm::utostr(Context.getAnonymousStructId(TD) + 1);
+        Name += llvm::utostr(Context.getAnonymousStructId(TD));
       }
       Name += ">";
       mangleSourceName(Name.str());
@@ -770,6 +798,9 @@ MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
 void MicrosoftCXXNameMangler::mangleNestedName(const NamedDecl *ND) {
   // <postfix> ::= <unqualified-name> [<postfix>]
   //           ::= <substitution> [<postfix>]
+  if (isLambda(ND))
+    return;
+
   const DeclContext *DC = ND->getDeclContext();
 
   while (!DC->isTranslationUnit()) {

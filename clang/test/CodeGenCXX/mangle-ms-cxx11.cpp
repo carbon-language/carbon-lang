@@ -101,3 +101,21 @@ decltype(a) fun(decltype(a) x, decltype(a)) { return x; }
 // CHECK-DAG: ?fun@PR18022@@YA?AU<unnamed-type-a>@1@U21@0@Z
 
 }
+
+inline int define_lambda() {
+  static auto lambda = [] { static int local; ++local; return local; };
+// First, we have the static local variable of type "<lambda_1>" inside of
+// "define_lambda".
+// CHECK-DAG: ?lambda@?1??define_lambda@@YAHXZ@4V<lambda_1>@@A
+// Next, we have the "operator()" for "<lambda_1>" which is inside of
+// "define_lambda".
+// CHECK-DAG: ??R<lambda_1>@?define_lambda@@YAHXZ@QBEHXZ
+// Finally, we have the local which is inside of "<lambda_1>" which is inside of
+// "define_lambda". Hooray.
+// CHECK-DAG: ?local@?2???R<lambda_1>@?define_lambda@@YAHXZ@QBEHXZ@4HA
+  return lambda();
+}
+
+int call_lambda() {
+  return define_lambda();
+}
