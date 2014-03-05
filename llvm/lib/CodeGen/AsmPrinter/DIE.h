@@ -193,7 +193,7 @@ class DIEValue {
   virtual void anchor();
 
 public:
-  enum {
+  enum Type {
     isInteger,
     isString,
     isExpr,
@@ -206,16 +206,16 @@ public:
   };
 
 protected:
-  /// Type - Type of data stored in the value.
+  /// Ty - Type of data stored in the value.
   ///
-  unsigned Type;
+  Type Ty;
 
-public:
-  explicit DIEValue(unsigned T) : Type(T) {}
+  explicit DIEValue(Type T) : Ty(T) {}
   virtual ~DIEValue() {}
 
+public:
   // Accessors
-  unsigned getType() const { return Type; }
+  Type getType() const { return Ty; }
 
   /// EmitValue - Emit value via the Dwarf writer.
   ///
