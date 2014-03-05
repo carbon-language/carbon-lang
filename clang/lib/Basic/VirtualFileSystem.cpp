@@ -582,9 +582,11 @@ class VFSFromYAMLParser {
       return NULL;
     }
 
-    // Remove trailing slash(es)
+    // Remove trailing slash(es), being careful not to remove the root path
     StringRef Trimmed(Name);
-    while (Trimmed.size() > 1 && sys::path::is_separator(Trimmed.back()))
+    size_t RootPathLen = sys::path::root_path(Trimmed).size();
+    while (Trimmed.size() > RootPathLen &&
+           sys::path::is_separator(Trimmed.back()))
       Trimmed = Trimmed.slice(0, Trimmed.size()-1);
     // Get the last component
     StringRef LastComponent = sys::path::filename(Trimmed);
