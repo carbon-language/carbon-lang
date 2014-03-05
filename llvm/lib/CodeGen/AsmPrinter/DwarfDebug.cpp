@@ -1892,8 +1892,7 @@ unsigned DwarfFile::computeSizeAndOffset(DIE *Die, unsigned Offset) {
 
   // Size the DIE children if any.
   if (!Children.empty()) {
-    assert(Abbrev.getChildrenFlag() == dwarf::DW_CHILDREN_yes &&
-           "Children flag not set");
+    assert(Abbrev.hasChildren() && "Children flag not set");
 
     for (unsigned j = 0, M = Children.size(); j < M; ++j)
       Offset = computeSizeAndOffset(Children[j], Offset);
@@ -2060,7 +2059,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
   }
 
   // Emit the DIE children if any.
-  if (Abbrev.getChildrenFlag() == dwarf::DW_CHILDREN_yes) {
+  if (Abbrev.hasChildren()) {
     const std::vector<DIE *> &Children = Die->getChildren();
 
     for (unsigned j = 0, M = Children.size(); j < M; ++j)

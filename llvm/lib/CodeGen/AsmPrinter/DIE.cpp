@@ -49,7 +49,7 @@ void DIEAbbrevData::Profile(FoldingSetNodeID &ID) const {
 ///
 void DIEAbbrev::Profile(FoldingSetNodeID &ID) const {
   ID.AddInteger(unsigned(Tag));
-  ID.AddInteger(ChildrenFlag);
+  ID.AddInteger(unsigned(Children));
 
   // For each attribute description.
   for (unsigned i = 0, N = Data.size(); i < N; ++i)
@@ -63,7 +63,7 @@ void DIEAbbrev::Emit(AsmPrinter *AP) const {
   AP->EmitULEB128(Tag, dwarf::TagString(Tag));
 
   // Emit whether it has children DIEs.
-  AP->EmitULEB128(ChildrenFlag, dwarf::ChildrenString(ChildrenFlag));
+  AP->EmitULEB128((unsigned)Children, dwarf::ChildrenString(Children));
 
   // For each attribute description.
   for (unsigned i = 0, N = Data.size(); i < N; ++i) {
@@ -90,7 +90,7 @@ void DIEAbbrev::print(raw_ostream &O) {
     << "  "
     << dwarf::TagString(Tag)
     << " "
-    << dwarf::ChildrenString(ChildrenFlag)
+    << dwarf::ChildrenString(Children)
     << '\n';
 
   for (unsigned i = 0, N = Data.size(); i < N; ++i) {
@@ -161,7 +161,7 @@ void DIE::print(raw_ostream &O, unsigned IndentCount) const {
     O << Indent
       << dwarf::TagString(Abbrev.getTag())
       << " "
-      << dwarf::ChildrenString(Abbrev.getChildrenFlag()) << "\n";
+      << dwarf::ChildrenString(Abbrev.hasChildren()) << "\n";
   } else {
     O << "Size: " << Size << "\n";
   }

@@ -56,31 +56,33 @@ public:
 /// DIEAbbrev - Dwarf abbreviation, describes the organization of a debug
 /// information object.
 class DIEAbbrev : public FoldingSetNode {
+  /// Unique number for node.
+  ///
+  unsigned Number;
+
   /// Tag - Dwarf tag code.
   ///
   dwarf::Tag Tag;
 
-  /// ChildrenFlag - Dwarf children flag.
+  /// Children - Whether or not this node has children.
   ///
-  uint16_t ChildrenFlag;
-
-  /// Unique number for node.
-  ///
-  unsigned Number;
+  // This cheats a bit in all of the uses since the values in the standard
+  // are 0 and 1 for no children and children respectively.
+  bool Children;
 
   /// Data - Raw data bytes for abbreviation.
   ///
   SmallVector<DIEAbbrevData, 12> Data;
 
 public:
-  DIEAbbrev(dwarf::Tag T, uint16_t C) : Tag(T), ChildrenFlag(C), Data() {}
+  DIEAbbrev(dwarf::Tag T, bool C) : Tag(T), Children(C), Data() {}
 
   // Accessors.
   dwarf::Tag getTag() const { return Tag; }
   unsigned getNumber() const { return Number; }
-  uint16_t getChildrenFlag() const { return ChildrenFlag; }
+  bool hasChildren() const { return Children; }
   const SmallVectorImpl<DIEAbbrevData> &getData() const { return Data; }
-  void setChildrenFlag(uint16_t CF) { ChildrenFlag = CF; }
+  void setChildrenFlag(bool hasChild) { Children = hasChild; }
   void setNumber(unsigned N) { Number = N; }
 
   /// AddAttribute - Adds another set of attribute information to the
