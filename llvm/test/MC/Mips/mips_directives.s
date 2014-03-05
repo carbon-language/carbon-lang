@@ -58,3 +58,10 @@ $BB0_4:
     ldxc1   $f0, $zero($5)
     luxc1   $f0, $6($5)
     lwxc1   $f6, $2($5)
+
+# CHECK:   .set dsp
+# CHECK:   lbux    $7, $10($11)         # encoding: [0x7d,0x6a,0x39,0x8a]
+# CHECK:   lhx     $5, $6($7)           # encoding: [0x7c,0xe6,0x29,0x0a]
+   .set dsp
+   lbux    $7, $10($11)
+   lhx     $5, $6($7)

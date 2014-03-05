@@ -101,6 +101,9 @@ void MipsTargetAsmStreamer::emitDirectiveSetMips32R2() {
   OS << "\t.set\tmips32r2\n";
 }
 
+void MipsTargetAsmStreamer::emitDirectiveSetDsp() {
+  OS << "\t.set\tdsp\n";
+}
 // Print a 32 bit hex number with all numbers.
 static void printHex32(unsigned Value, raw_ostream &OS) {
   OS << "0x";
@@ -308,5 +311,9 @@ void MipsTargetELFStreamer::emitFMask(unsigned FPUBitmask,
 }
 
 void MipsTargetELFStreamer::emitDirectiveSetMips32R2() {
+  // No action required for ELF output.
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetDsp() {
   // No action required for ELF output.
 }

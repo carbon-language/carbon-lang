@@ -2460,6 +2460,13 @@ bool MipsAsmParser::parseDirectiveSet() {
     setFeatureBits(Mips::FeatureMips32r2,"mips32r2");
     getTargetStreamer().emitDirectiveSetMips32R2();
     return false;
+  } else if (Tok.getString() == "dsp") {
+    Parser.Lex(); // Eat token.
+    if (getLexer().isNot(AsmToken::EndOfStatement))
+      return reportParseError("unexpected token in .set directive");
+    setFeatureBits(Mips::FeatureDSP, "dsp");
+    getTargetStreamer().emitDirectiveSetDsp();
+    return false;
   } else {
     // It is just an identifier, look for an assignment.
     parseSetAssignment();

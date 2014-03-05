@@ -41,6 +41,7 @@ public:
   virtual void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff) = 0;
 
   virtual void emitDirectiveSetMips32R2() = 0;
+  virtual void emitDirectiveSetDsp() = 0;
 };
 
 // This part is for ascii assembly output
@@ -71,6 +72,7 @@ public:
   virtual void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff);
 
   virtual void emitDirectiveSetMips32R2();
+  virtual void emitDirectiveSetDsp();
 };
 
 // This part is for ELF object output
@@ -108,6 +110,7 @@ public:
   virtual void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff);
 
   virtual void emitDirectiveSetMips32R2();
+  virtual void emitDirectiveSetDsp();
 };
 }
 #endif
