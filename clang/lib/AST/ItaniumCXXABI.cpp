@@ -37,11 +37,11 @@ class ItaniumNumberingContext : public MangleNumberingContext {
 
 public:
   /// Variable decls are numbered by identifier.
-  virtual unsigned getManglingNumber(const VarDecl *VD, Scope *) {
+  virtual unsigned getManglingNumber(const VarDecl *VD, unsigned) {
     return ++VarManglingNumbers[VD->getIdentifier()];
   }
 
-  virtual unsigned getManglingNumber(const TagDecl *TD, Scope *) {
+  virtual unsigned getManglingNumber(const TagDecl *TD, unsigned) {
     return ++TagManglingNumbers[TD->getIdentifier()];
   }
 };

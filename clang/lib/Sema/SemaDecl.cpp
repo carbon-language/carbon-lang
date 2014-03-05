@@ -3168,7 +3168,8 @@ static void HandleTagNumbering(Sema &S, const TagDecl *Tag, Scope *TagScope) {
       return;
     MangleNumberingContext &MCtx =
         S.Context.getManglingNumberContext(Tag->getParent());
-    S.Context.setManglingNumber(Tag, MCtx.getManglingNumber(Tag, TagScope));
+    S.Context.setManglingNumber(
+        Tag, MCtx.getManglingNumber(Tag, TagScope->getMSLocalManglingNumber()));
     return;
   }
 
@@ -3177,7 +3178,9 @@ static void HandleTagNumbering(Sema &S, const TagDecl *Tag, Scope *TagScope) {
   if (MangleNumberingContext *MCtx =
           S.getCurrentMangleNumberContext(Tag->getDeclContext(),
                                           ManglingContextDecl)) {
-    S.Context.setManglingNumber(Tag, MCtx->getManglingNumber(Tag, TagScope));
+    S.Context.setManglingNumber(
+        Tag,
+        MCtx->getManglingNumber(Tag, TagScope->getMSLocalManglingNumber()));
   }
 }
 
@@ -3816,7 +3819,7 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
       if (MangleNumberingContext *MCtx =
               getCurrentMangleNumberContext(NewVD->getDeclContext(),
                                             ManglingContextDecl)) {
-        Context.setManglingNumber(NewVD, MCtx->getManglingNumber(NewVD, S));
+        Context.setManglingNumber(NewVD, MCtx->getManglingNumber(NewVD, S->getMSLocalManglingNumber()));
         Context.setStaticLocalNumber(NewVD, MCtx->getStaticLocalNumber(NewVD));
       }
     }
@@ -5482,7 +5485,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     if (MangleNumberingContext *MCtx =
             getCurrentMangleNumberContext(NewVD->getDeclContext(),
                                           ManglingContextDecl)) {
-      Context.setManglingNumber(NewVD, MCtx->getManglingNumber(NewVD, S));
+      Context.setManglingNumber(
+          NewVD, MCtx->getManglingNumber(NewVD, S->getMSLocalManglingNumber()));
       Context.setStaticLocalNumber(NewVD, MCtx->getStaticLocalNumber(NewVD));
     }
   }

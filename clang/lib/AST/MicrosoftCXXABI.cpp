@@ -29,12 +29,14 @@ namespace {
 /// Typically these are things like static locals, lambdas, or blocks.
 class MicrosoftNumberingContext : public MangleNumberingContext {
 public:
-  virtual unsigned getManglingNumber(const VarDecl *VD, Scope *S) {
-    return S->getMSLocalManglingNumber();
+  virtual unsigned getManglingNumber(const VarDecl *VD,
+                                     unsigned MSLocalManglingNumber) {
+    return MSLocalManglingNumber;
   }
 
-  virtual unsigned getManglingNumber(const TagDecl *TD, Scope *S) {
-    return S->getMSLocalManglingNumber();
+  virtual unsigned getManglingNumber(const TagDecl *TD,
+                                     unsigned MSLocalManglingNumber) {
+    return MSLocalManglingNumber;
   }
 };
 

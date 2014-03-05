@@ -16,7 +16,6 @@
 #define LLVM_CLANG_MANGLENUMBERINGCONTEXT_H
 
 #include "clang/Basic/LLVM.h"
-#include "clang/Sema/Scope.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 
@@ -51,11 +50,13 @@ public:
 
   /// \brief Retrieve the mangling number of a static local variable within
   /// this context.
-  virtual unsigned getManglingNumber(const VarDecl *VD, Scope *S) = 0;
+  virtual unsigned getManglingNumber(const VarDecl *VD,
+                                     unsigned MSLocalManglingNumber) = 0;
 
   /// \brief Retrieve the mangling number of a static local variable within
   /// this context.
-  virtual unsigned getManglingNumber(const TagDecl *TD, Scope *S) = 0;
+  virtual unsigned getManglingNumber(const TagDecl *TD,
+                                     unsigned MSLocalManglingNumber) = 0;
 };
   
 } // end namespace clang
