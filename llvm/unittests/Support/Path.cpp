@@ -210,6 +210,35 @@ TEST(Support, AbsolutePathIteratorWin32) {
 }
 #endif // LLVM_ON_WIN32
 
+TEST(Support, AbsolutePathIteratorEnd) {
+  // Trailing slashes are converted to '.' unless they are part of the root path.
+  SmallVector<StringRef, 4> Paths;
+  Paths.push_back("/foo/");
+  Paths.push_back("/foo//");
+  Paths.push_back("//net//");
+#ifdef LLVM_ON_WIN32
+  Paths.push_back("c:\\\\");
+#endif
+
+  for (StringRef Path : Paths) {
+    StringRef LastComponent = *--path::end(Path);
+    EXPECT_EQ(".", LastComponent);
+  }
+
+  SmallVector<StringRef, 3> RootPaths;
+  RootPaths.push_back("/");
+  RootPaths.push_back("//net/");
+#ifdef LLVM_ON_WIN32
+  RootPaths.push_back("c:\\");
+#endif
+
+  for (StringRef Path : RootPaths) {
+    StringRef LastComponent = *--path::end(Path);
+    EXPECT_EQ(1u, LastComponent.size());
+    EXPECT_TRUE(path::is_separator(LastComponent[0]));
+  }
+}
+
 TEST(Support, HomeDirectory) {
 #ifdef LLVM_ON_UNIX
   // This test only makes sense on Unix if $HOME is set.

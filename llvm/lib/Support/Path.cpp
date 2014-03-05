@@ -307,21 +307,18 @@ const_iterator &const_iterator::operator++() {
 }
 
 const_iterator &const_iterator::operator--() {
-  // If we're at the end and the previous char was a '/', return '.'.
+  // If we're at the end and the previous char was a '/', return '.' unless
+  // we are the root path.
+  size_t root_dir_pos = root_dir_start(Path);
   if (Position == Path.size() &&
-      Path.size() > 1 &&
-      is_separator(Path[Position - 1])
-#ifdef LLVM_ON_WIN32
-      && Path[Position - 2] != ':'
-#endif
-      ) {
+      Path.size() > root_dir_pos + 1 &&
+      is_separator(Path[Position - 1])) {
     --Position;
     Component = ".";
     return *this;
   }
 
   // Skip separators unless it's the root directory.
-  size_t root_dir_pos = root_dir_start(Path);
   size_t end_pos = Position;
 
   while(end_pos > 0 &&
