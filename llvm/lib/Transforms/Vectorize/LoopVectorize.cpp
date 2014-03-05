@@ -433,11 +433,12 @@ public:
     InnerLoopVectorizer(OrigLoop, SE, LI, DT, DL, TLI, 1, UnrollFactor) { }
 
 private:
-  virtual void scalarizeInstruction(Instruction *Instr, bool IfPredicateStore = false);
-  virtual void vectorizeMemoryInstruction(Instruction *Instr);
-  virtual Value *getBroadcastInstrs(Value *V);
-  virtual Value *getConsecutiveVector(Value* Val, int StartIdx, bool Negate);
-  virtual Value *reverseVector(Value *Vec);
+  void scalarizeInstruction(Instruction *Instr,
+                            bool IfPredicateStore = false) override;
+  void vectorizeMemoryInstruction(Instruction *Instr) override;
+  Value *getBroadcastInstrs(Value *V) override;
+  Value *getConsecutiveVector(Value* Val, int StartIdx, bool Negate) override;
+  Value *reverseVector(Value *Vec) override;
 };
 
 /// \brief Look for a meaningful debug location on the instruction or it's
@@ -1020,7 +1021,7 @@ struct LoopVectorize : public FunctionPass {
 
   BlockFrequency ColdEntryFreq;
 
-  virtual bool runOnFunction(Function &F) {
+  bool runOnFunction(Function &F) override {
     SE = &getAnalysis<ScalarEvolution>();
     DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
     DL = DLP ? &DLP->getDataLayout() : 0;
@@ -1160,7 +1161,7 @@ struct LoopVectorize : public FunctionPass {
     return true;
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequiredID(LoopSimplifyID);
     AU.addRequiredID(LCSSAID);
     AU.addRequired<BlockFrequencyInfo>();

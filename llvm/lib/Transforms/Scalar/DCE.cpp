@@ -38,7 +38,7 @@ namespace {
     DeadInstElimination() : BasicBlockPass(ID) {
       initializeDeadInstEliminationPass(*PassRegistry::getPassRegistry());
     }
-    virtual bool runOnBasicBlock(BasicBlock &BB) {
+    bool runOnBasicBlock(BasicBlock &BB) override {
       if (skipOptnoneFunction(BB))
         return false;
       TargetLibraryInfo *TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
@@ -54,7 +54,7 @@ namespace {
       return Changed;
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
     }
   };
@@ -79,9 +79,9 @@ namespace {
       initializeDCEPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnFunction(Function &F);
+    bool runOnFunction(Function &F) override;
 
-     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
     }
  };

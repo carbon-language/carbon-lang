@@ -2508,7 +2508,7 @@ public:
 
   /// replaceAllUsesWith - override so that instruction replacement
   /// can be defined in terms of the instruction combiner framework.
-  virtual void replaceAllUsesWith(Instruction *I, Value *With) const {
+  void replaceAllUsesWith(Instruction *I, Value *With) const override {
     IC->ReplaceInstUsesWith(*I, With);
   }
 };

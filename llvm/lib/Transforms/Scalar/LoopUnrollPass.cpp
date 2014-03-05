@@ -87,12 +87,12 @@ namespace {
     bool     UserAllowPartial;     // CurrentAllowPartial is user-specified.
     bool     UserRuntime;          // CurrentRuntime is user-specified.
 
-    bool runOnLoop(Loop *L, LPPassManager &LPM);
+    bool runOnLoop(Loop *L, LPPassManager &LPM) override;
 
     /// This transformation requires natural loop information & requires that
     /// loop preheaders be inserted into the CFG...
     ///
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);

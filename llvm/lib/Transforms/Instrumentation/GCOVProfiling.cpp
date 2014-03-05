@@ -80,7 +80,7 @@ namespace {
     ~GCOVProfiler() {
       DeleteContainerPointers(Funcs);
     }
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "GCOV Profiler";
     }
 
@@ -93,7 +93,7 @@ namespace {
       ReversedVersion[4] = '\0';
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
-    bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
     // Create the .gcno files for the Module based on DebugInfo.
     void emitProfileNotes();

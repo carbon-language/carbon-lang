@@ -35,8 +35,8 @@ namespace {
       initializePartiallyInlineLibCallsPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual bool runOnFunction(Function &F);
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
+    bool runOnFunction(Function &F) override;
 
   private:
     /// Optimize calls to sqrt.

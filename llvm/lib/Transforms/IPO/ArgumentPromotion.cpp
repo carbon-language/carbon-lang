@@ -58,12 +58,12 @@ namespace {
   /// ArgPromotion - The 'by reference' to 'by value' argument promotion pass.
   ///
   struct ArgPromotion : public CallGraphSCCPass {
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<AliasAnalysis>();
       CallGraphSCCPass::getAnalysisUsage(AU);
     }
 
-    virtual bool runOnSCC(CallGraphSCC &SCC);
+    bool runOnSCC(CallGraphSCC &SCC) override;
     static char ID; // Pass identification, replacement for typeid
     explicit ArgPromotion(unsigned maxElements = 3)
         : CallGraphSCCPass(ID), maxElements(maxElements) {

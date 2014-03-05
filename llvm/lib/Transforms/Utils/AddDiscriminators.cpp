@@ -76,7 +76,7 @@ namespace {
       initializeAddDiscriminatorsPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnFunction(Function &F);
+    bool runOnFunction(Function &F) override;
   };
 }
 

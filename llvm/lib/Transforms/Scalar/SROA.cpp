@@ -836,8 +836,8 @@ public:
       DVIs.pop_back_val()->eraseFromParent();
   }
 
-  virtual bool isInstInList(Instruction *I,
-                            const SmallVectorImpl<Instruction*> &Insts) const {
+  bool isInstInList(Instruction *I,
+                    const SmallVectorImpl<Instruction*> &Insts) const override {
     Value *Ptr;
     if (LoadInst *LI = dyn_cast<LoadInst>(I))
       Ptr = LI->getOperand(0);
@@ -864,7 +864,7 @@ public:
     return false;
   }
 
-  virtual void updateDebugInfo(Instruction *Inst) const {
+  void updateDebugInfo(Instruction *Inst) const override {
     for (SmallVectorImpl<DbgDeclareInst *>::const_iterator I = DDIs.begin(),
            E = DDIs.end(); I != E; ++I) {
       DbgDeclareInst *DDI = *I;
@@ -975,10 +975,10 @@ public:
         C(0), DL(0), DT(0) {
     initializeSROAPass(*PassRegistry::getPassRegistry());
   }
-  bool runOnFunction(Function &F);
-  void getAnalysisUsage(AnalysisUsage &AU) const;
+  bool runOnFunction(Function &F) override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  const char *getPassName() const { return "SROA"; }
+  const char *getPassName() const override { return "SROA"; }
   static char ID;
 
 private:

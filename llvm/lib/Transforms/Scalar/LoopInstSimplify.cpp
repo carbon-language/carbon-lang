@@ -36,9 +36,9 @@ namespace {
       initializeLoopInstSimplifyPass(*PassRegistry::getPassRegistry());
     }
 
-    bool runOnLoop(Loop*, LPPassManager&);
+    bool runOnLoop(Loop*, LPPassManager&) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);

@@ -1783,7 +1783,7 @@ struct SLPVectorizer : public FunctionPass {
   LoopInfo *LI;
   DominatorTree *DT;
 
-  virtual bool runOnFunction(Function &F) {
+  bool runOnFunction(Function &F) override {
     if (skipOptnoneFunction(F))
       return false;
 
@@ -1842,7 +1842,7 @@ struct SLPVectorizer : public FunctionPass {
     return Changed;
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     FunctionPass::getAnalysisUsage(AU);
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<AliasAnalysis>();

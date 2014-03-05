@@ -131,8 +131,8 @@ public:
     initializeScalarizerPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual bool doInitialization(Module &M);
-  virtual bool runOnFunction(Function &F);
+  bool doInitialization(Module &M) override;
+  bool runOnFunction(Function &F) override;
 
   // InstVisitor methods.  They return true if the instruction was scalarized,
   // false if nothing changed.

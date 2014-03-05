@@ -252,12 +252,12 @@ struct LCSSA : public FunctionPass {
   LoopInfo *LI;
   ScalarEvolution *SE;
 
-  virtual bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
   /// This transformation requires natural loop information & requires that
   /// loop preheaders be inserted into the CFG.  It maintains both of these,
   /// as well as the CFG.  It also requires dominator information.
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
 
     AU.addRequired<DominatorTreeWrapperPass>();
@@ -270,7 +270,7 @@ struct LCSSA : public FunctionPass {
 private:
   bool processLoop(Loop &L);
 
-  virtual void verifyAnalysis() const;
+  void verifyAnalysis() const override;
 };
 }
 

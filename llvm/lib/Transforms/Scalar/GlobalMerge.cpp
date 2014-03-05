@@ -112,15 +112,15 @@ namespace {
       initializeGlobalMergePass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool doInitialization(Module &M);
-    virtual bool runOnFunction(Function &F);
-    virtual bool doFinalization(Module &M);
+    bool doInitialization(Module &M) override;
+    bool runOnFunction(Function &F) override;
+    bool doFinalization(Module &M) override;
 
-    const char *getPassName() const {
+    const char *getPassName() const override {
       return "Merge internal globals";
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       FunctionPass::getAnalysisUsage(AU);
     }

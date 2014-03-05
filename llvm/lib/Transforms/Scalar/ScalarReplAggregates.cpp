@@ -80,7 +80,7 @@ namespace {
         ScalarLoadThreshold = SLT;
     }
 
-    bool runOnFunction(Function &F);
+    bool runOnFunction(Function &F) override;
 
     bool performScalarRepl(Function &F);
     bool performPromotion(Function &F);
@@ -195,7 +195,7 @@ namespace {
 
     // getAnalysisUsage - This pass does not require any passes, but we know it
     // will not alter the CFG, so say so.
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.setPreservesCFG();
     }
@@ -212,7 +212,7 @@ namespace {
 
     // getAnalysisUsage - This pass does not require any passes, but we know it
     // will not alter the CFG, so say so.
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
     }
   };
@@ -1082,14 +1082,14 @@ public:
     }
   }
 
-  virtual bool isInstInList(Instruction *I,
-                            const SmallVectorImpl<Instruction*> &Insts) const {
+  bool isInstInList(Instruction *I,
+                    const SmallVectorImpl<Instruction*> &Insts) const override {
     if (LoadInst *LI = dyn_cast<LoadInst>(I))
       return LI->getOperand(0) == AI;
     return cast<StoreInst>(I)->getPointerOperand() == AI;
   }
 
-  virtual void updateDebugInfo(Instruction *Inst) const {
+  void updateDebugInfo(Instruction *Inst) const override {
     for (SmallVectorImpl<DbgDeclareInst *>::const_iterator I = DDIs.begin(),
            E = DDIs.end(); I != E; ++I) {
       DbgDeclareInst *DDI = *I;

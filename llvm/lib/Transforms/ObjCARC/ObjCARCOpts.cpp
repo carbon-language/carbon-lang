@@ -1163,10 +1163,10 @@ namespace {
     void GatherStatistics(Function &F, bool AfterOptimization = false);
 #endif
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual bool doInitialization(Module &M);
-    virtual bool runOnFunction(Function &F);
-    virtual void releaseMemory();
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
+    bool doInitialization(Module &M) override;
+    bool runOnFunction(Function &F) override;
+    void releaseMemory() override;
 
   public:
     static char ID;

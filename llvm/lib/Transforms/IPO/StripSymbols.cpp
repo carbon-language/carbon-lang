@@ -44,9 +44,9 @@ namespace {
         initializeStripSymbolsPass(*PassRegistry::getPassRegistry());
       }
 
-    virtual bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
     }
   };
@@ -59,9 +59,9 @@ namespace {
         initializeStripNonDebugSymbolsPass(*PassRegistry::getPassRegistry());
       }
 
-    virtual bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
     }
   };
@@ -74,9 +74,9 @@ namespace {
         initializeStripDebugDeclarePass(*PassRegistry::getPassRegistry());
       }
 
-    virtual bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
     }
   };
@@ -89,9 +89,9 @@ namespace {
         initializeStripDeadDebugInfoPass(*PassRegistry::getPassRegistry());
       }
 
-    virtual bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
     }
   };

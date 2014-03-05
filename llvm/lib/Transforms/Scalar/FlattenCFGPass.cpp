@@ -26,9 +26,9 @@ public:
   FlattenCFGPass() : FunctionPass(ID) {
     initializeFlattenCFGPassPass(*PassRegistry::getPassRegistry());
   }
-  bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<AliasAnalysis>();
   }
 

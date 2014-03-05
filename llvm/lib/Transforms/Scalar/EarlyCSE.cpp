@@ -303,7 +303,7 @@ public:
     initializeEarlyCSEPass(*PassRegistry::getPassRegistry());
   }
 
-  bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
 private:
 
@@ -376,7 +376,7 @@ private:
   bool processNode(DomTreeNode *Node);
 
   // This transformation requires dominator postdominator info
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<TargetLibraryInfo>();
     AU.setPreservesCFG();

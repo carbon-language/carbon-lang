@@ -144,7 +144,7 @@ namespace {
       DL = 0; DT = 0; SE = 0; TLI = 0; TTI = 0;
     }
 
-    bool runOnLoop(Loop *L, LPPassManager &LPM);
+    bool runOnLoop(Loop *L, LPPassManager &LPM) override;
     bool runOnLoopBlock(BasicBlock *BB, const SCEV *BECount,
                         SmallVectorImpl<BasicBlock*> &ExitBlocks);
 
@@ -164,7 +164,7 @@ namespace {
     /// This transformation requires natural loop information & requires that
     /// loop preheaders be inserted into the CFG.
     ///
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
       AU.addRequiredID(LoopSimplifyID);

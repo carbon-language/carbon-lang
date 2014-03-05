@@ -63,7 +63,7 @@ STATISTIC(NumCXXDtorsRemoved, "Number of global C++ destructors removed");
 
 namespace {
   struct GlobalOpt : public ModulePass {
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<TargetLibraryInfo>();
     }
     static char ID; // Pass identification, replacement for typeid
@@ -71,7 +71,7 @@ namespace {
       initializeGlobalOptPass(*PassRegistry::getPassRegistry());
     }
 
-    bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
   private:
     GlobalVariable *FindGlobalCtors(Module &M);

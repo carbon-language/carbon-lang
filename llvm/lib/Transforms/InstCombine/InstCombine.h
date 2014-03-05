@@ -102,11 +102,11 @@ public:
   }
 
 public:
-  virtual bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
   bool DoOneIteration(Function &F, unsigned ItNum);
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   const DataLayout *getDataLayout() const { return DL; }
 

@@ -47,13 +47,13 @@ public:
 
   static char ID; // Pass identification, replacement for typeid
 
-  virtual InlineCost getInlineCost(CallSite CS);
+  InlineCost getInlineCost(CallSite CS) override;
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-  virtual bool runOnSCC(CallGraphSCC &SCC);
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnSCC(CallGraphSCC &SCC) override;
 
   using llvm::Pass::doFinalization;
-  virtual bool doFinalization(CallGraph &CG) {
+  bool doFinalization(CallGraph &CG) override {
     return removeDeadFunctions(CG, /*AlwaysInlineOnly=*/ true);
   }
 };

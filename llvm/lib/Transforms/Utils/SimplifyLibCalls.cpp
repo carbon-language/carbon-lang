@@ -152,7 +152,8 @@ protected:
 struct InstFortifiedLibCallOptimization : public FortifiedLibCallOptimization {
   CallInst *CI;
 
-  bool isFoldable(unsigned SizeCIOp, unsigned SizeArgOp, bool isString) const {
+  bool isFoldable(unsigned SizeCIOp, unsigned SizeArgOp,
+                  bool isString) const override {
     if (CI->getArgOperand(SizeCIOp) == CI->getArgOperand(SizeArgOp))
       return true;
     if (ConstantInt *SizeCI =
@@ -175,7 +176,8 @@ struct InstFortifiedLibCallOptimization : public FortifiedLibCallOptimization {
 };
 
 struct MemCpyChkOpt : public InstFortifiedLibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     this->CI = CI;
     FunctionType *FT = Callee->getFunctionType();
     LLVMContext &Context = CI->getParent()->getContext();
@@ -198,7 +200,8 @@ struct MemCpyChkOpt : public InstFortifiedLibCallOptimization {
 };
 
 struct MemMoveChkOpt : public InstFortifiedLibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     this->CI = CI;
     FunctionType *FT = Callee->getFunctionType();
     LLVMContext &Context = CI->getParent()->getContext();
@@ -221,7 +224,8 @@ struct MemMoveChkOpt : public InstFortifiedLibCallOptimization {
 };
 
 struct MemSetChkOpt : public InstFortifiedLibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     this->CI = CI;
     FunctionType *FT = Callee->getFunctionType();
     LLVMContext &Context = CI->getParent()->getContext();
@@ -245,7 +249,8 @@ struct MemSetChkOpt : public InstFortifiedLibCallOptimization {
 };
 
 struct StrCpyChkOpt : public InstFortifiedLibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     this->CI = CI;
     StringRef Name = Callee->getName();
     FunctionType *FT = Callee->getFunctionType();
@@ -290,7 +295,8 @@ struct StrCpyChkOpt : public InstFortifiedLibCallOptimization {
 };
 
 struct StpCpyChkOpt : public InstFortifiedLibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     this->CI = CI;
     StringRef Name = Callee->getName();
     FunctionType *FT = Callee->getFunctionType();
@@ -340,7 +346,8 @@ struct StpCpyChkOpt : public InstFortifiedLibCallOptimization {
 };
 
 struct StrNCpyChkOpt : public InstFortifiedLibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     this->CI = CI;
     StringRef Name = Callee->getName();
     FunctionType *FT = Callee->getFunctionType();
@@ -369,7 +376,8 @@ struct StrNCpyChkOpt : public InstFortifiedLibCallOptimization {
 //===----------------------------------------------------------------------===//
 
 struct StrCatOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Verify the "strcat" function prototype.
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
@@ -419,7 +427,8 @@ struct StrCatOpt : public LibCallOptimization {
 };
 
 struct StrNCatOpt : public StrCatOpt {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Verify the "strncat" function prototype.
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 ||
@@ -463,7 +472,8 @@ struct StrNCatOpt : public StrCatOpt {
 };
 
 struct StrChrOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Verify the "strchr" function prototype.
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
@@ -512,7 +522,8 @@ struct StrChrOpt : public LibCallOptimization {
 };
 
 struct StrRChrOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Verify the "strrchr" function prototype.
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
@@ -548,7 +559,8 @@ struct StrRChrOpt : public LibCallOptimization {
 };
 
 struct StrCmpOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Verify the "strcmp" function prototype.
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
@@ -593,7 +605,8 @@ struct StrCmpOpt : public LibCallOptimization {
 };
 
 struct StrNCmpOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Verify the "strncmp" function prototype.
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 ||
@@ -643,7 +656,8 @@ struct StrNCmpOpt : public LibCallOptimization {
 };
 
 struct StrCpyOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Verify the "strcpy" function prototype.
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
@@ -672,7 +686,8 @@ struct StrCpyOpt : public LibCallOptimization {
 };
 
 struct StpCpyOpt: public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Verify the "stpcpy" function prototype.
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
@@ -708,7 +723,8 @@ struct StpCpyOpt: public LibCallOptimization {
 };
 
 struct StrNCpyOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         FT->getParamType(0) != FT->getParamType(1) ||
@@ -755,8 +771,9 @@ struct StrNCpyOpt : public LibCallOptimization {
 };
 
 struct StrLenOpt : public LibCallOptimization {
-  virtual bool ignoreCallingConv() { return true; }
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  bool ignoreCallingConv() override { return true; }
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 1 ||
         FT->getParamType(0) != B.getInt8PtrTy() ||
@@ -778,7 +795,8 @@ struct StrLenOpt : public LibCallOptimization {
 };
 
 struct StrPBrkOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
         FT->getParamType(0) != B.getInt8PtrTy() ||
@@ -813,7 +831,8 @@ struct StrPBrkOpt : public LibCallOptimization {
 };
 
 struct StrToOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     if ((FT->getNumParams() != 2 && FT->getNumParams() != 3) ||
         !FT->getParamType(0)->isPointerTy() ||
@@ -832,7 +851,8 @@ struct StrToOpt : public LibCallOptimization {
 };
 
 struct StrSpnOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
         FT->getParamType(0) != B.getInt8PtrTy() ||
@@ -861,7 +881,8 @@ struct StrSpnOpt : public LibCallOptimization {
 };
 
 struct StrCSpnOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
         FT->getParamType(0) != B.getInt8PtrTy() ||
@@ -893,7 +914,8 @@ struct StrCSpnOpt : public LibCallOptimization {
 };
 
 struct StrStrOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 ||
         !FT->getParamType(0)->isPointerTy() ||
@@ -957,7 +979,8 @@ struct StrStrOpt : public LibCallOptimization {
 };
 
 struct MemCmpOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || !FT->getParamType(0)->isPointerTy() ||
         !FT->getParamType(1)->isPointerTy() ||
@@ -1009,7 +1032,8 @@ struct MemCmpOpt : public LibCallOptimization {
 };
 
 struct MemCpyOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // These optimizations require DataLayout.
     if (!DL) return 0;
 
@@ -1028,7 +1052,8 @@ struct MemCpyOpt : public LibCallOptimization {
 };
 
 struct MemMoveOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // These optimizations require DataLayout.
     if (!DL) return 0;
 
@@ -1047,7 +1072,8 @@ struct MemMoveOpt : public LibCallOptimization {
 };
 
 struct MemSetOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // These optimizations require DataLayout.
     if (!DL) return 0;
 
@@ -1075,7 +1101,8 @@ struct MemSetOpt : public LibCallOptimization {
 struct UnaryDoubleFPOpt : public LibCallOptimization {
   bool CheckRetType;
   UnaryDoubleFPOpt(bool CheckReturnType): CheckRetType(CheckReturnType) {}
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 1 || !FT->getReturnType()->isDoubleTy() ||
         !FT->getParamType(0)->isDoubleTy())
@@ -1107,7 +1134,8 @@ struct UnaryDoubleFPOpt : public LibCallOptimization {
 struct BinaryDoubleFPOpt : public LibCallOptimization {
   bool CheckRetType;
   BinaryDoubleFPOpt(bool CheckReturnType): CheckRetType(CheckReturnType) {}
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     // Just make sure this has 2 arguments of the same FP type, which match the
     // result type.
@@ -1155,7 +1183,8 @@ struct UnsafeFPLibCallOptimization : public LibCallOptimization {
 
 struct CosOpt : public UnsafeFPLibCallOptimization {
   CosOpt(bool UnsafeFPShrink) : UnsafeFPLibCallOptimization(UnsafeFPShrink) {}
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     Value *Ret = NULL;
     if (UnsafeFPShrink && Callee->getName() == "cos" &&
         TLI->has(LibFunc::cosf)) {
@@ -1182,7 +1211,8 @@ struct CosOpt : public UnsafeFPLibCallOptimization {
 
 struct PowOpt : public UnsafeFPLibCallOptimization {
   PowOpt(bool UnsafeFPShrink) : UnsafeFPLibCallOptimization(UnsafeFPShrink) {}
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     Value *Ret = NULL;
     if (UnsafeFPShrink && Callee->getName() == "pow" &&
         TLI->has(LibFunc::powf)) {
@@ -1256,7 +1286,8 @@ struct PowOpt : public UnsafeFPLibCallOptimization {
 
 struct Exp2Opt : public UnsafeFPLibCallOptimization {
   Exp2Opt(bool UnsafeFPShrink) : UnsafeFPLibCallOptimization(UnsafeFPShrink) {}
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     Value *Ret = NULL;
     if (UnsafeFPShrink && Callee->getName() == "exp2" &&
         TLI->has(LibFunc::exp2f)) {
@@ -1313,7 +1344,8 @@ struct Exp2Opt : public UnsafeFPLibCallOptimization {
 struct SinCosPiOpt : public LibCallOptimization {
   SinCosPiOpt() {}
 
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Make sure the prototype is as expected, otherwise the rest of the
     // function is probably invalid and likely to abort.
     if (!isTrigLibCall(CI))
@@ -1464,7 +1496,8 @@ struct SinCosPiOpt : public LibCallOptimization {
 //===----------------------------------------------------------------------===//
 
 struct FFSOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     // Just make sure this has 2 arguments of the same FP type, which match the
     // result type.
@@ -1497,8 +1530,9 @@ struct FFSOpt : public LibCallOptimization {
 };
 
 struct AbsOpt : public LibCallOptimization {
-  virtual bool ignoreCallingConv() { return true; }
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  bool ignoreCallingConv() override { return true; }
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     // We require integer(integer) where the types agree.
     if (FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy() ||
@@ -1515,7 +1549,8 @@ struct AbsOpt : public LibCallOptimization {
 };
 
 struct IsDigitOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     // We require integer(i32)
     if (FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy() ||
@@ -1531,7 +1566,8 @@ struct IsDigitOpt : public LibCallOptimization {
 };
 
 struct IsAsciiOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     // We require integer(i32)
     if (FT->getNumParams() != 1 || !FT->getReturnType()->isIntegerTy() ||
@@ -1546,7 +1582,8 @@ struct IsAsciiOpt : public LibCallOptimization {
 };
 
 struct ToAsciiOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     FunctionType *FT = Callee->getFunctionType();
     // We require i32(i32)
     if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
@@ -1566,7 +1603,8 @@ struct ToAsciiOpt : public LibCallOptimization {
 struct ErrorReportingOpt : public LibCallOptimization {
   ErrorReportingOpt(int S = -1) : StreamArg(S) {}
 
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &) override {
     // Error reporting calls should be cold, mark them as such.
     // This applies even to non-builtin calls: it is only a hint and applies to
     // functions that the frontend might not understand as builtins.
@@ -1668,7 +1706,8 @@ struct PrintFOpt : public LibCallOptimization {
     return 0;
   }
 
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Require one fixed pointer argument and an integer/void result.
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() < 1 || !FT->getParamType(0)->isPointerTy() ||
@@ -1761,7 +1800,8 @@ struct SPrintFOpt : public LibCallOptimization {
     return 0;
   }
 
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Require two fixed pointer arguments and an integer result.
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
@@ -1842,7 +1882,8 @@ struct FPrintFOpt : public LibCallOptimization {
     return 0;
   }
 
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Require two fixed paramters as pointers and integer result.
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 2 || !FT->getParamType(0)->isPointerTy() ||
@@ -1870,7 +1911,8 @@ struct FPrintFOpt : public LibCallOptimization {
 };
 
 struct FWriteOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     ErrorReportingOpt ER(/* StreamArg = */ 3);
     (void) ER.callOptimizer(Callee, CI, B);
 
@@ -1906,7 +1948,8 @@ struct FWriteOpt : public LibCallOptimization {
 };
 
 struct FPutsOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     ErrorReportingOpt ER(/* StreamArg = */ 1);
     (void) ER.callOptimizer(Callee, CI, B);
 
@@ -1931,7 +1974,8 @@ struct FPutsOpt : public LibCallOptimization {
 };
 
 struct PutsOpt : public LibCallOptimization {
-  virtual Value *callOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+  Value *callOptimizer(Function *Callee, CallInst *CI,
+                       IRBuilder<> &B) override {
     // Require one fixed pointer argument and an integer/void result.
     FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() < 1 || !FT->getParamType(0)->isPointerTy() ||

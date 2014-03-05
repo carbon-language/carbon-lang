@@ -4867,8 +4867,8 @@ public:
   LoopStrengthReduce();
 
 private:
-  bool runOnLoop(Loop *L, LPPassManager &LPM);
-  void getAnalysisUsage(AnalysisUsage &AU) const;
+  bool runOnLoop(Loop *L, LPPassManager &LPM) override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
 }

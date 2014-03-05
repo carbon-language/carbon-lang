@@ -32,7 +32,7 @@ public:
   }
 
   // We can preserve non-critical-edgeness when we unify function exit nodes
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   // getReturn|Unwind|UnreachableBlock - Return the new single (or nonexistent)
   // return, unwind, or unreachable  basic blocks in the CFG.
@@ -41,7 +41,7 @@ public:
   BasicBlock *getUnwindBlock() const { return UnwindBlock; }
   BasicBlock *getUnreachableBlock() const { return UnreachableBlock; }
 
-  virtual bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 };
 
 Pass *createUnifyFunctionExitNodesPass();

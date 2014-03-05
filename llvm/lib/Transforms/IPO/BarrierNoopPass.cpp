@@ -36,7 +36,7 @@ public:
     initializeBarrierNoopPass(*PassRegistry::getPassRegistry());
   }
 
-  bool runOnModule(Module &M) { return false; }
+  bool runOnModule(Module &M) override { return false; }
 };
 }
 

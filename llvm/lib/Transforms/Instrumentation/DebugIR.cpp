@@ -67,11 +67,12 @@ public:
 
   // This function is called after an Instruction, GlobalValue, or GlobalAlias
   // is printed.
-  void printInfoComment(const Value &V, formatted_raw_ostream &Out) {
+  void printInfoComment(const Value &V, formatted_raw_ostream &Out) override {
     addEntry(&V, Out);
   }
 
-  void emitFunctionAnnot(const Function *F, formatted_raw_ostream &Out) {
+  void emitFunctionAnnot(const Function *F,
+                         formatted_raw_ostream &Out) override {
     addEntry(F, Out);
   }
 

@@ -84,9 +84,9 @@ namespace {
       initializeIndVarSimplifyPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
+    bool runOnLoop(Loop *L, LPPassManager &LPM) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfo>();
       AU.addRequired<ScalarEvolution>();
@@ -99,7 +99,7 @@ namespace {
     }
 
   private:
-    virtual void releaseMemory() {
+    void releaseMemory() override {
       DeadInsts.clear();
     }
 
@@ -1138,7 +1138,7 @@ namespace {
     }
 
     // Implement the interface used by simplifyUsersOfIV.
-    virtual void visitCast(CastInst *Cast) { visitIVCast(Cast, WI, SE, DL); }
+    void visitCast(CastInst *Cast) override { visitIVCast(Cast, WI, SE, DL); }
   };
 }
 

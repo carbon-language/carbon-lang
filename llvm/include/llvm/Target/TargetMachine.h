@@ -312,7 +312,7 @@ public:
   /// \brief Register analysis passes for this target with a pass manager.
   ///
   /// This registers target independent analysis passes.
-  virtual void addAnalysisPasses(PassManagerBase &PM);
+  void addAnalysisPasses(PassManagerBase &PM) override;
 
   /// createPassConfig - Create a pass configuration object to be used by
   /// addPassToEmitX methods for generating a pipeline of CodeGen passes.
@@ -321,12 +321,10 @@ public:
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
   /// generation.
-  virtual bool addPassesToEmitFile(PassManagerBase &PM,
-                                   formatted_raw_ostream &Out,
-                                   CodeGenFileType FileType,
-                                   bool DisableVerify = true,
-                                   AnalysisID StartAfter = 0,
-                                   AnalysisID StopAfter = 0);
+  bool addPassesToEmitFile(PassManagerBase &PM, formatted_raw_ostream &Out,
+                           CodeGenFileType FileType, bool DisableVerify = true,
+                           AnalysisID StartAfter = 0,
+                           AnalysisID StopAfter = 0) override;
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a JITCodeEmitter object to handle
@@ -334,19 +332,16 @@ public:
   /// of functions.  This method returns true if machine code emission is
   /// not supported.
   ///
-  virtual bool addPassesToEmitMachineCode(PassManagerBase &PM,
-                                          JITCodeEmitter &MCE,
-                                          bool DisableVerify = true);
+  bool addPassesToEmitMachineCode(PassManagerBase &PM, JITCodeEmitter &MCE,
+                                  bool DisableVerify = true) override;
 
   /// addPassesToEmitMC - Add passes to the specified pass manager to get
   /// machine code emitted with the MCJIT. This method returns true if machine
   /// code is not supported. It fills the MCContext Ctx pointer which can be
   /// used to build custom MCStreamer.
   ///
-  virtual bool addPassesToEmitMC(PassManagerBase &PM,
-                                 MCContext *&Ctx,
-                                 raw_ostream &OS,
-                                 bool DisableVerify = true);
+  bool addPassesToEmitMC(PassManagerBase &PM, MCContext *&Ctx,
+                         raw_ostream &OS, bool DisableVerify = true) override;
 
   /// addCodeEmitter - This pass should be overridden by the target to add a
   /// code emitter, if supported.  If this is not supported, 'true' should be

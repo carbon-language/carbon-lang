@@ -41,7 +41,7 @@ namespace {
     }
 
     // runOnSCC - Analyze the SCC, performing the transformation if possible.
-    bool runOnSCC(CallGraphSCC &SCC);
+    bool runOnSCC(CallGraphSCC &SCC) override;
 
     bool SimplifyFunction(Function *F);
     void DeleteBasicBlock(BasicBlock *BB);

@@ -38,13 +38,13 @@ namespace {
       initializeInstSimplifierPass(*PassRegistry::getPassRegistry());
     }
 
-    void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<TargetLibraryInfo>();
     }
 
     /// runOnFunction - Remove instructions that simplify.
-    bool runOnFunction(Function &F) {
+    bool runOnFunction(Function &F) override {
       const DominatorTreeWrapperPass *DTWP =
           getAnalysisIfAvailable<DominatorTreeWrapperPass>();
       const DominatorTree *DT = DTWP ? &DTWP->getDomTree() : 0;

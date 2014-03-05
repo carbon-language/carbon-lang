@@ -79,9 +79,9 @@ namespace {
     void ContractRelease(Instruction *Release,
                          inst_iterator &Iter);
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual bool doInitialization(Module &M);
-    virtual bool runOnFunction(Function &F);
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
+    bool doInitialization(Module &M) override;
+    bool runOnFunction(Function &F) override;
 
   public:
     static char ID;

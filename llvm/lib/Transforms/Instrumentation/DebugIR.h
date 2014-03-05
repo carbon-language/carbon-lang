@@ -43,7 +43,7 @@ class DebugIR : public llvm::ModulePass {
 public:
   static char ID;
 
-  const char *getPassName() const { return "DebugIR"; }
+  const char *getPassName() const override { return "DebugIR"; }
 
   /// Generate a file on disk to be displayed in a debugger. If Filename and
   /// Directory are empty, a temporary path will be generated.
@@ -62,7 +62,7 @@ public:
 
   /// Run pass on M and set Path to the source file path in the output module.
   bool runOnModule(llvm::Module &M, std::string &Path);
-  bool runOnModule(llvm::Module &M);
+  bool runOnModule(llvm::Module &M) override;
 
 private:
 

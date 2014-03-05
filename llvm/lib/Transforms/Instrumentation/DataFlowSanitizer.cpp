@@ -213,8 +213,8 @@ class DataFlowSanitizer : public ModulePass {
   DataFlowSanitizer(StringRef ABIListFile = StringRef(),
                     void *(*getArgTLS)() = 0, void *(*getRetValTLS)() = 0);
   static char ID;
-  bool doInitialization(Module &M);
-  bool runOnModule(Module &M);
+  bool doInitialization(Module &M) override;
+  bool runOnModule(Module &M) override;
 };
 
 struct DFSanFunction {

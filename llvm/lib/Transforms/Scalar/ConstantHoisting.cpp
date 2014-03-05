@@ -86,11 +86,11 @@ public:
     initializeConstantHoistingPass(*PassRegistry::getPassRegistry());
   }
 
-  bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
-  const char *getPassName() const { return "Constant Hoisting"; }
+  const char *getPassName() const override { return "Constant Hoisting"; }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<TargetTransformInfo>();

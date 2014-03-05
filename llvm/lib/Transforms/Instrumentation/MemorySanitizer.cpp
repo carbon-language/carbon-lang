@@ -211,9 +211,9 @@ class MemorySanitizer : public FunctionPass {
         WarningFn(0),
         BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile : BlacklistFile),
         WrapIndirectCalls(!ClWrapIndirectCalls.empty()) {}
-  const char *getPassName() const { return "MemorySanitizer"; }
-  bool runOnFunction(Function &F);
-  bool doInitialization(Module &M);
+  const char *getPassName() const override { return "MemorySanitizer"; }
+  bool runOnFunction(Function &F) override;
+  bool doInitialization(Module &M) override;
   static char ID;  // Pass identification, replacement for typeid.
 
  private:
@@ -2321,7 +2321,7 @@ struct VarArgAMD64Helper : public VarArgHelper {
   // would have been to associate each live instance of va_list with a copy of
   // MSanParamTLS, and extract shadow on va_arg() call in the argument list
   // order.
-  void visitCallSite(CallSite &CS, IRBuilder<> &IRB) {
+  void visitCallSite(CallSite &CS, IRBuilder<> &IRB) override {
     unsigned GpOffset = 0;
     unsigned FpOffset = AMD64GpEndOffset;
     unsigned OverflowOffset = AMD64FpEndOffset;
@@ -2364,7 +2364,7 @@ struct VarArgAMD64Helper : public VarArgHelper {
                               "_msarg");
   }
 
-  void visitVAStartInst(VAStartInst &I) {
+  void visitVAStartInst(VAStartInst &I) override {
     IRBuilder<> IRB(&I);
     VAStartInstrumentationList.push_back(&I);
     Value *VAListTag = I.getArgOperand(0);
@@ -2376,7 +2376,7 @@ struct VarArgAMD64Helper : public VarArgHelper {
                      /* size */24, /* alignment */8, false);
   }
 
-  void visitVACopyInst(VACopyInst &I) {
+  void visitVACopyInst(VACopyInst &I) override {
     IRBuilder<> IRB(&I);
     Value *VAListTag = I.getArgOperand(0);
     Value *ShadowPtr = MSV.getShadowPtr(VAListTag, IRB.getInt8Ty(), IRB);
@@ -2387,7 +2387,7 @@ struct VarArgAMD64Helper : public VarArgHelper {
                      /* size */24, /* alignment */8, false);
   }
 
-  void finalizeInstrumentation() {
+  void finalizeInstrumentation() override {
     assert(!VAArgOverflowSize && !VAArgTLSCopy &&
            "finalizeInstrumentation called twice");
     if (!VAStartInstrumentationList.empty()) {
@@ -2439,13 +2439,13 @@ struct VarArgNoOpHelper : public VarArgHelper {
   VarArgNoOpHelper(Function &F, MemorySanitizer &MS,
                    MemorySanitizerVisitor &MSV) {}
 
-  void visitCallSite(CallSite &CS, IRBuilder<> &IRB) {}
+  void visitCallSite(CallSite &CS, IRBuilder<> &IRB) override {}
 
-  void visitVAStartInst(VAStartInst &I) {}
+  void visitVAStartInst(VAStartInst &I) override {}
 
-  void visitVACopyInst(VACopyInst &I) {}
+  void visitVACopyInst(VACopyInst &I) override {}
 
-  void finalizeInstrumentation() {}
+  void finalizeInstrumentation() override {}
 };
 
 VarArgHelper *CreateVarArgHelper(Function &Func, MemorySanitizer &Msan,

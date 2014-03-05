@@ -60,9 +60,9 @@ namespace {
     explicit InternalizePass(bool OnlyHidden = false);
     explicit InternalizePass(ArrayRef<const char *> ExportList, bool OnlyHidden);
     void LoadFile(const char *Filename);
-    virtual bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addPreserved<CallGraphWrapperPass>();
     }

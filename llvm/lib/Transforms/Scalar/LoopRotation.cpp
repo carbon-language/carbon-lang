@@ -44,7 +44,7 @@ namespace {
     }
 
     // LCSSA form makes instruction renaming easier.
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();
@@ -56,7 +56,7 @@ namespace {
       AU.addRequired<TargetTransformInfo>();
     }
 
-    bool runOnLoop(Loop *L, LPPassManager &LPM);
+    bool runOnLoop(Loop *L, LPPassManager &LPM) override;
     bool simplifyLoopLatch(Loop *L);
     bool rotateLoop(Loop *L, bool SimplifiedLatch);
 

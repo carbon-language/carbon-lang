@@ -561,7 +561,7 @@ public:
     initializeMergeFunctionsPass(*PassRegistry::getPassRegistry());
   }
 
-  bool runOnModule(Module &M);
+  bool runOnModule(Module &M) override;
 
 private:
   typedef DenseSet<ComparableFunction> FnSetType;

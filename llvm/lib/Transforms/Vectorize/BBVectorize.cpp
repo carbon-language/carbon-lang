@@ -431,7 +431,7 @@ namespace {
       return changed;
     }
 
-    virtual bool runOnBasicBlock(BasicBlock &BB) {
+    bool runOnBasicBlock(BasicBlock &BB) override {
       // OptimizeNone check deferred to vectorizeBB().
 
       AA = &getAnalysis<AliasAnalysis>();
@@ -444,7 +444,7 @@ namespace {
       return vectorizeBB(BB);
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       BasicBlockPass::getAnalysisUsage(AU);
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<DominatorTreeWrapperPass>();

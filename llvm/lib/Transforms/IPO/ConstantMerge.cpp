@@ -42,7 +42,7 @@ namespace {
 
     // For this pass, process all of the globals in the module, eliminating
     // duplicate constants.
-    bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
     // Return true iff we can determine the alignment of this global variable.
     bool hasKnownAlignment(GlobalVariable *GV) const;

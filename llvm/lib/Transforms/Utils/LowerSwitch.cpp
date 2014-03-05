@@ -37,9 +37,9 @@ namespace {
       initializeLowerSwitchPass(*PassRegistry::getPassRegistry());
     } 
 
-    virtual bool runOnFunction(Function &F);
-    
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    bool runOnFunction(Function &F) override;
+
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       // This is a cluster of orthogonal Transforms
       AU.addPreserved<UnifyFunctionExitNodes>();
       AU.addPreserved("mem2reg");

@@ -89,9 +89,9 @@ namespace {
       initializeTailCallElimPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-    virtual bool runOnFunction(Function &F);
+    bool runOnFunction(Function &F) override;
 
   private:
     CallInst *FindTRECandidate(Instruction *I,

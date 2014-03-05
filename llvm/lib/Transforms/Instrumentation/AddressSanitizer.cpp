@@ -301,7 +301,7 @@ struct AddressSanitizer : public FunctionPass {
         CheckLifetime(CheckLifetime || ClCheckLifetime),
         BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
                                             : BlacklistFile) {}
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "AddressSanitizerFunctionPass";
   }
   void instrumentMop(Instruction *I);
@@ -319,9 +319,9 @@ struct AddressSanitizer : public FunctionPass {
                                    Value *Size,
                                    Instruction *InsertBefore, bool IsWrite);
   Value *memToShadow(Value *Shadow, IRBuilder<> &IRB);
-  bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
   bool maybeInsertAsanInitAtFunctionEntry(Function &F);
-  virtual bool doInitialization(Module &M);
+  bool doInitialization(Module &M) override;
   static char ID;  // Pass identification, replacement for typeid
 
  private:
@@ -368,9 +368,9 @@ class AddressSanitizerModule : public ModulePass {
         CheckInitOrder(CheckInitOrder || ClInitializers),
         BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
                                             : BlacklistFile) {}
-  bool runOnModule(Module &M);
+  bool runOnModule(Module &M) override;
   static char ID;  // Pass identification, replacement for typeid
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "AddressSanitizerModule";
   }
 

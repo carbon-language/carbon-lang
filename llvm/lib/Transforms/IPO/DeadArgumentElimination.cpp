@@ -138,7 +138,7 @@ namespace {
       initializeDAEPass(*PassRegistry::getPassRegistry());
     }
 
-    bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
     virtual bool ShouldHackArguments() const { return false; }
 
@@ -173,7 +173,7 @@ namespace {
     static char ID;
     DAH() : DAE(ID) {}
 
-    virtual bool ShouldHackArguments() const { return true; }
+    bool ShouldHackArguments() const override { return true; }
   };
 }
 

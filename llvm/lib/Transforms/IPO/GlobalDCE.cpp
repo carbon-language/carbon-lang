@@ -38,7 +38,7 @@ namespace {
     // run - Do the GlobalDCE pass on the specified module, optionally updating
     // the specified callgraph to reflect the changes.
     //
-    bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
   private:
     SmallPtrSet<GlobalValue*, 32> AliveGlobals;

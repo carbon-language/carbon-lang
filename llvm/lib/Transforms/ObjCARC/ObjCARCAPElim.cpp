@@ -37,8 +37,8 @@ using namespace llvm::objcarc;
 namespace {
   /// \brief Autorelease pool elimination.
   class ObjCARCAPElim : public ModulePass {
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual bool runOnModule(Module &M);
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
+    bool runOnModule(Module &M) override;
 
     static bool MayAutorelease(ImmutableCallSite CS, unsigned Depth = 0);
     static bool OptimizeBB(BasicBlock *BB);

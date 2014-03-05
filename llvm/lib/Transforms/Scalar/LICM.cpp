@@ -77,12 +77,12 @@ namespace {
       initializeLICMPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
+    bool runOnLoop(Loop *L, LPPassManager &LPM) override;
 
     /// This transformation requires natural loop information & requires that
     /// loop preheaders be inserted into the CFG...
     ///
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<LoopInfo>();
@@ -98,7 +98,7 @@ namespace {
 
     using llvm::Pass::doFinalization;
 
-    bool doFinalization() {
+    bool doFinalization() override {
       assert(LoopToAliasSetMap.empty() && "Didn't free loop alias sets");
       return false;
     }
@@ -122,11 +122,12 @@ namespace {
     DenseMap<Loop*, AliasSetTracker*> LoopToAliasSetMap;
 
     /// cloneBasicBlockAnalysis - Simple Analysis hook. Clone alias set info.
-    void cloneBasicBlockAnalysis(BasicBlock *From, BasicBlock *To, Loop *L);
+    void cloneBasicBlockAnalysis(BasicBlock *From, BasicBlock *To,
+                                 Loop *L) override;
 
     /// deleteAnalysisValue - Simple Analysis hook. Delete value V from alias
     /// set.
-    void deleteAnalysisValue(Value *V, Loop *L);
+    void deleteAnalysisValue(Value *V, Loop *L) override;
 
     /// SinkRegion - Walk the specified region of the CFG (defined by all blocks
     /// dominated by the specified block, and that are in the current loop) in
@@ -694,8 +695,8 @@ namespace {
           LoopExitBlocks(LEB), LoopInsertPts(LIP), PredCache(PIC), AST(ast),
           LI(li), DL(dl), Alignment(alignment), TBAATag(TBAATag) {}
 
-    virtual bool isInstInList(Instruction *I,
-                              const SmallVectorImpl<Instruction*> &) const {
+    bool isInstInList(Instruction *I,
+                      const SmallVectorImpl<Instruction*> &) const override {
       Value *Ptr;
       if (LoadInst *LI = dyn_cast<LoadInst>(I))
         Ptr = LI->getOperand(0);
@@ -704,7 +705,7 @@ namespace {
       return PointerMustAliases.count(Ptr);
     }
 
-    virtual void doExtraRewritesBeforeFinalDeletion() const {
+    void doExtraRewritesBeforeFinalDeletion() const override {
       // Insert stores after in the loop exit blocks.  Each exit block gets a
       // store of the live-out values that feed them.  Since we've already told
       // the SSA updater about the defs in the loop and the preheader
@@ -722,11 +723,11 @@ namespace {
       }
     }
 
-    virtual void replaceLoadWithValue(LoadInst *LI, Value *V) const {
+    void replaceLoadWithValue(LoadInst *LI, Value *V) const override {
       // Update alias analysis.
       AST.copyValue(LI, V);
     }
-    virtual void instructionDeleted(Instruction *I) const {
+    void instructionDeleted(Instruction *I) const override {
       AST.deleteValue(I);
     }
   };

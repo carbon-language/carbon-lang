@@ -125,9 +125,9 @@ namespace {
       initializeLoopRerollPass(*PassRegistry::getPassRegistry());
     }
 
-    bool runOnLoop(Loop *L, LPPassManager &LPM);
+    bool runOnLoop(Loop *L, LPPassManager &LPM) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<LoopInfo>();
       AU.addPreserved<LoopInfo>();

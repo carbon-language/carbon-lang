@@ -743,9 +743,9 @@ namespace {
     LoopInfo *LI;
     ScalarEvolution *SE;
 
-    virtual bool runOnFunction(Function &F);
+    bool runOnFunction(Function &F) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       // We need loop information to identify the loops...
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addPreserved<DominatorTreeWrapperPass>();
@@ -760,7 +760,7 @@ namespace {
     }
 
     /// verifyAnalysis() - Verify LoopSimplifyForm's guarantees.
-    void verifyAnalysis() const;
+    void verifyAnalysis() const override;
 
   private:
     bool ProcessLoop(Loop *L);

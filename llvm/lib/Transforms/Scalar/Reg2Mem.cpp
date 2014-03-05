@@ -40,7 +40,7 @@ namespace {
       initializeRegToMemPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequiredID(BreakCriticalEdgesID);
       AU.addPreservedID(BreakCriticalEdgesID);
     }
@@ -56,7 +56,7 @@ namespace {
       return false;
     }
 
-    virtual bool runOnFunction(Function &F);
+    bool runOnFunction(Function &F) override;
   };
 }
 

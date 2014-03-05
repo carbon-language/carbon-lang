@@ -1499,7 +1499,7 @@ namespace {
   /// Sparse Conditional Constant Propagator.
   ///
   struct SCCP : public FunctionPass {
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<TargetLibraryInfo>();
     }
     static char ID; // Pass identification, replacement for typeid
@@ -1510,7 +1510,7 @@ namespace {
     // runOnFunction - Run the Sparse Conditional Constant Propagation
     // algorithm, and return true if the function was modified.
     //
-    bool runOnFunction(Function &F);
+    bool runOnFunction(Function &F) override;
   };
 } // end anonymous namespace
 
@@ -1632,14 +1632,14 @@ namespace {
   /// Constant Propagation.
   ///
   struct IPSCCP : public ModulePass {
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<TargetLibraryInfo>();
     }
     static char ID;
     IPSCCP() : ModulePass(ID) {
       initializeIPSCCPPass(*PassRegistry::getPassRegistry());
     }
-    bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
   };
 } // end anonymous namespace
 

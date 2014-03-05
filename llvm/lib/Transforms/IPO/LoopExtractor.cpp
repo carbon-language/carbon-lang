@@ -42,9 +42,9 @@ namespace {
         initializeLoopExtractorPass(*PassRegistry::getPassRegistry());
       }
 
-    virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
+    bool runOnLoop(Loop *L, LPPassManager &LPM) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequiredID(BreakCriticalEdgesID);
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<DominatorTreeWrapperPass>();
@@ -180,7 +180,7 @@ namespace {
         LoadFile(BlockFile.c_str());
     }
 
-    bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
   };
 }
 

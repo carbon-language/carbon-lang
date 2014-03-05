@@ -48,12 +48,12 @@ public:
 
   static char ID; // Pass identification, replacement for typeid
 
-  InlineCost getInlineCost(CallSite CS) {
+  InlineCost getInlineCost(CallSite CS) override {
     return ICA->getInlineCost(CS, getInlineThreshold(CS));
   }
 
-  virtual bool runOnSCC(CallGraphSCC &SCC);
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  bool runOnSCC(CallGraphSCC &SCC) override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
 } // end anonymous namespace

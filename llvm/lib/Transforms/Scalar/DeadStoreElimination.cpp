@@ -53,7 +53,7 @@ namespace {
       initializeDSEPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnFunction(Function &F) {
+    bool runOnFunction(Function &F) override {
       if (skipOptnoneFunction(F))
         return false;
 
@@ -79,7 +79,7 @@ namespace {
     void RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
                                SmallSetVector<Value*, 16> &DeadStackObjects);
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<AliasAnalysis>();

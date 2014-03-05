@@ -28,14 +28,14 @@ STATISTIC(NumPartialInlined, "Number of functions partially inlined");
 
 namespace {
   struct PartialInliner : public ModulePass {
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const { }
+    void getAnalysisUsage(AnalysisUsage &AU) const override { }
     static char ID; // Pass identification, replacement for typeid
     PartialInliner() : ModulePass(ID) {
       initializePartialInlinerPass(*PassRegistry::getPassRegistry());
     }
-    
-    bool runOnModule(Module& M);
-    
+
+    bool runOnModule(Module& M) override;
+
   private:
     Function* unswitchFunction(Function* F);
   };

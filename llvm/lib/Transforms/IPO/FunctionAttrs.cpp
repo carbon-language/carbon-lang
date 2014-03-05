@@ -51,7 +51,7 @@ namespace {
     }
 
     // runOnSCC - Analyze the SCC, performing the transformation if possible.
-    bool runOnSCC(CallGraphSCC &SCC);
+    bool runOnSCC(CallGraphSCC &SCC) override;
 
     // AddReadAttrs - Deduce readonly/readnone attributes for the SCC.
     bool AddReadAttrs(const CallGraphSCC &SCC);
@@ -120,7 +120,7 @@ namespace {
     // call declarations.
     bool annotateLibraryCalls(const CallGraphSCC &SCC);
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<TargetLibraryInfo>();
@@ -342,9 +342,9 @@ namespace {
     ArgumentUsesTracker(const SmallPtrSet<Function*, 8> &SCCNodes)
       : Captured(false), SCCNodes(SCCNodes) {}
 
-    void tooManyUses() { Captured = true; }
+    void tooManyUses() override { Captured = true; }
 
-    bool captured(Use *U) {
+    bool captured(Use *U) override {
       CallSite CS(U->getUser());
       if (!CS.getInstruction()) { Captured = true; return true; }
 

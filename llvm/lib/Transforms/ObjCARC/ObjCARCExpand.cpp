@@ -50,9 +50,9 @@ using namespace llvm::objcarc;
 namespace {
   /// \brief Early ARC transformations.
   class ObjCARCExpand : public FunctionPass {
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual bool doInitialization(Module &M);
-    virtual bool runOnFunction(Function &F);
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
+    bool doInitialization(Module &M) override;
+    bool runOnFunction(Function &F) override;
 
     /// A flag indicating whether this optimization pass should run.
     bool Run;

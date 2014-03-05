@@ -315,11 +315,11 @@ namespace {
       DL = 0;
     }
 
-    bool runOnFunction(Function &F);
+    bool runOnFunction(Function &F) override;
 
   private:
     // This transformation requires dominator postdominator info
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<MemoryDependenceAnalysis>();

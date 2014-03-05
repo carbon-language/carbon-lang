@@ -244,15 +244,15 @@ public:
     initializeSampleProfileLoaderPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual bool doInitialization(Module &M);
+  bool doInitialization(Module &M) override;
 
   void dump() { Profiler->dump(); }
 
-  virtual const char *getPassName() const { return "Sample profile pass"; }
+  const char *getPassName() const override { return "Sample profile pass"; }
 
-  virtual bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     AU.addRequired<LoopInfo>();
     AU.addRequired<DominatorTreeWrapperPass>();

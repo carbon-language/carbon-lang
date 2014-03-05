@@ -80,10 +80,10 @@ namespace {
         useExpensiveEHSupport(useExpensiveEHSupport) {
       initializeLowerInvokePass(*PassRegistry::getPassRegistry());
     }
-    bool doInitialization(Module &M);
-    bool runOnFunction(Function &F);
+    bool doInitialization(Module &M) override;
+    bool runOnFunction(Function &F) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       // This is a cluster of orthogonal Transforms
       AU.addPreserved("mem2reg");
       AU.addPreservedID(LowerSwitchID);
