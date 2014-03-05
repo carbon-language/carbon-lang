@@ -6,7 +6,7 @@
 ; CHECK-NEXT:  __LLVM_StackMaps:
 ; CHECK-NEXT:   .long 0
 ; Num Functions
-; CHECK-NEXT:   .long 14
+; CHECK-NEXT:   .long 15
 ; CHECK-NEXT:   .long _constantargs
 ; CHECK-NEXT:   .long 8
 ; CHECK-NEXT:   .long _osrinline
@@ -35,13 +35,15 @@
 ; CHECK-NEXT:   .long 56
 ; CHECK-NEXT:   .long _longid
 ; CHECK-NEXT:   .long 8
+; CHECK-NEXT:   .long _clobberScratch
+; CHECK-NEXT:   .long 56
 ; Num LargeConstants
 ; CHECK-NEXT:   .long   3
 ; CHECK-NEXT:   .quad   2147483648
 ; CHECK-NEXT:   .quad   4294967295
 ; CHECK-NEXT:   .quad   4294967296
 ; Num Callsites
-; CHECK-NEXT:   .long   18
+; CHECK-NEXT:   .long   19
 
 ; Constant arguments
 ;
@@ -433,6 +435,24 @@ entry:
   tail call void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 4294967296, i32 0, i8* null, i32 0)
   tail call void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 9223372036854775807, i32 0, i8* null, i32 0)
   tail call void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 -1, i32 0, i8* null, i32 0)
+  ret void
+}
+
+; Map a value when R11 is the only free register.
+; The scratch register should not be used for a live stackmap value.
+;
+; CHECK-LABEL:  .long L{{.*}}-_clobberScratch
+; CHECK-NEXT:   .short 0
+; 1 location
+; CHECK-NEXT:   .short 1
+; Loc 0: Indirect fp - offset
+; CHECK-NEXT:   .byte   3
+; CHECK-NEXT:   .byte   4
+; CHECK-NEXT:   .short  6
+; CHECK-NEXT:   .long   -{{[0-9]+}}
+define void @clobberScratch(i32 %a) {
+  tail call void asm sideeffect "nop", "~{ax},~{bx},~{cx},~{dx},~{bp},~{si},~{di},~{r8},~{r9},~{r10},~{r12},~{r13},~{r14},~{r15}"() nounwind
+  tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 16, i32 8, i32 %a)
   ret void
 }
 
