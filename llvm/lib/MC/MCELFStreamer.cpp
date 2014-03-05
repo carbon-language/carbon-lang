@@ -38,7 +38,7 @@ using namespace llvm;
 MCELFStreamer::~MCELFStreamer() {
 }
 
-void MCELFStreamer::InitSections(bool Force) {
+void MCELFStreamer::InitSections() {
   // This emulates the same behavior of GNU as. This makes it easier
   // to compare the output as the major sections are in the same order.
   SwitchSection(getContext().getObjectFileInfo()->getTextSection());

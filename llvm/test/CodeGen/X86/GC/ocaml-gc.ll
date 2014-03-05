@@ -1,8 +1,10 @@
 ; RUN: llc < %s -mtriple=x86_64-linux-gnu | FileCheck %s
 
-define i32 @main(i32 %x) nounwind gc "ocaml" {
 ; CHECK:        .text
-; CHECK-NEXT:   .globl "caml<stdin>__code_begin"
+; CHECK-NEXT:   .file   "<stdin>"
+
+define i32 @main(i32 %x) nounwind gc "ocaml" {
+; CHECK:   .globl "caml<stdin>__code_begin"
 ; CHECK-NEXT: "caml<stdin>__code_begin":
 ; CHECK-NEXT:   .data
 ; CHECK-NEXT:   .globl  "caml<stdin>__data_begin"

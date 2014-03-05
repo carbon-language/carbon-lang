@@ -44,7 +44,7 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  virtual void InitSections(bool Force);
+  virtual void InitSections();
   virtual void ChangeSection(const MCSection *Section,
                              const MCExpr *Subsection);
   virtual void EmitLabel(MCSymbol *Symbol);

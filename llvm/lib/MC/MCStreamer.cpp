@@ -205,7 +205,7 @@ void MCStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
                                      MCSymbol *EHSymbol) {
 }
 
-void MCStreamer::InitSections(bool Force) {
+void MCStreamer::InitSections() {
   SwitchSection(getContext().getObjectFileInfo()->getTextSection());
 }
 

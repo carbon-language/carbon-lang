@@ -352,10 +352,7 @@ public:
   }
 
   /// Create the default sections and set the initial one.
-  ///
-  /// @param Force - If false, a text streamer implementation can be a nop.
-  /// Used by CodeGen to avoid starting every file with '.text'.
-  virtual void InitSections(bool Force = true);
+  virtual void InitSections();
 
   /// AssignSection - Sets the symbol's section.
   ///
