@@ -785,7 +785,7 @@ static void performWriteOperation(ArchiveOperation Operation,
       object::Archive::child_iterator OldMember = Member.getOld();
       failIfError(OldMember->getMemoryBuffer(MemberBuffer));
     }
-    MemberBuffers[I] = MemberBuffer.take();
+    MemberBuffers[I] = MemberBuffer.release();
   }
 
   if (Symtab) {
@@ -947,7 +947,7 @@ static int performOperation(ArchiveOperation Operation) {
   }
 
   if (!EC) {
-    object::Archive Archive(Buf.take(), EC);
+    object::Archive Archive(Buf.release(), EC);
 
     if (EC) {
       errs() << ToolName << ": error loading '" << ArchiveName

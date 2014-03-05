@@ -67,7 +67,7 @@ size_t SourceMgr::AddIncludeFile(const std::string &Filename,
 
   if (!NewBuf) return ~0U;
 
-  return AddNewSourceBuffer(NewBuf.take(), IncludeLoc);
+  return AddNewSourceBuffer(NewBuf.release(), IncludeLoc);
 }
 
 

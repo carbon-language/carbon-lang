@@ -98,7 +98,7 @@ MachOUniversalBinary::create(MemoryBuffer *Source) {
   OwningPtr<MachOUniversalBinary> Ret(new MachOUniversalBinary(Source, EC));
   if (EC)
     return EC;
-  return Ret.take();
+  return Ret.release();
 }
 
 MachOUniversalBinary::MachOUniversalBinary(MemoryBuffer *Source,

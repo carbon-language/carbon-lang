@@ -88,7 +88,7 @@ int TableGenMain(char *argv0, TableGenMainFn *MainFn) {
            << ec.message() <<"\n";
     return 1;
   }
-  MemoryBuffer *F = File.take();
+  MemoryBuffer *F = File.release();
 
   // Tell SrcMgr about this buffer, which is what TGParser will pick up.
   SrcMgr.AddNewSourceBuffer(F, SMLoc());

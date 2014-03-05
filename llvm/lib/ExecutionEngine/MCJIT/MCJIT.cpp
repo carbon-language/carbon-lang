@@ -168,7 +168,7 @@ ObjectBufferStream* MCJIT::emitObject(Module *M) {
     ObjCache->notifyObjectCompiled(M, MB.get());
   }
 
-  return CompiledObject.take();
+  return CompiledObject.release();
 }
 
 void MCJIT::generateCodeForModule(Module *M) {
@@ -188,7 +188,7 @@ void MCJIT::generateCodeForModule(Module *M) {
   if (0 != ObjCache) {
     OwningPtr<MemoryBuffer> PreCompiledObject(ObjCache->getObject(M));
     if (0 != PreCompiledObject.get())
-      ObjectToLoad.reset(new ObjectBuffer(PreCompiledObject.take()));
+      ObjectToLoad.reset(new ObjectBuffer(PreCompiledObject.release()));
   }
 
   // If the cache did not contain a suitable object, compile the object
@@ -199,7 +199,7 @@ void MCJIT::generateCodeForModule(Module *M) {
 
   // Load the object into the dynamic linker.
   // MCJIT now owns the ObjectImage pointer (via its LoadedObjects list).
-  ObjectImage *LoadedObject = Dyld.loadObject(ObjectToLoad.take());
+  ObjectImage *LoadedObject = Dyld.loadObject(ObjectToLoad.release());
   LoadedObjects.push_back(LoadedObject);
   if (!LoadedObject)
     report_fatal_error(Dyld.getErrorString());
@@ -308,7 +308,7 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
       // FIXME: Support nested archives?
       if (!ChildIt->getAsBinary(ChildBin) && ChildBin->isObject()) {
         object::ObjectFile *OF = reinterpret_cast<object::ObjectFile *>(
-                                                            ChildBin.take());
+                                                            ChildBin.release());
         // This causes the object file to be loaded.
         addObjectFile(OF);
         // The address should be here now.

@@ -98,7 +98,7 @@ public:
   Matcher *getNext() { return Next.get(); }
   const Matcher *getNext() const { return Next.get(); }
   void setNext(Matcher *C) { Next.reset(C); }
-  Matcher *takeNext() { return Next.take(); }
+  Matcher *takeNext() { return Next.release(); }
 
   OwningPtr<Matcher> &getNextPtr() { return Next; }
 

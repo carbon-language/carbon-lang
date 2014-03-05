@@ -308,7 +308,7 @@ void DWARFContext::parseCompileUnits() {
     if (!CU->extract(DIData, &offset)) {
       break;
     }
-    CUs.push_back(CU.take());
+    CUs.push_back(CU.release());
     offset = CUs.back()->getNextUnitOffset();
   }
 }
@@ -327,7 +327,7 @@ void DWARFContext::parseTypeUnits() {
           &I->second.Relocs, isLittleEndian()));
       if (!TU->extract(DIData, &offset))
         break;
-      TUs.push_back(TU.take());
+      TUs.push_back(TU.release());
       offset = TUs.back()->getNextUnitOffset();
     }
   }
@@ -346,7 +346,7 @@ void DWARFContext::parseDWOCompileUnits() {
     if (!DWOCU->extract(DIData, &offset)) {
       break;
     }
-    DWOCUs.push_back(DWOCU.take());
+    DWOCUs.push_back(DWOCU.release());
     offset = DWOCUs.back()->getNextUnitOffset();
   }
 }
@@ -366,7 +366,7 @@ void DWARFContext::parseDWOTypeUnits() {
           isLittleEndian()));
       if (!TU->extract(DIData, &offset))
         break;
-      DWOTUs.push_back(TU.take());
+      DWOTUs.push_back(TU.release());
       offset = DWOTUs.back()->getNextUnitOffset();
     }
   }
@@ -636,7 +636,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
       // Make data point to uncompressed section contents and save its contents.
       name = name.substr(1);
       data = UncompressedSection->getBuffer();
-      UncompressedSections.push_back(UncompressedSection.take());
+      UncompressedSections.push_back(UncompressedSection.release());
     }
 
     StringRef *Section =

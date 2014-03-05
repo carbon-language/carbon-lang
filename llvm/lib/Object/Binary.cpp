@@ -48,7 +48,7 @@ ErrorOr<Binary *> object::createBinary(MemoryBuffer *Source,
 
   switch (Type) {
     case sys::fs::file_magic::archive:
-      return Archive::create(scopedSource.take());
+      return Archive::create(scopedSource.release());
     case sys::fs::file_magic::elf_relocatable:
     case sys::fs::file_magic::elf_executable:
     case sys::fs::file_magic::elf_shared_object:
@@ -67,10 +67,10 @@ ErrorOr<Binary *> object::createBinary(MemoryBuffer *Source,
     case sys::fs::file_magic::coff_import_library:
     case sys::fs::file_magic::pecoff_executable:
     case sys::fs::file_magic::bitcode:
-      return ObjectFile::createSymbolicFile(scopedSource.take(), true, Type,
+      return ObjectFile::createSymbolicFile(scopedSource.release(), true, Type,
                                             Context);
     case sys::fs::file_magic::macho_universal_binary:
-      return MachOUniversalBinary::create(scopedSource.take());
+      return MachOUniversalBinary::create(scopedSource.release());
     case sys::fs::file_magic::unknown:
     case sys::fs::file_magic::windows_resource:
       // Unrecognized object file format.
@@ -83,5 +83,5 @@ ErrorOr<Binary *> object::createBinary(StringRef Path) {
   OwningPtr<MemoryBuffer> File;
   if (error_code EC = MemoryBuffer::getFileOrSTDIN(Path, File))
     return EC;
-  return createBinary(File.take());
+  return createBinary(File.release());
 }

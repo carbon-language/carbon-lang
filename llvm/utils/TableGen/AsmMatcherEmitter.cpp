@@ -1366,7 +1366,7 @@ void AsmMatcherInfo::buildInfo() {
           StringRef(II->TheDef->getName()).endswith("_Int"))
         continue;
 
-      Matchables.push_back(II.take());
+      Matchables.push_back(II.release());
     }
 
     // Parse all of the InstAlias definitions and stick them in the list of
@@ -1390,7 +1390,7 @@ void AsmMatcherInfo::buildInfo() {
       // Validate the alias definitions.
       II->validate(CommentDelimiter, false);
 
-      Matchables.push_back(II.take());
+      Matchables.push_back(II.release());
     }
   }
 
@@ -1461,7 +1461,7 @@ void AsmMatcherInfo::buildInfo() {
         AliasII->formTwoOperandAlias(Constraint);
 
         // Add the alias to the matchables list.
-        NewMatchables.push_back(AliasII.take());
+        NewMatchables.push_back(AliasII.release());
       }
     } else
       II->buildAliasResultOperands();

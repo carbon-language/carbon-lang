@@ -209,7 +209,7 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
   }
 
   OwningPtr<MachOObjectFile> MachOOF(static_cast<MachOObjectFile *>(
-      ObjectFile::createMachOObjectFile(Buff.take()).get()));
+      ObjectFile::createMachOObjectFile(Buff.release()).get()));
 
   DisassembleInputMachO2(Filename, MachOOF.get());
 }
@@ -297,7 +297,7 @@ static void DisassembleInputMachO2(StringRef Filename,
         errs() << "llvm-objdump: " << Filename << ": " << ec.message() << '\n';
         return;
       }
-      DbgObj = ObjectFile::createMachOObjectFile(Buf.take()).get();
+      DbgObj = ObjectFile::createMachOObjectFile(Buf.release()).get();
     }
 
     // Setup the DIContext

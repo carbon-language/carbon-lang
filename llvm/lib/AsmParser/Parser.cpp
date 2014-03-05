@@ -37,7 +37,7 @@ Module *llvm::ParseAssembly(MemoryBuffer *F,
   OwningPtr<Module> M2(new Module(F->getBufferIdentifier(), Context));
   if (LLParser(F, SM, Err, M2.get()).Run())
     return 0;
-  return M2.take();
+  return M2.release();
 }
 
 Module *llvm::ParseAssemblyFile(const std::string &Filename, SMDiagnostic &Err,
@@ -49,7 +49,7 @@ Module *llvm::ParseAssemblyFile(const std::string &Filename, SMDiagnostic &Err,
     return 0;
   }
 
-  return ParseAssembly(File.take(), 0, Err, Context);
+  return ParseAssembly(File.release(), 0, Err, Context);
 }
 
 Module *llvm::ParseAssemblyString(const char *AsmString, Module *M,

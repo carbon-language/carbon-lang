@@ -2539,7 +2539,7 @@ LLVMBool LLVMCreateMemoryBufferWithContentsOfFile(
   OwningPtr<MemoryBuffer> MB;
   error_code ec;
   if (!(ec = MemoryBuffer::getFile(Path, MB))) {
-    *OutMemBuf = wrap(MB.take());
+    *OutMemBuf = wrap(MB.release());
     return 0;
   }
 
@@ -2552,7 +2552,7 @@ LLVMBool LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
   OwningPtr<MemoryBuffer> MB;
   error_code ec;
   if (!(ec = MemoryBuffer::getSTDIN(MB))) {
-    *OutMemBuf = wrap(MB.take());
+    *OutMemBuf = wrap(MB.release());
     return 0;
   }
 

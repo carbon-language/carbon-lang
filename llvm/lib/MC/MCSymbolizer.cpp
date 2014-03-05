@@ -13,7 +13,7 @@
 using namespace llvm;
 
 MCSymbolizer::MCSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo)
-  : Ctx(Ctx), RelInfo(RelInfo.take()) {
+  : Ctx(Ctx), RelInfo(RelInfo.release()) {
 }
 
 MCSymbolizer::~MCSymbolizer() {

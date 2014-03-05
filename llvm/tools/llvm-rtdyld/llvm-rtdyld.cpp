@@ -140,7 +140,7 @@ static int printLineInfoForInput() {
       return Error("unable to read input: '" + ec.message() + "'");
 
     // Load the object file
-    LoadedObject.reset(Dyld.loadObject(new ObjectBuffer(InputBuffer.take())));
+    LoadedObject.reset(Dyld.loadObject(new ObjectBuffer(InputBuffer.release())));
     if (!LoadedObject) {
       return Error(Dyld.getErrorString());
     }
@@ -198,7 +198,7 @@ static int executeInput() {
       return Error("unable to read input: '" + ec.message() + "'");
 
     // Load the object file
-    LoadedObject.reset(Dyld.loadObject(new ObjectBuffer(InputBuffer.take())));
+    LoadedObject.reset(Dyld.loadObject(new ObjectBuffer(InputBuffer.release())));
     if (!LoadedObject) {
       return Error(Dyld.getErrorString());
     }

@@ -486,12 +486,12 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
     if (UseMCJIT && ExecutionEngine::MCJITCtor) {
       ExecutionEngine *EE =
         ExecutionEngine::MCJITCtor(M, ErrorStr, MCJMM ? MCJMM : JMM,
-                                   AllocateGVsWithCode, TheTM.take());
+                                   AllocateGVsWithCode, TheTM.release());
       if (EE) return EE;
     } else if (ExecutionEngine::JITCtor) {
       ExecutionEngine *EE =
         ExecutionEngine::JITCtor(M, ErrorStr, JMM,
-                                 AllocateGVsWithCode, TheTM.take());
+                                 AllocateGVsWithCode, TheTM.release());
       if (EE) return EE;
     }
   }

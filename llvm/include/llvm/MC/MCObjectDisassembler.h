@@ -68,7 +68,7 @@ public:
   /// somewhere not accessible in the object file.
   /// This is used for dynamic disassembly (see RawMemoryObject).
   void setFallbackRegion(OwningPtr<MemoryObject> &Region) {
-    FallbackRegion.reset(Region.take());
+    FallbackRegion.reset(Region.release());
   }
 
   /// \brief Set the symbolizer to use to get information on external functions.

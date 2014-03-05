@@ -270,7 +270,7 @@ const void* LTOCodeGenerator::compile(size_t* length,
     sys::fs::remove(NativeObjectPath);
     return NULL;
   }
-  NativeObjectFile = BuffPtr.take();
+  NativeObjectFile = BuffPtr.release();
 
   // remove temp files
   sys::fs::remove(NativeObjectPath);

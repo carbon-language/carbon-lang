@@ -68,7 +68,7 @@ SpecialCaseList *SpecialCaseList::create(
   OwningPtr<SpecialCaseList> SCL(new SpecialCaseList());
   if (!SCL->parse(MB, Error))
     return 0;
-  return SCL.take();
+  return SCL.release();
 }
 
 SpecialCaseList *SpecialCaseList::createOrDie(const StringRef Path) {

@@ -1071,5 +1071,5 @@ ErrorOr<ObjectFile *> ObjectFile::createCOFFObjectFile(MemoryBuffer *Object,
   OwningPtr<COFFObjectFile> Ret(new COFFObjectFile(Object, EC, BufferOwned));
   if (EC)
     return EC;
-  return Ret.take();
+  return Ret.release();
 }

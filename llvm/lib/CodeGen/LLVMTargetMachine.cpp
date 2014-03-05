@@ -227,7 +227,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     return true;
 
   // If successful, createAsmPrinter took ownership of AsmStreamer.
-  AsmStreamer.take();
+  AsmStreamer.release();
 
   PM.add(Printer);
 
@@ -292,7 +292,7 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
     return true;
 
   // If successful, createAsmPrinter took ownership of AsmStreamer.
-  AsmStreamer.take();
+  AsmStreamer.release();
 
   PM.add(Printer);
 

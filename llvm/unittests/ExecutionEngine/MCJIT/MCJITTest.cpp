@@ -49,7 +49,7 @@ TEST_F(MCJITTest, global_variable) {
 
   int initialValue = 5;
   GlobalValue *Global = insertGlobalInt32(M.get(), "test_global", initialValue);
-  createJIT(M.take());
+  createJIT(M.release());
   void *globalPtr =  TheJIT->getPointerToGlobal(Global);
   EXPECT_TRUE(0 != globalPtr)
     << "Unable to get pointer to global value from JIT";
@@ -62,7 +62,7 @@ TEST_F(MCJITTest, add_function) {
   SKIP_UNSUPPORTED_PLATFORM;
 
   Function *F = insertAddFunction(M.get());
-  createJIT(M.take());
+  createJIT(M.release());
   uint64_t addPtr = TheJIT->getFunctionAddress(F->getName().str());
   EXPECT_TRUE(0 != addPtr)
     << "Unable to get pointer to function from JIT";
@@ -83,7 +83,7 @@ TEST_F(MCJITTest, run_main) {
 
   int rc = 6;
   Function *Main = insertMainFunction(M.get(), 6);
-  createJIT(M.take());
+  createJIT(M.release());
   uint64_t ptr = TheJIT->getFunctionAddress(Main->getName().str());
   EXPECT_TRUE(0 != ptr)
     << "Unable to get pointer to main() from JIT";
@@ -104,7 +104,7 @@ TEST_F(MCJITTest, return_global) {
   Value *ReadGlobal = Builder.CreateLoad(GV);
   endFunctionWithRet(ReturnGlobal, ReadGlobal);
 
-  createJIT(M.take());
+  createJIT(M.release());
   uint64_t rgvPtr = TheJIT->getFunctionAddress(ReturnGlobal->getName().str());
   EXPECT_TRUE(0 != rgvPtr);
 
@@ -175,7 +175,7 @@ TEST_F(MCJITTest, multiple_functions) {
     Inner = Outer;
   }
 
-  createJIT(M.take());
+  createJIT(M.release());
   uint64_t ptr = TheJIT->getFunctionAddress(Outer->getName().str());
   EXPECT_TRUE(0 != ptr)
     << "Unable to get pointer to outer function from JIT";

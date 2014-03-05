@@ -141,7 +141,7 @@ static void parseMCMarkup(StringRef Filename) {
     errs() << ToolName << ": " << ec.message() << '\n';
     return;
   }
-  MemoryBuffer *Buffer = BufferPtr.take();
+  MemoryBuffer *Buffer = BufferPtr.release();
 
   SourceMgr SrcMgr;
 

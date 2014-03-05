@@ -83,7 +83,7 @@ bool LTOModule::isBitcodeFileForTarget(const char *path,
   OwningPtr<MemoryBuffer> buffer;
   if (MemoryBuffer::getFile(path, buffer))
     return false;
-  return isTargetMatch(buffer.take(), triplePrefix);
+  return isTargetMatch(buffer.release(), triplePrefix);
 }
 
 /// isTargetMatch - Returns 'true' if the memory buffer is for the specified
@@ -103,7 +103,7 @@ LTOModule *LTOModule::makeLTOModule(const char *path, TargetOptions options,
     errMsg = ec.message();
     return NULL;
   }
-  return makeLTOModule(buffer.take(), options, errMsg);
+  return makeLTOModule(buffer.release(), options, errMsg);
 }
 
 LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
@@ -123,7 +123,7 @@ LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
     errMsg = ec.message();
     return NULL;
   }
-  return makeLTOModule(buffer.take(), options, errMsg);
+  return makeLTOModule(buffer.release(), options, errMsg);
 }
 
 LTOModule *LTOModule::makeLTOModule(const void *mem, size_t length,
@@ -132,7 +132,7 @@ LTOModule *LTOModule::makeLTOModule(const void *mem, size_t length,
   OwningPtr<MemoryBuffer> buffer(makeBuffer(mem, length, path));
   if (!buffer)
     return NULL;
-  return makeLTOModule(buffer.take(), options, errMsg);
+  return makeLTOModule(buffer.release(), options, errMsg);
 }
 
 LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
@@ -175,7 +175,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
                                                      options);
   m->materializeAllPermanently();
 
-  LTOModule *Ret = new LTOModule(m.take(), target);
+  LTOModule *Ret = new LTOModule(m.release(), target);
 
   // We need a MCContext set up in order to get mangled names of private
   // symbols. It is a bit odd that we need to report uses and definitions

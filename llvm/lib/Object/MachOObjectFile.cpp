@@ -1565,7 +1565,7 @@ ErrorOr<ObjectFile *> ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer,
 
   if (EC)
     return EC;
-  return Ret.take();
+  return Ret.release();
 }
 
 } // end namespace object

@@ -79,7 +79,7 @@ ErrorOr<ObjectFile *> ObjectFile::createELFObjectFile(MemoryBuffer *Obj,
 
   if (EC)
     return EC;
-  return R.take();
+  return R.release();
 }
 
 } // end namespace llvm

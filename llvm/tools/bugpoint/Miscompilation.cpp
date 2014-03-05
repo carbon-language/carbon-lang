@@ -145,7 +145,7 @@ ReduceMiscompilingPasses::doTest(std::vector<std::string> &Prefix,
             << "' passes compile correctly after the '"
             << getPassesString(Prefix) << "' passes: ";
 
-  OwningPtr<Module> OriginalInput(BD.swapProgramIn(PrefixOutput.take()));
+  OwningPtr<Module> OriginalInput(BD.swapProgramIn(PrefixOutput.release()));
   if (BD.runPasses(BD.getProgram(), Suffix, BitcodeResult, false/*delete*/,
                    true/*quiet*/)) {
     errs() << " Error running this sequence of passes"
@@ -168,7 +168,7 @@ ReduceMiscompilingPasses::doTest(std::vector<std::string> &Prefix,
   // Otherwise, we must not be running the bad pass anymore.
   outs() << " yup.\n";      // No miscompilation!
   // Restore orig program & free test.
-  delete BD.swapProgramIn(OriginalInput.take());
+  delete BD.swapProgramIn(OriginalInput.release());
   return NoFailure;
 }
 

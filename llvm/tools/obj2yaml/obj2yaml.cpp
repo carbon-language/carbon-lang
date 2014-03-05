@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     errs() << "Error: '" << ec.message() << "' opening file '" << InputFilename
            << "'\n";
   } else {
-    ec = coff2yaml(outs(), buf.take());
+    ec = coff2yaml(outs(), buf.release());
     if (ec)
       errs() << "Error: " << ec.message() << " dumping COFF file\n";
   }

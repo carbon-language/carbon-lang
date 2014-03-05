@@ -832,7 +832,7 @@ static bool ReadCheckFile(SourceMgr &SM,
   // If we want to canonicalize whitespace, strip excess whitespace from the
   // buffer containing the CHECK lines. Remove DOS style line endings.
   MemoryBuffer *F =
-    CanonicalizeInputFile(File.take(), NoCanonicalizeWhiteSpace);
+    CanonicalizeInputFile(File.release(), NoCanonicalizeWhiteSpace);
 
   SM.AddNewSourceBuffer(F, SMLoc());
 
@@ -1234,7 +1234,7 @@ int main(int argc, char **argv) {
   // Remove duplicate spaces in the input file if requested.
   // Remove DOS style line endings.
   MemoryBuffer *F =
-    CanonicalizeInputFile(File.take(), NoCanonicalizeWhiteSpace);
+    CanonicalizeInputFile(File.release(), NoCanonicalizeWhiteSpace);
 
   SM.AddNewSourceBuffer(F, SMLoc());
 

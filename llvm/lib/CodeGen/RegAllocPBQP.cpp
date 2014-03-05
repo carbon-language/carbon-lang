@@ -89,7 +89,7 @@ public:
 
   /// Construct a PBQP register allocator.
   RegAllocPBQP(OwningPtr<PBQPBuilder> &b, char *cPassID=0)
-      : MachineFunctionPass(ID), builder(b.take()), customPassID(cPassID) {
+      : MachineFunctionPass(ID), builder(b.release()), customPassID(cPassID) {
     initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
     initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
     initializeLiveStacksPass(*PassRegistry::getPassRegistry());
@@ -280,7 +280,7 @@ PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
     }
   }
 
-  return p.take();
+  return p.release();
 }
 
 void PBQPBuilder::addSpillCosts(PBQP::Vector &costVec,
@@ -391,7 +391,7 @@ PBQPRAProblem *PBQPBuilderWithCoalescing::build(MachineFunction *mf,
     }
   }
 
-  return p.take();
+  return p.release();
 }
 
 void PBQPBuilderWithCoalescing::addPhysRegCoalesce(PBQP::Vector &costVec,

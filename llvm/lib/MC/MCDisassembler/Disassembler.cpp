@@ -84,7 +84,7 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
 
   OwningPtr<MCSymbolizer> Symbolizer(
     TheTarget->createMCSymbolizer(Triple, GetOpInfo, SymbolLookUp, DisInfo,
-                                  Ctx, RelInfo.take()));
+                                  Ctx, RelInfo.release()));
   DisAsm->setSymbolizer(Symbolizer);
   DisAsm->setupForSymbolicDisassembly(GetOpInfo, SymbolLookUp, DisInfo,
                                       Ctx, RelInfo);

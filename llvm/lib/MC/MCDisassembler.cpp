@@ -52,5 +52,5 @@ void MCDisassembler::tryAddingPcLoadReferenceComment(int64_t Value,
 }
 
 void MCDisassembler::setSymbolizer(OwningPtr<MCSymbolizer> &Symzer) {
-  Symbolizer.reset(Symzer.take());
+  Symbolizer.reset(Symzer.release());
 }

@@ -33,7 +33,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
     for (unsigned i = 0, e = Scope->getNumChildren(); i != e; ++i) {
       OwningPtr<Matcher> Child(Scope->takeChild(i));
       ContractNodes(Child, CGP);
-      Scope->resetChild(i, Child.take());
+      Scope->resetChild(i, Child.release());
     }
     return;
   }
@@ -62,7 +62,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
 
     if (New) {
       // Insert the new node.
-      New->setNext(MatcherPtr.take());
+      New->setNext(MatcherPtr.release());
       MatcherPtr.reset(New);
       // Remove the old one.
       MC->setNext(MC->getNext()->takeNext());
@@ -85,7 +85,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
   if (isa<EmitNodeMatcher>(N) && isa<MarkGlueResultsMatcher>(N->getNext()) &&
       isa<CompleteMatchMatcher>(N->getNext()->getNext())) {
     // Unlink the two nodes from the list.
-    Matcher *EmitNode = MatcherPtr.take();
+    Matcher *EmitNode = MatcherPtr.release();
     Matcher *MFR = EmitNode->takeNext();
     Matcher *Tail = MFR->takeNext();
         
@@ -164,7 +164,7 @@ static void ContractNodes(OwningPtr<Matcher> &MatcherPtr,
        isa<RecordMatcher>(N)) &&
       isa<CheckOpcodeMatcher>(N->getNext())) {
     // Unlink the two nodes from the list.
-    Matcher *CheckType = MatcherPtr.take();
+    Matcher *CheckType = MatcherPtr.release();
     Matcher *CheckOpcode = CheckType->takeNext();
     Matcher *Tail = CheckOpcode->takeNext();
     
@@ -198,7 +198,7 @@ static void SinkPatternPredicates(OwningPtr<Matcher> &MatcherPtr) {
     for (unsigned i = 0, e = Scope->getNumChildren(); i != e; ++i) {
       OwningPtr<Matcher> Child(Scope->takeChild(i));
       SinkPatternPredicates(Child);
-      Scope->resetChild(i, Child.take());
+      Scope->resetChild(i, Child.release());
     }
     return;
   }
@@ -217,7 +217,7 @@ static void SinkPatternPredicates(OwningPtr<Matcher> &MatcherPtr) {
   
   // Okay, we know we can sink it past at least one node.  Unlink it from the
   // chain and scan for the new insertion point.
-  MatcherPtr.take();  // Don't delete CPPM.
+  MatcherPtr.release();  // Don't delete CPPM.
   MatcherPtr.reset(CPPM->takeNext());
   
   N = MatcherPtr.get();
@@ -272,7 +272,7 @@ static void FactorNodes(OwningPtr<Matcher> &MatcherPtr) {
     OwningPtr<Matcher> Child(Scope->takeChild(i));
     FactorNodes(Child);
     
-    if (Matcher *N = Child.take())
+    if (Matcher *N = Child.release())
       OptionsToMatch.push_back(N);
   }
   
@@ -516,5 +516,5 @@ Matcher *llvm::OptimizeMatcher(Matcher *TheMatcher,
   ContractNodes(MatcherPtr, CGP);
   SinkPatternPredicates(MatcherPtr);
   FactorNodes(MatcherPtr);
-  return MatcherPtr.take();
+  return MatcherPtr.release();
 }

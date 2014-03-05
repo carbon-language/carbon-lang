@@ -90,5 +90,5 @@ ErrorOr<ObjectFile *> ObjectFile::createObjectFile(StringRef ObjectPath) {
   OwningPtr<MemoryBuffer> File;
   if (error_code EC = MemoryBuffer::getFile(ObjectPath, File))
     return EC;
-  return createObjectFile(File.take());
+  return createObjectFile(File.release());
 }

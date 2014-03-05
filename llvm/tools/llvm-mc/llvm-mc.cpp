@@ -368,7 +368,7 @@ int main(int argc, char **argv) {
     errs() << ProgName << ": " << ec.message() << '\n';
     return 1;
   }
-  MemoryBuffer *Buffer = BufferPtr.take();
+  MemoryBuffer *Buffer = BufferPtr.release();
 
   SourceMgr SrcMgr;
 

@@ -94,7 +94,7 @@ static void DumpInput(const StringRef &Filename) {
     return;
   }
 
-  ErrorOr<ObjectFile*> ObjOrErr(ObjectFile::createObjectFile(Buff.take()));
+  ErrorOr<ObjectFile*> ObjOrErr(ObjectFile::createObjectFile(Buff.release()));
   if (error_code EC = ObjOrErr.getError()) {
     errs() << Filename << ": " << EC.message() << '\n';
     return;

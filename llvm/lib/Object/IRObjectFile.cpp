@@ -148,5 +148,5 @@ ErrorOr<SymbolicFile *> llvm::object::SymbolicFile::createIRObjectFile(
       new IRObjectFile(Object, EC, Context, BufferOwned));
   if (EC)
     return EC;
-  return Ret.take();
+  return Ret.release();
 }

@@ -60,7 +60,7 @@ Module *llvm::getLazyIRFileModule(const std::string &Filename, SMDiagnostic &Err
     return 0;
   }
 
-  return getLazyIRModule(File.take(), Err, Context);
+  return getLazyIRModule(File.release(), Err, Context);
 }
 
 Module *llvm::ParseIR(MemoryBuffer *Buffer, SMDiagnostic &Err,
@@ -93,7 +93,7 @@ Module *llvm::ParseIRFile(const std::string &Filename, SMDiagnostic &Err,
     return 0;
   }
 
-  return ParseIR(File.take(), Err, Context);
+  return ParseIR(File.release(), Err, Context);
 }
 
 //===----------------------------------------------------------------------===//
