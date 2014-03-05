@@ -13,6 +13,7 @@
 
 #include "llvm/Object/Archive.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Endian.h"
@@ -168,7 +169,7 @@ error_code Archive::Child::getName(StringRef &Result) const {
   return object_error::success;
 }
 
-error_code Archive::Child::getMemoryBuffer(OwningPtr<MemoryBuffer> &Result,
+error_code Archive::Child::getMemoryBuffer(std::unique_ptr<MemoryBuffer> &Result,
                                            bool FullPath) const {
   StringRef Name;
   if (error_code ec = getName(Name))
@@ -182,25 +183,41 @@ error_code Archive::Child::getMemoryBuffer(OwningPtr<MemoryBuffer> &Result,
   return error_code::success();
 }
 
-error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result,
+error_code Archive::Child::getMemoryBuffer(OwningPtr<MemoryBuffer> &Result,
+                                           bool FullPath) const {
+  std::unique_ptr<MemoryBuffer> MB;
+  error_code ec = getMemoryBuffer(MB, FullPath);
+  Result = std::move(MB);
+  return ec;
+}
+
+error_code Archive::Child::getAsBinary(std::unique_ptr<Binary> &Result,
                                        LLVMContext *Context) const {
-  OwningPtr<Binary> ret;
-  OwningPtr<MemoryBuffer> Buff;
+  std::unique_ptr<Binary> ret;
+  std::unique_ptr<MemoryBuffer> Buff;
   if (error_code ec = getMemoryBuffer(Buff))
     return ec;
-  ErrorOr<Binary *> BinaryOrErr = createBinary(Buff.take(), Context);
+  ErrorOr<Binary *> BinaryOrErr = createBinary(Buff.release(), Context);
   if (error_code EC = BinaryOrErr.getError())
     return EC;
   Result.reset(BinaryOrErr.get());
   return object_error::success;
 }
 
+error_code Archive::Child::getAsBinary(OwningPtr<Binary> &Result,
+                                       LLVMContext *Context) const {
+  std::unique_ptr<Binary> B;
+  error_code ec = getAsBinary(B, Context);
+  Result = std::move(B);
+  return ec;
+}
+
 ErrorOr<Archive*> Archive::create(MemoryBuffer *Source) {
   error_code EC;
-  OwningPtr<Archive> Ret(new Archive(Source, EC));
+  std::unique_ptr<Archive> Ret(new Archive(Source, EC));
   if (EC)
     return EC;
-  return Ret.take();
+  return Ret.release();
 }
 
 Archive::Archive(MemoryBuffer *source, error_code &ec)

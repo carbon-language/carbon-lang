@@ -78,7 +78,7 @@ TEST_F(MemoryBufferTest, NullTerminator4K) {
   }
   OF.close();
 
-  OwningPtr<MemoryBuffer> MB;
+  OwningBuffer MB;
   error_code EC = MemoryBuffer::getFile(TestPath.c_str(), MB);
   ASSERT_FALSE(EC);
 

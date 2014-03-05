@@ -43,6 +43,9 @@ public:
   static error_code create(StringRef FilePath, size_t Size,
                            OwningPtr<FileOutputBuffer> &Result,
                            unsigned Flags = 0);
+  static error_code create(StringRef FilePath, size_t Size,
+                           std::unique_ptr<FileOutputBuffer> &Result,
+                           unsigned Flags = 0);
 
   /// Returns a pointer to the start of the buffer.
   uint8_t *getBufferStart() {
@@ -83,7 +86,7 @@ private:
   FileOutputBuffer(llvm::sys::fs::mapped_file_region *R,
                    StringRef Path, StringRef TempPath);
 
-  OwningPtr<llvm::sys::fs::mapped_file_region> Region;
+  std::unique_ptr<llvm::sys::fs::mapped_file_region> Region;
   SmallString<128>    FinalPath;
   SmallString<128>    TempPath;
 };

@@ -19,6 +19,7 @@
 #include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
+#include <memory>
 
 namespace llvm {
 
@@ -66,7 +67,11 @@ public:
   /// MemoryBuffer if successful, otherwise returning null.  If FileSize is
   /// specified, this means that the client knows that the file exists and that
   /// it has the specified size.
-  static error_code getFile(Twine Filename, OwningPtr<MemoryBuffer> &result,
+  static error_code getFile(Twine Filename, OwningPtr<MemoryBuffer> &Result,
+                            int64_t FileSize = -1,
+                            bool RequiresNullTerminator = true);
+  static error_code getFile(Twine Filename,
+                            std::unique_ptr<MemoryBuffer> &Result,
                             int64_t FileSize = -1,
                             bool RequiresNullTerminator = true);
 
@@ -76,11 +81,18 @@ public:
   static error_code getOpenFileSlice(int FD, const char *Filename,
                                      OwningPtr<MemoryBuffer> &Result,
                                      uint64_t MapSize, int64_t Offset);
+  static error_code getOpenFileSlice(int FD, const char *Filename,
+                                     std::unique_ptr<MemoryBuffer> &Result,
+                                     uint64_t MapSize, int64_t Offset);
 
   /// Given an already-open file descriptor, read the file and return a
   /// MemoryBuffer.
   static error_code getOpenFile(int FD, const char *Filename,
                                 OwningPtr<MemoryBuffer> &Result,
+                                uint64_t FileSize,
+                                bool RequiresNullTerminator = true);
+  static error_code getOpenFile(int FD, const char *Filename,
+                                std::unique_ptr<MemoryBuffer> &Result,
                                 uint64_t FileSize,
                                 bool RequiresNullTerminator = true);
 
@@ -111,14 +123,18 @@ public:
 
   /// getSTDIN - Read all of stdin into a file buffer, and return it.
   /// If an error occurs, this returns null and sets ec.
-  static error_code getSTDIN(OwningPtr<MemoryBuffer> &result);
+  static error_code getSTDIN(OwningPtr<MemoryBuffer> &Result);
+  static error_code getSTDIN(std::unique_ptr<MemoryBuffer> &Result);
 
 
   /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
   /// if the Filename is "-".  If an error occurs, this returns null and sets
   /// ec.
   static error_code getFileOrSTDIN(StringRef Filename,
-                                   OwningPtr<MemoryBuffer> &result,
+                                   OwningPtr<MemoryBuffer> &Result,
+                                   int64_t FileSize = -1);
+  static error_code getFileOrSTDIN(StringRef Filename,
+                                   std::unique_ptr<MemoryBuffer> &Result,
                                    int64_t FileSize = -1);
 
   //===--------------------------------------------------------------------===//
