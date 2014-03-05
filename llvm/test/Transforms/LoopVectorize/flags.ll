@@ -51,3 +51,29 @@ define i32 @flags2(i32 %n, i32* nocapture %A) nounwind uwtable ssp {
 ._crit_edge:                                      ; preds = %.lr.ph, %0
   ret i32 undef
 }
+
+; Make sure we copy fast math flags and use them for the final reduction.
+; CHECK-LABEL: fast_math
+; CHECK: load <4 x float>
+; CHECK: fadd fast <4 x float>
+; CHECK: br
+; CHECK: fadd fast <4 x float>
+; CHECK: fadd fast <4 x float>
+define float @fast_math(float* noalias %s) {
+entry:
+  br label %for.body
+
+for.body:
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %q.04 = phi float [ 0.000000e+00, %entry ], [ %add, %for.body ]
+  %arrayidx = getelementptr inbounds float* %s, i64 %indvars.iv
+  %0 = load float* %arrayidx, align 4
+  %add = fadd fast float %q.04, %0
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %exitcond = icmp eq i64 %indvars.iv.next, 256
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:
+  %add.lcssa = phi float [ %add, %for.body ]
+  ret float %add.lcssa
+}

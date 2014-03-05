@@ -2489,6 +2489,16 @@ static void cse(SmallVector<BasicBlock *, 4> &BBs) {
   }
 }
 
+/// \brief Adds a 'fast' flag to floating point operations.
+static Value *addFastMathFlag(Value *V) {
+  if (isa<FPMathOperator>(V)){
+    FastMathFlags Flags;
+    Flags.setUnsafeAlgebra();
+    cast<Instruction>(V)->setFastMathFlags(Flags);
+  }
+  return V;
+}
+
 void InnerLoopVectorizer::vectorizeLoop() {
   //===------------------------------------------------===//
   //
@@ -2632,9 +2642,10 @@ void InnerLoopVectorizer::vectorizeLoop() {
     setDebugLocFromInst(Builder, ReducedPartRdx);
     for (unsigned part = 1; part < UF; ++part) {
       if (Op != Instruction::ICmp && Op != Instruction::FCmp)
-        ReducedPartRdx = Builder.CreateBinOp((Instruction::BinaryOps)Op,
-                                             RdxParts[part], ReducedPartRdx,
-                                             "bin.rdx");
+        // Floating point operations had to be 'fast' to enable the reduction.
+        ReducedPartRdx = addFastMathFlag(
+            Builder.CreateBinOp((Instruction::BinaryOps)Op, RdxParts[part],
+                                ReducedPartRdx, "bin.rdx"));
       else
         ReducedPartRdx = createMinMaxOp(Builder, RdxDesc.MinMaxKind,
                                         ReducedPartRdx, RdxParts[part]);
@@ -2664,8 +2675,9 @@ void InnerLoopVectorizer::vectorizeLoop() {
                                     "rdx.shuf");
 
         if (Op != Instruction::ICmp && Op != Instruction::FCmp)
-          TmpVec = Builder.CreateBinOp((Instruction::BinaryOps)Op, TmpVec, Shuf,
-                                       "bin.rdx");
+          // Floating point operations had to be 'fast' to enable the reduction.
+          TmpVec = addFastMathFlag(Builder.CreateBinOp(
+              (Instruction::BinaryOps)Op, TmpVec, Shuf, "bin.rdx"));
         else
           TmpVec = createMinMaxOp(Builder, RdxDesc.MinMaxKind, TmpVec, Shuf);
       }
@@ -2998,6 +3010,10 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
         }
         if (VecOp && isa<PossiblyExactOperator>(VecOp))
           VecOp->setIsExact(BinOp->isExact());
+
+        // Copy the fast-math flags.
+        if (VecOp && isa<FPMathOperator>(V))
+          VecOp->setFastMathFlags(it->getFastMathFlags());
 
         Entry[Part] = V;
       }
