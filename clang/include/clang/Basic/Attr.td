@@ -1306,6 +1306,10 @@ def Capability : InheritableAttr {
                     [GNU<"shared_capability">,
                      CXX11<"clang","shared_capability">]>];
   let Documentation = [Undocumented];
+  let AdditionalMembers = [{
+    bool isMutex() const { return getName().equals_lower("mutex"); }
+    bool isRole() const { return getName().equals_lower("role"); }
+  }];
 }
 
 def AssertCapability : InheritableAttr {

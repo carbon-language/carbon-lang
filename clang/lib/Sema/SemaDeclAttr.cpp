@@ -3892,11 +3892,19 @@ static void handleCapabilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // parameters. However, semantically, both attributes represent the same
   // concept, and so they use the same semantic attribute. Eventually, the
   // lockable attribute will be removed.
-  StringRef N;
+  //
+  // For backwards compatibility, any capability which has no specified string
+  // literal will be considered a "mutex."
+  StringRef N("mutex");
   SourceLocation LiteralLoc;
   if (Attr.getKind() == AttributeList::AT_Capability &&
       !S.checkStringLiteralArgumentAttr(Attr, 0, N, &LiteralLoc))
     return;
+
+  // Currently, there are only two names allowed for a capability: role and
+  // mutex (case insensitive). Diagnose other capability names.
+  if (!N.equals_lower("mutex") && !N.equals_lower("role"))
+    S.Diag(LiteralLoc, diag::warn_invalid_capability_name) << N;
 
   D->addAttr(::new (S.Context) CapabilityAttr(Attr.getRange(), S.Context, N,
                                         Attr.getAttributeSpellingListIndex()));

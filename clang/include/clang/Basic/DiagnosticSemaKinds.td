@@ -2153,6 +2153,9 @@ def note_overridden_method : Note<
   "overridden method is here">;
 
 // Thread Safety Attributes
+def warn_invalid_capability_name : Warning<
+  "invalid capability name '%0'; capability name must be 'mutex' or 'role'">,
+  InGroup<ThreadSafetyAttributes>, DefaultIgnore;
 def warn_thread_attribute_ignored : Warning<
   "ignoring %0 attribute because its argument is invalid">,
   InGroup<ThreadSafetyAttributes>, DefaultIgnore;

@@ -1,8 +1,11 @@
 // RUN: %clang_cc1 -fsyntax-only -Wthread-safety -verify %s
 
-struct __attribute__((capability("thread role"))) ThreadRole {};
+struct __attribute__((capability("role"))) ThreadRole {};
 struct __attribute__((shared_capability("mutex"))) Mutex {};
 struct NotACapability {};
+
+// Test an invalid capability name
+struct __attribute__((capability("wrong"))) IncorrectName {}; // expected-warning {{invalid capability name 'wrong'; capability name must be 'mutex' or 'role'}}
 
 int Test1 __attribute__((capability("test1")));  // expected-error {{'capability' attribute only applies to structs}}
 int Test2 __attribute__((shared_capability("test2"))); // expected-error {{'shared_capability' attribute only applies to structs}}
