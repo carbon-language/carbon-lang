@@ -1210,16 +1210,20 @@ bool ModuleLinker::run() {
   if (SrcM->getDataLayout() && DstM->getDataLayout() &&
       *SrcM->getDataLayout() != *DstM->getDataLayout()) {
     if (!SuppressWarnings) {
-      errs() << "WARNING: Linking two modules of different data layouts!\n";
+      errs() << "WARNING: Linking two modules of different data layouts: '"
+             << SrcM->getModuleIdentifier() << "' is '"
+             << SrcM->getDataLayoutStr() << "' whereas '"
+             << DstM->getModuleIdentifier() << "' is '"
+             << DstM->getDataLayoutStr() << "'\n";
     }
   }
   if (!SrcM->getTargetTriple().empty() &&
       DstM->getTargetTriple() != SrcM->getTargetTriple()) {
     if (!SuppressWarnings) {
-      errs() << "WARNING: Linking two modules of different target triples: ";
-      if (!SrcM->getModuleIdentifier().empty())
-        errs() << SrcM->getModuleIdentifier() << ": ";
-      errs() << "'" << SrcM->getTargetTriple() << "' and '"
+      errs() << "WARNING: Linking two modules of different target triples: "
+             << SrcM->getModuleIdentifier() << "' is '"
+             << SrcM->getTargetTriple() << "' whereas '"
+             << DstM->getModuleIdentifier() << "' is '"
              << DstM->getTargetTriple() << "'\n";
     }
   }
