@@ -19,6 +19,7 @@ namespace lldb_private
     typedef lldb::ABISP (*ABICreateInstance) (const ArchSpec &arch);
     typedef Disassembler* (*DisassemblerCreateInstance) (const ArchSpec &arch, const char *flavor);
     typedef DynamicLoader* (*DynamicLoaderCreateInstance) (Process* process, bool force);
+    typedef lldb::JITLoaderSP (*JITLoaderCreateInstance) (Process *process, bool force);
     typedef ObjectContainer* (*ObjectContainerCreateInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& data_sp, lldb::offset_t data_offset, const FileSpec *file, lldb::offset_t offset, lldb::offset_t length);
     typedef size_t (*ObjectFileGetModuleSpecifications) (const FileSpec &file, lldb::DataBufferSP& data_sp, lldb::offset_t data_offset, lldb::offset_t file_offset, lldb::offset_t length, ModuleSpecList &module_specs);
     typedef ObjectFile* (*ObjectFileCreateInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& data_sp, lldb::offset_t data_offset, const FileSpec* file, lldb::offset_t file_offset, lldb::offset_t length);

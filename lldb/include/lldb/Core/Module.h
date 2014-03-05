@@ -703,11 +703,25 @@ public:
     uint32_t
     GetVersion (uint32_t *versions, uint32_t num_versions);
 
-    // Load an object file from memory.
+    //------------------------------------------------------------------
+    /// Load an object file from memory. 
+    ///
+    /// If available, the size of the object file in memory may be 
+    /// passed to avoid additional round trips to process memory. 
+    /// If the size is not provided, a default value is used. This
+    /// value should be large enough to enable the ObjectFile plugins
+    /// to read the header of the object file without going back to the
+    /// process. 
+    ///
+    /// @return 
+    ///     The object file loaded from memory or NULL, if the operation 
+    ///     failed (see the `error` for more information in that case).
+    //------------------------------------------------------------------
     ObjectFile *
     GetMemoryObjectFile (const lldb::ProcessSP &process_sp, 
                          lldb::addr_t header_addr,
-                         Error &error);
+                         Error &error,
+                         size_t size_to_read = 512);
     //------------------------------------------------------------------
     /// Get the symbol vendor interface for the current architecture.
     ///

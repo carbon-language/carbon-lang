@@ -145,6 +145,7 @@ lldb_private::DisableLog (const char **categories, Stream *feedback_strm)
                 else if (0 == ::strncasecmp(arg, "module", 6))  flag_bits &= ~LIBLLDB_LOG_MODULES;
                 else if (0 == ::strncasecmp(arg, "mmap", 4))    flag_bits &= ~LIBLLDB_LOG_MMAP;
                 else if (0 == ::strcasecmp(arg, "os"))          flag_bits &= ~LIBLLDB_LOG_OS;
+                else if (0 == ::strcasecmp(arg, "jit"))         flag_bits &= ~LIBLLDB_LOG_JIT_LOADER;
                 else
                 {
                     feedback_strm->Printf ("error:  unrecognized log category '%s'\n", arg);
@@ -220,6 +221,7 @@ lldb_private::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const ch
             else if (0 == ::strncasecmp(arg, "unwind", 6))  flag_bits |= LIBLLDB_LOG_UNWIND;
             else if (0 == ::strcasecmp(arg, "verbose"))     flag_bits |= LIBLLDB_LOG_VERBOSE;
             else if (0 == ::strncasecmp(arg, "watch", 5))   flag_bits |= LIBLLDB_LOG_WATCHPOINTS;
+            else if (0 == ::strcasecmp(arg, "jit"))         flag_bits |= LIBLLDB_LOG_JIT_LOADER;
             else
             {
                 feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
@@ -267,5 +269,6 @@ lldb_private::ListLogCategories (Stream *strm)
                  "  types - log type system related activities\n"
                  "  unwind - log stack unwind activities\n"
                  "  verbose - enable verbose logging\n"
-                 "  watch - log watchpoint related activities\n");
+                 "  watch - log watchpoint related activities\n"
+                 "  jit - log JIT events in the target\n");
 }

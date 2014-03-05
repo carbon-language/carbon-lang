@@ -103,6 +103,7 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Linux" )
     lldbPluginProcessLinux
     lldbPluginProcessPOSIX
     lldbPluginProcessElfCore
+    lldbPluginJITLoaderGDB
     )
 endif ()
 

@@ -105,7 +105,8 @@ ifeq ($(HOST_OS),Linux)
               lldbPluginProcessLinux.a \
               lldbPluginProcessPOSIX.a \
               lldbPluginDynamicLoaderMacOSX.a \
-              lldbPluginProcessElfCore.a
+              lldbPluginProcessElfCore.a \
+              lldbPluginJITLoaderGDB.a
 endif
 
 ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))

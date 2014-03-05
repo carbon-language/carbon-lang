@@ -284,7 +284,7 @@ Module::~Module()
 }
 
 ObjectFile *
-Module::GetMemoryObjectFile (const lldb::ProcessSP &process_sp, lldb::addr_t header_addr, Error &error)
+Module::GetMemoryObjectFile (const lldb::ProcessSP &process_sp, lldb::addr_t header_addr, Error &error, size_t size_to_read)
 {
     if (m_objfile_sp)
     {
@@ -296,13 +296,13 @@ Module::GetMemoryObjectFile (const lldb::ProcessSP &process_sp, lldb::addr_t hea
         if (process_sp)
         {
             m_did_load_objfile = true;
-            std::unique_ptr<DataBufferHeap> data_ap (new DataBufferHeap (512, 0));
+            std::unique_ptr<DataBufferHeap> data_ap (new DataBufferHeap (size_to_read, 0));
             Error readmem_error;
             const size_t bytes_read = process_sp->ReadMemory (header_addr, 
                                                               data_ap->GetBytes(), 
                                                               data_ap->GetByteSize(), 
                                                               readmem_error);
-            if (bytes_read == 512)
+            if (bytes_read == size_to_read)
             {
                 DataBufferSP data_sp(data_ap.release());
                 m_objfile_sp = ObjectFile::FindPlugin(shared_from_this(), process_sp, header_addr, data_sp);

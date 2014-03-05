@@ -30,6 +30,7 @@
 #include "lldb/Host/Terminal.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/DynamicLoader.h"
+#include "lldb/Target/JITLoader.h"
 #include "lldb/Target/OperatingSystem.h"
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/CPPLanguageRuntime.h"
@@ -1154,6 +1155,7 @@ Process::Finalize()
     m_os_ap.reset();
     m_system_runtime_ap.reset();
     m_dyld_ap.reset();
+    m_jit_loaders_ap.reset();
     m_thread_list_real.Destroy();
     m_thread_list.Destroy();
     m_extended_thread_list.Destroy();
@@ -2929,13 +2931,14 @@ Process::DeallocateMemory (addr_t ptr)
 
 ModuleSP
 Process::ReadModuleFromMemory (const FileSpec& file_spec, 
-                               lldb::addr_t header_addr)
+                               lldb::addr_t header_addr,
+                               size_t size_to_read)
 {
     ModuleSP module_sp (new Module (file_spec, ArchSpec()));
     if (module_sp)
     {
         Error error;
-        ObjectFile *objfile = module_sp->GetMemoryObjectFile (shared_from_this(), header_addr, error);
+        ObjectFile *objfile = module_sp->GetMemoryObjectFile (shared_from_this(), header_addr, error, size_to_read);
         if (objfile)
             return module_sp;
     }
@@ -2988,6 +2991,7 @@ Process::Launch (ProcessLaunchInfo &launch_info)
     Error error;
     m_abi_sp.reset();
     m_dyld_ap.reset();
+    m_jit_loaders_ap.reset();
     m_system_runtime_ap.reset();
     m_os_ap.reset();
     m_process_input_reader.reset();
@@ -3064,6 +3068,8 @@ Process::Launch (ProcessLaunchInfo &launch_info)
                         if (dyld)
                             dyld->DidLaunch();
 
+                        GetJITLoaders().DidLaunch();
+
                         SystemRuntime *system_runtime = GetSystemRuntime ();
                         if (system_runtime)
                             system_runtime->DidLaunch();
@@ -3110,6 +3116,8 @@ Process::LoadCore ()
         DynamicLoader *dyld = GetDynamicLoader ();
         if (dyld)
             dyld->DidAttach();
+
+        GetJITLoaders().DidAttach();
         
         SystemRuntime *system_runtime = GetSystemRuntime ();
         if (system_runtime)
@@ -3131,6 +3139,17 @@ Process::GetDynamicLoader ()
     if (m_dyld_ap.get() == NULL)
         m_dyld_ap.reset (DynamicLoader::FindPlugin(this, NULL));
     return m_dyld_ap.get();
+}
+
+JITLoaderList &
+Process::GetJITLoaders ()
+{
+    if (!m_jit_loaders_ap)
+    {
+        m_jit_loaders_ap.reset(new JITLoaderList());
+        JITLoader::LoadPlugins(this, *m_jit_loaders_ap);
+    }
+    return *m_jit_loaders_ap;
 }
 
 SystemRuntime *
@@ -3203,6 +3222,7 @@ Process::Attach (ProcessAttachInfo &attach_info)
     m_abi_sp.reset();
     m_process_input_reader.reset();
     m_dyld_ap.reset();
+    m_jit_loaders_ap.reset();
     m_system_runtime_ap.reset();
     m_os_ap.reset();
     
@@ -3376,6 +3396,8 @@ Process::CompleteAttach ()
     if (dyld)
         dyld->DidAttach();
 
+    GetJITLoaders().DidAttach();
+
     SystemRuntime *system_runtime = GetSystemRuntime ();
     if (system_runtime)
         system_runtime->DidAttach();
@@ -3546,7 +3568,7 @@ Process::Halt (bool clear_thread_plans)
                     // Wait for 1 second for the process to stop.
                     TimeValue timeout_time;
                     timeout_time = TimeValue::Now();
-                    timeout_time.OffsetWithSeconds(1);
+                    timeout_time.OffsetWithSeconds(10);
                     bool got_event = halt_listener.WaitForEvent (&timeout_time, event_sp);
                     StateType state = ProcessEventData::GetStateFromEvent(event_sp.get());
                     
@@ -5957,6 +5979,7 @@ Process::DidExec ()
     m_system_runtime_ap.reset();
     m_os_ap.reset();
     m_dyld_ap.reset();
+    m_jit_loaders_ap.reset();
     m_image_tokens.clear();
     m_allocated_memory_cache.Clear();
     m_language_runtimes.clear();

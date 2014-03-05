@@ -107,6 +107,7 @@ class   Instruction;
 class   InstructionList;
 class   IOHandler;
 class   IRExecutionUnit;
+class   JITLoader;
 class   LanguageRuntime;
 class   SystemRuntime;
 class   LineTable;
@@ -305,6 +306,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::InlineFunctionInfo> InlineFunctionInfoSP;
     typedef std::shared_ptr<lldb_private::Instruction> InstructionSP;
     typedef std::shared_ptr<lldb_private::IOHandler> IOHandlerSP;
+    typedef std::shared_ptr<lldb_private::JITLoader> JITLoaderSP;
     typedef std::shared_ptr<lldb_private::LanguageRuntime> LanguageRuntimeSP;
     typedef std::shared_ptr<lldb_private::SystemRuntime> SystemRuntimeSP;
     typedef std::shared_ptr<lldb_private::LineTable> LineTableSP;

@@ -80,6 +80,24 @@ public:
     GetDynamicLoaderCreateCallbackForPluginName (const ConstString &name);
 
     //------------------------------------------------------------------
+    // JITLoader
+    //------------------------------------------------------------------
+    static bool
+    RegisterPlugin (const ConstString &name,
+                    const char *description,
+                    JITLoaderCreateInstance create_callback,
+                    DebuggerInitializeCallback debugger_init_callback = NULL);
+
+    static bool
+    UnregisterPlugin (JITLoaderCreateInstance create_callback);
+
+    static JITLoaderCreateInstance
+    GetJITLoaderCreateCallbackAtIndex (uint32_t idx);
+
+    static JITLoaderCreateInstance
+    GetJITLoaderCreateCallbackForPluginName (const ConstString &name);
+
+    //------------------------------------------------------------------
     // EmulateInstruction
     //------------------------------------------------------------------
     static bool

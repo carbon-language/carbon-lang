@@ -544,6 +544,116 @@ PluginManager::GetDynamicLoaderCreateCallbackForPluginName (const ConstString &n
     return NULL;
 }
 
+#pragma mark JITLoader
+
+
+struct JITLoaderInstance
+{
+    JITLoaderInstance() :
+        name(),
+        description(),
+        create_callback(NULL),
+        debugger_init_callback (NULL)
+    {
+    }
+
+    ConstString name;
+    std::string description;
+    JITLoaderCreateInstance create_callback;
+    DebuggerInitializeCallback debugger_init_callback;
+};
+
+typedef std::vector<JITLoaderInstance> JITLoaderInstances;
+
+
+static Mutex &
+GetJITLoaderMutex ()
+{
+    static Mutex g_instances_mutex (Mutex::eMutexTypeRecursive);
+    return g_instances_mutex;
+}
+
+static JITLoaderInstances &
+GetJITLoaderInstances ()
+{
+    static JITLoaderInstances g_instances;
+    return g_instances;
+}
+
+
+bool
+PluginManager::RegisterPlugin
+(
+    const ConstString &name,
+    const char *description,
+    JITLoaderCreateInstance create_callback,
+    DebuggerInitializeCallback debugger_init_callback
+)
+{
+    if (create_callback)
+    {
+        JITLoaderInstance instance;
+        assert ((bool)name);
+        instance.name = name;
+        if (description && description[0])
+            instance.description = description;
+        instance.create_callback = create_callback;
+        instance.debugger_init_callback = debugger_init_callback;
+        Mutex::Locker locker (GetJITLoaderMutex ());
+        GetJITLoaderInstances ().push_back (instance);
+    }
+    return false;
+}
+
+bool
+PluginManager::UnregisterPlugin (JITLoaderCreateInstance create_callback)
+{
+    if (create_callback)
+    {
+        Mutex::Locker locker (GetJITLoaderMutex ());
+        JITLoaderInstances &instances = GetJITLoaderInstances ();
+        
+        JITLoaderInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->create_callback == create_callback)
+            {
+                instances.erase(pos);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+JITLoaderCreateInstance
+PluginManager::GetJITLoaderCreateCallbackAtIndex (uint32_t idx)
+{
+    Mutex::Locker locker (GetJITLoaderMutex ());
+    JITLoaderInstances &instances = GetJITLoaderInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_callback;
+    return NULL;
+}
+
+JITLoaderCreateInstance
+PluginManager::GetJITLoaderCreateCallbackForPluginName (const ConstString &name)
+{
+    if (name)
+    {
+        Mutex::Locker locker (GetJITLoaderMutex ());
+        JITLoaderInstances &instances = GetJITLoaderInstances ();
+        
+        JITLoaderInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (name == pos->name)
+                return pos->create_callback;
+        }
+    }
+    return NULL;
+}
+
 #pragma mark EmulateInstruction
 
 
@@ -1938,6 +2048,19 @@ PluginManager::DebuggerInitialize (Debugger &debugger)
         DynamicLoaderInstances &instances = GetDynamicLoaderInstances ();
     
         DynamicLoaderInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (pos->debugger_init_callback)
+                pos->debugger_init_callback (debugger);
+        }
+    }
+
+    // Initialize the JITLoader plugins
+    {
+        Mutex::Locker locker (GetJITLoaderMutex ());
+        JITLoaderInstances &instances = GetJITLoaderInstances ();
+    
+        JITLoaderInstances::iterator pos, end = instances.end();
         for (pos = instances.begin(); pos != end; ++ pos)
         {
             if (pos->debugger_init_callback)

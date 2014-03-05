@@ -72,6 +72,7 @@
 
 #if defined (__linux__)
 #include "Plugins/Process/Linux/ProcessLinux.h"
+#include "Plugins/JITLoader/GDB/JITLoaderGDB.h"
 #endif
 
 #if defined (__FreeBSD__)
@@ -149,6 +150,7 @@ lldb_private::Initialize ()
         // Linux hosted plugins
         //----------------------------------------------------------------------
         ProcessLinux::Initialize();
+        JITLoaderGDB::Initialize();
 #endif
 #if defined (__FreeBSD__)
         ProcessFreeBSD::Initialize();
@@ -231,6 +233,7 @@ lldb_private::Terminate ()
 
 #if defined (__linux__)
     ProcessLinux::Terminate();
+    JITLoaderGDB::Terminate();
 #endif
 
 #if defined (__FreeBSD__)

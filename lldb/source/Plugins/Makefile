@@ -37,6 +37,7 @@ ifeq ($(HOST_OS),Linux)
 DIRS += DynamicLoader/MacOSX-DYLD
 DIRS += Process/Linux Process/POSIX
 DIRS += Process/elf-core
+DIRS += JITLoader/GDB
 endif
 
 ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
