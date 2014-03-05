@@ -9,6 +9,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;CHECK: fmul <2 x double>{{.*}}!fpmath ![[FP1:[0-9]+]]
 ;CHECK: store <2 x double>{{.*}}!tbaa ![[TBAA]]
 ;CHECK: ret void
+
 define void @test1(double* %a, double* %b, double* %c) {
 entry:
   %i0 = load double* %a, align 8, !tbaa !4
