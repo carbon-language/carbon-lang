@@ -178,7 +178,7 @@ __attribute__((objc_protocol_requires_explicit_implementation))  // expected-err
 
  __attribute__((objc_protocol_requires_explicit_implementation))
 @protocol Ex2ProtocolA
-- (void)methodB; // expected-note {{method 'methodB' declared here}}
+- (void)methodB;
 @end
 
  __attribute__((objc_protocol_requires_explicit_implementation))
@@ -202,7 +202,6 @@ __attribute__((objc_protocol_requires_explicit_implementation))  // expected-err
 @interface Ex2ClassB : Ex2ClassA <Ex2ProtocolB>
 @end
 
-@implementation Ex2ClassB // expected-warning {{method 'methodB' in protocol 'Ex2ProtocolA' not implemented}}\
-                          // expected-warning {{method 'methodA' in protocol 'Ex2ProtocolB' not implemented}}
+@implementation Ex2ClassB // expected-warning {{method 'methodA' in protocol 'Ex2ProtocolB' not implemented}}
 @end
 

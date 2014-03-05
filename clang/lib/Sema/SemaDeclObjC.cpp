@@ -1635,6 +1635,17 @@ void Sema::WarnExactTypedMethods(ObjCMethodDecl *ImpMethodDecl,
 typedef llvm::DenseSet<IdentifierInfo*> ProtocolNameSet;
 typedef llvm::OwningPtr<ProtocolNameSet> LazyProtocolNameSet;
 
+
+
+static void findProtocolsWithExplicitImpls(const ObjCProtocolDecl *PDecl,
+                                           ProtocolNameSet &PNS) {
+  if (PDecl->hasAttr<ObjCExplicitProtocolImplAttr>())
+    PNS.insert(PDecl->getIdentifier());
+  for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
+       PE = PDecl->protocol_end(); PI != PE; ++PI)
+    findProtocolsWithExplicitImpls(*PI, PNS);
+}
+
 /// Recursively populates a set with all conformed protocols in a class
 /// hierarchy that have the 'objc_protocol_requires_explicit_implementation'
 /// attribute.
@@ -1646,10 +1657,10 @@ static void findProtocolsWithExplicitImpls(const ObjCInterfaceDecl *Super,
   for (ObjCInterfaceDecl::all_protocol_iterator
         I = Super->all_referenced_protocol_begin(),
         E = Super->all_referenced_protocol_end(); I != E; ++I) {
-    const ObjCProtocolDecl *PDecl = *I;
-    if (PDecl->hasAttr<ObjCExplicitProtocolImplAttr>())
-      PNS.insert(PDecl->getIdentifier());
+    findProtocolsWithExplicitImpls(*I, PNS);
   }
+
+  findProtocolsWithExplicitImpls(Super->getSuperClass(), PNS);
 }
 
 /// CheckProtocolMethodDefs - This routine checks unimplemented methods
