@@ -70,6 +70,7 @@ Contents
    design
    getting_started
    development
+   windows_support
    open_projects
    sphinx_intro
 
