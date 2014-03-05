@@ -17,6 +17,8 @@
 
 namespace __tsan {
 
+void DDMutexInit(ThreadState *thr, uptr pc, SyncVar *s);
+
 SyncVar::SyncVar(uptr addr, u64 uid)
   : mtx(MutexTypeSyncVar, StatMtxSyncVar)
   , addr(addr)
@@ -58,7 +60,6 @@ SyncVar* SyncTab::GetIfExistsAndLock(uptr addr, bool write_lock) {
 }
 
 SyncVar* SyncTab::Create(ThreadState *thr, uptr pc, uptr addr) {
-  Context *ctx = CTX();
   StatInc(thr, StatSyncCreated);
   void *mem = internal_alloc(MBlockSync, sizeof(SyncVar));
   const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
@@ -67,7 +68,7 @@ SyncVar* SyncTab::Create(ThreadState *thr, uptr pc, uptr addr) {
   res->creation_stack_id = CurrentStackId(thr, pc);
 #endif
   if (flags()->detect_deadlocks)
-    ctx->dd->MutexInit(&res->dd, res->creation_stack_id, res->GetId());
+    DDMutexInit(thr, pc, res);
   return res;
 }
 

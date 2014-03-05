@@ -30,75 +30,80 @@ struct DDLogicalThread {
   u64 ctx;
   DeadlockDetectorTLS<DDBV> dd;
   DDReport rep;
+  bool report_pending;
 };
 
-struct DDetectorImpl : public DDetector {
+struct DD : public DDetector {
   SpinMutex mtx;
   DeadlockDetector<DDBV> dd;
 
-  DDetectorImpl();
+  DD();
 
-  virtual DDPhysicalThread* CreatePhysicalThread();
-  virtual void DestroyPhysicalThread(DDPhysicalThread *pt);
+  DDPhysicalThread* CreatePhysicalThread();
+  void DestroyPhysicalThread(DDPhysicalThread *pt);
 
-  virtual DDLogicalThread* CreateLogicalThread(u64 ctx);
-  virtual void DestroyLogicalThread(DDLogicalThread *lt);
+  DDLogicalThread* CreateLogicalThread(u64 ctx);
+  void DestroyLogicalThread(DDLogicalThread *lt);
 
-  virtual void MutexInit(DDMutex *m, u32 stk, u64 ctx);
-  virtual DDReport *MutexLock(DDPhysicalThread *pt, DDLogicalThread *lt,
-      DDMutex *m, bool writelock, bool trylock);
-  virtual DDReport *MutexUnlock(DDPhysicalThread *pt, DDLogicalThread *lt,
-      DDMutex *m, bool writelock);
-  virtual void MutexDestroy(DDPhysicalThread *pt, DDLogicalThread *lt,
-      DDMutex *m);
+  void MutexInit(DDCallback *cb, DDMutex *m);
+  void MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock);
+  void MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock);
+  void MutexBeforeUnlock(DDCallback *cb, DDMutex *m, bool wlock);
+  void MutexDestroy(DDCallback *cb, DDMutex *m);
+
+  DDReport *GetReport(DDCallback *cb);
 
   void MutexEnsureID(DDLogicalThread *lt, DDMutex *m);
 };
 
 DDetector *DDetector::Create() {
-  void *mem = MmapOrDie(sizeof(DDetectorImpl), "deadlock detector");
-  return new(mem) DDetectorImpl();
+  void *mem = MmapOrDie(sizeof(DD), "deadlock detector");
+  return new(mem) DD();
 }
 
-DDetectorImpl::DDetectorImpl() {
+DD::DD() {
   dd.clear();
 }
 
-DDPhysicalThread* DDetectorImpl::CreatePhysicalThread() {
+DDPhysicalThread* DD::CreatePhysicalThread() {
   return 0;
 }
 
-void DDetectorImpl::DestroyPhysicalThread(DDPhysicalThread *pt) {
+void DD::DestroyPhysicalThread(DDPhysicalThread *pt) {
 }
 
-DDLogicalThread* DDetectorImpl::CreateLogicalThread(u64 ctx) {
+DDLogicalThread* DD::CreateLogicalThread(u64 ctx) {
   DDLogicalThread *lt = (DDLogicalThread*)InternalAlloc(sizeof(*lt));
   lt->ctx = ctx;
   lt->dd.clear();
+  lt->report_pending = false;
   return lt;
 }
 
-void DDetectorImpl::DestroyLogicalThread(DDLogicalThread *lt) {
+void DD::DestroyLogicalThread(DDLogicalThread *lt) {
   lt->~DDLogicalThread();
   InternalFree(lt);
 }
 
-void DDetectorImpl::MutexInit(DDMutex *m, u32 stk, u64 ctx) {
+void DD::MutexInit(DDCallback *cb, DDMutex *m) {
   m->id = 0;
-  m->stk = stk;
-  m->ctx = ctx;
+  m->stk = cb->Unwind();
 }
 
-void DDetectorImpl::MutexEnsureID(DDLogicalThread *lt, DDMutex *m) {
+void DD::MutexEnsureID(DDLogicalThread *lt, DDMutex *m) {
   if (!dd.nodeBelongsToCurrentEpoch(m->id))
     m->id = dd.newNode(reinterpret_cast<uptr>(m));
   dd.ensureCurrentEpoch(&lt->dd);
 }
 
-DDReport *DDetectorImpl::MutexLock(DDPhysicalThread *pt, DDLogicalThread *lt,
-    DDMutex *m, bool writelock, bool trylock) {
+void DD::MutexBeforeLock(DDCallback *cb,
+    DDMutex *m, bool wlock) {
+}
+
+void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
+  DDLogicalThread *lt = cb->lt;
   if (dd.onFirstLock(&lt->dd, m->id))
-    return 0;
+    return;
   SpinMutexLock lk(&mtx);
   MutexEnsureID(lt, m);
   CHECK(!dd.isHeld(&lt->dd, m->id));
@@ -106,13 +111,13 @@ DDReport *DDetectorImpl::MutexLock(DDPhysicalThread *pt, DDLogicalThread *lt,
   bool has_deadlock = trylock
       ? dd.onTryLock(&lt->dd, m->id)
        : dd.onLock(&lt->dd, m->id);
-  DDReport *rep = 0;
   if (has_deadlock) {
     uptr path[10];
     uptr len = dd.findPathToHeldLock(&lt->dd, m->id,
                                           path, ARRAY_SIZE(path));
     CHECK_GT(len, 0U);  // Hm.. cycle of 10 locks? I'd like to see that.
-    rep = &lt->rep;
+    lt->report_pending = true;
+    DDReport *rep = &lt->rep;
     rep->n = len;
     for (uptr i = 0; i < len; i++) {
       DDMutex *m0 = (DDMutex*)dd.getData(path[i]);
@@ -123,24 +128,28 @@ DDReport *DDetectorImpl::MutexLock(DDPhysicalThread *pt, DDLogicalThread *lt,
       rep->loop[i].stk = m0->stk;
     }
   }
-  return rep;
 }
 
-DDReport *DDetectorImpl::MutexUnlock(DDPhysicalThread *pt, DDLogicalThread *lt,
-    DDMutex *m, bool writelock) {
+void DD::MutexBeforeUnlock(DDCallback *cb, DDMutex *m, bool wlock) {
   // Printf("T%d MutexUnlock: %zx; recursion %d\n", thr->tid,
   //        s->deadlock_detector_id, s->recursion);
-  dd.onUnlock(&lt->dd, m->id);
-  return 0;
+  dd.onUnlock(&cb->lt->dd, m->id);
 }
 
-void DDetectorImpl::MutexDestroy(DDPhysicalThread *pt, DDLogicalThread *lt,
+void DD::MutexDestroy(DDCallback *cb,
     DDMutex *m) {
   if (!m->id) return;
   SpinMutexLock lk(&mtx);
   if (dd.nodeBelongsToCurrentEpoch(m->id))
     dd.removeNode(m->id);
   m->id = 0;
+}
+
+DDReport *DD::GetReport(DDCallback *cb) {
+  if (!cb->lt->report_pending)
+    return 0;
+  cb->lt->report_pending = false;
+  return &cb->lt->rep;
 }
 
 }  // namespace __sanitizer

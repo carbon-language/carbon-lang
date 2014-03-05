@@ -11,6 +11,7 @@
 
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_deadlock_detector_interface.h"
+#include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_addrhashmap.h"
 #include "sanitizer_common/sanitizer_mutex.h"
@@ -28,6 +29,13 @@ struct Thread {
   bool ignore_interceptors;
 };
 
+struct Callback : DDCallback {
+  Thread *thr;
+
+  Callback(Thread *thr);
+  virtual u32 Unwind();
+};
+
 typedef AddrHashMap<Mutex, 1000003> MutexHashMap;
 
 struct Context {
@@ -36,14 +44,19 @@ struct Context {
   MutexHashMap mutex_map;
 };
 
+inline CommonFlags* flags() {
+  return common_flags();
+}
+
 void Initialize();
 void InitializeInterceptors();
 
 void ThreadInit(Thread *thr);
 void ThreadDestroy(Thread *thr);
 
-void MutexLock(Thread *thr, uptr m, bool writelock, bool trylock);
-void MutexUnlock(Thread *thr, uptr m, bool writelock);
+void MutexBeforeLock(Thread *thr, uptr m, bool writelock);
+void MutexAfterLock(Thread *thr, uptr m, bool writelock, bool trylock);
+void MutexBeforeUnlock(Thread *thr, uptr m, bool writelock);
 void MutexDestroy(Thread *thr, uptr m);
 
 }  // namespace __dsan

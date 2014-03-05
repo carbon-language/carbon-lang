@@ -22,7 +22,33 @@
 
 namespace __tsan {
 
-void ReportDeadlockReport(ThreadState *thr, uptr pc, DDReport *r);
+void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r);
+
+struct Callback : DDCallback {
+  ThreadState *thr;
+  uptr pc;
+
+  Callback(ThreadState *thr, uptr pc)
+      : thr(thr)
+      , pc(pc) {
+    DDCallback::pt = thr->dd_pt;
+    DDCallback::lt = thr->dd_lt;
+  }
+
+  virtual u32 Unwind() {
+#ifdef TSAN_GO
+    return 0;
+#else
+    return CurrentStackId(thr, pc);
+#endif
+  }
+};
+
+void DDMutexInit(ThreadState *thr, uptr pc, SyncVar *s) {
+  Callback cb(thr, pc);
+  CTX()->dd->MutexInit(&cb, &s->dd);
+  s->dd.ctx = s->GetId();
+}
 
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
                  bool rw, bool recursive, bool linker_init) {
@@ -55,8 +81,10 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
   SyncVar *s = ctx->synctab.GetAndRemove(thr, pc, addr);
   if (s == 0)
     return;
-  if (flags()->detect_deadlocks)
-    ctx->dd->MutexDestroy(thr->dd_pt, thr->dd_lt, &s->dd);
+  if (flags()->detect_deadlocks) {
+    Callback cb(thr, pc);
+    ctx->dd->MutexDestroy(&cb, &s->dd);
+  }
   if (IsAppMem(addr)) {
     CHECK(!thr->is_freeing);
     thr->is_freeing = true;
@@ -111,12 +139,16 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec, bool try_lock) {
   }
   s->recursion += rec;
   thr->mset.Add(s->GetId(), true, thr->fast_state.epoch());
-  DDReport *dd_rep = 0;
-  if (flags()->detect_deadlocks && s->recursion == 1)
-    dd_rep = ctx->dd->MutexLock(thr->dd_pt, thr->dd_lt, &s->dd, true, try_lock);
+  if (flags()->detect_deadlocks && s->recursion == 1) {
+    Callback cb(thr, pc);
+    ctx->dd->MutexBeforeLock(&cb, &s->dd, true);
+    ctx->dd->MutexAfterLock(&cb, &s->dd, true, try_lock);
+  }
   s->mtx.Unlock();
-  if (dd_rep)
-    ReportDeadlockReport(thr, pc, dd_rep);
+  if (flags()->detect_deadlocks) {
+    Callback cb(thr, pc);
+    ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
+  }
 }
 
 int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
@@ -153,12 +185,15 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
     }
   }
   thr->mset.Del(s->GetId(), true);
-  DDReport *dd_rep = 0;
-  if (flags()->detect_deadlocks && s->recursion == 0)
-    dd_rep = ctx->dd->MutexUnlock(thr->dd_pt, thr->dd_lt, &s->dd, true);
+  if (flags()->detect_deadlocks && s->recursion == 0) {
+    Callback cb(thr, pc);
+    ctx->dd->MutexBeforeUnlock(&cb, &s->dd, true);
+  }
   s->mtx.Unlock();
-  if (dd_rep)
-    ReportDeadlockReport(thr, pc, dd_rep);
+  if (flags()->detect_deadlocks) {
+    Callback cb(thr, pc);
+    ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
+  }
   return rec;
 }
 
@@ -179,12 +214,16 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr, bool trylock) {
   AcquireImpl(thr, pc, &s->clock);
   s->last_lock = thr->fast_state.raw();
   thr->mset.Add(s->GetId(), false, thr->fast_state.epoch());
-  DDReport *dd_rep = 0;
-  if (flags()->detect_deadlocks && s->recursion == 0)
-    dd_rep = ctx->dd->MutexLock(thr->dd_pt, thr->dd_lt, &s->dd, false, trylock);
+  if (flags()->detect_deadlocks && s->recursion == 0) {
+    Callback cb(thr, pc);
+    ctx->dd->MutexBeforeLock(&cb, &s->dd, false);
+    ctx->dd->MutexAfterLock(&cb, &s->dd, false, trylock);
+  }
   s->mtx.ReadUnlock();
-  if (dd_rep)
-    ReportDeadlockReport(thr, pc, dd_rep);
+  if (flags()->detect_deadlocks) {
+    Callback cb(thr, pc);
+    ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
+  }
 }
 
 void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
@@ -202,13 +241,16 @@ void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
     PrintCurrentStack(thr, pc);
   }
   ReleaseImpl(thr, pc, &s->read_clock);
-  DDReport *dd_rep = 0;
-  if (flags()->detect_deadlocks && s->recursion == 0)
-    dd_rep = ctx->dd->MutexUnlock(thr->dd_pt, thr->dd_lt, &s->dd, false);
+  if (flags()->detect_deadlocks && s->recursion == 0) {
+    Callback cb(thr, pc);
+    ctx->dd->MutexBeforeUnlock(&cb, &s->dd, false);
+  }
   s->mtx.Unlock();
   thr->mset.Del(s->GetId(), false);
-  if (dd_rep)
-    ReportDeadlockReport(thr, pc, dd_rep);
+  if (flags()->detect_deadlocks) {
+    Callback cb(thr, pc);
+    ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
+  }
 }
 
 void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
@@ -245,12 +287,15 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
     PrintCurrentStack(thr, pc);
   }
   thr->mset.Del(s->GetId(), write);
-  DDReport *dd_rep = 0;
-  if (flags()->detect_deadlocks && s->recursion == 0)
-    dd_rep = ctx->dd->MutexUnlock(thr->dd_pt, thr->dd_lt, &s->dd, write);
+  if (flags()->detect_deadlocks && s->recursion == 0) {
+    Callback cb(thr, pc);
+    ctx->dd->MutexBeforeUnlock(&cb, &s->dd, write);
+  }
   s->mtx.Unlock();
-  if (dd_rep)
-    ReportDeadlockReport(thr, pc, dd_rep);
+  if (flags()->detect_deadlocks) {
+    Callback cb(thr, pc);
+    ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
+  }
 }
 
 void MutexRepair(ThreadState *thr, uptr pc, uptr addr) {
@@ -370,7 +415,9 @@ void AcquireReleaseImpl(ThreadState *thr, uptr pc, SyncClock *c) {
   StatInc(thr, StatSyncRelease);
 }
 
-void ReportDeadlockReport(ThreadState *thr, uptr pc, DDReport *r) {
+void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
+  if (r == 0)
+    return;
   Context *ctx = CTX();
   ThreadRegistryLock l(ctx->thread_registry);
   ScopedReport rep(ReportTypeDeadlock);

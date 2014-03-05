@@ -18,32 +18,11 @@ namespace __dsan {
 
 static Context *ctx;
 
-void Initialize() {
-  static u64 ctx_mem[sizeof(Context) / sizeof(u64) + 1];
-  ctx = new(ctx_mem) Context();
-
-  InitializeInterceptors();
-  //common_flags()->allow_addr2line = true;
-  common_flags()->symbolize = true;
-  ctx->dd = DDetector::Create();
-}
-
-void ThreadInit(Thread *thr) {
-  thr->dd_pt = ctx->dd->CreatePhysicalThread();
-  thr->dd_lt = ctx->dd->CreateLogicalThread(0);
-}
-
-void ThreadDestroy(Thread *thr) {
-  ctx->dd->DestroyPhysicalThread(thr->dd_pt);
-  ctx->dd->DestroyLogicalThread(thr->dd_lt);
-}
-
-static u32 CurrentStackTrace(Thread *thr) {
+static u32 CurrentStackTrace(Thread *thr, uptr skip) {
   StackTrace trace;
   thr->ignore_interceptors = true;
   trace.Unwind(1000, 0, 0, 0, 0, 0, false);
   thr->ignore_interceptors = false;
-  const uptr skip = 4;
   if (trace.size <= skip)
     return 0;
   return StackDepotPut(trace.trace + skip, trace.size - skip);
@@ -58,45 +37,96 @@ static void PrintStackTrace(Thread *thr, u32 stk) {
 }
 
 static void ReportDeadlock(Thread *thr, DDReport *rep) {
+  if (rep == 0)
+    return;
   Printf("==============================\n");
-  Printf("DEADLOCK\n");
-  PrintStackTrace(thr, CurrentStackTrace(thr));
+  Printf("WARNING: lock-order-inversion (potential deadlock)\n");
   for (int i = 0; i < rep->n; i++) {
-    Printf("Mutex %llu created at:\n", rep->loop[i].mtx_ctx0);
+    Printf("Thread %d locks mutex %llu under mutex %llu:\n",
+      rep->loop[i].thr_ctx, rep->loop[i].mtx_ctx1, rep->loop[i].mtx_ctx0);
     PrintStackTrace(thr, rep->loop[i].stk);
   }
   Printf("==============================\n");
 }
 
-void MutexLock(Thread *thr, uptr m, bool writelock, bool trylock) {
+Callback::Callback(Thread *thr)
+    : thr(thr) {
+  lt = thr->dd_lt;
+  pt = thr->dd_pt;
+}
+
+u32 Callback::Unwind() {
+  return CurrentStackTrace(thr, 3);
+}
+
+void Initialize() {
+  static u64 ctx_mem[sizeof(Context) / sizeof(u64) + 1];
+  ctx = new(ctx_mem) Context();
+
+  InitializeInterceptors();
+  ParseCommonFlagsFromString(flags(), GetEnv("DSAN_OPTIONS"));
+  //common_flags()->allow_addr2line = true;
+  common_flags()->symbolize = true;
+  ctx->dd = DDetector::Create();
+}
+
+void ThreadInit(Thread *thr) {
+  static atomic_uintptr_t id_gen;
+  uptr id = atomic_fetch_add(&id_gen, 1, memory_order_relaxed);
+  thr->dd_pt = ctx->dd->CreatePhysicalThread();
+  thr->dd_lt = ctx->dd->CreateLogicalThread(id);
+}
+
+void ThreadDestroy(Thread *thr) {
+  ctx->dd->DestroyPhysicalThread(thr->dd_pt);
+  ctx->dd->DestroyLogicalThread(thr->dd_lt);
+}
+
+void MutexBeforeLock(Thread *thr, uptr m, bool writelock) {
   if (thr->ignore_interceptors)
     return;
-  DDReport *rep = 0;
+  Callback cb(thr);
   {
     MutexHashMap::Handle h(&ctx->mutex_map, m);
     if (h.created())
-      ctx->dd->MutexInit(&h->dd, CurrentStackTrace(thr), m);
-    rep = ctx->dd->MutexLock(thr->dd_pt, thr->dd_lt, &h->dd,
-                             writelock, trylock);
+      ctx->dd->MutexInit(&cb, &h->dd);
+    ctx->dd->MutexBeforeLock(&cb, &h->dd, writelock);
   }
-  if (rep)
-    ReportDeadlock(thr, rep);
+  ReportDeadlock(thr, ctx->dd->GetReport(&cb));
 }
 
-void MutexUnlock(Thread *thr, uptr m, bool writelock) {
+void MutexAfterLock(Thread *thr, uptr m, bool writelock, bool trylock) {
   if (thr->ignore_interceptors)
     return;
-  MutexHashMap::Handle h(&ctx->mutex_map, m);
-  ctx->dd->MutexUnlock(thr->dd_pt, thr->dd_lt, &h->dd, writelock);
+  Callback cb(thr);
+  {
+    MutexHashMap::Handle h(&ctx->mutex_map, m);
+    if (h.created())
+      ctx->dd->MutexInit(&cb, &h->dd);
+    ctx->dd->MutexAfterLock(&cb, &h->dd, writelock, trylock);
+  }
+  ReportDeadlock(thr, ctx->dd->GetReport(&cb));
+}
+
+void MutexBeforeUnlock(Thread *thr, uptr m, bool writelock) {
+  if (thr->ignore_interceptors)
+    return;
+  Callback cb(thr);
+  {
+    MutexHashMap::Handle h(&ctx->mutex_map, m);
+    ctx->dd->MutexBeforeUnlock(&cb, &h->dd, writelock);
+  }
+  ReportDeadlock(thr, ctx->dd->GetReport(&cb));
 }
 
 void MutexDestroy(Thread *thr, uptr m) {
   if (thr->ignore_interceptors)
     return;
+  Callback cb(thr);
   MutexHashMap::Handle h(&ctx->mutex_map, m, true);
   if (!h.exists())
     return;
-  ctx->dd->MutexDestroy(thr->dd_pt, thr->dd_lt, &h->dd);
+  ctx->dd->MutexDestroy(&cb, &h->dd);
 }
 
 }  // namespace __dsan

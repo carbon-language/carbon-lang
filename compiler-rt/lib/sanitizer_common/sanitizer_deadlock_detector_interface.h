@@ -16,9 +16,12 @@
 #ifndef SANITIZER_DEADLOCK_DETECTOR_INTERFACE_H
 #define SANITIZER_DEADLOCK_DETECTOR_INTERFACE_H
 
-#define SANITIZER_DEADLOCK_DETECTOR_VERSION 1
+#ifndef SANITIZER_DEADLOCK_DETECTOR_VERSION
+# define SANITIZER_DEADLOCK_DETECTOR_VERSION 1
+#endif
 
 #include "sanitizer_internal_defs.h"
+#include "sanitizer_atomic.h"
 
 namespace __sanitizer {
 
@@ -26,10 +29,21 @@ namespace __sanitizer {
 // lt - logical (user) thread.
 // pt - physical (OS) thread.
 
+struct DDPhysicalThread;
+struct DDLogicalThread;
+
 struct DDMutex {
+#if SANITIZER_DEADLOCK_DETECTOR_VERSION == 1
   uptr id;
-  u32  stk;  // creation (or any other) stack that indentifies the mutex
-  u64  ctx;  // user context
+  u32  stk;  // creation stack
+  u64  ctx;
+#elif SANITIZER_DEADLOCK_DETECTOR_VERSION == 2
+  u32              id;
+  u32              recursion;
+  atomic_uintptr_t owner;
+#else
+# error "BAD SANITIZER_DEADLOCK_DETECTOR_VERSION"
+#endif
 };
 
 struct DDReport {
@@ -42,8 +56,12 @@ struct DDReport {
   } loop[16];
 };
 
-struct DDPhysicalThread;
-struct DDLogicalThread;
+struct DDCallback {
+  DDPhysicalThread *pt;
+  DDLogicalThread  *lt;
+
+  virtual u32 Unwind() { return 0; }
+};
 
 struct DDetector {
   static DDetector *Create();
@@ -54,13 +72,14 @@ struct DDetector {
   virtual DDLogicalThread* CreateLogicalThread(u64 ctx) { return 0; }
   virtual void DestroyLogicalThread(DDLogicalThread *lt) {}
 
-  virtual void MutexInit(DDMutex *m, u32 stk, u64 ctx) {}
-  virtual DDReport *MutexLock(DDPhysicalThread *pt, DDLogicalThread *lt,
-      DDMutex *m, bool writelock, bool trylock) { return 0; }
-  virtual DDReport *MutexUnlock(DDPhysicalThread *pt, DDLogicalThread *lt,
-      DDMutex *m, bool writelock) { return 0; }
-  virtual void MutexDestroy(DDPhysicalThread *pt, DDLogicalThread *lt,
-      DDMutex *m) {}
+  virtual void MutexInit(DDCallback *cb, DDMutex *m) {}
+  virtual void MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock) {}
+  virtual void MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock,
+      bool trylock) {}
+  virtual void MutexBeforeUnlock(DDCallback *cb, DDMutex *m, bool wlock) {}
+  virtual void MutexDestroy(DDCallback *cb, DDMutex *m) {}
+
+  virtual DDReport *GetReport(DDCallback *cb) { return 0; }
 };
 
 } // namespace __sanitizer
