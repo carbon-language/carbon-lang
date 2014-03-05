@@ -492,11 +492,14 @@ namespace llvm {
                        unsigned OffsetFromOrigArg,
                        unsigned ArgOffset,
                        unsigned ArgSize,
-                       bool ForceMutable) const;
+                       bool ForceMutable,
+                       unsigned ByValStoreOffset,
+					   unsigned TotalArgRegsSaveSize) const;
 
     void VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
                               SDLoc dl, SDValue &Chain,
                               unsigned ArgOffset,
+							  unsigned TotalArgRegsSaveSize,
                               bool ForceMutable = false) const;
 
     void computeRegArea(CCState &CCInfo, MachineFunction &MF,

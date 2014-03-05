@@ -23,9 +23,9 @@ define void @foo(double %vfp0,     ; --> D0,     NSAA=SP
 entry:
   ;CHECK: sub sp, #8
   ;CHECK: push.w {r11, lr}
-  ;CHECK: add r0, sp, #16
-  ;CHECK: str r2, [sp, #20]
-  ;CHECK: str r1, [sp, #16]
+  ;CHECK: add r0, sp, #8
+  ;CHECK: str r2, [sp, #12]
+  ;CHECK: str r1, [sp, #8]
   ;CHECK: bl  fooUseStruct
   call void @fooUseStruct(%st_t* %p1)
   ret void

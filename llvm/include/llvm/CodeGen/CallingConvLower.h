@@ -404,6 +404,11 @@ public:
     ByValRegs.clear();
   }
 
+  // Rewind byval registers tracking info.
+  void rewindByValRegsInfo() {
+    InRegsParamsProceed = 0;
+  }
+
   ParmContext getCallOrPrologue() const { return CallOrPrologue; }
 
 private:
