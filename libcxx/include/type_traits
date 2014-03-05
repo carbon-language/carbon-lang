@@ -762,7 +762,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_abstract : public __libcpp_
 
 // is_final
 
-#if __has_feature(is_final)
+#if _LIBCPP_STD_VER > 11 && __has_feature(is_final)
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY 
 is_final : public integral_constant<bool, __is_final(_Tp)> {};
 #endif

@@ -13,7 +13,7 @@
 
 #include <type_traits>
 
-#if __cplusplus >= 201103L
+#if _LIBCPP_STD_VER > 11
 
 struct P final { };
 union U1 { };
