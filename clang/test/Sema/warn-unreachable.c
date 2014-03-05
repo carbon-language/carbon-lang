@@ -136,7 +136,7 @@ void PR9774(int *s) {
 
 // Test case for <rdar://problem/11005770>.  We should treat code guarded
 // by 'x & 0' and 'x * 0' as unreachable.
-void calledFun();
+int calledFun();
 void test_mul_and_zero(int x) {
   if (x & 0) calledFun(); // expected-warning {{will never be executed}}
   if (0 & x) calledFun(); // expected-warning {{will never be executed}}
@@ -201,5 +201,28 @@ int trivial_dead_return() {
 MyEnum trival_dead_return_enum() {
   raze();
   return Value1; // no-warning
+}
+
+// Test unreachable code depending on configuration values
+#define CONFIG_CONSTANT 1
+int test_config_constant(int x) {
+  if (!CONFIG_CONSTANT) {
+    calledFun(); // no-warning
+    return 1;
+  }
+  if (!1) {
+    calledFun(); // expected-warning {{will never be executed}}
+    return 1;
+  }
+  if (sizeof(int) > sizeof(char)) {
+    calledFun(); // no-warning
+    return 1;
+  }
+  if (x > 10)
+    return CONFIG_CONSTANT ? calledFun() : calledFun(); // no-warning
+  else
+    return 1 ?
+      calledFun() :
+      calledFun(); // expected-warning {{will never be executed}}
 }
 
