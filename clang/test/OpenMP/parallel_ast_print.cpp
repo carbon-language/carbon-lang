@@ -9,7 +9,7 @@
 void foo() {}
 
 
-template <typename T>
+template <typename T, int C>
 T tmain(T argc, T *argv) {
   T b = argc, c, d, e, f, g;
   static T a;
@@ -17,28 +17,36 @@ T tmain(T argc, T *argv) {
   a=2;
 #pragma omp parallel default(none), private(argc,b) firstprivate(argv) shared (d) if (argc > 0)
   foo();
+#pragma omp parallel if (C)
+  foo();
   return 0;
 }
-// CHECK: template <typename T = int> int tmain(int argc, int *argv) {
+// CHECK: template <typename T = int, int C = 2> int tmain(int argc, int *argv) {
 // CHECK-NEXT: int b = argc, c, d, e, f, g;
 // CHECK-NEXT: static int a;
 // CHECK-NEXT: #pragma omp parallel
 // CHECK-NEXT: a = 2;
 // CHECK-NEXT: #pragma omp parallel default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0)
 // CHECK-NEXT: foo()
-// CHECK: template <typename T = float> float tmain(float argc, float *argv) {
+// CHECK-NEXT: #pragma omp parallel if(2)
+// CHECK-NEXT: foo()
+// CHECK: template <typename T = float, int C = 0> float tmain(float argc, float *argv) {
 // CHECK-NEXT: float b = argc, c, d, e, f, g;
 // CHECK-NEXT: static float a;
 // CHECK-NEXT: #pragma omp parallel
 // CHECK-NEXT: a = 2;
 // CHECK-NEXT: #pragma omp parallel default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0)
 // CHECK-NEXT: foo()
-// CHECK: template <typename T> T tmain(T argc, T *argv) {
+// CHECK-NEXT: #pragma omp parallel if(0)
+// CHECK-NEXT: foo()
+// CHECK: template <typename T, int C> T tmain(T argc, T *argv) {
 // CHECK-NEXT: T b = argc, c, d, e, f, g;
 // CHECK-NEXT: static T a;
 // CHECK-NEXT: #pragma omp parallel
 // CHECK-NEXT: a = 2;
 // CHECK-NEXT: #pragma omp parallel default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0)
+// CHECK-NEXT: foo()
+// CHECK-NEXT: #pragma omp parallel if(C)
 // CHECK-NEXT: foo()
 
 int main (int argc, char **argv) {
@@ -54,7 +62,7 @@ int main (int argc, char **argv) {
 // CHECK-NEXT: #pragma omp parallel default(none) private(argc,b) firstprivate(argv) if(argc > 0)
   foo();
 // CHECK-NEXT: foo();
-  return tmain(b, &b) + tmain(x, &x);
+  return tmain<int, 2>(b, &b) + tmain<float, 0>(x, &x);
 }
 
 #endif
