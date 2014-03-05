@@ -48,7 +48,8 @@ OPENMP_PARALLEL_CLAUSE(private)
 OPENMP_PARALLEL_CLAUSE(firstprivate)
 OPENMP_PARALLEL_CLAUSE(shared)
 
-// FIXME: clauses allowed for directive 'omp simd'.
+// FIXME: more clauses allowed for directive 'omp simd'.
+OPENMP_SIMD_CLAUSE(private)
 
 // Static attributes for 'default' clause.
 OPENMP_DEFAULT_KIND(none)
