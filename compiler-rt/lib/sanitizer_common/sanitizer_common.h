@@ -19,6 +19,7 @@
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
 #include "sanitizer_mutex.h"
+#include "sanitizer_flags.h"
 
 namespace __sanitizer {
 struct StackTrace;
