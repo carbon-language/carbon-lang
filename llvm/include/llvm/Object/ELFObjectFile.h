@@ -67,7 +67,7 @@ protected:
                            SymbolRef::Type &Res) const override;
   error_code getSymbolSection(DataRefImpl Symb,
                               section_iterator &Res) const override;
-  error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const;
+  error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const override;
 
   error_code getLibraryNext(DataRefImpl Data,
                             LibraryRef &Result) const override;
@@ -77,19 +77,19 @@ protected:
   error_code getSectionName(DataRefImpl Sec, StringRef &Res) const override;
   error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const override;
   error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const override;
-  error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const;
+  error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const override;
   error_code getSectionAlignment(DataRefImpl Sec, uint64_t &Res) const override;
   error_code isSectionText(DataRefImpl Sec, bool &Res) const override;
-  error_code isSectionData(DataRefImpl Sec, bool &Res) const;
+  error_code isSectionData(DataRefImpl Sec, bool &Res) const override;
   error_code isSectionBSS(DataRefImpl Sec, bool &Res) const override;
   error_code isSectionRequiredForExecution(DataRefImpl Sec,
                                            bool &Res) const override;
-  error_code isSectionVirtual(DataRefImpl Sec, bool &Res) const;
+  error_code isSectionVirtual(DataRefImpl Sec, bool &Res) const override;
   error_code isSectionZeroInit(DataRefImpl Sec, bool &Res) const override;
-  error_code isSectionReadOnlyData(DataRefImpl Sec, bool &Res) const;
+  error_code isSectionReadOnlyData(DataRefImpl Sec, bool &Res) const override;
   error_code sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
                                    bool &Result) const override;
-  relocation_iterator section_rel_begin(DataRefImpl Sec) const;
+  relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
   relocation_iterator section_rel_end(DataRefImpl Sec) const override;
   section_iterator getRelocatedSection(DataRefImpl Sec) const override;
 
@@ -98,7 +98,7 @@ protected:
                                   uint64_t &Res) const override;
   error_code getRelocationOffset(DataRefImpl Rel, uint64_t &Res) const override;
   symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
-  error_code getRelocationType(DataRefImpl Rel, uint64_t &Res) const;
+  error_code getRelocationType(DataRefImpl Rel, uint64_t &Res) const override;
   error_code getRelocationTypeName(DataRefImpl Rel,
                                   SmallVectorImpl<char> &Result) const override;
   error_code getRelocationValueString(DataRefImpl Rel,

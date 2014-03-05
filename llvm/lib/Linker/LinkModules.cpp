@@ -87,7 +87,7 @@ public:
 private:
   Type *getImpl(Type *T);
   /// remapType - Implement the ValueMapTypeRemapper interface.
-  Type *remapType(Type *SrcTy) {
+  Type *remapType(Type *SrcTy) override {
     return get(SrcTy);
   }
   
@@ -372,7 +372,7 @@ namespace {
       LazilyLinkFunctions(LazilyLinkFunctions) {
     }
 
-    virtual Value *materializeValueFor(Value *V);
+    Value *materializeValueFor(Value *V) override;
   };
 
   /// ModuleLinker - This is an implementation class for the LinkModules

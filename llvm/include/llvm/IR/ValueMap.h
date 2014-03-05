@@ -209,7 +209,7 @@ class ValueMapCallbackVH : public CallbackVH {
 public:
   KeyT Unwrap() const { return cast_or_null<KeySansPointerT>(getValPtr()); }
 
-  virtual void deleted() {
+  void deleted() override {
     // Make a copy that won't get changed even when *this is destroyed.
     ValueMapCallbackVH Copy(*this);
     sys::Mutex *M = Config::getMutex(Copy.Map->Data);
@@ -220,7 +220,7 @@ public:
     if (M)
       M->release();
   }
-  virtual void allUsesReplacedWith(Value *new_key) {
+  void allUsesReplacedWith(Value *new_key) override {
     assert(isa<KeySansPointerT>(new_key) &&
            "Invalid RAUW on key of ValueMap<>");
     // Make a copy that won't get changed even when *this is destroyed.

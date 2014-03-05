@@ -307,11 +307,11 @@ public:
   InputArgList(const char* const *ArgBegin, const char* const *ArgEnd);
   ~InputArgList();
 
-  virtual const char *getArgString(unsigned Index) const {
+  const char *getArgString(unsigned Index) const override {
     return ArgStrings[Index];
   }
 
-  virtual unsigned getNumInputArgStrings() const {
+  unsigned getNumInputArgStrings() const override {
     return NumInputArgStrings;
   }
 
@@ -323,7 +323,7 @@ public:
   unsigned MakeIndex(StringRef String0) const;
   unsigned MakeIndex(StringRef String0, StringRef String1) const;
 
-  virtual const char *MakeArgString(StringRef Str) const;
+  const char *MakeArgString(StringRef Str) const override;
 
   /// @}
 };
@@ -341,11 +341,11 @@ public:
   DerivedArgList(const InputArgList &BaseArgs);
   ~DerivedArgList();
 
-  virtual const char *getArgString(unsigned Index) const {
+  const char *getArgString(unsigned Index) const override {
     return BaseArgs.getArgString(Index);
   }
 
-  virtual unsigned getNumInputArgStrings() const {
+  unsigned getNumInputArgStrings() const override {
     return BaseArgs.getNumInputArgStrings();
   }
 
@@ -362,7 +362,7 @@ public:
     SynthesizedArgs.push_back(A);
   }
 
-  virtual const char *MakeArgString(StringRef Str) const;
+  const char *MakeArgString(StringRef Str) const override;
 
   /// AddFlagArg - Construct a new FlagArg for the given option \p Id and
   /// append it to the argument list.

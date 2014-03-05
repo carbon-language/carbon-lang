@@ -120,7 +120,7 @@ private:
 
   struct ListCompleterConcept : CompleterConcept {
     ~ListCompleterConcept();
-    CompletionAction complete(StringRef Buffer, size_t Pos) const;
+    CompletionAction complete(StringRef Buffer, size_t Pos) const override;
     static std::string getCommonPrefix(const std::vector<Completion> &Comps);
     virtual std::vector<Completion> getCompletions(StringRef Buffer,
                                                    size_t Pos) const = 0;
@@ -129,7 +129,7 @@ private:
   template <typename T>
   struct CompleterModel : CompleterConcept {
     CompleterModel(T Value) : Value(Value) {}
-    CompletionAction complete(StringRef Buffer, size_t Pos) const {
+    CompletionAction complete(StringRef Buffer, size_t Pos) const override {
       return Value(Buffer, Pos);
     }
     T Value;
@@ -138,7 +138,8 @@ private:
   template <typename T>
   struct ListCompleterModel : ListCompleterConcept {
     ListCompleterModel(T Value) : Value(Value) {}
-    std::vector<Completion> getCompletions(StringRef Buffer, size_t Pos) const {
+    std::vector<Completion> getCompletions(StringRef Buffer,
+                                           size_t Pos) const override {
       return Value(Buffer, Pos);
     }
     T Value;

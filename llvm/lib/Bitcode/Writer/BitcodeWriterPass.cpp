@@ -31,9 +31,9 @@ namespace {
     explicit WriteBitcodePass(raw_ostream &o)
       : ModulePass(ID), OS(o) {}
 
-    const char *getPassName() const { return "Bitcode Writer"; }
+    const char *getPassName() const override { return "Bitcode Writer"; }
 
-    bool runOnModule(Module &M) {
+    bool runOnModule(Module &M) override {
       WriteBitcodeToFile(&M, OS);
       return false;
     }

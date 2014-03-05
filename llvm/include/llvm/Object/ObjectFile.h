@@ -223,7 +223,7 @@ protected:
   // modified externally. It's UB otherwise.
   friend class SymbolRef;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const = 0;
-  virtual error_code printSymbolName(raw_ostream &OS, DataRefImpl Symb) const;
+  error_code printSymbolName(raw_ostream &OS, DataRefImpl Symb) const override;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const = 0;
   virtual error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res)const=0;
   virtual error_code getSymbolAlignment(DataRefImpl Symb, uint32_t &Res) const;

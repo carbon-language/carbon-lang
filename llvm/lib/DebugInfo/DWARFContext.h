@@ -71,7 +71,7 @@ public:
     return DICtx->getKind() == CK_DWARF;
   }
 
-  virtual void dump(raw_ostream &OS, DIDumpType DumpType = DIDT_All);
+  void dump(raw_ostream &OS, DIDumpType DumpType = DIDT_All) override;
 
   /// Get the number of compile units in this context.
   unsigned getNumCompileUnits() {
@@ -148,12 +148,12 @@ public:
   const DWARFDebugLine::LineTable *
   getLineTableForCompileUnit(DWARFCompileUnit *cu);
 
-  virtual DILineInfo getLineInfoForAddress(uint64_t Address,
-      DILineInfoSpecifier Specifier = DILineInfoSpecifier());
-  virtual DILineInfoTable getLineInfoForAddressRange(uint64_t Address,
-      uint64_t Size, DILineInfoSpecifier Specifier = DILineInfoSpecifier());
-  virtual DIInliningInfo getInliningInfoForAddress(uint64_t Address,
-      DILineInfoSpecifier Specifier = DILineInfoSpecifier());
+  DILineInfo getLineInfoForAddress(uint64_t Address,
+      DILineInfoSpecifier Specifier = DILineInfoSpecifier()) override;
+  DILineInfoTable getLineInfoForAddressRange(uint64_t Address, uint64_t Size,
+      DILineInfoSpecifier Specifier = DILineInfoSpecifier()) override;
+  DIInliningInfo getInliningInfoForAddress(uint64_t Address,
+      DILineInfoSpecifier Specifier = DILineInfoSpecifier()) override;
 
   virtual bool isLittleEndian() const = 0;
   virtual uint8_t getAddressSize() const = 0;
@@ -231,35 +231,35 @@ class DWARFContextInMemory : public DWARFContext {
 public:
   DWARFContextInMemory(object::ObjectFile *);
   ~DWARFContextInMemory();
-  virtual bool isLittleEndian() const { return IsLittleEndian; }
-  virtual uint8_t getAddressSize() const { return AddressSize; }
-  virtual const Section &getInfoSection() { return InfoSection; }
-  virtual const TypeSectionMap &getTypesSections() { return TypesSections; }
-  virtual StringRef getAbbrevSection() { return AbbrevSection; }
-  virtual const Section &getLocSection() { return LocSection; }
-  virtual StringRef getARangeSection() { return ARangeSection; }
-  virtual StringRef getDebugFrameSection() { return DebugFrameSection; }
-  virtual const Section &getLineSection() { return LineSection; }
-  virtual const Section &getLineDWOSection() { return LineDWOSection; }
-  virtual StringRef getStringSection() { return StringSection; }
-  virtual StringRef getRangeSection() { return RangeSection; }
-  virtual StringRef getPubNamesSection() { return PubNamesSection; }
-  virtual StringRef getPubTypesSection() { return PubTypesSection; }
-  virtual StringRef getGnuPubNamesSection() { return GnuPubNamesSection; }
-  virtual StringRef getGnuPubTypesSection() { return GnuPubTypesSection; }
+  bool isLittleEndian() const override { return IsLittleEndian; }
+  uint8_t getAddressSize() const override { return AddressSize; }
+  const Section &getInfoSection() override { return InfoSection; }
+  const TypeSectionMap &getTypesSections() override { return TypesSections; }
+  StringRef getAbbrevSection() override { return AbbrevSection; }
+  const Section &getLocSection() override { return LocSection; }
+  StringRef getARangeSection() override { return ARangeSection; }
+  StringRef getDebugFrameSection() override { return DebugFrameSection; }
+  const Section &getLineSection() override { return LineSection; }
+  const Section &getLineDWOSection() override { return LineDWOSection; }
+  StringRef getStringSection() override { return StringSection; }
+  StringRef getRangeSection() override { return RangeSection; }
+  StringRef getPubNamesSection() override { return PubNamesSection; }
+  StringRef getPubTypesSection() override { return PubTypesSection; }
+  StringRef getGnuPubNamesSection() override { return GnuPubNamesSection; }
+  StringRef getGnuPubTypesSection() override { return GnuPubTypesSection; }
 
   // Sections for DWARF5 split dwarf proposal.
-  virtual const Section &getInfoDWOSection() { return InfoDWOSection; }
-  virtual const TypeSectionMap &getTypesDWOSections() {
+  const Section &getInfoDWOSection() override { return InfoDWOSection; }
+  const TypeSectionMap &getTypesDWOSections() override {
     return TypesDWOSections;
   }
-  virtual StringRef getAbbrevDWOSection() { return AbbrevDWOSection; }
-  virtual StringRef getStringDWOSection() { return StringDWOSection; }
-  virtual StringRef getStringOffsetDWOSection() {
+  StringRef getAbbrevDWOSection() override { return AbbrevDWOSection; }
+  StringRef getStringDWOSection() override { return StringDWOSection; }
+  StringRef getStringOffsetDWOSection() override {
     return StringOffsetDWOSection;
   }
-  virtual StringRef getRangeDWOSection() { return RangeDWOSection; }
-  virtual StringRef getAddrSection() {
+  StringRef getRangeDWOSection() override { return RangeDWOSection; }
+  StringRef getAddrSection() override {
     return AddrSection;
   }
 };

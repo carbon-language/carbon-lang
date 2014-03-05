@@ -231,7 +231,7 @@ public:
   struct DumpingState : public State {
     DumpingState(raw_ostream &OS) : OS(OS) {}
     virtual ~DumpingState();
-    virtual void finalize();
+    void finalize() override;
   private:
     raw_ostream &OS;
   };

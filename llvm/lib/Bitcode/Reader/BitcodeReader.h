@@ -247,11 +247,11 @@ public:
   /// when the reader is destroyed.
   void setBufferOwned(bool Owned) { BufferOwned = Owned; }
 
-  virtual bool isMaterializable(const GlobalValue *GV) const;
-  virtual bool isDematerializable(const GlobalValue *GV) const;
-  virtual error_code Materialize(GlobalValue *GV);
-  virtual error_code MaterializeModule(Module *M);
-  virtual void Dematerialize(GlobalValue *GV);
+  bool isMaterializable(const GlobalValue *GV) const override;
+  bool isDematerializable(const GlobalValue *GV) const override;
+  error_code Materialize(GlobalValue *GV) override;
+  error_code MaterializeModule(Module *M) override;
+  void Dematerialize(GlobalValue *GV) override;
 
   /// @brief Main interface to parsing a bitcode buffer.
   /// @returns true if an error occurred.

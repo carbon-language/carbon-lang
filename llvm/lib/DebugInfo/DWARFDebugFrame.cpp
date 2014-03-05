@@ -214,7 +214,7 @@ public:
   ~CIE() {
   }
 
-  void dumpHeader(raw_ostream &OS) const {
+  void dumpHeader(raw_ostream &OS) const override {
     OS << format("%08x %08x %08x CIE",
                  (uint32_t)Offset, (uint32_t)Length, DW_CIE_ID)
        << "\n";
@@ -258,7 +258,7 @@ public:
   ~FDE() {
   }
 
-  void dumpHeader(raw_ostream &OS) const {
+  void dumpHeader(raw_ostream &OS) const override {
     OS << format("%08x %08x %08x FDE ",
                  (uint32_t)Offset, (uint32_t)Length, (int32_t)LinkedCIEOffset);
     OS << format("cie=%08x pc=%08x...%08x\n",
