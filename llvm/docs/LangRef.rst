@@ -1743,14 +1743,12 @@ Floating Point Types
    * - ``ppc_fp128``
      - 128-bit floating point value (two 64-bits)
 
-.. _t_x86mmx:
-
-X86mmx Type
-"""""""""""
+X86_mmx Type
+""""""""""""
 
 :Overview:
 
-The x86mmx type represents a value held in an MMX register on an x86
+The x86_mmx type represents a value held in an MMX register on an x86
 machine. The operations allowed on it are quite limited: parameters and
 return values, load and store, and bitcast. User-specified MMX
 instructions are represented as intrinsic or asm calls with arguments
@@ -1761,7 +1759,7 @@ of this type.
 
 ::
 
-      x86mmx
+      x86_mmx
 
 
 .. _t_pointer:
@@ -2046,7 +2044,7 @@ The IEEE 16-bit format (half precision) is represented by ``0xH``
 followed by 4 hexadecimal digits. All hexadecimal formats are big-endian
 (sign bit at the left).
 
-There are no constants of type x86mmx.
+There are no constants of type x86_mmx.
 
 .. _complexconstants:
 
