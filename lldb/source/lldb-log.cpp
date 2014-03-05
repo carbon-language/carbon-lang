@@ -253,6 +253,7 @@ lldb_private::ListLogCategories (Stream *strm)
                  "  events - log broadcaster, listener and event queue activities\n"
                  "  expr - log expressions\n"
                  "  host - log host activities\n"
+                 "  jit - log JIT events in the target\n"
                  "  mmap - log mmap related activities\n"
                  "  module - log module activities such as when modules are created, detroyed, replaced, and more\n"
                  "  object - log object construction/destruction for important objects\n"
@@ -269,6 +270,5 @@ lldb_private::ListLogCategories (Stream *strm)
                  "  types - log type system related activities\n"
                  "  unwind - log stack unwind activities\n"
                  "  verbose - enable verbose logging\n"
-                 "  watch - log watchpoint related activities\n"
-                 "  jit - log JIT events in the target\n");
+                 "  watch - log watchpoint related activities\n");
 }
