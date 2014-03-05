@@ -2792,9 +2792,9 @@ metadata types that refer to the same loop identifier metadata.
 
    for.body:
      ...
-     %0 = load i32* %arrayidx, align 4, !llvm.mem.parallel_loop_access !0
+     %val0 = load i32* %arrayidx, !llvm.mem.parallel_loop_access !0
      ...
-     store i32 %0, i32* %arrayidx4, align 4, !llvm.mem.parallel_loop_access !0
+     store i32 %val0, i32* %arrayidx1, !llvm.mem.parallel_loop_access !0
      ...
      br i1 %exitcond, label %for.end, label %for.body, !llvm.loop !0
 
@@ -2809,21 +2809,22 @@ the loop identifier metadata node directly:
 .. code-block:: llvm
 
    outer.for.body:
-   ...
+     ...
+     %val1 = load i32* %arrayidx3, !llvm.mem.parallel_loop_access !2
+     ...
+     br label %inner.for.body
 
    inner.for.body:
      ...
-     %0 = load i32* %arrayidx, align 4, !llvm.mem.parallel_loop_access !0
+     %val0 = load i32* %arrayidx1, !llvm.mem.parallel_loop_access !0
      ...
-     store i32 %0, i32* %arrayidx4, align 4, !llvm.mem.parallel_loop_access !0
+     store i32 %val0, i32* %arrayidx2, !llvm.mem.parallel_loop_access !0
      ...
      br i1 %exitcond, label %inner.for.end, label %inner.for.body, !llvm.loop !1
 
    inner.for.end:
      ...
-     %0 = load i32* %arrayidx, align 4, !llvm.mem.parallel_loop_access !0
-     ...
-     store i32 %0, i32* %arrayidx4, align 4, !llvm.mem.parallel_loop_access !0
+     store i32 %val1, i32* %arrayidx4, !llvm.mem.parallel_loop_access !2
      ...
      br i1 %exitcond, label %outer.for.end, label %outer.for.body, !llvm.loop !2
 
