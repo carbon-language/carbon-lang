@@ -499,8 +499,11 @@ DiagnosticNoteRenderer::emitBuildingModuleLocation(SourceLocation Loc,
   // Generate a note indicating the include location.
   SmallString<200> MessageStorage;
   llvm::raw_svector_ostream Message(MessageStorage);
-  Message << "while building module '" << ModuleName << "' imported from "
-          << PLoc.getFilename() << ':' << PLoc.getLine() << ":";
+  if (PLoc.getFilename())
+    Message << "while building module '" << ModuleName << "' imported from "
+            << PLoc.getFilename() << ':' << PLoc.getLine() << ":";
+  else
+    Message << "while building module '" << ModuleName << ":";
   emitNote(Loc, Message.str(), &SM);
 }
 

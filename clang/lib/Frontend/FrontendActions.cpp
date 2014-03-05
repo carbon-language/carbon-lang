@@ -240,7 +240,15 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
     // map with a single module (the common case).
     return false;
   }
-  
+
+  // If we're being run from the command-line, the module build stack will not
+  // have been filled in yet, so complete it now in order to allow us to detect
+  // module cycles.
+  SourceManager &SourceMgr = CI.getSourceManager();
+  if (SourceMgr.getModuleBuildStack().empty())
+    SourceMgr.pushModuleBuildStack(CI.getLangOpts().CurrentModule,
+                                   FullSourceLoc(SourceLocation(), SourceMgr));
+
   // Dig out the module definition.
   Module = HS.lookupModule(CI.getLangOpts().CurrentModule, 
                            /*AllowSearch=*/false);
