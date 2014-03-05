@@ -165,56 +165,6 @@ template <> struct simplify_type<const Use> {
   static SimpleType getSimplifiedValue(const Use &Val) { return Val.get(); }
 };
 
-template<typename UserTy>  // UserTy == 'User' or 'const User'
-class value_use_iterator : public std::iterator<std::forward_iterator_tag,
-                                                UserTy*, ptrdiff_t> {
-  typedef std::iterator<std::forward_iterator_tag, UserTy*, ptrdiff_t> super;
-  typedef value_use_iterator<UserTy> _Self;
-
-  Use *U;
-  explicit value_use_iterator(Use *u) : U(u) {}
-  friend class Value;
-public:
-  typedef typename super::reference reference;
-  typedef typename super::pointer pointer;
-
-  value_use_iterator() {}
-
-  bool operator==(const _Self &x) const {
-    return U == x.U;
-  }
-  bool operator!=(const _Self &x) const {
-    return !operator==(x);
-  }
-
-  /// \brief Returns true if this iterator is equal to use_end() on the value.
-  bool atEnd() const { return U == 0; }
-
-  // Iterator traversal: forward iteration only
-  _Self &operator++() {          // Preincrement
-    assert(U && "Cannot increment end iterator!");
-    U = U->getNext();
-    return *this;
-  }
-  _Self operator++(int) {        // Postincrement
-    _Self tmp = *this; ++*this; return tmp;
-  }
-
-  // Retrieve a pointer to the current User.
-  UserTy *operator*() const {
-    assert(U && "Cannot dereference end iterator!");
-    return U->getUser();
-  }
-
-  UserTy *operator->() const { return operator*(); }
-
-  Use &getUse() const { return *U; }
-
-  /// \brief Return the operand # of this use in its User.
-  /// FIXME: Replace all callers with a direct call to Use::getOperandNo.
-  unsigned getOperandNo() const { return U->getOperandNo(); }
-};
-
 // Create wrappers for C Binding types (see CBindingWrapping.h).
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Use, LLVMUseRef)
 

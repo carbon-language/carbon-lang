@@ -2100,8 +2100,7 @@ public:
   /// getIncomingBlock - Return incoming basic block corresponding
   /// to value use iterator.
   ///
-  template <typename U>
-  BasicBlock *getIncomingBlock(value_use_iterator<U> I) const {
+  BasicBlock *getIncomingBlock(Value::const_use_iterator I) const {
     return getIncomingBlock(I.getUse());
   }
 

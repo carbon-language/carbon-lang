@@ -104,7 +104,7 @@ public:
   /// isCallee - Determine whether the passed iterator points to the
   /// callee operand's Use.
   ///
-  bool isCallee(value_use_iterator<UserTy> UI) const {
+  bool isCallee(Value::const_use_iterator UI) const {
     return getCallee() == &UI.getUse();
   }
 
@@ -121,7 +121,7 @@ public:
 
   /// Given a value use iterator, returns the argument that corresponds to it.
   /// Iterator must actually correspond to an argument.
-  unsigned getArgumentNo(value_use_iterator<UserTy> I) const {
+  unsigned getArgumentNo(Value::const_use_iterator I) const {
     assert(getInstruction() && "Not a call or invoke instruction!");
     assert(arg_begin() <= &I.getUse() && &I.getUse() < arg_end()
            && "Argument # out of range!");

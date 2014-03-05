@@ -75,6 +75,58 @@ protected:
   unsigned char SubclassOptionalData : 7;
 
 private:
+  template <typename UserTy> // UserTy == 'User' or 'const User'
+  class user_iterator_impl
+      : public std::iterator<std::forward_iterator_tag, UserTy *, ptrdiff_t> {
+    typedef std::iterator<std::forward_iterator_tag, UserTy *, ptrdiff_t> super;
+
+    Use *U;
+    explicit user_iterator_impl(Use *u) : U(u) {}
+    friend class Value;
+
+  public:
+    typedef typename super::reference reference;
+    typedef typename super::pointer pointer;
+
+    user_iterator_impl() {}
+
+    bool operator==(const user_iterator_impl &x) const { return U == x.U; }
+    bool operator!=(const user_iterator_impl &x) const { return !operator==(x); }
+
+    /// \brief Returns true if this iterator is equal to use_end() on the value.
+    bool atEnd() const { return U == 0; }
+
+    // Iterator traversal: forward iteration only
+    user_iterator_impl &operator++() { // Preincrement
+      assert(U && "Cannot increment end iterator!");
+      U = U->getNext();
+      return *this;
+    }
+    user_iterator_impl operator++(int) { // Postincrement
+      auto tmp = *this;
+      ++*this;
+      return tmp;
+    }
+
+    // Retrieve a pointer to the current User.
+    UserTy *operator*() const {
+      assert(U && "Cannot dereference end iterator!");
+      return U->getUser();
+    }
+
+    UserTy *operator->() const { return operator*(); }
+
+    operator user_iterator_impl<const UserTy>() const {
+      return user_iterator_impl<const UserTy>(U);
+    }
+
+    Use &getUse() const { return *U; }
+
+    /// \brief Return the operand # of this use in its User.
+    /// FIXME: Replace all callers with a direct call to Use::getOperandNo.
+    unsigned getOperandNo() const { return U->getOperandNo(); }
+  };
+
   /// SubclassData - This member is defined by this class, but is not used for
   /// anything.  Subclasses can use it to hold whatever state they find useful.
   /// This field is initialized to zero by the ctor.
@@ -151,16 +203,16 @@ public:
   //----------------------------------------------------------------------
   // Methods for handling the chain of uses of this Value.
   //
-  typedef value_use_iterator<User>       use_iterator;
-  typedef value_use_iterator<const User> const_use_iterator;
-
   bool               use_empty() const { return UseList == 0; }
+
+  typedef user_iterator_impl<User>       use_iterator;
+  typedef user_iterator_impl<const User> const_use_iterator;
   use_iterator       use_begin()       { return use_iterator(UseList); }
   const_use_iterator use_begin() const { return const_use_iterator(UseList); }
   use_iterator       use_end()         { return use_iterator(0);   }
   const_use_iterator use_end()   const { return const_use_iterator(0);   }
-  User              *use_back()        { return *use_begin(); }
-  const User        *use_back()  const { return *use_begin(); }
+  User               *use_back()        { return *use_begin(); }
+  const User         *use_back()  const { return *use_begin(); }
 
   /// hasOneUse - Return true if there is exactly one user of this value.  This
   /// is specialized because it is a common request and does not require
