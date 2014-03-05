@@ -165,11 +165,11 @@ public:
                                  FuncAtomContent + sizeof(FuncAtomContent)),
             symbolName) {}
 
-  virtual uint64_t ordinal() const { return 0; }
-  virtual Scope scope() const { return scopeGlobal; }
-  virtual ContentType contentType() const { return typeCode; }
-  virtual Alignment alignment() const { return Alignment(1); }
-  virtual ContentPermissions permissions() const { return permR_X; }
+  uint64_t ordinal() const override { return 0; }
+  Scope scope() const override { return scopeGlobal; }
+  ContentType contentType() const override { return typeCode; }
+  Alignment alignment() const override { return Alignment(1); }
+  ContentPermissions permissions() const override { return permR_X; }
 };
 
 class FileImportLibrary : public File {
@@ -214,19 +214,19 @@ public:
     ec = error_code::success();
   }
 
-  virtual const atom_collection<DefinedAtom> &defined() const {
+  const atom_collection<DefinedAtom> &defined() const override {
     return _definedAtoms;
   }
 
-  virtual const atom_collection<UndefinedAtom> &undefined() const {
+  const atom_collection<UndefinedAtom> &undefined() const override {
     return _noUndefinedAtoms;
   }
 
-  virtual const atom_collection<SharedLibraryAtom> &sharedLibrary() const {
+  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
     return _sharedLibraryAtoms;
   }
 
-  virtual const atom_collection<AbsoluteAtom> &absolute() const {
+  const atom_collection<AbsoluteAtom> &absolute() const override {
     return _noAbsoluteAtoms;
   }
 
@@ -292,16 +292,16 @@ private:
 
 class COFFImportLibraryReader : public Reader {
 public:
-  virtual bool canParse(file_magic magic, StringRef,
-                        const MemoryBuffer &mb) const {
+  bool canParse(file_magic magic, StringRef,
+                const MemoryBuffer &mb) const override {
     if (mb.getBufferSize() < sizeof(COFF::ImportHeader))
       return false;
     return (magic == llvm::sys::fs::file_magic::coff_import_library);
   }
 
-  virtual error_code
+  error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const {
+            std::vector<std::unique_ptr<File> > &result) const override {
     error_code ec;
     auto file = std::unique_ptr<File>(new FileImportLibrary(std::move(mb), ec));
     if (ec)

@@ -33,17 +33,16 @@ public:
       : Reference(ns, arch, relocType), _target(target),
         _offsetInAtom(offsetInAtom) {}
 
-  virtual const Atom *target() const { return _target; }
-  virtual void setTarget(const Atom *newAtom) { _target = newAtom; }
+  const Atom *target() const override { return _target; }
+  void setTarget(const Atom *newAtom) override { _target = newAtom; }
 
   // Addend is a value to be added to the relocation target. For example, if
   // target=AtomX and addend=4, the relocation address will become the address
   // of AtomX + 4. COFF does not support that sort of relocation, thus addend
   // is always zero.
-  virtual Addend addend() const { return 0; }
-  virtual void setAddend(Addend) {}
-
-  virtual uint64_t offsetInAtom() const { return _offsetInAtom; }
+  Addend addend() const override { return 0; }
+  void setAddend(Addend) override {}
+  uint64_t offsetInAtom() const override { return _offsetInAtom; }
 
 private:
   const Atom *_target;
@@ -55,10 +54,10 @@ public:
   COFFAbsoluteAtom(const File &f, StringRef name, Scope scope, uint64_t value)
       : _owningFile(f), _name(name), _scope(scope), _value(value) {}
 
-  virtual const File &file() const { return _owningFile; }
-  virtual Scope scope() const { return _scope; }
-  virtual StringRef name() const { return _name; }
-  virtual uint64_t value() const { return _value; }
+  const File &file() const override { return _owningFile; }
+  Scope scope() const override { return _scope; }
+  StringRef name() const override { return _name; }
+  uint64_t value() const override { return _value; }
 
 private:
   const File &_owningFile;
@@ -73,10 +72,10 @@ public:
                     const UndefinedAtom *fallback = nullptr)
       : _owningFile(file), _name(name), _fallback(fallback) {}
 
-  virtual const File &file() const { return _owningFile; }
-  virtual StringRef name() const { return _name; }
-  virtual CanBeNull canBeNull() const { return CanBeNull::canBeNullNever; }
-  virtual const UndefinedAtom *fallback() const { return _fallback; }
+  const File &file() const override { return _owningFile; }
+  StringRef name() const override { return _name; }
+  CanBeNull canBeNull() const override { return CanBeNull::canBeNullNever; }
+  const UndefinedAtom *fallback() const override { return _fallback; }
 
 private:
   const File &_owningFile;
@@ -95,16 +94,18 @@ public:
     Internal
   };
 
-  virtual const File &file() const { return _file; }
-  virtual StringRef name() const { return _name; }
-  virtual Interposable interposable() const { return interposeNo; }
-  virtual Merge merge() const { return mergeNo; }
-  virtual Alignment alignment() const { return Alignment(0); }
-  virtual SectionChoice sectionChoice() const = 0;
-  virtual StringRef customSectionName() const { return ""; }
-  virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
-  virtual DeadStripKind deadStrip() const { return deadStripNormal; }
-  virtual bool isAlias() const { return false; }
+  const File &file() const override { return _file; }
+  StringRef name() const override { return _name; }
+  Interposable interposable() const override { return interposeNo; }
+  Merge merge() const override { return mergeNo; }
+  Alignment alignment() const override { return Alignment(0); }
+  SectionChoice sectionChoice() const = 0;
+  StringRef customSectionName() const override { return ""; }
+  SectionPosition sectionPosition() const override {
+    return sectionPositionAny;
+  }
+  DeadStripKind deadStrip() const override { return deadStripNormal; }
+  bool isAlias() const override { return false; }
 
   Kind getKind() const { return _kind; }
 
@@ -112,11 +113,11 @@ public:
     _references.push_back(std::move(reference));
   }
 
-  virtual reference_iterator begin() const {
+  reference_iterator begin() const override {
     return reference_iterator(*this, reinterpret_cast<const void *>(0));
   }
 
-  virtual reference_iterator end() const {
+  reference_iterator end() const override {
     return reference_iterator(
         *this, reinterpret_cast<const void *>(_references.size()));
   }
@@ -126,12 +127,12 @@ protected:
       : _file(file), _name(name), _kind(kind) {}
 
 private:
-  virtual const Reference *derefIterator(const void *iter) const {
+  const Reference *derefIterator(const void *iter) const override {
     size_t index = reinterpret_cast<size_t>(iter);
     return _references[index].get();
   }
 
-  virtual void incrementIterator(const void *&iter) const {
+  void incrementIterator(const void *&iter) const override {
     size_t index = reinterpret_cast<size_t>(iter);
     iter = reinterpret_cast<const void *>(index + 1);
   }
@@ -159,13 +160,13 @@ public:
 
   void setAlignment(Alignment val) { _alignment = val; }
 
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
-  virtual StringRef customSectionName() const { return _sectionName; }
-  virtual Scope scope() const { return _scope; }
-  virtual ContentType contentType() const { return _contentType; }
-  virtual ContentPermissions permissions() const { return _permissions; }
-  virtual uint64_t ordinal() const { return _ordinal; }
-  virtual Alignment alignment() const { return _alignment; }
+  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
+  StringRef customSectionName() const override { return _sectionName; }
+  Scope scope() const override { return _scope; }
+  ContentType contentType() const override { return _contentType; }
+  ContentPermissions permissions() const override { return _permissions; }
+  uint64_t ordinal() const override { return _ordinal; }
+  Alignment alignment() const override { return _alignment; }
 
 private:
   StringRef _sectionName;
@@ -188,11 +189,11 @@ public:
                             ordinal),
         _isComdat(isComdat), _merge(merge), _dataref(data) {}
 
-  virtual Merge merge() const { return _merge; }
-  virtual uint64_t size() const { return _dataref.size(); }
-  virtual ArrayRef<uint8_t> rawContent() const { return _dataref; }
+  Merge merge() const override { return _merge; }
+  uint64_t size() const override { return _dataref.size(); }
+  ArrayRef<uint8_t> rawContent() const override { return _dataref; }
 
-  virtual DeadStripKind deadStrip() const {
+  DeadStripKind deadStrip() const override {
     // Only COMDAT symbols would be dead-stripped.
     return _isComdat ? deadStripNormal : deadStripNever;
   }
@@ -213,9 +214,9 @@ public:
                             ordinal),
         _merge(merge), _size(size) {}
 
-  virtual Merge merge() const { return _merge; }
-  virtual uint64_t size() const { return _size; }
-  virtual ArrayRef<uint8_t> rawContent() const { return _contents; }
+  Merge merge() const override { return _merge; }
+  uint64_t size() const override { return _size; }
+  ArrayRef<uint8_t> rawContent() const override { return _contents; }
 
 private:
   Merge _merge;
@@ -227,12 +228,12 @@ private:
 /// not read from file.
 class COFFLinkerInternalAtom : public COFFBaseDefinedAtom {
 public:
-  virtual SectionChoice sectionChoice() const { return sectionBasedOnContent; }
-  virtual uint64_t ordinal() const { return _ordinal; }
-  virtual Scope scope() const { return scopeGlobal; }
-  virtual Alignment alignment() const { return Alignment(0); }
-  virtual uint64_t size() const { return _data.size(); }
-  virtual ArrayRef<uint8_t> rawContent() const { return _data; }
+  SectionChoice sectionChoice() const override { return sectionBasedOnContent; }
+  uint64_t ordinal() const override { return _ordinal; }
+  Scope scope() const override { return scopeGlobal; }
+  Alignment alignment() const override { return Alignment(0); }
+  uint64_t size() const override { return _data.size(); }
+  ArrayRef<uint8_t> rawContent() const override { return _data; }
 
 protected:
   COFFLinkerInternalAtom(const File &file, uint64_t ordinal,
@@ -252,10 +253,10 @@ public:
       : COFFLinkerInternalAtom(file, ordinal, stringRefToVector(contents)),
         _sectionName(sectionName) {}
 
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
-  virtual StringRef customSectionName() const { return _sectionName; }
-  virtual ContentType contentType() const { return typeData; }
-  virtual ContentPermissions permissions() const { return permR__; }
+  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
+  StringRef customSectionName() const override { return _sectionName; }
+  ContentType contentType() const override { return typeData; }
+  ContentPermissions permissions() const override { return permR__; }
 
 private:
   StringRef _sectionName;
@@ -279,20 +280,20 @@ public:
         _importName(importName), _dllName(dllName), _importTableEntry(nullptr) {
   }
 
-  virtual const File &file() const { return _file; }
+  const File &file() const override { return _file; }
   uint16_t hint() const { return _hint; }
 
   /// Returns the symbol name to be used by the core linker.
-  virtual StringRef name() const { return _mangledName; }
+  StringRef name() const override { return _mangledName; }
 
   /// Returns the symbol name to be used in the import description table in the
   /// COFF header.
   virtual StringRef importName() const { return _importName; }
 
-  virtual StringRef loadName() const { return _dllName; }
-  virtual bool canBeNullAtRuntime() const { return false; }
-  virtual Type type() const { return Type::Unknown; }
-  virtual uint64_t size() const { return 0; }
+  StringRef loadName() const override { return _dllName; }
+  bool canBeNullAtRuntime() const override { return false; }
+  Type type() const override { return Type::Unknown; }
+  uint64_t size() const override { return 0; }
 
   void setImportTableEntry(const DefinedAtom *atom) {
     _importTableEntry = atom;

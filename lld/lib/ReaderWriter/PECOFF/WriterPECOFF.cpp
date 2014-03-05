@@ -114,7 +114,7 @@ public:
     _size = llvm::RoundUpToAlignment(size, 8);
   }
 
-  virtual void write(uint8_t *buffer) {
+  void write(uint8_t *buffer) override {
     ArrayRef<uint8_t> array = _context.getDosStub();
     std::memcpy(buffer, array.data(), array.size());
     auto *header = reinterpret_cast<llvm::object::dos_header *>(buffer);
@@ -131,7 +131,7 @@ class PEHeaderChunk : public HeaderChunk {
 public:
   explicit PEHeaderChunk(const PECOFFLinkingContext &ctx);
 
-  virtual void write(uint8_t *buffer);
+  void write(uint8_t *buffer) override;
 
   void setSizeOfHeaders(uint64_t size) {
     // Must be multiple of FileAlignment.
@@ -168,8 +168,8 @@ class SectionHeaderTableChunk : public HeaderChunk {
 public:
   SectionHeaderTableChunk() : HeaderChunk() {}
   void addSection(SectionChunk *chunk);
-  virtual uint64_t size() const;
-  virtual void write(uint8_t *buffer);
+  uint64_t size() const override;
+  void write(uint8_t *buffer) override;
 
 private:
   static llvm::object::coff_section createSectionHeader(SectionChunk *chunk);
@@ -179,7 +179,7 @@ private:
 
 class SectionChunk : public Chunk {
 public:
-  virtual uint64_t align() const { return SECTOR_SIZE; }
+  uint64_t align() const override { return SECTOR_SIZE; }
   uint32_t getCharacteristics() const { return _characteristics; }
   StringRef getSectionName() const { return _sectionName; }
 
@@ -208,7 +208,7 @@ public:
   AtomChunk(const PECOFFLinkingContext &ctx, StringRef name,
             const std::vector<const DefinedAtom *> &atoms);
 
-  virtual void write(uint8_t *buffer);
+  void write(uint8_t *buffer) override;
 
   void appendAtom(const DefinedAtom *atom);
   void buildAtomRvaMap(std::map<const Atom *, uint64_t> &atomRva) const;
@@ -225,7 +225,7 @@ public:
   void printAtomAddresses(uint64_t baseAddr) const;
   void addBaseRelocations(std::vector<uint64_t> &relocSites) const;
 
-  virtual void setVirtualAddress(uint32_t rva);
+  void setVirtualAddress(uint32_t rva) override;
   uint64_t getAtomVirtualAddress(StringRef name) const;
 
   static bool classof(const Chunk *c) { return c->getKind() == kindAtomChunk; }
@@ -257,12 +257,12 @@ public:
   DataDirectoryChunk()
       : HeaderChunk(), _data(std::vector<llvm::object::data_directory>(16)) {}
 
-  virtual uint64_t size() const {
+  uint64_t size() const override {
     return sizeof(llvm::object::data_directory) * _data.size();
   }
 
   void setField(DataDirectoryIndex index, uint32_t addr, uint32_t size);
-  virtual void write(uint8_t *buffer);
+  void write(uint8_t *buffer) override;
 
 private:
   std::vector<llvm::object::data_directory> _data;
@@ -290,11 +290,11 @@ public:
       : SectionChunk(kindSection, ".reloc", characteristics),
         _contents(createContents(chunks)) {}
 
-  virtual void write(uint8_t *buffer) {
+  void write(uint8_t *buffer) override {
     std::memcpy(buffer, &_contents[0], _contents.size());
   }
 
-  virtual uint64_t size() const { return _contents.size(); }
+  uint64_t size() const override { return _contents.size(); }
 
 private:
   // When loaded into memory, reloc section should be readable and writable.
@@ -832,7 +832,7 @@ public:
         _imageSizeOnDisk(0) {}
 
   template <class PEHeader> void build(const File &linkedFile);
-  virtual error_code writeFile(const File &linkedFile, StringRef path);
+  error_code writeFile(const File &linkedFile, StringRef path) override;
 
 private:
   void applyAllRelocations(uint8_t *bufferStart);

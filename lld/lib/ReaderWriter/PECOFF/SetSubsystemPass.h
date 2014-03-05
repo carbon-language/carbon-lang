@@ -23,7 +23,7 @@ class SetSubsystemPass : public lld::Pass {
 public:
   SetSubsystemPass(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
 
-  virtual void perform(std::unique_ptr<MutableFile> &file) {
+  void perform(std::unique_ptr<MutableFile> &file) override {
     if (_ctx.getSubsystem() != WindowsSubsystem::IMAGE_SUBSYSTEM_UNKNOWN)
       return;
     StringRef main = _ctx.decorateSymbol("main");

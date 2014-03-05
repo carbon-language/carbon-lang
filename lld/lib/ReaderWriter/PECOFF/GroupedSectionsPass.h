@@ -48,7 +48,7 @@ static bool compare(const DefinedAtom *left, const DefinedAtom *right) {
 
 class GroupedSectionsPass : public lld::Pass {
 public:
-  virtual void perform(std::unique_ptr<MutableFile> &file) {
+  void perform(std::unique_ptr<MutableFile> &file) override {
     auto definedAtoms = file->definedAtoms();
     std::stable_sort(definedAtoms.begin(), definedAtoms.end(), compare);
   }

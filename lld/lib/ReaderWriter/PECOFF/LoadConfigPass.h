@@ -35,10 +35,10 @@ class LoadConfigAtom : public COFFLinkerInternalAtom {
 public:
   LoadConfigAtom(VirtualFile &file, const DefinedAtom *sxdata, int count);
 
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
-  virtual StringRef customSectionName() const { return ".loadcfg"; }
-  virtual ContentType contentType() const { return typeData; }
-  virtual ContentPermissions permissions() const { return permR__; }
+  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
+  StringRef customSectionName() const override { return ".loadcfg"; }
+  ContentType contentType() const override { return typeData; }
+  ContentPermissions permissions() const override { return permR__; }
 
   template <typename T> T *getContents() const {
     return (T *)rawContent().data();
@@ -51,7 +51,7 @@ class LoadConfigPass : public lld::Pass {
 public:
   LoadConfigPass(PECOFFLinkingContext &ctx) : _ctx(ctx), _file(ctx) {}
 
-  virtual void perform(std::unique_ptr<MutableFile> &file);
+  void perform(std::unique_ptr<MutableFile> &file) override;
 
 private:
   PECOFFLinkingContext &_ctx;

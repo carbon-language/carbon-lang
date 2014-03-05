@@ -72,19 +72,19 @@ public:
   StringRef getLinkerDirectives() const { return _directives; }
   bool isCompatibleWithSEH() const { return _compatibleWithSEH; }
 
-  virtual const atom_collection<DefinedAtom> &defined() const {
+  const atom_collection<DefinedAtom> &defined() const override {
     return _definedAtoms;
   }
 
-  virtual const atom_collection<UndefinedAtom> &undefined() const {
+  const atom_collection<UndefinedAtom> &undefined() const override {
     return _undefinedAtoms;
   }
 
-  virtual const atom_collection<SharedLibraryAtom> &sharedLibrary() const {
+  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
     return _sharedLibraryAtoms;
   }
 
-  virtual const atom_collection<AbsoluteAtom> &absolute() const {
+  const atom_collection<AbsoluteAtom> &absolute() const override {
     return _absoluteAtoms;
   }
 
@@ -176,7 +176,7 @@ private:
 
 class BumpPtrStringSaver : public llvm::cl::StringSaver {
 public:
-  virtual const char *SaveString(const char *str) {
+  const char *SaveString(const char *str) override {
     size_t len = strlen(str);
     char *copy = _alloc.Allocate<char>(len + 1);
     memcpy(copy, str, len + 1);
@@ -892,14 +892,14 @@ StringRef FileCOFF::ArrayRefToString(ArrayRef<uint8_t> array) {
 // cvtres.exe on RC files and then then link its outputs.
 class ResourceFileReader : public Reader {
 public:
-  virtual bool canParse(file_magic magic, StringRef ext,
-                        const MemoryBuffer &) const {
+  bool canParse(file_magic magic, StringRef ext,
+                const MemoryBuffer &) const override {
     return (magic == llvm::sys::fs::file_magic::windows_resource);
   }
 
-  virtual error_code
+  error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const {
+            std::vector<std::unique_ptr<File> > &result) const override {
     // Convert RC file to COFF
     ErrorOr<std::string> coffPath = convertResourceFileToCOFF(std::move(mb));
     if (error_code ec = coffPath.getError())
@@ -994,14 +994,14 @@ class COFFObjectReader : public Reader {
 public:
   COFFObjectReader(PECOFFLinkingContext &ctx) : _context(ctx) {}
 
-  virtual bool canParse(file_magic magic, StringRef ext,
-                        const MemoryBuffer &) const {
+  bool canParse(file_magic magic, StringRef ext,
+                const MemoryBuffer &) const override {
     return (magic == llvm::sys::fs::file_magic::coff_object);
   }
 
-  virtual error_code
+  error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
-            std::vector<std::unique_ptr<File>> &result) const {
+            std::vector<std::unique_ptr<File> > &result) const override {
     // Parse the memory buffer as PECOFF file.
     const char *mbName = mb->getBufferIdentifier();
     error_code ec;
