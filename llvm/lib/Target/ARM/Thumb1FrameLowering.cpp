@@ -327,7 +327,7 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
   unsigned Align = MF.getTarget().getFrameLowering()->getStackAlignment();
   unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize(Align);
   int NumBytes = (int)MFI->getStackSize();
-  assert(NumBytes >= ArgRegsSaveSize &&
+  assert((unsigned)NumBytes >= ArgRegsSaveSize &&
          "ArgRegsSaveSize is included in NumBytes");
   const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
