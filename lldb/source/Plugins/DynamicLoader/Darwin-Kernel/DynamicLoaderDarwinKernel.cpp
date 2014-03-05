@@ -810,7 +810,7 @@ DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule (Process *p
             // to be the bundle ID for this kext, e.g. "com.apple.filesystems.msdosfs", and ask the platform
             // to find it.
             PlatformSP platform_sp (target.GetPlatform());
-            if (platform_sp)
+            if (!m_module_sp && platform_sp)
             {
                 ConstString platform_name (platform_sp->GetPluginName());
                 static ConstString g_platform_name (PlatformDarwinKernel::GetPluginNameStatic());
