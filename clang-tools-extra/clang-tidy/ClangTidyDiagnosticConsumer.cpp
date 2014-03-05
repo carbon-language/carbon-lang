@@ -110,7 +110,7 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
   addFixes(Info, Errors.back());
 
   // Let argument parsing-related warnings through.
-  if (!Diags->hasSourceManager() ||
+  if (!Info.getLocation().isValid() ||
       !Diags->getSourceManager().isInSystemHeader(Info.getLocation())) {
     LastErrorRelatesToUserCode = true;
   }
@@ -128,12 +128,16 @@ void ClangTidyDiagnosticConsumer::addFixes(const Diagnostic &Info,
                                            ClangTidyError &Error) {
   if (!Info.hasSourceManager())
     return;
-  SourceManager &SourceMgr = Info.getSourceManager();
+  SourceManager &Sources = Info.getSourceManager();
   tooling::Replacements Replacements;
   for (unsigned i = 0, e = Info.getNumFixItHints(); i != e; ++i) {
-    Error.Fix.insert(tooling::Replacement(
-        SourceMgr, Info.getFixItHint(i).RemoveRange.getBegin(), 0,
-        Info.getFixItHint(i).CodeToInsert));
+    CharSourceRange Range = Info.getFixItHint(i).RemoveRange;
+    assert(Range.getBegin().isValid() && Range.getEnd().isValid() &&
+           "Invalid range in the fix-it hint.");
+    assert(Range.getBegin().isFileID() && Range.getEnd().isFileID() &&
+           "Only file locations supported in fix-it hints.");
+    std::string Text = Info.getFixItHint(i).CodeToInsert;
+    Error.Fix.insert(tooling::Replacement(Sources, Range, Text));
   }
 }
 

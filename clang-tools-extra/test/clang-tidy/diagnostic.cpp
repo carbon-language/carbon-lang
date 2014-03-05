@@ -1,5 +1,5 @@
-// RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
-// RUN: clang-tidy %t.cpp -- -fan-unknown-option > %t2.cpp
-// RUN: FileCheck -input-file=%t2.cpp %s
+// RUN: clang-tidy %s -- -fan-unknown-option | FileCheck -check-prefix=CHECK1 %s
+// RUN: clang-tidy %s.nonexistent.cpp -- | FileCheck -check-prefix=CHECK2 %s
 
-// CHECK: warning: unknown argument: '-fan-unknown-option'
+// CHECK1: warning: unknown argument: '-fan-unknown-option'
+// CHECK2: warning: error reading '{{.*}}.nonexistent.cpp'
