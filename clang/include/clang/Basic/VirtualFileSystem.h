@@ -95,7 +95,7 @@ public:
 };
 
 /// \brief The virtual file system interface.
-class FileSystem : public RefCountedBase<FileSystem> {
+class FileSystem : public llvm::ThreadSafeRefCountedBase<FileSystem> {
 public:
   virtual ~FileSystem();
 
