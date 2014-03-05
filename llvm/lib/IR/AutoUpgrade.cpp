@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/AutoUpgrade.h"
+#include "llvm/IR/AutoUpgrade.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/CallSite.h"

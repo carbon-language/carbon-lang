@@ -1,4 +1,4 @@
-//===-- llvm/AutoUpgrade.h - AutoUpgrade Helpers ----------------*- C++ -*-===//
+//===- AutoUpgrade.h - AutoUpgrade Helpers ----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_AUTOUPGRADE_H
-#define LLVM_AUTOUPGRADE_H
+#ifndef LLVM_IR_AUTOUPGRADE_H
+#define LLVM_IR_AUTOUPGRADE_H
 
 namespace llvm {
   class CallInst;

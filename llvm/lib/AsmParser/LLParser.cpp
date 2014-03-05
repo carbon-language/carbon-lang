@@ -13,7 +13,7 @@
 
 #include "LLParser.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/AutoUpgrade.h"
+#include "llvm/IR/AutoUpgrade.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
