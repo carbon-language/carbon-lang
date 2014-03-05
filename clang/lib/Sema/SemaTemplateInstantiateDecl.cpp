@@ -3636,6 +3636,7 @@ void Sema::BuildVariableInstantiation(
 
   // Forward the mangling number from the template to the instantiated decl.
   Context.setManglingNumber(NewVar, Context.getManglingNumber(OldVar));
+  Context.setStaticLocalNumber(NewVar, Context.getStaticLocalNumber(OldVar));
 
   // Delay instantiation of the initializer for variable templates until a
   // definition of the variable is needed.

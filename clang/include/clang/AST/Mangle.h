@@ -80,6 +80,7 @@ private:
 
   llvm::DenseMap<const BlockDecl*, unsigned> GlobalBlockIds;
   llvm::DenseMap<const BlockDecl*, unsigned> LocalBlockIds;
+  llvm::DenseMap<const TagDecl*, uint64_t> AnonStructIds;
 
 public:
   ManglerKind getKind() const { return Kind; }
@@ -104,7 +105,13 @@ public:
       Result = BlockIds.insert(std::make_pair(BD, BlockIds.size()));
     return Result.first->second;
   }
-  
+
+  uint64_t getAnonymousStructId(const TagDecl *TD) {
+    std::pair<llvm::DenseMap<const TagDecl *, uint64_t>::iterator, bool>
+        Result = AnonStructIds.insert(std::make_pair(TD, AnonStructIds.size()));
+    return Result.first->second;
+  }
+
   /// @name Mangler Entry Points
   /// @{
 

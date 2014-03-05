@@ -24,8 +24,8 @@ void StaticLocal() {
   static S TheS;
 }
 // CHECK-LABEL: define void @"\01?StaticLocal@@YAXXZ"()
-// CHECK: load i32* @"\01?$S1@?1??StaticLocal@@YAXXZ@4IA"
-// CHECK: store i32 {{.*}}, i32* @"\01?$S1@?1??StaticLocal@@YAXXZ@4IA"
+// CHECK: load i32* @"\01?$S1@?0??StaticLocal@@YAXXZ@4IA"
+// CHECK: store i32 {{.*}}, i32* @"\01?$S1@?0??StaticLocal@@YAXXZ@4IA"
 // CHECK: ret
 
 void MultipleStatics() {
@@ -66,7 +66,7 @@ void MultipleStatics() {
   static S S35;
 }
 // CHECK-LABEL: define void @"\01?MultipleStatics@@YAXXZ"()
-// CHECK: load i32* @"\01?$S1@?1??MultipleStatics@@YAXXZ@4IA"
+// CHECK: load i32* @"\01?$S1@?0??MultipleStatics@@YAXXZ@4IA"
 // CHECK: and i32 {{.*}}, 1
 // CHECK: and i32 {{.*}}, 2
 // CHECK: and i32 {{.*}}, 4
@@ -74,7 +74,7 @@ void MultipleStatics() {
 // CHECK: and i32 {{.*}}, 16
 //   ...
 // CHECK: and i32 {{.*}}, -2147483648
-// CHECK: load i32* @"\01?$S1@?1??MultipleStatics@@YAXXZ@4IA1"
+// CHECK: load i32* @"\01?$S1@?0??MultipleStatics@@YAXXZ@4IA1"
 // CHECK: and i32 {{.*}}, 1
 // CHECK: and i32 {{.*}}, 2
 // CHECK: and i32 {{.*}}, 4

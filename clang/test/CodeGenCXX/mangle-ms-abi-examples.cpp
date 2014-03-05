@@ -11,7 +11,7 @@ struct A {
     B();
   }
 };
-void foo () {
+inline void foo () {
   struct C {
     struct D { virtual ~D() {} };
     void bar () {
@@ -25,4 +25,6 @@ void foo () {
   C::D();
   C().bar();
 }
-
+void call () {
+  foo();
+}

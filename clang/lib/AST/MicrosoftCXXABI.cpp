@@ -28,15 +28,13 @@ namespace {
 /// \brief Numbers things which need to correspond across multiple TUs.
 /// Typically these are things like static locals, lambdas, or blocks.
 class MicrosoftNumberingContext : public MangleNumberingContext {
-  unsigned NumStaticLocals;
-
 public:
-  MicrosoftNumberingContext() : NumStaticLocals(0) { }
+  virtual unsigned getManglingNumber(const VarDecl *VD, Scope *S) {
+    return S->getMSLocalManglingNumber();
+  }
 
-  /// Static locals are numbered by source order.
-  virtual unsigned getManglingNumber(const VarDecl *VD) {
-    assert(VD->isStaticLocal());
-    return ++NumStaticLocals;
+  virtual unsigned getManglingNumber(const TagDecl *TD, Scope *S) {
+    return S->getMSLocalManglingNumber();
   }
 };
 

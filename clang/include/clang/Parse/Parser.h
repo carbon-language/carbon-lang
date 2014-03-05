@@ -737,14 +737,18 @@ public:
   public:
     // ParseScope - Construct a new object to manage a scope in the
     // parser Self where the new Scope is created with the flags
-    // ScopeFlags, but only when ManageScope is true (the default). If
-    // ManageScope is false, this object does nothing.
-    ParseScope(Parser *Self, unsigned ScopeFlags, bool ManageScope = true)
+    // ScopeFlags, but only when we aren't about to enter a compound statement.
+    ParseScope(Parser *Self, unsigned ScopeFlags, bool EnteredScope = true,
+               bool BeforeCompoundStmt = false)
       : Self(Self) {
-      if (ManageScope)
+      if (EnteredScope && !BeforeCompoundStmt)
         Self->EnterScope(ScopeFlags);
-      else
+      else {
+        if (BeforeCompoundStmt)
+          Self->getCurScope()->incrementMSLocalManglingNumber();
+
         this->Self = 0;
+      }
     }
 
     // Exit - Exit the scope associated with this object now, rather

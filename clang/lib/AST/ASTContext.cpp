@@ -8052,6 +8052,17 @@ unsigned ASTContext::getManglingNumber(const NamedDecl *ND) const {
   return I != MangleNumbers.end() ? I->second : 1;
 }
 
+void ASTContext::setStaticLocalNumber(const VarDecl *VD, unsigned Number) {
+  if (Number > 1)
+    StaticLocalNumbers[VD] = Number;
+}
+
+unsigned ASTContext::getStaticLocalNumber(const VarDecl *VD) const {
+  llvm::DenseMap<const VarDecl *, unsigned>::const_iterator I =
+      StaticLocalNumbers.find(VD);
+  return I != StaticLocalNumbers.end() ? I->second : 1;
+}
+
 MangleNumberingContext &
 ASTContext::getManglingNumberContext(const DeclContext *DC) {
   assert(LangOpts.CPlusPlus);  // We don't need mangling numbers for plain C.

@@ -365,6 +365,7 @@ private:
   /// \brief Side-table of mangling numbers for declarations which rarely
   /// need them (like static local vars).
   llvm::DenseMap<const NamedDecl *, unsigned> MangleNumbers;
+  llvm::DenseMap<const VarDecl *, unsigned> StaticLocalNumbers;
 
   /// \brief Mapping that stores parameterIndex values for ParmVarDecls when
   /// that value exceeds the bitfield size of ParmVarDeclBits.ParameterIndex.
@@ -2170,6 +2171,9 @@ public:
 
   void setManglingNumber(const NamedDecl *ND, unsigned Number);
   unsigned getManglingNumber(const NamedDecl *ND) const;
+
+  void setStaticLocalNumber(const VarDecl *VD, unsigned Number);
+  unsigned getStaticLocalNumber(const VarDecl *VD) const;
 
   /// \brief Retrieve the context for computing mangling numbers in the given
   /// DeclContext.

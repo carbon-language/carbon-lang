@@ -3157,7 +3157,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   return ParsedFreeStandingDeclSpec(S, AS, DS, MultiTemplateParamsArg());
 }
 
-static void HandleTagNumbering(Sema &S, const TagDecl *Tag) {
+static void HandleTagNumbering(Sema &S, const TagDecl *Tag, Scope *TagScope) {
   if (!S.Context.getLangOpts().CPlusPlus)
     return;
 
@@ -3168,7 +3168,7 @@ static void HandleTagNumbering(Sema &S, const TagDecl *Tag) {
       return;
     MangleNumberingContext &MCtx =
         S.Context.getManglingNumberContext(Tag->getParent());
-    S.Context.setManglingNumber(Tag, MCtx.getManglingNumber(Tag));
+    S.Context.setManglingNumber(Tag, MCtx.getManglingNumber(Tag, TagScope));
     return;
   }
 
@@ -3177,7 +3177,7 @@ static void HandleTagNumbering(Sema &S, const TagDecl *Tag) {
   if (MangleNumberingContext *MCtx =
           S.getCurrentMangleNumberContext(Tag->getDeclContext(),
                                           ManglingContextDecl)) {
-    S.Context.setManglingNumber(Tag, MCtx->getManglingNumber(Tag));
+    S.Context.setManglingNumber(Tag, MCtx->getManglingNumber(Tag, TagScope));
   }
 }
 
@@ -3210,7 +3210,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   }
 
   if (Tag) {
-    HandleTagNumbering(*this, Tag);
+    HandleTagNumbering(*this, Tag, S);
     Tag->setFreeStanding();
     if (Tag->isInvalidDecl())
       return Tag;
@@ -3809,6 +3809,18 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
   if (InjectAnonymousStructOrUnionMembers(*this, S, Owner, Record, AS,
                                           Chain, false))
     Invalid = true;
+
+  if (VarDecl *NewVD = dyn_cast<VarDecl>(Anon)) {
+    if (getLangOpts().CPlusPlus && NewVD->isStaticLocal()) {
+      Decl *ManglingContextDecl;
+      if (MangleNumberingContext *MCtx =
+              getCurrentMangleNumberContext(NewVD->getDeclContext(),
+                                            ManglingContextDecl)) {
+        Context.setManglingNumber(NewVD, MCtx->getManglingNumber(NewVD, S));
+        Context.setStaticLocalNumber(NewVD, MCtx->getStaticLocalNumber(NewVD));
+      }
+    }
+  }
 
   if (Invalid)
     Anon->setInvalidDecl();
@@ -5470,7 +5482,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     if (MangleNumberingContext *MCtx =
             getCurrentMangleNumberContext(NewVD->getDeclContext(),
                                           ManglingContextDecl)) {
-      Context.setManglingNumber(NewVD, MCtx->getManglingNumber(NewVD));
+      Context.setManglingNumber(NewVD, MCtx->getManglingNumber(NewVD, S));
+      Context.setStaticLocalNumber(NewVD, MCtx->getStaticLocalNumber(NewVD));
     }
   }
 
@@ -8990,7 +9003,7 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
 
   if (DeclSpec::isDeclRep(DS.getTypeSpecType())) {
     if (TagDecl *Tag = dyn_cast_or_null<TagDecl>(DS.getRepAsDecl())) {
-      HandleTagNumbering(*this, Tag);
+      HandleTagNumbering(*this, Tag, S);
       if (!Tag->hasNameForLinkage() && !Tag->hasDeclaratorForAnonDecl())
         Tag->setDeclaratorForAnonDecl(FirstDeclaratorInGroup);
     }

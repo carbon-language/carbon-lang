@@ -16,6 +16,7 @@
 #define LLVM_CLANG_MANGLENUMBERINGCONTEXT_H
 
 #include "clang/Basic/LLVM.h"
+#include "clang/Sema/Scope.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 
@@ -33,7 +34,6 @@ class VarDecl;
 class MangleNumberingContext 
     : public RefCountedBase<MangleNumberingContext> {
   llvm::DenseMap<const Type *, unsigned> ManglingNumbers;
-  llvm::DenseMap<IdentifierInfo*, unsigned> TagManglingNumbers;
 
 public:
   virtual ~MangleNumberingContext() {}
@@ -46,13 +46,16 @@ public:
   /// context.
   unsigned getManglingNumber(const BlockDecl *BD);
 
-  /// \brief Retrieve the mangling number of a static local variable within
-  /// this context.
-  virtual unsigned getManglingNumber(const VarDecl *VD) = 0;
+  /// Static locals are numbered by source order.
+  unsigned getStaticLocalNumber(const VarDecl *VD);
 
   /// \brief Retrieve the mangling number of a static local variable within
   /// this context.
-  unsigned getManglingNumber(const TagDecl *TD);
+  virtual unsigned getManglingNumber(const VarDecl *VD, Scope *S) = 0;
+
+  /// \brief Retrieve the mangling number of a static local variable within
+  /// this context.
+  virtual unsigned getManglingNumber(const TagDecl *TD, Scope *S) = 0;
 };
   
 } // end namespace clang

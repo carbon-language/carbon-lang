@@ -1291,7 +1291,7 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
   if (D.isExternallyVisible()) {
     // Externally visible variables have to be numbered in Sema to properly
     // handle unreachable VarDecls.
-    BitIndex = getContext().getManglingNumber(&D);
+    BitIndex = getContext().getStaticLocalNumber(&D);
     assert(BitIndex > 0);
     BitIndex--;
   } else {
