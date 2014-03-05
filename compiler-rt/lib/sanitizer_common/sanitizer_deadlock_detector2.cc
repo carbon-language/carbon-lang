@@ -172,7 +172,7 @@ void DD::MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock) {
   if (lt->nlocked == 1) {
     VPrintf(3, "#%llu: DD::MutexBeforeLock first mutex\n",
         cb->lt->ctx);
-    return 0;
+    return;
   }
 
   bool added = false;
@@ -361,10 +361,10 @@ void DD::Report(DDPhysicalThread *pt, DDLogicalThread *lt, int npath) {
 }
 
 DDReport *DD::GetReport(DDCallback *cb) {
-  if (!cb->lt->report_pending)
+  if (!cb->pt->report_pending)
     return 0;
-  cb->lt->report_pending = false;
-  return &cb->lt->rep;
+  cb->pt->report_pending = false;
+  return &cb->pt->rep;
 }
 
 }  // namespace __sanitizer

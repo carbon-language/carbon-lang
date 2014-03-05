@@ -12,7 +12,6 @@ else()
 endif()
 
 set(DD_DYNAMIC_DEFINITIONS DYNAMIC=1)
-set(DD_COMMON_DEFINITIONS SANITIZER_DEADLOCK_DETECTOR_VERSION=2)
 
 set(DD_SOURCES
   dd_rtl.cc
@@ -47,9 +46,6 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE AND NOT ANDROID)
     $<TARGET_OBJECTS:RTInterception.${arch}>
     $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
     $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
-#  set_target_compile_flags(clang_rt.dd-${arch} ${DD_CFLAGS})
-#  set_property(TARGET clang_rt.dd-${arch} APPEND PROPERTY
-#    COMPILE_DEFINITIONS ${DD_COMMON_DEFINITIONS})
   target_link_libraries(clang_rt.dyndd-${arch} pthread dl)
 endif()
 

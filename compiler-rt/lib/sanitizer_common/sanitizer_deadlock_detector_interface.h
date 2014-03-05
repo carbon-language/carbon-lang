@@ -36,7 +36,6 @@ struct DDMutex {
 #if SANITIZER_DEADLOCK_DETECTOR_VERSION == 1
   uptr id;
   u32  stk;  // creation stack
-  u64  ctx;
 #elif SANITIZER_DEADLOCK_DETECTOR_VERSION == 2
   u32              id;
   u32              recursion;
@@ -44,6 +43,7 @@ struct DDMutex {
 #else
 # error "BAD SANITIZER_DEADLOCK_DETECTOR_VERSION"
 #endif
+  u64  ctx;
 };
 
 struct DDReport {
