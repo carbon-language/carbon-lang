@@ -161,6 +161,7 @@ int test_break_preceded_by_noreturn(int i) {
       break; // expected-warning {{will never be executed}}
     default:
       break;
+      break; // expected-warning {{will never be executed}}
   }
   return i;
 }
