@@ -23,3 +23,4 @@ add_clang_library(clangTidy
 add_subdirectory(tool)
 add_subdirectory(llvm)
 add_subdirectory(google)
+add_subdirectory(misc)

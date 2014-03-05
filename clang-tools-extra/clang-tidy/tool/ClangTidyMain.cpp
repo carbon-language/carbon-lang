@@ -47,11 +47,9 @@ int main(int argc, const char **argv) {
 
   // FIXME: Allow using --list-checks without positional arguments.
   if (ListChecks) {
-    std::vector<std::string> CheckNames =
-        clang::tidy::getCheckNames(Checks, DisableChecks);
     llvm::outs() << "Enabled checks:";
-    for (unsigned i = 0; i < CheckNames.size(); ++i)
-      llvm::outs() << "\n    " << CheckNames[i];
+    for (auto CheckName : clang::tidy::getCheckNames(Checks, DisableChecks))
+      llvm::outs() << "\n    " << CheckName;
     llvm::outs() << "\n\n";
     return 0;
   }
@@ -75,6 +73,10 @@ static int LLVMModuleAnchorDestination = LLVMModuleAnchorSource;
 // This anchor is used to force the linker to link the GoogleModule.
 extern volatile int GoogleModuleAnchorSource;
 static int GoogleModuleAnchorDestination = GoogleModuleAnchorSource;
+
+// This anchor is used to force the linker to link the MiscModule.
+extern volatile int MiscModuleAnchorSource;
+static int MiscModuleAnchorDestination = MiscModuleAnchorSource;
 
 } // namespace tidy
 } // namespace clang
