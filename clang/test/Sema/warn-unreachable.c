@@ -226,3 +226,11 @@ int test_config_constant(int x) {
       calledFun(); // expected-warning {{will never be executed}}
 }
 
+int sizeof_int() {
+  if (sizeof(long) == sizeof(int))
+    return 1; // no-warning
+  if (sizeof(long) != sizeof(int))
+    return 0; // no-warning
+  return 2; // no-warning
+}
+

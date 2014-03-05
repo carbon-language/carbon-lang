@@ -382,7 +382,7 @@ static bool isConfigurationValue(const Stmt *S) {
       return true;
     case Stmt::BinaryOperatorClass: {
       const BinaryOperator *B = cast<BinaryOperator>(S);
-      return (B->isLogicalOp() || B->isRelationalOp()) &&
+      return (B->isLogicalOp() || B->isComparisonOp()) &&
              (isConfigurationValue(B->getLHS()) ||
               isConfigurationValue(B->getRHS()));
     }
