@@ -204,6 +204,27 @@ MyEnum trival_dead_return_enum() {
   return Value1; // no-warning
 }
 
+MyEnum trivial_dead_return_enum_2(int x) {
+  switch (x) {
+    case 1: return 1;
+    case 2: return 2;
+    case 3: return 3;
+  }
+
+  return 2; // no-warning
+}
+
+MyEnum nontrivial_dead_return_enum_2(int x) {
+  switch (x) {
+    case 1: return 1;
+    case 2: return 2;
+    case 3: return 3;
+    default: return 4;
+  }
+
+  return calledFun(); // expected-warning {{will never be executed}}
+}
+
 // Test unreachable code depending on configuration values
 #define CONFIG_CONSTANT 1
 int test_config_constant(int x) {
@@ -235,7 +256,7 @@ int sizeof_int() {
   return 2; // no-warning
 }
 
-enum MyEnum {
+enum MyEnum2 {
   ME_A = CONFIG_CONSTANT,
   ME_B = 1
 };

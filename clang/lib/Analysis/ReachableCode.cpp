@@ -291,20 +291,18 @@ static bool isEnumConstant(const Expr *Ex) {
 }
 
 static bool isTrivialExpression(const Expr *Ex) {
+  Ex = Ex->IgnoreParenCasts();
   return isa<IntegerLiteral>(Ex) || isa<StringLiteral>(Ex) ||
          isEnumConstant(Ex);
 }
 
-static bool isTrivialReturnPrecededByNoReturn(const CFGBlock *B,
-                                              const Stmt *S) {
+static bool isTrivialReturn(const CFGBlock *B, const Stmt *S) {
   if (B->pred_empty())
     return false;
 
   const Expr *Ex = dyn_cast<Expr>(S);
   if (!Ex)
     return false;
-
-  Ex = Ex->IgnoreParenCasts();
 
   if (!isTrivialExpression(Ex))
     return false;
@@ -319,14 +317,13 @@ static bool isTrivialReturnPrecededByNoReturn(const CFGBlock *B,
       if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(CS->getStmt())) {
         const Expr *RE = RS->getRetValue();
         if (RE && RE->IgnoreParenCasts() == Ex)
-          break;
+          return true;
       }
-      return false;
+      break;
     }
   }
 
-  assert(B->pred_size() == 1);
-  return bodyEndsWithNoReturn(*B->pred_begin());
+  return false;
 }
 
 void DeadCodeScan::reportDeadCode(const CFGBlock *B,
@@ -339,7 +336,7 @@ void DeadCodeScan::reportDeadCode(const CFGBlock *B,
     return;
 
   // Suppress trivial 'return' statements that are dead.
-  if (isTrivialReturnPrecededByNoReturn(B, S))
+  if (isTrivialReturn(B, S))
     return;
 
   SourceRange R1, R2;
