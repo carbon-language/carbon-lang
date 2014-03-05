@@ -41,6 +41,7 @@ set(SANITIZER_LIBCDEP_SOURCES
 # included in sanitizer_common source files, but we need to depend on
 # headers when building our custom unit tests.
 set(SANITIZER_HEADERS
+  sanitizer_addrhashmap.h
   sanitizer_allocator.h
   sanitizer_allocator_internal.h
   sanitizer_atomic.h
