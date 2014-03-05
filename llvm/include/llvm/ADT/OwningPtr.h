@@ -73,6 +73,8 @@ public:
     return Tmp;
   }
 
+  T *release() { return take(); }
+
   std::unique_ptr<T> take_unique() { return std::unique_ptr<T>(take()); }
 
   T &operator*() const {

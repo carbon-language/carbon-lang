@@ -90,6 +90,24 @@ TEST_F(OwningPtrTest, Take) {
   EXPECT_EQ(1u, TrackDestructor::Destructions);
 }
 
+TEST_F(OwningPtrTest, Release) {
+  TrackDestructor::ResetCounts();
+  TrackDestructor *T = 0;
+  {
+    OwningPtr<TrackDestructor> O(new TrackDestructor(3));
+    T = O.release();
+    EXPECT_FALSE((bool)O);
+    EXPECT_TRUE(!O);
+    EXPECT_FALSE(O.get());
+    EXPECT_FALSE(O.isValid());
+    EXPECT_TRUE(T);
+    EXPECT_EQ(3, T->val);
+    EXPECT_EQ(0u, TrackDestructor::Destructions);
+  }
+  delete T;
+  EXPECT_EQ(1u, TrackDestructor::Destructions);
+}
+
 TEST_F(OwningPtrTest, MoveConstruction) {
   TrackDestructor::ResetCounts();
   {
