@@ -11,4 +11,4 @@ target datalayout = "e"
 ; this is a hack to check that llvm-link printed no warnings.
 ; WARN-A: FileCheck error: '-' is empty.
 
-; WARN-B: WARNING: Linking two modules of different data layouts!
+; WARN-B: WARNING: Linking two modules of different data layouts:
