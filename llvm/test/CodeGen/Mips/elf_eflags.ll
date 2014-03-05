@@ -16,62 +16,62 @@
 ; Note that EF_MIPS_CPIC is set by -mabicalls which is the default on Linux
 ; TODO need to support -mno-abicalls
 
-; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32 -relocation-model=static %s -o - | FileCheck -check-prefix=CHECK-BE32 %s
-; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32 %s -o - | FileCheck -check-prefix=CHECK-BE32_PIC %s
-; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32r2 -relocation-model=static %s -o - | FileCheck -check-prefix=CHECK-BE32R2 %s
-; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32r2 %s -o - | FileCheck -check-prefix=CHECK-BE32R2_PIC %s
-; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32r2 -mattr=+micromips -relocation-model=static %s -o - | FileCheck -check-prefix=CHECK-BE32R2-MICROMIPS %s
-; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32r2 -mattr=+micromips %s -o - | FileCheck -check-prefix=CHECK-BE32R2-MICROMIPS_PIC %s
+; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32 -relocation-model=static %s -o - | FileCheck -check-prefix=CHECK-LE32 %s
+; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32 %s -o - | FileCheck -check-prefix=CHECK-LE32_PIC %s
+; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32r2 -relocation-model=static %s -o - | FileCheck -check-prefix=CHECK-LE32R2 %s
+; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32r2 %s -o - | FileCheck -check-prefix=CHECK-LE32R2_PIC %s
+; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32r2 -mattr=+micromips -relocation-model=static %s -o - | FileCheck -check-prefix=CHECK-LE32R2-MICROMIPS %s
+; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32r2 -mattr=+micromips %s -o - | FileCheck -check-prefix=CHECK-LE32R2-MICROMIPS_PIC %s
 
-; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips64 -relocation-model=static %s -o - | FileCheck -check-prefix=CHECK-BE64 %s
-; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips64 %s -o - | FileCheck -check-prefix=CHECK-BE64_PIC %s
-; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips64r2 -relocation-model=static %s -o - | FileCheck -check-prefix=CHECK-BE64R2 %s
-; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips64r2 %s -o - | FileCheck -check-prefix=CHECK-BE64R2_PIC %s
+; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips64 -relocation-model=static %s -o - | FileCheck -check-prefix=CHECK-LE64 %s
+; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips64 %s -o - | FileCheck -check-prefix=CHECK-LE64_PIC %s
+; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips64r2 -relocation-model=static %s -o - | FileCheck -check-prefix=CHECK-LE64R2 %s
+; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips64r2 %s -o - | FileCheck -check-prefix=CHECK-LE64R2_PIC %s
 
 ; RUN: llc -mtriple mipsel-unknown-linux -mcpu=mips32r2 -mattr=+mips16 -relocation-model=pic %s -o - | FileCheck -check-prefix=CHECK-LE32R2-MIPS16 %s
 
 ; 32(R1) bit with NO_REORDER and static
-; CHECK-BE32: .abicalls
-; CHECK-BE32: .option	pic0
-; CHECK-BE32: .set	noreorder
+; CHECK-LE32: .abicalls
+; CHECK-LE32: .option	pic0
+; CHECK-LE32: .set	noreorder
 ;
 ; 32(R1) bit with NO_REORDER and PIC
-; CHECK-BE32_PIC: .abicalls
-; CHECK-BE32_PIC: .set	noreorder
+; CHECK-LE32_PIC: .abicalls
+; CHECK-LE32_PIC: .set	noreorder
 ;
 ; 32R2 bit with NO_REORDER and static
-; CHECK-BE32R2: .abicalls
-; CHECK-BE32R2: .option pic0
-; CHECK-BE32R2: .set noreorder
+; CHECK-LE32R2: .abicalls
+; CHECK-LE32R2: .option pic0
+; CHECK-LE32R2: .set noreorder
 ;
 ; 32R2 bit with NO_REORDER and PIC
-; CHECK-BE32R2_PIC: .abicalls
-; CHECK-BE32R2_PIC: .set noreorder
+; CHECK-LE32R2_PIC: .abicalls
+; CHECK-LE32R2_PIC: .set noreorder
 ;
 ; 32R2 bit MICROMIPS with NO_REORDER and static
-; CHECK-BE32R2-MICROMIPS: .abicalls
-; CHECK-BE32R2-MICROMIPS: .option pic0
-; CHECK-BE32R2-MICROMIPS: .set	micromips
+; CHECK-LE32R2-MICROMIPS: .abicalls
+; CHECK-LE32R2-MICROMIPS: .option pic0
+; CHECK-LE32R2-MICROMIPS: .set	micromips
 ;
 ; 32R2 bit MICROMIPS with NO_REORDER and PIC
-; CHECK-BE32R2-MICROMIPS_PIC: .abicalls
-; CHECK-BE32R2-MICROMIPS_PIC: .set micromips
+; CHECK-LE32R2-MICROMIPS_PIC: .abicalls
+; CHECK-LE32R2-MICROMIPS_PIC: .set micromips
 ;
 ; 64(R1) bit with NO_REORDER and static
-; CHECK-BE64: .abicalls
-; CHECK-BE64: .set noreorder
+; CHECK-LE64: .abicalls
+; CHECK-LE64: .set noreorder
 ;
 ; 64(R1) bit with NO_REORDER and PIC
-; CHECK-BE64_PIC: .abicalls
-; CHECK-BE64_PIC: .set noreorder
+; CHECK-LE64_PIC: .abicalls
+; CHECK-LE64_PIC: .set noreorder
 ;
 ; 64R2 bit with NO_REORDER and static
-; CHECK-BE64R2: .abicalls
-; CHECK-BE64R2: .set noreorder
+; CHECK-LE64R2: .abicalls
+; CHECK-LE64R2: .set noreorder
 ;
 ; 64R2 bit with NO_REORDER and PIC
-; CHECK-BE64R2_PIC: .abicalls
-; CHECK-BE64R2_PIC: .set noreorder
+; CHECK-LE64R2_PIC: .abicalls
+; CHECK-LE64R2_PIC: .set noreorder
 ;
 ; 32R2 bit MIPS16 with PIC
 ; CHECK-LE32R2-MIPS16: .abicalls
