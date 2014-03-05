@@ -330,10 +330,6 @@ OMPClause *Parser::ParseOpenMPSingleExprClause(OpenMPClauseKind Kind) {
   ExprResult LHS(ParseCastExpression(false, false, NotTypeCast));
   ExprResult Val(ParseRHSOfBinaryExpression(LHS, prec::Conditional));
 
-  if (Tok.isNot(tok::r_paren) && Tok.isNot(tok::comma) &&
-      Tok.isNot(tok::annot_pragma_openmp_end))
-    ConsumeAnyToken();
-
   // Parse ')'.
   T.consumeClose();
 

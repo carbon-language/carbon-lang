@@ -20,6 +20,7 @@ int tmain(T argc, S **argv) {
   #pragma omp parallel if (foobool(argc)), if (true) // expected-error {{directive '#pragma omp parallel' cannot contain more than one 'if' clause}}
   #pragma omp parallel if (S) // expected-error {{'S' does not refer to a value}}
   #pragma omp parallel if (argv[1]=2) // expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp parallel if (argc argc) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   #pragma omp parallel if(argc)
   foo();
 
@@ -36,6 +37,8 @@ int main(int argc, char **argv) {
   #pragma omp parallel if (foobool(argc)), if (true) // expected-error {{directive '#pragma omp parallel' cannot contain more than one 'if' clause}}
   #pragma omp parallel if (S1) // expected-error {{'S1' does not refer to a value}}
   #pragma omp parallel if (argv[1]=2) // expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp parallel if (argc argc) // expected-error {{expected ')'}} expected-note {{to match this '('}}
+  #pragma omp parallel if (1 0) // expected-error {{expected ')'}} expected-note {{to match this '('}}
   #pragma omp parallel if(if(tmain(argc, argv) // expected-error {{expected expression}} expected-error {{expected ')'}} expected-note {{to match this '('}}
   foo();
 
