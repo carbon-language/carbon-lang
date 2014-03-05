@@ -95,9 +95,9 @@ class LLVMSymbolizer(Symbolizer):
           break
         file_name = self.pipe.stdout.readline().rstrip()
         file_name = fix_filename(file_name)
-        if (not function_name.startswith('??') and
+        if (not function_name.startswith('??') or
             not file_name.startswith('??')):
-          # Append only valid frames.
+          # Append only non-trivial frames.
           result.append('%s in %s %s' % (addr, function_name,
                                          file_name))
     except Exception:
