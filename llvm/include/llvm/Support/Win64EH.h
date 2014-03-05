@@ -108,8 +108,7 @@ struct UnwindInfo {
 
   /// \brief Return pointer to language specific data part of UnwindInfo.
   const void *getLanguageSpecificData() const {
-    return reinterpret_cast<const support::ulittle32_t *>(
-        &UnwindCodes[(NumCodes + 1) & ~1]);
+    return reinterpret_cast<const void *>(&UnwindCodes[(NumCodes + 1) & ~1]);
   }
 
   /// \brief Return image-relative offset of language-specific exception handler.
