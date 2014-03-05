@@ -181,3 +181,35 @@ typedef NSObject<Fooing> FooObject;
 @implementation Fail // expected-warning {{auto property synthesis will not synthesize property 'muahahaha' declared in protocol 'Fooing'}} expected-warning {{auto property synthesis will not synthesize property 'hoho' declared in protocol 'SubFooling'}}
 @end
 
+// rdar://16089191
+@class NSURL;
+
+@interface Root
+- (void)setFileURL : (NSURL *) arg;
+- (void)setFile : (NSURL *) arg;
+- (NSURL *)fileSys;
+- (void)setFileSys : (NSURL *) arg;
+- (NSURL *)fileKerl;
+@end
+
+@interface SuperClass : Root
+- (NSURL *)fileURL;
+- (NSURL *)file;
+- (NSURL *)fileLog;
+- (void)setFileLog : (NSURL *) arg;
+- (void)setFileKerl : (NSURL *) arg;
+@end
+
+@protocol r16089191Protocol
+@property (readonly) NSURL *fileURL;
+@property (copy) NSURL *file; 
+@property (copy) NSURL *fileSys; 
+@property (copy) NSURL *fileLog; 
+@property (copy) NSURL *fileKerl; 
+@end
+
+@interface SubClass : SuperClass <r16089191Protocol>
+@end
+
+@implementation SubClass
+@end

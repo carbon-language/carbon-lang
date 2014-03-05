@@ -1534,6 +1534,26 @@ Sema::IvarBacksCurrentMethodAccessor(ObjCInterfaceDecl *IFace,
   return false;
 }
 
+static bool SuperClassImplementsProperty(ObjCInterfaceDecl *IDecl,
+                                         ObjCPropertyDecl *Prop) {
+  bool SuperClassImplementsGetter = false;
+  bool SuperClassImplementsSetter = false;
+  if (Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_readonly)
+    SuperClassImplementsSetter = true;
+    
+  while (IDecl->getSuperClass()) {
+    ObjCInterfaceDecl *SDecl = IDecl->getSuperClass();
+    if (!SuperClassImplementsGetter && SDecl->getInstanceMethod(Prop->getGetterName()))
+      SuperClassImplementsGetter = true;
+    
+    if (!SuperClassImplementsSetter && SDecl->getInstanceMethod(Prop->getSetterName()))
+      SuperClassImplementsSetter = true;
+    if (SuperClassImplementsGetter && SuperClassImplementsSetter)
+      return true;
+    IDecl = IDecl->getSuperClass();
+  }
+  return false;
+}
 
 /// \brief Default synthesizes all properties which must be synthesized
 /// in class's \@implementation.
@@ -1590,10 +1610,14 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
     if (ObjCProtocolDecl *Proto =
           dyn_cast<ObjCProtocolDecl>(Prop->getDeclContext())) {
       // We won't auto-synthesize properties declared in protocols.
-      Diag(IMPDecl->getLocation(), 
-           diag::warn_auto_synthesizing_protocol_property)
-        << Prop << Proto;
-      Diag(Prop->getLocation(), diag::note_property_declare);
+      // Suppress the warning if class's superclass implements property's
+      // getter and implements property's setter (if readwrite property).
+      if (!SuperClassImplementsProperty(IDecl, Prop)) {
+        Diag(IMPDecl->getLocation(),
+             diag::warn_auto_synthesizing_protocol_property)
+          << Prop << Proto;
+        Diag(Prop->getLocation(), diag::note_property_declare);
+      }
       continue;
     }
 
