@@ -20,9 +20,9 @@
 
 #include "llvm/ADT/ilist.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/IR/DebugLoc.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/ArrayRecycler.h"
-#include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/Recycler.h"
 
 namespace llvm {

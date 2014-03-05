@@ -17,8 +17,8 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/User.h"
-#include "llvm/Support/DebugLoc.h"
 
 namespace llvm {
 

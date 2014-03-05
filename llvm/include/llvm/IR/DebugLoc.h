@@ -1,4 +1,4 @@
-//===---- llvm/Support/DebugLoc.h - Debug Location Information --*- C++ -*-===//
+//===- DebugLoc.h - Debug Location Information ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_DEBUGLOC_H
-#define LLVM_SUPPORT_DEBUGLOC_H
+#ifndef LLVM_IR_DEBUGLOC_H
+#define LLVM_IR_DEBUGLOC_H
 
 #include "llvm/Support/DataTypes.h"
 

@@ -21,9 +21,9 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/ValueHandle.h"
-#include "llvm/Support/DebugLoc.h"
 #include <utility>
 namespace llvm {
 

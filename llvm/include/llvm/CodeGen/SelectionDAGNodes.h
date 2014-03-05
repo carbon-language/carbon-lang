@@ -29,9 +29,9 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 

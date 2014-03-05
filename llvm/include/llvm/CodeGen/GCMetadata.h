@@ -35,8 +35,8 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/IR/DebugLoc.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/DebugLoc.h"
 
 namespace llvm {
   class AsmPrinter;
