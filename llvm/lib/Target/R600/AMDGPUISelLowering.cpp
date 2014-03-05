@@ -613,9 +613,9 @@ SDValue AMDGPUTargetLowering::MergeVectorStore(const SDValue &Op,
   EVT MemVT = Store->getMemoryVT();
   unsigned MemBits = MemVT.getSizeInBits();
 
-  // Byte stores are really expensive, so if possible, try to pack
-  // 32-bit vector truncatating store into an i32 store.
-  // XXX: We could also handle optimize other vector bitwidths
+  // Byte stores are really expensive, so if possible, try to pack 32-bit vector
+  // truncating store into an i32 store.
+  // XXX: We could also handle optimize other vector bitwidths.
   if (!MemVT.isVector() || MemBits > 32) {
     return SDValue();
   }
