@@ -175,7 +175,7 @@ public:
 
   /// findAttribute - Find a value in the DIE with the attribute given,
   /// returns NULL if no such attribute exists.
-  DIEValue *findAttribute(uint16_t Attribute) const;
+  DIEValue *findAttribute(dwarf::Attribute Attribute) const;
 
 #ifndef NDEBUG
   void print(raw_ostream &O, unsigned IndentCount = 0) const;
