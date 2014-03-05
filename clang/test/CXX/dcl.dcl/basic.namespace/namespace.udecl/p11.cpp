@@ -101,3 +101,9 @@ namespace test6 {
   }
   void foo(); // expected-error {{declaration conflicts with target of using declaration already in scope}}
 }
+
+namespace test7 {
+  void foo();
+  using test7::foo;
+  void foo() {}
+}
