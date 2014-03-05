@@ -28,12 +28,15 @@ Second, Clang implements many MSVC language extensions, such as
 ``__declspec(dllexport)`` and a handful of pragmas.  These are typically
 controlled by ``-fms-extensions``.
 
-Finally, MSVC accepts some C++ code that Clang will typically diagnose as
+Third, MSVC accepts some C++ code that Clang will typically diagnose as
 invalid.  When these constructs are present in widely included system headers,
 Clang attempts to recover and continue compiling the user's program.  Most
 parsing and semantic compatibility tweaks are controlled by
 ``-fms-compatibility`` and ``-fdelayed-template-parsing``, and they are a work
 in progress.
+
+Finally, there is :ref:`clang-cl`, a driver program for clang that attempts to
+be compatible with MSVC's cl.exe.
 
 ABI features
 ============
