@@ -237,7 +237,7 @@ struct F : virtual Z, virtual D {
 F f;
 
 struct G : virtual simple::A {
-  // VTABLE-EXTENDED-G: VFTable for 'extended::G' (1 entries).
+  // VTABLE-EXTENDED-G: VFTable for 'extended::G' (1 entry).
   // VTABLE-EXTENDED-G-NEXT: 0 | void extended::G::g()
 
   // VTABLE-EXTENDED-G: VFTable for 'V1' in 'simple::A' in 'extended::G' (2 entries).

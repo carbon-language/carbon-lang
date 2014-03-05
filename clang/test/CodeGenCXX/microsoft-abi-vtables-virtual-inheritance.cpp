@@ -42,7 +42,7 @@ struct C: virtual A {
   // VTABLE-C-NEXT: 0 | void C::f()
   // VTABLE-C-NEXT: 1 | void A::z()
 
-  // VTABLE-C: VFTable indices for 'C' (1 entries)
+  // VTABLE-C: VFTable indices for 'C' (1 entry)
   // VTABLE-C-NEXT: vbtable index 1, vfptr at offset 0
   // VTABLE-C-NEXT: 0 | void C::f()
 
@@ -54,7 +54,7 @@ struct C: virtual A {
 C c;
 
 struct D: virtual A {
-  // VTABLE-D: VFTable for 'D' (1 entries).
+  // VTABLE-D: VFTable for 'D' (1 entry).
   // VTABLE-D-NEXT: 0 | void D::h()
 
   // VTABLE-D: VFTable for 'A' in 'D' (2 entries).
@@ -101,17 +101,17 @@ Z z;
 namespace Test2 {
 
 struct X: virtual A, virtual B {
-  // TEST2: VFTable for 'Test2::X' (1 entries).
+  // TEST2: VFTable for 'Test2::X' (1 entry).
   // TEST2-NEXT: 0 | void Test2::X::h()
 
   // TEST2: VFTable for 'A' in 'Test2::X' (2 entries).
   // TEST2-NEXT: 0 | void A::f()
   // TEST2-NEXT: 1 | void A::z()
 
-  // TEST2: VFTable for 'B' in 'Test2::X' (1 entries).
+  // TEST2: VFTable for 'B' in 'Test2::X' (1 entry).
   // TEST2-NEXT: 0 | void B::g()
 
-  // TEST2: VFTable indices for 'Test2::X' (1 entries).
+  // TEST2: VFTable indices for 'Test2::X' (1 entry).
   // TEST2-NEXT: 0 | void Test2::X::h()
 
   // MANGLING-DAG: @"\01??_7X@Test2@@6B01@@"
@@ -176,7 +176,7 @@ struct X : A {
 };
 
 struct Y : virtual X {
-  // TEST5: VFTable for 'Test5::Y' (1 entries).
+  // TEST5: VFTable for 'Test5::Y' (1 entry).
   // TEST5-NEXT: 0 | void Test5::Y::h()
 
   // TEST5: VFTable for 'A' in 'Test5::X' in 'Test5::Y' (3 entries).
@@ -184,7 +184,7 @@ struct Y : virtual X {
   // TEST5-NEXT: 1 | void A::z()
   // TEST5-NEXT: 2 | void Test5::X::g()
 
-  // TEST5: VFTable indices for 'Test5::Y' (1 entries).
+  // TEST5: VFTable indices for 'Test5::Y' (1 entry).
   // TEST5-NEXT: 0 | void Test5::Y::h()
 
   // MANGLING-DAG: @"\01??_7Y@Test5@@6B01@@"
@@ -238,14 +238,14 @@ namespace Test8 {
 
 // This is a typical diamond inheritance with a shared 'A' vbase.
 struct X : D, C {
-  // TEST8-X: VFTable for 'D' in 'Test8::X' (1 entries).
+  // TEST8-X: VFTable for 'D' in 'Test8::X' (1 entry).
   // TEST8-X-NEXT: 0 | void D::h()
 
   // TEST8-X: VFTable for 'A' in 'D' in 'Test8::X' (2 entries).
   // TEST8-X-NEXT: 0 | void Test8::X::f()
   // TEST8-X-NEXT: 1 | void A::z()
 
-  // TEST8-X: VFTable indices for 'Test8::X' (1 entries).
+  // TEST8-X: VFTable indices for 'Test8::X' (1 entry).
   // TEST8-X-NEXT: via vbtable index 1, vfptr at offset 0
   // TEST8-X-NEXT: 0 | void Test8::X::f()
 
@@ -265,7 +265,7 @@ class Z : Y, C {
   // TEST8-Z-NEXT: 0 | void Test8::Z::f()
   // TEST8-Z-NEXT: 1 | void A::z()
 
-  // TEST8-Z: VFTable indices for 'Test8::Z' (1 entries).
+  // TEST8-Z: VFTable indices for 'Test8::Z' (1 entry).
   // TEST8-Z-NEXT: via vbtable index 1, vfptr at offset 0
   // TEST8-Z-NEXT: 0 | void Test8::Z::f()
   virtual void f();
@@ -278,14 +278,14 @@ namespace Test9 {
 struct X : A { };
 
 struct Y : virtual X {
-  // TEST9-Y: VFTable for 'Test9::Y' (1 entries).
+  // TEST9-Y: VFTable for 'Test9::Y' (1 entry).
   // TEST9-Y-NEXT: 0 | void Test9::Y::h()
 
   // TEST9-Y: VFTable for 'A' in 'Test9::X' in 'Test9::Y' (2 entries).
   // TEST9-Y-NEXT: 0 | void A::f()
   // TEST9-Y-NEXT: 1 | void A::z()
 
-  // TEST9-Y: VFTable indices for 'Test9::Y' (1 entries).
+  // TEST9-Y: VFTable indices for 'Test9::Y' (1 entry).
   // TEST9-Y-NEXT: 0 | void Test9::Y::h()
 
   // MANGLING-DAG: @"\01??_7Y@Test9@@6B01@@"
@@ -297,14 +297,14 @@ struct Y : virtual X {
 Y y;
 
 struct Z : Y, virtual B {
-  // TEST9-Z: VFTable for 'Test9::Y' in 'Test9::Z' (1 entries).
+  // TEST9-Z: VFTable for 'Test9::Y' in 'Test9::Z' (1 entry).
   // TEST9-Z-NEXT: 0 | void Test9::Y::h()
 
   // TEST9-Z: VFTable for 'A' in 'Test9::X' in 'Test9::Y' in 'Test9::Z' (2 entries).
   // TEST9-Z-NEXT: 0 | void A::f()
   // TEST9-Z-NEXT: 1 | void A::z()
 
-  // TEST9-Z: VFTable for 'B' in 'Test9::Z' (1 entries).
+  // TEST9-Z: VFTable for 'B' in 'Test9::Z' (1 entry).
   // TEST9-Z-NEXT: 0 | void B::g()
 
   // TEST9-Z-NOT: VFTable indices for 'Test9::Z'
@@ -318,17 +318,17 @@ struct Z : Y, virtual B {
 Z z;
 
 struct W : Z, D, virtual A, virtual B {
-  // TEST9-W: VFTable for 'Test9::Y' in 'Test9::Z' in 'Test9::W' (1 entries).
+  // TEST9-W: VFTable for 'Test9::Y' in 'Test9::Z' in 'Test9::W' (1 entry).
   // TEST9-W-NEXT: 0 | void Test9::Y::h()
 
   // TEST9-W: VFTable for 'A' in 'Test9::X' in 'Test9::Y' in 'Test9::Z' in 'Test9::W' (2 entries).
   // TEST9-W-NEXT: 0 | void A::f()
   // TEST9-W-NEXT: 1 | void A::z()
 
-  // TEST9-W: VFTable for 'B' in 'Test9::Z' in 'Test9::W' (1 entries).
+  // TEST9-W: VFTable for 'B' in 'Test9::Z' in 'Test9::W' (1 entry).
   // TEST9-W-NEXT: 0 | void B::g()
 
-  // TEST9-W: VFTable for 'D' in 'Test9::W' (1 entries).
+  // TEST9-W: VFTable for 'D' in 'Test9::W' (1 entry).
   // TEST9-W-NEXT: 0 | void D::h()
 
   // TEST9-W: VFTable for 'A' in 'D' in 'Test9::W' (2 entries).
@@ -352,17 +352,17 @@ struct W : Z, D, virtual A, virtual B {
 W w;
 
 struct T : Z, D, virtual A, virtual B {
-  // TEST9-T: VFTable for 'Test9::Y' in 'Test9::Z' in 'Test9::T' (1 entries).
+  // TEST9-T: VFTable for 'Test9::Y' in 'Test9::Z' in 'Test9::T' (1 entry).
   // TEST9-T-NEXT: 0 | void Test9::T::h()
 
   // TEST9-T: VFTable for 'A' in 'Test9::X' in 'Test9::Y' in 'Test9::Z' in 'Test9::T' (2 entries).
   // TEST9-T-NEXT: 0 | void Test9::T::f()
   // TEST9-T-NEXT: 1 | void Test9::T::z()
 
-  // TEST9-T: VFTable for 'B' in 'Test9::Z' in 'Test9::T' (1 entries).
+  // TEST9-T: VFTable for 'B' in 'Test9::Z' in 'Test9::T' (1 entry).
   // TEST9-T-NEXT: 0 | void Test9::T::g()
 
-  // TEST9-T: VFTable for 'D' in 'Test9::T' (1 entries).
+  // TEST9-T: VFTable for 'D' in 'Test9::T' (1 entry).
   // TEST9-T-NEXT: 0 | void Test9::T::h()
   // TEST9-T-NEXT:     [this adjustment: -8 non-virtual]
 
@@ -412,7 +412,7 @@ struct X : virtual C, virtual A {
   // TEST10-NEXT: 0 | void Test10::X::f()
   // TEST10-NEXT: 1 | void A::z()
 
-  // TEST10: VFTable indices for 'Test10::X' (1 entries).
+  // TEST10: VFTable indices for 'Test10::X' (1 entry).
   // TEST10-NEXT: via vbtable index 1, vfptr at offset 0
   // TEST10-NEXT: 0 | void Test10::X::f()
   virtual void f();
@@ -465,7 +465,7 @@ struct W : Z, X {
 };
 
 struct U : virtual W {
-  // VDTORS-U: VFTable for 'vdtors::Z' in 'vdtors::W' in 'vdtors::U' (1 entries).
+  // VDTORS-U: VFTable for 'vdtors::Z' in 'vdtors::W' in 'vdtors::U' (1 entry).
   // VDTORS-U-NEXT: 0 | void vdtors::Z::z()
 
   // VDTORS-U: VFTable for 'vdtors::X' in 'vdtors::W' in 'vdtors::U' (2 entries).
@@ -476,7 +476,7 @@ struct U : virtual W {
   // VDTORS-U: Thunks for 'vdtors::W::~W()' (1 entry).
   // VDTORS-U-NEXT: 0 | [this adjustment: -4 non-virtual]
 
-  // VDTORS-U: VFTable indices for 'vdtors::U' (1 entries).
+  // VDTORS-U: VFTable indices for 'vdtors::U' (1 entry).
   // VDTORS-U-NEXT: -- accessible via vbtable index 1, vfptr at offset 4 --
   // VDTORS-U-NEXT: 0 | vdtors::U::~U() [scalar deleting]
   virtual ~U();
@@ -485,7 +485,7 @@ struct U : virtual W {
 U u;
 
 struct V : virtual W {
-  // VDTORS-V: VFTable for 'vdtors::Z' in 'vdtors::W' in 'vdtors::V' (1 entries).
+  // VDTORS-V: VFTable for 'vdtors::Z' in 'vdtors::W' in 'vdtors::V' (1 entry).
   // VDTORS-V-NEXT: 0 | void vdtors::Z::z()
 
   // VDTORS-V: VFTable for 'vdtors::X' in 'vdtors::W' in 'vdtors::V' (2 entries).
@@ -496,7 +496,7 @@ struct V : virtual W {
   // VDTORS-V: Thunks for 'vdtors::W::~W()' (1 entry).
   // VDTORS-V-NEXT: 0 | [this adjustment: -4 non-virtual]
 
-  // VDTORS-V: VFTable indices for 'vdtors::V' (1 entries).
+  // VDTORS-V: VFTable indices for 'vdtors::V' (1 entry).
   // VDTORS-V-NEXT: -- accessible via vbtable index 1, vfptr at offset 4 --
   // VDTORS-V-NEXT: 0 | vdtors::V::~V() [scalar deleting]
 };
@@ -540,7 +540,7 @@ struct W : Z {
   // RET-W-NEXT:     [return adjustment: vbase #1, 0 non-virtual]
   // RET-W-NEXT: 1 | return_adjustment::X *return_adjustment::W::foo()
 
-  // RET-W: VFTable indices for 'return_adjustment::W' (1 entries).
+  // RET-W: VFTable indices for 'return_adjustment::W' (1 entry).
   // RET-W-NEXT: 1 | return_adjustment::X *return_adjustment::W::foo()
 
   virtual X* foo();
@@ -556,7 +556,7 @@ struct T : W {
   // RET-T-NEXT:     [return adjustment: vbase #2, 0 non-virtual]
   // RET-T-NEXT: 2 | return_adjustment::Y *return_adjustment::T::foo()
 
-  // RET-T: VFTable indices for 'return_adjustment::T' (1 entries).
+  // RET-T: VFTable indices for 'return_adjustment::T' (1 entry).
   // RET-T-NEXT: 2 | return_adjustment::Y *return_adjustment::T::foo()
 
   virtual Y* foo();
@@ -574,7 +574,7 @@ struct V : Z {
   // RET-V-NEXT:     [return adjustment: vbptr at offset 4, vbase #1, 0 non-virtual]
   // RET-V-NEXT: 1 | return_adjustment::U *return_adjustment::V::foo()
 
-  // RET-V: VFTable indices for 'return_adjustment::V' (1 entries).
+  // RET-V: VFTable indices for 'return_adjustment::V' (1 entry).
   // RET-V-NEXT: 1 | return_adjustment::U *return_adjustment::V::foo()
 
   virtual U* foo();

@@ -3067,7 +3067,8 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
   PrintBasePath(WhichVFPtr.PathToBaseWithVPtr, Out);
   Out << "'";
   MostDerivedClass->printQualifiedName(Out);
-  Out << "' (" << Components.size() << " entries).\n";
+  Out << "' (" << Components.size()
+      << (Components.size() == 1 ? " entry" : " entries") << ").\n";
 
   for (unsigned I = 0, E = Components.size(); I != E; ++I) {
     Out << llvm::format("%4d | ", I);
@@ -3412,7 +3413,8 @@ void MicrosoftVTableContext::dumpMethodLocations(
     Out << "VFTable indices for ";
     Out << "'";
     RD->printQualifiedName(Out);
-    Out << "' (" << IndicesMap.size() << " entries).\n";
+    Out << "' (" << IndicesMap.size()
+        << (IndicesMap.size() == 1 ? " entry" : " entries") << ").\n";
 
     CharUnits LastVFPtrOffset = CharUnits::fromQuantity(-1);
     uint64_t LastVBIndex = 0;

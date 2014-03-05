@@ -257,10 +257,10 @@ N n;
 struct O { virtual A *f(); };
 struct P : O { virtual B *f(); };
 P p;
-// CHECK-O: VFTable for 'O' (1 entries)
+// CHECK-O: VFTable for 'O' (1 entry)
 // CHECK-O-NEXT: 0 | A *O::f()
 
-// CHECK-O: VFTable for 'O' in 'P' (1 entries)
+// CHECK-O: VFTable for 'O' in 'P' (1 entry)
 // CHECK-O-NEXT: 0 | B *P::f()
 
 struct Q {
