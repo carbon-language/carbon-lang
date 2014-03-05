@@ -99,7 +99,7 @@ namespace llvm {
 /// management of reference counts.
 template <class Derived>
 class ThreadSafeRefCountedBase {
-  mutable std::atomic_int RefCount;
+  mutable std::atomic<int> RefCount;
 
 protected:
   ThreadSafeRefCountedBase() : RefCount(0) {}
