@@ -66,7 +66,7 @@ print >> out_file, '''\
     .na { background-color: #DDDDDD }
     .open * { color: #AAAAAA }
     //.open { filter: opacity(0.2) }
-    span:target { background-color: #FFFFBB; outline: #DDDD55 solid thin; }
+    tr:target { background-color: #FFFFBB }
     th { background-color: #FFDDAA }
   </style>
 </head>
@@ -122,7 +122,7 @@ def availability(issue):
     avail_style = ' class="na"'
   elif status.startswith('sup '):
     dup = status.split(' ', 1)[1]
-    avail = 'Superseded by %s' % dup
+    avail = 'Superseded by <a href="#%s">%s</a>' % (dup, dup)
     try:
       _, avail_style = availability(int(dup))
     except:
@@ -130,7 +130,7 @@ def availability(issue):
       avail_style = ' class="none"'
   elif status.startswith('dup '):
     dup = int(status.split(' ', 1)[1])
-    avail = 'Duplicate of %s' % dup
+    avail = 'Duplicate of <a href="#%s">%s</a>' % (dup, dup)
     _, avail_style = availability(dup)
   else:
     assert False, 'unknown status %s for issue %s' % (status, dr.issue)
@@ -154,13 +154,12 @@ for dr in drs:
       count[avail] = count.get(avail, 0) + 1
 
   print >> out_file, '''\
-  <tr%s>
+  <tr%s id="%s">
     <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/%s">%s</a></td>
     <td>%s</td>
     <td>%s</td>
     <td%s align="center">%s</td>
-  </tr>''' % (row_style, dr.url, dr.issue, dr.status, dr.title, avail_style,
-              avail)
+  </tr>''' % (row_style, dr.issue, dr.url, dr.issue, dr.status, dr.title, avail_style, avail)
 
 for status, num in count.items():
   print "%s: %s" % (status, num)
