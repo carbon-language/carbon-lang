@@ -1302,7 +1302,9 @@ void TypePrinter::printObjCObjectPointerBefore(const ObjCObjectPointerType *T,
     OS << '>';
   }
   
-  if (!T->isObjCIdType() && !T->isObjCQualifiedIdType()) {
+  if (!T->isObjCIdType() && !T->isObjCQualifiedIdType() &&
+      !T->isObjCClassType() && !T->isObjCQualifiedClassType() &&
+      !T->isObjCSelType()) {
     OS << " *"; // Don't forget the implicit pointer.
   } else {
     spaceBeforePlaceHolder(OS);

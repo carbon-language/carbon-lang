@@ -25,6 +25,6 @@ int main () {
     
     return classA == classB  || classA == classC ||
            classC == classA ||
-           classA == classD; // expected-warning {{comparison of distinct pointer types ('Class<SomeProtocol> *' and 'Class<SomeProtocol1> *')}}
+           classA == classD; // expected-warning {{comparison of distinct pointer types ('Class<SomeProtocol>' and 'Class<SomeProtocol1>')}}
 }
 
