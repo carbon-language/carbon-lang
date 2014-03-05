@@ -50,13 +50,13 @@ public:
 ///   require a ModR/M byte or instructions where the entire ModR/M byte is used
 ///   for operands.
 class DumbFilter : public ModRMFilter {
-  virtual void anchor();
+  void anchor() override;
 public:
-  bool isDumb() const {
+  bool isDumb() const override {
     return true;
   }
-  
-  bool accepts(uint8_t modRM) const {
+
+  bool accepts(uint8_t modRM) const override {
     return true;
   }
 };
@@ -65,7 +65,7 @@ public:
 ///   Some instructions are classified based on whether they are 11 or anything
 ///   else.  This filter performs that classification.
 class ModFilter : public ModRMFilter {
-  virtual void anchor();
+  void anchor() override;
   bool R;
 public:
   /// Constructor
@@ -79,7 +79,7 @@ public:
     R(r) {
   }
 
-  bool accepts(uint8_t modRM) const {
+  bool accepts(uint8_t modRM) const override {
     return (R == ((modRM & 0xc0) == 0xc0));
   }
 };
@@ -87,7 +87,7 @@ public:
 /// ExtendedFilter - Extended opcodes are classified based on the value of the
 ///   mod field [bits 7-6] and the value of the nnn field [bits 5-3]. 
 class ExtendedFilter : public ModRMFilter {
-  virtual void anchor();
+  void anchor() override;
   bool R;
   uint8_t NNN;
 public:
@@ -102,7 +102,7 @@ public:
     NNN(nnn) {
   }
 
-  bool accepts(uint8_t modRM) const {
+  bool accepts(uint8_t modRM) const override {
     return (((R  && ((modRM & 0xc0) == 0xc0)) ||
              (!R && ((modRM & 0xc0) != 0xc0))) &&
             (((modRM & 0x38) >> 3) == NNN));
@@ -112,7 +112,7 @@ public:
 /// ExactFilter - The occasional extended opcode (such as VMCALL or MONITOR)
 ///   requires the ModR/M byte to have a specific value.
 class ExactFilter : public ModRMFilter {
-  virtual void anchor();
+  void anchor() override;
   uint8_t ModRM;
 public:
   /// Constructor
@@ -123,7 +123,7 @@ public:
     ModRM(modRM) {
   }
 
-  bool accepts(uint8_t modRM) const {
+  bool accepts(uint8_t modRM) const override {
     return (ModRM == modRM);
   }
 };
