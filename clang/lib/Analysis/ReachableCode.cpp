@@ -376,6 +376,11 @@ static bool isConfigurationValue(const Stmt *S) {
     S = Ex->IgnoreParenCasts();
 
   switch (S->getStmtClass()) {
+    case Stmt::DeclRefExprClass: {
+      const DeclRefExpr *DR = cast<DeclRefExpr>(S);
+      const EnumConstantDecl *ED = dyn_cast<EnumConstantDecl>(DR->getDecl());
+      return ED ? isConfigurationValue(ED->getInitExpr()) : false;
+    }
     case Stmt::IntegerLiteralClass:
       return isExpandedFromConfigurationMacro(S);
     case Stmt::UnaryExprOrTypeTraitExprClass:

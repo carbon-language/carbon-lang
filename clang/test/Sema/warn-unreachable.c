@@ -234,3 +234,21 @@ int sizeof_int() {
   return 2; // no-warning
 }
 
+enum MyEnum {
+  ME_A = CONFIG_CONSTANT,
+  ME_B = 1
+};
+
+int test_MyEnum() {
+  if (!ME_A)
+    return 1; // no-warning
+  if (ME_A)
+    return 2; // no-warning
+  if (ME_B)
+    return 3;
+  // FIXME: we should only need one diagnostic here.
+  if (!ME_B) // expected-warning {{will never be executed}}
+    return 4;// expected-warning {{will never be executed}}
+  return 5;
+}
+
