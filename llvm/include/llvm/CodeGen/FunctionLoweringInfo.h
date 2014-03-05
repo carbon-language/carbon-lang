@@ -41,6 +41,7 @@ class MachineBasicBlock;
 class MachineFunction;
 class MachineModuleInfo;
 class MachineRegisterInfo;
+class SelectionDAG;
 class TargetLowering;
 class Value;
 
@@ -125,7 +126,7 @@ public:
   /// set - Initialize this FunctionLoweringInfo with the given Function
   /// and its associated MachineFunction.
   ///
-  void set(const Function &Fn, MachineFunction &MF);
+  void set(const Function &Fn, MachineFunction &MF, SelectionDAG *DAG);
 
   /// clear - Clear out all the function-specific state. This returns this
   /// FunctionLoweringInfo to an empty state, ready to be used for a

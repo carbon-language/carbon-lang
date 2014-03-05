@@ -249,6 +249,7 @@ public:
     LocalFrameSize = 0;
     LocalFrameMaxAlign = 0;
     UseLocalStackAllocationBlock = false;
+    HasInlineAsmWithSPAdjust = false;
   }
 
   /// hasStackObjects - Return true if there are any stack objects in this

@@ -417,7 +417,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   SplitCriticalSideEffectEdges(const_cast<Function&>(Fn), this);
 
   CurDAG->init(*MF, TLI);
-  FuncInfo->set(Fn, *MF);
+  FuncInfo->set(Fn, *MF, CurDAG);
 
   if (UseMBPI && OptLevel != CodeGenOpt::None)
     FuncInfo->BPI = &getAnalysis<BranchProbabilityInfo>();
@@ -427,7 +427,6 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   SDB->init(GFI, *AA, LibInfo);
 
   MF->setHasInlineAsm(false);
-  MF->getFrameInfo()->setHasInlineAsmWithSPAdjust(false);
 
   SelectAllBasicBlocks(Fn);
 
