@@ -603,10 +603,14 @@ const FileEntry *HeaderSearch::LookupFile(
       TmpDir.push_back('/');
       TmpDir.append(Filename.begin(), Filename.end());
 
-      HeaderFileInfo &FromHFI = getFileInfo(Includer);
+      // FIXME: We don't cache the result of getFileInfo across the call to
+      // getFileAndSuggestModule, because it's a reference to an element of
+      // a container that could be reallocated across this call.
+      bool IncluderIsSystemHeader =
+          getFileInfo(Includer).DirInfo != SrcMgr::C_User;
       if (const FileEntry *FE =
               getFileAndSuggestModule(*this, TmpDir.str(), Includer->getDir(),
-                                      FromHFI.DirInfo != SrcMgr::C_User,
+                                      IncluderIsSystemHeader,
                                       SuggestedModule)) {
         // Leave CurDir unset.
         // This file is a system header or C++ unfriendly if the old file is.
@@ -614,6 +618,7 @@ const FileEntry *HeaderSearch::LookupFile(
         // Note that we only use one of FromHFI/ToHFI at once, due to potential
         // reallocation of the underlying vector potentially making the first
         // reference binding dangling.
+        HeaderFileInfo &FromHFI = getFileInfo(Includer);
         unsigned DirInfo = FromHFI.DirInfo;
         bool IndexHeaderMapHeader = FromHFI.IndexHeaderMapHeader;
         StringRef Framework = FromHFI.Framework;
