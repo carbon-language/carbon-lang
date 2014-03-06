@@ -1200,8 +1200,14 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
 
   if (IsLambdaConversionToBlock)
     EmitLambdaBlockInvokeBody();
-  else
+  else {
+    PGO.assignRegionCounters(blockDecl, fn);
+    RegionCounter Cnt = getPGORegionCounter(blockDecl->getBody());
+    Cnt.beginRegion(Builder);
     EmitStmt(blockDecl->getBody());
+    PGO.emitWriteoutFunction();
+    PGO.destroyRegionCounters();
+  }
 
   // Remember where we were...
   llvm::BasicBlock *resume = Builder.GetInsertBlock();

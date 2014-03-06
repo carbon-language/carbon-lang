@@ -315,6 +315,10 @@ namespace {
       (*CounterMap)[S->getBody()] = NextCounter++;
       Visit(S->getBody());
     }
+    void VisitBlockDecl(const BlockDecl *S) {
+      (*CounterMap)[S->getBody()] = NextCounter++;
+      Visit(S->getBody());
+    }
     /// Assign a counter to track the block following a label.
     void VisitLabelStmt(const LabelStmt *S) {
       (*CounterMap)[S] = NextCounter++;
@@ -475,6 +479,13 @@ namespace {
     }
 
     void VisitObjCMethodDecl(const ObjCMethodDecl *S) {
+      RegionCounter Cnt(PGO, S->getBody());
+      Cnt.beginRegion();
+      (*CountMap)[S->getBody()] = PGO.getCurrentRegionCount();
+      Visit(S->getBody());
+    }
+
+    void VisitBlockDecl(const BlockDecl *S) {
       RegionCounter Cnt(PGO, S->getBody());
       Cnt.beginRegion();
       (*CountMap)[S->getBody()] = PGO.getCurrentRegionCount();
@@ -802,6 +813,8 @@ void CodeGenPGO::mapRegionCounters(const Decl *D) {
     Walker.VisitFunctionDecl(FD);
   else if (const ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(D))
     Walker.VisitObjCMethodDecl(MD);
+  else if (const BlockDecl *BD = dyn_cast_or_null<BlockDecl>(D))
+    Walker.VisitBlockDecl(BD);
   NumRegionCounters = Walker.NextCounter;
 }
 
@@ -812,6 +825,8 @@ void CodeGenPGO::computeRegionCounts(const Decl *D) {
     Walker.VisitFunctionDecl(FD);
   else if (const ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(D))
     Walker.VisitObjCMethodDecl(MD);
+  else if (const BlockDecl *BD = dyn_cast_or_null<BlockDecl>(D))
+    Walker.VisitBlockDecl(BD);
 }
 
 void CodeGenPGO::emitCounterVariables() {
