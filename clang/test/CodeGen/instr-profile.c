@@ -18,7 +18,7 @@
 // PGOGEN: @[[BLC:__llvm_pgo_ctr[0-9]*]] = private global [9 x i64]  zeroinitializer
 // PGOGEN: @[[NOC:__llvm_pgo_ctr[0-9]*]] = private global [2 x i64]  zeroinitializer
 // PGOGEN: @[[MAC:__llvm_pgo_ctr[0-9]*]] = private global [1 x i64]  zeroinitializer
-// PGOGEN: @[[STF:__llvm_pgo_ctr[0-9]*]] = private global [2 x i64]  zeroinitializer
+// PGOGEN: @[[STC:__llvm_pgo_ctr[0-9]*]] = private global [2 x i64]  zeroinitializer
 
 // PGOGEN-LABEL: @simple_loops()
 // PGOUSE-LABEL: @simple_loops()
@@ -448,9 +448,9 @@ void no_usable_data() {
 
 // PGOGEN-LABEL: @static_func()
 // PGOUSE-LABEL: @static_func()
-// PGOGEN: store {{.*}} @[[STF]], i64 0, i64 0
+// PGOGEN: store {{.*}} @[[STC]], i64 0, i64 0
 static void static_func() {
-  // PGOGEN: store {{.*}} @[[STF]], i64 0, i64 1
+  // PGOGEN: store {{.*}} @[[STC]], i64 0, i64 1
   // PGOUSE: br {{.*}} !prof ![[ST1:[0-9]+]]
   for (int i = 0; i < 10; ++i) {
   }
