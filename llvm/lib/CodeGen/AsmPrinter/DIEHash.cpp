@@ -300,42 +300,41 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   // reproducibility of the signature, the set of forms used in the signature
   // computation is limited to the following: DW_FORM_sdata, DW_FORM_flag,
   // DW_FORM_string, and DW_FORM_block.
-  switch (Desc->getForm()) {
-  case dwarf::DW_FORM_string:
-    llvm_unreachable(
-        "Add support for DW_FORM_string if we ever start emitting them again");
-  case dwarf::DW_FORM_GNU_str_index:
-  case dwarf::DW_FORM_strp:
+
+  switch (Value->getType()) {
+  case DIEValue::isInteger: {
+    addULEB128('A');
+    addULEB128(Attribute);
+    switch (Desc->getForm()) {
+    case dwarf::DW_FORM_data1:
+    case dwarf::DW_FORM_data2:
+    case dwarf::DW_FORM_data4:
+    case dwarf::DW_FORM_data8:
+    case dwarf::DW_FORM_udata:
+    case dwarf::DW_FORM_sdata:
+      addULEB128(dwarf::DW_FORM_sdata);
+      addSLEB128((int64_t)cast<DIEInteger>(Value)->getValue());
+      break;
+    // DW_FORM_flag_present is just flag with a value of one. We still give it a
+    // value so just use the value.
+    case dwarf::DW_FORM_flag_present:
+    case dwarf::DW_FORM_flag:
+      addULEB128(dwarf::DW_FORM_flag);
+      addULEB128((int64_t)cast<DIEInteger>(Value)->getValue());
+      break;
+    default:
+      llvm_unreachable("Unknown integer form!");
+    }
+    break;
+  }
+  case DIEValue::isString:
     addULEB128('A');
     addULEB128(Attribute);
     addULEB128(dwarf::DW_FORM_string);
     addString(cast<DIEString>(Value)->getString());
     break;
-  case dwarf::DW_FORM_data1:
-  case dwarf::DW_FORM_data2:
-  case dwarf::DW_FORM_data4:
-  case dwarf::DW_FORM_data8:
-  case dwarf::DW_FORM_udata:
-  case dwarf::DW_FORM_sdata:
-    addULEB128('A');
-    addULEB128(Attribute);
-    addULEB128(dwarf::DW_FORM_sdata);
-    addSLEB128((int64_t)cast<DIEInteger>(Value)->getValue());
-    break;
-  // DW_FORM_flag_present is just flag with a value of one. We still give it a
-  // value so just use the value.
-  case dwarf::DW_FORM_flag_present:
-  case dwarf::DW_FORM_flag:
-    addULEB128('A');
-    addULEB128(Attribute);
-    addULEB128(dwarf::DW_FORM_flag);
-    addULEB128((int64_t)cast<DIEInteger>(Value)->getValue());
-    break;
-  case dwarf::DW_FORM_exprloc:
-  case dwarf::DW_FORM_block1:
-  case dwarf::DW_FORM_block2:
-  case dwarf::DW_FORM_block4:
-  case dwarf::DW_FORM_block:
+  case DIEValue::isBlock:
+  case DIEValue::isLoc:
     addULEB128('A');
     addULEB128(Attribute);
     addULEB128(dwarf::DW_FORM_block);
@@ -347,8 +346,13 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
       hashBlockData(cast<DIELoc>(Value)->getValues());
     }
     break;
-  default:
-    llvm_unreachable("Add support for additional forms");
+  case DIEValue::isExpr:
+  case DIEValue::isLabel:
+  case DIEValue::isDelta:
+  case DIEValue::isEntry:
+  case DIEValue::isTypeSignature:
+  case DIEValue::isLocList:
+    llvm_unreachable("Add support for additional value types.");
   }
 }
 
