@@ -1,4 +1,4 @@
-//===-- llvm/GVMaterializer.h - Interface for GV materializers --*- C++ -*-===//
+//===- GVMaterializer.h - Interface for GV materializers --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_GVMATERIALIZER_H
-#define LLVM_GVMATERIALIZER_H
+#ifndef LLVM_IR_GVMATERIALIZER_H
+#define LLVM_IR_GVMATERIALIZER_H
 
 #include "llvm/Support/system_error.h"
 
