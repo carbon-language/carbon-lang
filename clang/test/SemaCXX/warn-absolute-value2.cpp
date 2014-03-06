@@ -2,12 +2,12 @@
 
 extern "C" {
 int abs(int);
-long labs(long);
+double fabs(double);
 }
 
-using ::labs;
+using ::fabs;
 
-long test(long x) {
+double test(double x) {
   return ::abs(x);
   // expected-warning@-1{{using integer absolute value function 'abs' when argument is of floating point type}}
 }
