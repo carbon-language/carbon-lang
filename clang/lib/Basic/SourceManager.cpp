@@ -1378,31 +1378,6 @@ unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos,
     }
   }
 
-  // If the spread is large, do a "radix" test as our initial guess, based on
-  // the assumption that lines average to approximately the same length.
-  // NOTE: This is currently disabled, as it does not appear to be profitable in
-  // initial measurements.
-  if (0 && SourceLineCacheEnd-SourceLineCache > 20) {
-    unsigned FileLen = Content->SourceLineCache[Content->NumLines-1];
-
-    // Take a stab at guessing where it is.
-    unsigned ApproxPos = Content->NumLines*QueriedFilePos / FileLen;
-
-    // Check for -10 and +10 lines.
-    unsigned LowerBound = std::max(int(ApproxPos-10), 0);
-    unsigned UpperBound = std::min(ApproxPos+10, FileLen);
-
-    // If the computed lower bound is less than the query location, move it in.
-    if (SourceLineCache < SourceLineCacheStart+LowerBound &&
-        SourceLineCacheStart[LowerBound] < QueriedFilePos)
-      SourceLineCache = SourceLineCacheStart+LowerBound;
-
-    // If the computed upper bound is greater than the query location, move it.
-    if (SourceLineCacheEnd > SourceLineCacheStart+UpperBound &&
-        SourceLineCacheStart[UpperBound] >= QueriedFilePos)
-      SourceLineCacheEnd = SourceLineCacheStart+UpperBound;
-  }
-
   unsigned *Pos
     = std::lower_bound(SourceLineCache, SourceLineCacheEnd, QueriedFilePos);
   unsigned LineNo = Pos-SourceLineCacheStart;
