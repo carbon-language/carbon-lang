@@ -124,10 +124,8 @@ lldb_private::Initialize ()
         ScriptInterpreterPython::InitializePrivate();
         OperatingSystemPython::Initialize();
 #endif
-#if defined(__linux__) || defined(__FreeBSD__)
         JITLoaderGDB::Initialize();
         ProcessElfCore::Initialize();
-#endif
         
 #if defined (__APPLE__)
         //----------------------------------------------------------------------
@@ -210,11 +208,9 @@ lldb_private::Terminate ()
 #ifndef LLDB_DISABLE_PYTHON
     OperatingSystemPython::Terminate();
 #endif
-#if defined(__linux__) || defined(__FreeBSD__)
     JITLoaderGDB::Terminate();
     ProcessElfCore::Terminate();
-#endif
-
+    
 #if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();
     DynamicLoaderDarwinKernel::Terminate();
