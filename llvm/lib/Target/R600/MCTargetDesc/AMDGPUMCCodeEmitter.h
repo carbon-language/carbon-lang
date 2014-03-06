@@ -1,4 +1,4 @@
-//===-- AMDGPUCodeEmitter.h - AMDGPU Code Emitter interface -----------------===//
+//===-- AMDGPUCodeEmitter.h - AMDGPU Code Emitter interface -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
