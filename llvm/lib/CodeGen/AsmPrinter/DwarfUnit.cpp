@@ -958,6 +958,8 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   // Create new type.
   TyDIE = createAndAddDIE(Ty.getTag(), *ContextDIE, Ty);
 
+  updateAcceleratorTables(Context, Ty, TyDIE);
+
   if (Ty.isBasicType())
     constructTypeDIE(*TyDIE, DIBasicType(Ty));
   else if (Ty.isCompositeType()) {
@@ -973,8 +975,6 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     assert(Ty.isDerivedType() && "Unknown kind of DIType");
     constructTypeDIE(*TyDIE, DIDerivedType(Ty));
   }
-
-  updateAcceleratorTables(Context, Ty, TyDIE);
 
   return TyDIE;
 }

@@ -2310,10 +2310,10 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
       GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubNamesSection()
                : Asm->getObjFileLowering().getDwarfPubNamesSection();
 
-  DwarfFile &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
-  const SmallVectorImpl<DwarfUnit *> &Units = Holder.getUnits();
-  for (unsigned i = 0; i != Units.size(); ++i) {
-    DwarfUnit *TheU = Units[i];
+  for (const auto &NU : CUMap) {
+    DwarfCompileUnit *TheU = NU.second;
+    if (auto Skeleton = static_cast<DwarfCompileUnit *>(TheU->getSkeleton()))
+      TheU = Skeleton;
     unsigned ID = TheU->getUniqueID();
 
     // Start the dwarf pubnames section.
@@ -2374,10 +2374,10 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
       GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubTypesSection()
                : Asm->getObjFileLowering().getDwarfPubTypesSection();
 
-  DwarfFile &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
-  const SmallVectorImpl<DwarfUnit *> &Units = Holder.getUnits();
-  for (unsigned i = 0; i != Units.size(); ++i) {
-    DwarfUnit *TheU = Units[i];
+  for (const auto &NU : CUMap) {
+    DwarfCompileUnit *TheU = NU.second;
+    if (auto Skeleton = static_cast<DwarfCompileUnit *>(TheU->getSkeleton()))
+      TheU = Skeleton;
     unsigned ID = TheU->getUniqueID();
 
     // Start the dwarf pubtypes section.
