@@ -135,6 +135,8 @@ void force_usage() {
 }
 
 // CHECK: define internal void @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ"() [[NUW]]
+// CHECK: load i32* @"\01??_Bfoo@?$B@H@@2VA@@A@5"
+// CHECK: store i32 {{.*}}, i32* @"\01??_Bfoo@?$B@H@@2VA@@A@5"
 // CHECK: %{{[.0-9A-Z_a-z]+}} = call x86_thiscallcc %class.A* @"\01??0A@@QAE@XZ"
 // CHECK: call i32 @atexit(void ()* @"\01??__Ffoo@?$B@H@@2VA@@A@YAXXZ")
 // CHECK: ret void

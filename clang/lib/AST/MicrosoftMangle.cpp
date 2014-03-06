@@ -2280,13 +2280,17 @@ void MicrosoftMangleContextImpl::mangleStaticGuardVariable(const VarDecl *VD,
   bool Visible = VD->isExternallyVisible();
   // <operator-name> ::= ?_B # local static guard
   Mangler.getStream() << (Visible ? "\01??_B" : "\01?$S1@");
-  Mangler.mangleNestedName(VD);
+  unsigned ScopeDepth = 0;
+  if (Visible && !getNextDiscriminator(VD, ScopeDepth))
+    // If we do not have a discriminator and are emitting a guard variable for
+    // use at global scope, then mangling the nested name will not be enough to
+    // remove ambiguities.
+    Mangler.mangle(VD, "");
+  else
+    Mangler.mangleNestedName(VD);
   Mangler.getStream() << (Visible ? "@5" : "@4IA");
-  if (Visible) {
-    unsigned ScopeDepth;
-    getNextDiscriminator(VD, ScopeDepth);
+  if (ScopeDepth)
     Mangler.mangleNumber(ScopeDepth);
-  }
 }
 
 void MicrosoftMangleContextImpl::mangleInitFiniStub(const VarDecl *D,
