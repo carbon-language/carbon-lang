@@ -6,8 +6,8 @@
 
 ; Check that the attributes in the compile unit both point to a correct
 ; location, even when nothing is exported.
-; CHECK: DW_AT_GNU_pubnames [DW_FORM_sec_offset]   (0x00000000)
-; CHECK: DW_AT_GNU_pubtypes [DW_FORM_sec_offset]   (0x00000000)
+; CHECK: DW_AT_GNU_pubnames [DW_FORM_flag_present]   (true)
+; CHECK-NOT: DW_AT_GNU_pubtypes [
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!3, !4}

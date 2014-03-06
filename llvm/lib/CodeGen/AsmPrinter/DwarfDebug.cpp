@@ -733,13 +733,7 @@ void DwarfDebug::addGnuPubAttributes(DwarfUnit *U, DIE *D) const {
   if (!GenerateGnuPubSections)
     return;
 
-  addSectionLabel(Asm, U, D, dwarf::DW_AT_GNU_pubnames,
-                  Asm->GetTempSymbol("gnu_pubnames", U->getUniqueID()),
-                  DwarfGnuPubNamesSectionSym);
-
-  addSectionLabel(Asm, U, D, dwarf::DW_AT_GNU_pubtypes,
-                  Asm->GetTempSymbol("gnu_pubtypes", U->getUniqueID()),
-                  DwarfGnuPubTypesSectionSym);
+  U->addFlag(D, dwarf::DW_AT_GNU_pubnames);
 }
 
 // Create new DwarfCompileUnit for the given metadata node with tag
