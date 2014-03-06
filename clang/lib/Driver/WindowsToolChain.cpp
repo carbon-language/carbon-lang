@@ -43,7 +43,7 @@ Tool *Windows::buildLinker() const {
 }
 
 Tool *Windows::buildAssembler() const {
-  if (getTriple().getEnvironment() == llvm::Triple::MachO)
+  if (getTriple().getObjectFormat() == llvm::Triple::MachO)
     return new tools::darwin::Assemble(*this);
   getDriver().Diag(clang::diag::err_no_external_assembler);
   return NULL;

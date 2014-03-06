@@ -1971,7 +1971,7 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
         TC = new toolchains::Generic_ELF(*this, Target, Args);
         break;
       }
-      if (Target.getEnvironment() == llvm::Triple::MachO) {
+      if (Target.getObjectFormat() == llvm::Triple::MachO) {
         TC = new toolchains::MachO(*this, Target, Args);
         break;
       }

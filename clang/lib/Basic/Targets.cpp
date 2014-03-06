@@ -5911,7 +5911,7 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
     }
 
   case llvm::Triple::x86_64:
-    if (Triple.isOSDarwin() || Triple.getEnvironment() == llvm::Triple::MachO)
+    if (Triple.isOSDarwin() || Triple.getObjectFormat() == llvm::Triple::MachO)
       return new DarwinX86_64TargetInfo(Triple);
 
     switch (os) {
