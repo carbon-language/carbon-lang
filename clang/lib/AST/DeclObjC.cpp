@@ -465,9 +465,8 @@ void ObjCInterfaceDecl::startDefinition() {
   allocateDefinitionData();
 
   // Update all of the declarations with a pointer to the definition.
-  for (redecl_iterator RD = redecls_begin(), RDEnd = redecls_end();
-       RD != RDEnd; ++RD) {
-    if (*RD != this)
+  for (auto RD : redecls()) {
+    if (RD != this)
       RD->Data = Data;
   }
 }
@@ -1591,8 +1590,7 @@ void ObjCProtocolDecl::startDefinition() {
   allocateDefinitionData();
   
   // Update all of the declarations with a pointer to the definition.
-  for (redecl_iterator RD = redecls_begin(), RDEnd = redecls_end();
-       RD != RDEnd; ++RD)
+  for (auto RD : redecls())
     RD->Data = this->Data;
 }
 

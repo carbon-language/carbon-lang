@@ -108,10 +108,8 @@ UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT,
     return UuidForRD;
   }
 
-  for (CXXRecordDecl::redecl_iterator I = RD->redecls_begin(),
-                                      E = RD->redecls_end();
-       I != E; ++I)
-    if (UuidAttr *Uuid = I->getAttr<UuidAttr>())
+  for (auto I : RD->redecls())
+    if (auto Uuid = I->getAttr<UuidAttr>())
       return Uuid;
 
   return 0;

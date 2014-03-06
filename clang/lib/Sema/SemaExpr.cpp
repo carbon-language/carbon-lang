@@ -168,9 +168,7 @@ void Sema::NoteDeletedFunction(FunctionDecl *Decl) {
 /// \brief Determine whether a FunctionDecl was ever declared with an
 /// explicit storage class.
 static bool hasAnyExplicitStorageClass(const FunctionDecl *D) {
-  for (FunctionDecl::redecl_iterator I = D->redecls_begin(),
-                                     E = D->redecls_end();
-       I != E; ++I) {
+  for (auto I : D->redecls()) {
     if (I->getStorageClass() != SC_None)
       return true;
   }
@@ -11409,10 +11407,9 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
     }
   } else {
     // Walk redefinitions, as some of them may be instantiable.
-    for (FunctionDecl::redecl_iterator i(Func->redecls_begin()),
-         e(Func->redecls_end()); i != e; ++i) {
+    for (auto i : Func->redecls()) {
       if (!i->isUsed(false) && i->isImplicitlyInstantiable())
-        MarkFunctionReferenced(Loc, *i);
+        MarkFunctionReferenced(Loc, i);
     }
   }
 

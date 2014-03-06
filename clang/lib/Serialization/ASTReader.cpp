@@ -7676,16 +7676,14 @@ void ASTReader::finishPendingActions() {
       llvm::SmallVector<const NamedDecl*, 4> Candidates;
       for (DeclContext::lookup_iterator I = R.begin(), E = R.end();
            !Found && I != E; ++I) {
-        for (Decl::redecl_iterator RI = (*I)->redecls_begin(),
-                                   RE = (*I)->redecls_end();
-             RI != RE; ++RI) {
-          if ((*RI)->getLexicalDeclContext() == CanonDef) {
+        for (auto RI : (*I)->redecls()) {
+          if (RI->getLexicalDeclContext() == CanonDef) {
             // This declaration is present in the canonical definition. If it's
             // in the same redecl chain, it's the one we're looking for.
-            if ((*RI)->getCanonicalDecl() == DCanon)
+            if (RI->getCanonicalDecl() == DCanon)
               Found = true;
             else
-              Candidates.push_back(cast<NamedDecl>(*RI));
+              Candidates.push_back(cast<NamedDecl>(RI));
             break;
           }
         }
@@ -7726,44 +7724,35 @@ void ASTReader::finishPendingActions() {
         const_cast<TagType*>(TagT)->decl = TD;
       }
       
-      if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(*D)) {
-        for (CXXRecordDecl::redecl_iterator R = RD->redecls_begin(),
-                                         REnd = RD->redecls_end();
-             R != REnd; ++R)
-          cast<CXXRecordDecl>(*R)->DefinitionData = RD->DefinitionData;
+      if (auto RD = dyn_cast<CXXRecordDecl>(*D)) {
+        for (auto R : RD->redecls())
+          cast<CXXRecordDecl>(R)->DefinitionData = RD->DefinitionData;
         
       }
 
       continue;
     }
     
-    if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(*D)) {
+    if (auto ID = dyn_cast<ObjCInterfaceDecl>(*D)) {
       // Make sure that the ObjCInterfaceType points at the definition.
       const_cast<ObjCInterfaceType *>(cast<ObjCInterfaceType>(ID->TypeForDecl))
         ->Decl = ID;
       
-      for (ObjCInterfaceDecl::redecl_iterator R = ID->redecls_begin(),
-                                           REnd = ID->redecls_end();
-           R != REnd; ++R)
+      for (auto R : ID->redecls())
         R->Data = ID->Data;
       
       continue;
     }
     
-    if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(*D)) {
-      for (ObjCProtocolDecl::redecl_iterator R = PD->redecls_begin(),
-                                          REnd = PD->redecls_end();
-           R != REnd; ++R)
+    if (auto PD = dyn_cast<ObjCProtocolDecl>(*D)) {
+      for (auto R : PD->redecls())
         R->Data = PD->Data;
       
       continue;
     }
     
-    RedeclarableTemplateDecl *RTD
-      = cast<RedeclarableTemplateDecl>(*D)->getCanonicalDecl();
-    for (RedeclarableTemplateDecl::redecl_iterator R = RTD->redecls_begin(),
-                                                REnd = RTD->redecls_end();
-         R != REnd; ++R)
+    auto RTD = cast<RedeclarableTemplateDecl>(*D)->getCanonicalDecl();
+    for (auto R : RTD->redecls())
       R->Common = RTD->Common;
   }
   PendingDefinitions.clear();

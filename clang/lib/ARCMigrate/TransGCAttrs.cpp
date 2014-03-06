@@ -164,8 +164,7 @@ public:
     if (!D)
       return false;
 
-    for (Decl::redecl_iterator
-           I = D->redecls_begin(), E = D->redecls_end(); I != E; ++I)
+    for (auto I : D->redecls())
       if (!isInMainFile(I->getLocation()))
         return false;
     

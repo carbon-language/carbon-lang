@@ -1245,10 +1245,8 @@ public:
     // that all other computed linkages match, check that the one we just
     // computed also does.
     NamedDecl *Old = NULL;
-    for (NamedDecl::redecl_iterator I = D->redecls_begin(),
-                                    E = D->redecls_end();
-         I != E; ++I) {
-      NamedDecl *T = cast<NamedDecl>(*I);
+    for (auto I : D->redecls()) {
+      NamedDecl *T = cast<NamedDecl>(I);
       if (T == D)
         continue;
       if (!T->isInvalidDecl() && T->hasCachedLinkage()) {
@@ -1793,23 +1791,21 @@ VarDecl *VarDecl::getActingDefinition() {
 
   VarDecl *LastTentative = 0;
   VarDecl *First = getFirstDecl();
-  for (redecl_iterator I = First->redecls_begin(), E = First->redecls_end();
-       I != E; ++I) {
-    Kind = (*I)->isThisDeclarationADefinition();
+  for (auto I : First->redecls()) {
+    Kind = I->isThisDeclarationADefinition();
     if (Kind == Definition)
       return 0;
     else if (Kind == TentativeDefinition)
-      LastTentative = *I;
+      LastTentative = I;
   }
   return LastTentative;
 }
 
 VarDecl *VarDecl::getDefinition(ASTContext &C) {
   VarDecl *First = getFirstDecl();
-  for (redecl_iterator I = First->redecls_begin(), E = First->redecls_end();
-       I != E; ++I) {
-    if ((*I)->isThisDeclarationADefinition(C) == Definition)
-      return *I;
+  for (auto I : First->redecls()) {
+    if (I->isThisDeclarationADefinition(C) == Definition)
+      return I;
   }
   return 0;
 }
@@ -1818,9 +1814,8 @@ VarDecl::DefinitionKind VarDecl::hasDefinition(ASTContext &C) const {
   DefinitionKind Kind = DeclarationOnly;
   
   const VarDecl *First = getFirstDecl();
-  for (redecl_iterator I = First->redecls_begin(), E = First->redecls_end();
-       I != E; ++I) {
-    Kind = std::max(Kind, (*I)->isThisDeclarationADefinition(C));
+  for (auto I : First->redecls()) {
+    Kind = std::max(Kind, I->isThisDeclarationADefinition(C));
     if (Kind == Definition)
       break;
   }
@@ -1829,13 +1824,11 @@ VarDecl::DefinitionKind VarDecl::hasDefinition(ASTContext &C) const {
 }
 
 const Expr *VarDecl::getAnyInitializer(const VarDecl *&D) const {
-  redecl_iterator I = redecls_begin(), E = redecls_end();
-  while (I != E && !I->getInit())
-    ++I;
-
-  if (I != E) {
-    D = *I;
-    return I->getInit();
+  for (auto I : redecls()) {
+    if (auto Expr = I->getInit()) {
+      D = I;
+      return Expr;
+    }
   }
   return 0;
 }
@@ -1860,10 +1853,9 @@ VarDecl *VarDecl::getOutOfLineDefinition() {
   if (!isStaticDataMember())
     return 0;
   
-  for (VarDecl::redecl_iterator RD = redecls_begin(), RDEnd = redecls_end();
-       RD != RDEnd; ++RD) {
+  for (auto RD : redecls()) {
     if (RD->getLexicalDeclContext()->isFileContext())
-      return *RD;
+      return RD;
   }
   
   return 0;
@@ -2190,9 +2182,9 @@ bool FunctionDecl::isVariadic() const {
 }
 
 bool FunctionDecl::hasBody(const FunctionDecl *&Definition) const {
-  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
+  for (auto I : redecls()) {
     if (I->Body || I->IsLateTemplateParsed) {
-      Definition = *I;
+      Definition = I;
       return true;
     }
   }
@@ -2215,10 +2207,10 @@ bool FunctionDecl::hasTrivialBody() const
 }
 
 bool FunctionDecl::isDefined(const FunctionDecl *&Definition) const {
-  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
+  for (auto I : redecls()) {
     if (I->IsDeleted || I->IsDefaulted || I->Body || I->IsLateTemplateParsed ||
         I->hasAttr<AliasAttr>()) {
-      Definition = I->IsDeleted ? I->getCanonicalDecl() : *I;
+      Definition = I->IsDeleted ? I->getCanonicalDecl() : I;
       return true;
     }
   }
@@ -2680,9 +2672,7 @@ bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
     
     // If any declaration is 'inline' but not 'extern', then this definition
     // is externally visible.
-    for (redecl_iterator Redecl = redecls_begin(), RedeclEnd = redecls_end();
-         Redecl != RedeclEnd;
-         ++Redecl) {
+    for (auto Redecl : redecls()) {
       if (Redecl->isInlineSpecified() && 
           Redecl->getStorageClass() != SC_Extern)
         return true;
@@ -2699,10 +2689,8 @@ bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
   //   [...] If all of the file scope declarations for a function in a 
   //   translation unit include the inline function specifier without extern, 
   //   then the definition in that translation unit is an inline definition.
-  for (redecl_iterator Redecl = redecls_begin(), RedeclEnd = redecls_end();
-       Redecl != RedeclEnd;
-       ++Redecl) {
-    if (RedeclForcesDefC99(*Redecl))
+  for (auto Redecl : redecls()) {
+    if (RedeclForcesDefC99(Redecl))
       return true;
   }
   
@@ -3187,8 +3175,8 @@ void TagDecl::startDefinition() {
   if (CXXRecordDecl *D = dyn_cast<CXXRecordDecl>(this)) {
     struct CXXRecordDecl::DefinitionData *Data = 
       new (getASTContext()) struct CXXRecordDecl::DefinitionData(D);
-    for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I)
-      cast<CXXRecordDecl>(*I)->DefinitionData = Data;
+    for (auto I : redecls())
+      cast<CXXRecordDecl>(I)->DefinitionData = Data;
   }
 }
 
@@ -3220,10 +3208,9 @@ TagDecl *TagDecl::getDefinition() const {
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(this))
     return CXXRD->getDefinition();
 
-  for (redecl_iterator R = redecls_begin(), REnd = redecls_end();
-       R != REnd; ++R)
+  for (auto R : redecls())
     if (R->isCompleteDefinition())
-      return *R;
+      return R;
 
   return 0;
 }

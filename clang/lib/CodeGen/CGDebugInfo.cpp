@@ -2424,9 +2424,7 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
       return SP;
   }
 
-  for (FunctionDecl::redecl_iterator I = FD->redecls_begin(),
-         E = FD->redecls_end(); I != E; ++I) {
-    const FunctionDecl *NextFD = *I;
+  for (auto NextFD : FD->redecls()) {
     llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator
       MI = SPCache.find(NextFD->getCanonicalDecl());
     if (MI != SPCache.end()) {

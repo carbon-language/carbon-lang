@@ -5540,11 +5540,9 @@ void Sema::CheckShadow(Scope *S, VarDecl *D, const LookupResult& R) {
     if (shadowedVar->isExternC()) {
       // For shadowing external vars, make sure that we point to the global
       // declaration, not a locally scoped extern declaration.
-      for (VarDecl::redecl_iterator
-             I = shadowedVar->redecls_begin(), E = shadowedVar->redecls_end();
-           I != E; ++I)
+      for (auto I : shadowedVar->redecls())
         if (I->isFileVarDecl()) {
-          ShadowedDecl = *I;
+          ShadowedDecl = I;
           break;
         }
     }
@@ -10330,8 +10328,7 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
       }
 
       bool previousMismatch = false;
-      for (TagDecl::redecl_iterator I(Previous->redecls_begin()),
-           E(Previous->redecls_end()); I != E; ++I) {
+      for (auto I : Previous->redecls()) {
         if (I->getTagKind() != NewTag) {
           if (!previousMismatch) {
             previousMismatch = true;

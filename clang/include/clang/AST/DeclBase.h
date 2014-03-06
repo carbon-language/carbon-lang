@@ -19,6 +19,7 @@
 #include "clang/Basic/Linkage.h"
 #include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/PrettyStackTrace.h"
 
@@ -770,12 +771,14 @@ public:
     }
   };
 
-  /// \brief Returns iterator for all the redeclarations of the same decl.
-  /// It will iterate at least once (when this decl is the only one).
-  redecl_iterator redecls_begin() const {
-    return redecl_iterator(const_cast<Decl*>(this));
+  typedef llvm::iterator_range<redecl_iterator> redecl_range;
+
+  /// \brief Returns an iterator range for all the redeclarations of the same
+  /// decl. It will iterate at least once (when this decl is the only one).
+  redecl_range redecls() const {
+    return redecl_range(redecl_iterator(const_cast<Decl *>(this)),
+                        redecl_iterator());
   }
-  redecl_iterator redecls_end() const { return redecl_iterator(); }
 
   /// \brief Retrieve the previous declaration that declares the same entity
   /// as this declaration, or NULL if there is no previous declaration.

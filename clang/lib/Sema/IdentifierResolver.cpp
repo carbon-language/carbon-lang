@@ -273,10 +273,8 @@ static DeclMatchKind compareDeclarations(NamedDecl *Existing, NamedDecl *New) {
 
     // If the existing declaration is somewhere in the previous declaration
     // chain of the new declaration, then prefer the new declaration.
-    for (Decl::redecl_iterator RD = New->redecls_begin(), 
-                            RDEnd = New->redecls_end();
-         RD != RDEnd; ++RD) {
-      if (*RD == Existing)
+    for (auto RD : New->redecls()) {
+      if (RD == Existing)
         return DMK_Replace;
         
       if (RD->isCanonicalDecl())

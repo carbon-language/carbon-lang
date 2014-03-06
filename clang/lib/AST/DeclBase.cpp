@@ -313,7 +313,7 @@ bool Decl::isReferenced() const {
     return true;
 
   // Check redeclarations.
-  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I)
+  for (auto I : redecls())
     if (I->Referenced)
       return true;
 

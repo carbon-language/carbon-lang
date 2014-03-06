@@ -1269,9 +1269,8 @@ bool LookupResult::isVisibleSlow(Sema &SemaRef, NamedDecl *D) {
 static NamedDecl *findAcceptableDecl(Sema &SemaRef, NamedDecl *D) {
   assert(!LookupResult::isVisible(SemaRef, D) && "not in slow case");
 
-  for (Decl::redecl_iterator RD = D->redecls_begin(), RDEnd = D->redecls_end();
-       RD != RDEnd; ++RD) {
-    if (NamedDecl *ND = dyn_cast<NamedDecl>(*RD)) {
+  for (auto RD : D->redecls()) {
+    if (auto ND = dyn_cast<NamedDecl>(RD)) {
       if (LookupResult::isVisible(SemaRef, ND))
         return ND;
     }

@@ -12405,11 +12405,9 @@ bool Sema::DefineUsedVTables() {
       bool IsExplicitInstantiationDeclaration
         = Class->getTemplateSpecializationKind()
                                       == TSK_ExplicitInstantiationDeclaration;
-      for (TagDecl::redecl_iterator R = Class->redecls_begin(),
-                                 REnd = Class->redecls_end();
-           R != REnd; ++R) {
+      for (auto R : Class->redecls()) {
         TemplateSpecializationKind TSK
-          = cast<CXXRecordDecl>(*R)->getTemplateSpecializationKind();
+          = cast<CXXRecordDecl>(R)->getTemplateSpecializationKind();
         if (TSK == TSK_ExplicitInstantiationDeclaration)
           IsExplicitInstantiationDeclaration = true;
         else if (TSK == TSK_ExplicitInstantiationDefinition) {

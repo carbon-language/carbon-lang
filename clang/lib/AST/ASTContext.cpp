@@ -332,11 +332,9 @@ const RawComment *ASTContext::getRawCommentForAnyRedecl(
   // Search for comments attached to declarations in the redeclaration chain.
   const RawComment *RC = NULL;
   const Decl *OriginalDeclForRC = NULL;
-  for (Decl::redecl_iterator I = D->redecls_begin(),
-                             E = D->redecls_end();
-       I != E; ++I) {
+  for (auto I : D->redecls()) {
     llvm::DenseMap<const Decl *, RawCommentAndCacheFlags>::iterator Pos =
-        RedeclComments.find(*I);
+        RedeclComments.find(I);
     if (Pos != RedeclComments.end()) {
       const RawCommentAndCacheFlags &Raw = Pos->second;
       if (Raw.getKind() != RawCommentAndCacheFlags::NoCommentInDecl) {
@@ -345,16 +343,16 @@ const RawComment *ASTContext::getRawCommentForAnyRedecl(
         break;
       }
     } else {
-      RC = getRawCommentForDeclNoCache(*I);
-      OriginalDeclForRC = *I;
+      RC = getRawCommentForDeclNoCache(I);
+      OriginalDeclForRC = I;
       RawCommentAndCacheFlags Raw;
       if (RC) {
         Raw.setRaw(RC);
         Raw.setKind(RawCommentAndCacheFlags::FromDecl);
       } else
         Raw.setKind(RawCommentAndCacheFlags::NoCommentInDecl);
-      Raw.setOriginalDecl(*I);
-      RedeclComments[*I] = Raw;
+      Raw.setOriginalDecl(I);
+      RedeclComments[I] = Raw;
       if (RC)
         break;
     }
@@ -372,10 +370,8 @@ const RawComment *ASTContext::getRawCommentForAnyRedecl(
   Raw.setKind(RawCommentAndCacheFlags::FromRedecl);
   Raw.setOriginalDecl(OriginalDeclForRC);
 
-  for (Decl::redecl_iterator I = D->redecls_begin(),
-                             E = D->redecls_end();
-       I != E; ++I) {
-    RawCommentAndCacheFlags &R = RedeclComments[*I];
+  for (auto I : D->redecls()) {
+    RawCommentAndCacheFlags &R = RedeclComments[I];
     if (R.getKind() == RawCommentAndCacheFlags::NoCommentInDecl)
       R = Raw;
   }
