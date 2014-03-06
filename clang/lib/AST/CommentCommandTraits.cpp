@@ -43,47 +43,42 @@ const CommandInfo *CommandTraits::getCommandInfo(unsigned CommandID) const {
   return getRegisteredCommandInfo(CommandID);
 }
 
-static void
-HelperTypoCorrectCommandInfo(SmallVectorImpl<const CommandInfo *> &BestCommand,
-                             StringRef Typo, const CommandInfo *Command) {
-  const unsigned MaxEditDistance = 1;
-  unsigned BestEditDistance = MaxEditDistance + 1;
-  StringRef Name = Command->Name;
-  
-  unsigned MinPossibleEditDistance = abs((int)Name.size() - (int)Typo.size());
-  if (MinPossibleEditDistance > 0 &&
-      Typo.size() / MinPossibleEditDistance < 1)
-    return;
-  unsigned EditDistance = Typo.edit_distance(Name, true, MaxEditDistance);
-  if (EditDistance > MaxEditDistance)
-    return;
-  if (EditDistance == BestEditDistance)
-    BestCommand.push_back(Command);
-  else if (EditDistance < BestEditDistance) {
-    BestCommand.clear();
-    BestCommand.push_back(Command);
-    BestEditDistance = EditDistance;
-  }
-}
-
 const CommandInfo *
 CommandTraits::getTypoCorrectCommandInfo(StringRef Typo) const {
-  // single character command impostures, such as \t or \n must not go
+  // Single-character command impostures, such as \t or \n, should not go
   // through the fixit logic.
   if (Typo.size() <= 1)
-    return NULL;
-  
+    return nullptr;
+
+  // The maximum edit distance we're prepared to accept.
+  const unsigned MaxEditDistance = 1;
+
+  unsigned BestEditDistance = MaxEditDistance;
   SmallVector<const CommandInfo *, 2> BestCommand;
-  
-  const int NumOfCommands = llvm::array_lengthof(Commands);
-  for (int i = 0; i < NumOfCommands; i++)
-    HelperTypoCorrectCommandInfo(BestCommand, Typo, &Commands[i]);
-  
-  for (unsigned i = 0, e = RegisteredCommands.size(); i != e; ++i)
-    if (!RegisteredCommands[i]->IsUnknownCommand)
-      HelperTypoCorrectCommandInfo(BestCommand, Typo, RegisteredCommands[i]);
-  
-  return (BestCommand.size() != 1) ? NULL : BestCommand[0];
+
+  auto ConsiderCorrection = [&](const CommandInfo *Command) {
+    StringRef Name = Command->Name;
+
+    unsigned MinPossibleEditDistance = abs((int)Name.size() - (int)Typo.size());
+    if (MinPossibleEditDistance <= BestEditDistance) {
+      unsigned EditDistance = Typo.edit_distance(Name, true, BestEditDistance);
+      if (EditDistance < BestEditDistance) {
+        BestEditDistance = EditDistance;
+        BestCommand.clear();
+      }
+      if (EditDistance == BestEditDistance)
+        BestCommand.push_back(Command);
+    }
+  };
+
+  for (const auto &Command : Commands)
+    ConsiderCorrection(&Command);
+
+  for (const auto *Command : RegisteredCommands)
+    if (!Command->IsUnknownCommand)
+      ConsiderCorrection(Command);
+
+  return BestCommand.size() == 1 ? BestCommand[0] : nullptr;
 }
 
 CommandInfo *CommandTraits::createCommandInfoWithName(StringRef CommandName) {
