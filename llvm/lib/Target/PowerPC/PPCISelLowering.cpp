@@ -3773,6 +3773,9 @@ PPCTargetLowering::LowerCall_32SVR4(SDValue Chain, SDValue Callee,
     }
 
     if (VA.isRegLoc()) {
+      if (Arg.getValueType() == MVT::i1)
+        Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Arg);
+
       seenFloatArg |= VA.getLocVT().isFloatingPoint();
       // Put argument in a physical register.
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
