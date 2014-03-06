@@ -240,6 +240,8 @@ static inline bool inheritsFrom(InstructionContext child,
     return false;
   case IC_EVEX_L2_K:
   case IC_EVEX_L2_B:
+  case IC_EVEX_L2_K_B:
+  case IC_EVEX_L2_KZ_B:
   case IC_EVEX_L2_XS_K:
   case IC_EVEX_L2_XS_B:
   case IC_EVEX_L2_XD_B:
