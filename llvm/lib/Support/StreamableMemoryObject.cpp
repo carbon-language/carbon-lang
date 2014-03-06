@@ -48,10 +48,10 @@ private:
   // These are implemented as inline functions here to avoid multiple virtual
   // calls per public function
   bool validAddress(uint64_t address) const {
-    return static_cast<ptrdiff_t>(address) < LastChar - FirstChar;
+    return static_cast<std::ptrdiff_t>(address) < LastChar - FirstChar;
   }
   bool objectEnd(uint64_t address) const {
-    return static_cast<ptrdiff_t>(address) == LastChar - FirstChar;
+    return static_cast<std::ptrdiff_t>(address) == LastChar - FirstChar;
   }
 
   RawMemoryObject(const RawMemoryObject&) LLVM_DELETED_FUNCTION;
