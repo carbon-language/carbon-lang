@@ -2660,8 +2660,8 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
                                                    Values);
 
   if (Entry) {
-    // Already created, fix the linkage and update the initializer.
-    Entry->setLinkage(llvm::GlobalValue::PrivateLinkage);
+    // Already created, update the initializer.
+    assert(Entry->getLinkage() == llvm::GlobalValue::PrivateLinkage);
     Entry->setInitializer(Init);
   } else {
     Entry =
@@ -6242,10 +6242,9 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocolRef(
     // reference or not. At module finalization we add the empty
     // contents for protocols which were referenced but never defined.
     Entry =
-      new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ProtocolnfABITy, false,
-                               llvm::GlobalValue::ExternalLinkage,
-                               0,
-                               "\01l_OBJC_PROTOCOL_$_" + PD->getName());
+        new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ProtocolnfABITy,
+                                 false, llvm::GlobalValue::WeakAnyLinkage, 0,
+                                 "\01l_OBJC_PROTOCOL_$_" + PD->getName());
     Entry->setSection("__DATA,__datacoal_nt,coalesced");
   }
 
@@ -6358,8 +6357,8 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
                                                    Values);
 
   if (Entry) {
-    // Already created, fix the linkage and update the initializer.
-    Entry->setLinkage(llvm::GlobalValue::WeakAnyLinkage);
+    // Already created, update the initializer.
+    assert(Entry->getLinkage() == llvm::GlobalValue::WeakAnyLinkage);
     Entry->setInitializer(Init);
   } else {
     Entry =
