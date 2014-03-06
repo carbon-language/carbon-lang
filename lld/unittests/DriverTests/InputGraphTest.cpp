@@ -27,9 +27,9 @@ namespace {
 class MyLinkingContext : public LinkingContext {
 public:
 
-  virtual Writer &writer() const { llvm_unreachable("no writer!"); }
+  Writer &writer() const override { llvm_unreachable("no writer!"); }
 
-  virtual bool validateImpl(raw_ostream &) { return true; }
+  bool validateImpl(raw_ostream &) override { return true; }
 };
 
 class MyInputGraph : public InputGraph {
@@ -41,15 +41,15 @@ class MyFileNode : public FileNode {
 public:
   MyFileNode(StringRef path, int64_t ordinal) : FileNode(path, ordinal) {}
 
-  bool validate() { return true; }
+  bool validate() override { return true; }
 
-  bool dump(raw_ostream &) { return true; }
+  bool dump(raw_ostream &) override { return true; }
 
-  virtual error_code parse(const LinkingContext &, raw_ostream &) {
+  error_code parse(const LinkingContext &, raw_ostream &) override {
     return error_code::success();
   }
 
-  virtual ErrorOr<File &> getNextFile() {
+  ErrorOr<File &> getNextFile() override {
     if (_nextFileIndex == _files.size())
       return make_error_code(InputGraphError::no_more_files);
     return *_files[_nextFileIndex++];
@@ -60,11 +60,11 @@ class MyGroupNode : public Group {
 public:
   MyGroupNode(int64_t ordinal) : Group(ordinal) {}
 
-  bool validate() { return true; }
+  bool validate() override { return true; }
 
-  bool dump(raw_ostream &) { return true; }
+  bool dump(raw_ostream &) override { return true; }
 
-  virtual error_code parse(const LinkingContext &, raw_ostream &) {
+  error_code parse(const LinkingContext &, raw_ostream &) override {
     return error_code::success();
   }
 };
@@ -77,25 +77,25 @@ public:
         _isHidden(isHidden)
   {}
 
-  bool validate() { return true; }
+  bool validate() override { return true; }
 
-  bool dump(raw_ostream &) { return true; }
+  bool dump(raw_ostream &) override { return true; }
 
-  virtual error_code parse(const LinkingContext &, raw_ostream &) {
+  error_code parse(const LinkingContext &, raw_ostream &) override {
     return error_code::success();
   }
 
-  virtual ErrorOr<File &> getNextFile() {
+  ErrorOr<File &> getNextFile() override {
     if (_nextFileIndex == _files.size())
       return make_error_code(InputGraphError::no_more_files);
     return *_files[_nextFileIndex++];
   }
 
   /// \brief How do we want to expand the current node ?
-  virtual ExpandType expandType() const { return _expandType; }
+  ExpandType expandType() const override { return _expandType; }
 
   /// \brief Get the elements that we want to expand with.
-  virtual range<InputGraph::InputElementIterT> expandElements() {
+  range<InputGraph::InputElementIterT> expandElements() override {
     return make_range(_expandElements.begin(), _expandElements.end());
   }
 
@@ -106,7 +106,7 @@ public:
   }
 
   // Is hidden node
-  virtual bool isHidden() const { return _isHidden; }
+  bool isHidden() const override { return _isHidden; }
 
 private:
   InputGraph::InputElementVectorT _expandElements;

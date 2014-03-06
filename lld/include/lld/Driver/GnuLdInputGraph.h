@@ -35,16 +35,16 @@ public:
         _isWholeArchive(isWholeArchive), _asNeeded(asNeeded),
         _isDashlPrefix(dashlPrefix) {}
 
-  virtual ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
+  ErrorOr<StringRef> getPath(const LinkingContext &ctx) const override;
 
   /// \brief validates the Input Element
-  virtual bool validate() { return true; }
+  bool validate() override { return true; }
 
   /// \brief create an error string for printing purposes
-  virtual std::string errStr(error_code);
+  std::string errStr(error_code) override;
 
   /// \brief Dump the Input Element
-  virtual bool dump(raw_ostream &diagnostics) {
+  bool dump(raw_ostream &diagnostics) override {
     diagnostics << "Name    : " << *getPath(_elfLinkingContext) << "\n";
     diagnostics << "Type    : "
                 << "ELF File"
@@ -60,7 +60,7 @@ public:
   }
 
   /// \brief Parse the input file to lld::File.
-  error_code parse(const LinkingContext &, raw_ostream &);
+  error_code parse(const LinkingContext &, raw_ostream &) override;
 
   /// \brief This is used by Group Nodes, when there is a need to reset the
   /// the file to be processed next. When handling a group node that contains
@@ -68,7 +68,7 @@ public:
   /// to start processing files as part of the inputelement from beginning.
   /// reset the next file index to 0 only if the node is an archive library or
   /// a shared library
-  virtual void resetNextIndex() {
+  void resetNextIndex() override {
     if ((!_isWholeArchive && (_files[0]->kind() == File::kindArchiveLibrary)) ||
         (_files[0]->kind() == File::kindSharedLibrary))
       _nextFileIndex = 0;
@@ -79,7 +79,7 @@ public:
   /// to resolve atoms. This iterates over all the files thats part
   /// of this node. Returns no_more_files when there are no files to be
   /// processed
-  virtual ErrorOr<File &> getNextFile() {
+  ErrorOr<File &> getNextFile() override {
     if (_nextFileIndex == _files.size())
       return make_error_code(InputGraphError::no_more_files);
     return *_files[_nextFileIndex++];
@@ -101,16 +101,16 @@ public:
       : Group(ordinal), _elfLinkingContext(ctx) {}
 
   /// \brief Validate the options
-  virtual bool validate() {
+  bool validate() override {
     (void)_elfLinkingContext;
     return true;
   }
 
   /// \brief Dump the ELFGroup
-  virtual bool dump(raw_ostream &) { return true; }
+  bool dump(raw_ostream &) override { return true; }
 
   /// \brief Parse the group members.
-  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
+  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override {
     for (auto &ei : _elements)
       if (error_code ec = ei->parse(ctx, diagnostics))
         return ec;
@@ -130,19 +130,19 @@ public:
   {}
 
   /// \brief Is this node part of resolution ?
-  virtual bool isHidden() const { return true; }
+  bool isHidden() const override { return true; }
 
   /// \brief Validate the options
-  virtual bool validate() {
+  bool validate() override {
     (void)_elfLinkingContext;
     return true;
   }
 
   /// \brief Dump the Linker script.
-  virtual bool dump(raw_ostream &) { return true; }
+  bool dump(raw_ostream &) override { return true; }
 
   /// \brief Parse the linker script.
-  virtual error_code parse(const LinkingContext &, raw_ostream &);
+  error_code parse(const LinkingContext &, raw_ostream &) override;
 
 protected:
   ELFLinkingContext &_elfLinkingContext;
@@ -157,32 +157,32 @@ public:
   ELFGNULdScript(ELFLinkingContext &ctx, StringRef userPath, int64_t ordinal)
       : GNULdScript(ctx, userPath, ordinal) {}
 
-  virtual error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics);
+  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override;
 
-  virtual ExpandType expandType() const {
+  ExpandType expandType() const override {
     return InputElement::ExpandType::ExpandOnly;
   }
 
   /// Unused functions for ELFGNULdScript Nodes.
-  virtual ErrorOr<File &> getNextFile() {
+  ErrorOr<File &> getNextFile() override {
     return make_error_code(InputGraphError::no_more_files);
   }
 
   /// Return the elements that we would want to expand with.
-  range<InputGraph::InputElementIterT> expandElements() {
+  range<InputGraph::InputElementIterT> expandElements() override {
     return make_range(_expandElements.begin(), _expandElements.end());
   }
 
-  virtual void setResolveState(uint32_t) {
+  void setResolveState(uint32_t) override {
     llvm_unreachable("cannot use this function: setResolveState");
   }
 
-  virtual uint32_t getResolveState() const {
+  uint32_t getResolveState() const override {
     llvm_unreachable("cannot use this function: getResolveState");
   }
 
   // Do nothing here.
-  virtual void resetNextIndex() {}
+  void resetNextIndex() override {}
 
 private:
   InputGraph::InputElementVectorT _expandElements;

@@ -243,15 +243,15 @@ public:
     return make_range(_elements.begin(), _elements.end());
   }
 
-  virtual void resetNextIndex() {
+  void resetNextIndex() override {
     _currentElementIndex = _nextElementIndex = 0;
     for (auto &elem : _elements)
       elem->resetNextIndex();
   }
 
-  virtual uint32_t getResolveState() const;
+  uint32_t getResolveState() const override;
 
-  virtual void setResolveState(uint32_t);
+  void setResolveState(uint32_t) override;
 
 protected:
   ControlKind _controlKind;
@@ -307,15 +307,15 @@ public:
 
   /// \brief Reset the file index if the resolver needs to process
   /// the node again.
-  virtual void resetNextIndex();
+  void resetNextIndex() override;
 
   /// \brief Set the resolve state for the FileNode.
-  virtual void setResolveState(uint32_t resolveState) {
+  void setResolveState(uint32_t resolveState) override {
     _resolveState = resolveState;
   }
 
   /// \brief Retrieve the resolve state of the FileNode.
-  virtual uint32_t getResolveState() const { return _resolveState; }
+  uint32_t getResolveState() const override { return _resolveState; }
 
 protected:
   /// \brief Read the file into _buffer.
@@ -344,12 +344,12 @@ public:
   }
 
   /// \brief Process input element and add it to the group
-  virtual bool processInputElement(std::unique_ptr<InputElement> element) {
+  bool processInputElement(std::unique_ptr<InputElement> element) override {
     _elements.push_back(std::move(element));
     return true;
   }
 
-  virtual ErrorOr<File &> getNextFile();
+  ErrorOr<File &> getNextFile() override;
 };
 
 /// \brief Represents Internal Input files
@@ -365,26 +365,26 @@ public:
   }
 
   /// \brief validates the Input Element
-  virtual bool validate() { return true; }
+  bool validate() override { return true; }
 
   /// \brief Dump the Input Element
-  virtual bool dump(raw_ostream &) { return true; }
+  bool dump(raw_ostream &) override { return true; }
 
   /// \brief parse the input element
-  virtual error_code parse(const LinkingContext &, raw_ostream &) {
+  error_code parse(const LinkingContext &, raw_ostream &) override {
     return error_code::success();
   }
 
   /// \brief Return the next File thats part of this node to the
   /// resolver.
-  virtual ErrorOr<File &> getNextFile() {
+  ErrorOr<File &> getNextFile() override {
     if (_nextFileIndex == _files.size())
       return make_error_code(InputGraphError::no_more_files);
     return *_files[_nextFileIndex++];
   }
 
   // Do nothing here.
-  virtual void resetNextIndex() {}
+  void resetNextIndex() override {}
 };
 } // namespace lld
 

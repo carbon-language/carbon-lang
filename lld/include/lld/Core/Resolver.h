@@ -85,23 +85,23 @@ private:
   public:
     MergedFile() : MutableFile("<linker-internal>") {}
 
-    virtual const atom_collection<DefinedAtom> &defined() const {
+    const atom_collection<DefinedAtom> &defined() const override {
       return _definedAtoms;
     }
-    virtual const atom_collection<UndefinedAtom>& undefined() const {
+    const atom_collection<UndefinedAtom>& undefined() const override {
       return _undefinedAtoms;
     }
-    virtual const atom_collection<SharedLibraryAtom>& sharedLibrary() const {
+    const atom_collection<SharedLibraryAtom>& sharedLibrary() const override {
       return _sharedLibraryAtoms;
     }
-    virtual const atom_collection<AbsoluteAtom>& absolute() const {
+    const atom_collection<AbsoluteAtom>& absolute() const override {
       return _absoluteAtoms;
     }
 
     void addAtoms(std::vector<const Atom*>& atoms);
 
-    virtual void addAtom(const Atom& atom);
-    virtual DefinedAtomRange definedAtoms();
+    void addAtom(const Atom& atom) override;
+    DefinedAtomRange definedAtoms() override;
 
   private:
     atom_collection_vector<DefinedAtom>         _definedAtoms;

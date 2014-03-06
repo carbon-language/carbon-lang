@@ -73,33 +73,33 @@ class HexagonGOTAtom : public GOTAtom {
 public:
   HexagonGOTAtom(const File &f) : GOTAtom(f, ".got") {}
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return makeArrayRef(hexagonGotAtomContent);
   }
 
-  virtual Alignment alignment() const { return Alignment(2); }
+  Alignment alignment() const override { return Alignment(2); }
 };
 
 class HexagonGOTPLTAtom : public GOTAtom {
 public:
   HexagonGOTPLTAtom(const File &f) : GOTAtom(f, ".got.plt") {}
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return makeArrayRef(hexagonGotPltAtomContent);
   }
 
-  virtual Alignment alignment() const { return Alignment(2); }
+  Alignment alignment() const override { return Alignment(2); }
 };
 
 class HexagonGOTPLT0Atom : public GOTAtom {
 public:
   HexagonGOTPLT0Atom(const File &f) : GOTAtom(f, ".got.plt") {}
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return makeArrayRef(hexagonGotPlt0AtomContent);
   }
 
-  virtual Alignment alignment() const { return Alignment(3); }
+  Alignment alignment() const override { return Alignment(3); }
 };
 
 class HexagonPLT0Atom : public PLT0Atom {
@@ -110,7 +110,7 @@ public:
 #endif
   }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return makeArrayRef(hexagonPlt0AtomContent);
   }
 };
@@ -120,7 +120,7 @@ class HexagonPLTAtom : public PLTAtom {
 public:
   HexagonPLTAtom(const File &f, StringRef secName) : PLTAtom(f, secName) {}
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return makeArrayRef(hexagonPltAtomContent);
   }
 };
@@ -180,7 +180,7 @@ public:
   ///
   /// After all references are handled, the atoms created during that are all
   /// added to mf.
-  virtual void perform(std::unique_ptr<MutableFile> &mf) {
+  void perform(std::unique_ptr<MutableFile> &mf) override {
     // Process all references.
     for (const auto &atom : mf->defined())
       for (const auto &ref : *atom)

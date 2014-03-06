@@ -32,7 +32,7 @@ class Writer : public lld::Writer {
 public:
   Writer(const LinkingContext &context) {}
 
-  virtual error_code writeFile(const lld::File &file, StringRef outPath) {
+  error_code writeFile(const lld::File &file, StringRef outPath) override {
     // reserve first byte for unnamed atoms
     _stringPool.push_back('\0');
     // visit all atoms

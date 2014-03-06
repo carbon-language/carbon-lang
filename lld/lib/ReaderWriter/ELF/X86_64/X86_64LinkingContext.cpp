@@ -38,10 +38,10 @@ public:
     _name += function;
 #endif
   }
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return makeArrayRef(x86_64InitFiniAtomContent);
   }
-  virtual Alignment alignment() const { return Alignment(3); }
+  Alignment alignment() const override { return Alignment(3); }
 };
 
 class X86_64FiniAtom : public InitFiniAtom {
@@ -53,11 +53,11 @@ public:
     _name += function;
 #endif
   }
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return makeArrayRef(x86_64InitFiniAtomContent);
   }
 
-  virtual Alignment alignment() const { return Alignment(3); }
+  Alignment alignment() const override { return Alignment(3); }
 };
 
 class X86_64InitFiniFile : public SimpleFile {

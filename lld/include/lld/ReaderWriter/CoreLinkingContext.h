@@ -30,13 +30,13 @@ public:
     TEST_RELOC_LEA32_WAS_GOT = 5,
   };
 
-  virtual bool validateImpl(raw_ostream &diagnostics);
-  virtual void addPasses(PassManager &pm);
+  bool validateImpl(raw_ostream &diagnostics) override;
+  void addPasses(PassManager &pm) override;
 
   void addPassNamed(StringRef name) { _passNames.push_back(name); }
 
 protected:
-  virtual Writer &writer() const;
+  Writer &writer() const override;
 
 private:
   std::unique_ptr<Writer>  _writer;

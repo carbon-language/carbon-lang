@@ -1345,11 +1345,11 @@ public:
     this->_msize = this->_fsize;
   }
 
-  virtual void doPreFlight() override {
+  void doPreFlight() override {
     // TODO: Generate a proper binary search table.
   }
 
-  virtual void finalize() override {
+  void finalize() override {
     MergedSections<ELFT> *s = _layout.findOutputSection(".eh_frame");
     _ehFrameAddr = s ? s->virtualAddr() : 0;
   }

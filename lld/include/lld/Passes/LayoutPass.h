@@ -42,7 +42,7 @@ public:
   LayoutPass(const Registry &registry);
 
   /// Sorts atoms in mergedFile by content type then by command line order.
-  virtual void perform(std::unique_ptr<MutableFile> &mergedFile);
+  void perform(std::unique_ptr<MutableFile> &mergedFile) override;
 
   virtual ~LayoutPass() {}
 

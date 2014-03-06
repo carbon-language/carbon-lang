@@ -26,7 +26,7 @@ namespace {
 class DarwinLdParserTest
     : public ParserTest<DarwinLdDriver, MachOLinkingContext> {
 protected:
-  virtual const LinkingContext *linkingContext() { return &_context; }
+  const LinkingContext *linkingContext() override { return &_context; }
 };
 
 TEST_F(DarwinLdParserTest, Basic) {

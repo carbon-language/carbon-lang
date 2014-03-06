@@ -86,7 +86,7 @@ public:
                                    const Reference &) const {
     return false;
   }
-  virtual bool validateImpl(raw_ostream &diagnostics);
+  bool validateImpl(raw_ostream &diagnostics) override;
 
   /// \brief Does the linker allow dynamic libraries to be linked with ?
   /// This is true when the output mode of the executable is set to be
@@ -144,7 +144,7 @@ public:
   }
 
   TargetHandlerBase *targetHandler() const { return _targetHandler.get(); }
-  virtual void addPasses(PassManager &pm);
+  void addPasses(PassManager &pm) override;
 
   void setTriple(llvm::Triple trip) { _triple = trip; }
   void setNoInhibitExec(bool v) { _noInhibitExec = v; }
@@ -173,7 +173,7 @@ public:
   ErrorOr<StringRef> searchLibrary(StringRef libName) const;
 
   /// Get the entry symbol name
-  virtual StringRef entrySymbolName() const;
+  StringRef entrySymbolName() const override;
 
   /// add to the list of initializer functions
   void addInitFunction(StringRef name) { _initFunctions.push_back(name); }
@@ -218,7 +218,7 @@ public:
     return _rpathLinkList;
   }
 
-  virtual bool addUndefinedAtomsFromSharedLibrary(const SharedLibraryFile *s) {
+  bool addUndefinedAtomsFromSharedLibrary(const SharedLibraryFile *s) override {
     if (_undefinedAtomsFromFile.find(s) != _undefinedAtomsFromFile.end())
       return false;
     _undefinedAtomsFromFile[s] = true;
@@ -245,10 +245,10 @@ private:
 protected:
   ELFLinkingContext(llvm::Triple, std::unique_ptr<TargetHandlerBase>);
 
-  virtual Writer &writer() const;
+  Writer &writer() const override;
 
   /// Method to create a internal file for an undefined symbol
-  virtual std::unique_ptr<File> createUndefinedSymbolFile() const;
+  std::unique_ptr<File> createUndefinedSymbolFile() const override;
 
   uint16_t _outputELFType; // e.g ET_EXEC
   llvm::Triple _triple;

@@ -39,7 +39,7 @@ public:
 
   /// \brief Check if any member of the archive contains an Atom with the
   /// specified name and return the File object for that member, or nullptr.
-  virtual const File *find(StringRef name, bool dataSymbolOnly) const {
+  const File *find(StringRef name, bool dataSymbolOnly) const override {
     auto member = _symbolMemberMap.find(name);
     if (member == _symbolMemberMap.end())
       return nullptr;
@@ -72,7 +72,7 @@ public:
 
   /// \brief parse each member
   virtual error_code
-  parseAllMembers(std::vector<std::unique_ptr<File>> &result) const {
+  parseAllMembers(std::vector<std::unique_ptr<File>> &result) const override {
     for (auto mf = _archive->child_begin(), me = _archive->child_end();
          mf != me; ++mf) {
       if (error_code ec = instantiateMember(mf, result))
@@ -81,19 +81,19 @@ public:
     return error_code::success();
   }
 
-  virtual const atom_collection<DefinedAtom> &defined() const {
+  const atom_collection<DefinedAtom> &defined() const override {
     return _definedAtoms;
   }
 
-  virtual const atom_collection<UndefinedAtom> &undefined() const {
+  const atom_collection<UndefinedAtom> &undefined() const override {
     return _undefinedAtoms;
   }
 
-  virtual const atom_collection<SharedLibraryAtom> &sharedLibrary() const {
+  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
     return _sharedLibraryAtoms;
   }
 
-  virtual const atom_collection<AbsoluteAtom> &absolute() const {
+  const atom_collection<AbsoluteAtom> &absolute() const override {
     return _absoluteAtoms;
   }
 
@@ -203,13 +203,13 @@ public:
   ArchiveReader(bool logLoading) : _logLoading(logLoading) {}
 
   virtual bool canParse(file_magic magic, StringRef,
-                        const MemoryBuffer &) const {
+                        const MemoryBuffer &) const override {
     return (magic == llvm::sys::fs::file_magic::archive);
   }
 
   virtual error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &reg,
-            std::vector<std::unique_ptr<File>> &result) const {
+            std::vector<std::unique_ptr<File>> &result) const override {
     // Make Archive object which will be owned by FileArchive object.
     error_code ec;
     Archive *archive = new Archive(mb.get(), ec);

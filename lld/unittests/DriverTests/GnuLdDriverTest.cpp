@@ -24,7 +24,7 @@ namespace {
 class GnuLdParserTest
     : public ParserTest<GnuLdDriver, std::unique_ptr<ELFLinkingContext>> {
 protected:
-  virtual const LinkingContext *linkingContext() { return _context.get(); }
+  const LinkingContext *linkingContext() override { return _context.get(); }
 };
 
 TEST_F(GnuLdParserTest, Empty) {

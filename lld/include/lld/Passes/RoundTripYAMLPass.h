@@ -23,7 +23,7 @@ public:
 
   /// Writes to a YAML file and reads the atoms from the YAML file back.
   /// Replaces the mergedFile with new contents.
-  virtual void perform(std::unique_ptr<MutableFile> &mergedFile);
+  void perform(std::unique_ptr<MutableFile> &mergedFile) override;
 
   virtual ~RoundTripYAMLPass() {}
 

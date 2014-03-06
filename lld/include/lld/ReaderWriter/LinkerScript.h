@@ -105,7 +105,7 @@ public:
     return c->getKind() == Kind::OutputFormat;
   }
 
-  virtual void dump(raw_ostream &os) const {
+  void dump(raw_ostream &os) const override {
     os << "OUTPUT_FORMAT(";
     for (auto fb = _formats.begin(), fe = _formats.end(); fb != fe; ++fb) {
       if (fb != _formats.begin())
@@ -132,7 +132,7 @@ public:
     return c->getKind() == Kind::OutputArch;
   }
 
-  virtual void dump(raw_ostream &os) const {
+  void dump(raw_ostream &os) const override {
     os << "OUTPUT_arch(" << getArch() << ")\n";
   }
 
@@ -162,7 +162,7 @@ public:
 
   static bool classof(const Command *c) { return c->getKind() == Kind::Group; }
 
-  virtual void dump(raw_ostream &os) const {
+  void dump(raw_ostream &os) const override {
     os << "GROUP(";
     bool first = true;
     for (const auto &path : getPaths()) {
@@ -194,7 +194,7 @@ public:
     return c->getKind() == Kind::Entry;
   }
 
-  virtual void dump(raw_ostream &os) const {
+  void dump(raw_ostream &os) const override {
     os << "ENTRY(" << _entryName << ")\n";
   }
 

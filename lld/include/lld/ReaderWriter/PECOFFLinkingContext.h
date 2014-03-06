@@ -72,13 +72,13 @@ public:
   /// \brief Casting support
   static inline bool classof(const LinkingContext *info) { return true; }
 
-  virtual Writer &writer() const;
-  virtual bool validateImpl(raw_ostream &diagnostics);
+  Writer &writer() const override;
+  bool validateImpl(raw_ostream &diagnostics) override;
 
-  virtual void addPasses(PassManager &pm);
+  void addPasses(PassManager &pm) override;
 
-  virtual bool
-  createImplicitFiles(std::vector<std::unique_ptr<File> > &result) const;
+  bool createImplicitFiles(
+      std::vector<std::unique_ptr<File> > &result) const override;
 
   bool is64Bit() const {
     return _machineType == llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
@@ -254,10 +254,10 @@ public:
 
 protected:
   /// Method to create a internal file for the entry symbol
-  virtual std::unique_ptr<File> createEntrySymbolFile() const;
+  std::unique_ptr<File> createEntrySymbolFile() const override;
 
   /// Method to create a internal file for an undefined symbol
-  virtual std::unique_ptr<File> createUndefinedSymbolFile() const;
+  std::unique_ptr<File> createUndefinedSymbolFile() const override;
 
 private:
   enum : uint64_t {

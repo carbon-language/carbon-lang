@@ -18,7 +18,7 @@ namespace elf {
 class ArrayOrderPass : public Pass {
 public:
   ArrayOrderPass() : Pass() {}
-  virtual void perform(std::unique_ptr<MutableFile> &mergedFile) override;
+  void perform(std::unique_ptr<MutableFile> &mergedFile) override;
 };
 }
 }

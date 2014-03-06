@@ -52,8 +52,8 @@ public:
   /// other setXXX() methods.
   void configure(HeaderFileType type, Arch arch, OS os, uint32_t minOSVersion);
 
-  virtual void addPasses(PassManager &pm);
-  virtual bool validateImpl(raw_ostream &diagnostics);
+  void addPasses(PassManager &pm) override;
+  bool validateImpl(raw_ostream &diagnostics) override;
 
   uint32_t getCPUType() const;
   uint32_t getCPUSubType() const;
@@ -139,7 +139,7 @@ public:
   static bool parsePackedVersion(StringRef str, uint32_t &result);
 
 private:
-  virtual Writer &writer() const;
+  Writer &writer() const override;
 
   struct ArchInfo {
     StringRef                 archName;

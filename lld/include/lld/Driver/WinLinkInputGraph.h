@@ -30,18 +30,18 @@ public:
   PECOFFFileNode(PECOFFLinkingContext &ctx, StringRef path)
       : FileNode(path), _ctx(ctx) {}
 
-  virtual ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
+  ErrorOr<StringRef> getPath(const LinkingContext &ctx) const override;
 
   /// \brief Parse the input file to lld::File.
-  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics);
+  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override;
 
   /// \brief validates the Input Element
-  virtual bool validate() { return true; }
+  bool validate() override { return true; }
 
   /// \brief Dump the Input Element
-  virtual bool dump(raw_ostream &) { return true; }
+  bool dump(raw_ostream &) override { return true; }
 
-  virtual ErrorOr<File &> getNextFile();
+  ErrorOr<File &> getNextFile() override;
 
 protected:
   const PECOFFLinkingContext &_ctx;
@@ -53,7 +53,7 @@ public:
   PECOFFLibraryNode(PECOFFLinkingContext &ctx, StringRef path)
       : PECOFFFileNode(ctx, path) {}
 
-  virtual ErrorOr<StringRef> getPath(const LinkingContext &ctx) const;
+  ErrorOr<StringRef> getPath(const LinkingContext &ctx) const override;
 };
 
 /// \brief Represents a ELF control node
@@ -61,11 +61,11 @@ class PECOFFGroup : public Group {
 public:
   PECOFFGroup() : Group(0) {}
 
-  virtual bool validate() { return true; }
-  virtual bool dump(raw_ostream &) { return true; }
+  bool validate() override { return true; }
+  bool dump(raw_ostream &) override { return true; }
 
   /// \brief Parse the group members.
-  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) {
+  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override {
     for (auto &elem : _elements)
       if (error_code ec = elem->parse(ctx, diagnostics))
         return ec;

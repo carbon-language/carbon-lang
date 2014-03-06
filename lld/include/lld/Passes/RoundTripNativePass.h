@@ -23,7 +23,7 @@ public:
 
   /// Writes to a native file and reads the atoms from the native file back.
   /// Replaces mergedFile with the contents of the native File.
-  virtual void perform(std::unique_ptr<MutableFile> &mergedFile);
+  void perform(std::unique_ptr<MutableFile> &mergedFile) override;
 
   virtual ~RoundTripNativePass() {}
 

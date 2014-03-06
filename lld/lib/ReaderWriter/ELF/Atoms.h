@@ -698,7 +698,7 @@ public:
     }
   }
 
-  virtual uint64_t size() const override {
+  uint64_t size() const override {
     return _symbol->st_size;
   }
 

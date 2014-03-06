@@ -49,13 +49,13 @@ public:
   ELFObjectReader(bool atomizeStrings) : _atomizeStrings(atomizeStrings) {}
 
   virtual bool canParse(file_magic magic, StringRef,
-                        const MemoryBuffer &) const {
+                        const MemoryBuffer &) const override {
     return (magic == llvm::sys::fs::file_magic::elf_relocatable);
   }
 
   virtual error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const {
+            std::vector<std::unique_ptr<File>> &result) const override {
     error_code ec;
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
@@ -76,13 +76,13 @@ public:
   ELFDSOReader(bool useUndefines) : _useUndefines(useUndefines) {}
 
   virtual bool canParse(file_magic magic, StringRef,
-                        const MemoryBuffer &) const {
+                        const MemoryBuffer &) const override {
     return (magic == llvm::sys::fs::file_magic::elf_shared_object);
   }
 
   virtual error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const {
+            std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
     auto f = createELF<DynamicFileCreateELFTraits>(

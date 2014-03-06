@@ -30,7 +30,7 @@ public:
   CommandLineUndefinedAtom(const File &f, StringRef name)
       : SimpleUndefinedAtom(f, name) {}
 
-  virtual CanBeNull canBeNull() const {
+  CanBeNull canBeNull() const override {
     return CanBeNull::canBeNullAtBuildtime;
   }
 };

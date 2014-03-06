@@ -53,7 +53,7 @@ public:
   /// Scans all Atoms looking for call-site uses of SharedLibraryAtoms
   /// and transfroms the call-site to call a stub instead using the
   /// helper methods below.
-  virtual void perform(std::unique_ptr<MutableFile> &mergedFile);
+  void perform(std::unique_ptr<MutableFile> &mergedFile) override;
 
   /// If true, the pass should use stubs for references
   /// to shared library symbols. If false, the pass
@@ -90,7 +90,7 @@ public:
   /// Scans all Atoms looking for pointer to SharedLibraryAtoms
   /// and transfroms them to a pointer to a GOT entry using the
   /// helper methods below.
-  virtual void perform(std::unique_ptr<MutableFile> &mergedFile);
+  void perform(std::unique_ptr<MutableFile> &mergedFile) override;
 
   /// If true, the pass will use GOT entries for references
   /// to shared library symbols. If false, the pass

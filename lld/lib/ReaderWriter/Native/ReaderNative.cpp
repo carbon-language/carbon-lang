@@ -44,74 +44,74 @@ public:
                           const NativeDefinedAtomIvarsV1* ivarData)
         : _file(&f), _ivarData(ivarData) { }
 
-  virtual const lld::File& file() const;
+  const lld::File& file() const override;
 
-  virtual uint64_t ordinal() const;
+  uint64_t ordinal() const override;
 
-  virtual StringRef name() const;
+  StringRef name() const override;
 
-  virtual uint64_t size() const {
+  uint64_t size() const override {
     return _ivarData->contentSize;
   }
 
-  virtual DefinedAtom::Scope scope() const {
+  DefinedAtom::Scope scope() const override {
     return (DefinedAtom::Scope)(attributes().scope);
   }
 
-  virtual DefinedAtom::Interposable interposable() const {
+  DefinedAtom::Interposable interposable() const override {
     return (DefinedAtom::Interposable)(attributes().interposable);
   }
 
-  virtual DefinedAtom::Merge merge() const {
+  DefinedAtom::Merge merge() const override {
     return (DefinedAtom::Merge)(attributes().merge);
   }
 
-  virtual DefinedAtom::ContentType contentType() const {
+  DefinedAtom::ContentType contentType() const override {
     const NativeAtomAttributesV1& attr = attributes();
     return (DefinedAtom::ContentType)(attr.contentType);
   }
 
-  virtual DefinedAtom::Alignment alignment() const {
+  DefinedAtom::Alignment alignment() const override {
     return DefinedAtom::Alignment(attributes().align2, attributes().alignModulus);
   }
 
-  virtual DefinedAtom::SectionChoice sectionChoice() const {
+  DefinedAtom::SectionChoice sectionChoice() const override {
     return (DefinedAtom::SectionChoice)(
         attributes().sectionChoiceAndPosition >> 4);
   }
 
-  virtual StringRef customSectionName() const;
+  StringRef customSectionName() const override;
 
-  virtual SectionPosition sectionPosition() const {
+  SectionPosition sectionPosition() const override {
      return (DefinedAtom::SectionPosition)(
         attributes().sectionChoiceAndPosition & 0xF);
   }
 
-  virtual DefinedAtom::DeadStripKind deadStrip() const {
+  DefinedAtom::DeadStripKind deadStrip() const override {
      return (DefinedAtom::DeadStripKind)(attributes().deadStrip);
   }
 
-  virtual DynamicExport dynamicExport() const {
+  DynamicExport dynamicExport() const override {
     return (DynamicExport)attributes().dynamicExport;
   }
 
-  virtual DefinedAtom::ContentPermissions permissions() const {
+  DefinedAtom::ContentPermissions permissions() const override {
      return (DefinedAtom::ContentPermissions)(attributes().permissions);
   }
 
-  virtual bool isAlias() const {
+  bool isAlias() const override {
      return (attributes().alias != 0);
   }
 
-  virtual ArrayRef<uint8_t> rawContent() const;
+  ArrayRef<uint8_t> rawContent() const override;
 
-  virtual reference_iterator begin() const;
+  reference_iterator begin() const override;
 
-  virtual reference_iterator end() const;
+  reference_iterator end() const override;
 
-  virtual const Reference* derefIterator(const void*) const;
+  const Reference* derefIterator(const void*) const override;
 
-  virtual void incrementIterator(const void*& it) const;
+  void incrementIterator(const void*& it) const override;
 
 private:
   const NativeAtomAttributesV1& attributes() const;
@@ -132,14 +132,14 @@ public:
                              const NativeUndefinedAtomIvarsV1* ivarData)
         : _file(&f), _ivarData(ivarData) { }
 
-  virtual const lld::File& file() const;
-  virtual StringRef name() const;
+  const lld::File& file() const override;
+  StringRef name() const override;
 
-  virtual CanBeNull canBeNull() const {
+  CanBeNull canBeNull() const override {
     return (CanBeNull)(_ivarData->flags & 0x3);
   }
 
-  virtual const UndefinedAtom *fallback() const;
+  const UndefinedAtom *fallback() const override;
 
 private:
   const File                        *_file;
@@ -158,19 +158,19 @@ public:
                              const NativeSharedLibraryAtomIvarsV1* ivarData)
         : _file(&f), _ivarData(ivarData) { }
 
-  virtual const lld::File& file() const;
-  virtual StringRef name() const;
-  virtual StringRef loadName() const;
+  const lld::File& file() const override;
+  StringRef name() const override;
+  StringRef loadName() const override;
 
-  virtual bool canBeNullAtRuntime() const {
+  bool canBeNullAtRuntime() const override {
     return (_ivarData->flags & 0x1);
   }
 
-  virtual Type type() const {
+  Type type() const override {
     return (Type)_ivarData->type;
   }
 
-  virtual uint64_t size() const {
+  uint64_t size() const override {
     return _ivarData->size;
   }
 
@@ -190,13 +190,13 @@ public:
                              const NativeAbsoluteAtomIvarsV1* ivarData)
         : _file(&f), _ivarData(ivarData) { }
 
-  virtual const lld::File& file() const;
-  virtual StringRef name() const;
-  virtual Scope scope() const {
+  const lld::File& file() const override;
+  StringRef name() const override;
+  Scope scope() const override {
     const NativeAtomAttributesV1& attr = absAttributes();
     return (Scope)(attr.scope);
   }
-  virtual uint64_t value() const {
+  uint64_t value() const override {
     return _ivarData->value;
   }
 
@@ -218,14 +218,14 @@ public:
                   (KindArch)ivarData->kindArch, ivarData->kindValue),
         _file(&f), _ivarData(ivarData) {}
 
-  virtual uint64_t offsetInAtom() const {
+  uint64_t offsetInAtom() const override {
     return _ivarData->offsetInAtom;
   }
 
-  virtual const Atom* target() const;
-  virtual Addend addend() const;
-  virtual void setTarget(const Atom* newAtom);
-  virtual void setAddend(Addend a);
+  const Atom* target() const override;
+  Addend addend() const override;
+  void setTarget(const Atom* newAtom) override;
+  void setAddend(Addend a) override;
 
 private:
   const File                    *_file;
@@ -244,14 +244,14 @@ public:
                   (KindArch)ivarData->kindArch, ivarData->kindValue),
         _file(&f), _ivarData(ivarData) {}
 
-  virtual uint64_t offsetInAtom() const {
+  uint64_t offsetInAtom() const override {
     return _ivarData->offsetInAtom;
   }
 
-  virtual const Atom* target() const;
-  virtual Addend addend() const;
-  virtual void setTarget(const Atom* newAtom);
-  virtual void setAddend(Addend a);
+  const Atom* target() const override;
+  Addend addend() const override;
+  void setTarget(const Atom* newAtom) override;
+  void setAddend(Addend a) override;
 
 private:
   const File                    *_file;
@@ -384,16 +384,16 @@ public:
     delete [] _targetsTable;
   }
 
-  virtual const atom_collection<DefinedAtom>&  defined() const {
+  const atom_collection<DefinedAtom>&  defined() const override {
     return _definedAtoms;
   }
-  virtual const atom_collection<UndefinedAtom>& undefined() const {
+  const atom_collection<UndefinedAtom>& undefined() const override {
       return _undefinedAtoms;
   }
-  virtual const atom_collection<SharedLibraryAtom>& sharedLibrary() const {
+  const atom_collection<SharedLibraryAtom>& sharedLibrary() const override {
       return _sharedLibraryAtoms;
   }
-  virtual const atom_collection<AbsoluteAtom> &absolute() const {
+  const atom_collection<AbsoluteAtom> &absolute() const override {
     return _absoluteAtoms;
   }
 
@@ -1003,7 +1003,7 @@ namespace {
 class NativeReader : public Reader {
 public:
   virtual bool canParse(file_magic magic, StringRef,
-                        const MemoryBuffer &mb) const {
+                        const MemoryBuffer &mb) const override {
     const NativeFileHeader *const header =
         reinterpret_cast<const NativeFileHeader *>(mb.getBufferStart());
     return (memcmp(header->magic, NATIVE_FILE_HEADER_MAGIC,
@@ -1012,7 +1012,7 @@ public:
 
   virtual error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const {
+            std::vector<std::unique_ptr<File>> &result) const override {
     return lld::native::File::make(std::move(mb), result);
     return error_code::success();
   }

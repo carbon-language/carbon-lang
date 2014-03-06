@@ -15,11 +15,11 @@ using namespace lld;
 
 class _NativeReaderErrorCategory : public llvm::_do_message {
 public:
-  virtual const char* name() const {
+  const char* name() const override {
     return "lld.native.reader";
   }
 
-  virtual std::string message(int ev) const {
+  std::string message(int ev) const override {
     if (NativeReaderError(ev) == NativeReaderError::success)
       return "Success";
     if (NativeReaderError(ev) == NativeReaderError::unknown_file_format)
@@ -36,7 +36,7 @@ public:
                      "message defined.");
   }
 
-  virtual llvm::error_condition default_error_condition(int ev) const {
+  llvm::error_condition default_error_condition(int ev) const override {
     if (NativeReaderError(ev) == NativeReaderError::success)
       return llvm::errc::success;
     return llvm::errc::invalid_argument;
@@ -50,11 +50,11 @@ const llvm::error_category &lld::native_reader_category() {
 
 class _YamlReaderErrorCategory : public llvm::_do_message {
 public:
-  virtual const char* name() const {
+  const char* name() const override {
     return "lld.yaml.reader";
   }
 
-  virtual std::string message(int ev) const {
+  std::string message(int ev) const override {
     if (YamlReaderError(ev) == YamlReaderError::success)
       return "Success";
     if (YamlReaderError(ev) == YamlReaderError::unknown_keyword)
@@ -65,7 +65,7 @@ public:
                      "message defined.");
   }
 
-  virtual llvm::error_condition default_error_condition(int ev) const {
+  llvm::error_condition default_error_condition(int ev) const override {
     if (YamlReaderError(ev) == YamlReaderError::success)
       return llvm::errc::success;
     return llvm::errc::invalid_argument;
@@ -79,9 +79,9 @@ const llvm::error_category &lld::YamlReaderCategory() {
 
 class _LinkerScriptReaderErrorCategory : public llvm::_do_message {
 public:
-  virtual const char *name() const { return "lld.linker-script.reader"; }
+  const char *name() const override { return "lld.linker-script.reader"; }
 
-  virtual std::string message(int ev) const {
+  std::string message(int ev) const override {
     LinkerScriptReaderError e = LinkerScriptReaderError(ev);
     if (e == LinkerScriptReaderError::success)
       return "Success";
@@ -92,7 +92,7 @@ public:
         "message defined.");
   }
 
-  virtual llvm::error_condition default_error_condition(int ev) const {
+  llvm::error_condition default_error_condition(int ev) const override {
     LinkerScriptReaderError e = LinkerScriptReaderError(ev);
     if (e == LinkerScriptReaderError::success)
       return llvm::errc::success;
@@ -107,16 +107,16 @@ const llvm::error_category &lld::LinkerScriptReaderCategory() {
 
 class _InputGraphErrorCategory : public llvm::_do_message {
 public:
-  virtual const char *name() const { return "lld.inputGraph.parse"; }
+  const char *name() const override { return "lld.inputGraph.parse"; }
 
-  virtual std::string message(int ev) const {
+  std::string message(int ev) const override {
     if (InputGraphError(ev) == InputGraphError::success)
       return "Success";
     llvm_unreachable("An enumerator of InputGraphError does not have a "
                      "message defined.");
   }
 
-  virtual llvm::error_condition default_error_condition(int ev) const {
+  llvm::error_condition default_error_condition(int ev) const override {
     if (InputGraphError(ev) == InputGraphError::success)
       return llvm::errc::success;
     return llvm::errc::invalid_argument;
@@ -130,9 +130,9 @@ const llvm::error_category &lld::InputGraphErrorCategory() {
 
 class _ReaderErrorCategory : public llvm::_do_message {
 public:
-  virtual const char *name() const { return "lld.inputGraph.parse"; }
+  const char *name() const override { return "lld.inputGraph.parse"; }
 
-  virtual std::string message(int ev) const {
+  std::string message(int ev) const override {
     if (ReaderError(ev) == ReaderError::success)
       return "Success";
     else if (ReaderError(ev) == ReaderError::unknown_file_format)
@@ -142,7 +142,7 @@ public:
                      "message defined.");
   }
 
-  virtual llvm::error_condition default_error_condition(int ev) const {
+  llvm::error_condition default_error_condition(int ev) const override {
     if (ReaderError(ev) == ReaderError::success)
       return llvm::errc::success;
     return llvm::errc::invalid_argument;

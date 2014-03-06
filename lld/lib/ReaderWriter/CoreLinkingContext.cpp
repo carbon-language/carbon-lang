@@ -29,57 +29,57 @@ public:
     _ordinal = lastOrdinal++;
   }
 
-  virtual const File &file() const { return _file; }
+  const File &file() const override { return _file; }
 
-  virtual StringRef name() const { return StringRef(); }
+  StringRef name() const override { return StringRef(); }
 
-  virtual uint64_t ordinal() const { return _ordinal; }
+  uint64_t ordinal() const override { return _ordinal; }
 
-  virtual uint64_t size() const { return 0; }
+  uint64_t size() const override { return 0; }
 
-  virtual Scope scope() const { return DefinedAtom::scopeLinkageUnit; }
+  Scope scope() const override { return DefinedAtom::scopeLinkageUnit; }
 
-  virtual Interposable interposable() const { return DefinedAtom::interposeNo; }
+  Interposable interposable() const override { return DefinedAtom::interposeNo; }
 
-  virtual Merge merge() const { return DefinedAtom::mergeNo; }
+  Merge merge() const override { return DefinedAtom::mergeNo; }
 
-  virtual ContentType contentType() const { return DefinedAtom::typeStub; }
+  ContentType contentType() const override { return DefinedAtom::typeStub; }
 
-  virtual Alignment alignment() const { return Alignment(0, 0); }
+  Alignment alignment() const override { return Alignment(0, 0); }
 
-  virtual SectionChoice sectionChoice() const {
+  SectionChoice sectionChoice() const override {
     return DefinedAtom::sectionBasedOnContent;
   }
 
-  virtual StringRef customSectionName() const { return StringRef(); }
+  StringRef customSectionName() const override { return StringRef(); }
 
-  virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
+  SectionPosition sectionPosition() const override { return sectionPositionAny; }
 
-  virtual DeadStripKind deadStrip() const {
+  DeadStripKind deadStrip() const override {
     return DefinedAtom::deadStripNormal;
   }
 
-  virtual ContentPermissions permissions() const {
+  ContentPermissions permissions() const override {
     return DefinedAtom::permR_X;
   }
 
-  virtual bool isAlias() const { return false; }
+  bool isAlias() const override { return false; }
 
-  virtual ArrayRef<uint8_t> rawContent() const { return ArrayRef<uint8_t>(); }
+  ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 
-  virtual reference_iterator begin() const {
+  reference_iterator begin() const override {
     return reference_iterator(*this, nullptr);
   }
 
-  virtual reference_iterator end() const {
+  reference_iterator end() const override {
     return reference_iterator(*this, nullptr);
   }
 
-  virtual const Reference *derefIterator(const void *iter) const {
+  const Reference *derefIterator(const void *iter) const override {
     return nullptr;
   }
 
-  virtual void incrementIterator(const void *&iter) const {}
+  void incrementIterator(const void *&iter) const override {}
 
 private:
   const File &_file;
@@ -94,57 +94,57 @@ public:
     _ordinal = lastOrdinal++;
   }
 
-  virtual const File &file() const { return _file; }
+  const File &file() const override { return _file; }
 
-  virtual StringRef name() const { return StringRef(); }
+  StringRef name() const override { return StringRef(); }
 
-  virtual uint64_t ordinal() const { return _ordinal; }
+  uint64_t ordinal() const override { return _ordinal; }
 
-  virtual uint64_t size() const { return 0; }
+  uint64_t size() const override { return 0; }
 
-  virtual Scope scope() const { return DefinedAtom::scopeLinkageUnit; }
+  Scope scope() const override { return DefinedAtom::scopeLinkageUnit; }
 
-  virtual Interposable interposable() const { return DefinedAtom::interposeNo; }
+  Interposable interposable() const override { return DefinedAtom::interposeNo; }
 
-  virtual Merge merge() const { return DefinedAtom::mergeNo; }
+  Merge merge() const override { return DefinedAtom::mergeNo; }
 
-  virtual ContentType contentType() const { return DefinedAtom::typeGOT; }
+  ContentType contentType() const override { return DefinedAtom::typeGOT; }
 
-  virtual Alignment alignment() const { return Alignment(3, 0); }
+  Alignment alignment() const override { return Alignment(3, 0); }
 
-  virtual SectionChoice sectionChoice() const {
+  SectionChoice sectionChoice() const override {
     return DefinedAtom::sectionBasedOnContent;
   }
 
-  virtual StringRef customSectionName() const { return StringRef(); }
+  StringRef customSectionName() const override { return StringRef(); }
 
-  virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
+  SectionPosition sectionPosition() const override { return sectionPositionAny; }
 
-  virtual DeadStripKind deadStrip() const {
+  DeadStripKind deadStrip() const override {
     return DefinedAtom::deadStripNormal;
   }
 
-  virtual ContentPermissions permissions() const {
+  ContentPermissions permissions() const override {
     return DefinedAtom::permRW_;
   }
 
-  virtual bool isAlias() const { return false; }
+  bool isAlias() const override { return false; }
 
-  virtual ArrayRef<uint8_t> rawContent() const { return ArrayRef<uint8_t>(); }
+  ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 
-  virtual reference_iterator begin() const {
+  reference_iterator begin() const override {
     return reference_iterator(*this, nullptr);
   }
 
-  virtual reference_iterator end() const {
+  reference_iterator end() const override {
     return reference_iterator(*this, nullptr);
   }
 
-  virtual const Reference *derefIterator(const void *iter) const {
+  const Reference *derefIterator(const void *iter) const override {
     return nullptr;
   }
 
-  virtual void incrementIterator(const void *&iter) const {}
+  void incrementIterator(const void *&iter) const override {}
 
 private:
   const File &_file;
@@ -155,28 +155,28 @@ class TestingPassFile : public SimpleFile {
 public:
   TestingPassFile(const LinkingContext &ctx) : SimpleFile("Testing pass") {}
 
-  virtual void addAtom(const Atom &atom) {
+  void addAtom(const Atom &atom) override {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))
       _definedAtoms._atoms.push_back(defAtom);
     else
       llvm_unreachable("atom has unknown definition kind");
   }
 
-  virtual DefinedAtomRange definedAtoms() {
+  DefinedAtomRange definedAtoms() override {
     return range<std::vector<const DefinedAtom *>::iterator>(
         _definedAtoms._atoms.begin(), _definedAtoms._atoms.end());
   }
 
-  virtual const atom_collection<DefinedAtom> &defined() const {
+  const atom_collection<DefinedAtom> &defined() const override {
     return _definedAtoms;
   }
-  virtual const atom_collection<UndefinedAtom> &undefined() const {
+  const atom_collection<UndefinedAtom> &undefined() const override {
     return _undefinedAtoms;
   }
-  virtual const atom_collection<SharedLibraryAtom> &sharedLibrary() const {
+  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
     return _sharedLibraryAtoms;
   }
-  virtual const atom_collection<AbsoluteAtom> &absolute() const {
+  const atom_collection<AbsoluteAtom> &absolute() const override {
     return _absoluteAtoms;
   }
 
@@ -192,21 +192,21 @@ class TestingStubsPass : public StubsPass {
 public:
   TestingStubsPass(const LinkingContext &ctx) : _file(TestingPassFile(ctx)) {}
 
-  virtual bool noTextRelocs() { return true; }
+  bool noTextRelocs() override { return true; }
 
-  virtual bool isCallSite(const Reference &ref) {
+  bool isCallSite(const Reference &ref) override {
     if (ref.kindNamespace() != Reference::KindNamespace::testing)
       return false;
     return (ref.kindValue() == CoreLinkingContext::TEST_RELOC_CALL32);
   }
 
-  virtual const DefinedAtom *getStub(const Atom &target) {
+  const DefinedAtom *getStub(const Atom &target) override {
     const DefinedAtom *result = new TestingStubAtom(_file, target);
     _file.addAtom(*result);
     return result;
   }
 
-  virtual void addStubAtoms(MutableFile &mergedFile) {
+  void addStubAtoms(MutableFile &mergedFile) override {
     for (const DefinedAtom *stub : _file.defined()) {
       mergedFile.addAtom(*stub);
     }
@@ -220,9 +220,9 @@ class TestingGOTPass : public GOTPass {
 public:
   TestingGOTPass(const LinkingContext &ctx) : _file(TestingPassFile(ctx)) {}
 
-  virtual bool noTextRelocs() { return true; }
+  bool noTextRelocs() override { return true; }
 
-  virtual bool isGOTAccess(const Reference &ref, bool &canBypassGOT) {
+  bool isGOTAccess(const Reference &ref, bool &canBypassGOT) override {
     if (ref.kindNamespace() != Reference::KindNamespace::testing)
       return false;
     switch (ref.kindValue()) {
@@ -236,13 +236,13 @@ public:
     return false;
   }
 
-  virtual void updateReferenceToGOT(const Reference *ref, bool targetIsNowGOT) {
+  void updateReferenceToGOT(const Reference *ref, bool targetIsNowGOT) override {
     const_cast<Reference *>(ref)->setKindValue(
         targetIsNowGOT ? CoreLinkingContext::TEST_RELOC_PCREL32
                        : CoreLinkingContext::TEST_RELOC_LEA32_WAS_GOT);
   }
 
-  virtual const DefinedAtom *makeGOTEntry(const Atom &target) {
+  const DefinedAtom *makeGOTEntry(const Atom &target) override {
     return new TestingGOTAtom(_file, target);
   }
 

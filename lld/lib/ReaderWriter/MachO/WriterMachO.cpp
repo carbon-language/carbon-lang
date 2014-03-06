@@ -32,7 +32,7 @@ class MachOWriter : public Writer {
 public:
   MachOWriter(const MachOLinkingContext &ctxt) : _context(ctxt) { }
 
-  virtual error_code writeFile(const lld::File &file, StringRef path) {
+  error_code writeFile(const lld::File &file, StringRef path) override {
     // Construct empty normalized file from atoms.
     ErrorOr<std::unique_ptr<NormalizedFile>> nFile =
                                 normalized::normalizedFromAtoms(file, _context);
@@ -46,7 +46,7 @@ public:
     return writeBinary(*nFile->get(), path);
   }
 
-  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &r) {
+  bool createImplicitFiles(std::vector<std::unique_ptr<File> > &r) override {
     if (_context.outputFileType() == llvm::MachO::MH_EXECUTE) {
       // When building main executables, add _main as required entry point.
       r.emplace_back(new CRuntimeFile(_context));

@@ -55,7 +55,7 @@ class X86_64GOTAtom : public GOTAtom {
 public:
   X86_64GOTAtom(const File &f, StringRef secName) : GOTAtom(f, secName) {}
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return ArrayRef<uint8_t>(x86_64GotAtomContent, 8);
   }
 };
@@ -67,7 +67,7 @@ public:
     _name = ".PLT0";
 #endif
   }
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return ArrayRef<uint8_t>(x86_64Plt0AtomContent, 16);
   }
 };
@@ -76,7 +76,7 @@ class X86_64PLTAtom : public PLTAtom {
 public:
   X86_64PLTAtom(const File &f, StringRef secName) : PLTAtom(f, secName) {}
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return ArrayRef<uint8_t>(x86_64PltAtomContent, 16);
   }
 };
@@ -220,7 +220,7 @@ public:
   ///
   /// After all references are handled, the atoms created during that are all
   /// added to mf.
-  virtual void perform(std::unique_ptr<MutableFile> &mf) {
+  void perform(std::unique_ptr<MutableFile> &mf) override {
     ScopedTask task(getDefaultDomain(), "X86-64 GOT/PLT Pass");
     // Process all references.
     for (const auto &atom : mf->defined())

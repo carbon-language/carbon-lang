@@ -37,11 +37,11 @@ public:
     _name += function;
 #endif
   }
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return ArrayRef<uint8_t>(hexagonInitFiniAtomContent, 4);
   }
 
-  virtual Alignment alignment() const { return Alignment(2); }
+  Alignment alignment() const override { return Alignment(2); }
 };
 
 class HexagonFiniAtom : public InitFiniAtom {
@@ -53,10 +53,10 @@ public:
     _name += function;
 #endif
   }
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return ArrayRef<uint8_t>(hexagonInitFiniAtomContent, 4);
   }
-  virtual Alignment alignment() const { return Alignment(2); }
+  Alignment alignment() const override { return Alignment(2); }
 };
 
 class HexagonInitFiniFile : public SimpleFile {

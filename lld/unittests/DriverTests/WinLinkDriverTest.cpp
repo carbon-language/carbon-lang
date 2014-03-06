@@ -29,7 +29,7 @@ namespace {
 class WinLinkParserTest
     : public ParserTest<WinLinkDriver, PECOFFLinkingContext> {
 protected:
-  virtual const LinkingContext *linkingContext() { return &_context; }
+  const LinkingContext *linkingContext() override { return &_context; }
 };
 
 TEST_F(WinLinkParserTest, Basic) {
