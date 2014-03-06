@@ -772,7 +772,7 @@ void CodeGenPGO::emitCounterVariables() {
 }
 
 void CodeGenPGO::emitCounterIncrement(CGBuilderTy &Builder, unsigned Counter) {
-  if (!CGM.getCodeGenOpts().ProfileInstrGenerate)
+  if (!RegionCounters)
     return;
   llvm::Value *Addr =
     Builder.CreateConstInBoundsGEP2_64(RegionCounters, 0, Counter);
