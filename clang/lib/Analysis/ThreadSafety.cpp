@@ -172,12 +172,9 @@ private:
     const Expr* const* FunArgs;    // Function arguments
     CallingContext*    PrevCtx;    // The previous context; or 0 if none.
 
-    CallingContext(const NamedDecl *D = 0, const Expr *S = 0,
-                   unsigned N = 0, const Expr* const *A = 0,
-                   CallingContext *P = 0)
-      : AttrDecl(D), SelfArg(S), SelfArrow(false),
-        NumArgs(N), FunArgs(A), PrevCtx(P)
-    { }
+    CallingContext(const NamedDecl *D)
+        : AttrDecl(D), SelfArg(0), SelfArrow(false), NumArgs(0), FunArgs(0),
+          PrevCtx(0) {}
   };
 
   typedef SmallVector<SExprNode, 4> NodeVector;
