@@ -138,8 +138,8 @@ protected:
     if (Tuple.getTriple().empty())
       Tuple.setTriple(sys::getProcessTriple());
 
-    if (Tuple.isOSWindows() && Triple::ELF != Tuple.getEnvironment()) {
-      Tuple.setEnvironment(Triple::ELF);
+    if (Tuple.isOSWindows() && !Tuple.isOSBinFormatELF()) {
+      Tuple.setObjectFormat(Triple::ELF);
       TheModule->setTargetTriple(Tuple.getTriple());
     }
 

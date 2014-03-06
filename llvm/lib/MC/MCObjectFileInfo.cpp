@@ -736,10 +736,10 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
        Arch == Triple::arm || Arch == Triple::thumb ||
        Arch == Triple::ppc || Arch == Triple::ppc64 ||
        Arch == Triple::UnknownArch) &&
-      (T.isOSDarwin() || T.getEnvironment() == Triple::MachO)) {
+      (T.isOSDarwin() || T.isOSBinFormatMachO())) {
     Env = IsMachO;
     InitMachOMCObjectFileInfo(T);
-  } else if (T.isOSWindows() && T.getEnvironment() != Triple::ELF) {
+  } else if (T.isOSWindows() && !T.isOSBinFormatELF()) {
     assert((Arch == Triple::x86 || Arch == Triple::x86_64) &&
            "expected x86 or x86_64");
     Env = IsCOFF;

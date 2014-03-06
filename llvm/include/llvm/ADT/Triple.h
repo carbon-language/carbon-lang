@@ -124,9 +124,14 @@ public:
     CODE16,
     EABI,
     EABIHF,
-    MachO,
     Android,
-    ELF
+  };
+  enum ObjectFormatType {
+    UnknownObjectFormat,
+
+    COFF,
+    ELF,
+    MachO,
   };
 
 private:
@@ -144,13 +149,16 @@ private:
   /// The parsed Environment type.
   EnvironmentType Environment;
 
+  /// The object format type.
+  ObjectFormatType ObjectFormat;
+
 public:
   /// @name Constructors
   /// @{
 
   /// \brief Default constructor is the same as an empty string and leaves all
   /// triple fields unknown.
-  Triple() : Data(), Arch(), Vendor(), OS(), Environment() {}
+  Triple() : Data(), Arch(), Vendor(), OS(), Environment(), ObjectFormat() {}
 
   explicit Triple(const Twine &Str);
   Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr);
@@ -188,6 +196,9 @@ public:
 
   /// getEnvironment - Get the parsed environment type of this triple.
   EnvironmentType getEnvironment() const { return Environment; }
+
+  /// getFormat - Get the object format for this triple.
+  ObjectFormatType getObjectFormat() const { return ObjectFormat; }
 
   /// getOSVersion - Parse the version number from the OS name component of the
   /// triple, if present.
@@ -344,18 +355,17 @@ public:
 
   /// \brief Tests whether the OS uses the ELF binary format.
   bool isOSBinFormatELF() const {
-    return !isOSBinFormatMachO() && !isOSBinFormatCOFF();
+    return getObjectFormat() == Triple::ELF;
   }
 
   /// \brief Tests whether the OS uses the COFF binary format.
   bool isOSBinFormatCOFF() const {
-    return getEnvironment() != Triple::ELF &&
-           getEnvironment() != Triple::MachO && isOSWindows();
+    return getObjectFormat() == Triple::COFF;
   }
 
   /// \brief Tests whether the environment is MachO.
   bool isOSBinFormatMachO() const {
-    return getEnvironment() == Triple::MachO || isOSDarwin();
+    return getObjectFormat() == Triple::MachO;
   }
 
   /// @}
@@ -377,6 +387,9 @@ public:
   /// setEnvironment - Set the environment (fourth) component of the triple
   /// to a known type.
   void setEnvironment(EnvironmentType Kind);
+
+  /// setObjectFormat - Set the object file format
+  void setObjectFormat(ObjectFormatType Kind);
 
   /// setTriple - Set all components to the new triple \p Str.
   void setTriple(const Twine &Str);

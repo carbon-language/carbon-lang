@@ -801,7 +801,7 @@ MCAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
                                       TheTriple.isMacOSX() &&
                                       !TheTriple.isMacOSXVersionLT(10, 7));
 
-  if (TheTriple.isOSWindows() && TheTriple.getEnvironment() != Triple::ELF)
+  if (TheTriple.isOSWindows() && !TheTriple.isOSBinFormatELF())
     return new WindowsX86AsmBackend(T, false, CPU);
 
   uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
@@ -824,7 +824,7 @@ MCAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
                                       !TheTriple.isMacOSXVersionLT(10, 7), CS);
   }
 
-  if (TheTriple.isOSWindows() && TheTriple.getEnvironment() != Triple::ELF)
+  if (TheTriple.isOSWindows() && !TheTriple.isOSBinFormatELF())
     return new WindowsX86AsmBackend(T, true, CPU);
 
   uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());

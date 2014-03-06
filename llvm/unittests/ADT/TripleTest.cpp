@@ -201,7 +201,7 @@ TEST(TripleTest, Normalization) {
         EXPECT_EQ(E, Triple::normalize(Join(C[2], C[0], C[1])));
         EXPECT_EQ(E, Triple::normalize(Join(C[2], C[1], C[0])));
 
-        for (int Env = 1+Triple::UnknownEnvironment; Env <= Triple::MachO;
+        for (int Env = 1 + Triple::UnknownEnvironment; Env <= Triple::Android;
              ++Env) {
           C[3] = Triple::getEnvironmentTypeName(Triple::EnvironmentType(Env));
 
@@ -495,6 +495,24 @@ TEST(TripleTest, getOSVersion) {
   EXPECT_EQ((unsigned)7, Major);
   EXPECT_EQ((unsigned)0, Minor);
   EXPECT_EQ((unsigned)0, Micro);
+}
+
+TEST(TripleTest, FileFormat) {
+  EXPECT_EQ(Triple::ELF, Triple("i686-unknown-linux-gnu").getObjectFormat());
+  EXPECT_EQ(Triple::ELF, Triple("i686-unknown-freebsd").getObjectFormat());
+  EXPECT_EQ(Triple::ELF, Triple("i686-unknown-netbsd").getObjectFormat());
+  EXPECT_EQ(Triple::ELF, Triple("i686--win32-elf").getObjectFormat());
+  EXPECT_EQ(Triple::ELF, Triple("i686---elf").getObjectFormat());
+
+  EXPECT_EQ(Triple::MachO, Triple("i686-apple-macosx").getObjectFormat());
+  EXPECT_EQ(Triple::MachO, Triple("i686-apple-ios").getObjectFormat());
+  EXPECT_EQ(Triple::MachO, Triple("i686---macho").getObjectFormat());
+
+  EXPECT_EQ(Triple::COFF, Triple("i686--win32").getObjectFormat());
+
+  Triple T = Triple("");
+  T.setObjectFormat(Triple::ELF);
+  EXPECT_EQ(Triple::ELF, T.getObjectFormat());
 }
 
 }

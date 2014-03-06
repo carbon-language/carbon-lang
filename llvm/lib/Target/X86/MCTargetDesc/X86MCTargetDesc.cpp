@@ -276,7 +276,7 @@ static MCAsmInfo *createX86MCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
       MAI = new X86_64MCAsmInfoDarwin(TheTriple);
     else
       MAI = new X86MCAsmInfoDarwin(TheTriple);
-  } else if (TheTriple.getEnvironment() == Triple::ELF) {
+  } else if (TheTriple.isOSBinFormatELF()) {
     // Force the use of an ELF container.
     MAI = new X86ELFMCAsmInfo(TheTriple);
   } else if (TheTriple.getOS() == Triple::Win32) {
@@ -370,7 +370,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
   if (TheTriple.isOSBinFormatMachO())
     return createMachOStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll);
 
-  if (TheTriple.isOSWindows() && TheTriple.getEnvironment() != Triple::ELF)
+  if (TheTriple.isOSWindows() && !TheTriple.isOSBinFormatELF())
     return createWinCOFFStreamer(Ctx, MAB, *_Emitter, _OS, RelaxAll);
 
   return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);

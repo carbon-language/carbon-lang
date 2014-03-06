@@ -196,11 +196,12 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
     case Triple::EABIHF:
     case Triple::GNUEABI:
     case Triple::GNUEABIHF:
-    case Triple::MachO:
       TargetABI = ARM_ABI_AAPCS;
       break;
     default:
-      if (isTargetIOS() && isMClass())
+      if ((isTargetIOS() && isMClass()) ||
+          (TargetTriple.isOSBinFormatMachO() &&
+           TargetTriple.getOS() == Triple::UnknownOS))
         TargetABI = ARM_ABI_AAPCS;
       else
         TargetABI = ARM_ABI_APCS;
