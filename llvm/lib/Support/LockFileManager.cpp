@@ -115,25 +115,42 @@ LockFileManager::LockFileManager(StringRef FileName)
     }
   }
 
-  // Create a symbolic link from the lock file name. If this succeeds, we're done.
-  // Note that we are using symbolic link because hard links are not supported
-  // by all filesystems.
-  error_code EC
-    = sys::fs::create_symbolic_link(UniqueLockFileName.str(),
-                                      LockFileName.str());
-  if (EC == errc::success)
-    return;
+  while (1) {
+    // Create a symbolic link from the lock file name. If this succeeds, we're
+    // done. Note that we are using symbolic link because hard links are not
+    // supported by all filesystems.
+    error_code EC
+      = sys::fs::create_symbolic_link(UniqueLockFileName.str(),
+                                        LockFileName.str());
+    if (EC == errc::success)
+      return;
 
-  // Someone else managed to create the lock file first. Wipe out our unique
-  // lock file (it's useless now) and read the process ID from the lock file.
-  sys::fs::remove(UniqueLockFileName.str());
-  if ((Owner = readLockFile(LockFileName)))
-    return;
+    if (EC != errc::file_exists) {
+      Error = EC;
+      return;
+    }
 
-  // There is a lock file that nobody owns; try to clean it up and report
-  // an error.
-  sys::fs::remove(LockFileName.str());
-  Error = EC;
+    // Someone else managed to create the lock file first. Read the process ID
+    // from the lock file.
+    if ((Owner = readLockFile(LockFileName))) {
+      // Wipe out our unique lock file (it's useless now)
+      sys::fs::remove(UniqueLockFileName.str());
+      return;
+    }
+
+    if (!sys::fs::exists(LockFileName.str())) {
+      // The previous owner released the lock file before we could read it.
+      // Try to get ownership again.
+      continue;
+    }
+
+    // There is a lock file that nobody owns; try to clean it up and get
+    // ownership.
+    if ((EC = sys::fs::remove(LockFileName.str()))) {
+      Error = EC;
+      return;
+    }
+  }
 }
 
 LockFileManager::LockFileState LockFileManager::getState() const {
