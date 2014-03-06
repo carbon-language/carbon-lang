@@ -5955,11 +5955,11 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CodeGenFunction &CGF,
   PTGV = new llvm::GlobalVariable(
     CGM.getModule(),
     Init->getType(), false,
-    llvm::GlobalValue::PrivateLinkage,
+    llvm::GlobalValue::WeakAnyLinkage,
     Init,
     ProtocolName);
-  assertPrivateName(PTGV);
   PTGV->setSection("__DATA, __objc_protorefs, coalesced, no_dead_strip");
+  PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   CGM.AddUsedGlobal(PTGV);
   return CGF.Builder.CreateLoad(PTGV);
 }
@@ -6243,11 +6243,10 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocolRef(
     // contents for protocols which were referenced but never defined.
     Entry =
         new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ProtocolnfABITy,
-                                 false, llvm::GlobalValue::PrivateLinkage, 0,
+                                 false, llvm::GlobalValue::WeakAnyLinkage, 0,
                                  "\01l_OBJC_PROTOCOL_$_" + PD->getName());
     Entry->setSection("__DATA,__datacoal_nt,coalesced");
   }
-  assertPrivateName(Entry);
 
   return Entry;
 }
@@ -6359,11 +6358,12 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
 
   if (Entry) {
     // Already created, update the initializer.
+    assert(Entry->getLinkage() == llvm::GlobalValue::WeakAnyLinkage);
     Entry->setInitializer(Init);
   } else {
     Entry =
       new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ProtocolnfABITy,
-                               false, llvm::GlobalValue::PrivateLinkage, Init,
+                               false, llvm::GlobalValue::WeakAnyLinkage, Init,
                                "\01l_OBJC_PROTOCOL_$_" + PD->getName());
     Entry->setAlignment(
       CGM.getDataLayout().getABITypeAlignment(ObjCTypes.ProtocolnfABITy));
@@ -6371,19 +6371,19 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
 
     Protocols[PD->getIdentifier()] = Entry;
   }
-  assertPrivateName(Entry);
+  Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
   CGM.AddUsedGlobal(Entry);
 
   // Use this protocol meta-data to build protocol list table in section
   // __DATA, __objc_protolist
   llvm::GlobalVariable *PTGV =
     new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ProtocolnfABIPtrTy,
-                             false, llvm::GlobalValue::PrivateLinkage, Entry,
+                             false, llvm::GlobalValue::WeakAnyLinkage, Entry,
                              "\01l_OBJC_LABEL_PROTOCOL_$_" + PD->getName());
-  assertPrivateName(PTGV);
   PTGV->setAlignment(
     CGM.getDataLayout().getABITypeAlignment(ObjCTypes.ProtocolnfABIPtrTy));
   PTGV->setSection("__DATA, __objc_protolist, coalesced, no_dead_strip");
+  PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
   CGM.AddUsedGlobal(PTGV);
   return Entry;
 }
@@ -6592,14 +6592,14 @@ CGObjCNonFragileABIMac::EmitVTableMessageSend(CodeGenFunction &CGF,
     messageRef = new llvm::GlobalVariable(CGM.getModule(),
                                           init->getType(),
                                           /*constant*/ false,
-                                          llvm::GlobalValue::PrivateLinkage,
+                                          llvm::GlobalValue::WeakAnyLinkage,
                                           init,
                                           messageRefName);
+    messageRef->setVisibility(llvm::GlobalValue::HiddenVisibility);
     messageRef->setAlignment(16);
     messageRef->setSection("__DATA, __objc_msgrefs, coalesced");
   }
-  assertPrivateName(messageRef);
-
+  
   bool requiresnullCheck = false;
   if (CGM.getLangOpts().ObjCAutoRefCount && method)
     for (ObjCMethodDecl::param_const_iterator i = method->param_begin(),
