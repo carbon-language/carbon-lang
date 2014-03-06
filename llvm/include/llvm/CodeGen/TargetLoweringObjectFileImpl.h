@@ -102,12 +102,6 @@ public:
 
   const MCSection *getSectionForConstant(SectionKind Kind) const override;
 
-  /// This hook allows targets to selectively decide not to emit the
-  /// UsedDirective for some symbols in llvm.used.
-  /// FIXME: REMOVE this (rdar://7071300)
-  bool shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler &Mang,
-                                  TargetMachine &TM) const override;
-
   /// The mach-o version of this method defaults to returning a stub reference.
   const MCExpr *
   getTTypeGlobalReference(const GlobalValue *GV, unsigned Encoding,

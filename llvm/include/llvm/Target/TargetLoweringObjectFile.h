@@ -68,14 +68,6 @@ public:
                                ArrayRef<Module::ModuleFlagEntry> Flags,
                                Mangler &Mang, const TargetMachine &TM) const {}
 
-  /// This hook allows targets to selectively decide not to emit the
-  /// UsedDirective for some symbols in llvm.used.
-  /// FIXME: REMOVE this (rdar://7071300)
-  virtual bool shouldEmitUsedDirectiveFor(const GlobalValue *GV, Mangler &Mang,
-                                          TargetMachine &TM) const {
-    return GV != 0;
-  }
-
   /// Given a constant with the SectionKind, return a section that it should be
   /// placed in.
   virtual const MCSection *getSectionForConstant(SectionKind Kind) const;

@@ -641,24 +641,6 @@ TargetLoweringObjectFileMachO::getSectionForConstant(SectionKind Kind) const {
   return ReadOnlySection;  // .const
 }
 
-/// This hook allows targets to selectively decide not to emit the UsedDirective
-/// for some symbols in llvm.used.
-// FIXME: REMOVE this (rdar://7071300)
-bool TargetLoweringObjectFileMachO::shouldEmitUsedDirectiveFor(
-    const GlobalValue *GV, Mangler &Mang, TargetMachine &TM) const {
-  // Check whether the mangled name has the "Private" or "LinkerPrivate" prefix.
-  if (GV->hasLocalLinkage() && !isa<Function>(GV)) {
-    // FIXME: ObjC metadata is currently emitted as internal symbols that have
-    // \1L and \0l prefixes on them.  Fix them to be Private/LinkerPrivate and
-    // this horrible hack can go away.
-    MCSymbol *Sym = TM.getSymbol(GV, Mang);
-    if (Sym->getName()[0] == 'L' || Sym->getName()[0] == 'l')
-      return false;
-  }
-
-  return true;
-}
-
 const MCExpr *TargetLoweringObjectFileMachO::getTTypeGlobalReference(
     const GlobalValue *GV, unsigned Encoding, Mangler &Mang,
     const TargetMachine &TM, MachineModuleInfo *MMI,

@@ -6,4 +6,8 @@ target triple = "i686-apple-darwin8.7.2"
 @x = weak global i32 0
 ; CHECK: .no_dead_strip	_x
 
-@llvm.used = appending global [1 x i8*] [ i8* bitcast (i32* @x to i8*) ]
+@"\01Ly" = private global i8 0
+; CHECK: no_dead_strip Ly
+
+@llvm.used = appending global [2 x i8*] [ i8* bitcast (i32* @x to i8*),
+            i8* @"\01Ly" ]
