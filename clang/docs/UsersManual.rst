@@ -1095,17 +1095,42 @@ below. If multiple flags are present, the last one is used.
   Generate complete debug info.
 
 Comment Parsing Options
---------------------------
+-----------------------
 
 Clang parses Doxygen and non-Doxygen style documentation comments and attaches
 them to the appropriate declaration nodes.  By default, it only parses
 Doxygen-style comments and ignores ordinary comments starting with ``//`` and
 ``/*``.
 
+.. option:: -Wdocumentation
+
+  Emit warnings about use of documentation comments.  This warning group is off
+  by default.
+
+  This includes checking that ``\param`` commands name parameters that actually
+  present in the function signature, checking that ``\returns`` is used only on
+  functions that actually return a value etc.
+
+.. option:: -Wno-documentation-unknown-command
+
+  Don't warn when encountering an unknown Doxygen command.
+
 .. option:: -fparse-all-comments
 
   Parse all comments as documentation comments (including ordinary comments
   starting with ``//`` and ``/*``).
+
+.. option:: -fcomment-block-commands=[commands]
+
+  Define custom documentation commands as block commands.  This allows Clang to
+  construct the correct AST for these custom commands, and silences warnings
+  about unknown commands.  Several commands must be separated by a comma
+  *without trailing space*; e.g. ``-fcomment-block-commands=foo,bar`` defines
+  custom commands ``\foo`` and ``\bar``.
+
+  It is also possible to use ``-fcomment-block-commands`` several times; e.g.
+  ``-fcomment-block-commands=foo -fcomment-block-commands=bar`` does the same
+  as above.
 
 .. _c:
 
