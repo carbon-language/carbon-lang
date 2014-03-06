@@ -29,8 +29,6 @@ add_lldb_library(lldbCore
   FileSpecList.cpp
   History.cpp
   IOHandler.cpp
-  JITLoader.cpp
-  JITLoaderList.cpp
   Language.cpp
   Listener.cpp
   Log.cpp
