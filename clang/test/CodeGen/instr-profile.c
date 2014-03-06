@@ -5,8 +5,8 @@
 // (excepting no_usable_data). As such, main() should call every function in
 // this test.
 
-// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-generate | FileCheck -check-prefix=PGOGEN %s
-// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile.pgodata | FileCheck -check-prefix=PGOUSE %s
+// RUN: %clang_cc1 -triple x86_64-apple-macosx10.9 -main-file-name instr-profile.c %s -o - -emit-llvm -fprofile-instr-generate | FileCheck -check-prefix=PGOGEN %s
+// RUN: %clang_cc1 -triple x86_64-apple-macosx10.9 -main-file-name instr-profile.c %s -o - -emit-llvm -fprofile-instr-use=%S/Inputs/instr-profile.pgodata | FileCheck -check-prefix=PGOUSE %s
 
 // PGOGEN: @[[SLC:__llvm_pgo_ctr[0-9]*]] = private global [4 x i64] zeroinitializer
 // PGOGEN: @[[IFC:__llvm_pgo_ctr[0-9]*]] = private global [11 x i64] zeroinitializer
