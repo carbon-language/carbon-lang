@@ -457,6 +457,10 @@ static bool isConfigurationValue(const Stmt *S) {
 
 /// Returns true if we should always explore all successors of a block.
 static bool shouldTreatSuccessorsAsReachable(const CFGBlock *B) {
+  if (const Stmt *Term = B->getTerminator())
+    if (isa<SwitchStmt>(Term))
+      return true;
+
   return isConfigurationValue(B->getTerminatorCondition());
 }
 
@@ -500,24 +504,6 @@ unsigned ScanReachableFromBlock(const CFGBlock *Start,
           B = UB;
           break;
         }
-
-        // For switch statements, treat all cases as being reachable.
-        // There are many cases where a switch can contain values that
-        // are not in an enumeration but they are still reachable because
-        // other values are possible.
-        //
-        // Note that this is quite conservative.  If one saw:
-        //
-        //  switch (1) {
-        //    case 2: ...
-        //
-        // we should be able to say that 'case 2' is unreachable.  To do
-        // this we can either put more heuristics here, or possibly retain
-        // that information in the CFG itself.
-        //
-        const Stmt *Label = UB->getLabel();
-        if (Label && isa<SwitchCase>(Label))
-          B = UB;
       }
       while (false);
 

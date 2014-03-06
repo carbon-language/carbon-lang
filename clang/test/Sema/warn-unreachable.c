@@ -226,6 +226,17 @@ MyEnum nontrivial_dead_return_enum_2(int x) {
   return calledFun(); // expected-warning {{will never be executed}}
 }
 
+enum X { A, B, C };
+
+int covered_switch(enum X x) {
+  switch (x) {
+  case A: return 1;
+  case B: return 2;
+  case C: return 3;
+  }
+  return 4; // no-warning
+}
+
 // Test unreachable code depending on configuration values
 #define CONFIG_CONSTANT 1
 int test_config_constant(int x) {
