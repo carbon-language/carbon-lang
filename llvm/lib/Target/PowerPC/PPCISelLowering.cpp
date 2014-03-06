@@ -2777,6 +2777,10 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
         if (GPR_idx != Num_GPR_Regs) {
           unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
           ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
+
+          if (ObjectVT == MVT::i1)
+            ArgVal = DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, ArgVal);
+
           ++GPR_idx;
         } else {
           needsLoad = true;
@@ -4414,6 +4418,9 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
     case MVT::i32:
     case MVT::i64:
       if (GPR_idx != NumGPRs) {
+        if (Arg.getValueType() == MVT::i1)
+          Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, PtrVT, Arg);
+
         RegsToPass.push_back(std::make_pair(GPR[GPR_idx++], Arg));
       } else {
         LowerMemOpCallTo(DAG, MF, Chain, Arg, PtrOff, SPDiff, ArgOffset,
