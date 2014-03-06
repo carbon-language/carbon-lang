@@ -129,4 +129,25 @@ PR19040_test_return_t PR19040_fn1 ()
     return PR19040_TEST_FAILURE; // expected-warning {{will never be executed}}
 }
 
+__attribute__((noreturn))
+void raze();
+
+namespace std {
+template<typename T> struct basic_string {
+  basic_string(const T* x) {}
+  ~basic_string() {};
+};
+typedef basic_string<char> string;
+}
+
+std::string testStr() {
+  raze();
+  return ""; // no-warning
+}
+
+std::string testStrWarn(const char *s) {
+  raze();
+  return s; // expected-warning {{will never be executed}}
+}
+
 

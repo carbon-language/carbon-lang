@@ -251,7 +251,10 @@ static bool bodyEndsWithNoReturn(const CFGBlock *B) {
   for (CFGBlock::const_reverse_iterator I = B->rbegin(), E = B->rend();
        I != E; ++I) {
     if (Optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
-      if (const CallExpr *CE = dyn_cast<CallExpr>(CS->getStmt())) {
+      const Stmt *S = CS->getStmt();
+      if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(S))
+        S = EWC->getSubExpr();
+      if (const CallExpr *CE = dyn_cast<CallExpr>(S)) {
         QualType CalleeType = CE->getCallee()->getType();
         if (getFunctionExtInfo(*CalleeType).getNoReturn())
           return true;
@@ -290,6 +293,53 @@ static bool isEnumConstant(const Expr *Ex) {
   return isa<EnumConstantDecl>(DR->getDecl());
 }
 
+static const Expr *stripStdStringCtor(const Expr *Ex) {
+  // Go crazy pattern matching an implicit construction of std::string("").
+  const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(Ex);
+  if (!EWC)
+    return 0;
+  const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(EWC->getSubExpr());
+  if (!CCE)
+    return 0;
+  QualType Ty = CCE->getType();
+  if (const ElaboratedType *ET = dyn_cast<ElaboratedType>(Ty))
+    Ty = ET->getNamedType();
+  const TypedefType *TT = dyn_cast<TypedefType>(Ty);
+  StringRef Name = TT->getDecl()->getName();
+  if (Name != "string")
+    return 0;
+  if (CCE->getNumArgs() != 1)
+    return 0;
+  const MaterializeTemporaryExpr *MTE =
+    dyn_cast<MaterializeTemporaryExpr>(CCE->getArg(0));
+  if (!MTE)
+    return 0;
+  CXXBindTemporaryExpr *CBT =
+    dyn_cast<CXXBindTemporaryExpr>(MTE->GetTemporaryExpr()->IgnoreParenCasts());
+  if (!CBT)
+    return 0;
+  Ex = CBT->getSubExpr()->IgnoreParenCasts();
+  CCE = dyn_cast<CXXConstructExpr>(Ex);
+  if (!CCE)
+    return 0;
+  if (CCE->getNumArgs() != 1)
+    return 0;
+  return dyn_cast<StringLiteral>(CCE->getArg(0)->IgnoreParenCasts());
+}
+
+/// Strip away "sugar" around trivial expressions that are for the
+/// purpose of this analysis considered uninteresting for dead code warnings.
+static const Expr *stripExprSugar(const Expr *Ex) {
+  Ex = Ex->IgnoreParenCasts();
+  // If 'Ex' is a constructor for a std::string, strip that
+  // away.  We can only get here if the trivial expression was
+  // something like a C string literal, with the std::string
+  // just wrapping that value.
+  if (const Expr *StdStringVal = stripStdStringCtor(Ex))
+    return StdStringVal;
+  return Ex;
+}
+
 static bool isTrivialExpression(const Expr *Ex) {
   Ex = Ex->IgnoreParenCasts();
   return isa<IntegerLiteral>(Ex) || isa<StringLiteral>(Ex) ||
@@ -324,7 +374,7 @@ static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S) {
     if (Optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
       if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(CS->getStmt())) {
         const Expr *RE = RS->getRetValue();
-        if (RE && RE->IgnoreParenCasts() == Ex)
+        if (RE && stripExprSugar(RE->IgnoreParenCasts()) == Ex)
           return bodyEndsWithNoReturn(*B->pred_begin());
       }
       break;
