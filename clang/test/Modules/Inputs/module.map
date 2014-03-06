@@ -23,6 +23,8 @@ module module_private_left { header "module_private_left.h" }
 module module_private_right { header "module_private_right.h" }
 module macros_top { 
   header "macros_top.h" 
+  explicit module b { header "macros_top_b.h" }
+  explicit module c { header "macros_top_c.h" }
 }
 module macros_left { 
   header "macros_left.h" 

@@ -3021,9 +3021,19 @@ class ASTIdentifierTableTrait {
       // We can't do that currently, because a #include of a different submodule
       // of the same module just leaks through macros instead of providing new
       // DefMacroDirectives for them.
-      if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD))
-        if (SubmoduleID SourceID = DefMD->getInfo()->getOwningModuleID())
+      if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD)) {
+        // Figure out which submodule the macro was originally defined within.
+        SubmoduleID SourceID = DefMD->getInfo()->getOwningModuleID();
+        if (!SourceID) {
+          SourceLocation DefLoc = DefMD->getInfo()->getDefinitionLoc();
+          if (DefLoc == MD->getLocation())
+            SourceID = ThisModID;
+          else
+            SourceID = Writer.inferSubmoduleIDFromLocation(DefLoc);
+        }
+        if (SourceID != OrigModID)
           Overridden.push_back(SourceID);
+      }
 
       // We are looking for a definition in a different submodule than the one
       // that we started with. If a submodule has re-definitions of the same

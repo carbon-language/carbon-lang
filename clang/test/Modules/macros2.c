@@ -75,3 +75,9 @@ int n1 = TOP_OTHER_REDEF1; // expected-warning{{ambiguous expansion of macro 'TO
 int n2 = TOP_OTHER_REDEF2; // ok
 
 int n3 = TOP_OTHER_DEF_RIGHT_UNDEF; // ok
+
+int top_redef_in_submodules = TOP_REDEF_IN_SUBMODULES;
+@import macros_top.c;
+void test2() {
+  int TOP_REDEF_IN_SUBMODULES = top_redef_in_submodules;
+}

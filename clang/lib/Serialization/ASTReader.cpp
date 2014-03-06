@@ -1679,8 +1679,9 @@ void ASTReader::removeOverriddenMacros(IdentifierInfo *II,
     HiddenNames &Hidden = HiddenNamesMap[Owner];
     HiddenMacrosMap::iterator HI = Hidden.HiddenMacros.find(II);
     if (HI != Hidden.HiddenMacros.end()) {
-      removeOverriddenMacros(II, Ambig, HI->second->getOverriddenSubmodules());
+      auto SubOverrides = HI->second->getOverriddenSubmodules();
       Hidden.HiddenMacros.erase(HI);
+      removeOverriddenMacros(II, Ambig, SubOverrides);
     }
 
     // If this macro is already in our list of conflicts, remove it from there.
