@@ -75,3 +75,29 @@ int t2(int *arr, int i) {
   //__asm mov eax, [arr + i];
   return 0;
 }
+
+typedef struct {
+  int a;
+  int b;
+} A;
+
+void t3() {
+  __asm mov eax, [eax] UndeclaredId // expected-error {{unknown token in expression}}
+
+  // FIXME: Only emit one diagnostic here.
+  // expected-error@+2 {{unexpected type name 'A': expected expression}}
+  // expected-error@+1 {{unknown token in expression}}
+  __asm mov eax, [eax] A
+}
+
+void t4() {
+  // The dot in the "intel dot operator" is optional in MSVC.  MSVC also does
+  // global field lookup, but we don't.
+  __asm mov eax, [0] A.a
+  __asm mov eax, [0].A.a
+  __asm mov eax, [0].a    // expected-error {{Unable to lookup field reference!}}
+  __asm mov eax, fs:[0] A.a
+  __asm mov eax, fs:[0].A.a
+  __asm mov eax, fs:[0].a // expected-error {{Unable to lookup field reference!}}
+  __asm mov eax, fs:[0]. A.a  // expected-error {{Unexpected token type!}}
+}
