@@ -14,6 +14,7 @@
 #include "lldb/API/SBQueueItem.h"
 #include "lldb/API/SBThread.h"
 #include "lldb/Core/Address.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/QueueItem.h"
 #include "lldb/Target/Thread.h"
 
@@ -108,12 +109,20 @@ SBQueueItem::GetExtendedBacktraceThread (const char *type)
     SBThread result;
     if (m_queue_item_sp)
     {
-        ThreadSP thread_sp;
-        ConstString type_const (type);
-        thread_sp = m_queue_item_sp->GetExtendedBacktraceThread (type_const);
-        if (thread_sp)
+        ProcessSP process_sp = m_queue_item_sp->GetProcessSP();
+        Process::StopLocker stop_locker;
+        if (process_sp && stop_locker.TryLock(&process_sp->GetRunLock()))
         {
-            result.SetThread (thread_sp);
+            ThreadSP thread_sp;
+            ConstString type_const (type);
+            thread_sp = m_queue_item_sp->GetExtendedBacktraceThread (type_const);
+            if (thread_sp)
+            {
+                // Save this in the Process' ExtendedThreadList so a strong pointer retains the
+                // object
+                process_sp->GetExtendedThreadList().AddThread (thread_sp);
+                result.SetThread (thread_sp);
+            }
         }
     }
     return result;

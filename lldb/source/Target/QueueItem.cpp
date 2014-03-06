@@ -75,3 +75,15 @@ QueueItem::GetExtendedBacktraceThread (ConstString type)
     }
     return return_thread;
 }
+
+ProcessSP
+QueueItem::GetProcessSP()
+{
+    ProcessSP process_sp;
+    QueueSP queue_sp = m_queue_wp.lock ();
+    if (queue_sp)
+    {
+        process_sp = queue_sp->GetProcess();
+    }
+    return process_sp;
+}

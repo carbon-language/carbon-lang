@@ -250,14 +250,14 @@ Thread::GetStaticBroadcasterClass ()
     return class_name;
 }
 
-Thread::Thread (Process &process, lldb::tid_t tid) :
+Thread::Thread (Process &process, lldb::tid_t tid, bool use_invalid_index_id) :
     ThreadProperties (false),
     UserID (tid),
     Broadcaster(&process.GetTarget().GetDebugger(), Thread::GetStaticBroadcasterClass().AsCString()),
     m_process_wp (process.shared_from_this()),
     m_stop_info_sp (),
     m_stop_info_stop_id (0),
-    m_index_id (process.GetNextThreadIndexID(tid)),
+    m_index_id (use_invalid_index_id ? LLDB_INVALID_INDEX32 : process.GetNextThreadIndexID(tid)),
     m_reg_context_sp (),
     m_state (eStateUnloaded),
     m_state_mutex (Mutex::eMutexTypeRecursive),

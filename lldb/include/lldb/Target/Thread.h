@@ -153,7 +153,25 @@ public:
     static const ThreadPropertiesSP &
     GetGlobalProperties();
 
-    Thread (Process &process, lldb::tid_t tid);
+    //------------------------------------------------------------------
+    /// Constructor
+    ///
+    /// @param [in] process
+    ///
+    /// @param [in] tid
+    ///
+    /// @param [in] use_invalid_index_id
+    ///     Optional parameter, defaults to false.  The only subclass that
+    ///     is likely to set use_invalid_index_id == true is the HistoryThread
+    ///     class.  In that case, the Thread we are constructing represents
+    ///     a thread from earlier in the program execution.  We may have the 
+    ///     tid of the original thread that they represent but we don't want 
+    ///     to reuse the IndexID of that thread, or create a new one.  If a
+    ///     client wants to know the original thread's IndexID, they should use
+    ///     Thread::GetExtendedBacktraceOriginatingIndexID().
+    //------------------------------------------------------------------
+    Thread (Process &process, lldb::tid_t tid, bool use_invalid_index_id = false);
+
     virtual ~Thread();
 
     lldb::ProcessSP

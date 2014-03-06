@@ -20,6 +20,8 @@
 using namespace lldb;
 using namespace lldb_private;
 
+// Constructor 
+
 HistoryUnwind::HistoryUnwind (Thread &thread,
                               std::vector<lldb::addr_t> pcs,
                               uint32_t stop_id,
@@ -30,6 +32,8 @@ HistoryUnwind::HistoryUnwind (Thread &thread,
         m_stop_id_is_valid (stop_id_is_valid)
 {
 }
+
+// Destructor
 
 HistoryUnwind::~HistoryUnwind ()
 {

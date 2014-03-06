@@ -14,6 +14,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/lldb-enumerations.h"
+#include "lldb/lldb-forward.h"
 
 #include "lldb/Core/Address.h"
 #include "lldb/Core/ConstString.h"
@@ -212,6 +213,9 @@ public:
     {
         m_target_queue_label = queue_name;
     }
+
+    lldb::ProcessSP
+    GetProcessSP ();
 
 protected:
     lldb::QueueWP           m_queue_wp;

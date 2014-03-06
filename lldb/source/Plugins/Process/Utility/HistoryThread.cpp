@@ -20,12 +20,14 @@
 using namespace lldb;
 using namespace lldb_private;
 
+//  Constructor
+
 HistoryThread::HistoryThread (lldb_private::Process &process, 
                               lldb::tid_t tid,
                               std::vector<lldb::addr_t> pcs, 
                               uint32_t stop_id, 
                               bool stop_id_is_valid) : 
-        Thread (process, tid),
+        Thread (process, tid, true),
         m_framelist_mutex(),
         m_framelist(),
         m_pcs (pcs),
@@ -42,6 +44,8 @@ HistoryThread::HistoryThread (lldb_private::Process &process,
     if (log)
         log->Printf ("%p HistoryThread::HistoryThread", this);
 }
+
+//  Destructor
 
 HistoryThread::~HistoryThread ()
 {
