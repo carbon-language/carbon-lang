@@ -17,24 +17,21 @@ namespace clang {
 namespace tidy {
 
 ClangTidyCheckFactories::~ClangTidyCheckFactories() {
-  for (FactoryMap::iterator I = Factories.begin(), E = Factories.end(); I != E;
-       ++I) {
-    delete I->second;
-  }
+  for (const auto &Factory : Factories)
+    delete Factory.second;
 }
+
 void ClangTidyCheckFactories::addCheckFactory(StringRef Name,
                                               CheckFactoryBase *Factory) {
-
   Factories[Name] = Factory;
 }
 
 void ClangTidyCheckFactories::createChecks(
     ChecksFilter &Filter, SmallVectorImpl<ClangTidyCheck *> &Checks) {
-  for (FactoryMap::iterator I = Factories.begin(), E = Factories.end(); I != E;
-       ++I) {
-    if (Filter.IsCheckEnabled(I->first)) {
-      ClangTidyCheck *Check = I->second->createCheck();
-      Check->setName(I->first);
+  for (const auto &Factory : Factories) {
+    if (Filter.IsCheckEnabled(Factory.first)) {
+      ClangTidyCheck *Check = Factory.second->createCheck();
+      Check->setName(Factory.first);
       Checks.push_back(Check);
     }
   }

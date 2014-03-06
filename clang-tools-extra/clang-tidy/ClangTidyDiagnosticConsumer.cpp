@@ -119,8 +119,8 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
 // Flushes the internal diagnostics buffer to the ClangTidyContext.
 void ClangTidyDiagnosticConsumer::finish() {
   finalizeLastError();
-  for (unsigned i = 0, e = Errors.size(); i != e; ++i)
-    Context.storeError(Errors[i]);
+  for (const ClangTidyError &Error : Errors)
+    Context.storeError(Error);
   Errors.clear();
 }
 

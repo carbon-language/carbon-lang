@@ -66,24 +66,18 @@ public:
 
   void FlushDiagnosticsImpl(std::vector<const ento::PathDiagnostic *> &Diags,
                             FilesMade *filesMade) override {
-    for (std::vector<const ento::PathDiagnostic *>::iterator I = Diags.begin(),
-                                                             E = Diags.end();
-         I != E; ++I) {
-      const ento::PathDiagnostic *PD = *I;
+    for (const ento::PathDiagnostic *PD : Diags) {
       SmallString<64> CheckName(AnalyzerCheckNamePrefix);
       CheckName += PD->getCheckName();
       addRanges(Context.diag(CheckName, PD->getLocation().asLocation(),
                              PD->getShortDescription()),
                 PD->path.back()->getRanges());
 
-      ento::PathPieces FlatPath =
-          PD->path.flatten(/*ShouldFlattenMacros=*/true);
-      for (ento::PathPieces::const_iterator PI = FlatPath.begin(),
-                                            PE = FlatPath.end();
-           PI != PE; ++PI) {
-        addRanges(Context.diag(CheckName, (*PI)->getLocation().asLocation(),
-                               (*PI)->getString(), DiagnosticIDs::Note),
-                  (*PI)->getRanges());
+      for (const auto &DiagPiece :
+           PD->path.flatten(/*ShouldFlattenMacros=*/true)) {
+        addRanges(Context.diag(CheckName, DiagPiece->getLocation().asLocation(),
+                               DiagPiece->getString(), DiagnosticIDs::Note),
+                  DiagPiece->getRanges());
       }
     }
   }
@@ -98,9 +92,8 @@ private:
   // FIXME: Convert to operator<<(DiagnosticBuilder&, ArrayRef<SourceRange>).
   static const DiagnosticBuilder &addRanges(const DiagnosticBuilder &DB,
                                             ArrayRef<SourceRange> Ranges) {
-    for (ArrayRef<SourceRange>::iterator I = Ranges.begin(), E = Ranges.end();
-         I != E; ++I)
-      DB << *I;
+    for (const SourceRange &Range : Ranges)
+      DB << Range;
     return DB;
   }
 };
@@ -121,19 +114,15 @@ ClangTidyASTConsumerFactory::ClangTidyASTConsumerFactory(
 
   CheckFactories->createChecks(Filter, Checks);
 
-  for (SmallVectorImpl<ClangTidyCheck *>::iterator I = Checks.begin(),
-                                                   E = Checks.end();
-       I != E; ++I) {
-    (*I)->setContext(&Context);
-    (*I)->registerMatchers(&Finder);
+  for (ClangTidyCheck *Check : Checks) {
+    Check->setContext(&Context);
+    Check->registerMatchers(&Finder);
   }
 }
 
 ClangTidyASTConsumerFactory::~ClangTidyASTConsumerFactory() {
-  for (SmallVectorImpl<ClangTidyCheck *>::iterator I = Checks.begin(),
-                                                   E = Checks.end();
-       I != E; ++I)
-    delete *I;
+  for (ClangTidyCheck *Check : Checks)
+    delete Check;
 }
 
 clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
@@ -141,10 +130,8 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
   // FIXME: Move this to a separate method, so that CreateASTConsumer doesn't
   // modify Compiler.
   Context.setSourceManager(&Compiler.getSourceManager());
-  for (SmallVectorImpl<ClangTidyCheck *>::iterator I = Checks.begin(),
-                                                   E = Checks.end();
-       I != E; ++I)
-    (*I)->registerPPCallbacks(Compiler);
+  for (ClangTidyCheck *Check : Checks)
+    Check->registerPPCallbacks(Compiler);
 
   SmallVector<ASTConsumer *, 2> Consumers;
   if (!CheckFactories->empty())
@@ -169,19 +156,13 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
 
 std::vector<std::string> ClangTidyASTConsumerFactory::getCheckNames() {
   std::vector<std::string> CheckNames;
-  for (ClangTidyCheckFactories::FactoryMap::const_iterator
-           I = CheckFactories->begin(),
-           E = CheckFactories->end();
-       I != E; ++I) {
-    if (Filter.IsCheckEnabled(I->first))
-      CheckNames.push_back(I->first);
+  for (const auto &CheckFactory : *CheckFactories) {
+    if (Filter.IsCheckEnabled(CheckFactory.first))
+      CheckNames.push_back(CheckFactory.first);
   }
 
-  CheckersList AnalyzerChecks = getCheckersControlList();
-  for (CheckersList::const_iterator I = AnalyzerChecks.begin(),
-                                    E = AnalyzerChecks.end();
-       I != E; ++I)
-    CheckNames.push_back(AnalyzerCheckNamePrefix + I->first);
+  for (const auto &AnalyzerCheck : getCheckersControlList())
+    CheckNames.push_back(AnalyzerCheckNamePrefix + AnalyzerCheck.first);
 
   std::sort(CheckNames.begin(), CheckNames.end());
   return CheckNames;
@@ -190,13 +171,12 @@ std::vector<std::string> ClangTidyASTConsumerFactory::getCheckNames() {
 ClangTidyASTConsumerFactory::CheckersList
 ClangTidyASTConsumerFactory::getCheckersControlList() {
   CheckersList List;
-  ArrayRef<StringRef> Checks(StaticAnalyzerChecks);
 
   bool AnalyzerChecksEnabled = false;
-  for (unsigned i = 0; i < Checks.size(); ++i) {
-    std::string Checker((AnalyzerCheckNamePrefix + Checks[i]).str());
+  for (StringRef CheckName : StaticAnalyzerChecks) {
+    std::string Checker((AnalyzerCheckNamePrefix + CheckName).str());
     AnalyzerChecksEnabled |=
-        Filter.IsCheckEnabled(Checker) && !Checks[i].startswith("debug");
+        Filter.IsCheckEnabled(Checker) && !CheckName.startswith("debug");
   }
 
   if (AnalyzerChecksEnabled) {
@@ -207,12 +187,12 @@ ClangTidyASTConsumerFactory::getCheckersControlList() {
     // Always add all core checkers if any other static analyzer checks are
     // enabled. This is currently necessary, as other path sensitive checks
     // rely on the core checkers.
-    for (unsigned i = 0; i < Checks.size(); ++i) {
-      std::string Checker((AnalyzerCheckNamePrefix + Checks[i]).str());
+    for (StringRef CheckName : StaticAnalyzerChecks) {
+      std::string Checker((AnalyzerCheckNamePrefix + CheckName).str());
 
-      if (Checks[i].startswith("core") ||
-          (!Checks[i].startswith("debug") && Filter.IsCheckEnabled(Checker)))
-        List.push_back(std::make_pair(Checks[i], true));
+      if (CheckName.startswith("core") ||
+          (!CheckName.startswith("debug") && Filter.IsCheckEnabled(Checker)))
+        List.push_back(std::make_pair(CheckName, true));
     }
   }
   return List;
@@ -302,20 +282,18 @@ static void reportDiagnostic(const ClangTidyMessage &Message,
                              SourceManager &SourceMgr,
                              DiagnosticsEngine::Level Level,
                              DiagnosticsEngine &Diags,
-                             tooling::Replacements *Fixes = NULL) {
+                             const tooling::Replacements *Fixes = NULL) {
   SourceLocation Loc =
       getLocation(SourceMgr, Message.FilePath, Message.FileOffset);
   DiagnosticBuilder Diag = Diags.Report(Loc, Diags.getCustomDiagID(Level, "%0"))
                            << Message.Message;
   if (Fixes != NULL) {
-    for (tooling::Replacements::const_iterator I = Fixes->begin(),
-                                               E = Fixes->end();
-         I != E; ++I) {
+    for (const tooling::Replacement &Fix : *Fixes) {
       SourceLocation FixLoc =
-          getLocation(SourceMgr, I->getFilePath(), I->getOffset());
+          getLocation(SourceMgr, Fix.getFilePath(), Fix.getOffset());
       Diag << FixItHint::CreateReplacement(
-                  SourceRange(FixLoc, FixLoc.getLocWithOffset(I->getLength())),
-                  I->getReplacementText());
+                  SourceRange(FixLoc, FixLoc.getLocWithOffset(Fix.getLength())),
+                  Fix.getReplacementText());
     }
   }
 }
@@ -332,15 +310,13 @@ void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {
   DiagPrinter->BeginSourceFile(LangOpts);
   SourceManager SourceMgr(Diags, Files);
   Rewriter Rewrite(SourceMgr, LangOpts);
-  for (SmallVectorImpl<ClangTidyError>::iterator I = Errors.begin(),
-                                                 E = Errors.end();
-       I != E; ++I) {
-    reportDiagnostic(I->Message, SourceMgr, DiagnosticsEngine::Warning, Diags,
-                     &I->Fix);
-    for (unsigned i = 0, e = I->Notes.size(); i != e; ++i) {
-      reportDiagnostic(I->Notes[i], SourceMgr, DiagnosticsEngine::Note, Diags);
-    }
-    tooling::applyAllReplacements(I->Fix, Rewrite);
+  for (const ClangTidyError &Error : Errors) {
+    reportDiagnostic(Error.Message, SourceMgr, DiagnosticsEngine::Warning, Diags,
+                     &Error.Fix);
+    for (const ClangTidyMessage &Note : Error.Notes)
+      reportDiagnostic(Note, SourceMgr, DiagnosticsEngine::Note, Diags);
+
+    tooling::applyAllReplacements(Error.Fix, Rewrite);
   }
   // FIXME: Run clang-format on changes.
   if (Fix)
