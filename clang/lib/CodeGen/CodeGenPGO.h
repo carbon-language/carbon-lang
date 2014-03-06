@@ -118,9 +118,9 @@ public:
   /// function. Does nothing if instrumentation is not enabled and either
   /// generates global variables or associates PGO data with each of the
   /// counters depending on whether we are generating or using instrumentation.
-  void assignRegionCounters(GlobalDecl &GD);
+  void assignRegionCounters(const Decl *D, StringRef Name);
   /// Emit code to write counts for a given function to disk, if necessary.
-  void emitWriteoutFunction(GlobalDecl &GD);
+  void emitWriteoutFunction(StringRef Name);
   /// Clean up region counter state. Must be called if assignRegionCounters is
   /// used.
   void destroyRegionCounters();
@@ -131,7 +131,7 @@ public:
 private:
   void mapRegionCounters(const Decl *D);
   void computeRegionCounts(const Decl *D);
-  void loadRegionCounts(GlobalDecl &GD, PGOProfileData *PGOData);
+  void loadRegionCounts(StringRef Name, PGOProfileData *PGOData);
   void emitCounterVariables();
 
   /// Emit code to increment the counter at the given index

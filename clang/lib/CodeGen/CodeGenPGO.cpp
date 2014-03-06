@@ -162,7 +162,7 @@ bool PGOProfileData::getFunctionCounts(StringRef MangledName,
   return false;
 }
 
-void CodeGenPGO::emitWriteoutFunction(GlobalDecl &GD) {
+void CodeGenPGO::emitWriteoutFunction(StringRef Name) {
   if (!CGM.getCodeGenOpts().ProfileInstrGenerate)
     return;
 
@@ -207,7 +207,7 @@ void CodeGenPGO::emitWriteoutFunction(GlobalDecl &GD) {
     CGM.getModule().getOrInsertFunction("llvm_pgo_emit", FTy);
 
   llvm::Constant *MangledName =
-    CGM.GetAddrOfConstantCString(CGM.getMangledName(GD), "__llvm_pgo_name");
+    CGM.GetAddrOfConstantCString(Name, "__llvm_pgo_name");
   MangledName = llvm::ConstantExpr::getBitCast(MangledName, Int8PtrTy);
   PGOBuilder.CreateCall3(EmitFunc, MangledName,
                          PGOBuilder.getInt32(NumRegionCounters),
@@ -728,19 +728,18 @@ namespace {
   };
 }
 
-void CodeGenPGO::assignRegionCounters(GlobalDecl &GD) {
+void CodeGenPGO::assignRegionCounters(const Decl *D, StringRef Name) {
   bool InstrumentRegions = CGM.getCodeGenOpts().ProfileInstrGenerate;
   PGOProfileData *PGOData = CGM.getPGOData();
   if (!InstrumentRegions && !PGOData)
     return;
-  const Decl *D = GD.getDecl();
   if (!D)
     return;
   mapRegionCounters(D);
   if (InstrumentRegions)
     emitCounterVariables();
   if (PGOData) {
-    loadRegionCounts(GD, PGOData);
+    loadRegionCounts(Name, PGOData);
     computeRegionCounts(D);
   }
 }
@@ -781,13 +780,13 @@ void CodeGenPGO::emitCounterIncrement(CGBuilderTy &Builder, unsigned Counter) {
   Builder.CreateStore(Count, Addr);
 }
 
-void CodeGenPGO::loadRegionCounts(GlobalDecl &GD, PGOProfileData *PGOData) {
+void CodeGenPGO::loadRegionCounts(StringRef Name, PGOProfileData *PGOData) {
   // For now, ignore the counts from the PGO data file only if the number of
   // counters does not match. This could be tightened down in the future to
   // ignore counts when the input changes in various ways, e.g., by comparing a
   // hash value based on some characteristics of the input.
   RegionCounts = new std::vector<uint64_t>();
-  if (PGOData->getFunctionCounts(CGM.getMangledName(GD), *RegionCounts) ||
+  if (PGOData->getFunctionCounts(Name, *RegionCounts) ||
       RegionCounts->size() != NumRegionCounters) {
     delete RegionCounts;
     RegionCounts = 0;

@@ -589,7 +589,6 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
   if (CGM.getCodeGenOpts().InstrumentForProfiling)
     EmitMCountInstrumentation();
 
-  PGO.assignRegionCounters(GD);
   if (CGM.getPGOData() && D) {
     // Turn on InlineHint attribute for hot functions.
     if (CGM.getPGOData()->isHotFunction(CGM.getMangledName(GD)))
@@ -771,6 +770,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   StartFunction(GD, ResTy, Fn, FnInfo, Args, BodyRange.getBegin());
 
   // Generate the body of the function.
+  PGO.assignRegionCounters(GD.getDecl(), CGM.getMangledName(GD));
   if (isa<CXXDestructorDecl>(FD))
     EmitDestructorBody(Args);
   else if (isa<CXXConstructorDecl>(FD))
@@ -831,7 +831,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   if (!CurFn->doesNotThrow())
     TryMarkNoThrow(CurFn);
 
-  PGO.emitWriteoutFunction(CurGD);
+  PGO.emitWriteoutFunction(CGM.getMangledName(CurGD));
   PGO.destroyRegionCounters();
 }
 
