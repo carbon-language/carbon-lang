@@ -3077,6 +3077,11 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
                "operator>(const SomeLoooooooooooooooooooooooooogType &other);");
   verifyFormat("SomeLoooooooooooooooooooooooooogType\n"
                "operator>>(const SomeLooooooooooooooooooooooooogType &other);");
+  verifyFormat("SomeLoooooooooooooooooooooooooogType\n"
+               "operator<<(const SomeLooooooooooooooooooooooooogType &other);");
+  verifyGoogleFormat(
+      "SomeLoooooooooooooooooooooooooooooogType operator>>(\n"
+      "    const SomeLooooooooogType &a, const SomeLooooooooogType &b);");
   verifyGoogleFormat(
       "SomeLoooooooooooooooooooooooooooooogType operator<<(\n"
       "    const SomeLooooooooogType &a, const SomeLooooooooogType &b);");
