@@ -10,6 +10,7 @@
 #include "llvm/Support/StreamableMemoryObject.h"
 #include "llvm/Support/Compiler.h"
 #include <cassert>
+#include <cstddef>
 #include <cstring>
 
 
