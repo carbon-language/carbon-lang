@@ -716,26 +716,15 @@ public:
   }
 };
 
-
-
 /// \brief A short list of SExprs
 class MutexIDList : public SmallVector<SExpr, 3> {
 public:
-  /// \brief Return true if the list contains the specified SExpr
-  /// Performs a linear search, because these lists are almost always very small.
-  bool contains(const SExpr& M) {
-    for (iterator I=begin(),E=end(); I != E; ++I)
-      if ((*I) == M) return true;
-    return false;
-  }
-
-  /// \brief Push M onto list, bud discard duplicates
+  /// \brief Push M onto list, but discard duplicates.
   void push_back_nodup(const SExpr& M) {
-    if (!contains(M)) push_back(M);
+    if (end() == std::find(begin(), end(), M))
+      push_back(M);
   }
 };
-
-
 
 /// \brief This is a helper class that stores info about the most recent
 /// accquire of a Lock.
