@@ -1684,9 +1684,11 @@ void ASTReader::removeOverriddenMacros(IdentifierInfo *II,
     }
 
     // If this macro is already in our list of conflicts, remove it from there.
-    for (unsigned AI = 0, AN = Ambig.size(); AI != AN; ++AI)
-      if (Ambig[AI]->getInfo()->getOwningModuleID() == OwnerID)
-        Ambig.erase(Ambig.begin() + AI);
+    Ambig.erase(
+        std::remove_if(Ambig.begin(), Ambig.end(), [&](DefMacroDirective *MD) {
+          return MD->getInfo()->getOwningModuleID() == OwnerID;
+        }),
+        Ambig.end());
   }
 }
 
