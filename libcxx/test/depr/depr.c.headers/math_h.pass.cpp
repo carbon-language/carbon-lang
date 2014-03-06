@@ -82,9 +82,9 @@ void test_exp()
 void test_fabs()
 {
     static_assert((std::is_same<decltype(fabs((double)0)), double>::value), "");
-    static_assert((std::is_same<decltype(fabsf(0)), float>::value), "");
-    static_assert((std::is_same<decltype(fabsl(0)), long double>::value), "");
-    assert(fabs(-1) == 1);
+    static_assert((std::is_same<decltype(fabsf(0.f)), float>::value), "");
+    static_assert((std::is_same<decltype(fabsl(0.L)), long double>::value), "");
+    assert(fabs(-1.f) == 1);
 }
 
 void test_floor()

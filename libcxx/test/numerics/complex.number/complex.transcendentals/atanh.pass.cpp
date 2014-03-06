@@ -51,7 +51,7 @@ void test_edges()
             assert(std::signbit(x[i].real()) == std::signbit(r.real()));
             assert(std::isnan(r.imag()));
         }
-        else if (abs(x[i].real()) == 1 && x[i].imag() == 0)
+        else if (std::abs(x[i].real()) == 1 && x[i].imag() == 0)
         {
             assert(std::isinf(r.real()));
             assert(std::signbit(x[i].real()) == std::signbit(r.real()));
