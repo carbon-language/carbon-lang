@@ -210,7 +210,7 @@ class NamedMDNode : public ilist_node<NamedMDNode> {
 
   template<class T1, class T2>
   class op_iterator_impl :
-      public std::iterator<std::random_access_iterator_tag, T2> {
+      public std::iterator<std::bidirectional_iterator_tag, T2> {
     const NamedMDNode *Node;
     unsigned Idx;
     op_iterator_impl(const NamedMDNode *N, unsigned i) : Node(N), Idx(i) { }
@@ -232,6 +232,16 @@ class NamedMDNode : public ilist_node<NamedMDNode> {
       operator++();
       return tmp;
     }
+    op_iterator_impl &operator--() {
+      --Idx;
+      return *this;
+    }
+    op_iterator_impl operator--(int) {
+      op_iterator_impl tmp(*this);
+      operator--();
+      return tmp;
+    }
+
     op_iterator_impl &operator=(const op_iterator_impl &o) {
       Node = o.Node;
       Idx = o.Idx;
