@@ -115,23 +115,14 @@ LockFileManager::LockFileManager(StringRef FileName)
     }
   }
 
-  // Create a hard link from the lock file name. If this succeeds, we're done.
+  // Create a symbolic link from the lock file name. If this succeeds, we're done.
+  // Note that we are using symbolic link because hard links are not supported
+  // by all filesystems.
   error_code EC
-    = sys::fs::create_hard_link(UniqueLockFileName.str(),
+    = sys::fs::create_symbolic_link(UniqueLockFileName.str(),
                                       LockFileName.str());
   if (EC == errc::success)
     return;
-
-  // Creating the hard link failed.
-
-#ifdef LLVM_ON_UNIX
-  // The creation of the hard link may appear to fail, but if stat'ing the
-  // unique file returns a link count of 2, then we can still declare success.
-  struct stat StatBuf;
-  if (stat(UniqueLockFileName.c_str(), &StatBuf) == 0 &&
-      StatBuf.st_nlink == 2)
-    return;
-#endif
 
   // Someone else managed to create the lock file first. Wipe out our unique
   // lock file (it's useless now) and read the process ID from the lock file.
