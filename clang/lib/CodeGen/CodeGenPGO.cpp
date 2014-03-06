@@ -49,11 +49,17 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
   while (CurPtr < BufferEnd) {
     // Read the function name.
     const char *FuncStart = CurPtr;
-    CurPtr = strchr(CurPtr, ' ');
+    // For Objective-C methods, the name may include whitespace, so search
+    // backward from the end of the line to find the space that separates the
+    // name from the number of counters. (This is a temporary hack since we are
+    // going to completely replace this file format in the near future.)
+    CurPtr = strchr(CurPtr, '\n');
     if (!CurPtr) {
       ReportBadPGOData(CGM, "pgo data file has malformed function entry");
       return;
     }
+    while (*--CurPtr != ' ')
+      ;
     StringRef FuncName(FuncStart, CurPtr - FuncStart);
 
     // Read the number of counters.
@@ -129,8 +135,10 @@ bool PGOProfileData::getFunctionCounts(StringRef FuncName,
   const char *CurPtr = DataBuffer->getBufferStart() + OffsetIter->getValue();
 
   // Skip over the function name.
-  CurPtr = strchr(CurPtr, ' ');
+  CurPtr = strchr(CurPtr, '\n');
   assert(CurPtr && "pgo-data has corrupted function entry");
+  while (*--CurPtr != ' ')
+    ;
 
   // Read the number of counters.
   char *EndPtr;
@@ -303,6 +311,10 @@ namespace {
       (*CounterMap)[S->getBody()] = NextCounter++;
       Visit(S->getBody());
     }
+    void VisitObjCMethodDecl(const ObjCMethodDecl *S) {
+      (*CounterMap)[S->getBody()] = NextCounter++;
+      Visit(S->getBody());
+    }
     /// Assign a counter to track the block following a label.
     void VisitLabelStmt(const LabelStmt *S) {
       (*CounterMap)[S] = NextCounter++;
@@ -456,6 +468,13 @@ namespace {
     }
 
     void VisitFunctionDecl(const FunctionDecl *S) {
+      RegionCounter Cnt(PGO, S->getBody());
+      Cnt.beginRegion();
+      (*CountMap)[S->getBody()] = PGO.getCurrentRegionCount();
+      Visit(S->getBody());
+    }
+
+    void VisitObjCMethodDecl(const ObjCMethodDecl *S) {
       RegionCounter Cnt(PGO, S->getBody());
       Cnt.beginRegion();
       (*CountMap)[S->getBody()] = PGO.getCurrentRegionCount();
@@ -781,6 +800,8 @@ void CodeGenPGO::mapRegionCounters(const Decl *D) {
   MapRegionCounters Walker(RegionCounterMap);
   if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
     Walker.VisitFunctionDecl(FD);
+  else if (const ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(D))
+    Walker.VisitObjCMethodDecl(MD);
   NumRegionCounters = Walker.NextCounter;
 }
 
@@ -789,6 +810,8 @@ void CodeGenPGO::computeRegionCounts(const Decl *D) {
   ComputeRegionCounts Walker(StmtCountMap, *this);
   if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
     Walker.VisitFunctionDecl(FD);
+  else if (const ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(D))
+    Walker.VisitObjCMethodDecl(MD);
 }
 
 void CodeGenPGO::emitCounterVariables() {

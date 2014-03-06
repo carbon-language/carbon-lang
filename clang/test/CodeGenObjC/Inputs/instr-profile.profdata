@@ -1,4 +1,4 @@
-foreach 2
+instr-profile.m:+[A foreach:] 2
 1
 2
 

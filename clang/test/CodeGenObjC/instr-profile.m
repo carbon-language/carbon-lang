@@ -8,11 +8,24 @@
 // RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile.profdata | FileCheck -check-prefix=PGOUSE %s
 
 #ifdef HAVE_FOUNDATION
+
 // Use this to build an instrumented version to regenerate the input file.
 #import <Foundation/Foundation.h>
+
 #else
+
+// Minimal definitions to get this to compile without Foundation.h.
+
+@protocol NSObject
+@end
+
+@interface NSObject <NSObject>
+- (id)init;
++ (id)alloc;
+@end
+
 struct NSFastEnumerationState;
-@interface NSArray
+@interface NSArray : NSObject
 - (unsigned long) countByEnumeratingWithState: (struct NSFastEnumerationState*) state
                   objects: (id*) buffer
                   count: (unsigned long) bufferSize;
@@ -22,17 +35,26 @@ struct NSFastEnumerationState;
 
 // PGOGEN: @[[FOR:__llvm_pgo_ctr[0-9]*]] = private global [2 x i64] zeroinitializer
 
-// PGOGEN-LABEL: @foreach
-// PGOUSE-LABEL: @foreach
+@interface A : NSObject
++ (void)foreach: (NSArray *)array;
+@end
+
+@implementation A
+// PGOGEN-LABEL: define {{.*}}+[A foreach:]
+// PGOUSE-LABEL: define {{.*}}+[A foreach:]
 // PGOGEN: store {{.*}} @[[FOR]], i64 0, i64 0
-void foreach(NSArray *array) {
++ (void)foreach: (NSArray *)array
+{
   // PGOGEN: store {{.*}} @[[FOR]], i64 0, i64 1
   // FIXME: We don't emit branch weights for this yet.
   for (id x in array) {
   }
 }
+@end
 
 int main(int argc, const char *argv[]) {
+  A *a = [[A alloc] init];
   NSArray *array = [NSArray arrayWithObjects: @"0", @"1", (void*)0];
-  foreach(array);
+  [A foreach: array];
+  return 0;
 }
