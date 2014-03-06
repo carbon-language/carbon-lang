@@ -2003,44 +2003,8 @@ void DwarfDebug::emitDIE(DIE *Die) {
             cast<DIEInteger>(Values[i])->getValue()));
     }
 
-    switch (Attr) {
-    case dwarf::DW_AT_abstract_origin:
-    case dwarf::DW_AT_type:
-    case dwarf::DW_AT_friend:
-    case dwarf::DW_AT_specification:
-    case dwarf::DW_AT_import:
-    case dwarf::DW_AT_containing_type: {
-      DIEEntry *E = cast<DIEEntry>(Values[i]);
-      DIE *Origin = E->getEntry();
-      unsigned Addr = Origin->getOffset();
-      if (Form == dwarf::DW_FORM_ref_addr) {
-        assert(!useSplitDwarf() && "TODO: dwo files can't have relocations.");
-        // For DW_FORM_ref_addr, output the offset from beginning of debug info
-        // section. Origin->getOffset() returns the offset from start of the
-        // compile unit.
-        DwarfCompileUnit *CU = CUDieMap.lookup(Origin->getUnit());
-        assert(CU && "CUDie should belong to a CU.");
-        Addr += CU->getDebugInfoOffset();
-        if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-          Asm->EmitLabelPlusOffset(CU->getSectionSym(), Addr,
-                                   DIEEntry::getRefAddrSize(Asm));
-        else
-          Asm->EmitLabelOffsetDifference(CU->getSectionSym(), Addr,
-                                         CU->getSectionSym(),
-                                         DIEEntry::getRefAddrSize(Asm));
-      } else {
-        // Make sure Origin belong to the same CU.
-        assert(Die->getUnit() == Origin->getUnit() &&
-               "The referenced DIE should belong to the same CU in ref4");
-        Asm->EmitInt32(Addr);
-      }
-      break;
-    }
-    default:
-      // Emit an attribute using the defined form.
-      Values[i]->EmitValue(Asm, Form);
-      break;
-    }
+    // Emit an attribute using the defined form.
+    Values[i]->EmitValue(Asm, Form);
   }
 
   // Emit the DIE children if any.

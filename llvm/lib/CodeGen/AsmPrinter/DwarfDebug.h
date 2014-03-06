@@ -759,6 +759,10 @@ public:
     return Ref.resolve(TypeIdentifierMap);
   }
 
+  /// Find the DwarfCompileUnit for the given CU Die.
+  DwarfCompileUnit *lookupUnit(const DIE *CU) const {
+    return CUDieMap.lookup(CU);
+  }
   /// isSubprogramContext - Return true if Context is either a subprogram
   /// or another context nested inside a subprogram.
   bool isSubprogramContext(const MDNode *Context);

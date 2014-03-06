@@ -382,7 +382,26 @@ void DIEString::print(raw_ostream &O) const {
 /// EmitValue - Emit debug information entry offset.
 ///
 void DIEEntry::EmitValue(AsmPrinter *AP, dwarf::Form Form) const {
-  AP->EmitInt32(Entry->getOffset());
+
+  if (Form == dwarf::DW_FORM_ref_addr) {
+    const DwarfDebug *DD = AP->getDwarfDebug();
+    unsigned Addr = Entry->getOffset();
+    assert(!DD->useSplitDwarf() && "TODO: dwo files can't have relocations.");
+    // For DW_FORM_ref_addr, output the offset from beginning of debug info
+    // section. Entry->getOffset() returns the offset from start of the
+    // compile unit.
+    DwarfCompileUnit *CU = DD->lookupUnit(Entry->getUnit());
+    assert(CU && "CUDie should belong to a CU.");
+    Addr += CU->getDebugInfoOffset();
+    if (AP->MAI->doesDwarfUseRelocationsAcrossSections())
+      AP->EmitLabelPlusOffset(CU->getSectionSym(), Addr,
+                              DIEEntry::getRefAddrSize(AP));
+    else
+      AP->EmitLabelOffsetDifference(CU->getSectionSym(), Addr,
+                                    CU->getSectionSym(),
+                                    DIEEntry::getRefAddrSize(AP));
+  } else
+    AP->EmitInt32(Entry->getOffset());
 }
 
 unsigned DIEEntry::getRefAddrSize(AsmPrinter *AP) {
