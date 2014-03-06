@@ -4583,6 +4583,10 @@ bool AsmParser::parseMSInlineAsm(
       break;
     }
     case AOK_DotOperator:
+      // Insert the dot if the user omitted it.
+      OS.flush();
+      if (AsmStringIR.back() != '.')
+        OS << '.';
       OS << (*I).Val;
       break;
     }

@@ -1075,10 +1075,15 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
           if (getParser().parsePrimaryExpr(Val, End))
             return Error(Tok.getLoc(), "Unexpected identifier!");
         } else {
-          InlineAsmIdentifierInfo &Info = SM.getIdentifierInfo();
-          if (ParseIntelIdentifier(Val, Identifier, Info,
-                                   /*Unevaluated=*/false, End))
-            return true;
+          // This is a dot operator, not an adjacent identifier.
+          if (Identifier.find('.') != StringRef::npos) {
+            return false;
+          } else {
+            InlineAsmIdentifierInfo &Info = SM.getIdentifierInfo();
+            if (ParseIntelIdentifier(Val, Identifier, Info,
+                                     /*Unevaluated=*/false, End))
+              return true;
+          }
         }
         SM.onIdentifierExpr(Val, Identifier);
         UpdateLocLex = false;
@@ -1179,8 +1184,10 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, SMLoc Start,
       Disp = Imm;  // An immediate displacement only.
   }
 
-  // Parse the dot operator (e.g., [ebx].foo.bar).
-  if (Tok.getString().startswith(".")) {
+  // Parse struct field access.  Intel requires a dot, but MSVC doesn't.  MSVC
+  // will in fact do global lookup the field name inside all global typedefs,
+  // but we don't emulate that.
+  if (Tok.getString().find('.') != StringRef::npos) {
     const MCExpr *NewDisp;
     if (ParseIntelDotOperator(Disp, NewDisp))
       return 0;
@@ -1369,8 +1376,10 @@ bool X86AsmParser::ParseIntelDotOperator(const MCExpr *Disp,
   else
     return Error(Tok.getLoc(), "Non-constant offsets are not supported!");
 
-  // Drop the '.'.
-  StringRef DotDispStr = Tok.getString().drop_front(1);
+  // Drop the optional '.'.
+  StringRef DotDispStr = Tok.getString();
+  if (DotDispStr.startswith("."))
+    DotDispStr = DotDispStr.drop_front(1);
 
   // .Imm gets lexed as a real.
   if (Tok.is(AsmToken::Real)) {
