@@ -692,6 +692,20 @@ SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   LoadSDNode *Load = cast<LoadSDNode>(Op);
   ISD::LoadExtType ExtType = Load->getExtensionType();
+  EVT VT = Op.getValueType();
+  EVT MemVT = Load->getMemoryVT();
+
+  if (ExtType != ISD::NON_EXTLOAD && !VT.isVector() && VT.getSizeInBits() > 32) {
+    // We can do the extload to 32-bits, and then need to separately extend to
+    // 64-bits.
+
+    SDValue ExtLoad32 = DAG.getExtLoad(ExtType, DL, MVT::i32,
+                                       Load->getChain(),
+                                       Load->getBasePtr(),
+                                       MemVT,
+                                       Load->getMemOperand());
+    return DAG.getNode(ISD::getExtForLoadExtType(ExtType), DL, VT, ExtLoad32);
+  }
 
   // Lower loads constant address space global variable loads
   if (Load->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS &&
@@ -711,8 +725,6 @@ SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
     return SDValue();
 
 
-  EVT VT = Op.getValueType();
-  EVT MemVT = Load->getMemoryVT();
   unsigned Mask = 0;
   if (Load->getMemoryVT() == MVT::i8) {
     Mask = 0xff;

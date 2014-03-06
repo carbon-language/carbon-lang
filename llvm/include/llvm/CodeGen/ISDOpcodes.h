@@ -702,6 +702,8 @@ namespace ISD {
     LAST_LOADEXT_TYPE
   };
 
+  NodeType getExtForLoadExtType(LoadExtType);
+
   //===--------------------------------------------------------------------===//
   /// ISD::CondCode enum - These are ordered carefully to make the bitfields
   /// below work out, when considering SETFALSE (something that never exists

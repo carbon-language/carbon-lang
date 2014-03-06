@@ -128,6 +128,9 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setLoadExtAction(ISD::SEXTLOAD, MVT::i32, Expand);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Custom);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Custom);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i32, Expand);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i8, Custom);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Custom);
   setLoadExtAction(ISD::SEXTLOAD, MVT::v8i16, Expand);
   setLoadExtAction(ISD::SEXTLOAD, MVT::v16i16, Expand);
 

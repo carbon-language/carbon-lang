@@ -231,6 +231,21 @@ bool ISD::allOperandsUndef(const SDNode *N) {
   return true;
 }
 
+ISD::NodeType ISD::getExtForLoadExtType(ISD::LoadExtType ExtType) {
+  switch (ExtType) {
+  case ISD::EXTLOAD:
+    return ISD::ANY_EXTEND;
+  case ISD::SEXTLOAD:
+    return ISD::SIGN_EXTEND;
+  case ISD::ZEXTLOAD:
+    return ISD::ZERO_EXTEND;
+  default:
+    break;
+  }
+
+  llvm_unreachable("Invalid LoadExtType");
+}
+
 /// getSetCCSwappedOperands - Return the operation corresponding to (Y op X)
 /// when given the operation for (X op Y).
 ISD::CondCode ISD::getSetCCSwappedOperands(ISD::CondCode Operation) {
