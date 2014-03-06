@@ -235,7 +235,10 @@ namespace {
     }
 
     /// Return true if assignments have a non-void result.
-    bool CanCaptureValueOfType(QualType ty) {
+    bool CanCaptureValue(Expr *exp) {
+      if (exp->isGLValue())
+        return true;
+      QualType ty = exp->getType();
       assert(!ty->isIncompleteType());
       assert(!ty->isDependentType());
 
@@ -461,7 +464,7 @@ PseudoOpBuilder::buildIncDecOperation(Scope *Sc, SourceLocation opcLoc,
 
   // That's the postfix result.
   if (UnaryOperator::isPostfix(opcode) &&
-      (result.get()->isTypeDependent() || CanCaptureValueOfType(resultType))) {
+      (result.get()->isTypeDependent() || CanCaptureValue(result.get()))) {
     result = capture(result.take());
     setResultToLastSemantic();
   }
@@ -762,7 +765,7 @@ ExprResult ObjCPropertyOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
     ObjCMessageExpr *msgExpr =
       cast<ObjCMessageExpr>(msg.get()->IgnoreImplicit());
     Expr *arg = msgExpr->getArg(0);
-    if (CanCaptureValueOfType(arg->getType()))
+    if (CanCaptureValue(arg))
       msgExpr->setArg(0, captureValueAsResult(arg));
   }
 
@@ -1368,7 +1371,7 @@ ExprResult ObjCSubscriptOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
     ObjCMessageExpr *msgExpr =
       cast<ObjCMessageExpr>(msg.get()->IgnoreImplicit());
     Expr *arg = msgExpr->getArg(0);
-    if (CanCaptureValueOfType(arg->getType()))
+    if (CanCaptureValue(arg))
       msgExpr->setArg(0, captureValueAsResult(arg));
   }
   
