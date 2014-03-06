@@ -1996,6 +1996,7 @@ void ModuleMapParser::parseInferredModuleDecl(bool Framework, bool Explicit) {
     // We'll be inferring framework modules for this directory.
     Map.InferredDirectories[Directory].InferModules = true;
     Map.InferredDirectories[Directory].InferSystemModules = Attrs.IsSystem;
+    // FIXME: Handle the 'framework' keyword.
   }
 
   // Parse the opening brace.

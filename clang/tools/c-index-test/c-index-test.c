@@ -1329,7 +1329,7 @@ static enum CXChildVisitResult PrintTypeSize(CXCursor cursor, CXCursor p,
     CXCursor Parent, Root;
     if (clang_getCursorKind(cursor) == CXCursor_FieldDecl ) {
       const char *RootParentName;
-      Root = Parent = p;
+      Parent = p;
       do {
         Root = Parent;
         RootParentName = clang_getCString(clang_getCursorSpelling(Root));
