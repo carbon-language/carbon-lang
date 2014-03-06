@@ -1286,9 +1286,10 @@ OMPClause *Sema::ActOnOpenMPSharedClause(ArrayRef<Expr *> VarList,
     SourceLocation ELoc = (*I)->getExprLoc();
     // OpenMP [2.1, C/C++]
     //  A list item is a variable name.
-    // OpenMP  [2.9.3.4, Restrictions, p.1]
-    //  A variable that is part of another variable (as an array or
-    //  structure element) cannot appear in a private clause.
+    // OpenMP  [2.14.3.2, Restrictions, p.1]
+    //  A variable that is part of another variable (as an array or structure
+    //  element) cannot appear in a shared unless it is a static data member
+    //  of a C++ class.
     DeclRefExpr *DE = dyn_cast<DeclRefExpr>(*I);
     if (!DE || !isa<VarDecl>(DE->getDecl())) {
       Diag(ELoc, diag::err_omp_expected_var_name)

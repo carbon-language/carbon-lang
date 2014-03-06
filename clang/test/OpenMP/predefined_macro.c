@@ -5,7 +5,7 @@
 // -fopenmp=libiomp5 option is specified
 #ifndef _OPENMP
 #error "No _OPENMP macro is defined with -fopenmp option"
-#elsif _OPENMP != 201107
+#elsif _OPENMP != 201307
 #error "_OPENMP has incorrect value"
 #endif //_OPENMP
 #else
@@ -22,7 +22,7 @@
 // -fopenmp=libiomp5 option is specified
 #ifndef _OPENMP
 #error "No _OPENMP macro is defined with -fopenmp option"
-#elsif _OPENMP != 201107
+#elsif _OPENMP != 201307
 #error "_OPENMP has incorrect value"
 #endif // _OPENMP
 #else

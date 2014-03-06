@@ -1361,6 +1361,10 @@ public:
                                                    EndLoc);
   }
 
+  /// \brief Build a new OpenMP 'shared' clause.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
   OMPClause *RebuildOMPSharedClause(ArrayRef<Expr *> VarList,
                                     SourceLocation StartLoc,
                                     SourceLocation LParenLoc,
