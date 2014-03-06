@@ -52,9 +52,9 @@ void test_pow(float a0, double a1, long double a2) {
 // CHECK-YES: declare float @powf(float, float)
 // CHECK-YES: declare double @pow(double, double)
 // CHECK-YES: declare x86_fp80 @powl(x86_fp80, x86_fp80)
-// CHECK-NO: declare float @llvm.pow.f32(float, float) [[NUW_RO:#[0-9]+]]
-// CHECK-NO: declare double @llvm.pow.f64(double, double) [[NUW_RO]]
-// CHECK-NO: declare x86_fp80 @llvm.pow.f80(x86_fp80, x86_fp80) [[NUW_RO]]
+// CHECK-NO: declare float @llvm.pow.f32(float, float) [[NUW_RNI:#[0-9]+]]
+// CHECK-NO: declare double @llvm.pow.f64(double, double) [[NUW_RNI]]
+// CHECK-NO: declare x86_fp80 @llvm.pow.f80(x86_fp80, x86_fp80) [[NUW_RNI]]
 
 // CHECK-YES-LABEL: define void @test_fma
 // CHECK-NO-LABEL: define void @test_fma
@@ -127,4 +127,4 @@ void test_builtins(double d, float f, long double ld) {
 // CHECK-YES: attributes [[NUW_RN]] = { nounwind readnone }
 
 // CHECK-NO: attributes [[NUW_RN]] = { nounwind readnone{{.*}} }
-// CHECK-NO: attributes [[NUW_RO]] = { nounwind readonly }
+// CHECK-NO: attributes [[NUW_RNI]] = { nounwind readnone }
