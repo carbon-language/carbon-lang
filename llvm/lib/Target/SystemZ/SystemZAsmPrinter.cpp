@@ -179,8 +179,7 @@ getModifierVariantKind(SystemZCP::SystemZCPModifier Modifier) {
 
 void SystemZAsmPrinter::
 EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
-  SystemZConstantPoolValue *ZCPV =
-    static_cast<SystemZConstantPoolValue*>(MCPV);
+  auto *ZCPV = static_cast<SystemZConstantPoolValue*>(MCPV);
 
   const MCExpr *Expr =
     MCSymbolRefExpr::Create(getSymbol(ZCPV->getGlobalValue()),
@@ -221,7 +220,7 @@ bool SystemZAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 
 void SystemZAsmPrinter::EmitEndOfAsmFile(Module &M) {
   if (Subtarget->isTargetELF()) {
-    const TargetLoweringObjectFileELF &TLOFELF =
+    auto &TLOFELF =
       static_cast<const TargetLoweringObjectFileELF &>(getObjFileLowering());
 
     MachineModuleInfoELF &MMIELF = MMI->getObjFileInfo<MachineModuleInfoELF>();

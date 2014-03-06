@@ -22,7 +22,7 @@ using namespace llvm;
 
 // Return true if Expr is in the range [MinValue, MaxValue].
 static bool inRange(const MCExpr *Expr, int64_t MinValue, int64_t MaxValue) {
-  if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr)) {
+  if (auto *CE = dyn_cast<MCConstantExpr>(Expr)) {
     int64_t Value = CE->getValue();
     return Value >= MinValue && Value <= MaxValue;
   }
@@ -112,7 +112,7 @@ private:
     // Add as immediates when possible.  Null MCExpr = 0.
     if (Expr == 0)
       Inst.addOperand(MCOperand::CreateImm(0));
-    else if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
+    else if (auto *CE = dyn_cast<MCConstantExpr>(Expr))
       Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
     else
       Inst.addOperand(MCOperand::CreateExpr(Expr));
@@ -781,7 +781,7 @@ parsePCRel(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
 
   // For consistency with the GNU assembler, treat immediates as offsets
   // from ".".
-  if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr)) {
+  if (auto *CE = dyn_cast<MCConstantExpr>(Expr)) {
     int64_t Value = CE->getValue();
     if ((Value & 1) || Value < MinVal || Value > MaxVal) {
       Error(StartLoc, "offset out of range");

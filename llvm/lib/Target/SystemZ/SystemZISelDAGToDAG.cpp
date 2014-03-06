@@ -650,8 +650,7 @@ bool SystemZDAGToDAGISel::detectOrAndInsertion(SDValue &Op,
     return false;
 
   // We need a constant mask.
-  ConstantSDNode *MaskNode =
-    dyn_cast<ConstantSDNode>(Op.getOperand(1).getNode());
+  auto *MaskNode = dyn_cast<ConstantSDNode>(Op.getOperand(1).getNode());
   if (!MaskNode)
     return false;
 
@@ -703,8 +702,7 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
     if (RxSBG.Opcode == SystemZ::RNSBG)
       return false;
 
-    ConstantSDNode *MaskNode =
-      dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
+    auto *MaskNode = dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
     if (!MaskNode)
       return false;
 
@@ -728,8 +726,7 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
     if (RxSBG.Opcode != SystemZ::RNSBG)
       return false;
 
-    ConstantSDNode *MaskNode =
-      dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
+    auto *MaskNode = dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
     if (!MaskNode)
       return false;
 
@@ -753,8 +750,7 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
     // Any 64-bit rotate left can be merged into the RxSBG.
     if (RxSBG.BitSize != 64 || N.getValueType() != MVT::i64)
       return false;
-    ConstantSDNode *CountNode
-      = dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
+    auto *CountNode = dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
     if (!CountNode)
       return false;
 
@@ -792,8 +788,7 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
   }
 
   case ISD::SHL: {
-    ConstantSDNode *CountNode =
-      dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
+    auto *CountNode = dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
     if (!CountNode)
       return false;
 
@@ -820,8 +815,7 @@ bool SystemZDAGToDAGISel::expandRxSBG(RxSBGOperands &RxSBG) const {
 
   case ISD::SRL:
   case ISD::SRA: {
-    ConstantSDNode *CountNode =
-      dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
+    auto *CountNode = dyn_cast<ConstantSDNode>(N.getOperand(1).getNode());
     if (!CountNode)
       return false;
 
@@ -890,7 +884,7 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
         SystemZ::isImmLF(~RISBG.Mask) ||
         SystemZ::isImmHF(~RISBG.Mask)) {
       // Force the new mask into the DAG, since it may include known-one bits.
-      ConstantSDNode *MaskN = cast<ConstantSDNode>(N->getOperand(1).getNode());
+      auto *MaskN = cast<ConstantSDNode>(N->getOperand(1).getNode());
       if (MaskN->getZExtValue() != RISBG.Mask) {
         SDValue NewMask = CurDAG->getConstant(RISBG.Mask, VT);
         N = CurDAG->UpdateNodeOperands(N, N->getOperand(0), NewMask);
@@ -942,7 +936,7 @@ SDNode *SystemZDAGToDAGISel::tryRxSBG(SDNode *N, unsigned Opcode) {
 
   // Prefer IC for character insertions from memory.
   if (Opcode == SystemZ::ROSBG && (RxSBG[I].Mask & 0xff) == 0)
-    if (LoadSDNode *Load = dyn_cast<LoadSDNode>(Op0.getNode()))
+    if (auto *Load = dyn_cast<LoadSDNode>(Op0.getNode()))
       if (Load->getMemoryVT() == MVT::i8)
         return 0;
 
@@ -1010,8 +1004,8 @@ bool SystemZDAGToDAGISel::canUseBlockOperation(StoreSDNode *Store,
 }
 
 bool SystemZDAGToDAGISel::storeLoadCanUseMVC(SDNode *N) const {
-  StoreSDNode *Store = cast<StoreSDNode>(N);
-  LoadSDNode *Load = cast<LoadSDNode>(Store->getValue());
+  auto *Store = cast<StoreSDNode>(N);
+  auto *Load = cast<LoadSDNode>(Store->getValue());
 
   // Prefer not to use MVC if either address can use ... RELATIVE LONG
   // instructions.
@@ -1030,9 +1024,9 @@ bool SystemZDAGToDAGISel::storeLoadCanUseMVC(SDNode *N) const {
 
 bool SystemZDAGToDAGISel::storeLoadCanUseBlockBinary(SDNode *N,
                                                      unsigned I) const {
-  StoreSDNode *StoreA = cast<StoreSDNode>(N);
-  LoadSDNode *LoadA = cast<LoadSDNode>(StoreA->getValue().getOperand(1 - I));
-  LoadSDNode *LoadB = cast<LoadSDNode>(StoreA->getValue().getOperand(I));
+  auto *StoreA = cast<StoreSDNode>(N);
+  auto *LoadA = cast<LoadSDNode>(StoreA->getValue().getOperand(1 - I));
+  auto *LoadB = cast<LoadSDNode>(StoreA->getValue().getOperand(I));
   return !LoadA->isVolatile() && canUseBlockOperation(StoreA, LoadB);
 }
 
@@ -1063,7 +1057,7 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
     // If this is a 64-bit operation in which both 32-bit halves are nonzero,
     // split the operation into two.
     if (!ResNode && Node->getValueType(0) == MVT::i64)
-      if (ConstantSDNode *Op1 = dyn_cast<ConstantSDNode>(Node->getOperand(1))) {
+      if (auto *Op1 = dyn_cast<ConstantSDNode>(Node->getOperand(1))) {
         uint64_t Val = Op1->getZExtValue();
         if (!SystemZ::isImmLF(Val) && !SystemZ::isImmHF(Val))
           Node = splitLargeImmediate(Opcode, Node, Node->getOperand(0),

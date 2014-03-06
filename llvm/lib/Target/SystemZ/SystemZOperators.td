@@ -251,7 +251,7 @@ def anyextloadi32 : PatFrag<(ops node:$ptr), (anyextload node:$ptr), [{
 // Aligned loads.
 class AlignedLoad<SDPatternOperator load>
   : PatFrag<(ops node:$addr), (load node:$addr), [{
-  LoadSDNode *Load = cast<LoadSDNode>(N);
+  auto *Load = cast<LoadSDNode>(N);
   return Load->getAlignment() >= Load->getMemoryVT().getStoreSize();
 }]>;
 def aligned_load         : AlignedLoad<load>;
@@ -263,7 +263,7 @@ def aligned_azextloadi32 : AlignedLoad<azextloadi32>;
 // Aligned stores.
 class AlignedStore<SDPatternOperator store>
   : PatFrag<(ops node:$src, node:$addr), (store node:$src, node:$addr), [{
-  StoreSDNode *Store = cast<StoreSDNode>(N);
+  auto *Store = cast<StoreSDNode>(N);
   return Store->getAlignment() >= Store->getMemoryVT().getStoreSize();
 }]>;
 def aligned_store         : AlignedStore<store>;
@@ -274,7 +274,7 @@ def aligned_truncstorei32 : AlignedStore<truncstorei32>;
 // location multiple times.
 class NonvolatileLoad<SDPatternOperator load>
   : PatFrag<(ops node:$addr), (load node:$addr), [{
-  LoadSDNode *Load = cast<LoadSDNode>(N);
+  auto *Load = cast<LoadSDNode>(N);
   return !Load->isVolatile();
 }]>;
 def nonvolatile_load          : NonvolatileLoad<load>;
@@ -285,7 +285,7 @@ def nonvolatile_anyextloadi32 : NonvolatileLoad<anyextloadi32>;
 // Non-volatile stores.
 class NonvolatileStore<SDPatternOperator store>
   : PatFrag<(ops node:$src, node:$addr), (store node:$src, node:$addr), [{
-  StoreSDNode *Store = cast<StoreSDNode>(N);
+  auto *Store = cast<StoreSDNode>(N);
   return !Store->isVolatile();
 }]>;
 def nonvolatile_store         : NonvolatileStore<store>;
