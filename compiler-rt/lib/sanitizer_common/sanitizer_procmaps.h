@@ -20,13 +20,13 @@
 
 namespace __sanitizer {
 
-#if SANITIZER_LINUX
+#if SANITIZER_FREEBSD || SANITIZER_LINUX
 struct ProcSelfMapsBuff {
   char *data;
   uptr mmaped_size;
   uptr len;
 };
-#endif  // SANITIZER_LINUX
+#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX
 
 class MemoryMappingLayout {
  public:
@@ -55,7 +55,7 @@ class MemoryMappingLayout {
 
   // FIXME: Hide implementation details for different platforms in
   // platform-specific files.
-# if SANITIZER_LINUX
+# if SANITIZER_FREEBSD || SANITIZER_LINUX
   ProcSelfMapsBuff proc_self_maps_;
   char *current_;
 
