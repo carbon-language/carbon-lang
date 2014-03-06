@@ -189,7 +189,8 @@ MACHO-I386-NEXT:     ]
 MACHO-I386-NEXT:     Symbols [
 MACHO-I386-NEXT:       Symbol {
 MACHO-I386-NEXT:         Name: _main (1)
-MACHO-I386-NEXT:         Type: 0xF
+MACHO-I386-NEXT:         Extern
+MACHO-I386-NEXT:         Type: Section (0xE)
 MACHO-I386-NEXT:         Section: __text (0x1)
 MACHO-I386-NEXT:         RefType: UndefinedNonLazy (0x0)
 MACHO-I386-NEXT:         Flags [ (0x0)
@@ -231,7 +232,8 @@ MACHO-X86-64-NEXT:    ]
 MACHO-X86-64-NEXT:    Symbols [
 MACHO-X86-64-NEXT:      Symbol {
 MACHO-X86-64-NEXT:        Name: _main (1)
-MACHO-X86-64-NEXT:        Type: 0xF
+MACHO-X86-64-NEXT:        Extern
+MACHO-X86-64-NEXT:        Type: Section (0xE)
 MACHO-X86-64-NEXT:        Section: __text (0x1)
 MACHO-X86-64-NEXT:        RefType: UndefinedNonLazy (0x0)
 MACHO-X86-64-NEXT:        Flags [ (0x0)
@@ -306,7 +308,8 @@ MACHO-PPC-NEXT:     ]
 MACHO-PPC-NEXT:     Symbols [
 MACHO-PPC-NEXT:       Symbol {
 MACHO-PPC-NEXT:         Name: _f (4)
-MACHO-PPC-NEXT:         Type: 0xF
+MACHO-PPC-NEXT:         Extern
+MACHO-PPC-NEXT:         Type: Section (0xE)
 MACHO-PPC-NEXT:         Section: __text (0x1)
 MACHO-PPC-NEXT:         RefType: UndefinedNonLazy (0x0)
 MACHO-PPC-NEXT:         Flags [ (0x0)
@@ -371,7 +374,8 @@ MACHO-PPC-NEXT:     ]
 MACHO-PPC-NEXT:     Symbols [
 MACHO-PPC-NEXT:       Symbol {
 MACHO-PPC-NEXT:         Name: _b (1)
-MACHO-PPC-NEXT:         Type: 0xF
+MACHO-PPC-NEXT:         Extern
+MACHO-PPC-NEXT:         Type: Section (0xE)
 MACHO-PPC-NEXT:         Section: __data (0x3)
 MACHO-PPC-NEXT:         RefType: UndefinedNonLazy (0x0)
 MACHO-PPC-NEXT:         Flags [ (0x0)
@@ -461,7 +465,8 @@ MACHO-PPC64-NEXT:     ]
 MACHO-PPC64-NEXT:     Symbols [
 MACHO-PPC64-NEXT:       Symbol {
 MACHO-PPC64-NEXT:         Name: _f (4)
-MACHO-PPC64-NEXT:         Type: 0xF
+MACHO-PPC64-NEXT:         Extern
+MACHO-PPC64-NEXT:         Type: Section (0xE)
 MACHO-PPC64-NEXT:         Section: __text (0x1)
 MACHO-PPC64-NEXT:         RefType: UndefinedNonLazy (0x0)
 MACHO-PPC64-NEXT:         Flags [ (0x0)
@@ -526,7 +531,8 @@ MACHO-PPC64-NEXT:     ]
 MACHO-PPC64-NEXT:     Symbols [
 MACHO-PPC64-NEXT:       Symbol {
 MACHO-PPC64-NEXT:         Name: _b (1)
-MACHO-PPC64-NEXT:         Type: 0xF
+MACHO-PPC64-NEXT:         Extern
+MACHO-PPC64-NEXT:         Type: Section (0xE)
 MACHO-PPC64-NEXT:         Section: __data (0x3)
 MACHO-PPC64-NEXT:         RefType: UndefinedNonLazy (0x0)
 MACHO-PPC64-NEXT:         Flags [ (0x0)
@@ -691,7 +697,8 @@ MACHO-ARM-NEXT:     ]
 MACHO-ARM-NEXT:     Symbols [
 MACHO-ARM-NEXT:       Symbol {
 MACHO-ARM-NEXT:         Name: _f (4)
-MACHO-ARM-NEXT:         Type: 0xF
+MACHO-ARM-NEXT:         Extern
+MACHO-ARM-NEXT:         Type: Section (0xE)
 MACHO-ARM-NEXT:         Section: __text (0x1)
 MACHO-ARM-NEXT:         RefType: UndefinedNonLazy (0x0)
 MACHO-ARM-NEXT:         Flags [ (0x0)
@@ -700,7 +707,8 @@ MACHO-ARM-NEXT:         Value: 0x10
 MACHO-ARM-NEXT:       }
 MACHO-ARM-NEXT:       Symbol {
 MACHO-ARM-NEXT:         Name: _h (1)
-MACHO-ARM-NEXT:         Type: 0xF
+MACHO-ARM-NEXT:         Extern
+MACHO-ARM-NEXT:         Type: Section (0xE)
 MACHO-ARM-NEXT:         Section: __text (0x1)
 MACHO-ARM-NEXT:         RefType: UndefinedNonLazy (0x0)
 MACHO-ARM-NEXT:         Flags [ (0x0)
@@ -825,7 +833,8 @@ MACHO-ARM-NEXT:     ]
 MACHO-ARM-NEXT:     Symbols [
 MACHO-ARM-NEXT:       Symbol {
 MACHO-ARM-NEXT:         Name: _b (10)
-MACHO-ARM-NEXT:         Type: 0xF
+MACHO-ARM-NEXT:         Extern
+MACHO-ARM-NEXT:         Type: Section (0xE)
 MACHO-ARM-NEXT:         Section: __data (0x6)
 MACHO-ARM-NEXT:         RefType: UndefinedNonLazy (0x0)
 MACHO-ARM-NEXT:         Flags [ (0x0)

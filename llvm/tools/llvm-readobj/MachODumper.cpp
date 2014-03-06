@@ -125,12 +125,10 @@ static const EnumEntry<unsigned> MachOSymbolFlags[] = {
 
 static const EnumEntry<unsigned> MachOSymbolTypes[] = {
   { "Undef",           0x0 },
-  { "External",        0x1 },
   { "Abs",             0x2 },
   { "Indirect",        0xA },
   { "PreboundUndef",   0xC },
-  { "Section",         0xE },
-  { "PrivateExternal", 0x10 }
+  { "Section",         0xE }
 };
 
 namespace {
@@ -395,7 +393,12 @@ void MachODumper::printSymbol(symbol_iterator SymI) {
   if (Symbol.Type & MachO::N_STAB) {
     W.printHex ("Type", "SymDebugTable", Symbol.Type);
   } else {
-    W.printEnum("Type", Symbol.Type, makeArrayRef(MachOSymbolTypes));
+    if (Symbol.Type & MachO::N_PEXT)
+      W.startLine() << "PrivateExtern\n";
+    if (Symbol.Type & MachO::N_EXT)
+      W.startLine() << "Extern\n";
+    W.printEnum("Type", Symbol.Type & MachO::N_TYPE,
+                makeArrayRef(MachOSymbolTypes));
   }
   W.printHex   ("Section", SectionName, Symbol.SectionIndex);
   W.printEnum  ("RefType", static_cast<uint16_t>(Symbol.Flags & 0xF),
