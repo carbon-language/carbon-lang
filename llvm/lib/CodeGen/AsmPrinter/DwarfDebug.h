@@ -739,14 +739,14 @@ public:
 
   /// \brief Returns whether or not to emit tables that dwarf consumers can
   /// use to accelerate lookup.
-  bool useDwarfAccelTables() { return HasDwarfAccelTables; }
+  bool useDwarfAccelTables() const { return HasDwarfAccelTables; }
 
   /// \brief Returns whether or not to change the current debug info for the
   /// split dwarf proposal support.
-  bool useSplitDwarf() { return HasSplitDwarf; }
+  bool useSplitDwarf() const { return HasSplitDwarf; }
 
   /// \brief Returns whether or not to use AT_ranges for compilation units.
-  bool useCURanges() { return HasCURanges; }
+  bool useCURanges() const { return HasCURanges; }
 
   /// Returns the Dwarf Version.
   unsigned getDwarfVersion() const { return DwarfVersion; }
