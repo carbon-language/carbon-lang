@@ -4,6 +4,7 @@ include_directories(../..)
 
 set(DD_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 append_no_rtti_flag(DD_CFLAGS)
+list(APPEND DD_CFLAGS -ftls-model=initial-exec)
 
 if("${CMAKE_BUILD_TYPE}" EQUAL "Release")
   set(DD_COMMON_DEFINITIONS DEBUG=0)
