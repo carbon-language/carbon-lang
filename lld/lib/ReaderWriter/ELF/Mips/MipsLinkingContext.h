@@ -40,15 +40,15 @@ public:
   const MipsTargetLayout<Mips32ElELFType> &getTargetLayout() const;
 
   // ELFLinkingContext
-  virtual bool isLittleEndian() const;
-  virtual uint64_t getBaseAddress() const;
-  virtual StringRef entrySymbolName() const;
-  virtual StringRef getDefaultInterpreter() const;
-  virtual void addPasses(PassManager &pm);
-  virtual bool isRelaOutputFormat() const { return false; }
-  virtual bool isDynamicRelocation(const DefinedAtom &,
-                                   const Reference &r) const;
-  virtual bool isPLTRelocation(const DefinedAtom &, const Reference &r) const;
+  bool isLittleEndian() const override;
+  uint64_t getBaseAddress() const override;
+  StringRef entrySymbolName() const override;
+  StringRef getDefaultInterpreter() const override;
+  void addPasses(PassManager &pm) override;
+  bool isRelaOutputFormat() const override { return false; }
+  bool isDynamicRelocation(const DefinedAtom &,
+                           const Reference &r) const override;
+  bool isPLTRelocation(const DefinedAtom &, const Reference &r) const override;
 };
 
 } // elf

@@ -28,11 +28,11 @@ public:
 
 protected:
   // Add any runtime files and their atoms to the output
-  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File>> &);
+  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
-  virtual void finalizeDefaultAtomValues();
+  void finalizeDefaultAtomValues() override;
 
-  virtual error_code setELFHeader() {
+  error_code setELFHeader() override {
     DynamicLibraryWriter<ELFT>::setELFHeader();
     MipsELFWriter<ELFT>::setELFHeader(*this->_elfHeader);
     return error_code::success();

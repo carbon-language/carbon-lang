@@ -25,9 +25,9 @@ public:
 
   ~MipsTargetRelocationHandler();
 
-  virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                     const lld::AtomLayout &,
-                                     const Reference &) const;
+  error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                             const lld::AtomLayout &,
+                             const Reference &) const override;
 
 private:
   typedef std::vector<const Reference *> PairedRelocationsT;

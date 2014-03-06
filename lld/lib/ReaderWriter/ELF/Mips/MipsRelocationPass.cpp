@@ -49,7 +49,7 @@ class MipsGOTAtom : public GOTAtom {
 public:
   MipsGOTAtom(const File &f) : GOTAtom(f, ".got") {}
 
-  virtual Alignment alignment() const { return Alignment(2); }
+  Alignment alignment() const override { return Alignment(2); }
 };
 
 /// \brief MIPS GOT entry initialized by zero.
@@ -57,7 +57,7 @@ class GOT0Atom : public MipsGOTAtom {
 public:
   GOT0Atom(const File &f) : MipsGOTAtom(f) {}
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(mipsGot0AtomContent);
   }
 };
@@ -67,7 +67,7 @@ class GOTModulePointerAtom : public MipsGOTAtom {
 public:
   GOTModulePointerAtom(const File &f) : MipsGOTAtom(f) {}
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(mipsGotModulePointerAtomContent);
   }
 };
@@ -76,7 +76,7 @@ class PLT0Atom : public PLTAtom {
 public:
   PLT0Atom(const File &f) : PLTAtom(f, ".plt") {}
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(mipsPlt0AtomContent);
   }
 };
@@ -85,7 +85,7 @@ class PLTAAtom : public PLTAtom {
 public:
   PLTAAtom(const File &f) : PLTAtom(f, ".plt") {}
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(mipsPltAAtomContent);
   }
 };
@@ -95,9 +95,9 @@ class GOTPLTAtom : public GOTAtom {
 public:
   GOTPLTAtom(const File &f) : GOTAtom(f, ".got.plt") {}
 
-  virtual Alignment alignment() const { return Alignment(2); }
+  Alignment alignment() const override { return Alignment(2); }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     return llvm::makeArrayRef(mipsGot0AtomContent);
   }
 };
@@ -120,7 +120,7 @@ public:
     _localGotVector.push_back(new (_file._alloc) GOTModulePointerAtom(_file));
   }
 
-  virtual void perform(std::unique_ptr<MutableFile> &mf) {
+  void perform(std::unique_ptr<MutableFile> &mf) override {
     // Process all references.
     for (const auto &atom : mf->defined())
       for (const auto &ref : *atom)

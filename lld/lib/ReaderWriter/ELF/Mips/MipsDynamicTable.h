@@ -27,7 +27,7 @@ public:
                                   DefaultLayout<MipsELFType>::ORDER_DYNAMIC),
         _mipsTargetLayout(layout) {}
 
-  virtual void createDefaultEntries() {
+  void createDefaultEntries() override {
     DynamicTable<MipsELFType>::createDefaultEntries();
 
     typename DynamicTable<MipsELFType>::Elf_Dyn dyn;
@@ -69,7 +69,7 @@ public:
     _dt_pltgot = this->addEntry(dyn);
   }
 
-  virtual void updateDynamicTable() {
+  void updateDynamicTable() override {
     DynamicTable<MipsELFType>::updateDynamicTable();
 
     // Assign the minimum segment address to the DT_MIPS_BASE_ADDRESS tag.
@@ -89,7 +89,7 @@ public:
         _mipsTargetLayout.findOutputSection(".got")->virtualAddr();
   }
 
-  virtual int64_t getGotPltTag() { return DT_MIPS_PLTGOT; }
+  int64_t getGotPltTag() override { return DT_MIPS_PLTGOT; }
 
 private:
   std::size_t _dt_symtabno;

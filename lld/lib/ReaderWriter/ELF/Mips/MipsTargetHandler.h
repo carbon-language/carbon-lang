@@ -29,10 +29,10 @@ public:
 
   const MipsGOTSection<ELFType> &getGOTSection() const { return *_gotSection; }
 
-  virtual AtomSection<ELFType> *
+  AtomSection<ELFType> *
   createSection(StringRef name, int32_t type,
                 DefinedAtom::ContentPermissions permissions,
-                Layout::SectionOrder order) {
+                Layout::SectionOrder order) override {
     if (type == DefinedAtom::typeGOT && name == ".got")
       return _gotSection;
     return DefaultLayout<ELFType>::createSection(name, type, permissions,
@@ -72,17 +72,17 @@ class MipsTargetHandler final
 public:
   MipsTargetHandler(MipsLinkingContext &context);
 
-  virtual MipsTargetLayout<Mips32ElELFType> &getTargetLayout() {
+  MipsTargetLayout<Mips32ElELFType> &getTargetLayout() override {
     return *(_mipsTargetLayout.get());
   }
 
-  virtual const MipsTargetRelocationHandler &getRelocationHandler() const {
+  const MipsTargetRelocationHandler &getRelocationHandler() const override {
     return *(_mipsRelocationHandler.get());
   }
 
-  virtual std::unique_ptr<Writer> getWriter();
+  std::unique_ptr<Writer> getWriter() override;
 
-  virtual void registerRelocationNames(Registry &registry);
+  void registerRelocationNames(Registry &registry) override ;
 
 private:
   static const Registry::KindStrings kindStrings[];
@@ -101,7 +101,7 @@ public:
             DefaultLayout<Mips32ElELFType>::ORDER_DYNAMIC_SYMBOLS),
         _mipsTargetLayout(layout) {}
 
-  virtual void sortSymbols() {
+  void sortSymbols() override {
     std::stable_sort(_symbolTable.begin(), _symbolTable.end(),
                      [this](const SymbolEntry &A, const SymbolEntry &B) {
       if (A._symbol.getBinding() != STB_GLOBAL &&

@@ -49,7 +49,7 @@ public:
     return ia == _posMap.end() && ib != _posMap.end();
   }
 
-  virtual const lld::AtomLayout &appendAtom(const Atom *atom) {
+  const lld::AtomLayout &appendAtom(const Atom *atom) override {
     const DefinedAtom *da = dyn_cast<DefinedAtom>(atom);
 
     const Atom *ta = nullptr;
