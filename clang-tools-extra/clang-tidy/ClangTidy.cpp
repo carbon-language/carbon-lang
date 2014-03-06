@@ -69,15 +69,15 @@ public:
     for (const ento::PathDiagnostic *PD : Diags) {
       SmallString<64> CheckName(AnalyzerCheckNamePrefix);
       CheckName += PD->getCheckName();
-      addRanges(Context.diag(CheckName, PD->getLocation().asLocation(),
-                             PD->getShortDescription()),
-                PD->path.back()->getRanges());
+      Context.diag(CheckName, PD->getLocation().asLocation(),
+                   PD->getShortDescription())
+          << PD->path.back()->getRanges();
 
       for (const auto &DiagPiece :
            PD->path.flatten(/*ShouldFlattenMacros=*/true)) {
-        addRanges(Context.diag(CheckName, DiagPiece->getLocation().asLocation(),
-                               DiagPiece->getString(), DiagnosticIDs::Note),
-                  DiagPiece->getRanges());
+        Context.diag(CheckName, DiagPiece->getLocation().asLocation(),
+                     DiagPiece->getString(), DiagnosticIDs::Note)
+            << DiagPiece->getRanges();
       }
     }
   }
@@ -88,14 +88,6 @@ public:
 
 private:
   ClangTidyContext &Context;
-
-  // FIXME: Convert to operator<<(DiagnosticBuilder&, ArrayRef<SourceRange>).
-  static const DiagnosticBuilder &addRanges(const DiagnosticBuilder &DB,
-                                            ArrayRef<SourceRange> Ranges) {
-    for (const SourceRange &Range : Ranges)
-      DB << Range;
-    return DB;
-  }
 };
 
 } // namespace
