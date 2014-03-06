@@ -44,7 +44,7 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/StackProtector.h"
-#include "llvm/DebugInfo.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"

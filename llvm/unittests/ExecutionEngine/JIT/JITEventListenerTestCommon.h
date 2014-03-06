@@ -12,10 +12,10 @@
 
 #include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/Config/config.h"
-#include "llvm/DebugInfo.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/IR/DIBuilder.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"

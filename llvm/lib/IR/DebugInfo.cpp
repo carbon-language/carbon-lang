@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo.h"
+#include "llvm/IR/DebugInfo.h"
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"

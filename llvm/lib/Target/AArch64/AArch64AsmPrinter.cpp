@@ -18,7 +18,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
-#include "llvm/DebugInfo.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInst.h"

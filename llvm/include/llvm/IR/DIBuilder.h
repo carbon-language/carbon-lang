@@ -17,7 +17,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/DebugInfo.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/DataTypes.h"
 

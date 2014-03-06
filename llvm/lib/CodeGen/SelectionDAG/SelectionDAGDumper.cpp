@@ -17,7 +17,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/DebugInfo.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/Debug.h"

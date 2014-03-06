@@ -22,7 +22,7 @@
 #include "llvm/CodeGen/LexicalScopes.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/DebugInfo.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"

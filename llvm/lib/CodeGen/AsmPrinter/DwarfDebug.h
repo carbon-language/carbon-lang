@@ -24,7 +24,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/LexicalScopes.h"
-#include "llvm/DebugInfo.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/Support/Allocator.h"

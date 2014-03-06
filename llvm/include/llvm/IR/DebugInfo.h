@@ -1,4 +1,4 @@
-//===--- llvm/Analysis/DebugInfo.h - Debug Information Helpers --*- C++ -*-===//
+//===- DebugInfo.h - Debug Information Helpers ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_H
-#define LLVM_DEBUGINFO_H
+#ifndef LLVM_IR_DEBUGINFO_H
+#define LLVM_IR_DEBUGINFO_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"

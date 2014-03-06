@@ -16,7 +16,7 @@
 #include "llvm/ExecutionEngine/JITEventListener.h"
 
 #define DEBUG_TYPE "oprofile-jit-event-listener"
-#include "llvm/DebugInfo.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/CodeGen/MachineFunction.h"

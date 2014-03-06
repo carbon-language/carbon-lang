@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IR/AutoUpgrade.h"
-#include "llvm/DebugInfo.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
