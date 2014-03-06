@@ -18,6 +18,7 @@
 // PGOGEN: @[[BLC:__llvm_pgo_ctr[0-9]*]] = private global [9 x i64]  zeroinitializer
 // PGOGEN: @[[NOC:__llvm_pgo_ctr[0-9]*]] = private global [2 x i64]  zeroinitializer
 // PGOGEN: @[[MAC:__llvm_pgo_ctr[0-9]*]] = private global [1 x i64]  zeroinitializer
+// PGOGEN: @[[STF:__llvm_pgo_ctr[0-9]*]] = private global [2 x i64]  zeroinitializer
 
 // PGOGEN-LABEL: @simple_loops()
 // PGOUSE-LABEL: @simple_loops()
@@ -445,6 +446,16 @@ void no_usable_data() {
   // PGOUSE-NOT: br {{.*}} !prof ![0-9]+
 }
 
+// PGOGEN-LABEL: @static_func()
+// PGOUSE-LABEL: @static_func()
+// PGOGEN: store {{.*}} @[[STF]], i64 0, i64 0
+static void static_func() {
+  // PGOGEN: store {{.*}} @[[STF]], i64 0, i64 1
+  // PGOUSE: br {{.*}} !prof ![[ST1:[0-9]+]]
+  for (int i = 0; i < 10; ++i) {
+  }
+}
+
 // PGOUSE-DAG: ![[SL1]] = metadata !{metadata !"branch_weights", i32 101, i32 2}
 // PGOUSE-DAG: ![[SL2]] = metadata !{metadata !"branch_weights", i32 101, i32 2}
 // PGOUSE-DAG: ![[SL3]] = metadata !{metadata !"branch_weights", i32 76, i32 2}
@@ -513,6 +524,7 @@ void no_usable_data() {
 // PGOUSE-DAG: ![[BL6]] = metadata !{metadata !"branch_weights", i32 51, i32 2}
 // PGOUSE-DAG: ![[BL7]] = metadata !{metadata !"branch_weights", i32 26, i32 27}
 // PGOUSE-DAG: ![[BL8]] = metadata !{metadata !"branch_weights", i32 51, i32 2}
+// PGOUSE-DAG: ![[ST1]] = metadata !{metadata !"branch_weights", i32 11, i32 2}
 
 int main(int argc, const char *argv[]) {
   simple_loops();
@@ -525,5 +537,6 @@ int main(int argc, const char *argv[]) {
   boolop_loops();
   do_fallthrough();
   no_usable_data();
+  static_func();
   return 0;
 }

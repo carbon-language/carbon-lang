@@ -161,7 +161,32 @@ bool PGOProfileData::getFunctionCounts(StringRef FuncName,
   return false;
 }
 
-void CodeGenPGO::emitWriteoutFunction(StringRef Name) {
+void CodeGenPGO::setFuncName(llvm::Function *Fn) {
+  StringRef Func = Fn->getName();
+
+  // Function names may be prefixed with a binary '1' to indicate
+  // that the backend should not modify the symbols due to any platform
+  // naming convention. Do not include that '1' in the PGO profile name.
+  if (Func[0] == '\1')
+    Func = Func.substr(1);
+
+  if (!Fn->hasLocalLinkage()) {
+    FuncName = new std::string(Func);
+    return;
+  }
+
+  // For local symbols, prepend the main file name to distinguish them.
+  // Do not include the full path in the file name since there's no guarantee
+  // that it will stay the same, e.g., if the files are checked out from
+  // version control in different locations.
+  FuncName = new std::string(CGM.getCodeGenOpts().MainFileName);
+  if (FuncName->empty())
+    FuncName->assign("<unknown>");
+  FuncName->append(":");
+  FuncName->append(Func);
+}
+
+void CodeGenPGO::emitWriteoutFunction() {
   if (!CGM.getCodeGenOpts().ProfileInstrGenerate)
     return;
 
@@ -206,7 +231,7 @@ void CodeGenPGO::emitWriteoutFunction(StringRef Name) {
     CGM.getModule().getOrInsertFunction("llvm_pgo_emit", FTy);
 
   llvm::Constant *NameString =
-    CGM.GetAddrOfConstantCString(Name, "__llvm_pgo_name");
+    CGM.GetAddrOfConstantCString(getFuncName(), "__llvm_pgo_name");
   NameString = llvm::ConstantExpr::getBitCast(NameString, Int8PtrTy);
   PGOBuilder.CreateCall3(EmitFunc, NameString,
                          PGOBuilder.getInt32(NumRegionCounters),
@@ -727,19 +752,27 @@ namespace {
   };
 }
 
-void CodeGenPGO::assignRegionCounters(const Decl *D, StringRef Name) {
+void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
   bool InstrumentRegions = CGM.getCodeGenOpts().ProfileInstrGenerate;
   PGOProfileData *PGOData = CGM.getPGOData();
   if (!InstrumentRegions && !PGOData)
     return;
   if (!D)
     return;
+  setFuncName(Fn);
   mapRegionCounters(D);
   if (InstrumentRegions)
     emitCounterVariables();
   if (PGOData) {
-    loadRegionCounts(Name, PGOData);
+    loadRegionCounts(PGOData);
     computeRegionCounts(D);
+
+    // Turn on InlineHint attribute for hot functions.
+    if (PGOData->isHotFunction(getFuncName()))
+      Fn->addFnAttr(llvm::Attribute::InlineHint);
+    // Turn on Cold attribute for cold functions.
+    else if (PGOData->isColdFunction(getFuncName()))
+      Fn->addFnAttr(llvm::Attribute::Cold);
   }
 }
 
@@ -779,13 +812,13 @@ void CodeGenPGO::emitCounterIncrement(CGBuilderTy &Builder, unsigned Counter) {
   Builder.CreateStore(Count, Addr);
 }
 
-void CodeGenPGO::loadRegionCounts(StringRef Name, PGOProfileData *PGOData) {
+void CodeGenPGO::loadRegionCounts(PGOProfileData *PGOData) {
   // For now, ignore the counts from the PGO data file only if the number of
   // counters does not match. This could be tightened down in the future to
   // ignore counts when the input changes in various ways, e.g., by comparing a
   // hash value based on some characteristics of the input.
   RegionCounts = new std::vector<uint64_t>();
-  if (PGOData->getFunctionCounts(Name, *RegionCounts) ||
+  if (PGOData->getFunctionCounts(getFuncName(), *RegionCounts) ||
       RegionCounts->size() != NumRegionCounters) {
     delete RegionCounts;
     RegionCounts = 0;

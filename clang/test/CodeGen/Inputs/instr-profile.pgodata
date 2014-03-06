@@ -132,3 +132,7 @@ no_usable_data 5
 main 1
 1
 
+instr-profile.c:static_func 2
+1
+10
+

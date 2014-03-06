@@ -56,6 +56,7 @@ public:
 class CodeGenPGO {
 private:
   CodeGenModule &CGM;
+  std::string *FuncName;
 
   unsigned NumRegionCounters;
   llvm::GlobalVariable *RegionCounters;
@@ -66,14 +67,21 @@ private:
 
 public:
   CodeGenPGO(CodeGenModule &CGM)
-    : CGM(CGM), NumRegionCounters(0), RegionCounters(0), RegionCounterMap(0),
-      StmtCountMap(0), RegionCounts(0), CurrentRegionCount(0) {}
-  ~CodeGenPGO() {}
+    : CGM(CGM), FuncName(0), NumRegionCounters(0), RegionCounters(0),
+      RegionCounterMap(0), StmtCountMap(0), RegionCounts(0),
+      CurrentRegionCount(0) {}
+  ~CodeGenPGO() {
+    if (FuncName) delete FuncName;
+  }
 
   /// Whether or not we have PGO region data for the current function. This is
   /// false both when we have no data at all and when our data has been
   /// discarded.
   bool haveRegionCounts() const { return RegionCounts != 0; }
+
+  /// Get the string used to identify this function in the profile data.
+  /// For functions with local linkage, this includes the main file name.
+  const StringRef getFuncName() const { return StringRef(*FuncName); }
 
   /// Return the counter value of the current region.
   uint64_t getCurrentRegionCount() const { return CurrentRegionCount; }
@@ -118,9 +126,9 @@ public:
   /// function. Does nothing if instrumentation is not enabled and either
   /// generates global variables or associates PGO data with each of the
   /// counters depending on whether we are generating or using instrumentation.
-  void assignRegionCounters(const Decl *D, StringRef Name);
+  void assignRegionCounters(const Decl *D, llvm::Function *Fn);
   /// Emit code to write counts for a given function to disk, if necessary.
-  void emitWriteoutFunction(StringRef Name);
+  void emitWriteoutFunction();
   /// Clean up region counter state. Must be called if assignRegionCounters is
   /// used.
   void destroyRegionCounters();
@@ -129,9 +137,10 @@ public:
   static llvm::Function *emitInitialization(CodeGenModule &CGM);
 
 private:
+  void setFuncName(llvm::Function *Fn);
   void mapRegionCounters(const Decl *D);
   void computeRegionCounts(const Decl *D);
-  void loadRegionCounts(StringRef Name, PGOProfileData *PGOData);
+  void loadRegionCounts(PGOProfileData *PGOData);
   void emitCounterVariables();
 
   /// Emit code to increment the counter at the given index
