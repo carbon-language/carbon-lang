@@ -2526,11 +2526,11 @@ void DwarfDebug::emitDebugLoc() {
   unsigned char Size = Asm->getDataLayout().getPointerSize();
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", 0));
   unsigned index = 1;
-  for (SmallVectorImpl<DotDebugLocEntry>::iterator
+  for (SmallVectorImpl<DotDebugLocEntry>::const_iterator
            I = DotDebugLocEntries.begin(),
            E = DotDebugLocEntries.end();
        I != E; ++I, ++index) {
-    DotDebugLocEntry &Entry = *I;
+    const DotDebugLocEntry &Entry = *I;
     if (Entry.isMerged())
       continue;
     if (Entry.isEmpty()) {

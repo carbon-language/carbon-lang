@@ -124,8 +124,8 @@ public:
 
   /// \brief Empty entries are also used as a trigger to emit temp label. Such
   /// labels are referenced is used to find debug_loc offset for a given DIE.
-  bool isEmpty() { return Begin == 0 && End == 0; }
-  bool isMerged() { return Merged; }
+  bool isEmpty() const { return Begin == 0 && End == 0; }
+  bool isMerged() const { return Merged; }
   void Merge(DotDebugLocEntry *Next) {
     if (!(Begin && Loc == Next->Loc && End == Next->Begin))
       return;
