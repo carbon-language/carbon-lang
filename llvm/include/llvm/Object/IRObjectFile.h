@@ -23,8 +23,9 @@ class GlobalValue;
 
 namespace object {
 class IRObjectFile : public SymbolicFile {
-  OwningPtr<Module> M;
-  OwningPtr<Mangler> Mang;
+  std::unique_ptr<Module> M;
+  std::unique_ptr<Mangler> Mang;
+
 public:
   IRObjectFile(MemoryBuffer *Object, error_code &EC, LLVMContext &Context,
                bool BufferOwned);

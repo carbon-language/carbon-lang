@@ -179,9 +179,8 @@ static void reportError(StringRef Input, StringRef Message) {
 }
 
 /// @brief Creates an format-specific object file dumper.
-static error_code createDumper(const ObjectFile *Obj,
-                               StreamWriter &Writer,
-                               OwningPtr<ObjDumper> &Result) {
+static error_code createDumper(const ObjectFile *Obj, StreamWriter &Writer,
+                               std::unique_ptr<ObjDumper> &Result) {
   if (!Obj)
     return readobj_error::unsupported_file_format;
 
@@ -199,7 +198,7 @@ static error_code createDumper(const ObjectFile *Obj,
 /// @brief Dumps the specified object file.
 static void dumpObject(const ObjectFile *Obj) {
   StreamWriter Writer(outs());
-  OwningPtr<ObjDumper> Dumper;
+  std::unique_ptr<ObjDumper> Dumper;
   if (error_code EC = createDumper(Obj, Writer, Dumper)) {
     reportError(Obj->getFileName(), EC);
     return;
@@ -244,7 +243,7 @@ static void dumpArchive(const Archive *Arc) {
   for (Archive::child_iterator ArcI = Arc->child_begin(),
                                ArcE = Arc->child_end();
                                ArcI != ArcE; ++ArcI) {
-    OwningPtr<Binary> child;
+    std::unique_ptr<Binary> child;
     if (error_code EC = ArcI->getAsBinary(child)) {
       // Ignore non-object files.
       if (EC != object_error::invalid_file_type)
@@ -274,7 +273,7 @@ static void dumpInput(StringRef File) {
     reportError(File, EC);
     return;
   }
-  OwningPtr<Binary> Binary(BinaryOrErr.get());
+  std::unique_ptr<Binary> Binary(BinaryOrErr.get());
 
   if (Archive *Arc = dyn_cast<Archive>(Binary.get()))
     dumpArchive(Arc);

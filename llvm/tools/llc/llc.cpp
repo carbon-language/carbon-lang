@@ -206,7 +206,7 @@ int main(int argc, char **argv) {
 static int compileModule(char **argv, LLVMContext &Context) {
   // Load the module to be compiled...
   SMDiagnostic Err;
-  OwningPtr<Module> M;
+  std::unique_ptr<Module> M;
   Module *mod = 0;
   Triple TheTriple;
 
@@ -266,10 +266,9 @@ static int compileModule(char **argv, LLVMContext &Context) {
   TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
   Options.DisableIntegratedAS = NoIntegratedAssembler;
 
-  OwningPtr<TargetMachine>
-    target(TheTarget->createTargetMachine(TheTriple.getTriple(),
-                                          MCPU, FeaturesStr, Options,
-                                          RelocModel, CMModel, OLvl));
+  std::unique_ptr<TargetMachine> target(
+      TheTarget->createTargetMachine(TheTriple.getTriple(), MCPU, FeaturesStr,
+                                     Options, RelocModel, CMModel, OLvl));
   assert(target.get() && "Could not allocate target machine!");
   assert(mod && "Should have exited after outputting help!");
   TargetMachine &Target = *target.get();
@@ -284,8 +283,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
     FloatABIForCalls = FloatABI::Soft;
 
   // Figure out where we are going to send the output.
-  OwningPtr<tool_output_file> Out
-    (GetOutputStream(TheTarget->getName(), TheTriple.getOS(), argv[0]));
+  std::unique_ptr<tool_output_file> Out(
+      GetOutputStream(TheTarget->getName(), TheTriple.getOS(), argv[0]));
   if (!Out) return 1;
 
   // Build up all of the passes that we want to do to the module.

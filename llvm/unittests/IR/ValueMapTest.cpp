@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IR/ValueMap.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
@@ -24,8 +23,8 @@ template<typename T>
 class ValueMapTest : public testing::Test {
 protected:
   Constant *ConstantV;
-  OwningPtr<BitCastInst> BitcastV;
-  OwningPtr<BinaryOperator> AddV;
+  std::unique_ptr<BitCastInst> BitcastV;
+  std::unique_ptr<BinaryOperator> AddV;
 
   ValueMapTest() :
     ConstantV(ConstantInt::get(Type::getInt32Ty(getGlobalContext()), 0)),

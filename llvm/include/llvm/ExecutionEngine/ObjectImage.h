@@ -28,7 +28,7 @@ class ObjectImage {
   virtual void anchor();
 
 protected:
-  OwningPtr<ObjectBuffer> Buffer;
+  std::unique_ptr<ObjectBuffer> Buffer;
 
 public:
   ObjectImage(ObjectBuffer *Input) : Buffer(Input) {}

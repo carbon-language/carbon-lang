@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
@@ -41,9 +40,9 @@ protected:
   formatted_raw_ostream &OS;
   const MCAsmInfo *MAI;
 private:
-  OwningPtr<MCInstPrinter> InstPrinter;
-  OwningPtr<MCCodeEmitter> Emitter;
-  OwningPtr<MCAsmBackend> AsmBackend;
+  std::unique_ptr<MCInstPrinter> InstPrinter;
+  std::unique_ptr<MCCodeEmitter> Emitter;
+  std::unique_ptr<MCAsmBackend> AsmBackend;
 
   SmallString<128> CommentToEmit;
   raw_svector_ostream CommentStream;

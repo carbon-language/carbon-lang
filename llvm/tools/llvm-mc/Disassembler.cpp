@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Disassembler.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
@@ -159,7 +158,7 @@ int Disassembler::disassemble(const Target &T,
                               MemoryBuffer &Buffer,
                               SourceMgr &SM,
                               raw_ostream &Out) {
-  OwningPtr<const MCDisassembler> DisAsm(T.createMCDisassembler(STI));
+  std::unique_ptr<const MCDisassembler> DisAsm(T.createMCDisassembler(STI));
   if (!DisAsm) {
     errs() << "error: no disassembler for target " << Triple << "\n";
     return -1;

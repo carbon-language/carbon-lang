@@ -15,7 +15,6 @@
 #ifndef LLVM_BITCODE_BITSTREAMREADER_H
 #define LLVM_BITCODE_BITSTREAMREADER_H
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/BitCodes.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/StreamableMemoryObject.h"
@@ -44,7 +43,7 @@ public:
     std::vector<std::pair<unsigned, std::string> > RecordNames;
   };
 private:
-  OwningPtr<StreamableMemoryObject> BitcodeBytes;
+  std::unique_ptr<StreamableMemoryObject> BitcodeBytes;
 
   std::vector<BlockInfo> BlockInfoRecords;
 

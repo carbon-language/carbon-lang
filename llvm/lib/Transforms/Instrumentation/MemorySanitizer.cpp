@@ -272,7 +272,7 @@ class MemorySanitizer : public FunctionPass {
   /// \brief Path to blacklist file.
   SmallString<64> BlacklistFile;
   /// \brief The blacklist.
-  OwningPtr<SpecialCaseList> BL;
+  std::unique_ptr<SpecialCaseList> BL;
   /// \brief An empty volatile inline asm that prevents callback merge.
   InlineAsm *EmptyAsm;
 
@@ -489,7 +489,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   MemorySanitizer &MS;
   SmallVector<PHINode *, 16> ShadowPHINodes, OriginPHINodes;
   ValueMap<Value*, Value*> ShadowMap, OriginMap;
-  OwningPtr<VarArgHelper> VAHelper;
+  std::unique_ptr<VarArgHelper> VAHelper;
 
   // The following flags disable parts of MSan instrumentation based on
   // blacklist contents and command-line options.

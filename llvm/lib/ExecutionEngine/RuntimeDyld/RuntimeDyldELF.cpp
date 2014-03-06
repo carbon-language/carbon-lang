@@ -16,7 +16,6 @@
 #include "JITRegistrar.h"
 #include "ObjectImageCommon.h"
 #include "llvm/ADT/IntervalMap.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"

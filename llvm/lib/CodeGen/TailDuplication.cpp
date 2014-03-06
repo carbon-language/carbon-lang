@@ -15,7 +15,6 @@
 #define DEBUG_TYPE "tailduplication"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -65,7 +64,7 @@ namespace {
     const MachineBranchProbabilityInfo *MBPI;
     MachineModuleInfo *MMI;
     MachineRegisterInfo *MRI;
-    OwningPtr<RegScavenger> RS;
+    std::unique_ptr<RegScavenger> RS;
     bool PreRegAlloc;
 
     // SSAUpdateVRs - A list of virtual registers for which to update SSA form.

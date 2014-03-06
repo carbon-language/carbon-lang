@@ -53,8 +53,8 @@ inline const char* getFilename() {
 template<typename WrapperT>
 class JITEventListenerTestBase : public testing::Test {
 protected:
-  llvm::OwningPtr<WrapperT> MockWrapper;
-  llvm::OwningPtr<llvm::JITEventListener> Listener;
+  std::unique_ptr<WrapperT> MockWrapper;
+  std::unique_ptr<llvm::JITEventListener> Listener;
 
 public:
   llvm::Module* M;

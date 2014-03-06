@@ -770,7 +770,7 @@ static void performWriteOperation(ArchiveOperation Operation,
   MemberBuffers.resize(NewMembers.size());
 
   for (unsigned I = 0, N = NewMembers.size(); I < N; ++I) {
-    OwningPtr<MemoryBuffer> MemberBuffer;
+    std::unique_ptr<MemoryBuffer> MemberBuffer;
     NewArchiveIterator &Member = NewMembers[I];
 
     if (Member.isNewMember()) {
@@ -938,7 +938,7 @@ int ar_main(char **argv) {
 
 static int performOperation(ArchiveOperation Operation) {
   // Create or open the archive object.
-  OwningPtr<MemoryBuffer> Buf;
+  std::unique_ptr<MemoryBuffer> Buf;
   error_code EC = MemoryBuffer::getFile(ArchiveName, Buf, -1, false);
   if (EC && EC != llvm::errc::no_such_file_or_directory) {
     errs() << ToolName << ": error opening '" << ArchiveName

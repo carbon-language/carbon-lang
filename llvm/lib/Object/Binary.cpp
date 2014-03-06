@@ -43,7 +43,7 @@ StringRef Binary::getFileName() const {
 
 ErrorOr<Binary *> object::createBinary(MemoryBuffer *Source,
                                        LLVMContext *Context) {
-  OwningPtr<MemoryBuffer> scopedSource(Source);
+  std::unique_ptr<MemoryBuffer> scopedSource(Source);
   sys::fs::file_magic Type = sys::fs::identify_magic(Source->getBuffer());
 
   switch (Type) {
@@ -80,7 +80,7 @@ ErrorOr<Binary *> object::createBinary(MemoryBuffer *Source,
 }
 
 ErrorOr<Binary *> object::createBinary(StringRef Path) {
-  OwningPtr<MemoryBuffer> File;
+  std::unique_ptr<MemoryBuffer> File;
   if (error_code EC = MemoryBuffer::getFileOrSTDIN(Path, File))
     return EC;
   return createBinary(File.release());

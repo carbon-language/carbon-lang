@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -136,7 +135,7 @@ MarkupTag MarkupParser::parseTag() {
 }
 
 static void parseMCMarkup(StringRef Filename) {
-  OwningPtr<MemoryBuffer> BufferPtr;
+  std::unique_ptr<MemoryBuffer> BufferPtr;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, BufferPtr)) {
     errs() << ToolName << ": " << ec.message() << '\n';
     return;

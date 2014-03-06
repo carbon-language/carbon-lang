@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/ExecutionEngine/ObjectBuffer.h"
@@ -133,8 +132,8 @@ static int printLineInfoForInput() {
     RuntimeDyld Dyld(&MemMgr);
 
     // Load the input memory buffer.
-    OwningPtr<MemoryBuffer> InputBuffer;
-    OwningPtr<ObjectImage>  LoadedObject;
+    std::unique_ptr<MemoryBuffer> InputBuffer;
+    std::unique_ptr<ObjectImage> LoadedObject;
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFileList[i],
                                                      InputBuffer))
       return Error("unable to read input: '" + ec.message() + "'");
@@ -148,7 +147,8 @@ static int printLineInfoForInput() {
     // Resolve all the relocations we can.
     Dyld.resolveRelocations();
 
-    OwningPtr<DIContext> Context(DIContext::getDWARFContext(LoadedObject->getObjectFile()));
+    std::unique_ptr<DIContext> Context(
+        DIContext::getDWARFContext(LoadedObject->getObjectFile()));
 
     // Use symbol info to iterate functions in the object.
     for (object::symbol_iterator I = LoadedObject->begin_symbols(),
@@ -191,8 +191,8 @@ static int executeInput() {
     InputFileList.push_back("-");
   for(unsigned i = 0, e = InputFileList.size(); i != e; ++i) {
     // Load the input memory buffer.
-    OwningPtr<MemoryBuffer> InputBuffer;
-    OwningPtr<ObjectImage>  LoadedObject;
+    std::unique_ptr<MemoryBuffer> InputBuffer;
+    std::unique_ptr<ObjectImage> LoadedObject;
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFileList[i],
                                                      InputBuffer))
       return Error("unable to read input: '" + ec.message() + "'");

@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
@@ -41,7 +40,7 @@ protected:
   }
 
   LLVMContext Ctx;
-  OwningPtr<Module> M;
+  std::unique_ptr<Module> M;
   Function *F;
   BasicBlock *BB;
   GlobalVariable *GV;
@@ -109,7 +108,7 @@ TEST_F(IRBuilderTest, LandingPadName) {
 }
 
 TEST_F(IRBuilderTest, DataLayout) {
-  OwningPtr<Module> M(new Module("test", Ctx));
+  std::unique_ptr<Module> M(new Module("test", Ctx));
   M->setDataLayout("e-n32");
   EXPECT_TRUE(M->getDataLayout()->isLegalInteger(32));
   M->setDataLayout("e");

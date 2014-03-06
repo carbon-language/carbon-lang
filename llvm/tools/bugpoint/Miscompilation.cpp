@@ -128,8 +128,8 @@ ReduceMiscompilingPasses::doTest(std::vector<std::string> &Prefix,
   // Ok, so now we know that the prefix passes work, try running the suffix
   // passes on the result of the prefix passes.
   //
-  OwningPtr<Module> PrefixOutput(ParseInputFile(BitcodeResult,
-                                                BD.getContext()));
+  std::unique_ptr<Module> PrefixOutput(
+      ParseInputFile(BitcodeResult, BD.getContext()));
   if (!PrefixOutput) {
     errs() << BD.getToolName() << ": Error reading bitcode file '"
            << BitcodeResult << "'!\n";
@@ -145,7 +145,8 @@ ReduceMiscompilingPasses::doTest(std::vector<std::string> &Prefix,
             << "' passes compile correctly after the '"
             << getPassesString(Prefix) << "' passes: ";
 
-  OwningPtr<Module> OriginalInput(BD.swapProgramIn(PrefixOutput.release()));
+  std::unique_ptr<Module> OriginalInput(
+      BD.swapProgramIn(PrefixOutput.release()));
   if (BD.runPasses(BD.getProgram(), Suffix, BitcodeResult, false/*delete*/,
                    true/*quiet*/)) {
     errs() << " Error running this sequence of passes"

@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "WindowsSupport.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/FileSystem.h"
 #include <cstdio>
 #include <fcntl.h>
@@ -187,7 +186,7 @@ static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
   }
 
   // Now build the command line.
-  OwningArrayPtr<char> command(new char[len+1]);
+  std::unique_ptr<char[]> command(new char[len+1]);
   char *p = command.get();
 
   for (unsigned i = 0; args[i]; i++) {

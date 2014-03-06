@@ -503,7 +503,7 @@ bool DebugIR::updateExtension(StringRef NewExtension) {
   return true;
 }
 
-void DebugIR::generateFilename(OwningPtr<int> &fd) {
+void DebugIR::generateFilename(std::unique_ptr<int> &fd) {
   SmallVector<char, 16> PathVec;
   fd.reset(new int);
   sys::fs::createTemporaryFile("debug-ir", "ll", *fd, PathVec);
@@ -524,7 +524,7 @@ std::string DebugIR::getPath() {
 }
 
 void DebugIR::writeDebugBitcode(const Module *M, int *fd) {
-  OwningPtr<raw_fd_ostream> Out;
+  std::unique_ptr<raw_fd_ostream> Out;
   std::string error;
 
   if (!fd) {
@@ -542,12 +542,12 @@ void DebugIR::writeDebugBitcode(const Module *M, int *fd) {
   Out->close();
 }
 
-void DebugIR::createDebugInfo(Module &M, OwningPtr<Module> &DisplayM) {
+void DebugIR::createDebugInfo(Module &M, std::unique_ptr<Module> &DisplayM) {
   if (M.getFunctionList().size() == 0)
     // no functions -- no debug info needed
     return;
 
-  OwningPtr<ValueToValueMapTy> VMap;
+  std::unique_ptr<ValueToValueMapTy> VMap;
 
   if (WriteSourceToDisk && (HideDebugIntrinsics || HideDebugMetadata)) {
     VMap.reset(new ValueToValueMapTy);
@@ -566,7 +566,7 @@ void DebugIR::createDebugInfo(Module &M, OwningPtr<Module> &DisplayM) {
 bool DebugIR::isMissingPath() { return Filename.empty() || Directory.empty(); }
 
 bool DebugIR::runOnModule(Module &M) {
-  OwningPtr<int> fd;
+  std::unique_ptr<int> fd;
 
   if (isMissingPath() && !getSourceInfo(M)) {
     if (!WriteSourceToDisk)
@@ -585,7 +585,7 @@ bool DebugIR::runOnModule(Module &M) {
   // file name from the DICompileUnit descriptor.
   DebugMetadataRemover::process(M, !ParsedPath);
 
-  OwningPtr<Module> DisplayM;
+  std::unique_ptr<Module> DisplayM;
   createDebugInfo(M, DisplayM);
   if (WriteSourceToDisk) {
     Module *OutputM = DisplayM.get() ? DisplayM.get() : &M;

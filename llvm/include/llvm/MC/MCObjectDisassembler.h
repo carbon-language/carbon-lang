@@ -16,7 +16,6 @@
 #define LLVM_MC_MCOBJECTDISASSEMBLER_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MemoryObject.h"
@@ -67,7 +66,7 @@ public:
   /// \brief Set the region on which to fallback if disassembly was requested
   /// somewhere not accessible in the object file.
   /// This is used for dynamic disassembly (see RawMemoryObject).
-  void setFallbackRegion(OwningPtr<MemoryObject> &Region) {
+  void setFallbackRegion(std::unique_ptr<MemoryObject> &Region) {
     FallbackRegion.reset(Region.release());
   }
 
@@ -113,7 +112,7 @@ protected:
   MCObjectSymbolizer *MOS;
 
   /// \brief The fallback memory region, outside the object file.
-  OwningPtr<MemoryObject> FallbackRegion;
+  std::unique_ptr<MemoryObject> FallbackRegion;
 
   /// \brief Return a memory region suitable for reading starting at \p Addr.
   /// In most cases, this returns a StringRefMemoryObject backed by the

@@ -111,7 +111,7 @@ public:
 private:
   std::string Prompt;
   std::string HistoryPath;
-  OwningPtr<InternalData> Data;
+  std::unique_ptr<InternalData> Data;
 
   struct CompleterConcept {
     virtual ~CompleterConcept();
@@ -145,7 +145,7 @@ private:
     T Value;
   };
 
-  llvm::OwningPtr<const CompleterConcept> Completer;
+  std::unique_ptr<const CompleterConcept> Completer;
 };
 
 }

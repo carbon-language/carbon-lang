@@ -443,7 +443,7 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M,
 }
 
 ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
-  OwningPtr<TargetMachine> TheTM(TM); // Take ownership.
+  std::unique_ptr<TargetMachine> TheTM(TM); // Take ownership.
 
   // Make sure we can resolve symbols in the program as well. The zero arg
   // to the function tells DynamicLibrary to load the program, not a library.

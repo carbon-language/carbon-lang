@@ -18,7 +18,6 @@
 #include "DwarfDebug.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/DebugInfo.h"
@@ -71,7 +70,7 @@ protected:
   DICompileUnit CUNode;
 
   /// Unit debug information entry.
-  const OwningPtr<DIE> UnitDie;
+  const std::unique_ptr<DIE> UnitDie;
 
   /// Offset of the UnitDie from beginning of debug info section.
   unsigned DebugInfoOffset;

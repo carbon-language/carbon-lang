@@ -15,7 +15,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "yaml2obj.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -57,7 +56,7 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
-  OwningPtr<MemoryBuffer> Buf;
+  std::unique_ptr<MemoryBuffer> Buf;
   if (MemoryBuffer::getFileOrSTDIN(Input, Buf))
     return 1;
   if (Format == YOF_COFF) {

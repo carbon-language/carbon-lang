@@ -15,7 +15,6 @@
 
 #include "llvm/IR/LLVMContext.h"
 #include "../../lib/ExecutionEngine/IntelJITEvents/IntelJITEventsWrapper.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
@@ -163,16 +162,15 @@ protected:
   LLVMContext Context; // Global ownership
   Module *TheModule; // Owned by ExecutionEngine.
   JITMemoryManager *JMM; // Owned by ExecutionEngine.
-  OwningPtr<ExecutionEngine> TheJIT;
+  std::unique_ptr<ExecutionEngine> TheJIT;
 
 public:
   void ProcessInput(const std::string &Filename) {
     InitEE(Filename);
 
-    llvm::OwningPtr<llvm::JITEventListener> Listener(JITEventListener::createIntelJITEventListener(
-        new IntelJITEventsWrapper(NotifyEvent, 0,
-          IsProfilingActive, 0, 0,
-          GetNewMethodID)));
+    std::unique_ptr<llvm::JITEventListener> Listener(
+        JITEventListener::createIntelJITEventListener(new IntelJITEventsWrapper(
+            NotifyEvent, 0, IsProfilingActive, 0, 0, GetNewMethodID)));
 
     TheJIT->RegisterJITEventListener(Listener.get());
 

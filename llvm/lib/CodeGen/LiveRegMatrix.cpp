@@ -67,7 +67,7 @@ void LiveRegMatrix::releaseMemory() {
     Matrix[i].clear();
     // No need to clear Queries here, since LiveIntervalUnion::Query doesn't
     // have anything important to clear and LiveRegMatrix's runOnFunction()
-    // does a OwningPtr::reset anyways.
+    // does a std::unique_ptr::reset anyways.
   }
 }
 

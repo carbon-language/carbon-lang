@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -96,7 +95,7 @@ int main(int argc, char **argv) {
 
   GCOVFile GF;
 
-  OwningPtr<MemoryBuffer> GCNO_Buff;
+  std::unique_ptr<MemoryBuffer> GCNO_Buff;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCNO, GCNO_Buff)) {
     errs() << InputGCNO << ": " << ec.message() << "\n";
     return 1;
@@ -107,7 +106,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  OwningPtr<MemoryBuffer> GCDA_Buff;
+  std::unique_ptr<MemoryBuffer> GCDA_Buff;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputGCDA, GCDA_Buff)) {
     if (ec != errc::no_such_file_or_directory) {
       errs() << InputGCDA << ": " << ec.message() << "\n";

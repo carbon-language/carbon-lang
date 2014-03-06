@@ -32,7 +32,7 @@ namespace {
 
 struct PatternMatchTest : ::testing::Test {
   LLVMContext Ctx;
-  OwningPtr<Module> M;
+  std::unique_ptr<Module> M;
   Function *F;
   BasicBlock *BB;
   IRBuilder<true, NoFolder> IRB;

@@ -146,7 +146,7 @@ ObjectBufferStream* MCJIT::emitObject(Module *M) {
   PM.add(new DataLayoutPass(M));
 
   // The RuntimeDyld will take ownership of this shortly
-  OwningPtr<ObjectBufferStream> CompiledObject(new ObjectBufferStream());
+  std::unique_ptr<ObjectBufferStream> CompiledObject(new ObjectBufferStream());
 
   // Turn the machine code intermediate representation into bytes in memory
   // that may be executed.
@@ -164,7 +164,7 @@ ObjectBufferStream* MCJIT::emitObject(Module *M) {
   if (ObjCache) {
     // MemoryBuffer is a thin wrapper around the actual memory, so it's OK
     // to create a temporary object here and delete it after the call.
-    OwningPtr<MemoryBuffer> MB(CompiledObject->getMemBuffer());
+    std::unique_ptr<MemoryBuffer> MB(CompiledObject->getMemBuffer());
     ObjCache->notifyObjectCompiled(M, MB.get());
   }
 
@@ -183,10 +183,10 @@ void MCJIT::generateCodeForModule(Module *M) {
   if (OwnedModules.hasModuleBeenLoaded(M))
     return;
 
-  OwningPtr<ObjectBuffer> ObjectToLoad;
+  std::unique_ptr<ObjectBuffer> ObjectToLoad;
   // Try to load the pre-compiled object from cache if possible
   if (0 != ObjCache) {
-    OwningPtr<MemoryBuffer> PreCompiledObject(ObjCache->getObject(M));
+    std::unique_ptr<MemoryBuffer> PreCompiledObject(ObjCache->getObject(M));
     if (0 != PreCompiledObject.get())
       ObjectToLoad.reset(new ObjectBuffer(PreCompiledObject.release()));
   }
@@ -304,7 +304,7 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
     // Look for our symbols in each Archive
     object::Archive::child_iterator ChildIt = A->findSym(Name);
     if (ChildIt != A->child_end()) {
-      OwningPtr<object::Binary> ChildBin;
+      std::unique_ptr<object::Binary> ChildBin;
       // FIXME: Support nested archives?
       if (!ChildIt->getAsBinary(ChildBin) && ChildBin->isObject()) {
         object::ObjectFile *OF = reinterpret_cast<object::ObjectFile *>(

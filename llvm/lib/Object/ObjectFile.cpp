@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -87,7 +86,7 @@ ErrorOr<ObjectFile *> ObjectFile::createObjectFile(MemoryBuffer *Object,
 }
 
 ErrorOr<ObjectFile *> ObjectFile::createObjectFile(StringRef ObjectPath) {
-  OwningPtr<MemoryBuffer> File;
+  std::unique_ptr<MemoryBuffer> File;
   if (error_code EC = MemoryBuffer::getFile(ObjectPath, File))
     return EC;
   return createObjectFile(File.release());

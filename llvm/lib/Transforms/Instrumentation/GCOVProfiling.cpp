@@ -687,7 +687,7 @@ GlobalVariable *GCOVProfiler::buildEdgeLookupTable(
   Type *Int64PtrTy = Type::getInt64PtrTy(*Ctx);
   ArrayType *EdgeTableTy = ArrayType::get(Int64PtrTy, TableSize);
 
-  OwningArrayPtr<Constant *> EdgeTable(new Constant*[TableSize]);
+  std::unique_ptr<Constant * []> EdgeTable(new Constant *[TableSize]);
   Constant *NullValue = Constant::getNullValue(Int64PtrTy);
   for (size_t i = 0; i != TableSize; ++i)
     EdgeTable[i] = NullValue;

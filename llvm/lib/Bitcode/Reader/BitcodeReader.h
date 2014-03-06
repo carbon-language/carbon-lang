@@ -127,7 +127,7 @@ class BitcodeReader : public GVMaterializer {
   Module *TheModule;
   MemoryBuffer *Buffer;
   bool BufferOwned;
-  OwningPtr<BitstreamReader> StreamFile;
+  std::unique_ptr<BitstreamReader> StreamFile;
   BitstreamCursor Stream;
   DataStreamer *LazyStreamer;
   uint64_t NextUnreadBit;

@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Compression.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
@@ -48,10 +47,10 @@ static zlib::Status encodeZlibReturnValue(int ReturnValue) {
 
 bool zlib::isAvailable() { return true; }
 zlib::Status zlib::compress(StringRef InputBuffer,
-                            OwningPtr<MemoryBuffer> &CompressedBuffer,
+                            std::unique_ptr<MemoryBuffer> &CompressedBuffer,
                             CompressionLevel Level) {
   unsigned long CompressedSize = ::compressBound(InputBuffer.size());
-  OwningArrayPtr<char> TmpBuffer(new char[CompressedSize]);
+  std::unique_ptr<char[]> TmpBuffer(new char[CompressedSize]);
   int CLevel = encodeZlibCompressionLevel(Level);
   Status Res = encodeZlibReturnValue(::compress2(
       (Bytef *)TmpBuffer.get(), &CompressedSize,
@@ -66,9 +65,9 @@ zlib::Status zlib::compress(StringRef InputBuffer,
 }
 
 zlib::Status zlib::uncompress(StringRef InputBuffer,
-                              OwningPtr<MemoryBuffer> &UncompressedBuffer,
+                              std::unique_ptr<MemoryBuffer> &UncompressedBuffer,
                               size_t UncompressedSize) {
-  OwningArrayPtr<char> TmpBuffer(new char[UncompressedSize]);
+  std::unique_ptr<char[]> TmpBuffer(new char[UncompressedSize]);
   Status Res = encodeZlibReturnValue(
       ::uncompress((Bytef *)TmpBuffer.get(), (uLongf *)&UncompressedSize,
                    (const Bytef *)InputBuffer.data(), InputBuffer.size()));
@@ -88,12 +87,12 @@ uint32_t zlib::crc32(StringRef Buffer) {
 #else
 bool zlib::isAvailable() { return false; }
 zlib::Status zlib::compress(StringRef InputBuffer,
-                            OwningPtr<MemoryBuffer> &CompressedBuffer,
+                            std::unique_ptr<MemoryBuffer> &CompressedBuffer,
                             CompressionLevel Level) {
   return zlib::StatusUnsupported;
 }
 zlib::Status zlib::uncompress(StringRef InputBuffer,
-                              OwningPtr<MemoryBuffer> &UncompressedBuffer,
+                              std::unique_ptr<MemoryBuffer> &UncompressedBuffer,
                               size_t UncompressedSize) {
   return zlib::StatusUnsupported;
 }

@@ -15,7 +15,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/SpecialCaseList.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -55,7 +54,7 @@ SpecialCaseList *SpecialCaseList::create(
     const StringRef Path, std::string &Error) {
   if (Path.empty())
     return new SpecialCaseList();
-  OwningPtr<MemoryBuffer> File;
+  std::unique_ptr<MemoryBuffer> File;
   if (error_code EC = MemoryBuffer::getFile(Path, File)) {
     Error = (Twine("Can't open file '") + Path + "': " + EC.message()).str();
     return 0;
@@ -65,7 +64,7 @@ SpecialCaseList *SpecialCaseList::create(
 
 SpecialCaseList *SpecialCaseList::create(
     const MemoryBuffer *MB, std::string &Error) {
-  OwningPtr<SpecialCaseList> SCL(new SpecialCaseList());
+  std::unique_ptr<SpecialCaseList> SCL(new SpecialCaseList());
   if (!SCL->parse(MB, Error))
     return 0;
   return SCL.release();

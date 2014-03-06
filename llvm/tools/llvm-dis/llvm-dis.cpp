@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .ll disassembler\n");
 
   std::string ErrorMessage;
-  OwningPtr<Module> M;
+  std::unique_ptr<Module> M;
 
   // Use the bitcode streaming interface
   DataStreamer *streamer = getDataFileStreamer(InputFilename, &ErrorMessage);
@@ -171,14 +171,14 @@ int main(int argc, char **argv) {
   }
 
   std::string ErrorInfo;
-  OwningPtr<tool_output_file> Out(new tool_output_file(
-      OutputFilename.c_str(), ErrorInfo, sys::fs::F_None));
+  std::unique_ptr<tool_output_file> Out(
+      new tool_output_file(OutputFilename.c_str(), ErrorInfo, sys::fs::F_None));
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << '\n';
     return 1;
   }
 
-  OwningPtr<AssemblyAnnotationWriter> Annotator;
+  std::unique_ptr<AssemblyAnnotationWriter> Annotator;
   if (ShowAnnotations)
     Annotator.reset(new CommentWriter());
 

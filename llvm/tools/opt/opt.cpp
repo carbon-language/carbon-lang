@@ -356,7 +356,7 @@ int main(int argc, char **argv) {
   SMDiagnostic Err;
 
   // Load the input module...
-  OwningPtr<Module> M;
+  std::unique_ptr<Module> M;
   M.reset(ParseIRFile(InputFilename, Err, Context));
 
   if (M.get() == 0) {
@@ -369,7 +369,7 @@ int main(int argc, char **argv) {
     M->setTargetTriple(Triple::normalize(TargetTriple));
 
   // Figure out what stream we are supposed to write to...
-  OwningPtr<tool_output_file> Out;
+  std::unique_ptr<tool_output_file> Out;
   if (NoOutput) {
     if (!OutputFilename.empty())
       errs() << "WARNING: The -o (output filename) option is ignored when\n"
@@ -442,13 +442,13 @@ int main(int argc, char **argv) {
   TargetMachine *Machine = 0;
   if (ModuleTriple.getArch())
     Machine = GetTargetMachine(Triple(ModuleTriple));
-  OwningPtr<TargetMachine> TM(Machine);
+  std::unique_ptr<TargetMachine> TM(Machine);
 
   // Add internal analysis passes from the target machine.
   if (TM.get())
     TM->addAnalysisPasses(Passes);
 
-  OwningPtr<FunctionPassManager> FPasses;
+  std::unique_ptr<FunctionPassManager> FPasses;
   if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {
     FPasses.reset(new FunctionPassManager(M.get()));
     if (DL)

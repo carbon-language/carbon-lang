@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/OwningPtr.h"
 #include "MCJITTestBase.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
@@ -101,7 +100,7 @@ protected:
 
   void compileAndRun(int ExpectedRC = OriginalRC) {
     // This function shouldn't be called until after SetUp.
-    ASSERT_TRUE(TheJIT.isValid());
+    ASSERT_TRUE(bool(TheJIT));
     ASSERT_TRUE(0 != Main);
 
     // We may be using a null cache, so ensure compilation is valid.
@@ -133,7 +132,7 @@ TEST_F(MCJITObjectCacheTest, SetNullObjectCache) {
 TEST_F(MCJITObjectCacheTest, VerifyBasicObjectCaching) {
   SKIP_UNSUPPORTED_PLATFORM;
 
-  OwningPtr<TestObjectCache>  Cache(new TestObjectCache);
+  std::unique_ptr<TestObjectCache> Cache(new TestObjectCache);
 
   // Save a copy of the module pointer before handing it off to MCJIT.
   const Module * SavedModulePointer = M.get();
@@ -162,7 +161,7 @@ TEST_F(MCJITObjectCacheTest, VerifyBasicObjectCaching) {
 TEST_F(MCJITObjectCacheTest, VerifyLoadFromCache) {
   SKIP_UNSUPPORTED_PLATFORM;
 
-  OwningPtr<TestObjectCache>  Cache(new TestObjectCache);
+  std::unique_ptr<TestObjectCache> Cache(new TestObjectCache);
 
   // Compile this module with an MCJIT engine
   createJIT(M.release());
@@ -196,7 +195,7 @@ TEST_F(MCJITObjectCacheTest, VerifyLoadFromCache) {
 TEST_F(MCJITObjectCacheTest, VerifyNonLoadFromCache) {
   SKIP_UNSUPPORTED_PLATFORM;
 
-  OwningPtr<TestObjectCache>  Cache(new TestObjectCache);
+  std::unique_ptr<TestObjectCache> Cache(new TestObjectCache);
 
   // Compile this module with an MCJIT engine
   createJIT(M.release());

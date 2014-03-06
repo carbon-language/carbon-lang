@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -101,8 +100,8 @@ int main(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM profile data merger\n");
 
-  OwningPtr<MemoryBuffer> File1;
-  OwningPtr<MemoryBuffer> File2;
+  std::unique_ptr<MemoryBuffer> File1;
+  std::unique_ptr<MemoryBuffer> File2;
   if (error_code ec = MemoryBuffer::getFile(Filename1, File1))
     exitWithError(ec.message(), Filename1);
   if (error_code ec = MemoryBuffer::getFile(Filename2, File2))

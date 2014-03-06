@@ -36,7 +36,7 @@ LockFileManager::readLockFile(StringRef LockFileName) {
 
   // Read the owning host and PID out of the lock file. If it appears that the
   // owning process is dead, the lock file is invalid.
-  OwningPtr<MemoryBuffer> MB;
+  std::unique_ptr<MemoryBuffer> MB;
   if (MemoryBuffer::getFile(LockFileName, MB))
     return None;
 

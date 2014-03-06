@@ -18,7 +18,6 @@
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
@@ -620,7 +619,7 @@ void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
 static bool ExpandResponseFile(const char *FName, StringSaver &Saver,
                                TokenizerCallback Tokenizer,
                                SmallVectorImpl<const char *> &NewArgv) {
-  OwningPtr<MemoryBuffer> MemBuf;
+  std::unique_ptr<MemoryBuffer> MemBuf;
   if (MemoryBuffer::getFile(FName, MemBuf))
     return false;
   StringRef Str(MemBuf->getBufferStart(), MemBuf->getBufferSize());

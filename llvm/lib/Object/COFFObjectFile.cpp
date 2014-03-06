@@ -1068,7 +1068,8 @@ error_code ExportDirectoryEntryRef::getSymbolName(StringRef &Result) const {
 ErrorOr<ObjectFile *> ObjectFile::createCOFFObjectFile(MemoryBuffer *Object,
                                                        bool BufferOwned) {
   error_code EC;
-  OwningPtr<COFFObjectFile> Ret(new COFFObjectFile(Object, EC, BufferOwned));
+  std::unique_ptr<COFFObjectFile> Ret(
+      new COFFObjectFile(Object, EC, BufferOwned));
   if (EC)
     return EC;
   return Ret.release();

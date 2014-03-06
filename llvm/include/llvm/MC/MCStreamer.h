@@ -130,7 +130,7 @@ public:
   void emitCurrentConstantPool();
 
 private:
-  OwningPtr<AssemblerConstantPools> ConstantPools;
+  std::unique_ptr<AssemblerConstantPools> ConstantPools;
 };
 
 /// MCStreamer - Streaming machine code generation interface.  This interface
@@ -144,7 +144,7 @@ private:
 ///
 class MCStreamer {
   MCContext &Context;
-  OwningPtr<MCTargetStreamer> TargetStreamer;
+  std::unique_ptr<MCTargetStreamer> TargetStreamer;
 
   MCStreamer(const MCStreamer &) LLVM_DELETED_FUNCTION;
   MCStreamer &operator=(const MCStreamer &) LLVM_DELETED_FUNCTION;

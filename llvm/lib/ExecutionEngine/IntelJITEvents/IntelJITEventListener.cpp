@@ -20,7 +20,6 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/ExecutionEngine/ObjectImage.h"
@@ -40,7 +39,7 @@ namespace {
 class IntelJITEventListener : public JITEventListener {
   typedef DenseMap<void*, unsigned int> MethodIDMap;
 
-  OwningPtr<IntelJITEventsWrapper> Wrapper;
+  std::unique_ptr<IntelJITEventsWrapper> Wrapper;
   MethodIDMap MethodIDs;
   FilenameCache Filenames;
 

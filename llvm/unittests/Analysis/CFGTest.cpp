@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CFG.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Dominators.h"
@@ -116,7 +115,7 @@ protected:
     PM.run(*M);
   }
 
-  OwningPtr<Module> M;
+  std::unique_ptr<Module> M;
   Instruction *A, *B;
 };
 

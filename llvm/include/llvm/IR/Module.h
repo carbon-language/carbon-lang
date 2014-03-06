@@ -15,7 +15,6 @@
 #ifndef LLVM_IR_MODULE_H
 #define LLVM_IR_MODULE_H
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalAlias.h"
@@ -197,7 +196,8 @@ private:
   NamedMDListType NamedMDList;    ///< The named metadata in the module
   std::string GlobalScopeAsm;     ///< Inline Asm at global scope.
   ValueSymbolTable *ValSymTab;    ///< Symbol table for values
-  OwningPtr<GVMaterializer> Materializer;  ///< Used to materialize GlobalValues
+  std::unique_ptr<GVMaterializer>
+  Materializer;                   ///< Used to materialize GlobalValues
   std::string ModuleID;           ///< Human readable identifier for the module
   std::string TargetTriple;       ///< Platform target triple Module compiled on
   void *NamedMDSymTab;            ///< NamedMDNode names.

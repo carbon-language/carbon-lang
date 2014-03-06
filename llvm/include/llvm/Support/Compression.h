@@ -15,11 +15,11 @@
 #define LLVM_SUPPORT_COMPRESSION_H
 
 #include "llvm/Support/DataTypes.h"
+#include <memory>
 
 namespace llvm {
 
 class MemoryBuffer;
-template<typename T> class OwningPtr;
 class StringRef;
 
 namespace zlib {
@@ -43,11 +43,11 @@ enum Status {
 bool isAvailable();
 
 Status compress(StringRef InputBuffer,
-                OwningPtr<MemoryBuffer> &CompressedBuffer,
+                std::unique_ptr<MemoryBuffer> &CompressedBuffer,
                 CompressionLevel Level = DefaultCompression);
 
 Status uncompress(StringRef InputBuffer,
-                  OwningPtr<MemoryBuffer> &UncompressedBuffer,
+                  std::unique_ptr<MemoryBuffer> &UncompressedBuffer,
                   size_t UncompressedSize);
 
 uint32_t crc32(StringRef Buffer);

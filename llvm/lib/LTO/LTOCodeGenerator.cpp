@@ -264,7 +264,7 @@ const void* LTOCodeGenerator::compile(size_t* length,
   delete NativeObjectFile;
 
   // read .o file into memory buffer
-  OwningPtr<MemoryBuffer> BuffPtr;
+  std::unique_ptr<MemoryBuffer> BuffPtr;
   if (error_code ec = MemoryBuffer::getFile(name, BuffPtr, -1, false)) {
     errMsg = ec.message();
     sys::fs::remove(NativeObjectPath);

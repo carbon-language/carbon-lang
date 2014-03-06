@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-objdump.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
@@ -201,14 +200,14 @@ static void DisassembleInputMachO2(StringRef Filename,
                                    MachOObjectFile *MachOOF);
 
 void llvm::DisassembleInputMachO(StringRef Filename) {
-  OwningPtr<MemoryBuffer> Buff;
+  std::unique_ptr<MemoryBuffer> Buff;
 
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
     errs() << "llvm-objdump: " << Filename << ": " << ec.message() << "\n";
     return;
   }
 
-  OwningPtr<MachOObjectFile> MachOOF(static_cast<MachOObjectFile *>(
+  std::unique_ptr<MachOObjectFile> MachOOF(static_cast<MachOObjectFile *>(
       ObjectFile::createMachOObjectFile(Buff.release()).get()));
 
   DisassembleInputMachO2(Filename, MachOOF.get());
@@ -221,21 +220,22 @@ static void DisassembleInputMachO2(StringRef Filename,
     // GetTarget prints out stuff.
     return;
   }
-  OwningPtr<const MCInstrInfo> InstrInfo(TheTarget->createMCInstrInfo());
-  OwningPtr<MCInstrAnalysis>
-    InstrAnalysis(TheTarget->createMCInstrAnalysis(InstrInfo.get()));
+  std::unique_ptr<const MCInstrInfo> InstrInfo(TheTarget->createMCInstrInfo());
+  std::unique_ptr<MCInstrAnalysis> InstrAnalysis(
+      TheTarget->createMCInstrAnalysis(InstrInfo.get()));
 
   // Set up disassembler.
-  OwningPtr<const MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
-  OwningPtr<const MCAsmInfo> AsmInfo(
+  std::unique_ptr<const MCRegisterInfo> MRI(
+      TheTarget->createMCRegInfo(TripleName));
+  std::unique_ptr<const MCAsmInfo> AsmInfo(
       TheTarget->createMCAsmInfo(*MRI, TripleName));
-  OwningPtr<const MCSubtargetInfo>
-    STI(TheTarget->createMCSubtargetInfo(TripleName, "", ""));
-  OwningPtr<const MCDisassembler> DisAsm(TheTarget->createMCDisassembler(*STI));
+  std::unique_ptr<const MCSubtargetInfo> STI(
+      TheTarget->createMCSubtargetInfo(TripleName, "", ""));
+  std::unique_ptr<const MCDisassembler> DisAsm(
+      TheTarget->createMCDisassembler(*STI));
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
-  OwningPtr<MCInstPrinter>
-    IP(TheTarget->createMCInstPrinter(AsmPrinterVariant, *AsmInfo, *InstrInfo,
-                                      *MRI, *STI));
+  std::unique_ptr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
+      AsmPrinterVariant, *AsmInfo, *InstrInfo, *MRI, *STI));
 
   if (!InstrAnalysis || !AsmInfo || !STI || !DisAsm || !IP) {
     errs() << "error: couldn't initialize disassembler for target "
@@ -285,14 +285,14 @@ static void DisassembleInputMachO2(StringRef Filename,
   raw_ostream &DebugOut = nulls();
 #endif
 
-  OwningPtr<DIContext> diContext;
+  std::unique_ptr<DIContext> diContext;
   ObjectFile *DbgObj = MachOOF;
   // Try to find debug info and set up the DIContext for it.
   if (UseDbg) {
     // A separate DSym file path was specified, parse it as a macho file,
     // get the sections and supply it to the section name parsing machinery.
     if (!DSYMFile.empty()) {
-      OwningPtr<MemoryBuffer> Buf;
+      std::unique_ptr<MemoryBuffer> Buf;
       if (error_code ec = MemoryBuffer::getFileOrSTDIN(DSYMFile, Buf)) {
         errs() << "llvm-objdump: " << Filename << ": " << ec.message() << '\n';
         return;

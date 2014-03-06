@@ -15,7 +15,6 @@
 #define LTO_MODULE_H
 
 #include "llvm-c/lto.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
@@ -48,8 +47,8 @@ private:
     const llvm::GlobalValue *symbol;
   };
 
-  llvm::OwningPtr<llvm::Module>           _module;
-  llvm::OwningPtr<llvm::TargetMachine>    _target;
+  std::unique_ptr<llvm::Module>           _module;
+  std::unique_ptr<llvm::TargetMachine>    _target;
   llvm::MCObjectFileInfo ObjFileInfo;
   StringSet                               _linkeropt_strings;
   std::vector<const char *>               _deplibs;

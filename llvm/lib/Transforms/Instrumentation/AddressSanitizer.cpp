@@ -19,7 +19,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
@@ -349,7 +348,7 @@ struct AddressSanitizer : public FunctionPass {
   Function *AsanHandleNoReturnFunc;
   Function *AsanCovFunction;
   Function *AsanPtrCmpFunction, *AsanPtrSubFunction;
-  OwningPtr<SpecialCaseList> BL;
+  std::unique_ptr<SpecialCaseList> BL;
   // This array is indexed by AccessIsWrite and log2(AccessSize).
   Function *AsanErrorCallback[2][kNumberOfAccessSizes];
   // This array is indexed by AccessIsWrite.
@@ -386,7 +385,7 @@ class AddressSanitizerModule : public ModulePass {
   bool CheckInitOrder;
   SmallString<64> BlacklistFile;
 
-  OwningPtr<SpecialCaseList> BL;
+  std::unique_ptr<SpecialCaseList> BL;
   SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
   Type *IntptrTy;
   LLVMContext *C;

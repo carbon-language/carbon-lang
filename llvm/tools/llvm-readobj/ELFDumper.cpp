@@ -83,14 +83,13 @@ namespace llvm {
 template <class ELFT>
 static error_code createELFDumper(const ELFFile<ELFT> *Obj,
                                   StreamWriter &Writer,
-                                  OwningPtr<ObjDumper> &Result) {
+                                  std::unique_ptr<ObjDumper> &Result) {
   Result.reset(new ELFDumper<ELFT>(Obj, Writer));
   return readobj_error::success;
 }
 
-error_code createELFDumper(const object::ObjectFile *Obj,
-                           StreamWriter& Writer,
-                           OwningPtr<ObjDumper> &Result) {
+error_code createELFDumper(const object::ObjectFile *Obj, StreamWriter &Writer,
+                           std::unique_ptr<ObjDumper> &Result) {
   // Little-endian 32-bit
   if (const ELF32LEObjectFile *ELFObj = dyn_cast<ELF32LEObjectFile>(Obj))
     return createELFDumper(ELFObj->getELFFile(), Writer, Result);

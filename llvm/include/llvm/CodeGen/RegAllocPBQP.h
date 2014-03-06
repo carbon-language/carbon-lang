@@ -29,7 +29,6 @@ namespace llvm {
   class MachineBlockFrequencyInfo;
   class MachineFunction;
   class TargetRegisterInfo;
-  template<class T> class OwningPtr;
 
   typedef PBQP::RegAlloc::Graph PBQPRAGraph;
 
@@ -158,8 +157,9 @@ namespace llvm {
                             PBQP::PBQPNum benefit);
   };
 
-  FunctionPass* createPBQPRegisterAllocator(OwningPtr<PBQPBuilder> &builder,
-                                            char *customPassID=0);
+  FunctionPass *
+  createPBQPRegisterAllocator(std::unique_ptr<PBQPBuilder> &builder,
+                              char *customPassID = 0);
 }
 
 #endif /* LLVM_CODEGEN_REGALLOCPBQP_H */

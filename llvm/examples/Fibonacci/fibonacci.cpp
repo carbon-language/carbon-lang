@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
   LLVMContext Context;
 
   // Create some module to put our function into it.
-  OwningPtr<Module> M(new Module("test", Context));
+  std::unique_ptr<Module> M(new Module("test", Context));
 
   // We are about to create the "fib" function:
   Function *FibF = CreateFibFunction(M.get(), Context);

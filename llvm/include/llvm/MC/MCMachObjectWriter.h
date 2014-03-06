@@ -11,7 +11,6 @@
 #define LLVM_MC_MCMACHOBJECTWRITER_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectWriter.h"
@@ -92,7 +91,7 @@ class MachObjectWriter : public MCObjectWriter {
   };
 
   /// The target specific Mach-O writer instance.
-  llvm::OwningPtr<MCMachObjectTargetWriter> TargetObjectWriter;
+  std::unique_ptr<MCMachObjectTargetWriter> TargetObjectWriter;
 
   /// @name Relocation Data
   /// @{

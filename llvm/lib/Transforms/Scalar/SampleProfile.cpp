@@ -26,7 +26,6 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringMap.h"
@@ -240,7 +239,7 @@ public:
   static char ID;
 
   SampleProfileLoader(StringRef Name = SampleProfileFile)
-      : FunctionPass(ID), Profiler(0), Filename(Name) {
+      : FunctionPass(ID), Profiler(), Filename(Name) {
     initializeSampleProfileLoaderPass(*PassRegistry::getPassRegistry());
   }
 
@@ -261,7 +260,7 @@ public:
 
 protected:
   /// \brief Profile reader object.
-  OwningPtr<SampleModuleProfile> Profiler;
+  std::unique_ptr<SampleModuleProfile> Profiler;
 
   /// \brief Name of the profile file to load.
   StringRef Filename;
@@ -399,7 +398,7 @@ void SampleModuleProfile::dump() {
 /// profiles for large programs, as the representation is extremely
 /// inefficient.
 void SampleModuleProfile::loadText() {
-  OwningPtr<MemoryBuffer> Buffer;
+  std::unique_ptr<MemoryBuffer> Buffer;
   error_code EC = MemoryBuffer::getFile(Filename, Buffer);
   if (EC)
     report_fatal_error("Could not open file " + Filename + ": " + EC.message());

@@ -16,7 +16,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
@@ -821,7 +820,7 @@ static StringRef FindFirstMatchingPrefix(StringRef &Buffer,
 /// Returns true in case of an error, false otherwise.
 static bool ReadCheckFile(SourceMgr &SM,
                           std::vector<CheckString> &CheckStrings) {
-  OwningPtr<MemoryBuffer> File;
+  std::unique_ptr<MemoryBuffer> File;
   if (error_code ec =
         MemoryBuffer::getFileOrSTDIN(CheckFilename, File)) {
     errs() << "Could not open check file '" << CheckFilename << "': "
@@ -1218,7 +1217,7 @@ int main(int argc, char **argv) {
     return 2;
 
   // Open the file to check and add it to SourceMgr.
-  OwningPtr<MemoryBuffer> File;
+  std::unique_ptr<MemoryBuffer> File;
   if (error_code ec =
         MemoryBuffer::getFileOrSTDIN(InputFilename, File)) {
     errs() << "Could not open input file '" << InputFilename << "': "

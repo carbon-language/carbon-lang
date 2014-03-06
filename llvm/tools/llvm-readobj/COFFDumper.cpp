@@ -104,9 +104,8 @@ private:
 
 namespace llvm {
 
-error_code createCOFFDumper(const object::ObjectFile *Obj,
-                            StreamWriter& Writer,
-                            OwningPtr<ObjDumper> &Result) {
+error_code createCOFFDumper(const object::ObjectFile *Obj, StreamWriter &Writer,
+                            std::unique_ptr<ObjDumper> &Result) {
   const COFFObjectFile *COFFObj = dyn_cast<COFFObjectFile>(Obj);
   if (!COFFObj)
     return readobj_error::unsupported_obj_file_format;

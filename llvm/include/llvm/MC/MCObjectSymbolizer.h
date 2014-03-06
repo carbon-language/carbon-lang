@@ -41,7 +41,7 @@ protected:
   const object::RelocationRef *findRelocationAt(uint64_t Addr);
   const object::SectionRef *findSectionContaining(uint64_t Addr);
 
-  MCObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,
+  MCObjectSymbolizer(MCContext &Ctx, std::unique_ptr<MCRelocationInfo> &RelInfo,
                      const object::ObjectFile *Obj);
 
 public:
@@ -63,8 +63,9 @@ public:
 
   /// \brief Create an object symbolizer for \p Obj.
   static MCObjectSymbolizer *
-    createObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,
-                           const object::ObjectFile *Obj);
+  createObjectSymbolizer(MCContext &Ctx,
+                         std::unique_ptr<MCRelocationInfo> &RelInfo,
+                         const object::ObjectFile *Obj);
 
 private:
   typedef DenseMap<uint64_t, object::RelocationRef> AddrToRelocMap;

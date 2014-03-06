@@ -34,7 +34,6 @@
 #include "llvm/CodeGen/RegAllocPBQP.h"
 #include "RegisterCoalescer.h"
 #include "Spiller.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -88,7 +87,7 @@ public:
   static char ID;
 
   /// Construct a PBQP register allocator.
-  RegAllocPBQP(OwningPtr<PBQPBuilder> &b, char *cPassID=0)
+  RegAllocPBQP(std::unique_ptr<PBQPBuilder> &b, char *cPassID=0)
       : MachineFunctionPass(ID), builder(b.release()), customPassID(cPassID) {
     initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
     initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
@@ -117,8 +116,7 @@ private:
   typedef std::map<RegPair, PBQP::PBQPNum> CoalesceMap;
   typedef std::set<unsigned> RegSet;
 
-
-  OwningPtr<PBQPBuilder> builder;
+  std::unique_ptr<PBQPBuilder> builder;
 
   char *customPassID;
 
@@ -129,7 +127,7 @@ private:
   MachineRegisterInfo *mri;
   const MachineBlockFrequencyInfo *mbfi;
 
-  OwningPtr<Spiller> spiller;
+  std::unique_ptr<Spiller> spiller;
   LiveIntervals *lis;
   LiveStacks *lss;
   VirtRegMap *vrm;
@@ -191,7 +189,7 @@ PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
   MachineRegisterInfo *mri = &mf->getRegInfo();
   const TargetRegisterInfo *tri = mf->getTarget().getRegisterInfo();
 
-  OwningPtr<PBQPRAProblem> p(new PBQPRAProblem());
+  std::unique_ptr<PBQPRAProblem> p(new PBQPRAProblem());
   PBQPRAGraph &g = p->getGraph();
   RegSet pregs;
 
@@ -314,7 +312,7 @@ PBQPRAProblem *PBQPBuilderWithCoalescing::build(MachineFunction *mf,
                                                 const MachineBlockFrequencyInfo *mbfi,
                                                 const RegSet &vregs) {
 
-  OwningPtr<PBQPRAProblem> p(PBQPBuilder::build(mf, lis, mbfi, vregs));
+  std::unique_ptr<PBQPRAProblem> p(PBQPBuilder::build(mf, lis, mbfi, vregs));
   PBQPRAGraph &g = p->getGraph();
 
   const TargetMachine &tm = mf->getTarget();
@@ -587,8 +585,8 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
     while (!pbqpAllocComplete) {
       DEBUG(dbgs() << "  PBQP Regalloc round " << round << ":\n");
 
-      OwningPtr<PBQPRAProblem> problem(
-        builder->build(mf, lis, mbfi, vregsToAlloc));
+      std::unique_ptr<PBQPRAProblem> problem(
+          builder->build(mf, lis, mbfi, vregsToAlloc));
 
 #ifndef NDEBUG
       if (pbqpDumpGraphs) {
@@ -622,14 +620,14 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   return true;
 }
 
-FunctionPass* llvm::createPBQPRegisterAllocator(
-                                           OwningPtr<PBQPBuilder> &builder,
-                                           char *customPassID) {
+FunctionPass *
+llvm::createPBQPRegisterAllocator(std::unique_ptr<PBQPBuilder> &builder,
+                                  char *customPassID) {
   return new RegAllocPBQP(builder, customPassID);
 }
 
 FunctionPass* llvm::createDefaultPBQPRegisterAllocator() {
-  OwningPtr<PBQPBuilder> Builder;
+  std::unique_ptr<PBQPBuilder> Builder;
   if (pbqpCoalescing)
     Builder.reset(new PBQPBuilderWithCoalescing());
   else

@@ -16,7 +16,6 @@
 #ifndef LLVM_MC_MCMODULEYAML_H
 #define LLVM_MC_MCMODULEYAML_H
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCModule.h"
 #include "llvm/Support/raw_ostream.h"
@@ -33,7 +32,7 @@ StringRef mcmodule2yaml(raw_ostream &OS, const MCModule &MCM,
 
 /// \brief Creates a new module and returns it in \p MCM.
 /// \returns The empty string on success, an error message on failure.
-StringRef yaml2mcmodule(OwningPtr<MCModule> &MCM, StringRef YamlContent,
+StringRef yaml2mcmodule(std::unique_ptr<MCModule> &MCM, StringRef YamlContent,
                         const MCInstrInfo &MII, const MCRegisterInfo &MRI);
 
 } // end namespace llvm

@@ -53,7 +53,6 @@
 #define LLVM_ANALYSIS_CALLGRAPH_H
 
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Function.h"
@@ -314,7 +313,7 @@ private:
 /// call graph interface is entirelly a wrapper around a \c CallGraph object
 /// which is stored internally for each module.
 class CallGraphWrapperPass : public ModulePass {
-  OwningPtr<CallGraph> G;
+  std::unique_ptr<CallGraph> G;
 
 public:
   static char ID; // Class identification, replacement for typeinfo

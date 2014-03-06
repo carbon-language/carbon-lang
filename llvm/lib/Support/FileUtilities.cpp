@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FileUtilities.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
@@ -177,13 +176,13 @@ int llvm::DiffFilesWithTolerance(StringRef NameA,
                                  std::string *Error) {
   // Now its safe to mmap the files into memory because both files
   // have a non-zero size.
-  OwningPtr<MemoryBuffer> F1;
+  std::unique_ptr<MemoryBuffer> F1;
   if (error_code ec = MemoryBuffer::getFile(NameA, F1)) {
     if (Error)
       *Error = ec.message();
     return 2;
   }
-  OwningPtr<MemoryBuffer> F2;
+  std::unique_ptr<MemoryBuffer> F2;
   if (error_code ec = MemoryBuffer::getFile(NameB, F2)) {
     if (Error)
       *Error = ec.message();

@@ -1549,7 +1549,7 @@ ErrorOr<ObjectFile *> ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer,
                                                         bool BufferOwned) {
   StringRef Magic = Buffer->getBuffer().slice(0, 4);
   error_code EC;
-  OwningPtr<MachOObjectFile> Ret;
+  std::unique_ptr<MachOObjectFile> Ret;
   if (Magic == "\xFE\xED\xFA\xCE")
     Ret.reset(new MachOObjectFile(Buffer, false, false, EC, BufferOwned));
   else if (Magic == "\xCE\xFA\xED\xFE")

@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/DIContext.h"
@@ -87,7 +86,7 @@ static void PrintDILineInfo(DILineInfo dli) {
 }
 
 static void DumpInput(const StringRef &Filename) {
-  OwningPtr<MemoryBuffer> Buff;
+  std::unique_ptr<MemoryBuffer> Buff;
 
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
     errs() << Filename << ": " << ec.message() << "\n";
@@ -99,9 +98,9 @@ static void DumpInput(const StringRef &Filename) {
     errs() << Filename << ": " << EC.message() << '\n';
     return;
   }
-  OwningPtr<ObjectFile> Obj(ObjOrErr.get());
+  std::unique_ptr<ObjectFile> Obj(ObjOrErr.get());
 
-  OwningPtr<DIContext> DICtx(DIContext::getDWARFContext(Obj.get()));
+  std::unique_ptr<DIContext> DICtx(DIContext::getDWARFContext(Obj.get()));
 
   if (Address == -1ULL) {
     outs() << Filename

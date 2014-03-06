@@ -852,15 +852,15 @@ public:
   void nextDocument();
 
 private:
-  llvm::SourceMgr                  SrcMgr; // must be before Strm
-  OwningPtr<llvm::yaml::Stream>    Strm;
-  OwningPtr<HNode>                 TopNode;
-  llvm::error_code                 EC;
-  llvm::BumpPtrAllocator           StringAllocator;
-  llvm::yaml::document_iterator    DocIterator;
-  std::vector<bool>                BitValuesUsed;
-  HNode                           *CurrentNode;
-  bool                             ScalarMatchFound;
+  llvm::SourceMgr                     SrcMgr; // must be before Strm
+  std::unique_ptr<llvm::yaml::Stream> Strm;
+  std::unique_ptr<HNode>              TopNode;
+  llvm::error_code                    EC;
+  llvm::BumpPtrAllocator              StringAllocator;
+  llvm::yaml::document_iterator       DocIterator;
+  std::vector<bool>                   BitValuesUsed;
+  HNode                              *CurrentNode;
+  bool                                ScalarMatchFound;
 };
 
 

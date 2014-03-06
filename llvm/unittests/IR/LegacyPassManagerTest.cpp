@@ -346,7 +346,7 @@ namespace llvm {
 
     template<typename T>
     void MemoryTestHelper(int run) {
-      OwningPtr<Module> M(makeLLVMModule());
+      std::unique_ptr<Module> M(makeLLVMModule());
       T *P = new T();
       PassManager Passes;
       Passes.add(new DataLayoutPass(M.get()));

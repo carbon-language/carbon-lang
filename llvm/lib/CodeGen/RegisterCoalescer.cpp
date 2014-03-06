@@ -15,7 +15,6 @@
 
 #define DEBUG_TYPE "regalloc"
 #include "RegisterCoalescer.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"

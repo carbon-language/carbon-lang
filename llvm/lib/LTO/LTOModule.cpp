@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/LTO/LTOModule.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Constants.h"
@@ -80,7 +79,7 @@ bool LTOModule::isBitcodeFileForTarget(const void *mem, size_t length,
 
 bool LTOModule::isBitcodeFileForTarget(const char *path,
                                        const char *triplePrefix) {
-  OwningPtr<MemoryBuffer> buffer;
+  std::unique_ptr<MemoryBuffer> buffer;
   if (MemoryBuffer::getFile(path, buffer))
     return false;
   return isTargetMatch(buffer.release(), triplePrefix);
@@ -98,7 +97,7 @@ bool LTOModule::isTargetMatch(MemoryBuffer *buffer, const char *triplePrefix) {
 /// the buffer.
 LTOModule *LTOModule::makeLTOModule(const char *path, TargetOptions options,
                                     std::string &errMsg) {
-  OwningPtr<MemoryBuffer> buffer;
+  std::unique_ptr<MemoryBuffer> buffer;
   if (error_code ec = MemoryBuffer::getFile(path, buffer)) {
     errMsg = ec.message();
     return NULL;
@@ -117,7 +116,7 @@ LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
                                     off_t offset,
                                     TargetOptions options,
                                     std::string &errMsg) {
-  OwningPtr<MemoryBuffer> buffer;
+  std::unique_ptr<MemoryBuffer> buffer;
   if (error_code ec =
           MemoryBuffer::getOpenFileSlice(fd, path, buffer, map_size, offset)) {
     errMsg = ec.message();
@@ -129,7 +128,7 @@ LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
 LTOModule *LTOModule::makeLTOModule(const void *mem, size_t length,
                                     TargetOptions options,
                                     std::string &errMsg, StringRef path) {
-  OwningPtr<MemoryBuffer> buffer(makeBuffer(mem, length, path));
+  std::unique_ptr<MemoryBuffer> buffer(makeBuffer(mem, length, path));
   if (!buffer)
     return NULL;
   return makeLTOModule(buffer.release(), options, errMsg);
@@ -146,7 +145,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
     delete buffer;
     return NULL;
   }
-  OwningPtr<Module> m(ModuleOrErr.get());
+  std::unique_ptr<Module> m(ModuleOrErr.get());
 
   std::string TripleStr = m->getTargetTriple();
   if (TripleStr.empty())
@@ -725,20 +724,19 @@ bool LTOModule::addAsmGlobalSymbols(std::string &errMsg) {
   if (inlineAsm.empty())
     return false;
 
-  OwningPtr<RecordStreamer> Streamer(new RecordStreamer(_context));
+  std::unique_ptr<RecordStreamer> Streamer(new RecordStreamer(_context));
   MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(inlineAsm);
   SourceMgr SrcMgr;
   SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
-  OwningPtr<MCAsmParser> Parser(createMCAsmParser(SrcMgr,
-                                                  _context, *Streamer,
-                                                  *_target->getMCAsmInfo()));
+  std::unique_ptr<MCAsmParser> Parser(
+      createMCAsmParser(SrcMgr, _context, *Streamer, *_target->getMCAsmInfo()));
   const Target &T = _target->getTarget();
-  OwningPtr<MCInstrInfo> MCII(T.createMCInstrInfo());
-  OwningPtr<MCSubtargetInfo>
-    STI(T.createMCSubtargetInfo(_target->getTargetTriple(),
-                                _target->getTargetCPU(),
-                                _target->getTargetFeatureString()));
-  OwningPtr<MCTargetAsmParser> TAP(T.createMCAsmParser(*STI, *Parser.get(), *MCII));
+  std::unique_ptr<MCInstrInfo> MCII(T.createMCInstrInfo());
+  std::unique_ptr<MCSubtargetInfo> STI(T.createMCSubtargetInfo(
+      _target->getTargetTriple(), _target->getTargetCPU(),
+      _target->getTargetFeatureString()));
+  std::unique_ptr<MCTargetAsmParser> TAP(
+      T.createMCAsmParser(*STI, *Parser.get(), *MCII));
   if (!TAP) {
     errMsg = "target " + std::string(T.getName()) +
       " does not define AsmParser.";

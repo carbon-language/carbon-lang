@@ -1561,12 +1561,10 @@ bool Scanner::fetchMoreTokens() {
 }
 
 Stream::Stream(StringRef Input, SourceMgr &SM)
-  : scanner(new Scanner(Input, SM))
-  , CurrentDoc(0) {}
+    : scanner(new Scanner(Input, SM)), CurrentDoc() {}
 
 Stream::Stream(MemoryBuffer *InputBuffer, SourceMgr &SM)
-  : scanner(new Scanner(InputBuffer, SM))
-  , CurrentDoc(0) {}
+    : scanner(new Scanner(InputBuffer, SM)), CurrentDoc() {}
 
 Stream::~Stream() {}
 
@@ -1601,11 +1599,9 @@ void Stream::skip() {
     i->skip();
 }
 
-Node::Node(unsigned int Type, OwningPtr<Document> &D, StringRef A, StringRef T)
-  : Doc(D)
-  , TypeID(Type)
-  , Anchor(A)
-  , Tag(T) {
+Node::Node(unsigned int Type, std::unique_ptr<Document> &D, StringRef A,
+           StringRef T)
+    : Doc(D), TypeID(Type), Anchor(A), Tag(T) {
   SMLoc Start = SMLoc::getFromPointer(peekNext().Range.begin());
   SourceRange = SMRange(Start, Start);
 }

@@ -56,8 +56,8 @@ private:
 namespace llvm {
 
 error_code createMachODumper(const object::ObjectFile *Obj,
-                             StreamWriter& Writer,
-                             OwningPtr<ObjDumper> &Result) {
+                             StreamWriter &Writer,
+                             std::unique_ptr<ObjDumper> &Result) {
   const MachOObjectFile *MachOObj = dyn_cast<MachOObjectFile>(Obj);
   if (!MachOObj)
     return readobj_error::unsupported_obj_file_format;

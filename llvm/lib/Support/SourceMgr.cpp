@@ -14,7 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Locale.h"
@@ -55,7 +54,7 @@ SourceMgr::~SourceMgr() {
 size_t SourceMgr::AddIncludeFile(const std::string &Filename,
                                  SMLoc IncludeLoc,
                                  std::string &IncludedFile) {
-  OwningPtr<MemoryBuffer> NewBuf;
+  std::unique_ptr<MemoryBuffer> NewBuf;
   IncludedFile = Filename;
   MemoryBuffer::getFile(IncludedFile.c_str(), NewBuf);
 

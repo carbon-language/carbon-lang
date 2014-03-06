@@ -34,7 +34,8 @@ class MCMachObjectSymbolizer : public MCObjectSymbolizer {
   uint64_t StubsIndSymIndex;
 
 public:
-  MCMachObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,
+  MCMachObjectSymbolizer(MCContext &Ctx,
+                         std::unique_ptr<MCRelocationInfo> &RelInfo,
                          const MachOObjectFile *MOOF);
 
   StringRef findExternalFunctionAt(uint64_t Addr) override;
@@ -44,12 +45,11 @@ public:
 };
 } // End unnamed namespace
 
-
-MCMachObjectSymbolizer::
-MCMachObjectSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo,
-                       const MachOObjectFile *MOOF)
-    : MCObjectSymbolizer(Ctx, RelInfo, MOOF), MOOF(MOOF),
-      StubsStart(0), StubsCount(0), StubSize(0), StubsIndSymIndex(0) {
+MCMachObjectSymbolizer::MCMachObjectSymbolizer(
+    MCContext &Ctx, std::unique_ptr<MCRelocationInfo> &RelInfo,
+    const MachOObjectFile *MOOF)
+    : MCObjectSymbolizer(Ctx, RelInfo, MOOF), MOOF(MOOF), StubsStart(0),
+      StubsCount(0), StubSize(0), StubsIndSymIndex(0) {
 
   for (section_iterator SI = MOOF->section_begin(), SE = MOOF->section_end();
        SI != SE; ++SI) {
@@ -120,11 +120,10 @@ tryAddingPcLoadReferenceComment(raw_ostream &cStream, int64_t Value,
 
 //===- MCObjectSymbolizer -------------------------------------------------===//
 
-MCObjectSymbolizer::MCObjectSymbolizer(MCContext &Ctx,
-                                       OwningPtr<MCRelocationInfo> &RelInfo,
-                                       const ObjectFile *Obj)
-    : MCSymbolizer(Ctx, RelInfo), Obj(Obj), SortedSections(), AddrToReloc() {
-}
+MCObjectSymbolizer::MCObjectSymbolizer(
+    MCContext &Ctx, std::unique_ptr<MCRelocationInfo> &RelInfo,
+    const ObjectFile *Obj)
+    : MCSymbolizer(Ctx, RelInfo), Obj(Obj), SortedSections(), AddrToReloc() {}
 
 bool MCObjectSymbolizer::
 tryAddingSymbolicOperand(MCInst &MI, raw_ostream &cStream,
@@ -188,10 +187,9 @@ StringRef MCObjectSymbolizer::findExternalFunctionAt(uint64_t Addr) {
   return StringRef();
 }
 
-MCObjectSymbolizer *
-MCObjectSymbolizer::createObjectSymbolizer(MCContext &Ctx,
-                                           OwningPtr<MCRelocationInfo> &RelInfo,
-                                           const ObjectFile *Obj) {
+MCObjectSymbolizer *MCObjectSymbolizer::createObjectSymbolizer(
+    MCContext &Ctx, std::unique_ptr<MCRelocationInfo> &RelInfo,
+    const ObjectFile *Obj) {
   if (const MachOObjectFile *MOOF = dyn_cast<MachOObjectFile>(Obj))
     return new MCMachObjectSymbolizer(Ctx, RelInfo, MOOF);
   return new MCObjectSymbolizer(Ctx, RelInfo, Obj);

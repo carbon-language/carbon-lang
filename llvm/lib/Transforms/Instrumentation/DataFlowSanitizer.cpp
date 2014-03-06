@@ -190,7 +190,7 @@ class DataFlowSanitizer : public ModulePass {
   Constant *DFSanSetLabelFn;
   Constant *DFSanNonzeroLabelFn;
   MDNode *ColdCallWeights;
-  OwningPtr<SpecialCaseList> ABIList;
+  std::unique_ptr<SpecialCaseList> ABIList;
   DenseMap<Value *, Function *> UnwrappedFnMap;
   AttributeSet ReadOnlyNoneAttrs;
 

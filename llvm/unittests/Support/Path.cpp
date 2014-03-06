@@ -555,7 +555,7 @@ TEST_F(FileSystemTest, CarriageReturn) {
     File << '\n';
   }
   {
-    OwningPtr<MemoryBuffer> Buf;
+    std::unique_ptr<MemoryBuffer> Buf;
     MemoryBuffer::getFile(FilePathname.c_str(), Buf);
     EXPECT_EQ(Buf->getBuffer(), "\r\n");
   }
@@ -566,7 +566,7 @@ TEST_F(FileSystemTest, CarriageReturn) {
     File << '\n';
   }
   {
-    OwningPtr<MemoryBuffer> Buf;
+    std::unique_ptr<MemoryBuffer> Buf;
     MemoryBuffer::getFile(FilePathname.c_str(), Buf);
     EXPECT_EQ(Buf->getBuffer(), "\n");
   }

@@ -236,13 +236,13 @@ static void PrintFileSectionSizes(StringRef file) {
     errs() << ToolName << ": " << file << ": " << EC.message() << ".\n";
     return;
   }
-  OwningPtr<Binary> binary(BinaryOrErr.get());
+  std::unique_ptr<Binary> binary(BinaryOrErr.get());
 
   if (Archive *a = dyn_cast<Archive>(binary.get())) {
     // This is an archive. Iterate over each member and display its sizes.
     for (object::Archive::child_iterator i = a->child_begin(),
                                          e = a->child_end(); i != e; ++i) {
-      OwningPtr<Binary> child;
+      std::unique_ptr<Binary> child;
       if (error_code ec = i->getAsBinary(child)) {
         errs() << ToolName << ": " << file << ": " << ec.message() << ".\n";
         continue;

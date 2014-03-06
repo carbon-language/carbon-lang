@@ -45,7 +45,7 @@ TEST(ValueTest, UsedInBasicBlock) {
 
 TEST(GlobalTest, CreateAddressSpace) {
   LLVMContext &Ctx = getGlobalContext();
-  OwningPtr<Module> M(new Module("TestModule", Ctx));
+  std::unique_ptr<Module> M(new Module("TestModule", Ctx));
   Type *Int8Ty = Type::getInt8Ty(Ctx);
   Type *Int32Ty = Type::getInt32Ty(Ctx);
 

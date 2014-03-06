@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 
   // Use lazy loading, since we only care about selected global values.
   SMDiagnostic Err;
-  OwningPtr<Module> M;
+  std::unique_ptr<Module> M;
   M.reset(getLazyIRFileModule(InputFilename, Err, Context));
 
   if (M.get() == 0) {

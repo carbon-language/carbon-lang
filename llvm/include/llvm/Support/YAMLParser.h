@@ -38,7 +38,6 @@
 #ifndef LLVM_SUPPORT_YAMLPARSER_H
 #define LLVM_SUPPORT_YAMLPARSER_H
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
@@ -96,8 +95,8 @@ public:
   void printError(Node *N, const Twine &Msg);
 
 private:
-  OwningPtr<Scanner> scanner;
-  OwningPtr<Document> CurrentDoc;
+  std::unique_ptr<Scanner> scanner;
+  std::unique_ptr<Document> CurrentDoc;
 
   friend class Document;
 };
@@ -115,7 +114,7 @@ public:
     NK_Alias
   };
 
-  Node(unsigned int Type, OwningPtr<Document> &, StringRef Anchor,
+  Node(unsigned int Type, std::unique_ptr<Document> &, StringRef Anchor,
        StringRef Tag);
 
   /// @brief Get the value of the anchor attached to this node. If it does not
@@ -156,7 +155,7 @@ public:
   }
 
 protected:
-  OwningPtr<Document> &Doc;
+  std::unique_ptr<Document> &Doc;
   SMRange SourceRange;
 
   void operator delete(void *) throw() {}
@@ -177,7 +176,7 @@ private:
 class NullNode : public Node {
   void anchor() override;
 public:
-  NullNode(OwningPtr<Document> &D)
+  NullNode(std::unique_ptr<Document> &D)
       : Node(NK_Null, D, StringRef(), StringRef()) {}
 
   static inline bool classof(const Node *N) {
@@ -193,7 +192,7 @@ public:
 class ScalarNode : public Node {
   void anchor() override;
 public:
-  ScalarNode(OwningPtr<Document> &D, StringRef Anchor, StringRef Tag,
+  ScalarNode(std::unique_ptr<Document> &D, StringRef Anchor, StringRef Tag,
              StringRef Val)
       : Node(NK_Scalar, D, Anchor, Tag), Value(Val) {
     SMLoc Start = SMLoc::getFromPointer(Val.begin());
@@ -235,11 +234,8 @@ private:
 class KeyValueNode : public Node {
   void anchor() override;
 public:
-  KeyValueNode(OwningPtr<Document> &D)
-    : Node(NK_KeyValue, D, StringRef(), StringRef())
-    , Key(0)
-    , Value(0)
-  {}
+  KeyValueNode(std::unique_ptr<Document> &D)
+      : Node(NK_KeyValue, D, StringRef(), StringRef()), Key(0), Value(0) {}
 
   /// @brief Parse and return the key.
   ///
@@ -353,7 +349,7 @@ public:
     MT_Inline ///< An inline mapping node is used for "[key: value]".
   };
 
-  MappingNode(OwningPtr<Document> &D, StringRef Anchor, StringRef Tag,
+  MappingNode(std::unique_ptr<Document> &D, StringRef Anchor, StringRef Tag,
               MappingType MT)
       : Node(NK_Mapping, D, Anchor, Tag), Type(MT), IsAtBeginning(true),
         IsAtEnd(false), CurrentEntry(0) {}
@@ -410,7 +406,7 @@ public:
     ST_Indentless
   };
 
-  SequenceNode(OwningPtr<Document> &D, StringRef Anchor, StringRef Tag,
+  SequenceNode(std::unique_ptr<Document> &D, StringRef Anchor, StringRef Tag,
                SequenceType ST)
       : Node(NK_Sequence, D, Anchor, Tag), SeqType(ST), IsAtBeginning(true),
         IsAtEnd(false),
@@ -453,8 +449,8 @@ private:
 class AliasNode : public Node {
   void anchor() override;
 public:
-  AliasNode(OwningPtr<Document> &D, StringRef Val)
-    : Node(NK_Alias, D, StringRef(), StringRef()), Name(Val) {}
+  AliasNode(std::unique_ptr<Document> &D, StringRef Val)
+      : Node(NK_Alias, D, StringRef(), StringRef()), Name(Val) {}
 
   StringRef getName() const { return Name; }
   Node *getTarget();
@@ -531,7 +527,7 @@ private:
 class document_iterator {
 public:
   document_iterator() : Doc(0) {}
-  document_iterator(OwningPtr<Document> &D) : Doc(&D) {}
+  document_iterator(std::unique_ptr<Document> &D) : Doc(&D) {}
 
   bool operator ==(const document_iterator &Other) {
     if (isAtEnd() || Other.isAtEnd())
@@ -558,16 +554,14 @@ public:
     return *Doc->get();
   }
 
-  OwningPtr<Document> &operator ->() {
-    return *Doc;
-  }
+  std::unique_ptr<Document> &operator->() { return *Doc; }
 
 private:
   bool isAtEnd() const {
     return !Doc || !*Doc;
   }
 
-  OwningPtr<Document> *Doc;
+  std::unique_ptr<Document> *Doc;
 };
 
 }

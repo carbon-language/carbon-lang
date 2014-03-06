@@ -77,14 +77,13 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
   if (!DisAsm)
     return 0;
 
-  OwningPtr<MCRelocationInfo> RelInfo(
-    TheTarget->createMCRelocationInfo(Triple, *Ctx));
+  std::unique_ptr<MCRelocationInfo> RelInfo(
+      TheTarget->createMCRelocationInfo(Triple, *Ctx));
   if (!RelInfo)
     return 0;
 
-  OwningPtr<MCSymbolizer> Symbolizer(
-    TheTarget->createMCSymbolizer(Triple, GetOpInfo, SymbolLookUp, DisInfo,
-                                  Ctx, RelInfo.release()));
+  std::unique_ptr<MCSymbolizer> Symbolizer(TheTarget->createMCSymbolizer(
+      Triple, GetOpInfo, SymbolLookUp, DisInfo, Ctx, RelInfo.release()));
   DisAsm->setSymbolizer(Symbolizer);
   DisAsm->setupForSymbolicDisassembly(GetOpInfo, SymbolLookUp, DisInfo,
                                       Ctx, RelInfo);

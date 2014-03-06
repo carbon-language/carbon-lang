@@ -17,7 +17,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-objdump.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
@@ -282,60 +281,61 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     FeaturesStr = Features.getString();
   }
 
-  OwningPtr<const MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
+  std::unique_ptr<const MCRegisterInfo> MRI(
+      TheTarget->createMCRegInfo(TripleName));
   if (!MRI) {
     errs() << "error: no register info for target " << TripleName << "\n";
     return;
   }
 
   // Set up disassembler.
-  OwningPtr<const MCAsmInfo> AsmInfo(
-    TheTarget->createMCAsmInfo(*MRI, TripleName));
+  std::unique_ptr<const MCAsmInfo> AsmInfo(
+      TheTarget->createMCAsmInfo(*MRI, TripleName));
   if (!AsmInfo) {
     errs() << "error: no assembly info for target " << TripleName << "\n";
     return;
   }
 
-  OwningPtr<const MCSubtargetInfo> STI(
-    TheTarget->createMCSubtargetInfo(TripleName, "", FeaturesStr));
+  std::unique_ptr<const MCSubtargetInfo> STI(
+      TheTarget->createMCSubtargetInfo(TripleName, "", FeaturesStr));
   if (!STI) {
     errs() << "error: no subtarget info for target " << TripleName << "\n";
     return;
   }
 
-  OwningPtr<const MCInstrInfo> MII(TheTarget->createMCInstrInfo());
+  std::unique_ptr<const MCInstrInfo> MII(TheTarget->createMCInstrInfo());
   if (!MII) {
     errs() << "error: no instruction info for target " << TripleName << "\n";
     return;
   }
 
-  OwningPtr<MCDisassembler> DisAsm(TheTarget->createMCDisassembler(*STI));
+  std::unique_ptr<MCDisassembler> DisAsm(TheTarget->createMCDisassembler(*STI));
   if (!DisAsm) {
     errs() << "error: no disassembler for target " << TripleName << "\n";
     return;
   }
 
-  OwningPtr<const MCObjectFileInfo> MOFI;
-  OwningPtr<MCContext> Ctx;
+  std::unique_ptr<const MCObjectFileInfo> MOFI;
+  std::unique_ptr<MCContext> Ctx;
 
   if (Symbolize) {
     MOFI.reset(new MCObjectFileInfo);
     Ctx.reset(new MCContext(AsmInfo.get(), MRI.get(), MOFI.get()));
-    OwningPtr<MCRelocationInfo> RelInfo(
-      TheTarget->createMCRelocationInfo(TripleName, *Ctx.get()));
+    std::unique_ptr<MCRelocationInfo> RelInfo(
+        TheTarget->createMCRelocationInfo(TripleName, *Ctx.get()));
     if (RelInfo) {
-      OwningPtr<MCSymbolizer> Symzer(
-        MCObjectSymbolizer::createObjectSymbolizer(*Ctx.get(), RelInfo, Obj));
+      std::unique_ptr<MCSymbolizer> Symzer(
+          MCObjectSymbolizer::createObjectSymbolizer(*Ctx.get(), RelInfo, Obj));
       if (Symzer)
         DisAsm->setSymbolizer(Symzer);
     }
   }
 
-  OwningPtr<const MCInstrAnalysis>
-    MIA(TheTarget->createMCInstrAnalysis(MII.get()));
+  std::unique_ptr<const MCInstrAnalysis> MIA(
+      TheTarget->createMCInstrAnalysis(MII.get()));
 
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
-  OwningPtr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
+  std::unique_ptr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
       AsmPrinterVariant, *AsmInfo, *MII, *MRI, *STI));
   if (!IP) {
     errs() << "error: no instruction printer for target " << TripleName
@@ -344,9 +344,9 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   }
 
   if (CFG || !YAMLCFG.empty()) {
-    OwningPtr<MCObjectDisassembler> OD(
-      new MCObjectDisassembler(*Obj, *DisAsm, *MIA));
-    OwningPtr<MCModule> Mod(OD->buildModule(/* withCFG */ true));
+    std::unique_ptr<MCObjectDisassembler> OD(
+        new MCObjectDisassembler(*Obj, *DisAsm, *MIA));
+    std::unique_ptr<MCModule> Mod(OD->buildModule(/* withCFG */ true));
     for (MCModule::const_atom_iterator AI = Mod->atom_begin(),
                                        AE = Mod->atom_end();
                                        AI != AE; ++AI) {
@@ -814,7 +814,7 @@ static void DumpObject(const ObjectFile *o) {
 static void DumpArchive(const Archive *a) {
   for (Archive::child_iterator i = a->child_begin(), e = a->child_end(); i != e;
        ++i) {
-    OwningPtr<Binary> child;
+    std::unique_ptr<Binary> child;
     if (error_code EC = i->getAsBinary(child)) {
       // Ignore non-object files.
       if (EC != object_error::invalid_file_type)
@@ -849,7 +849,7 @@ static void DumpInput(StringRef file) {
     errs() << ToolName << ": '" << file << "': " << EC.message() << ".\n";
     return;
   }
-  OwningPtr<Binary> binary(BinaryOrErr.get());
+  std::unique_ptr<Binary> binary(BinaryOrErr.get());
 
   if (Archive *a = dyn_cast<Archive>(binary.get()))
     DumpArchive(a);

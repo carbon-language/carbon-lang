@@ -175,7 +175,7 @@ Module *parseIR(const char *IR) {
 
 class PassManagerTest : public ::testing::Test {
 protected:
-  OwningPtr<Module> M;
+  std::unique_ptr<Module> M;
 
 public:
   PassManagerTest()

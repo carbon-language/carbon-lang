@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "gtest/gtest.h"
 
@@ -17,7 +16,7 @@ using namespace llvm;
 namespace {
 
 TEST(MCJITMemoryManagerTest, BasicAllocations) {
-  OwningPtr<SectionMemoryManager> MemMgr(new SectionMemoryManager());
+  std::unique_ptr<SectionMemoryManager> MemMgr(new SectionMemoryManager());
 
   uint8_t *code1 = MemMgr->allocateCodeSection(256, 0, 1, "");
   uint8_t *data1 = MemMgr->allocateDataSection(256, 0, 2, "", true);
@@ -50,7 +49,7 @@ TEST(MCJITMemoryManagerTest, BasicAllocations) {
 }
 
 TEST(MCJITMemoryManagerTest, LargeAllocations) {
-  OwningPtr<SectionMemoryManager> MemMgr(new SectionMemoryManager());
+  std::unique_ptr<SectionMemoryManager> MemMgr(new SectionMemoryManager());
 
   uint8_t *code1 = MemMgr->allocateCodeSection(0x100000, 0, 1, "");
   uint8_t *data1 = MemMgr->allocateDataSection(0x100000, 0, 2, "", true);
@@ -83,7 +82,7 @@ TEST(MCJITMemoryManagerTest, LargeAllocations) {
 }
 
 TEST(MCJITMemoryManagerTest, ManyAllocations) {
-  OwningPtr<SectionMemoryManager> MemMgr(new SectionMemoryManager());
+  std::unique_ptr<SectionMemoryManager> MemMgr(new SectionMemoryManager());
 
   uint8_t* code[10000];
   uint8_t* data[10000];
@@ -118,7 +117,7 @@ TEST(MCJITMemoryManagerTest, ManyAllocations) {
 }
 
 TEST(MCJITMemoryManagerTest, ManyVariedAllocations) {
-  OwningPtr<SectionMemoryManager> MemMgr(new SectionMemoryManager());
+  std::unique_ptr<SectionMemoryManager> MemMgr(new SectionMemoryManager());
 
   uint8_t* code[10000];
   uint8_t* data[10000];

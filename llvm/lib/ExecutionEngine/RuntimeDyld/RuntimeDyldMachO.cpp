@@ -13,7 +13,6 @@
 
 #define DEBUG_TYPE "dyld"
 #include "RuntimeDyldMachO.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 using namespace llvm;

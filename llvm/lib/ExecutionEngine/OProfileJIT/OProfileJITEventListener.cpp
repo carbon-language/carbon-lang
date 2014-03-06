@@ -18,7 +18,6 @@
 #define DEBUG_TYPE "oprofile-jit-event-listener"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Function.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/ExecutionEngine/ObjectImage.h"
 #include "llvm/ExecutionEngine/OProfileWrapper.h"
@@ -229,7 +228,8 @@ void OProfileJITEventListener::NotifyFreeingObject(const ObjectImage &Obj) {
 
 namespace llvm {
 JITEventListener *JITEventListener::createOProfileJITEventListener() {
-  static OwningPtr<OProfileWrapper> JITProfilingWrapper(new OProfileWrapper);
+  static std::unique_ptr<OProfileWrapper> JITProfilingWrapper(
+      new OProfileWrapper);
   return new OProfileJITEventListener(*JITProfilingWrapper);
 }
 

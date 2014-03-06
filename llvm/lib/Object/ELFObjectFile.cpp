@@ -24,7 +24,7 @@ ErrorOr<ObjectFile *> ObjectFile::createELFObjectFile(MemoryBuffer *Obj,
     1ULL << countTrailingZeros(uintptr_t(Obj->getBufferStart()));
 
   error_code EC;
-  OwningPtr<ObjectFile> R;
+  std::unique_ptr<ObjectFile> R;
   if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2LSB)
 #if !LLVM_IS_UNALIGNED_ACCESS_FAST
     if (MaxAlignment >= 4)

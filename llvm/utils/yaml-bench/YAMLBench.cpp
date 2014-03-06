@@ -188,7 +188,7 @@ static std::string createJSONText(size_t MemoryMB, unsigned ValueSize) {
 int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv);
   if (Input.getNumOccurrences()) {
-    OwningPtr<MemoryBuffer> Buf;
+    std::unique_ptr<MemoryBuffer> Buf;
     if (MemoryBuffer::getFileOrSTDIN(Input, Buf))
       return 1;
 

@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCELFObjectWriter.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
@@ -79,7 +78,7 @@ class ELFObjectWriter : public MCObjectWriter {
     };
 
     /// The target specific ELF writer instance.
-    llvm::OwningPtr<MCELFObjectTargetWriter> TargetObjectWriter;
+    std::unique_ptr<MCELFObjectTargetWriter> TargetObjectWriter;
 
     SmallPtrSet<const MCSymbol *, 16> UsedInReloc;
     SmallPtrSet<const MCSymbol *, 16> WeakrefUsedInReloc;

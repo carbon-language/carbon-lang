@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/LineIterator.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "gtest/gtest.h"
 
@@ -18,9 +17,9 @@ using namespace llvm::sys;
 namespace {
 
 TEST(LineIteratorTest, Basic) {
-  OwningPtr<MemoryBuffer> Buffer(MemoryBuffer::getMemBuffer("line 1\n"
-                                                            "line 2\n"
-                                                            "line 3"));
+  std::unique_ptr<MemoryBuffer> Buffer(MemoryBuffer::getMemBuffer("line 1\n"
+                                                                  "line 2\n"
+                                                                  "line 3"));
 
   line_iterator I = line_iterator(*Buffer), E;
 
@@ -42,11 +41,12 @@ TEST(LineIteratorTest, Basic) {
 }
 
 TEST(LineIteratorTest, CommentSkipping) {
-  OwningPtr<MemoryBuffer> Buffer(MemoryBuffer::getMemBuffer("line 1\n"
-                                                            "line 2\n"
-                                                            "# Comment 1\n"
-                                                            "line 4\n"
-                                                            "# Comment 2"));
+  std::unique_ptr<MemoryBuffer> Buffer(
+      MemoryBuffer::getMemBuffer("line 1\n"
+                                 "line 2\n"
+                                 "# Comment 1\n"
+                                 "line 4\n"
+                                 "# Comment 2"));
 
   line_iterator I = line_iterator(*Buffer, '#'), E;
 
@@ -68,11 +68,11 @@ TEST(LineIteratorTest, CommentSkipping) {
 }
 
 TEST(LineIteratorTest, BlankSkipping) {
-  OwningPtr<MemoryBuffer> Buffer(MemoryBuffer::getMemBuffer("\n\n\n"
-                                                            "line 1\n"
-                                                            "\n\n\n"
-                                                            "line 2\n"
-                                                            "\n\n\n"));
+  std::unique_ptr<MemoryBuffer> Buffer(MemoryBuffer::getMemBuffer("\n\n\n"
+                                                                  "line 1\n"
+                                                                  "\n\n\n"
+                                                                  "line 2\n"
+                                                                  "\n\n\n"));
 
   line_iterator I = line_iterator(*Buffer), E;
 
@@ -91,7 +91,7 @@ TEST(LineIteratorTest, BlankSkipping) {
 }
 
 TEST(LineIteratorTest, EmptyBuffers) {
-  OwningPtr<MemoryBuffer> Buffer(MemoryBuffer::getMemBuffer(""));
+  std::unique_ptr<MemoryBuffer> Buffer(MemoryBuffer::getMemBuffer(""));
   EXPECT_TRUE(line_iterator(*Buffer).is_at_eof());
   EXPECT_EQ(line_iterator(), line_iterator(*Buffer));
 

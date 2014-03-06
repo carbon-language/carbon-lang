@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Compression.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -25,8 +24,8 @@ namespace {
 #if LLVM_ENABLE_ZLIB == 1 && HAVE_LIBZ
 
 void TestZlibCompression(StringRef Input, zlib::CompressionLevel Level) {
-  OwningPtr<MemoryBuffer> Compressed;
-  OwningPtr<MemoryBuffer> Uncompressed;
+  std::unique_ptr<MemoryBuffer> Compressed;
+  std::unique_ptr<MemoryBuffer> Uncompressed;
   EXPECT_EQ(zlib::StatusOK, zlib::compress(Input, Compressed, Level));
   // Check that uncompressed buffer is the same as original.
   EXPECT_EQ(zlib::StatusOK, zlib::uncompress(Compressed->getBuffer(),

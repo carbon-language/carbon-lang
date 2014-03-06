@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/JITEventListener.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/IR/Instructions.h"
@@ -69,7 +68,7 @@ class JITEventListenerTest : public testing::Test {
   }
 
   Module *M;
-  const OwningPtr<ExecutionEngine> EE;
+  const std::unique_ptr<ExecutionEngine> EE;
 };
 
 // Tests on SystemZ disabled as we're running the old JIT

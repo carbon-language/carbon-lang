@@ -40,7 +40,7 @@ protected:
   }
 
   SpecialCaseList *makeSpecialCaseList(StringRef List, std::string &Error) {
-    OwningPtr<MemoryBuffer> MB(MemoryBuffer::getMemBuffer(List));
+    std::unique_ptr<MemoryBuffer> MB(MemoryBuffer::getMemBuffer(List));
     return SpecialCaseList::create(MB.get(), Error);
   }
 
@@ -60,9 +60,10 @@ TEST_F(SpecialCaseListTest, ModuleIsIn) {
   Function *F = makeFunction("foo", M);
   GlobalVariable *GV = makeGlobal("bar", "t", M);
 
-  OwningPtr<SpecialCaseList> SCL(makeSpecialCaseList("# This is a comment.\n"
-                                                     "\n"
-                                                     "src:hello\n"));
+  std::unique_ptr<SpecialCaseList> SCL(
+      makeSpecialCaseList("# This is a comment.\n"
+                          "\n"
+                          "src:hello\n"));
   EXPECT_TRUE(SCL->isIn(M));
   EXPECT_TRUE(SCL->isIn(*F));
   EXPECT_TRUE(SCL->isIn(*GV));
@@ -83,7 +84,7 @@ TEST_F(SpecialCaseListTest, FunctionIsIn) {
   Function *Foo = makeFunction("foo", M);
   Function *Bar = makeFunction("bar", M);
 
-  OwningPtr<SpecialCaseList> SCL(makeSpecialCaseList("fun:foo\n"));
+  std::unique_ptr<SpecialCaseList> SCL(makeSpecialCaseList("fun:foo\n"));
   EXPECT_TRUE(SCL->isIn(*Foo));
   EXPECT_FALSE(SCL->isIn(*Bar));
 
@@ -107,7 +108,7 @@ TEST_F(SpecialCaseListTest, GlobalIsIn) {
   GlobalVariable *Foo = makeGlobal("foo", "t1", M);
   GlobalVariable *Bar = makeGlobal("bar", "t2", M);
 
-  OwningPtr<SpecialCaseList> SCL(makeSpecialCaseList("global:foo\n"));
+  std::unique_ptr<SpecialCaseList> SCL(makeSpecialCaseList("global:foo\n"));
   EXPECT_TRUE(SCL->isIn(*Foo));
   EXPECT_FALSE(SCL->isIn(*Bar));
   EXPECT_FALSE(SCL->isIn(*Foo, "init"));
@@ -157,7 +158,7 @@ TEST_F(SpecialCaseListTest, AliasIsIn) {
   GlobalAlias *FooAlias = makeAlias("fooalias", Foo);
   GlobalAlias *BarAlias = makeAlias("baralias", Bar);
 
-  OwningPtr<SpecialCaseList> SCL(makeSpecialCaseList("fun:foo\n"));
+  std::unique_ptr<SpecialCaseList> SCL(makeSpecialCaseList("fun:foo\n"));
   EXPECT_FALSE(SCL->isIn(*FooAlias));
   EXPECT_FALSE(SCL->isIn(*BarAlias));
 
@@ -193,9 +194,9 @@ TEST_F(SpecialCaseListTest, Substring) {
   GlobalAlias *GA1 = makeAlias("buffoonery", F);
   GlobalAlias *GA2 = makeAlias("foobar", GV);
 
-  OwningPtr<SpecialCaseList> SCL(makeSpecialCaseList("src:hello\n"
-                                                     "fun:foo\n"
-                                                     "global:bar\n"));
+  std::unique_ptr<SpecialCaseList> SCL(makeSpecialCaseList("src:hello\n"
+                                                           "fun:foo\n"
+                                                           "global:bar\n"));
   EXPECT_FALSE(SCL->isIn(M));
   EXPECT_FALSE(SCL->isIn(*F));
   EXPECT_FALSE(SCL->isIn(*GV));
@@ -224,7 +225,7 @@ TEST_F(SpecialCaseListTest, InvalidSpecialCaseList) {
 }
 
 TEST_F(SpecialCaseListTest, EmptySpecialCaseList) {
-  OwningPtr<SpecialCaseList> SCL(makeSpecialCaseList(""));
+  std::unique_ptr<SpecialCaseList> SCL(makeSpecialCaseList(""));
   Module M("foo", Ctx);
   EXPECT_FALSE(SCL->isIn(M));
 }

@@ -101,7 +101,7 @@ class RAGreedy : public MachineFunctionPass,
   LiveDebugVariables *DebugVars;
 
   // state
-  OwningPtr<Spiller> SpillerInstance;
+  std::unique_ptr<Spiller> SpillerInstance;
   PQueue Queue;
   unsigned NextCascade;
 
@@ -196,8 +196,8 @@ class RAGreedy : public MachineFunctionPass,
   };
 
   // splitting state.
-  OwningPtr<SplitAnalysis> SA;
-  OwningPtr<SplitEditor> SE;
+  std::unique_ptr<SplitAnalysis> SA;
+  std::unique_ptr<SplitEditor> SE;
 
   /// Cached per-block interference maps
   InterferenceCache IntfCache;

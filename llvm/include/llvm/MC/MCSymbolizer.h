@@ -16,10 +16,10 @@
 #ifndef LLVM_MC_MCSYMBOLIZER_H
 #define LLVM_MC_MCSYMBOLIZER_H
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/MC/MCRelocationInfo.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
+#include <memory>
 
 namespace llvm {
 
@@ -42,11 +42,11 @@ class MCSymbolizer {
 
 protected:
   MCContext &Ctx;
-  OwningPtr<MCRelocationInfo> RelInfo;
+  std::unique_ptr<MCRelocationInfo> RelInfo;
 
 public:
   /// \brief Construct an MCSymbolizer, taking ownership of \p RelInfo.
-  MCSymbolizer(MCContext &Ctx, OwningPtr<MCRelocationInfo> &RelInfo);
+  MCSymbolizer(MCContext &Ctx, std::unique_ptr<MCRelocationInfo> &RelInfo);
   virtual ~MCSymbolizer();
 
   /// \brief Try to add a symbolic operand instead of \p Value to the MCInst.

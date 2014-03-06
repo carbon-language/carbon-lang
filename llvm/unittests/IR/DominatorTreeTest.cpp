@@ -218,7 +218,7 @@ namespace llvm {
 
     TEST(DominatorTree, Unreachable) {
       DPass *P = new DPass();
-      OwningPtr<Module> M(makeLLVMModule(P));
+      std::unique_ptr<Module> M(makeLLVMModule(P));
       PassManager Passes;
       Passes.add(P);
       Passes.run(*M);

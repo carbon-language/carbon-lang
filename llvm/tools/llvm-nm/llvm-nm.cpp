@@ -518,7 +518,7 @@ static void dumpSymbolNamesFromObject(SymbolicFile *Obj) {
 }
 
 static void dumpSymbolNamesFromFile(std::string &Filename) {
-  OwningPtr<MemoryBuffer> Buffer;
+  std::unique_ptr<MemoryBuffer> Buffer;
   if (error(MemoryBuffer::getFileOrSTDIN(Filename, Buffer), Filename))
     return;
 
@@ -526,7 +526,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
   ErrorOr<Binary *> BinaryOrErr = createBinary(Buffer.release(), &Context);
   if (error(BinaryOrErr.getError(), Filename))
     return;
-  OwningPtr<Binary> Bin(BinaryOrErr.get());
+  std::unique_ptr<Binary> Bin(BinaryOrErr.get());
 
   if (Archive *A = dyn_cast<Archive>(Bin.get())) {
     if (ArchiveMap) {
@@ -552,7 +552,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
 
     for (Archive::child_iterator I = A->child_begin(), E = A->child_end();
          I != E; ++I) {
-      OwningPtr<Binary> Child;
+      std::unique_ptr<Binary> Child;
       if (I->getAsBinary(Child, &Context))
         continue;
       if (SymbolicFile *O = dyn_cast<SymbolicFile>(Child.get())) {
@@ -566,7 +566,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
     for (MachOUniversalBinary::object_iterator I = UB->begin_objects(),
                                                E = UB->end_objects();
          I != E; ++I) {
-      OwningPtr<ObjectFile> Obj;
+      std::unique_ptr<ObjectFile> Obj;
       if (!I->getAsObjectFile(Obj)) {
         outs() << Obj->getFileName() << ":\n";
         dumpSymbolNamesFromObject(Obj.get());

@@ -284,7 +284,7 @@ public:
     if (!getCacheFilename(ModuleID, CacheName))
       return NULL;
     // Load the object from the cache filename
-    OwningPtr<MemoryBuffer> IRObjectBuffer;
+    std::unique_ptr<MemoryBuffer> IRObjectBuffer;
     MemoryBuffer::getFile(CacheName.c_str(), IRObjectBuffer, -1, false);
     // If the file isn't there, that's OK.
     if (!IRObjectBuffer)
@@ -537,7 +537,7 @@ int main(int argc, char **argv, char * const *envp) {
   }
 
   for (unsigned i = 0, e = ExtraArchives.size(); i != e; ++i) {
-    OwningPtr<MemoryBuffer> ArBuf;
+    std::unique_ptr<MemoryBuffer> ArBuf;
     error_code ec;
     ec = MemoryBuffer::getFileOrSTDIN(ExtraArchives[i], ArBuf);
     if (ec) {
@@ -662,7 +662,7 @@ int main(int argc, char **argv, char * const *envp) {
     // address space, assign the section addresses to resolve any relocations,
     // and send it to the target.
 
-    OwningPtr<RemoteTarget> Target;
+    std::unique_ptr<RemoteTarget> Target;
     if (!ChildExecPath.empty()) { // Remote execution on a child process
 #ifndef LLVM_ON_UNIX
       // FIXME: Remove this pointless fallback mode which causes tests to "pass"

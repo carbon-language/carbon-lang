@@ -99,7 +99,7 @@ struct ThreadSanitizer : public FunctionPass {
   const DataLayout *DL;
   Type *IntptrTy;
   SmallString<64> BlacklistFile;
-  OwningPtr<SpecialCaseList> BL;
+  std::unique_ptr<SpecialCaseList> BL;
   IntegerType *OrdTy;
   // Callbacks to run-time library are computed in doInitialization.
   Function *TsanFuncEntry;

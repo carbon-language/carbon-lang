@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/Interpreter.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/LLVMContext.h"
@@ -38,7 +37,7 @@ protected:
 
   Module *const M;
   std::string Error;
-  const OwningPtr<ExecutionEngine> Engine;
+  const std::unique_ptr<ExecutionEngine> Engine;
 };
 
 TEST_F(ExecutionEngineTest, ForwardGlobalMapping) {

@@ -162,7 +162,7 @@ TEST(ConstantsTest, PointerCast) {
   }
 
 TEST(ConstantsTest, AsInstructionsTest) {
-  OwningPtr<Module> M(new Module("MyModule", getGlobalContext()));
+  std::unique_ptr<Module> M(new Module("MyModule", getGlobalContext()));
 
   Type *Int64Ty = Type::getInt64Ty(getGlobalContext());
   Type *Int32Ty = Type::getInt32Ty(getGlobalContext());

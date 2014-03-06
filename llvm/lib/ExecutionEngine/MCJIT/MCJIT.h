@@ -76,7 +76,7 @@ public:
 
 private:
   MCJIT *ParentEngine;
-  OwningPtr<RTDyldMemoryManager> ClientMM;
+  std::unique_ptr<RTDyldMemoryManager> ClientMM;
 };
 
 // About Module states: added->loaded->finalized.

@@ -18,7 +18,6 @@
 #include "DWARFDebugRangeList.h"
 #include "DWARFTypeUnit.h"
 #include "llvm/ADT/MapVector.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/DIContext.h"
 
@@ -31,15 +30,15 @@ namespace llvm {
 class DWARFContext : public DIContext {
   SmallVector<DWARFCompileUnit *, 1> CUs;
   SmallVector<DWARFTypeUnit *, 1> TUs;
-  OwningPtr<DWARFDebugAbbrev> Abbrev;
-  OwningPtr<DWARFDebugLoc> Loc;
-  OwningPtr<DWARFDebugAranges> Aranges;
-  OwningPtr<DWARFDebugLine> Line;
-  OwningPtr<DWARFDebugFrame> DebugFrame;
+  std::unique_ptr<DWARFDebugAbbrev> Abbrev;
+  std::unique_ptr<DWARFDebugLoc> Loc;
+  std::unique_ptr<DWARFDebugAranges> Aranges;
+  std::unique_ptr<DWARFDebugLine> Line;
+  std::unique_ptr<DWARFDebugFrame> DebugFrame;
 
   SmallVector<DWARFCompileUnit *, 1> DWOCUs;
   SmallVector<DWARFTypeUnit *, 1> DWOTUs;
-  OwningPtr<DWARFDebugAbbrev> AbbrevDWO;
+  std::unique_ptr<DWARFDebugAbbrev> AbbrevDWO;
 
   DWARFContext(DWARFContext &) LLVM_DELETED_FUNCTION;
   DWARFContext &operator=(DWARFContext &) LLVM_DELETED_FUNCTION;

@@ -18,6 +18,7 @@
 
 #include "llvm-c/Disassembler.h"
 #include "llvm/MC/MCSymbolizer.h"
+#include <memory>
 
 namespace llvm {
 
@@ -38,12 +39,11 @@ class MCExternalSymbolizer : public MCSymbolizer {
 
 public:
   MCExternalSymbolizer(MCContext &Ctx,
-                       OwningPtr<MCRelocationInfo> &RelInfo,
+                       std::unique_ptr<MCRelocationInfo> &RelInfo,
                        LLVMOpInfoCallback getOpInfo,
-                       LLVMSymbolLookupCallback symbolLookUp,
-                       void *disInfo)
-    : MCSymbolizer(Ctx, RelInfo),
-      GetOpInfo(getOpInfo), SymbolLookUp(symbolLookUp), DisInfo(disInfo) {}
+                       LLVMSymbolLookupCallback symbolLookUp, void *disInfo)
+      : MCSymbolizer(Ctx, RelInfo), GetOpInfo(getOpInfo),
+        SymbolLookUp(symbolLookUp), DisInfo(disInfo) {}
 
   bool tryAddingSymbolicOperand(MCInst &MI, raw_ostream &CommentStream,
                                 int64_t Value,

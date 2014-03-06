@@ -15,7 +15,6 @@
 #define DEBUG_TYPE "misched"
 
 #include "llvm/CodeGen/MachineScheduler.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/PriorityQueue.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -321,7 +320,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
 
   // Instantiate the selected scheduler for this target, function, and
   // optimization level.
-  OwningPtr<ScheduleDAGInstrs> Scheduler(createMachineScheduler());
+  std::unique_ptr<ScheduleDAGInstrs> Scheduler(createMachineScheduler());
   scheduleRegions(*Scheduler);
 
   DEBUG(LIS->dump());
@@ -342,7 +341,7 @@ bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
 
   // Instantiate the selected scheduler for this target, function, and
   // optimization level.
-  OwningPtr<ScheduleDAGInstrs> Scheduler(createPostMachineScheduler());
+  std::unique_ptr<ScheduleDAGInstrs> Scheduler(createPostMachineScheduler());
   scheduleRegions(*Scheduler);
 
   if (VerifyScheduling)

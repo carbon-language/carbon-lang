@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IR/ValueHandle.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
@@ -336,7 +335,7 @@ TEST_F(ValueHandle, DestroyingOtherVHOnSameValueDoesntBreakIteration) {
 
   class DestroyingVH : public CallbackVH {
   public:
-    OwningPtr<WeakVH> ToClear[2];
+    std::unique_ptr<WeakVH> ToClear[2];
     DestroyingVH(Value *V) {
       ToClear[0].reset(new WeakVH(V));
       setValPtr(V);

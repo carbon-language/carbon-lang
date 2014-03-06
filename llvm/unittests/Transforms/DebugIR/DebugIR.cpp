@@ -90,8 +90,8 @@ protected:
 
   LLVMContext Context;
   char *cwd;
-  OwningPtr<Module> M;
-  OwningPtr<DebugIR> D;
+  std::unique_ptr<Module> M;
+  std::unique_ptr<DebugIR> D;
 };
 
 // Test empty named Module that is not supposed to be output to disk.

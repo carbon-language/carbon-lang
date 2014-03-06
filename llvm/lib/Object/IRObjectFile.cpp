@@ -144,7 +144,7 @@ basic_symbol_iterator IRObjectFile::symbol_end_impl() const {
 ErrorOr<SymbolicFile *> llvm::object::SymbolicFile::createIRObjectFile(
     MemoryBuffer *Object, LLVMContext &Context, bool BufferOwned) {
   error_code EC;
-  OwningPtr<IRObjectFile> Ret(
+  std::unique_ptr<IRObjectFile> Ret(
       new IRObjectFile(Object, EC, Context, BufferOwned));
   if (EC)
     return EC;

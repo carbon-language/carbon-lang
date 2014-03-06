@@ -15,7 +15,6 @@
 #define LLVM_ANALYSIS_MEMORYDEPENDENCEANALYSIS_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -325,7 +324,8 @@ namespace llvm {
     AliasAnalysis *AA;
     const DataLayout *DL;
     DominatorTree *DT;
-    OwningPtr<PredIteratorCache> PredCache;
+    std::unique_ptr<PredIteratorCache> PredCache;
+
   public:
     MemoryDependenceAnalysis();
     ~MemoryDependenceAnalysis();

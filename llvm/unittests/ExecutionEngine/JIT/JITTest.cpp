@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/JIT.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -77,7 +76,8 @@ std::string DumpFunction(const Function *F) {
 }
 
 class RecordingJITMemoryManager : public JITMemoryManager {
-  const OwningPtr<JITMemoryManager> Base;
+  const std::unique_ptr<JITMemoryManager> Base;
+
 public:
   RecordingJITMemoryManager()
     : Base(JITMemoryManager::CreateDefaultMemManager()) {
@@ -203,7 +203,7 @@ class JITTest : public testing::Test {
   LLVMContext Context;
   Module *M;  // Owned by ExecutionEngine.
   RecordingJITMemoryManager *RJMM;
-  OwningPtr<ExecutionEngine> TheJIT;
+  std::unique_ptr<ExecutionEngine> TheJIT;
 };
 
 // Regression test for a bug.  The JIT used to allocate globals inside the same
@@ -220,13 +220,13 @@ TEST(JIT, GlobalInFunction) {
   // memory is more easily tested.
   MemMgr->setPoisonMemory(true);
   std::string Error;
-  OwningPtr<ExecutionEngine> JIT(EngineBuilder(M)
-                                 .setEngineKind(EngineKind::JIT)
-                                 .setErrorStr(&Error)
-                                 .setJITMemoryManager(MemMgr)
-                                 // The next line enables the fix:
-                                 .setAllocateGVsWithCode(false)
-                                 .create());
+  std::unique_ptr<ExecutionEngine> JIT(EngineBuilder(M)
+                                           .setEngineKind(EngineKind::JIT)
+                                           .setErrorStr(&Error)
+                                           .setJITMemoryManager(MemMgr)
+                                           // The next line enables the fix:
+                                           .setAllocateGVsWithCode(false)
+                                           .create());
   ASSERT_EQ(Error, "");
 
   // Create a global variable.
@@ -669,7 +669,8 @@ TEST(LazyLoadedJITTest, MaterializableAvailableExternallyFunctionIsntCompiled) {
                       "} ");
   ASSERT_FALSE(Bitcode.empty()) << "Assembling failed";
   Module *M;
-  OwningPtr<ExecutionEngine> TheJIT(getJITFromBitcode(Context, Bitcode, M));
+  std::unique_ptr<ExecutionEngine> TheJIT(
+      getJITFromBitcode(Context, Bitcode, M));
   ASSERT_TRUE(TheJIT.get()) << "Failed to create JIT.";
   TheJIT->DisableLazyCompilation(true);
 
@@ -708,7 +709,8 @@ TEST(LazyLoadedJITTest, EagerCompiledRecursionThroughGhost) {
                       "} ");
   ASSERT_FALSE(Bitcode.empty()) << "Assembling failed";
   Module *M;
-  OwningPtr<ExecutionEngine> TheJIT(getJITFromBitcode(Context, Bitcode, M));
+  std::unique_ptr<ExecutionEngine> TheJIT(
+      getJITFromBitcode(Context, Bitcode, M));
   ASSERT_TRUE(TheJIT.get()) << "Failed to create JIT.";
   TheJIT->DisableLazyCompilation(true);
 

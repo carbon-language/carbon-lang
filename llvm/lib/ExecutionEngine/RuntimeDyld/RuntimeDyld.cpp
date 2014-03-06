@@ -96,7 +96,7 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
 ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
   MutexGuard locked(lock);
 
-  OwningPtr<ObjectImage> Obj(InputObject);
+  std::unique_ptr<ObjectImage> Obj(InputObject);
   if (!Obj)
     return NULL;
 

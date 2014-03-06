@@ -11,10 +11,11 @@
 #ifndef LLVM_SUPPORT_STREAMABLEMEMORYOBJECT_H
 #define LLVM_SUPPORT_STREAMABLEMEMORYOBJECT_H
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataStream.h"
 #include "llvm/Support/MemoryObject.h"
+#include <cassert>
+#include <memory>
 #include <vector>
 
 namespace llvm {
@@ -137,7 +138,7 @@ public:
 private:
   const static uint32_t kChunkSize = 4096 * 4;
   mutable std::vector<unsigned char> Bytes;
-  OwningPtr<DataStreamer> Streamer;
+  std::unique_ptr<DataStreamer> Streamer;
   mutable size_t BytesRead;   // Bytes read from stream
   size_t BytesSkipped;// Bytes skipped at start of stream (e.g. wrapper/header)
   mutable size_t ObjectSize; // 0 if unknown, set if wrapper seen or EOF reached

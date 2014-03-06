@@ -16,7 +16,6 @@
 #ifndef LLVM_TRANSFORMS_INSTRUMENTATION_DEBUGIR_H
 #define LLVM_TRANSFORMS_INSTRUMENTATION_DEBUGIR_H
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
@@ -79,11 +78,11 @@ private:
   bool updateExtension(llvm::StringRef NewExtension);
 
   /// Generate a temporary filename and open an fd
-  void generateFilename(llvm::OwningPtr<int> &fd);
+  void generateFilename(std::unique_ptr<int> &fd);
 
   /// Creates DWARF CU/Subroutine metadata
   void createDebugInfo(llvm::Module &M,
-                       llvm::OwningPtr<llvm::Module> &DisplayM);
+                       std::unique_ptr<llvm::Module> &DisplayM);
 
   /// Returns true if either Directory or Filename is missing, false otherwise.
   bool isMissingPath();

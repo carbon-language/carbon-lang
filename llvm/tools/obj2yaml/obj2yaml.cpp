@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "obj2yaml.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/CommandLine.h"
@@ -38,7 +37,7 @@ int main(int argc, char *argv[]) {
   llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   // Process the input file
-  OwningPtr<MemoryBuffer> buf;
+  std::unique_ptr<MemoryBuffer> buf;
 
   // TODO: If this is an archive, then burst it and dump each entry
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, buf)) {
