@@ -160,8 +160,8 @@ declare double @llvm.pow.f64(double %Val, double %Power)
 define double @test_simplify17(double %x) {
 ; CHECK-LABEL: @test_simplify17(
   %retval = call double @llvm.pow.f64(double %x, double 0.5)
-; CHECK-NEXT: [[SQRT:%[a-z0-9]+]] = call double @sqrt(double %x) [[NUW_RO]]
-; CHECK-NEXT: [[FABS:%[a-z0-9]+]] = call double @fabs(double [[SQRT]]) [[NUW_RO]]
+; CHECK-NEXT: [[SQRT:%[a-z0-9]+]] = call double @sqrt(double %x)
+; CHECK-NEXT: [[FABS:%[a-z0-9]+]] = call double @fabs(double [[SQRT]])
 ; CHECK-NEXT: [[FCMP:%[a-z0-9]+]] = fcmp oeq double %x, 0xFFF0000000000000
 ; CHECK-NEXT: [[SELECT:%[a-z0-9]+]] = select i1 [[FCMP]], double 0x7FF0000000000000, double [[FABS]]
   ret double %retval

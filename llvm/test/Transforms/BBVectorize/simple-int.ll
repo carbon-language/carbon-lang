@@ -126,8 +126,7 @@ define double @test4(double %A1, double %A2, double %B1, double %B2, i32 %P) {
 
 ; CHECK: declare <2 x double> @llvm.fma.v2f64(<2 x double>, <2 x double>, <2 x double>) #0
 ; CHECK: declare <2 x double> @llvm.fmuladd.v2f64(<2 x double>, <2 x double>, <2 x double>) #0
-; CHECK: declare <2 x double> @llvm.cos.v2f64(<2 x double>) #1
-; CHECK: declare <2 x double> @llvm.powi.v2f64(<2 x double>, i32) #1
+; CHECK: declare <2 x double> @llvm.cos.v2f64(<2 x double>) #0
+; CHECK: declare <2 x double> @llvm.powi.v2f64(<2 x double>, i32) #0
 
 ; CHECK: attributes #0 = { nounwind readnone }
-; CHECK: attributes #1 = { nounwind readonly }

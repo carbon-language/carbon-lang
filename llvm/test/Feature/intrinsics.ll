@@ -61,7 +61,7 @@ define void @libm() {
 ; FIXME: test ALL the intrinsics in this file.
 
 ; rdar://11542750
-; CHECK: declare void @llvm.trap() #2
+; CHECK: declare void @llvm.trap() #1
 declare void @llvm.trap()
 
 define void @trap() {
@@ -70,5 +70,4 @@ define void @trap() {
 }
 
 ; CHECK: attributes #0 = { nounwind readnone }
-; CHECK: attributes #1 = { nounwind readonly }
-; CHECK: attributes #2 = { noreturn nounwind }
+; CHECK: attributes #1 = { noreturn nounwind }

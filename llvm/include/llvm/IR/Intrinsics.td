@@ -285,10 +285,17 @@ def int_memset  : Intrinsic<[],
                              llvm_i32_ty, llvm_i1_ty],
                             [IntrReadWriteArgMem, NoCapture<0>]>;
 
-// These functions do not actually read memory, but they are sensitive to the
-// rounding mode.  This needs to be modelled separately; in the meantime
-// declaring them as reading memory is conservatively correct.
-let Properties = [IntrReadMem] in {
+let Properties = [IntrNoMem] in {
+  def int_fma  : Intrinsic<[llvm_anyfloat_ty],
+                           [LLVMMatchType<0>, LLVMMatchType<0>,
+                            LLVMMatchType<0>]>;
+  def int_fmuladd : Intrinsic<[llvm_anyfloat_ty],
+                              [LLVMMatchType<0>, LLVMMatchType<0>,
+                               LLVMMatchType<0>]>;
+
+  // These functions do not read memory, but are sensitive to the
+  // rounding mode. LLVM purposely does not model changes to the FP
+  // environment so they can be treated as readnone.
   def int_sqrt : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_powi : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, llvm_i32_ty]>;
   def int_sin  : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
@@ -309,16 +316,6 @@ let Properties = [IntrReadMem] in {
   def int_rint  : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_nearbyint : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
   def int_round : Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>]>;
-}
-
-let Properties = [IntrNoMem] in {
-  def int_fma  : Intrinsic<[llvm_anyfloat_ty],
-                         [LLVMMatchType<0>, LLVMMatchType<0>,
-                          LLVMMatchType<0>]>;
-
-  def int_fmuladd : Intrinsic<[llvm_anyfloat_ty],
-                              [LLVMMatchType<0>, LLVMMatchType<0>,
-                               LLVMMatchType<0>]>;
 }
 
 // NOTE: these are internal interfaces.
