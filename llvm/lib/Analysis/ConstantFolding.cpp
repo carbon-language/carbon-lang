@@ -1195,6 +1195,7 @@ bool llvm::canConstantFoldCallTo(const Function *F) {
   case Intrinsic::cttz:
   case Intrinsic::fma:
   case Intrinsic::fmuladd:
+  case Intrinsic::copysign:
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::uadd_with_overflow:
   case Intrinsic::ssub_with_overflow:
@@ -1531,6 +1532,12 @@ static Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID,
         double Op2V = getValueAsDouble(Op2);
         if (IntrinsicID == Intrinsic::pow) {
           return ConstantFoldBinaryFP(pow, Op1V, Op2V, Ty);
+        }
+        if (IntrinsicID == Intrinsic::copysign) {
+          APFloat V1 = Op1->getValueAPF();
+          APFloat V2 = Op2->getValueAPF();
+          V1.copySign(V2);
+          return ConstantFP::get(Ty->getContext(), V1);
         }
         if (!TLI)
           return 0;
