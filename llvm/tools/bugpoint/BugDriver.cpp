@@ -17,7 +17,7 @@
 #include "ToolRunner.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IRReader/IRReader.h"
-#include "llvm/Linker.h"
+#include "llvm/Linker/Linker.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"

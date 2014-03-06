@@ -39,7 +39,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Linker.h"
+#include "llvm/Linker/Linker.h"
 #include "llvm/Target/TargetOptions.h"
 #include <string>
 #include <vector>

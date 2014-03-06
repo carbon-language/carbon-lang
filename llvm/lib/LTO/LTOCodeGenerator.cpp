@@ -29,7 +29,7 @@
 #include "llvm/IR/Verifier.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/LTO/LTOModule.h"
-#include "llvm/Linker.h"
+#include "llvm/Linker/Linker.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/SubtargetFeature.h"

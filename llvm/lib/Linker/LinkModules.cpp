@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Linker.h"
+#include "llvm/Linker/Linker.h"
 #include "llvm-c/Linker.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SetVector.h"

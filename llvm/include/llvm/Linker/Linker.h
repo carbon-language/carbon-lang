@@ -1,4 +1,4 @@
-//===- llvm/Linker.h - Module Linker Interface ------------------*- C++ -*-===//
+//===- Linker.h - Module Linker Interface -----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LINKER_H
-#define LLVM_LINKER_H
+#ifndef LLVM_LINKER_LINKER_H
+#define LLVM_LINKER_LINKER_H
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include <string>
