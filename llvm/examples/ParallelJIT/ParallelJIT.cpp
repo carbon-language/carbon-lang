@@ -139,6 +139,7 @@ public:
   ~WaitForThreads()
   {
     int result = pthread_cond_destroy( &condition );
+    (void)result;
     assert( result == 0 );
 
     result = pthread_mutex_destroy( &mutex );
@@ -149,6 +150,7 @@ public:
   void block()
   {
     int result = pthread_mutex_lock( &mutex );
+    (void)result;
     assert( result == 0 );
     n ++;
     //~ std::cout << "block() n " << n << " waitFor " << waitFor << std::endl;
@@ -178,6 +180,7 @@ public:
   void releaseThreads( size_t num )
   {
     int result = pthread_mutex_lock( &mutex );
+    (void)result;
     assert( result == 0 );
 
     if ( n >= num ) {
