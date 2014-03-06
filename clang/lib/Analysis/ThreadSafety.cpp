@@ -188,44 +188,41 @@ private:
   NodeVector NodeVec;
 
 private:
+  unsigned make(ExprOp O, unsigned F = 0, const void *D = 0) {
+    NodeVec.push_back(SExprNode(O, F, D));
+    return NodeVec.size() - 1;
+  }
+
   unsigned makeNop() {
-    NodeVec.push_back(SExprNode(EOP_Nop, 0, 0));
-    return NodeVec.size()-1;
+    return make(EOP_Nop);
   }
 
   unsigned makeWildcard() {
-    NodeVec.push_back(SExprNode(EOP_Wildcard, 0, 0));
-    return NodeVec.size()-1;
+    return make(EOP_Wildcard);
   }
 
   unsigned makeUniversal() {
-    NodeVec.push_back(SExprNode(EOP_Universal, 0, 0));
-    return NodeVec.size()-1;
+    return make(EOP_Universal);
   }
 
   unsigned makeNamedVar(const NamedDecl *D) {
-    NodeVec.push_back(SExprNode(EOP_NVar, 0, D));
-    return NodeVec.size()-1;
+    return make(EOP_NVar, 0, D);
   }
 
   unsigned makeLocalVar(const NamedDecl *D) {
-    NodeVec.push_back(SExprNode(EOP_LVar, 0, D));
-    return NodeVec.size()-1;
+    return make(EOP_LVar, 0, D);
   }
 
   unsigned makeThis() {
-    NodeVec.push_back(SExprNode(EOP_This, 0, 0));
-    return NodeVec.size()-1;
+    return make(EOP_This);
   }
 
   unsigned makeDot(const NamedDecl *D, bool Arrow) {
-    NodeVec.push_back(SExprNode(EOP_Dot, Arrow ? 1 : 0, D));
-    return NodeVec.size()-1;
+    return make(EOP_Dot, Arrow ? 1 : 0, D);
   }
 
   unsigned makeCall(unsigned NumArgs, const NamedDecl *D) {
-    NodeVec.push_back(SExprNode(EOP_Call, NumArgs, D));
-    return NodeVec.size()-1;
+    return make(EOP_Call, NumArgs, D);
   }
 
   // Grab the very first declaration of virtual method D
@@ -242,28 +239,23 @@ private:
   }
 
   unsigned makeMCall(unsigned NumArgs, const CXXMethodDecl *D) {
-    NodeVec.push_back(SExprNode(EOP_MCall, NumArgs, getFirstVirtualDecl(D)));
-    return NodeVec.size()-1;
+    return make(EOP_MCall, NumArgs, getFirstVirtualDecl(D));
   }
 
   unsigned makeIndex() {
-    NodeVec.push_back(SExprNode(EOP_Index, 0, 0));
-    return NodeVec.size()-1;
+    return make(EOP_Index);
   }
 
   unsigned makeUnary() {
-    NodeVec.push_back(SExprNode(EOP_Unary, 0, 0));
-    return NodeVec.size()-1;
+    return make(EOP_Unary);
   }
 
   unsigned makeBinary() {
-    NodeVec.push_back(SExprNode(EOP_Binary, 0, 0));
-    return NodeVec.size()-1;
+    return make(EOP_Binary);
   }
 
   unsigned makeUnknown(unsigned Arity) {
-    NodeVec.push_back(SExprNode(EOP_Unknown, Arity, 0));
-    return NodeVec.size()-1;
+    return make(EOP_Unknown, Arity);
   }
 
   inline bool isCalleeArrow(const Expr *E) {
