@@ -30,36 +30,31 @@ public:
                        const SystemZSubtarget &sti);
 
   // Override TargetFrameLowering.
-  virtual bool isFPCloseToIncomingSP() const override { return false; }
-  virtual const SpillSlot *
-    getCalleeSavedSpillSlots(unsigned &NumEntries) const override;
-  virtual void
-    processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                         RegScavenger *RS) const override;
-  virtual bool
-    spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator MBBI,
-                              const std::vector<CalleeSavedInfo> &CSI,
-                              const TargetRegisterInfo *TRI) const
+  bool isFPCloseToIncomingSP() const override { return false; }
+  const SpillSlot *getCalleeSavedSpillSlots(unsigned &NumEntries) const
     override;
-  virtual bool
-    restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                MachineBasicBlock::iterator MBBII,
-                                const std::vector<CalleeSavedInfo> &CSI,
-                                const TargetRegisterInfo *TRI) const override;
-  virtual void processFunctionBeforeFrameFinalized(MachineFunction &MF,
-                                                   RegScavenger *RS) const;
-  virtual void emitPrologue(MachineFunction &MF) const override;
-  virtual void emitEpilogue(MachineFunction &MF,
-                            MachineBasicBlock &MBB) const override;
-  virtual bool hasFP(const MachineFunction &MF) const override;
-  virtual int getFrameIndexOffset(const MachineFunction &MF,
-                                  int FI) const override;
-  virtual bool hasReservedCallFrame(const MachineFunction &MF) const override;
-  virtual void
-  eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                MachineBasicBlock &MBB,
-                                MachineBasicBlock::iterator MI) const override;
+  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                            RegScavenger *RS) const override;
+  bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator MBBI,
+                                 const std::vector<CalleeSavedInfo> &CSI,
+                                 const TargetRegisterInfo *TRI) const override;
+  bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MBBII,
+                                   const std::vector<CalleeSavedInfo> &CSI,
+                                   const TargetRegisterInfo *TRI) const
+    override;
+  void processFunctionBeforeFrameFinalized(MachineFunction &MF,
+                                           RegScavenger *RS) const override;
+  void emitPrologue(MachineFunction &MF) const override;
+  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
+  bool hasFP(const MachineFunction &MF) const override;
+  int getFrameIndexOffset(const MachineFunction &MF, int FI) const override;
+  bool hasReservedCallFrame(const MachineFunction &MF) const override;
+  void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator MI) const
+    override;
 
   // Return the number of bytes in the callee-allocated part of the frame.
   uint64_t getAllocatedStackSize(const MachineFunction &MF) const;

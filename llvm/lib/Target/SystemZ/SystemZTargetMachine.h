@@ -42,30 +42,30 @@ public:
                        CodeGenOpt::Level OL);
 
   // Override TargetMachine.
-  virtual const TargetFrameLowering *getFrameLowering() const override {
+  const TargetFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
   }
-  virtual const SystemZInstrInfo *getInstrInfo() const override {
+  const SystemZInstrInfo *getInstrInfo() const override {
     return &InstrInfo;
   }
-  virtual const SystemZSubtarget *getSubtargetImpl() const override {
+  const SystemZSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }
-  virtual const DataLayout *getDataLayout() const override {
+  const DataLayout *getDataLayout() const override {
     return &DL;
   }
-  virtual const SystemZRegisterInfo *getRegisterInfo() const override {
+  const SystemZRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
-  virtual const SystemZTargetLowering *getTargetLowering() const override {
+  const SystemZTargetLowering *getTargetLowering() const override {
     return &TLInfo;
   }
-  virtual const TargetSelectionDAGInfo *getSelectionDAGInfo() const override {
+  const TargetSelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
 
   // Override LLVMTargetMachine
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 };
 
 } // end namespace llvm

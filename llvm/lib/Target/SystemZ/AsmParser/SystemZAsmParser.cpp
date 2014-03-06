@@ -162,7 +162,7 @@ public:
   }
 
   // Token operands
-  virtual bool isToken() const override {
+  bool isToken() const override {
     return Kind == KindToken;
   }
   StringRef getToken() const {
@@ -171,13 +171,13 @@ public:
   }
 
   // Register operands.
-  virtual bool isReg() const override {
+  bool isReg() const override {
     return Kind == KindReg;
   }
   bool isReg(RegisterKind RegKind) const {
     return Kind == KindReg && Reg.Kind == RegKind;
   }
-  virtual unsigned getReg() const override {
+  unsigned getReg() const override {
     assert(Kind == KindReg && "Not a register");
     return Reg.Num;
   }
@@ -189,7 +189,7 @@ public:
   }
 
   // Immediate operands.
-  virtual bool isImm() const override {
+  bool isImm() const override {
     return Kind == KindImm;
   }
   bool isImm(int64_t MinValue, int64_t MaxValue) const {
@@ -201,7 +201,7 @@ public:
   }
 
   // Memory operands.
-  virtual bool isMem() const override {
+  bool isMem() const override {
     return Kind == KindMem;
   }
   bool isMem(RegisterKind RegKind, MemoryKind MemKind) const {
@@ -221,9 +221,9 @@ public:
   }
 
   // Override MCParsedAsmOperand.
-  virtual SMLoc getStartLoc() const override { return StartLoc; }
-  virtual SMLoc getEndLoc() const override { return EndLoc; }
-  virtual void print(raw_ostream &OS) const override;
+  SMLoc getStartLoc() const override { return StartLoc; }
+  SMLoc getEndLoc() const override { return EndLoc; }
+  void print(raw_ostream &OS) const override;
 
   // Used by the TableGen code to add particular types of operand
   // to an instruction.
@@ -340,18 +340,16 @@ public:
   }
 
   // Override MCTargetAsmParser.
-  virtual bool ParseDirective(AsmToken DirectiveID) override;
-  virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
-                             SMLoc &EndLoc) override;
-  virtual bool
-  ParseInstruction(ParseInstructionInfo &Info,
-                   StringRef Name, SMLoc NameLoc,
-                   SmallVectorImpl<MCParsedAsmOperand*> &Operands) override;
-  virtual bool
-    MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
-                            SmallVectorImpl<MCParsedAsmOperand*> &Operands,
-                            MCStreamer &Out, unsigned &ErrorInfo,
-                            bool MatchingInlineAsm) override;
+  bool ParseDirective(AsmToken DirectiveID) override;
+  bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
+  bool ParseInstruction(ParseInstructionInfo &Info,
+                        StringRef Name, SMLoc NameLoc,
+                        SmallVectorImpl<MCParsedAsmOperand*> &Operands)
+    override;
+  bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
+                               SmallVectorImpl<MCParsedAsmOperand*> &Operands,
+                               MCStreamer &Out, unsigned &ErrorInfo,
+                               bool MatchingInlineAsm) override;
 
   // Used by the TableGen code to parse particular operand types.
   OperandMatchResultTy

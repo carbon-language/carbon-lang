@@ -201,57 +201,50 @@ public:
   explicit SystemZTargetLowering(SystemZTargetMachine &TM);
 
   // Override TargetLowering.
-  virtual MVT getScalarShiftAmountTy(EVT LHSTy) const override {
+  MVT getScalarShiftAmountTy(EVT LHSTy) const override {
     return MVT::i32;
   }
-  virtual EVT getSetCCResultType(LLVMContext &, EVT) const override;
-  virtual bool isFMAFasterThanFMulAndFAdd(EVT VT) const override;
-  virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const override;
-  virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const override;
-  virtual bool
-    allowsUnalignedMemoryAccesses(EVT VT, unsigned AS,
-                                  bool *Fast) const override;
-  virtual bool isTruncateFree(Type *, Type *) const override;
-  virtual bool isTruncateFree(EVT, EVT) const override;
-  virtual const char *getTargetNodeName(unsigned Opcode) const override;
-  virtual std::pair<unsigned, const TargetRegisterClass *>
+  EVT getSetCCResultType(LLVMContext &, EVT) const override;
+  bool isFMAFasterThanFMulAndFAdd(EVT VT) const override;
+  bool isFPImmLegal(const APFloat &Imm, EVT VT) const override;
+  bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const override;
+  bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS,
+                                     bool *Fast) const override;
+  bool isTruncateFree(Type *, Type *) const override;
+  bool isTruncateFree(EVT, EVT) const override;
+  const char *getTargetNodeName(unsigned Opcode) const override;
+  std::pair<unsigned, const TargetRegisterClass *>
     getRegForInlineAsmConstraint(const std::string &Constraint,
                                  MVT VT) const override;
-  virtual TargetLowering::ConstraintType
+  TargetLowering::ConstraintType
     getConstraintType(const std::string &Constraint) const override;
-  virtual TargetLowering::ConstraintWeight
+  TargetLowering::ConstraintWeight
     getSingleConstraintMatchWeight(AsmOperandInfo &info,
                                    const char *constraint) const override;
-  virtual void
-    LowerAsmOperandForConstraint(SDValue Op,
-                                 std::string &Constraint,
-                                 std::vector<SDValue> &Ops,
-                                 SelectionDAG &DAG) const override;
-  virtual MachineBasicBlock *
-    EmitInstrWithCustomInserter(MachineInstr *MI,
-                                MachineBasicBlock *BB) const override;
-  virtual SDValue LowerOperation(SDValue Op,
-                                 SelectionDAG &DAG) const override;
-  virtual bool allowTruncateForTailCall(Type *, Type *) const override;
-  virtual bool mayBeEmittedAsTailCall(CallInst *CI) const override;
-  virtual SDValue
-    LowerFormalArguments(SDValue Chain,
-                         CallingConv::ID CallConv, bool isVarArg,
-                         const SmallVectorImpl<ISD::InputArg> &Ins,
-                         SDLoc DL, SelectionDAG &DAG,
-                         SmallVectorImpl<SDValue> &InVals) const override;
-  virtual SDValue
-    LowerCall(CallLoweringInfo &CLI,
-              SmallVectorImpl<SDValue> &InVals) const override;
+  void LowerAsmOperandForConstraint(SDValue Op,
+                                    std::string &Constraint,
+                                    std::vector<SDValue> &Ops,
+                                    SelectionDAG &DAG) const override;
+  MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                 MachineBasicBlock *BB) const
+    override;
+  SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
+  bool allowTruncateForTailCall(Type *, Type *) const override;
+  bool mayBeEmittedAsTailCall(CallInst *CI) const override;
+  SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
+                               bool isVarArg,
+                               const SmallVectorImpl<ISD::InputArg> &Ins,
+                               SDLoc DL, SelectionDAG &DAG,
+                               SmallVectorImpl<SDValue> &InVals) const override;
+  SDValue LowerCall(CallLoweringInfo &CLI,
+                    SmallVectorImpl<SDValue> &InVals) const override;
 
-  virtual SDValue
-    LowerReturn(SDValue Chain,
-                CallingConv::ID CallConv, bool IsVarArg,
-                const SmallVectorImpl<ISD::OutputArg> &Outs,
-                const SmallVectorImpl<SDValue> &OutVals,
-                SDLoc DL, SelectionDAG &DAG) const override;
-  virtual SDValue prepareVolatileOrAtomicLoad(SDValue Chain, SDLoc DL,
-                                              SelectionDAG &DAG) const override;
+  SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
+                      const SmallVectorImpl<ISD::OutputArg> &Outs,
+                      const SmallVectorImpl<SDValue> &OutVals,
+                      SDLoc DL, SelectionDAG &DAG) const override;
+  SDValue prepareVolatileOrAtomicLoad(SDValue Chain, SDLoc DL,
+                                      SelectionDAG &DAG) const override;
 
 private:
   const SystemZSubtarget &Subtarget;

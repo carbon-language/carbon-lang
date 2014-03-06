@@ -21,8 +21,7 @@ public:
   explicit SystemZMCAsmInfo(StringRef TT);
 
   // Override MCAsmInfo;
-  virtual const MCSection *
-  getNonexecutableStackSection(MCContext &Ctx) const override;
+  const MCSection *getNonexecutableStackSection(MCContext &Ctx) const override;
 };
 
 } // end namespace llvm

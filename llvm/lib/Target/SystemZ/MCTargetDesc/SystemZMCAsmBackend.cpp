@@ -43,28 +43,25 @@ public:
     : OSABI(osABI) {}
 
   // Override MCAsmBackend
-  virtual unsigned getNumFixupKinds() const override {
+  unsigned getNumFixupKinds() const override {
     return SystemZ::NumTargetFixupKinds;
   }
-  virtual const MCFixupKindInfo &
-  getFixupKindInfo(MCFixupKind Kind) const override;
-  virtual void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                          uint64_t Value) const override;
-  virtual bool mayNeedRelaxation(const MCInst &Inst) const override {
+  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override;
+  void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+                  uint64_t Value) const override;
+  bool mayNeedRelaxation(const MCInst &Inst) const override {
     return false;
   }
-  virtual bool fixupNeedsRelaxation(const MCFixup &Fixup,
-                                    uint64_t Value,
-                                    const MCRelaxableFragment *Fragment,
-                                    const MCAsmLayout &Layout) const override {
+  bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
+                            const MCRelaxableFragment *Fragment,
+                            const MCAsmLayout &Layout) const override {
     return false;
   }
-  virtual void relaxInstruction(const MCInst &Inst,
-                                MCInst &Res) const override {
+  void relaxInstruction(const MCInst &Inst, MCInst &Res) const override {
     llvm_unreachable("SystemZ does do not have assembler relaxation");
   }
-  virtual bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override;
-  virtual MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override;
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
     return createSystemZObjectWriter(OS, OSABI);
   }
 };

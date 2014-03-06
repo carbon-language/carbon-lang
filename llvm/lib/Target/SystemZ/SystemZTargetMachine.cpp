@@ -47,10 +47,10 @@ public:
     return getTM<SystemZTargetMachine>();
   }
 
-  virtual void addIRPasses() override;
-  virtual bool addInstSelector() override;
-  virtual bool addPreSched2() override;
-  virtual bool addPreEmitPass() override;
+  void addIRPasses() override;
+  bool addInstSelector() override;
+  bool addPreSched2() override;
+  bool addPreEmitPass() override;
 };
 } // end anonymous namespace
 

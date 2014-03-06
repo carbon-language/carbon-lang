@@ -133,7 +133,7 @@ public:
   SystemZLongBranch(const SystemZTargetMachine &tm)
     : MachineFunctionPass(ID), TII(0) {}
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "SystemZ Long Branch";
   }
 

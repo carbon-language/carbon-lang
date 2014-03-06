@@ -27,12 +27,10 @@ public:
   virtual ~SystemZDisassembler() {}
 
   // Override MCDisassembler.
-  virtual DecodeStatus getInstruction(MCInst &instr,
-                                      uint64_t &size,
-                                      const MemoryObject &region,
-                                      uint64_t address,
-                                      raw_ostream &vStream,
-                                      raw_ostream &cStream) const override;
+  DecodeStatus getInstruction(MCInst &instr, uint64_t &size,
+                              const MemoryObject &region, uint64_t address,
+                              raw_ostream &vStream,
+                              raw_ostream &cStream) const override;
 };
 } // end anonymous namespace
 

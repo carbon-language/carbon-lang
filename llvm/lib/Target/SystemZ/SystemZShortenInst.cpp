@@ -26,7 +26,7 @@ public:
   static char ID;
   SystemZShortenInst(const SystemZTargetMachine &tm);
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "SystemZ Instruction Shortening";
   }
 
