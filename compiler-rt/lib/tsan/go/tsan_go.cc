@@ -85,6 +85,7 @@ ReportStack *SymbolizeCode(uptr addr) {
 extern "C" {
 
 static ThreadState *main_thr;
+static bool inited;
 
 static ThreadState *AllocGoroutine() {
   ThreadState *thr = (ThreadState*)internal_alloc(MBlockThreadContex,
@@ -98,6 +99,7 @@ void __tsan_init(ThreadState **thrp, void (*cb)(SymbolizeContext *cb)) {
   ThreadState *thr = AllocGoroutine();
   main_thr = *thrp = thr;
   Initialize(thr);
+  inited = true;
 }
 
 void __tsan_fini() {
@@ -151,10 +153,10 @@ void __tsan_func_exit(ThreadState *thr) {
   FuncExit(thr);
 }
 
-void __tsan_malloc(ThreadState *thr, void *p, uptr sz, void *pc) {
-  if (thr == 0)  // probably before __tsan_init()
+void __tsan_malloc(void *p, uptr sz) {
+  if (!inited)
     return;
-  MemoryResetRange(thr, (uptr)pc, (uptr)p, sz);
+  MemoryResetRange(0, 0, (uptr)p, sz);
 }
 
 void __tsan_go_start(ThreadState *parent, ThreadState **pthr, void *pc) {
