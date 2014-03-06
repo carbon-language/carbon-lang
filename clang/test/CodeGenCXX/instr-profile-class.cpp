@@ -11,7 +11,7 @@
 // RUN: FileCheck --input-file=%tgen -check-prefix=MTHGEN %s
 // RUN: FileCheck --input-file=%tgen -check-prefix=WRPGEN %s
 
-// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile-class.pgodata -fno-exceptions -target %itanium_abi_triple > %tuse
+// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/instr-profile-class.profdata -fno-exceptions -target %itanium_abi_triple > %tuse
 // RUN: FileCheck --input-file=%tuse -check-prefix=CTRUSE %s
 // RUN: FileCheck --input-file=%tuse -check-prefix=DTRUSE %s
 // RUN: FileCheck --input-file=%tuse -check-prefix=MTHUSE %s
