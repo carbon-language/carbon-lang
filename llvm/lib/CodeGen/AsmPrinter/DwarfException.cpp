@@ -241,7 +241,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
        I != E; ++I) {
     for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
          MI != E; ++MI) {
-      if (!MI->isLabel()) {
+      if (!MI->isEHLabel()) {
         if (MI->isCall())
           SawPotentiallyThrowing |= !CallToNoUnwindFunction(MI);
         continue;
