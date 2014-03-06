@@ -30,3 +30,24 @@ entry:
   tail call void asm sideeffect "foo ${0:n}", "i"(i32 99) nounwind
   ret void
 }
+
+@x = external global i32
+@y = external global i32, section ".cp.rodata"
+
+; CHECK-LABEL: f5:
+; CHECK: ldw r0, dp[x]
+; CHECK: retsp 0
+define i32 @f5() nounwind {
+entry:
+  %asmtmp = call i32 asm "ldw $0, $1", "=r,*m"(i32* @x) nounwind
+  ret i32 %asmtmp
+}
+
+; CHECK-LABEL: f6:
+; CHECK: ldw r0, cp[y]
+; CHECK: retsp 0
+define i32 @f6() nounwind {
+entry:
+  %asmtmp = call i32 asm "ldw $0, $1", "=r,*m"(i32* @y) nounwind
+  ret i32 %asmtmp
+}

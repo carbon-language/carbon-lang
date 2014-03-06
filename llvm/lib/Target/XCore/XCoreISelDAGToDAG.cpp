@@ -66,7 +66,10 @@ namespace {
 
     // Complex Pattern Selectors.
     bool SelectADDRspii(SDValue Addr, SDValue &Base, SDValue &Offset);
-    
+
+    bool SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
+                                      std::vector<SDValue> &OutOps) override;
+
     virtual const char *getPassName() const {
       return "XCore DAG->DAG Pattern Instruction Selection";
     } 
@@ -103,6 +106,28 @@ bool XCoreDAGToDAGISel::SelectADDRspii(SDValue Addr, SDValue &Base,
       return true;
     }
   }
+  return false;
+}
+
+bool XCoreDAGToDAGISel::
+SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
+                             std::vector<SDValue> &OutOps) {
+  SDValue Reg;
+  switch (ConstraintCode) {
+  default: return true;
+  case 'm': // Memory.
+    switch (Op.getOpcode()) {
+    default: return true;
+    case XCoreISD::CPRelativeWrapper:
+      Reg = CurDAG->getRegister(XCore::CP, MVT::i32);
+      break;
+    case XCoreISD::DPRelativeWrapper:
+      Reg = CurDAG->getRegister(XCore::DP, MVT::i32);
+      break;
+    }
+  }
+  OutOps.push_back(Reg);
+  OutOps.push_back(Op.getOperand(0));
   return false;
 }
 
