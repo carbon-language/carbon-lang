@@ -2395,6 +2395,13 @@ bool RecursiveASTVisitor<Derived>::VisitOMPIfClause(OMPIfClause *C) {
 }
 
 template<typename Derived>
+bool RecursiveASTVisitor<Derived>::VisitOMPNumThreadsClause(
+                                                      OMPNumThreadsClause *C) {
+  TraverseStmt(C->getNumThreads());
+  return true;
+}
+
+template<typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPDefaultClause(OMPDefaultClause *C) {
   return true;
 }

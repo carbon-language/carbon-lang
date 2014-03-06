@@ -186,6 +186,60 @@ public:
   StmtRange children() { return StmtRange(&Condition, &Condition + 1); }
 };
 
+/// \brief This represents 'num_threads' clause in the '#pragma omp ...'
+/// directive.
+///
+/// \code
+/// #pragma omp parallel num_threads(6)
+/// \endcode
+/// In this example directive '#pragma omp parallel' has simple 'num_threads'
+/// clause with number of threads '6'.
+///
+class OMPNumThreadsClause : public OMPClause {
+  friend class OMPClauseReader;
+  /// \brief Location of '('.
+  SourceLocation LParenLoc;
+  /// \brief Condition of the 'num_threads' clause.
+  Stmt *NumThreads;
+
+  /// \brief Set condition.
+  ///
+  void setNumThreads(Expr *NThreads) { NumThreads = NThreads; }
+
+public:
+  /// \brief Build 'num_threads' clause with condition \a NumThreads.
+  ///
+  /// \param NumThreads Number of threads for the construct.
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param EndLoc Ending location of the clause.
+  ///
+  OMPNumThreadsClause(Expr *NumThreads, SourceLocation StartLoc,
+                      SourceLocation LParenLoc, SourceLocation EndLoc)
+      : OMPClause(OMPC_num_threads, StartLoc, EndLoc), LParenLoc(LParenLoc),
+        NumThreads(NumThreads) {}
+
+  /// \brief Build an empty clause.
+  ///
+  OMPNumThreadsClause()
+      : OMPClause(OMPC_num_threads, SourceLocation(), SourceLocation()),
+        LParenLoc(SourceLocation()), NumThreads(0) {}
+
+  /// \brief Sets the location of '('.
+  void setLParenLoc(SourceLocation Loc) { LParenLoc = Loc; }
+  /// \brief Returns the location of '('.
+  SourceLocation getLParenLoc() const { return LParenLoc; }
+
+  /// \brief Returns number of threads.
+  Expr *getNumThreads() const { return cast_or_null<Expr>(NumThreads); }
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_num_threads;
+  }
+
+  StmtRange children() { return StmtRange(&NumThreads, &NumThreads + 1); }
+};
+
 /// \brief This represents 'default' clause in the '#pragma omp ...' directive.
 ///
 /// \code

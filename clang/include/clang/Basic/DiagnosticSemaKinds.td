@@ -6866,6 +6866,20 @@ def note_omp_predetermined_dsa : Note<
   "predetermined as %0">;
 def err_omp_not_for : Error<
   "statement after '#pragma omp %0' must be a for loop">;
+def err_omp_negative_expression_in_clause : Error<
+  "argument to '%0' clause must be a positive integer value">;
+def err_omp_not_integral : Error<
+  "expression must have integral or unscoped enumeration "
+  "type, not %0">;
+def err_omp_incomplete_type : Error<
+  "expression has incomplete class type %0">;
+def err_omp_explicit_conversion : Error<
+  "expression requires explicit conversion from %0 to %1">;
+def note_omp_conversion_here : Note<
+  "conversion to %select{integral|enumeration}0 type %1 declared here">;
+def err_omp_ambiguous_conversion : Error<
+  "ambiguous conversion from type %0 to an integral or unscoped "
+  "enumeration type">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

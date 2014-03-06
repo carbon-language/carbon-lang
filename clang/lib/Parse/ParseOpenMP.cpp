@@ -272,8 +272,10 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
 
   switch (CKind) {
   case OMPC_if:
+  case OMPC_num_threads:
     // OpenMP [2.5, Restrictions]
     //  At most one if clause can appear on the directive.
+    //  At most one num_threads clause can appear on the directive.
     if (!FirstClause) {
       Diag(Tok, diag::err_omp_more_one_clause)
            << getOpenMPDirectiveName(DKind) << getOpenMPClauseName(CKind);

@@ -1684,6 +1684,11 @@ void OMPClauseWriter::VisitOMPIfClause(OMPIfClause *C) {
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
 }
 
+void OMPClauseWriter::VisitOMPNumThreadsClause(OMPNumThreadsClause *C) {
+  Writer->Writer.AddStmt(C->getNumThreads());
+  Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
+}
+
 void OMPClauseWriter::VisitOMPDefaultClause(OMPDefaultClause *C) {
   Record.push_back(C->getDefaultKind());
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);

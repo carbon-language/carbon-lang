@@ -612,6 +612,12 @@ void OMPClausePrinter::VisitOMPIfClause(OMPIfClause *Node) {
   OS << ")";
 }
 
+void OMPClausePrinter::VisitOMPNumThreadsClause(OMPNumThreadsClause *Node) {
+  OS << "num_threads(";
+  Node->getNumThreads()->printPretty(OS, 0, Policy, 0);
+  OS << ")";
+}
+
 void OMPClausePrinter::VisitOMPDefaultClause(OMPDefaultClause *Node) {
   OS << "default("
      << getOpenMPSimpleClauseTypeName(OMPC_default, Node->getDefaultKind())

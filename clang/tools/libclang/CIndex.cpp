@@ -1936,6 +1936,10 @@ void OMPClauseEnqueue::VisitOMPIfClause(const OMPIfClause *C) {
   Visitor->AddStmt(C->getCondition());
 }
 
+void OMPClauseEnqueue::VisitOMPNumThreadsClause(const OMPNumThreadsClause *C) {
+  Visitor->AddStmt(C->getNumThreads());
+}
+
 void OMPClauseEnqueue::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
 
 template<typename T>
