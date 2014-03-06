@@ -4353,10 +4353,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_ConsumableAutoCast:
     handleSimpleAttribute<ConsumableAutoCastAttr>(S, D, Attr); break;
-    break;
   case AttributeList::AT_ConsumableSetOnRead:
     handleSimpleAttribute<ConsumableSetOnReadAttr>(S, D, Attr); break;
-    break;
   case AttributeList::AT_CallableWhen:
     handleCallableWhenAttr(S, D, Attr);
     break;
