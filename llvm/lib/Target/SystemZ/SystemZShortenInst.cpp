@@ -30,7 +30,7 @@ public:
     return "SystemZ Instruction Shortening";
   }
 
-  bool processBlock(MachineBasicBlock *MBB);
+  bool processBlock(MachineBasicBlock &MBB);
   bool runOnMachineFunction(MachineFunction &F);
 
 private:
@@ -98,16 +98,15 @@ bool SystemZShortenInst::shortenIIF(MachineInstr &MI, unsigned *GPRMap,
 }
 
 // Process all instructions in MBB.  Return true if something changed.
-bool SystemZShortenInst::processBlock(MachineBasicBlock *MBB) {
+bool SystemZShortenInst::processBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
 
   // Work out which words are live on exit from the block.
   unsigned LiveLow = 0;
   unsigned LiveHigh = 0;
-  for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
-         SE = MBB->succ_end(); SI != SE; ++SI) {
-    for (MachineBasicBlock::livein_iterator LI = (*SI)->livein_begin(),
-           LE = (*SI)->livein_end(); LI != LE; ++LI) {
+  for (auto SI = MBB.succ_begin(), SE = MBB.succ_end(); SI != SE; ++SI) {
+    for (auto LI = (*SI)->livein_begin(), LE = (*SI)->livein_end();
+         LI != LE; ++LI) {
       unsigned Reg = *LI;
       assert(Reg < SystemZ::NUM_TARGET_REGS && "Invalid register number");
       LiveLow |= LowGPRs[Reg];
@@ -116,8 +115,7 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock *MBB) {
   }
 
   // Iterate backwards through the block looking for instructions to change.
-  for (MachineBasicBlock::reverse_iterator MBBI = MBB->rbegin(),
-         MBBE = MBB->rend(); MBBI != MBBE; ++MBBI) {
+  for (auto MBBI = MBB.rbegin(), MBBE = MBB.rend(); MBBI != MBBE; ++MBBI) {
     MachineInstr &MI = *MBBI;
     unsigned Opcode = MI.getOpcode();
     if (Opcode == SystemZ::IILF)
@@ -128,8 +126,8 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock *MBB) {
                             SystemZ::LLIHH);
     unsigned UsedLow = 0;
     unsigned UsedHigh = 0;
-    for (MachineInstr::mop_iterator MOI = MI.operands_begin(),
-           MOE = MI.operands_end(); MOI != MOE; ++MOI) {
+    for (auto MOI = MI.operands_begin(), MOE = MI.operands_end();
+         MOI != MOE; ++MOI) {
       MachineOperand &MO = *MOI;
       if (MO.isReg()) {
         if (unsigned Reg = MO.getReg()) {
@@ -155,9 +153,8 @@ bool SystemZShortenInst::runOnMachineFunction(MachineFunction &F) {
   TII = static_cast<const SystemZInstrInfo *>(F.getTarget().getInstrInfo());
 
   bool Changed = false;
-  for (MachineFunction::iterator MFI = F.begin(), MFE = F.end();
-       MFI != MFE; ++MFI)
-    Changed |= processBlock(MFI);
+  for (auto &MBB : F)
+    Changed |= processBlock(MBB);
 
   return Changed;
 }

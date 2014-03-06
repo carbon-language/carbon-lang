@@ -336,9 +336,8 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
     MCSymbol *GPRSaveLabel = MMI.getContext().CreateTempSymbol();
     BuildMI(MBB, MBBI, DL,
             ZII->get(TargetOpcode::PROLOG_LABEL)).addSym(GPRSaveLabel);
-    for (std::vector<CalleeSavedInfo>::const_iterator
-           I = CSI.begin(), E = CSI.end(); I != E; ++I) {
-      unsigned Reg = I->getReg();
+    for (auto &Save : CSI) {
+      unsigned Reg = Save.getReg();
       if (SystemZ::GR64BitRegClass.contains(Reg)) {
         int64_t Offset = SPOffsetFromCFA + RegSpillOffsets[Reg];
         MMI.addFrameInst(MCCFIInstruction::createOffset(
@@ -378,16 +377,14 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
     // Mark the FramePtr as live at the beginning of every block except
     // the entry block.  (We'll have marked R11 as live on entry when
     // saving the GPRs.)
-    for (MachineFunction::iterator I = std::next(MF.begin()), E = MF.end();
-         I != E; ++I)
+    for (auto I = std::next(MF.begin()), E = MF.end(); I != E; ++I)
       I->addLiveIn(SystemZ::R11D);
   }
 
   // Skip over the FPR saves.
   MCSymbol *FPRSaveLabel = 0;
-  for (std::vector<CalleeSavedInfo>::const_iterator
-         I = CSI.begin(), E = CSI.end(); I != E; ++I) {
-    unsigned Reg = I->getReg();
+  for (auto &Save : CSI) {
+    unsigned Reg = Save.getReg();
     if (SystemZ::FP64BitRegClass.contains(Reg)) {
       if (MBBI != MBB.end() &&
           (MBBI->getOpcode() == SystemZ::STD ||
@@ -399,10 +396,10 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
       // Add CFI for the this save.
       if (!FPRSaveLabel)
         FPRSaveLabel = MMI.getContext().CreateTempSymbol();
-      unsigned Reg = MRI->getDwarfRegNum(I->getReg(), true);
-      int64_t Offset = getFrameIndexOffset(MF, I->getFrameIdx());
+      unsigned DwarfReg = MRI->getDwarfRegNum(Reg, true);
+      int64_t Offset = getFrameIndexOffset(MF, Save.getFrameIdx());
       MMI.addFrameInst(MCCFIInstruction::createOffset(
-          FPRSaveLabel, Reg, SPOffsetFromCFA + Offset));
+          FPRSaveLabel, DwarfReg, SPOffsetFromCFA + Offset));
     }
   }
   // Complete the CFI for the FPR saves, modelling them as taking effect

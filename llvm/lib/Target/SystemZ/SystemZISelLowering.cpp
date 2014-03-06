@@ -1284,8 +1284,7 @@ static unsigned reverseCCMask(unsigned CCMask) {
 static void adjustForSubtraction(SelectionDAG &DAG, Comparison &C) {
   if (C.CCMask == SystemZ::CCMASK_CMP_EQ ||
       C.CCMask == SystemZ::CCMASK_CMP_NE) {
-    for (SDNode::use_iterator I = C.Op0->use_begin(), E = C.Op0->use_end();
-         I != E; ++I) {
+    for (auto I = C.Op0->use_begin(), E = C.Op0->use_end(); I != E; ++I) {
       SDNode *N = *I;
       if (N->getOpcode() == ISD::SUB &&
           ((N->getOperand(0) == C.Op0 && N->getOperand(1) == C.Op1) ||
@@ -1305,8 +1304,7 @@ static void adjustForSubtraction(SelectionDAG &DAG, Comparison &C) {
 static void adjustForFNeg(Comparison &C) {
   ConstantFPSDNode *C1 = dyn_cast<ConstantFPSDNode>(C.Op1);
   if (C1 && C1->isZero()) {
-    for (SDNode::use_iterator I = C.Op0->use_begin(), E = C.Op0->use_end();
-         I != E; ++I) {
+    for (auto I = C.Op0->use_begin(), E = C.Op0->use_end(); I != E; ++I) {
       SDNode *N = *I;
       if (N->getOpcode() == ISD::FNEG) {
         C.Op0 = SDValue(N, 0);
@@ -1333,8 +1331,7 @@ static void adjustForLTGFR(Comparison &C) {
     if (C1 && C1->getZExtValue() == 32) {
       SDValue ShlOp0 = C.Op0.getOperand(0);
       // See whether X has any SIGN_EXTEND_INREG uses.
-      for (SDNode::use_iterator I = ShlOp0->use_begin(), E = ShlOp0->use_end();
-           I != E; ++I) {
+      for (auto I = ShlOp0->use_begin(), E = ShlOp0->use_end(); I != E; ++I) {
         SDNode *N = *I;
         if (N->getOpcode() == ISD::SIGN_EXTEND_INREG &&
             cast<VTSDNode>(N->getOperand(1))->getVT() == MVT::i32) {
