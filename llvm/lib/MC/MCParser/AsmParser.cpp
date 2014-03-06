@@ -805,9 +805,8 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
                                         getContext());
           EndLoc = FirstTokenLoc;
           return false;
-        } else
-          return Error(FirstTokenLoc, "invalid token in expression");
-        return true;
+        }
+        return Error(FirstTokenLoc, "invalid token in expression");
       }
     }
     // Parse symbol variant
