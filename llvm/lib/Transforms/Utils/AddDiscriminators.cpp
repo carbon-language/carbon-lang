@@ -55,10 +55,10 @@
 #define DEBUG_TYPE "add-discriminators"
 
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/DIBuilder.h"
 #include "llvm/DebugInfo.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
