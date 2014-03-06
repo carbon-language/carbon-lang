@@ -1914,9 +1914,6 @@ static void HandleRecvmsg(ThreadState *thr, uptr pc,
 #undef SANITIZER_INTERCEPT_GETADDRINFO
 
 #define COMMON_INTERCEPT_FUNCTION(name) INTERCEPT_FUNCTION(name)
-#define COMMON_INTERCEPTOR_UNPOISON_PARAM(ctx, count) \
-  do {                                                \
-  } while (false)
 
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size)                    \
   MemoryAccessRange(((TsanInterceptorContext *)ctx)->thr,                 \

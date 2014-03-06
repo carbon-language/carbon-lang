@@ -1199,13 +1199,13 @@ int OnExit() {
   } while (0)
 
 #define COMMON_INTERCEPT_FUNCTION(name) MSAN_INTERCEPT_FUNC(name)
-#define COMMON_INTERCEPTOR_UNPOISON_PARAM(ctx, count)  \
+#define COMMON_INTERCEPTOR_UNPOISON_PARAM(count)  \
   UnpoisonParam(count)
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
   __msan_unpoison(ptr, size)
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) \
   CHECK_UNPOISONED_CTX(ctx, ptr, size)
-#define COMMON_INTERCEPTOR_INITIALIZE_RANGE(ctx, ptr, size) \
+#define COMMON_INTERCEPTOR_INITIALIZE_RANGE(ptr, size) \
   __msan_unpoison(ptr, size)
 #define COMMON_INTERCEPTOR_ENTER(ctx, func, ...)                  \
   if (msan_init_is_running) return REAL(func)(__VA_ARGS__);       \
