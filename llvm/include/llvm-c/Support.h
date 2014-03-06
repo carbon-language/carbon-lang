@@ -14,11 +14,30 @@
 #ifndef LLVM_C_SUPPORT_H
 #define LLVM_C_SUPPORT_H
 
-#include "llvm-c/Core.h"
+#include "llvm/Support/DataTypes.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @defgroup LLVMCSupportTypes Types and Enumerations
+ *
+ * @{
+ */
+
+typedef int LLVMBool;
+
+/**
+ * Used to pass regions of memory through LLVM interfaces.
+ *
+ * @see llvm::MemoryBuffer
+ */
+typedef struct LLVMOpaqueMemoryBuffer *LLVMMemoryBufferRef;
+
+/**
+ * @}
+ */
 
 /**
  * This function permanently loads the dynamic library at the given path.

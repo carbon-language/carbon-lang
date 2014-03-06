@@ -15,7 +15,7 @@
 #ifndef LLVM_C_CORE_H
 #define LLVM_C_CORE_H
 
-#include "llvm/Support/DataTypes.h"
+#include "llvm-c/Support.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,8 +61,6 @@ extern "C" {
  *
  * @{
  */
-
-typedef int LLVMBool;
 
 /* Opaque types. */
 
@@ -113,13 +111,6 @@ typedef struct LLVMOpaqueBuilder *LLVMBuilderRef;
  * different type to keep binary compatibility.
  */
 typedef struct LLVMOpaqueModuleProvider *LLVMModuleProviderRef;
-
-/**
- * Used to provide a module to JIT or interpreter.
- *
- * @see llvm::MemoryBuffer
- */
-typedef struct LLVMOpaqueMemoryBuffer *LLVMMemoryBufferRef;
 
 /** @see llvm::PassManagerBase */
 typedef struct LLVMOpaquePassManager *LLVMPassManagerRef;
