@@ -43,6 +43,6 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI) {
   return MIB.addFrameIndex(FI).addImm(Offset).addReg(0).addMemOperand(MMO);
 }
 
-} // End llvm namespace
+} // end namespace llvm
 
 #endif

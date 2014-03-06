@@ -74,6 +74,6 @@ public:
                            MachinePointerInfo SrcPtrInfo) const override;
 };
 
-}
+} // end namespace llvm
 
 #endif

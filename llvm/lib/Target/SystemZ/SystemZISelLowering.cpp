@@ -58,7 +58,7 @@ struct Comparison {
   // The mask of CC values for which the original condition is true.
   unsigned CCMask;
 };
-}
+} // end anonymous namespace
 
 // Classify VT as either 32 or 64 bit.
 static bool is32Bit(EVT VT) {

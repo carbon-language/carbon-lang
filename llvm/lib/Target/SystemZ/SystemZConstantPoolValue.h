@@ -18,10 +18,10 @@ namespace llvm {
 class GlobalValue;
 
 namespace SystemZCP {
-  enum SystemZCPModifier {
-    NTPOFF
-  };
-}
+enum SystemZCPModifier {
+  NTPOFF
+};
+} // end namespace SystemZCP
 
 /// A SystemZ-specific constant pool value.  At present, the only
 /// defined constant pool values are offsets of thread-local variables
@@ -50,6 +50,6 @@ public:
   SystemZCP::SystemZCPModifier getModifier() const { return Modifier; }
 };
 
-} // End llvm namespace
+} // end namespace llvm
 
 #endif

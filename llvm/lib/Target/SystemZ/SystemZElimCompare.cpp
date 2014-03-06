@@ -33,64 +33,64 @@ STATISTIC(EliminatedComparisons, "Number of eliminated comparisons");
 STATISTIC(FusedComparisons, "Number of fused compare-and-branch instructions");
 
 namespace {
-  // Represents the references to a particular register in one or more
-  // instructions.
-  struct Reference {
-    Reference()
-      : Def(false), Use(false), IndirectDef(false), IndirectUse(false) {}
+// Represents the references to a particular register in one or more
+// instructions.
+struct Reference {
+  Reference()
+    : Def(false), Use(false), IndirectDef(false), IndirectUse(false) {}
 
-    Reference &operator|=(const Reference &Other) {
-      Def |= Other.Def;
-      IndirectDef |= Other.IndirectDef;
-      Use |= Other.Use;
-      IndirectUse |= Other.IndirectUse;
-      return *this;
-    }
+  Reference &operator|=(const Reference &Other) {
+    Def |= Other.Def;
+    IndirectDef |= Other.IndirectDef;
+    Use |= Other.Use;
+    IndirectUse |= Other.IndirectUse;
+    return *this;
+  }
 
-    operator bool() const { return Def || Use; }
+  operator bool() const { return Def || Use; }
 
-    // True if the register is defined or used in some form, either directly or
-    // via a sub- or super-register.
-    bool Def;
-    bool Use;
+  // True if the register is defined or used in some form, either directly or
+  // via a sub- or super-register.
+  bool Def;
+  bool Use;
 
-    // True if the register is defined or used indirectly, by a sub- or
-    // super-register.
-    bool IndirectDef;
-    bool IndirectUse;
-  };
+  // True if the register is defined or used indirectly, by a sub- or
+  // super-register.
+  bool IndirectDef;
+  bool IndirectUse;
+};
 
-  class SystemZElimCompare : public MachineFunctionPass {
-  public:
-    static char ID;
-    SystemZElimCompare(const SystemZTargetMachine &tm)
-      : MachineFunctionPass(ID), TII(0), TRI(0) {}
+class SystemZElimCompare : public MachineFunctionPass {
+public:
+  static char ID;
+  SystemZElimCompare(const SystemZTargetMachine &tm)
+    : MachineFunctionPass(ID), TII(0), TRI(0) {}
 
-    virtual const char *getPassName() const {
-      return "SystemZ Comparison Elimination";
-    }
+  virtual const char *getPassName() const {
+    return "SystemZ Comparison Elimination";
+  }
 
-    bool processBlock(MachineBasicBlock *MBB);
-    bool runOnMachineFunction(MachineFunction &F);
+  bool processBlock(MachineBasicBlock *MBB);
+  bool runOnMachineFunction(MachineFunction &F);
 
-  private:
-    Reference getRegReferences(MachineInstr *MI, unsigned Reg);
-    bool convertToBRCT(MachineInstr *MI, MachineInstr *Compare,
-                       SmallVectorImpl<MachineInstr *> &CCUsers);
-    bool convertToLoadAndTest(MachineInstr *MI);
-    bool adjustCCMasksForInstr(MachineInstr *MI, MachineInstr *Compare,
-                               SmallVectorImpl<MachineInstr *> &CCUsers);
-    bool optimizeCompareZero(MachineInstr *Compare,
+private:
+  Reference getRegReferences(MachineInstr *MI, unsigned Reg);
+  bool convertToBRCT(MachineInstr *MI, MachineInstr *Compare,
+                     SmallVectorImpl<MachineInstr *> &CCUsers);
+  bool convertToLoadAndTest(MachineInstr *MI);
+  bool adjustCCMasksForInstr(MachineInstr *MI, MachineInstr *Compare,
                              SmallVectorImpl<MachineInstr *> &CCUsers);
-    bool fuseCompareAndBranch(MachineInstr *Compare,
-                              SmallVectorImpl<MachineInstr *> &CCUsers);
+  bool optimizeCompareZero(MachineInstr *Compare,
+                           SmallVectorImpl<MachineInstr *> &CCUsers);
+  bool fuseCompareAndBranch(MachineInstr *Compare,
+                            SmallVectorImpl<MachineInstr *> &CCUsers);
 
-    const SystemZInstrInfo *TII;
-    const TargetRegisterInfo *TRI;
-  };
+  const SystemZInstrInfo *TII;
+  const TargetRegisterInfo *TRI;
+};
 
-  char SystemZElimCompare::ID = 0;
-} // end of anonymous namespace
+char SystemZElimCompare::ID = 0;
+} // end anonymous namespace
 
 FunctionPass *llvm::createSystemZElimComparePass(SystemZTargetMachine &TM) {
   return new SystemZElimCompare(TM);

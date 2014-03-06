@@ -428,7 +428,7 @@ public:
     return parsePCRel(Operands, -(1LL << 32), (1LL << 32) - 1);
   }
 };
-}
+} // end anonymous namespace
 
 #define GET_REGISTER_MATCHER
 #define GET_SUBTARGET_FEATURE_NAME

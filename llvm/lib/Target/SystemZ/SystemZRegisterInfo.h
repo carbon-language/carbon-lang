@@ -19,15 +19,15 @@
 namespace llvm {
 
 namespace SystemZ {
-  // Return the subreg to use for referring to the even and odd registers
-  // in a GR128 pair.  Is32Bit says whether we want a GR32 or GR64.
-  inline unsigned even128(bool Is32bit) {
-    return Is32bit ? subreg_hl32 : subreg_h64;
-  }
-  inline unsigned odd128(bool Is32bit) {
-    return Is32bit ? subreg_l32 : subreg_l64;
-  }
+// Return the subreg to use for referring to the even and odd registers
+// in a GR128 pair.  Is32Bit says whether we want a GR32 or GR64.
+inline unsigned even128(bool Is32bit) {
+  return Is32bit ? subreg_hl32 : subreg_h64;
 }
+inline unsigned odd128(bool Is32bit) {
+  return Is32bit ? subreg_l32 : subreg_l64;
+}
+} // end namespace SystemZ
 
 class SystemZSubtarget;
 class SystemZInstrInfo;

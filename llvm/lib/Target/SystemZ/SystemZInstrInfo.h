@@ -26,89 +26,89 @@ namespace llvm {
 class SystemZTargetMachine;
 
 namespace SystemZII {
-  enum {
-    // See comments in SystemZInstrFormats.td.
-    SimpleBDXLoad          = (1 << 0),
-    SimpleBDXStore         = (1 << 1),
-    Has20BitOffset         = (1 << 2),
-    HasIndex               = (1 << 3),
-    Is128Bit               = (1 << 4),
-    AccessSizeMask         = (31 << 5),
-    AccessSizeShift        = 5,
-    CCValuesMask           = (15 << 10),
-    CCValuesShift          = 10,
-    CompareZeroCCMaskMask  = (15 << 14),
-    CompareZeroCCMaskShift = 14,
-    CCMaskFirst            = (1 << 18),
-    CCMaskLast             = (1 << 19),
-    IsLogical              = (1 << 20)
-  };
-  static inline unsigned getAccessSize(unsigned int Flags) {
-    return (Flags & AccessSizeMask) >> AccessSizeShift;
-  }
-  static inline unsigned getCCValues(unsigned int Flags) {
-    return (Flags & CCValuesMask) >> CCValuesShift;
-  }
-  static inline unsigned getCompareZeroCCMask(unsigned int Flags) {
-    return (Flags & CompareZeroCCMaskMask) >> CompareZeroCCMaskShift;
-  }
-
-  // SystemZ MachineOperand target flags.
-  enum {
-    // Masks out the bits for the access model.
-    MO_SYMBOL_MODIFIER = (1 << 0),
-
-    // @GOT (aka @GOTENT)
-    MO_GOT = (1 << 0)
-  };
-  // Classifies a branch.
-  enum BranchType {
-    // An instruction that branches on the current value of CC.
-    BranchNormal,
-
-    // An instruction that peforms a 32-bit signed comparison and branches
-    // on the result.
-    BranchC,
-
-    // An instruction that peforms a 32-bit unsigned comparison and branches
-    // on the result.
-    BranchCL,
-
-    // An instruction that peforms a 64-bit signed comparison and branches
-    // on the result.
-    BranchCG,
-
-    // An instruction that peforms a 64-bit unsigned comparison and branches
-    // on the result.
-    BranchCLG,
-
-    // An instruction that decrements a 32-bit register and branches if
-    // the result is nonzero.
-    BranchCT,
-
-    // An instruction that decrements a 64-bit register and branches if
-    // the result is nonzero.
-    BranchCTG
-  };
-  // Information about a branch instruction.
-  struct Branch {
-    // The type of the branch.
-    BranchType Type;
-
-    // CCMASK_<N> is set if CC might be equal to N.
-    unsigned CCValid;
-
-    // CCMASK_<N> is set if the branch should be taken when CC == N.
-    unsigned CCMask;
-
-    // The target of the branch.
-    const MachineOperand *Target;
-
-    Branch(BranchType type, unsigned ccValid, unsigned ccMask,
-           const MachineOperand *target)
-      : Type(type), CCValid(ccValid), CCMask(ccMask), Target(target) {}
-  };
+enum {
+  // See comments in SystemZInstrFormats.td.
+  SimpleBDXLoad          = (1 << 0),
+  SimpleBDXStore         = (1 << 1),
+  Has20BitOffset         = (1 << 2),
+  HasIndex               = (1 << 3),
+  Is128Bit               = (1 << 4),
+  AccessSizeMask         = (31 << 5),
+  AccessSizeShift        = 5,
+  CCValuesMask           = (15 << 10),
+  CCValuesShift          = 10,
+  CompareZeroCCMaskMask  = (15 << 14),
+  CompareZeroCCMaskShift = 14,
+  CCMaskFirst            = (1 << 18),
+  CCMaskLast             = (1 << 19),
+  IsLogical              = (1 << 20)
+};
+static inline unsigned getAccessSize(unsigned int Flags) {
+  return (Flags & AccessSizeMask) >> AccessSizeShift;
 }
+static inline unsigned getCCValues(unsigned int Flags) {
+  return (Flags & CCValuesMask) >> CCValuesShift;
+}
+static inline unsigned getCompareZeroCCMask(unsigned int Flags) {
+  return (Flags & CompareZeroCCMaskMask) >> CompareZeroCCMaskShift;
+}
+
+// SystemZ MachineOperand target flags.
+enum {
+  // Masks out the bits for the access model.
+  MO_SYMBOL_MODIFIER = (1 << 0),
+
+  // @GOT (aka @GOTENT)
+  MO_GOT = (1 << 0)
+};
+// Classifies a branch.
+enum BranchType {
+  // An instruction that branches on the current value of CC.
+  BranchNormal,
+
+  // An instruction that peforms a 32-bit signed comparison and branches
+  // on the result.
+  BranchC,
+
+  // An instruction that peforms a 32-bit unsigned comparison and branches
+  // on the result.
+  BranchCL,
+
+  // An instruction that peforms a 64-bit signed comparison and branches
+  // on the result.
+  BranchCG,
+
+  // An instruction that peforms a 64-bit unsigned comparison and branches
+  // on the result.
+  BranchCLG,
+
+  // An instruction that decrements a 32-bit register and branches if
+  // the result is nonzero.
+  BranchCT,
+
+  // An instruction that decrements a 64-bit register and branches if
+  // the result is nonzero.
+  BranchCTG
+};
+// Information about a branch instruction.
+struct Branch {
+  // The type of the branch.
+  BranchType Type;
+
+  // CCMASK_<N> is set if CC might be equal to N.
+  unsigned CCValid;
+
+  // CCMASK_<N> is set if the branch should be taken when CC == N.
+  unsigned CCMask;
+
+  // The target of the branch.
+  const MachineOperand *Target;
+
+  Branch(BranchType type, unsigned ccValid, unsigned ccMask,
+         const MachineOperand *target)
+    : Type(type), CCValid(ccValid), CCMask(ccMask), Target(target) {}
+};
+} // end namespace SystemZII
 
 class SystemZInstrInfo : public SystemZGenInstrInfo {
   const SystemZRegisterInfo RI;

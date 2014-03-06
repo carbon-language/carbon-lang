@@ -20,29 +20,29 @@
 using namespace llvm;
 
 namespace {
-  // The ABI-defined register save slots, relative to the incoming stack
-  // pointer.
-  static const TargetFrameLowering::SpillSlot SpillOffsetTable[] = {
-    { SystemZ::R2D,  0x10 },
-    { SystemZ::R3D,  0x18 },
-    { SystemZ::R4D,  0x20 },
-    { SystemZ::R5D,  0x28 },
-    { SystemZ::R6D,  0x30 },
-    { SystemZ::R7D,  0x38 },
-    { SystemZ::R8D,  0x40 },
-    { SystemZ::R9D,  0x48 },
-    { SystemZ::R10D, 0x50 },
-    { SystemZ::R11D, 0x58 },
-    { SystemZ::R12D, 0x60 },
-    { SystemZ::R13D, 0x68 },
-    { SystemZ::R14D, 0x70 },
-    { SystemZ::R15D, 0x78 },
-    { SystemZ::F0D,  0x80 },
-    { SystemZ::F2D,  0x88 },
-    { SystemZ::F4D,  0x90 },
-    { SystemZ::F6D,  0x98 }
-  };
-}
+// The ABI-defined register save slots, relative to the incoming stack
+// pointer.
+static const TargetFrameLowering::SpillSlot SpillOffsetTable[] = {
+  { SystemZ::R2D,  0x10 },
+  { SystemZ::R3D,  0x18 },
+  { SystemZ::R4D,  0x20 },
+  { SystemZ::R5D,  0x28 },
+  { SystemZ::R6D,  0x30 },
+  { SystemZ::R7D,  0x38 },
+  { SystemZ::R8D,  0x40 },
+  { SystemZ::R9D,  0x48 },
+  { SystemZ::R10D, 0x50 },
+  { SystemZ::R11D, 0x58 },
+  { SystemZ::R12D, 0x60 },
+  { SystemZ::R13D, 0x68 },
+  { SystemZ::R14D, 0x70 },
+  { SystemZ::R15D, 0x78 },
+  { SystemZ::F0D,  0x80 },
+  { SystemZ::F2D,  0x88 },
+  { SystemZ::F4D,  0x90 },
+  { SystemZ::F6D,  0x98 }
+};
+} // end anonymous namespace
 
 SystemZFrameLowering::SystemZFrameLowering(const SystemZTargetMachine &tm,
                                            const SystemZSubtarget &sti)

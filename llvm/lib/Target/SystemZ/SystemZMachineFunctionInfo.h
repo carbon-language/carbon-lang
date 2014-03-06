@@ -63,6 +63,6 @@ public:
   void setManipulatesSP(bool MSP) { ManipulatesSP = MSP; }
 };
 
-} // end llvm namespace
+} // end namespace llvm
 
 #endif

@@ -25,6 +25,6 @@ public:
   getNonexecutableStackSection(MCContext &Ctx) const override;
 };
 
-} // namespace llvm
+} // end namespace llvm
 
 #endif

@@ -33,7 +33,7 @@ protected:
                                          const MCFixup &Fixup,
                                          bool IsPCRel) const override;
 };
-} // end anonymouse namespace
+} // end anonymous namespace
 
 SystemZObjectWriter::SystemZObjectWriter(uint8_t OSABI)
   : MCELFObjectTargetWriter(/*Is64Bit=*/true, OSABI, ELF::EM_S390,

@@ -628,16 +628,16 @@ static bool isSimpleBD12Move(const MachineInstr *MI, unsigned Flag) {
 }
 
 namespace {
-  struct LogicOp {
-    LogicOp() : RegSize(0), ImmLSB(0), ImmSize(0) {}
-    LogicOp(unsigned regSize, unsigned immLSB, unsigned immSize)
-      : RegSize(regSize), ImmLSB(immLSB), ImmSize(immSize) {}
+struct LogicOp {
+  LogicOp() : RegSize(0), ImmLSB(0), ImmSize(0) {}
+  LogicOp(unsigned regSize, unsigned immLSB, unsigned immSize)
+    : RegSize(regSize), ImmLSB(immLSB), ImmSize(immSize) {}
 
-    operator bool() const { return RegSize; }
+  operator bool() const { return RegSize; }
 
-    unsigned RegSize, ImmLSB, ImmSize;
-  };
-}
+  unsigned RegSize, ImmLSB, ImmSize;
+};
+} // end anonymous namespace
 
 static LogicOp interpretAndImmediate(unsigned Opcode) {
   switch (Opcode) {

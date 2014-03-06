@@ -21,32 +21,32 @@
 using namespace llvm;
 
 namespace {
-  class SystemZShortenInst : public MachineFunctionPass {
-  public:
-    static char ID;
-    SystemZShortenInst(const SystemZTargetMachine &tm);
+class SystemZShortenInst : public MachineFunctionPass {
+public:
+  static char ID;
+  SystemZShortenInst(const SystemZTargetMachine &tm);
 
-    virtual const char *getPassName() const {
-      return "SystemZ Instruction Shortening";
-    }
+  virtual const char *getPassName() const {
+    return "SystemZ Instruction Shortening";
+  }
 
-    bool processBlock(MachineBasicBlock *MBB);
-    bool runOnMachineFunction(MachineFunction &F);
+  bool processBlock(MachineBasicBlock *MBB);
+  bool runOnMachineFunction(MachineFunction &F);
 
-  private:
-    bool shortenIIF(MachineInstr &MI, unsigned *GPRMap, unsigned LiveOther,
-                    unsigned LLIxL, unsigned LLIxH);
+private:
+  bool shortenIIF(MachineInstr &MI, unsigned *GPRMap, unsigned LiveOther,
+                  unsigned LLIxL, unsigned LLIxH);
 
-    const SystemZInstrInfo *TII;
+  const SystemZInstrInfo *TII;
 
-    // LowGPRs[I] has bit N set if LLVM register I includes the low
-    // word of GPR N.  HighGPRs is the same for the high word.
-    unsigned LowGPRs[SystemZ::NUM_TARGET_REGS];
-    unsigned HighGPRs[SystemZ::NUM_TARGET_REGS];
-  };
+  // LowGPRs[I] has bit N set if LLVM register I includes the low
+  // word of GPR N.  HighGPRs is the same for the high word.
+  unsigned LowGPRs[SystemZ::NUM_TARGET_REGS];
+  unsigned HighGPRs[SystemZ::NUM_TARGET_REGS];
+};
 
-  char SystemZShortenInst::ID = 0;
-} // end of anonymous namespace
+char SystemZShortenInst::ID = 0;
+} // end anonymous namespace
 
 FunctionPass *llvm::createSystemZShortenInstPass(SystemZTargetMachine &TM) {
   return new SystemZShortenInst(TM);

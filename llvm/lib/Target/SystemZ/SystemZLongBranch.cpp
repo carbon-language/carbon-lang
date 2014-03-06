@@ -71,99 +71,99 @@ using namespace llvm;
 STATISTIC(LongBranches, "Number of long branches.");
 
 namespace {
-  // Represents positional information about a basic block.
-  struct MBBInfo {
-    // The address that we currently assume the block has.
-    uint64_t Address;
+// Represents positional information about a basic block.
+struct MBBInfo {
+  // The address that we currently assume the block has.
+  uint64_t Address;
 
-    // The size of the block in bytes, excluding terminators.
-    // This value never changes.
-    uint64_t Size;
+  // The size of the block in bytes, excluding terminators.
+  // This value never changes.
+  uint64_t Size;
 
-    // The minimum alignment of the block, as a log2 value.
-    // This value never changes.
-    unsigned Alignment;
+  // The minimum alignment of the block, as a log2 value.
+  // This value never changes.
+  unsigned Alignment;
 
-    // The number of terminators in this block.  This value never changes.
-    unsigned NumTerminators;
+  // The number of terminators in this block.  This value never changes.
+  unsigned NumTerminators;
 
-    MBBInfo()
-      : Address(0), Size(0), Alignment(0), NumTerminators(0) {} 
-  };
+  MBBInfo()
+    : Address(0), Size(0), Alignment(0), NumTerminators(0) {} 
+};
 
-  // Represents the state of a block terminator.
-  struct TerminatorInfo {
-    // If this terminator is a relaxable branch, this points to the branch
-    // instruction, otherwise it is null.
-    MachineInstr *Branch;
+// Represents the state of a block terminator.
+struct TerminatorInfo {
+  // If this terminator is a relaxable branch, this points to the branch
+  // instruction, otherwise it is null.
+  MachineInstr *Branch;
 
-    // The address that we currently assume the terminator has.
-    uint64_t Address;
+  // The address that we currently assume the terminator has.
+  uint64_t Address;
 
-    // The current size of the terminator in bytes.
-    uint64_t Size;
+  // The current size of the terminator in bytes.
+  uint64_t Size;
 
-    // If Branch is nonnull, this is the number of the target block,
-    // otherwise it is unused.
-    unsigned TargetBlock;
+  // If Branch is nonnull, this is the number of the target block,
+  // otherwise it is unused.
+  unsigned TargetBlock;
 
-    // If Branch is nonnull, this is the length of the longest relaxed form,
-    // otherwise it is zero.
-    unsigned ExtraRelaxSize;
+  // If Branch is nonnull, this is the length of the longest relaxed form,
+  // otherwise it is zero.
+  unsigned ExtraRelaxSize;
 
-    TerminatorInfo() : Branch(0), Size(0), TargetBlock(0), ExtraRelaxSize(0) {}
-  };
+  TerminatorInfo() : Branch(0), Size(0), TargetBlock(0), ExtraRelaxSize(0) {}
+};
 
-  // Used to keep track of the current position while iterating over the blocks.
-  struct BlockPosition {
-    // The address that we assume this position has.
-    uint64_t Address;
+// Used to keep track of the current position while iterating over the blocks.
+struct BlockPosition {
+  // The address that we assume this position has.
+  uint64_t Address;
 
-    // The number of low bits in Address that are known to be the same
-    // as the runtime address.
-    unsigned KnownBits;
+  // The number of low bits in Address that are known to be the same
+  // as the runtime address.
+  unsigned KnownBits;
 
-    BlockPosition(unsigned InitialAlignment)
-      : Address(0), KnownBits(InitialAlignment) {}
-  };
+  BlockPosition(unsigned InitialAlignment)
+    : Address(0), KnownBits(InitialAlignment) {}
+};
 
-  class SystemZLongBranch : public MachineFunctionPass {
-  public:
-    static char ID;
-    SystemZLongBranch(const SystemZTargetMachine &tm)
-      : MachineFunctionPass(ID), TII(0) {}
+class SystemZLongBranch : public MachineFunctionPass {
+public:
+  static char ID;
+  SystemZLongBranch(const SystemZTargetMachine &tm)
+    : MachineFunctionPass(ID), TII(0) {}
 
-    virtual const char *getPassName() const {
-      return "SystemZ Long Branch";
-    }
+  virtual const char *getPassName() const {
+    return "SystemZ Long Branch";
+  }
 
-    bool runOnMachineFunction(MachineFunction &F);
+  bool runOnMachineFunction(MachineFunction &F);
 
-  private:
-    void skipNonTerminators(BlockPosition &Position, MBBInfo &Block);
-    void skipTerminator(BlockPosition &Position, TerminatorInfo &Terminator,
-                        bool AssumeRelaxed);
-    TerminatorInfo describeTerminator(MachineInstr *MI);
-    uint64_t initMBBInfo();
-    bool mustRelaxBranch(const TerminatorInfo &Terminator, uint64_t Address);
-    bool mustRelaxABranch();
-    void setWorstCaseAddresses();
-    void splitBranchOnCount(MachineInstr *MI, unsigned AddOpcode);
-    void splitCompareBranch(MachineInstr *MI, unsigned CompareOpcode);
-    void relaxBranch(TerminatorInfo &Terminator);
-    void relaxBranches();
+private:
+  void skipNonTerminators(BlockPosition &Position, MBBInfo &Block);
+  void skipTerminator(BlockPosition &Position, TerminatorInfo &Terminator,
+                      bool AssumeRelaxed);
+  TerminatorInfo describeTerminator(MachineInstr *MI);
+  uint64_t initMBBInfo();
+  bool mustRelaxBranch(const TerminatorInfo &Terminator, uint64_t Address);
+  bool mustRelaxABranch();
+  void setWorstCaseAddresses();
+  void splitBranchOnCount(MachineInstr *MI, unsigned AddOpcode);
+  void splitCompareBranch(MachineInstr *MI, unsigned CompareOpcode);
+  void relaxBranch(TerminatorInfo &Terminator);
+  void relaxBranches();
 
-    const SystemZInstrInfo *TII;
-    MachineFunction *MF;
-    SmallVector<MBBInfo, 16> MBBs;
-    SmallVector<TerminatorInfo, 16> Terminators;
-  };
+  const SystemZInstrInfo *TII;
+  MachineFunction *MF;
+  SmallVector<MBBInfo, 16> MBBs;
+  SmallVector<TerminatorInfo, 16> Terminators;
+};
 
-  char SystemZLongBranch::ID = 0;
+char SystemZLongBranch::ID = 0;
 
-  const uint64_t MaxBackwardRange = 0x10000;
-  const uint64_t MaxForwardRange = 0xfffe;
-} // end of anonymous namespace
+const uint64_t MaxBackwardRange = 0x10000;
+const uint64_t MaxForwardRange = 0xfffe;
+} // end anonymous namespace
 
 FunctionPass *llvm::createSystemZLongBranchPass(SystemZTargetMachine &TM) {
   return new SystemZLongBranch(TM);

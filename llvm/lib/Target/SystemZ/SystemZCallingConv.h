@@ -11,13 +11,13 @@
 #define SYSTEMZCALLINGCONV_H
 
 namespace llvm {
-  namespace SystemZ {
-    const unsigned NumArgGPRs = 5;
-    extern const unsigned ArgGPRs[NumArgGPRs];
+namespace SystemZ {
+  const unsigned NumArgGPRs = 5;
+  extern const unsigned ArgGPRs[NumArgGPRs];
 
-    const unsigned NumArgFPRs = 4;
-    extern const unsigned ArgFPRs[NumArgFPRs];
-  }
-}
+  const unsigned NumArgFPRs = 4;
+  extern const unsigned ArgFPRs[NumArgFPRs];
+} // end namespace SystemZ
+} // end namespace llvm
 
 #endif
