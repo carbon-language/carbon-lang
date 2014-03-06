@@ -1281,12 +1281,12 @@ void TypePrinter::printObjCObjectPointerBefore(const ObjCObjectPointerType *T,
   T->getPointeeType().getLocalQualifiers().print(OS, Policy,
                                                 /*appendSpaceIfNonEmpty=*/true);
 
+  assert(!T->isObjCSelType());
+
   if (T->isObjCIdType() || T->isObjCQualifiedIdType())
     OS << "id";
   else if (T->isObjCClassType() || T->isObjCQualifiedClassType())
     OS << "Class";
-  else if (T->isObjCSelType())
-    OS << "SEL";
   else
     OS << T->getInterfaceDecl()->getName();
   
@@ -1303,8 +1303,7 @@ void TypePrinter::printObjCObjectPointerBefore(const ObjCObjectPointerType *T,
   }
   
   if (!T->isObjCIdType() && !T->isObjCQualifiedIdType() &&
-      !T->isObjCClassType() && !T->isObjCQualifiedClassType() &&
-      !T->isObjCSelType()) {
+      !T->isObjCClassType() && !T->isObjCQualifiedClassType()) {
     OS << " *"; // Don't forget the implicit pointer.
   } else {
     spaceBeforePlaceHolder(OS);
