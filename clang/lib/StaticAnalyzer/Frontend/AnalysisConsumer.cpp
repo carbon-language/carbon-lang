@@ -103,14 +103,6 @@ public:
     IncludePath = true;
   }
 
-  const DiagnosticBuilder &addRanges(const DiagnosticBuilder &DB,
-                                     ArrayRef<SourceRange> Ranges) {
-    for (ArrayRef<SourceRange>::iterator I = Ranges.begin(), E = Ranges.end();
-         I != E; ++I)
-      DB << *I;
-    return DB;
-  }
-
   void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
                             FilesMade *filesMade) {
     unsigned WarnID = Diag.getCustomDiagID(DiagnosticsEngine::Warning, "%0");
@@ -120,8 +112,8 @@ public:
          E = Diags.end(); I != E; ++I) {
       const PathDiagnostic *PD = *I;
       SourceLocation WarnLoc = PD->getLocation().asLocation();
-      addRanges(Diag.Report(WarnLoc, WarnID) << PD->getShortDescription(),
-                PD->path.back()->getRanges());
+      Diag.Report(WarnLoc, WarnID) << PD->getShortDescription()
+                                   << PD->path.back()->getRanges();
 
       if (!IncludePath)
         continue;
@@ -131,8 +123,8 @@ public:
                                       PE = FlatPath.end();
            PI != PE; ++PI) {
         SourceLocation NoteLoc = (*PI)->getLocation().asLocation();
-        addRanges(Diag.Report(NoteLoc, NoteID) << (*PI)->getString(),
-                  (*PI)->getRanges());
+        Diag.Report(NoteLoc, NoteID) << (*PI)->getString()
+                                     << (*PI)->getRanges();
       }
     }
   }

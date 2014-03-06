@@ -1015,7 +1015,8 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB, int I) {
   return DB;
 }
 
-inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,bool I) {
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           bool I) {
   DB.AddTaggedVal(I, DiagnosticsEngine::ak_sint);
   return DB;
 }
@@ -1052,10 +1053,17 @@ operator<<(const DiagnosticBuilder &DB, T *DC) {
                   DiagnosticsEngine::ak_declcontext);
   return DB;
 }
-  
+
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            const SourceRange &R) {
   DB.AddSourceRange(CharSourceRange::getTokenRange(R));
+  return DB;
+}
+
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           ArrayRef<SourceRange> Ranges) {
+  for (const SourceRange &R: Ranges)
+    DB.AddSourceRange(CharSourceRange::getTokenRange(R));
   return DB;
 }
 
@@ -1064,7 +1072,7 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   DB.AddSourceRange(R);
   return DB;
 }
-  
+
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            const FixItHint &Hint) {
   if (!Hint.isNull())
@@ -1073,7 +1081,7 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
 }
 
 inline DiagnosticBuilder DiagnosticsEngine::Report(SourceLocation Loc,
-                                            unsigned DiagID){
+                                                   unsigned DiagID) {
   assert(CurDiagID == ~0U && "Multiple diagnostics in flight at once!");
   CurDiagLoc = Loc;
   CurDiagID = DiagID;
