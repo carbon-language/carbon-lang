@@ -739,9 +739,8 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
       (T.isOSDarwin() || T.isOSBinFormatMachO())) {
     Env = IsMachO;
     InitMachOMCObjectFileInfo(T);
-  } else if (T.isOSWindows() && !T.isOSBinFormatELF()) {
-    assert((Arch == Triple::x86 || Arch == Triple::x86_64) &&
-           "expected x86 or x86_64");
+  } else if ((Arch == Triple::x86 || Arch == Triple::x86_64) &&
+             T.getObjectFormat() != Triple::ELF && T.isOSWindows()) {
     Env = IsCOFF;
     InitCOFFMCObjectFileInfo(T);
   } else {
