@@ -1996,8 +1996,12 @@ void DwarfDebug::emitDIE(DIE *Die) {
     dwarf::Form Form = AbbrevData[i].getForm();
     assert(Form && "Too many attributes for DIE (check abbreviation)");
 
-    if (Asm->isVerbose())
+    if (Asm->isVerbose()) {
       Asm->OutStreamer.AddComment(dwarf::AttributeString(Attr));
+      if (Attr == dwarf::DW_AT_accessibility)
+        Asm->OutStreamer.AddComment(dwarf::AccessibilityString(
+            cast<DIEInteger>(Values[i])->getValue()));
+    }
 
     switch (Attr) {
     case dwarf::DW_AT_abstract_origin:
@@ -2030,14 +2034,6 @@ void DwarfDebug::emitDIE(DIE *Die) {
                "The referenced DIE should belong to the same CU in ref4");
         Asm->EmitInt32(Addr);
       }
-      break;
-    }
-    case dwarf::DW_AT_accessibility: {
-      if (Asm->isVerbose()) {
-        DIEInteger *V = cast<DIEInteger>(Values[i]);
-        Asm->OutStreamer.AddComment(dwarf::AccessibilityString(V->getValue()));
-      }
-      Values[i]->EmitValue(Asm, Form);
       break;
     }
     default:
