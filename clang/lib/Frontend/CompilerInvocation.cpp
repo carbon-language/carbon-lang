@@ -1431,8 +1431,12 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     Opts.setMSPointerToMemberRepresentationMethod(InheritanceModel);
   }
 
-  // Check if -fopenmp is specified.
-  Opts.OpenMP = Args.hasArg(OPT_fopenmp);
+  // Check if -fopenmp= is specified.
+  if (const Arg *A = Args.getLastArg(options::OPT_fopenmp_EQ)) {
+    Opts.OpenMP = llvm::StringSwitch<bool>(A->getValue())
+        .Case("libiomp5", true)
+        .Default(false);
+  }
 
   // Record whether the __DEPRECATED define was requested.
   Opts.Deprecated = Args.hasFlag(OPT_fdeprecated_macro,
