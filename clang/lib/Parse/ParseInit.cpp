@@ -105,8 +105,6 @@ bool Parser::MayBeDesignationStart() {
       return true;
     }
   }
-  
-  return true;
 }
 
 static void CheckArrayDesignatorSyntax(Parser &P, SourceLocation Loc,
