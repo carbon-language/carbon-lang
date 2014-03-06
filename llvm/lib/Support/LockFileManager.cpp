@@ -115,42 +115,34 @@ LockFileManager::LockFileManager(StringRef FileName)
     }
   }
 
-  while (1) {
-    // Create a symbolic link from the lock file name. If this succeeds, we're
-    // done. Note that we are using symbolic link because hard links are not
-    // supported by all filesystems.
-    error_code EC
-      = sys::fs::create_symbolic_link(UniqueLockFileName.str(),
-                                        LockFileName.str());
-    if (EC == errc::success)
-      return;
+  // Create a hard link from the lock file name. If this succeeds, we're done.
+  error_code EC
+    = sys::fs::create_hard_link(UniqueLockFileName.str(),
+                                      LockFileName.str());
+  if (EC == errc::success)
+    return;
 
-    if (EC != errc::file_exists) {
-      Error = EC;
-      return;
-    }
+  // Creating the hard link failed.
 
-    // Someone else managed to create the lock file first. Read the process ID
-    // from the lock file.
-    if ((Owner = readLockFile(LockFileName))) {
-      // Wipe out our unique lock file (it's useless now)
-      sys::fs::remove(UniqueLockFileName.str());
-      return;
-    }
+#ifdef LLVM_ON_UNIX
+  // The creation of the hard link may appear to fail, but if stat'ing the
+  // unique file returns a link count of 2, then we can still declare success.
+  struct stat StatBuf;
+  if (stat(UniqueLockFileName.c_str(), &StatBuf) == 0 &&
+      StatBuf.st_nlink == 2)
+    return;
+#endif
 
-    if (!sys::fs::exists(LockFileName.str())) {
-      // The previous owner released the lock file before we could read it.
-      // Try to get ownership again.
-      continue;
-    }
+  // Someone else managed to create the lock file first. Wipe out our unique
+  // lock file (it's useless now) and read the process ID from the lock file.
+  sys::fs::remove(UniqueLockFileName.str());
+  if ((Owner = readLockFile(LockFileName)))
+    return;
 
-    // There is a lock file that nobody owns; try to clean it up and get
-    // ownership.
-    if ((EC = sys::fs::remove(LockFileName.str()))) {
-      Error = EC;
-      return;
-    }
-  }
+  // There is a lock file that nobody owns; try to clean it up and report
+  // an error.
+  sys::fs::remove(LockFileName.str());
+  Error = EC;
 }
 
 LockFileManager::LockFileState LockFileManager::getState() const {
