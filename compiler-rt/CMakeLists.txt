@@ -235,6 +235,7 @@ pythonize_bool(COMPILER_RT_DEBUG)
 #================================
 include(config-ix)
 
+add_definitions_if(COMPILER_RT_HAS_WALL_FLAG -Wall)
 if(COMPILER_RT_ENABLE_WERROR)
   add_definitions_if(COMPILER_RT_HAS_WERROR_FLAG -Werror)
   add_definitions_if(COMPILER_RT_HAS_WX_FLAG /WX)
