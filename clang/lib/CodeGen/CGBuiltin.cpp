@@ -1311,7 +1311,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     llvm::Type *ArgType = Base->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::pow, ArgType);
     return RValue::get(Builder.CreateCall2(F, Base, Exponent));
-    break;
   }
 
   case Builtin::BIfma:
