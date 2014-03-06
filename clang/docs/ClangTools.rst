@@ -93,9 +93,9 @@ as a user tool (ideally with powerful IDE integrations) and as part of other
 refactoring tools, e.g. to do a reformatting of all the lines changed during a
 renaming.
 
-``cpp11-migrate``
+``clang-modernize``
 ~~~~~~~~~~~~~~~~~
-``cpp11-migrate`` migrates C++ code to use C++11 features where appropriate.
+``clang-modernize`` migrates C++ code to use C++11 features where appropriate.
 Currently it can:
 
 * convert loops to range-based for loops;
