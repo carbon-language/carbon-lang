@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lldb/lldb-dll-export.h"
+#include "lldb/lldb-defines.h"
 
 // from getopt.h
 #define no_argument       0
