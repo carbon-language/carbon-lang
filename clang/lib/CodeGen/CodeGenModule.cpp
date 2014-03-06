@@ -258,7 +258,7 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitGlobalAnnotations();
   EmitStaticExternCAliases();
-  EmitLLVMUsed();
+  emitLLVMUsed();
 
   if (CodeGenOpts.Autolink &&
       (Context.getLangOpts().Modules || !LinkerOptionsMetadata.empty())) {
@@ -699,7 +699,7 @@ void CodeGenModule::SetCommonAttributes(const Decl *D,
     GV->setVisibility(llvm::GlobalValue::DefaultVisibility);
 
   if (D->hasAttr<UsedAttr>())
-    AddUsedGlobal(GV);
+    addUsedGlobal(GV);
 
   if (const SectionAttr *SA = D->getAttr<SectionAttr>())
     GV->setSection(SA->getName());
@@ -776,37 +776,49 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
                     llvm::Attribute::NoBuiltin);
 }
 
-void CodeGenModule::AddUsedGlobal(llvm::GlobalValue *GV) {
+void CodeGenModule::addUsedGlobal(llvm::GlobalValue *GV) {
   assert(!GV->isDeclaration() &&
          "Only globals with definition can force usage.");
   LLVMUsed.push_back(GV);
 }
 
-void CodeGenModule::EmitLLVMUsed() {
+void CodeGenModule::addCompilerUsedGlobal(llvm::GlobalValue *GV) {
+  assert(!GV->isDeclaration() &&
+         "Only globals with definition can force usage.");
+  LLVMCompilerUsed.push_back(GV);
+}
+
+static void emitUsed(CodeGenModule &CGM, StringRef Name,
+                     std::vector<llvm::WeakVH> &List) {
   // Don't create llvm.used if there is no need.
-  if (LLVMUsed.empty())
+  if (List.empty())
     return;
 
-  // Convert LLVMUsed to what ConstantArray needs.
+  // Convert List to what ConstantArray needs.
   SmallVector<llvm::Constant*, 8> UsedArray;
-  UsedArray.resize(LLVMUsed.size());
-  for (unsigned i = 0, e = LLVMUsed.size(); i != e; ++i) {
+  UsedArray.resize(List.size());
+  for (unsigned i = 0, e = List.size(); i != e; ++i) {
     UsedArray[i] =
-     llvm::ConstantExpr::getBitCast(cast<llvm::Constant>(&*LLVMUsed[i]),
-                                    Int8PtrTy);
+     llvm::ConstantExpr::getBitCast(cast<llvm::Constant>(&*List[i]),
+                                    CGM.Int8PtrTy);
   }
 
   if (UsedArray.empty())
     return;
-  llvm::ArrayType *ATy = llvm::ArrayType::get(Int8PtrTy, UsedArray.size());
+  llvm::ArrayType *ATy = llvm::ArrayType::get(CGM.Int8PtrTy, UsedArray.size());
 
   llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(getModule(), ATy, false,
+    new llvm::GlobalVariable(CGM.getModule(), ATy, false,
                              llvm::GlobalValue::AppendingLinkage,
                              llvm::ConstantArray::get(ATy, UsedArray),
-                             "llvm.used");
+                             Name);
 
   GV->setSection("llvm.metadata");
+}
+
+void CodeGenModule::emitLLVMUsed() {
+  emitUsed(*this, "llvm.used", LLVMUsed);
+  emitUsed(*this, "llvm.compiler.used", LLVMCompilerUsed);
 }
 
 void CodeGenModule::AppendLinkerOptions(StringRef Opts) {
@@ -3054,7 +3066,7 @@ void CodeGenModule::EmitStaticExternCAliases() {
     IdentifierInfo *Name = I->first;
     llvm::GlobalValue *Val = I->second;
     if (Val && !getModule().getNamedValue(Name->getName()))
-      AddUsedGlobal(new llvm::GlobalAlias(Val->getType(), Val->getLinkage(),
+      addUsedGlobal(new llvm::GlobalAlias(Val->getType(), Val->getLinkage(),
                                           Name->getName(), Val, &getModule()));
   }
 }

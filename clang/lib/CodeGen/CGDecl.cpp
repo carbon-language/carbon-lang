@@ -332,7 +332,7 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
     var->setSection(SA->getName());
 
   if (D.hasAttr<UsedAttr>())
-    CGM.AddUsedGlobal(var);
+    CGM.addUsedGlobal(var);
 
   // We may have to cast the constant because of the initializer
   // mismatch above.
