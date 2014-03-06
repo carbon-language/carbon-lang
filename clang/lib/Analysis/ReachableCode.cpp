@@ -296,16 +296,23 @@ static bool isTrivialExpression(const Expr *Ex) {
          isEnumConstant(Ex);
 }
 
-static bool isTrivialReturn(const CFGBlock *B, const Stmt *S) {
-  if (B->pred_empty())
-    return false;
-
+static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S) {
   const Expr *Ex = dyn_cast<Expr>(S);
   if (!Ex)
     return false;
 
   if (!isTrivialExpression(Ex))
     return false;
+
+  // Check if the block ends with a do...while() and see if 'S' is the
+  // condition.
+  if (const Stmt *Term = B->getTerminator()) {
+    if (const DoStmt *DS = dyn_cast<DoStmt>(Term))
+      if (DS->getCond() == S)
+        return true;
+  }
+
+
 
   // Look to see if the block ends with a 'return', and see if 'S'
   // is a substatement.  The 'return' may not be the last element in
@@ -317,11 +324,14 @@ static bool isTrivialReturn(const CFGBlock *B, const Stmt *S) {
       if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(CS->getStmt())) {
         const Expr *RE = RS->getRetValue();
         if (RE && RE->IgnoreParenCasts() == Ex)
-          return true;
+          break;
       }
-      break;
+      return false;
     }
   }
+
+  if (B->pred_size() == 1)
+    return bodyEndsWithNoReturn(*B->pred_begin());
 
   return false;
 }
@@ -336,7 +346,7 @@ void DeadCodeScan::reportDeadCode(const CFGBlock *B,
     return;
 
   // Suppress trivial 'return' statements that are dead.
-  if (isTrivialReturn(B, S))
+  if (isTrivialReturnOrDoWhile(B, S))
     return;
 
   SourceRange R1, R2;

@@ -268,9 +268,31 @@ int test_MyEnum() {
     return 2; // no-warning
   if (ME_B)
     return 3;
-  // FIXME: we should only need one diagnostic here.
   if (!ME_B) // expected-warning {{will never be executed}}
-    return 4;// expected-warning {{will never be executed}}
+    return 4; // expected-warning {{will never be executed}}
   return 5;
+}
+
+// Test for idiomatic do..while.
+int test_do_while(int x) {
+  do {
+    if (x == calledFun())
+      break;
+    ++x;
+    break;
+  }
+  while (0); // no-warning
+  return x;
+}
+
+int test_do_while_nontrivial_cond(int x) {
+  do {
+    if (x == calledFun())
+      break;
+    ++x;
+    break;
+  }
+  while (calledFun()); // expected-warning {{will never be executed}}
+  return x;
 }
 
