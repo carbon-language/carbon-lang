@@ -40,8 +40,8 @@ struct NSFastEnumerationState;
 @end
 
 @implementation A
-// PGOGEN-LABEL: define {{.*}}+[A foreach:]
-// PGOUSE-LABEL: define {{.*}}+[A foreach:]
+// PGOGEN: define {{.*}}+[A foreach:]
+// PGOUSE: define {{.*}}+[A foreach:]
 // PGOGEN: store {{.*}} @[[FOR]], i64 0, i64 0
 + (void)foreach: (NSArray *)array
 {
