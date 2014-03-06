@@ -16,7 +16,7 @@
 // those aren't comprehensive either. Second, many conditions cannot be
 // checked statically. This pass does no dynamic instrumentation, so it
 // can't check for all possible problems.
-// 
+//
 // Another limitation is that it assumes all code will be executed. A store
 // through a null pointer in a basic block which is never reached is harmless,
 // but this pass will warn about it anyway. This is the main reason why most
@@ -26,12 +26,12 @@
 // less obvious. If an optimization pass appears to be introducing a warning,
 // it may be that the optimization pass is merely exposing an existing
 // condition in the code.
-// 
+//
 // This code may be run before instcombine. In many cases, instcombine checks
 // for the same kinds of things and turns instructions with undefined behavior
 // into unreachable (or equivalent). Because of this, this pass makes some
 // effort to look through bitcasts and so on.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Lint.h"
@@ -652,8 +652,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
       if (W != V)
         return findValueImpl(W, OffsetOk, Visited);
   } else if (CastInst *CI = dyn_cast<CastInst>(V)) {
-    if (CI->isNoopCast(DL ? DL->getIntPtrType(V->getContext()) :
-                            Type::getInt64Ty(V->getContext())))
+    if (CI->isNoopCast(DL))
       return findValueImpl(CI->getOperand(0), OffsetOk, Visited);
   } else if (ExtractValueInst *Ex = dyn_cast<ExtractValueInst>(V)) {
     if (Value *W = FindInsertedValue(Ex->getAggregateOperand(),
@@ -666,7 +665,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
       if (CastInst::isNoopCast(Instruction::CastOps(CE->getOpcode()),
                                CE->getOperand(0)->getType(),
                                CE->getType(),
-                               DL ? DL->getIntPtrType(V->getContext()) :
+                               DL ? DL->getIntPtrType(V->getType()) :
                                     Type::getInt64Ty(V->getContext())))
         return findValueImpl(CE->getOperand(0), OffsetOk, Visited);
     } else if (CE->getOpcode() == Instruction::ExtractValue) {

@@ -582,6 +582,11 @@ public:
     Type *IntPtrTy ///< Integer type corresponding to pointer
   ) const;
 
+  /// @brief Determine if this cast is a no-op cast.
+  bool isNoopCast(
+    const DataLayout *DL ///< DataLayout to get the Int Ptr type from.
+  ) const;
+
   /// Determine how a pair of casts can be eliminated, if they can be at all.
   /// This is a helper function for both CastInst and ConstantExpr.
   /// @returns 0 if the CastInst pair can't be eliminated, otherwise

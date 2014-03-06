@@ -2115,8 +2115,27 @@ bool CastInst::isNoopCast(Type *IntPtrTy) const {
   return isNoopCast(getOpcode(), getOperand(0)->getType(), getType(), IntPtrTy);
 }
 
-/// This function determines if a pair of casts can be eliminated and what 
-/// opcode should be used in the elimination. This assumes that there are two 
+bool CastInst::isNoopCast(const DataLayout *DL) const {
+  if (!DL) {
+    // Assume maximum pointer size.
+    return isNoopCast(Type::getInt64Ty(getContext()));
+  }
+
+  Type *PtrOpTy = 0;
+  if (getOpcode() == Instruction::PtrToInt)
+    PtrOpTy = getOperand(0)->getType();
+  else if (getOpcode() == Instruction::IntToPtr)
+    PtrOpTy = getType();
+
+  Type *IntPtrTy = PtrOpTy
+                 ? DL->getIntPtrType(PtrOpTy)
+                 : DL->getIntPtrType(getContext(), 0);
+
+  return isNoopCast(getOpcode(), getOperand(0)->getType(), getType(), IntPtrTy);
+}
+
+/// This function determines if a pair of casts can be eliminated and what
+/// opcode should be used in the elimination. This assumes that there are two
 /// instructions like this:
 /// *  %F = firstOpcode SrcTy %x to MidTy
 /// *  %S = secondOpcode MidTy %F to DstTy
