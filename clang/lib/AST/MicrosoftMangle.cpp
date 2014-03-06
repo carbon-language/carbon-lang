@@ -2295,6 +2295,10 @@ void MicrosoftMangleContextImpl::mangleInitFiniStub(const VarDecl *D,
   MicrosoftCXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "\01??__" << CharCode;
   Mangler.mangleName(D);
+  if (D->isStaticDataMember()) {
+    Mangler.mangleVariableEncoding(D);
+    Mangler.getStream() << '@';
+  }
   // This is the function class mangling.  These stubs are global, non-variadic,
   // cdecl functions that return void and take no args.
   Mangler.getStream() << "YAXXZ";

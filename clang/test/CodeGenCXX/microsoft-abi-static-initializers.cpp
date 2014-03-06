@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - -mconstructor-aliases -triple=i386-pc-win32 | FileCheck %s
 
 // CHECK: @llvm.global_ctors = appending global [2 x { i32, void ()* }]
-// CHECK: [{ i32, void ()* } { i32 65535, void ()* @"\01??__Efoo@?$B@H@@YAXXZ" },
+// CHECK: [{ i32, void ()* } { i32 65535, void ()* @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ"
 // CHECK:  { i32, void ()* } { i32 65535, void ()* @_GLOBAL__I_a }]
 
 struct S {
@@ -134,16 +134,16 @@ void force_usage() {
   (void)B<int>::foo;  // (void) - force usage
 }
 
-// CHECK: define internal void @"\01??__Efoo@?$B@H@@YAXXZ"() [[NUW]]
+// CHECK: define internal void @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ"() [[NUW]]
 // CHECK: %{{[.0-9A-Z_a-z]+}} = call x86_thiscallcc %class.A* @"\01??0A@@QAE@XZ"
-// CHECK: call i32 @atexit(void ()* @"\01??__Ffoo@?$B@H@@YAXXZ")
+// CHECK: call i32 @atexit(void ()* @"\01??__Ffoo@?$B@H@@2VA@@A@YAXXZ")
 // CHECK: ret void
 
 // CHECK: define linkonce_odr x86_thiscallcc %class.A* @"\01??0A@@QAE@XZ"
 
 // CHECK: define linkonce_odr x86_thiscallcc void @"\01??1A@@QAE@XZ"
 
-// CHECK: define internal void @"\01??__Ffoo@?$B@H@@YAXXZ"
+// CHECK: define internal void @"\01??__Ffoo@?$B@H@@2VA@@A@YAXXZ"
 // CHECK: call x86_thiscallcc void @"\01??1A@@QAE@XZ"{{.*}}foo
 // CHECK: ret void
 
