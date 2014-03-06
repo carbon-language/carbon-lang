@@ -286,14 +286,6 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   const DIEAbbrevData *Desc = Attr.Desc;
   dwarf::Attribute Attribute = Desc->getAttribute();
 
-  // 7.27 Step 3
-  // ... An attribute that refers to another type entry T is processed as
-  // follows:
-  if (const DIEEntry *EntryAttr = dyn_cast<DIEEntry>(Value)) {
-    hashDIEEntry(Attribute, Tag, *EntryAttr->getEntry());
-    return;
-  }
-
   // Other attribute values use the letter 'A' as the marker, and the value
   // consists of the form code (encoded as an unsigned LEB128 value) followed by
   // the encoding of the value according to the form code. To ensure
@@ -302,6 +294,12 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   // DW_FORM_string, and DW_FORM_block.
 
   switch (Value->getType()) {
+    // 7.27 Step 3
+    // ... An attribute that refers to another type entry T is processed as
+    // follows:
+  case DIEValue::isEntry:
+    hashDIEEntry(Attribute, Tag, *cast<DIEEntry>(Value)->getEntry());
+    break;
   case DIEValue::isInteger: {
     addULEB128('A');
     addULEB128(Attribute);
@@ -352,8 +350,6 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
   case DIEValue::isExpr:
   case DIEValue::isLabel:
   case DIEValue::isDelta:
-    // These two were handled above.
-  case DIEValue::isEntry:
   case DIEValue::isTypeSignature:
     llvm_unreachable("Add support for additional value types.");
   }
