@@ -23,8 +23,8 @@
 
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
-#include <memory>
 #include <atomic>
+#include <memory>
 
 namespace llvm {
 
