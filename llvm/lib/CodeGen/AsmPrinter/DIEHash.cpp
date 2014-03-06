@@ -346,12 +346,15 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
       hashBlockData(cast<DIELoc>(Value)->getValues());
     }
     break;
+    // FIXME: Handle loclistptr.
+  case DIEValue::isLocList:
+    // FIXME: It's uncertain whether or not we should handle this at the moment.
   case DIEValue::isExpr:
   case DIEValue::isLabel:
   case DIEValue::isDelta:
+    // These two were handled above.
   case DIEValue::isEntry:
   case DIEValue::isTypeSignature:
-  case DIEValue::isLocList:
     llvm_unreachable("Add support for additional value types.");
   }
 }
