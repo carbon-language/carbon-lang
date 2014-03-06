@@ -557,6 +557,7 @@
 		490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */ = {isa = PBXBuildFile; fileRef = 490A36BE180F0E6F00BA31F8 /* PlatformWindows.h */; };
 		490A966B1628C3BF00F0002E /* SBDeclaration.h in Headers */ = {isa = PBXBuildFile; fileRef = 9452573816262CEF00325455 /* SBDeclaration.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 494260D914579144003C1C78 /* VerifyDecl.cpp */; };
+		4952BBB018C8ECE00016209F /* lldb-dll-export.h in Headers */ = {isa = PBXBuildFile; fileRef = 4952BBAF18C8ECE00016209F /* lldb-dll-export.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4966DCC3148978A10028481B /* ClangExternalASTSourceCommon.cpp */; };
 		49A1CAC51430E8DE00306AC9 /* ExpressionSourceCode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A1CAC31430E8BD00306AC9 /* ExpressionSourceCode.cpp */; };
 		49A71FE7141FFA5C00D59478 /* IRInterpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 496B01581406DE8900F830D5 /* IRInterpreter.cpp */; };
@@ -1622,6 +1623,7 @@
 		49445C2512245E3600C11A81 /* ClangExpressionParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionParser.cpp; path = source/Expression/ClangExpressionParser.cpp; sourceTree = "<group>"; };
 		49445C2912245E5500C11A81 /* ClangExpressionParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExpressionParser.h; path = include/lldb/Expression/ClangExpressionParser.h; sourceTree = "<group>"; };
 		49445E341225AB6A00C11A81 /* ClangUserExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangUserExpression.h; path = include/lldb/Expression/ClangUserExpression.h; sourceTree = "<group>"; };
+		4952BBAF18C8ECE00016209F /* lldb-dll-export.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-dll-export.h"; path = "include/lldb/lldb-dll-export.h"; sourceTree = "<group>"; };
 		495B38431489714C002708C5 /* ClangExternalASTSourceCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClangExternalASTSourceCommon.h; path = include/lldb/Symbol/ClangExternalASTSourceCommon.h; sourceTree = "<group>"; };
 		495BBACB119A0DBE00418BEA /* PathMappingList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PathMappingList.cpp; path = source/Target/PathMappingList.cpp; sourceTree = "<group>"; };
 		495BBACF119A0DE700418BEA /* PathMappingList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PathMappingList.h; path = include/lldb/Target/PathMappingList.h; sourceTree = "<group>"; };
@@ -2382,6 +2384,7 @@
 			children = (
 				2611FEEE142D83060017FEA3 /* interface */,
 				26BC7C2510F1B3BC00F91463 /* lldb-defines.h */,
+				4952BBAF18C8ECE00016209F /* lldb-dll-export.h */,
 				26BC7C2610F1B3BC00F91463 /* lldb-enumerations.h */,
 				26DE1E6A11616C2E00A093E2 /* lldb-forward.h */,
 				26651A14133BEC76005B64B7 /* lldb-public.h */,
@@ -3859,6 +3862,7 @@
 				26DE205511618FB800A093E2 /* SBCompileUnit.h in Headers */,
 				9443B123140C26AB0013457C /* SBData.h in Headers */,
 				26680220115FD13D008E1FE4 /* SBDebugger.h in Headers */,
+				4952BBB018C8ECE00016209F /* lldb-dll-export.h in Headers */,
 				490A966B1628C3BF00F0002E /* SBDeclaration.h in Headers */,
 				26680221115FD13D008E1FE4 /* SBDefines.h in Headers */,
 				AF0EBBEC185941360059E52F /* SBQueue.h in Headers */,
