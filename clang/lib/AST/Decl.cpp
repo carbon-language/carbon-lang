@@ -1243,8 +1243,7 @@ public:
 
     // We have just computed the linkage for this decl. By induction we know
     // that all other computed linkages match, check that the one we just
-    // computed
-    // also does.
+    // computed also does.
     NamedDecl *Old = NULL;
     for (NamedDecl::redecl_iterator I = D->redecls_begin(),
                                     E = D->redecls_end();
@@ -1252,7 +1251,7 @@ public:
       NamedDecl *T = cast<NamedDecl>(*I);
       if (T == D)
         continue;
-      if (T->hasCachedLinkage()) {
+      if (!T->isInvalidDecl() && T->hasCachedLinkage()) {
         Old = T;
         break;
       }

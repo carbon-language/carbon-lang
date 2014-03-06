@@ -213,3 +213,7 @@ namespace PR16247 {
   void pr16247_bar(int) {}
   void pr16247_bar(double) {}
 }
+namespace PR18964 {
+  unsigned &*foo; //expected-error{{'foo' declared as a pointer to a reference of type}}
+  extern struct {} *foo; // don't assert
+}
