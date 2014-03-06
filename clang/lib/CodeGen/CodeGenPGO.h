@@ -42,13 +42,13 @@ public:
   PGOProfileData(CodeGenModule &CGM, std::string Path);
   /// Fill Counts with the profile data for the given function name. Returns
   /// false on success.
-  bool getFunctionCounts(StringRef MangledName, std::vector<uint64_t> &Counts);
+  bool getFunctionCounts(StringRef FuncName, std::vector<uint64_t> &Counts);
   /// Return true if a function is hot. If we know nothing about the function,
   /// return false.
-  bool isHotFunction(StringRef MangledName);
+  bool isHotFunction(StringRef FuncName);
   /// Return true if a function is cold. If we know nothing about the function,
   /// return false.
-  bool isColdFunction(StringRef MangledName);
+  bool isColdFunction(StringRef FuncName);
 };
 
 /// Per-function PGO state. This class should generally not be used directly,

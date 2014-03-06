@@ -47,15 +47,14 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
   const char *CurPtr = BufferStart;
   uint64_t MaxCount = 0;
   while (CurPtr < BufferEnd) {
-    // Read the mangled function name.
-    const char *FuncName = CurPtr;
-    // FIXME: Something will need to be added to distinguish static functions.
+    // Read the function name.
+    const char *FuncStart = CurPtr;
     CurPtr = strchr(CurPtr, ' ');
     if (!CurPtr) {
       ReportBadPGOData(CGM, "pgo data file has malformed function entry");
       return;
     }
-    StringRef MangledName(FuncName, CurPtr - FuncName);
+    StringRef FuncName(FuncStart, CurPtr - FuncStart);
 
     // Read the number of counters.
     char *EndPtr;
@@ -73,7 +72,7 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
       return;
     }
     CurPtr = EndPtr; // Point to '\n'.
-    FunctionCounts[MangledName] = Count;
+    FunctionCounts[FuncName] = Count;
     MaxCount = Count > MaxCount ? Count : MaxCount;
 
     // There is one line for each counter; skip over those lines.
@@ -89,16 +88,16 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
     // Skip over the blank line separating functions.
     CurPtr += 2;
 
-    DataOffsets[MangledName] = FuncName - BufferStart;
+    DataOffsets[FuncName] = FuncStart - BufferStart;
   }
   MaxFunctionCount = MaxCount;
 }
 
 /// Return true if a function is hot. If we know nothing about the function,
 /// return false.
-bool PGOProfileData::isHotFunction(StringRef MangledName) {
+bool PGOProfileData::isHotFunction(StringRef FuncName) {
   llvm::StringMap<uint64_t>::const_iterator CountIter =
-    FunctionCounts.find(MangledName);
+    FunctionCounts.find(FuncName);
   // If we know nothing about the function, return false.
   if (CountIter == FunctionCounts.end())
     return false;
@@ -109,9 +108,9 @@ bool PGOProfileData::isHotFunction(StringRef MangledName) {
 
 /// Return true if a function is cold. If we know nothing about the function,
 /// return false.
-bool PGOProfileData::isColdFunction(StringRef MangledName) {
+bool PGOProfileData::isColdFunction(StringRef FuncName) {
   llvm::StringMap<uint64_t>::const_iterator CountIter =
-    FunctionCounts.find(MangledName);
+    FunctionCounts.find(FuncName);
   // If we know nothing about the function, return false.
   if (CountIter == FunctionCounts.end())
     return false;
@@ -120,11 +119,11 @@ bool PGOProfileData::isColdFunction(StringRef MangledName) {
   return CountIter->getValue() <= (uint64_t)(0.01 * (double)MaxFunctionCount);
 }
 
-bool PGOProfileData::getFunctionCounts(StringRef MangledName,
+bool PGOProfileData::getFunctionCounts(StringRef FuncName,
                                        std::vector<uint64_t> &Counts) {
   // Find the relevant section of the pgo-data file.
   llvm::StringMap<unsigned>::const_iterator OffsetIter =
-    DataOffsets.find(MangledName);
+    DataOffsets.find(FuncName);
   if (OffsetIter == DataOffsets.end())
     return true;
   const char *CurPtr = DataBuffer->getBufferStart() + OffsetIter->getValue();
@@ -197,7 +196,7 @@ void CodeGenPGO::emitWriteoutFunction(StringRef Name) {
 
   llvm::Type *Int64PtrTy = llvm::Type::getInt64PtrTy(Ctx);
   llvm::Type *Args[] = {
-    Int8PtrTy,                       // const char *MangledName
+    Int8PtrTy,                       // const char *FuncName
     Int32Ty,                         // uint32_t NumCounters
     Int64PtrTy                       // uint64_t *Counters
   };
@@ -206,10 +205,10 @@ void CodeGenPGO::emitWriteoutFunction(StringRef Name) {
   llvm::Constant *EmitFunc =
     CGM.getModule().getOrInsertFunction("llvm_pgo_emit", FTy);
 
-  llvm::Constant *MangledName =
+  llvm::Constant *NameString =
     CGM.GetAddrOfConstantCString(Name, "__llvm_pgo_name");
-  MangledName = llvm::ConstantExpr::getBitCast(MangledName, Int8PtrTy);
-  PGOBuilder.CreateCall3(EmitFunc, MangledName,
+  NameString = llvm::ConstantExpr::getBitCast(NameString, Int8PtrTy);
+  PGOBuilder.CreateCall3(EmitFunc, NameString,
                          PGOBuilder.getInt32(NumRegionCounters),
                          PGOBuilder.CreateBitCast(RegionCounters, Int64PtrTy));
 }
