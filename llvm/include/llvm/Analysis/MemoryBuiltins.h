@@ -19,9 +19,9 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/TargetFolder.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/ValueHandle.h"
-#include "llvm/InstVisitor.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {

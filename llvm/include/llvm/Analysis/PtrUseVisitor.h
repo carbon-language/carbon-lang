@@ -26,8 +26,8 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/InstVisitor.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
