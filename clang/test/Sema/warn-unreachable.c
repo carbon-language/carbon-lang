@@ -209,9 +209,10 @@ MyEnum trivial_dead_return_enum_2(int x) {
     case 1: return 1;
     case 2: return 2;
     case 3: return 3;
+    default: return 4;
   }
 
-  return 2; // no-warning
+  return 2; // expected-warning {{will never be executed}}
 }
 
 MyEnum nontrivial_dead_return_enum_2(int x) {

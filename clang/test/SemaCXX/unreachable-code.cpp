@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fcxx-exceptions -fexceptions -fsyntax-only -Wunreachable-code -fblocks -verify %s
 
 int j;
-void bar() { }
+int bar();
 int test1() {
   for (int i = 0;
        i != 10;
@@ -11,7 +11,19 @@ int test1() {
       return 1;
   }
   return 0;
-  return 1;    // expected-warning {{will never be executed}}
+  return 1; // expected-warning {{will never be executed}}
+}
+
+int test1_B() {
+  for (int i = 0;
+       i != 10;
+       ++i) {  // expected-warning {{will never be executed}}
+    if (j == 23) // missing {}'s
+      bar();
+      return 1;
+  }
+  return 0;
+  return bar(); // expected-warning {{will never be executed}}
 }
 
 void test2(int i) {

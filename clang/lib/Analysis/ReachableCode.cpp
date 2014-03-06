@@ -312,7 +312,8 @@ static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S) {
         return true;
   }
 
-
+  if (B->pred_size() != 1)
+    return false;
 
   // Look to see if the block ends with a 'return', and see if 'S'
   // is a substatement.  The 'return' may not be the last element in
@@ -324,15 +325,11 @@ static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S) {
       if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(CS->getStmt())) {
         const Expr *RE = RS->getRetValue();
         if (RE && RE->IgnoreParenCasts() == Ex)
-          break;
+          return bodyEndsWithNoReturn(*B->pred_begin());
       }
-      return false;
+      break;
     }
   }
-
-  if (B->pred_size() == 1)
-    return bodyEndsWithNoReturn(*B->pred_begin());
-
   return false;
 }
 
