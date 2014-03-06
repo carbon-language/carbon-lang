@@ -397,7 +397,7 @@ void MachODumper::printSymbol(symbol_iterator SymI) {
       W.startLine() << "PrivateExtern\n";
     if (Symbol.Type & MachO::N_EXT)
       W.startLine() << "Extern\n";
-    W.printEnum("Type", Symbol.Type & MachO::N_TYPE,
+    W.printEnum("Type", uint8_t(Symbol.Type & MachO::N_TYPE),
                 makeArrayRef(MachOSymbolTypes));
   }
   W.printHex   ("Section", SectionName, Symbol.SectionIndex);
