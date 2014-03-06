@@ -208,8 +208,9 @@ class NamedMDNode : public ilist_node<NamedMDNode> {
 
   explicit NamedMDNode(const Twine &N);
 
-  template<class T>
-  class op_iterator_impl {
+  template<class T1, class T2>
+  class op_iterator_impl :
+      public std::iterator<std::random_access_iterator_tag, T2> {
     const NamedMDNode *Node;
     unsigned Idx;
     op_iterator_impl(const NamedMDNode *N, unsigned i) : Node(N), Idx(i) { }
@@ -220,10 +221,11 @@ class NamedMDNode : public ilist_node<NamedMDNode> {
     op_iterator_impl() : Node(0), Idx(0) { }
     op_iterator_impl(const op_iterator_impl &o) : Node(o.Node), Idx(o.Idx) { }
 
-    bool operator==(const op_iterator_impl<T> &o) const { return Idx == o.Idx; }
-    bool operator!=(const op_iterator_impl<T> &o) const { return Idx != o.Idx; }
+    bool operator==(const op_iterator_impl &o) const { return Idx == o.Idx; }
+    bool operator!=(const op_iterator_impl &o) const { return Idx != o.Idx; }
     op_iterator_impl &operator++() {
-      ++Idx; return *this;
+      ++Idx;
+      return *this;
     }
     op_iterator_impl operator++(int) {
       op_iterator_impl tmp(*this);
@@ -231,10 +233,11 @@ class NamedMDNode : public ilist_node<NamedMDNode> {
       return tmp;
     }
     op_iterator_impl &operator=(const op_iterator_impl &o) {
+      Node = o.Node;
       Idx = o.Idx;
       return *this;
     }
-    T operator*() const { return Node->getOperand(Idx); }
+    T1 operator*() const { return Node->getOperand(Idx); }
   };
 
 public:
@@ -273,11 +276,11 @@ public:
   // ---------------------------------------------------------------------------
   // Operand Iterator interface...
   //
-  typedef op_iterator_impl<MDNode*> op_iterator;
+  typedef op_iterator_impl<MDNode*, MDNode> op_iterator;
   op_iterator op_begin() { return op_iterator(this, 0); }
   op_iterator op_end()   { return op_iterator(this, getNumOperands()); }
 
-  typedef op_iterator_impl<const MDNode*> const_op_iterator;
+  typedef op_iterator_impl<const MDNode*, MDNode> const_op_iterator;
   const_op_iterator op_begin() const { return const_op_iterator(this, 0); }
   const_op_iterator op_end()   const { return const_op_iterator(this, getNumOperands()); }
 
