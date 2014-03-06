@@ -134,10 +134,6 @@ static const EnumEntry<unsigned> MachOSymbolTypes[] = {
 };
 
 namespace {
-  enum {
-    N_STAB = 0xE0
-  };
-
   struct MachOSection {
     ArrayRef<char> Name;
     ArrayRef<char> SegmentName;
@@ -396,7 +392,7 @@ void MachODumper::printSymbol(symbol_iterator SymI) {
 
   DictScope D(W, "Symbol");
   W.printNumber("Name", SymbolName, Symbol.StringIndex);
-  if (Symbol.Type & N_STAB) {
+  if (Symbol.Type & MachO::N_STAB) {
     W.printHex ("Type", "SymDebugTable", Symbol.Type);
   } else {
     W.printEnum("Type", Symbol.Type, makeArrayRef(MachOSymbolTypes));
