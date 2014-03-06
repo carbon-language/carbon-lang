@@ -219,7 +219,7 @@ static bool isCDisp8(uint64_t TSFlags, int Value, int& CValue) {
 
   if (Value & MemObjMask) // Unaligned offset
     return false;
-  Value /= MemObjSize;
+  Value /= (int)MemObjSize;
   bool Ret = (Value == (signed char)Value);
 
   if (Ret)

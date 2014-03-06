@@ -1,5 +1,101 @@
 // RUN: llvm-mc -triple x86_64-unknown-unknown -mcpu=knl --show-encoding %s | FileCheck %s
 
+// CHECK: vaddpd -8192(%rdx), %zmm27, %zmm8
+// CHECK:  encoding: [0x62,0x71,0xa5,0x40,0x58,0x42,0x80]
+          vaddpd -8192(%rdx), %zmm27, %zmm8
+
+// CHECK: vaddpd -1024(%rdx){1to8}, %zmm27, %zmm8
+// CHECK:  encoding: [0x62,0x71,0xa5,0x50,0x58,0x42,0x80]
+          vaddpd -1024(%rdx){1to8}, %zmm27, %zmm8
+
+// CHECK: vaddps -8192(%rdx), %zmm13, %zmm18
+// CHECK:  encoding: [0x62,0xe1,0x14,0x48,0x58,0x52,0x80]
+          vaddps -8192(%rdx), %zmm13, %zmm18
+
+// CHECK: vaddps -512(%rdx){1to16}, %zmm13, %zmm18
+// CHECK:  encoding: [0x62,0xe1,0x14,0x58,0x58,0x52,0x80]
+          vaddps -512(%rdx){1to16}, %zmm13, %zmm18
+
+// CHECK: vdivpd -8192(%rdx), %zmm6, %zmm18
+// CHECK:  encoding: [0x62,0xe1,0xcd,0x48,0x5e,0x52,0x80]
+          vdivpd -8192(%rdx), %zmm6, %zmm18
+
+// CHECK: vdivpd -1024(%rdx){1to8}, %zmm6, %zmm18
+// CHECK:  encoding: [0x62,0xe1,0xcd,0x58,0x5e,0x52,0x80]
+          vdivpd -1024(%rdx){1to8}, %zmm6, %zmm18
+
+// CHECK: vdivps -8192(%rdx), %zmm23, %zmm23
+// CHECK:  encoding: [0x62,0xe1,0x44,0x40,0x5e,0x7a,0x80]
+          vdivps -8192(%rdx), %zmm23, %zmm23
+
+// CHECK: vdivps -512(%rdx){1to16}, %zmm23, %zmm23
+// CHECK:  encoding: [0x62,0xe1,0x44,0x50,0x5e,0x7a,0x80]
+          vdivps -512(%rdx){1to16}, %zmm23, %zmm23
+
+// CHECK: vmaxpd -8192(%rdx), %zmm28, %zmm30
+// CHECK:  encoding: [0x62,0x61,0x9d,0x40,0x5f,0x72,0x80]
+          vmaxpd -8192(%rdx), %zmm28, %zmm30
+
+// CHECK: vmaxpd -1024(%rdx){1to8}, %zmm28, %zmm30
+// CHECK:  encoding: [0x62,0x61,0x9d,0x50,0x5f,0x72,0x80]
+          vmaxpd -1024(%rdx){1to8}, %zmm28, %zmm30
+
+// CHECK: vmaxps -8192(%rdx), %zmm6, %zmm25
+// CHECK:  encoding: [0x62,0x61,0x4c,0x48,0x5f,0x4a,0x80]
+          vmaxps -8192(%rdx), %zmm6, %zmm25
+
+// CHECK: vmaxps -512(%rdx){1to16}, %zmm6, %zmm25
+// CHECK:  encoding: [0x62,0x61,0x4c,0x58,0x5f,0x4a,0x80]
+          vmaxps -512(%rdx){1to16}, %zmm6, %zmm25
+
+// CHECK: vminpd -8192(%rdx), %zmm6, %zmm6
+// CHECK:  encoding: [0x62,0xf1,0xcd,0x48,0x5d,0x72,0x80]
+          vminpd -8192(%rdx), %zmm6, %zmm6
+
+// CHECK: vminpd -1024(%rdx){1to8}, %zmm6, %zmm6
+// CHECK:  encoding: [0x62,0xf1,0xcd,0x58,0x5d,0x72,0x80]
+          vminpd -1024(%rdx){1to8}, %zmm6, %zmm6
+
+// CHECK: vminps -8192(%rdx), %zmm3, %zmm3
+// CHECK:  encoding: [0x62,0xf1,0x64,0x48,0x5d,0x5a,0x80]
+          vminps -8192(%rdx), %zmm3, %zmm3
+
+// CHECK: vminps -512(%rdx){1to16}, %zmm3, %zmm3
+// CHECK:  encoding: [0x62,0xf1,0x64,0x58,0x5d,0x5a,0x80]
+          vminps -512(%rdx){1to16}, %zmm3, %zmm3
+
+// CHECK: vmulpd -8192(%rdx), %zmm4, %zmm24
+// CHECK:  encoding: [0x62,0x61,0xdd,0x48,0x59,0x42,0x80]
+          vmulpd -8192(%rdx), %zmm4, %zmm24
+
+// CHECK: vmulpd -1024(%rdx){1to8}, %zmm4, %zmm24
+// CHECK:  encoding: [0x62,0x61,0xdd,0x58,0x59,0x42,0x80]
+          vmulpd -1024(%rdx){1to8}, %zmm4, %zmm24
+
+// CHECK: vmulps -8192(%rdx), %zmm6, %zmm3
+// CHECK:  encoding: [0x62,0xf1,0x4c,0x48,0x59,0x5a,0x80]
+          vmulps -8192(%rdx), %zmm6, %zmm3
+
+// CHECK: vmulps -512(%rdx){1to16}, %zmm6, %zmm3
+// CHECK:  encoding: [0x62,0xf1,0x4c,0x58,0x59,0x5a,0x80]
+          vmulps -512(%rdx){1to16}, %zmm6, %zmm3
+
+// CHECK: vsubpd -8192(%rdx), %zmm12, %zmm9
+// CHECK:  encoding: [0x62,0x71,0x9d,0x48,0x5c,0x4a,0x80]
+          vsubpd -8192(%rdx), %zmm12, %zmm9
+
+// CHECK: vsubpd -1024(%rdx){1to8}, %zmm12, %zmm9
+// CHECK:  encoding: [0x62,0x71,0x9d,0x58,0x5c,0x4a,0x80]
+          vsubpd -1024(%rdx){1to8}, %zmm12, %zmm9
+
+// CHECK: vsubps -8192(%rdx), %zmm27, %zmm14
+// CHECK:  encoding: [0x62,0x71,0x24,0x40,0x5c,0x72,0x80]
+          vsubps -8192(%rdx), %zmm27, %zmm14
+
+// CHECK: vsubps -512(%rdx){1to16}, %zmm27, %zmm14
+// CHECK:  encoding: [0x62,0x71,0x24,0x50,0x5c,0x72,0x80]
+          vsubps -512(%rdx){1to16}, %zmm27, %zmm14
+
 // CHECK: vinserti32x4
 // CHECK: encoding: [0x62,0xa3,0x55,0x48,0x38,0xcd,0x01]
 vinserti32x4  $1, %xmm21, %zmm5, %zmm17
@@ -45,7 +141,7 @@ vpbroadcastd  %xmm0, %zmm1 {%k1} {z}
 vmovdqu64 %zmm0, %zmm1 {%k3}
 
 // CHECK: vmovd
-// CHECK: encoding: [0x62,0xe1,0x7d,0x08,0x7e,0xb4,0x24,0xac,0xff,0xff,0xff]
+// CHECK: encoding: [0x62,0xe1,0x7d,0x08,0x7e,0x74,0x24,0xeb]
 vmovd %xmm22, -84(%rsp)
 
 // CHECK: vextractps
