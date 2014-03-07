@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
-#if SANITIZER_LINUX
+#if SANITIZER_FREEBSD || SANITIZER_LINUX
 
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
@@ -26,9 +26,20 @@
 #include <dlfcn.h>
 #include <pthread.h>
 #include <signal.h>
-#include <sys/prctl.h>
 #include <sys/resource.h>
+#if SANITIZER_FREEBSD
+#define _GNU_SOURCE  // to declare _Unwind_Backtrace() from <unwind.h>
+#endif
 #include <unwind.h>
+
+#if SANITIZER_FREEBSD
+#include <pthread_np.h>
+#define pthread_getattr_np pthread_attr_get_np
+#endif
+
+#if SANITIZER_LINUX
+#include <sys/prctl.h>
+#endif
 
 #if !SANITIZER_ANDROID
 #include <elf.h>
@@ -292,7 +303,7 @@ uptr GetTlsSize() {
   return g_tls_size;
 }
 
-#if defined(__x86_64__) || defined(__i386__)
+#if (defined(__x86_64__) || defined(__i386__)) && SANITIZER_LINUX
 // sizeof(struct thread) from glibc.
 static atomic_uintptr_t kThreadDescriptorSize;
 
@@ -340,27 +351,70 @@ uptr ThreadSelfOffset() {
 
 uptr ThreadSelf() {
   uptr descr_addr;
-#ifdef __i386__
+# if defined(__i386__)
   asm("mov %%gs:%c1,%0" : "=r"(descr_addr) : "i"(kThreadSelfOffset));
-#else
+# elif defined(__x86_64__)
   asm("mov %%fs:%c1,%0" : "=r"(descr_addr) : "i"(kThreadSelfOffset));
-#endif
+# else
+#  error "unsupported CPU arch"
+# endif
   return descr_addr;
 }
-#endif  // defined(__x86_64__) || defined(__i386__)
+#endif  // (defined(__x86_64__) || defined(__i386__)) && SANITIZER_LINUX
+
+#if SANITIZER_FREEBSD
+static void **ThreadSelfSegbase() {
+  void **segbase = 0;
+# if defined(__i386__)
+  // sysarch(I386_GET_GSBASE, segbase);
+  __asm __volatile("mov %%gs:0, %0" : "=r" (segbase));
+# elif defined(__x86_64__)
+  // sysarch(AMD64_GET_FSBASE, segbase);
+  __asm __volatile("movq %%fs:0, %0" : "=r" (segbase));
+# else
+#  error "unsupported CPU arch for FreeBSD platform"
+# endif
+  return segbase;
+}
+
+uptr ThreadSelf() {
+  return (uptr)ThreadSelfSegbase()[2];
+}
+#endif  // SANITIZER_FREEBSD
+
+static void GetTls(uptr *addr, uptr *size) {
+#if SANITIZER_LINUX
+# if defined(__x86_64__) || defined(__i386__)
+  *addr = ThreadSelf();
+  *size = GetTlsSize();
+  *addr -= *size;
+  *addr += ThreadDescriptorSize();
+# else
+  *addr = 0;
+  *size = 0;
+# endif
+#elif SANITIZER_FREEBSD
+  void** segbase = ThreadSelfSegbase();
+  *addr = 0;
+  *size = 0;
+  if (segbase != 0) {
+    // tcbalign = 16
+    // tls_size = round(tls_static_space, tcbalign);
+    // dtv = segbase[1];
+    // dtv[2] = segbase - tls_static_space;
+    void **dtv = (void**) segbase[1];
+    *addr = (uptr) dtv[2];
+    *size = (*addr == 0) ? 0 : ((uptr) segbase[0] - (uptr) dtv[2]);
+  }
+#else
+# error "Unknown OS"
+#endif
+}
 
 void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
                           uptr *tls_addr, uptr *tls_size) {
 #ifndef SANITIZER_GO
-#if defined(__x86_64__) || defined(__i386__)
-  *tls_addr = ThreadSelf();
-  *tls_size = GetTlsSize();
-  *tls_addr -= *tls_size;
-  *tls_addr += ThreadDescriptorSize();
-#else
-  *tls_addr = 0;
-  *tls_size = 0;
-#endif
+  GetTls(tls_addr, tls_size);
 
   uptr stack_top, stack_bottom;
   GetThreadStackTopAndBottom(main, &stack_top, &stack_bottom);
@@ -417,7 +471,9 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
   return memory_mapping.DumpListOfModules(modules, max_modules, filter);
 }
 #else  // SANITIZER_ANDROID
+# if !SANITIZER_FREEBSD
 typedef ElfW(Phdr) Elf_Phdr;
+# endif
 
 struct DlIteratePhdrData {
   LoadedModule *modules;
@@ -480,4 +536,4 @@ void SetIndirectCallWrapper(uptr wrapper) {
 
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_LINUX
+#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX
