@@ -3466,6 +3466,14 @@ static bool matchRotateSub(SDValue Pos, SDValue Neg, unsigned OpSize) {
     return 0;
   SDValue NegOp1 = Neg.getOperand(1);
 
+  // On the RHS of [A], if Pos is Pos' & (OpSize - 1), just replace Pos with
+  // Pos'.  The truncation is redundant for the purpose of the equality.
+  if (MaskLoBits &&
+      Pos.getOpcode() == ISD::AND &&
+      Pos.getOperand(1).getOpcode() == ISD::Constant &&
+      cast<ConstantSDNode>(Pos.getOperand(1))->getAPIntValue() == OpSize - 1)
+    Pos = Pos.getOperand(0);
+
   // The condition we need is now:
   //
   //     (NegC - NegOp1) & Mask == (OpSize - Pos) & Mask
