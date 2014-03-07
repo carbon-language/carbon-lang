@@ -70,6 +70,12 @@ struct A : virtual V1 {
   // VTABLE-SIMPLE-A-NEXT: 1 | simple::A::~A() [scalar deleting]
   // VTABLE-SIMPLE-A-NEXT:     [this adjustment: vtordisp at -4, 0 non-virtual]
 
+  // VTABLE-SIMPLE-A: Thunks for 'simple::A::~A()' (1 entry).
+  // VTABLE-SIMPLE-A-NEXT: 0 | [this adjustment: vtordisp at -4, 0 non-virtual]
+
+  // VTABLE-SIMPLE-A: Thunks for 'void simple::A::f()' (1 entry).
+  // VTABLE-SIMPLE-A-NEXT: 0 | [this adjustment: vtordisp at -4, 0 non-virtual]
+
   virtual void f();
   // MANGLING-DAG: @"\01?f@A@simple@@$4PPPPPPPM@A@AEXXZ"
 
@@ -85,11 +91,20 @@ struct B : virtual V3 {
   // VTABLE-SIMPLE-B-NEXT: 1 | simple::B::~B() [scalar deleting]
   // VTABLE-SIMPLE-B-NEXT:     [this adjustment: vtordisp at -4, 0 non-virtual]
 
+  // VTABLE-SIMPLE-B: Thunks for 'simple::B::~B()' (1 entry).
+  // VTABLE-SIMPLE-B-NEXT: 0 | [this adjustment: vtordisp at -4, 0 non-virtual]
+
   // VTABLE-SIMPLE-B: VFTable for 'V2' in 'V3' in 'simple::B' (2 entries).
   // VTABLE-SIMPLE-B-NEXT: 0 | void simple::B::f()
   // VTABLE-SIMPLE-B-NEXT:     [this adjustment: vtordisp at -12, 0 non-virtual]
   // VTABLE-SIMPLE-B-NEXT: 1 | simple::B::~B() [scalar deleting]
   // VTABLE-SIMPLE-B-NEXT:     [this adjustment: vtordisp at -12, -8 non-virtual]
+
+  // VTABLE-SIMPLE-B: Thunks for 'simple::B::~B()' (1 entry).
+  // VTABLE-SIMPLE-B-NEXT: 0 | [this adjustment: vtordisp at -12, -8 non-virtual]
+
+  // VTABLE-SIMPLE-B: Thunks for 'void simple::B::f()' (1 entry).
+  // VTABLE-SIMPLE-B-NEXT: 0 | [this adjustment: vtordisp at -12, 0 non-virtual]
 
   // FIXME: The vtordisp thunk should only get emitted for a constructor
   // if "this" leaves scope.
@@ -111,17 +126,32 @@ struct C : virtual V4 {
   // VTABLE-SIMPLE-C-NEXT: 1 | simple::C::~C() [scalar deleting]
   // VTABLE-SIMPLE-C-NEXT:     [this adjustment: vtordisp at -4, 0 non-virtual]
 
+  // VTABLE-SIMPLE-C: Thunks for 'simple::C::~C()' (1 entry).
+  // VTABLE-SIMPLE-C-NEXT: 0 | [this adjustment: vtordisp at -4, 0 non-virtual]
+
   // VTABLE-SIMPLE-C: VFTable for 'V1' in 'V4' in 'simple::C' (2 entries).
   // VTABLE-SIMPLE-C-NEXT: 0 | void simple::C::f()
   // VTABLE-SIMPLE-C-NEXT:     [this adjustment: vtordisp at -12, 0 non-virtual]
   // VTABLE-SIMPLE-C-NEXT: 1 | simple::C::~C() [scalar deleting]
   // VTABLE-SIMPLE-C-NEXT:     [this adjustment: vtordisp at -12, -8 non-virtual]
 
+  // VTABLE-SIMPLE-C: Thunks for 'simple::C::~C()' (1 entry).
+  // VTABLE-SIMPLE-C-NEXT: 0 | [this adjustment: vtordisp at -12, -8 non-virtual]
+
+  // VTABLE-SIMPLE-C: Thunks for 'void simple::C::f()' (1 entry).
+  // VTABLE-SIMPLE-C-NEXT: 0 | [this adjustment: vtordisp at -12, 0 non-virtual]
+
   // VTABLE-SIMPLE-C: VFTable for 'V2' in 'V4' in 'simple::C' (2 entries).
   // VTABLE-SIMPLE-C-NEXT: 0 | void simple::C::f()
   // VTABLE-SIMPLE-C-NEXT:     [this adjustment: vtordisp at -16, -4 non-virtual]
   // VTABLE-SIMPLE-C-NEXT: 1 | simple::C::~C() [scalar deleting]
   // VTABLE-SIMPLE-C-NEXT:     [this adjustment: vtordisp at -16, -12 non-virtual]
+
+  // VTABLE-SIMPLE-C: Thunks for 'simple::C::~C()' (1 entry).
+  // VTABLE-SIMPLE-C-NEXT: 0 | [this adjustment: vtordisp at -16, -12 non-virtual]
+
+  // VTABLE-SIMPLE-C: Thunks for 'void simple::C::f()' (1 entry).
+  // VTABLE-SIMPLE-C-NEXT: 0 | [this adjustment: vtordisp at -16, -4 non-virtual]
 
   int x;
   virtual void f();
@@ -159,6 +189,10 @@ struct A : virtual simple::A {
   // VTABLE-EXTENDED-A-NEXT: 1 | extended::A::~A() [scalar deleting]
   // VTABLE-EXTENDED-A-NEXT:     [this adjustment: vtordisp at -4, 0 non-virtual]
 
+  // VTABLE-EXTENDED-A: Thunks for 'void simple::A::f()' (1 entry).
+  // VTABLE-EXTENDED-A-NEXT: 0 | [this adjustment: vtordisp at -4, vbptr at 8 to the left,
+  // VTABLE-EXTENDED-A-NEXT:      vboffset at 8 in the vbtable, 8 non-virtual]
+
   // `vtordispex{8,8,4294967292,8}'
   // MANGLING-DAG: @"\01?f@A@simple@@$R477PPPPPPPM@7AEXXZ"
 
@@ -179,6 +213,10 @@ struct B : virtual simple::A {
   // VTABLE-EXTENDED-B: 1 | extended::B::~B() [scalar deleting]
   // VTABLE-EXTENDED-B-NEXT: [this adjustment: vtordisp at -4, 0 non-virtual]
 
+  // VTABLE-EXTENDED-B: Thunks for 'void simple::A::f()' (1 entry).
+  // VTABLE-EXTENDED-B-NEXT: 0 | [this adjustment: vtordisp at -4, vbptr at 8 to the left,
+  // VTABLE-EXTENDED-B-NEXT:      vboffset at 8 in the vbtable, 8 non-virtual]
+
   // vtordisp{4294967292,0}
   // MANGLING-DAG: @"\01??_EB@extended@@$4PPPPPPPM@A@AEPAXI@Z"
 };
@@ -189,6 +227,10 @@ struct C : virtual simple::A {
   // VTABLE-EXTENDED-C: VFTable for 'V1' in 'simple::A' in 'extended::C' (2 entries).
   // VTABLE-EXTENDED-C-NEXT: 0 | void simple::A::f()
   // VTABLE-EXTENDED-C-NEXT:     [this adjustment: vtordisp at -4, vbptr at 12 to the left,
+  // VTABLE-EXTENDED-C-NEXT:      vboffset at 8 in the vbtable, 8 non-virtual]
+
+  // VTABLE-EXTENDED-C: Thunks for 'void simple::A::f()' (1 entry).
+  // VTABLE-EXTENDED-C-NEXT: 0 | [this adjustment: vtordisp at -4, vbptr at 12 to the left,
   // VTABLE-EXTENDED-C-NEXT:      vboffset at 8 in the vbtable, 8 non-virtual]
 
   // `vtordispex{12,8,4294967292,8}'
@@ -212,6 +254,10 @@ struct E : virtual D {
   // VTABLE-EXTENDED-E-NEXT:     [this adjustment: vtordisp at -4, vbptr at 8 to the left,
   // VTABLE-EXTENDED-E-NEXT:      vboffset at 8 in the vbtable, 12 non-virtual]
 
+  // VTABLE-EXTENDED-E: Thunks for 'void extended::D::f()' (1 entry).
+  // VTABLE-EXTENDED-E-NEXT: 0 | [this adjustment: vtordisp at -4, vbptr at 8 to the left,
+  // VTABLE-EXTENDED-E-NEXT:      vboffset at 8 in the vbtable, 12 non-virtual]
+
   // `vtordispex{8,8,4294967292,12}'
   // MANGLING-DAG: @"\01?f@D@extended@@$R477PPPPPPPM@M@AEXXZ"
 
@@ -225,6 +271,10 @@ struct F : virtual Z, virtual D {
   // VTABLE-EXTENDED-F: VFTable for 'V2' in 'extended::D' in 'extended::F' (2 entries).
   // VTABLE-EXTENDED-F-NEXT: 0 | void extended::D::f()
   // VTABLE-EXTENDED-F-NEXT:     [this adjustment: vtordisp at -4, vbptr at 20 to the left,
+  // VTABLE-EXTENDED-F-NEXT:      vboffset at 12 in the vbtable, 12 non-virtual]
+
+  // VTABLE-EXTENDED-F: Thunks for 'void extended::D::f()' (1 entry).
+  // VTABLE-EXTENDED-F-NEXT: 0 | [this adjustment: vtordisp at -4, vbptr at 20 to the left,
   // VTABLE-EXTENDED-F-NEXT:      vboffset at 12 in the vbtable, 12 non-virtual]
 
   // `vtordispex{20,12,4294967292,12}'
@@ -247,6 +297,10 @@ struct G : virtual simple::A {
   // VTABLE-EXTENDED-G-NEXT: 1 | extended::G::~G() [scalar deleting]
   // VTABLE-EXTENDED-G-NEXT:     [this adjustment: vtordisp at -4, 0 non-virtual]
 
+  // VTABLE-EXTENDED-G: Thunks for 'void simple::A::f()' (1 entry).
+  // VTABLE-EXTENDED-G-NEXT: 0 | [this adjustment: vtordisp at -4, vbptr at 8 to the left,
+  // VTABLE-EXTENDED-G-NEXT:      vboffset at 8 in the vbtable, 8 non-virtual]
+
   // Emits a G's own vfptr, thus moving the vbptr in the layout.
   virtual void g();
 
@@ -267,6 +321,10 @@ struct H : Z, A {
   // VTABLE-EXTENDED-H-NEXT:     [this adjustment: vtordisp at -4, vbptr at 8 to the left,
   // VTABLE-EXTENDED-H-NEXT:      vboffset at 8 in the vbtable, 8 non-virtual]
 
+  // VTABLE-EXTENDED-H: Thunks for 'void simple::A::f()' (1 entry).
+  // VTABLE-EXTENDED-H-NEXT: 0 | [this adjustment: vtordisp at -4, vbptr at 8 to the left,
+  // VTABLE-EXTENDED-H-NEXT:      vboffset at 8 in the vbtable, 8 non-virtual]
+
   // MANGLING-DAG: @"\01?f@A@simple@@$R477PPPPPPPM@7AEXXZ"
   // MANGLING-DAG: @"\01??_EH@extended@@$4PPPPPPPM@BA@AEPAXI@Z"
 };
@@ -282,6 +340,10 @@ struct A : virtual simple::B {
   // VTABLE-PR17738-A: VFTable for 'V2' in 'V3' in 'simple::B' in 'pr17738::A' (2 entries).
   // VTABLE-PR17738-A-NEXT: 0 | void simple::B::f()
   // VTABLE-PR17738-A-NEXT:     [this adjustment: vtordisp at -12, vbptr at 20 to the left,
+  // VTABLE-PR17738-A-NEXT:      vboffset at 8 in the vbtable, 16 non-virtual]
+
+  // VTABLE-PR17738-A: Thunks for 'void simple::B::f()' (1 entry).
+  // VTABLE-PR17738-A-NEXT: 0 | [this adjustment: vtordisp at -12, vbptr at 20 to the left,
   // VTABLE-PR17738-A-NEXT:      vboffset at 8 in the vbtable, 16 non-virtual]
 
   // MANGLING-DAG: @"\01?f@B@simple@@$R4BE@7PPPPPPPE@BA@AEXXZ"

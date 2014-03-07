@@ -458,9 +458,12 @@ struct Ret1 {
 struct Test1 : Ret1 {
   // RET-THUNKS-Test1: VFTable for 'return_adjustment::Ret1' in 'return_adjustment::Test1' (3 entries).
   // RET-THUNKS-Test1-NEXT: 0 | this_adjustment::Test1 *return_adjustment::Test1::foo()
-  // RET-THUNKS-Test1-NEXT:     [return adjustment: 4 non-virtual]
+  // RET-THUNKS-Test1-NEXT:     [return adjustment (to type 'struct C *'): 4 non-virtual]
   // RET-THUNKS-Test1-NEXT: 1 | void return_adjustment::Ret1::z()
   // RET-THUNKS-Test1-NEXT: 2 | this_adjustment::Test1 *return_adjustment::Test1::foo()
+
+  // RET-THUNKS-Test1: Thunks for 'this_adjustment::Test1 *return_adjustment::Test1::foo()' (1 entry).
+  // RET-THUNKS-Test1-NEXT: 0 | [return adjustment (to type 'struct C *'): 4 non-virtual]
 
   // RET-THUNKS-Test1: VFTable indices for 'return_adjustment::Test1' (1 entry).
   // RET-THUNKS-Test1-NEXT: 2 | this_adjustment::Test1 *return_adjustment::Test1::foo()
@@ -477,11 +480,15 @@ struct Ret2 : B, this_adjustment::Test1 { };
 struct Test2 : Test1 {
   // RET-THUNKS-Test2: VFTable for 'return_adjustment::Ret1' in 'return_adjustment::Test1' in 'return_adjustment::Test2' (4 entries).
   // RET-THUNKS-Test2-NEXT: 0 | return_adjustment::Ret2 *return_adjustment::Test2::foo()
-  // RET-THUNKS-Test2-NEXT:     [return adjustment: 8 non-virtual]
+  // RET-THUNKS-Test2-NEXT:     [return adjustment (to type 'struct C *'): 8 non-virtual]
   // RET-THUNKS-Test2-NEXT: 1 | void return_adjustment::Ret1::z()
   // RET-THUNKS-Test2-NEXT: 2 | return_adjustment::Ret2 *return_adjustment::Test2::foo()
-  // RET-THUNKS-Test2-NEXT:     [return adjustment: 4 non-virtual]
+  // RET-THUNKS-Test2-NEXT:     [return adjustment (to type 'struct this_adjustment::Test1 *'): 4 non-virtual]
   // RET-THUNKS-Test2-NEXT: 3 | return_adjustment::Ret2 *return_adjustment::Test2::foo()
+
+  // RET-THUNKS-Test2: Thunks for 'return_adjustment::Ret2 *return_adjustment::Test2::foo()' (2 entries).
+  // RET-THUNKS-Test2-NEXT: 0 | [return adjustment (to type 'struct this_adjustment::Test1 *'): 4 non-virtual]
+  // RET-THUNKS-Test2-NEXT: 1 | [return adjustment (to type 'struct C *'): 8 non-virtual]
 
   // RET-THUNKS-Test2: VFTable indices for 'return_adjustment::Test2' (1 entry).
   // RET-THUNKS-Test2-NEXT: 3 | return_adjustment::Ret2 *return_adjustment::Test2::foo()
@@ -498,9 +505,12 @@ struct Test3: B, Ret1 {
 
   // RET-THUNKS-Test3: VFTable for 'return_adjustment::Ret1' in 'return_adjustment::Test3' (3 entries).
   // RET-THUNKS-Test3-NEXT: 0 | this_adjustment::Test1 *return_adjustment::Test3::foo()
-  // RET-THUNKS-Test3-NEXT:     [return adjustment: 4 non-virtual]
+  // RET-THUNKS-Test3-NEXT:     [return adjustment (to type 'struct C *'): 4 non-virtual]
   // RET-THUNKS-Test3-NEXT: 1 | void return_adjustment::Ret1::z()
   // RET-THUNKS-Test3-NEXT: 2 | this_adjustment::Test1 *return_adjustment::Test3::foo()
+
+  // RET-THUNKS-Test3: Thunks for 'this_adjustment::Test1 *return_adjustment::Test3::foo()' (1 entry).
+  // RET-THUNKS-Test3-NEXT: 0 | [return adjustment (to type 'struct C *'): 4 non-virtual]
 
   // RET-THUNKS-Test3: VFTable indices for 'return_adjustment::Test3' (1 entry).
   // RET-THUNKS-Test3-NEXT: via vfptr at offset 4
@@ -518,15 +528,19 @@ struct Test4 : Test3 {
 
   // RET-THUNKS-Test4: VFTable for 'return_adjustment::Ret1' in 'return_adjustment::Test3' in 'return_adjustment::Test4' (4 entries).
   // RET-THUNKS-Test4-NEXT: 0 | return_adjustment::Ret2 *return_adjustment::Test4::foo()
-  // RET-THUNKS-Test4-NEXT:     [return adjustment: 8 non-virtual]
+  // RET-THUNKS-Test4-NEXT:     [return adjustment (to type 'struct C *'): 8 non-virtual]
   // RET-THUNKS-Test4-NEXT: 1 | void return_adjustment::Ret1::z()
   // RET-THUNKS-Test4-NEXT: 2 | return_adjustment::Ret2 *return_adjustment::Test4::foo()
-  // RET-THUNKS-Test4-NEXT:     [return adjustment: 4 non-virtual]
+  // RET-THUNKS-Test4-NEXT:     [return adjustment (to type 'struct this_adjustment::Test1 *'): 4 non-virtual]
   // RET-THUNKS-Test4-NEXT: 3 | return_adjustment::Ret2 *return_adjustment::Test4::foo()
+
+  // RET-THUNKS-Test4: Thunks for 'return_adjustment::Ret2 *return_adjustment::Test4::foo()' (2 entries).
+  // RET-THUNKS-Test4-NEXT: 0 | [return adjustment (to type 'struct this_adjustment::Test1 *'): 4 non-virtual]
+  // RET-THUNKS-Test4-NEXT: 1 | [return adjustment (to type 'struct C *'): 8 non-virtual]
 
   // RET-THUNKS-Test4: VFTable indices for 'return_adjustment::Test4' (1 entry).
   // RET-THUNKS-Test4-NEXT: -- accessible via vfptr at offset 4 --
-  // RET-THUNKS-Test4-NEXT:   3 | return_adjustment::Ret2 *return_adjustment::Test4::foo()
+  // RET-THUNKS-Test4-NEXT: 3 | return_adjustment::Ret2 *return_adjustment::Test4::foo()
 
   virtual Ret2* foo();
 };
@@ -536,19 +550,31 @@ Test4 t4;
 struct Test5 : Ret1, Test1 {
   // RET-THUNKS-Test5: VFTable for 'return_adjustment::Ret1' in 'return_adjustment::Test5' (3 entries).
   // RET-THUNKS-Test5-NEXT: 0 | return_adjustment::Ret2 *return_adjustment::Test5::foo()
-  // RET-THUNKS-Test5-NEXT:     [return adjustment: 8 non-virtual]
+  // RET-THUNKS-Test5-NEXT:     [return adjustment (to type 'struct C *'): 8 non-virtual]
   // RET-THUNKS-Test5-NEXT: 1 | void return_adjustment::Ret1::z()
   // RET-THUNKS-Test5-NEXT: 2 | return_adjustment::Ret2 *return_adjustment::Test5::foo()
 
+  // RET-THUNKS-Test5: Thunks for 'return_adjustment::Ret2 *return_adjustment::Test5::foo()' (1 entry).
+  // RET-THUNKS-Test5-NEXT: 0 | [return adjustment (to type 'struct C *'): 8 non-virtual]
+
   // RET-THUNKS-Test5: VFTable for 'return_adjustment::Ret1' in  'return_adjustment::Test1' in 'return_adjustment::Test5' (4 entries).
   // RET-THUNKS-Test5-NEXT: 0 | return_adjustment::Ret2 *return_adjustment::Test5::foo()
-  // RET-THUNKS-Test5-NEXT:     [return adjustment: 8 non-virtual]
+  // RET-THUNKS-Test5-NEXT:     [return adjustment (to type 'struct C *'): 8 non-virtual]
   // RET-THUNKS-Test5-NEXT:     [this adjustment: -4 non-virtual]
   // RET-THUNKS-Test5-NEXT: 1 | void return_adjustment::Ret1::z()
   // RET-THUNKS-Test5-NEXT: 2 | return_adjustment::Ret2 *return_adjustment::Test5::foo()
-  // RET-THUNKS-Test5-NEXT:     [return adjustment: 4 non-virtual]
+  // RET-THUNKS-Test5-NEXT:     [return adjustment (to type 'struct this_adjustment::Test1 *'): 4 non-virtual]
   // RET-THUNKS-Test5-NEXT:     [this adjustment: -4 non-virtual]
   // RET-THUNKS-Test5-NEXT: 3 | return_adjustment::Ret2 *return_adjustment::Test5::foo()
+  // RET-THUNKS-Test5-NEXT:     [return adjustment (to type 'struct return_adjustment::Ret2 *'): 0 non-virtual]
+  // RET-THUNKS-Test5-NEXT:     [this adjustment: -4 non-virtual]
+
+  // RET-THUNKS-Test5: Thunks for 'return_adjustment::Ret2 *return_adjustment::Test5::foo()' (3 entries).
+  // RET-THUNKS-Test5-NEXT: 0 | [return adjustment (to type 'struct return_adjustment::Ret2 *'): 0 non-virtual]
+  // RET-THUNKS-Test5-NEXT:     [this adjustment: -4 non-virtual]
+  // RET-THUNKS-Test5-NEXT: 1 | [return adjustment (to type 'struct this_adjustment::Test1 *'): 4 non-virtual]
+  // RET-THUNKS-Test5-NEXT:     [this adjustment: -4 non-virtual]
+  // RET-THUNKS-Test5-NEXT: 2 | [return adjustment (to type 'struct C *'): 8 non-virtual]
   // RET-THUNKS-Test5-NEXT:     [this adjustment: -4 non-virtual]
 
   // RET-THUNKS-Test5: VFTable indices for 'return_adjustment::Test5' (1 entry).
@@ -565,10 +591,15 @@ struct Test6 : Test1 {
   virtual Ret3* foo();
   // RET-THUNKS-Test6: VFTable for 'return_adjustment::Ret1' in 'return_adjustment::Test1' in 'return_adjustment::Test6' (4 entries).
   // RET-THUNKS-Test6-NEXT: 0 | return_adjustment::Ret3 *return_adjustment::Test6::foo()
-  // RET-THUNKS-Test6-NEXT:     [return adjustment: 4 non-virtual]
+  // RET-THUNKS-Test6-NEXT:     [return adjustment (to type 'struct C *'): 4 non-virtual]
   // RET-THUNKS-Test6-NEXT: 1 | void return_adjustment::Ret1::z()
   // RET-THUNKS-Test6-NEXT: 2 | return_adjustment::Ret3 *return_adjustment::Test6::foo()
+  // RET-THUNKS-Test6-NEXT:     [return adjustment (to type 'struct this_adjustment::Test1 *'): 0 non-virtual]
   // RET-THUNKS-Test6-NEXT: 3 | return_adjustment::Ret3 *return_adjustment::Test6::foo()
+
+  // RET-THUNKS-Test6: Thunks for 'return_adjustment::Ret3 *return_adjustment::Test6::foo()' (2 entries).
+  // RET-THUNKS-Test6-NEXT: 0 | [return adjustment (to type 'struct this_adjustment::Test1 *'): 0 non-virtual]
+  // RET-THUNKS-Test6-NEXT: 1 | [return adjustment (to type 'struct C *'): 4 non-virtual]
 
   // RET-THUNKS-Test6: VFTable indices for 'return_adjustment::Test6' (1 entry).
   // RET-THUNKS-Test6-NEXT: 3 | return_adjustment::Ret3 *return_adjustment::Test6::foo()

@@ -217,12 +217,7 @@ void call_complete_dtor() {
   // CHECK: ret
 }
 
-struct X : virtual VBase {
-  int x;
-};
-
-
-struct C : X {
+struct C : B {
   C();
   // has an implicit vdtor.
 };

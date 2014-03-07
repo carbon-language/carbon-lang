@@ -11,6 +11,7 @@
 // RUN: FileCheck --check-prefix=TEST7 %s < %t
 // RUN: FileCheck --check-prefix=TEST8-X %s < %t
 // RUN: FileCheck --check-prefix=TEST8-Z %s < %t
+// RUN: FileCheck --check-prefix=TEST8-T %s < %t
 // RUN: FileCheck --check-prefix=TEST9-Y %s < %t
 // RUN: FileCheck --check-prefix=TEST9-Z %s < %t
 // RUN: FileCheck --check-prefix=TEST9-W %s < %t
@@ -48,7 +49,7 @@ struct C: virtual A {
 
   // MANGLING-DAG: @"\01??_7C@@6B@"
 
-  virtual void f();
+  virtual void f() {}
 };
 
 C c;
@@ -156,6 +157,9 @@ struct X: virtual C {
   // TEST4-NEXT:     [this adjustment: 8 non-virtual]
   // TEST4-NEXT: 1 | void A::z()
 
+  // TEST4: Thunks for 'void C::f()' (1 entry).
+  // TEST4-NEXT: 0 | [this adjustment: 8 non-virtual]
+
   // TEST4-NOT: VFTable indices for 'Test4::X'
 
   // MANGLING-DAG: @"\01??_7X@Test4@@6B@"
@@ -260,7 +264,7 @@ X x;
 // Another diamond inheritance which led to AST crashes.
 struct Y : virtual A {};
 
-class Z : Y, C {
+struct Z : Y, C {
   // TEST8-Z: VFTable for 'A' in 'Test8::Y' in 'Test8::Z' (2 entries).
   // TEST8-Z-NEXT: 0 | void Test8::Z::f()
   // TEST8-Z-NEXT: 1 | void A::z()
@@ -271,6 +275,27 @@ class Z : Y, C {
   virtual void f();
 };
 Z z;
+
+// Another diamond inheritance which we miscompiled (PR18967).
+struct W : virtual A {
+  virtual void bar();
+};
+
+struct T : W, C {
+  // TEST8-T: VFTable for 'Test8::W' in 'Test8::T' (1 entry)
+  // TEST8-T-NEXT: 0 | void Test8::T::bar()
+
+  // TEST8-T: VFTable for 'A' in 'Test8::W' in 'Test8::T' (2 entries)
+  // TEST8-T-NEXT: 0 | void C::f()
+  // TEST8-T-NEXT:     [this adjustment: -4 non-virtual]
+  // TEST8-T-NEXT: 1 | void A::z()
+
+  // TEST8-T: Thunks for 'void C::f()' (1 entry).
+  // TEST8-T-NEXT: 0 | [this adjustment: -4 non-virtual]
+  virtual void bar();
+  int field;
+};
+T t;
 }
 
 namespace Test9 {
@@ -473,7 +498,7 @@ struct U : virtual W {
   // VDTORS-U-NEXT:     [this adjustment: -4 non-virtual]
   // VDTORS-U-NEXT: 1 | void vdtors::X::zzz()
 
-  // VDTORS-U: Thunks for 'vdtors::W::~W()' (1 entry).
+  // VDTORS-U: Thunks for 'vdtors::U::~U()' (1 entry).
   // VDTORS-U-NEXT: 0 | [this adjustment: -4 non-virtual]
 
   // VDTORS-U: VFTable indices for 'vdtors::U' (1 entry).
@@ -493,7 +518,7 @@ struct V : virtual W {
   // VDTORS-V-NEXT:     [this adjustment: -4 non-virtual]
   // VDTORS-V-NEXT: 1 | void vdtors::X::zzz()
 
-  // VDTORS-V: Thunks for 'vdtors::W::~W()' (1 entry).
+  // VDTORS-V: Thunks for 'vdtors::V::~V()' (1 entry).
   // VDTORS-V-NEXT: 0 | [this adjustment: -4 non-virtual]
 
   // VDTORS-V: VFTable indices for 'vdtors::V' (1 entry).
@@ -537,8 +562,11 @@ struct Z {
 struct W : Z {
   // RET-W: VFTable for 'return_adjustment::Z' in 'return_adjustment::W' (2 entries).
   // RET-W-NEXT: 0 | return_adjustment::X *return_adjustment::W::foo()
-  // RET-W-NEXT:     [return adjustment: vbase #1, 0 non-virtual]
+  // RET-W-NEXT:     [return adjustment (to type 'struct A *'): vbase #1, 0 non-virtual]
   // RET-W-NEXT: 1 | return_adjustment::X *return_adjustment::W::foo()
+
+  // RET-W: Thunks for 'return_adjustment::X *return_adjustment::W::foo()' (1 entry).
+  // RET-W-NEXT: 0 | [return adjustment (to type 'struct A *'): vbase #1, 0 non-virtual]
 
   // RET-W: VFTable indices for 'return_adjustment::W' (1 entry).
   // RET-W-NEXT: 1 | return_adjustment::X *return_adjustment::W::foo()
@@ -551,10 +579,14 @@ W y;
 struct T : W {
   // RET-T: VFTable for 'return_adjustment::Z' in 'return_adjustment::W' in 'return_adjustment::T' (3 entries).
   // RET-T-NEXT: 0 | return_adjustment::Y *return_adjustment::T::foo()
-  // RET-T-NEXT:     [return adjustment: vbase #1, 0 non-virtual]
+  // RET-T-NEXT:     [return adjustment (to type 'struct A *'): vbase #1, 0 non-virtual]
   // RET-T-NEXT: 1 | return_adjustment::Y *return_adjustment::T::foo()
-  // RET-T-NEXT:     [return adjustment: vbase #2, 0 non-virtual]
+  // RET-T-NEXT:     [return adjustment (to type 'struct return_adjustment::X *'): vbase #2, 0 non-virtual]
   // RET-T-NEXT: 2 | return_adjustment::Y *return_adjustment::T::foo()
+
+  // RET-T: Thunks for 'return_adjustment::Y *return_adjustment::T::foo()' (2 entries).
+  // RET-T-NEXT: 0 | [return adjustment (to type 'struct A *'): vbase #1, 0 non-virtual]
+  // RET-T-NEXT: 1 | [return adjustment (to type 'struct return_adjustment::X *'): vbase #2, 0 non-virtual]
 
   // RET-T: VFTable indices for 'return_adjustment::T' (1 entry).
   // RET-T-NEXT: 2 | return_adjustment::Y *return_adjustment::T::foo()
@@ -571,8 +603,11 @@ struct U : virtual A {
 struct V : Z {
   // RET-V: VFTable for 'return_adjustment::Z' in 'return_adjustment::V' (2 entries).
   // RET-V-NEXT: 0 | return_adjustment::U *return_adjustment::V::foo()
-  // RET-V-NEXT:     [return adjustment: vbptr at offset 4, vbase #1, 0 non-virtual]
+  // RET-V-NEXT:     [return adjustment (to type 'struct A *'): vbptr at offset 4, vbase #1, 0 non-virtual]
   // RET-V-NEXT: 1 | return_adjustment::U *return_adjustment::V::foo()
+
+  // RET-V: Thunks for 'return_adjustment::U *return_adjustment::V::foo()' (1 entry).
+  // RET-V-NEXT: 0 | [return adjustment (to type 'struct A *'): vbptr at offset 4, vbase #1, 0 non-virtual]
 
   // RET-V: VFTable indices for 'return_adjustment::V' (1 entry).
   // RET-V-NEXT: 1 | return_adjustment::U *return_adjustment::V::foo()
