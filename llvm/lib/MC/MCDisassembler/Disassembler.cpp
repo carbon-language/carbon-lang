@@ -84,7 +84,7 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
 
   std::unique_ptr<MCSymbolizer> Symbolizer(TheTarget->createMCSymbolizer(
       Triple, GetOpInfo, SymbolLookUp, DisInfo, Ctx, RelInfo.release()));
-  DisAsm->setSymbolizer(Symbolizer);
+  DisAsm->setSymbolizer(std::move(Symbolizer));
   DisAsm->setupForSymbolicDisassembly(GetOpInfo, SymbolLookUp, DisInfo,
                                       Ctx, RelInfo);
   // Set up the instruction printer.

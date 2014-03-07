@@ -55,6 +55,6 @@ void MCDisassembler::tryAddingPcLoadReferenceComment(int64_t Value,
     Symbolizer->tryAddingPcLoadReferenceComment(cStream, Value, Address);
 }
 
-void MCDisassembler::setSymbolizer(std::unique_ptr<MCSymbolizer> &Symzer) {
-  Symbolizer.reset(Symzer.release());
+void MCDisassembler::setSymbolizer(std::unique_ptr<MCSymbolizer> Symzer) {
+  Symbolizer = std::move(Symzer);
 }

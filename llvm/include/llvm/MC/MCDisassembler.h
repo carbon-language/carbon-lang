@@ -114,7 +114,7 @@ public:
 
   /// Set \p Symzer as the current symbolizer.
   /// This takes ownership of \p Symzer, and deletes the previously set one.
-  void setSymbolizer(std::unique_ptr<MCSymbolizer> &Symzer);
+  void setSymbolizer(std::unique_ptr<MCSymbolizer> Symzer);
 
   /// Sets up an external symbolizer that uses the C API callbacks.
   void setupForSymbolicDisassembly(LLVMOpInfoCallback GetOpInfo,
