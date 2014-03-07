@@ -43,22 +43,22 @@ class MCSymbol;
 class MachineOperand {
 public:
   enum MachineOperandType {
-    MO_Register,               ///< Register operand.
-    MO_Immediate,              ///< Immediate operand
-    MO_CImmediate,             ///< Immediate >64bit operand
-    MO_FPImmediate,            ///< Floating-point immediate operand
-    MO_MachineBasicBlock,      ///< MachineBasicBlock reference
-    MO_FrameIndex,             ///< Abstract Stack Frame Index
-    MO_ConstantPoolIndex,      ///< Address of indexed Constant in Constant Pool
-    MO_TargetIndex,            ///< Target-dependent index+offset operand.
-    MO_JumpTableIndex,         ///< Address of indexed Jump Table for switch
-    MO_ExternalSymbol,         ///< Name of external global symbol
-    MO_GlobalAddress,          ///< Address of a global value
-    MO_BlockAddress,           ///< Address of a basic block
-    MO_RegisterMask,           ///< Mask of preserved registers.
-    MO_RegisterLiveOut,        ///< Mask of live-out registers.
-    MO_Metadata,               ///< Metadata reference (for debug info)
-    MO_MCSymbol                ///< MCSymbol reference (for debug/eh info)
+    MO_Register,          ///< Register operand.
+    MO_Immediate,         ///< Immediate operand
+    MO_CImmediate,        ///< Immediate >64bit operand
+    MO_FPImmediate,       ///< Floating-point immediate operand
+    MO_MachineBasicBlock, ///< MachineBasicBlock reference
+    MO_FrameIndex,        ///< Abstract Stack Frame Index
+    MO_ConstantPoolIndex, ///< Address of indexed Constant in Constant Pool
+    MO_TargetIndex,       ///< Target-dependent index+offset operand.
+    MO_JumpTableIndex,    ///< Address of indexed Jump Table for switch
+    MO_ExternalSymbol,    ///< Name of external global symbol
+    MO_GlobalAddress,     ///< Address of a global value
+    MO_BlockAddress,      ///< Address of a basic block
+    MO_RegisterMask,      ///< Mask of preserved registers.
+    MO_RegisterLiveOut,   ///< Mask of live-out registers.
+    MO_Metadata,          ///< Metadata reference (for debug info)
+    MO_MCSymbol           ///< MCSymbol reference (for debug/eh info)
   };
 
 private:
@@ -150,13 +150,13 @@ private:
 
   /// Contents union - This contains the payload for the various operand types.
   union {
-    MachineBasicBlock *MBB;   // For MO_MachineBasicBlock.
-    const ConstantFP *CFP;    // For MO_FPImmediate.
-    const ConstantInt *CI;    // For MO_CImmediate. Integers > 64bit.
-    int64_t ImmVal;           // For MO_Immediate.
-    const uint32_t *RegMask;  // For MO_RegisterMask and MO_RegisterLiveOut.
-    const MDNode *MD;         // For MO_Metadata.
-    MCSymbol *Sym;            // For MO_MCSymbol
+    MachineBasicBlock *MBB;  // For MO_MachineBasicBlock.
+    const ConstantFP *CFP;   // For MO_FPImmediate.
+    const ConstantInt *CI;   // For MO_CImmediate. Integers > 64bit.
+    int64_t ImmVal;          // For MO_Immediate.
+    const uint32_t *RegMask; // For MO_RegisterMask and MO_RegisterLiveOut.
+    const MDNode *MD;        // For MO_Metadata.
+    MCSymbol *Sym;           // For MO_MCSymbol
 
     struct {                  // For MO_Register.
       // Register number is in SmallContents.RegNo.

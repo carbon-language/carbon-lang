@@ -294,27 +294,11 @@ GetInstByName(const char *Name,
 void CodeGenTarget::ComputeInstrsByEnum() const {
   // The ordering here must match the ordering in TargetOpcodes.h.
   static const char *const FixedInstrs[] = {
-    "PHI",
-    "INLINEASM",
-    "PROLOG_LABEL",
-    "EH_LABEL",
-    "GC_LABEL",
-    "KILL",
-    "EXTRACT_SUBREG",
-    "INSERT_SUBREG",
-    "IMPLICIT_DEF",
-    "SUBREG_TO_REG",
-    "COPY_TO_REGCLASS",
-    "DBG_VALUE",
-    "REG_SEQUENCE",
-    "COPY",
-    "BUNDLE",
-    "LIFETIME_START",
-    "LIFETIME_END",
-    "STACKMAP",
-    "PATCHPOINT",
-    0
-  };
+      "PHI",          "INLINEASM",     "PROLOG_LABEL",     "EH_LABEL",
+      "GC_LABEL",     "KILL",          "EXTRACT_SUBREG",   "INSERT_SUBREG",
+      "IMPLICIT_DEF", "SUBREG_TO_REG", "COPY_TO_REGCLASS", "DBG_VALUE",
+      "REG_SEQUENCE", "COPY",          "BUNDLE",           "LIFETIME_START",
+      "LIFETIME_END", "STACKMAP",      "PATCHPOINT",       0};
   const DenseMap<const Record*, CodeGenInstruction*> &Insts = getInstructions();
   for (const char *const *p = FixedInstrs; *p; ++p) {
     const CodeGenInstruction *Instr = GetInstByName(*p, Insts, Records);
