@@ -28,12 +28,11 @@
 #ifndef LLVM_SYSTEM_MD5_H
 #define LLVM_SYSTEM_MD5_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
-
-template <typename T> class ArrayRef;
 
 class MD5 {
   // Any 32-bit or wider unsigned integer data type will do.
