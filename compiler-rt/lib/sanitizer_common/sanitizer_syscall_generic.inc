@@ -11,7 +11,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define internal_syscall syscall
+#if SANITIZER_FREEBSD
+# define SYSCALL(name) SYS_ ## name
+#else
+# define SYSCALL(name) __NR_ ## name
+#endif
+
+#if SANITIZER_FREEBSD && defined(__x86_64__)
+# define internal_syscall __syscall
+# else
+# define internal_syscall syscall
+#endif
 
 bool internal_iserror(uptr retval, int *rverrno) {
   if (retval == (uptr)-1) {
