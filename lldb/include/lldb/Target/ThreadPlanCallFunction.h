@@ -125,7 +125,10 @@ public:
         m_takedown_done = true;
     }
     
-protected:    
+    virtual void
+    SetStopOthers (bool new_value);
+    
+protected:
     void ReportRegisterState (const char *message);
 
     virtual bool

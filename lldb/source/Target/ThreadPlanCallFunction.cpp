@@ -536,6 +536,13 @@ ThreadPlanCallFunction::BreakpointsExplainStop()
     return false;
 }
 
+void
+ThreadPlanCallFunction::SetStopOthers (bool new_value)
+{
+    m_subplan_sp->SetStopOthers(new_value);
+}
+
+
 bool
 ThreadPlanCallFunction::RestoreThreadState()
 {
