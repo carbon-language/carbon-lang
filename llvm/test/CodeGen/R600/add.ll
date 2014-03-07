@@ -125,3 +125,18 @@ entry:
   store i64 %0, i64 addrspace(1)* %out
   ret void
 }
+
+; The V_ADDC_U32 and V_ADD_I32 instruction can't read SGPRs, because they
+; use VCC.  The test is designed so that %a will be stored in an SGPR and
+; %0 will be stored in a VGPR, so the comiler will be forced to copy %a
+; to a VGPR before doing the add.
+
+; FUNC-LABEL: @add64_sgpr_vgpr
+; SI-CHECK-NOT: V_ADDC_U32_e32 s
+define void @add64_sgpr_vgpr(i64 addrspace(1)* %out, i64 %a, i64 addrspace(1)* %in) {
+entry:
+  %0 = load i64 addrspace(1)* %in
+  %1 = add i64 %a, %0
+  store i64 %1, i64 addrspace(1)* %out
+  ret void
+}
