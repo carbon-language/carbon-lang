@@ -15,18 +15,18 @@
 
 ; <data section> - it should have made one span covering all vars in this CU.
 ; CHECK-NEXT: .quad some_data
-; CHECK-NEXT: .Lset0 = .Ldebug_end1-some_data
-; CHECK-NEXT: .quad .Lset0
+; CHECK-NEXT: [[R1:\.[A-Za-z0-9]*]] = .Ldebug_end1-some_data
+; CHECK-NEXT: .quad [[R1]]
 
 ; <text section> - it should have made one span covering all functions in this CU.
 ; CHECK-NEXT: .quad .Lfunc_begin0
-; CHECK-NEXT: .Lset1 = .Ldebug_end2-.Lfunc_begin0
-; CHECK-NEXT: .quad .Lset1
+; CHECK-NEXT: [[R2:\.[A-Za-z0-9]*]] = .Ldebug_end2-.Lfunc_begin0
+; CHECK-NEXT: .quad [[R2]]
 
 ; <other sections> - it should have made one span covering all vars in this CU.
 ; CHECK-NEXT: .quad some_other
-; CHECK-NEXT: .Lset2 = .Ldebug_end3-some_other
-; CHECK-NEXT: .quad .Lset2
+; CHECK-NEXT: [[R3:\.[A-Za-z0-9]*]] = .Ldebug_end3-some_other
+; CHECK-NEXT: .quad [[R3]]
 
 ; -- finish --
 ; CHECK-NEXT: # ARange terminator
