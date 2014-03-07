@@ -5651,7 +5651,6 @@ validateInstruction(MCInst &Inst,
   case ARM::sysSTMIB_UPD:
     return Error(Operands[2]->getStartLoc(),
                  "system STM cannot have writeback register");
-    break;
   case ARM::tMUL: {
     // The second source operand must be the same register as the destination
     // operand.
