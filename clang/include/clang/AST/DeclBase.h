@@ -1589,8 +1589,9 @@ public:
 
   // These are all defined in DependentDiagnostic.h.
   class ddiag_iterator;
-  inline ddiag_iterator ddiag_begin() const;
-  inline ddiag_iterator ddiag_end() const;
+  typedef llvm::iterator_range<DeclContext::ddiag_iterator> ddiag_range;
+
+  inline ddiag_range ddiags() const;
 
   // Low-level accessors
     

@@ -171,18 +171,16 @@ private:
   DependentDiagnostic *Ptr;
 };
 
-inline DeclContext::ddiag_iterator DeclContext::ddiag_begin() const {
+inline DeclContext::ddiag_range DeclContext::ddiags() const {
   assert(isDependentContext()
          && "cannot iterate dependent diagnostics of non-dependent context");
   const DependentStoredDeclsMap *Map
     = static_cast<DependentStoredDeclsMap*>(getPrimaryContext()->getLookupPtr());
 
-  if (!Map) return ddiag_iterator();
-  return ddiag_iterator(Map->FirstDiagnostic);
-}
+  if (!Map)
+    return ddiag_range();
 
-inline DeclContext::ddiag_iterator DeclContext::ddiag_end() const {
-  return ddiag_iterator();
+  return ddiag_range(ddiag_iterator(Map->FirstDiagnostic), ddiag_iterator());
 }
 
 }
