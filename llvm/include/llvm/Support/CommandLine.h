@@ -24,7 +24,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/type_traits.h"
 #include <cassert>
 #include <climits>
 #include <cstdarg>
@@ -422,7 +421,7 @@ struct OptionValueBase<DataType, false> : OptionValueCopy<DataType> {
 
 // Top-level option class.
 template<class DataType>
-struct OptionValue : OptionValueBase<DataType, is_class<DataType>::value> {
+struct OptionValue : OptionValueBase<DataType, std::is_class<DataType>::value> {
   OptionValue() {}
 
   OptionValue(const DataType& V) {
@@ -1156,7 +1155,7 @@ template <class DataType, bool ExternalStorage = false,
           class ParserClass = parser<DataType> >
 class opt : public Option,
             public opt_storage<DataType, ExternalStorage,
-                               is_class<DataType>::value> {
+                               std::is_class<DataType>::value> {
   ParserClass Parser;
 
   bool handleOccurrence(unsigned pos, StringRef ArgName,

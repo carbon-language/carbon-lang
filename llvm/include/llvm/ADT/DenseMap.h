@@ -977,7 +977,8 @@ class DenseMapIterator {
   friend class DenseMapIterator<KeyT, ValueT, KeyInfoT, true>;
 public:
   typedef ptrdiff_t difference_type;
-  typedef typename conditional<IsConst, const Bucket, Bucket>::type value_type;
+  typedef typename std::conditional<IsConst, const Bucket, Bucket>::type
+  value_type;
   typedef value_type *pointer;
   typedef value_type &reference;
   typedef std::forward_iterator_tag iterator_category;

@@ -223,8 +223,8 @@ steps:
         [...]
         template <class T>
         static bool classof(const T *,
-                            ::llvm::enable_if_c<
-                              ::llvm::is_base_of<Foo, T>::value
+                            ::std::enable_if<
+                              ::std::is_base_of<Foo, T>::value
                             >::type* = 0) { return true; }
         [...]
       };

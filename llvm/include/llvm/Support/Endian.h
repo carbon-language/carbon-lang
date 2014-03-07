@@ -17,7 +17,6 @@
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/SwapByteOrder.h"
-#include "llvm/Support/type_traits.h"
 
 namespace llvm {
 namespace support {

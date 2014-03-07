@@ -77,12 +77,16 @@ using namespace llvm;
 
 
 // Test the peculiar behavior of Use in simplify_type.
-int Check1[is_same<simplify_type<Use>::SimpleType, Value *>::value ? 1 : -1];
-int Check2[is_same<simplify_type<Use *>::SimpleType, Value *>::value ? 1 : -1];
+static_assert(std::is_same<simplify_type<Use>::SimpleType, Value *>::value,
+              "Use doesn't simplify correctly!");
+static_assert(std::is_same<simplify_type<Use *>::SimpleType, Value *>::value,
+              "Use doesn't simplify correctly!");
 
 // Test that a regular class behaves as expected.
-int Check3[is_same<simplify_type<foo>::SimpleType, int>::value ? 1 : -1];
-int Check4[is_same<simplify_type<foo *>::SimpleType, foo *>::value ? 1 : -1];
+static_assert(std::is_same<simplify_type<foo>::SimpleType, int>::value,
+              "Unexpected simplify_type result!");
+static_assert(std::is_same<simplify_type<foo *>::SimpleType, foo *>::value,
+              "Unexpected simplify_type result!");
 
 namespace {
 

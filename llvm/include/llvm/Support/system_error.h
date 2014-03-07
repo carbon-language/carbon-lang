@@ -48,10 +48,10 @@ const error_category& generic_category();
 const error_category& system_category();
 
 template <class T> struct is_error_code_enum
-    : public false_type {};
+    : public std::false_type {};
 
 template <class T> struct is_error_condition_enum
-    : public false_type {};
+    : public std::false_type {};
 
 class error_code
 {
@@ -203,7 +203,7 @@ enum class errc
     wrong_protocol_type                 // EPROTOTYPE
 };
 
-template <> struct is_error_condition_enum<errc> : true_type { }
+template <> struct is_error_condition_enum<errc> : std::true_type { }
 
 error_code make_error_code(errc e);
 error_condition make_error_condition(errc e);
@@ -225,7 +225,6 @@ template <> struct hash<std::error_code>;
 */
 
 #include "llvm/Config/llvm-config.h"
-#include "llvm/Support/type_traits.h"
 #include <cerrno>
 #include <string>
 
@@ -474,11 +473,11 @@ namespace llvm {
 
 // is_error_code_enum
 
-template <class Tp> struct is_error_code_enum : public false_type {};
+template <class Tp> struct is_error_code_enum : public std::false_type {};
 
 // is_error_condition_enum
 
-template <class Tp> struct is_error_condition_enum : public false_type {};
+template <class Tp> struct is_error_condition_enum : public std::false_type {};
 
 // Some error codes are not present on all platforms, so we provide equivalents
 // for them:
@@ -613,9 +612,9 @@ enum _ {
   operator int() const {return v_;}
 };
 
-template <> struct is_error_condition_enum<errc> : true_type { };
+template <> struct is_error_condition_enum<errc> : std::true_type { };
 
-template <> struct is_error_condition_enum<errc::_> : true_type { };
+template <> struct is_error_condition_enum<errc::_> : std::true_type { };
 
 class error_condition;
 class error_code;
@@ -675,7 +674,7 @@ public:
     : _val_(_val), _cat_(&_cat) {}
 
   template <class E>
-  error_condition(E _e, typename enable_if_c<
+  error_condition(E _e, typename std::enable_if<
                           is_error_condition_enum<E>::value
                         >::type* = 0)
     {*this = make_error_condition(_e);}
@@ -686,13 +685,12 @@ public:
   }
 
   template <class E>
-    typename enable_if_c
-    <
-      is_error_condition_enum<E>::value,
-      error_condition&
-    >::type
-    operator=(E _e)
-      {*this = make_error_condition(_e); return *this;}
+  typename std::enable_if<is_error_condition_enum<E>::value,
+                          error_condition &>::type
+  operator=(E _e) {
+    *this = make_error_condition(_e);
+    return *this;
+  }
 
   void clear() {
     _val_ = 0;
@@ -737,7 +735,7 @@ public:
     : _val_(_val), _cat_(&_cat) {}
 
   template <class E>
-  error_code(E _e, typename enable_if_c<
+  error_code(E _e, typename std::enable_if<
                      is_error_code_enum<E>::value
                    >::type* = 0) {
     *this = make_error_code(_e);
@@ -749,13 +747,11 @@ public:
   }
 
   template <class E>
-    typename enable_if_c
-    <
-      is_error_code_enum<E>::value,
-      error_code&
-    >::type
-    operator=(E _e)
-      {*this = make_error_code(_e); return *this;}
+  typename std::enable_if<is_error_code_enum<E>::value, error_code &>::type
+  operator=(E _e) {
+    *this = make_error_code(_e);
+    return *this;
+  }
 
   void clear() {
     _val_ = 0;
@@ -892,9 +888,9 @@ enum _ {
 };
 
 
-template <> struct is_error_code_enum<windows_error> : true_type { };
+template <> struct is_error_code_enum<windows_error> : std::true_type { };
 
-template <> struct is_error_code_enum<windows_error::_> : true_type { };
+template <> struct is_error_code_enum<windows_error::_> : std::true_type { };
 
 inline error_code make_error_code(windows_error e) {
   return error_code(static_cast<int>(e), system_category());

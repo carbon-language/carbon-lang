@@ -59,11 +59,8 @@ struct isa_impl {
 
 /// \brief Always allow upcasts, and perform no dynamic check for them.
 template <typename To, typename From>
-struct isa_impl<To, From,
-                typename enable_if<
-                  llvm::is_base_of<To, From>
-                >::type
-               > {
+struct isa_impl<
+    To, From, typename std::enable_if<std::is_base_of<To, From>::value>::type> {
   static inline bool doit(const From &) { return true; }
 };
 
@@ -209,7 +206,7 @@ template<class To, class FromTy> struct cast_convert_val<To,FromTy,FromTy> {
 
 template <class X> struct is_simple_type {
   static const bool value =
-      is_same<X, typename simplify_type<X>::SimpleType>::value;
+      std::is_same<X, typename simplify_type<X>::SimpleType>::value;
 };
 
 // cast<X> - Return the argument parameter cast to the specified type.  This
@@ -220,8 +217,8 @@ template <class X> struct is_simple_type {
 //  cast<Instruction>(myVal)->getParent()
 //
 template <class X, class Y>
-inline typename enable_if_c<!is_simple_type<Y>::value,
-                            typename cast_retty<X, const Y>::ret_type>::type
+inline typename std::enable_if<!is_simple_type<Y>::value,
+                               typename cast_retty<X, const Y>::ret_type>::type
 cast(const Y &Val) {
   assert(isa<X>(Val) && "cast<Ty>() argument of incompatible type!");
   return cast_convert_val<
@@ -263,7 +260,7 @@ cast_or_null(Y *Val) {
 //
 
 template <class X, class Y>
-LLVM_ATTRIBUTE_UNUSED_RESULT inline typename enable_if_c<
+LLVM_ATTRIBUTE_UNUSED_RESULT inline typename std::enable_if<
     !is_simple_type<Y>::value, typename cast_retty<X, const Y>::ret_type>::type
 dyn_cast(const Y &Val) {
   return isa<X>(Val) ? cast<X>(Val) : 0;

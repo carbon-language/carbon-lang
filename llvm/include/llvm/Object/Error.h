@@ -41,10 +41,10 @@ inline error_code make_error_code(object_error e) {
 
 } // end namespace object.
 
-template <> struct is_error_code_enum<object::object_error> : true_type { };
+template <> struct is_error_code_enum<object::object_error> : std::true_type {};
 
-template <> struct is_error_code_enum<object::object_error::Impl> : true_type {
-};
+template <>
+struct is_error_code_enum<object::object_error::Impl> : std::true_type {};
 
 } // end namespace llvm.
 

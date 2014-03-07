@@ -23,8 +23,6 @@
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/Support/type_traits.h"
-
 
 namespace llvm {
 namespace yaml {
@@ -266,7 +264,7 @@ public:
 // has_FlowTraits<int> will cause an error with some compilers because
 // it subclasses int.  Using this wrapper only instantiates the
 // real has_FlowTraits only if the template type is a class.
-template <typename T, bool Enabled = llvm::is_class<T>::value>
+template <typename T, bool Enabled = std::is_class<T>::value>
 class has_FlowTraits
 {
 public:
@@ -296,7 +294,7 @@ public:
 
 // Test if SequenceTraits<T> is defined on type T
 template<typename T>
-struct has_SequenceTraits : public  llvm::integral_constant<bool,
+struct has_SequenceTraits : public std::integral_constant<bool,
                                       has_SequenceMethodTraits<T>::value > { };
 
 
@@ -320,7 +318,7 @@ public:
 
 
 template<typename T>
-struct missingTraits : public  llvm::integral_constant<bool,
+struct missingTraits : public std::integral_constant<bool,
                                          !has_ScalarEnumerationTraits<T>::value
                                       && !has_ScalarBitSetTraits<T>::value
                                       && !has_ScalarTraits<T>::value
@@ -329,12 +327,12 @@ struct missingTraits : public  llvm::integral_constant<bool,
                                       && !has_DocumentListTraits<T>::value >  {};
 
 template<typename T>
-struct validatedMappingTraits : public  llvm::integral_constant<bool,
+struct validatedMappingTraits : public std::integral_constant<bool,
                                        has_MappingTraits<T>::value
                                     && has_MappingValidateTraits<T>::value> {};
 
 template<typename T>
-struct unvalidatedMappingTraits : public  llvm::integral_constant<bool,
+struct unvalidatedMappingTraits : public std::integral_constant<bool,
                                         has_MappingTraits<T>::value
                                     && !has_MappingValidateTraits<T>::value> {};
 // Base class for Input and Output.
@@ -414,7 +412,7 @@ public:
   }
 
   template <typename T>
-  typename llvm::enable_if_c<has_SequenceTraits<T>::value,void>::type
+  typename std::enable_if<has_SequenceTraits<T>::value,void>::type
   mapOptional(const char* Key, T& Val) {
     // omit key/value instead of outputting empty sequence
     if ( this->canElideEmptySequence() && !(Val.begin() != Val.end()) )
@@ -423,7 +421,7 @@ public:
   }
 
   template <typename T>
-  typename llvm::enable_if_c<!has_SequenceTraits<T>::value,void>::type
+  typename std::enable_if<!has_SequenceTraits<T>::value,void>::type
   mapOptional(const char* Key, T& Val) {
     this->processKey(Key, Val, false);
   }
@@ -468,7 +466,7 @@ private:
 
 
 template<typename T>
-typename llvm::enable_if_c<has_ScalarEnumerationTraits<T>::value,void>::type
+typename std::enable_if<has_ScalarEnumerationTraits<T>::value,void>::type
 yamlize(IO &io, T &Val, bool) {
   io.beginEnumScalar();
   ScalarEnumerationTraits<T>::enumeration(io, Val);
@@ -476,7 +474,7 @@ yamlize(IO &io, T &Val, bool) {
 }
 
 template<typename T>
-typename llvm::enable_if_c<has_ScalarBitSetTraits<T>::value,void>::type
+typename std::enable_if<has_ScalarBitSetTraits<T>::value,void>::type
 yamlize(IO &io, T &Val, bool) {
   bool DoClear;
   if ( io.beginBitSetScalar(DoClear) ) {
@@ -489,7 +487,7 @@ yamlize(IO &io, T &Val, bool) {
 
 
 template<typename T>
-typename llvm::enable_if_c<has_ScalarTraits<T>::value,void>::type
+typename std::enable_if<has_ScalarTraits<T>::value,void>::type
 yamlize(IO &io, T &Val, bool) {
   if ( io.outputting() ) {
     std::string Storage;
@@ -510,7 +508,7 @@ yamlize(IO &io, T &Val, bool) {
 
 
 template<typename T>
-typename llvm::enable_if_c<validatedMappingTraits<T>::value, void>::type
+typename std::enable_if<validatedMappingTraits<T>::value, void>::type
 yamlize(IO &io, T &Val, bool) {
   io.beginMapping();
   if (io.outputting()) {
@@ -530,7 +528,7 @@ yamlize(IO &io, T &Val, bool) {
 }
 
 template<typename T>
-typename llvm::enable_if_c<unvalidatedMappingTraits<T>::value, void>::type
+typename std::enable_if<unvalidatedMappingTraits<T>::value, void>::type
 yamlize(IO &io, T &Val, bool) {
   io.beginMapping();
   MappingTraits<T>::mapping(io, Val);
@@ -538,13 +536,13 @@ yamlize(IO &io, T &Val, bool) {
 }
 
 template<typename T>
-typename llvm::enable_if_c<missingTraits<T>::value, void>::type
+typename std::enable_if<missingTraits<T>::value, void>::type
 yamlize(IO &io, T &Val, bool) {
   char missing_yaml_trait_for_type[sizeof(MissingTrait<T>)];
 }
 
 template<typename T>
-typename llvm::enable_if_c<has_SequenceTraits<T>::value,void>::type
+typename std::enable_if<has_SequenceTraits<T>::value,void>::type
 yamlize(IO &io, T &Seq, bool) {
   if ( has_FlowTraits< SequenceTraits<T> >::value ) {
     unsigned incnt = io.beginFlowSequence();
@@ -990,7 +988,7 @@ struct ScalarTraits<Hex64> {
 // Define non-member operator>> so that Input can stream in a document list.
 template <typename T>
 inline
-typename llvm::enable_if_c<has_DocumentListTraits<T>::value,Input &>::type
+typename std::enable_if<has_DocumentListTraits<T>::value, Input &>::type
 operator>>(Input &yin, T &docList) {
   int i = 0;
   while ( yin.setCurrentDocument() ) {
@@ -1006,7 +1004,7 @@ operator>>(Input &yin, T &docList) {
 // Define non-member operator>> so that Input can stream in a map as a document.
 template <typename T>
 inline
-typename llvm::enable_if_c<has_MappingTraits<T>::value,Input &>::type
+typename std::enable_if<has_MappingTraits<T>::value, Input &>::type
 operator>>(Input &yin, T &docMap) {
   yin.setCurrentDocument();
   yamlize(yin, docMap, true);
@@ -1017,7 +1015,7 @@ operator>>(Input &yin, T &docMap) {
 // a document.
 template <typename T>
 inline
-typename llvm::enable_if_c<has_SequenceTraits<T>::value,Input &>::type
+typename std::enable_if<has_SequenceTraits<T>::value, Input &>::type
 operator>>(Input &yin, T &docSeq) {
   if (yin.setCurrentDocument())
     yamlize(yin, docSeq, true);
@@ -1027,7 +1025,7 @@ operator>>(Input &yin, T &docSeq) {
 // Provide better error message about types missing a trait specialization
 template <typename T>
 inline
-typename llvm::enable_if_c<missingTraits<T>::value,Input &>::type
+typename std::enable_if<missingTraits<T>::value, Input &>::type
 operator>>(Input &yin, T &docSeq) {
   char missing_yaml_trait_for_type[sizeof(MissingTrait<T>)];
   return yin;
@@ -1037,7 +1035,7 @@ operator>>(Input &yin, T &docSeq) {
 // Define non-member operator<< so that Output can stream out document list.
 template <typename T>
 inline
-typename llvm::enable_if_c<has_DocumentListTraits<T>::value,Output &>::type
+typename std::enable_if<has_DocumentListTraits<T>::value, Output &>::type
 operator<<(Output &yout, T &docList) {
   yout.beginDocuments();
   const size_t count = DocumentListTraits<T>::size(yout, docList);
@@ -1054,7 +1052,7 @@ operator<<(Output &yout, T &docList) {
 // Define non-member operator<< so that Output can stream out a map.
 template <typename T>
 inline
-typename llvm::enable_if_c<has_MappingTraits<T>::value,Output &>::type
+typename std::enable_if<has_MappingTraits<T>::value, Output &>::type
 operator<<(Output &yout, T &map) {
   yout.beginDocuments();
   if ( yout.preflightDocument(0) ) {
@@ -1068,7 +1066,7 @@ operator<<(Output &yout, T &map) {
 // Define non-member operator<< so that Output can stream out a sequence.
 template <typename T>
 inline
-typename llvm::enable_if_c<has_SequenceTraits<T>::value,Output &>::type
+typename std::enable_if<has_SequenceTraits<T>::value, Output &>::type
 operator<<(Output &yout, T &seq) {
   yout.beginDocuments();
   if ( yout.preflightDocument(0) ) {
@@ -1082,7 +1080,7 @@ operator<<(Output &yout, T &seq) {
 // Provide better error message about types missing a trait specialization
 template <typename T>
 inline
-typename llvm::enable_if_c<missingTraits<T>::value,Output &>::type
+typename std::enable_if<missingTraits<T>::value, Output &>::type
 operator<<(Output &yout, T &seq) {
   char missing_yaml_trait_for_type[sizeof(MissingTrait<T>)];
   return yout;

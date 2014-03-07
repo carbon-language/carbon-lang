@@ -109,7 +109,8 @@ public:
 /// differing argument types even if they would implicit promote to a common
 /// type without changing the value.
 template <typename T>
-typename enable_if<is_integral_or_enum<T>, hash_code>::type hash_value(T value);
+typename std::enable_if<is_integral_or_enum<T>::value, hash_code>::type
+hash_value(T value);
 
 /// \brief Compute a hash_code for a pointer's address.
 ///
@@ -352,24 +353,24 @@ inline size_t get_execution_seed() {
 // and pointers, but there are platforms where it doesn't and we would like to
 // support user-defined types which happen to satisfy this property.
 template <typename T> struct is_hashable_data
-  : integral_constant<bool, ((is_integral_or_enum<T>::value ||
-                              is_pointer<T>::value) &&
-                             64 % sizeof(T) == 0)> {};
+  : std::integral_constant<bool, ((is_integral_or_enum<T>::value ||
+                                   std::is_pointer<T>::value) &&
+                                  64 % sizeof(T) == 0)> {};
 
 // Special case std::pair to detect when both types are viable and when there
 // is no alignment-derived padding in the pair. This is a bit of a lie because
 // std::pair isn't truly POD, but it's close enough in all reasonable
 // implementations for our use case of hashing the underlying data.
 template <typename T, typename U> struct is_hashable_data<std::pair<T, U> >
-  : integral_constant<bool, (is_hashable_data<T>::value &&
-                             is_hashable_data<U>::value &&
-                             (sizeof(T) + sizeof(U)) ==
-                              sizeof(std::pair<T, U>))> {};
+  : std::integral_constant<bool, (is_hashable_data<T>::value &&
+                                  is_hashable_data<U>::value &&
+                                  (sizeof(T) + sizeof(U)) ==
+                                   sizeof(std::pair<T, U>))> {};
 
 /// \brief Helper to get the hashable data representation for a type.
 /// This variant is enabled when the type itself can be used.
 template <typename T>
-typename enable_if<is_hashable_data<T>, T>::type
+typename std::enable_if<is_hashable_data<T>::value, T>::type
 get_hashable_data(const T &value) {
   return value;
 }
@@ -377,7 +378,7 @@ get_hashable_data(const T &value) {
 /// This variant is enabled when we must first call hash_value and use the
 /// result as our data.
 template <typename T>
-typename enable_if_c<!is_hashable_data<T>::value, size_t>::type
+typename std::enable_if<!is_hashable_data<T>::value, size_t>::type
 get_hashable_data(const T &value) {
   using ::llvm::hash_value;
   return hash_value(value);
@@ -451,7 +452,7 @@ hash_code hash_combine_range_impl(InputIteratorT first, InputIteratorT last) {
 /// are stored in contiguous memory, this routine avoids copying each value
 /// and directly reads from the underlying memory.
 template <typename ValueT>
-typename enable_if<is_hashable_data<ValueT>, hash_code>::type
+typename std::enable_if<is_hashable_data<ValueT>::value, hash_code>::type
 hash_combine_range_impl(ValueT *first, ValueT *last) {
   const size_t seed = get_execution_seed();
   const char *s_begin = reinterpret_cast<const char *>(first);
@@ -734,7 +735,7 @@ inline hash_code hash_integer_value(uint64_t value) {
 // Declared and documented above, but defined here so that any of the hashing
 // infrastructure is available.
 template <typename T>
-typename enable_if<is_integral_or_enum<T>, hash_code>::type
+typename std::enable_if<is_integral_or_enum<T>::value, hash_code>::type
 hash_value(T value) {
   return ::llvm::hashing::detail::hash_integer_value(value);
 }

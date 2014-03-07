@@ -36,7 +36,7 @@ template <typename VectorT>
 class TinyPtrVectorTest : public testing::Test {
 protected:
   typedef typename VectorT::value_type PtrT;
-  typedef typename remove_pointer<PtrT>::type ValueT;
+  typedef typename std::remove_pointer<PtrT>::type ValueT;
 
   VectorT V;
   VectorT V2;

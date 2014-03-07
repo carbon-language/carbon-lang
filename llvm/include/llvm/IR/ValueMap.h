@@ -198,7 +198,7 @@ class ValueMapCallbackVH : public CallbackVH {
   friend class ValueMap<KeyT, ValueT, Config>;
   friend struct DenseMapInfo<ValueMapCallbackVH>;
   typedef ValueMap<KeyT, ValueT, Config> ValueMapT;
-  typedef typename llvm::remove_pointer<KeyT>::type KeySansPointerT;
+  typedef typename std::remove_pointer<KeyT>::type KeySansPointerT;
 
   ValueMapT *Map;
 

@@ -41,7 +41,7 @@ struct NonPOD {
 
 namespace hashing {
 namespace detail {
-template <> struct is_hashable_data<LargeTestInteger> : true_type {};
+template <> struct is_hashable_data<LargeTestInteger> : std::true_type {};
 } // namespace detail
 } // namespace hashing
 

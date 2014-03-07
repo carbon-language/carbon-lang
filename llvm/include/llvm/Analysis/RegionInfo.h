@@ -496,13 +496,11 @@ public:
   //@{
   template <bool IsConst>
   class block_iterator_wrapper
-    : public df_iterator<typename conditional<IsConst,
-                                              const BasicBlock,
-                                              BasicBlock>::type*> {
-    typedef df_iterator<typename conditional<IsConst,
-                                             const BasicBlock,
-                                             BasicBlock>::type*>
-      super;
+      : public df_iterator<typename std::conditional<IsConst, const BasicBlock,
+                                                     BasicBlock>::type *> {
+    typedef df_iterator<typename std::conditional<IsConst, const BasicBlock,
+                                                  BasicBlock>::type *> super;
+
   public:
     typedef block_iterator_wrapper<IsConst> Self;
     typedef typename super::pointer pointer;

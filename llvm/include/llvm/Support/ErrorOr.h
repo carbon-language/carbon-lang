@@ -19,7 +19,6 @@
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/Support/type_traits.h"
 #include <cassert>
 #include <type_traits>
 
@@ -82,26 +81,22 @@ public:
 template<class T>
 class ErrorOr {
   template <class OtherT> friend class ErrorOr;
-  static const bool isRef = is_reference<T>::value;
-  typedef ReferenceStorage<typename remove_reference<T>::type> wrap;
+  static const bool isRef = std::is_reference<T>::value;
+  typedef ReferenceStorage<typename std::remove_reference<T>::type> wrap;
 
 public:
-  typedef typename
-    conditional< isRef
-               , wrap
-               , T
-               >::type storage_type;
+  typedef typename std::conditional<isRef, wrap, T>::type storage_type;
 
 private:
-  typedef typename remove_reference<T>::type &reference;
-  typedef const typename remove_reference<T>::type &const_reference;
-  typedef typename remove_reference<T>::type *pointer;
+  typedef typename std::remove_reference<T>::type &reference;
+  typedef const typename std::remove_reference<T>::type &const_reference;
+  typedef typename std::remove_reference<T>::type *pointer;
 
 public:
   template <class E>
-  ErrorOr(E ErrorCode, typename enable_if_c<is_error_code_enum<E>::value ||
-                                            is_error_condition_enum<E>::value,
-                                            void *>::type = 0)
+  ErrorOr(E ErrorCode, typename std::enable_if<is_error_code_enum<E>::value ||
+                                               is_error_condition_enum<E>::value,
+                                               void *>::type = 0)
       : HasError(true) {
     new (getErrorStorage()) error_code(make_error_code(ErrorCode));
   }
@@ -270,8 +265,8 @@ private:
 };
 
 template<class T, class E>
-typename enable_if_c<is_error_code_enum<E>::value ||
-                     is_error_condition_enum<E>::value, bool>::type
+typename std::enable_if<is_error_code_enum<E>::value ||
+                        is_error_condition_enum<E>::value, bool>::type
 operator ==(ErrorOr<T> &Err, E Code) {
   return error_code(Err) == Code;
 }
