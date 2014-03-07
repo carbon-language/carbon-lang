@@ -22,6 +22,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/InlineAsm.h"
@@ -286,10 +287,24 @@ public:
   const_mop_iterator operands_begin() const { return Operands; }
   const_mop_iterator operands_end() const { return Operands + NumOperands; }
 
+  inline iterator_range<mop_iterator>  operands() {
+    return iterator_range<mop_iterator>(operands_begin(), operands_end());
+  }
+  inline iterator_range<const_mop_iterator> operands() const {
+    return iterator_range<const_mop_iterator>(operands_begin(), operands_end());
+  }
+
   /// Access to memory operands of the instruction
   mmo_iterator memoperands_begin() const { return MemRefs; }
   mmo_iterator memoperands_end() const { return MemRefs + NumMemRefs; }
   bool memoperands_empty() const { return NumMemRefs == 0; }
+
+  inline iterator_range<mmo_iterator>  memoperands() {
+    return iterator_range<mmo_iterator>(memoperands_begin(), memoperands_end());
+  }
+  inline iterator_range<mmo_iterator> memoperands() const {
+    return iterator_range<mmo_iterator>(memoperands_begin(), memoperands_end());
+  }
 
   /// hasOneMemOperand - Return true if this instruction has exactly one
   /// MachineMemOperand.
