@@ -3414,9 +3414,9 @@ static bool MatchRotateHalf(SDValue Op, SDValue &Shift, SDValue &Mask) {
 //
 //     (or (shift1 X, Neg), (shift2 X, Pos))
 //
-// reduces to a rotate in direction shift2 by Pos and a rotate in direction
-// shift1 by Neg.  The range [0, OpSize) means that we only need to consider
-// shift amounts with defined behavior.
+// reduces to a rotate in direction shift2 by Pos or (equivalently) a rotate
+// in direction shift1 by Neg.  The range [0, OpSize) means that we only need
+// to consider shift amounts with defined behavior.
 static bool matchRotateSub(SDValue Pos, SDValue Neg, unsigned OpSize) {
   // If OpSize is a power of 2 then:
   //
@@ -3437,7 +3437,7 @@ static bool matchRotateSub(SDValue Pos, SDValue Neg, unsigned OpSize) {
   //
   // for all Neg and Pos.  Note that the (or ...) then invokes undefined
   // behavior if Pos == 0 (and consequently Neg == OpSize).
-  // 
+  //
   // We could actually use [A] whenever OpSize is a power of 2, but the
   // only extra cases that it would match are those uninteresting ones
   // where Neg and Pos are never in range at the same time.  E.g. for
@@ -3449,13 +3449,13 @@ static bool matchRotateSub(SDValue Pos, SDValue Neg, unsigned OpSize) {
   // always invokes undefined behavior for 32-bit X.
   //
   // Below, Mask == OpSize - 1 when using [A] and is all-ones otherwise.
-  unsigned LoBits = 0;
+  unsigned MaskLoBits = 0;
   if (Neg.getOpcode() == ISD::AND &&
       isPowerOf2_64(OpSize) &&
       Neg.getOperand(1).getOpcode() == ISD::Constant &&
       cast<ConstantSDNode>(Neg.getOperand(1))->getAPIntValue() == OpSize - 1) {
     Neg = Neg.getOperand(0);
-    LoBits = Log2_64(OpSize);
+    MaskLoBits = Log2_64(OpSize);
   }
 
   // Check whether Neg has the form (sub NegC, NegOp1) for some NegC and NegOp1.
@@ -3496,8 +3496,9 @@ static bool matchRotateSub(SDValue Pos, SDValue Neg, unsigned OpSize) {
     return false;
 
   // Now we just need to check that OpSize & Mask == Width & Mask.
-  if (LoBits)
-    return Width.getLoBits(LoBits) == 0;
+  if (MaskLoBits)
+    // Opsize & Mask is 0 since Mask is Opsize - 1.
+    return Width.getLoBits(MaskLoBits) == 0;
   return Width == OpSize;
 }
 
