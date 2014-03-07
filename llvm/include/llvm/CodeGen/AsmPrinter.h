@@ -24,6 +24,7 @@
 namespace llvm {
   class AsmPrinterHandler;
   class BlockAddress;
+  class ByteStreamer;
   class GCStrategy;
   class Constant;
   class ConstantArray;
@@ -429,7 +430,7 @@ namespace llvm {
     virtual unsigned getISAEncoding() { return 0; }
 
     /// EmitDwarfRegOp - Emit dwarf register operation.
-    virtual void EmitDwarfRegOp(const MachineLocation &MLoc,
+    virtual void EmitDwarfRegOp(ByteStreamer &BS, const MachineLocation &MLoc,
                                 bool Indirect) const;
 
     //===------------------------------------------------------------------===//

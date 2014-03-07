@@ -31,6 +31,7 @@
 
 namespace llvm {
 
+class ByteStreamer;
 class DwarfUnit;
 class DwarfCompileUnit;
 class ConstantInt;
@@ -586,6 +587,9 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Emit visible names into a debug str section.
   void emitDebugStr();
+
+  /// \brief Emit an entry for the debug loc section.
+  void emitDebugLocEntry(ByteStreamer &Streamer, const DotDebugLocEntry &Entry);
 
   /// \brief Emit visible names into a debug loc section.
   void emitDebugLoc();

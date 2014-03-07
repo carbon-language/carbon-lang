@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "dwarfdebug"
+#include "ByteStreamer.h"
 #include "DwarfDebug.h"
 #include "DIE.h"
 #include "DIEHash.h"
@@ -2395,6 +2396,65 @@ void DwarfDebug::emitDebugStr() {
   Holder.emitStrings(Asm->getObjFileLowering().getDwarfStrSection());
 }
 
+void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
+                                   const DotDebugLocEntry &Entry) {
+  DIVariable DV(Entry.getVariable());
+  if (Entry.isInt()) {
+    DIBasicType BTy(DV.getType());
+    if (BTy.Verify() && (BTy.getEncoding() == dwarf::DW_ATE_signed ||
+                         BTy.getEncoding() == dwarf::DW_ATE_signed_char)) {
+      Streamer.EmitInt8(dwarf::DW_OP_consts, "DW_OP_consts");
+      Streamer.EmitSLEB128(Entry.getInt());
+    } else {
+      Streamer.EmitInt8(dwarf::DW_OP_constu, "DW_OP_constu");
+      Streamer.EmitULEB128(Entry.getInt());
+    }
+  } else if (Entry.isLocation()) {
+    MachineLocation Loc = Entry.getLoc();
+    if (!DV.hasComplexAddress())
+      // Regular entry.
+      Asm->EmitDwarfRegOp(Streamer, Loc, DV.isIndirect());
+    else {
+      // Complex address entry.
+      unsigned N = DV.getNumAddrElements();
+      unsigned i = 0;
+      if (N >= 2 && DV.getAddrElement(0) == DIBuilder::OpPlus) {
+        if (Loc.getOffset()) {
+          i = 2;
+          Asm->EmitDwarfRegOp(Streamer, Loc, DV.isIndirect());
+          Streamer.EmitInt8(dwarf::DW_OP_deref, "DW_OP_deref");
+          Streamer.EmitInt8(dwarf::DW_OP_plus_uconst, "DW_OP_plus_uconst");
+          Streamer.EmitSLEB128(DV.getAddrElement(1));
+        } else {
+          // If first address element is OpPlus then emit
+          // DW_OP_breg + Offset instead of DW_OP_reg + Offset.
+          MachineLocation TLoc(Loc.getReg(), DV.getAddrElement(1));
+          Asm->EmitDwarfRegOp(Streamer, TLoc, DV.isIndirect());
+          i = 2;
+        }
+      } else {
+        Asm->EmitDwarfRegOp(Streamer, Loc, DV.isIndirect());
+      }
+
+      // Emit remaining complex address elements.
+      for (; i < N; ++i) {
+        uint64_t Element = DV.getAddrElement(i);
+        if (Element == DIBuilder::OpPlus) {
+          Streamer.EmitInt8(dwarf::DW_OP_plus_uconst, "DW_OP_plus_uconst");
+          Streamer.EmitULEB128(DV.getAddrElement(++i));
+        } else if (Element == DIBuilder::OpDeref) {
+          if (!Loc.isReg())
+            Streamer.EmitInt8(dwarf::DW_OP_deref, "DW_OP_deref");
+        } else
+          llvm_unreachable("unknown Opcode found in complex address");
+      }
+    }
+  }
+  // else ... ignore constant fp. There is not any good way to
+  // to represent them here in dwarf.
+  // FIXME: ^
+}
+
 // Emit locations into the debug loc section.
 void DwarfDebug::emitDebugLoc() {
   if (DotDebugLocEntries.empty())
@@ -2422,76 +2482,24 @@ void DwarfDebug::emitDebugLoc() {
     const DotDebugLocEntry &Entry = *I;
     if (Entry.isMerged())
       continue;
+
     if (Entry.isEmpty()) {
       Asm->OutStreamer.EmitIntValue(0, Size);
       Asm->OutStreamer.EmitIntValue(0, Size);
       Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", index));
     } else {
+      // Set up the range.
       Asm->OutStreamer.EmitSymbolValue(Entry.getBeginSym(), Size);
       Asm->OutStreamer.EmitSymbolValue(Entry.getEndSym(), Size);
-      DIVariable DV(Entry.getVariable());
       Asm->OutStreamer.AddComment("Loc expr size");
       MCSymbol *begin = Asm->OutStreamer.getContext().CreateTempSymbol();
       MCSymbol *end = Asm->OutStreamer.getContext().CreateTempSymbol();
       Asm->EmitLabelDifference(end, begin, 2);
       Asm->OutStreamer.EmitLabel(begin);
-      if (Entry.isInt()) {
-        DIBasicType BTy(DV.getType());
-        if (BTy.Verify() && (BTy.getEncoding() == dwarf::DW_ATE_signed ||
-                             BTy.getEncoding() == dwarf::DW_ATE_signed_char)) {
-          Asm->OutStreamer.AddComment("DW_OP_consts");
-          Asm->EmitInt8(dwarf::DW_OP_consts);
-          Asm->EmitSLEB128(Entry.getInt());
-        } else {
-          Asm->OutStreamer.AddComment("DW_OP_constu");
-          Asm->EmitInt8(dwarf::DW_OP_constu);
-          Asm->EmitULEB128(Entry.getInt());
-        }
-      } else if (Entry.isLocation()) {
-        MachineLocation Loc = Entry.getLoc();
-        if (!DV.hasComplexAddress())
-          // Regular entry.
-          Asm->EmitDwarfRegOp(Loc, DV.isIndirect());
-        else {
-          // Complex address entry.
-          unsigned N = DV.getNumAddrElements();
-          unsigned i = 0;
-          if (N >= 2 && DV.getAddrElement(0) == DIBuilder::OpPlus) {
-            if (Loc.getOffset()) {
-              i = 2;
-              Asm->EmitDwarfRegOp(Loc, DV.isIndirect());
-              Asm->OutStreamer.AddComment("DW_OP_deref");
-              Asm->EmitInt8(dwarf::DW_OP_deref);
-              Asm->OutStreamer.AddComment("DW_OP_plus_uconst");
-              Asm->EmitInt8(dwarf::DW_OP_plus_uconst);
-              Asm->EmitSLEB128(DV.getAddrElement(1));
-            } else {
-              // If first address element is OpPlus then emit
-              // DW_OP_breg + Offset instead of DW_OP_reg + Offset.
-              MachineLocation TLoc(Loc.getReg(), DV.getAddrElement(1));
-              Asm->EmitDwarfRegOp(TLoc, DV.isIndirect());
-              i = 2;
-            }
-          } else {
-            Asm->EmitDwarfRegOp(Loc, DV.isIndirect());
-          }
-
-          // Emit remaining complex address elements.
-          for (; i < N; ++i) {
-            uint64_t Element = DV.getAddrElement(i);
-            if (Element == DIBuilder::OpPlus) {
-              Asm->EmitInt8(dwarf::DW_OP_plus_uconst);
-              Asm->EmitULEB128(DV.getAddrElement(++i));
-            } else if (Element == DIBuilder::OpDeref) {
-              if (!Loc.isReg())
-                Asm->EmitInt8(dwarf::DW_OP_deref);
-            } else
-              llvm_unreachable("unknown Opcode found in complex address");
-          }
-        }
-      }
-      // else ... ignore constant fp. There is not any good way to
-      // to represent them here in dwarf.
+      // Emit the entry.
+      APByteStreamer Streamer(*Asm);
+      emitDebugLocEntry(Streamer, Entry);
+      // Close the range.
       Asm->OutStreamer.EmitLabel(end);
     }
   }

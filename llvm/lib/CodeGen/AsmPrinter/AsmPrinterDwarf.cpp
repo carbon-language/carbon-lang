@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "asm-printer"
+#include "ByteStreamer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/Twine.h"
@@ -185,58 +186,47 @@ void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
 }
 
 /// Emit a dwarf register operation.
-static void emitDwarfRegOp(const AsmPrinter &AP, int Reg) {
+static void emitDwarfRegOp(ByteStreamer &Streamer, int Reg) {
   assert(Reg >= 0);
   if (Reg < 32) {
-    AP.OutStreamer.AddComment(
-        dwarf::OperationEncodingString(dwarf::DW_OP_reg0 + Reg));
-    AP.EmitInt8(dwarf::DW_OP_reg0 + Reg);
+    Streamer.EmitInt8(dwarf::DW_OP_reg0 + Reg,
+                      dwarf::OperationEncodingString(dwarf::DW_OP_reg0 + Reg));
   } else {
-    AP.OutStreamer.AddComment("DW_OP_regx");
-    AP.EmitInt8(dwarf::DW_OP_regx);
-    AP.OutStreamer.AddComment(Twine(Reg));
-    AP.EmitULEB128(Reg);
+    Streamer.EmitInt8(dwarf::DW_OP_regx, "DW_OP_regx");
+    Streamer.EmitULEB128(Reg, Twine(Reg));
   }
 }
 
 /// Emit an (double-)indirect dwarf register operation.
-static void emitDwarfRegOpIndirect(const AsmPrinter &AP, int Reg, int Offset,
+static void emitDwarfRegOpIndirect(ByteStreamer &Streamer, int Reg, int Offset,
                                    bool Deref) {
   assert(Reg >= 0);
   if (Reg < 32) {
-    AP.OutStreamer.AddComment(
-        dwarf::OperationEncodingString(dwarf::DW_OP_breg0 + Reg));
-    AP.EmitInt8(dwarf::DW_OP_breg0 + Reg);
+    Streamer.EmitInt8(dwarf::DW_OP_breg0 + Reg,
+                      dwarf::OperationEncodingString(dwarf::DW_OP_breg0 + Reg));
   } else {
-    AP.OutStreamer.AddComment("DW_OP_bregx");
-    AP.EmitInt8(dwarf::DW_OP_bregx);
-    AP.OutStreamer.AddComment(Twine(Reg));
-    AP.EmitULEB128(Reg);
+    Streamer.EmitInt8(dwarf::DW_OP_bregx, "DW_OP_bregx");
+    Streamer.EmitULEB128(Reg, Twine(Reg));
   }
-  AP.EmitSLEB128(Offset);
+  Streamer.EmitSLEB128(Offset);
   if (Deref)
-    AP.EmitInt8(dwarf::DW_OP_deref);
+    Streamer.EmitInt8(dwarf::DW_OP_deref, "DW_OP_deref");
 }
 
 /// Emit a dwarf register operation for describing
 /// - a small value occupying only part of a register or
 /// - a small register representing only part of a value.
-static void emitDwarfOpPiece(const AsmPrinter &AP, unsigned Size,
+static void emitDwarfOpPiece(ByteStreamer &Streamer, unsigned Size,
                              unsigned Offset) {
   assert(Size > 0);
   if (Offset > 0) {
-    AP.OutStreamer.AddComment("DW_OP_bit_piece");
-    AP.EmitInt8(dwarf::DW_OP_bit_piece);
-    AP.OutStreamer.AddComment(Twine(Size));
-    AP.EmitULEB128(Size);
-    AP.OutStreamer.AddComment(Twine(Offset));
-    AP.EmitULEB128(Offset);
+    Streamer.EmitInt8(dwarf::DW_OP_bit_piece, "DW_OP_bit_piece");
+    Streamer.EmitULEB128(Size, Twine(Size));
+    Streamer.EmitULEB128(Offset, Twine(Offset));
   } else {
-    AP.OutStreamer.AddComment("DW_OP_piece");
-    AP.EmitInt8(dwarf::DW_OP_piece);
+    Streamer.EmitInt8(dwarf::DW_OP_piece, "DW_OP_piece");
     unsigned ByteSize = Size / 8; // Assuming 8 bits per byte.
-    AP.OutStreamer.AddComment(Twine(ByteSize));
-    AP.EmitULEB128(ByteSize);
+    Streamer.EmitULEB128(ByteSize, Twine(ByteSize));
   }
 }
 
@@ -244,7 +234,7 @@ static void emitDwarfOpPiece(const AsmPrinter &AP, unsigned Size,
 /// register.  This function attempts to emit a dwarf register by
 /// emitting a piece of a super-register or by piecing together
 /// multiple subregisters that alias the register.
-static void EmitDwarfRegOpPiece(const AsmPrinter &AP,
+static void EmitDwarfRegOpPiece(ByteStreamer &Streamer, const AsmPrinter &AP,
                                 const MachineLocation &MLoc) {
   assert(!MLoc.isIndirect());
   const TargetRegisterInfo *TRI = AP.TM.getRegisterInfo();
@@ -259,8 +249,8 @@ static void EmitDwarfRegOpPiece(const AsmPrinter &AP,
       unsigned Size = TRI->getSubRegIdxSize(Idx);
       unsigned Offset = TRI->getSubRegIdxOffset(Idx);
       AP.OutStreamer.AddComment("super-register");
-      emitDwarfRegOp(AP, Reg);
-      emitDwarfOpPiece(AP, Size, Offset);
+      emitDwarfRegOp(Streamer, Reg);
+      emitDwarfOpPiece(Streamer, Size, Offset);
       return;
     }
   }
@@ -292,8 +282,8 @@ static void EmitDwarfRegOpPiece(const AsmPrinter &AP,
     // its range, emit a DWARF piece for it.
     if (Reg >= 0 && Intersection.any()) {
       AP.OutStreamer.AddComment("sub-register");
-      emitDwarfRegOp(AP, Reg);
-      emitDwarfOpPiece(AP, Size, Offset == CurPos ? 0 : Offset);
+      emitDwarfRegOp(Streamer, Reg);
+      emitDwarfOpPiece(Streamer, Size, Offset == CurPos ? 0 : Offset);
       CurPos = Offset + Size;
 
       // Mark it as emitted.
@@ -303,13 +293,14 @@ static void EmitDwarfRegOpPiece(const AsmPrinter &AP,
 
   if (CurPos == 0) {
     // FIXME: We have no reasonable way of handling errors in here.
-    AP.OutStreamer.AddComment("nop (could not find a dwarf register number)");
-    AP.EmitInt8(dwarf::DW_OP_nop);
+    Streamer.EmitInt8(dwarf::DW_OP_nop,
+                      "nop (could not find a dwarf register number)");
   }
 }
 
 /// EmitDwarfRegOp - Emit dwarf register operation.
-void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
+void AsmPrinter::EmitDwarfRegOp(ByteStreamer &Streamer,
+                                const MachineLocation &MLoc,
                                 bool Indirect) const {
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
   int Reg = TRI->getDwarfRegNum(MLoc.getReg(), false);
@@ -320,23 +311,22 @@ void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
       // caller might be in the middle of a dwarf expression. We should
       // probably assert that Reg >= 0 once debug info generation is more
       // mature.
-      OutStreamer.AddComment(
-          "nop (invalid dwarf register number for indirect loc)");
-      EmitInt8(dwarf::DW_OP_nop);
+      Streamer.EmitInt8(dwarf::DW_OP_nop,
+                        "nop (invalid dwarf register number for indirect loc)");
       return;
     }
 
     // Attempt to find a valid super- or sub-register.
     if (!Indirect && !MLoc.isIndirect())
-      return EmitDwarfRegOpPiece(*this, MLoc);
+      return EmitDwarfRegOpPiece(Streamer, *this, MLoc);
   }
 
   if (MLoc.isIndirect())
-    emitDwarfRegOpIndirect(*this, Reg, MLoc.getOffset(), Indirect);
+    emitDwarfRegOpIndirect(Streamer, Reg, MLoc.getOffset(), Indirect);
   else if (Indirect)
-    emitDwarfRegOpIndirect(*this, Reg, 0, false);
+    emitDwarfRegOpIndirect(Streamer, Reg, 0, false);
   else
-    emitDwarfRegOp(*this, Reg);
+    emitDwarfRegOp(Streamer, Reg);
 }
 
 //===----------------------------------------------------------------------===//
