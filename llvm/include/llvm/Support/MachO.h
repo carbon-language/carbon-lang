@@ -147,7 +147,9 @@ namespace llvm {
       SECTION_ATTRIBUTES_SYS = 0x00ffff00u  // SECTION_ATTRIBUTES_SYS
     };
 
-    enum SectionType {
+    /// These are the section type and attributes fields.  A MachO section can
+    /// have only one Type, but can have any of the attributes specified.
+    enum SectionType : uint32_t {
       // Constant masks for the "flags[7:0]" field in llvm::MachO::section and
       // llvm::MachO::section_64 (mask "flags" with SECTION_TYPE)
       S_REGULAR                             = 0x00u,
@@ -171,7 +173,9 @@ namespace llvm {
       S_THREAD_LOCAL_ZEROFILL               = 0x12u,
       S_THREAD_LOCAL_VARIABLES              = 0x13u,
       S_THREAD_LOCAL_VARIABLE_POINTERS      = 0x14u,
-      S_THREAD_LOCAL_INIT_FUNCTION_POINTERS = 0x15u
+      S_THREAD_LOCAL_INIT_FUNCTION_POINTERS = 0x15u,
+
+      LAST_KNOWN_SECTION_TYPE = S_THREAD_LOCAL_INIT_FUNCTION_POINTERS
     };
 
     enum : uint32_t {

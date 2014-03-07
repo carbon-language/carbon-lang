@@ -230,7 +230,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
     if (Symbol->isInSection()) {
       const MCSectionMachO &Section = static_cast<const MCSectionMachO&>(
         Fragment->getParent()->getSection());
-      if (Section.hasAttribute(MCSectionMachO::S_ATTR_DEBUG))
+      if (Section.hasAttribute(MachO::S_ATTR_DEBUG))
         Base = 0;
     }
 

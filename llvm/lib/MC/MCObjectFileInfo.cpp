@@ -34,7 +34,7 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
 
   TextSection // .text
     = Ctx->getMachOSection("__TEXT", "__text",
-                           MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                           MachO::S_ATTR_PURE_INSTRUCTIONS,
                            SectionKind::getText());
   DataSection // .data
     = Ctx->getMachOSection("__DATA", "__data", 0,
@@ -45,43 +45,43 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
 
   TLSDataSection // .tdata
     = Ctx->getMachOSection("__DATA", "__thread_data",
-                           MCSectionMachO::S_THREAD_LOCAL_REGULAR,
+                           MachO::S_THREAD_LOCAL_REGULAR,
                            SectionKind::getDataRel());
   TLSBSSSection // .tbss
     = Ctx->getMachOSection("__DATA", "__thread_bss",
-                           MCSectionMachO::S_THREAD_LOCAL_ZEROFILL,
+                           MachO::S_THREAD_LOCAL_ZEROFILL,
                            SectionKind::getThreadBSS());
 
   // TODO: Verify datarel below.
   TLSTLVSection // .tlv
     = Ctx->getMachOSection("__DATA", "__thread_vars",
-                           MCSectionMachO::S_THREAD_LOCAL_VARIABLES,
+                           MachO::S_THREAD_LOCAL_VARIABLES,
                            SectionKind::getDataRel());
 
   TLSThreadInitSection
     = Ctx->getMachOSection("__DATA", "__thread_init",
-                          MCSectionMachO::S_THREAD_LOCAL_INIT_FUNCTION_POINTERS,
+                          MachO::S_THREAD_LOCAL_INIT_FUNCTION_POINTERS,
                           SectionKind::getDataRel());
 
   CStringSection // .cstring
     = Ctx->getMachOSection("__TEXT", "__cstring",
-                           MCSectionMachO::S_CSTRING_LITERALS,
+                           MachO::S_CSTRING_LITERALS,
                            SectionKind::getMergeable1ByteCString());
   UStringSection
     = Ctx->getMachOSection("__TEXT","__ustring", 0,
                            SectionKind::getMergeable2ByteCString());
   FourByteConstantSection // .literal4
     = Ctx->getMachOSection("__TEXT", "__literal4",
-                           MCSectionMachO::S_4BYTE_LITERALS,
+                           MachO::S_4BYTE_LITERALS,
                            SectionKind::getMergeableConst4());
   EightByteConstantSection // .literal8
     = Ctx->getMachOSection("__TEXT", "__literal8",
-                           MCSectionMachO::S_8BYTE_LITERALS,
+                           MachO::S_8BYTE_LITERALS,
                            SectionKind::getMergeableConst8());
 
   SixteenByteConstantSection // .literal16
       = Ctx->getMachOSection("__TEXT", "__literal16",
-                             MCSectionMachO::S_16BYTE_LITERALS,
+                             MachO::S_16BYTE_LITERALS,
                              SectionKind::getMergeableConst16());
 
   ReadOnlySection  // .const
@@ -90,36 +90,36 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
 
   TextCoalSection
     = Ctx->getMachOSection("__TEXT", "__textcoal_nt",
-                           MCSectionMachO::S_COALESCED |
-                           MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                           MachO::S_COALESCED |
+                           MachO::S_ATTR_PURE_INSTRUCTIONS,
                            SectionKind::getText());
   ConstTextCoalSection
     = Ctx->getMachOSection("__TEXT", "__const_coal",
-                           MCSectionMachO::S_COALESCED,
+                           MachO::S_COALESCED,
                            SectionKind::getReadOnly());
   ConstDataSection  // .const_data
     = Ctx->getMachOSection("__DATA", "__const", 0,
                            SectionKind::getReadOnlyWithRel());
   DataCoalSection
     = Ctx->getMachOSection("__DATA","__datacoal_nt",
-                           MCSectionMachO::S_COALESCED,
+                           MachO::S_COALESCED,
                            SectionKind::getDataRel());
   DataCommonSection
     = Ctx->getMachOSection("__DATA","__common",
-                           MCSectionMachO::S_ZEROFILL,
+                           MachO::S_ZEROFILL,
                            SectionKind::getBSS());
   DataBSSSection
-    = Ctx->getMachOSection("__DATA","__bss", MCSectionMachO::S_ZEROFILL,
+    = Ctx->getMachOSection("__DATA","__bss", MachO::S_ZEROFILL,
                            SectionKind::getBSS());
 
 
   LazySymbolPointerSection
     = Ctx->getMachOSection("__DATA", "__la_symbol_ptr",
-                           MCSectionMachO::S_LAZY_SYMBOL_POINTERS,
+                           MachO::S_LAZY_SYMBOL_POINTERS,
                            SectionKind::getMetadata());
   NonLazySymbolPointerSection
     = Ctx->getMachOSection("__DATA", "__nl_symbol_ptr",
-                           MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
+                           MachO::S_NON_LAZY_SYMBOL_POINTERS,
                            SectionKind::getMetadata());
 
   if (RelocM == Reloc::Static) {
@@ -132,11 +132,11 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   } else {
     StaticCtorSection
       = Ctx->getMachOSection("__DATA", "__mod_init_func",
-                             MCSectionMachO::S_MOD_INIT_FUNC_POINTERS,
+                             MachO::S_MOD_INIT_FUNC_POINTERS,
                              SectionKind::getDataRel());
     StaticDtorSection
       = Ctx->getMachOSection("__DATA", "__mod_term_func",
-                             MCSectionMachO::S_MOD_TERM_FUNC_POINTERS,
+                             MachO::S_MOD_TERM_FUNC_POINTERS,
                              SectionKind::getDataRel());
   }
 
@@ -149,7 +149,7 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   if (T.isMacOSX() && !T.isMacOSXVersionLT(10, 6)) {
     CompactUnwindSection =
       Ctx->getMachOSection("__LD", "__compact_unwind",
-                           MCSectionMachO::S_ATTR_DEBUG,
+                           MachO::S_ATTR_DEBUG,
                            SectionKind::getReadOnly());
 
     if (T.getArch() == Triple::x86_64 || T.getArch() == Triple::x86)
@@ -159,77 +159,77 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   // Debug Information.
   DwarfAccelNamesSection =
     Ctx->getMachOSection("__DWARF", "__apple_names",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfAccelObjCSection =
     Ctx->getMachOSection("__DWARF", "__apple_objc",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   // 16 character section limit...
   DwarfAccelNamespaceSection =
     Ctx->getMachOSection("__DWARF", "__apple_namespac",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfAccelTypesSection =
     Ctx->getMachOSection("__DWARF", "__apple_types",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
 
   DwarfAbbrevSection =
     Ctx->getMachOSection("__DWARF", "__debug_abbrev",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfInfoSection =
     Ctx->getMachOSection("__DWARF", "__debug_info",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfLineSection =
     Ctx->getMachOSection("__DWARF", "__debug_line",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfFrameSection =
     Ctx->getMachOSection("__DWARF", "__debug_frame",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfPubNamesSection =
     Ctx->getMachOSection("__DWARF", "__debug_pubnames",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfPubTypesSection =
     Ctx->getMachOSection("__DWARF", "__debug_pubtypes",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfGnuPubNamesSection =
     Ctx->getMachOSection("__DWARF", "__debug_gnu_pubn",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfGnuPubTypesSection =
     Ctx->getMachOSection("__DWARF", "__debug_gnu_pubt",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfStrSection =
     Ctx->getMachOSection("__DWARF", "__debug_str",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfLocSection =
     Ctx->getMachOSection("__DWARF", "__debug_loc",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfARangesSection =
     Ctx->getMachOSection("__DWARF", "__debug_aranges",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfRangesSection =
     Ctx->getMachOSection("__DWARF", "__debug_ranges",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfMacroInfoSection =
     Ctx->getMachOSection("__DWARF", "__debug_macinfo",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   DwarfDebugInlineSection =
     Ctx->getMachOSection("__DWARF", "__debug_inlined",
-                         MCSectionMachO::S_ATTR_DEBUG,
+                         MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
   StackMapSection =
     Ctx->getMachOSection("__LLVM_STACKMAPS", "__llvm_stackmaps", 0,
@@ -765,10 +765,10 @@ void MCObjectFileInfo::InitEHFrameSection() {
   if (Env == IsMachO)
     EHFrameSection =
       Ctx->getMachOSection("__TEXT", "__eh_frame",
-                           MCSectionMachO::S_COALESCED |
-                           MCSectionMachO::S_ATTR_NO_TOC |
-                           MCSectionMachO::S_ATTR_STRIP_STATIC_SYMS |
-                           MCSectionMachO::S_ATTR_LIVE_SUPPORT,
+                           MachO::S_COALESCED |
+                           MachO::S_ATTR_NO_TOC |
+                           MachO::S_ATTR_STRIP_STATIC_SYMS |
+                           MachO::S_ATTR_LIVE_SUPPORT,
                            SectionKind::getReadOnly());
   else if (Env == IsELF)
     EHFrameSection =

@@ -758,7 +758,7 @@ public:
     //
     // See <rdar://problem/4765733>.
     const MCSectionMachO &SMO = static_cast<const MCSectionMachO&>(Section);
-    return SMO.getType() == MCSectionMachO::S_CSTRING_LITERALS;
+    return SMO.getType() == MachO::S_CSTRING_LITERALS;
   }
 
   virtual bool isSectionAtomizable(const MCSection &Section) const {
@@ -768,15 +768,15 @@ public:
     default:
       return true;
 
-    case MCSectionMachO::S_4BYTE_LITERALS:
-    case MCSectionMachO::S_8BYTE_LITERALS:
-    case MCSectionMachO::S_16BYTE_LITERALS:
-    case MCSectionMachO::S_LITERAL_POINTERS:
-    case MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS:
-    case MCSectionMachO::S_LAZY_SYMBOL_POINTERS:
-    case MCSectionMachO::S_MOD_INIT_FUNC_POINTERS:
-    case MCSectionMachO::S_MOD_TERM_FUNC_POINTERS:
-    case MCSectionMachO::S_INTERPOSING:
+    case MachO::S_4BYTE_LITERALS:
+    case MachO::S_8BYTE_LITERALS:
+    case MachO::S_16BYTE_LITERALS:
+    case MachO::S_LITERAL_POINTERS:
+    case MachO::S_NON_LAZY_SYMBOL_POINTERS:
+    case MachO::S_LAZY_SYMBOL_POINTERS:
+    case MachO::S_MOD_INIT_FUNC_POINTERS:
+    case MachO::S_MOD_TERM_FUNC_POINTERS:
+    case MachO::S_INTERPOSING:
       return false;
     }
   }

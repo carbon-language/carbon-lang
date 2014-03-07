@@ -541,9 +541,9 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     if (!Stubs.empty()) {
       const MCSection *TheSection =
         OutContext.getMachOSection("__IMPORT", "__jump_table",
-                                   MCSectionMachO::S_SYMBOL_STUBS |
-                                   MCSectionMachO::S_ATTR_SELF_MODIFYING_CODE |
-                                   MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                                   MachO::S_SYMBOL_STUBS |
+                                   MachO::S_ATTR_SELF_MODIFYING_CODE |
+                                   MachO::S_ATTR_PURE_INSTRUCTIONS,
                                    5, SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
 
@@ -567,7 +567,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     if (!Stubs.empty()) {
       const MCSection *TheSection =
         OutContext.getMachOSection("__IMPORT", "__pointers",
-                                   MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS,
+                                   MachO::S_NON_LAZY_SYMBOL_POINTERS,
                                    SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
 

@@ -229,7 +229,7 @@ void MachObjectWriter::WriteSection(const MCAssembler &Asm,
 
   unsigned Flags = Section.getTypeAndAttributes();
   if (SD.hasInstructions())
-    Flags |= MCSectionMachO::S_ATTR_SOME_INSTRUCTIONS;
+    Flags |= MachO::S_ATTR_SOME_INSTRUCTIONS;
 
   assert(isPowerOf2_32(SD.getAlignment()) && "Invalid alignment!");
   Write32(Log2_32(SD.getAlignment()));
@@ -437,9 +437,9 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
     const MCSectionMachO &Section =
       cast<MCSectionMachO>(it->SectionData->getSection());
 
-    if (Section.getType() != MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS &&
-        Section.getType() != MCSectionMachO::S_LAZY_SYMBOL_POINTERS &&
-        Section.getType() != MCSectionMachO::S_SYMBOL_STUBS) {
+    if (Section.getType() != MachO::S_NON_LAZY_SYMBOL_POINTERS &&
+        Section.getType() != MachO::S_LAZY_SYMBOL_POINTERS &&
+        Section.getType() != MachO::S_SYMBOL_STUBS) {
 	MCSymbol &Symbol = *it->Symbol;
 	report_fatal_error("indirect symbol '" + Symbol.getName() +
                            "' not in a symbol pointer or stub section");
@@ -453,7 +453,7 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
     const MCSectionMachO &Section =
       cast<MCSectionMachO>(it->SectionData->getSection());
 
-    if (Section.getType() != MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS)
+    if (Section.getType() != MachO::S_NON_LAZY_SYMBOL_POINTERS)
       continue;
 
     // Initialize the section indirect symbol base, if necessary.
@@ -469,8 +469,8 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
     const MCSectionMachO &Section =
       cast<MCSectionMachO>(it->SectionData->getSection());
 
-    if (Section.getType() != MCSectionMachO::S_LAZY_SYMBOL_POINTERS &&
-        Section.getType() != MCSectionMachO::S_SYMBOL_STUBS)
+    if (Section.getType() != MachO::S_LAZY_SYMBOL_POINTERS &&
+        Section.getType() != MachO::S_SYMBOL_STUBS)
       continue;
 
     // Initialize the section indirect symbol base, if necessary.
@@ -921,7 +921,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
       // special handling.
       const MCSectionMachO &Section =
         static_cast<const MCSectionMachO&>(it->SectionData->getSection());
-      if (Section.getType() == MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS) {
+      if (Section.getType() == MachO::S_NON_LAZY_SYMBOL_POINTERS) {
         // If this symbol is defined and internal, mark it as such.
         if (it->Symbol->isDefined() &&
             !Asm.getSymbolData(*it->Symbol).isExternal()) {

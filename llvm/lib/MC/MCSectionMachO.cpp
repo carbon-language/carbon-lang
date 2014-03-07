@@ -18,7 +18,7 @@ using namespace llvm;
 /// section type list.
 static const struct {
   const char *AssemblerName, *EnumName;
-} SectionTypeDescriptors[MCSectionMachO::LAST_KNOWN_SECTION_TYPE+1] = {
+} SectionTypeDescriptors[MachO::LAST_KNOWN_SECTION_TYPE+1] = {
   { "regular",                  "S_REGULAR" },                    // 0x00
   { 0,                          "S_ZEROFILL" },                   // 0x01
   { "cstring_literals",         "S_CSTRING_LITERALS" },           // 0x02
@@ -55,7 +55,7 @@ static const struct {
   const char *AssemblerName, *EnumName;
 } SectionAttrDescriptors[] = {
 #define ENTRY(ASMNAME, ENUM) \
-  { MCSectionMachO::ENUM, ASMNAME, #ENUM },
+  { MachO::ENUM, ASMNAME, #ENUM },
 ENTRY("pure_instructions",   S_ATTR_PURE_INSTRUCTIONS)
 ENTRY("no_toc",              S_ATTR_NO_TOC)
 ENTRY("strip_static_syms",   S_ATTR_STRIP_STATIC_SYMS)
@@ -102,8 +102,8 @@ void MCSectionMachO::PrintSwitchToSection(const MCAsmInfo &MAI,
     return;
   }
 
-  unsigned SectionType = TAA & MCSectionMachO::SECTION_TYPE;
-  assert(SectionType <= MCSectionMachO::LAST_KNOWN_SECTION_TYPE &&
+  unsigned SectionType = getType();
+  assert(SectionType <= MachO::LAST_KNOWN_SECTION_TYPE &&
          "Invalid SectionType specified!");
 
   if (SectionTypeDescriptors[SectionType].AssemblerName) {
@@ -116,7 +116,7 @@ void MCSectionMachO::PrintSwitchToSection(const MCAsmInfo &MAI,
   }
 
   // If we don't have any attributes, we're done.
-  unsigned SectionAttrs = TAA & MCSectionMachO::SECTION_ATTRIBUTES;
+  unsigned SectionAttrs = TAA & MachO::SECTION_ATTRIBUTES;
   if (SectionAttrs == 0) {
     // If we have a S_SYMBOL_STUBS size specified, print it along with 'none' as
     // the attribute specifier.
@@ -155,13 +155,13 @@ void MCSectionMachO::PrintSwitchToSection(const MCAsmInfo &MAI,
 }
 
 bool MCSectionMachO::UseCodeAlign() const {
-  return hasAttribute(MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS);
+  return hasAttribute(MachO::S_ATTR_PURE_INSTRUCTIONS);
 }
 
 bool MCSectionMachO::isVirtualSection() const {
-  return (getType() == MCSectionMachO::S_ZEROFILL ||
-          getType() == MCSectionMachO::S_GB_ZEROFILL ||
-          getType() == MCSectionMachO::S_THREAD_LOCAL_ZEROFILL);
+  return (getType() == MachO::S_ZEROFILL ||
+          getType() == MachO::S_GB_ZEROFILL ||
+          getType() == MachO::S_THREAD_LOCAL_ZEROFILL);
 }
 
 /// StripSpaces - This removes leading and trailing spaces from the StringRef.
@@ -228,13 +228,13 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
 
   // Figure out which section type it is.
   unsigned TypeID;
-  for (TypeID = 0; TypeID !=MCSectionMachO::LAST_KNOWN_SECTION_TYPE+1; ++TypeID)
+  for (TypeID = 0; TypeID != MachO::LAST_KNOWN_SECTION_TYPE + 1; ++TypeID)
     if (SectionTypeDescriptors[TypeID].AssemblerName &&
         SectionType == SectionTypeDescriptors[TypeID].AssemblerName)
       break;
 
   // If we didn't find the section type, reject it.
-  if (TypeID > MCSectionMachO::LAST_KNOWN_SECTION_TYPE)
+  if (TypeID > MachO::LAST_KNOWN_SECTION_TYPE)
     return "mach-o section specifier uses an unknown section type";
 
   // Remember the TypeID.
@@ -244,7 +244,7 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
   // If we have no comma after the section type, there are no attributes.
   if (Comma.second.empty()) {
     // S_SYMBOL_STUBS always require a symbol stub size specifier.
-    if (TAA == MCSectionMachO::S_SYMBOL_STUBS)
+    if (TAA == MachO::S_SYMBOL_STUBS)
       return "mach-o section specifier of type 'symbol_stubs' requires a size "
              "specifier";
     return "";
@@ -281,14 +281,14 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
   // Okay, we've parsed the section attributes, see if we have a stub size spec.
   if (Comma.second.empty()) {
     // S_SYMBOL_STUBS always require a symbol stub size specifier.
-    if (TAA == MCSectionMachO::S_SYMBOL_STUBS)
+    if (TAA == MachO::S_SYMBOL_STUBS)
       return "mach-o section specifier of type 'symbol_stubs' requires a size "
       "specifier";
     return "";
   }
 
   // If we have a stub size spec, we must have a sectiontype of S_SYMBOL_STUBS.
-  if ((TAA & MCSectionMachO::SECTION_TYPE) != MCSectionMachO::S_SYMBOL_STUBS)
+  if ((TAA & MachO::SECTION_TYPE) != MachO::S_SYMBOL_STUBS)
     return "mach-o section specifier cannot have a stub size specified because "
            "it does not have type 'symbol_stubs'";
 

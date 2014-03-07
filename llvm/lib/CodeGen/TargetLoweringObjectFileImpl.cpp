@@ -548,15 +548,15 @@ bool TargetLoweringObjectFileMachO::isSectionAtomizableBySymbols(
 
       // These sections are atomized at the element boundaries without using
       // symbols.
-    case MCSectionMachO::S_4BYTE_LITERALS:
-    case MCSectionMachO::S_8BYTE_LITERALS:
-    case MCSectionMachO::S_16BYTE_LITERALS:
-    case MCSectionMachO::S_LITERAL_POINTERS:
-    case MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS:
-    case MCSectionMachO::S_LAZY_SYMBOL_POINTERS:
-    case MCSectionMachO::S_MOD_INIT_FUNC_POINTERS:
-    case MCSectionMachO::S_MOD_TERM_FUNC_POINTERS:
-    case MCSectionMachO::S_INTERPOSING:
+    case MachO::S_4BYTE_LITERALS:
+    case MachO::S_8BYTE_LITERALS:
+    case MachO::S_16BYTE_LITERALS:
+    case MachO::S_LITERAL_POINTERS:
+    case MachO::S_NON_LAZY_SYMBOL_POINTERS:
+    case MachO::S_LAZY_SYMBOL_POINTERS:
+    case MachO::S_MOD_INIT_FUNC_POINTERS:
+    case MachO::S_MOD_TERM_FUNC_POINTERS:
+    case MachO::S_INTERPOSING:
       return false;
     }
 }

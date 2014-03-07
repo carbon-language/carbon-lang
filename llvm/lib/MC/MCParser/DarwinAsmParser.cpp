@@ -195,19 +195,19 @@ public:
   }
   bool ParseSectionDirectiveCString(StringRef, SMLoc) {
     return ParseSectionSwitch("__TEXT","__cstring",
-                              MCSectionMachO::S_CSTRING_LITERALS);
+                              MachO::S_CSTRING_LITERALS);
   }
   bool ParseSectionDirectiveLiteral4(StringRef, SMLoc) {
     return ParseSectionSwitch("__TEXT", "__literal4",
-                              MCSectionMachO::S_4BYTE_LITERALS, 4);
+                              MachO::S_4BYTE_LITERALS, 4);
   }
   bool ParseSectionDirectiveLiteral8(StringRef, SMLoc) {
     return ParseSectionSwitch("__TEXT", "__literal8",
-                              MCSectionMachO::S_8BYTE_LITERALS, 8);
+                              MachO::S_8BYTE_LITERALS, 8);
   }
   bool ParseSectionDirectiveLiteral16(StringRef, SMLoc) {
     return ParseSectionSwitch("__TEXT","__literal16",
-                              MCSectionMachO::S_16BYTE_LITERALS, 16);
+                              MachO::S_16BYTE_LITERALS, 16);
   }
   bool ParseSectionDirectiveConstructor(StringRef, SMLoc) {
     return ParseSectionSwitch("__TEXT","__constructor");
@@ -223,15 +223,15 @@ public:
   }
   bool ParseSectionDirectiveSymbolStub(StringRef, SMLoc) {
     return ParseSectionSwitch("__TEXT","__symbol_stub",
-                              MCSectionMachO::S_SYMBOL_STUBS |
-                              MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
+                              MachO::S_SYMBOL_STUBS |
+                              MachO::S_ATTR_PURE_INSTRUCTIONS,
                               // FIXME: Different on PPC and ARM.
                               0, 16);
   }
   bool ParseSectionDirectivePICSymbolStub(StringRef, SMLoc) {
     return ParseSectionSwitch("__TEXT","__picsymbol_stub",
-                              MCSectionMachO::S_SYMBOL_STUBS |
-                              MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS, 0, 26);
+                              MachO::S_SYMBOL_STUBS |
+                              MachO::S_ATTR_PURE_INSTRUCTIONS, 0, 26);
   }
   bool ParseSectionDirectiveData(StringRef, SMLoc) {
     return ParseSectionSwitch("__DATA", "__data");
@@ -241,115 +241,115 @@ public:
   }
   bool ParseSectionDirectiveNonLazySymbolPointers(StringRef, SMLoc) {
     return ParseSectionSwitch("__DATA", "__nl_symbol_ptr",
-                              MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS, 4);
+                              MachO::S_NON_LAZY_SYMBOL_POINTERS, 4);
   }
   bool ParseSectionDirectiveLazySymbolPointers(StringRef, SMLoc) {
     return ParseSectionSwitch("__DATA", "__la_symbol_ptr",
-                              MCSectionMachO::S_LAZY_SYMBOL_POINTERS, 4);
+                              MachO::S_LAZY_SYMBOL_POINTERS, 4);
   }
   bool ParseSectionDirectiveDyld(StringRef, SMLoc) {
     return ParseSectionSwitch("__DATA", "__dyld");
   }
   bool ParseSectionDirectiveModInitFunc(StringRef, SMLoc) {
     return ParseSectionSwitch("__DATA", "__mod_init_func",
-                              MCSectionMachO::S_MOD_INIT_FUNC_POINTERS, 4);
+                              MachO::S_MOD_INIT_FUNC_POINTERS, 4);
   }
   bool ParseSectionDirectiveModTermFunc(StringRef, SMLoc) {
     return ParseSectionSwitch("__DATA", "__mod_term_func",
-                              MCSectionMachO::S_MOD_TERM_FUNC_POINTERS, 4);
+                              MachO::S_MOD_TERM_FUNC_POINTERS, 4);
   }
   bool ParseSectionDirectiveConstData(StringRef, SMLoc) {
     return ParseSectionSwitch("__DATA", "__const");
   }
   bool ParseSectionDirectiveObjCClass(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__class",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCMetaClass(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__meta_class",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCCatClsMeth(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__cat_cls_meth",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCCatInstMeth(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__cat_inst_meth",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCProtocol(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__protocol",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCStringObject(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__string_object",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCClsMeth(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__cls_meth",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCInstMeth(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__inst_meth",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCClsRefs(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__cls_refs",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP |
-                              MCSectionMachO::S_LITERAL_POINTERS, 4);
+                              MachO::S_ATTR_NO_DEAD_STRIP |
+                              MachO::S_LITERAL_POINTERS, 4);
   }
   bool ParseSectionDirectiveObjCMessageRefs(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__message_refs",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP |
-                              MCSectionMachO::S_LITERAL_POINTERS, 4);
+                              MachO::S_ATTR_NO_DEAD_STRIP |
+                              MachO::S_LITERAL_POINTERS, 4);
   }
   bool ParseSectionDirectiveObjCSymbols(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__symbols",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCCategory(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__category",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCClassVars(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__class_vars",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCInstanceVars(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__instance_vars",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCModuleInfo(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__module_info",
-                              MCSectionMachO::S_ATTR_NO_DEAD_STRIP);
+                              MachO::S_ATTR_NO_DEAD_STRIP);
   }
   bool ParseSectionDirectiveObjCClassNames(StringRef, SMLoc) {
     return ParseSectionSwitch("__TEXT", "__cstring",
-                              MCSectionMachO::S_CSTRING_LITERALS);
+                              MachO::S_CSTRING_LITERALS);
   }
   bool ParseSectionDirectiveObjCMethVarTypes(StringRef, SMLoc) {
     return ParseSectionSwitch("__TEXT", "__cstring",
-                              MCSectionMachO::S_CSTRING_LITERALS);
+                              MachO::S_CSTRING_LITERALS);
   }
   bool ParseSectionDirectiveObjCMethVarNames(StringRef, SMLoc) {
     return ParseSectionSwitch("__TEXT", "__cstring",
-                              MCSectionMachO::S_CSTRING_LITERALS);
+                              MachO::S_CSTRING_LITERALS);
   }
   bool ParseSectionDirectiveObjCSelectorStrs(StringRef, SMLoc) {
     return ParseSectionSwitch("__OBJC", "__selector_strs",
-                              MCSectionMachO::S_CSTRING_LITERALS);
+                              MachO::S_CSTRING_LITERALS);
   }
   bool ParseSectionDirectiveTData(StringRef, SMLoc) {
     return ParseSectionSwitch("__DATA", "__thread_data",
-                              MCSectionMachO::S_THREAD_LOCAL_REGULAR);
+                              MachO::S_THREAD_LOCAL_REGULAR);
   }
   bool ParseSectionDirectiveText(StringRef, SMLoc) {
     return ParseSectionSwitch("__TEXT", "__text",
-                              MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS);
+                              MachO::S_ATTR_PURE_INSTRUCTIONS);
   }
   bool ParseSectionDirectiveTLV(StringRef, SMLoc) {
     return ParseSectionSwitch("__DATA", "__thread_vars",
-                              MCSectionMachO::S_THREAD_LOCAL_VARIABLES);
+                              MachO::S_THREAD_LOCAL_VARIABLES);
   }
   bool ParseSectionDirectiveIdent(StringRef, SMLoc) {
     // Darwin silently ignores the .ident directive.
@@ -358,7 +358,7 @@ public:
   }
   bool ParseSectionDirectiveThreadInitFunc(StringRef, SMLoc) {
     return ParseSectionSwitch("__DATA", "__thread_init",
-                         MCSectionMachO::S_THREAD_LOCAL_INIT_FUNCTION_POINTERS);
+                         MachO::S_THREAD_LOCAL_INIT_FUNCTION_POINTERS);
   }
 
 };
@@ -374,7 +374,7 @@ bool DarwinAsmParser::ParseSectionSwitch(const char *Segment,
   Lex();
 
   // FIXME: Arch specific.
-  bool isText = TAA & MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS;
+  bool isText = TAA & MachO::S_ATTR_PURE_INSTRUCTIONS;
   getStreamer().SwitchSection(getContext().getMachOSection(
                                 Segment, Section, TAA, StubSize,
                                 isText ? SectionKind::getText()
@@ -429,9 +429,9 @@ bool DarwinAsmParser::ParseDirectiveIndirectSymbol(StringRef, SMLoc Loc) {
   const MCSectionMachO *Current = static_cast<const MCSectionMachO*>(
                                        getStreamer().getCurrentSection().first);
   unsigned SectionType = Current->getType();
-  if (SectionType != MCSectionMachO::S_NON_LAZY_SYMBOL_POINTERS &&
-      SectionType != MCSectionMachO::S_LAZY_SYMBOL_POINTERS &&
-      SectionType != MCSectionMachO::S_SYMBOL_STUBS)
+  if (SectionType != MachO::S_NON_LAZY_SYMBOL_POINTERS &&
+      SectionType != MachO::S_LAZY_SYMBOL_POINTERS &&
+      SectionType != MachO::S_SYMBOL_STUBS)
     return Error(Loc, "indirect symbol not in a symbol pointer or stub "
                       "section");
 
@@ -729,7 +729,7 @@ bool DarwinAsmParser::ParseDirectiveTBSS(StringRef, SMLoc) {
 
   getStreamer().EmitTBSSSymbol(getContext().getMachOSection(
                                  "__DATA", "__thread_bss",
-                                 MCSectionMachO::S_THREAD_LOCAL_ZEROFILL,
+                                 MachO::S_THREAD_LOCAL_ZEROFILL,
                                  0, SectionKind::getThreadBSS()),
                                Sym, Size, 1 << Pow2Alignment);
 
@@ -758,7 +758,7 @@ bool DarwinAsmParser::ParseDirectiveZerofill(StringRef, SMLoc) {
   if (getLexer().is(AsmToken::EndOfStatement)) {
     // Create the zerofill section but no symbol
     getStreamer().EmitZerofill(getContext().getMachOSection(
-                                 Segment, Section, MCSectionMachO::S_ZEROFILL,
+                                 Segment, Section, MachO::S_ZEROFILL,
                                  0, SectionKind::getBSS()));
     return false;
   }
@@ -816,7 +816,7 @@ bool DarwinAsmParser::ParseDirectiveZerofill(StringRef, SMLoc) {
   //
   // FIXME: Arch specific.
   getStreamer().EmitZerofill(getContext().getMachOSection(
-                               Segment, Section, MCSectionMachO::S_ZEROFILL,
+                               Segment, Section, MachO::S_ZEROFILL,
                                0, SectionKind::getBSS()),
                              Sym, Size, 1 << Pow2Alignment);
 
