@@ -177,7 +177,6 @@ unsigned ARMTTI::getIntImmCost(const APInt &Imm, Type *Ty) const {
     // Load from constantpool.
     return 3;
   }
-  return 2;
 }
 
 unsigned ARMTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
