@@ -5731,11 +5731,9 @@ static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
                                ResultBuilder &Results) {
   typedef CodeCompletionResult Result;
   
-  for (DeclContext::decl_iterator D = Ctx->decls_begin(), 
-                               DEnd = Ctx->decls_end();
-       D != DEnd; ++D) {
+  for (const auto *D : Ctx->decls()) {
     // Record any protocols we find.
-    if (ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(*D))
+    if (const auto *Proto = dyn_cast<ObjCProtocolDecl>(D))
       if (!OnlyForwardDeclarations || !Proto->hasDefinition())
         Results.AddResult(Result(Proto, Results.getBasePriority(Proto), 0),
                           CurContext, 0, false);
@@ -5799,11 +5797,9 @@ static void AddInterfaceResults(DeclContext *Ctx, DeclContext *CurContext,
                                 ResultBuilder &Results) {
   typedef CodeCompletionResult Result;
   
-  for (DeclContext::decl_iterator D = Ctx->decls_begin(), 
-                               DEnd = Ctx->decls_end();
-       D != DEnd; ++D) {
+  for (const auto *D : Ctx->decls()) {
     // Record any interfaces we find.
-    if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(*D))
+    if (const auto *Class = dyn_cast<ObjCInterfaceDecl>(D))
       if ((!OnlyForwardDeclarations || !Class->hasDefinition()) &&
           (!OnlyUnimplemented || !Class->getImplementation()))
         Results.AddResult(Result(Class, Results.getBasePriority(Class), 0),
@@ -5901,10 +5897,8 @@ void Sema::CodeCompleteObjCInterfaceCategory(Scope *S,
   // Add all of the categories we know about.
   Results.EnterNewScope();
   TranslationUnitDecl *TU = Context.getTranslationUnitDecl();
-  for (DeclContext::decl_iterator D = TU->decls_begin(), 
-                               DEnd = TU->decls_end();
-       D != DEnd; ++D) 
-    if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(*D))
+  for (const auto *D : TU->decls()) 
+    if (const auto *Category = dyn_cast<ObjCCategoryDecl>(D))
       if (CategoryNames.insert(Category->getIdentifier()))
         Results.AddResult(Result(Category, Results.getBasePriority(Category),0),
                           CurContext, 0, false);
@@ -5975,10 +5969,8 @@ void Sema::CodeCompleteObjCPropertyDefinition(Scope *S) {
 
   // Ignore any properties that have already been implemented.
   Container = getContainerDef(Container);
-  for (DeclContext::decl_iterator D = Container->decls_begin(),
-                               DEnd = Container->decls_end();
-       D != DEnd; ++D)
-    if (ObjCPropertyImplDecl *PropertyImpl = dyn_cast<ObjCPropertyImplDecl>(*D))
+  for (const auto *D : Container->decls())
+    if (const auto *PropertyImpl = dyn_cast<ObjCPropertyImplDecl>(D))
       Results.Ignore(PropertyImpl->getPropertyDecl());
   
   // Add any properties that we find.

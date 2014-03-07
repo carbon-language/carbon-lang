@@ -2595,9 +2595,8 @@ uint64_t ASTWriter::WriteDeclContextLexicalBlock(ASTContext &Context,
   RecordData Record;
   Record.push_back(DECL_CONTEXT_LEXICAL);
   SmallVector<KindDeclIDPair, 64> Decls;
-  for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
-         D != DEnd; ++D)
-    Decls.push_back(std::make_pair((*D)->getKind(), GetDeclRef(*D)));
+  for (const auto *D : DC->decls())
+    Decls.push_back(std::make_pair(D->getKind(), GetDeclRef(D)));
 
   ++NumLexicalDeclContexts;
   Stream.EmitRecordWithBlob(DeclContextLexicalAbbrev, Record, data(Decls));
@@ -4050,11 +4049,9 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   // translation unit that do not come from other AST files.
   const TranslationUnitDecl *TU = Context.getTranslationUnitDecl();
   SmallVector<KindDeclIDPair, 64> NewGlobalDecls;
-  for (DeclContext::decl_iterator I = TU->noload_decls_begin(),
-                                  E = TU->noload_decls_end();
-       I != E; ++I) {
-    if (!(*I)->isFromASTFile())
-      NewGlobalDecls.push_back(std::make_pair((*I)->getKind(), GetDeclRef(*I)));
+  for (const auto *I : TU->noload_decls()) {
+    if (!I->isFromASTFile())
+      NewGlobalDecls.push_back(std::make_pair(I->getKind(), GetDeclRef(I)));
   }
   
   llvm::BitCodeAbbrev *Abv = new llvm::BitCodeAbbrev();

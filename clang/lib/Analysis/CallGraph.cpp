@@ -95,9 +95,8 @@ void CallGraph::addNodesForBlocks(DeclContext *D) {
   if (BlockDecl *BD = dyn_cast<BlockDecl>(D))
     addNodeForDecl(BD, true);
 
-  for (DeclContext::decl_iterator I = D->decls_begin(), E = D->decls_end();
-       I!=E; ++I)
-    if (DeclContext *DC = dyn_cast<DeclContext>(*I))
+  for (auto *I : D->decls())
+    if (auto *DC = dyn_cast<DeclContext>(I))
       addNodesForBlocks(DC);
 }
 

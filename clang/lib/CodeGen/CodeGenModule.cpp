@@ -2832,13 +2832,12 @@ void CodeGenModule::EmitObjCIvarInitializations(ObjCImplementationDecl *D) {
 
 /// EmitNamespace - Emit all declarations in a namespace.
 void CodeGenModule::EmitNamespace(const NamespaceDecl *ND) {
-  for (RecordDecl::decl_iterator I = ND->decls_begin(), E = ND->decls_end();
-       I != E; ++I) {
-    if (const VarDecl *VD = dyn_cast<VarDecl>(*I))
+  for (auto *I : ND->decls()) {
+    if (const auto *VD = dyn_cast<VarDecl>(I))
       if (VD->getTemplateSpecializationKind() != TSK_ExplicitSpecialization &&
           VD->getTemplateSpecializationKind() != TSK_Undeclared)
         continue;
-    EmitTopLevelDecl(*I);
+    EmitTopLevelDecl(I);
   }
 }
 
@@ -2850,17 +2849,16 @@ void CodeGenModule::EmitLinkageSpec(const LinkageSpecDecl *LSD) {
     return;
   }
 
-  for (RecordDecl::decl_iterator I = LSD->decls_begin(), E = LSD->decls_end();
-       I != E; ++I) {
+  for (auto *I : LSD->decls()) {
     // Meta-data for ObjC class includes references to implemented methods.
     // Generate class's method definitions first.
-    if (ObjCImplDecl *OID = dyn_cast<ObjCImplDecl>(*I)) {
+    if (auto *OID = dyn_cast<ObjCImplDecl>(I)) {
       for (ObjCContainerDecl::method_iterator M = OID->meth_begin(),
            MEnd = OID->meth_end();
            M != MEnd; ++M)
         EmitTopLevelDecl(*M);
     }
-    EmitTopLevelDecl(*I);
+    EmitTopLevelDecl(I);
   }
 }
 

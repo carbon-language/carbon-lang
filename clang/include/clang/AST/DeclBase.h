@@ -1306,17 +1306,21 @@ public:
     }
   };
 
+  typedef llvm::iterator_range<decl_iterator> decl_range;
+
   /// decls_begin/decls_end - Iterate over the declarations stored in
   /// this context.
-  decl_iterator decls_begin() const;
-  decl_iterator decls_end() const { return decl_iterator(); }
+  decl_range decls() const;
+  decl_iterator decls_begin() const { return decls().begin(); }
+  decl_iterator decls_end() const { return decls().end(); }
   bool decls_empty() const;
 
   /// noload_decls_begin/end - Iterate over the declarations stored in this
   /// context that are currently loaded; don't attempt to retrieve anything
   /// from an external source.
-  decl_iterator noload_decls_begin() const;
-  decl_iterator noload_decls_end() const { return decl_iterator(); }
+  decl_range noload_decls() const;
+  decl_iterator noload_decls_begin() const { return noload_decls().begin(); }
+  decl_iterator noload_decls_end() const { return noload_decls().end(); }
 
   /// specific_decl_iterator - Iterates over a subrange of
   /// declarations stored in a DeclContext, providing only those that

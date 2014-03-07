@@ -935,9 +935,8 @@ void CGDebugInfo::CollectRecordFields(const RecordDecl *record,
 
     // Static and non-static members should appear in the same order as
     // the corresponding declarations in the source program.
-    for (RecordDecl::decl_iterator I = record->decls_begin(),
-           E = record->decls_end(); I != E; ++I)
-      if (const VarDecl *V = dyn_cast<VarDecl>(*I)) {
+    for (const auto *I : record->decls())
+      if (const auto *V = dyn_cast<VarDecl>(I)) {
         // Reuse the existing static member declaration if one exists
         llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator MI =
             StaticDataMemberCache.find(V->getCanonicalDecl());
@@ -948,7 +947,7 @@ void CGDebugInfo::CollectRecordFields(const RecordDecl *record,
               llvm::DIDerivedType(cast<llvm::MDNode>(MI->second)));
         } else
           elements.push_back(CreateRecordStaticField(V, RecordTy));
-      } else if (FieldDecl *field = dyn_cast<FieldDecl>(*I)) {
+      } else if (const auto *field = dyn_cast<FieldDecl>(I)) {
         CollectRecordNormalField(field, layout.getFieldOffset(fieldNo),
                                  tunit, elements, RecordTy);
 
@@ -1130,9 +1129,8 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
   // Since we want more than just the individual member decls if we
   // have templated functions iterate over every declaration to gather
   // the functions.
-  for(DeclContext::decl_iterator I = RD->decls_begin(),
-        E = RD->decls_end(); I != E; ++I) {
-    if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*I)) {
+  for(const auto *I : RD->decls()) {
+    if (const auto *Method = dyn_cast<CXXMethodDecl>(I)) {
       // Reuse the existing member function declaration if it exists.
       // It may be associated with the declaration of the type & should be
       // reused as we're building the definition.
@@ -1149,8 +1147,7 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
           EltTys.push_back(CreateCXXMemberFunction(Method, Unit, RecordTy));
       } else
         EltTys.push_back(MI->second);
-    } else if (const FunctionTemplateDecl *FTD =
-                   dyn_cast<FunctionTemplateDecl>(*I)) {
+    } else if (const auto *FTD = dyn_cast<FunctionTemplateDecl>(I)) {
       // Add any template specializations that have already been seen. Like
       // implicit member functions, these may have been added to a declaration
       // in the case of vtable-based debug info reduction.

@@ -101,9 +101,8 @@ static void Scan(IvarUsageMap& M, const ObjCContainerDecl *D) {
 
 static void Scan(IvarUsageMap &M, const DeclContext *C, const FileID FID,
                  SourceManager &SM) {
-  for (DeclContext::decl_iterator I=C->decls_begin(), E=C->decls_end();
-       I!=E; ++I)
-    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
+  for (const auto *I : C->decls())
+    if (const auto *FD = dyn_cast<FunctionDecl>(I)) {
       SourceLocation L = FD->getLocStart();
       if (SM.getFileID(L) == FID)
         Scan(M, FD->getBody());

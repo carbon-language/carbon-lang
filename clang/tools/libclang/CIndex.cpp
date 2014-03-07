@@ -980,13 +980,11 @@ bool CursorVisitor::VisitObjCContainerDecl(ObjCContainerDecl *D) {
 
   // Get all the Decls in the DeclContext, and sort them with the
   // additional ones we've collected.  Then visit them.
-  for (DeclContext::decl_iterator I = D->decls_begin(), E = D->decls_end();
-       I!=E; ++I) {
-    Decl *subDecl = *I;
-    if (!subDecl || subDecl->getLexicalDeclContext() != D ||
-        subDecl->getLocStart().isInvalid())
+  for (auto *SubDecl : D->decls()) {
+    if (!SubDecl || SubDecl->getLexicalDeclContext() != D ||
+        SubDecl->getLocStart().isInvalid())
       continue;
-    DeclsInContainer.push_back(subDecl);
+    DeclsInContainer.push_back(SubDecl);
   }
 
   // Now sort the Decls so that they appear in lexical order.

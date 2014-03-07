@@ -930,10 +930,8 @@ static Optional<unsigned> findAnonymousStructOrUnionIndex(RecordDecl *Anon) {
     return None;
 
   unsigned Index = 0;
-  for (DeclContext::decl_iterator D = Owner->noload_decls_begin(),
-                               DEnd = Owner->noload_decls_end();
-       D != DEnd; ++D) {
-    FieldDecl *F = dyn_cast<FieldDecl>(*D);
+  for (const auto *D : Owner->noload_decls()) {
+    const auto *F = dyn_cast<FieldDecl>(D);
     if (!F || !F->isAnonymousStructOrUnion())
       continue;
 
@@ -1908,11 +1906,8 @@ void ASTNodeImporter::ImportDeclContext(DeclContext *FromDC, bool ForceImport) {
     return;
   }
   
-  for (DeclContext::decl_iterator From = FromDC->decls_begin(),
-                               FromEnd = FromDC->decls_end();
-       From != FromEnd;
-       ++From)
-    Importer.Import(*From);
+  for (auto *From : FromDC->decls())
+    Importer.Import(From);
 }
 
 bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To, 
@@ -2852,10 +2847,8 @@ static unsigned getFieldIndex(Decl *F) {
     return 0;
 
   unsigned Index = 1;
-  for (DeclContext::decl_iterator D = Owner->noload_decls_begin(),
-                               DEnd = Owner->noload_decls_end();
-       D != DEnd; ++D) {
-    if (*D == F)
+  for (const auto *D : Owner->noload_decls()) {
+    if (D == F)
       return Index;
 
     if (isa<FieldDecl>(*D) || isa<IndirectFieldDecl>(*D))

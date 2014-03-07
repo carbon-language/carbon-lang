@@ -1138,11 +1138,9 @@ static void diagnoseBadDirectAccess(Sema &S,
   // Check whether there's an AccessSpecDecl preceding this in the
   // chain of the DeclContext.
   bool isImplicit = true;
-  for (CXXRecordDecl::decl_iterator
-         I = DeclaringClass->decls_begin(), E = DeclaringClass->decls_end();
-       I != E; ++I) {
-    if (*I == ImmediateChild) break;
-    if (isa<AccessSpecDecl>(*I)) {
+  for (const auto *I : DeclaringClass->decls()) {
+    if (I == ImmediateChild) break;
+    if (isa<AccessSpecDecl>(I)) {
       isImplicit = false;
       break;
     }

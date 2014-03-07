@@ -2319,11 +2319,10 @@ namespace {
     llvm::SmallPtrSet<ValueDecl*, 4> UninitializedFields;
 
     // At the beginning, all fields are uninitialized.
-    for (DeclContext::decl_iterator I = RD->decls_begin(), E = RD->decls_end();
-         I != E; ++I) {
-      if (FieldDecl *FD = dyn_cast<FieldDecl>(*I)) {
+    for (auto *I : RD->decls()) {
+      if (auto *FD = dyn_cast<FieldDecl>(I)) {
         UninitializedFields.insert(FD);
-      } else if (IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(*I)) {
+      } else if (auto *IFD = dyn_cast<IndirectFieldDecl>(I)) {
         UninitializedFields.insert(IFD->getAnonField());
       }
     }
@@ -3645,10 +3644,8 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor, bool AnyErrors,
   }
 
   // Fields.
-  for (DeclContext::decl_iterator Mem = ClassDecl->decls_begin(),
-                               MemEnd = ClassDecl->decls_end();
-       Mem != MemEnd; ++Mem) {
-    if (FieldDecl *F = dyn_cast<FieldDecl>(*Mem)) {
+  for (auto *Mem : ClassDecl->decls()) {
+    if (auto *F = dyn_cast<FieldDecl>(Mem)) {
       // C++ [class.bit]p2:
       //   A declaration for a bit-field that omits the identifier declares an
       //   unnamed bit-field. Unnamed bit-fields are not members and cannot be
@@ -3671,7 +3668,7 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor, bool AnyErrors,
     if (Info.isImplicitCopyOrMove())
       continue;
     
-    if (IndirectFieldDecl *F = dyn_cast<IndirectFieldDecl>(*Mem)) {
+    if (auto *F = dyn_cast<IndirectFieldDecl>(Mem)) {
       if (F->getType()->isIncompleteArrayType()) {
         assert(ClassDecl->hasFlexibleArrayMember() &&
                "Incomplete array type is not valid");
@@ -4337,9 +4334,7 @@ static void CheckAbstractClassUsage(AbstractUsageInfo &Info,
 /// Check for invalid uses of an abstract type within a class definition.
 static void CheckAbstractClassUsage(AbstractUsageInfo &Info,
                                     CXXRecordDecl *RD) {
-  for (CXXRecordDecl::decl_iterator
-         I = RD->decls_begin(), E = RD->decls_end(); I != E; ++I) {
-    Decl *D = *I;
+  for (auto *D : RD->decls()) {
     if (D->isImplicit()) continue;
 
     // Methods and method templates.
@@ -6571,9 +6566,8 @@ static void DiagnoseNamespaceInlineMismatch(Sema &S, SourceLocation KeywordLoc,
       NS->setInline(*IsInline);
     // Patch up the lookup table for the containing namespace. This isn't really
     // correct, but it's good enough for this particular case.
-    for (DeclContext::decl_iterator I = PrevNS->decls_begin(),
-                                    E = PrevNS->decls_end(); I != E; ++I)
-      if (NamedDecl *ND = dyn_cast<NamedDecl>(*I))
+    for (auto *I : PrevNS->decls())
+      if (auto *ND = dyn_cast<NamedDecl>(I))
         PrevNS->getParent()->makeDeclVisibleInContext(ND);
     return;
   }

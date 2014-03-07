@@ -873,9 +873,8 @@ public:
   void handleFileLevelDecl(Decl *D) {
     Unit.addFileLevelDecl(D);
     if (NamespaceDecl *NSD = dyn_cast<NamespaceDecl>(D)) {
-      for (NamespaceDecl::decl_iterator
-             I = NSD->decls_begin(), E = NSD->decls_end(); I != E; ++I)
-        handleFileLevelDecl(*I);
+      for (auto *I : NSD->decls())
+        handleFileLevelDecl(I);
     }
   }
 

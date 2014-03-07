@@ -93,10 +93,8 @@ namespace {
       // In C++, we may have member functions that need to be emitted at this 
       // point.
       if (Ctx->getLangOpts().CPlusPlus && !D->isDependentContext()) {
-        for (DeclContext::decl_iterator M = D->decls_begin(), 
-                                     MEnd = D->decls_end();
-             M != MEnd; ++M)
-          if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*M))
+        for (auto *M : D->decls())
+          if (auto *Method = dyn_cast<CXXMethodDecl>(M))
             if (Method->doesThisDeclarationHaveABody() &&
                 (Method->hasAttr<UsedAttr>() || 
                  Method->hasAttr<ConstructorAttr>()))

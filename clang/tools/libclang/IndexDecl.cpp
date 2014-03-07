@@ -173,10 +173,9 @@ public:
            IvarE = D->ivar_end(); IvarI != IvarE; ++IvarI) {
       IndexCtx.indexDecl(*IvarI);
     }
-    for (DeclContext::decl_iterator
-           I = D->decls_begin(), E = D->decls_end(); I != E; ++I) {
-      if (!isa<ObjCIvarDecl>(*I))
-        IndexCtx.indexDecl(*I);
+    for (const auto *I : D->decls()) {
+      if (!isa<ObjCIvarDecl>(I))
+        IndexCtx.indexDecl(I);
     }
 
     return true;
@@ -337,10 +336,8 @@ void IndexingContext::indexDecl(const Decl *D) {
 }
 
 void IndexingContext::indexDeclContext(const DeclContext *DC) {
-  for (DeclContext::decl_iterator
-         I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
-    indexDecl(*I);
-  }
+  for (const auto *I : DC->decls())
+    indexDecl(I);
 }
 
 void IndexingContext::indexTopLevelDecl(const Decl *D) {

@@ -2055,9 +2055,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   LateInstantiatedAttrVec LateAttrs;
   Instantiator.enableLateAttributeInstantiation(&LateAttrs);
 
-  for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
-         MemberEnd = Pattern->decls_end();
-       Member != MemberEnd; ++Member) {
+  for (auto *Member : Pattern->decls()) {
     // Don't instantiate members not belonging in this semantic context.
     // e.g. for:
     // @code
@@ -2067,19 +2065,19 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
     // @endcode
     // 'class B' has the template as lexical context but semantically it is
     // introduced in namespace scope.
-    if ((*Member)->getDeclContext() != Pattern)
+    if (Member->getDeclContext() != Pattern)
       continue;
 
-    if ((*Member)->isInvalidDecl()) {
+    if (Member->isInvalidDecl()) {
       Instantiation->setInvalidDecl();
       continue;
     }
 
-    Decl *NewMember = Instantiator.Visit(*Member);
+    Decl *NewMember = Instantiator.Visit(Member);
     if (NewMember) {
       if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember)) {
         Fields.push_back(Field);
-        FieldDecl *OldField = cast<FieldDecl>(*Member);
+        FieldDecl *OldField = cast<FieldDecl>(Member);
         if (OldField->getInClassInitializer())
           FieldsWithMemberInitializers.push_back(std::make_pair(OldField,
                                                                 Field));
@@ -2471,11 +2469,9 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
        TSK == TSK_ExplicitInstantiationDeclaration ||
        (TSK == TSK_ImplicitInstantiation && Instantiation->isLocalClass())) &&
       "Unexpected template specialization kind!");
-  for (DeclContext::decl_iterator D = Instantiation->decls_begin(),
-                               DEnd = Instantiation->decls_end();
-       D != DEnd; ++D) {
+  for (auto *D : Instantiation->decls()) {
     bool SuppressNew = false;
-    if (FunctionDecl *Function = dyn_cast<FunctionDecl>(*D)) {
+    if (auto *Function = dyn_cast<FunctionDecl>(D)) {
       if (FunctionDecl *Pattern
             = Function->getInstantiatedFromMemberFunction()) {
         MemberSpecializationInfo *MSInfo 
@@ -2516,7 +2512,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
                 std::make_pair(Function, PointOfInstantiation));
         }
       }
-    } else if (VarDecl *Var = dyn_cast<VarDecl>(*D)) {
+    } else if (auto *Var = dyn_cast<VarDecl>(D)) {
       if (isa<VarTemplateSpecializationDecl>(Var))
         continue;
 
@@ -2552,7 +2548,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
           Var->setTemplateSpecializationKind(TSK, PointOfInstantiation);
         }
       }      
-    } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(*D)) {
+    } else if (auto *Record = dyn_cast<CXXRecordDecl>(D)) {
       // Always skip the injected-class-name, along with any
       // redeclarations of nested classes, since both would cause us
       // to try to instantiate the members of a class twice.
@@ -2609,7 +2605,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       if (Pattern)
         InstantiateClassMembers(PointOfInstantiation, Pattern, TemplateArgs, 
                                 TSK);
-    } else if (EnumDecl *Enum = dyn_cast<EnumDecl>(*D)) {
+    } else if (auto *Enum = dyn_cast<EnumDecl>(D)) {
       MemberSpecializationInfo *MSInfo = Enum->getMemberSpecializationInfo();
       assert(MSInfo && "No member specialization information?");
 
