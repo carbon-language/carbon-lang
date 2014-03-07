@@ -70,9 +70,13 @@ ProcessElfCore::CanDebug(Target &target, bool plugin_specified_by_name)
                                                   NULL, NULL, NULL));
         if (m_core_module_sp)
         {
-            ObjectFile *core_objfile = m_core_module_sp->GetObjectFile();
-            if (core_objfile && core_objfile->GetType() == ObjectFile::eTypeCoreFile)
-                return true;
+            const llvm::Triple &triple_ref = m_core_module_sp->GetArchitecture().GetTriple();
+            if (triple_ref.getEnvironment() == llvm::Triple::ELF)
+            {
+                ObjectFile *core_objfile = m_core_module_sp->GetObjectFile();
+                if (core_objfile && core_objfile->GetType() == ObjectFile::eTypeCoreFile)
+                    return true;
+            }
         }
     }
     return false;
