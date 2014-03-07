@@ -43,3 +43,17 @@ entry:
 ; CHECK-NOT: shufps	$16
 ; CHECK: ret
 }
+
+; We used to get stuck in type legalization for this example when lowering the
+; vselect. With SSE1 v4f32 is a legal type but v4i1 (or any vector integer type)
+; is not. We used to ping pong between splitting the vselect for the v4i
+; condition operand and widening the resulting vselect for the v4f32 result.
+; PR18036
+
+; CHECK-LABEL: vselect
+define <4 x float> @vselect(<4 x float>*%p, <4 x i32> %q) {
+entry:
+  %a1 = icmp eq <4 x i32> %q, zeroinitializer
+  %a14 = select <4 x i1> %a1, <4 x float> <float 1.000000e+00, float 2.000000e+00, float 3.000000e+00, float 4.000000e+0> , <4 x float> zeroinitializer
+  ret <4 x float> %a14
+}

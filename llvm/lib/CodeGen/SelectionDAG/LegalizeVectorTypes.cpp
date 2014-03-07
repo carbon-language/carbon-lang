@@ -2192,6 +2192,17 @@ SDValue DAGTypeLegalizer::WidenVecRes_SELECT(SDNode *N) {
     if (getTypeAction(CondVT) == TargetLowering::TypeWidenVector)
       Cond1 = GetWidenedVector(Cond1);
 
+    // If we have to split the condition there is no point in widening the
+    // select. This would result in an cycle of widening the select ->
+    // widening the condition operand -> splitting the condition operand ->
+    // splitting the select -> widening the select. Instead split this select
+    // further and widen the resulting type.
+    if (getTypeAction(CondVT) == TargetLowering::TypeSplitVector) {
+      SDValue SplitSelect = SplitVecOp_VSELECT(N, 0);
+      SDValue Res = ModifyToType(SplitSelect, WidenVT);
+      return Res;
+    }
+
     if (Cond1.getValueType() != CondWidenVT)
       Cond1 = ModifyToType(Cond1, CondWidenVT);
   }
