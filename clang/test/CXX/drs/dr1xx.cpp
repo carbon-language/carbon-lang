@@ -66,7 +66,7 @@ namespace dr108 { // dr108: yes
 namespace dr109 { // dr109: yes
   struct A { template<typename T> void f(T); };
   template<typename T> struct B : T {
-    using T::template f; // expected-error {{using declaration can not refer to a template}}
+    using T::template f; // expected-error {{using declaration cannot refer to a template}}
     void g() { this->f<int>(123); } // expected-error {{use 'template'}}
   };
 }
@@ -722,9 +722,9 @@ namespace dr169 { // dr169: yes
   };
   struct D : A<int>, B {
     using A<int>::n;
-    using B::C<int>; // expected-error {{using declaration can not refer to a template specialization}}
-    using B::f<int>; // expected-error {{using declaration can not refer to a template specialization}}
-    using B::n<int>; // expected-error {{using declaration can not refer to a template specialization}}
+    using B::C<int>; // expected-error {{using declaration cannot refer to a template specialization}}
+    using B::f<int>; // expected-error {{using declaration cannot refer to a template specialization}}
+    using B::n<int>; // expected-error {{using declaration cannot refer to a template specialization}}
   };
 }
 

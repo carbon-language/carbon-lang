@@ -33,7 +33,7 @@ namespace E {
     template <typename TYPE> int funcE(TYPE arg) { return(arg); }
 }
 
-using E::funcE<int>; // expected-error{{using declaration can not refer to a template specialization}}
+using E::funcE<int>; // expected-error{{using declaration cannot refer to a template specialization}}
 
 namespace F {
     struct X;

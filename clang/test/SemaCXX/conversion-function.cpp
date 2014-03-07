@@ -408,8 +408,8 @@ namespace PR12712 {
 
 namespace PR18234 {
   struct A {
-    operator enum E { e } (); // expected-error {{'PR18234::A::E' can not be defined in a type specifier}}
-    operator struct S { int n; } (); // expected-error {{'PR18234::A::S' can not be defined in a type specifier}}
+    operator enum E { e } (); // expected-error {{'PR18234::A::E' cannot be defined in a type specifier}}
+    operator struct S { int n; } (); // expected-error {{'PR18234::A::S' cannot be defined in a type specifier}}
   } a;
   A::S s = a;
   A::E e = a; // expected-note {{here}}

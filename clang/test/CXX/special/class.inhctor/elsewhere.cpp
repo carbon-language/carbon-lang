@@ -9,7 +9,7 @@ struct B1 {
   B1(int);
 };
 
-using B1::B1; // expected-error {{using declaration can not refer to class member}}
+using B1::B1; // expected-error {{using declaration cannot refer to class member}}
 
 // C++11 [namespace.udecl]p10:
 //   A using-declaration is a declaration and can therefore be used repeatedly
@@ -27,7 +27,7 @@ struct I1 : B1 {
 //   shall name a direct base class of the class being defined.
 
 struct D1 : I1 {
-  using B1::B1; // expected-error {{'B1' is not a direct base of 'D1', can not inherit constructors}}
+  using B1::B1; // expected-error {{'B1' is not a direct base of 'D1', cannot inherit constructors}}
 };
 
 template<typename T> struct A {};
@@ -47,7 +47,7 @@ C<char> cc; // expected-note {{here}}
 
 template<typename T> struct D : A<T> {};
 template<typename T> struct E : D<T> {
-  using A<bool>::A; // expected-error {{'A<bool>' is not a direct base of 'E<bool>', can not inherit}}
+  using A<bool>::A; // expected-error {{'A<bool>' is not a direct base of 'E<bool>', cannot inherit}}
 };
 E<bool> eb; // expected-note {{here}}
 

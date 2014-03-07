@@ -5,4 +5,4 @@ namespace A {
   namespace B { }
 }
 
-using A::B; // expected-error{{using declaration can not refer to namespace}}
+using A::B; // expected-error{{using declaration cannot refer to namespace}}

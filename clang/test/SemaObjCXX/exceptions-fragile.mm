@@ -6,7 +6,7 @@ void opaque();
 namespace test0 {
   void test() {
     try {
-    } catch (NSException *e) { // expected-warning {{can not catch an exception thrown with @throw in C++ in the non-unified exception model}}
+    } catch (NSException *e) { // expected-warning {{cannot catch an exception thrown with @throw in C++ in the non-unified exception model}}
     }
   }
 }

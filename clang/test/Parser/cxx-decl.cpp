@@ -181,7 +181,7 @@ void test (DIE die, DIE *Die, DIE INT, DIE *FLOAT) {
 }
 
 namespace PR15017 {
-  template<typename T = struct X { int i; }> struct S {}; // expected-error {{'PR15017::X' can not be defined in a type specifier}}
+  template<typename T = struct X { int i; }> struct S {}; // expected-error {{'PR15017::X' cannot be defined in a type specifier}}
 }
 
 // Ensure we produce at least some diagnostic for attributes in C++98.

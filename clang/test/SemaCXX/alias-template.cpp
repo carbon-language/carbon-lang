@@ -102,10 +102,10 @@ class CtorDtorName {
 };
 
 namespace TagName {
-  template<typename Z> using S = struct { int n; }; // expected-error {{can not be defined}}
-  template<typename Z> using T = class { int n; }; // expected-error {{can not be defined}}
-  template<typename Z> using U = enum { a, b, c }; // expected-error {{can not be defined}}
-  template<typename Z> using V = struct V { int n; }; // expected-error {{'TagName::V' can not be defined in a type alias template}}
+  template<typename Z> using S = struct { int n; }; // expected-error {{cannot be defined}}
+  template<typename Z> using T = class { int n; }; // expected-error {{cannot be defined}}
+  template<typename Z> using U = enum { a, b, c }; // expected-error {{cannot be defined}}
+  template<typename Z> using V = struct V { int n; }; // expected-error {{'TagName::V' cannot be defined in a type alias template}}
 }
 
 namespace StdExample {

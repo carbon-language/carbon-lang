@@ -6,24 +6,24 @@
 
 @interface I @end
 
-@implementation I<P> @end // expected-error {{@implementation declaration can not be protocol qualified}}
+@implementation I<P> @end // expected-error {{@implementation declaration cannot be protocol qualified}}
 
 @interface J < P,P >
 @end
 
 
-@implementation J < P,P > // expected-error {{@implementation declaration can not be protocol qualified}}
+@implementation J < P,P > // expected-error {{@implementation declaration cannot be protocol qualified}}
 @end
 
 @interface K @end
 
-@implementation K <P // expected-error {{@implementation declaration can not be protocol qualified}}
+@implementation K <P // expected-error {{@implementation declaration cannot be protocol qualified}}
 @end // expected-error {{expected '>'}}
 
 // rdar://13920026
-@implementation I (Cat) <P>  // expected-error {{@implementation declaration can not be protocol qualified}}
+@implementation I (Cat) <P>  // expected-error {{@implementation declaration cannot be protocol qualified}}
 - (void) Meth {}
 @end
 
-@implementation I (Cat1) <P // expected-error {{@implementation declaration can not be protocol qualified}}
+@implementation I (Cat1) <P // expected-error {{@implementation declaration cannot be protocol qualified}}
 @end // expected-error {{expected '>'}}
