@@ -104,7 +104,7 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
                                                   &Clang->getTargetOpts()));
     Clang->createFileManager();
     Clang->createSourceManager(Clang->getFileManager());
-    Clang->createPreprocessor();
+    Clang->createPreprocessor(TU_Prefix);
     Clang->getDiagnosticClient().BeginSourceFile(Clang->getLangOpts(),
                                                  &Clang->getPreprocessor());
     Clang->createASTContext();

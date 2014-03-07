@@ -200,6 +200,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// avoid tearing the Lexer and etc. down).
   bool IncrementalProcessing;
 
+  /// The kind of translation unit we are processing.
+  TranslationUnitKind TUKind;
+
   /// \brief The code-completion handler.
   CodeCompletionHandler *CodeComplete;
 
@@ -439,7 +442,8 @@ public:
                IdentifierInfoLookup *IILookup = 0,
                bool OwnsHeaderSearch = false,
                bool DelayInitialization = false,
-               bool IncrProcessing = false);
+               bool IncrProcessing = false,
+               TranslationUnitKind TUKind = TU_Complete);
 
   ~Preprocessor();
 

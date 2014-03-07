@@ -561,7 +561,7 @@ public:
 
   /// Create the preprocessor, using the invocation, file, and source managers,
   /// and replace any existing one with it.
-  void createPreprocessor();
+  void createPreprocessor(TranslationUnitKind TUKind);
 
   /// Create the AST context.
   void createASTContext();
