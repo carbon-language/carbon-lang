@@ -1080,10 +1080,20 @@ DeclContext::decl_range DeclContext::noload_decls() const {
   return decl_range(decl_iterator(FirstDecl), decl_iterator());
 }
 
+DeclContext::decl_iterator DeclContext::noload_decls_begin() const {
+  return decl_iterator(FirstDecl);
+}
+
 DeclContext::decl_range DeclContext::decls() const {
   if (hasExternalLexicalStorage())
     LoadLexicalDeclsFromExternalStorage();
   return decl_range(decl_iterator(FirstDecl), decl_iterator());
+}
+
+DeclContext::decl_iterator DeclContext::decls_begin() const {
+  if (hasExternalLexicalStorage())
+    LoadLexicalDeclsFromExternalStorage();
+  return decl_iterator(FirstDecl);
 }
 
 bool DeclContext::decls_empty() const {

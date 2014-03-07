@@ -352,10 +352,14 @@ public:
     return param_const_range(getParams(), getParams() + NumParams);
   }
 
-  param_const_iterator param_begin() const { return params().begin(); }
-  param_const_iterator param_end() const { return params().end(); }
-  param_iterator param_begin() { return params().begin(); }
-  param_iterator param_end() { return params().end(); }
+  param_const_iterator param_begin() const {
+    return param_const_iterator(getParams());
+  }
+  param_const_iterator param_end() const {
+    return param_const_iterator(getParams() + NumParams);
+  }
+  param_iterator param_begin() { return param_iterator(getParams()); }
+  param_iterator param_end() { return param_iterator(getParams() + NumParams); }
 
   // This method returns and of the parameters which are part of the selector
   // name mangling requirements.

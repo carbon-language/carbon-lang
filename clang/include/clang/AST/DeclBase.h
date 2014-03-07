@@ -780,8 +780,10 @@ public:
                         redecl_iterator());
   }
 
-  redecl_iterator redecls_begin() const { return redecls().begin(); }
-  redecl_iterator redecls_end() const { return redecls().end(); }
+  redecl_iterator redecls_begin() const {
+    return redecl_iterator(const_cast<Decl *>(this));
+  }
+  redecl_iterator redecls_end() const { return redecl_iterator(); }
 
   /// \brief Retrieve the previous declaration that declares the same entity
   /// as this declaration, or NULL if there is no previous declaration.
@@ -1311,16 +1313,16 @@ public:
   /// decls_begin/decls_end - Iterate over the declarations stored in
   /// this context.
   decl_range decls() const;
-  decl_iterator decls_begin() const { return decls().begin(); }
-  decl_iterator decls_end() const { return decls().end(); }
+  decl_iterator decls_begin() const;
+  decl_iterator decls_end() const { return decl_iterator(); }
   bool decls_empty() const;
 
   /// noload_decls_begin/end - Iterate over the declarations stored in this
   /// context that are currently loaded; don't attempt to retrieve anything
   /// from an external source.
   decl_range noload_decls() const;
-  decl_iterator noload_decls_begin() const { return noload_decls().begin(); }
-  decl_iterator noload_decls_end() const { return noload_decls().end(); }
+  decl_iterator noload_decls_begin() const;
+  decl_iterator noload_decls_end() const { return decl_iterator(); }
 
   /// specific_decl_iterator - Iterates over a subrange of
   /// declarations stored in a DeclContext, providing only those that

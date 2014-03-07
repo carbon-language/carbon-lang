@@ -171,8 +171,11 @@ public:
                         redecl_iterator());
   }
 
-  redecl_iterator redecls_begin() const { return redecls().begin(); }
-  redecl_iterator redecls_end() const { return redecls().end(); }
+  redecl_iterator redecls_begin() const {
+    return redecl_iterator(
+        const_cast<decl_type *>(static_cast<const decl_type *>(this)));
+  }
+  redecl_iterator redecls_end() const { return redecl_iterator(); }
 
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
