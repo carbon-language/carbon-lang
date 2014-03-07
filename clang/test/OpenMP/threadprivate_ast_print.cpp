@@ -26,9 +26,16 @@ int a, b;
 #pragma omp threadprivate(d, b)
 // CHECK-NEXT: #pragma omp threadprivate(d,b)
 
+template <class T>
+struct ST {
+  static T m;
+  #pragma omp threadprivate(m)
+};
+
 template <class T> T foo() {
   static T v;
   #pragma omp threadprivate(v)
+  v = ST<T>::m;
   return v;
 }
 //CHECK: template <class T = int> int foo() {

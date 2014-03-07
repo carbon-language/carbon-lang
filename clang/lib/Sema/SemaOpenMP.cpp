@@ -525,8 +525,7 @@ ExprResult Sema::ActOnOpenMPIdExpression(Scope *CurScope,
   }
 
   QualType ExprType = VD->getType().getNonReferenceType();
-  ExprResult DE = BuildDeclRefExpr(VD, ExprType, VK_RValue, Id.getLoc());
-  DSAStack->addDSA(VD, cast<DeclRefExpr>(DE.get()), OMPC_threadprivate);
+  ExprResult DE = BuildDeclRefExpr(VD, ExprType, VK_LValue, Id.getLoc());
   return DE;
 }
 
@@ -582,6 +581,7 @@ OMPThreadPrivateDecl *Sema::CheckOMPThreadPrivateDecl(
     }
 
     Vars.push_back(*I);
+    DSAStack->addDSA(VD, DE, OMPC_threadprivate);
   }
   OMPThreadPrivateDecl *D = 0;
   if (!Vars.empty()) {
