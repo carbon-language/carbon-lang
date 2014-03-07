@@ -266,7 +266,7 @@ LLVM-specific variables
 **LLVM_EXTERNAL_{CLANG,LLD,POLLY}_SOURCE_DIR**:PATH
   Path to ``{Clang,lld,Polly}``\'s source directory. Defaults to
   ``tools/{clang,lld,polly}``. ``{Clang,lld,Polly}`` will not be built when it
-  is empty or it does not point valid path.
+  is empty or it does not point to a valid path.
 
 **LLVM_USE_OPROFILE**:BOOL
   Enable building OProfile JIT support. Defaults to OFF
