@@ -669,7 +669,6 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   switch (BuiltinID) {
   case X86::BI_mm_prefetch:
     return SemaBuiltinMMPrefetch(TheCall);
-    break;
   }
   return false;
 }
