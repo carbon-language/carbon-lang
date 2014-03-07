@@ -1791,16 +1791,16 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
 static bool DeclHasAttr(const Decl *D, const Attr *A) {
   const OwnershipAttr *OA = dyn_cast<OwnershipAttr>(A);
   const AnnotateAttr *Ann = dyn_cast<AnnotateAttr>(A);
-  for (Decl::attr_iterator i = D->attr_begin(), e = D->attr_end(); i != e; ++i)
-    if ((*i)->getKind() == A->getKind()) {
+  for (auto i : D->attrs())
+    if (i->getKind() == A->getKind()) {
       if (Ann) {
-        if (Ann->getAnnotation() == cast<AnnotateAttr>(*i)->getAnnotation())
+        if (Ann->getAnnotation() == cast<AnnotateAttr>(i)->getAnnotation())
           return true;
         continue;
       }
       // FIXME: Don't hardcode this check
-      if (OA && isa<OwnershipAttr>(*i))
-        return OA->getOwnKind() == cast<OwnershipAttr>(*i)->getOwnKind();
+      if (OA && isa<OwnershipAttr>(i))
+        return OA->getOwnKind() == cast<OwnershipAttr>(i)->getOwnKind();
       return true;
     }
 
@@ -1997,12 +1997,9 @@ static const Decl *getDefinition(const Decl *D) {
 }
 
 static bool hasAttribute(const Decl *D, attr::Kind Kind) {
-  for (Decl::attr_iterator I = D->attr_begin(), E = D->attr_end();
-       I != E; ++I) {
-    Attr *Attribute = *I;
+  for (auto Attribute : D->attrs())
     if (Attribute->getKind() == Kind)
       return true;
-  }
   return false;
 }
 

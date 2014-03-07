@@ -762,7 +762,7 @@ void ASTDumper::dumpDecl(const Decl *D) {
     if (ND->isHidden())
       OS << " hidden";
 
-  bool HasAttrs = D->attr_begin() != D->attr_end();
+  bool HasAttrs = D->hasAttrs();
   const FullComment *Comment =
       D->getASTContext().getLocalCommentForDeclUncached(D);
   // Decls within functions are visited by the body

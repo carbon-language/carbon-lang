@@ -2638,12 +2638,11 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
     return Result.TakeString();
   }
 
-  for (Decl::attr_iterator i = ND->attr_begin(); i != ND->attr_end(); ++i) {
-    if (AnnotateAttr *Attr = dyn_cast_or_null<AnnotateAttr>(*i)) {
-      Result.AddAnnotation(Result.getAllocator().CopyString(Attr->getAnnotation()));
-    }
-  }
-  
+  for (auto i = ND->specific_attr_begin<AnnotateAttr>(),
+            e = ND->specific_attr_end<AnnotateAttr>(); i != e; ++i)
+    Result.AddAnnotation(
+        Result.getAllocator().CopyString((*i)->getAnnotation()));
+
   AddResultTypeChunk(Ctx, Policy, ND, Result);
   
   if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {

@@ -669,8 +669,8 @@ bool RecursiveASTVisitor<Derived>::TraverseDecl(Decl *D) {
   }
 
   // Visit any attributes attached to this declaration.
-  for (Decl::attr_iterator I=D->attr_begin(), E=D->attr_end(); I != E; ++I) {
-    if (!getDerived().TraverseAttr(*I))
+  for (auto I : D->attrs()) {
+    if (!getDerived().TraverseAttr(I))
       return false;
   }
   return true;
