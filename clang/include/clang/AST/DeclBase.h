@@ -780,6 +780,9 @@ public:
                         redecl_iterator());
   }
 
+  redecl_iterator redecls_begin() const { return redecls().begin(); }
+  redecl_iterator redecls_end() const { return redecls().end(); }
+
   /// \brief Retrieve the previous declaration that declares the same entity
   /// as this declaration, or NULL if there is no previous declaration.
   Decl *getPreviousDecl() { return getPreviousDeclImpl(); }

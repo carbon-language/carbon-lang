@@ -171,6 +171,9 @@ public:
                         redecl_iterator());
   }
 
+  redecl_iterator redecls_begin() const { return redecls().begin(); }
+  redecl_iterator redecls_end() const { return redecls().end(); }
+
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };
