@@ -400,6 +400,15 @@ const Stmt *DeadCodeScan::findDeadCode(const clang::CFGBlock *Block) {
   return 0;
 }
 
+static int SrcCmp(const std::pair<const CFGBlock *, const Stmt *> *p1,
+                  const std::pair<const CFGBlock *, const Stmt *> *p2) {
+  if (p1->second->getLocStart() < p2->second->getLocStart())
+    return -1;
+  if (p2->second->getLocStart() < p1->second->getLocStart())
+    return 1;
+  return 0;
+}
+
 unsigned DeadCodeScan::scanBackwards(const clang::CFGBlock *Start,
                                      clang::reachable_code::Callback &CB) {
 
@@ -448,13 +457,7 @@ unsigned DeadCodeScan::scanBackwards(const clang::CFGBlock *Start,
   // If we didn't find a dead root, then report the dead code with the
   // earliest location.
   if (!DeferredLocs.empty()) {
-    llvm::array_pod_sort(DeferredLocs.begin(), DeferredLocs.end(),
-                         [](const DeferredLocsTy::value_type *p1,
-                            const DeferredLocsTy::value_type *p2) {
-      if (p1->second->getLocStart() != p2->second->getLocStart())
-        return p1->second->getLocStart() < p2->second->getLocStart() ? -1 : 1;
-      return 0;
-    });
+    llvm::array_pod_sort(DeferredLocs.begin(), DeferredLocs.end(), SrcCmp);
     for (DeferredLocsTy::iterator I = DeferredLocs.begin(),
          E = DeferredLocs.end(); I != E; ++I) {
       const CFGBlock *Block = I->first;
