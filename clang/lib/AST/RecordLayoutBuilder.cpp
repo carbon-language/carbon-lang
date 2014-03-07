@@ -3002,10 +3002,8 @@ uint64_t ASTContext::getFieldOffset(const ValueDecl *VD) const {
     const IndirectFieldDecl *IFD = cast<IndirectFieldDecl>(VD);
 
     OffsetInBits = 0;
-    for (IndirectFieldDecl::chain_iterator CI = IFD->chain_begin(),
-                                           CE = IFD->chain_end();
-         CI != CE; ++CI)
-      OffsetInBits += ::getFieldOffset(*this, cast<FieldDecl>(*CI));
+    for (const auto *CI : IFD->chains())
+      OffsetInBits += ::getFieldOffset(*this, cast<FieldDecl>(CI));
   }
 
   return OffsetInBits;

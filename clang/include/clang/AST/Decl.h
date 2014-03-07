@@ -2331,8 +2331,13 @@ public:
   static IndirectFieldDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
   typedef NamedDecl * const *chain_iterator;
-  chain_iterator chain_begin() const { return Chaining; }
-  chain_iterator chain_end() const  { return Chaining+ChainingSize; }
+  typedef llvm::iterator_range<chain_iterator> chain_range;
+
+  chain_range chains() const {
+    return chain_range(Chaining, Chaining + ChainingSize);
+  }
+  chain_iterator chain_begin() const { return chains().begin(); }
+  chain_iterator chain_end() const  { return chains().end(); }
 
   unsigned getChainingSize() const { return ChainingSize; }
 

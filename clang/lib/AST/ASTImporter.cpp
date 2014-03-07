@@ -2967,9 +2967,8 @@ Decl *ASTNodeImporter::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
     new (Importer.getToContext())NamedDecl*[D->getChainingSize()];
 
   unsigned i = 0;
-  for (IndirectFieldDecl::chain_iterator PI = D->chain_begin(),
-       PE = D->chain_end(); PI != PE; ++PI) {
-    Decl* D = Importer.Import(*PI);
+  for (auto *PI : D->chains()) {
+    Decl *D = Importer.Import(PI);
     if (!D)
       return 0;
     NamedChain[i++] = cast<NamedDecl>(D);

@@ -549,10 +549,8 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     // If we are initializing an anonymous union field, drill down to
     // the field.
     IndirectFieldDecl *IndirectField = MemberInit->getIndirectMember();
-    IndirectFieldDecl::chain_iterator I = IndirectField->chain_begin(),
-      IEnd = IndirectField->chain_end();
-    for ( ; I != IEnd; ++I)
-      LHS = CGF.EmitLValueForFieldInitialization(LHS, cast<FieldDecl>(*I));
+    for (const auto *I : IndirectField->chains())
+      LHS = CGF.EmitLValueForFieldInitialization(LHS, cast<FieldDecl>(I));
     FieldType = MemberInit->getIndirectMember()->getAnonField()->getType();
   } else {
     LHS = CGF.EmitLValueForFieldInitialization(LHS, Field);

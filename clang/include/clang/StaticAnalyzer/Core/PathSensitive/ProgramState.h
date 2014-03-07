@@ -676,10 +676,8 @@ inline SVal ProgramState::getLValue(const FieldDecl *D, SVal Base) const {
 inline SVal ProgramState::getLValue(const IndirectFieldDecl *D,
                                     SVal Base) const {
   StoreManager &SM = *getStateManager().StoreMgr;
-  for (IndirectFieldDecl::chain_iterator I = D->chain_begin(),
-                                         E = D->chain_end();
-       I != E; ++I) {
-    Base = SM.getLValueField(cast<FieldDecl>(*I), Base);
+  for (const auto *I : D->chains()) {
+    Base = SM.getLValueField(cast<FieldDecl>(I), Base);
   }
 
   return Base;

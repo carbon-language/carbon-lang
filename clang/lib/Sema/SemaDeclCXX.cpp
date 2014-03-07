@@ -3413,10 +3413,8 @@ struct BaseAndFieldInfo {
     if (!Indirect)
       return isInactiveUnionMember(Field);
 
-    for (IndirectFieldDecl::chain_iterator C = Indirect->chain_begin(),
-                                           CEnd = Indirect->chain_end();
-         C != CEnd; ++C) {
-      FieldDecl *Field = dyn_cast<FieldDecl>(*C);
+    for (auto *C : Indirect->chains()) {
+      FieldDecl *Field = dyn_cast<FieldDecl>(C);
       if (Field && isInactiveUnionMember(Field))
         return true;
     }
@@ -3564,10 +3562,8 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor, bool AnyErrors,
       Info.AllBaseFields[Member->getAnyMember()] = Member;
 
       if (IndirectFieldDecl *F = Member->getIndirectMember()) {
-        for (IndirectFieldDecl::chain_iterator C = F->chain_begin(),
-                                            CEnd = F->chain_end();
-             C != CEnd; ++C) {
-          FieldDecl *FD = dyn_cast<FieldDecl>(*C);
+        for (auto *C : F->chains()) {
+          FieldDecl *FD = dyn_cast<FieldDecl>(C);
           if (FD && FD->getParent()->isUnion())
             Info.ActiveUnionMember.insert(std::make_pair(
                 FD->getParent()->getCanonicalDecl(), FD->getCanonicalDecl()));
