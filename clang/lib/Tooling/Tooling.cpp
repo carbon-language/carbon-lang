@@ -228,7 +228,7 @@ bool ToolInvocation::run() {
         llvm::MemoryBuffer::getMemBuffer(It->getValue());
     Invocation->getPreprocessorOpts().addRemappedFile(It->getKey(), Input);
   }
-  return runInvocation(BinaryName, Compilation.get(), Invocation.take());
+  return runInvocation(BinaryName, Compilation.get(), Invocation.release());
 }
 
 bool ToolInvocation::runInvocation(

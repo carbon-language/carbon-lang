@@ -227,7 +227,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
       }
 
       IntrusiveRefCntPtr<vfs::FileSystem> FS =
-          vfs::getVFSFromYAML(Buffer.take(), /*DiagHandler*/0);
+          vfs::getVFSFromYAML(Buffer.release(), /*DiagHandler*/ 0);
       if (!FS.getPtr()) {
         CI.getDiagnostics().Report(diag::err_invalid_vfs_overlay) << *I;
         goto failure;
@@ -343,7 +343,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
         goto failure;
     }
 
-    CI.setASTConsumer(Consumer.take());
+    CI.setASTConsumer(Consumer.release());
     if (!CI.hasASTConsumer())
       goto failure;
   }

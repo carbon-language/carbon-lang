@@ -6015,5 +6015,5 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   if (!Target->handleTargetFeatures(Opts->Features, Diags))
     return 0;
 
-  return Target.take();
+  return Target.release();
 }

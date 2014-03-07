@@ -120,7 +120,7 @@ public:
 
   /// takeGraph - Returns the exploded graph.  Ownership of the graph is
   ///  transferred to the caller.
-  ExplodedGraph* takeGraph() { return G.take(); }
+  ExplodedGraph *takeGraph() { return G.release(); }
 
   /// ExecuteWorkList - Run the worklist algorithm for a maximum number of
   ///  steps.  Returns true if there is still simulation state on the worklist.

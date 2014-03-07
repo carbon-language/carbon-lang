@@ -724,7 +724,7 @@ CFG* CFGBuilder::buildCFG(const Decl *D, Stmt *Statement) {
   // Create an empty entry block that has no predecessors.
   cfg->setEntry(createBlock());
 
-  return cfg.take();
+  return cfg.release();
 }
 
 /// createBlock - Used to lazily create blocks that are connected

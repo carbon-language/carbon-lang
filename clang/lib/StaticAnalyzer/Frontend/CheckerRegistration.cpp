@@ -123,7 +123,7 @@ CheckerManager *ento::createCheckerManager(AnalyzerOptions &opts,
           << checkerOpts[i].getName();
   }
 
-  return checkerMgr.take();
+  return checkerMgr.release();
 }
 
 void ento::printCheckerHelp(raw_ostream &out, ArrayRef<std::string> plugins) {

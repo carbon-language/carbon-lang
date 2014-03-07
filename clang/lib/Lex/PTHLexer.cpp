@@ -534,9 +534,9 @@ PTHManager *PTHManager::Create(const std::string &file,
   if (!len) originalSourceBase = 0;
 
   // Create the new PTHManager.
-  return new PTHManager(File.take(), FL.take(), IData, PerIDCache,
-                        SL.take(), NumIds, spellingBase,
-                        (const char*) originalSourceBase);
+  return new PTHManager(File.release(), FL.release(), IData, PerIDCache,
+                        SL.release(), NumIds, spellingBase,
+                        (const char *)originalSourceBase);
 }
 
 IdentifierInfo* PTHManager::LazilyCreateIdentifierInfo(unsigned PersistentID) {

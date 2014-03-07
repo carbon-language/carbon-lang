@@ -277,7 +277,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     Diags.Report(diag::err_fe_error_reading) << Opts.InputFile;
     return false;
   }
-  MemoryBuffer *Buffer = BufferPtr.take();
+  MemoryBuffer *Buffer = BufferPtr.release();
 
   SourceMgr SrcMgr;
 

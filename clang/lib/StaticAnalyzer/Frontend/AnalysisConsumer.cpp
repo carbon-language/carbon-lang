@@ -730,7 +730,7 @@ static ExplodedNode::Auditor* CreateUbiViz() {
   OwningPtr<llvm::raw_fd_ostream> Stream;
   Stream.reset(new llvm::raw_fd_ostream(FD, true));
 
-  return new UbigraphViz(Stream.take(), P);
+  return new UbigraphViz(Stream.release(), P);
 }
 
 void UbigraphViz::AddEdge(ExplodedNode *Src, ExplodedNode *Dst) {

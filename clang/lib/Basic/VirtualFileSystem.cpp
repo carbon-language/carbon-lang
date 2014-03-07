@@ -731,7 +731,7 @@ VFSFromYAML *VFSFromYAML::create(MemoryBuffer *Buffer,
   if (!P.parse(Root, FS.get()))
     return NULL;
 
-  return FS.take();
+  return FS.release();
 }
 
 ErrorOr<Entry *> VFSFromYAML::lookupPath(const Twine &Path_) {

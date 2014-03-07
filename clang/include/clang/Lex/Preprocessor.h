@@ -1326,13 +1326,9 @@ public:
 private:
 
   void PushIncludeMacroStack() {
-    IncludeMacroStack.push_back(IncludeStackInfo(CurLexerKind,
-                                                 CurSubmodule,
-                                                 CurLexer.take(),
-                                                 CurPTHLexer.take(),
-                                                 CurPPLexer,
-                                                 CurTokenLexer.take(),
-                                                 CurDirLookup));
+    IncludeMacroStack.push_back(IncludeStackInfo(
+        CurLexerKind, CurSubmodule, CurLexer.release(), CurPTHLexer.release(),
+        CurPPLexer, CurTokenLexer.release(), CurDirLookup));
     CurPPLexer = 0;
   }
 

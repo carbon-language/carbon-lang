@@ -781,7 +781,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   // Tell the diagnostic client that we have started a source file.
   AST->getDiagnostics().getClient()->BeginSourceFile(Context.getLangOpts(),&PP);
 
-  return AST.take();
+  return AST.release();
 }
 
 namespace {
@@ -1798,7 +1798,7 @@ ASTUnit *ASTUnit::create(CompilerInvocation *CI,
   AST->SourceMgr = new SourceManager(AST->getDiagnostics(), *AST->FileMgr,
                                      UserFilesAreVolatile);
 
-  return AST.take();
+  return AST.release();
 }
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
@@ -1938,7 +1938,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   Act->EndSourceFile();
 
   if (OwnAST)
-    return OwnAST.take();
+    return OwnAST.release();
   else
     return AST;
 }
@@ -2001,7 +2001,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
     llvm::CrashRecoveryContextReleaseRefCleanup<DiagnosticsEngine> >
     DiagCleanup(Diags.getPtr());
 
-  return AST->LoadFromCompilerInvocation(PrecompilePreamble)? 0 : AST.take();
+  return AST->LoadFromCompilerInvocation(PrecompilePreamble) ? 0
+                                                             : AST.release();
 }
 
 ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
@@ -2093,7 +2094,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
     return 0;
   }
 
-  return AST.take();
+  return AST.release();
 }
 
 bool ASTUnit::Reparse(ArrayRef<RemappedFile> RemappedFiles) {

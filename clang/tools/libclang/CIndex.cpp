@@ -2811,7 +2811,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   if (isASTReadError(Unit ? Unit.get() : ErrUnit.get())) {
     PTUI->result = CXError_ASTReadError;
   } else {
-    *PTUI->out_TU = MakeCXTranslationUnit(CXXIdx, Unit.take());
+    *PTUI->out_TU = MakeCXTranslationUnit(CXXIdx, Unit.release());
     PTUI->result = *PTUI->out_TU ? CXError_Success : CXError_Failure;
   }
 }
@@ -6607,7 +6607,7 @@ CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
   CXTUResourceUsage usage = { (void*) entries.get(),
                             (unsigned) entries->size(),
                             entries->size() ? &(*entries)[0] : 0 };
-  entries.take();
+  entries.release();
   return usage;
 }
 

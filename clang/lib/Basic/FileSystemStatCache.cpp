@@ -91,7 +91,7 @@ bool FileSystemStatCache::get(const char *Path, FileData &Data, bool isFile,
       if (Status) {
         R = CacheExists;
         copyStatusToFileData(*Status, Data);
-        *F = OwnedFile.take();
+        *F = OwnedFile.release();
       } else {
         // fstat rarely fails.  If it does, claim the initial open didn't
         // succeed.

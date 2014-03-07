@@ -435,7 +435,7 @@ public:
 
   /// takeASTConsumer - Remove the current AST consumer and give ownership to
   /// the caller.
-  ASTConsumer *takeASTConsumer() { return Consumer.take(); }
+  ASTConsumer *takeASTConsumer() { return Consumer.release(); }
 
   /// setASTConsumer - Replace the current AST consumer; the compiler instance
   /// takes ownership of \p Value.
@@ -450,9 +450,9 @@ public:
     assert(TheSema && "Compiler instance has no Sema object!");
     return *TheSema;
   }
-  
-  Sema *takeSema() { return TheSema.take(); }
-  
+
+  Sema *takeSema() { return TheSema.release(); }
+
   /// }
   /// @name Module Management
   /// {
@@ -477,7 +477,7 @@ public:
   /// takeCodeCompletionConsumer - Remove the current code completion consumer
   /// and give ownership to the caller.
   CodeCompleteConsumer *takeCodeCompletionConsumer() {
-    return CompletionConsumer.take();
+    return CompletionConsumer.release();
   }
 
   /// setCodeCompletionConsumer - Replace the current code completion consumer;

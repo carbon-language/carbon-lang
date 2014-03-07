@@ -70,7 +70,7 @@ CXRemapping clang_getRemappings(const char *migrate_dir_path) {
     return 0;
   }
 
-  return remap.take();
+  return remap.release();
 }
 
 CXRemapping clang_getRemappingsFromFileList(const char **filePaths,
@@ -83,7 +83,7 @@ CXRemapping clang_getRemappingsFromFileList(const char **filePaths,
     if (Logging)
       llvm::errs() << "clang_getRemappingsFromFileList was called with "
                       "numFiles=0\n";
-    return remap.take();
+    return remap.release();
   }
 
   if (!filePaths) {
@@ -108,10 +108,10 @@ CXRemapping clang_getRemappingsFromFileList(const char **filePaths,
              I = diagBuffer.err_begin(), E = diagBuffer.err_end(); I != E; ++I)
         llvm::errs() << I->second << '\n';
     }
-    return remap.take();
+    return remap.release();
   }
 
-  return remap.take();
+  return remap.release();
 }
 
 unsigned clang_remap_getNumFiles(CXRemapping map) {

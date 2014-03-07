@@ -71,7 +71,7 @@ void FileManager::addStatCache(FileSystemStatCache *statCache,
                                bool AtBeginning) {
   assert(statCache && "No stat cache provided?");
   if (AtBeginning || StatCache.get() == 0) {
-    statCache->setNextStatCache(StatCache.take());
+    statCache->setNextStatCache(StatCache.release());
     StatCache.reset(statCache);
     return;
   }
@@ -395,7 +395,7 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
     if (ErrorStr)
       *ErrorStr = ec.message();
     Entry->closeFile();
-    return Result.take();
+    return Result.release();
   }
 
   // Otherwise, open the file.
@@ -404,7 +404,7 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
     ec = FS->getBufferForFile(Filename, Result, FileSize);
     if (ec && ErrorStr)
       *ErrorStr = ec.message();
-    return Result.take();
+    return Result.release();
   }
 
   SmallString<128> FilePath(Entry->getName());
@@ -412,7 +412,7 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
   ec = FS->getBufferForFile(FilePath.str(), Result, FileSize);
   if (ec && ErrorStr)
     *ErrorStr = ec.message();
-  return Result.take();
+  return Result.release();
 }
 
 llvm::MemoryBuffer *FileManager::
@@ -423,7 +423,7 @@ getBufferForFile(StringRef Filename, std::string *ErrorStr) {
     ec = FS->getBufferForFile(Filename, Result);
     if (ec && ErrorStr)
       *ErrorStr = ec.message();
-    return Result.take();
+    return Result.release();
   }
 
   SmallString<128> FilePath(Filename);
@@ -431,7 +431,7 @@ getBufferForFile(StringRef Filename, std::string *ErrorStr) {
   ec = FS->getBufferForFile(FilePath.c_str(), Result);
   if (ec && ErrorStr)
     *ErrorStr = ec.message();
-  return Result.take();
+  return Result.release();
 }
 
 /// getStatValue - Get the 'stat' information for the specified path,

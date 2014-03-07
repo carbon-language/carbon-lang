@@ -103,7 +103,7 @@ const HeaderMap *HeaderMap::Create(const FileEntry *FE, FileManager &FM) {
   if (Header->Reserved != 0) return 0;
 
   // Okay, everything looks good, create the header map.
-  return new HeaderMap(FileBuffer.take(), NeedsByteSwap);
+  return new HeaderMap(FileBuffer.release(), NeedsByteSwap);
 }
 
 HeaderMap::~HeaderMap() {

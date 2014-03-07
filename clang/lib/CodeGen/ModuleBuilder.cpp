@@ -48,9 +48,7 @@ namespace {
       return M.get();
     }
 
-    virtual llvm::Module* ReleaseModule() {
-      return M.take();
-    }
+    virtual llvm::Module *ReleaseModule() { return M.release(); }
 
     virtual void Initialize(ASTContext &Context) {
       Ctx = &Context;

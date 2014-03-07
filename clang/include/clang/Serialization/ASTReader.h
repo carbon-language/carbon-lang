@@ -1325,7 +1325,7 @@ public:
   /// Takes ownership of \p L.
   void addListener(ASTReaderListener *L) {
     if (Listener)
-      L = new ChainedASTReaderListener(L, Listener.take());
+      L = new ChainedASTReaderListener(L, Listener.release());
     Listener.reset(L);
   }
 

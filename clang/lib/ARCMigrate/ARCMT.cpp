@@ -208,7 +208,7 @@ createInvocationForMigration(CompilerInvocation &origCI) {
 
   CInvok->getLangOpts()->ObjCARCWeak = HasARCRuntime(origCI);
 
-  return CInvok.take();
+  return CInvok.release();
 }
 
 static void emitPremigrationErrors(const CapturedDiagList &arcDiags,
@@ -264,7 +264,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   Diags->setClient(&errRec, /*ShouldOwnClient=*/false);
 
   OwningPtr<ASTUnit> Unit(
-      ASTUnit::LoadFromCompilerInvocationAction(CInvok.take(), Diags));
+      ASTUnit::LoadFromCompilerInvocationAction(CInvok.release(), Diags));
   if (!Unit) {
     errRec.FinishCapture();
     return true;
@@ -537,9 +537,8 @@ bool MigrationProcess::applyTransform(TransformFn trans,
   OwningPtr<ARCMTMacroTrackerAction> ASTAction;
   ASTAction.reset(new ARCMTMacroTrackerAction(ARCMTMacroLocs));
 
-  OwningPtr<ASTUnit> Unit(
-      ASTUnit::LoadFromCompilerInvocationAction(CInvok.take(), Diags,
-                                                ASTAction.get()));
+  OwningPtr<ASTUnit> Unit(ASTUnit::LoadFromCompilerInvocationAction(
+      CInvok.release(), Diags, ASTAction.get()));
   if (!Unit) {
     errRec.FinishCapture();
     return true;

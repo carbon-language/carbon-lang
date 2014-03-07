@@ -184,7 +184,7 @@ TEST(ExternalSemaSource, SanityCheck) {
   Installer->PushWatcher(&Watcher);
   std::vector<std::string> Args(1, "-std=c++11");
   ASSERT_TRUE(clang::tooling::runToolOnCodeWithArgs(
-      Installer.take(), "namespace AAA { } using namespace AAB;", Args));
+      Installer.release(), "namespace AAA { } using namespace AAB;", Args));
   ASSERT_EQ(0, Watcher.SeenCount);
 }
 
@@ -199,7 +199,7 @@ TEST(ExternalSemaSource, ExternalTypoCorrectionPrioritized) {
   Installer->PushWatcher(&Watcher);
   std::vector<std::string> Args(1, "-std=c++11");
   ASSERT_TRUE(clang::tooling::runToolOnCodeWithArgs(
-      Installer.take(), "namespace AAA { } using namespace AAB;", Args));
+      Installer.release(), "namespace AAA { } using namespace AAB;", Args));
   ASSERT_LE(0, Provider.CallCount);
   ASSERT_EQ(1, Watcher.SeenCount);
 }
@@ -219,7 +219,7 @@ TEST(ExternalSemaSource, ExternalTypoCorrectionOrdering) {
   Installer->PushWatcher(&Watcher);
   std::vector<std::string> Args(1, "-std=c++11");
   ASSERT_TRUE(clang::tooling::runToolOnCodeWithArgs(
-      Installer.take(), "namespace AAA { } using namespace AAB;", Args));
+      Installer.release(), "namespace AAA { } using namespace AAB;", Args));
   ASSERT_LE(1, First.CallCount);
   ASSERT_LE(1, Second.CallCount);
   ASSERT_EQ(0, Third.CallCount);
@@ -237,7 +237,7 @@ TEST(ExternalSemaSource, TryOtherTacticsBeforeDiagnosing) {
   // This code hits the class template specialization/class member of a class
   // template specialization checks in Sema::RequireCompleteTypeImpl.
   ASSERT_TRUE(clang::tooling::runToolOnCodeWithArgs(
-      Installer.take(),
+      Installer.release(),
       "template <typename T> struct S { class C { }; }; S<char>::C SCInst;",
       Args));
   ASSERT_EQ(0, Diagnoser.CallCount);
@@ -256,7 +256,7 @@ TEST(ExternalSemaSource, FirstDiagnoserTaken) {
   Installer->PushSource(&Third);
   std::vector<std::string> Args(1, "-std=c++11");
   ASSERT_FALSE(clang::tooling::runToolOnCodeWithArgs(
-      Installer.take(), "class Incomplete; Incomplete IncompleteInstance;",
+      Installer.release(), "class Incomplete; Incomplete IncompleteInstance;",
       Args));
   ASSERT_EQ(1, First.CallCount);
   ASSERT_EQ(1, Second.CallCount);

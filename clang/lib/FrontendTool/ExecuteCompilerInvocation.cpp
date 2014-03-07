@@ -75,7 +75,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
         OwningPtr<PluginASTAction> P(it->instantiate());
         if (!P->ParseArgs(CI, CI.getFrontendOpts().PluginArgs))
           return 0;
-        return P.take();
+        return P.release();
       }
     }
 
@@ -238,6 +238,6 @@ bool clang::ExecuteCompilerInvocation(CompilerInstance *Clang) {
     return false;
   bool Success = Clang->ExecuteAction(*Act);
   if (Clang->getFrontendOpts().DisableFree)
-    BuryPointer(Act.take());
+    BuryPointer(Act.release());
   return Success;
 }

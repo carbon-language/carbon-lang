@@ -126,7 +126,7 @@ class JSONCompilationDatabasePlugin : public CompilationDatabasePlugin {
         JSONCompilationDatabase::loadFromFile(JSONDatabasePath, ErrorMessage));
     if (!Database)
       return NULL;
-    return Database.take();
+    return Database.release();
   }
 };
 
@@ -152,10 +152,10 @@ JSONCompilationDatabase::loadFromFile(StringRef FilePath,
     return NULL;
   }
   OwningPtr<JSONCompilationDatabase> Database(
-    new JSONCompilationDatabase(DatabaseBuffer.take()));
+      new JSONCompilationDatabase(DatabaseBuffer.release()));
   if (!Database->parse(ErrorMessage))
     return NULL;
-  return Database.take();
+  return Database.release();
 }
 
 JSONCompilationDatabase *
@@ -164,10 +164,10 @@ JSONCompilationDatabase::loadFromBuffer(StringRef DatabaseString,
   OwningPtr<llvm::MemoryBuffer> DatabaseBuffer(
       llvm::MemoryBuffer::getMemBuffer(DatabaseString));
   OwningPtr<JSONCompilationDatabase> Database(
-      new JSONCompilationDatabase(DatabaseBuffer.take()));
+      new JSONCompilationDatabase(DatabaseBuffer.release()));
   if (!Database->parse(ErrorMessage))
     return NULL;
-  return Database.take();
+  return Database.release();
 }
 
 std::vector<CompileCommand>

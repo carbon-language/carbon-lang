@@ -1362,8 +1362,8 @@ bool ConsumedAnalyzer::splitState(const CFGBlock *CurrBlock,
     delete CurrStates;
     
   if (*++SI)
-    BlockInfo.addInfo(*SI, FalseStates.take());
-  
+    BlockInfo.addInfo(*SI, FalseStates.release());
+
   CurrStates = NULL;
   return true;
 }

@@ -44,7 +44,7 @@ static ASTReader *createASTReader(CompilerInstance &CI,
   case ASTReader::Success:
     // Set the predefines buffer as suggested by the PCH reader.
     PP.setPredefines(Reader->getSuggestedPredefines());
-    return Reader.take();
+    return Reader.release();
 
   case ASTReader::Failure:
   case ASTReader::Missing:
@@ -98,7 +98,7 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
         new DiagnosticsEngine(DiagID, &CI.getDiagnosticOpts(), DiagClient));
 
     OwningPtr<CompilerInstance> Clang(new CompilerInstance());
-    Clang->setInvocation(CInvok.take());
+    Clang->setInvocation(CInvok.release());
     Clang->setDiagnostics(Diags.getPtr());
     Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
                                                   &Clang->getTargetOpts()));
@@ -116,7 +116,7 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
                                     /*isysroot=*/"", &OS));
     Clang->getASTContext().setASTMutationListener(
                                             consumer->GetASTMutationListener());
-    Clang->setASTConsumer(consumer.take());
+    Clang->setASTConsumer(consumer.release());
     Clang->createSema(TU_Prefix, 0);
 
     if (firstInclude) {
@@ -156,7 +156,7 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
     serialBufs.push_back(
       llvm::MemoryBuffer::getMemBufferCopy(StringRef(serialAST.data(),
                                                            serialAST.size())));
-    source->CIs.push_back(Clang.take());
+    source->CIs.push_back(Clang.release());
   }
 
   assert(!serialBufs.empty());

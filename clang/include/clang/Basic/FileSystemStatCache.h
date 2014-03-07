@@ -82,8 +82,8 @@ public:
   /// \brief Retrieve the next stat call cache in the chain, transferring
   /// ownership of this cache (and, transitively, all of the remaining caches)
   /// to the caller.
-  FileSystemStatCache *takeNextStatCache() { return NextStatCache.take(); }
-  
+  FileSystemStatCache *takeNextStatCache() { return NextStatCache.release(); }
+
 protected:
   virtual LookupResult getStat(const char *Path, FileData &Data, bool isFile,
                                vfs::File **F, vfs::FileSystem &FS) = 0;

@@ -146,9 +146,7 @@ public:
     return *CurrentASTUnit;
   }
 
-  ASTUnit *takeCurrentASTUnit() {
-    return CurrentASTUnit.take();
-  }
+  ASTUnit *takeCurrentASTUnit() { return CurrentASTUnit.release(); }
 
   void setCurrentInput(const FrontendInputFile &CurrentInput, ASTUnit *AST = 0);
 

@@ -247,8 +247,9 @@ GlobalModuleIndex::readIndex(StringRef Path) {
       Cursor.Read(8) != 'I') {
     return std::make_pair((GlobalModuleIndex *)0, EC_IOError);
   }
-  
-  return std::make_pair(new GlobalModuleIndex(Buffer.take(), Cursor), EC_None);
+
+  return std::make_pair(new GlobalModuleIndex(Buffer.release(), Cursor),
+                        EC_None);
 }
 
 void

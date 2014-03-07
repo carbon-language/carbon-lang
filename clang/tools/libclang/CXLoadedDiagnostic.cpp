@@ -292,7 +292,7 @@ CXDiagnosticSet DiagLoader::load(const char *file) {
                                                BlockID, true);
     switch (Res) {
       case Read_EndOfStream:
-        return (CXDiagnosticSet) Diags.take();
+        return (CXDiagnosticSet)Diags.release();
       case Read_Failure:
         return 0;
       case Read_Record:
@@ -567,7 +567,7 @@ LoadResult DiagLoader::readDiagnosticBlock(llvm::BitstreamCursor &Stream,
         continue;
       }
       case Read_BlockEnd:
-        Diags.appendDiagnostic(D.take());        
+        Diags.appendDiagnostic(D.release());
         return Success;
       case Read_Record:
         break;

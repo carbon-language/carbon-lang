@@ -85,5 +85,5 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
                                      CCArgs.size(),
                                      *Diags))
     return 0;
-  return CI.take();
+  return CI.release();
 }

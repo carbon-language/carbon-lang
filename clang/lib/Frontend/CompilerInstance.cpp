@@ -156,11 +156,10 @@ static void SetupSerializedDiagnostics(DiagnosticOptions *DiagOpts,
       << OutputFile << ErrorInfo;
     return;
   }
-  
-  DiagnosticConsumer *SerializedConsumer =
-    clang::serialized_diags::create(OS.take(), DiagOpts);
 
-  
+  DiagnosticConsumer *SerializedConsumer =
+      clang::serialized_diags::create(OS.release(), DiagOpts);
+
   Diags.setClient(new ChainedDiagnosticConsumer(Diags.takeClient(),
                                                 SerializedConsumer));
 }
@@ -355,7 +354,7 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
     // Set the predefines buffer as suggested by the PCH reader. Typically, the
     // predefines buffer will be empty.
     PP.setPredefines(Reader->getSuggestedPredefines());
-    return Reader.take();
+    return Reader.release();
 
   case ASTReader::Failure:
     // Unrecoverable failure: don't even try to process the input file.
@@ -607,7 +606,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
   if (TempPathName)
     *TempPathName = TempFile;
 
-  return OS.take();
+  return OS.release();
 }
 
 // Initialization Utilities
@@ -671,7 +670,7 @@ bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
     const FileEntry *File = FileMgr.getVirtualFile(SB->getBufferIdentifier(),
                                                    SB->getBufferSize(), 0);
     SourceMgr.createMainFileID(File, Kind);
-    SourceMgr.overrideFileContents(File, SB.take());
+    SourceMgr.overrideFileContents(File, SB.release());
   }
 
   assert(!SourceMgr.getMainFileID().isInvalid() &&
