@@ -184,7 +184,6 @@ void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
   EmitLabelDifference(Label, SectionLabel, 4);
 }
 
-
 /// Emit a dwarf register operation.
 static void emitDwarfRegOp(const AsmPrinter &AP, int Reg) {
   assert(Reg >= 0);
@@ -201,8 +200,8 @@ static void emitDwarfRegOp(const AsmPrinter &AP, int Reg) {
 }
 
 /// Emit an (double-)indirect dwarf register operation.
-static void emitDwarfRegOpIndirect(const AsmPrinter &AP,
-                                   int Reg, int Offset, bool Deref) {
+static void emitDwarfRegOpIndirect(const AsmPrinter &AP, int Reg, int Offset,
+                                   bool Deref) {
   assert(Reg >= 0);
   if (Reg < 32) {
     AP.OutStreamer.AddComment(
@@ -222,8 +221,8 @@ static void emitDwarfRegOpIndirect(const AsmPrinter &AP,
 /// Emit a dwarf register operation for describing
 /// - a small value occupying only part of a register or
 /// - a small register representing only part of a value.
-static void emitDwarfOpPiece(const AsmPrinter &AP,
-                                unsigned Size, unsigned Offset) {
+static void emitDwarfOpPiece(const AsmPrinter &AP, unsigned Size,
+                             unsigned Offset) {
   assert(Size > 0);
   if (Offset > 0) {
     AP.OutStreamer.AddComment("DW_OP_bit_piece");
@@ -273,7 +272,7 @@ static void EmitDwarfRegOpPiece(const AsmPrinter &AP,
   // efficient DW_OP_piece.
   unsigned CurPos = 0;
   // The size of the register in bits, assuming 8 bits per byte.
-  unsigned RegSize = TRI->getMinimalPhysRegClass(MLoc.getReg())->getSize()*8;
+  unsigned RegSize = TRI->getMinimalPhysRegClass(MLoc.getReg())->getSize() * 8;
   // Keep track of the bits in the register we already emitted, so we
   // can avoid emitting redundant aliasing subregs.
   SmallBitVector Coverage(RegSize, false);
@@ -286,7 +285,7 @@ static void EmitDwarfRegOpPiece(const AsmPrinter &AP,
     // Intersection between the bits we already emitted and the bits
     // covered by this subregister.
     SmallBitVector Intersection(RegSize, false);
-    Intersection.set(Offset, Offset+Size);
+    Intersection.set(Offset, Offset + Size);
     Intersection ^= Coverage;
 
     // If this sub-register has a DWARF number and we haven't covered
@@ -295,10 +294,10 @@ static void EmitDwarfRegOpPiece(const AsmPrinter &AP,
       AP.OutStreamer.AddComment("sub-register");
       emitDwarfRegOp(AP, Reg);
       emitDwarfOpPiece(AP, Size, Offset == CurPos ? 0 : Offset);
-      CurPos = Offset+Size;
+      CurPos = Offset + Size;
 
       // Mark it as emitted.
-      Coverage.set(Offset, Offset+Size);
+      Coverage.set(Offset, Offset + Size);
     }
   }
 
