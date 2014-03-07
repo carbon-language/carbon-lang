@@ -274,7 +274,7 @@ def : ProcessorModel<"knl", HaswellModel,
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [Feature3DNow]>;
 def : Proc<"k6-3",            [Feature3DNow]>;
-def : Proc<"athlon",          [Feature3DNowA, FeatureSlowBTMem, 
+def : Proc<"athlon",          [Feature3DNowA, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
 def : Proc<"athlon-tbird",    [Feature3DNowA, FeatureSlowBTMem,
                                FeatureSlowSHLD]>;
