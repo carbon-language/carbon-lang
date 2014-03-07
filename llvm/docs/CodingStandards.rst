@@ -747,7 +747,7 @@ is a copy.  Particularly in range-based ``for`` loops, careless copies are
 expensive.
 
 As a rule of thumb, use ``const auto &`` unless you need to mutate or copy the
-result.
+result, and use ``const auto *`` when copying pointers.
 
 .. code-block:: c++
 
@@ -759,6 +759,10 @@ result.
 
   // Remove the reference if you really want a new copy.
   for (auto Val : Container) { Val.change(); saveSomewhere(Val); }
+
+  // Copy pointers, but make it clear that they're pointers.
+  for (const auto *Val : Container) { observe(*Val); }
+  for (auto *Val : Container) { Val->change(); }
 
 Style Issues
 ============
