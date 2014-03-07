@@ -379,7 +379,7 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
   }
 #endif // !NDEBUG
   
-  // memset_pattern16 is only available on iOS 3.0 and Mac OS/X 10.5 and later.
+  // memset_pattern16 is only available on iOS 3.0 and Mac OS X 10.5 and later.
   if (T.isMacOSX()) {
     if (T.isMacOSXVersionLT(10, 5))
       TLI.setUnavailable(LibFunc::memset_pattern16);

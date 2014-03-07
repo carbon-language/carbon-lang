@@ -576,13 +576,13 @@ ifeq ($(HOST_OS),HP-UX)
   CompileCommonOpts := -D_REENTRANT -D_HPUX_SOURCE
 endif
 
-# If we are building a universal binary on Mac OS/X, pass extra options.  This
+# If we are building a universal binary on Mac OS X, pass extra options.  This
 # is useful to people that want to link the LLVM libraries into their universal
 # apps.
 #
 # The following can be optionally specified:
 #   UNIVERSAL_SDK_PATH variable can be specified as a path to the SDK to use.
-#      For Mac OS/X 10.4 Intel machines, the traditional one is:
+#      For Mac OS X 10.4 Intel machines, the traditional one is:
 #      UNIVERSAL_SDK_PATH=/Developer/SDKs/MacOSX10.4u.sdk/
 #   UNIVERSAL_ARCH can be optionally specified to be a list of architectures
 #      to build for, e.g. UNIVERSAL_ARCH="i386 ppc ppc64".  This defaults to
