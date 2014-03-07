@@ -194,8 +194,20 @@ static bool isConfigurationValue(const Stmt *S) {
   switch (S->getStmtClass()) {
     case Stmt::DeclRefExprClass: {
       const DeclRefExpr *DR = cast<DeclRefExpr>(S);
-      const EnumConstantDecl *ED = dyn_cast<EnumConstantDecl>(DR->getDecl());
-      return ED ? isConfigurationValue(ED->getInitExpr()) : false;
+      const ValueDecl *D = DR->getDecl();
+      if (const EnumConstantDecl *ED = dyn_cast<EnumConstantDecl>(D))
+        return ED ? isConfigurationValue(ED->getInitExpr()) : false;
+      if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+        // As a heuristic, treat globals as configuration values.  Note
+        // that we only will get here if Sema evaluated this
+        // condition to a constant expression, which means the global
+        // had to be declared in a way to be a truly constant value.
+        // We could generalize this to local variables, but it isn't
+        // clear if those truly represent configuration values that
+        // gate unreachable code.
+        return !VD->hasLocalStorage();
+      }
+      return false;
     }
     case Stmt::IntegerLiteralClass:
       return isExpandedFromConfigurationMacro(S);

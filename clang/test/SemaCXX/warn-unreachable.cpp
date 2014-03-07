@@ -155,3 +155,10 @@ bool testBool() {
   return true; // no-warning
 }
 
+static const bool ConditionVar = 1;
+int test_global_as_conditionVariable() {
+  if (ConditionVar)
+    return 1;
+  return 0; // no-warning
+}
+
