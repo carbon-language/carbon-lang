@@ -49,7 +49,6 @@
 
 namespace __sanitizer {
 
-#ifndef SANITIZER_GO
 // This function is defined elsewhere if we intercepted pthread_attr_getstack.
 SANITIZER_WEAK_ATTRIBUTE int
 real_pthread_attr_getstack(void *attr, void **addr, size_t *size);
@@ -114,10 +113,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
   *stack_top = (uptr)stackaddr + stacksize;
   *stack_bottom = (uptr)stackaddr;
 }
-#endif  // #ifndef SANITIZER_GO
 
-// Does not compile for Go because dlsym() requires -ldl
-#ifndef SANITIZER_GO
 bool SetEnv(const char *name, const char *value) {
   void *f = dlsym(RTLD_NEXT, "setenv");
   if (f == 0)
@@ -128,7 +124,6 @@ bool SetEnv(const char *name, const char *value) {
   internal_memcpy(&setenv_f, &f, sizeof(f));
   return IndirectExternCall(setenv_f)(name, value, 1) == 0;
 }
-#endif
 
 bool SanitizerSetThreadName(const char *name) {
 #ifdef PR_SET_NAME
@@ -151,7 +146,6 @@ bool SanitizerGetThreadName(char *name, int max_len) {
 #endif
 }
 
-#ifndef SANITIZER_GO
 //------------------------- SlowUnwindStack -----------------------------------
 
 typedef struct {
@@ -273,8 +267,6 @@ void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
     trace[size++] = frames[i].absolute_pc + 2;
 }
 
-#endif  // !SANITIZER_GO
-
 static uptr g_tls_size;
 
 #ifdef __i386__
@@ -284,7 +276,7 @@ static uptr g_tls_size;
 #endif
 
 void InitTlsSize() {
-#if !defined(SANITIZER_GO) && !SANITIZER_ANDROID
+#if !SANITIZER_ANDROID
   typedef void (*get_tls_func)(size_t*, size_t*) DL_INTERNAL_FUNCTION;
   get_tls_func get_tls;
   void *get_tls_static_info_ptr = dlsym(RTLD_NEXT, "_dl_get_tls_static_info");
@@ -413,7 +405,6 @@ static void GetTls(uptr *addr, uptr *size) {
 
 void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
                           uptr *tls_addr, uptr *tls_size) {
-#ifndef SANITIZER_GO
   GetTls(tls_addr, tls_size);
 
   uptr stack_top, stack_bottom;
@@ -430,15 +421,8 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
       *tls_addr = *stk_addr + *stk_size;
     }
   }
-#else  // SANITIZER_GO
-  *stk_addr = 0;
-  *stk_size = 0;
-  *tls_addr = 0;
-  *tls_size = 0;
-#endif  // SANITIZER_GO
 }
 
-#ifndef SANITIZER_GO
 void AdjustStackSize(void *attr_) {
   pthread_attr_t *attr = (pthread_attr_t *)attr_;
   uptr stackaddr = 0;
@@ -462,7 +446,6 @@ void AdjustStackSize(void *attr_) {
     }
   }
 }
-#endif  // SANITIZER_GO
 
 #if SANITIZER_ANDROID
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
@@ -524,7 +507,6 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
 }
 #endif  // SANITIZER_ANDROID
 
-#ifndef SANITIZER_GO
 uptr indirect_call_wrapper;
 
 void SetIndirectCallWrapper(uptr wrapper) {
@@ -532,7 +514,6 @@ void SetIndirectCallWrapper(uptr wrapper) {
   CHECK(wrapper);
   indirect_call_wrapper = wrapper;
 }
-#endif
 
 }  // namespace __sanitizer
 

@@ -379,6 +379,17 @@ void ReExec() {
   Die();
 }
 
+// Stub implementation of GetThreadStackAndTls for Go.
+#if SANITIZER_GO
+void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
+                          uptr *tls_addr, uptr *tls_size) {
+  *stk_addr = 0;
+  *stk_size = 0;
+  *tls_addr = 0;
+  *tls_size = 0;
+}
+#endif  // SANITIZER_GO
+
 void PrepareForSandboxing() {
   // Some kinds of sandboxes may forbid filesystem access, so we won't be able
   // to read the file mappings from /proc/self/maps. Luckily, neither the
