@@ -363,11 +363,14 @@ endif
 dsym:	$(DSYM)
 all:	$(EXE) $(DSYM)
 clean::
-ifeq "$(DYLIB_NAME)" ""
-	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS) $(ARCHIVE_NAME) $(ARCHIVE_OBJECTS) *.d.[0-9] *.d.[0-9][0-9] *.d.[0-9][0-9][0-9] *.d.[0-9][0-9][0-9][0-9] *.d.[0-9][0-9][0-9][0-9][0-9]
-else
-	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS) $(ARCHIVE_NAME) $(ARCHIVE_OBJECTS) $(DYLIB_OBJECTS) $(DYLIB_PREREQS) $(DYLIB_FILENAME) $(DYLIB_FILENAME).dSYM $(DYLIB_FILENAME).debug *.d.[0-9] *.d.[0-9][0-9] *.d.[0-9][0-9][0-9] *.d.[0-9][0-9][0-9][0-9] *.d.[0-9][0-9][0-9][0-9][0-9]
+	rm -rf "$(EXE)" $(OBJECTS) $(PREREQS) $(ARCHIVE_NAME) $(ARCHIVE_OBJECTS) *.d.[0-9] *.d.[0-9][0-9] *.d.[0-9][0-9][0-9] *.d.[0-9][0-9][0-9][0-9] *.d.[0-9][0-9][0-9][0-9][0-9]
+ifneq "$(DYLIB_NAME)" ""
+	rm -rf $(DYLIB_OBJECTS) $(DYLIB_PREREQS) $(DYLIB_FILENAME) $(DYLIB_FILENAME).dSYM $(DYLIB_FILENAME).debug
 endif
+ifneq "$(DSYM)" ""
+	rm -rf "$(DSYM)"
+endif
+	
 
 #----------------------------------------------------------------------
 # From http://blog.melski.net/tag/debugging-makefiles/

@@ -21,7 +21,6 @@ class ChangedInferiorTestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.inferior_not_crashing()
 
-    @expectedFailureFreeBSD('llvm.org/pr17933')
     def test_inferior_crashing_dwarf(self):
         """Test lldb reloads the inferior after it was changed during the session."""
         self.buildDwarf()
