@@ -70,9 +70,9 @@ namespace llvm {
     static char ID;
     VirtRegMap() : MachineFunctionPass(ID), Virt2PhysMap(NO_PHYS_REG),
                    Virt2StackSlotMap(NO_STACK_SLOT), Virt2SplitMap(0) { }
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
@@ -177,7 +177,7 @@ namespace llvm {
     /// the specified stack slot
     void assignVirt2StackSlot(unsigned virtReg, int frameIndex);
 
-    void print(raw_ostream &OS, const Module* M = 0) const;
+    void print(raw_ostream &OS, const Module* M = 0) const override;
     void dump() const;
   };
 

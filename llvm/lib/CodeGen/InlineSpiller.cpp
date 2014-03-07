@@ -153,7 +153,7 @@ public:
       TRI(*mf.getTarget().getRegisterInfo()),
       MBFI(pass.getAnalysis<MachineBlockFrequencyInfo>()) {}
 
-  void spill(LiveRangeEdit &);
+  void spill(LiveRangeEdit &) override;
 
 private:
   bool isSnippet(const LiveInterval &SnipLI);

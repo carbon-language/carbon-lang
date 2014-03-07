@@ -60,9 +60,9 @@ namespace {
       initializeMachineSinkingPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       MachineFunctionPass::getAnalysisUsage(AU);
       AU.addRequired<AliasAnalysis>();
@@ -72,7 +72,7 @@ namespace {
       AU.addPreserved<MachineLoopInfo>();
     }
 
-    virtual void releaseMemory() {
+    void releaseMemory() override {
       CEBCandidates.clear();
     }
 

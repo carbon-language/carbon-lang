@@ -99,7 +99,7 @@ private:
 
   /// MachineRegisterInfo callback to notify when new virtual
   /// registers are created.
-  void MRI_NoteNewVirtualRegister(unsigned VReg);
+  void MRI_NoteNewVirtualRegister(unsigned VReg) override;
 
 public:
   /// Create a LiveRangeEdit for breaking down parent into smaller pieces.

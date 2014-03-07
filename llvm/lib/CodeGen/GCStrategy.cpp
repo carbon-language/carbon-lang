@@ -52,11 +52,11 @@ namespace {
     static char ID;
 
     LowerIntrinsics();
-    const char *getPassName() const;
-    void getAnalysisUsage(AnalysisUsage &AU) const;
+    const char *getPassName() const override;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-    bool doInitialization(Module &M);
-    bool runOnFunction(Function &F);
+    bool doInitialization(Module &M) override;
+    bool runOnFunction(Function &F) override;
   };
 
 
@@ -82,9 +82,9 @@ namespace {
     static char ID;
 
     GCMachineCodeAnalysis();
-    void getAnalysisUsage(AnalysisUsage &AU) const;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-    bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
   };
 
 }

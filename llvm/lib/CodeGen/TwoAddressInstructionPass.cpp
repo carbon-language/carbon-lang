@@ -144,7 +144,7 @@ public:
     initializeTwoAddressInstructionPassPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     AU.addRequired<AliasAnalysis>();
     AU.addPreserved<LiveVariables>();
@@ -156,7 +156,7 @@ public:
   }
 
   /// runOnMachineFunction - Pass entry point.
-  bool runOnMachineFunction(MachineFunction&);
+  bool runOnMachineFunction(MachineFunction&) override;
 };
 } // end anonymous namespace
 

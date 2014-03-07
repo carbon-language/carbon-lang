@@ -59,9 +59,9 @@ class LiveRegMatrix : public MachineFunctionPass {
   BitVector RegMaskUsable;
 
   // MachineFunctionPass boilerplate.
-  virtual void getAnalysisUsage(AnalysisUsage&) const;
-  virtual bool runOnMachineFunction(MachineFunction&);
-  virtual void releaseMemory();
+  void getAnalysisUsage(AnalysisUsage&) const override;
+  bool runOnMachineFunction(MachineFunction&) override;
+  void releaseMemory() override;
 public:
   static char ID;
   LiveRegMatrix();

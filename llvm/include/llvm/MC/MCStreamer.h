@@ -118,7 +118,7 @@ public:
 
   virtual void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE);
 
-  virtual void finish();
+  void finish() override;
 
   /// Callback used to implement the ldr= pseudo.
   /// Add a new entry to the constant pool for the current section and return an

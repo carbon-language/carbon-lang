@@ -294,7 +294,7 @@ public:
 
   /// Implement ScheduleDAGInstrs interface for scheduling a sequence of
   /// reorderable instructions.
-  virtual void schedule();
+  void schedule() override;
 
   /// Change the position of an instruction within the basic block and update
   /// live ranges and region boundary iterators.
@@ -384,7 +384,7 @@ public:
   virtual ~ScheduleDAGMILive();
 
   /// Return true if this DAG supports VReg liveness and RegPressure.
-  virtual bool hasVRegLiveness() const { return true; }
+  bool hasVRegLiveness() const override { return true; }
 
   /// \brief Return true if register pressure tracking is enabled.
   bool isTrackingPressure() const { return ShouldTrackPressure; }
@@ -427,7 +427,7 @@ public:
 
   /// Implement ScheduleDAGInstrs interface for scheduling a sequence of
   /// reorderable instructions.
-  virtual void schedule();
+  void schedule() override;
 
   /// Compute the cyclic critical path through the DAG.
   unsigned computeCyclicCriticalPath();

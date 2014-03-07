@@ -78,9 +78,9 @@ namespace {
     explicit LocalStackSlotPass() : MachineFunctionPass(ID) { 
       initializeLocalStackSlotPassPass(*PassRegistry::getPassRegistry());
     }
-    bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<StackProtector>();
       MachineFunctionPass::getAnalysisUsage(AU);

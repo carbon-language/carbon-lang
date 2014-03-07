@@ -55,8 +55,8 @@ namespace {
   public:
     ShadowStackGC();
 
-    bool initializeCustomLowering(Module &M);
-    bool performCustomLowering(Function &F);
+    bool initializeCustomLowering(Module &M) override;
+    bool performCustomLowering(Function &F) override;
 
   private:
     bool IsNullValue(Value *V);

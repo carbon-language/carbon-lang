@@ -45,8 +45,8 @@ public:
 
   void setMap(MMIAddrLabelMap *map) { Map = map; }
 
-  virtual void deleted();
-  virtual void allUsesReplacedWith(Value *V2);
+  void deleted() override;
+  void allUsesReplacedWith(Value *V2) override;
 };
 
 class MMIAddrLabelMap {

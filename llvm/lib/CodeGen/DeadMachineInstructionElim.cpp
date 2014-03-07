@@ -27,7 +27,7 @@ STATISTIC(NumDeletes,          "Number of dead instructions deleted");
 
 namespace {
   class DeadMachineInstructionElim : public MachineFunctionPass {
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
     const TargetRegisterInfo *TRI;
     const MachineRegisterInfo *MRI;

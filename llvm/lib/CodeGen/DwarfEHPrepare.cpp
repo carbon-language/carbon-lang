@@ -47,11 +47,11 @@ namespace {
       initializeDominatorTreeWrapperPassPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnFunction(Function &Fn);
+    bool runOnFunction(Function &Fn) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const { }
+    void getAnalysisUsage(AnalysisUsage &AU) const override { }
 
-    const char *getPassName() const {
+    const char *getPassName() const override {
       return "Exception handling preparation";
     }
   };

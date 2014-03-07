@@ -108,7 +108,7 @@ public:
   DefaultVLIWScheduler(MachineFunction &MF, MachineLoopInfo &MLI,
                    MachineDominatorTree &MDT, bool IsPostRA);
   // Schedule - Actual scheduling work.
-  void schedule();
+  void schedule() override;
 };
 }
 

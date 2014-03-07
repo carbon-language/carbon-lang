@@ -40,14 +40,14 @@ using namespace llvm;
 
 namespace {
   class UnreachableBlockElim : public FunctionPass {
-    virtual bool runOnFunction(Function &F);
+    bool runOnFunction(Function &F) override;
   public:
     static char ID; // Pass identification, replacement for typeid
     UnreachableBlockElim() : FunctionPass(ID) {
       initializeUnreachableBlockElimPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addPreserved<DominatorTreeWrapperPass>();
     }
   };
@@ -95,8 +95,8 @@ bool UnreachableBlockElim::runOnFunction(Function &F) {
 
 namespace {
   class UnreachableMachineBlockElim : public MachineFunctionPass {
-    virtual bool runOnMachineFunction(MachineFunction &F);
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    bool runOnMachineFunction(MachineFunction &F) override;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
     MachineModuleInfo *MMI;
   public:
     static char ID; // Pass identification, replacement for typeid

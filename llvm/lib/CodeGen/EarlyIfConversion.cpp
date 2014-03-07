@@ -590,9 +590,9 @@ class EarlyIfConverter : public MachineFunctionPass {
 public:
   static char ID;
   EarlyIfConverter() : MachineFunctionPass(ID) {}
-  void getAnalysisUsage(AnalysisUsage &AU) const;
-  bool runOnMachineFunction(MachineFunction &MF);
-  const char *getPassName() const { return "Early If-Conversion"; }
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnMachineFunction(MachineFunction &MF) override;
+  const char *getPassName() const override { return "Early If-Conversion"; }
 
 private:
   bool tryConvertIf(MachineBasicBlock*);

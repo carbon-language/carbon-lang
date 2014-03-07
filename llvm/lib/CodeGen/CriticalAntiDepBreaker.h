@@ -72,7 +72,7 @@ class TargetRegisterInfo;
     ~CriticalAntiDepBreaker();
 
     /// Start - Initialize anti-dep breaking for a new basic block.
-    void StartBlock(MachineBasicBlock *BB);
+    void StartBlock(MachineBasicBlock *BB) override;
 
     /// BreakAntiDependencies - Identifiy anti-dependencies along the critical
     /// path
@@ -82,15 +82,16 @@ class TargetRegisterInfo;
                                    MachineBasicBlock::iterator Begin,
                                    MachineBasicBlock::iterator End,
                                    unsigned InsertPosIndex,
-                                   DbgValueVector &DbgValues);
+                                   DbgValueVector &DbgValues) override;
 
     /// Observe - Update liveness information to account for the current
     /// instruction, which will not be scheduled.
     ///
-    void Observe(MachineInstr *MI, unsigned Count, unsigned InsertPosIndex);
+    void Observe(MachineInstr *MI, unsigned Count,
+                 unsigned InsertPosIndex) override;
 
     /// Finish - Finish anti-dep breaking for a basic block.
-    void FinishBlock();
+    void FinishBlock() override;
 
   private:
     void PrescanInstruction(MachineInstr *MI);

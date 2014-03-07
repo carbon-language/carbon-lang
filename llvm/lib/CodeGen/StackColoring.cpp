@@ -130,8 +130,8 @@ public:
   StackColoring() : MachineFunctionPass(ID) {
     initializeStackColoringPass(*PassRegistry::getPassRegistry());
   }
-  void getAnalysisUsage(AnalysisUsage &AU) const;
-  bool runOnMachineFunction(MachineFunction &MF);
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
 private:
   /// Debug.

@@ -76,24 +76,24 @@ public:
   RABasic();
 
   /// Return the pass name.
-  virtual const char* getPassName() const {
+  const char* getPassName() const override {
     return "Basic Register Allocator";
   }
 
   /// RABasic analysis usage.
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  virtual void releaseMemory();
+  void releaseMemory() override;
 
-  virtual Spiller &spiller() { return *SpillerInstance; }
+  Spiller &spiller() override { return *SpillerInstance; }
 
   virtual float getPriority(LiveInterval *LI) { return LI->weight; }
 
-  virtual void enqueue(LiveInterval *LI) {
+  void enqueue(LiveInterval *LI) override {
     Queue.push(LI);
   }
 
-  virtual LiveInterval *dequeue() {
+  LiveInterval *dequeue() override {
     if (Queue.empty())
       return 0;
     LiveInterval *LI = Queue.top();
@@ -101,11 +101,11 @@ public:
     return LI;
   }
 
-  virtual unsigned selectOrSplit(LiveInterval &VirtReg,
-                                 SmallVectorImpl<unsigned> &SplitVRegs);
+  unsigned selectOrSplit(LiveInterval &VirtReg,
+                         SmallVectorImpl<unsigned> &SplitVRegs) override;
 
   /// Perform register allocation.
-  virtual bool runOnMachineFunction(MachineFunction &mf);
+  bool runOnMachineFunction(MachineFunction &mf) override;
 
   // Helper for spilling all live virtual registers currently unified under preg
   // that interfere with the most recently queried lvr.  Return true if spilling

@@ -256,21 +256,20 @@ public:
   RAGreedy();
 
   /// Return the pass name.
-  virtual const char* getPassName() const {
+  const char* getPassName() const override {
     return "Greedy Register Allocator";
   }
 
   /// RAGreedy analysis usage.
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-  virtual void releaseMemory();
-  virtual Spiller &spiller() { return *SpillerInstance; }
-  virtual void enqueue(LiveInterval *LI);
-  virtual LiveInterval *dequeue();
-  virtual unsigned selectOrSplit(LiveInterval&,
-                                 SmallVectorImpl<unsigned>&);
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  void releaseMemory() override;
+  Spiller &spiller() override { return *SpillerInstance; }
+  void enqueue(LiveInterval *LI) override;
+  LiveInterval *dequeue() override;
+  unsigned selectOrSplit(LiveInterval&, SmallVectorImpl<unsigned>&) override;
 
   /// Perform register allocation.
-  virtual bool runOnMachineFunction(MachineFunction &mf);
+  bool runOnMachineFunction(MachineFunction &mf) override;
 
   static char ID;
 
@@ -278,9 +277,9 @@ private:
   unsigned selectOrSplitImpl(LiveInterval &, SmallVectorImpl<unsigned> &,
                              SmallVirtRegSet &, unsigned = 0);
 
-  bool LRE_CanEraseVirtReg(unsigned);
-  void LRE_WillShrinkVirtReg(unsigned);
-  void LRE_DidCloneVirtReg(unsigned, unsigned);
+  bool LRE_CanEraseVirtReg(unsigned) override;
+  void LRE_WillShrinkVirtReg(unsigned) override;
+  void LRE_DidCloneVirtReg(unsigned, unsigned) override;
   void enqueue(PQueue &CurQueue, LiveInterval *LI);
   LiveInterval *dequeue(PQueue &CurQueue);
 

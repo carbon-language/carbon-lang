@@ -85,7 +85,7 @@ namespace {
     static char ID;
     PostRAScheduler() : MachineFunctionPass(ID) {}
 
-    void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<TargetPassConfig>();
@@ -96,7 +96,7 @@ namespace {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
-    bool runOnMachineFunction(MachineFunction &Fn);
+    bool runOnMachineFunction(MachineFunction &Fn) override;
   };
   char PostRAScheduler::ID = 0;
 
@@ -141,23 +141,23 @@ namespace {
     /// startBlock - Initialize register live-range state for scheduling in
     /// this block.
     ///
-    void startBlock(MachineBasicBlock *BB);
+    void startBlock(MachineBasicBlock *BB) override;
 
     // Set the index of RegionEnd within the current BB.
     void setEndIndex(unsigned EndIdx) { EndIndex = EndIdx; }
 
     /// Initialize the scheduler state for the next scheduling region.
-    virtual void enterRegion(MachineBasicBlock *bb,
-                             MachineBasicBlock::iterator begin,
-                             MachineBasicBlock::iterator end,
-                             unsigned regioninstrs);
+    void enterRegion(MachineBasicBlock *bb,
+                     MachineBasicBlock::iterator begin,
+                     MachineBasicBlock::iterator end,
+                     unsigned regioninstrs) override;
 
     /// Notify that the scheduler has finished scheduling the current region.
-    virtual void exitRegion();
+    void exitRegion() override;
 
     /// Schedule - Schedule the instruction range using list scheduling.
     ///
-    void schedule();
+    void schedule() override;
 
     void EmitSchedule();
 
@@ -168,7 +168,7 @@ namespace {
 
     /// finishBlock - Clean up register live-range state.
     ///
-    void finishBlock();
+    void finishBlock() override;
 
   private:
     void ReleaseSucc(SUnit *SU, SDep *SuccEdge);

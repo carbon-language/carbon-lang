@@ -57,8 +57,8 @@ namespace {
       initializePHIEliminationPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnMachineFunction(MachineFunction &Fn);
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    bool runOnMachineFunction(MachineFunction &Fn) override;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   private:
     /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions

@@ -41,9 +41,9 @@ public:
     initializeProcessImplicitDefsPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &au) const;
+  void getAnalysisUsage(AnalysisUsage &au) const override;
 
-  virtual bool runOnMachineFunction(MachineFunction &fn);
+  bool runOnMachineFunction(MachineFunction &fn) override;
 };
 } // end anonymous namespace
 

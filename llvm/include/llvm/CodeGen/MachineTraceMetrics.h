@@ -77,10 +77,10 @@ public:
   class Trace;
   static char ID;
   MachineTraceMetrics();
-  void getAnalysisUsage(AnalysisUsage&) const;
-  bool runOnMachineFunction(MachineFunction&);
-  void releaseMemory();
-  void verifyAnalysis() const;
+  void getAnalysisUsage(AnalysisUsage&) const override;
+  bool runOnMachineFunction(MachineFunction&) override;
+  void releaseMemory() override;
+  void verifyAnalysis() const override;
 
   friend class Ensemble;
   friend class Trace;

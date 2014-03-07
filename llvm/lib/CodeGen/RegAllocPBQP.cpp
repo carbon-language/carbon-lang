@@ -96,15 +96,15 @@ public:
   }
 
   /// Return the pass name.
-  virtual const char* getPassName() const {
+  const char* getPassName() const override {
     return "PBQP Register Allocator";
   }
 
   /// PBQP analysis usage.
-  virtual void getAnalysisUsage(AnalysisUsage &au) const;
+  void getAnalysisUsage(AnalysisUsage &au) const override;
 
   /// Perform register allocation
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
 private:
 

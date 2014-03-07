@@ -42,7 +42,7 @@ namespace {
      initializeMachineCopyPropagationPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
   private:
     typedef SmallVector<unsigned, 4> DestList;

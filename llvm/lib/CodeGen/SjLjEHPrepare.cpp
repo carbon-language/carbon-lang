@@ -60,11 +60,11 @@ class SjLjEHPrepare : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid
   explicit SjLjEHPrepare(const TargetMachine *TM) : FunctionPass(ID), TM(TM) {}
-  bool doInitialization(Module &M);
-  bool runOnFunction(Function &F);
+  bool doInitialization(Module &M) override;
+  bool runOnFunction(Function &F) override;
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {}
-  const char *getPassName() const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {}
+  const char *getPassName() const override {
     return "SJLJ Exception Handling preparation";
   }
 

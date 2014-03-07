@@ -172,20 +172,20 @@ namespace llvm {
 
     /// getAnalysisUsage - Record analysis usage.
     ///
-    void getAnalysisUsage(AnalysisUsage &AU) const;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
 
     /// doInitialization - Set up the AsmPrinter when we are working on a new
     /// module.  If your pass overrides this, it must make sure to explicitly
     /// call this implementation.
-    bool doInitialization(Module &M);
+    bool doInitialization(Module &M) override;
 
     /// doFinalization - Shut down the asmprinter.  If you override this in your
     /// pass, you must make sure to call it explicitly.
-    bool doFinalization(Module &M);
+    bool doFinalization(Module &M) override;
 
     /// runOnMachineFunction - Emit the specified function out to the
     /// OutStreamer.
-    virtual bool runOnMachineFunction(MachineFunction &MF) {
+    bool runOnMachineFunction(MachineFunction &MF) override {
       SetupMachineFunction(MF);
       EmitFunctionHeader();
       EmitFunctionBody();

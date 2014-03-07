@@ -377,10 +377,10 @@ namespace llvm {
       initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &au) const;
-    virtual void releaseMemory();
+    void getAnalysisUsage(AnalysisUsage &au) const override;
+    void releaseMemory() override;
 
-    virtual bool runOnMachineFunction(MachineFunction &fn);
+    bool runOnMachineFunction(MachineFunction &fn) override;
 
     /// Dump the indexes.
     void dump() const;

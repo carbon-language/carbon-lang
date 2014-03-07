@@ -87,7 +87,7 @@ namespace {
         initializeStackSlotColoringPass(*PassRegistry::getPassRegistry());
       }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<SlotIndexes>();
       AU.addPreserved<SlotIndexes>();
@@ -98,7 +98,7 @@ namespace {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
   private:
     void InitializeSlots();

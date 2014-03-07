@@ -145,11 +145,11 @@ public:
   virtual SmallVectorImpl<char> &getContents() = 0;
   virtual const SmallVectorImpl<char> &getContents() const = 0;
 
-  virtual uint8_t getBundlePadding() const {
+  uint8_t getBundlePadding() const override {
     return BundlePadding;
   }
 
-  virtual void setBundlePadding(uint8_t N) {
+  void setBundlePadding(uint8_t N) override {
     BundlePadding = N;
   }
 
@@ -170,7 +170,7 @@ public:
 /// data and also have fixups registered.
 ///
 class MCEncodedFragmentWithFixups : public MCEncodedFragment {
-  virtual void anchor();
+  void anchor() override;
 
 public:
   MCEncodedFragmentWithFixups(MCFragment::FragmentType FType,
@@ -201,7 +201,7 @@ public:
 /// Fragment for data and encoded instructions.
 ///
 class MCDataFragment : public MCEncodedFragmentWithFixups {
-  virtual void anchor();
+  void anchor() override;
 
   /// \brief Does this fragment contain encoded instructions anywhere in it?
   bool HasInstructions;
@@ -220,28 +220,30 @@ public:
   {
   }
 
-  virtual SmallVectorImpl<char> &getContents() { return Contents; }
-  virtual const SmallVectorImpl<char> &getContents() const { return Contents; }
+  SmallVectorImpl<char> &getContents() override { return Contents; }
+  virtual const SmallVectorImpl<char> &getContents() const override {
+    return Contents;
+  }
 
-  SmallVectorImpl<MCFixup> &getFixups() {
+  SmallVectorImpl<MCFixup> &getFixups() override {
     return Fixups;
   }
 
-  const SmallVectorImpl<MCFixup> &getFixups() const {
+  const SmallVectorImpl<MCFixup> &getFixups() const override {
     return Fixups;
   }
 
-  virtual bool hasInstructions() const { return HasInstructions; }
+  bool hasInstructions() const override { return HasInstructions; }
   virtual void setHasInstructions(bool V) { HasInstructions = V; }
 
-  virtual bool alignToBundleEnd() const { return AlignToBundleEnd; }
-  virtual void setAlignToBundleEnd(bool V) { AlignToBundleEnd = V; }
+  bool alignToBundleEnd() const override { return AlignToBundleEnd; }
+  void setAlignToBundleEnd(bool V) override { AlignToBundleEnd = V; }
 
-  fixup_iterator fixup_begin() { return Fixups.begin(); }
-  const_fixup_iterator fixup_begin() const { return Fixups.begin(); }
+  fixup_iterator fixup_begin() override { return Fixups.begin(); }
+  const_fixup_iterator fixup_begin() const override { return Fixups.begin(); }
 
-  fixup_iterator fixup_end() {return Fixups.end();}
-  const_fixup_iterator fixup_end() const {return Fixups.end();}
+  fixup_iterator fixup_end() override {return Fixups.end();}
+  const_fixup_iterator fixup_end() const override {return Fixups.end();}
 
   static bool classof(const MCFragment *F) {
     return F->getKind() == MCFragment::FT_Data;
@@ -254,7 +256,7 @@ public:
 /// consumption.
 ///
 class MCCompactEncodedInstFragment : public MCEncodedFragment {
-  virtual void anchor();
+  void anchor() override;
 
   /// \brief Should this fragment be aligned to the end of a bundle?
   bool AlignToBundleEnd;
@@ -266,15 +268,15 @@ public:
   {
   }
 
-  virtual bool hasInstructions() const {
+  bool hasInstructions() const override {
     return true;
   }
 
-  virtual SmallVectorImpl<char> &getContents() { return Contents; }
-  virtual const SmallVectorImpl<char> &getContents() const { return Contents; }
+  SmallVectorImpl<char> &getContents() override { return Contents; }
+  const SmallVectorImpl<char> &getContents() const override { return Contents; }
 
-  virtual bool alignToBundleEnd() const { return AlignToBundleEnd; }
-  virtual void setAlignToBundleEnd(bool V) { AlignToBundleEnd = V; }
+  bool alignToBundleEnd() const override { return AlignToBundleEnd; }
+  void setAlignToBundleEnd(bool V) override { AlignToBundleEnd = V; }
 
   static bool classof(const MCFragment *F) {
     return F->getKind() == MCFragment::FT_CompactEncodedInst;
@@ -285,7 +287,7 @@ public:
 /// relaxed during the assembler layout and relaxation stage.
 ///
 class MCRelaxableFragment : public MCEncodedFragmentWithFixups {
-  virtual void anchor();
+  void anchor() override;
 
   /// Inst - The instruction this is a fragment for.
   MCInst Inst;
@@ -308,29 +310,29 @@ public:
     : MCEncodedFragmentWithFixups(FT_Relaxable, SD), Inst(_Inst), STI(_STI) {
   }
 
-  virtual SmallVectorImpl<char> &getContents() { return Contents; }
-  virtual const SmallVectorImpl<char> &getContents() const { return Contents; }
+  SmallVectorImpl<char> &getContents() override { return Contents; }
+  const SmallVectorImpl<char> &getContents() const override { return Contents; }
 
   const MCInst &getInst() const { return Inst; }
   void setInst(const MCInst& Value) { Inst = Value; }
 
   const MCSubtargetInfo &getSubtargetInfo() { return STI; }
 
-  SmallVectorImpl<MCFixup> &getFixups() {
+  SmallVectorImpl<MCFixup> &getFixups() override {
     return Fixups;
   }
 
-  const SmallVectorImpl<MCFixup> &getFixups() const {
+  const SmallVectorImpl<MCFixup> &getFixups() const override {
     return Fixups;
   }
 
-  virtual bool hasInstructions() const { return true; }
+  bool hasInstructions() const override { return true; }
 
-  fixup_iterator fixup_begin() { return Fixups.begin(); }
-  const_fixup_iterator fixup_begin() const { return Fixups.begin(); }
+  fixup_iterator fixup_begin() override { return Fixups.begin(); }
+  const_fixup_iterator fixup_begin() const override { return Fixups.begin(); }
 
-  fixup_iterator fixup_end() {return Fixups.end();}
-  const_fixup_iterator fixup_end() const {return Fixups.end();}
+  fixup_iterator fixup_end() override {return Fixups.end();}
+  const_fixup_iterator fixup_end() const override {return Fixups.end();}
 
   static bool classof(const MCFragment *F) {
     return F->getKind() == MCFragment::FT_Relaxable;

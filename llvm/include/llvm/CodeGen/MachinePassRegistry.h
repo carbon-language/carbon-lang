@@ -142,12 +142,10 @@ public:
 
   // Implement the MachinePassRegistryListener callbacks.
   //
-  virtual void NotifyAdd(const char *N,
-                         MachinePassCtor C,
-                         const char *D) {
+  void NotifyAdd(const char *N, MachinePassCtor C, const char *D) override {
     this->addLiteralOption(N, (typename RegistryClass::FunctionPassCtor)C, D);
   }
-  virtual void NotifyRemove(const char *N) {
+  void NotifyRemove(const char *N) override {
     this->removeLiteralOption(N);
   }
 };

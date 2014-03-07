@@ -43,10 +43,10 @@ public:
 
   /// \brief Tell the pass manager which passes we depend on and what
   /// information we preserve.
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   /// \brief Calculate the liveness information for the given machine function.
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
 private:
   /// \brief Performs the actual liveness calculation for the function.

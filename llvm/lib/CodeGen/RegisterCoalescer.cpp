@@ -111,7 +111,7 @@ namespace {
     void eliminateDeadDefs();
 
     /// LiveRangeEdit callback.
-    void LRE_WillEraseInstruction(MachineInstr *MI);
+    void LRE_WillEraseInstruction(MachineInstr *MI) override;
 
     /// coalesceLocals - coalesce the LocalWorkList.
     void coalesceLocals();
@@ -187,15 +187,15 @@ namespace {
       initializeRegisterCoalescerPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-    virtual void releaseMemory();
+    void releaseMemory() override;
 
     /// runOnMachineFunction - pass entry point
-    virtual bool runOnMachineFunction(MachineFunction&);
+    bool runOnMachineFunction(MachineFunction&) override;
 
     /// print - Implement the dump method.
-    virtual void print(raw_ostream &O, const Module* = 0) const;
+    void print(raw_ostream &O, const Module* = 0) const override;
   };
 } /// end anonymous namespace
 

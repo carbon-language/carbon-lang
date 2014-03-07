@@ -44,14 +44,14 @@ protected:
   /// For MachineFunctionPasses, calling AU.preservesCFG() indicates that
   /// the pass does not modify the MachineBasicBlock CFG.
   ///
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
 private:
   /// createPrinterPass - Get a machine function printer pass.
-  virtual Pass *createPrinterPass(raw_ostream &O,
-                                  const std::string &Banner) const;
+  Pass *createPrinterPass(raw_ostream &O,
+                          const std::string &Banner) const override;
 
-  virtual bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 };
 
 } // End llvm namespace

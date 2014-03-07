@@ -110,11 +110,11 @@ typedef DenseMap<Instruction *, Type *> InstrToOrigTy;
       : FunctionPass(ID), TM(TM), TLI(0) {
         initializeCodeGenPreparePass(*PassRegistry::getPassRegistry());
       }
-    bool runOnFunction(Function &F);
+    bool runOnFunction(Function &F) override;
 
-    const char *getPassName() const { return "CodeGen Prepare"; }
+    const char *getPassName() const override { return "CodeGen Prepare"; }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addPreserved<DominatorTreeWrapperPass>();
       AU.addRequired<TargetLibraryInfo>();
     }
@@ -606,11 +606,11 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
 namespace {
 class CodeGenPrepareFortifiedLibCalls : public SimplifyFortifiedLibCalls {
 protected:
-  void replaceCall(Value *With) {
+  void replaceCall(Value *With) override {
     CI->replaceAllUsesWith(With);
     CI->eraseFromParent();
   }
-  bool isFoldable(unsigned SizeCIOp, unsigned, bool) const {
+  bool isFoldable(unsigned SizeCIOp, unsigned, bool) const override {
       if (ConstantInt *SizeCI =
                              dyn_cast<ConstantInt>(CI->getArgOperand(SizeCIOp)))
         return SizeCI->isAllOnesValue();
@@ -984,7 +984,7 @@ class TypePromotionTransaction {
     }
 
     /// \brief Move the instruction back to its original position.
-    void undo() {
+    void undo() override {
       DEBUG(dbgs() << "Undo: moveBefore: " << *Inst << "\n");
       Position.insert(Inst);
     }
@@ -1009,7 +1009,7 @@ class TypePromotionTransaction {
     }
 
     /// \brief Restore the original value of the instruction.
-    void undo() {
+    void undo() override {
       DEBUG(dbgs() << "Undo: setOperand:" << Idx << "\n"
                    << "for: " << *Inst << "\n"
                    << "with: " << *Origin << "\n");
@@ -1041,7 +1041,7 @@ class TypePromotionTransaction {
     }
 
     /// \brief Restore the original list of uses.
-    void undo() {
+    void undo() override {
       DEBUG(dbgs() << "Undo: OperandsHider: " << *Inst << "\n");
       for (unsigned It = 0, EndIt = OriginalValues.size(); It != EndIt; ++It)
         Inst->setOperand(It, OriginalValues[It]);
@@ -1064,7 +1064,7 @@ class TypePromotionTransaction {
     Instruction *getBuiltInstruction() { return Inst; }
 
     /// \brief Remove the built instruction.
-    void undo() {
+    void undo() override {
       DEBUG(dbgs() << "Undo: TruncBuilder: " << *Inst << "\n");
       Inst->eraseFromParent();
     }
@@ -1087,7 +1087,7 @@ class TypePromotionTransaction {
     Instruction *getBuiltInstruction() { return Inst; }
 
     /// \brief Remove the built instruction.
-    void undo() {
+    void undo() override {
       DEBUG(dbgs() << "Undo: SExtBuilder: " << *Inst << "\n");
       Inst->eraseFromParent();
     }
@@ -1108,7 +1108,7 @@ class TypePromotionTransaction {
     }
 
     /// \brief Mutate the instruction back to its original type.
-    void undo() {
+    void undo() override {
       DEBUG(dbgs() << "Undo: MutateType: " << *Inst << " with " << *OrigTy
                    << "\n");
       Inst->mutateType(OrigTy);
@@ -1148,7 +1148,7 @@ class TypePromotionTransaction {
     }
 
     /// \brief Reassign the original uses of Inst to Inst.
-    void undo() {
+    void undo() override {
       DEBUG(dbgs() << "Undo: UsersReplacer: " << *Inst << "\n");
       for (use_iterator UseIt = OriginalUses.begin(),
                         EndIt = OriginalUses.end();
@@ -1184,11 +1184,11 @@ class TypePromotionTransaction {
     ~InstructionRemover() { delete Replacer; }
 
     /// \brief Really remove the instruction.
-    void commit() { delete Inst; }
+    void commit() override { delete Inst; }
 
     /// \brief Resurrect the instruction and reassign it to the proper uses if
     /// new value was provided when build this action.
-    void undo() {
+    void undo() override {
       DEBUG(dbgs() << "Undo: InstructionRemover: " << *Inst << "\n");
       Inserter.insert(Inst);
       if (Replacer)

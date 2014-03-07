@@ -164,7 +164,7 @@ public:
                  VirtRegMap &vrm)
     : SpillerBase(pass, mf, vrm) {}
 
-  void spill(LiveRangeEdit &LRE) {
+  void spill(LiveRangeEdit &LRE) override {
     // Ignore spillIs - we don't use it.
     trivialSpillEverywhere(LRE);
   }

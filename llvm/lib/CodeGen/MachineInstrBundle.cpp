@@ -26,7 +26,7 @@ namespace {
       initializeUnpackMachineBundlesPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
   };
 } // end anonymous namespace
 
@@ -77,7 +77,7 @@ namespace {
       initializeFinalizeMachineBundlesPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
   };
 } // end anonymous namespace
 

@@ -100,7 +100,7 @@ class MachineSchedulerBase : public MachineSchedContext,
 public:
   MachineSchedulerBase(char &ID): MachineFunctionPass(ID) {}
 
-  virtual void print(raw_ostream &O, const Module* = 0) const;
+  void print(raw_ostream &O, const Module* = 0) const override;
 
 protected:
   void scheduleRegions(ScheduleDAGInstrs &Scheduler);
@@ -111,9 +111,9 @@ class MachineScheduler : public MachineSchedulerBase {
 public:
   MachineScheduler();
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  virtual bool runOnMachineFunction(MachineFunction&);
+  bool runOnMachineFunction(MachineFunction&) override;
 
   static char ID; // Class identification, replacement for typeinfo
 
@@ -126,9 +126,9 @@ class PostMachineScheduler : public MachineSchedulerBase {
 public:
   PostMachineScheduler();
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  virtual bool runOnMachineFunction(MachineFunction&);
+  bool runOnMachineFunction(MachineFunction&) override;
 
   static char ID; // Class identification, replacement for typeinfo
 
@@ -1216,7 +1216,7 @@ public:
                       const TargetRegisterInfo *tri)
     : TII(tii), TRI(tri) {}
 
-  virtual void apply(ScheduleDAGMI *DAG);
+  void apply(ScheduleDAGMI *DAG) override;
 protected:
   void clusterNeighboringLoads(ArrayRef<SUnit*> Loads, ScheduleDAGMI *DAG);
 };
@@ -1319,7 +1319,7 @@ class MacroFusion : public ScheduleDAGMutation {
 public:
   MacroFusion(const TargetInstrInfo *tii): TII(tii) {}
 
-  virtual void apply(ScheduleDAGMI *DAG);
+  void apply(ScheduleDAGMI *DAG) override;
 };
 } // anonymous
 
@@ -1368,7 +1368,7 @@ class CopyConstrain : public ScheduleDAGMutation {
 public:
   CopyConstrain(const TargetInstrInfo *, const TargetRegisterInfo *) {}
 
-  virtual void apply(ScheduleDAGMI *DAG);
+  void apply(ScheduleDAGMI *DAG) override;
 
 protected:
   void constrainLocalCopy(SUnit *CopySU, ScheduleDAGMILive *DAG);
@@ -3251,7 +3251,7 @@ class ILPScheduler : public MachineSchedStrategy {
 public:
   ILPScheduler(bool MaximizeILP): DAG(0), Cmp(MaximizeILP) {}
 
-  virtual void initialize(ScheduleDAGMI *dag) {
+  void initialize(ScheduleDAGMI *dag) override {
     assert(dag->hasVRegLiveness() && "ILPScheduler needs vreg liveness");
     DAG = static_cast<ScheduleDAGMILive*>(dag);
     DAG->computeDFSResult();
@@ -3260,7 +3260,7 @@ public:
     ReadyQ.clear();
   }
 
-  virtual void registerRoots() {
+  void registerRoots() override {
     // Restore the heap in ReadyQ with the updated DFS results.
     std::make_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
   }
@@ -3269,7 +3269,7 @@ public:
   /// -----------------------------------------
 
   /// Callback to select the highest priority node from the ready Q.
-  virtual SUnit *pickNode(bool &IsTopNode) {
+  SUnit *pickNode(bool &IsTopNode) override {
     if (ReadyQ.empty()) return NULL;
     std::pop_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
     SUnit *SU = ReadyQ.back();
@@ -3285,19 +3285,19 @@ public:
   }
 
   /// \brief Scheduler callback to notify that a new subtree is scheduled.
-  virtual void scheduleTree(unsigned SubtreeID) {
+  void scheduleTree(unsigned SubtreeID) override {
     std::make_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
   }
 
   /// Callback after a node is scheduled. Mark a newly scheduled tree, notify
   /// DFSResults, and resort the priority Q.
-  virtual void schedNode(SUnit *SU, bool IsTopNode) {
+  void schedNode(SUnit *SU, bool IsTopNode) override {
     assert(!IsTopNode && "SchedDFSResult needs bottom-up");
   }
 
-  virtual void releaseTopNode(SUnit *) { /*only called for top roots*/ }
+  void releaseTopNode(SUnit *) override { /*only called for top roots*/ }
 
-  virtual void releaseBottomNode(SUnit *SU) {
+  void releaseBottomNode(SUnit *SU) override {
     ReadyQ.push_back(SU);
     std::push_heap(ReadyQ.begin(), ReadyQ.end(), Cmp);
   }

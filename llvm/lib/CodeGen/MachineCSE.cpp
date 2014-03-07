@@ -49,9 +49,9 @@ namespace {
       initializeMachineCSEPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       MachineFunctionPass::getAnalysisUsage(AU);
       AU.addRequired<AliasAnalysis>();
@@ -60,7 +60,7 @@ namespace {
       AU.addPreserved<MachineDominatorTree>();
     }
 
-    virtual void releaseMemory() {
+    void releaseMemory() override {
       ScopeMap.clear();
       Exps.clear();
     }

@@ -32,7 +32,7 @@ namespace {
                           DebugLoc DL) const;
   public:
     ErlangGC();
-    bool findCustomSafePoints(GCFunctionInfo &FI, MachineFunction &MF);
+    bool findCustomSafePoints(GCFunctionInfo &FI, MachineFunction &MF) override;
   };
 
 }

@@ -147,9 +147,9 @@ public:
   }
 
 private:
-  virtual bool runOnMachineFunction(MachineFunction&);
-  virtual void getAnalysisUsage(AnalysisUsage&) const;
-  virtual void releaseMemory();
+  bool runOnMachineFunction(MachineFunction&) override;
+  void getAnalysisUsage(AnalysisUsage&) const override;
+  void releaseMemory() override;
 
   void activate(unsigned);
 };

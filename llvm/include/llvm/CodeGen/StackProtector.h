@@ -114,14 +114,14 @@ public:
     initializeStackProtectorPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addPreserved<DominatorTreeWrapperPass>();
   }
 
   SSPLayoutKind getSSPLayout(const AllocaInst *AI) const;
   void adjustForColoring(const AllocaInst *From, const AllocaInst *To);
 
-  virtual bool runOnFunction(Function &Fn);
+  bool runOnFunction(Function &Fn) override;
 };
 } // end namespace llvm
 

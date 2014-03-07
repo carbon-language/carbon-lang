@@ -180,8 +180,8 @@ public:
   ~MachineModuleInfo();
 
   // Initialization and Finalization
-  virtual bool doInitialization(Module &);
-  virtual bool doFinalization(Module &);
+  bool doInitialization(Module &) override;
+  bool doFinalization(Module &) override;
 
   /// EndFunction - Discard function meta information.
   ///

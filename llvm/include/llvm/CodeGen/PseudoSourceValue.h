@@ -29,7 +29,7 @@ namespace llvm {
     /// printCustom - Implement printing for PseudoSourceValue. This is called
     /// from Value::print or Value's operator<<.
     ///
-    virtual void printCustom(raw_ostream &O) const;
+    void printCustom(raw_ostream &O) const override;
 
   public:
     explicit PseudoSourceValue(enum ValueTy Subclass = PseudoSourceValueVal);
@@ -93,13 +93,13 @@ namespace llvm {
       return V->getValueID() == FixedStackPseudoSourceValueVal;
     }
 
-    virtual bool isConstant(const MachineFrameInfo *MFI) const;
+    bool isConstant(const MachineFrameInfo *MFI) const override;
 
-    virtual bool isAliased(const MachineFrameInfo *MFI) const;
+    bool isAliased(const MachineFrameInfo *MFI) const override;
 
-    virtual bool mayAlias(const MachineFrameInfo *) const;
+    bool mayAlias(const MachineFrameInfo *) const override;
 
-    virtual void printCustom(raw_ostream &OS) const;
+    void printCustom(raw_ostream &OS) const override;
 
     int getFrameIndex() const { return FI; }
   };

@@ -110,15 +110,15 @@ public:
 
   /// atIssueLimit - Return true if no more instructions may be issued in this
   /// cycle.
-  virtual bool atIssueLimit() const;
+  bool atIssueLimit() const override;
 
   // Stalls provides an cycle offset at which SU will be scheduled. It will be
   // negative for bottom-up scheduling.
-  virtual HazardType getHazardType(SUnit *SU, int Stalls);
-  virtual void Reset();
-  virtual void EmitInstruction(SUnit *SU);
-  virtual void AdvanceCycle();
-  virtual void RecedeCycle();
+  HazardType getHazardType(SUnit *SU, int Stalls) override;
+  void Reset() override;
+  void EmitInstruction(SUnit *SU) override;
+  void AdvanceCycle() override;
+  void RecedeCycle() override;
 };
 
 }

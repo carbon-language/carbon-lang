@@ -142,9 +142,9 @@ namespace llvm {
 
     /// Build a PBQP instance to represent the register allocation problem for
     /// the given MachineFunction.
-    virtual PBQPRAProblem *build(MachineFunction *mf, const LiveIntervals *lis,
-                                 const MachineBlockFrequencyInfo *mbfi,
-                                 const RegSet &vregs);
+    PBQPRAProblem *build(MachineFunction *mf, const LiveIntervals *lis,
+                         const MachineBlockFrequencyInfo *mbfi,
+                         const RegSet &vregs) override;
 
   private:
 

@@ -69,10 +69,10 @@ class MCSymbol;
     bool ShouldOmitSectionDirective(StringRef Name, const MCAsmInfo &MAI) const;
 
     StringRef getSectionName() const { return SectionName; }
-    virtual std::string getLabelBeginName() const {
+    std::string getLabelBeginName() const override {
       return SectionName.str() + "_begin";
     }
-    virtual std::string getLabelEndName() const {
+    std::string getLabelEndName() const override {
       return SectionName.str() + "_end";
     }
     unsigned getCharacteristics() const { return Characteristics; }
@@ -81,11 +81,10 @@ class MCSymbol;
 
     void setSelection(int Selection, const MCSectionCOFF *Assoc = 0) const;
 
-    virtual void PrintSwitchToSection(const MCAsmInfo &MAI,
-                                      raw_ostream &OS,
-                                      const MCExpr *Subsection) const;
-    virtual bool UseCodeAlign() const;
-    virtual bool isVirtualSection() const;
+    void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
+                              const MCExpr *Subsection) const override;
+    bool UseCodeAlign() const override;
+    bool isVirtualSection() const override;
 
     static bool classof(const MCSection *S) {
       return S->getVariant() == SV_COFF;

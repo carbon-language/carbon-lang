@@ -32,12 +32,12 @@ namespace {
   public:
     explicit Printer(raw_ostream &OS) : FunctionPass(ID), OS(OS) {}
 
-    
-    const char *getPassName() const;
-    void getAnalysisUsage(AnalysisUsage &AU) const;
-    
-    bool runOnFunction(Function &F);
-    bool doFinalization(Module &M);
+
+    const char *getPassName() const override;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
+
+    bool runOnFunction(Function &F) override;
+    bool doFinalization(Module &M) override;
   };
 
 }

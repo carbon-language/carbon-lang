@@ -229,13 +229,13 @@ namespace llvm {
     /// the level of the whole MachineFunction. By default does nothing.
     virtual void finalizeSchedule() {}
 
-    virtual void dumpNode(const SUnit *SU) const;
+    void dumpNode(const SUnit *SU) const override;
 
     /// Return a label for a DAG node that points to an instruction.
-    virtual std::string getGraphNodeLabel(const SUnit *SU) const;
+    std::string getGraphNodeLabel(const SUnit *SU) const override;
 
     /// Return a label for the region of code covered by the DAG.
-    virtual std::string getDAGName() const;
+    std::string getDAGName() const override;
 
     /// \brief Fix register kill flags that scheduling has made invalid.
     void fixupKills(MachineBasicBlock *MBB);

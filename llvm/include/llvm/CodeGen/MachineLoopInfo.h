@@ -120,11 +120,11 @@ public:
 
   /// runOnFunction - Calculate the natural loop information.
   ///
-  virtual bool runOnMachineFunction(MachineFunction &F);
+  bool runOnMachineFunction(MachineFunction &F) override;
 
-  virtual void releaseMemory() { LI.releaseMemory(); }
+  void releaseMemory() override { LI.releaseMemory(); }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   /// removeLoop - This removes the specified top-level loop from this loop info
   /// object.  The loop is not deleted, as it will presumably be inserted into
