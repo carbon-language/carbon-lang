@@ -30,6 +30,7 @@ class ArgList;
 
 namespace clang {
 class ASTConsumer;
+class ASTReader;
 class CompilerInstance;
 class CompilerInvocation;
 class Decl;
@@ -72,10 +73,18 @@ void ProcessWarningOptions(DiagnosticsEngine &Diags,
 void DoPrintPreprocessedInput(Preprocessor &PP, raw_ostream* OS,
                               const PreprocessorOutputOptions &Opts);
 
-/// AttachDependencyFileGen - Create a dependency file generator, and attach
-/// it to the given preprocessor.  This takes ownership of the output stream.
-void AttachDependencyFileGen(Preprocessor &PP,
-                             const DependencyOutputOptions &Opts);
+/// Builds a depdenency file when attached to a Preprocessor (for includes) and
+/// ASTReader (for module imports), and writes it out at the end of processing
+/// a source file.  Users should attach to the ast reader whenever a module is
+/// loaded.
+class DependencyFileGenerator {
+  void *Impl; // Opaque implementation
+  DependencyFileGenerator(void *Impl);
+public:
+  static DependencyFileGenerator *CreateAndAttachToPreprocessor(
+    Preprocessor &PP, const DependencyOutputOptions &Opts);
+  void AttachToASTReader(ASTReader &R);
+};
 
 /// AttachDependencyGraphGen - Create a dependency graph generator, and attach
 /// it to the given preprocessor.

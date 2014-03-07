@@ -60,6 +60,70 @@ using namespace clang::serialization;
 using namespace clang::serialization::reader;
 using llvm::BitstreamCursor;
 
+
+//===----------------------------------------------------------------------===//
+// ChainedASTReaderListener implementation
+//===----------------------------------------------------------------------===//
+
+bool
+ChainedASTReaderListener::ReadFullVersionInformation(StringRef FullVersion) {
+  return First->ReadFullVersionInformation(FullVersion) ||
+         Second->ReadFullVersionInformation(FullVersion);
+}
+bool ChainedASTReaderListener::ReadLanguageOptions(const LangOptions &LangOpts,
+                                                   bool Complain) {
+  return First->ReadLanguageOptions(LangOpts, Complain) ||
+         Second->ReadLanguageOptions(LangOpts, Complain);
+}
+bool
+ChainedASTReaderListener::ReadTargetOptions(const TargetOptions &TargetOpts,
+                                            bool Complain) {
+  return First->ReadTargetOptions(TargetOpts, Complain) ||
+         Second->ReadTargetOptions(TargetOpts, Complain);
+}
+bool ChainedASTReaderListener::ReadDiagnosticOptions(
+    const DiagnosticOptions &DiagOpts, bool Complain) {
+  return First->ReadDiagnosticOptions(DiagOpts, Complain) ||
+         Second->ReadDiagnosticOptions(DiagOpts, Complain);
+}
+bool
+ChainedASTReaderListener::ReadFileSystemOptions(const FileSystemOptions &FSOpts,
+                                                bool Complain) {
+  return First->ReadFileSystemOptions(FSOpts, Complain) ||
+         Second->ReadFileSystemOptions(FSOpts, Complain);
+}
+
+bool ChainedASTReaderListener::ReadHeaderSearchOptions(
+    const HeaderSearchOptions &HSOpts, bool Complain) {
+  return First->ReadHeaderSearchOptions(HSOpts, Complain) ||
+         Second->ReadHeaderSearchOptions(HSOpts, Complain);
+}
+bool ChainedASTReaderListener::ReadPreprocessorOptions(
+    const PreprocessorOptions &PPOpts, bool Complain,
+    std::string &SuggestedPredefines) {
+  return First->ReadPreprocessorOptions(PPOpts, Complain,
+                                        SuggestedPredefines) ||
+         Second->ReadPreprocessorOptions(PPOpts, Complain, SuggestedPredefines);
+}
+void ChainedASTReaderListener::ReadCounter(const serialization::ModuleFile &M,
+                                           unsigned Value) {
+  First->ReadCounter(M, Value);
+  Second->ReadCounter(M, Value);
+}
+bool ChainedASTReaderListener::needsInputFileVisitation() {
+  return First->needsInputFileVisitation() ||
+         Second->needsInputFileVisitation();
+}
+bool ChainedASTReaderListener::needsSystemInputFileVisitation() {
+  return First->needsSystemInputFileVisitation() ||
+  Second->needsSystemInputFileVisitation();
+}
+bool ChainedASTReaderListener::visitInputFile(StringRef Filename,
+                                              bool isSystem) {
+  return First->visitInputFile(Filename, isSystem) ||
+         Second->visitInputFile(Filename, isSystem);
+}
+
 //===----------------------------------------------------------------------===//
 // PCH validator implementation
 //===----------------------------------------------------------------------===//
@@ -2004,30 +2068,44 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       // Validate input files.
       const HeaderSearchOptions &HSOpts =
           PP.getHeaderSearchInfo().getHeaderSearchOpts();
+
+      // All user input files reside at the index range [0, Record[1]), and
+      // system input files reside at [Record[1], Record[0]).
+      // Record is the one from INPUT_FILE_OFFSETS.
+      unsigned NumInputs = Record[0];
+      unsigned NumUserInputs = Record[1];
+
       if (!DisableValidation &&
           (!HSOpts.ModulesValidateOncePerBuildSession ||
            F.InputFilesValidationTimestamp <= HSOpts.BuildSessionTimestamp)) {
         bool Complain = (ClientLoadCapabilities & ARR_OutOfDate) == 0;
-        // All user input files reside at the index range [0, Record[1]), and
-        // system input files reside at [Record[1], Record[0]).
-        // Record is the one from INPUT_FILE_OFFSETS.
-        //
+
         // If we are reading a module, we will create a verification timestamp,
         // so we verify all input files.  Otherwise, verify only user input
         // files.
-        unsigned NumInputs = Record[0];
-        unsigned NumUserInputs = Record[1];
-        unsigned N = ValidateSystemInputs ||
-                             (HSOpts.ModulesValidateOncePerBuildSession &&
-                              F.Kind == MK_Module)
-                         ? NumInputs
-                         : NumUserInputs;
+
+        unsigned N = NumUserInputs;
+        if (ValidateSystemInputs ||
+            (Listener && Listener->needsInputFileVisitation()) ||
+            (HSOpts.ModulesValidateOncePerBuildSession && F.Kind == MK_Module))
+          N = NumInputs;
+
         for (unsigned I = 0; I < N; ++I) {
           InputFile IF = getInputFile(F, I+1, Complain);
+          if (const FileEntry *F = IF.getFile())
+            Listener->visitInputFile(F->getName(), I >= NumUserInputs);
           if (!IF.getFile() || IF.isOutOfDate())
             return OutOfDate;
         }
       }
+
+      if (Listener && Listener->needsInputFileVisitation()) {
+        unsigned N = Listener->needsSystemInputFileVisitation() ? NumInputs
+                                                                : NumUserInputs;
+        for (unsigned I = 0; I < N; ++I)
+          Listener->visitInputFile(getInputFileName(F, I+1), I >= NumUserInputs);
+      }
+
       return Success;
     }
 
@@ -3729,6 +3807,7 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
     return true;
 
   bool NeedsInputFiles = Listener.needsInputFileVisitation();
+  bool NeedsSystemInputFiles = Listener.needsSystemInputFileVisitation();
   BitstreamCursor InputFilesCursor;
   if (NeedsInputFiles) {
     InputFilesCursor = Stream;
@@ -3815,6 +3894,10 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
       for (unsigned I = 0; I != NumInputFiles; ++I) {
         // Go find this input file.
         bool isSystemFile = I >= NumUserFiles;
+
+        if (isSystemFile && !NeedsSystemInputFiles)
+          break; // the rest are system input files
+
         BitstreamCursor &Cursor = InputFilesCursor;
         SavedStreamPosition SavedPosition(Cursor);
         Cursor.JumpToBit(InputFileOffs[I]);
