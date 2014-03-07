@@ -78,3 +78,10 @@ List of projects and tools
     "cldoc is a Clang based documentation generator for C and C++.
     cldoc tries to solve the issue of writing C/C++ software documentation
     with a modern, non-intrusive and robust approach."
+
+`<https://github.com/AlexDenisov/ToyClangPlugin>`_
+    "The simplest Clang plugin implementing a semantic check for Objective-C.
+    This example shows how to use the ``DiagnosticsEngine`` (emit warnings,
+    errors, fixit hints).  See also `<http://l.rw.rw/clang_plugin>`_ for
+    step-by-step instructions."
+
