@@ -46,9 +46,9 @@ system linker tool.
 Current Status
 --------------
 
-lld is in its early stages of development.
+lld can self host on x86-64 Linux and x86 Windows.
 
-It can currently self host on Linux x86-64 with -static.
+All SingleSource tests in test-suite pass on x86-64 Linux.
 
 Source
 ------
