@@ -21,7 +21,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/Support/type_traits.h"
 #include <list>
 #include <vector>
 
@@ -1046,8 +1045,8 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
 // match.
 template<typename T>
 inline
-typename llvm::enable_if<llvm::is_same<T, DeclContext>, 
-                         const DiagnosticBuilder &>::type
+typename std::enable_if<std::is_same<T, DeclContext>::value,
+                        const DiagnosticBuilder &>::type
 operator<<(const DiagnosticBuilder &DB, T *DC) {
   DB.AddTaggedVal(reinterpret_cast<intptr_t>(DC),
                   DiagnosticsEngine::ak_declcontext);

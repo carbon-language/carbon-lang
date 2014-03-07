@@ -215,7 +215,7 @@ struct ObjCDictionaryElement {
 } // end namespace clang
 
 namespace llvm {
-template <> struct isPodLike<clang::ObjCDictionaryElement> : llvm::true_type {};
+template <> struct isPodLike<clang::ObjCDictionaryElement> : std::true_type {};
 }
 
 namespace clang {

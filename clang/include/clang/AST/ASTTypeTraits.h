@@ -297,18 +297,18 @@ private:
 
 template <typename T>
 struct DynTypedNode::BaseConverter<
-    T, typename llvm::enable_if<llvm::is_base_of<
-           Decl, T> >::type> : public DynCastPtrConverter<T, Decl> {};
+    T, typename std::enable_if<std::is_base_of<Decl, T>::value>::type>
+    : public DynCastPtrConverter<T, Decl> {};
 
 template <typename T>
 struct DynTypedNode::BaseConverter<
-    T, typename llvm::enable_if<llvm::is_base_of<
-           Stmt, T> >::type> : public DynCastPtrConverter<T, Stmt> {};
+    T, typename std::enable_if<std::is_base_of<Stmt, T>::value>::type>
+    : public DynCastPtrConverter<T, Stmt> {};
 
 template <typename T>
 struct DynTypedNode::BaseConverter<
-    T, typename llvm::enable_if<llvm::is_base_of<
-           Type, T> >::type> : public DynCastPtrConverter<T, Type> {};
+    T, typename std::enable_if<std::is_base_of<Type, T>::value>::type>
+    : public DynCastPtrConverter<T, Type> {};
 
 template <>
 struct DynTypedNode::BaseConverter<

@@ -23,7 +23,6 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/Support/type_traits.h"
 #include <vector>
 
 namespace clang {

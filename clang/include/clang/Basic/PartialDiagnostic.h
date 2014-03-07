@@ -376,8 +376,8 @@ public:
   // match.
   template<typename T>
   friend inline
-  typename llvm::enable_if<llvm::is_same<T, DeclContext>,
-                           const PartialDiagnostic &>::type
+  typename std::enable_if<std::is_same<T, DeclContext>::value,
+                          const PartialDiagnostic &>::type
   operator<<(const PartialDiagnostic &PD, T *DC) {
     PD.AddTaggedVal(reinterpret_cast<intptr_t>(DC),
                     DiagnosticsEngine::ak_declcontext);

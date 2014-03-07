@@ -17,7 +17,6 @@
 
 #include "clang/AST/Type.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/type_traits.h"
 #include <iterator>
 
 namespace clang {
@@ -60,9 +59,9 @@ public:
 
   /// \brief Converting constructor that permits implicit upcasting of
   /// canonical type pointers.
-  template<typename U>
-  CanQual(const CanQual<U>& Other,
-          typename llvm::enable_if<llvm::is_base_of<T, U>, int>::type = 0);
+  template <typename U>
+  CanQual(const CanQual<U> &Other,
+          typename std::enable_if<std::is_base_of<T, U>::value, int>::type = 0);
 
   /// \brief Retrieve the underlying type pointer, which refers to a
   /// canonical type.

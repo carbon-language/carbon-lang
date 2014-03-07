@@ -53,7 +53,7 @@ public:
   }
 
   ~ASTVector() {
-    if (llvm::is_class<T>::value) {
+    if (std::is_class<T>::value) {
       // Destroy the constructed elements in the vector.
       destroy_range(Begin, End);
     }
@@ -123,7 +123,7 @@ public:
   }
 
   void clear() {
-    if (llvm::is_class<T>::value) {
+    if (std::is_class<T>::value) {
       destroy_range(Begin, End);
     }
     End = Begin;
@@ -368,7 +368,7 @@ void ASTVector<T>::grow(const ASTContext &C, size_t MinSize) {
   T *NewElts = new (C, llvm::alignOf<T>()) T[NewCapacity];
 
   // Copy the elements over.
-  if (llvm::is_class<T>::value) {
+  if (std::is_class<T>::value) {
     std::uninitialized_copy(Begin, End, NewElts);
     // Destroy the original elements.
     destroy_range(Begin, End);

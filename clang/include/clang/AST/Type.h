@@ -31,7 +31,6 @@
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/type_traits.h"
 
 namespace clang {
   enum {
@@ -5173,10 +5172,9 @@ inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
 
 // Helper class template that is used by Type::getAs to ensure that one does
 // not try to look through a qualified type to get to an array type.
-template<typename T,
-         bool isArrayType = (llvm::is_same<T, ArrayType>::value ||
-                             llvm::is_base_of<ArrayType, T>::value)>
-struct ArrayType_cannot_be_used_with_getAs { };
+template <typename T, bool isArrayType = (std::is_same<T, ArrayType>::value ||
+                                          std::is_base_of<ArrayType, T>::value)>
+struct ArrayType_cannot_be_used_with_getAs {};
 
 template<typename T>
 struct ArrayType_cannot_be_used_with_getAs<T, true>;
