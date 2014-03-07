@@ -48,9 +48,6 @@ protected:
   static unsigned SharedTypeIds(const LandingPadInfo *L,
                                 const LandingPadInfo *R);
 
-  /// PadLT - Order landing pads lexicographically by type id.
-  static bool PadLT(const LandingPadInfo *L, const LandingPadInfo *R);
-
   /// PadRange - Structure holding a try-range and the associated landing pad.
   struct PadRange {
     // The index of the landing pad.

@@ -191,18 +191,6 @@ void ConstantHoisting::CollectConstants(Function &F) {
       CollectConstants(I);
 }
 
-/// \brief Compare function for sorting integer constants by type and by value
-/// within a type in ConstantMaps.
-static bool
-ConstantMapLessThan(const std::pair<ConstantInt *, ConstantCandidate> &LHS,
-                    const std::pair<ConstantInt *, ConstantCandidate> &RHS) {
-  if (LHS.first->getType() == RHS.first->getType())
-    return LHS.first->getValue().ult(RHS.first->getValue());
-  else
-    return LHS.first->getType()->getBitWidth() <
-           RHS.first->getType()->getBitWidth();
-}
-
 /// \brief Find the base constant within the given range and rebase all other
 /// constants with respect to the base constant.
 void ConstantHoisting::FindAndMakeBaseConstant(ConstantMapType::iterator S,
@@ -239,7 +227,14 @@ void ConstantHoisting::FindAndMakeBaseConstant(ConstantMapType::iterator S,
 /// an add from a common base constant.
 void ConstantHoisting::FindBaseConstants() {
   // Sort the constants by value and type. This invalidates the mapping.
-  std::sort(ConstantMap.begin(), ConstantMap.end(), ConstantMapLessThan);
+  std::sort(ConstantMap.begin(), ConstantMap.end(),
+            [](const std::pair<ConstantInt *, ConstantCandidate> &LHS,
+               const std::pair<ConstantInt *, ConstantCandidate> &RHS) {
+    if (LHS.first->getType() != RHS.first->getType())
+      return LHS.first->getType()->getBitWidth() <
+             RHS.first->getType()->getBitWidth();
+    return LHS.first->getValue().ult(RHS.first->getValue());
+  });
 
   // Simple linear scan through the sorted constant map for viable merge
   // candidates.

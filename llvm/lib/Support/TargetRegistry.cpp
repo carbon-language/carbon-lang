@@ -127,11 +127,6 @@ const Target *TargetRegistry::getClosestTargetForJIT(std::string &Error) {
   return TheTarget;
 }
 
-static int TargetArraySortFn(const std::pair<StringRef, const Target *> *LHS,
-                             const std::pair<StringRef, const Target *> *RHS) {
-  return LHS->first.compare(RHS->first);
-}
-
 void TargetRegistry::printRegisteredTargetsForVersion() {
   std::vector<std::pair<StringRef, const Target*> > Targets;
   size_t Width = 0;
@@ -141,7 +136,11 @@ void TargetRegistry::printRegisteredTargetsForVersion() {
     Targets.push_back(std::make_pair(I->getName(), &*I));
     Width = std::max(Width, Targets.back().first.size());
   }
-  array_pod_sort(Targets.begin(), Targets.end(), TargetArraySortFn);
+  array_pod_sort(Targets.begin(), Targets.end(),
+                 [](const std::pair<StringRef, const Target *> *LHS,
+                    const std::pair<StringRef, const Target *> *RHS) {
+    return LHS->first.compare(RHS->first);
+  });
 
   raw_ostream &OS = outs();
   OS << "  Registered Targets:\n";

@@ -1205,9 +1205,11 @@ class LoadClusterMutation : public ScheduleDAGMutation {
     unsigned Offset;
     LoadInfo(SUnit *su, unsigned reg, unsigned ofs)
       : SU(su), BaseReg(reg), Offset(ofs) {}
+
+    bool operator<(const LoadInfo &RHS) const {
+      return std::tie(BaseReg, Offset) < std::tie(RHS.BaseReg, RHS.Offset);
+    }
   };
-  static bool LoadInfoLess(const LoadClusterMutation::LoadInfo &LHS,
-                           const LoadClusterMutation::LoadInfo &RHS);
 
   const TargetInstrInfo *TII;
   const TargetRegisterInfo *TRI;
@@ -1222,14 +1224,6 @@ protected:
 };
 } // anonymous
 
-bool LoadClusterMutation::LoadInfoLess(
-  const LoadClusterMutation::LoadInfo &LHS,
-  const LoadClusterMutation::LoadInfo &RHS) {
-  if (LHS.BaseReg != RHS.BaseReg)
-    return LHS.BaseReg < RHS.BaseReg;
-  return LHS.Offset < RHS.Offset;
-}
-
 void LoadClusterMutation::clusterNeighboringLoads(ArrayRef<SUnit*> Loads,
                                                   ScheduleDAGMI *DAG) {
   SmallVector<LoadClusterMutation::LoadInfo,32> LoadRecords;
@@ -1242,7 +1236,7 @@ void LoadClusterMutation::clusterNeighboringLoads(ArrayRef<SUnit*> Loads,
   }
   if (LoadRecords.size() < 2)
     return;
-  std::sort(LoadRecords.begin(), LoadRecords.end(), LoadInfoLess);
+  std::sort(LoadRecords.begin(), LoadRecords.end());
   unsigned ClusterLength = 1;
   for (unsigned Idx = 0, End = LoadRecords.size(); Idx < (End - 1); ++Idx) {
     if (LoadRecords[Idx].BaseReg != LoadRecords[Idx+1].BaseReg) {

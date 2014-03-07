@@ -58,19 +58,6 @@ unsigned DwarfException::SharedTypeIds(const LandingPadInfo *L,
   return Count;
 }
 
-/// PadLT - Order landing pads lexicographically by type id.
-bool DwarfException::PadLT(const LandingPadInfo *L, const LandingPadInfo *R) {
-  const std::vector<int> &LIds = L->TypeIds, &RIds = R->TypeIds;
-  unsigned LSize = LIds.size(), RSize = RIds.size();
-  unsigned MinSize = LSize < RSize ? LSize : RSize;
-
-  for (unsigned i = 0; i != MinSize; ++i)
-    if (LIds[i] != RIds[i])
-      return LIds[i] < RIds[i];
-
-  return LSize < RSize;
-}
-
 /// ComputeActionsTable - Compute the actions table and gather the first action
 /// index for each landing pad site.
 unsigned DwarfException::
@@ -356,7 +343,10 @@ void DwarfException::EmitExceptionTable() {
   for (unsigned i = 0, N = PadInfos.size(); i != N; ++i)
     LandingPads.push_back(&PadInfos[i]);
 
-  std::sort(LandingPads.begin(), LandingPads.end(), PadLT);
+  // Order landing pads lexicographically by type id.
+  std::sort(LandingPads.begin(), LandingPads.end(),
+            [](const LandingPadInfo *L,
+               const LandingPadInfo *R) { return L->TypeIds < R->TypeIds; });
 
   // Compute the actions table and gather the first action index for each
   // landing pad site.
