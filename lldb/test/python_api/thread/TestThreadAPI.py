@@ -74,7 +74,6 @@ class ThreadAPITestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.step_out_of_malloc_into_function_b(self.exe_name)
 
-    @expectedFailureFreeBSD('llvm.org/pr17944')
     @expectedFailureLinux # llvm.org/pr14416
     @python_api_test
     @dwarf_test
@@ -187,6 +186,15 @@ class ThreadAPITestCase(TestBase):
             #print "caller symbol of malloc:", caller_symbol
             if not caller_symbol:
                 self.fail("Test failed: could not locate the caller symbol of malloc")
+
+            # Our top frame may be an inlined function in malloc() (e.g., on
+            # FreeBSD).  Apply a simple heuristic of stepping out until we find
+            # a non-malloc caller
+            while caller_symbol.startswith("malloc"):
+                thread.StepOut()
+                self.assertTrue(thread.IsValid(), "Thread valid after stepping to outer malloc")
+                caller_symbol = get_caller_symbol(thread)
+
             if caller_symbol == "b(int)":
                 break
             #self.runCmd("thread backtrace")
