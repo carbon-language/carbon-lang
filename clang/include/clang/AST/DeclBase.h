@@ -1575,16 +1575,16 @@ public:
   /// within this context.
   typedef UsingDirectiveDecl * const * udir_iterator;
 
-  typedef std::pair<udir_iterator, udir_iterator> udir_iterator_range;
+  typedef llvm::iterator_range<udir_iterator> udir_range;
 
-  udir_iterator_range getUsingDirectives() const;
+  udir_range getUsingDirectives() const;
 
   udir_iterator using_directives_begin() const {
-    return getUsingDirectives().first;
+    return getUsingDirectives().begin();
   }
 
   udir_iterator using_directives_end() const {
-    return getUsingDirectives().second;
+    return getUsingDirectives().end();
   }
 
   // These are all defined in DependentDiagnostic.h.
