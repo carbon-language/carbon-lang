@@ -1675,8 +1675,9 @@ bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
 }
 
 bool CursorVisitor::VisitAttributes(Decl *D) {
-  for (auto I : D->attrs())
-    if (Visit(MakeCXCursor(I, D, TU)))
+  for (AttrVec::const_iterator i = D->attr_begin(), e = D->attr_end();
+       i != e; ++i)
+    if (Visit(MakeCXCursor(*i, D, TU)))
         return true;
 
   return false;
@@ -6040,8 +6041,9 @@ static int getCursorPlatformAvailabilityForDecl(const Decl *D,
                                                 int availability_size) {
   bool HadAvailAttr = false;
   int N = 0;
-  for (auto A : D->attrs()) {
-    if (DeprecatedAttr *Deprecated = dyn_cast<DeprecatedAttr>(A)) {
+  for (Decl::attr_iterator A = D->attr_begin(), AEnd = D->attr_end(); A != AEnd;
+       ++A) {
+    if (DeprecatedAttr *Deprecated = dyn_cast<DeprecatedAttr>(*A)) {
       HadAvailAttr = true;
       if (always_deprecated)
         *always_deprecated = 1;
@@ -6050,7 +6052,7 @@ static int getCursorPlatformAvailabilityForDecl(const Decl *D,
       continue;
     }
     
-    if (UnavailableAttr *Unavailable = dyn_cast<UnavailableAttr>(A)) {
+    if (UnavailableAttr *Unavailable = dyn_cast<UnavailableAttr>(*A)) {
       HadAvailAttr = true;
       if (always_unavailable)
         *always_unavailable = 1;
@@ -6060,7 +6062,7 @@ static int getCursorPlatformAvailabilityForDecl(const Decl *D,
       continue;
     }
     
-    if (AvailabilityAttr *Avail = dyn_cast<AvailabilityAttr>(A)) {
+    if (AvailabilityAttr *Avail = dyn_cast<AvailabilityAttr>(*A)) {
       HadAvailAttr = true;
       if (N < availability_size) {
         availability[N].Platform

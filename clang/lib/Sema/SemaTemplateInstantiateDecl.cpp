@@ -168,7 +168,10 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
                             const Decl *Tmpl, Decl *New,
                             LateInstantiatedAttrVec *LateAttrs,
                             LocalInstantiationScope *OuterMostScope) {
-  for (auto TmplAttr : Tmpl->attrs()) {
+  for (AttrVec::const_iterator i = Tmpl->attr_begin(), e = Tmpl->attr_end();
+       i != e; ++i) {
+    const Attr *TmplAttr = *i;
+
     // FIXME: This should be generalized to more than just the AlignedAttr.
     const AlignedAttr *Aligned = dyn_cast<AlignedAttr>(TmplAttr);
     if (Aligned && Aligned->isAlignmentDependent()) {

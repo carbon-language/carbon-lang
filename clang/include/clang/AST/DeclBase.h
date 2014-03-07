@@ -18,7 +18,6 @@
 #include "clang/AST/DeclarationName.h"
 #include "clang/Basic/Linkage.h"
 #include "clang/Basic/Specifiers.h"
-#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Compiler.h"
@@ -448,23 +447,14 @@ public:
   }
 
   typedef AttrVec::const_iterator attr_iterator;
-  typedef llvm::iterator_range<attr_iterator> attr_range;
 
-  attr_range attrs() const {
-    // FIXME: Do not rely on iterators having comparable singular values.
-    //        Note that this should error out if they do not.
-    if (!hasAttrs())
-      return attr_range();
-
-    auto const &A = getAttrs();
-    return attr_range(A.begin(), A.end());
-  }
-
+  // FIXME: Do not rely on iterators having comparable singular values.
+  //        Note that this should error out if they do not.
   attr_iterator attr_begin() const {
-    return attrs().begin();
+    return hasAttrs() ? getAttrs().begin() : 0;
   }
   attr_iterator attr_end() const {
-    return attrs().end();
+    return hasAttrs() ? getAttrs().end() : 0;
   }
 
   template <typename T>

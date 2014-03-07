@@ -408,8 +408,8 @@ AvailabilityResult Decl::getAvailability(std::string *Message) const {
   AvailabilityResult Result = AR_Available;
   std::string ResultMessage;
 
-  for (auto A : attrs()) {
-    if (auto Deprecated = dyn_cast<DeprecatedAttr>(A)) {
+  for (attr_iterator A = attr_begin(), AEnd = attr_end(); A != AEnd; ++A) {
+    if (DeprecatedAttr *Deprecated = dyn_cast<DeprecatedAttr>(*A)) {
       if (Result >= AR_Deprecated)
         continue;
 
@@ -420,13 +420,13 @@ AvailabilityResult Decl::getAvailability(std::string *Message) const {
       continue;
     }
 
-    if (auto Unavailable = dyn_cast<UnavailableAttr>(A)) {
+    if (UnavailableAttr *Unavailable = dyn_cast<UnavailableAttr>(*A)) {
       if (Message)
         *Message = Unavailable->getMessage();
       return AR_Unavailable;
     }
 
-    if (auto Availability = dyn_cast<AvailabilityAttr>(A)) {
+    if (AvailabilityAttr *Availability = dyn_cast<AvailabilityAttr>(*A)) {
       AvailabilityResult AR = CheckAvailability(getASTContext(), Availability,
                                                 Message);
 
@@ -482,11 +482,11 @@ bool Decl::isWeakImported() const {
   if (!canBeWeakImported(IsDefinition))
     return false;
 
-  for (auto A : attrs()) {
-    if (isa<WeakImportAttr>(A))
+  for (attr_iterator A = attr_begin(), AEnd = attr_end(); A != AEnd; ++A) {
+    if (isa<WeakImportAttr>(*A))
       return true;
 
-    if (AvailabilityAttr *Availability = dyn_cast<AvailabilityAttr>(A)) {
+    if (AvailabilityAttr *Availability = dyn_cast<AvailabilityAttr>(*A)) {
       if (CheckAvailability(getASTContext(), Availability, 0) 
                                                          == AR_NotYetIntroduced)
         return true;

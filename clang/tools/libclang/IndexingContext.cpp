@@ -67,7 +67,9 @@ AttrListInfo::AttrListInfo(const Decl *D, IndexingContext &IdxCtx)
   if (!D->hasAttrs())
     return;
 
-  for (auto A : D->attrs()) {
+  for (AttrVec::const_iterator AttrI = D->attr_begin(), AttrE = D->attr_end();
+         AttrI != AttrE; ++AttrI) {
+    const Attr *A = *AttrI;
     CXCursor C = MakeCXCursor(A, D, IdxCtx.CXTU);
     CXIdxLoc Loc =  IdxCtx.getIndexLoc(A->getLocation());
     switch (C.kind) {

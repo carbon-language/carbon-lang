@@ -1940,11 +1940,13 @@ void Sema::DiagnoseMissingDesignatedInitOverrides(
 static void AddPropertyAttrs(Sema &S, ObjCMethodDecl *PropertyMethod,
                              ObjCPropertyDecl *Property) {
   // Should we just clone all attributes over?
-  for (auto A : Property->attrs()) {
-    if (isa<DeprecatedAttr>(A) || 
-        isa<UnavailableAttr>(A) || 
-        isa<AvailabilityAttr>(A))
-      PropertyMethod->addAttr(A->clone(S.Context));
+  for (Decl::attr_iterator A = Property->attr_begin(), 
+                        AEnd = Property->attr_end(); 
+       A != AEnd; ++A) {
+    if (isa<DeprecatedAttr>(*A) || 
+        isa<UnavailableAttr>(*A) || 
+        isa<AvailabilityAttr>(*A))
+      PropertyMethod->addAttr((*A)->clone(S.Context));
   }
 }
 
