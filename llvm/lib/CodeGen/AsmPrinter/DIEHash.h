@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef CODEGEN_ASMPRINTER_DIEHASH_H__
+#define CODEGEN_ASMPRINTER_DIEHASH_H__
+
 #include "DIE.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/MD5.h"
@@ -23,6 +26,7 @@ class CompileUnit;
 /// \brief An object containing the capability of hashing and adding hash
 /// attributes onto a DIE.
 class DIEHash {
+
   // The entry for a particular attribute.
   struct AttrEntry {
     const DIEValue *Val;
@@ -108,13 +112,17 @@ private:
   void computeHash(const DIE &Die);
 
   // Routines that add DIEValues to the hash.
-private:
+public:
+  /// \brief Adds \param Value to the hash.
+  void update(uint8_t Value) { Hash.update(Value); }
+
   /// \brief Encodes and adds \param Value to the hash as a ULEB128.
   void addULEB128(uint64_t Value);
 
   /// \brief Encodes and adds \param Value to the hash as a SLEB128.
   void addSLEB128(int64_t Value);
 
+private:
   /// \brief Adds \param Str to the hash and includes a NULL byte.
   void addString(StringRef Str);
 
@@ -154,3 +162,5 @@ private:
   DenseMap<const DIE *, unsigned> Numbering;
 };
 }
+
+#endif
