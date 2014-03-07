@@ -1,4 +1,7 @@
-; RUN: llc -mtriple=aarch64-non-linux-gnu < %s -filetype=obj | llvm-dwarfdump - | FileCheck %s
+; RUN: llc -mtriple=aarch64-non-linux-gnu -dwarf-version=4 < %s -filetype=obj \
+; RUN:    | llvm-dwarfdump - | FileCheck -check-prefix=CHECK -check-prefix=CHECK-4 %s
+; RUN: llc -mtriple=aarch64-non-linux-gnu -dwarf-version=3 < %s -filetype=obj \
+; RUN:    | llvm-dwarfdump - | FileCheck -check-prefix=CHECK -check-prefix=CHECK-3 %s
 
 ; We're mostly checking that relocations are applied correctly
 ; here. Currently R_AARCH64_ABS32 is used for references to debug data
@@ -12,7 +15,8 @@
 ; A couple of ABS64s similarly:
 
 ; CHECK: DW_AT_low_pc [DW_FORM_addr] (0x0000000000000000)
-; CHECK: DW_AT_high_pc [DW_FORM_data4] (0x00000008)
+; CHECK-4: DW_AT_high_pc [DW_FORM_data4] (0x00000008)
+; CHECK-3: DW_AT_high_pc [DW_FORM_addr] (0x0000000000000008)
 
 define i32 @main() nounwind {
   ret i32 0, !dbg !8

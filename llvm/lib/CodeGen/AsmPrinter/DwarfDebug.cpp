@@ -413,7 +413,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit *SPCU,
   }
 
   SPCU->addLabelAddress(SPDie, dwarf::DW_AT_low_pc, FunctionBeginSym);
-  if (Triple(Asm->getTargetTriple()).isOSDarwin())
+  if (DwarfVersion < 4 || Triple(Asm->getTargetTriple()).isOSDarwin())
     SPCU->addLabelAddress(SPDie, dwarf::DW_AT_high_pc, FunctionEndSym);
   else
     SPCU->addLabelDelta(SPDie, dwarf::DW_AT_high_pc, FunctionEndSym,
