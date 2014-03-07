@@ -125,9 +125,7 @@ lldb_private::Initialize ()
         OperatingSystemPython::Initialize();
 #endif
         JITLoaderGDB::Initialize();
-#if defined(__linux__) || defined(__FreeBSD__)
         ProcessElfCore::Initialize();
-#endif
         
 #if defined (__APPLE__)
         //----------------------------------------------------------------------
@@ -211,9 +209,7 @@ lldb_private::Terminate ()
     OperatingSystemPython::Terminate();
 #endif
     JITLoaderGDB::Terminate();
-#if defined(__linux__) || defined(__FreeBSD__)
     ProcessElfCore::Terminate();
-#endif
     
 #if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();
