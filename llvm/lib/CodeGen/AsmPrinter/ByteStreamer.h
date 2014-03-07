@@ -23,6 +23,8 @@
 namespace llvm {
 class ByteStreamer {
  public:
+  virtual ~ByteStreamer() {}
+
   // For now we're just handling the calls we need for dwarf emission/hashing.
   virtual void EmitInt8(uint8_t Byte, const Twine &Comment = "") = 0;
   virtual void EmitSLEB128(uint64_t DWord, const Twine &Comment = "") = 0;
