@@ -337,7 +337,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
         m_compiler->createSourceManager(*m_file_manager.get());
     
     m_compiler->createFileManager();
-    m_compiler->createPreprocessor();
+    m_compiler->createPreprocessor(TU_Complete);
     
     // 6. Most of this we get from the CompilerInstance, but we 
     // also want to give the context an ExternalASTSource.
