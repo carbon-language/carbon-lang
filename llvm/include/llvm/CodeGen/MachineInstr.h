@@ -637,19 +637,19 @@ public:
   /// bundle remain bundled.
   void eraseFromBundle();
 
-  /// isLabel - Returns true if the MachineInstr represents a label.
-  ///
-  bool isLabel() const {
-    return getOpcode() == TargetOpcode::PROLOG_LABEL ||
-           getOpcode() == TargetOpcode::EH_LABEL ||
-           getOpcode() == TargetOpcode::GC_LABEL;
-  }
-
-  bool isPrologLabel() const {
-    return getOpcode() == TargetOpcode::PROLOG_LABEL;
-  }
   bool isEHLabel() const { return getOpcode() == TargetOpcode::EH_LABEL; }
   bool isGCLabel() const { return getOpcode() == TargetOpcode::GC_LABEL; }
+
+  /// isLabel - Returns true if the MachineInstr represents a label.
+  ///
+  bool isLabel() const { return isEHLabel() || isGCLabel(); }
+  bool isCFIInstruction() const {
+    return getOpcode() == TargetOpcode::CFI_INSTRUCTION;
+  }
+
+  // True if the instruction represents a position in the function.
+  bool isPosition() const { return isLabel() || isCFIInstruction(); }
+
   bool isDebugValue() const { return getOpcode() == TargetOpcode::DBG_VALUE; }
   /// A DBG_VALUE is indirect iff the first operand is a register and
   /// the second operand is an immediate.
@@ -715,7 +715,7 @@ public:
     // Pseudo-instructions that don't produce any real output.
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:
-    case TargetOpcode::PROLOG_LABEL:
+    case TargetOpcode::CFI_INSTRUCTION:
     case TargetOpcode::EH_LABEL:
     case TargetOpcode::GC_LABEL:
     case TargetOpcode::DBG_VALUE:

@@ -203,6 +203,8 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
     return getRegMask() == Other.getRegMask();
   case MachineOperand::MO_MCSymbol:
     return getMCSymbol() == Other.getMCSymbol();
+  case MachineOperand::MO_CFIIndex:
+    return getCFIIndex() == Other.getCFIIndex();
   case MachineOperand::MO_Metadata:
     return getMetadata() == Other.getMetadata();
   }
@@ -247,6 +249,8 @@ hash_code llvm::hash_value(const MachineOperand &MO) {
     return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getMetadata());
   case MachineOperand::MO_MCSymbol:
     return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getMCSymbol());
+  case MachineOperand::MO_CFIIndex:
+    return hash_combine(MO.getType(), MO.getTargetFlags(), MO.getCFIIndex());
   }
   llvm_unreachable("Invalid machine operand type");
 }
@@ -379,6 +383,9 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     break;
   case MachineOperand::MO_MCSymbol:
     OS << "<MCSym=" << *getMCSymbol() << '>';
+    break;
+  case MachineOperand::MO_CFIIndex:
+    OS << "<call frame instruction>";
     break;
   }
 
@@ -1295,8 +1302,8 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
     return false;
   }
 
-  if (isLabel() || isDebugValue() ||
-      isTerminator() || hasUnmodeledSideEffects())
+  if (isPosition() || isDebugValue() || isTerminator() ||
+      hasUnmodeledSideEffects())
     return false;
 
   // See if this instruction does a load.  If so, we have to guarantee that the

@@ -304,12 +304,14 @@ static bool isEAXLiveIn(MachineFunction &MF) {
   return false;
 }
 
-void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
-                                                 MCSymbol *Label,
-                                                 unsigned FramePtr) const {
+void X86FrameLowering::emitCalleeSavedFrameMoves(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI, DebugLoc DL,
+    unsigned FramePtr) const {
+  MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo &MMI = MF.getMMI();
   const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
+  const X86InstrInfo &TII = *TM.getInstrInfo();
 
   // Add callee saved registers to move list.
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
@@ -363,7 +365,9 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
       continue;
 
     unsigned DwarfReg = MRI->getDwarfRegNum(Reg, true);
-    MMI.addFrameInst(MCCFIInstruction::createOffset(Label, DwarfReg, Offset));
+    unsigned CFIIndex =
+        MMI.addFrameInst(MCCFIInstruction::createOffset(0, DwarfReg, Offset));
+    BuildMI(MBB, MBBI, DL, TII.get(X86::CFI_INSTRUCTION)).addCFIIndex(CFIIndex);
   }
 }
 
@@ -503,19 +507,19 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (needsFrameMoves) {
       // Mark the place where EBP/RBP was saved.
-      MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL))
-        .addSym(FrameLabel);
-
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
-      MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaOffset(FrameLabel, 2 * stackGrowth));
+      unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaOffset(0, 2 * stackGrowth));
+      BuildMI(MBB, MBBI, DL, TII.get(X86::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
 
       // Change the rule for the FramePtr to be an "offset" rule.
       unsigned DwarfFramePtr = RegInfo->getDwarfRegNum(FramePtr, true);
-      MMI.addFrameInst(MCCFIInstruction::createOffset(FrameLabel, DwarfFramePtr,
-                                                      2 * stackGrowth));
+      CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createOffset(0, DwarfFramePtr, 2 * stackGrowth));
+      BuildMI(MBB, MBBI, DL, TII.get(X86::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
 
     // Update EBP with the new base value.
@@ -526,14 +530,12 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (needsFrameMoves) {
       // Mark effective beginning of when frame pointer becomes valid.
-      MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL))
-        .addSym(FrameLabel);
-
       // Define the current CFA to use the EBP/RBP register.
       unsigned DwarfFramePtr = RegInfo->getDwarfRegNum(FramePtr, true);
-      MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaRegister(FrameLabel, DwarfFramePtr));
+      unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaRegister(0, DwarfFramePtr));
+      BuildMI(MBB, MBBI, DL, TII.get(X86::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
 
     // Mark the FramePtr as live-in in every block except the entry.
@@ -557,13 +559,12 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (!HasFP && needsFrameMoves) {
       // Mark callee-saved push instruction.
-      MCSymbol *Label = MMI.getContext().CreateTempSymbol();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL)).addSym(Label);
-
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
-      MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaOffset(Label, StackOffset));
+      unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaOffset(nullptr, StackOffset));
+      BuildMI(MBB, MBBI, DL, TII.get(X86::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
       StackOffset += stackGrowth;
     }
   }
@@ -692,20 +693,19 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
   if (( (!HasFP && NumBytes) || PushedRegs) && needsFrameMoves) {
     // Mark end of stack pointer adjustment.
-    MCSymbol *Label = MMI.getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, DL, TII.get(X86::PROLOG_LABEL))
-      .addSym(Label);
-
     if (!HasFP && NumBytes) {
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
-      MMI.addFrameInst(MCCFIInstruction::createDefCfaOffset(
-          Label, -StackSize + stackGrowth));
+      unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaOffset(0, -StackSize + stackGrowth));
+
+      BuildMI(MBB, MBBI, DL, TII.get(X86::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
 
     // Emit DWARF info specifying the offsets of the callee-saved registers.
     if (PushedRegs)
-      emitCalleeSavedFrameMoves(MF, Label, HasFP ? FramePtr : StackPtr);
+      emitCalleeSavedFrameMoves(MBB, MBBI, DL, HasFP ? FramePtr : StackPtr);
   }
 }
 

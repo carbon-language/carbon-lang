@@ -294,7 +294,7 @@ GetInstByName(const char *Name,
 void CodeGenTarget::ComputeInstrsByEnum() const {
   // The ordering here must match the ordering in TargetOpcodes.h.
   static const char *const FixedInstrs[] = {
-      "PHI",          "INLINEASM",     "PROLOG_LABEL",     "EH_LABEL",
+      "PHI",          "INLINEASM",     "CFI_INSTRUCTION",  "EH_LABEL",
       "GC_LABEL",     "KILL",          "EXTRACT_SUBREG",   "INSERT_SUBREG",
       "IMPLICIT_DEF", "SUBREG_TO_REG", "COPY_TO_REGCLASS", "DBG_VALUE",
       "REG_SEQUENCE", "COPY",          "BUNDLE",           "LIFETIME_START",

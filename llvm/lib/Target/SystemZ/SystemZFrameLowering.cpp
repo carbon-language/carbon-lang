@@ -333,15 +333,14 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
       llvm_unreachable("Couldn't skip over GPR saves");
 
     // Add CFI for the GPR saves.
-    MCSymbol *GPRSaveLabel = MMI.getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, DL,
-            ZII->get(TargetOpcode::PROLOG_LABEL)).addSym(GPRSaveLabel);
     for (auto &Save : CSI) {
       unsigned Reg = Save.getReg();
       if (SystemZ::GR64BitRegClass.contains(Reg)) {
         int64_t Offset = SPOffsetFromCFA + RegSpillOffsets[Reg];
-        MMI.addFrameInst(MCCFIInstruction::createOffset(
-            GPRSaveLabel, MRI->getDwarfRegNum(Reg, true), Offset));
+        unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
+            nullptr, MRI->getDwarfRegNum(Reg, true), Offset));
+        BuildMI(MBB, MBBI, DL, ZII->get(TargetOpcode::CFI_INSTRUCTION))
+            .addCFIIndex(CFIIndex);
       }
     }
   }
@@ -353,11 +352,10 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
     emitIncrement(MBB, MBBI, DL, SystemZ::R15D, Delta, ZII);
 
     // Add CFI for the allocation.
-    MCSymbol *AdjustSPLabel = MMI.getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, DL, ZII->get(TargetOpcode::PROLOG_LABEL))
-      .addSym(AdjustSPLabel);
-    MMI.addFrameInst(MCCFIInstruction::createDefCfaOffset(
-        AdjustSPLabel, SPOffsetFromCFA + Delta));
+    unsigned CFIIndex = MMI.addFrameInst(
+        MCCFIInstruction::createDefCfaOffset(nullptr, SPOffsetFromCFA + Delta));
+    BuildMI(MBB, MBBI, DL, ZII->get(TargetOpcode::CFI_INSTRUCTION))
+        .addCFIIndex(CFIIndex);
     SPOffsetFromCFA += Delta;
   }
 
@@ -367,12 +365,11 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
       .addReg(SystemZ::R15D);
 
     // Add CFI for the new frame location.
-    MCSymbol *SetFPLabel = MMI.getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, DL, ZII->get(TargetOpcode::PROLOG_LABEL))
-      .addSym(SetFPLabel);
     unsigned HardFP = MRI->getDwarfRegNum(SystemZ::R11D, true);
-    MMI.addFrameInst(
-        MCCFIInstruction::createDefCfaRegister(SetFPLabel, HardFP));
+    unsigned CFIIndex = MMI.addFrameInst(
+        MCCFIInstruction::createDefCfaRegister(nullptr, HardFP));
+    BuildMI(MBB, MBBI, DL, ZII->get(TargetOpcode::CFI_INSTRUCTION))
+        .addCFIIndex(CFIIndex);
 
     // Mark the FramePtr as live at the beginning of every block except
     // the entry block.  (We'll have marked R11 as live on entry when
@@ -382,7 +379,7 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
   }
 
   // Skip over the FPR saves.
-  MCSymbol *FPRSaveLabel = 0;
+  SmallVector<unsigned, 8> CFIIndexes;
   for (auto &Save : CSI) {
     unsigned Reg = Save.getReg();
     if (SystemZ::FP64BitRegClass.contains(Reg)) {
@@ -394,19 +391,19 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
         llvm_unreachable("Couldn't skip over FPR save");
 
       // Add CFI for the this save.
-      if (!FPRSaveLabel)
-        FPRSaveLabel = MMI.getContext().CreateTempSymbol();
       unsigned DwarfReg = MRI->getDwarfRegNum(Reg, true);
       int64_t Offset = getFrameIndexOffset(MF, Save.getFrameIdx());
-      MMI.addFrameInst(MCCFIInstruction::createOffset(
-          FPRSaveLabel, DwarfReg, SPOffsetFromCFA + Offset));
+      unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
+          nullptr, DwarfReg, SPOffsetFromCFA + Offset));
+      CFIIndexes.push_back(CFIIndex);
     }
   }
   // Complete the CFI for the FPR saves, modelling them as taking effect
   // after the last save.
-  if (FPRSaveLabel)
-    BuildMI(MBB, MBBI, DL, ZII->get(TargetOpcode::PROLOG_LABEL))
-      .addSym(FPRSaveLabel);
+  for (auto CFIIndex : CFIIndexes) {
+    BuildMI(MBB, MBBI, DL, ZII->get(TargetOpcode::CFI_INSTRUCTION))
+        .addCFIIndex(CFIIndex);
+  }
 }
 
 void SystemZFrameLowering::emitEpilogue(MachineFunction &MF,

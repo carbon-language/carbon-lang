@@ -704,6 +704,6 @@ bool Filler::delayHasHazard(const MachineInstr &Candidate, RegDefsUses &RegDU,
 
 bool Filler::terminateSearch(const MachineInstr &Candidate) const {
   return (Candidate.isTerminator() || Candidate.isCall() ||
-          Candidate.isLabel() || Candidate.isInlineAsm() ||
+          Candidate.isPosition() || Candidate.isInlineAsm() ||
           Candidate.hasUnmodeledSideEffects());
 }

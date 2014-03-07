@@ -25,7 +25,7 @@ namespace TargetOpcode {
 enum {
   PHI = 0,
   INLINEASM = 1,
-  PROLOG_LABEL = 2,
+  CFI_INSTRUCTION = 2,
   EH_LABEL = 3,
   GC_LABEL = 4,
 

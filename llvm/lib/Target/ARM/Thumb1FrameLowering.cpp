@@ -114,24 +114,22 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   if (ArgRegsSaveSize) {
     emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -ArgRegsSaveSize,
                  MachineInstr::FrameSetup);
-    MCSymbol *SPLabel = MMI.getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::PROLOG_LABEL))
-        .addSym(SPLabel);
     CFAOffset -= ArgRegsSaveSize;
-    MMI.addFrameInst(
-        MCCFIInstruction::createDefCfaOffset(SPLabel, CFAOffset));
+    unsigned CFIIndex = MMI.addFrameInst(
+        MCCFIInstruction::createDefCfaOffset(nullptr, CFAOffset));
+    BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+        .addCFIIndex(CFIIndex);
   }
 
   if (!AFI->hasStackFrame()) {
     if (NumBytes - ArgRegsSaveSize != 0) {
       emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -(NumBytes - ArgRegsSaveSize),
                    MachineInstr::FrameSetup);
-      MCSymbol *SPLabel = MMI.getContext().CreateTempSymbol();
-      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::PROLOG_LABEL))
-          .addSym(SPLabel);
       CFAOffset -= NumBytes - ArgRegsSaveSize;
-      MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaOffset(SPLabel, CFAOffset));
+      unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaOffset(nullptr, CFAOffset));
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
     return;
   }
@@ -190,12 +188,12 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     NumBytes = 0;
   }
 
-  MCSymbol *SPLabel = MMI.getContext().CreateTempSymbol();
-  BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::PROLOG_LABEL)).addSym(SPLabel);
   if (adjustedGPRCS1Size) {
     CFAOffset -= adjustedGPRCS1Size;
-    MMI.addFrameInst(
-        MCCFIInstruction::createDefCfaOffset(SPLabel, CFAOffset));
+    unsigned CFIIndex = MMI.addFrameInst(
+        MCCFIInstruction::createDefCfaOffset(nullptr, CFAOffset));
+    BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+        .addCFIIndex(CFIIndex);
   }
   for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
          E = CSI.end(); I != E; ++I) {
@@ -219,9 +217,10 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     case ARM::R6:
     case ARM::R7:
     case ARM::LR:
-      MMI.addFrameInst(MCCFIInstruction::createOffset(SPLabel,
-         MRI->getDwarfRegNum(Reg, true),
-         MFI->getObjectOffset(FI)));
+      unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
+          nullptr, MRI->getDwarfRegNum(Reg, true), MFI->getObjectOffset(FI)));
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
       break;
     }
   }
@@ -234,18 +233,19 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
       .addReg(ARM::SP).addImm(FramePtrOffsetInBlock / 4)
       .setMIFlags(MachineInstr::FrameSetup));
-    MCSymbol *SPLabel = MMI.getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::PROLOG_LABEL))
-        .addSym(SPLabel);
     if(FramePtrOffsetInBlock) {
       CFAOffset += FramePtrOffsetInBlock;
-      MMI.addFrameInst(
-          MCCFIInstruction::createDefCfa(SPLabel,
-              MRI->getDwarfRegNum(FramePtr, true), CFAOffset));
-    } else
-      MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaRegister(SPLabel,
-              MRI->getDwarfRegNum(FramePtr, true)));
+      unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createDefCfa(
+          nullptr, MRI->getDwarfRegNum(FramePtr, true), CFAOffset));
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
+    } else {
+      unsigned CFIIndex =
+          MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(
+              nullptr, MRI->getDwarfRegNum(FramePtr, true)));
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
+    }
     if (NumBytes > 508)
       // If offset is > 508 then sp cannot be adjusted in a single instruction,
       // try restoring from fp instead.
@@ -257,12 +257,11 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, -NumBytes,
                  MachineInstr::FrameSetup);
     if (!HasFP) {
-      MCSymbol *SPLabel = MMI.getContext().CreateTempSymbol();
-      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::PROLOG_LABEL))
-          .addSym(SPLabel);
       CFAOffset -= NumBytes;
-      MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaOffset(SPLabel, CFAOffset));
+      unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaOffset(nullptr, CFAOffset));
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
   }
 

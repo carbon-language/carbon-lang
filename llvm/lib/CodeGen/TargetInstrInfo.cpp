@@ -645,7 +645,7 @@ bool TargetInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
                                            const MachineBasicBlock *MBB,
                                            const MachineFunction &MF) const {
   // Terminators and labels can't be scheduled around.
-  if (MI->isTerminator() || MI->isLabel())
+  if (MI->isTerminator() || MI->isPosition())
     return true;
 
   // Don't attempt to schedule around any instruction that defines

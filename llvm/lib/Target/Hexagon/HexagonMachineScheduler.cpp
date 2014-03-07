@@ -108,7 +108,7 @@ bool VLIWResourceModel::reserveResources(SUnit *SU) {
   case TargetOpcode::REG_SEQUENCE:
   case TargetOpcode::IMPLICIT_DEF:
   case TargetOpcode::KILL:
-  case TargetOpcode::PROLOG_LABEL:
+  case TargetOpcode::CFI_INSTRUCTION:
   case TargetOpcode::EH_LABEL:
   case TargetOpcode::COPY:
   case TargetOpcode::INLINEASM:

@@ -238,8 +238,10 @@ public:
     return FrameInstructions;
   }
 
-  void addFrameInst(const MCCFIInstruction &Inst) {
+  unsigned LLVM_ATTRIBUTE_UNUSED_RESULT
+  addFrameInst(const MCCFIInstruction &Inst) {
     FrameInstructions.push_back(Inst);
+    return FrameInstructions.size() - 1;
   }
 
   /// getCompactUnwindEncoding - Returns the compact unwind encoding for a

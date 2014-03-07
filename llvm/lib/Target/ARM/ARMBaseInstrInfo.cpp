@@ -1543,7 +1543,7 @@ bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
     return false;
 
   // Terminators and labels can't be scheduled around.
-  if (MI->isTerminator() || MI->isLabel())
+  if (MI->isTerminator() || MI->isPosition())
     return true;
 
   // Treat the start of the IT block as a scheduling boundary, but schedule

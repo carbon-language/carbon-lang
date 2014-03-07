@@ -353,9 +353,6 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   assert((isDarwinABI || isSVR4ABI) &&
          "Currently only Darwin and SVR4 ABIs are supported for PowerPC.");
 
-  // Prepare for frame info.
-  MCSymbol *FrameLabel = 0;
-
   // Scan the prolog, looking for an UPDATE_VRSAVE instruction.  If we find it,
   // process it.
   if (!isSVR4ABI)
@@ -561,35 +558,36 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   // Add the "machine moves" for the instructions we generated above, but in
   // reverse order.
   if (needsFrameMoves) {
-    // Mark effective beginning of when frame pointer becomes valid.
-    FrameLabel = MMI.getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, dl, TII.get(PPC::PROLOG_LABEL)).addSym(FrameLabel);
-
     // Show update of SP.
     assert(NegFrameSize);
-    MMI.addFrameInst(
-        MCCFIInstruction::createDefCfaOffset(FrameLabel, NegFrameSize));
+    unsigned CFIIndex = MMI.addFrameInst(
+        MCCFIInstruction::createDefCfaOffset(nullptr, NegFrameSize));
+    BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION)).addCFIIndex(CFIIndex);
 
     if (HasFP) {
       unsigned Reg = MRI->getDwarfRegNum(FPReg, true);
-      MMI.addFrameInst(
-          MCCFIInstruction::createOffset(FrameLabel, Reg, FPOffset));
+      CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createOffset(nullptr, Reg, FPOffset));
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
 
     if (HasBP) {
       unsigned Reg = MRI->getDwarfRegNum(BPReg, true);
-      MMI.addFrameInst(
-          MCCFIInstruction::createOffset(FrameLabel, Reg, BPOffset));
+      CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createOffset(nullptr, Reg, BPOffset));
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
 
     if (MustSaveLR) {
       unsigned Reg = MRI->getDwarfRegNum(LRReg, true);
-      MMI.addFrameInst(
-          MCCFIInstruction::createOffset(FrameLabel, Reg, LROffset));
+      CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createOffset(nullptr, Reg, LROffset));
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
   }
-
-  MCSymbol *ReadyLabel = 0;
 
   // If there is a frame pointer, copy R1 into R31
   if (HasFP) {
@@ -598,19 +596,17 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       .addReg(SPReg);
 
     if (needsFrameMoves) {
-      ReadyLabel = MMI.getContext().CreateTempSymbol();
-
       // Mark effective beginning of when frame pointer is ready.
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::PROLOG_LABEL)).addSym(ReadyLabel);
-
       unsigned Reg = MRI->getDwarfRegNum(FPReg, true);
-      MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(ReadyLabel, Reg));
+      unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createDefCfaRegister(nullptr, Reg));
+
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
   }
 
   if (needsFrameMoves) {
-    MCSymbol *Label = HasFP ? ReadyLabel : FrameLabel;
-
     // Add callee saved registers to move list.
     const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
     for (unsigned I = 0, E = CSI.size(); I != E; ++I) {
@@ -631,14 +627,18 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       // For 64-bit SVR4 when we have spilled CRs, the spill location
       // is SP+8, not a frame-relative slot.
       if (isSVR4ABI && isPPC64 && (PPC::CR2 <= Reg && Reg <= PPC::CR4)) {
-        MMI.addFrameInst(MCCFIInstruction::createOffset(
-            Label, MRI->getDwarfRegNum(PPC::CR2, true), 8));
+        unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
+            nullptr, MRI->getDwarfRegNum(PPC::CR2, true), 8));
+        BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION))
+            .addCFIIndex(CFIIndex);
         continue;
       }
 
       int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
-      MMI.addFrameInst(MCCFIInstruction::createOffset(
-          Label, MRI->getDwarfRegNum(Reg, true), Offset));
+      unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
+          nullptr, MRI->getDwarfRegNum(Reg, true), Offset));
+      BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
   }
 }

@@ -58,7 +58,8 @@ public:
     MO_RegisterMask,      ///< Mask of preserved registers.
     MO_RegisterLiveOut,   ///< Mask of live-out registers.
     MO_Metadata,          ///< Metadata reference (for debug info)
-    MO_MCSymbol           ///< MCSymbol reference (for debug/eh info)
+    MO_MCSymbol,          ///< MCSymbol reference (for debug/eh info)
+    MO_CFIIndex           ///< MCCFIInstruction index.
   };
 
 private:
@@ -156,7 +157,8 @@ private:
     int64_t ImmVal;          // For MO_Immediate.
     const uint32_t *RegMask; // For MO_RegisterMask and MO_RegisterLiveOut.
     const MDNode *MD;        // For MO_Metadata.
-    MCSymbol *Sym;           // For MO_MCSymbol
+    MCSymbol *Sym;           // For MO_MCSymbol.
+    unsigned CFIIndex;       // For MO_CFI.
 
     struct {                  // For MO_Register.
       // Register number is in SmallContents.RegNo.
@@ -252,7 +254,7 @@ public:
   /// isMetadata - Tests if this is a MO_Metadata operand.
   bool isMetadata() const { return OpKind == MO_Metadata; }
   bool isMCSymbol() const { return OpKind == MO_MCSymbol; }
-
+  bool isCFIIndex() const { return OpKind == MO_CFIIndex; }
 
   //===--------------------------------------------------------------------===//
   // Accessors for Register Operands
@@ -441,6 +443,11 @@ public:
   MCSymbol *getMCSymbol() const {
     assert(isMCSymbol() && "Wrong MachineOperand accessor");
     return Contents.Sym;
+  }
+
+  unsigned getCFIIndex() const {
+    assert(isCFIIndex() && "Wrong MachineOperand accessor");
+    return Contents.CFIIndex;
   }
 
   /// getOffset - Return the offset from the symbol in this operand. This always
@@ -683,6 +690,12 @@ public:
   static MachineOperand CreateMCSymbol(MCSymbol *Sym) {
     MachineOperand Op(MachineOperand::MO_MCSymbol);
     Op.Contents.Sym = Sym;
+    return Op;
+  }
+
+  static MachineOperand CreateCFIIndex(unsigned CFIIndex) {
+    MachineOperand Op(MachineOperand::MO_CFIIndex);
+    Op.Contents.CFIIndex = CFIIndex;
     return Op;
   }
 

@@ -37,7 +37,8 @@ class XCoreFunctionInfo : public MachineFunctionInfo {
   bool ReturnStackOffsetSet;
   int VarArgsFrameIndex;
   mutable int CachedEStackSize;
-  std::vector<std::pair<MCSymbol*, CalleeSavedInfo> > SpillLabels;
+  std::vector<std::pair<MachineBasicBlock::iterator, CalleeSavedInfo>>
+  SpillLabels;
 
 public:
   XCoreFunctionInfo() :
@@ -95,7 +96,8 @@ public:
 
   bool isLargeFrame(const MachineFunction &MF) const;
 
-  std::vector<std::pair<MCSymbol*, CalleeSavedInfo> > &getSpillLabels() {
+  std::vector<std::pair<MachineBasicBlock::iterator, CalleeSavedInfo>> &
+  getSpillLabels() {
     return SpillLabels;
   }
 };

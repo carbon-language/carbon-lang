@@ -299,11 +299,10 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
   TII.adjustStackPtr(SP, -StackSize, MBB, MBBI);
 
   // emit ".cfi_def_cfa_offset StackSize"
-  MCSymbol *AdjustSPLabel = MMI.getContext().CreateTempSymbol();
-  BuildMI(MBB, MBBI, dl,
-          TII.get(TargetOpcode::PROLOG_LABEL)).addSym(AdjustSPLabel);
-  MMI.addFrameInst(
-      MCCFIInstruction::createDefCfaOffset(AdjustSPLabel, -StackSize));
+  unsigned CFIIndex = MMI.addFrameInst(
+      MCCFIInstruction::createDefCfaOffset(nullptr, -StackSize));
+  BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
 
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 
@@ -315,10 +314,6 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
 
     // Iterate over list of callee-saved registers and emit .cfi_offset
     // directives.
-    MCSymbol *CSLabel = MMI.getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, dl,
-            TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel);
-
     for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
            E = CSI.end(); I != E; ++I) {
       int64_t Offset = MFI->getObjectOffset(I->getFrameIdx());
@@ -335,14 +330,21 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
         if (!STI.isLittle())
           std::swap(Reg0, Reg1);
 
-        MMI.addFrameInst(
-            MCCFIInstruction::createOffset(CSLabel, Reg0, Offset));
-        MMI.addFrameInst(
-            MCCFIInstruction::createOffset(CSLabel, Reg1, Offset + 4));
+        unsigned CFIIndex = MMI.addFrameInst(
+            MCCFIInstruction::createOffset(nullptr, Reg0, Offset));
+        BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+            .addCFIIndex(CFIIndex);
+
+        CFIIndex = MMI.addFrameInst(
+            MCCFIInstruction::createOffset(nullptr, Reg1, Offset + 4));
+        BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+            .addCFIIndex(CFIIndex);
       } else {
         // Reg is either in GPR32 or FGR32.
-        MMI.addFrameInst(MCCFIInstruction::createOffset(
-            CSLabel, MRI->getDwarfRegNum(Reg, 1), Offset));
+        unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
+            nullptr, MRI->getDwarfRegNum(Reg, 1), Offset));
+        BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+            .addCFIIndex(CFIIndex);
       }
     }
   }
@@ -360,13 +362,13 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
     }
 
     // Emit .cfi_offset directives for eh data registers.
-    MCSymbol *CSLabel2 = MMI.getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, dl,
-            TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel2);
     for (int I = 0; I < 4; ++I) {
       int64_t Offset = MFI->getObjectOffset(MipsFI->getEhDataRegFI(I));
       unsigned Reg = MRI->getDwarfRegNum(ehDataReg(I), true);
-      MMI.addFrameInst(MCCFIInstruction::createOffset(CSLabel2, Reg, Offset));
+      unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createOffset(nullptr, Reg, Offset));
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+          .addCFIIndex(CFIIndex);
     }
   }
 
@@ -376,11 +378,10 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, dl, TII.get(ADDu), FP).addReg(SP).addReg(ZERO);
 
     // emit ".cfi_def_cfa_register $fp"
-    MCSymbol *SetFPLabel = MMI.getContext().CreateTempSymbol();
-    BuildMI(MBB, MBBI, dl,
-            TII.get(TargetOpcode::PROLOG_LABEL)).addSym(SetFPLabel);
-    MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(
-        SetFPLabel, MRI->getDwarfRegNum(FP, true)));
+    unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(
+        nullptr, MRI->getDwarfRegNum(FP, true)));
+    BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+        .addCFIIndex(CFIIndex);
   }
 }
 

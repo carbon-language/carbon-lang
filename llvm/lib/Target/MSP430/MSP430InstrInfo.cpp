@@ -299,7 +299,7 @@ unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   default:
     switch (Desc.getOpcode()) {
     default: llvm_unreachable("Unknown instruction size!");
-    case TargetOpcode::PROLOG_LABEL:
+    case TargetOpcode::CFI_INSTRUCTION:
     case TargetOpcode::EH_LABEL:
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:

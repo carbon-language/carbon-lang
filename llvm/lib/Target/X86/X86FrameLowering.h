@@ -34,7 +34,8 @@ public:
       TM(tm), STI(sti) {
   }
 
-  void emitCalleeSavedFrameMoves(MachineFunction &MF, MCSymbol *Label,
+  void emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator MBBI, DebugLoc DL,
                                  unsigned FramePtr) const;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into

@@ -104,23 +104,23 @@ void SparcFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   MachineModuleInfo &MMI = MF.getMMI();
   const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
-  MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
-  BuildMI(MBB, MBBI, dl, TII.get(SP::PROLOG_LABEL)).addSym(FrameLabel);
-
   unsigned regFP = MRI->getDwarfRegNum(SP::I6, true);
 
   // Emit ".cfi_def_cfa_register 30".
-  MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(FrameLabel,
-                                                          regFP));
+  unsigned CFIIndex =
+      MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(nullptr, regFP));
+  BuildMI(MBB, MBBI, dl, TII.get(SP::CFI_INSTRUCTION)).addCFIIndex(CFIIndex);
+
   // Emit ".cfi_window_save".
-  MMI.addFrameInst(MCCFIInstruction::createWindowSave(FrameLabel));
+  CFIIndex = MMI.addFrameInst(MCCFIInstruction::createWindowSave(nullptr));
+  BuildMI(MBB, MBBI, dl, TII.get(SP::CFI_INSTRUCTION)).addCFIIndex(CFIIndex);
 
   unsigned regInRA = MRI->getDwarfRegNum(SP::I7, true);
   unsigned regOutRA = MRI->getDwarfRegNum(SP::O7, true);
   // Emit ".cfi_register 15, 31".
-  MMI.addFrameInst(MCCFIInstruction::createRegister(FrameLabel,
-                                                    regOutRA,
-                                                    regInRA));
+  CFIIndex = MMI.addFrameInst(
+      MCCFIInstruction::createRegister(nullptr, regOutRA, regInRA));
+  BuildMI(MBB, MBBI, dl, TII.get(SP::CFI_INSTRUCTION)).addCFIIndex(CFIIndex);
 }
 
 void SparcFrameLowering::

@@ -714,7 +714,7 @@ def INLINEASM : Instruction {
   let AsmString = "";
   let neverHasSideEffects = 1;  // Note side effect is encoded in an operand.
 }
-def PROLOG_LABEL : Instruction {
+def CFI_INSTRUCTION : Instruction {
   let OutOperandList = (outs);
   let InOperandList = (ins i32imm:$id);
   let AsmString = "";

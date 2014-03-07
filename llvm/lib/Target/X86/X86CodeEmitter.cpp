@@ -1115,7 +1115,8 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
       if (MI.getOperand(0).getSymbolName()[0])
         report_fatal_error("JIT does not support inline asm!");
       break;
-    case TargetOpcode::PROLOG_LABEL:
+    case TargetOpcode::CFI_INSTRUCTION:
+      break;
     case TargetOpcode::GC_LABEL:
     case TargetOpcode::EH_LABEL:
       MCE.emitLabel(MI.getOperand(0).getMCSymbol());

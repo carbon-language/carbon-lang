@@ -172,7 +172,12 @@ public:
     MI->addOperand(*MF, MachineOperand::CreateMetadata(MD));
     return *this;
   }
-  
+
+  const MachineInstrBuilder &addCFIIndex(unsigned CFIIndex) const {
+    MI->addOperand(*MF, MachineOperand::CreateCFIIndex(CFIIndex));
+    return *this;
+  }
+
   const MachineInstrBuilder &addSym(MCSymbol *Sym) const {
     MI->addOperand(*MF, MachineOperand::CreateMCSymbol(Sym));
     return *this;

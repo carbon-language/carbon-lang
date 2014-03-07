@@ -211,12 +211,8 @@ Filler::findDelayInstr(MachineBasicBlock &MBB,
     if (I->isDebugValue())
       continue;
 
-
-    if (I->hasUnmodeledSideEffects()
-        || I->isInlineAsm()
-        || I->isLabel()
-        || I->hasDelaySlot()
-        || I->isBundledWithSucc())
+    if (I->hasUnmodeledSideEffects() || I->isInlineAsm() || I->isPosition() ||
+        I->hasDelaySlot() || I->isBundledWithSucc())
       break;
 
     if (delayHasHazard(I, sawLoad, sawStore, RegDefs, RegUses)) {

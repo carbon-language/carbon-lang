@@ -866,7 +866,8 @@ void ARMCodeEmitter::emitPseudoInstruction(const MachineInstr &MI) {
     }
     break;
   }
-  case TargetOpcode::PROLOG_LABEL:
+  case TargetOpcode::CFI_INSTRUCTION:
+    break;
   case TargetOpcode::EH_LABEL:
     MCE.emitLabel(MI.getOperand(0).getMCSymbol());
     break;

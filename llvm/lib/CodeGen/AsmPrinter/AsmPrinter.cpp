@@ -699,9 +699,7 @@ bool AsmPrinter::needsSEHMoves() {
     MF->getFunction()->needsUnwindTableEntry();
 }
 
-void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
-  const MCSymbol *Label = MI.getOperand(0).getMCSymbol();
-
+void AsmPrinter::emitCFIInstruction(const MachineInstr &MI) {
   ExceptionHandling::ExceptionsType ExceptionHandlingType =
       MAI->getExceptionHandlingType();
   if (ExceptionHandlingType != ExceptionHandling::DwarfCFI &&
@@ -716,16 +714,9 @@ void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
 
   const MachineModuleInfo &MMI = MF->getMMI();
   const std::vector<MCCFIInstruction> &Instrs = MMI.getFrameInstructions();
-  bool FoundOne = false;
-  (void)FoundOne;
-  for (std::vector<MCCFIInstruction>::const_iterator I = Instrs.begin(),
-         E = Instrs.end(); I != E; ++I) {
-    if (I->getLabel() == Label) {
-      emitCFIInstruction(*I);
-      FoundOne = true;
-    }
-  }
-  assert(FoundOne);
+  unsigned CFIIndex = MI.getOperand(0).getCFIIndex();
+  const MCCFIInstruction &CFI = Instrs[CFIIndex];
+  emitCFIInstruction(CFI);
 }
 
 /// EmitFunctionBody - This method emits the body and trailer for a
@@ -748,7 +739,7 @@ void AsmPrinter::EmitFunctionBody() {
       LastMI = II;
 
       // Print the assembly for the instruction.
-      if (!II->isLabel() && !II->isImplicitDef() && !II->isKill() &&
+      if (!II->isPosition() && !II->isImplicitDef() && !II->isKill() &&
           !II->isDebugValue()) {
         HasAnyRealCode = true;
         ++EmittedInsts;
@@ -767,8 +758,8 @@ void AsmPrinter::EmitFunctionBody() {
         emitComments(*II, OutStreamer.GetCommentOS());
 
       switch (II->getOpcode()) {
-      case TargetOpcode::PROLOG_LABEL:
-        emitPrologLabel(*II);
+      case TargetOpcode::CFI_INSTRUCTION:
+        emitCFIInstruction(*II);
         break;
 
       case TargetOpcode::EH_LABEL:
@@ -811,7 +802,7 @@ void AsmPrinter::EmitFunctionBody() {
   // label equaling the end of function label and an invalid "row" in the
   // FDE. We need to emit a noop in this situation so that the FDE's rows are
   // valid.
-  bool RequiresNoop = LastMI && LastMI->isPrologLabel();
+  bool RequiresNoop = LastMI && LastMI->isCFIInstruction();
 
   // If the function is empty and the object file uses .subsections_via_symbols,
   // then we need to emit *something* to the function body to prevent the

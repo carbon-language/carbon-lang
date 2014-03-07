@@ -325,8 +325,8 @@ bool MachineCSE::PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
 }
 
 bool MachineCSE::isCSECandidate(MachineInstr *MI) {
-  if (MI->isLabel() || MI->isPHI() || MI->isImplicitDef() ||
-      MI->isKill() || MI->isInlineAsm() || MI->isDebugValue())
+  if (MI->isPosition() || MI->isPHI() || MI->isImplicitDef() || MI->isKill() ||
+      MI->isInlineAsm() || MI->isDebugValue())
     return false;
 
   // Ignore copies.

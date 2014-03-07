@@ -804,8 +804,9 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
              "RPTracker can't find MI");
     }
 
-    assert((CanHandleTerminators || (!MI->isTerminator() && !MI->isLabel())) &&
-           "Cannot schedule terminators or labels!");
+    assert(
+        (CanHandleTerminators || (!MI->isTerminator() && !MI->isPosition())) &&
+        "Cannot schedule terminators or labels!");
 
     // Add register-based dependencies (data, anti, and output).
     bool HasVRegDef = false;

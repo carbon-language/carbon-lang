@@ -160,7 +160,7 @@ MachineBasicBlock::iterator MachineBasicBlock::getFirstNonPHI() {
 MachineBasicBlock::iterator
 MachineBasicBlock::SkipPHIsAndLabels(MachineBasicBlock::iterator I) {
   iterator E = end();
-  while (I != E && (I->isPHI() || I->isLabel() || I->isDebugValue()))
+  while (I != E && (I->isPHI() || I->isPosition() || I->isDebugValue()))
     ++I;
   // FIXME: This needs to change if we wish to bundle labels / dbg_values
   // inside the bundle.

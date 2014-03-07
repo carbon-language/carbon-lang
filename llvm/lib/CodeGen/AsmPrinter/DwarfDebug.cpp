@@ -1610,7 +1610,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
         History.push_back(MI);
       } else {
         // Not a DBG_VALUE instruction.
-        if (!MI->isLabel())
+        if (!MI->isPosition())
           AtBlockEntry = false;
 
         // First known non-DBG_VALUE and non-frame setup location marks

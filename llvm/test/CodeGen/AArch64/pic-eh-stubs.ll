@@ -10,8 +10,8 @@
   ; ... referring indirectly to stubs for its typeinfo ...
 ; CHECK: // @TType Encoding = indirect pcrel sdata8
   ; ... one of which is "int"'s typeinfo
-; CHECK: .Ltmp9:
-; CHECK-NEXT: .xword  .L_ZTIi.DW.stub-.Ltmp9
+; CHECK: .Ltmp7:
+; CHECK-NEXT: .xword  .L_ZTIi.DW.stub-.Ltmp7
 
   ; .. and which is properly defined (in a writable section for the dynamic loader) later.
 ; CHECK: .section .data.rel,"aw"

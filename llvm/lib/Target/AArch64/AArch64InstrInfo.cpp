@@ -735,7 +735,7 @@ unsigned AArch64InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
     return getInstBundleLength(MI);
   case TargetOpcode::IMPLICIT_DEF:
   case TargetOpcode::KILL:
-  case TargetOpcode::PROLOG_LABEL:
+  case TargetOpcode::CFI_INSTRUCTION:
   case TargetOpcode::EH_LABEL:
   case TargetOpcode::GC_LABEL:
   case TargetOpcode::DBG_VALUE:

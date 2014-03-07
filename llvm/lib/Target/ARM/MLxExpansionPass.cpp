@@ -335,7 +335,7 @@ bool MLxExpansion::ExpandFPMLxInstructions(MachineBasicBlock &MBB) {
   while (MII != E) {
     MachineInstr *MI = &*MII;
 
-    if (MI->isLabel() || MI->isImplicitDef() || MI->isCopy()) {
+    if (MI->isPosition() || MI->isImplicitDef() || MI->isCopy()) {
       ++MII;
       continue;
     }

@@ -208,7 +208,7 @@ namespace llvm {
     /// function.
     void EmitFunctionBody();
 
-    void emitPrologLabel(const MachineInstr &MI);
+    void emitCFIInstruction(const MachineInstr &MI);
 
     enum CFIMoveType {
       CFI_M_None,
