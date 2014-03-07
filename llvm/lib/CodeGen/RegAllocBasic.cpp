@@ -87,8 +87,6 @@ public:
 
   Spiller &spiller() override { return *SpillerInstance; }
 
-  virtual float getPriority(LiveInterval *LI) { return LI->weight; }
-
   void enqueue(LiveInterval *LI) override {
     Queue.push(LI);
   }
