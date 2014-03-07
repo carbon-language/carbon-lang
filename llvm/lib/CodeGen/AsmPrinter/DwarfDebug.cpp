@@ -2498,28 +2498,6 @@ void DwarfDebug::emitDebugLoc() {
   }
 }
 
-struct SymbolCUSorter {
-  SymbolCUSorter(const MCStreamer &s) : Streamer(s) {}
-  const MCStreamer &Streamer;
-
-  bool operator()(const SymbolCU &A, const SymbolCU &B) {
-    unsigned IA = A.Sym ? Streamer.GetSymbolOrder(A.Sym) : 0;
-    unsigned IB = B.Sym ? Streamer.GetSymbolOrder(B.Sym) : 0;
-
-    // Symbols with no order assigned should be placed at the end.
-    // (e.g. section end labels)
-    if (IA == 0)
-      IA = (unsigned)(-1);
-    if (IB == 0)
-      IB = (unsigned)(-1);
-    return IA < IB;
-  }
-};
-
-static bool CUSort(const DwarfUnit *A, const DwarfUnit *B) {
-  return (A->getUniqueID() < B->getUniqueID());
-}
-
 struct ArangeSpan {
   const MCSymbol *Start, *End;
 };
@@ -2553,8 +2531,19 @@ void DwarfDebug::emitDebugARanges() {
       continue;
 
     // Sort the symbols by offset within the section.
-    SymbolCUSorter sorter(Asm->OutStreamer);
-    std::sort(List.begin(), List.end(), sorter);
+    std::sort(List.begin(), List.end(),
+              [&](const SymbolCU &A, const SymbolCU &B) {
+      unsigned IA = A.Sym ? Asm->OutStreamer.GetSymbolOrder(A.Sym) : 0;
+      unsigned IB = B.Sym ? Asm->OutStreamer.GetSymbolOrder(B.Sym) : 0;
+
+      // Symbols with no order assigned should be placed at the end.
+      // (e.g. section end labels)
+      if (IA == 0)
+        return false;
+      if (IB == 0)
+        return true;
+      return IA < IB;
+    });
 
     // If we have no section (e.g. common), just write out
     // individual spans for each symbol.
@@ -2595,7 +2584,9 @@ void DwarfDebug::emitDebugARanges() {
   }
 
   // Sort the CU list (again, to ensure consistent output order).
-  std::sort(CUs.begin(), CUs.end(), CUSort);
+  std::sort(CUs.begin(), CUs.end(), [](const DwarfUnit *A, const DwarfUnit *B) {
+    return A->getUniqueID() < B->getUniqueID();
+  });
 
   // Emit an arange table for each CU we used.
   for (DwarfCompileUnit *CU : CUs) {
