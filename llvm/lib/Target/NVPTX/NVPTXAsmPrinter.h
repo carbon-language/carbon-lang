@@ -197,7 +197,6 @@ private:
 
   void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0) const {}
 
-  void printGlobalVariable(const GlobalVariable *GVar);
   void printVecModifiedImmediate(const MachineOperand &MO, const char *Modifier,
                                  raw_ostream &O);
   void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
