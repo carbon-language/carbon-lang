@@ -72,7 +72,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
            FrontendPluginRegistry::begin(), ie = FrontendPluginRegistry::end();
          it != ie; ++it) {
       if (it->getName() == CI.getFrontendOpts().ActionName) {
-        OwningPtr<PluginASTAction> P(it->instantiate());
+        std::unique_ptr<PluginASTAction> P(it->instantiate());
         if (!P->ParseArgs(CI, CI.getFrontendOpts().PluginArgs))
           return 0;
         return P.release();
@@ -181,7 +181,7 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
 bool clang::ExecuteCompilerInvocation(CompilerInstance *Clang) {
   // Honor -help.
   if (Clang->getFrontendOpts().ShowHelp) {
-    OwningPtr<OptTable> Opts(driver::createDriverOptTable());
+    std::unique_ptr<OptTable> Opts(driver::createDriverOptTable());
     Opts->PrintHelp(llvm::outs(), "clang -cc1",
                     "LLVM 'Clang' Compiler: http://clang.llvm.org",
                     /*Include=*/ driver::options::CC1Option, /*Exclude=*/ 0);
@@ -233,7 +233,7 @@ bool clang::ExecuteCompilerInvocation(CompilerInstance *Clang) {
   if (Clang->getDiagnostics().hasErrorOccurred())
     return false;
   // Create and execute the frontend action.
-  OwningPtr<FrontendAction> Act(CreateFrontendAction(*Clang));
+  std::unique_ptr<FrontendAction> Act(CreateFrontendAction(*Clang));
   if (!Act)
     return false;
   bool Success = Clang->ExecuteAction(*Act);

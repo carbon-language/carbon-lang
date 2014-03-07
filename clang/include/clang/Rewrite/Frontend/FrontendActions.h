@@ -28,8 +28,8 @@ protected:
 
 class FixItAction : public ASTFrontendAction {
 protected:
-  OwningPtr<FixItRewriter> Rewriter;
-  OwningPtr<FixItOptions> FixItOpts;
+  std::unique_ptr<FixItRewriter> Rewriter;
+  std::unique_ptr<FixItOptions> FixItOpts;
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          StringRef InFile);

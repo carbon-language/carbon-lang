@@ -27,7 +27,7 @@ using namespace ento;
 namespace {
 class UndefCapturedBlockVarChecker
   : public Checker< check::PostStmt<BlockExpr> > {
- mutable OwningPtr<BugType> BT;
+  mutable std::unique_ptr<BugType> BT;
 
 public:
   void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;

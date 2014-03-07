@@ -59,7 +59,7 @@ using serialization::ModuleFile;
 class GlobalModuleIndex {
   /// \brief Buffer containing the index file, which is lazily accessed so long
   /// as the global module index is live.
-  llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
+  std::unique_ptr<llvm::MemoryBuffer> Buffer;
 
   /// \brief The hash table.
   ///

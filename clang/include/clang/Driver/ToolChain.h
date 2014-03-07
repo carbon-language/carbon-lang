@@ -66,15 +66,15 @@ private:
   /// programs.
   path_list ProgramPaths;
 
-  mutable OwningPtr<Tool> Clang;
-  mutable OwningPtr<Tool> Assemble;
-  mutable OwningPtr<Tool> Link;
+  mutable std::unique_ptr<Tool> Clang;
+  mutable std::unique_ptr<Tool> Assemble;
+  mutable std::unique_ptr<Tool> Link;
   Tool *getClang() const;
   Tool *getAssemble() const;
   Tool *getLink() const;
   Tool *getClangAs() const;
 
-  mutable OwningPtr<SanitizerArgs> SanitizerArguments;
+  mutable std::unique_ptr<SanitizerArgs> SanitizerArguments;
 
 protected:
   MultilibSet Multilibs;

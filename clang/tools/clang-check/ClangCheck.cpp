@@ -50,7 +50,7 @@ static cl::extrahelp MoreHelp(
 );
 
 static cl::OptionCategory ClangCheckCategory("clang-check options");
-static OwningPtr<opt::OptTable> Options(createDriverOptTable());
+static std::unique_ptr<opt::OptTable> Options(createDriverOptTable());
 static cl::opt<bool>
 ASTDump("ast-dump", cl::desc(Options->getOptionHelpText(options::OPT_ast_dump)),
         cl::cat(ClangCheckCategory));

@@ -184,10 +184,9 @@ void MultiplexASTMutationListener::DeclarationMarkedUsed(const Decl *D) {
 
 }  // end namespace clang
 
-
-MultiplexConsumer::MultiplexConsumer(ArrayRef<ASTConsumer*> C)
-    : Consumers(C.begin(), C.end()),
-      MutationListener(0), DeserializationListener(0) {
+MultiplexConsumer::MultiplexConsumer(ArrayRef<ASTConsumer *> C)
+    : Consumers(C.begin(), C.end()), MutationListener(),
+      DeserializationListener() {
   // Collect the mutation listeners and deserialization listeners of all
   // children, and create a multiplex listener each if so.
   std::vector<ASTMutationListener*> mutationListeners;

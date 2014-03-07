@@ -117,7 +117,7 @@ public:
   }
 
 private:
-  OwningPtr<Command> Fallback;
+  std::unique_ptr<Command> Fallback;
 };
 
 /// JobList - A sequence of jobs to perform.

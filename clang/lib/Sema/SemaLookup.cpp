@@ -4163,7 +4163,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     // FIXME: Re-add the ability to skip very unlikely potential corrections.
     if (IdentifierInfoLookup *External
                             = Context.Idents.getExternalIdentifierLookup()) {
-      OwningPtr<IdentifierIterator> Iter(External->getIdentifiers());
+      std::unique_ptr<IdentifierIterator> Iter(External->getIdentifiers());
       do {
         StringRef Name = Iter->Next();
         if (Name.empty())

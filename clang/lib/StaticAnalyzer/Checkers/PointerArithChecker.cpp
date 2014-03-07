@@ -24,7 +24,7 @@ using namespace ento;
 namespace {
 class PointerArithChecker 
   : public Checker< check::PreStmt<BinaryOperator> > {
-  mutable OwningPtr<BuiltinBug> BT;
+  mutable std::unique_ptr<BuiltinBug> BT;
 
 public:
   void checkPreStmt(const BinaryOperator *B, CheckerContext &C) const;

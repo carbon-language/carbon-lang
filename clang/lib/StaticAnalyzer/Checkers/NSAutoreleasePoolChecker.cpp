@@ -32,7 +32,7 @@ using namespace ento;
 namespace {
 class NSAutoreleasePoolChecker
   : public Checker<check::PreObjCMessage> {
-  mutable OwningPtr<BugType> BT;
+  mutable std::unique_ptr<BugType> BT;
   mutable Selector releaseS;
 
 public:

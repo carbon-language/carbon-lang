@@ -302,7 +302,7 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
 
   // These may refer to the function arguments, but need to be parsed early to
   // participate in determining whether it's a redeclaration.
-  llvm::OwningPtr<ParseScope> PrototypeScope;
+  std::unique_ptr<ParseScope> PrototypeScope;
   if (AttrName->isStr("enable_if") && D && D->isFunctionDeclarator()) {
     DeclaratorChunk::FunctionTypeInfo FTI = D->getFunctionTypeInfo();
     PrototypeScope.reset(new ParseScope(this, Scope::FunctionPrototypeScope |
@@ -342,7 +342,7 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
 
     // Parse the non-empty comma-separated list of expressions.
     do {
-      OwningPtr<EnterExpressionEvaluationContext> Unevaluated;
+      std::unique_ptr<EnterExpressionEvaluationContext> Unevaluated;
       if (attributeParsedArgsUnevaluated(*AttrName))
         Unevaluated.reset(new EnterExpressionEvaluationContext(Actions,
         Sema::Unevaluated));

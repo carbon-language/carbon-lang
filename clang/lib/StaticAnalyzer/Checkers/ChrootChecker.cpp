@@ -41,7 +41,7 @@ bool isRootChanged(intptr_t k) { return k == ROOT_CHANGED; }
 class ChrootChecker : public Checker<eval::Call, check::PreStmt<CallExpr> > {
   mutable IdentifierInfo *II_chroot, *II_chdir;
   // This bug refers to possibly break out of a chroot() jail.
-  mutable OwningPtr<BuiltinBug> BT_BreakJail;
+  mutable std::unique_ptr<BuiltinBug> BT_BreakJail;
 
 public:
   ChrootChecker() : II_chroot(0), II_chdir(0) {}

@@ -1709,7 +1709,7 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
   // require an explicit implementation, via attribute
   // 'objc_protocol_requires_explicit_implementation'.
   if (IDecl) {
-    OwningPtr<ObjCContainerDecl::PropertyMap> LazyMap;
+    std::unique_ptr<ObjCContainerDecl::PropertyMap> LazyMap;
 
     for (ObjCInterfaceDecl::all_protocol_iterator
           PI = IDecl->all_referenced_protocol_begin(),

@@ -29,7 +29,7 @@ namespace {
 class MacOSKeychainAPIChecker : public Checker<check::PreStmt<CallExpr>,
                                                check::PostStmt<CallExpr>,
                                                check::DeadSymbols> {
-  mutable OwningPtr<BugType> BT;
+  mutable std::unique_ptr<BugType> BT;
 
 public:
   /// AllocationState is a part of the checker specific state together with the

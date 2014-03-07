@@ -26,8 +26,8 @@ using namespace ento;
 namespace {
 class ObjCAtSyncChecker
     : public Checker< check::PreStmt<ObjCAtSynchronizedStmt> > {
-  mutable OwningPtr<BuiltinBug> BT_null;
-  mutable OwningPtr<BuiltinBug> BT_undef;
+  mutable std::unique_ptr<BuiltinBug> BT_null;
+  mutable std::unique_ptr<BuiltinBug> BT_undef;
 
 public:
   void checkPreStmt(const ObjCAtSynchronizedStmt *S, CheckerContext &C) const;

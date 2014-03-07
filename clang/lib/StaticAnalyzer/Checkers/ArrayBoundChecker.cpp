@@ -25,7 +25,8 @@ using namespace ento;
 namespace {
 class ArrayBoundChecker : 
     public Checker<check::Location> {
-  mutable OwningPtr<BuiltinBug> BT;
+  mutable std::unique_ptr<BuiltinBug> BT;
+
 public:
   void checkLocation(SVal l, bool isLoad, const Stmt* S,
                      CheckerContext &C) const;

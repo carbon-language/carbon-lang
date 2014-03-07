@@ -499,7 +499,7 @@ class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
   /// supply a message that will be used to construct an extra hint on the
   /// returns from all the calls on the stack from this event to the final
   /// diagnostic.
-  OwningPtr<StackHintGenerator> CallStackHint;
+  std::unique_ptr<StackHintGenerator> CallStackHint;
 
 public:
   PathDiagnosticEventPiece(const PathDiagnosticLocation &pos,

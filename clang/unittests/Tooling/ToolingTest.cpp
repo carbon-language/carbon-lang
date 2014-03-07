@@ -107,7 +107,7 @@ TEST(runToolOnCode, FindsClassDecl) {
 }
 
 TEST(buildASTFromCode, FindsClassDecl) {
-  OwningPtr<ASTUnit> AST(buildASTFromCode("class X;"));
+  std::unique_ptr<ASTUnit> AST(buildASTFromCode("class X;"));
   ASSERT_TRUE(AST.get());
   EXPECT_TRUE(FindClassDeclX(AST.get()));
 
@@ -117,9 +117,9 @@ TEST(buildASTFromCode, FindsClassDecl) {
 }
 
 TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromType) {
-  OwningPtr<FrontendActionFactory> Factory(
+  std::unique_ptr<FrontendActionFactory> Factory(
       newFrontendActionFactory<SyntaxOnlyAction>());
-  OwningPtr<FrontendAction> Action(Factory->create());
+  std::unique_ptr<FrontendAction> Action(Factory->create());
   EXPECT_TRUE(Action.get() != NULL);
 }
 
@@ -131,9 +131,9 @@ struct IndependentFrontendActionCreator {
 
 TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromFactoryType) {
   IndependentFrontendActionCreator Creator;
-  OwningPtr<FrontendActionFactory> Factory(
+  std::unique_ptr<FrontendActionFactory> Factory(
       newFrontendActionFactory(&Creator));
-  OwningPtr<FrontendAction> Action(Factory->create());
+  std::unique_ptr<FrontendAction> Action(Factory->create());
   EXPECT_TRUE(Action.get() != NULL);
 }
 

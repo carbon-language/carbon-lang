@@ -54,8 +54,8 @@ class SimpleStreamChecker : public Checker<check::PostCall,
 
   mutable IdentifierInfo *IIfopen, *IIfclose;
 
-  OwningPtr<BugType> DoubleCloseBugType;
-  OwningPtr<BugType> LeakBugType;
+  std::unique_ptr<BugType> DoubleCloseBugType;
+  std::unique_ptr<BugType> LeakBugType;
 
   void initIdentifierInfo(ASTContext &Ctx) const;
 

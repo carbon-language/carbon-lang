@@ -30,12 +30,13 @@ using namespace clang;
 namespace {
   class CodeGeneratorImpl : public CodeGenerator {
     DiagnosticsEngine &Diags;
-    OwningPtr<const llvm::DataLayout> TD;
+    std::unique_ptr<const llvm::DataLayout> TD;
     ASTContext *Ctx;
     const CodeGenOptions CodeGenOpts;  // Intentionally copied in.
   protected:
-    OwningPtr<llvm::Module> M;
-    OwningPtr<CodeGen::CodeGenModule> Builder;
+    std::unique_ptr<llvm::Module> M;
+    std::unique_ptr<CodeGen::CodeGenModule> Builder;
+
   public:
     CodeGeneratorImpl(DiagnosticsEngine &diags, const std::string& ModuleName,
                       const CodeGenOptions &CGO, llvm::LLVMContext& C)

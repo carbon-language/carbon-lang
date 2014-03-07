@@ -143,7 +143,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       if (llvm::sys::fs::exists(BLPath)) {
         // Validate the blacklist format.
         std::string BLError;
-        llvm::OwningPtr<llvm::SpecialCaseList> SCL(
+        std::unique_ptr<llvm::SpecialCaseList> SCL(
             llvm::SpecialCaseList::create(BLPath, BLError));
         if (!SCL.get())
           D.Diag(diag::err_drv_malformed_sanitizer_blacklist) << BLError;

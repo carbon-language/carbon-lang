@@ -112,7 +112,7 @@ private:
   // FIXME: We are constantly running into bugs where Line.Level is incorrectly
   // subtracted from beyond 0. Introduce a method to subtract from Line.Level
   // and use that everywhere in the Parser.
-  OwningPtr<UnwrappedLine> Line;
+  std::unique_ptr<UnwrappedLine> Line;
 
   // Comments are sorted into unwrapped lines by whether they are in the same
   // line as the previous token, or not. If not, they belong to the next token.

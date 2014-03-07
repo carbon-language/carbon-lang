@@ -72,7 +72,8 @@ PrintedStmtMatches(StringRef Code, const std::vector<std::string> &Args,
   PrintMatch Printer;
   MatchFinder Finder;
   Finder.addMatcher(NodeMatch, &Printer);
-  OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
+  std::unique_ptr<FrontendActionFactory> Factory(
+      newFrontendActionFactory(&Finder));
 
   if (!runToolOnCodeWithArgs(Factory->create(), Code, Args))
     return testing::AssertionFailure()

@@ -74,7 +74,8 @@ public:
   PrintMatch Printer;
   MatchFinder Finder;
   Finder.addMatcher(NodeMatch, &Printer);
-  OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
+  std::unique_ptr<FrontendActionFactory> Factory(
+      newFrontendActionFactory(&Finder));
 
   if (!runToolOnCodeWithArgs(Factory->create(), Code, Args, FileName))
     return testing::AssertionFailure()

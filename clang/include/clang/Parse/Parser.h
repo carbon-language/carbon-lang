@@ -139,23 +139,23 @@ class Parser : public CodeCompletionHandler {
   llvm::SmallDenseMap<const IdentifierInfo *, tok::TokenKind>
   ContextualKeywords;
 
-  OwningPtr<PragmaHandler> AlignHandler;
-  OwningPtr<PragmaHandler> GCCVisibilityHandler;
-  OwningPtr<PragmaHandler> OptionsHandler;
-  OwningPtr<PragmaHandler> PackHandler;
-  OwningPtr<PragmaHandler> MSStructHandler;
-  OwningPtr<PragmaHandler> UnusedHandler;
-  OwningPtr<PragmaHandler> WeakHandler;
-  OwningPtr<PragmaHandler> RedefineExtnameHandler;
-  OwningPtr<PragmaHandler> FPContractHandler;
-  OwningPtr<PragmaHandler> OpenCLExtensionHandler;
-  OwningPtr<PragmaHandler> OpenMPHandler;
-  OwningPtr<PragmaHandler> MSCommentHandler;
-  OwningPtr<PragmaHandler> MSDetectMismatchHandler;
-  OwningPtr<PragmaHandler> MSPointersToMembers;
-  OwningPtr<PragmaHandler> MSVtorDisp;
+  std::unique_ptr<PragmaHandler> AlignHandler;
+  std::unique_ptr<PragmaHandler> GCCVisibilityHandler;
+  std::unique_ptr<PragmaHandler> OptionsHandler;
+  std::unique_ptr<PragmaHandler> PackHandler;
+  std::unique_ptr<PragmaHandler> MSStructHandler;
+  std::unique_ptr<PragmaHandler> UnusedHandler;
+  std::unique_ptr<PragmaHandler> WeakHandler;
+  std::unique_ptr<PragmaHandler> RedefineExtnameHandler;
+  std::unique_ptr<PragmaHandler> FPContractHandler;
+  std::unique_ptr<PragmaHandler> OpenCLExtensionHandler;
+  std::unique_ptr<PragmaHandler> OpenMPHandler;
+  std::unique_ptr<PragmaHandler> MSCommentHandler;
+  std::unique_ptr<PragmaHandler> MSDetectMismatchHandler;
+  std::unique_ptr<PragmaHandler> MSPointersToMembers;
+  std::unique_ptr<PragmaHandler> MSVtorDisp;
 
-  OwningPtr<CommentHandler> CommentSemaHandler;
+  std::unique_ptr<CommentHandler> CommentSemaHandler;
 
   /// Whether the '>' token acts as an operator or not. This will be
   /// true except when we are parsing an expression within a C++

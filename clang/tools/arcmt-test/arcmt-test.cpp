@@ -178,7 +178,7 @@ static bool performTransformations(StringRef resourcesPath,
                                  origCI.getMigratorOpts().NoFinalizeRemoval);
   assert(!transforms.empty());
 
-  OwningPtr<PrintTransforms> transformPrinter;
+  std::unique_ptr<PrintTransforms> transformPrinter;
   if (OutputTransformations)
     transformPrinter.reset(new PrintTransforms(llvm::outs()));
 
@@ -207,12 +207,12 @@ static bool performTransformations(StringRef resourcesPath,
 static bool filesCompareEqual(StringRef fname1, StringRef fname2) {
   using namespace llvm;
 
-  OwningPtr<MemoryBuffer> file1;
+  std::unique_ptr<MemoryBuffer> file1;
   MemoryBuffer::getFile(fname1, file1);
   if (!file1)
     return false;
-  
-  OwningPtr<MemoryBuffer> file2;
+
+  std::unique_ptr<MemoryBuffer> file2;
   MemoryBuffer::getFile(fname2, file2);
   if (!file2)
     return false;
@@ -238,7 +238,7 @@ static bool verifyTransformedFiles(ArrayRef<std::string> resultFiles) {
     resultMap[sys::path::stem(fname)] = fname;
   }
 
-  OwningPtr<MemoryBuffer> inputBuf;
+  std::unique_ptr<MemoryBuffer> inputBuf;
   if (RemappingsFile.empty())
     MemoryBuffer::getSTDIN(inputBuf);
   else

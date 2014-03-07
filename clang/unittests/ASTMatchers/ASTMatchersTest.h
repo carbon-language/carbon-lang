@@ -67,7 +67,8 @@ testing::AssertionResult matchesConditionally(const std::string &Code,
   Finder.addMatcher(AMatcher, new VerifyMatch(0, &Found));
   if (!Finder.addDynamicMatcher(AMatcher, new VerifyMatch(0, &DynamicFound)))
     return testing::AssertionFailure() << "Could not add dynamic matcher";
-  OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
+  std::unique_ptr<FrontendActionFactory> Factory(
+      newFrontendActionFactory(&Finder));
   // Some tests use typeof, which is a gnu extension.
   std::vector<std::string> Args(1, CompileArg);
   if (!runToolOnCodeWithArgs(Factory->create(), Code, Args)) {
@@ -105,12 +106,13 @@ testing::AssertionResult
 matchAndVerifyResultConditionally(const std::string &Code, const T &AMatcher,
                                   BoundNodesCallback *FindResultVerifier,
                                   bool ExpectResult) {
-  OwningPtr<BoundNodesCallback> ScopedVerifier(FindResultVerifier);
+  std::unique_ptr<BoundNodesCallback> ScopedVerifier(FindResultVerifier);
   bool VerifiedResult = false;
   MatchFinder Finder;
   Finder.addMatcher(
       AMatcher, new VerifyMatch(FindResultVerifier, &VerifiedResult));
-  OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
+  std::unique_ptr<FrontendActionFactory> Factory(
+      newFrontendActionFactory(&Finder));
   // Some tests use typeof, which is a gnu extension.
   std::vector<std::string> Args(1, "-std=gnu++98");
   if (!runToolOnCodeWithArgs(Factory->create(), Code, Args)) {
@@ -125,7 +127,7 @@ matchAndVerifyResultConditionally(const std::string &Code, const T &AMatcher,
   }
 
   VerifiedResult = false;
-  OwningPtr<ASTUnit> AST(buildASTFromCodeWithArgs(Code, Args));
+  std::unique_ptr<ASTUnit> AST(buildASTFromCodeWithArgs(Code, Args));
   if (!AST.get())
     return testing::AssertionFailure() << "Parsing error in \"" << Code
                                        << "\" while building AST";

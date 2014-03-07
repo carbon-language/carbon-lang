@@ -38,11 +38,12 @@ public:
       return error_code(errc::no_such_file_or_directory, posix_category());
     return I->second;
   }
-  error_code openFileForRead(const Twine &Path, OwningPtr<vfs::File> &Result) {
+  error_code openFileForRead(const Twine &Path,
+                             std::unique_ptr<vfs::File> &Result) {
     llvm_unreachable("unimplemented");
   }
   error_code getBufferForFile(const Twine &Name,
-                              OwningPtr<MemoryBuffer> &Result,
+                              std::unique_ptr<MemoryBuffer> &Result,
                               int64_t FileSize = -1,
                               bool RequiresNullTerminator = true) {
     llvm_unreachable("unimplemented");

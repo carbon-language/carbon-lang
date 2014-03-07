@@ -28,8 +28,8 @@ using namespace ento;
 namespace {
 class ArrayBoundCheckerV2 : 
     public Checker<check::Location> {
-  mutable OwningPtr<BuiltinBug> BT;
-      
+  mutable std::unique_ptr<BuiltinBug> BT;
+
   enum OOB_Kind { OOB_Precedes, OOB_Excedes, OOB_Tainted };
   
   void reportOOB(CheckerContext &C, ProgramStateRef errorState,

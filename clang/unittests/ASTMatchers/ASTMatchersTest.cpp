@@ -4165,12 +4165,13 @@ TEST(MatchFinder, InterceptsStartOfTranslationUnit) {
   MatchFinder Finder;
   VerifyStartOfTranslationUnit VerifyCallback;
   Finder.addMatcher(decl(), &VerifyCallback);
-  OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
+  std::unique_ptr<FrontendActionFactory> Factory(
+      newFrontendActionFactory(&Finder));
   ASSERT_TRUE(tooling::runToolOnCode(Factory->create(), "int x;"));
   EXPECT_TRUE(VerifyCallback.Called);
 
   VerifyCallback.Called = false;
-  OwningPtr<ASTUnit> AST(tooling::buildASTFromCode("int x;"));
+  std::unique_ptr<ASTUnit> AST(tooling::buildASTFromCode("int x;"));
   ASSERT_TRUE(AST.get());
   Finder.matchAST(AST->getASTContext());
   EXPECT_TRUE(VerifyCallback.Called);
@@ -4192,12 +4193,13 @@ TEST(MatchFinder, InterceptsEndOfTranslationUnit) {
   MatchFinder Finder;
   VerifyEndOfTranslationUnit VerifyCallback;
   Finder.addMatcher(decl(), &VerifyCallback);
-  OwningPtr<FrontendActionFactory> Factory(newFrontendActionFactory(&Finder));
+  std::unique_ptr<FrontendActionFactory> Factory(
+      newFrontendActionFactory(&Finder));
   ASSERT_TRUE(tooling::runToolOnCode(Factory->create(), "int x;"));
   EXPECT_TRUE(VerifyCallback.Called);
 
   VerifyCallback.Called = false;
-  OwningPtr<ASTUnit> AST(tooling::buildASTFromCode("int x;"));
+  std::unique_ptr<ASTUnit> AST(tooling::buildASTFromCode("int x;"));
   ASSERT_TRUE(AST.get());
   Finder.matchAST(AST->getASTContext());
   EXPECT_TRUE(VerifyCallback.Called);

@@ -1203,7 +1203,7 @@ void Driver::BuildActions(const ToolChain &TC, DerivedArgList &Args,
     }
 
     // Build the pipeline for this file.
-    OwningPtr<Action> Current(new InputAction(*InputArg, InputType));
+    std::unique_ptr<Action> Current(new InputAction(*InputArg, InputType));
     for (SmallVectorImpl<phases::ID>::iterator
            i = PL.begin(), e = PL.end(); i != e; ++i) {
       phases::ID Phase = *i;

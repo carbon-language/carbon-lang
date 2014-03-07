@@ -24,7 +24,7 @@ using namespace ento;
 namespace {
 
 class UndefBranchChecker : public Checker<check::BranchCondition> {
-  mutable OwningPtr<BuiltinBug> BT;
+  mutable std::unique_ptr<BuiltinBug> BT;
 
   struct FindUndefExpr {
     ProgramStateRef St;

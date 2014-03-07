@@ -28,8 +28,8 @@ namespace {
 class UndefResultChecker 
   : public Checker< check::PostStmt<BinaryOperator> > {
 
-  mutable OwningPtr<BugType> BT;
-  
+  mutable std::unique_ptr<BugType> BT;
+
 public:
   void checkPostStmt(const BinaryOperator *B, CheckerContext &C) const;
 };

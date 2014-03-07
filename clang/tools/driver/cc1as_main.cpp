@@ -151,10 +151,10 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   bool Success = true;
 
   // Parse the arguments.
-  OwningPtr<OptTable> OptTbl(createCC1AsOptTable());
+  std::unique_ptr<OptTable> OptTbl(createCC1AsOptTable());
   unsigned MissingArgIndex, MissingArgCount;
-  OwningPtr<InputArgList> Args(
-    OptTbl->ParseArgs(ArgBegin, ArgEnd,MissingArgIndex, MissingArgCount));
+  std::unique_ptr<InputArgList> Args(
+      OptTbl->ParseArgs(ArgBegin, ArgEnd, MissingArgIndex, MissingArgCount));
 
   // Check for missing argument error.
   if (MissingArgCount) {
@@ -271,7 +271,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     return false;
   }
 
-  OwningPtr<MemoryBuffer> BufferPtr;
+  std::unique_ptr<MemoryBuffer> BufferPtr;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(Opts.InputFile, BufferPtr)) {
     Error = ec.message();
     Diags.Report(diag::err_fe_error_reading) << Opts.InputFile;
@@ -288,10 +288,10 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   // it later.
   SrcMgr.setIncludeDirs(Opts.IncludePaths);
 
-  OwningPtr<MCRegisterInfo> MRI(TheTarget->createMCRegInfo(Opts.Triple));
+  std::unique_ptr<MCRegisterInfo> MRI(TheTarget->createMCRegInfo(Opts.Triple));
   assert(MRI && "Unable to create target register info!");
 
-  OwningPtr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(*MRI, Opts.Triple));
+  std::unique_ptr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(*MRI, Opts.Triple));
   assert(MAI && "Unable to create target asm info!");
 
   bool IsBinary = Opts.OutputType == AssemblerInvocation::FT_Obj;
@@ -301,7 +301,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
 
   // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
-  OwningPtr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
+  std::unique_ptr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
   MCContext Ctx(MAI.get(), MRI.get(), MOFI.get(), &SrcMgr);
   // FIXME: Assembler behavior can change with -static.
   MOFI->InitMCObjectFileInfo(Opts.Triple,
@@ -327,11 +327,11 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
       FS += "," + Opts.Features[i];
   }
 
-  OwningPtr<MCStreamer> Str;
+  std::unique_ptr<MCStreamer> Str;
 
-  OwningPtr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
-  OwningPtr<MCSubtargetInfo>
-    STI(TheTarget->createMCSubtargetInfo(Opts.Triple, Opts.CPU, FS));
+  std::unique_ptr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
+  std::unique_ptr<MCSubtargetInfo> STI(
+      TheTarget->createMCSubtargetInfo(Opts.Triple, Opts.CPU, FS));
 
   // FIXME: There is a bit of code duplication with addPassesToEmitFile.
   if (Opts.OutputType == AssemblerInvocation::FT_Asm) {
@@ -363,9 +363,10 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     Str.get()->InitSections();
   }
 
-  OwningPtr<MCAsmParser> Parser(createMCAsmParser(SrcMgr, Ctx,
-                                                  *Str.get(), *MAI));
-  OwningPtr<MCTargetAsmParser> TAP(TheTarget->createMCAsmParser(*STI, *Parser, *MCII));
+  std::unique_ptr<MCAsmParser> Parser(
+      createMCAsmParser(SrcMgr, Ctx, *Str.get(), *MAI));
+  std::unique_ptr<MCTargetAsmParser> TAP(
+      TheTarget->createMCAsmParser(*STI, *Parser, *MCII));
   if (!TAP) {
     Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
     return false;
@@ -427,7 +428,7 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
 
   // Honor -help.
   if (Asm.ShowHelp) {
-    OwningPtr<OptTable> Opts(driver::createCC1AsOptTable());
+    std::unique_ptr<OptTable> Opts(driver::createCC1AsOptTable());
     Opts->PrintHelp(llvm::outs(), "clang -cc1as", "Clang Integrated Assembler");
     return 0;
   }

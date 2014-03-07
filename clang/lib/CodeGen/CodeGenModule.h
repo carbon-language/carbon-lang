@@ -235,7 +235,7 @@ class CodeGenModule : public CodeGenTypeCache {
   DiagnosticsEngine &Diags;
   const llvm::DataLayout &TheDataLayout;
   const TargetInfo &Target;
-  llvm::OwningPtr<CGCXXABI> ABI;
+  std::unique_ptr<CGCXXABI> ABI;
   llvm::LLVMContext &VMContext;
 
   CodeGenTBAA *TBAA;
@@ -430,7 +430,7 @@ class CodeGenModule : public CodeGenTypeCache {
 
   GlobalDecl initializedGlobalDecl;
 
-  llvm::OwningPtr<llvm::SpecialCaseList> SanitizerBlacklist;
+  std::unique_ptr<llvm::SpecialCaseList> SanitizerBlacklist;
 
   const SanitizerOptions &SanOpts;
 

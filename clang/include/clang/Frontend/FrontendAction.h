@@ -35,7 +35,7 @@ class CompilerInstance;
 /// Abstract base class for actions which can be performed by the frontend.
 class FrontendAction {
   FrontendInputFile CurrentInput;
-  OwningPtr<ASTUnit> CurrentASTUnit;
+  std::unique_ptr<ASTUnit> CurrentASTUnit;
   CompilerInstance *Instance;
   friend class ASTMergeAction;
   friend class WrapperFrontendAction;
@@ -260,7 +260,7 @@ public:
 /// some existing action's behavior. It implements every virtual method in
 /// the FrontendAction interface by forwarding to the wrapped action.
 class WrapperFrontendAction : public FrontendAction {
-  OwningPtr<FrontendAction> WrappedAction;
+  std::unique_ptr<FrontendAction> WrappedAction;
 
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,

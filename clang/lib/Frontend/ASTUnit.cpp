@@ -677,7 +677,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                   bool CaptureDiagnostics,
                                   bool AllowPCHWithCompilerErrors,
                                   bool UserFilesAreVolatile) {
-  OwningPtr<ASTUnit> AST(new ASTUnit(true));
+  std::unique_ptr<ASTUnit> AST(new ASTUnit(true));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
@@ -1055,7 +1055,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   }
   
   // Create the compiler instance to use for building the AST.
-  OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+  std::unique_ptr<CompilerInstance> Clang(new CompilerInstance());
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
@@ -1141,10 +1141,10 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     // Keep track of the override buffer;
     SavedMainFileBuffer = OverrideMainBuffer;
   }
-  
-  OwningPtr<TopLevelDeclTrackerAction> Act(
-    new TopLevelDeclTrackerAction(*this));
-    
+
+  std::unique_ptr<TopLevelDeclTrackerAction> Act(
+      new TopLevelDeclTrackerAction(*this));
+
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<TopLevelDeclTrackerAction>
     ActCleanup(Act.get());
@@ -1406,7 +1406,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     = ComputePreamble(*PreambleInvocation, MaxLines, CreatedPreambleBuffer);
 
   // If ComputePreamble() Take ownership of the preamble buffer.
-  OwningPtr<llvm::MemoryBuffer> OwnedPreambleBuffer;
+  std::unique_ptr<llvm::MemoryBuffer> OwnedPreambleBuffer;
   if (CreatedPreambleBuffer)
     OwnedPreambleBuffer.reset(NewPreamble.first);
 
@@ -1587,7 +1587,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   PreprocessorOpts.PrecompiledPreambleBytes.second = false;
   
   // Create the compiler instance to use for building the precompiled preamble.
-  OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+  std::unique_ptr<CompilerInstance> Clang(new CompilerInstance());
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
@@ -1638,8 +1638,8 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   // Create the source manager.
   Clang->setSourceManager(new SourceManager(getDiagnostics(),
                                             Clang->getFileManager()));
-  
-  OwningPtr<PrecompilePreambleAction> Act;
+
+  std::unique_ptr<PrecompilePreambleAction> Act;
   Act.reset(new PrecompilePreambleAction(*this));
   if (!Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0])) {
     llvm::sys::fs::remove(FrontendOpts.OutputFile);
@@ -1786,7 +1786,7 @@ ASTUnit *ASTUnit::create(CompilerInvocation *CI,
                          IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                          bool CaptureDiagnostics,
                          bool UserFilesAreVolatile) {
-  OwningPtr<ASTUnit> AST;
+  std::unique_ptr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
   ConfigureDiags(Diags, 0, 0, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
@@ -1800,22 +1800,16 @@ ASTUnit *ASTUnit::create(CompilerInvocation *CI,
   return AST.release();
 }
 
-ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
-                              IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-                                             ASTFrontendAction *Action,
-                                             ASTUnit *Unit,
-                                             bool Persistent,
-                                             StringRef ResourceFilesPath,
-                                             bool OnlyLocalDecls,
-                                             bool CaptureDiagnostics,
-                                             bool PrecompilePreamble,
-                                             bool CacheCodeCompletionResults,
-                                    bool IncludeBriefCommentsInCodeCompletion,
-                                             bool UserFilesAreVolatile,
-                                             OwningPtr<ASTUnit> *ErrAST) {
+ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(
+    CompilerInvocation *CI, IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
+    ASTFrontendAction *Action, ASTUnit *Unit, bool Persistent,
+    StringRef ResourceFilesPath, bool OnlyLocalDecls, bool CaptureDiagnostics,
+    bool PrecompilePreamble, bool CacheCodeCompletionResults,
+    bool IncludeBriefCommentsInCodeCompletion, bool UserFilesAreVolatile,
+    std::unique_ptr<ASTUnit> *ErrAST) {
   assert(CI && "A CompilerInvocation is required");
 
-  OwningPtr<ASTUnit> OwnAST;
+  std::unique_ptr<ASTUnit> OwnAST;
   ASTUnit *AST = Unit;
   if (!AST) {
     // Create the AST unit.
@@ -1849,7 +1843,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   ProcessWarningOptions(AST->getDiagnostics(), CI->getDiagnosticOpts());
 
   // Create the compiler instance to use for building the AST.
-  OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+  std::unique_ptr<CompilerInstance> Clang(new CompilerInstance());
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
@@ -1895,7 +1889,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
 
   ASTFrontendAction *Act = Action;
 
-  OwningPtr<TopLevelDeclTrackerAction> TrackerAct;
+  std::unique_ptr<TopLevelDeclTrackerAction> TrackerAct;
   if (!Act) {
     TrackerAct.reset(new TopLevelDeclTrackerAction(*AST));
     Act = TrackerAct.get();
@@ -1978,7 +1972,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                     bool IncludeBriefCommentsInCodeCompletion,
                                              bool UserFilesAreVolatile) {
   // Create the AST unit.
-  OwningPtr<ASTUnit> AST;
+  std::unique_ptr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
   ConfigureDiags(Diags, 0, 0, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
@@ -2004,23 +1998,16 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                                              : AST.release();
 }
 
-ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
-                                      const char **ArgEnd,
-                                    IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-                                      StringRef ResourceFilesPath,
-                                      bool OnlyLocalDecls,
-                                      bool CaptureDiagnostics,
-                                      ArrayRef<RemappedFile> RemappedFiles,
-                                      bool RemappedFilesKeepOriginalName,
-                                      bool PrecompilePreamble,
-                                      TranslationUnitKind TUKind,
-                                      bool CacheCodeCompletionResults,
-                                      bool IncludeBriefCommentsInCodeCompletion,
-                                      bool AllowPCHWithCompilerErrors,
-                                      bool SkipFunctionBodies,
-                                      bool UserFilesAreVolatile,
-                                      bool ForSerialization,
-                                      OwningPtr<ASTUnit> *ErrAST) {
+ASTUnit *ASTUnit::LoadFromCommandLine(
+    const char **ArgBegin, const char **ArgEnd,
+    IntrusiveRefCntPtr<DiagnosticsEngine> Diags, StringRef ResourceFilesPath,
+    bool OnlyLocalDecls, bool CaptureDiagnostics,
+    ArrayRef<RemappedFile> RemappedFiles, bool RemappedFilesKeepOriginalName,
+    bool PrecompilePreamble, TranslationUnitKind TUKind,
+    bool CacheCodeCompletionResults, bool IncludeBriefCommentsInCodeCompletion,
+    bool AllowPCHWithCompilerErrors, bool SkipFunctionBodies,
+    bool UserFilesAreVolatile, bool ForSerialization,
+    std::unique_ptr<ASTUnit> *ErrAST) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
@@ -2058,7 +2045,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   CI->getFrontendOpts().SkipFunctionBodies = SkipFunctionBodies;
 
   // Create the AST unit.
-  OwningPtr<ASTUnit> AST;
+  std::unique_ptr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
   ConfigureDiags(Diags, ArgBegin, ArgEnd, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
@@ -2427,7 +2414,7 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   // Set the language options appropriately.
   LangOpts = *CCInvocation->getLangOpts();
 
-  OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+  std::unique_ptr<CompilerInstance> Clang(new CompilerInstance());
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
@@ -2524,8 +2511,8 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   // Disable the preprocessing record if modules are not enabled.
   if (!Clang->getLangOpts().Modules)
     PreprocessorOpts.DetailedRecord = false;
-  
-  OwningPtr<SyntaxOnlyAction> Act;
+
+  std::unique_ptr<SyntaxOnlyAction> Act;
   Act.reset(new SyntaxOnlyAction);
   if (Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0])) {
     Act->Execute();

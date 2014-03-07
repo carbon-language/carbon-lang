@@ -55,7 +55,7 @@ CXRemapping clang_getRemappings(const char *migrate_dir_path) {
   }
 
   TextDiagnosticBuffer diagBuffer;
-  OwningPtr<Remap> remap(new Remap());
+  std::unique_ptr<Remap> remap(new Remap());
 
   bool err = arcmt::getFileRemappings(remap->Vec, migrate_dir_path,&diagBuffer);
 
@@ -77,7 +77,7 @@ CXRemapping clang_getRemappingsFromFileList(const char **filePaths,
                                             unsigned numFiles) {
   bool Logging = ::getenv("LIBCLANG_LOGGING");
 
-  OwningPtr<Remap> remap(new Remap());
+  std::unique_ptr<Remap> remap(new Remap());
 
   if (numFiles == 0) {
     if (Logging)

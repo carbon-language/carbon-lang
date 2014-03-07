@@ -25,8 +25,8 @@ using namespace ento;
 
 namespace {
 class ReturnUndefChecker : public Checker< check::PreStmt<ReturnStmt> > {
-  mutable OwningPtr<BuiltinBug> BT_Undef;
-  mutable OwningPtr<BuiltinBug> BT_NullReference;
+  mutable std::unique_ptr<BuiltinBug> BT_Undef;
+  mutable std::unique_ptr<BuiltinBug> BT_NullReference;
 
   void emitUndef(CheckerContext &C, const Expr *RetE) const;
   void checkReference(CheckerContext &C, const Expr *RetE,

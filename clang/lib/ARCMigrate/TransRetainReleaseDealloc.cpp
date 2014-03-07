@@ -38,7 +38,7 @@ class RetainReleaseDeallocRemover :
   MigrationPass &Pass;
 
   ExprSet Removables;
-  OwningPtr<ParentMap> StmtMap;
+  std::unique_ptr<ParentMap> StmtMap;
 
   Selector DelegateSel, FinalizeSel;
 

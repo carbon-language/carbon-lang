@@ -679,7 +679,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
   }
 
   // Find the block info for this block and take ownership of it.
-  OwningPtr<CGBlockInfo> blockInfo;
+  std::unique_ptr<CGBlockInfo> blockInfo;
   blockInfo.reset(findAndRemoveBlockInfo(&FirstBlockInfo,
                                          blockExpr->getBlockDecl()));
 

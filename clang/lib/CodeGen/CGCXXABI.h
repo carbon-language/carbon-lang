@@ -41,7 +41,7 @@ namespace CodeGen {
 class CGCXXABI {
 protected:
   CodeGenModule &CGM;
-  OwningPtr<MangleContext> MangleCtx;
+  std::unique_ptr<MangleContext> MangleCtx;
 
   CGCXXABI(CodeGenModule &CGM)
     : CGM(CGM), MangleCtx(CGM.getContext().createMangleContext()) {}

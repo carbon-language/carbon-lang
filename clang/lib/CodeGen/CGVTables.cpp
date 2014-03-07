@@ -554,7 +554,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   if (CGDebugInfo *DI = CGM.getModuleDebugInfo())
     DI->completeClassData(Base.getBase());
 
-  OwningPtr<VTableLayout> VTLayout(
+  std::unique_ptr<VTableLayout> VTLayout(
       getItaniumVTableContext().createConstructionVTableLayout(
           Base.getBase(), Base.getBaseOffset(), BaseIsVirtual, RD));
 

@@ -204,7 +204,7 @@ private:
   DiagnosticsEngine &Diags;
   DiagnosticConsumer *PrimaryClient;
   bool OwnsPrimaryClient;
-  OwningPtr<TextDiagnosticBuffer> Buffer;
+  std::unique_ptr<TextDiagnosticBuffer> Buffer;
   const Preprocessor *CurrentPreprocessor;
   const LangOptions *LangOpts;
   SourceManager *SrcManager;

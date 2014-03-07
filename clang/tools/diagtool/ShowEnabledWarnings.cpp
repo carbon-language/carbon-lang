@@ -64,9 +64,9 @@ createDiagnostics(unsigned int argc, char **argv) {
     new DiagnosticsEngine(DiagIDs, new DiagnosticOptions(), DiagsBuffer));
 
   // Try to build a CompilerInvocation.
-  OwningPtr<CompilerInvocation> Invocation(
-    createInvocationFromCommandLine(ArrayRef<const char *>(argv, argc),
-                                    InterimDiags));
+  std::unique_ptr<CompilerInvocation> Invocation(
+      createInvocationFromCommandLine(ArrayRef<const char *>(argv, argc),
+                                      InterimDiags));
   if (!Invocation)
     return NULL;
 

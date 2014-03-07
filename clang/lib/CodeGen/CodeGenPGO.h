@@ -30,7 +30,7 @@ class RegionCounter;
 class PGOProfileData {
 private:
   /// The PGO data
-  llvm::OwningPtr<llvm::MemoryBuffer> DataBuffer;
+  std::unique_ptr<llvm::MemoryBuffer> DataBuffer;
   /// Offsets into DataBuffer for each function's counters
   llvm::StringMap<unsigned> DataOffsets;
   /// Execution counts for each function.

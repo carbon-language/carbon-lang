@@ -30,7 +30,7 @@ class TextDiagnosticPrinter : public DiagnosticConsumer {
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
 
   /// \brief Handle to the currently active text diagnostic emitter.
-  OwningPtr<TextDiagnostic> TextDiag;
+  std::unique_ptr<TextDiagnostic> TextDiag;
 
   /// A string to prefix to error messages.
   std::string Prefix;

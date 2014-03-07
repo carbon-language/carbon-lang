@@ -18,7 +18,7 @@ using namespace ento;
 
 namespace {
 class ExprInspectionChecker : public Checker< eval::Call > {
-  mutable OwningPtr<BugType> BT;
+  mutable std::unique_ptr<BugType> BT;
 
   void analyzerEval(const CallExpr *CE, CheckerContext &C) const;
   void analyzerCheckInlined(const CallExpr *CE, CheckerContext &C) const;

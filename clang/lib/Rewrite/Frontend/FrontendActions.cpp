@@ -110,9 +110,9 @@ bool FixItRecompile::BeginInvocation(CompilerInstance &CI) {
   bool err = false;
   {
     const FrontendOptions &FEOpts = CI.getFrontendOpts();
-    OwningPtr<FrontendAction> FixAction(new SyntaxOnlyAction());
+    std::unique_ptr<FrontendAction> FixAction(new SyntaxOnlyAction());
     if (FixAction->BeginSourceFile(CI, FEOpts.Inputs[0])) {
-      OwningPtr<FixItOptions> FixItOpts;
+      std::unique_ptr<FixItOptions> FixItOpts;
       if (FEOpts.FixToTemporaries)
         FixItOpts.reset(new FixItRewriteToTemp());
       else

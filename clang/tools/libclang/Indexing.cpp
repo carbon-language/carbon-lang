@@ -411,7 +411,7 @@ class IndexingFrontendAction : public ASTFrontendAction {
   CXTranslationUnit CXTU;
 
   SessionSkipBodyData *SKData;
-  OwningPtr<TUSkipBodyControl> SKCtrl;
+  std::unique_ptr<TUSkipBodyControl> SKCtrl;
 
 public:
   IndexingFrontendAction(CXClientData clientData,
@@ -465,7 +465,7 @@ public:
 
 struct IndexSessionData {
   CXIndex CIdx;
-  OwningPtr<SessionSkipBodyData> SkipBodyData;
+  std::unique_ptr<SessionSkipBodyData> SkipBodyData;
 
   explicit IndexSessionData(CXIndex cIdx)
     : CIdx(cIdx), SkipBodyData(new SessionSkipBodyData) {}
@@ -559,9 +559,9 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   llvm::CrashRecoveryContextCleanupRegistrar<DiagnosticsEngine,
     llvm::CrashRecoveryContextReleaseRefCleanup<DiagnosticsEngine> >
     DiagCleanup(Diags.getPtr());
-  
-  OwningPtr<std::vector<const char *> >
-    Args(new std::vector<const char*>());
+
+  std::unique_ptr<std::vector<const char *>> Args(
+      new std::vector<const char *>());
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<std::vector<const char*> >
@@ -592,7 +592,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   if (CInvok->getFrontendOpts().Inputs.empty())
     return;
 
-  OwningPtr<MemBufferOwner> BufOwner(new MemBufferOwner());
+  std::unique_ptr<MemBufferOwner> BufOwner(new MemBufferOwner());
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<MemBufferOwner>
@@ -618,7 +618,8 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   ASTUnit *Unit = ASTUnit::create(CInvok.getPtr(), Diags,
                                   CaptureDiagnostics,
                                   /*UserFilesAreVolatile=*/true);
-  OwningPtr<CXTUOwner> CXTU(new CXTUOwner(MakeCXTranslationUnit(CXXIdx, Unit)));
+  std::unique_ptr<CXTUOwner> CXTU(
+      new CXTUOwner(MakeCXTranslationUnit(CXXIdx, Unit)));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<CXTUOwner>
@@ -631,7 +632,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   if (SkipBodies)
     CInvok->getFrontendOpts().SkipFunctionBodies = true;
 
-  OwningPtr<IndexingFrontendAction> IndexAction;
+  std::unique_ptr<IndexingFrontendAction> IndexAction;
   IndexAction.reset(new IndexingFrontendAction(client_data, CB,
                                                index_options, CXTU->getTU(),
                               SkipBodies ? IdxSession->SkipBodyData.get() : 0));
@@ -790,14 +791,14 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
                                   ? index_callbacks_size : sizeof(CB);
   memcpy(&CB, client_index_callbacks, ClientCBSize);
 
-  OwningPtr<IndexingContext> IndexCtx;
+  std::unique_ptr<IndexingContext> IndexCtx;
   IndexCtx.reset(new IndexingContext(client_data, CB, index_options, TU));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<IndexingContext>
     IndexCtxCleanup(IndexCtx.get());
 
-  OwningPtr<IndexingConsumer> IndexConsumer;
+  std::unique_ptr<IndexingConsumer> IndexConsumer;
   IndexConsumer.reset(new IndexingConsumer(*IndexCtx, 0));
 
   // Recover resources if we crash before exiting this method.

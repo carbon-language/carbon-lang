@@ -29,8 +29,8 @@ class DereferenceChecker
     : public Checker< check::Location,
                       check::Bind,
                       EventDispatcher<ImplicitNullDerefEvent> > {
-  mutable OwningPtr<BuiltinBug> BT_null;
-  mutable OwningPtr<BuiltinBug> BT_undef;
+  mutable std::unique_ptr<BuiltinBug> BT_null;
+  mutable std::unique_ptr<BuiltinBug> BT_undef;
 
   void reportBug(ProgramStateRef State, const Stmt *S, CheckerContext &C,
                  bool IsBind = false) const;

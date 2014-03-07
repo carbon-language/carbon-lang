@@ -31,7 +31,7 @@ using namespace ento;
 
 namespace {
 class MacOSXAPIChecker : public Checker< check::PreStmt<CallExpr> > {
-  mutable OwningPtr<BugType> BT_dispatchOnce;
+  mutable std::unique_ptr<BugType> BT_dispatchOnce;
 
 public:
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;

@@ -291,7 +291,7 @@ class CFGBuilder {
   typedef BlockScopePosPair JumpSource;
 
   ASTContext *Context;
-  OwningPtr<CFG> cfg;
+  std::unique_ptr<CFG> cfg;
 
   CFGBlock *Block;
   CFGBlock *Succ;

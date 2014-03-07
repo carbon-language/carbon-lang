@@ -200,7 +200,7 @@ private:
     llvm::BitstreamWriter Stream;
 
     /// \brief The name of the diagnostics file.
-    OwningPtr<raw_ostream> OS;
+    std::unique_ptr<raw_ostream> OS;
 
     /// \brief The set of constructed record abbreviations.
     AbbreviationMap Abbrevs;

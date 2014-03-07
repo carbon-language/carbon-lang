@@ -79,7 +79,7 @@ public:
                            raw_ostream &Error) const;
 private:
   FileMatchTrieNode *Root;
-  OwningPtr<PathComparator> Comparator;
+  std::unique_ptr<PathComparator> Comparator;
 };
 
 

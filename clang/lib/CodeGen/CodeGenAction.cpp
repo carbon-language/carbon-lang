@@ -47,9 +47,9 @@ namespace clang {
 
     Timer LLVMIRGeneration;
 
-    OwningPtr<CodeGenerator> Gen;
+    std::unique_ptr<CodeGenerator> Gen;
 
-    OwningPtr<llvm::Module> TheModule, LinkModule;
+    std::unique_ptr<llvm::Module> TheModule, LinkModule;
 
   public:
     BackendConsumer(BackendAction action, DiagnosticsEngine &_Diags,
@@ -465,7 +465,7 @@ static raw_ostream *GetOutputStream(CompilerInstance &CI,
 ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
                                               StringRef InFile) {
   BackendAction BA = static_cast<BackendAction>(Act);
-  OwningPtr<raw_ostream> OS(GetOutputStream(CI, InFile, BA));
+  std::unique_ptr<raw_ostream> OS(GetOutputStream(CI, InFile, BA));
   if (BA != Backend_EmitNothing && !OS)
     return 0;
 

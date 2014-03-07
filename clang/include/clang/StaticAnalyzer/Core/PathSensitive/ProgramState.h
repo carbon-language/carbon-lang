@@ -441,8 +441,8 @@ private:
   SubEngine *Eng; /* Can be null. */
 
   EnvironmentManager                   EnvMgr;
-  OwningPtr<StoreManager>              StoreMgr;
-  OwningPtr<ConstraintManager>         ConstraintMgr;
+  std::unique_ptr<StoreManager>        StoreMgr;
+  std::unique_ptr<ConstraintManager>   ConstraintMgr;
 
   ProgramState::GenericDataMap::Factory     GDMFactory;
 
@@ -454,10 +454,10 @@ private:
   llvm::FoldingSet<ProgramState> StateSet;
 
   /// Object that manages the data for all created SVals.
-  OwningPtr<SValBuilder> svalBuilder;
+  std::unique_ptr<SValBuilder> svalBuilder;
 
   /// Manages memory for created CallEvents.
-  OwningPtr<CallEventManager> CallEventMgr;
+  std::unique_ptr<CallEventManager> CallEventMgr;
 
   /// A BumpPtrAllocator to allocate states.
   llvm::BumpPtrAllocator &Alloc;

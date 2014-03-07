@@ -22,8 +22,8 @@ class LangOptions;
 /// diagnostics should be included in counts.
 class ChainedDiagnosticConsumer : public DiagnosticConsumer {
   virtual void anchor();
-  OwningPtr<DiagnosticConsumer> Primary;
-  OwningPtr<DiagnosticConsumer> Secondary;
+  std::unique_ptr<DiagnosticConsumer> Primary;
+  std::unique_ptr<DiagnosticConsumer> Secondary;
 
 public:
   ChainedDiagnosticConsumer(DiagnosticConsumer *_Primary,

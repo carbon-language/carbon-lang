@@ -187,7 +187,7 @@ struct FormatToken {
 
   /// \brief A token can have a special role that can carry extra information
   /// about the token's formatting.
-  llvm::OwningPtr<TokenRole> Role;
+  std::unique_ptr<TokenRole> Role;
 
   /// \brief If this is an opening parenthesis, how are the parameters packed?
   ParameterPackingKind PackingKind;

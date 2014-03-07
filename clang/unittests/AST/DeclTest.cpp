@@ -20,7 +20,7 @@ using namespace clang::tooling;
 
 TEST(Decl, CleansUpAPValues) {
   MatchFinder Finder;
-  llvm::OwningPtr<FrontendActionFactory> Factory(
+  std::unique_ptr<FrontendActionFactory> Factory(
       newFrontendActionFactory(&Finder));
 
   // This is a regression test for a memory leak in APValues for structs that

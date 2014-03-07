@@ -791,7 +791,7 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
   if (!Current.isStringLiteral() && !Current.is(tok::comment))
     return 0;
 
-  llvm::OwningPtr<BreakableToken> Token;
+  std::unique_ptr<BreakableToken> Token;
   unsigned StartColumn = State.Column - Current.ColumnWidth;
   unsigned ColumnLimit = getColumnLimit(State);
 

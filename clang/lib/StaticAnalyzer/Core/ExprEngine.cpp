@@ -2550,7 +2550,7 @@ void ExprEngine::ViewGraph(ArrayRef<const ExplodedNode*> Nodes) {
   GraphPrintCheckerState = this;
   GraphPrintSourceManager = &getContext().getSourceManager();
 
-  OwningPtr<ExplodedGraph> TrimmedG(G.trim(Nodes));
+  std::unique_ptr<ExplodedGraph> TrimmedG(G.trim(Nodes));
 
   if (!TrimmedG.get())
     llvm::errs() << "warning: Trimmed ExplodedGraph is empty.\n";

@@ -453,7 +453,7 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
 
   if (IT == PredefinedExpr::FuncDName) {
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(CurrentDecl)) {
-      OwningPtr<MangleContext> MC;
+      std::unique_ptr<MangleContext> MC;
       MC.reset(Context.createMangleContext());
 
       if (MC->shouldMangleDeclName(ND)) {

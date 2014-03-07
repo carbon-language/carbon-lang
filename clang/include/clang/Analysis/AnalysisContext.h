@@ -69,16 +69,16 @@ class AnalysisDeclContext {
 
   const Decl * const D;
 
-  OwningPtr<CFG> cfg, completeCFG;
-  OwningPtr<CFGStmtMap> cfgStmtMap;
+  std::unique_ptr<CFG> cfg, completeCFG;
+  std::unique_ptr<CFGStmtMap> cfgStmtMap;
 
   CFG::BuildOptions cfgBuildOptions;
   CFG::BuildOptions::ForcedBlkExprs *forcedBlkExprs;
 
   bool builtCFG, builtCompleteCFG;
-  OwningPtr<ParentMap> PM;
-  OwningPtr<PseudoConstantAnalysis> PCA;
-  OwningPtr<CFGReverseBlockReachabilityAnalysis> CFA;
+  std::unique_ptr<ParentMap> PM;
+  std::unique_ptr<PseudoConstantAnalysis> PCA;
+  std::unique_ptr<CFGReverseBlockReachabilityAnalysis> CFA;
 
   llvm::BumpPtrAllocator A;
 

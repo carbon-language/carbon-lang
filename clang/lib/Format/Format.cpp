@@ -1790,7 +1790,7 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName,
     }
 
     if (IsFile) {
-      OwningPtr<llvm::MemoryBuffer> Text;
+      std::unique_ptr<llvm::MemoryBuffer> Text;
       if (llvm::error_code ec =
               llvm::MemoryBuffer::getFile(ConfigFile.c_str(), Text)) {
         llvm::errs() << ec.message() << "\n";

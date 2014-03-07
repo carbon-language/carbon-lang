@@ -425,7 +425,7 @@ static void InvalidPTH(DiagnosticsEngine &Diags, const char *Msg) {
 PTHManager *PTHManager::Create(const std::string &file,
                                DiagnosticsEngine &Diags) {
   // Memory map the PTH file.
-  OwningPtr<llvm::MemoryBuffer> File;
+  std::unique_ptr<llvm::MemoryBuffer> File;
 
   if (llvm::MemoryBuffer::getFile(file, File)) {
     // FIXME: Add ec.message() to this diag.
@@ -475,7 +475,7 @@ PTHManager *PTHManager::Create(const std::string &file,
     return 0; // FIXME: Proper error diagnostic?
   }
 
-  OwningPtr<PTHFileLookup> FL(PTHFileLookup::Create(FileTable, BufBeg));
+  std::unique_ptr<PTHFileLookup> FL(PTHFileLookup::Create(FileTable, BufBeg));
 
   // Warn if the PTH file is empty.  We still want to create a PTHManager
   // as the PTH could be used with -include-pth.
@@ -501,8 +501,8 @@ PTHManager *PTHManager::Create(const std::string &file,
     return 0;
   }
 
-  OwningPtr<PTHStringIdLookup> SL(PTHStringIdLookup::Create(StringIdTable,
-                                                                  BufBeg));
+  std::unique_ptr<PTHStringIdLookup> SL(
+      PTHStringIdLookup::Create(StringIdTable, BufBeg));
 
   // Get the location of the spelling cache.
   const unsigned char* spellingBaseOffset = PrologueOffset + sizeof(uint32_t)*3;

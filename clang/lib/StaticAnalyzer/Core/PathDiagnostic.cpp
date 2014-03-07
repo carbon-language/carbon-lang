@@ -197,8 +197,8 @@ PathDiagnosticConsumer::~PathDiagnosticConsumer() {
 }
 
 void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
-  OwningPtr<PathDiagnostic> OwningD(D);
-  
+  std::unique_ptr<PathDiagnostic> OwningD(D);
+
   if (!D || D->path.empty())
     return;
   

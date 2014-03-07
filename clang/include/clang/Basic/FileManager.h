@@ -70,7 +70,7 @@ class FileEntry {
   bool IsValid;               // Is this \c FileEntry initialized and valid?
 
   /// \brief The open file, if it is owned by the \p FileEntry.
-  mutable OwningPtr<vfs::File> File;
+  mutable std::unique_ptr<vfs::File> File;
   friend class FileManager;
 
   void closeFile() const {
@@ -169,7 +169,7 @@ class FileManager : public RefCountedBase<FileManager> {
   unsigned NumDirCacheMisses, NumFileCacheMisses;
 
   // Caching.
-  OwningPtr<FileSystemStatCache> StatCache;
+  std::unique_ptr<FileSystemStatCache> StatCache;
 
   bool getStatValue(const char *Path, FileData &Data, bool isFile,
                     vfs::File **F);

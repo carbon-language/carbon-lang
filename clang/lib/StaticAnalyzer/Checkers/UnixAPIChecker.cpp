@@ -30,7 +30,7 @@ using namespace ento;
 
 namespace {
 class UnixAPIChecker : public Checker< check::PreStmt<CallExpr> > {
-  mutable OwningPtr<BugType> BT_open, BT_pthreadOnce, BT_mallocZero;
+  mutable std::unique_ptr<BugType> BT_open, BT_pthreadOnce, BT_mallocZero;
   mutable Optional<uint64_t> Val_O_CREAT;
 
 public:
@@ -57,7 +57,7 @@ private:
                             const unsigned numArgs,
                             const unsigned sizeArg,
                             const char *fn) const;
-  void LazyInitialize(OwningPtr<BugType> &BT, const char *name) const {
+  void LazyInitialize(std::unique_ptr<BugType> &BT, const char *name) const {
     if (BT)
       return;
     BT.reset(new BugType(this, name, categories::UnixAPI));

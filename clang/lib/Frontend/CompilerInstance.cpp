@@ -147,7 +147,7 @@ static void SetupSerializedDiagnostics(DiagnosticOptions *DiagOpts,
                                        DiagnosticsEngine &Diags,
                                        StringRef OutputFile) {
   std::string ErrorInfo;
-  OwningPtr<llvm::raw_fd_ostream> OS;
+  std::unique_ptr<llvm::raw_fd_ostream> OS;
   OS.reset(new llvm::raw_fd_ostream(OutputFile.str().c_str(), ErrorInfo,
                                     llvm::sys::fs::F_None));
 
@@ -334,7 +334,7 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                              void *DeserializationListener,
                                              bool Preamble,
                                              bool UseGlobalModuleIndex) {
-  OwningPtr<ASTReader> Reader;
+  std::unique_ptr<ASTReader> Reader;
   Reader.reset(new ASTReader(PP, Context,
                              Sysroot.empty() ? "" : Sysroot.c_str(),
                              DisablePCHValidation,
@@ -539,7 +539,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
     OutFile = "-";
   }
 
-  OwningPtr<llvm::raw_fd_ostream> OS;
+  std::unique_ptr<llvm::raw_fd_ostream> OS;
   std::string OSFile;
 
   if (UseTemporary) {
@@ -662,7 +662,7 @@ bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
 
     SourceMgr.createMainFileID(File, Kind);
   } else {
-    OwningPtr<llvm::MemoryBuffer> SB;
+    std::unique_ptr<llvm::MemoryBuffer> SB;
     if (llvm::error_code ec = llvm::MemoryBuffer::getSTDIN(SB)) {
       Diags.Report(diag::err_fe_error_reading_stdin) << ec.message();
       return false;

@@ -1286,8 +1286,9 @@ void ConsumedAnalyzer::determineExpectedReturnState(AnalysisDeclContext &AC,
 
 bool ConsumedAnalyzer::splitState(const CFGBlock *CurrBlock,
                                   const ConsumedStmtVisitor &Visitor) {
-  
-  OwningPtr<ConsumedStateMap> FalseStates(new ConsumedStateMap(*CurrStates));
+
+  std::unique_ptr<ConsumedStateMap> FalseStates(
+      new ConsumedStateMap(*CurrStates));
   PropagationInfo PInfo;
   
   if (const IfStmt *IfNode =

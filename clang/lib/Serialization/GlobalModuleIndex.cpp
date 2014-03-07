@@ -228,7 +228,7 @@ GlobalModuleIndex::readIndex(StringRef Path) {
   IndexPath += Path;
   llvm::sys::path::append(IndexPath, IndexFileName);
 
-  llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
+  std::unique_ptr<llvm::MemoryBuffer> Buffer;
   if (llvm::MemoryBuffer::getFile(IndexPath.c_str(), Buffer) !=
       llvm::errc::success)
     return std::make_pair((GlobalModuleIndex *)0, EC_NotFound);
@@ -469,7 +469,7 @@ namespace {
 
 bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
   // Open the module file.
-  OwningPtr<llvm::MemoryBuffer> Buffer;
+  std::unique_ptr<llvm::MemoryBuffer> Buffer;
   std::string ErrorStr;
   Buffer.reset(FileMgr.getBufferForFile(File, &ErrorStr, /*isVolatile=*/true));
   if (!Buffer) {
@@ -593,10 +593,10 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
     if (State == ASTBlock && Code == IDENTIFIER_TABLE && Record[0] > 0) {
       typedef OnDiskChainedHashTable<InterestingASTIdentifierLookupTrait>
         InterestingIdentifierTable;
-      llvm::OwningPtr<InterestingIdentifierTable>
-        Table(InterestingIdentifierTable::Create(
-                (const unsigned char *)Blob.data() + Record[0],
-                (const unsigned char *)Blob.data()));
+      std::unique_ptr<InterestingIdentifierTable> Table(
+          InterestingIdentifierTable::Create(
+              (const unsigned char *)Blob.data() + Record[0],
+              (const unsigned char *)Blob.data()));
       for (InterestingIdentifierTable::data_iterator D = Table->data_begin(),
                                                      DEnd = Table->data_end();
            D != DEnd; ++D) {

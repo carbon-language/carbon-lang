@@ -128,9 +128,9 @@ class DeadStoreObs : public LiveVariables::Observer {
   AnalysisDeclContext* AC;
   ParentMap& Parents;
   llvm::SmallPtrSet<const VarDecl*, 20> Escaped;
-  OwningPtr<ReachableCode> reachableCode;
+  std::unique_ptr<ReachableCode> reachableCode;
   const CFGBlock *currentBlock;
-  OwningPtr<llvm::DenseSet<const VarDecl *> > InEH;
+  std::unique_ptr<llvm::DenseSet<const VarDecl *>> InEH;
 
   enum DeadStoreKind { Standard, Enclosing, DeadIncrement, DeadInit };
 

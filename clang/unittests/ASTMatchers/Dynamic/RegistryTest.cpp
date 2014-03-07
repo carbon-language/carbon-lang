@@ -370,7 +370,7 @@ TEST_F(RegistryTest, VariadicOp) {
 
 TEST_F(RegistryTest, Errors) {
   // Incorrect argument count.
-  OwningPtr<Diagnostics> Error(new Diagnostics());
+  std::unique_ptr<Diagnostics> Error(new Diagnostics());
   EXPECT_TRUE(constructMatcher("hasInitializer", Error.get()).isNull());
   EXPECT_EQ("Incorrect argument count. (Expected = 1) != (Actual = 0)",
             Error->toString());

@@ -79,7 +79,7 @@ testing::AssertionResult MatchVerifier<NodeType>::match(
     std::vector<std::string>& Args, Language L) {
   MatchFinder Finder;
   Finder.addMatcher(AMatcher.bind(""), this);
-  OwningPtr<tooling::FrontendActionFactory> Factory(
+  std::unique_ptr<tooling::FrontendActionFactory> Factory(
       tooling::newFrontendActionFactory(&Finder));
 
   StringRef FileName;

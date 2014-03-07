@@ -569,7 +569,7 @@ class SourceManager : public RefCountedBase<SourceManager> {
 
   /// \brief Lazily create the object keeping overridden files info, since
   /// it is uncommonly used.
-  OwningPtr<OverriddenFilesInfoTy> OverriddenFilesInfo;
+  std::unique_ptr<OverriddenFilesInfoTy> OverriddenFilesInfo;
 
   OverriddenFilesInfoTy &getOverriddenFilesInfo() {
     if (!OverriddenFilesInfo)

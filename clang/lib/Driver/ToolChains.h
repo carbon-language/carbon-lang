@@ -186,8 +186,8 @@ protected:
   /// @}
 
 private:
-  mutable OwningPtr<tools::gcc::Preprocess> Preprocess;
-  mutable OwningPtr<tools::gcc::Compile> Compile;
+  mutable std::unique_ptr<tools::gcc::Preprocess> Preprocess;
+  mutable std::unique_ptr<tools::gcc::Compile> Compile;
 };
 
 class LLVM_LIBRARY_VISIBILITY MachO : public ToolChain {
@@ -196,9 +196,9 @@ protected:
   virtual Tool *buildLinker() const;
   virtual Tool *getTool(Action::ActionClass AC) const;
 private:
-  mutable OwningPtr<tools::darwin::Lipo> Lipo;
-  mutable OwningPtr<tools::darwin::Dsymutil> Dsymutil;
-  mutable OwningPtr<tools::darwin::VerifyDebug> VerifyDebug;
+  mutable std::unique_ptr<tools::darwin::Lipo> Lipo;
+  mutable std::unique_ptr<tools::darwin::Dsymutil> Dsymutil;
+  mutable std::unique_ptr<tools::darwin::VerifyDebug> VerifyDebug;
 
 public:
   MachO(const Driver &D, const llvm::Triple &Triple,

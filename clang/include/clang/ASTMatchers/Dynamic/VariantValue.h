@@ -173,7 +173,7 @@ private:
     const MatcherT &matcher() const { return *Out; }
 
   private:
-    OwningPtr<MatcherT> Out;
+    std::unique_ptr<MatcherT> Out;
   };
 
   IntrusiveRefCntPtr<const Payload> Value;

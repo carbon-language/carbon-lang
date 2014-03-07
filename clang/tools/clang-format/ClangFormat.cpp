@@ -208,7 +208,7 @@ static bool format(StringRef FileName) {
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
       new DiagnosticOptions);
   SourceManager Sources(Diagnostics, Files);
-  OwningPtr<MemoryBuffer> Code;
+  std::unique_ptr<MemoryBuffer> Code;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(FileName, Code)) {
     llvm::errs() << ec.message() << "\n";
     return true;

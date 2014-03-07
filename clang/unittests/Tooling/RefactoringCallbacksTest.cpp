@@ -25,7 +25,7 @@ void expectRewritten(const std::string &Code,
                      RefactoringCallback &Callback) {
   MatchFinder Finder;
   Finder.addMatcher(AMatcher, &Callback);
-  OwningPtr<tooling::FrontendActionFactory> Factory(
+  std::unique_ptr<tooling::FrontendActionFactory> Factory(
       tooling::newFrontendActionFactory(&Finder));
   ASSERT_TRUE(tooling::runToolOnCode(Factory->create(), Code))
       << "Parsing error in \"" << Code << "\"";

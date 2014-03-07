@@ -52,7 +52,7 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
   // Don't check that inputs exist, they may have been remapped.
   TheDriver.setCheckInputsExist(false);
 
-  OwningPtr<driver::Compilation> C(TheDriver.BuildCompilation(Args));
+  std::unique_ptr<driver::Compilation> C(TheDriver.BuildCompilation(Args));
 
   // Just print the cc1 options if -### was present.
   if (C->getArgs().hasArg(driver::options::OPT__HASH_HASH_HASH)) {
@@ -78,7 +78,7 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
   }
 
   const ArgStringList &CCArgs = Cmd->getArguments();
-  OwningPtr<CompilerInvocation> CI(new CompilerInvocation());
+  std::unique_ptr<CompilerInvocation> CI(new CompilerInvocation());
   if (!CompilerInvocation::CreateFromArgs(*CI,
                                      const_cast<const char **>(CCArgs.data()),
                                      const_cast<const char **>(CCArgs.data()) +

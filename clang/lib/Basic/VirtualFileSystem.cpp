@@ -65,10 +65,10 @@ File::~File() {}
 FileSystem::~FileSystem() {}
 
 error_code FileSystem::getBufferForFile(const llvm::Twine &Name,
-                                        OwningPtr<MemoryBuffer> &Result,
+                                        std::unique_ptr<MemoryBuffer> &Result,
                                         int64_t FileSize,
                                         bool RequiresNullTerminator) {
-  llvm::OwningPtr<File> F;
+  std::unique_ptr<File> F;
   if (error_code EC = openFileForRead(Name, F))
     return EC;
 
@@ -93,7 +93,7 @@ class RealFile : public File {
 public:
   ~RealFile();
   ErrorOr<Status> status() override;
-  error_code getBuffer(const Twine &Name, OwningPtr<MemoryBuffer> &Result,
+  error_code getBuffer(const Twine &Name, std::unique_ptr<MemoryBuffer> &Result,
                        int64_t FileSize = -1,
                        bool RequiresNullTerminator = true) override;
   error_code close() override;
@@ -116,7 +116,7 @@ ErrorOr<Status> RealFile::status() {
 }
 
 error_code RealFile::getBuffer(const Twine &Name,
-                               OwningPtr<MemoryBuffer> &Result,
+                               std::unique_ptr<MemoryBuffer> &Result,
                                int64_t FileSize, bool RequiresNullTerminator) {
   assert(FD != -1 && "cannot get buffer for closed file");
   return MemoryBuffer::getOpenFile(FD, Name.str().c_str(), Result, FileSize,
@@ -150,7 +150,7 @@ class RealFileSystem : public FileSystem {
 public:
   ErrorOr<Status> status(const Twine &Path) override;
   error_code openFileForRead(const Twine &Path,
-                             OwningPtr<File> &Result) override;
+                             std::unique_ptr<File> &Result) override;
 };
 } // end anonymous namespace
 
@@ -164,7 +164,7 @@ ErrorOr<Status> RealFileSystem::status(const Twine &Path) {
 }
 
 error_code RealFileSystem::openFileForRead(const Twine &Name,
-                                           OwningPtr<File> &Result) {
+                                           std::unique_ptr<File> &Result) {
   int FD;
   if (error_code EC = sys::fs::openFileForRead(Name, FD))
     return EC;
@@ -200,7 +200,7 @@ ErrorOr<Status> OverlayFileSystem::status(const Twine &Path) {
 }
 
 error_code OverlayFileSystem::openFileForRead(const llvm::Twine &Path,
-                                              OwningPtr<File> &Result) {
+                                              std::unique_ptr<File> &Result) {
   // FIXME: handle symlinks that cross file systems
   for (iterator I = overlays_begin(), E = overlays_end(); I != E; ++I) {
     error_code EC = (*I)->openFileForRead(Path, Result);
@@ -389,7 +389,7 @@ public:
 
   ErrorOr<Status> status(const Twine &Path) override;
   error_code openFileForRead(const Twine &Path,
-                             OwningPtr<File> &Result) override;
+                             std::unique_ptr<File> &Result) override;
 };
 
 /// \brief A helper class to hold the common YAML parsing state.
@@ -727,7 +727,7 @@ VFSFromYAML *VFSFromYAML::create(MemoryBuffer *Buffer,
 
   VFSFromYAMLParser P(Stream);
 
-  OwningPtr<VFSFromYAML> FS(new VFSFromYAML(ExternalFS));
+  std::unique_ptr<VFSFromYAML> FS(new VFSFromYAML(ExternalFS));
   if (!P.parse(Root, FS.get()))
     return NULL;
 
@@ -810,7 +810,7 @@ ErrorOr<Status> VFSFromYAML::status(const Twine &Path) {
 }
 
 error_code VFSFromYAML::openFileForRead(const Twine &Path,
-                                        OwningPtr<vfs::File> &Result) {
+                                        std::unique_ptr<vfs::File> &Result) {
   ErrorOr<Entry *> E = lookupPath(Path);
   if (!E)
     return E.getError();

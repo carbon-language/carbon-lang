@@ -2682,7 +2682,7 @@ static bool IsUbuntu(enum Distro Distro) {
 }
 
 static Distro DetectDistro(llvm::Triple::ArchType Arch) {
-  OwningPtr<llvm::MemoryBuffer> File;
+  std::unique_ptr<llvm::MemoryBuffer> File;
   if (!llvm::MemoryBuffer::getFile("/etc/lsb-release", File)) {
     StringRef Data = File.get()->getBuffer();
     SmallVector<StringRef, 8> Lines;

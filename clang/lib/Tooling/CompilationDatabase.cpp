@@ -43,7 +43,7 @@ CompilationDatabase::loadFromDirectory(StringRef BuildDirectory,
        Ie = CompilationDatabasePluginRegistry::end();
        It != Ie; ++It) {
     std::string DatabaseErrorMessage;
-    OwningPtr<CompilationDatabasePlugin> Plugin(It->instantiate());
+    std::unique_ptr<CompilationDatabasePlugin> Plugin(It->instantiate());
     if (CompilationDatabase *DB =
         Plugin->loadFromDirectory(BuildDirectory, DatabaseErrorMessage))
       return DB;
@@ -213,7 +213,7 @@ static bool stripPositionalArgs(std::vector<const char *> Args,
 
   // Neither clang executable nor default image name are required since the
   // jobs the driver builds will not be executed.
-  OwningPtr<driver::Driver> NewDriver(new driver::Driver(
+  std::unique_ptr<driver::Driver> NewDriver(new driver::Driver(
       /* ClangExecutable= */ "", llvm::sys::getDefaultTargetTriple(),
       /* DefaultImageName= */ "", Diagnostics));
   NewDriver->setCheckInputsExist(false);
@@ -241,7 +241,7 @@ static bool stripPositionalArgs(std::vector<const char *> Args,
   std::remove_if(Args.begin(), Args.end(),
                  MatchesAny(std::string("-no-integrated-as")));
 
-  const OwningPtr<driver::Compilation> Compilation(
+  const std::unique_ptr<driver::Compilation> Compilation(
       NewDriver->BuildCompilation(Args));
 
   const driver::JobList &Jobs = Compilation->getJobs();

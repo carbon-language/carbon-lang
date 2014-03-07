@@ -29,8 +29,9 @@ using namespace ento;
 namespace {
 class NonNullParamChecker
   : public Checker< check::PreCall > {
-  mutable OwningPtr<BugType> BTAttrNonNull;
-  mutable OwningPtr<BugType> BTNullRefArg;
+  mutable std::unique_ptr<BugType> BTAttrNonNull;
+  mutable std::unique_ptr<BugType> BTNullRefArg;
+
 public:
 
   void checkPreCall(const CallEvent &Call, CheckerContext &C) const;

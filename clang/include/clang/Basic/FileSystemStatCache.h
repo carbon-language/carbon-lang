@@ -46,8 +46,8 @@ struct FileData {
 class FileSystemStatCache {
   virtual void anchor();
 protected:
-  OwningPtr<FileSystemStatCache> NextStatCache;
-  
+  std::unique_ptr<FileSystemStatCache> NextStatCache;
+
 public:
   virtual ~FileSystemStatCache() {}
   

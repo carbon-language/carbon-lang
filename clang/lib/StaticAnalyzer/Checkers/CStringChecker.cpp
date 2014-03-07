@@ -35,11 +35,8 @@ class CStringChecker : public Checker< eval::Call,
                                          check::DeadSymbols,
                                          check::RegionChanges
                                          > {
-  mutable OwningPtr<BugType> BT_Null,
-                             BT_Bounds,
-                             BT_Overlap,
-                             BT_NotCString,
-                             BT_AdditionOverflow;
+  mutable std::unique_ptr<BugType> BT_Null, BT_Bounds, BT_Overlap,
+      BT_NotCString, BT_AdditionOverflow;
 
   mutable const char *CurrentFunctionDescription;
 

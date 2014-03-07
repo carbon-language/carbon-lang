@@ -137,7 +137,7 @@ public:
 class ExternalSemaSourceInstaller : public clang::ASTFrontendAction {
   std::vector<NamespaceDiagnosticWatcher *> Watchers;
   std::vector<clang::ExternalSemaSource *> Sources;
-  llvm::OwningPtr<DiagnosticConsumer> OwnedClient;
+  std::unique_ptr<DiagnosticConsumer> OwnedClient;
 
 protected:
   virtual clang::ASTConsumer *
@@ -178,7 +178,7 @@ public:
 
 // Make sure that the NamespaceDiagnosticWatcher is not miscounting.
 TEST(ExternalSemaSource, SanityCheck) {
-  llvm::OwningPtr<ExternalSemaSourceInstaller> Installer(
+  std::unique_ptr<ExternalSemaSourceInstaller> Installer(
       new ExternalSemaSourceInstaller);
   NamespaceDiagnosticWatcher Watcher("AAB", "BBB");
   Installer->PushWatcher(&Watcher);
@@ -191,7 +191,7 @@ TEST(ExternalSemaSource, SanityCheck) {
 // Check that when we add a NamespaceTypeProvider, we use that suggestion
 // instead of the usual suggestion we would use above.
 TEST(ExternalSemaSource, ExternalTypoCorrectionPrioritized) {
-  llvm::OwningPtr<ExternalSemaSourceInstaller> Installer(
+  std::unique_ptr<ExternalSemaSourceInstaller> Installer(
       new ExternalSemaSourceInstaller);
   NamespaceTypoProvider Provider("AAB", "BBB");
   NamespaceDiagnosticWatcher Watcher("AAB", "BBB");
@@ -207,7 +207,7 @@ TEST(ExternalSemaSource, ExternalTypoCorrectionPrioritized) {
 // Check that we use the first successful TypoCorrection returned from an
 // ExternalSemaSource.
 TEST(ExternalSemaSource, ExternalTypoCorrectionOrdering) {
-  llvm::OwningPtr<ExternalSemaSourceInstaller> Installer(
+  std::unique_ptr<ExternalSemaSourceInstaller> Installer(
       new ExternalSemaSourceInstaller);
   NamespaceTypoProvider First("XXX", "BBB");
   NamespaceTypoProvider Second("AAB", "CCC");
@@ -229,7 +229,7 @@ TEST(ExternalSemaSource, ExternalTypoCorrectionOrdering) {
 // We should only try MaybeDiagnoseMissingCompleteType if we can't otherwise
 // solve the problem.
 TEST(ExternalSemaSource, TryOtherTacticsBeforeDiagnosing) {
-  llvm::OwningPtr<ExternalSemaSourceInstaller> Installer(
+  std::unique_ptr<ExternalSemaSourceInstaller> Installer(
       new ExternalSemaSourceInstaller);
   CompleteTypeDiagnoser Diagnoser(false);
   Installer->PushSource(&Diagnoser);
@@ -246,7 +246,7 @@ TEST(ExternalSemaSource, TryOtherTacticsBeforeDiagnosing) {
 // The first ExternalSemaSource where MaybeDiagnoseMissingCompleteType returns
 // true should be the last one called.
 TEST(ExternalSemaSource, FirstDiagnoserTaken) {
-  llvm::OwningPtr<ExternalSemaSourceInstaller> Installer(
+  std::unique_ptr<ExternalSemaSourceInstaller> Installer(
       new ExternalSemaSourceInstaller);
   CompleteTypeDiagnoser First(false);
   CompleteTypeDiagnoser Second(true);

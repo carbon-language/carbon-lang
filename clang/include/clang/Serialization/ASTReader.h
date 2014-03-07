@@ -322,7 +322,7 @@ public:
 
 private:
   /// \brief The receiver of some callbacks invoked by ASTReader.
-  OwningPtr<ASTReaderListener> Listener;
+  std::unique_ptr<ASTReaderListener> Listener;
 
   /// \brief The receiver of deserialization events.
   ASTDeserializationListener *DeserializationListener;
@@ -352,7 +352,7 @@ private:
   SourceLocation CurrentImportLoc;
 
   /// \brief The global module index, if loaded.
-  llvm::OwningPtr<GlobalModuleIndex> GlobalIndex;
+  std::unique_ptr<GlobalModuleIndex> GlobalIndex;
 
   /// \brief A map of global bit offsets to the module that stores entities
   /// at those bit offsets.

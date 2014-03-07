@@ -379,7 +379,7 @@ void FileManager::FixupRelativePath(SmallVectorImpl<char> &path) const {
 llvm::MemoryBuffer *FileManager::
 getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
                  bool isVolatile) {
-  OwningPtr<llvm::MemoryBuffer> Result;
+  std::unique_ptr<llvm::MemoryBuffer> Result;
   llvm::error_code ec;
 
   uint64_t FileSize = Entry->getSize();
@@ -417,7 +417,7 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
 
 llvm::MemoryBuffer *FileManager::
 getBufferForFile(StringRef Filename, std::string *ErrorStr) {
-  OwningPtr<llvm::MemoryBuffer> Result;
+  std::unique_ptr<llvm::MemoryBuffer> Result;
   llvm::error_code ec;
   if (FileSystemOpts.WorkingDir.empty()) {
     ec = FS->getBufferForFile(Filename, Result);

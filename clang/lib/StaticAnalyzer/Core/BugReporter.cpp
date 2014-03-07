@@ -2816,7 +2816,7 @@ namespace {
 class ReportGraph {
 public:
   InterExplodedGraphMap BackMap;
-  OwningPtr<ExplodedGraph> Graph;
+  std::unique_ptr<ExplodedGraph> Graph;
   const ExplodedNode *ErrorNode;
   size_t Index;
 };
@@ -2831,7 +2831,7 @@ class TrimmedGraph {
   typedef std::pair<const ExplodedNode *, size_t> NodeIndexPair;
   SmallVector<NodeIndexPair, 32> ReportNodes;
 
-  OwningPtr<ExplodedGraph> G;
+  std::unique_ptr<ExplodedGraph> G;
 
   /// A helper class for sorting ExplodedNodes by priority.
   template <bool Descending>
@@ -3415,15 +3415,13 @@ void BugReporter::FlushReport(BugReport *exampleReport,
   // Probably doesn't make a difference in practice.
   BugType& BT = exampleReport->getBugType();
 
-  OwningPtr<PathDiagnostic>
-    D(new PathDiagnostic(exampleReport->getBugType().getCheckName(),
-                         exampleReport->getDeclWithIssue(),
-                         exampleReport->getBugType().getName(),
-                         exampleReport->getDescription(),
-                         exampleReport->getShortDescription(/*Fallback=*/false),
-                         BT.getCategory(),
-                         exampleReport->getUniqueingLocation(),
-                         exampleReport->getUniqueingDecl()));
+  std::unique_ptr<PathDiagnostic> D(new PathDiagnostic(
+      exampleReport->getBugType().getCheckName(),
+      exampleReport->getDeclWithIssue(), exampleReport->getBugType().getName(),
+      exampleReport->getDescription(),
+      exampleReport->getShortDescription(/*Fallback=*/false), BT.getCategory(),
+      exampleReport->getUniqueingLocation(),
+      exampleReport->getUniqueingDecl()));
 
   MaxBugClassSize = std::max(bugReports.size(),
                              static_cast<size_t>(MaxBugClassSize));

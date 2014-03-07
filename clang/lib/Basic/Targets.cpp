@@ -5965,7 +5965,7 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   llvm::Triple Triple(Opts->Triple);
 
   // Construct the target
-  OwningPtr<TargetInfo> Target(AllocateTarget(Triple));
+  std::unique_ptr<TargetInfo> Target(AllocateTarget(Triple));
   if (!Target) {
     Diags.Report(diag::err_target_unknown_triple) << Triple.str();
     return 0;

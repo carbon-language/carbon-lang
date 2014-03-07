@@ -199,13 +199,13 @@ public:
                   const char *NL, const char *Sep) const;
 
 private:
-  mutable OwningPtr<BugType> BT_DoubleFree[CK_NumCheckKinds];
-  mutable OwningPtr<BugType> BT_DoubleDelete;
-  mutable OwningPtr<BugType> BT_Leak[CK_NumCheckKinds];
-  mutable OwningPtr<BugType> BT_UseFree[CK_NumCheckKinds];
-  mutable OwningPtr<BugType> BT_BadFree[CK_NumCheckKinds];
-  mutable OwningPtr<BugType> BT_MismatchedDealloc;
-  mutable OwningPtr<BugType> BT_OffsetFree[CK_NumCheckKinds];
+  mutable std::unique_ptr<BugType> BT_DoubleFree[CK_NumCheckKinds];
+  mutable std::unique_ptr<BugType> BT_DoubleDelete;
+  mutable std::unique_ptr<BugType> BT_Leak[CK_NumCheckKinds];
+  mutable std::unique_ptr<BugType> BT_UseFree[CK_NumCheckKinds];
+  mutable std::unique_ptr<BugType> BT_BadFree[CK_NumCheckKinds];
+  mutable std::unique_ptr<BugType> BT_MismatchedDealloc;
+  mutable std::unique_ptr<BugType> BT_OffsetFree[CK_NumCheckKinds];
   mutable IdentifierInfo *II_malloc, *II_free, *II_realloc, *II_calloc,
                          *II_valloc, *II_reallocf, *II_strndup, *II_strdup;
 

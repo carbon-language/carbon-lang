@@ -60,10 +60,10 @@ namespace {
 class UnbridgedCastRewriter : public RecursiveASTVisitor<UnbridgedCastRewriter>{
   MigrationPass &Pass;
   IdentifierInfo *SelfII;
-  OwningPtr<ParentMap> StmtMap;
+  std::unique_ptr<ParentMap> StmtMap;
   Decl *ParentD;
   Stmt *Body;
-  mutable OwningPtr<ExprSet> Removables;
+  mutable std::unique_ptr<ExprSet> Removables;
 
 public:
   UnbridgedCastRewriter(MigrationPass &pass) : Pass(pass), ParentD(0), Body(0) {

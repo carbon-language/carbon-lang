@@ -122,7 +122,7 @@ public:
       BuryPointer(TM.release());
   }
 
-  llvm::OwningPtr<TargetMachine> TM;
+  std::unique_ptr<TargetMachine> TM;
 
   void EmitAssembly(BackendAction Action, raw_ostream *OS);
 };

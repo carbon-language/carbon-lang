@@ -2338,19 +2338,19 @@ class RetainCountChecker
                     check::RegionChanges,
                     eval::Assume,
                     eval::Call > {
-  mutable OwningPtr<CFRefBug> useAfterRelease, releaseNotOwned;
-  mutable OwningPtr<CFRefBug> deallocGC, deallocNotOwned;
-  mutable OwningPtr<CFRefBug> overAutorelease, returnNotOwnedForOwned;
-  mutable OwningPtr<CFRefBug> leakWithinFunction, leakAtReturn;
-  mutable OwningPtr<CFRefBug> leakWithinFunctionGC, leakAtReturnGC;
+  mutable std::unique_ptr<CFRefBug> useAfterRelease, releaseNotOwned;
+  mutable std::unique_ptr<CFRefBug> deallocGC, deallocNotOwned;
+  mutable std::unique_ptr<CFRefBug> overAutorelease, returnNotOwnedForOwned;
+  mutable std::unique_ptr<CFRefBug> leakWithinFunction, leakAtReturn;
+  mutable std::unique_ptr<CFRefBug> leakWithinFunctionGC, leakAtReturnGC;
 
   typedef llvm::DenseMap<SymbolRef, const CheckerProgramPointTag *> SymbolTagMap;
 
   // This map is only used to ensure proper deletion of any allocated tags.
   mutable SymbolTagMap DeadSymbolTags;
 
-  mutable OwningPtr<RetainSummaryManager> Summaries;
-  mutable OwningPtr<RetainSummaryManager> SummariesGC;
+  mutable std::unique_ptr<RetainSummaryManager> Summaries;
+  mutable std::unique_ptr<RetainSummaryManager> SummariesGC;
   mutable SummaryLogTy SummaryLog;
   mutable bool ShouldResetSummaryLog;
 

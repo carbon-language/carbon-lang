@@ -87,7 +87,7 @@ public:
   static const char *const HelpMessage;
 
 private:
-  OwningPtr<CompilationDatabase> Compilations;
+  std::unique_ptr<CompilationDatabase> Compilations;
   std::vector<std::string> SourcePathList;
 };
 

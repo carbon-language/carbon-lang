@@ -87,7 +87,7 @@ private:
   IntrusiveRefCntPtr<DiagnosticsEngine>   Diagnostics;
   IntrusiveRefCntPtr<FileManager>         FileMgr;
   IntrusiveRefCntPtr<SourceManager>       SourceMgr;
-  OwningPtr<HeaderSearch>                 HeaderInfo;
+  std::unique_ptr<HeaderSearch>           HeaderInfo;
   IntrusiveRefCntPtr<TargetInfo>          Target;
   IntrusiveRefCntPtr<Preprocessor>        PP;
   IntrusiveRefCntPtr<ASTContext>          Ctx;
@@ -97,18 +97,18 @@ private:
   bool HadModuleLoaderFatalFailure;
 
   struct ASTWriterData;
-  OwningPtr<ASTWriterData> WriterData;
+  std::unique_ptr<ASTWriterData> WriterData;
 
   FileSystemOptions FileSystemOpts;
 
   /// \brief The AST consumer that received information about the translation
   /// unit as it was parsed or loaded.
-  OwningPtr<ASTConsumer> Consumer;
-  
+  std::unique_ptr<ASTConsumer> Consumer;
+
   /// \brief The semantic analysis object used to type-check the translation
   /// unit.
-  OwningPtr<Sema> TheSema;
-  
+  std::unique_ptr<Sema> TheSema;
+
   /// Optional owned invocation, just used to make the invocation used in
   /// LoadFromCommandLine available.
   IntrusiveRefCntPtr<CompilerInvocation> Invocation;
@@ -382,8 +382,8 @@ private:
   /// \brief Allocator used to store cached code completions.
   IntrusiveRefCntPtr<GlobalCodeCompletionAllocator>
     CachedCompletionAllocator;
-  
-  OwningPtr<CodeCompletionTUInfo> CCTUInfo;
+
+  std::unique_ptr<CodeCompletionTUInfo> CCTUInfo;
 
   /// \brief The set of cached code-completion results.
   std::vector<CachedCodeCompletionResult> CachedCompletionResults;
@@ -754,19 +754,14 @@ public:
   /// This will only receive an ASTUnit if a new one was created. If an already
   /// created ASTUnit was passed in \p Unit then the caller can check that.
   ///
-  static ASTUnit *LoadFromCompilerInvocationAction(CompilerInvocation *CI,
-                              IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-                                             ASTFrontendAction *Action = 0,
-                                             ASTUnit *Unit = 0,
-                                             bool Persistent = true,
-                                      StringRef ResourceFilesPath = StringRef(),
-                                             bool OnlyLocalDecls = false,
-                                             bool CaptureDiagnostics = false,
-                                             bool PrecompilePreamble = false,
-                                       bool CacheCodeCompletionResults = false,
-                              bool IncludeBriefCommentsInCodeCompletion = false,
-                                       bool UserFilesAreVolatile = false,
-                                       OwningPtr<ASTUnit> *ErrAST = 0);
+  static ASTUnit *LoadFromCompilerInvocationAction(
+      CompilerInvocation *CI, IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
+      ASTFrontendAction *Action = 0, ASTUnit *Unit = 0, bool Persistent = true,
+      StringRef ResourceFilesPath = StringRef(), bool OnlyLocalDecls = false,
+      bool CaptureDiagnostics = false, bool PrecompilePreamble = false,
+      bool CacheCodeCompletionResults = false,
+      bool IncludeBriefCommentsInCodeCompletion = false,
+      bool UserFilesAreVolatile = false, std::unique_ptr<ASTUnit> *ErrAST = 0);
 
   /// LoadFromCompilerInvocation - Create an ASTUnit from a source file, via a
   /// CompilerInvocation object.
@@ -807,24 +802,19 @@ public:
   ///
   // FIXME: Move OnlyLocalDecls, UseBumpAllocator to setters on the ASTUnit, we
   // shouldn't need to specify them at construction time.
-  static ASTUnit *LoadFromCommandLine(const char **ArgBegin,
-                                      const char **ArgEnd,
-                              IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-                                      StringRef ResourceFilesPath,
-                                      bool OnlyLocalDecls = false,
-                                      bool CaptureDiagnostics = false,
-                                      ArrayRef<RemappedFile> RemappedFiles = None,
-                                      bool RemappedFilesKeepOriginalName = true,
-                                      bool PrecompilePreamble = false,
-                                      TranslationUnitKind TUKind = TU_Complete,
-                                      bool CacheCodeCompletionResults = false,
-                            bool IncludeBriefCommentsInCodeCompletion = false,
-                                      bool AllowPCHWithCompilerErrors = false,
-                                      bool SkipFunctionBodies = false,
-                                      bool UserFilesAreVolatile = false,
-                                      bool ForSerialization = false,
-                                      OwningPtr<ASTUnit> *ErrAST = 0);
-  
+  static ASTUnit *LoadFromCommandLine(
+      const char **ArgBegin, const char **ArgEnd,
+      IntrusiveRefCntPtr<DiagnosticsEngine> Diags, StringRef ResourceFilesPath,
+      bool OnlyLocalDecls = false, bool CaptureDiagnostics = false,
+      ArrayRef<RemappedFile> RemappedFiles = None,
+      bool RemappedFilesKeepOriginalName = true,
+      bool PrecompilePreamble = false, TranslationUnitKind TUKind = TU_Complete,
+      bool CacheCodeCompletionResults = false,
+      bool IncludeBriefCommentsInCodeCompletion = false,
+      bool AllowPCHWithCompilerErrors = false, bool SkipFunctionBodies = false,
+      bool UserFilesAreVolatile = false, bool ForSerialization = false,
+      std::unique_ptr<ASTUnit> *ErrAST = 0);
+
   /// \brief Reparse the source files using the same command-line options that
   /// were originally used to produce this translation unit.
   ///

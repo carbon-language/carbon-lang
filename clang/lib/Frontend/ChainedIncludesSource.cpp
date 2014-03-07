@@ -31,7 +31,7 @@ static ASTReader *createASTReader(CompilerInstance &CI,
                              SmallVectorImpl<std::string> &bufNames,
                              ASTDeserializationListener *deserialListener = 0) {
   Preprocessor &PP = CI.getPreprocessor();
-  OwningPtr<ASTReader> Reader;
+  std::unique_ptr<ASTReader> Reader;
   Reader.reset(new ASTReader(PP, CI.getASTContext(), /*isysroot=*/"",
                              /*DisableValidation=*/true));
   for (unsigned ti = 0; ti < bufNames.size(); ++ti) {
@@ -76,7 +76,7 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
 
   for (unsigned i = 0, e = includes.size(); i != e; ++i) {
     bool firstInclude = (i == 0);
-    OwningPtr<CompilerInvocation> CInvok;
+    std::unique_ptr<CompilerInvocation> CInvok;
     CInvok.reset(new CompilerInvocation(CI.getInvocation()));
     
     CInvok->getPreprocessorOpts().ChainedIncludes.clear();
@@ -97,7 +97,7 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
     IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
         new DiagnosticsEngine(DiagID, &CI.getDiagnosticOpts(), DiagClient));
 
-    OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+    std::unique_ptr<CompilerInstance> Clang(new CompilerInstance());
     Clang->setInvocation(CInvok.release());
     Clang->setDiagnostics(Diags.getPtr());
     Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
@@ -111,7 +111,7 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
 
     SmallVector<char, 256> serialAST;
     llvm::raw_svector_ostream OS(serialAST);
-    OwningPtr<ASTConsumer> consumer;
+    std::unique_ptr<ASTConsumer> consumer;
     consumer.reset(new PCHGenerator(Clang->getPreprocessor(), "-", 0,
                                     /*isysroot=*/"", &OS));
     Clang->getASTContext().setASTMutationListener(

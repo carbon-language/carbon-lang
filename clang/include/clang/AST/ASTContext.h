@@ -394,7 +394,7 @@ private:
   PartialDiagnostic::StorageAllocator DiagAllocator;
 
   /// \brief The current C++ ABI.
-  OwningPtr<CXXABI> ABI;
+  std::unique_ptr<CXXABI> ABI;
   CXXABI *createCXXABI(const TargetInfo &T);
 
   /// \brief The logical -> physical address space map.
@@ -2300,9 +2300,9 @@ private:
   friend class DeclarationNameTable;
   void ReleaseDeclContextMaps();
 
-  llvm::OwningPtr<ParentMap> AllParents;
+  std::unique_ptr<ParentMap> AllParents;
 
-  llvm::OwningPtr<VTableContextBase> VTContext;
+  std::unique_ptr<VTableContextBase> VTContext;
 };
 
 /// \brief Utility function for constructing a nullary selector.

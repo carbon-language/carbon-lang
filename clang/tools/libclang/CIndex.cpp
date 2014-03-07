@@ -2723,8 +2723,8 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
     llvm::CrashRecoveryContextReleaseRefCleanup<DiagnosticsEngine> >
     DiagCleanup(Diags.getPtr());
 
-  OwningPtr<std::vector<ASTUnit::RemappedFile> >
-    RemappedFiles(new std::vector<ASTUnit::RemappedFile>());
+  std::unique_ptr<std::vector<ASTUnit::RemappedFile>> RemappedFiles(
+      new std::vector<ASTUnit::RemappedFile>());
 
   // Recover resources if we crash before exiting this function.
   llvm::CrashRecoveryContextCleanupRegistrar<
@@ -2738,8 +2738,8 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
                                             Buffer));
   }
 
-  OwningPtr<std::vector<const char *> >
-    Args(new std::vector<const char*>());
+  std::unique_ptr<std::vector<const char *>> Args(
+      new std::vector<const char *>());
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<std::vector<const char*> >
@@ -2779,26 +2779,17 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   }
   
   unsigned NumErrors = Diags->getClient()->getNumErrors();
-  OwningPtr<ASTUnit> ErrUnit;
-  OwningPtr<ASTUnit> Unit(
-    ASTUnit::LoadFromCommandLine(Args->size() ? &(*Args)[0] : 0 
-                                 /* vector::data() not portable */,
-                                 Args->size() ? (&(*Args)[0] + Args->size()) :0,
-                                 Diags,
-                                 CXXIdx->getClangResourcesPath(),
-                                 CXXIdx->getOnlyLocalDecls(),
-                                 /*CaptureDiagnostics=*/true,
-                                 *RemappedFiles.get(),
-                                 /*RemappedFilesKeepOriginalName=*/true,
-                                 PrecompilePreamble,
-                                 TUKind,
-                                 CacheCodeCompletionResults,
-                                 IncludeBriefCommentsInCodeCompletion,
-                                 /*AllowPCHWithCompilerErrors=*/true,
-                                 SkipFunctionBodies,
-                                 /*UserFilesAreVolatile=*/true,
-                                 ForSerialization,
-                                 &ErrUnit));
+  std::unique_ptr<ASTUnit> ErrUnit;
+  std::unique_ptr<ASTUnit> Unit(ASTUnit::LoadFromCommandLine(
+      Args->size() ? &(*Args)[0] : 0
+          /* vector::data() not portable */,
+      Args->size() ? (&(*Args)[0] + Args->size()) : 0, Diags,
+      CXXIdx->getClangResourcesPath(), CXXIdx->getOnlyLocalDecls(),
+      /*CaptureDiagnostics=*/true, *RemappedFiles.get(),
+      /*RemappedFilesKeepOriginalName=*/true, PrecompilePreamble, TUKind,
+      CacheCodeCompletionResults, IncludeBriefCommentsInCodeCompletion,
+      /*AllowPCHWithCompilerErrors=*/true, SkipFunctionBodies,
+      /*UserFilesAreVolatile=*/true, ForSerialization, &ErrUnit));
 
   if (NumErrors != Diags->getClient()->getNumErrors()) {
     // Make sure to check that 'Unit' is non-NULL.
@@ -3019,10 +3010,10 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
 
   ASTUnit *CXXUnit = cxtu::getASTUnit(TU);
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
-  
-  OwningPtr<std::vector<ASTUnit::RemappedFile> >
-    RemappedFiles(new std::vector<ASTUnit::RemappedFile>());
-  
+
+  std::unique_ptr<std::vector<ASTUnit::RemappedFile>> RemappedFiles(
+      new std::vector<ASTUnit::RemappedFile>());
+
   // Recover resources if we crash before exiting this function.
   llvm::CrashRecoveryContextCleanupRegistrar<
     std::vector<ASTUnit::RemappedFile> > RemappedCleanup(RemappedFiles.get());
@@ -6524,7 +6515,7 @@ CXTUResourceUsage clang_getCXTUResourceUsage(CXTranslationUnit TU) {
   }
   
   ASTUnit *astUnit = cxtu::getASTUnit(TU);
-  OwningPtr<MemUsageEntries> entries(new MemUsageEntries());
+  std::unique_ptr<MemUsageEntries> entries(new MemUsageEntries());
   ASTContext &astContext = astUnit->getASTContext();
   
   // How much memory is used by AST nodes and types?
