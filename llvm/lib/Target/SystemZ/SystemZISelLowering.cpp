@@ -209,9 +209,6 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
   // Give LowerOperation the chance to replace 64-bit ORs with subregs.
   setOperationAction(ISD::OR, MVT::i64, Custom);
 
-  // Give LowerOperation the chance to optimize SIGN_EXTEND sequences.
-  setOperationAction(ISD::SIGN_EXTEND, MVT::i64, Custom);
-
   // FIXME: Can we support these natively?
   setOperationAction(ISD::SRL_PARTS, MVT::i64, Expand);
   setOperationAction(ISD::SHL_PARTS, MVT::i64, Expand);
@@ -292,6 +289,9 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
   setOperationAction(ISD::VACOPY,  MVT::Other, Custom);
   setOperationAction(ISD::VAEND,   MVT::Other, Expand);
+
+  // Codes for which we want to perform some z-specific combinations.
+  setTargetDAGCombine(ISD::SIGN_EXTEND);
 
   // We want to use MVC in preference to even a single load/store pair.
   MaxStoresPerMemcpy = 0;
@@ -2174,36 +2174,6 @@ SDValue SystemZTargetLowering::lowerOR(SDValue Op, SelectionDAG &DAG) const {
                                    MVT::i64, HighOp, Low32);
 }
 
-SDValue SystemZTargetLowering::lowerSIGN_EXTEND(SDValue Op,
-                                                SelectionDAG &DAG) const {
-  // Convert (sext (ashr (shl X, C1), C2)) to
-  // (ashr (shl (anyext X), C1'), C2')), since wider shifts are as
-  // cheap as narrower ones.
-  SDValue N0 = Op.getOperand(0);
-  EVT VT = Op.getValueType();
-  if (N0.hasOneUse() && N0.getOpcode() == ISD::SRA) {
-    auto *SraAmt = dyn_cast<ConstantSDNode>(N0.getOperand(1));
-    SDValue Inner = N0.getOperand(0);
-    if (SraAmt && Inner.hasOneUse() && Inner.getOpcode() == ISD::SHL) {
-      auto *ShlAmt = dyn_cast<ConstantSDNode>(Inner.getOperand(1));
-      if (ShlAmt) {
-        unsigned Extra = (VT.getSizeInBits() -
-                          N0.getValueType().getSizeInBits());
-        unsigned NewShlAmt = ShlAmt->getZExtValue() + Extra;
-        unsigned NewSraAmt = SraAmt->getZExtValue() + Extra;
-        EVT ShiftVT = N0.getOperand(1).getValueType();
-        SDValue Ext = DAG.getNode(ISD::ANY_EXTEND, SDLoc(Inner), VT,
-                                  Inner.getOperand(0));
-        SDValue Shl = DAG.getNode(ISD::SHL, SDLoc(Inner), VT, Ext,
-                                  DAG.getConstant(NewShlAmt, ShiftVT));
-        return DAG.getNode(ISD::SRA, SDLoc(N0), VT, Shl,
-                           DAG.getConstant(NewSraAmt, ShiftVT));
-      }
-    }
-  }
-  return SDValue();
-}
-
 // Op is an atomic load.  Lower it into a normal volatile load.
 SDValue SystemZTargetLowering::lowerATOMIC_LOAD(SDValue Op,
                                                 SelectionDAG &DAG) const {
@@ -2456,8 +2426,6 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerUDIVREM(Op, DAG);
   case ISD::OR:
     return lowerOR(Op, DAG);
-  case ISD::SIGN_EXTEND:
-    return lowerSIGN_EXTEND(Op, DAG);
   case ISD::ATOMIC_SWAP:
     return lowerATOMIC_LOAD_OP(Op, DAG, SystemZISD::ATOMIC_SWAPW);
   case ISD::ATOMIC_STORE:
@@ -2548,6 +2516,39 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
   return NULL;
 #undef OPCODE
+}
+
+SDValue SystemZTargetLowering::PerformDAGCombine(SDNode *N,
+                                                 DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+  unsigned Opcode = N->getOpcode();
+  if (Opcode == ISD::SIGN_EXTEND) {
+    // Convert (sext (ashr (shl X, C1), C2)) to
+    // (ashr (shl (anyext X), C1'), C2')), since wider shifts are as
+    // cheap as narrower ones.
+    SDValue N0 = N->getOperand(0);
+    EVT VT = N->getValueType(0);
+    if (N0.hasOneUse() && N0.getOpcode() == ISD::SRA) {
+      auto *SraAmt = dyn_cast<ConstantSDNode>(N0.getOperand(1));
+      SDValue Inner = N0.getOperand(0);
+      if (SraAmt && Inner.hasOneUse() && Inner.getOpcode() == ISD::SHL) {
+        if (auto *ShlAmt = dyn_cast<ConstantSDNode>(Inner.getOperand(1))) {
+          unsigned Extra = (VT.getSizeInBits() -
+                            N0.getValueType().getSizeInBits());
+          unsigned NewShlAmt = ShlAmt->getZExtValue() + Extra;
+          unsigned NewSraAmt = SraAmt->getZExtValue() + Extra;
+          EVT ShiftVT = N0.getOperand(1).getValueType();
+          SDValue Ext = DAG.getNode(ISD::ANY_EXTEND, SDLoc(Inner), VT,
+                                    Inner.getOperand(0));
+          SDValue Shl = DAG.getNode(ISD::SHL, SDLoc(Inner), VT, Ext,
+                                    DAG.getConstant(NewShlAmt, ShiftVT));
+          return DAG.getNode(ISD::SRA, SDLoc(N0), VT, Shl,
+                             DAG.getConstant(NewSraAmt, ShiftVT));
+        }
+      }
+    }
+  }
+  return SDValue();
 }
 
 //===----------------------------------------------------------------------===//
