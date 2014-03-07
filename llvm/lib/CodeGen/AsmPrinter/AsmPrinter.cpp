@@ -876,8 +876,8 @@ void AsmPrinter::EmitFunctionBody() {
 static void emitDwarfRegOp(const AsmPrinter &AP, int Reg) {
   assert(Reg >= 0);
   if (Reg < 32) {
-    AP.OutStreamer.AddComment(dwarf::
-                              OperationEncodingString(dwarf::DW_OP_reg0 + Reg));
+    AP.OutStreamer.AddComment(
+        dwarf::OperationEncodingString(dwarf::DW_OP_reg0 + Reg));
     AP.EmitInt8(dwarf::DW_OP_reg0 + Reg);
   } else {
     AP.OutStreamer.AddComment("DW_OP_regx");
@@ -892,8 +892,8 @@ static void emitDwarfRegOpIndirect(const AsmPrinter &AP,
                                    int Reg, int Offset, bool Deref) {
   assert(Reg >= 0);
   if (Reg < 32) {
-    AP.OutStreamer.AddComment(dwarf::
-                              OperationEncodingString(dwarf::DW_OP_breg0 + Reg));
+    AP.OutStreamer.AddComment(
+        dwarf::OperationEncodingString(dwarf::DW_OP_breg0 + Reg));
     AP.EmitInt8(dwarf::DW_OP_breg0 + Reg);
   } else {
     AP.OutStreamer.AddComment("DW_OP_bregx");
@@ -1006,8 +1006,10 @@ void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc,
     if (Indirect || MLoc.isIndirect()) {
       // FIXME: We have no reasonable way of handling errors in here. The
       // caller might be in the middle of a dwarf expression. We should
-      // probably assert that Reg >= 0 once debug info generation is more mature.
-      OutStreamer.AddComment("nop (invalid dwarf register number for indirect loc)");
+      // probably assert that Reg >= 0 once debug info generation is more
+      // mature.
+      OutStreamer.AddComment(
+          "nop (invalid dwarf register number for indirect loc)");
       EmitInt8(dwarf::DW_OP_nop);
       return;
     }
