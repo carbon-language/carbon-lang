@@ -3321,6 +3321,11 @@ multiclass NeonI_3VDL2_2Op_mull_v3<bit u, bits<4> opcode, string asmop,
                           (i64 (vector_extract (v2i64 VPR128:$Rm), 1)))))))],
                    NoItinerary>;
   }
+
+  def : Pat<(v16i8 (int_aarch64_neon_vmull_p64
+                      (v1i64 (extract_subvector (v2i64 VPR128:$Rn), (i64 1))),
+                      (v1i64 (extract_subvector (v2i64 VPR128:$Rm), (i64 1))))),
+            (!cast<Instruction>(NAME # "_1q2d") VPR128:$Rn, VPR128:$Rm)>;
 }
 
 defm PMULL2vvv : NeonI_3VDL2_2Op_mull_v3<0b0, 0b1110, "pmull2", "NI_pmull_hi",
@@ -5878,11 +5883,20 @@ multiclass Neon_ScalarXIndexedElem_MUL_Patterns<
                  (ExTy (vector_extract (VecOpTy VPRC:$MRm), OpImm:$Imm)))))),
              (ResTy (INST (OpVTy FPRC:$Rn), (VecOpTy VPRC:$MRm), OpImm:$Imm))>;
 
+  def  : Pat<(ResTy (opnode (OpVTy FPRC:$Rn),
+               (OpVTy (extract_subvector (VecOpTy VPRC:$MRm), OpImm:$Imm)))),
+             (ResTy (INST (OpVTy FPRC:$Rn), (VecOpTy VPRC:$MRm), OpImm:$Imm))>;
+
   //swapped operands
   def  : Pat<(ResTy (opnode
                (OpVTy (scalar_to_vector
                  (ExTy (vector_extract (VecOpTy VPRC:$MRm), OpImm:$Imm)))),
                  (OpVTy FPRC:$Rn))),
+             (ResTy (INST (OpVTy FPRC:$Rn), (VecOpTy VPRC:$MRm), OpImm:$Imm))>;
+
+  def  : Pat<(ResTy (opnode
+               (OpVTy (extract_subvector (VecOpTy VPRC:$MRm), OpImm:$Imm)),
+               (OpVTy FPRC:$Rn))),
              (ResTy (INST (OpVTy FPRC:$Rn), (VecOpTy VPRC:$MRm), OpImm:$Imm))>;
 }
 
@@ -5975,12 +5989,27 @@ multiclass Neon_ScalarXIndexedElem_MLAL_Patterns<
              (ResTy (INST (ResTy ResFPRC:$Ra),
                (OpTy FPRC:$Rn), (OpVTy VPRC:$MRm), OpImm:$Imm))>;
 
+  def  : Pat<(ResTy (opnode
+               (ResTy ResFPRC:$Ra),
+               (ResTy (coreopnode (OpTy FPRC:$Rn),
+                 (OpTy (extract_subvector (OpVTy VPRC:$MRm), OpImm:$Imm)))))),
+             (ResTy (INST (ResTy ResFPRC:$Ra),
+               (OpTy FPRC:$Rn), (OpVTy VPRC:$MRm), OpImm:$Imm))>;
+
   // swapped operands
   def  : Pat<(ResTy (opnode
                (ResTy ResFPRC:$Ra),
                (ResTy (coreopnode
                  (OpTy (scalar_to_vector
                    (ExTy (vector_extract (OpVTy VPRC:$MRm), OpImm:$Imm)))),
+                 (OpTy FPRC:$Rn))))),
+             (ResTy (INST (ResTy ResFPRC:$Ra),
+               (OpTy FPRC:$Rn), (OpVTy VPRC:$MRm), OpImm:$Imm))>;
+
+  def  : Pat<(ResTy (opnode
+               (ResTy ResFPRC:$Ra),
+               (ResTy (coreopnode
+                 (OpTy (extract_subvector (OpVTy VPRC:$MRm), OpImm:$Imm)),
                  (OpTy FPRC:$Rn))))),
              (ResTy (INST (ResTy ResFPRC:$Ra),
                (OpTy FPRC:$Rn), (OpVTy VPRC:$MRm), OpImm:$Imm))>;
