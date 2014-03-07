@@ -2837,7 +2837,7 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
 void DwarfDebug::attachLowHighPC(DwarfCompileUnit *Unit, DIE *D,
                                  MCSymbol *Begin, MCSymbol *End) {
   Unit->addLabelAddress(D, dwarf::DW_AT_low_pc, Begin);
-  if (DwarfVersion < 4)
+  if (DwarfVersion < 4 || Triple(Asm->getTargetTriple()).isOSDarwin())
     Unit->addLabelAddress(D, dwarf::DW_AT_high_pc, End);
   else
     Unit->addLabelDelta(D, dwarf::DW_AT_high_pc, End, Begin);
