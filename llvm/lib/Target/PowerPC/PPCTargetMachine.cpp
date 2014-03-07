@@ -75,10 +75,6 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT,
     FrameLowering(Subtarget), JITInfo(*this, is64Bit),
     TLInfo(*this), TSInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()) {
-
-  // The binutils for the BG/P are too old for CFI.
-  if (Subtarget.isBGP())
-    setMCUseCFI(false);
   initAsmInfo();
 }
 
