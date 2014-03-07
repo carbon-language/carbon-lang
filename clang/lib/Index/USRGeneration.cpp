@@ -205,12 +205,9 @@ void USRGenerator::VisitFunctionDecl(const FunctionDecl *D) {
   }
 
   // Mangle in type information for the arguments.
-  for (FunctionDecl::param_const_iterator I = D->param_begin(),
-                                          E = D->param_end();
-       I != E; ++I) {
+  for (auto PD : D->params()) {
     Out << '#';
-    if (ParmVarDecl *PD = *I)
-      VisitType(PD->getType());
+    VisitType(PD->getType());
   }
   if (D->isVariadic())
     Out << '.';

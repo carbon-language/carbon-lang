@@ -2743,9 +2743,8 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   
   // Import the function parameters.
   SmallVector<ParmVarDecl *, 8> Parameters;
-  for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();
-       P != PEnd; ++P) {
-    ParmVarDecl *ToP = cast_or_null<ParmVarDecl>(Importer.Import(*P));
+  for (auto P : D->params()) {
+    ParmVarDecl *ToP = cast_or_null<ParmVarDecl>(Importer.Import(P));
     if (!ToP)
       return 0;
     

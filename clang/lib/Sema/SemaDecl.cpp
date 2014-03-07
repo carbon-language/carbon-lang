@@ -7326,11 +7326,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     }
 
     llvm::SmallPtrSet<const Type *, 16> ValidTypes;
-    for (FunctionDecl::param_iterator PI = NewFD->param_begin(),
-         PE = NewFD->param_end(); PI != PE; ++PI) {
-      ParmVarDecl *Param = *PI;
+    for (auto Param : NewFD->params())
       checkIsValidOpenCLKernelParameter(*this, D, Param, ValidTypes);
-    }
   }
 
   MarkUnusedFileScopedDecl(NewFD);
@@ -9599,8 +9596,7 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
                            /*CheckParameterNames=*/true);
 
   // Introduce our parameters into the function scope
-  for (unsigned p = 0, NumParams = FD->getNumParams(); p < NumParams; ++p) {
-    ParmVarDecl *Param = FD->getParamDecl(p);
+  for (auto Param : FD->params()) {
     Param->setOwningFunction(FD);
 
     // If this has an identifier, add it to the scope stack.

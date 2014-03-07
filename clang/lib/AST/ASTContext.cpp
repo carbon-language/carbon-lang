@@ -4850,9 +4850,8 @@ bool ASTContext::getObjCEncodingForFunctionDecl(const FunctionDecl *Decl,
   getObjCEncodingForType(Decl->getReturnType(), S);
   CharUnits ParmOffset;
   // Compute size of all parameters.
-  for (FunctionDecl::param_const_iterator PI = Decl->param_begin(),
-       E = Decl->param_end(); PI != E; ++PI) {
-    QualType PType = (*PI)->getType();
+  for (auto PI : Decl->params()) {
+    QualType PType = PI->getType();
     CharUnits sz = getObjCEncodingTypeSize(PType);
     if (sz.isZero())
       continue;
@@ -4865,9 +4864,7 @@ bool ASTContext::getObjCEncodingForFunctionDecl(const FunctionDecl *Decl,
   ParmOffset = CharUnits::Zero();
 
   // Argument types.
-  for (FunctionDecl::param_const_iterator PI = Decl->param_begin(),
-       E = Decl->param_end(); PI != E; ++PI) {
-    ParmVarDecl *PVDecl = *PI;
+  for (auto PVDecl : Decl->params()) {
     QualType PType = PVDecl->getOriginalType();
     if (const ArrayType *AT =
           dyn_cast<ArrayType>(PType->getCanonicalTypeInternal())) {

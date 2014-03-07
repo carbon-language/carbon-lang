@@ -2507,11 +2507,8 @@ Sema::SubstituteExplicitTemplateArguments(
   if (ExplicitTemplateArgs.size() == 0) {
     // No arguments to substitute; just copy over the parameter types and
     // fill in the function type.
-    for (FunctionDecl::param_iterator P = Function->param_begin(),
-                                   PEnd = Function->param_end();
-         P != PEnd;
-         ++P)
-      ParamTypes.push_back((*P)->getType());
+    for (auto P : Function->params())
+      ParamTypes.push_back(P->getType());
 
     if (FunctionType)
       *FunctionType = Function->getType();

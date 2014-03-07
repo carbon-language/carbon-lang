@@ -259,13 +259,12 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     // Print the parameters.
     Out << "(";
     bool PrintComma = false;
-    for (FunctionDecl::param_const_iterator I = FD->param_begin(),
-           E = FD->param_end(); I != E; ++I) {
+    for (auto I : FD->params()) {
       if (PrintComma)
         Out << ", ";
       else
         PrintComma = true;
-      Out << **I;
+      Out << *I;
     }
     Out << ")";
     break;

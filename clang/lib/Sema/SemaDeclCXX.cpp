@@ -10810,10 +10810,8 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
                   diag::err_operator_overload_static) << FnDecl->getDeclName();
   } else {
     bool ClassOrEnumParam = false;
-    for (FunctionDecl::param_iterator Param = FnDecl->param_begin(),
-                                   ParamEnd = FnDecl->param_end();
-         Param != ParamEnd; ++Param) {
-      QualType ParamType = (*Param)->getType().getNonReferenceType();
+    for (auto Param : FnDecl->params()) {
+      QualType ParamType = Param->getType().getNonReferenceType();
       if (ParamType->isDependentType() || ParamType->isRecordType() ||
           ParamType->isEnumeralType()) {
         ClassOrEnumParam = true;
@@ -10834,12 +10832,11 @@ bool Sema::CheckOverloadedOperatorDeclaration(FunctionDecl *FnDecl) {
   // Only the function-call operator allows default arguments
   // (C++ [over.call]p1).
   if (Op != OO_Call) {
-    for (FunctionDecl::param_iterator Param = FnDecl->param_begin();
-         Param != FnDecl->param_end(); ++Param) {
-      if ((*Param)->hasDefaultArg())
-        return Diag((*Param)->getLocation(),
+    for (auto Param : FnDecl->params()) {
+      if (Param->hasDefaultArg())
+        return Diag(Param->getLocation(),
                     diag::err_operator_overload_default_arg)
-          << FnDecl->getDeclName() << (*Param)->getDefaultArgRange();
+          << FnDecl->getDeclName() << Param->getDefaultArgRange();
     }
   }
 
@@ -11042,13 +11039,11 @@ FinishedParams:
 
   // A parameter-declaration-clause containing a default argument is not
   // equivalent to any of the permitted forms.
-  for (FunctionDecl::param_iterator Param = FnDecl->param_begin(),
-                                    ParamEnd = FnDecl->param_end();
-       Param != ParamEnd; ++Param) {
-    if ((*Param)->hasDefaultArg()) {
-      Diag((*Param)->getDefaultArgRange().getBegin(),
+  for (auto Param : FnDecl->params()) {
+    if (Param->hasDefaultArg()) {
+      Diag(Param->getDefaultArgRange().getBegin(),
            diag::err_literal_operator_default_argument)
-        << (*Param)->getDefaultArgRange();
+        << Param->getDefaultArgRange();
       break;
     }
   }

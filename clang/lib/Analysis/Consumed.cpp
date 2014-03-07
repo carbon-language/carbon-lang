@@ -1388,9 +1388,8 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
   ConsumedStmtVisitor Visitor(AC, *this, CurrStates);
   
   // Add all trackable parameters to the state map.
-  for (FunctionDecl::param_const_iterator PI = D->param_begin(),
-       PE = D->param_end(); PI != PE; ++PI) {
-    Visitor.VisitParmVarDecl(*PI);
+  for (auto PI : D->params()) {
+    Visitor.VisitParmVarDecl(PI);
   }
   
   // Visit all of the function's basic blocks.

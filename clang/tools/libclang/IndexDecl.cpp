@@ -41,10 +41,8 @@ public:
       if (const ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D)) {
         IndexCtx.handleVar(Parm);
       } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        for (FunctionDecl::param_const_iterator PI = FD->param_begin(),
-                                                PE = FD->param_end();
-             PI != PE; ++PI) {
-          IndexCtx.handleVar(*PI);
+        for (auto PI : FD->params()) {
+          IndexCtx.handleVar(PI);
         }
       }
     }

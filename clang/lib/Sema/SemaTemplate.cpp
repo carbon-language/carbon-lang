@@ -6284,10 +6284,8 @@ static void StripImplicitInstantiation(NamedDecl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     FD->setInlineSpecified(false);
 
-    for (FunctionDecl::param_iterator I = FD->param_begin(),
-                                      E = FD->param_end();
-         I != E; ++I)
-      (*I)->dropAttrs();
+    for (auto I : FD->params())
+      I->dropAttrs();
   }
 }
 

@@ -1843,12 +1843,20 @@ public:
   unsigned param_size() const { return getNumParams(); }
   typedef ParmVarDecl **param_iterator;
   typedef ParmVarDecl * const *param_const_iterator;
+  typedef llvm::iterator_range<param_iterator> param_range;
+  typedef llvm::iterator_range<param_const_iterator> param_const_range;
 
-  param_iterator param_begin() { return ParamInfo; }
-  param_iterator param_end()   { return ParamInfo+param_size(); }
+  param_iterator param_begin() { return params().begin(); }
+  param_iterator param_end()   { return params().end(); }
+  param_range params() {
+    return param_range(ParamInfo, ParamInfo + param_size());
+  }
 
-  param_const_iterator param_begin() const { return ParamInfo; }
-  param_const_iterator param_end() const   { return ParamInfo+param_size(); }
+  param_const_iterator param_begin() const { return params().begin(); }
+  param_const_iterator param_end() const   { return params().end(); }
+  param_const_range params() const {
+    return param_const_range(ParamInfo, ParamInfo + param_size());
+  }
 
   /// getNumParams - Return the number of parameters this function must have
   /// based on its FunctionType.  This is the length of the ParamInfo array
