@@ -8,6 +8,8 @@ import lldb
 from lldbtest import *
 import lldbutil
 
+exe_name = "ProcessAttach"  # Must match Makefile
+
 class ProcessAttachTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
@@ -45,7 +47,7 @@ class ProcessAttachTestCase(TestBase):
     def process_attach_by_id(self):
         """Test attach by process id"""
 
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = os.path.join(os.getcwd(), exe_name)
 
         # Spawn a new process
         popen = self.spawnSubprocess(exe)
@@ -62,13 +64,13 @@ class ProcessAttachTestCase(TestBase):
     def process_attach_by_name(self):
         """Test attach by process name"""
 
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = os.path.join(os.getcwd(), exe_name)
 
         # Spawn a new process
         popen = self.spawnSubprocess(exe)
         self.addTearDownHook(self.cleanupSubprocesses)
 
-        self.runCmd("process attach -n a.out")
+        self.runCmd("process attach -n " + exe_name)
 
         target = self.dbg.GetSelectedTarget()
 
