@@ -40,8 +40,8 @@ inline error_code make_error_code(readobj_error e) {
   return error_code(static_cast<int>(e), readobj_category());
 }
 
-template <> struct is_error_code_enum<readobj_error> : true_type { };
-template <> struct is_error_code_enum<readobj_error::_> : true_type { };
+template <> struct is_error_code_enum<readobj_error> : std::true_type { };
+template <> struct is_error_code_enum<readobj_error::_> : std::true_type { };
 
 } // namespace llvm
 
