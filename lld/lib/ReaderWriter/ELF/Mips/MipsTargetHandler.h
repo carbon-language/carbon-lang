@@ -82,7 +82,7 @@ public:
 
   std::unique_ptr<Writer> getWriter() override;
 
-  void registerRelocationNames(Registry &registry) override ;
+  void registerRelocationNames(Registry &registry) override;
 
 private:
   static const Registry::KindStrings kindStrings[];
