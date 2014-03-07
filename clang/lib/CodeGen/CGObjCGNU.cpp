@@ -790,10 +790,8 @@ class CGObjCGNUstep : public CGObjCGNU {
         if (copy) return SetPropertyAtomicCopy;
         return SetPropertyAtomic;
       }
-      if (copy) return SetPropertyNonAtomicCopy;
-      return SetPropertyNonAtomic;
 
-      return 0;
+      return copy ? SetPropertyNonAtomicCopy : SetPropertyNonAtomic;
     }
 };
 
