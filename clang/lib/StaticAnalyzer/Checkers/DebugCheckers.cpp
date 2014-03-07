@@ -161,11 +161,6 @@ namespace {
 class ConfigDumper : public Checker< check::EndOfTranslationUnit > {
   typedef AnalyzerOptions::ConfigTable Table;
 
-  static int compareEntry(const Table::MapEntryTy *const *LHS,
-                          const Table::MapEntryTy *const *RHS) {
-    return (*LHS)->getKey().compare((*RHS)->getKey());
-  }
-
 public:
   void checkEndOfTranslationUnit(const TranslationUnitDecl *TU,
                                  AnalysisManager& mgr,
@@ -176,7 +171,11 @@ public:
     for (Table::const_iterator I = Config.begin(), E = Config.end(); I != E;
          ++I)
       Keys.push_back(&*I);
-    llvm::array_pod_sort(Keys.begin(), Keys.end(), compareEntry);
+    llvm::array_pod_sort(Keys.begin(), Keys.end(),
+                         [](const Table::MapEntryTy *const *LHS,
+                            const Table::MapEntryTy *const *RHS) {
+      return (*LHS)->getKey().compare((*RHS)->getKey());
+    });
 
     llvm::errs() << "[config]\n";
     for (unsigned I = 0, E = Keys.size(); I != E; ++I)

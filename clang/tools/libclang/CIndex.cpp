@@ -762,12 +762,6 @@ bool CursorVisitor::VisitDeclaratorDecl(DeclaratorDecl *DD) {
   return false;
 }
 
-/// \brief Compare two base or member initializers based on their source order.
-static int CompareCXXCtorInitializers(CXXCtorInitializer *const *X,
-                                      CXXCtorInitializer *const *Y) {
-  return (*X)->getSourceOrder() - (*Y)->getSourceOrder();
-}
-
 bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
   unsigned NumParamList = ND->getNumTemplateParameterLists();
   for (unsigned i = 0; i < NumParamList; i++) {
@@ -822,9 +816,12 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
       }
       
       // Sort the initializers in source order
-      llvm::array_pod_sort(WrittenInits.begin(), WrittenInits.end(),
-                           &CompareCXXCtorInitializers);
-      
+      llvm::array_pod_sort(
+          WrittenInits.begin(), WrittenInits.end(),
+          [](CXXCtorInitializer *const *X, CXXCtorInitializer *const *Y) {
+            return (*X)->getSourceOrder() - (*Y)->getSourceOrder();
+          });
+
       // Visit the initializers in source order
       for (unsigned I = 0, N = WrittenInits.size(); I != N; ++I) {
         CXXCtorInitializer *Init = WrittenInits[I];

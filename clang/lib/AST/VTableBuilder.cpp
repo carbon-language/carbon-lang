@@ -3244,10 +3244,6 @@ void MicrosoftVTableContext::computeVTablePaths(bool ForVBTables,
     Changed = rebucketPaths(Paths);
 }
 
-static bool pathCompare(const VPtrInfo *LHS, const VPtrInfo *RHS) {
-  return LHS->MangledPath < RHS->MangledPath;
-}
-
 static bool extendPath(VPtrInfo *P) {
   if (P->NextBaseToMangle) {
     P->MangledPath.push_back(P->NextBaseToMangle);
@@ -3265,7 +3261,10 @@ static bool rebucketPaths(VPtrInfoVector &Paths) {
   // ordering is based on pointers, but it doesn't change our output order.  The
   // current algorithm is designed to match MSVC 2012's names.
   VPtrInfoVector PathsSorted(Paths);
-  std::sort(PathsSorted.begin(), PathsSorted.end(), pathCompare);
+  std::sort(PathsSorted.begin(), PathsSorted.end(),
+            [](const VPtrInfo *LHS, const VPtrInfo *RHS) {
+    return LHS->MangledPath < RHS->MangledPath;
+  });
   bool Changed = false;
   for (size_t I = 0, E = PathsSorted.size(); I != E;) {
     // Scan forward to find the end of the bucket.
