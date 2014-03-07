@@ -459,9 +459,13 @@ static bool isConfigurationValue(const Stmt *S) {
 
 /// Returns true if we should always explore all successors of a block.
 static bool shouldTreatSuccessorsAsReachable(const CFGBlock *B) {
-  if (const Stmt *Term = B->getTerminator())
+  if (const Stmt *Term = B->getTerminator()) {
     if (isa<SwitchStmt>(Term))
       return true;
+    // Specially handle '||' and '&&'.
+    if (isa<BinaryOperator>(Term))
+      return isConfigurationValue(Term);
+  }
 
   return isConfigurationValue(B->getTerminatorCondition());
 }
@@ -491,9 +495,9 @@ unsigned ScanReachableFromBlock(const CFGBlock *Start,
     // and that we should forge ahead and explore those branches anyway.
     // This allows us to potentially uncover some "always unreachable" code
     // within the "sometimes unreachable" code.
-    bool TreatAllSuccessorsAsReachable = shouldTreatSuccessorsAsReachable(item);
-
     // Look at the successors and mark then reachable.
+    Optional<bool> TreatAllSuccessorsAsReachable;
+
     for (CFGBlock::const_succ_iterator I = item->succ_begin(), 
          E = item->succ_end(); I != E; ++I) {
       const CFGBlock *B = *I;
@@ -502,7 +506,11 @@ unsigned ScanReachableFromBlock(const CFGBlock *Start,
         if (!UB)
           break;
 
-        if (TreatAllSuccessorsAsReachable) {
+        if (!TreatAllSuccessorsAsReachable.hasValue())
+          TreatAllSuccessorsAsReachable =
+            shouldTreatSuccessorsAsReachable(item);
+
+        if (TreatAllSuccessorsAsReachable.getValue()) {
           B = UB;
           break;
         }

@@ -1326,8 +1326,8 @@ CFGBuilder::VisitLogicalOperator(BinaryOperator *B,
     else {
       RHSBlock->setTerminator(Term);
       TryResult KnownVal = tryEvaluateBool(RHS);
-      addSuccessor(RHSBlock, KnownVal.isFalse() ? NULL : TrueBlock);
-      addSuccessor(RHSBlock, KnownVal.isTrue() ? NULL : FalseBlock);
+      addSuccessor(RHSBlock, TrueBlock, !KnownVal.isFalse());
+      addSuccessor(RHSBlock, FalseBlock, !KnownVal.isTrue());
     }
 
     Block = RHSBlock;
@@ -1370,12 +1370,12 @@ CFGBuilder::VisitLogicalOperator(BinaryOperator *B,
 
   // Now link the LHSBlock with RHSBlock.
   if (B->getOpcode() == BO_LOr) {
-    addSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : TrueBlock);
-    addSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : RHSBlock);
+    addSuccessor(LHSBlock, TrueBlock, !KnownVal.isFalse());
+    addSuccessor(LHSBlock, RHSBlock, !KnownVal.isTrue());
   } else {
     assert(B->getOpcode() == BO_LAnd);
-    addSuccessor(LHSBlock, KnownVal.isFalse() ? NULL : RHSBlock);
-    addSuccessor(LHSBlock, KnownVal.isTrue() ? NULL : FalseBlock);
+    addSuccessor(LHSBlock, RHSBlock, !KnownVal.isFalse());
+    addSuccessor(LHSBlock, FalseBlock, !KnownVal.isTrue());
   }
 
   return std::make_pair(EntryLHSBlock, ExitBlock);

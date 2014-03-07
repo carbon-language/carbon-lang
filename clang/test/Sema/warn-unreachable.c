@@ -275,8 +275,8 @@ int sizeof_int(int x, int y) {
     return 1; // no-warning
   if (sizeof(long) != sizeof(int))
     return 0; // no-warning
-  if (x && y && sizeof(long) > sizeof(int))
-    return 0;
+  if (x && y && sizeof(long) < sizeof(char))
+    return 0; // no-warning
   return 2; // no-warning
 }
 
