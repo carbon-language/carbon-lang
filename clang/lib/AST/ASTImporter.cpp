@@ -2967,7 +2967,7 @@ Decl *ASTNodeImporter::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
     new (Importer.getToContext())NamedDecl*[D->getChainingSize()];
 
   unsigned i = 0;
-  for (auto *PI : D->chains()) {
+  for (auto *PI : D->chain()) {
     Decl *D = Importer.Import(PI);
     if (!D)
       return 0;

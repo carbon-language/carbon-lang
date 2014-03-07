@@ -3413,7 +3413,7 @@ struct BaseAndFieldInfo {
     if (!Indirect)
       return isInactiveUnionMember(Field);
 
-    for (auto *C : Indirect->chains()) {
+    for (auto *C : Indirect->chain()) {
       FieldDecl *Field = dyn_cast<FieldDecl>(C);
       if (Field && isInactiveUnionMember(Field))
         return true;
@@ -3562,7 +3562,7 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor, bool AnyErrors,
       Info.AllBaseFields[Member->getAnyMember()] = Member;
 
       if (IndirectFieldDecl *F = Member->getIndirectMember()) {
-        for (auto *C : F->chains()) {
+        for (auto *C : F->chain()) {
           FieldDecl *FD = dyn_cast<FieldDecl>(C);
           if (FD && FD->getParent()->isUnion())
             Info.ActiveUnionMember.insert(std::make_pair(

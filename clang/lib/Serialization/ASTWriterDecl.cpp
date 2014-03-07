@@ -686,7 +686,7 @@ void ASTDeclWriter::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
   VisitValueDecl(D);
   Record.push_back(D->getChainingSize());
 
-  for (const auto *P : D->chains())
+  for (const auto *P : D->chain())
     Writer.AddDeclRef(P, Record);
   Code = serialization::DECL_INDIRECTFIELD;
 }

@@ -1832,7 +1832,7 @@ static bool HandleLValueMember(EvalInfo &Info, const Expr *E, LValue &LVal,
 static bool HandleLValueIndirectMember(EvalInfo &Info, const Expr *E,
                                        LValue &LVal,
                                        const IndirectFieldDecl *IFD) {
-  for (const auto *C : IFD->chains())
+  for (const auto *C : IFD->chain())
     if (!HandleLValueMember(Info, E, LVal, cast<FieldDecl>(C)))
       return false;
   return true;
@@ -3720,7 +3720,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
     } else if (IndirectFieldDecl *IFD = (*I)->getIndirectMember()) {
       // Walk the indirect field decl's chain to find the object to initialize,
       // and make sure we've initialized every step along it.
-      for (auto *C : IFD->chains()) {
+      for (auto *C : IFD->chain()) {
         FD = cast<FieldDecl>(C);
         CXXRecordDecl *CD = cast<CXXRecordDecl>(FD->getParent());
         // Switch the union field if it differs. This happens if we had

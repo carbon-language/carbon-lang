@@ -2333,11 +2333,11 @@ public:
   typedef NamedDecl * const *chain_iterator;
   typedef llvm::iterator_range<chain_iterator> chain_range;
 
-  chain_range chains() const {
+  chain_range chain() const {
     return chain_range(Chaining, Chaining + ChainingSize);
   }
-  chain_iterator chain_begin() const { return chains().begin(); }
-  chain_iterator chain_end() const  { return chains().end(); }
+  chain_iterator chain_begin() const { return chain().begin(); }
+  chain_iterator chain_end() const  { return chain().end(); }
 
   unsigned getChainingSize() const { return ChainingSize; }
 

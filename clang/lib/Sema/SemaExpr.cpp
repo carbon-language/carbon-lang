@@ -10229,7 +10229,7 @@ ExprResult Sema::BuildBuiltinOffsetOf(SourceLocation BuiltinLoc,
     }
 
     if (IndirectMemberDecl) {
-      for (auto *FI : IndirectMemberDecl->chains()) {
+      for (auto *FI : IndirectMemberDecl->chain()) {
         assert(isa<FieldDecl>(FI));
         Comps.push_back(OffsetOfNode(OC.LocStart,
                                      cast<FieldDecl>(FI), OC.LocEnd));

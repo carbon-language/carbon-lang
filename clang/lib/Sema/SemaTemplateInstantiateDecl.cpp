@@ -562,7 +562,7 @@ Decl *TemplateDeclInstantiator::VisitIndirectFieldDecl(IndirectFieldDecl *D) {
     new (SemaRef.Context)NamedDecl*[D->getChainingSize()];
 
   int i = 0;
-  for (auto *PI : D->chains()) {
+  for (auto *PI : D->chain()) {
     NamedDecl *Next = SemaRef.FindInstantiatedDecl(D->getLocation(), PI,
                                               TemplateArgs);
     if (!Next)
