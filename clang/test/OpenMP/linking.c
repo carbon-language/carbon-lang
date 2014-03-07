@@ -33,13 +33,15 @@
 // RUN:     -fopenmp=libiomp5 -target i386-unknown-linux \
 // RUN:   | FileCheck --check-prefix=CHECK-IOMP5-LD-32 %s
 // CHECK-IOMP5-LD-32: "{{.*}}ld{{(.exe)?}}"
-// CHECK-IOMP5-LD-32: "-liomp5"
+// CHECK-IOMP5-LD-32: "-liomp5" "-lgcc"
+// CHECK-IOMP5-LD-32: "-lpthread" "-lc"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -fopenmp=libiomp5 -target x86_64-unknown-linux \
 // RUN:   | FileCheck --check-prefix=CHECK-IOMP5-LD-64 %s
 // CHECK-IOMP5-LD-64: "{{.*}}ld{{(.exe)?}}"
-// CHECK-IOMP5-LD-64: "-liomp5"
+// CHECK-IOMP5-LD-64: "-liomp5" "-lgcc"
+// CHECK-IOMP5-LD-64: "-lpthread" "-lc"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -fopenmp=lib -target i386-unknown-linux \
