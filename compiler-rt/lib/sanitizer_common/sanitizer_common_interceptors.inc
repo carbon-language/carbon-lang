@@ -2535,9 +2535,11 @@ INTERCEPTOR(int, pthread_cond_destroy, void *c) {
   COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_destroy, cond);
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, c, sizeof(uptr));
   int res = REAL(pthread_cond_destroy)(cond);
-  // Free our aux cond and zero the pointer to not leave dangling pointers.
-  WRAP(free)(cond);
-  atomic_store((atomic_uintptr_t*)c, 0, memory_order_relaxed);
+  if (SI_LINUX_NOT_ANDROID) {
+    // Free our aux cond and zero the pointer to not leave dangling pointers.
+    WRAP(free)(cond);
+    atomic_store((atomic_uintptr_t*)c, 0, memory_order_relaxed);
+  }
   return res;
 }
 
