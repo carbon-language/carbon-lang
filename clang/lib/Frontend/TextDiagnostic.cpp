@@ -812,7 +812,9 @@ void TextDiagnostic::emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
     if (unsigned ColNo = PLoc.getColumn()) {
       if (DiagOpts->getFormat() == DiagnosticOptions::Msvc) {
         OS << ',';
-        ColNo--;
+        // Visual Studio 2010 or earlier expects column number to be off by one
+        if (LangOpts.MSCVersion && LangOpts.MSCVersion < 1700)
+          ColNo--;
       } else
         OS << ':';
       OS << ColNo;
