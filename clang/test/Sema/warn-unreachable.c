@@ -215,6 +215,16 @@ MyEnum trivial_dead_return_enum_2(int x) {
   return 2; // expected-warning {{will never be executed}}
 }
 
+const char *trivial_dead_return_cstr() {
+  raze();
+  return ""; // no-warning
+}
+
+char trivial_dead_return_char() {
+  raze();
+  return ' '; // no-warning
+}
+
 MyEnum nontrivial_dead_return_enum_2(int x) {
   switch (x) {
     case 1: return 1;
@@ -260,11 +270,13 @@ int test_config_constant(int x) {
       calledFun(); // expected-warning {{will never be executed}}
 }
 
-int sizeof_int() {
+int sizeof_int(int x, int y) {
   if (sizeof(long) == sizeof(int))
     return 1; // no-warning
   if (sizeof(long) != sizeof(int))
     return 0; // no-warning
+  if (x && y && sizeof(long) > sizeof(int))
+    return 0;
   return 2; // no-warning
 }
 

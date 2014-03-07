@@ -150,4 +150,8 @@ std::string testStrWarn(const char *s) {
   return s; // expected-warning {{will never be executed}}
 }
 
+bool testBool() {
+  raze();
+  return true; // no-warning
+}
 
