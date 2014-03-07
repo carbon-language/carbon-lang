@@ -1141,9 +1141,7 @@ void RewriteObjC::RewriteObjCMethodDecl(const ObjCInterfaceDecl *IDecl,
   ResultStr += " _cmd";
 
   // Method arguments.
-  for (ObjCMethodDecl::param_iterator PI = OMD->param_begin(),
-       E = OMD->param_end(); PI != E; ++PI) {
-    ParmVarDecl *PDecl = *PI;
+  for (const auto *PDecl : OMD->params()) {
     ResultStr += ", ";
     if (PDecl->getType()->isObjCQualifiedIdType()) {
       ResultStr += "id ";
@@ -2975,11 +2973,10 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
   ArgTypes.push_back(Context->getObjCSelType());
   if (ObjCMethodDecl *OMD = Exp->getMethodDecl()) {
     // Push any user argument types.
-    for (ObjCMethodDecl::param_iterator PI = OMD->param_begin(),
-         E = OMD->param_end(); PI != E; ++PI) {
-      QualType t = (*PI)->getType()->isObjCQualifiedIdType()
+    for (const auto *PI : OMD->params()) {
+      QualType t = PI->getType()->isObjCQualifiedIdType()
                      ? Context->getObjCIdType()
-                     : (*PI)->getType();
+                     : PI->getType();
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
       (void)convertBlockPointerToFunctionPointer(t);
       ArgTypes.push_back(t);

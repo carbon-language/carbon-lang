@@ -318,9 +318,8 @@ CodeGenTypes::arrangeObjCMessageSendSignature(const ObjCMethodDecl *MD,
   argTys.push_back(Context.getCanonicalParamType(receiverType));
   argTys.push_back(Context.getCanonicalParamType(Context.getObjCSelType()));
   // FIXME: Kill copy?
-  for (ObjCMethodDecl::param_const_iterator i = MD->param_begin(),
-         e = MD->param_end(); i != e; ++i) {
-    argTys.push_back(Context.getCanonicalParamType((*i)->getType()));
+  for (const auto *I : MD->params()) {
+    argTys.push_back(Context.getCanonicalParamType(I->getType()));
   }
 
   FunctionType::ExtInfo einfo;

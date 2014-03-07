@@ -329,17 +329,15 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
                            /*CheckParameterNames=*/false);
 
   // Introduce all of the other parameters into this scope.
-  for (ObjCMethodDecl::param_iterator PI = MDecl->param_begin(),
-       E = MDecl->param_end(); PI != E; ++PI) {
-    ParmVarDecl *Param = (*PI);
+  for (auto *Param : MDecl->params()) {
     if (!Param->isInvalidDecl() &&
         getLangOpts().ObjCAutoRefCount &&
         !HasExplicitOwnershipAttr(*this, Param))
       Diag(Param->getLocation(), diag::warn_arc_strong_pointer_objc_pointer) <<
             Param->getType();
     
-    if ((*PI)->getIdentifier())
-      PushOnScopeChains(*PI, FnBodyScope);
+    if (Param->getIdentifier())
+      PushOnScopeChains(Param, FnBodyScope);
   }
 
   // In ARC, disallow definition of retain/release/autorelease/retainCount

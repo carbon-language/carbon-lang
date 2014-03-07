@@ -1337,9 +1337,7 @@ void RewriteModernObjC::RewriteObjCMethodDecl(const ObjCInterfaceDecl *IDecl,
   ResultStr += " _cmd";
 
   // Method arguments.
-  for (ObjCMethodDecl::param_iterator PI = OMD->param_begin(),
-       E = OMD->param_end(); PI != E; ++PI) {
-    ParmVarDecl *PDecl = *PI;
+  for (const auto *PDecl : OMD->params()) {
     ResultStr += ", ";
     if (PDecl->getType()->isObjCQualifiedIdType()) {
       ResultStr += "id ";
@@ -2733,9 +2731,8 @@ Stmt *RewriteModernObjC::RewriteObjCBoxedExpr(ObjCBoxedExpr *Exp) {
   SmallVector<QualType, 4> ArgTypes;
   ArgTypes.push_back(Context->getObjCIdType());
   ArgTypes.push_back(Context->getObjCSelType());
-  for (ObjCMethodDecl::param_iterator PI = BoxingMethod->param_begin(),
-       E = BoxingMethod->param_end(); PI != E; ++PI)
-    ArgTypes.push_back((*PI)->getType());
+  for (const auto PI : BoxingMethod->parameters())
+    ArgTypes.push_back(PI->getType());
   
   QualType returnType = Exp->getType();
   // Get the type, we will need to reference it in a couple spots.
@@ -2863,9 +2860,8 @@ Stmt *RewriteModernObjC::RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp) {
   SmallVector<QualType, 4> ArgTypes;
   ArgTypes.push_back(Context->getObjCIdType());
   ArgTypes.push_back(Context->getObjCSelType());
-  for (ObjCMethodDecl::param_iterator PI = ArrayMethod->param_begin(),
-       E = ArrayMethod->param_end(); PI != E; ++PI)
-    ArgTypes.push_back((*PI)->getType());
+  for (const auto *PI : ArrayMethod->params())
+    ArgTypes.push_back(PI->getType());
   
   QualType returnType = Exp->getType();
   // Get the type, we will need to reference it in a couple spots.
@@ -3021,9 +3017,8 @@ Stmt *RewriteModernObjC::RewriteObjCDictionaryLiteralExpr(ObjCDictionaryLiteral 
   SmallVector<QualType, 8> ArgTypes;
   ArgTypes.push_back(Context->getObjCIdType());
   ArgTypes.push_back(Context->getObjCSelType());
-  for (ObjCMethodDecl::param_iterator PI = DictMethod->param_begin(),
-       E = DictMethod->param_end(); PI != E; ++PI) {
-    QualType T = (*PI)->getType();
+  for (const auto *PI : DictMethod->params()) {
+    QualType T = PI->getType();
     if (const PointerType* PT = T->getAs<PointerType>()) {
       QualType PointeeTy = PT->getPointeeType();
       convertToUnqualifiedObjCType(PointeeTy);
@@ -3600,11 +3595,10 @@ Stmt *RewriteModernObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
   ArgTypes.push_back(Context->getObjCSelType());
   if (ObjCMethodDecl *OMD = Exp->getMethodDecl()) {
     // Push any user argument types.
-    for (ObjCMethodDecl::param_iterator PI = OMD->param_begin(),
-         E = OMD->param_end(); PI != E; ++PI) {
-      QualType t = (*PI)->getType()->isObjCQualifiedIdType()
+    for (const auto *PI : OMD->params()) {
+      QualType t = PI->getType()->isObjCQualifiedIdType()
                      ? Context->getObjCIdType()
-                     : (*PI)->getType();
+                     : PI->getType();
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
       (void)convertBlockPointerToFunctionPointer(t);
       ArgTypes.push_back(t);

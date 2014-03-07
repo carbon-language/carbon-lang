@@ -3101,13 +3101,9 @@ static void MaybeAddOverrideCalls(Sema &S, DeclContext *InContext,
   
   // We need to have names for all of the parameters, if we're going to 
   // generate a forwarding call.
-  for (CXXMethodDecl::param_iterator P = Method->param_begin(),
-                                  PEnd = Method->param_end();
-       P != PEnd;
-       ++P) {
-    if (!(*P)->getDeclName())
+  for (auto P : Method->params())
+    if (!P->getDeclName())
       return;
-  }
 
   PrintingPolicy Policy = getCompletionPrintingPolicy(S);
   for (CXXMethodDecl::method_iterator M = Method->begin_overridden_methods(),
@@ -3137,16 +3133,14 @@ static void MaybeAddOverrideCalls(Sema &S, DeclContext *InContext,
                                          Overridden->getNameAsString()));
     Builder.AddChunk(CodeCompletionString::CK_LeftParen);
     bool FirstParam = true;
-    for (CXXMethodDecl::param_iterator P = Method->param_begin(),
-                                    PEnd = Method->param_end();
-         P != PEnd; ++P) {
+    for (auto P : Method->params()) {
       if (FirstParam)
         FirstParam = false;
       else
         Builder.AddChunk(CodeCompletionString::CK_Comma);
 
-      Builder.AddPlaceholderChunk(Results.getAllocator().CopyString( 
-                                        (*P)->getIdentifier()->getName()));
+      Builder.AddPlaceholderChunk(
+          Results.getAllocator().CopyString(P->getIdentifier()->getName()));
     }
     Builder.AddChunk(CodeCompletionString::CK_RightParen);
     Results.AddResult(CodeCompletionResult(Builder.TakeString(),

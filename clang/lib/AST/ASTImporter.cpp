@@ -3300,11 +3300,8 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
 
   // Import the parameters
   SmallVector<ParmVarDecl *, 5> ToParams;
-  for (ObjCMethodDecl::param_iterator FromP = D->param_begin(),
-                                   FromPEnd = D->param_end();
-       FromP != FromPEnd; 
-       ++FromP) {
-    ParmVarDecl *ToP = cast_or_null<ParmVarDecl>(Importer.Import(*FromP));
+  for (auto *FromP : D->params()) {
+    ParmVarDecl *ToP = cast_or_null<ParmVarDecl>(Importer.Import(FromP));
     if (!ToP)
       return 0;
     

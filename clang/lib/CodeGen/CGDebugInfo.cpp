@@ -2472,9 +2472,8 @@ llvm::DICompositeType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
     llvm::DIType CmdTy = getOrCreateType(OMethod->getCmdDecl()->getType(), F);
     Elts.push_back(DBuilder.createArtificialType(CmdTy));
     // Get rest of the arguments.
-    for (ObjCMethodDecl::param_const_iterator PI = OMethod->param_begin(),
-           PE = OMethod->param_end(); PI != PE; ++PI)
-      Elts.push_back(getOrCreateType((*PI)->getType(), F));
+    for (const auto *PI : OMethod->params())
+      Elts.push_back(getOrCreateType(PI->getType(), F));
 
     llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(Elts);
     return DBuilder.createSubroutineType(F, EltTypeArray);

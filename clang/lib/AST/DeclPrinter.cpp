@@ -928,13 +928,12 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
 
   std::string name = OMD->getSelector().getAsString();
   std::string::size_type pos, lastPos = 0;
-  for (ObjCMethodDecl::param_iterator PI = OMD->param_begin(),
-       E = OMD->param_end(); PI != E; ++PI) {
+  for (const auto *PI : OMD->params()) {
     // FIXME: selector is missing here!
     pos = name.find_first_of(':', lastPos);
     Out << " " << name.substr(lastPos, pos - lastPos);
-    Out << ":(" << (*PI)->getASTContext().getUnqualifiedObjCPointerType((*PI)->getType()).
-                      getAsString(Policy) << ')' << **PI;
+    Out << ":(" << PI->getASTContext().getUnqualifiedObjCPointerType(PI->getType()).
+                      getAsString(Policy) << ')' << *PI;
     lastPos = pos + 1;
   }
 

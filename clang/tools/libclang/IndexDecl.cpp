@@ -54,10 +54,8 @@ public:
       return;
 
     IndexCtx.indexTypeSourceInfo(D->getReturnTypeSourceInfo(), D);
-    for (ObjCMethodDecl::param_const_iterator I = D->param_begin(),
-                                              E = D->param_end();
-         I != E; ++I)
-      handleDeclarator(*I, D);
+    for (const auto *I : D->params())
+      handleDeclarator(I, D);
 
     if (D->isThisDeclarationADefinition()) {
       const Stmt *Body = D->getBody();

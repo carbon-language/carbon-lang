@@ -418,10 +418,8 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
                              const_cast<ParmVarDecl **>(Params.end()),
                              /*CheckParameterNames=*/false);
     
-    for (CXXMethodDecl::param_iterator P = Method->param_begin(), 
-                                    PEnd = Method->param_end();
-         P != PEnd; ++P)
-      (*P)->setOwningFunction(Method);
+    for (auto P : Method->params())
+      P->setOwningFunction(Method);
   }
 
   Decl *ManglingContextDecl;
