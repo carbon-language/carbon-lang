@@ -455,7 +455,7 @@ TEST(ParseFixedCompilationDatabase, ReturnsArgumentsAfterDoubleDash) {
   };
   OwningPtr<FixedCompilationDatabase> Database(
       FixedCompilationDatabase::loadFromCommandLine(Argc, Argv));
-  ASSERT_TRUE(Database.isValid());
+  ASSERT_TRUE((bool)Database);
   std::vector<CompileCommand> Result =
     Database->getCompileCommands("source");
   ASSERT_EQ(1ul, Result.size());
@@ -474,7 +474,7 @@ TEST(ParseFixedCompilationDatabase, ReturnsEmptyCommandLine) {
   const char *Argv[] = { "1", "2", "--\0no-constant-folding" };
   OwningPtr<FixedCompilationDatabase> Database(
       FixedCompilationDatabase::loadFromCommandLine(Argc, Argv));
-  ASSERT_TRUE(Database.isValid());
+  ASSERT_TRUE((bool)Database);
   std::vector<CompileCommand> Result =
     Database->getCompileCommands("source");
   ASSERT_EQ(1ul, Result.size());
@@ -491,7 +491,7 @@ TEST(ParseFixedCompilationDatabase, HandlesPositionalArgs) {
   int Argc = sizeof(Argv) / sizeof(char*);
   OwningPtr<FixedCompilationDatabase> Database(
       FixedCompilationDatabase::loadFromCommandLine(Argc, Argv));
-  ASSERT_TRUE(Database.isValid());
+  ASSERT_TRUE((bool)Database);
   std::vector<CompileCommand> Result =
     Database->getCompileCommands("source");
   ASSERT_EQ(1ul, Result.size());
@@ -510,7 +510,7 @@ TEST(ParseFixedCompilationDatabase, HandlesArgv0) {
   int Argc = sizeof(Argv) / sizeof(char*);
   OwningPtr<FixedCompilationDatabase> Database(
       FixedCompilationDatabase::loadFromCommandLine(Argc, Argv));
-  ASSERT_TRUE(Database.isValid());
+  ASSERT_TRUE((bool)Database);
   std::vector<CompileCommand> Result =
     Database->getCompileCommands("source");
   ASSERT_EQ(1ul, Result.size());

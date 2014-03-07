@@ -124,7 +124,7 @@ public:
 
   bool isCurrentFileAST() const {
     assert(!CurrentInput.isEmpty() && "No current file!");
-    return CurrentASTUnit.isValid();
+    return (bool)CurrentASTUnit;
   }
 
   const FrontendInputFile &getCurrentInput() const {

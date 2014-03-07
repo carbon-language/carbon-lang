@@ -1333,7 +1333,7 @@ public:
   void setDeserializationListener(ASTDeserializationListener *Listener);
 
   /// \brief Determine whether this AST reader has a global index.
-  bool hasGlobalIndex() const { return GlobalIndex.isValid(); }
+  bool hasGlobalIndex() const { return (bool)GlobalIndex; }
 
   /// \brief Attempts to load the global index.
   ///

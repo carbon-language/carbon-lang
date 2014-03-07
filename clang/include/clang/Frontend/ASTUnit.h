@@ -500,7 +500,7 @@ public:
   void setASTContext(ASTContext *ctx) { Ctx = ctx; }
   void setPreprocessor(Preprocessor *pp);
 
-  bool hasSema() const { return TheSema.isValid(); }
+  bool hasSema() const { return (bool)TheSema; }
   Sema &getSema() const { 
     assert(TheSema && "ASTUnit does not have a Sema object!");
     return *TheSema; 

@@ -464,7 +464,7 @@ public:
     }
   }
 
-  bool ok() { return FileStream.isValid(); }
+  bool ok() { return (bool)FileStream; }
   raw_ostream &getStream() { return *FileStream; }
 
 private:

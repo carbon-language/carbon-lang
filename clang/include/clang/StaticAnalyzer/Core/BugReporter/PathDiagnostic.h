@@ -523,10 +523,8 @@ public:
   bool isPrunable() const {
     return IsPrunable.hasValue() ? IsPrunable.getValue() : false;
   }
-  
-  bool hasCallStackHint() {
-    return CallStackHint.isValid();
-  }
+
+  bool hasCallStackHint() { return (bool)CallStackHint; }
 
   /// Produce the hint for the given node. The node contains 
   /// information about the call for which the diagnostic can be generated.
