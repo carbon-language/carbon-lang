@@ -363,12 +363,13 @@ endif
 dsym:	$(DSYM)
 all:	$(EXE) $(DSYM)
 clean::
-	rm -rf "$(EXE)" $(OBJECTS) $(PREREQS) $(ARCHIVE_NAME) $(ARCHIVE_OBJECTS) *.d.[0-9] *.d.[0-9][0-9] *.d.[0-9][0-9][0-9] *.d.[0-9][0-9][0-9][0-9] *.d.[0-9][0-9][0-9][0-9][0-9]
+	$(RM) "$(EXE)" $(OBJECTS) $(PREREQS) $(ARCHIVE_NAME) $(ARCHIVE_OBJECTS)
+	$(RM) -r *.d.[0-9] *.d.[0-9][0-9] *.d.[0-9][0-9][0-9] *.d.[0-9][0-9][0-9][0-9] *.d.[0-9][0-9][0-9][0-9][0-9]
 ifneq "$(DYLIB_NAME)" ""
-	rm -rf $(DYLIB_OBJECTS) $(DYLIB_PREREQS) $(DYLIB_FILENAME) $(DYLIB_FILENAME).dSYM $(DYLIB_FILENAME).debug
+	$(RM) $(DYLIB_OBJECTS) $(DYLIB_PREREQS) $(DYLIB_FILENAME) $(DYLIB_FILENAME).dSYM $(DYLIB_FILENAME).debug
 endif
 ifneq "$(DSYM)" ""
-	rm -rf "$(DSYM)"
+	$(RM) "$(DSYM)"
 endif
 	
 
