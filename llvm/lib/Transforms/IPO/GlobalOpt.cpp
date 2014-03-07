@@ -2860,6 +2860,10 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
   return true;
 }
 
+static int compareNames(Constant *const *A, Constant *const *B) {
+  return (*A)->getName().compare((*B)->getName());
+}
+
 static void setUsedInitializer(GlobalVariable &V,
                                SmallPtrSet<GlobalValue *, 8> Init) {
   if (Init.empty()) {
@@ -2878,10 +2882,7 @@ static void setUsedInitializer(GlobalVariable &V,
     UsedArray.push_back(Cast);
   }
   // Sort to get deterministic order.
-  array_pod_sort(UsedArray.begin(), UsedArray.end(),
-                 [](Constant *const *A, Constant *const *B) {
-    return (*A)->getName().compare((*B)->getName());
-  });
+  array_pod_sort(UsedArray.begin(), UsedArray.end(), compareNames);
   ArrayType *ATy = ArrayType::get(Int8PtrTy, UsedArray.size());
 
   Module *M = V.getParent();
