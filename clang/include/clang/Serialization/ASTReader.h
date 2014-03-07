@@ -545,7 +545,7 @@ private:
       assert(getKind() == Macro && "Hidden name is not a macro!");
       return std::make_pair(Id, MMI);
     }
-};
+  };
 
   typedef llvm::SmallDenseMap<IdentifierInfo*,
                               ModuleMacroInfo*> HiddenMacrosMap;
@@ -1023,6 +1023,13 @@ private:
 
   /// \brief Reads a statement from the specified cursor.
   Stmt *ReadStmtFromStream(ModuleFile &F);
+
+  /// \brief Reads the stored information about an input file.
+  void readInputFileInfo(ModuleFile &F, unsigned ID, std::string &Filename,
+                         off_t &StoredSize, time_t &StoredTime,
+                         bool &Overridden);
+  /// \brief A convenience method to read the filename from an input file.
+  std::string getInputFileName(ModuleFile &F, unsigned ID);
 
   /// \brief Retrieve the file entry and 'overridden' bit for an input
   /// file in the given module file.
