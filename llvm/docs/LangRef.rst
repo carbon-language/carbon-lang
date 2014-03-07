@@ -663,7 +663,7 @@ Syntax::
     define [linkage] [visibility] [DLLStorageClass]
            [cconv] [ret attrs]
            <ResultType> @<FunctionName> ([argument list])
-           [fn Attrs] [section "name"] [align N]
+           [unnamed_addr] [fn Attrs] [section "name"] [align N]
            [gc] [prefix Constant] { ... }
 
 .. _langref_aliases:
