@@ -1,7 +1,9 @@
-; RUN: llc -mtriple=x86_64-apple-darwin %s -filetype=obj -o %t
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
-; RUN: llc -mtriple=x86_64-apple-darwin -regalloc=basic %s -filetype=obj -o %t
-; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin < %s -filetype=obj \
+; RUN:     | llvm-dwarfdump -debug-dump=info - | FileCheck --check-prefix=CHECK --check-prefix=DARWIN %s
+; RUN: llc -mtriple=x86_64-linux-gnu < %s -filetype=obj \
+; RUN:     | llvm-dwarfdump -debug-dump=info - | FileCheck --check-prefix=CHECK --check-prefix=LINUX %s
+; RUN: llc -mtriple=x86_64-apple-darwin < %s -filetype=obj -regalloc=basic \
+; RUN:     | llvm-dwarfdump -debug-dump=info - | FileCheck --check-prefix=CHECK --check-prefix=DARWIN %s
 
 ;CHECK: DW_TAG_inlined_subroutine
 ;CHECK-NEXT: DW_AT_abstract_origin
@@ -11,8 +13,10 @@
 ;CHECK-NEXT: DW_AT_call_line
 
 ;CHECK: DW_TAG_formal_parameter
-;CHECK: DW_TAG_formal_parameter
-;CHECK-NEXT: DW_AT_name [DW_FORM_strp] ( .debug_str[0x00000055] = "sp")
+;FIXME: Linux shouldn't drop this parameter either...
+;LINUX-NOT: DW_TAG_formal_parameter
+;DARWIN: DW_TAG_formal_parameter
+;DARWIN-NEXT: DW_AT_name [DW_FORM_strp] ( .debug_str[0x00000055] = "sp")
 
 %struct.S1 = type { float*, i32 }
 
