@@ -566,6 +566,8 @@ SystemRuntimeMacOSX::PopulatePendingItemsForQueue (Queue *queue)
 
                     queue->PushPendingQueueItem (queue_item_sp);
                 }
+                m_page_to_free = ret.item_buffer_ptr;
+                m_page_to_free_size = ret.item_buffer_size;
             }
         }
     }
