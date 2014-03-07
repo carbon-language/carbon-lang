@@ -64,7 +64,10 @@ public:
   unsigned getTypeAndAttributes() const { return TypeAndAttributes; }
   unsigned getStubSize() const { return Reserved2; }
 
-  unsigned getType() const { return TypeAndAttributes & MachO::SECTION_TYPE; }
+  MachO::SectionType getType() const {
+    return static_cast<MachO::SectionType>(TypeAndAttributes &
+                                           MachO::SECTION_TYPE);
+  }
   bool hasAttribute(unsigned Value) const {
     return (TypeAndAttributes & Value) != 0;
   }

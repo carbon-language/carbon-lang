@@ -102,7 +102,7 @@ void MCSectionMachO::PrintSwitchToSection(const MCAsmInfo &MAI,
     return;
   }
 
-  unsigned SectionType = getType();
+  MachO::SectionType SectionType = getType();
   assert(SectionType <= MachO::LAST_KNOWN_SECTION_TYPE &&
          "Invalid SectionType specified!");
 
