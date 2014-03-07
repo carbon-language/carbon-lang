@@ -17,6 +17,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include <cassert>
+#include <limits>
 
 namespace llvm {
 
@@ -41,6 +42,9 @@ template <typename PointerTy, unsigned IntBits, typename IntType=unsigned,
           typename PtrTraits = PointerLikeTypeTraits<PointerTy> >
 class PointerIntPair {
   intptr_t Value;
+  static_assert(PtrTraits::NumLowBitsAvailable <
+                std::numeric_limits<uintptr_t>::digits,
+                "cannot use a pointer type that has all bits free");
   enum : uintptr_t {
     /// PointerBitMask - The bits that come from the pointer.
     PointerBitMask =
@@ -79,7 +83,7 @@ public:
   void setPointer(PointerTy PtrVal) {
     intptr_t PtrWord
       = reinterpret_cast<intptr_t>(PtrTraits::getAsVoidPointer(PtrVal));
-    assert((PtrWord & ((1 << PtrTraits::NumLowBitsAvailable)-1)) == 0 &&
+    assert((PtrWord & ~PointerBitMask) == 0 &&
            "Pointer is not sufficiently aligned");
     // Preserve all low bits, just update the pointer.
     Value = PtrWord | (Value & ~PointerBitMask);
@@ -87,7 +91,7 @@ public:
 
   void setInt(IntType IntVal) {
     intptr_t IntWord = static_cast<intptr_t>(IntVal);
-    assert(IntWord < (1 << IntBits) && "Integer too large for field");
+    assert((IntWord & ~IntMask) == 0 && "Integer too large for field");
     
     // Preserve all bits other than the ones we are updating.
     Value &= ~ShiftedIntMask;     // Remove integer field.
@@ -97,7 +101,7 @@ public:
   void initWithPointer(PointerTy PtrVal) {
     intptr_t PtrWord
       = reinterpret_cast<intptr_t>(PtrTraits::getAsVoidPointer(PtrVal));
-    assert((PtrWord & ((1 << PtrTraits::NumLowBitsAvailable)-1)) == 0 &&
+    assert((PtrWord & ~PointerBitMask) == 0 &&
            "Pointer is not sufficiently aligned");
     Value = PtrWord;
   }
@@ -105,10 +109,10 @@ public:
   void setPointerAndInt(PointerTy PtrVal, IntType IntVal) {
     intptr_t PtrWord
       = reinterpret_cast<intptr_t>(PtrTraits::getAsVoidPointer(PtrVal));
-    assert((PtrWord & ((1 << PtrTraits::NumLowBitsAvailable)-1)) == 0 &&
+    assert((PtrWord & ~PointerBitMask) == 0 &&
            "Pointer is not sufficiently aligned");
     intptr_t IntWord = static_cast<intptr_t>(IntVal);
-    assert(IntWord < (1 << IntBits) && "Integer too large for field");
+    assert((IntWord & ~IntMask) == 0 && "Integer too large for field");
 
     Value = PtrWord | (IntWord << IntShift);
   }
