@@ -61,11 +61,11 @@ TEST_F(PointerIntPairTest, ManyUnusedBits) {
 
   PointerIntPair<Fixnum31, 1, bool, FixnumPointerTraits> pair;
   EXPECT_EQ((uintptr_t)0, pair.getPointer().Value);
-  EXPECT_EQ(false, pair.getInt());
+  EXPECT_FALSE(pair.getInt());
 
   pair.setPointerAndInt({ 0x7FFFFFFF }, true );
   EXPECT_EQ((uintptr_t)0x7FFFFFFF, pair.getPointer().Value);
-  EXPECT_EQ(true, pair.getInt());
+  EXPECT_TRUE(pair.getInt());
 
   EXPECT_EQ(FixnumPointerTraits::NumLowBitsAvailable - 1,
             PointerLikeTypeTraits<decltype(pair)>::NumLowBitsAvailable);
