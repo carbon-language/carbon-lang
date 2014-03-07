@@ -3420,10 +3420,17 @@ public:
   void setContextParam(ImplicitParamDecl *P) { setParam(0, P); }
 
   typedef ImplicitParamDecl **param_iterator;
+  typedef llvm::iterator_range<param_iterator> param_range;
+
   /// \brief Retrieve an iterator pointing to the first parameter decl.
   param_iterator param_begin() const { return getParams(); }
   /// \brief Retrieve an iterator one past the last parameter decl.
   param_iterator param_end() const { return getParams() + NumParams; }
+
+  /// \brief Retrieve an iterator range for the parameter declarations.
+  param_range params() const {
+    return param_range(getParams(), getParams() + NumParams);
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
