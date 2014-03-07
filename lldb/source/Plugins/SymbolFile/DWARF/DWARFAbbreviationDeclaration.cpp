@@ -92,84 +92,6 @@ DWARFAbbreviationDeclaration::IsValid()
 }
 
 
-void
-DWARFAbbreviationDeclaration::CopyExcludingAddressAttributes(const DWARFAbbreviationDeclaration& abbr_decl, const uint32_t idx)
-{
-    m_code = abbr_decl.Code();  // Invalidate the code since that can't be copied safely.
-    m_tag = abbr_decl.Tag();
-    m_has_children = abbr_decl.HasChildren();
-
-    const DWARFAttribute::collection& attributes = abbr_decl.Attributes();
-    const uint32_t num_abbr_decl_attributes = attributes.size();
-
-    dw_attr_t attr;
-    dw_form_t form;
-    uint32_t i;
-
-    for (i = 0; i < num_abbr_decl_attributes; ++i)
-    {
-        attributes[i].get(attr, form);
-        switch (attr)
-        {
-        case DW_AT_location:
-        case DW_AT_frame_base:
-            // Only add these if they are location expressions (have a single
-            // value) and not location lists (have a lists of location
-            // expressions which are only valid over specific address ranges)
-            if (DWARFFormValue::IsBlockForm(form))
-                m_attributes.push_back(DWARFAttribute(attr, form));
-            break;
-
-        case DW_AT_low_pc:
-        case DW_AT_high_pc:
-        case DW_AT_ranges:
-        case DW_AT_entry_pc:
-            // Don't add these attributes
-            if (i >= idx)
-                break;
-            // Fall through and add attribute
-        default:
-            // Add anything that isn't address related
-            m_attributes.push_back(DWARFAttribute(attr, form));
-            break;
-        }
-    }
-}
-
-void
-DWARFAbbreviationDeclaration::CopyChangingStringToStrp(
-    const DWARFAbbreviationDeclaration& abbr_decl,
-    const DWARFDataExtractor& debug_info_data,
-    dw_offset_t debug_info_offset,
-    const DWARFCompileUnit* cu,
-    const uint32_t strp_min_len
-)
-{
-    m_code = InvalidCode;
-    m_tag = abbr_decl.Tag();
-    m_has_children = abbr_decl.HasChildren();
-
-    const DWARFAttribute::collection& attributes = abbr_decl.Attributes();
-    const uint32_t num_abbr_decl_attributes = attributes.size();
-
-    dw_attr_t attr;
-    dw_form_t form;
-    uint32_t i;
-    lldb::offset_t offset = debug_info_offset;
-
-    for (i = 0; i < num_abbr_decl_attributes; ++i)
-    {
-        attributes[i].get(attr, form);
-        dw_offset_t attr_offset = offset;
-        DWARFFormValue::SkipValue(form, debug_info_data, &offset, cu);
-
-        if (form == DW_FORM_string && ((offset - attr_offset) >= strp_min_len))
-            m_attributes.push_back(DWARFAttribute(attr, DW_FORM_strp));
-        else
-            m_attributes.push_back(DWARFAttribute(attr, form));
-    }
-}
-
 
 uint32_t
 DWARFAbbreviationDeclaration::FindAttributeIndex(dw_attr_t attr) const
@@ -193,19 +115,3 @@ DWARFAbbreviationDeclaration::operator == (const DWARFAbbreviationDeclaration& r
         && Attributes()     == rhs.Attributes();
 }
 
-#if 0
-DWARFAbbreviationDeclaration::Append(BinaryStreamBuf& out_buff) const
-{
-    out_buff.Append32_as_ULEB128(Code());
-    out_buff.Append32_as_ULEB128(Tag());
-    out_buff.Append8(HasChildren());
-    const uint32_t kNumAttributes = m_attributes.size();
-    for (uint32_t i = 0; i < kNumAttributes; ++i)
-    {
-        out_buff.Append32_as_ULEB128(m_attributes[i].attr());
-        out_buff.Append32_as_ULEB128(m_attributes[i].form());
-    }
-    out_buff.Append8(0);    // Output a zero for attr (faster than using Append32_as_ULEB128)
-    out_buff.Append8(0);    // Output a zero for attr (faster than using Append32_as_ULEB128)
-}
-#endif  // 0

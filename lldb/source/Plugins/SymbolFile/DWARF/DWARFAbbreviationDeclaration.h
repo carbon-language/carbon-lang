@@ -55,21 +55,12 @@ public:
                     {
                         return m_attributes[idx].get_form();
                     }
-    void            CopyExcludingAddressAttributes(const DWARFAbbreviationDeclaration& abbr_decl, const uint32_t idx);
-    void            CopyChangingStringToStrp(
-                        const DWARFAbbreviationDeclaration& abbr_decl,
-                        const lldb_private::DWARFDataExtractor& debug_info_data,
-                        dw_offset_t debug_info_offset,
-                        const DWARFCompileUnit* cu,
-                        const uint32_t strp_min_len);
     uint32_t        FindAttributeIndex(dw_attr_t attr) const;
     bool            Extract(const lldb_private::DWARFDataExtractor& data, lldb::offset_t *offset_ptr);
     bool            Extract(const lldb_private::DWARFDataExtractor& data, lldb::offset_t *offset_ptr, dw_uleb128_t code);
-//  void            Append(BinaryStreamBuf& out_buff) const;
     bool            IsValid();
     void            Dump(lldb_private::Stream *s) const;
     bool            operator == (const DWARFAbbreviationDeclaration& rhs) const;
-//  DWARFAttribute::collection& Attributes() { return m_attributes; }
     const DWARFAttribute::collection& Attributes() const { return m_attributes; }
 protected:
     dw_uleb128_t        m_code;
