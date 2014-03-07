@@ -5897,24 +5897,46 @@ Process::GetThreadStatus (Stream &strm,
 {
     size_t num_thread_infos_dumped = 0;
     
-    Mutex::Locker locker (GetThreadList().GetMutex());
-    const size_t num_threads = GetThreadList().GetSize();
+    // You can't hold the thread list lock while calling Thread::GetStatus.  That very well might run code (e.g. if we need it
+    // to get return values or arguments.)  For that to work the process has to be able to acquire it.  So instead copy the thread
+    // ID's, and look them up one by one:
+    
+    uint32_t num_threads;
+    std::vector<uint32_t> thread_index_array;
+    //Scope for thread list locker;
+    {
+        Mutex::Locker locker (GetThreadList().GetMutex());
+        ThreadList &curr_thread_list = GetThreadList();
+        num_threads = curr_thread_list.GetSize();
+        uint32_t idx;
+        thread_index_array.resize(num_threads);
+        for (idx = 0; idx < num_threads; ++idx)
+            thread_index_array[idx] = curr_thread_list.GetThreadAtIndex(idx)->GetID();
+    }
+    
     for (uint32_t i = 0; i < num_threads; i++)
     {
-        Thread *thread = GetThreadList().GetThreadAtIndex(i).get();
-        if (thread)
+        ThreadSP thread_sp(GetThreadList().FindThreadByID(thread_index_array[i]));
+        if (thread_sp)
         {
             if (only_threads_with_stop_reason)
             {
-                StopInfoSP stop_info_sp = thread->GetStopInfo();
+                StopInfoSP stop_info_sp = thread_sp->GetStopInfo();
                 if (stop_info_sp.get() == NULL || !stop_info_sp->IsValid())
                     continue;
             }
-            thread->GetStatus (strm, 
+            thread_sp->GetStatus (strm,
                                start_frame, 
                                num_frames, 
                                num_frames_with_source);
             ++num_thread_infos_dumped;
+        }
+        else
+        {
+            Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS));
+            if (log)
+                log->Printf("Process::GetThreadStatus - thread 0x" PRIu64 " vanished while running Thread::GetStatus.");
+            
         }
     }
     return num_thread_infos_dumped;
