@@ -7,10 +7,9 @@
  *
  *===----------------------------------------------------------------------===//
  *
- * FIXME: description
- * This file implements the __udivsi3 (32-bit unsigned integer divide) 
- * function for the ARM architecture.  A naive digit-by-digit computation is
- * employed for simplicity.
+ * This file implements outline macros for the __sync_fetch_and_*
+ * operations. Different instantiations will generate appropriate assembly for
+ * ARM and Thumb-2 versions of the functions.
  *
  *===----------------------------------------------------------------------===*/
 
