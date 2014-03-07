@@ -542,8 +542,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit *TheCU,
            "Invalid starting label for an inlined scope!");
     assert(EndLabel->isDefined() && "Invalid end label for an inlined scope!");
 
-    TheCU->addLabelAddress(ScopeDIE, dwarf::DW_AT_low_pc, StartLabel);
-    TheCU->addLabelAddress(ScopeDIE, dwarf::DW_AT_high_pc, EndLabel);
+    attachLowHighPC(TheCU, ScopeDIE, StartLabel, EndLabel);
   }
 
   InlinedSubprogramDIEs.insert(OriginDIE);

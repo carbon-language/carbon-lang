@@ -7,8 +7,9 @@
 
 ;CHECK: DW_TAG_inlined_subroutine
 ;CHECK-NEXT: DW_AT_abstract_origin
-;CHECK-NEXT: DW_AT_low_pc
-;CHECK-NEXT: DW_AT_high_pc
+;CHECK-NEXT: DW_AT_low_pc [DW_FORM_addr]
+;DARWIN-NEXT: DW_AT_high_pc [DW_FORM_addr]
+;LINUX-NEXT: DW_AT_high_pc [DW_FORM_data4]
 ;CHECK-NEXT: DW_AT_call_file
 ;CHECK-NEXT: DW_AT_call_line
 
