@@ -413,8 +413,11 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit *SPCU,
   }
 
   SPCU->addLabelAddress(SPDie, dwarf::DW_AT_low_pc, FunctionBeginSym);
-  SPCU->addLabelDelta(SPDie, dwarf::DW_AT_high_pc, FunctionEndSym,
-                      FunctionBeginSym);
+  if (Triple(Asm->getTargetTriple()).isOSDarwin())
+    SPCU->addLabelAddress(SPDie, dwarf::DW_AT_high_pc, FunctionEndSym);
+  else
+    SPCU->addLabelDelta(SPDie, dwarf::DW_AT_high_pc, FunctionEndSym,
+                        FunctionBeginSym);
 
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   MachineLocation Location(RI->getFrameRegister(*Asm->MF));
