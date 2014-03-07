@@ -93,12 +93,13 @@ public:
   enum Merge {
     mergeNo,                // Another atom with same name is error
     mergeAsTentative,       // Is ANSI C tentative definition, can be coalesced
-    mergeAsWeak,            // is C++ inline definition that was not inlined,
+    mergeAsWeak,            // Is C++ inline definition that was not inlined,
                             // but address was not taken, so atom can be hidden
                             // by linker
-    mergeAsWeakAndAddressUsed,// is C++ definition inline definition whose
-                              // address was taken.
-    mergeByContent          // merge with other constants with same content
+    mergeAsWeakAndAddressUsed, // Is C++ definition inline definition whose
+                               // address was taken.
+    mergeByContent,         // Merge with other constants with same content
+    mergeSameNameAndSize,   // Another atom with different size is error
   };
 
   enum ContentType {

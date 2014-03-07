@@ -98,27 +98,17 @@ enum MergeResolution {
   MCR_First,
   MCR_Second,
   MCR_Largest,
+  MCR_SameSize,
   MCR_Error
 };
 
-static MergeResolution mergeCases[4][4] = {
-  // no        tentative     weak       weakAddressUsed
-  {
-    // first is no
-    MCR_Error,  MCR_First,   MCR_First, MCR_First
-  },
-  {
-    // first is tentative
-    MCR_Second, MCR_Largest, MCR_Second, MCR_Second
-  },
-  {
-    // first is weak
-    MCR_Second, MCR_First,   MCR_First, MCR_Second
-  },
-  {
-    // first is weakAddressUsed
-    MCR_Second, MCR_First,   MCR_First, MCR_First
-  }
+static MergeResolution mergeCases[][5] = {
+  // no          tentative      weak          weakAddress   sameNameAndSize
+  {MCR_Error,    MCR_First,     MCR_First,    MCR_First,    MCR_SameSize}, // no
+  {MCR_Second,   MCR_Largest,   MCR_Second,   MCR_Second,   MCR_SameSize}, // tentative
+  {MCR_Second,   MCR_First,     MCR_First,    MCR_Second,   MCR_SameSize}, // weak
+  {MCR_Second,   MCR_First,     MCR_First,    MCR_First,    MCR_SameSize}, // weakAddress
+  {MCR_SameSize, MCR_SameSize,  MCR_SameSize, MCR_SameSize, MCR_SameSize}, // sameSize
 };
 
 static MergeResolution mergeSelect(DefinedAtom::Merge first,
@@ -126,7 +116,7 @@ static MergeResolution mergeSelect(DefinedAtom::Merge first,
   return mergeCases[first][second];
 }
 
-void SymbolTable::addByName(const Atom & newAtom) {
+void SymbolTable::addByName(const Atom &newAtom) {
   StringRef name = newAtom.name();
   assert(!name.empty());
   const Atom *existing = this->findByName(name);
@@ -149,7 +139,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
     assert(existing->definition() == Atom::definitionRegular);
     assert(newAtom.definition() == Atom::definitionRegular);
     switch (mergeSelect(((DefinedAtom*)existing)->merge(),
-                        ((DefinedAtom*)(&newAtom))->merge())) {
+                        ((DefinedAtom*)&newAtom)->merge())) {
     case MCR_First:
       useNew = false;
       break;
@@ -159,6 +149,18 @@ void SymbolTable::addByName(const Atom & newAtom) {
     case MCR_Largest:
       useNew = true;
       break;
+    case MCR_SameSize: {
+      uint64_t sa = ((DefinedAtom*)existing)->size();
+      uint64_t sb = ((DefinedAtom*)&newAtom)->size();
+      if (sa == sb) {
+        useNew = true;
+        break;
+      }
+      llvm::errs() << "Size mismatch: "
+                   << existing->name() << " (" << sa << ") "
+                   << newAtom.name() << " (" << sb << ")\n";
+      // fallthrough
+    }
     case MCR_Error:
       llvm::errs() << "Duplicate symbols: "
                    << existing->name()
