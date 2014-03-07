@@ -1416,7 +1416,7 @@ Operating System Features and Limitations
 Darwin (Mac OS X)
 ^^^^^^^^^^^^^^^^^
 
-None
+Thread Sanitizer is not supported.
 
 Windows
 ^^^^^^^
