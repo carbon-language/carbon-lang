@@ -746,23 +746,21 @@ The convenience of ``auto`` makes it easy to forget that its default behavior
 is a copy.  Particularly in range-based ``for`` loops, careless copies are
 expensive.
 
-As a rule of thumb, use ``const auto &`` unless you need to mutate or copy the
-result, and use ``const auto *`` when copying pointers.
+As a rule of thumb, use ``auto &`` unless you need to copy the result, and use
+``auto *`` when copying pointers.
 
 .. code-block:: c++
 
-  // Typically there's no reason to mutate or modify Val.
+  // Typically there's no reason to copy.
   for (const auto &Val : Container) { observe(Val); }
-
-  // Remove the const if you need to modify Val.
   for (auto &Val : Container) { Val.change(); }
 
   // Remove the reference if you really want a new copy.
   for (auto Val : Container) { Val.change(); saveSomewhere(Val); }
 
   // Copy pointers, but make it clear that they're pointers.
-  for (const auto *Val : Container) { observe(*Val); }
-  for (auto *Val : Container) { Val->change(); }
+  for (const auto *Ptr : Container) { observe(*Ptr); }
+  for (auto *Ptr : Container) { Ptr->change(); }
 
 Style Issues
 ============
