@@ -77,7 +77,7 @@ TEST(AddressSanitizer, WcsLenTest) {
   free(heap_string);
 }
 
-#ifndef __APPLE__
+#if SANITIZER_TEST_HAS_STRNLEN
 TEST(AddressSanitizer, StrNLenOOBTest) {
   size_t size = Ident(123);
   char *str = MallocAndMemsetString(size);
@@ -95,7 +95,7 @@ TEST(AddressSanitizer, StrNLenOOBTest) {
   EXPECT_DEATH(Ident(strnlen(str, size + 1)), RightOOBReadMessage(0));
   free(str);
 }
-#endif
+#endif  // SANITIZER_TEST_HAS_STRNLEN
 
 TEST(AddressSanitizer, StrDupOOBTest) {
   size_t size = Ident(42);

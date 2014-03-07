@@ -25,26 +25,9 @@ NOINLINE void *malloc_bbb(size_t size) {
 NOINLINE void *malloc_aaa(size_t size) {
   void *res = malloc_bbb(size); break_optimization(0); return res;}
 
-#ifndef __APPLE__
-NOINLINE void *memalign_fff(size_t alignment, size_t size) {
-  void *res = memalign/**/(alignment, size); break_optimization(0); return res;}
-NOINLINE void *memalign_eee(size_t alignment, size_t size) {
-  void *res = memalign_fff(alignment, size); break_optimization(0); return res;}
-NOINLINE void *memalign_ddd(size_t alignment, size_t size) {
-  void *res = memalign_eee(alignment, size); break_optimization(0); return res;}
-NOINLINE void *memalign_ccc(size_t alignment, size_t size) {
-  void *res = memalign_ddd(alignment, size); break_optimization(0); return res;}
-NOINLINE void *memalign_bbb(size_t alignment, size_t size) {
-  void *res = memalign_ccc(alignment, size); break_optimization(0); return res;}
-NOINLINE void *memalign_aaa(size_t alignment, size_t size) {
-  void *res = memalign_bbb(alignment, size); break_optimization(0); return res;}
-#endif  // __APPLE__
-
-
 NOINLINE void free_ccc(void *p) { free(p); break_optimization(0);}
 NOINLINE void free_bbb(void *p) { free_ccc(p); break_optimization(0);}
 NOINLINE void free_aaa(void *p) { free_bbb(p); break_optimization(0);}
-
 
 template<typename T>
 NOINLINE void uaf_test(int size, int off) {
@@ -90,19 +73,19 @@ TEST(AddressSanitizer, VariousMallocsTest) {
   *c = 0;
   delete c;
 
-#if !defined(__APPLE__) && !defined(ANDROID) && !defined(__ANDROID__)
+#if SANITIZER_TEST_HAS_POSIX_MEMALIGN
   int *pm;
   int pm_res = posix_memalign((void**)&pm, kPageSize, kPageSize);
   EXPECT_EQ(0, pm_res);
   free(pm);
-#endif
+#endif  // SANITIZER_TEST_HAS_POSIX_MEMALIGN
 
-#if !defined(__APPLE__)
+#if SANITIZER_TEST_HAS_MEMALIGN
   int *ma = (int*)memalign(kPageSize, kPageSize);
   EXPECT_EQ(0U, (uintptr_t)ma % kPageSize);
   ma[123] = 0;
   free(ma);
-#endif  // __APPLE__
+#endif  // SANITIZER_TEST_HAS_MEMALIGN
 }
 
 TEST(AddressSanitizer, CallocTest) {
@@ -135,7 +118,7 @@ TEST(AddressSanitizer, VallocTest) {
   free(a);
 }
 
-#ifndef __APPLE__
+#if SANITIZER_TEST_HAS_PVALLOC
 TEST(AddressSanitizer, PvallocTest) {
   char *a = (char*)pvalloc(kPageSize + 100);
   EXPECT_EQ(0U, (uintptr_t)a % kPageSize);
@@ -147,7 +130,7 @@ TEST(AddressSanitizer, PvallocTest) {
   a[101] = 1;  // we should not report an error here.
   free(a);
 }
-#endif  // __APPLE__
+#endif  // SANITIZER_TEST_HAS_PVALLOC
 
 void *TSDWorker(void *test_key) {
   if (test_key) {
@@ -306,7 +289,7 @@ TEST(AddressSanitizer, HugeMallocTest) {
                "AddressSanitizer failed to allocate");
 }
 
-#ifndef __APPLE__
+#if SANITIZER_TEST_HAS_MEMALIGN
 void MemalignRun(size_t align, size_t size, int idx) {
   char *p = (char *)memalign(align, size);
   Ident(p)[idx] = 0;
@@ -322,7 +305,7 @@ TEST(AddressSanitizer, memalign) {
                  "is located 1 bytes to the right");
   }
 }
-#endif
+#endif  // SANITIZER_TEST_HAS_MEMALIGN
 
 void *ManyThreadsWorker(void *a) {
   for (int iter = 0; iter < 100; iter++) {
@@ -381,12 +364,12 @@ TEST(AddressSanitizer, ZeroSizeMallocTest) {
   void *ptr = Ident(malloc(0));
   EXPECT_TRUE(NULL != ptr);
   free(ptr);
-#if !defined(__APPLE__) && !defined(ANDROID) && !defined(__ANDROID__)
+#if SANITIZER_TEST_HAS_POSIX_MEMALIGN
   int pm_res = posix_memalign(&ptr, 1<<20, 0);
   EXPECT_EQ(0, pm_res);
   EXPECT_TRUE(NULL != ptr);
   free(ptr);
-#endif
+#endif  // SANITIZER_TEST_HAS_POSIX_MEMALIGN
   int *int_ptr = new int[0];
   int *int_ptr2 = new int[0];
   EXPECT_TRUE(NULL != int_ptr);
@@ -396,7 +379,7 @@ TEST(AddressSanitizer, ZeroSizeMallocTest) {
   delete[] int_ptr2;
 }
 
-#ifndef __APPLE__
+#if SANITIZER_TEST_HAS_MALLOC_USABLE_SIZE
 static const char *kMallocUsableSizeErrorMsg =
   "AddressSanitizer: attempting to call malloc_usable_size()";
 
@@ -414,7 +397,7 @@ TEST(AddressSanitizer, MallocUsableSizeTest) {
   EXPECT_DEATH(malloc_usable_size(array), kMallocUsableSizeErrorMsg);
   delete int_ptr;
 }
-#endif
+#endif  // SANITIZER_TEST_HAS_MALLOC_USABLE_SIZE
 
 void WrongFree() {
   int *x = (int*)malloc(100 * sizeof(int));
