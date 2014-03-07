@@ -10446,15 +10446,14 @@ void Sema::ActOnBlockArguments(SourceLocation CaretLoc, Declarator &ParamInfo,
   ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);
 
   // Put the parameter variables in scope.
-  for (BlockDecl::param_iterator AI = CurBlock->TheDecl->param_begin(),
-         E = CurBlock->TheDecl->param_end(); AI != E; ++AI) {
-    (*AI)->setOwningFunction(CurBlock->TheDecl);
+  for (auto AI : CurBlock->TheDecl->params()) {
+    AI->setOwningFunction(CurBlock->TheDecl);
 
     // If this has an identifier, add it to the scope stack.
-    if ((*AI)->getIdentifier()) {
-      CheckShadow(CurBlock->TheScope, *AI);
+    if (AI->getIdentifier()) {
+      CheckShadow(CurBlock->TheScope, AI);
 
-      PushOnScopeChains(*AI, CurBlock->TheScope);
+      PushOnScopeChains(AI, CurBlock->TheScope);
     }
   }
 }

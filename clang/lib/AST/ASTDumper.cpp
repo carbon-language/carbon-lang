@@ -1439,9 +1439,8 @@ void ASTDumper::VisitObjCPropertyImplDecl(const ObjCPropertyImplDecl *D) {
 }
 
 void ASTDumper::VisitBlockDecl(const BlockDecl *D) {
-  for (BlockDecl::param_const_iterator I = D->param_begin(), E = D->param_end();
-       I != E; ++I)
-    dumpDecl(*I);
+  for (auto I : D->params())
+    dumpDecl(I);
 
   if (D->isVariadic()) {
     IndentScope Indent(*this);

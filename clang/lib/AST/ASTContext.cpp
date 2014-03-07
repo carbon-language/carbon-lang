@@ -4804,9 +4804,8 @@ std::string ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr) const {
   SourceLocation Loc;
   CharUnits PtrSize = getTypeSizeInChars(VoidPtrTy);
   CharUnits ParmOffset = PtrSize;
-  for (BlockDecl::param_const_iterator PI = Decl->param_begin(),
-       E = Decl->param_end(); PI != E; ++PI) {
-    QualType PType = (*PI)->getType();
+  for (auto PI : Decl->params()) {
+    QualType PType = PI->getType();
     CharUnits sz = getObjCEncodingTypeSize(PType);
     if (sz.isZero())
       continue;
@@ -4820,9 +4819,7 @@ std::string ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr) const {
   
   // Argument types.
   ParmOffset = PtrSize;
-  for (BlockDecl::param_const_iterator PI = Decl->param_begin(), E =
-       Decl->param_end(); PI != E; ++PI) {
-    ParmVarDecl *PVDecl = *PI;
+  for (auto PVDecl : Decl->params()) {
     QualType PType = PVDecl->getOriginalType(); 
     if (const ArrayType *AT =
           dyn_cast<ArrayType>(PType->getCanonicalTypeInternal())) {

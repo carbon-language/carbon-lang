@@ -1117,9 +1117,8 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   args.push_back(&selfDecl);
 
   // Now add the rest of the parameters.
-  for (BlockDecl::param_const_iterator i = blockDecl->param_begin(),
-       e = blockDecl->param_end(); i != e; ++i)
-    args.push_back(*i);
+  for (auto i : blockDecl->params())
+    args.push_back(i);
 
   // Create the function declaration.
   const FunctionProtoType *fnType = blockInfo.getBlockExpr()->getFunctionType();

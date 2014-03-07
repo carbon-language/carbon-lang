@@ -2163,11 +2163,9 @@ void CodeGenFunction::EmitLambdaBlockInvokeBody() {
   CallArgs.add(RValue::get(ThisPtr), ThisType);
 
   // Add the rest of the parameters.
-  for (BlockDecl::param_const_iterator I = BD->param_begin(),
-       E = BD->param_end(); I != E; ++I) {
-    ParmVarDecl *param = *I;
+  for (auto param : BD->params())
     EmitDelegateCallArg(CallArgs, param, param->getLocStart());
-  }
+
   assert(!Lambda->isGenericLambda() && 
             "generic lambda interconversion to block not implemented");
   EmitForwardingCallToLambda(Lambda->getLambdaCallOperator(), CallArgs);
