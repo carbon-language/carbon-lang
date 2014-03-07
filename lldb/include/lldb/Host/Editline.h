@@ -135,7 +135,14 @@ public:
     
     void
     SetPrompt (const char *p);
-
+    
+    void
+    ShowLineNumbers (bool enable, uint32_t line_offset)
+    {
+        m_prompt_with_line_numbers = enable;
+        m_line_offset = line_offset;
+    }
+    
 private:
 
     Error
@@ -193,6 +200,7 @@ private:
     LineCompletedCallbackType m_line_complete_callback;
     void *m_line_complete_callback_baton;
     Command m_lines_command;
+    uint32_t m_line_offset;
     uint32_t m_lines_curr_line;
     uint32_t m_lines_max_line;
     bool m_prompt_with_line_numbers;

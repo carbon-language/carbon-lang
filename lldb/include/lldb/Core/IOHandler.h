@@ -380,6 +380,7 @@ namespace lldb_private {
                            const char *editline_name, // Used for saving history files
                            const char *prompt,
                            bool multi_line,
+                           uint32_t line_number_start, // If non-zero show line numbers starting at 'line_number_start'
                            IOHandlerDelegate &delegate);
 
         IOHandlerEditline (Debugger &debugger,
@@ -390,6 +391,7 @@ namespace lldb_private {
                            const char *editline_name, // Used for saving history files
                            const char *prompt,
                            bool multi_line,
+                           uint32_t line_number_start, // If non-zero show line numbers starting at 'line_number_start'
                            IOHandlerDelegate &delegate);
         
         virtual
@@ -437,7 +439,10 @@ namespace lldb_private {
         
         bool
         GetLines (StringList &lines);
-
+        
+        void
+        SetBaseLineNumber (uint32_t line);
+        
     private:
         static LineStatus
         LineCompletedCallback (Editline *editline,
@@ -458,6 +463,7 @@ namespace lldb_private {
         std::unique_ptr<Editline> m_editline_ap;
         IOHandlerDelegate &m_delegate;
         std::string m_prompt;
+        uint32_t m_base_line_number; // If non-zero, then show line numbers in prompt
         bool m_multi_line;        
     };
     

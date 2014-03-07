@@ -42,6 +42,7 @@ Editline::Editline (const char *prog,       // prog can't be NULL
     m_line_complete_callback (NULL),
     m_line_complete_callback_baton (NULL),
     m_lines_command (Command::None),
+    m_line_offset (0),
     m_lines_curr_line (0),
     m_lines_max_line (0),
     m_prompt_with_line_numbers (false),

@@ -428,6 +428,7 @@ CommandObjectExpression::DoExecute
                                                           "lldb-expr",      // Name of input reader for history
                                                           NULL,             // No prompt
                                                           multiple_lines,
+                                                          1,                // Show line numbers starting at 1
                                                           *this));
         
         StreamFileSP output_sp(io_handler_sp->GetOutputStreamFile());

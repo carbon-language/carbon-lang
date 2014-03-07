@@ -2663,6 +2663,7 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
                                                               NULL, // Pass in NULL for "editline_name" so no history is saved, or written
                                                               debugger.GetPrompt(),
                                                               false, // Not multi-line
+                                                              0,
                                                               *this));
             const bool old_async_execution = debugger.GetAsyncExecution();
             
@@ -3052,6 +3053,7 @@ CommandInterpreter::GetLLDBCommandsFromIOHandler (const char *prompt,
                                                       "lldb",       // Name of input reader for history
                                                       prompt,       // Prompt
                                                       true,         // Get multiple lines
+                                                      0,            // Don't show line numbers
                                                       delegate));   // IOHandlerDelegate
     
     if (io_handler_sp)
@@ -3077,6 +3079,7 @@ CommandInterpreter::GetPythonCommandsFromIOHandler (const char *prompt,
                                                       "lldb-python",    // Name of input reader for history
                                                       prompt,           // Prompt
                                                       true,             // Get multiple lines
+                                                      0,                // Don't show line numbers
                                                       delegate));       // IOHandlerDelegate
     
     if (io_handler_sp)
@@ -3110,6 +3113,7 @@ CommandInterpreter::RunCommandInterpreter(bool auto_handle_events,
                                                              "lldb",
                                                              m_debugger.GetPrompt(),
                                                              multiple_lines,
+                                                             0,            // Don't show line numbers
                                                              *this));
     m_debugger.PushIOHandler(m_command_io_handler_sp);
     
