@@ -359,6 +359,10 @@ public:
   void addSectionDelta(DIE *Die, dwarf::Attribute Attribute, const MCSymbol *Hi,
                        const MCSymbol *Lo);
 
+  /// addLabelDelta - Add a label delta attribute data and value.
+  void addLabelDelta(DIE *Die, dwarf::Attribute Attribute, const MCSymbol *Hi,
+                     const MCSymbol *Lo);
+
   /// addDIEEntry - Add a DIE attribute data and value.
   void addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIE *Entry);
 

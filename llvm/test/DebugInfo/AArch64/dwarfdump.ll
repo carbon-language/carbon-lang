@@ -12,7 +12,7 @@
 ; A couple of ABS64s similarly:
 
 ; CHECK: DW_AT_low_pc [DW_FORM_addr] (0x0000000000000000)
-; CHECK: DW_AT_high_pc [DW_FORM_addr] (0x0000000000000008)
+; CHECK: DW_AT_high_pc [DW_FORM_data4] (0x00000008)
 
 define i32 @main() nounwind {
   ret i32 0, !dbg !8

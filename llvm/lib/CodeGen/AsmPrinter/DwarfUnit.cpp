@@ -320,6 +320,12 @@ void DwarfUnit::addSectionDelta(DIE *Die, dwarf::Attribute Attribute,
     Die->addValue(Attribute, dwarf::DW_FORM_data4, Value);
 }
 
+void DwarfUnit::addLabelDelta(DIE *Die, dwarf::Attribute Attribute,
+                              const MCSymbol *Hi, const MCSymbol *Lo) {
+  DIEValue *Value = new (DIEValueAllocator) DIEDelta(Hi, Lo);
+  Die->addValue(Attribute, dwarf::DW_FORM_data4, Value);
+}
+
 /// addDIEEntry - Add a DIE attribute data and value.
 ///
 void DwarfUnit::addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIE *Entry) {

@@ -413,7 +413,8 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit *SPCU,
   }
 
   SPCU->addLabelAddress(SPDie, dwarf::DW_AT_low_pc, FunctionBeginSym);
-  SPCU->addLabelAddress(SPDie, dwarf::DW_AT_high_pc, FunctionEndSym);
+  SPCU->addLabelDelta(SPDie, dwarf::DW_AT_high_pc, FunctionEndSym,
+                      FunctionBeginSym);
 
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   MachineLocation Location(RI->getFrameRegister(*Asm->MF));
