@@ -519,15 +519,16 @@ std::basic_ostream<_CharT, _Traits> &
 __quoted_output ( basic_ostream<_CharT, _Traits> &__os, 
         _ForwardIterator __first, _ForwardIterator __last, _CharT __delim, _CharT __escape )
 {
-    __os << __delim;
+    _VSTD::basic_string<_CharT, _Traits> __str;
+    __str.push_back(__delim);
     for ( ; __first != __last; ++ __first )
     {
         if (_Traits::eq (*__first, __escape) || _Traits::eq (*__first, __delim))
-            __os << __escape;
-        __os << *__first;
+            __str.push_back(__escape);
+        __str.push_back(*__first);
     }
-    __os << __delim;
-    return __os;
+    __str.push_back(__delim);
+    return __put_character_sequence(__os, __str.data(), __str.size());
 }
 
 template <class _CharT, class _Traits, class _String>
