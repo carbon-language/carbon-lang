@@ -8255,7 +8255,7 @@ bool ARMAsmParser::parseDirectiveUnreq(SMLoc L) {
     Error(L, "unexpected input in .unreq directive.");
     return false;
   }
-  RegisterReqs.erase(Parser.getTok().getIdentifier());
+  RegisterReqs.erase(Parser.getTok().getIdentifier().lower());
   Parser.Lex(); // Eat the identifier.
   return false;
 }
