@@ -1,10 +1,18 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK %s
-; RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck --check-prefix=CM-CHECK %s
-; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK %s
+; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG-CHECK --check-prefix=FUNC %s
+; RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck --check-prefix=CM-CHECK --check-prefix=FUNC %s
+; RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck --check-prefix=SI-CHECK --check-prefix=FUNC %s
 
 ;===------------------------------------------------------------------------===;
 ; Global Address Space
 ;===------------------------------------------------------------------------===;
+; FUNC-LABEL: @store_i1
+; EG-CHECK: MEM_RAT MSKOR
+; SI-CHECK: BUFFER_STORE_BYTE
+define void @store_i1(i1 addrspace(1)* %out) {
+entry:
+  store i1 true, i1 addrspace(1)* %out
+  ret void
+}
 
 ; i8 store
 ; EG-CHECK-LABEL: @store_i8
@@ -172,6 +180,15 @@ entry:
 ;===------------------------------------------------------------------------===;
 ; Local Address Space
 ;===------------------------------------------------------------------------===;
+
+; FUNC-LABEL: @store_local_i1
+; EG-CHECK: LDS_BYTE_WRITE
+; SI-CHECK: DS_WRITE_B8
+define void @store_local_i1(i1 addrspace(3)* %out) {
+entry:
+  store i1 true, i1 addrspace(3)* %out
+  ret void
+}
 
 ; EG-CHECK-LABEL: @store_local_i8
 ; EG-CHECK: LDS_BYTE_WRITE
