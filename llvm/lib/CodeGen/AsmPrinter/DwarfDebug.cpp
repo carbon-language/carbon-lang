@@ -412,12 +412,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit *SPCU,
     }
   }
 
-  SPCU->addLabelAddress(SPDie, dwarf::DW_AT_low_pc, FunctionBeginSym);
-  if (DwarfVersion < 4 || Triple(Asm->getTargetTriple()).isOSDarwin())
-    SPCU->addLabelAddress(SPDie, dwarf::DW_AT_high_pc, FunctionEndSym);
-  else
-    SPCU->addLabelDelta(SPDie, dwarf::DW_AT_high_pc, FunctionEndSym,
-                        FunctionBeginSym);
+  attachLowHighPC(SPCU, SPDie, FunctionBeginSym, FunctionEndSym);
 
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   MachineLocation Location(RI->getFrameRegister(*Asm->MF));
@@ -2976,4 +2971,13 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
           : Asm->getObjFileLowering().getDwarfTypesSection(Signature));
 
   CU.addDIETypeSignature(RefDie, *NewTU);
+}
+
+void DwarfDebug::attachLowHighPC(DwarfCompileUnit *Unit, DIE *D,
+                                 MCSymbol *Begin, MCSymbol *End) {
+  Unit->addLabelAddress(D, dwarf::DW_AT_low_pc, Begin);
+  if (DwarfVersion < 4 || Triple(Asm->getTargetTriple()).isOSDarwin())
+    Unit->addLabelAddress(D, dwarf::DW_AT_high_pc, End);
+  else
+    Unit->addLabelDelta(D, dwarf::DW_AT_high_pc, End, Begin);
 }
