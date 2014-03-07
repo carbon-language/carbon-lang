@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -Wignored-qualifiers -Wno-error=return-type -verify -fblocks -Wno-unreachable-code -Wno-unused-value
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 %s -fsyntax-only -Wignored-qualifiers -Wno-error=return-type -verify -fblocks -Wno-unreachable-code -Wno-unused-value
 
 // clang emits the following warning by default.
 // With GCC, -pedantic, -Wreturn-type or -Wall are required to produce the 
@@ -282,3 +282,37 @@ lbl:
   if (1)
     goto lbl;
 }
+
+// PR19074.
+void abort(void) __attribute__((noreturn));
+#define av_assert0(cond) do {\
+    if (!(cond)) {\
+      abort();\
+    }\
+  } while (0)
+
+int PR19074(int x) {
+  switch(x) {
+  case 0:
+    return 0;
+  default:
+    av_assert0(0);
+  } // no-warning
+}
+
+int PR19074_positive(int x) {
+  switch(x) {
+  case 0:
+    return 0;
+  default:
+    break;
+  }
+} // expected-warning {{control may reach end of non-void function}}
+
+// sizeof(long) test.
+int sizeof_long() {
+  if (sizeof(long) == 4)
+    return 1;
+  if (sizeof(long) == 8)
+    return 2;
+} // no-warning
