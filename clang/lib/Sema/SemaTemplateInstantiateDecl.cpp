@@ -2325,6 +2325,9 @@ Decl *TemplateDeclInstantiator::VisitOMPThreadPrivateDecl(
   OMPThreadPrivateDecl *TD =
     SemaRef.CheckOMPThreadPrivateDecl(D->getLocation(), Vars);
 
+  TD->setAccess(AS_public);
+  Owner->addDecl(TD);
+
   return TD;
 }
 
