@@ -136,10 +136,10 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
                  FrontendPluginRegistry::begin(), ie = FrontendPluginRegistry::end();
                  it != ie; ++it) {
                 if (it->getName() == CI.getFrontendOpts().ActionName) {
-                    llvm::OwningPtr<PluginASTAction> P(it->instantiate());
+                    std::unique_ptr<PluginASTAction> P(it->instantiate());
                     if (!P->ParseArgs(CI, CI.getFrontendOpts().PluginArgs))
                         return 0;
-                    return P.take();
+                    return P.release();
                 }
             }
             

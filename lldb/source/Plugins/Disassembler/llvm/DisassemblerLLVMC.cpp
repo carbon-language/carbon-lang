@@ -10,7 +10,6 @@
 #include "DisassemblerLLVMC.h"
 
 #include "llvm-c/Disassembler.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
@@ -449,7 +448,7 @@ DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, uns
     m_disasm_ap.reset(curr_target->createMCDisassembler(*m_subtarget_info_ap.get()));
     if (m_disasm_ap.get() && m_context_ap.get())
     {
-        llvm::OwningPtr<llvm::MCRelocationInfo> RelInfo(curr_target->createMCRelocationInfo(triple, *m_context_ap.get()));
+        std::unique_ptr<llvm::MCRelocationInfo> RelInfo(curr_target->createMCRelocationInfo(triple, *m_context_ap.get()));
         if (!RelInfo)
         {
             m_is_valid = false;
