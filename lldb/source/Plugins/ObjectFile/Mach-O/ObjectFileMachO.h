@@ -162,14 +162,13 @@ public:
     
     virtual uint32_t
     GetSDKVersion (uint32_t *versions, uint32_t num_versions);
-
-protected:
-
+    
     static bool
     ParseHeader (lldb_private::DataExtractor &data,
                  lldb::offset_t *data_offset_ptr,
                  llvm::MachO::mach_header &header);
     
+protected:
     
     static bool
     GetUUID (const llvm::MachO::mach_header &header,

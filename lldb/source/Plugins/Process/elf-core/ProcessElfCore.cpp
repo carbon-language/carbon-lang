@@ -19,6 +19,9 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/DynamicLoader.h"
+
+#include "llvm/Support/ELF.h"
+
 #include "ProcessPOSIXLog.h"
 
 #include "Plugins/ObjectFile/ELF/ObjectFileELF.h"
@@ -54,8 +57,24 @@ lldb::ProcessSP
 ProcessElfCore::CreateInstance (Target &target, Listener &listener, const FileSpec *crash_file)
 {
     lldb::ProcessSP process_sp;
-    if (crash_file) 
-        process_sp.reset(new ProcessElfCore (target, listener, *crash_file));
+    if (crash_file)
+    {
+        // Read enough data for a ELF32 header or ELF64 header
+        const size_t header_size = sizeof(llvm::ELF::Elf64_Ehdr);
+        
+        lldb::DataBufferSP data_sp (crash_file->ReadFileContents(0, header_size));
+        if (data_sp->GetByteSize() == header_size)
+        {
+            elf::ELFHeader elf_header;
+            DataExtractor data(data_sp, lldb::eByteOrderLittle, 4);
+            lldb::offset_t data_offset = 0;
+            if (elf_header.Parse(data, &data_offset))
+            {
+                if (elf_header.e_type == llvm::ELF::ET_CORE)
+                    process_sp.reset(new ProcessElfCore (target, listener, *crash_file));
+            }
+        }
+    }
     return process_sp;
 }
 

@@ -35,6 +35,7 @@
 // Needed for the plug-in names for the dynamic loaders.
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
 #include "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h"
+#include "Plugins/ObjectFile/Mach-O/ObjectFileMachO.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -64,7 +65,23 @@ ProcessMachCore::CreateInstance (Target &target, Listener &listener, const FileS
 {
     lldb::ProcessSP process_sp;
     if (crash_file)
-        process_sp.reset(new ProcessMachCore (target, listener, *crash_file));
+    {
+        const size_t header_size = sizeof(llvm::MachO::mach_header);
+        lldb::DataBufferSP data_sp (crash_file->ReadFileContents(0, header_size));
+        if (data_sp->GetByteSize() == header_size)
+        {
+            DataExtractor data(data_sp, lldb::eByteOrderLittle, 4);
+            
+            lldb::offset_t data_offset = 0;
+            llvm::MachO::mach_header mach_header;
+            if (ObjectFileMachO::ParseHeader(data, &data_offset, mach_header))
+            {
+                if (mach_header.filetype == llvm::MachO::MH_CORE)
+                    process_sp.reset(new ProcessMachCore (target, listener, *crash_file));
+            }
+        }
+        
+    }
     return process_sp;
 }
 
