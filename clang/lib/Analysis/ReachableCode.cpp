@@ -189,7 +189,8 @@ static bool isExpandedFromConfigurationMacro(const Stmt *S) {
 /// "sometimes unreachable" code.  Such code is usually not interesting
 /// to report as unreachable, and may mask truly unreachable code within
 /// those blocks.
-static bool isConfigurationValue(const Stmt *S) {
+static bool isConfigurationValue(const Stmt *S,
+                                 bool IncludeIntegers = true) {
   if (!S)
     return false;
 
@@ -201,7 +202,7 @@ static bool isConfigurationValue(const Stmt *S) {
       const DeclRefExpr *DR = cast<DeclRefExpr>(S);
       const ValueDecl *D = DR->getDecl();
       if (const EnumConstantDecl *ED = dyn_cast<EnumConstantDecl>(D))
-        return ED ? isConfigurationValue(ED->getInitExpr()) : false;
+        return isConfigurationValue(ED->getInitExpr());
       if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
         // As a heuristic, treat globals as configuration values.  Note
         // that we only will get here if Sema evaluated this
@@ -215,14 +216,18 @@ static bool isConfigurationValue(const Stmt *S) {
       return false;
     }
     case Stmt::IntegerLiteralClass:
-      return isExpandedFromConfigurationMacro(S);
+      return IncludeIntegers ? isExpandedFromConfigurationMacro(S)
+                             : false;
     case Stmt::UnaryExprOrTypeTraitExprClass:
       return true;
     case Stmt::BinaryOperatorClass: {
       const BinaryOperator *B = cast<BinaryOperator>(S);
-      return (B->isLogicalOp() || B->isComparisonOp()) &&
-             (isConfigurationValue(B->getLHS()) ||
-              isConfigurationValue(B->getRHS()));
+      // Only include raw integers (not enums) as configuration
+      // values if they are used in a logical or comparison operator
+      // (not arithmetic).
+      IncludeIntegers &= (B->isLogicalOp() || B->isComparisonOp());
+      return isConfigurationValue(B->getLHS(), IncludeIntegers) ||
+             isConfigurationValue(B->getRHS(), IncludeIntegers);
     }
     case Stmt::UnaryOperatorClass: {
       const UnaryOperator *UO = cast<UnaryOperator>(S);

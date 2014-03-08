@@ -175,3 +175,27 @@ void raze(const A& x);
 void test_with_unreachable_tmp_dtors(int x) {
   raze(x ? A() : A()); // no-warning
 }
+
+// Test sizeof - sizeof in enum declaration.
+enum { BrownCow = sizeof(long) - sizeof(char) };
+enum { CowBrown = 8 - 1 };
+
+
+int test_enum_sizeof_arithmetic() {
+  if (BrownCow)
+    return 1;
+  return 2;
+}
+
+int test_enum_arithmetic() {
+  if (CowBrown)
+    return 1;
+  return 2; // expected-warning {{never be executed}}
+}
+
+int test_arithmetic() {
+  if (8 -1)
+    return 1;
+  return 2; // expected-warning {{never be executed}}
+}
+
