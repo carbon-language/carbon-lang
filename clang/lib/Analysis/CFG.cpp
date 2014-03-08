@@ -3351,10 +3351,12 @@ CFGBlock *CFGBuilder::VisitCXXBindTemporaryExprForTemporaryDtors(
     // a new block for the destructor which does not have as a successor
     // anything built thus far. Control won't flow out of this block.
     const CXXDestructorDecl *Dtor = E->getTemporary()->getDestructor();
-    if (Dtor->isNoReturn())
+    if (Dtor->isNoReturn()) {
+      Succ = B;
       Block = createNoReturnBlock();
-    else
+    } else {
       autoCreateBlock();
+    }
 
     appendTemporaryDtor(Block, E);
     B = Block;
