@@ -167,16 +167,14 @@ public:
 
   // MCObjectWriter interface implementation.
 
-  void ExecutePostLayoutBinding(MCAssembler &Asm, const MCAsmLayout &Layout);
+  void ExecutePostLayoutBinding(MCAssembler &Asm,
+                                const MCAsmLayout &Layout) override;
 
-  void RecordRelocation(const MCAssembler &Asm,
-                        const MCAsmLayout &Layout,
-                        const MCFragment *Fragment,
-                        const MCFixup &Fixup,
-                        MCValue Target,
-                        uint64_t &FixedValue);
+  void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
+                        const MCFragment *Fragment, const MCFixup &Fixup,
+                        MCValue Target, uint64_t &FixedValue) override;
 
-  void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
+  void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
 };
 }
 

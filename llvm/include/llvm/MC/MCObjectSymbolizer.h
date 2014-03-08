@@ -50,10 +50,11 @@ public:
   bool tryAddingSymbolicOperand(MCInst &MI, raw_ostream &cStream,
                                 int64_t Value, uint64_t Address,
                                 bool IsBranch, uint64_t Offset,
-                                uint64_t InstSize);
+                                uint64_t InstSize) override;
 
   void tryAddingPcLoadReferenceComment(raw_ostream &cStream,
-                                       int64_t Value, uint64_t Address);
+                                       int64_t Value,
+                                       uint64_t Address) override;
   /// @}
 
   /// \brief Look for an external function symbol at \p Addr.

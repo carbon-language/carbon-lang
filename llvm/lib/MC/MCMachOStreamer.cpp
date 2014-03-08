@@ -31,7 +31,7 @@ namespace {
 
 class MCMachOStreamer : public MCObjectStreamer {
 private:
-  virtual void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo &STI);
+  void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo &STI) override;
 
   void EmitDataRegion(DataRegionData::KindTy Kind);
   void EmitDataRegionEnd();
@@ -43,52 +43,51 @@ public:
   /// @name MCStreamer Interface
   /// @{
 
-  virtual void EmitLabel(MCSymbol *Symbol);
-  virtual void EmitDebugLabel(MCSymbol *Symbol);
-  virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
-                                   MCSymbol *EHSymbol);
-  virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
-  virtual void EmitLinkerOptions(ArrayRef<std::string> Options);
-  virtual void EmitDataRegion(MCDataRegionType Kind);
-  virtual void EmitThumbFunc(MCSymbol *Func);
-  virtual bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
-  virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
-  virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
-                                unsigned ByteAlignment);
-  virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol) {
+  void EmitLabel(MCSymbol *Symbol) override;
+  void EmitDebugLabel(MCSymbol *Symbol) override;
+  void EmitEHSymAttributes(const MCSymbol *Symbol, MCSymbol *EHSymbol) override;
+  void EmitAssemblerFlag(MCAssemblerFlag Flag) override;
+  void EmitLinkerOptions(ArrayRef<std::string> Options) override;
+  void EmitDataRegion(MCDataRegionType Kind) override;
+  void EmitThumbFunc(MCSymbol *Func) override;
+  bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) override;
+  void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) override;
+  void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+                        unsigned ByteAlignment) override;
+  void BeginCOFFSymbolDef(const MCSymbol *Symbol) override {
     llvm_unreachable("macho doesn't support this directive");
   }
-  virtual void EmitCOFFSymbolStorageClass(int StorageClass) {
+  void EmitCOFFSymbolStorageClass(int StorageClass) override {
     llvm_unreachable("macho doesn't support this directive");
   }
-  virtual void EmitCOFFSymbolType(int Type) {
+  void EmitCOFFSymbolType(int Type) override {
     llvm_unreachable("macho doesn't support this directive");
   }
-  virtual void EndCOFFSymbolDef() {
+  void EndCOFFSymbolDef() override {
     llvm_unreachable("macho doesn't support this directive");
   }
-  virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
+  void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) override {
     llvm_unreachable("macho doesn't support this directive");
   }
-  virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
-                                     unsigned ByteAlignment);
-  virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
-                            uint64_t Size = 0, unsigned ByteAlignment = 0);
+  void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+                             unsigned ByteAlignment) override;
+  void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
+                    uint64_t Size = 0, unsigned ByteAlignment = 0) override;
   virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
-                              uint64_t Size, unsigned ByteAlignment = 0);
+                      uint64_t Size, unsigned ByteAlignment = 0) override;
 
-  virtual void EmitFileDirective(StringRef Filename) {
+  void EmitFileDirective(StringRef Filename) override {
     // FIXME: Just ignore the .file; it isn't important enough to fail the
     // entire assembly.
 
     // report_fatal_error("unsupported directive: '.file'");
   }
 
-  virtual void EmitIdent(StringRef IdentString) {
+  void EmitIdent(StringRef IdentString) override {
     llvm_unreachable("macho doesn't support this directive");
   }
 
-  virtual void FinishImpl();
+  void FinishImpl() override;
 };
 
 } // end anonymous namespace.

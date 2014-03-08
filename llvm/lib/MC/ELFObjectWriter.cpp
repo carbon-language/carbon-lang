@@ -248,11 +248,9 @@ class ELFObjectWriter : public MCObjectWriter {
                           const MCAsmLayout &Layout,
                           const SectionIndexMapTy &SectionIndexMap);
 
-    virtual void RecordRelocation(const MCAssembler &Asm,
-                                  const MCAsmLayout &Layout,
-                                  const MCFragment *Fragment,
-                                  const MCFixup &Fixup,
-                                  MCValue Target, uint64_t &FixedValue);
+    void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
+                          const MCFragment *Fragment, const MCFixup &Fixup,
+                          MCValue Target, uint64_t &FixedValue) override;
 
     uint64_t getSymbolIndexInSymbolTable(const MCAssembler &Asm,
                                          const MCSymbol *S);
@@ -299,8 +297,8 @@ class ELFObjectWriter : public MCObjectWriter {
                                SectionIndexMapTy &SectionIndexMap,
                                const RelMapTy &RelMap);
 
-    virtual void ExecutePostLayoutBinding(MCAssembler &Asm,
-                                          const MCAsmLayout &Layout);
+    void ExecutePostLayoutBinding(MCAssembler &Asm,
+                                  const MCAsmLayout &Layout) override;
 
     void WriteSectionHeader(MCAssembler &Asm, const GroupMapTy &GroupMap,
                             const MCAsmLayout &Layout,
@@ -319,14 +317,14 @@ class ELFObjectWriter : public MCObjectWriter {
                                   MCDataFragment *F,
                                   const MCSectionData *SD);
 
-    virtual bool
+    bool
     IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
                                            const MCSymbolData &DataA,
                                            const MCFragment &FB,
                                            bool InSet,
-                                           bool IsPCRel) const;
+                                           bool IsPCRel) const override;
 
-    virtual void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
+    void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
     void WriteSection(MCAssembler &Asm,
                       const SectionIndexMapTy &SectionIndexMap,
                       uint32_t GroupSymbolIndex,

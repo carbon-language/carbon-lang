@@ -20,13 +20,13 @@ namespace llvm {
   };
 
   class MCAsmInfoMicrosoft : public MCAsmInfoCOFF {
-    virtual void anchor();
+    void anchor() override;
   protected:
     explicit MCAsmInfoMicrosoft();
   };
 
   class MCAsmInfoGNUCOFF : public MCAsmInfoCOFF {
-    virtual void anchor();
+    void anchor() override;
   protected:
     explicit MCAsmInfoGNUCOFF();
   };
