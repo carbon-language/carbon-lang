@@ -406,7 +406,7 @@ int CustomExecutor::ExecuteProgram(const std::string &Bitcode,
 // code borrowed from:
 // http://oopweb.com/CPP/Documents/CPPHOWTO/Volume/C++Programming-HOWTO-7.html
 static void lexCommand(std::string &Message, const std::string &CommandLine,
-                       std::string &CmdPath, std::vector<std::string> Args) {
+                       std::string &CmdPath, std::vector<std::string> &Args) {
 
   std::string Command = "";
   std::string delimiters = " ";
