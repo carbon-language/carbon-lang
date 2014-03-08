@@ -1330,6 +1330,10 @@ SBThread::GetExtendedBacktraceThread (const char *type)
         }
     }
 
+    if (log && sb_origin_thread.IsValid() == false)
+    {
+        log->Printf("SBThread(%p)::GetExtendedBacktraceThread() is not returning a Valid thread", exe_ctx.GetThreadPtr());
+    }
     return sb_origin_thread;
 }
 

@@ -14,6 +14,7 @@
 #include "lldb/API/SBQueueItem.h"
 #include "lldb/API/SBThread.h"
 #include "lldb/Core/Address.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/QueueItem.h"
 #include "lldb/Target/Thread.h"
@@ -45,13 +46,20 @@ SBQueueItem::~SBQueueItem()
 bool
 SBQueueItem::IsValid() const
 {
-    return m_queue_item_sp.get() != NULL;
+    bool is_valid = m_queue_item_sp.get() != NULL;
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf("SBQueueItem(%p)::IsValid() == %s", m_queue_item_sp.get(), is_valid ? "true" : "false");
+    return is_valid;
 }
 
 
 void
 SBQueueItem::Clear ()
 {
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf("SBQueueItem(%p)::Clear()", m_queue_item_sp.get());
     m_queue_item_sp.reset();
 }
 
@@ -67,10 +75,13 @@ lldb::QueueItemKind
 SBQueueItem::GetKind () const
 {
     QueueItemKind result = eQueueItemKindUnknown;
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (m_queue_item_sp)
     {
         result = m_queue_item_sp->GetKind ();
     }
+    if (log)
+        log->Printf("SBQueueItem(%p)::GetKind() == %d", m_queue_item_sp.get(), (int) result);
     return result;
 }
 
@@ -87,9 +98,19 @@ SBAddress
 SBQueueItem::GetAddress () const
 {
     SBAddress result;
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (m_queue_item_sp)
     {
         result.SetAddress (&m_queue_item_sp->GetAddress());
+    }
+    if (log)
+    {
+        StreamString sstr;
+        const Address *addr = result.get();
+        if (addr)
+            addr->Dump (&sstr, NULL, Address::DumpStyleModuleWithFileAddress, Address::DumpStyleInvalid, 4);
+        log->Printf ("SBQueueItem(%p)::GetAddress() == SBAddress(%p): %s",
+                     m_queue_item_sp.get(), result.get(), sstr.GetData());
     }
     return result;
 }
@@ -107,6 +128,7 @@ SBThread
 SBQueueItem::GetExtendedBacktraceThread (const char *type)
 {
     SBThread result;
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (m_queue_item_sp)
     {
         ProcessSP process_sp = m_queue_item_sp->GetProcessSP();
@@ -122,6 +144,13 @@ SBQueueItem::GetExtendedBacktraceThread (const char *type)
                 // object
                 process_sp->GetExtendedThreadList().AddThread (thread_sp);
                 result.SetThread (thread_sp);
+                if (log)
+                {
+                    const char *queue_name = thread_sp->GetQueueName();
+                    if (queue_name == NULL)
+                        queue_name = "";
+                    log->Printf ("SBQueueItem(%p)::GetExtendedBacktraceThread() = new extended Thread created (%p) with queue_id 0x%" PRIx64 " queue name '%s'", m_queue_item_sp.get(), thread_sp.get(), (uint64_t) thread_sp->GetQueueID(), queue_name);
+                }
             }
         }
     }
