@@ -52,9 +52,9 @@ namespace llvm {
     // running the "Kept" passes fail when run on the output of the "removed"
     // passes.  If we return true, we update the current module of bugpoint.
     //
-    virtual TestResult doTest(std::vector<std::string> &Removed,
-                              std::vector<std::string> &Kept,
-                              std::string &Error);
+    TestResult doTest(std::vector<std::string> &Removed,
+                      std::vector<std::string> &Kept,
+                      std::string &Error) override;
   };
 }
 
@@ -110,9 +110,9 @@ namespace {
                                   bool (*testFn)(const BugDriver &, Module *))
       : BD(bd), TestFn(testFn) {}
 
-    virtual TestResult doTest(std::vector<GlobalVariable*> &Prefix,
-                              std::vector<GlobalVariable*> &Kept,
-                              std::string &Error) {
+    TestResult doTest(std::vector<GlobalVariable*> &Prefix,
+                      std::vector<GlobalVariable*> &Kept,
+                      std::string &Error) override {
       if (!Kept.empty() && TestGlobalVariables(Kept))
         return KeepSuffix;
       if (!Prefix.empty() && TestGlobalVariables(Prefix))
@@ -180,9 +180,9 @@ namespace {
                             bool (*testFn)(const BugDriver &, Module *))
       : BD(bd), TestFn(testFn) {}
 
-    virtual TestResult doTest(std::vector<Function*> &Prefix,
-                              std::vector<Function*> &Kept,
-                              std::string &Error) {
+    TestResult doTest(std::vector<Function*> &Prefix,
+                      std::vector<Function*> &Kept,
+                      std::string &Error) override {
       if (!Kept.empty() && TestFuncs(Kept))
         return KeepSuffix;
       if (!Prefix.empty() && TestFuncs(Prefix))
@@ -253,9 +253,9 @@ namespace {
                          bool (*testFn)(const BugDriver &, Module *))
       : BD(bd), TestFn(testFn) {}
 
-    virtual TestResult doTest(std::vector<const BasicBlock*> &Prefix,
-                              std::vector<const BasicBlock*> &Kept,
-                              std::string &Error) {
+    TestResult doTest(std::vector<const BasicBlock*> &Prefix,
+                      std::vector<const BasicBlock*> &Kept,
+                      std::string &Error) override {
       if (!Kept.empty() && TestBlocks(Kept))
         return KeepSuffix;
       if (!Prefix.empty() && TestBlocks(Prefix))
@@ -362,9 +362,9 @@ namespace {
                                bool (*testFn)(const BugDriver &, Module *))
       : BD(bd), TestFn(testFn) {}
 
-    virtual TestResult doTest(std::vector<const Instruction*> &Prefix,
-                              std::vector<const Instruction*> &Kept,
-                              std::string &Error) {
+    TestResult doTest(std::vector<const Instruction*> &Prefix,
+                      std::vector<const Instruction*> &Kept,
+                      std::string &Error) override {
       if (!Kept.empty() && TestInsts(Kept))
         return KeepSuffix;
       if (!Prefix.empty() && TestInsts(Prefix))

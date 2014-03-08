@@ -79,11 +79,11 @@ namespace llvm {
       : out(errs()), Differences(false), Indent(0) {}
 
     bool hadDifferences() const;
-    void enterContext(Value *L, Value *R);
-    void exitContext();
-    void log(StringRef text);
-    void logf(const LogBuilder &Log);
-    void logd(const DiffLogBuilder &Log);
+    void enterContext(Value *L, Value *R) override;
+    void exitContext() override;
+    void log(StringRef text) override;
+    void logf(const LogBuilder &Log) override;
+    void logd(const DiffLogBuilder &Log) override;
   };
 }
 

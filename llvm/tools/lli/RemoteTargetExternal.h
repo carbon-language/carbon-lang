@@ -46,9 +46,8 @@ public:
   ///
   /// @returns True on success. On failure, ErrorMsg is updated with
   ///          descriptive text of the encountered error.
-  virtual bool allocateSpace(size_t Size,
-                             unsigned Alignment,
-                             uint64_t &Address);
+  bool allocateSpace(size_t Size, unsigned Alignment,
+                     uint64_t &Address) override;
 
   /// Load data into the target address space.
   ///
@@ -58,7 +57,7 @@ public:
   ///
   /// @returns True on success. On failure, ErrorMsg is updated with
   ///          descriptive text of the encountered error.
-  virtual bool loadData(uint64_t Address, const void *Data, size_t Size);
+  bool loadData(uint64_t Address, const void *Data, size_t Size) override;
 
   /// Load code into the target address space and prepare it for execution.
   ///
@@ -68,7 +67,7 @@ public:
   ///
   /// @returns True on success. On failure, ErrorMsg is updated with
   ///          descriptive text of the encountered error.
-  virtual bool loadCode(uint64_t Address, const void *Data, size_t Size);
+  bool loadCode(uint64_t Address, const void *Data, size_t Size) override;
 
   /// Execute code in the target process. The called function is required
   /// to be of signature int "(*)(void)".
@@ -79,16 +78,16 @@ public:
   ///
   /// @returns True on success. On failure, ErrorMsg is updated with
   ///          descriptive text of the encountered error.
-  virtual bool executeCode(uint64_t Address, int &RetVal);
+  bool executeCode(uint64_t Address, int &RetVal) override;
 
   /// Minimum alignment for memory permissions. Used to separate code and
   /// data regions to make sure data doesn't get marked as code or vice
   /// versa.
   ///
   /// @returns Page alignment return value. Default of 4k.
-  virtual unsigned getPageAlignment() { return 4096; }
+  unsigned getPageAlignment() override { return 4096; }
 
-  virtual bool create() {
+  bool create() override {
     RPC.ChildName = ChildName;
     if (!RPC.createServer())
       return true;
@@ -104,7 +103,7 @@ public:
   }
 
   /// Terminate the remote process.
-  virtual void stop();
+  void stop() override;
 
   RemoteTargetExternal(std::string &Name) : RemoteTarget(), ChildName(Name) {}
   virtual ~RemoteTargetExternal() {}

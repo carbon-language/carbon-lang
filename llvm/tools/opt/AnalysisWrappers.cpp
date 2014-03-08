@@ -32,7 +32,7 @@ namespace {
   struct ExternalFunctionsPassedConstants : public ModulePass {
     static char ID; // Pass ID, replacement for typeid
     ExternalFunctionsPassedConstants() : ModulePass(ID) {}
-    virtual bool runOnModule(Module &M) {
+    bool runOnModule(Module &M) override {
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
         if (!I->isDeclaration()) continue;
 
@@ -62,7 +62,7 @@ namespace {
       return false;
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
     }
   };
@@ -78,11 +78,11 @@ namespace {
     static char ID; // Pass ID, replacement for typeid
     CallGraphPrinter() : ModulePass(ID) {}
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
       AU.addRequiredTransitive<CallGraphWrapperPass>();
     }
-    virtual bool runOnModule(Module &M) {
+    bool runOnModule(Module &M) override {
       getAnalysis<CallGraphWrapperPass>().print(errs(), &M);
       return false;
     }

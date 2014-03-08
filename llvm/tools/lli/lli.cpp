@@ -262,7 +262,7 @@ public:
   }
   virtual ~LLIObjectCache() {}
 
-  virtual void notifyObjectCompiled(const Module *M, const MemoryBuffer *Obj) {
+  void notifyObjectCompiled(const Module *M, const MemoryBuffer *Obj) override {
     const std::string ModuleID = M->getModuleIdentifier();
     std::string CacheName;
     if (!getCacheFilename(ModuleID, CacheName))
@@ -278,7 +278,7 @@ public:
     outfile.close();
   }
 
-  virtual MemoryBuffer* getObject(const Module* M) {
+  MemoryBuffer* getObject(const Module* M) override {
     const std::string ModuleID = M->getModuleIdentifier();
     std::string CacheName;
     if (!getCacheFilename(ModuleID, CacheName))

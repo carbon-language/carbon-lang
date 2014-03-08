@@ -36,7 +36,7 @@ struct FunctionPassPrinter : public FunctionPass {
     PassName = "FunctionPass Printer: " + PassToPrintName;
   }
 
-  virtual bool runOnFunction(Function &F) {
+  bool runOnFunction(Function &F) override {
     if (!QuietPass)
       Out << "Printing analysis '" << PassToPrint->getPassName()
           << "' for function '" << F.getName() << "':\n";
@@ -46,9 +46,9 @@ struct FunctionPassPrinter : public FunctionPass {
     return false;
   }
 
-  virtual const char *getPassName() const { return PassName.c_str(); }
+  const char *getPassName() const override { return PassName.c_str(); }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequiredID(PassToPrint->getTypeInfo());
     AU.setPreservesAll();
   }
@@ -69,7 +69,7 @@ struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
     PassName = "CallGraphSCCPass Printer: " + PassToPrintName;
   }
 
-  virtual bool runOnSCC(CallGraphSCC &SCC) {
+  bool runOnSCC(CallGraphSCC &SCC) override {
     if (!QuietPass)
       Out << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
 
@@ -83,9 +83,9 @@ struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
     return false;
   }
 
-  virtual const char *getPassName() const { return PassName.c_str(); }
+  const char *getPassName() const override { return PassName.c_str(); }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequiredID(PassToPrint->getTypeInfo());
     AU.setPreservesAll();
   }
@@ -106,7 +106,7 @@ struct ModulePassPrinter : public ModulePass {
     PassName = "ModulePass Printer: " + PassToPrintName;
   }
 
-  virtual bool runOnModule(Module &M) {
+  bool runOnModule(Module &M) override {
     if (!QuietPass)
       Out << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
 
@@ -115,9 +115,9 @@ struct ModulePassPrinter : public ModulePass {
     return false;
   }
 
-  virtual const char *getPassName() const { return PassName.c_str(); }
+  const char *getPassName() const override { return PassName.c_str(); }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequiredID(PassToPrint->getTypeInfo());
     AU.setPreservesAll();
   }
@@ -138,7 +138,7 @@ struct LoopPassPrinter : public LoopPass {
     PassName = "LoopPass Printer: " + PassToPrintName;
   }
 
-  virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
+  bool runOnLoop(Loop *L, LPPassManager &LPM) override {
     if (!QuietPass)
       Out << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
 
@@ -148,9 +148,9 @@ struct LoopPassPrinter : public LoopPass {
     return false;
   }
 
-  virtual const char *getPassName() const { return PassName.c_str(); }
+  const char *getPassName() const override { return PassName.c_str(); }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequiredID(PassToPrint->getTypeInfo());
     AU.setPreservesAll();
   }
@@ -171,7 +171,7 @@ struct RegionPassPrinter : public RegionPass {
     PassName = "RegionPass Printer: " + PassToPrintName;
   }
 
-  virtual bool runOnRegion(Region *R, RGPassManager &RGM) {
+  bool runOnRegion(Region *R, RGPassManager &RGM) override {
     if (!QuietPass) {
       Out << "Printing analysis '" << PassToPrint->getPassName() << "' for "
           << "region: '" << R->getNameStr() << "' in function '"
@@ -183,9 +183,9 @@ struct RegionPassPrinter : public RegionPass {
     return false;
   }
 
-  virtual const char *getPassName() const { return PassName.c_str(); }
+  const char *getPassName() const override { return PassName.c_str(); }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequiredID(PassToPrint->getTypeInfo());
     AU.setPreservesAll();
   }
@@ -206,7 +206,7 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
     PassName = "BasicBlockPass Printer: " + PassToPrintName;
   }
 
-  virtual bool runOnBasicBlock(BasicBlock &BB) {
+  bool runOnBasicBlock(BasicBlock &BB) override {
     if (!QuietPass)
       Out << "Printing Analysis info for BasicBlock '" << BB.getName()
           << "': Pass " << PassToPrint->getPassName() << ":\n";
@@ -217,9 +217,9 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
     return false;
   }
 
-  virtual const char *getPassName() const { return PassName.c_str(); }
+  const char *getPassName() const override { return PassName.c_str(); }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequiredID(PassToPrint->getTypeInfo());
     AU.setPreservesAll();
   }

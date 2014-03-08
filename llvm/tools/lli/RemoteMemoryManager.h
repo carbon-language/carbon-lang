@@ -67,45 +67,48 @@ public:
   virtual ~RemoteMemoryManager();
 
   uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                               unsigned SectionID, StringRef SectionName);
+                               unsigned SectionID,
+                               StringRef SectionName) override;
 
   uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
                                unsigned SectionID, StringRef SectionName,
-                               bool IsReadOnly);
+                               bool IsReadOnly) override;
 
   // For now, remote symbol resolution is not support in lli.  The MCJIT
   // interface does support this, but clients must provide their own
   // mechanism for finding remote symbol addresses.  MCJIT will resolve
   // symbols from Modules it contains.
-  uint64_t getSymbolAddress(const std::string &Name) { return 0; }
+  uint64_t getSymbolAddress(const std::string &Name) override { return 0; }
 
-  void notifyObjectLoaded(ExecutionEngine *EE, const ObjectImage *Obj);
+  void notifyObjectLoaded(ExecutionEngine *EE, const ObjectImage *Obj) override;
 
-  bool finalizeMemory(std::string *ErrMsg);
+  bool finalizeMemory(std::string *ErrMsg) override;
 
   // For now, remote EH frame registration isn't supported.  Remote symbol
   // resolution is a prerequisite to supporting remote EH frame registration.
-  void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) {}
-  void deregisterEHFrames(uint8_t *Addr, uint64_t LoadAddr, size_t Size) {}
+  void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr,
+                        size_t Size) override {}
+  void deregisterEHFrames(uint8_t *Addr, uint64_t LoadAddr,
+                          size_t Size) override {}
 
   // This is a non-interface function used by lli
   void setRemoteTarget(RemoteTarget *T) { Target = T; }
 
   // The following obsolete JITMemoryManager calls are stubbed out for
   // this model.
-  void setMemoryWritable();
-  void setMemoryExecutable();
-  void setPoisonMemory(bool poison);
-  void AllocateGOT();
-  uint8_t *getGOTBase() const;
-  uint8_t *startFunctionBody(const Function *F, uintptr_t &ActualSize);
+  void setMemoryWritable() override;
+  void setMemoryExecutable() override;
+  void setPoisonMemory(bool poison) override;
+  void AllocateGOT() override;
+  uint8_t *getGOTBase() const override;
+  uint8_t *startFunctionBody(const Function *F, uintptr_t &ActualSize) override;
   uint8_t *allocateStub(const GlobalValue* F, unsigned StubSize,
-                        unsigned Alignment);
+                        unsigned Alignment) override;
   void endFunctionBody(const Function *F, uint8_t *FunctionStart,
-                       uint8_t *FunctionEnd);
-  uint8_t *allocateSpace(intptr_t Size, unsigned Alignment);
-  uint8_t *allocateGlobal(uintptr_t Size, unsigned Alignment);
-  void deallocateFunctionBody(void *Body);
+                       uint8_t *FunctionEnd) override;
+  uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) override;
+  uint8_t *allocateGlobal(uintptr_t Size, unsigned Alignment) override;
+  void deallocateFunctionBody(void *Body) override;
 };
 
 } // end namespace llvm

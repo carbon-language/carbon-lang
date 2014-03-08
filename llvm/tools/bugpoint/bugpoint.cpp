@@ -101,7 +101,7 @@ namespace {
   public:
     AddToDriver(BugDriver &_D) : FunctionPassManager(0), D(_D) {}
 
-    virtual void add(Pass *P) {
+    void add(Pass *P) override {
       const void *ID = P->getPassID();
       const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(ID);
       D.addPass(PI->getPassArgument());

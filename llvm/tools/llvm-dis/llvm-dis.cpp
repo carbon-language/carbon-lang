@@ -66,11 +66,11 @@ static void printDebugLoc(const DebugLoc &DL, formatted_raw_ostream &OS) {
 class CommentWriter : public AssemblyAnnotationWriter {
 public:
   void emitFunctionAnnot(const Function *F,
-                         formatted_raw_ostream &OS) {
+                         formatted_raw_ostream &OS) override {
     OS << "; [#uses=" << F->getNumUses() << ']';  // Output # uses
     OS << '\n';
   }
-  void printInfoComment(const Value &V, formatted_raw_ostream &OS) {
+  void printInfoComment(const Value &V, formatted_raw_ostream &OS) override {
     bool Padded = false;
     if (!V.getType()->isVoidTy()) {
       OS.PadToColumn(50);

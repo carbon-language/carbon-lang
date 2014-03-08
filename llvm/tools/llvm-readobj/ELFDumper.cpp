@@ -42,18 +42,18 @@ public:
   ELFDumper(const ELFFile<ELFT> *Obj, StreamWriter &Writer)
       : ObjDumper(Writer), Obj(Obj) {}
 
-  virtual void printFileHeaders() override;
-  virtual void printSections() override;
-  virtual void printRelocations() override;
-  virtual void printSymbols() override;
-  virtual void printDynamicSymbols() override;
-  virtual void printUnwindInfo() override;
+  void printFileHeaders() override;
+  void printSections() override;
+  void printRelocations() override;
+  void printSymbols() override;
+  void printDynamicSymbols() override;
+  void printUnwindInfo() override;
 
-  virtual void printDynamicTable() override;
-  virtual void printNeededLibraries() override;
-  virtual void printProgramHeaders() override;
+  void printDynamicTable() override;
+  void printNeededLibraries() override;
+  void printProgramHeaders() override;
 
-  virtual void printAttributes() override;
+  void printAttributes() override;
 
 private:
   typedef ELFFile<ELFT> ELFO;

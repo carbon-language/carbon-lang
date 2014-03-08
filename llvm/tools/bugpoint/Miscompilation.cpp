@@ -48,9 +48,9 @@ namespace {
   public:
     ReduceMiscompilingPasses(BugDriver &bd) : BD(bd) {}
 
-    virtual TestResult doTest(std::vector<std::string> &Prefix,
-                              std::vector<std::string> &Suffix,
-                              std::string &Error);
+    TestResult doTest(std::vector<std::string> &Prefix,
+                      std::vector<std::string> &Suffix,
+                      std::string &Error) override;
   };
 }
 
@@ -183,9 +183,9 @@ namespace {
                                           std::string &))
       : BD(bd), TestFn(F) {}
 
-    virtual TestResult doTest(std::vector<Function*> &Prefix,
-                              std::vector<Function*> &Suffix,
-                              std::string &Error) {
+    TestResult doTest(std::vector<Function*> &Prefix,
+                      std::vector<Function*> &Suffix,
+                      std::string &Error) override {
       if (!Suffix.empty()) {
         bool Ret = TestFuncs(Suffix, Error);
         if (!Error.empty())
@@ -468,9 +468,9 @@ namespace {
                             const std::vector<Function*> &Fns)
       : BD(bd), TestFn(F), FunctionsBeingTested(Fns) {}
 
-    virtual TestResult doTest(std::vector<BasicBlock*> &Prefix,
-                              std::vector<BasicBlock*> &Suffix,
-                              std::string &Error) {
+    TestResult doTest(std::vector<BasicBlock*> &Prefix,
+                      std::vector<BasicBlock*> &Suffix,
+                      std::string &Error) override {
       if (!Suffix.empty()) {
         bool Ret = TestFuncs(Suffix, Error);
         if (!Error.empty())

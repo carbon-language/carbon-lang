@@ -37,11 +37,11 @@ namespace {
   struct CFGSCC : public FunctionPass {
     static char ID;  // Pass identification, replacement for typeid
     CFGSCC() : FunctionPass(ID) {}
-    bool runOnFunction(Function& func);
+    bool runOnFunction(Function& func) override;
 
-    void print(raw_ostream &O, const Module* = 0) const { }
+    void print(raw_ostream &O, const Module* = 0) const override { }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
     }
   };
@@ -51,12 +51,12 @@ namespace {
     CallGraphSCC() : ModulePass(ID) {}
 
     // run - Print out SCCs in the call graph for the specified module.
-    bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
-    void print(raw_ostream &O, const Module* = 0) const { }
+    void print(raw_ostream &O, const Module* = 0) const override { }
 
     // getAnalysisUsage - This pass requires the CallGraph.
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
       AU.addRequired<CallGraphWrapperPass>();
     }

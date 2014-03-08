@@ -29,12 +29,12 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     DomInfoPrinter() : FunctionPass(ID) {}
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
       AU.addRequired<DominatorTreeWrapperPass>();
     }
 
-    virtual bool runOnFunction(Function &F) {
+    bool runOnFunction(Function &F) override {
       getAnalysis<DominatorTreeWrapperPass>().dump();
       return false;
     }

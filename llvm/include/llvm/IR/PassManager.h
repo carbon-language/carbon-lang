@@ -205,11 +205,11 @@ template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 struct PassModel<IRUnitT, AnalysisManagerT, PassT,
                  true> : PassConcept<IRUnitT, AnalysisManagerT> {
   PassModel(PassT Pass) : Pass(std::move(Pass)) {}
-  virtual PassModel *clone() { return new PassModel(Pass); }
-  virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) {
+  PassModel *clone() override { return new PassModel(Pass); }
+  PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) override {
     return Pass.run(IR, AM);
   }
-  virtual StringRef name() { return PassT::name(); }
+  StringRef name() override { return PassT::name(); }
   PassT Pass;
 };
 
@@ -219,11 +219,11 @@ template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 struct PassModel<IRUnitT, AnalysisManagerT, PassT,
                  false> : PassConcept<IRUnitT, AnalysisManagerT> {
   PassModel(PassT Pass) : Pass(std::move(Pass)) {}
-  virtual PassModel *clone() { return new PassModel(Pass); }
-  virtual PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) {
+  PassModel *clone() override { return new PassModel(Pass); }
+  PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) override {
     return Pass.run(IR);
   }
-  virtual StringRef name() { return PassT::name(); }
+  StringRef name() override { return PassT::name(); }
   PassT Pass;
 };
 
@@ -303,12 +303,12 @@ template <typename IRUnitT, typename PassT, typename ResultT>
 struct AnalysisResultModel<IRUnitT, PassT, ResultT,
                            true> : AnalysisResultConcept<IRUnitT> {
   AnalysisResultModel(ResultT Result) : Result(std::move(Result)) {}
-  virtual AnalysisResultModel *clone() {
+  AnalysisResultModel *clone() override {
     return new AnalysisResultModel(Result);
   }
 
   /// \brief The model delegates to the \c ResultT method.
-  virtual bool invalidate(IRUnitT IR, const PreservedAnalyses &PA) {
+  bool invalidate(IRUnitT IR, const PreservedAnalyses &PA) override {
     return Result.invalidate(IR, PA);
   }
 
@@ -371,7 +371,7 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
                          false> : AnalysisPassConcept<IRUnitT,
                                                      AnalysisManagerT> {
   AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
-  virtual AnalysisPassModel *clone() { return new AnalysisPassModel(Pass); }
+  AnalysisPassModel *clone() override { return new AnalysisPassModel(Pass); }
 
   // FIXME: Replace PassT::Result with type traits when we use C++11.
   typedef AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
@@ -380,7 +380,7 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
   /// \brief The model delegates to the \c PassT::run method.
   ///
   /// The return is wrapped in an \c AnalysisResultModel.
-  virtual ResultModelT *run(IRUnitT IR, AnalysisManagerT *) {
+  ResultModelT *run(IRUnitT IR, AnalysisManagerT *) override {
     return new ResultModelT(Pass.run(IR));
   }
 

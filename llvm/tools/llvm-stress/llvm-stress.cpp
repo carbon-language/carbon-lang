@@ -288,7 +288,7 @@ protected:
 
 struct LoadModifier: public Modifier {
   LoadModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
-  virtual void Act() {
+  void Act() override {
     // Try to use predefined pointers. If non-exist, use undef pointer value;
     Value *Ptr = getRandomPointerValue();
     Value *V = new LoadInst(Ptr, "L", BB->getTerminator());
@@ -298,7 +298,7 @@ struct LoadModifier: public Modifier {
 
 struct StoreModifier: public Modifier {
   StoreModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
-  virtual void Act() {
+  void Act() override {
     // Try to use predefined pointers. If non-exist, use undef pointer value;
     Value *Ptr = getRandomPointerValue();
     Type  *Tp = Ptr->getType();
@@ -317,7 +317,7 @@ struct StoreModifier: public Modifier {
 struct BinModifier: public Modifier {
   BinModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
 
-  virtual void Act() {
+  void Act() override {
     Value *Val0 = getRandomVal();
     Value *Val1 = getRandomValue(Val0->getType());
 
@@ -360,7 +360,7 @@ struct BinModifier: public Modifier {
 /// Generate constant values.
 struct ConstModifier: public Modifier {
   ConstModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
-  virtual void Act() {
+  void Act() override {
     Type *Ty = pickType();
 
     if (Ty->isVectorTy()) {
@@ -407,7 +407,7 @@ struct ConstModifier: public Modifier {
 struct AllocaModifier: public Modifier {
   AllocaModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R){}
 
-  virtual void Act() {
+  void Act() override {
     Type *Tp = pickType();
     PT->push_back(new AllocaInst(Tp, "A", BB->getFirstNonPHI()));
   }
@@ -417,7 +417,7 @@ struct ExtractElementModifier: public Modifier {
   ExtractElementModifier(BasicBlock *BB, PieceTable *PT, Random *R):
     Modifier(BB, PT, R) {}
 
-  virtual void Act() {
+  void Act() override {
     Value *Val0 = getRandomVectorValue();
     Value *V = ExtractElementInst::Create(Val0,
              ConstantInt::get(Type::getInt32Ty(BB->getContext()),
@@ -429,7 +429,7 @@ struct ExtractElementModifier: public Modifier {
 
 struct ShuffModifier: public Modifier {
   ShuffModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
-  virtual void Act() {
+  void Act() override {
 
     Value *Val0 = getRandomVectorValue();
     Value *Val1 = getRandomValue(Val0->getType());
@@ -458,7 +458,7 @@ struct InsertElementModifier: public Modifier {
   InsertElementModifier(BasicBlock *BB, PieceTable *PT, Random *R):
     Modifier(BB, PT, R) {}
 
-  virtual void Act() {
+  void Act() override {
     Value *Val0 = getRandomVectorValue();
     Value *Val1 = getRandomValue(Val0->getType()->getScalarType());
 
@@ -473,7 +473,7 @@ struct InsertElementModifier: public Modifier {
 
 struct CastModifier: public Modifier {
   CastModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
-  virtual void Act() {
+  void Act() override {
 
     Value *V = getRandomVal();
     Type *VTy = V->getType();
@@ -560,7 +560,7 @@ struct SelectModifier: public Modifier {
   SelectModifier(BasicBlock *BB, PieceTable *PT, Random *R):
     Modifier(BB, PT, R) {}
 
-  virtual void Act() {
+  void Act() override {
     // Try a bunch of different select configuration until a valid one is found.
       Value *Val0 = getRandomVal();
       Value *Val1 = getRandomValue(Val0->getType());
@@ -583,7 +583,7 @@ struct SelectModifier: public Modifier {
 
 struct CmpModifier: public Modifier {
   CmpModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
-  virtual void Act() {
+  void Act() override {
 
     Value *Val0 = getRandomVal();
     Value *Val1 = getRandomValue(Val0->getType());

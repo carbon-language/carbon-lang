@@ -61,17 +61,18 @@ public:
   SmallVector<sys::MemoryBlock, 16> DataMemory;
 
   uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                               unsigned SectionID, StringRef SectionName);
+                               unsigned SectionID,
+                               StringRef SectionName) override;
   uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
                                unsigned SectionID, StringRef SectionName,
-                               bool IsReadOnly);
+                               bool IsReadOnly) override;
 
-  virtual void *getPointerToNamedFunction(const std::string &Name,
-                                          bool AbortOnFailure = true) {
+  void *getPointerToNamedFunction(const std::string &Name,
+                                  bool AbortOnFailure = true) override {
     return 0;
   }
 
-  bool finalizeMemory(std::string *ErrMsg) { return false; }
+  bool finalizeMemory(std::string *ErrMsg) override { return false; }
 
   // Invalidate instruction cache for sections with execute permissions.
   // Some platforms with separate data cache and instruction cache require
