@@ -1,4 +1,4 @@
-//===- llvm/unittest/ADT/OwningPtrTest.cpp - OwningPtr unit tests -----------===//
+//===- llvm/unittest/ADT/OwningPtrTest.cpp - OwningPtr unit tests ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
