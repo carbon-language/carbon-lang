@@ -501,8 +501,7 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit *TheCU,
   assert(Start->isDefined() && "Invalid starting label for an inlined scope!");
   assert(End->isDefined() && "Invalid end label for an inlined scope!");
 
-  TheCU->addLabelAddress(ScopeDIE, dwarf::DW_AT_low_pc, Start);
-  TheCU->addLabelAddress(ScopeDIE, dwarf::DW_AT_high_pc, End);
+  attachLowHighPC(TheCU, ScopeDIE, Start, End);
 
   return ScopeDIE;
 }
