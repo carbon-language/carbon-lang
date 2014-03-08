@@ -135,7 +135,7 @@ namespace llvm {
   public:
     virtual ~AsmPrinter();
 
-    const DwarfDebug *getDwarfDebug() const { return DD; }
+    DwarfDebug *getDwarfDebug() { return DD; }
 
     /// isVerbose - Return true if assembly output should contain comments.
     ///

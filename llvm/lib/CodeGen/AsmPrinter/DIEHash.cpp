@@ -13,8 +13,10 @@
 
 #define DEBUG_TYPE "dwarfdebug"
 
+#include "ByteStreamer.h"
 #include "DIEHash.h"
 #include "DIE.h"
+#include "DwarfDebug.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -279,6 +281,28 @@ void DIEHash::hashBlockData(const SmallVectorImpl<DIEValue *> &Values) {
     Hash.update((uint64_t)cast<DIEInteger>(*I)->getValue());
 }
 
+// Hash the contents of a loclistptr class.
+void DIEHash::hashLocList(const DIELocList &LocList) {
+  SmallVectorImpl<DotDebugLocEntry>::const_iterator Start =
+      AP->getDwarfDebug()->getDebugLocEntries().begin();
+  Start += LocList.getValue();
+  HashingByteStreamer Streamer(*this);
+  for (SmallVectorImpl<DotDebugLocEntry>::const_iterator
+           I = Start,
+           E = AP->getDwarfDebug()->getDebugLocEntries().end();
+       I != E; ++I) {
+    const DotDebugLocEntry &Entry = *I;
+    // Go through the entries until we hit the end of the list,
+    // which is the next empty entry.
+    if (Entry.isEmpty())
+      return;
+    else if (Entry.isMerged())
+      continue;
+    else
+      AP->getDwarfDebug()->emitDebugLocEntry(Streamer, Entry);
+  }
+}
+
 // Hash an individual attribute \param Attr based on the type of attribute and
 // the form.
 void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
@@ -333,19 +357,23 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
     break;
   case DIEValue::isBlock:
   case DIEValue::isLoc:
+  case DIEValue::isLocList:
     addULEB128('A');
     addULEB128(Attribute);
     addULEB128(dwarf::DW_FORM_block);
     if (isa<DIEBlock>(Value)) {
       addULEB128(cast<DIEBlock>(Value)->ComputeSize(AP));
       hashBlockData(cast<DIEBlock>(Value)->getValues());
-    } else {
+    } else if (isa<DIELoc>(Value)) {
       addULEB128(cast<DIELoc>(Value)->ComputeSize(AP));
       hashBlockData(cast<DIELoc>(Value)->getValues());
+    } else {
+      // We could add the block length, but that would take
+      // a bit of work and not add a lot of uniqueness
+      // to the hash in some way we could test.
+      hashLocList(*cast<DIELocList>(Value));
     }
     break;
-    // FIXME: Handle loclistptr.
-  case DIEValue::isLocList:
     // FIXME: It's uncertain whether or not we should handle this at the moment.
   case DIEValue::isExpr:
   case DIEValue::isLabel:

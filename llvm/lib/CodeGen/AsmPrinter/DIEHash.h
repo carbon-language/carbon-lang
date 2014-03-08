@@ -137,6 +137,9 @@ private:
   /// DW_FORM_exprloc.
   void hashBlockData(const SmallVectorImpl<DIEValue *> &Values);
 
+  /// \brief Hashes the contents pointed to in the .debug_loc section.
+  void hashLocList(const DIELocList &LocList);
+
   /// \brief Hashes an individual attribute.
   void hashAttribute(AttrEntry Attr, dwarf::Tag Tag);
 
