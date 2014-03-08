@@ -852,7 +852,7 @@ ObjectFilePECOFF::DumpOptCOFFHeader(Stream *s, const coff_opt_header_t& header)
     s->Printf ("  heap_reserve_size       = 0x%16.16" PRIx64 "\n", header.heap_reserve_size);
     s->Printf ("  heap_commit_size        = 0x%16.16" PRIx64 "\n", header.heap_commit_size);
     s->Printf ("  loader_flags            = 0x%8.8x\n", header.loader_flags);
-    s->Printf ("  num_data_dir_entries    = 0x%8.8zx\n", header.data_dirs.size());
+    s->Printf ("  num_data_dir_entries    = 0x%8.8x\n", (uint32_t)header.data_dirs.size());
     uint32_t i;
     for (i=0; i<header.data_dirs.size(); i++)
     {

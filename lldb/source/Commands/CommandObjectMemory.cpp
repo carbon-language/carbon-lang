@@ -685,7 +685,7 @@ protected:
             data_sp.reset (new DataBufferHeap (total_byte_size, '\0'));
             if (data_sp->GetBytes() == NULL)
             {
-                result.AppendErrorWithFormat ("can't allocate 0x%zx bytes for the memory read buffer, specify a smaller size to read", total_byte_size);
+                result.AppendErrorWithFormat ("can't allocate 0x%" PRIx32 " bytes for the memory read buffer, specify a smaller size to read", (uint32_t)total_byte_size);
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }

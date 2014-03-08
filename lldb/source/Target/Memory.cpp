@@ -9,6 +9,7 @@
 
 #include "lldb/Target/Memory.h"
 // C Includes
+#include <inttypes.h>
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
@@ -395,8 +396,8 @@ AllocatedMemoryCache::AllocatePage (uint32_t byte_size,
     Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
     {
-        log->Printf ("Process::DoAllocateMemory (byte_size = 0x%8.8zx, permissions = %s) => 0x%16.16" PRIx64,
-                     page_byte_size, 
+        log->Printf ("Process::DoAllocateMemory (byte_size = 0x%8.8" PRIx32 ", permissions = %s) => 0x%16.16" PRIx64,
+                     (uint32_t)page_byte_size, 
                      GetPermissionsAsCString(permissions), 
                      (uint64_t)addr);
     }
@@ -433,7 +434,7 @@ AllocatedMemoryCache::AllocateMemory (size_t byte_size,
     }
     Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
-        log->Printf ("AllocatedMemoryCache::AllocateMemory (byte_size = 0x%8.8zx, permissions = %s) => 0x%16.16" PRIx64, byte_size, GetPermissionsAsCString(permissions), (uint64_t)addr);
+        log->Printf ("AllocatedMemoryCache::AllocateMemory (byte_size = 0x%8.8" PRIx32 ", permissions = %s) => 0x%16.16" PRIx64, (uint32_t)byte_size, GetPermissionsAsCString(permissions), (uint64_t)addr);
     return addr;
 }
 
