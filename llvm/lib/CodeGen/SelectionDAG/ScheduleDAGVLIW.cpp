@@ -80,7 +80,7 @@ public:
     delete AvailableQueue;
   }
 
-  void Schedule();
+  void Schedule() override;
 
 private:
   void releaseSucc(SUnit *SU, const SDep &D);

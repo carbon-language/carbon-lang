@@ -409,7 +409,7 @@ public:
   explicit WorkListRemover(DAGCombiner &dc)
     : SelectionDAG::DAGUpdateListener(dc.getDAG()), DC(dc) {}
 
-  virtual void NodeDeleted(SDNode *N, SDNode *E) {
+  void NodeDeleted(SDNode *N, SDNode *E) override {
     DC.removeFromWorkList(N);
   }
 };

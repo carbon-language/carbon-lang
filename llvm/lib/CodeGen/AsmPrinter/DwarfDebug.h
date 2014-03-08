@@ -702,19 +702,19 @@ public:
   void beginModule();
 
   /// \brief Emit all Dwarf sections that should come after the content.
-  void endModule();
+  void endModule() override;
 
   /// \brief Gather pre-function debug information.
-  void beginFunction(const MachineFunction *MF);
+  void beginFunction(const MachineFunction *MF) override;
 
   /// \brief Gather and emit post-function debug information.
-  void endFunction(const MachineFunction *MF);
+  void endFunction(const MachineFunction *MF) override;
 
   /// \brief Process beginning of an instruction.
-  void beginInstruction(const MachineInstr *MI);
+  void beginInstruction(const MachineInstr *MI) override;
 
   /// \brief Process end of an instruction.
-  void endInstruction();
+  void endInstruction() override;
 
   /// \brief Add a DIE to the set of types that we're going to pull into
   /// type units.
@@ -726,7 +726,7 @@ public:
 
   /// \brief For symbols that have a size designated (e.g. common symbols),
   /// this tracks that size.
-  void setSymbolSize(const MCSymbol *Sym, uint64_t Size) {
+  void setSymbolSize(const MCSymbol *Sym, uint64_t Size) override {
     SymSize[Sym] = Size;
   }
 

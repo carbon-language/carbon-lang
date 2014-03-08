@@ -117,13 +117,13 @@ namespace llvm {
     virtual MachineBasicBlock*
     EmitSchedule(MachineBasicBlock::iterator &InsertPos);
 
-    virtual void dumpNode(const SUnit *SU) const;
+    void dumpNode(const SUnit *SU) const override;
 
     void dumpSchedule() const;
 
-    virtual std::string getGraphNodeLabel(const SUnit *SU) const;
+    std::string getGraphNodeLabel(const SUnit *SU) const override;
 
-    virtual std::string getDAGName() const;
+    std::string getDAGName() const override;
 
     virtual void getCustomGraphFeatures(GraphWriter<ScheduleDAG*> &GW) const;
 

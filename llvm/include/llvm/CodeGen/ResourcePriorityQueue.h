@@ -81,17 +81,17 @@ namespace llvm {
       delete ResourcesModel;
     }
 
-    bool isBottomUp() const { return false; }
+    bool isBottomUp() const override { return false; }
 
-    void initNodes(std::vector<SUnit> &sunits);
+    void initNodes(std::vector<SUnit> &sunits) override;
 
-    void addNode(const SUnit *SU) {
+    void addNode(const SUnit *SU) override {
       NumNodesSolelyBlocking.resize(SUnits->size(), 0);
     }
 
-    void updateNode(const SUnit *SU) {}
+    void updateNode(const SUnit *SU) override {}
 
-    void releaseState() {
+    void releaseState() override {
       SUnits = 0;
     }
 
@@ -116,18 +116,18 @@ namespace llvm {
     signed regPressureDelta(SUnit *SU, bool RawPressure = false);
     signed rawRegPressureDelta (SUnit *SU, unsigned RCId);
 
-    bool empty() const { return Queue.empty(); }
+    bool empty() const override { return Queue.empty(); }
 
-    virtual void push(SUnit *U);
+    void push(SUnit *U) override;
 
-    virtual SUnit *pop();
+    SUnit *pop() override;
 
-    virtual void remove(SUnit *SU);
+    void remove(SUnit *SU) override;
 
-    virtual void dump(ScheduleDAG* DAG) const;
+    void dump(ScheduleDAG* DAG) const override;
 
     /// scheduledNode - Main resource tracking point.
-    void scheduledNode(SUnit *Node);
+    void scheduledNode(SUnit *Node) override;
     bool isResourceAvailable(SUnit *SU);
     void reserveResources(SUnit *SU);
 

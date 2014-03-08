@@ -36,7 +36,7 @@ class AsmLexer : public MCAsmLexer {
 
 protected:
   /// LexToken - Read the next token and return its code.
-  virtual AsmToken LexToken();
+  AsmToken LexToken() override;
 
 public:
   AsmLexer(const MCAsmInfo &MAI);
@@ -44,10 +44,10 @@ public:
 
   void setBuffer(const MemoryBuffer *buf, const char *ptr = NULL);
 
-  virtual StringRef LexUntilEndOfStatement();
+  StringRef LexUntilEndOfStatement() override;
   StringRef LexUntilEndOfLine();
 
-  virtual const AsmToken peekTok(bool ShouldSkipSpace = true);
+  const AsmToken peekTok(bool ShouldSkipSpace = true) override;
 
   bool isAtStartOfComment(char Char);
   bool isAtStatementSeparator(const char *Ptr);

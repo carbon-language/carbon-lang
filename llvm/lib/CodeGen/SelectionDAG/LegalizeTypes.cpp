@@ -634,7 +634,7 @@ namespace {
       : SelectionDAG::DAGUpdateListener(dtl.getDAG()),
         DTL(dtl), NodesToAnalyze(nta) {}
 
-    virtual void NodeDeleted(SDNode *N, SDNode *E) {
+    void NodeDeleted(SDNode *N, SDNode *E) override {
       assert(N->getNodeId() != DAGTypeLegalizer::ReadyToProcess &&
              N->getNodeId() != DAGTypeLegalizer::Processed &&
              "Invalid node ID for RAUW deletion!");
@@ -655,7 +655,7 @@ namespace {
         NodesToAnalyze.insert(E);
     }
 
-    virtual void NodeUpdated(SDNode *N) {
+    void NodeUpdated(SDNode *N) override {
       // Node updates can mean pretty much anything.  It is possible that an
       // operand was set to something already processed (f.e.) in which case
       // this node could become ready.  Recompute its flags.

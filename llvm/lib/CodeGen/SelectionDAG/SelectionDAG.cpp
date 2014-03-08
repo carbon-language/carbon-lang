@@ -5674,7 +5674,7 @@ class RAUWUpdateListener : public SelectionDAG::DAGUpdateListener {
   SDNode::use_iterator &UI;
   SDNode::use_iterator &UE;
 
-  virtual void NodeDeleted(SDNode *N, SDNode *E) {
+  void NodeDeleted(SDNode *N, SDNode *E) override {
     // Increment the iterator as needed.
     while (UI != UE && N == *UI)
       ++UI;

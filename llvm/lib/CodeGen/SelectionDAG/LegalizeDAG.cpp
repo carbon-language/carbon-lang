@@ -152,10 +152,10 @@ private:
 
 public:
   // DAGUpdateListener implementation.
-  virtual void NodeDeleted(SDNode *N, SDNode *E) {
+  void NodeDeleted(SDNode *N, SDNode *E) override {
     ForgetNode(N);
   }
-  virtual void NodeUpdated(SDNode *N) {}
+  void NodeUpdated(SDNode *N) override {}
 
   // Node replacement helpers
   void ReplacedNode(SDNode *N) {

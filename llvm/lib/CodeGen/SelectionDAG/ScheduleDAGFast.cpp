@@ -80,7 +80,7 @@ public:
   ScheduleDAGFast(MachineFunction &mf)
     : ScheduleDAGSDNodes(mf) {}
 
-  void Schedule();
+  void Schedule() override;
 
   /// AddPred - adds a predecessor edge to SUnit SU.
   /// This returns true if this is a new predecessor.
@@ -107,7 +107,7 @@ private:
   void ListScheduleBottomUp();
 
   /// forceUnitLatencies - The fast scheduler doesn't care about real latencies.
-  bool forceUnitLatencies() const { return true; }
+  bool forceUnitLatencies() const override { return true; }
 };
 }  // end anonymous namespace
 
@@ -646,9 +646,10 @@ class ScheduleDAGLinearize : public ScheduleDAGSDNodes {
 public:
   ScheduleDAGLinearize(MachineFunction &mf) : ScheduleDAGSDNodes(mf) {}
 
-  void Schedule();
+  void Schedule() override;
 
-  MachineBasicBlock *EmitSchedule(MachineBasicBlock::iterator &InsertPos);
+  MachineBasicBlock *
+    EmitSchedule(MachineBasicBlock::iterator &InsertPos) override;
 
 private:
   std::vector<SDNode*> Sequence;

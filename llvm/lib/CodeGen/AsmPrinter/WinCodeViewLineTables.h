@@ -122,22 +122,22 @@ public:
       free(I->second);
   }
 
-  virtual void setSymbolSize(const llvm::MCSymbol *, uint64_t) {}
+  void setSymbolSize(const llvm::MCSymbol *, uint64_t) override {}
 
   /// \brief Emit the COFF section that holds the line table information.
-  virtual void endModule();
+  void endModule() override;
 
   /// \brief Gather pre-function debug information.
-  virtual void beginFunction(const MachineFunction *MF);
+  void beginFunction(const MachineFunction *MF) override;
 
   /// \brief Gather post-function debug information.
-  virtual void endFunction(const MachineFunction *);
+  void endFunction(const MachineFunction *) override;
 
   /// \brief Process beginning of an instruction.
-  virtual void beginInstruction(const MachineInstr *MI);
+  void beginInstruction(const MachineInstr *MI) override;
 
   /// \brief Process end of an instruction.
-  virtual void endInstruction() {}
+  void endInstruction() override {}
 };
 } // End of namespace llvm
 

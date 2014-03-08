@@ -33,8 +33,8 @@ namespace {
 
   class OcamlGCMetadataPrinter : public GCMetadataPrinter {
   public:
-    void beginAssembly(AsmPrinter &AP);
-    void finishAssembly(AsmPrinter &AP);
+    void beginAssembly(AsmPrinter &AP) override;
+    void finishAssembly(AsmPrinter &AP) override;
   };
 
 }

@@ -803,7 +803,7 @@ public:
   /// NodeDeleted - Handle nodes deleted from the graph. If the node being
   /// deleted is the current ISelPosition node, update ISelPosition.
   ///
-  virtual void NodeDeleted(SDNode *N, SDNode *E) {
+  void NodeDeleted(SDNode *N, SDNode *E) override {
     if (ISelPosition == SelectionDAG::allnodes_iterator(N))
       ++ISelPosition;
   }

@@ -265,19 +265,19 @@ public:
 
   /// EmitValue - Emit integer of appropriate size.
   ///
-  virtual void EmitValue(AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(AsmPrinter *AP, dwarf::Form Form) const override;
 
   uint64_t getValue() const { return Integer; }
 
   /// SizeOf - Determine size of integer value in bytes.
   ///
-  virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const override;
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEValue *I) { return I->getType() == isInteger; }
 
 #ifndef NDEBUG
-  virtual void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const override;
 #endif
 };
 
@@ -292,7 +292,7 @@ public:
 
   /// EmitValue - Emit expression value.
   ///
-  virtual void EmitValue(AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(AsmPrinter *AP, dwarf::Form Form) const override;
 
   /// getValue - Get MCExpr.
   ///
@@ -300,13 +300,13 @@ public:
 
   /// SizeOf - Determine size of expression value in bytes.
   ///
-  virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const override;
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEValue *E) { return E->getType() == isExpr; }
 
 #ifndef NDEBUG
-  virtual void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const override;
 #endif
 };
 
@@ -321,7 +321,7 @@ public:
 
   /// EmitValue - Emit label value.
   ///
-  virtual void EmitValue(AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(AsmPrinter *AP, dwarf::Form Form) const override;
 
   /// getValue - Get MCSymbol.
   ///
@@ -329,13 +329,13 @@ public:
 
   /// SizeOf - Determine size of label value in bytes.
   ///
-  virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const override;
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEValue *L) { return L->getType() == isLabel; }
 
 #ifndef NDEBUG
-  virtual void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const override;
 #endif
 };
 
@@ -352,17 +352,17 @@ public:
 
   /// EmitValue - Emit delta value.
   ///
-  virtual void EmitValue(AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(AsmPrinter *AP, dwarf::Form Form) const override;
 
   /// SizeOf - Determine size of delta value in bytes.
   ///
-  virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const override;
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEValue *D) { return D->getType() == isDelta; }
 
 #ifndef NDEBUG
-  virtual void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const override;
 #endif
 };
 
@@ -382,17 +382,17 @@ public:
 
   /// EmitValue - Emit delta value.
   ///
-  virtual void EmitValue(AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(AsmPrinter *AP, dwarf::Form Form) const override;
 
   /// SizeOf - Determine size of delta value in bytes.
   ///
-  virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const override;
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEValue *D) { return D->getType() == isString; }
 
 #ifndef NDEBUG
-  virtual void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const override;
 #endif
 };
 
@@ -412,11 +412,11 @@ public:
 
   /// EmitValue - Emit debug information entry offset.
   ///
-  virtual void EmitValue(AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(AsmPrinter *AP, dwarf::Form Form) const override;
 
   /// SizeOf - Determine size of debug information entry in bytes.
   ///
-  virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
+   unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const override {
     return Form == dwarf::DW_FORM_ref_addr ? getRefAddrSize(AP)
                                            : sizeof(int32_t);
   }
@@ -428,7 +428,7 @@ public:
   static bool classof(const DIEValue *E) { return E->getType() == isEntry; }
 
 #ifndef NDEBUG
-  virtual void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const override;
 #endif
 };
 
@@ -442,10 +442,10 @@ public:
       : DIEValue(isTypeSignature), Unit(Unit) {}
 
   /// \brief Emit type unit signature.
-  virtual void EmitValue(AsmPrinter *Asm, dwarf::Form Form) const;
+  void EmitValue(AsmPrinter *Asm, dwarf::Form Form) const override;
 
   /// Returns size of a ref_sig8 entry.
-  virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
+  unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const override {
     assert(Form == dwarf::DW_FORM_ref_sig8);
     return 8;
   }
@@ -455,7 +455,7 @@ public:
     return E->getType() == isTypeSignature;
   }
 #ifndef NDEBUG
-  virtual void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const override;
   void dump() const;
 #endif
 };
@@ -489,17 +489,17 @@ public:
 
   /// EmitValue - Emit location data.
   ///
-  virtual void EmitValue(AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(AsmPrinter *AP, dwarf::Form Form) const override;
 
   /// SizeOf - Determine size of location data in bytes.
   ///
-  virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const override;
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEValue *E) { return E->getType() == isLoc; }
 
 #ifndef NDEBUG
-  virtual void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const override;
 #endif
 };
 
@@ -529,17 +529,17 @@ public:
 
   /// EmitValue - Emit location data.
   ///
-  virtual void EmitValue(AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(AsmPrinter *AP, dwarf::Form Form) const override;
 
   /// SizeOf - Determine size of location data in bytes.
   ///
-  virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const override;
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEValue *E) { return E->getType() == isBlock; }
 
 #ifndef NDEBUG
-  virtual void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const override;
 #endif
 };
 
@@ -559,17 +559,17 @@ public:
 
   /// EmitValue - Emit location data.
   ///
-  virtual void EmitValue(AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(AsmPrinter *AP, dwarf::Form Form) const override;
 
   /// SizeOf - Determine size of location data in bytes.
   ///
-  virtual unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(AsmPrinter *AP, dwarf::Form Form) const override;
 
   // Implement isa/cast/dyncast.
   static bool classof(const DIEValue *E) { return E->getType() == isLocList; }
 
 #ifndef NDEBUG
-  virtual void print(raw_ostream &O) const;
+  void print(raw_ostream &O) const override;
 #endif
 };
 

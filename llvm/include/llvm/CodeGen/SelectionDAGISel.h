@@ -60,9 +60,9 @@ public:
     return TM.getTargetLowering();
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
   virtual void EmitFunctionEntryCode() {}
 
