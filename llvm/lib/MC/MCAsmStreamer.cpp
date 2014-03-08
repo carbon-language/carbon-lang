@@ -102,7 +102,7 @@ public:
   void AddComment(const Twine &T) override;
 
   /// AddEncodingComment - Add a comment showing the encoding of an instruction.
-  virtual void AddEncodingComment(const MCInst &Inst, const MCSubtargetInfo &);
+  void AddEncodingComment(const MCInst &Inst, const MCSubtargetInfo &);
 
   /// GetCommentOS - Return a raw_ostream that comments can be written to.
   /// Unlike AddComment, you are required to terminate comments with \n if you
