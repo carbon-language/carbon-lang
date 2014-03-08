@@ -98,8 +98,8 @@ public:
                             // by linker
     mergeAsWeakAndAddressUsed, // Is C++ definition inline definition whose
                                // address was taken.
-    mergeByContent,         // Merge with other constants with same content
     mergeSameNameAndSize,   // Another atom with different size is error
+    mergeByContent,         // Merge with other constants with same content.
   };
 
   enum ContentType {

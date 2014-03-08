@@ -113,6 +113,8 @@ static MergeResolution mergeCases[][5] = {
 
 static MergeResolution mergeSelect(DefinedAtom::Merge first,
                                    DefinedAtom::Merge second) {
+  assert(first != DefinedAtom::mergeByContent);
+  assert(second != DefinedAtom::mergeByContent);
   return mergeCases[first][second];
 }
 
