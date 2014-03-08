@@ -397,9 +397,11 @@ const Stmt *DeadCodeScan::findDeadCode(const clang::CFGBlock *Block) {
     }
 
   if (CFGTerminator T = Block->getTerminator()) {
-    const Stmt *S = T.getStmt();
-    if (isValidDeadStmt(S))
-      return S;
+    if (!T.isTemporaryDtorsBranch()) {
+      const Stmt *S = T.getStmt();
+      if (isValidDeadStmt(S))
+        return S;
+    }
   }
 
   return 0;
