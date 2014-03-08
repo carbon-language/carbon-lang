@@ -3996,15 +3996,17 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       }
       
       StringRef Name = Blob;
-      SubmoduleID GlobalID = getGlobalSubmoduleID(F, Record[0]);
-      SubmoduleID Parent = getGlobalSubmoduleID(F, Record[1]);
-      bool IsFramework = Record[2];
-      bool IsExplicit = Record[3];
-      bool IsSystem = Record[4];
-      bool InferSubmodules = Record[5];
-      bool InferExplicitSubmodules = Record[6];
-      bool InferExportWildcard = Record[7];
-      bool ConfigMacrosExhaustive = Record[8];
+      unsigned Idx = 0;
+      SubmoduleID GlobalID = getGlobalSubmoduleID(F, Record[Idx++]);
+      SubmoduleID Parent = getGlobalSubmoduleID(F, Record[Idx++]);
+      bool IsFramework = Record[Idx++];
+      bool IsExplicit = Record[Idx++];
+      bool IsSystem = Record[Idx++];
+      bool IsExternC = Record[Idx++];
+      bool InferSubmodules = Record[Idx++];
+      bool InferExplicitSubmodules = Record[Idx++];
+      bool InferExportWildcard = Record[Idx++];
+      bool ConfigMacrosExhaustive = Record[Idx++];
 
       Module *ParentModule = 0;
       if (Parent)
@@ -4040,6 +4042,7 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       
       CurrentModule->IsFromModuleFile = true;
       CurrentModule->IsSystem = IsSystem || CurrentModule->IsSystem;
+      CurrentModule->IsExternC = IsExternC;
       CurrentModule->InferSubmodules = InferSubmodules;
       CurrentModule->InferExplicitSubmodules = InferExplicitSubmodules;
       CurrentModule->InferExportWildcard = InferExportWildcard;

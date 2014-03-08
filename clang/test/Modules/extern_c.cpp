@@ -9,6 +9,12 @@
 // RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_CXX
 // RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_C -DEXTERN_CXX
 // RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_C -DNAMESPACE
+// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs -x c %s
+// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs/elsewhere -I %S/Inputs %s -DEXTERN_C -DINDIRECT
+
+#ifdef INDIRECT
+#include "c-header-indirect.h"
+#endif
 
 #ifdef NAMESPACE
 namespace M {
@@ -34,7 +40,7 @@ extern "C++" {
 // expected-error@-3 {{import of C++ module 'cxx_library' appears within extern "C" language linkage specification}}
 // expected-note@-17 {{extern "C" language linkage specification begins here}}
 #elif defined(NAMESPACE)
-// expected-error-re@-6 {{import of module '{{c_library|cxx_library}}' appears within namespace 'M'}}
+// expected-error-re@-6 {{import of module '{{c_library.inner|cxx_library}}' appears within namespace 'M'}}
 // expected-note@-24 {{namespace 'M' begins here}}
 #endif
 
@@ -51,16 +57,25 @@ extern "C++" {
 using namespace M;
 #endif
 
+#ifdef __cplusplus
 namespace N {
-  int k = f();
+#endif
+  void g() {
+    int k = f();
+  }
 
+#ifdef __cplusplus
   extern "C" {
+#endif
     int f;
 #if !defined(CXX_HEADER)
     // expected-error@-2 {{redefinition of 'f' as different kind of symbol}}
     // expected-note@c-header.h:1 {{previous}}
 #endif
+
+#ifdef __cplusplus
   }
 }
+#endif
 
-suppress_expected_no_diagnostics_error; // expected-error {{}}
+suppress_expected_no_diagnostics_error error_here; // expected-error {{}}
