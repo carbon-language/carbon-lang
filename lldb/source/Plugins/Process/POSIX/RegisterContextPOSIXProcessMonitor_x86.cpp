@@ -347,12 +347,12 @@ RegisterContextPOSIXProcessMonitor_x86_64::ReadAllRegisterValues(DataBufferSP &d
 
         if (success)
         {
-            ::memcpy (dst, &m_gpr_x86_64, GetGPRSize());
-            dst += GetGPRSize();
+          ::memcpy (dst, &m_gpr_x86_64, GetGPRSize());
+          dst += GetGPRSize();
+          if (GetFPRType() == eFXSAVE)
+              ::memcpy (dst, &m_fpr.xstate.fxsave, sizeof(m_fpr.xstate.fxsave));
         }
-        if (GetFPRType() == eFXSAVE)
-            ::memcpy (dst, &m_fpr.xstate.fxsave, sizeof(m_fpr.xstate.fxsave));
-        
+
         if (GetFPRType() == eXSAVE)
         {
             ByteOrder byte_order = GetByteOrder();
