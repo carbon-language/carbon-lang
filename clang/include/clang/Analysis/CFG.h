@@ -615,7 +615,7 @@ public:
 
   // Manipulation of block contents
 
-  void setTerminator(Stmt *Statement) { Terminator = Statement; }
+  void setTerminator(CFGTerminator Term) { Terminator = Term; }
   void setLabel(Stmt *Statement) { Label = Statement; }
   void setLoopTarget(const Stmt *loopTarget) { LoopTarget = loopTarget; }
   void setHasNoReturnElement() { HasNoReturnElement = true; }

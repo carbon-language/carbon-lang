@@ -261,7 +261,7 @@ void test_noreturn2() {
 // CHECK:   [B3]
 // CHECK:     1: [B5.8] && [B4.5]
 // CHECK:     2: [B5.3]([B3.1])
-// CHECK:     T: [B5.8] && ...
+// CHECK:     T: (Temp Dtor) [B5.8] && ...
 // CHECK:     Preds (2): B4 B5
 // CHECK:     Succs (2): B2 B1
 // CHECK:   [B4]
@@ -291,7 +291,7 @@ void test_noreturn2() {
 // CHECK:   [B7]
 // CHECK:     1: [B9.5] && [B8.5]
 // CHECK:     2: bool a = A() && B();
-// CHECK:     T: [B9.5] && ...
+// CHECK:     T: (Temp Dtor) [B9.5] && ...
 // CHECK:     Preds (2): B8 B9
 // CHECK:     Succs (2): B6 B5
 // CHECK:   [B8]
@@ -327,7 +327,7 @@ void test_noreturn2() {
 // CHECK:   [B3]
 // CHECK:     1: [B5.8] || [B4.5]
 // CHECK:     2: [B5.3]([B3.1])
-// CHECK:     T: [B5.8] || ...
+// CHECK:     T: (Temp Dtor) [B5.8] || ...
 // CHECK:     Preds (2): B4 B5
 // CHECK:     Succs (2): B1 B2
 // CHECK:   [B4]
@@ -357,7 +357,7 @@ void test_noreturn2() {
 // CHECK:   [B7]
 // CHECK:     1: [B9.5] || [B8.5]
 // CHECK:     2: bool a = A() || B();
-// CHECK:     T: [B9.5] || ...
+// CHECK:     T: (Temp Dtor) [B9.5] || ...
 // CHECK:     Preds (2): B8 B9
 // CHECK:     Succs (2): B5 B6
 // CHECK:   [B8]
@@ -429,7 +429,7 @@ void test_noreturn2() {
 // CHECK:     3: [B7.2]
 // CHECK:     4: [B7.3] (CXXConstructExpr, class A)
 // CHECK:     5: A a = B() ? A() : A(B());
-// CHECK:     T: [B10.5] ? ... : ...
+// CHECK:     T: (Temp Dtor) [B10.5] ? ... : ...
 // CHECK:     Preds (2): B8 B9
 // CHECK:     Succs (2): B5 B6
 // CHECK:   [B8]
@@ -495,7 +495,7 @@ void test_noreturn2() {
 // CHECK:     2: [B4.1] (ImplicitCastExpr, NoOp, const class A)
 // CHECK:     3: [B4.2]
 // CHECK:     4: [B7.3]([B4.3])
-// CHECK:     T: [B7.8] ? ... : ...
+// CHECK:     T: (Temp Dtor) [B7.8] ? ... : ...
 // CHECK:     Preds (2): B5 B6
 // CHECK:     Succs (2): B2 B3
 // CHECK:   [B5]
@@ -552,7 +552,7 @@ void test_noreturn2() {
 // CHECK:     2: [B10.1] (ImplicitCastExpr, NoOp, const class A)
 // CHECK:     3: [B10.2]
 // CHECK:     4: const A &a = B() ? A() : A(B());
-// CHECK:     T: [B13.5] ? ... : ...
+// CHECK:     T: (Temp Dtor) [B13.5] ? ... : ...
 // CHECK:     Preds (2): B11 B12
 // CHECK:     Succs (2): B8 B9
 // CHECK:   [B11]
@@ -616,7 +616,7 @@ void test_noreturn2() {
 // CHECK:     3: [B4.2]
 // CHECK:     4: [B4.3] (CXXConstructExpr, class A)
 // CHECK:     5: A a = A() ?: A();
-// CHECK:     T: [B7.5] ? ... : ...
+// CHECK:     T: (Temp Dtor) [B7.5] ? ... : ...
 // CHECK:     Preds (2): B5 B6
 // CHECK:     Succs (2): B2 B3
 // CHECK:   [B5]
@@ -668,7 +668,7 @@ void test_noreturn2() {
 // CHECK:     2: [B4.1] (ImplicitCastExpr, NoOp, const class A)
 // CHECK:     3: [B4.2]
 // CHECK:     4: [B7.3]([B4.3])
-// CHECK:     T: [B7.8] ? ... : ...
+// CHECK:     T: (Temp Dtor) [B7.8] ? ... : ...
 // CHECK:     Preds (2): B5 B6
 // CHECK:     Succs (2): B2 B3
 // CHECK:   [B5]
@@ -708,7 +708,7 @@ void test_noreturn2() {
 // CHECK:     2: [B9.1] (ImplicitCastExpr, NoOp, const class A)
 // CHECK:     3: [B9.2]
 // CHECK:     4: const A &a = A() ?: A();
-// CHECK:     T: [B12.5] ? ... : ...
+// CHECK:     T: (Temp Dtor) [B12.5] ? ... : ...
 // CHECK:     Preds (2): B10 B11
 // CHECK:     Succs (2): B7 B8
 // CHECK:   [B10]

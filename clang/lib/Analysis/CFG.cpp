@@ -3405,6 +3405,7 @@ CFGBlock *CFGBuilder::VisitConditionalOperatorForTemporaryDtors(
 
   Block = createBlock(false);
   Block->setTerminator(CFGTerminator(E, true));
+  assert(Block->getTerminator().isTemporaryDtorsBranch());
 
   // See if this is a known constant.
   const TryResult &KnownVal = tryEvaluateBool(E->getCond());
@@ -3766,6 +3767,13 @@ public:
   void VisitExpr(Expr *E) {
     E->printPretty(OS, Helper, Policy);
   }
+
+public:
+  void print(CFGTerminator T) {
+    if (T.isTemporaryDtorsBranch())
+      OS << "(Temp Dtor) ";
+    Visit(T.getStmt());
+  }
 };
 } // end anonymous namespace
 
@@ -3969,7 +3977,7 @@ static void print_block(raw_ostream &OS, const CFG* cfg,
 
     PrintingPolicy PP(Helper.getLangOpts());
     CFGBlockTerminatorPrint TPrinter(OS, &Helper, PP);
-    TPrinter.Visit(const_cast<Stmt*>(B.getTerminator().getStmt()));
+    TPrinter.print(B.getTerminator());
     OS << '\n';
     
     if (ShowColors)
@@ -4107,7 +4115,7 @@ void CFGBlock::print(raw_ostream &OS, const CFG* cfg,
 void CFGBlock::printTerminator(raw_ostream &OS,
                                const LangOptions &LO) const {
   CFGBlockTerminatorPrint TPrinter(OS, NULL, PrintingPolicy(LO));
-  TPrinter.Visit(const_cast<Stmt*>(getTerminator().getStmt()));
+  TPrinter.print(getTerminator());
 }
 
 Stmt *CFGBlock::getTerminatorCondition() {
