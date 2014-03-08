@@ -1,4 +1,4 @@
-// RUN: %clangxx --verify-debug-info -O0 -g %s -c -o %t.o
+// RUN: %clangxx -O0 -g %s -c -o %t.o
 // RUN: %clangxx %t.o -o %t.out
 // RUN: %test_debuginfo %s %t.out 
 // Radar 8775834
