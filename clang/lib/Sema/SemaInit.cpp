@@ -441,26 +441,22 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
                               Entity, ILE, RequiresSecondPass);
     else if (RDecl->isUnion() && isa<CXXRecordDecl>(RDecl) &&
              cast<CXXRecordDecl>(RDecl)->hasInClassInitializer()) {
-      for (RecordDecl::field_iterator Field = RDecl->field_begin(),
-                                      FieldEnd = RDecl->field_end();
-           Field != FieldEnd; ++Field) {
+      for (auto *Field : RDecl->fields()) {
         if (Field->hasInClassInitializer()) {
-          FillInValueInitForField(0, *Field, Entity, ILE, RequiresSecondPass);
+          FillInValueInitForField(0, Field, Entity, ILE, RequiresSecondPass);
           break;
         }
       }
     } else {
       unsigned Init = 0;
-      for (RecordDecl::field_iterator Field = RDecl->field_begin(),
-                                      FieldEnd = RDecl->field_end();
-           Field != FieldEnd; ++Field) {
+      for (auto *Field : RDecl->fields()) {
         if (Field->isUnnamedBitfield())
           continue;
 
         if (hadError)
           return;
 
-        FillInValueInitForField(Init, *Field, Entity, ILE, RequiresSecondPass);
+        FillInValueInitForField(Init, Field, Entity, ILE, RequiresSecondPass);
         if (hadError)
           return;
 
@@ -587,13 +583,10 @@ int InitListChecker::numArrayElements(QualType DeclType) {
 int InitListChecker::numStructUnionElements(QualType DeclType) {
   RecordDecl *structDecl = DeclType->getAs<RecordType>()->getDecl();
   int InitializableMembers = 0;
-  for (RecordDecl::field_iterator
-         Field = structDecl->field_begin(),
-         FieldEnd = structDecl->field_end();
-       Field != FieldEnd; ++Field) {
+  for (const auto *Field : structDecl->fields())
     if (!Field->isUnnamedBitfield())
       ++InitializableMembers;
-  }
+
   if (structDecl->isUnion())
     return std::min(InitializableMembers, 1);
   return InitializableMembers - structDecl->hasFlexibleArrayMember();
@@ -2293,8 +2286,7 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
     if (RDecl->isUnion())
       NumElements = 1;
     else
-      NumElements = std::distance(RDecl->field_begin(),
-                                  RDecl->field_end());
+      NumElements = llvm::distance(RDecl->fields());
   }
 
   Result->reserveInits(SemaRef.Context, NumElements);
@@ -5468,9 +5460,7 @@ static void performLifetimeExtension(Expr *Init, const ValueDecl *ExtendingD) {
         performReferenceExtension(ILE->getInit(0), ExtendingD);
       else {
         unsigned Index = 0;
-        for (RecordDecl::field_iterator I = RD->field_begin(),
-                                        E = RD->field_end();
-             I != E; ++I) {
+        for (const auto *I : RD->fields()) {
           if (Index >= ILE->getNumInits())
             break;
           if (I->isUnnamedBitfield())
@@ -6263,8 +6253,7 @@ static bool DiagnoseUninitializedReference(Sema &S, SourceLocation Loc,
   if (!RD || !RD->hasUninitializedReferenceMember())
     return false;
 
-  for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
-                                     FE = RD->field_end(); FI != FE; ++FI) {
+  for (const auto *FI : RD->fields()) {
     if (FI->isUnnamedBitfield())
       continue;
 

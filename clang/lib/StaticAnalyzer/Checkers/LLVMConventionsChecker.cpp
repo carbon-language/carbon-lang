@@ -237,10 +237,9 @@ static void CheckASTMemory(const CXXRecordDecl *R, BugReporter &BR,
   if (!IsPartOfAST(R))
     return;
 
-  for (RecordDecl::field_iterator I = R->field_begin(), E = R->field_end();
-       I != E; ++I) {
+  for (auto *I : R->fields()) {
     ASTFieldVisitor walker(R, BR, Checker);
-    walker.Visit(*I);
+    walker.Visit(I);
   }
 }
 
@@ -254,9 +253,8 @@ void ASTFieldVisitor::Visit(FieldDecl *D) {
 
   if (const RecordType *RT = T->getAs<RecordType>()) {
     const RecordDecl *RD = RT->getDecl()->getDefinition();
-    for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-         I != E; ++I)
-      Visit(*I);
+    for (auto *I : RD->fields())
+      Visit(I);
   }
 
   FieldChain.pop_back();

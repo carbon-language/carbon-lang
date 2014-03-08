@@ -4296,14 +4296,12 @@ void Sema::CodeCompleteConstructorInitializer(
   }
   
   // Add completions for members.
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-                                  FieldEnd = ClassDecl->field_end();
-       Field != FieldEnd; ++Field) {
+  for (auto *Field : ClassDecl->fields()) {
     if (!InitializedFields.insert(cast<FieldDecl>(Field->getCanonicalDecl()))) {
       SawLastInitializer
         = !Initializers.empty() && 
           Initializers.back()->isAnyMemberInitializer() &&
-          Initializers.back()->getAnyMember() == *Field;
+          Initializers.back()->getAnyMember() == Field;
       continue;
     }
     
@@ -4320,7 +4318,7 @@ void Sema::CodeCompleteConstructorInitializer(
                                                      : CCP_MemberDeclaration,
                                            CXCursor_MemberRef,
                                            CXAvailability_Available,
-                                           *Field));
+                                           Field));
     SawLastInitializer = false;
   }
   Results.ExitScope();

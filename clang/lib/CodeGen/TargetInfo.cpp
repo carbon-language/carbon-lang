@@ -214,9 +214,8 @@ static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays) {
       if (!isEmptyRecord(Context, i->getType(), true))
         return false;
 
-  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
-         i != e; ++i)
-    if (!isEmptyField(Context, *i, AllowArrays))
+  for (const auto *I : RD->fields())
+    if (!isEmptyField(Context, I, AllowArrays))
       return false;
   return true;
 }
@@ -261,9 +260,7 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
   }
 
   // Check for single element.
-  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
-         i != e; ++i) {
-    const FieldDecl *FD = *i;
+  for (const auto *FD : RD->fields()) {
     QualType FT = FD->getType();
 
     // Ignore empty fields.
@@ -339,10 +336,7 @@ static bool canExpandIndirectArgument(QualType Ty, ASTContext &Context) {
 
   uint64_t Size = 0;
 
-  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
-         i != e; ++i) {
-    const FieldDecl *FD = *i;
-
+  for (const auto *FD : RD->fields()) {
     if (!is32Or64BitBasicType(FD->getType(), Context))
       return false;
 
@@ -678,10 +672,7 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty, ASTContext &Context,
 
   // Structure types are passed in register if all fields would be
   // passed in a register.
-  for (RecordDecl::field_iterator i = RT->getDecl()->field_begin(),
-         e = RT->getDecl()->field_end(); i != e; ++i) {
-    const FieldDecl *FD = *i;
-
+  for (const auto *FD : RT->getDecl()->fields()) {
     // Empty fields are ignored.
     if (isEmptyField(Context, FD, true))
       continue;
@@ -795,8 +786,7 @@ static bool isRecordWithSSEVectorType(ASTContext &Context, QualType Ty) {
       if (!isRecordWithSSEVectorType(Context, i->getType()))
         return false;
 
-  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
-       i != e; ++i) {
+  for (const auto *i : RD->fields()) {
     QualType FT = i->getType();
 
     if (isSSEVectorType(Context, FT))
@@ -3405,9 +3395,7 @@ static bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
       return false;
 
     Members = 0;
-    for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
-         i != e; ++i) {
-      const FieldDecl *FD = *i;
+    for (const auto *FD : RD->fields()) {
       uint64_t FldMembers;
       if (!isHomogeneousAggregate(FD->getType(), Base, Context, &FldMembers))
         return false;
@@ -4609,10 +4597,7 @@ bool SystemZABIInfo::isFPArgumentType(QualType Ty) const {
       }
 
     // Check the fields.
-    for (RecordDecl::field_iterator I = RD->field_begin(),
-           E = RD->field_end(); I != E; ++I) {
-      const FieldDecl *FD = *I;
-
+    for (const auto *FD : RD->fields()) {
       // Empty bitfields don't affect things either way.
       // Unlike isSingleElementStruct(), empty structure and array fields
       // do count.  So do anonymous bitfields that aren't zero-sized.

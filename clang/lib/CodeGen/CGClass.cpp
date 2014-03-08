@@ -1195,13 +1195,9 @@ HasTrivialDestructorBody(ASTContext &Context,
     return false;
 
   // Check fields.
-  for (CXXRecordDecl::field_iterator I = BaseClassDecl->field_begin(),
-       E = BaseClassDecl->field_end(); I != E; ++I) {
-    const FieldDecl *Field = *I;
-    
+  for (const auto *Field : BaseClassDecl->fields())
     if (!FieldHasTrivialDestructorBody(Context, Field))
       return false;
-  }
 
   // Check non-virtual bases.
   for (CXXRecordDecl::base_class_const_iterator I = 
@@ -1256,13 +1252,9 @@ static bool CanSkipVTablePointerInitialization(ASTContext &Context,
 
   // Check the fields.
   const CXXRecordDecl *ClassDecl = Dtor->getParent();
-  for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
-       E = ClassDecl->field_end(); I != E; ++I) {
-    const FieldDecl *Field = *I;
-
+  for (const auto *Field : ClassDecl->fields())
     if (!FieldHasTrivialDestructorBody(Context, Field))
       return false;
-  }
 
   return true;
 }
@@ -1512,10 +1504,8 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
   }
 
   // Destroy direct fields.
-  for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
-       E = ClassDecl->field_end(); I != E; ++I) {
-    const FieldDecl *field = *I;
-    QualType type = field->getType();
+  for (const auto *Field : ClassDecl->fields()) {
+    QualType type = Field->getType();
     QualType::DestructionKind dtorKind = type.isDestructedType();
     if (!dtorKind) continue;
 
@@ -1524,7 +1514,7 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
     if (RT && RT->getDecl()->isAnonymousStructOrUnion()) continue;
 
     CleanupKind cleanupKind = getCleanupKind(dtorKind);
-    EHStack.pushCleanup<DestroyField>(cleanupKind, field,
+    EHStack.pushCleanup<DestroyField>(cleanupKind, Field,
                                       getDestroyer(dtorKind),
                                       cleanupKind & EHCleanup);
   }

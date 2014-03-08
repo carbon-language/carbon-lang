@@ -1024,10 +1024,9 @@ static const FieldDecl *FindFirstNamedDataMember(const RecordDecl *RD) {
   assert(RD->isAnonymousStructOrUnion() &&
          "Expected anonymous struct or union!");
   
-  for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-       I != E; ++I) {
+  for (const auto *I : RD->fields()) {
     if (I->getIdentifier())
-      return *I;
+      return I;
     
     if (const RecordType *RT = I->getType()->getAs<RecordType>())
       if (const FieldDecl *NamedDataMember = 

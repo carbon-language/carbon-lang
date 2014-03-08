@@ -2201,9 +2201,7 @@ void CGObjCCommonMac::BuildRCBlockVarRecordLayout(const RecordType *RT,
                                                   bool ByrefLayout) {
   const RecordDecl *RD = RT->getDecl();
   SmallVector<const FieldDecl*, 16> Fields;
-  for (RecordDecl::field_iterator i = RD->field_begin(),
-       e = RD->field_end(); i != e; ++i)
-    Fields.push_back(*i);
+  llvm::copy(RD->fields(), std::back_inserter(Fields));
   llvm::Type *Ty = CGM.getTypes().ConvertType(QualType(RT, 0));
   const llvm::StructLayout *RecLayout =
     CGM.getDataLayout().getStructLayout(cast<llvm::StructType>(Ty));
@@ -4516,9 +4514,7 @@ void CGObjCCommonMac::BuildAggrIvarRecordLayout(const RecordType *RT,
   const RecordDecl *RD = RT->getDecl();
   // FIXME - Use iterator.
   SmallVector<const FieldDecl*, 16> Fields;
-  for (RecordDecl::field_iterator i = RD->field_begin(),
-                                  e = RD->field_end(); i != e; ++i)
-    Fields.push_back(*i);
+  llvm::copy(RD->fields(), std::back_inserter(Fields));
   llvm::Type *Ty = CGM.getTypes().ConvertType(QualType(RT, 0));
   const llvm::StructLayout *RecLayout =
     CGM.getDataLayout().getStructLayout(cast<llvm::StructType>(Ty));

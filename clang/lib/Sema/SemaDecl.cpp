@@ -6476,9 +6476,7 @@ static void checkIsValidOpenCLKernelParameter(
     // Add a null marker so we know when we've gone back up a level
     VisitStack.push_back((const Decl *) 0);
 
-    for (RecordDecl::field_iterator I = RD->field_begin(),
-           E = RD->field_end(); I != E; ++I) {
-      const FieldDecl *FD = *I;
+    for (const auto *FD : RD->fields()) {
       QualType QT = FD->getType();
 
       if (ValidTypes.count(QT.getTypePtr()))

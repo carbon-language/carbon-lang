@@ -140,8 +140,7 @@ isSafeToConvert(const RecordDecl *RD, CodeGenTypes &CGT,
   
   // If this type would require laying out members that are currently being laid
   // out, don't do it.
-  for (RecordDecl::field_iterator I = RD->field_begin(),
-       E = RD->field_end(); I != E; ++I)
+  for (const auto *I : RD->fields())
     if (!isSafeToConvert(I->getType(), CGT, AlreadyChecked))
       return false;
   

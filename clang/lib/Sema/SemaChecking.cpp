@@ -7634,21 +7634,16 @@ bool isLayoutCompatibleUnion(ASTContext &C,
                              RecordDecl *RD1,
                              RecordDecl *RD2) {
   llvm::SmallPtrSet<FieldDecl *, 8> UnmatchedFields;
-  for (RecordDecl::field_iterator Field2 = RD2->field_begin(),
-                                  Field2End = RD2->field_end();
-       Field2 != Field2End; ++Field2) {
-    UnmatchedFields.insert(*Field2);
-  }
+  for (auto *Field2 : RD2->fields())
+    UnmatchedFields.insert(Field2);
 
-  for (RecordDecl::field_iterator Field1 = RD1->field_begin(),
-                                  Field1End = RD1->field_end();
-       Field1 != Field1End; ++Field1) {
+  for (auto *Field1 : RD1->fields()) {
     llvm::SmallPtrSet<FieldDecl *, 8>::iterator
         I = UnmatchedFields.begin(),
         E = UnmatchedFields.end();
 
     for ( ; I != E; ++I) {
-      if (isLayoutCompatible(C, *Field1, *I)) {
+      if (isLayoutCompatible(C, Field1, *I)) {
         bool Result = UnmatchedFields.erase(*I);
         (void) Result;
         assert(Result);

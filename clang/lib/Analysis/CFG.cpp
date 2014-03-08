@@ -902,8 +902,7 @@ void CFGBuilder::addImplicitDtorsForDestructor(const CXXDestructorDecl *DD) {
   }
 
   // First destroy member objects.
-  for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
-      FE = RD->field_end(); FI != FE; ++FI) {
+  for (auto *FI : RD->fields()) {
     // Check for constant size array. Set type to array element type.
     QualType QT = FI->getType();
     if (const ConstantArrayType *AT = Context->getAsConstantArrayType(QT)) {
@@ -915,7 +914,7 @@ void CFGBuilder::addImplicitDtorsForDestructor(const CXXDestructorDecl *DD) {
     if (const CXXRecordDecl *CD = QT->getAsCXXRecordDecl())
       if (!CD->hasTrivialDestructor()) {
         autoCreateBlock();
-        appendMemberDtor(Block, *FI);
+        appendMemberDtor(Block, FI);
       }
   }
 }

@@ -2837,10 +2837,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
     // all union fields.
     const RecordDecl *RD = cast<RecordDecl>(RT->getDecl());
     if (RD->isUnion() && RD->isAnonymousStructOrUnion()) {
-      for (RecordDecl::field_iterator I = RD->field_begin(),
-             E = RD->field_end();
-           I != E; ++I) {
-        FieldDecl *Field = *I;
+      for (const auto *Field : RD->fields()) {
         llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
         StringRef FieldName = Field->getName();
 

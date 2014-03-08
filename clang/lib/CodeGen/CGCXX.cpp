@@ -56,8 +56,7 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
 
   // If any field has a non-trivial destructor, we have to emit the
   // destructor separately.
-  for (CXXRecordDecl::field_iterator I = Class->field_begin(),
-         E = Class->field_end(); I != E; ++I)
+  for (const auto *I : Class->fields())
     if (I->getType().isDestructedType())
       return true;
 

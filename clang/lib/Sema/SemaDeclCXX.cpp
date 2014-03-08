@@ -951,12 +951,11 @@ static void CheckConstexprCtorInitializer(Sema &SemaRef,
     SemaRef.Diag(Field->getLocation(), diag::note_constexpr_ctor_missing_init);
   } else if (Field->isAnonymousStructOrUnion()) {
     const RecordDecl *RD = Field->getType()->castAs<RecordType>()->getDecl();
-    for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-         I != E; ++I)
+    for (auto *I : RD->fields())
       // If an anonymous union contains an anonymous struct of which any member
       // is initialized, all members must be initialized.
-      if (!RD->isUnion() || Inits.count(*I))
-        CheckConstexprCtorInitializer(SemaRef, Dcl, *I, Inits, Diagnosed);
+      if (!RD->isUnion() || Inits.count(I))
+        CheckConstexprCtorInitializer(SemaRef, Dcl, I, Inits, Diagnosed);
   }
 }
 
@@ -1167,9 +1166,8 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
         }
 
         bool Diagnosed = false;
-        for (CXXRecordDecl::field_iterator I = RD->field_begin(),
-             E = RD->field_end(); I != E; ++I)
-          CheckConstexprCtorInitializer(*this, Dcl, *I, Inits, Diagnosed);
+        for (auto *I : RD->fields())
+          CheckConstexprCtorInitializer(*this, Dcl, I, Inits, Diagnosed);
         if (Diagnosed)
           return false;
       }
@@ -3705,9 +3703,8 @@ static void PopulateKeysForFields(FieldDecl *Field, SmallVectorImpl<const void*>
   if (const RecordType *RT = Field->getType()->getAs<RecordType>()) {
     const RecordDecl *RD = RT->getDecl();
     if (RD->isAnonymousStructOrUnion()) {
-      for (RecordDecl::field_iterator Field = RD->field_begin(),
-          E = RD->field_end(); Field != E; ++Field)
-        PopulateKeysForFields(*Field, IdealInits);
+      for (auto *Field : RD->fields())
+        PopulateKeysForFields(Field, IdealInits);
       return;
     }
   }
@@ -3769,12 +3766,11 @@ static void DiagnoseBaseOrMemInitializerOrder(
   }
 
   // 3. Direct fields.
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-       E = ClassDecl->field_end(); Field != E; ++Field) {
+  for (auto *Field : ClassDecl->fields()) {
     if (Field->isUnnamedBitfield())
       continue;
     
-    PopulateKeysForFields(*Field, IdealInitKeys);
+    PopulateKeysForFields(Field, IdealInitKeys);
   }
   
   unsigned NumIdealInits = IdealInitKeys.size();
@@ -3970,9 +3966,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
   // emitted, and we currently don't say.
   
   // Non-static data members.
-  for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
-       E = ClassDecl->field_end(); I != E; ++I) {
-    FieldDecl *Field = *I;
+  for (auto *Field : ClassDecl->fields()) {
     if (Field->isInvalidDecl())
       continue;
     
@@ -4383,9 +4377,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
       !Record->isAggregate() && !Record->hasUserDeclaredConstructor() &&
       !Record->isLambda()) {
     bool Complained = false;
-    for (RecordDecl::field_iterator F = Record->field_begin(), 
-                                 FEnd = Record->field_end();
-         F != FEnd; ++F) {
+    for (const auto *F : Record->fields()) {
       if (F->hasInClassInitializer() || F->isUnnamedBitfield())
         continue;
 
@@ -4659,9 +4651,7 @@ static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
   //   -- for each non-static data member of X that is of class type (or array
   //      thereof), the assignment operator selected to copy/move that member is
   //      a constexpr function
-  for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
-                               FEnd = ClassDecl->field_end();
-       F != FEnd; ++F) {
+  for (const auto *F : ClassDecl->fields()) {
     if (F->isInvalidDecl())
       continue;
     QualType BaseType = S.Context.getBaseElementType(F->getType());
@@ -5217,9 +5207,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
       bool AllVariantFieldsAreConst = true;
 
       // FIXME: Handle anonymous unions declared within anonymous unions.
-      for (CXXRecordDecl::field_iterator UI = FieldRecord->field_begin(),
-                                         UE = FieldRecord->field_end();
-           UI != UE; ++UI) {
+      for (auto *UI : FieldRecord->fields()) {
         QualType UnionFieldType = S.Context.getBaseElementType(UI->getType());
 
         if (!UnionFieldType.isConstQualified())
@@ -5227,14 +5215,14 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
 
         CXXRecordDecl *UnionFieldRecord = UnionFieldType->getAsCXXRecordDecl();
         if (UnionFieldRecord &&
-            shouldDeleteForClassSubobject(UnionFieldRecord, *UI,
+            shouldDeleteForClassSubobject(UnionFieldRecord, UI,
                                           UnionFieldType.getCVRQualifiers()))
           return true;
       }
 
       // At least one member in each anonymous union must be non-const
       if (CSM == Sema::CXXDefaultConstructor && AllVariantFieldsAreConst &&
-          FieldRecord->field_begin() != FieldRecord->field_end()) {
+          !FieldRecord->field_empty()) {
         if (Diagnose)
           S.Diag(FieldRecord->getLocation(),
                  diag::note_deleted_default_ctor_all_const)
@@ -5262,7 +5250,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForAllConstMembers() {
   // This is a silly definition, because it gives an empty union a deleted
   // default constructor. Don't do that.
   if (CSM == Sema::CXXDefaultConstructor && inUnion() && AllFieldsAreConst &&
-      (MD->getParent()->field_begin() != MD->getParent()->field_end())) {
+      !MD->getParent()->field_empty()) {
     if (Diagnose)
       S.Diag(MD->getParent()->getLocation(),
              diag::note_deleted_default_ctor_all_const)
@@ -5385,10 +5373,9 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
         return true;
   }
 
-  for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
-                                     FE = RD->field_end(); FI != FE; ++FI)
+  for (auto *FI : RD->fields())
     if (!FI->isInvalidDecl() && !FI->isUnnamedBitfield() &&
-        SMI.shouldDeleteForField(*FI))
+        SMI.shouldDeleteForField(FI))
       return true;
 
   if (SMI.shouldDeleteForAllConstMembers())
@@ -5605,8 +5592,7 @@ static bool checkTrivialSubobjectCall(Sema &S, SourceLocation SubobjLoc,
 static bool checkTrivialClassMembers(Sema &S, CXXRecordDecl *RD,
                                      Sema::CXXSpecialMember CSM,
                                      bool ConstArg, bool Diagnose) {
-  for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
-                                     FE = RD->field_end(); FI != FE; ++FI) {
+  for (const auto *FI : RD->fields()) {
     if (FI->isInvalidDecl() || FI->isUnnamedBitfield())
       continue;
 
@@ -5626,7 +5612,7 @@ static bool checkTrivialClassMembers(Sema &S, CXXRecordDecl *RD,
     //       brace-or-equal-initializer
     if (CSM == Sema::CXXDefaultConstructor && FI->hasInClassInitializer()) {
       if (Diagnose)
-        S.Diag(FI->getLocation(), diag::note_nontrivial_in_class_init) << *FI;
+        S.Diag(FI->getLocation(), diag::note_nontrivial_in_class_init) << FI;
       return false;
     }
 
@@ -8048,9 +8034,7 @@ Sema::ComputeDefaultedDefaultCtorExceptionSpec(SourceLocation Loc,
   }
 
   // Field constructors.
-  for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
-                               FEnd = ClassDecl->field_end();
-       F != FEnd; ++F) {
+  for (const auto *F : ClassDecl->fields()) {
     if (F->hasInClassInitializer()) {
       if (Expr *E = F->getInClassInitializer())
         ExceptSpec.CalledExpr(E);
@@ -8137,9 +8121,7 @@ Sema::ComputeInheritingCtorExceptionSpec(CXXConstructorDecl *CD) {
   }
 
   // Field constructors.
-  for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
-                               FEnd = ClassDecl->field_end();
-       F != FEnd; ++F) {
+  for (const auto *F : ClassDecl->fields()) {
     if (F->hasInClassInitializer()) {
       if (Expr *E = F->getInClassInitializer())
         ExceptSpec.CalledExpr(E);
@@ -8647,9 +8629,7 @@ Sema::ComputeDefaultedDtorExceptionSpec(CXXMethodDecl *MD) {
   }
 
   // Field destructors.
-  for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
-                               FEnd = ClassDecl->field_end();
-       F != FEnd; ++F) {
+  for (const auto *F : ClassDecl->fields()) {
     if (const RecordType *RecordTy
         = Context.getBaseElementType(F->getType())->getAs<RecordType>())
       ExceptSpec.CalledDecl(F->getLocation(),
@@ -9257,10 +9237,7 @@ Sema::ComputeDefaultedCopyAssignmentExceptionSpec(CXXMethodDecl *MD) {
       ExceptSpec.CalledDecl(Base->getLocStart(), CopyAssign);
   }
 
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-                                  FieldEnd = ClassDecl->field_end();
-       Field != FieldEnd;
-       ++Field) {
+  for (const auto *Field : ClassDecl->fields()) {
     QualType FieldType = Context.getBaseElementType(Field->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
       if (CXXMethodDecl *CopyAssign =
@@ -9495,9 +9472,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   }
   
   // Assign non-static members.
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-                                  FieldEnd = ClassDecl->field_end(); 
-       Field != FieldEnd; ++Field) {
+  for (auto *Field : ClassDecl->fields()) {
     if (Field->isUnnamedBitfield())
       continue;
 
@@ -9544,7 +9519,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     CXXScopeSpec SS; // Intentionally empty
     LookupResult MemberLookup(*this, Field->getDeclName(), Loc,
                               LookupMemberName);
-    MemberLookup.addDecl(*Field);
+    MemberLookup.addDecl(Field);
     MemberLookup.resolveKind();
 
     MemberBuilder From(OtherRef, OtherRefType, /*IsArrow=*/false, MemberLookup);
@@ -9647,10 +9622,7 @@ Sema::ComputeDefaultedMoveAssignmentExceptionSpec(CXXMethodDecl *MD) {
       ExceptSpec.CalledDecl(Base->getLocStart(), MoveAssign);
   }
 
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-                                  FieldEnd = ClassDecl->field_end();
-       Field != FieldEnd;
-       ++Field) {
+  for (const auto *Field : ClassDecl->fields()) {
     QualType FieldType = Context.getBaseElementType(Field->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
       if (CXXMethodDecl *MoveAssign =
@@ -9924,9 +9896,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
   }
 
   // Assign non-static members.
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-                                  FieldEnd = ClassDecl->field_end(); 
-       Field != FieldEnd; ++Field) {
+  for (auto *Field : ClassDecl->fields()) {
     if (Field->isUnnamedBitfield())
       continue;
 
@@ -9972,7 +9942,7 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
     // Build references to the field in the object we're copying from and to.
     LookupResult MemberLookup(*this, Field->getDeclName(), Loc,
                               LookupMemberName);
-    MemberLookup.addDecl(*Field);
+    MemberLookup.addDecl(Field);
     MemberLookup.resolveKind();
     MemberBuilder From(MoveOther, OtherRefType,
                        /*IsArrow=*/false, MemberLookup);
@@ -10075,10 +10045,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpec(CXXMethodDecl *MD) {
           LookupCopyingConstructor(BaseClassDecl, Quals))
       ExceptSpec.CalledDecl(Base->getLocStart(), CopyConstructor);
   }
-  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
-                                  FieldEnd = ClassDecl->field_end();
-       Field != FieldEnd;
-       ++Field) {
+  for (const auto *Field : ClassDecl->fields()) {
     QualType FieldType = Context.getBaseElementType(Field->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
       if (CXXConstructorDecl *CopyConstructor =
@@ -10244,9 +10211,7 @@ Sema::ComputeDefaultedMoveCtorExceptionSpec(CXXMethodDecl *MD) {
   }
 
   // Field constructors.
-  for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
-                               FEnd = ClassDecl->field_end();
-       F != FEnd; ++F) {
+  for (const auto *F : ClassDecl->fields()) {
     QualType FieldType = Context.getBaseElementType(F->getType());
     if (CXXRecordDecl *FieldRecDecl = FieldType->getAsCXXRecordDecl()) {
       CXXConstructorDecl *Constructor =

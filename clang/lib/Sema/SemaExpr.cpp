@@ -6554,9 +6554,7 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType,
   RecordDecl *UD = UT->getDecl();
   FieldDecl *InitField = 0;
   // It's compatible if the expression matches any of the fields.
-  for (RecordDecl::field_iterator it = UD->field_begin(),
-         itend = UD->field_end();
-       it != itend; ++it) {
+  for (auto *it : UD->fields()) {
     if (it->getType()->isPointerType()) {
       // If the transparent union contains a pointer type, we allow:
       // 1) void pointer
@@ -6564,7 +6562,7 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType,
       if (RHSType->isPointerType())
         if (RHSType->castAs<PointerType>()->getPointeeType()->isVoidType()) {
           RHS = ImpCastExprToType(RHS.take(), it->getType(), CK_BitCast);
-          InitField = *it;
+          InitField = it;
           break;
         }
 
@@ -6572,7 +6570,7 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType,
                                            Expr::NPC_ValueDependentIsNull)) {
         RHS = ImpCastExprToType(RHS.take(), it->getType(),
                                 CK_NullToPointer);
-        InitField = *it;
+        InitField = it;
         break;
       }
     }
@@ -6581,7 +6579,7 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType,
     if (CheckAssignmentConstraints(it->getType(), RHS, Kind)
           == Compatible) {
       RHS = ImpCastExprToType(RHS.take(), it->getType(), Kind);
-      InitField = *it;
+      InitField = it;
       break;
     }
   }

@@ -3350,9 +3350,7 @@ void Sema::ActOnCapturedRegionError() {
   Record->setInvalidDecl();
 
   SmallVector<Decl*, 4> Fields;
-  for (RecordDecl::field_iterator I = Record->field_begin(),
-                                  E = Record->field_end(); I != E; ++I)
-    Fields.push_back(*I);
+  llvm::copy(Record->fields(), std::back_inserter(Fields));
   ActOnFields(/*Scope=*/0, Record->getLocation(), Record, Fields,
               SourceLocation(), SourceLocation(), /*AttributeList=*/0);
 

@@ -1363,8 +1363,7 @@ static bool CheckConstantExpression(EvalInfo &Info, SourceLocation DiagLoc,
           return false;
       }
     }
-    for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-         I != E; ++I) {
+    for (const auto *I : RD->fields()) {
       if (!CheckConstantExpression(Info, DiagLoc, I->getType(),
                                    Value.getStructField(I->getFieldIndex())))
         return false;
@@ -3674,7 +3673,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
   // Reserve space for the struct members.
   if (!RD->isUnion() && Result.isUninit())
     Result = APValue(APValue::UninitStruct(), RD->getNumBases(),
-                     std::distance(RD->field_begin(), RD->field_end()));
+                     llvm::distance(RD->fields()));
 
   if (RD->isInvalidDecl()) return false;
   const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(RD);
@@ -3734,7 +3733,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
             *Value = APValue(FD);
           else
             *Value = APValue(APValue::UninitStruct(), CD->getNumBases(),
-                             std::distance(CD->field_begin(), CD->field_end()));
+                             llvm::distance(CD->fields()));
         }
         if (!HandleLValueMember(Info, (*I)->getInit(), Subobject, FD))
           return false;
@@ -4931,7 +4930,7 @@ static bool HandleClassZeroInitialization(EvalInfo &Info, const Expr *E,
   assert(!RD->isUnion() && "Expected non-union class type");
   const CXXRecordDecl *CD = dyn_cast<CXXRecordDecl>(RD);
   Result = APValue(APValue::UninitStruct(), CD ? CD->getNumBases() : 0,
-                   std::distance(RD->field_begin(), RD->field_end()));
+                   llvm::distance(RD->fields()));
 
   if (RD->isInvalidDecl()) return false;
   const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(RD);
@@ -4950,14 +4949,13 @@ static bool HandleClassZeroInitialization(EvalInfo &Info, const Expr *E,
     }
   }
 
-  for (RecordDecl::field_iterator I = RD->field_begin(), End = RD->field_end();
-       I != End; ++I) {
+  for (const auto *I : RD->fields()) {
     // -- if T is a reference type, no initialization is performed.
     if (I->getType()->isReferenceType())
       continue;
 
     LValue Subobject = This;
-    if (!HandleLValueMember(Info, E, Subobject, *I, &Layout))
+    if (!HandleLValueMember(Info, E, Subobject, I, &Layout))
       return false;
 
     ImplicitValueInitExpr VIE(I->getType());
@@ -5061,12 +5059,10 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
   assert((!isa<CXXRecordDecl>(RD) || !cast<CXXRecordDecl>(RD)->getNumBases()) &&
          "initializer list for class with base classes");
-  Result = APValue(APValue::UninitStruct(), 0,
-                   std::distance(RD->field_begin(), RD->field_end()));
+  Result = APValue(APValue::UninitStruct(), 0, llvm::distance(RD->fields()));
   unsigned ElementNo = 0;
   bool Success = true;
-  for (RecordDecl::field_iterator Field = RD->field_begin(),
-       FieldEnd = RD->field_end(); Field != FieldEnd; ++Field) {
+  for (const auto *Field : RD->fields()) {
     // Anonymous bit-fields are not considered members of the class for
     // purposes of aggregate initialization.
     if (Field->isUnnamedBitfield())
@@ -5079,7 +5075,7 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
     // FIXME: Diagnostics here should point to the end of the initializer
     // list, not the start.
     if (!HandleLValueMember(Info, HaveInit ? E->getInit(ElementNo) : E,
-                            Subobject, *Field, &Layout))
+                            Subobject, Field, &Layout))
       return false;
 
     // Perform an implicit value-initialization for members beyond the end of
@@ -5094,7 +5090,7 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
     APValue &FieldVal = Result.getStructField(Field->getFieldIndex());
     if (!EvaluateInPlace(FieldVal, Info, Subobject, Init) ||
         (Field->isBitField() && !truncateBitfieldValue(Info, Init,
-                                                       FieldVal, *Field))) {
+                                                       FieldVal, Field))) {
       if (!Info.keepEvaluatingAfterFailure())
         return false;
       Success = false;

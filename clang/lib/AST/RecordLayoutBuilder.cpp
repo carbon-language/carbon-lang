@@ -160,9 +160,7 @@ void EmptySubobjectMap::ComputeEmptySubobjectSizes() {
   }
 
   // Check the fields.
-  for (CXXRecordDecl::field_iterator I = Class->field_begin(),
-       E = Class->field_end(); I != E; ++I) {
-
+  for (const auto *I : Class->fields()) {
     const RecordType *RT =
       Context.getBaseElementType(I->getType())->getAs<RecordType>();
 
@@ -1372,9 +1370,8 @@ void RecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
 void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   // Layout each field, for now, just sequentially, respecting alignment.  In
   // the future, this will need to be tweakable by targets.
-  for (RecordDecl::field_iterator Field = D->field_begin(),
-       FieldEnd = D->field_end(); Field != FieldEnd; ++Field)
-    LayoutField(*Field);
+  for (const auto *Field : D->fields())
+    LayoutField(Field);
 }
 
 void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
@@ -2468,10 +2465,8 @@ void MicrosoftRecordLayoutBuilder::layoutNonVirtualBase(
 
 void MicrosoftRecordLayoutBuilder::layoutFields(const RecordDecl *RD) {
   LastFieldIsNonZeroWidthBitfield = false;
-  for (RecordDecl::field_iterator Field = RD->field_begin(),
-                                  FieldEnd = RD->field_end();
-       Field != FieldEnd; ++Field)
-    layoutField(*Field);
+  for (const auto *Field : RD->fields())
+    layoutField(Field);
 }
 
 void MicrosoftRecordLayoutBuilder::layoutField(const FieldDecl *FD) {

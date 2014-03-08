@@ -1715,9 +1715,7 @@ IsTransparentUnionStandardConversion(Sema &S, Expr* From,
   // The field to initialize within the transparent union.
   RecordDecl *UD = UT->getDecl();
   // It's compatible if the expression matches any of the fields.
-  for (RecordDecl::field_iterator it = UD->field_begin(),
-       itend = UD->field_end();
-       it != itend; ++it) {
+  for (const auto *it : UD->fields()) {
     if (IsStandardConversion(S, From, it->getType(), InOverloadResolution, SCS,
                              CStyle, /*ObjCWritebackConversion=*/false)) {
       ToType = it->getType();

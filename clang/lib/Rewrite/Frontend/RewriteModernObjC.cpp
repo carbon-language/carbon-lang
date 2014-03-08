@@ -3788,11 +3788,8 @@ bool RewriteModernObjC::RewriteObjCFieldDeclType(QualType &Type,
         return true;
       }
       Result += " {\n";
-      for (RecordDecl::field_iterator i = RD->field_begin(), 
-           e = RD->field_end(); i != e; ++i) {
-        FieldDecl *FD = *i;
+      for (auto *FD : RD->fields())
         RewriteObjCFieldDecl(FD, Result);
-      }
       Result += "\t} "; 
       return true;
     }
@@ -5847,9 +5844,7 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
 }
 
 void RewriteModernObjC::RewriteRecordBody(RecordDecl *RD) {
-  for (RecordDecl::field_iterator i = RD->field_begin(), 
-                                  e = RD->field_end(); i != e; ++i) {
-    FieldDecl *FD = *i;
+  for (auto *FD : RD->fields()) {
     if (isTopLevelBlockPointerType(FD->getType()))
       RewriteBlockPointerDecl(FD);
     if (FD->getType()->isObjCQualifiedIdType() ||

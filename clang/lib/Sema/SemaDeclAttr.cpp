@@ -1104,9 +1104,8 @@ static void possibleTransparentUnionPointerType(QualType &T) {
   if (const RecordType *UT = T->getAsUnionType())
     if (UT && UT->getDecl()->hasAttr<TransparentUnionAttr>()) {
       RecordDecl *UD = UT->getDecl();
-      for (RecordDecl::field_iterator it = UD->field_begin(),
-           itend = UD->field_end(); it != itend; ++it) {
-        QualType QT = it->getType();
+      for (const auto *I : UD->fields()) {
+        QualType QT = I->getType();
         if (QT->isAnyPointerType() || QT->isBlockPointerType()) {
           T = QT;
           return;
@@ -1540,9 +1539,8 @@ static void handleVecReturnAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     return;
   }
 
-  for (RecordDecl::field_iterator iter = record->field_begin();
-       iter != record->field_end(); iter++) {
-    if ((count == 1) || !iter->getType()->isVectorType()) {
+  for (const auto *I : record->fields()) {
+    if ((count == 1) || !I->getType()->isVectorType()) {
       S.Diag(Attr.getLoc(), diag::err_attribute_vecreturn_only_vector_member);
       return;
     }

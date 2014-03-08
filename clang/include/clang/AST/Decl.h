@@ -3150,7 +3150,9 @@ public:
   // the non-static data members of this class, ignoring any static
   // data members, functions, constructors, destructors, etc.
   typedef specific_decl_iterator<FieldDecl> field_iterator;
+  typedef specific_decl_range<FieldDecl> field_range;
 
+  field_range fields() const { return field_range(field_begin(), field_end()); }
   field_iterator field_begin() const;
 
   field_iterator field_end() const {

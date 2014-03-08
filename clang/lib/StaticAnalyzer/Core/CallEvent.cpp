@@ -68,8 +68,7 @@ static bool isCallbackArg(SVal V, QualType T) {
 
   if (const RecordType *RT = T->getAsStructureType()) {
     const RecordDecl *RD = RT->getDecl();
-    for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-         I != E; ++I) {
+    for (const auto *I : RD->fields()) {
       QualType FieldT = I->getType();
       if (FieldT->isBlockPointerType() || FieldT->isFunctionPointerType())
         return true;

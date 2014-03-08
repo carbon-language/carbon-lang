@@ -2062,9 +2062,7 @@ RegionStoreManager::tryBindSmallStruct(RegionBindingsConstRef B,
     if (Class->getNumBases() != 0 || Class->getNumVBases() != 0)
       return None;
 
-  for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-       I != E; ++I) {
-    const FieldDecl *FD = *I;
+  for (const auto *FD : RD->fields()) {
     if (FD->isUnnamedBitfield())
       continue;
 
@@ -2077,7 +2075,7 @@ RegionStoreManager::tryBindSmallStruct(RegionBindingsConstRef B,
     if (!(Ty->isScalarType() || Ty->isReferenceType()))
       return None;
 
-    Fields.push_back(*I);
+    Fields.push_back(FD);
   }
 
   RegionBindingsRef NewB = B;

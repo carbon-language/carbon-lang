@@ -752,15 +752,14 @@ long long clang_Type_getSizeOf(CXType T) {
 }
 
 static long long visitRecordForValidation(const RecordDecl *RD) {
-  for (RecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
-       I != E; ++I){
-    QualType FQT = (*I)->getType();
+  for (const auto *I : RD->fields()){
+    QualType FQT = I->getType();
     if (FQT->isIncompleteType())
       return CXTypeLayoutError_Incomplete;
     if (FQT->isDependentType())
       return CXTypeLayoutError_Dependent;
     // recurse
-    if (const RecordType *ChildType = (*I)->getType()->getAs<RecordType>()) {
+    if (const RecordType *ChildType = I->getType()->getAs<RecordType>()) {
       if (const RecordDecl *Child = ChildType->getDecl()) {
         long long ret = visitRecordForValidation(Child);
         if (ret < 0)

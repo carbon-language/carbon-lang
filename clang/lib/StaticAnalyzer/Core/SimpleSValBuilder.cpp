@@ -569,11 +569,10 @@ static SVal evalBinOpFieldRegionFieldRegion(const FieldRegion *LeftFR,
   // members and the units in which bit-fields reside have addresses that
   // increase in the order in which they are declared."
   bool leftFirst = (op == BO_LT || op == BO_LE);
-  for (RecordDecl::field_iterator I = RD->field_begin(),
-       E = RD->field_end(); I!=E; ++I) {
-    if (*I == LeftFD)
+  for (const auto *I : RD->fields()) {
+    if (I == LeftFD)
       return SVB.makeTruthVal(leftFirst, resultTy);
-    if (*I == RightFD)
+    if (I == RightFD)
       return SVB.makeTruthVal(!leftFirst, resultTy);
   }
 
