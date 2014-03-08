@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=generic | FileCheck %s
 
 ; Check that we recognize this idiom for rotation too:
-;    a << (b & 31) | a >> ((0 - b) & 31)
+;    a << (b & (OpSize-1)) | a >> ((0 - b) & (OpSize-1))
 
 define i32 @rotate_left_32(i32 %a, i32 %b) {
 ; CHECK-LABEL: rotate_left_32:
