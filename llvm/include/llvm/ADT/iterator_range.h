@@ -19,6 +19,8 @@
 #ifndef LLVM_ADT_ITERATOR_RANGE_H
 #define LLVM_ADT_ITERATOR_RANGE_H
 
+#include <algorithm>
+#include <iterator>
 #include <utility>
 
 namespace llvm {
