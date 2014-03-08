@@ -14,6 +14,7 @@
 #ifndef LLVM_RUNTIME_DYLD_MACHO_H
 #define LLVM_RUNTIME_DYLD_MACHO_H
 
+#include "ObjectImageCommon.h"
 #include "RuntimeDyldImpl.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Object/MachO.h"
@@ -95,6 +96,15 @@ public:
   bool isCompatibleFile(const object::ObjectFile *Obj) const override;
   void registerEHFrames() override;
   void finalizeLoad(ObjSectionToIDMap &SectionMap) override;
+
+
+  static ObjectImage *createObjectImage(ObjectBuffer *InputBuffer) {
+    return new ObjectImageCommon(InputBuffer);
+  }
+
+  static ObjectImage *createObjectImageFromFile(object::ObjectFile *InputObject) {
+    return new ObjectImageCommon(InputObject);
+  }
 };
 
 } // end namespace llvm

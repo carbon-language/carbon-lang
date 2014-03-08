@@ -139,12 +139,13 @@ public:
                             StubMap &Stubs) override;
   bool isCompatibleFormat(const ObjectBuffer *Buffer) const override;
   bool isCompatibleFile(const object::ObjectFile *Buffer) const override;
-  ObjectImage *createObjectImage(ObjectBuffer *InputBuffer) override;
-  ObjectImage *createObjectImageFromFile(object::ObjectFile *Obj) override;
   void registerEHFrames() override;
   void deregisterEHFrames() override;
   void finalizeLoad(ObjSectionToIDMap &SectionMap) override;
   virtual ~RuntimeDyldELF();
+
+  static ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
+  static ObjectImage *createObjectImageFromFile(object::ObjectFile *Obj);
 };
 
 } // end namespace llvm

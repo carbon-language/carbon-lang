@@ -310,9 +310,6 @@ protected:
   // The base class does nothing.  ELF overrides this.
   virtual void updateGOTEntries(StringRef Name, uint64_t Addr) {}
 
-  virtual ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
-  virtual ObjectImage *createObjectImageFromFile(object::ObjectFile *InputObject);
-
   // \brief Compute an upper bound of the memory that is required to load all sections
   void computeTotalAllocSize(ObjectImage &Obj, 
                              uint64_t& CodeSize, 
@@ -322,16 +319,12 @@ protected:
   // \brief Compute the stub buffer size required for a section
   unsigned computeSectionStubBufSize(ObjectImage &Obj, const SectionRef &Section); 
 
-  // This is the implementation for the two public overloads
-  ObjectImage *loadObject(ObjectImage *InputObject);
-
 public:
   RuntimeDyldImpl(RTDyldMemoryManager *mm) : MemMgr(mm), HasError(false) {}
 
   virtual ~RuntimeDyldImpl();
 
-  ObjectImage *loadObject(ObjectBuffer *InputBuffer);
-  ObjectImage *loadObject(object::ObjectFile *InputObject);
+  ObjectImage* loadObject(ObjectImage* InputObject);
 
   void *getSymbolAddress(StringRef Name) {
     // FIXME: Just look up as a function for now. Overly simple of course.

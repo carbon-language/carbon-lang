@@ -75,25 +75,7 @@ void RuntimeDyldImpl::mapSectionAddress(const void *LocalAddress,
   llvm_unreachable("Attempting to remap address of unknown section!");
 }
 
-// Subclasses can implement this method to create specialized image instances.
-// The caller owns the pointer that is returned.
-ObjectImage *RuntimeDyldImpl::createObjectImage(ObjectBuffer *InputBuffer) {
-  return new ObjectImageCommon(InputBuffer);
-}
-
-ObjectImage *RuntimeDyldImpl::createObjectImageFromFile(ObjectFile *InputObject) {
-  return new ObjectImageCommon(InputObject);
-}
-
-ObjectImage *RuntimeDyldImpl::loadObject(ObjectFile *InputObject) {
-  return loadObject(createObjectImageFromFile(InputObject));
-}
-
-ObjectImage *RuntimeDyldImpl::loadObject(ObjectBuffer *InputBuffer) {
-  return loadObject(createObjectImage(InputBuffer));
-} 
-
-ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
+ObjectImage* RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
   MutexGuard locked(lock);
 
   std::unique_ptr<ObjectImage> Obj(InputObject);
@@ -155,7 +137,7 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
         if (SI == Obj->end_sections()) continue;
         Check(SI->getContents(SectionData));
         Check(SI->isText(IsCode));
-        const uint8_t* SymPtr = (const uint8_t*)InputObject->getData().data() +
+        const uint8_t* SymPtr = (const uint8_t*)Obj->getData().data() +
                                 (uintptr_t)FileOffset;
         uintptr_t SectOffset = (uintptr_t)(SymPtr -
                                            (const uint8_t*)SectionData.begin());
@@ -693,60 +675,70 @@ RuntimeDyld::~RuntimeDyld() {
 }
 
 ObjectImage *RuntimeDyld::loadObject(ObjectFile *InputObject) {
-  if (!Dyld) {
-    if (InputObject->isELF())
-      Dyld = new RuntimeDyldELF(MM);
-    else if (InputObject->isMachO())
-      Dyld = new RuntimeDyldMachO(MM);
-    else
-      report_fatal_error("Incompatible object format!");
-  } else {
-    if (!Dyld->isCompatibleFile(InputObject))
-      report_fatal_error("Incompatible object format!");
-  }
+  std::unique_ptr<ObjectImage> InputImage;
 
-  return Dyld->loadObject(InputObject);
+  if (InputObject->isELF()) {
+    InputImage.reset(RuntimeDyldELF::createObjectImageFromFile(InputObject));
+    if (!Dyld)
+      Dyld = new RuntimeDyldELF(MM);
+  } else if (InputObject->isMachO()) {
+    InputImage.reset(RuntimeDyldMachO::createObjectImageFromFile(InputObject));
+    if (!Dyld)
+      Dyld = new RuntimeDyldMachO(MM);
+  } else
+    report_fatal_error("Incompatible object format!");
+
+  if (!Dyld->isCompatibleFile(InputObject))
+    report_fatal_error("Incompatible object format!");
+
+  Dyld->loadObject(InputImage.get());
+  return InputImage.release();
 }
 
 ObjectImage *RuntimeDyld::loadObject(ObjectBuffer *InputBuffer) {
-  if (!Dyld) {
-    sys::fs::file_magic Type =
-        sys::fs::identify_magic(InputBuffer->getBuffer());
-    switch (Type) {
-    case sys::fs::file_magic::elf_relocatable:
-    case sys::fs::file_magic::elf_executable:
-    case sys::fs::file_magic::elf_shared_object:
-    case sys::fs::file_magic::elf_core:
+  std::unique_ptr<ObjectImage> InputImage;
+  sys::fs::file_magic Type =
+    sys::fs::identify_magic(InputBuffer->getBuffer());
+
+  switch (Type) {
+  case sys::fs::file_magic::elf_relocatable:
+  case sys::fs::file_magic::elf_executable:
+  case sys::fs::file_magic::elf_shared_object:
+  case sys::fs::file_magic::elf_core:
+    InputImage.reset(RuntimeDyldELF::createObjectImage(InputBuffer));
+    if (!Dyld)
       Dyld = new RuntimeDyldELF(MM);
-      break;
-    case sys::fs::file_magic::macho_object:
-    case sys::fs::file_magic::macho_executable:
-    case sys::fs::file_magic::macho_fixed_virtual_memory_shared_lib:
-    case sys::fs::file_magic::macho_core:
-    case sys::fs::file_magic::macho_preload_executable:
-    case sys::fs::file_magic::macho_dynamically_linked_shared_lib:
-    case sys::fs::file_magic::macho_dynamic_linker:
-    case sys::fs::file_magic::macho_bundle:
-    case sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
-    case sys::fs::file_magic::macho_dsym_companion:
+    break;
+  case sys::fs::file_magic::macho_object:
+  case sys::fs::file_magic::macho_executable:
+  case sys::fs::file_magic::macho_fixed_virtual_memory_shared_lib:
+  case sys::fs::file_magic::macho_core:
+  case sys::fs::file_magic::macho_preload_executable:
+  case sys::fs::file_magic::macho_dynamically_linked_shared_lib:
+  case sys::fs::file_magic::macho_dynamic_linker:
+  case sys::fs::file_magic::macho_bundle:
+  case sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
+  case sys::fs::file_magic::macho_dsym_companion:
+    InputImage.reset(RuntimeDyldMachO::createObjectImage(InputBuffer));
+    if (!Dyld)
       Dyld = new RuntimeDyldMachO(MM);
-      break;
-    case sys::fs::file_magic::unknown:
-    case sys::fs::file_magic::bitcode:
-    case sys::fs::file_magic::archive:
-    case sys::fs::file_magic::coff_object:
-    case sys::fs::file_magic::coff_import_library:
-    case sys::fs::file_magic::pecoff_executable:
-    case sys::fs::file_magic::macho_universal_binary:
-    case sys::fs::file_magic::windows_resource:
-      report_fatal_error("Incompatible object format!");
-    }
-  } else {
-    if (!Dyld->isCompatibleFormat(InputBuffer))
-      report_fatal_error("Incompatible object format!");
+    break;
+  case sys::fs::file_magic::unknown:
+  case sys::fs::file_magic::bitcode:
+  case sys::fs::file_magic::archive:
+  case sys::fs::file_magic::coff_object:
+  case sys::fs::file_magic::coff_import_library:
+  case sys::fs::file_magic::pecoff_executable:
+  case sys::fs::file_magic::macho_universal_binary:
+  case sys::fs::file_magic::windows_resource:
+    report_fatal_error("Incompatible object format!");
   }
 
-  return Dyld->loadObject(InputBuffer);
+  if (!Dyld->isCompatibleFormat(InputBuffer))
+    report_fatal_error("Incompatible object format!");
+
+  Dyld->loadObject(InputImage.get());
+  return InputImage.release();
 }
 
 void *RuntimeDyld::getSymbolAddress(StringRef Name) {
