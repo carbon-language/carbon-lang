@@ -37,7 +37,7 @@ class ELFAsmParser : public MCAsmParserExtension {
 public:
   ELFAsmParser() { BracketExpressionsSupported = true; }
 
-  virtual void Initialize(MCAsmParser &Parser) {
+  void Initialize(MCAsmParser &Parser) override {
     // Call the base implementation.
     this->MCAsmParserExtension::Initialize(Parser);
 

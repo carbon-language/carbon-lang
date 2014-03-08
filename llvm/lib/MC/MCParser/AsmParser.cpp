@@ -190,10 +190,10 @@ public:
             const MCAsmInfo &MAI);
   virtual ~AsmParser();
 
-  virtual bool Run(bool NoInitialTextSection, bool NoFinalize = false);
+  bool Run(bool NoInitialTextSection, bool NoFinalize = false) override;
 
-  virtual void addDirectiveHandler(StringRef Directive,
-                                   ExtensionDirectiveHandler Handler) {
+  void addDirectiveHandler(StringRef Directive,
+                           ExtensionDirectiveHandler Handler) override {
     ExtensionDirectiveMap[Directive] = Handler;
   }
 
@@ -201,52 +201,52 @@ public:
   /// @name MCAsmParser Interface
   /// {
 
-  virtual SourceMgr &getSourceManager() { return SrcMgr; }
-  virtual MCAsmLexer &getLexer() { return Lexer; }
-  virtual MCContext &getContext() { return Ctx; }
-  virtual MCStreamer &getStreamer() { return Out; }
-  virtual unsigned getAssemblerDialect() {
+  SourceMgr &getSourceManager() override { return SrcMgr; }
+  MCAsmLexer &getLexer() override { return Lexer; }
+  MCContext &getContext() override { return Ctx; }
+  MCStreamer &getStreamer() override { return Out; }
+  unsigned getAssemblerDialect() override {
     if (AssemblerDialect == ~0U)
       return MAI.getAssemblerDialect();
     else
       return AssemblerDialect;
   }
-  virtual void setAssemblerDialect(unsigned i) {
+  void setAssemblerDialect(unsigned i) override {
     AssemblerDialect = i;
   }
 
-  virtual void Note(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges = None);
-  virtual bool Warning(SMLoc L, const Twine &Msg,
-                       ArrayRef<SMRange> Ranges = None);
-  virtual bool Error(SMLoc L, const Twine &Msg,
-                     ArrayRef<SMRange> Ranges = None);
+  void Note(SMLoc L, const Twine &Msg,
+            ArrayRef<SMRange> Ranges = None) override;
+  bool Warning(SMLoc L, const Twine &Msg,
+               ArrayRef<SMRange> Ranges = None) override;
+  bool Error(SMLoc L, const Twine &Msg,
+             ArrayRef<SMRange> Ranges = None) override;
 
-  virtual const AsmToken &Lex();
+  const AsmToken &Lex() override;
 
-  void setParsingInlineAsm(bool V) { ParsingInlineAsm = V; }
-  bool isParsingInlineAsm() { return ParsingInlineAsm; }
+  void setParsingInlineAsm(bool V) override { ParsingInlineAsm = V; }
+  bool isParsingInlineAsm() override { return ParsingInlineAsm; }
 
   bool parseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                         unsigned &NumOutputs, unsigned &NumInputs,
                         SmallVectorImpl<std::pair<void *,bool> > &OpDecls,
                         SmallVectorImpl<std::string> &Constraints,
                         SmallVectorImpl<std::string> &Clobbers,
-                        const MCInstrInfo *MII,
-                        const MCInstPrinter *IP,
-                        MCAsmParserSemaCallback &SI);
+                        const MCInstrInfo *MII, const MCInstPrinter *IP,
+                        MCAsmParserSemaCallback &SI) override;
 
   bool parseExpression(const MCExpr *&Res);
-  virtual bool parseExpression(const MCExpr *&Res, SMLoc &EndLoc);
-  virtual bool parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc);
-  virtual bool parseParenExpression(const MCExpr *&Res, SMLoc &EndLoc);
-  virtual bool parseAbsoluteExpression(int64_t &Res);
+  bool parseExpression(const MCExpr *&Res, SMLoc &EndLoc) override;
+  bool parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) override;
+  bool parseParenExpression(const MCExpr *&Res, SMLoc &EndLoc) override;
+  bool parseAbsoluteExpression(int64_t &Res) override;
 
   /// \brief Parse an identifier or string (as a quoted identifier)
   /// and set \p Res to the identifier contents.
-  virtual bool parseIdentifier(StringRef &Res);
-  virtual void eatToEndOfStatement();
+  bool parseIdentifier(StringRef &Res) override;
+  void eatToEndOfStatement() override;
 
-  virtual void checkForValidSection();
+  void checkForValidSection() override;
   /// }
 
 private:
@@ -322,7 +322,7 @@ private:
   /// \brief Parse up to the end of statement and a return the contents from the
   /// current token until the end of the statement; the current token on exit
   /// will be either the EndOfStatement or EOF.
-  virtual StringRef parseStringToEndOfStatement();
+  StringRef parseStringToEndOfStatement() override;
 
   /// \brief Parse until the end of a statement or a comma is encountered,
   /// return the contents from the current token up to the end or comma.
@@ -451,7 +451,7 @@ private:
   bool parseDirectiveElseIf(SMLoc DirectiveLoc); // ".elseif"
   bool parseDirectiveElse(SMLoc DirectiveLoc); // ".else"
   bool parseDirectiveEndIf(SMLoc DirectiveLoc); // .endif
-  virtual bool parseEscapedString(std::string &Data);
+  bool parseEscapedString(std::string &Data) override;
 
   const MCExpr *applyModifierToExpr(const MCExpr *E,
                                     MCSymbolRefExpr::VariantKind Variant);

@@ -40,7 +40,7 @@ class DarwinAsmParser : public MCAsmParserExtension {
 public:
   DarwinAsmParser() {}
 
-  virtual void Initialize(MCAsmParser &Parser) {
+  void Initialize(MCAsmParser &Parser) override {
     // Call the base implementation.
     this->MCAsmParserExtension::Initialize(Parser);
 

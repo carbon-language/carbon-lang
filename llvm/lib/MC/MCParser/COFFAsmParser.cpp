@@ -42,7 +42,7 @@ class COFFAsmParser : public MCAsmParserExtension {
   bool ParseSectionName(StringRef &SectionName);
   bool ParseSectionFlags(StringRef FlagsString, unsigned* Flags);
 
-  virtual void Initialize(MCAsmParser &Parser) {
+  void Initialize(MCAsmParser &Parser) override {
     // Call the base implementation.
     MCAsmParserExtension::Initialize(Parser);
 
