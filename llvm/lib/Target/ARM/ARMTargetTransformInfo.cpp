@@ -163,20 +163,21 @@ unsigned ARMTTI::getIntImmCost(const APInt &Imm, Type *Ty) const {
         (ARM_AM::getSOImmVal(~ZImmVal) != -1))
       return 1;
     return ST->hasV6T2Ops() ? 2 : 3;
-  } else if (ST->isThumb2()) {
+  }
+  if (ST->isThumb2()) {
     if ((SImmVal >= 0 && SImmVal < 65536) ||
         (ARM_AM::getT2SOImmVal(ZImmVal) != -1) ||
         (ARM_AM::getT2SOImmVal(~ZImmVal) != -1))
       return 1;
     return ST->hasV6T2Ops() ? 2 : 3;
-  } else /*Thumb1*/ {
-    if (SImmVal >= 0 && SImmVal < 256)
-      return 1;
-    if ((~ZImmVal < 256) || ARM_AM::isThumbImmShiftedVal(ZImmVal))
-      return 2;
-    // Load from constantpool.
-    return 3;
   }
+  // Thumb1.
+  if (SImmVal >= 0 && SImmVal < 256)
+    return 1;
+  if ((~ZImmVal < 256) || ARM_AM::isThumbImmShiftedVal(ZImmVal))
+    return 2;
+  // Load from constantpool.
+  return 3;
 }
 
 unsigned ARMTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
