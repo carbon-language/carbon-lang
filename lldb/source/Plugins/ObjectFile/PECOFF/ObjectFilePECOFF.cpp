@@ -24,6 +24,8 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/SectionLoadList.h"
+#include "lldb/Target/Target.h"
 
 #define IMAGE_DOS_SIGNATURE             0x5A4D      // MZ
 #define IMAGE_NT_SIGNATURE              0x00004550  // PE00
@@ -171,6 +173,43 @@ ObjectFilePECOFF::ParseHeader ()
         }
     }
     return false;
+}
+
+bool
+ObjectFilePECOFF::SetLoadAddress(Target &target, addr_t value, bool value_is_offset)
+{
+    bool changed = false;
+    ModuleSP module_sp = GetModule();
+    if (module_sp)
+    {
+        size_t num_loaded_sections = 0;
+        SectionList *section_list = GetSectionList ();
+        if (section_list)
+        {
+            if (!value_is_offset)
+            {
+                value -= m_image_base;
+            }
+
+            const size_t num_sections = section_list->GetSize();
+            size_t sect_idx = 0;
+                
+            for (sect_idx = 0; sect_idx < num_sections; ++sect_idx)
+            {
+                // Iterate through the object file sections to find all
+                // of the sections that have SHF_ALLOC in their flag bits.
+                SectionSP section_sp (section_list->GetSectionAtIndex (sect_idx));
+                if (section_sp && !section_sp->IsThreadSpecific())
+                {
+                    if (target.GetSectionLoadList().SetSectionLoadAddress (section_sp, section_sp->GetFileAddress() + value))
+                        ++num_loaded_sections;
+                }
+            }
+            changed = num_loaded_sections > 0;
+            return num_loaded_sections > 0;
+        }
+    }
+    return changed;
 }
 
 
@@ -351,6 +390,9 @@ ObjectFilePECOFF::ParseCOFFOptionalHeader(lldb::offset_t *offset_ptr)
                     m_coff_header_opt.data_dirs[i].vmaddr = m_data.GetU32(offset_ptr);
                     m_coff_header_opt.data_dirs[i].vmsize = m_data.GetU32(offset_ptr);
                 }
+
+                m_file_offset = m_coff_header_opt.image_base;
+                m_image_base = m_coff_header_opt.image_base;
             }
         }
     }

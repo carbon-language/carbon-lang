@@ -73,6 +73,9 @@ public:
     virtual bool
     ParseHeader ();
     
+    virtual bool
+    SetLoadAddress(lldb_private::Target &target, lldb::addr_t value, bool value_is_offset);
+
     virtual lldb::ByteOrder
     GetByteOrder () const;
     
@@ -262,6 +265,7 @@ private:
 	coff_header_t		m_coff_header;
 	coff_opt_header_t	m_coff_header_opt;
 	SectionHeaderColl	m_sect_headers;
+    lldb::addr_t		m_image_base;
 };
 
 #endif  // #ifndef liblldb_ObjectFilePECOFF_h_
