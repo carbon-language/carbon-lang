@@ -132,10 +132,8 @@ static bool isTrivialExpression(const Expr *Ex) {
 
 static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S) {
   const Expr *Ex = dyn_cast<Expr>(S);
-  if (!Ex)
-    return false;
 
-  if (!isTrivialExpression(Ex))
+  if (Ex && !isTrivialExpression(Ex))
     return false;
 
   // Check if the block ends with a do...while() and see if 'S' is the
@@ -152,13 +150,20 @@ static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S) {
   // Look to see if the block ends with a 'return', and see if 'S'
   // is a substatement.  The 'return' may not be the last element in
   // the block because of destructors.
-  assert(!B->empty());
   for (CFGBlock::const_reverse_iterator I = B->rbegin(), E = B->rend();
        I != E; ++I) {
     if (Optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
       if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(CS->getStmt())) {
-        const Expr *RE = RS->getRetValue();
-        if (RE && stripExprSugar(RE->IgnoreParenCasts()) == Ex)
+        bool LookAtBody = false;
+        if (RS == S)
+          LookAtBody = true;
+        else {
+          const Expr *RE = RS->getRetValue();
+          if (RE && stripExprSugar(RE->IgnoreParenCasts()) == Ex)
+            LookAtBody = true;
+        }
+
+        if (LookAtBody)
           return bodyEndsWithNoReturn(*B->pred_begin());
       }
       break;

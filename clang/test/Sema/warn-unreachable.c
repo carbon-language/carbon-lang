@@ -199,6 +199,11 @@ int trivial_dead_return() {
   return ((0)); // no-warning
 }
 
+void trivial_dead_return_void() {
+  raze();
+  return; // no-warning
+}
+
 MyEnum trival_dead_return_enum() {
   raze();
   return Value1; // no-warning
