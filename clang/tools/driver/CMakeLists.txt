@@ -16,9 +16,6 @@ set( LLVM_LINK_COMPONENTS
   Vectorize
   )
 
-# Support plugins.
-set(LLVM_NO_DEAD_STRIP 1)
-
 add_clang_executable(clang
   driver.cpp
   cc1_main.cpp
@@ -32,8 +29,13 @@ target_link_libraries(clang
   clangFrontendTool
   )
 
+if(NOT CLANG_IS_PRODUCTION)
+  # Support plugins.
+  set(LLVM_NO_DEAD_STRIP 1)
+  set_target_properties(clang PROPERTIES ENABLE_EXPORTS 1)
+endif()
+
 set_target_properties(clang PROPERTIES VERSION ${CLANG_EXECUTABLE_VERSION})
-set_target_properties(clang PROPERTIES ENABLE_EXPORTS 1)
 
 add_dependencies(clang clang-headers)
 
