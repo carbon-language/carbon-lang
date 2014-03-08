@@ -30,7 +30,7 @@ typedef struct {
 /// \brief finds the scatter Bits that need to be used to apply relocations
 inline uint32_t
 findBitMask(uint32_t insn, Instruction *encodings, int32_t numInsns) {
-  for (int32_t i = 0; i < numInsns ; i++) {
+  for (int32_t i = 0; i < numInsns; i++) {
     if (((insn & 0xc000) == 0) && !(encodings[i].isDuplex))
       continue;
 
