@@ -9,6 +9,8 @@
 
 #include "lldb/lldb-python.h"
 
+#include <inttypes.h>
+
 #include "lldb/API/SBQueue.h"
 
 #include "lldb/API/SBProcess.h"
