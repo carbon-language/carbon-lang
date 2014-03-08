@@ -3499,8 +3499,8 @@ LabelDecl *LabelDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
 void ValueDecl::anchor() { }
 
 bool ValueDecl::isWeak() const {
-  for (attr_iterator I = attr_begin(), E = attr_end(); I != E; ++I)
-    if (isa<WeakAttr>(*I) || isa<WeakRefAttr>(*I))
+  for (const auto *I : attrs())
+    if (isa<WeakAttr>(I) || isa<WeakRefAttr>(I))
       return true;
 
   return isWeakImported();

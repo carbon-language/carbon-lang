@@ -12673,48 +12673,41 @@ bool Sema::checkThisInStaticMemberFunctionAttributes(CXXMethodDecl *Method) {
   FindCXXThisExpr Finder(*this);
 
   // Check attributes.
-  for (Decl::attr_iterator A = Method->attr_begin(), AEnd = Method->attr_end();
-       A != AEnd; ++A) {
+  for (const auto *A : Method->attrs()) {
     // FIXME: This should be emitted by tblgen.
     Expr *Arg = 0;
     ArrayRef<Expr *> Args;
-    if (GuardedByAttr *G = dyn_cast<GuardedByAttr>(*A))
+    if (const auto *G = dyn_cast<GuardedByAttr>(A))
       Arg = G->getArg();
-    else if (PtGuardedByAttr *G = dyn_cast<PtGuardedByAttr>(*A))
+    else if (const auto *G = dyn_cast<PtGuardedByAttr>(A))
       Arg = G->getArg();
-    else if (AcquiredAfterAttr *AA = dyn_cast<AcquiredAfterAttr>(*A))
+    else if (const auto *AA = dyn_cast<AcquiredAfterAttr>(A))
       Args = ArrayRef<Expr *>(AA->args_begin(), AA->args_size());
-    else if (AcquiredBeforeAttr *AB = dyn_cast<AcquiredBeforeAttr>(*A))
+    else if (const auto *AB = dyn_cast<AcquiredBeforeAttr>(A))
       Args = ArrayRef<Expr *>(AB->args_begin(), AB->args_size());
-    else if (ExclusiveLockFunctionAttr *ELF 
-               = dyn_cast<ExclusiveLockFunctionAttr>(*A))
+    else if (const auto *ELF  = dyn_cast<ExclusiveLockFunctionAttr>(A))
       Args = ArrayRef<Expr *>(ELF->args_begin(), ELF->args_size());
-    else if (SharedLockFunctionAttr *SLF 
-               = dyn_cast<SharedLockFunctionAttr>(*A))
+    else if (const auto *SLF  = dyn_cast<SharedLockFunctionAttr>(A))
       Args = ArrayRef<Expr *>(SLF->args_begin(), SLF->args_size());
-    else if (ExclusiveTrylockFunctionAttr *ETLF
-               = dyn_cast<ExclusiveTrylockFunctionAttr>(*A)) {
+    else if (const auto *ETLF = dyn_cast<ExclusiveTrylockFunctionAttr>(A)) {
       Arg = ETLF->getSuccessValue();
       Args = ArrayRef<Expr *>(ETLF->args_begin(), ETLF->args_size());
-    } else if (SharedTrylockFunctionAttr *STLF
-                 = dyn_cast<SharedTrylockFunctionAttr>(*A)) {
+    } else if (const auto *STLF = dyn_cast<SharedTrylockFunctionAttr>(A)) {
       Arg = STLF->getSuccessValue();
       Args = ArrayRef<Expr *>(STLF->args_begin(), STLF->args_size());
-    } else if (UnlockFunctionAttr *UF = dyn_cast<UnlockFunctionAttr>(*A))
+    } else if (const auto *UF = dyn_cast<UnlockFunctionAttr>(A))
       Args = ArrayRef<Expr *>(UF->args_begin(), UF->args_size());
-    else if (LockReturnedAttr *LR = dyn_cast<LockReturnedAttr>(*A))
+    else if (const auto *LR = dyn_cast<LockReturnedAttr>(A))
       Arg = LR->getArg();
-    else if (LocksExcludedAttr *LE = dyn_cast<LocksExcludedAttr>(*A))
+    else if (const auto *LE = dyn_cast<LocksExcludedAttr>(A))
       Args = ArrayRef<Expr *>(LE->args_begin(), LE->args_size());
-    else if (RequiresCapabilityAttr *RC
-               = dyn_cast<RequiresCapabilityAttr>(*A))
+    else if (const auto *RC = dyn_cast<RequiresCapabilityAttr>(A))
       Args = ArrayRef<Expr *>(RC->args_begin(), RC->args_size());
-    else if (AcquireCapabilityAttr *AC = dyn_cast<AcquireCapabilityAttr>(*A))
+    else if (const auto *AC = dyn_cast<AcquireCapabilityAttr>(A))
       Args = ArrayRef<Expr *>(AC->args_begin(), AC->args_size());
-    else if (TryAcquireCapabilityAttr *AC
-             = dyn_cast<TryAcquireCapabilityAttr>(*A))
-             Args = ArrayRef<Expr *>(AC->args_begin(), AC->args_size());
-    else if (ReleaseCapabilityAttr *RC = dyn_cast<ReleaseCapabilityAttr>(*A))
+    else if (const auto *AC = dyn_cast<TryAcquireCapabilityAttr>(A))
+      Args = ArrayRef<Expr *>(AC->args_begin(), AC->args_size());
+    else if (const auto *RC = dyn_cast<ReleaseCapabilityAttr>(A))
       Args = ArrayRef<Expr *>(RC->args_begin(), RC->args_size());
 
     if (Arg && !Finder.TraverseStmt(Arg))

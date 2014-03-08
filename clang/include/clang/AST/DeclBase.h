@@ -447,9 +447,12 @@ public:
   }
 
   typedef AttrVec::const_iterator attr_iterator;
+  typedef llvm::iterator_range<attr_iterator> attr_range;
 
-  // FIXME: Do not rely on iterators having comparable singular values.
-  //        Note that this should error out if they do not.
+  attr_range attrs() const {
+    return attr_range(attr_begin(), attr_end());
+  }
+
   attr_iterator attr_begin() const {
     return hasAttrs() ? getAttrs().begin() : 0;
   }
