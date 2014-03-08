@@ -82,7 +82,7 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
                                 uint32_t Type,
                                 int64_t Addend);
 
-  unsigned getMaxStubSize() {
+  unsigned getMaxStubSize() override {
     if (Arch == Triple::aarch64)
       return 20; // movz; movk; movk; movk; br
     if (Arch == Triple::arm || Arch == Triple::thumb)
@@ -99,7 +99,7 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
       return 0;
   }
 
-  unsigned getStubAlignment() {
+  unsigned getStubAlignment() override {
     if (Arch == Triple::systemz)
       return 8;
     else
@@ -114,7 +114,7 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
   uint64_t findGOTEntry(uint64_t LoadAddr, uint64_t Offset);
   size_t getGOTEntrySize();
 
-  virtual void updateGOTEntries(StringRef Name, uint64_t Addr);
+  void updateGOTEntries(StringRef Name, uint64_t Addr) override;
 
   // Relocation entries for symbols whose position-independent offset is
   // updated in a global offset table.
@@ -132,20 +132,18 @@ public:
   RuntimeDyldELF(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm)
                                           {}
 
-  virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value);
-  virtual void processRelocationRef(unsigned SectionID,
-                                    RelocationRef RelI,
-                                    ObjectImage &Obj,
-                                    ObjSectionToIDMap &ObjSectionToID,
-                                    const SymbolTableMap &Symbols,
-                                    StubMap &Stubs);
-  virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const;
-  virtual bool isCompatibleFile(const object::ObjectFile *Buffer) const;
-  virtual ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
-  virtual ObjectImage *createObjectImageFromFile(object::ObjectFile *Obj);
-  virtual void registerEHFrames();
-  virtual void deregisterEHFrames();
-  virtual void finalizeLoad(ObjSectionToIDMap &SectionMap);
+  void resolveRelocation(const RelocationEntry &RE, uint64_t Value) override;
+  void processRelocationRef(unsigned SectionID, RelocationRef RelI,
+                            ObjectImage &Obj, ObjSectionToIDMap &ObjSectionToID,
+                            const SymbolTableMap &Symbols,
+                            StubMap &Stubs) override;
+  bool isCompatibleFormat(const ObjectBuffer *Buffer) const override;
+  bool isCompatibleFile(const object::ObjectFile *Buffer) const override;
+  ObjectImage *createObjectImage(ObjectBuffer *InputBuffer) override;
+  ObjectImage *createObjectImageFromFile(object::ObjectFile *Obj) override;
+  void registerEHFrames() override;
+  void deregisterEHFrames() override;
+  void finalizeLoad(ObjSectionToIDMap &SectionMap) override;
   virtual ~RuntimeDyldELF();
 };
 

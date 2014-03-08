@@ -375,8 +375,8 @@ namespace {
 
     JITResolver &getJITResolver() { return Resolver; }
 
-    virtual void startFunction(MachineFunction &F);
-    virtual bool finishFunction(MachineFunction &F);
+    void startFunction(MachineFunction &F) override;
+    bool finishFunction(MachineFunction &F) override;
 
     void emitConstantPool(MachineConstantPool *MCP);
     void initJumpTableInfo(MachineJumpTableInfo *MJTI);
@@ -386,24 +386,23 @@ namespace {
                      unsigned StubSize, unsigned Alignment = 1);
     void startGVStub(void *Buffer, unsigned StubSize);
     void finishGVStub();
-    virtual void *allocIndirectGV(const GlobalValue *GV,
-                                  const uint8_t *Buffer, size_t Size,
-                                  unsigned Alignment);
+    void *allocIndirectGV(const GlobalValue *GV, const uint8_t *Buffer,
+                          size_t Size, unsigned Alignment) override;
 
     /// allocateSpace - Reserves space in the current block if any, or
     /// allocate a new one of the given size.
-    virtual void *allocateSpace(uintptr_t Size, unsigned Alignment);
+    void *allocateSpace(uintptr_t Size, unsigned Alignment) override;
 
     /// allocateGlobal - Allocate memory for a global.  Unlike allocateSpace,
     /// this method does not allocate memory in the current output buffer,
     /// because a global may live longer than the current function.
-    virtual void *allocateGlobal(uintptr_t Size, unsigned Alignment);
+    void *allocateGlobal(uintptr_t Size, unsigned Alignment) override;
 
-    virtual void addRelocation(const MachineRelocation &MR) {
+    void addRelocation(const MachineRelocation &MR) override {
       Relocations.push_back(MR);
     }
 
-    virtual void StartMachineBasicBlock(MachineBasicBlock *MBB) {
+    void StartMachineBasicBlock(MachineBasicBlock *MBB) override {
       if (MBBLocations.size() <= (unsigned)MBB->getNumber())
         MBBLocations.resize((MBB->getNumber()+1)*2);
       MBBLocations[MBB->getNumber()] = getCurrentPCValue();
@@ -414,10 +413,11 @@ namespace {
                    << (void*) getCurrentPCValue() << "]\n");
     }
 
-    virtual uintptr_t getConstantPoolEntryAddress(unsigned Entry) const;
-    virtual uintptr_t getJumpTableEntryAddress(unsigned Entry) const;
+    uintptr_t getConstantPoolEntryAddress(unsigned Entry) const override;
+    uintptr_t getJumpTableEntryAddress(unsigned Entry) const override;
 
-    virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const{
+    uintptr_t
+    getMachineBasicBlockAddress(MachineBasicBlock *MBB) const override {
       assert(MBBLocations.size() > (unsigned)MBB->getNumber() &&
              MBBLocations[MBB->getNumber()] && "MBB not emitted!");
       return MBBLocations[MBB->getNumber()];
@@ -432,22 +432,22 @@ namespace {
     /// function body.
     void deallocateMemForFunction(const Function *F);
 
-    virtual void processDebugLoc(DebugLoc DL, bool BeforePrintingInsn);
+    void processDebugLoc(DebugLoc DL, bool BeforePrintingInsn) override;
 
-    virtual void emitLabel(MCSymbol *Label) {
+    void emitLabel(MCSymbol *Label) override {
       LabelLocations[Label] = getCurrentPCValue();
     }
 
-    virtual DenseMap<MCSymbol*, uintptr_t> *getLabelLocations() {
+    DenseMap<MCSymbol*, uintptr_t> *getLabelLocations() override {
       return &LabelLocations;
     }
 
-    virtual uintptr_t getLabelAddress(MCSymbol *Label) const {
+    uintptr_t getLabelAddress(MCSymbol *Label) const override {
       assert(LabelLocations.count(Label) && "Label not emitted!");
       return LabelLocations.find(Label)->second;
     }
 
-    virtual void setModuleInfo(MachineModuleInfo* Info) {
+    void setModuleInfo(MachineModuleInfo* Info) override {
       MMI = Info;
     }
 

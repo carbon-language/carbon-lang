@@ -55,7 +55,7 @@ class RuntimeDyldMachO : public RuntimeDyldImpl {
                          bool isPCRel,
                          unsigned Size);
 
-  unsigned getMaxStubSize() {
+  unsigned getMaxStubSize() override {
     if (Arch == Triple::arm || Arch == Triple::thumb)
       return 8; // 32-bit instruction and 32-bit address
     else if (Arch == Triple::x86_64)
@@ -64,7 +64,7 @@ class RuntimeDyldMachO : public RuntimeDyldImpl {
       return 0;
   }
 
-  unsigned getStubAlignment() {
+  unsigned getStubAlignment() override {
     return 1;
   }
 
@@ -86,17 +86,15 @@ class RuntimeDyldMachO : public RuntimeDyldImpl {
 public:
   RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
-  virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value);
-  virtual void processRelocationRef(unsigned SectionID,
-                                    RelocationRef RelI,
-                                    ObjectImage &Obj,
-                                    ObjSectionToIDMap &ObjSectionToID,
-                                    const SymbolTableMap &Symbols,
-                                    StubMap &Stubs);
-  virtual bool isCompatibleFormat(const ObjectBuffer *Buffer) const;
-  virtual bool isCompatibleFile(const object::ObjectFile *Obj) const;
-  virtual void registerEHFrames();
-  virtual void finalizeLoad(ObjSectionToIDMap &SectionMap);
+  void resolveRelocation(const RelocationEntry &RE, uint64_t Value) override;
+  void processRelocationRef(unsigned SectionID, RelocationRef RelI,
+                            ObjectImage &Obj, ObjSectionToIDMap &ObjSectionToID,
+                            const SymbolTableMap &Symbols,
+                            StubMap &Stubs) override;
+  bool isCompatibleFormat(const ObjectBuffer *Buffer) const override;
+  bool isCompatibleFile(const object::ObjectFile *Obj) const override;
+  void registerEHFrames() override;
+  void finalizeLoad(ObjSectionToIDMap &SectionMap) override;
 };
 
 } // end namespace llvm

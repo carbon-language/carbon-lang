@@ -84,12 +84,12 @@ public:
   /// Creates an entry in the JIT registry for the buffer @p Object,
   /// which must contain an object file in executable memory with any
   /// debug information for the debugger.
-  void registerObject(const ObjectBuffer &Object);
+  void registerObject(const ObjectBuffer &Object) override;
 
   /// Removes the internal registration of @p Object, and
   /// frees associated resources.
   /// Returns true if @p Object was found in ObjectBufferMap.
-  bool deregisterObject(const ObjectBuffer &Object);
+  bool deregisterObject(const ObjectBuffer &Object) override;
 
 private:
   /// Deregister the debug info for the given object file from the debugger

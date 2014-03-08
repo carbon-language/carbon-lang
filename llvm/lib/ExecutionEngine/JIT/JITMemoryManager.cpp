@@ -274,8 +274,8 @@ namespace {
   public:
     JITSlabAllocator(DefaultJITMemoryManager &jmm) : JMM(jmm) { }
     virtual ~JITSlabAllocator() { }
-    virtual MemSlab *Allocate(size_t Size);
-    virtual void Deallocate(MemSlab *Slab);
+    MemSlab *Allocate(size_t Size) override;
+    void Deallocate(MemSlab *Slab) override;
   };
 
   /// DefaultJITMemoryManager - Manage memory for the JIT code generation.
@@ -332,23 +332,24 @@ namespace {
 
     /// getPointerToNamedFunction - This method returns the address of the
     /// specified function by using the dlsym function call.
-    virtual void *getPointerToNamedFunction(const std::string &Name,
-                                            bool AbortOnFailure = true);
+    void *getPointerToNamedFunction(const std::string &Name,
+                                    bool AbortOnFailure = true) override;
 
-    void AllocateGOT();
+    void AllocateGOT() override;
 
     // Testing methods.
-    virtual bool CheckInvariants(std::string &ErrorStr);
-    size_t GetDefaultCodeSlabSize() { return DefaultCodeSlabSize; }
-    size_t GetDefaultDataSlabSize() { return DefaultSlabSize; }
-    size_t GetDefaultStubSlabSize() { return DefaultSlabSize; }
-    unsigned GetNumCodeSlabs() { return CodeSlabs.size(); }
-    unsigned GetNumDataSlabs() { return DataAllocator.GetNumSlabs(); }
-    unsigned GetNumStubSlabs() { return StubAllocator.GetNumSlabs(); }
+    bool CheckInvariants(std::string &ErrorStr) override;
+    size_t GetDefaultCodeSlabSize() override { return DefaultCodeSlabSize; }
+    size_t GetDefaultDataSlabSize() override { return DefaultSlabSize; }
+    size_t GetDefaultStubSlabSize() override { return DefaultSlabSize; }
+    unsigned GetNumCodeSlabs() override { return CodeSlabs.size(); }
+    unsigned GetNumDataSlabs() override { return DataAllocator.GetNumSlabs(); }
+    unsigned GetNumStubSlabs() override { return StubAllocator.GetNumSlabs(); }
 
     /// startFunctionBody - When a function starts, allocate a block of free
     /// executable memory, returning a pointer to it and its actual size.
-    uint8_t *startFunctionBody(const Function *F, uintptr_t &ActualSize) {
+    uint8_t *startFunctionBody(const Function *F,
+                               uintptr_t &ActualSize) override {
 
       FreeRangeHeader* candidateBlock = FreeMemoryList;
       FreeRangeHeader* head = FreeMemoryList;
@@ -422,7 +423,7 @@ namespace {
     /// endFunctionBody - The function F is now allocated, and takes the memory
     /// in the range [FunctionStart,FunctionEnd).
     void endFunctionBody(const Function *F, uint8_t *FunctionStart,
-                         uint8_t *FunctionEnd) {
+                         uint8_t *FunctionEnd) override {
       assert(FunctionEnd > FunctionStart);
       assert(FunctionStart == (uint8_t *)(CurBlock+1) &&
              "Mismatched function start/end!");
@@ -435,7 +436,7 @@ namespace {
 
     /// allocateSpace - Allocate a memory block of the given size.  This method
     /// cannot be called between calls to startFunctionBody and endFunctionBody.
-    uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) {
+    uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) override {
       CurBlock = FreeMemoryList;
       FreeMemoryList = FreeMemoryList->AllocateBlock();
 
@@ -453,18 +454,19 @@ namespace {
 
     /// allocateStub - Allocate memory for a function stub.
     uint8_t *allocateStub(const GlobalValue* F, unsigned StubSize,
-                          unsigned Alignment) {
+                          unsigned Alignment) override {
       return (uint8_t*)StubAllocator.Allocate(StubSize, Alignment);
     }
 
     /// allocateGlobal - Allocate memory for a global.
-    uint8_t *allocateGlobal(uintptr_t Size, unsigned Alignment) {
+    uint8_t *allocateGlobal(uintptr_t Size, unsigned Alignment) override {
       return (uint8_t*)DataAllocator.Allocate(Size, Alignment);
     }
 
     /// allocateCodeSection - Allocate memory for a code section.
     uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                                 unsigned SectionID, StringRef SectionName) {
+                                 unsigned SectionID,
+                                 StringRef SectionName) override {
       // Grow the required block size to account for the block header
       Size += sizeof(*CurBlock);
 
@@ -511,15 +513,15 @@ namespace {
     /// allocateDataSection - Allocate memory for a data section.
     uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
                                  unsigned SectionID, StringRef SectionName,
-                                 bool IsReadOnly) {
+                                 bool IsReadOnly) override {
       return (uint8_t*)DataAllocator.Allocate(Size, Alignment);
     }
 
-    bool finalizeMemory(std::string *ErrMsg) {
+    bool finalizeMemory(std::string *ErrMsg) override {
       return false;
     }
 
-    uint8_t *getGOTBase() const {
+    uint8_t *getGOTBase() const override {
       return GOTBase;
     }
 
@@ -539,28 +541,26 @@ namespace {
 
     /// deallocateFunctionBody - Deallocate all memory for the specified
     /// function body.
-    void deallocateFunctionBody(void *Body) {
+    void deallocateFunctionBody(void *Body) override {
       if (Body) deallocateBlock(Body);
     }
 
     /// setMemoryWritable - When code generation is in progress,
     /// the code pages may need permissions changed.
-    void setMemoryWritable()
-    {
+    void setMemoryWritable() override {
       for (unsigned i = 0, e = CodeSlabs.size(); i != e; ++i)
         sys::Memory::setWritable(CodeSlabs[i]);
     }
     /// setMemoryExecutable - When code generation is done and we're ready to
     /// start execution, the code pages may need permissions changed.
-    void setMemoryExecutable()
-    {
+    void setMemoryExecutable() override {
       for (unsigned i = 0, e = CodeSlabs.size(); i != e; ++i)
         sys::Memory::setExecutable(CodeSlabs[i]);
     }
 
     /// setPoisonMemory - Controls whether we write garbage over freed memory.
     ///
-    void setPoisonMemory(bool poison) {
+    void setPoisonMemory(bool poison) override {
       PoisonMemory = poison;
     }
   };

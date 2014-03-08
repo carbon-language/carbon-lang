@@ -48,19 +48,18 @@ public:
   ///
   /// The value of \p Alignment must be a power of two.  If \p Alignment is zero
   /// a default alignment of 16 will be used.
-  virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID,
-                                       StringRef SectionName);
+  uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
+                               unsigned SectionID,
+                               StringRef SectionName) override;
 
   /// \brief Allocates a memory block of (at least) the given size suitable for
   /// executable code.
   ///
   /// The value of \p Alignment must be a power of two.  If \p Alignment is zero
   /// a default alignment of 16 will be used.
-  virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
-                                       unsigned SectionID,
-                                       StringRef SectionName,
-                                       bool isReadOnly);
+  uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
+                               unsigned SectionID, StringRef SectionName,
+                               bool isReadOnly) override;
 
   /// \brief Update section-specific memory permissions and other attributes.
   ///
@@ -73,7 +72,7 @@ public:
   /// operations needed to reliably use the memory are also performed.
   ///
   /// \returns true if an error occurred, false otherwise.
-  virtual bool finalizeMemory(std::string *ErrMsg = 0);
+  bool finalizeMemory(std::string *ErrMsg = 0) override;
 
   /// \brief Invalidate instruction cache for code sections.
   ///

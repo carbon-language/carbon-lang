@@ -94,23 +94,19 @@ class ELFObjectImage : public ObjectImageCommon {
 
     // Subclasses can override these methods to update the image with loaded
     // addresses for sections and common symbols
-    virtual void updateSectionAddress(const SectionRef &Sec, uint64_t Addr)
-    {
+    void updateSectionAddress(const SectionRef &Sec, uint64_t Addr) override {
       DyldObj->updateSectionAddress(Sec, Addr);
     }
 
-    virtual void updateSymbolAddress(const SymbolRef &Sym, uint64_t Addr)
-    {
+    void updateSymbolAddress(const SymbolRef &Sym, uint64_t Addr) override {
       DyldObj->updateSymbolAddress(Sym, Addr);
     }
 
-    virtual void registerWithDebugger()
-    {
+    void registerWithDebugger() override {
       JITRegistrar::getGDBRegistrar().registerObject(*Buffer);
       Registered = true;
     }
-    virtual void deregisterWithDebugger()
-    {
+    void deregisterWithDebugger() override {
       JITRegistrar::getGDBRegistrar().deregisterObject(*Buffer);
     }
 };

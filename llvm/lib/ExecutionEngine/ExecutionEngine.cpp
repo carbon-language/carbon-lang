@@ -97,7 +97,7 @@ public:
     return static_cast<char*>(RawMemory) + sizeof(GVMemoryBlock);
   }
 
-  virtual void deleted() {
+  void deleted() override {
     // We allocated with operator new and with some extra memory hanging off the
     // end, so don't just delete this.  I'm not sure if this is actually
     // required.

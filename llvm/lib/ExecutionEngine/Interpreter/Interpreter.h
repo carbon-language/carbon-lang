@@ -112,11 +112,11 @@ public:
 
   /// run - Start execution with the specified function and arguments.
   ///
-  virtual GenericValue runFunction(Function *F,
-                                   const std::vector<GenericValue> &ArgValues);
+  GenericValue runFunction(Function *F,
+                           const std::vector<GenericValue> &ArgValues) override;
 
-  virtual void *getPointerToNamedFunction(const std::string &Name,
-                                          bool AbortOnFailure = true) {
+  void *getPointerToNamedFunction(const std::string &Name,
+                                  bool AbortOnFailure = true) override {
     // FIXME: not implemented.
     return 0;
   }
@@ -124,13 +124,13 @@ public:
   /// recompileAndRelinkFunction - For the interpreter, functions are always
   /// up-to-date.
   ///
-  virtual void *recompileAndRelinkFunction(Function *F) {
+  void *recompileAndRelinkFunction(Function *F) override {
     return getPointerToFunction(F);
   }
 
   /// freeMachineCodeForFunction - The interpreter does not generate any code.
   ///
-  void freeMachineCodeForFunction(Function *F) { }
+  void freeMachineCodeForFunction(Function *F) override { }
 
   // Methods used to execute code:
   // Place a call on the stack
@@ -212,8 +212,8 @@ private:  // Helper functions
   //
   void SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF);
 
-  void *getPointerToFunction(Function *F) { return (void*)F; }
-  void *getPointerToBasicBlock(BasicBlock *BB) { return (void*)BB; }
+  void *getPointerToFunction(Function *F) override { return (void*)F; }
+  void *getPointerToBasicBlock(BasicBlock *BB) override { return (void*)BB; }
 
   void initializeExecutionEngine() { }
   void initializeExternalFunctions();

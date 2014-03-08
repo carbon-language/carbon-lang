@@ -643,75 +643,76 @@ namespace {
 
     RecordStreamer(MCContext &Context) : MCStreamer(Context) {}
 
-    virtual void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) {
+    void EmitInstruction(const MCInst &Inst,
+                         const MCSubtargetInfo &STI) override {
       // Scan for values.
       for (unsigned i = Inst.getNumOperands(); i--; )
         if (Inst.getOperand(i).isExpr())
           AddValueSymbols(Inst.getOperand(i).getExpr());
     }
-    virtual void EmitLabel(MCSymbol *Symbol) {
+    void EmitLabel(MCSymbol *Symbol) override {
       Symbol->setSection(*getCurrentSection().first);
       markDefined(*Symbol);
     }
-    virtual void EmitDebugLabel(MCSymbol *Symbol) {
+    void EmitDebugLabel(MCSymbol *Symbol) override {
       EmitLabel(Symbol);
     }
-    virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
+    void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) override {
       // FIXME: should we handle aliases?
       markDefined(*Symbol);
     }
-    virtual bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) {
+    bool EmitSymbolAttribute(MCSymbol *Symbol,
+                             MCSymbolAttr Attribute) override {
       if (Attribute == MCSA_Global)
         markGlobal(*Symbol);
       return true;
     }
-    virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
-                              uint64_t Size , unsigned ByteAlignment) {
+    void EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
+                      uint64_t Size , unsigned ByteAlignment) override {
       markDefined(*Symbol);
     }
-    virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
-                                  unsigned ByteAlignment) {
+    void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+                          unsigned ByteAlignment) override {
       markDefined(*Symbol);
     }
 
-    virtual void EmitBundleAlignMode(unsigned AlignPow2) {}
-    virtual void EmitBundleLock(bool AlignToEnd) {}
-    virtual void EmitBundleUnlock() {}
+    void EmitBundleAlignMode(unsigned AlignPow2) override {}
+    void EmitBundleLock(bool AlignToEnd) override {}
+    void EmitBundleUnlock() override {}
 
     // Noop calls.
-    virtual void ChangeSection(const MCSection *Section,
-                               const MCExpr *Subsection) {}
-    virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {}
-    virtual void EmitThumbFunc(MCSymbol *Func) {}
-    virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}
-    virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {}
-    virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol) {}
-    virtual void EmitCOFFSymbolStorageClass(int StorageClass) {}
-    virtual void EmitCOFFSymbolType(int Type) {}
-    virtual void EndCOFFSymbolDef() {}
-    virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {}
-    virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
-                                       unsigned ByteAlignment) {}
-    virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
-                                uint64_t Size, unsigned ByteAlignment) {}
-    virtual void EmitBytes(StringRef Data) {}
-    virtual void EmitValueImpl(const MCExpr *Value, unsigned Size) {}
-    virtual void EmitULEB128Value(const MCExpr *Value) {}
-    virtual void EmitSLEB128Value(const MCExpr *Value) {}
-    virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
-                                      unsigned ValueSize,
-                                      unsigned MaxBytesToEmit) {}
-    virtual void EmitCodeAlignment(unsigned ByteAlignment,
-                                   unsigned MaxBytesToEmit) {}
-    virtual bool EmitValueToOffset(const MCExpr *Offset,
-                                   unsigned char Value ) { return false; }
-    virtual void EmitFileDirective(StringRef Filename) {}
-    virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
-                                          const MCSymbol *LastLabel,
-                                          const MCSymbol *Label,
-                                          unsigned PointerSize) {}
-    virtual void FinishImpl() {}
-    virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
+    void ChangeSection(const MCSection *Section,
+                       const MCExpr *Subsection) override {}
+    void EmitAssemblerFlag(MCAssemblerFlag Flag) override {}
+    void EmitThumbFunc(MCSymbol *Func) override {}
+    void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) override {}
+    void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) override {}
+    void BeginCOFFSymbolDef(const MCSymbol *Symbol) override {}
+    void EmitCOFFSymbolStorageClass(int StorageClass) override {}
+    void EmitCOFFSymbolType(int Type) override {}
+    void EndCOFFSymbolDef() override {}
+    void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) override {}
+    void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+                               unsigned ByteAlignment) override {}
+    void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
+                        uint64_t Size, unsigned ByteAlignment) override {}
+    void EmitBytes(StringRef Data) override {}
+    void EmitValueImpl(const MCExpr *Value, unsigned Size) override {}
+    void EmitULEB128Value(const MCExpr *Value) override {}
+    void EmitSLEB128Value(const MCExpr *Value) override {}
+    void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
+                              unsigned ValueSize,
+                              unsigned MaxBytesToEmit) override {}
+    void EmitCodeAlignment(unsigned ByteAlignment,
+                           unsigned MaxBytesToEmit) override {}
+    bool EmitValueToOffset(const MCExpr *Offset,
+                           unsigned char Value) override { return false; }
+    void EmitFileDirective(StringRef Filename) override {}
+    void EmitDwarfAdvanceLineAddr(int64_t LineDelta, const MCSymbol *LastLabel,
+                                  const MCSymbol *Label,
+                                  unsigned PointerSize) override {}
+    void FinishImpl() override {}
+    void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) override {
       RecordProcEnd(Frame);
     }
   };

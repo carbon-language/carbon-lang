@@ -56,7 +56,7 @@ protected:
 /// while providing a common ObjectBuffer interface for access to the
 /// memory once the object has been generated.
 class ObjectBufferStream : public ObjectBuffer {
-  virtual void anchor();
+  void anchor() override;
 public:
   ObjectBufferStream() : OS(SV) {}
   virtual ~ObjectBufferStream() {}

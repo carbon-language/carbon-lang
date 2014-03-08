@@ -450,9 +450,8 @@ void JIT::runJITOnFunction(Function *F, MachineCodeInfo *MCI) {
     MachineCodeInfo *const MCI;
    public:
     MCIListener(MachineCodeInfo *mci) : MCI(mci) {}
-    virtual void NotifyFunctionEmitted(const Function &,
-                                       void *Code, size_t Size,
-                                       const EmittedFunctionDetails &) {
+    void NotifyFunctionEmitted(const Function &, void *Code, size_t Size,
+                               const EmittedFunctionDetails &) override {
       MCI->setAddress(Code);
       MCI->setSize(Size);
     }

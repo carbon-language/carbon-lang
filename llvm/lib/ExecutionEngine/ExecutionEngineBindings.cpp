@@ -360,17 +360,17 @@ public:
   SimpleBindingMemoryManager(const SimpleBindingMMFunctions& Functions,
                              void *Opaque);
   virtual ~SimpleBindingMemoryManager();
-  
-  virtual uint8_t *allocateCodeSection(
-    uintptr_t Size, unsigned Alignment, unsigned SectionID,
-    StringRef SectionName);
 
-  virtual uint8_t *allocateDataSection(
-    uintptr_t Size, unsigned Alignment, unsigned SectionID,
-    StringRef SectionName, bool isReadOnly);
+  uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
+                               unsigned SectionID,
+                               StringRef SectionName) override;
 
-  virtual bool finalizeMemory(std::string *ErrMsg);
-  
+  uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
+                               unsigned SectionID, StringRef SectionName,
+                               bool isReadOnly) override;
+
+  bool finalizeMemory(std::string *ErrMsg) override;
+
 private:
   SimpleBindingMMFunctions Functions;
   void *Opaque;
