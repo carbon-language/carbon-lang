@@ -427,7 +427,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   if (!isIncrementalProcessingEnabled())
     CurPPLexer = 0;
 
-  if (TUKind != TU_Prefix) {
+  if (TUKind == TU_Complete) {
     // This is the end of the top-level file. 'WarnUnusedMacroLocs' has
     // collected all macro locations that we need to warn because they are not
     // used.
