@@ -3809,8 +3809,7 @@ bool RewriteModernObjC::RewriteObjCFieldDeclType(QualType &Type,
       }
       
       Result += " {\n";
-      for (EnumDecl::enumerator_iterator EC = ED->enumerator_begin(),
-           ECEnd = ED->enumerator_end(); EC != ECEnd; ++EC) {
+      for (const auto *EC : ED->enumerators()) {
         Result += "\t"; Result += EC->getName(); Result += " = ";
         llvm::APSInt Val = EC->getInitVal();
         Result += Val.toString(10);

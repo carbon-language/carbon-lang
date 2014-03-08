@@ -667,9 +667,7 @@ static bool UseNSOptionsMacro(Preprocessor &PP, ASTContext &Ctx,
   bool PowerOfTwo = true;
   bool AllHexdecimalEnumerator = true;
   uint64_t MaxPowerOfTwoVal = 0;
-  for (EnumDecl::enumerator_iterator EI = EnumDcl->enumerator_begin(),
-       EE = EnumDcl->enumerator_end(); EI != EE; ++EI) {
-    EnumConstantDecl *Enumerator = (*EI);
+  for (auto Enumerator : EnumDcl->enumerators()) {
     const Expr *InitExpr = Enumerator->getInitExpr();
     if (!InitExpr) {
       PowerOfTwo = false;

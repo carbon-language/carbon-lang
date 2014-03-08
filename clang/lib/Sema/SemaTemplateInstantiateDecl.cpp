@@ -733,9 +733,7 @@ void TemplateDeclInstantiator::InstantiateEnumDefinition(
   SmallVector<Decl*, 4> Enumerators;
 
   EnumConstantDecl *LastEnumConst = 0;
-  for (EnumDecl::enumerator_iterator EC = Pattern->enumerator_begin(),
-         ECEnd = Pattern->enumerator_end();
-       EC != ECEnd; ++EC) {
+  for (auto *EC : Pattern->enumerators()) {
     // The specified value for the enumerator.
     ExprResult Value = SemaRef.Owned((Expr *)0);
     if (Expr *UninstValue = EC->getInitExpr()) {
@@ -765,7 +763,7 @@ void TemplateDeclInstantiator::InstantiateEnumDefinition(
     }
 
     if (EnumConst) {
-      SemaRef.InstantiateAttrs(TemplateArgs, *EC, EnumConst);
+      SemaRef.InstantiateAttrs(TemplateArgs, EC, EnumConst);
 
       EnumConst->setAccess(Enum->getAccess());
       Enum->addDecl(EnumConst);
@@ -776,7 +774,7 @@ void TemplateDeclInstantiator::InstantiateEnumDefinition(
           !Enum->isScoped()) {
         // If the enumeration is within a function or method, record the enum
         // constant as a local.
-        SemaRef.CurrentInstantiationScope->InstantiatedLocal(*EC, EnumConst);
+        SemaRef.CurrentInstantiationScope->InstantiatedLocal(EC, EnumConst);
       }
     }
   }

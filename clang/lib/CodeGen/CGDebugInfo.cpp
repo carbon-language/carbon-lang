@@ -1917,9 +1917,7 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumType *Ty) {
   // Create DIEnumerator elements for each enumerator.
   SmallVector<llvm::Value *, 16> Enumerators;
   ED = ED->getDefinition();
-  for (EnumDecl::enumerator_iterator
-         Enum = ED->enumerator_begin(), EnumEnd = ED->enumerator_end();
-       Enum != EnumEnd; ++Enum) {
+  for (const auto *Enum : ED->enumerators()) {
     Enumerators.push_back(
       DBuilder.createEnumerator(Enum->getName(),
                                 Enum->getInitVal().getSExtValue()));

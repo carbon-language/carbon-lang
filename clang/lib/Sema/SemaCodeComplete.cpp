@@ -3795,13 +3795,11 @@ void Sema::CodeCompleteCase(Scope *S) {
                         CodeCompleter->getCodeCompletionTUInfo(),
                         CodeCompletionContext::CCC_Expression);
   Results.EnterNewScope();
-  for (EnumDecl::enumerator_iterator E = Enum->enumerator_begin(),
-                                  EEnd = Enum->enumerator_end();
-       E != EEnd; ++E) {
-    if (EnumeratorsSeen.count(*E))
+  for (auto *E : Enum->enumerators()) {
+    if (EnumeratorsSeen.count(E))
       continue;
     
-    CodeCompletionResult R(*E, CCP_EnumInCase, Qualifier);
+    CodeCompletionResult R(E, CCP_EnumInCase, Qualifier);
     Results.AddResult(R, CurContext, 0, false);
   }
   Results.ExitScope();

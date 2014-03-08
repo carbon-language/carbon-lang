@@ -9630,10 +9630,9 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
 
       // Similarly, dive into enums and fish their constants out, making them
       // accessible in this scope.
-      if (EnumDecl *ED = dyn_cast<EnumDecl>(D)) {
-        for (EnumDecl::enumerator_iterator EI = ED->enumerator_begin(),
-               EE = ED->enumerator_end(); EI != EE; ++EI)
-          PushOnScopeChains(*EI, FnBodyScope, /*AddToContext=*/false);
+      if (auto *ED = dyn_cast<EnumDecl>(D)) {
+        for (auto *EI : ED->enumerators())
+          PushOnScopeChains(EI, FnBodyScope, /*AddToContext=*/false);
       }
     }
   }

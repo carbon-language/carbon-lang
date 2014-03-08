@@ -817,10 +817,9 @@ void AddTopLevelDeclarationToHash(Decl *D, unsigned &Hash) {
       // For an unscoped enum include the enumerators in the hash since they
       // enter the top-level namespace.
       if (!EnumD->isScoped()) {
-        for (EnumDecl::enumerator_iterator EI = EnumD->enumerator_begin(),
-               EE = EnumD->enumerator_end(); EI != EE; ++EI) {
-          if ((*EI)->getIdentifier())
-            Hash = llvm::HashString((*EI)->getIdentifier()->getName(), Hash);
+        for (const auto *EI : EnumD->enumerators()) {
+          if (EI->getIdentifier())
+            Hash = llvm::HashString(EI->getIdentifier()->getName(), Hash);
         }
       }
     }

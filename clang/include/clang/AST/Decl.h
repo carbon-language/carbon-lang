@@ -2899,6 +2899,11 @@ public:
   // enumerator_iterator - Iterates through the enumerators of this
   // enumeration.
   typedef specific_decl_iterator<EnumConstantDecl> enumerator_iterator;
+  typedef specific_decl_range<EnumConstantDecl> enumerator_range;
+
+  enumerator_range enumerators() const {
+    return enumerator_range(enumerator_begin(), enumerator_end());
+  }
 
   enumerator_iterator enumerator_begin() const {
     const EnumDecl *E = getDefinition();
