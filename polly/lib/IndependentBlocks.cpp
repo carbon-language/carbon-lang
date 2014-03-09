@@ -359,10 +359,9 @@ bool IndependentBlocks::translateScalarToArray(const Region *R) {
 
 // Returns true when Inst is only used inside region R.
 bool IndependentBlocks::onlyUsedInRegion(Instruction *Inst, const Region *R) {
-  for (Instruction::use_iterator UI = Inst->use_begin(), UE = Inst->use_end();
-       UI != UE; ++UI)
-    if (Instruction *U = dyn_cast<Instruction>(*UI))
-      if (isEscapeUse(U, R))
+  for (User *U : Inst->users())
+    if (Instruction *UI = dyn_cast<Instruction>(U))
+      if (isEscapeUse(UI, R))
         return false;
 
   return true;
@@ -374,22 +373,21 @@ bool IndependentBlocks::translateScalarToArray(Instruction *Inst,
     return false;
 
   SmallVector<Instruction *, 4> LoadInside, LoadOutside;
-  for (Instruction::use_iterator UI = Inst->use_begin(), UE = Inst->use_end();
-       UI != UE; ++UI)
+  for (User *U : Inst->users())
     // Inst is referenced outside or referenced as an escaped operand.
-    if (Instruction *U = dyn_cast<Instruction>(*UI)) {
-      if (isEscapeUse(U, R))
-        LoadOutside.push_back(U);
+    if (Instruction *UI = dyn_cast<Instruction>(U)) {
+      if (isEscapeUse(UI, R))
+        LoadOutside.push_back(UI);
 
       if (DisableIntraScopScalarToArray)
         continue;
 
-      if (canSynthesize(U, LI, SE, R))
+      if (canSynthesize(UI, LI, SE, R))
         continue;
 
-      BasicBlock *UParent = U->getParent();
+      BasicBlock *UParent = UI->getParent();
       if (R->contains(UParent) && isEscapeOperand(Inst, UParent, R))
-        LoadInside.push_back(U);
+        LoadInside.push_back(UI);
     }
 
   if (LoadOutside.empty() && LoadInside.empty())
@@ -458,9 +456,8 @@ bool IndependentBlocks::isIndependentBlock(const Region *R,
       continue;
 
     // A value inside the Scop is referenced outside.
-    for (Instruction::use_iterator UI = Inst->use_begin(), UE = Inst->use_end();
-         UI != UE; ++UI) {
-      if (isEscapeUse(*UI, R)) {
+    for (User *U : Inst->users()) {
+      if (isEscapeUse(U, R)) {
         DEBUG(dbgs() << "Instruction not independent:\n");
         DEBUG(dbgs() << "Instruction used outside the Scop!\n");
         DEBUG(Inst->print(dbgs()));

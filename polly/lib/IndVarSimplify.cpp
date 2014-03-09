@@ -262,12 +262,12 @@ void PollyIndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
 
   // Check Incr uses. One user is PN and the other user is an exit condition
   // used by the conditional terminator.
-  Value::use_iterator IncrUse = Incr->use_begin();
+  Value::user_iterator IncrUse = Incr->user_begin();
   Instruction *U1 = cast<Instruction>(*IncrUse++);
-  if (IncrUse == Incr->use_end())
+  if (IncrUse == Incr->user_end())
     return;
   Instruction *U2 = cast<Instruction>(*IncrUse++);
-  if (IncrUse != Incr->use_end())
+  if (IncrUse != Incr->user_end())
     return;
 
   // Find exit condition, which is an fcmp.  If it doesn't exist, or if it isn't
@@ -276,10 +276,10 @@ void PollyIndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
   if (!Compare)
     Compare = dyn_cast<FCmpInst>(U2);
   if (Compare == 0 || !Compare->hasOneUse() ||
-      !isa<BranchInst>(Compare->use_back()))
+      !isa<BranchInst>(Compare->user_back()))
     return;
 
-  BranchInst *TheBr = cast<BranchInst>(Compare->use_back());
+  BranchInst *TheBr = cast<BranchInst>(Compare->user_back());
 
   // We need to verify that the branch actually controls the iteration count
   // of the loop.  If not, the new IV can overflow and no one will notice.
@@ -1084,16 +1084,14 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
 /// pushNarrowIVUsers - Add eligible users of NarrowDef to NarrowIVUsers.
 ///
 void WidenIV::pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef) {
-  for (Value::use_iterator UI = NarrowDef->use_begin(),
-                           UE = NarrowDef->use_end();
-       UI != UE; ++UI) {
-    Instruction *NarrowUse = cast<Instruction>(*UI);
+  for (User *U : NarrowDef->users()) {
+    Instruction *NarrowUser = cast<Instruction>(U);
 
     // Handle data flow merges and bizarre phi cycles.
-    if (!Widened.insert(NarrowUse))
+    if (!Widened.insert(NarrowUser))
       continue;
 
-    NarrowIVUsers.push_back(NarrowIVDefUse(NarrowDef, NarrowUse, WideDef));
+    NarrowIVUsers.push_back(NarrowIVDefUse(NarrowDef, NarrowUser, WideDef));
   }
 }
 
@@ -1436,17 +1434,14 @@ static bool AlmostDeadIV(PHINode *Phi, BasicBlock *LatchBlock, Value *Cond) {
   int LatchIdx = Phi->getBasicBlockIndex(LatchBlock);
   Value *IncV = Phi->getIncomingValue(LatchIdx);
 
-  for (Value::use_iterator UI = Phi->use_begin(), UE = Phi->use_end(); UI != UE;
-       ++UI) {
-    if (*UI != Cond && *UI != IncV)
+  for (User *U : Phi->users())
+    if (U != Cond && U != IncV)
       return false;
-  }
 
-  for (Value::use_iterator UI = IncV->use_begin(), UE = IncV->use_end();
-       UI != UE; ++UI) {
-    if (*UI != Cond && *UI != Phi)
+  for (User *U : IncV->users())
+    if (U != Cond && U != Phi)
       return false;
-  }
+
   return true;
 }
 
@@ -1747,12 +1742,11 @@ void PollyIndVarSimplify::SinkUnusedInvariants(Loop *L) {
     // Determine if there is a use in or before the loop (direct or
     // otherwise).
     bool UsedInLoop = false;
-    for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); UI != UE;
-         ++UI) {
-      User *U = *UI;
-      BasicBlock *UseBB = cast<Instruction>(U)->getParent();
-      if (PHINode *P = dyn_cast<PHINode>(U)) {
-        unsigned i = PHINode::getIncomingValueNumForOperand(UI.getOperandNo());
+    for (Use &U : I->uses()) {
+      Instruction *UI = cast<Instruction>(U.getUser());
+      BasicBlock *UseBB = UI->getParent();
+      if (PHINode *P = dyn_cast<PHINode>(UI)) {
+        unsigned i = PHINode::getIncomingValueNumForOperand(U.getOperandNo());
         UseBB = P->getIncomingBlock(i);
       }
       if (UseBB == Preheader || L->contains(UseBB)) {
