@@ -1,0 +1,40 @@
+# Check reading addendum for R_MIPS_26 relocation.
+#
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s
+# RUN: lld -flavor gnu -target mipsel -o %t-exe %t-obj
+# RUN: llvm-objdump -t -disassemble %t-exe | FileCheck %s
+
+# CHECK: Disassembly of section .text:
+# CHECK-NEXT: __start:
+# CHECK-NEXT:   400128:  00 00 00 00  nop
+
+# CHECK:      loc:
+# CHECK-NEXT:   40012c:  4a 00 50 0c  jal  20971816
+# CHECK-NEXT:   400130:  00 00 00 00  nop
+# CHECK-NEXT:   400134:  4a 00 90 0c  jal  37749032
+# CHECK-NEXT:   400138:  00 00 00 00  nop
+# CHECK-NEXT:   40013c:  46 00 10 0c  jal  4194584
+# CHECK-NEXT:   400140:  00 00 00 00  nop
+# CHECK-NEXT:   400144:  4b 00 50 0c  jal  20971820
+# CHECK-NEXT:   400148:  00 00 00 00  nop
+# CHECK-NEXT:   40014c:  4b 00 90 0c  jal  37749036
+# CHECK-NEXT:   400150:  00 00 00 00  nop
+# CHECK-NEXT:   400154:  47 00 10 0c  jal  4194588
+# CHECK-NEXT:   400158:  00 00 00 00  nop
+
+# CHECK: SYMBOL TABLE:
+# CHECK: 0040012c l F .text  00000030 loc
+# CHECK: 00400128 g F .text  00000004 __start
+
+    .global __start
+    .ent    __start
+__start:
+    nop
+loc:
+    jal     __start + 0x1000000
+    jal     __start + 0x2000000
+    jal     __start + (-0x10)
+    jal     loc + 0x1000000
+    jal     loc + 0x2000000
+    jal     loc + (-0x10)
+    .end    __start

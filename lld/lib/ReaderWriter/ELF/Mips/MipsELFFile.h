@@ -74,7 +74,7 @@ private:
       ref->setAddend(*(int32_t *)ap);
       break;
     case R_MIPS_26:
-      ref->setAddend(*(int16_t *)ap);
+      ref->setAddend(*(int32_t *)ap & 0x3ffffff);
       break;
     case R_MIPS_HI16:
     case R_MIPS_LO16:
