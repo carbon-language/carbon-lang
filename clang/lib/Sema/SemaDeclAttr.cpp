@@ -4655,6 +4655,8 @@ void Sema::DeclApplyPragmaWeak(Scope *S, NamedDecl *ND, WeakInfo &W) {
     // to insert Decl at TU scope, sorry.
     DeclContext *SavedContext = CurContext;
     CurContext = Context.getTranslationUnitDecl();
+    NewD->setDeclContext(CurContext);
+    NewD->setLexicalDeclContext(CurContext);
     PushOnScopeChains(NewD, S);
     CurContext = SavedContext;
   } else { // just add weak to existing
