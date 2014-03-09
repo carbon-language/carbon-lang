@@ -451,12 +451,10 @@ public:
 
   void assign(unsigned NumElts, const T &Elt) {
     clear();
-    append(NumElts, Elt);
-  }
-
-  template <typename in_iter> void assign(in_iter S, in_iter E) {
-    clear();
-    append(S, E);
+    if (this->capacity() < NumElts)
+      this->grow(NumElts);
+    this->setEnd(this->begin()+NumElts);
+    std::uninitialized_fill(this->begin(), this->end(), Elt);
   }
 
   iterator erase(iterator I) {

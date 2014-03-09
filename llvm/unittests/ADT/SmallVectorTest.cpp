@@ -338,17 +338,6 @@ TYPED_TEST(SmallVectorTest, AssignTest) {
   this->assertValuesInOrder(this->theVector, 2u, 77, 77);
 }
 
-TYPED_TEST(SmallVectorTest, AssignIterPair) {
-  SCOPED_TRACE("AssignIterPair");
-
-  std::vector<int> v;
-  v.push_back(1);
-  v.push_back(2);
-  this->theVector.push_back(Constructable(1));
-  this->theVector.assign(v.begin(), v.end());
-  this->assertValuesInOrder(this->theVector, 2u, 1, 2);
-}
-
 // Erase a single element
 TYPED_TEST(SmallVectorTest, EraseTest) {
   SCOPED_TRACE("EraseTest");
