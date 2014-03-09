@@ -120,7 +120,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name,
   // Normalize the attribute name, __foo__ becomes foo. This is only allowable
   // for GNU attributes.
   bool IsGNU = SyntaxUsed == AS_GNU || (SyntaxUsed == AS_CXX11 &&
-                                        FullName.equals("gnu"));
+                                        FullName == "gnu");
   if (IsGNU && AttrName.size() >= 4 && AttrName.startswith("__") &&
       AttrName.endswith("__"))
     AttrName = AttrName.slice(2, AttrName.size() - 2);

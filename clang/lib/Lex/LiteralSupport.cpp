@@ -1373,7 +1373,7 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
         // result of a concatenation involving at least one user-defined-string-
         // literal, all the participating user-defined-string-literals shall
         // have the same ud-suffix.
-        if (!UDSuffixBuf.equals(UDSuffix)) {
+        if (UDSuffixBuf != UDSuffix) {
           if (Diags) {
             SourceLocation TokLoc = StringToks[i].getLocation();
             Diags->Report(TokLoc, diag::err_string_concat_mixed_suffix)
