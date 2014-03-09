@@ -1399,10 +1399,6 @@ public:
     }
   };
 
-  template <typename SpecificDecl>
-  using specific_decl_range =
-      llvm::iterator_range<specific_decl_iterator<SpecificDecl>>;
-
   /// \brief Iterates over a filtered subrange of declarations stored
   /// in a DeclContext.
   ///
