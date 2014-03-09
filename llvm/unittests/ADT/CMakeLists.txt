@@ -40,7 +40,6 @@ set(ADTSources
   TripleTest.cpp
   TwineTest.cpp
   VariadicFunctionTest.cpp
-  polymorphic_ptr_test.cpp
  )
 
 add_llvm_unittest(ADTTests
