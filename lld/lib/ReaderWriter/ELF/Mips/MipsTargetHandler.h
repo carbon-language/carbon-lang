@@ -73,11 +73,11 @@ public:
   MipsTargetHandler(MipsLinkingContext &context);
 
   MipsTargetLayout<Mips32ElELFType> &getTargetLayout() override {
-    return *(_mipsTargetLayout.get());
+    return *_mipsTargetLayout;
   }
 
   const MipsTargetRelocationHandler &getRelocationHandler() const override {
-    return *(_mipsRelocationHandler.get());
+    return *_mipsRelocationHandler;
   }
 
   std::unique_ptr<Writer> getWriter() override;

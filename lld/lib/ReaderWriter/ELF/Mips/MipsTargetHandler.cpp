@@ -23,18 +23,18 @@ MipsTargetHandler::MipsTargetHandler(MipsLinkingContext &context)
       _mipsRuntimeFile(new MipsRuntimeFile<Mips32ElELFType>(context)),
       _mipsTargetLayout(new MipsTargetLayout<Mips32ElELFType>(context)),
       _mipsRelocationHandler(
-          new MipsTargetRelocationHandler(*_mipsTargetLayout.get())) {}
+          new MipsTargetRelocationHandler(*_mipsTargetLayout)) {}
 
 std::unique_ptr<Writer> MipsTargetHandler::getWriter() {
   switch (_mipsLinkingContext.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
     return std::unique_ptr<Writer>(
         new elf::MipsExecutableWriter<Mips32ElELFType>(
-            _mipsLinkingContext, *_mipsTargetLayout.get()));
+            _mipsLinkingContext, *_mipsTargetLayout));
   case llvm::ELF::ET_DYN:
     return std::unique_ptr<Writer>(
         new elf::MipsDynamicLibraryWriter<Mips32ElELFType>(
-            _mipsLinkingContext, *_mipsTargetLayout.get()));
+            _mipsLinkingContext, *_mipsTargetLayout));
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:
