@@ -56,6 +56,23 @@ public:
 
     return std::move(file);
   }
+
+private:
+  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
+  typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
+
+  ELFReference<ELFT> *
+  createRelocationReference(const Elf_Sym &symbol, const Elf_Rel &ri,
+                            ArrayRef<uint8_t> content) override {
+    bool isMips64EL = this->_objFile->isMips64EL();
+    auto *ref = new (this->_readerStorage)
+        ELFReference<ELFT>(&ri, ri.r_offset - symbol.st_value, this->kindArch(),
+                           ri.getType(isMips64EL), ri.getSymbol(isMips64EL));
+    int32_t addend =
+        *(int16_t *)(content.data() + ri.r_offset - symbol.st_value);
+    ref->setAddend(addend);
+    return ref;
+  }
 };
 
 } // elf

@@ -1,41 +1,42 @@
-# Check handling of HI16 and LO16 relocations against _gp_disp symbol.
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t1 %s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t2 %t1
-# RUN: llvm-objdump -section-headers -t -disassemble %t2 | FileCheck %s
+# Check handling multiple HI16 relocation followed by a single LO16 relocation.
+#
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s
+# RUN: lld -flavor gnu -target mipsel -e glob1 -o %t-exe %t-obj
+# RUN: llvm-objdump -t -disassemble %t-exe | FileCheck %s
 
 # CHECK: Disassembly of section .text:
 # CHECK: glob1:
-# CHECK-NEXT:   114:  01 00 01 8c  lw      $1, 1($zero)
-# CHECK-NEXT:   118:  01 00 02 8c  lw      $2, 1($zero)
-# CHECK-NEXT:   11c:  d8 8e 21 24  addiu   $1, $1, -28968
-# CHECK: glob2:
-# CHECK-NEXT:   120:  01 00 01 8c  lw      $1, 1($zero)
-# CHECK-NEXT:   124:  01 00 02 8c  lw      $2, 1($zero)
-# CHECK-NEXT:   128:  cc 8e 21 24  addiu $1, $1, -28980
-
-# CHECK: Sections:
-# CHECK: Idx Name  Size      Address          Type
-# CHECK:   4 .text 00000018 0000000000000114 TEXT DATA
-# CHECK:   6 .got  00000008 0000000000001000 DATA
+# CHECK-NEXT: 400128:  40 00 08 3c  lui  $8, 64
+# CHECK-NEXT: 40012c:  40 00 08 3c  lui  $8, 64
+# CHECK-NEXT: 400130:  40 00 08 3c  lui  $8, 64
+# CHECK-NEXT: 400134:  40 00 08 3c  lui  $8, 64
+# CHECK-NEXT: 400138:  42 00 08 3c  lui  $8, 66
+# CHECK-NEXT: 40013c:  3e 00 08 3c  lui  $8, 62
+# CHECK-NEXT: 400140:  40 02 08 3c  lui  $8, 576
+# CHECK-NEXT: 400144:  40 fe 08 3c  lui  $8, 65088
+# CHECK-NEXT: 400148:  4d 01 08 85  lh   $8, 333($8)
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 00000114 g F .text  0000000c glob1
-# CHECK: 00000120 g F .text  0000000c glob2
-# CHECK: 00001000 g   *ABS*  00000000 _GLOBAL_OFFSET_TABLE_
-# CHECK: 00008ff0 g   *ABS*  00000000 _gp_disp
+# CHECK: 00400128 g F .text  00000024 glob1
+# CHECK: 0040014c g F .text  00000004 glob2
 
     .global glob1
     .ent    glob1
 glob1:
-    lw      $1,%hi(_gp_disp)    # (.got + 0x7ff0 - (.glob1 + 0) + 0x8000) >> 16
-    lw      $2,%hi(_gp_disp)    # (.got + 0x7ff0 - (.glob1 + 4) + 0x8000) >> 16
-    addiu   $1,$1,%lo(_gp_disp) # .got + 0x7ff0 - (.glob1 + 8) + 4
+    lui     $t0,%hi(glob2+0x1)
+    lui     $t0,%hi(glob2+(-0x1))
+    lui     $t0,%hi(glob2+0x1ff)
+    lui     $t0,%hi(glob2+(-0x1ff))
+    lui     $t0,%hi(glob2+0x1ffff)
+    lui     $t0,%hi(glob2+(-0x1ffff))
+    lui     $t0,%hi(glob2+0x1ffffff)
+    lui     $t0,%hi(glob2+(-0x1ffffff))
+
+    lh      $t0,%lo(glob2+(-0x1ffffff))($t0)
     .end    glob1
 
     .global glob2
     .ent    glob2
 glob2:
-    lw      $1,%hi(_gp_disp)    # (.got + 0x7ff0 - (.glob2 + 0) + 0x8000) >> 16
-    lw      $2,%hi(_gp_disp)    # (.got + 0x7ff0 - (.glob2 + 4) + 0x8000) >> 16
-    addiu   $1,$1,%lo(_gp_disp) # .got + 0x7ff0 - (.glob2 + 8) + 4
+    nop
     .end    glob2

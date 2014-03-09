@@ -1,0 +1,45 @@
+# Check handling of HI16 and LO16 relocations for _gp_disp.
+#
+# R_MIPS_HI16: (AHL + GP - P) - (short)(AHL + GP - P)
+# R_MIPS_LO16: AHL + GP - P + 4
+#   where AHL = (AHI << 16) + ALO
+#
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s
+# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-obj
+# RUN: llvm-objdump -t -disassemble %t-so | FileCheck %s
+
+# CHECK: Disassembly of section .text:
+# CHECK: glob1:
+# CHECK-NEXT:  f0:  01 00 08 3c  lui  $8, 1
+# CHECK-NEXT:  f4:  01 8f 08 85  lh   $8, -28927($8)
+# CHECK-NEXT:  f8:  01 00 08 3c  lui  $8, 1
+# CHECK-NEXT:  fc:  f7 8e 08 85  lh   $8, -28937($8)
+# CHECK-NEXT: 100:  01 00 08 3c  lui  $8, 1
+# CHECK-NEXT: 104:  ef 90 08 85  lh   $8, -28433($8)
+# CHECK-NEXT: 108:  01 00 08 3c  lui  $8, 1
+# CHECK-NEXT: 10c:  e9 8c 08 85  lh   $8, -29463($8)
+# CHECK-NEXT: 110:  03 00 08 3c  lui  $8, 3
+# CHECK-NEXT: 114:  df 8e 08 85  lh   $8, -28961($8)
+
+# CHECK: SYMBOL TABLE:
+# CHECK: 000000f0  g F  .text  00000028 glob1
+# CHECK: 00008ff0  g    *ABS*  00000000 _gp_disp
+
+    .global glob1
+    .ent    glob1
+glob1:
+    lui     $t0,%hi(_gp_disp+0x1)
+    lh      $t0,%lo(_gp_disp+0x1)($t0)
+
+    lui     $t0,%hi(_gp_disp+(-0x1))
+    lh      $t0,%lo(_gp_disp+(-0x1))($t0)
+
+    lui     $t0,%hi(_gp_disp+0x1ff)
+    lh      $t0,%lo(_gp_disp+0x1ff)($t0)
+
+    lui     $t0,%hi(_gp_disp+(-0x1ff))
+    lh      $t0,%lo(_gp_disp+(-0x1ff))($t0)
+
+    lui     $t0,%hi(_gp_disp+0x1ffff)
+    lh      $t0,%lo(_gp_disp+0x1ffff)($t0)
+    .end    glob1

@@ -1,0 +1,66 @@
+# Check handling of HI16 and LO16 relocations for regular symbol.
+#
+# R_MIPS_HI16: (AHL + S) - (short)(AHL + S)
+# R_MIPS_LO16: AHL + S
+#   where AHL = (AHI << 16) + ALO
+#
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s
+# RUN: lld -flavor gnu -target mipsel -e glob1 -o %t-exe %t-obj
+# RUN: llvm-objdump -t -disassemble %t-exe | FileCheck %s
+
+# CHECK: Disassembly of section .text:
+# CHECK: glob1:
+# CHECK-NEXT: 400128:  40 00 08 3c  lui  $8, 64
+# CHECK-NEXT: 40012c:  69 01 08 85  lh   $8, 361($8)
+# CHECK-NEXT: 400130:  40 00 08 3c  lui  $8, 64
+# CHECK-NEXT: 400134:  67 01 08 85  lh   $8, 359($8)
+# CHECK-NEXT: 400138:  40 00 08 3c  lui  $8, 64
+# CHECK-NEXT: 40013c:  67 03 08 85  lh   $8, 871($8)
+# CHECK-NEXT: 400140:  40 00 08 3c  lui  $8, 64
+# CHECK-NEXT: 400144:  69 ff 08 85  lh   $8, -151($8)
+# CHECK-NEXT: 400148:  42 00 08 3c  lui  $8, 66
+# CHECK-NEXT: 40014c:  67 01 08 85  lh   $8, 359($8)
+# CHECK-NEXT: 400150:  3e 00 08 3c  lui  $8, 62
+# CHECK-NEXT: 400154:  69 01 08 85  lh   $8, 361($8)
+# CHECK-NEXT: 400158:  40 02 08 3c  lui  $8, 576
+# CHECK-NEXT: 40015c:  67 01 08 85  lh   $8, 359($8)
+# CHECK-NEXT: 400160:  40 fe 08 3c  lui  $8, 65088
+# CHECK-NEXT: 400164:  69 01 08 85  lh   $8, 361($8)
+
+# CHECK: SYMBOL TABLE:
+# CHECK: 00400128  g F .text  00000040 glob1
+# CHECK: 00400168  g F .text  00000004 glob2
+
+    .global glob1
+    .ent    glob1
+glob1:
+    lui     $t0,%hi(glob2+0x1)
+    lh      $t0,%lo(glob2+0x1)($t0)
+
+    lui     $t0,%hi(glob2+(-0x1))
+    lh      $t0,%lo(glob2+(-0x1))($t0)
+
+    lui     $t0,%hi(glob2+0x1ff)
+    lh      $t0,%lo(glob2+0x1ff)($t0)
+
+    lui     $t0,%hi(glob2+(-0x1ff))
+    lh      $t0,%lo(glob2+(-0x1ff))($t0)
+
+    lui     $t0,%hi(glob2+0x1ffff)
+    lh      $t0,%lo(glob2+0x1ffff)($t0)
+
+    lui     $t0,%hi(glob2+(-0x1ffff))
+    lh      $t0,%lo(glob2+(-0x1ffff))($t0)
+
+    lui     $t0,%hi(glob2+0x1ffffff)          # truncate
+    lh      $t0,%lo(glob2+0x1ffffff)($t0)
+
+    lui     $t0,%hi(glob2+(-0x1ffffff))       # truncate
+    lh      $t0,%lo(glob2+(-0x1ffffff))($t0)
+    .end    glob1
+
+    .global glob2
+    .ent    glob2
+glob2:
+    nop
+    .end    glob2
