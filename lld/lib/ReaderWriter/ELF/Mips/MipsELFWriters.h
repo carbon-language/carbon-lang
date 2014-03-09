@@ -42,24 +42,25 @@ public:
   }
 
   void finalizeMipsRuntimeAtomValues() {
-    if (_mipsLinkingContext.isDynamic()) {
-      auto gotSection = _mipsTargetLayout.findOutputSection(".got");
-      auto got = gotSection ? gotSection->virtualAddr() : 0;
-      auto gp = gotSection ? got + _mipsTargetLayout.getGPOffset() : 0;
+    if (!_mipsLinkingContext.isDynamic())
+      return;
 
-      auto gotAtomIter =
-          _mipsTargetLayout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
-      assert(gotAtomIter != _mipsTargetLayout.absoluteAtoms().end());
-      (*gotAtomIter)->_virtualAddr = got;
+    auto gotSection = _mipsTargetLayout.findOutputSection(".got");
+    auto got = gotSection ? gotSection->virtualAddr() : 0;
+    auto gp = gotSection ? got + _mipsTargetLayout.getGPOffset() : 0;
 
-      auto gpAtomIter = _mipsTargetLayout.findAbsoluteAtom("_gp");
-      assert(gpAtomIter != _mipsTargetLayout.absoluteAtoms().end());
-      (*gpAtomIter)->_virtualAddr = gp;
+    auto gotAtomIter =
+        _mipsTargetLayout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
+    assert(gotAtomIter != _mipsTargetLayout.absoluteAtoms().end());
+    (*gotAtomIter)->_virtualAddr = got;
 
-      AtomLayout *gpAtom = _mipsTargetLayout.getGP();
-      assert(gpAtom != nullptr);
-      gpAtom->_virtualAddr = gp;
-    }
+    auto gpAtomIter = _mipsTargetLayout.findAbsoluteAtom("_gp");
+    assert(gpAtomIter != _mipsTargetLayout.absoluteAtoms().end());
+    (*gpAtomIter)->_virtualAddr = gp;
+
+    AtomLayout *gpAtom = _mipsTargetLayout.getGP();
+    assert(gpAtom != nullptr);
+    gpAtom->_virtualAddr = gp;
   }
 
   bool hasGlobalGOTEntry(const Atom *a) const {
