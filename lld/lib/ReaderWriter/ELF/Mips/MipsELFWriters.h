@@ -21,13 +21,13 @@ template <typename ELFT> class MipsELFWriter {
 public:
   MipsELFWriter(MipsLinkingContext &context,
                 MipsTargetLayout<ELFT> &targetLayout)
-      : _mipsLinkingContext(context), _mipsTargetLayout(targetLayout) {}
+      : _context(context), _targetLayout(targetLayout) {}
 
   void setELFHeader(ELFHeader<ELFT> &elfHeader) {
     elfHeader.e_version(1);
     elfHeader.e_ident(llvm::ELF::EI_VERSION, llvm::ELF::EV_CURRENT);
     elfHeader.e_ident(llvm::ELF::EI_OSABI, llvm::ELF::ELFOSABI_NONE);
-    if (_mipsTargetLayout.findOutputSection(".got.plt"))
+    if (_targetLayout.findOutputSection(".got.plt"))
       elfHeader.e_ident(llvm::ELF::EI_ABIVERSION, 1);
     else
       elfHeader.e_ident(llvm::ELF::EI_ABIVERSION, 0);
@@ -36,40 +36,39 @@ public:
     // merge them and write result here.
     uint32_t flags = llvm::ELF::EF_MIPS_NOREORDER | llvm::ELF::EF_MIPS_ABI_O32 |
                      llvm::ELF::EF_MIPS_CPIC | llvm::ELF::EF_MIPS_ARCH_32R2;
-    if (_mipsLinkingContext.getOutputELFType() == llvm::ELF::ET_DYN)
+    if (_context.getOutputELFType() == llvm::ELF::ET_DYN)
       flags |= EF_MIPS_PIC;
     elfHeader.e_flags(flags);
   }
 
   void finalizeMipsRuntimeAtomValues() {
-    if (!_mipsLinkingContext.isDynamic())
+    if (!_context.isDynamic())
       return;
 
-    auto gotSection = _mipsTargetLayout.findOutputSection(".got");
+    auto gotSection = _targetLayout.findOutputSection(".got");
     auto got = gotSection ? gotSection->virtualAddr() : 0;
-    auto gp = gotSection ? got + _mipsTargetLayout.getGPOffset() : 0;
+    auto gp = gotSection ? got + _targetLayout.getGPOffset() : 0;
 
-    auto gotAtomIter =
-        _mipsTargetLayout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
-    assert(gotAtomIter != _mipsTargetLayout.absoluteAtoms().end());
+    auto gotAtomIter = _targetLayout.findAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
+    assert(gotAtomIter != _targetLayout.absoluteAtoms().end());
     (*gotAtomIter)->_virtualAddr = got;
 
-    auto gpAtomIter = _mipsTargetLayout.findAbsoluteAtom("_gp");
-    assert(gpAtomIter != _mipsTargetLayout.absoluteAtoms().end());
+    auto gpAtomIter = _targetLayout.findAbsoluteAtom("_gp");
+    assert(gpAtomIter != _targetLayout.absoluteAtoms().end());
     (*gpAtomIter)->_virtualAddr = gp;
 
-    AtomLayout *gpAtom = _mipsTargetLayout.getGP();
+    AtomLayout *gpAtom = _targetLayout.getGP();
     assert(gpAtom != nullptr);
     gpAtom->_virtualAddr = gp;
   }
 
   bool hasGlobalGOTEntry(const Atom *a) const {
-    return _mipsTargetLayout.getGOTSection().hasGlobalGOTEntry(a);
+    return _targetLayout.getGOTSection().hasGlobalGOTEntry(a);
   }
 
 private:
-  MipsLinkingContext &_mipsLinkingContext;
-  MipsTargetLayout<ELFT> &_mipsTargetLayout;
+  MipsLinkingContext &_context;
+  MipsTargetLayout<ELFT> &_targetLayout;
 };
 
 } // elf
