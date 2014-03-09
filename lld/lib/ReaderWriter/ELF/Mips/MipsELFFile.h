@@ -68,9 +68,19 @@ private:
     auto *ref = new (this->_readerStorage)
         ELFReference<ELFT>(&ri, ri.r_offset - symbol.st_value, this->kindArch(),
                            ri.getType(isMips64EL), ri.getSymbol(isMips64EL));
-    int32_t addend =
-        *(int16_t *)(content.data() + ri.r_offset - symbol.st_value);
-    ref->setAddend(addend);
+    const uint8_t *ap = content.data() + ri.r_offset - symbol.st_value;
+    switch (ri.getType(isMips64EL)) {
+    case R_MIPS_32:
+      ref->setAddend(*(int32_t *)ap);
+      break;
+    case R_MIPS_26:
+      ref->setAddend(*(int16_t *)ap);
+      break;
+    case R_MIPS_HI16:
+    case R_MIPS_LO16:
+      ref->setAddend(*(int16_t *)ap);
+      break;
+    }
     return ref;
   }
 };
