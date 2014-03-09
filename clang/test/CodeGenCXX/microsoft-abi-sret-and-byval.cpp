@@ -253,7 +253,7 @@ void bar() {
   int c = foo(NonTrivial(), b);
 }
 // WIN32-LABEL: define void @"\01?bar@test2@@YAXXZ"() {{.*}} {
-// WIN32:   %[[argmem:[^ ]*]] = alloca [[argmem_ty:<{ %"struct.test2::NonTrivial", %"struct.test2::POD" }>]], inalloca
+// WIN32:   %[[argmem:[^ ]*]] = alloca inalloca [[argmem_ty:<{ %"struct.test2::NonTrivial", %"struct.test2::POD" }>]]
 // WIN32:   getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 1
 // WIN32:   call void @llvm.memcpy
 // WIN32:   getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 0

@@ -31,7 +31,7 @@ void call_foo() {
 //
 // CHECK-LABEL: define void @"\01?call_foo@@YAXXZ"()
 // CHECK: call i8* @llvm.stacksave()
-// CHECK: %[[argmem:[^ ]*]] = alloca [[argmem_ty]], inalloca
+// CHECK: %[[argmem:[^ ]*]] = alloca inalloca [[argmem_ty]]
 // CHECK: %[[arg3:[^ ]*]] = getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 2
 // CHECK: invoke x86_thiscallcc %struct.A* @"\01??0A@@QAE@H@Z"(%struct.A* %[[arg3]], i32 3)
 // CHECK: %[[arg2:[^ ]*]] = getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 1

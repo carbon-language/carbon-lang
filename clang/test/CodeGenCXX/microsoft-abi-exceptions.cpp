@@ -39,7 +39,7 @@ int HasDeactivatedCleanups() {
 // WIN32-LABEL: define i32 @"\01?HasDeactivatedCleanups@@YAHXZ"() {{.*}} {
 // WIN32:   %[[isactive:.*]] = alloca i1
 // WIN32:   call i8* @llvm.stacksave()
-// WIN32:   %[[argmem:.*]] = alloca [[argmem_ty:<{ %struct.A, %struct.A }>]], inalloca
+// WIN32:   %[[argmem:.*]] = alloca inalloca [[argmem_ty:<{ %struct.A, %struct.A }>]]
 // WIN32:   %[[arg1:.*]] = getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 1
 // WIN32:   invoke x86_thiscallcc %struct.A* @"\01??0A@@QAE@XZ"
 // WIN32:   invoke void @"\01?TakeRef@@YAXABUA@@@Z"
