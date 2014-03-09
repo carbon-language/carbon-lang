@@ -17,11 +17,11 @@
 #define LLVM_CLANG_SERIALIZATION_GLOBAL_MODULE_INDEX_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include <memory>
 #include <utility>
 
 namespace llvm {

@@ -44,12 +44,12 @@
 #include "clang/Sema/Weak.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include <deque>
+#include <memory>
 #include <string>
 #include <vector>
 

@@ -16,9 +16,9 @@
 #define LLVM_CLANG_FILESYSTEMSTATCACHE_H
 
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/FileSystem.h"
+#include <memory>
 #include <sys/stat.h>
 #include <sys/types.h>
 

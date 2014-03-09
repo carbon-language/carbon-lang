@@ -12,7 +12,7 @@
 
 #include "clang/ARCMigrate/FileRemapper.h"
 #include "clang/Frontend/FrontendAction.h"
-#include "llvm/ADT/OwningPtr.h"
+#include <memory>
 
 namespace clang {
 namespace arcmt {

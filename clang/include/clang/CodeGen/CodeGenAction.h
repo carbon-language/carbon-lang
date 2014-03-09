@@ -11,7 +11,7 @@
 #define LLVM_CLANG_CODEGEN_CODE_GEN_ACTION_H
 
 #include "clang/Frontend/FrontendAction.h"
-#include "llvm/ADT/OwningPtr.h"
+#include <memory>
 
 namespace llvm {
   class LLVMContext;

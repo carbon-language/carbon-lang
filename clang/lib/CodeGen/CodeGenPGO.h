@@ -18,9 +18,9 @@
 #include "CodeGenModule.h"
 #include "CodeGenTypes.h"
 #include "clang/Frontend/CodeGenOptions.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include <memory>
 
 namespace clang {
 namespace CodeGen {

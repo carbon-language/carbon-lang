@@ -11,9 +11,9 @@
 #define CLANG_DRIVER_JOB_H_
 
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Option/Option.h"
+#include <memory>
 
 namespace llvm {
   class raw_ostream;

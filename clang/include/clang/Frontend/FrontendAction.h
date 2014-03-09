@@ -21,8 +21,8 @@
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Frontend/FrontendOptions.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
+#include <memory>
 #include <string>
 #include <vector>
 

@@ -11,7 +11,7 @@
 #define LLVM_CLANG_FRONTEND_CHAINEDDIAGNOSTICCONSUMER_H
 
 #include "clang/Basic/Diagnostic.h"
-#include "llvm/ADT/OwningPtr.h"
+#include <memory>
 
 namespace clang {
 class LangOptions;

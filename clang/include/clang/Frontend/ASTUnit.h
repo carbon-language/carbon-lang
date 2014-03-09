@@ -27,13 +27,13 @@
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "clang/Serialization/ASTBitCodes.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/MD5.h"
 #include "llvm/Support/Path.h"
 #include <cassert>
 #include <map>
+#include <memory>
 #include <string>
 #include <sys/types.h>
 #include <utility>

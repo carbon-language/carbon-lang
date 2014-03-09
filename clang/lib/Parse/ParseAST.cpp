@@ -23,9 +23,9 @@
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaConsumer.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include <cstdio>
+#include <memory>
 
 using namespace clang;
 

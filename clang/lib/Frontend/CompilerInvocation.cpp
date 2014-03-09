@@ -19,7 +19,6 @@
 #include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Serialization/ASTReader.h"
 #include "llvm/ADT/Hashing.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -35,6 +34,7 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/system_error.h"
 #include <atomic>
+#include <memory>
 #include <sys/stat.h>
 using namespace clang;
 

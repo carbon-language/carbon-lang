@@ -21,7 +21,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Casting.h"
@@ -29,6 +28,7 @@
 #include <bitset>
 #include <cassert>
 #include <iterator>
+#include <memory>
 
 namespace clang {
   class CXXDestructorDecl;
