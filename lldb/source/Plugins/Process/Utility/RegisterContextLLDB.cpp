@@ -820,7 +820,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     // We'd prefer to use an UnwindPlan intended for call sites when we're at a call site but if we've
     // struck out on that, fall back to using the non-call-site assembly inspection UnwindPlan if possible.
     unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtNonCallSite (m_thread);
-    if (unwind_plan_sp->GetSourcedFromCompiler() == eLazyBoolNo)
+    if (unwind_plan_sp && unwind_plan_sp->GetSourcedFromCompiler() == eLazyBoolNo)
     {
         // We probably have an UnwindPlan created by inspecting assembly instructions, and we probably
         // don't have any eh_frame instructions available.
