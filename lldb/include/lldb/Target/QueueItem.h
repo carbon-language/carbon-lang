@@ -38,7 +38,7 @@ class QueueItem :
 {
 public:
 
-    QueueItem (lldb::QueueSP queue_sp);
+    QueueItem (lldb::QueueSP queue_sp, lldb::addr_t item_ref);
 
     ~QueueItem ();
 
@@ -222,6 +222,7 @@ protected:
     lldb::QueueItemKind     m_kind;
     lldb_private::Address   m_address;
 
+    lldb::addr_t            m_item_ref;     // the token we can be used to fetch more information about this queue item
     lldb::addr_t            m_item_that_enqueued_this_ref;  // a handle that we can pass into libBacktraceRecording
                                                             // to get the QueueItem that enqueued this item
     lldb::tid_t             m_enqueueing_thread_id;    // thread that enqueued this item

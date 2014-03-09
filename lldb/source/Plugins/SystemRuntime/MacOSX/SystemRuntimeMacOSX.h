@@ -188,6 +188,23 @@ private:
         }
     };
 
+
+    // The libBacktraceRecording function __introspection_dispatch_queue_get_pending_items has
+    // two forms.  It can either return a simple array of item_refs (void *) size or it can return
+    // a header with uint32_t version, a uint32_t size of item, and then an array of item_refs (void*)
+    // and code addresses (void*) for all the pending blocks.
+
+    struct ItemRefAndCodeAddress {
+        lldb::addr_t    item_ref;
+        lldb::addr_t    code_address;
+    };  
+
+    struct PendingItemsForQueue {
+        bool new_style;              // new-style means both item_refs and code_addresses avail
+                                     // old-style means only item_refs is filled in
+        std::vector<ItemRefAndCodeAddress> item_refs_and_code_addresses;
+    };  
+
     bool
     BacktraceRecordingHeadersInitialized ();
 
@@ -197,7 +214,7 @@ private:
     void
     ReadLibdispatchOffsets ();
 
-    std::vector<lldb::addr_t>
+    PendingItemsForQueue
     GetPendingItemRefsForQueue (lldb::addr_t queue);
 
     ItemInfo

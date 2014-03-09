@@ -15,10 +15,11 @@
 using namespace lldb;
 using namespace lldb_private;
 
-QueueItem::QueueItem (QueueSP queue_sp) :
+QueueItem::QueueItem (QueueSP queue_sp, lldb::addr_t item_ref) :
     m_queue_wp (),
     m_kind (eQueueItemKindUnknown),
     m_address (),
+    m_item_ref (item_ref),
     m_item_that_enqueued_this_ref (LLDB_INVALID_ADDRESS),
     m_enqueueing_thread_id (LLDB_INVALID_THREAD_ID),
     m_enqueueing_queue_id (LLDB_INVALID_QUEUE_ID),

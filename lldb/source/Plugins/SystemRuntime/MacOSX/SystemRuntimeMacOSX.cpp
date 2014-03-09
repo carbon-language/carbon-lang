@@ -526,18 +526,104 @@ SystemRuntimeMacOSX::PopulateQueueList (lldb_private::QueueList &queue_list)
     }
 }
 
+// Returns either an array of introspection_dispatch_item_info_ref's for the pending items on
+// a queue or an array introspection_dispatch_item_info_ref's and code addresses for the 
+// pending items on a queue.  The information about each of these pending items then needs to 
+// be fetched individually by passing the ref to libBacktraceRecording.
+
+SystemRuntimeMacOSX::PendingItemsForQueue
+SystemRuntimeMacOSX::GetPendingItemRefsForQueue (lldb::addr_t queue)
+{
+    PendingItemsForQueue pending_item_refs;
+    AppleGetPendingItemsHandler::GetPendingItemsReturnInfo pending_items_pointer;
+    ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
+    if (cur_thread_sp)
+    { 
+        Error error;
+        pending_items_pointer = m_get_pending_items_handler.GetPendingItems (*cur_thread_sp.get(), queue, m_page_to_free, m_page_to_free_size, error);
+        m_page_to_free = LLDB_INVALID_ADDRESS;
+        m_page_to_free_size = 0;
+        if (error.Success())
+        {
+            if (pending_items_pointer.count > 0
+                && pending_items_pointer.items_buffer_size > 0
+                && pending_items_pointer.items_buffer_ptr != 0
+                && pending_items_pointer.items_buffer_ptr != LLDB_INVALID_ADDRESS)
+            {
+                DataBufferHeap data (pending_items_pointer.items_buffer_size, 0);
+                if (m_process->ReadMemory (pending_items_pointer.items_buffer_ptr, data.GetBytes(), pending_items_pointer.items_buffer_size, error))
+                {
+                    DataExtractor extractor (data.GetBytes(), data.GetByteSize(), m_process->GetByteOrder(), m_process->GetAddressByteSize());
+
+                    // We either have an array of
+                    //    void* item_ref
+                    // (old style) or we have a structure returned which looks like
+                    //
+                    // struct introspection_dispatch_pending_item_info_s {
+                    //   void *item_ref;
+                    //   void *function_or_block;
+                    // };
+                    //
+                    // struct introspection_dispatch_pending_items_array_s {
+                    //   uint32_t version;
+                    //   uint32_t size_of_item_info;
+                    //   introspection_dispatch_pending_item_info_s items[];
+                    //   }
+
+                    offset_t offset = 0;
+                    int i = 0;
+                    uint32_t version = extractor.GetU32(&offset);
+                    if (version == 1)
+                    {
+                        pending_item_refs.new_style = true;
+                        uint32_t item_size = extractor.GetU32(&offset);
+                        uint32_t start_of_array_offset = offset;
+                        while (offset < pending_items_pointer.items_buffer_size && i < pending_items_pointer.count)
+                        {
+                            offset = start_of_array_offset + (i * item_size);
+                            ItemRefAndCodeAddress item;
+                            item.item_ref = extractor.GetPointer (&offset);
+                            item.code_address = extractor.GetPointer (&offset);
+                            pending_item_refs.item_refs_and_code_addresses.push_back (item);
+                            i++;
+                        }
+                    }
+                    else
+                    {
+                        offset = 0;
+                        pending_item_refs.new_style = false;
+                        while (offset < pending_items_pointer.items_buffer_size && i < pending_items_pointer.count)
+                        {
+                            ItemRefAndCodeAddress item;
+                            item.item_ref = extractor.GetPointer (&offset);
+                            item.code_address = LLDB_INVALID_ADDRESS;
+                            pending_item_refs.item_refs_and_code_addresses.push_back (item);
+                            i++;
+                        }
+                    }
+                }
+                m_page_to_free = pending_items_pointer.items_buffer_ptr;
+                m_page_to_free_size = pending_items_pointer.items_buffer_size;
+            }
+        }
+    }
+    return pending_item_refs;
+}
+
+
+
 void
 SystemRuntimeMacOSX::PopulatePendingItemsForQueue (Queue *queue)
 {
     if (BacktraceRecordingHeadersInitialized())
     {
-        std::vector<addr_t> pending_item_refs = GetPendingItemRefsForQueue (queue->GetLibdispatchQueueAddress());
-        for (addr_t pending_item : pending_item_refs)
+        PendingItemsForQueue pending_item_refs = GetPendingItemRefsForQueue (queue->GetLibdispatchQueueAddress());
+        for (ItemRefAndCodeAddress pending_item : pending_item_refs.item_refs_and_code_addresses)
         {
             AppleGetItemInfoHandler::GetItemInfoReturnInfo ret;
             ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
             Error error;
-            ret = m_get_item_info_handler.GetItemInfo (*cur_thread_sp.get(), pending_item, m_page_to_free, m_page_to_free_size, error);
+            ret = m_get_item_info_handler.GetItemInfo (*cur_thread_sp.get(), pending_item.item_ref, m_page_to_free, m_page_to_free_size, error);
             m_page_to_free = LLDB_INVALID_ADDRESS;
             m_page_to_free_size = 0;
             if (ret.item_buffer_ptr != 0 &&  ret.item_buffer_ptr != LLDB_INVALID_ADDRESS && ret.item_buffer_size > 0)
@@ -547,7 +633,7 @@ SystemRuntimeMacOSX::PopulatePendingItemsForQueue (Queue *queue)
                 {
                     DataExtractor extractor (data.GetBytes(), data.GetByteSize(), m_process->GetByteOrder(), m_process->GetAddressByteSize());
                     ItemInfo item = ExtractItemInfoFromBuffer (extractor);
-                    QueueItemSP queue_item_sp (new QueueItem (queue->shared_from_this()));
+                    QueueItemSP queue_item_sp (new QueueItem (queue->shared_from_this(), pending_item.item_ref));
                     queue_item_sp->SetItemThatEnqueuedThis (item.item_that_enqueued_this);
 
                     Address addr;
@@ -572,50 +658,6 @@ SystemRuntimeMacOSX::PopulatePendingItemsForQueue (Queue *queue)
         }
     }
 }
-
-// Returns an array of introspection_dispatch_item_info_ref's for the pending items on
-// a queue.  The information about each of these pending items then needs to be fetched
-// individually by passing the ref to libBacktraceRecording.
-
-std::vector<lldb::addr_t>
-SystemRuntimeMacOSX::GetPendingItemRefsForQueue (lldb::addr_t queue)
-{
-    std::vector<addr_t> pending_item_refs;
-    AppleGetPendingItemsHandler::GetPendingItemsReturnInfo pending_items_pointer;
-    ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
-    if (cur_thread_sp)
-    { 
-        Error error;
-        pending_items_pointer = m_get_pending_items_handler.GetPendingItems (*cur_thread_sp.get(), queue, m_page_to_free, m_page_to_free_size, error);
-        m_page_to_free = LLDB_INVALID_ADDRESS;
-        m_page_to_free_size = 0;
-        if (error.Success())
-        {
-            if (pending_items_pointer.count > 0
-                && pending_items_pointer.items_buffer_size > 0
-                && pending_items_pointer.items_buffer_ptr != 0
-                && pending_items_pointer.items_buffer_ptr != LLDB_INVALID_ADDRESS)
-            {
-                DataBufferHeap data (pending_items_pointer.items_buffer_size, 0);
-                if (m_process->ReadMemory (pending_items_pointer.items_buffer_ptr, data.GetBytes(), pending_items_pointer.items_buffer_size, error))
-                {
-                    offset_t offset = 0;
-                    DataExtractor extractor (data.GetBytes(), data.GetByteSize(), m_process->GetByteOrder(), m_process->GetAddressByteSize());
-                    int i = 0;
-                    while (offset < pending_items_pointer.items_buffer_size && i < pending_items_pointer.count)
-                    {
-                        pending_item_refs.push_back (extractor.GetPointer (&offset));
-                        i++;
-                    }
-                }
-                m_page_to_free = pending_items_pointer.items_buffer_ptr;
-                m_page_to_free_size = pending_items_pointer.items_buffer_size;
-            }
-        }
-    }
-    return pending_item_refs;
-}
-
 
 void
 SystemRuntimeMacOSX::PopulateQueuesUsingLibBTR (lldb::addr_t queues_buffer, uint64_t queues_buffer_size, 
