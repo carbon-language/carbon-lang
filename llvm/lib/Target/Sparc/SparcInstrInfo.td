@@ -1107,7 +1107,7 @@ let Predicates = [HasV9], hasSideEffects = 1, rd = 0, rs1 = 0b01111 in
  def MEMBARi : F3_2<2, 0b101000, (outs), (ins simm13Op:$simm13),
                     "membar $simm13", []>;
 
-let Constraints = "$val = $dst" in {
+let Constraints = "$val = $dst", DecoderMethod = "DecodeSWAP" in {
   def SWAPrr : F3_1<3, 0b001111,
                  (outs IntRegs:$dst), (ins MEMrr:$addr, IntRegs:$val),
                  "swap [$addr], $dst",
