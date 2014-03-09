@@ -53,7 +53,7 @@ struct TUTrackingInfo {
   /// \}
 
 private:
-  llvm::OwningPtr<StmtAncestorASTVisitor> ParentFinder;
+  std::unique_ptr<StmtAncestorASTVisitor> ParentFinder;
   StmtGeneratedVarNameMap GeneratedDecls;
   ReplacedVarsMap ReplacedVars;
 };

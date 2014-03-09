@@ -124,7 +124,7 @@ private:
   SmallVector<ClangTidyCheck *, 8> Checks;
   ClangTidyContext &Context;
   ast_matchers::MatchFinder Finder;
-  OwningPtr<ClangTidyCheckFactories> CheckFactories;
+  std::unique_ptr<ClangTidyCheckFactories> CheckFactories;
 };
 
 /// \brief Fills the list of check names that are enabled when the provided

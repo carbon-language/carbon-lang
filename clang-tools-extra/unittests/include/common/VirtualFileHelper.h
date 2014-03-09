@@ -73,7 +73,7 @@ private:
   FileManager Files;
   // most tests don't need more than one file
   llvm::SmallVector<VirtualFile, 1> VirtualFiles;
-  llvm::OwningPtr<SourceManager> Sources;
+  std::unique_ptr<SourceManager> Sources;
 };
 
 } // end namespace clang

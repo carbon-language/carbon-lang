@@ -66,7 +66,7 @@ private:
   virtual bool handleBeginSource(clang::CompilerInstance &CI,
                                  llvm::StringRef Filename) override;
 
-  llvm::OwningPtr<IncludeDirectives> IncludeManager;
+  std::unique_ptr<IncludeDirectives> IncludeManager;
   ConstructorParamReplacer *Replacer;
 };
 

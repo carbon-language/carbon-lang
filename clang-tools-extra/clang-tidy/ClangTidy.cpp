@@ -100,7 +100,7 @@ ClangTidyASTConsumerFactory::ClangTidyASTConsumerFactory(
   for (ClangTidyModuleRegistry::iterator I = ClangTidyModuleRegistry::begin(),
                                          E = ClangTidyModuleRegistry::end();
        I != E; ++I) {
-    OwningPtr<ClangTidyModule> Module(I->instantiate());
+    std::unique_ptr<ClangTidyModule> Module(I->instantiate());
     Module->addCheckFactories(*CheckFactories);
   }
 

@@ -50,7 +50,7 @@ template <typename T> std::string runCheckOnCode(StringRef Code) {
     return "";
   ast_matchers::MatchFinder Finder;
   Check.registerMatchers(&Finder);
-  OwningPtr<tooling::FrontendActionFactory> Factory(
+  std::unique_ptr<tooling::FrontendActionFactory> Factory(
       tooling::newFrontendActionFactory(&Finder));
   if (!tooling::runToolOnCode(Factory->create(), Code))
     return "";

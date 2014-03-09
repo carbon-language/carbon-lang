@@ -154,7 +154,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Config/config.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
@@ -231,7 +230,7 @@ error_code getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
     HeaderDirectory = HeaderPrefix;
 
   // Read the header list file into a buffer.
-  OwningPtr<MemoryBuffer> listBuffer;
+  std::unique_ptr<MemoryBuffer> listBuffer;
   if (error_code ec = MemoryBuffer::getFile(ListFileName, listBuffer)) {
     return ec;
   }
@@ -290,7 +289,7 @@ error_code getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
 
 // Helper function for finding the input file in an arguments list.
 std::string findInputFile(const CommandLineArguments &CLArgs) {
-  OwningPtr<OptTable> Opts(createDriverOptTable());
+  std::unique_ptr<OptTable> Opts(createDriverOptTable());
   const unsigned IncludedFlagsBitmask = options::CC1Option;
   unsigned MissingArgIndex, MissingArgCount;
   SmallVector<const char *, 256> Argv;
@@ -298,7 +297,7 @@ std::string findInputFile(const CommandLineArguments &CLArgs) {
                                             E = CLArgs.end();
        I != E; ++I)
     Argv.push_back(I->c_str());
-  OwningPtr<InputArgList> Args(
+  std::unique_ptr<InputArgList> Args(
       Opts->ParseArgs(Argv.data(), Argv.data() + Argv.size(), MissingArgIndex,
                       MissingArgCount, IncludedFlagsBitmask));
   std::vector<std::string> Inputs = Args->getAllArgValues(OPT_INPUT);
@@ -725,12 +724,12 @@ int main(int Argc, const char **Argv) {
   // Create the compilation database.
   SmallString<256> PathBuf;
   sys::fs::current_path(PathBuf);
-  OwningPtr<CompilationDatabase> Compilations;
+  std::unique_ptr<CompilationDatabase> Compilations;
   Compilations.reset(
       new FixedCompilationDatabase(Twine(PathBuf), CC1Arguments));
 
   // Create preprocessor tracker, to watch for macro and conditional problems.
-  OwningPtr<PreprocessorTracker> PPTracker(PreprocessorTracker::create());
+  std::unique_ptr<PreprocessorTracker> PPTracker(PreprocessorTracker::create());
 
   // Parse all of the headers, detecting duplicates.
   EntityMap Entities;

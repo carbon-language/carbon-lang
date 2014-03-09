@@ -30,7 +30,6 @@
 //===---------------------------------------------------------------------===//
 
 #include "Modularize.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
@@ -281,7 +280,7 @@ bool createModuleMap(llvm::StringRef ModuleMapPath,
                      DependencyMap &Dependencies, llvm::StringRef HeaderPrefix,
                      llvm::StringRef RootModuleName) {
   // Load internal representation of modules.
-  llvm::OwningPtr<Module> RootModule(loadModuleDescriptions(
+  std::unique_ptr<Module> RootModule(loadModuleDescriptions(
       RootModuleName, HeaderFileNames, Dependencies, HeaderPrefix));
   if (!RootModule.get())
     return false;

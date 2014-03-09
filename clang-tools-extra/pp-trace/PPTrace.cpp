@@ -57,7 +57,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Config/config.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
@@ -192,7 +191,7 @@ int main(int Argc, const char **Argv) {
   // Create the compilation database.
   SmallString<256> PathBuf;
   sys::fs::current_path(PathBuf);
-  OwningPtr<CompilationDatabase> Compilations;
+  std::unique_ptr<CompilationDatabase> Compilations;
   Compilations.reset(
       new FixedCompilationDatabase(Twine(PathBuf), CC1Arguments));
 

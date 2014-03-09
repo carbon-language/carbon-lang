@@ -105,7 +105,7 @@ private:
   StringRef Include;
   VirtualFileHelper VFHelper;
   tooling::Replacements &Replaces;
-  OwningPtr<IncludeDirectives> FileIncludes;
+  std::unique_ptr<IncludeDirectives> FileIncludes;
   std::string FileToModify;
   // if non-null, add the include directives in this file instead of the main
   // file.

@@ -61,7 +61,7 @@ Transforms::createSelectedTransforms(const TransformOptions &GlobalOptions,
     if (!OptionEnabled)
       continue;
 
-    llvm::OwningPtr<TransformFactory> Factory(I->instantiate());
+    std::unique_ptr<TransformFactory> Factory(I->instantiate());
     if (Factory->supportsCompilers(RequiredVersions))
       ChosenTransforms.push_back(Factory->createTransform(GlobalOptions));
     else if (ExplicitlyEnabled)

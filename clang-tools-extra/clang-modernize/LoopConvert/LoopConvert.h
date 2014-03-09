@@ -37,7 +37,7 @@ public:
   virtual bool handleBeginSource(clang::CompilerInstance &CI,
                                  llvm::StringRef Filename) override;
 private:
-  llvm::OwningPtr<TUTrackingInfo> TUInfo;
+  std::unique_ptr<TUTrackingInfo> TUInfo;
 };
 
 #endif // CLANG_MODERNIZE_LOOP_CONVERT_H

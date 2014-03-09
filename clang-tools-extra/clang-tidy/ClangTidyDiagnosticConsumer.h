@@ -128,7 +128,7 @@ private:
   void finalizeLastError();
 
   ClangTidyContext &Context;
-  OwningPtr<DiagnosticsEngine> Diags;
+  std::unique_ptr<DiagnosticsEngine> Diags;
   SmallVector<ClangTidyError, 8> Errors;
   bool LastErrorRelatesToUserCode;
 };

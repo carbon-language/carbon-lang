@@ -323,7 +323,7 @@ int main(int argc, const char **argv) {
   cl::SetVersionPrinter(&printVersion);
 
   // Parse options and generate compilations.
-  OwningPtr<CompilationDatabase> Compilations(
+  std::unique_ptr<CompilationDatabase> Compilations(
       FixedCompilationDatabase::loadFromCommandLine(argc, argv));
   cl::ParseCommandLineOptions(argc, argv);
 

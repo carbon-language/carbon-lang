@@ -126,8 +126,9 @@ int main(int Argc, const char **Argv) {
   cl::ParseCommandLineOptions(Argc, Argv, "module-map-checker.\n");
 
   // Create checker object.
-  OwningPtr<ModuleMapChecker> Checker(ModuleMapChecker::createModuleMapChecker(
-      ModuleMapPath, IncludePaths, DumpModuleMap, CC1Arguments));
+  std::unique_ptr<ModuleMapChecker> Checker(
+      ModuleMapChecker::createModuleMapChecker(ModuleMapPath, IncludePaths,
+                                               DumpModuleMap, CC1Arguments));
 
   // Do the checks.  The return value is the program return code,
   // 0 for okay, 1 for module map warnings produced, 2 for any other error.
@@ -394,7 +395,7 @@ ModuleMapChecker::collectUmbrellaHeaderHeaders(StringRef UmbrellaHeaderName) {
     sys::fs::current_path(PathBuf);
 
   // Create the compilation database.
-  OwningPtr<CompilationDatabase> Compilations;
+  std::unique_ptr<CompilationDatabase> Compilations;
   Compilations.reset(new FixedCompilationDatabase(Twine(PathBuf), CommandLine));
 
   std::vector<std::string> HeaderPath;

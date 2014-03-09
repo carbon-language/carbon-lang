@@ -32,7 +32,6 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/LineEditor/LineEditor.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -70,8 +69,8 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  llvm::OwningPtr<CompilationDatabase> Compilations(
-        FixedCompilationDatabase::loadFromCommandLine(argc, argv));
+  std::unique_ptr<CompilationDatabase> Compilations(
+      FixedCompilationDatabase::loadFromCommandLine(argc, argv));
   if (!Compilations) {  // Couldn't find a compilation DB from the command line
     std::string ErrorMessage;
     Compilations.reset(

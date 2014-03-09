@@ -25,10 +25,10 @@ using namespace clang::query;
 using namespace clang::tooling;
 
 TEST(Query, Basic) {
-  OwningPtr<ASTUnit> FooAST(
+  std::unique_ptr<ASTUnit> FooAST(
       buildASTFromCode("void foo1(void) {}\nvoid foo2(void) {}", "foo.cc"));
   ASSERT_TRUE(FooAST.get());
-  OwningPtr<ASTUnit> BarAST(
+  std::unique_ptr<ASTUnit> BarAST(
       buildASTFromCode("void bar1(void) {}\nvoid bar2(void) {}", "bar.cc"));
   ASSERT_TRUE(BarAST.get());
 

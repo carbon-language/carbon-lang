@@ -233,7 +233,7 @@ int main(int argc, char **argv) {
 
   // Remove the TUReplacementFiles (triggered by "remove-change-desc-files"
   // command line option) when exiting main().
-  OwningPtr<ScopedFileRemover> Remover;
+  std::unique_ptr<ScopedFileRemover> Remover;
   if (RemoveTUReplacementFiles)
     Remover.reset(new ScopedFileRemover(TURFiles, Diagnostics));
 

@@ -18,7 +18,6 @@
 
 #include "Core/IncludeExcludeInfo.h"
 #include "Core/Refactoring.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Registry.h"
 #include "llvm/Support/Timer.h"

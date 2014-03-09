@@ -59,7 +59,7 @@ collectReplacementsFromDirectory(const llvm::StringRef Directory,
 
     TURFiles.push_back(I->path());
 
-    OwningPtr<MemoryBuffer> Out;
+    std::unique_ptr<MemoryBuffer> Out;
     error_code BufferError = MemoryBuffer::getFile(I->path(), Out);
     if (BufferError) {
       errs() << "Error reading " << I->path() << ": " << BufferError.message()

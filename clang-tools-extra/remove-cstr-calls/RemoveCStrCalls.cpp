@@ -42,7 +42,6 @@
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -179,8 +178,8 @@ cl::list<std::string> SourcePaths(
 
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
-  llvm::OwningPtr<CompilationDatabase> Compilations(
-    tooling::FixedCompilationDatabase::loadFromCommandLine(argc, argv));
+  std::unique_ptr<CompilationDatabase> Compilations(
+      tooling::FixedCompilationDatabase::loadFromCommandLine(argc, argv));
   cl::ParseCommandLineOptions(argc, argv);
   if (!Compilations) {
     std::string ErrorMessage;

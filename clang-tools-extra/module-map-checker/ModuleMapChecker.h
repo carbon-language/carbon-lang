@@ -25,7 +25,6 @@
 #include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Lex/ModuleMap.h"
 #include "clang/Lex/Preprocessor.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Host.h"
 #include <string>
@@ -82,9 +81,9 @@ class ModuleMapChecker {
   /// Options controlling the \#include directive.
   llvm::IntrusiveRefCntPtr<clang::HeaderSearchOptions> HeaderSearchOpts;
   /// Header search manager.
-  llvm::OwningPtr<clang::HeaderSearch> HeaderInfo;
+  std::unique_ptr<clang::HeaderSearch> HeaderInfo;
   /// The module map.
-  llvm::OwningPtr<clang::ModuleMap> ModMap;
+  std::unique_ptr<clang::ModuleMap> ModMap;
 
   // Internal data.
 

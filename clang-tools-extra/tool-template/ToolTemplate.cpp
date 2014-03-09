@@ -42,7 +42,6 @@
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
@@ -81,8 +80,8 @@ cl::list<std::string> SourcePaths(
 
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
-  llvm::OwningPtr<CompilationDatabase> Compilations(
-        FixedCompilationDatabase::loadFromCommandLine(argc, argv));
+  std::unique_ptr<CompilationDatabase> Compilations(
+      FixedCompilationDatabase::loadFromCommandLine(argc, argv));
   cl::ParseCommandLineOptions(argc, argv);
   if (!Compilations) {  // Couldn't find a compilation DB from the command line
     std::string ErrorMessage;
