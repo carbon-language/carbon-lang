@@ -11,7 +11,7 @@ define void @foo(i32 %n) {
 
 ; Use of inalloca implies that that the alloca is not static.
 define void @bar() {
-  %m = alloca i32, inalloca
+  %m = alloca inalloca i32
   ret void
 }
 ; CHECK-LABEL: _bar:

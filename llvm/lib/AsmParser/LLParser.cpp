@@ -707,7 +707,8 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 ///       OptionalThreadLocal OptionalAddrSpace OptionalUnNammedAddr
 ///       OptionalExternallyInitialized GlobalType Type Const
 ///
-/// Everything through visibility has been parsed already.
+/// Everything up to and including OptionalDLLStorageClass has been parsed
+/// already.
 ///
 bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
                            unsigned Linkage, bool HasLinkage,
@@ -4071,33 +4072,27 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
 //===----------------------------------------------------------------------===//
 
 /// ParseAlloc
-///   ::= 'alloca' Type (',' 'inalloca')? (',' TypeAndValue)? (',' OptionalInfo)?
+///   ::= 'alloca' 'inalloca'? Type (',' TypeAndValue)? (',' 'align' i32)?
 int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Size = 0;
   LocTy SizeLoc;
   unsigned Alignment = 0;
-  bool IsInAlloca = false;
   Type *Ty = 0;
+
+  bool IsInAlloca = EatIfPresent(lltok::kw_inalloca);
+
   if (ParseType(Ty)) return true;
 
   bool AteExtraComma = false;
   if (EatIfPresent(lltok::comma)) {
-    bool HaveComma = true;
-    if (EatIfPresent(lltok::kw_inalloca)) {
-      IsInAlloca = true;
-      HaveComma = EatIfPresent(lltok::comma);
-    }
-
-    if (HaveComma) {
-      if (Lex.getKind() == lltok::kw_align) {
-        if (ParseOptionalAlignment(Alignment)) return true;
-      } else if (Lex.getKind() == lltok::MetadataVar) {
-        AteExtraComma = true;
-      } else {
-        if (ParseTypeAndValue(Size, SizeLoc, PFS) ||
-            ParseOptionalCommaAlign(Alignment, AteExtraComma))
-          return true;
-      }
+    if (Lex.getKind() == lltok::kw_align) {
+      if (ParseOptionalAlignment(Alignment)) return true;
+    } else if (Lex.getKind() == lltok::MetadataVar) {
+      AteExtraComma = true;
+    } else {
+      if (ParseTypeAndValue(Size, SizeLoc, PFS) ||
+          ParseOptionalCommaAlign(Alignment, AteExtraComma))
+        return true;
     }
   }
 

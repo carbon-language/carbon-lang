@@ -10,7 +10,7 @@ declare void @Foo_ctor(%Foo* %this)
 
 define void @g() {
 entry:
-  %args = alloca %frame, inalloca
+  %args = alloca inalloca %frame
   %c = getelementptr %frame* %args, i32 0, i32 2
 ; CHECK: movl    $20, %eax
 ; CHECK: calll   __chkstk

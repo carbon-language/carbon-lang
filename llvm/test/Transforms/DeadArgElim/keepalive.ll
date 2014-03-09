@@ -38,7 +38,7 @@ define internal x86_thiscallcc i32 @unused_this(i32* %this, i32* inalloca %argme
 
 define i32 @caller2() {
 	%t = alloca i32
-	%m = alloca i32, inalloca
+	%m = alloca inalloca i32
 	store i32 42, i32* %m
 	%v = call x86_thiscallcc i32 @unused_this(i32* %t, i32* inalloca %m)
 	ret i32 %v

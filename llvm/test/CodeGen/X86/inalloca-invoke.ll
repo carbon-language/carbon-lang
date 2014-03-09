@@ -16,7 +16,7 @@ define i32 @main() {
 
 blah:
   %inalloca.save = call i8* @llvm.stacksave()
-  %rev_args = alloca %frame.reverse, inalloca, align 4
+  %rev_args = alloca inalloca %frame.reverse, align 4
   %beg = getelementptr %frame.reverse* %rev_args, i32 0, i32 0
   %end = getelementptr %frame.reverse* %rev_args, i32 0, i32 1
 
