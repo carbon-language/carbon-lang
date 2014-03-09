@@ -8,6 +8,7 @@
  */
 int user_function(int a);
 
+// RUN: rm -rf %t/cache
 // RUN: c-index-test -test-load-source all %s -I %S/Inputs | FileCheck %s
 // RUN: c-index-test -test-load-source all %s -fretain-comments-from-system-headers -I %S/Inputs | FileCheck %s -check-prefix=CHECK-RETAIN
 
