@@ -732,8 +732,7 @@ static void GetBranchWeights(TerminatorInst *TI,
   MDNode* MD = TI->getMetadata(LLVMContext::MD_prof);
   assert(MD);
   for (unsigned i = 1, e = MD->getNumOperands(); i < e; ++i) {
-    ConstantInt* CI = dyn_cast<ConstantInt>(MD->getOperand(i));
-    assert(CI);
+    ConstantInt *CI = cast<ConstantInt>(MD->getOperand(i));
     Weights.push_back(CI->getValue().getZExtValue());
   }
 
@@ -750,19 +749,11 @@ static void GetBranchWeights(TerminatorInst *TI,
 
 /// Keep halving the weights until all can fit in uint32_t.
 static void FitWeights(MutableArrayRef<uint64_t> Weights) {
-  while (true) {
-    bool Halve = false;
-    for (unsigned i = 0; i < Weights.size(); ++i)
-      if (Weights[i] > UINT_MAX) {
-        Halve = true;
-        break;
-      }
-
-    if (! Halve)
-      return;
-
-    for (unsigned i = 0; i < Weights.size(); ++i)
-      Weights[i] /= 2;
+  uint64_t Max = *std::max_element(Weights.begin(), Weights.end());
+  if (Max > UINT_MAX) {
+    unsigned Offset = 32 - countLeadingZeros(Max);
+    for (uint64_t &I : Weights)
+      I >>= Offset;
   }
 }
 
