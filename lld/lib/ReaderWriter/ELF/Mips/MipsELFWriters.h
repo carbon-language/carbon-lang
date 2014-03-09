@@ -68,7 +68,7 @@ public:
   }
 
 private:
-  MipsLinkingContext &_mipsLinkingContext LLVM_ATTRIBUTE_UNUSED;
+  MipsLinkingContext &_mipsLinkingContext;
   MipsTargetLayout<ELFT> &_mipsTargetLayout;
 };
 
