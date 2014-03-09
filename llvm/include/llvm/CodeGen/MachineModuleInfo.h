@@ -168,10 +168,13 @@ class MachineModuleInfo : public ImmutablePass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  typedef std::pair<unsigned, DebugLoc> UnsignedDebugLocPair;
-  typedef SmallVector<std::pair<TrackingVH<MDNode>, UnsignedDebugLocPair>, 4>
-    VariableDbgInfoMapTy;
-  VariableDbgInfoMapTy VariableDbgInfo;
+  struct VariableDbgInfo {
+    TrackingVH<MDNode> Var;
+    unsigned Slot;
+    DebugLoc Loc;
+  };
+  typedef SmallVector<VariableDbgInfo, 4> VariableDbgInfoMapTy;
+  VariableDbgInfoMapTy VariableDbgInfos;
 
   MachineModuleInfo();  // DUMMY CONSTRUCTOR, DO NOT CALL.
   // Real constructor.
@@ -401,10 +404,11 @@ public:
   /// setVariableDbgInfo - Collect information used to emit debugging
   /// information of a variable.
   void setVariableDbgInfo(MDNode *N, unsigned Slot, DebugLoc Loc) {
-    VariableDbgInfo.push_back(std::make_pair(N, std::make_pair(Slot, Loc)));
+    VariableDbgInfo Info = { N, Slot, Loc };
+    VariableDbgInfos.push_back(std::move(Info));
   }
 
-  VariableDbgInfoMapTy &getVariableDbgInfo() { return VariableDbgInfo; }
+  VariableDbgInfoMapTy &getVariableDbgInfo() { return VariableDbgInfos; }
 
 }; // End class MachineModuleInfo
 

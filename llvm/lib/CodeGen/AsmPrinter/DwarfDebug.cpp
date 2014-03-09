@@ -1185,26 +1185,23 @@ bool DwarfDebug::addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope) {
 void DwarfDebug::collectVariableInfoFromMMITable(
     SmallPtrSet<const MDNode *, 16> &Processed) {
   for (const auto &VI : MMI->getVariableDbgInfo()) {
-    const MDNode *Var = VI.first;
-    if (!Var)
+    if (!VI.Var)
       continue;
-    Processed.insert(Var);
-    DIVariable DV(Var);
-    const std::pair<unsigned, DebugLoc> &VP = VI.second;
-
-    LexicalScope *Scope = LScopes.findLexicalScope(VP.second);
+    Processed.insert(VI.Var);
+    DIVariable DV(VI.Var);
+    LexicalScope *Scope = LScopes.findLexicalScope(VI.Loc);
 
     // If variable scope is not found then skip this variable.
     if (Scope == 0)
       continue;
 
-    DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VP.second);
+    DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VI.Loc);
     DbgVariable *RegVar = new DbgVariable(DV, AbsDbgVariable, this);
-    RegVar->setFrameIndex(VP.first);
+    RegVar->setFrameIndex(VI.Slot);
     if (!addCurrentFnArgument(RegVar, Scope))
       addScopeVariable(Scope, RegVar);
     if (AbsDbgVariable)
-      AbsDbgVariable->setFrameIndex(VP.first);
+      AbsDbgVariable->setFrameIndex(VI.Slot);
   }
 }
 
