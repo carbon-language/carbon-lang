@@ -62,6 +62,9 @@ public:
     lldb::SBQueueItem
     GetPendingItemAtIndex (uint32_t);
 
+    uint32_t
+    GetNumRunningItems ();
+
 protected:
     friend class SBProcess;
 

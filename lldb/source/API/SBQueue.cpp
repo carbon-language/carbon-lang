@@ -222,21 +222,24 @@ namespace lldb_private
             }
             return sb_thread;
         }
-        
-        
+
         uint32_t
         GetNumPendingItems ()
         {
             uint32_t result = 0;
-            FetchItems();
-        
-            if (m_pending_items_fetched)
+
+            QueueSP queue_sp = m_queue_wp.lock();
+            if (m_pending_items_fetched == false && queue_sp)
+            {
+                result = queue_sp->GetNumPendingWorkItems();
+            }
+            else
             {
                 result = m_pending_items.size();
             }
             return result;
         }
-        
+
         lldb::SBQueueItem
         GetPendingItemAtIndex (uint32_t idx)
         {
@@ -246,6 +249,16 @@ namespace lldb_private
             {
                 result.SetQueueItem (m_pending_items[idx]);
             }
+            return result;
+        }
+
+        uint32_t
+        GetNumRunningItems ()
+        {
+            uint32_t result = 0;
+            QueueSP queue_sp = m_queue_wp.lock();
+            if (queue_sp)
+                result = queue_sp->GetNumRunningWorkItems();
             return result;
         }
         
@@ -397,6 +410,16 @@ SBQueue::GetPendingItemAtIndex (uint32_t idx)
     if (log)
         log->Printf("SBQueue(0x%" PRIx64 ")::GetPendingItemAtIndex(%d)", m_opaque_sp->GetQueueID(),  idx);
     return m_opaque_sp->GetPendingItemAtIndex (idx);
+}
+
+uint32_t
+SBQueue::GetNumRunningItems ()
+{
+    uint32_t running_items = m_opaque_sp->GetNumRunningItems ();
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf("SBQueue(0x%" PRIx64 ")::GetNumRunningItems() == %d", m_opaque_sp->GetQueueID(), running_items);
+    return running_items;
 }
 
 SBProcess
