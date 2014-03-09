@@ -73,11 +73,11 @@ public:
   MipsTargetHandler(MipsLinkingContext &context);
 
   MipsTargetLayout<Mips32ElELFType> &getTargetLayout() override {
-    return *_mipsTargetLayout;
+    return *_targetLayout;
   }
 
   const MipsTargetRelocationHandler &getRelocationHandler() const override {
-    return *_mipsRelocationHandler;
+    return *_relocationHandler;
   }
 
   std::unique_ptr<Writer> getWriter() override;
@@ -86,10 +86,10 @@ public:
 
 private:
   static const Registry::KindStrings kindStrings[];
-  MipsLinkingContext &_mipsLinkingContext;
-  std::unique_ptr<MipsRuntimeFile<Mips32ElELFType>> _mipsRuntimeFile;
-  std::unique_ptr<MipsTargetLayout<Mips32ElELFType>> _mipsTargetLayout;
-  std::unique_ptr<MipsTargetRelocationHandler> _mipsRelocationHandler;
+  MipsLinkingContext &_context;
+  std::unique_ptr<MipsRuntimeFile<Mips32ElELFType>> _runtimeFile;
+  std::unique_ptr<MipsTargetLayout<Mips32ElELFType>> _targetLayout;
+  std::unique_ptr<MipsTargetRelocationHandler> _relocationHandler;
 };
 
 class MipsDynamicSymbolTable : public DynamicSymbolTable<Mips32ElELFType> {
@@ -99,7 +99,7 @@ public:
       : DynamicSymbolTable<Mips32ElELFType>(
             context, layout, ".dynsym",
             DefaultLayout<Mips32ElELFType>::ORDER_DYNAMIC_SYMBOLS),
-        _mipsTargetLayout(layout) {}
+        _targetLayout(layout) {}
 
   void sortSymbols() override {
     std::stable_sort(_symbolTable.begin(), _symbolTable.end(),
@@ -108,12 +108,12 @@ public:
           B._symbol.getBinding() != STB_GLOBAL)
         return A._symbol.getBinding() < B._symbol.getBinding();
 
-      return _mipsTargetLayout.getGOTSection().compare(A._atom, B._atom);
+      return _targetLayout.getGOTSection().compare(A._atom, B._atom);
     });
   }
 
 private:
-  MipsTargetLayout<Mips32ElELFType> &_mipsTargetLayout;
+  MipsTargetLayout<Mips32ElELFType> &_targetLayout;
 };
 
 } // end namespace elf

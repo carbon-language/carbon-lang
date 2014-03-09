@@ -19,22 +19,21 @@ using namespace elf;
 typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ElELFType;
 
 MipsTargetHandler::MipsTargetHandler(MipsLinkingContext &context)
-    : DefaultTargetHandler(context), _mipsLinkingContext(context),
-      _mipsRuntimeFile(new MipsRuntimeFile<Mips32ElELFType>(context)),
-      _mipsTargetLayout(new MipsTargetLayout<Mips32ElELFType>(context)),
-      _mipsRelocationHandler(
-          new MipsTargetRelocationHandler(*_mipsTargetLayout)) {}
+    : DefaultTargetHandler(context), _context(context),
+      _runtimeFile(new MipsRuntimeFile<Mips32ElELFType>(context)),
+      _targetLayout(new MipsTargetLayout<Mips32ElELFType>(context)),
+      _relocationHandler(new MipsTargetRelocationHandler(*_targetLayout)) {}
 
 std::unique_ptr<Writer> MipsTargetHandler::getWriter() {
-  switch (_mipsLinkingContext.getOutputELFType()) {
+  switch (_context.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
     return std::unique_ptr<Writer>(
-        new elf::MipsExecutableWriter<Mips32ElELFType>(
-            _mipsLinkingContext, *_mipsTargetLayout));
+        new elf::MipsExecutableWriter<Mips32ElELFType>(_context,
+                                                       *_targetLayout));
   case llvm::ELF::ET_DYN:
     return std::unique_ptr<Writer>(
-        new elf::MipsDynamicLibraryWriter<Mips32ElELFType>(
-            _mipsLinkingContext, *_mipsTargetLayout));
+        new elf::MipsDynamicLibraryWriter<Mips32ElELFType>(_context,
+                                                           *_targetLayout));
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:
