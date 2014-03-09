@@ -19,9 +19,8 @@ class MipsTargetHandler;
 class MipsTargetRelocationHandler final
     : public TargetRelocationHandler<Mips32ElELFType> {
 public:
-  MipsTargetRelocationHandler(MipsLinkingContext &context,
-                              MipsTargetLayout<Mips32ElELFType> &layout)
-      : _mipsLinkingContext(context), _mipsTargetLayout(layout) {}
+  MipsTargetRelocationHandler(MipsTargetLayout<Mips32ElELFType> &layout)
+      : _mipsTargetLayout(layout) {}
 
   ~MipsTargetRelocationHandler();
 
@@ -42,7 +41,6 @@ private:
                               const lld::AtomLayout &atom, int64_t gpAddr,
                               int64_t loAddend) const;
 
-  MipsLinkingContext &_mipsLinkingContext LLVM_ATTRIBUTE_UNUSED;
   MipsTargetLayout<Mips32ElELFType> &_mipsTargetLayout;
 };
 

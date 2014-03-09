@@ -23,7 +23,7 @@ MipsTargetHandler::MipsTargetHandler(MipsLinkingContext &context)
       _mipsRuntimeFile(new MipsRuntimeFile<Mips32ElELFType>(context)),
       _mipsTargetLayout(new MipsTargetLayout<Mips32ElELFType>(context)),
       _mipsRelocationHandler(
-          new MipsTargetRelocationHandler(context, *_mipsTargetLayout.get())) {}
+          new MipsTargetRelocationHandler(*_mipsTargetLayout.get())) {}
 
 std::unique_ptr<Writer> MipsTargetHandler::getWriter() {
   switch (_mipsLinkingContext.getOutputELFType()) {
