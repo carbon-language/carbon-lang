@@ -224,7 +224,7 @@ PlatformWindows::ResolveExecutable (const FileSpec &exe_file,
                                                  NULL,
                                                  NULL);
 
-            if (!exe_module_sp && exe_module_sp->GetObjectFile() == NULL)
+            if (!exe_module_sp || exe_module_sp->GetObjectFile() == NULL)
             {
                 exe_module_sp.reset();
                 error.SetErrorStringWithFormat ("'%s' doesn't contain the architecture %s",
