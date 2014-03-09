@@ -23,7 +23,7 @@ public:
                 MipsTargetLayout<ELFT> &targetLayout)
       : _mipsLinkingContext(context), _mipsTargetLayout(targetLayout) {}
 
-  bool setELFHeader(ELFHeader<ELFT> &elfHeader) {
+  void setELFHeader(ELFHeader<ELFT> &elfHeader) {
     elfHeader.e_version(1);
     elfHeader.e_ident(llvm::ELF::EI_VERSION, llvm::ELF::EV_CURRENT);
     elfHeader.e_ident(llvm::ELF::EI_OSABI, llvm::ELF::ELFOSABI_NONE);
@@ -39,7 +39,6 @@ public:
     if (_mipsLinkingContext.getOutputELFType() == llvm::ELF::ET_DYN)
       flags |= EF_MIPS_PIC;
     elfHeader.e_flags(flags);
-    return true;
   }
 
   void finalizeMipsRuntimeAtomValues() {
