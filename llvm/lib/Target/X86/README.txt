@@ -1444,6 +1444,54 @@ it would be nice to produce "into" someday.
 
 //===---------------------------------------------------------------------===//
 
+This code:
+
+void vec_mpys1(int y[], const int x[], int scaler) {
+int i;
+for (i = 0; i < 150; i++)
+ y[i] += (((long long)scaler * (long long)x[i]) >> 31);
+}
+
+Compiles to this loop with GCC 3.x:
+
+.L5:
+	movl	%ebx, %eax
+	imull	(%edi,%ecx,4)
+	shrdl	$31, %edx, %eax
+	addl	%eax, (%esi,%ecx,4)
+	incl	%ecx
+	cmpl	$149, %ecx
+	jle	.L5
+
+llvm-gcc compiles it to the much uglier:
+
+LBB1_1:	## bb1
+	movl	24(%esp), %eax
+	movl	(%eax,%edi,4), %ebx
+	movl	%ebx, %ebp
+	imull	%esi, %ebp
+	movl	%ebx, %eax
+	mull	%ecx
+	addl	%ebp, %edx
+	sarl	$31, %ebx
+	imull	%ecx, %ebx
+	addl	%edx, %ebx
+	shldl	$1, %eax, %ebx
+	movl	20(%esp), %eax
+	addl	%ebx, (%eax,%edi,4)
+	incl	%edi
+	cmpl	$150, %edi
+	jne	LBB1_1	## bb1
+
+The issue is that we hoist the cast of "scaler" to long long outside of the
+loop, the value comes into the loop as two values, and
+RegsForValue::getCopyFromRegs doesn't know how to put an AssertSext on the
+constructed BUILD_PAIR which represents the cast value.
+
+This can be handled by making CodeGenPrepare sink the cast.
+
+//===---------------------------------------------------------------------===//
+
 Test instructions can be eliminated by using EFLAGS values from arithmetic
 instructions. This is currently not done for mul, and, or, xor, neg, shl,
 sra, srl, shld, shrd, atomic ops, and others. It is also currently not done

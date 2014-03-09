@@ -129,7 +129,6 @@ typedef DenseMap<Instruction *, Type *> InstrToOrigTy;
     bool OptimizeMemoryInst(Instruction *I, Value *Addr, Type *AccessTy);
     bool OptimizeInlineAsmInst(CallInst *CS);
     bool OptimizeCallInst(CallInst *CI);
-    bool SinkExtExpand(CastInst *I);
     bool MoveExtToFormExtLoad(Instruction *I);
     bool OptimizeExtUses(Instruction *I);
     bool OptimizeSelectInst(SelectInst *SI);
@@ -465,8 +464,40 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
   DEBUG(dbgs() << "AFTER:\n" << *DestBB << "\n\n\n");
 }
 
-/// SinkCast - Sink the specified cast instruction into its user blocks
-static bool SinkCast(CastInst *CI) {
+/// OptimizeNoopCopyExpression - If the specified cast instruction is a noop
+/// copy (e.g. it's casting from one pointer type to another, i32->i8 on PPC),
+/// sink it into user blocks to reduce the number of virtual
+/// registers that must be created and coalesced.
+///
+/// Return true if any changes are made.
+///
+static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
+  // If this is a noop copy,
+  EVT SrcVT = TLI.getValueType(CI->getOperand(0)->getType());
+  EVT DstVT = TLI.getValueType(CI->getType());
+
+  // This is an fp<->int conversion?
+  if (SrcVT.isInteger() != DstVT.isInteger())
+    return false;
+
+  // If this is an extension, it will be a zero or sign extension, which
+  // isn't a noop.
+  if (SrcVT.bitsLT(DstVT)) return false;
+
+  // If these values will be promoted, find out what they will be promoted
+  // to.  This helps us consider truncates on PPC as noop copies when they
+  // are.
+  if (TLI.getTypeAction(CI->getContext(), SrcVT) ==
+      TargetLowering::TypePromoteInteger)
+    SrcVT = TLI.getTypeToTransformTo(CI->getContext(), SrcVT);
+  if (TLI.getTypeAction(CI->getContext(), DstVT) ==
+      TargetLowering::TypePromoteInteger)
+    DstVT = TLI.getTypeToTransformTo(CI->getContext(), DstVT);
+
+  // If, after promotion, these are the same types, this is a noop copy.
+  if (SrcVT != DstVT)
+    return false;
+
   BasicBlock *DefBB = CI->getParent();
 
   /// InsertedCasts - Only insert a cast in each block once.
@@ -514,43 +545,6 @@ static bool SinkCast(CastInst *CI) {
   }
 
   return MadeChange;
-}
-
-/// OptimizeNoopCopyExpression - If the specified cast instruction is a noop
-/// copy (e.g. it's casting from one pointer type to another, i32->i8 on PPC),
-/// sink it into user blocks to reduce the number of virtual
-/// registers that must be created and coalesced.
-///
-/// Return true if any changes are made.
-///
-static bool OptimizeNoopCopyExpression(CastInst *CI, const TargetLowering &TLI){
-  // If this is a noop copy,
-  EVT SrcVT = TLI.getValueType(CI->getOperand(0)->getType());
-  EVT DstVT = TLI.getValueType(CI->getType());
-
-  // This is an fp<->int conversion?
-  if (SrcVT.isInteger() != DstVT.isInteger())
-    return false;
-
-  // If this is an extension, it will be a zero or sign extension, which
-  // isn't a noop.
-  if (SrcVT.bitsLT(DstVT)) return false;
-
-  // If these values will be promoted, find out what they will be promoted
-  // to.  This helps us consider truncates on PPC as noop copies when they
-  // are.
-  if (TLI.getTypeAction(CI->getContext(), SrcVT) ==
-      TargetLowering::TypePromoteInteger)
-    SrcVT = TLI.getTypeToTransformTo(CI->getContext(), SrcVT);
-  if (TLI.getTypeAction(CI->getContext(), DstVT) ==
-      TargetLowering::TypePromoteInteger)
-    DstVT = TLI.getTypeToTransformTo(CI->getContext(), DstVT);
-
-  // If, after promotion, these are the same types, this is a noop copy.
-  if (SrcVT != DstVT)
-    return false;
-
-  return SinkCast(CI);
 }
 
 /// OptimizeCmpExpression - sink the given CmpInst into user blocks to reduce
@@ -2523,16 +2517,6 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(CallInst *CS) {
   return MadeChange;
 }
 
-/// SinkExtExpand - Sink a zext or sext into its user blocks if the target type
-/// doesn't fit in one register
-bool CodeGenPrepare::SinkExtExpand(CastInst *CI) {
-  if (TLI &&
-      TLI->getTypeAction(CI->getContext(), TLI->getValueType(CI->getType())) ==
-          TargetLowering::TypeExpandInteger)
-    return SinkCast(CI);
-  return false;
-}
-
 /// MoveExtToFormExtLoad - Move a zext or sext fed by a load into the same
 /// basic block as the load, unless conditions are unfavorable. This allows
 /// SelectionDAG to fold the extend into the load.
@@ -2544,12 +2528,6 @@ bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *I) {
 
   // If they're already in the same block, there's nothing to do.
   if (LI->getParent() == I->getParent())
-    return false;
-
-  // Do not undo the optimization in SinkExtExpand
-  if (TLI &&
-      TLI->getTypeAction(I->getContext(), TLI->getValueType(I->getType())) ==
-          TargetLowering::TypeExpandInteger)
     return false;
 
   // If the load has other users and the truncate is not free, this probably
@@ -2833,8 +2811,6 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
       return true;
 
     if (isa<ZExtInst>(I) || isa<SExtInst>(I)) {
-      if (SinkExtExpand(CI))
-        return true;
       bool MadeChange = MoveExtToFormExtLoad(I);
       return MadeChange | OptimizeExtUses(I);
     }
