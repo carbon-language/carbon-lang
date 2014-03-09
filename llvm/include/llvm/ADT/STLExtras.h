@@ -17,10 +17,12 @@
 #ifndef LLVM_ADT_STLEXTRAS_H
 #define LLVM_ADT_STLEXTRAS_H
 
+#include "llvm/Support/Compiler.h"
 #include <cstddef> // for std::size_t
 #include <cstdlib> // for qsort
 #include <functional>
 #include <iterator>
+#include <memory>
 #include <utility> // for std::pair
 
 namespace llvm {
@@ -254,6 +256,173 @@ void DeleteContainerSeconds(Container &C) {
     delete I->second;
   C.clear();
 }
+
+//===----------------------------------------------------------------------===//
+//     Extra additions to <memory>
+//===----------------------------------------------------------------------===//
+
+#if LLVM_HAS_VARIADIC_TEMPLATES
+
+/// Implement make_unique according to N3656.
+///
+/// template<class T, class... Args> unique_ptr<T> make_unique(Args&&... args);
+/// Remarks: This function shall not participate in overload resolution unless
+///          T is not an array.
+/// Returns: unique_ptr<T>(new T(std::forward<Args>(args)...)).
+///
+/// template<class T> unique_ptr<T> make_unique(size_t n);
+/// Remarks: This function shall not participate in overload resolution unless
+///          T is an array of unknown bound.
+/// Returns: unique_ptr<T>(new typename remove_extent<T>::type[n]()).
+///
+/// template<class T, class... Args> unspecified make_unique(Args&&...) = delete;
+/// Remarks: This function shall not participate in overload resolution unless
+///          T is an array of known bound.
+///
+/// Use scenarios:
+///
+/// Single object case:
+///
+/// auto p0 = make_unique<int>();
+///
+/// auto p2 = make_unique<std::tuple<int, int>>(0, 1);
+///
+/// Array case:
+///
+/// auto p1 = make_unique<int[]>(2); // value-initializes the array with 0's.
+///
+template <class T, class... Args>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+make_unique(Args &&... args) {
+  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+template <class T>
+typename std::enable_if<std::is_array<T>::value && std::extent<T>::value == 0,
+                        std::unique_ptr<T>>::type
+make_unique(size_t n) {
+  return std::unique_ptr<T>(new typename std::remove_extent<T>::type[n]());
+}
+
+template <class T, class... Args>
+typename std::enable_if<std::extent<T>::value != 0>::type
+make_unique(Args &&...) LLVM_DELETED_FUNCTION;
+
+#else
+
+template <class T>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+make_unique() {
+  return std::unique_ptr<T>(new T());
+}
+
+template <class T, class Arg1>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+make_unique(Arg1 &&arg1) {
+  return std::unique_ptr<T>(new T(std::forward<Arg1>(arg1)));
+}
+
+template <class T, class Arg1, class Arg2>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+make_unique(Arg1 &&arg1, Arg2 &&arg2) {
+  return std::unique_ptr<T>(
+      new T(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2)));
+}
+
+template <class T, class Arg1, class Arg2, class Arg3>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+make_unique(Arg1 &&arg1, Arg2 &&arg2, Arg3 &&arg3) {
+  return std::unique_ptr<T>(new T(std::forward<Arg1>(arg1),
+                                  std::forward<Arg2>(arg2),
+                                  std::forward<Arg3>(arg3)));
+}
+
+template <class T, class Arg1, class Arg2, class Arg3, class Arg4>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+make_unique(Arg1 &&arg1, Arg2 &&arg2, Arg3 &&arg3, Arg4 &&arg4) {
+  return std::unique_ptr<T>(
+      new T(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2),
+            std::forward<Arg3>(arg3), std::forward<Arg4>(arg4)));
+}
+
+template <class T, class Arg1, class Arg2, class Arg3, class Arg4, class Arg5>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+make_unique(Arg1 &&arg1, Arg2 &&arg2, Arg3 &&arg3, Arg4 &&arg4, Arg5 &&arg5) {
+  return std::unique_ptr<T>(
+      new T(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2),
+            std::forward<Arg3>(arg3), std::forward<Arg4>(arg4),
+            std::forward<Arg5>(arg5)));
+}
+
+template <class T, class Arg1, class Arg2, class Arg3, class Arg4, class Arg5,
+          class Arg6>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+make_unique(Arg1 &&arg1, Arg2 &&arg2, Arg3 &&arg3, Arg4 &&arg4, Arg5 &&arg5,
+            Arg6 &&arg6) {
+  return std::unique_ptr<T>(
+      new T(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2),
+            std::forward<Arg3>(arg3), std::forward<Arg4>(arg4),
+            std::forward<Arg5>(arg5), std::forward<Arg6>(arg6)));
+}
+
+template <class T, class Arg1, class Arg2, class Arg3, class Arg4, class Arg5,
+          class Arg6, class Arg7>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+make_unique(Arg1 &&arg1, Arg2 &&arg2, Arg3 &&arg3, Arg4 &&arg4, Arg5 &&arg5,
+            Arg6 &&arg6, Arg7 &&arg7) {
+  return std::unique_ptr<T>(
+      new T(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2),
+            std::forward<Arg3>(arg3), std::forward<Arg4>(arg4),
+            std::forward<Arg5>(arg5), std::forward<Arg6>(arg6),
+            std::forward<Arg7>(arg7)));
+}
+
+template <class T, class Arg1, class Arg2, class Arg3, class Arg4, class Arg5,
+          class Arg6, class Arg7, class Arg8>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+make_unique(Arg1 &&arg1, Arg2 &&arg2, Arg3 &&arg3, Arg4 &&arg4, Arg5 &&arg5,
+            Arg6 &&arg6, Arg7 &&arg7, Arg8 &&arg8) {
+  return std::unique_ptr<T>(
+      new T(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2),
+            std::forward<Arg3>(arg3), std::forward<Arg4>(arg4),
+            std::forward<Arg5>(arg5), std::forward<Arg6>(arg6),
+            std::forward<Arg7>(arg7), std::forward<Arg8>(arg8)));
+}
+
+template <class T, class Arg1, class Arg2, class Arg3, class Arg4, class Arg5,
+          class Arg6, class Arg7, class Arg8, class Arg9>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+make_unique(Arg1 &&arg1, Arg2 &&arg2, Arg3 &&arg3, Arg4 &&arg4, Arg5 &&arg5,
+            Arg6 &&arg6, Arg7 &&arg7, Arg8 &&arg8, Arg9 &&arg9) {
+  return std::unique_ptr<T>(
+      new T(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2),
+            std::forward<Arg3>(arg3), std::forward<Arg4>(arg4),
+            std::forward<Arg5>(arg5), std::forward<Arg6>(arg6),
+            std::forward<Arg7>(arg7), std::forward<Arg8>(arg8),
+            std::forward<Arg9>(arg9)));
+}
+
+template <class T, class Arg1, class Arg2, class Arg3, class Arg4, class Arg5,
+          class Arg6, class Arg7, class Arg8, class Arg9, class Arg10>
+typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
+make_unique(Arg1 &&arg1, Arg2 &&arg2, Arg3 &&arg3, Arg4 &&arg4, Arg5 &&arg5,
+            Arg6 &&arg6, Arg7 &&arg7, Arg8 &&arg8, Arg9 &&arg9, Arg10 &&arg10) {
+  return std::unique_ptr<T>(
+      new T(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2),
+            std::forward<Arg3>(arg3), std::forward<Arg4>(arg4),
+            std::forward<Arg5>(arg5), std::forward<Arg6>(arg6),
+            std::forward<Arg7>(arg7), std::forward<Arg8>(arg8),
+            std::forward<Arg9>(arg9), std::forward<Arg10>(arg10)));
+}
+
+template <class T>
+typename std::enable_if<std::is_array<T>::value &&std::extent<T>::value == 0,
+                        std::unique_ptr<T>>::type
+make_unique(size_t n) {
+  return std::unique_ptr<T>(new typename std::remove_extent<T>::type[n]());
+}
+
+#endif
 
 } // End llvm namespace
 
