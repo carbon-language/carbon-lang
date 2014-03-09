@@ -50,13 +50,6 @@ TEST_F(SmallStringTest, AssignRepeated) {
   EXPECT_STREQ("aaa", theString.c_str());
 }
 
-TEST_F(SmallStringTest, AssignIterPair) {
-  StringRef abc = "abc";
-  theString.assign(abc.begin(), abc.end());
-  EXPECT_EQ(3u, theString.size());
-  EXPECT_STREQ("abc", theString.c_str());
-}
-
 TEST_F(SmallStringTest, AssignStringRef) {
   StringRef abc = "abc";
   theString.assign(abc);
@@ -84,6 +77,23 @@ TEST_F(SmallStringTest, AppendStringRef) {
   StringRef abc = "abc";
   theString.append(abc);
   theString.append(abc);
+  EXPECT_EQ(6u, theString.size());
+  EXPECT_STREQ("abcabc", theString.c_str());
+}
+
+TEST_F(SmallStringTest, PlusEqualsStringRef) {
+  StringRef abc = "abc";
+  theString += abc;
+  theString += abc;
+  EXPECT_EQ(6u, theString.size());
+  EXPECT_STREQ("abcabc", theString.c_str());
+}
+
+TEST_F(SmallStringTest, PlusEqualsSmallVector) {
+  StringRef abc = "abc";
+  SmallVector<char, 10> abcVec(abc.begin(), abc.end());
+  theString += abcVec;
+  theString += abcVec;
   EXPECT_EQ(6u, theString.size());
   EXPECT_STREQ("abcabc", theString.c_str());
 }

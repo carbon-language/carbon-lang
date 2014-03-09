@@ -28,30 +28,18 @@ public:
   SmallString() {}
 
   /// Initialize from a StringRef.
-  SmallString(StringRef S) : SmallVector<char, InternalLen>(S.begin(), S.end()) {}
+  /*implicit*/ SmallString(StringRef S) : SmallVector<char, InternalLen>(S.begin(), S.end()) {}
 
   /// Initialize with a range.
   template<typename ItTy>
   SmallString(ItTy S, ItTy E) : SmallVector<char, InternalLen>(S, E) {}
 
-  // Note that in order to add new overloads for append & assign, we have to
-  // duplicate the inherited versions so as not to inadvertently hide them.
-
   /// @}
   /// @name String Assignment
   /// @{
 
-  /// Assign from a repeated element.
-  void assign(size_t NumElts, char Elt) {
-    this->SmallVectorImpl<char>::assign(NumElts, Elt);
-  }
-
-  /// Assign from an iterator pair.
-  template<typename in_iter>
-  void assign(in_iter S, in_iter E) {
-    this->clear();
-    SmallVectorImpl<char>::append(S, E);
-  }
+  // Provide assign from SmallVectorImpl<char>
+  using SmallVectorImpl<char>::assign;
 
   /// Assign from a StringRef.
   void assign(StringRef RHS) {
@@ -65,20 +53,7 @@ public:
     SmallVectorImpl<char>::append(RHS.begin(), RHS.end());
   }
 
-  /// @}
-  /// @name String Concatenation
-  /// @{
-
-  /// Append from an iterator pair.
-  template<typename in_iter>
-  void append(in_iter S, in_iter E) {
-    SmallVectorImpl<char>::append(S, E);
-  }
-
-  void append(size_t NumInputs, char Elt) {
-    SmallVectorImpl<char>::append(NumInputs, Elt);
-  }
-
+  using SmallVectorImpl<char>::append;
 
   /// Append from a StringRef.
   void append(StringRef RHS) {
@@ -93,12 +68,6 @@ public:
   /// @}
   /// @name String Comparison
   /// @{
-
-  /// Check for string equality.  This is more efficient than compare() when
-  /// the relative ordering of inequal strings isn't needed.
-  bool equals(StringRef RHS) const {
-    return str().equals(RHS);
-  }
 
   /// Check for string equality, ignoring case.
   bool equals_lower(StringRef RHS) const {
@@ -276,6 +245,9 @@ public:
   /// Implicit conversion to StringRef.
   operator StringRef() const { return str(); }
 
+  // Provide op= for SmallVectorImpl<char>
+  using SmallVectorImpl<char>::operator=;
+
   // Extra operators.
   const SmallString &operator=(StringRef RHS) {
     this->clear();
@@ -283,9 +255,15 @@ public:
   }
 
   SmallString &operator+=(StringRef RHS) {
-    this->append(RHS.begin(), RHS.end());
+    append(RHS.begin(), RHS.end());
     return *this;
   }
+
+  SmallString &operator+=(const SmallVectorImpl<char> &RHS) {
+    append(RHS.begin(), RHS.end());
+    return *this;
+  }
+
   SmallString &operator+=(char C) {
     this->push_back(C);
     return *this;

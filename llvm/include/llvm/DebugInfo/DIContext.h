@@ -50,8 +50,7 @@ public:
 
   bool operator==(const DILineInfo &RHS) const {
     return Line == RHS.Line && Column == RHS.Column &&
-           FileName.equals(RHS.FileName) &&
-           FunctionName.equals(RHS.FunctionName);
+           FileName == RHS.FileName && FunctionName == RHS.FunctionName;
   }
   bool operator!=(const DILineInfo &RHS) const {
     return !(*this == RHS);
