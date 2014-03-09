@@ -17,9 +17,9 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Token.h"
-#include "llvm/ADT/OwningPtr.h"
 #include <list>
 #include <map>
+#include <memory>
 
 namespace clang {
   class LangOptions;

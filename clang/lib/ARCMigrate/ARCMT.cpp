@@ -537,7 +537,7 @@ bool MigrationProcess::applyTransform(TransformFn trans,
   std::unique_ptr<ARCMTMacroTrackerAction> ASTAction;
   ASTAction.reset(new ARCMTMacroTrackerAction(ARCMTMacroLocs));
 
-  OwningPtr<ASTUnit> Unit(ASTUnit::LoadFromCompilerInvocationAction(
+  std::unique_ptr<ASTUnit> Unit(ASTUnit::LoadFromCompilerInvocationAction(
       CInvok.release(), Diags, ASTAction.get()));
   if (!Unit) {
     errRec.FinishCapture();

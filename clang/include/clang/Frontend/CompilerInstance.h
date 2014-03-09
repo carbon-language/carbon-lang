@@ -106,7 +106,7 @@ class CompilerInstance : public ModuleLoader {
   IntrusiveRefCntPtr<ASTReader> ModuleManager;
 
   /// \brief The dependency file generator.
-  OwningPtr<DependencyFileGenerator> TheDependencyFileGenerator;
+  std::unique_ptr<DependencyFileGenerator> TheDependencyFileGenerator;
 
   /// \brief The set of top-level modules that has already been loaded,
   /// along with the module map

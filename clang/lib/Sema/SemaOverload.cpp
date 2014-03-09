@@ -11685,7 +11685,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
 
   // Build the full argument list for the method call (the implicit object
   // parameter is placed at the beginning of the list).
-  llvm::OwningArrayPtr<Expr *> MethodArgs(new Expr*[Args.size() + 1]);
+  std::unique_ptr<Expr * []> MethodArgs(new Expr *[Args.size() + 1]);
   MethodArgs[0] = Object.get();
   std::copy(Args.begin(), Args.end(), &MethodArgs[1]);
 

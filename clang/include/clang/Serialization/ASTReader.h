@@ -188,8 +188,9 @@ public:
 
 /// \brief Simple wrapper class for chaining listeners.
 class ChainedASTReaderListener : public ASTReaderListener {
-  OwningPtr<ASTReaderListener> First;
-  OwningPtr<ASTReaderListener> Second;
+  std::unique_ptr<ASTReaderListener> First;
+  std::unique_ptr<ASTReaderListener> Second;
+
 public:
   /// Takes ownership of \p First and \p Second.
   ChainedASTReaderListener(ASTReaderListener *First, ASTReaderListener *Second)

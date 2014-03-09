@@ -29,7 +29,6 @@ namespace llvm {
   class StringRef;
   class Twine;
   template<typename T> class ArrayRef;
-  template<typename T> class OwningPtr;
   template<unsigned InternalLen> class SmallString;
   template<typename T, unsigned N> class SmallVector;
   template<typename T> class SmallVectorImpl;
@@ -63,7 +62,6 @@ namespace clang {
   using llvm::StringRef;
   using llvm::Twine;
   using llvm::ArrayRef;
-  using llvm::OwningPtr;
   using llvm::SmallString;
   using llvm::SmallVector;
   using llvm::SmallVectorImpl;

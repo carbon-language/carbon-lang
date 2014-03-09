@@ -16,8 +16,8 @@
 #define LLVM_CLANG_TOOLING_FILE_MATCH_TRIE_H
 
 #include "clang/Basic/LLVM.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
+#include <memory>
 #include <string>
 #include <vector>
 

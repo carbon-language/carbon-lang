@@ -1631,9 +1631,7 @@ void Sema::WarnExactTypedMethods(ObjCMethodDecl *ImpMethodDecl,
 /// memory cost and it would be handy for lookups.
 
 typedef llvm::DenseSet<IdentifierInfo*> ProtocolNameSet;
-typedef llvm::OwningPtr<ProtocolNameSet> LazyProtocolNameSet;
-
-
+typedef std::unique_ptr<ProtocolNameSet> LazyProtocolNameSet;
 
 static void findProtocolsWithExplicitImpls(const ObjCProtocolDecl *PDecl,
                                            ProtocolNameSet &PNS) {
@@ -1691,7 +1689,7 @@ static void CheckProtocolMethodDefs(Sema &S,
   // change is restricted to 'objc_protocol_requires_explicit_implementation'
   // protocols for now for controlled evaluation.
   if (PDecl->hasAttr<ObjCExplicitProtocolImplAttr>()) {
-    if (!ProtocolsExplictImpl.isValid()) {
+    if (!ProtocolsExplictImpl) {
       ProtocolsExplictImpl.reset(new ProtocolNameSet);
       findProtocolsWithExplicitImpls(Super, *ProtocolsExplictImpl);
     }

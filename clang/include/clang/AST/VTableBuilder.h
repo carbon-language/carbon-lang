@@ -209,11 +209,11 @@ public:
   typedef llvm::DenseMap<BaseSubobject, uint64_t> AddressPointsMapTy;
 private:
   uint64_t NumVTableComponents;
-  llvm::OwningArrayPtr<VTableComponent> VTableComponents;
+  std::unique_ptr<VTableComponent[]> VTableComponents;
 
   /// \brief Contains thunks needed by vtables, sorted by indices.
   uint64_t NumVTableThunks;
-  llvm::OwningArrayPtr<VTableThunkTy> VTableThunks;
+  std::unique_ptr<VTableThunkTy[]> VTableThunks;
 
   /// \brief Address points for all vtables.
   AddressPointsMapTy AddressPoints;
