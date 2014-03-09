@@ -24,7 +24,7 @@ class X86_64MachORelocationInfo : public MCRelocationInfo {
 public:
   X86_64MachORelocationInfo(MCContext &Ctx) : MCRelocationInfo(Ctx) {}
 
-  const MCExpr *createExprForRelocation(RelocationRef Rel) {
+  const MCExpr *createExprForRelocation(RelocationRef Rel) override {
     const MachOObjectFile *Obj = cast<MachOObjectFile>(Rel.getObjectFile());
 
     uint64_t RelType; Rel.getType(RelType);

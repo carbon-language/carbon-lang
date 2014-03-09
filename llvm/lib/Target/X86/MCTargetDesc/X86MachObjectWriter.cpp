@@ -63,7 +63,7 @@ public:
   void RecordRelocation(MachObjectWriter *Writer,
                         const MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
-                        MCValue Target, uint64_t &FixedValue) {
+                        MCValue Target, uint64_t &FixedValue) override {
     if (Writer->is64Bit())
       RecordX86_64Relocation(Writer, Asm, Layout, Fragment, Fixup, Target,
                              FixedValue);

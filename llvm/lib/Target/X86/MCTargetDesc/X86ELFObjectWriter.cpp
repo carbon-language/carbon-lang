@@ -24,9 +24,9 @@ namespace {
 
     virtual ~X86ELFObjectWriter();
   protected:
-    virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                                  bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend) const;
+    unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
+                          bool IsPCRel, bool IsRelocWithSymbol,
+                          int64_t Addend) const override;
   };
 }
 

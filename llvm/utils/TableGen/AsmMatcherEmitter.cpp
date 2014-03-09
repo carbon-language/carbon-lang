@@ -2681,8 +2681,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "                       const SmallVectorImpl<MCParsedAsmOperand*> "
      << "&Operands);\n";
   OS << "  void convertToMapAndConstraints(unsigned Kind,\n                ";
-  OS << "           const SmallVectorImpl<MCParsedAsmOperand*> &Operands);\n";
-  OS << "  bool mnemonicIsValid(StringRef Mnemonic, unsigned VariantID);\n";
+  OS << "           const SmallVectorImpl<MCParsedAsmOperand*> &Operands) override;\n";
+  OS << "  bool mnemonicIsValid(StringRef Mnemonic, unsigned VariantID) override;\n";
   OS << "  unsigned MatchInstructionImpl(\n";
   OS.indent(27);
   OS << "const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n"

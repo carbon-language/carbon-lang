@@ -653,7 +653,7 @@ private:
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out, unsigned &ErrorInfo,
-                               bool MatchingInlineAsm);
+                               bool MatchingInlineAsm) override;
 
   /// doSrcDstMatch - Returns true if operands are matching in their
   /// word size (%si and %di, %esi and %edi, etc.). Order depends on
@@ -707,13 +707,13 @@ public:
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
-  virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
+  bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
 
-  virtual bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
-                                SMLoc NameLoc,
-                                SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+  bool
+    ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
+                     SmallVectorImpl<MCParsedAsmOperand*> &Operands) override;
 
-  virtual bool ParseDirective(AsmToken DirectiveID);
+  bool ParseDirective(AsmToken DirectiveID) override;
 };
 } // end anonymous namespace
 
