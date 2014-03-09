@@ -60,15 +60,15 @@ private:
 };
 
 /// \brief Mips Runtime file.
-template <class ELFType> class MipsRuntimeFile : public CRuntimeFile<ELFType> {
+template <class ELFType>
+class MipsRuntimeFile final : public CRuntimeFile<ELFType> {
 public:
   MipsRuntimeFile(const MipsLinkingContext &context)
       : CRuntimeFile<ELFType>(context, "Mips runtime file") {}
 };
 
 /// \brief TargetHandler for Mips
-class MipsTargetHandler final
-    : public DefaultTargetHandler<Mips32ElELFType> {
+class MipsTargetHandler final : public DefaultTargetHandler<Mips32ElELFType> {
 public:
   MipsTargetHandler(MipsLinkingContext &context);
 
