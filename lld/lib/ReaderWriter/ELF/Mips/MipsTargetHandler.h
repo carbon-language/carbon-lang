@@ -10,6 +10,7 @@
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
+#include "MipsELFReader.h"
 #include "MipsLinkingContext.h"
 #include "MipsRelocationHandler.h"
 #include "MipsSectionChunks.h"
@@ -74,6 +75,10 @@ public:
 
   MipsTargetLayout<Mips32ElELFType> &getTargetLayout() override {
     return *_targetLayout;
+  }
+
+  std::unique_ptr<Reader> getObjReader(bool atomizeStrings) override {
+    return std::unique_ptr<Reader>(new MipsELFObjectReader(atomizeStrings));
   }
 
   const MipsTargetRelocationHandler &getRelocationHandler() const override {
