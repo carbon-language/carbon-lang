@@ -20,8 +20,7 @@ namespace elf {
 template <typename ELFT> class MipsTargetLayout;
 
 template <class ELFT>
-class MipsExecutableWriter : public ExecutableWriter<ELFT>,
-                             public MipsELFWriter<ELFT> {
+class MipsExecutableWriter : public ExecutableWriter<ELFT> {
 public:
   MipsExecutableWriter(MipsLinkingContext &context,
                        MipsTargetLayout<ELFT> &layout);
@@ -36,7 +35,7 @@ protected:
 
   error_code setELFHeader() override {
     ExecutableWriter<ELFT>::setELFHeader();
-    MipsELFWriter<ELFT>::setELFHeader(*this->_elfHeader);
+    _writeHelper.setELFHeader(*this->_elfHeader);
     return error_code::success();
   }
 
@@ -53,6 +52,7 @@ private:
     }
   }
 
+  MipsELFWriter<ELFT> _writeHelper;
   std::unique_ptr<MipsRuntimeFile<ELFT>> _mipsRuntimeFile;
   MipsLinkingContext &_mipsContext;
   MipsTargetLayout<Mips32ElELFType> &_mipsTargetLayout;
@@ -62,7 +62,7 @@ template <class ELFT>
 MipsExecutableWriter<ELFT>::MipsExecutableWriter(MipsLinkingContext &context,
                                                  MipsTargetLayout<ELFT> &layout)
     : ExecutableWriter<ELFT>(context, layout),
-      MipsELFWriter<ELFT>(context, layout),
+      _writeHelper(context, layout),
       _mipsRuntimeFile(new MipsRuntimeFile<ELFT>(context)),
       _mipsContext(context), _mipsTargetLayout(layout) {}
 
@@ -74,7 +74,7 @@ void MipsExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
     // FIXME (simon): Consider to move this check to the
     // MipsELFUndefinedAtom class method. That allows to
     // handle more complex coditions in the future.
-    if (this->hasGlobalGOTEntry(a))
+    if (_writeHelper.hasGlobalGOTEntry(a))
       this->_dynamicSymbolTable->addSymbol(a, ELF::SHN_UNDEF);
 
   ExecutableWriter<ELFT>::buildDynamicSymbolTable(file);
@@ -94,7 +94,7 @@ template <class ELFT>
 void MipsExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
   // Finalize the atom values that are part of the parent.
   ExecutableWriter<ELFT>::finalizeDefaultAtomValues();
-  MipsELFWriter<ELFT>::finalizeMipsRuntimeAtomValues();
+  _writeHelper.finalizeMipsRuntimeAtomValues();
 }
 
 /// \brief create dynamic table

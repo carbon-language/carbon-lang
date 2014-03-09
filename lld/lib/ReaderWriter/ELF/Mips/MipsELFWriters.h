@@ -23,7 +23,6 @@ public:
                 MipsTargetLayout<ELFT> &targetLayout)
       : _mipsLinkingContext(context), _mipsTargetLayout(targetLayout) {}
 
-protected:
   bool setELFHeader(ELFHeader<ELFT> &elfHeader) {
     elfHeader.e_version(1);
     elfHeader.e_ident(llvm::ELF::EI_VERSION, llvm::ELF::EV_CURRENT);

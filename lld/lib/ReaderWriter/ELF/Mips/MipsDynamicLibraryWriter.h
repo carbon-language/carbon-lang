@@ -20,8 +20,7 @@ namespace elf {
 template <typename ELFT> class MipsTargetLayout;
 
 template <class ELFT>
-class MipsDynamicLibraryWriter : public DynamicLibraryWriter<ELFT>,
-                                 public MipsELFWriter<ELFT> {
+class MipsDynamicLibraryWriter : public DynamicLibraryWriter<ELFT> {
 public:
   MipsDynamicLibraryWriter(MipsLinkingContext &context,
                            MipsTargetLayout<ELFT> &layout);
@@ -34,7 +33,7 @@ protected:
 
   error_code setELFHeader() override {
     DynamicLibraryWriter<ELFT>::setELFHeader();
-    MipsELFWriter<ELFT>::setELFHeader(*this->_elfHeader);
+    _writeHelper.setELFHeader(*this->_elfHeader);
     return error_code::success();
   }
 
@@ -51,6 +50,7 @@ private:
     }
   }
 
+  MipsELFWriter<ELFT> _writeHelper;
   std::unique_ptr<MipsRuntimeFile<ELFT>> _mipsRuntimeFile;
   MipsLinkingContext &_mipsContext;
   MipsTargetLayout<Mips32ElELFType> &_mipsTargetLayout;
@@ -60,7 +60,7 @@ template <class ELFT>
 MipsDynamicLibraryWriter<ELFT>::MipsDynamicLibraryWriter(
     MipsLinkingContext &context, MipsTargetLayout<ELFT> &layout)
     : DynamicLibraryWriter<ELFT>(context, layout),
-      MipsELFWriter<ELFT>(context, layout),
+      _writeHelper(context, layout),
       _mipsRuntimeFile(new MipsRuntimeFile<ELFT>(context)),
       _mipsContext(context), _mipsTargetLayout(layout) {}
 
@@ -78,7 +78,7 @@ template <class ELFT>
 void MipsDynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {
   // Finalize the atom values that are part of the parent.
   DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues();
-  MipsELFWriter<ELFT>::finalizeMipsRuntimeAtomValues();
+  _writeHelper.finalizeMipsRuntimeAtomValues();
 }
 
 /// \brief create dynamic table
