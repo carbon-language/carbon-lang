@@ -27,6 +27,7 @@ namespace llvm {
 namespace clang {
   class AnalysisDeclContext;
   class CFGBlock;
+  class Preprocessor;
 }
 
 //===----------------------------------------------------------------------===//
@@ -49,7 +50,8 @@ public:
 unsigned ScanReachableFromBlock(const CFGBlock *Start,
                                 llvm::BitVector &Reachable);
 
-void FindUnreachableCode(AnalysisDeclContext &AC, Callback &CB);
+void FindUnreachableCode(AnalysisDeclContext &AC, Preprocessor &PP,
+                         Callback &CB);
 
 }} // end namespace clang::reachable_code
 

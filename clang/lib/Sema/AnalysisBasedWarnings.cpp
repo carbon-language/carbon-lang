@@ -84,7 +84,7 @@ static void CheckUnreachable(Sema &S, AnalysisDeclContext &AC) {
     return;
 
   UnreachableCodeHandler UC(S);
-  reachable_code::FindUnreachableCode(AC, UC);
+  reachable_code::FindUnreachableCode(AC, S.getPreprocessor(), UC);
 }
 
 //===----------------------------------------------------------------------===//

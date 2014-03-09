@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/Analyses/ReachableCode.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
@@ -172,14 +173,39 @@ static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S) {
   return false;
 }
 
+static SourceLocation getTopMostMacro(SourceLocation Loc, SourceManager &SM) {
+  assert(Loc.isMacroID());
+  SourceLocation Last;
+  while (Loc.isMacroID()) {
+    Last = Loc;
+    Loc = SM.getImmediateMacroCallerLoc(Loc);
+  }
+  return Last;
+}
+
 /// Returns true if the statement is expanded from a configuration macro.
-static bool isExpandedFromConfigurationMacro(const Stmt *S) {
+static bool isExpandedFromConfigurationMacro(const Stmt *S,
+                                             Preprocessor &PP,
+                                             bool IgnoreYES_NO = false) {
   // FIXME: This is not very precise.  Here we just check to see if the
   // value comes from a macro, but we can do much better.  This is likely
   // to be over conservative.  This logic is factored into a separate function
   // so that we can refine it later.
   SourceLocation L = S->getLocStart();
-  return L.isMacroID();
+  if (L.isMacroID()) {
+    if (IgnoreYES_NO) {
+      // The Objective-C constant 'YES' and 'NO'
+      // are defined as macros.  Do not treat them
+      // as configuration values.
+      SourceManager &SM = PP.getSourceManager();
+      SourceLocation TopL = getTopMostMacro(L, SM);
+      StringRef MacroName = PP.getImmediateMacroName(TopL);
+      if (MacroName == "YES" || MacroName == "NO")
+        return false;
+    }
+    return true;
+  }
+  return false;
 }
 
 /// Returns true if the statement represents a configuration value.
@@ -190,6 +216,7 @@ static bool isExpandedFromConfigurationMacro(const Stmt *S) {
 /// to report as unreachable, and may mask truly unreachable code within
 /// those blocks.
 static bool isConfigurationValue(const Stmt *S,
+                                 Preprocessor &PP,
                                  bool IncludeIntegers = true) {
   if (!S)
     return false;
@@ -202,7 +229,7 @@ static bool isConfigurationValue(const Stmt *S,
       const DeclRefExpr *DR = cast<DeclRefExpr>(S);
       const ValueDecl *D = DR->getDecl();
       if (const EnumConstantDecl *ED = dyn_cast<EnumConstantDecl>(D))
-        return isConfigurationValue(ED->getInitExpr());
+        return isConfigurationValue(ED->getInitExpr(), PP);
       if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
         // As a heuristic, treat globals as configuration values.  Note
         // that we only will get here if Sema evaluated this
@@ -216,8 +243,11 @@ static bool isConfigurationValue(const Stmt *S,
       return false;
     }
     case Stmt::IntegerLiteralClass:
-      return IncludeIntegers ? isExpandedFromConfigurationMacro(S)
+      return IncludeIntegers ? isExpandedFromConfigurationMacro(S, PP)
                              : false;
+    case Stmt::ObjCBoolLiteralExprClass:
+      return isExpandedFromConfigurationMacro(S, PP, /* IgnoreYES_NO */ true);
+
     case Stmt::UnaryExprOrTypeTraitExprClass:
       return true;
     case Stmt::BinaryOperatorClass: {
@@ -226,13 +256,13 @@ static bool isConfigurationValue(const Stmt *S,
       // values if they are used in a logical or comparison operator
       // (not arithmetic).
       IncludeIntegers &= (B->isLogicalOp() || B->isComparisonOp());
-      return isConfigurationValue(B->getLHS(), IncludeIntegers) ||
-             isConfigurationValue(B->getRHS(), IncludeIntegers);
+      return isConfigurationValue(B->getLHS(), PP, IncludeIntegers) ||
+             isConfigurationValue(B->getRHS(), PP, IncludeIntegers);
     }
     case Stmt::UnaryOperatorClass: {
       const UnaryOperator *UO = cast<UnaryOperator>(S);
       return UO->getOpcode() == UO_LNot &&
-             isConfigurationValue(UO->getSubExpr());
+             isConfigurationValue(UO->getSubExpr(), PP);
     }
     default:
       return false;
@@ -240,20 +270,22 @@ static bool isConfigurationValue(const Stmt *S,
 }
 
 /// Returns true if we should always explore all successors of a block.
-static bool shouldTreatSuccessorsAsReachable(const CFGBlock *B) {
+static bool shouldTreatSuccessorsAsReachable(const CFGBlock *B,
+                                             Preprocessor &PP) {
   if (const Stmt *Term = B->getTerminator()) {
     if (isa<SwitchStmt>(Term))
       return true;
     // Specially handle '||' and '&&'.
     if (isa<BinaryOperator>(Term))
-      return isConfigurationValue(Term);
+      return isConfigurationValue(Term, PP);
   }
 
-  return isConfigurationValue(B->getTerminatorCondition());
+  return isConfigurationValue(B->getTerminatorCondition(), PP);
 }
 
 static unsigned scanFromBlock(const CFGBlock *Start,
                               llvm::BitVector &Reachable,
+                              Preprocessor *PP,
                               bool IncludeSometimesUnreachableEdges) {
   unsigned count = 0;
   
@@ -291,9 +323,11 @@ static unsigned scanFromBlock(const CFGBlock *Start,
         if (!UB)
           break;
 
-        if (!TreatAllSuccessorsAsReachable.hasValue())
+        if (!TreatAllSuccessorsAsReachable.hasValue()) {
+          assert(PP);
           TreatAllSuccessorsAsReachable =
-            shouldTreatSuccessorsAsReachable(item);
+            shouldTreatSuccessorsAsReachable(item, *PP);
+        }
 
         if (TreatAllSuccessorsAsReachable.getValue()) {
           B = UB;
@@ -316,8 +350,9 @@ static unsigned scanFromBlock(const CFGBlock *Start,
 }
 
 static unsigned scanMaybeReachableFromBlock(const CFGBlock *Start,
+                                            Preprocessor &PP,
                                             llvm::BitVector &Reachable) {
-  return scanFromBlock(Start, Reachable, true);
+  return scanFromBlock(Start, Reachable, &PP, true);
 }
 
 //===----------------------------------------------------------------------===//
@@ -329,6 +364,7 @@ namespace {
     llvm::BitVector Visited;
     llvm::BitVector &Reachable;
     SmallVector<const CFGBlock *, 10> WorkList;
+    Preprocessor &PP;
 
     typedef SmallVector<std::pair<const CFGBlock *, const Stmt *>, 12>
     DeferredLocsTy;
@@ -336,9 +372,10 @@ namespace {
     DeferredLocsTy DeferredLocs;
 
   public:
-    DeadCodeScan(llvm::BitVector &reachable)
+    DeadCodeScan(llvm::BitVector &reachable, Preprocessor &PP)
     : Visited(reachable.size()),
-    Reachable(reachable) {}
+      Reachable(reachable),
+      PP(PP) {}
 
     void enqueue(const CFGBlock *block);
     unsigned scanBackwards(const CFGBlock *Start,
@@ -450,13 +487,13 @@ unsigned DeadCodeScan::scanBackwards(const clang::CFGBlock *Start,
 
     // Specially handle macro-expanded code.
     if (S->getLocStart().isMacroID()) {
-      count += scanMaybeReachableFromBlock(Block, Reachable);
+      count += scanMaybeReachableFromBlock(Block, PP, Reachable);
       continue;
     }
 
     if (isDeadCodeRoot(Block)) {
       reportDeadCode(Block, S, CB);
-      count += scanMaybeReachableFromBlock(Block, Reachable);
+      count += scanMaybeReachableFromBlock(Block, PP, Reachable);
     }
     else {
       // Record this statement as the possibly best location in a
@@ -476,7 +513,7 @@ unsigned DeadCodeScan::scanBackwards(const clang::CFGBlock *Start,
       if (Reachable[Block->getBlockID()])
         continue;
       reportDeadCode(Block, I->second, CB);
-      count += scanMaybeReachableFromBlock(Block, Reachable);
+      count += scanMaybeReachableFromBlock(Block, PP, Reachable);
     }
   }
 
@@ -576,19 +613,21 @@ void Callback::anchor() { }
 
 unsigned ScanReachableFromBlock(const CFGBlock *Start,
                                 llvm::BitVector &Reachable) {
-  return scanFromBlock(Start, Reachable, false);
+  return scanFromBlock(Start, Reachable, /* SourceManager* */ 0, false);
 }
 
-void FindUnreachableCode(AnalysisDeclContext &AC, Callback &CB) {
+void FindUnreachableCode(AnalysisDeclContext &AC, Preprocessor &PP,
+                         Callback &CB) {
+
   CFG *cfg = AC.getCFG();
   if (!cfg)
     return;
 
-  // Scan for reachable blocks from the entrance of the CFG.  
+  // Scan for reachable blocks from the entrance of the CFG.
   // If there are no unreachable blocks, we're done.
   llvm::BitVector reachable(cfg->getNumBlockIDs());
   unsigned numReachable =
-    scanMaybeReachableFromBlock(&cfg->getEntry(), reachable);
+    scanMaybeReachableFromBlock(&cfg->getEntry(), PP, reachable);
   if (numReachable == cfg->getNumBlockIDs())
     return;
   
@@ -597,7 +636,7 @@ void FindUnreachableCode(AnalysisDeclContext &AC, Callback &CB) {
   if (!AC.getCFGBuildOptions().AddEHEdges) {
     for (CFG::try_block_iterator I = cfg->try_blocks_begin(),
          E = cfg->try_blocks_end() ; I != E; ++I) {
-      numReachable += scanMaybeReachableFromBlock(*I, reachable);
+      numReachable += scanMaybeReachableFromBlock(*I, PP, reachable);
     }
     if (numReachable == cfg->getNumBlockIDs())
       return;
@@ -611,7 +650,7 @@ void FindUnreachableCode(AnalysisDeclContext &AC, Callback &CB) {
     if (reachable[block->getBlockID()])
       continue;
     
-    DeadCodeScan DS(reachable);
+    DeadCodeScan DS(reachable, PP);
     numReachable += DS.scanBackwards(block, CB);
     
     if (numReachable == cfg->getNumBlockIDs())
