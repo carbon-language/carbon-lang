@@ -101,7 +101,7 @@ static bool parseFunctionPassPipeline(FunctionPassManager &FPM,
       PipelineText = PipelineText.substr(1);
 
       // Add the nested pass manager with the appropriate adaptor.
-      FPM.addPass(NestedFPM);
+      FPM.addPass(std::move(NestedFPM));
     } else {
       // Otherwise try to parse a pass name.
       size_t End = PipelineText.find_first_of(",)");
@@ -138,7 +138,7 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
       PipelineText = PipelineText.substr(1);
 
       // Now add the nested manager as a module pass.
-      MPM.addPass(NestedMPM);
+      MPM.addPass(std::move(NestedMPM));
     } else if (PipelineText.startswith("function(")) {
       FunctionPassManager NestedFPM;
 
@@ -151,7 +151,7 @@ static bool parseModulePassPipeline(ModulePassManager &MPM,
       PipelineText = PipelineText.substr(1);
 
       // Add the nested pass manager with the appropriate adaptor.
-      MPM.addPass(createModuleToFunctionPassAdaptor(NestedFPM));
+      MPM.addPass(createModuleToFunctionPassAdaptor(std::move(NestedFPM)));
     } else {
       // Otherwise try to parse a pass name.
       size_t End = PipelineText.find_first_of(",)");
@@ -185,7 +185,7 @@ bool llvm::parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText,
     if (!parseFunctionPassPipeline(FPM, PipelineText, VerifyEachPass) ||
         !PipelineText.empty())
       return false;
-    MPM.addPass(createModuleToFunctionPassAdaptor(FPM));
+    MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
     return true;
   }
 
@@ -201,7 +201,7 @@ bool llvm::parsePassPipeline(ModulePassManager &MPM, StringRef PipelineText,
     if (!parseFunctionPassPipeline(FPM, PipelineText, VerifyEachPass) ||
         !PipelineText.empty())
       return false;
-    MPM.addPass(createModuleToFunctionPassAdaptor(FPM));
+    MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
     return true;
   }
 

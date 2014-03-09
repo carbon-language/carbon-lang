@@ -45,12 +45,12 @@ ModuleAnalysisManager::getResultImpl(void *PassID, Module *M) {
   ModuleAnalysisResultMapT::iterator RI;
   bool Inserted;
   std::tie(RI, Inserted) = ModuleAnalysisResults.insert(std::make_pair(
-      PassID, polymorphic_ptr<detail::AnalysisResultConcept<Module *> >()));
+      PassID, std::unique_ptr<detail::AnalysisResultConcept<Module *>>()));
 
   // If we don't have a cached result for this module, look up the pass and run
   // it to produce a result, which we then add to the cache.
   if (Inserted)
-    RI->second = lookupPass(PassID).run(M, this);
+    RI->second = std::move(lookupPass(PassID).run(M, this));
 
   return *RI->second;
 }
@@ -122,7 +122,7 @@ FunctionAnalysisManager::getResultImpl(void *PassID, Function *F) {
   // run it to produce a result, which we then add to the cache.
   if (Inserted) {
     FunctionAnalysisResultListT &ResultList = FunctionAnalysisResultLists[F];
-    ResultList.push_back(std::make_pair(PassID, lookupPass(PassID).run(F, this)));
+    ResultList.emplace_back(PassID, lookupPass(PassID).run(F, this));
     RI->second = std::prev(ResultList.end());
   }
 
