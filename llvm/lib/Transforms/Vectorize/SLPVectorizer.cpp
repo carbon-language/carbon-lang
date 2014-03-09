@@ -1654,6 +1654,7 @@ Value *BoUpSLP::vectorizeTree() {
 
       Type *Ty = Scalar->getType();
       if (!Ty->isVoidTy()) {
+#ifndef NDEBUG
         for (User *U : Scalar->users()) {
           DEBUG(dbgs() << "SLP: \tvalidating user:" << *U << ".\n");
 
@@ -1662,6 +1663,7 @@ Value *BoUpSLP::vectorizeTree() {
                   (RdxOps && RdxOps->count(U))) &&
                  "Replacing out-of-tree value with undef");
         }
+#endif
         Value *Undef = UndefValue::get(Ty);
         Scalar->replaceAllUsesWith(Undef);
       }
