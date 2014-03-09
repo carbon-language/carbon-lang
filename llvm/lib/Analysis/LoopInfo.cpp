@@ -179,12 +179,11 @@ bool Loop::isLCSSAForm(DominatorTree &DT) const {
   for (block_iterator BI = block_begin(), E = block_end(); BI != E; ++BI) {
     BasicBlock *BB = *BI;
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;++I)
-      for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
-           ++UI) {
-        User *U = *UI;
-        BasicBlock *UserBB = cast<Instruction>(U)->getParent();
-        if (PHINode *P = dyn_cast<PHINode>(U))
-          UserBB = P->getIncomingBlock(UI);
+      for (Use &U : I->uses()) {
+        Instruction *UI = cast<Instruction>(U.getUser());
+        BasicBlock *UserBB = UI->getParent();
+        if (PHINode *P = dyn_cast<PHINode>(UI))
+          UserBB = P->getIncomingBlock(U);
 
         // Check the current block, as a fast-path, before checking whether
         // the use is anywhere in the loop.  Most values are used in the same

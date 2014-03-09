@@ -303,11 +303,10 @@ void SparseSolver::Solve(Function &F) {
 
       // "I" got into the work list because it made a transition.  See if any
       // users are both live and in need of updating.
-      for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-           UI != E; ++UI) {
-        Instruction *U = cast<Instruction>(*UI);
-        if (BBExecutable.count(U->getParent()))   // Inst is executable?
-          visitInst(*U);
+      for (User *U : I->users()) {
+        Instruction *UI = cast<Instruction>(U);
+        if (BBExecutable.count(UI->getParent()))   // Inst is executable?
+          visitInst(*UI);
       }
     }
 

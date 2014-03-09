@@ -788,15 +788,14 @@ static IntrinsicInst *FindInitTrampolineFromAlloca(Value *TrampMem) {
   // is good enough in practice and simpler than handling any number of casts.
   Value *Underlying = TrampMem->stripPointerCasts();
   if (Underlying != TrampMem &&
-      (!Underlying->hasOneUse() || *Underlying->use_begin() != TrampMem))
+      (!Underlying->hasOneUse() || Underlying->user_back() != TrampMem))
     return 0;
   if (!isa<AllocaInst>(Underlying))
     return 0;
 
   IntrinsicInst *InitTrampoline = 0;
-  for (Value::use_iterator I = TrampMem->use_begin(), E = TrampMem->use_end();
-       I != E; I++) {
-    IntrinsicInst *II = dyn_cast<IntrinsicInst>(*I);
+  for (User *U : TrampMem->users()) {
+    IntrinsicInst *II = dyn_cast<IntrinsicInst>(U);
     if (!II)
       return 0;
     if (II->getIntrinsicID() == Intrinsic::init_trampoline) {
@@ -1010,9 +1009,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     // the critical edge).  Bail out in this case.
     if (!Caller->use_empty())
       if (InvokeInst *II = dyn_cast<InvokeInst>(Caller))
-        for (Value::use_iterator UI = II->use_begin(), E = II->use_end();
-             UI != E; ++UI)
-          if (PHINode *PN = dyn_cast<PHINode>(*UI))
+        for (User *U : II->users())
+          if (PHINode *PN = dyn_cast<PHINode>(U))
             if (PN->getParent() == II->getNormalDest() ||
                 PN->getParent() == II->getUnwindDest())
               return false;

@@ -1052,9 +1052,8 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
 
   Function *Caller = CS.getInstruction()->getParent()->getParent();
   // Check if the caller function is recursive itself.
-  for (Value::use_iterator U = Caller->use_begin(), E = Caller->use_end();
-       U != E; ++U) {
-    CallSite Site(cast<Value>(*U));
+  for (User *U : Caller->users()) {
+    CallSite Site(U);
     if (!Site)
       continue;
     Instruction *I = Site.getInstruction();

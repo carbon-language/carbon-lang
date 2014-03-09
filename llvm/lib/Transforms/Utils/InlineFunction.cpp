@@ -401,9 +401,8 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
 // isUsedByLifetimeMarker - Check whether this Value is used by a lifetime
 // intrinsic.
 static bool isUsedByLifetimeMarker(Value *V) {
-  for (Value::use_iterator UI = V->use_begin(), UE = V->use_end(); UI != UE;
-       ++UI) {
-    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(*UI)) {
+  for (User *U : V->users()) {
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(U)) {
       switch (II->getIntrinsicID()) {
       default: break;
       case Intrinsic::lifetime_start:
@@ -423,11 +422,10 @@ static bool hasLifetimeMarkers(AllocaInst *AI) {
     return isUsedByLifetimeMarker(AI);
 
   // Do a scan to find all the casts to i8*.
-  for (Value::use_iterator I = AI->use_begin(), E = AI->use_end(); I != E;
-       ++I) {
-    if (I->getType() != Int8PtrTy) continue;
-    if (I->stripPointerCasts() != AI) continue;
-    if (isUsedByLifetimeMarker(*I))
+  for (User *U : AI->users()) {
+    if (U->getType() != Int8PtrTy) continue;
+    if (U->stripPointerCasts() != AI) continue;
+    if (isUsedByLifetimeMarker(U))
       return true;
   }
   return false;

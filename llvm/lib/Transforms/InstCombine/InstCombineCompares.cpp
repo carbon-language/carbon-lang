@@ -1937,16 +1937,15 @@ static Instruction *ProcessUGT_ADDCST_ADD(ICmpInst &I, Value *A, Value *B,
   // and truncates that discard the high bits of the add.  Verify that this is
   // the case.
   Instruction *OrigAdd = cast<Instruction>(AddWithCst->getOperand(0));
-  for (Value::use_iterator UI = OrigAdd->use_begin(), E = OrigAdd->use_end();
-       UI != E; ++UI) {
-    if (*UI == AddWithCst) continue;
+  for (User *U : OrigAdd->users()) {
+    if (U == AddWithCst) continue;
 
     // Only accept truncates for now.  We would really like a nice recursive
     // predicate like SimplifyDemandedBits, but which goes downwards the use-def
     // chain to see which bits of a value are actually demanded.  If the
     // original add had another add which was then immediately truncated, we
     // could still do the transformation.
-    TruncInst *TI = dyn_cast<TruncInst>(*UI);
+    TruncInst *TI = dyn_cast<TruncInst>(U);
     if (TI == 0 ||
         TI->getType()->getPrimitiveSizeInBits() > NewWidth) return 0;
   }
@@ -2068,8 +2067,8 @@ static bool swapMayExposeCSEOpportunities(const Value * Op0,
   // At the end, if the benefit is greater than 0, Op0 should come second to
   // expose more CSE opportunities.
   int GlobalSwapBenefits = 0;
-  for (Value::const_use_iterator UI = Op0->use_begin(), UIEnd = Op0->use_end(); UI != UIEnd; ++UI) {
-    const BinaryOperator *BinOp = dyn_cast<BinaryOperator>(*UI);
+  for (const User *U : Op0->users()) {
+    const BinaryOperator *BinOp = dyn_cast<BinaryOperator>(U);
     if (!BinOp || BinOp->getOpcode() != Instruction::Sub)
       continue;
     // If Op0 is the first argument, this is not beneficial to swap the
@@ -2468,7 +2467,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   // operands has at least one user besides the compare (the select),
   // which would often largely negate the benefit of folding anyway.
   if (I.hasOneUse())
-    if (SelectInst *SI = dyn_cast<SelectInst>(*I.use_begin()))
+    if (SelectInst *SI = dyn_cast<SelectInst>(*I.user_begin()))
       if ((SI->getOperand(1) == Op0 && SI->getOperand(2) == Op1) ||
           (SI->getOperand(2) == Op0 && SI->getOperand(1) == Op1))
         return 0;

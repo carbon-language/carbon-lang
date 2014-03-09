@@ -637,10 +637,9 @@ private:
         return I;
       }
 
-      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end(); UI != UE;
-           ++UI)
-        if (Visited.insert(cast<Instruction>(*UI)))
-          Uses.push_back(std::make_pair(I, cast<Instruction>(*UI)));
+      for (User *U : I->users())
+        if (Visited.insert(cast<Instruction>(U)))
+          Uses.push_back(std::make_pair(I, cast<Instruction>(U)));
     } while (!Uses.empty());
 
     return 0;
@@ -817,12 +816,10 @@ public:
     // Retain the debug information attached to the alloca for use when
     // rewriting loads and stores.
     if (MDNode *DebugNode = MDNode::getIfExists(AI.getContext(), &AI)) {
-      for (Value::use_iterator UI = DebugNode->use_begin(),
-                               UE = DebugNode->use_end();
-           UI != UE; ++UI)
-        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(*UI))
+      for (User *U : DebugNode->users())
+        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(U))
           DDIs.push_back(DDI);
-        else if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(*UI))
+        else if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(U))
           DVIs.push_back(DVI);
     }
 
@@ -1085,9 +1082,8 @@ static bool isSafePHIToSpeculate(PHINode &PN,
   BasicBlock *BB = PN.getParent();
   unsigned MaxAlign = 0;
   bool HaveLoad = false;
-  for (Value::use_iterator UI = PN.use_begin(), UE = PN.use_end(); UI != UE;
-       ++UI) {
-    LoadInst *LI = dyn_cast<LoadInst>(*UI);
+  for (User *U : PN.users()) {
+    LoadInst *LI = dyn_cast<LoadInst>(U);
     if (LI == 0 || !LI->isSimple())
       return false;
 
@@ -1151,13 +1147,13 @@ static void speculatePHINodeLoads(PHINode &PN) {
 
   // Get the TBAA tag and alignment to use from one of the loads.  It doesn't
   // matter which one we get and if any differ.
-  LoadInst *SomeLoad = cast<LoadInst>(*PN.use_begin());
+  LoadInst *SomeLoad = cast<LoadInst>(PN.user_back());
   MDNode *TBAATag = SomeLoad->getMetadata(LLVMContext::MD_tbaa);
   unsigned Align = SomeLoad->getAlignment();
 
   // Rewrite all loads of the PN to use the new PHI.
   while (!PN.use_empty()) {
-    LoadInst *LI = cast<LoadInst>(*PN.use_begin());
+    LoadInst *LI = cast<LoadInst>(PN.user_back());
     LI->replaceAllUsesWith(NewPN);
     LI->eraseFromParent();
   }
@@ -1201,9 +1197,8 @@ static bool isSafeSelectToSpeculate(SelectInst &SI, const DataLayout *DL = 0) {
   bool TDerefable = TValue->isDereferenceablePointer();
   bool FDerefable = FValue->isDereferenceablePointer();
 
-  for (Value::use_iterator UI = SI.use_begin(), UE = SI.use_end(); UI != UE;
-       ++UI) {
-    LoadInst *LI = dyn_cast<LoadInst>(*UI);
+  for (User *U : SI.users()) {
+    LoadInst *LI = dyn_cast<LoadInst>(U);
     if (LI == 0 || !LI->isSimple())
       return false;
 
@@ -1229,7 +1224,7 @@ static void speculateSelectInstLoads(SelectInst &SI) {
   Value *FV = SI.getFalseValue();
   // Replace the loads of the select with a select of two loads.
   while (!SI.use_empty()) {
-    LoadInst *LI = cast<LoadInst>(*SI.use_begin());
+    LoadInst *LI = cast<LoadInst>(SI.user_back());
     assert(LI->isSimple() && "We only speculate simple loads");
 
     IRB.SetInsertPoint(LI);
@@ -2782,10 +2777,9 @@ private:
   /// Enqueue all the users of the given instruction for further processing.
   /// This uses a set to de-duplicate users.
   void enqueueUsers(Instruction &I) {
-    for (Value::use_iterator UI = I.use_begin(), UE = I.use_end(); UI != UE;
-         ++UI)
-      if (Visited.insert(*UI))
-        Queue.push_back(&UI.getUse());
+    for (Use &U : I.uses())
+      if (Visited.insert(U.getUser()))
+        Queue.push_back(&U);
   }
 
   // Conservative default is to not rewrite anything.
@@ -3516,10 +3510,9 @@ void SROA::deleteDeadInstructions(SmallPtrSet<AllocaInst*, 4> &DeletedAllocas) {
 static void enqueueUsersInWorklist(Instruction &I,
                                    SmallVectorImpl<Instruction *> &Worklist,
                                    SmallPtrSet<Instruction *, 8> &Visited) {
-  for (Value::use_iterator UI = I.use_begin(), UE = I.use_end(); UI != UE;
-       ++UI)
-    if (Visited.insert(cast<Instruction>(*UI)))
-      Worklist.push_back(cast<Instruction>(*UI));
+  for (User *U : I.users())
+    if (Visited.insert(cast<Instruction>(U)))
+      Worklist.push_back(cast<Instruction>(U));
 }
 
 /// \brief Promote the allocas, using the best available technique.

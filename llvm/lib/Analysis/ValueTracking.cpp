@@ -1960,9 +1960,8 @@ llvm::GetUnderlyingObjects(Value *V,
 /// are lifetime markers.
 ///
 bool llvm::onlyUsedByLifetimeMarkers(const Value *V) {
-  for (Value::const_use_iterator UI = V->use_begin(), UE = V->use_end();
-       UI != UE; ++UI) {
-    const IntrinsicInst *II = dyn_cast<IntrinsicInst>(*UI);
+  for (const User *U : V->users()) {
+    const IntrinsicInst *II = dyn_cast<IntrinsicInst>(U);
     if (!II) return false;
 
     if (II->getIntrinsicID() != Intrinsic::lifetime_start &&

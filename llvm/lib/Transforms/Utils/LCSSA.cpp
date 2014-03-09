@@ -65,15 +65,14 @@ static bool processInstruction(Loop &L, Instruction &Inst, DominatorTree &DT,
 
   BasicBlock *InstBB = Inst.getParent();
 
-  for (Value::use_iterator UI = Inst.use_begin(), E = Inst.use_end(); UI != E;
-       ++UI) {
-    User *U = *UI;
-    BasicBlock *UserBB = cast<Instruction>(U)->getParent();
-    if (PHINode *PN = dyn_cast<PHINode>(U))
-      UserBB = PN->getIncomingBlock(UI);
+  for (Use &U : Inst.uses()) {
+    Instruction *User = cast<Instruction>(U.getUser());
+    BasicBlock *UserBB = User->getParent();
+    if (PHINode *PN = dyn_cast<PHINode>(User))
+      UserBB = PN->getIncomingBlock(U);
 
     if (InstBB != UserBB && !L.contains(UserBB))
-      UsesToRewrite.push_back(&UI.getUse());
+      UsesToRewrite.push_back(&U);
   }
 
   // If there are no uses outside the loop, exit with no change.
@@ -208,8 +207,8 @@ bool llvm::formLCSSA(Loop &L, DominatorTree &DT, ScalarEvolution *SE) {
       // Reject two common cases fast: instructions with no uses (like stores)
       // and instructions with one use that is in the same block as this.
       if (I->use_empty() ||
-          (I->hasOneUse() && I->use_back()->getParent() == BB &&
-           !isa<PHINode>(I->use_back())))
+          (I->hasOneUse() && I->user_back()->getParent() == BB &&
+           !isa<PHINode>(I->user_back())))
         continue;
 
       Changed |= processInstruction(L, *I, DT, ExitBlocks, PredCache);

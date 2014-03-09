@@ -939,9 +939,8 @@ static void ReplaceUsesOfWith(Instruction *I, Value *V,
       Worklist.push_back(Use);
 
   // Add users to the worklist which may be simplified now.
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-       UI != E; ++UI)
-    Worklist.push_back(cast<Instruction>(*UI));
+  for (User *U : I->users())
+    Worklist.push_back(cast<Instruction>(U));
   LPM->deleteSimpleAnalysisValue(I, L);
   RemoveFromWorklist(I, Worklist);
   I->replaceAllUsesWith(V);
@@ -991,12 +990,11 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
       Replacement = ConstantInt::get(Type::getInt1Ty(Val->getContext()),
                                      !cast<ConstantInt>(Val)->getZExtValue());
 
-    for (Value::use_iterator UI = LIC->use_begin(), E = LIC->use_end();
-         UI != E; ++UI) {
-      Instruction *U = dyn_cast<Instruction>(*UI);
-      if (!U || !L->contains(U))
+    for (User *U : LIC->users()) {
+      Instruction *UI = dyn_cast<Instruction>(U);
+      if (!UI || !L->contains(UI))
         continue;
-      Worklist.push_back(U);
+      Worklist.push_back(UI);
     }
 
     for (std::vector<Instruction*>::iterator UI = Worklist.begin(),
@@ -1010,19 +1008,18 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
   // Otherwise, we don't know the precise value of LIC, but we do know that it
   // is certainly NOT "Val".  As such, simplify any uses in the loop that we
   // can.  This case occurs when we unswitch switch statements.
-  for (Value::use_iterator UI = LIC->use_begin(), E = LIC->use_end();
-       UI != E; ++UI) {
-    Instruction *U = dyn_cast<Instruction>(*UI);
-    if (!U || !L->contains(U))
+  for (User *U : LIC->users()) {
+    Instruction *UI = dyn_cast<Instruction>(U);
+    if (!UI || !L->contains(UI))
       continue;
 
-    Worklist.push_back(U);
+    Worklist.push_back(UI);
 
     // TODO: We could do other simplifications, for example, turning
     // 'icmp eq LIC, Val' -> false.
 
     // If we know that LIC is not Val, use this info to simplify code.
-    SwitchInst *SI = dyn_cast<SwitchInst>(U);
+    SwitchInst *SI = dyn_cast<SwitchInst>(UI);
     if (SI == 0 || !isa<ConstantInt>(Val)) continue;
 
     SwitchInst::CaseIt DeadCase = SI->findCaseValue(cast<ConstantInt>(Val));

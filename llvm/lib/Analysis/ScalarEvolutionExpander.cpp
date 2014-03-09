@@ -47,9 +47,7 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
   Instruction *Ret = NULL;
 
   // Check to see if there is already a cast!
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
-       UI != E; ++UI) {
-    User *U = *UI;
+  for (User *U : V->users())
     if (U->getType() == Ty)
       if (CastInst *CI = dyn_cast<CastInst>(U))
         if (CI->getOpcode() == Op) {
@@ -69,7 +67,6 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
           Ret = CI;
           break;
         }
-  }
 
   // Create a new cast.
   if (!Ret)

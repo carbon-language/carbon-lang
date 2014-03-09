@@ -79,9 +79,8 @@ bool ConstantPropagation::runOnFunction(Function &F) {
       if (Constant *C = ConstantFoldInstruction(I, DL, TLI)) {
         // Add all of the users of this instruction to the worklist, they might
         // be constant propagatable now...
-        for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-             UI != UE; ++UI)
-          WorkList.insert(cast<Instruction>(*UI));
+        for (User *U : I->users())
+          WorkList.insert(cast<Instruction>(U));
 
         // Replace all of the uses of a variable with uses of the constant.
         I->replaceAllUsesWith(C);

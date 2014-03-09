@@ -5580,9 +5580,8 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
 /// IsOnlyUsedInZeroEqualityComparison - Return true if it only matters that the
 /// value is equal or not-equal to zero.
 static bool IsOnlyUsedInZeroEqualityComparison(const Value *V) {
-  for (Value::const_use_iterator UI = V->use_begin(), E = V->use_end();
-       UI != E; ++UI) {
-    if (const ICmpInst *IC = dyn_cast<ICmpInst>(*UI))
+  for (const User *U : V->users()) {
+    if (const ICmpInst *IC = dyn_cast<ICmpInst>(U))
       if (IC->isEquality())
         if (const Constant *C = dyn_cast<Constant>(IC->getOperand(1)))
           if (C->isNullValue())
@@ -7326,12 +7325,10 @@ static bool isOnlyUsedInEntryBlock(const Argument *A, bool FastISel) {
     return A->use_empty();
 
   const BasicBlock *Entry = A->getParent()->begin();
-  for (Value::const_use_iterator UI = A->use_begin(), E = A->use_end();
-       UI != E; ++UI) {
-    const User *U = *UI;
+  for (const User *U : A->users())
     if (cast<Instruction>(U)->getParent() != Entry || isa<SwitchInst>(U))
       return false;  // Use not in entry block.
-  }
+
   return true;
 }
 

@@ -149,7 +149,7 @@ static void MarkBlocksLiveIn(BasicBlock *BB,
 /// instruction with those returned by the personality function.
 void SjLjEHPrepare::substituteLPadValues(LandingPadInst *LPI, Value *ExnVal,
                                          Value *SelVal) {
-  SmallVector<Value *, 8> UseWorkList(LPI->use_begin(), LPI->use_end());
+  SmallVector<Value *, 8> UseWorkList(LPI->user_begin(), LPI->user_end());
   while (!UseWorkList.empty()) {
     Value *Val = UseWorkList.pop_back_val();
     ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(Val);
@@ -294,8 +294,8 @@ void SjLjEHPrepare::lowerAcrossUnwindEdges(Function &F,
       if (Inst->use_empty())
         continue;
       if (Inst->hasOneUse() &&
-          cast<Instruction>(Inst->use_back())->getParent() == BB &&
-          !isa<PHINode>(Inst->use_back()))
+          cast<Instruction>(Inst->user_back())->getParent() == BB &&
+          !isa<PHINode>(Inst->user_back()))
         continue;
 
       // If this is an alloca in the entry block, it's not a real register
@@ -306,11 +306,10 @@ void SjLjEHPrepare::lowerAcrossUnwindEdges(Function &F,
 
       // Avoid iterator invalidation by copying users to a temporary vector.
       SmallVector<Instruction *, 16> Users;
-      for (Value::use_iterator UI = Inst->use_begin(), E = Inst->use_end();
-           UI != E; ++UI) {
-        Instruction *User = cast<Instruction>(*UI);
-        if (User->getParent() != BB || isa<PHINode>(User))
-          Users.push_back(User);
+      for (User *U : Inst->users()) {
+        Instruction *UI = cast<Instruction>(U);
+        if (UI->getParent() != BB || isa<PHINode>(UI))
+          Users.push_back(UI);
       }
 
       // Find all of the blocks that this value is live in.

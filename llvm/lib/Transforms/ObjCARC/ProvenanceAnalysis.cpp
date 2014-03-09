@@ -79,11 +79,10 @@ static bool IsStoredObjCPointer(const Value *P) {
   Visited.insert(P);
   do {
     P = Worklist.pop_back_val();
-    for (Value::const_use_iterator UI = P->use_begin(), UE = P->use_end();
-         UI != UE; ++UI) {
-      const User *Ur = *UI;
+    for (const Use &U : P->uses()) {
+      const User *Ur = U.getUser();
       if (isa<StoreInst>(Ur)) {
-        if (UI.getOperandNo() == 0)
+        if (U.getOperandNo() == 0)
           // The pointer is stored.
           return true;
         // The pointed is stored through.

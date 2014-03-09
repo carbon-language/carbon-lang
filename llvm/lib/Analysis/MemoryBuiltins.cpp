@@ -261,8 +261,8 @@ PointerType *llvm::getMallocType(const CallInst *CI,
   unsigned NumOfBitCastUses = 0;
 
   // Determine if CallInst has a bitcast use.
-  for (Value::const_use_iterator UI = CI->use_begin(), E = CI->use_end();
-       UI != E; )
+  for (Value::const_user_iterator UI = CI->user_begin(), E = CI->user_end();
+       UI != E;)
     if (const BitCastInst *BCI = dyn_cast<BitCastInst>(*UI++)) {
       MallocType = cast<PointerType>(BCI->getDestTy());
       NumOfBitCastUses++;

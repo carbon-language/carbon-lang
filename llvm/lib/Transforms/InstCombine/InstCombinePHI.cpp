@@ -255,9 +255,7 @@ static bool isSafeAndProfitableToSinkLoad(LoadInst *L) {
   // profitable to do this xform.
   if (AllocaInst *AI = dyn_cast<AllocaInst>(L->getOperand(0))) {
     bool isAddressTaken = false;
-    for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
-         UI != E; ++UI) {
-      User *U = *UI;
+    for (User *U : AI->users()) {
       if (isa<LoadInst>(U)) continue;
       if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
         // If storing TO the alloca, then the address isn't taken.
@@ -518,7 +516,7 @@ static bool DeadPHICycle(PHINode *PN,
   if (PotentiallyDeadPHIs.size() == 16)
     return false;
 
-  if (PHINode *PU = dyn_cast<PHINode>(PN->use_back()))
+  if (PHINode *PU = dyn_cast<PHINode>(PN->user_back()))
     return DeadPHICycle(PU, PotentiallyDeadPHIs);
 
   return false;
@@ -649,32 +647,30 @@ Instruction *InstCombiner::SliceUpIllegalIntegerPHI(PHINode &FirstPhi) {
       return 0;
     }
 
-
-    for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end();
-         UI != E; ++UI) {
-      Instruction *User = cast<Instruction>(*UI);
+    for (User *U : PN->users()) {
+      Instruction *UserI = cast<Instruction>(U);
 
       // If the user is a PHI, inspect its uses recursively.
-      if (PHINode *UserPN = dyn_cast<PHINode>(User)) {
+      if (PHINode *UserPN = dyn_cast<PHINode>(UserI)) {
         if (PHIsInspected.insert(UserPN))
           PHIsToSlice.push_back(UserPN);
         continue;
       }
 
       // Truncates are always ok.
-      if (isa<TruncInst>(User)) {
-        PHIUsers.push_back(PHIUsageRecord(PHIId, 0, User));
+      if (isa<TruncInst>(UserI)) {
+        PHIUsers.push_back(PHIUsageRecord(PHIId, 0, UserI));
         continue;
       }
 
       // Otherwise it must be a lshr which can only be used by one trunc.
-      if (User->getOpcode() != Instruction::LShr ||
-          !User->hasOneUse() || !isa<TruncInst>(User->use_back()) ||
-          !isa<ConstantInt>(User->getOperand(1)))
+      if (UserI->getOpcode() != Instruction::LShr ||
+          !UserI->hasOneUse() || !isa<TruncInst>(UserI->user_back()) ||
+          !isa<ConstantInt>(UserI->getOperand(1)))
         return 0;
 
-      unsigned Shift = cast<ConstantInt>(User->getOperand(1))->getZExtValue();
-      PHIUsers.push_back(PHIUsageRecord(PHIId, Shift, User->use_back()));
+      unsigned Shift = cast<ConstantInt>(UserI->getOperand(1))->getZExtValue();
+      PHIUsers.push_back(PHIUsageRecord(PHIId, Shift, UserI->user_back()));
     }
   }
 
@@ -809,7 +805,7 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
   // this PHI only has a single use (a PHI), and if that PHI only has one use (a
   // PHI)... break the cycle.
   if (PN.hasOneUse()) {
-    Instruction *PHIUser = cast<Instruction>(PN.use_back());
+    Instruction *PHIUser = cast<Instruction>(PN.user_back());
     if (PHINode *PU = dyn_cast<PHINode>(PHIUser)) {
       SmallPtrSet<PHINode*, 16> PotentiallyDeadPHIs;
       PotentiallyDeadPHIs.insert(&PN);
@@ -825,7 +821,7 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
     // late.
     if (PHIUser->hasOneUse() &&
         (isa<BinaryOperator>(PHIUser) || isa<GetElementPtrInst>(PHIUser)) &&
-        PHIUser->use_back() == &PN) {
+        PHIUser->user_back() == &PN) {
       return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
     }
   }

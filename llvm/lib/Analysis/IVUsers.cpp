@@ -142,9 +142,8 @@ bool IVUsers::AddUsersImpl(Instruction *I,
     return false;
 
   SmallPtrSet<Instruction *, 4> UniqueUsers;
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-       UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
+  for (Use &U : I->uses()) {
+    Instruction *User = cast<Instruction>(U.getUser());
     if (!UniqueUsers.insert(User))
       continue;
 
@@ -157,7 +156,7 @@ bool IVUsers::AddUsersImpl(Instruction *I,
     BasicBlock *UseBB = User->getParent();
     // A phi's use is live out of its predecessor block.
     if (PHINode *PHI = dyn_cast<PHINode>(User)) {
-      unsigned OperandNo = UI.getOperandNo();
+      unsigned OperandNo = U.getOperandNo();
       unsigned ValNo = PHINode::getIncomingValueNumForOperand(OperandNo);
       UseBB = PHI->getIncomingBlock(ValNo);
     }

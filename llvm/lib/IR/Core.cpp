@@ -514,7 +514,7 @@ LLVMUseRef LLVMGetFirstUse(LLVMValueRef Val) {
   Value::use_iterator I = V->use_begin();
   if (I == V->use_end())
     return 0;
-  return wrap(&(I.getUse()));
+  return wrap(&*I);
 }
 
 LLVMUseRef LLVMGetNextUse(LLVMUseRef U) {

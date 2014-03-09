@@ -1476,7 +1476,7 @@ bool llvm::StripDebugInfo(Module &M) {
   // the module.
   if (Function *Declare = M.getFunction("llvm.dbg.declare")) {
     while (!Declare->use_empty()) {
-      CallInst *CI = cast<CallInst>(Declare->use_back());
+      CallInst *CI = cast<CallInst>(Declare->user_back());
       CI->eraseFromParent();
     }
     Declare->eraseFromParent();
@@ -1485,7 +1485,7 @@ bool llvm::StripDebugInfo(Module &M) {
 
   if (Function *DbgVal = M.getFunction("llvm.dbg.value")) {
     while (!DbgVal->use_empty()) {
-      CallInst *CI = cast<CallInst>(DbgVal->use_back());
+      CallInst *CI = cast<CallInst>(DbgVal->user_back());
       CI->eraseFromParent();
     }
     DbgVal->eraseFromParent();

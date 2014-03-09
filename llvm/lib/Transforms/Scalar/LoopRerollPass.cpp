@@ -354,12 +354,9 @@ Pass *llvm::createLoopRerollPass() {
 // This operates like Instruction::isUsedOutsideOfBlock, but considers PHIs in
 // non-loop blocks to be outside the loop.
 static bool hasUsesOutsideLoop(Instruction *I, Loop *L) {
-  for (Value::use_iterator UI = I->use_begin(),
-       UIE = I->use_end(); UI != UIE; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
-    if (!L->contains(User))
+  for (User *U : I->users())
+    if (!L->contains(cast<Instruction>(U)))
       return true;
-  }
 
   return false;
 }
@@ -409,7 +406,7 @@ void LoopReroll::SimpleLoopReduction::add(Loop *L) {
   Instruction *C = Instructions.front();
 
   do {
-    C = cast<Instruction>(*C->use_begin());
+    C = cast<Instruction>(*C->user_begin());
     if (C->hasOneUse()) {
       if (!C->isBinaryOp())
         return;
@@ -424,17 +421,15 @@ void LoopReroll::SimpleLoopReduction::add(Loop *L) {
 
   if (Instructions.size() < 2 ||
       !C->isSameOperationAs(Instructions.back()) ||
-      C->use_begin() == C->use_end())
+      C->use_empty())
     return;
 
   // C is now the (potential) last instruction in the reduction chain.
-  for (Value::use_iterator UI = C->use_begin(), UIE = C->use_end();
-       UI != UIE; ++UI) {
+  for (User *U : C->users())
     // The only in-loop user can be the initial PHI.
-    if (L->contains(cast<Instruction>(*UI)))
-      if (cast<Instruction>(*UI ) != Instructions.front())
+    if (L->contains(cast<Instruction>(U)))
+      if (cast<Instruction>(U) != Instructions.front())
         return;
-  }
 
   Instructions.push_back(C);
   Valid = true;
@@ -484,12 +479,11 @@ void LoopReroll::collectInLoopUserSet(Loop *L,
       continue;
 
     if (!Final.count(I))
-      for (Value::use_iterator UI = I->use_begin(),
-           UIE = I->use_end(); UI != UIE; ++UI) {
-        Instruction *User = cast<Instruction>(*UI);
+      for (Use &U : I->uses()) {
+        Instruction *User = cast<Instruction>(U.getUser());
         if (PHINode *PN = dyn_cast<PHINode>(User)) {
           // Ignore "wrap-around" uses to PHIs of this loop's header.
-          if (PN->getIncomingBlock(UI) == L->getHeader())
+          if (PN->getIncomingBlock(U) == L->getHeader())
             continue;
         }
   
@@ -560,8 +554,8 @@ bool LoopReroll::findScaleFromMul(Instruction *RealIV, uint64_t &Scale,
   if (RealIV->getNumUses() != 2)
     return false;
   const SCEVAddRecExpr *RealIVSCEV = cast<SCEVAddRecExpr>(SE->getSCEV(RealIV));
-  Instruction *User1 = cast<Instruction>(*RealIV->use_begin()),
-              *User2 = cast<Instruction>(*std::next(RealIV->use_begin()));
+  Instruction *User1 = cast<Instruction>(*RealIV->user_begin()),
+              *User2 = cast<Instruction>(*std::next(RealIV->user_begin()));
   if (!SE->isSCEVable(User1->getType()) || !SE->isSCEVable(User2->getType()))
     return false;
   const SCEVAddRecExpr *User1SCEV =
@@ -617,26 +611,25 @@ bool LoopReroll::collectAllRoots(Loop *L, uint64_t Inc, uint64_t Scale,
                                  SmallVector<SmallInstructionVector, 32> &Roots,
                                  SmallInstructionSet &AllRoots,
                                  SmallInstructionVector &LoopIncs) {
-  for (Value::use_iterator UI = IV->use_begin(),
-       UIE = IV->use_end(); UI != UIE; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
-    if (!SE->isSCEVable(User->getType()))
+  for (User *U : IV->users()) {
+    Instruction *UI = cast<Instruction>(U);
+    if (!SE->isSCEVable(UI->getType()))
       continue;
-    if (User->getType() != IV->getType())
+    if (UI->getType() != IV->getType())
       continue;
-    if (!L->contains(User))
+    if (!L->contains(UI))
       continue;
-    if (hasUsesOutsideLoop(User, L))
+    if (hasUsesOutsideLoop(UI, L))
       continue;
 
     if (const SCEVConstant *Diff = dyn_cast<SCEVConstant>(SE->getMinusSCEV(
-          SE->getSCEV(User), SE->getSCEV(IV)))) {
+          SE->getSCEV(UI), SE->getSCEV(IV)))) {
       uint64_t Idx = Diff->getValue()->getValue().getZExtValue();
       if (Idx > 0 && Idx < Scale) {
-        Roots[Idx-1].push_back(User);
-        AllRoots.insert(User);
+        Roots[Idx-1].push_back(UI);
+        AllRoots.insert(UI);
       } else if (Idx == Scale && Inc > 1) {
-        LoopIncs.push_back(User);
+        LoopIncs.push_back(UI);
       }
     }
   }
@@ -720,10 +713,8 @@ void LoopReroll::ReductionTracker::replaceSelected() {
 
     // Replace users with the new end-of-chain value.
     SmallInstructionVector Users;
-    for (Value::use_iterator UI =
-           PossibleReds[i].getReducedValue()->use_begin(),
-         UIE = PossibleReds[i].getReducedValue()->use_end(); UI != UIE; ++UI)
-      Users.push_back(cast<Instruction>(*UI));
+    for (User *U : PossibleReds[i].getReducedValue()->users())
+      Users.push_back(cast<Instruction>(U));
 
     for (SmallInstructionVector::iterator J = Users.begin(),
          JE = Users.end(); J != JE; ++J)

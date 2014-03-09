@@ -134,7 +134,7 @@ static void RewriteUsesOfClonedInstructions(BasicBlock *OrigHeader,
     for (Value::use_iterator UI = OrigHeaderVal->use_begin(),
          UE = OrigHeaderVal->use_end(); UI != UE; ) {
       // Grab the use before incrementing the iterator.
-      Use &U = UI.getUse();
+      Use &U = *UI;
 
       // Increment the iterator before removing the use from the list.
       ++UI;

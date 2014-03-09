@@ -607,10 +607,10 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
         }
         NewF->getBasicBlockList().splice(NewF->begin(), F.getBasicBlockList());
 
-        for (Function::use_iterator ui = F.use_begin(), ue = F.use_end();
-             ui != ue;) {
-          BlockAddress *BA = dyn_cast<BlockAddress>(ui.getUse().getUser());
-          ++ui;
+        for (Function::user_iterator UI = F.user_begin(), UE = F.user_end();
+             UI != UE;) {
+          BlockAddress *BA = dyn_cast<BlockAddress>(*UI);
+          ++UI;
           if (BA) {
             BA->replaceAllUsesWith(
                 BlockAddress::get(NewF, BA->getBasicBlock()));
@@ -1105,12 +1105,11 @@ void DFSanVisitor::visitInsertValueInst(InsertValueInst &I) {
 
 void DFSanVisitor::visitAllocaInst(AllocaInst &I) {
   bool AllLoadsStores = true;
-  for (Instruction::use_iterator i = I.use_begin(), e = I.use_end(); i != e;
-       ++i) {
-    if (isa<LoadInst>(*i))
+  for (User *U : I.users()) {
+    if (isa<LoadInst>(U))
       continue;
 
-    if (StoreInst *SI = dyn_cast<StoreInst>(*i)) {
+    if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
       if (SI->getPointerOperand() == &I)
         continue;
     }

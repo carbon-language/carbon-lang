@@ -3033,9 +3033,8 @@ static void
 PushDefUseChildren(Instruction *I,
                    SmallVectorImpl<Instruction *> &Worklist) {
   // Push the def-use children onto the Worklist stack.
-  for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-       UI != UE; ++UI)
-    Worklist.push_back(cast<Instruction>(*UI));
+  for (User *U : I->users())
+    Worklist.push_back(cast<Instruction>(U));
 }
 
 /// ForgetSymbolicValue - This looks up computed SCEV values for all
@@ -7334,11 +7333,8 @@ void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *V) {
   // so that future queries will recompute the expressions using the new
   // value.
   Value *Old = getValPtr();
-  SmallVector<User *, 16> Worklist;
+  SmallVector<User *, 16> Worklist(Old->user_begin(), Old->user_end());
   SmallPtrSet<User *, 8> Visited;
-  for (Value::use_iterator UI = Old->use_begin(), UE = Old->use_end();
-       UI != UE; ++UI)
-    Worklist.push_back(*UI);
   while (!Worklist.empty()) {
     User *U = Worklist.pop_back_val();
     // Deleting the Old value will cause this to dangle. Postpone
@@ -7350,9 +7346,7 @@ void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *V) {
     if (PHINode *PN = dyn_cast<PHINode>(U))
       SE->ConstantEvolutionLoopExitValue.erase(PN);
     SE->ValueExprMap.erase(U);
-    for (Value::use_iterator UI = U->use_begin(), UE = U->use_end();
-         UI != UE; ++UI)
-      Worklist.push_back(*UI);
+    Worklist.insert(Worklist.end(), U->user_begin(), U->user_end());
   }
   // Delete the Old value.
   if (PHINode *PN = dyn_cast<PHINode>(Old))

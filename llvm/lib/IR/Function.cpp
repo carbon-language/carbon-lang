@@ -711,15 +711,15 @@ Function *Intrinsic::getDeclaration(Module *M, ID id, ArrayRef<Type*> Tys) {
 /// hasAddressTaken - returns true if there are any uses of this function
 /// other than direct calls or invokes to it.
 bool Function::hasAddressTaken(const User* *PutOffender) const {
-  for (Value::const_use_iterator I = use_begin(), E = use_end(); I != E; ++I) {
-    const User *U = *I;
-    if (isa<BlockAddress>(U))
+  for (const Use &U : uses()) {
+    const User *FU = U.getUser();
+    if (isa<BlockAddress>(FU))
       continue;
-    if (!isa<CallInst>(U) && !isa<InvokeInst>(U))
-      return PutOffender ? (*PutOffender = U, true) : true;
-    ImmutableCallSite CS(cast<Instruction>(U));
-    if (!CS.isCallee(I))
-      return PutOffender ? (*PutOffender = U, true) : true;
+    if (!isa<CallInst>(FU) && !isa<InvokeInst>(FU))
+      return PutOffender ? (*PutOffender = FU, true) : true;
+    ImmutableCallSite CS(cast<Instruction>(FU));
+    if (!CS.isCallee(&U))
+      return PutOffender ? (*PutOffender = FU, true) : true;
   }
   return false;
 }
@@ -731,8 +731,8 @@ bool Function::isDefTriviallyDead() const {
     return false;
 
   // Check if the function is used by anything other than a blockaddress.
-  for (Value::const_use_iterator I = use_begin(), E = use_end(); I != E; ++I)
-    if (!isa<BlockAddress>(*I))
+  for (const User *U : users())
+    if (!isa<BlockAddress>(U))
       return false;
 
   return true;

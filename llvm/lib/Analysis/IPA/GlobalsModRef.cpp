@@ -252,33 +252,33 @@ bool GlobalsModRef::AnalyzeUsesOfPointer(Value *V,
                                          GlobalValue *OkayStoreDest) {
   if (!V->getType()->isPointerTy()) return true;
 
-  for (Value::use_iterator UI = V->use_begin(), E=V->use_end(); UI != E; ++UI) {
-    User *U = *UI;
-    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
+  for (Use &U : V->uses()) {
+    User *I = U.getUser();
+    if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
       Readers.push_back(LI->getParent()->getParent());
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
       if (V == SI->getOperand(1)) {
         Writers.push_back(SI->getParent()->getParent());
       } else if (SI->getOperand(1) != OkayStoreDest) {
         return true;  // Storing the pointer
       }
-    } else if (Operator::getOpcode(U) == Instruction::GetElementPtr) {
-      if (AnalyzeUsesOfPointer(U, Readers, Writers))
+    } else if (Operator::getOpcode(I) == Instruction::GetElementPtr) {
+      if (AnalyzeUsesOfPointer(I, Readers, Writers))
         return true;
-    } else if (Operator::getOpcode(U) == Instruction::BitCast) {
-      if (AnalyzeUsesOfPointer(U, Readers, Writers, OkayStoreDest))
+    } else if (Operator::getOpcode(I) == Instruction::BitCast) {
+      if (AnalyzeUsesOfPointer(I, Readers, Writers, OkayStoreDest))
         return true;
-    } else if (CallSite CS = U) {
+    } else if (CallSite CS = I) {
       // Make sure that this is just the function being called, not that it is
       // passing into the function.
-      if (!CS.isCallee(UI)) {
+      if (!CS.isCallee(&U)) {
         // Detect calls to free.
-        if (isFreeCall(U, TLI))
+        if (isFreeCall(I, TLI))
           Writers.push_back(CS->getParent()->getParent());
         else
           return true; // Argument of an unknown call.
       }
-    } else if (ICmpInst *ICI = dyn_cast<ICmpInst>(U)) {
+    } else if (ICmpInst *ICI = dyn_cast<ICmpInst>(I)) {
       if (!isa<ConstantPointerNull>(ICI->getOperand(1)))
         return true;  // Allow comparison against null.
     } else {
@@ -303,8 +303,7 @@ bool GlobalsModRef::AnalyzeIndirectGlobalMemory(GlobalValue *GV) {
 
   // Walk the user list of the global.  If we find anything other than a direct
   // load or store, bail out.
-  for (Value::use_iterator I = GV->use_begin(), E = GV->use_end(); I != E; ++I){
-    User *U = *I;
+  for (User *U : GV->users()) {
     if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       // The pointer loaded from the global can only be used in simple ways:
       // we allow addressing of it and loading storing to it.  We do *not* allow

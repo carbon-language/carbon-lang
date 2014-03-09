@@ -61,9 +61,7 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
   // assignments to subsections of the memory unit.
 
   // Only allow direct and non-volatile loads and stores...
-  for (Value::const_use_iterator UI = AI->use_begin(), UE = AI->use_end();
-       UI != UE; ++UI) { // Loop over all of the uses of the alloca
-    const User *U = *UI;
+  for (const User *U : AI->users()) {
     if (const LoadInst *LI = dyn_cast<LoadInst>(U)) {
       // Note that atomic loads can be transformed; atomic semantics do
       // not have any meaning for a local alloca.
@@ -131,8 +129,7 @@ struct AllocaInfo {
     // As we scan the uses of the alloca instruction, keep track of stores,
     // and decide whether all of the loads and stores to the alloca are within
     // the same basic block.
-    for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
-         UI != E;) {
+    for (auto UI = AI->user_begin(), E = AI->user_end(); UI != E;) {
       Instruction *User = cast<Instruction>(*UI++);
 
       if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
@@ -317,8 +314,7 @@ static void removeLifetimeIntrinsicUsers(AllocaInst *AI) {
   // Knowing that this alloca is promotable, we know that it's safe to kill all
   // instructions except for load and store.
 
-  for (Value::use_iterator UI = AI->use_begin(), UE = AI->use_end();
-       UI != UE;) {
+  for (auto UI = AI->user_begin(), UE = AI->user_end(); UI != UE;) {
     Instruction *I = cast<Instruction>(*UI);
     ++UI;
     if (isa<LoadInst>(I) || isa<StoreInst>(I))
@@ -328,10 +324,9 @@ static void removeLifetimeIntrinsicUsers(AllocaInst *AI) {
       // The only users of this bitcast/GEP instruction are lifetime intrinsics.
       // Follow the use/def chain to erase them now instead of leaving it for
       // dead code elimination later.
-      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-           UI != UE;) {
-        Instruction *Inst = cast<Instruction>(*UI);
-        ++UI;
+      for (auto UUI = I->user_begin(), UUE = I->user_end(); UUI != UUE;) {
+        Instruction *Inst = cast<Instruction>(*UUI);
+        ++UUI;
         Inst->eraseFromParent();
       }
     }
@@ -359,7 +354,7 @@ static bool rewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info,
   // Clear out UsingBlocks.  We will reconstruct it here if needed.
   Info.UsingBlocks.clear();
 
-  for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end(); UI != E;) {
+  for (auto UI = AI->user_begin(), E = AI->user_end(); UI != E;) {
     Instruction *UserInst = cast<Instruction>(*UI++);
     if (!isa<LoadInst>(UserInst)) {
       assert(UserInst == OnlyStore && "Should only have load/stores");
@@ -456,9 +451,8 @@ static void promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
   typedef SmallVector<std::pair<unsigned, StoreInst *>, 64> StoresByIndexTy;
   StoresByIndexTy StoresByIndex;
 
-  for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end(); UI != E;
-       ++UI)
-    if (StoreInst *SI = dyn_cast<StoreInst>(*UI))
+  for (User *U : AI->users())
+    if (StoreInst *SI = dyn_cast<StoreInst>(U))
       StoresByIndex.push_back(std::make_pair(LBI.getInstructionIndex(SI), SI));
 
   // Sort the stores by their index, making it efficient to do a lookup with a
@@ -467,7 +461,7 @@ static void promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
 
   // Walk all of the loads from this alloca, replacing them with the nearest
   // store above them, if any.
-  for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end(); UI != E;) {
+  for (auto UI = AI->user_begin(), E = AI->user_end(); UI != E;) {
     LoadInst *LI = dyn_cast<LoadInst>(*UI++);
     if (!LI)
       continue;
@@ -495,7 +489,7 @@ static void promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
 
   // Remove the (now dead) stores and alloca.
   while (!AI->use_empty()) {
-    StoreInst *SI = cast<StoreInst>(AI->use_back());
+    StoreInst *SI = cast<StoreInst>(AI->user_back());
     // Record debuginfo for the store before removing it.
     if (DbgDeclareInst *DDI = Info.DbgDeclare) {
       DIBuilder DIB(*AI->getParent()->getParent()->getParent());

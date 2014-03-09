@@ -132,11 +132,10 @@ ModulePass *llvm::createStripDeadDebugInfoPass() {
 
 /// OnlyUsedBy - Return true if V is only used by Usr.
 static bool OnlyUsedBy(Value *V, Value *Usr) {
-  for(Value::use_iterator I = V->use_begin(), E = V->use_end(); I != E; ++I) {
-    User *U = *I;
+  for (User *U : V->users())
     if (U != Usr)
       return false;
-  }
+
   return true;
 }
 
@@ -250,7 +249,7 @@ bool StripDebugDeclare::runOnModule(Module &M) {
 
   if (Declare) {
     while (!Declare->use_empty()) {
-      CallInst *CI = cast<CallInst>(Declare->use_back());
+      CallInst *CI = cast<CallInst>(Declare->user_back());
       Value *Arg1 = CI->getArgOperand(0);
       Value *Arg2 = CI->getArgOperand(1);
       assert(CI->use_empty() && "llvm.dbg intrinsic should have void result");

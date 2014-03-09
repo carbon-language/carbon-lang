@@ -421,14 +421,12 @@ determinePointerReadAttrs(Argument *A,
   bool IsRead = false;
   // We don't need to track IsWritten. If A is written to, return immediately.
 
-  for (Value::use_iterator UI = A->use_begin(), UE = A->use_end();
-       UI != UE; ++UI) {
+  for (Use &U : A->uses()) {
     if (Count++ >= 20)
       return Attribute::None;
 
-    Use *U = &UI.getUse();
-    Visited.insert(U);
-    Worklist.push_back(U);
+    Visited.insert(&U);
+    Worklist.push_back(&U);
   }
 
   while (!Worklist.empty()) {
@@ -443,12 +441,9 @@ determinePointerReadAttrs(Argument *A,
     case Instruction::Select:
     case Instruction::AddrSpaceCast:
       // The original value is not read/written via this if the new value isn't.
-      for (Instruction::use_iterator UI = I->use_begin(), UE = I->use_end();
-           UI != UE; ++UI) {
-        Use *U = &UI.getUse();
-        if (Visited.insert(U))
-          Worklist.push_back(U);
-      }
+      for (Use &UU : I->uses())
+        if (Visited.insert(&UU))
+          Worklist.push_back(&UU);
       break;
 
     case Instruction::Call:

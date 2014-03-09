@@ -440,17 +440,17 @@ bool ObjCARCContract::runOnFunction(Function &F) {
 
     // Don't use GetObjCArg because we don't want to look through bitcasts
     // and such; to do the replacement, the argument must have type i8*.
-    const Value *Arg = cast<CallInst>(Inst)->getArgOperand(0);
+    Value *Arg = cast<CallInst>(Inst)->getArgOperand(0);
     for (;;) {
       // If we're compiling bugpointed code, don't get in trouble.
       if (!isa<Instruction>(Arg) && !isa<Argument>(Arg))
         break;
       // Look through the uses of the pointer.
-      for (Value::const_use_iterator UI = Arg->use_begin(), UE = Arg->use_end();
+      for (Value::use_iterator UI = Arg->use_begin(), UE = Arg->use_end();
            UI != UE; ) {
-        Use &U = UI.getUse();
-        unsigned OperandNo = UI.getOperandNo();
-        ++UI; // Increment UI now, because we may unlink its element.
+        // Increment UI now, because we may unlink its element.
+        Use &U = *UI++;
+        unsigned OperandNo = U.getOperandNo();
 
         // If the call's return value dominates a use of the call's argument
         // value, rewrite the use to use the return value. We check for
@@ -476,8 +476,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
               if (PHI->getIncomingBlock(i) == BB) {
                 // Keep the UI iterator valid.
                 if (&PHI->getOperandUse(
-                      PHINode::getOperandNumForIncomingValue(i)) ==
-                    &UI.getUse())
+                        PHINode::getOperandNumForIncomingValue(i)) == &U)
                   ++UI;
                 PHI->setIncomingValue(i, Replacement);
               }

@@ -1435,16 +1435,15 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
     // Scan all uses of this instruction to see if it is used outside of its
     // block, and if so, record them in UsesToRename.
-    for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
-         ++UI) {
-      Instruction *User = cast<Instruction>(*UI);
+    for (Use &U : I->uses()) {
+      Instruction *User = cast<Instruction>(U.getUser());
       if (PHINode *UserPN = dyn_cast<PHINode>(User)) {
-        if (UserPN->getIncomingBlock(UI) == BB)
+        if (UserPN->getIncomingBlock(U) == BB)
           continue;
       } else if (User->getParent() == BB)
         continue;
 
-      UsesToRename.push_back(&UI.getUse());
+      UsesToRename.push_back(&U);
     }
 
     // If there are no uses outside the block, we're done with this instruction.
@@ -1589,16 +1588,15 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
   for (BasicBlock::iterator I = BB->begin(); I != BB->end(); ++I) {
     // Scan all uses of this instruction to see if it is used outside of its
     // block, and if so, record them in UsesToRename.
-    for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
-         ++UI) {
-      Instruction *User = cast<Instruction>(*UI);
+    for (Use &U : I->uses()) {
+      Instruction *User = cast<Instruction>(U.getUser());
       if (PHINode *UserPN = dyn_cast<PHINode>(User)) {
-        if (UserPN->getIncomingBlock(UI) == BB)
+        if (UserPN->getIncomingBlock(U) == BB)
           continue;
       } else if (User->getParent() == BB)
         continue;
 
-      UsesToRename.push_back(&UI.getUse());
+      UsesToRename.push_back(&U);
     }
 
     // If there are no uses outside the block, we're done with this instruction.

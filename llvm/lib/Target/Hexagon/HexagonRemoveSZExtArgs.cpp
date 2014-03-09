@@ -60,18 +60,17 @@ bool HexagonRemoveExtendArgs::runOnFunction(Function &F) {
     if (F.getAttributes().hasAttribute(Idx, Attribute::SExt)) {
       Argument* Arg = AI;
       if (!isa<PointerType>(Arg->getType())) {
-        for (Instruction::use_iterator UI = Arg->use_begin();
-             UI != Arg->use_end();) {
+        for (auto UI = Arg->user_begin(); UI != Arg->user_end();) {
           if (isa<SExtInst>(*UI)) {
-            Instruction* Use = cast<Instruction>(*UI);
-            SExtInst* SI = new SExtInst(Arg, Use->getType());
+            Instruction* I = cast<Instruction>(*UI);
+            SExtInst* SI = new SExtInst(Arg, I->getType());
             assert (EVT::getEVT(SI->getType()) ==
-                    (EVT::getEVT(Use->getType())));
+                    (EVT::getEVT(I->getType())));
             ++UI;
-            Use->replaceAllUsesWith(SI);
+            I->replaceAllUsesWith(SI);
             Instruction* First = F.getEntryBlock().begin();
             SI->insertBefore(First);
-            Use->eraseFromParent();
+            I->eraseFromParent();
           } else {
             ++UI;
           }

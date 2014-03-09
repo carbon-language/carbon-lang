@@ -15,6 +15,7 @@
 #define LLVM_IR_VALUE_H
 
 #include "llvm-c/Core.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/Use.h"
 #include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/Casting.h"
@@ -75,13 +76,54 @@ protected:
   unsigned char SubclassOptionalData : 7;
 
 private:
+  template <typename UseT> // UseT == 'Use' or 'const Use'
+  class use_iterator_impl
+      : public std::iterator<std::forward_iterator_tag, UseT *, ptrdiff_t> {
+    typedef std::iterator<std::forward_iterator_tag, UseT *, ptrdiff_t> super;
+
+    UseT *U;
+    explicit use_iterator_impl(UseT *u) : U(u) {}
+    friend class Value;
+
+  public:
+    typedef typename super::reference reference;
+    typedef typename super::pointer pointer;
+
+    use_iterator_impl() : U() {}
+
+    bool operator==(const use_iterator_impl &x) const { return U == x.U; }
+    bool operator!=(const use_iterator_impl &x) const { return !operator==(x); }
+
+    use_iterator_impl &operator++() { // Preincrement
+      assert(U && "Cannot increment end iterator!");
+      U = U->getNext();
+      return *this;
+    }
+    use_iterator_impl operator++(int) { // Postincrement
+      auto tmp = *this;
+      ++*this;
+      return tmp;
+    }
+
+    UseT &operator*() const {
+      assert(U && "Cannot dereference end iterator!");
+      return *U;
+    }
+
+    UseT *operator->() const { return &operator*(); }
+
+    operator use_iterator_impl<const UseT>() const {
+      return use_iterator_impl<const UseT>(U);
+    }
+  };
+
   template <typename UserTy> // UserTy == 'User' or 'const User'
   class user_iterator_impl
       : public std::iterator<std::forward_iterator_tag, UserTy *, ptrdiff_t> {
     typedef std::iterator<std::forward_iterator_tag, UserTy *, ptrdiff_t> super;
 
-    Use *U;
-    explicit user_iterator_impl(Use *u) : U(u) {}
+    use_iterator_impl<Use> UI;
+    explicit user_iterator_impl(Use *U) : UI(U) {}
     friend class Value;
 
   public:
@@ -90,16 +132,14 @@ private:
 
     user_iterator_impl() {}
 
-    bool operator==(const user_iterator_impl &x) const { return U == x.U; }
+    bool operator==(const user_iterator_impl &x) const { return UI == x.UI; }
     bool operator!=(const user_iterator_impl &x) const { return !operator==(x); }
 
-    /// \brief Returns true if this iterator is equal to use_end() on the value.
-    bool atEnd() const { return U == 0; }
+    /// \brief Returns true if this iterator is equal to user_end() on the value.
+    bool atEnd() const { return *this == user_iterator_impl(); }
 
-    // Iterator traversal: forward iteration only
     user_iterator_impl &operator++() { // Preincrement
-      assert(U && "Cannot increment end iterator!");
-      U = U->getNext();
+      ++UI;
       return *this;
     }
     user_iterator_impl operator++(int) { // Postincrement
@@ -110,21 +150,20 @@ private:
 
     // Retrieve a pointer to the current User.
     UserTy *operator*() const {
-      assert(U && "Cannot dereference end iterator!");
-      return U->getUser();
+      return UI->getUser();
     }
 
     UserTy *operator->() const { return operator*(); }
 
     operator user_iterator_impl<const UserTy>() const {
-      return user_iterator_impl<const UserTy>(U);
+      return user_iterator_impl<const UserTy>(*UI);
     }
 
-    Use &getUse() const { return *U; }
+    Use &getUse() const { return *UI; }
 
     /// \brief Return the operand # of this use in its User.
     /// FIXME: Replace all callers with a direct call to Use::getOperandNo.
-    unsigned getOperandNo() const { return U->getOperandNo(); }
+    unsigned getOperandNo() const { return UI->getOperandNo(); }
   };
 
   /// SubclassData - This member is defined by this class, but is not used for
@@ -205,14 +244,33 @@ public:
   //
   bool               use_empty() const { return UseList == 0; }
 
-  typedef user_iterator_impl<User>       use_iterator;
-  typedef user_iterator_impl<const User> const_use_iterator;
+  typedef use_iterator_impl<Use>       use_iterator;
+  typedef use_iterator_impl<const Use> const_use_iterator;
   use_iterator       use_begin()       { return use_iterator(UseList); }
   const_use_iterator use_begin() const { return const_use_iterator(UseList); }
-  use_iterator       use_end()         { return use_iterator(0);   }
-  const_use_iterator use_end()   const { return const_use_iterator(0);   }
-  User               *use_back()        { return *use_begin(); }
-  const User         *use_back()  const { return *use_begin(); }
+  use_iterator       use_end()         { return use_iterator();   }
+  const_use_iterator use_end()   const { return const_use_iterator();   }
+  iterator_range<use_iterator> uses() {
+    return iterator_range<use_iterator>(use_begin(), use_end());
+  }
+  iterator_range<const_use_iterator> uses() const {
+    return iterator_range<const_use_iterator>(use_begin(), use_end());
+  }
+
+  typedef user_iterator_impl<User>       user_iterator;
+  typedef user_iterator_impl<const User> const_user_iterator;
+  user_iterator       user_begin()       { return user_iterator(UseList); }
+  const_user_iterator user_begin() const { return const_user_iterator(UseList); }
+  user_iterator       user_end()         { return user_iterator();   }
+  const_user_iterator user_end()   const { return const_user_iterator();   }
+  User               *user_back()        { return *user_begin(); }
+  const User         *user_back()  const { return *user_begin(); }
+  iterator_range<user_iterator> users() {
+    return iterator_range<user_iterator>(user_begin(), user_end());
+  }
+  iterator_range<const_user_iterator> users() const {
+    return iterator_range<const_user_iterator>(user_begin(), user_end());
+  }
 
   /// hasOneUse - Return true if there is exactly one user of this value.  This
   /// is specialized because it is a common request and does not require

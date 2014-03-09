@@ -336,16 +336,15 @@ bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
   // don't mess around with them.
   BasicBlock::const_iterator BBI = BB->begin();
   while (const PHINode *PN = dyn_cast<PHINode>(BBI++)) {
-    for (Value::const_use_iterator UI = PN->use_begin(), E = PN->use_end();
-         UI != E; ++UI) {
-      const Instruction *User = cast<Instruction>(*UI);
-      if (User->getParent() != DestBB || !isa<PHINode>(User))
+    for (const User *U : PN->users()) {
+      const Instruction *UI = cast<Instruction>(U);
+      if (UI->getParent() != DestBB || !isa<PHINode>(UI))
         return false;
       // If User is inside DestBB block and it is a PHINode then check
       // incoming value. If incoming value is not from BB then this is
       // a complex condition (e.g. preheaders) we want to avoid here.
-      if (User->getParent() == DestBB) {
-        if (const PHINode *UPN = dyn_cast<PHINode>(User))
+      if (UI->getParent() == DestBB) {
+        if (const PHINode *UPN = dyn_cast<PHINode>(UI))
           for (unsigned I = 0, E = UPN->getNumIncomingValues(); I != E; ++I) {
             Instruction *Insn = dyn_cast<Instruction>(UPN->getIncomingValue(I));
             if (Insn && Insn->getParent() == BB &&
@@ -474,7 +473,7 @@ static bool SinkCast(CastInst *CI) {
   DenseMap<BasicBlock*, CastInst*> InsertedCasts;
 
   bool MadeChange = false;
-  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end();
+  for (Value::user_iterator UI = CI->user_begin(), E = CI->user_end();
        UI != E; ) {
     Use &TheUse = UI.getUse();
     Instruction *User = cast<Instruction>(*UI);
@@ -483,7 +482,7 @@ static bool SinkCast(CastInst *CI) {
     // appropriate predecessor block.
     BasicBlock *UserBB = User->getParent();
     if (PHINode *PN = dyn_cast<PHINode>(User)) {
-      UserBB = PN->getIncomingBlock(UI);
+      UserBB = PN->getIncomingBlock(TheUse);
     }
 
     // Preincrement use iterator so we don't invalidate it.
@@ -567,7 +566,7 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
   DenseMap<BasicBlock*, CmpInst*> InsertedCmps;
 
   bool MadeChange = false;
-  for (Value::use_iterator UI = CI->use_begin(), E = CI->use_end();
+  for (Value::user_iterator UI = CI->user_begin(), E = CI->user_end();
        UI != E; ) {
     Use &TheUse = UI.getUse();
     Instruction *User = cast<Instruction>(*UI);
@@ -1143,11 +1142,9 @@ class TypePromotionTransaction {
       DEBUG(dbgs() << "Do: UsersReplacer: " << *Inst << " with " << *New
                    << "\n");
       // Record the original uses.
-      for (Value::use_iterator UseIt = Inst->use_begin(),
-                               EndIt = Inst->use_end();
-           UseIt != EndIt; ++UseIt) {
-        Instruction *Use = cast<Instruction>(*UseIt);
-        OriginalUses.push_back(InstructionAndIdx(Use, UseIt.getOperandNo()));
+      for (Use &U : Inst->uses()) {
+        Instruction *UserI = cast<Instruction>(U.getUser());
+        OriginalUses.push_back(InstructionAndIdx(UserI, U.getOperandNo()));
       }
       // Now, we can replace the uses.
       Inst->replaceAllUsesWith(New);
@@ -2115,23 +2112,22 @@ static bool FindAllMemoryUses(Instruction *I,
     return true;
 
   // Loop over all the uses, recursively processing them.
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-       UI != E; ++UI) {
-    User *U = *UI;
+  for (Use &U : I->uses()) {
+    Instruction *UserI = cast<Instruction>(U.getUser());
 
-    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
-      MemoryUses.push_back(std::make_pair(LI, UI.getOperandNo()));
+    if (LoadInst *LI = dyn_cast<LoadInst>(UserI)) {
+      MemoryUses.push_back(std::make_pair(LI, U.getOperandNo()));
       continue;
     }
 
-    if (StoreInst *SI = dyn_cast<StoreInst>(U)) {
-      unsigned opNo = UI.getOperandNo();
+    if (StoreInst *SI = dyn_cast<StoreInst>(UserI)) {
+      unsigned opNo = U.getOperandNo();
       if (opNo == 0) return true; // Storing addr, not into addr.
       MemoryUses.push_back(std::make_pair(SI, opNo));
       continue;
     }
 
-    if (CallInst *CI = dyn_cast<CallInst>(U)) {
+    if (CallInst *CI = dyn_cast<CallInst>(UserI)) {
       InlineAsm *IA = dyn_cast<InlineAsm>(CI->getCalledValue());
       if (!IA) return true;
 
@@ -2141,8 +2137,7 @@ static bool FindAllMemoryUses(Instruction *I,
       continue;
     }
 
-    if (FindAllMemoryUses(cast<Instruction>(U), MemoryUses, ConsideredInsts,
-                          TLI))
+    if (FindAllMemoryUses(UserI, MemoryUses, ConsideredInsts, TLI))
       return true;
   }
 
@@ -2603,12 +2598,11 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
     return false;
 
   bool DefIsLiveOut = false;
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-       UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
+  for (User *U : I->users()) {
+    Instruction *UI = cast<Instruction>(U);
 
     // Figure out which BB this ext is used in.
-    BasicBlock *UserBB = User->getParent();
+    BasicBlock *UserBB = UI->getParent();
     if (UserBB == DefBB) continue;
     DefIsLiveOut = true;
     break;
@@ -2617,14 +2611,13 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
     return false;
 
   // Make sure none of the uses are PHI nodes.
-  for (Value::use_iterator UI = Src->use_begin(), E = Src->use_end();
-       UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
-    BasicBlock *UserBB = User->getParent();
+  for (User *U : Src->users()) {
+    Instruction *UI = cast<Instruction>(U);
+    BasicBlock *UserBB = UI->getParent();
     if (UserBB == DefBB) continue;
     // Be conservative. We don't want this xform to end up introducing
     // reloads just before load / store instructions.
-    if (isa<PHINode>(User) || isa<LoadInst>(User) || isa<StoreInst>(User))
+    if (isa<PHINode>(UI) || isa<LoadInst>(UI) || isa<StoreInst>(UI))
       return false;
   }
 
@@ -2632,10 +2625,8 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   DenseMap<BasicBlock*, Instruction*> InsertedTruncs;
 
   bool MadeChange = false;
-  for (Value::use_iterator UI = Src->use_begin(), E = Src->use_end();
-       UI != E; ++UI) {
-    Use &TheUse = UI.getUse();
-    Instruction *User = cast<Instruction>(*UI);
+  for (Use &U : Src->uses()) {
+    Instruction *User = cast<Instruction>(U.getUser());
 
     // Figure out which BB this ext is used in.
     BasicBlock *UserBB = User->getParent();
@@ -2651,7 +2642,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
     }
 
     // Replace a use of the {s|z}ext source with a use of the result.
-    TheUse = InsertedTrunc;
+    U = InsertedTrunc;
     ++NumExtUses;
     MadeChange = true;
   }
@@ -2779,16 +2770,15 @@ bool CodeGenPrepare::OptimizeShuffleVectorInst(ShuffleVectorInst *SVI) {
   DenseMap<BasicBlock*, Instruction*> InsertedShuffles;
 
   bool MadeChange = false;
-  for (Value::use_iterator UI = SVI->use_begin(), E = SVI->use_end();
-       UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
+  for (User *U : SVI->users()) {
+    Instruction *UI = cast<Instruction>(U);
 
     // Figure out which BB this ext is used in.
-    BasicBlock *UserBB = User->getParent();
+    BasicBlock *UserBB = UI->getParent();
     if (UserBB == DefBB) continue;
 
     // For now only apply this when the splat is used by a shift instruction.
-    if (!User->isShift()) continue;
+    if (!UI->isShift()) continue;
 
     // Everything checks out, sink the shuffle if the user's block doesn't
     // already have a copy.
@@ -2801,7 +2791,7 @@ bool CodeGenPrepare::OptimizeShuffleVectorInst(ShuffleVectorInst *SVI) {
                                               SVI->getOperand(2), "", InsertPt);
     }
 
-    User->replaceUsesOfWith(SVI, InsertedShuffle);
+    UI->replaceUsesOfWith(SVI, InsertedShuffle);
     MadeChange = true;
   }
 

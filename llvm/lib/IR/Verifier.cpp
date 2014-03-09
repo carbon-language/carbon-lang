@@ -1974,9 +1974,8 @@ void Verifier::visitInstruction(Instruction &I) {
   Assert1(BB, "Instruction not embedded in basic block!", &I);
 
   if (!isa<PHINode>(I)) {   // Check that non-phi nodes are not self referential
-    for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
-         UI != UE; ++UI)
-      Assert1(*UI != (User*)&I || !DT.isReachableFromEntry(BB),
+    for (User *U : I.users())
+      Assert1(U != (User*)&I || !DT.isReachableFromEntry(BB),
               "Only PHI nodes may reference their own value!", &I);
   }
 
@@ -1999,13 +1998,12 @@ void Verifier::visitInstruction(Instruction &I) {
   // Check that all uses of the instruction, if they are instructions
   // themselves, actually have parent basic blocks.  If the use is not an
   // instruction, it is an error!
-  for (User::use_iterator UI = I.use_begin(), UE = I.use_end();
-       UI != UE; ++UI) {
-    if (Instruction *Used = dyn_cast<Instruction>(*UI))
+  for (Use &U : I.uses()) {
+    if (Instruction *Used = dyn_cast<Instruction>(U.getUser()))
       Assert2(Used->getParent() != 0, "Instruction referencing instruction not"
               " embedded in a basic block!", &I, Used);
     else {
-      CheckFailed("Use of instruction is not an instruction!", *UI);
+      CheckFailed("Use of instruction is not an instruction!", U);
       return;
     }
   }

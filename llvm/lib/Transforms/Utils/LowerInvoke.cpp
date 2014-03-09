@@ -325,8 +325,8 @@ splitLiveRangesLiveAcrossInvokes(SmallVectorImpl<InvokeInst*> &Invokes) {
       Instruction *Inst = II;
       if (Inst->use_empty()) continue;
       if (Inst->hasOneUse() &&
-          cast<Instruction>(Inst->use_back())->getParent() == BB &&
-          !isa<PHINode>(Inst->use_back())) continue;
+          cast<Instruction>(Inst->user_back())->getParent() == BB &&
+          !isa<PHINode>(Inst->user_back())) continue;
 
       // If this is an alloca in the entry block, it's not a real register
       // value.
@@ -336,11 +336,10 @@ splitLiveRangesLiveAcrossInvokes(SmallVectorImpl<InvokeInst*> &Invokes) {
 
       // Avoid iterator invalidation by copying users to a temporary vector.
       SmallVector<Instruction*,16> Users;
-      for (Value::use_iterator UI = Inst->use_begin(), E = Inst->use_end();
-           UI != E; ++UI) {
-        Instruction *User = cast<Instruction>(*UI);
-        if (User->getParent() != BB || isa<PHINode>(User))
-          Users.push_back(User);
+      for (User *U : Inst->users()) {
+        Instruction *UI = cast<Instruction>(U);
+        if (UI->getParent() != BB || isa<PHINode>(UI))
+          Users.push_back(UI);
       }
 
       // Scan all of the uses and see if the live range is live across an unwind

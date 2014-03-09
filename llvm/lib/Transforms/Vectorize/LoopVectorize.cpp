@@ -3344,12 +3344,11 @@ static bool hasOutsideLoopUser(const Loop *TheLoop, Instruction *Inst,
   // instructions must not have external users.
   if (!Reductions.count(Inst))
     //Check that all of the users of the loop are inside the BB.
-    for (Value::use_iterator I = Inst->use_begin(), E = Inst->use_end();
-         I != E; ++I) {
-      Instruction *U = cast<Instruction>(*I);
+    for (User *U : Inst->users()) {
+      Instruction *UI = cast<Instruction>(U);
       // This user may be a reduction exit value.
-      if (!TheLoop->contains(U)) {
-        DEBUG(dbgs() << "LV: Found an outside user for : " << *U << '\n');
+      if (!TheLoop->contains(UI)) {
+        DEBUG(dbgs() << "LV: Found an outside user for : " << *UI << '\n');
         return true;
       }
     }
@@ -3545,9 +3544,8 @@ static Value *stripGetElementPtr(Value *Ptr, ScalarEvolution *SE,
 ///\brief Look for a cast use of the passed value.
 static Value *getUniqueCastUse(Value *Ptr, Loop *Lp, Type *Ty) {
   Value *UniqueCast = 0;
-  for (Value::use_iterator UI = Ptr->use_begin(), UE = Ptr->use_end(); UI != UE;
-       ++UI) {
-    CastInst *CI = dyn_cast<CastInst>(*UI);
+  for (User *U : Ptr->users()) {
+    CastInst *CI = dyn_cast<CastInst>(U);
     if (CI && CI->getType() == Ty) {
       if (!UniqueCast)
         UniqueCast = CI;
@@ -4714,12 +4712,11 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
     // nodes once we get to them.
     SmallVector<Instruction *, 8> NonPHIs;
     SmallVector<Instruction *, 8> PHIs;
-    for (Value::use_iterator UI = Cur->use_begin(), E = Cur->use_end(); UI != E;
-         ++UI) {
-      Instruction *Usr = cast<Instruction>(*UI);
+    for (User *U : Cur->users()) {
+      Instruction *UI = cast<Instruction>(U);
 
       // Check if we found the exit user.
-      BasicBlock *Parent = Usr->getParent();
+      BasicBlock *Parent = UI->getParent();
       if (!TheLoop->contains(Parent)) {
         // Exit if you find multiple outside users or if the header phi node is
         // being used. In this case the user uses the value of the previous
@@ -4742,20 +4739,20 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
       // value must only be used once, except by phi nodes and min/max
       // reductions which are represented as a cmp followed by a select.
       ReductionInstDesc IgnoredVal(false, 0);
-      if (VisitedInsts.insert(Usr)) {
-        if (isa<PHINode>(Usr))
-          PHIs.push_back(Usr);
+      if (VisitedInsts.insert(UI)) {
+        if (isa<PHINode>(UI))
+          PHIs.push_back(UI);
         else
-          NonPHIs.push_back(Usr);
-      } else if (!isa<PHINode>(Usr) &&
-                 ((!isa<FCmpInst>(Usr) &&
-                   !isa<ICmpInst>(Usr) &&
-                   !isa<SelectInst>(Usr)) ||
-                  !isMinMaxSelectCmpPattern(Usr, IgnoredVal).IsReduction))
+          NonPHIs.push_back(UI);
+      } else if (!isa<PHINode>(UI) &&
+                 ((!isa<FCmpInst>(UI) &&
+                   !isa<ICmpInst>(UI) &&
+                   !isa<SelectInst>(UI)) ||
+                  !isMinMaxSelectCmpPattern(UI, IgnoredVal).IsReduction))
         return false;
 
       // Remember that we completed the cycle.
-      if (Usr == Phi)
+      if (UI == Phi)
         FoundStartPHI = true;
     }
     Worklist.append(PHIs.begin(), PHIs.end());
@@ -4801,7 +4798,7 @@ LoopVectorizationLegality::isMinMaxSelectCmpPattern(Instruction *I,
   // We must handle the select(cmp()) as a single instruction. Advance to the
   // select.
   if ((Cmp = dyn_cast<ICmpInst>(I)) || (Cmp = dyn_cast<FCmpInst>(I))) {
-    if (!Cmp->hasOneUse() || !(Select = dyn_cast<SelectInst>(*I->use_begin())))
+    if (!Cmp->hasOneUse() || !(Select = dyn_cast<SelectInst>(*I->user_begin())))
       return ReductionInstDesc(false, I);
     return ReductionInstDesc(Select, Prev.MinMaxKind);
   }

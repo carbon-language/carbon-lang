@@ -411,7 +411,7 @@ void llvm::UpgradeCallsToIntrinsic(Function* F) {
   if (UpgradeIntrinsicFunction(F, NewFn)) {
     if (NewFn != F) {
       // Replace all uses to the old function with the new one if necessary.
-      for (Value::use_iterator UI = F->use_begin(), UE = F->use_end();
+      for (Value::user_iterator UI = F->user_begin(), UE = F->user_end();
            UI != UE; ) {
         if (CallInst *CI = dyn_cast<CallInst>(*UI++))
           UpgradeIntrinsicCall(CI, NewFn);

@@ -119,7 +119,7 @@ bool Value::isUsedInBasicBlock(const BasicBlock *BB) const {
   // Scan both lists simultaneously until one is exhausted. This limits the
   // search to the shorter list.
   BasicBlock::const_iterator BI = BB->begin(), BE = BB->end();
-  const_use_iterator UI = use_begin(), UE = use_end();
+  const_user_iterator UI = user_begin(), UE = user_end();
   for (; BI != BE && UI != UE; ++BI, ++UI) {
     // Scan basic block: Check if this Value is used by the instruction at BI.
     if (std::find(BI->op_begin(), BI->op_end(), this) != BI->op_end())

@@ -74,7 +74,7 @@ BasicBlock::~BasicBlock() {
     Constant *Replacement =
       ConstantInt::get(llvm::Type::getInt32Ty(getContext()), 1);
     while (!use_empty()) {
-      BlockAddress *BA = cast<BlockAddress>(use_back());
+      BlockAddress *BA = cast<BlockAddress>(user_back());
       BA->replaceAllUsesWith(ConstantExpr::getIntToPtr(Replacement,
                                                        BA->getType()));
       BA->destroyConstant();

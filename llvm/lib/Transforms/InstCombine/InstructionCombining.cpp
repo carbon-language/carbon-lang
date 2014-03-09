@@ -641,10 +641,9 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   // uses into the PHI.
   if (!PN->hasOneUse()) {
     // Walk the use list for the instruction, comparing them to I.
-    for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end();
-         UI != E; ++UI) {
-      Instruction *User = cast<Instruction>(*UI);
-      if (User != &I && !I.isIdenticalTo(User))
+    for (User *U : PN->users()) {
+      Instruction *UI = cast<Instruction>(U);
+      if (UI != &I && !I.isIdenticalTo(UI))
         return 0;
     }
     // Otherwise, we can replace *all* users with the new PHI we form.
@@ -759,8 +758,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
     }
   }
 
-  for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end();
-       UI != E; ) {
+  for (auto UI = PN->user_begin(), E = PN->user_end(); UI != E;) {
     Instruction *User = cast<Instruction>(*UI++);
     if (User == &I) continue;
     ReplaceInstUsesWith(*User, NewPN);
@@ -1080,7 +1078,7 @@ Value *InstCombiner::Descale(Value *Val, APInt Scale, bool &NoSignedWrap) {
 
     // Move up one level in the expression.
     assert(Ancestor->hasOneUse() && "Drilled down when more than one use!");
-    Ancestor = Ancestor->use_back();
+    Ancestor = Ancestor->user_back();
   } while (1);
 }
 
@@ -1425,9 +1423,8 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakVH> &Users,
 
   do {
     Instruction *PI = Worklist.pop_back_val();
-    for (Value::use_iterator UI = PI->use_begin(), UE = PI->use_end(); UI != UE;
-         ++UI) {
-      Instruction *I = cast<Instruction>(*UI);
+    for (User *U : PI->users()) {
+      Instruction *I = cast<Instruction>(U);
       switch (I->getOpcode()) {
       default:
         // Give up the moment we see something we can't handle.
@@ -2404,12 +2401,12 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     // See if we can trivially sink this instruction to a successor basic block.
     if (I->hasOneUse()) {
       BasicBlock *BB = I->getParent();
-      Instruction *UserInst = cast<Instruction>(I->use_back());
+      Instruction *UserInst = cast<Instruction>(*I->user_begin());
       BasicBlock *UserParent;
 
       // Get the block the use occurs in.
       if (PHINode *PN = dyn_cast<PHINode>(UserInst))
-        UserParent = PN->getIncomingBlock(I->use_begin().getUse());
+        UserParent = PN->getIncomingBlock(*I->use_begin());
       else
         UserParent = UserInst->getParent();
 

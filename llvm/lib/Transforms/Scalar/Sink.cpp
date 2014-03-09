@@ -76,15 +76,14 @@ bool Sinking::AllUsesDominatedByBlock(Instruction *Inst,
   // This may leave a referencing dbg_value in the original block, before
   // the definition of the vreg.  Dwarf generator handles this although the
   // user might not get the right info at runtime.
-  for (Value::use_iterator I = Inst->use_begin(),
-       E = Inst->use_end(); I != E; ++I) {
+  for (Use &U : Inst->uses()) {
     // Determine the block of the use.
-    Instruction *UseInst = cast<Instruction>(*I);
+    Instruction *UseInst = cast<Instruction>(U.getUser());
     BasicBlock *UseBlock = UseInst->getParent();
     if (PHINode *PN = dyn_cast<PHINode>(UseInst)) {
       // PHI nodes use the operand in the predecessor block, not the block with
       // the PHI.
-      unsigned Num = PHINode::getIncomingValueNumForOperand(I.getOperandNo());
+      unsigned Num = PHINode::getIncomingValueNumForOperand(U.getOperandNo());
       UseBlock = PN->getIncomingBlock(Num);
     }
     // Check that it dominates.

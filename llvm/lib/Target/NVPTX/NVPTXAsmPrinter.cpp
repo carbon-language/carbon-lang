@@ -699,12 +699,11 @@ static bool usedInGlobalVarDef(const Constant *C) {
     return true;
   }
 
-  for (Value::const_use_iterator ui = C->use_begin(), ue = C->use_end();
-       ui != ue; ++ui) {
-    const Constant *C = dyn_cast<Constant>(*ui);
-    if (usedInGlobalVarDef(C))
-      return true;
-  }
+  for (const User *U : C->users())
+    if (const Constant *C = dyn_cast<Constant>(U))
+      if (usedInGlobalVarDef(C))
+        return true;
+
   return false;
 }
 
@@ -730,11 +729,10 @@ static bool usedInOneFunc(const User *U, Function const *&oneFunc) {
                           (md->getName().str() == "llvm.dbg.sp")))
       return true;
 
-  for (User::const_use_iterator ui = U->use_begin(), ue = U->use_end();
-       ui != ue; ++ui) {
-    if (usedInOneFunc(*ui, oneFunc) == false)
+  for (const User *UU : U->users())
+    if (usedInOneFunc(UU, oneFunc) == false)
       return false;
-  }
+
   return true;
 }
 
@@ -765,12 +763,11 @@ static bool canDemoteGlobalVar(const GlobalVariable *gv, Function const *&f) {
 
 static bool useFuncSeen(const Constant *C,
                         llvm::DenseMap<const Function *, bool> &seenMap) {
-  for (Value::const_use_iterator ui = C->use_begin(), ue = C->use_end();
-       ui != ue; ++ui) {
-    if (const Constant *cu = dyn_cast<Constant>(*ui)) {
+  for (const User *U : C->users()) {
+    if (const Constant *cu = dyn_cast<Constant>(U)) {
       if (useFuncSeen(cu, seenMap))
         return true;
-    } else if (const Instruction *I = dyn_cast<Instruction>(*ui)) {
+    } else if (const Instruction *I = dyn_cast<Instruction>(U)) {
       const BasicBlock *bb = I->getParent();
       if (!bb)
         continue;
@@ -797,10 +794,8 @@ void NVPTXAsmPrinter::emitDeclarations(const Module &M, raw_ostream &O) {
       emitDeclaration(F, O);
       continue;
     }
-    for (Value::const_use_iterator iter = F->use_begin(),
-                                   iterEnd = F->use_end();
-         iter != iterEnd; ++iter) {
-      if (const Constant *C = dyn_cast<Constant>(*iter)) {
+    for (const User *U : F->users()) {
+      if (const Constant *C = dyn_cast<Constant>(U)) {
         if (usedInGlobalVarDef(C)) {
           // The use is in the initialization of a global variable
           // that is a function pointer, so print a declaration
@@ -816,9 +811,9 @@ void NVPTXAsmPrinter::emitDeclarations(const Module &M, raw_ostream &O) {
         }
       }
 
-      if (!isa<Instruction>(*iter))
+      if (!isa<Instruction>(U))
         continue;
-      const Instruction *instr = cast<Instruction>(*iter);
+      const Instruction *instr = cast<Instruction>(U);
       const BasicBlock *bb = instr->getParent();
       if (!bb)
         continue;

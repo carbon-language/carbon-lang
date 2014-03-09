@@ -103,10 +103,12 @@ public:
 
   /// isCallee - Determine whether the passed iterator points to the
   /// callee operand's Use.
-  ///
-  bool isCallee(Value::const_use_iterator UI) const {
-    return getCallee() == &UI.getUse();
+  bool isCallee(Value::const_user_iterator UI) const {
+    return isCallee(&UI.getUse());
   }
+
+  /// Determine whether this Use is the callee operand's Use.
+  bool isCallee(const Use *U) const { return getCallee() == U; }
 
   ValTy *getArgument(unsigned ArgNo) const {
     assert(arg_begin() + ArgNo < arg_end() && "Argument # out of range!");
@@ -121,11 +123,17 @@ public:
 
   /// Given a value use iterator, returns the argument that corresponds to it.
   /// Iterator must actually correspond to an argument.
-  unsigned getArgumentNo(Value::const_use_iterator I) const {
+  unsigned getArgumentNo(Value::const_user_iterator I) const {
+    return getArgumentNo(&I.getUse());
+  }
+
+  /// Given a use for an argument, get the argument number that corresponds to
+  /// it.
+  unsigned getArgumentNo(const Use *U) const {
     assert(getInstruction() && "Not a call or invoke instruction!");
-    assert(arg_begin() <= &I.getUse() && &I.getUse() < arg_end()
+    assert(arg_begin() <= U && U < arg_end()
            && "Argument # out of range!");
-    return &I.getUse() - arg_begin();
+    return U - arg_begin();
   }
 
   /// arg_iterator - The type of iterator to use when looping over actual

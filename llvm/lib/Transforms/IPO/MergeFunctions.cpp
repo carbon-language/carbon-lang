@@ -697,14 +697,13 @@ bool DenseMapInfo<ComparableFunction>::isEqual(const ComparableFunction &LHS,
 // Replace direct callers of Old with New.
 void MergeFunctions::replaceDirectCallers(Function *Old, Function *New) {
   Constant *BitcastNew = ConstantExpr::getBitCast(New, Old->getType());
-  for (Value::use_iterator UI = Old->use_begin(), UE = Old->use_end();
-       UI != UE;) {
-    Value::use_iterator TheIter = UI;
+  for (auto UI = Old->use_begin(), UE = Old->use_end(); UI != UE;) {
+    Use *U = &*UI;
     ++UI;
-    CallSite CS(*TheIter);
-    if (CS && CS.isCallee(TheIter)) {
+    CallSite CS(U->getUser());
+    if (CS && CS.isCallee(U)) {
       remove(CS.getInstruction()->getParent()->getParent());
-      TheIter.getUse().set(BitcastNew);
+      U->set(BitcastNew);
     }
   }
 }
@@ -895,17 +894,14 @@ void MergeFunctions::removeUsers(Value *V) {
     Value *V = Worklist.back();
     Worklist.pop_back();
 
-    for (Value::use_iterator UI = V->use_begin(), UE = V->use_end();
-         UI != UE; ++UI) {
-      Use &U = UI.getUse();
-      if (Instruction *I = dyn_cast<Instruction>(U.getUser())) {
+    for (User *U : V->users()) {
+      if (Instruction *I = dyn_cast<Instruction>(U)) {
         remove(I->getParent()->getParent());
-      } else if (isa<GlobalValue>(U.getUser())) {
+      } else if (isa<GlobalValue>(U)) {
         // do nothing
-      } else if (Constant *C = dyn_cast<Constant>(U.getUser())) {
-        for (Value::use_iterator CUI = C->use_begin(), CUE = C->use_end();
-             CUI != CUE; ++CUI)
-          Worklist.push_back(*CUI);
+      } else if (Constant *C = dyn_cast<Constant>(U)) {
+        for (User *UU : C->users())
+          Worklist.push_back(UU);
       }
     }
   }

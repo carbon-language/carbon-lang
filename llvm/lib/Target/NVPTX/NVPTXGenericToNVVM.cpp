@@ -146,10 +146,8 @@ bool GenericToNVVM::runOnModule(Module &M) {
     // variable initializers, as other uses have been already been removed
     // while walking through the instructions in function definitions.
     for (Value::use_iterator UI = GV->use_begin(), UE = GV->use_end();
-         UI != UE;) {
-      Use &U = (UI++).getUse();
-      U.set(BitCastNewGV);
-    }
+         UI != UE;)
+      (UI++)->set(BitCastNewGV);
     std::string Name = GV->getName();
     GV->removeDeadConstantUsers();
     GV->eraseFromParent();

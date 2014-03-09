@@ -332,7 +332,7 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
     // new value.  If they reference more than one placeholder, update them all
     // at once.
     while (!Placeholder->use_empty()) {
-      Value::use_iterator UI = Placeholder->use_begin();
+      auto UI = Placeholder->user_begin();
       User *U = *UI;
 
       // If the using object isn't uniqued, just update the operands.  This
@@ -3116,8 +3116,8 @@ error_code BitcodeReader::Materialize(GlobalValue *GV) {
   for (UpgradedIntrinsicMap::iterator I = UpgradedIntrinsics.begin(),
        E = UpgradedIntrinsics.end(); I != E; ++I) {
     if (I->first != I->second) {
-      for (Value::use_iterator UI = I->first->use_begin(),
-           UE = I->first->use_end(); UI != UE; ) {
+      for (auto UI = I->first->user_begin(), UE = I->first->user_end();
+           UI != UE;) {
         if (CallInst* CI = dyn_cast<CallInst>(*UI++))
           UpgradeIntrinsicCall(CI, I->second);
       }
@@ -3172,8 +3172,8 @@ error_code BitcodeReader::MaterializeModule(Module *M) {
   for (std::vector<std::pair<Function*, Function*> >::iterator I =
        UpgradedIntrinsics.begin(), E = UpgradedIntrinsics.end(); I != E; ++I) {
     if (I->first != I->second) {
-      for (Value::use_iterator UI = I->first->use_begin(),
-           UE = I->first->use_end(); UI != UE; ) {
+      for (auto UI = I->first->user_begin(), UE = I->first->user_end();
+           UI != UE;) {
         if (CallInst* CI = dyn_cast<CallInst>(*UI++))
           UpgradeIntrinsicCall(CI, I->second);
       }

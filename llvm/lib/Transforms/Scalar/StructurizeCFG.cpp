@@ -325,16 +325,10 @@ Value *StructurizeCFG::invert(Value *Condition) {
   if (Instruction *Inst = dyn_cast<Instruction>(Condition)) {
     // Third: Check all the users for an invert
     BasicBlock *Parent = Inst->getParent();
-    for (Value::use_iterator I = Condition->use_begin(),
-           E = Condition->use_end(); I != E; ++I) {
-
-      Instruction *User = dyn_cast<Instruction>(*I);
-      if (!User || User->getParent() != Parent)
-        continue;
-
-      if (match(*I, m_Not(m_Specific(Condition))))
-        return *I;
-    }
+    for (User *U : Condition->users())
+      if (Instruction *I = dyn_cast<Instruction>(U))
+        if (I->getParent() == Parent && match(I, m_Not(m_Specific(Condition))))
+          return I;
 
     // Last option: Create a new instruction
     return BinaryOperator::CreateNot(Condition, "", Parent->getTerminator());
@@ -834,16 +828,14 @@ void StructurizeCFG::rebuildSSA() {
          II != IE; ++II) {
 
       bool Initialized = false;
-      for (Use *I = &II->use_begin().getUse(), *Next; I; I = Next) {
-
-        Next = I->getNext();
-
-        Instruction *User = cast<Instruction>(I->getUser());
+      for (auto I = II->use_begin(), E = II->use_end(); I != E;) {
+        Use &U = *I++;
+        Instruction *User = cast<Instruction>(U.getUser());
         if (User->getParent() == BB) {
           continue;
 
         } else if (PHINode *UserPN = dyn_cast<PHINode>(User)) {
-          if (UserPN->getIncomingBlock(*I) == BB)
+          if (UserPN->getIncomingBlock(U) == BB)
             continue;
         }
 
@@ -857,7 +849,7 @@ void StructurizeCFG::rebuildSSA() {
           Updater.AddAvailableValue(BB, II);
           Initialized = true;
         }
-        Updater.RewriteUseAfterInsertions(*I);
+        Updater.RewriteUseAfterInsertions(U);
       }
     }
 }

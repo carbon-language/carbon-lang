@@ -45,10 +45,10 @@ public:
   // Out of line virtual method, so the vtable, etc has a home.
   ~Instruction();
 
-  /// use_back - Specialize the methods defined in Value, as we know that an
+  /// user_back - Specialize the methods defined in Value, as we know that an
   /// instruction can only be used by other instructions.
-  Instruction       *use_back()       { return cast<Instruction>(*use_begin());}
-  const Instruction *use_back() const { return cast<Instruction>(*use_begin());}
+  Instruction       *user_back()       { return cast<Instruction>(*user_begin());}
+  const Instruction *user_back() const { return cast<Instruction>(*user_begin());}
 
   inline const BasicBlock *getParent() const { return Parent; }
   inline       BasicBlock *getParent()       { return Parent; }

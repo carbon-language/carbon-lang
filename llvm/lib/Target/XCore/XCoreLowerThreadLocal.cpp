@@ -127,10 +127,7 @@ createReplacementInstr(ConstantExpr *CE, Instruction *Instr) {
 
 static bool replaceConstantExprOp(ConstantExpr *CE, Pass *P) {
   do {
-    SmallVector<WeakVH,8> WUsers;
-    for (Value::use_iterator I = CE->use_begin(), E = CE->use_end();
-         I != E; ++I)
-      WUsers.push_back(WeakVH(*I));
+    SmallVector<WeakVH,8> WUsers(CE->user_begin(), CE->user_end());
     std::sort(WUsers.begin(), WUsers.end());
     WUsers.erase(std::unique(WUsers.begin(), WUsers.end()), WUsers.end());
     while (!WUsers.empty())
@@ -162,9 +159,9 @@ static bool replaceConstantExprOp(ConstantExpr *CE, Pass *P) {
 
 static bool rewriteNonInstructionUses(GlobalVariable *GV, Pass *P) {
   SmallVector<WeakVH,8> WUsers;
-  for (Value::use_iterator I = GV->use_begin(), E = GV->use_end(); I != E; ++I)
-    if (!isa<Instruction>(*I))
-      WUsers.push_back(WeakVH(*I));
+  for (User *U : GV->users())
+    if (!isa<Instruction>(U))
+      WUsers.push_back(WeakVH(U));
   while (!WUsers.empty())
     if (WeakVH WU = WUsers.pop_back_val()) {
       ConstantExpr *CE = dyn_cast<ConstantExpr>(WU);
@@ -203,7 +200,7 @@ bool XCoreLowerThreadLocal::lowerGlobal(GlobalVariable *GV) {
                        GV->isExternallyInitialized());
 
   // Update uses.
-  SmallVector<User *, 16> Users(GV->use_begin(), GV->use_end());
+  SmallVector<User *, 16> Users(GV->user_begin(), GV->user_end());
   for (unsigned I = 0, E = Users.size(); I != E; ++I) {
     User *U = Users[I];
     Instruction *Inst = cast<Instruction>(U);

@@ -44,10 +44,10 @@ public:
   typedef typename super::reference reference;
 
   PredIterator() {}
-  explicit inline PredIterator(Ptr *bb) : It(bb->use_begin()) {
+  explicit inline PredIterator(Ptr *bb) : It(bb->user_begin()) {
     advancePastNonTerminators();
   }
-  inline PredIterator(Ptr *bb, bool) : It(bb->use_end()) {}
+  inline PredIterator(Ptr *bb, bool) : It(bb->user_end()) {}
 
   inline bool operator==(const Self& x) const { return It == x.It; }
   inline bool operator!=(const Self& x) const { return !operator==(x); }
@@ -81,9 +81,9 @@ public:
   }
 };
 
-typedef PredIterator<BasicBlock, Value::use_iterator> pred_iterator;
+typedef PredIterator<BasicBlock, Value::user_iterator> pred_iterator;
 typedef PredIterator<const BasicBlock,
-                     Value::const_use_iterator> const_pred_iterator;
+                     Value::const_user_iterator> const_pred_iterator;
 
 inline pred_iterator pred_begin(BasicBlock *BB) { return pred_iterator(BB); }
 inline const_pred_iterator pred_begin(const BasicBlock *BB) {

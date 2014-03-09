@@ -123,7 +123,7 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
         if (DL->getTypeStoreSize(load->getType()) < MaxAggrCopySize)
           continue;
 
-        User *use = *(load->use_begin());
+        User *use = load->user_back();
         if (StoreInst *store = dyn_cast<StoreInst>(use)) {
           if (store->getOperand(0) != load) //getValueOperand
             continue;
@@ -163,7 +163,7 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
   //
   for (unsigned i = 0, e = aggrLoads.size(); i != e; ++i) {
     LoadInst *load = aggrLoads[i];
-    StoreInst *store = dyn_cast<StoreInst>(*load->use_begin());
+    StoreInst *store = dyn_cast<StoreInst>(*load->user_begin());
     Value *srcAddr = load->getOperand(0);
     Value *dstAddr = store->getOperand(1);
     unsigned numLoads = DL->getTypeStoreSize(load->getType());

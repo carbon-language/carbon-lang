@@ -68,9 +68,8 @@ namespace {
             if (!I->use_empty())
               if (Value *V = SimplifyInstruction(I, DL, TLI, DT)) {
                 // Mark all uses for resimplification next time round the loop.
-                for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-                     UI != UE; ++UI)
-                  Next->insert(cast<Instruction>(*UI));
+                for (User *U : I->users())
+                  Next->insert(cast<Instruction>(U));
                 I->replaceAllUsesWith(V);
                 ++NumSimplified;
                 Changed = true;

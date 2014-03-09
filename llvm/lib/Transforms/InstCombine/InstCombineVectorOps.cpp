@@ -118,7 +118,7 @@ Instruction *InstCombiner::scalarizePHI(ExtractElementInst &EI, PHINode *PN) {
   // If so, it's known at this point that one operand is PHI and the other is
   // an extractelement node. Find the PHI user that is not the extractelement
   // node.
-  Value::use_iterator iu = PN->use_begin();
+  auto iu = PN->user_begin();
   Instruction *PHIUser = dyn_cast<Instruction>(*iu);
   if (PHIUser == cast<Instruction>(&EI))
     PHIUser = cast<Instruction>(*(++iu));
@@ -126,7 +126,7 @@ Instruction *InstCombiner::scalarizePHI(ExtractElementInst &EI, PHINode *PN) {
   // Verify that this PHI user has one use, which is the PHI itself,
   // and that it is a binary operation which is cheap to scalarize.
   // otherwise return NULL.
-  if (!PHIUser->hasOneUse() || !(PHIUser->use_back() == PN) ||
+  if (!PHIUser->hasOneUse() || !(PHIUser->user_back() == PN) ||
       !(isa<BinaryOperator>(PHIUser)) || !CheapToScalarize(PHIUser, true))
     return NULL;
 
@@ -521,7 +521,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
 
       // If this insertelement isn't used by some other insertelement, turn it
       // (and any insertelements it points to), into one big shuffle.
-      if (!IE.hasOneUse() || !isa<InsertElementInst>(IE.use_back())) {
+      if (!IE.hasOneUse() || !isa<InsertElementInst>(IE.user_back())) {
         SmallVector<Constant*, 16> Mask;
         ShuffleOps LR = CollectShuffleElements(&IE, Mask, 0);
 

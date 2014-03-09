@@ -2028,7 +2028,7 @@ unsigned GVN::replaceAllDominatedUsesWith(Value *From, Value *To,
   unsigned Count = 0;
   for (Value::use_iterator UI = From->use_begin(), UE = From->use_end();
        UI != UE; ) {
-    Use &U = (UI++).getUse();
+    Use &U = *UI++;
 
     if (DT->dominates(Root, U)) {
       U.set(To);

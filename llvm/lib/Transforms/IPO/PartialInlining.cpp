@@ -128,8 +128,8 @@ Function* PartialInliner::unswitchFunction(Function* F) {
   InlineFunctionInfo IFI;
   
   // Inline the top-level if test into all callers.
-  std::vector<User*> Users(duplicateFunction->use_begin(), 
-                           duplicateFunction->use_end());
+  std::vector<User *> Users(duplicateFunction->user_begin(),
+                            duplicateFunction->user_end());
   for (std::vector<User*>::iterator UI = Users.begin(), UE = Users.end();
        UI != UE; ++UI)
     if (CallInst *CI = dyn_cast<CallInst>(*UI))
@@ -162,9 +162,8 @@ bool PartialInliner::runOnModule(Module& M) {
     if (currFunc->use_empty()) continue;
     
     bool recursive = false;
-    for (Function::use_iterator UI = currFunc->use_begin(),
-         UE = currFunc->use_end(); UI != UE; ++UI)
-      if (Instruction* I = dyn_cast<Instruction>(*UI))
+    for (User *U : currFunc->users())
+      if (Instruction* I = dyn_cast<Instruction>(U))
         if (I->getParent()->getParent() == currFunc) {
           recursive = true;
           break;

@@ -85,17 +85,15 @@ void llvm::PointerMayBeCaptured(const Value *V, CaptureTracker *Tracker) {
   SmallSet<const Use *, Threshold> Visited;
   int Count = 0;
 
-  for (Value::const_use_iterator UI = V->use_begin(), UE = V->use_end();
-       UI != UE; ++UI) {
+  for (const Use &U : V->uses()) {
     // If there are lots of uses, conservatively say that the value
     // is captured to avoid taking too much compile time.
     if (Count++ >= Threshold)
       return Tracker->tooManyUses();
 
-    Use *U = &UI.getUse();
-    if (!Tracker->shouldExplore(U)) continue;
-    Visited.insert(U);
-    Worklist.push_back(U);
+    if (!Tracker->shouldExplore(&U)) continue;
+    Visited.insert(&U);
+    Worklist.push_back(&U);
   }
 
   while (!Worklist.empty()) {
@@ -148,17 +146,15 @@ void llvm::PointerMayBeCaptured(const Value *V, CaptureTracker *Tracker) {
     case Instruction::AddrSpaceCast:
       // The original value is not captured via this if the new value isn't.
       Count = 0;
-      for (Instruction::use_iterator UI = I->use_begin(), UE = I->use_end();
-           UI != UE; ++UI) {
+      for (Use &UU : I->uses()) {
         // If there are lots of uses, conservatively say that the value
         // is captured to avoid taking too much compile time.
         if (Count++ >= Threshold)
           return Tracker->tooManyUses();
 
-        Use *U = &UI.getUse();
-        if (Visited.insert(U))
-          if (Tracker->shouldExplore(U))
-            Worklist.push_back(U);
+        if (Visited.insert(&UU))
+          if (Tracker->shouldExplore(&UU))
+            Worklist.push_back(&UU);
       }
       break;
     case Instruction::ICmp:

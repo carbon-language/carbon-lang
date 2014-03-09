@@ -561,19 +561,18 @@ void BoUpSLP::buildTree(ArrayRef<Value *> Roots, ValueSet *Rdx) {
       if (Entry->NeedToGather)
         continue;
 
-      for (Value::use_iterator User = Scalar->use_begin(),
-           UE = Scalar->use_end(); User != UE; ++User) {
-        DEBUG(dbgs() << "SLP: Checking user:" << **User << ".\n");
+      for (User *U : Scalar->users()) {
+        DEBUG(dbgs() << "SLP: Checking user:" << *U << ".\n");
 
         // Skip in-tree scalars that become vectors.
-        if (ScalarToTreeEntry.count(*User)) {
+        if (ScalarToTreeEntry.count(U)) {
           DEBUG(dbgs() << "SLP: \tInternal user will be removed:" <<
-                **User << ".\n");
-          int Idx = ScalarToTreeEntry[*User]; (void) Idx;
+                *U << ".\n");
+          int Idx = ScalarToTreeEntry[U]; (void) Idx;
           assert(!VectorizableTree[Idx].NeedToGather && "Bad state");
           continue;
         }
-        Instruction *UserInst = dyn_cast<Instruction>(*User);
+        Instruction *UserInst = dyn_cast<Instruction>(U);
         if (!UserInst)
           continue;
 
@@ -581,9 +580,9 @@ void BoUpSLP::buildTree(ArrayRef<Value *> Roots, ValueSet *Rdx) {
         if (Rdx && std::find(Rdx->begin(), Rdx->end(), UserInst) != Rdx->end())
           continue;
 
-        DEBUG(dbgs() << "SLP: Need to extract:" << **User << " from lane " <<
+        DEBUG(dbgs() << "SLP: Need to extract:" << *U << " from lane " <<
               Lane << " from " << *Scalar << ".\n");
-        ExternalUses.push_back(ExternalUser(Scalar, *User, Lane));
+        ExternalUses.push_back(ExternalUser(Scalar, U, Lane));
       }
     }
   }
@@ -670,57 +669,56 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
   for (unsigned i = 0, e = VL.size(); i != e; ++i) {
     Instruction *Scalar = cast<Instruction>(VL[i]);
     DEBUG(dbgs() << "SLP: Checking users of  " << *Scalar << ". \n");
-    for (Value::use_iterator U = Scalar->use_begin(), UE = Scalar->use_end();
-         U != UE; ++U) {
-      DEBUG(dbgs() << "SLP: \tUser " << **U << ". \n");
-      Instruction *User = dyn_cast<Instruction>(*U);
-      if (!User) {
+    for (User *U : Scalar->users()) {
+      DEBUG(dbgs() << "SLP: \tUser " << *U << ". \n");
+      Instruction *UI = dyn_cast<Instruction>(U);
+      if (!UI) {
         DEBUG(dbgs() << "SLP: Gathering due unknown user. \n");
         newTreeEntry(VL, false);
         return;
       }
 
       // We don't care if the user is in a different basic block.
-      BasicBlock *UserBlock = User->getParent();
+      BasicBlock *UserBlock = UI->getParent();
       if (UserBlock != BB) {
         DEBUG(dbgs() << "SLP: User from a different basic block "
-              << *User << ". \n");
+              << *UI << ". \n");
         continue;
       }
 
       // If this is a PHINode within this basic block then we can place the
       // extract wherever we want.
-      if (isa<PHINode>(*User)) {
-        DEBUG(dbgs() << "SLP: \tWe can schedule PHIs:" << *User << ". \n");
+      if (isa<PHINode>(*UI)) {
+        DEBUG(dbgs() << "SLP: \tWe can schedule PHIs:" << *UI << ". \n");
         continue;
       }
 
       // Check if this is a safe in-tree user.
-      if (ScalarToTreeEntry.count(User)) {
-        int Idx = ScalarToTreeEntry[User];
+      if (ScalarToTreeEntry.count(UI)) {
+        int Idx = ScalarToTreeEntry[UI];
         int VecLocation = VectorizableTree[Idx].LastScalarIndex;
         if (VecLocation <= MyLastIndex) {
           DEBUG(dbgs() << "SLP: Gathering due to unschedulable vector. \n");
           newTreeEntry(VL, false);
           return;
         }
-        DEBUG(dbgs() << "SLP: In-tree user (" << *User << ") at #" <<
+        DEBUG(dbgs() << "SLP: In-tree user (" << *UI << ") at #" <<
               VecLocation << " vector value (" << *Scalar << ") at #"
               << MyLastIndex << ".\n");
         continue;
       }
 
       // This user is part of the reduction.
-      if (RdxOps && RdxOps->count(User))
+      if (RdxOps && RdxOps->count(UI))
         continue;
 
       // Make sure that we can schedule this unknown user.
       BlockNumbering &BN = BlocksNumbers[BB];
-      int UserIndex = BN.getIndex(User);
+      int UserIndex = BN.getIndex(UI);
       if (UserIndex < MyLastIndex) {
 
         DEBUG(dbgs() << "SLP: Can't schedule extractelement for "
-              << *User << ". \n");
+              << *UI << ". \n");
         newTreeEntry(VL, false);
         return;
       }
@@ -739,11 +737,10 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
   // Check that instructions in this bundle don't reference other instructions.
   // The runtime of this check is O(N * N-1 * uses(N)) and a typical N is 4.
   for (unsigned i = 0, e = VL.size(); i < e; ++i) {
-    for (Value::use_iterator U = VL[i]->use_begin(), UE = VL[i]->use_end();
-         U != UE; ++U) {
+    for (User *U : VL[i]->users()) {
       for (unsigned j = 0; j < e; ++j) {
-        if (i != j && *U == VL[j]) {
-          DEBUG(dbgs() << "SLP: Intra-bundle dependencies!" << **U << ". \n");
+        if (i != j && U == VL[j]) {
+          DEBUG(dbgs() << "SLP: Intra-bundle dependencies!" << *U << ". \n");
           newTreeEntry(VL, false);
           return;
         }
@@ -1595,8 +1592,8 @@ Value *BoUpSLP::vectorizeTree() {
 
     // Skip users that we already RAUW. This happens when one instruction
     // has multiple uses of the same value.
-    if (std::find(Scalar->use_begin(), Scalar->use_end(), User) ==
-        Scalar->use_end())
+    if (std::find(Scalar->user_begin(), Scalar->user_end(), User) ==
+        Scalar->user_end())
       continue;
     assert(ScalarToTreeEntry.count(Scalar) && "Invalid scalar");
 
@@ -1657,13 +1654,12 @@ Value *BoUpSLP::vectorizeTree() {
 
       Type *Ty = Scalar->getType();
       if (!Ty->isVoidTy()) {
-        for (Value::use_iterator User = Scalar->use_begin(),
-             UE = Scalar->use_end(); User != UE; ++User) {
-          DEBUG(dbgs() << "SLP: \tvalidating user:" << **User << ".\n");
+        for (User *U : Scalar->users()) {
+          DEBUG(dbgs() << "SLP: \tvalidating user:" << *U << ".\n");
 
-          assert((ScalarToTreeEntry.count(*User) ||
+          assert((ScalarToTreeEntry.count(U) ||
                   // It is legal to replace the reduction users by undef.
-                  (RdxOps && RdxOps->count(*User))) &&
+                  (RdxOps && RdxOps->count(U))) &&
                  "Replacing out-of-tree value with undef");
         }
         Value *Undef = UndefValue::get(Ty);
@@ -2466,7 +2462,7 @@ static bool findBuildVector(InsertElementInst *IE,
     if (IE->use_empty())
       return false;
 
-    InsertElementInst *NextUse = dyn_cast<InsertElementInst>(IE->use_back());
+    InsertElementInst *NextUse = dyn_cast<InsertElementInst>(IE->user_back());
     if (!NextUse)
       return true;
 

@@ -37,12 +37,11 @@ namespace {
         if (!I->isDeclaration()) continue;
 
         bool PrintedFn = false;
-        for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-             UI != E; ++UI) {
-          Instruction *User = dyn_cast<Instruction>(*UI);
-          if (!User) continue;
+        for (User *U : I->users()) {
+          Instruction *UI = dyn_cast<Instruction>(U);
+          if (!UI) continue;
 
-          CallSite CS(cast<Value>(User));
+          CallSite CS(cast<Value>(UI));
           if (!CS) continue;
 
           for (CallSite::arg_iterator AI = CS.arg_begin(),
@@ -53,7 +52,7 @@ namespace {
               errs() << "Function '" << I->getName() << "':\n";
               PrintedFn = true;
             }
-            errs() << *User;
+            errs() << *UI;
             break;
           }
         }

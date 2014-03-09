@@ -51,22 +51,22 @@ isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
   // ahead and replace the value with the global, this lets the caller quickly
   // eliminate the markers.
 
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
-    User *U = cast<Instruction>(*UI);
+  for (Use &U : V->uses()) {
+    Instruction *I = cast<Instruction>(U.getUser());
 
-    if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
       // Ignore non-volatile loads, they are always ok.
       if (!LI->isSimple()) return false;
       continue;
     }
 
-    if (BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(I)) {
       // If uses of the bitcast are ok, we are ok.
       if (!isOnlyCopiedFromConstantGlobal(BCI, TheCopy, ToDelete, IsOffset))
         return false;
       continue;
     }
-    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I)) {
       // If the GEP has all zero indices, it doesn't offset the pointer.  If it
       // doesn't, it does.
       if (!isOnlyCopiedFromConstantGlobal(
@@ -75,14 +75,14 @@ isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
       continue;
     }
 
-    if (CallSite CS = U) {
+    if (CallSite CS = I) {
       // If this is the function being called then we treat it like a load and
       // ignore it.
-      if (CS.isCallee(UI))
+      if (CS.isCallee(&U))
         continue;
 
       // Inalloca arguments are clobbered by the call.
-      unsigned ArgNo = CS.getArgumentNo(UI);
+      unsigned ArgNo = CS.getArgumentNo(&U);
       if (CS.isInAllocaArgument(ArgNo))
         return false;
 
@@ -100,7 +100,7 @@ isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
     }
 
     // Lifetime intrinsics can be handled by the caller.
-    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(U)) {
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
       if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
           II->getIntrinsicID() == Intrinsic::lifetime_end) {
         assert(II->use_empty() && "Lifetime markers have no result to use!");
@@ -111,13 +111,13 @@ isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
 
     // If this is isn't our memcpy/memmove, reject it as something we can't
     // handle.
-    MemTransferInst *MI = dyn_cast<MemTransferInst>(U);
+    MemTransferInst *MI = dyn_cast<MemTransferInst>(I);
     if (MI == 0)
       return false;
 
     // If the transfer is using the alloca as a source of the transfer, then
     // ignore it since it is a load (unless the transfer is volatile).
-    if (UI.getOperandNo() == 1) {
+    if (U.getOperandNo() == 1) {
       if (MI->isVolatile()) return false;
       continue;
     }
@@ -130,7 +130,7 @@ isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
     if (IsOffset) return false;
 
     // If the memintrinsic isn't using the alloca as the dest, reject it.
-    if (UI.getOperandNo() != 0) return false;
+    if (U.getOperandNo() != 0) return false;
 
     // If the source of the memcpy/move is not a constant global, reject it.
     if (!pointsToConstantGlobal(MI->getSource()))

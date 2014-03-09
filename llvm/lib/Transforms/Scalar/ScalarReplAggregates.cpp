@@ -466,10 +466,10 @@ bool ConvertToScalarInfo::MergeInVectorType(VectorType *VInTy,
 /// SawVec flag.
 bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset,
                                              Value* NonConstantIdx) {
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
+  for (User *U : V->users()) {
+    Instruction *UI = cast<Instruction>(U);
 
-    if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+    if (LoadInst *LI = dyn_cast<LoadInst>(UI)) {
       // Don't break volatile loads.
       if (!LI->isSimple())
         return false;
@@ -481,7 +481,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset,
       continue;
     }
 
-    if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+    if (StoreInst *SI = dyn_cast<StoreInst>(UI)) {
       // Storing the pointer, not into the value?
       if (SI->getOperand(0) == V || !SI->isSimple()) return false;
       // Don't touch MMX operations.
@@ -492,7 +492,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset,
       continue;
     }
 
-    if (BitCastInst *BCI = dyn_cast<BitCastInst>(User)) {
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(UI)) {
       if (!onlyUsedByLifetimeMarkers(BCI))
         IsNotTrivial = true;  // Can't be mem2reg'd.
       if (!CanConvertToScalar(BCI, Offset, NonConstantIdx))
@@ -500,7 +500,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset,
       continue;
     }
 
-    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(UI)) {
       // If this is a GEP with a variable indices, we can't handle it.
       PointerType* PtrTy = dyn_cast<PointerType>(GEP->getPointerOperandType());
       if (!PtrTy)
@@ -532,7 +532,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset,
 
     // If this is a constant sized memset of a constant value (e.g. 0) we can
     // handle it.
-    if (MemSetInst *MSI = dyn_cast<MemSetInst>(User)) {
+    if (MemSetInst *MSI = dyn_cast<MemSetInst>(UI)) {
       // Store to dynamic index.
       if (NonConstantIdx)
         return false;
@@ -559,7 +559,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset,
 
     // If this is a memcpy or memmove into or out of the whole allocation, we
     // can handle it like a load or store of the scalar type.
-    if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(User)) {
+    if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(UI)) {
       // Store to dynamic index.
       if (NonConstantIdx)
         return false;
@@ -572,7 +572,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset,
     }
 
     // If this is a lifetime intrinsic, we can handle it.
-    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(User)) {
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(UI)) {
       if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
           II->getIntrinsicID() == Intrinsic::lifetime_end) {
         continue;
@@ -597,7 +597,7 @@ void ConvertToScalarInfo::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI,
                                               uint64_t Offset,
                                               Value* NonConstantIdx) {
   while (!Ptr->use_empty()) {
-    Instruction *User = cast<Instruction>(Ptr->use_back());
+    Instruction *User = cast<Instruction>(Ptr->user_back());
 
     if (BitCastInst *CI = dyn_cast<BitCastInst>(User)) {
       ConvertUsesToScalar(CI, NewAI, Offset, NonConstantIdx);
@@ -1060,11 +1060,10 @@ public:
     // Remember which alloca we're promoting (for isInstInList).
     this->AI = AI;
     if (MDNode *DebugNode = MDNode::getIfExists(AI->getContext(), AI)) {
-      for (Value::use_iterator UI = DebugNode->use_begin(),
-             E = DebugNode->use_end(); UI != E; ++UI)
-        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(*UI))
+      for (User *U : DebugNode->users())
+        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(U))
           DDIs.push_back(DDI);
-        else if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(*UI))
+        else if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(U))
           DVIs.push_back(DVI);
     }
 
@@ -1142,9 +1141,8 @@ static bool isSafeSelectToSpeculate(SelectInst *SI, const DataLayout *DL) {
   bool TDerefable = SI->getTrueValue()->isDereferenceablePointer();
   bool FDerefable = SI->getFalseValue()->isDereferenceablePointer();
 
-  for (Value::use_iterator UI = SI->use_begin(), UE = SI->use_end();
-       UI != UE; ++UI) {
-    LoadInst *LI = dyn_cast<LoadInst>(*UI);
+  for (User *U : SI->users()) {
+    LoadInst *LI = dyn_cast<LoadInst>(U);
     if (LI == 0 || !LI->isSimple()) return false;
 
     // Both operands to the select need to be dereferencable, either absolutely
@@ -1183,9 +1181,8 @@ static bool isSafePHIToSpeculate(PHINode *PN, const DataLayout *DL) {
   // TODO: Allow stores.
   BasicBlock *BB = PN->getParent();
   unsigned MaxAlign = 0;
-  for (Value::use_iterator UI = PN->use_begin(), UE = PN->use_end();
-       UI != UE; ++UI) {
-    LoadInst *LI = dyn_cast<LoadInst>(*UI);
+  for (User *U : PN->users()) {
+    LoadInst *LI = dyn_cast<LoadInst>(U);
     if (LI == 0 || !LI->isSimple()) return false;
 
     // For now we only allow loads in the same block as the PHI.  This is a
@@ -1243,10 +1240,7 @@ static bool isSafePHIToSpeculate(PHINode *PN, const DataLayout *DL) {
 static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const DataLayout *DL) {
   SetVector<Instruction*, SmallVector<Instruction*, 4>,
             SmallPtrSet<Instruction*, 4> > InstsToRewrite;
-
-  for (Value::use_iterator UI = AI->use_begin(), UE = AI->use_end();
-       UI != UE; ++UI) {
-    User *U = *UI;
+  for (User *U : AI->users()) {
     if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       if (!LI->isSimple())
         return false;
@@ -1316,12 +1310,9 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const DataLayout *DL) {
   for (unsigned i = 0, e = InstsToRewrite.size(); i != e; ++i) {
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(InstsToRewrite[i])) {
       // This could only be a bitcast used by nothing but lifetime intrinsics.
-      for (BitCastInst::use_iterator I = BCI->use_begin(), E = BCI->use_end();
-           I != E;) {
-        Use &U = I.getUse();
-        ++I;
-        cast<Instruction>(U.getUser())->eraseFromParent();
-      }
+      for (BitCastInst::user_iterator I = BCI->user_begin(), E = BCI->user_end();
+           I != E;)
+        cast<Instruction>(*I++)->eraseFromParent();
       BCI->eraseFromParent();
       continue;
     }
@@ -1330,7 +1321,7 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const DataLayout *DL) {
       // Selects in InstsToRewrite only have load uses.  Rewrite each as two
       // loads with a new select.
       while (!SI->use_empty()) {
-        LoadInst *LI = cast<LoadInst>(SI->use_back());
+        LoadInst *LI = cast<LoadInst>(SI->user_back());
 
         IRBuilder<> Builder(LI);
         LoadInst *TrueLoad =
@@ -1371,13 +1362,13 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const DataLayout *DL) {
 
     // Get the TBAA tag and alignment to use from one of the loads.  It doesn't
     // matter which one we get and if any differ, it doesn't matter.
-    LoadInst *SomeLoad = cast<LoadInst>(PN->use_back());
+    LoadInst *SomeLoad = cast<LoadInst>(PN->user_back());
     MDNode *TBAATag = SomeLoad->getMetadata(LLVMContext::MD_tbaa);
     unsigned Align = SomeLoad->getAlignment();
 
     // Rewrite all loads of the PN to use the new PHI.
     while (!PN->use_empty()) {
-      LoadInst *LI = cast<LoadInst>(PN->use_back());
+      LoadInst *LI = cast<LoadInst>(PN->user_back());
       LI->replaceAllUsesWith(NewPN);
       LI->eraseFromParent();
     }
@@ -1437,9 +1428,8 @@ bool SROA::performPromotion(Function &F) {
         AllocaInst *AI = Allocas[i];
 
         // Build list of instructions to promote.
-        for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
-             UI != E; ++UI)
-          Insts.push_back(cast<Instruction>(*UI));
+        for (User *U : AI->users())
+          Insts.push_back(cast<Instruction>(U));
         AllocaPromoter(Insts, SSA, &DIB).run(AI, Insts);
         Insts.clear();
       }
@@ -1602,8 +1592,8 @@ void SROA::DeleteDeadInstructions() {
 /// referenced by this instruction.
 void SROA::isSafeForScalarRepl(Instruction *I, uint64_t Offset,
                                AllocaInfo &Info) {
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI!=E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
+  for (Use &U : I->uses()) {
+    Instruction *User = cast<Instruction>(U.getUser());
 
     if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
       isSafeForScalarRepl(BC, Offset, Info);
@@ -1620,7 +1610,7 @@ void SROA::isSafeForScalarRepl(Instruction *I, uint64_t Offset,
         return MarkUnsafe(Info, User);
 
       isSafeMemAccess(Offset, Length->getZExtValue(), 0,
-                      UI.getOperandNo() == 0, Info, MI,
+                      U.getOperandNo() == 0, Info, MI,
                       true /*AllowWholeAccess*/);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       if (!LI->isSimple())
@@ -1669,39 +1659,39 @@ void SROA::isSafePHISelectUseForScalarRepl(Instruction *I, uint64_t Offset,
     if (!Info.CheckedPHIs.insert(PN))
       return;
 
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI!=E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
+  for (User *U : I->users()) {
+    Instruction *UI = cast<Instruction>(U);
 
-    if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
+    if (BitCastInst *BC = dyn_cast<BitCastInst>(UI)) {
       isSafePHISelectUseForScalarRepl(BC, Offset, Info);
-    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(User)) {
+    } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(UI)) {
       // Only allow "bitcast" GEPs for simplicity.  We could generalize this,
       // but would have to prove that we're staying inside of an element being
       // promoted.
       if (!GEPI->hasAllZeroIndices())
-        return MarkUnsafe(Info, User);
+        return MarkUnsafe(Info, UI);
       isSafePHISelectUseForScalarRepl(GEPI, Offset, Info);
-    } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+    } else if (LoadInst *LI = dyn_cast<LoadInst>(UI)) {
       if (!LI->isSimple())
-        return MarkUnsafe(Info, User);
+        return MarkUnsafe(Info, UI);
       Type *LIType = LI->getType();
       isSafeMemAccess(Offset, DL->getTypeAllocSize(LIType),
                       LIType, false, Info, LI, false /*AllowWholeAccess*/);
       Info.hasALoadOrStore = true;
 
-    } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(UI)) {
       // Store is ok if storing INTO the pointer, not storing the pointer
       if (!SI->isSimple() || SI->getOperand(0) == I)
-        return MarkUnsafe(Info, User);
+        return MarkUnsafe(Info, UI);
 
       Type *SIType = SI->getOperand(0)->getType();
       isSafeMemAccess(Offset, DL->getTypeAllocSize(SIType),
                       SIType, true, Info, SI, false /*AllowWholeAccess*/);
       Info.hasALoadOrStore = true;
-    } else if (isa<PHINode>(User) || isa<SelectInst>(User)) {
-      isSafePHISelectUseForScalarRepl(User, Offset, Info);
+    } else if (isa<PHINode>(UI) || isa<SelectInst>(UI)) {
+      isSafePHISelectUseForScalarRepl(UI, Offset, Info);
     } else {
-      return MarkUnsafe(Info, User);
+      return MarkUnsafe(Info, UI);
     }
     if (Info.isUnsafe) return;
   }
@@ -1871,8 +1861,8 @@ bool SROA::TypeHasComponent(Type *T, uint64_t Offset, uint64_t Size) {
 void SROA::RewriteForScalarRepl(Instruction *I, AllocaInst *AI, uint64_t Offset,
                                 SmallVectorImpl<AllocaInst *> &NewElts) {
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI!=E;) {
-    Use &TheUse = UI.getUse();
-    Instruction *User = cast<Instruction>(*UI++);
+    Use &TheUse = *UI++;
+    Instruction *User = cast<Instruction>(TheUse.getUser());
 
     if (BitCastInst *BC = dyn_cast<BitCastInst>(User)) {
       RewriteBitCast(BC, AI, Offset, NewElts);

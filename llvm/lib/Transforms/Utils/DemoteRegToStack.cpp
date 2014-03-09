@@ -41,7 +41,7 @@ AllocaInst *llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
 
   // Change all of the users of the instruction to read from the stack slot.
   while (!I.use_empty()) {
-    Instruction *U = cast<Instruction>(I.use_back());
+    Instruction *U = cast<Instruction>(I.user_back());
     if (PHINode *PN = dyn_cast<PHINode>(U)) {
       // If this is a PHI node, we can't insert a load of the value before the
       // use.  Instead insert the load in the predecessor block corresponding

@@ -380,13 +380,13 @@ Value *TailCallElim::CanTransformAccumulatorRecursion(Instruction *I,
     return 0;
 
   // The only user of this instruction we allow is a single return instruction.
-  if (!I->hasOneUse() || !isa<ReturnInst>(I->use_back()))
+  if (!I->hasOneUse() || !isa<ReturnInst>(I->user_back()))
     return 0;
 
   // Ok, now we have to check all of the other return instructions in this
   // function.  If they return non-constants or differing values, then we cannot
   // transform the function safely.
-  return getCommonReturnValue(cast<ReturnInst>(I->use_back()), CI);
+  return getCommonReturnValue(cast<ReturnInst>(I->user_back()), CI);
 }
 
 static Instruction *FirstNonDbg(BasicBlock::iterator I) {

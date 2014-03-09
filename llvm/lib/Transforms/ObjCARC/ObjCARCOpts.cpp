@@ -163,12 +163,9 @@ static const Value *FindSingleUseIdentifiedObject(const Value *Arg) {
   // If we found an identifiable object but it has multiple uses, but they are
   // trivial uses, we can still consider this to be a single-use value.
   if (IsObjCIdentifiedObject(Arg)) {
-    for (Value::const_use_iterator UI = Arg->use_begin(), UE = Arg->use_end();
-         UI != UE; ++UI) {
-      const User *U = *UI;
+    for (const User *U : Arg->users())
       if (!U->use_empty() || StripPointerCastsAndObjCCalls(U) != Arg)
          return 0;
-    }
 
     return Arg;
   }
@@ -1266,13 +1263,11 @@ ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
   Users.push_back(Ptr);
   do {
     Ptr = Users.pop_back_val();
-    for (Value::const_use_iterator UI = Ptr->use_begin(), UE = Ptr->use_end();
-         UI != UE; ++UI) {
-      const User *I = *UI;
-      if (isa<ReturnInst>(I) || GetBasicInstructionClass(I) == IC_RetainRV)
+    for (const User *U : Ptr->users()) {
+      if (isa<ReturnInst>(U) || GetBasicInstructionClass(U) == IC_RetainRV)
         return;
-      if (isa<BitCastInst>(I))
-        Users.push_back(I);
+      if (isa<BitCastInst>(U))
+        Users.push_back(U);
     }
   } while (!Users.empty());
 
@@ -2787,9 +2782,8 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
     CallInst *Call = cast<CallInst>(Inst);
     Value *Arg = Call->getArgOperand(0);
     if (AllocaInst *Alloca = dyn_cast<AllocaInst>(Arg)) {
-      for (Value::use_iterator UI = Alloca->use_begin(),
-           UE = Alloca->use_end(); UI != UE; ++UI) {
-        const Instruction *UserInst = cast<Instruction>(*UI);
+      for (User *U : Alloca->users()) {
+        const Instruction *UserInst = cast<Instruction>(U);
         switch (GetBasicInstructionClass(UserInst)) {
         case IC_InitWeak:
         case IC_StoreWeak:
@@ -2800,8 +2794,7 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
         }
       }
       Changed = true;
-      for (Value::use_iterator UI = Alloca->use_begin(),
-           UE = Alloca->use_end(); UI != UE; ) {
+      for (auto UI = Alloca->user_begin(), UE = Alloca->user_end(); UI != UE;) {
         CallInst *UserInst = cast<CallInst>(*UI++);
         switch (GetBasicInstructionClass(UserInst)) {
         case IC_InitWeak:

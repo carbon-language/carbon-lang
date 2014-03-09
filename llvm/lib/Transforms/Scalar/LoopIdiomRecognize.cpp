@@ -464,9 +464,8 @@ bool NclPopcountRecognize::detectIdiom(Instruction *&CntInst,
 
       // Check if the result of the instruction is live of the loop.
       bool LiveOutLoop = false;
-      for (Value::use_iterator I = Inst->use_begin(), E = Inst->use_end();
-             I != E;  I++) {
-        if ((cast<Instruction>(*I))->getParent() != LoopEntry) {
+      for (User *U : Inst->users()) {
+        if ((cast<Instruction>(U))->getParent() != LoopEntry) {
           LiveOutLoop = true; break;
         }
       }
@@ -602,11 +601,9 @@ void NclPopcountRecognize::transform(Instruction *CntInst,
   //  __builtin_ctpop().
   {
     SmallVector<Value *, 4> CntUses;
-    for (Value::use_iterator I = CntInst->use_begin(), E = CntInst->use_end();
-         I != E; I++) {
-      if (cast<Instruction>(*I)->getParent() != Body)
-        CntUses.push_back(*I);
-    }
+    for (User *U : CntInst->users())
+      if (cast<Instruction>(U)->getParent() != Body)
+        CntUses.push_back(U);
     for (unsigned Idx = 0; Idx < CntUses.size(); Idx++) {
       (cast<Instruction>(CntUses[Idx]))->replaceUsesOfWith(CntInst, NewCount);
     }

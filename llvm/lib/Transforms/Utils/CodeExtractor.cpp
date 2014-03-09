@@ -171,9 +171,8 @@ void CodeExtractor::findInputsOutputs(ValueSet &Inputs,
         if (definedInCaller(Blocks, *OI))
           Inputs.insert(*OI);
 
-      for (Value::use_iterator UI = II->use_begin(), UE = II->use_end();
-           UI != UE; ++UI)
-        if (!definedInRegion(Blocks, *UI)) {
+      for (User *U : II->users())
+        if (!definedInRegion(Blocks, U)) {
           Outputs.insert(II);
           break;
         }
@@ -369,7 +368,7 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
     } else
       RewriteVal = AI++;
 
-    std::vector<User*> Users(inputs[i]->use_begin(), inputs[i]->use_end());
+    std::vector<User*> Users(inputs[i]->user_begin(), inputs[i]->user_end());
     for (std::vector<User*>::iterator use = Users.begin(), useE = Users.end();
          use != useE; ++use)
       if (Instruction* inst = dyn_cast<Instruction>(*use))
@@ -389,7 +388,7 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
   // Rewrite branches to basic blocks outside of the loop to new dummy blocks
   // within the new function. This must be done before we lose track of which
   // blocks were originally in the code region.
-  std::vector<User*> Users(header->use_begin(), header->use_end());
+  std::vector<User*> Users(header->user_begin(), header->user_end());
   for (unsigned i = 0, e = Users.size(); i != e; ++i)
     // The BasicBlock which contains the branch is not in the region
     // modify the branch target to a new block
@@ -405,13 +404,12 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
 /// that uses the value within the basic block, and return the predecessor
 /// block associated with that use, or return 0 if none is found.
 static BasicBlock* FindPhiPredForUseInBlock(Value* Used, BasicBlock* BB) {
-  for (Value::use_iterator UI = Used->use_begin(),
-       UE = Used->use_end(); UI != UE; ++UI) {
-     PHINode *P = dyn_cast<PHINode>(*UI);
+  for (Use &U : Used->uses()) {
+     PHINode *P = dyn_cast<PHINode>(U.getUser());
      if (P && P->getParent() == BB)
-       return P->getIncomingBlock(UI);
+       return P->getIncomingBlock(U);
   }
-  
+
   return 0;
 }
 
@@ -502,7 +500,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     LoadInst *load = new LoadInst(Output, outputs[i]->getName()+".reload");
     Reloads.push_back(load);
     codeReplacer->getInstList().push_back(load);
-    std::vector<User*> Users(outputs[i]->use_begin(), outputs[i]->use_end());
+    std::vector<User*> Users(outputs[i]->user_begin(), outputs[i]->user_end());
     for (unsigned u = 0, e = Users.size(); u != e; ++u) {
       Instruction *inst = cast<Instruction>(Users[u]);
       if (!Blocks.count(inst->getParent()))

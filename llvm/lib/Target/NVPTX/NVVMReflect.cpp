@@ -143,11 +143,9 @@ bool NVVMReflect::runOnModule(Module &M) {
   // ConstantArray can be found successfully, see if it can be
   // found in VarMap. If so, replace the uses of CallInst with the
   // value found in VarMap. If not, replace the use  with value 0.
-  for (Value::use_iterator I = ReflectFunction->use_begin(),
-                           E = ReflectFunction->use_end();
-       I != E; ++I) {
-    assert(isa<CallInst>(*I) && "Only a call instruction can use _reflect");
-    CallInst *Reflect = cast<CallInst>(*I);
+  for (User *U : ReflectFunction->users()) {
+    assert(isa<CallInst>(U) && "Only a call instruction can use _reflect");
+    CallInst *Reflect = cast<CallInst>(U);
 
     assert((Reflect->getNumOperands() == 2) &&
            "Only one operand expect for _reflect function");

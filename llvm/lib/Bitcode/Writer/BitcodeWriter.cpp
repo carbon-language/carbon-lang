@@ -1807,17 +1807,10 @@ static void WriteUseList(const Value *V, const ValueEnumerator &VE,
     return;
 
   // Make a copy of the in-memory use-list for sorting.
-  unsigned UseListSize = std::distance(V->use_begin(), V->use_end());
-  SmallVector<const User*, 8> UseList;
-  UseList.reserve(UseListSize);
-  for (Value::const_use_iterator I = V->use_begin(), E = V->use_end();
-       I != E; ++I) {
-    const User *U = *I;
-    UseList.push_back(U);
-  }
+  SmallVector<const User*, 8> UserList(V->user_begin(), V->user_end());
 
   // Sort the copy based on the order read by the BitcodeReader.
-  std::sort(UseList.begin(), UseList.end(), bitcodereader_order);
+  std::sort(UserList.begin(), UserList.end(), bitcodereader_order);
 
   // TODO: Generate a diff between the BitcodeWriter in-memory use-list and the
   // sorted list (i.e., the expected BitcodeReader in-memory use-list).

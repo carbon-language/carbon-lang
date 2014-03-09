@@ -500,9 +500,9 @@ static bool isTriviallyReplacablePHI(PHINode &PN, Instruction &I) {
 /// exit blocks of the loop.
 ///
 bool LICM::isNotUsedInLoop(Instruction &I) {
-  for (Value::use_iterator UI = I.use_begin(), E = I.use_end(); UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
-    if (PHINode *PN = dyn_cast<PHINode>(User)) {
+  for (User *U : I.users()) {
+    Instruction *UI = cast<Instruction>(U);
+    if (PHINode *PN = dyn_cast<PHINode>(UI)) {
       // A PHI node where all of the incoming values are this instruction are
       // special -- they can just be RAUW'ed with the instruction and thus
       // don't require a use in the predecessor. This is a particular important
@@ -524,7 +524,7 @@ bool LICM::isNotUsedInLoop(Instruction &I) {
       continue;
     }
 
-    if (CurLoop->contains(User))
+    if (CurLoop->contains(UI))
       return false;
   }
   return true;
@@ -554,7 +554,7 @@ void LICM::sink(Instruction &I) {
   // the instruction.
   while (!I.use_empty()) {
     // The user must be a PHI node.
-    PHINode *PN = cast<PHINode>(I.use_back());
+    PHINode *PN = cast<PHINode>(I.user_back());
 
     BasicBlock *ExitBlock = PN->getParent();
     assert(ExitBlockSet.count(ExitBlock) &&
@@ -789,23 +789,22 @@ void LICM::PromoteAliasSet(AliasSet &AS,
     if (SomePtr->getType() != ASIV->getType())
       return;
 
-    for (Value::use_iterator UI = ASIV->use_begin(), UE = ASIV->use_end();
-         UI != UE; ++UI) {
+    for (User *U : ASIV->users()) {
       // Ignore instructions that are outside the loop.
-      Instruction *Use = dyn_cast<Instruction>(*UI);
-      if (!Use || !CurLoop->contains(Use))
+      Instruction *UI = dyn_cast<Instruction>(U);
+      if (!UI || !CurLoop->contains(UI))
         continue;
 
       // If there is an non-load/store instruction in the loop, we can't promote
       // it.
-      if (LoadInst *load = dyn_cast<LoadInst>(Use)) {
+      if (LoadInst *load = dyn_cast<LoadInst>(UI)) {
         assert(!load->isVolatile() && "AST broken");
         if (!load->isSimple())
           return;
-      } else if (StoreInst *store = dyn_cast<StoreInst>(Use)) {
+      } else if (StoreInst *store = dyn_cast<StoreInst>(UI)) {
         // Stores *of* the pointer are not interesting, only stores *to* the
         // pointer.
-        if (Use->getOperand(1) != ASIV)
+        if (UI->getOperand(1) != ASIV)
           continue;
         assert(!store->isVolatile() && "AST broken");
         if (!store->isSimple())
@@ -821,13 +820,13 @@ void LICM::PromoteAliasSet(AliasSet &AS,
         // Larger is better, with the exception of 0 being the best alignment.
         unsigned InstAlignment = store->getAlignment();
         if ((InstAlignment > Alignment || InstAlignment == 0) && Alignment != 0)
-          if (isGuaranteedToExecute(*Use)) {
+          if (isGuaranteedToExecute(*UI)) {
             GuaranteedToExecute = true;
             Alignment = InstAlignment;
           }
 
         if (!GuaranteedToExecute)
-          GuaranteedToExecute = isGuaranteedToExecute(*Use);
+          GuaranteedToExecute = isGuaranteedToExecute(*UI);
 
       } else
         return; // Not a load or store.
@@ -835,13 +834,13 @@ void LICM::PromoteAliasSet(AliasSet &AS,
       // Merge the TBAA tags.
       if (LoopUses.empty()) {
         // On the first load/store, just take its TBAA tag.
-        TBAATag = Use->getMetadata(LLVMContext::MD_tbaa);
+        TBAATag = UI->getMetadata(LLVMContext::MD_tbaa);
       } else if (TBAATag) {
         TBAATag = MDNode::getMostGenericTBAA(TBAATag,
-                                       Use->getMetadata(LLVMContext::MD_tbaa));
+                                       UI->getMetadata(LLVMContext::MD_tbaa));
       }
-      
-      LoopUses.push_back(Use);
+
+      LoopUses.push_back(UI);
     }
   }
 

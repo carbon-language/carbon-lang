@@ -657,23 +657,21 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
   // guarantees that it holds only undefined values when passed in (so the final
   // memcpy can be dropped), that it is not read or written between the call and
   // the memcpy, and that writing beyond the end of it is undefined.
-  SmallVector<User*, 8> srcUseList(srcAlloca->use_begin(),
-                                   srcAlloca->use_end());
+  SmallVector<User*, 8> srcUseList(srcAlloca->user_begin(),
+                                   srcAlloca->user_end());
   while (!srcUseList.empty()) {
-    User *UI = srcUseList.pop_back_val();
+    User *U = srcUseList.pop_back_val();
 
-    if (isa<BitCastInst>(UI) || isa<AddrSpaceCastInst>(UI)) {
-      for (User::use_iterator I = UI->use_begin(), E = UI->use_end();
-           I != E; ++I)
-        srcUseList.push_back(*I);
-    } else if (GetElementPtrInst *G = dyn_cast<GetElementPtrInst>(UI)) {
+    if (isa<BitCastInst>(U) || isa<AddrSpaceCastInst>(U)) {
+      for (User *UU : U->users())
+        srcUseList.push_back(UU);
+    } else if (GetElementPtrInst *G = dyn_cast<GetElementPtrInst>(U)) {
       if (G->hasAllZeroIndices())
-        for (User::use_iterator I = UI->use_begin(), E = UI->use_end();
-             I != E; ++I)
-          srcUseList.push_back(*I);
+        for (User *UU : U->users())
+          srcUseList.push_back(UU);
       else
         return false;
-    } else if (UI != C && UI != cpy) {
+    } else if (U != C && U != cpy) {
       return false;
     }
   }

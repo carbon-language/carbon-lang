@@ -285,15 +285,14 @@ Instruction *SimplifyIndvar::splitOverflowIntrinsic(Instruction *IVUser,
   // Find a branch guarded by the overflow check.
   BranchInst *Branch = 0;
   Instruction *AddVal = 0;
-  for (Value::use_iterator UI = II->use_begin(), E = II->use_end();
-       UI != E; ++UI) {
-    if (ExtractValueInst *ExtractInst = dyn_cast<ExtractValueInst>(*UI)) {
+  for (User *U : II->users()) {
+    if (ExtractValueInst *ExtractInst = dyn_cast<ExtractValueInst>(U)) {
       if (ExtractInst->getNumIndices() != 1)
         continue;
       if (ExtractInst->getIndices()[0] == 0)
         AddVal = ExtractInst;
       else if (ExtractInst->getIndices()[0] == 1 && ExtractInst->hasOneUse())
-        Branch = dyn_cast<BranchInst>(ExtractInst->use_back());
+        Branch = dyn_cast<BranchInst>(ExtractInst->user_back());
     }
   }
   if (!AddVal || !Branch)
@@ -305,12 +304,11 @@ Instruction *SimplifyIndvar::splitOverflowIntrinsic(Instruction *IVUser,
 
   // Check if all users of the add are provably NSW.
   bool AllNSW = true;
-  for (Value::use_iterator UI = AddVal->use_begin(), E = AddVal->use_end();
-       UI != E; ++UI) {
-    if (Instruction *UseInst = dyn_cast<Instruction>(*UI)) {
+  for (Use &U : AddVal->uses()) {
+    if (Instruction *UseInst = dyn_cast<Instruction>(U.getUser())) {
       BasicBlock *UseBB = UseInst->getParent();
       if (PHINode *PHI = dyn_cast<PHINode>(UseInst))
-        UseBB = PHI->getIncomingBlock(UI);
+        UseBB = PHI->getIncomingBlock(U);
       if (!DT->dominates(ContinueBB, UseBB)) {
         AllNSW = false;
         break;
@@ -343,16 +341,15 @@ static void pushIVUsers(
   SmallPtrSet<Instruction*,16> &Simplified,
   SmallVectorImpl< std::pair<Instruction*,Instruction*> > &SimpleIVUsers) {
 
-  for (Value::use_iterator UI = Def->use_begin(), E = Def->use_end();
-       UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
+  for (User *U : Def->users()) {
+    Instruction *UI = cast<Instruction>(U);
 
     // Avoid infinite or exponential worklist processing.
     // Also ensure unique worklist users.
     // If Def is a LoopPhi, it may not be in the Simplified set, so check for
     // self edges first.
-    if (User != Def && Simplified.insert(User))
-      SimpleIVUsers.push_back(std::make_pair(User, Def));
+    if (UI != Def && Simplified.insert(UI))
+      SimpleIVUsers.push_back(std::make_pair(UI, Def));
   }
 }
 

@@ -159,12 +159,11 @@ void ValueEnumerator::print(raw_ostream &OS, const ValueMapType &Map,
     V->dump();
 
     OS << " Uses(" << std::distance(V->use_begin(),V->use_end()) << "):";
-    for (Value::const_use_iterator UI = V->use_begin(), UE = V->use_end();
-         UI != UE; ++UI) {
-      if (UI != V->use_begin())
+    for (const Use &U : V->uses()) {
+      if (&U != &*V->use_begin())
         OS << ",";
-      if((*UI)->hasName())
-        OS << " " << (*UI)->getName();
+      if(U->hasName())
+        OS << " " << U->getName();
       else
         OS << " [null]";
 

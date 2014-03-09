@@ -218,7 +218,7 @@ void Constant::destroyConstantImpl() {
   // Constants) that they are, in fact, invalid now and should be deleted.
   //
   while (!use_empty()) {
-    Value *V = use_back();
+    Value *V = user_back();
 #ifndef NDEBUG      // Only in -g mode...
     if (!isa<Constant>(V)) {
       dbgs() << "While deleting: " << *this
@@ -230,7 +230,7 @@ void Constant::destroyConstantImpl() {
     cast<Constant>(V)->destroyConstant();
 
     // The constant should remove itself from our use list...
-    assert((use_empty() || use_back() != V) && "Constant not removed!");
+    assert((use_empty() || user_back() != V) && "Constant not removed!");
   }
 
   // Value has no outstanding references it is safe to delete it now...
@@ -307,8 +307,8 @@ bool Constant::isThreadDependent() const {
 /// isConstantUsed - Return true if the constant has users other than constant
 /// exprs and other dangling things.
 bool Constant::isConstantUsed() const {
-  for (const_use_iterator UI = use_begin(), E = use_end(); UI != E; ++UI) {
-    const Constant *UC = dyn_cast<Constant>(*UI);
+  for (const User *U : users()) {
+    const Constant *UC = dyn_cast<Constant>(U);
     if (UC == 0 || isa<GlobalValue>(UC))
       return true;
 
@@ -377,7 +377,7 @@ static bool removeDeadUsersOfConstant(const Constant *C) {
   if (isa<GlobalValue>(C)) return false; // Cannot remove this
 
   while (!C->use_empty()) {
-    const Constant *User = dyn_cast<Constant>(C->use_back());
+    const Constant *User = dyn_cast<Constant>(C->user_back());
     if (!User) return false; // Non-constant usage;
     if (!removeDeadUsersOfConstant(User))
       return false; // Constant wasn't dead
@@ -393,8 +393,8 @@ static bool removeDeadUsersOfConstant(const Constant *C) {
 /// that want to check to see if a global is unused, but don't want to deal
 /// with potentially dead constants hanging off of the globals.
 void Constant::removeDeadConstantUsers() const {
-  Value::const_use_iterator I = use_begin(), E = use_end();
-  Value::const_use_iterator LastNonDeadUser = E;
+  Value::const_user_iterator I = user_begin(), E = user_end();
+  Value::const_user_iterator LastNonDeadUser = E;
   while (I != E) {
     const Constant *User = dyn_cast<Constant>(*I);
     if (User == 0) {
@@ -413,7 +413,7 @@ void Constant::removeDeadConstantUsers() const {
 
     // If the constant was dead, then the iterator is invalidated.
     if (LastNonDeadUser == E) {
-      I = use_begin();
+      I = user_begin();
       if (I == E) break;
     } else {
       I = LastNonDeadUser;

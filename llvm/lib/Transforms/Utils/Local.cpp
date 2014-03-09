@@ -354,8 +354,8 @@ llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V,
 /// true when there are no uses or multiple uses that all refer to the same
 /// value.
 static bool areAllUsesEqual(Instruction *I) {
-  Value::use_iterator UI = I->use_begin();
-  Value::use_iterator UE = I->use_end();
+  Value::user_iterator UI = I->user_begin();
+  Value::user_iterator UE = I->user_end();
   if (UI == UE)
     return true;
 
@@ -376,7 +376,7 @@ bool llvm::RecursivelyDeleteDeadPHINode(PHINode *PN,
                                         const TargetLibraryInfo *TLI) {
   SmallPtrSet<Instruction*, 4> Visited;
   for (Instruction *I = PN; areAllUsesEqual(I) && !I->mayHaveSideEffects();
-       I = cast<Instruction>(*I->use_begin())) {
+       I = cast<Instruction>(*I->user_begin())) {
     if (I->use_empty())
       return RecursivelyDeleteTriviallyDeadInstructions(I, TLI);
 
@@ -752,10 +752,9 @@ bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
   if (!Succ->getSinglePredecessor()) {
     BasicBlock::iterator BBI = BB->begin();
     while (isa<PHINode>(*BBI)) {
-      for (Value::use_iterator UI = BBI->use_begin(), E = BBI->use_end();
-           UI != E; ++UI) {
-        if (PHINode* PN = dyn_cast<PHINode>(*UI)) {
-          if (PN->getIncomingBlock(UI) != BB)
+      for (Use &U : BBI->uses()) {
+        if (PHINode* PN = dyn_cast<PHINode>(U.getUser())) {
+          if (PN->getIncomingBlock(U) != BB)
             return false;
         } else {
           return false;
@@ -1056,11 +1055,10 @@ bool llvm::LowerDbgDeclare(Function &F) {
       // We only remove the dbg.declare intrinsic if all uses are
       // converted to dbg.value intrinsics.
       bool RemoveDDI = true;
-      for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
-           UI != E; ++UI)
-        if (StoreInst *SI = dyn_cast<StoreInst>(*UI))
+      for (User *U : AI->users())
+        if (StoreInst *SI = dyn_cast<StoreInst>(U))
           ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
-        else if (LoadInst *LI = dyn_cast<LoadInst>(*UI))
+        else if (LoadInst *LI = dyn_cast<LoadInst>(U))
           ConvertDebugDeclareToDebugValue(DDI, LI, DIB);
         else
           RemoveDDI = false;
@@ -1075,9 +1073,8 @@ bool llvm::LowerDbgDeclare(Function &F) {
 /// alloca 'V', if any.
 DbgDeclareInst *llvm::FindAllocaDbgDeclare(Value *V) {
   if (MDNode *DebugNode = MDNode::getIfExists(V->getContext(), V))
-    for (Value::use_iterator UI = DebugNode->use_begin(),
-         E = DebugNode->use_end(); UI != E; ++UI)
-      if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(*UI))
+    for (User *U : DebugNode->users())
+      if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(U))
         return DDI;
 
   return 0;

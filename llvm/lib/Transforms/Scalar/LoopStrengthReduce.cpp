@@ -722,13 +722,12 @@ static bool isHighCostExpansion(const SCEV *S,
       // multiplication already generates this expression.
       if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(Mul->getOperand(1))) {
         Value *UVal = U->getValue();
-        for (Value::use_iterator UI = UVal->use_begin(), UE = UVal->use_end();
-             UI != UE; ++UI) {
+        for (User *UR : UVal->users()) {
           // If U is a constant, it may be used by a ConstantExpr.
-          Instruction *User = dyn_cast<Instruction>(*UI);
-          if (User && User->getOpcode() == Instruction::Mul
-              && SE.isSCEVable(User->getType())) {
-            return SE.getSCEV(User) == Mul;
+          Instruction *UI = dyn_cast<Instruction>(UR);
+          if (UI && UI->getOpcode() == Instruction::Mul &&
+              SE.isSCEVable(UI->getType())) {
+            return SE.getSCEV(UI) == Mul;
           }
         }
       }
@@ -2635,9 +2634,8 @@ void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
   // they will eventually be used be the current chain, or can be computed
   // from one of the chain increments. To be more precise we could
   // transitively follow its user and only add leaf IV users to the set.
-  for (Value::use_iterator UseIter = IVOper->use_begin(),
-         UseEnd = IVOper->use_end(); UseIter != UseEnd; ++UseIter) {
-    Instruction *OtherUse = dyn_cast<Instruction>(*UseIter);
+  for (User *U : IVOper->users()) {
+    Instruction *OtherUse = dyn_cast<Instruction>(U);
     if (!OtherUse)
       continue;
     // Uses in the chain will no longer be uses if the chain is formed.
@@ -3048,18 +3046,17 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
     else if (const SCEVUDivExpr *D = dyn_cast<SCEVUDivExpr>(S)) {
       Worklist.push_back(D->getLHS());
       Worklist.push_back(D->getRHS());
-    } else if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
-      if (!Inserted.insert(U)) continue;
-      const Value *V = U->getValue();
+    } else if (const SCEVUnknown *US = dyn_cast<SCEVUnknown>(S)) {
+      if (!Inserted.insert(US)) continue;
+      const Value *V = US->getValue();
       if (const Instruction *Inst = dyn_cast<Instruction>(V)) {
         // Look for instructions defined outside the loop.
         if (L->contains(Inst)) continue;
       } else if (isa<UndefValue>(V))
         // Undef doesn't have a live range, so it doesn't matter.
         continue;
-      for (Value::const_use_iterator UI = V->use_begin(), UE = V->use_end();
-           UI != UE; ++UI) {
-        const Instruction *UserInst = dyn_cast<Instruction>(*UI);
+      for (const Use &U : V->uses()) {
+        const Instruction *UserInst = dyn_cast<Instruction>(U.getUser());
         // Ignore non-instructions.
         if (!UserInst)
           continue;
@@ -3071,7 +3068,7 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
         const BasicBlock *UseBB = !isa<PHINode>(UserInst) ?
           UserInst->getParent() :
           cast<PHINode>(UserInst)->getIncomingBlock(
-            PHINode::getIncomingValueNumForOperand(UI.getOperandNo()));
+            PHINode::getIncomingValueNumForOperand(U.getOperandNo()));
         if (!DT.dominates(L->getHeader(), UseBB))
           continue;
         // Ignore uses which are part of other SCEV expressions, to avoid
@@ -3081,7 +3078,7 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
           // If the user is a no-op, look through to its uses.
           if (!isa<SCEVUnknown>(UserS))
             continue;
-          if (UserS == U) {
+          if (UserS == US) {
             Worklist.push_back(
               SE.getUnknown(const_cast<Instruction *>(UserInst)));
             continue;
@@ -3089,7 +3086,7 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
         }
         // Ignore icmp instructions which are already being analyzed.
         if (const ICmpInst *ICI = dyn_cast<ICmpInst>(UserInst)) {
-          unsigned OtherIdx = !UI.getOperandNo();
+          unsigned OtherIdx = !U.getOperandNo();
           Value *OtherOp = const_cast<Value *>(ICI->getOperand(OtherIdx));
           if (SE.hasComputableLoopEvolution(SE.getSCEV(OtherOp), L))
             continue;
@@ -3097,7 +3094,7 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
 
         LSRFixup &LF = getNewFixup();
         LF.UserInst = const_cast<Instruction *>(UserInst);
-        LF.OperandValToReplace = UI.getUse();
+        LF.OperandValToReplace = U;
         std::pair<size_t, int64_t> P = getUse(S, LSRUse::Basic, 0);
         LF.LUIdx = P.first;
         LF.Offset = P.second;
@@ -3107,7 +3104,7 @@ LSRInstance::CollectLoopInvariantFixupsAndFormulae() {
             SE.getTypeSizeInBits(LU.WidestFixupType) <
             SE.getTypeSizeInBits(LF.OperandValToReplace->getType()))
           LU.WidestFixupType = LF.OperandValToReplace->getType();
-        InsertSupplementalFormula(U, LU, LF.LUIdx);
+        InsertSupplementalFormula(US, LU, LF.LUIdx);
         CountRegisters(LU.Formulae.back(), Uses.size() - 1);
         break;
       }

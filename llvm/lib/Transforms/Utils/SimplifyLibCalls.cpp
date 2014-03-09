@@ -88,9 +88,8 @@ public:
 /// isOnlyUsedInZeroEqualityComparison - Return true if it only matters that the
 /// value is equal or not-equal to zero.
 static bool isOnlyUsedInZeroEqualityComparison(Value *V) {
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
-       UI != E; ++UI) {
-    if (ICmpInst *IC = dyn_cast<ICmpInst>(*UI))
+  for (User *U : V->users()) {
+    if (ICmpInst *IC = dyn_cast<ICmpInst>(U))
       if (IC->isEquality())
         if (Constant *C = dyn_cast<Constant>(IC->getOperand(1)))
           if (C->isNullValue())
@@ -104,9 +103,8 @@ static bool isOnlyUsedInZeroEqualityComparison(Value *V) {
 /// isOnlyUsedInEqualityComparison - Return true if it is only used in equality
 /// comparisons with With.
 static bool isOnlyUsedInEqualityComparison(Value *V, Value *With) {
-  for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
-       UI != E; ++UI) {
-    if (ICmpInst *IC = dyn_cast<ICmpInst>(*UI))
+  for (User *U : V->users()) {
+    if (ICmpInst *IC = dyn_cast<ICmpInst>(U))
       if (IC->isEquality() && IC->getOperand(1) == With)
         continue;
     // Unknown instruction.
@@ -936,8 +934,7 @@ struct StrStrOpt : public LibCallOptimization {
                                    StrLen, B, DL, TLI);
       if (!StrNCmp)
         return 0;
-      for (Value::use_iterator UI = CI->use_begin(), UE = CI->use_end();
-           UI != UE; ) {
+      for (auto UI = CI->user_begin(), UE = CI->user_end(); UI != UE;) {
         ICmpInst *Old = cast<ICmpInst>(*UI++);
         Value *Cmp = B.CreateICmp(Old->getPredicate(), StrNCmp,
                                   ConstantInt::getNullValue(StrNCmp->getType()),
@@ -1110,9 +1107,8 @@ struct UnaryDoubleFPOpt : public LibCallOptimization {
 
     if (CheckRetType) {
       // Check if all the uses for function like 'sin' are converted to float.
-      for (Value::use_iterator UseI = CI->use_begin(); UseI != CI->use_end();
-          ++UseI) {
-        FPTruncInst *Cast = dyn_cast<FPTruncInst>(*UseI);
+      for (User *U : CI->users()) {
+        FPTruncInst *Cast = dyn_cast<FPTruncInst>(U);
         if (Cast == 0 || !Cast->getType()->isFloatTy())
           return 0;
       }
@@ -1147,9 +1143,8 @@ struct BinaryDoubleFPOpt : public LibCallOptimization {
     if (CheckRetType) {
       // Check if all the uses for function like 'fmin/fmax' are converted to
       // float.
-      for (Value::use_iterator UseI = CI->use_begin(); UseI != CI->use_end();
-          ++UseI) {
-        FPTruncInst *Cast = dyn_cast<FPTruncInst>(*UseI);
+      for (User *U : CI->users()) {
+        FPTruncInst *Cast = dyn_cast<FPTruncInst>(U);
         if (Cast == 0 || !Cast->getType()->isFloatTy())
           return 0;
       }
@@ -1361,9 +1356,8 @@ struct SinCosPiOpt : public LibCallOptimization {
     // Look for all compatible sinpi, cospi and sincospi calls with the same
     // argument. If there are enough (in some sense) we can make the
     // substitution.
-    for (Value::use_iterator UI = Arg->use_begin(), UE = Arg->use_end();
-         UI != UE; ++UI)
-      classifyArgUse(*UI, CI->getParent(), IsFloat, SinCalls, CosCalls,
+    for (User *U : Arg->users())
+      classifyArgUse(U, CI->getParent(), IsFloat, SinCalls, CosCalls,
                      SinCosCalls);
 
     // It's only worthwhile if both sinpi and cospi are actually used.
