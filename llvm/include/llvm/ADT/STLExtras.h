@@ -263,40 +263,29 @@ void DeleteContainerSeconds(Container &C) {
 
 #if LLVM_HAS_VARIADIC_TEMPLATES
 
-/// Implement make_unique according to N3656.
+// Implement make_unique according to N3656.
+
+/// \brief Constructs a `new T()` with the given args and returns a
+///        `unique_ptr<T>` which owns the object.
 ///
-/// template<class T, class... Args> unique_ptr<T> make_unique(Args&&... args);
-/// Remarks: This function shall not participate in overload resolution unless
-///          T is not an array.
-/// Returns: unique_ptr<T>(new T(std::forward<Args>(args)...)).
+/// Example:
 ///
-/// template<class T> unique_ptr<T> make_unique(size_t n);
-/// Remarks: This function shall not participate in overload resolution unless
-///          T is an array of unknown bound.
-/// Returns: unique_ptr<T>(new typename remove_extent<T>::type[n]()).
-///
-/// template<class T, class... Args> unspecified make_unique(Args&&...) = delete;
-/// Remarks: This function shall not participate in overload resolution unless
-///          T is an array of known bound.
-///
-/// Use scenarios:
-///
-/// Single object case:
-///
-/// auto p0 = make_unique<int>();
-///
-/// auto p2 = make_unique<std::tuple<int, int>>(0, 1);
-///
-/// Array case:
-///
-/// auto p1 = make_unique<int[]>(2); // value-initializes the array with 0's.
-///
+///     auto p = make_unique<int>();
+///     auto p = make_unique<std::tuple<int, int>>(0, 1);
 template <class T, class... Args>
 typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type
 make_unique(Args &&... args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
+/// \brief Constructs a `new T[n]` with the given args and returns a
+///        `unique_ptr<T[]>` which owns the object.
+///
+/// \param n size of the new array.
+///
+/// Example:
+///
+///     auto p = make_unique<int[]>(2); // value-initializes the array with 0's.
 template <class T>
 typename std::enable_if<std::is_array<T>::value && std::extent<T>::value == 0,
                         std::unique_ptr<T>>::type
@@ -304,6 +293,7 @@ make_unique(size_t n) {
   return std::unique_ptr<T>(new typename std::remove_extent<T>::type[n]());
 }
 
+/// This function isn't used and is only here to provide better compile errors.
 template <class T, class... Args>
 typename std::enable_if<std::extent<T>::value != 0>::type
 make_unique(Args &&...) LLVM_DELETED_FUNCTION;
