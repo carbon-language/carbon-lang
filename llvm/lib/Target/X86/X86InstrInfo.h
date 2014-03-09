@@ -161,7 +161,7 @@ public:
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).
   ///
-  virtual const X86RegisterInfo &getRegisterInfo() const { return RI; }
+  const X86RegisterInfo &getRegisterInfo() const { return RI; }
 
   /// isCoalescableExtInstr - Return true if the instruction is a "coalescable"
   /// extension instruction. That is, it's like a copy where it's legal for the
@@ -257,12 +257,12 @@ public:
                            const TargetRegisterClass *RC,
                            const TargetRegisterInfo *TRI) const override;
 
-  virtual void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
-                              SmallVectorImpl<MachineOperand> &Addr,
-                              const TargetRegisterClass *RC,
-                              MachineInstr::mmo_iterator MMOBegin,
-                              MachineInstr::mmo_iterator MMOEnd,
-                              SmallVectorImpl<MachineInstr*> &NewMIs) const;
+  void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
+                      SmallVectorImpl<MachineOperand> &Addr,
+                      const TargetRegisterClass *RC,
+                      MachineInstr::mmo_iterator MMOBegin,
+                      MachineInstr::mmo_iterator MMOEnd,
+                      SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
@@ -270,12 +270,12 @@ public:
                             const TargetRegisterClass *RC,
                             const TargetRegisterInfo *TRI) const override;
 
-  virtual void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                               SmallVectorImpl<MachineOperand> &Addr,
-                               const TargetRegisterClass *RC,
-                               MachineInstr::mmo_iterator MMOBegin,
-                               MachineInstr::mmo_iterator MMOEnd,
-                               SmallVectorImpl<MachineInstr*> &NewMIs) const;
+  void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                       SmallVectorImpl<MachineOperand> &Addr,
+                       const TargetRegisterClass *RC,
+                       MachineInstr::mmo_iterator MMOBegin,
+                       MachineInstr::mmo_iterator MMOEnd,
+                       SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
   bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const override;
 
