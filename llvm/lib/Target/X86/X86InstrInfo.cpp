@@ -5268,7 +5268,7 @@ namespace {
     static char ID;
     CGBR() : MachineFunctionPass(ID) {}
 
-    virtual bool runOnMachineFunction(MachineFunction &MF) {
+    bool runOnMachineFunction(MachineFunction &MF) override {
       const X86TargetMachine *TM =
         static_cast<const X86TargetMachine *>(&MF.getTarget());
 
@@ -5315,11 +5315,11 @@ namespace {
       return true;
     }
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "X86 PIC Global Base Reg Initialization";
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
@@ -5335,7 +5335,7 @@ namespace {
     static char ID;
     LDTLSCleanup() : MachineFunctionPass(ID) {}
 
-    virtual bool runOnMachineFunction(MachineFunction &MF) {
+    bool runOnMachineFunction(MachineFunction &MF) override {
       X86MachineFunctionInfo* MFI = MF.getInfo<X86MachineFunctionInfo>();
       if (MFI->getNumLocalDynamicTLSAccesses() < 2) {
         // No point folding accesses if there isn't at least two.
@@ -5428,11 +5428,11 @@ namespace {
       return Copy;
     }
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "Local Dynamic TLS Access Clean-up";
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<MachineDominatorTree>();
       MachineFunctionPass::getAnalysisUsage(AU);

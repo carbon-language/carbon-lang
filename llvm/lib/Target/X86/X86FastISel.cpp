@@ -62,16 +62,16 @@ public:
     X86ScalarSSEf32 = Subtarget->hasSSE1();
   }
 
-  virtual bool TargetSelectInstruction(const Instruction *I);
+  bool TargetSelectInstruction(const Instruction *I) override;
 
   /// \brief The specified machine instr operand is a vreg, and that
   /// vreg is being provided by the specified load instruction.  If possible,
   /// try to fold the load as an operand to the instruction, returning true if
   /// possible.
-  virtual bool tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
-                                   const LoadInst *LI);
+  bool tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
+                           const LoadInst *LI) override;
 
-  virtual bool FastLowerArguments();
+  bool FastLowerArguments() override;
 
 #include "X86GenFastISel.inc"
 
@@ -128,11 +128,11 @@ private:
 
   bool handleConstantAddresses(const Value *V, X86AddressMode &AM);
 
-  unsigned TargetMaterializeConstant(const Constant *C);
+  unsigned TargetMaterializeConstant(const Constant *C) override;
 
-  unsigned TargetMaterializeAlloca(const AllocaInst *C);
+  unsigned TargetMaterializeAlloca(const AllocaInst *C) override;
 
-  unsigned TargetMaterializeFloatZero(const ConstantFP *CF);
+  unsigned TargetMaterializeFloatZero(const ConstantFP *CF) override;
 
   /// isScalarFPTypeInSSEReg - Return true if the specified scalar FP type is
   /// computed in an SSE register, not on the X87 floating point stack.

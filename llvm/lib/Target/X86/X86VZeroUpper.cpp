@@ -35,11 +35,11 @@ namespace {
     static char ID;
     VZeroUpperInserter() : MachineFunctionPass(ID) {}
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
     bool processBasicBlock(MachineFunction &MF, MachineBasicBlock &MBB);
 
-    virtual const char *getPassName() const { return "X86 vzeroupper inserter";}
+    const char *getPassName() const override {return "X86 vzeroupper inserter";}
 
   private:
     const TargetInstrInfo *TII; // Machine instruction info.

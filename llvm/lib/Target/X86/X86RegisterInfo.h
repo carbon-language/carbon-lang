@@ -62,66 +62,70 @@ public:
 
   /// getCompactUnwindRegNum - This function maps the register to the number for
   /// compact unwind encoding. Return -1 if the register isn't valid.
-  int getCompactUnwindRegNum(unsigned RegNum, bool isEH) const;
+  int getCompactUnwindRegNum(unsigned RegNum, bool isEH) const override;
 
   /// Code Generation virtual methods...
   ///
-  virtual bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const;
+  bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const override;
 
   /// getMatchingSuperRegClass - Return a subclass of the specified register
   /// class A so that each register in it has a sub-register of the
   /// specified sub-register index which is in the specified register class B.
-  virtual const TargetRegisterClass *
+  const TargetRegisterClass *
   getMatchingSuperRegClass(const TargetRegisterClass *A,
-                           const TargetRegisterClass *B, unsigned Idx) const;
+                           const TargetRegisterClass *B,
+                           unsigned Idx) const override;
 
-  virtual const TargetRegisterClass *
-  getSubClassWithSubReg(const TargetRegisterClass *RC, unsigned Idx) const;
+  const TargetRegisterClass *
+  getSubClassWithSubReg(const TargetRegisterClass *RC,
+                        unsigned Idx) const override;
 
   const TargetRegisterClass*
-  getLargestLegalSuperClass(const TargetRegisterClass *RC) const;
+  getLargestLegalSuperClass(const TargetRegisterClass *RC) const override;
 
   /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
   /// values.
   const TargetRegisterClass *
-  getPointerRegClass(const MachineFunction &MF, unsigned Kind = 0) const;
+  getPointerRegClass(const MachineFunction &MF,
+                     unsigned Kind = 0) const override;
 
   /// getCrossCopyRegClass - Returns a legal register class to copy a register
   /// in the specified class to or from. Returns NULL if it is possible to copy
   /// between a two registers of the specified class.
   const TargetRegisterClass *
-  getCrossCopyRegClass(const TargetRegisterClass *RC) const;
+  getCrossCopyRegClass(const TargetRegisterClass *RC) const override;
 
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
-                               MachineFunction &MF) const;
+                               MachineFunction &MF) const override;
 
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee-save registers on this target.
-  const uint16_t *getCalleeSavedRegs(const MachineFunction* MF = 0) const;
-  const uint32_t *getCallPreservedMask(CallingConv::ID) const;
+  const uint16_t *
+  getCalleeSavedRegs(const MachineFunction* MF = 0) const override;
+  const uint32_t *getCallPreservedMask(CallingConv::ID) const override;
   const uint32_t *getNoPreservedMask() const;
 
   /// getReservedRegs - Returns a bitset indexed by physical register number
   /// indicating if a register is a special register that has particular uses and
   /// should be considered unavailable at all times, e.g. SP, RA. This is used by
   /// register scavenger to determine what registers are free.
-  BitVector getReservedRegs(const MachineFunction &MF) const;
+  BitVector getReservedRegs(const MachineFunction &MF) const override;
 
   bool hasBasePointer(const MachineFunction &MF) const;
 
   bool canRealignStack(const MachineFunction &MF) const;
 
-  bool needsStackRealignment(const MachineFunction &MF) const;
+  bool needsStackRealignment(const MachineFunction &MF) const override;
 
   bool hasReservedSpillSlot(const MachineFunction &MF, unsigned Reg,
-                            int &FrameIdx) const;
+                            int &FrameIdx) const override;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator MI,
                            int SPAdj, unsigned FIOperandNum,
-                           RegScavenger *RS = NULL) const;
+                           RegScavenger *RS = NULL) const override;
 
   // Debug information queries.
-  unsigned getFrameRegister(const MachineFunction &MF) const;
+  unsigned getFrameRegister(const MachineFunction &MF) const override;
   unsigned getStackRegister() const { return StackPtr; }
   unsigned getBaseRegister() const { return BasePtr; }
   // FIXME: Move to FrameInfok

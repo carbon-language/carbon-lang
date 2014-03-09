@@ -965,23 +965,24 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
   OS << "struct " << ClassName << " : public TargetRegisterInfo {\n"
      << "  explicit " << ClassName
      << "(unsigned RA, unsigned D = 0, unsigned E = 0, unsigned PC = 0);\n"
-     << "  virtual bool needsStackRealignment(const MachineFunction &) const\n"
+     << "  bool needsStackRealignment(const MachineFunction &) const override\n"
      << "     { return false; }\n";
   if (!RegBank.getSubRegIndices().empty()) {
-    OS << "  virtual unsigned composeSubRegIndicesImpl"
-       << "(unsigned, unsigned) const;\n"
-      << "  virtual const TargetRegisterClass *"
-      "getSubClassWithSubReg(const TargetRegisterClass*, unsigned) const;\n";
+    OS << "  unsigned composeSubRegIndicesImpl"
+       << "(unsigned, unsigned) const override;\n"
+       << "  const TargetRegisterClass *getSubClassWithSubReg"
+       << "(const TargetRegisterClass*, unsigned) const override;\n";
   }
-  OS << "  virtual const RegClassWeight &getRegClassWeight("
-     << "const TargetRegisterClass *RC) const;\n"
-     << "  virtual unsigned getRegUnitWeight(unsigned RegUnit) const;\n"
-     << "  virtual unsigned getNumRegPressureSets() const;\n"
-     << "  virtual const char *getRegPressureSetName(unsigned Idx) const;\n"
-     << "  virtual unsigned getRegPressureSetLimit(unsigned Idx) const;\n"
-     << "  virtual const int *getRegClassPressureSets("
-     << "const TargetRegisterClass *RC) const;\n"
-     << "  virtual const int *getRegUnitPressureSets(unsigned RegUnit) const;\n"
+  OS << "  const RegClassWeight &getRegClassWeight("
+     << "const TargetRegisterClass *RC) const override;\n"
+     << "  unsigned getRegUnitWeight(unsigned RegUnit) const override;\n"
+     << "  unsigned getNumRegPressureSets() const override;\n"
+     << "  const char *getRegPressureSetName(unsigned Idx) const override;\n"
+     << "  unsigned getRegPressureSetLimit(unsigned Idx) const override;\n"
+     << "  const int *getRegClassPressureSets("
+     << "const TargetRegisterClass *RC) const override;\n"
+     << "  const int *getRegUnitPressureSets("
+     << "unsigned RegUnit) const override;\n"
      << "};\n\n";
 
   ArrayRef<CodeGenRegisterClass*> RegisterClasses = RegBank.getRegClasses();

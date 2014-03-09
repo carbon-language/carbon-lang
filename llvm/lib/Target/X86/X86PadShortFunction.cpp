@@ -51,9 +51,9 @@ namespace {
     PadShortFunc() : MachineFunctionPass(ID)
                    , Threshold(4), TM(0), TII(0) {}
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "X86 Atom pad short functions";
     }
 

@@ -59,7 +59,7 @@ namespace {
       memset(RegMap, 0, sizeof(RegMap));
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<EdgeBundles>();
       AU.addPreservedID(MachineLoopInfoID);
@@ -67,9 +67,9 @@ namespace {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
-    virtual const char *getPassName() const { return "X86 FP Stackifier"; }
+    const char *getPassName() const override { return "X86 FP Stackifier"; }
 
   private:
     const TargetInstrInfo *TII; // Machine instruction info.

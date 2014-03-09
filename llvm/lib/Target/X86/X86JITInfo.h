@@ -35,41 +35,41 @@ namespace llvm {
     /// overwriting OLD with a branch to NEW.  This is used for self-modifying
     /// code.
     ///
-    virtual void replaceMachineCodeForFunction(void *Old, void *New);
+    void replaceMachineCodeForFunction(void *Old, void *New) override;
 
     /// emitGlobalValueIndirectSym - Use the specified JITCodeEmitter object
     /// to emit an indirect symbol which contains the address of the specified
     /// ptr.
-    virtual void *emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,
-                                             JITCodeEmitter &JCE);
+    void *emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,
+                                     JITCodeEmitter &JCE) override;
 
     // getStubLayout - Returns the size and alignment of the largest call stub
     // on X86.
-    virtual StubLayout getStubLayout();
+    StubLayout getStubLayout() override;
 
     /// emitFunctionStub - Use the specified JITCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.
-    virtual void *emitFunctionStub(const Function* F, void *Target,
-                                   JITCodeEmitter &JCE);
+    void *emitFunctionStub(const Function* F, void *Target,
+                           JITCodeEmitter &JCE) override;
 
     /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
     /// specific basic block.
-    virtual uintptr_t getPICJumpTableEntry(uintptr_t BB, uintptr_t JTBase);
+    uintptr_t getPICJumpTableEntry(uintptr_t BB, uintptr_t JTBase) override;
 
     /// getLazyResolverFunction - Expose the lazy resolver to the JIT.
-    virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
+    LazyResolverFn getLazyResolverFunction(JITCompilerFn) override;
 
     /// relocate - Before the JIT can run a block of code that has been emitted,
     /// it must rewrite the code to contain the actual addresses of any
     /// referenced global symbols.
-    virtual void relocate(void *Function, MachineRelocation *MR,
-                          unsigned NumRelocs, unsigned char* GOTBase);
+    void relocate(void *Function, MachineRelocation *MR,
+                  unsigned NumRelocs, unsigned char* GOTBase) override;
 
     /// allocateThreadLocalMemory - Each target has its own way of
     /// handling thread local variables. This method returns a value only
     /// meaningful to the target.
-    virtual char* allocateThreadLocalMemory(size_t size);
+    char* allocateThreadLocalMemory(size_t size) override;
 
     /// setPICBase / getPICBase - Getter / setter of PICBase, used to compute
     /// PIC jumptable entry.

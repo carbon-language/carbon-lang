@@ -33,22 +33,20 @@ public:
   explicit X86SelectionDAGInfo(const X86TargetMachine &TM);
   ~X86SelectionDAGInfo();
 
-  virtual
   SDValue EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
                                   SDValue Chain,
                                   SDValue Dst, SDValue Src,
                                   SDValue Size, unsigned Align,
                                   bool isVolatile,
-                                  MachinePointerInfo DstPtrInfo) const;
+                                  MachinePointerInfo DstPtrInfo) const override;
 
-  virtual
   SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
                                   SDValue Chain,
                                   SDValue Dst, SDValue Src,
                                   SDValue Size, unsigned Align,
                                   bool isVolatile, bool AlwaysInline,
                                   MachinePointerInfo DstPtrInfo,
-                                  MachinePointerInfo SrcPtrInfo) const;
+                                  MachinePointerInfo SrcPtrInfo) const override;
 };
 
 }

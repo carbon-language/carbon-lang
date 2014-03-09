@@ -1498,7 +1498,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
      << "StringRef FS);\n"
      << "public:\n"
      << "  unsigned resolveSchedClass(unsigned SchedClass, const MachineInstr *DefMI,"
-     << " const TargetSchedModel *SchedModel) const;\n"
+     << " const TargetSchedModel *SchedModel) const override;\n"
      << "  DFAPacketizer *createDFAPacketizer(const InstrItineraryData *IID)"
      << " const;\n"
      << "};\n";

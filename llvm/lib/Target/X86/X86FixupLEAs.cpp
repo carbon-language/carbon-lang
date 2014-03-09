@@ -39,7 +39,7 @@ namespace {
     /// where appropriate.
     bool processBasicBlock(MachineFunction &MF, MachineFunction::iterator MFI);
 
-    virtual const char *getPassName() const { return "X86 Atom LEA Fixup";}
+    const char *getPassName() const override { return "X86 Atom LEA Fixup";}
 
     /// \brief Given a machine register, look for the instruction
     /// which writes it in the current basic block. If found,
@@ -80,7 +80,7 @@ namespace {
     /// \brief Loop over all of the basic blocks,
     /// replacing instructions by equivalent LEA instructions
     /// if needed and when possible.
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
   private:
     MachineFunction *MF;

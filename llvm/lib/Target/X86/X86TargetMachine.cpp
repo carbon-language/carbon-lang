@@ -158,11 +158,11 @@ public:
     return *getX86TargetMachine().getSubtargetImpl();
   }
 
-  virtual bool addInstSelector();
-  virtual bool addILPOpts();
-  virtual bool addPreRegAlloc();
-  virtual bool addPostRegAlloc();
-  virtual bool addPreEmitPass();
+  bool addInstSelector() override;
+  bool addILPOpts() override;
+  bool addPreRegAlloc() override;
+  bool addPostRegAlloc() override;
+  bool addPreEmitPass() override;
 };
 } // namespace
 

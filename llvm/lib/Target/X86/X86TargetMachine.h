@@ -46,38 +46,37 @@ public:
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL);
 
-  virtual const DataLayout *getDataLayout() const { return &DL; }
-  virtual const X86InstrInfo     *getInstrInfo() const {
+  const DataLayout *getDataLayout() const override { return &DL; }
+  const X86InstrInfo *getInstrInfo() const override {
     return &InstrInfo;
   }
-  virtual const TargetFrameLowering  *getFrameLowering() const {
+  const TargetFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
   }
-  virtual       X86JITInfo       *getJITInfo()         {
+  X86JITInfo *getJITInfo() override {
     return &JITInfo;
   }
-  virtual const X86Subtarget     *getSubtargetImpl() const{ return &Subtarget; }
-  virtual const X86TargetLowering *getTargetLowering() const {
+  const X86Subtarget *getSubtargetImpl() const override { return &Subtarget; }
+  const X86TargetLowering *getTargetLowering() const override {
     return &TLInfo;
   }
-  virtual const X86SelectionDAGInfo *getSelectionDAGInfo() const {
+  const X86SelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
-  virtual const X86RegisterInfo  *getRegisterInfo() const {
+  const X86RegisterInfo  *getRegisterInfo() const override {
     return &getInstrInfo()->getRegisterInfo();
   }
-  virtual const InstrItineraryData *getInstrItineraryData() const {
+  const InstrItineraryData *getInstrItineraryData() const override {
     return &InstrItins;
   }
 
   /// \brief Register X86 analysis passes with a pass manager.
-  virtual void addAnalysisPasses(PassManagerBase &PM);
+  void addAnalysisPasses(PassManagerBase &PM) override;
 
   // Set up the pass pipeline.
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
-  virtual bool addCodeEmitter(PassManagerBase &PM,
-                              JITCodeEmitter &JCE);
+  bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &JCE) override;
 };
 
 } // End llvm namespace
