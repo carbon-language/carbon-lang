@@ -109,7 +109,33 @@ ObjectFilePECOFF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                                            lldb::offset_t length,
                                            lldb_private::ModuleSpecList &specs)
 {
-    return 0;
+    const size_t initial_count = specs.GetSize();
+
+    if (ObjectFilePECOFF::MagicBytesMatch(data_sp))
+    {
+        DataExtractor data;
+        data.SetData(data_sp, data_offset, length);
+        data.SetByteOrder(eByteOrderLittle);
+
+        dos_header_t dos_header;
+        coff_header_t coff_header;
+
+        if (ParseDOSHeader(data, dos_header))
+        {
+            lldb::offset_t offset = dos_header.e_lfanew;
+            uint32_t pe_signature = data.GetU32(&offset);
+            if (pe_signature != IMAGE_NT_SIGNATURE)
+                return false;
+            if (ParseCOFFHeader(data, &offset, coff_header))
+            {
+                ArchSpec spec;
+                spec.SetArchitecture(eArchTypeCOFF, coff_header.machine, LLDB_INVALID_CPUTYPE);
+                specs.Append(ModuleSpec(file, spec));
+            }
+        }
+    }
+
+    return specs.GetSize() - initial_count;
 }
 
 
@@ -157,13 +183,13 @@ ObjectFilePECOFF::ParseHeader ()
         m_data.SetByteOrder (eByteOrderLittle);
         lldb::offset_t offset = 0;
         
-        if (ParseDOSHeader())
+        if (ParseDOSHeader(m_data, m_dos_header))
         {
             offset = m_dos_header.e_lfanew;
             uint32_t pe_signature = m_data.GetU32 (&offset);
             if (pe_signature != IMAGE_NT_SIGNATURE)
                 return false;
-            if (ParseCOFFHeader(&offset))
+            if (ParseCOFFHeader(m_data, &offset, m_coff_header))
             {
                 if (m_coff_header.hdrsize > 0)
                     ParseCOFFOptionalHeader(&offset);
@@ -254,56 +280,56 @@ ObjectFilePECOFF::NeedsEndianSwap() const
 // ParseDOSHeader
 //----------------------------------------------------------------------
 bool
-ObjectFilePECOFF::ParseDOSHeader ()
+ObjectFilePECOFF::ParseDOSHeader (DataExtractor &data, dos_header_t &dos_header)
 {
     bool success = false;
     lldb::offset_t offset = 0;
-    success = m_data.ValidOffsetForDataOfSize(0, sizeof(m_dos_header));
+    success = data.ValidOffsetForDataOfSize(0, sizeof(dos_header));
     
     if (success)
     {
-        m_dos_header.e_magic = m_data.GetU16(&offset); // Magic number
-        success = m_dos_header.e_magic == IMAGE_DOS_SIGNATURE;
+        dos_header.e_magic = data.GetU16(&offset); // Magic number
+        success = dos_header.e_magic == IMAGE_DOS_SIGNATURE;
         
         if (success)
         {
-            m_dos_header.e_cblp     = m_data.GetU16(&offset); // Bytes on last page of file
-            m_dos_header.e_cp       = m_data.GetU16(&offset); // Pages in file
-            m_dos_header.e_crlc     = m_data.GetU16(&offset); // Relocations
-            m_dos_header.e_cparhdr  = m_data.GetU16(&offset); // Size of header in paragraphs
-            m_dos_header.e_minalloc = m_data.GetU16(&offset); // Minimum extra paragraphs needed
-            m_dos_header.e_maxalloc = m_data.GetU16(&offset); // Maximum extra paragraphs needed
-            m_dos_header.e_ss       = m_data.GetU16(&offset); // Initial (relative) SS value
-            m_dos_header.e_sp       = m_data.GetU16(&offset); // Initial SP value
-            m_dos_header.e_csum     = m_data.GetU16(&offset); // Checksum
-            m_dos_header.e_ip       = m_data.GetU16(&offset); // Initial IP value
-            m_dos_header.e_cs       = m_data.GetU16(&offset); // Initial (relative) CS value
-            m_dos_header.e_lfarlc   = m_data.GetU16(&offset); // File address of relocation table
-            m_dos_header.e_ovno     = m_data.GetU16(&offset); // Overlay number
+            dos_header.e_cblp     = data.GetU16(&offset); // Bytes on last page of file
+            dos_header.e_cp       = data.GetU16(&offset); // Pages in file
+            dos_header.e_crlc     = data.GetU16(&offset); // Relocations
+            dos_header.e_cparhdr  = data.GetU16(&offset); // Size of header in paragraphs
+            dos_header.e_minalloc = data.GetU16(&offset); // Minimum extra paragraphs needed
+            dos_header.e_maxalloc = data.GetU16(&offset); // Maximum extra paragraphs needed
+            dos_header.e_ss       = data.GetU16(&offset); // Initial (relative) SS value
+            dos_header.e_sp       = data.GetU16(&offset); // Initial SP value
+            dos_header.e_csum     = data.GetU16(&offset); // Checksum
+            dos_header.e_ip       = data.GetU16(&offset); // Initial IP value
+            dos_header.e_cs       = data.GetU16(&offset); // Initial (relative) CS value
+            dos_header.e_lfarlc   = data.GetU16(&offset); // File address of relocation table
+            dos_header.e_ovno     = data.GetU16(&offset); // Overlay number
             
-            m_dos_header.e_res[0]   = m_data.GetU16(&offset); // Reserved words
-            m_dos_header.e_res[1]   = m_data.GetU16(&offset); // Reserved words
-            m_dos_header.e_res[2]   = m_data.GetU16(&offset); // Reserved words
-            m_dos_header.e_res[3]   = m_data.GetU16(&offset); // Reserved words
+            dos_header.e_res[0]   = data.GetU16(&offset); // Reserved words
+            dos_header.e_res[1]   = data.GetU16(&offset); // Reserved words
+            dos_header.e_res[2]   = data.GetU16(&offset); // Reserved words
+            dos_header.e_res[3]   = data.GetU16(&offset); // Reserved words
             
-            m_dos_header.e_oemid    = m_data.GetU16(&offset); // OEM identifier (for e_oeminfo)
-            m_dos_header.e_oeminfo  = m_data.GetU16(&offset); // OEM information; e_oemid specific
-            m_dos_header.e_res2[0]  = m_data.GetU16(&offset); // Reserved words
-            m_dos_header.e_res2[1]  = m_data.GetU16(&offset); // Reserved words
-            m_dos_header.e_res2[2]  = m_data.GetU16(&offset); // Reserved words
-            m_dos_header.e_res2[3]  = m_data.GetU16(&offset); // Reserved words
-            m_dos_header.e_res2[4]  = m_data.GetU16(&offset); // Reserved words
-            m_dos_header.e_res2[5]  = m_data.GetU16(&offset); // Reserved words
-            m_dos_header.e_res2[6]  = m_data.GetU16(&offset); // Reserved words
-            m_dos_header.e_res2[7]  = m_data.GetU16(&offset); // Reserved words
-            m_dos_header.e_res2[8]  = m_data.GetU16(&offset); // Reserved words
-            m_dos_header.e_res2[9]  = m_data.GetU16(&offset); // Reserved words
+            dos_header.e_oemid    = data.GetU16(&offset); // OEM identifier (for e_oeminfo)
+            dos_header.e_oeminfo  = data.GetU16(&offset); // OEM information; e_oemid specific
+            dos_header.e_res2[0]  = data.GetU16(&offset); // Reserved words
+            dos_header.e_res2[1]  = data.GetU16(&offset); // Reserved words
+            dos_header.e_res2[2]  = data.GetU16(&offset); // Reserved words
+            dos_header.e_res2[3]  = data.GetU16(&offset); // Reserved words
+            dos_header.e_res2[4]  = data.GetU16(&offset); // Reserved words
+            dos_header.e_res2[5]  = data.GetU16(&offset); // Reserved words
+            dos_header.e_res2[6]  = data.GetU16(&offset); // Reserved words
+            dos_header.e_res2[7]  = data.GetU16(&offset); // Reserved words
+            dos_header.e_res2[8]  = data.GetU16(&offset); // Reserved words
+            dos_header.e_res2[9]  = data.GetU16(&offset); // Reserved words
             
-            m_dos_header.e_lfanew   = m_data.GetU32(&offset); // File address of new exe header
+            dos_header.e_lfanew   = data.GetU32(&offset); // File address of new exe header
         }
     }
     if (!success)
-        memset(&m_dos_header, 0, sizeof(m_dos_header));
+        memset(&dos_header, 0, sizeof(dos_header));
     return success;
 }
 
@@ -312,21 +338,21 @@ ObjectFilePECOFF::ParseDOSHeader ()
 // ParserCOFFHeader
 //----------------------------------------------------------------------
 bool
-ObjectFilePECOFF::ParseCOFFHeader(lldb::offset_t *offset_ptr)
+ObjectFilePECOFF::ParseCOFFHeader(DataExtractor &data, lldb::offset_t *offset_ptr, coff_header_t &coff_header)
 {
-    bool success = m_data.ValidOffsetForDataOfSize (*offset_ptr, sizeof(m_coff_header));
+    bool success = data.ValidOffsetForDataOfSize (*offset_ptr, sizeof(coff_header));
     if (success)
     {
-        m_coff_header.machine   = m_data.GetU16(offset_ptr);
-        m_coff_header.nsects    = m_data.GetU16(offset_ptr);
-        m_coff_header.modtime   = m_data.GetU32(offset_ptr);
-        m_coff_header.symoff    = m_data.GetU32(offset_ptr);
-        m_coff_header.nsyms     = m_data.GetU32(offset_ptr);
-        m_coff_header.hdrsize   = m_data.GetU16(offset_ptr);
-        m_coff_header.flags     = m_data.GetU16(offset_ptr);
+        coff_header.machine   = data.GetU16(offset_ptr);
+        coff_header.nsects    = data.GetU16(offset_ptr);
+        coff_header.modtime   = data.GetU32(offset_ptr);
+        coff_header.symoff    = data.GetU32(offset_ptr);
+        coff_header.nsyms     = data.GetU32(offset_ptr);
+        coff_header.hdrsize   = data.GetU16(offset_ptr);
+        coff_header.flags     = data.GetU16(offset_ptr);
     }
     if (!success)
-        memset(&m_coff_header, 0, sizeof(m_coff_header));
+        memset(&coff_header, 0, sizeof(coff_header));
     return success;
 }
 

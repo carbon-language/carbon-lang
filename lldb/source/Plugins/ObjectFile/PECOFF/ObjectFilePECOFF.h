@@ -245,8 +245,8 @@ protected:
         uint32_t   address_of_name_ordinals;
     } export_directory_entry;
     
-	bool ParseDOSHeader ();
-	bool ParseCOFFHeader (lldb::offset_t *offset_ptr);
+	static bool ParseDOSHeader (lldb_private::DataExtractor &data, dos_header_t &dos_header);
+	static bool ParseCOFFHeader (lldb_private::DataExtractor &data, lldb::offset_t *offset_ptr, coff_header_t &coff_header);
 	bool ParseCOFFOptionalHeader (lldb::offset_t *offset_ptr);
 	bool ParseSectionHeaders (uint32_t offset);
 	
