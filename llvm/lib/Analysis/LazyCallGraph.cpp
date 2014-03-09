@@ -51,10 +51,9 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F) : G(G), F(F) {
   SmallPtrSet<Constant *, 16> Visited;
   // Find all the potential callees in this function. First walk the
   // instructions and add every operand which is a constant to the worklist.
-  for (Function::iterator BBI = F.begin(), BBE = F.end(); BBI != BBE; ++BBI)
-    for (BasicBlock::iterator II = BBI->begin(), IE = BBI->end(); II != IE;
-         ++II)
-      for (Value *Op : II->operand_values())
+  for (BasicBlock &BB : F)
+    for (Instruction &I : BB)
+      for (Value *Op : I.operand_values())
         if (Constant *C = dyn_cast<Constant>(Op))
           if (Visited.insert(C))
             Worklist.push_back(C);
@@ -70,13 +69,11 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, const Node &OtherN)
   // Loop over the other node's callees, adding the Function*s to our list
   // directly, and recursing to add the Node*s.
   Callees.reserve(OtherN.Callees.size());
-  for (NodeVectorImplT::iterator OI = OtherN.Callees.begin(),
-                                 OE = OtherN.Callees.end();
-       OI != OE; ++OI)
-    if (Function *Callee = OI->dyn_cast<Function *>())
+  for (const auto &OtherCallee : OtherN.Callees)
+    if (Function *Callee = OtherCallee.dyn_cast<Function *>())
       Callees.push_back(Callee);
     else
-      Callees.push_back(G.copyInto(*OI->get<Node *>()));
+      Callees.push_back(G.copyInto(*OtherCallee.get<Node *>()));
 }
 
 LazyCallGraph::Node::Node(LazyCallGraph &G, Node &&OtherN)
@@ -84,25 +81,24 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Node &&OtherN)
       CalleeSet(std::move(OtherN.CalleeSet)) {
   // Loop over our Callees. They've been moved from another node, but we need
   // to move the Node*s to live under our bump ptr allocator.
-  for (NodeVectorImplT::iterator CI = Callees.begin(), CE = Callees.end();
-       CI != CE; ++CI)
-    if (Node *ChildN = CI->dyn_cast<Node *>())
-      *CI = G.moveInto(std::move(*ChildN));
+  for (auto &Callee : Callees)
+    if (Node *ChildN = Callee.dyn_cast<Node *>())
+      Callee = G.moveInto(std::move(*ChildN));
 }
 
 LazyCallGraph::LazyCallGraph(Module &M) : M(M) {
-  for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI)
-    if (!FI->isDeclaration() && !FI->hasLocalLinkage())
-      if (EntryNodeSet.insert(&*FI))
-        EntryNodes.push_back(&*FI);
+  for (Function &F : M)
+    if (!F.isDeclaration() && !F.hasLocalLinkage())
+      if (EntryNodeSet.insert(&F))
+        EntryNodes.push_back(&F);
 
   // Now add entry nodes for functions reachable via initializers to globals.
   SmallVector<Constant *, 16> Worklist;
   SmallPtrSet<Constant *, 16> Visited;
-  for (Module::global_iterator GI = M.global_begin(), GE = M.global_end(); GI != GE; ++GI)
-    if (GI->hasInitializer())
-      if (Visited.insert(GI->getInitializer()))
-        Worklist.push_back(GI->getInitializer());
+  for (GlobalVariable &GV : M.globals())
+    if (GV.hasInitializer())
+      if (Visited.insert(GV.getInitializer()))
+        Worklist.push_back(GV.getInitializer());
 
   findCallees(Worklist, Visited, EntryNodes, EntryNodeSet);
 }
@@ -110,13 +106,11 @@ LazyCallGraph::LazyCallGraph(Module &M) : M(M) {
 LazyCallGraph::LazyCallGraph(const LazyCallGraph &G)
     : M(G.M), EntryNodeSet(G.EntryNodeSet) {
   EntryNodes.reserve(G.EntryNodes.size());
-  for (NodeVectorImplT::const_iterator EI = G.EntryNodes.begin(),
-                                       EE = G.EntryNodes.end();
-       EI != EE; ++EI)
-    if (Function *Callee = EI->dyn_cast<Function *>())
+  for (const auto &EntryNode : G.EntryNodes)
+    if (Function *Callee = EntryNode.dyn_cast<Function *>())
       EntryNodes.push_back(Callee);
     else
-      EntryNodes.push_back(copyInto(*EI->get<Node *>()));
+      EntryNodes.push_back(copyInto(*EntryNode.get<Node *>()));
 }
 
 // FIXME: This would be crazy simpler if BumpPtrAllocator were movable without
@@ -128,11 +122,9 @@ LazyCallGraph::LazyCallGraph(LazyCallGraph &&G)
   // Loop over our EntryNodes. They've been moved from another graph, so we
   // need to move the Node*s to live under our bump ptr allocator. We can just
   // do this in-place.
-  for (NodeVectorImplT::iterator EI = EntryNodes.begin(),
-                                 EE = EntryNodes.end();
-       EI != EE; ++EI)
-    if (Node *EntryN = EI->dyn_cast<Node *>())
-      *EI = moveInto(std::move(*EntryN));
+  for (auto &Entry : EntryNodes)
+    if (Node *EntryN = Entry.dyn_cast<Node *>())
+      Entry = moveInto(std::move(*EntryN));
 }
 
 LazyCallGraph::Node *LazyCallGraph::insertInto(Function &F, Node *&MappedN) {
@@ -162,9 +154,9 @@ LazyCallGraphPrinterPass::LazyCallGraphPrinterPass(raw_ostream &OS) : OS(OS) {}
 static void printNodes(raw_ostream &OS, LazyCallGraph::Node &N,
                        SmallPtrSetImpl<LazyCallGraph::Node *> &Printed) {
   // Recurse depth first through the nodes.
-  for (LazyCallGraph::iterator I = N.begin(), E = N.end(); I != E; ++I)
-    if (Printed.insert(*I))
-      printNodes(OS, **I, Printed);
+  for (LazyCallGraph::Node *ChildN : N)
+    if (Printed.insert(ChildN))
+      printNodes(OS, *ChildN, Printed);
 
   OS << "  Call edges in function: " << N.getFunction().getName() << "\n";
   for (LazyCallGraph::iterator I = N.begin(), E = N.end(); I != E; ++I)
@@ -179,9 +171,9 @@ PreservedAnalyses LazyCallGraphPrinterPass::run(Module *M, ModuleAnalysisManager
   OS << "Printing the call graph for module: " << M->getModuleIdentifier() << "\n\n";
 
   SmallPtrSet<LazyCallGraph::Node *, 16> Printed;
-  for (LazyCallGraph::iterator I = G.begin(), E = G.end(); I != E; ++I)
-    if (Printed.insert(*I))
-      printNodes(OS, **I, Printed);
+  for (LazyCallGraph::Node *N : G)
+    if (Printed.insert(N))
+      printNodes(OS, *N, Printed);
 
   return PreservedAnalyses::all();
 }
