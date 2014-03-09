@@ -510,19 +510,17 @@ private:
 class OverloadedMatcherDescriptor : public MatcherDescriptor {
 public:
   OverloadedMatcherDescriptor(ArrayRef<MatcherDescriptor *> Callbacks)
-      : Overloads(Callbacks) {}
+      : Overloads(Callbacks.begin(), Callbacks.end()) {}
 
-  virtual ~OverloadedMatcherDescriptor() {
-    llvm::DeleteContainerPointers(Overloads);
-  }
+  virtual ~OverloadedMatcherDescriptor() {}
 
   virtual VariantMatcher create(const SourceRange &NameRange,
                                 ArrayRef<ParserValue> Args,
                                 Diagnostics *Error) const {
     std::vector<VariantMatcher> Constructed;
     Diagnostics::OverloadContext Ctx(Error);
-    for (size_t i = 0, e = Overloads.size(); i != e; ++i) {
-      VariantMatcher SubMatcher = Overloads[i]->create(NameRange, Args, Error);
+    for (const auto &O : Overloads) {
+      VariantMatcher SubMatcher = O->create(NameRange, Args, Error);
       if (!SubMatcher.isNull()) {
         Constructed.push_back(SubMatcher);
       }
@@ -542,10 +540,8 @@ public:
   bool isVariadic() const {
     bool Overload0Variadic = Overloads[0]->isVariadic();
 #ifndef NDEBUG
-    for (std::vector<MatcherDescriptor *>::const_iterator I = Overloads.begin(),
-                                                          E = Overloads.end();
-         I != E; ++I) {
-      assert(Overload0Variadic == (*I)->isVariadic());
+    for (const auto &O : Overloads) {
+      assert(Overload0Variadic == O->isVariadic());
     }
 #endif
     return Overload0Variadic;
@@ -554,10 +550,8 @@ public:
   unsigned getNumArgs() const {
     unsigned Overload0NumArgs = Overloads[0]->getNumArgs();
 #ifndef NDEBUG
-    for (std::vector<MatcherDescriptor *>::const_iterator I = Overloads.begin(),
-                                                          E = Overloads.end();
-         I != E; ++I) {
-      assert(Overload0NumArgs == (*I)->getNumArgs());
+    for (const auto &O : Overloads) {
+      assert(Overload0NumArgs == O->getNumArgs());
     }
 #endif
     return Overload0NumArgs;
@@ -565,27 +559,23 @@ public:
 
   void getArgKinds(ast_type_traits::ASTNodeKind ThisKind, unsigned ArgNo,
                    std::vector<ArgKind> &Kinds) const {
-    for (std::vector<MatcherDescriptor *>::const_iterator I = Overloads.begin(),
-                                                    E = Overloads.end();
-         I != E; ++I) {
-      if ((*I)->isConvertibleTo(ThisKind))
-        (*I)->getArgKinds(ThisKind, ArgNo, Kinds);
+    for (const auto &O : Overloads) {
+      if (O->isConvertibleTo(ThisKind))
+        O->getArgKinds(ThisKind, ArgNo, Kinds);
     }
   }
 
   bool isConvertibleTo(ast_type_traits::ASTNodeKind Kind, unsigned *Specificity,
                        ast_type_traits::ASTNodeKind *LeastDerivedKind) const {
-    for (std::vector<MatcherDescriptor *>::const_iterator I = Overloads.begin(),
-                                                    E = Overloads.end();
-         I != E; ++I) {
-      if ((*I)->isConvertibleTo(Kind, Specificity, LeastDerivedKind))
+    for (const auto &O : Overloads) {
+      if (O->isConvertibleTo(Kind, Specificity, LeastDerivedKind))
         return true;
     }
     return false;
   }
 
 private:
-  std::vector<MatcherDescriptor *> Overloads;
+  std::vector<std::unique_ptr<MatcherDescriptor>> Overloads;
 };
 
 /// \brief Variadic operator marshaller function.
