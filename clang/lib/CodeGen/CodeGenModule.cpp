@@ -1938,7 +1938,7 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
   for (llvm::Value::use_iterator ui = old->use_begin(), ue = old->use_end();
          ui != ue; ) {
     llvm::Value::use_iterator use = ui++; // Increment before the use is erased.
-    llvm::User *user = *use;
+    llvm::User *user = use->getUser();
 
     // Recognize and replace uses of bitcasts.  Most calls to
     // unprototyped functions will use bitcasts.
@@ -1951,7 +1951,7 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
     // Recognize calls to the function.
     llvm::CallSite callSite(user);
     if (!callSite) continue;
-    if (!callSite.isCallee(use)) continue;
+    if (!callSite.isCallee(&*use)) continue;
 
     // If the return types don't match exactly, then we can't
     // transform this call unless it's dead.

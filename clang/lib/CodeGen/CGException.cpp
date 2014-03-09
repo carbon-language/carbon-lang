@@ -263,12 +263,9 @@ static llvm::Constant *getOpaquePersonalityFn(CodeGenModule &CGM,
 /// Check whether a personality function could reasonably be swapped
 /// for a C++ personality function.
 static bool PersonalityHasOnlyCXXUses(llvm::Constant *Fn) {
-  for (llvm::Constant::use_iterator
-         I = Fn->use_begin(), E = Fn->use_end(); I != E; ++I) {
-    llvm::User *User = *I;
-
+  for (llvm::User *U : Fn->users()) {
     // Conditionally white-list bitcasts.
-    if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(User)) {
+    if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(U)) {
       if (CE->getOpcode() != llvm::Instruction::BitCast) return false;
       if (!PersonalityHasOnlyCXXUses(CE))
         return false;
@@ -276,7 +273,7 @@ static bool PersonalityHasOnlyCXXUses(llvm::Constant *Fn) {
     }
 
     // Otherwise, it has to be a landingpad instruction.
-    llvm::LandingPadInst *LPI = dyn_cast<llvm::LandingPadInst>(User);
+    llvm::LandingPadInst *LPI = dyn_cast<llvm::LandingPadInst>(U);
     if (!LPI) return false;
 
     for (unsigned I = 0, E = LPI->getNumClauses(); I != E; ++I) {

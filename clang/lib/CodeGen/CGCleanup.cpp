@@ -528,7 +528,7 @@ static void destroyOptimisticNormalEntry(CodeGenFunction &CGF,
   llvm::BasicBlock *unreachableBB = CGF.getUnreachableBlock();
   for (llvm::BasicBlock::use_iterator
          i = entry->use_begin(), e = entry->use_end(); i != e; ) {
-    llvm::Use &use = i.getUse();
+    llvm::Use &use = *i;
     ++i;
 
     use.set(unreachableBB);

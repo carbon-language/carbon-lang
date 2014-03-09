@@ -1742,7 +1742,7 @@ static llvm::StoreInst *findDominatingStoreToReturnValue(CodeGenFunction &CGF) {
   }
 
   llvm::StoreInst *store =
-    dyn_cast<llvm::StoreInst>(CGF.ReturnValue->use_back());
+    dyn_cast<llvm::StoreInst>(CGF.ReturnValue->user_back());
   if (!store) return 0;
 
   // These aren't actually possible for non-coerced returns, and we
