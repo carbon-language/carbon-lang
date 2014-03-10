@@ -104,16 +104,6 @@ Constant *Module::getOrInsertFunction(StringRef Name,
     return New;                    // Return the new prototype.
   }
 
-  // Okay, the function exists.  Does it have externally visible linkage?
-  if (F->hasLocalLinkage()) {
-    // Clear the function's name.
-    F->setName("");
-    // Retry, now there won't be a conflict.
-    Constant *NewF = getOrInsertFunction(Name, Ty);
-    F->setName(Name);
-    return NewF;
-  }
-
   // If the function exists but has the wrong type, return a bitcast to the
   // right type.
   if (F->getType() != PointerType::getUnqual(Ty))
