@@ -19,6 +19,9 @@
 #include "ClangTidyDiagnosticConsumer.h"
 #include "llvm/ADT/SmallString.h"
 
+#include <set>
+#include <tuple>
+
 namespace clang {
 namespace tidy {
 
@@ -116,11 +119,24 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
   }
 }
 
+struct LessClangTidyError {
+  bool operator()(const ClangTidyError *LHS, const ClangTidyError *RHS) const {
+    const ClangTidyMessage &M1 = LHS->Message;
+    const ClangTidyMessage &M2 = RHS->Message;
+
+    return std::tie(M1.FilePath, M1.FileOffset, M1.Message) <
+           std::tie(M2.FilePath, M2.FileOffset, M2.Message);
+  }
+};
+
 // Flushes the internal diagnostics buffer to the ClangTidyContext.
 void ClangTidyDiagnosticConsumer::finish() {
   finalizeLastError();
-  for (const ClangTidyError &Error : Errors)
-    Context.storeError(Error);
+  std::set<const ClangTidyError*, LessClangTidyError> UniqueErrors;
+  for (const ClangTidyError &Error : Errors) {
+    if (UniqueErrors.insert(&Error).second)
+      Context.storeError(Error);
+  }
   Errors.clear();
 }
 
