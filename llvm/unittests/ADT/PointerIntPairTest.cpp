@@ -19,7 +19,7 @@ class PointerIntPairTest : public testing::Test {
 };
 
 TEST_F(PointerIntPairTest, GetSet) {
-  PointerIntPair<PointerIntPairTest *, 2> Pair{this, 1U};
+  PointerIntPair<PointerIntPairTest *, 2> Pair(this, 1U);
   EXPECT_EQ(this, Pair.getPointer());
   EXPECT_EQ(1U, Pair.getInt());
 
@@ -42,6 +42,7 @@ TEST_F(PointerIntPairTest, DefaultInitialize) {
   EXPECT_EQ(0U, Pair.getInt());
 }
 
+#if !(defined(_MSC_VER) && _MSC_VER==1700)
 TEST_F(PointerIntPairTest, ManyUnusedBits) {
   // In real code this would be a word-sized integer limited to 31 bits.
   struct Fixnum31 {
@@ -70,5 +71,6 @@ TEST_F(PointerIntPairTest, ManyUnusedBits) {
   EXPECT_EQ(FixnumPointerTraits::NumLowBitsAvailable - 1,
             PointerLikeTypeTraits<decltype(pair)>::NumLowBitsAvailable);
 }
+#endif
 
 } // end anonymous namespace
