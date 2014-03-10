@@ -688,7 +688,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
 }
 
 #if 0
-static void DebugUsers(Log *log, Value *value, uint8_t depth)
+static void DebugUsers(lldb_private::Log *log, Value *value, uint8_t depth)
 {    
     if (!depth)
         return;
@@ -698,7 +698,7 @@ static void DebugUsers(Log *log, Value *value, uint8_t depth)
     if (log)
         log->Printf("  <Begin %d users>", value->getNumUses());
     
-    for (llvm::User *u : users())
+    for (llvm::User *u : value->users())
     {
         if (log)
             log->Printf("  <Use %p> %s", u, PrintValue(u).c_str());
