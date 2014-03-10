@@ -145,6 +145,10 @@ namespace CallingConv {
     X86_CDeclMethod = 80
 
   };
+
+  /// isARMTargetCC - Return true if the specific calling convention is one of
+  /// ARM target specific calling convention.
+  bool isARMTargetCC(ID id);
 } // End CallingConv namespace
 
 } // End llvm namespace
