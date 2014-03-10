@@ -689,6 +689,7 @@ ENABLE_LIBCPP
 ENABLE_CXX1Y
 ENABLE_SPLIT_DWARF
 ENABLE_CLANG_ARCMT
+CLANG_PLUGIN_SUPPORT
 ENABLE_CLANG_STATIC_ANALYZER
 ENABLE_CLANG_REWRITER
 ENABLE_OPTIMIZED
@@ -1407,6 +1408,8 @@ Optional Features:
   --enable-cxx1y          Use c++1y if available (default is NO)
   --enable-split-dwarf    Use split-dwarf if available (default is NO)
   --enable-clang-arcmt    Enable building of clang ARCMT (default is YES)
+  --enable-clang-plugin-support
+                          Enable plugin support in clang (default is YES)
   --enable-clang-static-analyzer
                           Enable building of clang Static Analyzer (default is
                           YES)
@@ -4869,6 +4872,26 @@ case "$enableval" in
 ;;
   *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-clang-arcmt. Use \"yes\" or \"no\"" >&5
 echo "$as_me: error: Invalid setting for --enable-clang-arcmt. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
+clang_plugin_support="yes"
+# Check whether --enable-clang-plugin-support was given.
+if test "${enable_clang_plugin_support+set}" = set; then
+  enableval=$enable_clang_plugin_support; clang_plugin_support="$enableval"
+else
+  enableval="yes"
+fi
+
+case "$enableval" in
+  yes) CLANG_PLUGIN_SUPPORT=1
+ ;;
+  no)  CLANG_PLUGIN_SUPPORT=0
+ ;;
+  default) CLANG_PLUGIN_SUPPORT=1
+;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-clang-plugin-support. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-clang-plugin-support. Use \"yes\" or \"no\"" >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
 
@@ -20180,6 +20203,7 @@ ENABLE_LIBCPP!$ENABLE_LIBCPP$ac_delim
 ENABLE_CXX1Y!$ENABLE_CXX1Y$ac_delim
 ENABLE_SPLIT_DWARF!$ENABLE_SPLIT_DWARF$ac_delim
 ENABLE_CLANG_ARCMT!$ENABLE_CLANG_ARCMT$ac_delim
+CLANG_PLUGIN_SUPPORT!$CLANG_PLUGIN_SUPPORT$ac_delim
 ENABLE_CLANG_STATIC_ANALYZER!$ENABLE_CLANG_STATIC_ANALYZER$ac_delim
 ENABLE_CLANG_REWRITER!$ENABLE_CLANG_REWRITER$ac_delim
 ENABLE_OPTIMIZED!$ENABLE_OPTIMIZED$ac_delim
@@ -20189,7 +20213,6 @@ ENABLE_WERROR!$ENABLE_WERROR$ac_delim
 ENABLE_EXPENSIVE_CHECKS!$ENABLE_EXPENSIVE_CHECKS$ac_delim
 EXPENSIVE_CHECKS!$EXPENSIVE_CHECKS$ac_delim
 DEBUG_RUNTIME!$DEBUG_RUNTIME$ac_delim
-DEBUG_SYMBOLS!$DEBUG_SYMBOLS$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -20231,6 +20254,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+DEBUG_SYMBOLS!$DEBUG_SYMBOLS$ac_delim
 KEEP_SYMBOLS!$KEEP_SYMBOLS$ac_delim
 JIT!$JIT$ac_delim
 TARGET_HAS_JIT!$TARGET_HAS_JIT$ac_delim
@@ -20327,7 +20351,6 @@ LLVM_ETCDIR!$LLVM_ETCDIR$ac_delim
 LLVM_INCLUDEDIR!$LLVM_INCLUDEDIR$ac_delim
 LLVM_INFODIR!$LLVM_INFODIR$ac_delim
 LLVM_MANDIR!$LLVM_MANDIR$ac_delim
-LLVM_CONFIGTIME!$LLVM_CONFIGTIME$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -20369,6 +20392,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+LLVM_CONFIGTIME!$LLVM_CONFIGTIME$ac_delim
 BINDINGS_TO_BUILD!$BINDINGS_TO_BUILD$ac_delim
 ALL_BINDINGS!$ALL_BINDINGS$ac_delim
 OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
@@ -20380,7 +20404,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 9; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 10; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

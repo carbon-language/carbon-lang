@@ -253,6 +253,9 @@ ENABLE_CXX1Y = @ENABLE_CXX1Y@
 # When ENABLE_SPLIT_DWARF is enabled, LLVM uses -gfission to build in debug mode.
 ENABLE_SPLIT_DWARF = @ENABLE_SPLIT_DWARF@
 
+# When enabled, clang will have plugin support.
+CLANG_PLUGIN_SUPPORT = @CLANG_PLUGIN_SUPPORT@
+
 # When ENABLE_CLANG_ARCMT is enabled, clang will have ARCMigrationTool.
 ENABLE_CLANG_ARCMT = @ENABLE_CLANG_ARCMT@
 
