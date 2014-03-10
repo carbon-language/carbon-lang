@@ -184,19 +184,26 @@ void BreakableStringLiteral::insertBreak(unsigned LineIndex,
       Prefix, InPPDirective, 1, IndentLevel, LeadingSpaces);
 }
 
-static StringRef getLineCommentPrefix(StringRef Comment) {
-  static const char *const KnownPrefixes[] = { "/// ", "///", "// ", "//" };
-  for (size_t i = 0, e = llvm::array_lengthof(KnownPrefixes); i != e; ++i)
-    if (Comment.startswith(KnownPrefixes[i]))
-      return KnownPrefixes[i];
-  return "";
+static StringRef getLineCommentIndentPrefix(StringRef Comment) {
+  static const char *const KnownPrefixes[] = { "///", "//" };
+  StringRef LongestPrefix;
+  for (StringRef KnownPrefix : KnownPrefixes) {
+    if (Comment.startswith(KnownPrefix)) {
+      size_t PrefixLength = KnownPrefix.size();
+      while (PrefixLength < Comment.size() && Comment[PrefixLength] == ' ')
+        ++PrefixLength;
+      if (PrefixLength > LongestPrefix.size())
+        LongestPrefix = Comment.substr(0, PrefixLength);
+    }
+  }
+  return LongestPrefix;
 }
 
 BreakableLineComment::BreakableLineComment(
     const FormatToken &Token, unsigned IndentLevel, unsigned StartColumn,
     bool InPPDirective, encoding::Encoding Encoding, const FormatStyle &Style)
     : BreakableSingleLineToken(Token, IndentLevel, StartColumn,
-                               getLineCommentPrefix(Token.TokenText), "",
+                               getLineCommentIndentPrefix(Token.TokenText), "",
                                InPPDirective, Encoding, Style) {
   OriginalPrefix = Prefix;
   if (Token.TokenText.size() > Prefix.size() &&

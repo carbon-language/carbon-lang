@@ -1026,6 +1026,21 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
       format("#define XXX //q w e r t y u i", getLLVMStyleWithColumns(22)));
 }
 
+TEST_F(FormatTest, PreservesHangingIndentInCxxComments) {
+  EXPECT_EQ("//     A comment\n"
+            "//     that doesn't\n"
+            "//     fit on one\n"
+            "//     line",
+            format("//     A comment that doesn't fit on one line",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("///     A comment\n"
+            "///     that doesn't\n"
+            "///     fit on one\n"
+            "///     line",
+            format("///     A comment that doesn't fit on one line",
+                   getLLVMStyleWithColumns(20)));
+}
+
 TEST_F(FormatTest, DontSplitLineCommentsWithEscapedNewlines) {
   EXPECT_EQ("// aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
             "// aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\\n"
