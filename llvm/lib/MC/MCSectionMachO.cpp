@@ -209,7 +209,7 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
   // Figure out which section type it is.
   auto TypeDescriptor = std::find_if(
       std::begin(SectionTypeDescriptors), std::end(SectionTypeDescriptors),
-      [&](const decltype(*SectionTypeDescriptors) &Descriptor) {
+      [&](decltype(*SectionTypeDescriptors) &Descriptor) {
         return Descriptor.AssemblerName &&
                SectionType == Descriptor.AssemblerName;
       });
@@ -238,7 +238,7 @@ std::string MCSectionMachO::ParseSectionSpecifier(StringRef Spec,        // In.
   for (StringRef &SectionAttr : SectionAttrs) {
     auto AttrDescriptorI = std::find_if(
         std::begin(SectionAttrDescriptors), std::end(SectionAttrDescriptors),
-        [&](const decltype(*SectionAttrDescriptors) &Descriptor) {
+        [&](decltype(*SectionAttrDescriptors) &Descriptor) {
           return Descriptor.AssemblerName &&
                  SectionAttr.trim() == Descriptor.AssemblerName;
         });
