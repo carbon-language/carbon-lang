@@ -835,7 +835,15 @@ public:
     typedef _VSTD::reverse_iterator<const_iterator>         const_reverse_iterator;
 
     _LIBCPP_INLINE_VISIBILITY
-    map(const key_compare& __comp = key_compare())
+    map()
+        _NOEXCEPT_(
+            is_nothrow_default_constructible<allocator_type>::value &&
+            is_nothrow_default_constructible<key_compare>::value &&
+            is_nothrow_copy_constructible<key_compare>::value)
+        : __tree_(__vc(key_compare())) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    explicit map(const key_compare& __comp)
         _NOEXCEPT_(
             is_nothrow_default_constructible<allocator_type>::value &&
             is_nothrow_default_constructible<key_compare>::value &&
@@ -1568,7 +1576,15 @@ public:
     typedef _VSTD::reverse_iterator<const_iterator>         const_reverse_iterator;
 
     _LIBCPP_INLINE_VISIBILITY
-    multimap(const key_compare& __comp = key_compare())
+    multimap()
+        _NOEXCEPT_(
+            is_nothrow_default_constructible<allocator_type>::value &&
+            is_nothrow_default_constructible<key_compare>::value &&
+            is_nothrow_copy_constructible<key_compare>::value)
+        : __tree_(__vc(key_compare())) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    explicit multimap(const key_compare& __comp)
         _NOEXCEPT_(
             is_nothrow_default_constructible<allocator_type>::value &&
             is_nothrow_default_constructible<key_compare>::value &&
