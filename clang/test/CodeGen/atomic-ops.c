@@ -91,14 +91,20 @@ int fi3d(int *i) {
 
 _Bool fi4(_Atomic(int) *i) {
   // CHECK: @fi4
-  // CHECK: cmpxchg i32*
+  // CHECK: [[OLD:%[.0-9A-Z_a-z]+]] = cmpxchg i32* [[PTR:%[.0-9A-Z_a-z]+]], i32 [[EXPECTED:%[.0-9A-Z_a-z]+]], i32 [[DESIRED:%[.0-9A-Z_a-z]+]]
+  // CHECK: [[CMP:%[.0-9A-Z_a-z]+]] = icmp eq i32 [[OLD]], [[EXPECTED]]
+  // CHECK: br i1 [[CMP]], label %[[STORE_EXPECTED:[.0-9A-Z_a-z]+]], label %[[CONTINUE:[.0-9A-Z_a-z]+]]
+  // CHECK: store i32 [[OLD]]
   int cmp = 0;
   return __c11_atomic_compare_exchange_strong(i, &cmp, 1, memory_order_acquire, memory_order_acquire);
 }
 
 _Bool fi4a(int *i) {
   // CHECK: @fi4
-  // CHECK: cmpxchg i32*
+  // CHECK: [[OLD:%[.0-9A-Z_a-z]+]] = cmpxchg i32* [[PTR:%[.0-9A-Z_a-z]+]], i32 [[EXPECTED:%[.0-9A-Z_a-z]+]], i32 [[DESIRED:%[.0-9A-Z_a-z]+]]
+  // CHECK: [[CMP:%[.0-9A-Z_a-z]+]] = icmp eq i32 [[OLD]], [[EXPECTED]]
+  // CHECK: br i1 [[CMP]], label %[[STORE_EXPECTED:[.0-9A-Z_a-z]+]], label %[[CONTINUE:[.0-9A-Z_a-z]+]]
+  // CHECK: store i32 [[OLD]]
   int cmp = 0;
   int desired = 1;
   return __atomic_compare_exchange(i, &cmp, &desired, 0, memory_order_acquire, memory_order_acquire);
@@ -106,7 +112,10 @@ _Bool fi4a(int *i) {
 
 _Bool fi4b(int *i) {
   // CHECK: @fi4
-  // CHECK: cmpxchg i32*
+  // CHECK: [[OLD:%[.0-9A-Z_a-z]+]] = cmpxchg i32* [[PTR:%[.0-9A-Z_a-z]+]], i32 [[EXPECTED:%[.0-9A-Z_a-z]+]], i32 [[DESIRED:%[.0-9A-Z_a-z]+]]
+  // CHECK: [[CMP:%[.0-9A-Z_a-z]+]] = icmp eq i32 [[OLD]], [[EXPECTED]]
+  // CHECK: br i1 [[CMP]], label %[[STORE_EXPECTED:[.0-9A-Z_a-z]+]], label %[[CONTINUE:[.0-9A-Z_a-z]+]]
+  // CHECK: store i32 [[OLD]]
   int cmp = 0;
   return __atomic_compare_exchange_n(i, &cmp, 1, 1, memory_order_acquire, memory_order_acquire);
 }

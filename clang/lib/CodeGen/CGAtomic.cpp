@@ -201,16 +201,42 @@ EmitAtomicOp(CodeGenFunction &CGF, AtomicExpr *E, llvm::Value *Dest,
   case AtomicExpr::AO__atomic_compare_exchange_n: {
     // Note that cmpxchg only supports specifying one ordering and
     // doesn't support weak cmpxchg, at least at the moment.
-    llvm::LoadInst *LoadVal1 = CGF.Builder.CreateLoad(Val1);
-    LoadVal1->setAlignment(Align);
-    llvm::LoadInst *LoadVal2 = CGF.Builder.CreateLoad(Val2);
-    LoadVal2->setAlignment(Align);
-    llvm::AtomicCmpXchgInst *CXI =
-        CGF.Builder.CreateAtomicCmpXchg(Ptr, LoadVal1, LoadVal2, Order);
-    CXI->setVolatile(E->isVolatile());
-    llvm::StoreInst *StoreVal1 = CGF.Builder.CreateStore(CXI, Val1);
-    StoreVal1->setAlignment(Align);
-    llvm::Value *Cmp = CGF.Builder.CreateICmpEQ(CXI, LoadVal1);
+
+    llvm::LoadInst *Expected = CGF.Builder.CreateLoad(Val1);
+    Expected->setAlignment(Align);
+    llvm::LoadInst *Desired = CGF.Builder.CreateLoad(Val2);
+    Desired->setAlignment(Align);
+    llvm::AtomicCmpXchgInst *Old =
+        CGF.Builder.CreateAtomicCmpXchg(Ptr, Expected, Desired, Order);
+    Old->setVolatile(E->isVolatile());
+
+    // Cmp holds the result of the compare-exchange operation: true on success,
+    // false on failure.
+    llvm::Value *Cmp = CGF.Builder.CreateICmpEQ(Old, Expected);
+
+    // This basic block is used to hold the store instruction if the operation
+    // failed.
+    llvm::BasicBlock *StoreExpectedBB =
+        CGF.createBasicBlock("cmpxchg.store_expected", CGF.CurFn);
+
+    // This basic block is the exit point of the operation, we should end up
+    // here regardless of whether or not the operation succeeded.
+    llvm::BasicBlock *ContinueBB =
+        CGF.createBasicBlock("cmpxchg.continue", CGF.CurFn);
+
+    // Update Expected if Expected isn't equal to Old, otherwise branch to the
+    // exit point.
+    CGF.Builder.CreateCondBr(Cmp, ContinueBB, StoreExpectedBB);
+
+    CGF.Builder.SetInsertPoint(StoreExpectedBB);
+    // Update the memory at Expected with Old's value.
+    llvm::StoreInst *StoreExpected = CGF.Builder.CreateStore(Old, Val1);
+    StoreExpected->setAlignment(Align);
+    // Finally, branch to the exit point.
+    CGF.Builder.CreateBr(ContinueBB);
+
+    CGF.Builder.SetInsertPoint(ContinueBB);
+    // Update the memory at Dest with Cmp's value.
     CGF.EmitStoreOfScalar(Cmp, CGF.MakeAddrLValue(Dest, E->getType()));
     return;
   }
