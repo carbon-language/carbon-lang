@@ -1100,7 +1100,8 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
   bool InFunctionDecl = Line.MightBeFunctionDecl;
   while (Current != NULL) {
     if (Current->Type == TT_LineComment) {
-      if (Current->Previous->BlockKind == BK_BracedInit)
+      if (Current->Previous->BlockKind == BK_BracedInit &&
+          Current->Previous->opensScope())
         Current->SpacesRequiredBefore = Style.Cpp11BracedListStyle ? 0 : 1;
       else
         Current->SpacesRequiredBefore = Style.SpacesBeforeTrailingComments;

@@ -7980,6 +7980,12 @@ TEST_F(FormatTest, FormatsLambdas) {
   verifyFormat("double &operator[](int i) { return 0; }\n"
                "int i;");
   verifyFormat("std::unique_ptr<int[]> foo() {}");
+
+  // Other corner cases.
+  verifyFormat("void f() {\n"
+               "  bar([]() {} // Did not respect SpacesBeforeTrailingComments\n"
+               "      );\n"
+               "}");
 }
 
 TEST_F(FormatTest, FormatsBlocks) {
