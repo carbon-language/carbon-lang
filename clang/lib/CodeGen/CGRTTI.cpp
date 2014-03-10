@@ -332,11 +332,11 @@ getTypeInfoLinkage(CodeGenModule &CGM, QualType Ty) {
   
   switch (Ty->getLinkage()) {
   case NoLinkage:
-  case VisibleNoLinkage:
   case InternalLinkage:
   case UniqueExternalLinkage:
     return llvm::GlobalValue::InternalLinkage;
 
+  case VisibleNoLinkage:
   case ExternalLinkage:
     if (!CGM.getLangOpts().RTTI) {
       // RTTI is not enabled, which means that this type info struct is going
