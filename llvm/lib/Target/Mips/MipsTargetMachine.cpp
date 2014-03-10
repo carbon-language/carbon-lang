@@ -175,6 +175,9 @@ public:
   virtual bool addInstSelector();
   virtual void addMachineSSAOptimization();
   virtual bool addPreEmitPass();
+
+  virtual bool addPreRegAlloc();
+
 };
 } // namespace
 
@@ -206,6 +209,15 @@ bool MipsPassConfig::addInstSelector() {
 void MipsPassConfig::addMachineSSAOptimization() {
   addPass(createMipsOptimizePICCallPass(getMipsTargetMachine()));
   TargetPassConfig::addMachineSSAOptimization();
+}
+
+bool MipsPassConfig::addPreRegAlloc() {
+  if (getOptLevel() == CodeGenOpt::None) {
+    addPass(createMipsOptimizePICCallPass(getMipsTargetMachine()));
+    return true;
+  }
+  else
+    return false;
 }
 
 void MipsTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
