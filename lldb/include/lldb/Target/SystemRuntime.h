@@ -270,6 +270,25 @@ public:
     {
     }
 
+    //------------------------------------------------------------------
+    /// Complete the fields in a QueueItem
+    ///
+    /// PopulatePendingItemsForQueue() may not fill in all of the QueueItem
+    /// details; when the remaining fields are needed, they will be
+    /// fetched by call this method.
+    ///
+    /// @param [in] queue_item
+    ///   The QueueItem that we will be completing.
+    ///
+    /// @param [in] item_ref
+    ///     The item_ref token that is needed to retrieve the rest of the
+    ///     information about the QueueItem.
+    //------------------------------------------------------------------
+    virtual void
+    CompleteQueueItem (lldb_private::QueueItem *queue_item, lldb::addr_t item_ref)
+    {
+    }
+
 protected:
     //------------------------------------------------------------------
     // Member variables.

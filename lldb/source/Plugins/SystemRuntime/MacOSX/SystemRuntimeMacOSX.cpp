@@ -620,42 +620,42 @@ SystemRuntimeMacOSX::PopulatePendingItemsForQueue (Queue *queue)
         PendingItemsForQueue pending_item_refs = GetPendingItemRefsForQueue (queue->GetLibdispatchQueueAddress());
         for (ItemRefAndCodeAddress pending_item : pending_item_refs.item_refs_and_code_addresses)
         {
-            AppleGetItemInfoHandler::GetItemInfoReturnInfo ret;
-            ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
-            Error error;
-            ret = m_get_item_info_handler.GetItemInfo (*cur_thread_sp.get(), pending_item.item_ref, m_page_to_free, m_page_to_free_size, error);
-            m_page_to_free = LLDB_INVALID_ADDRESS;
-            m_page_to_free_size = 0;
-            if (ret.item_buffer_ptr != 0 &&  ret.item_buffer_ptr != LLDB_INVALID_ADDRESS && ret.item_buffer_size > 0)
-            {
-                DataBufferHeap data (ret.item_buffer_size, 0);
-                if (m_process->ReadMemory (ret.item_buffer_ptr, data.GetBytes(), ret.item_buffer_size, error) && error.Success())
-                {
-                    DataExtractor extractor (data.GetBytes(), data.GetByteSize(), m_process->GetByteOrder(), m_process->GetAddressByteSize());
-                    ItemInfo item = ExtractItemInfoFromBuffer (extractor);
-                    QueueItemSP queue_item_sp (new QueueItem (queue->shared_from_this(), pending_item.item_ref));
-                    queue_item_sp->SetItemThatEnqueuedThis (item.item_that_enqueued_this);
-
-                    Address addr;
-                    if (!m_process->GetTarget().ResolveLoadAddress (item.function_or_block, addr, item.stop_id))
-                    {
-                        m_process->GetTarget().ResolveLoadAddress (item.function_or_block, addr);
-                    }
-                    queue_item_sp->SetAddress (addr);
-                    queue_item_sp->SetEnqueueingThreadID (item.enqueuing_thread_id);
-                    queue_item_sp->SetTargetQueueID (item.enqueuing_thread_id);
-                    queue_item_sp->SetStopID (item.stop_id);
-                    queue_item_sp->SetEnqueueingBacktrace (item.enqueuing_callstack);
-                    queue_item_sp->SetThreadLabel (item.enqueuing_thread_label);
-                    queue_item_sp->SetQueueLabel (item.enqueuing_queue_label);
-                    queue_item_sp->SetTargetQueueLabel (item.target_queue_label);
-
-                    queue->PushPendingQueueItem (queue_item_sp);
-                }
-                m_page_to_free = ret.item_buffer_ptr;
-                m_page_to_free_size = ret.item_buffer_size;
-            }
+            Address addr;
+            m_process->GetTarget().ResolveLoadAddress (pending_item.code_address, addr);
+            QueueItemSP queue_item_sp (new QueueItem (queue->shared_from_this(), m_process->shared_from_this(), pending_item.item_ref, addr));
+            queue->PushPendingQueueItem (queue_item_sp);
         }
+    }
+}
+
+void 
+SystemRuntimeMacOSX::CompleteQueueItem (QueueItem *queue_item, addr_t item_ref)
+{
+    AppleGetItemInfoHandler::GetItemInfoReturnInfo ret;
+
+    ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
+    Error error;
+    ret = m_get_item_info_handler.GetItemInfo (*cur_thread_sp.get(), item_ref, m_page_to_free, m_page_to_free_size, error);
+    m_page_to_free = LLDB_INVALID_ADDRESS;
+    m_page_to_free_size = 0;
+    if (ret.item_buffer_ptr != 0 &&  ret.item_buffer_ptr != LLDB_INVALID_ADDRESS && ret.item_buffer_size > 0)
+    {
+        DataBufferHeap data (ret.item_buffer_size, 0);
+        if (m_process->ReadMemory (ret.item_buffer_ptr, data.GetBytes(), ret.item_buffer_size, error) && error.Success())
+        {
+            DataExtractor extractor (data.GetBytes(), data.GetByteSize(), m_process->GetByteOrder(), m_process->GetAddressByteSize());
+            ItemInfo item = ExtractItemInfoFromBuffer (extractor);
+            queue_item->SetItemThatEnqueuedThis (item.item_that_enqueued_this);
+            queue_item->SetEnqueueingThreadID (item.enqueuing_thread_id);
+            queue_item->SetEnqueueingQueueID (item.enqueuing_queue_serialnum);
+            queue_item->SetStopID (item.stop_id);
+            queue_item->SetEnqueueingBacktrace (item.enqueuing_callstack);
+            queue_item->SetThreadLabel (item.enqueuing_thread_label);
+            queue_item->SetQueueLabel (item.enqueuing_queue_label);
+            queue_item->SetTargetQueueLabel (item.target_queue_label);
+        }
+        m_page_to_free = ret.item_buffer_ptr;
+        m_page_to_free_size = ret.item_buffer_size;
     }
 }
 

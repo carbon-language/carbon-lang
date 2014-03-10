@@ -100,6 +100,9 @@ public:
     void
     PopulatePendingItemsForQueue (lldb_private::Queue *queue);
 
+    void
+    CompleteQueueItem (lldb_private::QueueItem *queue_item, lldb::addr_t item_ref);
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
