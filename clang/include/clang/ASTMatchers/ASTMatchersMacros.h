@@ -37,6 +37,25 @@
 #ifndef LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_MACROS_H
 #define LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_MACROS_H
 
+/// \brief AST_MATCHER_FUNCTION_P(ReturnType, DefineMatcher, ParamType, Param) {
+/// defines a single-parameter function named DefineMatcher() that returns a
+/// ReturnType object.
+///
+/// The code between the curly braces has access to the following variables:
+///
+///   Param:                 the parameter passed to the function; its type
+///                          is ParamType.
+///
+/// The code should return an instance of ReturnType.
+#define AST_MATCHER_FUNCTION_P(ReturnType, DefineMatcher, ParamType, Param)    \
+  AST_MATCHER_FUNCTION_P_OVERLOAD(ReturnType, DefineMatcher, ParamType, Param, \
+                                  0)
+#define AST_MATCHER_FUNCTION_P_OVERLOAD(ReturnType, DefineMatcher, ParamType,  \
+                                        Param, OverloadId)                     \
+  inline ReturnType DefineMatcher(const ParamType &Param);                     \
+  typedef ReturnType (&DefineMatcher##_Type##OverloadId)(const ParamType &);   \
+  inline ReturnType DefineMatcher(const ParamType &Param)
+
 /// \brief AST_MATCHER(Type, DefineMatcher) { ... }
 /// defines a zero parameter function named DefineMatcher() that returns a
 /// Matcher<Type> object.

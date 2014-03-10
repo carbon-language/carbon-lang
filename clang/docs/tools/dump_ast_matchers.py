@@ -204,6 +204,25 @@ def act_on_decl(declaration, comment, allowed_types):
         add_matcher(result_type, name, args, comment)
       return
 
+    m = re.match(r"""^\s*AST_MATCHER_FUNCTION(_P)?(.?)(?:_OVERLOAD)?\(
+                       (?:\s*([^\s,]+)\s*,)?
+                          \s*([^\s,]+)\s*
+                       (?:,\s*([^\s,]+)\s*
+                          ,\s*([^\s,]+)\s*)?
+                       (?:,\s*([^\s,]+)\s*
+                          ,\s*([^\s,]+)\s*)?
+                       (?:,\s*\d+\s*)?
+                      \)\s*{\s*$""", declaration, flags=re.X)
+    if m:
+      p, n, result, name = m.groups()[0:4]
+      args = m.groups()[4:]
+      if n not in ['', '2']:
+        raise Exception('Cannot parse "%s"' % declaration)
+      args = ', '.join('%s %s' % (args[i], args[i+1])
+                       for i in range(0, len(args), 2) if args[i])
+      add_matcher(result, name, args, comment)
+      return
+
     m = re.match(r"""^\s*AST_MATCHER(_P)?(.?)(?:_OVERLOAD)?\(
                        (?:\s*([^\s,]+)\s*,)?
                           \s*([^\s,]+)\s*

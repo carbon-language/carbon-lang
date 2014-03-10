@@ -66,7 +66,7 @@ public:
     VariantMatcher Out;
     if (Ctor)
       Out = Registry::constructMatcher(*Ctor, SourceRange(), Args(Arg1), Error);
-    EXPECT_EQ("", DummyError.toStringFull());
+    EXPECT_EQ("", DummyError.toStringFull()) << MatcherName;
     return Out;
   }
 
@@ -211,6 +211,25 @@ TEST_F(RegistryTest, OverloadedMatchers) {
   Code = "class Z { public: void z() { this->z(); } };";
   EXPECT_TRUE(matches(Code, CallExpr0));
   EXPECT_FALSE(matches(Code, CallExpr1));
+
+  Matcher<Decl> DeclDecl = declaratorDecl(hasTypeLoc(
+      constructMatcher(
+          "loc", constructMatcher("asString", std::string("const double *")))
+          .getTypedMatcher<TypeLoc>()));
+
+  Matcher<NestedNameSpecifierLoc> NNSL =
+      constructMatcher(
+          "loc", VariantMatcher::SingleMatcher(nestedNameSpecifier(
+                     specifiesType(hasDeclaration(recordDecl(hasName("A")))))))
+          .getTypedMatcher<NestedNameSpecifierLoc>();
+
+  Code = "const double * x = 0;";
+  EXPECT_TRUE(matches(Code, DeclDecl));
+  EXPECT_FALSE(matches(Code, NNSL));
+
+  Code = "struct A { struct B {}; }; A::B a_b;";
+  EXPECT_FALSE(matches(Code, DeclDecl));
+  EXPECT_TRUE(matches(Code, NNSL));
 }
 
 TEST_F(RegistryTest, PolymorphicMatchers) {

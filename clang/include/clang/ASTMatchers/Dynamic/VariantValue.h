@@ -49,7 +49,8 @@ class VariantMatcher {
   class MatcherOps {
   public:
     virtual ~MatcherOps();
-    virtual bool canConstructFrom(const DynTypedMatcher &Matcher) const = 0;
+    virtual bool canConstructFrom(const DynTypedMatcher &Matcher,
+                                  bool &IsExactMatch) const = 0;
     virtual void constructFrom(const DynTypedMatcher &Matcher) = 0;
     virtual void constructVariadicOperator(
         ast_matchers::internal::VariadicOperatorFunction Func,
@@ -144,7 +145,10 @@ private:
   public:
     typedef ast_matchers::internal::Matcher<T> MatcherT;
 
-    virtual bool canConstructFrom(const DynTypedMatcher &Matcher) const {
+    virtual bool canConstructFrom(const DynTypedMatcher &Matcher,
+                                  bool &IsExactMatch) const {
+      IsExactMatch = Matcher.getSupportedKind().isSame(
+          ast_type_traits::ASTNodeKind::getFromNodeKind<T>());
       return Matcher.canConvertTo<T>();
     }
 

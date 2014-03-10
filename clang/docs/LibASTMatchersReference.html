@@ -3213,12 +3213,6 @@ nestedNameSpecifierLoc(hasPrefix(loc(specifiesType(asString("struct A")))))
 </pre></td></tr>
 
 
-<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1NestedNameSpecifierLoc.html">NestedNameSpecifierLoc</a>&gt;</td><td class="name" onclick="toggle('loc1')"><a name="loc1Anchor">loc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1NestedNameSpecifier.html">NestedNameSpecifier</a>&gt;  InnerMatcher</td></tr>
-<tr><td colspan="4" class="doc" id="loc1"><pre>Matches NestedNameSpecifierLocs for which the given inner
-NestedNameSpecifier-matcher matches.
-</pre></td></tr>
-
-
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1NestedNameSpecifierLoc.html">NestedNameSpecifierLoc</a>&gt;</td><td class="name" onclick="toggle('specifiesTypeLoc0')"><a name="specifiesTypeLoc0Anchor">specifiesTypeLoc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt; InnerMatcher</td></tr>
 <tr><td colspan="4" class="doc" id="specifiesTypeLoc0"><pre>Matches nested name specifier locs that specify a type matching the
 given TypeLoc.
@@ -3613,12 +3607,6 @@ Usable as: Any Matcher
 </pre></td></tr>
 
 
-<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;</td><td class="name" onclick="toggle('loc0')"><a name="loc0Anchor">loc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt;  InnerMatcher</td></tr>
-<tr><td colspan="4" class="doc" id="loc0"><pre>Matches TypeLocs for which the given inner
-QualType-matcher matches.
-</pre></td></tr>
-
-
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypedefType.html">TypedefType</a>&gt;</td><td class="name" onclick="toggle('hasDeclaration1')"><a name="hasDeclaration1Anchor">hasDeclaration</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;  InnerMatcher</td></tr>
 <tr><td colspan="4" class="doc" id="hasDeclaration1"><pre>Matches a node if the declaration associated with that node
 matches the given matcher.
@@ -3776,6 +3764,18 @@ or conditional operator.
 
 Example matches true (matcher = hasCondition(boolLiteral(equals(true))))
   if (true) {}
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt;internal::BindableMatcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1NestedNameSpecifierLoc.html">NestedNameSpecifierLoc</a>&gt;&gt;</td><td class="name" onclick="toggle('loc1')"><a name="loc1Anchor">loc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1NestedNameSpecifier.html">NestedNameSpecifier</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="loc1"><pre>Matches NestedNameSpecifierLocs for which the given inner
+NestedNameSpecifier-matcher matches.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt;internal::BindableMatcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TypeLoc.html">TypeLoc</a>&gt;&gt;</td><td class="name" onclick="toggle('loc0')"><a name="loc0Anchor">loc</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt; InnerMatcher</td></tr>
+<tr><td colspan="4" class="doc" id="loc0"><pre>Matches TypeLocs for which the given inner
+QualType-matcher matches.
 </pre></td></tr>
 
 <!--END_TRAVERSAL_MATCHERS -->

@@ -2869,8 +2869,8 @@ AST_POLYMORPHIC_MATCHER(
 
 /// \brief Matches \c TypeLocs for which the given inner
 /// QualType-matcher matches.
-inline internal::BindableMatcher<TypeLoc> loc(
-    const internal::Matcher<QualType> &InnerMatcher) {
+AST_MATCHER_FUNCTION_P_OVERLOAD(internal::BindableMatcher<TypeLoc>, loc,
+                                internal::Matcher<QualType>, InnerMatcher, 0) {
   return internal::BindableMatcher<TypeLoc>(
       new internal::TypeLocTypeMatcher(InnerMatcher));
 }
@@ -3353,8 +3353,9 @@ const internal::VariadicAllOfMatcher<
 
 /// \brief Matches \c NestedNameSpecifierLocs for which the given inner
 /// NestedNameSpecifier-matcher matches.
-inline internal::BindableMatcher<NestedNameSpecifierLoc> loc(
-    const internal::Matcher<NestedNameSpecifier> &InnerMatcher) {
+AST_MATCHER_FUNCTION_P_OVERLOAD(
+    internal::BindableMatcher<NestedNameSpecifierLoc>, loc,
+    internal::Matcher<NestedNameSpecifier>, InnerMatcher, 1) {
   return internal::BindableMatcher<NestedNameSpecifierLoc>(
       new internal::LocMatcher<NestedNameSpecifierLoc, NestedNameSpecifier>(
           InnerMatcher));
@@ -3390,7 +3391,7 @@ AST_MATCHER_P(NestedNameSpecifier, specifiesType,
 ///   matches "A::"
 AST_MATCHER_P(NestedNameSpecifierLoc, specifiesTypeLoc,
               internal::Matcher<TypeLoc>, InnerMatcher) {
-  return InnerMatcher.matches(Node.getTypeLoc(), Finder, Builder);
+  return Node && InnerMatcher.matches(Node.getTypeLoc(), Finder, Builder);
 }
 
 /// \brief Matches on the prefix of a \c NestedNameSpecifier.

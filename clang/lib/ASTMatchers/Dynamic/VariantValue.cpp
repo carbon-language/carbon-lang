@@ -37,7 +37,8 @@ public:
   }
 
   virtual void makeTypedMatcher(MatcherOps &Ops) const {
-    if (Ops.canConstructFrom(Matcher))
+    bool Ignore;
+    if (Ops.canConstructFrom(Matcher, Ignore))
       Ops.constructFrom(Matcher);
   }
 
@@ -69,15 +70,25 @@ public:
   }
 
   virtual void makeTypedMatcher(MatcherOps &Ops) const {
+    bool FoundIsExact = false;
     const DynTypedMatcher *Found = NULL;
+    int NumFound = 0;
     for (size_t i = 0, e = Matchers.size(); i != e; ++i) {
-      if (Ops.canConstructFrom(Matchers[i])) {
-        if (Found)
-          return;
+      bool IsExactMatch;
+      if (Ops.canConstructFrom(Matchers[i], IsExactMatch)) {
+        if (Found) {
+          if (FoundIsExact) {
+            assert(!IsExactMatch && "We should not have two exact matches.");
+            continue;
+          }
+        }
         Found = &Matchers[i];
+        FoundIsExact = IsExactMatch;
+        ++NumFound;
       }
     }
-    if (Found)
+    // We only succeed if we found exactly one, or if we found an exact match.
+    if (Found && (FoundIsExact || NumFound == 1))
       Ops.constructFrom(*Found);
   }
 
