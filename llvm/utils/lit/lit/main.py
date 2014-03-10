@@ -136,6 +136,9 @@ def main(builtinParameters = {}):
     from optparse import OptionParser, OptionGroup
     parser = OptionParser("usage: %prog [options] {file-or-path}")
 
+    parser.add_option("", "--version", dest="show_version",
+                      help="Show version and exit",
+                      action="store_true", default=False)
     parser.add_option("-j", "--threads", dest="numThreads", metavar="N",
                       help="Number of testing threads",
                       type=int, action="store", default=None)
@@ -227,6 +230,10 @@ def main(builtinParameters = {}):
     parser.add_option_group(group)
 
     (opts, args) = parser.parse_args()
+
+    if opts.show_version:
+        print "lit %s" % (lit.__version__,)
+        return
 
     if not args:
         parser.error('No inputs specified')
