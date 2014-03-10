@@ -20,7 +20,6 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include <utility>
-
 using namespace llvm;
 
 namespace {
@@ -405,7 +404,9 @@ unsigned BasicTTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
 
 unsigned BasicTTI::getVectorInstrCost(unsigned Opcode, Type *Val,
                                       unsigned Index) const {
-  return 1;
+  std::pair<unsigned, MVT> LT =  getTLI()->getTypeLegalizationCost(Val->getScalarType());
+
+  return LT.first;
 }
 
 unsigned BasicTTI::getMemoryOpCost(unsigned Opcode, Type *Src,

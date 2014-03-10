@@ -221,9 +221,9 @@ define i32 @casts() {
   %r96 = fptoui <2 x float> undef to <2 x i32>
   ; CHECK: cost of 1 {{.*}} fptosi
   %r97 = fptosi <2 x float> undef to <2 x i32>
-  ; CHECK: cost of 24 {{.*}} fptoui
+  ; CHECK: cost of 28 {{.*}} fptoui
   %r98 = fptoui <2 x float> undef to <2 x i64>
-  ; CHECK: cost of 24 {{.*}} fptosi
+  ; CHECK: cost of 28 {{.*}} fptosi
   %r99 = fptosi <2 x float> undef to <2 x i64>
 
   ; CHECK: cost of 8 {{.*}} fptoui
@@ -242,9 +242,9 @@ define i32 @casts() {
   %r106 = fptoui <2 x double> undef to <2 x i32>
   ; CHECK: cost of 2 {{.*}} fptosi
   %r107 = fptosi <2 x double> undef to <2 x i32>
-  ; CHECK: cost of 24 {{.*}} fptoui
+  ; CHECK: cost of 28 {{.*}} fptoui
   %r108 = fptoui <2 x double> undef to <2 x i64>
-  ; CHECK: cost of 24 {{.*}} fptosi
+  ; CHECK: cost of 28 {{.*}} fptosi
   %r109 = fptosi <2 x double> undef to <2 x i64>
 
   ; CHECK: cost of 16 {{.*}} fptoui
@@ -263,9 +263,9 @@ define i32 @casts() {
   %r116 = fptoui <4 x float> undef to <4 x i32>
   ; CHECK: cost of 1 {{.*}} fptosi
   %r117 = fptosi <4 x float> undef to <4 x i32>
-  ; CHECK: cost of 48 {{.*}} fptoui
+  ; CHECK: cost of 56 {{.*}} fptoui
   %r118 = fptoui <4 x float> undef to <4 x i64>
-  ; CHECK: cost of 48 {{.*}} fptosi
+  ; CHECK: cost of 56 {{.*}} fptosi
   %r119 = fptosi <4 x float> undef to <4 x i64>
 
   ; CHECK: cost of 16 {{.*}} fptoui
@@ -284,9 +284,9 @@ define i32 @casts() {
   %r126 = fptoui <4 x double> undef to <4 x i32>
   ; CHECK: cost of 16 {{.*}} fptosi
   %r127 = fptosi <4 x double> undef to <4 x i32>
-  ; CHECK: cost of 48 {{.*}} fptoui
+  ; CHECK: cost of 56 {{.*}} fptoui
   %r128 = fptoui <4 x double> undef to <4 x i64>
-  ; CHECK: cost of 48 {{.*}} fptosi
+  ; CHECK: cost of 56 {{.*}} fptosi
   %r129 = fptosi <4 x double> undef to <4 x i64>
 
   ; CHECK: cost of 32 {{.*}} fptoui
@@ -305,9 +305,9 @@ define i32 @casts() {
   %r136 = fptoui <8 x float> undef to <8 x i32>
   ; CHECK: cost of 2 {{.*}} fptosi
   %r137 = fptosi <8 x float> undef to <8 x i32>
-  ; CHECK: cost of 96 {{.*}} fptoui
+  ; CHECK: cost of 112 {{.*}} fptoui
   %r138 = fptoui <8 x float> undef to <8 x i64>
-  ; CHECK: cost of 96 {{.*}} fptosi
+  ; CHECK: cost of 112 {{.*}} fptosi
   %r139 = fptosi <8 x float> undef to <8 x i64>
 
   ; CHECK: cost of 32 {{.*}} fptoui
@@ -326,9 +326,9 @@ define i32 @casts() {
   %r146 = fptoui <8 x double> undef to <8 x i32>
   ; CHECK: cost of 32 {{.*}} fptosi
   %r147 = fptosi <8 x double> undef to <8 x i32>
-  ; CHECK: cost of 96 {{.*}} fptoui
+  ; CHECK: cost of 112 {{.*}} fptoui
   %r148 = fptoui <8 x double> undef to <8 x i64>
-  ; CHECK: cost of 96 {{.*}} fptosi
+  ; CHECK: cost of 112 {{.*}} fptosi
   %r149 = fptosi <8 x double> undef to <8 x i64>
 
   ; CHECK: cost of 64 {{.*}} fptoui
@@ -347,9 +347,9 @@ define i32 @casts() {
   %r156 = fptoui <16 x float> undef to <16 x i32>
   ; CHECK: cost of 4 {{.*}} fptosi
   %r157 = fptosi <16 x float> undef to <16 x i32>
-  ; CHECK: cost of 192 {{.*}} fptoui
+  ; CHECK: cost of 224 {{.*}} fptoui
   %r158 = fptoui <16 x float> undef to <16 x i64>
-  ; CHECK: cost of 192 {{.*}} fptosi
+  ; CHECK: cost of 224 {{.*}} fptosi
   %r159 = fptosi <16 x float> undef to <16 x i64>
 
   ; CHECK: cost of 64 {{.*}} fptoui
@@ -368,9 +368,9 @@ define i32 @casts() {
   %r166 = fptoui <16 x double> undef to <16 x i32>
   ; CHECK: cost of 64 {{.*}} fptosi
   %r167 = fptosi <16 x double> undef to <16 x i32>
-  ; CHECK: cost of 192 {{.*}} fptoui
+  ; CHECK: cost of 224 {{.*}} fptoui
   %r168 = fptoui <16 x double> undef to <16 x i64>
-  ; CHECK: cost of 192 {{.*}} fptosi
+  ; CHECK: cost of 224 {{.*}} fptosi
   %r169 = fptosi <16 x double> undef to <16 x i64>
 
   ; CHECK: cost of 8 {{.*}} uitofp
