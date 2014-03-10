@@ -143,9 +143,11 @@ public:
 private:
   // Note that this must not be -1 or -2 as those are already used by the
   // SmallPtrSet.
-  static const uintptr_t AllPassesID = (intptr_t)-3;
+  static const uintptr_t AllPassesID = (intptr_t)(-3);
 
-  bool areAllPreserved() const { return PreservedPassIDs.count((void *)AllPassesID); }
+  bool areAllPreserved() const {
+    return PreservedPassIDs.count((void *)AllPassesID);
+  }
 
   SmallPtrSet<void *, 2> PreservedPassIDs;
 };
@@ -176,7 +178,9 @@ template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
           typename ResultT>
 class PassRunAcceptsAnalysisManager {
   typedef char SmallType;
-  struct BigType { char a, b; };
+  struct BigType {
+    char a, b;
+  };
 
   template <typename T, ResultT (T::*)(IRUnitT, AnalysisManagerT *)>
   struct Checker;
@@ -201,8 +205,8 @@ struct PassModel;
 /// \brief Specialization of \c PassModel for passes that accept an analyis
 /// manager.
 template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
-struct PassModel<IRUnitT, AnalysisManagerT, PassT,
-                 true> : PassConcept<IRUnitT, AnalysisManagerT> {
+struct PassModel<IRUnitT, AnalysisManagerT, PassT, true>
+    : PassConcept<IRUnitT, AnalysisManagerT> {
   explicit PassModel(PassT Pass) : Pass(std::move(Pass)) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
@@ -223,8 +227,8 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT,
 /// \brief Specialization of \c PassModel for passes that accept an analyis
 /// manager.
 template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
-struct PassModel<IRUnitT, AnalysisManagerT, PassT,
-                 false> : PassConcept<IRUnitT, AnalysisManagerT> {
+struct PassModel<IRUnitT, AnalysisManagerT, PassT, false>
+    : PassConcept<IRUnitT, AnalysisManagerT> {
   explicit PassModel(PassT Pass) : Pass(std::move(Pass)) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
@@ -266,7 +270,9 @@ template <typename IRUnitT> struct AnalysisResultConcept {
 /// \c invalidate member function.
 template <typename IRUnitT, typename ResultT> class ResultHasInvalidateMethod {
   typedef char SmallType;
-  struct BigType { char a, b; };
+  struct BigType {
+    char a, b;
+  };
 
   template <typename T, bool (T::*)(IRUnitT, const PreservedAnalyses &)>
   struct Checker;
@@ -292,8 +298,8 @@ struct AnalysisResultModel;
 /// \brief Specialization of \c AnalysisResultModel which provides the default
 /// invalidate functionality.
 template <typename IRUnitT, typename PassT, typename ResultT>
-struct AnalysisResultModel<IRUnitT, PassT, ResultT,
-                           false> : AnalysisResultConcept<IRUnitT> {
+struct AnalysisResultModel<IRUnitT, PassT, ResultT, false>
+    : AnalysisResultConcept<IRUnitT> {
   explicit AnalysisResultModel(ResultT Result) : Result(std::move(Result)) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
@@ -320,8 +326,8 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT,
 /// \brief Specialization of \c AnalysisResultModel which delegates invalidate
 /// handling to \c ResultT.
 template <typename IRUnitT, typename PassT, typename ResultT>
-struct AnalysisResultModel<IRUnitT, PassT, ResultT,
-                           true> : AnalysisResultConcept<IRUnitT> {
+struct AnalysisResultModel<IRUnitT, PassT, ResultT, true>
+    : AnalysisResultConcept<IRUnitT> {
   explicit AnalysisResultModel(ResultT Result) : Result(std::move(Result)) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
@@ -353,7 +359,7 @@ struct AnalysisPassConcept {
   /// \returns A unique_ptr to the analysis result object to be queried by
   /// users.
   virtual std::unique_ptr<AnalysisResultConcept<IRUnitT>>
-      run(IRUnitT IR, AnalysisManagerT *AM) = 0;
+  run(IRUnitT IR, AnalysisManagerT *AM) = 0;
 };
 
 /// \brief Wrapper to model the analysis pass concept.
@@ -363,15 +369,14 @@ struct AnalysisPassConcept {
 /// wrapped in a \c AnalysisResultModel.
 template <typename IRUnitT, typename AnalysisManagerT, typename PassT,
           bool AcceptsAnalysisManager = PassRunAcceptsAnalysisManager<
-              IRUnitT, AnalysisManagerT, PassT,
-              typename PassT::Result>::Value> struct AnalysisPassModel;
+              IRUnitT, AnalysisManagerT, PassT, typename PassT::Result>::Value>
+struct AnalysisPassModel;
 
 /// \brief Specialization of \c AnalysisPassModel which passes an
 /// \c AnalysisManager to PassT's run method.
 template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
-struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
-                         true> : AnalysisPassConcept<IRUnitT,
-                                                     AnalysisManagerT> {
+struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, true>
+    : AnalysisPassConcept<IRUnitT, AnalysisManagerT> {
   explicit AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
@@ -400,9 +405,8 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
 /// \brief Specialization of \c AnalysisPassModel which does not pass an
 /// \c AnalysisManager to PassT's run method.
 template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
-struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
-                         false> : AnalysisPassConcept<IRUnitT,
-                                                     AnalysisManagerT> {
+struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, false>
+    : AnalysisPassConcept<IRUnitT, AnalysisManagerT> {
   explicit AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
@@ -428,7 +432,7 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
   PassT Pass;
 };
 
-}
+} // End namespace detail
 
 class ModuleAnalysisManager;
 
@@ -458,7 +462,8 @@ public:
 
 private:
   // Pull in the concept type and model template specialized for modules.
-  typedef detail::PassConcept<Module *, ModuleAnalysisManager> ModulePassConcept;
+  typedef detail::PassConcept<Module *, ModuleAnalysisManager>
+  ModulePassConcept;
   template <typename PassT>
   struct ModulePassModel
       : detail::PassModel<Module *, ModuleAnalysisManager, PassT> {
@@ -480,7 +485,8 @@ public:
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
   FunctionPassManager() {}
-  FunctionPassManager(FunctionPassManager &&Arg) : Passes(std::move(Arg.Passes)) {}
+  FunctionPassManager(FunctionPassManager &&Arg)
+      : Passes(std::move(Arg.Passes)) {}
   FunctionPassManager &operator=(FunctionPassManager &&RHS) {
     Passes = std::move(RHS.Passes);
     return *this;
@@ -497,7 +503,7 @@ public:
 private:
   // Pull in the concept type and model template specialized for functions.
   typedef detail::PassConcept<Function *, FunctionAnalysisManager>
-      FunctionPassConcept;
+  FunctionPassConcept;
   template <typename PassT>
   struct FunctionPassModel
       : detail::PassModel<Function *, FunctionAnalysisManager, PassT> {
@@ -526,10 +532,11 @@ namespace detail {
 /// - invalidateImpl
 ///
 /// The details of the call pattern are within.
-template <typename DerivedT, typename IRUnitT>
-class AnalysisManagerBase {
+template <typename DerivedT, typename IRUnitT> class AnalysisManagerBase {
   DerivedT *derived_this() { return static_cast<DerivedT *>(this); }
-  const DerivedT *derived_this() const { return static_cast<const DerivedT *>(this); }
+  const DerivedT *derived_this() const {
+    return static_cast<const DerivedT *>(this);
+  }
 
   AnalysisManagerBase(const AnalysisManagerBase &) LLVM_DELETED_FUNCTION;
   AnalysisManagerBase &
@@ -642,7 +649,7 @@ private:
   AnalysisPassMapT AnalysisPasses;
 };
 
-}
+} // End namespace detail
 
 /// \brief A module analysis pass manager with lazy running and caching of
 /// results.
@@ -683,7 +690,8 @@ private:
   /// \brief Invalidate results across a module.
   void invalidateImpl(Module *M, const PreservedAnalyses &PA);
 
-  /// \brief Map type from module analysis pass ID to pass result concept pointer.
+  /// \brief Map type from module analysis pass ID to pass result concept
+  /// pointer.
   typedef DenseMap<void *,
                    std::unique_ptr<detail::AnalysisResultConcept<Module *>>>
       ModuleAnalysisResultMapT;
@@ -697,7 +705,8 @@ private:
 class FunctionAnalysisManager
     : public detail::AnalysisManagerBase<FunctionAnalysisManager, Function *> {
   friend class detail::AnalysisManagerBase<FunctionAnalysisManager, Function *>;
-  typedef detail::AnalysisManagerBase<FunctionAnalysisManager, Function *> BaseT;
+  typedef detail::AnalysisManagerBase<FunctionAnalysisManager, Function *>
+      BaseT;
   typedef BaseT::ResultConceptT ResultConceptT;
   typedef BaseT::PassConceptT PassConceptT;
 
@@ -728,7 +737,8 @@ public:
   void clear();
 
 private:
-  FunctionAnalysisManager(const FunctionAnalysisManager &) LLVM_DELETED_FUNCTION;
+  FunctionAnalysisManager(const FunctionAnalysisManager &)
+      LLVM_DELETED_FUNCTION;
   FunctionAnalysisManager &
   operator=(const FunctionAnalysisManager &) LLVM_DELETED_FUNCTION;
 
@@ -751,11 +761,11 @@ private:
   /// half of a bijection and provides storage for the actual result concept.
   typedef std::list<std::pair<
       void *, std::unique_ptr<detail::AnalysisResultConcept<Function *>>>>
-  FunctionAnalysisResultListT;
+          FunctionAnalysisResultListT;
 
   /// \brief Map type from function pointer to our custom list type.
   typedef DenseMap<Function *, FunctionAnalysisResultListT>
-  FunctionAnalysisResultListMapT;
+      FunctionAnalysisResultListMapT;
 
   /// \brief Map from function to a list of function analysis results.
   ///
@@ -928,8 +938,7 @@ private:
 /// \c FunctionAnalysisManagerModuleProxy analysis prior to running the function
 /// pass over the module to enable a \c FunctionAnalysisManager to be used
 /// within this run safely.
-template <typename FunctionPassT>
-class ModuleToFunctionPassAdaptor {
+template <typename FunctionPassT> class ModuleToFunctionPassAdaptor {
 public:
   explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass)
       : Pass(std::move(Pass)) {}
