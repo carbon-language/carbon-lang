@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 /// \file
 ///
-/// Generic dominator tree construction - This file provides rouitens to
-/// constructs immediate dominator information for a flow-graph based on the
+/// Generic dominator tree construction - This file provides routines to
+/// construct immediate dominator information for a flow-graph based on the
 /// algorithm described in this document:
 ///
 ///   A Fast Algorithm for Finding Dominators in a Flowgraph
