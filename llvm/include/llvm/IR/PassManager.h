@@ -70,7 +70,7 @@ public:
   PreservedAnalyses(const PreservedAnalyses &Arg)
       : PreservedPassIDs(Arg.PreservedPassIDs) {}
   PreservedAnalyses(PreservedAnalyses &&Arg)
-      : PreservedPassIDs(Arg.PreservedPassIDs) {}
+      : PreservedPassIDs(std::move(Arg.PreservedPassIDs)) {}
   PreservedAnalyses &operator=(PreservedAnalyses RHS) {
     std::swap(*this, RHS);
     return *this;
@@ -207,7 +207,7 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT,
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
   PassModel(const PassModel &Arg) : Pass(Arg.Pass) {}
-  PassModel(PassModel &&Arg) : Pass(Arg.Pass) {}
+  PassModel(PassModel &&Arg) : Pass(std::move(Arg.Pass)) {}
   PassModel &operator=(PassModel RHS) {
     std::swap(*this, RHS);
     return *this;
@@ -229,7 +229,7 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT,
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
   PassModel(const PassModel &Arg) : Pass(Arg.Pass) {}
-  PassModel(PassModel &&Arg) : Pass(Arg.Pass) {}
+  PassModel(PassModel &&Arg) : Pass(std::move(Arg.Pass)) {}
   PassModel &operator=(PassModel RHS) {
     std::swap(*this, RHS);
     return *this;
@@ -298,7 +298,8 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT,
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
   AnalysisResultModel(const AnalysisResultModel &Arg) : Result(Arg.Result) {}
-  AnalysisResultModel(AnalysisResultModel &&Arg) : Result(Arg.Result) {}
+  AnalysisResultModel(AnalysisResultModel &&Arg)
+      : Result(std::move(Arg.Result)) {}
   AnalysisResultModel &operator=(AnalysisResultModel RHS) {
     std::swap(*this, RHS);
     return *this;
@@ -325,7 +326,8 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT,
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
   AnalysisResultModel(const AnalysisResultModel &Arg) : Result(Arg.Result) {}
-  AnalysisResultModel(AnalysisResultModel &&Arg) : Result(Arg.Result) {}
+  AnalysisResultModel(AnalysisResultModel &&Arg)
+      : Result(std::move(Arg.Result)) {}
   AnalysisResultModel &operator=(AnalysisResultModel RHS) {
     std::swap(*this, RHS);
     return *this;
@@ -374,7 +376,7 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
   AnalysisPassModel(const AnalysisPassModel &Arg) : Pass(Arg.Pass) {}
-  AnalysisPassModel(AnalysisPassModel &&Arg) : Pass(Arg.Pass) {}
+  AnalysisPassModel(AnalysisPassModel &&Arg) : Pass(std::move(Arg.Pass)) {}
   AnalysisPassModel &operator=(AnalysisPassModel RHS) {
     std::swap(*this, RHS);
     return *this;
@@ -405,7 +407,7 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
   AnalysisPassModel(const AnalysisPassModel &Arg) : Pass(Arg.Pass) {}
-  AnalysisPassModel(AnalysisPassModel &&Arg) : Pass(Arg.Pass) {}
+  AnalysisPassModel(AnalysisPassModel &&Arg) : Pass(std::move(Arg.Pass)) {}
   AnalysisPassModel &operator=(AnalysisPassModel RHS) {
     std::swap(*this, RHS);
     return *this;
