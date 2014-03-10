@@ -606,7 +606,7 @@ def warn_auto_module_import : Warning<
   "import of module '%1'">, InGroup<AutoImport>, DefaultIgnore;
 def warn_uncovered_module_header : Warning<
   "umbrella header for module '%0' does not include header '%1'">, 
-  InGroup<IncompleteUmbrella>, DefaultIgnore;
+  InGroup<IncompleteUmbrella>;
 def warn_forgotten_module_header : Warning<
   "header '%0' is included in module '%1' but not listed in module map">,
   InGroup<IncompleteModule>, DefaultIgnore;
