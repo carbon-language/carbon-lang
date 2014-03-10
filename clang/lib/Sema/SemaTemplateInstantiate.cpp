@@ -2018,7 +2018,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
     Spec->setTemplateSpecializationKind(TSK);
     Spec->setPointOfInstantiation(PointOfInstantiation);
   }
-  
+
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Instantiation);
   if (Inst.isInvalid())
     return true;
@@ -2040,7 +2040,12 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 
   // Start the definition of this instantiation.
   Instantiation->startDefinition();
-  
+
+  // The instantiation is visible here, even if it was first declared in an
+  // unimported module.
+  Instantiation->setHidden(false);
+
+  // FIXME: This loses the as-written tag kind for an explicit instantiation.
   Instantiation->setTagKind(Pattern->getTagKind());
 
   // Do substitution on the base class specifiers.
@@ -2167,6 +2172,8 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 
   ActOnFinishDelayedMemberInitializers(Instantiation);
 
+  // FIXME: We should do something similar for explicit instantiations so they
+  // end up in the right module.
   if (TSK == TSK_ImplicitInstantiation) {
     Instantiation->setLocation(Pattern->getLocation());
     Instantiation->setLocStart(Pattern->getInnerLocStart());
@@ -2255,6 +2262,10 @@ bool Sema::InstantiateEnum(SourceLocation PointOfInstantiation,
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Instantiation);
   if (Inst.isInvalid())
     return true;
+
+  // The instantiation is visible here, even if it was first declared in an
+  // unimported module.
+  Instantiation->setHidden(false);
 
   // Enter the scope of this instantiation. We don't use
   // PushDeclContext because we don't have a scope.
