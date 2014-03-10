@@ -178,8 +178,8 @@ public:
   // delete.
   //
   void dropAllReferences() {
-    for (op_iterator i = op_begin(), e = op_end(); i != e; ++i)
-      i->set(0);
+    for (Use &U : operands())
+      U.set(0);
   }
 
   /// replaceUsesOfWith - Replaces all references to the "From" definition with

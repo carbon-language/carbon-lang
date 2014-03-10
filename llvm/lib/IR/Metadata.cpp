@@ -224,8 +224,8 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Value*> Vals,
   // Note that if the operands are later nulled out, the node will be
   // removed from the uniquing map.
   FoldingSetNodeID ID;
-  for (unsigned i = 0; i != Vals.size(); ++i)
-    ID.AddPointer(Vals[i]);
+  for (Value *V : Vals)
+    ID.AddPointer(V);
 
   void *InsertPoint;
   MDNode *N = pImpl->MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
@@ -236,8 +236,7 @@ MDNode *MDNode::getMDNode(LLVMContext &Context, ArrayRef<Value*> Vals,
   bool isFunctionLocal = false;
   switch (FL) {
   case FL_Unknown:
-    for (unsigned i = 0; i != Vals.size(); ++i) {
-      Value *V = Vals[i];
+    for (Value *V : Vals) {
       if (!V) continue;
       if (isFunctionLocalValue(V)) {
         isFunctionLocal = true;
@@ -649,9 +648,9 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
       setHasMetadataHashEntry(true);
     } else {
       // Handle replacement of an existing value.
-      for (unsigned i = 0, e = Info.size(); i != e; ++i)
-        if (Info[i].first == KindID) {
-          Info[i].second = Node;
+      for (auto &P : Info)
+        if (P.first == KindID) {
+          P.second = Node;
           return;
         }
     }
@@ -697,10 +696,9 @@ MDNode *Instruction::getMetadataImpl(unsigned KindID) const {
   LLVMContextImpl::MDMapTy &Info = getContext().pImpl->MetadataStore[this];
   assert(!Info.empty() && "bit out of sync with hash table");
 
-  for (LLVMContextImpl::MDMapTy::iterator I = Info.begin(), E = Info.end();
-       I != E; ++I)
-    if (I->first == KindID)
-      return I->second;
+  for (const auto &I : Info)
+    if (I.first == KindID)
+      return I.second;
   return 0;
 }
 

@@ -174,11 +174,8 @@ public:
   /// given name, an offset and a parent in the TBAA type DAG.
   MDNode *createTBAAScalarTypeNode(StringRef Name, MDNode *Parent,
                                    uint64_t Offset = 0) {
-    SmallVector<Value *, 4> Ops(3);
-    Type *Int64 = IntegerType::get(Context, 64);
-    Ops[0] = createString(Name);
-    Ops[1] = Parent;
-    Ops[2] = ConstantInt::get(Int64, Offset);
+    ConstantInt *Off = ConstantInt::get(Type::getInt64Ty(Context), Offset);
+    Value *Ops[3] = { createString(Name), Parent, Off };
     return MDNode::get(Context, Ops);
   }
 

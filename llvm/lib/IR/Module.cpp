@@ -271,8 +271,7 @@ getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const {
   const NamedMDNode *ModFlags = getModuleFlagsMetadata();
   if (!ModFlags) return;
 
-  for (unsigned i = 0, e = ModFlags->getNumOperands(); i != e; ++i) {
-    MDNode *Flag = ModFlags->getOperand(i);
+  for (const MDNode *Flag : ModFlags->operands()) {
     if (Flag->getNumOperands() >= 3 && isa<ConstantInt>(Flag->getOperand(0)) &&
         isa<MDString>(Flag->getOperand(1))) {
       // Check the operands of the MDNode before accessing the operands.
@@ -291,8 +290,7 @@ getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const {
 Value *Module::getModuleFlag(StringRef Key) const {
   SmallVector<Module::ModuleFlagEntry, 8> ModuleFlags;
   getModuleFlagsMetadata(ModuleFlags);
-  for (unsigned I = 0, E = ModuleFlags.size(); I < E; ++I) {
-    const ModuleFlagEntry &MFE = ModuleFlags[I];
+  for (const ModuleFlagEntry &MFE : ModuleFlags) {
     if (Key == MFE.Key->getString())
       return MFE.Val;
   }

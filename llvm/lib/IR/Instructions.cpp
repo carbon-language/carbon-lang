@@ -1578,11 +1578,11 @@ bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2,
 
   if (const ConstantVector *MV = dyn_cast<ConstantVector>(Mask)) {
     unsigned V1Size = cast<VectorType>(V1->getType())->getNumElements();
-    for (unsigned i = 0, e = MV->getNumOperands(); i != e; ++i) {
-      if (ConstantInt *CI = dyn_cast<ConstantInt>(MV->getOperand(i))) {
+    for (Value *Op : MV->operands()) {
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
         if (CI->uge(V1Size*2))
           return false;
-      } else if (!isa<UndefValue>(MV->getOperand(i))) {
+      } else if (!isa<UndefValue>(Op)) {
         return false;
       }
     }
@@ -1702,8 +1702,7 @@ ExtractValueInst::ExtractValueInst(const ExtractValueInst &EVI)
 //
 Type *ExtractValueInst::getIndexedType(Type *Agg,
                                        ArrayRef<unsigned> Idxs) {
-  for (unsigned CurIdx = 0; CurIdx != Idxs.size(); ++CurIdx) {
-    unsigned Index = Idxs[CurIdx];
+  for (unsigned Index : Idxs) {
     // We can't use CompositeType::indexValid(Index) here.
     // indexValid() always returns true for arrays because getelementptr allows
     // out-of-bounds indices. Since we don't allow those for extractvalue and

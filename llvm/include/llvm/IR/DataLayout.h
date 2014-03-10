@@ -219,8 +219,8 @@ public:
   /// The width is specified in bits.
   ///
   bool isLegalInteger(unsigned Width) const {
-    for (unsigned i = 0, e = (unsigned)LegalIntWidths.size(); i != e; ++i)
-      if (LegalIntWidths[i] == Width)
+    for (unsigned LegalIntWidth : LegalIntWidths)
+      if (LegalIntWidth == Width)
         return true;
     return false;
   }
@@ -283,8 +283,8 @@ public:
   /// only supports i32 as a native integer type, then i27 fits in a legal
   // integer type but i45 does not.
   bool fitsInLegalInteger(unsigned Width) const {
-    for (unsigned i = 0, e = (unsigned)LegalIntWidths.size(); i != e; ++i)
-      if (Width <= LegalIntWidths[i])
+    for (unsigned LegalIntWidth : LegalIntWidths)
+      if (Width <= LegalIntWidth)
         return true;
     return false;
   }
