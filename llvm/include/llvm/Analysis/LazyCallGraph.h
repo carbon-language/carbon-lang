@@ -132,7 +132,7 @@ public:
 
   public:
     iterator(const iterator &Arg) : G(Arg.G), NI(Arg.NI) {}
-
+    iterator(iterator &&Arg) : G(Arg.G), NI(std::move(Arg.NI)) {}
     iterator &operator=(iterator Arg) {
       std::swap(Arg, *this);
       return *this;
