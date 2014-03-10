@@ -57,7 +57,8 @@ ModuleAnalysisManager::getResultImpl(void *PassID, Module *M) {
 
 ModuleAnalysisManager::ResultConceptT *
 ModuleAnalysisManager::getCachedResultImpl(void *PassID, Module *M) const {
-  ModuleAnalysisResultMapT::const_iterator RI = ModuleAnalysisResults.find(PassID);
+  ModuleAnalysisResultMapT::const_iterator RI =
+      ModuleAnalysisResults.find(PassID);
   return RI == ModuleAnalysisResults.end() ? 0 : &*RI->second;
 }
 
@@ -76,7 +77,8 @@ void ModuleAnalysisManager::invalidateImpl(Module *M,
       ModuleAnalysisResults.erase(I);
 }
 
-PreservedAnalyses FunctionPassManager::run(Function *F, FunctionAnalysisManager *AM) {
+PreservedAnalyses FunctionPassManager::run(Function *F,
+                                           FunctionAnalysisManager *AM) {
   PreservedAnalyses PA = PreservedAnalyses::all();
 
   if (DebugPM)

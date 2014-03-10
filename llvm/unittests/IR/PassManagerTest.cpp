@@ -58,7 +58,7 @@ public:
     int FunctionCount;
   };
 
-  static void *ID() { return (void * )&PassID; }
+  static void *ID() { return (void *)&PassID; }
 
   TestModuleAnalysis(int &Runs) : Runs(Runs) {}
 
@@ -92,9 +92,7 @@ struct TestModulePass {
 };
 
 struct TestPreservingModulePass {
-  PreservedAnalyses run(Module *M) {
-    return PreservedAnalyses::all();
-  }
+  PreservedAnalyses run(Module *M) { return PreservedAnalyses::all(); }
 
   static StringRef name() { return "TestPreservingModulePass"; }
 };
