@@ -15,7 +15,6 @@
 #ifndef POLLY_SCOPLIB_H
 #define POLLY_SCOPLIB_H
 
-#define SCOPLIB_INT_T_IS_MP
 #include "isl/ctx.h"
 
 #include "scoplib/scop.h"

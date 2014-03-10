@@ -19,13 +19,11 @@
 #include "polly/ScopLib.h"
 #include "polly/ScopInfo.h"
 
-#include "llvm/Support/CommandLine.h"
-#include "llvm/IR/Writer.h"
-
 #include "stdio.h"
 #include "isl/set.h"
 #include "isl/map.h"
 #include "isl/constraint.h"
+#include "isl/val_gmp.h"
 
 using namespace llvm;
 
@@ -98,7 +96,7 @@ scoplib_statement_p ScopLib::initializeStatement(ScopStmt *stmt) {
   // Statement name
   std::string entryName;
   raw_string_ostream OS(entryName);
-  WriteAsOperand(OS, stmt->getBasicBlock(), false);
+  stmt->getBasicBlock()->printAsOperand(OS, false);
   entryName = OS.str();
   Stmt->body = (char *)malloc(sizeof(char) * (entryName.size() + 1));
   strcpy(Stmt->body, entryName.c_str());
@@ -186,30 +184,34 @@ int ScopLib::domainToMatrix_constraint(isl_constraint *c, void *user) {
   else
     scoplib_vector_tag_inequality(vec);
 
-  isl_int v;
-  isl_int_init(v);
+  isl_val *v;
 
   // Assign variables
   for (int i = 0; i < nb_vars; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_set, i, &v);
-    isl_int_set(vec->p[i + 1], v);
+    v = isl_constraint_get_coefficient_val(c, isl_dim_set, i);
+    SCOPVAL_init(vec->p[i + 1]);
+    isl_val_get_num_gmp(v, vec->p[i + 1]);
+    isl_val_free(v);
   }
 
   // Assign parameters
   for (int i = 0; i < nb_params; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_param, i, &v);
-    isl_int_set(vec->p[nb_vars + i + 1], v);
+    v = isl_constraint_get_coefficient_val(c, isl_dim_param, i);
+    SCOPVAL_init(vec->p[nb_vars + i + 1]);
+    isl_val_get_num_gmp(v, vec->p[nb_vars + i + 1]);
+    isl_val_free(v);
   }
 
   // Assign constant
-  isl_constraint_get_constant(c, &v);
-  isl_int_set(vec->p[nb_params + nb_vars + 1], v);
+  v = isl_constraint_get_constant_val(c);
+  SCOPVAL_init(vec->p[nb_params + nb_vars + 1]);
+  isl_val_get_num_gmp(v, vec->p[nb_params + nb_vars + 1]);
 
   scoplib_matrix_insert_vector(m, vec, m->NbRows);
 
   scoplib_vector_free(vec);
   isl_constraint_free(c);
-  isl_int_clear(v);
+  isl_val_free(v);
 
   return 0;
 }
@@ -274,32 +276,38 @@ int ScopLib::scatteringToMatrix_constraint(isl_constraint *c, void *user) {
   else
     scoplib_vector_tag_inequality(vec);
 
-  isl_int v;
-  isl_int_init(v);
+  isl_val *v;
 
   // Assign variables
   for (int i = 0; i < nb_in; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_in, i, &v);
-    isl_int_set(vec->p[i + 1], v);
+    v = isl_constraint_get_coefficient_val(c, isl_dim_in, i);
+    SCOPVAL_init(vec->p[i + 1]);
+    isl_val_get_num_gmp(v, vec->p[i + 1]);
+    isl_val_free(v);
   }
 
   // Assign parameters
   for (int i = 0; i < nb_params; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_param, i, &v);
-    isl_int_set(vec->p[nb_in + i + 1], v);
+    v = isl_constraint_get_coefficient_val(c, isl_dim_param, i);
+    SCOPVAL_init(vec->p[nb_in + i + 1]);
+    isl_val_get_num_gmp(v, vec->p[nb_in + i + 1]);
+    isl_val_free(v);
   }
 
   // Assign constant
-  isl_constraint_get_constant(c, &v);
-  isl_int_set(vec->p[nb_in + nb_params + 1], v);
+  v = isl_constraint_get_constant_val(c);
+  SCOPVAL_init(vec->p[nb_in + nb_params + 1]);
+  isl_val_get_num_gmp(v, vec->p[nb_in + nb_params + 1]);
 
   scoplib_vector_p null = scoplib_vector_malloc(nb_params + nb_in + 2);
 
   vec = scoplib_vector_sub(null, vec);
   scoplib_matrix_insert_vector(m, vec, 0);
 
+  scoplib_vector_free(null);
+  scoplib_vector_free(vec);
   isl_constraint_free(c);
-  isl_int_clear(v);
+  isl_val_free(v);
 
   return 0;
 }
@@ -363,47 +371,53 @@ int ScopLib::accessToMatrix_constraint(isl_constraint *c, void *user) {
 
   scoplib_vector_p vec = scoplib_vector_malloc(nb_params + nb_in + 2);
 
-  isl_int v;
-  isl_int_init(v);
+  isl_val *v;
 
   // The access dimension has to be one.
-  isl_constraint_get_coefficient(c, isl_dim_out, 0, &v);
-  assert((isl_int_is_one(v) || isl_int_is_negone(v)) &&
+  v = isl_constraint_get_coefficient_val(c, isl_dim_out, 0);
+  assert((isl_val_is_one(v) || isl_val_is_negone(v)) &&
          "Access relations not supported in scoplib");
-  bool inverse = isl_int_is_one(v);
+  bool inverse = isl_val_is_one(v);
+  isl_val_free(v);
 
   // Assign variables
   for (int i = 0; i < nb_in; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_in, i, &v);
+    v = isl_constraint_get_coefficient_val(c, isl_dim_in, i);
 
     if (inverse)
-      isl_int_neg(v, v);
+      v = isl_val_neg(v);
 
-    isl_int_set(vec->p[i + 1], v);
+    SCOPVAL_init(vec->p[i + 1]);
+    isl_val_get_num_gmp(v, vec->p[i + 1]);
+    isl_val_free(v);
   }
 
   // Assign parameters
   for (int i = 0; i < nb_params; ++i) {
-    isl_constraint_get_coefficient(c, isl_dim_param, i, &v);
+    v = isl_constraint_get_coefficient_val(c, isl_dim_param, i);
 
     if (inverse)
-      isl_int_neg(v, v);
+      v = isl_val_neg(v);
 
-    isl_int_set(vec->p[nb_in + i + 1], v);
+    SCOPVAL_init(vec->p[nb_in + i + 1]);
+    isl_val_get_num_gmp(v, vec->p[nb_in + i + 1]);
+    isl_val_free(v);
   }
 
   // Assign constant
-  isl_constraint_get_constant(c, &v);
+  v = isl_constraint_get_constant_val(c);
 
   if (inverse)
-    isl_int_neg(v, v);
+    v = isl_val_neg(v);
 
-  isl_int_set(vec->p[nb_in + nb_params + 1], v);
+  SCOPVAL_init(vec->p[nb_in + nb_params + 1]);
+  isl_val_get_num_gmp(v, vec->p[nb_in + nb_params + 1]);
 
   scoplib_matrix_insert_vector(m, vec, m->NbRows);
 
+  scoplib_vector_free(vec);
   isl_constraint_free(c);
-  isl_int_clear(v);
+  isl_val_free(v);
 
   return 0;
 }
@@ -446,7 +460,7 @@ scoplib_matrix_p ScopLib::createAccessMatrix(ScopStmt *S, bool isRead) {
       // Set the index of the memory access base element.
       std::map<const Value *, int>::iterator BA =
           ArrayMap.find((*MI)->getBaseAddr());
-      isl_int_set_si(m->p[m->NbRows - 1][0], (*BA).second + 1);
+      SCOPVAL_set_si(m->p[m->NbRows - 1][0], (*BA).second + 1);
     }
 
   return m;
@@ -492,27 +506,36 @@ ScopLib::~ScopLib() {
 /// @param Space An isl space object, describing how to spilt the dimensions.
 ///
 /// @return An isl constraint representing this integer array.
-isl_constraint *constraintFromMatrixRow(isl_int *row,
+isl_constraint *constraintFromMatrixRow(mpz_t *row,
                                         __isl_take isl_space *Space) {
   isl_constraint *c;
+  isl_ctx *ctx;
 
+  ctx = isl_space_get_ctx(Space);
   unsigned NbIn = isl_space_dim(Space, isl_dim_in);
   unsigned NbParam = isl_space_dim(Space, isl_dim_param);
 
-  if (isl_int_is_zero(row[0]))
+  if (SCOPVAL_zero_p(row[0]))
     c = isl_equality_alloc(isl_local_space_from_space(Space));
   else
     c = isl_inequality_alloc(isl_local_space_from_space(Space));
 
   unsigned current_column = 1;
 
-  for (unsigned j = 0; j < NbIn; ++j)
-    isl_constraint_set_coefficient(c, isl_dim_in, j, row[current_column++]);
+  isl_val *v;
 
-  for (unsigned j = 0; j < NbParam; ++j)
-    isl_constraint_set_coefficient(c, isl_dim_param, j, row[current_column++]);
+  for (unsigned j = 0; j < NbIn; ++j) {
+    v = isl_val_int_from_gmp(ctx, row[current_column++]);
+    c = isl_constraint_set_coefficient_val(c, isl_dim_in, j, v);
+  }
 
-  isl_constraint_set_constant(c, row[current_column]);
+  for (unsigned j = 0; j < NbParam; ++j) {
+    v = isl_val_int_from_gmp(ctx, row[current_column++]);
+    c = isl_constraint_set_coefficient_val(c, isl_dim_param, j, v);
+  }
+
+  v = isl_val_int_from_gmp(ctx, row[current_column]);
+  c = isl_constraint_set_constant_val(c, v);
 
   return c;
 }
@@ -529,27 +552,15 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, __isl_take isl_space *Space,
 
   for (unsigned i = 0; i < m->NbRows; ++i) {
     isl_constraint *c;
-
     c = constraintFromMatrixRow(m->p[i], isl_space_copy(Space));
-
-    mpz_t minusOne;
-    mpz_init(minusOne);
-    mpz_set_si(minusOne, -1);
-    isl_constraint_set_coefficient(c, isl_dim_out, i, minusOne);
-
+    c = isl_constraint_set_coefficient_si(c, isl_dim_out, i, -1);
     bmap = isl_basic_map_add_constraint(bmap, c);
   }
 
   for (unsigned i = m->NbRows; i < scatteringDims; i++) {
     isl_constraint *c;
-
     c = isl_equality_alloc(isl_local_space_from_space(isl_space_copy(Space)));
-
-    mpz_t One;
-    mpz_init(One);
-    mpz_set_si(One, 1);
-    isl_constraint_set_coefficient(c, isl_dim_out, i, One);
-
+    c = isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
     bmap = isl_basic_map_add_constraint(bmap, c);
   }
 
@@ -563,9 +574,10 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, __isl_take isl_space *Space,
 /// @param Space An isl space object, describing how to spilt the dimensions.
 ///
 /// @return An isl constraint representing this integer array.
-isl_constraint *constraintFromMatrixRowFull(isl_int *row,
+isl_constraint *constraintFromMatrixRowFull(mpz_t *row,
                                             __isl_take isl_space *Space) {
   isl_constraint *c;
+  isl_ctx *ctx = isl_space_get_ctx(Space);
 
   unsigned NbOut = isl_space_dim(Space, isl_dim_out);
   unsigned NbIn = isl_space_dim(Space, isl_dim_in);
@@ -573,23 +585,32 @@ isl_constraint *constraintFromMatrixRowFull(isl_int *row,
 
   isl_local_space *LSpace = isl_local_space_from_space(Space);
 
-  if (isl_int_is_zero(row[0]))
+  if (SCOPVAL_zero_p(row[0]))
     c = isl_equality_alloc(LSpace);
   else
     c = isl_inequality_alloc(LSpace);
 
   unsigned current_column = 1;
 
-  for (unsigned j = 0; j < NbOut; ++j)
-    isl_constraint_set_coefficient(c, isl_dim_out, j, row[current_column++]);
+  isl_val *v;
 
-  for (unsigned j = 0; j < NbIn; ++j)
-    isl_constraint_set_coefficient(c, isl_dim_in, j, row[current_column++]);
+  for (unsigned j = 0; j < NbOut; ++j) {
+    v = isl_val_int_from_gmp(ctx, row[current_column++]);
+    c = isl_constraint_set_coefficient_val(c, isl_dim_out, j, v);
+  }
 
-  for (unsigned j = 0; j < NbParam; ++j)
-    isl_constraint_set_coefficient(c, isl_dim_param, j, row[current_column++]);
+  for (unsigned j = 0; j < NbIn; ++j) {
+    v = isl_val_int_from_gmp(ctx, row[current_column++]);
+    c = isl_constraint_set_coefficient_val(c, isl_dim_in, j, v);
+  }
 
-  isl_constraint_set_constant(c, row[current_column]);
+  for (unsigned j = 0; j < NbParam; ++j) {
+    v = isl_val_int_from_gmp(ctx, row[current_column++]);
+    c = isl_constraint_set_coefficient_val(c, isl_dim_param, j, v);
+  }
+
+  v = isl_val_int_from_gmp(ctx, row[current_column]);
+  c = isl_constraint_set_constant_val(c, v);
 
   return c;
 }

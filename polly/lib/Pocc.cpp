@@ -253,14 +253,14 @@ void Pocc::printScop(raw_ostream &OS) const {
 
   OS << "\n";
 
-  if (error_code ec = MemoryBuffer::getFile(PlutoStdout, stdoutBuffer))
+  if (error_code ec = MemoryBuffer::getFile(PlutoStdout.str(), stdoutBuffer))
     OS << "Could not open pocc stdout file: " + ec.message() << "\n";
   else {
     OS << "pocc stdout: " << stdoutBuffer->getBufferIdentifier() << "\n";
     OS << stdoutBuffer->getBuffer() << "\n";
   }
 
-  if (error_code ec = MemoryBuffer::getFile(PlutoStderr, stderrBuffer))
+  if (error_code ec = MemoryBuffer::getFile(PlutoStderr.str(), stderrBuffer))
     OS << "Could not open pocc stderr file: " + ec.message() << "\n";
   else {
     OS << "pocc stderr: " << PlutoStderr << "\n";
