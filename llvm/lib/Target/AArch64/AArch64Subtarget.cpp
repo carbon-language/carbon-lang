@@ -30,9 +30,9 @@ void AArch64Subtarget::anchor() {}
 
 AArch64Subtarget::AArch64Subtarget(StringRef TT, StringRef CPU, StringRef FS,
                                    bool LittleEndian)
-    : AArch64GenSubtargetInfo(TT, CPU, FS), HasFPARMv8(false), HasNEON(false),
-      HasCrypto(false), TargetTriple(TT), CPUString(CPU),
-      IsLittleEndian(LittleEndian) {
+    : AArch64GenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
+      HasFPARMv8(false), HasNEON(false), HasCrypto(false), TargetTriple(TT),
+      CPUString(CPU), IsLittleEndian(LittleEndian) {
 
   initializeSubtargetFeatures(CPU, FS);
 }
