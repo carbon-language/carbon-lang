@@ -162,12 +162,12 @@ class DeltaActiveSetHelper : public DeltaAlgorithm {
 
 protected:
   /// UpdatedSearchState - Callback used when the search state changes.
-  virtual void UpdatedSearchState(const changeset_ty &Changes,
+  void UpdatedSearchState(const changeset_ty &Changes,
                                   const changesetlist_ty &Sets) override {
     DDAI.UpdatedSearchState(Changes, Sets, Required);
   }
 
-  virtual bool ExecuteOneTest(const changeset_ty &S) override {
+  bool ExecuteOneTest(const changeset_ty &S) override {
     return DDAI.GetTestResult(S, Required);
   }
 

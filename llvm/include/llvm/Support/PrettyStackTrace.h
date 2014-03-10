@@ -50,7 +50,7 @@ namespace llvm {
     const char *Str;
   public:
     PrettyStackTraceString(const char *str) : Str(str) {}
-    virtual void print(raw_ostream &OS) const override;
+    void print(raw_ostream &OS) const override;
   };
 
   /// PrettyStackTraceProgram - This object prints a specified program arguments
@@ -63,7 +63,7 @@ namespace llvm {
       : ArgC(argc), ArgV(argv) {
       EnablePrettyStackTrace();
     }
-    virtual void print(raw_ostream &OS) const override;
+    void print(raw_ostream &OS) const override;
   };
 
 } // end namespace llvm

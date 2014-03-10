@@ -48,8 +48,8 @@ _do_message::message(int ev) const {
 
 class _generic_error_category : public _do_message {
 public:
-  virtual const char* name() const override;
-  virtual std::string message(int ev) const override;
+  const char* name() const override;
+  std::string message(int ev) const override;
 };
 
 const char*
@@ -74,9 +74,9 @@ generic_category() {
 
 class _system_error_category : public _do_message {
 public:
-  virtual const char* name() const override;
-  virtual std::string message(int ev) const override;
-  virtual error_condition default_error_condition(int ev) const override;
+  const char* name() const override;
+  std::string message(int ev) const override;
+  error_condition default_error_condition(int ev) const override;
 };
 
 const char*
