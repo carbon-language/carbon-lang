@@ -101,7 +101,7 @@ class LazyCallGraph {
 public:
   class Node;
   typedef SmallVector<PointerUnion<Function *, Node *>, 4> NodeVectorT;
-  typedef SmallVectorImpl<PointerUnion<Function *, Node *> > NodeVectorImplT;
+  typedef SmallVectorImpl<PointerUnion<Function *, Node *>> NodeVectorImplT;
 
   /// \brief A lazy iterator used for both the entry nodes and child nodes.
   ///
