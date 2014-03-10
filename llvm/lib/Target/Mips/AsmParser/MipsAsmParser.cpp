@@ -2331,6 +2331,7 @@ bool MipsAsmParser::parseSetReorderDirective() {
     return false;
   }
   Options.setReorder();
+  getTargetStreamer().emitDirectiveSetReorder();
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }
