@@ -253,13 +253,9 @@ class DirectoryEntry : public Entry {
 
 public:
   virtual ~DirectoryEntry();
-#if LLVM_HAS_RVALUE_REFERENCES
   DirectoryEntry(StringRef Name, std::vector<Entry *> Contents, Status S)
       : Entry(EK_Directory, Name), Contents(std::move(Contents)),
         S(std::move(S)) {}
-#endif
-  DirectoryEntry(StringRef Name, ArrayRef<Entry *> Contents, const Status &S)
-      : Entry(EK_Directory, Name), Contents(Contents), S(S) {}
   Status getStatus() { return S; }
   typedef std::vector<Entry *>::iterator iterator;
   iterator contents_begin() { return Contents.begin(); }
@@ -612,7 +608,7 @@ class VFSFromYAMLParser {
     for (sys::path::reverse_iterator I = sys::path::rbegin(Parent),
                                      E = sys::path::rend(Parent);
          I != E; ++I) {
-      Result = new DirectoryEntry(*I, Result,
+      Result = new DirectoryEntry(*I, llvm::makeArrayRef(Result),
           Status("", "", getNextVirtualUniqueID(), sys::TimeValue::now(), 0, 0,
                  0, file_type::directory_file, sys::fs::all_all));
     }

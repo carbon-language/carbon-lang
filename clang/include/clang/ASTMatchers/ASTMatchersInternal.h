@@ -1106,8 +1106,8 @@ template <typename T>
 class VariadicOperatorMatcherInterface : public MatcherInterface<T> {
 public:
   VariadicOperatorMatcherInterface(VariadicOperatorFunction Func,
-                                   ArrayRef<DynTypedMatcher> InnerMatchers)
-      : Func(Func), InnerMatchers(InnerMatchers) {}
+                                   std::vector<DynTypedMatcher> InnerMatchers)
+      : Func(Func), InnerMatchers(std::move(InnerMatchers)) {}
 
   virtual bool matches(const T &Node, ASTMatchFinder *Finder,
                        BoundNodesTreeBuilder *Builder) const {
@@ -1150,7 +1150,8 @@ public:
     addMatcher<T>(Param3, Matchers);
     addMatcher<T>(Param4, Matchers);
     addMatcher<T>(Param5, Matchers);
-    return Matcher<T>(new VariadicOperatorMatcherInterface<T>(Func, Matchers));
+    return Matcher<T>(
+        new VariadicOperatorMatcherInterface<T>(Func, std::move(Matchers)));
   }
 
 private:
@@ -1246,8 +1247,8 @@ bool AnyOfVariadicOperator(const ast_type_traits::DynTypedNode DynNode,
 
 template <typename T>
 inline Matcher<T> DynTypedMatcher::unconditionalConvertTo() const {
-  return Matcher<T>(
-      new VariadicOperatorMatcherInterface<T>(AllOfVariadicOperator, *this));
+  return Matcher<T>(new VariadicOperatorMatcherInterface<T>(
+      AllOfVariadicOperator, llvm::makeArrayRef(*this)));
 }
 
 /// \brief Creates a Matcher<T> that matches if all inner matchers match.
@@ -1259,7 +1260,7 @@ BindableMatcher<T> makeAllOfComposite(
     DynMatchers.push_back(*InnerMatchers[i]);
   }
   return BindableMatcher<T>(new VariadicOperatorMatcherInterface<T>(
-      AllOfVariadicOperator, DynMatchers));
+      AllOfVariadicOperator, std::move(DynMatchers)));
 }
 
 /// \brief Creates a Matcher<T> that matches if

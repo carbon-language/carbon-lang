@@ -78,14 +78,14 @@ public:
   /// \brief Clones the provided matchers.
   ///
   /// They should be the result of a polymorphic matcher.
-  static VariantMatcher PolymorphicMatcher(ArrayRef<DynTypedMatcher> Matchers);
+  static VariantMatcher PolymorphicMatcher(std::vector<DynTypedMatcher> Matchers);
 
   /// \brief Creates a 'variadic' operator matcher.
   ///
   /// It will bind to the appropriate type on getTypedMatcher<T>().
   static VariantMatcher VariadicOperatorMatcher(
       ast_matchers::internal::VariadicOperatorFunction Func,
-      ArrayRef<VariantMatcher> Args);
+      std::vector<VariantMatcher> Args);
 
   /// \brief Makes the matcher the "null" matcher.
   void reset();

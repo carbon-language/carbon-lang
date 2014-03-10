@@ -3399,10 +3399,8 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   SmallVector<BugReport*, 10> bugReports;
   BugReport *exampleReport = FindReportInEquivalenceClass(EQ, bugReports);
   if (exampleReport) {
-    const PathDiagnosticConsumers &C = getPathDiagnosticConsumers();
-    for (PathDiagnosticConsumers::const_iterator I=C.begin(),
-                                                 E=C.end(); I != E; ++I) {
-      FlushReport(exampleReport, **I, bugReports);
+    for (PathDiagnosticConsumer *PDC : getPathDiagnosticConsumers()) {
+      FlushReport(exampleReport, *PDC, bugReports);
     }
   }
 }

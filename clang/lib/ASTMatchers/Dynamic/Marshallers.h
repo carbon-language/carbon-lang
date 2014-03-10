@@ -260,7 +260,7 @@ static VariantMatcher outvalueToVariantMatcher(const T &PolyMatcher,
                                                    NULL) {
   std::vector<DynTypedMatcher> Matchers;
   mergePolyMatchers(PolyMatcher, Matchers, typename T::ReturnTypes());
-  VariantMatcher Out = VariantMatcher::PolymorphicMatcher(Matchers);
+  VariantMatcher Out = VariantMatcher::PolymorphicMatcher(std::move(Matchers));
   return Out;
 }
 
@@ -609,7 +609,7 @@ public:
       }
       InnerArgs.push_back(Value.getMatcher());
     }
-    return VariantMatcher::VariadicOperatorMatcher(Func, InnerArgs);
+    return VariantMatcher::VariadicOperatorMatcher(Func, std::move(InnerArgs));
   }
 
   bool isVariadic() const { return true; }

@@ -42,8 +42,8 @@ namespace tooling {
 /// \brief Specifies the working directory and command of a compilation.
 struct CompileCommand {
   CompileCommand() {}
-  CompileCommand(Twine Directory, ArrayRef<std::string> CommandLine)
-    : Directory(Directory.str()), CommandLine(CommandLine) {}
+  CompileCommand(Twine Directory, std::vector<std::string> CommandLine)
+      : Directory(Directory.str()), CommandLine(std::move(CommandLine)) {}
 
   /// \brief The working directory the command was executed from.
   std::string Directory;
