@@ -47,7 +47,7 @@ struct ClangTidyMessage {
 ///
 /// FIXME: Make Diagnostics flexible enough to support this directly.
 struct ClangTidyError {
-  ClangTidyError(StringRef CheckName, const ClangTidyMessage &Message);
+  ClangTidyError(StringRef CheckName);
 
   std::string CheckName;
   ClangTidyMessage Message;
@@ -123,8 +123,6 @@ public:
   void finish() override;
 
 private:
-  void addFixes(const Diagnostic &Info, ClangTidyError &Error);
-  ClangTidyMessage getMessage(const Diagnostic &Info) const;
   void finalizeLastError();
 
   ClangTidyContext &Context;

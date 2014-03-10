@@ -17,6 +17,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangTidyDiagnosticConsumer.h"
+
+#include "clang/Frontend/DiagnosticRenderer.h"
 #include "llvm/ADT/SmallString.h"
 
 #include <set>
@@ -25,19 +27,91 @@
 namespace clang {
 namespace tidy {
 
+class ClangTidyDiagnosticRenderer : public DiagnosticRenderer {
+public:
+  ClangTidyDiagnosticRenderer(const LangOptions &LangOpts,
+                              DiagnosticOptions *DiagOpts,
+                              ClangTidyError &Error)
+      : DiagnosticRenderer(LangOpts, DiagOpts), Error(Error) {}
+
+protected:
+  void emitDiagnosticMessage(SourceLocation Loc, PresumedLoc PLoc,
+                             DiagnosticsEngine::Level Level, StringRef Message,
+                             ArrayRef<CharSourceRange> Ranges,
+                             const SourceManager *SM,
+                             DiagOrStoredDiag Info) override {
+    if (Level == DiagnosticsEngine::Ignored)
+      return;
+    ClangTidyMessage TidyMessage = Loc.isValid()
+                                       ? ClangTidyMessage(Message, *SM, Loc)
+                                       : ClangTidyMessage(Message);
+    if (Level == DiagnosticsEngine::Note) {
+      Error.Notes.push_back(TidyMessage);
+      return;
+    }
+    assert(Error.Message.Message.empty() &&
+           "Overwriting a diagnostic message");
+    Error.Message = TidyMessage;
+  }
+
+  void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
+                         DiagnosticsEngine::Level Level,
+                         ArrayRef<CharSourceRange> Ranges,
+                         const SourceManager &SM) override {}
+
+  void emitBasicNote(StringRef Message) override {
+    Error.Notes.push_back(ClangTidyMessage(Message));
+  }
+
+  void emitCodeContext(SourceLocation Loc, DiagnosticsEngine::Level Level,
+                       SmallVectorImpl<CharSourceRange> &Ranges,
+                       ArrayRef<FixItHint> Hints,
+                       const SourceManager &SM) override {
+    assert(Loc.isValid());
+    for (const auto &FixIt : Hints) {
+      CharSourceRange Range = FixIt.RemoveRange;
+      assert(Range.getBegin().isValid() && Range.getEnd().isValid() &&
+             "Invalid range in the fix-it hint.");
+      assert(Range.getBegin().isFileID() && Range.getEnd().isFileID() &&
+             "Only file locations supported in fix-it hints.");
+
+      Error.Fix.insert(tooling::Replacement(SM, Range, FixIt.CodeToInsert));
+    }
+  }
+
+  void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
+                           const SourceManager &SM) override {}
+
+  void emitImportLocation(SourceLocation Loc, PresumedLoc PLoc,
+                          StringRef ModuleName,
+                          const SourceManager &SM) override {}
+
+  void emitBuildingModuleLocation(SourceLocation Loc, PresumedLoc PLoc,
+                                  StringRef ModuleName,
+                                  const SourceManager &SM) override {}
+
+  void endDiagnostic(DiagOrStoredDiag D,
+                     DiagnosticsEngine::Level Level) override {
+    assert(!Error.Message.Message.empty() && "Message has not been set");
+  }
+
+private:
+  ClangTidyError &Error;
+};
+
 ClangTidyMessage::ClangTidyMessage(StringRef Message) : Message(Message) {}
 
 ClangTidyMessage::ClangTidyMessage(StringRef Message,
                                    const SourceManager &Sources,
                                    SourceLocation Loc)
     : Message(Message) {
+  assert(Loc.isValid() && Loc.isFileID());
   FilePath = Sources.getFilename(Loc);
   FileOffset = Sources.getFileOffset(Loc);
 }
 
-ClangTidyError::ClangTidyError(StringRef CheckName,
-                               const ClangTidyMessage &Message)
-    : CheckName(CheckName), Message(Message) {}
+ClangTidyError::ClangTidyError(StringRef CheckName)
+    : CheckName(CheckName) {}
 
 DiagnosticBuilder ClangTidyContext::diag(
     StringRef CheckName, SourceLocation Loc, StringRef Description,
@@ -100,17 +174,27 @@ void ClangTidyDiagnosticConsumer::finalizeLastError() {
 
 void ClangTidyDiagnosticConsumer::HandleDiagnostic(
     DiagnosticsEngine::Level DiagLevel, const Diagnostic &Info) {
-  // FIXME: Deduplicate diagnostics.
   if (DiagLevel == DiagnosticsEngine::Note) {
     assert(!Errors.empty() &&
            "A diagnostic note can only be appended to a message.");
-    Errors.back().Notes.push_back(getMessage(Info));
   } else {
     finalizeLastError();
-    Errors.push_back(
-        ClangTidyError(Context.getCheckName(Info.getID()), getMessage(Info)));
+    Errors.push_back(ClangTidyError(Context.getCheckName(Info.getID())));
   }
-  addFixes(Info, Errors.back());
+
+  // FIXME: Provide correct LangOptions for each file.
+  LangOptions LangOpts;
+  ClangTidyDiagnosticRenderer Converter(
+      LangOpts, &Context.DiagEngine->getDiagnosticOptions(), Errors.back());
+  SmallString<100> Message;
+  Info.FormatDiagnostic(Message);
+  SourceManager *Sources = nullptr;
+  if (Info.hasSourceManager())
+    Sources = &Info.getSourceManager();
+  Converter.emitDiagnostic(
+      Info.getLocation(), DiagLevel, Message, Info.getRanges(),
+      llvm::makeArrayRef(Info.getFixItHints(), Info.getNumFixItHints()),
+      Sources);
 
   // Let argument parsing-related warnings through.
   if (!Info.getLocation().isValid() ||
@@ -138,34 +222,6 @@ void ClangTidyDiagnosticConsumer::finish() {
       Context.storeError(Error);
   }
   Errors.clear();
-}
-
-void ClangTidyDiagnosticConsumer::addFixes(const Diagnostic &Info,
-                                           ClangTidyError &Error) {
-  if (!Info.hasSourceManager())
-    return;
-  SourceManager &Sources = Info.getSourceManager();
-  tooling::Replacements Replacements;
-  for (unsigned i = 0, e = Info.getNumFixItHints(); i != e; ++i) {
-    CharSourceRange Range = Info.getFixItHint(i).RemoveRange;
-    assert(Range.getBegin().isValid() && Range.getEnd().isValid() &&
-           "Invalid range in the fix-it hint.");
-    assert(Range.getBegin().isFileID() && Range.getEnd().isFileID() &&
-           "Only file locations supported in fix-it hints.");
-    std::string Text = Info.getFixItHint(i).CodeToInsert;
-    Error.Fix.insert(tooling::Replacement(Sources, Range, Text));
-  }
-}
-
-ClangTidyMessage
-ClangTidyDiagnosticConsumer::getMessage(const Diagnostic &Info) const {
-  SmallString<100> Buf;
-  Info.FormatDiagnostic(Buf);
-  if (!Info.hasSourceManager()) {
-    return ClangTidyMessage(Buf.str());
-  }
-  return ClangTidyMessage(Buf.str(), Info.getSourceManager(),
-                          Info.getLocation());
 }
 
 } // namespace tidy
