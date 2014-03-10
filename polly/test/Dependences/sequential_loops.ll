@@ -70,9 +70,9 @@ exit.3:
 ; MEMORY:     {  }
 ; MEMORY:   WAW dependences:
 ; MEMORY:     {
-; MEMORY:       Stmt_S1[i0] -> Stmt_S2[i0] : i0 >= 0 and i0 <= 9;
-; MEMORY:       Stmt_S2[i0] -> Stmt_S3[i0] : i0 >= 0 and i0 <= 9;
-; MEMORY:       Stmt_S1[i0] -> Stmt_S3[i0] : i0 >= 0 and i0 <= 99
+; MEMORY:       Stmt_S1[i0] -> Stmt_S2[i0] : i0 <= 9 and i0 >= 0;
+; MEMORY:       Stmt_S2[i0] -> Stmt_S3[i0] : i0 <= 9 and i0 >= 0;
+; MEMORY:       Stmt_S1[i0] -> Stmt_S3[i0] : i0 <= 99 and i0 >= 0
 ; MEMORY:     }
 
 ;     for(i = 0; i < 100; i++ )
@@ -142,14 +142,14 @@ exit.3:
 ; MEMORY: region: 'S1 => exit.3' in function 'read_after_writes':
 ; MEMORY:   RAW dependences:
 ; MEMORY:     {
-; MEMORY:       Stmt_S2[i0] -> Stmt_S3[i0] : i0 >= 0 and i0 <= 9;
-; MEMORY:       Stmt_S1[i0] -> Stmt_S3[i0] : i0 >= 0 and i0 <= 99
+; MEMORY:       Stmt_S2[i0] -> Stmt_S3[i0] : i0 <= 9 and i0 >= 0;
+; MEMORY:       Stmt_S1[i0] -> Stmt_S3[i0] : i0 <= 99 and i0 >= 0
 ; MEMORY:     }
 ; MEMORY:   WAR dependences:
 ; MEMORY:     {  }
 ; MEMORY:   WAW dependences:
 ; MEMORY:     {
-; MEMORY:       Stmt_S1[i0] -> Stmt_S2[i0] : i0 >= 0 and i0 <= 9
+; MEMORY:       Stmt_S1[i0] -> Stmt_S2[i0] : i0 <= 9 and i0 >= 0
 ; MEMORY:     }
 
 ;     for(i = 0; i < 100; i++ )
@@ -209,8 +209,8 @@ exit.3:
 ; VALUE:     }
 ; VALUE:   WAR dependences:
 ; VALUE:     {
-; VALUE:       Stmt_S1[i0] -> Stmt_S2[i0] : i0 >= 0 and i0 <= 9;
-; VALUE:       Stmt_S1[i0] -> Stmt_S3[i0] : i0 >= 10 and i0 <= 99
+; VALUE:       Stmt_S1[i0] -> Stmt_S2[i0] : i0 <= 9 and i0 >= 0;
+; VALUE:       Stmt_S1[i0] -> Stmt_S3[i0] : i0 <= 99 and i0 >= 10
 ; VALUE:     }
 ; VALUE:   WAW dependences:
 ; VALUE:     {
@@ -223,12 +223,12 @@ exit.3:
 ; MEMORY:     }
 ; MEMORY:   WAR dependences:
 ; MEMORY:     {
-; MEMORY:        Stmt_S1[i0] -> Stmt_S2[i0] : i0 >= 0 and i0 <= 9;
-; MEMORY:        Stmt_S1[i0] -> Stmt_S3[i0] : i0 >= 0 and i0 <= 9
+; MEMORY:        Stmt_S1[i0] -> Stmt_S2[i0] : i0 <= 9 and i0 >= 0;
+; MEMORY:        Stmt_S1[i0] -> Stmt_S3[i0] : i0 <= 99 and i0 >= 0
 ; MEMORY:     }
 ; MEMORY:   WAW dependences:
 ; MEMORY:     {
-; MEMORY:        Stmt_S2[i0] -> Stmt_S3[i0] : i0 >= 0 and i0 <= 9
+; MEMORY:        Stmt_S2[i0] -> Stmt_S3[i0] : i0 <= 9 and i0 >= 0
 ; MEMORY:     }
 
 ;     for(i = 0; i < 100; i++ )
@@ -286,7 +286,7 @@ exit.2:
 ; MEMORY:   RAW dependences:
 ; MEMORY:     [p] -> {
 ; MEMORY:       Stmt_S1[i0] -> Stmt_S2[-p + i0] :
-; MEMORY:           i0 >= 0 and i0 <= 99 and i0 >= p and i0 <= 9 + p
+; MEMORY:           i0 >= p and i0 <= 99 and i0 >= 0 and i0 <= 9 + p
 ; MEMORY:     }
 ; MEMORY:   WAR dependences:
 ; MEMORY:     [p] -> {
