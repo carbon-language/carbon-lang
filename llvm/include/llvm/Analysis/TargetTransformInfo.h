@@ -59,11 +59,6 @@ protected:
   /// group's stack.
   void pushTTIStack(Pass *P);
 
-  /// All pass subclasses must in their finalizePass routine call popTTIStack
-  /// to update the pointers tracking the previous TTI instance in the analysis
-  /// group's stack, and the top of the analysis group's stack.
-  void popTTIStack();
-
   /// All pass subclasses must call TargetTransformInfo::getAnalysisUsage.
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 

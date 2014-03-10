@@ -56,10 +56,6 @@ public:
     pushTTIStack(this);
   }
 
-  virtual void finalizePass() {
-    popTTIStack();
-  }
-
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     TargetTransformInfo::getAnalysisUsage(AU);
   }

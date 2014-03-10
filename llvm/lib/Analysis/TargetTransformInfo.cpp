@@ -35,16 +35,6 @@ void TargetTransformInfo::pushTTIStack(Pass *P) {
     PTTI->TopTTI = this;
 }
 
-void TargetTransformInfo::popTTIStack() {
-  TopTTI = 0;
-
-  // Walk up the chain and update the top TTI pointer.
-  for (TargetTransformInfo *PTTI = PrevTTI; PTTI; PTTI = PTTI->PrevTTI)
-    PTTI->TopTTI = PrevTTI;
-
-  PrevTTI = 0;
-}
-
 void TargetTransformInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<TargetTransformInfo>();
 }
