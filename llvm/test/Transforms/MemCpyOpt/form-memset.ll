@@ -272,3 +272,15 @@ define void @test9() nounwind {
 ; CHECK-LABEL: @test9(
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* bitcast ([16 x i64]* @test9buf to i8*), i8 -1, i64 16, i32 16, i1 false)
 }
+
+; PR19092
+define void @test10(i8* nocapture %P) nounwind {
+  tail call void @llvm.memset.p0i8.i64(i8* %P, i8 0, i64 42, i32 1, i1 false)
+  tail call void @llvm.memset.p0i8.i64(i8* %P, i8 0, i64 23, i32 1, i1 false)
+  ret void
+; CHECK-LABEL: @test10(
+; CHECK-NOT: memset
+; CHECK: call void @llvm.memset.p0i8.i64(i8* %P, i8 0, i64 42, i32 1, i1 false)
+; CHECK-NOT: memset
+; CHECK: ret void
+}

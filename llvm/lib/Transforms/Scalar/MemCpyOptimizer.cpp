@@ -75,6 +75,13 @@ static bool IsPointerOffset(Value *Ptr1, Value *Ptr2, int64_t &Offset,
                             const DataLayout &TD) {
   Ptr1 = Ptr1->stripPointerCasts();
   Ptr2 = Ptr2->stripPointerCasts();
+
+  // Handle the trivial case first.
+  if (Ptr1 == Ptr2) {
+    Offset = 0;
+    return true;
+  }
+
   GEPOperator *GEP1 = dyn_cast<GEPOperator>(Ptr1);
   GEPOperator *GEP2 = dyn_cast<GEPOperator>(Ptr2);
 
