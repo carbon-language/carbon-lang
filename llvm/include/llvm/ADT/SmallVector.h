@@ -14,6 +14,7 @@
 #ifndef LLVM_ADT_SMALLVECTOR_H
 #define LLVM_ADT_SMALLVECTOR_H
 
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
@@ -868,6 +869,12 @@ public:
   template<typename ItTy>
   SmallVector(ItTy S, ItTy E) : SmallVectorImpl<T>(N) {
     this->append(S, E);
+  }
+
+  template <typename RangeTy>
+  explicit SmallVector(const llvm::iterator_range<RangeTy> R)
+      : SmallVectorImpl<T>(N) {
+    this->append(R.begin(), R.end());
   }
 
   SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(N) {
