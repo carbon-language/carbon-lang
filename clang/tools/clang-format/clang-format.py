@@ -32,48 +32,51 @@ binary = 'clang-format'
 # used.
 style = 'file'
 
-# Get the current text.
-buf = vim.current.buffer
-text = '\n'.join(buf)
+def main():
+  # Get the current text.
+  buf = vim.current.buffer
+  text = '\n'.join(buf)
 
-# Determine range to format.
-cursor = int(vim.eval('line2byte(line("."))+col(".")')) - 2
-lines = '%s:%s' % (vim.current.range.start + 1, vim.current.range.end + 1)
+  # Determine range to format.
+  cursor = int(vim.eval('line2byte(line("."))+col(".")')) - 2
+  lines = '%s:%s' % (vim.current.range.start + 1, vim.current.range.end + 1)
 
-# Avoid flashing an ugly, ugly cmd prompt on Windows when invoking clang-format.
-startupinfo = None
-if sys.platform.startswith('win32'):
-  startupinfo = subprocess.STARTUPINFO()
-  startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-  startupinfo.wShowWindow = subprocess.SW_HIDE
+  # Avoid flashing an ugly, ugly cmd prompt on Windows when invoking clang-format.
+  startupinfo = None
+  if sys.platform.startswith('win32'):
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = subprocess.SW_HIDE
 
-# Call formatter.
-command = [binary, '-lines', lines, '-style', style, '-cursor', str(cursor)]
-if vim.current.buffer.name:
-  command.extend(['-assume-filename', vim.current.buffer.name])
-p = subprocess.Popen(command,
-                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                     stdin=subprocess.PIPE, startupinfo=startupinfo)
-stdout, stderr = p.communicate(input=text)
+  # Call formatter.
+  command = [binary, '-lines', lines, '-style', style, '-cursor', str(cursor)]
+  if vim.current.buffer.name:
+    command.extend(['-assume-filename', vim.current.buffer.name])
+  p = subprocess.Popen(command,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                       stdin=subprocess.PIPE, startupinfo=startupinfo)
+  stdout, stderr = p.communicate(input=text)
 
-# If successful, replace buffer contents.
-if stderr:
-  message = stderr.splitlines()[0]
-  parts = message.split(' ', 2)
-  if len(parts) > 2:
-    message = parts[2]
-  print 'Formatting failed: %s (total %d warnings, %d errors)' % (
-      message, stderr.count('warning:'), stderr.count('error:'))
+  # If successful, replace buffer contents.
+  if stderr:
+    message = stderr.splitlines()[0]
+    parts = message.split(' ', 2)
+    if len(parts) > 2:
+      message = parts[2]
+    print 'Formatting failed: %s (total %d warnings, %d errors)' % (
+        message, stderr.count('warning:'), stderr.count('error:'))
 
-if not stdout:
-  print ('No output from clang-format (crashed?).\n' +
-      'Please report to bugs.llvm.org.')
-else:
-  lines = stdout.split('\n')
-  output = json.loads(lines[0])
-  lines = lines[1:]
-  sequence = difflib.SequenceMatcher(None, vim.current.buffer, lines)
-  for op in reversed(sequence.get_opcodes()):
-    if op[0] is not 'equal':
-      vim.current.buffer[op[1]:op[2]] = lines[op[3]:op[4]]
-  vim.command('goto %d' % (output['Cursor'] + 1))
+  if not stdout:
+    print ('No output from clang-format (crashed?).\n' +
+        'Please report to bugs.llvm.org.')
+  else:
+    lines = stdout.split('\n')
+    output = json.loads(lines[0])
+    lines = lines[1:]
+    sequence = difflib.SequenceMatcher(None, vim.current.buffer, lines)
+    for op in reversed(sequence.get_opcodes()):
+      if op[0] is not 'equal':
+        vim.current.buffer[op[1]:op[2]] = lines[op[3]:op[4]]
+    vim.command('goto %d' % (output['Cursor'] + 1))
+
+main()
