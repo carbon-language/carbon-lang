@@ -1084,6 +1084,7 @@
 // MIPS32BE:#define _MIPS_SZINT 32
 // MIPS32BE:#define _MIPS_SZLONG 32
 // MIPS32BE:#define _MIPS_SZPTR 32
+// MIPS32BE:#define __BIG_ENDIAN__ 1
 // MIPS32BE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // MIPS32BE:#define __CHAR16_TYPE__ unsigned short
 // MIPS32BE:#define __CHAR32_TYPE__ unsigned int
@@ -1261,6 +1262,7 @@
 // MIPS32EL:#define __LDBL_MIN_10_EXP__ (-307)
 // MIPS32EL:#define __LDBL_MIN_EXP__ (-1021)
 // MIPS32EL:#define __LDBL_MIN__ 2.2250738585072014e-308L
+// MIPS32EL:#define __LITTLE_ENDIAN__ 1
 // MIPS32EL:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // MIPS32EL:#define __LONG_MAX__ 2147483647L
 // MIPS32EL-NOT:#define __LP64__
@@ -1319,6 +1321,7 @@
 // MIPS64BE:#define _MIPS_SZINT 32
 // MIPS64BE:#define _MIPS_SZLONG 64
 // MIPS64BE:#define _MIPS_SZPTR 64
+// MIPS64BE:#define __BIG_ENDIAN__ 1
 // MIPS64BE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // MIPS64BE:#define __CHAR16_TYPE__ unsigned short
 // MIPS64BE:#define __CHAR32_TYPE__ unsigned int
@@ -1495,6 +1498,7 @@
 // MIPS64EL:#define __LDBL_MIN_10_EXP__ (-4931)
 // MIPS64EL:#define __LDBL_MIN_EXP__ (-16381)
 // MIPS64EL:#define __LDBL_MIN__ 3.36210314311209350626267781732175260e-4932L
+// MIPS64EL:#define __LITTLE_ENDIAN__ 1
 // MIPS64EL:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // MIPS64EL:#define __LONG_MAX__ 9223372036854775807L
 // MIPS64EL:#define __LP64__ 1
@@ -1746,6 +1750,7 @@
 // MSP430:#define __LDBL_MIN_10_EXP__ (-307)
 // MSP430:#define __LDBL_MIN_EXP__ (-1021)
 // MSP430:#define __LDBL_MIN__ 2.2250738585072014e-308L
+// MSP430:#define __LITTLE_ENDIAN__ 1
 // MSP430:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // MSP430:#define __LONG_MAX__ 2147483647L
 // MSP430-NOT:#define __LP64__
@@ -1842,6 +1847,7 @@
 // NVPTX32:#define __LDBL_MIN_10_EXP__ (-307)
 // NVPTX32:#define __LDBL_MIN_EXP__ (-1021)
 // NVPTX32:#define __LDBL_MIN__ 2.2250738585072014e-308L
+// NVPTX32:#define __LITTLE_ENDIAN__ 1
 // NVPTX32:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // NVPTX32:#define __LONG_MAX__ 9223372036854775807L
 // NVPTX32-NOT:#define __LP64__
@@ -1939,6 +1945,7 @@
 // NVPTX64:#define __LDBL_MIN_10_EXP__ (-307)
 // NVPTX64:#define __LDBL_MIN_EXP__ (-1021)
 // NVPTX64:#define __LDBL_MIN__ 2.2250738585072014e-308L
+// NVPTX64:#define __LITTLE_ENDIAN__ 1
 // NVPTX64:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // NVPTX64:#define __LONG_MAX__ 9223372036854775807L
 // NVPTX64:#define __LP64__ 1
@@ -2979,6 +2986,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc-none-none < /dev/null | FileCheck -check-prefix SPARC %s
 //
 // SPARC-NOT:#define _LP64
+// SPARC:#define __BIG_ENDIAN__ 1
 // SPARC:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // SPARC:#define __CHAR16_TYPE__ unsigned short
 // SPARC:#define __CHAR32_TYPE__ unsigned int
@@ -3077,6 +3085,7 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=tce-none-none < /dev/null | FileCheck -check-prefix TCE %s
 //
 // TCE-NOT:#define _LP64
+// TCE:#define __BIG_ENDIAN__ 1
 // TCE:#define __BYTE_ORDER__ __ORDER_BIG_ENDIAN__
 // TCE:#define __CHAR16_TYPE__ unsigned short
 // TCE:#define __CHAR32_TYPE__ unsigned int
@@ -3524,4 +3533,6 @@
 // PPC64-FREEBSD-NOT: #define __LONG_DOUBLE_128__ 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=xcore-none-none < /dev/null | FileCheck -check-prefix XCORE %s
+// XCORE:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+// XCORE:#define __LITTLE_ENDIAN__ 1
 // XCORE:#define __XS1B__ 1

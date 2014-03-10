@@ -541,11 +541,13 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   Builder.defineMacro("__ORDER_LITTLE_ENDIAN__", "1234");
   Builder.defineMacro("__ORDER_BIG_ENDIAN__",    "4321");
   Builder.defineMacro("__ORDER_PDP_ENDIAN__",    "3412");
-  if (TI.isBigEndian())
+  if (TI.isBigEndian()) {
     Builder.defineMacro("__BYTE_ORDER__", "__ORDER_BIG_ENDIAN__");
-  else
+    Builder.defineMacro("__BIG_ENDIAN__");
+  } else {
     Builder.defineMacro("__BYTE_ORDER__", "__ORDER_LITTLE_ENDIAN__");
-
+    Builder.defineMacro("__LITTLE_ENDIAN__");
+  }
 
   if (TI.getPointerWidth(0) == 64 && TI.getLongWidth() == 64
       && TI.getIntWidth() == 32) {
