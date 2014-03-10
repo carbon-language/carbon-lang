@@ -2281,19 +2281,20 @@ static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
   // We custom lower concat_vectors with 4, 8, or 16 operands that are all the
   // same operand and of type v1* using the DUP instruction.
   unsigned NumOps = Op->getNumOperands();
-  if (NumOps != 4 && NumOps != 8 && NumOps != 16)
+  if (NumOps == 2) {
+    assert(Op.getValueType().getSizeInBits() == 128 && "unexpected concat");
     return Op;
+  }
+
+  if (NumOps != 4 && NumOps != 8 && NumOps != 16)
+    return SDValue();
 
   // Must be a single value for VDUP.
-  bool isConstant = true;
   SDValue Op0 = Op.getOperand(0);
   for (unsigned i = 1; i < NumOps; ++i) {
     SDValue OpN = Op.getOperand(i);
     if (Op0 != OpN)
-      return Op;
-
-    if (!isa<ConstantSDNode>(OpN->getOperand(0)))
-      isConstant = false;
+      return SDValue();
   }
 
   // Verify the value type.
@@ -2302,22 +2303,22 @@ static SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) {
   default: llvm_unreachable("Unexpected number of operands");
   case 4:
     if (EltVT != MVT::v1i16 && EltVT != MVT::v1i32)
-      return Op;
+      return SDValue();
     break;
   case 8:
     if (EltVT != MVT::v1i8 && EltVT != MVT::v1i16)
-      return Op;
+      return SDValue();
     break;
   case 16:
     if (EltVT != MVT::v1i8)
-      return Op;
+      return SDValue();
     break;
   }
 
   SDLoc DL(Op);
   EVT VT = Op.getValueType();
   // VDUP produces better code for constants.
-  if (isConstant)
+  if (Op0->getOpcode() == ISD::BUILD_VECTOR)
     return DAG.getNode(AArch64ISD::NEON_VDUP, DL, VT, Op0->getOperand(0));
   return DAG.getNode(AArch64ISD::NEON_VDUPLANE, DL, VT, Op0,
                      DAG.getConstant(0, MVT::i64));

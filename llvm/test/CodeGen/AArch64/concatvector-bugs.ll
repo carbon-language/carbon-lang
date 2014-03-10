@@ -45,3 +45,24 @@ for.body130.us.us:                                ; preds = %for.body130.us.us, 
   br label %for.body130.us.us
 }
 
+declare <1 x i16> @llvm.aarch64.neon.vuqrshrn.v1i16(<1 x i32>, i32)
+
+define <8 x i16> @test_splat(i32 %l) nounwind {
+; CHECK-LABEL: test_splat:
+; CHECK: ret
+  %lhs = insertelement <1 x i32> undef, i32 %l, i32 0
+  %shift = tail call <1 x i16> @llvm.aarch64.neon.vuqrshrn.v1i16(<1 x i32> %lhs, i32 11)
+  %vec = shufflevector <1 x i16> %shift, <1 x i16> undef, <8 x i32> zeroinitializer
+  ret <8 x i16> %vec
+}
+
+
+define <8 x i16> @test_notsplat(<8 x i16> %a, <8 x i16> %b, i32 %l) nounwind {
+; CHECK-LABEL: test_notsplat:
+; CHECK: ret
+entry:
+  %lhs = insertelement <1 x i32> undef, i32 %l, i32 0
+  %shift = tail call <1 x i16> @llvm.aarch64.neon.vuqrshrn.v1i16(<1 x i32> %lhs, i32 11)
+  %vec = shufflevector <1 x i16> %shift, <1 x i16> undef, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 0, i32 0, i32 0, i32 0>
+  ret <8 x i16> %vec
+}
