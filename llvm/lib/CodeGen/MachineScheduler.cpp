@@ -2444,29 +2444,29 @@ public:
     GenericSchedulerBase(C), DAG(0), Top(SchedBoundary::TopQID, "TopQ"),
     Bot(SchedBoundary::BotQID, "BotQ") {}
 
-  virtual void initPolicy(MachineBasicBlock::iterator Begin,
-                          MachineBasicBlock::iterator End,
-                          unsigned NumRegionInstrs) override;
+  void initPolicy(MachineBasicBlock::iterator Begin,
+                  MachineBasicBlock::iterator End,
+                  unsigned NumRegionInstrs) override;
 
-  virtual bool shouldTrackPressure() const override {
+  bool shouldTrackPressure() const override {
     return RegionPolicy.ShouldTrackPressure;
   }
 
-  virtual void initialize(ScheduleDAGMI *dag) override;
+  void initialize(ScheduleDAGMI *dag) override;
 
-  virtual SUnit *pickNode(bool &IsTopNode) override;
+  SUnit *pickNode(bool &IsTopNode) override;
 
-  virtual void schedNode(SUnit *SU, bool IsTopNode) override;
+  void schedNode(SUnit *SU, bool IsTopNode) override;
 
-  virtual void releaseTopNode(SUnit *SU) override {
+  void releaseTopNode(SUnit *SU) override {
     Top.releaseTopNode(SU);
   }
 
-  virtual void releaseBottomNode(SUnit *SU) override {
+  void releaseBottomNode(SUnit *SU) override {
     Bot.releaseBottomNode(SU);
   }
 
-  virtual void registerRoots() override;
+  void registerRoots() override;
 
 protected:
   void checkAcyclicLatency();
@@ -3037,16 +3037,16 @@ public:
 
   virtual ~PostGenericScheduler() {}
 
-  virtual void initPolicy(MachineBasicBlock::iterator Begin,
-                          MachineBasicBlock::iterator End,
-                          unsigned NumRegionInstrs) override {
+  void initPolicy(MachineBasicBlock::iterator Begin,
+                  MachineBasicBlock::iterator End,
+                  unsigned NumRegionInstrs) override {
     /* no configurable policy */
   };
 
   /// PostRA scheduling does not track pressure.
-  virtual bool shouldTrackPressure() const override { return false; }
+  bool shouldTrackPressure() const override { return false; }
 
-  virtual void initialize(ScheduleDAGMI *Dag) override {
+  void initialize(ScheduleDAGMI *Dag) override {
     DAG = Dag;
     SchedModel = DAG->getSchedModel();
     TRI = DAG->TRI;
@@ -3065,22 +3065,22 @@ public:
     }
   }
 
-  virtual void registerRoots() override;
+  void registerRoots() override;
 
-  virtual SUnit *pickNode(bool &IsTopNode) override;
+  SUnit *pickNode(bool &IsTopNode) override;
 
-  virtual void scheduleTree(unsigned SubtreeID) override {
+  void scheduleTree(unsigned SubtreeID) override {
     llvm_unreachable("PostRA scheduler does not support subtree analysis.");
   }
 
-  virtual void schedNode(SUnit *SU, bool IsTopNode) override;
+  void schedNode(SUnit *SU, bool IsTopNode) override;
 
-  virtual void releaseTopNode(SUnit *SU) override {
+  void releaseTopNode(SUnit *SU) override {
     Top.releaseTopNode(SU);
   }
 
   // Only called for roots.
-  virtual void releaseBottomNode(SUnit *SU) override {
+  void releaseBottomNode(SUnit *SU) override {
     BotRoots.push_back(SU);
   }
 

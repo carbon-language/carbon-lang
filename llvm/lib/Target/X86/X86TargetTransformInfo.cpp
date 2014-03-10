@@ -52,11 +52,11 @@ public:
     initializeX86TTIPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void initializePass() override {
+  void initializePass() override {
     pushTTIStack(this);
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     TargetTransformInfo::getAnalysisUsage(AU);
   }
 
@@ -64,7 +64,7 @@ public:
   static char ID;
 
   /// Provide necessary pointer adjustments for the two base classes.
-  virtual void *getAdjustedAnalysisPointer(const void *ID) override {
+  void *getAdjustedAnalysisPointer(const void *ID) override {
     if (ID == &TargetTransformInfo::ID)
       return (TargetTransformInfo*)this;
     return this;
@@ -72,43 +72,41 @@ public:
 
   /// \name Scalar TTI Implementations
   /// @{
-  virtual PopcntSupportKind getPopcntSupport(unsigned TyWidth) const override;
+  PopcntSupportKind getPopcntSupport(unsigned TyWidth) const override;
 
   /// @}
 
   /// \name Vector TTI Implementations
   /// @{
 
-  virtual unsigned getNumberOfRegisters(bool Vector) const override;
-  virtual unsigned getRegisterBitWidth(bool Vector) const override;
-  virtual unsigned getMaximumUnrollFactor() const override;
-  virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty,
-                                          OperandValueKind,
-                                          OperandValueKind) const override;
-  virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
-                                  int Index, Type *SubTp) const override;
-  virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
-                                    Type *Src) const override;
-  virtual unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                      Type *CondTy) const override;
-  virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
-                                      unsigned Index) const override;
-  virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
-                                   unsigned Alignment,
-                                   unsigned AddressSpace) const override;
+  unsigned getNumberOfRegisters(bool Vector) const override;
+  unsigned getRegisterBitWidth(bool Vector) const override;
+  unsigned getMaximumUnrollFactor() const override;
+  unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty, OperandValueKind,
+                                  OperandValueKind) const override;
+  unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
+                          int Index, Type *SubTp) const override;
+  unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
+                            Type *Src) const override;
+  unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                              Type *CondTy) const override;
+  unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
+                              unsigned Index) const override;
+  unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
+                           unsigned AddressSpace) const override;
 
-  virtual unsigned
-  getAddressComputationCost(Type *PtrTy, bool IsComplex) const override;
+  unsigned getAddressComputationCost(Type *PtrTy,
+                                     bool IsComplex) const override;
 
-  virtual unsigned getReductionCost(unsigned Opcode, Type *Ty,
-                                    bool IsPairwiseForm) const override;
+  unsigned getReductionCost(unsigned Opcode, Type *Ty,
+                            bool IsPairwiseForm) const override;
 
-  virtual unsigned getIntImmCost(const APInt &Imm, Type *Ty) const override;
+  unsigned getIntImmCost(const APInt &Imm, Type *Ty) const override;
 
-  virtual unsigned getIntImmCost(unsigned Opcode, const APInt &Imm,
-                                 Type *Ty) const override;
-  virtual unsigned getIntImmCost(Intrinsic::ID IID, const APInt &Imm,
-                                 Type *Ty) const override;
+  unsigned getIntImmCost(unsigned Opcode, const APInt &Imm,
+                         Type *Ty) const override;
+  unsigned getIntImmCost(Intrinsic::ID IID, const APInt &Imm,
+                         Type *Ty) const override;
 
   /// @}
 };
