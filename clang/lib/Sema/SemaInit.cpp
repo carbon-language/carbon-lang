@@ -2286,7 +2286,7 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
     if (RDecl->isUnion())
       NumElements = 1;
     else
-      NumElements = llvm::distance(RDecl->fields());
+      NumElements = std::distance(RDecl->field_begin(), RDecl->field_end());
   }
 
   Result->reserveInits(SemaRef.Context, NumElements);

@@ -3673,7 +3673,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
   // Reserve space for the struct members.
   if (!RD->isUnion() && Result.isUninit())
     Result = APValue(APValue::UninitStruct(), RD->getNumBases(),
-                     llvm::distance(RD->fields()));
+                     std::distance(RD->field_begin(), RD->field_end()));
 
   if (RD->isInvalidDecl()) return false;
   const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(RD);
@@ -3733,7 +3733,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
             *Value = APValue(FD);
           else
             *Value = APValue(APValue::UninitStruct(), CD->getNumBases(),
-                             llvm::distance(CD->fields()));
+                             std::distance(CD->field_begin(), CD->field_end()));
         }
         if (!HandleLValueMember(Info, (*I)->getInit(), Subobject, FD))
           return false;
@@ -4930,7 +4930,7 @@ static bool HandleClassZeroInitialization(EvalInfo &Info, const Expr *E,
   assert(!RD->isUnion() && "Expected non-union class type");
   const CXXRecordDecl *CD = dyn_cast<CXXRecordDecl>(RD);
   Result = APValue(APValue::UninitStruct(), CD ? CD->getNumBases() : 0,
-                   llvm::distance(RD->fields()));
+                   std::distance(RD->field_begin(), RD->field_end()));
 
   if (RD->isInvalidDecl()) return false;
   const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(RD);
@@ -5059,7 +5059,8 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
   assert((!isa<CXXRecordDecl>(RD) || !cast<CXXRecordDecl>(RD)->getNumBases()) &&
          "initializer list for class with base classes");
-  Result = APValue(APValue::UninitStruct(), 0, llvm::distance(RD->fields()));
+  Result = APValue(APValue::UninitStruct(), 0,
+                   std::distance(RD->field_begin(), RD->field_end()));
   unsigned ElementNo = 0;
   bool Success = true;
   for (const auto *Field : RD->fields()) {

@@ -1146,8 +1146,7 @@ void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope,
   LambdaScopeInfo *LSI = getCurLambda();
   CXXRecordDecl *Class = LSI->Lambda;
   Class->setInvalidDecl();
-  SmallVector<Decl*, 4> Fields;
-  llvm::copy(Class->fields(), std::back_inserter(Fields));
+  SmallVector<Decl*, 4> Fields(Class->fields());
   ActOnFields(0, Class->getLocation(), Class, Fields, SourceLocation(),
               SourceLocation(), 0);
   CheckCompletedCXXClass(Class);
@@ -1507,8 +1506,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
       addBlockPointerConversion(*this, IntroducerRange, Class, CallOperator);
     
     // Finalize the lambda class.
-    SmallVector<Decl*, 4> Fields;
-    llvm::copy(Class->fields(), std::back_inserter(Fields));
+    SmallVector<Decl*, 4> Fields(Class->fields());
     ActOnFields(0, Class->getLocation(), Class, Fields, SourceLocation(),
                 SourceLocation(), 0);
     CheckCompletedCXXClass(Class);
