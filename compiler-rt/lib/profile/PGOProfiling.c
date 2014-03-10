@@ -7,15 +7,29 @@
 |*
 \*===----------------------------------------------------------------------===*/
 
-#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifndef _MSC_VER
+#define I386_FREEBSD (defined(__FreeBSD__) && defined(__i386__))
+
+#if !I386_FREEBSD
+#include <inttypes.h>
+#endif
+
+#if !defined(_MSC_VER) && !I386_FREEBSD
 #include <stdint.h>
-#else
+#endif
+
+#if defined(_MSC_VER)
 typedef unsigned int uint32_t;
 typedef unsigned int uint64_t;
+#elif I386_FREEBSD
+/* System headers define 'size_t' incorrectly on x64 FreeBSD (prior to
+ * FreeBSD 10, r232261) when compiled in 32-bit mode.
+ */
+#define PRIu64 "llu"
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
 #endif
 
 static FILE *OutputFile = NULL;

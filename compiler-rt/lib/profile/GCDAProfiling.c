@@ -25,18 +25,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/mman.h>
-#include <sys/types.h>
 #ifdef _WIN32
 #include <direct.h>
 #endif
 
-#ifndef _MSC_VER
+#define I386_FREEBSD (defined(__FreeBSD__) && defined(__i386__))
+
+#if !I386_FREEBSD
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
+
+#if !defined(_MSC_VER) && !I386_FREEBSD
 #include <stdint.h>
-#else
+#endif
+
+#if defined(_MSC_VER)
 typedef unsigned int uint32_t;
 typedef unsigned int uint64_t;
+#elif I386_FREEBSD
+/* System headers define 'size_t' incorrectly on x64 FreeBSD (prior to
+ * FreeBSD 10, r232261) when compiled in 32-bit mode.
+ */
+typedef unsigned char uint8_t;
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
+int mkdir(const char*, unsigned short);
 #endif
 
 /* #define DEBUG_GCDAPROFILING */
