@@ -70,7 +70,7 @@ if( NOT LLVM_INCLUDE_TOOLS STREQUAL "bootstrap-only" )
   if(WITH_POLLY)
     add_llvm_external_project(polly)
   else(WITH_POLLY)
-    list(APPEND LLVM_IMPLICIT_PROJECT_IGNORE "${CMAKE_CURRENT_SOURCE_DIR}/polly")
+    list(APPEND LLVM_IMPLICIT_PROJECT_IGNORE "${LLVM_MAIN_SRC_DIR}/tools/polly")
   endif(WITH_POLLY)
 
   # Automatically add remaining sub-directories containing a 'CMakeLists.txt'
