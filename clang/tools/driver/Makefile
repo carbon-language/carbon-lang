@@ -11,12 +11,6 @@ CLANG_LEVEL := ../..
 TOOLNAME = clang
 TOOLALIAS = clang++
 
-# We don't currently expect production Clang builds to be interested in
-# plugins. This is important for startup performance.
-ifdef CLANG_IS_PRODUCTION
-TOOL_NO_EXPORTS := 1
-endif
-
 ifdef CLANG_ORDER_FILE
 TOOL_ORDER_FILE := $(CLANG_ORDER_FILE)
 endif
@@ -24,13 +18,18 @@ endif
 # Include tool version information on OS X.
 TOOL_INFO_PLIST := Info.plist
 
-# Support plugins.
-NO_DEAD_STRIP := 1
-
 # Include this here so we can get the configuration of the targets that have
 # been configured for construction. We have to do this early so we can set up
 # LINK_COMPONENTS before including Makefile.rules
 include $(CLANG_LEVEL)/../../Makefile.config
+
+# Have the option of not supporting plugins. This is important for startup
+# performance.
+ifeq ($(CLANG_PLUGIN_SUPPORT), 1)
+NO_DEAD_STRIP := 1
+else
+TOOL_NO_EXPORTS := 1
+endif
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
                    instrumentation ipo irreader linker objcarcopts option \

@@ -16,11 +16,11 @@ set( LLVM_LINK_COMPONENTS
   Vectorize
   )
 
-option(CLANG_IS_PRODUCTION "Build clang without plugin support" OFF)
+option(CLANG_PLUGIN_SUPPORT "Build clang with plugin support" ON)
 
 # Support plugins. This must be before add_clang_executable as it reads
 # LLVM_NO_DEAD_STRIP.
-if(NOT CLANG_IS_PRODUCTION)
+if(CLANG_PLUGIN_SUPPORT)
   set(LLVM_NO_DEAD_STRIP 1)
 endif()
 
@@ -40,7 +40,7 @@ target_link_libraries(clang
 set_target_properties(clang PROPERTIES VERSION ${CLANG_EXECUTABLE_VERSION})
 
 # Support plugins.
-if(NOT CLANG_IS_PRODUCTION)
+if(CLANG_PLUGIN_SUPPORT)
   set_target_properties(clang PROPERTIES ENABLE_EXPORTS 1)
 endif()
 
