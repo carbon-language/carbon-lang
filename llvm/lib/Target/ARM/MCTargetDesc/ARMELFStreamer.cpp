@@ -483,7 +483,7 @@ public:
     MCELFStreamer::EmitInstruction(Inst, STI);
   }
 
-  virtual void emitInst(uint32_t Inst, char Suffix) {
+  void emitInst(uint32_t Inst, char Suffix) {
     unsigned Size;
     char Buffer[4];
     const bool LittleEndian = getContext().getAsmInfo()->isLittleEndian();
