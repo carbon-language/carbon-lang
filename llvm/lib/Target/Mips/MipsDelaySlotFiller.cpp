@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "delay-slot-filler"
 
+#include "MCTargetDesc/MipsMCNaCl.h"
 #include "Mips.h"
 #include "MipsInstrInfo.h"
 #include "MipsTargetMachine.h"
@@ -530,6 +531,18 @@ bool Filler::searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
 
     if (delayHasHazard(*I, RegDU, IM))
       continue;
+
+    if (TM.getSubtarget<MipsSubtarget>().isTargetNaCl()) {
+      // In NaCl, instructions that must be masked are forbidden in delay slots.
+      // We only check for loads, stores and SP changes.  Calls, returns and
+      // branches are not checked because non-NaCl targets never put them in
+      // delay slots.
+      unsigned AddrIdx;
+      if ((isBasePlusOffsetMemoryAccess(I->getOpcode(), &AddrIdx)
+           && baseRegNeedsLoadStoreMask(I->getOperand(AddrIdx).getReg()))
+          || I->modifiesRegister(Mips::SP, TM.getRegisterInfo()))
+        continue;
+    }
 
     Filler = I;
     return true;
