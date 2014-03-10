@@ -64,6 +64,16 @@ class Function;
 /// the IR is not mutated at all.
 class PreservedAnalyses {
 public:
+  PreservedAnalyses() {}
+  PreservedAnalyses(const PreservedAnalyses &Arg)
+      : PreservedPassIDs(Arg.PreservedPassIDs) {}
+  PreservedAnalyses(PreservedAnalyses &&Arg)
+      : PreservedPassIDs(Arg.PreservedPassIDs) {}
+  PreservedAnalyses &operator=(PreservedAnalyses RHS) {
+    std::swap(*this, RHS);
+    return *this;
+  }
+
   /// \brief Convenience factory function for the empty preserved set.
   static PreservedAnalyses none() { return PreservedAnalyses(); }
 
@@ -72,15 +82,6 @@ public:
     PreservedAnalyses PA;
     PA.PreservedPassIDs.insert((void *)AllPassesID);
     return PA;
-  }
-
-  PreservedAnalyses &operator=(PreservedAnalyses Arg) {
-    swap(Arg);
-    return *this;
-  }
-
-  void swap(PreservedAnalyses &Arg) {
-    PreservedPassIDs.swap(Arg.PreservedPassIDs);
   }
 
   /// \brief Mark a particular pass as preserved, adding it to the set.
@@ -147,10 +148,6 @@ private:
   SmallPtrSet<void *, 2> PreservedPassIDs;
 };
 
-inline void swap(PreservedAnalyses &LHS, PreservedAnalyses &RHS) {
-  LHS.swap(RHS);
-}
-
 /// \brief Implementation details of the pass manager interfaces.
 namespace detail {
 
@@ -204,7 +201,14 @@ struct PassModel;
 template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 struct PassModel<IRUnitT, AnalysisManagerT, PassT,
                  true> : PassConcept<IRUnitT, AnalysisManagerT> {
-  PassModel(PassT Pass) : Pass(std::move(Pass)) {}
+  explicit PassModel(PassT Pass) : Pass(std::move(Pass)) {}
+  PassModel(const PassModel &Arg) : Pass(Arg.Pass) {}
+  PassModel(PassModel &&Arg) : Pass(Arg.Pass) {}
+  PassModel &operator=(PassModel RHS) {
+    std::swap(*this, RHS);
+    return *this;
+  }
+
   PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) override {
     return Pass.run(IR, AM);
   }
@@ -217,7 +221,14 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT,
 template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 struct PassModel<IRUnitT, AnalysisManagerT, PassT,
                  false> : PassConcept<IRUnitT, AnalysisManagerT> {
-  PassModel(PassT Pass) : Pass(std::move(Pass)) {}
+  explicit PassModel(PassT Pass) : Pass(std::move(Pass)) {}
+  PassModel(const PassModel &Arg) : Pass(Arg.Pass) {}
+  PassModel(PassModel &&Arg) : Pass(Arg.Pass) {}
+  PassModel &operator=(PassModel RHS) {
+    std::swap(*this, RHS);
+    return *this;
+  }
+
   PreservedAnalyses run(IRUnitT IR, AnalysisManagerT *AM) override {
     return Pass.run(IR);
   }
@@ -277,7 +288,13 @@ struct AnalysisResultModel;
 template <typename IRUnitT, typename PassT, typename ResultT>
 struct AnalysisResultModel<IRUnitT, PassT, ResultT,
                            false> : AnalysisResultConcept<IRUnitT> {
-  AnalysisResultModel(ResultT Result) : Result(std::move(Result)) {}
+  explicit AnalysisResultModel(ResultT Result) : Result(std::move(Result)) {}
+  AnalysisResultModel(const AnalysisResultModel &Arg) : Result(Arg.Result) {}
+  AnalysisResultModel(AnalysisResultModel &&Arg) : Result(Arg.Result) {}
+  AnalysisResultModel &operator=(AnalysisResultModel RHS) {
+    std::swap(*this, RHS);
+    return *this;
+  }
 
   /// \brief The model bases invalidation solely on being in the preserved set.
   //
@@ -296,7 +313,13 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT,
 template <typename IRUnitT, typename PassT, typename ResultT>
 struct AnalysisResultModel<IRUnitT, PassT, ResultT,
                            true> : AnalysisResultConcept<IRUnitT> {
-  AnalysisResultModel(ResultT Result) : Result(std::move(Result)) {}
+  explicit AnalysisResultModel(ResultT Result) : Result(std::move(Result)) {}
+  AnalysisResultModel(const AnalysisResultModel &Arg) : Result(Arg.Result) {}
+  AnalysisResultModel(AnalysisResultModel &&Arg) : Result(Arg.Result) {}
+  AnalysisResultModel &operator=(AnalysisResultModel RHS) {
+    std::swap(*this, RHS);
+    return *this;
+  }
 
   /// \brief The model delegates to the \c ResultT method.
   bool invalidate(IRUnitT IR, const PreservedAnalyses &PA) override {
@@ -337,7 +360,13 @@ template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
                          true> : AnalysisPassConcept<IRUnitT,
                                                      AnalysisManagerT> {
-  AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
+  explicit AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
+  AnalysisPassModel(const AnalysisPassModel &Arg) : Pass(Arg.Pass) {}
+  AnalysisPassModel(AnalysisPassModel &&Arg) : Pass(Arg.Pass) {}
+  AnalysisPassModel &operator=(AnalysisPassModel RHS) {
+    std::swap(*this, RHS);
+    return *this;
+  }
 
   // FIXME: Replace PassT::Result with type traits when we use C++11.
   typedef AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
@@ -360,7 +389,13 @@ template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
                          false> : AnalysisPassConcept<IRUnitT,
                                                      AnalysisManagerT> {
-  AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
+  explicit AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
+  AnalysisPassModel(const AnalysisPassModel &Arg) : Pass(Arg.Pass) {}
+  AnalysisPassModel(AnalysisPassModel &&Arg) : Pass(Arg.Pass) {}
+  AnalysisPassModel &operator=(AnalysisPassModel RHS) {
+    std::swap(*this, RHS);
+    return *this;
+  }
 
   // FIXME: Replace PassT::Result with type traits when we use C++11.
   typedef AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
@@ -383,6 +418,15 @@ class ModuleAnalysisManager;
 
 class ModulePassManager {
 public:
+  // We have to explicitly define all the special member functions because MSVC
+  // 2013 refuses to generate them.
+  ModulePassManager() {}
+  ModulePassManager(ModulePassManager &&Arg) : Passes(std::move(Arg.Passes)) {}
+  ModulePassManager &operator=(ModulePassManager &&RHS) {
+    Passes = std::move(RHS.Passes);
+    return *this;
+  }
+
   /// \brief Run all of the module passes in this module pass manager over
   /// a module.
   ///
@@ -407,6 +451,9 @@ private:
               std::move(Pass)) {}
   };
 
+  ModulePassManager(const ModulePassManager &) LLVM_DELETED_FUNCTION;
+  ModulePassManager &operator=(const ModulePassManager &) LLVM_DELETED_FUNCTION;
+
   std::vector<std::unique_ptr<ModulePassConcept>> Passes;
 };
 
@@ -414,6 +461,15 @@ class FunctionAnalysisManager;
 
 class FunctionPassManager {
 public:
+  // We have to explicitly define all the special member functions because MSVC
+  // 2013 refuses to generate them.
+  FunctionPassManager() {}
+  FunctionPassManager(FunctionPassManager &&Arg) : Passes(std::move(Arg.Passes)) {}
+  FunctionPassManager &operator=(FunctionPassManager &&RHS) {
+    Passes = std::move(RHS.Passes);
+    return *this;
+  }
+
   template <typename FunctionPassT> void addPass(FunctionPassT Pass) {
     Passes.emplace_back(new FunctionPassModel<FunctionPassT>(std::move(Pass)));
   }
@@ -433,6 +489,10 @@ private:
         : detail::PassModel<Function *, FunctionAnalysisManager, PassT>(
               std::move(Pass)) {}
   };
+
+  FunctionPassManager(const FunctionPassManager &) LLVM_DELETED_FUNCTION;
+  FunctionPassManager &
+  operator=(const FunctionPassManager &) LLVM_DELETED_FUNCTION;
 
   std::vector<std::unique_ptr<FunctionPassConcept>> Passes;
 };
@@ -455,12 +515,24 @@ class AnalysisManagerBase {
   DerivedT *derived_this() { return static_cast<DerivedT *>(this); }
   const DerivedT *derived_this() const { return static_cast<const DerivedT *>(this); }
 
+  AnalysisManagerBase(const AnalysisManagerBase &) LLVM_DELETED_FUNCTION;
+  AnalysisManagerBase &
+  operator=(const AnalysisManagerBase &) LLVM_DELETED_FUNCTION;
+
 protected:
   typedef detail::AnalysisResultConcept<IRUnitT> ResultConceptT;
   typedef detail::AnalysisPassConcept<IRUnitT, DerivedT> PassConceptT;
 
   // FIXME: Provide template aliases for the models when we're using C++11 in
   // a mode supporting them.
+
+  AnalysisManagerBase() {}
+  AnalysisManagerBase(AnalysisManagerBase &&Arg)
+      : AnalysisPasses(std::move(Arg.AnalysisPasses)) {}
+  AnalysisManagerBase &operator=(AnalysisManagerBase &&RHS) {
+    AnalysisPasses = std::move(RHS.AnalysisPasses);
+    return *this;
+  }
 
 public:
   /// \brief Get the result of an analysis pass for this module.
@@ -564,9 +636,21 @@ class ModuleAnalysisManager
   typedef BaseT::PassConceptT PassConceptT;
 
 public:
-  // Public methods provided by the base class.
+  ModuleAnalysisManager() {}
+  ModuleAnalysisManager(ModuleAnalysisManager &&Arg)
+      : BaseT(std::move(static_cast<BaseT &>(Arg))),
+        ModuleAnalysisResults(std::move(Arg.ModuleAnalysisResults)) {}
+  ModuleAnalysisManager &operator=(ModuleAnalysisManager &&RHS) {
+    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
+    ModuleAnalysisResults = std::move(RHS.ModuleAnalysisResults);
+    return *this;
+  }
 
 private:
+  ModuleAnalysisManager(const ModuleAnalysisManager &) LLVM_DELETED_FUNCTION;
+  ModuleAnalysisManager &
+  operator=(const ModuleAnalysisManager &) LLVM_DELETED_FUNCTION;
+
   /// \brief Get a module pass result, running the pass if necessary.
   ResultConceptT &getResultImpl(void *PassID, Module *M);
 
@@ -600,6 +684,16 @@ class FunctionAnalysisManager
 public:
   // Most public APIs are inherited from the CRTP base class.
 
+  FunctionAnalysisManager() {}
+  FunctionAnalysisManager(FunctionAnalysisManager &&Arg)
+      : BaseT(std::move(static_cast<BaseT &>(Arg))),
+        FunctionAnalysisResults(std::move(Arg.FunctionAnalysisResults)) {}
+  FunctionAnalysisManager &operator=(FunctionAnalysisManager &&RHS) {
+    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
+    FunctionAnalysisResults = std::move(RHS.FunctionAnalysisResults);
+    return *this;
+  }
+
   /// \brief Returns true if the analysis manager has an empty results cache.
   bool empty() const;
 
@@ -612,6 +706,10 @@ public:
   void clear();
 
 private:
+  FunctionAnalysisManager(const FunctionAnalysisManager &) LLVM_DELETED_FUNCTION;
+  FunctionAnalysisManager &
+  operator=(const FunctionAnalysisManager &) LLVM_DELETED_FUNCTION;
+
   /// \brief Get a function pass result, running the pass if necessary.
   ResultConceptT &getResultImpl(void *PassID, Function *F);
 
@@ -668,7 +766,18 @@ public:
 
   static void *ID() { return (void *)&PassID; }
 
-  FunctionAnalysisManagerModuleProxy(FunctionAnalysisManager &FAM) : FAM(FAM) {}
+  explicit FunctionAnalysisManagerModuleProxy(FunctionAnalysisManager &FAM)
+      : FAM(FAM) {}
+  FunctionAnalysisManagerModuleProxy(
+      const FunctionAnalysisManagerModuleProxy &Arg)
+      : FAM(Arg.FAM) {}
+  FunctionAnalysisManagerModuleProxy(FunctionAnalysisManagerModuleProxy &&Arg)
+      : FAM(Arg.FAM) {}
+  FunctionAnalysisManagerModuleProxy &
+  operator=(FunctionAnalysisManagerModuleProxy RHS) {
+    std::swap(*this, RHS);
+    return *this;
+  }
 
   /// \brief Run the analysis pass and create our proxy result object.
   ///
@@ -693,7 +802,13 @@ private:
 /// See its documentation for more information.
 class FunctionAnalysisManagerModuleProxy::Result {
 public:
-  Result(FunctionAnalysisManager &FAM) : FAM(FAM) {}
+  explicit Result(FunctionAnalysisManager &FAM) : FAM(FAM) {}
+  Result(const Result &Arg) : FAM(Arg.FAM) {}
+  Result(Result &&Arg) : FAM(Arg.FAM) {}
+  Result &operator=(Result RHS) {
+    std::swap(*this, RHS);
+    return *this;
+  }
   ~Result();
 
   /// \brief Accessor for the \c FunctionAnalysisManager.
@@ -732,7 +847,13 @@ public:
   /// \brief Result proxy object for \c ModuleAnalysisManagerFunctionProxy.
   class Result {
   public:
-    Result(const ModuleAnalysisManager &MAM) : MAM(MAM) {}
+    explicit Result(const ModuleAnalysisManager &MAM) : MAM(MAM) {}
+    Result(const Result &Arg) : MAM(Arg.MAM) {}
+    Result(Result &&Arg) : MAM(Arg.MAM) {}
+    Result &operator=(Result RHS) {
+      std::swap(*this, RHS);
+      return *this;
+    }
 
     const ModuleAnalysisManager &getManager() const { return MAM; }
 
@@ -772,6 +893,14 @@ class ModuleToFunctionPassAdaptor {
 public:
   explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass)
       : Pass(std::move(Pass)) {}
+  ModuleToFunctionPassAdaptor(const ModuleToFunctionPassAdaptor &Arg)
+      : Pass(Arg.Pass) {}
+  ModuleToFunctionPassAdaptor(ModuleToFunctionPassAdaptor &&Arg)
+      : Pass(std::move(Arg.Pass)) {}
+  ModuleToFunctionPassAdaptor &operator=(ModuleToFunctionPassAdaptor RHS) {
+    std::swap(*this, RHS);
+    return *this;
+  }
 
   /// \brief Runs the function pass across every function in the module.
   PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM) {
