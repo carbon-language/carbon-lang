@@ -19,7 +19,7 @@ using namespace llvm;
 
 static void findCallees(
     SmallVectorImpl<Constant *> &Worklist, SmallPtrSetImpl<Constant *> &Visited,
-    SmallVectorImpl<PointerUnion<Function *, LazyCallGraph::Node *> > &Callees,
+    SmallVectorImpl<PointerUnion<Function *, LazyCallGraph::Node *>> &Callees,
     SmallPtrSetImpl<Function *> &CalleeSet) {
   while (!Worklist.empty()) {
     Constant *C = Worklist.pop_back_val();
@@ -36,7 +36,7 @@ static void findCallees(
       // strong definition's address would be an effective way to determine the
       // safety of optimizing a direct call edge.
       if (!F->isDeclaration() && CalleeSet.insert(F))
-          Callees.push_back(F);
+        Callees.push_back(F);
       continue;
     }
 
@@ -165,10 +165,12 @@ static void printNodes(raw_ostream &OS, LazyCallGraph::Node &N,
   OS << "\n";
 }
 
-PreservedAnalyses LazyCallGraphPrinterPass::run(Module *M, ModuleAnalysisManager *AM) {
+PreservedAnalyses LazyCallGraphPrinterPass::run(Module *M,
+                                                ModuleAnalysisManager *AM) {
   LazyCallGraph &G = AM->getResult<LazyCallGraphAnalysis>(M);
 
-  OS << "Printing the call graph for module: " << M->getModuleIdentifier() << "\n\n";
+  OS << "Printing the call graph for module: " << M->getModuleIdentifier()
+     << "\n\n";
 
   SmallPtrSet<LazyCallGraph::Node *, 16> Printed;
   for (LazyCallGraph::Node *N : G)
