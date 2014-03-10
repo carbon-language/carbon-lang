@@ -12,13 +12,6 @@ you can now submit your patches for Clang and LLVM at
 Sign up
 -------
 
-There are two options to get an account on Phabricator. You can sign up
-immediately with one of the supported OAuth account types if you're comfortable
-with OAuth, but you can also email chandlerc@gmail.com to request an account to
-be created manually without using OAuth. We're working to get support in
-Phabricator to directly create new accounts, but currently this is a manual
-process.
-
 Note that if you use your Subversion user name as Phabricator user name,
 Phabricator will automatically connect your submits to your Phabricator user in
 the `Code Repository Browser`_.
