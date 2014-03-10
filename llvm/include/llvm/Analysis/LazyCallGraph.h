@@ -192,6 +192,12 @@ public:
   /// Any other operation on G is likely to fail.
   LazyCallGraph(LazyCallGraph &&G);
 
+  /// \brief Copy and move assignment.
+  LazyCallGraph &operator=(LazyCallGraph RHS) {
+    std::swap(*this, RHS);
+    return *this;
+  }
+
   iterator begin() { return iterator(*this, EntryNodes); }
   iterator end() { return iterator(*this, EntryNodes, iterator::IsAtEndT()); }
 
