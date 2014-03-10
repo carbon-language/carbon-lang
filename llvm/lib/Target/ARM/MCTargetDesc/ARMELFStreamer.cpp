@@ -114,32 +114,32 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   MCInstPrinter &InstPrinter;
   bool IsVerboseAsm;
 
-  virtual void emitFnStart();
-  virtual void emitFnEnd();
-  virtual void emitCantUnwind();
-  virtual void emitPersonality(const MCSymbol *Personality);
-  virtual void emitPersonalityIndex(unsigned Index);
-  virtual void emitHandlerData();
-  virtual void emitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset = 0);
-  virtual void emitMovSP(unsigned Reg, int64_t Offset = 0);
-  virtual void emitPad(int64_t Offset);
-  virtual void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
-                           bool isVector);
-  virtual void emitUnwindRaw(int64_t Offset,
-                             const SmallVectorImpl<uint8_t> &Opcodes);
+  void emitFnStart() override;
+  void emitFnEnd() override;
+  void emitCantUnwind() override;
+  void emitPersonality(const MCSymbol *Personality) override;
+  void emitPersonalityIndex(unsigned Index) override;
+  void emitHandlerData() override;
+  void emitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset = 0) override;
+  void emitMovSP(unsigned Reg, int64_t Offset = 0) override;
+  void emitPad(int64_t Offset) override;
+  void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
+                   bool isVector) override;
+  void emitUnwindRaw(int64_t Offset,
+                     const SmallVectorImpl<uint8_t> &Opcodes) override;
 
-  virtual void switchVendor(StringRef Vendor);
-  virtual void emitAttribute(unsigned Attribute, unsigned Value);
-  virtual void emitTextAttribute(unsigned Attribute, StringRef String);
-  virtual void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
-                                    StringRef StrinValue);
-  virtual void emitArch(unsigned Arch);
-  virtual void emitObjectArch(unsigned Arch);
-  virtual void emitFPU(unsigned FPU);
-  virtual void emitInst(uint32_t Inst, char Suffix = '\0');
-  virtual void finishAttributeSection();
+  void switchVendor(StringRef Vendor) override;
+  void emitAttribute(unsigned Attribute, unsigned Value) override;
+  void emitTextAttribute(unsigned Attribute, StringRef String) override;
+  void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
+                            StringRef StrinValue) override;
+  void emitArch(unsigned Arch) override;
+  void emitObjectArch(unsigned Arch) override;
+  void emitFPU(unsigned FPU) override;
+  void emitInst(uint32_t Inst, char Suffix = '\0') override;
+  void finishAttributeSection() override;
 
-  virtual void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE);
+  void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE) override;
 
 public:
   ARMTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS,
@@ -383,32 +383,32 @@ private:
 
   ARMELFStreamer &getStreamer();
 
-  virtual void emitFnStart();
-  virtual void emitFnEnd();
-  virtual void emitCantUnwind();
-  virtual void emitPersonality(const MCSymbol *Personality);
-  virtual void emitPersonalityIndex(unsigned Index);
-  virtual void emitHandlerData();
-  virtual void emitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset = 0);
-  virtual void emitMovSP(unsigned Reg, int64_t Offset = 0);
-  virtual void emitPad(int64_t Offset);
-  virtual void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
-                           bool isVector);
-  virtual void emitUnwindRaw(int64_t Offset,
-                             const SmallVectorImpl<uint8_t> &Opcodes);
+  void emitFnStart() override;
+  void emitFnEnd() override;
+  void emitCantUnwind() override;
+  void emitPersonality(const MCSymbol *Personality) override;
+  void emitPersonalityIndex(unsigned Index) override;
+  void emitHandlerData() override;
+  void emitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset = 0) override;
+  void emitMovSP(unsigned Reg, int64_t Offset = 0) override;
+  void emitPad(int64_t Offset) override;
+  void emitRegSave(const SmallVectorImpl<unsigned> &RegList,
+                   bool isVector) override;
+  void emitUnwindRaw(int64_t Offset,
+                     const SmallVectorImpl<uint8_t> &Opcodes) override;
 
-  virtual void switchVendor(StringRef Vendor);
-  virtual void emitAttribute(unsigned Attribute, unsigned Value);
-  virtual void emitTextAttribute(unsigned Attribute, StringRef String);
-  virtual void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
-                                    StringRef StringValue);
-  virtual void emitArch(unsigned Arch);
-  virtual void emitObjectArch(unsigned Arch);
-  virtual void emitFPU(unsigned FPU);
-  virtual void emitInst(uint32_t Inst, char Suffix = '\0');
-  virtual void finishAttributeSection();
+  void switchVendor(StringRef Vendor) override;
+  void emitAttribute(unsigned Attribute, unsigned Value) override;
+  void emitTextAttribute(unsigned Attribute, StringRef String) override;
+  void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
+                            StringRef StringValue) override;
+  void emitArch(unsigned Arch) override;
+  void emitObjectArch(unsigned Arch) override;
+  void emitFPU(unsigned FPU) override;
+  void emitInst(uint32_t Inst, char Suffix = '\0') override;
+  void finishAttributeSection() override;
 
-  virtual void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE);
+  void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE) override;
 
   size_t calculateContentSize() const;
 
@@ -444,7 +444,7 @@ public:
 
   ~ARMELFStreamer() {}
 
-  virtual void FinishImpl();
+  void FinishImpl() override;
 
   // ARM exception handling directives
   void emitFnStart();
@@ -459,8 +459,8 @@ public:
   void emitRegSave(const SmallVectorImpl<unsigned> &RegList, bool isVector);
   void emitUnwindRaw(int64_t Offset, const SmallVectorImpl<uint8_t> &Opcodes);
 
-  virtual void ChangeSection(const MCSection *Section,
-                             const MCExpr *Subsection) {
+  void ChangeSection(const MCSection *Section,
+                     const MCExpr *Subsection) override {
     // We have to keep track of the mapping symbol state of any sections we
     // use. Each one should start off as EMS_None, which is provided as the
     // default constructor by DenseMap::lookup.
@@ -473,7 +473,8 @@ public:
   /// This function is the one used to emit instruction data into the ELF
   /// streamer. We override it to add the appropriate mapping symbol if
   /// necessary.
-  virtual void EmitInstruction(const MCInst& Inst, const MCSubtargetInfo &STI) {
+  void EmitInstruction(const MCInst& Inst,
+                       const MCSubtargetInfo &STI) override {
     if (IsThumb)
       EmitThumbMappingSymbol();
     else
@@ -523,7 +524,7 @@ public:
   /// This is one of the functions used to emit data into an ELF section, so the
   /// ARM streamer overrides it to add the appropriate mapping symbol ($d) if
   /// necessary.
-  virtual void EmitBytes(StringRef Data) {
+  void EmitBytes(StringRef Data) override {
     EmitDataMappingSymbol();
     MCELFStreamer::EmitBytes(Data);
   }
@@ -531,12 +532,12 @@ public:
   /// This is one of the functions used to emit data into an ELF section, so the
   /// ARM streamer overrides it to add the appropriate mapping symbol ($d) if
   /// necessary.
-  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size) {
+  void EmitValueImpl(const MCExpr *Value, unsigned Size) override {
     EmitDataMappingSymbol();
     MCELFStreamer::EmitValueImpl(Value, Size);
   }
 
-  virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {
+  void EmitAssemblerFlag(MCAssemblerFlag Flag) override {
     MCELFStreamer::EmitAssemblerFlag(Flag);
 
     switch (Flag) {
@@ -599,7 +600,7 @@ private:
     Symbol->setVariableValue(Value);
   }
 
-  void EmitThumbFunc(MCSymbol *Func) {
+  void EmitThumbFunc(MCSymbol *Func) override {
     // FIXME: Anything needed here to flag the function as thumb?
 
     getAssembler().setIsThumbFunc(Func);

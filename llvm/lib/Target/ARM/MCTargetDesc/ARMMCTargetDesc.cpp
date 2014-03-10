@@ -287,14 +287,14 @@ class ARMMCInstrAnalysis : public MCInstrAnalysis {
 public:
   ARMMCInstrAnalysis(const MCInstrInfo *Info) : MCInstrAnalysis(Info) {}
 
-  virtual bool isUnconditionalBranch(const MCInst &Inst) const {
+  bool isUnconditionalBranch(const MCInst &Inst) const override {
     // BCCs with the "always" predicate are unconditional branches.
     if (Inst.getOpcode() == ARM::Bcc && Inst.getOperand(1).getImm()==ARMCC::AL)
       return true;
     return MCInstrAnalysis::isUnconditionalBranch(Inst);
   }
 
-  virtual bool isConditionalBranch(const MCInst &Inst) const {
+  bool isConditionalBranch(const MCInst &Inst) const override {
     // BCCs with the "always" predicate are unconditional branches.
     if (Inst.getOpcode() == ARM::Bcc && Inst.getOperand(1).getImm()==ARMCC::AL)
       return false;
@@ -302,7 +302,7 @@ public:
   }
 
   bool evaluateBranch(const MCInst &Inst, uint64_t Addr,
-                      uint64_t Size, uint64_t &Target) const {
+                      uint64_t Size, uint64_t &Target) const override {
     // We only handle PCRel branches for now.
     if (Info->get(Inst.getOpcode()).OpInfo[0].OperandType!=MCOI::OPERAND_PCREL)
       return false;

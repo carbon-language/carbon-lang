@@ -23,7 +23,7 @@ public:
   ARMMachORelocationInfo(MCContext &Ctx) : MCRelocationInfo(Ctx) {}
 
   const MCExpr *createExprForCAPIVariantKind(const MCExpr *SubExpr,
-                                             unsigned VariantKind) {
+                                             unsigned VariantKind) override {
     switch(VariantKind) {
     case LLVMDisassembler_VariantKind_ARM_HI16:
       return ARMMCExpr::CreateUpper16(SubExpr, Ctx);

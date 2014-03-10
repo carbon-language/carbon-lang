@@ -20,13 +20,13 @@
 namespace llvm {
 
   class ARMMCAsmInfoDarwin : public MCAsmInfoDarwin {
-    virtual void anchor();
+    void anchor() override;
   public:
     explicit ARMMCAsmInfoDarwin();
   };
 
   class ARMELFMCAsmInfo : public MCAsmInfoELF {
-    virtual void anchor();
+    void anchor() override;
   public:
     explicit ARMELFMCAsmInfo();
   };

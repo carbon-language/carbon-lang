@@ -51,13 +51,15 @@ public:
     delete STI;
   }
 
-  unsigned getNumFixupKinds() const { return ARM::NumTargetFixupKinds; }
+  unsigned getNumFixupKinds() const override {
+    return ARM::NumTargetFixupKinds;
+  }
 
   bool hasNOP() const {
     return (STI->getFeatureBits() & ARM::HasV6T2Ops) != 0;
   }
 
-  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
+  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override {
     const static MCFixupKindInfo Infos[ARM::NumTargetFixupKinds] = {
 // This table *must* be in the order that the fixup_* kinds are defined in
 // ARMFixupKinds.h.
@@ -113,24 +115,23 @@ public:
   void processFixupValue(const MCAssembler &Asm, const MCAsmLayout &Layout,
                          const MCFixup &Fixup, const MCFragment *DF,
                          MCValue &Target, uint64_t &Value,
-                         bool &IsResolved);
+                         bool &IsResolved) override;
 
 
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                  uint64_t Value) const;
+                  uint64_t Value) const override;
 
-  bool mayNeedRelaxation(const MCInst &Inst) const;
+  bool mayNeedRelaxation(const MCInst &Inst) const override;
 
-  bool fixupNeedsRelaxation(const MCFixup &Fixup,
-                            uint64_t Value,
+  bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                             const MCRelaxableFragment *DF,
-                            const MCAsmLayout &Layout) const;
+                            const MCAsmLayout &Layout) const override;
 
-  void relaxInstruction(const MCInst &Inst, MCInst &Res) const;
+  void relaxInstruction(const MCInst &Inst, MCInst &Res) const override;
 
-  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const;
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override;
 
-  void handleAssemblerFlag(MCAssemblerFlag Flag) {
+  void handleAssemblerFlag(MCAssemblerFlag Flag) override {
     switch (Flag) {
     default: break;
     case MCAF_Code16:
@@ -663,7 +664,7 @@ public:
                    uint8_t _OSABI)
     : ARMAsmBackend(T, TT), OSABI(_OSABI) { }
 
-  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
     return createARMELFObjectWriter(OS, OSABI);
   }
 };
@@ -678,7 +679,7 @@ public:
       HasDataInCodeSupport = true;
     }
 
-  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
     return createARMMachObjectWriter(OS, /*Is64Bit=*/false,
                                      MachO::CPU_TYPE_ARM,
                                      Subtype);
