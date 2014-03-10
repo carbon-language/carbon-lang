@@ -12,6 +12,7 @@ find . | \
     grep -v '^\./dist' | \
     grep -v '^\./utils' | \
     grep -v '^\./venv' | \
+    grep -v '^\./notes.txt' | \
     grep -v '^\./lit.egg-info' | \
     grep -v '^\./lit/ExampleTests' | \
     grep -v '/Output' | \
