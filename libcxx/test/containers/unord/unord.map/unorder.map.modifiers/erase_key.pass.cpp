@@ -21,6 +21,23 @@
 
 #include "min_allocator.h"
 
+#if __cplusplus >= 201103L
+template <typename Unordered>
+bool only_deletions ( const Unordered &whole, const Unordered &part ) {
+    typename Unordered::const_iterator w = whole.begin();
+    typename Unordered::const_iterator p = part.begin();
+    
+    while ( w != whole.end () && p != part.end()) {        
+        if ( *w == *p )
+            p++;
+        w++;
+        }
+
+    return p == part.end();
+}
+#endif
+
+
 int main()
 {
     {
@@ -136,6 +153,25 @@ int main()
 
         assert(c.erase(3) == 0);
         assert(c.size() == 0);
+    }
+    {
+    typedef std::unordered_map<int, int> C;
+    C m, m2;
+    for ( int i = 0; i < 10; ++i ) {
+        m[i] = i;
+        m2[i] = i;
+        }
+    
+    C::iterator i = m2.begin();
+    int ctr = 0;
+    while (i != m2.end()) {
+        if (ctr++ % 2 == 0)
+            m2.erase(i++);
+        else
+            ++i;
+        }
+
+    assert (only_deletions (m, m2));
     }
 #endif
 }
