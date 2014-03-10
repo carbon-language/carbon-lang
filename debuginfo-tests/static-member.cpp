@@ -2,6 +2,10 @@
 // RUN: %clangxx %t -o %t.out
 // RUN: %test_debuginfo %s %t.out
 
+// FIXME: The ptype command only works with an LLDB from XCode 5 or
+// later and not all buildbots have that yet.
+// XFAIL: darwin
+
 // DEBUGGER: delete breakpoints
 // DEBUGGER: break static-member.cpp:33
 // DEBUGGER: r
