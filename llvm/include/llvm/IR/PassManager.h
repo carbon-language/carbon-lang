@@ -64,6 +64,8 @@ class Function;
 /// the IR is not mutated at all.
 class PreservedAnalyses {
 public:
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   PreservedAnalyses() {}
   PreservedAnalyses(const PreservedAnalyses &Arg)
       : PreservedPassIDs(Arg.PreservedPassIDs) {}
@@ -202,6 +204,8 @@ template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 struct PassModel<IRUnitT, AnalysisManagerT, PassT,
                  true> : PassConcept<IRUnitT, AnalysisManagerT> {
   explicit PassModel(PassT Pass) : Pass(std::move(Pass)) {}
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   PassModel(const PassModel &Arg) : Pass(Arg.Pass) {}
   PassModel(PassModel &&Arg) : Pass(Arg.Pass) {}
   PassModel &operator=(PassModel RHS) {
@@ -222,6 +226,8 @@ template <typename IRUnitT, typename AnalysisManagerT, typename PassT>
 struct PassModel<IRUnitT, AnalysisManagerT, PassT,
                  false> : PassConcept<IRUnitT, AnalysisManagerT> {
   explicit PassModel(PassT Pass) : Pass(std::move(Pass)) {}
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   PassModel(const PassModel &Arg) : Pass(Arg.Pass) {}
   PassModel(PassModel &&Arg) : Pass(Arg.Pass) {}
   PassModel &operator=(PassModel RHS) {
@@ -289,6 +295,8 @@ template <typename IRUnitT, typename PassT, typename ResultT>
 struct AnalysisResultModel<IRUnitT, PassT, ResultT,
                            false> : AnalysisResultConcept<IRUnitT> {
   explicit AnalysisResultModel(ResultT Result) : Result(std::move(Result)) {}
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   AnalysisResultModel(const AnalysisResultModel &Arg) : Result(Arg.Result) {}
   AnalysisResultModel(AnalysisResultModel &&Arg) : Result(Arg.Result) {}
   AnalysisResultModel &operator=(AnalysisResultModel RHS) {
@@ -314,6 +322,8 @@ template <typename IRUnitT, typename PassT, typename ResultT>
 struct AnalysisResultModel<IRUnitT, PassT, ResultT,
                            true> : AnalysisResultConcept<IRUnitT> {
   explicit AnalysisResultModel(ResultT Result) : Result(std::move(Result)) {}
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   AnalysisResultModel(const AnalysisResultModel &Arg) : Result(Arg.Result) {}
   AnalysisResultModel(AnalysisResultModel &&Arg) : Result(Arg.Result) {}
   AnalysisResultModel &operator=(AnalysisResultModel RHS) {
@@ -361,6 +371,8 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
                          true> : AnalysisPassConcept<IRUnitT,
                                                      AnalysisManagerT> {
   explicit AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   AnalysisPassModel(const AnalysisPassModel &Arg) : Pass(Arg.Pass) {}
   AnalysisPassModel(AnalysisPassModel &&Arg) : Pass(Arg.Pass) {}
   AnalysisPassModel &operator=(AnalysisPassModel RHS) {
@@ -390,6 +402,8 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT,
                          false> : AnalysisPassConcept<IRUnitT,
                                                      AnalysisManagerT> {
   explicit AnalysisPassModel(PassT Pass) : Pass(std::move(Pass)) {}
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   AnalysisPassModel(const AnalysisPassModel &Arg) : Pass(Arg.Pass) {}
   AnalysisPassModel(AnalysisPassModel &&Arg) : Pass(Arg.Pass) {}
   AnalysisPassModel &operator=(AnalysisPassModel RHS) {
@@ -419,7 +433,7 @@ class ModuleAnalysisManager;
 class ModulePassManager {
 public:
   // We have to explicitly define all the special member functions because MSVC
-  // 2013 refuses to generate them.
+  // refuses to generate them.
   ModulePassManager() {}
   ModulePassManager(ModulePassManager &&Arg) : Passes(std::move(Arg.Passes)) {}
   ModulePassManager &operator=(ModulePassManager &&RHS) {
@@ -462,7 +476,7 @@ class FunctionAnalysisManager;
 class FunctionPassManager {
 public:
   // We have to explicitly define all the special member functions because MSVC
-  // 2013 refuses to generate them.
+  // refuses to generate them.
   FunctionPassManager() {}
   FunctionPassManager(FunctionPassManager &&Arg) : Passes(std::move(Arg.Passes)) {}
   FunctionPassManager &operator=(FunctionPassManager &&RHS) {
@@ -526,6 +540,8 @@ protected:
   // FIXME: Provide template aliases for the models when we're using C++11 in
   // a mode supporting them.
 
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   AnalysisManagerBase() {}
   AnalysisManagerBase(AnalysisManagerBase &&Arg)
       : AnalysisPasses(std::move(Arg.AnalysisPasses)) {}
@@ -636,6 +652,8 @@ class ModuleAnalysisManager
   typedef BaseT::PassConceptT PassConceptT;
 
 public:
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   ModuleAnalysisManager() {}
   ModuleAnalysisManager(ModuleAnalysisManager &&Arg)
       : BaseT(std::move(static_cast<BaseT &>(Arg))),
@@ -684,6 +702,8 @@ class FunctionAnalysisManager
 public:
   // Most public APIs are inherited from the CRTP base class.
 
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   FunctionAnalysisManager() {}
   FunctionAnalysisManager(FunctionAnalysisManager &&Arg)
       : BaseT(std::move(static_cast<BaseT &>(Arg))),
@@ -803,6 +823,8 @@ private:
 class FunctionAnalysisManagerModuleProxy::Result {
 public:
   explicit Result(FunctionAnalysisManager &FAM) : FAM(FAM) {}
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   Result(const Result &Arg) : FAM(Arg.FAM) {}
   Result(Result &&Arg) : FAM(Arg.FAM) {}
   Result &operator=(Result RHS) {
@@ -848,6 +870,8 @@ public:
   class Result {
   public:
     explicit Result(const ModuleAnalysisManager &MAM) : MAM(MAM) {}
+    // We have to explicitly define all the special member functions because
+    // MSVC refuses to generate them.
     Result(const Result &Arg) : MAM(Arg.MAM) {}
     Result(Result &&Arg) : MAM(Arg.MAM) {}
     Result &operator=(Result RHS) {
@@ -893,6 +917,8 @@ class ModuleToFunctionPassAdaptor {
 public:
   explicit ModuleToFunctionPassAdaptor(FunctionPassT Pass)
       : Pass(std::move(Pass)) {}
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   ModuleToFunctionPassAdaptor(const ModuleToFunctionPassAdaptor &Arg)
       : Pass(Arg.Pass) {}
   ModuleToFunctionPassAdaptor(ModuleToFunctionPassAdaptor &&Arg)
