@@ -788,6 +788,8 @@ public:
 
   explicit FunctionAnalysisManagerModuleProxy(FunctionAnalysisManager &FAM)
       : FAM(FAM) {}
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
   FunctionAnalysisManagerModuleProxy(
       const FunctionAnalysisManagerModuleProxy &Arg)
       : FAM(Arg.FAM) {}
@@ -892,6 +894,18 @@ public:
 
   ModuleAnalysisManagerFunctionProxy(const ModuleAnalysisManager &MAM)
       : MAM(MAM) {}
+  // We have to explicitly define all the special member functions because MSVC
+  // refuses to generate them.
+  ModuleAnalysisManagerFunctionProxy(
+      const ModuleAnalysisManagerFunctionProxy &Arg)
+      : MAM(Arg.MAM) {}
+  ModuleAnalysisManagerFunctionProxy(ModuleAnalysisManagerFunctionProxy &&Arg)
+      : MAM(Arg.MAM) {}
+  ModuleAnalysisManagerFunctionProxy &
+  operator=(ModuleAnalysisManagerFunctionProxy RHS) {
+    std::swap(*this, RHS);
+    return *this;
+  }
 
   /// \brief Run the analysis pass and create our proxy result object.
   /// Nothing to see here, it just forwards the \c MAM reference into the
