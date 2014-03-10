@@ -266,9 +266,9 @@ namespace {
     static char ID;
     ARMConstantIslands() : MachineFunctionPass(ID) {}
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "ARM constant island placement and branch shortening pass";
     }
 

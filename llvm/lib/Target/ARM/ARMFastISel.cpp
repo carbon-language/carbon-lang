@@ -144,12 +144,12 @@ class ARMFastISel : public FastISel {
 
     // Backend specific FastISel code.
   private:
-    virtual bool TargetSelectInstruction(const Instruction *I);
-    virtual unsigned TargetMaterializeConstant(const Constant *C);
-    virtual unsigned TargetMaterializeAlloca(const AllocaInst *AI);
-    virtual bool tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
-                                     const LoadInst *LI);
-    virtual bool FastLowerArguments();
+    bool TargetSelectInstruction(const Instruction *I) override;
+    unsigned TargetMaterializeConstant(const Constant *C) override;
+    unsigned TargetMaterializeAlloca(const AllocaInst *AI) override;
+    bool tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
+                             const LoadInst *LI) override;
+    bool FastLowerArguments() override;
   private:
   #include "ARMGenFastISel.inc"
 

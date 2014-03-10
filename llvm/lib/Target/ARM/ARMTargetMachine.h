@@ -44,23 +44,23 @@ public:
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
 
-  virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }
-  virtual const ARMSubtarget  *getSubtargetImpl() const { return &Subtarget; }
-  virtual const ARMTargetLowering *getTargetLowering() const {
+  ARMJITInfo *getJITInfo() override { return &JITInfo; }
+  const ARMSubtarget *getSubtargetImpl() const override { return &Subtarget; }
+  const ARMTargetLowering *getTargetLowering() const override {
     // Implemented by derived classes
     llvm_unreachable("getTargetLowering not implemented");
   }
-  virtual const InstrItineraryData *getInstrItineraryData() const {
+  const InstrItineraryData *getInstrItineraryData() const override {
     return &InstrItins;
   }
 
   /// \brief Register ARM analysis passes with a pass manager.
-  virtual void addAnalysisPasses(PassManagerBase &PM);
+  void addAnalysisPasses(PassManagerBase &PM) override;
 
   // Pass Pipeline Configuration
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
-  virtual bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &MCE);
+  bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &MCE) override;
 };
 
 /// ARMTargetMachine - ARM target machine.
@@ -79,22 +79,22 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL);
 
-  virtual const ARMRegisterInfo  *getRegisterInfo() const {
+  const ARMRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
 
-  virtual const ARMTargetLowering *getTargetLowering() const {
+  const ARMTargetLowering *getTargetLowering() const override {
     return &TLInfo;
   }
 
-  virtual const ARMSelectionDAGInfo* getSelectionDAGInfo() const {
+  const ARMSelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
-  virtual const ARMFrameLowering *getFrameLowering() const {
+  const ARMFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
   }
-  virtual const ARMInstrInfo     *getInstrInfo() const { return &InstrInfo; }
-  virtual const DataLayout       *getDataLayout() const { return &DL; }
+  const ARMInstrInfo *getInstrInfo() const override { return &InstrInfo; }
+  const DataLayout *getDataLayout() const override { return &DL; }
 };
 
 /// ThumbTargetMachine - Thumb target machine.
@@ -118,27 +118,27 @@ public:
                      CodeGenOpt::Level OL);
 
   /// returns either Thumb1RegisterInfo or Thumb2RegisterInfo
-  virtual const ARMBaseRegisterInfo *getRegisterInfo() const {
+  const ARMBaseRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo->getRegisterInfo();
   }
 
-  virtual const ARMTargetLowering *getTargetLowering() const {
+  const ARMTargetLowering *getTargetLowering() const override {
     return &TLInfo;
   }
 
-  virtual const ARMSelectionDAGInfo *getSelectionDAGInfo() const {
+  const ARMSelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
 
   /// returns either Thumb1InstrInfo or Thumb2InstrInfo
-  virtual const ARMBaseInstrInfo *getInstrInfo() const {
+  const ARMBaseInstrInfo *getInstrInfo() const override {
     return InstrInfo.get();
   }
   /// returns either Thumb1FrameLowering or ARMFrameLowering
-  virtual const ARMFrameLowering *getFrameLowering() const {
+  const ARMFrameLowering *getFrameLowering() const override {
     return FrameLowering.get();
   }
-  virtual const DataLayout       *getDataLayout() const { return &DL; }
+  const DataLayout *getDataLayout() const override { return &DL; }
 };
 
 } // end namespace llvm

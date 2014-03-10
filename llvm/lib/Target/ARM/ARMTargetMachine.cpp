@@ -166,11 +166,11 @@ public:
     return *getARMTargetMachine().getSubtargetImpl();
   }
 
-  virtual bool addPreISel();
-  virtual bool addInstSelector();
-  virtual bool addPreRegAlloc();
-  virtual bool addPreSched2();
-  virtual bool addPreEmitPass();
+  bool addPreISel() override;
+  bool addInstSelector() override;
+  bool addPreRegAlloc() override;
+  bool addPreSched2() override;
+  bool addPreEmitPass() override;
 };
 } // namespace
 

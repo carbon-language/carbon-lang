@@ -137,9 +137,9 @@ namespace {
     const Thumb2InstrInfo *TII;
     const ARMSubtarget *STI;
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "Thumb2 instruction size reduction pass";
     }
 

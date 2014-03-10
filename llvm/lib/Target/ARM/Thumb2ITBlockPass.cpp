@@ -33,9 +33,9 @@ namespace {
     const TargetRegisterInfo *TRI;
     ARMFunctionInfo *AFI;
 
-    virtual bool runOnMachineFunction(MachineFunction &Fn);
+    bool runOnMachineFunction(MachineFunction &Fn) override;
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "Thumb IT blocks insertion pass";
     }
 

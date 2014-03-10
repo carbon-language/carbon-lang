@@ -52,7 +52,7 @@ public:
     initializeARMTTIPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual void initializePass() override {
+  void initializePass() override {
     pushTTIStack(this);
   }
 
@@ -60,7 +60,7 @@ public:
     popTTIStack();
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     TargetTransformInfo::getAnalysisUsage(AU);
   }
 
@@ -68,7 +68,7 @@ public:
   static char ID;
 
   /// Provide necessary pointer adjustments for the two base classes.
-  virtual void *getAdjustedAnalysisPointer(const void *ID) override {
+  void *getAdjustedAnalysisPointer(const void *ID) override {
     if (ID == &TargetTransformInfo::ID)
       return (TargetTransformInfo*)this;
     return this;
@@ -77,8 +77,7 @@ public:
   /// \name Scalar TTI Implementations
   /// @{
   using TargetTransformInfo::getIntImmCost;
-  virtual unsigned
-  getIntImmCost(const APInt &Imm, Type *Ty) const override;
+  unsigned getIntImmCost(const APInt &Imm, Type *Ty) const override;
 
   /// @}
 
@@ -86,7 +85,7 @@ public:
   /// \name Vector TTI Implementations
   /// @{
 
-  unsigned getNumberOfRegisters(bool Vector) const {
+  unsigned getNumberOfRegisters(bool Vector) const override {
     if (Vector) {
       if (ST->hasNEON())
         return 16;
@@ -98,7 +97,7 @@ public:
     return 13;
   }
 
-  unsigned getRegisterBitWidth(bool Vector) const {
+  unsigned getRegisterBitWidth(bool Vector) const override {
     if (Vector) {
       if (ST->hasNEON())
         return 128;
@@ -108,7 +107,7 @@ public:
     return 32;
   }
 
-  unsigned getMaximumUnrollFactor() const {
+  unsigned getMaximumUnrollFactor() const override {
     // These are out of order CPUs:
     if (ST->isCortexA15() || ST->isSwift())
       return 2;
@@ -116,23 +115,27 @@ public:
   }
 
   unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
-                          int Index, Type *SubTp) const;
+                          int Index, Type *SubTp) const override;
 
   unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
-                                      Type *Src) const;
+                            Type *Src) const override;
 
-  unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) const;
+  unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                              Type *CondTy) const override;
 
-  unsigned getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index) const;
+  unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
+                              unsigned Index) const override;
 
-  unsigned getAddressComputationCost(Type *Val, bool IsComplex) const;
+  unsigned getAddressComputationCost(Type *Val,
+                                     bool IsComplex) const override;
 
-  unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty,
-                                  OperandValueKind Op1Info = OK_AnyValue,
-                                  OperandValueKind Op2Info = OK_AnyValue) const;
+  unsigned
+  getArithmeticInstrCost(unsigned Opcode, Type *Ty,
+                         OperandValueKind Op1Info = OK_AnyValue,
+                         OperandValueKind Op2Info = OK_AnyValue) const override;
 
   unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
-                           unsigned AddressSpace) const;
+                           unsigned AddressSpace) const override;
   /// @}
 };
 

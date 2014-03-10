@@ -46,9 +46,9 @@ namespace {
     const ARMSubtarget *STI;
     ARMFunctionInfo *AFI;
 
-    virtual bool runOnMachineFunction(MachineFunction &Fn);
+    bool runOnMachineFunction(MachineFunction &Fn) override;
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "ARM pseudo instruction expansion pass";
     }
 

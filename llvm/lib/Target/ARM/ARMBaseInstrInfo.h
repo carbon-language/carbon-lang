@@ -42,37 +42,37 @@ public:
   // if there is not such an opcode.
   virtual unsigned getUnindexedOpcode(unsigned Opc) const =0;
 
-  virtual MachineInstr *convertToThreeAddress(MachineFunction::iterator &MFI,
-                                              MachineBasicBlock::iterator &MBBI,
-                                              LiveVariables *LV) const;
+  MachineInstr *convertToThreeAddress(MachineFunction::iterator &MFI,
+                                      MachineBasicBlock::iterator &MBBI,
+                                      LiveVariables *LV) const override;
 
   virtual const ARMBaseRegisterInfo &getRegisterInfo() const = 0;
   const ARMSubtarget &getSubtarget() const { return Subtarget; }
 
   ScheduleHazardRecognizer *
   CreateTargetHazardRecognizer(const TargetMachine *TM,
-                               const ScheduleDAG *DAG) const;
+                               const ScheduleDAG *DAG) const override;
 
   ScheduleHazardRecognizer *
   CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
-                                     const ScheduleDAG *DAG) const;
+                                     const ScheduleDAG *DAG) const override;
 
   // Branch analysis.
-  virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
-                             MachineBasicBlock *&FBB,
-                             SmallVectorImpl<MachineOperand> &Cond,
-                             bool AllowModify = false) const;
-  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
-  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                                MachineBasicBlock *FBB,
-                                const SmallVectorImpl<MachineOperand> &Cond,
-                                DebugLoc DL) const;
+  bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                     MachineBasicBlock *&FBB,
+                     SmallVectorImpl<MachineOperand> &Cond,
+                     bool AllowModify = false) const override;
+  unsigned RemoveBranch(MachineBasicBlock &MBB) const override;
+  unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                        MachineBasicBlock *FBB,
+                        const SmallVectorImpl<MachineOperand> &Cond,
+                        DebugLoc DL) const override;
 
-  virtual
-  bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
+  bool
+  ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
 
   // Predication support.
-  bool isPredicated(const MachineInstr *MI) const;
+  bool isPredicated(const MachineInstr *MI) const override;
 
   ARMCC::CondCodes getPredicate(const MachineInstr *MI) const {
     int PIdx = MI->findFirstPredOperandIdx();
@@ -80,76 +80,73 @@ public:
                       : ARMCC::AL;
   }
 
-  virtual
   bool PredicateInstruction(MachineInstr *MI,
-                            const SmallVectorImpl<MachineOperand> &Pred) const;
+                    const SmallVectorImpl<MachineOperand> &Pred) const override;
 
-  virtual
   bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
-                         const SmallVectorImpl<MachineOperand> &Pred2) const;
+                   const SmallVectorImpl<MachineOperand> &Pred2) const override;
 
-  virtual bool DefinesPredicate(MachineInstr *MI,
-                                std::vector<MachineOperand> &Pred) const;
+  bool DefinesPredicate(MachineInstr *MI,
+                        std::vector<MachineOperand> &Pred) const override;
 
-  virtual bool isPredicable(MachineInstr *MI) const;
+  bool isPredicable(MachineInstr *MI) const override;
 
   /// GetInstSize - Returns the size of the specified MachineInstr.
   ///
   virtual unsigned GetInstSizeInBytes(const MachineInstr* MI) const;
 
-  virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
-                                       int &FrameIndex) const;
-  virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
-                                      int &FrameIndex) const;
-  virtual unsigned isLoadFromStackSlotPostFE(const MachineInstr *MI,
-                                             int &FrameIndex) const;
-  virtual unsigned isStoreToStackSlotPostFE(const MachineInstr *MI,
-                                            int &FrameIndex) const;
+  unsigned isLoadFromStackSlot(const MachineInstr *MI,
+                               int &FrameIndex) const override;
+  unsigned isStoreToStackSlot(const MachineInstr *MI,
+                              int &FrameIndex) const override;
+  unsigned isLoadFromStackSlotPostFE(const MachineInstr *MI,
+                                     int &FrameIndex) const override;
+  unsigned isStoreToStackSlotPostFE(const MachineInstr *MI,
+                                    int &FrameIndex) const override;
 
-  virtual void copyPhysReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator I, DebugLoc DL,
-                           unsigned DestReg, unsigned SrcReg,
-                           bool KillSrc) const;
+  void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                   DebugLoc DL, unsigned DestReg, unsigned SrcReg,
+                   bool KillSrc) const override;
 
-  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MBBI,
-                                   unsigned SrcReg, bool isKill, int FrameIndex,
-                                   const TargetRegisterClass *RC,
-                                   const TargetRegisterInfo *TRI) const;
+  void storeRegToStackSlot(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator MBBI,
+                           unsigned SrcReg, bool isKill, int FrameIndex,
+                           const TargetRegisterClass *RC,
+                           const TargetRegisterInfo *TRI) const override;
 
-  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator MBBI,
-                                    unsigned DestReg, int FrameIndex,
-                                    const TargetRegisterClass *RC,
-                                    const TargetRegisterInfo *TRI) const;
+  void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MBBI,
+                            unsigned DestReg, int FrameIndex,
+                            const TargetRegisterClass *RC,
+                            const TargetRegisterInfo *TRI) const override;
 
-  virtual bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const;
+  bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const override;
 
-  virtual void reMaterialize(MachineBasicBlock &MBB,
-                             MachineBasicBlock::iterator MI,
-                             unsigned DestReg, unsigned SubIdx,
-                             const MachineInstr *Orig,
-                             const TargetRegisterInfo &TRI) const;
+  void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                     unsigned DestReg, unsigned SubIdx,
+                     const MachineInstr *Orig,
+                     const TargetRegisterInfo &TRI) const override;
 
-  MachineInstr *duplicate(MachineInstr *Orig, MachineFunction &MF) const;
+  MachineInstr *duplicate(MachineInstr *Orig,
+                          MachineFunction &MF) const override;
 
-  MachineInstr *commuteInstruction(MachineInstr*, bool=false) const;
+  MachineInstr *commuteInstruction(MachineInstr*,
+                                   bool=false) const override;
 
   const MachineInstrBuilder &AddDReg(MachineInstrBuilder &MIB, unsigned Reg,
                                      unsigned SubIdx, unsigned State,
                                      const TargetRegisterInfo *TRI) const;
 
-  virtual bool produceSameValue(const MachineInstr *MI0,
-                                const MachineInstr *MI1,
-                                const MachineRegisterInfo *MRI) const;
+  bool produceSameValue(const MachineInstr *MI0, const MachineInstr *MI1,
+                        const MachineRegisterInfo *MRI) const override;
 
   /// areLoadsFromSameBasePtr - This is used by the pre-regalloc scheduler to
   /// determine if two loads are loading from the same base address. It should
   /// only return true if the base pointers are the same and the only
   /// differences between the two addresses is the offset. It also returns the
   /// offsets by reference.
-  virtual bool areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
-                                       int64_t &Offset1, int64_t &Offset2)const;
+  bool areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2, int64_t &Offset1,
+                               int64_t &Offset2) const override;
 
   /// shouldScheduleLoadsNear - This is a used by the pre-regalloc scheduler to
   /// determine (in conjunction with areLoadsFromSameBasePtr) if two loads
@@ -159,83 +156,79 @@ public:
   /// from the common base address. It returns true if it decides it's desirable
   /// to schedule the two loads together. "NumLoads" is the number of loads that
   /// have already been scheduled after Load1.
-  virtual bool shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
-                                       int64_t Offset1, int64_t Offset2,
-                                       unsigned NumLoads) const;
+  bool shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
+                               int64_t Offset1, int64_t Offset2,
+                               unsigned NumLoads) const override;
 
-  virtual bool isSchedulingBoundary(const MachineInstr *MI,
-                                    const MachineBasicBlock *MBB,
-                                    const MachineFunction &MF) const;
+  bool isSchedulingBoundary(const MachineInstr *MI,
+                            const MachineBasicBlock *MBB,
+                            const MachineFunction &MF) const override;
 
-  virtual bool isProfitableToIfCvt(MachineBasicBlock &MBB,
-                                   unsigned NumCycles, unsigned ExtraPredCycles,
-                                   const BranchProbability &Probability) const;
+  bool isProfitableToIfCvt(MachineBasicBlock &MBB,
+                           unsigned NumCycles, unsigned ExtraPredCycles,
+                           const BranchProbability &Probability) const override;
 
-  virtual bool isProfitableToIfCvt(MachineBasicBlock &TMBB,
-                                   unsigned NumT, unsigned ExtraT,
-                                   MachineBasicBlock &FMBB,
-                                   unsigned NumF, unsigned ExtraF,
-                                   const BranchProbability &Probability) const;
+  bool isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned NumT,
+                           unsigned ExtraT, MachineBasicBlock &FMBB,
+                           unsigned NumF, unsigned ExtraF,
+                           const BranchProbability &Probability) const override;
 
-  virtual bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB,
-                                         unsigned NumCycles,
-                                         const BranchProbability
-                                         &Probability) const {
+  bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
+                          const BranchProbability &Probability) const override {
     return NumCycles == 1;
   }
 
-  virtual bool isProfitableToUnpredicate(MachineBasicBlock &TMBB,
-                                         MachineBasicBlock &FMBB) const;
+  bool isProfitableToUnpredicate(MachineBasicBlock &TMBB,
+                                 MachineBasicBlock &FMBB) const override;
 
   /// analyzeCompare - For a comparison instruction, return the source registers
   /// in SrcReg and SrcReg2 if having two register operands, and the value it
   /// compares against in CmpValue. Return true if the comparison instruction
   /// can be analyzed.
-  virtual bool analyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
-                              unsigned &SrcReg2, int &CmpMask,
-                              int &CmpValue) const;
+  bool analyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
+                      unsigned &SrcReg2, int &CmpMask,
+                      int &CmpValue) const override;
 
   /// optimizeCompareInstr - Convert the instruction to set the zero flag so
   /// that we can remove a "comparison with zero"; Remove a redundant CMP
   /// instruction if the flags can be updated in the same way by an earlier
   /// instruction such as SUB.
-  virtual bool optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
-                                    unsigned SrcReg2, int CmpMask, int CmpValue,
-                                    const MachineRegisterInfo *MRI) const;
+  bool optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
+                            unsigned SrcReg2, int CmpMask, int CmpValue,
+                            const MachineRegisterInfo *MRI) const override;
 
-  virtual bool analyzeSelect(const MachineInstr *MI,
-                             SmallVectorImpl<MachineOperand> &Cond,
-                             unsigned &TrueOp, unsigned &FalseOp,
-                             bool &Optimizable) const;
+  bool analyzeSelect(const MachineInstr *MI,
+                     SmallVectorImpl<MachineOperand> &Cond,
+                     unsigned &TrueOp, unsigned &FalseOp,
+                     bool &Optimizable) const override;
 
-  virtual MachineInstr *optimizeSelect(MachineInstr *MI, bool) const;
+  MachineInstr *optimizeSelect(MachineInstr *MI, bool) const override;
 
   /// FoldImmediate - 'Reg' is known to be defined by a move immediate
   /// instruction, try to fold the immediate into the use instruction.
-  virtual bool FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
-                             unsigned Reg, MachineRegisterInfo *MRI) const;
+  bool FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
+                     unsigned Reg, MachineRegisterInfo *MRI) const override;
 
-  virtual unsigned getNumMicroOps(const InstrItineraryData *ItinData,
-                                  const MachineInstr *MI) const;
+  unsigned getNumMicroOps(const InstrItineraryData *ItinData,
+                          const MachineInstr *MI) const override;
 
-  virtual
   int getOperandLatency(const InstrItineraryData *ItinData,
                         const MachineInstr *DefMI, unsigned DefIdx,
-                        const MachineInstr *UseMI, unsigned UseIdx) const;
-  virtual
+                        const MachineInstr *UseMI,
+                        unsigned UseIdx) const override;
   int getOperandLatency(const InstrItineraryData *ItinData,
                         SDNode *DefNode, unsigned DefIdx,
-                        SDNode *UseNode, unsigned UseIdx) const;
+                        SDNode *UseNode, unsigned UseIdx) const override;
 
   /// VFP/NEON execution domains.
   std::pair<uint16_t, uint16_t>
-  getExecutionDomain(const MachineInstr *MI) const;
-  void setExecutionDomain(MachineInstr *MI, unsigned Domain) const;
+  getExecutionDomain(const MachineInstr *MI) const override;
+  void setExecutionDomain(MachineInstr *MI, unsigned Domain) const override;
 
   unsigned getPartialRegUpdateClearance(const MachineInstr*, unsigned,
-                                        const TargetRegisterInfo*) const;
+                                      const TargetRegisterInfo*) const override;
   void breakPartialRegDependency(MachineBasicBlock::iterator, unsigned,
-                                 const TargetRegisterInfo *TRI) const;
+                                 const TargetRegisterInfo *TRI) const override;
   /// Get the number of addresses by LDM or VLDM or zero for unknown.
   unsigned getNumLDMAddresses(const MachineInstr *MI) const;
 
@@ -264,24 +257,27 @@ private:
                         const MCInstrDesc &UseMCID,
                         unsigned UseIdx, unsigned UseAlign) const;
 
-  unsigned getPredicationCost(const MachineInstr *MI) const;
+  unsigned getPredicationCost(const MachineInstr *MI) const override;
 
   unsigned getInstrLatency(const InstrItineraryData *ItinData,
                            const MachineInstr *MI,
-                           unsigned *PredCost = 0) const;
+                           unsigned *PredCost = 0) const override;
 
   int getInstrLatency(const InstrItineraryData *ItinData,
-                      SDNode *Node) const;
+                      SDNode *Node) const override;
 
   bool hasHighOperandLatency(const InstrItineraryData *ItinData,
                              const MachineRegisterInfo *MRI,
                              const MachineInstr *DefMI, unsigned DefIdx,
-                             const MachineInstr *UseMI, unsigned UseIdx) const;
+                             const MachineInstr *UseMI,
+                             unsigned UseIdx) const override;
   bool hasLowDefLatency(const InstrItineraryData *ItinData,
-                        const MachineInstr *DefMI, unsigned DefIdx) const;
+                        const MachineInstr *DefMI,
+                        unsigned DefIdx) const override;
 
   /// verifyInstruction - Perform target specific instruction verification.
-  bool verifyInstruction(const MachineInstr *MI, StringRef &ErrInfo) const;
+  bool verifyInstruction(const MachineInstr *MI,
+                         StringRef &ErrInfo) const override;
 
 private:
   /// Modeling special VFP / NEON fp MLA / MLS hazards.

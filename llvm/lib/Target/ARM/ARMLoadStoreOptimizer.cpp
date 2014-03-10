@@ -69,9 +69,9 @@ namespace {
     RegScavenger *RS;
     bool isThumb2;
 
-    virtual bool runOnMachineFunction(MachineFunction &Fn);
+    bool runOnMachineFunction(MachineFunction &Fn) override;
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "ARM load / store optimization pass";
     }
 
@@ -1550,9 +1550,9 @@ namespace {
     MachineRegisterInfo *MRI;
     MachineFunction *MF;
 
-    virtual bool runOnMachineFunction(MachineFunction &Fn);
+    bool runOnMachineFunction(MachineFunction &Fn) override;
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "ARM pre- register allocation load / store optimization pass";
     }
 
