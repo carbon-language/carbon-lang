@@ -583,7 +583,8 @@ private:
       // recovered from an error (e.g. failure to find the matching >).
       if (CurrentToken->Type != TT_LambdaLSquare &&
           CurrentToken->Type != TT_FunctionLBrace &&
-          CurrentToken->Type != TT_ImplicitStringLiteral)
+          CurrentToken->Type != TT_ImplicitStringLiteral &&
+          CurrentToken->Type != TT_TrailingReturnArrow)
         CurrentToken->Type = TT_Unknown;
       if (CurrentToken->Role)
         CurrentToken->Role.reset(NULL);

@@ -784,7 +784,10 @@ bool UnwrappedLineParser::tryToParseLambda() {
     case tok::identifier:
     case tok::coloncolon:
     case tok::kw_mutable:
+      nextToken();
+      break;
     case tok::arrow:
+      FormatTok->Type = TT_TrailingReturnArrow;
       nextToken();
       break;
     default:
