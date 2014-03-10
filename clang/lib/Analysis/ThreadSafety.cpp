@@ -1878,10 +1878,8 @@ void BuildLockset::checkAccess(const Expr *Exp, AccessKind AK) {
     Analyzer->Handler.handleNoMutexHeld(D, POK_VarAccess, AK,
                                         Exp->getExprLoc());
 
-  for (specific_attr_iterator<GuardedByAttr>
-         I = D->specific_attr_begin<GuardedByAttr>(),
-         E = D->specific_attr_end<GuardedByAttr>(); I != E; ++I)
-    warnIfMutexNotHeld(D, Exp, AK, (*I)->getArg(), POK_VarAccess);
+  for (const auto *I : D->specific_attrs<GuardedByAttr>())
+    warnIfMutexNotHeld(D, Exp, AK, I->getArg(), POK_VarAccess);
 }
 
 /// \brief Checks pt_guarded_by and pt_guarded_var attributes.
@@ -1916,10 +1914,8 @@ void BuildLockset::checkPtAccess(const Expr *Exp, AccessKind AK) {
     Analyzer->Handler.handleNoMutexHeld(D, POK_VarDereference, AK,
                                         Exp->getExprLoc());
 
-  for (specific_attr_iterator<PtGuardedByAttr>
-          I = D->specific_attr_begin<PtGuardedByAttr>(),
-          E = D->specific_attr_end<PtGuardedByAttr>(); I != E; ++I)
-    warnIfMutexNotHeld(D, Exp, AK, (*I)->getArg(), POK_VarDereference);
+  for (auto const *I : D->specific_attrs<PtGuardedByAttr>())
+    warnIfMutexNotHeld(D, Exp, AK, I->getArg(), POK_VarDereference);
 }
 
 

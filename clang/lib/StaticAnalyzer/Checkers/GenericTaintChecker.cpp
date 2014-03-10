@@ -613,11 +613,7 @@ static bool getPrintfFormatArgumentNum(const CallExpr *CE,
   const FunctionDecl *FDecl = C.getCalleeDecl(CE);
   if (!FDecl)
     return false;
-  for (specific_attr_iterator<FormatAttr>
-         i = FDecl->specific_attr_begin<FormatAttr>(),
-         e = FDecl->specific_attr_end<FormatAttr>(); i != e ; ++i) {
-
-    const FormatAttr *Format = *i;
+  for (const auto *Format : FDecl->specific_attrs<FormatAttr>()) {
     ArgNum = Format->getFormatIdx() - 1;
     if ((Format->getType()->getName() == "printf") &&
          CE->getNumArgs() > ArgNum)

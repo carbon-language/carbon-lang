@@ -730,11 +730,7 @@ static void CheckNonNullArguments(Sema &S,
                                   const Expr * const *ExprArgs,
                                   SourceLocation CallSiteLoc) {
   // Check the attributes attached to the method/function itself.
-  for (specific_attr_iterator<NonNullAttr>
-       I = FDecl->specific_attr_begin<NonNullAttr>(),
-       E = FDecl->specific_attr_end<NonNullAttr>(); I != E; ++I) {
-
-    const NonNullAttr *NonNull = *I;
+  for (const auto *NonNull : FDecl->specific_attrs<NonNullAttr>()) {
     for (NonNullAttr::args_iterator i = NonNull->args_begin(),
          e = NonNull->args_end();
          i != e; ++i) {
@@ -771,14 +767,11 @@ void Sema::checkCall(NamedDecl *FDecl, ArrayRef<const Expr *> Args,
   // Printf and scanf checking.
   llvm::SmallBitVector CheckedVarArgs;
   if (FDecl) {
-    for (specific_attr_iterator<FormatAttr>
-             I = FDecl->specific_attr_begin<FormatAttr>(),
-             E = FDecl->specific_attr_end<FormatAttr>();
-         I != E; ++I) {
+    for (const auto *I : FDecl->specific_attrs<FormatAttr>()) {
       // Only create vector if there are format attributes.
       CheckedVarArgs.resize(Args.size());
 
-      CheckFormatArguments(*I, Args, IsMemberFunction, CallType, Loc, Range,
+      CheckFormatArguments(I, Args, IsMemberFunction, CallType, Loc, Range,
                            CheckedVarArgs);
     }
   }
@@ -799,12 +792,8 @@ void Sema::checkCall(NamedDecl *FDecl, ArrayRef<const Expr *> Args,
     CheckNonNullArguments(*this, FDecl, Args.data(), Loc);
 
     // Type safety checking.
-    for (specific_attr_iterator<ArgumentWithTypeTagAttr>
-           i = FDecl->specific_attr_begin<ArgumentWithTypeTagAttr>(),
-           e = FDecl->specific_attr_end<ArgumentWithTypeTagAttr>();
-         i != e; ++i) {
-      CheckArgumentWithTypeTag(*i, Args.data());
-    }
+    for (const auto *I : FDecl->specific_attrs<ArgumentWithTypeTagAttr>())
+      CheckArgumentWithTypeTag(I, Args.data());
   }
 }
 
@@ -2141,10 +2130,7 @@ checkFormatStringExpr(Sema &S, const Expr *E, ArrayRef<const Expr *> Args,
         if (const ParmVarDecl *PV = dyn_cast<ParmVarDecl>(VD)) {
           if (const NamedDecl *ND = dyn_cast<NamedDecl>(PV->getDeclContext())) {
             int PVIndex = PV->getFunctionScopeIndex() + 1;
-            for (specific_attr_iterator<FormatAttr>
-                 i = ND->specific_attr_begin<FormatAttr>(),
-                 e = ND->specific_attr_end<FormatAttr>(); i != e ; ++i) {
-              FormatAttr *PVFormat = *i;
+            for (const auto *PVFormat : ND->specific_attrs<FormatAttr>()) {
               // adjust for implicit parameter
               if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(ND))
                 if (MD->isInstance())

@@ -227,10 +227,7 @@ public:
 };
 
 static bool isInvalidationMethod(const ObjCMethodDecl *M, bool LookForPartial) {
-  for (specific_attr_iterator<AnnotateAttr>
-       AI = M->specific_attr_begin<AnnotateAttr>(),
-       AE = M->specific_attr_end<AnnotateAttr>(); AI != AE; ++AI) {
-    const AnnotateAttr *Ann = *AI;
+  for (const auto *Ann : M->specific_attrs<AnnotateAttr>()) {
     if (!LookForPartial &&
         Ann->getAnnotation() == "objc_instance_variable_invalidator")
       return true;
