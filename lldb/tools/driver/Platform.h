@@ -20,7 +20,7 @@
     #include <io.h>
     #include <eh.h>
     #include <inttypes.h>
-    #include "lldb/Host/windows/Windows.h"
+    #include "lldb/Host/windows/windows.h"
 
     struct timeval
     {

@@ -16,7 +16,7 @@
 #ifdef _WIN32
 #include "lldb/Host/windows/windows.h"
 #include <winsock2.h>
-#include <WS2tcpip.h>
+#include <ws2tcpip.h>
 typedef ADDRESS_FAMILY sa_family_t;
 #else
 #include <sys/socket.h>
