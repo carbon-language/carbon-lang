@@ -890,6 +890,9 @@ protected:
 
   /// DefinedClasses - List of defined classes.
   SmallVector<llvm::GlobalValue*, 16> DefinedClasses;
+  
+  /// ImplementedClasses - List of @implemented classes.
+  SmallVector<const ObjCInterfaceDecl*, 16> ImplementedClasses;
 
   /// DefinedNonLazyClasses - List of defined "non-lazy" classes.
   SmallVector<llvm::GlobalValue*, 16> DefinedNonLazyClasses;
@@ -1323,7 +1326,7 @@ private:
                                             llvm::Constant *SuperClassGV,
                                             llvm::Constant *ClassRoGV,
                                             bool HiddenVisibility,
-                                            bool Weak = false);
+                                            bool Weak);
 
   llvm::Constant *GetMethodConstant(const ObjCMethodDecl *MD);
 
@@ -3156,6 +3159,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
     GV = CreateMetadataVar(Name, Init, Section, 4, true);
   assertPrivateName(GV);
   DefinedClasses.push_back(GV);
+  ImplementedClasses.push_back(Interface);
   // method definition entries must be clear for next implementation.
   MethodDefinitions.clear();
 }
@@ -4404,9 +4408,17 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
   // The runtime expects exactly the list of defined classes followed
   // by the list of defined categories, in a single array.
   SmallVector<llvm::Constant*, 8> Symbols(NumClasses + NumCategories);
-  for (unsigned i=0; i<NumClasses; i++)
+  for (unsigned i=0; i<NumClasses; i++) {
+    const ObjCInterfaceDecl *ID = ImplementedClasses[i];
+    assert(ID);
+    if (ObjCImplementationDecl *IMP = ID->getImplementation())
+      // We are implementing a weak imported interface. Give it external linkage
+      if (ID->isWeakImported() && !IMP->isWeakImported())
+        DefinedClasses[i]->setLinkage(llvm::GlobalVariable::ExternalLinkage);
+    
     Symbols[i] = llvm::ConstantExpr::getBitCast(DefinedClasses[i],
                                                 ObjCTypes.Int8PtrTy);
+  }
   for (unsigned i=0; i<NumCategories; i++)
     Symbols[NumClasses + i] =
       llvm::ConstantExpr::getBitCast(DefinedCategories[i],
@@ -5534,6 +5546,16 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
 
   // Build list of all implemented class addresses in array
   // L_OBJC_LABEL_CLASS_$.
+
+  for (unsigned i=0, NumClasses=ImplementedClasses.size(); i<NumClasses; i++) {
+    const ObjCInterfaceDecl *ID = ImplementedClasses[i];
+    assert(ID);
+    if (ObjCImplementationDecl *IMP = ID->getImplementation())
+      // We are implementing a weak imported interface. Give it external linkage
+      if (ID->isWeakImported() && !IMP->isWeakImported())
+        DefinedClasses[i]->setLinkage(llvm::GlobalVariable::ExternalLinkage);
+  }
+  
   AddModuleClassList(DefinedClasses,
                      "\01L_OBJC_LABEL_CLASS_$",
                      "__DATA, __objc_classlist, regular, no_dead_strip");
@@ -5833,7 +5855,8 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   if (!ID->getClassInterface()->getSuperClass()) {
     // class is root
     flags |= NonFragileABI_Class_Root;
-    SuperClassGV = GetClassGlobal(ObjCClassName + ClassName);
+    SuperClassGV = GetClassGlobal(ObjCClassName + ClassName,
+                                  ID->getClassInterface()->isWeakImported());
     IsAGV = GetClassGlobal(ObjCMetaClassName + ClassName,
                            ID->getClassInterface()->isWeakImported());
 
@@ -5906,8 +5929,10 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   TClassName = ObjCClassName + ClassName;
   llvm::GlobalVariable *ClassMD =
     BuildClassMetaData(TClassName, MetaTClass, SuperClassGV, CLASS_RO_GV,
-                       classIsHidden);
+                       classIsHidden,
+                       ID->getClassInterface()->isWeakImported());
   DefinedClasses.push_back(ClassMD);
+  ImplementedClasses.push_back(ID->getClassInterface());
 
   // Determine if this class is also "non-lazy".
   if (ImplementationIsNonLazy(ID))
@@ -6697,7 +6722,8 @@ CGObjCNonFragileABIMac::EmitSuperClassRef(CodeGenFunction &CGF,
 
   if (!Entry) {
     std::string ClassName(getClassSymbolPrefix() + ID->getNameAsString());
-    llvm::GlobalVariable *ClassGV = GetClassGlobal(ClassName);
+    llvm::GlobalVariable *ClassGV = GetClassGlobal(ClassName,
+                                                   ID->isWeakImported());
     Entry =
       new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ClassnfABIPtrTy,
                                false, llvm::GlobalValue::PrivateLinkage,
