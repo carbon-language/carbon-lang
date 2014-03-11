@@ -12,10 +12,10 @@
 ; CHECK-NOT: file_names[
 
 ; CHECK: .debug_pubnames contents:
-; CHECK-NEXT: {{^$}}
+; CHECK-NOT: Offset
 
 ; CHECK: .debug_pubtypes contents:
-; CHECK-NEXT: {{^$}}
+; CHECK-NOT: Offset
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!5}

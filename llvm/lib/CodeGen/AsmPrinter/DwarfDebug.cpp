@@ -2215,6 +2215,9 @@ void DwarfDebug::emitDebugPubSection(
 
     const auto &Globals = (TheU->*Accessor)();
 
+    if (Globals.empty())
+      continue;
+
     if (auto Skeleton = static_cast<DwarfCompileUnit *>(TheU->getSkeleton()))
       TheU = Skeleton;
     unsigned ID = TheU->getUniqueID();
