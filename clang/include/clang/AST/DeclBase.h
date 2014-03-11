@@ -1009,7 +1009,7 @@ public:
                        SourceManager &sm, const char *Msg)
   : TheDecl(theDecl), Loc(L), SM(sm), Message(Msg) {}
 
-  virtual void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const override;
 };
 
 typedef llvm::MutableArrayRef<NamedDecl*> DeclContextLookupResult;

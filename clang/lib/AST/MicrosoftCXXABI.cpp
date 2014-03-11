@@ -29,13 +29,13 @@ namespace {
 /// Typically these are things like static locals, lambdas, or blocks.
 class MicrosoftNumberingContext : public MangleNumberingContext {
 public:
-  virtual unsigned getManglingNumber(const VarDecl *VD,
-                                     unsigned MSLocalManglingNumber) {
+  unsigned getManglingNumber(const VarDecl *VD,
+                             unsigned MSLocalManglingNumber) override {
     return MSLocalManglingNumber;
   }
 
-  virtual unsigned getManglingNumber(const TagDecl *TD,
-                                     unsigned MSLocalManglingNumber) {
+  unsigned getManglingNumber(const TagDecl *TD,
+                             unsigned MSLocalManglingNumber) override {
     return MSLocalManglingNumber;
   }
 };
@@ -46,16 +46,16 @@ public:
   MicrosoftCXXABI(ASTContext &Ctx) : Context(Ctx) { }
 
   std::pair<uint64_t, unsigned>
-  getMemberPointerWidthAndAlign(const MemberPointerType *MPT) const;
+  getMemberPointerWidthAndAlign(const MemberPointerType *MPT) const override;
 
-  CallingConv getDefaultMethodCallConv(bool isVariadic) const {
+  CallingConv getDefaultMethodCallConv(bool isVariadic) const override {
     if (!isVariadic &&
         Context.getTargetInfo().getTriple().getArch() == llvm::Triple::x86)
       return CC_X86ThisCall;
     return CC_C;
   }
 
-  bool isNearlyEmpty(const CXXRecordDecl *RD) const {
+  bool isNearlyEmpty(const CXXRecordDecl *RD) const override {
     // FIXME: Audit the corners
     if (!RD->isDynamicClass())
       return false;
@@ -69,7 +69,7 @@ public:
       Layout.getNonVirtualSize() == PointerSize * 2;
   }    
 
-  MangleNumberingContext *createMangleNumberingContext() const {
+  MangleNumberingContext *createMangleNumberingContext() const override {
     return new MicrosoftNumberingContext();
   }
 };

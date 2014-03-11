@@ -329,7 +329,7 @@ private:
     VirtualBaseClassOffsetOffsetsMapTy;
   VirtualBaseClassOffsetOffsetsMapTy VirtualBaseClassOffsetOffsets;
 
-  void computeVTableRelatedInformation(const CXXRecordDecl *RD);
+  void computeVTableRelatedInformation(const CXXRecordDecl *RD) override;
 
 public:
   ItaniumVTableContext(ASTContext &Context);
@@ -495,7 +495,7 @@ private:
 
   void enumerateVFPtrs(const CXXRecordDecl *ForClass, VPtrInfoVector &Result);
 
-  void computeVTableRelatedInformation(const CXXRecordDecl *RD);
+  void computeVTableRelatedInformation(const CXXRecordDecl *RD) override;
 
   void dumpMethodLocations(const CXXRecordDecl *RD,
                            const MethodVFTableLocationsTy &NewMethods,
@@ -520,7 +520,7 @@ public:
 
   const MethodVFTableLocation &getMethodVFTableLocation(GlobalDecl GD);
 
-  const ThunkInfoVectorTy *getThunkInfo(GlobalDecl GD) {
+  const ThunkInfoVectorTy *getThunkInfo(GlobalDecl GD) override {
     // Complete destructors don't have a slot in a vftable, so no thunks needed.
     if (isa<CXXDestructorDecl>(GD.getDecl()) &&
         GD.getDtorType() == Dtor_Complete)

@@ -92,34 +92,32 @@ class MicrosoftMangleContextImpl : public MicrosoftMangleContext {
 public:
   MicrosoftMangleContextImpl(ASTContext &Context, DiagnosticsEngine &Diags)
       : MicrosoftMangleContext(Context, Diags) {}
-  virtual bool shouldMangleCXXName(const NamedDecl *D);
-  virtual void mangleCXXName(const NamedDecl *D, raw_ostream &Out);
-  virtual void mangleVirtualMemPtrThunk(const CXXMethodDecl *MD,
-                                        raw_ostream &);
-  virtual void mangleThunk(const CXXMethodDecl *MD,
-                           const ThunkInfo &Thunk,
-                           raw_ostream &);
-  virtual void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
-                                  const ThisAdjustment &ThisAdjustment,
-                                  raw_ostream &);
-  virtual void mangleCXXVFTable(const CXXRecordDecl *Derived,
-                                ArrayRef<const CXXRecordDecl *> BasePath,
-                                raw_ostream &Out);
-  virtual void mangleCXXVBTable(const CXXRecordDecl *Derived,
-                                ArrayRef<const CXXRecordDecl *> BasePath,
-                                raw_ostream &Out);
-  virtual void mangleCXXRTTI(QualType T, raw_ostream &);
-  virtual void mangleCXXRTTIName(QualType T, raw_ostream &);
-  virtual void mangleTypeName(QualType T, raw_ostream &);
-  virtual void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
-                             raw_ostream &);
-  virtual void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
-                             raw_ostream &);
-  virtual void mangleReferenceTemporary(const VarDecl *, raw_ostream &);
-  virtual void mangleStaticGuardVariable(const VarDecl *D, raw_ostream &Out);
-  virtual void mangleDynamicInitializer(const VarDecl *D, raw_ostream &Out);
-  virtual void mangleDynamicAtExitDestructor(const VarDecl *D,
-                                             raw_ostream &Out);
+  bool shouldMangleCXXName(const NamedDecl *D) override;
+  void mangleCXXName(const NamedDecl *D, raw_ostream &Out) override;
+  void mangleVirtualMemPtrThunk(const CXXMethodDecl *MD, raw_ostream &) override;
+  void mangleThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk,
+                   raw_ostream &) override;
+  void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
+                          const ThisAdjustment &ThisAdjustment,
+                          raw_ostream &) override;
+  void mangleCXXVFTable(const CXXRecordDecl *Derived,
+                        ArrayRef<const CXXRecordDecl *> BasePath,
+                        raw_ostream &Out) override;
+  void mangleCXXVBTable(const CXXRecordDecl *Derived,
+                        ArrayRef<const CXXRecordDecl *> BasePath,
+                        raw_ostream &Out) override;
+  void mangleCXXRTTI(QualType T, raw_ostream &) override;
+  void mangleCXXRTTIName(QualType T, raw_ostream &) override;
+  void mangleTypeName(QualType T, raw_ostream &) override;
+  void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
+                     raw_ostream &) override;
+  void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
+                     raw_ostream &) override;
+  void mangleReferenceTemporary(const VarDecl *, raw_ostream &) override;
+  void mangleStaticGuardVariable(const VarDecl *D, raw_ostream &Out) override;
+  void mangleDynamicInitializer(const VarDecl *D, raw_ostream &Out) override;
+  void mangleDynamicAtExitDestructor(const VarDecl *D,
+                                     raw_ostream &Out) override;
   bool getNextDiscriminator(const NamedDecl *ND, unsigned &disc) {
     // Lambda closure types are already numbered.
     if (isLambda(ND))

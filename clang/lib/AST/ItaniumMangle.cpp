@@ -125,36 +125,33 @@ public:
   /// @name Mangler Entry Points
   /// @{
 
-  bool shouldMangleCXXName(const NamedDecl *D);
-  void mangleCXXName(const NamedDecl *D, raw_ostream &);
-  void mangleThunk(const CXXMethodDecl *MD,
-                   const ThunkInfo &Thunk,
-                   raw_ostream &);
+  bool shouldMangleCXXName(const NamedDecl *D) override;
+  void mangleCXXName(const NamedDecl *D, raw_ostream &) override;
+  void mangleThunk(const CXXMethodDecl *MD, const ThunkInfo &Thunk,
+                   raw_ostream &) override;
   void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
                           const ThisAdjustment &ThisAdjustment,
-                          raw_ostream &);
-  void mangleReferenceTemporary(const VarDecl *D,
-                                raw_ostream &);
-  void mangleCXXVTable(const CXXRecordDecl *RD,
-                       raw_ostream &);
-  void mangleCXXVTT(const CXXRecordDecl *RD,
-                    raw_ostream &);
+                          raw_ostream &) override;
+  void mangleReferenceTemporary(const VarDecl *D, raw_ostream &) override;
+  void mangleCXXVTable(const CXXRecordDecl *RD, raw_ostream &) override;
+  void mangleCXXVTT(const CXXRecordDecl *RD, raw_ostream &) override;
   void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
-                           const CXXRecordDecl *Type,
-                           raw_ostream &);
-  void mangleCXXRTTI(QualType T, raw_ostream &);
-  void mangleCXXRTTIName(QualType T, raw_ostream &);
-  void mangleTypeName(QualType T, raw_ostream &);
+                           const CXXRecordDecl *Type, raw_ostream &) override;
+  void mangleCXXRTTI(QualType T, raw_ostream &) override;
+  void mangleCXXRTTIName(QualType T, raw_ostream &) override;
+  void mangleTypeName(QualType T, raw_ostream &) override;
   void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type,
-                     raw_ostream &);
+                     raw_ostream &) override;
   void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
-                     raw_ostream &);
+                     raw_ostream &) override;
 
-  void mangleStaticGuardVariable(const VarDecl *D, raw_ostream &);
-  void mangleDynamicInitializer(const VarDecl *D, raw_ostream &Out);
-  void mangleDynamicAtExitDestructor(const VarDecl *D, raw_ostream &Out);
-  void mangleItaniumThreadLocalInit(const VarDecl *D, raw_ostream &);
-  void mangleItaniumThreadLocalWrapper(const VarDecl *D, raw_ostream &);
+  void mangleStaticGuardVariable(const VarDecl *D, raw_ostream &) override;
+  void mangleDynamicInitializer(const VarDecl *D, raw_ostream &Out) override;
+  void mangleDynamicAtExitDestructor(const VarDecl *D,
+                                     raw_ostream &Out) override;
+  void mangleItaniumThreadLocalInit(const VarDecl *D, raw_ostream &) override;
+  void mangleItaniumThreadLocalWrapper(const VarDecl *D,
+                                       raw_ostream &) override;
 
   bool getNextDiscriminator(const NamedDecl *ND, unsigned &disc) {
     // Lambda closure types are already numbered.

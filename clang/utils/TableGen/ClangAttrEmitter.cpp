@@ -1491,10 +1491,10 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
       OS << "  }\n\n";
     }
 
-    OS << "  virtual " << R.getName() << "Attr *clone (ASTContext &C) const;\n";
-    OS << "  virtual void printPretty(raw_ostream &OS,\n"
-       << "                           const PrintingPolicy &Policy) const;\n";
-    OS << "  virtual const char *getSpelling() const;\n";
+    OS << "  " << R.getName() << "Attr *clone(ASTContext &C) const override;\n";
+    OS << "  void printPretty(raw_ostream &OS,\n"
+       << "                   const PrintingPolicy &Policy) const override;\n";
+    OS << "  const char *getSpelling() const override;\n";
     
     if (!ElideSpelling) {
       assert(!SemanticToSyntacticMap.empty() && "Empty semantic mapping list");
@@ -1524,11 +1524,11 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
        << "attr::" << R.getName() << "; }\n";
 
     bool LateParsed = R.getValueAsBit("LateParsed");
-    OS << "  virtual bool isLateParsed() const { return "
+    OS << "  bool isLateParsed() const override { return "
        << LateParsed << "; }\n";
 
     if (R.getValueAsBit("DuplicatesAllowedWhileMerging"))
-      OS << "  virtual bool duplicatesAllowed() const { return true; }\n\n";
+      OS << "  bool duplicatesAllowed() const override { return true; }\n\n";
 
     OS << "};\n\n";
   }

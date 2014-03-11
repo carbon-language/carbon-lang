@@ -123,7 +123,7 @@ public:
   /// \brief Sets the location of the colon.
   void setColonLoc(SourceLocation CLoc) { ColonLoc = CLoc; }
 
-  SourceRange getSourceRange() const LLVM_READONLY {
+  SourceRange getSourceRange() const override LLVM_READONLY {
     return SourceRange(getAccessSpecifierLoc(), getColonLoc());
   }
 
@@ -627,7 +627,7 @@ public:
   typedef std::reverse_iterator<base_class_const_iterator>
     reverse_base_class_const_iterator;
 
-  virtual CXXRecordDecl *getCanonicalDecl() {
+  CXXRecordDecl *getCanonicalDecl() override {
     return cast<CXXRecordDecl>(RecordDecl::getCanonicalDecl());
   }
   virtual const CXXRecordDecl *getCanonicalDecl() const {
@@ -1546,7 +1546,7 @@ public:
   void finishedDefaultedOrDeletedMember(CXXMethodDecl *MD);
 
   /// \brief Indicates that the definition of this class is now complete.
-  virtual void completeDefinition();
+  void completeDefinition() override;
 
   /// \brief Indicates that the definition of this class is now complete,
   /// and provides a final overrider map to help determine
@@ -1654,7 +1654,7 @@ public:
 /// In the terminology of the C++ Standard, these are the (static and
 /// non-static) member functions, whether virtual or not.
 class CXXMethodDecl : public FunctionDecl {
-  virtual void anchor();
+  void anchor() override;
 protected:
   CXXMethodDecl(Kind DK, CXXRecordDecl *RD, SourceLocation StartLoc,
                 const DeclarationNameInfo &NameInfo,
@@ -1721,10 +1721,10 @@ public:
   /// \brief Determine whether this is a move assignment operator.
   bool isMoveAssignmentOperator() const;
 
-  CXXMethodDecl *getCanonicalDecl() {
+  CXXMethodDecl *getCanonicalDecl() override {
     return cast<CXXMethodDecl>(FunctionDecl::getCanonicalDecl());
   }
-  const CXXMethodDecl *getCanonicalDecl() const {
+  const CXXMethodDecl *getCanonicalDecl() const override {
     return const_cast<CXXMethodDecl*>(this)->getCanonicalDecl();
   }
 
@@ -2084,7 +2084,7 @@ public:
 /// };
 /// \endcode
 class CXXConstructorDecl : public CXXMethodDecl {
-  virtual void anchor();
+  void anchor() override;
   /// \brief Whether this constructor declaration has the \c explicit keyword
   /// specified.
   bool IsExplicitSpecified : 1;
@@ -2258,10 +2258,10 @@ public:
   /// \brief Set the constructor that this inheriting constructor is based on.
   void setInheritedConstructor(const CXXConstructorDecl *BaseCtor);
 
-  const CXXConstructorDecl *getCanonicalDecl() const {
+  const CXXConstructorDecl *getCanonicalDecl() const override {
     return cast<CXXConstructorDecl>(FunctionDecl::getCanonicalDecl());
   }
-  CXXConstructorDecl *getCanonicalDecl() {
+  CXXConstructorDecl *getCanonicalDecl() override {
     return cast<CXXConstructorDecl>(FunctionDecl::getCanonicalDecl());
   }
 
@@ -2284,7 +2284,7 @@ public:
 /// };
 /// \endcode
 class CXXDestructorDecl : public CXXMethodDecl {
-  virtual void anchor();
+  void anchor() override;
 
   FunctionDecl *OperatorDelete;
 
@@ -2333,7 +2333,7 @@ public:
 /// };
 /// \endcode
 class CXXConversionDecl : public CXXMethodDecl {
-  virtual void anchor();
+  void anchor() override;
   /// Whether this conversion function declaration is marked
   /// "explicit", meaning that it can only be applied when the user
   /// explicitly wrote a cast. This is a C++0x feature.
@@ -2462,7 +2462,7 @@ public:
     return decls_empty() ? getLocation() : decls_begin()->getLocEnd();
   }
 
-  SourceRange getSourceRange() const LLVM_READONLY {
+  SourceRange getSourceRange() const override LLVM_READONLY {
     return SourceRange(ExternLoc, getLocEnd());
   }
 
@@ -2487,7 +2487,7 @@ public:
 /// artificial names for all using-directives in order to store
 /// them in DeclContext effectively.
 class UsingDirectiveDecl : public NamedDecl {
-  virtual void anchor();
+  void anchor() override;
   /// \brief The location of the \c using keyword.
   SourceLocation UsingLoc;
 
@@ -2568,8 +2568,8 @@ public:
                                     NamedDecl *Nominated,
                                     DeclContext *CommonAncestor);
   static UsingDirectiveDecl *CreateDeserialized(ASTContext &C, unsigned ID);
-  
-  SourceRange getSourceRange() const LLVM_READONLY {
+
+  SourceRange getSourceRange() const override LLVM_READONLY {
     return SourceRange(UsingLoc, getLocation());
   }
 
@@ -2590,7 +2590,7 @@ public:
 /// namespace Foo = Bar;
 /// \endcode
 class NamespaceAliasDecl : public NamedDecl {
-  virtual void anchor();
+  void anchor() override;
 
   /// \brief The location of the \c namespace keyword.
   SourceLocation NamespaceLoc;
@@ -2663,8 +2663,8 @@ public:
                                     NamedDecl *Namespace);
 
   static NamespaceAliasDecl *CreateDeserialized(ASTContext &C, unsigned ID);
-  
-  virtual SourceRange getSourceRange() const LLVM_READONLY {
+
+  SourceRange getSourceRange() const override LLVM_READONLY {
     return SourceRange(NamespaceLoc, IdentLoc);
   }
 
@@ -2686,7 +2686,7 @@ public:
 /// }
 /// \endcode
 class UsingShadowDecl : public NamedDecl, public Redeclarable<UsingShadowDecl> {
-  virtual void anchor();
+  void anchor() override;
 
   /// The referenced declaration.
   NamedDecl *Underlying;
@@ -2709,13 +2709,13 @@ class UsingShadowDecl : public NamedDecl, public Redeclarable<UsingShadowDecl> {
   }
 
   typedef Redeclarable<UsingShadowDecl> redeclarable_base;
-  virtual UsingShadowDecl *getNextRedeclaration() {
+  UsingShadowDecl *getNextRedeclaration() override {
     return RedeclLink.getNext();
   }
-  virtual UsingShadowDecl *getPreviousDeclImpl() {
+  UsingShadowDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();
   }
-  virtual UsingShadowDecl *getMostRecentDeclImpl() {
+  UsingShadowDecl *getMostRecentDeclImpl() override {
     return getMostRecentDecl();
   }
 
@@ -2736,10 +2736,10 @@ public:
   using redeclarable_base::getPreviousDecl;
   using redeclarable_base::getMostRecentDecl;
 
-  virtual UsingShadowDecl *getCanonicalDecl() {
+  UsingShadowDecl *getCanonicalDecl() override {
     return getFirstDecl();
   }
-  virtual const UsingShadowDecl *getCanonicalDecl() const {
+  const UsingShadowDecl *getCanonicalDecl() const {
     return getFirstDecl();
   }
 
@@ -2778,7 +2778,7 @@ public:
 ///    using someNameSpace::someIdentifier;
 /// \endcode
 class UsingDecl : public NamedDecl {
-  virtual void anchor();
+  void anchor() override;
 
   /// \brief The source location of the 'using' keyword itself.
   SourceLocation UsingLocation;
@@ -2894,7 +2894,7 @@ public:
 
   static UsingDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
-  SourceRange getSourceRange() const LLVM_READONLY;
+  SourceRange getSourceRange() const override LLVM_READONLY;
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == Using; }
@@ -2915,7 +2915,7 @@ public:
 /// };
 /// \endcode
 class UnresolvedUsingValueDecl : public ValueDecl {
-  virtual void anchor();
+  void anchor() override;
 
   /// \brief The source location of the 'using' keyword
   SourceLocation UsingLocation;
@@ -2968,7 +2968,7 @@ public:
   static UnresolvedUsingValueDecl *
   CreateDeserialized(ASTContext &C, unsigned ID);
 
-  SourceRange getSourceRange() const LLVM_READONLY;
+  SourceRange getSourceRange() const override LLVM_READONLY;
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == UnresolvedUsingValue; }
@@ -2989,7 +2989,7 @@ public:
 /// The type associated with an unresolved using typename decl is
 /// currently always a typename type.
 class UnresolvedUsingTypenameDecl : public TypeDecl {
-  virtual void anchor();
+  void anchor() override;
 
   /// \brief The source location of the 'typename' keyword
   SourceLocation TypenameLocation;
@@ -3067,7 +3067,7 @@ public:
 
   SourceLocation getRParenLoc() const { return RParenLoc; }
 
-  SourceRange getSourceRange() const LLVM_READONLY {
+  SourceRange getSourceRange() const override LLVM_READONLY {
     return SourceRange(getLocation(), getRParenLoc());
   }
 

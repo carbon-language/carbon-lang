@@ -304,7 +304,7 @@ inline raw_ostream &operator<<(raw_ostream &OS, const NamedDecl &ND) {
 /// location of the statement.  For GNU local labels (__label__), the decl
 /// location is where the __label__ is.
 class LabelDecl : public NamedDecl {
-  virtual void anchor();
+  void anchor() override;
   LabelStmt *TheStmt;
   /// LocStart - For normal labels, this is the same as the main declaration
   /// label, i.e., the location of the identifier; for GNU local labels,
@@ -329,7 +329,7 @@ public:
   bool isGnuLocal() const { return LocStart != getLocation(); }
   void setLocStart(SourceLocation L) { LocStart = L; }
 
-  SourceRange getSourceRange() const LLVM_READONLY {
+  SourceRange getSourceRange() const override LLVM_READONLY {
     return SourceRange(LocStart, getLocation());
   }
 
@@ -359,9 +359,9 @@ class NamespaceDecl : public NamedDecl, public DeclContext,
                 NamespaceDecl *PrevDecl);
 
   typedef Redeclarable<NamespaceDecl> redeclarable_base;
-  virtual NamespaceDecl *getNextRedeclaration();
-  virtual NamespaceDecl *getPreviousDeclImpl();
-  virtual NamespaceDecl *getMostRecentDeclImpl();
+  NamespaceDecl *getNextRedeclaration() override;
+  NamespaceDecl *getPreviousDeclImpl() override;
+  NamespaceDecl *getMostRecentDeclImpl() override;
 
 public:
   static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
@@ -435,14 +435,14 @@ public:
   }
 
   /// Retrieves the canonical declaration of this namespace.
-  NamespaceDecl *getCanonicalDecl() {
+  NamespaceDecl *getCanonicalDecl() override {
     return getOriginalNamespace();
   }
   const NamespaceDecl *getCanonicalDecl() const {
     return getOriginalNamespace();
   }
-  
-  virtual SourceRange getSourceRange() const LLVM_READONLY {
+
+  SourceRange getSourceRange() const override LLVM_READONLY {
     return SourceRange(LocStart, RBraceLoc);
   }
 
@@ -469,7 +469,7 @@ public:
 /// an lvalue) a function (in which case it is a function designator) or
 /// an enum constant.
 class ValueDecl : public NamedDecl {
-  virtual void anchor();
+  void anchor() override;
   QualType DeclType;
 
 protected:
@@ -570,7 +570,7 @@ public:
   /// range taking into account any outer template declarations.
   SourceLocation getOuterLocStart() const;
 
-  virtual SourceRange getSourceRange() const LLVM_READONLY;
+  SourceRange getSourceRange() const override LLVM_READONLY;
   SourceLocation getLocStart() const LLVM_READONLY {
     return getOuterLocStart();
   }
@@ -772,11 +772,11 @@ protected:
           TypeSourceInfo *TInfo, StorageClass SC);
 
   typedef Redeclarable<VarDecl> redeclarable_base;
-  virtual VarDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
-  virtual VarDecl *getPreviousDeclImpl() {
+  VarDecl *getNextRedeclaration() override { return RedeclLink.getNext(); }
+  VarDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();
   }
-  virtual VarDecl *getMostRecentDeclImpl() {
+  VarDecl *getMostRecentDeclImpl() override {
     return getMostRecentDecl();
   }
 
@@ -796,8 +796,8 @@ public:
                          StorageClass S);
 
   static VarDecl *CreateDeserialized(ASTContext &C, unsigned ID);
-  
-  virtual SourceRange getSourceRange() const LLVM_READONLY;
+
+  SourceRange getSourceRange() const override LLVM_READONLY;
 
   /// \brief Returns the storage class as written in the source. For the
   /// computed linkage of symbol, see getLinkage.
@@ -918,7 +918,7 @@ public:
     return getKind() != Decl::ParmVar && getDeclContext()->isRecord();
   }
 
-  virtual VarDecl *getCanonicalDecl();
+  VarDecl *getCanonicalDecl() override;
   const VarDecl *getCanonicalDecl() const {
     return const_cast<VarDecl*>(this)->getCanonicalDecl();
   }
@@ -965,7 +965,7 @@ public:
 
   /// \brief Determine whether this is or was instantiated from an out-of-line
   /// definition of a static data member.
-  virtual bool isOutOfLine() const;
+  bool isOutOfLine() const override;
 
   /// \brief If this is a static data member, find its out-of-line definition.
   VarDecl *getOutOfLineDefinition();
@@ -1213,7 +1213,7 @@ public:
 };
 
 class ImplicitParamDecl : public VarDecl {
-  virtual void anchor();
+  void anchor() override;
 public:
   static ImplicitParamDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation IdLoc, IdentifierInfo *Id,
@@ -1259,8 +1259,8 @@ public:
                              StorageClass S, Expr *DefArg);
 
   static ParmVarDecl *CreateDeserialized(ASTContext &C, unsigned ID);
-  
-  virtual SourceRange getSourceRange() const LLVM_READONLY;
+
+  SourceRange getSourceRange() const override LLVM_READONLY;
 
   void setObjCMethodScopeInfo(unsigned parameterIndex) {
     ParmVarDeclBits.IsObjCMethodParam = true;
@@ -1564,11 +1564,11 @@ protected:
       DNLoc(NameInfo.getInfo()) {}
 
   typedef Redeclarable<FunctionDecl> redeclarable_base;
-  virtual FunctionDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
-  virtual FunctionDecl *getPreviousDeclImpl() {
+  FunctionDecl *getNextRedeclaration() override { return RedeclLink.getNext(); }
+  FunctionDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();
   }
-  virtual FunctionDecl *getMostRecentDeclImpl() {
+  FunctionDecl *getMostRecentDeclImpl() override {
     return getMostRecentDecl();
   }
 
@@ -1612,13 +1612,12 @@ public:
     return DeclarationNameInfo(getDeclName(), getLocation(), DNLoc);
   }
 
-  virtual void getNameForDiagnostic(raw_ostream &OS,
-                                    const PrintingPolicy &Policy,
-                                    bool Qualified) const;
+  void getNameForDiagnostic(raw_ostream &OS, const PrintingPolicy &Policy,
+                            bool Qualified) const override;
 
   void setRangeEnd(SourceLocation E) { EndRangeLoc = E; }
 
-  virtual SourceRange getSourceRange() const LLVM_READONLY;
+  SourceRange getSourceRange() const override LLVM_READONLY;
 
   /// \brief Returns true if the function has a body (definition). The
   /// function body might be in any of the (re-)declarations of this
@@ -1627,7 +1626,7 @@ public:
   /// containing the body (if there is one).
   bool hasBody(const FunctionDecl *&Definition) const;
 
-  virtual bool hasBody() const {
+  bool hasBody() const override {
     const FunctionDecl* Definition;
     return hasBody(Definition);
   }
@@ -1655,7 +1654,7 @@ public:
   /// unnecessary AST de-serialization of the body.
   Stmt *getBody(const FunctionDecl *&Definition) const;
 
-  virtual Stmt *getBody() const {
+   Stmt *getBody() const override {
     const FunctionDecl* Definition;
     return getBody(Definition);
   }
@@ -1835,7 +1834,7 @@ public:
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
 
   virtual const FunctionDecl *getCanonicalDecl() const;
-  virtual FunctionDecl *getCanonicalDecl();
+  FunctionDecl *getCanonicalDecl() override;
 
   unsigned getBuiltinID() const;
 
@@ -2120,7 +2119,7 @@ public:
 
   /// \brief Determine whether this is or was instantiated from an out-of-line
   /// definition of a member function.
-  virtual bool isOutOfLine() const;
+  bool isOutOfLine() const override;
 
   /// \brief Identify a memory copying or setting function.
   /// If the given function is a memory copy or setting function, returns
@@ -2259,10 +2258,10 @@ public:
     return cast<RecordDecl>(getDeclContext());
   }
 
-  SourceRange getSourceRange() const LLVM_READONLY;
+  SourceRange getSourceRange() const override LLVM_READONLY;
 
   /// Retrieves the canonical declaration of this field.
-  FieldDecl *getCanonicalDecl() { return getFirstDecl(); }
+  FieldDecl *getCanonicalDecl() override { return getFirstDecl(); }
   const FieldDecl *getCanonicalDecl() const { return getFirstDecl(); }
 
   // Implement isa/cast/dyncast/etc.
@@ -2301,10 +2300,10 @@ public:
   void setInitExpr(Expr *E) { Init = (Stmt*) E; }
   void setInitVal(const llvm::APSInt &V) { Val = V; }
 
-  SourceRange getSourceRange() const LLVM_READONLY;
+  SourceRange getSourceRange() const override LLVM_READONLY;
 
   /// Retrieves the canonical declaration of this enumerator.
-  EnumConstantDecl *getCanonicalDecl() { return getFirstDecl(); }
+  EnumConstantDecl *getCanonicalDecl() override { return getFirstDecl(); }
   const EnumConstantDecl *getCanonicalDecl() const { return getFirstDecl(); }
 
   // Implement isa/cast/dyncast/etc.
@@ -2318,7 +2317,7 @@ public:
 /// field injected from an anonymous union/struct into the parent scope.
 /// IndirectFieldDecl are always implicit.
 class IndirectFieldDecl : public ValueDecl {
-  virtual void anchor();
+  void anchor() override;
   NamedDecl **Chaining;
   unsigned ChainingSize;
 
@@ -2364,7 +2363,7 @@ public:
 /// TypeDecl - Represents a declaration of a type.
 ///
 class TypeDecl : public NamedDecl {
-  virtual void anchor();
+  void anchor() override;
   /// TypeForDecl - This indicates the Type object that represents
   /// this TypeDecl.  It is a cache maintained by
   /// ASTContext::getTypedefType, ASTContext::getTagDeclType, and
@@ -2394,7 +2393,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return LocStart; }
   void setLocStart(SourceLocation L) { LocStart = L; }
-  virtual SourceRange getSourceRange() const LLVM_READONLY {
+  SourceRange getSourceRange() const override LLVM_READONLY {
     if (LocStart.isValid())
       return SourceRange(LocStart, getLocation());
     else
@@ -2409,7 +2408,7 @@ public:
 
 /// Base class for declarations which introduce a typedef-name.
 class TypedefNameDecl : public TypeDecl, public Redeclarable<TypedefNameDecl> {
-  virtual void anchor();
+  void anchor() override;
   typedef std::pair<TypeSourceInfo*, QualType> ModedTInfo;
   llvm::PointerUnion<TypeSourceInfo*, ModedTInfo*> MaybeModedTInfo;
 
@@ -2420,13 +2419,13 @@ protected:
     : TypeDecl(DK, DC, IdLoc, Id, StartLoc), MaybeModedTInfo(TInfo) {}
 
   typedef Redeclarable<TypedefNameDecl> redeclarable_base;
-  virtual TypedefNameDecl *getNextRedeclaration() {
+  TypedefNameDecl *getNextRedeclaration() override {
     return RedeclLink.getNext();
   }
-  virtual TypedefNameDecl *getPreviousDeclImpl() {
+  TypedefNameDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();
   }
-  virtual TypedefNameDecl *getMostRecentDeclImpl() {
+  TypedefNameDecl *getMostRecentDeclImpl() override {
     return getMostRecentDecl();
   }
 
@@ -2460,7 +2459,7 @@ public:
   }
 
   /// Retrieves the canonical declaration of this typedef-name.
-  TypedefNameDecl *getCanonicalDecl() { return getFirstDecl(); }
+  TypedefNameDecl *getCanonicalDecl() override { return getFirstDecl(); }
   const TypedefNameDecl *getCanonicalDecl() const { return getFirstDecl(); }
 
   // Implement isa/cast/dyncast/etc.
@@ -2482,8 +2481,8 @@ public:
                              SourceLocation StartLoc, SourceLocation IdLoc,
                              IdentifierInfo *Id, TypeSourceInfo *TInfo);
   static TypedefDecl *CreateDeserialized(ASTContext &C, unsigned ID);
-  
-  SourceRange getSourceRange() const LLVM_READONLY;
+
+  SourceRange getSourceRange() const override LLVM_READONLY;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -2503,7 +2502,7 @@ public:
                                IdentifierInfo *Id, TypeSourceInfo *TInfo);
   static TypeAliasDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
-  SourceRange getSourceRange() const LLVM_READONLY;
+  SourceRange getSourceRange() const override LLVM_READONLY;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -2604,11 +2603,11 @@ protected:
   }
 
   typedef Redeclarable<TagDecl> redeclarable_base;
-  virtual TagDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
-  virtual TagDecl *getPreviousDeclImpl() {
+  TagDecl *getNextRedeclaration() override { return RedeclLink.getNext(); }
+  TagDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();
   }
-  virtual TagDecl *getMostRecentDeclImpl() {
+  TagDecl *getMostRecentDeclImpl() override {
     return getMostRecentDecl();
   }
 
@@ -2637,9 +2636,9 @@ public:
   /// getOuterLocStart - Return SourceLocation representing start of source
   /// range taking into account any outer template declarations.
   SourceLocation getOuterLocStart() const;
-  virtual SourceRange getSourceRange() const LLVM_READONLY;
+  SourceRange getSourceRange() const override LLVM_READONLY;
 
-  virtual TagDecl* getCanonicalDecl();
+  TagDecl* getCanonicalDecl() override;
   const TagDecl* getCanonicalDecl() const {
     return const_cast<TagDecl*>(this)->getCanonicalDecl();
   }
@@ -2807,7 +2806,7 @@ public:
 /// with a fixed underlying type, and in C we allow them to be forward-declared
 /// with no underlying type as an extension.
 class EnumDecl : public TagDecl {
-  virtual void anchor();
+  void anchor() override;
   /// IntegerType - This represent the integer type that the enum corresponds
   /// to for code generation purposes.  Note that the enumerator constants may
   /// have a different type than this does.
@@ -2853,7 +2852,7 @@ class EnumDecl : public TagDecl {
   void setInstantiationOfMemberEnum(ASTContext &C, EnumDecl *ED,
                                     TemplateSpecializationKind TSK);
 public:
-  EnumDecl *getCanonicalDecl() {
+  EnumDecl *getCanonicalDecl() override {
     return cast<EnumDecl>(TagDecl::getCanonicalDecl());
   }
   const EnumDecl *getCanonicalDecl() const {
@@ -3202,7 +3201,7 @@ public:
   SourceLocation getAsmLoc() const { return getLocation(); }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
-  SourceRange getSourceRange() const LLVM_READONLY {
+  SourceRange getSourceRange() const override LLVM_READONLY {
     return SourceRange(getAsmLoc(), getRParenLoc());
   }
 
@@ -3298,7 +3297,7 @@ public:
   void setIsVariadic(bool value) { IsVariadic = value; }
 
   CompoundStmt *getCompoundBody() const { return (CompoundStmt*) Body; }
-  Stmt *getBody() const { return (Stmt*) Body; }
+  Stmt *getBody() const override { return (Stmt*) Body; }
   void setBody(CompoundStmt *B) { Body = (Stmt*) B; }
 
   void setSignatureAsWritten(TypeSourceInfo *Sig) { SignatureAsWritten = Sig; }
@@ -3386,7 +3385,7 @@ public:
     ManglingContextDecl = Ctx;
   }
 
-  virtual SourceRange getSourceRange() const LLVM_READONLY;
+  SourceRange getSourceRange() const override LLVM_READONLY;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -3422,7 +3421,7 @@ public:
   static CapturedDecl *CreateDeserialized(ASTContext &C, unsigned ID,
                                           unsigned NumParams);
 
-  Stmt *getBody() const { return Body; }
+  Stmt *getBody() const override { return Body; }
   void setBody(Stmt *B) { Body = B; }
 
   unsigned getNumParams() const { return NumParams; }
@@ -3525,9 +3524,9 @@ public:
   /// This will return an empty array if the locations of the individual
   /// identifiers aren't available.
   ArrayRef<SourceLocation> getIdentifierLocs() const;
-  
-  virtual SourceRange getSourceRange() const LLVM_READONLY;
-  
+
+  SourceRange getSourceRange() const override LLVM_READONLY;
+
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == Import; }
 };

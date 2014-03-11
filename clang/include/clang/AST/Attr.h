@@ -131,7 +131,7 @@ public:
 };
 
 class InheritableParamAttr : public InheritableAttr {
-  virtual void anchor();
+  void anchor() override;
 protected:
   InheritableParamAttr(attr::Kind AK, SourceRange R,
                        unsigned SpellingListIndex = 0)
