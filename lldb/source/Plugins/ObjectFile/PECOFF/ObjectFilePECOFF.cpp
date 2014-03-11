@@ -988,7 +988,7 @@ ObjectFilePECOFF::GetArchitecture (ArchSpec &arch)
         case llvm::COFF::IMAGE_FILE_MACHINE_POWERPC:
         case llvm::COFF::IMAGE_FILE_MACHINE_POWERPCFP:
         case llvm::COFF::IMAGE_FILE_MACHINE_ARM:
-        case llvm::COFF::IMAGE_FILE_MACHINE_ARMV7:
+        case llvm::COFF::IMAGE_FILE_MACHINE_ARMNT:
         case llvm::COFF::IMAGE_FILE_MACHINE_THUMB:
             arch.SetArchitecture (eArchTypeCOFF, machine, LLDB_INVALID_CPUTYPE);
             return true;
