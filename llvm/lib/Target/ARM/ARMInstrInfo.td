@@ -4538,11 +4538,6 @@ let usesCustomInserter = 1, Defs = [CPSR] in {
       (outs GPR:$dst1, GPR:$dst2),
       (ins GPR:$addr, i32imm:$ordering),
       NoItinerary, []>;
-  let mayStore = 1 in
-    def ATOMIC_STORE_I64 : PseudoInst<
-      (outs GPR:$dst1, GPR:$dst2),
-      (ins GPR:$addr, GPR:$src1, GPR:$src2, i32imm:$ordering),
-      NoItinerary, []>;
 }
 
 let usesCustomInserter = 1 in {

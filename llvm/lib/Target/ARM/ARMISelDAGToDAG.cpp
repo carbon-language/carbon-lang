@@ -3323,12 +3323,6 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     else
       break;
 
-  case ISD::ATOMIC_STORE:
-    if (cast<AtomicSDNode>(N)->getMemoryVT() == MVT::i64)
-      return SelectAtomic(N, 0, 0, 0, ARM::ATOMIC_STORE_I64);
-    else
-      break;
-
   case ISD::ATOMIC_LOAD_ADD:
     return SelectAtomic(N,
                         ARM::ATOMIC_LOAD_ADD_I8,
