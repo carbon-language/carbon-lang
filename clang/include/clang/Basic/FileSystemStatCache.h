@@ -113,8 +113,8 @@ public:
   iterator begin() const { return StatCalls.begin(); }
   iterator end() const { return StatCalls.end(); }
 
-  virtual LookupResult getStat(const char *Path, FileData &Data, bool isFile,
-                               vfs::File **F, vfs::FileSystem &FS);
+  LookupResult getStat(const char *Path, FileData &Data, bool isFile,
+                       vfs::File **F, vfs::FileSystem &FS) override;
 };
 
 } // end namespace clang

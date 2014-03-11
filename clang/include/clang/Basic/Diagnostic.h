@@ -1327,7 +1327,7 @@ public:
 class IgnoringDiagConsumer : public DiagnosticConsumer {
   virtual void anchor();
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                        const Diagnostic &Info) {
+                        const Diagnostic &Info) override {
     // Just ignore it.
   }
 };
@@ -1343,11 +1343,11 @@ public:
 
   virtual ~ForwardingDiagnosticConsumer();
 
-  virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                const Diagnostic &Info);
-  virtual void clear();
+  void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
+                        const Diagnostic &Info) override;
+  void clear() override;
 
-  virtual bool IncludeInDiagnosticCounts() const;
+  bool IncludeInDiagnosticCounts() const override;
 };
 
 // Struct used for sending info about how a type should be printed.

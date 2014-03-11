@@ -488,7 +488,7 @@ namespace {
          << "  " << getLowerName() << "Expr->printPretty(OS, 0, Policy);\n"
          << "  OS << \"";
     }
-    void writeDump(raw_ostream &OS) const {
+    void writeDump(raw_ostream &OS) const override {
     }
     void writeDumpChildren(raw_ostream &OS) const override {
       OS << "    if (SA->is" << getUpperName() << "Expr()) {\n";
@@ -869,7 +869,7 @@ namespace {
       OS << "      }\n";
     }
 
-    void writeDump(raw_ostream &OS) const {}
+    void writeDump(raw_ostream &OS) const override {}
 
     void writeDumpChildren(raw_ostream &OS) const override {
       OS << "    lastChild();\n";
@@ -922,7 +922,7 @@ namespace {
       OS << "      }\n";
     }
 
-    void writeDump(raw_ostream &OS) const {}
+    void writeDump(raw_ostream &OS) const override {}
 
     void writeDumpChildren(raw_ostream &OS) const override {
       OS << "    for (" << getAttrName() << "Attr::" << getLowerName()
