@@ -21,7 +21,7 @@
 #include <locale.h>
 #if defined(_LIBCPP_MSVCRT) || defined(__MINGW32__)
 # include <support/win32/locale_win32.h>
-#elif _AIX
+#elif defined(_AIX)
 # include <support/ibm/xlocale.h>
 #elif (defined(__GLIBC__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__sun__)) || defined(__EMSCRIPTEN__) || defined(__IBMCPP__)
 # include <xlocale.h>
