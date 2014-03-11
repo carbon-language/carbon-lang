@@ -758,8 +758,8 @@ bool UnwrappedLineParser::tryToParseLambda() {
   // FIXME: This is a dirty way to access the previous token. Find a better
   // solution.
   if (!Line->Tokens.empty() &&
-      (Line->Tokens.back().Tok->isOneOf(tok::identifier, tok::kw_operator,
-                                        tok::r_square) ||
+      (Line->Tokens.back().Tok->isOneOf(tok::identifier, tok::kw_operator) ||
+       Line->Tokens.back().Tok->closesScope() ||
        Line->Tokens.back().Tok->isSimpleTypeSpecifier())) {
     nextToken();
     return false;

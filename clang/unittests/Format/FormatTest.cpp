@@ -7981,6 +7981,7 @@ TEST_F(FormatTest, FormatsLambdas) {
                "int i;");
   verifyFormat("std::unique_ptr<int[]> foo() {}");
   verifyFormat("int i = a[a][a]->f();");
+  verifyFormat("int i = (*b)[a]->f();");
 
   // Other corner cases.
   verifyFormat("void f() {\n"
