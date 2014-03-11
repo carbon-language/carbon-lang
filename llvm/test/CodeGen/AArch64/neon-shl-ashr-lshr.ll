@@ -306,8 +306,8 @@ define <1 x i16> @ashr.v1i16.imm(<1 x i16> %a) {
 
 define <1 x i32> @ashr.v1i32.imm(<1 x i32> %a) {
 ; CHECK-LABEL: ashr.v1i32.imm:
-; CHECK: sshr v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, #32
-  %c = ashr <1 x i32> %a, <i32 32>
+; CHECK: sshr v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, #31
+  %c = ashr <1 x i32> %a, <i32 31>
   ret <1 x i32> %c
 }
 
@@ -327,7 +327,7 @@ define <1 x i16> @lshr.v1i16.imm(<1 x i16> %a) {
 
 define <1 x i32> @lshr.v1i32.imm(<1 x i32> %a) {
 ; CHECK-LABEL: lshr.v1i32.imm:
-; CHECK: ushr v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, #32
-  %c = lshr <1 x i32> %a, <i32 32>
+; CHECK: ushr v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, #31
+  %c = lshr <1 x i32> %a, <i32 31>
   ret <1 x i32> %c
 }

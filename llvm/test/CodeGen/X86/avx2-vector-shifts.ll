@@ -24,12 +24,12 @@ entry:
 
 define <16 x i16> @test_sllw_3(<16 x i16> %InVec) {
 entry:
-  %shl = shl <16 x i16> %InVec, <i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16>
+  %shl = shl <16 x i16> %InVec, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
   ret <16 x i16> %shl
 }
 
 ; CHECK-LABEL: test_sllw_3:
-; CHECK: vxorps  %ymm0, %ymm0, %ymm0
+; CHECK: vpsllw $15, %ymm0, %ymm0
 ; CHECK: ret
 
 define <8 x i32> @test_slld_1(<8 x i32> %InVec) {
@@ -54,12 +54,12 @@ entry:
 
 define <8 x i32> @test_slld_3(<8 x i32> %InVec) {
 entry:
-  %shl = shl <8 x i32> %InVec, <i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32>
+  %shl = shl <8 x i32> %InVec, <i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31>
   ret <8 x i32> %shl
 }
 
 ; CHECK-LABEL: test_slld_3:
-; CHECK: vxorps  %ymm0, %ymm0, %ymm0
+; CHECK: vpslld $31, %ymm0, %ymm0
 ; CHECK: ret
 
 define <4 x i64> @test_sllq_1(<4 x i64> %InVec) {
@@ -84,12 +84,12 @@ entry:
 
 define <4 x i64> @test_sllq_3(<4 x i64> %InVec) {
 entry:
-  %shl = shl <4 x i64> %InVec, <i64 64, i64 64, i64 64, i64 64>
+  %shl = shl <4 x i64> %InVec, <i64 63, i64 63, i64 63, i64 63>
   ret <4 x i64> %shl
 }
 
 ; CHECK-LABEL: test_sllq_3:
-; CHECK: vxorps  %ymm0, %ymm0, %ymm0
+; CHECK: vpsllq $63, %ymm0, %ymm0
 ; CHECK: ret
 
 ; AVX2 Arithmetic Shift
@@ -116,7 +116,7 @@ entry:
 
 define <16 x i16> @test_sraw_3(<16 x i16> %InVec) {
 entry:
-  %shl = ashr <16 x i16> %InVec, <i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16>
+  %shl = ashr <16 x i16> %InVec, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
   ret <16 x i16> %shl
 }
 
@@ -146,7 +146,7 @@ entry:
 
 define <8 x i32> @test_srad_3(<8 x i32> %InVec) {
 entry:
-  %shl = ashr <8 x i32> %InVec, <i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32>
+  %shl = ashr <8 x i32> %InVec, <i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31>
   ret <8 x i32> %shl
 }
 
@@ -178,12 +178,12 @@ entry:
 
 define <16 x i16> @test_srlw_3(<16 x i16> %InVec) {
 entry:
-  %shl = lshr <16 x i16> %InVec, <i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16>
+  %shl = lshr <16 x i16> %InVec, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>
   ret <16 x i16> %shl
 }
 
 ; CHECK-LABEL: test_srlw_3:
-; CHECK: vxorps  %ymm0, %ymm0, %ymm0
+; CHECK: vpsrlw $15, %ymm0, %ymm0
 ; CHECK: ret
 
 define <8 x i32> @test_srld_1(<8 x i32> %InVec) {
@@ -208,12 +208,12 @@ entry:
 
 define <8 x i32> @test_srld_3(<8 x i32> %InVec) {
 entry:
-  %shl = lshr <8 x i32> %InVec, <i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32, i32 32>
+  %shl = lshr <8 x i32> %InVec, <i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31>
   ret <8 x i32> %shl
 }
 
 ; CHECK-LABEL: test_srld_3:
-; CHECK: vxorps  %ymm0, %ymm0, %ymm0
+; CHECK: vpsrld $31, %ymm0, %ymm0
 ; CHECK: ret
 
 define <4 x i64> @test_srlq_1(<4 x i64> %InVec) {
@@ -238,10 +238,10 @@ entry:
 
 define <4 x i64> @test_srlq_3(<4 x i64> %InVec) {
 entry:
-  %shl = lshr <4 x i64> %InVec, <i64 64, i64 64, i64 64, i64 64>
+  %shl = lshr <4 x i64> %InVec, <i64 63, i64 63, i64 63, i64 63>
   ret <4 x i64> %shl
 }
 
 ; CHECK-LABEL: test_srlq_3:
-; CHECK: vxorps  %ymm0, %ymm0, %ymm0
+; CHECK: vpsrlq $63, %ymm0, %ymm0
 ; CHECK: ret

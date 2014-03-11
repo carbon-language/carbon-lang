@@ -180,7 +180,7 @@ define <8 x i8> @vlshri8(<8 x i8>* %A) nounwind {
 ;CHECK-LABEL: vlshri8:
 ;CHECK: vshr.u8
 	%tmp1 = load <8 x i8>* %A
-	%tmp2 = lshr <8 x i8> %tmp1, < i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8 >
+	%tmp2 = lshr <8 x i8> %tmp1, < i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7 >
 	ret <8 x i8> %tmp2
 }
 
@@ -188,7 +188,7 @@ define <4 x i16> @vlshri16(<4 x i16>* %A) nounwind {
 ;CHECK-LABEL: vlshri16:
 ;CHECK: vshr.u16
 	%tmp1 = load <4 x i16>* %A
-	%tmp2 = lshr <4 x i16> %tmp1, < i16 16, i16 16, i16 16, i16 16 >
+	%tmp2 = lshr <4 x i16> %tmp1, < i16 15, i16 15, i16 15, i16 15 >
 	ret <4 x i16> %tmp2
 }
 
@@ -196,7 +196,7 @@ define <2 x i32> @vlshri32(<2 x i32>* %A) nounwind {
 ;CHECK-LABEL: vlshri32:
 ;CHECK: vshr.u32
 	%tmp1 = load <2 x i32>* %A
-	%tmp2 = lshr <2 x i32> %tmp1, < i32 32, i32 32 >
+	%tmp2 = lshr <2 x i32> %tmp1, < i32 31, i32 31 >
 	ret <2 x i32> %tmp2
 }
 
@@ -204,7 +204,7 @@ define <1 x i64> @vlshri64(<1 x i64>* %A) nounwind {
 ;CHECK-LABEL: vlshri64:
 ;CHECK: vshr.u64
 	%tmp1 = load <1 x i64>* %A
-	%tmp2 = lshr <1 x i64> %tmp1, < i64 64 >
+	%tmp2 = lshr <1 x i64> %tmp1, < i64 63 >
 	ret <1 x i64> %tmp2
 }
 
@@ -252,7 +252,7 @@ define <16 x i8> @vlshrQi8(<16 x i8>* %A) nounwind {
 ;CHECK-LABEL: vlshrQi8:
 ;CHECK: vshr.u8
 	%tmp1 = load <16 x i8>* %A
-	%tmp2 = lshr <16 x i8> %tmp1, < i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8 >
+	%tmp2 = lshr <16 x i8> %tmp1, < i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7 >
 	ret <16 x i8> %tmp2
 }
 
@@ -260,7 +260,7 @@ define <8 x i16> @vlshrQi16(<8 x i16>* %A) nounwind {
 ;CHECK-LABEL: vlshrQi16:
 ;CHECK: vshr.u16
 	%tmp1 = load <8 x i16>* %A
-	%tmp2 = lshr <8 x i16> %tmp1, < i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16 >
+	%tmp2 = lshr <8 x i16> %tmp1, < i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15 >
 	ret <8 x i16> %tmp2
 }
 
@@ -268,7 +268,7 @@ define <4 x i32> @vlshrQi32(<4 x i32>* %A) nounwind {
 ;CHECK-LABEL: vlshrQi32:
 ;CHECK: vshr.u32
 	%tmp1 = load <4 x i32>* %A
-	%tmp2 = lshr <4 x i32> %tmp1, < i32 32, i32 32, i32 32, i32 32 >
+	%tmp2 = lshr <4 x i32> %tmp1, < i32 31, i32 31, i32 31, i32 31 >
 	ret <4 x i32> %tmp2
 }
 
@@ -276,7 +276,7 @@ define <2 x i64> @vlshrQi64(<2 x i64>* %A) nounwind {
 ;CHECK-LABEL: vlshrQi64:
 ;CHECK: vshr.u64
 	%tmp1 = load <2 x i64>* %A
-	%tmp2 = lshr <2 x i64> %tmp1, < i64 64, i64 64 >
+	%tmp2 = lshr <2 x i64> %tmp1, < i64 63, i64 63 >
 	ret <2 x i64> %tmp2
 }
 
@@ -331,7 +331,7 @@ define <8 x i8> @vashri8(<8 x i8>* %A) nounwind {
 ;CHECK-LABEL: vashri8:
 ;CHECK: vshr.s8
 	%tmp1 = load <8 x i8>* %A
-	%tmp2 = ashr <8 x i8> %tmp1, < i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8 >
+	%tmp2 = ashr <8 x i8> %tmp1, < i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7 >
 	ret <8 x i8> %tmp2
 }
 
@@ -339,7 +339,7 @@ define <4 x i16> @vashri16(<4 x i16>* %A) nounwind {
 ;CHECK-LABEL: vashri16:
 ;CHECK: vshr.s16
 	%tmp1 = load <4 x i16>* %A
-	%tmp2 = ashr <4 x i16> %tmp1, < i16 16, i16 16, i16 16, i16 16 >
+	%tmp2 = ashr <4 x i16> %tmp1, < i16 15, i16 15, i16 15, i16 15 >
 	ret <4 x i16> %tmp2
 }
 
@@ -347,7 +347,7 @@ define <2 x i32> @vashri32(<2 x i32>* %A) nounwind {
 ;CHECK-LABEL: vashri32:
 ;CHECK: vshr.s32
 	%tmp1 = load <2 x i32>* %A
-	%tmp2 = ashr <2 x i32> %tmp1, < i32 32, i32 32 >
+	%tmp2 = ashr <2 x i32> %tmp1, < i32 31, i32 31 >
 	ret <2 x i32> %tmp2
 }
 
@@ -355,7 +355,7 @@ define <1 x i64> @vashri64(<1 x i64>* %A) nounwind {
 ;CHECK-LABEL: vashri64:
 ;CHECK: vshr.s64
 	%tmp1 = load <1 x i64>* %A
-	%tmp2 = ashr <1 x i64> %tmp1, < i64 64 >
+	%tmp2 = ashr <1 x i64> %tmp1, < i64 63 >
 	ret <1 x i64> %tmp2
 }
 
@@ -403,7 +403,7 @@ define <16 x i8> @vashrQi8(<16 x i8>* %A) nounwind {
 ;CHECK-LABEL: vashrQi8:
 ;CHECK: vshr.s8
 	%tmp1 = load <16 x i8>* %A
-	%tmp2 = ashr <16 x i8> %tmp1, < i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8, i8 8 >
+	%tmp2 = ashr <16 x i8> %tmp1, < i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7 >
 	ret <16 x i8> %tmp2
 }
 
@@ -411,7 +411,7 @@ define <8 x i16> @vashrQi16(<8 x i16>* %A) nounwind {
 ;CHECK-LABEL: vashrQi16:
 ;CHECK: vshr.s16
 	%tmp1 = load <8 x i16>* %A
-	%tmp2 = ashr <8 x i16> %tmp1, < i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16, i16 16 >
+	%tmp2 = ashr <8 x i16> %tmp1, < i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15 >
 	ret <8 x i16> %tmp2
 }
 
@@ -419,7 +419,7 @@ define <4 x i32> @vashrQi32(<4 x i32>* %A) nounwind {
 ;CHECK-LABEL: vashrQi32:
 ;CHECK: vshr.s32
 	%tmp1 = load <4 x i32>* %A
-	%tmp2 = ashr <4 x i32> %tmp1, < i32 32, i32 32, i32 32, i32 32 >
+	%tmp2 = ashr <4 x i32> %tmp1, < i32 31, i32 31, i32 31, i32 31 >
 	ret <4 x i32> %tmp2
 }
 
@@ -427,6 +427,6 @@ define <2 x i64> @vashrQi64(<2 x i64>* %A) nounwind {
 ;CHECK-LABEL: vashrQi64:
 ;CHECK: vshr.s64
 	%tmp1 = load <2 x i64>* %A
-	%tmp2 = ashr <2 x i64> %tmp1, < i64 64, i64 64 >
+	%tmp2 = ashr <2 x i64> %tmp1, < i64 63, i64 63 >
 	ret <2 x i64> %tmp2
 }
