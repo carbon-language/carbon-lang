@@ -1065,82 +1065,82 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
     switch (TLI.getLoadExtAction(ExtType, SrcVT.getSimpleVT())) {
     default: llvm_unreachable("This action is not supported yet!");
     case TargetLowering::Custom:
-             isCustom = true;
-             // FALLTHROUGH
+      isCustom = true;
+      // FALLTHROUGH
     case TargetLowering::Legal: {
-             Value = SDValue(Node, 0);
-             Chain = SDValue(Node, 1);
+      Value = SDValue(Node, 0);
+      Chain = SDValue(Node, 1);
 
-             if (isCustom) {
-               SDValue Res = TLI.LowerOperation(SDValue(Node, 0), DAG);
-               if (Res.getNode()) {
-                 Value = Res;
-                 Chain = Res.getValue(1);
-               }
-             } else {
-               // If this is an unaligned load and the target doesn't support
-               // it, expand it.
-               EVT MemVT = LD->getMemoryVT();
-               unsigned AS = LD->getAddressSpace();
-               if (!TLI.allowsUnalignedMemoryAccesses(MemVT, AS)) {
-                 Type *Ty =
-                   LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
-                 unsigned ABIAlignment =
-                   TLI.getDataLayout()->getABITypeAlignment(Ty);
-                 if (LD->getAlignment() < ABIAlignment){
-                   ExpandUnalignedLoad(cast<LoadSDNode>(Node),
-                                       DAG, TLI, Value, Chain);
-                 }
-               }
-             }
-             break;
+      if (isCustom) {
+        SDValue Res = TLI.LowerOperation(SDValue(Node, 0), DAG);
+        if (Res.getNode()) {
+          Value = Res;
+          Chain = Res.getValue(1);
+        }
+      } else {
+        // If this is an unaligned load and the target doesn't support
+        // it, expand it.
+        EVT MemVT = LD->getMemoryVT();
+        unsigned AS = LD->getAddressSpace();
+        if (!TLI.allowsUnalignedMemoryAccesses(MemVT, AS)) {
+          Type *Ty =
+            LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
+          unsigned ABIAlignment =
+            TLI.getDataLayout()->getABITypeAlignment(Ty);
+          if (LD->getAlignment() < ABIAlignment){
+            ExpandUnalignedLoad(cast<LoadSDNode>(Node),
+                                DAG, TLI, Value, Chain);
+          }
+        }
+      }
+      break;
     }
     case TargetLowering::Expand:
-             if (!TLI.isLoadExtLegal(ISD::EXTLOAD, SrcVT) &&
-                                     TLI.isTypeLegal(SrcVT)) {
-               SDValue Load = DAG.getLoad(SrcVT, dl, Chain, Ptr,
-                                          LD->getMemOperand());
-               unsigned ExtendOp;
-               switch (ExtType) {
-               case ISD::EXTLOAD:
-                 ExtendOp = (SrcVT.isFloatingPoint() ?
-                             ISD::FP_EXTEND : ISD::ANY_EXTEND);
-                 break;
-               case ISD::SEXTLOAD: ExtendOp = ISD::SIGN_EXTEND; break;
-               case ISD::ZEXTLOAD: ExtendOp = ISD::ZERO_EXTEND; break;
-               default: llvm_unreachable("Unexpected extend load type!");
-               }
-               Value = DAG.getNode(ExtendOp, dl, Node->getValueType(0), Load);
-               Chain = Load.getValue(1);
-               break;
-             }
+      if (!TLI.isLoadExtLegal(ISD::EXTLOAD, SrcVT) &&
+          TLI.isTypeLegal(SrcVT)) {
+        SDValue Load = DAG.getLoad(SrcVT, dl, Chain, Ptr,
+                                   LD->getMemOperand());
+        unsigned ExtendOp;
+        switch (ExtType) {
+        case ISD::EXTLOAD:
+          ExtendOp = (SrcVT.isFloatingPoint() ?
+                      ISD::FP_EXTEND : ISD::ANY_EXTEND);
+          break;
+        case ISD::SEXTLOAD: ExtendOp = ISD::SIGN_EXTEND; break;
+        case ISD::ZEXTLOAD: ExtendOp = ISD::ZERO_EXTEND; break;
+        default: llvm_unreachable("Unexpected extend load type!");
+        }
+        Value = DAG.getNode(ExtendOp, dl, Node->getValueType(0), Load);
+        Chain = Load.getValue(1);
+        break;
+      }
 
-             assert(!SrcVT.isVector() &&
-                    "Vector Loads are handled in LegalizeVectorOps");
+      assert(!SrcVT.isVector() &&
+             "Vector Loads are handled in LegalizeVectorOps");
 
-             // FIXME: This does not work for vectors on most targets.  Sign-
-             // and zero-extend operations are currently folded into extending
-             // loads, whether they are legal or not, and then we end up here
-             // without any support for legalizing them.
-             assert(ExtType != ISD::EXTLOAD &&
-                    "EXTLOAD should always be supported!");
-             // Turn the unsupported load into an EXTLOAD followed by an
-             // explicit zero/sign extend inreg.
-             SDValue Result = DAG.getExtLoad(ISD::EXTLOAD, dl,
-                                             Node->getValueType(0),
-                                             Chain, Ptr, SrcVT,
-                                             LD->getMemOperand());
-             SDValue ValRes;
-             if (ExtType == ISD::SEXTLOAD)
-               ValRes = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl,
-                                    Result.getValueType(),
-                                    Result, DAG.getValueType(SrcVT));
-             else
-               ValRes = DAG.getZeroExtendInReg(Result, dl,
-                                               SrcVT.getScalarType());
-             Value = ValRes;
-             Chain = Result.getValue(1);
-             break;
+      // FIXME: This does not work for vectors on most targets.  Sign-
+      // and zero-extend operations are currently folded into extending
+      // loads, whether they are legal or not, and then we end up here
+      // without any support for legalizing them.
+      assert(ExtType != ISD::EXTLOAD &&
+             "EXTLOAD should always be supported!");
+      // Turn the unsupported load into an EXTLOAD followed by an
+      // explicit zero/sign extend inreg.
+      SDValue Result = DAG.getExtLoad(ISD::EXTLOAD, dl,
+                                      Node->getValueType(0),
+                                      Chain, Ptr, SrcVT,
+                                      LD->getMemOperand());
+      SDValue ValRes;
+      if (ExtType == ISD::SEXTLOAD)
+        ValRes = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl,
+                             Result.getValueType(),
+                             Result, DAG.getValueType(SrcVT));
+      else
+        ValRes = DAG.getZeroExtendInReg(Result, dl,
+                                        SrcVT.getScalarType());
+      Value = ValRes;
+      Chain = Result.getValue(1);
+      break;
     }
   }
 
