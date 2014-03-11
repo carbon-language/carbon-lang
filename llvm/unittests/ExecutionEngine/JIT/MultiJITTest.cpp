@@ -174,6 +174,14 @@ TEST(MultiJitTest, JitPool) {
     EXPECT_TRUE(fa != 0);
     fa = *(intptr_t *)fa;       // Bound value of IAT
   }
+#elif defined(__x86_64__)
+  // getPointerToNamedFunction might be indirect jump
+  // on Win32 x64 --enable-shared.
+  // FF 25 <pcrel32>: jmp *(RIP + pointer to IAT)
+  if (sa != fa && memcmp((char *)fa, "\xFF\x25", 2) == 0) {
+    fa += *(int32_t *)(fa + 2) + 6;     // Address to IAT(RIP)
+    fa = *(intptr_t *)fa;               // Bound value of IAT
+  }
 #endif
   EXPECT_TRUE(sa == fa);
 }
