@@ -620,4 +620,41 @@ TEST_F(FileSystemTest, FileMapping) {
   fs::mapped_file_region mfrrv(std::move(m));
   EXPECT_EQ(mfrrv.const_data(), Data);
 }
+
+TEST(Support, NormalizePath) {
+#if defined(LLVM_ON_WIN32)
+#define EXPECT_PATH_IS(path__, windows__, not_windows__)                        \
+  EXPECT_EQ(path__, windows__);
+#else
+#define EXPECT_PATH_IS(path__, windows__, not_windows__)                        \
+  EXPECT_EQ(path__, not_windows__);
+#endif
+
+  SmallString<64> Path1("a");
+  SmallString<64> Path2("a/b");
+  SmallString<64> Path3("a\\b");
+  SmallString<64> Path4("a\\\\b");
+  SmallString<64> Path5("\\a");
+  SmallString<64> Path6("a\\");
+
+  ASSERT_NO_ERROR(fs::normalize_separators(Path1));
+  EXPECT_PATH_IS(Path1, "a", "a");
+
+  ASSERT_NO_ERROR(fs::normalize_separators(Path2));
+  EXPECT_PATH_IS(Path2, "a/b", "a/b");
+
+  ASSERT_NO_ERROR(fs::normalize_separators(Path3));
+  EXPECT_PATH_IS(Path3, "a\\b", "a/b");
+
+  ASSERT_NO_ERROR(fs::normalize_separators(Path4));
+  EXPECT_PATH_IS(Path4, "a\\\\b", "a\\\\b");
+
+  ASSERT_NO_ERROR(fs::normalize_separators(Path5));
+  EXPECT_PATH_IS(Path5, "\\a", "/a");
+
+  ASSERT_NO_ERROR(fs::normalize_separators(Path6));
+  EXPECT_PATH_IS(Path6, "a\\", "a/");
+
+#undef EXPECT_PATH_IS
+}
 } // anonymous namespace

@@ -272,6 +272,19 @@ error_code create_directory(const Twine &path, bool IgnoreExisting) {
   return error_code::success();
 }
 
+error_code normalize_separators(SmallVectorImpl<char> &Path) {
+  for (auto PI = Path.begin(), PE = Path.end(); PI < PE; ++PI) {
+    if (*PI == '\\') {
+      auto PN = PI + 1;
+      if (PN < PE && *PN == '\\')
+        ++PI; // increment once, the for loop will move over the escaped slash
+      else
+        *PI = '/';
+    }
+  }
+  return error_code::success();
+}
+
 // Note that we are using symbolic link because hard links are not supported by
 // all filesystems (SMB doesn't).
 error_code create_link(const Twine &to, const Twine &from) {
