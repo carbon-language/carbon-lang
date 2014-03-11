@@ -183,7 +183,7 @@ define void @atomic_fetch_umin64(i64 %x) nounwind {
 }
 
 define void @atomic_fetch_cmpxchg64() nounwind {
-  %t1 = cmpxchg i64* @sc64, i64 0, i64 1 acquire
+  %t1 = cmpxchg i64* @sc64, i64 0, i64 1 acquire acquire
 ; X64:       lock
 ; X64:       cmpxchgq
 ; X32:       lock

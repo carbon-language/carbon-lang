@@ -243,7 +243,7 @@ define void @atomic_fetch_umin32(i32 %x) nounwind {
 }
 
 define void @atomic_fetch_cmpxchg32() nounwind {
-  %t1 = cmpxchg i32* @sc32, i32 0, i32 1 acquire
+  %t1 = cmpxchg i32* @sc32, i32 0, i32 1 acquire acquire
 ; X64:       lock
 ; X64:       cmpxchgl
 ; X32:       lock

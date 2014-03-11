@@ -2878,6 +2878,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                                  Node->getOperand(1), Zero, Zero,
                                  cast<AtomicSDNode>(Node)->getMemOperand(),
                                  cast<AtomicSDNode>(Node)->getOrdering(),
+                                 cast<AtomicSDNode>(Node)->getOrdering(),
                                  cast<AtomicSDNode>(Node)->getSynchScope());
     Results.push_back(Swap.getValue(0));
     Results.push_back(Swap.getValue(1));

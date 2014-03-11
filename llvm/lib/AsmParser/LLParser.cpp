@@ -1518,6 +1518,15 @@ bool LLParser::ParseScopeAndOrdering(bool isAtomic, SynchronizationScope &Scope,
   Scope = CrossThread;
   if (EatIfPresent(lltok::kw_singlethread))
     Scope = SingleThread;
+
+  return ParseOrdering(Ordering);
+}
+
+/// ParseOrdering
+///   ::= AtomicOrdering
+///
+/// This sets Ordering to the parsed value.
+bool LLParser::ParseOrdering(AtomicOrdering &Ordering) {
   switch (Lex.getKind()) {
   default: return TokError("Expected ordering on atomic instruction");
   case lltok::kw_unordered: Ordering = Unordered; break;
@@ -4193,11 +4202,12 @@ int LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS) {
 
 /// ParseCmpXchg
 ///   ::= 'cmpxchg' 'volatile'? TypeAndValue ',' TypeAndValue ',' TypeAndValue
-///       'singlethread'? AtomicOrdering
+///       'singlethread'? AtomicOrdering AtomicOrdering
 int LLParser::ParseCmpXchg(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Ptr, *Cmp, *New; LocTy PtrLoc, CmpLoc, NewLoc;
   bool AteExtraComma = false;
-  AtomicOrdering Ordering = NotAtomic;
+  AtomicOrdering SuccessOrdering = NotAtomic;
+  AtomicOrdering FailureOrdering = NotAtomic;
   SynchronizationScope Scope = CrossThread;
   bool isVolatile = false;
 
@@ -4209,11 +4219,16 @@ int LLParser::ParseCmpXchg(Instruction *&Inst, PerFunctionState &PFS) {
       ParseTypeAndValue(Cmp, CmpLoc, PFS) ||
       ParseToken(lltok::comma, "expected ',' after cmpxchg cmp operand") ||
       ParseTypeAndValue(New, NewLoc, PFS) ||
-      ParseScopeAndOrdering(true /*Always atomic*/, Scope, Ordering))
+      ParseScopeAndOrdering(true /*Always atomic*/, Scope, SuccessOrdering) ||
+      ParseOrdering(FailureOrdering))
     return true;
 
-  if (Ordering == Unordered)
+  if (SuccessOrdering == Unordered || FailureOrdering == Unordered)
     return TokError("cmpxchg cannot be unordered");
+  if (SuccessOrdering < FailureOrdering)
+    return TokError("cmpxchg must be at least as ordered on success as failure");
+  if (FailureOrdering == Release || FailureOrdering == AcquireRelease)
+    return TokError("cmpxchg failure ordering cannot include release semantics");
   if (!Ptr->getType()->isPointerTy())
     return Error(PtrLoc, "cmpxchg operand must be a pointer");
   if (cast<PointerType>(Ptr->getType())->getElementType() != Cmp->getType())
@@ -4227,8 +4242,8 @@ int LLParser::ParseCmpXchg(Instruction *&Inst, PerFunctionState &PFS) {
     return Error(NewLoc, "cmpxchg operand must be power-of-two byte-sized"
                          " integer");
 
-  AtomicCmpXchgInst *CXI =
-    new AtomicCmpXchgInst(Ptr, Cmp, New, Ordering, Scope);
+  AtomicCmpXchgInst *CXI = new AtomicCmpXchgInst(Ptr, Cmp, New, SuccessOrdering,
+                                                 FailureOrdering, Scope);
   CXI->setVolatile(isVolatile);
   Inst = CXI;
   return AteExtraComma ? InstExtraComma : InstNormal;

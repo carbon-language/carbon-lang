@@ -446,21 +446,6 @@ static ConstantInt *createOrdering(IRBuilder<> *IRB, AtomicOrdering ord) {
   return IRB->getInt32(v);
 }
 
-static ConstantInt *createFailOrdering(IRBuilder<> *IRB, AtomicOrdering ord) {
-  uint32_t v = 0;
-  switch (ord) {
-    case NotAtomic:              assert(false);
-    case Unordered:              // Fall-through.
-    case Monotonic:              v = 0; break;
-    // case Consume:                v = 1; break;  // Not specified yet.
-    case Acquire:                v = 2; break;
-    case Release:                v = 0; break;
-    case AcquireRelease:         v = 2; break;
-    case SequentiallyConsistent: v = 5; break;
-  }
-  return IRB->getInt32(v);
-}
-
 // If a memset intrinsic gets inlined by the code gen, we will miss races on it.
 // So, we either need to ensure the intrinsic is not inlined, or instrument it.
 // We do not instrument memset/memmove/memcpy intrinsics (too complicated),
@@ -556,8 +541,8 @@ bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
     Value *Args[] = {IRB.CreatePointerCast(Addr, PtrTy),
                      IRB.CreateIntCast(CASI->getCompareOperand(), Ty, false),
                      IRB.CreateIntCast(CASI->getNewValOperand(), Ty, false),
-                     createOrdering(&IRB, CASI->getOrdering()),
-                     createFailOrdering(&IRB, CASI->getOrdering())};
+                     createOrdering(&IRB, CASI->getSuccessOrdering()),
+                     createOrdering(&IRB, CASI->getFailureOrdering())};
     CallInst *C = CallInst::Create(TsanAtomicCAS[Idx], ArrayRef<Value*>(Args));
     ReplaceInstWithInst(I, C);
   } else if (FenceInst *FI = dyn_cast<FenceInst>(I)) {

@@ -1567,12 +1567,16 @@ void CppWriter::printInstruction(const Instruction *I,
   }
   case Instruction::AtomicCmpXchg: {
     const AtomicCmpXchgInst *cxi = cast<AtomicCmpXchgInst>(I);
-    StringRef Ordering = ConvertAtomicOrdering(cxi->getOrdering());
+    StringRef SuccessOrdering =
+        ConvertAtomicOrdering(cxi->getSuccessOrdering());
+    StringRef FailureOrdering =
+        ConvertAtomicOrdering(cxi->getFailureOrdering());
     StringRef CrossThread = ConvertAtomicSynchScope(cxi->getSynchScope());
     Out << "AtomicCmpXchgInst* " << iName
         << " = new AtomicCmpXchgInst("
         << opNames[0] << ", " << opNames[1] << ", " << opNames[2] << ", "
-        << Ordering << ", " << CrossThread << ", " << bbname
+        << SuccessOrdering << ", " << FailureOrdering << ", "
+        << CrossThread << ", " << bbname
         << ");";
     nl(Out) << iName << "->setName(\"";
     printEscapedString(cxi->getName());

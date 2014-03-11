@@ -26,7 +26,7 @@ entry:
 
 define void @example_cmpxchg(i64* %ptr, i64 %compare_to, i64 %new_value) nounwind uwtable sanitize_address {
 entry:
-  %0 = cmpxchg i64* %ptr, i64 %compare_to, i64 %new_value seq_cst
+  %0 = cmpxchg i64* %ptr, i64 %compare_to, i64 %new_value seq_cst seq_cst
   ret void
 }
 

@@ -348,7 +348,7 @@ entry:
 
 define void @atomic8_cas_monotonic(i8* %a) nounwind uwtable {
 entry:
-  cmpxchg i8* %a, i8 0, i8 1 monotonic
+  cmpxchg i8* %a, i8 0, i8 1 monotonic monotonic
   ret void
 }
 ; CHECK: atomic8_cas_monotonic
@@ -356,7 +356,7 @@ entry:
 
 define void @atomic8_cas_acquire(i8* %a) nounwind uwtable {
 entry:
-  cmpxchg i8* %a, i8 0, i8 1 acquire
+  cmpxchg i8* %a, i8 0, i8 1 acquire acquire
   ret void
 }
 ; CHECK: atomic8_cas_acquire
@@ -364,7 +364,7 @@ entry:
 
 define void @atomic8_cas_release(i8* %a) nounwind uwtable {
 entry:
-  cmpxchg i8* %a, i8 0, i8 1 release
+  cmpxchg i8* %a, i8 0, i8 1 release monotonic
   ret void
 }
 ; CHECK: atomic8_cas_release
@@ -372,7 +372,7 @@ entry:
 
 define void @atomic8_cas_acq_rel(i8* %a) nounwind uwtable {
 entry:
-  cmpxchg i8* %a, i8 0, i8 1 acq_rel
+  cmpxchg i8* %a, i8 0, i8 1 acq_rel acquire
   ret void
 }
 ; CHECK: atomic8_cas_acq_rel
@@ -380,7 +380,7 @@ entry:
 
 define void @atomic8_cas_seq_cst(i8* %a) nounwind uwtable {
 entry:
-  cmpxchg i8* %a, i8 0, i8 1 seq_cst
+  cmpxchg i8* %a, i8 0, i8 1 seq_cst seq_cst
   ret void
 }
 ; CHECK: atomic8_cas_seq_cst
@@ -732,7 +732,7 @@ entry:
 
 define void @atomic16_cas_monotonic(i16* %a) nounwind uwtable {
 entry:
-  cmpxchg i16* %a, i16 0, i16 1 monotonic
+  cmpxchg i16* %a, i16 0, i16 1 monotonic monotonic
   ret void
 }
 ; CHECK: atomic16_cas_monotonic
@@ -740,7 +740,7 @@ entry:
 
 define void @atomic16_cas_acquire(i16* %a) nounwind uwtable {
 entry:
-  cmpxchg i16* %a, i16 0, i16 1 acquire
+  cmpxchg i16* %a, i16 0, i16 1 acquire acquire
   ret void
 }
 ; CHECK: atomic16_cas_acquire
@@ -748,7 +748,7 @@ entry:
 
 define void @atomic16_cas_release(i16* %a) nounwind uwtable {
 entry:
-  cmpxchg i16* %a, i16 0, i16 1 release
+  cmpxchg i16* %a, i16 0, i16 1 release monotonic
   ret void
 }
 ; CHECK: atomic16_cas_release
@@ -756,7 +756,7 @@ entry:
 
 define void @atomic16_cas_acq_rel(i16* %a) nounwind uwtable {
 entry:
-  cmpxchg i16* %a, i16 0, i16 1 acq_rel
+  cmpxchg i16* %a, i16 0, i16 1 acq_rel acquire
   ret void
 }
 ; CHECK: atomic16_cas_acq_rel
@@ -764,7 +764,7 @@ entry:
 
 define void @atomic16_cas_seq_cst(i16* %a) nounwind uwtable {
 entry:
-  cmpxchg i16* %a, i16 0, i16 1 seq_cst
+  cmpxchg i16* %a, i16 0, i16 1 seq_cst seq_cst
   ret void
 }
 ; CHECK: atomic16_cas_seq_cst
@@ -1116,7 +1116,7 @@ entry:
 
 define void @atomic32_cas_monotonic(i32* %a) nounwind uwtable {
 entry:
-  cmpxchg i32* %a, i32 0, i32 1 monotonic
+  cmpxchg i32* %a, i32 0, i32 1 monotonic monotonic
   ret void
 }
 ; CHECK: atomic32_cas_monotonic
@@ -1124,7 +1124,7 @@ entry:
 
 define void @atomic32_cas_acquire(i32* %a) nounwind uwtable {
 entry:
-  cmpxchg i32* %a, i32 0, i32 1 acquire
+  cmpxchg i32* %a, i32 0, i32 1 acquire acquire
   ret void
 }
 ; CHECK: atomic32_cas_acquire
@@ -1132,7 +1132,7 @@ entry:
 
 define void @atomic32_cas_release(i32* %a) nounwind uwtable {
 entry:
-  cmpxchg i32* %a, i32 0, i32 1 release
+  cmpxchg i32* %a, i32 0, i32 1 release monotonic
   ret void
 }
 ; CHECK: atomic32_cas_release
@@ -1140,7 +1140,7 @@ entry:
 
 define void @atomic32_cas_acq_rel(i32* %a) nounwind uwtable {
 entry:
-  cmpxchg i32* %a, i32 0, i32 1 acq_rel
+  cmpxchg i32* %a, i32 0, i32 1 acq_rel acquire
   ret void
 }
 ; CHECK: atomic32_cas_acq_rel
@@ -1148,7 +1148,7 @@ entry:
 
 define void @atomic32_cas_seq_cst(i32* %a) nounwind uwtable {
 entry:
-  cmpxchg i32* %a, i32 0, i32 1 seq_cst
+  cmpxchg i32* %a, i32 0, i32 1 seq_cst seq_cst
   ret void
 }
 ; CHECK: atomic32_cas_seq_cst
@@ -1500,7 +1500,7 @@ entry:
 
 define void @atomic64_cas_monotonic(i64* %a) nounwind uwtable {
 entry:
-  cmpxchg i64* %a, i64 0, i64 1 monotonic
+  cmpxchg i64* %a, i64 0, i64 1 monotonic monotonic
   ret void
 }
 ; CHECK: atomic64_cas_monotonic
@@ -1508,7 +1508,7 @@ entry:
 
 define void @atomic64_cas_acquire(i64* %a) nounwind uwtable {
 entry:
-  cmpxchg i64* %a, i64 0, i64 1 acquire
+  cmpxchg i64* %a, i64 0, i64 1 acquire acquire
   ret void
 }
 ; CHECK: atomic64_cas_acquire
@@ -1516,7 +1516,7 @@ entry:
 
 define void @atomic64_cas_release(i64* %a) nounwind uwtable {
 entry:
-  cmpxchg i64* %a, i64 0, i64 1 release
+  cmpxchg i64* %a, i64 0, i64 1 release monotonic
   ret void
 }
 ; CHECK: atomic64_cas_release
@@ -1524,7 +1524,7 @@ entry:
 
 define void @atomic64_cas_acq_rel(i64* %a) nounwind uwtable {
 entry:
-  cmpxchg i64* %a, i64 0, i64 1 acq_rel
+  cmpxchg i64* %a, i64 0, i64 1 acq_rel acquire
   ret void
 }
 ; CHECK: atomic64_cas_acq_rel
@@ -1532,7 +1532,7 @@ entry:
 
 define void @atomic64_cas_seq_cst(i64* %a) nounwind uwtable {
 entry:
-  cmpxchg i64* %a, i64 0, i64 1 seq_cst
+  cmpxchg i64* %a, i64 0, i64 1 seq_cst seq_cst
   ret void
 }
 ; CHECK: atomic64_cas_seq_cst
@@ -1884,7 +1884,7 @@ entry:
 
 define void @atomic128_cas_monotonic(i128* %a) nounwind uwtable {
 entry:
-  cmpxchg i128* %a, i128 0, i128 1 monotonic
+  cmpxchg i128* %a, i128 0, i128 1 monotonic monotonic
   ret void
 }
 ; CHECK: atomic128_cas_monotonic
@@ -1892,7 +1892,7 @@ entry:
 
 define void @atomic128_cas_acquire(i128* %a) nounwind uwtable {
 entry:
-  cmpxchg i128* %a, i128 0, i128 1 acquire
+  cmpxchg i128* %a, i128 0, i128 1 acquire acquire
   ret void
 }
 ; CHECK: atomic128_cas_acquire
@@ -1900,7 +1900,7 @@ entry:
 
 define void @atomic128_cas_release(i128* %a) nounwind uwtable {
 entry:
-  cmpxchg i128* %a, i128 0, i128 1 release
+  cmpxchg i128* %a, i128 0, i128 1 release monotonic
   ret void
 }
 ; CHECK: atomic128_cas_release
@@ -1908,7 +1908,7 @@ entry:
 
 define void @atomic128_cas_acq_rel(i128* %a) nounwind uwtable {
 entry:
-  cmpxchg i128* %a, i128 0, i128 1 acq_rel
+  cmpxchg i128* %a, i128 0, i128 1 acq_rel acquire
   ret void
 }
 ; CHECK: atomic128_cas_acq_rel
@@ -1916,7 +1916,7 @@ entry:
 
 define void @atomic128_cas_seq_cst(i128* %a) nounwind uwtable {
 entry:
-  cmpxchg i128* %a, i128 0, i128 1 seq_cst
+  cmpxchg i128* %a, i128 0, i128 1 seq_cst seq_cst
   ret void
 }
 ; CHECK: atomic128_cas_seq_cst

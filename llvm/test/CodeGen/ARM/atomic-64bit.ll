@@ -171,7 +171,7 @@ define i64 @test7(i64* %ptr, i64 %val1, i64 %val2) {
 ; CHECK-THUMB: bne
 ; CHECK-THUMB: dmb {{ish$}}
 
-  %r = cmpxchg i64* %ptr, i64 %val1, i64 %val2 seq_cst
+  %r = cmpxchg i64* %ptr, i64 %val1, i64 %val2 seq_cst seq_cst
   ret i64 %r
 }
 

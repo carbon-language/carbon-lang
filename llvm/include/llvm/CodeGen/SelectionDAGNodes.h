@@ -1093,15 +1093,27 @@ public:
 class AtomicSDNode : public MemSDNode {
   SDUse Ops[4];
 
-  void InitAtomic(AtomicOrdering Ordering, SynchronizationScope SynchScope) {
+  /// For cmpxchg instructions, the ordering requirements when a store does not
+  /// occur.
+  AtomicOrdering FailureOrdering;
+
+  void InitAtomic(AtomicOrdering SuccessOrdering,
+                  AtomicOrdering FailureOrdering,
+                  SynchronizationScope SynchScope) {
     // This must match encodeMemSDNodeFlags() in SelectionDAG.cpp.
-    assert((Ordering & 15) == Ordering &&
+    assert((SuccessOrdering & 15) == SuccessOrdering &&
+           "Ordering may not require more than 4 bits!");
+    assert((FailureOrdering & 15) == FailureOrdering &&
            "Ordering may not require more than 4 bits!");
     assert((SynchScope & 1) == SynchScope &&
            "SynchScope may not require more than 1 bit!");
-    SubclassData |= Ordering << 8;
+    SubclassData |= SuccessOrdering << 8;
     SubclassData |= SynchScope << 12;
-    assert(getOrdering() == Ordering && "Ordering encoding error!");
+    this->FailureOrdering = FailureOrdering;
+    assert(getSuccessOrdering() == SuccessOrdering &&
+           "Ordering encoding error!");
+    assert(getFailureOrdering() == FailureOrdering &&
+           "Ordering encoding error!");
     assert(getSynchScope() == SynchScope && "Synch-scope encoding error!");
   }
 
@@ -1115,12 +1127,11 @@ public:
   // SrcVal: address to update as a Value (used for MemOperand)
   // Align:  alignment of memory
   AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL,
-               EVT MemVT,
-               SDValue Chain, SDValue Ptr,
-               SDValue Cmp, SDValue Swp, MachineMemOperand *MMO,
-               AtomicOrdering Ordering, SynchronizationScope SynchScope)
-    : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
-    InitAtomic(Ordering, SynchScope);
+               EVT MemVT, SDValue Chain, SDValue Ptr, SDValue Cmp, SDValue Swp,
+               MachineMemOperand *MMO, AtomicOrdering Ordering,
+               SynchronizationScope SynchScope)
+      : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
+    InitAtomic(Ordering, Ordering, SynchScope);
     InitOperands(Ops, Chain, Ptr, Cmp, Swp);
   }
   AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL,
@@ -1129,7 +1140,7 @@ public:
                SDValue Val, MachineMemOperand *MMO,
                AtomicOrdering Ordering, SynchronizationScope SynchScope)
     : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
-    InitAtomic(Ordering, SynchScope);
+    InitAtomic(Ordering, Ordering, SynchScope);
     InitOperands(Ops, Chain, Ptr, Val);
   }
   AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL,
@@ -1138,15 +1149,16 @@ public:
                MachineMemOperand *MMO,
                AtomicOrdering Ordering, SynchronizationScope SynchScope)
     : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
-    InitAtomic(Ordering, SynchScope);
+    InitAtomic(Ordering, Ordering, SynchScope);
     InitOperands(Ops, Chain, Ptr);
   }
   AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL, EVT MemVT,
                SDValue* AllOps, SDUse *DynOps, unsigned NumOps,
                MachineMemOperand *MMO,
-               AtomicOrdering Ordering, SynchronizationScope SynchScope)
+               AtomicOrdering SuccessOrdering, AtomicOrdering FailureOrdering,
+               SynchronizationScope SynchScope)
     : MemSDNode(Opc, Order, dl, VTL, MemVT, MMO) {
-    InitAtomic(Ordering, SynchScope);
+    InitAtomic(SuccessOrdering, FailureOrdering, SynchScope);
     assert((DynOps || NumOps <= array_lengthof(Ops)) &&
            "Too many ops for internal storage!");
     InitOperands(DynOps ? DynOps : Ops, AllOps, NumOps);
@@ -1154,6 +1166,16 @@ public:
 
   const SDValue &getBasePtr() const { return getOperand(1); }
   const SDValue &getVal() const { return getOperand(2); }
+
+  AtomicOrdering getSuccessOrdering() const {
+    return getOrdering();
+  }
+
+  // Not quite enough room in SubclassData for everything, so failure gets its
+  // own field.
+  AtomicOrdering getFailureOrdering() const {
+    return FailureOrdering;
+  }
 
   bool isCompareAndSwap() const {
     unsigned Op = getOpcode();

@@ -217,7 +217,7 @@ define void @atomic_fetch_umin8(i8 %x) nounwind {
 }
 
 define void @atomic_fetch_cmpxchg8() nounwind {
-  %t1 = cmpxchg i8* @sc8, i8 0, i8 1 acquire
+  %t1 = cmpxchg i8* @sc8, i8 0, i8 1 acquire acquire
 ; X64:       lock
 ; X64:       cmpxchgb
 ; X32:       lock

@@ -18,7 +18,7 @@ entry:
 loop:
 ; CHECK: lock
 ; CHECK-NEXT: cmpxchg8b
-  %r = cmpxchg i64* %ptr, i64 0, i64 1 monotonic
+  %r = cmpxchg i64* %ptr, i64 0, i64 1 monotonic monotonic
   %stored1  = icmp eq i64 %r, 0
   br i1 %stored1, label %loop, label %continue
 continue:

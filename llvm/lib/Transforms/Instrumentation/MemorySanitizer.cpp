@@ -1088,7 +1088,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   void visitAtomicCmpXchgInst(AtomicCmpXchgInst &I) {
     handleCASOrRMW(I);
-    I.setOrdering(addReleaseOrdering(I.getOrdering()));
+    I.setSuccessOrdering(addReleaseOrdering(I.getSuccessOrdering()));
   }
 
   // Vector manipulation.

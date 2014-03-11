@@ -1226,6 +1226,37 @@ void AssemblyWriter::writeAtomic(AtomicOrdering Ordering,
   }
 }
 
+void AssemblyWriter::writeAtomicCmpXchg(AtomicOrdering SuccessOrdering,
+                                        AtomicOrdering FailureOrdering,
+                                        SynchronizationScope SynchScope) {
+  assert(SuccessOrdering != NotAtomic && FailureOrdering != NotAtomic);
+
+  switch (SynchScope) {
+  case SingleThread: Out << " singlethread"; break;
+  case CrossThread: break;
+  }
+
+  switch (SuccessOrdering) {
+  default: Out << " <bad ordering " << int(SuccessOrdering) << ">"; break;
+  case Unordered: Out << " unordered"; break;
+  case Monotonic: Out << " monotonic"; break;
+  case Acquire: Out << " acquire"; break;
+  case Release: Out << " release"; break;
+  case AcquireRelease: Out << " acq_rel"; break;
+  case SequentiallyConsistent: Out << " seq_cst"; break;
+  }
+
+  switch (FailureOrdering) {
+  default: Out << " <bad ordering " << int(FailureOrdering) << ">"; break;
+  case Unordered: Out << " unordered"; break;
+  case Monotonic: Out << " monotonic"; break;
+  case Acquire: Out << " acquire"; break;
+  case Release: Out << " release"; break;
+  case AcquireRelease: Out << " acq_rel"; break;
+  case SequentiallyConsistent: Out << " seq_cst"; break;
+  }
+}
+
 void AssemblyWriter::writeParamOperand(const Value *Operand,
                                        AttributeSet Attrs, unsigned Idx) {
   if (Operand == 0) {
@@ -2018,7 +2049,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     if (SI->getAlignment())
       Out << ", align " << SI->getAlignment();
   } else if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(&I)) {
-    writeAtomic(CXI->getOrdering(), CXI->getSynchScope());
+    writeAtomicCmpXchg(CXI->getSuccessOrdering(), CXI->getFailureOrdering(),
+                       CXI->getSynchScope());
   } else if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(&I)) {
     writeAtomic(RMWI->getOrdering(), RMWI->getSynchScope());
   } else if (const FenceInst *FI = dyn_cast<FenceInst>(&I)) {

@@ -987,7 +987,7 @@ define i64 @test_atomic_load_umax_i64(i64 %offset) nounwind {
 
 define i8 @test_atomic_cmpxchg_i8(i8 %wanted, i8 %new) nounwind {
 ; CHECK-LABEL: test_atomic_cmpxchg_i8:
-   %old = cmpxchg i8* @var8, i8 %wanted, i8 %new acquire
+   %old = cmpxchg i8* @var8, i8 %wanted, i8 %new acquire acquire
 ; CHECK-NOT: dmb
 ; CHECK-NOT: mcr
 ; CHECK: movw r[[ADDR:[0-9]+]], :lower16:var8
@@ -1013,7 +1013,7 @@ define i8 @test_atomic_cmpxchg_i8(i8 %wanted, i8 %new) nounwind {
 
 define i16 @test_atomic_cmpxchg_i16(i16 %wanted, i16 %new) nounwind {
 ; CHECK-LABEL: test_atomic_cmpxchg_i16:
-   %old = cmpxchg i16* @var16, i16 %wanted, i16 %new seq_cst
+   %old = cmpxchg i16* @var16, i16 %wanted, i16 %new seq_cst seq_cst
 ; CHECK-NOT: dmb
 ; CHECK-NOT: mcr
 ; CHECK: movw r[[ADDR:[0-9]+]], :lower16:var16
@@ -1039,7 +1039,7 @@ define i16 @test_atomic_cmpxchg_i16(i16 %wanted, i16 %new) nounwind {
 
 define i32 @test_atomic_cmpxchg_i32(i32 %wanted, i32 %new) nounwind {
 ; CHECK-LABEL: test_atomic_cmpxchg_i32:
-   %old = cmpxchg i32* @var32, i32 %wanted, i32 %new release
+   %old = cmpxchg i32* @var32, i32 %wanted, i32 %new release monotonic
 ; CHECK-NOT: dmb
 ; CHECK-NOT: mcr
 ; CHECK: movw r[[ADDR:[0-9]+]], :lower16:var32
@@ -1065,7 +1065,7 @@ define i32 @test_atomic_cmpxchg_i32(i32 %wanted, i32 %new) nounwind {
 
 define i64 @test_atomic_cmpxchg_i64(i64 %wanted, i64 %new) nounwind {
 ; CHECK-LABEL: test_atomic_cmpxchg_i64:
-   %old = cmpxchg i64* @var64, i64 %wanted, i64 %new monotonic
+   %old = cmpxchg i64* @var64, i64 %wanted, i64 %new monotonic monotonic
 ; CHECK-NOT: dmb
 ; CHECK-NOT: mcr
 ; CHECK: movw r[[ADDR:[0-9]+]], :lower16:var64

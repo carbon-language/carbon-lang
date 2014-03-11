@@ -536,64 +536,64 @@ define void @test_compare_and_swap() nounwind {
 entry:
   %0 = load i8* @uc, align 1
   %1 = load i8* @sc, align 1
-  %2 = cmpxchg i8* @sc, i8 %0, i8 %1 monotonic
+  %2 = cmpxchg i8* @sc, i8 %0, i8 %1 monotonic monotonic
   store i8 %2, i8* @sc, align 1
   %3 = load i8* @uc, align 1
   %4 = load i8* @sc, align 1
-  %5 = cmpxchg i8* @uc, i8 %3, i8 %4 monotonic
+  %5 = cmpxchg i8* @uc, i8 %3, i8 %4 monotonic monotonic
   store i8 %5, i8* @uc, align 1
   %6 = load i8* @uc, align 1
   %7 = zext i8 %6 to i16
   %8 = load i8* @sc, align 1
   %9 = sext i8 %8 to i16
   %10 = bitcast i8* bitcast (i16* @ss to i8*) to i16*
-  %11 = cmpxchg i16* %10, i16 %7, i16 %9 monotonic
+  %11 = cmpxchg i16* %10, i16 %7, i16 %9 monotonic monotonic
   store i16 %11, i16* @ss, align 2
   %12 = load i8* @uc, align 1
   %13 = zext i8 %12 to i16
   %14 = load i8* @sc, align 1
   %15 = sext i8 %14 to i16
   %16 = bitcast i8* bitcast (i16* @us to i8*) to i16*
-  %17 = cmpxchg i16* %16, i16 %13, i16 %15 monotonic
+  %17 = cmpxchg i16* %16, i16 %13, i16 %15 monotonic monotonic
   store i16 %17, i16* @us, align 2
   %18 = load i8* @uc, align 1
   %19 = zext i8 %18 to i32
   %20 = load i8* @sc, align 1
   %21 = sext i8 %20 to i32
   %22 = bitcast i8* bitcast (i32* @si to i8*) to i32*
-  %23 = cmpxchg i32* %22, i32 %19, i32 %21 monotonic
+  %23 = cmpxchg i32* %22, i32 %19, i32 %21 monotonic monotonic
   store i32 %23, i32* @si, align 4
   %24 = load i8* @uc, align 1
   %25 = zext i8 %24 to i32
   %26 = load i8* @sc, align 1
   %27 = sext i8 %26 to i32
   %28 = bitcast i8* bitcast (i32* @ui to i8*) to i32*
-  %29 = cmpxchg i32* %28, i32 %25, i32 %27 monotonic
+  %29 = cmpxchg i32* %28, i32 %25, i32 %27 monotonic monotonic
   store i32 %29, i32* @ui, align 4
   %30 = load i8* @uc, align 1
   %31 = zext i8 %30 to i64
   %32 = load i8* @sc, align 1
   %33 = sext i8 %32 to i64
   %34 = bitcast i8* bitcast (i64* @sl to i8*) to i64*
-  %35 = cmpxchg i64* %34, i64 %31, i64 %33 monotonic
+  %35 = cmpxchg i64* %34, i64 %31, i64 %33 monotonic monotonic
   store i64 %35, i64* @sl, align 8
   %36 = load i8* @uc, align 1
   %37 = zext i8 %36 to i64
   %38 = load i8* @sc, align 1
   %39 = sext i8 %38 to i64
   %40 = bitcast i8* bitcast (i64* @ul to i8*) to i64*
-  %41 = cmpxchg i64* %40, i64 %37, i64 %39 monotonic
+  %41 = cmpxchg i64* %40, i64 %37, i64 %39 monotonic monotonic
   store i64 %41, i64* @ul, align 8
   %42 = load i8* @uc, align 1
   %43 = load i8* @sc, align 1
-  %44 = cmpxchg i8* @sc, i8 %42, i8 %43 monotonic
+  %44 = cmpxchg i8* @sc, i8 %42, i8 %43 monotonic monotonic
   %45 = icmp eq i8 %44, %42
   %46 = zext i1 %45 to i8
   %47 = zext i8 %46 to i32
   store i32 %47, i32* @ui, align 4
   %48 = load i8* @uc, align 1
   %49 = load i8* @sc, align 1
-  %50 = cmpxchg i8* @uc, i8 %48, i8 %49 monotonic
+  %50 = cmpxchg i8* @uc, i8 %48, i8 %49 monotonic monotonic
   %51 = icmp eq i8 %50, %48
   %52 = zext i1 %51 to i8
   %53 = zext i8 %52 to i32
@@ -603,7 +603,7 @@ entry:
   %56 = load i8* @sc, align 1
   %57 = sext i8 %56 to i16
   %58 = bitcast i8* bitcast (i16* @ss to i8*) to i16*
-  %59 = cmpxchg i16* %58, i16 %55, i16 %57 monotonic
+  %59 = cmpxchg i16* %58, i16 %55, i16 %57 monotonic monotonic
   %60 = icmp eq i16 %59, %55
   %61 = zext i1 %60 to i8
   %62 = zext i8 %61 to i32
@@ -613,7 +613,7 @@ entry:
   %65 = load i8* @sc, align 1
   %66 = sext i8 %65 to i16
   %67 = bitcast i8* bitcast (i16* @us to i8*) to i16*
-  %68 = cmpxchg i16* %67, i16 %64, i16 %66 monotonic
+  %68 = cmpxchg i16* %67, i16 %64, i16 %66 monotonic monotonic
   %69 = icmp eq i16 %68, %64
   %70 = zext i1 %69 to i8
   %71 = zext i8 %70 to i32
@@ -623,7 +623,7 @@ entry:
   %74 = load i8* @sc, align 1
   %75 = sext i8 %74 to i32
   %76 = bitcast i8* bitcast (i32* @si to i8*) to i32*
-  %77 = cmpxchg i32* %76, i32 %73, i32 %75 monotonic
+  %77 = cmpxchg i32* %76, i32 %73, i32 %75 monotonic monotonic
   %78 = icmp eq i32 %77, %73
   %79 = zext i1 %78 to i8
   %80 = zext i8 %79 to i32
@@ -633,7 +633,7 @@ entry:
   %83 = load i8* @sc, align 1
   %84 = sext i8 %83 to i32
   %85 = bitcast i8* bitcast (i32* @ui to i8*) to i32*
-  %86 = cmpxchg i32* %85, i32 %82, i32 %84 monotonic
+  %86 = cmpxchg i32* %85, i32 %82, i32 %84 monotonic monotonic
   %87 = icmp eq i32 %86, %82
   %88 = zext i1 %87 to i8
   %89 = zext i8 %88 to i32
@@ -643,7 +643,7 @@ entry:
   %92 = load i8* @sc, align 1
   %93 = sext i8 %92 to i64
   %94 = bitcast i8* bitcast (i64* @sl to i8*) to i64*
-  %95 = cmpxchg i64* %94, i64 %91, i64 %93 monotonic
+  %95 = cmpxchg i64* %94, i64 %91, i64 %93 monotonic monotonic
   %96 = icmp eq i64 %95, %91
   %97 = zext i1 %96 to i8
   %98 = zext i8 %97 to i32
@@ -653,7 +653,7 @@ entry:
   %101 = load i8* @sc, align 1
   %102 = sext i8 %101 to i64
   %103 = bitcast i8* bitcast (i64* @ul to i8*) to i64*
-  %104 = cmpxchg i64* %103, i64 %100, i64 %102 monotonic
+  %104 = cmpxchg i64* %103, i64 %100, i64 %102 monotonic monotonic
   %105 = icmp eq i64 %104, %100
   %106 = zext i1 %105 to i8
   %107 = zext i8 %106 to i32

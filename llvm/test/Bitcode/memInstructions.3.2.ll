@@ -223,69 +223,69 @@ define void @cmpxchg(i32* %ptr,i32 %cmp,i32 %new){
 entry:
   ;cmpxchg [volatile] <ty>* <pointer>, <ty> <cmp>, <ty> <new> [singlethread] <ordering>
 
-; CHECK: %res1 = cmpxchg i32* %ptr, i32 %cmp, i32 %new monotonic
-  %res1 = cmpxchg i32* %ptr, i32 %cmp, i32 %new monotonic
+; CHECK: %res1 = cmpxchg i32* %ptr, i32 %cmp, i32 %new monotonic monotonic
+  %res1 = cmpxchg i32* %ptr, i32 %cmp, i32 %new monotonic monotonic
   
-; CHECK-NEXT: %res2 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new monotonic
-  %res2 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new monotonic
+; CHECK-NEXT: %res2 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new monotonic monotonic
+  %res2 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new monotonic monotonic
   
-; CHECK-NEXT: %res3 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread monotonic
-  %res3 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread monotonic
+; CHECK-NEXT: %res3 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread monotonic monotonic
+  %res3 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread monotonic monotonic
   
-; CHECK-NEXT: %res4 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread monotonic
-  %res4 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread monotonic
-  
-  
-; CHECK-NEXT: %res5 = cmpxchg i32* %ptr, i32 %cmp, i32 %new acquire
-  %res5 = cmpxchg i32* %ptr, i32 %cmp, i32 %new acquire
-  
-; CHECK-NEXT: %res6 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acquire
-  %res6 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acquire
-  
-; CHECK-NEXT: %res7 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acquire
-  %res7 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acquire
-  
-; CHECK-NEXT: %res8 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acquire
-  %res8 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acquire
+; CHECK-NEXT: %res4 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread monotonic monotonic
+  %res4 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread monotonic monotonic
   
   
-; CHECK-NEXT: %res9 = cmpxchg i32* %ptr, i32 %cmp, i32 %new release
-  %res9 = cmpxchg i32* %ptr, i32 %cmp, i32 %new release
+; CHECK-NEXT: %res5 = cmpxchg i32* %ptr, i32 %cmp, i32 %new acquire acquire
+  %res5 = cmpxchg i32* %ptr, i32 %cmp, i32 %new acquire acquire
   
-; CHECK-NEXT: %res10 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new release
-  %res10 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new release
+; CHECK-NEXT: %res6 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acquire acquire
+  %res6 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acquire acquire
   
-; CHECK-NEXT: %res11 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread release
-  %res11 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread release
+; CHECK-NEXT: %res7 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acquire acquire
+  %res7 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acquire acquire
   
-; CHECK-NEXT: %res12 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread release
-  %res12 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread release
-  
-  
-; CHECK-NEXT: %res13 = cmpxchg i32* %ptr, i32 %cmp, i32 %new acq_rel
-  %res13 = cmpxchg i32* %ptr, i32 %cmp, i32 %new acq_rel
-  
-; CHECK-NEXT: %res14 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acq_rel
-  %res14 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acq_rel
-  
-; CHECK-NEXT: %res15 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel
-  %res15 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel
-  
-; CHECK-NEXT: %res16 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel
-  %res16 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel
+; CHECK-NEXT: %res8 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acquire acquire
+  %res8 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acquire acquire
   
   
-; CHECK-NEXT: %res17 = cmpxchg i32* %ptr, i32 %cmp, i32 %new seq_cst
-  %res17 = cmpxchg i32* %ptr, i32 %cmp, i32 %new seq_cst
+; CHECK-NEXT: %res9 = cmpxchg i32* %ptr, i32 %cmp, i32 %new release monotonic
+  %res9 = cmpxchg i32* %ptr, i32 %cmp, i32 %new release monotonic
   
-; CHECK-NEXT: %res18 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new seq_cst
-  %res18 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new seq_cst
+; CHECK-NEXT: %res10 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new release monotonic
+  %res10 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new release monotonic
   
-; CHECK-NEXT: %res19 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst
-  %res19 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst
+; CHECK-NEXT: %res11 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread release monotonic
+  %res11 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread release monotonic
   
-; CHECK-NEXT: %res20 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst
-  %res20 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst
+; CHECK-NEXT: %res12 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread release monotonic
+  %res12 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread release monotonic
+  
+  
+; CHECK-NEXT: %res13 = cmpxchg i32* %ptr, i32 %cmp, i32 %new acq_rel acquire
+  %res13 = cmpxchg i32* %ptr, i32 %cmp, i32 %new acq_rel acquire
+  
+; CHECK-NEXT: %res14 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acq_rel acquire
+  %res14 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new acq_rel acquire
+  
+; CHECK-NEXT: %res15 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel acquire
+  %res15 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel acquire
+  
+; CHECK-NEXT: %res16 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel acquire
+  %res16 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread acq_rel acquire
+  
+  
+; CHECK-NEXT: %res17 = cmpxchg i32* %ptr, i32 %cmp, i32 %new seq_cst seq_cst
+  %res17 = cmpxchg i32* %ptr, i32 %cmp, i32 %new seq_cst seq_cst
+  
+; CHECK-NEXT: %res18 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new seq_cst seq_cst
+  %res18 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new seq_cst seq_cst
+  
+; CHECK-NEXT: %res19 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst seq_cst
+  %res19 = cmpxchg i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst seq_cst
+  
+; CHECK-NEXT: %res20 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst seq_cst
+  %res20 = cmpxchg volatile i32* %ptr, i32 %cmp, i32 %new singlethread seq_cst seq_cst
 
   ret void
 }

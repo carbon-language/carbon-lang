@@ -338,7 +338,7 @@ AliasAnalysis::getModRefInfo(const VAArgInst *V, const Location &Loc) {
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(const AtomicCmpXchgInst *CX, const Location &Loc) {
   // Acquire/Release cmpxchg has properties that matter for arbitrary addresses.
-  if (CX->getOrdering() > Monotonic)
+  if (CX->getSuccessOrdering() > Monotonic)
     return ModRef;
 
   // If the cmpxchg address does not alias the location, it does not access it.

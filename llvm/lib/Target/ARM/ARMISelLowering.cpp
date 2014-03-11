@@ -6054,10 +6054,10 @@ ReplaceATOMIC_OP_64(SDNode *Node, SmallVectorImpl<SDValue>& Results,
                               Node->getOperand(i), DAG.getIntPtrConstant(1)));
   }
   SDVTList Tys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
-  SDValue Result =
-    DAG.getAtomic(Node->getOpcode(), dl, MVT::i64, Tys, Ops.data(), Ops.size(),
-                  cast<MemSDNode>(Node)->getMemOperand(), AN->getOrdering(),
-                  AN->getSynchScope());
+  SDValue Result = DAG.getAtomic(
+      Node->getOpcode(), dl, MVT::i64, Tys, Ops.data(), Ops.size(),
+      cast<MemSDNode>(Node)->getMemOperand(), AN->getSuccessOrdering(),
+      AN->getFailureOrdering(), AN->getSynchScope());
   SDValue OpsF[] = { Result.getValue(0), Result.getValue(1) };
   Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, OpsF, 2));
   Results.push_back(Result.getValue(2));

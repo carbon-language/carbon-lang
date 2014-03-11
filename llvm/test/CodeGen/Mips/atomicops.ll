@@ -20,7 +20,7 @@ entry:
   %add.i = add nsw i32 %0, 2
   %1 = load volatile i32* %x, align 4
   %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([8 x i8]* @.str, i32 0, i32 0), i32 %add.i, i32 %1) nounwind
-  %2 = cmpxchg i32* %x, i32 1, i32 2 seq_cst
+  %2 = cmpxchg i32* %x, i32 1, i32 2 seq_cst seq_cst
   %3 = load volatile i32* %x, align 4
   %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([8 x i8]* @.str, i32 0, i32 0), i32 %2, i32 %3) nounwind
   %4 = atomicrmw xchg i32* %x, i32 1 seq_cst

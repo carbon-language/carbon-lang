@@ -463,7 +463,8 @@ private:
 class AtomicCmpXchgInst : public Instruction {
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   void Init(Value *Ptr, Value *Cmp, Value *NewVal,
-            AtomicOrdering Ordering, SynchronizationScope SynchScope);
+            AtomicOrdering SuccessOrdering, AtomicOrdering FailureOrdering,
+            SynchronizationScope SynchScope);
 protected:
   AtomicCmpXchgInst *clone_impl() const override;
 public:
@@ -472,10 +473,14 @@ public:
     return User::operator new(s, 3);
   }
   AtomicCmpXchgInst(Value *Ptr, Value *Cmp, Value *NewVal,
-                    AtomicOrdering Ordering, SynchronizationScope SynchScope,
+                    AtomicOrdering SuccessOrdering,
+                    AtomicOrdering FailureOrdering,
+                    SynchronizationScope SynchScope,
                     Instruction *InsertBefore = 0);
   AtomicCmpXchgInst(Value *Ptr, Value *Cmp, Value *NewVal,
-                    AtomicOrdering Ordering, SynchronizationScope SynchScope,
+                    AtomicOrdering SuccessOrdering,
+                    AtomicOrdering FailureOrdering,
+                    SynchronizationScope SynchScope,
                     BasicBlock *InsertAtEnd);
 
   /// isVolatile - Return true if this is a cmpxchg from a volatile memory
@@ -496,11 +501,18 @@ public:
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
   /// Set the ordering constraint on this cmpxchg.
-  void setOrdering(AtomicOrdering Ordering) {
+  void setSuccessOrdering(AtomicOrdering Ordering) {
     assert(Ordering != NotAtomic &&
            "CmpXchg instructions can only be atomic.");
-    setInstructionSubclassData((getSubclassDataFromInstruction() & 3) |
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~0x1c) |
                                (Ordering << 2));
+  }
+
+  void setFailureOrdering(AtomicOrdering Ordering) {
+    assert(Ordering != NotAtomic &&
+           "CmpXchg instructions can only be atomic.");
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~0xe0) |
+                               (Ordering << 5));
   }
 
   /// Specify whether this cmpxchg is atomic and orders other operations with
@@ -512,8 +524,13 @@ public:
   }
 
   /// Returns the ordering constraint on this cmpxchg.
-  AtomicOrdering getOrdering() const {
-    return AtomicOrdering(getSubclassDataFromInstruction() >> 2);
+  AtomicOrdering getSuccessOrdering() const {
+    return AtomicOrdering((getSubclassDataFromInstruction() >> 2) & 7);
+  }
+
+  /// Returns the ordering constraint on this cmpxchg.
+  AtomicOrdering getFailureOrdering() const {
+    return AtomicOrdering((getSubclassDataFromInstruction() >> 5) & 7);
   }
 
   /// Returns whether this cmpxchg is atomic between threads or only within a
@@ -535,6 +552,28 @@ public:
   /// \brief Returns the address space of the pointer operand.
   unsigned getPointerAddressSpace() const {
     return getPointerOperand()->getType()->getPointerAddressSpace();
+  }
+
+  /// \brief Returns the strongest permitted ordering on failure, given the
+  /// desired ordering on success.
+  ///
+  /// If the comparison in a cmpxchg operation fails, there is no atomic store
+  /// so release semantics cannot be provided. So this function drops explicit
+  /// Release requests from the AtomicOrdering. A SequentiallyConsistent
+  /// operation would remain SequentiallyConsistent.
+  static AtomicOrdering
+  getStrongestFailureOrdering(AtomicOrdering SuccessOrdering) {
+    switch (SuccessOrdering) {
+    default: llvm_unreachable("invalid cmpxchg success ordering");
+    case Release:
+    case Monotonic:
+      return Monotonic;
+    case AcquireRelease:
+    case Acquire:
+      return Acquire;
+    case SequentiallyConsistent:
+      return SequentiallyConsistent;
+    }
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:

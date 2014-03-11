@@ -3,7 +3,7 @@
 define i8 @cmpswap() {
 ; CHECK-LABEL: @cmpswap(
   %i = alloca i8
-  %j = cmpxchg i8* %i, i8 0, i8 42 monotonic
+  %j = cmpxchg i8* %i, i8 0, i8 42 monotonic monotonic
 ; CHECK: [[INST:%[a-z0-9]+]] = load
 ; CHECK-NEXT: icmp
 ; CHECK-NEXT: select

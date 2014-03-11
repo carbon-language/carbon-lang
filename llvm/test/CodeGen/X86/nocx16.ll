@@ -2,7 +2,7 @@
 define void @test(i128* %a) nounwind {
 entry:
 ; CHECK: __sync_val_compare_and_swap_16
-  %0 = cmpxchg i128* %a, i128 1, i128 1 seq_cst
+  %0 = cmpxchg i128* %a, i128 1, i128 1 seq_cst seq_cst
 ; CHECK: __sync_lock_test_and_set_16
   %1 = atomicrmw xchg i128* %a, i128 1 seq_cst
 ; CHECK: __sync_fetch_and_add_16

@@ -65,7 +65,7 @@ define void @test5(i1 %C, i32* %P) {
 entry:
   br i1 %C, label %T, label %F
 T:
-  cmpxchg volatile i32* %P, i32 0, i32 1 seq_cst
+  cmpxchg volatile i32* %P, i32 0, i32 1 seq_cst seq_cst
   unreachable
 F:
   ret void

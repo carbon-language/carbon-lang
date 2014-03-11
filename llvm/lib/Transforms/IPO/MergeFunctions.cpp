@@ -341,7 +341,10 @@ bool FunctionComparator::isEquivalentOperation(const Instruction *I1,
            FI->getSynchScope() == cast<FenceInst>(I2)->getSynchScope();
   if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(I1))
     return CXI->isVolatile() == cast<AtomicCmpXchgInst>(I2)->isVolatile() &&
-           CXI->getOrdering() == cast<AtomicCmpXchgInst>(I2)->getOrdering() &&
+           CXI->getSuccessOrdering() ==
+               cast<AtomicCmpXchgInst>(I2)->getSuccessOrdering() &&
+           CXI->getFailureOrdering() ==
+               cast<AtomicCmpXchgInst>(I2)->getFailureOrdering() &&
            CXI->getSynchScope() == cast<AtomicCmpXchgInst>(I2)->getSynchScope();
   if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(I1))
     return RMWI->getOperation() == cast<AtomicRMWInst>(I2)->getOperation() &&

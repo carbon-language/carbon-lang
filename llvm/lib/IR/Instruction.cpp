@@ -313,7 +313,10 @@ bool Instruction::isIdenticalToWhenDefined(const Instruction *I) const {
            FI->getSynchScope() == cast<FenceInst>(FI)->getSynchScope();
   if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(this))
     return CXI->isVolatile() == cast<AtomicCmpXchgInst>(I)->isVolatile() &&
-           CXI->getOrdering() == cast<AtomicCmpXchgInst>(I)->getOrdering() &&
+           CXI->getSuccessOrdering() ==
+               cast<AtomicCmpXchgInst>(I)->getSuccessOrdering() &&
+           CXI->getFailureOrdering() ==
+               cast<AtomicCmpXchgInst>(I)->getFailureOrdering() &&
            CXI->getSynchScope() == cast<AtomicCmpXchgInst>(I)->getSynchScope();
   if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(this))
     return RMWI->getOperation() == cast<AtomicRMWInst>(I)->getOperation() &&
@@ -384,7 +387,10 @@ bool Instruction::isSameOperationAs(const Instruction *I,
            FI->getSynchScope() == cast<FenceInst>(I)->getSynchScope();
   if (const AtomicCmpXchgInst *CXI = dyn_cast<AtomicCmpXchgInst>(this))
     return CXI->isVolatile() == cast<AtomicCmpXchgInst>(I)->isVolatile() &&
-           CXI->getOrdering() == cast<AtomicCmpXchgInst>(I)->getOrdering() &&
+           CXI->getSuccessOrdering() ==
+               cast<AtomicCmpXchgInst>(I)->getSuccessOrdering() &&
+           CXI->getFailureOrdering() ==
+               cast<AtomicCmpXchgInst>(I)->getFailureOrdering() &&
            CXI->getSynchScope() == cast<AtomicCmpXchgInst>(I)->getSynchScope();
   if (const AtomicRMWInst *RMWI = dyn_cast<AtomicRMWInst>(this))
     return RMWI->getOperation() == cast<AtomicRMWInst>(I)->getOperation() &&

@@ -77,7 +77,7 @@ entry:
   %newval.addr = alloca i32, align 4
   store i32 %newval, i32* %newval.addr, align 4
   %tmp = load i32* %newval.addr, align 4
-  %0 = cmpxchg i32* @x, i32 %oldval, i32 %tmp monotonic
+  %0 = cmpxchg i32* @x, i32 %oldval, i32 %tmp monotonic monotonic
   ret i32 %0
 
 ; CHECK-EL-LABEL:   AtomicCmpSwap32:
@@ -333,7 +333,7 @@ entry:
 
 define signext i8 @AtomicCmpSwap8(i8 signext %oldval, i8 signext %newval) nounwind {
 entry:
-  %0 = cmpxchg i8* @y, i8 %oldval, i8 %newval monotonic
+  %0 = cmpxchg i8* @y, i8 %oldval, i8 %newval monotonic monotonic
   ret i8 %0
 
 ; CHECK-EL-LABEL:   AtomicCmpSwap8:
@@ -429,7 +429,7 @@ entry:
 
 define i32 @zeroreg() nounwind {
 entry:
-  %0 = cmpxchg i32* @a, i32 1, i32 0 seq_cst
+  %0 = cmpxchg i32* @a, i32 1, i32 0 seq_cst seq_cst
   %1 = icmp eq i32 %0, 1
   %conv = zext i1 %1 to i32
   ret i32 %conv
