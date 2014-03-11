@@ -128,27 +128,38 @@ operator+=(SmallVectorImpl<char> &Includes, StringRef RHS) {
   return Includes;
 }
 
-static void addHeaderInclude(StringRef HeaderName,
-                             SmallVectorImpl<char> &Includes,
-                             const LangOptions &LangOpts,
-                             bool IsExternC) {
+static llvm::error_code addHeaderInclude(StringRef HeaderName,
+                                         SmallVectorImpl<char> &Includes,
+                                         const LangOptions &LangOpts,
+                                         bool IsExternC) {
   if (IsExternC && LangOpts.CPlusPlus)
     Includes += "extern \"C\" {\n";
   if (LangOpts.ObjC1)
     Includes += "#import \"";
   else
     Includes += "#include \"";
-  Includes += HeaderName;
+  // Use an absolute path for the include; there's no reason to think that
+  // a relative path will work (. might not be on our include path) or that
+  // it will find the same file.
+  if (llvm::sys::path::is_absolute(HeaderName)) {
+    Includes += HeaderName;
+  } else {
+    SmallString<256> Header = HeaderName;
+    if (llvm::error_code Err = llvm::sys::fs::make_absolute(Header))
+      return Err;
+    Includes += Header;
+  }
   Includes += "\"\n";
   if (IsExternC && LangOpts.CPlusPlus)
     Includes += "}\n";
+  return llvm::error_code::success();
 }
 
-static void addHeaderInclude(const FileEntry *Header,
-                             SmallVectorImpl<char> &Includes,
-                             const LangOptions &LangOpts,
-                             bool IsExternC) {
-  addHeaderInclude(Header->getName(), Includes, LangOpts, IsExternC);
+static llvm::error_code addHeaderInclude(const FileEntry *Header,
+                                         SmallVectorImpl<char> &Includes,
+                                         const LangOptions &LangOpts,
+                                         bool IsExternC) {
+  return addHeaderInclude(Header->getName(), Includes, LangOpts, IsExternC);
 }
 
 /// \brief Collect the set of header includes needed to construct the given 
@@ -158,20 +169,21 @@ static void addHeaderInclude(const FileEntry *Header,
 ///
 /// \param Includes Will be augmented with the set of \#includes or \#imports
 /// needed to load all of the named headers.
-static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
-                                        FileManager &FileMgr,
-                                        ModuleMap &ModMap,
-                                        clang::Module *Module,
-                                        SmallVectorImpl<char> &Includes) {
+static llvm::error_code
+collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
+                            ModuleMap &ModMap, clang::Module *Module,
+                            SmallVectorImpl<char> &Includes) {
   // Don't collect any headers for unavailable modules.
   if (!Module->isAvailable())
-    return;
+    return llvm::error_code::success();
 
   // Add includes for each of these headers.
   for (unsigned I = 0, N = Module->NormalHeaders.size(); I != N; ++I) {
     const FileEntry *Header = Module->NormalHeaders[I];
     Module->addTopHeader(Header);
-    addHeaderInclude(Header, Includes, LangOpts, Module->IsExternC);
+    if (llvm::error_code Err =
+            addHeaderInclude(Header, Includes, LangOpts, Module->IsExternC))
+      return Err;
   }
   // Note that Module->PrivateHeaders will not be a TopHeader.
 
@@ -179,7 +191,9 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
     Module->addTopHeader(UmbrellaHeader);
     if (Module->Parent) {
       // Include the umbrella header for submodules.
-      addHeaderInclude(UmbrellaHeader, Includes, LangOpts, Module->IsExternC);
+      if (llvm::error_code Err = addHeaderInclude(UmbrellaHeader, Includes,
+                                                  LangOpts, Module->IsExternC))
+        return Err;
     }
   } else if (const DirectoryEntry *UmbrellaDir = Module->getUmbrellaDir()) {
     // Add all of the headers we find in this subdirectory.
@@ -204,16 +218,25 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
         Module->addTopHeader(Header);
       }
       
-      // Include this header umbrella header for submodules.
-      addHeaderInclude(Dir->path(), Includes, LangOpts, Module->IsExternC);
+      // Include this header as part of the umbrella directory.
+      if (llvm::error_code Err = addHeaderInclude(Dir->path(), Includes,
+                                                  LangOpts, Module->IsExternC))
+        return Err;
     }
+
+    if (EC)
+      return EC;
   }
   
   // Recurse into submodules.
   for (clang::Module::submodule_iterator Sub = Module->submodule_begin(),
                                       SubEnd = Module->submodule_end();
        Sub != SubEnd; ++Sub)
-    collectModuleHeaderIncludes(LangOpts, FileMgr, ModMap, *Sub, Includes);
+    if (llvm::error_code Err = collectModuleHeaderIncludes(
+            LangOpts, FileMgr, ModMap, *Sub, Includes))
+      return Err;
+
+  return llvm::error_code::success();
 }
 
 bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI, 
@@ -280,12 +303,21 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
 
   // Collect the set of #includes we need to build the module.
   SmallString<256> HeaderContents;
+  llvm::error_code Err = llvm::error_code::success();
   if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader())
-    addHeaderInclude(UmbrellaHeader, HeaderContents, CI.getLangOpts(),
-                     Module->IsExternC);
-  collectModuleHeaderIncludes(CI.getLangOpts(), FileMgr,
-    CI.getPreprocessor().getHeaderSearchInfo().getModuleMap(),
-    Module, HeaderContents);
+    Err = addHeaderInclude(UmbrellaHeader, HeaderContents, CI.getLangOpts(),
+                           Module->IsExternC);
+  if (!Err)
+    Err = collectModuleHeaderIncludes(
+        CI.getLangOpts(), FileMgr,
+        CI.getPreprocessor().getHeaderSearchInfo().getModuleMap(), Module,
+        HeaderContents);
+
+  if (Err) {
+    CI.getDiagnostics().Report(diag::err_module_cannot_create_includes)
+      << Module->getFullModuleName() << Err.message();
+    return false;
+  }
 
   llvm::MemoryBuffer *InputBuffer =
       llvm::MemoryBuffer::getMemBufferCopy(HeaderContents,
