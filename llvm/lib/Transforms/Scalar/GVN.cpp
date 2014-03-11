@@ -189,6 +189,10 @@ Expression ValueTable::create_expression(Instruction *I) {
     for (InsertValueInst::idx_iterator II = E->idx_begin(), IE = E->idx_end();
          II != IE; ++II)
       e.varargs.push_back(*II);
+  } else if (ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(I)) {
+    for (ExtractValueInst::idx_iterator II = EVI->idx_begin(),
+         IE = EVI->idx_end(); II != IE; ++II)
+      e.varargs.push_back(*II);
   }
 
   return e;
