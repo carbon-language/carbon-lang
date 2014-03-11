@@ -64,7 +64,7 @@ Here's a simplified Kwalify_ schema with an extension to allow alternate types.
                                  , IMAGE_FILE_MACHINE_AM33
                                  , IMAGE_FILE_MACHINE_AMD64
                                  , IMAGE_FILE_MACHINE_ARM
-                                 , IMAGE_FILE_MACHINE_ARMV7
+                                 , IMAGE_FILE_MACHINE_ARMNT
                                  , IMAGE_FILE_MACHINE_EBC
                                  , IMAGE_FILE_MACHINE_I386
                                  , IMAGE_FILE_MACHINE_IA64
