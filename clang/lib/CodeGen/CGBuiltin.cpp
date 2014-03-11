@@ -964,6 +964,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Args[2] = EmitToInt(*this, EmitScalarExpr(E->getArg(2)), T, IntType);
 
     Value *Result = Builder.CreateAtomicCmpXchg(Args[0], Args[1], Args[2],
+                                                llvm::SequentiallyConsistent,
                                                 llvm::SequentiallyConsistent);
     Result = EmitFromInt(*this, Result, T, ValueType);
     return RValue::get(Result);
@@ -990,6 +991,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
     Value *OldVal = Args[1];
     Value *PrevVal = Builder.CreateAtomicCmpXchg(Args[0], Args[1], Args[2],
+                                                 llvm::SequentiallyConsistent,
                                                  llvm::SequentiallyConsistent);
     Value *Result = Builder.CreateICmpEQ(PrevVal, OldVal);
     // zext bool to int.
@@ -1504,6 +1506,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
         EmitScalarExpr(E->getArg(0)),
         EmitScalarExpr(E->getArg(2)),
         EmitScalarExpr(E->getArg(1)),
+        SequentiallyConsistent,
         SequentiallyConsistent);
       CXI->setVolatile(true);
       return RValue::get(CXI);

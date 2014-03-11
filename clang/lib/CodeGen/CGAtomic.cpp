@@ -201,13 +201,14 @@ EmitAtomicOp(CodeGenFunction &CGF, AtomicExpr *E, llvm::Value *Dest,
   case AtomicExpr::AO__atomic_compare_exchange_n: {
     // Note that cmpxchg only supports specifying one ordering and
     // doesn't support weak cmpxchg, at least at the moment.
-
     llvm::LoadInst *Expected = CGF.Builder.CreateLoad(Val1);
     Expected->setAlignment(Align);
     llvm::LoadInst *Desired = CGF.Builder.CreateLoad(Val2);
     Desired->setAlignment(Align);
-    llvm::AtomicCmpXchgInst *Old =
-        CGF.Builder.CreateAtomicCmpXchg(Ptr, Expected, Desired, Order);
+    llvm::AtomicOrdering FailureOrder =
+        llvm::AtomicCmpXchgInst::getStrongestFailureOrdering(Order);
+    llvm::AtomicCmpXchgInst *Old = CGF.Builder.CreateAtomicCmpXchg(
+        Ptr, Expected, Desired, Order, FailureOrder);
     Old->setVolatile(E->isVolatile());
 
     // Cmp holds the result of the compare-exchange operation: true on success,
