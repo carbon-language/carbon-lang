@@ -395,12 +395,17 @@ IslScheduleOptimizer::getScheduleForBandList(isl_band_list *BandList) {
           isl_union_map_flat_range_product(PartialSchedule, SuffixSchedule);
       isl_band_list_free(Children);
     } else if (PollyVectorizerChoice != VECTORIZER_NONE) {
-      for (int j = 0; j < isl_band_n_member(Band); j++) {
+      // In case we are at the innermost band, we try to prepare for
+      // vectorization. This means, we look for the innermost parallel loop
+      // and strip mine this loop to the innermost level using a strip-mine
+      // factor corresponding to the number of vector iterations.
+      int NumDims = isl_band_n_member(Band);
+      for (int j = NumDims - 1; j >= 0; j--) {
         if (isl_band_member_is_coincident(Band, j)) {
           isl_map *TileMap;
           isl_union_map *TileUMap;
 
-          TileMap = getPrevectorMap(ctx, ScheduleDimensions - j - 1,
+          TileMap = getPrevectorMap(ctx, ScheduleDimensions - NumDims + j,
                                     ScheduleDimensions);
           TileUMap = isl_union_map_from_map(TileMap);
           TileUMap =
