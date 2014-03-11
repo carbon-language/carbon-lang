@@ -1439,9 +1439,11 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool isStructRet    = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
   bool isThisReturn   = false;
   bool isSibCall      = false;
+
   // Disable tail calls if they're not supported.
-  if (!Subtarget->supportsTailCall())
+  if (!Subtarget->supportsTailCall() || MF.getTarget().Options.DisableTailCalls)
     isTailCall = false;
+
   if (isTailCall) {
     // Check if it's really possible to do a tail call.
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv,
@@ -2273,7 +2275,7 @@ bool ARMTargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
   if (!Subtarget->supportsTailCall())
     return false;
 
-  if (!CI->isTailCall())
+  if (!CI->isTailCall() || getTargetMachine().Options.DisableTailCalls)
     return false;
 
   return !Subtarget->isThumb1Only();
