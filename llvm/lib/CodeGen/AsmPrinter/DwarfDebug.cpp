@@ -2213,10 +2213,6 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
     // Start the dwarf pubnames section.
     Asm->OutStreamer.SwitchSection(PSec);
 
-    // Emit a label so we can reference the beginning of this pubname section.
-    if (GnuStyle)
-      Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("gnu_pubnames", ID));
-
     // Emit the header.
     Asm->OutStreamer.AddComment("Length of Public Names Info");
     MCSymbol *BeginLabel = Asm->GetTempSymbol("pubnames_begin", ID);
@@ -2273,10 +2269,6 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
 
     // Start the dwarf pubtypes section.
     Asm->OutStreamer.SwitchSection(PSec);
-
-    // Emit a label so we can reference the beginning of this pubtype section.
-    if (GnuStyle)
-      Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("gnu_pubtypes", ID));
 
     // Emit the header.
     Asm->OutStreamer.AddComment("Length of Public Types Info");
