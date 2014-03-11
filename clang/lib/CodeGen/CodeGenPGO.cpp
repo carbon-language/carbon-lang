@@ -872,29 +872,59 @@ void CodeGenPGO::destroyRegionCounters() {
     delete RegionCounts;
 }
 
+/// \brief Calculate what to divide by to scale weights.
+///
+/// Given the maximum weight, calculate a divisor that will scale all the
+/// weights to strictly less than UINT32_MAX.
+static uint64_t calculateWeightScale(uint64_t MaxWeight) {
+  return MaxWeight < UINT32_MAX ? 1 : MaxWeight / UINT32_MAX + 1;
+}
+
+/// \brief Scale an individual branch weight (and add 1).
+///
+/// Scale a 64-bit weight down to 32-bits using \c Scale.
+///
+/// According to Laplace's Rule of Succession, it is better to compute the
+/// weight based on the count plus 1, so universally add 1 to the value.
+///
+/// \pre \c Scale was calculated by \a calculateWeightScale() with a weight no
+/// greater than \c Weight.
+static uint32_t scaleBranchWeight(uint64_t Weight, uint64_t Scale) {
+  assert(Scale && "scale by 0?");
+  uint64_t Scaled = Weight / Scale + 1;
+  assert(Scaled <= UINT32_MAX && "overflow 32-bits");
+  return Scaled;
+}
+
 llvm::MDNode *CodeGenPGO::createBranchWeights(uint64_t TrueCount,
                                               uint64_t FalseCount) {
+  // Check for empty weights.
   if (!TrueCount && !FalseCount)
     return 0;
 
+  // Calculate how to scale down to 32-bits.
+  uint64_t Scale = calculateWeightScale(std::max(TrueCount, FalseCount));
+
   llvm::MDBuilder MDHelper(CGM.getLLVMContext());
-  // TODO: need to scale down to 32-bits
-  // According to Laplace's Rule of Succession, it is better to compute the
-  // weight based on the count plus 1.
-  return MDHelper.createBranchWeights(TrueCount + 1, FalseCount + 1);
+  return MDHelper.createBranchWeights(scaleBranchWeight(TrueCount, Scale),
+                                      scaleBranchWeight(FalseCount, Scale));
 }
 
 llvm::MDNode *CodeGenPGO::createBranchWeights(ArrayRef<uint64_t> Weights) {
-  llvm::MDBuilder MDHelper(CGM.getLLVMContext());
-  // TODO: need to scale down to 32-bits, instead of just truncating.
-  // According to Laplace's Rule of Succession, it is better to compute the
-  // weight based on the count plus 1.
+  // We need at least two elements to create meaningful weights.
+  if (Weights.size() < 2)
+    return 0;
+
+  // Calculate how to scale down to 32-bits.
+  uint64_t Scale = calculateWeightScale(*std::max_element(Weights.begin(),
+                                                          Weights.end()));
+
   SmallVector<uint32_t, 16> ScaledWeights;
   ScaledWeights.reserve(Weights.size());
-  for (ArrayRef<uint64_t>::iterator WI = Weights.begin(), WE = Weights.end();
-       WI != WE; ++WI) {
-    ScaledWeights.push_back(*WI + 1);
-  }
+  for (uint64_t W : Weights)
+    ScaledWeights.push_back(scaleBranchWeight(W, Scale));
+
+  llvm::MDBuilder MDHelper(CGM.getLLVMContext());
   return MDHelper.createBranchWeights(ScaledWeights);
 }
 
