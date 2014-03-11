@@ -5429,8 +5429,7 @@ public:
 
   void getDefaultFeatures(llvm::StringMap<bool> &Features) const override {
   }
-  virtual void getArchDefines(const LangOptions &Opts,
-                              MacroBuilder &Builder) const {
+  void getArchDefines(const LangOptions &Opts, MacroBuilder &Builder) const {
     Builder.defineMacro("__le32__");
     Builder.defineMacro("__pnacl__");
   }
