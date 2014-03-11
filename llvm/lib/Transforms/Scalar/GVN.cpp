@@ -2550,6 +2550,8 @@ bool GVN::performPRE(Function &F) {
           predMap.push_back(std::make_pair(static_cast<Value *>(0), P));
           PREPred = P;
           ++NumWithout;
+        } else if (predV->getType() != CurInst->getType()) {
+          continue;
         } else if (predV == CurInst) {
           /* CurInst dominates this predecessor. */
           NumWithout = 2;
