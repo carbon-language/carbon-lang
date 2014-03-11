@@ -7986,6 +7986,11 @@ TEST_F(FormatTest, FormatsLambdas) {
                "  bar([]() {} // Did not respect SpacesBeforeTrailingComments\n"
                "      );\n"
                "}");
+
+  // Lambdas created through weird macros.
+  verifyFormat("void f() {\n"
+               "  MACRO((const AA &a) { return 1; });\n"
+               "}");
 }
 
 TEST_F(FormatTest, FormatsBlocks) {

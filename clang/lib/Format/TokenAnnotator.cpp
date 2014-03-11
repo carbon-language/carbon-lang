@@ -183,6 +183,9 @@ private:
           !CurrentToken->Next->HasUnescapedNewline &&
           !CurrentToken->Next->isTrailingComment())
         HasMultipleParametersOnALine = true;
+      if (CurrentToken->is(tok::kw_const) ||
+          CurrentToken->isSimpleTypeSpecifier())
+        Contexts.back().IsExpression = false;
       if (!consumeToken())
         return false;
       if (CurrentToken && CurrentToken->HasUnescapedNewline)
@@ -731,7 +734,8 @@ private:
             LeftOfParens &&
             LeftOfParens->isOneOf(tok::kw_sizeof, tok::kw_alignof);
         if (ParensAreType && !ParensCouldEndDecl && !IsSizeOfOrAlignOf &&
-            (Contexts.back().IsExpression ||
+            ((Contexts.size() > 1 &&
+              Contexts[Contexts.size() - 2].IsExpression) ||
              (Current.Next && Current.Next->isBinaryOperator())))
           IsCast = true;
         if (Current.Next && Current.Next->isNot(tok::string_literal) &&
