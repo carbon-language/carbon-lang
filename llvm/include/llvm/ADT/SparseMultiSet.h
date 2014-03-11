@@ -245,16 +245,6 @@ public:
     typedef typename super::pointer pointer;
     typedef typename super::reference reference;
 
-    iterator_base(const iterator_base &RHS)
-      : SMS(RHS.SMS), Idx(RHS.Idx), SparseIdx(RHS.SparseIdx) { }
-
-    const iterator_base &operator=(const iterator_base &RHS) {
-      SMS = RHS.SMS;
-      Idx = RHS.Idx;
-      SparseIdx = RHS.SparseIdx;
-      return *this;
-    }
-
     reference operator*() const {
       assert(isKeyed() && SMS->sparseIndex(SMS->Dense[Idx].Data) == SparseIdx &&
              "Dereferencing iterator of invalid key or index");

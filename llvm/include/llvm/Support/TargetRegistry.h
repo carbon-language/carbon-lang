@@ -486,7 +486,6 @@ namespace llvm {
       explicit iterator(Target *T) : Current(T) {}
       friend struct TargetRegistry;
     public:
-      iterator(const iterator &I) : Current(I.Current) {}
       iterator() : Current(0) {}
 
       bool operator==(const iterator &x) const {

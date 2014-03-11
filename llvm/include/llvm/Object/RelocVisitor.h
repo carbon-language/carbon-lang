@@ -33,7 +33,6 @@ struct RelocToApply {
   // The width of the value; how many bytes to touch when applying the
   // relocation.
   char Width;
-  RelocToApply(const RelocToApply &In) : Value(In.Value), Width(In.Width) {}
   RelocToApply(int64_t Value, char Width) : Value(Value), Width(Width) {}
   RelocToApply() : Value(0), Width(0) {}
 };

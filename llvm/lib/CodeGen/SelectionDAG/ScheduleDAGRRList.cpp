@@ -1539,7 +1539,6 @@ template<class SF>
 struct reverse_sort : public queue_sort {
   SF &SortFunc;
   reverse_sort(SF &sf) : SortFunc(sf) {}
-  reverse_sort(const reverse_sort &RHS) : SortFunc(RHS.SortFunc) {}
 
   bool operator()(SUnit* left, SUnit* right) const {
     // reverse left/right rather than simply !SortFunc(left, right)
@@ -1559,7 +1558,6 @@ struct bu_ls_rr_sort : public queue_sort {
 
   RegReductionPQBase *SPQ;
   bu_ls_rr_sort(RegReductionPQBase *spq) : SPQ(spq) {}
-  bu_ls_rr_sort(const bu_ls_rr_sort &RHS) : SPQ(RHS.SPQ) {}
 
   bool operator()(SUnit* left, SUnit* right) const;
 };
@@ -1574,8 +1572,6 @@ struct src_ls_rr_sort : public queue_sort {
   RegReductionPQBase *SPQ;
   src_ls_rr_sort(RegReductionPQBase *spq)
     : SPQ(spq) {}
-  src_ls_rr_sort(const src_ls_rr_sort &RHS)
-    : SPQ(RHS.SPQ) {}
 
   bool operator()(SUnit* left, SUnit* right) const;
 };
@@ -1590,8 +1586,6 @@ struct hybrid_ls_rr_sort : public queue_sort {
   RegReductionPQBase *SPQ;
   hybrid_ls_rr_sort(RegReductionPQBase *spq)
     : SPQ(spq) {}
-  hybrid_ls_rr_sort(const hybrid_ls_rr_sort &RHS)
-    : SPQ(RHS.SPQ) {}
 
   bool isReady(SUnit *SU, unsigned CurCycle) const;
 
@@ -1609,8 +1603,6 @@ struct ilp_ls_rr_sort : public queue_sort {
   RegReductionPQBase *SPQ;
   ilp_ls_rr_sort(RegReductionPQBase *spq)
     : SPQ(spq) {}
-  ilp_ls_rr_sort(const ilp_ls_rr_sort &RHS)
-    : SPQ(RHS.SPQ) {}
 
   bool isReady(SUnit *SU, unsigned CurCycle) const;
 

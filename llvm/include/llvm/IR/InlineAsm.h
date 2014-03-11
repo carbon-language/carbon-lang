@@ -164,9 +164,6 @@ public:
     ///Default constructor.
     ConstraintInfo();
     
-    /// Copy constructor.
-    ConstraintInfo(const ConstraintInfo &other);
-    
     /// Parse - Analyze the specified string (e.g. "=*&{eax}") and fill in the
     /// fields in this structure.  If the constraint string is not understood,
     /// return true, otherwise return false.

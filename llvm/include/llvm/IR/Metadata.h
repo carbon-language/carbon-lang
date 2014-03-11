@@ -219,7 +219,6 @@ class NamedMDNode : public ilist_node<NamedMDNode> {
 
   public:
     op_iterator_impl() : Node(0), Idx(0) { }
-    op_iterator_impl(const op_iterator_impl &o) : Node(o.Node), Idx(o.Idx) { }
 
     bool operator==(const op_iterator_impl &o) const { return Idx == o.Idx; }
     bool operator!=(const op_iterator_impl &o) const { return Idx != o.Idx; }
@@ -242,11 +241,6 @@ class NamedMDNode : public ilist_node<NamedMDNode> {
       return tmp;
     }
 
-    op_iterator_impl &operator=(const op_iterator_impl &o) {
-      Node = o.Node;
-      Idx = o.Idx;
-      return *this;
-    }
     T1 operator*() const { return Node->getOperand(Idx); }
   };
 

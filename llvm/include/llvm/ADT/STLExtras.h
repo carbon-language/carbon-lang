@@ -97,8 +97,6 @@ public:
 
   inline explicit mapped_iterator(const RootIt &I, UnaryFunc F)
     : current(I), Fn(F) {}
-  inline mapped_iterator(const mapped_iterator &It)
-    : current(It.current), Fn(It.Fn) {}
 
   inline value_type operator*() const {   // All this work to do this
     return Fn(*current);         // little change

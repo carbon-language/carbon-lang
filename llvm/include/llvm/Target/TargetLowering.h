@@ -2254,15 +2254,6 @@ public:
     /// operand it matches.
     unsigned getMatchedOperand() const;
 
-    /// Copy constructor for copying from an AsmOperandInfo.
-    AsmOperandInfo(const AsmOperandInfo &info)
-      : InlineAsm::ConstraintInfo(info),
-        ConstraintCode(info.ConstraintCode),
-        ConstraintType(info.ConstraintType),
-        CallOperandVal(info.CallOperandVal),
-        ConstraintVT(info.ConstraintVT) {
-    }
-
     /// Copy constructor for copying from a ConstraintInfo.
     AsmOperandInfo(const InlineAsm::ConstraintInfo &info)
       : InlineAsm::ConstraintInfo(info),

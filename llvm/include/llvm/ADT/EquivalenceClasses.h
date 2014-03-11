@@ -249,7 +249,6 @@ public:
 
     explicit member_iterator() {}
     explicit member_iterator(const ECValue *N) : Node(N) {}
-    member_iterator(const member_iterator &I) : Node(I.Node) {}
 
     reference operator*() const {
       assert(Node != 0 && "Dereferencing end()!");

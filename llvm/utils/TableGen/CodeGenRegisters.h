@@ -374,11 +374,6 @@ namespace llvm {
       unsigned SpillSize;
       unsigned SpillAlignment;
 
-      Key(const Key &O)
-        : Members(O.Members),
-          SpillSize(O.SpillSize),
-          SpillAlignment(O.SpillAlignment) {}
-
       Key(const CodeGenRegister::Set *M, unsigned S = 0, unsigned A = 0)
         : Members(M), SpillSize(S), SpillAlignment(A) {}
 
