@@ -72,7 +72,7 @@ define void @foo(double %p0, ; --> D0
 		 double %p8, ; --> Stack
 		 i32 %p9) #0 { ; --> R0, not Stack+8
 entry:
-  tail call void @fooUseI32(i32 %p9)
+  call void @fooUseI32(i32 %p9)
   ret void
 }
 

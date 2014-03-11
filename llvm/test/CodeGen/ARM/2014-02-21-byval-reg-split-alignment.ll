@@ -23,7 +23,7 @@ define void @foo1(i32 %a, %struct12bytes* byval %b, i64 %c) {
 ; CHECK: pop  {r11, lr}
 ; CHECK: add  sp, sp, #16
 
-  tail call void @useLong(i64 %c)
+  call void @useLong(i64 %c)
   ret void
 }
 
@@ -40,7 +40,7 @@ define void @foo2(i32 %a, %struct8bytes8align* byval %b) {
 ; CHECK: pop  {r11, lr}
 ; CHECK: add  sp, sp, #8
 
-  tail call void @usePtr(%struct8bytes8align* %b)
+  call void @usePtr(%struct8bytes8align* %b)
   ret void
 }
 
@@ -57,7 +57,7 @@ define void @foo3(%struct8bytes8align* byval %a, %struct4bytes* byval %b) {
 ; CHECK: pop  {r11, lr}
 ; CHECK: add  sp, sp, #16
 
-  tail call void @usePtr(%struct8bytes8align* %a)
+  call void @usePtr(%struct8bytes8align* %a)
   ret void
 }
 
@@ -76,7 +76,7 @@ define void @foo4(%struct4bytes* byval %a, %struct8bytes8align* byval %b) {
 ; CHECK: add     sp, sp, #16
 ; CHECK: mov     pc, lr
 
-  tail call void @usePtr(%struct8bytes8align* %b)
+  call void @usePtr(%struct8bytes8align* %b)
   ret void
 }
 
@@ -95,7 +95,7 @@ define void @foo5(%struct8bytes8align* byval %a, %struct4bytes* byval %b, %struc
 ; CHECK: add     sp, sp, #16
 ; CHECK: mov     pc, lr
 
-  tail call void @usePtr(%struct8bytes8align* %a)
+  call void @usePtr(%struct8bytes8align* %a)
   ret void
 }
 
@@ -109,6 +109,6 @@ define void @foo6(i32 %a, i32 %b, i32 %c, %struct8bytes8align* byval %d) {
 ; CHECK: pop  {r11, lr}
 ; CHECK: mov  pc, lr
 
-  tail call void @usePtr(%struct8bytes8align* %d)
+  call void @usePtr(%struct8bytes8align* %d)
   ret void
 }

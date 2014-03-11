@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mattr=+v7,+vfp3,-neon  | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-none-linux-gnueabi -mattr=+v7,+vfp3,-neon | FileCheck %s
 
 ; PR15611. Check that we don't crash when constant folding v1i32 types.
 
@@ -11,7 +11,7 @@ bb:
   %tmp3 = insertelement <4 x i32> %tmp2, i32 0, i32 3
   %tmp4 = add <4 x i32> %tmp3, <i32 -1, i32 -1, i32 -1, i32 -1>
 ; CHECK:  bl bar
-  tail call void @bar(<4 x i32> %tmp4)
+  call void @bar(<4 x i32> %tmp4)
   ret void
 }
 

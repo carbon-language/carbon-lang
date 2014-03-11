@@ -181,7 +181,7 @@ declare void @throw_exception_2()
 
 define void @test2() {
 entry:
-  tail call void @throw_exception_2()
+  call void @throw_exception_2()
   ret void
 }
 

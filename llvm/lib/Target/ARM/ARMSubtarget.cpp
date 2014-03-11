@@ -219,8 +219,10 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   if (isTargetMachO()) {
     IsR9Reserved = ReserveR9 | !HasV6Ops;
     SupportsTailCall = !isTargetIOS() || !getTargetTriple().isOSVersionLT(5, 0);
-  } else
+  } else {
     IsR9Reserved = ReserveR9;
+    SupportsTailCall = !isThumb1Only();
+  }
 
   if (!isThumb() || hasThumb2())
     PostRAScheduler = true;
