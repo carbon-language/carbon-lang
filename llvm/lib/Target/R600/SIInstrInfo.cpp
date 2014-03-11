@@ -25,12 +25,7 @@ using namespace llvm;
 
 SIInstrInfo::SIInstrInfo(AMDGPUTargetMachine &tm)
   : AMDGPUInstrInfo(tm),
-    RI(tm)
-    { }
-
-const SIRegisterInfo &SIInstrInfo::getRegisterInfo() const {
-  return RI;
-}
+    RI(tm) { }
 
 //===----------------------------------------------------------------------===//
 // TargetInstrInfo callbacks

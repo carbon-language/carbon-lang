@@ -36,7 +36,9 @@ private:
 public:
   explicit SIInstrInfo(AMDGPUTargetMachine &tm);
 
-  const SIRegisterInfo &getRegisterInfo() const;
+  const SIRegisterInfo &getRegisterInfo() const {
+    return RI;
+  }
 
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, DebugLoc DL,
