@@ -1231,9 +1231,9 @@ ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
     llvm::APSInt Result(32);
     if (SubExprs[1]->isIntegerConstantExpr(Result, Context) &&
         !isValidOrderingForOp(Result.getSExtValue(), Op))
-      return ExprError(Diag(SubExprs[1]->getLocStart(),
-                            diag::err_atomic_op_has_invalid_memory_order)
-                       << SubExprs[1]->getSourceRange());
+      Diag(SubExprs[1]->getLocStart(),
+           diag::warn_atomic_op_has_invalid_memory_order)
+          << SubExprs[1]->getSourceRange();
   }
 
   AtomicExpr *AE = new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
