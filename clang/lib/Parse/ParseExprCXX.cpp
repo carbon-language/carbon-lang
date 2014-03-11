@@ -1066,11 +1066,20 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                                            LParenLoc, FunLocalRangeEnd, D,
                                            TrailingReturnType),
                   Attr, DeclEndLoc);
-  } else if (Tok.is(tok::kw_mutable) || Tok.is(tok::arrow)) {
-    // It's common to forget that one needs '()' before 'mutable' or the 
-    // result type. Deal with this.
+  } else if (Tok.is(tok::kw_mutable) || Tok.is(tok::arrow) ||
+             (Tok.is(tok::l_square) && NextToken().is(tok::l_square))) {
+    // It's common to forget that one needs '()' before 'mutable', an attribute
+    // specifier, or the result type. Deal with this.
+    unsigned TokKind = 0;
+    switch (Tok.getKind()) {
+    case tok::kw_mutable: TokKind = 0; break;
+    case tok::arrow: TokKind = 1; break;
+    case tok::l_square: TokKind = 2; break;
+    default: llvm_unreachable("Unknown token kind");
+    }
+
     Diag(Tok, diag::err_lambda_missing_parens)
-      << Tok.is(tok::arrow)
+      << TokKind
       << FixItHint::CreateInsertion(Tok.getLocation(), "() ");
     SourceLocation DeclLoc = Tok.getLocation();
     SourceLocation DeclEndLoc = DeclLoc;
@@ -1081,7 +1090,11 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
       MutableLoc = ConsumeToken();
       DeclEndLoc = MutableLoc;
     }
-    
+
+    // Parse attribute-specifier[opt].
+    ParsedAttributes Attr(AttrFactory);
+    MaybeParseCXX11Attributes(Attr, &DeclEndLoc);
+
     // Parse the return type, if there is one.
     TypeResult TrailingReturnType;
     if (Tok.is(tok::arrow)) {
@@ -1091,7 +1104,6 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
         DeclEndLoc = Range.getEnd();      
     }
 
-    ParsedAttributes Attr(AttrFactory);
     SourceLocation NoLoc;
     D.AddTypeInfo(DeclaratorChunk::getFunction(/*hasProto=*/true,
                                                /*isAmbiguous=*/false,

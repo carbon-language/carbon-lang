@@ -24,6 +24,7 @@ class C {
     [] () -> class C { return C(); };
     [] () -> enum E { return e; };
 
+    [] [[noreturn]] { while (1) ; }; // expected-error {{lambda requires '()' before attribute specifier}}
     [] -> int { return 0; }; // expected-error{{lambda requires '()' before return type}}
     [] mutable -> int { return 0; }; // expected-error{{lambda requires '()' before 'mutable'}}
     [](int) -> {}; // PR13652 expected-error {{expected a type}}
