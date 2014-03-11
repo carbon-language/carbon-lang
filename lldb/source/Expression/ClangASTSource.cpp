@@ -316,6 +316,22 @@ ClangASTSource::CompleteType (clang::ObjCInterfaceDecl *interface_decl)
         dumper.ToLog(log, "      [COID] ");    
     }
     
+    Decl *original_decl = NULL;
+    ASTContext *original_ctx = NULL;
+    
+    if (m_ast_importer->ResolveDeclOrigin(interface_decl, &original_decl, &original_ctx))
+    {
+        if (ObjCInterfaceDecl *original_iface_decl = dyn_cast<ObjCInterfaceDecl>(original_decl))
+        {
+            ObjCInterfaceDecl *complete_iface_decl = GetCompleteObjCInterface(original_iface_decl);
+            
+            if (complete_iface_decl && (complete_iface_decl != original_iface_decl))
+            {
+                m_ast_importer->SetDeclOrigin(interface_decl, original_iface_decl);
+            }
+        }
+    }
+    
     m_ast_importer->CompleteObjCInterfaceDecl (interface_decl);
     
     if (interface_decl->getSuperClass() &&
