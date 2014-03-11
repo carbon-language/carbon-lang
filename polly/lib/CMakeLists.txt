@@ -43,7 +43,6 @@ if (SCOPLIB_FOUND)
 endif (SCOPLIB_FOUND)
 
 add_polly_library(Polly
-  RegisterPasses.cpp
   Analysis/Dependences.cpp
   Analysis/ScopDetection.cpp
   Analysis/ScopInfo.cpp
@@ -61,6 +60,7 @@ add_polly_library(Polly
   ${POLLY_SCOPLIB_FILES}
   Support/GICHelper.cpp
   Support/SCEVValidator.cpp
+  Support/RegisterPasses.cpp
   Support/ScopHelper.cpp
   ${POLLY_JSON_FILES}
   ${POLLY_OPENSCOP_FILES}
@@ -75,7 +75,7 @@ add_polly_library(Polly
   )
 
 add_polly_loadable_module(LLVMPolly
-  PollyModule.cpp
+  Polly.cpp
 )
 
 if (TARGET intrinsics_gen)
