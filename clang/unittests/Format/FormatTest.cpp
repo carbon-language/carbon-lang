@@ -7980,6 +7980,7 @@ TEST_F(FormatTest, FormatsLambdas) {
   verifyFormat("double &operator[](int i) { return 0; }\n"
                "int i;");
   verifyFormat("std::unique_ptr<int[]> foo() {}");
+  verifyFormat("int i = a[a][a]->f();");
 
   // Other corner cases.
   verifyFormat("void f() {\n"
