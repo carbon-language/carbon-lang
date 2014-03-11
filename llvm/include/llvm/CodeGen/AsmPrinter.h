@@ -16,6 +16,7 @@
 #ifndef LLVM_CODEGEN_ASMPRINTER_H
 #define LLVM_CODEGEN_ASMPRINTER_H
 
+#include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/Support/DataTypes.h"
@@ -313,11 +314,11 @@ namespace llvm {
 
     /// GetTempSymbol - Return the MCSymbol corresponding to the assembler
     /// temporary label with the specified stem and unique ID.
-    MCSymbol *GetTempSymbol(StringRef Name, unsigned ID) const;
+    MCSymbol *GetTempSymbol(Twine Name, unsigned ID) const;
 
     /// GetTempSymbol - Return an assembler temporary label with the specified
     /// stem.
-    MCSymbol *GetTempSymbol(StringRef Name) const;
+    MCSymbol *GetTempSymbol(Twine Name) const;
 
     /// Return the MCSymbol for a private symbol with global value name as its
     /// base, with the specified suffix.
