@@ -78,10 +78,6 @@ endif()
 add_custom_target(asan)
 if(APPLE)
   foreach (os ${SANITIZER_COMMON_SUPPORTED_DARWIN_OS})
-    # Dynamic lookup is needed because shadow scale and offset are
-    # provided by the instrumented modules.
-    set(ASAN_RUNTIME_LDFLAGS
-        "-undefined dynamic_lookup")
     add_compiler_rt_darwin_dynamic_runtime(clang_rt.asan_${os}_dynamic ${os}
       ARCH ${ASAN_SUPPORTED_ARCH}
       SOURCES $<TARGET_OBJECTS:RTAsan.${os}>
