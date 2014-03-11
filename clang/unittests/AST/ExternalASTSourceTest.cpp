@@ -77,7 +77,7 @@ TEST(ExternalASTSourceTest, FailedLookupOccursOnce) {
     unsigned &Calls;
   };
 
-  unsigned Calls;
+  unsigned Calls = 0;
   ASSERT_TRUE(testExternalASTSource(new TestSource(Calls), "int j, k = j;"));
   EXPECT_EQ(1u, Calls);
 }
