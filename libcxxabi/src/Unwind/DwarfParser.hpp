@@ -149,7 +149,7 @@ const char *CFI_Parser<A>::decodeFDE(A &addressSpace, pint_t fdeStart,
   if (cieInfo->fdesHaveAugmentationData) {
     pint_t augLen = (pint_t)addressSpace.getULEB128(p, nextCFI);
     pint_t endOfAug = p + augLen;
-    if (cieInfo->lsdaEncoding != 0) {
+    if (cieInfo->lsdaEncoding != DW_EH_PE_omit) {
       // peek at value (without indirection).  Zero means no lsda
       pint_t lsdaStart = p;
       if (addressSpace.getEncodedP(p, nextCFI, cieInfo->lsdaEncoding & 0x0F) !=
@@ -255,7 +255,7 @@ template <typename A>
 const char *CFI_Parser<A>::parseCIE(A &addressSpace, pint_t cie,
                                     CIE_Info *cieInfo) {
   cieInfo->pointerEncoding = 0;
-  cieInfo->lsdaEncoding = 0;
+  cieInfo->lsdaEncoding = DW_EH_PE_omit;
   cieInfo->personalityEncoding = 0;
   cieInfo->personalityOffsetInCIE = 0;
   cieInfo->personality = 0;
