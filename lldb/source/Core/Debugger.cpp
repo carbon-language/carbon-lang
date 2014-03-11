@@ -1682,6 +1682,13 @@ FormatPromptRecurse
                                     do_deref_pointer = false;
                                 }
                                 
+                                if (!target)
+                                {
+                                    if (log)
+                                        log->Printf("[Debugger::FormatPrompt] could not calculate target for prompt expression");
+                                    break;
+                                }
+                                
                                 // we do not want to use the summary for a bitfield of type T:n
                                 // if we were originally dealing with just a T - that would get
                                 // us into an endless recursion
