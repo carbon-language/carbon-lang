@@ -1839,3 +1839,9 @@ def : Pat<(cttz_zero_undef GR64:$src), (BSF64rr GR64:$src)>;
 def : Pat<(cttz_zero_undef (loadi16 addr:$src)), (BSF16rm addr:$src)>;
 def : Pat<(cttz_zero_undef (loadi32 addr:$src)), (BSF32rm addr:$src)>;
 def : Pat<(cttz_zero_undef (loadi64 addr:$src)), (BSF64rm addr:$src)>;
+
+// When HasMOVBE is enabled it is possible to get a non-legalized
+// register-register 16 bit bswap. This maps it to a ROL instruction.
+let Predicates = [HasMOVBE] in {
+ def : Pat<(bswap GR16:$src), (ROL16ri GR16:$src, (i8 8))>;
+}

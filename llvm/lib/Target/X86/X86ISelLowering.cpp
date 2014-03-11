@@ -505,7 +505,9 @@ void X86TargetLowering::resetOperationActions() {
   }
 
   setOperationAction(ISD::READCYCLECOUNTER , MVT::i64  , Custom);
-  setOperationAction(ISD::BSWAP            , MVT::i16  , Expand);
+
+  if (!Subtarget->hasMOVBE())
+    setOperationAction(ISD::BSWAP          , MVT::i16  , Expand);
 
   // These should be promoted to a larger select which is supported.
   setOperationAction(ISD::SELECT          , MVT::i1   , Promote);
