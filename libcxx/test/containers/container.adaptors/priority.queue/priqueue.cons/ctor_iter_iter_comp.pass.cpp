@@ -14,6 +14,7 @@
 
 #include <queue>
 #include <cassert>
+#include <functional>
 
 int main()
 {
