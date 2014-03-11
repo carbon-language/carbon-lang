@@ -31,8 +31,6 @@ private:
                                              unsigned MovRelOp,
                                              unsigned Dst,
                                              unsigned Src0) const;
-  // If you add or remove instructions from this function, you will
-
 public:
   explicit SIInstrInfo(AMDGPUTargetMachine &tm);
 
