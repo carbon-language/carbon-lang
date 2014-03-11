@@ -232,7 +232,7 @@ def main(builtinParameters = {}):
     (opts, args) = parser.parse_args()
 
     if opts.show_version:
-        print "lit %s" % (lit.__version__,)
+        print("lit %s" % (lit.__version__,))
         return
 
     if not args:
