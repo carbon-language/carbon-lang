@@ -69,10 +69,6 @@ public:
 
   DominatorTree() : DominatorTreeBase<BasicBlock>(false) {}
 
-  // FIXME: This is no longer needed and should be removed when its uses are
-  // cleaned up.
-  Base& getBase() { return *this; }
-
   /// \brief Returns *false* if the other dominator tree matches this dominator
   /// tree.
   inline bool compare(const DominatorTree &Other) const {
