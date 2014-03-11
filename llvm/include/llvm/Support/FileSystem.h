@@ -285,13 +285,18 @@ error_code create_directories(const Twine &path, bool IgnoreExisting = true);
 ///          error if the directory already existed.
 error_code create_directory(const Twine &path, bool IgnoreExisting = true);
 
-/// @brief Create a hard link from \a from to \a to.
+/// @brief Create a link from \a from to \a to.
+///
+/// The link may be a soft or a hard link, depending on the platform. The caller
+/// may not assume which one. Currently on windows it creates a hard link since
+/// soft links require extra privileges. On unix, it creates a soft link since
+/// hard links don't work on SMB file systems.
 ///
 /// @param to The path to hard link to.
 /// @param from The path to hard link from. This is created.
-/// @returns errc::success if exists(to) && exists(from) && equivalent(to, from)
-///          , otherwise a platform specific error_code.
-error_code create_hard_link(const Twine &to, const Twine &from);
+/// @returns errc::success if the link was created, otherwise a platform
+/// specific error_code.
+error_code create_link(const Twine &to, const Twine &from);
 
 /// @brief Get the current path.
 ///

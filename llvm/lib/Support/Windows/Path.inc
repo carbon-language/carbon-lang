@@ -158,7 +158,8 @@ error_code create_directory(const Twine &path, bool IgnoreExisting) {
   return error_code::success();
 }
 
-error_code create_hard_link(const Twine &to, const Twine &from) {
+// We can't use symbolic links for windows.
+error_code create_link(const Twine &to, const Twine &from) {
   // Get arguments.
   SmallString<128> from_storage;
   SmallString<128> to_storage;

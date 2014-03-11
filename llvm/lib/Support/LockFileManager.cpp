@@ -67,22 +67,6 @@ bool LockFileManager::processStillExecuting(StringRef Hostname, int PID) {
   return true;
 }
 
-#if LLVM_ON_UNIX
-static error_code unix_create_symbolic_link(const Twine &to,
-                                            const Twine &from) {
-  // Get arguments.
-  SmallString<128> from_storage;
-  SmallString<128> to_storage;
-  StringRef f = from.toNullTerminatedStringRef(from_storage);
-  StringRef t = to.toNullTerminatedStringRef(to_storage);
-
-  if (::symlink(t.begin(), f.begin()) == -1)
-    return error_code(errno, system_category());
-
-  return error_code::success();
-}
-#endif
-
 LockFileManager::LockFileManager(StringRef FileName)
 {
   this->FileName = FileName;
@@ -132,20 +116,9 @@ LockFileManager::LockFileManager(StringRef FileName)
   }
 
   while (1) {
-#if LLVM_ON_UNIX
-    // Create a symbolic link from the lock file name. If this succeeds, we're
-    // done. Note that we are using symbolic link because hard links are not
-    // supported by all filesystems.
-    error_code EC
-      = unix_create_symbolic_link(UniqueLockFileName.str(),
-                                        LockFileName.str());
-#else
-    // We can't use symbolic links for windows.
-    // Create a hard link from the lock file name. If this succeeds, we're done.
-    error_code EC
-      = sys::fs::create_hard_link(UniqueLockFileName.str(),
-                                        LockFileName.str());
-#endif
+    // Create a link from the lock file name. If this succeeds, we're done.
+    error_code EC =
+        sys::fs::create_link(UniqueLockFileName.str(), LockFileName.str());
     if (EC == errc::success)
       return;
 

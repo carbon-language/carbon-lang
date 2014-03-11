@@ -299,7 +299,7 @@ TEST_F(FileSystemTest, Unique) {
 
   // Two paths representing the same file on disk should still provide the
   // same unique id.  We can test this by making a hard link.
-  ASSERT_NO_ERROR(fs::create_hard_link(Twine(TempPath), Twine(TempPath2)));
+  ASSERT_NO_ERROR(fs::create_link(Twine(TempPath), Twine(TempPath2)));
   fs::UniqueID D2;
   ASSERT_NO_ERROR(fs::getUniqueID(Twine(TempPath2), D2));
   ASSERT_EQ(D2, F1);
@@ -365,7 +365,7 @@ TEST_F(FileSystemTest, TempFiles) {
   ASSERT_FALSE(TempPath3.endswith("."));
 
   // Create a hard link to Temp1.
-  ASSERT_NO_ERROR(fs::create_hard_link(Twine(TempPath), Twine(TempPath2)));
+  ASSERT_NO_ERROR(fs::create_link(Twine(TempPath), Twine(TempPath2)));
   bool equal;
   ASSERT_NO_ERROR(fs::equivalent(Twine(TempPath), Twine(TempPath2), equal));
   EXPECT_TRUE(equal);
