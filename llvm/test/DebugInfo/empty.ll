@@ -11,6 +11,12 @@
 ; CHECK: total_length: 0x00000019
 ; CHECK-NOT: file_names[
 
+; CHECK: .debug_pubnames contents:
+; CHECK-NEXT: {{^$}}
+
+; CHECK: .debug_pubtypes contents:
+; CHECK-NEXT: {{^$}}
+
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!5}
 
