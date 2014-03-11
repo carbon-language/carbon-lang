@@ -53,8 +53,7 @@ struct NameLookupTableDataDeleter {
 
 /// \brief Information about the contents of a DeclContext.
 struct DeclContextInfo {
-  DeclContextInfo()
-      : NameLookupTableData(), LexicalDecls(), NumLexicalDecls() {}
+  DeclContextInfo();
 
   /// An ASTDeclContextNameLookupTable.
   std::unique_ptr<OnDiskChainedHashTable<reader::ASTDeclContextNameLookupTrait>,

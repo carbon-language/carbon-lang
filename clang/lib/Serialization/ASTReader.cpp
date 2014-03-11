@@ -457,6 +457,9 @@ ASTReader::setDeserializationListener(ASTDeserializationListener *Listener) {
 }
 
 
+DeclContextInfo::DeclContextInfo()
+    : NameLookupTableData(), LexicalDecls(), NumLexicalDecls() {}
+
 void NameLookupTableDataDeleter::
 operator()(ASTDeclContextNameLookupTable *Ptr) const {
   delete Ptr;
