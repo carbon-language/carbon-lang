@@ -182,3 +182,225 @@ void PR16931(int* x) { // expected-note {{passing argument to parameter 'x' here
   flag flagvar = { 0 };
   PR16931(&flagvar); // expected-warning {{incompatible pointer types}}
 }
+
+void memory_checks(_Atomic(int) *Ap, int *p, int val) {
+  (void)__c11_atomic_load(Ap, memory_order_relaxed);
+  (void)__c11_atomic_load(Ap, memory_order_acquire);
+  (void)__c11_atomic_load(Ap, memory_order_consume);
+  (void)__c11_atomic_load(Ap, memory_order_release); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__c11_atomic_load(Ap, memory_order_acq_rel); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__c11_atomic_load(Ap, memory_order_seq_cst);
+  (void)__c11_atomic_load(Ap, val);
+  (void)__c11_atomic_load(Ap, -1); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__c11_atomic_load(Ap, 42); // expected-error {{memory order argument to atomic operation is invalid}}
+
+  (void)__c11_atomic_store(Ap, val, memory_order_relaxed);
+  (void)__c11_atomic_store(Ap, val, memory_order_acquire); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__c11_atomic_store(Ap, val, memory_order_consume); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__c11_atomic_store(Ap, val, memory_order_release);
+  (void)__c11_atomic_store(Ap, val, memory_order_acq_rel); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__c11_atomic_store(Ap, val, memory_order_seq_cst);
+
+  (void)__c11_atomic_fetch_add(Ap, 1, memory_order_relaxed);
+  (void)__c11_atomic_fetch_add(Ap, 1, memory_order_acquire);
+  (void)__c11_atomic_fetch_add(Ap, 1, memory_order_consume);
+  (void)__c11_atomic_fetch_add(Ap, 1, memory_order_release);
+  (void)__c11_atomic_fetch_add(Ap, 1, memory_order_acq_rel);
+  (void)__c11_atomic_fetch_add(Ap, 1, memory_order_seq_cst);
+
+  (void)__c11_atomic_init(Ap, val);
+  (void)__c11_atomic_init(Ap, val);
+  (void)__c11_atomic_init(Ap, val);
+  (void)__c11_atomic_init(Ap, val);
+  (void)__c11_atomic_init(Ap, val);
+  (void)__c11_atomic_init(Ap, val);
+
+  (void)__c11_atomic_fetch_sub(Ap, val, memory_order_relaxed);
+  (void)__c11_atomic_fetch_sub(Ap, val, memory_order_acquire);
+  (void)__c11_atomic_fetch_sub(Ap, val, memory_order_consume);
+  (void)__c11_atomic_fetch_sub(Ap, val, memory_order_release);
+  (void)__c11_atomic_fetch_sub(Ap, val, memory_order_acq_rel);
+  (void)__c11_atomic_fetch_sub(Ap, val, memory_order_seq_cst);
+
+  (void)__c11_atomic_fetch_and(Ap, val, memory_order_relaxed);
+  (void)__c11_atomic_fetch_and(Ap, val, memory_order_acquire);
+  (void)__c11_atomic_fetch_and(Ap, val, memory_order_consume);
+  (void)__c11_atomic_fetch_and(Ap, val, memory_order_release);
+  (void)__c11_atomic_fetch_and(Ap, val, memory_order_acq_rel);
+  (void)__c11_atomic_fetch_and(Ap, val, memory_order_seq_cst);
+
+  (void)__c11_atomic_fetch_or(Ap, val, memory_order_relaxed);
+  (void)__c11_atomic_fetch_or(Ap, val, memory_order_acquire);
+  (void)__c11_atomic_fetch_or(Ap, val, memory_order_consume);
+  (void)__c11_atomic_fetch_or(Ap, val, memory_order_release);
+  (void)__c11_atomic_fetch_or(Ap, val, memory_order_acq_rel);
+  (void)__c11_atomic_fetch_or(Ap, val, memory_order_seq_cst);
+
+  (void)__c11_atomic_fetch_xor(Ap, val, memory_order_relaxed);
+  (void)__c11_atomic_fetch_xor(Ap, val, memory_order_acquire);
+  (void)__c11_atomic_fetch_xor(Ap, val, memory_order_consume);
+  (void)__c11_atomic_fetch_xor(Ap, val, memory_order_release);
+  (void)__c11_atomic_fetch_xor(Ap, val, memory_order_acq_rel);
+  (void)__c11_atomic_fetch_xor(Ap, val, memory_order_seq_cst);
+
+  (void)__c11_atomic_exchange(Ap, val, memory_order_relaxed);
+  (void)__c11_atomic_exchange(Ap, val, memory_order_acquire);
+  (void)__c11_atomic_exchange(Ap, val, memory_order_consume);
+  (void)__c11_atomic_exchange(Ap, val, memory_order_release);
+  (void)__c11_atomic_exchange(Ap, val, memory_order_acq_rel);
+  (void)__c11_atomic_exchange(Ap, val, memory_order_seq_cst);
+
+  (void)__c11_atomic_compare_exchange_strong(Ap, p, val, memory_order_relaxed, memory_order_relaxed);
+  (void)__c11_atomic_compare_exchange_strong(Ap, p, val, memory_order_acquire, memory_order_relaxed);
+  (void)__c11_atomic_compare_exchange_strong(Ap, p, val, memory_order_consume, memory_order_relaxed);
+  (void)__c11_atomic_compare_exchange_strong(Ap, p, val, memory_order_release, memory_order_relaxed);
+  (void)__c11_atomic_compare_exchange_strong(Ap, p, val, memory_order_acq_rel, memory_order_relaxed);
+  (void)__c11_atomic_compare_exchange_strong(Ap, p, val, memory_order_seq_cst, memory_order_relaxed);
+
+  (void)__c11_atomic_compare_exchange_weak(Ap, p, val, memory_order_relaxed, memory_order_relaxed);
+  (void)__c11_atomic_compare_exchange_weak(Ap, p, val, memory_order_acquire, memory_order_relaxed);
+  (void)__c11_atomic_compare_exchange_weak(Ap, p, val, memory_order_consume, memory_order_relaxed);
+  (void)__c11_atomic_compare_exchange_weak(Ap, p, val, memory_order_release, memory_order_relaxed);
+  (void)__c11_atomic_compare_exchange_weak(Ap, p, val, memory_order_acq_rel, memory_order_relaxed);
+  (void)__c11_atomic_compare_exchange_weak(Ap, p, val, memory_order_seq_cst, memory_order_relaxed);
+
+  (void)__atomic_load_n(p, memory_order_relaxed);
+  (void)__atomic_load_n(p, memory_order_acquire);
+  (void)__atomic_load_n(p, memory_order_consume);
+  (void)__atomic_load_n(p, memory_order_release); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__atomic_load_n(p, memory_order_acq_rel); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__atomic_load_n(p, memory_order_seq_cst);
+
+  (void)__atomic_load(p, p, memory_order_relaxed);
+  (void)__atomic_load(p, p, memory_order_acquire);
+  (void)__atomic_load(p, p, memory_order_consume);
+  (void)__atomic_load(p, p, memory_order_release); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__atomic_load(p, p, memory_order_acq_rel); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__atomic_load(p, p, memory_order_seq_cst);
+
+  (void)__atomic_store(p, p, memory_order_relaxed);
+  (void)__atomic_store(p, p, memory_order_acquire); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__atomic_store(p, p, memory_order_consume); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__atomic_store(p, p, memory_order_release);
+  (void)__atomic_store(p, p, memory_order_acq_rel); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__atomic_store(p, p, memory_order_seq_cst);
+
+  (void)__atomic_store_n(p, val, memory_order_relaxed);
+  (void)__atomic_store_n(p, val, memory_order_acquire); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__atomic_store_n(p, val, memory_order_consume); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__atomic_store_n(p, val, memory_order_release);
+  (void)__atomic_store_n(p, val, memory_order_acq_rel); // expected-error {{memory order argument to atomic operation is invalid}}
+  (void)__atomic_store_n(p, val, memory_order_seq_cst);
+
+  (void)__atomic_fetch_add(p, val, memory_order_relaxed);
+  (void)__atomic_fetch_add(p, val, memory_order_acquire);
+  (void)__atomic_fetch_add(p, val, memory_order_consume);
+  (void)__atomic_fetch_add(p, val, memory_order_release);
+  (void)__atomic_fetch_add(p, val, memory_order_acq_rel);
+  (void)__atomic_fetch_add(p, val, memory_order_seq_cst);
+
+  (void)__atomic_fetch_sub(p, val, memory_order_relaxed);
+  (void)__atomic_fetch_sub(p, val, memory_order_acquire);
+  (void)__atomic_fetch_sub(p, val, memory_order_consume);
+  (void)__atomic_fetch_sub(p, val, memory_order_release);
+  (void)__atomic_fetch_sub(p, val, memory_order_acq_rel);
+  (void)__atomic_fetch_sub(p, val, memory_order_seq_cst);
+
+  (void)__atomic_add_fetch(p, val, memory_order_relaxed);
+  (void)__atomic_add_fetch(p, val, memory_order_acquire);
+  (void)__atomic_add_fetch(p, val, memory_order_consume);
+  (void)__atomic_add_fetch(p, val, memory_order_release);
+  (void)__atomic_add_fetch(p, val, memory_order_acq_rel);
+  (void)__atomic_add_fetch(p, val, memory_order_seq_cst);
+
+  (void)__atomic_sub_fetch(p, val, memory_order_relaxed);
+  (void)__atomic_sub_fetch(p, val, memory_order_acquire);
+  (void)__atomic_sub_fetch(p, val, memory_order_consume);
+  (void)__atomic_sub_fetch(p, val, memory_order_release);
+  (void)__atomic_sub_fetch(p, val, memory_order_acq_rel);
+  (void)__atomic_sub_fetch(p, val, memory_order_seq_cst);
+
+  (void)__atomic_fetch_and(p, val, memory_order_relaxed);
+  (void)__atomic_fetch_and(p, val, memory_order_acquire);
+  (void)__atomic_fetch_and(p, val, memory_order_consume);
+  (void)__atomic_fetch_and(p, val, memory_order_release);
+  (void)__atomic_fetch_and(p, val, memory_order_acq_rel);
+  (void)__atomic_fetch_and(p, val, memory_order_seq_cst);
+
+  (void)__atomic_fetch_or(p, val, memory_order_relaxed);
+  (void)__atomic_fetch_or(p, val, memory_order_acquire);
+  (void)__atomic_fetch_or(p, val, memory_order_consume);
+  (void)__atomic_fetch_or(p, val, memory_order_release);
+  (void)__atomic_fetch_or(p, val, memory_order_acq_rel);
+  (void)__atomic_fetch_or(p, val, memory_order_seq_cst);
+
+  (void)__atomic_fetch_xor(p, val, memory_order_relaxed);
+  (void)__atomic_fetch_xor(p, val, memory_order_acquire);
+  (void)__atomic_fetch_xor(p, val, memory_order_consume);
+  (void)__atomic_fetch_xor(p, val, memory_order_release);
+  (void)__atomic_fetch_xor(p, val, memory_order_acq_rel);
+  (void)__atomic_fetch_xor(p, val, memory_order_seq_cst);
+
+  (void)__atomic_fetch_nand(p, val, memory_order_relaxed);
+  (void)__atomic_fetch_nand(p, val, memory_order_acquire);
+  (void)__atomic_fetch_nand(p, val, memory_order_consume);
+  (void)__atomic_fetch_nand(p, val, memory_order_release);
+  (void)__atomic_fetch_nand(p, val, memory_order_acq_rel);
+  (void)__atomic_fetch_nand(p, val, memory_order_seq_cst);
+
+  (void)__atomic_and_fetch(p, val, memory_order_relaxed);
+  (void)__atomic_and_fetch(p, val, memory_order_acquire);
+  (void)__atomic_and_fetch(p, val, memory_order_consume);
+  (void)__atomic_and_fetch(p, val, memory_order_release);
+  (void)__atomic_and_fetch(p, val, memory_order_acq_rel);
+  (void)__atomic_and_fetch(p, val, memory_order_seq_cst);
+
+  (void)__atomic_or_fetch(p, val, memory_order_relaxed);
+  (void)__atomic_or_fetch(p, val, memory_order_acquire);
+  (void)__atomic_or_fetch(p, val, memory_order_consume);
+  (void)__atomic_or_fetch(p, val, memory_order_release);
+  (void)__atomic_or_fetch(p, val, memory_order_acq_rel);
+  (void)__atomic_or_fetch(p, val, memory_order_seq_cst);
+
+  (void)__atomic_xor_fetch(p, val, memory_order_relaxed);
+  (void)__atomic_xor_fetch(p, val, memory_order_acquire);
+  (void)__atomic_xor_fetch(p, val, memory_order_consume);
+  (void)__atomic_xor_fetch(p, val, memory_order_release);
+  (void)__atomic_xor_fetch(p, val, memory_order_acq_rel);
+  (void)__atomic_xor_fetch(p, val, memory_order_seq_cst);
+
+  (void)__atomic_nand_fetch(p, val, memory_order_relaxed);
+  (void)__atomic_nand_fetch(p, val, memory_order_acquire);
+  (void)__atomic_nand_fetch(p, val, memory_order_consume);
+  (void)__atomic_nand_fetch(p, val, memory_order_release);
+  (void)__atomic_nand_fetch(p, val, memory_order_acq_rel);
+  (void)__atomic_nand_fetch(p, val, memory_order_seq_cst);
+
+  (void)__atomic_exchange_n(p, val, memory_order_relaxed);
+  (void)__atomic_exchange_n(p, val, memory_order_acquire);
+  (void)__atomic_exchange_n(p, val, memory_order_consume);
+  (void)__atomic_exchange_n(p, val, memory_order_release);
+  (void)__atomic_exchange_n(p, val, memory_order_acq_rel);
+  (void)__atomic_exchange_n(p, val, memory_order_seq_cst);
+
+  (void)__atomic_exchange(p, p, p, memory_order_relaxed);
+  (void)__atomic_exchange(p, p, p, memory_order_acquire);
+  (void)__atomic_exchange(p, p, p, memory_order_consume);
+  (void)__atomic_exchange(p, p, p, memory_order_release);
+  (void)__atomic_exchange(p, p, p, memory_order_acq_rel);
+  (void)__atomic_exchange(p, p, p, memory_order_seq_cst);
+
+  (void)__atomic_compare_exchange(p, p, p, 0, memory_order_relaxed, memory_order_relaxed);
+  (void)__atomic_compare_exchange(p, p, p, 0, memory_order_acquire, memory_order_relaxed);
+  (void)__atomic_compare_exchange(p, p, p, 0, memory_order_consume, memory_order_relaxed);
+  (void)__atomic_compare_exchange(p, p, p, 0, memory_order_release, memory_order_relaxed);
+  (void)__atomic_compare_exchange(p, p, p, 0, memory_order_acq_rel, memory_order_relaxed);
+  (void)__atomic_compare_exchange(p, p, p, 0, memory_order_seq_cst, memory_order_relaxed);
+
+  (void)__atomic_compare_exchange_n(p, p, val, 0, memory_order_relaxed, memory_order_relaxed);
+  (void)__atomic_compare_exchange_n(p, p, val, 0, memory_order_acquire, memory_order_relaxed);
+  (void)__atomic_compare_exchange_n(p, p, val, 0, memory_order_consume, memory_order_relaxed);
+  (void)__atomic_compare_exchange_n(p, p, val, 0, memory_order_release, memory_order_relaxed);
+  (void)__atomic_compare_exchange_n(p, p, val, 0, memory_order_acq_rel, memory_order_relaxed);
+  (void)__atomic_compare_exchange_n(p, p, val, 0, memory_order_seq_cst, memory_order_relaxed);
+}

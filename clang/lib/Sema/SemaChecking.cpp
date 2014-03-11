@@ -911,6 +911,33 @@ bool Sema::CheckOtherCall(CallExpr *TheCall, const FunctionProtoType *Proto) {
   return false;
 }
 
+static bool isValidOrderingForOp(int64_t Ordering, AtomicExpr::AtomicOp Op) {
+  if (Ordering < AtomicExpr::AO_ABI_memory_order_relaxed ||
+      Ordering > AtomicExpr::AO_ABI_memory_order_seq_cst)
+    return false;
+
+  switch (Op) {
+  case AtomicExpr::AO__c11_atomic_init:
+    llvm_unreachable("There is no ordering argument for an init");
+
+  case AtomicExpr::AO__c11_atomic_load:
+  case AtomicExpr::AO__atomic_load_n:
+  case AtomicExpr::AO__atomic_load:
+    return Ordering != AtomicExpr::AO_ABI_memory_order_release &&
+           Ordering != AtomicExpr::AO_ABI_memory_order_acq_rel;
+
+  case AtomicExpr::AO__c11_atomic_store:
+  case AtomicExpr::AO__atomic_store:
+  case AtomicExpr::AO__atomic_store_n:
+    return Ordering != AtomicExpr::AO_ABI_memory_order_consume &&
+           Ordering != AtomicExpr::AO_ABI_memory_order_acquire &&
+           Ordering != AtomicExpr::AO_ABI_memory_order_acq_rel;
+
+  default:
+    return true;
+  }
+}
+
 ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
                                          AtomicExpr::AtomicOp Op) {
   CallExpr *TheCall = cast<CallExpr>(TheCallResult.get());
@@ -1199,7 +1226,16 @@ ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
     SubExprs.push_back(TheCall->getArg(3)); // Weak
     break;
   }
-  
+
+  if (SubExprs.size() >= 2 && Form != Init) {
+    llvm::APSInt Result(32);
+    if (SubExprs[1]->isIntegerConstantExpr(Result, Context) &&
+        !isValidOrderingForOp(Result.getSExtValue(), Op))
+      return ExprError(Diag(SubExprs[1]->getLocStart(),
+                            diag::err_atomic_op_has_invalid_memory_order)
+                       << SubExprs[1]->getSourceRange());
+  }
+
   AtomicExpr *AE = new (Context) AtomicExpr(TheCall->getCallee()->getLocStart(),
                                             SubExprs, ResultType, Op,
                                             TheCall->getRParenLoc());

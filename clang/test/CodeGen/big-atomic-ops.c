@@ -311,13 +311,4 @@ void atomic_init_foo()
   // CHECK: }
 }
 
-// CHECK: @invalid_atomic
-void invalid_atomic(_Atomic(int) *i) {
-  __c11_atomic_store(i, 1, memory_order_consume);
-  __c11_atomic_store(i, 1, memory_order_acquire);
-  __c11_atomic_store(i, 1, memory_order_acq_rel);
-  __c11_atomic_load(i, memory_order_release);
-  __c11_atomic_load(i, memory_order_acq_rel);
-}
-
 #endif
