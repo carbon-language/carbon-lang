@@ -124,17 +124,16 @@ AMDGPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 
 bool AMDGPUInstrInfo::expandPostRAPseudo (MachineBasicBlock::iterator MI) const {
   MachineBasicBlock *MBB = MI->getParent();
-   int OffsetOpIdx =
-       AMDGPU::getNamedOperandIdx(MI->getOpcode(), AMDGPU::OpName::addr);
+  int OffsetOpIdx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
+                                               AMDGPU::OpName::addr);
    // addr is a custom operand with multiple MI operands, and only the
    // first MI operand is given a name.
   int RegOpIdx = OffsetOpIdx + 1;
-  int ChanOpIdx =
-      AMDGPU::getNamedOperandIdx(MI->getOpcode(), AMDGPU::OpName::chan);
-
+  int ChanOpIdx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
+                                             AMDGPU::OpName::chan);
   if (isRegisterLoad(*MI)) {
-    int DstOpIdx =
-        AMDGPU::getNamedOperandIdx(MI->getOpcode(), AMDGPU::OpName::dst);
+    int DstOpIdx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
+                                              AMDGPU::OpName::dst);
     unsigned RegIndex = MI->getOperand(RegOpIdx).getImm();
     unsigned Channel = MI->getOperand(ChanOpIdx).getImm();
     unsigned Address = calculateIndirectAddress(RegIndex, Channel);
@@ -147,8 +146,8 @@ bool AMDGPUInstrInfo::expandPostRAPseudo (MachineBasicBlock::iterator MI) const 
                         Address, OffsetReg);
     }
   } else if (isRegisterStore(*MI)) {
-    int ValOpIdx =
-        AMDGPU::getNamedOperandIdx(MI->getOpcode(), AMDGPU::OpName::val);
+    int ValOpIdx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
+                                              AMDGPU::OpName::val);
     AMDGPU::getNamedOperandIdx(MI->getOpcode(), AMDGPU::OpName::dst);
     unsigned RegIndex = MI->getOperand(RegOpIdx).getImm();
     unsigned Channel = MI->getOperand(ChanOpIdx).getImm();
