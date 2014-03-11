@@ -2212,6 +2212,9 @@ void DwarfDebug::emitDebugPubSection(
     const StringMap<const DIE *> &(DwarfUnit::*Accessor)() const) {
   for (const auto &NU : CUMap) {
     DwarfCompileUnit *TheU = NU.second;
+
+    const auto &Globals = (TheU->*Accessor)();
+
     if (auto Skeleton = static_cast<DwarfCompileUnit *>(TheU->getSkeleton()))
       TheU = Skeleton;
     unsigned ID = TheU->getUniqueID();
@@ -2237,7 +2240,7 @@ void DwarfDebug::emitDebugPubSection(
     Asm->EmitLabelDifference(TheU->getLabelEnd(), TheU->getLabelBegin(), 4);
 
     // Emit the pubnames for this compilation unit.
-    for (const auto &GI : (getUnits()[ID]->*Accessor)()) {
+    for (const auto &GI : Globals) {
       const char *Name = GI.getKeyData();
       const DIE *Entity = GI.second;
 
