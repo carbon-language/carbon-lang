@@ -135,7 +135,7 @@ namespace {
     GCOVOptions Options;
 
     // Reversed, NUL-terminated copy of Options.Version.
-    char ReversedVersion[5];  
+    char ReversedVersion[5];
     // Checksum, produced by hash of EdgeDestinations
     SmallVector<uint32_t, 4> FileChecksums;
 
@@ -228,7 +228,7 @@ namespace {
         write(Lines[i]);
     }
 
-    GCOVLines(StringRef F, raw_ostream *os) 
+    GCOVLines(StringRef F, raw_ostream *os)
       : Filename(F) {
       this->os = os;
     }
@@ -276,7 +276,7 @@ namespace {
       });
       for (SmallVectorImpl<StringMapEntry<GCOVLines *> *>::iterator
                I = SortedLinesByFile.begin(), E = SortedLinesByFile.end();
-           I != E; ++I) 
+           I != E; ++I)
         (*I)->getValue()->writeOut();
       write(0);
       write(0);
@@ -535,7 +535,7 @@ bool GCOVProfiler::emitProfileArcs() {
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (!CU_Nodes) return false;
 
-  bool Result = false;  
+  bool Result = false;
   bool InsertIndCounterIncrCode = false;
   for (unsigned i = 0, e = CU_Nodes->getNumOperands(); i != e; ++i) {
     DICompileUnit CU(CU_Nodes->getOperand(i));
@@ -558,7 +558,7 @@ bool GCOVProfiler::emitProfileArcs() {
         else
           Edges += TI->getNumSuccessors();
       }
-      
+
       ArrayType *CounterTy =
         ArrayType::get(Type::getInt64Ty(*Ctx), Edges);
       GlobalVariable *Counters =
@@ -567,10 +567,10 @@ bool GCOVProfiler::emitProfileArcs() {
                            Constant::getNullValue(CounterTy),
                            "__llvm_gcov_ctr");
       CountersBySP.push_back(std::make_pair(Counters, (MDNode*)SP));
-      
+
       UniqueVector<BasicBlock *> ComplexEdgePreds;
       UniqueVector<BasicBlock *> ComplexEdgeSuccs;
-      
+
       unsigned Edge = 0;
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         TerminatorInst *TI = BB->getTerminator();
@@ -604,13 +604,13 @@ bool GCOVProfiler::emitProfileArcs() {
           Edge += Successors;
         }
       }
-      
+
       if (!ComplexEdgePreds.empty()) {
         GlobalVariable *EdgeTable =
           buildEdgeLookupTable(F, Counters,
                                ComplexEdgePreds, ComplexEdgeSuccs);
         GlobalVariable *EdgeState = getEdgeStateValue();
-        
+
         for (int i = 0, e = ComplexEdgePreds.size(); i != e; ++i) {
           IRBuilder<> Builder(ComplexEdgePreds[i + 1]->getFirstInsertionPt());
           Builder.CreateStore(Builder.getInt32(i), EdgeState);
