@@ -42,7 +42,7 @@ if (SCOPLIB_FOUND)
       Exchange/ScopLibImporter.cpp)
 endif (SCOPLIB_FOUND)
 
-add_polly_library(LLVMPollyLib
+add_polly_library(Polly
   RegisterPasses.cpp
   Analysis/Dependences.cpp
   Analysis/ScopDetection.cpp
@@ -80,10 +80,10 @@ add_polly_loadable_module(LLVMPolly
 
 if (TARGET intrinsics_gen)
   # Check if we are building as part of an LLVM build
-  add_dependencies(LLVMPollyLib intrinsics_gen)
+  add_dependencies(LLVMPolly intrinsics_gen)
 endif()
 
-target_link_libraries(LLVMPolly LLVMPollyLib)
+target_link_libraries(LLVMPolly Polly)
 
 set_target_properties(LLVMPolly
   PROPERTIES
