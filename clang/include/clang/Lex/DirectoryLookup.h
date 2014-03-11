@@ -170,6 +170,7 @@ public:
                               SmallVectorImpl<char> *RelativePath,
                               ModuleMap::KnownHeader *SuggestedModule,
                               bool &InUserSpecifiedSystemFramework,
+                              bool &HasBeenMapped,
                               SmallVectorImpl<char> &MappedName) const;
 
 private:

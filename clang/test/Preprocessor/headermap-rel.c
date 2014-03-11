@@ -6,5 +6,7 @@
 // RUN: FileCheck %s -input-file %t.i
 
 // CHECK: Foo.h is parsed
+// CHECK: Foo.h is parsed
 
+#include "Foo.h"
 #include "Foo.h"

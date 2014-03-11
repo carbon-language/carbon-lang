@@ -255,8 +255,10 @@ const FileEntry *DirectoryLookup::LookupFile(
     SmallVectorImpl<char> *RelativePath,
     ModuleMap::KnownHeader *SuggestedModule,
     bool &InUserSpecifiedSystemFramework,
+    bool &HasBeenMapped,
     SmallVectorImpl<char> &MappedName) const {
   InUserSpecifiedSystemFramework = false;
+  HasBeenMapped = false;
 
   SmallString<1024> TmpDir;
   if (isNormalDir()) {
@@ -298,6 +300,7 @@ const FileEntry *DirectoryLookup::LookupFile(
     MappedName.clear();
     MappedName.append(Dest.begin(), Dest.end());
     Filename = StringRef(MappedName.begin(), MappedName.size());
+    HasBeenMapped = true;
     Result = HM->LookupFile(Filename, HS.getFileMgr());
 
   } else {
@@ -533,6 +536,14 @@ static bool checkMSVCHeaderSearch(DiagnosticsEngine &Diags,
   return false;
 }
 
+static const char *copyString(StringRef Str, llvm::BumpPtrAllocator &Alloc) {
+  assert(!Str.empty());
+  char *CopyStr = Alloc.Allocate<char>(Str.size()+1);
+  std::copy(Str.begin(), Str.end(), CopyStr);
+  CopyStr[Str.size()] = '\0';
+  return CopyStr;
+}
+
 /// LookupFile - Given a "foo" or \<foo> reference, look up the indicated file,
 /// return null on failure.  isAngled indicates whether the file reference is
 /// for system \#include's or not (i.e. using <> instead of ""). Includers, if
@@ -673,20 +684,22 @@ const FileEntry *HeaderSearch::LookupFile(
   // multiply included, and the "pragma once" optimization prevents them from
   // being relex/pp'd, but they would still have to search through a
   // (potentially huge) series of SearchDirs to find it.
-  std::pair<unsigned, unsigned> &CacheLookup =
+  LookupFileCacheInfo &CacheLookup =
     LookupFileCache.GetOrCreateValue(Filename).getValue();
 
   // If the entry has been previously looked up, the first value will be
   // non-zero.  If the value is equal to i (the start point of our search), then
   // this is a matching hit.
-  if (!SkipCache && CacheLookup.first == i+1) {
+  if (!SkipCache && CacheLookup.StartIdx == i+1) {
     // Skip querying potentially lots of directories for this lookup.
-    i = CacheLookup.second;
+    i = CacheLookup.HitIdx;
+    if (CacheLookup.MappedName)
+      Filename = CacheLookup.MappedName;
   } else {
     // Otherwise, this is the first query, or the previous query didn't match
     // our search start.  We will fill in our found location below, so prime the
     // start point value.
-    CacheLookup.first = i+1;
+    CacheLookup.StartIdx = i+1;
   }
 
   SmallString<64> MappedName;
@@ -694,10 +707,15 @@ const FileEntry *HeaderSearch::LookupFile(
   // Check each directory in sequence to see if it contains this file.
   for (; i != SearchDirs.size(); ++i) {
     bool InUserSpecifiedSystemFramework = false;
+    bool HasBeenMapped = false;
     const FileEntry *FE =
       SearchDirs[i].LookupFile(Filename, *this, SearchPath, RelativePath,
                                SuggestedModule, InUserSpecifiedSystemFramework,
-                               MappedName);
+                               HasBeenMapped, MappedName);
+    if (HasBeenMapped) {
+      CacheLookup.MappedName =
+          copyString(Filename, LookupFileCache.getAllocator());
+    }
     if (!FE) continue;
 
     CurDir = &SearchDirs[i];
@@ -740,7 +758,7 @@ const FileEntry *HeaderSearch::LookupFile(
     }
 
     // Remember this location for the next lookup we do.
-    CacheLookup.second = i;
+    CacheLookup.HitIdx = i;
     return FE;
   }
 
@@ -767,10 +785,10 @@ const FileEntry *HeaderSearch::LookupFile(
         return MSFE;
       }
 
-      std::pair<unsigned, unsigned> &CacheLookup 
+      LookupFileCacheInfo &CacheLookup 
         = LookupFileCache.GetOrCreateValue(Filename).getValue();
-      CacheLookup.second
-        = LookupFileCache.GetOrCreateValue(ScratchFilename).getValue().second;
+      CacheLookup.HitIdx
+        = LookupFileCache.GetOrCreateValue(ScratchFilename).getValue().HitIdx;
       // FIXME: SuggestedModule.
       return FE;
     }
@@ -783,7 +801,7 @@ const FileEntry *HeaderSearch::LookupFile(
   }
 
   // Otherwise, didn't find it. Remember we didn't find this.
-  CacheLookup.second = SearchDirs.size();
+  CacheLookup.HitIdx = SearchDirs.size();
   return 0;
 }
 
