@@ -2204,6 +2204,12 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
       GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubNamesSection()
                : Asm->getObjFileLowering().getDwarfPubNamesSection();
 
+  emitDebugPubSection(GnuStyle, PSec, "Names", &DwarfUnit::getGlobalNames);
+}
+
+void DwarfDebug::emitDebugPubSection(
+    bool GnuStyle, const MCSection *PSec, StringRef Name,
+    const StringMap<const DIE *> &(DwarfUnit::*Accessor)() const) {
   for (const auto &NU : CUMap) {
     DwarfCompileUnit *TheU = NU.second;
     if (auto Skeleton = static_cast<DwarfCompileUnit *>(TheU->getSkeleton()))
@@ -2214,9 +2220,9 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
     Asm->OutStreamer.SwitchSection(PSec);
 
     // Emit the header.
-    Asm->OutStreamer.AddComment("Length of Public Names Info");
-    MCSymbol *BeginLabel = Asm->GetTempSymbol("pubnames_begin", ID);
-    MCSymbol *EndLabel = Asm->GetTempSymbol("pubnames_end", ID);
+    Asm->OutStreamer.AddComment("Length of Public " + Name + " Info");
+    MCSymbol *BeginLabel = Asm->GetTempSymbol("pub" + Name + "_begin", ID);
+    MCSymbol *EndLabel = Asm->GetTempSymbol("pub" + Name + "_end", ID);
     Asm->EmitLabelDifference(EndLabel, BeginLabel, 4);
 
     Asm->OutStreamer.EmitLabel(BeginLabel);
@@ -2231,7 +2237,7 @@ void DwarfDebug::emitDebugPubNames(bool GnuStyle) {
     Asm->EmitLabelDifference(TheU->getLabelEnd(), TheU->getLabelBegin(), 4);
 
     // Emit the pubnames for this compilation unit.
-    for (const auto &GI : getUnits()[ID]->getGlobalNames()) {
+    for (const auto &GI : (getUnits()[ID]->*Accessor)()) {
       const char *Name = GI.getKeyData();
       const DIE *Entity = GI.second;
 
@@ -2261,58 +2267,7 @@ void DwarfDebug::emitDebugPubTypes(bool GnuStyle) {
       GnuStyle ? Asm->getObjFileLowering().getDwarfGnuPubTypesSection()
                : Asm->getObjFileLowering().getDwarfPubTypesSection();
 
-  for (const auto &NU : CUMap) {
-    DwarfCompileUnit *TheU = NU.second;
-    if (auto Skeleton = static_cast<DwarfCompileUnit *>(TheU->getSkeleton()))
-      TheU = Skeleton;
-    unsigned ID = TheU->getUniqueID();
-
-    // Start the dwarf pubtypes section.
-    Asm->OutStreamer.SwitchSection(PSec);
-
-    // Emit the header.
-    Asm->OutStreamer.AddComment("Length of Public Types Info");
-    MCSymbol *BeginLabel = Asm->GetTempSymbol("pubtypes_begin", ID);
-    MCSymbol *EndLabel = Asm->GetTempSymbol("pubtypes_end", ID);
-    Asm->EmitLabelDifference(EndLabel, BeginLabel, 4);
-
-    Asm->OutStreamer.EmitLabel(BeginLabel);
-
-    Asm->OutStreamer.AddComment("DWARF Version");
-    Asm->EmitInt16(dwarf::DW_PUBTYPES_VERSION);
-
-    Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
-    Asm->EmitSectionOffset(TheU->getLabelBegin(), TheU->getSectionSym());
-
-    Asm->OutStreamer.AddComment("Compilation Unit Length");
-    Asm->EmitLabelDifference(TheU->getLabelEnd(), TheU->getLabelBegin(), 4);
-
-    // Emit the pubtypes.
-    for (const auto &GI : getUnits()[ID]->getGlobalTypes()) {
-      const char *Name = GI.getKeyData();
-      const DIE *Entity = GI.second;
-
-      Asm->OutStreamer.AddComment("DIE offset");
-      Asm->EmitInt32(Entity->getOffset());
-
-      if (GnuStyle) {
-        dwarf::PubIndexEntryDescriptor Desc = computeIndexValue(TheU, Entity);
-        Asm->OutStreamer.AddComment(
-            Twine("Kind: ") + dwarf::GDBIndexEntryKindString(Desc.Kind) + ", " +
-            dwarf::GDBIndexEntryLinkageString(Desc.Linkage));
-        Asm->EmitInt8(Desc.toBits());
-      }
-
-      Asm->OutStreamer.AddComment("External Name");
-
-      // Emit the name with a terminating null byte.
-      Asm->OutStreamer.EmitBytes(StringRef(Name, GI.getKeyLength() + 1));
-    }
-
-    Asm->OutStreamer.AddComment("End Mark");
-    Asm->EmitInt32(0);
-    Asm->OutStreamer.EmitLabel(EndLabel);
-  }
+  emitDebugPubSection(GnuStyle, PSec, "Types", &DwarfUnit::getGlobalTypes);
 }
 
 // Emit strings into a string section.
