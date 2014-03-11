@@ -108,6 +108,30 @@ bool FindIdenticalExprVisitor::VisitIfStmt(const IfStmt *I) {
   const Stmt *Stmt1 = I->getThen();
   const Stmt *Stmt2 = I->getElse();
 
+  // Check for identical conditions:
+  //
+  // if (b) {
+  //   foo1();
+  // } else if (b) {
+  //   foo2();
+  // }
+  if (Stmt1 && Stmt2) {
+    const Expr *Cond1 = I->getCond();
+    const Stmt *Else = Stmt2;
+    while (const IfStmt *I2 = dyn_cast_or_null<IfStmt>(Else)) {
+      const Expr *Cond2 = I2->getCond();
+      if (isIdenticalStmt(AC->getASTContext(), Cond1, Cond2, false)) {
+        SourceRange Sr = Cond1->getSourceRange();
+        PathDiagnosticLocation ELoc(Cond2, BR.getSourceManager(), AC);
+        BR.EmitBasicReport(AC->getDecl(), Checker, "Identical conditions",
+                           categories::LogicError,
+                           "expression is identical to previous condition",
+                           ELoc, Sr);
+      }
+      Else = I2->getElse();
+    }
+  }
+
   if (!Stmt1 || !Stmt2)
     return true;
 

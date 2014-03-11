@@ -1406,3 +1406,108 @@ void test_identical_logical9(int x, int y) {
     ;
 }
 #pragma clang diagnostic pop
+
+void test_warn_chained_if_stmts_1(int x) {
+  if (x == 1)
+    ;
+  else if (x == 1) // expected-warning {{expression is identical to previous condition}}
+    ;
+}
+
+void test_warn_chained_if_stmts_2(int x) {
+  if (x == 1)
+    ;
+  else if (x == 1) // expected-warning {{expression is identical to previous condition}}
+    ;
+  else if (x == 1) // expected-warning {{expression is identical to previous condition}}
+    ;
+}
+
+void test_warn_chained_if_stmts_3(int x) {
+  if (x == 1)
+    ;
+  else if (x == 2)
+    ;
+  else if (x == 1) // expected-warning {{expression is identical to previous condition}}
+    ;
+}
+
+void test_warn_chained_if_stmts_4(int x) {
+  if (x == 1)
+    ;
+  else if (func())
+    ;
+  else if (x == 1) // expected-warning {{expression is identical to previous condition}}
+    ;
+}
+
+void test_warn_chained_if_stmts_5(int x) {
+  if (x & 1)
+    ;
+  else if (x & 1) // expected-warning {{expression is identical to previous condition}}
+    ;
+}
+
+void test_warn_chained_if_stmts_6(int x) {
+  if (x == 1)
+    ;
+  else if (x == 2)
+    ;
+  else if (x == 2) // expected-warning {{expression is identical to previous condition}}
+    ;
+  else if (x == 3)
+    ;
+}
+
+void test_warn_chained_if_stmts_7(int x) {
+  if (x == 1)
+    ;
+  else if (x == 2)
+    ;
+  else if (x == 3)
+    ;
+  else if (x == 2) // expected-warning {{expression is identical to previous condition}}
+    ;
+  else if (x == 5)
+    ;
+}
+
+void test_warn_chained_if_stmts_8(int x) {
+  if (x == 1)
+    ;
+  else if (x == 2)
+    ;
+  else if (x == 3)
+    ;
+  else if (x == 2) // expected-warning {{expression is identical to previous condition}}
+    ;
+  else if (x == 5)
+    ;
+  else if (x == 3) // expected-warning {{expression is identical to previous condition}}
+    ;
+  else if (x == 7)
+    ;
+}
+
+void test_nowarn_chained_if_stmts_1(int x) {
+  if (func())
+    ;
+  else if (func()) // no-warning
+    ;
+}
+
+void test_nowarn_chained_if_stmts_2(int x) {
+  if (func())
+    ;
+  else if (x == 1)
+    ;
+  else if (func()) // no-warning
+    ;
+}
+
+void test_nowarn_chained_if_stmts_3(int x) {
+  if (x++)
+    ;
+  else if (x++) // no-warning
+    ;
+}
