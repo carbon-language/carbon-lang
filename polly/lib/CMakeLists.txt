@@ -43,6 +43,7 @@ if (SCOPLIB_FOUND)
 endif (SCOPLIB_FOUND)
 
 add_polly_library(LLVMPollyLib
+  RegisterPasses.cpp
   Analysis/Dependences.cpp
   Analysis/ScopDetection.cpp
   Analysis/ScopInfo.cpp
@@ -56,21 +57,20 @@ add_polly_library(LLVMPollyLib
   CodeGen/IRBuilder.cpp
   CodeGen/Utils.cpp
   ${GPGPU_CODEGEN_FILES}
+  Exchange/JSONExporter.cpp
+  ${POLLY_SCOPLIB_FILES}
   Support/GICHelper.cpp
   Support/SCEVValidator.cpp
   Support/ScopHelper.cpp
-  Exchange/JSONExporter.cpp
   ${POLLY_JSON_FILES}
   ${POLLY_OPENSCOP_FILES}
-  Canonicalization.cpp
-  CodePreparation.cpp
-  DeadCodeElimination.cpp
-  IndependentBlocks.cpp
-  IndVarSimplify.cpp
-  Pocc.cpp
-  RegisterPasses.cpp
-  ScheduleOptimizer.cpp
-  ${POLLY_SCOPLIB_FILES}
+  Transform/Canonicalization.cpp
+  Transform/CodePreparation.cpp
+  Transform/DeadCodeElimination.cpp
+  Transform/IndependentBlocks.cpp
+  Transform/IndVarSimplify.cpp
+  Transform/Pocc.cpp
+  Transform/ScheduleOptimizer.cpp
   ${POLLY_PLUTO_FILES}
   )
 
