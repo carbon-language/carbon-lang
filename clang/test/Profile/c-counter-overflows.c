@@ -3,7 +3,7 @@
 
 // RUN: %clang_cc1 -triple x86_64-apple-macosx10.9 -main-file-name c-counter-overflows.c %s -o - -emit-llvm -fprofile-instr-use=%S/Inputs/c-counter-overflows.profdata | FileCheck %s
 
-#include <stdint.h>
+typedef unsigned long long uint64_t;
 
 // PGOGEN: @[[MAIN:__llvm_pgo_ctr[0-9]*]] = private global [2 x i64] zeroinitializer
 int main(int argc, const char *argv[]) {
