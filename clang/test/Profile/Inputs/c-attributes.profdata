@@ -1,39 +1,24 @@
-hot_100_percent 4
+hot_100_percent 2
 100000
 4999950000
-0
-0
 
-hot_40_percent 4
+hot_40_percent 2
 40000
 799980000
-0
-0
 
-normal_func 4
+normal_func 2
 20000
 199990000
-0
-0
 
-cold_func 4
+cold_func 2
 500
 124750
-0
-0
 
-main 13
+main 6
 1
+0
 100000
-0
-0
 40000
-0
-0
 20000
-0
-0
 500
-0
-0
 

@@ -11,7 +11,6 @@
 // PGOGEN: @[[BSC:__llvm_pgo_ctr[0-9]*]] = private global [17 x i64] zeroinitializer
 // PGOGEN: @[[BOC:__llvm_pgo_ctr[0-9]*]] = private global [8 x i64]  zeroinitializer
 // PGOGEN: @[[BLC:__llvm_pgo_ctr[0-9]*]] = private global [9 x i64]  zeroinitializer
-// PGOGEN: @[[NOC:__llvm_pgo_ctr[0-9]*]] = private global [2 x i64]  zeroinitializer
 // PGOGEN: @[[MAC:__llvm_pgo_ctr[0-9]*]] = private global [1 x i64]  zeroinitializer
 // PGOGEN: @[[STC:__llvm_pgo_ctr[0-9]*]] = private global [2 x i64]  zeroinitializer
 
@@ -426,21 +425,6 @@ void do_fallthrough() {
   }
 }
 
-// PGOGEN-LABEL: @no_usable_data()
-// PGOUSE-LABEL: @no_usable_data()
-// PGOGEN: store {{.*}} @[[NOC]], i64 0, i64 0
-void no_usable_data() {
-  // The input data for PGOUSE is deliberately invalid for this function, so
-  // that we can test that we reject and ignore it properly.
-  int i = 0;
-
-  // PGOGEN: store {{.*}} @[[NOC]], i64 0, i64 1
-  if (i) {}
-
-  // PGOGEN-NOT: store {{.*}} @[[NOC]],
-  // PGOUSE-NOT: br {{.*}} !prof ![0-9]+
-}
-
 // PGOGEN-LABEL: @static_func()
 // PGOUSE-LABEL: @static_func()
 // PGOGEN: store {{.*}} @[[STC]], i64 0, i64 0
@@ -531,7 +515,6 @@ int main(int argc, const char *argv[]) {
   boolean_operators();
   boolop_loops();
   do_fallthrough();
-  no_usable_data();
   static_func();
   return 0;
 }

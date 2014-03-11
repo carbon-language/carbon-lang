@@ -92,9 +92,6 @@ big_switch 17
 2
 2
 
-issue_with_one_counter 1
-0
-
 boolean_operators 8
 1
 100
@@ -121,13 +118,6 @@ do_fallthrough 4
 10
 2
 8
-
-no_usable_data 5
-1
-1
-1
-1
-1
 
 main 1
 1
