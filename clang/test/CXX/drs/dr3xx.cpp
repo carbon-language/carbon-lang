@@ -924,3 +924,105 @@ namespace dr377 { // dr377: yes
 
 // dr378: dup 276
 // dr379: na
+
+namespace dr381 { // dr381: yes
+  struct A {
+    int a;
+  };
+  struct B : virtual A {};
+  struct C : B {};
+  struct D : B {};
+  struct E : public C, public D {};
+  struct F : public A {};
+  void f() {
+    E e;
+    e.B::a = 0; // expected-error {{ambiguous conversion}}
+    F f;
+    f.A::a = 1;
+  }
+}
+
+namespace dr382 { // dr382: yes c++11
+  // FIXME: Should we allow this in C++98 mode?
+  struct A { typedef int T; };
+  typename A::T t;
+  typename dr382::A a;
+#if __cplusplus < 201103L
+  // expected-error@-3 {{occurs outside of a template}}
+  // expected-error@-3 {{occurs outside of a template}}
+#endif
+  typename A b; // expected-error {{expected a qualified name}}
+}
+
+namespace dr383 { // dr383: yes
+  struct A { A &operator=(const A&); };
+  struct B { ~B(); };
+  union C { C &operator=(const C&); };
+  union D { ~D(); };
+  int check[(__is_pod(A) || __is_pod(B) || __is_pod(C) || __is_pod(D)) ? -1 : 1];
+}
+
+namespace dr384 { // dr384: yes
+  namespace N1 {
+    template<typename T> struct Base {};
+    template<typename T> struct X {
+      struct Y : public Base<T> {
+        Y operator+(int) const;
+      };
+      Y f(unsigned i) { return Y() + i; }
+    };
+  }
+
+  namespace N2 {
+    struct Z {};
+    template<typename T> int *operator+(T, unsigned);
+  }
+
+  int main() {
+    N1::X<N2::Z> v;
+    v.f(0);
+  }
+}
+
+namespace dr385 { // dr385: yes
+  struct A { protected: void f(); }; 
+  struct B : A { using A::f; };
+  struct C : A { void g(B b) { b.f(); } };
+  void h(B b) { b.f(); }
+
+  struct D { int n; }; // expected-note {{member}}
+  struct E : protected D {}; // expected-note 2{{protected}}
+  struct F : E { friend int i(E); };
+  int i(E e) { return e.n; } // expected-error {{protected base}} expected-error {{protected member}}
+}
+
+namespace dr387 { // dr387: yes
+  namespace old {
+    template<typename T> class number {
+      number(int); // expected-note 2{{here}}
+      friend number gcd(number &x, number &y) {}
+    };
+
+    void g() {
+      number<double> a(3), b(4); // expected-error 2{{private}}
+      a = gcd(a, b);
+      b = gcd(3, 4); // expected-error {{undeclared}}
+    }
+  }
+
+  namespace newer {
+    template <typename T> class number {
+    public:
+      number(int);
+      friend number gcd(number x, number y) { return 0; }
+    };
+
+    void g() {
+      number<double> a(3), b(4);
+      a = gcd(a, b);
+      b = gcd(3, 4); // expected-error {{undeclared}}
+    }
+  }
+}
+
+// FIXME: dr388 needs codegen test
