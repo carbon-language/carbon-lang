@@ -1206,11 +1206,11 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
           resolveRelocation(Section, Offset,
                             (uint64_t)Section.Address + Section.StubOffset,
                             RelType, 0);
-          if (SymType == SymbolRef::ST_Unknown)
-            // Restore the TOC for external calls
-            writeInt32BE(Target+4, 0xE8410028); // ld r2,40(r1)
           Section.StubOffset += getMaxStubSize();
         }
+        if (SymType == SymbolRef::ST_Unknown)
+          // Restore the TOC for external calls
+          writeInt32BE(Target+4, 0xE8410028); // ld r2,40(r1)
       }
     } else {
       RelocationEntry RE(SectionID, Offset, RelType, Value.Addend);
