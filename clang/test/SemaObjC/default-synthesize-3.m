@@ -202,10 +202,10 @@ typedef NSObject<Fooing> FooObject;
 
 @protocol r16089191Protocol
 @property (readonly) NSURL *fileURL;
-@property (copy) NSURL *file; 
-@property (copy) NSURL *fileSys; 
-@property (copy) NSURL *fileLog; 
-@property (copy) NSURL *fileKerl; 
+@property (copy) NSURL *file;
+@property (copy) NSURL *fileSys;
+@property (copy) NSURL *fileLog;
+@property (copy) NSURL *fileKerl;
 @end
 
 @interface SubClass : SuperClass <r16089191Protocol>

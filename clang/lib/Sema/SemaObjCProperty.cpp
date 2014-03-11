@@ -1540,12 +1540,12 @@ static bool SuperClassImplementsProperty(ObjCInterfaceDecl *IDecl,
   bool SuperClassImplementsSetter = false;
   if (Prop->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_readonly)
     SuperClassImplementsSetter = true;
-    
+
   while (IDecl->getSuperClass()) {
     ObjCInterfaceDecl *SDecl = IDecl->getSuperClass();
     if (!SuperClassImplementsGetter && SDecl->getInstanceMethod(Prop->getGetterName()))
       SuperClassImplementsGetter = true;
-    
+
     if (!SuperClassImplementsSetter && SDecl->getInstanceMethod(Prop->getSetterName()))
       SuperClassImplementsSetter = true;
     if (SuperClassImplementsGetter && SuperClassImplementsSetter)
