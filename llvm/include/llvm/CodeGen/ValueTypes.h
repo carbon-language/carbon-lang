@@ -434,6 +434,10 @@ namespace llvm {
       }
     }
 
+    unsigned getScalarSizeInBits() const {
+      return getScalarType().getSizeInBits();
+    }
+
     /// getStoreSize - Return the number of bytes overwritten by a store
     /// of the specified value type.
     unsigned getStoreSize() const {
@@ -786,6 +790,10 @@ namespace llvm {
       if (isSimple())
         return V.getSizeInBits();
       return getExtendedSizeInBits();
+    }
+
+    unsigned getScalarSizeInBits() const {
+      return getScalarType().getSizeInBits();
     }
 
     /// getStoreSize - Return the number of bytes overwritten by a store
