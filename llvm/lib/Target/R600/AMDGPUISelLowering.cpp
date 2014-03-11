@@ -605,8 +605,8 @@ SDValue AMDGPUTargetLowering::SplitVectorLoad(const SDValue &Op,
                         MemEltVT, Load->isVolatile(), Load->isNonTemporal(),
                         Load->getAlignment()));
   }
-  return DAG.getNode(ISD::BUILD_VECTOR, SL, Op.getValueType(), &Loads[0],
-                     Loads.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, SL, Op.getValueType(),
+                     Loads.data(), Loads.size());
 }
 
 SDValue AMDGPUTargetLowering::MergeVectorStore(const SDValue &Op,
