@@ -9,6 +9,7 @@
 # Test that address-masking sandboxing is added before indirect branches and
 # returns.
 
+	.align	4
 test1:
 	.set	noreorder
 
@@ -35,6 +36,7 @@ test1:
 
 # Test that address-masking sandboxing is added before load instructions.
 
+	.align	4
 test2:
 	.set	noreorder
 
@@ -104,6 +106,7 @@ test2:
 
 # Test that address-masking sandboxing is added before store instructions.
 
+	.align	4
 test3:
 	.set	noreorder
 
@@ -166,6 +169,7 @@ test3:
 # Test that address-masking sandboxing is added after instructions that change
 # stack pointer.
 
+	.align	4
 test4:
 	.set	noreorder
 
@@ -217,3 +221,65 @@ test4:
 # CHECK-NOT:     and
 # CHECK:         sw      $sp, 123($sp)
 # CHECK-NOT:     and
+
+
+
+# Test that call + branch delay is aligned at bundle end.  Test that mask is
+# added before indirect calls.
+
+	.align	4
+test5:
+	.set	noreorder
+
+        jal func1
+        addiu $4, $zero, 1
+
+        nop
+        bal func2
+        addiu $4, $zero, 2
+
+        nop
+        nop
+        bltzal $t1, func3
+        addiu $4, $zero, 3
+
+        nop
+        nop
+        nop
+        bgezal $t2, func4
+        addiu $4, $zero, 4
+
+        jalr $t9
+        addiu $4, $zero, 5
+
+# CHECK-LABEL:   test5:
+
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        jal
+# CHECK-NEXT:        addiu   $4, $zero, 1
+
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        bal
+# CHECK-NEXT:        addiu   $4, $zero, 2
+
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        bltzal
+# CHECK-NEXT:        addiu   $4, $zero, 3
+
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        nop
+
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        bgezal
+# CHECK-NEXT:        addiu   $4, $zero, 4
+
+# CHECK-NEXT:        nop
+# CHECK-NEXT:        and     $25, $25, $14
+# CHECK-NEXT:        jalr    $25
+# CHECK-NEXT:        addiu   $4, $zero, 5

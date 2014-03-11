@@ -12,7 +12,8 @@
 // before dangerous control-flow and memory access instructions.  It inserts
 // address-masking instructions after instructions that change the stack
 // pointer.  It ensures that the mask and the dangerous instruction are always
-// emitted in the same bundle.
+// emitted in the same bundle.  It aligns call + branch delay to the bundle end,
+// so that return address is always aligned to the start of next bundle.
 //
 //===----------------------------------------------------------------------===//
 
@@ -36,11 +37,15 @@ class MipsNaClELFStreamer : public MCELFStreamer {
 public:
   MipsNaClELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
                       MCCodeEmitter *Emitter)
-    : MCELFStreamer(Context, TAB, OS, Emitter) {}
+    : MCELFStreamer(Context, TAB, OS, Emitter), PendingCall(false) {}
 
   ~MipsNaClELFStreamer() {}
 
 private:
+  // Whether we started the sandboxing sequence for calls.  Calls are bundled
+  // with branch delays and aligned to the bundle end.
+  bool PendingCall;
+
   bool isIndirectJump(const MCInst &MI) {
     return MI.getOpcode() == Mips::JR || MI.getOpcode() == Mips::RET;
   }
@@ -48,6 +53,25 @@ private:
   bool isStackPointerFirstOperand(const MCInst &MI) {
     return (MI.getNumOperands() > 0 && MI.getOperand(0).isReg()
             && MI.getOperand(0).getReg() == Mips::SP);
+  }
+
+  bool isCall(unsigned Opcode, bool *IsIndirectCall) {
+    *IsIndirectCall = false;
+
+    switch (Opcode) {
+    default:
+      return false;
+
+    case Mips::JAL:
+    case Mips::BAL_BR:
+    case Mips::BLTZAL:
+    case Mips::BGEZAL:
+      return true;
+
+    case Mips::JALR:
+      *IsIndirectCall = true;
+      return true;
+    }
   }
 
   void emitMask(unsigned AddrReg, unsigned MaskReg,
@@ -98,6 +122,8 @@ public:
   virtual void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) {
     // Sandbox indirect jumps.
     if (isIndirectJump(Inst)) {
+      if (PendingCall)
+        report_fatal_error("Dangerous instruction in branch delay slot!");
       sandboxIndirectJump(Inst, STI);
       return;
     }
@@ -109,6 +135,9 @@ public:
                                                     &IsStore);
     bool IsSPFirstOperand = isStackPointerFirstOperand(Inst);
     if (IsMemAccess || IsSPFirstOperand) {
+      if (PendingCall)
+        report_fatal_error("Dangerous instruction in branch delay slot!");
+
       bool MaskBefore = (IsMemAccess
                          && baseRegNeedsLoadStoreMask(Inst.getOperand(AddrIdx)
                                                           .getReg()));
@@ -117,6 +146,31 @@ public:
         sandboxLoadStoreStackChange(Inst, AddrIdx, STI, MaskBefore, MaskAfter);
       else
         MCELFStreamer::EmitInstruction(Inst, STI);
+      return;
+    }
+
+    // Sandbox calls by aligning call and branch delay to the bundle end.
+    // For indirect calls, emit the mask before the call.
+    bool IsIndirectCall;
+    if (isCall(Inst.getOpcode(), &IsIndirectCall)) {
+      if (PendingCall)
+        report_fatal_error("Dangerous instruction in branch delay slot!");
+
+      // Start the sandboxing sequence by emitting call.
+      EmitBundleLock(true);
+      if (IsIndirectCall) {
+        unsigned TargetReg = Inst.getOperand(1).getReg();
+        emitMask(TargetReg, IndirectBranchMaskReg, STI);
+      }
+      MCELFStreamer::EmitInstruction(Inst, STI);
+      PendingCall = true;
+      return;
+    }
+    if (PendingCall) {
+      // Finish the sandboxing sequence by emitting branch delay.
+      MCELFStreamer::EmitInstruction(Inst, STI);
+      EmitBundleUnlock();
+      PendingCall = false;
       return;
     }
 
