@@ -40,16 +40,16 @@ set( LLDB_USED_LIBS
   lldbExpression
   lldbInterpreter
   lldbSymbol
-  lldbTarget  
+  lldbTarget
   lldbUtility
-  
+
   # Plugins
   lldbPluginDisassemblerLLVM
   lldbPluginSymbolFileDWARF
   lldbPluginSymbolFileSymtab
   lldbPluginDynamicLoaderStatic
   lldbPluginDynamicLoaderPosixDYLD
-  
+
   lldbPluginObjectFileMachO
   lldbPluginObjectFileELF
   lldbPluginSymbolVendorELF
@@ -150,8 +150,8 @@ set( CLANG_USED_LIBS
   clangRewriteFrontend
   clangSema
   clangSerialization
-  )  
-  
+  )
+
 set(LLDB_SYSTEM_LIBS)
 if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
   list(APPEND LLDB_SYSTEM_LIBS edit panel ncurses)
