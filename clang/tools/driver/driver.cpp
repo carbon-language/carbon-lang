@@ -227,8 +227,11 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
     { "++",        "--driver-mode=g++" },
   };
   std::string ProgName(llvm::sys::path::stem(ArgVector[0]));
+#ifdef _WIN32
+  // Transform to lowercase for case insensitive file systems.
   std::transform(ProgName.begin(), ProgName.end(), ProgName.begin(),
                  toLowercase);
+#endif
   StringRef ProgNameRef(ProgName);
   StringRef Prefix;
 
