@@ -78,8 +78,8 @@ class EmptyPragmaHandler : public PragmaHandler {
 public:
   EmptyPragmaHandler();
 
-  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
-                            Token &FirstToken);
+  void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                    Token &FirstToken) override;
 };
 
 /// PragmaNamespace - This PragmaHandler subdivides the namespace of pragmas,
@@ -114,10 +114,10 @@ public:
     return Handlers.empty();
   }
 
-  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
-                            Token &FirstToken);
+  void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                    Token &FirstToken) override;
 
-  virtual PragmaNamespace *getIfNamespace() { return this; }
+  PragmaNamespace *getIfNamespace() override { return this; }
 };
 
 

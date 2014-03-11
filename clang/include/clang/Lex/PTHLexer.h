@@ -90,11 +90,11 @@ public:
 
   /// IndirectLex - An indirect call to 'Lex' that can be invoked via
   ///  the PreprocessorLexer interface.
-  void IndirectLex(Token &Result) { Lex(Result); }
+  void IndirectLex(Token &Result) override { Lex(Result); }
 
   /// getSourceLocation - Return a source location for the token in
   /// the current file.
-  SourceLocation getSourceLocation();
+  SourceLocation getSourceLocation() override;
 
   /// SkipBlock - Used by Preprocessor to skip the current conditional block.
   bool SkipBlock();

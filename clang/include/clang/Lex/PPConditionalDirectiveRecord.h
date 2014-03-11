@@ -86,16 +86,16 @@ public:
   SourceLocation findConditionalDirectiveRegionLoc(SourceLocation Loc) const;
 
 private:
-  virtual void If(SourceLocation Loc, SourceRange ConditionRange,
-                  ConditionValueKind ConditionValue);
-  virtual void Elif(SourceLocation Loc, SourceRange ConditionRange,
-                    ConditionValueKind ConditionValue, SourceLocation IfLoc);
-  virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
-                     const MacroDirective *MD);
-  virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
-                      const MacroDirective *MD);
-  virtual void Else(SourceLocation Loc, SourceLocation IfLoc);
-  virtual void Endif(SourceLocation Loc, SourceLocation IfLoc);
+  void If(SourceLocation Loc, SourceRange ConditionRange,
+          ConditionValueKind ConditionValue) override;
+  void Elif(SourceLocation Loc, SourceRange ConditionRange,
+            ConditionValueKind ConditionValue, SourceLocation IfLoc) override;
+  void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
+             const MacroDirective *MD) override;
+  void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
+              const MacroDirective *MD) override;
+  void Else(SourceLocation Loc, SourceLocation IfLoc) override;
+  void Endif(SourceLocation Loc, SourceLocation IfLoc) override;
 };
 
 } // end namespace clang
