@@ -2609,9 +2609,11 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
       // There are updates. This means the context has external visible
       // storage, even if the original stored version didn't.
       LookupDC->setHasExternalVisibleStorage(true);
-      for (const auto &Update : I->second)
-        Update.second->DeclContextInfos[DC].NameLookupTableData.reset(
-            Update.first);
+      for (const auto &Update : I->second) {
+        DeclContextInfo &Info = Update.second->DeclContextInfos[DC];
+        delete Info.NameLookupTableData;
+        Info.NameLookupTableData = Update.first;
+      }
       PendingVisibleUpdates.erase(I);
     }
   }
