@@ -108,7 +108,8 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
   //   SomeParameter, OtherParameter).DoSomething(
   //   ...
   // As they hide "DoSomething" and are generally bad for readability.
-  if (Previous.opensScope() && State.LowestLevelOnLine < State.StartOfLineLevel)
+  if (Previous.opensScope() && Previous.isNot(tok::l_brace) &&
+      State.LowestLevelOnLine < State.StartOfLineLevel)
     return false;
   if (Current.isMemberAccess() && State.Stack.back().ContainsUnwrappedBuilder)
     return false;

@@ -7974,6 +7974,10 @@ TEST_F(FormatTest, FormatsLambdas) {
   verifyFormat("int c = []() -> int { return 2; }();\n");
   verifyFormat("int c = []() -> vector<int> { return {2}; }();\n");
   verifyFormat("Foo([]() -> std::vector<int> { return {2}; }());");
+  verifyFormat("auto aaaaaaaa = [](int i, // break for some reason\n"
+               "                   int j) -> int {\n"
+               "  return fffffffffffffffffffffffffffffffffffffff(i * j);\n"
+               "};");
 
   // Not lambdas.
   verifyFormat("constexpr char hello[]{\"hello\"};");
