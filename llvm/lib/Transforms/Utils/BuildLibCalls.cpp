@@ -30,6 +30,25 @@ Value *llvm::CastToCStr(Value *V, IRBuilder<> &B) {
   return B.CreateBitCast(V, B.getInt8PtrTy(), "cstr");
 }
 
+/// UpdateCalleeCC - Update libcall instruction calling convention to that of
+/// the callee's. In the case where the CC is C and the caller is using an
+/// ARM target specific calling convention (e.g. AAPCS-VFP), use caller CC
+/// to avoid calling convention mismatch.
+static void UpdateCalleeCC(CallInst *CI, Value *Callee, Function *CallerF) {
+  if (Function *F = dyn_cast<Function>(Callee->stripPointerCasts())) {
+    CallingConv::ID CC = F->getCallingConv();
+    CallingConv::ID CallerCC = CallerF->getCallingConv();
+    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
+      // If caller is using ARM target specific CC such as AAPCS-VFP,
+      // make sure the call uses it or it would introduce a calling
+      // convention mismatch.
+      CI->setCallingConv(CallerCC);
+      F->setCallingConv(CallerCC);
+    } else
+      CI->setCallingConv(CC);
+  }
+}
+
 /// EmitStrLen - Emit a call to the strlen function to the builder, for the
 /// specified pointer.  This always returns an integer value of size intptr_t.
 Value *llvm::EmitStrLen(Value *Ptr, IRBuilder<> &B, const DataLayout *TD,
@@ -53,19 +72,7 @@ Value *llvm::EmitStrLen(Value *Ptr, IRBuilder<> &B, const DataLayout *TD,
                                             B.getInt8PtrTy(),
                                             NULL);
   CallInst *CI = B.CreateCall(StrLen, CastToCStr(Ptr, B), "strlen");
-  if (Function *F = dyn_cast<Function>(StrLen->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, StrLen, CallerF);
   return CI;
 }
 
@@ -94,19 +101,7 @@ Value *llvm::EmitStrNLen(Value *Ptr, Value *MaxLen, IRBuilder<> &B,
                                              TD->getIntPtrType(Context),
                                              NULL);
   CallInst *CI = B.CreateCall2(StrNLen, CastToCStr(Ptr, B), MaxLen, "strnlen");
-  if (Function *F = dyn_cast<Function>(StrNLen->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, StrNLen, CallerF);
   return CI;
 }
 
@@ -133,19 +128,7 @@ Value *llvm::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B,
                                             I8Ptr, I8Ptr, I32Ty, NULL);
   CallInst *CI = B.CreateCall2(StrChr, CastToCStr(Ptr, B),
                                ConstantInt::get(I32Ty, C), "strchr");
-  if (Function *F = dyn_cast<Function>(StrChr->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, StrChr, CallerF);
   return CI;
 }
 
@@ -175,20 +158,7 @@ Value *llvm::EmitStrNCmp(Value *Ptr1, Value *Ptr2, Value *Len,
                                           TD->getIntPtrType(Context), NULL);
   CallInst *CI = B.CreateCall3(StrNCmp, CastToCStr(Ptr1, B),
                                CastToCStr(Ptr2, B), Len, "strncmp");
-
-  if (Function *F = dyn_cast<Function>(StrNCmp->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, StrNCmp, CallerF);
   return CI;
 }
 
@@ -212,19 +182,7 @@ Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
                                          I8Ptr, I8Ptr, I8Ptr, NULL);
   CallInst *CI = B.CreateCall2(StrCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
                                Name);
-  if (Function *F = dyn_cast<Function>(StrCpy->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, StrCpy, CallerF);
   return CI;
 }
 
@@ -250,19 +208,7 @@ Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
                                           Len->getType(), NULL);
   CallInst *CI = B.CreateCall3(StrNCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
                                Len, "strncpy");
-  if (Function *F = dyn_cast<Function>(StrNCpy->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, StrNCpy, CallerF);
   return CI;
 }
 
@@ -291,19 +237,7 @@ Value *llvm::EmitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
   Dst = CastToCStr(Dst, B);
   Src = CastToCStr(Src, B);
   CallInst *CI = B.CreateCall4(MemCpy, Dst, Src, Len, ObjSize);
-  if (Function *F = dyn_cast<Function>(MemCpy->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, MemCpy, CallerF);
   return CI;
 }
 
@@ -330,20 +264,7 @@ Value *llvm::EmitMemChr(Value *Ptr, Value *Val,
                                          TD->getIntPtrType(Context),
                                          NULL);
   CallInst *CI = B.CreateCall3(MemChr, CastToCStr(Ptr, B), Val, Len, "memchr");
-
-  if (Function *F = dyn_cast<Function>(MemChr->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, MemChr, CallerF);
   return CI;
 }
 
@@ -372,20 +293,7 @@ Value *llvm::EmitMemCmp(Value *Ptr1, Value *Ptr2,
                                          TD->getIntPtrType(Context), NULL);
   CallInst *CI = B.CreateCall3(MemCmp, CastToCStr(Ptr1, B), CastToCStr(Ptr2, B),
                                Len, "memcmp");
-
-  if (Function *F = dyn_cast<Function>(MemCmp->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, MemCmp, CallerF);
   return CI;
 }
 
@@ -419,19 +327,7 @@ Value *llvm::EmitUnaryFloatFnCall(Value *Op, StringRef Name, IRBuilder<> &B,
                                          Op->getType(), NULL);
   CallInst *CI = B.CreateCall(Callee, Op, Name);
   CI->setAttributes(Attrs);
-  if (Function *F = dyn_cast<Function>(Callee->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, Callee, CallerF);
   return CI;
 }
 
@@ -451,19 +347,7 @@ Value *llvm::EmitBinaryFloatFnCall(Value *Op1, Value *Op2, StringRef Name,
                                          Op1->getType(), Op2->getType(), NULL);
   CallInst *CI = B.CreateCall2(Callee, Op1, Op2, Name);
   CI->setAttributes(Attrs);
-  if (Function *F = dyn_cast<Function>(Callee->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, Callee, CallerF);
   return CI;
 }
 
@@ -484,20 +368,7 @@ Value *llvm::EmitPutChar(Value *Char, IRBuilder<> &B, const DataLayout *TD,
                               /*isSigned*/true,
                               "chari"),
                               "putchar");
-
-  if (Function *F = dyn_cast<Function>(PutChar->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, PutChar, CallerF);
   return CI;
 }
 
@@ -521,19 +392,7 @@ Value *llvm::EmitPutS(Value *Str, IRBuilder<> &B, const DataLayout *TD,
                                        B.getInt8PtrTy(),
                                        NULL);
   CallInst *CI = B.CreateCall(PutS, CastToCStr(Str, B), "puts");
-  if (Function *F = dyn_cast<Function>(PutS->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, PutS, CallerF);
   return CI;
 }
 
@@ -565,20 +424,7 @@ Value *llvm::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B,
   Char = B.CreateIntCast(Char, B.getInt32Ty(), /*isSigned*/true,
                          "chari");
   CallInst *CI = B.CreateCall2(F, Char, File, "fputc");
-
-  if (Function *Fn = dyn_cast<Function>(F->stripPointerCasts())) {
-    CallingConv::ID CC = Fn->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      Fn->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, F, CallerF);
   return CI;
 }
 
@@ -609,20 +455,7 @@ Value *llvm::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B,
                                B.getInt8PtrTy(),
                                File->getType(), NULL);
   CallInst *CI = B.CreateCall2(F, CastToCStr(Str, B), File, "fputs");
-
-  if (Function *Fn = dyn_cast<Function>(F->stripPointerCasts())) {
-    CallingConv::ID CC = Fn->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      Fn->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, F, CallerF);
   return CI;
 }
 
@@ -660,20 +493,7 @@ Value *llvm::EmitFWrite(Value *Ptr, Value *Size, Value *File,
                                File->getType(), NULL);
   CallInst *CI = B.CreateCall4(F, CastToCStr(Ptr, B), Size,
                         ConstantInt::get(TD->getIntPtrType(Context), 1), File);
-
-  if (Function *Fn = dyn_cast<Function>(F->stripPointerCasts())) {
-    CallingConv::ID CC = Fn->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      Fn->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-
+  UpdateCalleeCC(CI, F, CallerF);
   return CI;
 }
 
