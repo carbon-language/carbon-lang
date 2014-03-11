@@ -2,7 +2,8 @@
 
 @interface INTF1 @end
 
-@protocol p1,p2,p3;
+@protocol p1,p2,p3; // expected-note {{protocol 'p2' has no definition}} \
+                    // expected-note {{protocol 'p3' has no definition}}
 
 @protocol p1;
 
@@ -33,4 +34,15 @@
 @interface U2 @end
 
 @interface I4 : U2 <p1,p2>
+@end
+
+// rdar://16111182
+@interface NSObject @end
+
+@protocol UndefinedParentProtocol; // expected-note {{protocol 'UndefinedParentProtocol' has no definition}}
+
+@protocol UndefinedProtocol <UndefinedParentProtocol>
+@end
+
+@interface SomeObject : NSObject <UndefinedProtocol> // expected-warning {{cannot find protocol definition for 'UndefinedProtocol'}}
 @end

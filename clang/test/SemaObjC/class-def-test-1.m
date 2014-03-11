@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wno-objc-root-class %s
 
-@protocol SUPER;
+@protocol SUPER; // expected-note {{protocol 'SUPER' has no definition}}
 
 @interface SUPER <SUPER> @end // expected-warning {{cannot find protocol definition for 'SUPER'}}
 

@@ -25,7 +25,7 @@ typedef unsigned int NSUInteger;
 CK_UNRESTRICTED= 0,     CK_READ_ONLY,     CK_ADD_ONLY,     CK_REMOVE_ONLY };
 @protocol EcoClass <EcoBehavioredClassifier>      - (NSArray *) ownedAttributes;
 @end @protocol EcoNamespace;
-@protocol EcoType;
+@protocol EcoType @end;
 @protocol EcoClassifier <EcoNamespace,EcoType>    - (NSArray *) features; 
 @end @protocol EcoComment;
 @protocol EcoElement <NSObject> - (NSArray *) ownedElements;

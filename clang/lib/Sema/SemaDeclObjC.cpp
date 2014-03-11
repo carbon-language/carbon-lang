@@ -760,6 +760,22 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
   return ActOnObjCContainerStartDefinition(PDecl);
 }
 
+static bool NestedProtocolHasNoDefinition(ObjCProtocolDecl *PDecl,
+                                          ObjCProtocolDecl *&UndefinedProtocol) {
+  if (!PDecl->hasDefinition() || PDecl->getDefinition()->isHidden()) {
+    UndefinedProtocol = PDecl;
+    return true;
+  }
+  
+  for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
+       E = PDecl->protocol_end(); PI != E; ++PI)
+    if (NestedProtocolHasNoDefinition((*PI), UndefinedProtocol)) {
+      UndefinedProtocol = (*PI);
+      return true;
+    }
+  return false;
+}
+
 /// FindProtocolDeclaration - This routine looks up protocols and
 /// issues an error if they are not declared. It returns list of
 /// protocol declarations in its 'Protocols' argument.
@@ -795,10 +811,15 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
     // If this is a forward declaration and we are supposed to warn in this
     // case, do it.
     // FIXME: Recover nicely in the hidden case.
+    ObjCProtocolDecl *UndefinedProtocol;
+    
     if (WarnOnDeclarations &&
-        (!PDecl->hasDefinition() || PDecl->getDefinition()->isHidden()))
+        NestedProtocolHasNoDefinition(PDecl, UndefinedProtocol)) {
       Diag(ProtocolId[i].second, diag::warn_undef_protocolref)
         << ProtocolId[i].first;
+      Diag(UndefinedProtocol->getLocation(), diag::note_protocol_decl_undefined)
+        << UndefinedProtocol;
+    }
     Protocols.push_back(PDecl);
   }
 }
