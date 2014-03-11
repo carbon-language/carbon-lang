@@ -238,3 +238,13 @@ __attribute__((objc_root_class))
   return 0;
 }
 @end
+
+// rdar://16261494
+@class GEOPDAnalyticMetadata; // expected-note {{forward declaration of class here}}
+
+@implementation GEOPDAnalyticMetadata (PlaceCardExtras) // expected-error {{cannot find interface declaration for 'GEOPDAnalyticMetadata'}}
+- (instancetype)initInProcess
+{
+    return ((void*)0);
+}
+@end

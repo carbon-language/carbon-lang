@@ -415,7 +415,9 @@ bool ObjCInterfaceDecl::inheritsDesignatedInitializers() const {
 
 void ObjCInterfaceDecl::getDesignatedInitializers(
     llvm::SmallVectorImpl<const ObjCMethodDecl *> &Methods) const {
-  assert(hasDefinition());
+  // Check for a complete definition and recover if not so.
+  if (!isThisDeclarationADefinition())
+    return;
   if (data().ExternallyCompleted)
     LoadExternalDefinition();
 
@@ -433,7 +435,9 @@ void ObjCInterfaceDecl::getDesignatedInitializers(
 
 bool ObjCInterfaceDecl::isDesignatedInitializer(Selector Sel,
                                       const ObjCMethodDecl **InitMethod) const {
-  assert(hasDefinition());
+  // Check for a complete definition and recover if not so.
+  if (!isThisDeclarationADefinition())
+    return false;
   if (data().ExternallyCompleted)
     LoadExternalDefinition();
 
@@ -1197,12 +1201,16 @@ void ObjCInterfaceDecl::setExternallyCompleted() {
 }
 
 void ObjCInterfaceDecl::setHasDesignatedInitializers() {
-  assert(hasDefinition() && "Forward declarations can't contain methods");
+  // Check for a complete definition and recover if not so.
+  if (!isThisDeclarationADefinition())
+    return;
   data().HasDesignatedInitializers = true;
 }
 
 bool ObjCInterfaceDecl::hasDesignatedInitializers() const {
-  assert(hasDefinition() && "Forward declarations can't contain methods");
+  // Check for a complete definition and recover if not so.
+  if (!isThisDeclarationADefinition())
+    return false;
   if (data().ExternallyCompleted)
     LoadExternalDefinition();
 
