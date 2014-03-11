@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv7 -arm-tail-calls | FileCheck %s
+; RUN: llc < %s -mtriple=armv7 | FileCheck %s
 
 declare i16 @ret16(i16 returned)
 declare i32 @ret32(i32 returned)

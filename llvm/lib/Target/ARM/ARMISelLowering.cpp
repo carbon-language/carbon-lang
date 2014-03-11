@@ -55,12 +55,6 @@ STATISTIC(NumTailCalls, "Number of tail calls");
 STATISTIC(NumMovwMovt, "Number of GAs materialized with movw + movt");
 STATISTIC(NumLoopByVals, "Number of loops generated for byval arguments");
 
-// This option should go away when tail calls fully work.
-static cl::opt<bool>
-EnableARMTailCalls("arm-tail-calls", cl::Hidden,
-  cl::desc("Generate tail calls (TEMPORARY OPTION)."),
-  cl::init(false));
-
 cl::opt<bool>
 EnableARMLongCalls("arm-long-calls", cl::Hidden,
   cl::desc("Generate calls via indirect call instructions"),
@@ -1446,7 +1440,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool isThisReturn   = false;
   bool isSibCall      = false;
   // Disable tail calls if they're not supported.
-  if (!EnableARMTailCalls && !Subtarget->supportsTailCall())
+  if (!Subtarget->supportsTailCall())
     isTailCall = false;
   if (isTailCall) {
     // Check if it's really possible to do a tail call.
@@ -2276,7 +2270,7 @@ bool ARMTargetLowering::isUsedByReturnOnly(SDNode *N, SDValue &Chain) const {
 }
 
 bool ARMTargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
-  if (!EnableARMTailCalls && !Subtarget->supportsTailCall())
+  if (!Subtarget->supportsTailCall())
     return false;
 
   if (!CI->isTailCall())

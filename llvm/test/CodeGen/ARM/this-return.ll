@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=armv6-linux-gnueabi -arm-tail-calls | FileCheck %s -check-prefix=CHECKELF
-; RUN: llc < %s -mtriple=thumbv7-apple-ios -arm-tail-calls | FileCheck %s -check-prefix=CHECKT2D
+; RUN: llc < %s -mtriple=armv6-linux-gnueabi | FileCheck %s -check-prefix=CHECKELF
+; RUN: llc < %s -mtriple=thumbv7-apple-ios5.0 | FileCheck %s -check-prefix=CHECKT2D
 
 %struct.A = type { i8 }
 %struct.B = type { i32 }

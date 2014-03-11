@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=thumbv7-linux-gnueabi -O0 -arm-tail-calls < %s | FileCheck %s
+; RUN: llc -mtriple=thumbv7-linux-gnueabi -O0 < %s | FileCheck %s
 
 ; Primarily a non-crash test: Thumbv7 Linux does not have FastISel support,
 ; which led (via a convoluted route) to DAG nodes after a TC_RETURN that

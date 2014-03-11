@@ -1,7 +1,7 @@
-; RUN: llc < %s -mtriple=armv6-apple-ios -mattr=+vfp2 -arm-tail-calls | FileCheck %s -check-prefix=CHECKV6
-; RUN: llc < %s -mtriple=armv6-linux-gnueabi -relocation-model=pic -mattr=+vfp2 -arm-tail-calls | FileCheck %s -check-prefix=CHECKELF
-; RUN: llc < %s -mtriple=thumbv7-apple-ios -arm-tail-calls | FileCheck %s -check-prefix=CHECKT2D
+; RUN: llc < %s -mtriple=armv6-apple-ios5.0 -mattr=+vfp2 | FileCheck %s -check-prefix=CHECKV6
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios5.0 | FileCheck %s -check-prefix=CHECKT2D
+; RUN: llc < %s -mtriple=armv6-linux-gnueabi -relocation-model=pic -mattr=+vfp2 \
+; RUN:    | FileCheck %s -check-prefix=CHECKELF
 
 ; Enable tailcall optimization for iOS 5.0
 ; rdar://9120031
