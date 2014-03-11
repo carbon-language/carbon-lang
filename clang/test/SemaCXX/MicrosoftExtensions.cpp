@@ -303,7 +303,7 @@ struct SP9 {
   __declspec(property(get=GetV, put=SetV)) T V;
   T GetV() { return 0; }
   void SetV(T v) {}
-  void f() { V = this->V; V < this->V; }
+  bool f() { V = this->V; return V < this->V; }
   void g() { V++; }
   void h() { V*=2; }
 };

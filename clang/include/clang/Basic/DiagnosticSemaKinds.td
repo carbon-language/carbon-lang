@@ -5813,7 +5813,7 @@ def warn_unused_volatile : Warning<
   InGroup<DiagGroup<"unused-volatile-lvalue">>;
 
 def warn_unused_comparison : Warning<
-  "%select{equality|inequality}0 comparison result unused">,
+  "%select{%select{|in}1equality|relational}0 comparison result unused">,
   InGroup<UnusedComparison>;
 def note_inequality_comparison_to_or_assign : Note<
   "use '|=' to turn this inequality comparison into an or-assignment">;

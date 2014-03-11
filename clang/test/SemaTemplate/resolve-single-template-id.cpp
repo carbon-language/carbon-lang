@@ -67,10 +67,10 @@ int main()
   b = (void (*)()) twoT<int>;
   
   one < one; //expected-warning {{self-comparison always evaluates to false}} \
-             //expected-warning {{expression result unused}}         
+             //expected-warning {{relational comparison result unused}}         
 
   oneT<int> < oneT<int>;  //expected-warning {{self-comparison always evaluates to false}} \
-                          //expected-warning {{expression result unused}}
+                          //expected-warning {{relational comparison result unused}}
 
   two < two; //expected-error 2 {{reference to overloaded function could not be resolved; did you mean to call it with no arguments?}} expected-error {{invalid operands to binary expression ('void' and 'void')}}
   twoT<int> < twoT<int>; //expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}} {{cannot resolve overloaded function 'twoT' from context}}
