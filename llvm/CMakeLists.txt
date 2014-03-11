@@ -502,6 +502,13 @@ endif()
 
 add_subdirectory(projects)
 
+option(WITH_POLLY "Build LLVM with Polly" ON)
+if(WITH_POLLY)
+  if(NOT EXISTS ${LLVM_MAIN_SRC_DIR}/tools/polly/CMakeLists.txt)
+    set(WITH_POLLY OFF)
+  endif()
+endif(WITH_POLLY)
+
 if( LLVM_INCLUDE_TOOLS )
   add_subdirectory(tools)
 endif()
@@ -564,10 +571,3 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     PATTERN ".svn" EXCLUDE
     )
 endif()
-
-option(WITH_POLLY "Build LLVM with Polly" ON)
-if(WITH_POLLY)
-  if(NOT EXISTS ${LLVM_MAIN_SRC_DIR}/tools/polly/CMakeLists.txt)
-    set(WITH_POLLY OFF)
-  endif()
-endif(WITH_POLLY)
