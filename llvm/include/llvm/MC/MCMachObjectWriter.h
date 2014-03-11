@@ -153,6 +153,10 @@ public:
   /// @{
 
   bool is64Bit() const { return TargetObjectWriter->is64Bit(); }
+  bool isX86_64() const {
+    uint32_t CPUType = TargetObjectWriter->getCPUType();
+    return CPUType == MachO::CPU_TYPE_X86_64;
+  }
 
   /// @}
 

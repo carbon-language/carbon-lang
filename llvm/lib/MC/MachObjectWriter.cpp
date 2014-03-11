@@ -688,7 +688,8 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
     // same assumptions about any symbol that we normally make about
     // assembler locals.
 
-    if (!Asm.getBackend().hasReliableSymbolDifference()) {
+    bool hasReliableSymbolDifference = isX86_64();
+    if (!hasReliableSymbolDifference) {
       if (!SA.isInSection() || &SecA != &SecB ||
           (!SA.isTemporary() &&
            FB.getAtom() != Asm.getSymbolData(SA).getFragment()->getAtom() &&

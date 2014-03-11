@@ -739,7 +739,6 @@ public:
                          MachO::CPUSubTypeX86 st)
     : DarwinX86AsmBackend(T, MRI, CPU, true), SupportsCU(SupportsCU),
       Subtype(st) {
-    HasReliableSymbolDifference = true;
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {

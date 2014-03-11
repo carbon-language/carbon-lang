@@ -38,7 +38,6 @@ class MCAsmBackend {
 protected: // Can only create subclasses.
   MCAsmBackend();
 
-  unsigned HasReliableSymbolDifference : 1;
   unsigned HasDataInCodeSupport : 1;
 
 public:
@@ -56,20 +55,6 @@ public:
   virtual MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
     llvm_unreachable("createELFObjectTargetWriter is not supported by asm "
                      "backend");
-  }
-
-  /// hasReliableSymbolDifference - Check whether this target implements
-  /// accurate relocations for differences between symbols. If not, differences
-  /// between symbols will always be relocatable expressions and any references
-  /// to temporary symbols will be assumed to be in the same atom, unless they
-  /// reside in a different section.
-  ///
-  /// This should always be true (since it results in fewer relocations with no
-  /// loss of functionality), but is currently supported as a way to maintain
-  /// exact object compatibility with Darwin 'as' (on non-x86_64). It should
-  /// eventually should be eliminated.
-  bool hasReliableSymbolDifference() const {
-    return HasReliableSymbolDifference;
   }
 
   /// hasDataInCodeSupport - Check whether this target implements data-in-code
