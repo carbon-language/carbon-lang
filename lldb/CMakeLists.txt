@@ -126,19 +126,17 @@ elseif (MSVC_VERSION LESS 1700)
           "required to build lldb.")
 endif()
 
-# Disable Clang warnings
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  add_lldb_definitions(
-    -Wno-deprecated-declarations # Suppress "deprecated auto_ptr" warnings
-  )
-endif()
+# Disable GCC warnings
+check_cxx_compiler_flag("-Wno-deprecated-declarations"
+                        CXX_SUPPORTS_NO_DEPRECATED_DECLARATIONS)
+append_if(CXX_SUPPORTS_NO_DEPRECATED_DECLARATIONS
+          "-Wno-deprecated-declarations" CMAKE_CXX_FLAGS)
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
-    AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "3.3")
-  add_lldb_definitions(
-    -Wno-deprecated-register # Suppress "deprecated register keyword" warnings
-  )
-endif()
+# Disable Clang warnings
+check_cxx_compiler_flag("-Wno-deprecated-register"
+                        CXX_SUPPORTS_NO_DEPRECATED_REGISTER)
+append_if(CXX_SUPPORTS_NO_DEPRECATED_REGISTER
+          "-Wno-deprecated-register" CMAKE_CXX_FLAGS)
 
 # Disable MSVC warnings
 if( MSVC )
