@@ -630,17 +630,8 @@ SDValue AMDGPUTargetLowering::MergeVectorStore(const SDValue &Op,
   unsigned MemEltBits = MemEltVT.getSizeInBits();
   unsigned MemNumElements = MemVT.getVectorNumElements();
   EVT PackedVT = EVT::getIntegerVT(*DAG.getContext(), MemVT.getSizeInBits());
-  SDValue Mask;
-  switch(MemEltBits) {
-  case 8:
-    Mask = DAG.getConstant(0xFF, PackedVT);
-    break;
-  case 16:
-    Mask = DAG.getConstant(0xFFFF, PackedVT);
-    break;
-  default:
-    llvm_unreachable("Cannot lower this vector store");
-  }
+  SDValue Mask = DAG.getConstant((1 << MemEltBits) - 1, PackedVT);
+
   SDValue PackedValue;
   for (unsigned i = 0; i < MemNumElements; ++i) {
     EVT ElemVT = VT.getVectorElementType();
@@ -725,12 +716,7 @@ SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
     return SDValue();
 
 
-  unsigned Mask = 0;
-  if (Load->getMemoryVT() == MVT::i8) {
-    Mask = 0xff;
-  } else if (Load->getMemoryVT() == MVT::i16) {
-    Mask = 0xffff;
-  }
+  unsigned Mask = (1 << Load->getMemoryVT().getSizeInBits()) - 1;
   SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Load->getBasePtr(),
                             DAG.getConstant(2, MVT::i32));
   SDValue Ret = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, Op.getValueType(),
