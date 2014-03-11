@@ -21,7 +21,7 @@ almost all command line options that the linker shipped with Microsoft Visual
 C++ (link.exe) supports.
 
 The current status is that LLD can link itself on Windows x86 using Visual C++
-as the compiler.
+2012 or 2013 as the compiler.
 
 Development status
 ==================
@@ -71,6 +71,22 @@ Debug info
   debug info (old-style debug info) and PDB to emit an .pdb file. LLD doesn't
   support neither.
 
+
+Building LLD
+============
+
+1. Check out LLVM and LLD from the LLVM SVN repository (or Git mirror),
+#. run ``cmake`` as usual,
+#. open LLVM.sln with Visual Studio, and
+#. build ``lld`` target in ``lld executables`` folder
+
+Alternatively, you can use msbuild if you don't like to work in an IDE::
+
+  msbuild LLVM.sln /m /target:"lld executables\lld"
+
+MSBuild.exe had been shipped as a component of the .NET framework, but since
+2013 it's part of Visual Studio. You can find it at "C:\\Program Files
+(x86)\\msbuild".
 
 Known issues
 ============
