@@ -6425,7 +6425,7 @@ def err_default_not_in_switch : Error<
   "'default' statement not in switch statement">;
 def err_case_not_in_switch : Error<"'case' statement not in switch statement">;
 def warn_bool_switch_condition : Warning<
-  "switch condition has boolean value">;
+  "switch condition has boolean value">, InGroup<SwitchBool>;
 def warn_case_value_overflow : Warning<
   "overflow converting case value to switch condition type (%0 to %1)">,
   InGroup<Switch>;
