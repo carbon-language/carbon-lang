@@ -457,6 +457,11 @@ ASTReader::setDeserializationListener(ASTDeserializationListener *Listener) {
 }
 
 
+void NameLookupTableDataDeleter::
+operator()(ASTDeclContextNameLookupTable *Ptr) const {
+  delete Ptr;
+}
+
 
 unsigned ASTSelectorLookupTrait::ComputeHash(Selector Sel) {
   return serialization::ComputeHash(Sel);
@@ -836,11 +841,10 @@ bool ASTReader::ReadDeclContextStorage(ModuleFile &M,
       Error("Expected visible lookup table block");
       return true;
     }
-    Info.NameLookupTableData
-      = ASTDeclContextNameLookupTable::Create(
-                    (const unsigned char *)Blob.data() + Record[0],
-                    (const unsigned char *)Blob.data(),
-                    ASTDeclContextNameLookupTrait(*this, M));
+    Info.NameLookupTableData.reset(ASTDeclContextNameLookupTable::Create(
+        (const unsigned char *)Blob.data() + Record[0],
+        (const unsigned char *)Blob.data(),
+        ASTDeclContextNameLookupTrait(*this, M)));
   }
 
   return false;
@@ -2493,8 +2497,12 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
                         ASTDeclContextNameLookupTrait(*this, F));
       if (ID == PREDEF_DECL_TRANSLATION_UNIT_ID) { // Is it the TU?
         DeclContext *TU = Context.getTranslationUnitDecl();
-        F.DeclContextInfos[TU].NameLookupTableData = Table;
+        F.DeclContextInfos[TU].NameLookupTableData.reset(Table);
         TU->setHasExternalVisibleStorage(true);
+      } else if (Decl *D = DeclsLoaded[ID - NUM_PREDEF_DECL_IDS]) {
+        auto *DC = cast<DeclContext>(D);
+        DC->getPrimaryContext()->setHasExternalVisibleStorage(true);
+        F.DeclContextInfos[DC].NameLookupTableData.reset(Table);
       } else
         PendingVisibleUpdates[ID].push_back(std::make_pair(Table, &F));
       break;
@@ -6078,7 +6086,7 @@ namespace {
         return false;
       
       // Look for this name within this module.
-      ASTDeclContextNameLookupTable *LookupTable =
+      const auto &LookupTable =
         Info->second.NameLookupTableData;
       ASTDeclContextNameLookupTable::iterator Pos
         = LookupTable->find(This->Name);
@@ -6208,7 +6216,7 @@ namespace {
       if (!FoundInfo)
         return false;
 
-      ASTDeclContextNameLookupTable *LookupTable =
+      const auto &LookupTable =
         Info->second.NameLookupTableData;
       bool FoundAnything = false;
       for (ASTDeclContextNameLookupTable::data_iterator

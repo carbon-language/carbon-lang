@@ -44,13 +44,21 @@ enum ModuleKind {
   MK_MainFile  ///< File is a PCH file treated as the actual main file.
 };
 
+/// A custom deleter for DeclContextInfo::NameLookupTableData, to allow
+/// an incomplete type to be used there.
+struct NameLookupTableDataDeleter {
+  void operator()(
+      OnDiskChainedHashTable<reader::ASTDeclContextNameLookupTrait> *Ptr) const;
+};
+
 /// \brief Information about the contents of a DeclContext.
 struct DeclContextInfo {
   DeclContextInfo()
-    : NameLookupTableData(), LexicalDecls(), NumLexicalDecls() {}
+      : NameLookupTableData(), LexicalDecls(), NumLexicalDecls() {}
 
-  OnDiskChainedHashTable<reader::ASTDeclContextNameLookupTrait>
-    *NameLookupTableData; // an ASTDeclContextNameLookupTable.
+  /// An ASTDeclContextNameLookupTable.
+  std::unique_ptr<OnDiskChainedHashTable<reader::ASTDeclContextNameLookupTrait>,
+                  NameLookupTableDataDeleter> NameLookupTableData;
   const KindDeclIDPair *LexicalDecls;
   unsigned NumLexicalDecls;
 };
