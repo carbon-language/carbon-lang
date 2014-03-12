@@ -1578,6 +1578,16 @@ public:
     return D && isa<ObjCMethodDecl>(D);
   }
 
+  /// \brief Determine whether we can delay parsing the body of a function or
+  /// function template until it is used, assuming we don't care about emitting
+  /// code for that function.
+  ///
+  /// This will be \c false if we may need the body of the function in the
+  /// middle of parsing an expression (where it's impractical to switch to
+  /// parsing a different function), for instance, if it's constexpr in C++11
+  /// or has an 'auto' return type in C++14. These cases are essentially bugs.
+  bool canDelayFunctionBody(const Declarator &D);
+
   /// \brief Determine whether we can skip parsing the body of a function
   /// definition, assuming we don't care about analyzing its body or emitting
   /// code for that function.

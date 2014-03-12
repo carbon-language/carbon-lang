@@ -121,3 +121,5 @@ constexpr T Fun(T A) { return T(0); }
 constexpr int Var = Fun(20);
 }
 
+template <typename T>
+auto invalidTrailingRetType() -> Bogus {} // expected-error {{unknown type name 'Bogus'}}
