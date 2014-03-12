@@ -17,6 +17,14 @@
   #include <machine/sysarch.h>
 #endif
 
+#if defined(ANDROID) && defined(__mips__)
+  #include <sys/cachectl.h>
+#endif
+
+#if defined(ANDROID) && defined(__arm__)
+  #include <asm/unistd.h>
+#endif
+
 /*
  * The compiler generates calls to __clear_cache() when creating 
  * trampoline functions on the stack for use with nested functions.
@@ -32,13 +40,31 @@ __clear_cache(void* start, void* end)
  * Intel processors have a unified instruction and data cache
  * so there is nothing to do
  */
-#elif defined(__NetBSD__) && defined(__arm__)
-  struct arm_sync_icache_args arg;
+#elif defined(__arm__) && !defined(__APPLE__)
+    #if defined(__NetBSD__)
+        struct arm_sync_icache_args arg;
 
-  arg.addr = (uintptr_t)start;
-  arg.len = (uintptr_t)end - (uintptr_t)start;
+        arg.addr = (uintptr_t)start;
+        arg.len = (uintptr_t)end - (uintptr_t)start;
 
-  sysarch(ARM_SYNC_ICACHE, &arg);
+        sysarch(ARM_SYNC_ICACHE, &arg);
+    #elif defined(ANDROID)
+         const register int start_reg __asm("r0") = (int) (intptr_t) start;
+         const register int end_reg __asm("r1") = (int) (intptr_t) end;
+         const register int flags __asm("r2") = 0;
+         const register int syscall_nr __asm("r7") = __ARM_NR_cacheflush;
+        __asm __volatile("svc 0x0" : "=r"(start_reg)
+            : "r"(syscall_nr), "r"(start_reg), "r"(end_reg), "r"(flags) : "r0");
+         if (start_reg != 0) {
+             compilerrt_abort();
+         }
+    #else
+        compilerrt_abort();
+    #endif
+#elif defined(ANDROID) && defined(__mips__)
+  const uintptr_t start_int = (uintptr_t) start;
+  const uintptr_t end_int = (uintptr_t) end;
+  _flush_cache(start, (end_int - start_int), BCACHE);
 #elif defined(__aarch64__) && !defined(__APPLE__)
   uint64_t xstart = (uint64_t)(uintptr_t) start;
   uint64_t xend = (uint64_t)(uintptr_t) end;
