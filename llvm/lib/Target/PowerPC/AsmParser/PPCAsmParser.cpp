@@ -1205,6 +1205,8 @@ ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   case AsmToken::Integer:
   case AsmToken::Dot:
   case AsmToken::Dollar:
+  case AsmToken::Exclaim:
+  case AsmToken::Tilde:
     if (!ParseExpression(EVal))
       break;
     /* fall through */

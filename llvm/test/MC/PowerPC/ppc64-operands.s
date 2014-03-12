@@ -113,3 +113,10 @@
 
 # CHECK:                                 # encoding: [0x42,0x00,A,0bAAAAAA00]
          bdnz $-8
+
+# CHECK: andi. 0, 3, 32767               # encoding: [0x70,0x60,0x7f,0xff]
+         andi. %r0,%r3,~0x8000@l
+
+# CHECK: andi. 0, 3, 0                   # encoding: [0x70,0x60,0x00,0x00]
+         andi. %r0,%r3,!0x8000@l
+
