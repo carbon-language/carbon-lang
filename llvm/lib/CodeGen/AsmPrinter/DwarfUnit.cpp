@@ -998,8 +998,9 @@ void DwarfUnit::updateAcceleratorTables(DIScope Context, DIType Ty,
     unsigned Flags = IsImplementation ? dwarf::DW_FLAG_type_implementation : 0;
     addAccelType(Ty.getName(), std::make_pair(TyDIE, Flags));
 
-    if (!Context || Context.isCompileUnit() || Context.isFile() ||
-        Context.isNameSpace())
+    if ((!Context || Context.isCompileUnit() || Context.isFile() ||
+         Context.isNameSpace()) &&
+        getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly)
       GlobalTypes[getParentContextString(Context) + Ty.getName().str()] = TyDIE;
   }
 }
@@ -1064,6 +1065,8 @@ void DwarfUnit::addAccelType(StringRef Name,
 
 /// addGlobalName - Add a new global name to the compile unit.
 void DwarfUnit::addGlobalName(StringRef Name, DIE *Die, DIScope Context) {
+  if (getCUNode().getEmissionKind() == DIBuilder::LineTablesOnly)
+    return;
   std::string FullName = getParentContextString(Context) + Name.str();
   GlobalNames[FullName] = Die;
 }

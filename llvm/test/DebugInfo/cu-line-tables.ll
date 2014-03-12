@@ -12,6 +12,12 @@
 ; CHECK: .debug_ranges contents:
 ; CHECK-NOT: 00000000 <End of list>
 
+; CHECK: .debug_pubnames contents:
+; CHECK-NOT: Offset
+
+; CHECK: .debug_pubtypes contents:
+; CHECK-NOT: Offset
+
 ; Function Attrs: nounwind uwtable
 define i32 @f(i32 %a) #0 {
 entry:
