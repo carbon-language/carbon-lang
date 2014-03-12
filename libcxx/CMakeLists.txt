@@ -180,7 +180,7 @@ if (MSVC)
   # headers.
 else()
   if (LIBCXX_HAS_NOSTDINCXX_FLAG)
-    set(LIBCXX_CXX_REQUIRED_FLAGS -nostdinc++)
+    list(APPEND LIBCXX_CXX_REQUIRED_FLAGS -nostdinc++)
   endif()
   if (LIBCXX_ENABLE_CXX0X AND LIBCXX_HAS_STDCXX0X_FLAG)
     list(APPEND LIBCXX_CXX_REQUIRED_FLAGS -std=c++0x)
@@ -196,7 +196,7 @@ endmacro()
 # Get warning flags
 if (NOT MSVC)
   append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_WALL_FLAG -Wall)
-  set(LIBCXX_CXX_REQUIRED_FLAGS -Werror=return-type)
+  list(APPEND LIBCXX_CXX_REQUIRED_FLAGS -Werror=return-type)
 endif()
 
 append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_W_FLAG -W)
