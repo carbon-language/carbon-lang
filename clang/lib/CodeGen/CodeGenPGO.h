@@ -43,12 +43,8 @@ public:
   /// Fill Counts with the profile data for the given function name. Returns
   /// false on success.
   bool getFunctionCounts(StringRef FuncName, std::vector<uint64_t> &Counts);
-  /// Return true if a function is hot. If we know nothing about the function,
-  /// return false.
-  bool isHotFunction(StringRef FuncName);
-  /// Return true if a function is cold. If we know nothing about the function,
-  /// return false.
-  bool isColdFunction(StringRef FuncName);
+  /// Return the maximum of all known function counts.
+  uint64_t getMaximumFunctionCount() { return MaxFunctionCount; }
 };
 
 /// Per-function PGO state. This class should generally not be used directly,
@@ -140,6 +136,7 @@ private:
   void setFuncName(llvm::Function *Fn);
   void mapRegionCounters(const Decl *D);
   void computeRegionCounts(const Decl *D);
+  void applyFunctionAttributes(PGOProfileData *PGOData, llvm::Function *Fn);
   void loadRegionCounts(PGOProfileData *PGOData);
   void emitCounterVariables();
 

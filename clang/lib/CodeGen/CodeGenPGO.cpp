@@ -99,32 +99,6 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
   MaxFunctionCount = MaxCount;
 }
 
-/// Return true if a function is hot. If we know nothing about the function,
-/// return false.
-bool PGOProfileData::isHotFunction(StringRef FuncName) {
-  llvm::StringMap<uint64_t>::const_iterator CountIter =
-    FunctionCounts.find(FuncName);
-  // If we know nothing about the function, return false.
-  if (CountIter == FunctionCounts.end())
-    return false;
-  // FIXME: functions with >= 30% of the maximal function count are
-  // treated as hot. This number is from preliminary tuning on SPEC.
-  return CountIter->getValue() >= (uint64_t)(0.3 * (double)MaxFunctionCount);
-}
-
-/// Return true if a function is cold. If we know nothing about the function,
-/// return false.
-bool PGOProfileData::isColdFunction(StringRef FuncName) {
-  llvm::StringMap<uint64_t>::const_iterator CountIter =
-    FunctionCounts.find(FuncName);
-  // If we know nothing about the function, return false.
-  if (CountIter == FunctionCounts.end())
-    return false;
-  // FIXME: functions with <= 1% of the maximal function count are treated as
-  // cold. This number is from preliminary tuning on SPEC.
-  return CountIter->getValue() <= (uint64_t)(0.01 * (double)MaxFunctionCount);
-}
-
 bool PGOProfileData::getFunctionCounts(StringRef FuncName,
                                        std::vector<uint64_t> &Counts) {
   // Find the relevant section of the pgo-data file.
@@ -796,13 +770,7 @@ void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
   if (PGOData) {
     loadRegionCounts(PGOData);
     computeRegionCounts(D);
-
-    // Turn on InlineHint attribute for hot functions.
-    if (PGOData->isHotFunction(getFuncName()))
-      Fn->addFnAttr(llvm::Attribute::InlineHint);
-    // Turn on Cold attribute for cold functions.
-    else if (PGOData->isColdFunction(getFuncName()))
-      Fn->addFnAttr(llvm::Attribute::Cold);
+    applyFunctionAttributes(PGOData, Fn);
   }
 }
 
@@ -827,6 +795,23 @@ void CodeGenPGO::computeRegionCounts(const Decl *D) {
     Walker.VisitObjCMethodDecl(MD);
   else if (const BlockDecl *BD = dyn_cast_or_null<BlockDecl>(D))
     Walker.VisitBlockDecl(BD);
+}
+
+void CodeGenPGO::applyFunctionAttributes(PGOProfileData *PGOData,
+                                         llvm::Function *Fn) {
+  if (!haveRegionCounts())
+    return;
+
+  uint64_t MaxFunctionCount = PGOData->getMaximumFunctionCount();
+  uint64_t FunctionCount = getRegionCount(0);
+  if (FunctionCount >= (uint64_t)(0.3 * (double)MaxFunctionCount))
+    // Turn on InlineHint attribute for hot functions.
+    // FIXME: 30% is from preliminary tuning on SPEC, it may not be optimal.
+    Fn->addFnAttr(llvm::Attribute::InlineHint);
+  else if (FunctionCount <= (uint64_t)(0.01 * (double)MaxFunctionCount))
+    // Turn on Cold attribute for cold functions.
+    // FIXME: 1% is from preliminary tuning on SPEC, it may not be optimal.
+    Fn->addFnAttr(llvm::Attribute::Cold);
 }
 
 void CodeGenPGO::emitCounterVariables() {
