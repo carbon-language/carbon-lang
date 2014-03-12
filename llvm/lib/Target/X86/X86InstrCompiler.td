@@ -1556,6 +1556,8 @@ multiclass MaskedShiftAmountPats<SDNode frag, string name> {
 defm : MaskedShiftAmountPats<shl, "SHL">;
 defm : MaskedShiftAmountPats<srl, "SHR">;
 defm : MaskedShiftAmountPats<sra, "SAR">;
+defm : MaskedShiftAmountPats<rotl, "ROL">;
+defm : MaskedShiftAmountPats<rotr, "ROR">;
 
 // (anyext (setcc_carry)) -> (setcc_carry)
 def : Pat<(i16 (anyext (i8 (X86setcc_c X86_COND_B, EFLAGS)))),

@@ -5,6 +5,7 @@
 
 define i32 @rotate_left_32(i32 %a, i32 %b) {
 ; CHECK-LABEL: rotate_left_32:
+; CHECK-NOT: and
 ; CHECK: roll
 entry:
   %and = and i32 %b, 31
@@ -18,6 +19,7 @@ entry:
 
 define i32 @rotate_right_32(i32 %a, i32 %b) {
 ; CHECK-LABEL: rotate_right_32:
+; CHECK-NOT: and
 ; CHECK: rorl
 entry:
   %and = and i32 %b, 31
@@ -31,6 +33,7 @@ entry:
 
 define i64 @rotate_left_64(i64 %a, i64 %b) {
 ; CHECK-LABEL: rotate_left_64:
+; CHECK-NOT: and
 ; CHECK: rolq
 entry:
   %and = and i64 %b, 63
@@ -44,6 +47,7 @@ entry:
 
 define i64 @rotate_right_64(i64 %a, i64 %b) {
 ; CHECK-LABEL: rotate_right_64:
+; CHECK-NOT: and
 ; CHECK: rorq
 entry:
   %and = and i64 %b, 63
@@ -59,6 +63,7 @@ entry:
 
 define void @rotate_left_m32(i32 *%pa, i32 %b) {
 ; CHECK-LABEL: rotate_left_m32:
+; CHECK-NOT: and
 ; CHECK: roll
 ; no store:
 ; CHECK-NOT: mov
@@ -76,6 +81,7 @@ entry:
 
 define void @rotate_right_m32(i32 *%pa, i32 %b) {
 ; CHECK-LABEL: rotate_right_m32:
+; CHECK-NOT: and
 ; CHECK: rorl
 ; no store:
 ; CHECK-NOT: mov
@@ -93,6 +99,7 @@ entry:
 
 define void @rotate_left_m64(i64 *%pa, i64 %b) {
 ; CHECK-LABEL: rotate_left_m64:
+; CHECK-NOT: and
 ; CHECK: rolq
 ; no store:
 ; CHECK-NOT: mov
@@ -110,6 +117,7 @@ entry:
 
 define void @rotate_right_m64(i64 *%pa, i64 %b) {
 ; CHECK-LABEL: rotate_right_m64:
+; CHECK-NOT: and
 ; CHECK: rorq
 ; no store:
 ; CHECK-NOT: mov
