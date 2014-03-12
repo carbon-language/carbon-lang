@@ -2780,9 +2780,7 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   unsigned NumErrors = Diags->getClient()->getNumErrors();
   std::unique_ptr<ASTUnit> ErrUnit;
   std::unique_ptr<ASTUnit> Unit(ASTUnit::LoadFromCommandLine(
-      Args->size() ? &(*Args)[0] : 0
-          /* vector::data() not portable */,
-      Args->size() ? (&(*Args)[0] + Args->size()) : 0, Diags,
+      Args->data(), Args->data() + Args->size(), Diags,
       CXXIdx->getClangResourcesPath(), CXXIdx->getOnlyLocalDecls(),
       /*CaptureDiagnostics=*/true, *RemappedFiles.get(),
       /*RemappedFilesKeepOriginalName=*/true, PrecompilePreamble, TUKind,
