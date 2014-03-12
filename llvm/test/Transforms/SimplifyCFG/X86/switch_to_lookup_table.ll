@@ -832,7 +832,7 @@ return:
 ; CHECK-NOT: switch i32
 }
 
-; This lookup table will have holes, so we cannot build it without default result.
+; This lookup table will have holes, so we need to test for the holes.
 define i32 @nodefaultwithholes(i32 %c) {
 entry:
   switch i32 %c, label %sw.default [
@@ -853,8 +853,34 @@ return:
   ret i32 %x
 
 ; CHECK-LABEL: @nodefaultwithholes(
-; CHECK-NOT: @switch.table
+; CHECK: entry:
+; CHECK: br i1 %{{.*}}, label %switch.hole_check, label %sw.default
+; CHECK: switch.hole_check:
+; CHECK-NEXT: %switch.maskindex = trunc i32 %switch.tableidx to i6
+; CHECK-NEXT: %switch.shifted = lshr i6 -17, %switch.maskindex
+; The mask is binary 101111.
+; CHECK-NEXT: %switch.lobit = trunc i6 %switch.shifted to i1
+; CHECK-NEXT: br i1 %switch.lobit, label %switch.lookup, label %sw.default
+; CHECK-NOT: switch i32
+}
+
+; We don't build lookup tables with holes for switches with less than four cases.
+define i32 @threecasesholes(i32 %c) {
+entry:
+  switch i32 %c, label %sw.default [
+    i32 0, label %return
+    i32 1, label %sw.bb1
+    i32 3, label %sw.bb2
+  ]
+sw.bb1: br label %return
+sw.bb2: br label %return
+sw.default: br label %return
+return:
+  %x = phi i32 [ %c, %sw.default ], [ 5, %sw.bb2 ], [ 7, %sw.bb1 ], [ 9, %entry ]
+  ret i32 %x
+; CHECK-LABEL: @threecasesholes(
 ; CHECK: switch i32
+; CHECK-NOT: @switch.table
 }
 
 ; We build lookup tables for switches with three or more cases.

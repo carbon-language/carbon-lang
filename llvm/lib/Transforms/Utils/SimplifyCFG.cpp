@@ -68,6 +68,7 @@ static cl::opt<bool> HoistCondStores(
 
 STATISTIC(NumBitMaps, "Number of switch instructions turned into bitmaps");
 STATISTIC(NumLookupTables, "Number of switch instructions turned into lookup tables");
+STATISTIC(NumLookupTablesHoles, "Number of switch instructions turned into lookup tables (holes checked)");
 STATISTIC(NumSinkCommons, "Number of common instructions sunk down to the end block");
 STATISTIC(NumSpeculations, "Number of speculative executed instructions");
 
@@ -3735,11 +3736,22 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   uint64_t TableSize = RangeSpread.getLimitedValue() + 1;
   bool TableHasHoles = (NumResults < TableSize);
 
-  // If the table has holes, we need a constant result for the default case.
+  // If the table has holes, we need a constant result for the default case
+  // or a bitmask that fits in a register.
   SmallVector<std::pair<PHINode*, Constant*>, 4> DefaultResultsList;
-  if (TableHasHoles && !GetCaseResults(SI, 0, SI->getDefaultDest(), &CommonDest,
-                                       DefaultResultsList, DL))
-    return false;
+  bool HasDefaultResults = false;
+  if (TableHasHoles) {
+    HasDefaultResults = GetCaseResults(SI, 0, SI->getDefaultDest(), &CommonDest,
+                                       DefaultResultsList, DL);
+  }
+  bool NeedMask = (TableHasHoles && !HasDefaultResults);
+  if (NeedMask) {
+    // As an extra penalty for the validity test we require more cases.
+    if (SI->getNumCases() < 4)  // FIXME: Find best threshold value (benchmark).
+      return false;
+    if (!(DL && DL->fitsInLegalInteger(TableSize)))
+      return false;
+  }
 
   for (size_t I = 0, E = DefaultResultsList.size(); I != E; ++I) {
     PHINode *PHI = DefaultResultsList[I].first;
@@ -3786,12 +3798,54 @@ static bool SwitchToLookupTable(SwitchInst *SI,
 
   // Populate the BB that does the lookups.
   Builder.SetInsertPoint(LookupBB);
+
+  if (NeedMask) {
+    // Before doing the lookup we do the hole check.
+    // The LookupBB is therefore re-purposed to do the hole check
+    // and we create a new LookupBB.
+    BasicBlock *MaskBB = LookupBB;
+    MaskBB->setName("switch.hole_check");
+    LookupBB = BasicBlock::Create(Mod.getContext(),
+                                  "switch.lookup",
+                                  CommonDest->getParent(),
+                                  CommonDest);
+
+    // Build bitmask; fill in a 1 bit for every case.
+    APInt MaskInt(TableSize, 0);
+    APInt One(TableSize, 1);
+    const ResultListTy &ResultList = ResultLists[PHIs[0]];
+    for (size_t I = 0, E = ResultList.size(); I != E; ++I) {
+      uint64_t Idx = (ResultList[I].first->getValue() -
+                      MinCaseVal->getValue()).getLimitedValue();
+      MaskInt |= One << Idx;
+    }
+    ConstantInt *TableMask = ConstantInt::get(Mod.getContext(), MaskInt);
+
+    // Get the TableIndex'th bit of the bitmask.
+    // If this bit is 0 (meaning hole) jump to the default destination,
+    // else continue with table lookup.
+    IntegerType *MapTy = TableMask->getType();
+    Value *MaskIndex = Builder.CreateZExtOrTrunc(TableIndex, MapTy,
+                                                 "switch.maskindex");
+    Value *Shifted = Builder.CreateLShr(TableMask, MaskIndex,
+                                        "switch.shifted");
+    Value *LoBit = Builder.CreateTrunc(Shifted,
+                                       Type::getInt1Ty(Mod.getContext()),
+                                       "switch.lobit");
+    Builder.CreateCondBr(LoBit, LookupBB, SI->getDefaultDest());
+
+    Builder.SetInsertPoint(LookupBB);
+    AddPredecessorToBlock(SI->getDefaultDest(), MaskBB, SI->getParent());
+  }
+
   bool ReturnedEarly = false;
   for (size_t I = 0, E = PHIs.size(); I != E; ++I) {
     PHINode *PHI = PHIs[I];
 
+    // If using a bitmask, use any value to fill the lookup table holes.
+    Constant *DV = NeedMask ? ResultLists[PHI][0].second : DefaultResults[PHI];
     SwitchLookupTable Table(Mod, TableSize, MinCaseVal, ResultLists[PHI],
-                            DefaultResults[PHI], DL);
+                            DV, DL);
 
     Value *Result = Table.BuildLookup(TableIndex, Builder);
 
@@ -3821,6 +3875,8 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   SI->eraseFromParent();
 
   ++NumLookupTables;
+  if (NeedMask)
+    ++NumLookupTablesHoles;
   return true;
 }
 
