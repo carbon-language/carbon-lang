@@ -11,6 +11,7 @@
 #define LLDB_lldb_win32_h_
 
 #include <stdarg.h>
+#include <time.h>
 
 // posix utilities
 int vasprintf(char **ret, const char *fmt, va_list ap);

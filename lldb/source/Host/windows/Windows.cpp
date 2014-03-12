@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <io.h>
 #include <cerrno>
+#include <ctype.h>
 
 int vasprintf(char **ret, const char *fmt, va_list ap)
 {

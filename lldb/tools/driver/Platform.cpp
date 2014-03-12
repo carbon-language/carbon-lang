@@ -12,6 +12,7 @@
 
 #include <process.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #include "Platform.h"
 
