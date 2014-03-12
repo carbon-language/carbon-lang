@@ -581,7 +581,8 @@ let test_users () =
 let test_aliases () =
   (* CHECK: @alias = alias i32* @aliasee
    *)
-  let v = declare_global i32_type "aliasee" m in
+  let forty_two32 = const_int i32_type 42 in
+  let v = define_global "aliasee" forty_two32 m in
   ignore (add_alias m (pointer_type i32_type) v "alias")
 
 
