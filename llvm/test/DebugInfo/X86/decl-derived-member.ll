@@ -2,7 +2,6 @@
 
 ; RUN: %llc_dwarf -O0 -filetype=obj %s -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
-; XFAIL: *
 
 ; Testcase from:
 ; struct base {
@@ -15,10 +14,12 @@
 
 ; Where member b should be seen as a field at an offset and not a bitfield.
 
-; CHECK: DW_AT_member
+; CHECK: DW_TAG_member
 ; CHECK: DW_AT_name{{.*}}"b"
 ; CHECK-NOT: DW_AT_bit_offset
 
+%struct.foo = type { %struct.base }
+%struct.base = type { i32 (...)** }
 @f = global %struct.foo zeroinitializer, align 8
 @__dso_handle = external global i8
 @_ZTV4base = external unnamed_addr constant [4 x i8*]
