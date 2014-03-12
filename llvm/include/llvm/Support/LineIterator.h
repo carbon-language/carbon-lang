@@ -56,6 +56,7 @@ public:
 
   /// \brief Get the current line as a \c StringRef.
   StringRef operator*() const { return CurrentLine; }
+  const StringRef *operator->() const { return &CurrentLine; }
 
   friend bool operator==(const line_iterator &LHS, const line_iterator &RHS) {
     return LHS.Buffer == RHS.Buffer &&
