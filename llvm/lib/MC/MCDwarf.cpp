@@ -80,23 +80,10 @@ void MCLineEntry::Make(MCStreamer *MCOS, const MCSection *Section) {
   // clear DwarfLocSeen saying the current .loc info is now used.
   MCOS->getContext().ClearDwarfLocSeen();
 
-  // Get the MCLineSection for this section, if one does not exist for this
-  // section create it.
-  const DenseMap<const MCSection *, MCLineSection *> &MCLineSections =
-    MCOS->getContext().getMCLineSections();
-  MCLineSection *LineSection = MCLineSections.lookup(Section);
-  if (!LineSection) {
-    // Create a new MCLineSection.  This will be deleted after the dwarf line
-    // table is created using it by iterating through the MCLineSections
-    // DenseMap.
-    LineSection = new MCLineSection;
-    // Save a pointer to the new LineSection into the MCLineSections DenseMap.
-    MCOS->getContext().addMCLineSection(Section, LineSection);
-  }
-
   // Add the line entry to this section's entries.
-  LineSection->addLineEntry(LineEntry,
-                            MCOS->getContext().getDwarfCompileUnitID());
+  MCOS->getContext()
+      .getMCLineSections()[MCOS->getContext().getDwarfCompileUnitID()]
+      .addLineEntry(LineEntry, Section);
 }
 
 //
@@ -126,12 +113,8 @@ static inline const MCExpr *MakeStartMinusEndExpr(const MCStreamer &MCOS,
 //
 static inline void EmitDwarfLineTable(MCStreamer *MCOS,
                                       const MCSection *Section,
-                                      const MCLineSection *LineSection,
+                                      const MCLineSection::MCLineEntryCollection &LineEntries,
                                       unsigned CUID) {
-  // This LineSection does not contain any LineEntry for the given Compile Unit.
-  if (!LineSection->containEntriesForID(CUID))
-    return;
-
   unsigned FileNum = 1;
   unsigned LastLine = 1;
   unsigned Column = 0;
@@ -141,9 +124,9 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
   MCSymbol *LastLabel = NULL;
 
   // Loop through each MCLineEntry and encode the dwarf line number table.
-  for (MCLineSection::const_iterator
-         it = LineSection->getMCLineEntries(CUID).begin(),
-         ie = LineSection->getMCLineEntries(CUID).end(); it != ie; ++it) {
+  for (auto it = LineEntries.begin(),
+            ie = LineEntries.end();
+       it != ie; ++it) {
 
     if (FileNum != it->getFileNum()) {
       FileNum = it->getFileNum();
@@ -236,15 +219,6 @@ const MCSymbol *MCDwarfFileTable::Emit(MCStreamer *MCOS) {
   for (unsigned Is = 1, Ie = MCLineTableSymbols.size(); Is < Ie; Is++)
     EmitCU(MCOS, Is);
 
-  // Now delete the MCLineSections that were created in MCLineEntry::Make()
-  // and used to emit the line table.
-  const DenseMap<const MCSection *, MCLineSection *> &MCLineSections =
-    MCOS->getContext().getMCLineSections();
-  for (DenseMap<const MCSection *, MCLineSection *>::const_iterator it =
-       MCLineSections.begin(), ie = MCLineSections.end(); it != ie;
-       ++it)
-    delete it->second;
-
   return LineStartSym;
 }
 
@@ -329,20 +303,15 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
   MCOS->EmitLabel(ProEndSym);
 
   // Put out the line tables.
-  const DenseMap<const MCSection *, MCLineSection *> &MCLineSections =
+  const std::map<unsigned, MCLineSection> &MCLineSections =
     MCOS->getContext().getMCLineSections();
-  const std::vector<const MCSection *> &MCLineSectionOrder =
-    MCOS->getContext().getMCLineSectionOrder();
-  for (std::vector<const MCSection*>::const_iterator it =
-         MCLineSectionOrder.begin(), ie = MCLineSectionOrder.end(); it != ie;
-       ++it) {
-    const MCSection *Sec = *it;
-    const MCLineSection *Line = MCLineSections.lookup(Sec);
-    EmitDwarfLineTable(MCOS, Sec, Line, CUID);
-  }
+  auto Iter = MCLineSections.find(CUID);
+  if (Iter != MCLineSections.end())
+    for (const auto &LineSec : Iter->second.getMCLineEntries())
+      EmitDwarfLineTable(MCOS, LineSec.first, LineSec.second, CUID);
 
-  if (MCOS->getContext().getAsmInfo()->getLinkerRequiresNonEmptyDwarfLines()
-      && MCLineSectionOrder.begin() == MCLineSectionOrder.end()) {
+  if (MCOS->getContext().getAsmInfo()->getLinkerRequiresNonEmptyDwarfLines() &&
+      Iter == MCLineSections.end()) {
     // The darwin9 linker has a bug (see PR8715). For for 32-bit architectures
     // it requires:
     // total_length >= prologue_length + 10

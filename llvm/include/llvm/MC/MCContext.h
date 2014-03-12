@@ -148,10 +148,7 @@ namespace llvm {
 
     /// The dwarf line information from the .loc directives for the sections
     /// with assembled machine instructions have after seeing .loc directives.
-    DenseMap<const MCSection *, MCLineSection *> MCLineSections;
-    /// We need a deterministic iteration order, so we remember the order
-    /// the elements were added.
-    std::vector<const MCSection *> MCLineSectionOrder;
+    std::map<unsigned, MCLineSection> MCLineSections;
     /// The Compile Unit ID that we are currently processing.
     unsigned DwarfCompileUnitID;
     /// The line table start symbol for each Compile Unit.
@@ -316,16 +313,11 @@ namespace llvm {
       return MCDwarfDirsCUMap[CUID];
     }
 
-    const DenseMap<const MCSection *, MCLineSection *>
-    &getMCLineSections() const {
+    const std::map<unsigned, MCLineSection> &getMCLineSections() const {
       return MCLineSections;
     }
-    const std::vector<const MCSection *> &getMCLineSectionOrder() const {
-      return MCLineSectionOrder;
-    }
-    void addMCLineSection(const MCSection *Sec, MCLineSection *Line) {
-      MCLineSections[Sec] = Line;
-      MCLineSectionOrder.push_back(Sec);
+    std::map<unsigned, MCLineSection> &getMCLineSections() {
+      return MCLineSections;
     }
     unsigned getDwarfCompileUnitID() {
       return DwarfCompileUnitID;

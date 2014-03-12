@@ -16,6 +16,7 @@
 #define LLVM_MC_MCDWARF_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/raw_ostream.h"
@@ -172,45 +173,29 @@ public:
 };
 
 /// MCLineSection - Instances of this class represent the line information
-/// for a section where machine instructions have been assembled after seeing
+/// for a compile unit where machine instructions have been assembled after seeing
 /// .loc directives.  This is the information used to build the dwarf line
 /// table for a section.
 class MCLineSection {
-
-private:
-  MCLineSection(const MCLineSection &) LLVM_DELETED_FUNCTION;
-  void operator=(const MCLineSection &) LLVM_DELETED_FUNCTION;
-
 public:
-  // Constructor to create an MCLineSection with an empty MCLineEntries
-  // vector.
-  MCLineSection() {}
-
   // addLineEntry - adds an entry to this MCLineSection's line entries
-  void addLineEntry(const MCLineEntry &LineEntry, unsigned CUID) {
-    MCLineDivisions[CUID].push_back(LineEntry);
+  void addLineEntry(const MCLineEntry &LineEntry, const MCSection *Sec) {
+    MCLineDivisions[Sec].push_back(LineEntry);
   }
 
   typedef std::vector<MCLineEntry> MCLineEntryCollection;
   typedef MCLineEntryCollection::iterator iterator;
   typedef MCLineEntryCollection::const_iterator const_iterator;
-  typedef std::map<unsigned, MCLineEntryCollection> MCLineDivisionMap;
+  typedef MapVector<const MCSection *, MCLineEntryCollection> MCLineDivisionMap;
 
 private:
-  // A collection of MCLineEntry for each Compile Unit ID.
+  // A collection of MCLineEntry for each section.
   MCLineDivisionMap MCLineDivisions;
 
 public:
-  // Returns whether MCLineSection contains entries for a given Compile
-  // Unit ID.
-  bool containEntriesForID(unsigned CUID) const {
-    return MCLineDivisions.count(CUID);
-  }
   // Returns the collection of MCLineEntry for a given Compile Unit ID.
-  const MCLineEntryCollection &getMCLineEntries(unsigned CUID) const {
-    MCLineDivisionMap::const_iterator CIter = MCLineDivisions.find(CUID);
-    assert(CIter != MCLineDivisions.end());
-    return CIter->second;
+  const MCLineDivisionMap &getMCLineEntries() const {
+    return MCLineDivisions;
   }
 };
 
