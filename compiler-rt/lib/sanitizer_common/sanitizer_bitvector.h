@@ -44,7 +44,7 @@ class BasicBitVector {
     return bits_ != old;
   }
 
-  bool getBit(uptr idx) const { return bits_ & mask(idx); }
+  bool getBit(uptr idx) const { return (bits_ & mask(idx)) != 0; }
 
   uptr getAndClearFirstOne() {
     CHECK(!empty());
@@ -77,7 +77,9 @@ class BasicBitVector {
   void copyFrom(const BasicBitVector &v) { bits_ = v.bits_; }
 
   // Returns true if 'this' intersects with 'v'.
-  bool intersectsWith(const BasicBitVector &v) const { return bits_ & v.bits_; }
+  bool intersectsWith(const BasicBitVector &v) const {
+    return (bits_ & v.bits_) != 0;
+  }
 
   // for (BasicBitVector<>::Iterator it(bv); it.hasNext();) {
   //   uptr idx = it.next();
