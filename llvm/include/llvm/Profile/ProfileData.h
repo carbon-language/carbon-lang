@@ -23,6 +23,7 @@ namespace llvm {
 
 const char PROFILEDATA_MAGIC[4] = {'L', 'P', 'R', 'F'};
 const uint32_t PROFILEDATA_VERSION = 1;
+const uint32_t PROFILEDATA_HEADER_SIZE = 24;
 
 const error_category &profiledata_category();
 
