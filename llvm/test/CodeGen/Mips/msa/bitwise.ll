@@ -990,9 +990,10 @@ define void @bsel_v16i8(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b, <16 x i8>* 
   %6 = and <16 x i8> %2, %4
   %7 = or <16 x i8> %5, %6
   ; bmnz is the same operation
-  ; CHECK-DAG: bmnz.v [[R1]], [[R2]], [[R3]]
+  ; (vselect Mask, IfSet, IfClr) -> (BMNZ IfClr, IfSet, Mask)
+  ; CHECK-DAG: bmnz.v [[R2]], [[R1]], [[R3]]
   store <16 x i8> %7, <16 x i8>* %c
-  ; CHECK-DAG: st.b [[R1]], 0($4)
+  ; CHECK-DAG: st.b [[R2]], 0($4)
 
   ret void
   ; CHECK: .size bsel_v16i8

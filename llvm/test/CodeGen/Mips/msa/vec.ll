@@ -431,9 +431,9 @@ entry:
 ; ANYENDIAN-DAG: ld.b [[R4:\$w[0-9]+]], 0([[R1]])
 ; ANYENDIAN-DAG: ld.b [[R5:\$w[0-9]+]], 0([[R2]])
 ; ANYENDIAN-DAG: ld.b [[R6:\$w[0-9]+]], 0([[R3]])
-; bmnz.v is the same as bsel.v with wt and wd_in swapped
-; ANYENDIAN-DAG: bmnz.v [[R6]], [[R5]], [[R4]]
-; ANYENDIAN-DAG: st.b [[R6]], 0(
+; bmnz.v is the same as bsel.v with (wd_in, wt, ws) -> (wt, ws, wd_in)
+; ANYENDIAN-DAG: bmnz.v [[R5]], [[R6]], [[R4]]
+; ANYENDIAN-DAG: st.b [[R5]], 0(
 ; ANYENDIAN: .size llvm_mips_bsel_v_b_test
 
 @llvm_mips_bsel_v_h_ARG1 = global <8 x i16> <i16 0, i16 1, i16 2, i16 3, i16 4, i16 5, i16 6, i16 7>, align 16
@@ -462,9 +462,9 @@ entry:
 ; ANYENDIAN-DAG: ld.b [[R4:\$w[0-9]+]], 0([[R1]])
 ; ANYENDIAN-DAG: ld.b [[R5:\$w[0-9]+]], 0([[R2]])
 ; ANYENDIAN-DAG: ld.b [[R6:\$w[0-9]+]], 0([[R3]])
-; bmnz.v is the same as bsel.v with wt and wd_in swapped
-; ANYENDIAN-DAG: bmnz.v [[R6]], [[R5]], [[R4]]
-; ANYENDIAN-DAG: st.b [[R6]], 0(
+; bmnz.v is the same as bsel.v with (wd_in, wt, ws) -> (wt, ws, wd_in)
+; ANYENDIAN-DAG: bmnz.v [[R5]], [[R6]], [[R4]]
+; ANYENDIAN-DAG: st.b [[R5]], 0(
 ; ANYENDIAN: .size llvm_mips_bsel_v_h_test
 
 @llvm_mips_bsel_v_w_ARG1 = global <4 x i32> <i32 0, i32 1, i32 2, i32 3>, align 16
@@ -493,9 +493,9 @@ entry:
 ; ANYENDIAN-DAG: ld.b [[R4:\$w[0-9]+]], 0([[R1]])
 ; ANYENDIAN-DAG: ld.b [[R5:\$w[0-9]+]], 0([[R2]])
 ; ANYENDIAN-DAG: ld.b [[R6:\$w[0-9]+]], 0([[R3]])
-; bmnz.v is the same as bsel.v with wt and wd_in swapped
-; ANYENDIAN-DAG: bmnz.v [[R6]], [[R5]], [[R4]]
-; ANYENDIAN-DAG: st.b [[R6]], 0(
+; bmnz.v is the same as bsel.v with (wd_in, wt, ws) -> (wt, ws, wd_in)
+; ANYENDIAN-DAG: bmnz.v [[R5]], [[R6]], [[R4]]
+; ANYENDIAN-DAG: st.b [[R5]], 0(
 ; ANYENDIAN: .size llvm_mips_bsel_v_w_test
 
 @llvm_mips_bsel_v_d_ARG1 = global <2 x i64> <i64 0, i64 1>, align 16
@@ -524,9 +524,9 @@ entry:
 ; ANYENDIAN-DAG: ld.b [[R4:\$w[0-9]+]], 0([[R1]])
 ; ANYENDIAN-DAG: ld.b [[R5:\$w[0-9]+]], 0([[R2]])
 ; ANYENDIAN-DAG: ld.b [[R6:\$w[0-9]+]], 0([[R3]])
-; bmnz.v is the same as bsel.v with wt and wd_in swapped
-; ANYENDIAN-DAG: bmnz.v [[R6]], [[R5]], [[R4]]
-; ANYENDIAN-DAG: st.b [[R6]], 0(
+; bmnz.v is the same as bsel.v with (wd_in, wt, ws) -> (wt, ws, wd_in)
+; ANYENDIAN-DAG: bmnz.v [[R5]], [[R6]], [[R4]]
+; ANYENDIAN-DAG: st.b [[R5]], 0(
 ; ANYENDIAN: .size llvm_mips_bsel_v_d_test
 
 @llvm_mips_nor_v_b_ARG1 = global <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15>, align 16

@@ -1230,8 +1230,12 @@ class MSA_BIT_BINSXI_DESC_BASE<string instr_asm, ValueType Ty,
   dag OutOperandList = (outs ROWD:$wd);
   dag InOperandList = (ins ROWD:$wd_in, ROWS:$ws, vsplat_uimm8:$m);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws, $m");
-  list<dag> Pattern = [(set ROWD:$wd, (vselect (Ty Mask:$m), (Ty ROWD:$wd_in),
-                                               ROWS:$ws))];
+  // Note that binsxi and vselect treat the condition operand the opposite
+  // way to each other.
+  //   (vselect cond, if_set, if_clear)
+  //   (BSEL_V cond, if_clear, if_set)
+  list<dag> Pattern = [(set ROWD:$wd, (vselect (Ty Mask:$m), (Ty ROWD:$ws),
+                                               ROWS:$wd_in))];
   InstrItinClass Itinerary = itin;
   string Constraints = "$wd = $wd_in";
 }
@@ -1758,9 +1762,13 @@ class BSEL_V_DESC {
   dag InOperandList = (ins MSA128BOpnd:$wd_in, MSA128BOpnd:$ws,
                        MSA128BOpnd:$wt);
   string AsmString = "bsel.v\t$wd, $ws, $wt";
+  // Note that vselect and BSEL_V treat the condition operand the opposite way
+  // from each other.
+  //   (vselect cond, if_set, if_clear)
+  //   (BSEL_V cond, if_clear, if_set)
   list<dag> Pattern = [(set MSA128BOpnd:$wd,
-                        (vselect MSA128BOpnd:$wd_in, MSA128BOpnd:$ws,
-                                                  MSA128BOpnd:$wt))];
+                        (vselect MSA128BOpnd:$wd_in, MSA128BOpnd:$wt,
+                                                     MSA128BOpnd:$ws))];
   InstrItinClass Itinerary = NoItinerary;
   string Constraints = "$wd = $wd_in";
 }
@@ -1770,9 +1778,13 @@ class BSELI_B_DESC {
   dag InOperandList = (ins MSA128BOpnd:$wd_in, MSA128BOpnd:$ws,
                            vsplat_uimm8:$u8);
   string AsmString = "bseli.b\t$wd, $ws, $u8";
+  // Note that vselect and BSEL_V treat the condition operand the opposite way
+  // from each other.
+  //   (vselect cond, if_set, if_clear)
+  //   (BSEL_V cond, if_clear, if_set)
   list<dag> Pattern = [(set MSA128BOpnd:$wd, (vselect MSA128BOpnd:$wd_in,
-                                                      MSA128BOpnd:$ws,
-                                                      vsplati8_uimm8:$u8))];
+                                                      vsplati8_uimm8:$u8,
+                                                      MSA128BOpnd:$ws))];
   InstrItinClass Itinerary = NoItinerary;
   string Constraints = "$wd = $wd_in";
 }
@@ -2834,7 +2846,11 @@ def BSEL_V : BSEL_V_ENC, BSEL_V_DESC;
 
 class MSA_BSEL_PSEUDO_BASE<RegisterOperand RO, ValueType Ty> :
   MSAPseudo<(outs RO:$wd), (ins RO:$wd_in, RO:$ws, RO:$wt),
-            [(set RO:$wd, (Ty (vselect RO:$wd_in, RO:$ws, RO:$wt)))]>,
+            [(set RO:$wd, (Ty (vselect RO:$wd_in, RO:$wt, RO:$ws)))]>,
+  // Note that vselect and BSEL_V treat the condition operand the opposite way
+  // from each other.
+  //   (vselect cond, if_set, if_clear)
+  //   (BSEL_V cond, if_clear, if_set)
   PseudoInstExpansion<(BSEL_V MSA128BOpnd:$wd, MSA128BOpnd:$wd_in,
                               MSA128BOpnd:$ws, MSA128BOpnd:$wt)> {
   let Constraints = "$wd_in = $wd";

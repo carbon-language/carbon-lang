@@ -62,11 +62,16 @@ binsri.[bhwd],  binsli.[bhwd]:
 
 bmnz.v, bmz.v, bsel.v:
         These three operations differ only in the operand that is tied to the
-        result.
+        result and the order of the operands.
         It is (currently) not possible to emit bmz.v, or bsel.v since bmnz.v is
         the same operation and will be emitted instead.
         In future, the compiler may choose between these three instructions
         according to register allocation.
+        These three operations can be very confusing so here is a mapping
+        between the instructions and the vselect node in one place:
+                bmz.v  wd, ws, wt/i8 -> (vselect wt/i8, wd, ws)
+                bmnz.v wd, ws, wt/i8 -> (vselect wt/i8, ws, wd)
+                bsel.v wd, ws, wt/i8 -> (vselect wd, wt/i8, ws)
 
 bmnzi.b, bmzi.b:
         Like their non-immediate counterparts, bmnzi.v and bmzi.v are the same
