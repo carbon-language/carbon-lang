@@ -184,7 +184,7 @@ that scatter/gathers memory.
 
   int foo(int * A, int * B, int n) {
     for (intptr_t i = 0; i < n; ++i)
-        A[i] += B[i*4];
+        A[i] += B[i * 4];
   }
 
 In many situations the cost model will inform LLVM that this is not beneficial
