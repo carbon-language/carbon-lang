@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "NativeFileFormat.h"
+
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Simple.h"
 
@@ -23,10 +25,8 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include "NativeFileFormat.h"
-
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace lld {
 namespace native {

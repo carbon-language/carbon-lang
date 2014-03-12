@@ -18,8 +18,8 @@
 #define LLD_DRIVER_CORE_INPUT_GRAPH_H
 
 #include "lld/Core/InputGraph.h"
-#include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/CoreLinkingContext.h"
+#include "lld/ReaderWriter/Reader.h"
 #include "llvm/ADT/OwningPtr.h"
 
 #include <map>

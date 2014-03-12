@@ -13,11 +13,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include <algorithm>
-#include <cctype>
-#include <sstream>
-#include <map>
-
 #include "lld/Driver/Driver.h"
 #include "lld/Driver/WinLinkInputGraph.h"
 #include "lld/Driver/WinLinkModuleDef.h"
@@ -35,6 +30,11 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
+
+#include <algorithm>
+#include <cctype>
+#include <map>
+#include <sstream>
 
 namespace lld {
 

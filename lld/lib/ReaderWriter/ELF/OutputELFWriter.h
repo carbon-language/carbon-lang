@@ -9,16 +9,16 @@
 #ifndef LLD_READER_WRITER_ELF_OUTPUT_WRITER_H
 #define LLD_READER_WRITER_ELF_OUTPUT_WRITER_H
 
+#include "DefaultLayout.h"
+#include "ELFFile.h"
+#include "TargetLayout.h"
+
 #include "lld/Core/Instrumentation.h"
 #include "lld/Core/Parallel.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/ADT/StringSet.h"
-
-#include "DefaultLayout.h"
-#include "ELFFile.h"
-#include "TargetLayout.h"
 
 namespace lld {
 namespace elf {

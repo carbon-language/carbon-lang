@@ -21,12 +21,6 @@
 
 #define DEBUG_TYPE "WriterPECOFF"
 
-#include <algorithm>
-#include <cstdlib>
-#include <map>
-#include <time.h>
-#include <vector>
-
 #include "Atoms.h"
 #include "WriterImportLibrary.h"
 
@@ -45,6 +39,12 @@
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/Format.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <map>
+#include <time.h>
+#include <vector>
 
 using llvm::COFF::DataDirectoryIndex;
 using llvm::object::coff_runtime_function_x64;

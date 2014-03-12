@@ -19,8 +19,8 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
 
-#include <unordered_map>
 #include <set>
+#include <unordered_map>
 
 using llvm::object::Archive;
 using llvm::object::ObjectFile;
