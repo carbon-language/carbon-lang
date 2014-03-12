@@ -196,7 +196,7 @@ endmacro()
 # Get warning flags
 if (NOT MSVC)
   append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_WALL_FLAG -Wall)
-  set(LIBCXX_CXX_REQUIRED_FLAGS, -Werror=return-type)
+  set(LIBCXX_CXX_REQUIRED_FLAGS -Werror=return-type)
 endif()
 
 append_if(LIBCXX_CXX_WARNING_FLAGS LIBCXX_HAS_W_FLAG -W)
