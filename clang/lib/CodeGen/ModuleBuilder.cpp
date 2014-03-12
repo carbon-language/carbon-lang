@@ -45,13 +45,13 @@ namespace {
 
     virtual ~CodeGeneratorImpl() {}
 
-    virtual llvm::Module* GetModule() {
+    llvm::Module* GetModule() override {
       return M.get();
     }
 
-    virtual llvm::Module *ReleaseModule() { return M.release(); }
+    llvm::Module *ReleaseModule() override { return M.release(); }
 
-    virtual void Initialize(ASTContext &Context) {
+    void Initialize(ASTContext &Context) override {
       Ctx = &Context;
 
       M->setTargetTriple(Ctx->getTargetInfo().getTriple().getTriple());
@@ -64,14 +64,14 @@ namespace {
         HandleDependentLibrary(CodeGenOpts.DependentLibraries[i]);
     }
 
-    virtual void HandleCXXStaticMemberVarInstantiation(VarDecl *VD) {
+    void HandleCXXStaticMemberVarInstantiation(VarDecl *VD) override {
       if (Diags.hasErrorOccurred())
         return;
 
       Builder->HandleCXXStaticMemberVarInstantiation(VD);
     }
 
-    virtual bool HandleTopLevelDecl(DeclGroupRef DG) {
+    bool HandleTopLevelDecl(DeclGroupRef DG) override {
       if (Diags.hasErrorOccurred())
         return true;
 
@@ -85,7 +85,7 @@ namespace {
     /// to (e.g. struct, union, enum, class) is completed. This allows the
     /// client hack on the type, which can occur at any point in the file
     /// (because these can be defined in declspecs).
-    virtual void HandleTagDeclDefinition(TagDecl *D) {
+    void HandleTagDeclDefinition(TagDecl *D) override {
       if (Diags.hasErrorOccurred())
         return;
 
@@ -103,7 +103,7 @@ namespace {
       }
     }
 
-    virtual void HandleTagDeclRequiredDefinition(const TagDecl *D) override {
+    void HandleTagDeclRequiredDefinition(const TagDecl *D) override {
       if (Diags.hasErrorOccurred())
         return;
 
@@ -112,7 +112,7 @@ namespace {
           DI->completeRequiredType(RD);
     }
 
-    virtual void HandleTranslationUnit(ASTContext &Ctx) {
+    void HandleTranslationUnit(ASTContext &Ctx) override {
       if (Diags.hasErrorOccurred()) {
         if (Builder)
           Builder->clear();
@@ -124,30 +124,30 @@ namespace {
         Builder->Release();
     }
 
-    virtual void CompleteTentativeDefinition(VarDecl *D) {
+    void CompleteTentativeDefinition(VarDecl *D) override {
       if (Diags.hasErrorOccurred())
         return;
 
       Builder->EmitTentativeDefinition(D);
     }
 
-    virtual void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) {
+    void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) override {
       if (Diags.hasErrorOccurred())
         return;
 
       Builder->EmitVTable(RD, DefinitionRequired);
     }
 
-    virtual void HandleLinkerOptionPragma(llvm::StringRef Opts) {
+    void HandleLinkerOptionPragma(llvm::StringRef Opts) override {
       Builder->AppendLinkerOptions(Opts);
     }
 
-    virtual void HandleDetectMismatch(llvm::StringRef Name,
-                                      llvm::StringRef Value) {
+    void HandleDetectMismatch(llvm::StringRef Name,
+                              llvm::StringRef Value) override {
       Builder->AddDetectMismatch(Name, Value);
     }
 
-    virtual void HandleDependentLibrary(llvm::StringRef Lib) {
+    void HandleDependentLibrary(llvm::StringRef Lib) override {
       Builder->AddDependentLib(Lib);
     }
   };

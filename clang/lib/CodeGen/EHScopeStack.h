@@ -182,7 +182,7 @@ public:
     typedef typename DominatingValue<A0>::saved_type A0_saved;
     A0_saved a0_saved;
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       A0 a0 = DominatingValue<A0>::restore(CGF, a0_saved);
       T(a0).Emit(CGF, flags);
     }
@@ -199,7 +199,7 @@ public:
     A0_saved a0_saved;
     A1_saved a1_saved;
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       A0 a0 = DominatingValue<A0>::restore(CGF, a0_saved);
       A1 a1 = DominatingValue<A1>::restore(CGF, a1_saved);
       T(a0, a1).Emit(CGF, flags);
@@ -219,7 +219,7 @@ public:
     A1_saved a1_saved;
     A2_saved a2_saved;
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       A0 a0 = DominatingValue<A0>::restore(CGF, a0_saved);
       A1 a1 = DominatingValue<A1>::restore(CGF, a1_saved);
       A2 a2 = DominatingValue<A2>::restore(CGF, a2_saved);
@@ -242,7 +242,7 @@ public:
     A2_saved a2_saved;
     A3_saved a3_saved;
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       A0 a0 = DominatingValue<A0>::restore(CGF, a0_saved);
       A1 a1 = DominatingValue<A1>::restore(CGF, a1_saved);
       A2 a2 = DominatingValue<A2>::restore(CGF, a2_saved);

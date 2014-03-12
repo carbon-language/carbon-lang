@@ -479,98 +479,86 @@ public:
   CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
       unsigned protocolClassVersion);
 
-  virtual llvm::Constant *GenerateConstantString(const StringLiteral *);
+  llvm::Constant *GenerateConstantString(const StringLiteral *) override;
 
-  virtual RValue
-  GenerateMessageSend(CodeGenFunction &CGF,
-                      ReturnValueSlot Return,
-                      QualType ResultType,
-                      Selector Sel,
-                      llvm::Value *Receiver,
-                      const CallArgList &CallArgs,
+  RValue
+  GenerateMessageSend(CodeGenFunction &CGF, ReturnValueSlot Return,
+                      QualType ResultType, Selector Sel,
+                      llvm::Value *Receiver, const CallArgList &CallArgs,
                       const ObjCInterfaceDecl *Class,
-                      const ObjCMethodDecl *Method);
-  virtual RValue
-  GenerateMessageSendSuper(CodeGenFunction &CGF,
-                           ReturnValueSlot Return,
-                           QualType ResultType,
-                           Selector Sel,
+                      const ObjCMethodDecl *Method) override;
+  RValue
+  GenerateMessageSendSuper(CodeGenFunction &CGF, ReturnValueSlot Return,
+                           QualType ResultType, Selector Sel,
                            const ObjCInterfaceDecl *Class,
-                           bool isCategoryImpl,
-                           llvm::Value *Receiver,
-                           bool IsClassMessage,
-                           const CallArgList &CallArgs,
-                           const ObjCMethodDecl *Method);
-  virtual llvm::Value *GetClass(CodeGenFunction &CGF,
-                                const ObjCInterfaceDecl *OID);
-  virtual llvm::Value *GetSelector(CodeGenFunction &CGF, Selector Sel,
-                                   bool lval = false);
-  virtual llvm::Value *GetSelector(CodeGenFunction &CGF, const ObjCMethodDecl
-      *Method);
-  virtual llvm::Constant *GetEHType(QualType T);
+                           bool isCategoryImpl, llvm::Value *Receiver,
+                           bool IsClassMessage, const CallArgList &CallArgs,
+                           const ObjCMethodDecl *Method) override;
+  llvm::Value *GetClass(CodeGenFunction &CGF,
+                        const ObjCInterfaceDecl *OID) override;
+  llvm::Value *GetSelector(CodeGenFunction &CGF, Selector Sel,
+                           bool lval = false) override;
+  llvm::Value *GetSelector(CodeGenFunction &CGF,
+                           const ObjCMethodDecl *Method) override;
+  llvm::Constant *GetEHType(QualType T) override;
 
-  virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
-                                         const ObjCContainerDecl *CD);
-  virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
-  virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
-  virtual void RegisterAlias(const ObjCCompatibleAliasDecl *OAD);
-  virtual llvm::Value *GenerateProtocolRef(CodeGenFunction &CGF,
-                                           const ObjCProtocolDecl *PD);
-  virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
-  virtual llvm::Function *ModuleInitFunction();
-  virtual llvm::Constant *GetPropertyGetFunction();
-  virtual llvm::Constant *GetPropertySetFunction();
-  virtual llvm::Constant *GetOptimizedPropertySetFunction(bool atomic, 
-                                                          bool copy);
-  virtual llvm::Constant *GetSetStructFunction();
-  virtual llvm::Constant *GetGetStructFunction();
-  virtual llvm::Constant *GetCppAtomicObjectGetFunction();
-  virtual llvm::Constant *GetCppAtomicObjectSetFunction();
-  virtual llvm::Constant *EnumerationMutationFunction();
+  llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
+                                 const ObjCContainerDecl *CD) override;
+  void GenerateCategory(const ObjCCategoryImplDecl *CMD) override;
+  void GenerateClass(const ObjCImplementationDecl *ClassDecl) override;
+  void RegisterAlias(const ObjCCompatibleAliasDecl *OAD) override;
+  llvm::Value *GenerateProtocolRef(CodeGenFunction &CGF,
+                                   const ObjCProtocolDecl *PD) override;
+  void GenerateProtocol(const ObjCProtocolDecl *PD) override;
+  llvm::Function *ModuleInitFunction() override;
+  llvm::Constant *GetPropertyGetFunction() override;
+  llvm::Constant *GetPropertySetFunction() override;
+  llvm::Constant *GetOptimizedPropertySetFunction(bool atomic,
+                                                  bool copy) override;
+  llvm::Constant *GetSetStructFunction() override;
+  llvm::Constant *GetGetStructFunction() override;
+  llvm::Constant *GetCppAtomicObjectGetFunction() override;
+  llvm::Constant *GetCppAtomicObjectSetFunction() override;
+  llvm::Constant *EnumerationMutationFunction() override;
 
-  virtual void EmitTryStmt(CodeGenFunction &CGF,
-                           const ObjCAtTryStmt &S);
-  virtual void EmitSynchronizedStmt(CodeGenFunction &CGF,
-                                    const ObjCAtSynchronizedStmt &S);
-  virtual void EmitThrowStmt(CodeGenFunction &CGF,
-                             const ObjCAtThrowStmt &S,
-                             bool ClearInsertionPoint=true);
-  virtual llvm::Value * EmitObjCWeakRead(CodeGenFunction &CGF,
-                                         llvm::Value *AddrWeakObj);
-  virtual void EmitObjCWeakAssign(CodeGenFunction &CGF,
-                                  llvm::Value *src, llvm::Value *dst);
-  virtual void EmitObjCGlobalAssign(CodeGenFunction &CGF,
-                                    llvm::Value *src, llvm::Value *dest,
-                                    bool threadlocal=false);
-  virtual void EmitObjCIvarAssign(CodeGenFunction &CGF,
-                                    llvm::Value *src, llvm::Value *dest,
-                                    llvm::Value *ivarOffset);
-  virtual void EmitObjCStrongCastAssign(CodeGenFunction &CGF,
-                                        llvm::Value *src, llvm::Value *dest);
-  virtual void EmitGCMemmoveCollectable(CodeGenFunction &CGF,
-                                        llvm::Value *DestPtr,
-                                        llvm::Value *SrcPtr,
-                                        llvm::Value *Size);
-  virtual LValue EmitObjCValueForIvar(CodeGenFunction &CGF,
-                                      QualType ObjectTy,
-                                      llvm::Value *BaseValue,
-                                      const ObjCIvarDecl *Ivar,
-                                      unsigned CVRQualifiers);
-  virtual llvm::Value *EmitIvarOffset(CodeGenFunction &CGF,
-                                      const ObjCInterfaceDecl *Interface,
-                                      const ObjCIvarDecl *Ivar);
-  virtual llvm::Value *EmitNSAutoreleasePoolClassRef(CodeGenFunction &CGF);
-  virtual llvm::Constant *BuildGCBlockLayout(CodeGenModule &CGM,
-                                             const CGBlockInfo &blockInfo) {
+  void EmitTryStmt(CodeGenFunction &CGF,
+                   const ObjCAtTryStmt &S) override;
+  void EmitSynchronizedStmt(CodeGenFunction &CGF,
+                            const ObjCAtSynchronizedStmt &S) override;
+  void EmitThrowStmt(CodeGenFunction &CGF,
+                     const ObjCAtThrowStmt &S,
+                     bool ClearInsertionPoint=true) override;
+  llvm::Value * EmitObjCWeakRead(CodeGenFunction &CGF,
+                                 llvm::Value *AddrWeakObj) override;
+  void EmitObjCWeakAssign(CodeGenFunction &CGF,
+                          llvm::Value *src, llvm::Value *dst) override;
+  void EmitObjCGlobalAssign(CodeGenFunction &CGF,
+                            llvm::Value *src, llvm::Value *dest,
+                            bool threadlocal=false) override;
+  void EmitObjCIvarAssign(CodeGenFunction &CGF, llvm::Value *src,
+                          llvm::Value *dest, llvm::Value *ivarOffset) override;
+  void EmitObjCStrongCastAssign(CodeGenFunction &CGF,
+                                llvm::Value *src, llvm::Value *dest) override;
+  void EmitGCMemmoveCollectable(CodeGenFunction &CGF, llvm::Value *DestPtr,
+                                llvm::Value *SrcPtr,
+                                llvm::Value *Size) override;
+  LValue EmitObjCValueForIvar(CodeGenFunction &CGF, QualType ObjectTy,
+                              llvm::Value *BaseValue, const ObjCIvarDecl *Ivar,
+                              unsigned CVRQualifiers) override;
+  llvm::Value *EmitIvarOffset(CodeGenFunction &CGF,
+                              const ObjCInterfaceDecl *Interface,
+                              const ObjCIvarDecl *Ivar) override;
+  llvm::Value *EmitNSAutoreleasePoolClassRef(CodeGenFunction &CGF) override;
+  llvm::Constant *BuildGCBlockLayout(CodeGenModule &CGM,
+                                     const CGBlockInfo &blockInfo) override {
     return NULLPtr;
   }
-  virtual llvm::Constant *BuildRCBlockLayout(CodeGenModule &CGM,
-                                             const CGBlockInfo &blockInfo) {
+  llvm::Constant *BuildRCBlockLayout(CodeGenModule &CGM,
+                                     const CGBlockInfo &blockInfo) override {
     return NULLPtr;
   }
-  
-  virtual llvm::Constant *BuildByrefLayout(CodeGenModule &CGM,
-                                           QualType T) {
+
+  llvm::Constant *BuildByrefLayout(CodeGenModule &CGM, QualType T) override {
     return NULLPtr;
   }
 
@@ -596,11 +584,9 @@ class CGObjCGCC : public CGObjCGNU {
   /// arguments.  Returns the IMP for the corresponding method.
   LazyRuntimeFunction MsgLookupSuperFn;
 protected:
-  virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
-                                 llvm::Value *&Receiver,
-                                 llvm::Value *cmd,
-                                 llvm::MDNode *node,
-                                 MessageSendInfo &MSI) {
+  llvm::Value *LookupIMP(CodeGenFunction &CGF, llvm::Value *&Receiver,
+                         llvm::Value *cmd, llvm::MDNode *node,
+                         MessageSendInfo &MSI) override {
     CGBuilderTy &Builder = CGF.Builder;
     llvm::Value *args[] = {
             EnforceType(Builder, Receiver, IdTy),
@@ -609,10 +595,8 @@ protected:
     imp->setMetadata(msgSendMDKind, node);
     return imp.getInstruction();
   }
-  virtual llvm::Value *LookupIMPSuper(CodeGenFunction &CGF,
-                                      llvm::Value *ObjCSuper,
-                                      llvm::Value *cmd,
-                                      MessageSendInfo &MSI) {
+  llvm::Value *LookupIMPSuper(CodeGenFunction &CGF, llvm::Value *ObjCSuper,
+                              llvm::Value *cmd, MessageSendInfo &MSI) override {
       CGBuilderTy &Builder = CGF.Builder;
       llvm::Value *lookupArgs[] = {EnforceType(Builder, ObjCSuper,
           PtrToObjCSuperTy), cmd};
@@ -655,13 +639,11 @@ class CGObjCGNUstep : public CGObjCGNU {
     /// lookup functions.
     llvm::Type *SlotTy;
   public:
-    virtual llvm::Constant *GetEHType(QualType T);
+    llvm::Constant *GetEHType(QualType T) override;
   protected:
-    virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
-                                   llvm::Value *&Receiver,
-                                   llvm::Value *cmd,
-                                   llvm::MDNode *node,
-                                   MessageSendInfo &MSI) {
+    llvm::Value *LookupIMP(CodeGenFunction &CGF, llvm::Value *&Receiver,
+                           llvm::Value *cmd, llvm::MDNode *node,
+                           MessageSendInfo &MSI) override {
       CGBuilderTy &Builder = CGF.Builder;
       llvm::Function *LookupFn = SlotLookupFn;
 
@@ -697,10 +679,9 @@ class CGObjCGNUstep : public CGObjCGNU {
       Receiver = Builder.CreateLoad(ReceiverPtr, true);
       return imp;
     }
-    virtual llvm::Value *LookupIMPSuper(CodeGenFunction &CGF,
-                                        llvm::Value *ObjCSuper,
-                                        llvm::Value *cmd,
-                                        MessageSendInfo &MSI) {
+    llvm::Value *LookupIMPSuper(CodeGenFunction &CGF, llvm::Value *ObjCSuper,
+                                llvm::Value *cmd,
+                                MessageSendInfo &MSI) override {
       CGBuilderTy &Builder = CGF.Builder;
       llvm::Value *lookupArgs[] = {ObjCSuper, cmd};
 
@@ -761,22 +742,22 @@ class CGObjCGNUstep : public CGObjCGNU {
       CxxAtomicObjectGetFn.init(&CGM, "objc_getCppObjectAtomic", VoidTy, PtrTy,
           PtrTy, PtrTy, NULL);
     }
-    virtual llvm::Constant *GetCppAtomicObjectGetFunction() {
+    llvm::Constant *GetCppAtomicObjectGetFunction() override {
       // The optimised functions were added in version 1.7 of the GNUstep
       // runtime.
       assert (CGM.getLangOpts().ObjCRuntime.getVersion() >=
           VersionTuple(1, 7));
       return CxxAtomicObjectGetFn;
     }
-    virtual llvm::Constant *GetCppAtomicObjectSetFunction() {
+    llvm::Constant *GetCppAtomicObjectSetFunction() override {
       // The optimised functions were added in version 1.7 of the GNUstep
       // runtime.
       assert (CGM.getLangOpts().ObjCRuntime.getVersion() >=
           VersionTuple(1, 7));
       return CxxAtomicObjectSetFn;
     }
-    virtual llvm::Constant *GetOptimizedPropertySetFunction(bool atomic,
-                                                            bool copy) {
+    llvm::Constant *GetOptimizedPropertySetFunction(bool atomic,
+                                                    bool copy) override {
       // The optimised property functions omit the GC check, and so are not
       // safe to use in GC mode.  The standard functions are fast in GC mode,
       // so there is less advantage in using them.
@@ -809,11 +790,9 @@ protected:
   /// arguments.  Returns the IMP for the corresponding method.
   LazyRuntimeFunction MsgLookupSuperFn, MsgLookupSuperFnSRet;
 
-  virtual llvm::Value *LookupIMP(CodeGenFunction &CGF,
-                                 llvm::Value *&Receiver,
-                                 llvm::Value *cmd,
-                                 llvm::MDNode *node,
-                                 MessageSendInfo &MSI) {
+  llvm::Value *LookupIMP(CodeGenFunction &CGF, llvm::Value *&Receiver,
+                         llvm::Value *cmd, llvm::MDNode *node,
+                         MessageSendInfo &MSI) override {
     CGBuilderTy &Builder = CGF.Builder;
     llvm::Value *args[] = {
             EnforceType(Builder, Receiver, IdTy),
@@ -829,10 +808,8 @@ protected:
     return imp.getInstruction();
   }
 
-  virtual llvm::Value *LookupIMPSuper(CodeGenFunction &CGF,
-                                      llvm::Value *ObjCSuper,
-                                      llvm::Value *cmd,
-                                      MessageSendInfo &MSI) {
+  llvm::Value *LookupIMPSuper(CodeGenFunction &CGF, llvm::Value *ObjCSuper,
+                              llvm::Value *cmd, MessageSendInfo &MSI) override {
       CGBuilderTy &Builder = CGF.Builder;
       llvm::Value *lookupArgs[] = {EnforceType(Builder, ObjCSuper,
           PtrToObjCSuperTy), cmd};
@@ -843,8 +820,8 @@ protected:
         return CGF.EmitNounwindRuntimeCall(MsgLookupSuperFn, lookupArgs);
     }
 
-  virtual llvm::Value *GetClassNamed(CodeGenFunction &CGF,
-                                     const std::string &Name, bool isWeak) {
+  llvm::Value *GetClassNamed(CodeGenFunction &CGF,
+                             const std::string &Name, bool isWeak) override {
     if (isWeak)
       return CGObjCGNU::GetClassNamed(CGF, Name, isWeak);
 

@@ -431,7 +431,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
 
 namespace {
 struct FinishARCDealloc : EHScopeStack::Cleanup {
-  void Emit(CodeGenFunction &CGF, Flags flags) {
+  void Emit(CodeGenFunction &CGF, Flags flags) override {
     const ObjCMethodDecl *method = cast<ObjCMethodDecl>(CGF.CurCodeDecl);
 
     const ObjCImplDecl *impl = cast<ObjCImplDecl>(method->getDeclContext());
@@ -1298,7 +1298,7 @@ namespace {
       : addr(addr), ivar(ivar), destroyer(destroyer),
         useEHCleanupForArray(useEHCleanupForArray) {}
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       LValue lvalue
         = CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), addr, ivar, /*CVR*/ 0);
       CGF.emitDestroy(lvalue.getAddress(), ivar->getType(), destroyer,
@@ -1727,7 +1727,7 @@ namespace {
     CallObjCRelease(llvm::Value *object) : object(object) {}
     llvm::Value *object;
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       // Releases at the end of the full-expression are imprecise.
       CGF.EmitARCRelease(object, ARCImpreciseLifetime);
     }
@@ -2336,7 +2336,7 @@ namespace {
 
     CallObjCAutoreleasePoolObject(llvm::Value *token) : Token(token) {}
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       CGF.EmitObjCAutoreleasePoolPop(Token);
     }
   };
@@ -2345,7 +2345,7 @@ namespace {
 
     CallObjCMRRAutoreleasePoolObject(llvm::Value *token) : Token(token) {}
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       CGF.EmitObjCMRRAutoreleasePoolPop(Token);
     }
   };

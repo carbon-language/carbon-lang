@@ -37,14 +37,14 @@ class MicrosoftCXXABI : public CGCXXABI {
 public:
   MicrosoftCXXABI(CodeGenModule &CGM) : CGCXXABI(CGM) {}
 
-  bool HasThisReturn(GlobalDecl GD) const;
+  bool HasThisReturn(GlobalDecl GD) const override;
 
-  bool isReturnTypeIndirect(const CXXRecordDecl *RD) const {
+  bool isReturnTypeIndirect(const CXXRecordDecl *RD) const override {
     // Structures that are not C++03 PODs are always indirect.
     return !RD->isPOD();
   }
 
-  RecordArgABI getRecordArgABI(const CXXRecordDecl *RD) const {
+  RecordArgABI getRecordArgABI(const CXXRecordDecl *RD) const override {
     if (RD->hasNonTrivialCopyConstructor() || RD->hasNonTrivialDestructor()) {
       llvm::Triple::ArchType Arch = CGM.getTarget().getTriple().getArch();
       if (Arch == llvm::Triple::x86)
@@ -56,34 +56,34 @@ public:
     return RAA_Default;
   }
 
-  StringRef GetPureVirtualCallName() { return "_purecall"; }
+  StringRef GetPureVirtualCallName() override { return "_purecall"; }
   // No known support for deleted functions in MSVC yet, so this choice is
   // arbitrary.
-  StringRef GetDeletedVirtualCallName() { return "_purecall"; }
+  StringRef GetDeletedVirtualCallName() override { return "_purecall"; }
 
-  bool isInlineInitializedStaticDataMemberLinkOnce() { return true; }
+  bool isInlineInitializedStaticDataMemberLinkOnce()  override{ return true; }
 
   llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF,
                                       llvm::Value *ptr,
-                                      QualType type);
+                                      QualType type) override;
 
-  llvm::Value *GetVirtualBaseClassOffset(CodeGenFunction &CGF,
-                                         llvm::Value *This,
-                                         const CXXRecordDecl *ClassDecl,
-                                         const CXXRecordDecl *BaseClassDecl);
+  llvm::Value *
+  GetVirtualBaseClassOffset(CodeGenFunction &CGF, llvm::Value *This,
+                            const CXXRecordDecl *ClassDecl,
+                            const CXXRecordDecl *BaseClassDecl) override;
 
   void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
-                                 CXXCtorType Type,
-                                 CanQualType &ResTy,
-                                 SmallVectorImpl<CanQualType> &ArgTys);
+                                 CXXCtorType Type, CanQualType &ResTy,
+                                 SmallVectorImpl<CanQualType> &ArgTys) override;
 
-  llvm::BasicBlock *EmitCtorCompleteObjectHandler(CodeGenFunction &CGF,
-                                                  const CXXRecordDecl *RD);
+  llvm::BasicBlock *
+  EmitCtorCompleteObjectHandler(CodeGenFunction &CGF,
+                                const CXXRecordDecl *RD) override;
 
   void initializeHiddenVirtualInheritanceMembers(CodeGenFunction &CGF,
-                                                 const CXXRecordDecl *RD);
+                                              const CXXRecordDecl *RD) override;
 
-  void EmitCXXConstructors(const CXXConstructorDecl *D);
+  void EmitCXXConstructors(const CXXConstructorDecl *D) override;
 
   // Background on MSVC destructors
   // ==============================
@@ -120,17 +120,18 @@ public:
   void BuildDestructorSignature(const CXXDestructorDecl *Dtor,
                                 CXXDtorType Type,
                                 CanQualType &ResTy,
-                                SmallVectorImpl<CanQualType> &ArgTys);
+                                SmallVectorImpl<CanQualType> &ArgTys) override;
 
   /// Non-base dtors should be emitted as delegating thunks in this ABI.
   bool useThunkForDtorVariant(const CXXDestructorDecl *Dtor,
-                              CXXDtorType DT) const {
+                              CXXDtorType DT) const override {
     return DT != Dtor_Base;
   }
 
-  void EmitCXXDestructors(const CXXDestructorDecl *D);
+  void EmitCXXDestructors(const CXXDestructorDecl *D) override;
 
-  const CXXRecordDecl *getThisArgumentTypeForMethod(const CXXMethodDecl *MD) {
+  const CXXRecordDecl *
+  getThisArgumentTypeForMethod(const CXXMethodDecl *MD) override {
     MD = MD->getCanonicalDecl();
     if (MD->isVirtual() && !isa<CXXDestructorDecl>(MD)) {
       MicrosoftVTableContext::MethodVFTableLocation ML =
@@ -149,56 +150,59 @@ public:
 
   llvm::Value *adjustThisArgumentForVirtualCall(CodeGenFunction &CGF,
                                                 GlobalDecl GD,
-                                                llvm::Value *This);
+                                                llvm::Value *This) override;
 
   void addImplicitStructorParams(CodeGenFunction &CGF, QualType &ResTy,
-                                 FunctionArgList &Params);
+                                 FunctionArgList &Params) override;
 
   llvm::Value *adjustThisParameterInVirtualFunctionPrologue(
-      CodeGenFunction &CGF, GlobalDecl GD, llvm::Value *This);
+      CodeGenFunction &CGF, GlobalDecl GD, llvm::Value *This) override;
 
-  void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
+  void EmitInstanceFunctionProlog(CodeGenFunction &CGF) override;
 
   unsigned addImplicitConstructorArgs(CodeGenFunction &CGF,
                                       const CXXConstructorDecl *D,
                                       CXXCtorType Type, bool ForVirtualBase,
-                                      bool Delegating, CallArgList &Args);
+                                      bool Delegating,
+                                      CallArgList &Args) override;
 
   void EmitDestructorCall(CodeGenFunction &CGF, const CXXDestructorDecl *DD,
                           CXXDtorType Type, bool ForVirtualBase,
-                          bool Delegating, llvm::Value *This);
+                          bool Delegating, llvm::Value *This) override;
 
-  void emitVTableDefinitions(CodeGenVTables &CGVT, const CXXRecordDecl *RD);
+  void emitVTableDefinitions(CodeGenVTables &CGVT,
+                             const CXXRecordDecl *RD) override;
 
   llvm::Value *getVTableAddressPointInStructor(
       CodeGenFunction &CGF, const CXXRecordDecl *VTableClass,
       BaseSubobject Base, const CXXRecordDecl *NearestVBase,
-      bool &NeedsVirtualOffset);
+      bool &NeedsVirtualOffset) override;
 
   llvm::Constant *
   getVTableAddressPointForConstExpr(BaseSubobject Base,
-                                    const CXXRecordDecl *VTableClass);
+                                    const CXXRecordDecl *VTableClass) override;
 
   llvm::GlobalVariable *getAddrOfVTable(const CXXRecordDecl *RD,
-                                        CharUnits VPtrOffset);
+                                        CharUnits VPtrOffset) override;
 
   llvm::Value *getVirtualFunctionPointer(CodeGenFunction &CGF, GlobalDecl GD,
-                                         llvm::Value *This, llvm::Type *Ty);
+                                         llvm::Value *This,
+                                         llvm::Type *Ty) override;
 
   void EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                  const CXXDestructorDecl *Dtor,
                                  CXXDtorType DtorType, SourceLocation CallLoc,
-                                 llvm::Value *This);
+                                 llvm::Value *This) override;
 
   void adjustCallArgsForDestructorThunk(CodeGenFunction &CGF, GlobalDecl GD,
-                                        CallArgList &CallArgs) {
+                                        CallArgList &CallArgs) override {
     assert(GD.getDtorType() == Dtor_Deleting &&
            "Only deleting destructor thunks are available in this ABI");
     CallArgs.add(RValue::get(getStructorImplicitParamValue(CGF)),
                              CGM.getContext().IntTy);
   }
 
-  void emitVirtualInheritanceTables(const CXXRecordDecl *RD);
+  void emitVirtualInheritanceTables(const CXXRecordDecl *RD) override;
 
   llvm::GlobalVariable *
   getAddrOfVBTable(const VPtrInfo &VBT, const CXXRecordDecl *RD,
@@ -207,19 +211,19 @@ public:
   void emitVBTableDefinition(const VPtrInfo &VBT, const CXXRecordDecl *RD,
                              llvm::GlobalVariable *GV) const;
 
-  void setThunkLinkage(llvm::Function *Thunk, bool ForVTable) {
+  void setThunkLinkage(llvm::Function *Thunk, bool ForVTable) override {
     Thunk->setLinkage(llvm::GlobalValue::WeakAnyLinkage);
   }
 
   llvm::Value *performThisAdjustment(CodeGenFunction &CGF, llvm::Value *This,
-                                     const ThisAdjustment &TA);
+                                     const ThisAdjustment &TA) override;
 
   llvm::Value *performReturnAdjustment(CodeGenFunction &CGF, llvm::Value *Ret,
-                                       const ReturnAdjustment &RA);
+                                       const ReturnAdjustment &RA) override;
 
   void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                        llvm::GlobalVariable *DeclPtr,
-                       bool PerformInit);
+                       bool PerformInit) override;
 
   // ==== Notes on array cookies =========
   //
@@ -244,17 +248,18 @@ public:
   //   }
   // Whereas it prints "104" and "104" if you give A a destructor.
 
-  bool requiresArrayCookie(const CXXDeleteExpr *expr, QualType elementType);
-  bool requiresArrayCookie(const CXXNewExpr *expr);
-  CharUnits getArrayCookieSizeImpl(QualType type);
+  bool requiresArrayCookie(const CXXDeleteExpr *expr,
+                           QualType elementType) override;
+  bool requiresArrayCookie(const CXXNewExpr *expr) override;
+  CharUnits getArrayCookieSizeImpl(QualType type) override;
   llvm::Value *InitializeArrayCookie(CodeGenFunction &CGF,
                                      llvm::Value *NewPtr,
                                      llvm::Value *NumElements,
                                      const CXXNewExpr *expr,
-                                     QualType ElementType);
+                                     QualType ElementType) override;
   llvm::Value *readArrayCookieImpl(CodeGenFunction &CGF,
                                    llvm::Value *allocPtr,
-                                   CharUnits cookieSize);
+                                   CharUnits cookieSize) override;
 
 private:
   MicrosoftMangleContext &getMangleContext() {
@@ -333,43 +338,43 @@ private:
       const MicrosoftVTableContext::MethodVFTableLocation &ML);
 
 public:
-  virtual llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT);
+  llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT) override;
 
-  virtual bool isZeroInitializable(const MemberPointerType *MPT);
+  bool isZeroInitializable(const MemberPointerType *MPT) override;
 
-  virtual llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT);
+  llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT) override;
 
-  virtual llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
-                                                CharUnits offset);
-  virtual llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD);
-  virtual llvm::Constant *EmitMemberPointer(const APValue &MP, QualType MPT);
+  llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
+                                        CharUnits offset) override;
+  llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD) override;
+  llvm::Constant *EmitMemberPointer(const APValue &MP, QualType MPT) override;
 
-  virtual llvm::Value *EmitMemberPointerComparison(CodeGenFunction &CGF,
-                                                   llvm::Value *L,
-                                                   llvm::Value *R,
-                                                   const MemberPointerType *MPT,
-                                                   bool Inequality);
+  llvm::Value *EmitMemberPointerComparison(CodeGenFunction &CGF,
+                                           llvm::Value *L,
+                                           llvm::Value *R,
+                                           const MemberPointerType *MPT,
+                                           bool Inequality) override;
 
-  virtual llvm::Value *EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
-                                                  llvm::Value *MemPtr,
-                                                  const MemberPointerType *MPT);
+  llvm::Value *EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
+                                          llvm::Value *MemPtr,
+                                          const MemberPointerType *MPT) override;
 
-  virtual llvm::Value *
+  llvm::Value *
   EmitMemberDataPointerAddress(CodeGenFunction &CGF, const Expr *E,
                                llvm::Value *Base, llvm::Value *MemPtr,
-                               const MemberPointerType *MPT);
+                               const MemberPointerType *MPT) override;
 
-  virtual llvm::Value *EmitMemberPointerConversion(CodeGenFunction &CGF,
-                                                   const CastExpr *E,
-                                                   llvm::Value *Src);
+  llvm::Value *EmitMemberPointerConversion(CodeGenFunction &CGF,
+                                           const CastExpr *E,
+                                           llvm::Value *Src) override;
 
-  virtual llvm::Constant *EmitMemberPointerConversion(const CastExpr *E,
-                                                      llvm::Constant *Src);
+  llvm::Constant *EmitMemberPointerConversion(const CastExpr *E,
+                                              llvm::Constant *Src) override;
 
-  virtual llvm::Value *
+  llvm::Value *
   EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF, const Expr *E,
                                   llvm::Value *&This, llvm::Value *MemPtr,
-                                  const MemberPointerType *MPT);
+                                  const MemberPointerType *MPT) override;
 
 private:
   typedef std::pair<const CXXRecordDecl *, CharUnits> VFTableIdTy;

@@ -39,7 +39,7 @@ private:
 public:
   CGNVCUDARuntime(CodeGenModule &CGM);
 
-  void EmitDeviceStubBody(CodeGenFunction &CGF, FunctionArgList &Args);
+  void EmitDeviceStubBody(CodeGenFunction &CGF, FunctionArgList &Args) override;
 };
 
 }

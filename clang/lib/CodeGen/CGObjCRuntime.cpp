@@ -158,7 +158,7 @@ namespace {
     bool MightThrow;
     llvm::Value *Fn;
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       if (!MightThrow) {
         CGF.Builder.CreateCall(Fn)->setDoesNotThrow();
         return;
@@ -303,7 +303,7 @@ namespace {
     CallSyncExit(llvm::Value *SyncExitFn, llvm::Value *SyncArg)
       : SyncExitFn(SyncExitFn), SyncArg(SyncArg) {}
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       CGF.Builder.CreateCall(SyncExitFn, SyncArg)->setDoesNotThrow();
     }
   };

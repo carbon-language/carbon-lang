@@ -1587,7 +1587,7 @@ public:
     : ByrefHelpers(alignment), Flags(flags) {}
 
   void emitCopy(CodeGenFunction &CGF, llvm::Value *destField,
-                llvm::Value *srcField) {
+                llvm::Value *srcField) override {
     destField = CGF.Builder.CreateBitCast(destField, CGF.VoidPtrTy);
 
     srcField = CGF.Builder.CreateBitCast(srcField, CGF.VoidPtrPtrTy);
@@ -1602,14 +1602,14 @@ public:
     CGF.EmitNounwindRuntimeCall(fn, args);
   }
 
-  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
+  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) override {
     field = CGF.Builder.CreateBitCast(field, CGF.Int8PtrTy->getPointerTo(0));
     llvm::Value *value = CGF.Builder.CreateLoad(field);
 
     CGF.BuildBlockRelease(value, Flags | BLOCK_BYREF_CALLER);
   }
 
-  void profileImpl(llvm::FoldingSetNodeID &id) const {
+  void profileImpl(llvm::FoldingSetNodeID &id) const override {
     id.AddInteger(Flags.getBitMask());
   }
 };
@@ -1620,15 +1620,15 @@ public:
   ARCWeakByrefHelpers(CharUnits alignment) : ByrefHelpers(alignment) {}
 
   void emitCopy(CodeGenFunction &CGF, llvm::Value *destField,
-                llvm::Value *srcField) {
+                llvm::Value *srcField) override {
     CGF.EmitARCMoveWeak(destField, srcField);
   }
 
-  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
+  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) override {
     CGF.EmitARCDestroyWeak(field);
   }
 
-  void profileImpl(llvm::FoldingSetNodeID &id) const {
+  void profileImpl(llvm::FoldingSetNodeID &id) const override {
     // 0 is distinguishable from all pointers and byref flags
     id.AddInteger(0);
   }
@@ -1641,7 +1641,7 @@ public:
   ARCStrongByrefHelpers(CharUnits alignment) : ByrefHelpers(alignment) {}
 
   void emitCopy(CodeGenFunction &CGF, llvm::Value *destField,
-                llvm::Value *srcField) {
+                llvm::Value *srcField) override {
     // Do a "move" by copying the value and then zeroing out the old
     // variable.
 
@@ -1665,11 +1665,11 @@ public:
     store->setAlignment(Alignment.getQuantity());
   }
 
-  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
+  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) override {
     CGF.EmitARCDestroyStrong(field, ARCImpreciseLifetime);
   }
 
-  void profileImpl(llvm::FoldingSetNodeID &id) const {
+  void profileImpl(llvm::FoldingSetNodeID &id) const override {
     // 1 is distinguishable from all pointers and byref flags
     id.AddInteger(1);
   }
@@ -1682,7 +1682,7 @@ public:
   ARCStrongBlockByrefHelpers(CharUnits alignment) : ByrefHelpers(alignment) {}
 
   void emitCopy(CodeGenFunction &CGF, llvm::Value *destField,
-                llvm::Value *srcField) {
+                llvm::Value *srcField) override {
     // Do the copy with objc_retainBlock; that's all that
     // _Block_object_assign would do anyway, and we'd have to pass the
     // right arguments to make sure it doesn't get no-op'ed.
@@ -1695,11 +1695,11 @@ public:
     store->setAlignment(Alignment.getQuantity());
   }
 
-  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
+  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) override {
     CGF.EmitARCDestroyStrong(field, ARCImpreciseLifetime);
   }
 
-  void profileImpl(llvm::FoldingSetNodeID &id) const {
+  void profileImpl(llvm::FoldingSetNodeID &id) const override {
     // 2 is distinguishable from all pointers and byref flags
     id.AddInteger(2);
   }
@@ -1716,20 +1716,20 @@ public:
                   const Expr *copyExpr)
     : ByrefHelpers(alignment), VarType(type), CopyExpr(copyExpr) {}
 
-  bool needsCopy() const { return CopyExpr != 0; }
+  bool needsCopy() const override { return CopyExpr != 0; }
   void emitCopy(CodeGenFunction &CGF, llvm::Value *destField,
-                llvm::Value *srcField) {
+                llvm::Value *srcField) override {
     if (!CopyExpr) return;
     CGF.EmitSynthesizedCXXCopyCtor(destField, srcField, CopyExpr);
   }
 
-  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
+  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) override {
     EHScopeStack::stable_iterator cleanupDepth = CGF.EHStack.stable_begin();
     CGF.PushDestructorCleanup(VarType, field);
     CGF.PopCleanupBlocks(cleanupDepth);
   }
 
-  void profileImpl(llvm::FoldingSetNodeID &id) const {
+  void profileImpl(llvm::FoldingSetNodeID &id) const override {
     id.AddPointer(VarType.getCanonicalType().getAsOpaquePtr());
   }
 };
@@ -2214,7 +2214,7 @@ namespace {
     llvm::Value *Addr;
     CallBlockRelease(llvm::Value *Addr) : Addr(Addr) {}
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       // Should we be passing FIELD_IS_WEAK here?
       CGF.BuildBlockRelease(Addr, BLOCK_FIELD_IS_BYREF);
     }

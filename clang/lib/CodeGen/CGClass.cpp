@@ -342,7 +342,7 @@ namespace {
     CallBaseDtor(const CXXRecordDecl *Base, bool BaseIsVirtual)
       : BaseClass(Base), BaseIsVirtual(BaseIsVirtual) {}
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       const CXXRecordDecl *DerivedClass =
         cast<CXXMethodDecl>(CGF.CurCodeDecl)->getParent();
 
@@ -1368,7 +1368,7 @@ namespace {
   struct CallDtorDelete : EHScopeStack::Cleanup {
     CallDtorDelete() {}
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(CGF.CurCodeDecl);
       const CXXRecordDecl *ClassDecl = Dtor->getParent();
       CGF.EmitDeleteCall(Dtor->getOperatorDelete(), CGF.LoadCXXThis(),
@@ -1384,7 +1384,7 @@ namespace {
       assert(ShouldDeleteCondition != NULL);
     }
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       llvm::BasicBlock *callDeleteBB = CGF.createBasicBlock("dtor.call_delete");
       llvm::BasicBlock *continueBB = CGF.createBasicBlock("dtor.continue");
       llvm::Value *ShouldCallDelete
@@ -1413,7 +1413,7 @@ namespace {
       : field(field), destroyer(destroyer),
         useEHCleanupForArray(useEHCleanupForArray) {}
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       // Find the address of the field.
       llvm::Value *thisValue = CGF.LoadCXXThis();
       QualType RecordTy = CGF.getContext().getTagDeclType(field->getParent());
@@ -1794,7 +1794,7 @@ namespace {
                            CXXDtorType Type)
       : Dtor(D), Addr(Addr), Type(Type) {}
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       CGF.EmitCXXDestructorCall(Dtor, Type, /*ForVirtualBase=*/false,
                                 /*Delegating=*/true, Addr);
     }
@@ -1846,7 +1846,7 @@ namespace {
     CallLocalDtor(const CXXDestructorDecl *D, llvm::Value *Addr)
       : Dtor(D), Addr(Addr) {}
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       CGF.EmitCXXDestructorCall(Dtor, Dtor_Complete,
                                 /*ForVirtualBase=*/false,
                                 /*Delegating=*/false, Addr);

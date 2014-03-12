@@ -69,11 +69,11 @@ namespace clang {
     llvm::Module *takeModule() { return TheModule.release(); }
     llvm::Module *takeLinkModule() { return LinkModule.release(); }
 
-    virtual void HandleCXXStaticMemberVarInstantiation(VarDecl *VD) {
+    void HandleCXXStaticMemberVarInstantiation(VarDecl *VD) override {
       Gen->HandleCXXStaticMemberVarInstantiation(VD);
     }
 
-    virtual void Initialize(ASTContext &Ctx) {
+    void Initialize(ASTContext &Ctx) override {
       Context = &Ctx;
 
       if (llvm::TimePassesIsEnabled)
@@ -87,7 +87,7 @@ namespace clang {
         LLVMIRGeneration.stopTimer();
     }
 
-    virtual bool HandleTopLevelDecl(DeclGroupRef D) {
+    bool HandleTopLevelDecl(DeclGroupRef D) override {
       PrettyStackTraceDecl CrashInfo(*D.begin(), SourceLocation(),
                                      Context->getSourceManager(),
                                      "LLVM IR generation of declaration");
@@ -103,7 +103,7 @@ namespace clang {
       return true;
     }
 
-    virtual void HandleTranslationUnit(ASTContext &C) {
+    void HandleTranslationUnit(ASTContext &C) override {
       {
         PrettyStackTraceString CrashInfo("Per-file LLVM IR generation");
         if (llvm::TimePassesIsEnabled)
@@ -165,35 +165,35 @@ namespace clang {
       Ctx.setDiagnosticHandler(OldDiagnosticHandler, OldDiagnosticContext);
     }
 
-    virtual void HandleTagDeclDefinition(TagDecl *D) {
+    void HandleTagDeclDefinition(TagDecl *D) override {
       PrettyStackTraceDecl CrashInfo(D, SourceLocation(),
                                      Context->getSourceManager(),
                                      "LLVM IR generation of declaration");
       Gen->HandleTagDeclDefinition(D);
     }
 
-    virtual void HandleTagDeclRequiredDefinition(const TagDecl *D) {
+    void HandleTagDeclRequiredDefinition(const TagDecl *D) override {
       Gen->HandleTagDeclRequiredDefinition(D);
     }
 
-    virtual void CompleteTentativeDefinition(VarDecl *D) {
+    void CompleteTentativeDefinition(VarDecl *D) override {
       Gen->CompleteTentativeDefinition(D);
     }
 
-    virtual void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) {
+    void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) override {
       Gen->HandleVTable(RD, DefinitionRequired);
     }
 
-    virtual void HandleLinkerOptionPragma(llvm::StringRef Opts) {
+    void HandleLinkerOptionPragma(llvm::StringRef Opts) override {
       Gen->HandleLinkerOptionPragma(Opts);
     }
 
-    virtual void HandleDetectMismatch(llvm::StringRef Name,
-                                      llvm::StringRef Value) {
+    void HandleDetectMismatch(llvm::StringRef Name,
+                                      llvm::StringRef Value) override {
       Gen->HandleDetectMismatch(Name, Value);
     }
 
-    virtual void HandleDependentLibrary(llvm::StringRef Opts) {
+    void HandleDependentLibrary(llvm::StringRef Opts) override {
       Gen->HandleDependentLibrary(Opts);
     }
 

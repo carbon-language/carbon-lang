@@ -2250,7 +2250,7 @@ struct DestroyUnpassedArg : EHScopeStack::Cleanup {
   llvm::Value *Addr;
   QualType Ty;
 
-  void Emit(CodeGenFunction &CGF, Flags flags) {
+  void Emit(CodeGenFunction &CGF, Flags flags) override {
     const CXXDestructorDecl *Dtor = Ty->getAsCXXRecordDecl()->getDestructor();
     assert(!Dtor->isTrivial());
     CGF.EmitCXXDestructorCall(Dtor, Dtor_Complete, /*for vbase*/ false,

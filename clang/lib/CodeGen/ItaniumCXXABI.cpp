@@ -52,13 +52,13 @@ public:
     CGCXXABI(CGM), UseARMMethodPtrABI(UseARMMethodPtrABI),
     UseARMGuardVarABI(UseARMGuardVarABI) { }
 
-  bool isReturnTypeIndirect(const CXXRecordDecl *RD) const {
+  bool isReturnTypeIndirect(const CXXRecordDecl *RD) const override {
     // Structures with either a non-trivial destructor or a non-trivial
     // copy constructor are always indirect.
     return !RD->hasTrivialDestructor() || RD->hasNonTrivialCopyConstructor();
   }
 
-  RecordArgABI getRecordArgABI(const CXXRecordDecl *RD) const {
+  RecordArgABI getRecordArgABI(const CXXRecordDecl *RD) const override {
     // Structures with either a non-trivial destructor or a non-trivial
     // copy constructor are always indirect.
     if (!RD->hasTrivialDestructor() || RD->hasNonTrivialCopyConstructor())
@@ -66,116 +66,117 @@ public:
     return RAA_Default;
   }
 
-  bool isZeroInitializable(const MemberPointerType *MPT);
+  bool isZeroInitializable(const MemberPointerType *MPT) override;
 
-  llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT);
+  llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT) override;
 
-  llvm::Value *EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
-                                               const Expr *E,
-                                               llvm::Value *&This,
-                                               llvm::Value *MemFnPtr,
-                                               const MemberPointerType *MPT);
+  llvm::Value *
+    EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
+                                    const Expr *E,
+                                    llvm::Value *&This,
+                                    llvm::Value *MemFnPtr,
+                                    const MemberPointerType *MPT) override;
 
-  llvm::Value *EmitMemberDataPointerAddress(CodeGenFunction &CGF, const Expr *E,
-                                            llvm::Value *Base,
-                                            llvm::Value *MemPtr,
-                                            const MemberPointerType *MPT);
+  llvm::Value *
+    EmitMemberDataPointerAddress(CodeGenFunction &CGF, const Expr *E,
+                                 llvm::Value *Base,
+                                 llvm::Value *MemPtr,
+                                 const MemberPointerType *MPT) override;
 
   llvm::Value *EmitMemberPointerConversion(CodeGenFunction &CGF,
                                            const CastExpr *E,
-                                           llvm::Value *Src);
+                                           llvm::Value *Src) override;
   llvm::Constant *EmitMemberPointerConversion(const CastExpr *E,
-                                              llvm::Constant *Src);
+                                              llvm::Constant *Src) override;
 
-  llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT);
+  llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT) override;
 
-  llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD);
+  llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD) override;
   llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
-                                        CharUnits offset);
-  llvm::Constant *EmitMemberPointer(const APValue &MP, QualType MPT);
+                                        CharUnits offset) override;
+  llvm::Constant *EmitMemberPointer(const APValue &MP, QualType MPT) override;
   llvm::Constant *BuildMemberPointer(const CXXMethodDecl *MD,
                                      CharUnits ThisAdjustment);
 
   llvm::Value *EmitMemberPointerComparison(CodeGenFunction &CGF,
-                                           llvm::Value *L,
-                                           llvm::Value *R,
+                                           llvm::Value *L, llvm::Value *R,
                                            const MemberPointerType *MPT,
-                                           bool Inequality);
+                                           bool Inequality) override;
 
   llvm::Value *EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
-                                          llvm::Value *Addr,
-                                          const MemberPointerType *MPT);
+                                         llvm::Value *Addr,
+                                         const MemberPointerType *MPT) override;
 
-  llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF,
-                                      llvm::Value *ptr,
-                                      QualType type);
+  llvm::Value *adjustToCompleteObject(CodeGenFunction &CGF, llvm::Value *ptr,
+                                      QualType type) override;
 
-  llvm::Value *GetVirtualBaseClassOffset(CodeGenFunction &CGF,
-                                         llvm::Value *This,
-                                         const CXXRecordDecl *ClassDecl,
-                                         const CXXRecordDecl *BaseClassDecl);
+  llvm::Value *
+    GetVirtualBaseClassOffset(CodeGenFunction &CGF, llvm::Value *This,
+                              const CXXRecordDecl *ClassDecl,
+                              const CXXRecordDecl *BaseClassDecl) override;
 
   void BuildConstructorSignature(const CXXConstructorDecl *Ctor,
-                                 CXXCtorType T,
-                                 CanQualType &ResTy,
-                                 SmallVectorImpl<CanQualType> &ArgTys);
+                                 CXXCtorType T, CanQualType &ResTy,
+                                 SmallVectorImpl<CanQualType> &ArgTys) override;
 
-  void EmitCXXConstructors(const CXXConstructorDecl *D);
+  void EmitCXXConstructors(const CXXConstructorDecl *D) override;
 
   void BuildDestructorSignature(const CXXDestructorDecl *Dtor,
-                                CXXDtorType T,
-                                CanQualType &ResTy,
-                                SmallVectorImpl<CanQualType> &ArgTys);
+                                CXXDtorType T, CanQualType &ResTy,
+                                SmallVectorImpl<CanQualType> &ArgTys) override;
 
   bool useThunkForDtorVariant(const CXXDestructorDecl *Dtor,
-                              CXXDtorType DT) const {
+                              CXXDtorType DT) const override {
     // Itanium does not emit any destructor variant as an inline thunk.
     // Delegating may occur as an optimization, but all variants are either
     // emitted with external linkage or as linkonce if they are inline and used.
     return false;
   }
 
-  void EmitCXXDestructors(const CXXDestructorDecl *D);
+  void EmitCXXDestructors(const CXXDestructorDecl *D) override;
 
   void addImplicitStructorParams(CodeGenFunction &CGF, QualType &ResTy,
-                                 FunctionArgList &Params);
+                                 FunctionArgList &Params) override;
 
-  void EmitInstanceFunctionProlog(CodeGenFunction &CGF);
+  void EmitInstanceFunctionProlog(CodeGenFunction &CGF) override;
 
   unsigned addImplicitConstructorArgs(CodeGenFunction &CGF,
                                       const CXXConstructorDecl *D,
                                       CXXCtorType Type, bool ForVirtualBase,
-                                      bool Delegating, CallArgList &Args);
+                                      bool Delegating,
+                                      CallArgList &Args) override;
 
   void EmitDestructorCall(CodeGenFunction &CGF, const CXXDestructorDecl *DD,
                           CXXDtorType Type, bool ForVirtualBase,
-                          bool Delegating, llvm::Value *This);
+                          bool Delegating, llvm::Value *This) override;
 
-  void emitVTableDefinitions(CodeGenVTables &CGVT, const CXXRecordDecl *RD);
+  void emitVTableDefinitions(CodeGenVTables &CGVT,
+                             const CXXRecordDecl *RD) override;
 
   llvm::Value *getVTableAddressPointInStructor(
       CodeGenFunction &CGF, const CXXRecordDecl *VTableClass,
       BaseSubobject Base, const CXXRecordDecl *NearestVBase,
-      bool &NeedsVirtualOffset);
+      bool &NeedsVirtualOffset) override;
 
   llvm::Constant *
   getVTableAddressPointForConstExpr(BaseSubobject Base,
-                                    const CXXRecordDecl *VTableClass);
+                                    const CXXRecordDecl *VTableClass) override;
 
   llvm::GlobalVariable *getAddrOfVTable(const CXXRecordDecl *RD,
-                                        CharUnits VPtrOffset);
+                                        CharUnits VPtrOffset) override;
 
   llvm::Value *getVirtualFunctionPointer(CodeGenFunction &CGF, GlobalDecl GD,
-                                         llvm::Value *This, llvm::Type *Ty);
+                                         llvm::Value *This,
+                                         llvm::Type *Ty) override;
 
   void EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                  const CXXDestructorDecl *Dtor,
                                  CXXDtorType DtorType, SourceLocation CallLoc,
-                                 llvm::Value *This);
+                                 llvm::Value *This) override;
 
-  void emitVirtualInheritanceTables(const CXXRecordDecl *RD);
+  void emitVirtualInheritanceTables(const CXXRecordDecl *RD) override;
 
-  void setThunkLinkage(llvm::Function *Thunk, bool ForVTable) {
+  void setThunkLinkage(llvm::Function *Thunk, bool ForVTable) override {
     // Allow inlining of thunks by emitting them with available_externally
     // linkage together with vtables when needed.
     if (ForVTable)
@@ -183,38 +184,40 @@ public:
   }
 
   llvm::Value *performThisAdjustment(CodeGenFunction &CGF, llvm::Value *This,
-                                     const ThisAdjustment &TA);
+                                     const ThisAdjustment &TA) override;
 
   llvm::Value *performReturnAdjustment(CodeGenFunction &CGF, llvm::Value *Ret,
-                                       const ReturnAdjustment &RA);
+                                       const ReturnAdjustment &RA) override;
 
-  StringRef GetPureVirtualCallName() { return "__cxa_pure_virtual"; }
-  StringRef GetDeletedVirtualCallName() { return "__cxa_deleted_virtual"; }
+  StringRef GetPureVirtualCallName() override { return "__cxa_pure_virtual"; }
+  StringRef GetDeletedVirtualCallName() override
+    { return "__cxa_deleted_virtual"; }
 
-  CharUnits getArrayCookieSizeImpl(QualType elementType);
+  CharUnits getArrayCookieSizeImpl(QualType elementType) override;
   llvm::Value *InitializeArrayCookie(CodeGenFunction &CGF,
                                      llvm::Value *NewPtr,
                                      llvm::Value *NumElements,
                                      const CXXNewExpr *expr,
-                                     QualType ElementType);
+                                     QualType ElementType) override;
   llvm::Value *readArrayCookieImpl(CodeGenFunction &CGF,
                                    llvm::Value *allocPtr,
-                                   CharUnits cookieSize);
+                                   CharUnits cookieSize) override;
 
   void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
-                       llvm::GlobalVariable *DeclPtr, bool PerformInit);
+                       llvm::GlobalVariable *DeclPtr,
+                       bool PerformInit) override;
   void registerGlobalDtor(CodeGenFunction &CGF, const VarDecl &D,
-                          llvm::Constant *dtor, llvm::Constant *addr);
+                          llvm::Constant *dtor, llvm::Constant *addr) override;
 
   llvm::Function *getOrCreateThreadLocalWrapper(const VarDecl *VD,
                                                 llvm::GlobalVariable *Var);
   void EmitThreadLocalInitFuncs(
       llvm::ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *> > Decls,
-      llvm::Function *InitFunc);
+      llvm::Function *InitFunc) override;
   LValue EmitThreadLocalDeclRefExpr(CodeGenFunction &CGF,
-                                    const DeclRefExpr *DRE);
+                                    const DeclRefExpr *DRE) override;
 
-  bool NeedsVTTParameter(GlobalDecl GD);
+  bool NeedsVTTParameter(GlobalDecl GD) override;
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -223,22 +226,23 @@ public:
     ItaniumCXXABI(CGM, /* UseARMMethodPtrABI = */ true,
                   /* UseARMGuardVarABI = */ true) {}
 
-  bool HasThisReturn(GlobalDecl GD) const {
+  bool HasThisReturn(GlobalDecl GD) const override {
     return (isa<CXXConstructorDecl>(GD.getDecl()) || (
               isa<CXXDestructorDecl>(GD.getDecl()) &&
               GD.getDtorType() != Dtor_Deleting));
   }
 
-  void EmitReturnFromThunk(CodeGenFunction &CGF, RValue RV, QualType ResTy);
+  void EmitReturnFromThunk(CodeGenFunction &CGF, RValue RV,
+                           QualType ResTy) override;
 
-  CharUnits getArrayCookieSizeImpl(QualType elementType);
+  CharUnits getArrayCookieSizeImpl(QualType elementType) override;
   llvm::Value *InitializeArrayCookie(CodeGenFunction &CGF,
                                      llvm::Value *NewPtr,
                                      llvm::Value *NumElements,
                                      const CXXNewExpr *expr,
-                                     QualType ElementType);
+                                     QualType ElementType) override;
   llvm::Value *readArrayCookieImpl(CodeGenFunction &CGF, llvm::Value *allocPtr,
-                                   CharUnits cookieSize);
+                                   CharUnits cookieSize) override;
 };
 }
 
@@ -1322,7 +1326,7 @@ namespace {
     llvm::GlobalVariable *Guard;
     CallGuardAbort(llvm::GlobalVariable *Guard) : Guard(Guard) {}
 
-    void Emit(CodeGenFunction &CGF, Flags flags) {
+    void Emit(CodeGenFunction &CGF, Flags flags) override {
       CGF.EmitNounwindRuntimeCall(getGuardAbortFn(CGF.CGM, Guard->getType()),
                                   Guard);
     }
