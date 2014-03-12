@@ -1,18 +1,17 @@
 // RUN: %clang_cc1 -verify %s 
-// expected-no-diagnostics
 
 @interface I
-- (id) compare: (char) arg1;
+- (id) compare: (char) arg1; // expected-note {{method 'compare:' declared here}}
 - length;
 @end
 
 @interface J
-- (id) compare: (id) arg1;
+- (id) compare: (id) arg1; // expected-note {{method 'compare:' declared here}}
 @end
 
 SEL func()
 {
-	return @selector(compare:);	// no warning on multiple selector found.
+	return @selector(compare:);	// expected-warning {{several methods with selector 'compare:' of mismatched types are found for the @selector expression}}
 }
 
 int main() {
@@ -27,3 +26,26 @@ int main() {
 
  SEL s9 = @selector(:enum:bool:);
 }
+
+// rdar://15794055
+@interface NSObject @end
+
+@class NSNumber;
+
+@interface XBRecipe : NSObject
+@property (nonatomic, assign) float finalVolume; // expected-note {{method 'setFinalVolume:' declared here}}
+@end
+
+@interface XBDocument : NSObject
+@end
+
+@interface XBDocument ()
+- (void)setFinalVolume:(NSNumber *)finalVolumeNumber; // expected-note {{method 'setFinalVolume:' declared here}}
+@end
+
+@implementation XBDocument
+- (void)setFinalVolume:(NSNumber *)finalVolumeNumber
+{
+    (void)@selector(setFinalVolume:); // expected-warning {{several methods with selector 'setFinalVolume:' of mismatched types are found for the @selector expression}}
+}
+@end
