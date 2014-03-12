@@ -162,8 +162,7 @@ public:
     case llvm::ELF::SHN_HEXAGON_SCOMMON_2:
     case llvm::ELF::SHN_HEXAGON_SCOMMON_4:
     case llvm::ELF::SHN_HEXAGON_SCOMMON_8:
-      return llvm::ELF::STT_COMMON;
-
+      return true;
     default:
       break;
     }
