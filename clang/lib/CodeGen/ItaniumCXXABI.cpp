@@ -359,8 +359,7 @@ llvm::Value *ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(
 
   // Cast the adjusted this to a pointer to vtable pointer and load.
   llvm::Type *VTableTy = Builder.getInt8PtrTy();
-  llvm::Value *VTable = Builder.CreateBitCast(This, VTableTy->getPointerTo());
-  VTable = Builder.CreateLoad(VTable, "memptr.vtable");
+  llvm::Value *VTable = CGF.GetVTablePtr(This, VTableTy);
 
   // Apply the offset.
   llvm::Value *VTableOffset = FnAsInt;
