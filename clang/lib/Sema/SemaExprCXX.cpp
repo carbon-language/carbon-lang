@@ -1188,14 +1188,15 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
   else if (Initializer && isa<ImplicitValueInitExpr>(Initializer))
     HaveCompleteInit = true;
 
-  // C++11 [decl.spec.auto]p6. Deduce the type which 'auto' stands in for.
+  // C++11 [dcl.spec.auto]p6. Deduce the type which 'auto' stands in for.
   if (TypeMayContainAuto && AllocType->isUndeducedType()) {
     if (initStyle == CXXNewExpr::NoInit || NumInits == 0)
       return ExprError(Diag(StartLoc, diag::err_auto_new_requires_ctor_arg)
                        << AllocType << TypeRange);
-    if (initStyle == CXXNewExpr::ListInit)
+    if (initStyle == CXXNewExpr::ListInit ||
+        (NumInits == 1 && isa<InitListExpr>(Inits[0])))
       return ExprError(Diag(Inits[0]->getLocStart(),
-                            diag::err_auto_new_requires_parens)
+                            diag::err_auto_new_list_init)
                        << AllocType << TypeRange);
     if (NumInits > 1) {
       Expr *FirstBad = Inits[1];

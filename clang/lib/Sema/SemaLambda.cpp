@@ -736,6 +736,9 @@ QualType Sema::performLambdaInitCaptureInitialization(SourceLocation Loc,
       return QualType();
     } else {
       DeduceInit = CXXDirectInit->getExpr(0);
+      if (isa<InitListExpr>(DeduceInit))
+        Diag(CXXDirectInit->getLocStart(), diag::err_init_capture_paren_braces)
+          << DeclarationName(Id) << Loc;
     }
   }
 
