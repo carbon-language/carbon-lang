@@ -257,6 +257,7 @@ public:
 
 private:
     friend class Process;
+    friend class BreakpointLocation;
 
     //------------------------------------------------------------------
     /// The method removes the owner at \a break_loc_id from this breakpoint list.

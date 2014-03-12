@@ -521,8 +521,15 @@ BreakpointLocation::ClearBreakpointSite ()
 {
     if (m_bp_site_sp.get())
     {
-        m_owner.GetTarget().GetProcessSP()->RemoveOwnerFromBreakpointSite (GetBreakpoint().GetID(), 
+        ProcessSP process_sp(m_owner.GetTarget().GetProcessSP());
+        // If the process exists, get it to remove the owner, it will remove the physical implementation
+        // of the breakpoint as well if there are no more owners.  Otherwise just remove this owner.
+        if (process_sp)
+            process_sp->RemoveOwnerFromBreakpointSite (GetBreakpoint().GetID(),
                                                                            GetID(), m_bp_site_sp);
+        else
+            m_bp_site_sp->RemoveOwner(GetBreakpoint().GetID(), GetID());
+        
         m_bp_site_sp.reset();
         return true;
     }
