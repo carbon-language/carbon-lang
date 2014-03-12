@@ -995,7 +995,6 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
     ParsedAttributes Attr(AttrFactory);
     SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
     SourceLocation EllipsisLoc;
-
     
     if (Tok.isNot(tok::r_paren)) {
       Actions.RecordParsingTemplateParameterDepth(TemplateParameterDepth);
@@ -1008,6 +1007,10 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
     T.consumeClose();
     SourceLocation RParenLoc = T.getCloseLocation();
     DeclEndLoc = RParenLoc;
+
+    // GNU-style attributes must be parsed before the mutable specifier to be
+    // compatible with GCC.
+    MaybeParseGNUAttributes(Attr, &DeclEndLoc);
 
     // Parse 'mutable'[opt].
     SourceLocation MutableLoc;
@@ -1067,6 +1070,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                                            TrailingReturnType),
                   Attr, DeclEndLoc);
   } else if (Tok.is(tok::kw_mutable) || Tok.is(tok::arrow) ||
+             Tok.is(tok::kw___attribute) ||
              (Tok.is(tok::l_square) && NextToken().is(tok::l_square))) {
     // It's common to forget that one needs '()' before 'mutable', an attribute
     // specifier, or the result type. Deal with this.
@@ -1074,6 +1078,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
     switch (Tok.getKind()) {
     case tok::kw_mutable: TokKind = 0; break;
     case tok::arrow: TokKind = 1; break;
+    case tok::kw___attribute:
     case tok::l_square: TokKind = 2; break;
     default: llvm_unreachable("Unknown token kind");
     }
@@ -1083,7 +1088,12 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
       << FixItHint::CreateInsertion(Tok.getLocation(), "() ");
     SourceLocation DeclLoc = Tok.getLocation();
     SourceLocation DeclEndLoc = DeclLoc;
-    
+
+    // GNU-style attributes must be parsed before the mutable specifier to be
+    // compatible with GCC.
+    ParsedAttributes Attr(AttrFactory);
+    MaybeParseGNUAttributes(Attr, &DeclEndLoc);
+
     // Parse 'mutable', if it's there.
     SourceLocation MutableLoc;
     if (Tok.is(tok::kw_mutable)) {
@@ -1092,7 +1102,6 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
     }
 
     // Parse attribute-specifier[opt].
-    ParsedAttributes Attr(AttrFactory);
     MaybeParseCXX11Attributes(Attr, &DeclEndLoc);
 
     // Parse the return type, if there is one.
