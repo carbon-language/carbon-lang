@@ -110,6 +110,34 @@
 		2642FBAE13D003B400ED6808 /* CommunicationKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBA813D003B400ED6808 /* CommunicationKDP.cpp */; };
 		2642FBB013D003B400ED6808 /* ProcessKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBAA13D003B400ED6808 /* ProcessKDP.cpp */; };
 		2642FBB213D003B400ED6808 /* ProcessKDPLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBAC13D003B400ED6808 /* ProcessKDPLog.cpp */; };
+		26474CA018D0CAEC0073DEBA /* RegisterContext_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474C9E18D0CAEC0073DEBA /* RegisterContext_mips64.h */; };
+		26474CA118D0CAEC0073DEBA /* RegisterContext_x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474C9F18D0CAEC0073DEBA /* RegisterContext_x86.h */; };
+		26474CA818D0CB070073DEBA /* RegisterContextFreeBSD_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CA218D0CB070073DEBA /* RegisterContextFreeBSD_i386.cpp */; };
+		26474CA918D0CB070073DEBA /* RegisterContextFreeBSD_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CA318D0CB070073DEBA /* RegisterContextFreeBSD_i386.h */; };
+		26474CAA18D0CB070073DEBA /* RegisterContextFreeBSD_mips64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CA418D0CB070073DEBA /* RegisterContextFreeBSD_mips64.cpp */; };
+		26474CAB18D0CB070073DEBA /* RegisterContextFreeBSD_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CA518D0CB070073DEBA /* RegisterContextFreeBSD_mips64.h */; };
+		26474CAC18D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CA618D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.cpp */; };
+		26474CAD18D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CA718D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.h */; };
+		26474CB218D0CB180073DEBA /* RegisterContextLinux_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CAE18D0CB180073DEBA /* RegisterContextLinux_i386.cpp */; };
+		26474CB318D0CB180073DEBA /* RegisterContextLinux_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CAF18D0CB180073DEBA /* RegisterContextLinux_i386.h */; };
+		26474CB418D0CB180073DEBA /* RegisterContextLinux_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CB018D0CB180073DEBA /* RegisterContextLinux_x86_64.cpp */; };
+		26474CB518D0CB180073DEBA /* RegisterContextLinux_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CB118D0CB180073DEBA /* RegisterContextLinux_x86_64.h */; };
+		26474CBC18D0CB2D0073DEBA /* RegisterContextMach_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CB618D0CB2D0073DEBA /* RegisterContextMach_arm.cpp */; };
+		26474CBD18D0CB2D0073DEBA /* RegisterContextMach_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CB718D0CB2D0073DEBA /* RegisterContextMach_arm.h */; };
+		26474CBE18D0CB2D0073DEBA /* RegisterContextMach_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CB818D0CB2D0073DEBA /* RegisterContextMach_i386.cpp */; };
+		26474CBF18D0CB2D0073DEBA /* RegisterContextMach_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CB918D0CB2D0073DEBA /* RegisterContextMach_i386.h */; };
+		26474CC018D0CB2D0073DEBA /* RegisterContextMach_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CBA18D0CB2D0073DEBA /* RegisterContextMach_x86_64.cpp */; };
+		26474CC118D0CB2D0073DEBA /* RegisterContextMach_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CBB18D0CB2D0073DEBA /* RegisterContextMach_x86_64.h */; };
+		26474CC918D0CB5B0073DEBA /* RegisterContextMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CC218D0CB5B0073DEBA /* RegisterContextMemory.cpp */; };
+		26474CCA18D0CB5B0073DEBA /* RegisterContextMemory.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CC318D0CB5B0073DEBA /* RegisterContextMemory.h */; };
+		26474CCB18D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CC418D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.cpp */; };
+		26474CCC18D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CC518D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.h */; };
+		26474CCD18D0CB5B0073DEBA /* RegisterContextPOSIX_x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CC618D0CB5B0073DEBA /* RegisterContextPOSIX_x86.cpp */; };
+		26474CCE18D0CB5B0073DEBA /* RegisterContextPOSIX_x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CC718D0CB5B0073DEBA /* RegisterContextPOSIX_x86.h */; };
+		26474CCF18D0CB5B0073DEBA /* RegisterContextPOSIX.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CC818D0CB5B0073DEBA /* RegisterContextPOSIX.h */; };
+		26474CD318D0CB710073DEBA /* RegisterInfos_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CD018D0CB700073DEBA /* RegisterInfos_i386.h */; };
+		26474CD418D0CB710073DEBA /* RegisterInfos_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CD118D0CB710073DEBA /* RegisterInfos_mips64.h */; };
+		26474CD518D0CB710073DEBA /* RegisterInfos_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CD218D0CB710073DEBA /* RegisterInfos_x86_64.h */; };
 		26491E3B15E1DB8600CBFFC2 /* OptionValueRegex.h in Headers */ = {isa = PBXBuildFile; fileRef = 26491E3A15E1DB8600CBFFC2 /* OptionValueRegex.h */; };
 		26491E3E15E1DB9F00CBFFC2 /* OptionValueRegex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26491E3D15E1DB9F00CBFFC2 /* OptionValueRegex.cpp */; };
 		264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */; };
@@ -463,35 +491,6 @@
 		26BC17B018C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17A718C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.h */; };
 		26BC17B118C7F4CB00D2196D /* ThreadElfCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17A818C7F4CB00D2196D /* ThreadElfCore.cpp */; };
 		26BC17B218C7F4CB00D2196D /* ThreadElfCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17A918C7F4CB00D2196D /* ThreadElfCore.h */; };
-		26BC17D918C7F4FA00D2196D /* POSIXStopInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17B618C7F4FA00D2196D /* POSIXStopInfo.cpp */; };
-		26BC17DA18C7F4FA00D2196D /* POSIXStopInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17B718C7F4FA00D2196D /* POSIXStopInfo.h */; };
-		26BC17DC18C7F4FA00D2196D /* POSIXThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17B918C7F4FA00D2196D /* POSIXThread.h */; };
-		26BC17DD18C7F4FA00D2196D /* ProcessMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17BA18C7F4FA00D2196D /* ProcessMessage.cpp */; };
-		26BC17DE18C7F4FA00D2196D /* ProcessMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17BB18C7F4FA00D2196D /* ProcessMessage.h */; };
-		26BC17E118C7F4FA00D2196D /* ProcessPOSIXLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17BE18C7F4FA00D2196D /* ProcessPOSIXLog.cpp */; };
-		26BC17E218C7F4FA00D2196D /* ProcessPOSIXLog.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17BF18C7F4FA00D2196D /* ProcessPOSIXLog.h */; };
-		26BC17E318C7F4FA00D2196D /* RegisterContext_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17C018C7F4FA00D2196D /* RegisterContext_mips64.h */; };
-		26BC17E418C7F4FA00D2196D /* RegisterContext_x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17C118C7F4FA00D2196D /* RegisterContext_x86.h */; };
-		26BC17E518C7F4FA00D2196D /* RegisterContextFreeBSD_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17C218C7F4FA00D2196D /* RegisterContextFreeBSD_i386.cpp */; };
-		26BC17E618C7F4FA00D2196D /* RegisterContextFreeBSD_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17C318C7F4FA00D2196D /* RegisterContextFreeBSD_i386.h */; };
-		26BC17E718C7F4FA00D2196D /* RegisterContextFreeBSD_mips64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17C418C7F4FA00D2196D /* RegisterContextFreeBSD_mips64.cpp */; };
-		26BC17E818C7F4FA00D2196D /* RegisterContextFreeBSD_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17C518C7F4FA00D2196D /* RegisterContextFreeBSD_mips64.h */; };
-		26BC17E918C7F4FA00D2196D /* RegisterContextFreeBSD_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17C618C7F4FA00D2196D /* RegisterContextFreeBSD_x86_64.cpp */; };
-		26BC17EA18C7F4FA00D2196D /* RegisterContextFreeBSD_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17C718C7F4FA00D2196D /* RegisterContextFreeBSD_x86_64.h */; };
-		26BC17EB18C7F4FA00D2196D /* RegisterContextLinux_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17C818C7F4FA00D2196D /* RegisterContextLinux_i386.cpp */; };
-		26BC17EC18C7F4FA00D2196D /* RegisterContextLinux_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17C918C7F4FA00D2196D /* RegisterContextLinux_i386.h */; };
-		26BC17ED18C7F4FA00D2196D /* RegisterContextLinux_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17CA18C7F4FA00D2196D /* RegisterContextLinux_x86_64.cpp */; };
-		26BC17EE18C7F4FA00D2196D /* RegisterContextLinux_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17CB18C7F4FA00D2196D /* RegisterContextLinux_x86_64.h */; };
-		26BC17EF18C7F4FA00D2196D /* RegisterContextPOSIX.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17CC18C7F4FA00D2196D /* RegisterContextPOSIX.h */; };
-		26BC17F018C7F4FA00D2196D /* RegisterContextPOSIX_mips64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17CD18C7F4FA00D2196D /* RegisterContextPOSIX_mips64.cpp */; };
-		26BC17F118C7F4FA00D2196D /* RegisterContextPOSIX_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17CE18C7F4FA00D2196D /* RegisterContextPOSIX_mips64.h */; };
-		26BC17F218C7F4FA00D2196D /* RegisterContextPOSIX_x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17CF18C7F4FA00D2196D /* RegisterContextPOSIX_x86.cpp */; };
-		26BC17F318C7F4FA00D2196D /* RegisterContextPOSIX_x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17D018C7F4FA00D2196D /* RegisterContextPOSIX_x86.h */; };
-		26BC17F518C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17D218C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.h */; };
-		26BC17F718C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17D418C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.h */; };
-		26BC17F818C7F4FA00D2196D /* RegisterInfos_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17D518C7F4FA00D2196D /* RegisterInfos_i386.h */; };
-		26BC17F918C7F4FA00D2196D /* RegisterInfos_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17D618C7F4FA00D2196D /* RegisterInfos_mips64.h */; };
-		26BC17FA18C7F4FA00D2196D /* RegisterInfos_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17D718C7F4FA00D2196D /* RegisterInfos_x86_64.h */; };
 		26BCFC521368AE38006DC050 /* OptionGroupFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC511368AE38006DC050 /* OptionGroupFormat.cpp */; };
 		26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BD407E135D2ADF00237D80 /* FileLineResolver.cpp */; };
 		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -1064,6 +1063,34 @@
 		264334381110F63100CDB6C6 /* ValueObjectRegister.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectRegister.cpp; path = source/Core/ValueObjectRegister.cpp; sourceTree = "<group>"; };
 		2643343A1110F63C00CDB6C6 /* ValueObjectRegister.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectRegister.h; path = include/lldb/Core/ValueObjectRegister.h; sourceTree = "<group>"; };
 		264723A511FA076E00DE380C /* CleanUp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CleanUp.h; path = include/lldb/Utility/CleanUp.h; sourceTree = "<group>"; };
+		26474C9E18D0CAEC0073DEBA /* RegisterContext_mips64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContext_mips64.h; path = Utility/RegisterContext_mips64.h; sourceTree = "<group>"; };
+		26474C9F18D0CAEC0073DEBA /* RegisterContext_x86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContext_x86.h; path = Utility/RegisterContext_x86.h; sourceTree = "<group>"; };
+		26474CA218D0CB070073DEBA /* RegisterContextFreeBSD_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextFreeBSD_i386.cpp; path = Utility/RegisterContextFreeBSD_i386.cpp; sourceTree = "<group>"; };
+		26474CA318D0CB070073DEBA /* RegisterContextFreeBSD_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextFreeBSD_i386.h; path = Utility/RegisterContextFreeBSD_i386.h; sourceTree = "<group>"; };
+		26474CA418D0CB070073DEBA /* RegisterContextFreeBSD_mips64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextFreeBSD_mips64.cpp; path = Utility/RegisterContextFreeBSD_mips64.cpp; sourceTree = "<group>"; };
+		26474CA518D0CB070073DEBA /* RegisterContextFreeBSD_mips64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextFreeBSD_mips64.h; path = Utility/RegisterContextFreeBSD_mips64.h; sourceTree = "<group>"; };
+		26474CA618D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextFreeBSD_x86_64.cpp; path = Utility/RegisterContextFreeBSD_x86_64.cpp; sourceTree = "<group>"; };
+		26474CA718D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextFreeBSD_x86_64.h; path = Utility/RegisterContextFreeBSD_x86_64.h; sourceTree = "<group>"; };
+		26474CAE18D0CB180073DEBA /* RegisterContextLinux_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextLinux_i386.cpp; path = Utility/RegisterContextLinux_i386.cpp; sourceTree = "<group>"; };
+		26474CAF18D0CB180073DEBA /* RegisterContextLinux_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextLinux_i386.h; path = Utility/RegisterContextLinux_i386.h; sourceTree = "<group>"; };
+		26474CB018D0CB180073DEBA /* RegisterContextLinux_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextLinux_x86_64.cpp; path = Utility/RegisterContextLinux_x86_64.cpp; sourceTree = "<group>"; };
+		26474CB118D0CB180073DEBA /* RegisterContextLinux_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextLinux_x86_64.h; path = Utility/RegisterContextLinux_x86_64.h; sourceTree = "<group>"; };
+		26474CB618D0CB2D0073DEBA /* RegisterContextMach_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextMach_arm.cpp; path = Utility/RegisterContextMach_arm.cpp; sourceTree = "<group>"; };
+		26474CB718D0CB2D0073DEBA /* RegisterContextMach_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextMach_arm.h; path = Utility/RegisterContextMach_arm.h; sourceTree = "<group>"; };
+		26474CB818D0CB2D0073DEBA /* RegisterContextMach_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextMach_i386.cpp; path = Utility/RegisterContextMach_i386.cpp; sourceTree = "<group>"; };
+		26474CB918D0CB2D0073DEBA /* RegisterContextMach_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextMach_i386.h; path = Utility/RegisterContextMach_i386.h; sourceTree = "<group>"; };
+		26474CBA18D0CB2D0073DEBA /* RegisterContextMach_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextMach_x86_64.cpp; path = Utility/RegisterContextMach_x86_64.cpp; sourceTree = "<group>"; };
+		26474CBB18D0CB2D0073DEBA /* RegisterContextMach_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextMach_x86_64.h; path = Utility/RegisterContextMach_x86_64.h; sourceTree = "<group>"; };
+		26474CC218D0CB5B0073DEBA /* RegisterContextMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextMemory.cpp; path = Utility/RegisterContextMemory.cpp; sourceTree = "<group>"; };
+		26474CC318D0CB5B0073DEBA /* RegisterContextMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextMemory.h; path = Utility/RegisterContextMemory.h; sourceTree = "<group>"; };
+		26474CC418D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextPOSIX_mips64.cpp; path = Utility/RegisterContextPOSIX_mips64.cpp; sourceTree = "<group>"; };
+		26474CC518D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextPOSIX_mips64.h; path = Utility/RegisterContextPOSIX_mips64.h; sourceTree = "<group>"; };
+		26474CC618D0CB5B0073DEBA /* RegisterContextPOSIX_x86.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextPOSIX_x86.cpp; path = Utility/RegisterContextPOSIX_x86.cpp; sourceTree = "<group>"; };
+		26474CC718D0CB5B0073DEBA /* RegisterContextPOSIX_x86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextPOSIX_x86.h; path = Utility/RegisterContextPOSIX_x86.h; sourceTree = "<group>"; };
+		26474CC818D0CB5B0073DEBA /* RegisterContextPOSIX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextPOSIX.h; path = Utility/RegisterContextPOSIX.h; sourceTree = "<group>"; };
+		26474CD018D0CB700073DEBA /* RegisterInfos_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterInfos_i386.h; path = Utility/RegisterInfos_i386.h; sourceTree = "<group>"; };
+		26474CD118D0CB710073DEBA /* RegisterInfos_mips64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterInfos_mips64.h; path = Utility/RegisterInfos_mips64.h; sourceTree = "<group>"; };
+		26474CD218D0CB710073DEBA /* RegisterInfos_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterInfos_x86_64.h; path = Utility/RegisterInfos_x86_64.h; sourceTree = "<group>"; };
 		26491E3A15E1DB8600CBFFC2 /* OptionValueRegex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueRegex.h; path = include/lldb/Interpreter/OptionValueRegex.h; sourceTree = "<group>"; };
 		26491E3D15E1DB9F00CBFFC2 /* OptionValueRegex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueRegex.cpp; path = source/Interpreter/OptionValueRegex.cpp; sourceTree = "<group>"; };
 		264A43BB1320B3B4005B4096 /* Platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Platform.h; path = include/lldb/Target/Platform.h; sourceTree = "<group>"; };
@@ -1224,30 +1251,10 @@
 		26BC17BD18C7F4FA00D2196D /* ProcessPOSIX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessPOSIX.h; sourceTree = "<group>"; };
 		26BC17BE18C7F4FA00D2196D /* ProcessPOSIXLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessPOSIXLog.cpp; sourceTree = "<group>"; };
 		26BC17BF18C7F4FA00D2196D /* ProcessPOSIXLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessPOSIXLog.h; sourceTree = "<group>"; };
-		26BC17C018C7F4FA00D2196D /* RegisterContext_mips64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContext_mips64.h; sourceTree = "<group>"; };
-		26BC17C118C7F4FA00D2196D /* RegisterContext_x86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContext_x86.h; sourceTree = "<group>"; };
-		26BC17C218C7F4FA00D2196D /* RegisterContextFreeBSD_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextFreeBSD_i386.cpp; sourceTree = "<group>"; };
-		26BC17C318C7F4FA00D2196D /* RegisterContextFreeBSD_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextFreeBSD_i386.h; sourceTree = "<group>"; };
-		26BC17C418C7F4FA00D2196D /* RegisterContextFreeBSD_mips64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextFreeBSD_mips64.cpp; sourceTree = "<group>"; };
-		26BC17C518C7F4FA00D2196D /* RegisterContextFreeBSD_mips64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextFreeBSD_mips64.h; sourceTree = "<group>"; };
-		26BC17C618C7F4FA00D2196D /* RegisterContextFreeBSD_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextFreeBSD_x86_64.cpp; sourceTree = "<group>"; };
-		26BC17C718C7F4FA00D2196D /* RegisterContextFreeBSD_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextFreeBSD_x86_64.h; sourceTree = "<group>"; };
-		26BC17C818C7F4FA00D2196D /* RegisterContextLinux_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextLinux_i386.cpp; sourceTree = "<group>"; };
-		26BC17C918C7F4FA00D2196D /* RegisterContextLinux_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextLinux_i386.h; sourceTree = "<group>"; };
-		26BC17CA18C7F4FA00D2196D /* RegisterContextLinux_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextLinux_x86_64.cpp; sourceTree = "<group>"; };
-		26BC17CB18C7F4FA00D2196D /* RegisterContextLinux_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextLinux_x86_64.h; sourceTree = "<group>"; };
-		26BC17CC18C7F4FA00D2196D /* RegisterContextPOSIX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIX.h; sourceTree = "<group>"; };
-		26BC17CD18C7F4FA00D2196D /* RegisterContextPOSIX_mips64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIX_mips64.cpp; sourceTree = "<group>"; };
-		26BC17CE18C7F4FA00D2196D /* RegisterContextPOSIX_mips64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIX_mips64.h; sourceTree = "<group>"; };
-		26BC17CF18C7F4FA00D2196D /* RegisterContextPOSIX_x86.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIX_x86.cpp; sourceTree = "<group>"; };
-		26BC17D018C7F4FA00D2196D /* RegisterContextPOSIX_x86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIX_x86.h; sourceTree = "<group>"; };
 		26BC17D118C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_mips64.cpp; sourceTree = "<group>"; };
 		26BC17D218C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXProcessMonitor_mips64.h; sourceTree = "<group>"; };
 		26BC17D318C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_x86.cpp; sourceTree = "<group>"; };
 		26BC17D418C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXProcessMonitor_x86.h; sourceTree = "<group>"; };
-		26BC17D518C7F4FA00D2196D /* RegisterInfos_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterInfos_i386.h; sourceTree = "<group>"; };
-		26BC17D618C7F4FA00D2196D /* RegisterInfos_mips64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterInfos_mips64.h; sourceTree = "<group>"; };
-		26BC17D718C7F4FA00D2196D /* RegisterInfos_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterInfos_x86_64.h; sourceTree = "<group>"; };
 		26BC7C2510F1B3BC00F91463 /* lldb-defines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-defines.h"; path = "include/lldb/lldb-defines.h"; sourceTree = "<group>"; };
 		26BC7C2610F1B3BC00F91463 /* lldb-enumerations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-enumerations.h"; path = "include/lldb/lldb-enumerations.h"; sourceTree = "<group>"; };
 		26BC7C2810F1B3BC00F91463 /* lldb-private-interfaces.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-private-interfaces.h"; path = "include/lldb/lldb-private-interfaces.h"; sourceTree = "<group>"; };
@@ -2734,19 +2741,19 @@
 		26B4666E11A2080F00CF6220 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
-				B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */,
 				B287E63E12EFAE2C00C9BEFE /* ARMDefines.h */,
 				B23DD24F12EDFAC1000C3894 /* ARMUtils.h */,
 				26954EBC1401EE8B00294D09 /* DynamicRegisterInfo.cpp */,
 				26954EBD1401EE8B00294D09 /* DynamicRegisterInfo.h */,
-				B28058A0139988B0002D96D0 /* InferiorCallPOSIX.cpp */,
-				B28058A2139988C6002D96D0 /* InferiorCallPOSIX.h */,
 				AF1729D4182C907200E0AB97 /* HistoryThread.cpp */,
 				AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */,
 				AF061F89182C980000B6A19C /* HistoryThread.h */,
 				AF061F8A182C980000B6A19C /* HistoryUnwind.h */,
-				AF68D32F1255A110002FF25B /* UnwindLLDB.cpp */,
-				AF68D3301255A110002FF25B /* UnwindLLDB.h */,
+				B28058A0139988B0002D96D0 /* InferiorCallPOSIX.cpp */,
+				B28058A2139988C6002D96D0 /* InferiorCallPOSIX.h */,
+				B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */,
+				26474C9E18D0CAEC0073DEBA /* RegisterContext_mips64.h */,
+				26474C9F18D0CAEC0073DEBA /* RegisterContext_x86.h */,
 				26957D9213D381C900670048 /* RegisterContextDarwin_arm.cpp */,
 				26957D9313D381C900670048 /* RegisterContextDarwin_arm.h */,
 				26957D9413D381C900670048 /* RegisterContextDarwin_i386.cpp */,
@@ -2755,20 +2762,48 @@
 				26957D9713D381C900670048 /* RegisterContextDarwin_x86_64.h */,
 				944372DA171F6B4300E57C32 /* RegisterContextDummy.cpp */,
 				944372DB171F6B4300E57C32 /* RegisterContextDummy.h */,
+				26474CA218D0CB070073DEBA /* RegisterContextFreeBSD_i386.cpp */,
+				26474CA318D0CB070073DEBA /* RegisterContextFreeBSD_i386.h */,
+				26474CA418D0CB070073DEBA /* RegisterContextFreeBSD_mips64.cpp */,
+				26474CA518D0CB070073DEBA /* RegisterContextFreeBSD_mips64.h */,
+				26474CA618D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.cpp */,
+				26474CA718D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.h */,
 				AF061F85182C97ED00B6A19C /* RegisterContextHistory.cpp */,
 				AF061F86182C97ED00B6A19C /* RegisterContextHistory.h */,
+				26474CAE18D0CB180073DEBA /* RegisterContextLinux_i386.cpp */,
+				26474CAF18D0CB180073DEBA /* RegisterContextLinux_i386.h */,
+				26474CB018D0CB180073DEBA /* RegisterContextLinux_x86_64.cpp */,
+				26474CB118D0CB180073DEBA /* RegisterContextLinux_x86_64.h */,
 				AF68D2541255416E002FF25B /* RegisterContextLLDB.cpp */,
 				AF68D2551255416E002FF25B /* RegisterContextLLDB.h */,
+				26474CB618D0CB2D0073DEBA /* RegisterContextMach_arm.cpp */,
+				26474CB718D0CB2D0073DEBA /* RegisterContextMach_arm.h */,
+				26474CB818D0CB2D0073DEBA /* RegisterContextMach_i386.cpp */,
+				26474CB918D0CB2D0073DEBA /* RegisterContextMach_i386.h */,
+				26474CBA18D0CB2D0073DEBA /* RegisterContextMach_x86_64.cpp */,
+				26474CBB18D0CB2D0073DEBA /* RegisterContextMach_x86_64.h */,
 				262D24E413FB8710002D1960 /* RegisterContextMemory.cpp */,
 				262D24E513FB8710002D1960 /* RegisterContextMemory.h */,
-				26E3EEF811A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.h */,
 				26E3EEF711A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.cpp */,
+				26E3EEF811A994E800FBADB6 /* RegisterContextMacOSXFrameBackchain.h */,
+				26474CC218D0CB5B0073DEBA /* RegisterContextMemory.cpp */,
+				26474CC318D0CB5B0073DEBA /* RegisterContextMemory.h */,
+				26474CC418D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.cpp */,
+				26474CC518D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.h */,
+				26474CC618D0CB5B0073DEBA /* RegisterContextPOSIX_x86.cpp */,
+				26474CC718D0CB5B0073DEBA /* RegisterContextPOSIX_x86.h */,
+				26474CC818D0CB5B0073DEBA /* RegisterContextPOSIX.h */,
 				26CA979F172B1FD5005DC71B /* RegisterContextThreadMemory.cpp */,
 				26CA97A0172B1FD5005DC71B /* RegisterContextThreadMemory.h */,
+				26474CD018D0CB700073DEBA /* RegisterInfos_i386.h */,
+				26474CD118D0CB710073DEBA /* RegisterInfos_mips64.h */,
+				26474CD218D0CB710073DEBA /* RegisterInfos_x86_64.h */,
 				2615DBC91208B5FC0021781D /* StopInfoMachException.h */,
 				2615DBC81208B5FC0021781D /* StopInfoMachException.cpp */,
 				26F4A21A13FBA31A0064B613 /* ThreadMemory.cpp */,
 				26F4A21B13FBA31A0064B613 /* ThreadMemory.h */,
+				AF68D32F1255A110002FF25B /* UnwindLLDB.cpp */,
+				AF68D3301255A110002FF25B /* UnwindLLDB.h */,
 				26E3EEE411A9901300FBADB6 /* UnwindMacOSXFrameBackchain.h */,
 				26E3EEE311A9901300FBADB6 /* UnwindMacOSXFrameBackchain.cpp */,
 			);
@@ -2803,30 +2838,10 @@
 				26BC17BD18C7F4FA00D2196D /* ProcessPOSIX.h */,
 				26BC17BE18C7F4FA00D2196D /* ProcessPOSIXLog.cpp */,
 				26BC17BF18C7F4FA00D2196D /* ProcessPOSIXLog.h */,
-				26BC17C018C7F4FA00D2196D /* RegisterContext_mips64.h */,
-				26BC17C118C7F4FA00D2196D /* RegisterContext_x86.h */,
-				26BC17C218C7F4FA00D2196D /* RegisterContextFreeBSD_i386.cpp */,
-				26BC17C318C7F4FA00D2196D /* RegisterContextFreeBSD_i386.h */,
-				26BC17C418C7F4FA00D2196D /* RegisterContextFreeBSD_mips64.cpp */,
-				26BC17C518C7F4FA00D2196D /* RegisterContextFreeBSD_mips64.h */,
-				26BC17C618C7F4FA00D2196D /* RegisterContextFreeBSD_x86_64.cpp */,
-				26BC17C718C7F4FA00D2196D /* RegisterContextFreeBSD_x86_64.h */,
-				26BC17C818C7F4FA00D2196D /* RegisterContextLinux_i386.cpp */,
-				26BC17C918C7F4FA00D2196D /* RegisterContextLinux_i386.h */,
-				26BC17CA18C7F4FA00D2196D /* RegisterContextLinux_x86_64.cpp */,
-				26BC17CB18C7F4FA00D2196D /* RegisterContextLinux_x86_64.h */,
-				26BC17CC18C7F4FA00D2196D /* RegisterContextPOSIX.h */,
-				26BC17CD18C7F4FA00D2196D /* RegisterContextPOSIX_mips64.cpp */,
-				26BC17CE18C7F4FA00D2196D /* RegisterContextPOSIX_mips64.h */,
-				26BC17CF18C7F4FA00D2196D /* RegisterContextPOSIX_x86.cpp */,
-				26BC17D018C7F4FA00D2196D /* RegisterContextPOSIX_x86.h */,
 				26BC17D118C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.cpp */,
 				26BC17D218C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.h */,
 				26BC17D318C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.cpp */,
 				26BC17D418C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.h */,
-				26BC17D518C7F4FA00D2196D /* RegisterInfos_i386.h */,
-				26BC17D618C7F4FA00D2196D /* RegisterInfos_mips64.h */,
-				26BC17D718C7F4FA00D2196D /* RegisterInfos_x86_64.h */,
 			);
 			path = POSIX;
 			sourceTree = "<group>";
@@ -3908,83 +3923,81 @@
 			buildActionMask = 2147483647;
 			files = (
 				26A527C214E24F5F00F3A14A /* ProcessMachCore.h in Headers */,
-				26BC17E618C7F4FA00D2196D /* RegisterContextFreeBSD_i386.h in Headers */,
 				26BC17AC18C7F4CB00D2196D /* ProcessElfCore.h in Headers */,
-				26BC17EE18C7F4FA00D2196D /* RegisterContextLinux_x86_64.h in Headers */,
 				26A527C414E24F5F00F3A14A /* ThreadMachCore.h in Headers */,
+				26474CD318D0CB710073DEBA /* RegisterInfos_i386.h in Headers */,
 				4C6649A014EEE7F100B0316F /* StreamCallback.h in Headers */,
-				26BC17F918C7F4FA00D2196D /* RegisterInfos_mips64.h in Headers */,
 				26B7564F14F89356008D9CB3 /* PlatformiOSSimulator.h in Headers */,
+				26474CCA18D0CB5B0073DEBA /* RegisterContextMemory.h in Headers */,
+				26474CA018D0CAEC0073DEBA /* RegisterContext_mips64.h in Headers */,
 				26BC17AE18C7F4CB00D2196D /* RegisterContextPOSIXCore_mips64.h in Headers */,
 				26FFC19A14FC072100087D58 /* AuxVector.h in Headers */,
-				26BC17F818C7F4FA00D2196D /* RegisterInfos_i386.h in Headers */,
-				26BC17E418C7F4FA00D2196D /* RegisterContext_x86.h in Headers */,
 				AF25AB27188F685C0030DEC3 /* AppleGetQueuesHandler.h in Headers */,
 				26CA97A2172B1FD5005DC71B /* RegisterContextThreadMemory.h in Headers */,
+				26474CAB18D0CB070073DEBA /* RegisterContextFreeBSD_mips64.h in Headers */,
+				26474CA118D0CAEC0073DEBA /* RegisterContext_x86.h in Headers */,
 				26BC179D18C7F2CB00D2196D /* JITLoader.h in Headers */,
 				26FFC19C14FC072100087D58 /* DYLDRendezvous.h in Headers */,
 				AF1F7B08189C904B0087DB9C /* AppleGetPendingItemsHandler.h in Headers */,
 				AF2BCA6D18C7EFDE005B4526 /* JITLoaderGDB.h in Headers */,
 				26BC17B218C7F4CB00D2196D /* ThreadElfCore.h in Headers */,
-				26BC17F318C7F4FA00D2196D /* RegisterContextPOSIX_x86.h in Headers */,
-				26BC17DA18C7F4FA00D2196D /* POSIXStopInfo.h in Headers */,
 				26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */,
-				26BC17DC18C7F4FA00D2196D /* POSIXThread.h in Headers */,
 				AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */,
 				2694E99E14FC0BB30076DE67 /* PlatformFreeBSD.h in Headers */,
 				2694E9A514FC0BBD0076DE67 /* PlatformLinux.h in Headers */,
-				26BC17EA18C7F4FA00D2196D /* RegisterContextFreeBSD_x86_64.h in Headers */,
 				26AB54121832DC3400EADFF3 /* RegisterCheckpoint.h in Headers */,
 				26AB92131819D74600E63F3E /* DWARFDataExtractor.h in Headers */,
 				945759681534941F005A9070 /* PlatformPOSIX.h in Headers */,
 				26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */,
 				260CC62E15D04377002BF2E0 /* OptionValueArgs.h in Headers */,
-				26BC17F518C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.h in Headers */,
 				AF0E22F118A09FB20009B7D1 /* AppleGetItemInfoHandler.h in Headers */,
 				260CC62F15D04377002BF2E0 /* OptionValueArray.h in Headers */,
-				26BC17EC18C7F4FA00D2196D /* RegisterContextLinux_i386.h in Headers */,
+				26474CD418D0CB710073DEBA /* RegisterInfos_mips64.h in Headers */,
 				260CC63015D04377002BF2E0 /* OptionValueBoolean.h in Headers */,
 				260CC63115D04377002BF2E0 /* OptionValueProperties.h in Headers */,
-				26BC17E818C7F4FA00D2196D /* RegisterContextFreeBSD_mips64.h in Headers */,
 				260CC63215D04377002BF2E0 /* OptionValueDictionary.h in Headers */,
 				262173A118395D3800C52091 /* SectionLoadHistory.h in Headers */,
 				260CC63315D04377002BF2E0 /* OptionValueEnumeration.h in Headers */,
 				AF45FDE618A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h in Headers */,
 				260A63171861008E00FECF8E /* IOHandler.h in Headers */,
+				26474CD518D0CB710073DEBA /* RegisterInfos_x86_64.h in Headers */,
+				26474CCC18D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.h in Headers */,
+				26474CBD18D0CB2D0073DEBA /* RegisterContextMach_arm.h in Headers */,
 				260CC63415D04377002BF2E0 /* OptionValueFileSpec.h in Headers */,
 				26CFDCA11861638D000E63E5 /* Editline.h in Headers */,
 				26BC17B018C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.h in Headers */,
 				AF9B8F34182DB52900DA866F /* SystemRuntimeMacOSX.h in Headers */,
+				26474CB518D0CB180073DEBA /* RegisterContextLinux_x86_64.h in Headers */,
 				26D1804716CEE12C00EDFB5B /* TimeSpecTimeout.h in Headers */,
 				260CC63515D04377002BF2E0 /* OptionValueFileSpecList.h in Headers */,
+				26474CCE18D0CB5B0073DEBA /* RegisterContextPOSIX_x86.h in Headers */,
+				26474CAD18D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.h in Headers */,
 				490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */,
 				260CC63615D04377002BF2E0 /* OptionValueFormat.h in Headers */,
 				26D1804516CEE12500EDFB5B /* KQueue.h in Headers */,
 				260CC63715D04377002BF2E0 /* OptionValueSInt64.h in Headers */,
 				AF061F8C182C980000B6A19C /* HistoryUnwind.h in Headers */,
-				26BC17E318C7F4FA00D2196D /* RegisterContext_mips64.h in Headers */,
 				260CC63815D04377002BF2E0 /* OptionValueString.h in Headers */,
-				26BC17F118C7F4FA00D2196D /* RegisterContextPOSIX_mips64.h in Headers */,
 				260CC63915D04377002BF2E0 /* OptionValueUInt64.h in Headers */,
 				260CC63A15D04377002BF2E0 /* OptionValueUUID.h in Headers */,
 				260A248E15D06C50009981B0 /* OptionValues.h in Headers */,
-				26BC17F718C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.h in Headers */,
 				AF061F88182C97ED00B6A19C /* RegisterContextHistory.h in Headers */,
 				26DAED6015D327A200E15819 /* OptionValuePathMappings.h in Headers */,
 				26ACEC2815E077AE00E94760 /* Property.h in Headers */,
 				26491E3B15E1DB8600CBFFC2 /* OptionValueRegex.h in Headers */,
 				2697A39515E404BA003E682C /* OptionValueArch.h in Headers */,
+				26474CBF18D0CB2D0073DEBA /* RegisterContextMach_i386.h in Headers */,
+				26474CC118D0CB2D0073DEBA /* RegisterContextMach_x86_64.h in Headers */,
 				2698699D15E6CBD0002415FF /* OperatingSystemPython.h in Headers */,
 				260D9B2715EC369500960137 /* ModuleSpec.h in Headers */,
-				26BC17EF18C7F4FA00D2196D /* RegisterContextPOSIX.h in Headers */,
 				947A1D651616476B0017C8D1 /* CommandObjectPlugin.h in Headers */,
 				262ED0051631FA2800879631 /* OptionGroupString.h in Headers */,
+				26474CA918D0CB070073DEBA /* RegisterContextFreeBSD_i386.h in Headers */,
 				944372DD171F6B4300E57C32 /* RegisterContextDummy.h in Headers */,
+				26474CCF18D0CB5B0073DEBA /* RegisterContextPOSIX.h in Headers */,
 				26CEB5F318762056008F575A /* CommandObjectGUI.h in Headers */,
-				26BC17E218C7F4FA00D2196D /* ProcessPOSIXLog.h in Headers */,
-				26BC17DE18C7F4FA00D2196D /* ProcessMessage.h in Headers */,
+				26474CB318D0CB180073DEBA /* RegisterContextLinux_i386.h in Headers */,
 				AF061F8B182C980000B6A19C /* HistoryThread.h in Headers */,
-				26BC17FA18C7F4FA00D2196D /* RegisterInfos_x86_64.h in Headers */,
 				26BC179E18C7F2CB00D2196D /* JITLoaderList.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -4388,6 +4401,7 @@
 				26D1804216CEDF0700EDFB5B /* TimeSpecTimeout.cpp in Sources */,
 				2689FFDA13353D9D00698AC0 /* lldb.cpp in Sources */,
 				2689FFDB13353DA300698AC0 /* lldb-log.cpp in Sources */,
+				26474CCD18D0CB5B0073DEBA /* RegisterContextPOSIX_x86.cpp in Sources */,
 				2689FFEF13353DB600698AC0 /* Breakpoint.cpp in Sources */,
 				2689FFF113353DB600698AC0 /* BreakpointID.cpp in Sources */,
 				2689FFF313353DB600698AC0 /* BreakpointIDList.cpp in Sources */,
@@ -4400,10 +4414,14 @@
 				2689FFFF13353DB600698AC0 /* BreakpointResolver.cpp in Sources */,
 				2689000113353DB600698AC0 /* BreakpointResolverAddress.cpp in Sources */,
 				2689000313353DB600698AC0 /* BreakpointResolverFileLine.cpp in Sources */,
+				26474CA818D0CB070073DEBA /* RegisterContextFreeBSD_i386.cpp in Sources */,
 				94CD705216F8F5BC00CF1E42 /* LibCxxMap.cpp in Sources */,
 				2689000513353DB600698AC0 /* BreakpointResolverName.cpp in Sources */,
 				2689000713353DB600698AC0 /* BreakpointSite.cpp in Sources */,
 				2689000913353DB600698AC0 /* BreakpointSiteList.cpp in Sources */,
+				26474CC918D0CB5B0073DEBA /* RegisterContextMemory.cpp in Sources */,
+				26474CB218D0CB180073DEBA /* RegisterContextLinux_i386.cpp in Sources */,
+				26474CCB18D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.cpp in Sources */,
 				2689000B13353DB600698AC0 /* Stoppoint.cpp in Sources */,
 				2689000D13353DB600698AC0 /* StoppointCallbackContext.cpp in Sources */,
 				2689000F13353DB600698AC0 /* StoppointLocation.cpp in Sources */,
@@ -4413,6 +4431,7 @@
 				2689001413353DDE00698AC0 /* CommandObjectBreakpoint.cpp in Sources */,
 				2689001513353DDE00698AC0 /* CommandObjectBreakpointCommand.cpp in Sources */,
 				2689001613353DDE00698AC0 /* CommandObjectCommands.cpp in Sources */,
+				26474CAC18D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.cpp in Sources */,
 				2689001713353DDE00698AC0 /* CommandObjectDisassemble.cpp in Sources */,
 				2689001813353DDE00698AC0 /* CommandObjectExpression.cpp in Sources */,
 				2689001A13353DDE00698AC0 /* CommandObjectFrame.cpp in Sources */,
@@ -4421,9 +4440,9 @@
 				262173A318395D4600C52091 /* SectionLoadHistory.cpp in Sources */,
 				2689001E13353DDE00698AC0 /* CommandObjectMemory.cpp in Sources */,
 				2689001F13353DDE00698AC0 /* CommandObjectPlatform.cpp in Sources */,
+				26474CC018D0CB2D0073DEBA /* RegisterContextMach_x86_64.cpp in Sources */,
 				2689002013353DDE00698AC0 /* CommandObjectProcess.cpp in Sources */,
 				2689002113353DDE00698AC0 /* CommandObjectQuit.cpp in Sources */,
-				26BC17D918C7F4FA00D2196D /* POSIXStopInfo.cpp in Sources */,
 				2689002213353DDE00698AC0 /* CommandObjectRegister.cpp in Sources */,
 				26BC17AF18C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.cpp in Sources */,
 				2689002313353DDE00698AC0 /* CommandObjectScript.cpp in Sources */,
@@ -4484,10 +4503,8 @@
 				2689005413353E0400698AC0 /* UserSettingsController.cpp in Sources */,
 				2689005513353E0400698AC0 /* UUID.cpp in Sources */,
 				2689005613353E0400698AC0 /* Value.cpp in Sources */,
-				26BC17F218C7F4FA00D2196D /* RegisterContextPOSIX_x86.cpp in Sources */,
 				2689005713353E0400698AC0 /* ValueObject.cpp in Sources */,
 				2689005813353E0400698AC0 /* ValueObjectChild.cpp in Sources */,
-				26BC17ED18C7F4FA00D2196D /* RegisterContextLinux_x86_64.cpp in Sources */,
 				2689005913353E0400698AC0 /* ValueObjectConstResult.cpp in Sources */,
 				2689005A13353E0400698AC0 /* ValueObjectList.cpp in Sources */,
 				2689005B13353E0400698AC0 /* ValueObjectRegister.cpp in Sources */,
@@ -4499,11 +4516,10 @@
 				2689006113353E0E00698AC0 /* ClangExpressionParser.cpp in Sources */,
 				2689006213353E0E00698AC0 /* ClangExpressionVariable.cpp in Sources */,
 				2689006313353E0E00698AC0 /* ClangPersistentVariables.cpp in Sources */,
-				26BC17E918C7F4FA00D2196D /* RegisterContextFreeBSD_x86_64.cpp in Sources */,
 				2689006413353E0E00698AC0 /* ClangUserExpression.cpp in Sources */,
 				4C3ADCD61810D88B00357218 /* BreakpointResolverFileRegex.cpp in Sources */,
 				2689006513353E0E00698AC0 /* ClangUtilityFunction.cpp in Sources */,
-				26BC17E118C7F4FA00D2196D /* ProcessPOSIXLog.cpp in Sources */,
+				26474CB418D0CB180073DEBA /* RegisterContextLinux_x86_64.cpp in Sources */,
 				2689006613353E0E00698AC0 /* DWARFExpression.cpp in Sources */,
 				2689006713353E0E00698AC0 /* ASTDumper.cpp in Sources */,
 				2689006813353E0E00698AC0 /* ASTResultSynthesizer.cpp in Sources */,
@@ -4519,6 +4535,7 @@
 				2635879417822FC2004C30BA /* SymbolVendorELF.cpp in Sources */,
 				2689007213353E1A00698AC0 /* Mutex.cpp in Sources */,
 				2689007313353E1A00698AC0 /* Symbols.cpp in Sources */,
+				26474CBC18D0CB2D0073DEBA /* RegisterContextMach_arm.cpp in Sources */,
 				2689007413353E1A00698AC0 /* Terminal.cpp in Sources */,
 				2689007513353E1A00698AC0 /* TimeValue.cpp in Sources */,
 				2689007613353E1A00698AC0 /* CFCBundle.cpp in Sources */,
@@ -4538,6 +4555,7 @@
 				2689008313353E2200698AC0 /* CommandObjectMultiword.cpp in Sources */,
 				2689008413353E2200698AC0 /* CommandObjectRegexCommand.cpp in Sources */,
 				2689008513353E2200698AC0 /* CommandReturnObject.cpp in Sources */,
+				26474CBE18D0CB2D0073DEBA /* RegisterContextMach_i386.cpp in Sources */,
 				2689008613353E2200698AC0 /* Options.cpp in Sources */,
 				2689008713353E2200698AC0 /* ScriptInterpreter.cpp in Sources */,
 				2689008813353E2200698AC0 /* ScriptInterpreterNone.cpp in Sources */,
@@ -4583,7 +4601,6 @@
 				268900C613353E5F00698AC0 /* DWARFFormValue.cpp in Sources */,
 				268900C713353E5F00698AC0 /* DWARFLocationDescription.cpp in Sources */,
 				26BC17B118C7F4CB00D2196D /* ThreadElfCore.cpp in Sources */,
-				26BC17F018C7F4FA00D2196D /* RegisterContextPOSIX_mips64.cpp in Sources */,
 				268900C813353E5F00698AC0 /* DWARFLocationList.cpp in Sources */,
 				268900C913353E5F00698AC0 /* NameToDIE.cpp in Sources */,
 				268900CA13353E5F00698AC0 /* SymbolFileDWARF.cpp in Sources */,
@@ -4632,7 +4649,6 @@
 				268900F113353E6F00698AC0 /* RegisterContext.cpp in Sources */,
 				268900F213353E6F00698AC0 /* SectionLoadList.cpp in Sources */,
 				268900F313353E6F00698AC0 /* StackFrame.cpp in Sources */,
-				26BC17EB18C7F4FA00D2196D /* RegisterContextLinux_i386.cpp in Sources */,
 				268900F413353E6F00698AC0 /* StackFrameList.cpp in Sources */,
 				268900F513353E6F00698AC0 /* StackID.cpp in Sources */,
 				268900F613353E6F00698AC0 /* StopInfo.cpp in Sources */,
@@ -4651,12 +4667,12 @@
 				2689010313353E6F00698AC0 /* ThreadPlanStepRange.cpp in Sources */,
 				2689010413353E6F00698AC0 /* ThreadPlanStepInRange.cpp in Sources */,
 				2689010513353E6F00698AC0 /* ThreadPlanStepOverRange.cpp in Sources */,
-				26BC17DD18C7F4FA00D2196D /* ProcessMessage.cpp in Sources */,
 				2689010613353E6F00698AC0 /* ThreadPlanRunToAddress.cpp in Sources */,
 				2689010713353E6F00698AC0 /* ThreadPlanStepThrough.cpp in Sources */,
 				2689010813353E6F00698AC0 /* ThreadPlanStepUntil.cpp in Sources */,
 				2689010A13353E6F00698AC0 /* ThreadPlanTracer.cpp in Sources */,
 				AF37E10A17C861F20061E18E /* ProcessRunLock.cpp in Sources */,
+				26474CAA18D0CB070073DEBA /* RegisterContextFreeBSD_mips64.cpp in Sources */,
 				26CA97A1172B1FD5005DC71B /* RegisterContextThreadMemory.cpp in Sources */,
 				2689010B13353E6F00698AC0 /* ThreadSpec.cpp in Sources */,
 				2689010C13353E6F00698AC0 /* UnixSignals.cpp in Sources */,
@@ -4743,7 +4759,6 @@
 				49A71FE7141FFA5C00D59478 /* IRInterpreter.cpp in Sources */,
 				49A71FE8141FFACF00D59478 /* DataEncoder.cpp in Sources */,
 				B207C4931429607D00F36E4E /* CommandObjectWatchpoint.cpp in Sources */,
-				26BC17E518C7F4FA00D2196D /* RegisterContextFreeBSD_i386.cpp in Sources */,
 				49A1CAC51430E8DE00306AC9 /* ExpressionSourceCode.cpp in Sources */,
 				494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */,
 				49DA65031485C92A005FF180 /* AppleObjCTypeVendor.cpp in Sources */,
@@ -4797,7 +4812,6 @@
 				94CB255C16B069770059775D /* DataVisualization.cpp in Sources */,
 				94CD705016F8DF1C00CF1E42 /* LibCxxList.cpp in Sources */,
 				94CB255D16B069770059775D /* FormatClasses.cpp in Sources */,
-				26BC17E718C7F4FA00D2196D /* RegisterContextFreeBSD_mips64.cpp in Sources */,
 				94CB255E16B069770059775D /* FormatManager.cpp in Sources */,
 				94CB256616B096F10059775D /* TypeCategory.cpp in Sources */,
 				94CB256716B096F10059775D /* TypeCategoryMap.cpp in Sources */,
