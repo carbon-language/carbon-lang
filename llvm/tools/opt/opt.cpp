@@ -210,14 +210,7 @@ static void AddOptimizationPasses(PassManagerBase &MPM,FunctionPassManager &FPM,
   if (DisableInline) {
     // No inlining pass
   } else if (OptLevel > 1) {
-    unsigned Threshold = 225;
-    if (SizeLevel == 1)      // -Os
-      Threshold = 75;
-    else if (SizeLevel == 2) // -Oz
-      Threshold = 25;
-    if (OptLevel > 2)
-      Threshold = 275;
-    Builder.Inliner = createFunctionInliningPass(Threshold);
+    Builder.Inliner = createFunctionInliningPass(OptLevel, SizeLevel);
   } else {
     Builder.Inliner = createAlwaysInlinerPass();
   }

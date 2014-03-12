@@ -56,6 +56,17 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
+static int computeThresholdFromOptLevels(unsigned OptLevel,
+                                         unsigned SizeOptLevel) {
+  if (OptLevel > 2)
+    return 275;
+  if (SizeOptLevel == 1)
+    return 75;
+  if (SizeOptLevel == 2)
+    return 25;
+  return 225;
+}
+
 } // end anonymous namespace
 
 char SimpleInliner::ID = 0;
@@ -70,6 +81,12 @@ Pass *llvm::createFunctionInliningPass() { return new SimpleInliner(); }
 
 Pass *llvm::createFunctionInliningPass(int Threshold) {
   return new SimpleInliner(Threshold);
+}
+
+Pass *llvm::createFunctionInliningPass(unsigned OptLevel,
+                                       unsigned SizeOptLevel) {
+  return new SimpleInliner(
+      computeThresholdFromOptLevels(OptLevel, SizeOptLevel));
 }
 
 bool SimpleInliner::runOnSCC(CallGraphSCC &SCC) {
