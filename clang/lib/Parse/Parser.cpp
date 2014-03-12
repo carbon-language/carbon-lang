@@ -33,7 +33,7 @@ class ActionCommentHandler : public CommentHandler {
 public:
   explicit ActionCommentHandler(Sema &S) : S(S) { }
 
-  virtual bool HandleComment(Preprocessor &PP, SourceRange Comment) {
+  bool HandleComment(Preprocessor &PP, SourceRange Comment) override {
     S.ActOnComment(Comment);
     return false;
   }

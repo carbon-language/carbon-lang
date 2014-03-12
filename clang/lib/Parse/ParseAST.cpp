@@ -36,7 +36,7 @@ class PrettyStackTraceParserEntry : public llvm::PrettyStackTraceEntry {
   const Parser &P;
 public:
   PrettyStackTraceParserEntry(const Parser &p) : P(p) {}
-  virtual void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const override;
 };
 
 /// If a crash happens while the parser is active, print out a line indicating

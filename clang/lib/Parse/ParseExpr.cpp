@@ -428,7 +428,7 @@ class CastExpressionIdValidator : public CorrectionCandidateCallback {
     WantTypeSpecifiers = AllowTypes;
   }
 
-  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+  bool ValidateCandidate(const TypoCorrection &candidate) override {
     NamedDecl *ND = candidate.getCorrectionDecl();
     if (!ND)
       return candidate.isKeyword();

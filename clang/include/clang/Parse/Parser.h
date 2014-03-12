@@ -878,10 +878,10 @@ private:
     LateParsedClass(Parser *P, ParsingClass *C);
     virtual ~LateParsedClass();
 
-    virtual void ParseLexedMethodDeclarations();
-    virtual void ParseLexedMemberInitializers();
-    virtual void ParseLexedMethodDefs();
-    virtual void ParseLexedAttributes();
+    void ParseLexedMethodDeclarations() override;
+    void ParseLexedMemberInitializers() override;
+    void ParseLexedMethodDefs() override;
+    void ParseLexedAttributes() override;
 
   private:
     Parser *Self;
@@ -905,7 +905,7 @@ private:
                                  SourceLocation Loc)
       : Self(P), AttrName(Name), AttrNameLoc(Loc) {}
 
-    virtual void ParseLexedAttributes();
+    void ParseLexedAttributes() override;
 
     void addDecl(Decl *D) { Decls.push_back(D); }
   };
@@ -937,7 +937,7 @@ private:
     explicit LexedMethod(Parser* P, Decl *MD)
       : Self(P), D(MD), TemplateScope(false) {}
 
-    virtual void ParseLexedMethodDefs();
+    void ParseLexedMethodDefs() override;
   };
 
   /// LateParsedDefaultArgument - Keeps track of a parameter that may
@@ -967,7 +967,7 @@ private:
     explicit LateParsedMethodDeclaration(Parser *P, Decl *M)
       : Self(P), Method(M), TemplateScope(false), ExceptionSpecTokens(0) { }
 
-    virtual void ParseLexedMethodDeclarations();
+    void ParseLexedMethodDeclarations() override;
 
     Parser* Self;
 
@@ -998,7 +998,7 @@ private:
     LateParsedMemberInitializer(Parser *P, Decl *FD)
       : Self(P), Field(FD) { }
 
-    virtual void ParseLexedMemberInitializers();
+    void ParseLexedMemberInitializers() override;
 
     Parser *Self;
 
@@ -2399,14 +2399,13 @@ private:
 
   //===--------------------------------------------------------------------===//
   // Preprocessor code-completion pass-through
-  virtual void CodeCompleteDirective(bool InConditional);
-  virtual void CodeCompleteInConditionalExclusion();
-  virtual void CodeCompleteMacroName(bool IsDefinition);
-  virtual void CodeCompletePreprocessorExpression();
-  virtual void CodeCompleteMacroArgument(IdentifierInfo *Macro,
-                                         MacroInfo *MacroInfo,
-                                         unsigned ArgumentIndex);
-  virtual void CodeCompleteNaturalLanguage();
+  void CodeCompleteDirective(bool InConditional) override;
+  void CodeCompleteInConditionalExclusion() override;
+  void CodeCompleteMacroName(bool IsDefinition) override;
+  void CodeCompletePreprocessorExpression() override;
+  void CodeCompleteMacroArgument(IdentifierInfo *Macro, MacroInfo *MacroInfo,
+                                 unsigned ArgumentIndex) override;
+  void CodeCompleteNaturalLanguage() override;
 };
 
 }  // end namespace clang
