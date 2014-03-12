@@ -66,8 +66,8 @@
 ; CHECK-FP: .cfi_def_cfa_offset 16
 ; CHECK-FP: push   {r4, lr}
 ; CHECK-FP: .cfi_def_cfa_offset 24
-; CHECK-FP: .cfi_offset lr, -20
-; CHECK-FP: .cfi_offset r4, -24
+; CHECK-FP: .cfi_offset 14, -20
+; CHECK-FP: .cfi_offset 4, -24
 ; CHECK-FP: sub    sp, sp, #8
 ; CHECK-FP: .cfi_def_cfa_offset 32
 
@@ -77,11 +77,11 @@
 ; CHECK-FP-ELIM: .cfi_def_cfa_offset 16
 ; CHECK-FP-ELIM: push   {r4, r11, lr}
 ; CHECK-FP-ELIM: .cfi_def_cfa_offset 28
-; CHECK-FP-ELIM: .cfi_offset lr, -20
-; CHECK-FP-ELIM: .cfi_offset r11, -24
-; CHECK-FP-ELIM: .cfi_offset r4, -28
+; CHECK-FP-ELIM: .cfi_offset 14, -20
+; CHECK-FP-ELIM: .cfi_offset 11, -24
+; CHECK-FP-ELIM: .cfi_offset 4, -28
 ; CHECK-FP-ELIM: add    r11, sp, #4
-; CHECK-FP-ELIM: .cfi_def_cfa r11, 24
+; CHECK-FP-ELIM: .cfi_def_cfa 11, 24
 
 ; CHECK-THUMB-FP-LABEL: sum
 ; CHECK-THUMB-FP: .cfi_startproc
@@ -89,10 +89,10 @@
 ; CHECK-THUMB-FP: .cfi_def_cfa_offset 16
 ; CHECK-THUMB-FP: push   {r4, r5, r7, lr}
 ; CHECK-THUMB-FP: .cfi_def_cfa_offset 32
-; CHECK-THUMB-FP: .cfi_offset lr, -20
-; CHECK-THUMB-FP: .cfi_offset r7, -24
-; CHECK-THUMB-FP: .cfi_offset r5, -28
-; CHECK-THUMB-FP: .cfi_offset r4, -32
+; CHECK-THUMB-FP: .cfi_offset 14, -20
+; CHECK-THUMB-FP: .cfi_offset 7, -24
+; CHECK-THUMB-FP: .cfi_offset 5, -28
+; CHECK-THUMB-FP: .cfi_offset 4, -32
 ; CHECK-THUMB-FP: sub    sp, #8
 ; CHECK-THUMB-FP: .cfi_def_cfa_offset 40
 
@@ -102,12 +102,12 @@
 ; CHECK-THUMB-FP-ELIM: .cfi_def_cfa_offset 16
 ; CHECK-THUMB-FP-ELIM: push   {r4, r5, r7, lr}
 ; CHECK-THUMB-FP-ELIM: .cfi_def_cfa_offset 32
-; CHECK-THUMB-FP-ELIM: .cfi_offset lr, -20
-; CHECK-THUMB-FP-ELIM: .cfi_offset r7, -24
-; CHECK-THUMB-FP-ELIM: .cfi_offset r5, -28
-; CHECK-THUMB-FP-ELIM: .cfi_offset r4, -32
+; CHECK-THUMB-FP-ELIM: .cfi_offset 14, -20
+; CHECK-THUMB-FP-ELIM: .cfi_offset 7, -24
+; CHECK-THUMB-FP-ELIM: .cfi_offset 5, -28
+; CHECK-THUMB-FP-ELIM: .cfi_offset 4, -32
 ; CHECK-THUMB-FP-ELIM: add    r7, sp, #8
-; CHECK-THUMB-FP-ELIM: .cfi_def_cfa r7, 24
+; CHECK-THUMB-FP-ELIM: .cfi_def_cfa 7, 24
 
 define i32 @sum(i32 %count, ...) {
 entry:
