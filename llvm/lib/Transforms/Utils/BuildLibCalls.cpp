@@ -30,25 +30,6 @@ Value *llvm::CastToCStr(Value *V, IRBuilder<> &B) {
   return B.CreateBitCast(V, B.getInt8PtrTy(), "cstr");
 }
 
-/// UpdateCalleeCC - Update libcall instruction calling convention to that of
-/// the callee's. In the case where the CC is C and the caller is using an
-/// ARM target specific calling convention (e.g. AAPCS-VFP), use caller CC
-/// to avoid calling convention mismatch.
-static void UpdateCalleeCC(CallInst *CI, Value *Callee, Function *CallerF) {
-  if (Function *F = dyn_cast<Function>(Callee->stripPointerCasts())) {
-    CallingConv::ID CC = F->getCallingConv();
-    CallingConv::ID CallerCC = CallerF->getCallingConv();
-    if (CC == CallingConv::C && CallingConv::isARMTargetCC(CallerCC)) {
-      // If caller is using ARM target specific CC such as AAPCS-VFP,
-      // make sure the call uses it or it would introduce a calling
-      // convention mismatch.
-      CI->setCallingConv(CallerCC);
-      F->setCallingConv(CallerCC);
-    } else
-      CI->setCallingConv(CC);
-  }
-}
-
 /// EmitStrLen - Emit a call to the strlen function to the builder, for the
 /// specified pointer.  This always returns an integer value of size intptr_t.
 Value *llvm::EmitStrLen(Value *Ptr, IRBuilder<> &B, const DataLayout *TD,
@@ -56,8 +37,7 @@ Value *llvm::EmitStrLen(Value *Ptr, IRBuilder<> &B, const DataLayout *TD,
   if (!TLI->has(LibFunc::strlen))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[2];
   AS[0] = AttributeSet::get(M->getContext(), 1, Attribute::NoCapture);
   Attribute::AttrKind AVs[2] = { Attribute::ReadOnly, Attribute::NoUnwind };
@@ -72,7 +52,9 @@ Value *llvm::EmitStrLen(Value *Ptr, IRBuilder<> &B, const DataLayout *TD,
                                             B.getInt8PtrTy(),
                                             NULL);
   CallInst *CI = B.CreateCall(StrLen, CastToCStr(Ptr, B), "strlen");
-  UpdateCalleeCC(CI, StrLen, CallerF);
+  if (const Function *F = dyn_cast<Function>(StrLen->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
   return CI;
 }
 
@@ -84,8 +66,7 @@ Value *llvm::EmitStrNLen(Value *Ptr, Value *MaxLen, IRBuilder<> &B,
   if (!TLI->has(LibFunc::strnlen))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[2];
   AS[0] = AttributeSet::get(M->getContext(), 1, Attribute::NoCapture);
   Attribute::AttrKind AVs[2] = { Attribute::ReadOnly, Attribute::NoUnwind };
@@ -101,7 +82,9 @@ Value *llvm::EmitStrNLen(Value *Ptr, Value *MaxLen, IRBuilder<> &B,
                                              TD->getIntPtrType(Context),
                                              NULL);
   CallInst *CI = B.CreateCall2(StrNLen, CastToCStr(Ptr, B), MaxLen, "strnlen");
-  UpdateCalleeCC(CI, StrNLen, CallerF);
+  if (const Function *F = dyn_cast<Function>(StrNLen->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
   return CI;
 }
 
@@ -113,8 +96,7 @@ Value *llvm::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B,
   if (!TLI->has(LibFunc::strchr))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   Attribute::AttrKind AVs[2] = { Attribute::ReadOnly, Attribute::NoUnwind };
   AttributeSet AS =
     AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
@@ -128,7 +110,8 @@ Value *llvm::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B,
                                             I8Ptr, I8Ptr, I32Ty, NULL);
   CallInst *CI = B.CreateCall2(StrChr, CastToCStr(Ptr, B),
                                ConstantInt::get(I32Ty, C), "strchr");
-  UpdateCalleeCC(CI, StrChr, CallerF);
+  if (const Function *F = dyn_cast<Function>(StrChr->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
   return CI;
 }
 
@@ -139,8 +122,7 @@ Value *llvm::EmitStrNCmp(Value *Ptr1, Value *Ptr2, Value *Len,
   if (!TLI->has(LibFunc::strncmp))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[3];
   AS[0] = AttributeSet::get(M->getContext(), 1, Attribute::NoCapture);
   AS[1] = AttributeSet::get(M->getContext(), 2, Attribute::NoCapture);
@@ -158,7 +140,10 @@ Value *llvm::EmitStrNCmp(Value *Ptr1, Value *Ptr2, Value *Len,
                                           TD->getIntPtrType(Context), NULL);
   CallInst *CI = B.CreateCall3(StrNCmp, CastToCStr(Ptr1, B),
                                CastToCStr(Ptr2, B), Len, "strncmp");
-  UpdateCalleeCC(CI, StrNCmp, CallerF);
+
+  if (const Function *F = dyn_cast<Function>(StrNCmp->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
   return CI;
 }
 
@@ -170,8 +155,7 @@ Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
   if (!TLI->has(LibFunc::strcpy))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[2];
   AS[0] = AttributeSet::get(M->getContext(), 2, Attribute::NoCapture);
   AS[1] = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
@@ -182,7 +166,8 @@ Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
                                          I8Ptr, I8Ptr, I8Ptr, NULL);
   CallInst *CI = B.CreateCall2(StrCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
                                Name);
-  UpdateCalleeCC(CI, StrCpy, CallerF);
+  if (const Function *F = dyn_cast<Function>(StrCpy->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
   return CI;
 }
 
@@ -194,8 +179,7 @@ Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
   if (!TLI->has(LibFunc::strncpy))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[2];
   AS[0] = AttributeSet::get(M->getContext(), 2, Attribute::NoCapture);
   AS[1] = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
@@ -208,7 +192,8 @@ Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
                                           Len->getType(), NULL);
   CallInst *CI = B.CreateCall3(StrNCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
                                Len, "strncpy");
-  UpdateCalleeCC(CI, StrNCpy, CallerF);
+  if (const Function *F = dyn_cast<Function>(StrNCpy->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
   return CI;
 }
 
@@ -221,8 +206,7 @@ Value *llvm::EmitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
   if (!TLI->has(LibFunc::memcpy_chk))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS;
   AS = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
                          Attribute::NoUnwind);
@@ -237,7 +221,8 @@ Value *llvm::EmitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
   Dst = CastToCStr(Dst, B);
   Src = CastToCStr(Src, B);
   CallInst *CI = B.CreateCall4(MemCpy, Dst, Src, Len, ObjSize);
-  UpdateCalleeCC(CI, MemCpy, CallerF);
+  if (const Function *F = dyn_cast<Function>(MemCpy->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
   return CI;
 }
 
@@ -249,8 +234,7 @@ Value *llvm::EmitMemChr(Value *Ptr, Value *Val,
   if (!TLI->has(LibFunc::memchr))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS;
   Attribute::AttrKind AVs[2] = { Attribute::ReadOnly, Attribute::NoUnwind };
   AS = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
@@ -264,7 +248,10 @@ Value *llvm::EmitMemChr(Value *Ptr, Value *Val,
                                          TD->getIntPtrType(Context),
                                          NULL);
   CallInst *CI = B.CreateCall3(MemChr, CastToCStr(Ptr, B), Val, Len, "memchr");
-  UpdateCalleeCC(CI, MemChr, CallerF);
+
+  if (const Function *F = dyn_cast<Function>(MemChr->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
   return CI;
 }
 
@@ -275,8 +262,7 @@ Value *llvm::EmitMemCmp(Value *Ptr1, Value *Ptr2,
   if (!TLI->has(LibFunc::memcmp))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[3];
   AS[0] = AttributeSet::get(M->getContext(), 1, Attribute::NoCapture);
   AS[1] = AttributeSet::get(M->getContext(), 2, Attribute::NoCapture);
@@ -293,7 +279,10 @@ Value *llvm::EmitMemCmp(Value *Ptr1, Value *Ptr2,
                                          TD->getIntPtrType(Context), NULL);
   CallInst *CI = B.CreateCall3(MemCmp, CastToCStr(Ptr1, B), CastToCStr(Ptr2, B),
                                Len, "memcmp");
-  UpdateCalleeCC(CI, MemCmp, CallerF);
+
+  if (const Function *F = dyn_cast<Function>(MemCmp->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
   return CI;
 }
 
@@ -321,13 +310,14 @@ Value *llvm::EmitUnaryFloatFnCall(Value *Op, StringRef Name, IRBuilder<> &B,
   SmallString<20> NameBuffer;
   AppendTypeSuffix(Op, Name, NameBuffer);   
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   Value *Callee = M->getOrInsertFunction(Name, Op->getType(),
                                          Op->getType(), NULL);
   CallInst *CI = B.CreateCall(Callee, Op, Name);
   CI->setAttributes(Attrs);
-  UpdateCalleeCC(CI, Callee, CallerF);
+  if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
   return CI;
 }
 
@@ -341,13 +331,14 @@ Value *llvm::EmitBinaryFloatFnCall(Value *Op1, Value *Op2, StringRef Name,
   SmallString<20> NameBuffer;
   AppendTypeSuffix(Op1, Name, NameBuffer);   
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   Value *Callee = M->getOrInsertFunction(Name, Op1->getType(),
                                          Op1->getType(), Op2->getType(), NULL);
   CallInst *CI = B.CreateCall2(Callee, Op1, Op2, Name);
   CI->setAttributes(Attrs);
-  UpdateCalleeCC(CI, Callee, CallerF);
+  if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
+
   return CI;
 }
 
@@ -358,8 +349,7 @@ Value *llvm::EmitPutChar(Value *Char, IRBuilder<> &B, const DataLayout *TD,
   if (!TLI->has(LibFunc::putchar))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   Value *PutChar = M->getOrInsertFunction("putchar", B.getInt32Ty(),
                                           B.getInt32Ty(), NULL);
   CallInst *CI = B.CreateCall(PutChar,
@@ -368,7 +358,9 @@ Value *llvm::EmitPutChar(Value *Char, IRBuilder<> &B, const DataLayout *TD,
                               /*isSigned*/true,
                               "chari"),
                               "putchar");
-  UpdateCalleeCC(CI, PutChar, CallerF);
+
+  if (const Function *F = dyn_cast<Function>(PutChar->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
   return CI;
 }
 
@@ -379,8 +371,7 @@ Value *llvm::EmitPutS(Value *Str, IRBuilder<> &B, const DataLayout *TD,
   if (!TLI->has(LibFunc::puts))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[2];
   AS[0] = AttributeSet::get(M->getContext(), 1, Attribute::NoCapture);
   AS[1] = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
@@ -392,7 +383,8 @@ Value *llvm::EmitPutS(Value *Str, IRBuilder<> &B, const DataLayout *TD,
                                        B.getInt8PtrTy(),
                                        NULL);
   CallInst *CI = B.CreateCall(PutS, CastToCStr(Str, B), "puts");
-  UpdateCalleeCC(CI, PutS, CallerF);
+  if (const Function *F = dyn_cast<Function>(PutS->stripPointerCasts()))
+    CI->setCallingConv(F->getCallingConv());
   return CI;
 }
 
@@ -403,8 +395,7 @@ Value *llvm::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B,
   if (!TLI->has(LibFunc::fputc))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[2];
   AS[0] = AttributeSet::get(M->getContext(), 2, Attribute::NoCapture);
   AS[1] = AttributeSet::get(M->getContext(), AttributeSet::FunctionIndex,
@@ -424,7 +415,9 @@ Value *llvm::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B,
   Char = B.CreateIntCast(Char, B.getInt32Ty(), /*isSigned*/true,
                          "chari");
   CallInst *CI = B.CreateCall2(F, Char, File, "fputc");
-  UpdateCalleeCC(CI, F, CallerF);
+
+  if (const Function *Fn = dyn_cast<Function>(F->stripPointerCasts()))
+    CI->setCallingConv(Fn->getCallingConv());
   return CI;
 }
 
@@ -435,8 +428,7 @@ Value *llvm::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B,
   if (!TLI->has(LibFunc::fputs))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[3];
   AS[0] = AttributeSet::get(M->getContext(), 1, Attribute::NoCapture);
   AS[1] = AttributeSet::get(M->getContext(), 2, Attribute::NoCapture);
@@ -455,7 +447,9 @@ Value *llvm::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B,
                                B.getInt8PtrTy(),
                                File->getType(), NULL);
   CallInst *CI = B.CreateCall2(F, CastToCStr(Str, B), File, "fputs");
-  UpdateCalleeCC(CI, F, CallerF);
+
+  if (const Function *Fn = dyn_cast<Function>(F->stripPointerCasts()))
+    CI->setCallingConv(Fn->getCallingConv());
   return CI;
 }
 
@@ -467,8 +461,7 @@ Value *llvm::EmitFWrite(Value *Ptr, Value *Size, Value *File,
   if (!TLI->has(LibFunc::fwrite))
     return 0;
 
-  Function *CallerF = B.GetInsertBlock()->getParent();
-  Module *M = CallerF->getParent();
+  Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[3];
   AS[0] = AttributeSet::get(M->getContext(), 1, Attribute::NoCapture);
   AS[1] = AttributeSet::get(M->getContext(), 4, Attribute::NoCapture);
@@ -493,7 +486,9 @@ Value *llvm::EmitFWrite(Value *Ptr, Value *Size, Value *File,
                                File->getType(), NULL);
   CallInst *CI = B.CreateCall4(F, CastToCStr(Ptr, B), Size,
                         ConstantInt::get(TD->getIntPtrType(Context), 1), File);
-  UpdateCalleeCC(CI, F, CallerF);
+
+  if (const Function *Fn = dyn_cast<Function>(F->stripPointerCasts()))
+    CI->setCallingConv(Fn->getCallingConv());
   return CI;
 }
 

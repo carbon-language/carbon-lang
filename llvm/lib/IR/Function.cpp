@@ -779,11 +779,3 @@ void Function::setPrefixData(Constant *PrefixData) {
   }
   setValueSubclassData(SCData);
 }
-
-
-/// isARMTargetCC - Return true if the specific calling convention is one of
-/// ARM target specific calling convention.
-/// There isn't a CallingConv.cpp so we are adding this utility routine here.
-bool CallingConv::isARMTargetCC(ID id) {
-  return id == ARM_APCS || id == ARM_AAPCS || id == ARM_AAPCS_VFP;
-}
