@@ -4335,7 +4335,8 @@ class A {
 
 }  // end namespace NonMemberCalleeICETest
 
-namespace {
+
+namespace pt_guard_attribute_type {
   int i PT_GUARDED_BY(sls_mu);  // expected-warning {{'pt_guarded_by' only applies to pointer types; type here is 'int'}}
   int j PT_GUARDED_VAR;  // expected-warning {{'pt_guarded_var' only applies to pointer types; type here is 'int'}}
 
@@ -4346,4 +4347,34 @@ namespace {
     typedef int PT_GUARDED_BY(sls_mu) bad1;  // expected-warning {{'pt_guarded_by' attribute only applies to fields and global variables}}
     typedef int PT_GUARDED_VAR bad2;  // expected-warning {{'pt_guarded_var' attribute only applies to fields and global variables}}
   }
-}
+}  // end namespace pt_guard_attribute_type
+
+
+namespace ThreadAttributesOnLambdas {
+
+class Foo {
+  Mutex mu_;
+
+  void LockedFunction() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+
+  void test() {
+    auto func1 = [this]() EXCLUSIVE_LOCKS_REQUIRED(mu_) {
+      LockedFunction();
+    };
+
+    auto func2 = [this]() NO_THREAD_SAFETY_ANALYSIS {
+      LockedFunction();
+    };
+
+    auto func3 = [this]() EXCLUSIVE_LOCK_FUNCTION(mu_) {
+      mu_.Lock();
+    };
+
+    func1();  // expected-warning {{calling function 'operator()' requires exclusive lock on 'mu_'}}
+    func2();
+    func3();
+    mu_.Unlock();
+  }
+};
+
+}  // end namespace ThreadAttributesOnLambdas
