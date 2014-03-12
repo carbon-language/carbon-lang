@@ -30,11 +30,3 @@ check_library_exists(m ccos "" LIBCXX_HAS_M_LIB)
 check_library_exists(rt clock_gettime "" LIBCXX_HAS_RT_LIB)
 check_library_exists(gcc_s __gcc_personality_v0 "" LIBCXX_HAS_GCC_S_LIB)
 
-# Check C++0x features
-if (LIBCXX_ENABLE_CXX0X)
-  if (LIBCXX_HAS_STDCXX0X_FLAG)
-    set(CMAKE_REQUIRED_DEFINITIONS -std=c++0x)
-  endif()
-else()
-  set(LIBCXX_HAS_STDCXX0X_FLAG FALSE)
-endif()
