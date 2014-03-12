@@ -1492,6 +1492,18 @@ TSAN_INTERCEPTOR(void*, fopen, char *path, char *mode) {
   return res;
 }
 
+TSAN_INTERCEPTOR(void*, fopen64, char *path, char *mode) {
+  SCOPED_TSAN_INTERCEPTOR(fopen64, path, mode);
+  void *res = REAL(fopen64)(path, mode);
+  Acquire(thr, pc, File2addr(path));
+  if (res) {
+    int fd = fileno_unlocked(res);
+    if (fd >= 0)
+      FdFileCreate(thr, pc, fd);
+  }
+  return res;
+}
+
 TSAN_INTERCEPTOR(void*, freopen, char *path, char *mode, void *stream) {
   SCOPED_TSAN_INTERCEPTOR(freopen, path, mode, stream);
   if (stream) {
@@ -1501,6 +1513,45 @@ TSAN_INTERCEPTOR(void*, freopen, char *path, char *mode, void *stream) {
   }
   void *res = REAL(freopen)(path, mode, stream);
   Acquire(thr, pc, File2addr(path));
+  if (res) {
+    int fd = fileno_unlocked(res);
+    if (fd >= 0)
+      FdFileCreate(thr, pc, fd);
+  }
+  return res;
+}
+
+TSAN_INTERCEPTOR(void*, freopen64, char *path, char *mode, void *stream) {
+  SCOPED_TSAN_INTERCEPTOR(freopen64, path, mode, stream);
+  if (stream) {
+    int fd = fileno_unlocked(stream);
+    if (fd >= 0)
+      FdClose(thr, pc, fd);
+  }
+  void *res = REAL(freopen64)(path, mode, stream);
+  Acquire(thr, pc, File2addr(path));
+  if (res) {
+    int fd = fileno_unlocked(res);
+    if (fd >= 0)
+      FdFileCreate(thr, pc, fd);
+  }
+  return res;
+}
+
+TSAN_INTERCEPTOR(void*, tmpfile, int fake) {
+  SCOPED_TSAN_INTERCEPTOR(tmpfile, fake);
+  void *res = REAL(tmpfile)(fake);
+  if (res) {
+    int fd = fileno_unlocked(res);
+    if (fd >= 0)
+      FdFileCreate(thr, pc, fd);
+  }
+  return res;
+}
+
+TSAN_INTERCEPTOR(void*, tmpfile64, int fake) {
+  SCOPED_TSAN_INTERCEPTOR(tmpfile64, fake);
+  void *res = REAL(tmpfile64)(fake);
   if (res) {
     int fd = fileno_unlocked(res);
     if (fd >= 0)
@@ -2236,7 +2287,11 @@ void InitializeInterceptors() {
 
   TSAN_INTERCEPT(unlink);
   TSAN_INTERCEPT(fopen);
+  TSAN_INTERCEPT(fopen64);
   TSAN_INTERCEPT(freopen);
+  TSAN_INTERCEPT(freopen64);
+  TSAN_INTERCEPT(tmpfile);
+  TSAN_INTERCEPT(tmpfile64);
   TSAN_INTERCEPT(fclose);
   TSAN_INTERCEPT(fread);
   TSAN_INTERCEPT(fwrite);
