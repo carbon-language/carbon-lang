@@ -21,11 +21,13 @@ else
 endif
 
 ifneq ($(HOST_OS),MingW)
-DIRS += driver lldb-platform
+DIRS += lldb-platform
 endif
 
 ifeq ($(HOST_OS),Darwin)
 DIRS += debugserver
 endif
+
+DIRS += driver
 
 include $(LLDB_LEVEL)/Makefile

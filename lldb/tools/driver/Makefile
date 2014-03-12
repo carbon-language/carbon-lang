@@ -12,9 +12,14 @@ TOOLNAME = lldb
 
 NO_PEDANTIC = 1
 
-LLVMLibsOptions += -ledit -llldb -llldbUtility
-
 include $(LLDB_LEVEL)/Makefile
+
+ifneq ($(HOST_OS),MingW)
+LLVMLibsOptions += -ledit -llldb -llldbUtility
+else
+LLVMLibsOptions += -llldb -llldbUtility
+CPP.Flags += -DIMPORT_LIBLLDB
+endif
 
 ifeq ($(HOST_OS),Darwin)
 	LLVMLibsOptions += -Wl,-rpath,@loader_path/../lib/
