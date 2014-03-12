@@ -283,8 +283,8 @@ TEST_F(CloneFunc, Subprogram) {
   DISubprogram Sub2(*Iter);
   EXPECT_TRUE(Sub2.Verify());
 
-  EXPECT_TRUE(Sub1.getFunction() == OldFunc && Sub2.getFunction() == NewFunc
-           || Sub1.getFunction() == NewFunc && Sub2.getFunction() == OldFunc);
+  EXPECT_TRUE((Sub1.getFunction() == OldFunc && Sub2.getFunction() == NewFunc)
+           || (Sub1.getFunction() == NewFunc && Sub2.getFunction() == OldFunc));
 }
 
 // Test that the new subprogram entry was not added to the CU which doesn't
