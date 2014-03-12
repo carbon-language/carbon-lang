@@ -2483,6 +2483,21 @@ static void *init_cond(void *c, bool force = false) {
   return (void*)cond;
 }
 
+struct CondMutexUnlockCtx {
+  void *ctx;
+  void *m;
+};
+
+static void cond_mutex_unlock(CondMutexUnlockCtx *arg) {
+  COMMON_INTERCEPTOR_MUTEX_LOCK(arg->ctx, arg->m);
+}
+
+namespace __sanitizer {
+int call_pthread_cancel_with_cleanup(int(*fn)(void *c, void *m,
+    void *abstime), void *c, void *m, void *abstime,
+    void(*cleanup)(void *arg), void *arg);
+}  // namespace __sanitizer
+
 INTERCEPTOR(int, pthread_cond_init, void *c, void *a) {
   void *cond = init_cond(c, true);
   void *ctx;
@@ -2497,8 +2512,12 @@ INTERCEPTOR(int, pthread_cond_wait, void *c, void *m) {
   COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_wait, cond, m);
   COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m);
   COMMON_INTERCEPTOR_READ_RANGE(ctx, c, sizeof(uptr));
-  int res = REAL(pthread_cond_wait)(cond, m);
-  COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m);
+  CondMutexUnlockCtx arg = {ctx, m};
+  // This ensures that we handle mutex lock even in case of pthread_cancel.
+  // See test/tsan/cond_cancel.cc.
+  int res = __sanitizer::call_pthread_cancel_with_cleanup(
+      (int(*)(void *c, void *m, void *abstime))REAL(pthread_cond_wait),
+      cond, m, 0, (void(*)(void *arg))cond_mutex_unlock, &arg);
   return res;
 }
 
@@ -2508,8 +2527,12 @@ INTERCEPTOR(int, pthread_cond_timedwait, void *c, void *m, void *abstime) {
   COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_timedwait, cond, m, abstime);
   COMMON_INTERCEPTOR_MUTEX_UNLOCK(ctx, m);
   COMMON_INTERCEPTOR_READ_RANGE(ctx, c, sizeof(uptr));
-  int res = REAL(pthread_cond_timedwait)(cond, m, abstime);
-  COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m);
+  CondMutexUnlockCtx arg = {ctx, m};
+  // This ensures that we handle mutex lock even in case of pthread_cancel.
+  // See test/tsan/cond_cancel.cc.
+  int res = __sanitizer::call_pthread_cancel_with_cleanup(
+      REAL(pthread_cond_timedwait), cond, m, abstime,
+      (void(*)(void *arg))cond_mutex_unlock, &arg);
   return res;
 }
 

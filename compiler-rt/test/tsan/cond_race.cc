@@ -1,4 +1,5 @@
 // RUN: %clang_tsan -O1 %s -o %t && not %t 2>&1 | FileCheck %s
+// CHECK-NOT: unlock of unlocked mutex
 // CHECK: ThreadSanitizer: data race
 // CHECK: pthread_cond_signal
 
