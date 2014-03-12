@@ -56,5 +56,6 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
   UseIntegratedAssembler = true;
 
   // gas doesn't handle VFP register names in cfi directives.
+  // See https://sourceware.org/bugzilla/show_bug.cgi?id=16694
   DwarfRegNumForCFI = true;
 }
