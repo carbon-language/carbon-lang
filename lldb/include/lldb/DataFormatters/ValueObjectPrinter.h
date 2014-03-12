@@ -386,7 +386,7 @@ private:
     std::string m_summary;
     std::string m_error;
     
-    friend class StringSummaryFormat;
+    friend struct StringSummaryFormat;
     
     DISALLOW_COPY_AND_ASSIGN(ValueObjectPrinter);
 };
