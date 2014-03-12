@@ -363,7 +363,7 @@ unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
     }
   }
 
-  // Find or make a entry in the MCDwarfDirs vector for this Directory.
+  // Find or make an entry in the MCDwarfDirs vector for this Directory.
   // Capture directory name.
   unsigned DirIndex;
   if (Directory.empty()) {
