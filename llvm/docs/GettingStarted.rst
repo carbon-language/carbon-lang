@@ -1078,8 +1078,7 @@ different `tools`_.
 
 This directory contains projects that are not strictly part of LLVM but are
 shipped with LLVM. This is also the directory where you should create your own
-LLVM-based projects. See ``llvm/projects/sample`` for an example of how to set
-up your own project.
+LLVM-based projects.
 
 ``llvm/runtime``
 ----------------

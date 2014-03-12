@@ -166,7 +166,6 @@ for i in `ls ${srcdir}/projects`
 do
   if test -d ${srcdir}/projects/${i} ; then
     case ${i} in
-      sample)       AC_CONFIG_SUBDIRS([projects/sample])    ;;
       safecode)     AC_CONFIG_SUBDIRS([projects/safecode]) ;;
       compiler-rt)       ;;
       test-suite)     ;;

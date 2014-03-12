@@ -37,82 +37,16 @@ There are two ways that you can set all of these variables:
   of LLVM, and the ability to support multiple object directories from a single
   source directory.
 
-This document assumes that you will base your project on the LLVM sample project
-found in ``llvm/projects/sample``. If you want to devise your own build system,
-studying the sample project and LLVM ``Makefiles`` will probably provide enough
-information on how to write your own ``Makefiles``.
-
-Create a Project from the Sample Project
-========================================
-
-Follow these simple steps to start your project:
-
-1. Copy the ``llvm/projects/sample`` directory to any place of your choosing.
-   You can place it anywhere you like. Rename the directory to match the name
-   of your project.
-
-2. If you downloaded LLVM using Subversion, remove all the directories named
-   ``.svn`` (and all the files therein) from your project's new source tree.
-   This will keep Subversion from thinking that your project is inside
-   ``llvm/trunk/projects/sample``.
-
-3. Add your source code and Makefiles to your source tree.
-
-4. If you want your project to be configured with the ``configure`` script then
-   you need to edit ``autoconf/configure.ac`` as follows:
-
-   * **AC_INIT** - Place the name of your project, its version number and a
-     contact email address for your project as the arguments to this macro
- 
-   * **AC_CONFIG_AUX_DIR** - If your project isn't in the ``llvm/projects``
-     directory then you might need to adjust this so that it specifies a
-     relative path to the ``llvm/autoconf`` directory.
-
-   * **LLVM_CONFIG_PROJECT** - Just leave this alone.
-
-   * **AC_CONFIG_SRCDIR** - Specify a path to a file name that identifies your
-     project; or just leave it at ``Makefile.common.in``.
-
-   * **AC_CONFIG_FILES** - Do not change.
-
-   * **AC_CONFIG_MAKEFILE** - Use one of these macros for each Makefile that
-     your project uses. This macro arranges for your makefiles to be copied from
-     the source directory, unmodified, to the build directory.
-
-5. After updating ``autoconf/configure.ac``, regenerate the configure script
-   with these commands. (You must be using ``Autoconf`` version 2.59 or later
-   and your ``aclocal`` version should be 1.9 or later.)
-
-       .. code-block:: bash
-
-         % cd autoconf
-         % ./AutoRegen.sh
-
-6. Run ``configure`` in the directory in which you want to place object code.
-   Use the following options to tell your project where it can find LLVM:
-
-   ``--with-llvmsrc=<directory>``
-       Tell your project where the LLVM source tree is located.
-
-   ``--with-llvmobj=<directory>``
-       Tell your project where the LLVM object tree is located.
-
-   ``--prefix=<directory>``
-       Tell your project where it should get installed.
-
-That's it!  Now all you have to do is type ``gmake`` (or ``make`` if you're on a
-GNU/Linux system) in the root of your object directory, and your project should
-build.
+If you want to devise your own build system, studying other projects and LLVM
+``Makefiles`` will probably provide enough information on how to write your own
+``Makefiles``.
 
 Source Tree Layout
 ==================
 
 In order to use the LLVM build system, you will want to organize your source
 code so that it can benefit from the build system's features.  Mainly, you want
-your source tree layout to look similar to the LLVM source tree layout.  The
-best way to do this is to just copy the project tree from
-``llvm/projects/sample`` and modify it to meet your needs, but you can certainly
-add to it if you want.
+your source tree layout to look similar to the LLVM source tree layout.
 
 Underneath your top level directory, you should have the following directories:
 

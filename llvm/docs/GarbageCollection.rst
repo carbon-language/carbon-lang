@@ -500,8 +500,7 @@ This boilerplate collector does nothing.  More specifically:
 
 * The stack map is not compiled into the executable.
 
-Using the LLVM makefiles (like the `sample project
-<http://llvm.org/viewvc/llvm-project/llvm/trunk/projects/sample/>`__), this code
+Using the LLVM makefiles, this code
 can be compiled as a plugin using a simple makefile:
 
 .. code-block:: make

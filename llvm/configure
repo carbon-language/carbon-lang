@@ -823,7 +823,6 @@ ac_subdirs_all='projects/test-suite
 projects/llvm-test
 projects/poolalloc
 projects/llvm-poolalloc
-projects/sample
 projects/safecode
 tools/polly'
 
@@ -3751,8 +3750,6 @@ for i in `ls ${srcdir}/projects`
 do
   if test -d ${srcdir}/projects/${i} ; then
     case ${i} in
-      sample)       subdirs="$subdirs projects/sample"
-    ;;
       safecode)     subdirs="$subdirs projects/safecode"
  ;;
       compiler-rt)       ;;
