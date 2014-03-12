@@ -171,30 +171,30 @@ int show_main(int argc, const char *argv[]) {
   if (ShowAllFunctions && !ShowFunction.empty())
     errs() << "warning: -function argument ignored: showing all functions\n";
 
-  uint64_t MaxBlockCount = 0, MaxFunctionCount = 0;
+  uint64_t MaxFunctionCount = Reader->getMaximumFunctionCount();
+
+  uint64_t MaxBlockCount = 0;
   uint64_t Hash;
-  double CallFreq;
   size_t ShownFunctions = false;
   std::vector<uint64_t> Counts;
   for (const auto &Name : *Reader) {
     bool Show = ShowAllFunctions || Name.find(ShowFunction) != Name.npos;
     if (error_code EC = Reader->getFunctionCounts(Name, Hash, Counts))
       exitWithError(EC.message(), Filename);
-    if (error_code EC = Reader->getCallFrequency(Name, Hash, CallFreq))
-      exitWithError(EC.message(), Filename);
+
     if (Show) {
+      double CallFreq = Counts[0] / (double)MaxFunctionCount;
+
       if (!ShownFunctions)
         OS << "Counters:\n";
       ++ShownFunctions;
+
       OS << "  " << Name << ":\n"
          << "    Hash: " << HashPrinter(Hash) << "\n"
          << "    Relative call frequency: " << FreqPrinter(CallFreq) << "\n"
          << "    Counters: " << Counts.size() << "\n"
          << "    Function count: " << Counts[0] << "\n";
     }
-
-    if (Counts[0] > MaxFunctionCount)
-      MaxFunctionCount = Counts[0];
 
     if (Show && ShowCounts)
       OS << "    Block counts: [";

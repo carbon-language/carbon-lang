@@ -165,19 +165,3 @@ error_code ProfileDataReader::getFunctionCounts(StringRef FuncName,
 
   return profiledata_error::success;
 }
-
-error_code ProfileDataReader::getCallFrequency(StringRef FuncName,
-                                               uint64_t &FunctionHash,
-                                               double &Frequency) {
-  ProfileDataCursor Cursor(DataBuffer.get());
-  error_code EC;
-  if ((EC = findFunctionCounts(FuncName, FunctionHash, Cursor)))
-    return EC;
-  if ((EC = Cursor.skip64()))
-    return EC;
-  uint64_t CallCount;
-  if ((EC = Cursor.read64(CallCount)))
-    return EC;
-  Frequency = CallCount / (double)MaxFunctionCount;
-  return profiledata_error::success;
-}

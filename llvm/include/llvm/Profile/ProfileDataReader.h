@@ -79,10 +79,8 @@ public:
   /// Fill Counts with the profile data for the given function name.
   error_code getFunctionCounts(StringRef FuncName, uint64_t &FunctionHash,
                                std::vector<uint64_t> &Counts);
-  /// Get the frequency with which a function is called relative to the function
-  /// that is called most often in the program.
-  error_code getCallFrequency(StringRef FuncName, uint64_t &FunctionHash,
-                              double &F);
+  /// Return the maximum of all known function counts.
+  uint64_t getMaximumFunctionCount() { return MaxFunctionCount; }
 
   static error_code create(std::string Path,
                            std::unique_ptr<ProfileDataReader> &Result);
