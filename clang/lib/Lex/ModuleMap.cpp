@@ -1282,7 +1282,8 @@ void ModuleMapParser::parseModuleDecl() {
       
       if (ActiveModule) {
         Diags.Report(Id[I].second, diag::err_mmap_missing_module_qualified)
-          << Id[I].first << ActiveModule->getTopLevelModule();
+          << Id[I].first
+          << ActiveModule->getTopLevelModule()->getFullModuleName();
       } else {
         Diags.Report(Id[I].second, diag::err_mmap_expected_module_name);
       }

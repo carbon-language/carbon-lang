@@ -6564,8 +6564,7 @@ static void DiagnoseNamespaceInlineMismatch(Sema &S, SourceLocation KeywordLoc,
     S.Diag(Loc, diag::warn_inline_namespace_reopened_noninline)
       << FixItHint::CreateInsertion(KeywordLoc, "inline ");
   else
-    S.Diag(Loc, diag::err_inline_namespace_mismatch)
-      << IsInline;
+    S.Diag(Loc, diag::err_inline_namespace_mismatch) << *IsInline;
 
   S.Diag(PrevNS->getLocation(), diag::note_previous_definition);
   *IsInline = PrevNS->isInline();
