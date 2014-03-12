@@ -157,8 +157,10 @@ typename AddrHashMap<T, kSize>::Cell *AddrHashMap<T, kSize>::acquire(uptr addr,
   for (;;) {
     Cell *c = &table_[h];
     uptr addr1 = atomic_load(&c->addr, memory_order_acquire);
-    if (addr1 == addr)  // another thread has inserted it ahead of us
+    if (addr1 == addr) {  // another thread has inserted it ahead of us
+      c0->mtx.Unlock();
       return c;
+    }
     // Skip kLocked, since we hold the home cell mutex, it can't be our elem.
     if ((addr1 == 0 || addr1 == kRemoved) &&
         atomic_compare_exchange_strong(&c->addr, &addr1, kLocked,
