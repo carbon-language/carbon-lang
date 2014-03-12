@@ -322,8 +322,12 @@ void __movsq(unsigned long long *, unsigned long long const *, size_t);
 __int64 __mulh(__int64, __int64);
 static __inline__
 unsigned __int64 __popcnt64(unsigned __int64);
+static __inline__
 unsigned char __readgsbyte(unsigned long);
+static __inline__
 unsigned long __readgsdword(unsigned long);
+static __inline__
+unsigned __int64 __readgsqword(unsigned long);
 unsigned short __readgsword(unsigned long);
 unsigned __int64 __shiftleft128(unsigned __int64 _LowPart,
                                 unsigned __int64 _HighPart,
@@ -818,14 +822,15 @@ __faststorefence(void) {
 }
 #endif
 /*----------------------------------------------------------------------------*\
-|* readfs 
-|* (Pointers in address space #257 are relative to the FS segment register.)
+|* readfs, readgs
+|* (Pointers in address space #256 and #257 are relative to the GS and FS
+|* segment registers, respectively.)
 \*----------------------------------------------------------------------------*/
-#ifdef __i386__
 #define __ptr_to_addr_space(__addr_space_nbr, __type, __offset)              \
     ((volatile __type __attribute__((__address_space__(__addr_space_nbr)))*) \
     (__offset))
 
+#ifdef __i386__
 static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
 __readfsbyte(unsigned long __offset) {
   return *__ptr_to_addr_space(257, unsigned char, __offset);
@@ -842,8 +847,26 @@ static __inline__ unsigned short __attribute__((__always_inline__, __nodebug__))
 __readfsword(unsigned long __offset) {
   return *__ptr_to_addr_space(257, unsigned short, __offset);
 }
-#undef __ptr_to_addr_space
 #endif
+#ifdef __x86_64__
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+__readgsbyte(unsigned long __offset) {
+  return *__ptr_to_addr_space(256, unsigned char, __offset);
+}
+static __inline__ unsigned long __attribute__((__always_inline__, __nodebug__))
+__readgsdword(unsigned long __offset) {
+  return *__ptr_to_addr_space(256, unsigned long, __offset);
+}
+static __inline__ unsigned __int64 __attribute__((__always_inline__, __nodebug__))
+__readgsqword(unsigned long __offset) {
+  return *__ptr_to_addr_space(256, unsigned __int64, __offset);
+}
+static __inline__ unsigned short __attribute__((__always_inline__, __nodebug__))
+__readgsword(unsigned long __offset) {
+  return *__ptr_to_addr_space(256, unsigned short, __offset);
+}
+#endif
+#undef __ptr_to_addr_space
 /*----------------------------------------------------------------------------*\
 |* Misc
 \*----------------------------------------------------------------------------*/
