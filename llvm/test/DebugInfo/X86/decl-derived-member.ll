@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: %llc_dwarf -O0 -filetype=obj %s -o %t
+; RUN: %llc_dwarf -mtriple x86_64-pc-linux -O0 -filetype=obj %s -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
 ; Testcase from:
