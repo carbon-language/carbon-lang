@@ -8,10 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/OptionParser.h"
-
-#if (!defined( _MSC_VER ) && defined( _WIN32 ))
-#define _BSD_SOURCE // Required so that getopt.h defines optreset
-#endif
 #include "lldb/Host/HostGetOpt.h"
 
 using namespace lldb_private;
