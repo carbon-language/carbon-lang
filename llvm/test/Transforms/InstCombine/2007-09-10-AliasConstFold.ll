@@ -3,7 +3,9 @@
 
 @__gthrw_pthread_cancel = alias weak i32 (i32)* @pthread_cancel		; <i32 (i32)*> [#uses=1]
 @__gthread_active_ptr.5335 = internal constant i8* bitcast (i32 (i32)* @__gthrw_pthread_cancel to i8*)		; <i8**> [#uses=1]
-declare extern_weak i32 @pthread_cancel(i32)
+define weak i32 @pthread_cancel(i32) {
+       ret i32 0
+}
 
 define i1 @__gthread_active_p() {
 entry:

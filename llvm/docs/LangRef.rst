@@ -687,6 +687,11 @@ The linkage must be one of ``private``, ``linker_private``,
 might not correctly handle dropping a weak symbol that is aliased by a non-weak
 alias.
 
+Alias that are not ``unnamed_addr`` are guaranteed to have the same address as
+the aliasee.
+
+The aliasee must be a definition.
+
 .. _namedmetadatastructure:
 
 Named Metadata

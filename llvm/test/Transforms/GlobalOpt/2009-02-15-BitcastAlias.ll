@@ -1,6 +1,6 @@
 ; RUN: opt < %s -globalopt
 
-@g = external global i32
+@g = global i32 0
 
 @a = alias bitcast (i32* @g to i8*)
 

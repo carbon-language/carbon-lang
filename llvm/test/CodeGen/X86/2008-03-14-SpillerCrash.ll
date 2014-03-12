@@ -6,7 +6,7 @@
 	%struct.locale_data = type { i8*, i8*, i32, i32, { void (%struct.locale_data*)*, %struct.anon }, i32, i32, i32, [0 x %struct.locale_data_value] }
 	%struct.locale_data_value = type { i32* }
 
-@wcstoll_l = alias i64 (i32*, i32**, i32, %struct.__locale_struct*)* @__wcstoll_l		; <i64 (i32*, i32**, i32, %struct.__locale_struct*)*> [#uses=0]
+@wcstoll_l = alias i64 (i32*, i32**, i32, %struct.__locale_struct*)* @__wcstoll_l
 
 define i64 @____wcstoll_l_internal(i32* %nptr, i32** %endptr, i32 %base, i32 %group, %struct.__locale_struct* %loc) nounwind  {
 entry:

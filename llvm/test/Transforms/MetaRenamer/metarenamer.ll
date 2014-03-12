@@ -14,7 +14,9 @@ target triple = "x86_64-pc-linux-gnu"
 
 @func_7_xxx = alias weak i32 (...)* @aliased_func_7_xxx
 
-declare i32 @aliased_func_7_xxx(...)
+define i32 @aliased_func_7_xxx(...) {
+  ret i32 0
+}
 
 define i32 @func_3_xxx() nounwind uwtable ssp {
   ret i32 3

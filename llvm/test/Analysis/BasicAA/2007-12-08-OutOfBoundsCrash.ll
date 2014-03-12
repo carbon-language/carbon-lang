@@ -7,7 +7,7 @@ target triple = "x86_64-unknown-linux-gnu"
 	%struct.pci_device_id = type { i32, i32, i32, i32, i32, i32, i64 }
 	%struct.usb_bus = type { %struct.device* }
 	%struct.usb_hcd = type { %struct.usb_bus, [0 x i64] }
-@pci_ids = external constant [1 x %struct.pci_device_id]		; <[1 x %struct.pci_device_id]*> [#uses=1]
+@pci_ids = constant [1 x %struct.pci_device_id] zeroinitializer
 
 @__mod_pci_device_table = alias [1 x %struct.pci_device_id]* @pci_ids		; <[1 x %struct.pci_device_id]*> [#uses=0]
 

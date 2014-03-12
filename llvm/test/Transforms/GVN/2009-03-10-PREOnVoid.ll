@@ -53,30 +53,58 @@ bb11:		; preds = %bb7, %bb5
 	unreachable
 }
 
-declare i32 @pthread_once(i32*, void ()*)
+define i32 @pthread_once(i32*, void ()*) {
+       ret i32 0
+}
 
-declare i8* @pthread_getspecific(i32)
+define i8* @pthread_getspecific(i32) {
+       ret i8* null
+}
 
-declare i32 @pthread_setspecific(i32, i8*)
+define i32 @pthread_setspecific(i32, i8*) {
+        ret i32 0
+}
 
-declare i32 @pthread_create(i32*, %struct.pthread_attr_t*, i8* (i8*)*, i8*)
+define i32 @pthread_create(i32*, %struct.pthread_attr_t*, i8* (i8*)*, i8*) {
+       ret i32 0
+}
 
-declare i32 @pthread_cancel(i32)
+define i32 @pthread_cancel(i32) {
+      ret i32 0
+}
 
-declare i32 @pthread_mutex_lock(%struct.pthread_mutex_t*)
+define i32 @pthread_mutex_lock(%struct.pthread_mutex_t*) {
+       ret i32 0
+}
 
-declare i32 @pthread_mutex_trylock(%struct.pthread_mutex_t*)
+define i32 @pthread_mutex_trylock(%struct.pthread_mutex_t*) {
+       ret i32 0
+}
 
-declare i32 @pthread_mutex_unlock(%struct.pthread_mutex_t*)
+define i32 @pthread_mutex_unlock(%struct.pthread_mutex_t*) {
+       ret i32 0
+}
 
-declare i32 @pthread_mutex_init(%struct.pthread_mutex_t*, %struct.__sched_param*)
+define i32 @pthread_mutex_init(%struct.pthread_mutex_t*, %struct.__sched_param*) {
+        ret i32 0
+}
 
-declare i32 @pthread_key_create(i32*, void (i8*)*)
+define i32 @pthread_key_create(i32*, void (i8*)*) {
+       ret i32 0
+}
 
-declare i32 @pthread_key_delete(i32)
+define i32 @pthread_key_delete(i32) {
+        ret i32 0
+}
 
-declare i32 @pthread_mutexattr_init(%struct.__sched_param*)
+define i32 @pthread_mutexattr_init(%struct.__sched_param*) {
+        ret i32 0
+}
 
-declare i32 @pthread_mutexattr_settype(%struct.__sched_param*, i32)
+define i32 @pthread_mutexattr_settype(%struct.__sched_param*, i32) {
+        ret i32 0
+}
 
-declare i32 @pthread_mutexattr_destroy(%struct.__sched_param*)
+define i32 @pthread_mutexattr_destroy(%struct.__sched_param*) {
+       ret i32 0
+}

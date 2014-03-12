@@ -9,8 +9,10 @@
 @bar1  = alias void ()* @bar2
 ; CHECK: @bar1 = alias void ()* @bar2
 
-declare void @bar2()
-; CHECK: declare void @bar2()
+define void @bar2() {
+  ret void
+}
+; CHECK: define void @bar2()
 
 define void @baz() {
 entry:

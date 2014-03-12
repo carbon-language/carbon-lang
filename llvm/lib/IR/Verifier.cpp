@@ -501,6 +501,7 @@ void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
               &GA);
     }
   }
+  Assert1(!GV->isDeclaration(), "Alias must point to a definition", &GA);
 
   const GlobalValue* Resolved = GA.resolveAliasedGlobal(/*stopOnWeak*/ false);
   Assert1(Resolved,

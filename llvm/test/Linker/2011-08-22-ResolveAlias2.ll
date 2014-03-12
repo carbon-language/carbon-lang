@@ -37,56 +37,110 @@
 @_ZL33__gthrw_pthread_mutexattr_settypeP19pthread_mutexattr_ti = alias weak i32 (%union.pthread_mutexattr_t*, i32)* @pthread_mutexattr_settype
 @_ZL33__gthrw_pthread_mutexattr_destroyP19pthread_mutexattr_t = alias weak i32 (%union.pthread_mutexattr_t*)* @pthread_mutexattr_destroy
 
-declare void @_ZN13HexxagonBoardC2ERKS_(%struct.HexxagonBoard*, %struct.HexxagonBoard*) uwtable align 2
+define void @_ZN13HexxagonBoardC2ERKS_(%struct.HexxagonBoard*, %struct.HexxagonBoard*) uwtable align 2 {
+  ret void
+}
 
-declare extern_weak i32 @pthread_once(i32*, void ()*)
+define weak i32 @pthread_once(i32*, void ()*) {
+  ret i32 0
+}
 
-declare extern_weak i8* @pthread_getspecific(i32)
+define weak i8* @pthread_getspecific(i32) {
+  ret i8* null
+}
 
-declare extern_weak i32 @pthread_setspecific(i32, i8*)
+define weak i32 @pthread_setspecific(i32, i8*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_create(i64*, %union.pthread_attr_t*, i8* (i8*)*, i8*)
+define weak i32 @pthread_create(i64*, %union.pthread_attr_t*, i8* (i8*)*, i8*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_join(i64, i8**)
+define weak i32 @pthread_join(i64, i8**) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_equal(i64, i64)
+define weak i32 @pthread_equal(i64, i64) {
+  ret i32 0
+}
 
-declare extern_weak i64 @pthread_self()
+define weak i64 @pthread_self() {
+  ret i64 0
+}
 
-declare extern_weak i32 @pthread_detach(i64)
+define weak i32 @pthread_detach(i64) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_cancel(i64)
+define weak i32 @pthread_cancel(i64) {
+  ret i32 0
+}
 
-declare extern_weak i32 @sched_yield()
+define weak i32 @sched_yield() {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_mutex_lock(%union.pthread_mutex_t*)
+define weak i32 @pthread_mutex_lock(%union.pthread_mutex_t*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_mutex_trylock(%union.pthread_mutex_t*)
+define weak i32 @pthread_mutex_trylock(%union.pthread_mutex_t*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_mutex_timedlock(%union.pthread_mutex_t*, %struct.timespec*)
+define weak i32 @pthread_mutex_timedlock(%union.pthread_mutex_t*, %struct.timespec*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_mutex_unlock(%union.pthread_mutex_t*)
+define weak i32 @pthread_mutex_unlock(%union.pthread_mutex_t*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_mutex_init(%union.pthread_mutex_t*, %union.pthread_mutexattr_t*)
+define weak i32 @pthread_mutex_init(%union.pthread_mutex_t*, %union.pthread_mutexattr_t*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_mutex_destroy(%union.pthread_mutex_t*)
+define weak i32 @pthread_mutex_destroy(%union.pthread_mutex_t*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_cond_broadcast(%union.pthread_cond_t*)
+define weak i32 @pthread_cond_broadcast(%union.pthread_cond_t*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_cond_signal(%union.pthread_cond_t*)
+define weak i32 @pthread_cond_signal(%union.pthread_cond_t*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_cond_wait(%union.pthread_cond_t*, %union.pthread_mutex_t*)
+define weak i32 @pthread_cond_wait(%union.pthread_cond_t*, %union.pthread_mutex_t*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_cond_timedwait(%union.pthread_cond_t*, %union.pthread_mutex_t*, %struct.timespec*)
+define weak i32 @pthread_cond_timedwait(%union.pthread_cond_t*, %union.pthread_mutex_t*, %struct.timespec*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_cond_destroy(%union.pthread_cond_t*)
+define weak i32 @pthread_cond_destroy(%union.pthread_cond_t*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_key_create(i32*, void (i8*)*)
+define weak i32 @pthread_key_create(i32*, void (i8*)*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_key_delete(i32)
+define weak i32 @pthread_key_delete(i32) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_mutexattr_init(%union.pthread_mutexattr_t*)
+define weak i32 @pthread_mutexattr_init(%union.pthread_mutexattr_t*) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_mutexattr_settype(%union.pthread_mutexattr_t*, i32)
+define weak i32 @pthread_mutexattr_settype(%union.pthread_mutexattr_t*, i32) {
+  ret i32 0
+}
 
-declare extern_weak i32 @pthread_mutexattr_destroy(%union.pthread_mutexattr_t*)
+define weak i32 @pthread_mutexattr_destroy(%union.pthread_mutexattr_t*) {
+  ret i32 0
+}

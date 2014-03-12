@@ -928,11 +928,7 @@ bool AsmPrinter::doFinalization(Module &M) {
       MCSymbol *Name = getSymbol(I);
 
       const GlobalValue *GV = I->getAliasedGlobal();
-      if (GV->isDeclaration()) {
-        report_fatal_error(Name->getName() +
-                           ": Target doesn't support aliases to declarations");
-      }
-
+      assert(!GV->isDeclaration());
       MCSymbol *Target = getSymbol(GV);
 
       if (I->hasExternalLinkage() || !MAI->getWeakRefDirective())

@@ -3,7 +3,9 @@
 
 @A = alias weak void ()* @B		; <void ()*> [#uses=1]
 
-declare extern_weak void @B()
+define weak void @B() {
+       ret void
+}
 
 define i32 @active() {
 entry:
