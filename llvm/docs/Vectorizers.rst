@@ -182,10 +182,13 @@ that scatter/gathers memory.
 
 .. code-block:: c++
 
-  int foo(int *A, int *B, int n, int k) {
-    for (int i = 0; i < n; ++i)
-      A[i*7] += B[i*k];
+  int foo(int * A, int * B, int n) {
+    for (intptr_t i = 0; i < n; ++i)
+        A[i] += B[i*4];
   }
+
+In many situations the cost model will inform LLVM that this is not beneficial
+and LLVM will only vectorize such code if forced with "-mllvm -force-vector-width=#".
 
 Vectorization of Mixed Types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
