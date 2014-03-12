@@ -419,11 +419,6 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
     else
       AddPath("/usr/include/c++/4.4", CXXSystem, false);
     break;
-  case llvm::Triple::FreeBSD:
-    // FreeBSD 8.0
-    // FreeBSD 7.3
-    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2", "", "", "", triple);
-    break;
   case llvm::Triple::OpenBSD: {
     std::string t = triple.getTriple();
     if (t.substr(0, 6) == "x86_64")
