@@ -106,7 +106,6 @@ unsigned long __readcr3(void);
 unsigned long __readcr4(void);
 unsigned long __readcr8(void);
 unsigned int __readdr(unsigned int);
-unsigned int __readeflags(void);
 #ifdef __i386__
 static __inline__
 unsigned char __readfsbyte(unsigned long);
@@ -142,7 +141,6 @@ void __writecr3(unsigned int);
 void __writecr4(unsigned int);
 void __writecr8(unsigned int);
 void __writedr(unsigned int, unsigned int);
-void __writeeflags(unsigned int);
 void __writefsbyte(unsigned long, unsigned char);
 void __writefsdword(unsigned long, unsigned long);
 void __writefsqword(unsigned long, unsigned __int64);

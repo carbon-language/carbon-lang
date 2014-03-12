@@ -3,6 +3,11 @@
 // RUN:     -ffreestanding -fsyntax-only -Werror \
 // RUN:     -isystem %S/Inputs/include %s
 
+// RUN: %clang_cc1 -triple x86_64-pc-win32  \
+// RUN:     -fms-extensions -fms-compatibility -fmsc-version=1700 \
+// RUN:     -ffreestanding -fsyntax-only -Werror \
+// RUN:     -isystem %S/Inputs/include %s
+
 // Intrin.h needs size_t, but -ffreestanding prevents us from getting it from
 // stddef.h.  Work around it with this typedef.
 typedef __SIZE_TYPE__ size_t;
