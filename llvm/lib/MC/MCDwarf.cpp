@@ -111,10 +111,9 @@ static inline const MCExpr *MakeStartMinusEndExpr(const MCStreamer &MCOS,
 // This emits the Dwarf line table for the specified section from the entries
 // in the LineSection.
 //
-static inline void EmitDwarfLineTable(MCStreamer *MCOS,
-                                      const MCSection *Section,
-                                      const MCLineSection::MCLineEntryCollection &LineEntries,
-                                      unsigned CUID) {
+static inline void
+EmitDwarfLineTable(MCStreamer *MCOS, const MCSection *Section,
+                   const MCLineSection::MCLineEntryCollection &LineEntries) {
   unsigned FileNum = 1;
   unsigned LastLine = 1;
   unsigned Column = 0;
@@ -308,7 +307,7 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
   auto Iter = MCLineSections.find(CUID);
   if (Iter != MCLineSections.end())
     for (const auto &LineSec : Iter->second.getMCLineEntries())
-      EmitDwarfLineTable(MCOS, LineSec.first, LineSec.second, CUID);
+      EmitDwarfLineTable(MCOS, LineSec.first, LineSec.second);
 
   if (MCOS->getContext().getAsmInfo()->getLinkerRequiresNonEmptyDwarfLines() &&
       Iter == MCLineSections.end()) {
