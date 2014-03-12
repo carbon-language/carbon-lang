@@ -38,6 +38,11 @@ CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Utility
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Process/Utility
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Process/POSIX
 
+# Disable python and curses on mingw build
+ifeq ($(HOST_OS),MingW)
+CXXFLAGS += -DLLDB_DISABLE_PYTHON -DLLDB_DISABLE_CURSES
+endif
+
 ifeq (,$(findstring -DLLDB_DISABLE_PYTHON,$(CXXFLAGS)))
 # Set Python include directory
 PYTHON_INC_DIR = $(shell python-config --includes)

@@ -12,3 +12,7 @@ LIBRARYNAME := lldbAPI
 BUILD_ARCHIVE = 1
 
 include $(LLDB_LEVEL)/Makefile
+
+ifeq ($(HOST_OS),MingW)
+CXXFLAGS += -DEXPORT_LIBLLDB
+endif
