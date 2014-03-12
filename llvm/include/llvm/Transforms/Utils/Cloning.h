@@ -109,7 +109,7 @@ BasicBlock *CloneBasicBlock(const BasicBlock *BB,
 /// information about the cloned code if non-null.
 ///
 /// If ModuleLevelChanges is false, VMap contains no non-identity GlobalValue
-/// mappings.
+/// mappings, and debug info metadata will not be cloned.
 ///
 Function *CloneFunction(const Function *F,
                         ValueToValueMapTy &VMap,

@@ -27,6 +27,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
@@ -151,6 +152,60 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                        TypeMapper, Materializer);
 }
 
+// Find the MDNode which corresponds to the DISubprogram data that described F.
+static MDNode* FindSubprogram(const Function *F, DebugInfoFinder &Finder) {
+  for (DebugInfoFinder::iterator I = Finder.subprogram_begin(),
+                                 E = Finder.subprogram_end();
+       I != E; ++I) {
+    DISubprogram Subprogram(*I);
+    if (Subprogram.describes(F)) return Subprogram;
+  }
+  return NULL;
+}
+
+// Add an operand to an existing MDNode. The new operand will be added at the
+// back of the operand list.
+static void AddOperand(MDNode *Node, Value *Operand) {
+  SmallVector<Value*, 16> Operands;
+  for (unsigned i = 0; i < Node->getNumOperands(); i++) {
+    Operands.push_back(Node->getOperand(i));
+  }
+  Operands.push_back(Operand);
+  MDNode *NewNode = MDNode::get(Node->getContext(), Operands);
+  Node->replaceAllUsesWith(NewNode);
+}
+
+// Clone the module-level debug info associated with OldFunc. The cloned data
+// will point to NewFunc instead.
+static void CloneDebugInfoMetadata(Function *NewFunc, const Function *OldFunc,
+                            ValueToValueMapTy &VMap) {
+  DebugInfoFinder Finder;
+  Finder.processModule(*OldFunc->getParent());
+
+  const MDNode *OldSubprogramMDNode = FindSubprogram(OldFunc, Finder);
+  if (!OldSubprogramMDNode) return;
+
+  // Ensure that OldFunc appears in the map.
+  // (if it's already there it must point to NewFunc anyway)
+  VMap[OldFunc] = NewFunc;
+  DISubprogram NewSubprogram(MapValue(OldSubprogramMDNode, VMap));
+
+  for (DebugInfoFinder::iterator CUIter = Finder.compile_unit_begin(),
+       CUEnd = Finder.compile_unit_end(); CUIter != CUEnd; ++CUIter) {
+    DICompileUnit CU(*CUIter);
+
+    DIArray Subprograms(CU.getSubprograms());
+
+    // If the compile unit's function list contains the old function, it should
+    // also contain the new one.
+    for (unsigned i = 0; i < Subprograms.getNumElements(); i++) {
+      if ((MDNode*)Subprograms.getElement(i) == OldSubprogramMDNode) {
+        AddOperand(Subprograms, NewSubprogram);
+      }
+    }
+  }
+}
+
 /// CloneFunction - Return a copy of the specified function, but without
 /// embedding the function into another module.  Also, any references specified
 /// in the VMap are changed to refer to their mapped value instead of the
@@ -187,6 +242,9 @@ Function *llvm::CloneFunction(const Function *F, ValueToValueMapTy &VMap,
       DestI->setName(I->getName()); // Copy the name over...
       VMap[I] = DestI++;        // Add mapping to VMap
     }
+
+  if (ModuleLevelChanges)
+    CloneDebugInfoMetadata(NewF, F, VMap);
 
   SmallVector<ReturnInst*, 8> Returns;  // Ignore returns cloned.
   CloneFunctionInto(NewF, F, VMap, ModuleLevelChanges, Returns, "", CodeInfo);
