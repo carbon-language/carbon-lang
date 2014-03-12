@@ -946,6 +946,39 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
       buildTree_rec(Operands, Depth + 1);
       return;
     }
+    case Instruction::Call: {
+      // Check if the calls are all to the same vectorizable intrinsic.
+      IntrinsicInst *II = dyn_cast<IntrinsicInst>(VL[0]);
+      if (II==NULL) {
+        newTreeEntry(VL, false);
+        DEBUG(dbgs() << "SLP: Non-vectorizable call.\n");
+        return;
+      }
+
+      Intrinsic::ID ID = II->getIntrinsicID();
+
+      for (unsigned i = 1, e = VL.size(); i != e; ++i) {
+        IntrinsicInst *II2 = dyn_cast<IntrinsicInst>(VL[i]);
+        if (!II2 || II2->getIntrinsicID() != ID) {
+          newTreeEntry(VL, false);
+          DEBUG(dbgs() << "SLP: mismatched calls:" << *II << "!=" << *VL[i]
+                       << "\n");
+          return;
+        }
+      }
+
+      newTreeEntry(VL, true);
+      for (unsigned i = 0, e = II->getNumArgOperands(); i != e; ++i) {
+        ValueList Operands;
+        // Prepare the operand vector.
+        for (unsigned j = 0; j < VL.size(); ++j) {
+          IntrinsicInst *II2 = dyn_cast<IntrinsicInst>(VL[j]);
+          Operands.push_back(II2->getArgOperand(i));
+        }
+        buildTree_rec(Operands, Depth + 1);
+      }
+      return;
+    }
     default:
       newTreeEntry(VL, false);
       DEBUG(dbgs() << "SLP: Gathering unknown instruction.\n");
@@ -1084,6 +1117,30 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
       TTI->getMemoryOpCost(Instruction::Store, ScalarTy, 1, 0);
       int VecStCost = TTI->getMemoryOpCost(Instruction::Store, VecTy, 1, 0);
       return VecStCost - ScalarStCost;
+    }
+    case Instruction::Call: {
+      CallInst *CI = cast<CallInst>(VL0);
+      IntrinsicInst *II = cast<IntrinsicInst>(CI);
+      Intrinsic::ID ID = II->getIntrinsicID();
+
+      // Calculate the cost of the scalar and vector calls.
+      SmallVector<Type*, 4> ScalarTys, VecTys;
+      for (unsigned op = 0, opc = II->getNumArgOperands(); op!= opc; ++op) {
+        ScalarTys.push_back(CI->getArgOperand(op)->getType());
+        VecTys.push_back(VectorType::get(CI->getArgOperand(op)->getType(),
+                                         VecTy->getNumElements()));
+      }
+
+      int ScalarCallCost = VecTy->getNumElements() *
+          TTI->getIntrinsicInstrCost(ID, ScalarTy, ScalarTys);
+
+      int VecCallCost = TTI->getIntrinsicInstrCost(ID, VecTy, VecTys);
+
+      DEBUG(dbgs() << "SLP: Call cost "<< VecCallCost - ScalarCallCost
+            << " (" << VecCallCost  << "-" <<  ScalarCallCost << ")"
+            << " for " << *II << "\n");
+
+      return VecCallCost - ScalarCallCost;
     }
     default:
       llvm_unreachable("Unknown instruction");
@@ -1571,6 +1628,32 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       S->setAlignment(Alignment);
       E->VectorizedValue = S;
       return propagateMetadata(S, E->Scalars);
+    }
+    case Instruction::Call: {
+      CallInst *CI = cast<CallInst>(VL0);
+
+      setInsertPointAfterBundle(E->Scalars);
+      std::vector<Value *> OpVecs;
+      for (int j = 0, e = CI->getNumArgOperands(); j < e; ++j) {
+        ValueList OpVL;
+        for (int i = 0, e = E->Scalars.size(); i < e; ++i) {
+          CallInst *CEI = cast<CallInst>(E->Scalars[i]);
+          OpVL.push_back(CEI->getArgOperand(j));
+        }
+
+        Value *OpVec = vectorizeTree(OpVL);
+        DEBUG(dbgs() << "SLP: OpVec[" << j << "]: " << *OpVec << "\n");
+        OpVecs.push_back(OpVec);
+      }
+
+      Module *M = F->getParent();
+      IntrinsicInst *II = cast<IntrinsicInst>(CI);
+      Intrinsic::ID ID = II->getIntrinsicID();
+      Type *Tys[] = { VectorType::get(CI->getType(), E->Scalars.size()) };
+      Function *CF = Intrinsic::getDeclaration(M, ID, Tys);
+      Value *V = Builder.CreateCall(CF, OpVecs);
+      E->VectorizedValue = V;
+      return V;
     }
     default:
     llvm_unreachable("unknown inst");
