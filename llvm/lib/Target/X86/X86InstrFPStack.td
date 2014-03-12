@@ -206,16 +206,25 @@ def _FI32m  : FPI<0xDA, fp, (outs), (ins i32mem:$src),
 }
 
 let Defs = [FPSW] in {
+// FPBinary_rr just defines pseudo-instructions, no need to set a scheduling
+// resources.
 defm ADD : FPBinary_rr<fadd>;
 defm SUB : FPBinary_rr<fsub>;
 defm MUL : FPBinary_rr<fmul>;
 defm DIV : FPBinary_rr<fdiv>;
+// Sets the scheduling resources for the actual NAME#_F<size>m defintions.
+let SchedRW = [WriteFAddLd] in {
 defm ADD : FPBinary<fadd, MRM0m, "add">;
 defm SUB : FPBinary<fsub, MRM4m, "sub">;
 defm SUBR: FPBinary<fsub ,MRM5m, "subr">;
+}
+let SchedRW = [WriteFMulLd] in {
 defm MUL : FPBinary<fmul, MRM1m, "mul">;
+}
+let SchedRW = [WriteFDivLd] in {
 defm DIV : FPBinary<fdiv, MRM6m, "div">;
 defm DIVR: FPBinary<fdiv, MRM7m, "divr">;
+}
 }
 
 class FPST0rInst<Format fp, string asm>
@@ -228,6 +237,7 @@ class FPrST0PInst<Format fp, string asm>
 // NOTE: GAS and apparently all other AT&T style assemblers have a broken notion
 // of some of the 'reverse' forms of the fsub and fdiv instructions.  As such,
 // we have to put some 'r's in and take them out of weird places.
+let SchedRW = [WriteFAdd] in {
 def ADD_FST0r   : FPST0rInst <MRM0r, "fadd\t$op">;
 def ADD_FrST0   : FPrST0Inst <MRM0r, "fadd\t{%st(0), $op|$op, st(0)}">;
 def ADD_FPrST0  : FPrST0PInst<MRM0r, "faddp\t$op">;
@@ -237,15 +247,20 @@ def SUB_FPrST0  : FPrST0PInst<MRM5r, "fsub{r}p\t$op">;
 def SUB_FST0r   : FPST0rInst <MRM4r, "fsub\t$op">;
 def SUBR_FrST0  : FPrST0Inst <MRM4r, "fsub{|r}\t{%st(0), $op|$op, st(0)}">;
 def SUBR_FPrST0 : FPrST0PInst<MRM4r, "fsub{|r}p\t$op">;
+} // SchedRW
+let SchedRW = [WriteFMul] in {
 def MUL_FST0r   : FPST0rInst <MRM1r, "fmul\t$op">;
 def MUL_FrST0   : FPrST0Inst <MRM1r, "fmul\t{%st(0), $op|$op, st(0)}">;
 def MUL_FPrST0  : FPrST0PInst<MRM1r, "fmulp\t$op">;
+} // SchedRW
+let SchedRW = [WriteFDiv] in {
 def DIVR_FST0r  : FPST0rInst <MRM7r, "fdivr\t$op">;
 def DIV_FrST0   : FPrST0Inst <MRM7r, "fdiv{r}\t{%st(0), $op|$op, st(0)}">;
 def DIV_FPrST0  : FPrST0PInst<MRM7r, "fdiv{r}p\t$op">;
 def DIV_FST0r   : FPST0rInst <MRM6r, "fdiv\t$op">;
 def DIVR_FrST0  : FPrST0Inst <MRM6r, "fdiv{|r}\t{%st(0), $op|$op, st(0)}">;
 def DIVR_FPrST0 : FPrST0PInst<MRM6r, "fdiv{|r}p\t$op">;
+} // SchedRW
 
 def COM_FST0r   : FPST0rInst <MRM2r, "fcom\t$op">;
 def COMP_FST0r  : FPST0rInst <MRM3r, "fcomp\t$op">;
@@ -264,7 +279,9 @@ def _F     : FPI<0xD9, fp, (outs), (ins), asmstring>;
 let Defs = [FPSW] in {
 defm CHS : FPUnary<fneg, MRM_E0, "fchs">;
 defm ABS : FPUnary<fabs, MRM_E1, "fabs">;
+let SchedRW = [WriteFSqrt] in {
 defm SQRT: FPUnary<fsqrt,MRM_FA, "fsqrt">;
+}
 defm SIN : FPUnary<fsin, MRM_FE, "fsin">;
 defm COS : FPUnary<fcos, MRM_FF, "fcos">;
 
