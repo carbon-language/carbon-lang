@@ -42,7 +42,6 @@ namespace llvm {
   class DataLayout;
   class FunctionType;
   class LLVMContext;
-  class ProfileDataReader;
 }
 
 namespace clang {
@@ -86,6 +85,7 @@ namespace CodeGen {
   class CGCUDARuntime;
   class BlockFieldFlags;
   class FunctionArgList;
+  class PGOProfileData;
 
   struct OrderGlobalInits {
     unsigned int priority;
@@ -257,7 +257,7 @@ class CodeGenModule : public CodeGenTypeCache {
   ARCEntrypoints *ARCData;
   llvm::MDNode *NoObjCARCExceptionsMetadata;
   RREntrypoints *RRData;
-  std::unique_ptr<llvm::ProfileDataReader> PGOReader;
+  PGOProfileData *PGOData;
 
   // WeakRefReferences - A set of references that have only been seen via
   // a weakref so far. This is used to remove the weak of the reference if we
@@ -480,8 +480,8 @@ public:
     return *RRData;
   }
 
-  llvm::ProfileDataReader *getPGOReader() const {
-    return PGOReader.get();
+  PGOProfileData *getPGOData() const {
+    return PGOData;
   }
 
   llvm::Constant *getStaticLocalDeclAddress(const VarDecl *D) {
