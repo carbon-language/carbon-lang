@@ -4781,9 +4781,9 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
         
       public:
         TmplArgICEDiagnoser(QualType T) : T(T) { }
-        
-        virtual void diagnoseNotICE(Sema &S, SourceLocation Loc,
-                                    SourceRange SR) {
+
+        void diagnoseNotICE(Sema &S, SourceLocation Loc,
+                            SourceRange SR) override {
           S.Diag(Loc, diag::err_template_arg_not_ice) << T << SR;
         }
       } Diagnoser(ArgType);

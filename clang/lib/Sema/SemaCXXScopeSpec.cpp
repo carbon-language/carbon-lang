@@ -363,7 +363,7 @@ class NestedNameSpecifierValidatorCCC : public CorrectionCandidateCallback {
   explicit NestedNameSpecifierValidatorCCC(Sema &SRef)
       : SRef(SRef) {}
 
-  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+  bool ValidateCandidate(const TypoCorrection &candidate) override {
     return SRef.isAcceptableNestedNameSpecifier(candidate.getCorrectionDecl());
   }
 

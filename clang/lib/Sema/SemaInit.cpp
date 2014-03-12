@@ -1643,7 +1643,7 @@ class FieldInitializerValidatorCCC : public CorrectionCandidateCallback {
   explicit FieldInitializerValidatorCCC(RecordDecl *RD)
       : Record(RD) {}
 
-  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+  bool ValidateCandidate(const TypoCorrection &candidate) override {
     FieldDecl *FD = candidate.getCorrectionDeclAs<FieldDecl>();
     return FD && FD->getDeclContext()->getRedeclContext()->Equals(Record);
   }

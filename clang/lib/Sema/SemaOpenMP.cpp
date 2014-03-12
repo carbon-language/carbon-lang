@@ -397,7 +397,7 @@ private:
   Sema &Actions;
 public:
   VarDeclFilterCCC(Sema &S) : Actions(S) { }
-  virtual bool ValidateCandidate(const TypoCorrection &Candidate) {
+  bool ValidateCandidate(const TypoCorrection &Candidate) override {
     NamedDecl *ND = Candidate.getCorrectionDecl();
     if (VarDecl *VD = dyn_cast_or_null<VarDecl>(ND)) {
       return VD->hasGlobalStorage() &&
@@ -803,34 +803,34 @@ ExprResult Sema::PerformImplicitIntegerConversion(SourceLocation Loc,
     IntConvertDiagnoser()
         : ICEConvertDiagnoser(/*AllowScopedEnumerations*/false,
                               false, true) {}
-    virtual SemaDiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
-                                                 QualType T) {
+    SemaDiagnosticBuilder diagnoseNotInt(Sema &S, SourceLocation Loc,
+                                         QualType T) override {
       return S.Diag(Loc, diag::err_omp_not_integral) << T;
     }
-    virtual SemaDiagnosticBuilder diagnoseIncomplete(
-        Sema &S, SourceLocation Loc, QualType T) {
+    SemaDiagnosticBuilder diagnoseIncomplete(
+        Sema &S, SourceLocation Loc, QualType T) override {
       return S.Diag(Loc, diag::err_omp_incomplete_type) << T;
     }
-    virtual SemaDiagnosticBuilder diagnoseExplicitConv(
-        Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) {
+    SemaDiagnosticBuilder diagnoseExplicitConv(
+        Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) override {
       return S.Diag(Loc, diag::err_omp_explicit_conversion) << T << ConvTy;
     }
-    virtual SemaDiagnosticBuilder noteExplicitConv(
-        Sema &S, CXXConversionDecl *Conv, QualType ConvTy) {
+    SemaDiagnosticBuilder noteExplicitConv(
+        Sema &S, CXXConversionDecl *Conv, QualType ConvTy) override {
       return S.Diag(Conv->getLocation(), diag::note_omp_conversion_here)
                << ConvTy->isEnumeralType() << ConvTy;
     }
-    virtual SemaDiagnosticBuilder diagnoseAmbiguous(
-        Sema &S, SourceLocation Loc, QualType T) {
+    SemaDiagnosticBuilder diagnoseAmbiguous(
+        Sema &S, SourceLocation Loc, QualType T) override {
       return S.Diag(Loc, diag::err_omp_ambiguous_conversion) << T;
     }
-    virtual SemaDiagnosticBuilder noteAmbiguous(
-        Sema &S, CXXConversionDecl *Conv, QualType ConvTy) {
+    SemaDiagnosticBuilder noteAmbiguous(
+        Sema &S, CXXConversionDecl *Conv, QualType ConvTy) override {
       return S.Diag(Conv->getLocation(), diag::note_omp_conversion_here)
                << ConvTy->isEnumeralType() << ConvTy;
     }
-    virtual SemaDiagnosticBuilder diagnoseConversion(
-        Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) {
+    SemaDiagnosticBuilder diagnoseConversion(
+        Sema &S, SourceLocation Loc, QualType T, QualType ConvTy) override {
       llvm_unreachable("conversion functions are permitted");
     }
   } ConvertDiagnoser;

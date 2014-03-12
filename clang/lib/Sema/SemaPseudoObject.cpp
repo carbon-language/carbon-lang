@@ -283,10 +283,10 @@ namespace {
     bool findSetter(bool warn=true);
     bool findGetter();
 
-    Expr *rebuildAndCaptureObject(Expr *syntacticBase);
-    ExprResult buildGet();
-    ExprResult buildSet(Expr *op, SourceLocation, bool);
-    ExprResult complete(Expr *SyntacticForm);
+    Expr *rebuildAndCaptureObject(Expr *syntacticBase) override;
+    ExprResult buildGet() override;
+    ExprResult buildSet(Expr *op, SourceLocation, bool) override;
+    ExprResult complete(Expr *SyntacticForm) override;
 
     bool isWeakProperty() const;
   };
@@ -314,13 +314,13 @@ namespace {
                                        SourceLocation opLoc,
                                        BinaryOperatorKind opcode,
                                        Expr *LHS, Expr *RHS);
-   Expr *rebuildAndCaptureObject(Expr *syntacticBase);
-   
+   Expr *rebuildAndCaptureObject(Expr *syntacticBase) override;
+
    bool findAtIndexGetter();
    bool findAtIndexSetter();
-  
-   ExprResult buildGet();
-   ExprResult buildSet(Expr *op, SourceLocation, bool);
+
+   ExprResult buildGet() override;
+   ExprResult buildSet(Expr *op, SourceLocation, bool) override;
  };
 
  class MSPropertyOpBuilder : public PseudoOpBuilder {
@@ -331,9 +331,9 @@ namespace {
      PseudoOpBuilder(S, refExpr->getSourceRange().getBegin()),
      RefExpr(refExpr) {}
 
-   Expr *rebuildAndCaptureObject(Expr *);
-   ExprResult buildGet();
-   ExprResult buildSet(Expr *op, SourceLocation, bool);
+   Expr *rebuildAndCaptureObject(Expr *) override;
+   ExprResult buildGet() override;
+   ExprResult buildSet(Expr *op, SourceLocation, bool) override;
  };
 }
 

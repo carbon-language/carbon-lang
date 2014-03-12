@@ -767,7 +767,7 @@ namespace {
 // Callback to only accept typo corrections that refer to parameter packs.
 class ParameterPackValidatorCCC : public CorrectionCandidateCallback {
  public:
-  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+  bool ValidateCandidate(const TypoCorrection &candidate) override {
     NamedDecl *ND = candidate.getCorrectionDecl();
     return ND && ND->isParameterPack();
   }

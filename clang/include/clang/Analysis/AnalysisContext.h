@@ -287,11 +287,11 @@ public:
   const CFGBlock *getCallSiteBlock() const { return Block; }
 
   /// Return true if the current LocationContext has no caller context.
-  virtual bool inTopFrame() const { return getParent() == 0;  }
+  bool inTopFrame() const override { return getParent() == 0;  }
 
   unsigned getIndex() const { return Index; }
 
-  void Profile(llvm::FoldingSetNodeID &ID);
+  void Profile(llvm::FoldingSetNodeID &ID) override;
 
   static void Profile(llvm::FoldingSetNodeID &ID, AnalysisDeclContext *ctx,
                       const LocationContext *parent, const Stmt *s,
@@ -317,7 +317,7 @@ class ScopeContext : public LocationContext {
 public:
   ~ScopeContext() {}
 
-  void Profile(llvm::FoldingSetNodeID &ID);
+  void Profile(llvm::FoldingSetNodeID &ID) override;
 
   static void Profile(llvm::FoldingSetNodeID &ID, AnalysisDeclContext *ctx,
                       const LocationContext *parent, const Stmt *s) {
@@ -349,7 +349,7 @@ public:
   
   const void *getContextData() const { return ContextData; }
 
-  void Profile(llvm::FoldingSetNodeID &ID);
+  void Profile(llvm::FoldingSetNodeID &ID) override;
 
   static void Profile(llvm::FoldingSetNodeID &ID, AnalysisDeclContext *ctx,
                       const LocationContext *parent, const BlockDecl *bd,

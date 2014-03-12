@@ -1178,7 +1178,7 @@ public:
   public:
     BoundTypeDiagnoser1(unsigned DiagID, const T1 &Arg1)
       : TypeDiagnoser(DiagID == 0), DiagID(DiagID), Arg1(Arg1) { }
-    virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
+    void diagnose(Sema &S, SourceLocation Loc, QualType T) override {
       if (Suppressed) return;
       S.Diag(Loc, DiagID) << getPrintable(Arg1) << T;
     }
@@ -1198,7 +1198,7 @@ public:
       : TypeDiagnoser(DiagID == 0), DiagID(DiagID), Arg1(Arg1),
         Arg2(Arg2) { }
 
-    virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
+    void diagnose(Sema &S, SourceLocation Loc, QualType T) override {
       if (Suppressed) return;
       S.Diag(Loc, DiagID) << getPrintable(Arg1) << getPrintable(Arg2) << T;
     }
@@ -1219,7 +1219,7 @@ public:
     : TypeDiagnoser(DiagID == 0), DiagID(DiagID), Arg1(Arg1),
       Arg2(Arg2), Arg3(Arg3) { }
 
-    virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
+    void diagnose(Sema &S, SourceLocation Loc, QualType T) override {
       if (Suppressed) return;
       S.Diag(Loc, DiagID)
         << getPrintable(Arg1) << getPrintable(Arg2) << getPrintable(Arg3) << T;
@@ -2096,10 +2096,10 @@ public:
           AllowScopedEnumerations(AllowScopedEnumerations) {}
 
     /// Match an integral or (possibly scoped) enumeration type.
-    bool match(QualType T);
+    bool match(QualType T) override;
 
     SemaDiagnosticBuilder
-    diagnoseNoMatch(Sema &S, SourceLocation Loc, QualType T) {
+    diagnoseNoMatch(Sema &S, SourceLocation Loc, QualType T) override {
       return diagnoseNotInt(S, Loc, T);
     }
 

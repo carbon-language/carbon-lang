@@ -2366,30 +2366,31 @@ public:
   void DoneProcessing();
 
   void HandleIncompleteSpecifier(const char *startSpecifier,
-                                 unsigned specifierLen);
+                                 unsigned specifierLen) override;
 
   void HandleInvalidLengthModifier(
-      const analyze_format_string::FormatSpecifier &FS,
-      const analyze_format_string::ConversionSpecifier &CS,
-      const char *startSpecifier, unsigned specifierLen, unsigned DiagID);
+                           const analyze_format_string::FormatSpecifier &FS,
+                           const analyze_format_string::ConversionSpecifier &CS,
+                           const char *startSpecifier, unsigned specifierLen,
+                           unsigned DiagID);
 
   void HandleNonStandardLengthModifier(
-      const analyze_format_string::FormatSpecifier &FS,
-      const char *startSpecifier, unsigned specifierLen);
+                    const analyze_format_string::FormatSpecifier &FS,
+                    const char *startSpecifier, unsigned specifierLen);
 
   void HandleNonStandardConversionSpecifier(
-      const analyze_format_string::ConversionSpecifier &CS,
-      const char *startSpecifier, unsigned specifierLen);
+                    const analyze_format_string::ConversionSpecifier &CS,
+                    const char *startSpecifier, unsigned specifierLen);
 
-  virtual void HandlePosition(const char *startPos, unsigned posLen);
+  void HandlePosition(const char *startPos, unsigned posLen) override;
 
-  virtual void HandleInvalidPosition(const char *startSpecifier,
-                                     unsigned specifierLen,
-                                     analyze_format_string::PositionContext p);
+  void HandleInvalidPosition(const char *startSpecifier,
+                             unsigned specifierLen,
+                             analyze_format_string::PositionContext p) override;
 
-  virtual void HandleZeroPosition(const char *startPos, unsigned posLen);
+  void HandleZeroPosition(const char *startPos, unsigned posLen) override;
 
-  void HandleNullChar(const char *nullCharacter);
+  void HandleNullChar(const char *nullCharacter) override;
 
   template <typename Range>
   static void EmitFormatDiagnostic(Sema &S, bool inFunctionCall,
@@ -2758,15 +2759,15 @@ public:
       ObjCContext(isObjC)
   {}
 
-  
+
   bool HandleInvalidPrintfConversionSpecifier(
                                       const analyze_printf::PrintfSpecifier &FS,
                                       const char *startSpecifier,
-                                      unsigned specifierLen);
-  
+                                      unsigned specifierLen) override;
+
   bool HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier &FS,
                              const char *startSpecifier,
-                             unsigned specifierLen);
+                             unsigned specifierLen) override;
   bool checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
                        const char *StartSpecifier,
                        unsigned SpecifierLen,
@@ -3405,14 +3406,14 @@ public:
   
   bool HandleScanfSpecifier(const analyze_scanf::ScanfSpecifier &FS,
                             const char *startSpecifier,
-                            unsigned specifierLen);
+                            unsigned specifierLen) override;
   
   bool HandleInvalidScanfConversionSpecifier(
           const analyze_scanf::ScanfSpecifier &FS,
           const char *startSpecifier,
-          unsigned specifierLen);
+          unsigned specifierLen) override;
 
-  void HandleIncompleteScanList(const char *start, const char *end);
+  void HandleIncompleteScanList(const char *start, const char *end) override;
 };
 }
 

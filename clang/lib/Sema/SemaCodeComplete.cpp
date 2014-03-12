@@ -1253,9 +1253,9 @@ namespace {
   public:
     CodeCompletionDeclConsumer(ResultBuilder &Results, DeclContext *CurContext)
       : Results(Results), CurContext(CurContext) { }
-    
-    virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, DeclContext *Ctx,
-                           bool InBaseClass) {
+
+    void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, DeclContext *Ctx,
+                   bool InBaseClass) override {
       bool Accessible = true;
       if (Ctx)
         Accessible = Results.getSema().IsSimplyAccessible(ND, Ctx);

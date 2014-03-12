@@ -294,7 +294,7 @@ public:
 template <class C>
 class DeclFilterCCC : public CorrectionCandidateCallback {
 public:
-  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+  bool ValidateCandidate(const TypoCorrection &candidate) override {
     return candidate.getCorrectionDeclAs<C>();
   }
 };
@@ -308,7 +308,7 @@ public:
                         bool HasExplicitTemplateArgs,
                         bool AllowNonStaticMethods = true);
 
-  virtual bool ValidateCandidate(const TypoCorrection &candidate);
+  bool ValidateCandidate(const TypoCorrection &candidate) override;
 
  private:
   unsigned NumArgs;
@@ -327,7 +327,7 @@ public:
     WantRemainingKeywords = false;
   }
 
-  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+  bool ValidateCandidate(const TypoCorrection &candidate) override {
     return false;
   }
 };

@@ -5329,7 +5329,7 @@ ExprResult Sema::PerformContextualImplicitConversion(
     TypeDiagnoserPartialDiag(ContextualImplicitConverter &Converter, Expr *From)
         : TypeDiagnoser(Converter.Suppress), Converter(Converter), From(From) {}
 
-    virtual void diagnose(Sema &S, SourceLocation Loc, QualType T) {
+    void diagnose(Sema &S, SourceLocation Loc, QualType T) override {
       Converter.diagnoseIncomplete(S, Loc, T) << From->getSourceRange();
     }
   } IncompleteDiagnoser(Converter, From);
