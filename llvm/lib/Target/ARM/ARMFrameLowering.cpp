@@ -803,6 +803,11 @@ void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
       AddDefaultPred(MIB);
     }
     Regs.clear();
+
+    // Put any subsequent vpush instructions before this one: they will refer to
+    // higher register numbers so need to be pushed first in order to preserve
+    // monotonicity.
+    --MI;
   }
 }
 
@@ -886,6 +891,10 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
       AddDefaultPred(MIB);
     }
     Regs.clear();
+
+    // Put any subsequent vpop instructions after this one: they will refer to
+    // higher register numbers so need to be popped afterwards.
+    ++MI;
   }
 }
 
