@@ -39,6 +39,17 @@
 #include <sys/ucontext.h>
 #endif
 
+// x86_64 FreeBSD 9.2 and older define 64-bit register names in both 64-bit
+// and 32-bit modes.
+#if SANITIZER_FREEBSD
+#include <sys/param.h>
+# if __FreeBSD_version <= 902001  // v9.2
+#  define mc_eip mc_rip
+#  define mc_ebp mc_rbp
+#  define mc_esp mc_rsp
+# endif
+#endif
+
 extern "C" void* _DYNAMIC;
 
 namespace __asan {
