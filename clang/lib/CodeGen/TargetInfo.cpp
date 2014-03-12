@@ -3649,7 +3649,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty, bool &IsHA,
   if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64)) {
       // Update Allocated GPRs
     markAllocatedGPRs(1, 1);
-    return ABIArgInfo::getIndirect(0, /*ByVal=*/true,
+    return ABIArgInfo::getIndirect(TyAlign, /*ByVal=*/true,
            /*Realign=*/TyAlign > ABIAlign);
   }
 
