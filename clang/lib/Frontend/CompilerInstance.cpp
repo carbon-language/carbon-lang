@@ -334,13 +334,15 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                              void *DeserializationListener,
                                              bool Preamble,
                                              bool UseGlobalModuleIndex) {
+  HeaderSearchOptions &HSOpts = PP.getHeaderSearchInfo().getHeaderSearchOpts();
+
   std::unique_ptr<ASTReader> Reader;
   Reader.reset(new ASTReader(PP, Context,
                              Sysroot.empty() ? "" : Sysroot.c_str(),
                              DisablePCHValidation,
                              AllowPCHWithCompilerErrors,
                              /*AllowConfigurationMismatch*/false,
-                             /*ValidateSystemInputs*/false,
+                             HSOpts.ModulesValidateSystemHeaders,
                              UseGlobalModuleIndex));
 
   Reader->setDeserializationListener(
@@ -1141,14 +1143,15 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
         pruneModuleCache(getHeaderSearchOpts());
       }
 
-      std::string Sysroot = getHeaderSearchOpts().Sysroot;
+      HeaderSearchOptions &HSOpts = getHeaderSearchOpts();
+      std::string Sysroot = HSOpts.Sysroot;
       const PreprocessorOptions &PPOpts = getPreprocessorOpts();
       ModuleManager = new ASTReader(getPreprocessor(), *Context,
                                     Sysroot.empty() ? "" : Sysroot.c_str(),
                                     PPOpts.DisablePCHValidation,
                                     /*AllowASTWithCompilerErrors=*/false,
                                     /*AllowConfigurationMismatch=*/false,
-                                    /*ValidateSystemInputs=*/false,
+                                    HSOpts.ModulesValidateSystemHeaders,
                                     getFrontendOpts().UseGlobalModuleIndex);
       if (hasASTConsumer()) {
         ModuleManager->setDeserializationListener(

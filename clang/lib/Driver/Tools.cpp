@@ -3390,6 +3390,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fmodules_validate_once_per_build_session);
   }
 
+  Args.AddLastArg(CmdArgs, options::OPT_fmodules_validate_system_headers);
+
   // -faccess-control is default.
   if (Args.hasFlag(options::OPT_fno_access_control,
                    options::OPT_faccess_control,

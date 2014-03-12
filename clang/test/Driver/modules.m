@@ -14,3 +14,8 @@
 // RUN: %clang -fmodules-validate-once-per-build-session -### %s 2>&1 | FileCheck -check-prefix=MODULES_VALIDATE_ONCE_ERR %s
 // MODULES_VALIDATE_ONCE_ERR: option '-fmodules-validate-once-per-build-session' requires '-fbuild-session-timestamp=<seconds since Epoch>'
 
+// RUN: %clang -### %s 2>&1 | FileCheck -check-prefix=MODULES_VALIDATE_SYSTEM_HEADERS_DEFAULT %s
+// MODULES_VALIDATE_SYSTEM_HEADERS_DEFAULT-NOT: -fmodules-validate-system-headers
+
+// RUN: %clang -fmodules-validate-system-headers -### %s 2>&1 | FileCheck -check-prefix=MODULES_VALIDATE_SYSTEM_HEADERS %s
+// MODULES_VALIDATE_SYSTEM_HEADERS: -fmodules-validate-system-headers

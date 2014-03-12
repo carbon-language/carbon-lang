@@ -591,6 +591,9 @@ def fmodules_validate_once_per_build_session : Flag<["-"], "fmodules-validate-on
   Group<i_Group>, Flags<[CC1Option]>,
   HelpText<"Don't verify input files for the modules if the module has been "
            "successfully validate or loaded during this build session">;
+def fmodules_validate_system_headers : Flag<["-"], "fmodules-validate-system-headers">,
+  Group<i_Group>, Flags<[CC1Option]>,
+  HelpText<"Validate the system headers that a module depends on when loading the module">;
 def fmodules : Flag <["-"], "fmodules">, Group<f_Group>,
   Flags<[DriverOption, CC1Option]>,
   HelpText<"Enable the 'modules' language feature">;
