@@ -60,9 +60,9 @@ static int computeThresholdFromOptLevels(unsigned OptLevel,
                                          unsigned SizeOptLevel) {
   if (OptLevel > 2)
     return 275;
-  if (SizeOptLevel == 1)
+  if (SizeOptLevel == 1) // -Os
     return 75;
-  if (SizeOptLevel == 2)
+  if (SizeOptLevel == 2) // -Oz
     return 25;
   return 225;
 }
