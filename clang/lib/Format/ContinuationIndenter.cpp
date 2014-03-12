@@ -227,8 +227,8 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
                                State.NextToken->WhitespaceRange.getEnd()) -
                            SourceMgr.getSpellingColumnNumber(
                                State.NextToken->WhitespaceRange.getBegin());
-    State.Column += WhitespaceLength + State.NextToken->ColumnWidth;
-    State.NextToken = State.NextToken->Next;
+    State.Column += WhitespaceLength;
+    moveStateToNextToken(State, DryRun, /*NewLine=*/false);
     return 0;
   }
 
@@ -348,7 +348,6 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
   State.Stack.back().ContainsLineBreak = true;
 
   Penalty += State.NextToken->SplitPenalty;
-
 
   // Breaking before the first "<<" is generally not desirable if the LHS is
   // short. Also always add the penalty if the LHS is split over mutliple lines

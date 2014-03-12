@@ -2024,6 +2024,10 @@ TEST_F(FormatTest, DoesntRemoveUnknownTokens) {
   verifyFormat("#define A ''qqq");
   verifyFormat("#define A `qqq");
   verifyFormat("f(\"aaaa, bbbb, \"\\\"ccccc\\\"\");");
+  EXPECT_EQ("const char *c = STRINGIFY(\n"
+            "\\na : b);",
+            format("const char * c = STRINGIFY(\n"
+                   "\\na : b);"));
 }
 
 TEST_F(FormatTest, IndentsPPDirectiveInReducedSpace) {
