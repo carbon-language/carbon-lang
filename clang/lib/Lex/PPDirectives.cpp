@@ -1450,7 +1450,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   // the path.
   ModuleMap::KnownHeader SuggestedModule;
   SourceLocation FilenameLoc = FilenameTok.getLocation();
-  SmallString<1024> NormalizedPath;
+  SmallString<128> NormalizedPath;
   if (LangOpts.MSVCCompat) {
     NormalizedPath = Filename.str();
     llvm::sys::fs::normalize_separators(NormalizedPath);
