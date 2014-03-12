@@ -513,11 +513,11 @@ void MipsSEInstrInfo::expandExtractElementF64(MachineBasicBlock &MBB,
     //        that they clobber the upper 32-bits of the 64-bit FPR. Fixing that
     //        requires a major overhaul of the FPU implementation which can't
     //        be done right now due to time constraints.
-    //        MFHC1 is the only instruction that is affected since it is the
-    //        only instruction that doesn't read the lower 32-bits. We therefore
-    //        pretend that it reads the bottom 32-bits to artificially create a
-    //        dependency and prevent the scheduler changing the behaviour of the
-    //        code.
+    //        MFHC1 is one of two instructions that are affected since they are
+    //        the only instructions that don't read the lower 32-bits.
+    //        We therefore pretend that it reads the bottom 32-bits to
+    //        artificially create a dependency and prevent the scheduler
+    //        changing the behaviour of the code.
     BuildMI(MBB, I, dl, get(Mips::MFHC1), DstReg).addReg(SubReg).addReg(
         SrcReg, RegState::Implicit);
   } else
@@ -543,10 +543,22 @@ void MipsSEInstrInfo::expandBuildPairF64(MachineBasicBlock &MBB,
   BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_lo))
     .addReg(LoReg);
 
-  if (FP64)
+  if (FP64) {
+    // FIXME: The .addReg(DstReg, RegState::Implicit) is a white lie used to
+    //        temporarily work around a widespread bug in the -mfp64 support.
+    //        The problem is that none of the 32-bit fpu ops mention the fact
+    //        that they clobber the upper 32-bits of the 64-bit FPR. Fixing that
+    //        requires a major overhaul of the FPU implementation which can't
+    //        be done right now due to time constraints.
+    //        MTHC1 is one of two instructions that are affected since they are
+    //        the only instructions that don't read the lower 32-bits.
+    //        We therefore pretend that it reads the bottom 32-bits to
+    //        artificially create a dependency and prevent the scheduler
+    //        changing the behaviour of the code.
     BuildMI(MBB, I, dl, get(Mips::MTHC1), TRI.getSubReg(DstReg, Mips::sub_hi))
-      .addReg(HiReg);
-  else
+        .addReg(HiReg)
+        .addReg(DstReg, RegState::Implicit);
+  } else
     BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_hi))
       .addReg(HiReg);
 }
