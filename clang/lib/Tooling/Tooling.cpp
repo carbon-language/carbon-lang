@@ -24,6 +24,7 @@
 #include "clang/Tooling/ArgumentsAdjusters.h"
 #include "clang/Tooling/CompilationDatabase.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Config/config.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
@@ -31,7 +32,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 // For chdir, see the comment in ClangTool::run for more information.
-#ifdef _WIN32
+#ifdef LLVM_ON_WIN32
 #  include <direct.h>
 #else
 #  include <unistd.h>

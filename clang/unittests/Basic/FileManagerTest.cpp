@@ -11,6 +11,7 @@
 #include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/FileSystemStatCache.h"
 #include "gtest/gtest.h"
+#include "llvm/Config/config.h"
 
 using namespace llvm;
 using namespace clang;
@@ -126,7 +127,7 @@ TEST_F(FileManagerTest, getFileReturnsValidFileEntryForExistingRealFile) {
   statCache->InjectDirectory("/tmp", 42);
   statCache->InjectFile("/tmp/test", 43);
 
-#ifdef _WIN32
+#ifdef LLVM_ON_WIN32
   const char *DirName = "C:.";
   const char *FileName = "C:test";
   statCache->InjectDirectory(DirName, 44);
@@ -143,7 +144,7 @@ TEST_F(FileManagerTest, getFileReturnsValidFileEntryForExistingRealFile) {
   ASSERT_TRUE(dir != NULL);
   EXPECT_STREQ("/tmp", dir->getName());
 
-#ifdef _WIN32
+#ifdef LLVM_ON_WIN32
   file = manager.getFile(FileName);
   ASSERT_TRUE(file != NULL);
 
@@ -204,7 +205,7 @@ TEST_F(FileManagerTest, getFileReturnsNULLForNonexistentFile) {
 
 // The following tests apply to Unix-like system only.
 
-#ifndef _WIN32
+#ifndef LLVM_ON_WIN32
 
 // getFile() returns the same FileEntry for real files that are aliases.
 TEST_F(FileManagerTest, getFileReturnsSameFileEntryForAliasedRealFiles) {
@@ -234,6 +235,6 @@ TEST_F(FileManagerTest, getFileReturnsSameFileEntryForAliasedVirtualFiles) {
   EXPECT_EQ(manager.getFile("abc/foo.cpp"), manager.getFile("abc/bar.cpp"));
 }
 
-#endif  // !_WIN32
+#endif  // !LLVM_ON_WIN32
 
 } // anonymous namespace

@@ -110,7 +110,7 @@ public:
 }  // end anonymous namespace.
 
 static bool CanPrefixSysroot(StringRef Path) {
-#if defined(_WIN32)
+#if defined(LLVM_ON_WIN32)
   return !Path.empty() && llvm::sys::path::is_separator(Path[0]);
 #else
   return llvm::sys::path::is_absolute(Path);
@@ -328,7 +328,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
       llvm::sys::path::append(P, "../../../include");
       AddPath(P.str(), System, false);
       AddPath("/mingw/include", System, false);
-#if defined(_WIN32)
+#if defined(LLVM_ON_WIN32)
       AddPath("c:/mingw/include", System, false); 
 #endif
     }
@@ -403,7 +403,7 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
     AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.8.1");
     AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.8.2");
     // mingw.org C++ include paths
-#if defined(_WIN32)
+#if defined(LLVM_ON_WIN32)
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.0");
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.1");
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.2");

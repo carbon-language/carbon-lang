@@ -25,6 +25,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Config/config.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
@@ -227,7 +228,7 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
     { "++",        "--driver-mode=g++" },
   };
   std::string ProgName(llvm::sys::path::stem(ArgVector[0]));
-#ifdef _WIN32
+#ifdef LLVM_ON_WIN32
   // Transform to lowercase for case insensitive file systems.
   std::transform(ProgName.begin(), ProgName.end(), ProgName.begin(),
                  toLowercase);
@@ -445,7 +446,7 @@ int main(int argc_, const char **argv_) {
   
   llvm::llvm_shutdown();
 
-#ifdef _WIN32
+#ifdef LLVM_ON_WIN32
   // Exit status should not be negative on Win32, unless abnormal termination.
   // Once abnormal termiation was caught, negative status should not be
   // propagated.
