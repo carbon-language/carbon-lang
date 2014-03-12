@@ -17,22 +17,22 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/ValueTypes.h"
 
 namespace llvm {
 
 class AllocaInst;
 class Constant;
 class ConstantFP;
+class DataLayout;
 class FunctionLoweringInfo;
 class Instruction;
 class LoadInst;
+class MVT;
 class MachineConstantPool;
+class MachineFrameInfo;
 class MachineFunction;
 class MachineInstr;
-class MachineFrameInfo;
 class MachineRegisterInfo;
-class DataLayout;
 class TargetInstrInfo;
 class TargetLibraryInfo;
 class TargetLowering;

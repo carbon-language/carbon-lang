@@ -21,7 +21,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -42,6 +41,7 @@ class MachineFunction;
 class MachineModuleInfo;
 class MachineRegisterInfo;
 class SelectionDAG;
+class MVT;
 class TargetLowering;
 class Value;
 

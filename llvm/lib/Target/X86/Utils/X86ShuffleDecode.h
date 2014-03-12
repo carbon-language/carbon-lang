@@ -16,13 +16,14 @@
 #define X86_SHUFFLE_DECODE_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/ValueTypes.h"
 
 //===----------------------------------------------------------------------===//
 //  Vector Mask Decoding
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
+class MVT;
+
 enum {
   SM_SentinelZero = -1
 };
