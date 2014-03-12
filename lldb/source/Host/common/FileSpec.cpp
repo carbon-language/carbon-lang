@@ -936,12 +936,11 @@ FileSpec::EnumerateDirectory
     if (dir_path && dir_path[0])
     {
 #if _WIN32
-        char szDir[MAX_PATH];
-        strcpy_s(szDir, MAX_PATH, dir_path);
-        strcat_s(szDir, MAX_PATH, "\\*");
+        std::string szDir(dir_path);
+        szDir += "\\*";
 
         WIN32_FIND_DATA ffd;
-        HANDLE hFind = FindFirstFile(szDir, &ffd);
+        HANDLE hFind = FindFirstFile(szDir.c_str(), &ffd);
 
         if (hFind == INVALID_HANDLE_VALUE)
         {
