@@ -10,3 +10,6 @@
 // compilation will fail due to the '#error success'
 // XFAIL: win32
 
+// This test may or may not fail since 'Inputs\success.h' is passed
+// to Win32 API on win32.
+// REQUIRES: disabled
