@@ -308,19 +308,12 @@ void EmitAssemblyHelper::CreatePasses() {
   PMBuilder.LibraryInfo = new TargetLibraryInfo(TargetTriple);
   if (!CodeGenOpts.SimplifyLibCalls)
     PMBuilder.LibraryInfo->disableAllFunctions();
-  
+
   switch (Inlining) {
   case CodeGenOptions::NoInlining: break;
   case CodeGenOptions::NormalInlining: {
-    // FIXME: Derive these constants in a principled fashion.
-    unsigned Threshold = 225;
-    if (CodeGenOpts.OptimizeSize == 1)      // -Os
-      Threshold = 75;
-    else if (CodeGenOpts.OptimizeSize == 2) // -Oz
-      Threshold = 25;
-    else if (OptLevel > 2)
-      Threshold = 275;
-    PMBuilder.Inliner = createFunctionInliningPass(Threshold);
+    PMBuilder.Inliner =
+        createFunctionInliningPass(OptLevel, CodeGenOpts.OptimizeSize);
     break;
   }
   case CodeGenOptions::OnlyAlwaysInlining:
