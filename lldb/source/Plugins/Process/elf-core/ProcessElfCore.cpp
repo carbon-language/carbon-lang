@@ -17,12 +17,11 @@
 #include "lldb/Core/Section.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/DynamicLoader.h"
 
 #include "llvm/Support/ELF.h"
-
-#include "ProcessPOSIXLog.h"
 
 #include "Plugins/ObjectFile/ELF/ObjectFileELF.h"
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
@@ -397,7 +396,7 @@ ParseFreeBSDPrStatus(ThreadData &thread_data, DataExtractor &data,
                  arch.GetMachine() == llvm::Triple::x86_64);
     int pr_version = data.GetU32(&offset);
 
-    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+    Log *log (GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
     if (log)
     {
         if (pr_version > 1)

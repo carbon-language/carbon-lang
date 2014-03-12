@@ -92,6 +92,8 @@ endif ()
 if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
   list(APPEND LLDB_USED_LIBS
     lldbHostWindows
+    lldbPluginProcessElfCore
+    lldbPluginJITLoaderGDB
     Ws2_32
     )
 endif ()

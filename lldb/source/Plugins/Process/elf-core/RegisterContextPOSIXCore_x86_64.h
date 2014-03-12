@@ -10,7 +10,7 @@
 #ifndef liblldb_RegisterContextCorePOSIX_x86_64_H_
 #define liblldb_RegisterContextCorePOSIX_x86_64_H_
 
-#include "Plugins/Process/POSIX/RegisterContextPOSIX_x86.h"
+#include "Plugins/Process/Utility/RegisterContextPOSIX_x86.h"
 
 class RegisterContextCorePOSIX_x86_64 :
     public RegisterContextPOSIX_x86

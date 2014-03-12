@@ -20,7 +20,6 @@
 #include "lldb/Host/Endian.h"
 #include "llvm/Support/Compiler.h"
 
-#include "ProcessPOSIX.h"
 #include "RegisterContext_x86.h"
 #include "RegisterContextPOSIX_x86.h"
 #include "Plugins/Process/elf-core/ProcessElfCore.h"

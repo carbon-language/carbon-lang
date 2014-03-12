@@ -8,11 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Unwind.h"
-#include "ProcessPOSIXLog.h"
 
 #include "ThreadElfCore.h"
 #include "ProcessElfCore.h"
@@ -74,7 +74,7 @@ ThreadElfCore::CreateRegisterContextForFrame (StackFrame *frame)
 {
     RegisterContextSP reg_ctx_sp;
     uint32_t concrete_frame_idx = 0;
-    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
+    Log *log (GetLogIfAllCategoriesSet(LIBLLDB_LOG_THREAD));
 
     if (frame)
         concrete_frame_idx = frame->GetConcreteFrameIndex ();

@@ -109,6 +109,12 @@ ifeq ($(HOST_OS),Linux)
               lldbPluginJITLoaderGDB.a
 endif
 
+ifeq ($(HOST_OS),MingW)
+  USEDLIBS += lldbHostWindows.a \
+              lldbPluginProcessElfCore.a \
+              lldbPluginJITLoaderGDB.a
+endif
+
 ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
   USEDLIBS += lldbHostFreeBSD.a \
               lldbPluginProcessPOSIX.a \

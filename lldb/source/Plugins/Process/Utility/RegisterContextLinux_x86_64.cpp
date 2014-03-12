@@ -69,7 +69,7 @@ struct UserArea
     uint64_t fault_address; // Control register CR3.
 };
 
-#define DR_SIZE sizeof(UserArea::u_debugreg[0])
+#define DR_SIZE sizeof(((UserArea*)NULL)->u_debugreg[0])
 #define DR_OFFSET(reg_index) \
     (LLVM_EXTENSION offsetof(UserArea, u_debugreg[reg_index]))
 

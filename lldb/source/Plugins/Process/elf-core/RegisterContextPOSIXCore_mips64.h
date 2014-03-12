@@ -10,7 +10,7 @@
 #ifndef liblldb_RegisterContextCorePOSIX_mips64_H_
 #define liblldb_RegisterContextCorePOSIX_mips64_H_
 
-#include "Plugins/Process/POSIX/RegisterContextPOSIX_mips64.h"
+#include "Plugins/Process/Utility/RegisterContextPOSIX_mips64.h"
 
 class RegisterContextCorePOSIX_mips64 :
     public RegisterContextPOSIX_mips64

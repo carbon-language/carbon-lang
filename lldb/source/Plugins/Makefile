@@ -40,6 +40,11 @@ DIRS += Process/elf-core
 DIRS += JITLoader/GDB
 endif
 
+ifeq ($(HOST_OS),MingW)
+DIRS += Process/elf-core
+DIRS += JITLoader/GDB
+endif
+
 ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
 DIRS += Process/FreeBSD Process/POSIX
 DIRS += Process/elf-core
