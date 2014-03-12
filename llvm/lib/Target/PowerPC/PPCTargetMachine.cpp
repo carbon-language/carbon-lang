@@ -37,8 +37,13 @@ extern "C" void LLVMInitializePowerPCTarget() {
 static std::string getDataLayoutString(const PPCSubtarget &ST) {
   const Triple &T = ST.getTargetTriple();
 
-  // PPC is big endian.
-  std::string Ret = "E";
+  std::string Ret;
+
+  // Most PPC* platforms are big endian, PPC64LE is little endian.
+  if (ST.isLittleEndian())
+    Ret = "e";
+  else
+    Ret = "E";
 
   Ret += DataLayout::getManglingComponent(T);
 
