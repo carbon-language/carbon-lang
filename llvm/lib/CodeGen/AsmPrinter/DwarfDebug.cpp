@@ -62,7 +62,7 @@ static cl::opt<bool> UnknownLocations(
 
 static cl::opt<bool> GenerateCUHash("generate-cu-hash", cl::Hidden,
                                     cl::desc("Add the CU hash as the dwo_id."),
-                                    cl::init(false));
+                                    cl::init(true));
 
 static cl::opt<bool>
 GenerateGnuPubSections("generate-gnu-dwarf-pub-sections", cl::Hidden,
