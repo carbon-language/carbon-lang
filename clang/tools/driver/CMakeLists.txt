@@ -10,6 +10,7 @@ set( LLVM_LINK_COMPONENTS
   MCParser
   ObjCARCOpts
   Option
+  Profile
   ScalarOpts
   Support
   TransformUtils

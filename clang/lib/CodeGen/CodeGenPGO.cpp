@@ -17,131 +17,11 @@
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Config/config.h" // for strtoull()/strtoll() define
 #include "llvm/IR/MDBuilder.h"
+#include "llvm/Profile/ProfileDataReader.h"
 #include "llvm/Support/FileSystem.h"
 
 using namespace clang;
 using namespace CodeGen;
-
-static void ReportBadPGOData(CodeGenModule &CGM, const char *Message) {
-  DiagnosticsEngine &Diags = CGM.getDiags();
-  unsigned diagID = Diags.getCustomDiagID(DiagnosticsEngine::Error, "%0");
-  Diags.Report(diagID) << Message;
-}
-
-PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
-  : CGM(CGM) {
-  if (llvm::MemoryBuffer::getFile(Path, DataBuffer)) {
-    ReportBadPGOData(CGM, "failed to open pgo data file");
-    return;
-  }
-
-  if (DataBuffer->getBufferSize() > std::numeric_limits<unsigned>::max()) {
-    ReportBadPGOData(CGM, "pgo data file too big");
-    return;
-  }
-
-  // Scan through the data file and map each function to the corresponding
-  // file offset where its counts are stored.
-  const char *BufferStart = DataBuffer->getBufferStart();
-  const char *BufferEnd = DataBuffer->getBufferEnd();
-  const char *CurPtr = BufferStart;
-  uint64_t MaxCount = 0;
-  while (CurPtr < BufferEnd) {
-    // Read the function name.
-    const char *FuncStart = CurPtr;
-    // For Objective-C methods, the name may include whitespace, so search
-    // backward from the end of the line to find the space that separates the
-    // name from the number of counters. (This is a temporary hack since we are
-    // going to completely replace this file format in the near future.)
-    CurPtr = strchr(CurPtr, '\n');
-    if (!CurPtr) {
-      ReportBadPGOData(CGM, "pgo data file has malformed function entry");
-      return;
-    }
-    while (*--CurPtr != ' ')
-      ;
-    StringRef FuncName(FuncStart, CurPtr - FuncStart);
-
-    // Read the number of counters.
-    char *EndPtr;
-    unsigned NumCounters = strtol(++CurPtr, &EndPtr, 10);
-    if (EndPtr == CurPtr || *EndPtr != '\n' || NumCounters <= 0) {
-      ReportBadPGOData(CGM, "pgo data file has unexpected number of counters");
-      return;
-    }
-    CurPtr = EndPtr;
-
-    // Read function count.
-    uint64_t Count = strtoll(CurPtr, &EndPtr, 10);
-    if (EndPtr == CurPtr || *EndPtr != '\n') {
-      ReportBadPGOData(CGM, "pgo-data file has bad count value");
-      return;
-    }
-    CurPtr = EndPtr; // Point to '\n'.
-    FunctionCounts[FuncName] = Count;
-    MaxCount = Count > MaxCount ? Count : MaxCount;
-
-    // There is one line for each counter; skip over those lines.
-    // Since function count is already read, we start the loop from 1.
-    for (unsigned N = 1; N < NumCounters; ++N) {
-      CurPtr = strchr(++CurPtr, '\n');
-      if (!CurPtr) {
-        ReportBadPGOData(CGM, "pgo data file is missing some counter info");
-        return;
-      }
-    }
-
-    // Skip over the blank line separating functions.
-    CurPtr += 2;
-
-    DataOffsets[FuncName] = FuncStart - BufferStart;
-  }
-  MaxFunctionCount = MaxCount;
-}
-
-bool PGOProfileData::getFunctionCounts(StringRef FuncName,
-                                       std::vector<uint64_t> &Counts) {
-  // Find the relevant section of the pgo-data file.
-  llvm::StringMap<unsigned>::const_iterator OffsetIter =
-    DataOffsets.find(FuncName);
-  if (OffsetIter == DataOffsets.end())
-    return true;
-  const char *CurPtr = DataBuffer->getBufferStart() + OffsetIter->getValue();
-
-  // Skip over the function name.
-  CurPtr = strchr(CurPtr, '\n');
-  assert(CurPtr && "pgo-data has corrupted function entry");
-  while (*--CurPtr != ' ')
-    ;
-
-  // Read the number of counters.
-  char *EndPtr;
-  unsigned NumCounters = strtol(++CurPtr, &EndPtr, 10);
-  assert(EndPtr != CurPtr && *EndPtr == '\n' && NumCounters > 0 &&
-         "pgo-data file has corrupted number of counters");
-  CurPtr = EndPtr;
-
-  Counts.reserve(NumCounters);
-
-  for (unsigned N = 0; N < NumCounters; ++N) {
-    // Read the count value.
-    uint64_t Count = strtoll(CurPtr, &EndPtr, 10);
-    if (EndPtr == CurPtr || *EndPtr != '\n') {
-      ReportBadPGOData(CGM, "pgo-data file has bad count value");
-      return true;
-    }
-    Counts.push_back(Count);
-    CurPtr = EndPtr + 1;
-  }
-
-  // Make sure the number of counters matches up.
-  if (Counts.size() != NumCounters) {
-    ReportBadPGOData(CGM, "pgo-data file has inconsistent counters");
-    return true;
-  }
-
-  return false;
-}
 
 void CodeGenPGO::setFuncName(llvm::Function *Fn) {
   StringRef Func = Fn->getName();
@@ -177,22 +57,23 @@ void CodeGenPGO::emitWriteoutFunction() {
   llvm::Type *Int32Ty = llvm::Type::getInt32Ty(Ctx);
   llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(Ctx);
 
-  llvm::Function *WriteoutF =
-    CGM.getModule().getFunction("__llvm_pgo_writeout");
-  if (!WriteoutF) {
-    llvm::FunctionType *WriteoutFTy =
+  llvm::Function *AddFuncsF =
+    CGM.getModule().getFunction("__llvm_pgo_add_functions");
+  if (!AddFuncsF) {
+    llvm::FunctionType *AddFuncsFTy =
       llvm::FunctionType::get(llvm::Type::getVoidTy(Ctx), false);
-    WriteoutF = llvm::Function::Create(WriteoutFTy,
+    AddFuncsF = llvm::Function::Create(AddFuncsFTy,
                                        llvm::GlobalValue::InternalLinkage,
-                                       "__llvm_pgo_writeout", &CGM.getModule());
+                                       "__llvm_pgo_add_functions",
+                                       &CGM.getModule());
   }
-  WriteoutF->setUnnamedAddr(true);
-  WriteoutF->addFnAttr(llvm::Attribute::NoInline);
+  AddFuncsF->setUnnamedAddr(true);
+  AddFuncsF->addFnAttr(llvm::Attribute::NoInline);
   if (CGM.getCodeGenOpts().DisableRedZone)
-    WriteoutF->addFnAttr(llvm::Attribute::NoRedZone);
+    AddFuncsF->addFnAttr(llvm::Attribute::NoRedZone);
 
-  llvm::BasicBlock *BB = WriteoutF->empty() ?
-    llvm::BasicBlock::Create(Ctx, "", WriteoutF) : &WriteoutF->getEntryBlock();
+  llvm::BasicBlock *BB = AddFuncsF->empty() ?
+    llvm::BasicBlock::Create(Ctx, "", AddFuncsF) : &AddFuncsF->getEntryBlock();
 
   CGBuilderTy PGOBuilder(BB);
 
@@ -202,32 +83,35 @@ void CodeGenPGO::emitWriteoutFunction() {
   PGOBuilder.SetInsertPoint(I);
 
   llvm::Type *Int64PtrTy = llvm::Type::getInt64PtrTy(Ctx);
+  llvm::Type *Int64Ty = llvm::Type::getInt64Ty(Ctx);
   llvm::Type *Args[] = {
     Int8PtrTy,                       // const char *FuncName
+    Int64Ty,                         // uint64_t FunctionHash
     Int32Ty,                         // uint32_t NumCounters
     Int64PtrTy                       // uint64_t *Counters
   };
   llvm::FunctionType *FTy =
     llvm::FunctionType::get(PGOBuilder.getVoidTy(), Args, false);
   llvm::Constant *EmitFunc =
-    CGM.getModule().getOrInsertFunction("llvm_pgo_emit", FTy);
+    CGM.getModule().getOrInsertFunction("llvm_pgo_add_function", FTy);
 
   llvm::Constant *NameString =
     CGM.GetAddrOfConstantCString(getFuncName(), "__llvm_pgo_name");
   NameString = llvm::ConstantExpr::getBitCast(NameString, Int8PtrTy);
-  PGOBuilder.CreateCall3(EmitFunc, NameString,
+  PGOBuilder.CreateCall4(EmitFunc, NameString,
+                         // TODO: This should be a hash, not just the count!
+                         PGOBuilder.getInt64(NumRegionCounters),
                          PGOBuilder.getInt32(NumRegionCounters),
                          PGOBuilder.CreateBitCast(RegionCounters, Int64PtrTy));
 }
 
 llvm::Function *CodeGenPGO::emitInitialization(CodeGenModule &CGM) {
-  llvm::Function *WriteoutF =
-    CGM.getModule().getFunction("__llvm_pgo_writeout");
-  if (!WriteoutF)
+  llvm::Function *AddFuncsF =
+    CGM.getModule().getFunction("__llvm_pgo_add_functions");
+  if (!AddFuncsF)
     return NULL;
 
-  // Create a small bit of code that registers the "__llvm_pgo_writeout" to
-  // be executed at exit.
+  // Create a small bit of code that initializes PGO at startup
   llvm::Function *F = CGM.getModule().getFunction("__llvm_pgo_init");
   if (F)
     return NULL;
@@ -255,7 +139,7 @@ llvm::Function *CodeGenPGO::emitInitialization(CodeGenModule &CGM) {
   // Inialize the environment and register the local writeout function.
   llvm::Constant *PGOInit =
     CGM.getModule().getOrInsertFunction("llvm_pgo_init", FTy);
-  PGOBuilder.CreateCall(PGOInit, WriteoutF);
+  PGOBuilder.CreateCall(PGOInit, AddFuncsF);
   PGOBuilder.CreateRetVoid();
 
   return F;
@@ -758,8 +642,8 @@ namespace {
 
 void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
   bool InstrumentRegions = CGM.getCodeGenOpts().ProfileInstrGenerate;
-  PGOProfileData *PGOData = CGM.getPGOData();
-  if (!InstrumentRegions && !PGOData)
+  llvm::ProfileDataReader *PGOReader = CGM.getPGOReader();
+  if (!InstrumentRegions && !PGOReader)
     return;
   if (!D)
     return;
@@ -767,10 +651,10 @@ void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
   mapRegionCounters(D);
   if (InstrumentRegions)
     emitCounterVariables();
-  if (PGOData) {
-    loadRegionCounts(PGOData);
+  if (PGOReader) {
+    loadRegionCounts(PGOReader);
     computeRegionCounts(D);
-    applyFunctionAttributes(PGOData, Fn);
+    applyFunctionAttributes(PGOReader, Fn);
   }
 }
 
@@ -797,12 +681,12 @@ void CodeGenPGO::computeRegionCounts(const Decl *D) {
     Walker.VisitBlockDecl(BD);
 }
 
-void CodeGenPGO::applyFunctionAttributes(PGOProfileData *PGOData,
+void CodeGenPGO::applyFunctionAttributes(llvm::ProfileDataReader *PGOReader,
                                          llvm::Function *Fn) {
   if (!haveRegionCounts())
     return;
 
-  uint64_t MaxFunctionCount = PGOData->getMaximumFunctionCount();
+  uint64_t MaxFunctionCount = PGOReader->getMaximumFunctionCount();
   uint64_t FunctionCount = getRegionCount(0);
   if (FunctionCount >= (uint64_t)(0.3 * (double)MaxFunctionCount))
     // Turn on InlineHint attribute for hot functions.
@@ -835,13 +719,15 @@ void CodeGenPGO::emitCounterIncrement(CGBuilderTy &Builder, unsigned Counter) {
   Builder.CreateStore(Count, Addr);
 }
 
-void CodeGenPGO::loadRegionCounts(PGOProfileData *PGOData) {
+void CodeGenPGO::loadRegionCounts(llvm::ProfileDataReader *PGOReader) {
   // For now, ignore the counts from the PGO data file only if the number of
   // counters does not match. This could be tightened down in the future to
   // ignore counts when the input changes in various ways, e.g., by comparing a
   // hash value based on some characteristics of the input.
   RegionCounts = new std::vector<uint64_t>();
-  if (PGOData->getFunctionCounts(getFuncName(), *RegionCounts) ||
+  uint64_t Hash;
+  // TODO: Check for hash mismatch
+  if (PGOReader->getFunctionCounts(getFuncName(), Hash, *RegionCounts) ||
       RegionCounts->size() != NumRegionCounters) {
     delete RegionCounts;
     RegionCounts = 0;
