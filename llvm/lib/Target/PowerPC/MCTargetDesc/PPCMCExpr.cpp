@@ -54,7 +54,7 @@ PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
                                      const MCAsmLayout *Layout) const {
   MCValue Value;
 
-  if (!Layout || !getSubExpr()->EvaluateAsRelocatable(Value, *Layout))
+  if (!getSubExpr()->EvaluateAsRelocatable(Value, Layout))
     return false;
 
   if (Value.isAbsolute()) {
@@ -86,6 +86,9 @@ PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
     }
     Res = MCValue::get(Result);
   } else {
+    if (!Layout)
+      return false;
+
     MCContext &Context = Layout->getAssembler().getContext();
     const MCSymbolRefExpr *Sym = Value.getSymA();
     MCSymbolRefExpr::VariantKind Modifier = Sym->getKind();

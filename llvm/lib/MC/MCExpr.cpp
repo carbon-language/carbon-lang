@@ -607,9 +607,9 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
 }
 
 bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
-                                   const MCAsmLayout &Layout) const {
-  return EvaluateAsRelocatableImpl(Res, &Layout.getAssembler(), &Layout,
-                                   0, false);
+                                   const MCAsmLayout *Layout) const {
+  MCAssembler *Assembler = Layout ? &Layout->getAssembler() : 0;
+  return EvaluateAsRelocatableImpl(Res, Assembler, Layout, 0, false);
 }
 
 bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,

@@ -91,7 +91,7 @@ public:
   /// @param Res - The relocatable value, if evaluation succeeds.
   /// @param Layout - The assembler layout object to use for evaluating values.
   /// @result - True on success.
-  bool EvaluateAsRelocatable(MCValue &Res, const MCAsmLayout &Layout) const;
+  bool EvaluateAsRelocatable(MCValue &Res, const MCAsmLayout *Layout) const;
 
   /// FindAssociatedSection - Find the "associated section" for this expression,
   /// which is currently defined as the absolute section for constants, or

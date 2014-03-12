@@ -82,7 +82,7 @@ uint64_t MachObjectWriter::getSymbolAddress(const MCSymbolData* SD,
 
 
     MCValue Target;
-    if (!S.getVariableValue()->EvaluateAsRelocatable(Target, Layout))
+    if (!S.getVariableValue()->EvaluateAsRelocatable(Target, &Layout))
       report_fatal_error("unable to evaluate offset for variable '" +
                          S.getName() + "'");
 
@@ -631,7 +631,7 @@ void MachObjectWriter::markAbsoluteVariableSymbols(MCAssembler &Asm,
     // and neither symbol is external, mark the variable as absolute.
     const MCExpr *Expr = SD.getSymbol().getVariableValue();
     MCValue Value;
-    if (Expr->EvaluateAsRelocatable(Value, Layout)) {
+    if (Expr->EvaluateAsRelocatable(Value, &Layout)) {
       if (Value.getSymA() && Value.getSymB())
         const_cast<MCSymbol*>(&SD.getSymbol())->setAbsolute();
     }

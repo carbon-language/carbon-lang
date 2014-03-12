@@ -423,6 +423,14 @@ base:
 # CHECK-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_TLS target 0x0
          add 3, 4, target@tls
 
+# Verify that fixups on constants are resolved at assemble time
+
+# CHECK: ori 1, 2, 65535              # encoding: [0x60,0x41,0xff,0xff]
+         ori 1, 2, 131071@l
+# CHECK: ori 1, 2, 1                  # encoding: [0x60,0x41,0x00,0x01]
+         ori 1, 2, 131071@h
+# CHECK: ori 1, 2, 2                  # encoding: [0x60,0x41,0x00,0x02]
+         ori 1, 2, 131071@ha
 
 # Data relocs
 # llvm-mc does not show any "encoding" string for data, so we just check the relocs
@@ -442,7 +450,3 @@ base:
 # CHECK-REL: 0x{{[0-9A-F]*[08]}} R_PPC64_DTPREL64 target 0x0
 	.quad target@dtprel
 
-# Constant fixup
-        ori 1, 2, 131071@l
-# CHECK: ori 1, 2, 131071@l              # encoding: [0x60,0x41,A,A]
-# CHECK-NEXT:                            #   fixup A - offset: 2, value: 131071@l, kind: fixup_ppc_half16

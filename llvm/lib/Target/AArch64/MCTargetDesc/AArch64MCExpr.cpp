@@ -79,7 +79,7 @@ void AArch64MCExpr::PrintImpl(raw_ostream &OS) const {
 bool
 AArch64MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
                                          const MCAsmLayout *Layout) const {
-  return getSubExpr()->EvaluateAsRelocatable(Res, *Layout);
+  return getSubExpr()->EvaluateAsRelocatable(Res, Layout);
 }
 
 static void fixELFSymbolsInTLSFixupsImpl(const MCExpr *Expr, MCAssembler &Asm) {

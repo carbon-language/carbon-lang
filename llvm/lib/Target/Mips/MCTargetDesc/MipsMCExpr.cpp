@@ -36,9 +36,7 @@ void MipsMCExpr::PrintImpl(raw_ostream &OS) const {
 bool
 MipsMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
                                       const MCAsmLayout *Layout) const {
-  if (!Layout)
-    return false;
-  return getSubExpr()->EvaluateAsRelocatable(Res, *Layout);
+  return getSubExpr()->EvaluateAsRelocatable(Res, Layout);
 }
 
 // FIXME: This basically copies MCObjectStreamer::AddValueSymbols. Perhaps
