@@ -2,6 +2,7 @@
 
 ; RUN: %llc_dwarf -O0 -filetype=obj %s -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
+; XFAIL: *
 
 ; Testcase from:
 ; struct base {
