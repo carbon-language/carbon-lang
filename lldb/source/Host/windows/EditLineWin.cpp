@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // this file is only relevant for Visual C++
-#if defined( _MSC_VER )
+#if defined( _WIN32 )
 
 #include "lldb/Host/windows/windows.h"
 

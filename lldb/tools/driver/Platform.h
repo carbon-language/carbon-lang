@@ -12,7 +12,7 @@
 
 #include "lldb/Host/HostGetOpt.h"
 
-#if defined( _MSC_VER )
+#if defined( _WIN32 )
 
     // this will stop signal.h being included
     #define _INC_SIGNAL

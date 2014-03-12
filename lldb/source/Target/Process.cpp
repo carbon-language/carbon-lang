@@ -4771,7 +4771,7 @@ public:
             return true;
 
         int fds[2];
-#ifdef _MSC_VER
+#ifdef _WIN32
         // pipe is not supported on windows so default to a fail condition
         int err = 1;
 #else
@@ -4812,7 +4812,7 @@ public:
                 terminal.SetCanonical(false);
                 terminal.SetEcho(false);
 // FD_ZERO, FD_SET are not supported on windows
-#ifndef _MSC_VER
+#ifndef _WIN32
                 while (!GetIsDone())
                 {
                     fd_set read_fdset;

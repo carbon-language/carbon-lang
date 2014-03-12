@@ -702,7 +702,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
 
                 if (::mktemp (named_pipe_path))
                 {
-#if defined(_MSC_VER)
+#if defined(_WIN32)
                     if ( false )
 #else
                     if (::mkfifo(named_pipe_path, 0600) == 0)
