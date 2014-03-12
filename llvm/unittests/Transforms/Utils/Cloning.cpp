@@ -274,7 +274,7 @@ TEST_F(CloneFunc, NewFunctionCreated) {
 // function, while the original subprogram still points to the old one.
 TEST_F(CloneFunc, Subprogram) {
   unsigned SubprogramCount = Finder->subprogram_count();
-  EXPECT_EQ(2, SubprogramCount);
+  EXPECT_EQ(2U, SubprogramCount);
 
   DebugInfoFinder::iterator Iter = Finder->subprogram_begin();
   DISubprogram Sub1(*Iter);
@@ -290,7 +290,7 @@ TEST_F(CloneFunc, Subprogram) {
 // Test that the new subprogram entry was not added to the CU which doesn't
 // contain the old subprogram entry.
 TEST_F(CloneFunc, SubprogramInRightCU) {
-  EXPECT_EQ(2, Finder->compile_unit_count());
+  EXPECT_EQ(2U, Finder->compile_unit_count());
 
   DebugInfoFinder::iterator Iter = Finder->compile_unit_begin();
   DICompileUnit CU1(*Iter);
