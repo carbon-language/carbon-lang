@@ -81,8 +81,11 @@ unsigned char __lwpins32(unsigned int, unsigned int, unsigned int);
 void __lwpval32(unsigned int, unsigned int, unsigned int);
 unsigned int __lzcnt(unsigned int);
 unsigned short __lzcnt16(unsigned short);
+static __inline__
 void __movsb(unsigned char *, unsigned char const *, size_t);
+static __inline__
 void __movsd(unsigned long *, unsigned long const *, size_t);
+static __inline__
 void __movsw(unsigned short *, unsigned short const *, size_t);
 void __nop(void);
 void __nvreg_restore_fence(void);
@@ -121,8 +124,11 @@ unsigned __int64 __readpmc(unsigned long);
 unsigned long __segmentlimit(unsigned long);
 void __sidt(void *);
 void *__slwpcb(void);
+static __inline__
 void __stosb(unsigned char *, unsigned char, size_t);
+static __inline__
 void __stosd(unsigned long *, unsigned long, size_t);
+static __inline__
 void __stosw(unsigned short *, unsigned short, size_t);
 void __svm_clgi(void);
 void __svm_invlpga(void *, int);
@@ -318,6 +324,7 @@ void __incgsword(unsigned long);
 unsigned char __lwpins64(unsigned __int64, unsigned int, unsigned int);
 void __lwpval64(unsigned __int64, unsigned int, unsigned int);
 unsigned __int64 __lzcnt64(unsigned __int64);
+static __inline__
 void __movsq(unsigned long long *, unsigned long long const *, size_t);
 __int64 __mulh(__int64, __int64);
 static __inline__
@@ -335,6 +342,7 @@ unsigned __int64 __shiftleft128(unsigned __int64 _LowPart,
 unsigned __int64 __shiftright128(unsigned __int64 _LowPart,
                                  unsigned __int64 _HighPart,
                                  unsigned char _Shift);
+static __inline__
 void __stosq(unsigned __int64 *, unsigned __int64, size_t);
 unsigned __int64 __umulh(unsigned __int64, unsigned __int64);
 unsigned char __vmx_on(unsigned __int64 *);
@@ -867,6 +875,52 @@ __readgsword(unsigned long __offset) {
 }
 #endif
 #undef __ptr_to_addr_space
+/*----------------------------------------------------------------------------*\
+|* movs, stos
+\*----------------------------------------------------------------------------*/
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__movsb(unsigned char *__dst, unsigned char const *__src, size_t __n) {
+  __asm__("rep movsb" : : "D"(__dst), "S"(__src), "c"(__n)
+                        : "%edi", "%esi", "%ecx");
+}
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__movsd(unsigned long *__dst, unsigned long const *__src, size_t __n) {
+  __asm__("rep movsl" : : "D"(__dst), "S"(__src), "c"(__n)
+                        : "%edi", "%esi", "%ecx");
+}
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__movsw(unsigned short *__dst, unsigned short const *__src, size_t __n) {
+  __asm__("rep movsh" : : "D"(__dst), "S"(__src), "c"(__n)
+                        : "%edi", "%esi", "%ecx");
+}
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__stosb(unsigned char *__dst, unsigned char __x, size_t __n) {
+  __asm__("rep stosb" : : "D"(__dst), "a"(__x), "c"(__n)
+                        : "%edi", "%ecx");
+}
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__stosd(unsigned long *__dst, unsigned long __x, size_t __n) {
+  __asm__("rep stosl" : : "D"(__dst), "a"(__x), "c"(__n)
+                        : "%edi", "%ecx");
+}
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__stosw(unsigned short *__dst, unsigned short __x, size_t __n) {
+  __asm__("rep stosh" : : "D"(__dst), "a"(__x), "c"(__n)
+                        : "%edi", "%ecx");
+}
+#ifdef __x86_64__
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__movsq(unsigned long long *__dst, unsigned long long const *__src, size_t __n) {
+  __asm__("rep movsq" : : "D"(__dst), "S"(__src), "c"(__n)
+                        : "%edi", "%esi", "%ecx");
+}
+static __inline__ void __attribute__((__always_inline__, __nodebug__))
+__stosq(unsigned __int64 *__dst, unsigned __int64 __x, size_t __n) {
+  __asm__("rep stosq" : : "D"(__dst), "a"(__x), "c"(__n)
+                        : "%edi", "%ecx");
+}
+#endif
+
 /*----------------------------------------------------------------------------*\
 |* Misc
 \*----------------------------------------------------------------------------*/
