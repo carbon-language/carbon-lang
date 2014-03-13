@@ -1822,11 +1822,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
 
   // Add all of the property methods need adding to the method list and to the
   // property metadata list.
-  for (ObjCContainerDecl::prop_iterator
-         iter = PD->prop_begin(), endIter = PD->prop_end();
-       iter != endIter ; iter++) {
+  for (auto *property : PD->props()) {
     std::vector<llvm::Constant*> Fields;
-    ObjCPropertyDecl *property = *iter;
 
     Fields.push_back(MakePropertyEncodingString(property, 0));
     PushPropertyAttributes(Fields, property);

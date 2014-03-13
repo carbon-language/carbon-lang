@@ -3458,14 +3458,10 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
   Container = getContainerDef(Container);
   
   // Add properties in this container.
-  for (ObjCContainerDecl::prop_iterator P = Container->prop_begin(),
-                                     PEnd = Container->prop_end();
-       P != PEnd;
-       ++P) {
+  for (const auto *P : Container->props())
     if (AddedProperties.insert(P->getIdentifier()))
-      Results.MaybeAddResult(Result(*P, Results.getBasePriority(*P), 0),
+      Results.MaybeAddResult(Result(P, Results.getBasePriority(P), 0),
                              CurContext);
-  }
   
   // Add nullary methods
   if (AllowNullaryMethods) {
@@ -6981,14 +6977,10 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
       }
     }
     
-    for (unsigned I = 0, N = Containers.size(); I != N; ++I) {
-      for (ObjCContainerDecl::prop_iterator P = Containers[I]->prop_begin(),
-                                         PEnd = Containers[I]->prop_end(); 
-           P != PEnd; ++P) {
-        AddObjCKeyValueCompletions(*P, IsInstanceMethod, ReturnType, Context, 
+    for (unsigned I = 0, N = Containers.size(); I != N; ++I)
+      for (auto *P : Containers[I]->props())
+        AddObjCKeyValueCompletions(P, IsInstanceMethod, ReturnType, Context, 
                                    KnownSelectors, Results);
-      }
-    }
   }
   
   Results.ExitScope();

@@ -125,8 +125,7 @@ ObjCContainerDecl::HasUserDeclaredSetterMethod(const ObjCPropertyDecl *Property)
       // Also search through the categories looking for a 'readwrite' declaration
       // of this property. If one found, presumably a setter will be provided
       // (properties declared in categories will not get auto-synthesized).
-      for (ObjCContainerDecl::prop_iterator P = Cat->prop_begin(),
-           E = Cat->prop_end(); P != E; ++P)
+      for (const auto *P : Cat->props())
         if (P->getIdentifier() == Property->getIdentifier()) {
           if (P->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_readwrite)
             return true;
@@ -286,9 +285,7 @@ ObjCInterfaceDecl::FindPropertyVisibleInPrimaryClass(
 
 void ObjCInterfaceDecl::collectPropertiesToImplement(PropertyMap &PM,
                                                      PropertyDeclOrder &PO) const {
-  for (ObjCContainerDecl::prop_iterator P = prop_begin(),
-      E = prop_end(); P != E; ++P) {
-    ObjCPropertyDecl *Prop = *P;
+  for (auto *Prop : props()) {
     PM[Prop->getIdentifier()] = Prop;
     PO.push_back(Prop);
   }
@@ -1114,13 +1111,11 @@ ObjCMethodDecl::findPropertyDecl(bool CheckOverrides) const {
     
     bool IsGetter = (NumArgs == 0);
 
-    for (ObjCContainerDecl::prop_iterator I = Container->prop_begin(),
-                                          E = Container->prop_end();
-         I != E; ++I) {
-      Selector NextSel = IsGetter ? (*I)->getGetterName()
-                                  : (*I)->getSetterName();
+    for (const auto *I : Container->props()) {
+      Selector NextSel = IsGetter ? I->getGetterName()
+                                  : I->getSetterName();
       if (NextSel == Sel)
-        return *I;
+        return I;
     }
 
     llvm_unreachable("Marked as a property accessor but no property found!");
@@ -1606,9 +1601,7 @@ void ObjCProtocolDecl::collectPropertiesToImplement(PropertyMap &PM,
                                                     PropertyDeclOrder &PO) const {
   
   if (const ObjCProtocolDecl *PDecl = getDefinition()) {
-    for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
-         E = PDecl->prop_end(); P != E; ++P) {
-      ObjCPropertyDecl *Prop = *P;
+    for (auto *Prop : PDecl->props()) {
       // Insert into PM if not there already.
       PM.insert(std::make_pair(Prop->getIdentifier(), Prop));
       PO.push_back(Prop);
@@ -1626,9 +1619,7 @@ void ObjCProtocolDecl::collectInheritedProtocolProperties(
                                                 ProtocolPropertyMap &PM) const {
   if (const ObjCProtocolDecl *PDecl = getDefinition()) {
     bool MatchFound = false;
-    for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
-         E = PDecl->prop_end(); P != E; ++P) {
-      ObjCPropertyDecl *Prop = *P;
+    for (auto *Prop : PDecl->props()) {
       if (Prop == Property)
         continue;
       if (Prop->getIdentifier() == Property->getIdentifier()) {

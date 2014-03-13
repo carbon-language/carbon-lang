@@ -1446,11 +1446,8 @@ static void CollectImmediateProperties(ObjCContainerDecl *CDecl,
                                        bool IncludeProtocols = true) {
 
   if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl)) {
-    for (ObjCContainerDecl::prop_iterator P = IDecl->prop_begin(),
-         E = IDecl->prop_end(); P != E; ++P) {
-      ObjCPropertyDecl *Prop = *P;
+    for (auto *Prop : IDecl->props())
       PropMap[Prop->getIdentifier()] = Prop;
-    }
     if (IncludeProtocols) {
       // Scan through class's protocols.
       for (ObjCInterfaceDecl::all_protocol_iterator
@@ -1461,11 +1458,8 @@ static void CollectImmediateProperties(ObjCContainerDecl *CDecl,
   }
   if (ObjCCategoryDecl *CATDecl = dyn_cast<ObjCCategoryDecl>(CDecl)) {
     if (!CATDecl->IsClassExtension())
-      for (ObjCContainerDecl::prop_iterator P = CATDecl->prop_begin(),
-           E = CATDecl->prop_end(); P != E; ++P) {
-        ObjCPropertyDecl *Prop = *P;
+      for (auto *Prop : CATDecl->props())
         PropMap[Prop->getIdentifier()] = Prop;
-      }
     if (IncludeProtocols) {
       // Scan through class's protocols.
       for (ObjCCategoryDecl::protocol_iterator PI = CATDecl->protocol_begin(),
@@ -1474,9 +1468,7 @@ static void CollectImmediateProperties(ObjCContainerDecl *CDecl,
     }
   }
   else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(CDecl)) {
-    for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
-         E = PDecl->prop_end(); P != E; ++P) {
-      ObjCPropertyDecl *Prop = *P;
+    for (auto *Prop : PDecl->props()) {
       ObjCPropertyDecl *PropertyFromSuper = SuperPropMap[Prop->getIdentifier()];
       // Exclude property for protocols which conform to class's super-class, 
       // as super-class has to implement the property.
@@ -1523,12 +1515,10 @@ Sema::IvarBacksCurrentMethodAccessor(ObjCInterfaceDecl *IFace,
   
   // look up a property declaration whose one of its accessors is implemented
   // by this method.
-  for (ObjCContainerDecl::prop_iterator P = IFace->prop_begin(),
-       E = IFace->prop_end(); P != E; ++P) {
-    ObjCPropertyDecl *property = *P;
-    if ((property->getGetterName() == IMD->getSelector() ||
-         property->getSetterName() == IMD->getSelector()) &&
-        (property->getPropertyIvarDecl() == IV))
+  for (const auto *Property : IFace->props()) {
+    if ((Property->getGetterName() == IMD->getSelector() ||
+         Property->getSetterName() == IMD->getSelector()) &&
+        (Property->getPropertyIvarDecl() == IV))
       return true;
   }
   return false;
@@ -1733,13 +1723,10 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
       }
       // Add the properties of 'PDecl' to the list of properties that
       // need to be implemented.
-      for (ObjCProtocolDecl::prop_iterator
-           PRI = PDecl->prop_begin(), PRE = PDecl->prop_end();
-           PRI != PRE; ++PRI) {
-        ObjCPropertyDecl *PropDecl = *PRI;
-        if ((*LazyMap)[PRI->getIdentifier()])
+      for (auto *PropDecl : PDecl->props()) {
+        if ((*LazyMap)[PropDecl->getIdentifier()])
           continue;
-        PropMap[PRI->getIdentifier()] = PropDecl;
+        PropMap[PropDecl->getIdentifier()] = PropDecl;
       }
     }
   }
@@ -1799,10 +1786,7 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
   // Rules apply in non-GC mode only
   if (getLangOpts().getGC() != LangOptions::NonGC)
     return;
-  for (ObjCContainerDecl::prop_iterator I = IDecl->prop_begin(),
-       E = IDecl->prop_end();
-       I != E; ++I) {
-    ObjCPropertyDecl *Property = *I;
+  for (const auto *Property : IDecl->props()) {
     ObjCMethodDecl *GetterMethod = 0;
     ObjCMethodDecl *SetterMethod = 0;
     bool LookedUpGetterSetter = false;

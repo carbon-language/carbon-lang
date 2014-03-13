@@ -2680,10 +2680,8 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *> allMethods,
       // ProcessPropertyDecl is responsible for diagnosing conflicts with any
       // user-defined setter/getter. It also synthesizes setter/getter methods
       // and adds them to the DeclContext and global method pools.
-      for (ObjCContainerDecl::prop_iterator I = CDecl->prop_begin(),
-                                            E = CDecl->prop_end();
-           I != E; ++I)
-        ProcessPropertyDecl(*I, CDecl);
+      for (auto *I : CDecl->props())
+        ProcessPropertyDecl(I, CDecl);
     CDecl->setAtEndRange(AtEnd);
   }
   if (ObjCImplementationDecl *IC=dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
@@ -2698,9 +2696,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *> allMethods,
              Ext = IDecl->visible_extensions_begin(),
              ExtEnd = IDecl->visible_extensions_end();
            Ext != ExtEnd; ++Ext) {
-        for (ObjCContainerDecl::prop_iterator I = Ext->prop_begin(),
-             E = Ext->prop_end(); I != E; ++I) {
-          ObjCPropertyDecl *Property = *I;
+        for (const auto *Property : Ext->props()) {
           // Skip over properties declared @dynamic
           if (const ObjCPropertyImplDecl *PIDecl
               = IC->FindPropertyImplDecl(Property->getIdentifier()))

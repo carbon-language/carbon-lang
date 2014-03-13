@@ -521,6 +521,10 @@ public:
 
   // Iterator access to properties.
   typedef specific_decl_iterator<ObjCPropertyDecl> prop_iterator;
+  typedef llvm::iterator_range<specific_decl_iterator<ObjCPropertyDecl>>
+    prop_range;
+
+  prop_range props() const { return prop_range(prop_begin(), prop_end()); }
   prop_iterator prop_begin() const {
     return prop_iterator(decls_begin());
   }

@@ -999,7 +999,7 @@ protected:
     llvm::SmallPtrSet<const IdentifierInfo*, 16> &PropertySet,
     SmallVectorImpl<llvm::Constant*> &Properties,
     const Decl *Container,
-    const ObjCProtocolDecl *PROTO,
+    const ObjCProtocolDecl *Proto,
     const ObjCCommonTypesHelper &ObjCTypes);
 
   /// GetProtocolRef - Return a reference to the internal protocol
@@ -2773,14 +2773,12 @@ void CGObjCCommonMac::
 PushProtocolProperties(llvm::SmallPtrSet<const IdentifierInfo*,16> &PropertySet,
                        SmallVectorImpl<llvm::Constant *> &Properties,
                        const Decl *Container,
-                       const ObjCProtocolDecl *PROTO,
+                       const ObjCProtocolDecl *Proto,
                        const ObjCCommonTypesHelper &ObjCTypes) {
-  for (ObjCProtocolDecl::protocol_iterator P = PROTO->protocol_begin(),
-         E = PROTO->protocol_end(); P != E; ++P) 
+  for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
+         E = Proto->protocol_end(); P != E; ++P) 
     PushProtocolProperties(PropertySet, Properties, Container, (*P), ObjCTypes);
-  for (ObjCContainerDecl::prop_iterator I = PROTO->prop_begin(),
-       E = PROTO->prop_end(); I != E; ++I) {
-    const ObjCPropertyDecl *PD = *I;
+  for (const auto *PD : Proto->props()) {
     if (!PropertySet.insert(PD->getIdentifier()))
       continue;
     llvm::Constant *Prop[] = {
@@ -2809,9 +2807,7 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(Twine Name,
                                        const ObjCCommonTypesHelper &ObjCTypes) {
   SmallVector<llvm::Constant *, 16> Properties;
   llvm::SmallPtrSet<const IdentifierInfo*, 16> PropertySet;
-  for (ObjCContainerDecl::prop_iterator I = OCD->prop_begin(),
-         E = OCD->prop_end(); I != E; ++I) {
-    const ObjCPropertyDecl *PD = *I;
+  for (const auto *PD : OCD->props()) {
     PropertySet.insert(PD->getIdentifier());
     llvm::Constant *Prop[] = {
       GetPropertyName(PD->getIdentifier()),
