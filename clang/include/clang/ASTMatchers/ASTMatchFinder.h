@@ -228,7 +228,7 @@ selectFirst(StringRef BoundTo, const SmallVectorImpl<BoundNodes> &Results) {
 namespace internal {
 class CollectMatchesCallback : public MatchFinder::MatchCallback {
 public:
-  virtual void run(const MatchFinder::MatchResult &Result) {
+  void run(const MatchFinder::MatchResult &Result) override {
     Nodes.push_back(Result.Nodes);
   }
   SmallVector<BoundNodes, 1> Nodes;

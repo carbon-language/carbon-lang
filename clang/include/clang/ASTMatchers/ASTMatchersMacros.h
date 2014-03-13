@@ -72,8 +72,8 @@
   class matcher_##DefineMatcher##Matcher : public MatcherInterface<Type> {     \
   public:                                                                      \
     explicit matcher_##DefineMatcher##Matcher() {}                             \
-    virtual bool matches(const Type &Node, ASTMatchFinder *Finder,             \
-                         BoundNodesTreeBuilder *Builder) const;                \
+    bool matches(const Type &Node, ASTMatchFinder *Finder,                     \
+                 BoundNodesTreeBuilder *Builder) const override;               \
   };                                                                           \
   }                                                                            \
   inline internal::Matcher<Type> DefineMatcher() {                             \
@@ -109,8 +109,8 @@
     explicit matcher_##DefineMatcher##OverloadId##Matcher(                     \
         const ParamType &A##Param)                                             \
         : Param(A##Param) {}                                                   \
-    virtual bool matches(const Type &Node, ASTMatchFinder *Finder,             \
-                         BoundNodesTreeBuilder *Builder) const;                \
+    bool matches(const Type &Node, ASTMatchFinder *Finder,                     \
+                 BoundNodesTreeBuilder *Builder) const override;               \
                                                                                \
   private:                                                                     \
     const ParamType Param;                                                     \
@@ -154,8 +154,8 @@
     matcher_##DefineMatcher##OverloadId##Matcher(const ParamType1 &A##Param1,  \
                                                  const ParamType2 &A##Param2)  \
         : Param1(A##Param1), Param2(A##Param2) {}                              \
-    virtual bool matches(const Type &Node, ASTMatchFinder *Finder,             \
-                         BoundNodesTreeBuilder *Builder) const;                \
+    bool matches(const Type &Node, ASTMatchFinder *Finder,                     \
+                 BoundNodesTreeBuilder *Builder) const override;               \
                                                                                \
   private:                                                                     \
     const ParamType1 Param1;                                                   \
@@ -203,8 +203,8 @@
   template <typename NodeType>                                                 \
   class matcher_##DefineMatcher##Matcher : public MatcherInterface<NodeType> { \
   public:                                                                      \
-    virtual bool matches(const NodeType &Node, ASTMatchFinder *Finder,         \
-                         BoundNodesTreeBuilder *Builder) const;                \
+    bool matches(const NodeType &Node, ASTMatchFinder *Finder,                 \
+                 BoundNodesTreeBuilder *Builder) const override;               \
   };                                                                           \
   }                                                                            \
   inline internal::PolymorphicMatcherWithParam0<                               \
@@ -242,8 +242,8 @@
     explicit matcher_##DefineMatcher##OverloadId##Matcher(                     \
         const ParamType &A##Param)                                             \
         : Param(A##Param) {}                                                   \
-    virtual bool matches(const NodeType &Node, ASTMatchFinder *Finder,         \
-                         BoundNodesTreeBuilder *Builder) const;                \
+    bool matches(const NodeType &Node, ASTMatchFinder *Finder,                 \
+                 BoundNodesTreeBuilder *Builder) const override;               \
                                                                                \
   private:                                                                     \
     const ParamType Param;                                                     \
@@ -289,8 +289,8 @@
     matcher_##DefineMatcher##OverloadId##Matcher(const ParamType1 &A##Param1,  \
                                                  const ParamType2 &A##Param2)  \
         : Param1(A##Param1), Param2(A##Param2) {}                              \
-    virtual bool matches(const NodeType &Node, ASTMatchFinder *Finder,         \
-                         BoundNodesTreeBuilder *Builder) const;                \
+     bool matches(const NodeType &Node, ASTMatchFinder *Finder,                \
+                  BoundNodesTreeBuilder *Builder) const override;              \
                                                                                \
   private:                                                                     \
     const ParamType1 Param1;                                                   \
