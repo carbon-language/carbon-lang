@@ -264,20 +264,17 @@ append_if(COMPILER_RT_HAS_FNO_FUNCTION_SECTIONS_FLAG -fno-function-sections SANI
 if(MSVC)
   # Remove /MD flag so that it doesn't conflict with /MT.
   if(COMPILER_RT_HAS_MT_FLAG)
-    string(REGEX REPLACE "(^| ) */MD *( |$)" "\\1 \\2" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REGEX REPLACE "(^| ) */MDd? *( |$)" "\\1 \\2" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     list(APPEND SANITIZER_COMMON_CFLAGS /MT)
   endif()
   append_if(COMPILER_RT_HAS_Oy_FLAG /Oy- SANITIZER_COMMON_CFLAGS)
   append_if(COMPILER_RT_HAS_GS_FLAG /GS- SANITIZER_COMMON_CFLAGS)
 endif()
 
-# Build with optimization, unless we're in debug mode.
-if(NOT COMPILER_RT_DEBUG)
-  if(MSVC)
-    list(APPEND SANITIZER_COMMON_CFLAGS /O2)
-  else()
-    list(APPEND SANITIZER_COMMON_CFLAGS -O3)
-  endif()
+# Build with optimization, unless we're in debug mode. If we're using MSVC,
+# always respect the optimization flags set by CMAKE_BUILD_TYPE instead.
+if(NOT COMPILER_RT_DEBUG AND NOT MSVC)
+  list(APPEND SANITIZER_COMMON_CFLAGS -O3)
 endif()
 
 # Build sanitizer runtimes with debug info.
