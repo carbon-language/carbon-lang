@@ -338,56 +338,7 @@ const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section) {
 unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
                                  unsigned FileNumber, unsigned CUID) {
   MCDwarfFileTable &Table = MCDwarfFileTablesCUMap[CUID];
-  SmallVectorImpl<MCDwarfFile>& MCDwarfFiles = Table.getMCDwarfFiles();
-  SmallVectorImpl<std::string>& MCDwarfDirs = Table.getMCDwarfDirs();
-  // Make space for this FileNumber in the MCDwarfFiles vector if needed.
-  if (FileNumber >= MCDwarfFiles.size()) {
-    MCDwarfFiles.resize(FileNumber + 1);
-  }
-
-  // Get the new MCDwarfFile slot for this FileNumber.
-  MCDwarfFile &File = MCDwarfFiles[FileNumber];
-
-  // It is an error to use see the same number more than once.
-  if (!File.Name.empty())
-    return 0;
-
-  if (Directory.empty()) {
-    // Separate the directory part from the basename of the FileName.
-    StringRef tFileName = sys::path::filename(FileName);
-    if (!tFileName.empty()) {
-      Directory = sys::path::parent_path(FileName);
-      if (!Directory.empty())
-        FileName = tFileName;
-    }
-  }
-
-  // Find or make an entry in the MCDwarfDirs vector for this Directory.
-  // Capture directory name.
-  unsigned DirIndex;
-  if (Directory.empty()) {
-    // For FileNames with no directories a DirIndex of 0 is used.
-    DirIndex = 0;
-  } else {
-    DirIndex = 0;
-    for (unsigned End = MCDwarfDirs.size(); DirIndex < End; DirIndex++) {
-      if (Directory == MCDwarfDirs[DirIndex])
-        break;
-    }
-    if (DirIndex >= MCDwarfDirs.size())
-      MCDwarfDirs.push_back(Directory);
-    // The DirIndex is one based, as DirIndex of 0 is used for FileNames with
-    // no directories.  MCDwarfDirs[] is unlike MCDwarfFiles[] in that the
-    // directory names are stored at MCDwarfDirs[DirIndex-1] where FileNames
-    // are stored at MCDwarfFiles[FileNumber].Name .
-    DirIndex++;
-  }
-
-  File.Name = FileName;
-  File.DirIndex = DirIndex;
-
-  // return the allocated FileNumber.
-  return FileNumber;
+  return Table.getFile(Directory, FileName, FileNumber);
 }
 
 /// isValidDwarfFileNumber - takes a dwarf file number and returns true if it

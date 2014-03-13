@@ -325,6 +325,55 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS) const {
   return LineStartSym;
 }
 
+unsigned MCDwarfFileTable::getFile(StringRef Directory, StringRef FileName, unsigned FileNumber) {
+  // Make space for this FileNumber in the MCDwarfFiles vector if needed.
+  MCDwarfFiles.resize(FileNumber + 1);
+
+  // Get the new MCDwarfFile slot for this FileNumber.
+  MCDwarfFile &File = MCDwarfFiles[FileNumber];
+
+  // It is an error to use see the same number more than once.
+  if (!File.Name.empty())
+    return 0;
+
+  if (Directory.empty()) {
+    // Separate the directory part from the basename of the FileName.
+    StringRef tFileName = sys::path::filename(FileName);
+    if (!tFileName.empty()) {
+      Directory = sys::path::parent_path(FileName);
+      if (!Directory.empty())
+        FileName = tFileName;
+    }
+  }
+
+  // Find or make an entry in the MCDwarfDirs vector for this Directory.
+  // Capture directory name.
+  unsigned DirIndex;
+  if (Directory.empty()) {
+    // For FileNames with no directories a DirIndex of 0 is used.
+    DirIndex = 0;
+  } else {
+    DirIndex = 0;
+    for (unsigned End = MCDwarfDirs.size(); DirIndex < End; DirIndex++) {
+      if (Directory == MCDwarfDirs[DirIndex])
+        break;
+    }
+    if (DirIndex >= MCDwarfDirs.size())
+      MCDwarfDirs.push_back(Directory);
+    // The DirIndex is one based, as DirIndex of 0 is used for FileNames with
+    // no directories.  MCDwarfDirs[] is unlike MCDwarfFiles[] in that the
+    // directory names are stored at MCDwarfDirs[DirIndex-1] where FileNames
+    // are stored at MCDwarfFiles[FileNumber].Name .
+    DirIndex++;
+  }
+
+  File.Name = FileName;
+  File.DirIndex = DirIndex;
+
+  // return the allocated FileNumber.
+  return FileNumber;
+}
+
 /// Utility function to emit the encoding to a streamer.
 void MCDwarfLineAddr::Emit(MCStreamer *MCOS, int64_t LineDelta,
                            uint64_t AddrDelta) {

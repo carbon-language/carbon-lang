@@ -190,6 +190,8 @@ public:
   //
   const MCSymbol *EmitCU(MCStreamer *MCOS) const;
 
+  unsigned getFile(StringRef Directory, StringRef FileName, unsigned FileNumber);
+
   const SmallVectorImpl<std::string> &getMCDwarfDirs() const {
     return MCDwarfDirs;
   }
