@@ -49,9 +49,5 @@ int main() {
   pthread_join(t[1], NULL);
 }
 
-// CHECK: WARNING: ThreadSanitizer: data race
-
-// but should be:
-// WARNING: ThreadSanitizer: data race on vptr
-// see http://llvm.org/bugs/show_bug.cgi?id=19113
+// CHECK: WARNING: ThreadSanitizer: data race on vptr
 
