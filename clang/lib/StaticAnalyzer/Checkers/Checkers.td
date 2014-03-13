@@ -120,6 +120,10 @@ def SizeofPointerChecker : Checker<"SizeofPtr">,
   HelpText<"Warn about unintended use of sizeof() on pointer expressions">,
   DescFile<"CheckSizeofPointer.cpp">;
 
+def CallAndMessageUnInitRefArg : Checker<"CallAndMessageUnInitRefArg">,
+  HelpText<"Check for logical errors for function calls and Objective-C message expressions (e.g., uninitialized arguments, null function pointers, and pointer to undefined variables)">,
+  DescFile<"CallAndMessageChecker.cpp">;
+
 } // end "alpha.core"
 
 //===----------------------------------------------------------------------===//

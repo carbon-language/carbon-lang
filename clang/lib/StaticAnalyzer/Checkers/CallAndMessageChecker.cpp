@@ -27,6 +27,15 @@ using namespace clang;
 using namespace ento;
 
 namespace {
+
+struct ChecksFilter {
+  DefaultBool Check_CallAndMessageUnInitRefArg;
+  DefaultBool Check_CallAndMessageChecker;
+
+  CheckName CheckName_CallAndMessageUnInitRefArg;
+  CheckName CheckName_CallAndMessageChecker;
+};
+
 class CallAndMessageChecker
   : public Checker< check::PreStmt<CallExpr>,
                     check::PreStmt<CXXDeleteExpr>,
@@ -46,6 +55,7 @@ class CallAndMessageChecker
   mutable std::unique_ptr<BugType> BT_call_few_args;
 
 public:
+  ChecksFilter Filter;
 
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
   void checkPreStmt(const CXXDeleteExpr *DE, CheckerContext &C) const;
@@ -53,10 +63,11 @@ public:
   void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
 
 private:
-  bool PreVisitProcessArg(CheckerContext &C, SVal V, SourceRange argRange,
-                          const Expr *argEx, bool IsFirstArgument,
-                          bool checkUninitFields, const CallEvent &Call,
-                          std::unique_ptr<BugType> &BT) const;
+  bool PreVisitProcessArg(CheckerContext &C, SVal V, SourceRange ArgRange,
+                          const Expr *ArgEx, bool IsFirstArgument,
+                          bool CheckUninitFields, const CallEvent &Call,
+                          std::unique_ptr<BugType> &BT,
+                          const ParmVarDecl *ParamDecl) const;
 
   static void emitBadCall(BugType *BT, CheckerContext &C, const Expr *BadE);
   void emitNilReceiverBug(CheckerContext &C, const ObjCMethodCall &msg,
@@ -70,6 +81,10 @@ private:
     if (!BT)
       BT.reset(new BuiltinBug(this, desc));
   }
+  bool uninitRefOrPointer(CheckerContext &C, const SVal &V,
+                          const SourceRange &ArgRange,
+                          const Expr *ArgEx, std::unique_ptr<BugType> &BT,
+                          const ParmVarDecl *ParamDecl, const char *BD) const;
 };
 } // end anonymous namespace
 
@@ -114,27 +129,86 @@ static StringRef describeUninitializedArgumentInCall(const CallEvent &Call,
   }
 }
 
-bool CallAndMessageChecker::PreVisitProcessArg(
-    CheckerContext &C, SVal V, SourceRange argRange, const Expr *argEx,
-    bool IsFirstArgument, bool checkUninitFields, const CallEvent &Call,
-    std::unique_ptr<BugType> &BT) const {
+bool CallAndMessageChecker::uninitRefOrPointer(CheckerContext &C,
+                                               const SVal &V,
+                                               const SourceRange &ArgRange,
+                                               const Expr *ArgEx,
+                                               std::unique_ptr<BugType> &BT,
+                                               const ParmVarDecl *ParamDecl,
+                                               const char *BD) const {
+  if (!Filter.Check_CallAndMessageUnInitRefArg)
+    return false;
+
+  // No parameter declaration available, i.e. variadic function argument.
+  if(!ParamDecl)
+    return false;
+
+  // If parameter is declared as pointer to const in function declaration,
+  // then check if corresponding argument in function call is
+  // pointing to undefined symbol value (uninitialized memory).
+  StringRef Message;
+
+  if (ParamDecl->getType()->isPointerType()) {
+    Message = "Function call argument is a pointer to uninitialized value";
+  } else if (ParamDecl->getType()->isReferenceType()) {
+    Message = "Function call argument is an uninitialized value";
+  } else
+    return false;
+
+  if(!ParamDecl->getType()->getPointeeType().isConstQualified())
+    return false;
+
+  if (const MemRegion *SValMemRegion = V.getAsRegion()) {
+    const ProgramStateRef State = C.getState();
+    const SVal PSV = State->getSVal(SValMemRegion);
+    if (PSV.isUndef()) {
+      if (ExplodedNode *N = C.generateSink()) {
+        LazyInit_BT(BD, BT);
+        BugReport *R = new BugReport(*BT, Message, N);
+        R->addRange(ArgRange);
+        if (ArgEx) {
+          bugreporter::trackNullOrUndefValue(N, ArgEx, *R);
+        }
+        C.emitReport(R);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
+                                               SVal V,
+                                               SourceRange ArgRange,
+                                               const Expr *ArgEx,
+                                               bool IsFirstArgument,
+                                               bool CheckUninitFields,
+                                               const CallEvent &Call,
+                                               std::unique_ptr<BugType> &BT,
+                                               const ParmVarDecl *ParamDecl
+                                               ) const {
+  const char *BD = "Uninitialized argument value";
+
+  if (uninitRefOrPointer(C, V, ArgRange, ArgEx, BT, ParamDecl, BD))
+    return true;
+
   if (V.isUndef()) {
     if (ExplodedNode *N = C.generateSink()) {
-      LazyInit_BT("Uninitialized argument value", BT);
+      LazyInit_BT(BD, BT);
 
       // Generate a report for this bug.
-      StringRef Desc = describeUninitializedArgumentInCall(Call,
-                                                           IsFirstArgument);
+      StringRef Desc =
+          describeUninitializedArgumentInCall(Call, IsFirstArgument);
       BugReport *R = new BugReport(*BT, Desc, N);
-      R->addRange(argRange);
-      if (argEx)
-        bugreporter::trackNullOrUndefValue(N, argEx, *R);
+      R->addRange(ArgRange);
+      if (ArgEx)
+        bugreporter::trackNullOrUndefValue(N, ArgEx, *R);
       C.emitReport(R);
     }
     return true;
   }
 
-  if (!checkUninitFields)
+  if (!CheckUninitFields)
     return false;
 
   if (Optional<nonloc::LazyCompoundVal> LV =
@@ -185,7 +259,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(
 
     if (F.Find(D->getRegion())) {
       if (ExplodedNode *N = C.generateSink()) {
-        LazyInit_BT("Uninitialized argument value", BT);
+        LazyInit_BT(BD, BT);
         SmallString<512> Str;
         llvm::raw_svector_ostream os(Str);
         os << "Passed-by-value struct argument contains uninitialized data";
@@ -208,7 +282,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(
 
         // Generate a report for this bug.
         BugReport *R = new BugReport(*BT, os.str(), N);
-        R->addRange(argRange);
+        R->addRange(ArgRange);
 
         // FIXME: enhance track back for uninitialized value for arbitrary
         // memregions
@@ -308,7 +382,8 @@ void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
   }
 
   const Decl *D = Call.getDecl();
-  if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
+  const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D);
+  if (FD) {
     // If we have a declaration, we can make sure we pass enough parameters to
     // the function.
     unsigned Params = FD->getNumParams();
@@ -343,11 +418,15 @@ void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
   else
     BT = &BT_call_arg;
 
-  for (unsigned i = 0, e = Call.getNumArgs(); i != e; ++i)
+  for (unsigned i = 0, e = Call.getNumArgs(); i != e; ++i) {
+    const ParmVarDecl *ParamDecl = NULL;
+    if(FD && i < FD->getNumParams())
+      ParamDecl = FD->getParamDecl(i);
     if (PreVisitProcessArg(C, Call.getArgSVal(i), Call.getArgSourceRange(i),
                            Call.getArgExpr(i), /*IsFirstArgument=*/i == 0,
-                           checkUninitFields, Call, *BT))
+                           checkUninitFields, Call, *BT, ParamDecl))
       return;
+  }
 
   // If we make it here, record our assumptions about the callee.
   C.addTransition(State);
@@ -507,6 +586,13 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
   C.addTransition(state);
 }
 
-void ento::registerCallAndMessageChecker(CheckerManager &mgr) {
-  mgr.registerChecker<CallAndMessageChecker>();
-}
+#define REGISTER_CHECKER(name)                                                 \
+  void ento::register##name(CheckerManager &mgr) {                             \
+    CallAndMessageChecker *Checker =                                           \
+        mgr.registerChecker<CallAndMessageChecker>();                          \
+    Checker->Filter.Check_##name = true;                                       \
+    Checker->Filter.CheckName_##name = mgr.getCurrentCheckName();              \
+  }
+
+REGISTER_CHECKER(CallAndMessageUnInitRefArg)
+REGISTER_CHECKER(CallAndMessageChecker)
