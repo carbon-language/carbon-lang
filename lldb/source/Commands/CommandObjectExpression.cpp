@@ -406,6 +406,30 @@ CommandObjectExpression::IOHandlerLinesUpdated (IOHandler &io_handler,
     return LineStatus::Success;
 }
 
+void
+CommandObjectExpression::GetMultilineExpression ()
+{
+    m_expr_lines.clear();
+    m_expr_line_count = 0;
+    
+    Debugger &debugger = GetCommandInterpreter().GetDebugger();
+    const bool multiple_lines = true; // Get multiple lines
+    IOHandlerSP io_handler_sp (new IOHandlerEditline (debugger,
+                                                      "lldb-expr",      // Name of input reader for history
+                                                      NULL,             // No prompt
+                                                      multiple_lines,
+                                                      1,                // Show line numbers starting at 1
+                                                      *this));
+    
+    StreamFileSP output_sp(io_handler_sp->GetOutputStreamFile());
+    if (output_sp)
+    {
+        output_sp->PutCString("Enter expressions, then terminate with an empty line to evaluate:\n");
+        output_sp->Flush();
+    }
+    debugger.PushIOHandler(io_handler_sp);
+}
+
 bool
 CommandObjectExpression::DoExecute
 (
@@ -419,25 +443,7 @@ CommandObjectExpression::DoExecute
 
     if (command[0] == '\0')
     {
-        m_expr_lines.clear();
-        m_expr_line_count = 0;
-        
-        Debugger &debugger = GetCommandInterpreter().GetDebugger();
-        const bool multiple_lines = true; // Get multiple lines
-        IOHandlerSP io_handler_sp (new IOHandlerEditline (debugger,
-                                                          "lldb-expr",      // Name of input reader for history
-                                                          NULL,             // No prompt
-                                                          multiple_lines,
-                                                          1,                // Show line numbers starting at 1
-                                                          *this));
-        
-        StreamFileSP output_sp(io_handler_sp->GetOutputStreamFile());
-        if (output_sp)
-        {
-            output_sp->PutCString("Enter expressions, then terminate with an empty line to evaluate:\n");
-            output_sp->Flush();
-        }
-        debugger.PushIOHandler(io_handler_sp);
+        GetMultilineExpression ();
         return result.Succeeded();
     }
 
@@ -475,6 +481,13 @@ CommandObjectExpression::DoExecute
                 result.AppendError (error.AsCString());
                 result.SetStatus (eReturnStatusFailed);
                 return false;
+            }
+            
+            // No expression following options
+            if (expr[0] == '\0')
+            {
+                GetMultilineExpression ();
+                return result.Succeeded();
             }
         }
     }
