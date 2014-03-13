@@ -823,7 +823,11 @@ public:
   }
 
   typedef ObjCProtocolList::iterator protocol_iterator;
+  typedef llvm::iterator_range<protocol_iterator> protocol_range;
 
+  protocol_range protocols() const {
+    return protocol_range(protocol_begin(), protocol_end());
+  }
   protocol_iterator protocol_begin() const {
     // FIXME: Should make sure no callers ever do this.
     if (!hasDefinition())

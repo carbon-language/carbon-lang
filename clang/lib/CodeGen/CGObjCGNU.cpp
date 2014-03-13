@@ -2252,12 +2252,8 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   }
   // Collect the names of referenced protocols
   SmallVector<std::string, 16> Protocols;
-  for (ObjCInterfaceDecl::protocol_iterator
-         I = ClassDecl->protocol_begin(),
-         E = ClassDecl->protocol_end(); I != E; ++I)
-    Protocols.push_back((*I)->getNameAsString());
-
-
+  for (const auto *I : ClassDecl->protocols())
+    Protocols.push_back(I->getNameAsString());
 
   // Get the superclass pointer.
   llvm::Constant *SuperClass;

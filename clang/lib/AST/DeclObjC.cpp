@@ -555,10 +555,8 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
       return MethodDecl;
 
     // Didn't find one yet - look through protocols.
-    for (ObjCInterfaceDecl::protocol_iterator I = ClassDecl->protocol_begin(),
-                                              E = ClassDecl->protocol_end();
-           I != E; ++I)
-      if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
+    for (const auto *I : ClassDecl->protocols())
+      if ((MethodDecl = I->lookupMethod(Sel, isInstance)))
         return MethodDecl;
     
     // Didn't find one yet - now look through categories.
@@ -1004,10 +1002,8 @@ static void CollectOverriddenMethodsRecurse(const ObjCContainerDecl *Container,
 
   if (const ObjCInterfaceDecl *
         Interface = dyn_cast<ObjCInterfaceDecl>(Container)) {
-    for (ObjCInterfaceDecl::protocol_iterator P = Interface->protocol_begin(),
-                                           PEnd = Interface->protocol_end();
-         P != PEnd; ++P)
-      CollectOverriddenMethodsRecurse(*P, Method, Methods, MovedToSuper);
+    for (const auto *P : Interface->protocols())
+      CollectOverriddenMethodsRecurse(P, Method, Methods, MovedToSuper);
 
     for (ObjCInterfaceDecl::known_categories_iterator
            Cat = Interface->known_categories_begin(),
@@ -1381,9 +1377,8 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
   
   ObjCInterfaceDecl *IDecl = this;
   // 1st, look up the class.
-  for (ObjCInterfaceDecl::protocol_iterator
-        PI = IDecl->protocol_begin(), E = IDecl->protocol_end(); PI != E; ++PI){
-    if (getASTContext().ProtocolCompatibleWithProtocol(lProto, *PI))
+  for (auto *PI : IDecl->protocols()){
+    if (getASTContext().ProtocolCompatibleWithProtocol(lProto, PI))
       return true;
     // This is dubious and is added to be compatible with gcc.  In gcc, it is
     // also allowed assigning a protocol-qualified 'id' type to a LHS object
@@ -1392,7 +1387,7 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
     // FIXME: Treat this as an extension, and flag this as an error when GCC
     // extensions are not enabled.
     if (RHSIsQualifiedID &&
-        getASTContext().ProtocolCompatibleWithProtocol(*PI, lProto))
+        getASTContext().ProtocolCompatibleWithProtocol(PI, lProto))
       return true;
   }
 

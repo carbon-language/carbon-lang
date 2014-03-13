@@ -222,11 +222,8 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
 
     if (FoundInSuper) {
       // Also compare the property against a property in our protocols.
-      for (ObjCInterfaceDecl::protocol_iterator
-            P = CurrentInterfaceDecl->protocol_begin(),
-            PEnd = CurrentInterfaceDecl->protocol_end();
-           P != PEnd; ++P) {
-        CheckPropertyAgainstProtocol(*this, Res, *P, KnownProtos);
+      for (auto *P : CurrentInterfaceDecl->protocols()) {
+        CheckPropertyAgainstProtocol(*this, Res, P, KnownProtos);
       }
     } else {
       // Slower path: look in all protocols we referenced.

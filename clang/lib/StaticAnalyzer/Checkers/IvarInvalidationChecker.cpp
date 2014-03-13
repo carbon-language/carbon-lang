@@ -257,11 +257,8 @@ void IvarInvalidationCheckerImpl::containsInvalidationMethod(
   if (const ObjCInterfaceDecl *InterfD = dyn_cast<ObjCInterfaceDecl>(D)) {
 
     // Visit all protocols.
-    for (ObjCInterfaceDecl::protocol_iterator
-        I = InterfD->protocol_begin(),
-        E = InterfD->protocol_end(); I != E; ++I) {
-      containsInvalidationMethod((*I)->getDefinition(), OutInfo, Partial);
-    }
+    for (const auto *I : InterfD->protocols())
+      containsInvalidationMethod(I->getDefinition(), OutInfo, Partial);
 
     // Visit all categories in case the invalidation method is declared in
     // a category.
@@ -278,9 +275,9 @@ void IvarInvalidationCheckerImpl::containsInvalidationMethod(
 
   // If protocol, check all parent protocols.
   if (const ObjCProtocolDecl *ProtD = dyn_cast<ObjCProtocolDecl>(D)) {
-    for (ObjCInterfaceDecl::protocol_iterator
-        I = ProtD->protocol_begin(),
-        E = ProtD->protocol_end(); I != E; ++I) {
+    for (ObjCProtocolDecl::protocol_iterator I = ProtD->protocol_begin(),
+                                             E = ProtD->protocol_end();
+         I != E; ++I) {
       containsInvalidationMethod((*I)->getDefinition(), OutInfo, Partial);
     }
     return;

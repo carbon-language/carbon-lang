@@ -4852,10 +4852,8 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
     return;
   
   // Add methods in protocols.
-  for (ObjCInterfaceDecl::protocol_iterator I = IFace->protocol_begin(),
-                                            E = IFace->protocol_end();
-       I != E; ++I)
-    AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents,
+  for (auto *I : IFace->protocols())
+    AddObjCMethods(I, WantInstanceMethods, WantKind, SelIdents,
                    CurContext, Selectors, AllowSameLength, Results, false);
   
   // Add methods in categories.

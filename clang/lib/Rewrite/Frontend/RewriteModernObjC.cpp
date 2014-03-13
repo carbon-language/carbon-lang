@@ -7511,8 +7511,8 @@ void RewriteModernObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   // Protocols referenced in class declaration?
   // Protocol's super protocol list
   std::vector<ObjCProtocolDecl *> RefedProtocols;
-  for (ObjCInterfaceDecl::protocol_iterator I = CDecl->protocol_begin(),
-                                            E = CDecl->protocol_end();
+  for (ObjCCategoryDecl::protocol_iterator I = CDecl->protocol_begin(),
+                                           E = CDecl->protocol_end();
 
          I != E; ++I) {
     RefedProtocols.push_back(*I);

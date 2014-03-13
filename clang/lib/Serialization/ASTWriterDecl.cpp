@@ -491,10 +491,8 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
 
     // Write out the protocols that are directly referenced by the @interface.
     Record.push_back(Data.ReferencedProtocols.size());
-    for (ObjCInterfaceDecl::protocol_iterator P = D->protocol_begin(),
-                                           PEnd = D->protocol_end();
-         P != PEnd; ++P)
-      Writer.AddDeclRef(*P, Record);
+    for (const auto *P : D->protocols())
+      Writer.AddDeclRef(P, Record);
     for (ObjCInterfaceDecl::protocol_loc_iterator PL = D->protocol_loc_begin(),
          PLEnd = D->protocol_loc_end();
          PL != PLEnd; ++PL)
