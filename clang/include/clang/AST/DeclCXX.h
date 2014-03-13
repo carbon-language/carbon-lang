@@ -1019,6 +1019,11 @@ public:
                         FieldDecl *&ThisCapture) const;
 
   typedef const LambdaExpr::Capture* capture_const_iterator;
+  typedef llvm::iterator_range<capture_const_iterator> capture_const_range;
+
+  capture_const_range captures() const {
+    return capture_const_range(captures_begin(), captures_end());
+  }
   capture_const_iterator captures_begin() const {
     return isLambda() ? getLambdaData().Captures : NULL;
   }
