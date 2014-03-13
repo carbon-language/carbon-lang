@@ -227,6 +227,10 @@ inline CXXRecordDecl::friend_iterator CXXRecordDecl::friend_end() const {
   return friend_iterator(0);
 }
 
+inline CXXRecordDecl::friend_range CXXRecordDecl::friends() const {
+  return friend_range(friend_begin(), friend_end());
+}
+
 inline void CXXRecordDecl::pushFriendDecl(FriendDecl *FD) {
   assert(!FD->NextFriend && "friend already has next friend?");
   FD->NextFriend = data().FirstFriend;

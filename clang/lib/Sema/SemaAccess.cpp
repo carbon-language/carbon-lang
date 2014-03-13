@@ -571,10 +571,7 @@ static AccessResult GetFriendKind(Sema &S,
   AccessResult OnFailure = AR_inaccessible;
 
   // Okay, check friends.
-  for (CXXRecordDecl::friend_iterator I = Class->friend_begin(),
-         E = Class->friend_end(); I != E; ++I) {
-    FriendDecl *Friend = *I;
-
+  for (auto *Friend : Class->friends()) {
     switch (MatchesFriend(S, EC, Friend)) {
     case AR_accessible:
       return AR_accessible;

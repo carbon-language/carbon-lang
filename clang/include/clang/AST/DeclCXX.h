@@ -745,6 +745,9 @@ public:
   /// An iterator over friend declarations.  All of these are defined
   /// in DeclFriend.h.
   class friend_iterator;
+  typedef llvm::iterator_range<friend_iterator> friend_range;
+
+  friend_range friends() const;
   friend_iterator friend_begin() const;
   friend_iterator friend_end() const;
   void pushFriendDecl(FriendDecl *FD);
