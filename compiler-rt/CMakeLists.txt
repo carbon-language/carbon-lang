@@ -95,7 +95,8 @@ else()
   list(GET CONFIG_OUTPUT 3 LLVM_MAIN_SRC_DIR)
 
   # Make use of LLVM CMake modules.
-  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/share/llvm/cmake")
+  file(TO_CMAKE_PATH ${LLVM_BINARY_DIR} LLVM_BINARY_DIR_CMAKE_STYLE)
+  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR_CMAKE_STYLE}/share/llvm/cmake")
   list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
   # Get some LLVM variables from LLVMConfig.
   include("${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
