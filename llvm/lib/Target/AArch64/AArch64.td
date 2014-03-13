@@ -70,7 +70,9 @@ include "AArch64CallingConv.td"
 
 include "AArch64InstrInfo.td"
 
-def AArch64InstrInfo : InstrInfo;
+def AArch64InstrInfo : InstrInfo {
+  let noNamedPositionallyEncodedOperands = 1;
+}
 
 //===----------------------------------------------------------------------===//
 // Declare the target which we are implementing

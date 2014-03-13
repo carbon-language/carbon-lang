@@ -1881,6 +1881,9 @@ class A64I_dp3_4operand<bit sf, bits<6> opcode, RegisterClass AccReg,
              !strconcat(asmop, "\t$Rd, $Rn, $Rm, $Ra"),
              [(set AccTy:$Rd, pattern)], NoItinerary>,
     Sched<[WriteMAC, ReadMAC, ReadMAC, ReadMAC]> {
+  bits<5> Ra;
+  let Inst{14-10} = Ra;
+
   RegisterClass AccGPR = AccReg;
   RegisterClass SrcGPR = SrcReg;
 }

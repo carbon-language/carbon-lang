@@ -346,15 +346,13 @@ class A64I_dp3<bit sf, bits<6> opcode,
                dag outs, dag ins, string asmstr,
                list<dag> patterns, InstrItinClass itin>
   : A64InstRdnm<outs, ins, asmstr, patterns, itin> {
-  bits<5> Ra;
-
   let Inst{31} = sf;
   let Inst{30-29} = opcode{5-4};
   let Inst{28-24} = 0b11011;
   let Inst{23-21} = opcode{3-1};
   // Inherits Rm in 20-16
   let Inst{15} = opcode{0};
-  let Inst{14-10} = Ra;
+  // {14-10} mostly Ra, but unspecified for SMULH/UMULH
   // Inherits Rn in 9-5
   // Inherits Rd in 4-0
 }
