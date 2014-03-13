@@ -799,14 +799,14 @@ public:
   static void *ID() { return (void *)&PassID; }
 
   explicit FunctionAnalysisManagerModuleProxy(FunctionAnalysisManager &FAM)
-      : FAM(FAM) {}
+      : FAM(&FAM) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
   FunctionAnalysisManagerModuleProxy(
       const FunctionAnalysisManagerModuleProxy &Arg)
       : FAM(Arg.FAM) {}
   FunctionAnalysisManagerModuleProxy(FunctionAnalysisManagerModuleProxy &&Arg)
-      : FAM(Arg.FAM) {}
+      : FAM(std::move(Arg.FAM)) {}
   FunctionAnalysisManagerModuleProxy &
   operator=(FunctionAnalysisManagerModuleProxy RHS) {
     std::swap(*this, RHS);
@@ -827,7 +827,7 @@ public:
 private:
   static char PassID;
 
-  FunctionAnalysisManager &FAM;
+  FunctionAnalysisManager *FAM;
 };
 
 /// \brief The result proxy object for the
@@ -836,11 +836,11 @@ private:
 /// See its documentation for more information.
 class FunctionAnalysisManagerModuleProxy::Result {
 public:
-  explicit Result(FunctionAnalysisManager &FAM) : FAM(FAM) {}
+  explicit Result(FunctionAnalysisManager &FAM) : FAM(&FAM) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
   Result(const Result &Arg) : FAM(Arg.FAM) {}
-  Result(Result &&Arg) : FAM(Arg.FAM) {}
+  Result(Result &&Arg) : FAM(std::move(Arg.FAM)) {}
   Result &operator=(Result RHS) {
     std::swap(*this, RHS);
     return *this;
@@ -848,7 +848,7 @@ public:
   ~Result();
 
   /// \brief Accessor for the \c FunctionAnalysisManager.
-  FunctionAnalysisManager &getManager() { return FAM; }
+  FunctionAnalysisManager &getManager() { return *FAM; }
 
   /// \brief Handler for invalidation of the module.
   ///
@@ -863,7 +863,7 @@ public:
   bool invalidate(Module *M, const PreservedAnalyses &PA);
 
 private:
-  FunctionAnalysisManager &FAM;
+  FunctionAnalysisManager *FAM;
 };
 
 /// \brief A function analysis which acts as a proxy for a module analysis
@@ -883,36 +883,36 @@ public:
   /// \brief Result proxy object for \c ModuleAnalysisManagerFunctionProxy.
   class Result {
   public:
-    explicit Result(const ModuleAnalysisManager &MAM) : MAM(MAM) {}
+    explicit Result(const ModuleAnalysisManager &MAM) : MAM(&MAM) {}
     // We have to explicitly define all the special member functions because
     // MSVC refuses to generate them.
     Result(const Result &Arg) : MAM(Arg.MAM) {}
-    Result(Result &&Arg) : MAM(Arg.MAM) {}
+    Result(Result &&Arg) : MAM(std::move(Arg.MAM)) {}
     Result &operator=(Result RHS) {
       std::swap(*this, RHS);
       return *this;
     }
 
-    const ModuleAnalysisManager &getManager() const { return MAM; }
+    const ModuleAnalysisManager &getManager() const { return *MAM; }
 
     /// \brief Handle invalidation by ignoring it, this pass is immutable.
     bool invalidate(Function *) { return false; }
 
   private:
-    const ModuleAnalysisManager &MAM;
+    const ModuleAnalysisManager *MAM;
   };
 
   static void *ID() { return (void *)&PassID; }
 
   ModuleAnalysisManagerFunctionProxy(const ModuleAnalysisManager &MAM)
-      : MAM(MAM) {}
+      : MAM(&MAM) {}
   // We have to explicitly define all the special member functions because MSVC
   // refuses to generate them.
   ModuleAnalysisManagerFunctionProxy(
       const ModuleAnalysisManagerFunctionProxy &Arg)
       : MAM(Arg.MAM) {}
   ModuleAnalysisManagerFunctionProxy(ModuleAnalysisManagerFunctionProxy &&Arg)
-      : MAM(Arg.MAM) {}
+      : MAM(std::move(Arg.MAM)) {}
   ModuleAnalysisManagerFunctionProxy &
   operator=(ModuleAnalysisManagerFunctionProxy RHS) {
     std::swap(*this, RHS);
@@ -922,12 +922,12 @@ public:
   /// \brief Run the analysis pass and create our proxy result object.
   /// Nothing to see here, it just forwards the \c MAM reference into the
   /// result.
-  Result run(Function *) { return Result(MAM); }
+  Result run(Function *) { return Result(*MAM); }
 
 private:
   static char PassID;
 
-  const ModuleAnalysisManager &MAM;
+  const ModuleAnalysisManager *MAM;
 };
 
 /// \brief Trivial adaptor that maps from a module to its functions.

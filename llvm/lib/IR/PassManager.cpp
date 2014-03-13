@@ -171,14 +171,14 @@ char FunctionAnalysisManagerModuleProxy::PassID;
 
 FunctionAnalysisManagerModuleProxy::Result
 FunctionAnalysisManagerModuleProxy::run(Module *M) {
-  assert(FAM.empty() && "Function analyses ran prior to the module proxy!");
-  return Result(FAM);
+  assert(FAM->empty() && "Function analyses ran prior to the module proxy!");
+  return Result(*FAM);
 }
 
 FunctionAnalysisManagerModuleProxy::Result::~Result() {
   // Clear out the analysis manager if we're being destroyed -- it means we
   // didn't even see an invalidate call when we got invalidated.
-  FAM.clear();
+  FAM->clear();
 }
 
 bool FunctionAnalysisManagerModuleProxy::Result::invalidate(
@@ -188,7 +188,7 @@ bool FunctionAnalysisManagerModuleProxy::Result::invalidate(
   // objects in the cache making it impossible to incrementally preserve them.
   // Just clear the entire manager.
   if (!PA.preserved(ID()))
-    FAM.clear();
+    FAM->clear();
 
   // Return false to indicate that this result is still a valid proxy.
   return false;
