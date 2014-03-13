@@ -31,8 +31,83 @@ using namespace llvm;
 using namespace polly;
 
 static cl::opt<bool> EnableTiling("polly-pluto-tile", cl::desc("Enable tiling"),
-                                  cl::Hidden, cl::init(false),
+                                  cl::Hidden, cl::init(false), cl::ZeroOrMore,
                                   cl::cat(PollyCategory));
+
+static cl::opt<bool> EnableIntraTiling("polly-pluto-intratileopt",
+                                       cl::desc("Enable intratiling"),
+                                       cl::Hidden, cl::init(true),
+                                       cl::ZeroOrMore, cl::cat(PollyCategory));
+
+static cl::opt<bool> PlutoDebug("polly-pluto-debug",
+                                cl::desc("Enable pluto debug"), cl::Hidden,
+                                cl::init(false), cl::ZeroOrMore,
+                                cl::cat(PollyCategory));
+
+static cl::opt<bool> PlutoMoreDebug("polly-pluto-moredebug",
+                                    cl::desc("Enable more pluto debugging"),
+                                    cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                                    cl::cat(PollyCategory));
+
+static cl::opt<bool> PlutoParallel("polly-pluto-parallel",
+                                   cl::desc("Enable pluto parallel transforms"),
+                                   cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                                   cl::cat(PollyCategory));
+
+static cl::opt<bool>
+PlutoInnerParallel("polly-pluto-innerpara",
+                   cl::desc("Enable inner parallelism instead of piped."),
+                   cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                   cl::cat(PollyCategory));
+
+static cl::opt<bool>
+PlutoIdentity("polly-pluto-identity",
+              cl::desc("Enable pluto identity transformation"), cl::Hidden,
+              cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+
+static cl::opt<bool> PlutoUnroll("polly-pluto-unroll",
+                                 cl::desc("Enable pluto unrolling"), cl::Hidden,
+                                 cl::init(false), cl::ZeroOrMore,
+                                 cl::cat(PollyCategory));
+
+static cl::opt<bool> PlutoRar("polly-pluto-rar",
+                              cl::desc("Enable pluto rar deps"), cl::Hidden,
+                              cl::init(false), cl::ZeroOrMore,
+                              cl::cat(PollyCategory));
+
+static cl::opt<bool> PlutoParaPipe("polly-pluto-multipipe",
+                                   cl::desc("Enable multipipe parallelism"),
+                                   cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                                   cl::cat(PollyCategory));
+
+static cl::opt<bool> PlutoL2Tile("polly-pluto-l2tile",
+                                 cl::desc("Enable L2 tiling"), cl::Hidden,
+                                 cl::init(false), cl::ZeroOrMore,
+                                 cl::cat(PollyCategory));
+
+static cl::opt<bool> PlutoPollyUnroll("polly-pluto-pollyunroll",
+                                      cl::desc("Enable pluto polly unrolling"),
+                                      cl::Hidden, cl::init(false),
+                                      cl::ZeroOrMore, cl::cat(PollyCategory));
+
+static cl::opt<bool>
+PlutoIslDep("polly-pluto-isldep",
+            cl::desc("Enable pluto isl dependency scanning"), cl::Hidden,
+            cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+
+static cl::opt<bool> PlutoIslDepCompact(
+    "polly-pluto-isldepcom", cl::desc("Enable pluto isl dependency compaction"),
+    cl::Hidden, cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+
+static cl::opt<bool> PlutoIslSolve("polly-pluto-islsolve",
+                                   cl::desc("Enable pluto isl solver"),
+                                   cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                                   cl::cat(PollyCategory));
+
+static cl::opt<bool> PlutoLastWriter("polly-pluto-lastwriter",
+                                     cl::desc("Enable pluto lastwriter"),
+                                     cl::Hidden, cl::init(false),
+                                     cl::ZeroOrMore, cl::cat(PollyCategory));
 
 namespace {
 /// Convert an int into a string.
@@ -124,8 +199,23 @@ bool PlutoOptimizer::runOnScop(Scop &S) {
   Domain = isl_union_set_apply(Domain, isl_union_map_copy(ToPlutoNames));
 
   Options = pluto_options_alloc();
-  Options->fuse = 0;
+  Options->debug = PlutoDebug;
+  Options->fuse = 2;
+  Options->identity = PlutoIdentity;
+  Options->innerpar = PlutoInnerParallel;
+  Options->intratileopt = EnableIntraTiling;
+  Options->isldep = PlutoIslDep;
+  Options->isldepcompact = PlutoIslDepCompact;
+  Options->islsolve = PlutoIslSolve;
+  Options->l2tile = PlutoL2Tile;
+  Options->lastwriter = PlutoLastWriter;
+  Options->moredebug = PlutoMoreDebug;
+  Options->multipipe = PlutoParaPipe;
+  Options->parallel = PlutoParallel;
+  Options->polyunroll = PlutoPollyUnroll;
+  Options->rar = PlutoRar;
   Options->tile = EnableTiling;
+  Options->unroll = PlutoUnroll;
 
   DEBUG(dbgs() << "Domain: " << stringFromIslObj(Domain) << "\n";
         dbgs() << "Dependences: " << stringFromIslObj(Deps) << "\n";);
