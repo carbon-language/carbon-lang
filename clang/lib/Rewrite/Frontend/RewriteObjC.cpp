@@ -981,14 +981,11 @@ void RewriteObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
   ReplaceText(LocStart, 0, "// ");
 
   for (auto *I : CatDecl->properties())
-    RewriteProperty(I);
-  
+    RewriteProperty(I);  
   for (auto *I : CatDecl->instance_methods())
     RewriteMethodDeclaration(I);
-  for (ObjCCategoryDecl::classmeth_iterator
-         I = CatDecl->classmeth_begin(), E = CatDecl->classmeth_end();
-       I != E; ++I)
-    RewriteMethodDeclaration(*I);
+  for (auto *I : CatDecl->class_methods())
+    RewriteMethodDeclaration(I);
 
   // Lastly, comment out the @end.
   ReplaceText(CatDecl->getAtEndRange().getBegin(), 
@@ -1004,11 +1001,8 @@ void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
 
   for (auto *I : PDecl->instance_methods())
     RewriteMethodDeclaration(I);
-  for (ObjCProtocolDecl::classmeth_iterator
-         I = PDecl->classmeth_begin(), E = PDecl->classmeth_end();
-       I != E; ++I)
-    RewriteMethodDeclaration(*I);
-
+  for (auto *I : PDecl->class_methods())
+    RewriteMethodDeclaration(I);
   for (auto *I : PDecl->properties())
     RewriteProperty(I);
   
@@ -1193,12 +1187,8 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
     ReplaceText(LocStart, endBuf-startBuf, ResultStr);
   }
 
-  for (ObjCCategoryImplDecl::classmeth_iterator
-       I = IMD ? IMD->classmeth_begin() : CID->classmeth_begin(),
-       E = IMD ? IMD->classmeth_end() : CID->classmeth_end();
-       I != E; ++I) {
+  for (auto *OMD : IMD ? IMD->class_methods() : CID->class_methods()) {
     std::string ResultStr;
-    ObjCMethodDecl *OMD = *I;
     RewriteObjCMethodDecl(OMD->getClassInterface(), OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
     SourceLocation LocEnd = OMD->getCompoundBody()->getLocStart();
@@ -1239,10 +1229,8 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
     RewriteProperty(I);
   for (auto *I : ClassDecl->instance_methods())
     RewriteMethodDeclaration(I);
-  for (ObjCInterfaceDecl::classmeth_iterator
-         I = ClassDecl->classmeth_begin(), E = ClassDecl->classmeth_end();
-       I != E; ++I)
-    RewriteMethodDeclaration(*I);
+  for (auto *I : ClassDecl->class_methods())
+    RewriteMethodDeclaration(I);
 
   // Lastly, comment out the @end.
   ReplaceText(ClassDecl->getAtEndRange().getBegin(), strlen("@end"), 

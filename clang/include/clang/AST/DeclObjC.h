@@ -565,6 +565,11 @@ public:
   typedef filtered_decl_iterator<ObjCMethodDecl,
                                  &ObjCMethodDecl::isClassMethod>
     classmeth_iterator;
+  typedef llvm::iterator_range<classmeth_iterator> classmeth_range;
+
+  classmeth_range class_methods() const {
+    return classmeth_range(classmeth_begin(), classmeth_end());
+  }
   classmeth_iterator classmeth_begin() const {
     return classmeth_iterator(decls_begin());
   }

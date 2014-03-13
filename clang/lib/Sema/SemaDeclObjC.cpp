@@ -1780,10 +1780,7 @@ static void CheckProtocolMethodDefs(Sema &S,
           }
     }
   // check unimplemented class methods
-  for (ObjCProtocolDecl::classmeth_iterator
-         I = PDecl->classmeth_begin(), E = PDecl->classmeth_end();
-       I != E; ++I) {
-    ObjCMethodDecl *method = *I;
+  for (auto *method : PDecl->class_methods()) {
     if (method->getImplementationControl() != ObjCMethodDecl::Optional &&
         !ClsMap.count(method->getSelector()) &&
         (!Super || !Super->lookupMethod(method->getSelector(),
@@ -1853,26 +1850,23 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
 
   // Check and see if class methods in class interface have been
   // implemented in the implementation class. If so, their types match.
-  for (ObjCInterfaceDecl::classmeth_iterator I = CDecl->classmeth_begin(),
-                                             E = CDecl->classmeth_end();
-       I != E; ++I) {
-    if (!ClsMapSeen.insert((*I)->getSelector()))
+  for (auto *I : CDecl->class_methods()) {
+    if (!ClsMapSeen.insert(I->getSelector()))
       continue;
-    if (!ClsMap.count((*I)->getSelector())) {
+    if (!ClsMap.count(I->getSelector())) {
       if (ImmediateClass)
-        WarnUndefinedMethod(*this, IMPDecl->getLocation(), *I, IncompleteImpl,
+        WarnUndefinedMethod(*this, IMPDecl->getLocation(), I, IncompleteImpl,
                             diag::warn_undef_method_impl);
     } else {
       ObjCMethodDecl *ImpMethodDecl =
-        IMPDecl->getClassMethod((*I)->getSelector());
-      assert(CDecl->getClassMethod((*I)->getSelector()) &&
+        IMPDecl->getClassMethod(I->getSelector());
+      assert(CDecl->getClassMethod(I->getSelector()) &&
              "Expected to find the method through lookup as well");
-      ObjCMethodDecl *MethodDecl = *I;
       if (!WarnCategoryMethodImpl)
-        WarnConflictingTypedMethods(ImpMethodDecl, MethodDecl, 
+        WarnConflictingTypedMethods(ImpMethodDecl, I, 
                                     isa<ObjCProtocolDecl>(CDecl));
       else
-        WarnExactTypedMethods(ImpMethodDecl, MethodDecl,
+        WarnExactTypedMethods(ImpMethodDecl, I,
                               isa<ObjCProtocolDecl>(CDecl));
     }
   }
@@ -1955,10 +1949,8 @@ void Sema::CheckCategoryVsClassMethodMatches(
     InsMap.insert(Sel);
   }
   
-  for (ObjCImplementationDecl::classmeth_iterator
-       I = CatIMPDecl->classmeth_begin(),
-       E = CatIMPDecl->classmeth_end(); I != E; ++I) {
-    Selector Sel = (*I)->getSelector();
+  for (const auto *I : CatIMPDecl->class_methods()) {
+    Selector Sel = I->getSelector();
     if (SuperIDecl && SuperIDecl->lookupMethod(Sel, false))
       continue;
     ClsMap.insert(Sel);
@@ -1994,10 +1986,8 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
   }
 
   SelectorSet ClsMap;
-  for (ObjCImplementationDecl::classmeth_iterator
-       I = IMPDecl->classmeth_begin(),
-       E = IMPDecl->classmeth_end(); I != E; ++I)
-    ClsMap.insert((*I)->getSelector());
+  for (const auto *I : IMPDecl->class_methods())
+    ClsMap.insert(I->getSelector());
 
   // Check for type conflict of methods declared in a class/protocol and
   // its implementation; if any.

@@ -1165,10 +1165,8 @@ void RewriteModernObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
   
   for (auto *I : CatDecl->instance_methods())
     RewriteMethodDeclaration(I);
-  for (ObjCCategoryDecl::classmeth_iterator
-         I = CatDecl->classmeth_begin(), E = CatDecl->classmeth_end();
-       I != E; ++I)
-    RewriteMethodDeclaration(*I);
+  for (auto *I : CatDecl->class_methods())
+    RewriteMethodDeclaration(I);
 
   // Lastly, comment out the @end.
   ReplaceText(CatDecl->getAtEndRange().getBegin(), 
@@ -1184,11 +1182,8 @@ void RewriteModernObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
 
   for (auto *I : PDecl->instance_methods())
     RewriteMethodDeclaration(I);
-  for (ObjCProtocolDecl::classmeth_iterator
-         I = PDecl->classmeth_begin(), E = PDecl->classmeth_end();
-       I != E; ++I)
-    RewriteMethodDeclaration(*I);
-
+  for (auto *I : PDecl->class_methods())
+    RewriteMethodDeclaration(I);
   for (auto *I : PDecl->properties())
     RewriteProperty(I);
   
@@ -1399,12 +1394,8 @@ void RewriteModernObjC::RewriteImplementationDecl(Decl *OID) {
     ReplaceText(LocStart, endBuf-startBuf, ResultStr);
   }
 
-  for (ObjCCategoryImplDecl::classmeth_iterator
-       I = IMD ? IMD->classmeth_begin() : CID->classmeth_begin(),
-       E = IMD ? IMD->classmeth_end() : CID->classmeth_end();
-       I != E; ++I) {
+  for (auto *OMD : IMD ? IMD->class_methods() : CID->class_methods()) {
     std::string ResultStr;
-    ObjCMethodDecl *OMD = *I;
     RewriteObjCMethodDecl(OMD->getClassInterface(), OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
     SourceLocation LocEnd = OMD->getCompoundBody()->getLocStart();
@@ -1447,10 +1438,8 @@ void RewriteModernObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
       RewriteProperty(I);
     for (auto *I : ClassDecl->instance_methods())
       RewriteMethodDeclaration(I);
-    for (ObjCInterfaceDecl::classmeth_iterator
-         I = ClassDecl->classmeth_begin(), E = ClassDecl->classmeth_end();
-         I != E; ++I)
-      RewriteMethodDeclaration(*I);
+    for (auto *I : ClassDecl->class_methods())
+      RewriteMethodDeclaration(I);
 
     // Lastly, comment out the @end.
     ReplaceText(ClassDecl->getAtEndRange().getBegin(), strlen("@end"), 
@@ -7022,10 +7011,7 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
     }
   }
   
-  for (ObjCProtocolDecl::classmeth_iterator
-       I = PDecl->classmeth_begin(), E = PDecl->classmeth_end();
-       I != E; ++I) {
-    ObjCMethodDecl *MD = *I;
+  for (auto *MD : PDecl->class_methods()) {
     if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
       OptClassMethods.push_back(MD);
     } else {
@@ -7263,8 +7249,7 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                   "_OBJC_$_INSTANCE_METHODS_",
                                   IDecl->getNameAsString(), true);
   
-  SmallVector<ObjCMethodDecl *, 32>
-    ClassMethods(IDecl->classmeth_begin(), IDecl->classmeth_end());
+  SmallVector<ObjCMethodDecl *, 32> ClassMethods(IDecl->class_methods());
   
   Write_method_list_t_initializer(*this, Context, Result, ClassMethods,
                                   "_OBJC_$_CLASS_METHODS_",
@@ -7517,8 +7502,7 @@ void RewriteModernObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
                                   "_OBJC_$_CATEGORY_INSTANCE_METHODS_",
                                   FullCategoryName, true);
   
-  SmallVector<ObjCMethodDecl *, 32>
-    ClassMethods(IDecl->classmeth_begin(), IDecl->classmeth_end());
+  SmallVector<ObjCMethodDecl *, 32> ClassMethods(IDecl->class_methods());
   
   Write_method_list_t_initializer(*this, Context, Result, ClassMethods,
                                   "_OBJC_$_CATEGORY_CLASS_METHODS_",
