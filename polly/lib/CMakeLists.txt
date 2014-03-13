@@ -89,7 +89,3 @@ set_target_properties(LLVMPolly
   PROPERTIES
   LINKER_LANGUAGE CXX
   PREFIX "")
-
-if (PLUTO_FOUND)
-  target_link_libraries(LLVMPolly ${PLUTO_LIBRARY})
-endif(PLUTO_FOUND)

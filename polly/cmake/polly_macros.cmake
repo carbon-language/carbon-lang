@@ -27,18 +27,11 @@ macro(add_polly_library name)
     endforeach(lib)
   endif( LLVM_USED_LIBS )
 
-  target_link_libraries( ${name} ${ISL_LIBRARY})
-
-  if (CLOOG_FOUND)
-    target_link_libraries( ${name} ${CLOOG_LIBRARY} ${GMP_LIBRARY})
-  endif(CLOOG_FOUND)
-
-  if (OPENSCOP_FOUND)
-    target_link_libraries( ${name} ${OPENSCOP_LIBRARY})
-  endif(OPENSCOP_FOUND)
-  if (SCOPLIB_FOUND)
-    target_link_libraries( ${name} ${SCOPLIB_LIBRARY})
-  endif(SCOPLIB_FOUND)
+  if(POLLY_LINK_LIBS)
+    foreach(lib ${POLLY_LINK_LIBS})
+      target_link_libraries(${name} ${lib})
+    endforeach(lib)
+  endif(POLLY_LINK_LIBS)
 
   if( LLVM_LINK_COMPONENTS )
     llvm_config(${name} ${LLVM_LINK_COMPONENTS})
