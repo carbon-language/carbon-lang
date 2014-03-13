@@ -217,13 +217,13 @@ void CodeGenModule::checkAliases() {
     StringRef MangledName = getMangledName(GD);
     llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
     llvm::GlobalAlias *Alias = cast<llvm::GlobalAlias>(Entry);
-    llvm::GlobalValue *GV = Alias->getAliasedGlobal();
-    if (GV->isDeclaration()) {
-      Error = true;
-      getDiags().Report(AA->getLocation(), diag::err_alias_to_undefined);
-    } else if (!Alias->resolveAliasedGlobal(/*stopOnWeak*/ false)) {
+    llvm::GlobalValue *GV = Alias->resolveAliasedGlobal(/*stopOnWeak*/ false);
+    if (!GV) {
       Error = true;
       getDiags().Report(AA->getLocation(), diag::err_cyclic_alias);
+    } else if (GV->isDeclaration()) {
+      Error = true;
+      getDiags().Report(AA->getLocation(), diag::err_alias_to_undefined);
     }
   }
   if (!Error)
