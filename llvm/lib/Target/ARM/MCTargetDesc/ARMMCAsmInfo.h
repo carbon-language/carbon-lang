@@ -29,6 +29,8 @@ namespace llvm {
     void anchor() override;
   public:
     explicit ARMELFMCAsmInfo();
+
+    void setUseIntegratedAssembler(bool Value) override;
   };
 
 } // namespace llvm

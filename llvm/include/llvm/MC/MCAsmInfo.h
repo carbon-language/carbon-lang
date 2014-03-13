@@ -535,7 +535,7 @@ namespace llvm {
     bool useIntegratedAssembler() const { return UseIntegratedAssembler; }
 
     /// Set whether assembly (inline or otherwise) should be parsed.
-    void setUseIntegratedAssembler(bool Value) {
+    virtual void setUseIntegratedAssembler(bool Value) {
       UseIntegratedAssembler = Value;
     }
   };

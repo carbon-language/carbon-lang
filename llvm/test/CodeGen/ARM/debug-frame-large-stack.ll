@@ -42,8 +42,8 @@ define void @test2() {
 ; CHECK-ARM: .cfi_startproc
 ; CHECK-ARM: push    {r4, r5}
 ; CHECK-ARM: .cfi_def_cfa_offset 8
-; CHECK-ARM: .cfi_offset 5, -4
-; CHECK-ARM: .cfi_offset 4, -8
+; CHECK-ARM: .cfi_offset r5, -4
+; CHECK-ARM: .cfi_offset r4, -8
 ; CHECK-ARM: sub    sp, sp, #72
 ; CHECK-ARM: sub    sp, sp, #4096
 ; CHECK-ARM: .cfi_def_cfa_offset 4176
@@ -54,7 +54,7 @@ define void @test2() {
 ; CHECK-ARM-FP_ELIM: push    {r4, r5}
 ; CHECK-ARM-FP_ELIM: .cfi_def_cfa_offset 8
 ; CHECK-ARM-FP_ELIM: .cfi_offset 54, -4
-; CHECK-ARM-FP_ELIM: .cfi_offset 4, -8
+; CHECK-ARM-FP_ELIM: .cfi_offset r4, -8
 ; CHECK-ARM-FP_ELIM: sub    sp, sp, #72
 ; CHECK-ARM-FP_ELIM: sub    sp, sp, #4096
 ; CHECK-ARM-FP_ELIM: .cfi_def_cfa_offset 4176
@@ -73,11 +73,11 @@ define i32 @test3() {
 ; CHECK-ARM: .cfi_startproc
 ; CHECK-ARM: push    {r4, r5, r11}
 ; CHECK-ARM: .cfi_def_cfa_offset 12
-; CHECK-ARM: .cfi_offset 11, -4
-; CHECK-ARM: .cfi_offset 5, -8
-; CHECK-ARM: .cfi_offset 4, -12
+; CHECK-ARM: .cfi_offset r11, -4
+; CHECK-ARM: .cfi_offset r5, -8
+; CHECK-ARM: .cfi_offset r4, -12
 ; CHECK-ARM: add    r11, sp, #8
-; CHECK-ARM: .cfi_def_cfa 11, 4
+; CHECK-ARM: .cfi_def_cfa r11, 4
 ; CHECK-ARM: sub    sp, sp, #20
 ; CHECK-ARM: sub    sp, sp, #805306368
 ; CHECK-ARM: bic    sp, sp, #15
@@ -87,11 +87,11 @@ define i32 @test3() {
 ; CHECK-ARM-FP-ELIM: .cfi_startproc
 ; CHECK-ARM-FP-ELIM: push    {r4, r5, r11}
 ; CHECK-ARM-FP-ELIM: .cfi_def_cfa_offset 12
-; CHECK-ARM-FP-ELIM: .cfi_offset 11, -4
-; CHECK-ARM-FP-ELIM: .cfi_offset 5, -8
-; CHECK-ARM-FP-ELIM: .cfi_offset 4, -12
+; CHECK-ARM-FP-ELIM: .cfi_offset r11, -4
+; CHECK-ARM-FP-ELIM: .cfi_offset r5, -8
+; CHECK-ARM-FP-ELIM: .cfi_offset r4, -12
 ; CHECK-ARM-FP-ELIM: add    r11, sp, #8
-; CHECK-ARM-FP-ELIM: .cfi_def_cfa 11, 4
+; CHECK-ARM-FP-ELIM: .cfi_def_cfa r11, 4
 ; CHECK-ARM-FP-ELIM: sub    sp, sp, #20
 ; CHECK-ARM-FP-ELIM: sub    sp, sp, #805306368
 ; CHECK-ARM-FP-ELIM: bic    sp, sp, #15
