@@ -6996,9 +6996,8 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
     PDecl = Def;
   // Must write out all protocol definitions in current qualifier list,
   // and in their nested qualifiers before writing out current definition.
-  for (ObjCProtocolDecl::protocol_iterator I = PDecl->protocol_begin(),
-       E = PDecl->protocol_end(); I != E; ++I)
-    RewriteObjCProtocolMetaData(*I, Result);
+  for (auto *I : PDecl->protocols())
+    RewriteObjCProtocolMetaData(I, Result);
   
   // Construct method lists.
   std::vector<ObjCMethodDecl *> InstanceMethods, ClassMethods;
@@ -7033,11 +7032,7 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
                                          "_OBJC_PROTOCOL_METHOD_TYPES_",
                                          PDecl->getNameAsString());
   // Protocol's super protocol list
-  std::vector<ObjCProtocolDecl *> SuperProtocols;
-  for (ObjCProtocolDecl::protocol_iterator I = PDecl->protocol_begin(),
-       E = PDecl->protocol_end(); I != E; ++I)
-    SuperProtocols.push_back(*I);
-  
+  SmallVector<ObjCProtocolDecl *, 8> SuperProtocols(PDecl->protocols());  
   Write_protocol_list_initializer(Context, Result, SuperProtocols,
                                   "_OBJC_PROTOCOL_REFS_",
                                   PDecl->getNameAsString());

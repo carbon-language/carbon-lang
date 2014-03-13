@@ -3487,10 +3487,8 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
   
   // Add properties in referenced protocols.
   if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)) {
-    for (ObjCProtocolDecl::protocol_iterator P = Protocol->protocol_begin(),
-                                          PEnd = Protocol->protocol_end();
-         P != PEnd; ++P)
-      AddObjCProperties(*P, AllowCategories, AllowNullaryMethods, CurContext, 
+    for (auto *P : Protocol->protocols())
+      AddObjCProperties(P, AllowCategories, AllowNullaryMethods, CurContext, 
                         AddedProperties, Results);
   } else if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container)){
     if (AllowCategories) {

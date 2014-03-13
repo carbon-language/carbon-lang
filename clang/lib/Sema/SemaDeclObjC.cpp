@@ -767,10 +767,9 @@ static bool NestedProtocolHasNoDefinition(ObjCProtocolDecl *PDecl,
     return true;
   }
   
-  for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
-       E = PDecl->protocol_end(); PI != E; ++PI)
-    if (NestedProtocolHasNoDefinition((*PI), UndefinedProtocol)) {
-      UndefinedProtocol = (*PI);
+  for (auto *PI : PDecl->protocols())
+    if (NestedProtocolHasNoDefinition(PI, UndefinedProtocol)) {
+      UndefinedProtocol = PI;
       return true;
     }
   return false;
@@ -1649,9 +1648,8 @@ static void findProtocolsWithExplicitImpls(const ObjCProtocolDecl *PDecl,
                                            ProtocolNameSet &PNS) {
   if (PDecl->hasAttr<ObjCExplicitProtocolImplAttr>())
     PNS.insert(PDecl->getIdentifier());
-  for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
-       PE = PDecl->protocol_end(); PI != PE; ++PI)
-    findProtocolsWithExplicitImpls(*PI, PNS);
+  for (const auto *PI : PDecl->protocols())
+    findProtocolsWithExplicitImpls(PI, PNS);
 }
 
 /// Recursively populates a set with all conformed protocols in a class
@@ -1796,9 +1794,8 @@ static void CheckProtocolMethodDefs(Sema &S,
     }
   }
   // Check on this protocols's referenced protocols, recursively.
-  for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
-       E = PDecl->protocol_end(); PI != E; ++PI)
-    CheckProtocolMethodDefs(S, ImpLoc, *PI, IncompleteImpl, InsMap, ClsMap,
+  for (auto *PI : PDecl->protocols())
+    CheckProtocolMethodDefs(S, ImpLoc, PI, IncompleteImpl, InsMap, ClsMap,
                             CDecl, ProtocolsExplictImpl);
 }
 
@@ -1867,10 +1864,9 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
   if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl> (CDecl)) {
     // Also, check for methods declared in protocols inherited by
     // this protocol.
-    for (ObjCProtocolDecl::protocol_iterator
-          PI = PD->protocol_begin(), E = PD->protocol_end(); PI != E; ++PI)
+    for (auto *PI : PD->protocols())
       MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
-                                 IMPDecl, (*PI), IncompleteImpl, false,
+                                 IMPDecl, PI, IncompleteImpl, false,
                                  WarnCategoryMethodImpl);
   }
   

@@ -271,10 +271,8 @@ void IvarInvalidationCheckerImpl::containsInvalidationMethod(
 
   // If protocol, check all parent protocols.
   if (const ObjCProtocolDecl *ProtD = dyn_cast<ObjCProtocolDecl>(D)) {
-    for (ObjCProtocolDecl::protocol_iterator I = ProtD->protocol_begin(),
-                                             E = ProtD->protocol_end();
-         I != E; ++I) {
-      containsInvalidationMethod((*I)->getDefinition(), OutInfo, Partial);
+    for (const auto *I : ProtD->protocols()) {
+      containsInvalidationMethod(I->getDefinition(), OutInfo, Partial);
     }
     return;
   }

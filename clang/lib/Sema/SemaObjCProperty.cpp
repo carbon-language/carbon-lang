@@ -132,11 +132,8 @@ CheckPropertyAgainstProtocol(Sema &S, ObjCPropertyDecl *Prop,
   }
 
   // Check this property against any protocols we inherit.
-  for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
-                                        PEnd = Proto->protocol_end();
-       P != PEnd; ++P) {
-    CheckPropertyAgainstProtocol(S, Prop, *P, Known);
-  }
+  for (auto *P : Proto->protocols())
+    CheckPropertyAgainstProtocol(S, Prop, P, Known);
 }
 
 Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
@@ -239,11 +236,8 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
     }
   } else {
     ObjCProtocolDecl *Proto = cast<ObjCProtocolDecl>(ClassDecl);
-    for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
-                                          PEnd = Proto->protocol_end();
-         P != PEnd; ++P) {
-      CheckPropertyAgainstProtocol(*this, Res, *P, KnownProtos);
-    }
+    for (auto *P : Proto->protocols())
+      CheckPropertyAgainstProtocol(*this, Res, P, KnownProtos);
   }
 
   ActOnDocumentableDecl(Res);
@@ -1463,9 +1457,8 @@ static void CollectImmediateProperties(ObjCContainerDecl *CDecl,
       }
     }
     // scan through protocol's protocols.
-    for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
-         E = PDecl->protocol_end(); PI != E; ++PI)
-      CollectImmediateProperties((*PI), PropMap, SuperPropMap);
+    for (auto *PI : PDecl->protocols())
+      CollectImmediateProperties(PI, PropMap, SuperPropMap);
   }
 }
 

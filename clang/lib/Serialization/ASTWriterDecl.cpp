@@ -545,9 +545,8 @@ void ASTDeclWriter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
   Record.push_back(D->isThisDeclarationADefinition());
   if (D->isThisDeclarationADefinition()) {
     Record.push_back(D->protocol_size());
-    for (ObjCProtocolDecl::protocol_iterator
-         I = D->protocol_begin(), IEnd = D->protocol_end(); I != IEnd; ++I)
-      Writer.AddDeclRef(*I, Record);
+    for (const auto *I : D->protocols())
+      Writer.AddDeclRef(I, Record);
     for (ObjCProtocolDecl::protocol_loc_iterator PL = D->protocol_loc_begin(),
            PLEnd = D->protocol_loc_end();
          PL != PLEnd; ++PL)

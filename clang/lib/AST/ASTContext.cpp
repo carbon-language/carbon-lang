@@ -1811,10 +1811,9 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
     // all_referenced_protocol_iterator since we are walking all categories.    
     for (auto *Proto : OI->all_referenced_protocols()) {
       Protocols.insert(Proto->getCanonicalDecl());
-      for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
-           PE = Proto->protocol_end(); P != PE; ++P) {
-        Protocols.insert((*P)->getCanonicalDecl());
-        CollectInheritedProtocols(*P, Protocols);
+      for (auto *P : Proto->protocols()) {
+        Protocols.insert(P->getCanonicalDecl());
+        CollectInheritedProtocols(P, Protocols);
       }
     }
     
@@ -1832,18 +1831,14 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
          PE = OC->protocol_end(); P != PE; ++P) {
       ObjCProtocolDecl *Proto = (*P);
       Protocols.insert(Proto->getCanonicalDecl());
-      for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
-           PE = Proto->protocol_end(); P != PE; ++P)
-        CollectInheritedProtocols(*P, Protocols);
+      for (const auto *P : Proto->protocols())
+        CollectInheritedProtocols(P, Protocols);
     }
   } else if (const ObjCProtocolDecl *OP = dyn_cast<ObjCProtocolDecl>(CDecl)) {
-    for (ObjCProtocolDecl::protocol_iterator P = OP->protocol_begin(),
-         PE = OP->protocol_end(); P != PE; ++P) {
-      ObjCProtocolDecl *Proto = (*P);
+    for (auto *Proto : OP->protocols()) {
       Protocols.insert(Proto->getCanonicalDecl());
-      for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
-           PE = Proto->protocol_end(); P != PE; ++P)
-        CollectInheritedProtocols(*P, Protocols);
+      for (const auto *P : Proto->protocols())
+        CollectInheritedProtocols(P, Protocols);
     }
   }
 }
@@ -6386,9 +6381,8 @@ ASTContext::ProtocolCompatibleWithProtocol(ObjCProtocolDecl *lProto,
                                            ObjCProtocolDecl *rProto) const {
   if (declaresSameEntity(lProto, rProto))
     return true;
-  for (ObjCProtocolDecl::protocol_iterator PI = rProto->protocol_begin(),
-       E = rProto->protocol_end(); PI != E; ++PI)
-    if (ProtocolCompatibleWithProtocol(lProto, *PI))
+  for (auto *PI : rProto->protocols())
+    if (ProtocolCompatibleWithProtocol(lProto, PI))
       return true;
   return false;
 }

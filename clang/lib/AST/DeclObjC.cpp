@@ -143,11 +143,9 @@ ObjCContainerDecl::HasUserDeclaredSetterMethod(const ObjCPropertyDecl *Property)
     }
   }
   if (const ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(this))
-    for (ObjCProtocolDecl::protocol_iterator PI = PD->protocol_begin(),
-         E = PD->protocol_end(); PI != E; ++PI) {
-      if ((*PI)->HasUserDeclaredSetterMethod(Property))
+    for (const auto *PI : PD->protocols())
+      if (PI->HasUserDeclaredSetterMethod(Property))
         return true;
-    }
   return false;
 }
 
@@ -201,9 +199,8 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
       break;
     case Decl::ObjCProtocol: {
       const ObjCProtocolDecl *PID = cast<ObjCProtocolDecl>(this);
-      for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(),
-           E = PID->protocol_end(); I != E; ++I)
-        if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
+      for (const auto *I : PID->protocols())
+        if (ObjCPropertyDecl *P = I->FindPropertyDeclaration(PropertyId))
           return P;
       break;
     }
@@ -966,10 +963,8 @@ static void CollectOverriddenMethodsRecurse(const ObjCContainerDecl *Container,
     }
 
   if (const ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)){
-    for (ObjCProtocolDecl::protocol_iterator P = Protocol->protocol_begin(),
-                                          PEnd = Protocol->protocol_end();
-         P != PEnd; ++P)
-      CollectOverriddenMethodsRecurse(*P, Method, Methods, MovedToSuper);
+    for (const auto *P : Protocol->protocols())
+      CollectOverriddenMethodsRecurse(P, Method, Methods, MovedToSuper);
   }
 
   if (const ObjCInterfaceDecl *
@@ -1496,8 +1491,8 @@ ObjCProtocolDecl *ObjCProtocolDecl::lookupProtocolNamed(IdentifierInfo *Name) {
   if (Name == getIdentifier())
     return PDecl;
 
-  for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
-    if ((PDecl = (*I)->lookupProtocolNamed(Name)))
+  for (auto *I : protocols())
+    if ((PDecl = I->lookupProtocolNamed(Name)))
       return PDecl;
 
   return NULL;
@@ -1518,8 +1513,8 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupMethod(Selector Sel,
   if ((MethodDecl = getMethod(Sel, isInstance)))
     return MethodDecl;
 
-  for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
-    if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
+  for (const auto *I : protocols())
+    if ((MethodDecl = I->lookupMethod(Sel, isInstance)))
       return MethodDecl;
   return NULL;
 }
@@ -1548,9 +1543,8 @@ void ObjCProtocolDecl::collectPropertiesToImplement(PropertyMap &PM,
       PO.push_back(Prop);
     }
     // Scan through protocol's protocols.
-    for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
-         E = PDecl->protocol_end(); PI != E; ++PI)
-      (*PI)->collectPropertiesToImplement(PM, PO);
+    for (const auto *PI : PDecl->protocols())
+      PI->collectPropertiesToImplement(PM, PO);
   }
 }
 
@@ -1571,9 +1565,8 @@ void ObjCProtocolDecl::collectInheritedProtocolProperties(
     }
     // Scan through protocol's protocols which did not have a matching property.
     if (!MatchFound)
-      for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
-           E = PDecl->protocol_end(); PI != E; ++PI)
-        (*PI)->collectInheritedProtocolProperties(Property, PM);
+      for (const auto *PI : PDecl->protocols())
+        PI->collectInheritedProtocolProperties(Property, PM);
   }
 }
 

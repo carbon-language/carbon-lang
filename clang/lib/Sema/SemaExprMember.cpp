@@ -384,9 +384,8 @@ static Decl *FindGetterSetterNameDeclFromProtocolList(const ObjCProtocolDecl*PDe
   if (ObjCMethodDecl *OMD = PDecl->getInstanceMethod(Sel))
     return OMD;
 
-  for (ObjCProtocolDecl::protocol_iterator I = PDecl->protocol_begin(),
-       E = PDecl->protocol_end(); I != E; ++I) {
-    if (Decl *D = FindGetterSetterNameDeclFromProtocolList(*I, Member, Sel,
+  for (const auto *I : PDecl->protocols()) {
+    if (Decl *D = FindGetterSetterNameDeclFromProtocolList(I, Member, Sel,
                                                            Context))
       return D;
   }

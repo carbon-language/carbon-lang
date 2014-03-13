@@ -2771,9 +2771,8 @@ PushProtocolProperties(llvm::SmallPtrSet<const IdentifierInfo*,16> &PropertySet,
                        const Decl *Container,
                        const ObjCProtocolDecl *Proto,
                        const ObjCCommonTypesHelper &ObjCTypes) {
-  for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
-         E = Proto->protocol_end(); P != E; ++P) 
-    PushProtocolProperties(PropertySet, Properties, Container, (*P), ObjCTypes);
+  for (const auto *P : Proto->protocols()) 
+    PushProtocolProperties(PropertySet, Properties, Container, P, ObjCTypes);
   for (const auto *PD : Proto->properties()) {
     if (!PropertySet.insert(PD->getIdentifier()))
       continue;

@@ -1755,9 +1755,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     PD = Def;
 
   SmallVector<std::string, 16> Protocols;
-  for (ObjCProtocolDecl::protocol_iterator PI = PD->protocol_begin(),
-       E = PD->protocol_end(); PI != E; ++PI)
-    Protocols.push_back((*PI)->getNameAsString());
+  for (const auto *PI : PD->protocols())
+    Protocols.push_back(PI->getNameAsString());
   SmallVector<llvm::Constant*, 16> InstanceMethodNames;
   SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
   SmallVector<llvm::Constant*, 16> OptionalInstanceMethodNames;
