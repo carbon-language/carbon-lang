@@ -1000,10 +1000,10 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
     Out << "{\n";
     eolnOut = true;
     Indentation += Policy.Indentation;
-    for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
-         E = OID->ivar_end(); I != E; ++I) {
-      Indent() << I->getASTContext().getUnqualifiedObjCPointerType(I->getType()).
-                    getAsString(Policy) << ' ' << **I << ";\n";
+    for (const auto *I : OID->ivars()) {
+      Indent() << I->getASTContext()
+                      .getUnqualifiedObjCPointerType(I->getType())
+                      .getAsString(Policy) << ' ' << *I << ";\n";
     }
     Indentation -= Policy.Indentation;
     Out << "}\n";

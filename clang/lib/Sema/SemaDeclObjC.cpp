@@ -2520,9 +2520,7 @@ Sema::SelectorsForTypoCorrection(Selector Sel,
 /// class's \@implementation is seen.
 void Sema::DiagnoseDuplicateIvars(ObjCInterfaceDecl *ID, 
                                   ObjCInterfaceDecl *SID) {
-  for (ObjCInterfaceDecl::ivar_iterator IVI = ID->ivar_begin(),
-       IVE = ID->ivar_end(); IVI != IVE; ++IVI) {
-    ObjCIvarDecl* Ivar = *IVI;
+  for (auto *Ivar : ID->ivars()) {
     if (Ivar->isInvalidDecl())
       continue;
     if (IdentifierInfo *II = Ivar->getIdentifier()) {

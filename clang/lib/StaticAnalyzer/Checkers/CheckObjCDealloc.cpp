@@ -113,15 +113,12 @@ static void checkObjCDealloc(const CheckerBase *Checker,
 
   bool containsPointerIvar = false;
 
-  for (ObjCInterfaceDecl::ivar_iterator I=ID->ivar_begin(), E=ID->ivar_end();
-       I!=E; ++I) {
-
-    ObjCIvarDecl *ID = *I;
-    QualType T = ID->getType();
+  for (const auto *Ivar : ID->ivars()) {
+    QualType T = Ivar->getType();
 
     if (!T->isObjCObjectPointerType() ||
-        ID->hasAttr<IBOutletAttr>() || // Skip IBOutlets.
-        ID->hasAttr<IBOutletCollectionAttr>()) // Skip IBOutletCollections.
+        Ivar->hasAttr<IBOutletAttr>() || // Skip IBOutlets.
+        Ivar->hasAttr<IBOutletCollectionAttr>()) // Skip IBOutletCollections.
       continue;
 
     containsPointerIvar = true;

@@ -1795,9 +1795,8 @@ void ASTContext::DeepCollectObjCIvars(const ObjCInterfaceDecl *OI,
   if (const ObjCInterfaceDecl *SuperClass = OI->getSuperClass())
     DeepCollectObjCIvars(SuperClass, false, Ivars);
   if (!leafClass) {
-    for (ObjCInterfaceDecl::ivar_iterator I = OI->ivar_begin(),
-         E = OI->ivar_end(); I != E; ++I)
-      Ivars.push_back(*I);
+    for (const auto *I : OI->ivars())
+      Ivars.push_back(I);
   } else {
     ObjCInterfaceDecl *IDecl = const_cast<ObjCInterfaceDecl *>(OI);
     for (const ObjCIvarDecl *Iv = IDecl->all_declared_ivar_begin(); Iv; 

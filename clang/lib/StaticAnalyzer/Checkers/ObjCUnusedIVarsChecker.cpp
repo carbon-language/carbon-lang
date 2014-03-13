@@ -116,23 +116,19 @@ static void checkObjCUnusedIvar(const ObjCImplementationDecl *D,
   IvarUsageMap M;
 
   // Iterate over the ivars.
-  for (ObjCInterfaceDecl::ivar_iterator I=ID->ivar_begin(),
-        E=ID->ivar_end(); I!=E; ++I) {
-
-    const ObjCIvarDecl *ID = *I;
-
+  for (const auto *Ivar : ID->ivars()) {
     // Ignore ivars that...
     // (a) aren't private
     // (b) explicitly marked unused
     // (c) are iboutlets
     // (d) are unnamed bitfields
-    if (ID->getAccessControl() != ObjCIvarDecl::Private ||
-        ID->hasAttr<UnusedAttr>() || ID->hasAttr<IBOutletAttr>() ||
-        ID->hasAttr<IBOutletCollectionAttr>() ||
-        ID->isUnnamedBitfield())
+    if (Ivar->getAccessControl() != ObjCIvarDecl::Private ||
+        Ivar->hasAttr<UnusedAttr>() || Ivar->hasAttr<IBOutletAttr>() ||
+        Ivar->hasAttr<IBOutletCollectionAttr>() ||
+        Ivar->isUnnamedBitfield())
       continue;
 
-    M[ID] = Unused;
+    M[Ivar] = Unused;
   }
 
   if (M.empty())
