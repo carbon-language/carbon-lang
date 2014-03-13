@@ -1,6 +1,3 @@
-# build a monolithic libLLVMPollyLib.$shlibext
-# and a thin module LLVMPolly.moduleext that links to that shared library
-
 set(LLVM_NO_RTTI 1)
 
 if (PLUTO_FOUND)
@@ -74,6 +71,8 @@ add_polly_library(Polly
   ${POLLY_PLUTO_FILES}
   )
 
+# Build a monolithic Polly.a and a thin module LLVMPolly.moduleext that links to
+# that static library.
 add_polly_loadable_module(LLVMPolly
   Polly.cpp
 )
