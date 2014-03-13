@@ -11,8 +11,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif()
 
 add_definitions(
-  -DDEBUGSERVER_VERSION_NUM=${LLDB_VERSION}
-  -DDEBUGSERVER_VERSION_STR=${LLDB_VERSION}
+  -DDEBUGSERVER_VERSION_STR="${LLDB_VERSION}"
   )
 
 add_library(lldbDebugserverCommon

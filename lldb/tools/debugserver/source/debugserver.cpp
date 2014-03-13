@@ -781,7 +781,7 @@ ASLLogCallback(void *baton, uint32_t flags, const char *format, va_list args)
     {
         g_aslmsg = ::asl_new (ASL_TYPE_MSG);
         char asl_key_sender[PATH_MAX];
-        snprintf(asl_key_sender, sizeof(asl_key_sender), "com.apple.%s-%g", DEBUGSERVER_PROGRAM_NAME, DEBUGSERVER_VERSION_NUM);
+        snprintf(asl_key_sender, sizeof(asl_key_sender), "com.apple.%s-%s", DEBUGSERVER_PROGRAM_NAME, DEBUGSERVER_VERSION_STR);
         ::asl_set (g_aslmsg, ASL_KEY_SENDER, asl_key_sender);
     }
 
@@ -1234,9 +1234,9 @@ main (int argc, char *argv[])
     // as long as we're dropping remotenub in as a replacement for gdbserver,
     // explicitly note that this is not gdbserver.
 
-    RNBLogSTDOUT ("%s-%g %sfor %s.\n",
+    RNBLogSTDOUT ("%s-%s %sfor %s.\n",
                   DEBUGSERVER_PROGRAM_NAME,
-                  DEBUGSERVER_VERSION_NUM,
+                  DEBUGSERVER_VERSION_STR,
                   compile_options.c_str(),
                   RNB_ARCH);
 

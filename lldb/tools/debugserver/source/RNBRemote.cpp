@@ -3805,7 +3805,7 @@ RNBRemote::HandlePacket_qGDBServerVersion (const char *p)
         strm << "name:" DEBUGSERVER_PROGRAM_NAME ";";
     else
         strm << "name:debugserver;";
-    strm << "version:" << DEBUGSERVER_VERSION_NUM << ";";
+    strm << "version:" << DEBUGSERVER_VERSION_STR << ";";
 
     return SendPacket (strm.str());
 }
