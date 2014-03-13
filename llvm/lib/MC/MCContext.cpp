@@ -84,13 +84,10 @@ void MCContext::reset() {
   Symbols.clear();
   Allocator.Reset();
   Instances.clear();
-  MCDwarfFilesCUMap.clear();
-  MCDwarfDirsCUMap.clear();
+  MCDwarfFileTablesCUMap.clear();
   MCGenDwarfLabelEntries.clear();
   DwarfDebugFlags = StringRef();
-  MCLineSections.clear();
   DwarfCompileUnitID = 0;
-  MCLineTableSymbols.clear();
   CurrentDwarfLoc = MCDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0);
 
   // If we have the MachO uniquing map, free it.
@@ -337,8 +334,9 @@ unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
   // Note: in GenericAsmParser::ParseDirectiveFile() FileNumber was checked
   // to not be less than one.  This needs to be change to be not less than zero.
 
-  SmallVectorImpl<MCDwarfFile *>& MCDwarfFiles = MCDwarfFilesCUMap[CUID];
-  SmallVectorImpl<StringRef>& MCDwarfDirs = MCDwarfDirsCUMap[CUID];
+  MCDwarfFileTable &Table = MCDwarfFileTablesCUMap[CUID];
+  SmallVectorImpl<MCDwarfFile *>& MCDwarfFiles = Table.getMCDwarfFiles();
+  SmallVectorImpl<StringRef>& MCDwarfDirs = Table.getMCDwarfDirs();
   // Make space for this FileNumber in the MCDwarfFiles vector if needed.
   if (FileNumber >= MCDwarfFiles.size()) {
     MCDwarfFiles.resize(FileNumber + 1);
@@ -399,7 +397,7 @@ unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
 /// isValidDwarfFileNumber - takes a dwarf file number and returns true if it
 /// currently is assigned and false otherwise.
 bool MCContext::isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID) {
-  SmallVectorImpl<MCDwarfFile *>& MCDwarfFiles = MCDwarfFilesCUMap[CUID];
+  const SmallVectorImpl<MCDwarfFile *>& MCDwarfFiles = getMCDwarfFiles(CUID);
   if(FileNumber == 0 || FileNumber >= MCDwarfFiles.size())
     return false;
 

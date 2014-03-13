@@ -200,6 +200,11 @@ public:
 };
 
 class MCDwarfFileTable {
+  MCSymbol *Label;
+  SmallVector<StringRef, 3> MCDwarfDirs;
+  SmallVector<MCDwarfFile *, 3> MCDwarfFiles;
+  MCLineSection MCLineSections;
+
 public:
   //
   // This emits the Dwarf file and the line tables for all Compile Units.
@@ -208,7 +213,38 @@ public:
   //
   // This emits the Dwarf file and the line tables for a given Compile Unit.
   //
-  static const MCSymbol *EmitCU(MCStreamer *MCOS, unsigned ID);
+  const MCSymbol *EmitCU(MCStreamer *MCOS) const;
+
+  const SmallVectorImpl<StringRef> &getMCDwarfDirs() const {
+    return MCDwarfDirs;
+  }
+
+  SmallVectorImpl<StringRef> &getMCDwarfDirs() {
+    return MCDwarfDirs;
+  }
+
+  const SmallVectorImpl<MCDwarfFile *> &getMCDwarfFiles() const {
+    return MCDwarfFiles;
+  }
+
+  SmallVectorImpl<MCDwarfFile *> &getMCDwarfFiles() {
+    return MCDwarfFiles;
+  }
+
+  const MCLineSection &getMCLineSections() const {
+    return MCLineSections;
+  }
+  MCLineSection &getMCLineSections() {
+    return MCLineSections;
+  }
+
+  MCSymbol *getLabel() const {
+    return Label;
+  }
+
+  void setLabel(MCSymbol *Label) {
+    this->Label = Label;
+  }
 };
 
 class MCDwarfLineAddr {

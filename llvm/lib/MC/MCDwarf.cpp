@@ -82,7 +82,8 @@ void MCLineEntry::Make(MCStreamer *MCOS, const MCSection *Section) {
 
   // Add the line entry to this section's entries.
   MCOS->getContext()
-      .getMCLineSections()[MCOS->getContext().getDwarfCompileUnitID()]
+      .getMCDwarfFileTable(MCOS->getContext().getDwarfCompileUnitID())
+      .getMCLineSections()
       .addLineEntry(LineEntry, Section);
 }
 
@@ -205,27 +206,31 @@ EmitDwarfLineTable(MCStreamer *MCOS, const MCSection *Section,
 //
 const MCSymbol *MCDwarfFileTable::Emit(MCStreamer *MCOS) {
   MCContext &context = MCOS->getContext();
-  // Switch to the section where the table will be emitted into.
-  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfLineSection());
 
-  const DenseMap<unsigned, MCSymbol *> &MCLineTableSymbols =
-    MCOS->getContext().getMCLineTableSymbols();
   // CUID and MCLineTableSymbols are set in DwarfDebug, when DwarfDebug does
   // not exist, CUID will be 0 and MCLineTableSymbols will be empty.
   // Handle Compile Unit 0, the line table start symbol is the section symbol.
-  const MCSymbol *LineStartSym = EmitCU(MCOS, 0);
+  auto I = MCOS->getContext().getMCDwarfFileTables().begin(),
+       E = MCOS->getContext().getMCDwarfFileTables().end();
+
+  // Switch to the section where the table will be emitted into.
+  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfLineSection());
+
+  const MCSymbol *LineStartSym = I->second.EmitCU(MCOS);
   // Handle the rest of the Compile Units.
-  for (unsigned Is = 1, Ie = MCLineTableSymbols.size(); Is < Ie; Is++)
-    EmitCU(MCOS, Is);
+  for (++I; I != E; ++I)
+    I->second.EmitCU(MCOS);
 
   return LineStartSym;
 }
 
-const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
+const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS) const {
   MCContext &context = MCOS->getContext();
 
+
+
   // Create a symbol at the beginning of the line table.
-  MCSymbol *LineStartSym = MCOS->getContext().getMCLineTableSymbol(CUID);
+  MCSymbol *LineStartSym = Label;
   if (!LineStartSym)
     LineStartSym = context.CreateTempSymbol();
   // Set the value of the symbol, as we are at the start of the line table.
@@ -276,8 +281,6 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
   // Put out the directory and file tables.
 
   // First the directory table.
-  const SmallVectorImpl<StringRef> &MCDwarfDirs =
-    context.getMCDwarfDirs(CUID);
   for (unsigned i = 0; i < MCDwarfDirs.size(); i++) {
     MCOS->EmitBytes(MCDwarfDirs[i]); // the DirectoryName
     MCOS->EmitBytes(StringRef("\0", 1)); // the null term. of the string
@@ -285,8 +288,6 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
   MCOS->EmitIntValue(0, 1); // Terminate the directory list
 
   // Second the file table.
-  const SmallVectorImpl<MCDwarfFile *> &MCDwarfFiles =
-    MCOS->getContext().getMCDwarfFiles(CUID);
   for (unsigned i = 1; i < MCDwarfFiles.size(); i++) {
     MCOS->EmitBytes(MCDwarfFiles[i]->getName()); // FileName
     MCOS->EmitBytes(StringRef("\0", 1)); // the null term. of the string
@@ -302,15 +303,11 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS, unsigned CUID) {
   MCOS->EmitLabel(ProEndSym);
 
   // Put out the line tables.
-  const std::map<unsigned, MCLineSection> &MCLineSections =
-    MCOS->getContext().getMCLineSections();
-  auto Iter = MCLineSections.find(CUID);
-  if (Iter != MCLineSections.end())
-    for (const auto &LineSec : Iter->second.getMCLineEntries())
-      EmitDwarfLineTable(MCOS, LineSec.first, LineSec.second);
+  for (const auto &LineSec : MCLineSections.getMCLineEntries())
+    EmitDwarfLineTable(MCOS, LineSec.first, LineSec.second);
 
   if (MCOS->getContext().getAsmInfo()->getLinkerRequiresNonEmptyDwarfLines() &&
-      Iter == MCLineSections.end()) {
+      MCLineSections.getMCLineEntries().empty()) {
     // The darwin9 linker has a bug (see PR8715). For for 32-bit architectures
     // it requires:
     // total_length >= prologue_length + 10
@@ -729,7 +726,7 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS, const MCSymbol *LineSectionSymbol) {
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfARangesSection());
 
   // If there are no line table entries then do not emit any section contents.
-  if (context.getMCLineSections().empty())
+  if (!context.hasMCLineSections())
     return;
 
   // Output the data for .debug_aranges section.

@@ -108,9 +108,7 @@ namespace llvm {
     /// We now emit a line table for each compile unit. To reduce the prologue
     /// size of each line table, the files and directories used by each compile
     /// unit are separated.
-    typedef std::map<unsigned, SmallVector<MCDwarfFile *, 4> > MCDwarfFilesMap;
-    MCDwarfFilesMap MCDwarfFilesCUMap;
-    std::map<unsigned, SmallVector<StringRef, 4> > MCDwarfDirsCUMap;
+    std::map<unsigned, MCDwarfFileTable> MCDwarfFileTablesCUMap;
 
     /// The current dwarf line information from the last dwarf .loc directive.
     MCDwarfLoc CurrentDwarfLoc;
@@ -146,13 +144,8 @@ namespace llvm {
     /// Darwin).
     bool AllowTemporaryLabels;
 
-    /// The dwarf line information from the .loc directives for the sections
-    /// with assembled machine instructions have after seeing .loc directives.
-    std::map<unsigned, MCLineSection> MCLineSections;
     /// The Compile Unit ID that we are currently processing.
     unsigned DwarfCompileUnitID;
-    /// The line table start symbol for each Compile Unit.
-    DenseMap<unsigned, MCSymbol *> MCLineTableSymbols;
 
     void *MachOUniquingMap, *ELFUniquingMap, *COFFUniquingMap;
 
@@ -298,26 +291,38 @@ namespace llvm {
 
     bool hasDwarfFiles() const {
       // Traverse MCDwarfFilesCUMap and check whether each entry is empty.
-      MCDwarfFilesMap::const_iterator MapB, MapE;
-      for (MapB = MCDwarfFilesCUMap.begin(), MapE = MCDwarfFilesCUMap.end();
-           MapB != MapE; MapB++)
-        if (!MapB->second.empty())
+      for (const auto &FileTable : MCDwarfFileTablesCUMap)
+        if (!FileTable.second.getMCDwarfFiles().empty())
            return true;
       return false;
     }
 
-    const SmallVectorImpl<MCDwarfFile *> &getMCDwarfFiles(unsigned CUID = 0) {
-      return MCDwarfFilesCUMap[CUID];
-    }
-    const SmallVectorImpl<StringRef> &getMCDwarfDirs(unsigned CUID = 0) {
-      return MCDwarfDirsCUMap[CUID];
+    const std::map<unsigned, MCDwarfFileTable> &getMCDwarfFileTables() const {
+      return MCDwarfFileTablesCUMap;
     }
 
-    const std::map<unsigned, MCLineSection> &getMCLineSections() const {
-      return MCLineSections;
+    MCDwarfFileTable &getMCDwarfFileTable(unsigned CUID) {
+      return MCDwarfFileTablesCUMap[CUID];
     }
-    std::map<unsigned, MCLineSection> &getMCLineSections() {
-      return MCLineSections;
+
+    const MCDwarfFileTable &getMCDwarfFileTable(unsigned CUID) const {
+      auto I = MCDwarfFileTablesCUMap.find(CUID);
+      assert(I != MCDwarfFileTablesCUMap.end());
+      return I->second;
+    }
+
+    const SmallVectorImpl<MCDwarfFile *> &getMCDwarfFiles(unsigned CUID = 0) {
+      return getMCDwarfFileTable(CUID).getMCDwarfFiles();
+    }
+    const SmallVectorImpl<StringRef> &getMCDwarfDirs(unsigned CUID = 0) {
+      return getMCDwarfFileTable(CUID).getMCDwarfDirs();
+    }
+
+    bool hasMCLineSections() const {
+      for (const auto &Table : MCDwarfFileTablesCUMap)
+        if (!Table.second.getMCDwarfFiles().empty() || Table.second.getLabel())
+          return true;
+      return false;
     }
     unsigned getDwarfCompileUnitID() {
       return DwarfCompileUnitID;
@@ -325,18 +330,11 @@ namespace llvm {
     void setDwarfCompileUnitID(unsigned CUIndex) {
       DwarfCompileUnitID = CUIndex;
     }
-    const DenseMap<unsigned, MCSymbol *> &getMCLineTableSymbols() const {
-      return MCLineTableSymbols;
-    }
     MCSymbol *getMCLineTableSymbol(unsigned ID) const {
-      DenseMap<unsigned, MCSymbol *>::const_iterator CIter =
-        MCLineTableSymbols.find(ID);
-      if (CIter == MCLineTableSymbols.end())
-        return NULL;
-      return CIter->second;
+      return getMCDwarfFileTable(ID).getLabel();
     }
     void setMCLineTableSymbol(MCSymbol *Sym, unsigned ID) {
-      MCLineTableSymbols[ID] = Sym;
+      getMCDwarfFileTable(ID).setLabel(Sym);
     }
 
     /// setCurrentDwarfLoc - saves the information from the currently parsed
