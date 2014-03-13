@@ -326,8 +326,10 @@ bool LiveIntervals::shrinkToUses(LiveInterval *li,
   SmallPtrSet<MachineBasicBlock*, 16> LiveOut;
 
   // Visit all instructions reading li->reg.
-  for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(li->reg);
-       MachineInstr *UseMI = I.skipInstruction();) {
+  for (MachineRegisterInfo::reg_instr_iterator
+       I = MRI->reg_instr_begin(li->reg), E = MRI->reg_instr_end();
+       I != E; ) {
+    MachineInstr *UseMI = &*(I++);
     if (UseMI->isDebugValue() || !UseMI->readsVirtualRegister(li->reg))
       continue;
     SlotIndex Idx = getInstructionIndex(UseMI).getRegSlot();
@@ -980,10 +982,10 @@ private:
 
     if (TargetRegisterInfo::isVirtualRegister(Reg)) {
       SlotIndex LastUse = NewIdx;
-      for (MachineRegisterInfo::use_nodbg_iterator
-             UI = MRI.use_nodbg_begin(Reg),
-             UE = MRI.use_nodbg_end();
-           UI != UE; UI.skipInstruction()) {
+      for (MachineRegisterInfo::use_instr_nodbg_iterator
+             UI = MRI.use_instr_nodbg_begin(Reg),
+             UE = MRI.use_instr_nodbg_end();
+           UI != UE; ++UI) {
         const MachineInstr* MI = &*UI;
         SlotIndex InstSlot = LIS.getSlotIndexes()->getInstructionIndex(MI);
         if (InstSlot > LastUse && InstSlot < OldIdx)

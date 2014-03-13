@@ -939,8 +939,11 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
   LiveInterval *DstInt = DstIsPhys ? 0 : &LIS->getInterval(DstReg);
 
   SmallPtrSet<MachineInstr*, 8> Visited;
-  for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(SrcReg);
-       MachineInstr *UseMI = I.skipInstruction();) {
+  for (MachineRegisterInfo::reg_instr_iterator
+       I = MRI->reg_instr_begin(SrcReg), E = MRI->reg_instr_end();
+       I != E; ) {
+    MachineInstr *UseMI = &*(I++);
+
     // Each instruction can only be rewritten once because sub-register
     // composition is not always idempotent. When SrcReg != DstReg, rewriting
     // the UseMI operands removes them from the SrcReg use-def chain, but when

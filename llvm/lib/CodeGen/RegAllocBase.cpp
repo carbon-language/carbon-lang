@@ -110,11 +110,16 @@ void RegAllocBase::allocatePhysRegs() {
     if (AvailablePhysReg == ~0u) {
       // selectOrSplit failed to find a register!
       // Probably caused by an inline asm.
-      MachineInstr *MI;
-      for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(VirtReg->reg);
-           (MI = I.skipInstruction());)
-        if (MI->isInlineAsm())
+      MachineInstr *MI = 0;
+      for (MachineRegisterInfo::reg_instr_iterator
+           I = MRI->reg_instr_begin(VirtReg->reg), E = MRI->reg_instr_end();
+           I != E; ) {
+        MachineInstr *TmpMI = &*(I++);
+        if (TmpMI->isInlineAsm()) {
+          MI = TmpMI;
           break;
+        }
+      }
       if (MI)
         MI->emitError("inline assembly requires more registers than available");
       else
