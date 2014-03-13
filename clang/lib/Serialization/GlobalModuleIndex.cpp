@@ -835,7 +835,7 @@ namespace {
       End = Idx.key_end();
     }
 
-    virtual StringRef Next() {
+    StringRef Next() override {
       if (Current == End)
         return StringRef();
 

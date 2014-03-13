@@ -3782,17 +3782,17 @@ namespace {
     {
     }
 
-    virtual bool ReadLanguageOptions(const LangOptions &LangOpts,
-                                     bool Complain) {
+    bool ReadLanguageOptions(const LangOptions &LangOpts,
+                             bool Complain) override {
       return checkLanguageOptions(ExistingLangOpts, LangOpts, 0);
     }
-    virtual bool ReadTargetOptions(const TargetOptions &TargetOpts,
-                                   bool Complain) {
+    bool ReadTargetOptions(const TargetOptions &TargetOpts,
+                           bool Complain) override {
       return checkTargetOptions(ExistingTargetOpts, TargetOpts, 0);
     }
-    virtual bool ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
-                                         bool Complain,
-                                         std::string &SuggestedPredefines) {
+    bool ReadPreprocessorOptions(const PreprocessorOptions &PPOpts,
+                                 bool Complain,
+                                 std::string &SuggestedPredefines) override {
       return checkPreprocessorOptions(ExistingPPOpts, PPOpts, 0, FileMgr,
                                       SuggestedPredefines, ExistingLangOpts);
     }
@@ -6566,7 +6566,7 @@ namespace clang {
   public:
     explicit ASTIdentifierIterator(const ASTReader &Reader);
 
-    virtual StringRef Next();
+    StringRef Next() override;
   };
 }
 

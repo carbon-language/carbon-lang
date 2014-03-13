@@ -714,34 +714,33 @@ public:
   bool hasChain() const { return Chain; }
 
   // ASTDeserializationListener implementation
-  void ReaderInitialized(ASTReader *Reader);
-  void IdentifierRead(serialization::IdentID ID, IdentifierInfo *II);
-  void MacroRead(serialization::MacroID ID, MacroInfo *MI);
-  void TypeRead(serialization::TypeIdx Idx, QualType T);
-  void SelectorRead(serialization::SelectorID ID, Selector Sel);
+  void ReaderInitialized(ASTReader *Reader) override;
+  void IdentifierRead(serialization::IdentID ID, IdentifierInfo *II) override;
+  void MacroRead(serialization::MacroID ID, MacroInfo *MI) override;
+  void TypeRead(serialization::TypeIdx Idx, QualType T) override;
+  void SelectorRead(serialization::SelectorID ID, Selector Sel) override;
   void MacroDefinitionRead(serialization::PreprocessedEntityID ID,
-                           MacroDefinition *MD);
-  void ModuleRead(serialization::SubmoduleID ID, Module *Mod);
+                           MacroDefinition *MD) override;
+  void ModuleRead(serialization::SubmoduleID ID, Module *Mod) override;
 
   // ASTMutationListener implementation.
-  virtual void CompletedTagDefinition(const TagDecl *D);
-  virtual void AddedVisibleDecl(const DeclContext *DC, const Decl *D);
-  virtual void AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D);
-  virtual void AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
-                                    const ClassTemplateSpecializationDecl *D);
-  virtual void
-  AddedCXXTemplateSpecialization(const VarTemplateDecl *TD,
-                                 const VarTemplateSpecializationDecl *D);
-  virtual void AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
-                                              const FunctionDecl *D);
-  virtual void DeducedReturnType(const FunctionDecl *FD, QualType ReturnType);
-  virtual void CompletedImplicitDefinition(const FunctionDecl *D);
-  virtual void StaticDataMemberInstantiated(const VarDecl *D);
-  virtual void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
-                                            const ObjCInterfaceDecl *IFD);
-  virtual void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
-                                            const ObjCPropertyDecl *OrigProp,
-                                            const ObjCCategoryDecl *ClassExt);
+  void CompletedTagDefinition(const TagDecl *D) override;
+  void AddedVisibleDecl(const DeclContext *DC, const Decl *D) override;
+  void AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) override;
+  void AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
+                             const ClassTemplateSpecializationDecl *D) override;
+  void AddedCXXTemplateSpecialization(const VarTemplateDecl *TD,
+                               const VarTemplateSpecializationDecl *D) override;
+  void AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
+                                      const FunctionDecl *D) override;
+  void DeducedReturnType(const FunctionDecl *FD, QualType ReturnType) override;
+  void CompletedImplicitDefinition(const FunctionDecl *D) override;
+  void StaticDataMemberInstantiated(const VarDecl *D) override;
+  void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
+                                    const ObjCInterfaceDecl *IFD) override;
+  void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
+                                    const ObjCPropertyDecl *OrigProp,
+                                    const ObjCCategoryDecl *ClassExt) override;
   void DeclarationMarkedUsed(const Decl *D) override;
 };
 
@@ -770,10 +769,10 @@ public:
                StringRef isysroot, raw_ostream *Out,
                bool AllowASTWithErrors = false);
   ~PCHGenerator();
-  virtual void InitializeSema(Sema &S) { SemaPtr = &S; }
-  virtual void HandleTranslationUnit(ASTContext &Ctx);
-  virtual ASTMutationListener *GetASTMutationListener();
-  virtual ASTDeserializationListener *GetASTDeserializationListener();
+  void InitializeSema(Sema &S) override { SemaPtr = &S; }
+  void HandleTranslationUnit(ASTContext &Ctx) override;
+  ASTMutationListener *GetASTMutationListener() override;
+  ASTDeserializationListener *GetASTDeserializationListener() override;
 
   bool hasEmittedPCH() const { return HasEmittedPCH; }
 };
