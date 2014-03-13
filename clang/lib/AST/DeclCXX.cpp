@@ -202,19 +202,17 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       data().HasNonLiteralTypeFieldsOrBases = true;
     
     // Now go through all virtual bases of this base and add them.
-    for (CXXRecordDecl::base_class_iterator VBase =
-          BaseClassDecl->vbases_begin(),
-         E = BaseClassDecl->vbases_end(); VBase != E; ++VBase) {
+    for (const auto &VBase : BaseClassDecl->vbases()) {
       // Add this base if it's not already in the list.
-      if (SeenVBaseTypes.insert(C.getCanonicalType(VBase->getType()))) {
-        VBases.push_back(VBase);
+      if (SeenVBaseTypes.insert(C.getCanonicalType(VBase.getType()))) {
+        VBases.push_back(&VBase);
 
         // C++11 [class.copy]p8:
         //   The implicitly-declared copy constructor for a class X will have
         //   the form 'X::X(const X&)' if each [...] virtual base class B of X
         //   has a copy constructor whose first parameter is of type
         //   'const B&' or 'const volatile B&' [...]
-        if (CXXRecordDecl *VBaseDecl = VBase->getType()->getAsCXXRecordDecl())
+        if (CXXRecordDecl *VBaseDecl = VBase.getType()->getAsCXXRecordDecl())
           if (!VBaseDecl->hasCopyConstructorWithConstParam())
             data().ImplicitCopyConstructorHasConstParam = false;
       }

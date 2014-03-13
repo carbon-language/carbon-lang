@@ -1118,10 +1118,8 @@ void MicrosoftCXXABI::emitVBTableDefinition(const VPtrInfo &VBT,
   Offsets[0] = llvm::ConstantInt::get(CGM.IntTy, -VBPtrOffset.getQuantity());
 
   MicrosoftVTableContext &Context = CGM.getMicrosoftVTableContext();
-  for (CXXRecordDecl::base_class_const_iterator I = ReusingBase->vbases_begin(),
-                                                E = ReusingBase->vbases_end();
-       I != E; ++I) {
-    const CXXRecordDecl *VBase = I->getType()->getAsCXXRecordDecl();
+  for (const auto &I : ReusingBase->vbases()) {
+    const CXXRecordDecl *VBase = I.getType()->getAsCXXRecordDecl();
     CharUnits Offset = DerivedLayout.getVBaseClassOffset(VBase);
     assert(!Offset.isNegative());
 

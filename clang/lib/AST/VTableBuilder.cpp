@@ -3221,10 +3221,8 @@ void MicrosoftVTableContext::computeVTablePaths(bool ForVBTables,
 
     // After visiting any direct base, we've transitively visited all of its
     // morally virtual bases.
-    for (CXXRecordDecl::base_class_const_iterator II = Base->vbases_begin(),
-                                                  EE = Base->vbases_end();
-         II != EE; ++II)
-      VBasesSeen.insert(II->getType()->getAsCXXRecordDecl());
+    for (const auto &I : Base->vbases())
+      VBasesSeen.insert(I.getType()->getAsCXXRecordDecl());
   }
 
   // Sort the paths into buckets, and if any of them are ambiguous, extend all
@@ -3407,10 +3405,8 @@ const VirtualBaseInfo *MicrosoftVTableContext::computeVBTableRelatedInformation(
   // New vbases are added to the end of the vbtable.
   // Skip the self entry and vbases visited in the non-virtual base, if any.
   unsigned VBTableIndex = 1 + VBI->VBTableIndices.size();
-  for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
-                                                E = RD->vbases_end();
-       I != E; ++I) {
-    const CXXRecordDecl *CurVBase = I->getType()->getAsCXXRecordDecl();
+  for (const auto &I : RD->vbases()) {
+    const CXXRecordDecl *CurVBase = I.getType()->getAsCXXRecordDecl();
     if (!VBI->VBTableIndices.count(CurVBase))
       VBI->VBTableIndices[CurVBase] = VBTableIndex++;
   }

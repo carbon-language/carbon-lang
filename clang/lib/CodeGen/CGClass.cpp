@@ -1213,11 +1213,9 @@ HasTrivialDestructorBody(ASTContext &Context,
 
   if (BaseClassDecl == MostDerivedClassDecl) {
     // Check virtual bases.
-    for (CXXRecordDecl::base_class_const_iterator I = 
-         BaseClassDecl->vbases_begin(), E = BaseClassDecl->vbases_end();
-         I != E; ++I) {
+    for (const auto &I : BaseClassDecl->vbases()) {
       const CXXRecordDecl *VirtualBase =
-        cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
+        cast<CXXRecordDecl>(I.getType()->castAs<RecordType>()->getDecl());
       if (!HasTrivialDestructorBody(Context, VirtualBase,
                                     MostDerivedClassDecl))
         return false;      
@@ -1460,10 +1458,7 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
 
     // We push them in the forward order so that they'll be popped in
     // the reverse order.
-    for (CXXRecordDecl::base_class_const_iterator I = 
-           ClassDecl->vbases_begin(), E = ClassDecl->vbases_end();
-              I != E; ++I) {
-      const CXXBaseSpecifier &Base = *I;
+    for (const auto &Base : ClassDecl->vbases()) {
       CXXRecordDecl *BaseClassDecl
         = cast<CXXRecordDecl>(Base.getType()->getAs<RecordType>()->getDecl());
     

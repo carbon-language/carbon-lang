@@ -4266,21 +4266,19 @@ void Sema::CodeCompleteConstructorInitializer(
   }
   
   // Add completions for virtual base classes.
-  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
-                                       BaseEnd = ClassDecl->vbases_end();
-       Base != BaseEnd; ++Base) {
-    if (!InitializedBases.insert(Context.getCanonicalType(Base->getType()))) {
+  for (const auto &Base : ClassDecl->vbases()) {
+    if (!InitializedBases.insert(Context.getCanonicalType(Base.getType()))) {
       SawLastInitializer
         = !Initializers.empty() && 
           Initializers.back()->isBaseInitializer() &&
-          Context.hasSameUnqualifiedType(Base->getType(),
+          Context.hasSameUnqualifiedType(Base.getType(),
                QualType(Initializers.back()->getBaseClass(), 0));
       continue;
     }
     
     Builder.AddTypedTextChunk(
                Builder.getAllocator().CopyString(
-                          Base->getType().getAsString(Policy)));
+                          Base.getType().getAsString(Policy)));
     Builder.AddChunk(CodeCompletionString::CK_LeftParen);
     Builder.AddPlaceholderChunk("args");
     Builder.AddChunk(CodeCompletionString::CK_RightParen);

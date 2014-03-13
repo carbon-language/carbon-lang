@@ -880,12 +880,11 @@ void CFGBuilder::addImplicitDtorsForDestructor(const CXXDestructorDecl *DD) {
   const CXXRecordDecl *RD = DD->getParent();
 
   // At the end destroy virtual base objects.
-  for (CXXRecordDecl::base_class_const_iterator VI = RD->vbases_begin(),
-      VE = RD->vbases_end(); VI != VE; ++VI) {
-    const CXXRecordDecl *CD = VI->getType()->getAsCXXRecordDecl();
+  for (const auto &VI : RD->vbases()) {
+    const CXXRecordDecl *CD = VI.getType()->getAsCXXRecordDecl();
     if (!CD->hasTrivialDestructor()) {
       autoCreateBlock();
-      appendBaseDtor(Block, VI);
+      appendBaseDtor(Block, &VI);
     }
   }
 

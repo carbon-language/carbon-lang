@@ -442,10 +442,8 @@ void CGRecordLowering::accumulateVPtrs() {
 void CGRecordLowering::accumulateVBases() {
   Members.push_back(MemberInfo(Layout.getNonVirtualSize(),
                                MemberInfo::Scissor, 0, RD));
-  for (CXXRecordDecl::base_class_const_iterator Base = RD->vbases_begin(),
-                                                BaseEnd = RD->vbases_end();
-       Base != BaseEnd; ++Base) {
-    const CXXRecordDecl *BaseDecl = Base->getType()->getAsCXXRecordDecl();
+  for (const auto &Base : RD->vbases()) {
+    const CXXRecordDecl *BaseDecl = Base.getType()->getAsCXXRecordDecl();
     if (BaseDecl->isEmpty())
       continue;
     CharUnits Offset = Layout.getVBaseClassOffset(BaseDecl);

@@ -689,6 +689,13 @@ public:
   /// \brief Retrieves the number of virtual base classes of this class.
   unsigned getNumVBases() const { return data().NumVBases; }
 
+  base_class_range vbases() {
+    return base_class_range(vbases_begin(), vbases_end());
+  }
+  base_class_const_range vbases() const {
+    return base_class_const_range(vbases_begin(), vbases_end());
+  }
+
   base_class_iterator vbases_begin() { return data().getVBases(); }
   base_class_const_iterator vbases_begin() const { return data().getVBases(); }
   base_class_iterator vbases_end() { return vbases_begin() + data().NumVBases; }

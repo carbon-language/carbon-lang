@@ -496,11 +496,10 @@ comments::FullComment *ASTContext::getCommentForDecl(
         }
       }
       // Check virtual bases.
-      for (CXXRecordDecl::base_class_const_iterator I =
-           RD->vbases_begin(), E = RD->vbases_end(); I != E; ++I) {
-        if (I->getAccessSpecifier() != AS_public)
+      for (const auto &I : RD->vbases()) {
+        if (I.getAccessSpecifier() != AS_public)
           continue;
-        QualType Ty = I->getType();
+        QualType Ty = I.getType();
         if (Ty.isNull())
           continue;
         if (const CXXRecordDecl *VirtualBase = Ty->getAsCXXRecordDecl()) {
@@ -5617,10 +5616,8 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
   }
 
   if (CXXRec && includeVBases) {
-    for (CXXRecordDecl::base_class_iterator
-           BI = CXXRec->vbases_begin(),
-           BE = CXXRec->vbases_end(); BI != BE; ++BI) {
-      CXXRecordDecl *base = BI->getType()->getAsCXXRecordDecl();
+    for (const auto &BI : CXXRec->vbases()) {
+      CXXRecordDecl *base = BI.getType()->getAsCXXRecordDecl();
       if (base->isEmpty())
         continue;
       uint64_t offs = toBits(layout.getVBaseClassOffset(base));

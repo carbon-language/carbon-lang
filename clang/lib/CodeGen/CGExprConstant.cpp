@@ -1372,10 +1372,9 @@ static llvm::Constant *EmitNullConstant(CodeGenModule &CGM,
 
   // Fill in the virtual bases, if we're working with the complete object.
   if (asCompleteObject) {
-    for (CXXRecordDecl::base_class_const_iterator
-           I = record->vbases_begin(), E = record->vbases_end(); I != E; ++I) {
+    for (const auto &I : record->vbases()) {
       const CXXRecordDecl *base = 
-        cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
+        cast<CXXRecordDecl>(I.getType()->castAs<RecordType>()->getDecl());
 
       // Ignore empty bases.
       if (base->isEmpty())
