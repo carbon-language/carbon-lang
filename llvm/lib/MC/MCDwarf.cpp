@@ -82,7 +82,7 @@ void MCLineEntry::Make(MCStreamer *MCOS, const MCSection *Section) {
 
   // Add the line entry to this section's entries.
   MCOS->getContext()
-      .getMCDwarfFileTable(MCOS->getContext().getDwarfCompileUnitID())
+      .getMCDwarfLineTable(MCOS->getContext().getDwarfCompileUnitID())
       .getMCLineSections()
       .addLineEntry(LineEntry, Section);
 }
@@ -204,14 +204,14 @@ EmitDwarfLineTable(MCStreamer *MCOS, const MCSection *Section,
 //
 // This emits the Dwarf file and the line tables.
 //
-const MCSymbol *MCDwarfFileTable::Emit(MCStreamer *MCOS) {
+const MCSymbol *MCDwarfLineTable::Emit(MCStreamer *MCOS) {
   MCContext &context = MCOS->getContext();
 
   // CUID and MCLineTableSymbols are set in DwarfDebug, when DwarfDebug does
   // not exist, CUID will be 0 and MCLineTableSymbols will be empty.
   // Handle Compile Unit 0, the line table start symbol is the section symbol.
-  auto I = MCOS->getContext().getMCDwarfFileTables().begin(),
-       E = MCOS->getContext().getMCDwarfFileTables().end();
+  auto I = MCOS->getContext().getMCDwarfLineTables().begin(),
+       E = MCOS->getContext().getMCDwarfLineTables().end();
 
   // Switch to the section where the table will be emitted into.
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfLineSection());
@@ -303,7 +303,7 @@ std::pair<MCSymbol *, MCSymbol *> MCDwarfLineTableHeader::Emit(MCStreamer *MCOS)
   return std::make_pair(LineStartSym, LineEndSym);
 }
 
-const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS) const {
+const MCSymbol *MCDwarfLineTable::EmitCU(MCStreamer *MCOS) const {
   MCSymbol *LineStartSym;
   MCSymbol *LineEndSym;
   std::tie(LineStartSym, LineEndSym) = Header.Emit(MCOS);
@@ -331,7 +331,8 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS) const {
   return LineStartSym;
 }
 
-unsigned MCDwarfFileTable::getFile(StringRef Directory, StringRef FileName, unsigned FileNumber) {
+unsigned MCDwarfLineTable::getFile(StringRef Directory, StringRef FileName,
+                                   unsigned FileNumber) {
   return Header.getFile(Directory, FileName, FileNumber);
 }
 

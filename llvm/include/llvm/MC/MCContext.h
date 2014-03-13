@@ -116,7 +116,7 @@ namespace llvm {
     /// We now emit a line table for each compile unit. To reduce the prologue
     /// size of each line table, the files and directories used by each compile
     /// unit are separated.
-    std::map<unsigned, MCDwarfFileTable> MCDwarfFileTablesCUMap;
+    std::map<unsigned, MCDwarfLineTable> MCDwarfLineTablesCUMap;
 
     /// The current dwarf line information from the last dwarf .loc directive.
     MCDwarfLoc CurrentDwarfLoc;
@@ -302,35 +302,35 @@ namespace llvm {
 
     bool hasDwarfFiles() const {
       // Traverse MCDwarfFilesCUMap and check whether each entry is empty.
-      for (const auto &FileTable : MCDwarfFileTablesCUMap)
+      for (const auto &FileTable : MCDwarfLineTablesCUMap)
         if (!FileTable.second.getMCDwarfFiles().empty())
            return true;
       return false;
     }
 
-    const std::map<unsigned, MCDwarfFileTable> &getMCDwarfFileTables() const {
-      return MCDwarfFileTablesCUMap;
+    const std::map<unsigned, MCDwarfLineTable> &getMCDwarfLineTables() const {
+      return MCDwarfLineTablesCUMap;
     }
 
-    MCDwarfFileTable &getMCDwarfFileTable(unsigned CUID) {
-      return MCDwarfFileTablesCUMap[CUID];
+    MCDwarfLineTable &getMCDwarfLineTable(unsigned CUID) {
+      return MCDwarfLineTablesCUMap[CUID];
     }
 
-    const MCDwarfFileTable &getMCDwarfFileTable(unsigned CUID) const {
-      auto I = MCDwarfFileTablesCUMap.find(CUID);
-      assert(I != MCDwarfFileTablesCUMap.end());
+    const MCDwarfLineTable &getMCDwarfLineTable(unsigned CUID) const {
+      auto I = MCDwarfLineTablesCUMap.find(CUID);
+      assert(I != MCDwarfLineTablesCUMap.end());
       return I->second;
     }
 
     const SmallVectorImpl<MCDwarfFile> &getMCDwarfFiles(unsigned CUID = 0) {
-      return getMCDwarfFileTable(CUID).getMCDwarfFiles();
+      return getMCDwarfLineTable(CUID).getMCDwarfFiles();
     }
     const SmallVectorImpl<std::string> &getMCDwarfDirs(unsigned CUID = 0) {
-      return getMCDwarfFileTable(CUID).getMCDwarfDirs();
+      return getMCDwarfLineTable(CUID).getMCDwarfDirs();
     }
 
     bool hasMCLineSections() const {
-      for (const auto &Table : MCDwarfFileTablesCUMap)
+      for (const auto &Table : MCDwarfLineTablesCUMap)
         if (!Table.second.getMCDwarfFiles().empty() || Table.second.getLabel())
           return true;
       return false;
@@ -342,10 +342,10 @@ namespace llvm {
       DwarfCompileUnitID = CUIndex;
     }
     MCSymbol *getMCLineTableSymbol(unsigned ID) const {
-      return getMCDwarfFileTable(ID).getLabel();
+      return getMCDwarfLineTable(ID).getLabel();
     }
     void setMCLineTableSymbol(MCSymbol *Sym, unsigned ID) {
-      getMCDwarfFileTable(ID).setLabel(Sym);
+      getMCDwarfLineTable(ID).setLabel(Sym);
     }
 
     /// setCurrentDwarfLoc - saves the information from the currently parsed

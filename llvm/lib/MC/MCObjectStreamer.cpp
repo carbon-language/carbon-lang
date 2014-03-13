@@ -380,7 +380,7 @@ void MCObjectStreamer::FinishImpl() {
   // Dump out the dwarf file & directory tables and line tables.
   const MCSymbol *LineSectionSymbol = NULL;
   if (getContext().hasMCLineSections())
-    LineSectionSymbol = MCDwarfFileTable::Emit(this);
+    LineSectionSymbol = MCDwarfLineTable::Emit(this);
 
   // If we are generating dwarf for assembly source files dump out the sections.
   if (getContext().getGenDwarfForAssembly())

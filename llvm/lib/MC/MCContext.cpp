@@ -84,7 +84,7 @@ void MCContext::reset() {
   Symbols.clear();
   Allocator.Reset();
   Instances.clear();
-  MCDwarfFileTablesCUMap.clear();
+  MCDwarfLineTablesCUMap.clear();
   MCGenDwarfLabelEntries.clear();
   DwarfDebugFlags = StringRef();
   DwarfCompileUnitID = 0;
@@ -337,7 +337,7 @@ const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section) {
 /// allocated file number is returned.  The file numbers may be in any order.
 unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
                                  unsigned FileNumber, unsigned CUID) {
-  MCDwarfFileTable &Table = MCDwarfFileTablesCUMap[CUID];
+  MCDwarfLineTable &Table = MCDwarfLineTablesCUMap[CUID];
   return Table.getFile(Directory, FileName, FileNumber);
 }
 

@@ -183,7 +183,7 @@ struct MCDwarfLineTableHeader {
   std::pair<MCSymbol *, MCSymbol *> Emit(MCStreamer *MCOS) const;
 };
 
-class MCDwarfFileTable {
+class MCDwarfLineTable {
   MCDwarfLineTableHeader Header;
   MCLineSection MCLineSections;
 
