@@ -43,7 +43,7 @@ void LiveRangeCalc::createDeadDefs(LiveRange &LR, unsigned Reg) {
   // LR.createDeadDef() will deduplicate.
   for (MachineRegisterInfo::def_iterator
        I = MRI->def_begin(Reg), E = MRI->def_end(); I != E; ++I) {
-    const MachineInstr *MI = &*I;
+    const MachineInstr *MI = I->getParent();
     // Find the corresponding slot index.
     SlotIndex Idx;
     if (MI->isPHI())
@@ -52,7 +52,7 @@ void LiveRangeCalc::createDeadDefs(LiveRange &LR, unsigned Reg) {
     else
       // Instructions are either normal 'r', or early clobber 'e'.
       Idx = Indexes->getInstructionIndex(MI)
-        .getRegSlot(I.getOperand().isEarlyClobber());
+        .getRegSlot(I->isEarlyClobber());
 
     // Create the def in LR. This may find an existing def.
     LR.createDeadDef(Idx, *Alloc);
@@ -66,7 +66,7 @@ void LiveRangeCalc::extendToUses(LiveRange &LR, unsigned Reg) {
   // Visit all operands that read Reg. This may include partial defs.
   for (MachineRegisterInfo::reg_nodbg_iterator I = MRI->reg_nodbg_begin(Reg),
        E = MRI->reg_nodbg_end(); I != E; ++I) {
-    MachineOperand &MO = I.getOperand();
+    MachineOperand &MO = *I;
     // Clear all kill flags. They will be reinserted after register allocation
     // by LiveIntervalAnalysis::addKillFlags().
     if (MO.isUse())
@@ -75,7 +75,7 @@ void LiveRangeCalc::extendToUses(LiveRange &LR, unsigned Reg) {
       continue;
     // MI is reading Reg. We may have visited MI before if it happens to be
     // reading Reg multiple times. That is OK, extend() is idempotent.
-    const MachineInstr *MI = &*I;
+    const MachineInstr *MI = I->getParent();
 
     // Find the SlotIndex being read.
     SlotIndex Idx;

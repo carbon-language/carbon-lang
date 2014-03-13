@@ -1323,8 +1323,8 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
   if (equalityOnly) {
     // We need to check the uses of the condition register in order to reject
     // non-equality comparisons.
-    for (MachineRegisterInfo::use_iterator I = MRI->use_begin(CRReg),
-         IE = MRI->use_end(); I != IE; ++I) {
+    for (MachineRegisterInfo::use_instr_iterator I =MRI->use_instr_begin(CRReg),
+         IE = MRI->use_instr_end(); I != IE; ++I) {
       MachineInstr *UseMI = &*I;
       if (UseMI->getOpcode() == PPC::BCC) {
         unsigned Pred = UseMI->getOperand(0).getImm();
@@ -1346,8 +1346,8 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
   for (MachineBasicBlock::iterator EL = CmpInstr->getParent()->end();
        I != EL; ++I) {
     bool FoundUse = false;
-    for (MachineRegisterInfo::use_iterator J = MRI->use_begin(CRReg),
-         JE = MRI->use_end(); J != JE; ++J)
+    for (MachineRegisterInfo::use_instr_iterator J =MRI->use_instr_begin(CRReg),
+         JE = MRI->use_instr_end(); J != JE; ++J)
       if (&*J == &*I) {
         FoundUse = true;
         break;
@@ -1456,15 +1456,16 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
   }
 
   if (ShouldSwap)
-    for (MachineRegisterInfo::use_iterator I = MRI->use_begin(CRReg),
-         IE = MRI->use_end(); I != IE; ++I) {
+    for (MachineRegisterInfo::use_instr_iterator
+         I = MRI->use_instr_begin(CRReg), IE = MRI->use_instr_end();
+         I != IE; ++I) {
       MachineInstr *UseMI = &*I;
       if (UseMI->getOpcode() == PPC::BCC) {
         PPC::Predicate Pred = (PPC::Predicate) UseMI->getOperand(0).getImm();
         assert((!equalityOnly ||
                 Pred == PPC::PRED_EQ || Pred == PPC::PRED_NE) &&
                "Invalid predicate for equality-only optimization");
-        PredsToUpdate.push_back(std::make_pair(&((*I).getOperand(0)),
+        PredsToUpdate.push_back(std::make_pair(&(UseMI->getOperand(0)),
                                 PPC::getSwappedPredicate(Pred)));
       } else if (UseMI->getOpcode() == PPC::ISEL ||
                  UseMI->getOpcode() == PPC::ISEL8) {
@@ -1477,7 +1478,7 @@ bool PPCInstrInfo::optimizeCompareInstr(MachineInstr *CmpInstr,
         else if (NewSubReg == PPC::sub_gt)
           NewSubReg = PPC::sub_lt;
 
-        SubRegsToUpdate.push_back(std::make_pair(&((*I).getOperand(3)),
+        SubRegsToUpdate.push_back(std::make_pair(&(UseMI->getOperand(3)),
                                                  NewSubReg));
       } else // We need to abort on a user we don't understand.
         return false;

@@ -134,8 +134,8 @@ void SplitAnalysis::analyzeUses() {
   for (MachineRegisterInfo::use_nodbg_iterator
        I = MRI.use_nodbg_begin(CurLI->reg), E = MRI.use_nodbg_end(); I != E;
        ++I)
-    if (!I.getOperand().isUndef())
-      UseSlots.push_back(LIS.getInstructionIndex(&*I).getRegSlot());
+    if (!I->isUndef())
+      UseSlots.push_back(LIS.getInstructionIndex(I->getParent()).getRegSlot());
 
   array_pod_sort(UseSlots.begin(), UseSlots.end());
 
@@ -972,7 +972,7 @@ void SplitEditor::extendPHIKillRanges() {
 void SplitEditor::rewriteAssigned(bool ExtendRanges) {
   for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(Edit->getReg()),
        RE = MRI.reg_end(); RI != RE;) {
-    MachineOperand &MO = RI.getOperand();
+    MachineOperand &MO = *RI;
     MachineInstr *MI = MO.getParent();
     ++RI;
     // LiveDebugVariables should have handled all DBG_VALUE instructions.

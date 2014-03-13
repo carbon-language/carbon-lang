@@ -229,7 +229,7 @@ sink3AddrInstruction(MachineInstr *MI, unsigned SavedReg,
     for (MachineRegisterInfo::use_nodbg_iterator
            UI = MRI->use_nodbg_begin(SavedReg),
            UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
-      MachineOperand &UseMO = UI.getOperand();
+      MachineOperand &UseMO = *UI;
       if (!UseMO.isKill())
         continue;
       KillMI = UseMO.getParent();
@@ -317,7 +317,7 @@ bool TwoAddressInstructionPass::noUseAfterLastDef(unsigned Reg, unsigned Dist,
   unsigned LastUse = Dist;
   for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(Reg),
          E = MRI->reg_end(); I != E; ++I) {
-    MachineOperand &MO = I.getOperand();
+    MachineOperand &MO = *I;
     MachineInstr *MI = MO.getParent();
     if (MI->getParent() != MBB || MI->isDebugValue())
       continue;
@@ -419,7 +419,7 @@ static bool isKilled(MachineInstr &MI, unsigned Reg,
     // go with what the kill flag says.
     if (std::next(Begin) != MRI->def_end())
       return true;
-    DefMI = &*Begin;
+    DefMI = Begin->getParent();
     bool IsSrcPhys, IsDstPhys;
     unsigned SrcReg,  DstReg;
     // If the def is something other than a copy, then it isn't going to
@@ -457,7 +457,7 @@ MachineInstr *findOnlyInterestingUse(unsigned Reg, MachineBasicBlock *MBB,
   if (!MRI->hasOneNonDBGUse(Reg))
     // None or more than one use.
     return 0;
-  MachineInstr &UseMI = *MRI->use_nodbg_begin(Reg);
+  MachineInstr &UseMI = *MRI->use_instr_nodbg_begin(Reg);
   if (UseMI.getParent() != MBB)
     return 0;
   unsigned SrcReg;
@@ -914,8 +914,8 @@ rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
 /// instruction too close to the defs of its register dependencies.
 bool TwoAddressInstructionPass::isDefTooClose(unsigned Reg, unsigned Dist,
                                               MachineInstr *MI) {
-  for (MachineRegisterInfo::def_iterator DI = MRI->def_begin(Reg),
-         DE = MRI->def_end(); DI != DE; ++DI) {
+  for (MachineRegisterInfo::def_instr_iterator DI = MRI->def_instr_begin(Reg),
+         DE = MRI->def_instr_end(); DI != DE; ++DI) {
     MachineInstr *DefMI = &*DI;
     if (DefMI->getParent() != MBB || DefMI->isCopy() || DefMI->isCopyLike())
       continue;

@@ -89,8 +89,9 @@ protected:
     unsigned ss = vrm->assignVirt2StackSlot(li->reg);
 
     // Iterate over reg uses/defs.
-    for (MachineRegisterInfo::reg_iterator
-         regItr = mri->reg_begin(li->reg); regItr != mri->reg_end();) {
+    for (MachineRegisterInfo::reg_instr_iterator
+         regItr = mri->reg_instr_begin(li->reg);
+         regItr != mri->reg_instr_end();) {
 
       // Grab the use/def instr.
       MachineInstr *mi = &*regItr;
@@ -98,9 +99,7 @@ protected:
       DEBUG(dbgs() << "  Processing " << *mi);
 
       // Step regItr to the next use/def instr.
-      do {
-        ++regItr;
-      } while (regItr != mri->reg_end() && (&*regItr == mi));
+      ++regItr;
 
       // Collect uses & defs for this instr.
       SmallVector<unsigned, 2> indices;

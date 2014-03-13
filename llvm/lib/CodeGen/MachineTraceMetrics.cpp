@@ -627,7 +627,7 @@ struct DataDep {
     assert(TargetRegisterInfo::isVirtualRegister(VirtReg));
     MachineRegisterInfo::def_iterator DefI = MRI->def_begin(VirtReg);
     assert(!DefI.atEnd() && "Register has no defs");
-    DefMI = &*DefI;
+    DefMI = DefI->getParent();
     DefOp = DefI.getOperandNo();
     assert((++DefI).atEnd() && "Register has multiple defs");
   }

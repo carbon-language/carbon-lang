@@ -225,9 +225,9 @@ void A15SDOptimizer::eraseInstrWithNoUses(MachineInstr *MI) {
           IsDead = false;
           break;
         }
-        for (MachineRegisterInfo::use_iterator II = MRI->use_begin(Reg),
-                            EE = MRI->use_end();
-                            II != EE; ++II) {
+        for (MachineRegisterInfo::use_instr_iterator
+             II = MRI->use_instr_begin(Reg), EE = MRI->use_instr_end();
+             II != EE; ++II) {
           // We don't care about self references.
           if (&*II == Def)
             continue;
@@ -646,7 +646,7 @@ bool A15SDOptimizer::runOnInstruction(MachineInstr *MI) {
       unsigned DPRDefReg = MI->getOperand(0).getReg();
       for (MachineRegisterInfo::use_iterator I = MRI->use_begin(DPRDefReg),
              E = MRI->use_end(); I != E; ++I)
-        Uses.push_back(&I.getOperand());
+        Uses.push_back(&*I);
 
       // We can optimize this.
       unsigned NewReg = optimizeSDPattern(MI);

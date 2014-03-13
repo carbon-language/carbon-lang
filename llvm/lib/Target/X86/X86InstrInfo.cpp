@@ -1619,9 +1619,9 @@ static bool regIsPICBase(unsigned BaseReg, const MachineRegisterInfo &MRI) {
   if (!TargetRegisterInfo::isVirtualRegister(BaseReg))
     return false;
   bool isPICBase = false;
-  for (MachineRegisterInfo::def_iterator I = MRI.def_begin(BaseReg),
-         E = MRI.def_end(); I != E; ++I) {
-    MachineInstr *DefMI = I.getOperand().getParent();
+  for (MachineRegisterInfo::def_instr_iterator I = MRI.def_instr_begin(BaseReg),
+         E = MRI.def_instr_end(); I != E; ++I) {
+    MachineInstr *DefMI = &*I;
     if (DefMI->getOpcode() != X86::MOVPC32r)
       return false;
     assert(!isPICBase && "More than one PIC base?");

@@ -104,7 +104,7 @@ bool MipsSEDAGToDAGISel::replaceUsesWithZeroReg(MachineRegisterInfo *MRI,
   // Replace uses with ZeroReg.
   for (MachineRegisterInfo::use_iterator U = MRI->use_begin(DstReg),
        E = MRI->use_end(); U != E;) {
-    MachineOperand &MO = U.getOperand();
+    MachineOperand &MO = *U;
     unsigned OpNo = U.getOperandNo();
     MachineInstr *MI = MO.getParent();
     ++U;

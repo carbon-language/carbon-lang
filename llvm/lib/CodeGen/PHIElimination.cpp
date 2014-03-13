@@ -198,8 +198,9 @@ bool PHIElimination::EliminatePHINodes(MachineFunction &MF,
 /// This includes registers with no defs.
 static bool isImplicitlyDefined(unsigned VirtReg,
                                 const MachineRegisterInfo *MRI) {
-  for (MachineRegisterInfo::def_iterator DI = MRI->def_begin(VirtReg),
-       DE = MRI->def_end(); DI != DE; ++DI)
+  for (MachineRegisterInfo::def_instr_iterator
+       DI = MRI->def_instr_begin(VirtReg), DE = MRI->def_instr_end();
+       DI != DE; ++DI)
     if (!DI->isImplicitDef())
       return false;
   return true;

@@ -905,8 +905,8 @@ void ConnectedVNInfoEqClasses::Distribute(LiveInterval *LIV[],
   // Rewrite instructions.
   for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(LI.reg),
        RE = MRI.reg_end(); RI != RE;) {
-    MachineOperand &MO = RI.getOperand();
-    MachineInstr *MI = MO.getParent();
+    MachineOperand &MO = *RI;
+    MachineInstr *MI = RI->getParent();
     ++RI;
     // DBG_VALUE instructions don't have slot indexes, so get the index of the
     // instruction before them.

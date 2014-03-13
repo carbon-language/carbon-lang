@@ -262,8 +262,8 @@ TailDuplicatePass::TailDuplicateAndUpdate(MachineBasicBlock *MBB,
       // Rewrite uses that are outside of the original def's block.
       MachineRegisterInfo::use_iterator UI = MRI->use_begin(VReg);
       while (UI != MRI->use_end()) {
-        MachineOperand &UseMO = UI.getOperand();
-        MachineInstr *UseMI = &*UI;
+        MachineOperand &UseMO = *UI;
+        MachineInstr *UseMI = UseMO.getParent();
         ++UI;
         if (UseMI->isDebugValue()) {
           // SSAUpdate can replace the use with an undef. That creates
@@ -338,8 +338,8 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
 
 static bool isDefLiveOut(unsigned Reg, MachineBasicBlock *BB,
                          const MachineRegisterInfo *MRI) {
-  for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
-         UE = MRI->use_end(); UI != UE; ++UI) {
+  for (MachineRegisterInfo::use_instr_iterator UI = MRI->use_instr_begin(Reg),
+         UE = MRI->use_instr_end(); UI != UE; ++UI) {
     MachineInstr *UseMI = &*UI;
     if (UseMI->isDebugValue())
       continue;

@@ -16131,7 +16131,7 @@ X86TargetLowering::emitFMA3Instr(MachineInstr *MI,
 
   // Check whether the addend is defined by a PHI:
   assert(MRI.hasOneDef(AddendOp.getReg()) && "Multiple defs in SSA?");
-  MachineInstr &AddendDef = *MRI.def_begin(AddendOp.getReg());
+  MachineInstr &AddendDef = *MRI.def_instr_begin(AddendOp.getReg());
   if (!AddendDef.isPHI())
     return MBB;
 
@@ -16150,7 +16150,7 @@ X86TargetLowering::emitFMA3Instr(MachineInstr *MI,
   for (unsigned i = 1, e = AddendDef.getNumOperands(); i < e; i += 2) {
     assert(AddendDef.getOperand(i).isReg());
     MachineOperand PHISrcOp = AddendDef.getOperand(i);
-    MachineInstr &PHISrcInst = *MRI.def_begin(PHISrcOp.getReg());
+    MachineInstr &PHISrcInst = *MRI.def_instr_begin(PHISrcOp.getReg());
     if (&PHISrcInst == MI) {
       // Found a matching instruction.
       unsigned NewFMAOpc = 0;

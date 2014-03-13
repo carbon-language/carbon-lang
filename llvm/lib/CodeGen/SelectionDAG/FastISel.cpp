@@ -1559,7 +1559,7 @@ bool FastISel::tryToFoldLoad(const LoadInst *LI, const Instruction *FoldInst) {
     return false;
 
   MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(LoadReg);
-  MachineInstr *User = &*RI;
+  MachineInstr *User = RI->getParent();
 
   // Set the insertion point properly.  Folding the load can cause generation of
   // other random instructions (like sign extends) for addressing modes; make

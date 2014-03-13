@@ -364,15 +364,15 @@ bool MachineCSE::isProfitableToCSE(unsigned CSReg, unsigned Reg,
       TargetRegisterInfo::isVirtualRegister(Reg)) {
     MayIncreasePressure = false;
     SmallPtrSet<MachineInstr*, 8> CSUses;
-    for (MachineRegisterInfo::use_nodbg_iterator I =MRI->use_nodbg_begin(CSReg),
-         E = MRI->use_nodbg_end(); I != E; ++I) {
-      MachineInstr *Use = &*I;
-      CSUses.insert(Use);
+    for (MachineRegisterInfo::use_instr_nodbg_iterator
+         I = MRI->use_instr_nodbg_begin(CSReg), E = MRI->use_instr_nodbg_end();
+         I != E; ++I) {
+      CSUses.insert(&*I);
     }
-    for (MachineRegisterInfo::use_nodbg_iterator I = MRI->use_nodbg_begin(Reg),
-         E = MRI->use_nodbg_end(); I != E; ++I) {
-      MachineInstr *Use = &*I;
-      if (!CSUses.count(Use)) {
+    for (MachineRegisterInfo::use_instr_nodbg_iterator
+         I = MRI->use_instr_nodbg_begin(Reg), E = MRI->use_instr_nodbg_end();
+         I != E; ++I) {
+      if (!CSUses.count(&*I)) {
         MayIncreasePressure = true;
         break;
       }
@@ -403,11 +403,11 @@ bool MachineCSE::isProfitableToCSE(unsigned CSReg, unsigned Reg,
   }
   if (!HasVRegUse) {
     bool HasNonCopyUse = false;
-    for (MachineRegisterInfo::use_nodbg_iterator I =  MRI->use_nodbg_begin(Reg),
-           E = MRI->use_nodbg_end(); I != E; ++I) {
-      MachineInstr *Use = &*I;
+    for (MachineRegisterInfo::use_instr_nodbg_iterator
+         I =  MRI->use_instr_nodbg_begin(Reg), E = MRI->use_instr_nodbg_end();
+         I != E; ++I) {
       // Ignore copies.
-      if (!Use->isCopyLike()) {
+      if (!I->isCopyLike()) {
         HasNonCopyUse = true;
         break;
       }
@@ -420,11 +420,11 @@ bool MachineCSE::isProfitableToCSE(unsigned CSReg, unsigned Reg,
   // it unless the defined value is already used in the BB of the new use.
   bool HasPHI = false;
   SmallPtrSet<MachineBasicBlock*, 4> CSBBs;
-  for (MachineRegisterInfo::use_nodbg_iterator I =  MRI->use_nodbg_begin(CSReg),
-       E = MRI->use_nodbg_end(); I != E; ++I) {
-    MachineInstr *Use = &*I;
-    HasPHI |= Use->isPHI();
-    CSBBs.insert(Use->getParent());
+  for (MachineRegisterInfo::use_instr_nodbg_iterator
+       I =  MRI->use_instr_nodbg_begin(CSReg), E = MRI->use_instr_nodbg_end();
+       I != E; ++I) {
+    HasPHI |= I->isPHI();
+    CSBBs.insert(I->getParent());
   }
 
   if (!HasPHI)

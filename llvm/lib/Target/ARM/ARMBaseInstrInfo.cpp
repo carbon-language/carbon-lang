@@ -2245,8 +2245,9 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
   if (CmpMask != ~0) {
     if (!isSuitableForMask(MI, SrcReg, CmpMask, false) || isPredicated(MI)) {
       MI = 0;
-      for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(SrcReg),
-           UE = MRI->use_end(); UI != UE; ++UI) {
+      for (MachineRegisterInfo::use_instr_iterator
+           UI = MRI->use_instr_begin(SrcReg), UE = MRI->use_instr_end();
+           UI != UE; ++UI) {
         if (UI->getParent() != CmpInstr->getParent()) continue;
         MachineInstr *PotentialAND = &*UI;
         if (!isSuitableForMask(PotentialAND, SrcReg, CmpMask, true) ||

@@ -80,8 +80,9 @@ MachineRegisterInfo::recomputeRegClass(unsigned Reg, const TargetMachine &TM) {
   for (reg_nodbg_iterator I = reg_nodbg_begin(Reg), E = reg_nodbg_end(); I != E;
        ++I) {
     // Apply the effect of the given operand to NewRC.
-    NewRC = I->getRegClassConstraintEffect(I.getOperandNo(), NewRC, TII,
-                                           getTargetRegisterInfo());
+    MachineInstr *MI = I->getParent();
+    NewRC = MI->getRegClassConstraintEffect(I.getOperandNo(), NewRC, TII,
+                                            getTargetRegisterInfo());
     if (!NewRC || NewRC == OldRC)
       return false;
   }
@@ -126,7 +127,7 @@ void MachineRegisterInfo::verifyUseList(unsigned Reg) const {
 #ifndef NDEBUG
   bool Valid = true;
   for (reg_iterator I = reg_begin(Reg), E = reg_end(); I != E; ++I) {
-    MachineOperand *MO = &I.getOperand();
+    MachineOperand *MO = &*I;
     MachineInstr *MI = MO->getParent();
     if (!MI) {
       errs() << PrintReg(Reg, getTargetRegisterInfo())
@@ -287,7 +288,7 @@ void MachineRegisterInfo::replaceRegWith(unsigned FromReg, unsigned ToReg) {
 
   // TODO: This could be more efficient by bulk changing the operands.
   for (reg_iterator I = reg_begin(FromReg), E = reg_end(); I != E; ) {
-    MachineOperand &O = I.getOperand();
+    MachineOperand &O = *I;
     ++I;
     O.setReg(ToReg);
   }
@@ -299,8 +300,8 @@ void MachineRegisterInfo::replaceRegWith(unsigned FromReg, unsigned ToReg) {
 /// form, so there should only be one definition.
 MachineInstr *MachineRegisterInfo::getVRegDef(unsigned Reg) const {
   // Since we are in SSA form, we can use the first definition.
-  def_iterator I = def_begin(Reg);
-  assert((I.atEnd() || std::next(I) == def_end()) &&
+  def_instr_iterator I = def_instr_begin(Reg);
+  assert((I.atEnd() || std::next(I) == def_instr_end()) &&
          "getVRegDef assumes a single definition or no definition");
   return !I.atEnd() ? &*I : 0;
 }
@@ -310,8 +311,8 @@ MachineInstr *MachineRegisterInfo::getVRegDef(unsigned Reg) const {
 /// multiple definitions or no definition, return null.
 MachineInstr *MachineRegisterInfo::getUniqueVRegDef(unsigned Reg) const {
   if (def_empty(Reg)) return 0;
-  def_iterator I = def_begin(Reg);
-  if (std::next(I) != def_end())
+  def_instr_iterator I = def_instr_begin(Reg);
+  if (std::next(I) != def_instr_end())
     return 0;
   return &*I;
 }
@@ -329,7 +330,7 @@ bool MachineRegisterInfo::hasOneNonDBGUse(unsigned RegNo) const {
 /// preserve conservative kill flag information.
 void MachineRegisterInfo::clearKillFlags(unsigned Reg) const {
   for (use_iterator UI = use_begin(Reg), UE = use_end(); UI != UE; ++UI)
-    UI.getOperand().setIsKill(false);
+    UI->setIsKill(false);
 }
 
 bool MachineRegisterInfo::isLiveIn(unsigned Reg) const {
@@ -392,7 +393,7 @@ MachineRegisterInfo::EmitLiveInCopies(MachineBasicBlock *EntryMBB,
 #ifndef NDEBUG
 void MachineRegisterInfo::dumpUses(unsigned Reg) const {
   for (use_iterator I = use_begin(Reg), E = use_end(); I != E; ++I)
-    I.getOperand().getParent()->dump();
+    I->getParent()->dump();
 }
 #endif
 
@@ -420,11 +421,11 @@ bool MachineRegisterInfo::isConstantPhysReg(unsigned PhysReg,
 /// deleted during LiveDebugVariables analysis.
 void MachineRegisterInfo::markUsesInDebugValueAsUndef(unsigned Reg) const {
   // Mark any DBG_VALUE that uses Reg as undef (but don't delete it.)
-  MachineRegisterInfo::use_iterator nextI;
-  for (use_iterator I = use_begin(Reg), E = use_end(); I != E; I = nextI) {
+  MachineRegisterInfo::use_instr_iterator nextI;
+  for (use_instr_iterator I = use_instr_begin(Reg), E = use_instr_end();
+       I != E; I = nextI) {
     nextI = std::next(I);  // I is invalidated by the setReg
-    MachineOperand& Use = I.getOperand();
-    MachineInstr *UseMI = Use.getParent();
+    MachineInstr *UseMI = &*I;
     if (UseMI->isDebugValue())
       UseMI->getOperand(0).setReg(0U);
   }

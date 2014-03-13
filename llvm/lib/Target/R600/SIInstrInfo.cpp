@@ -691,7 +691,7 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
 
     for (MachineRegisterInfo::use_iterator I = MRI.use_begin(NewDstReg),
            E = MRI.use_end(); I != E; ++I) {
-      MachineInstr &UseMI = *I;
+      MachineInstr &UseMI = *I->getParent();
       if (!canReadVGPR(UseMI, I.getOperandNo())) {
         Worklist.push_back(&UseMI);
       }

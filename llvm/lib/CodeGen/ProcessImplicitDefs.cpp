@@ -83,7 +83,7 @@ void ProcessImplicitDefs::processImplicitDef(MachineInstr *MI) {
     for (MachineRegisterInfo::use_nodbg_iterator UI =
          MRI->use_nodbg_begin(Reg),
          UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
-      MachineOperand &MO = UI.getOperand();
+      MachineOperand &MO = *UI;
       MO.setIsUndef();
       MachineInstr *UserMI = MO.getParent();
       if (!canTurnIntoImplicitDef(UserMI))

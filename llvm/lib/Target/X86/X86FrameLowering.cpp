@@ -379,8 +379,9 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(
 static bool usesTheStack(const MachineFunction &MF) {
   const MachineRegisterInfo &MRI = MF.getRegInfo();
 
-  for (MachineRegisterInfo::reg_iterator ri = MRI.reg_begin(X86::EFLAGS),
-       re = MRI.reg_end(); ri != re; ++ri)
+  for (MachineRegisterInfo::reg_instr_iterator
+       ri = MRI.reg_instr_begin(X86::EFLAGS), re = MRI.reg_instr_end();
+       ri != re; ++ri)
     if (ri->isCopy())
       return true;
 

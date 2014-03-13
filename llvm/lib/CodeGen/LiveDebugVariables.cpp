@@ -571,10 +571,10 @@ UserValue::addDefsFromCopies(LiveInterval *LI, unsigned LocNo,
   for (MachineRegisterInfo::use_nodbg_iterator
          UI = MRI.use_nodbg_begin(LI->reg),
          UE = MRI.use_nodbg_end(); UI != UE; ++UI) {
+    MachineInstr *MI = UI->getParent();
     // Copies of the full value.
-    if (UI.getOperand().getSubReg() || !UI->isCopy())
+    if (UI->getSubReg() || !MI->isCopy())
       continue;
-    MachineInstr *MI = &*UI;
     unsigned DstReg = MI->getOperand(0).getReg();
 
     // Don't follow copies to physregs. These are usually setting up call

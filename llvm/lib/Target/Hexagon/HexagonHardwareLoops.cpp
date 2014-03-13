@@ -907,10 +907,10 @@ bool HexagonHardwareLoops::isDead(const MachineInstr *MI,
     // this instruction is dead: both it (and the phi node) can be removed.
     use_nodbg_iterator I = MRI->use_nodbg_begin(Reg);
     use_nodbg_iterator End = MRI->use_nodbg_end();
-    if (std::next(I) != End || !I.getOperand().getParent()->isPHI())
+    if (std::next(I) != End || !I->getParent()->isPHI())
       return false;
 
-    MachineInstr *OnePhi = I.getOperand().getParent();
+    MachineInstr *OnePhi = I->getParent();
     for (unsigned j = 0, f = OnePhi->getNumOperands(); j != f; ++j) {
       const MachineOperand &OPO = OnePhi->getOperand(j);
       if (!OPO.isReg() || !OPO.isDef())
@@ -921,7 +921,7 @@ bool HexagonHardwareLoops::isDead(const MachineInstr *MI,
       for (use_nodbg_iterator J = MRI->use_nodbg_begin(OPReg);
            J != End; J = nextJ) {
         nextJ = std::next(J);
-        MachineOperand &Use = J.getOperand();
+        MachineOperand &Use = *J;
         MachineInstr *UseMI = Use.getParent();
 
         // If the phi node has a user that is not MI, bail...
@@ -955,8 +955,8 @@ void HexagonHardwareLoops::removeIfDead(MachineInstr *MI) {
       for (MachineRegisterInfo::use_iterator I = MRI->use_begin(Reg),
            E = MRI->use_end(); I != E; I = nextI) {
         nextI = std::next(I);  // I is invalidated by the setReg
-        MachineOperand &Use = I.getOperand();
-        MachineInstr *UseMI = Use.getParent();
+        MachineOperand &Use = *I;
+        MachineInstr *UseMI = I->getParent();
         if (UseMI == MI)
           continue;
         if (Use.isDebug())

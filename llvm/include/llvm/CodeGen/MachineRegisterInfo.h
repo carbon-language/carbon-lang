@@ -203,10 +203,17 @@ public:
   template<bool Uses, bool Defs, bool SkipDebug,
            bool ByOperand, bool ByInstr, bool ByBundle>
   class defusechain_iterator;
+  template<bool Uses, bool Defs, bool SkipDebug,
+           bool ByOperand, bool ByInstr, bool ByBundle>
+  class defusechain_instr_iterator;
 
   // Make it a friend so it can access getNextOperandForReg().
   template<bool, bool, bool, bool, bool, bool>
     friend class defusechain_iterator;
+  template<bool, bool, bool, bool, bool, bool>
+    friend class defusechain_instr_iterator;
+
+
 
   /// reg_iterator/reg_begin/reg_end - Walk all defs and uses of the specified
   /// register.
@@ -219,7 +226,7 @@ public:
 
   /// reg_instr_iterator/reg_instr_begin/reg_instr_end - Walk all defs and uses
   /// of the specified register, stepping by MachineInstr.
-  typedef defusechain_iterator<true,true,false,false,true,false>
+  typedef defusechain_instr_iterator<true,true,false,false,true,false>
           reg_instr_iterator;
   reg_instr_iterator reg_instr_begin(unsigned RegNo) const {
     return reg_instr_iterator(getRegUseDefListHead(RegNo));
@@ -228,7 +235,7 @@ public:
 
   /// reg_bundle_iterator/reg_bundle_begin/reg_bundle_end - Walk all defs and uses
   /// of the specified register, stepping by bundle.
-  typedef defusechain_iterator<true,true,false,false,false,true>
+  typedef defusechain_instr_iterator<true,true,false,false,false,true>
           reg_bundle_iterator;
   reg_bundle_iterator reg_bundle_begin(unsigned RegNo) const {
     return reg_bundle_iterator(getRegUseDefListHead(RegNo));
@@ -251,7 +258,7 @@ public:
   /// reg_instr_nodbg_iterator/reg_instr_nodbg_begin/reg_instr_nodbg_end - Walk
   /// all defs and uses of the specified register, stepping by MachineInstr,
   /// skipping those marked as Debug.
-  typedef defusechain_iterator<true,true,true,false,true,false>
+  typedef defusechain_instr_iterator<true,true,true,false,true,false>
           reg_instr_nodbg_iterator;
   reg_instr_nodbg_iterator reg_instr_nodbg_begin(unsigned RegNo) const {
     return reg_instr_nodbg_iterator(getRegUseDefListHead(RegNo));
@@ -263,7 +270,7 @@ public:
   /// reg_bundle_nodbg_iterator/reg_bundle_nodbg_begin/reg_bundle_nodbg_end - Walk
   /// all defs and uses of the specified register, stepping by bundle,
   /// skipping those marked as Debug.
-  typedef defusechain_iterator<true,true,true,false,false,true>
+  typedef defusechain_instr_iterator<true,true,true,false,false,true>
           reg_bundle_nodbg_iterator;
   reg_bundle_nodbg_iterator reg_bundle_nodbg_begin(unsigned RegNo) const {
     return reg_bundle_nodbg_iterator(getRegUseDefListHead(RegNo));
@@ -288,7 +295,7 @@ public:
 
   /// def_instr_iterator/def_instr_begin/def_instr_end - Walk all defs of the
   /// specified register, stepping by MachineInst.
-  typedef defusechain_iterator<false,true,false,false,true,false>
+  typedef defusechain_instr_iterator<false,true,false,false,true,false>
           def_instr_iterator;
   def_instr_iterator def_instr_begin(unsigned RegNo) const {
     return def_instr_iterator(getRegUseDefListHead(RegNo));
@@ -297,7 +304,7 @@ public:
 
   /// def_bundle_iterator/def_bundle_begin/def_bundle_end - Walk all defs of the
   /// specified register, stepping by bundle.
-  typedef defusechain_iterator<false,true,false,false,false,true>
+  typedef defusechain_instr_iterator<false,true,false,false,false,true>
           def_bundle_iterator;
   def_bundle_iterator def_bundle_begin(unsigned RegNo) const {
     return def_bundle_iterator(getRegUseDefListHead(RegNo));
@@ -327,7 +334,7 @@ public:
 
   /// use_instr_iterator/use_instr_begin/use_instr_end - Walk all uses of the
   /// specified register, stepping by MachineInstr.
-  typedef defusechain_iterator<true,false,false,false,true,false>
+  typedef defusechain_instr_iterator<true,false,false,false,true,false>
           use_instr_iterator;
   use_instr_iterator use_instr_begin(unsigned RegNo) const {
     return use_instr_iterator(getRegUseDefListHead(RegNo));
@@ -336,7 +343,7 @@ public:
 
   /// use_bundle_iterator/use_bundle_begin/use_bundle_end - Walk all uses of the
   /// specified register, stepping by bundle.
-  typedef defusechain_iterator<true,false,false,false,false,true>
+  typedef defusechain_instr_iterator<true,false,false,false,false,true>
           use_bundle_iterator;
   use_bundle_iterator use_bundle_begin(unsigned RegNo) const {
     return use_bundle_iterator(getRegUseDefListHead(RegNo));
@@ -368,7 +375,7 @@ public:
   /// use_instr_nodbg_iterator/use_instr_nodbg_begin/use_instr_nodbg_end - Walk
   /// all uses of the specified register, stepping by MachineInstr, skipping
   /// those marked as Debug.
-  typedef defusechain_iterator<true,false,true,false,true,false>
+  typedef defusechain_instr_iterator<true,false,true,false,true,false>
           use_instr_nodbg_iterator;
   use_instr_nodbg_iterator use_instr_nodbg_begin(unsigned RegNo) const {
     return use_instr_nodbg_iterator(getRegUseDefListHead(RegNo));
@@ -380,7 +387,7 @@ public:
   /// use_bundle_nodbg_iterator/use_bundle_nodbg_begin/use_bundle_nodbg_end - Walk
   /// all uses of the specified register, stepping by bundle, skipping
   /// those marked as Debug.
-  typedef defusechain_iterator<true,false,true,false,false,true>
+  typedef defusechain_instr_iterator<true,false,true,false,false,true>
           use_bundle_nodbg_iterator;
   use_bundle_nodbg_iterator use_bundle_nodbg_begin(unsigned RegNo) const {
     return use_bundle_nodbg_iterator(getRegUseDefListHead(RegNo));
@@ -743,16 +750,107 @@ public:
       defusechain_iterator tmp = *this; ++*this; return tmp;
     }
 
-    MachineOperand &getOperand() const {
-      assert(Op && "Cannot dereference end iterator!");
-      return *Op;
-    }
-
     /// getOperandNo - Return the operand # of this MachineOperand in its
     /// MachineInstr.
     unsigned getOperandNo() const {
       assert(Op && "Cannot dereference end iterator!");
       return Op - &Op->getParent()->getOperand(0);
+    }
+
+    // Retrieve a reference to the current operand.
+    MachineOperand &operator*() const {
+      assert(Op && "Cannot dereference end iterator!");
+      return *Op;
+    }
+
+    MachineOperand *operator->() const {
+      assert(Op && "Cannot dereference end iterator!");
+      return Op;
+    }
+  };
+
+  /// defusechain_iterator - This class provides iterator support for machine
+  /// operands in the function that use or define a specific register.  If
+  /// ReturnUses is true it returns uses of registers, if ReturnDefs is true it
+  /// returns defs.  If neither are true then you are silly and it always
+  /// returns end().  If SkipDebug is true it skips uses marked Debug
+  /// when incrementing.
+  template<bool ReturnUses, bool ReturnDefs, bool SkipDebug,
+           bool ByOperand, bool ByInstr, bool ByBundle>
+  class defusechain_instr_iterator
+    : public std::iterator<std::forward_iterator_tag, MachineInstr, ptrdiff_t> {
+    MachineOperand *Op;
+    explicit defusechain_instr_iterator(MachineOperand *op) : Op(op) {
+      // If the first node isn't one we're interested in, advance to one that
+      // we are interested in.
+      if (op) {
+        if ((!ReturnUses && op->isUse()) ||
+            (!ReturnDefs && op->isDef()) ||
+            (SkipDebug && op->isDebug()))
+          advance();
+      }
+    }
+    friend class MachineRegisterInfo;
+
+    void advance() {
+      assert(Op && "Cannot increment end iterator!");
+      Op = getNextOperandForReg(Op);
+
+      // All defs come before the uses, so stop def_iterator early.
+      if (!ReturnUses) {
+        if (Op) {
+          if (Op->isUse())
+            Op = 0;
+          else
+            assert(!Op->isDebug() && "Can't have debug defs");
+        }
+      } else {
+        // If this is an operand we don't care about, skip it.
+        while (Op && ((!ReturnDefs && Op->isDef()) ||
+                      (SkipDebug && Op->isDebug())))
+          Op = getNextOperandForReg(Op);
+      }
+    }
+  public:
+    typedef std::iterator<std::forward_iterator_tag,
+                          MachineInstr, ptrdiff_t>::reference reference;
+    typedef std::iterator<std::forward_iterator_tag,
+                          MachineInstr, ptrdiff_t>::pointer pointer;
+
+    defusechain_instr_iterator(const defusechain_instr_iterator &I) : Op(I.Op){}
+    defusechain_instr_iterator() : Op(0) {}
+
+    bool operator==(const defusechain_instr_iterator &x) const {
+      return Op == x.Op;
+    }
+    bool operator!=(const defusechain_instr_iterator &x) const {
+      return !operator==(x);
+    }
+
+    /// atEnd - return true if this iterator is equal to reg_end() on the value.
+    bool atEnd() const { return Op == 0; }
+
+    // Iterator traversal: forward iteration only
+    defusechain_instr_iterator &operator++() {          // Preincrement
+      assert(Op && "Cannot increment end iterator!");
+      if (ByOperand)
+        advance();
+      else if (ByInstr) {
+        MachineInstr *P = Op->getParent();
+        do {
+          advance();
+        } while (Op && Op->getParent() == P);
+      } else if (ByBundle) {
+        MachineInstr *P = getBundleStart(Op->getParent());
+        do {
+          advance();
+        } while (Op && getBundleStart(Op->getParent()) == P);
+      }
+
+      return *this;
+    }
+    defusechain_instr_iterator operator++(int) {        // Postincrement
+      defusechain_instr_iterator tmp = *this; ++*this; return tmp;
     }
 
     // Retrieve a reference to the current operand.
