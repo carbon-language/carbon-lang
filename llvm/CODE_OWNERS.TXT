@@ -92,7 +92,7 @@ W: http://nondot.org/~sabre/
 D: Everything not covered by someone else
 
 N: Tim Northover
-E: Tim.Northover@arm.com
+E: t.p.northover@gmail.com
 D: AArch64 backend
 
 N: Jakob Olesen
