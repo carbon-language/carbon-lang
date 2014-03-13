@@ -510,6 +510,10 @@ public:
     return Hint.first ? 0 : Hint.second;
   }
 
+  /// markUsesInDebugValueAsUndef - Mark every DBG_VALUE referencing the
+  /// specified register as undefined which causes the DBG_VALUE to be
+  /// deleted during LiveDebugVariables analysis.
+  void markUsesInDebugValueAsUndef(unsigned Reg) const;
 
   //===--------------------------------------------------------------------===//
   // Physical Register Use Info

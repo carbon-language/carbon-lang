@@ -414,3 +414,18 @@ bool MachineRegisterInfo::isConstantPhysReg(unsigned PhysReg,
       return false;
   return true;
 }
+
+/// markUsesInDebugValueAsUndef - Mark every DBG_VALUE referencing the
+/// specified register as undefined which causes the DBG_VALUE to be
+/// deleted during LiveDebugVariables analysis.
+void MachineRegisterInfo::markUsesInDebugValueAsUndef(unsigned Reg) const {
+  // Mark any DBG_VALUE that uses Reg as undef (but don't delete it.)
+  MachineRegisterInfo::use_iterator nextI;
+  for (use_iterator I = use_begin(Reg), E = use_end(); I != E; I = nextI) {
+    nextI = std::next(I);  // I is invalidated by the setReg
+    MachineOperand& Use = I.getOperand();
+    MachineInstr *UseMI = Use.getParent();
+    if (UseMI->isDebugValue())
+      UseMI->getOperand(0).setReg(0U);
+  }
+}

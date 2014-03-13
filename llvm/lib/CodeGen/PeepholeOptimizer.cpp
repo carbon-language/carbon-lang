@@ -505,12 +505,12 @@ bool PeepholeOptimizer::isLoadFoldable(MachineInstr *MI,
     return false;
 
   unsigned Reg = MI->getOperand(0).getReg();
-  // To reduce compilation time, we check MRI->hasOneUse when inserting
+  // To reduce compilation time, we check MRI->hasOneNonDBGUse when inserting
   // loads. It should be checked when processing uses of the load, since
   // uses can be removed during peephole.
   if (!MI->getOperand(0).getSubReg() &&
       TargetRegisterInfo::isVirtualRegister(Reg) &&
-      MRI->hasOneUse(Reg)) {
+      MRI->hasOneNonDBGUse(Reg)) {
     FoldAsLoadDefReg = Reg;
     return true;
   }
@@ -594,10 +594,14 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       ++MII;
       LocalMIs.insert(MI);
 
+      // Skip debug values. They should not affect this peephole optimization.
+      if (MI->isDebugValue())
+          continue;
+
       // If there exists an instruction which belongs to the following
       // categories, we will discard the load candidate.
       if (MI->isPosition() || MI->isPHI() || MI->isImplicitDef() ||
-          MI->isKill() || MI->isInlineAsm() || MI->isDebugValue() ||
+          MI->isKill() || MI->isInlineAsm() ||
           MI->hasUnmodeledSideEffects()) {
         FoldAsLoadDefReg = 0;
         continue;
@@ -633,6 +637,9 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       if (!isLoadFoldable(MI, FoldAsLoadDefReg) && FoldAsLoadDefReg) {
         // We need to fold load after optimizeCmpInstr, since optimizeCmpInstr
         // can enable folding by converting SUB to CMP.
+        // Save FoldAsLoadDefReg because optimizeLoadInstr() resets it and we
+        // need it for markUsesInDebugValueAsUndef().
+        unsigned FoldedReg = FoldAsLoadDefReg;
         MachineInstr *DefMI = 0;
         MachineInstr *FoldMI = TII->optimizeLoadInstr(MI, MRI,
                                                       FoldAsLoadDefReg, DefMI);
@@ -645,6 +652,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
           LocalMIs.insert(FoldMI);
           MI->eraseFromParent();
           DefMI->eraseFromParent();
+          MRI->markUsesInDebugValueAsUndef(FoldedReg);
           ++NumLoadFold;
 
           // MI is replaced with FoldMI.
