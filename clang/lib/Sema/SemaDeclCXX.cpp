@@ -4423,27 +4423,25 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   }
 
   if (!Record->isDependentType()) {
-    for (CXXRecordDecl::method_iterator M = Record->method_begin(),
-                                     MEnd = Record->method_end();
-         M != MEnd; ++M) {
+    for (auto *M : Record->methods()) {
       // See if a method overloads virtual methods in a base
       // class without overriding any.
       if (!M->isStatic())
-        DiagnoseHiddenVirtualMethods(*M);
+        DiagnoseHiddenVirtualMethods(M);
 
       // Check whether the explicitly-defaulted special members are valid.
       if (!M->isInvalidDecl() && M->isExplicitlyDefaulted())
-        CheckExplicitlyDefaultedSpecialMember(*M);
+        CheckExplicitlyDefaultedSpecialMember(M);
 
       // For an explicitly defaulted or deleted special member, we defer
       // determining triviality until the class is complete. That time is now!
       if (!M->isImplicit() && !M->isUserProvided()) {
-        CXXSpecialMember CSM = getSpecialMember(*M);
+        CXXSpecialMember CSM = getSpecialMember(M);
         if (CSM != CXXInvalid) {
-          M->setTrivial(SpecialMemberIsTrivial(*M, CSM));
+          M->setTrivial(SpecialMemberIsTrivial(M, CSM));
 
           // Inform the class that we've finished declaring this member.
-          Record->finishedDefaultedOrDeletedMember(*M);
+          Record->finishedDefaultedOrDeletedMember(M);
         }
       }
     }
@@ -4462,10 +4460,8 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   // destructor for the class is trivial.
   if (LangOpts.CPlusPlus11 && !Record->isDependentType() &&
       !Record->isLiteral() && !Record->getNumVBases()) {
-    for (CXXRecordDecl::method_iterator M = Record->method_begin(),
-                                     MEnd = Record->method_end();
-         M != MEnd; ++M) {
-      if (M->isConstexpr() && M->isInstance() && !isa<CXXConstructorDecl>(*M)) {
+    for (const auto *M : Record->methods()) {
+      if (M->isConstexpr() && M->isInstance() && !isa<CXXConstructorDecl>(M)) {
         switch (Record->getTemplateSpecializationKind()) {
         case TSK_ImplicitInstantiation:
         case TSK_ExplicitInstantiationDeclaration:
@@ -5301,10 +5297,9 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
       if (!Diagnose) return true;
 
       // Find any user-declared move assignment operator.
-      for (CXXRecordDecl::method_iterator I = RD->method_begin(),
-                                          E = RD->method_end(); I != E; ++I) {
+      for (auto *I : RD->methods()) {
         if (I->isMoveAssignmentOperator()) {
-          UserDeclaredMove = *I;
+          UserDeclaredMove = I;
           break;
         }
       }
@@ -5752,8 +5747,7 @@ bool Sema::SpecialMemberIsTrivial(CXXMethodDecl *MD, CXXSpecialMember CSM,
     }
 
     // Must have a virtual method.
-    for (CXXRecordDecl::method_iterator MI = RD->method_begin(),
-                                        ME = RD->method_end(); MI != ME; ++MI) {
+    for (const auto *MI : RD->methods()) {
       if (MI->isVirtual()) {
         SourceLocation MLoc = MI->getLocStart();
         Diag(MLoc, diag::note_nontrivial_has_virtual) << RD << 0;
@@ -9308,10 +9302,9 @@ static void diagnoseDeprecatedCopyOperation(Sema &S, CXXMethodDecl *CopyOp,
              RD->hasUserDeclaredCopyAssignment() &&
              !S.getLangOpts().MSVCCompat) {
     // Find any user-declared move assignment operator.
-    for (CXXRecordDecl::method_iterator I = RD->method_begin(),
-                                        E = RD->method_end(); I != E; ++I) {
+    for (auto *I : RD->methods()) {
       if (I->isCopyAssignmentOperator()) {
-        UserDeclaredOperation = *I;
+        UserDeclaredOperation = I;
         break;
       }
     }
@@ -12346,10 +12339,9 @@ bool Sema::DefineUsedVTables() {
 
 void Sema::MarkVirtualMemberExceptionSpecsNeeded(SourceLocation Loc,
                                                  const CXXRecordDecl *RD) {
-  for (CXXRecordDecl::method_iterator I = RD->method_begin(),
-                                      E = RD->method_end(); I != E; ++I)
-    if ((*I)->isVirtual() && !(*I)->isPure())
-      ResolveExceptionSpec(Loc, (*I)->getType()->castAs<FunctionProtoType>());
+  for (const auto *I : RD->methods())
+    if (I->isVirtual() && !I->isPure())
+      ResolveExceptionSpec(Loc, I->getType()->castAs<FunctionProtoType>());
 }
 
 void Sema::MarkVirtualMembersReferenced(SourceLocation Loc,

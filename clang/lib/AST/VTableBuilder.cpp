@@ -402,10 +402,7 @@ void FinalOverriders::dump(raw_ostream &Out, BaseSubobject Base,
   Out << Base.getBaseOffset().getQuantity() << ")\n";
 
   // Now dump the overriders for this base subobject.
-  for (CXXRecordDecl::method_iterator I = RD->method_begin(), 
-       E = RD->method_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = *I;
-
+  for (const auto *MD : RD->methods()) {
     if (!MD->isVirtual())
       continue;
   
@@ -689,10 +686,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
   }
   
   // Add the vcall offsets.
-  for (CXXRecordDecl::method_iterator I = RD->method_begin(),
-       E = RD->method_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = *I;
-    
+  for (const auto *MD : RD->methods()) {
     if (!MD->isVirtual())
       continue;
 
@@ -1511,10 +1505,7 @@ void ItaniumVTableBuilder::AddMethods(
   NewVirtualFunctionsTy NewVirtualFunctions;
 
   // Now go through all virtual member functions and add them.
-  for (CXXRecordDecl::method_iterator I = RD->method_begin(),
-       E = RD->method_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = *I;
-  
+  for (const auto *MD : RD->methods()) {
     if (!MD->isVirtual())
       continue;
 
@@ -2194,10 +2185,7 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
   // Store them in a map keyed by the index so we'll get a sorted table.
   std::map<uint64_t, std::string> IndicesMap;
 
-  for (CXXRecordDecl::method_iterator i = MostDerivedClass->method_begin(),
-       e = MostDerivedClass->method_end(); i != e; ++i) {
-    const CXXMethodDecl *MD = *i;
-    
+  for (const auto *MD : MostDerivedClass->methods()) {
     // We only want virtual member functions.
     if (!MD->isVirtual())
       continue;
@@ -2772,17 +2760,14 @@ static void GroupNewVirtualOverloads(
   SmallVector<MethodGroup, 10> Groups;
   typedef llvm::DenseMap<DeclarationName, unsigned> VisitedGroupIndicesTy;
   VisitedGroupIndicesTy VisitedGroupIndices;
-  for (CXXRecordDecl::method_iterator I = RD->method_begin(),
-       E = RD->method_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = *I;
-
+  for (const auto *MD : RD->methods()) {
     VisitedGroupIndicesTy::iterator J;
     bool Inserted;
     std::tie(J, Inserted) = VisitedGroupIndices.insert(
         std::make_pair(MD->getDeclName(), Groups.size()));
     if (Inserted)
       Groups.push_back(MethodGroup());
-    if (I->isVirtual())
+    if (MD->isVirtual())
       Groups[J->second].push_back(MD);
   }
 

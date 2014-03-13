@@ -546,10 +546,7 @@ void FinalOverriderCollector::Collect(const CXXRecordDecl *RD,
     }
   }
 
-  for (CXXRecordDecl::method_iterator M = RD->method_begin(), 
-                                   MEnd = RD->method_end();
-       M != MEnd;
-       ++M) {
+  for (auto *M : RD->methods()) {
     // We only care about virtual methods.
     if (!M->isVirtual())
       continue;

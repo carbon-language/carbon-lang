@@ -711,6 +711,12 @@ public:
   /// all method members of the class, including non-instance methods,
   /// special methods, etc.
   typedef specific_decl_iterator<CXXMethodDecl> method_iterator;
+  typedef llvm::iterator_range<specific_decl_iterator<CXXMethodDecl>>
+    method_range;
+
+  method_range methods() const {
+    return method_range(method_begin(), method_end());
+  }
 
   /// \brief Method begin iterator.  Iterates in the order the methods
   /// were declared.

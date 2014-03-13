@@ -1967,10 +1967,7 @@ static const CXXMethodDecl *computeKeyFunction(ASTContext &Context,
   bool allowInlineFunctions =
     Context.getTargetInfo().getCXXABI().canKeyFunctionBeInline();
 
-  for (CXXRecordDecl::method_iterator I = RD->method_begin(),
-         E = RD->method_end(); I != E; ++I) {
-    const CXXMethodDecl *MD = *I;
-
+  for (const auto *MD : RD->methods()) {
     if (!MD->isVirtual())
       continue;
 
@@ -2777,11 +2774,9 @@ MicrosoftRecordLayoutBuilder::computeVtorDispSet(const CXXRecordDecl *RD) {
   if (RD->hasUserDeclaredConstructor() || RD->hasUserDeclaredDestructor()) {
     llvm::SmallPtrSet<const CXXMethodDecl *, 8> Work;
     // Seed the working set with our non-destructor virtual methods.
-    for (CXXRecordDecl::method_iterator i = RD->method_begin(),
-                                        e = RD->method_end();
-         i != e; ++i)
-      if ((*i)->isVirtual() && !isa<CXXDestructorDecl>(*i))
-        Work.insert(*i);
+    for (const auto *I : RD->methods())
+      if (I->isVirtual() && !isa<CXXDestructorDecl>(I))
+        Work.insert(I);
     while (!Work.empty()) {
       const CXXMethodDecl *MD = *Work.begin();
       CXXMethodDecl::method_iterator i = MD->begin_overridden_methods(),

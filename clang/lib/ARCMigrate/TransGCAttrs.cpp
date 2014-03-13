@@ -134,8 +134,7 @@ public:
       return hasObjCImpl(ContD);
 
     if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
-      for (CXXRecordDecl::method_iterator
-             MI = RD->method_begin(), ME = RD->method_end(); MI != ME; ++MI) {
+      for (const auto *MI : RD->methods()) {
         if (MI->isOutOfLine())
           return true;
       }
