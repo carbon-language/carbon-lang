@@ -330,10 +330,6 @@ const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section) {
 /// allocated file number is returned.  The file numbers may be in any order.
 unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
                                  unsigned FileNumber, unsigned CUID) {
-  // TODO: a FileNumber of zero says to use the next available file number.
-  // Note: in GenericAsmParser::ParseDirectiveFile() FileNumber was checked
-  // to not be less than one.  This needs to be change to be not less than zero.
-
   MCDwarfFileTable &Table = MCDwarfFileTablesCUMap[CUID];
   SmallVectorImpl<MCDwarfFile *>& MCDwarfFiles = Table.getMCDwarfFiles();
   SmallVectorImpl<StringRef>& MCDwarfDirs = Table.getMCDwarfDirs();
