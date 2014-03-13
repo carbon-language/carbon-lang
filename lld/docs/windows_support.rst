@@ -75,8 +75,11 @@ Debug info
 Building LLD
 ============
 
+Using Visual Studio IDE/MSBuild
+---------------------------
+
 1. Check out LLVM and LLD from the LLVM SVN repository (or Git mirror),
-#. run ``cmake -G "Visual Studio 12" <llvm-source-dir>``
+#. run ``cmake -G "Visual Studio 12" <llvm-source-dir>`` from VS command prompt,
 #. open LLVM.sln with Visual Studio, and
 #. build ``lld`` target in ``lld executables`` folder
 
@@ -90,6 +93,13 @@ MSBuild.exe had been shipped as a component of the .NET framework, but since
 
 You can build LLD as a 64 bit application. To do that, open VS2013 x64 command
 prompt and run cmake for "Visual Studio 12 Win64" target.
+
+Using Ninja
+-----------
+
+1. Check out LLVM and LLD from the LLVM SVN repository (or Git mirror),
+#. run ``cmake -G ninja <llvm-source-dir>`` from VS command prompt,
+#. run ``ninja lld``
 
 Known issues
 ============
