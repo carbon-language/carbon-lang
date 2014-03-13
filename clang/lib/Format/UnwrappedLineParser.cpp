@@ -770,7 +770,7 @@ bool UnwrappedLineParser::tryToParseLambda() {
   if (!tryToParseLambdaIntroducer())
     return false;
 
-  while (FormatTok && FormatTok->isNot(tok::l_brace)) {
+  while (FormatTok->isNot(tok::l_brace)) {
     if (FormatTok->isSimpleTypeSpecifier()) {
       nextToken();
       continue;
@@ -1369,6 +1369,7 @@ void UnwrappedLineParser::readToken() {
   bool CommentsInCurrentLine = true;
   do {
     FormatTok = Tokens->getNextToken();
+    assert(FormatTok);
     while (!Line->InPPDirective && FormatTok->Tok.is(tok::hash) &&
            (FormatTok->HasUnescapedNewline || FormatTok->IsFirst)) {
       // If there is an unfinished unwrapped line, we flush the preprocessor
