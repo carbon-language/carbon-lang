@@ -6258,13 +6258,15 @@ public:
                           SourceRange InstantiationRange = SourceRange());
 
     /// \brief Note that we are substituting prior template arguments into a
-    /// non-type or template template parameter.
+    /// non-type parameter.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           NamedDecl *Template,
                           NonTypeTemplateParmDecl *Param,
                           ArrayRef<TemplateArgument> TemplateArgs,
                           SourceRange InstantiationRange);
 
+    /// \brief Note that we are substituting prior template arguments into a
+    /// template template parameter.
     InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
                           NamedDecl *Template,
                           TemplateTemplateParmDecl *Param,
@@ -6295,6 +6297,15 @@ public:
     bool SavedInNonInstantiationSFINAEContext;
     bool CheckInstantiationDepth(SourceLocation PointOfInstantiation,
                                  SourceRange InstantiationRange);
+
+    // FIXME: Replace this with a constructor once we can use delegating
+    // constructors in llvm.
+    void Initialize(
+        ActiveTemplateInstantiation::InstantiationKind Kind,
+        SourceLocation PointOfInstantiation, SourceRange InstantiationRange,
+        Decl *Entity, NamedDecl *Template = nullptr,
+        ArrayRef<TemplateArgument> TemplateArgs = ArrayRef<TemplateArgument>(),
+        sema::TemplateDeductionInfo *DeductionInfo = nullptr);
 
     InstantiatingTemplate(const InstantiatingTemplate&) LLVM_DELETED_FUNCTION;
 
