@@ -289,6 +289,11 @@ public:
   virtual section_iterator section_begin() const = 0;
   virtual section_iterator section_end() const = 0;
 
+  typedef iterator_range<section_iterator> section_iterator_range;
+  section_iterator_range sections() const {
+    return section_iterator_range(section_begin(), section_end());
+  }
+
   virtual library_iterator needed_library_begin() const = 0;
   virtual library_iterator needed_library_end() const = 0;
 

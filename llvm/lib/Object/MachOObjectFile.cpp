@@ -313,16 +313,16 @@ static void printRelocationTargetName(const MachOObjectFile *O,
 
     // If we couldn't find a symbol that this relocation refers to, try
     // to find a section beginning instead.
-    for (section_iterator SI = O->section_begin(), SE = O->section_end();
-         SI != SE; ++SI) {
+    for (const SectionRef &Section : O->sections()) {
       error_code ec;
       uint64_t Addr;
       StringRef Name;
 
-      if ((ec = SI->getAddress(Addr)))
+      if ((ec = Section.getAddress(Addr)))
         report_fatal_error(ec.message());
-      if (Addr != Val) continue;
-      if ((ec = SI->getName(Name)))
+      if (Addr != Val)
+        continue;
+      if ((ec = Section.getName(Name)))
         report_fatal_error(ec.message());
       fmt << Name;
       return;
