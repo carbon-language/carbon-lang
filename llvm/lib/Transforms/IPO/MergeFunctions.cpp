@@ -193,8 +193,52 @@ private:
     return isEquivalentGEP(cast<GEPOperator>(GEP1), cast<GEPOperator>(GEP2));
   }
 
-  /// Compare two Types, treating all pointer types as equal.
-  bool isEquivalentType(Type *Ty1, Type *Ty2) const;
+  /// cmpType - compares two types,
+  /// defines total ordering among the types set.
+  ///
+  /// Return values:
+  /// 0 if types are equal,
+  /// -1 if Left is less than Right,
+  /// +1 if Left is greater than Right.
+  ///
+  /// Description:
+  /// Comparison is broken onto stages. Like in lexicographical comparison
+  /// stage coming first has higher priority.
+  /// On each explanation stage keep in mind total ordering properties.
+  ///
+  /// 0. Before comparison we coerce pointer types of 0 address space to integer.
+  /// We also don't bother with same type at left and right, so
+  /// just return 0 in this case.
+  ///
+  /// 1. If types are of different kind (different type IDs).
+  ///    Return result of type IDs comparison, treating them as numbers.
+  /// 2. If types are vectors or integers, compare Type* values as numbers.
+  /// 3. Types has same ID, so check whether they belongs to the next group:
+  /// * Void
+  /// * Float
+  /// * Double
+  /// * X86_FP80
+  /// * FP128
+  /// * PPC_FP128
+  /// * Label
+  /// * Metadata
+  /// If so - return 0, yes - we can treat these types as equal only because
+  /// their IDs are same.
+  /// 4. If Left and Right are pointers, return result of address space
+  /// comparison (numbers comparison). We can treat pointer types of same
+  /// address space as equal.
+  /// 5. If types are complex.
+  /// Then both Left and Right are to be expanded and their element types will
+  /// be checked with the same way. If we get Res != 0 on some stage, return it.
+  /// Otherwise return 0.
+  /// 6. For all other cases put llvm_unreachable.
+  int cmpType(Type *TyL, Type *TyR) const;
+
+  bool isEquivalentType(Type *Ty1, Type *Ty2) const {
+    return cmpType(Ty1, Ty2) == 0;
+  }
+
+  int cmpNumbers(uint64_t L, uint64_t R) const;
 
   // The two functions undergoing comparison.
   const Function *F1, *F2;
@@ -207,32 +251,39 @@ private:
 
 }
 
-// Any two pointers in the same address space are equivalent, intptr_t and
-// pointers are equivalent. Otherwise, standard type equivalence rules apply.
-bool FunctionComparator::isEquivalentType(Type *Ty1, Type *Ty2) const {
+int FunctionComparator::cmpNumbers(uint64_t L, uint64_t R) const {
+  if (L < R) return -1;
+  if (L > R) return 1;
+  return 0;
+}
 
-  PointerType *PTy1 = dyn_cast<PointerType>(Ty1);
-  PointerType *PTy2 = dyn_cast<PointerType>(Ty2);
+/// cmpType - compares two types,
+/// defines total ordering among the types set.
+/// See method declaration comments for more details.
+int FunctionComparator::cmpType(Type *TyL, Type *TyR) const {
+
+  PointerType *PTy1 = dyn_cast<PointerType>(TyL);
+  PointerType *PTy2 = dyn_cast<PointerType>(TyR);
 
   if (DL) {
-    if (PTy1 && PTy1->getAddressSpace() == 0) Ty1 = DL->getIntPtrType(Ty1);
-    if (PTy2 && PTy2->getAddressSpace() == 0) Ty2 = DL->getIntPtrType(Ty2);
+    if (PTy1 && PTy1->getAddressSpace() == 0) TyL = DL->getIntPtrType(TyL);
+    if (PTy2 && PTy2->getAddressSpace() == 0) TyR = DL->getIntPtrType(TyR);
   }
 
-  if (Ty1 == Ty2)
-    return true;
+  if (TyL == TyR)
+    return 0;
 
-  if (Ty1->getTypeID() != Ty2->getTypeID())
-    return false;
+  if (int Res = cmpNumbers(TyL->getTypeID(), TyR->getTypeID()))
+    return Res;
 
-  switch (Ty1->getTypeID()) {
+  switch (TyL->getTypeID()) {
   default:
     llvm_unreachable("Unknown type!");
     // Fall through in Release mode.
   case Type::IntegerTyID:
   case Type::VectorTyID:
-    // Ty1 == Ty2 would have returned true earlier.
-    return false;
+    // TyL == TyR would have returned true earlier.
+    return cmpNumbers((uint64_t)TyL, (uint64_t)TyR);
 
   case Type::VoidTyID:
   case Type::FloatTyID:
@@ -242,51 +293,55 @@ bool FunctionComparator::isEquivalentType(Type *Ty1, Type *Ty2) const {
   case Type::PPC_FP128TyID:
   case Type::LabelTyID:
   case Type::MetadataTyID:
-    return true;
+    return 0;
 
   case Type::PointerTyID: {
     assert(PTy1 && PTy2 && "Both types must be pointers here.");
-    return PTy1->getAddressSpace() == PTy2->getAddressSpace();
+    return cmpNumbers(PTy1->getAddressSpace(), PTy2->getAddressSpace());
   }
 
   case Type::StructTyID: {
-    StructType *STy1 = cast<StructType>(Ty1);
-    StructType *STy2 = cast<StructType>(Ty2);
+    StructType *STy1 = cast<StructType>(TyL);
+    StructType *STy2 = cast<StructType>(TyR);
     if (STy1->getNumElements() != STy2->getNumElements())
-      return false;
+      return cmpNumbers(STy1->getNumElements(), STy2->getNumElements());
 
     if (STy1->isPacked() != STy2->isPacked())
-      return false;
+      return cmpNumbers(STy1->isPacked(), STy2->isPacked());
 
     for (unsigned i = 0, e = STy1->getNumElements(); i != e; ++i) {
-      if (!isEquivalentType(STy1->getElementType(i), STy2->getElementType(i)))
-        return false;
+      if (int Res = cmpType(STy1->getElementType(i),
+                            STy2->getElementType(i)))
+        return Res;
     }
-    return true;
+    return 0;
   }
 
   case Type::FunctionTyID: {
-    FunctionType *FTy1 = cast<FunctionType>(Ty1);
-    FunctionType *FTy2 = cast<FunctionType>(Ty2);
-    if (FTy1->getNumParams() != FTy2->getNumParams() ||
-        FTy1->isVarArg() != FTy2->isVarArg())
-      return false;
+    FunctionType *FTy1 = cast<FunctionType>(TyL);
+    FunctionType *FTy2 = cast<FunctionType>(TyR);
+    if (FTy1->getNumParams() != FTy2->getNumParams())
+      return cmpNumbers(FTy1->getNumParams(), FTy2->getNumParams());
 
-    if (!isEquivalentType(FTy1->getReturnType(), FTy2->getReturnType()))
-      return false;
+    if (FTy1->isVarArg() != FTy2->isVarArg())
+      return cmpNumbers(FTy1->isVarArg(), FTy2->isVarArg());
+
+    if (int Res = cmpType(FTy1->getReturnType(), FTy2->getReturnType()))
+      return Res;
 
     for (unsigned i = 0, e = FTy1->getNumParams(); i != e; ++i) {
-      if (!isEquivalentType(FTy1->getParamType(i), FTy2->getParamType(i)))
-        return false;
+      if (int Res = cmpType(FTy1->getParamType(i), FTy2->getParamType(i)))
+        return Res;
     }
-    return true;
+    return 0;
   }
 
   case Type::ArrayTyID: {
-    ArrayType *ATy1 = cast<ArrayType>(Ty1);
-    ArrayType *ATy2 = cast<ArrayType>(Ty2);
-    return ATy1->getNumElements() == ATy2->getNumElements() &&
-           isEquivalentType(ATy1->getElementType(), ATy2->getElementType());
+    ArrayType *ATy1 = cast<ArrayType>(TyL);
+    ArrayType *ATy2 = cast<ArrayType>(TyR);
+    if (ATy1->getNumElements() != ATy2->getNumElements())
+      return cmpNumbers(ATy1->getNumElements(), ATy2->getNumElements());
+    return cmpType(ATy1->getElementType(), ATy2->getElementType());
   }
   }
 }
