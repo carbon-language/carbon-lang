@@ -534,6 +534,12 @@ public:
 
   // Iterator access to instance/class methods.
   typedef specific_decl_iterator<ObjCMethodDecl> method_iterator;
+  typedef llvm::iterator_range<specific_decl_iterator<ObjCMethodDecl>>
+    method_range;
+
+  method_range methods() const {
+    return method_range(meth_begin(), meth_end());
+  }
   method_iterator meth_begin() const {
     return method_iterator(decls_begin());
   }

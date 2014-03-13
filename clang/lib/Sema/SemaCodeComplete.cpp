@@ -3467,19 +3467,17 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
   if (AllowNullaryMethods) {
     ASTContext &Context = Container->getASTContext();
     PrintingPolicy Policy = getCompletionPrintingPolicy(Results.getSema());
-    for (ObjCContainerDecl::method_iterator M = Container->meth_begin(),
-                                         MEnd = Container->meth_end();
-         M != MEnd; ++M) {
+    for (auto *M : Container->methods()) {
       if (M->getSelector().isUnarySelector())
         if (IdentifierInfo *Name = M->getSelector().getIdentifierInfoForSlot(0))
           if (AddedProperties.insert(Name)) {
             CodeCompletionBuilder Builder(Results.getAllocator(),
                                           Results.getCodeCompletionTUInfo());
-            AddResultTypeChunk(Context, Policy, *M, Builder);
+            AddResultTypeChunk(Context, Policy, M, Builder);
             Builder.AddTypedTextChunk(
                             Results.getAllocator().CopyString(Name->getName()));
             
-            Results.MaybeAddResult(Result(Builder.TakeString(), *M,
+            Results.MaybeAddResult(Result(Builder.TakeString(), M,
                                   CCP_MemberDeclaration + CCD_MethodAsProperty),
                                           CurContext);
           }
@@ -4815,22 +4813,20 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
   Container = getContainerDef(Container);
   ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container);
   bool isRootClass = IFace && !IFace->getSuperClass();
-  for (ObjCContainerDecl::method_iterator M = Container->meth_begin(),
-                                       MEnd = Container->meth_end();
-       M != MEnd; ++M) {
+  for (auto *M : Container->methods()) {
     // The instance methods on the root class can be messaged via the
     // metaclass.
     if (M->isInstanceMethod() == WantInstanceMethods ||
         (isRootClass && !WantInstanceMethods)) {
       // Check whether the selector identifiers we've been given are a 
       // subset of the identifiers for this particular method.
-      if (!isAcceptableObjCMethod(*M, WantKind, SelIdents, AllowSameLength))
+      if (!isAcceptableObjCMethod(M, WantKind, SelIdents, AllowSameLength))
         continue;
 
       if (!Selectors.insert(M->getSelector()))
         continue;
       
-      Result R = Result(*M, Results.getBasePriority(*M), 0);
+      Result R = Result(M, Results.getBasePriority(M), 0);
       R.StartParameter = SelIdents.size();
       R.AllParametersAreInformative = (WantKind != MK_Any);
       if (!InOriginalClass)
@@ -6154,16 +6150,14 @@ static void FindImplementableMethods(ASTContext &Context,
   // Add methods in this container. This operation occurs last because
   // we want the methods from this container to override any methods
   // we've previously seen with the same selector.
-  for (ObjCContainerDecl::method_iterator M = Container->meth_begin(),
-                                       MEnd = Container->meth_end();
-       M != MEnd; ++M) {
+  for (auto *M : Container->methods()) {
     if (M->isInstanceMethod() == WantInstanceMethods) {
       if (!ReturnType.isNull() &&
           !Context.hasSameUnqualifiedType(ReturnType, M->getReturnType()))
         continue;
 
       KnownMethods[M->getSelector()] =
-          KnownMethodsMap::mapped_type(*M, InOriginalClass);
+          KnownMethodsMap::mapped_type(M, InOriginalClass);
     }
   }
 }

@@ -6279,9 +6279,8 @@ static void PassObjCImplDeclToConsumer(ObjCImplDecl *ImplD,
                                        ASTConsumer *Consumer) {
   assert(ImplD && Consumer);
 
-  for (ObjCImplDecl::method_iterator
-         I = ImplD->meth_begin(), E = ImplD->meth_end(); I != E; ++I)
-    Consumer->HandleInterestingDecl(DeclGroupRef(*I));
+  for (auto *I : ImplD->methods())
+    Consumer->HandleInterestingDecl(DeclGroupRef(I));
 
   Consumer->HandleInterestingDecl(DeclGroupRef(ImplD));
 }

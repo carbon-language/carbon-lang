@@ -248,14 +248,10 @@ void IvarInvalidationCheckerImpl::containsInvalidationMethod(
   // TODO: Cache the results.
 
   // Check all methods.
-  for (ObjCContainerDecl::method_iterator
-      I = D->meth_begin(),
-      E = D->meth_end(); I != E; ++I) {
-      const ObjCMethodDecl *MDI = *I;
-      if (isInvalidationMethod(MDI, Partial))
-        OutInfo.addInvalidationMethod(
-                               cast<ObjCMethodDecl>(MDI->getCanonicalDecl()));
-  }
+  for (const auto *MDI : D->methods())
+    if (isInvalidationMethod(MDI, Partial))
+      OutInfo.addInvalidationMethod(
+          cast<ObjCMethodDecl>(MDI->getCanonicalDecl()));
 
   // If interface, check all parent protocols and super.
   if (const ObjCInterfaceDecl *InterfD = dyn_cast<ObjCInterfaceDecl>(D)) {

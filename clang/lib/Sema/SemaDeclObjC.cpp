@@ -833,17 +833,12 @@ void Sema::DiagnoseClassExtensionDupMethods(ObjCCategoryDecl *CAT,
     return;  // Possibly due to previous error
 
   llvm::DenseMap<Selector, const ObjCMethodDecl*> MethodMap;
-  for (ObjCInterfaceDecl::method_iterator i = ID->meth_begin(),
-       e =  ID->meth_end(); i != e; ++i) {
-    ObjCMethodDecl *MD = *i;
+  for (auto *MD : ID->methods())
     MethodMap[MD->getSelector()] = MD;
-  }
 
   if (MethodMap.empty())
     return;
-  for (ObjCCategoryDecl::method_iterator i = CAT->meth_begin(),
-       e =  CAT->meth_end(); i != e; ++i) {
-    ObjCMethodDecl *Method = *i;
+  for (const auto *Method : CAT->methods()) {
     const ObjCMethodDecl *&PrevMethod = MethodMap[Method->getSelector()];
     if (PrevMethod && !MatchTwoMethodDeclarations(Method, PrevMethod)) {
       Diag(Method->getLocation(), diag::err_duplicate_method_decl)

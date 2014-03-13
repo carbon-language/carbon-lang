@@ -471,9 +471,7 @@ void ObjCMigrateASTConsumer::migrateObjCInterfaceDecl(ASTContext &Ctx,
   if (D->isDeprecated() || IsCategoryNameWithDeprecatedSuffix(D))
     return;
     
-  for (ObjCContainerDecl::method_iterator M = D->meth_begin(), MEnd = D->meth_end();
-       M != MEnd; ++M) {
-    ObjCMethodDecl *Method = (*M);
+  for (auto *Method : D->methods()) {
     if (Method->isDeprecated())
       continue;
     bool PropertyInferred = migrateProperty(Ctx, D, Method);
@@ -535,9 +533,7 @@ ClassImplementsAllMethodsAndProperties(ASTContext &Ctx,
   if (const ObjCProtocolDecl *PDecl = Protocol->getDefinition()) {
     if (PDecl->meth_begin() == PDecl->meth_end())
       return HasAtleastOneRequiredProperty;
-    for (ObjCContainerDecl::method_iterator M = PDecl->meth_begin(),
-         MEnd = PDecl->meth_end(); M != MEnd; ++M) {
-      ObjCMethodDecl *MD = (*M);
+    for (const auto *MD : PDecl->methods()) {
       if (MD->isImplicit())
         continue;
       if (MD->getImplementationControl() == ObjCMethodDecl::Optional)
@@ -1160,10 +1156,7 @@ void ObjCMigrateASTConsumer::migrateAllMethodInstaceType(ASTContext &Ctx,
     return;
   
   // migrate methods which can have instancetype as their result type.
-  for (ObjCContainerDecl::method_iterator M = CDecl->meth_begin(),
-       MEnd = CDecl->meth_end();
-       M != MEnd; ++M) {
-    ObjCMethodDecl *Method = (*M);
+  for (auto *Method : CDecl->methods()) {
     if (Method->isDeprecated())
       continue;
     migrateMethodInstanceType(Ctx, CDecl, Method);
@@ -1447,12 +1440,8 @@ void ObjCMigrateASTConsumer::migrateARCSafeAnnotation(ASTContext &Ctx,
     return;
   
   // migrate methods which can have instancetype as their result type.
-  for (ObjCContainerDecl::method_iterator M = CDecl->meth_begin(),
-       MEnd = CDecl->meth_end();
-       M != MEnd; ++M) {
-    ObjCMethodDecl *Method = (*M);
+  for (const auto *Method : CDecl->methods())
     migrateCFAnnotation(Ctx, Method);
-  }
 }
 
 void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
