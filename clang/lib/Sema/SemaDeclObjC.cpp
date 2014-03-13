@@ -1746,9 +1746,7 @@ static void CheckProtocolMethodDefs(Sema &S,
 
   // check unimplemented instance methods.
   if (!NSIDecl)
-    for (ObjCProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(),
-         E = PDecl->instmeth_end(); I != E; ++I) {
-      ObjCMethodDecl *method = *I;
+    for (auto *method : PDecl->instance_methods()) {
       if (method->getImplementationControl() != ObjCMethodDecl::Optional &&
           !method->isPropertyAccessor() &&
           !InsMap.count(method->getSelector()) &&
@@ -1828,30 +1826,27 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
                                       bool WarnCategoryMethodImpl) {
   // Check and see if instance methods in class interface have been
   // implemented in the implementation class. If so, their types match.
-  for (ObjCInterfaceDecl::instmeth_iterator I = CDecl->instmeth_begin(),
-       E = CDecl->instmeth_end(); I != E; ++I) {
-    if (!InsMapSeen.insert((*I)->getSelector()))
+  for (auto *I : CDecl->instance_methods()) {
+    if (!InsMapSeen.insert(I->getSelector()))
       continue;
-    if (!(*I)->isPropertyAccessor() &&
-        !InsMap.count((*I)->getSelector())) {
+    if (!I->isPropertyAccessor() &&
+        !InsMap.count(I->getSelector())) {
       if (ImmediateClass)
-        WarnUndefinedMethod(*this, IMPDecl->getLocation(), *I, IncompleteImpl,
+        WarnUndefinedMethod(*this, IMPDecl->getLocation(), I, IncompleteImpl,
                             diag::warn_undef_method_impl);
       continue;
     } else {
       ObjCMethodDecl *ImpMethodDecl =
-        IMPDecl->getInstanceMethod((*I)->getSelector());
-      assert(CDecl->getInstanceMethod((*I)->getSelector()) &&
+        IMPDecl->getInstanceMethod(I->getSelector());
+      assert(CDecl->getInstanceMethod(I->getSelector()) &&
              "Expected to find the method through lookup as well");
-      ObjCMethodDecl *MethodDecl = *I;
       // ImpMethodDecl may be null as in a @dynamic property.
       if (ImpMethodDecl) {
         if (!WarnCategoryMethodImpl)
-          WarnConflictingTypedMethods(ImpMethodDecl, MethodDecl,
+          WarnConflictingTypedMethods(ImpMethodDecl, I,
                                       isa<ObjCProtocolDecl>(CDecl));
-        else if (!MethodDecl->isPropertyAccessor())
-          WarnExactTypedMethods(ImpMethodDecl, MethodDecl,
-                                isa<ObjCProtocolDecl>(CDecl));
+        else if (!I->isPropertyAccessor())
+          WarnExactTypedMethods(ImpMethodDecl, I, isa<ObjCProtocolDecl>(CDecl));
       }
     }
   }
@@ -1950,10 +1945,8 @@ void Sema::CheckCategoryVsClassMethodMatches(
   ObjCInterfaceDecl *SuperIDecl = IDecl->getSuperClass();
   SelectorSet InsMap, ClsMap;
   
-  for (ObjCImplementationDecl::instmeth_iterator
-       I = CatIMPDecl->instmeth_begin(), 
-       E = CatIMPDecl->instmeth_end(); I!=E; ++I) {
-    Selector Sel = (*I)->getSelector();
+  for (const auto *I : CatIMPDecl->instance_methods()) {
+    Selector Sel = I->getSelector();
     // When checking for methods implemented in the category, skip over
     // those declared in category class's super class. This is because
     // the super class must implement the method.
@@ -1987,9 +1980,8 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
   SelectorSet InsMap;
   // Check and see if instance methods in class interface have been
   // implemented in the implementation class.
-  for (ObjCImplementationDecl::instmeth_iterator
-         I = IMPDecl->instmeth_begin(), E = IMPDecl->instmeth_end(); I!=E; ++I)
-    InsMap.insert((*I)->getSelector());
+  for (const auto *I : IMPDecl->instance_methods())
+    InsMap.insert(I->getSelector());
 
   // Check and see if properties declared in the interface have either 1)
   // an implementation or 2) there is a @synthesize/@dynamic implementation
@@ -3572,10 +3564,7 @@ void Sema::DiagnoseUnusedBackingIvarInAccessor(Scope *S,
   if (S->hasUnrecoverableErrorOccurred())
     return;
 
-  for (ObjCImplementationDecl::instmeth_iterator
-         MI = ImplD->instmeth_begin(),
-         ME = ImplD->instmeth_end(); MI != ME; ++MI) {
-    const ObjCMethodDecl *CurMethod = *MI;
+  for (const auto *CurMethod : ImplD->instance_methods()) {
     unsigned DIAG = diag::warn_unused_property_backing_ivar;
     SourceLocation Loc = CurMethod->getLocation();
     if (Diags.getDiagnosticLevel(DIAG, Loc) == DiagnosticsEngine::Ignored)

@@ -386,9 +386,7 @@ bool ObjCInterfaceDecl::inheritsDesignatedInitializers() const {
     return false;
   case DefinitionData::IDI_Unknown: {
     bool isIntroducingInitializers = false;
-    for (instmeth_iterator I = instmeth_begin(),
-                           E = instmeth_end(); I != E; ++I) {
-      const ObjCMethodDecl *MD = *I;
+    for (const auto *MD : instance_methods()) {
       if (MD->getMethodFamily() == OMF_init && !MD->isOverriding()) {
         isIntroducingInitializers = true;
         break;
@@ -422,12 +420,9 @@ void ObjCInterfaceDecl::getDesignatedInitializers(
   if (!IFace)
     return;
 
-  for (instmeth_iterator I = IFace->instmeth_begin(),
-                         E = IFace->instmeth_end(); I != E; ++I) {
-    const ObjCMethodDecl *MD = *I;
+  for (const auto *MD : IFace->instance_methods())
     if (MD->isThisDeclarationADesignatedInitializer())
       Methods.push_back(MD);
-  }
 }
 
 bool ObjCInterfaceDecl::isDesignatedInitializer(Selector Sel,

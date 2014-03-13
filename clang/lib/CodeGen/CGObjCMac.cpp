@@ -2589,9 +2589,7 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
   std::vector<llvm::Constant*> OptInstanceMethods, OptClassMethods;
   std::vector<llvm::Constant*> MethodTypesExt, OptMethodTypesExt;
-  for (ObjCProtocolDecl::instmeth_iterator
-         i = PD->instmeth_begin(), e = PD->instmeth_end(); i != e; ++i) {
-    ObjCMethodDecl *MD = *i;
+  for (const auto *MD : PD->instance_methods()) {
     llvm::Constant *C = GetMethodDescriptionConstant(MD);
     if (!C)
       return GetOrEmitProtocolRef(PD);
@@ -2939,11 +2937,10 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
                                      << OCD->getName();
 
   SmallVector<llvm::Constant *, 16> InstanceMethods, ClassMethods;
-  for (ObjCCategoryImplDecl::instmeth_iterator
-         i = OCD->instmeth_begin(), e = OCD->instmeth_end(); i != e; ++i) {
+  for (const auto *I : OCD->instance_methods())
     // Instance methods should always be defined.
-    InstanceMethods.push_back(GetMethodConstant(*i));
-  }
+    InstanceMethods.push_back(GetMethodConstant(I));
+
   for (ObjCCategoryImplDecl::classmeth_iterator
          i = OCD->classmeth_begin(), e = OCD->classmeth_end(); i != e; ++i) {
     // Class methods should always be defined.
@@ -3067,11 +3064,10 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
     Flags |= FragileABI_Class_Hidden;
 
   SmallVector<llvm::Constant *, 16> InstanceMethods, ClassMethods;
-  for (ObjCImplementationDecl::instmeth_iterator
-         i = ID->instmeth_begin(), e = ID->instmeth_end(); i != e; ++i) {
+  for (const auto *I : ID->instance_methods())
     // Instance methods should always be defined.
-    InstanceMethods.push_back(GetMethodConstant(*i));
-  }
+    InstanceMethods.push_back(GetMethodConstant(I));
+
   for (ObjCImplementationDecl::classmeth_iterator
          i = ID->classmeth_begin(), e = ID->classmeth_end(); i != e; ++i) {
     // Class methods should always be defined.
@@ -5664,11 +5660,10 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
     }
   } else {
     MethodListName += "INSTANCE_METHODS_" + ID->getNameAsString();
-    for (ObjCImplementationDecl::instmeth_iterator
-           i = ID->instmeth_begin(), e = ID->instmeth_end(); i != e; ++i) {
+    for (const auto *I : ID->instance_methods())
       // Instance methods should always be defined.
-      Methods.push_back(GetMethodConstant(*i));
-    }
+      Methods.push_back(GetMethodConstant(I));
+
     for (ObjCImplementationDecl::propimpl_iterator
            i = ID->propimpl_begin(), e = ID->propimpl_end(); i != e; ++i) {
       ObjCPropertyImplDecl *PID = *i;
@@ -5991,11 +5986,9 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   MethodListName += "INSTANCE_METHODS_" + Interface->getNameAsString() +
     "_$_" + OCD->getNameAsString();
 
-  for (ObjCCategoryImplDecl::instmeth_iterator
-         i = OCD->instmeth_begin(), e = OCD->instmeth_end(); i != e; ++i) {
+  for (const auto *I : OCD->instance_methods())
     // Instance methods should always be defined.
-    Methods.push_back(GetMethodConstant(*i));
-  }
+    Methods.push_back(GetMethodConstant(I));
 
   Values[2] = EmitMethodList(MethodListName,
                              "__DATA, __objc_const",
@@ -6282,9 +6275,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
   std::vector<llvm::Constant*> OptInstanceMethods, OptClassMethods;
   std::vector<llvm::Constant*> MethodTypesExt, OptMethodTypesExt;
-  for (ObjCProtocolDecl::instmeth_iterator
-         i = PD->instmeth_begin(), e = PD->instmeth_end(); i != e; ++i) {
-    ObjCMethodDecl *MD = *i;
+  for (const auto *MD : PD->instance_methods()) {
     llvm::Constant *C = GetMethodDescriptionConstant(MD);
     if (!C)
       return GetOrEmitProtocolRef(PD);

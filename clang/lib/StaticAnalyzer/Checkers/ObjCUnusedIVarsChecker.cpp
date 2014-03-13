@@ -77,9 +77,8 @@ static void Scan(IvarUsageMap& M, const ObjCPropertyImplDecl *D) {
 
 static void Scan(IvarUsageMap& M, const ObjCContainerDecl *D) {
   // Scan the methods for accesses.
-  for (ObjCContainerDecl::instmeth_iterator I = D->instmeth_begin(),
-       E = D->instmeth_end(); I!=E; ++I)
-    Scan(M, (*I)->getBody());
+  for (const auto *I : D->instance_methods())
+    Scan(M, I->getBody());
 
   if (const ObjCImplementationDecl *ID = dyn_cast<ObjCImplementationDecl>(D)) {
     // Scan for @synthesized property methods that act as setters/getters

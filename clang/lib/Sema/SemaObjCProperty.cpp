@@ -1742,9 +1742,8 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
 
   SelectorSet InsMap;
   // Collect property accessors implemented in current implementation.
-  for (ObjCImplementationDecl::instmeth_iterator
-       I = IMPDecl->instmeth_begin(), E = IMPDecl->instmeth_end(); I!=E; ++I)
-    InsMap.insert((*I)->getSelector());
+  for (const auto *I : IMPDecl->instance_methods())
+    InsMap.insert(I->getSelector());
   
   ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl);
   ObjCInterfaceDecl *PrimaryClass = 0;
@@ -1755,9 +1754,8 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
         // When reporting on missing setter/getters, do not report when
         // setter/getter is implemented in category's primary class
         // implementation.
-        for (ObjCImplementationDecl::instmeth_iterator
-             I = IMP->instmeth_begin(), E = IMP->instmeth_end(); I!=E; ++I)
-          InsMap.insert((*I)->getSelector());
+        for (const auto *I : IMP->instance_methods())
+          InsMap.insert(I->getSelector());
       }
 
   for (ObjCContainerDecl::PropertyMap::iterator
@@ -1900,10 +1898,9 @@ void Sema::DiagnoseMissingDesignatedInitOverrides(
     return;
 
   SelectorSet InitSelSet;
-  for (ObjCImplementationDecl::instmeth_iterator
-         I = ImplD->instmeth_begin(), E = ImplD->instmeth_end(); I!=E; ++I)
-    if ((*I)->getMethodFamily() == OMF_init)
-      InitSelSet.insert((*I)->getSelector());
+  for (const auto *I : ImplD->instance_methods())
+    if (I->getMethodFamily() == OMF_init)
+      InitSelSet.insert(I->getSelector());
 
   SmallVector<const ObjCMethodDecl *, 8> DesignatedInits;
   SuperD->getDesignatedInitializers(DesignatedInits);

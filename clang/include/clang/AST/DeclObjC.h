@@ -550,6 +550,11 @@ public:
   typedef filtered_decl_iterator<ObjCMethodDecl,
                                  &ObjCMethodDecl::isInstanceMethod>
     instmeth_iterator;
+  typedef llvm::iterator_range<instmeth_iterator> instmeth_range;
+
+  instmeth_range instance_methods() const {
+    return instmeth_range(instmeth_begin(), instmeth_end());
+  }
   instmeth_iterator instmeth_begin() const {
     return instmeth_iterator(decls_begin());
   }

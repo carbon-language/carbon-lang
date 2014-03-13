@@ -181,15 +181,11 @@ void ObjCSuperCallChecker::checkASTDecl(const ObjCImplementationDecl *D,
 
 
   // Iterate over all instance methods.
-  for (ObjCImplementationDecl::instmeth_iterator I = D->instmeth_begin(),
-                                                 E = D->instmeth_end();
-       I != E; ++I) {
-    Selector S = (*I)->getSelector();
+  for (auto *MD : D->instance_methods()) {
+    Selector S = MD->getSelector();
     // Find out whether this is a selector that we want to check.
     if (!SelectorsForClass[SuperclassName].count(S))
       continue;
-
-    ObjCMethodDecl *MD = *I;
 
     // Check if the method calls its superclass implementation.
     if (MD->getBody())

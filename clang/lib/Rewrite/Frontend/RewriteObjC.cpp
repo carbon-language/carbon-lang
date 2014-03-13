@@ -983,10 +983,8 @@ void RewriteObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
   for (auto *I : CatDecl->properties())
     RewriteProperty(I);
   
-  for (ObjCCategoryDecl::instmeth_iterator
-         I = CatDecl->instmeth_begin(), E = CatDecl->instmeth_end();
-       I != E; ++I)
-    RewriteMethodDeclaration(*I);
+  for (auto *I : CatDecl->instance_methods())
+    RewriteMethodDeclaration(I);
   for (ObjCCategoryDecl::classmeth_iterator
          I = CatDecl->classmeth_begin(), E = CatDecl->classmeth_end();
        I != E; ++I)
@@ -1004,10 +1002,8 @@ void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
   // FIXME: handle protocol headers that are declared across multiple lines.
   ReplaceText(LocStart, 0, "// ");
 
-  for (ObjCProtocolDecl::instmeth_iterator
-         I = PDecl->instmeth_begin(), E = PDecl->instmeth_end();
-       I != E; ++I)
-    RewriteMethodDeclaration(*I);
+  for (auto *I : PDecl->instance_methods())
+    RewriteMethodDeclaration(I);
   for (ObjCProtocolDecl::classmeth_iterator
          I = PDecl->classmeth_begin(), E = PDecl->classmeth_end();
        I != E; ++I)
@@ -1186,12 +1182,8 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
 
   InsertText(IMD ? IMD->getLocStart() : CID->getLocStart(), "// ");
 
-  for (ObjCCategoryImplDecl::instmeth_iterator
-       I = IMD ? IMD->instmeth_begin() : CID->instmeth_begin(),
-       E = IMD ? IMD->instmeth_end() : CID->instmeth_end();
-       I != E; ++I) {
+  for (auto *OMD : IMD ? IMD->instance_methods() : CID->instance_methods()) {
     std::string ResultStr;
-    ObjCMethodDecl *OMD = *I;
     RewriteObjCMethodDecl(OMD->getClassInterface(), OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
     SourceLocation LocEnd = OMD->getCompoundBody()->getLocStart();
@@ -1245,10 +1237,8 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
 
   for (auto *I : ClassDecl->properties())
     RewriteProperty(I);
-  for (ObjCInterfaceDecl::instmeth_iterator
-         I = ClassDecl->instmeth_begin(), E = ClassDecl->instmeth_end();
-       I != E; ++I)
-    RewriteMethodDeclaration(*I);
+  for (auto *I : ClassDecl->instance_methods())
+    RewriteMethodDeclaration(I);
   for (ObjCInterfaceDecl::classmeth_iterator
          I = ClassDecl->classmeth_begin(), E = ClassDecl->classmeth_end();
        I != E; ++I)
@@ -5447,8 +5437,7 @@ void RewriteObjCFragileABI::RewriteObjCClassMetaData(ObjCImplementationDecl *IDe
   }
   
   // Build _objc_method_list for class's instance methods if needed
-  SmallVector<ObjCMethodDecl *, 32>
-  InstanceMethods(IDecl->instmeth_begin(), IDecl->instmeth_end());
+  SmallVector<ObjCMethodDecl *, 32> InstanceMethods(IDecl->instance_methods());
   
   // If any of our property implementations have associated getters or
   // setters, produce metadata for them as well.
@@ -5729,8 +5718,7 @@ void RewriteObjCFragileABI::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *ID
   FullCategoryName += IDecl->getNameAsString();
   
   // Build _objc_method_list for class's instance methods if needed
-  SmallVector<ObjCMethodDecl *, 32>
-  InstanceMethods(IDecl->instmeth_begin(), IDecl->instmeth_end());
+  SmallVector<ObjCMethodDecl *, 32> InstanceMethods(IDecl->instance_methods());
   
   // If any of our property implementations have associated getters or
   // setters, produce metadata for them as well.

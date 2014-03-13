@@ -139,10 +139,7 @@ void DirectIvarAssignment::checkASTDecl(const ObjCImplementationDecl *D,
   if (IvarToPropMap.empty())
     return;
 
-  for (ObjCImplementationDecl::instmeth_iterator I = D->instmeth_begin(),
-      E = D->instmeth_end(); I != E; ++I) {
-
-    ObjCMethodDecl *M = *I;
+  for (const auto *M : D->instance_methods()) {
     AnalysisDeclContext *DCtx = Mgr.getAnalysisDeclContext(M);
 
     if ((*ShouldSkipMethod)(M))

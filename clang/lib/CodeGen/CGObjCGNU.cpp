@@ -1762,17 +1762,16 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
   SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
   SmallVector<llvm::Constant*, 16> OptionalInstanceMethodNames;
   SmallVector<llvm::Constant*, 16> OptionalInstanceMethodTypes;
-  for (ObjCProtocolDecl::instmeth_iterator iter = PD->instmeth_begin(),
-       E = PD->instmeth_end(); iter != E; iter++) {
+  for (const auto *I : PD->instance_methods()) {
     std::string TypeStr;
-    Context.getObjCEncodingForMethodDecl(*iter, TypeStr);
-    if ((*iter)->getImplementationControl() == ObjCMethodDecl::Optional) {
+    Context.getObjCEncodingForMethodDecl(I, TypeStr);
+    if (I->getImplementationControl() == ObjCMethodDecl::Optional) {
       OptionalInstanceMethodNames.push_back(
-          MakeConstantString((*iter)->getSelector().getAsString()));
+          MakeConstantString(I->getSelector().getAsString()));
       OptionalInstanceMethodTypes.push_back(MakeConstantString(TypeStr));
     } else {
       InstanceMethodNames.push_back(
-          MakeConstantString((*iter)->getSelector().getAsString()));
+          MakeConstantString(I->getSelector().getAsString()));
       InstanceMethodTypes.push_back(MakeConstantString(TypeStr));
     }
   }
@@ -2004,12 +2003,10 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   // Collect information about instance methods
   SmallVector<Selector, 16> InstanceMethodSels;
   SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
-  for (ObjCCategoryImplDecl::instmeth_iterator
-         iter = OCD->instmeth_begin(), endIter = OCD->instmeth_end();
-       iter != endIter ; iter++) {
-    InstanceMethodSels.push_back((*iter)->getSelector());
+  for (const auto *I : OCD->instance_methods()) {
+    InstanceMethodSels.push_back(I->getSelector());
     std::string TypeStr;
-    CGM.getContext().getObjCEncodingForMethodDecl(*iter,TypeStr);
+    CGM.getContext().getObjCEncodingForMethodDecl(I,TypeStr);
     InstanceMethodTypes.push_back(MakeConstantString(TypeStr));
   }
 
@@ -2237,12 +2234,10 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   // Collect information about instance methods
   SmallVector<Selector, 16> InstanceMethodSels;
   SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
-  for (ObjCImplementationDecl::instmeth_iterator
-         iter = OID->instmeth_begin(), endIter = OID->instmeth_end();
-       iter != endIter ; iter++) {
-    InstanceMethodSels.push_back((*iter)->getSelector());
+  for (const auto *I : OID->instance_methods()) {
+    InstanceMethodSels.push_back(I->getSelector());
     std::string TypeStr;
-    Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
+    Context.getObjCEncodingForMethodDecl(I,TypeStr);
     InstanceMethodTypes.push_back(MakeConstantString(TypeStr));
   }
 
