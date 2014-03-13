@@ -22,6 +22,31 @@ if (LLVM_ENABLE_DOXYGEN)
     set(extra_search_mappings "")
   endif()
 
+  # If asked, configure doxygen for the creation of a Qt Compressed Help file.
+  if (LLVM_ENABLE_DOXYGEN_QT_HELP)
+    set(CLANG_DOXYGEN_QCH_FILENAME "org.llvm.clang.qch" CACHE STRING
+      "Filename of the Qt Compressed help file")
+    set(CLANG_DOXYGEN_QHP_NAMESPACE "org.llvm.clang" CACHE STRING
+      "Namespace under which the intermediate Qt Help Project file lives")
+    set(CLANG_DOXYGEN_QHP_CUST_FILTER_NAME "Clang ${CLANG_VERSION}" CACHE STRING
+      "See http://qt-project.org/doc/qt-4.8/qthelpproject.html#custom-filters")
+    set(CLANG_DOXYGEN_QHP_CUST_FILTER_ATTRS "Clang,${CLANG_VERSION}" CACHE STRING
+      "See http://qt-project.org/doc/qt-4.8/qthelpproject.html#filter-attributes")
+    set(clang_doxygen_generate_qhp "YES")
+    set(clang_doxygen_qch_filename "${CLANG_DOXYGEN_QCH_FILENAME}")
+    set(clang_doxygen_qhp_namespace "${CLANG_DOXYGEN_QHP_NAMESPACE}")
+    set(clang_doxygen_qhelpgenerator_path "${LLVM_DOXYGEN_QHELPGENERATOR_PATH}")
+    set(clang_doxygen_qhp_cust_filter_name "${CLANG_DOXYGEN_QHP_CUST_FILTER_NAME}")
+    set(clang_doxygen_qhp_cust_filter_attrs "${CLANG_DOXYGEN_QHP_CUST_FILTER_ATTRS}")
+  else()
+    set(clang_doxygen_generate_qhp "NO")
+    set(clang_doxygen_qch_filename "")
+    set(clang_doxygen_qhp_namespace "")
+    set(clang_doxygen_qhelpgenerator_path "")
+    set(clang_doxygen_qhp_cust_filter_name "")
+    set(clang_doxygen_qhp_cust_filter_attrs "")
+  endif()
+
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doxygen.cfg.in
     ${CMAKE_CURRENT_BINARY_DIR}/doxygen.cfg @ONLY)
 
@@ -33,6 +58,12 @@ if (LLVM_ENABLE_DOXYGEN)
   set(enable_server_based_search)
   set(enable_external_search)
   set(extra_search_mappings)
+  set(clang_doxygen_generate_qhp)
+  set(clang_doxygen_qch_filename)
+  set(clang_doxygen_qhp_namespace)
+  set(clang_doxygen_qhelpgenerator_path)
+  set(clang_doxygen_qhp_cust_filter_name)
+  set(clang_doxygen_qhp_cust_filter_attrs)
 
   add_custom_target(doxygen-clang
     COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxygen.cfg
