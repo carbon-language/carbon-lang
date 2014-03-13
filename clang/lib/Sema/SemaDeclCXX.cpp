@@ -1155,12 +1155,10 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
         // always initialized so do not need to be checked. Dependent bases
         // might not have initializers in the member initializer list.
         llvm::SmallSet<Decl*, 16> Inits;
-        for (CXXConstructorDecl::init_const_iterator
-               I = Constructor->init_begin(), E = Constructor->init_end();
-             I != E; ++I) {
-          if (FieldDecl *FD = (*I)->getMember())
+        for (const auto *I: Constructor->inits()) {
+          if (FieldDecl *FD = I->getMember())
             Inits.insert(FD);
-          else if (IndirectFieldDecl *ID = (*I)->getIndirectMember())
+          else if (IndirectFieldDecl *ID = I->getIndirectMember())
             Inits.insert(ID->chain_begin(), ID->chain_end());
         }
 
@@ -2322,17 +2320,13 @@ namespace {
       }
     }
 
-    for (CXXConstructorDecl::init_const_iterator FieldInit =
-             Constructor->init_begin(),
-             FieldInitEnd = Constructor->init_end();
-         FieldInit != FieldInitEnd; ++FieldInit) {
-
-      Expr *InitExpr = (*FieldInit)->getInit();
+    for (const auto *FieldInit : Constructor->inits()) {
+      Expr *InitExpr = FieldInit->getInit();
 
       CheckInitExprContainsUninitializedFields(
           SemaRef, InitExpr, UninitializedFields, Constructor);
 
-      if (FieldDecl *Field = (*FieldInit)->getAnyMember())
+      if (FieldDecl *Field = FieldInit->getAnyMember())
         UninitializedFields.erase(Field);
     }
   }

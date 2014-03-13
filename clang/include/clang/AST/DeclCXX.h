@@ -2135,6 +2135,14 @@ public:
   /// \brief Iterates through the member/base initializer list.
   typedef CXXCtorInitializer * const * init_const_iterator;
 
+  typedef llvm::iterator_range<init_iterator> init_range;
+  typedef llvm::iterator_range<init_const_iterator> init_const_range;
+
+  init_range inits() { return init_range(init_begin(), init_end()); }
+  init_const_range inits() const {
+    return init_const_range(init_begin(), init_end());
+  }
+
   /// \brief Retrieve an iterator to the first initializer.
   init_iterator       init_begin()       { return CtorInitializers; }
   /// \brief Retrieve an iterator to the first initializer.

@@ -71,10 +71,7 @@ public:
 
     if (const CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(D)) {
       // Constructor initializers.
-      for (CXXConstructorDecl::init_const_iterator I = Ctor->init_begin(),
-                                                   E = Ctor->init_end();
-           I != E; ++I) {
-        CXXCtorInitializer *Init = *I;
+      for (const auto *Init : Ctor->inits()) {
         if (Init->isWritten()) {
           IndexCtx.indexTypeSourceInfo(Init->getTypeSourceInfo(), D);
           if (const FieldDecl *Member = Init->getAnyMember())

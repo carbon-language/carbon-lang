@@ -3511,11 +3511,9 @@ AST_MATCHER_P(CXXConstructorDecl, forEachConstructorInitializer,
               internal::Matcher<CXXCtorInitializer>, InnerMatcher) {
   BoundNodesTreeBuilder Result;
   bool Matched = false;
-  for (CXXConstructorDecl::init_const_iterator I = Node.init_begin(),
-                                               E = Node.init_end();
-       I != E; ++I) {
+  for (const auto *I : Node.inits()) {
     BoundNodesTreeBuilder InitBuilder(*Builder);
-    if (InnerMatcher.matches(**I, Finder, &InitBuilder)) {
+    if (InnerMatcher.matches(*I, Finder, &InitBuilder)) {
       Matched = true;
       Result.addMatch(InitBuilder);
     }
