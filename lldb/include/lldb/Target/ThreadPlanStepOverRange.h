@@ -21,14 +21,16 @@
 
 namespace lldb_private {
 
-class ThreadPlanStepOverRange : public ThreadPlanStepRange
+class ThreadPlanStepOverRange : public ThreadPlanStepRange,
+                                       ThreadPlanShouldStopHere
 {
 public:
 
     ThreadPlanStepOverRange (Thread &thread, 
                              const AddressRange &range, 
                              const SymbolContext &addr_context, 
-                             lldb::RunMode stop_others);
+                             lldb::RunMode stop_others,
+                             LazyBool step_out_avoids_no_debug);
                              
     virtual ~ThreadPlanStepOverRange ();
 
@@ -38,9 +40,20 @@ public:
 protected:
     virtual bool DoPlanExplainsStop (Event *event_ptr);
     virtual bool DoWillResume (lldb::StateType resume_state, bool current_plan);
-
+    
+    virtual void
+    SetFlagsToDefault ()
+    {
+        GetFlags().Set(ThreadPlanStepOverRange::s_default_flag_values);
+    }
+    
+    
+    
 private:
 
+    static uint32_t s_default_flag_values;
+    
+    void SetupAvoidNoDebug(LazyBool step_out_avoids_code_without_debug_info);
     bool IsEquivalentContext(const SymbolContext &context);
 
     bool m_first_resume;

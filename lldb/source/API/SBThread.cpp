@@ -601,11 +601,13 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
         {
             if (frame_sp->HasDebugInformation ())
             {
+                const LazyBool avoid_no_debug = eLazyBoolCalculate;
                 SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
                 new_plan_sp = thread->QueueThreadPlanForStepOverRange (abort_other_plans,
                                                                     sc.line_entry.range,
                                                                     sc,
-                                                                    stop_other_threads);
+                                                                    stop_other_threads,
+                                                                    avoid_no_debug);
             }
             else
             {
@@ -650,14 +652,16 @@ SBThread::StepInto (const char *target_name, lldb::RunMode stop_other_threads)
 
         if (frame_sp && frame_sp->HasDebugInformation ())
         {
-            bool avoid_code_without_debug_info = true;
+            const LazyBool step_out_avoids_code_without_debug_info = eLazyBoolCalculate;
+            const LazyBool step_in_avoids_code_without_debug_info = eLazyBoolCalculate;
             SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
             new_plan_sp = thread->QueueThreadPlanForStepInRange (abort_other_plans,
                                                               sc.line_entry.range,
                                                               sc,
                                                               target_name,
                                                               stop_other_threads,
-                                                              avoid_code_without_debug_info);
+                                                              step_in_avoids_code_without_debug_info,
+                                                              step_out_avoids_code_without_debug_info);
         }
         else
         {
@@ -690,13 +694,15 @@ SBThread::StepOut ()
 
         Thread *thread = exe_ctx.GetThreadPtr();
 
+        const LazyBool avoid_no_debug = eLazyBoolCalculate;
         ThreadPlanSP new_plan_sp(thread->QueueThreadPlanForStepOut (abort_other_plans,
                                                                   NULL, 
                                                                   false, 
                                                                   stop_other_threads, 
                                                                   eVoteYes, 
                                                                   eVoteNoOpinion,
-                                                                  0));
+                                                                  0,
+                                                                  avoid_no_debug));
                                                                   
         // This returns an error, we should use it!
         ResumeNewPlan (exe_ctx, new_plan_sp.get());

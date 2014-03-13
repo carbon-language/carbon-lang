@@ -92,6 +92,9 @@ endif
 CFLAGS ?= -g -O0
 CFLAGS += $(ARCHFLAG)$(ARCH) $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS)
 
+# Use this one if you want to build one part of the result without debug information:
+CFLAGS_NO_DEBUG = -O0 $(ARCHFLAG)$(ARCH) $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS)
+
 CXXFLAGS +=$(CFLAGS)
 LD = $(CC)
 LDFLAGS ?= $(CFLAGS)

@@ -4092,7 +4092,7 @@ public:
                     {
                         Process *process = exe_ctx.GetProcessPtr();
                         if (process && process->IsAlive() && StateIsStoppedState (process->GetState(), true))
-                            exe_ctx.GetThreadRef().StepIn(true, true);
+                            exe_ctx.GetThreadRef().StepIn(true);
                     }
                 }
                 return MenuActionResult::Handled;
@@ -5117,8 +5117,7 @@ public:
                     if (exe_ctx.HasThreadScope() && StateIsStoppedState (exe_ctx.GetProcessRef().GetState(), true))
                     {
                         bool source_step = (c == 's');
-                        bool avoid_code_without_debug_info = true;
-                        exe_ctx.GetThreadRef().StepIn(source_step, avoid_code_without_debug_info);
+                        exe_ctx.GetThreadRef().StepIn(source_step);
                     }
                 }
                 return eKeyHandled;

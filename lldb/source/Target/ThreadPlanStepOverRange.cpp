@@ -31,6 +31,7 @@
 using namespace lldb_private;
 using namespace lldb;
 
+uint32_t ThreadPlanStepOverRange::s_default_flag_values = 0;
 
 //----------------------------------------------------------------------
 // ThreadPlanStepOverRange: Step through a stack range, either stepping over or into
@@ -42,11 +43,15 @@ ThreadPlanStepOverRange::ThreadPlanStepOverRange
     Thread &thread,
     const AddressRange &range,
     const SymbolContext &addr_context,
-    lldb::RunMode stop_others
+    lldb::RunMode stop_others,
+    LazyBool step_out_avoids_code_without_debug_info
 ) :
     ThreadPlanStepRange (ThreadPlan::eKindStepOverRange, "Step range stepping over", thread, range, addr_context, stop_others),
+    ThreadPlanShouldStopHere (this),
     m_first_resume(true)
 {
+    SetFlagsToDefault();
+    SetupAvoidNoDebug(step_out_avoids_code_without_debug_info);
 }
 
 ThreadPlanStepOverRange::~ThreadPlanStepOverRange ()
@@ -63,6 +68,28 @@ ThreadPlanStepOverRange::GetDescription (Stream *s, lldb::DescriptionLevel level
         s->Printf ("stepping through range (stepping over functions): ");
         DumpRanges(s);    
     }
+}
+
+void
+ThreadPlanStepOverRange::SetupAvoidNoDebug(LazyBool step_out_avoids_code_without_debug_info)
+{
+    bool avoid_nodebug = true;
+    switch (step_out_avoids_code_without_debug_info)
+    {
+        case eLazyBoolYes:
+            avoid_nodebug = true;
+            break;
+        case eLazyBoolNo:
+            avoid_nodebug = false;
+            break;
+        case eLazyBoolCalculate:
+            avoid_nodebug = m_thread.GetStepOutAvoidsNoDebug();
+            break;
+    }
+    if (avoid_nodebug)
+        GetFlags().Set (ThreadPlanShouldStopHere::eStepOutAvoidNoDebug);
+    else
+        GetFlags().Clear (ThreadPlanShouldStopHere::eStepOutAvoidNoDebug);
 }
 
 bool
@@ -146,13 +173,13 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
             const SymbolContext &older_context = older_frame_sp->GetSymbolContext(eSymbolContextEverything);
             if (IsEquivalentContext(older_context))
             {
-                new_plan_sp = m_thread.QueueThreadPlanForStepOut (false,
-                                                           NULL,
-                                                           true,
-                                                           stop_others,
-                                                           eVoteNo,
-                                                           eVoteNoOpinion,
-                                                           0);
+                new_plan_sp = m_thread.QueueThreadPlanForStepOutNoShouldStop (false,
+                                                                              NULL,
+                                                                              true,
+                                                                              stop_others,
+                                                                              eVoteNo,
+                                                                              eVoteNoOpinion,
+                                                                              0);
                 break;
             }
             else
@@ -277,6 +304,13 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
     // If we get to this point, we're not going to use a previously set "next branch" breakpoint, so delete it:
     ClearNextBranchBreakpoint();
     
+    
+    // If we haven't figured out something to do yet, then ask the ShouldStopHere callback:
+    if (!new_plan_sp)
+    {
+        new_plan_sp = CheckShouldStopHereAndQueueStepOut (frame_order);
+    }
+    
     if (!new_plan_sp)
         m_no_more_plans = true;
     else
@@ -390,3 +424,4 @@ ThreadPlanStepOverRange::DoWillResume (lldb::StateType resume_state, bool curren
     
     return true;
 }
+

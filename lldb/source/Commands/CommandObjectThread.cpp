@@ -348,9 +348,26 @@ public:
             case 'a':
                 {
                     bool success;
-                    m_avoid_no_debug =  Args::StringToBoolean (option_arg, true, &success);
+                    bool avoid_no_debug =  Args::StringToBoolean (option_arg, true, &success);
                     if (!success)
                         error.SetErrorStringWithFormat("invalid boolean value for option '%c'", short_option);
+                    else
+                    {
+                        m_step_in_avoid_no_debug = avoid_no_debug ? eLazyBoolYes : eLazyBoolNo;
+                    }
+                }
+                break;
+            
+            case 'A':
+                {
+                    bool success;
+                    bool avoid_no_debug =  Args::StringToBoolean (option_arg, true, &success);
+                    if (!success)
+                        error.SetErrorStringWithFormat("invalid boolean value for option '%c'", short_option);
+                    else
+                    {
+                        m_step_out_avoid_no_debug = avoid_no_debug ? eLazyBoolYes : eLazyBoolNo;
+                    }
                 }
                 break;
             
@@ -386,7 +403,8 @@ public:
         void
         OptionParsingStarting ()
         {
-            m_avoid_no_debug = true;
+            m_step_in_avoid_no_debug = eLazyBoolCalculate;
+            m_step_out_avoid_no_debug = eLazyBoolCalculate;
             m_run_mode = eOnlyDuringStepping;
             m_avoid_regexp.clear();
             m_step_in_target.clear();
@@ -403,7 +421,8 @@ public:
         static OptionDefinition g_option_table[];
 
         // Instance variables to hold the values for command options.
-        bool m_avoid_no_debug;
+        LazyBool m_step_in_avoid_no_debug;
+        LazyBool m_step_out_avoid_no_debug;
         RunMode m_run_mode;
         std::string m_avoid_regexp;
         std::string m_step_in_target;
@@ -522,7 +541,9 @@ protected:
                                                                 frame->GetSymbolContext(eSymbolContextEverything),
                                                                 m_options.m_step_in_target.c_str(),
                                                                 stop_other_threads,
-                                                                m_options.m_avoid_no_debug);
+                                                                m_options.m_step_in_avoid_no_debug,
+                                                                m_options.m_step_out_avoid_no_debug);
+                
                 if (new_plan_sp && !m_options.m_avoid_regexp.empty())
                 {
                     ThreadPlanStepInRange *step_in_range_plan = static_cast<ThreadPlanStepInRange *> (new_plan_sp.get());
@@ -541,7 +562,8 @@ protected:
                 new_plan_sp = thread->QueueThreadPlanForStepOverRange (abort_other_plans,
                                                                     frame->GetSymbolContext(eSymbolContextEverything).line_entry.range, 
                                                                     frame->GetSymbolContext(eSymbolContextEverything), 
-                                                                    stop_other_threads);
+                                                                    stop_other_threads,
+                                                                    m_options.m_step_out_avoid_no_debug);
             else
                 new_plan_sp = thread->QueueThreadPlanForStepSingleInstruction (true,
                                                                             abort_other_plans, 
@@ -564,7 +586,8 @@ protected:
                                                           bool_stop_other_threads, 
                                                           eVoteYes, 
                                                           eVoteNoOpinion, 
-                                                          thread->GetSelectedFrameIndex());
+                                                          thread->GetSelectedFrameIndex(),
+                                                          m_options.m_step_out_avoid_no_debug);
         }
         else
         {
@@ -639,7 +662,8 @@ g_duo_running_mode[] =
 OptionDefinition
 CommandObjectThreadStepWithTypeAndScope::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "avoid-no-debug",  'a', OptionParser::eRequiredArgument, NULL,               0, eArgTypeBoolean,     "A boolean value that sets whether step-in will step over functions with no debug information."},
+{ LLDB_OPT_SET_1, false, "step-in-avoids-no-debug",   'a', OptionParser::eRequiredArgument, NULL,               0, eArgTypeBoolean,     "A boolean value that sets whether stepping into functions will step over functions with no debug information."},
+{ LLDB_OPT_SET_1, false, "step-out-avoids-no-debug",  'A', OptionParser::eRequiredArgument, NULL,               0, eArgTypeBoolean,     "A boolean value, if true stepping out of functions will continue to step out till it hits a function with debug information."},
 { LLDB_OPT_SET_1, false, "run-mode",        'm', OptionParser::eRequiredArgument, g_tri_running_mode, 0, eArgTypeRunMode, "Determine how to run other threads while stepping the current thread."},
 { LLDB_OPT_SET_1, false, "step-over-regexp",'r', OptionParser::eRequiredArgument, NULL,               0, eArgTypeRegularExpression,   "A regular expression that defines function names to not to stop at when stepping in."},
 { LLDB_OPT_SET_1, false, "step-in-target",  't', OptionParser::eRequiredArgument, NULL,               0, eArgTypeFunctionName,   "The name of the directly called function step in should stop at when stepping into."},

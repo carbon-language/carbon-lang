@@ -49,6 +49,12 @@ public:
     
     bool
     GetTraceEnabledState() const;
+    
+    bool
+    GetStepInAvoidsNoDebug () const;
+    
+    bool
+    GetStepOutAvoidsNoDebug () const;
 };
 
 typedef std::shared_ptr<ThreadProperties> ThreadPropertiesSP;
@@ -440,17 +446,22 @@ public:
     ///     If true and the frame has debug info, then do a source level
     ///     step in, else do a single instruction step in.
     ///
-    /// @param[in] avoid_code_without_debug_info
+    /// @param[in] step_in_avoids_code_without_debug_info
     ///     If \a true, then avoid stepping into code that doesn't have
     ///     debug info, else step into any code regardless of wether it
     ///     has debug info.
+    ///
+    /// @param[in] step_out_avoids_code_without_debug_info
+    ///     If \a true, then if you step out to code with no debug info, keep
+    ///     stepping out till you get to code with debug info.
     ///
     /// @return
     ///     An error that describes anything that went wrong
     //------------------------------------------------------------------
     virtual Error
     StepIn (bool source_step,
-            bool avoid_code_without_debug_info);
+            LazyBool step_in_avoids_code_without_debug_info = eLazyBoolCalculate,
+            LazyBool step_out_avoids_code_without_debug_info = eLazyBoolCalculate);
 
     //------------------------------------------------------------------
     /// Default implementation for stepping over.
@@ -466,7 +477,8 @@ public:
     ///     An error that describes anything that went wrong
     //------------------------------------------------------------------
     virtual Error
-    StepOver (bool source_step);
+    StepOver (bool source_step,
+              LazyBool step_out_avoids_code_without_debug_info = eLazyBoolCalculate);
 
     //------------------------------------------------------------------
     /// Default implementation for stepping out.
@@ -592,14 +604,19 @@ public:
     /// @param[in] stop_other_threads
     ///    \b true if we will stop other threads while we single step this one.
     ///
+    /// @param[in] step_out_avoids_code_without_debug_info
+    ///    If eLazyBoolYes, if the step over steps out it will continue to step out till it comes to a frame with debug info.
+    ///    If eLazyBoolCalculate, we will consult the default set in the thread.
+    ///
     /// @return
     ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
     //------------------------------------------------------------------
     virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepOverRange (bool abort_other_plans,
-                                 const AddressRange &range,
-                                 const SymbolContext &addr_context,
-                                 lldb::RunMode stop_other_threads);
+                                     const AddressRange &range,
+                                     const SymbolContext &addr_context,
+                                     lldb::RunMode stop_other_threads,
+                                     LazyBool step_out_avoids_code_without_debug_info = eLazyBoolCalculate);
 
     //------------------------------------------------------------------
     /// Queues the plan used to step through an address range, stepping into functions.
@@ -627,19 +644,25 @@ public:
     /// @param[in] stop_other_threads
     ///    \b true if we will stop other threads while we single step this one.
     ///
-    /// @param[in] avoid_code_without_debug_info
-    ///    If \b true we will step out if we step into code with no debug info.
+    /// @param[in] step_in_avoids_code_without_debug_info
+    ///    If eLazyBoolYes we will step out if we step into code with no debug info.
+    ///    If eLazyBoolCalculate we will consult the default set in the thread.
+    ///
+    /// @param[in] step_out_avoids_code_without_debug_info
+    ///    If eLazyBoolYes, if the step over steps out it will continue to step out till it comes to a frame with debug info.
+    ///    If eLazyBoolCalculate, it will consult the default set in the thread.
     ///
     /// @return
     ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
     //------------------------------------------------------------------
     virtual lldb::ThreadPlanSP
     QueueThreadPlanForStepInRange (bool abort_other_plans,
-                                 const AddressRange &range,
-                                 const SymbolContext &addr_context,
-                                 const char *step_in_target,
-                                 lldb::RunMode stop_other_threads,
-                                 bool avoid_code_without_debug_info);
+                                   const AddressRange &range,
+                                   const SymbolContext &addr_context,
+                                   const char *step_in_target,
+                                   lldb::RunMode stop_other_threads,
+                                   LazyBool step_in_avoids_code_without_debug_info = eLazyBoolCalculate,
+                                   LazyBool step_out_avoids_code_without_debug_info = eLazyBoolCalculate);
 
     //------------------------------------------------------------------
     /// Queue the plan used to step out of the function at the current PC of
@@ -666,6 +689,10 @@ public:
     /// @param[in] run_vote
     ///    See standard meanings for the stop & run votes in ThreadPlan.h.
     ///
+    /// @param[in] step_out_avoids_code_without_debug_info
+    ///    If eLazyBoolYes, if the step over steps out it will continue to step out till it comes to a frame with debug info.
+    ///    If eLazyBoolCalculate, it will consult the default set in the thread.
+    ///
     /// @return
     ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
     //------------------------------------------------------------------
@@ -676,7 +703,46 @@ public:
                                bool stop_other_threads,
                                Vote stop_vote, // = eVoteYes,
                                Vote run_vote, // = eVoteNoOpinion);
-                               uint32_t frame_idx);
+                               uint32_t frame_idx,
+                               LazyBool step_out_avoids_code_without_debug_info = eLazyBoolCalculate);
+
+    //------------------------------------------------------------------
+    /// Queue the plan used to step out of the function at the current PC of
+    /// a thread.  This version does not consult the should stop here callback, and should only
+    /// be used by other thread plans when they need to retain control of the step out.
+    ///
+    /// @param[in] abort_other_plans
+    ///    \b true if we discard the currently queued plans and replace them with this one.
+    ///    Otherwise this plan will go on the end of the plan stack.
+    ///
+    /// @param[in] addr_context
+    ///    When dealing with stepping through inlined functions the current PC is not enough information to know
+    ///    what "step" means.  For instance a series of nested inline functions might start at the same address.
+    //     The \a addr_context provides the current symbol context the step
+    ///    is supposed to be out of.
+    //   FIXME: Currently unused.
+    ///
+    /// @param[in] first_insn
+    ///     \b true if this is the first instruction of a function.
+    ///
+    /// @param[in] stop_other_threads
+    ///    \b true if we will stop other threads while we single step this one.
+    ///
+    /// @param[in] stop_vote
+    /// @param[in] run_vote
+    ///    See standard meanings for the stop & run votes in ThreadPlan.h.
+    ///
+    /// @return
+    ///     A shared pointer to the newly queued thread plan, or NULL if the plan could not be queued.
+    //------------------------------------------------------------------
+    virtual lldb::ThreadPlanSP
+    QueueThreadPlanForStepOutNoShouldStop (bool abort_other_plans,
+                                           SymbolContext *addr_context,
+                                           bool first_insn,
+                                           bool stop_other_threads,
+                                           Vote stop_vote, // = eVoteYes,
+                                           Vote run_vote, // = eVoteNoOpinion);
+                                           uint32_t frame_idx);
 
     //------------------------------------------------------------------
     /// Gets the plan used to step through the code that steps from a function

@@ -30,13 +30,17 @@ public:
     ThreadPlanStepInRange (Thread &thread,
                            const AddressRange &range,
                            const SymbolContext &addr_context,
-                           lldb::RunMode stop_others);
-
+                           lldb::RunMode stop_others,
+                            LazyBool step_in_avoids_code_without_debug_info,
+                            LazyBool step_out_avoids_code_without_debug_info);
+    
     ThreadPlanStepInRange (Thread &thread,
                            const AddressRange &range,
                            const SymbolContext &addr_context,
                            const char *step_into_function_name,
-                           lldb::RunMode stop_others);
+                           lldb::RunMode stop_others,
+                            LazyBool step_in_avoids_code_without_debug_info,
+                            LazyBool step_out_avoids_code_without_debug_info);
 
     virtual
     ~ThreadPlanStepInRange ();
@@ -54,9 +58,6 @@ public:
         m_step_into_target.SetCString(target);
     }
     
-    static lldb::ThreadPlanSP
-    DefaultShouldStopHereCallback (ThreadPlan *current_plan, Flags &flags, void *baton);
-
     static void
     SetDefaultFlagValue (uint32_t new_value);
     
@@ -64,13 +65,26 @@ public:
     IsVirtualStep();
 
 protected:
+    static bool
+    DefaultShouldStopHereCallback (ThreadPlan *current_plan, Flags &flags, lldb::FrameComparison operation, void *baton);
+
     virtual bool DoWillResume (lldb::StateType resume_state, bool current_plan);
 
     virtual bool
     DoPlanExplainsStop (Event *event_ptr);
 
     virtual void
-    SetFlagsToDefault ();
+    SetFlagsToDefault ()
+    {
+        GetFlags().Set(ThreadPlanStepInRange::s_default_flag_values);
+    }
+    
+    void
+    SetCallbacks()
+    {
+        ThreadPlanShouldStopHere::ThreadPlanShouldStopHereCallbacks callbacks(ThreadPlanStepInRange::DefaultShouldStopHereCallback, nullptr);
+        SetShouldStopHereCallbacks (&callbacks, nullptr);
+    }
     
     bool
     FrameMatchesAvoidCriteria ();
@@ -81,20 +95,23 @@ private:
     Thread::QueueThreadPlanForStepOverRange (bool abort_other_plans,
                                          const AddressRange &range,
                                          const SymbolContext &addr_context,
-                                         lldb::RunMode stop_others);
+                                         lldb::RunMode stop_others,
+                                         LazyBool avoid_code_without_debug_info);
     friend lldb::ThreadPlanSP
     Thread::QueueThreadPlanForStepInRange (bool abort_other_plans,
                                          const AddressRange &range,
                                          const SymbolContext &addr_context,
                                          const char *step_in_target,
                                          lldb::RunMode stop_others,
-                                         bool avoid_code_without_debug_info);
+                                         LazyBool step_in_avoids_code_without_debug_info,
+                                         LazyBool step_out_avoids_code_without_debug_info);
 
-
+    void SetupAvoidNoDebug(LazyBool step_in_avoids_code_without_debug_info,
+                           LazyBool step_out_avoids_code_without_debug_info);
     // Need an appropriate marker for the current stack so we can tell step out
     // from step in.
 
-    static uint32_t s_default_flag_values;
+    static uint32_t s_default_flag_values;  // These are the default flag values for the ThreadPlanStepThrough.
     lldb::ThreadPlanSP m_sub_plan_sp;  // Keep track of the last plan we were running.  If it fails, we should stop.
     std::unique_ptr<RegularExpression> m_avoid_regexp_ap;
     bool m_step_past_prologue;  // FIXME: For now hard-coded to true, we could put a switch in for this if there's

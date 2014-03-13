@@ -147,13 +147,13 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
                     // StepInstruction should probably have the tri-state RunMode, but for now it is safer to
                     // run others.
                     const bool stop_others = false;
-                    m_thread.QueueThreadPlanForStepOut(false,
-                                                       NULL,
-                                                       true,
-                                                       stop_others,
-                                                       eVoteNo,
-                                                       eVoteNoOpinion,
-                                                       0);
+                    m_thread.QueueThreadPlanForStepOutNoShouldStop(false,
+                                                                   NULL,
+                                                                   true,
+                                                                   stop_others,
+                                                                   eVoteNo,
+                                                                   eVoteNoOpinion,
+                                                                   0);
                     return false;
                 }
                 else
