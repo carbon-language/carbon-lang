@@ -677,7 +677,7 @@ public:
         if ((!ReturnUses && op->isUse()) ||
             (!ReturnDefs && op->isDef()) ||
             (SkipDebug && op->isDebug()))
-          ++*this;
+          advance();
       }
     }
     friend class MachineRegisterInfo;
