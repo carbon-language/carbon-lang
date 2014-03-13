@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "DWARFContext.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compression.h"
@@ -22,13 +21,6 @@ using namespace dwarf;
 using namespace object;
 
 typedef DWARFDebugLine::LineTable DWARFLineTable;
-
-DWARFContext::~DWARFContext() {
-  DeleteContainerPointers(CUs);
-  DeleteContainerPointers(TUs);
-  DeleteContainerPointers(DWOCUs);
-  DeleteContainerPointers(DWOTUs);
-}
 
 static void dumpPubSection(raw_ostream &OS, StringRef Name, StringRef Data,
                            bool LittleEndian, bool GnuStyle) {
@@ -125,7 +117,7 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
       savedAddressByteSize = CU->getAddressByteSize();
       unsigned stmtOffset =
           CU->getCompileUnitDIE()->getAttributeValueAsSectionOffset(
-              CU, DW_AT_stmt_list, -1U);
+              CU.get(), DW_AT_stmt_list, -1U);
       if (stmtOffset != -1U) {
         DataExtractor lineData(getLineSection().Data, isLittleEndian(),
                                savedAddressByteSize);
@@ -309,7 +301,7 @@ void DWARFContext::parseCompileUnits() {
     if (!CU->extract(DIData, &offset)) {
       break;
     }
-    CUs.push_back(CU.release());
+    CUs.push_back(std::move(CU));
     offset = CUs.back()->getNextUnitOffset();
   }
 }
@@ -328,7 +320,7 @@ void DWARFContext::parseTypeUnits() {
           &I.second.Relocs, isLittleEndian()));
       if (!TU->extract(DIData, &offset))
         break;
-      TUs.push_back(TU.release());
+      TUs.push_back(std::move(TU));
       offset = TUs.back()->getNextUnitOffset();
     }
   }
@@ -349,7 +341,7 @@ void DWARFContext::parseDWOCompileUnits() {
     if (!DWOCU->extract(DIData, &offset)) {
       break;
     }
-    DWOCUs.push_back(DWOCU.release());
+    DWOCUs.push_back(std::move(DWOCU));
     offset = DWOCUs.back()->getNextUnitOffset();
   }
 }
@@ -369,7 +361,7 @@ void DWARFContext::parseDWOTypeUnits() {
           isLittleEndian()));
       if (!TU->extract(DIData, &offset))
         break;
-      DWOTUs.push_back(TU.release());
+      DWOTUs.push_back(std::move(TU));
       offset = DWOTUs.back()->getNextUnitOffset();
     }
   }
@@ -377,14 +369,17 @@ void DWARFContext::parseDWOTypeUnits() {
 
 namespace {
   struct OffsetComparator {
-    bool operator()(const DWARFCompileUnit *LHS,
-                    const DWARFCompileUnit *RHS) const {
+
+    bool operator()(const std::unique_ptr<DWARFCompileUnit> &LHS,
+                    const std::unique_ptr<DWARFCompileUnit> &RHS) const {
       return LHS->getOffset() < RHS->getOffset();
     }
-    bool operator()(const DWARFCompileUnit *LHS, uint32_t RHS) const {
+    bool operator()(const std::unique_ptr<DWARFCompileUnit> &LHS,
+                    uint32_t RHS) const {
       return LHS->getOffset() < RHS;
     }
-    bool operator()(uint32_t LHS, const DWARFCompileUnit *RHS) const {
+    bool operator()(uint32_t LHS,
+                    const std::unique_ptr<DWARFCompileUnit> &RHS) const {
       return LHS < RHS->getOffset();
     }
   };
@@ -393,10 +388,10 @@ namespace {
 DWARFCompileUnit *DWARFContext::getCompileUnitForOffset(uint32_t Offset) {
   parseCompileUnits();
 
-  DWARFCompileUnit **CU =
+  std::unique_ptr<DWARFCompileUnit> *CU =
       std::lower_bound(CUs.begin(), CUs.end(), Offset, OffsetComparator());
   if (CU != CUs.end()) {
-    return *CU;
+    return CU->get();
   }
   return 0;
 }
@@ -636,7 +631,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
       // Make data point to uncompressed section contents and save its contents.
       name = name.substr(1);
       data = UncompressedSection->getBuffer();
-      UncompressedSections.push_back(UncompressedSection.release());
+      UncompressedSections.push_back(std::move(UncompressedSection));
     }
 
     StringRef *Section =
@@ -753,10 +748,6 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
       }
     }
   }
-}
-
-DWARFContextInMemory::~DWARFContextInMemory() {
-  DeleteContainerPointers(UncompressedSections);
 }
 
 void DWARFContextInMemory::anchor() { }

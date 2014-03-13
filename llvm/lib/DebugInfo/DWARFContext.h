@@ -28,8 +28,8 @@ namespace llvm {
 /// information parsing. The actual data is supplied through pure virtual
 /// methods that a concrete implementation provides.
 class DWARFContext : public DIContext {
-  typedef SmallVector<DWARFCompileUnit *, 1> CUVector;
-  typedef SmallVector<DWARFTypeUnit *, 1> TUVector;
+  typedef SmallVector<std::unique_ptr<DWARFCompileUnit>, 1> CUVector;
+  typedef SmallVector<std::unique_ptr<DWARFTypeUnit>, 1> TUVector;
 
   CUVector CUs;
   TUVector TUs;
@@ -69,7 +69,6 @@ public:
   };
 
   DWARFContext() : DIContext(CK_DWARF) {}
-  virtual ~DWARFContext();
 
   static bool classof(const DIContext *DICtx) {
     return DICtx->getKind() == CK_DWARF;
@@ -131,13 +130,13 @@ public:
   /// Get the compile unit at the specified index for this compile unit.
   DWARFCompileUnit *getCompileUnitAtIndex(unsigned index) {
     parseCompileUnits();
-    return CUs[index];
+    return CUs[index].get();
   }
 
   /// Get the compile unit at the specified index for the DWO compile units.
   DWARFCompileUnit *getDWOCompileUnitAtIndex(unsigned index) {
     parseDWOCompileUnits();
-    return DWOCUs[index];
+    return DWOCUs[index].get();
   }
 
   /// Get a pointer to the parsed DebugAbbrev object.
@@ -237,11 +236,10 @@ class DWARFContextInMemory : public DWARFContext {
   StringRef RangeDWOSection;
   StringRef AddrSection;
 
-  SmallVector<MemoryBuffer*, 4> UncompressedSections;
+  SmallVector<std::unique_ptr<MemoryBuffer>, 4> UncompressedSections;
 
 public:
   DWARFContextInMemory(object::ObjectFile *);
-  ~DWARFContextInMemory();
   bool isLittleEndian() const override { return IsLittleEndian; }
   uint8_t getAddressSize() const override { return AddressSize; }
   const Section &getInfoSection() override { return InfoSection; }
