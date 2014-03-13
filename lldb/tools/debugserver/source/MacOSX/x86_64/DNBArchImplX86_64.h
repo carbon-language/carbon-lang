@@ -16,7 +16,6 @@
 
 #if defined (__i386__) || defined (__x86_64__)
 #include "DNBArch.h"
-#include "../HasAVX.h"
 #include "MachRegisterStatesX86_64.h"
 
 #include <map>

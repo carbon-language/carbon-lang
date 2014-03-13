@@ -135,6 +135,9 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
     lldbPluginProcessMacOSXKernel
     lldbPluginSymbolVendorMacOSX
     lldbPluginSystemRuntimeMacOSX
+    lldbPluginProcessPOSIX
+    lldbPluginProcessElfCore
+    lldbPluginJITLoaderGDB
     )
 endif()
 
@@ -166,6 +169,8 @@ endif()
 if (NOT LLDB_DISABLE_PYTHON)
   list(APPEND LLDB_SYSTEM_LIBS ${PYTHON_LIBRARIES})
 endif()
+
+list(APPEND LLDB_SYSTEM_LIBS ${system_libs})
 
 set( LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}

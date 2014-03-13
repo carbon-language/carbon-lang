@@ -40,6 +40,12 @@ add_lldb_executable(debugserver
   ${generated_mach_interfaces}
   )
 
+set_source_files_properties(
+  HasAVX.s
+  # Necessary since compilation will fail with stand-alone assembler
+  PROPERTIES LANGUAGE C COMPILE_FLAGS "-x assembler-with-cpp"
+  )
+
 add_dependencies(debugserver generate_dnbconfig)
 target_link_libraries(debugserver ${DEBUGSERVER_USED_LIBS})
 

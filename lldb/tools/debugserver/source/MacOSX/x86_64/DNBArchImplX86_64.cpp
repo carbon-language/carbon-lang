@@ -18,6 +18,7 @@
 #include <sys/sysctl.h>
 
 #include "MacOSX/x86_64/DNBArchImplX86_64.h"
+#include "../HasAVX.h"
 #include "DNBLog.h"
 #include "MachThread.h"
 #include "MachProcess.h"
