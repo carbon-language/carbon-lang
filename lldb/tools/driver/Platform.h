@@ -16,17 +16,12 @@
 
     // this will stop signal.h being included
     #define _INC_SIGNAL
-
     #include <io.h>
+#if defined( _MSC_VER )
     #include <eh.h>
+#endif
     #include <inttypes.h>
     #include "lldb/Host/windows/windows.h"
-
-    struct timeval
-    {
-        long tv_sec;
-        long tv_usec;
-    };
 
     struct winsize
     {
@@ -65,12 +60,7 @@
         speed_t c_ospeed;  // output speed
     };
 
-    typedef long pid_t;
-
     #define STDIN_FILENO 0
-
-    #define PATH_MAX MAX_PATH
-    #define snprintf _snprintf
 
     extern int  ioctl( int d, int request, ... );
     extern int  kill ( pid_t pid, int sig      );
@@ -86,7 +76,18 @@
     #define SIG_DFL ( (sighandler_t) -1 )
     // ignored
     #define SIG_IGN ( (sighandler_t) -2 )
+
+#ifdef _MSC_VER
+    struct timeval
+    {
+        long tv_sec;
+        long tv_usec;
+    };
+    typedef long pid_t;
+    #define snprintf _snprintf
     extern sighandler_t signal( int sig, sighandler_t );
+    #define PATH_MAX MAX_PATH
+#endif
 
 #else
 

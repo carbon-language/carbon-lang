@@ -84,6 +84,7 @@ tcgetattr (int fildes, struct termios *termios_p)
     return -1;
 }
 
+#ifdef _MSC_VER
 sighandler_t
 signal (int sig, sighandler_t sigFunc)
 {
@@ -106,5 +107,6 @@ signal (int sig, sighandler_t sigFunc)
     }
     return 0;
 }
+#endif
 
 #endif
