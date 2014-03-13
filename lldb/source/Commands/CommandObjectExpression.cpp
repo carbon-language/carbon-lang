@@ -484,7 +484,7 @@ CommandObjectExpression::DoExecute
             }
             
             // No expression following options
-            if (expr[0] == '\0')
+            if (expr && expr[0] == '\0')
             {
                 GetMultilineExpression ();
                 return result.Succeeded();
