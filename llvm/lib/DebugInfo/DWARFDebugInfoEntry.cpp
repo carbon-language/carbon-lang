@@ -40,11 +40,8 @@ void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS, const DWARFUnit *u,
                      AbbrevDecl->hasChildren() ? '*' : ' ');
 
         // Dump all data in the DIE for the attributes.
-        const uint32_t numAttributes = AbbrevDecl->getNumAttributes();
-        for (uint32_t i = 0; i != numAttributes; ++i) {
-          uint16_t attr = AbbrevDecl->getAttrByIndex(i);
-          uint16_t form = AbbrevDecl->getFormByIndex(i);
-          dumpAttribute(OS, u, &offset, attr, form, indent);
+        for (const auto &AttrSpec : AbbrevDecl->attributes()) {
+          dumpAttribute(OS, u, &offset, AttrSpec.Attr, AttrSpec.Form, indent);
         }
 
         const DWARFDebugInfoEntryMinimal *child = getFirstChild();
@@ -116,8 +113,8 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFUnit *U,
   assert(FixedFormSizes.size() > 0);
 
   // Skip all data in the .debug_info for the attributes
-  for (uint32_t i = 0, n = AbbrevDecl->getNumAttributes(); i < n; ++i) {
-    uint16_t Form = AbbrevDecl->getFormByIndex(i);
+  for (const auto &AttrSpec : AbbrevDecl->attributes()) {
+    uint16_t Form = AttrSpec.Form;
 
     uint8_t FixedFormSize =
         (Form < FixedFormSizes.size()) ? FixedFormSizes[Form] : 0;

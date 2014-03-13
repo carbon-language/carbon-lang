@@ -33,19 +33,17 @@ bool DWARFAbbreviationDeclarationSet::extract(DataExtractor data,
 }
 
 void DWARFAbbreviationDeclarationSet::dump(raw_ostream &OS) const {
-  for (unsigned i = 0, e = Decls.size(); i != e; ++i)
-    Decls[i].dump(OS);
+  for (const auto &Decl : Decls)
+    Decl.dump(OS);
 }
 
 const DWARFAbbreviationDeclaration*
 DWARFAbbreviationDeclarationSet::getAbbreviationDeclaration(uint32_t abbrCode)
   const {
   if (IdxOffset == UINT32_MAX) {
-    DWARFAbbreviationDeclarationCollConstIter pos;
-    DWARFAbbreviationDeclarationCollConstIter end = Decls.end();
-    for (pos = Decls.begin(); pos != end; ++pos) {
-      if (pos->getCode() == abbrCode)
-        return &(*pos);
+    for (const auto &Decl : Decls) {
+      if (Decl.getCode() == abbrCode)
+        return &Decl;
     }
   } else {
     uint32_t idx = abbrCode - IdxOffset;
@@ -81,10 +79,9 @@ void DWARFDebugAbbrev::dump(raw_ostream &OS) const {
     return;
   }
 
-  DWARFAbbreviationDeclarationCollMapConstIter pos;
-  for (pos = AbbrevCollMap.begin(); pos != AbbrevCollMap.end(); ++pos) {
-    OS << format("Abbrev table for offset: 0x%8.8" PRIx64 "\n", pos->first);
-    pos->second.dump(OS);
+  for (const auto &I : AbbrevCollMap) {
+    OS << format("Abbrev table for offset: 0x%8.8" PRIx64 "\n", I.first);
+    I.second.dump(OS);
   }
 }
 

@@ -33,15 +33,12 @@ void DWARFDebugAranges::extract(DataExtractor DebugArangesData) {
     return;
 
   Aranges.reserve(TotalRanges);
-  for (RangeSetColl::const_iterator I = Sets.begin(), E = Sets.end(); I != E;
-       ++I) {
-    uint32_t CUOffset = I->getCompileUnitDIEOffset();
+  for (const auto &I : Sets) {
+    uint32_t CUOffset = I.getCompileUnitDIEOffset();
 
-    for (uint32_t i = 0, n = I->getNumDescriptors(); i < n; ++i) {
-      const DWARFDebugArangeSet::Descriptor *ArangeDescPtr =
-          I->getDescriptor(i);
-      uint64_t LowPC = ArangeDescPtr->Address;
-      uint64_t HighPC = LowPC + ArangeDescPtr->Length;
+    for (const auto &Desc : I.descriptors()) {
+      uint64_t LowPC = Desc.Address;
+      uint64_t HighPC = Desc.getEndAddress();
       appendRange(CUOffset, LowPC, HighPC);
     }
   }
@@ -59,12 +56,10 @@ void DWARFDebugAranges::generate(DWARFContext *CTX) {
   // Generate aranges from DIEs: even if .debug_aranges section is present,
   // it may describe only a small subset of compilation units, so we need to
   // manually build aranges for the rest of them.
-  for (uint32_t i = 0, n = CTX->getNumCompileUnits(); i < n; ++i) {
-    if (DWARFCompileUnit *CU = CTX->getCompileUnitAtIndex(i)) {
-      uint32_t CUOffset = CU->getOffset();
-      if (ParsedCUOffsets.insert(CUOffset).second)
-        CU->buildAddressRangeTable(this, true, CUOffset);
-    }
+  for (const auto &CU : CTX->compile_units()) {
+    uint32_t CUOffset = CU->getOffset();
+    if (ParsedCUOffsets.insert(CUOffset).second)
+      CU->buildAddressRangeTable(this, true, CUOffset);
   }
 
   sortAndMinimize();

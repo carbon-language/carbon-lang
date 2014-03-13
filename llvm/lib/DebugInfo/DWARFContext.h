@@ -28,33 +28,38 @@ namespace llvm {
 /// information parsing. The actual data is supplied through pure virtual
 /// methods that a concrete implementation provides.
 class DWARFContext : public DIContext {
-  SmallVector<DWARFCompileUnit *, 1> CUs;
-  SmallVector<DWARFTypeUnit *, 1> TUs;
+  typedef SmallVector<DWARFCompileUnit *, 1> CUVector;
+  typedef SmallVector<DWARFTypeUnit *, 1> TUVector;
+
+  CUVector CUs;
+  TUVector TUs;
   std::unique_ptr<DWARFDebugAbbrev> Abbrev;
   std::unique_ptr<DWARFDebugLoc> Loc;
   std::unique_ptr<DWARFDebugAranges> Aranges;
   std::unique_ptr<DWARFDebugLine> Line;
   std::unique_ptr<DWARFDebugFrame> DebugFrame;
 
-  SmallVector<DWARFCompileUnit *, 1> DWOCUs;
-  SmallVector<DWARFTypeUnit *, 1> DWOTUs;
+  CUVector DWOCUs;
+  TUVector DWOTUs;
   std::unique_ptr<DWARFDebugAbbrev> AbbrevDWO;
 
   DWARFContext(DWARFContext &) LLVM_DELETED_FUNCTION;
   DWARFContext &operator=(DWARFContext &) LLVM_DELETED_FUNCTION;
 
-  /// Read compile units from the debug_info section and store them in CUs.
+  /// Read compile units from the debug_info section (if necessary)
+  /// and store them in CUs.
   void parseCompileUnits();
 
-  /// Read type units from the debug_types sections and store them in CUs.
+  /// Read type units from the debug_types sections (if necessary)
+  /// and store them in TUs.
   void parseTypeUnits();
 
-  /// Read compile units from the debug_info.dwo section and store them in
-  /// DWOCUs.
+  /// Read compile units from the debug_info.dwo section (if necessary)
+  /// and store them in DWOCUs.
   void parseDWOCompileUnits();
 
-  /// Read type units from the debug_types.dwo section and store them in
-  /// DWOTUs.
+  /// Read type units from the debug_types.dwo section (if necessary)
+  /// and store them in DWOTUs.
   void parseDWOTypeUnits();
 
 public:
@@ -72,60 +77,67 @@ public:
 
   void dump(raw_ostream &OS, DIDumpType DumpType = DIDT_All) override;
 
+  typedef iterator_range<CUVector::iterator> cu_iterator_range;
+  typedef iterator_range<TUVector::iterator> tu_iterator_range;
+
+  /// Get compile units in this context.
+  cu_iterator_range compile_units() {
+    parseCompileUnits();
+    return cu_iterator_range(CUs.begin(), CUs.end());
+  }
+
+  /// Get type units in this context.
+  tu_iterator_range type_units() {
+    parseTypeUnits();
+    return tu_iterator_range(TUs.begin(), TUs.end());
+  }
+
+  /// Get compile units in the DWO context.
+  cu_iterator_range dwo_compile_units() {
+    parseDWOCompileUnits();
+    return cu_iterator_range(DWOCUs.begin(), DWOCUs.end());
+  }
+
+  /// Get type units in the DWO context.
+  tu_iterator_range dwo_type_units() {
+    parseDWOTypeUnits();
+    return tu_iterator_range(DWOTUs.begin(), DWOTUs.end());
+  }
+
   /// Get the number of compile units in this context.
   unsigned getNumCompileUnits() {
-    if (CUs.empty())
-      parseCompileUnits();
+    parseCompileUnits();
     return CUs.size();
   }
 
   /// Get the number of compile units in this context.
   unsigned getNumTypeUnits() {
-    if (TUs.empty())
-      parseTypeUnits();
+    parseTypeUnits();
     return TUs.size();
   }
 
   /// Get the number of compile units in the DWO context.
   unsigned getNumDWOCompileUnits() {
-    if (DWOCUs.empty())
-      parseDWOCompileUnits();
+    parseDWOCompileUnits();
     return DWOCUs.size();
   }
 
   /// Get the number of compile units in the DWO context.
   unsigned getNumDWOTypeUnits() {
-    if (DWOTUs.empty())
-      parseDWOTypeUnits();
+    parseDWOTypeUnits();
     return DWOTUs.size();
   }
 
   /// Get the compile unit at the specified index for this compile unit.
   DWARFCompileUnit *getCompileUnitAtIndex(unsigned index) {
-    if (CUs.empty())
-      parseCompileUnits();
+    parseCompileUnits();
     return CUs[index];
-  }
-
-  /// Get the type unit at the specified index for this compile unit.
-  DWARFTypeUnit *getTypeUnitAtIndex(unsigned index) {
-    if (TUs.empty())
-      parseTypeUnits();
-    return TUs[index];
   }
 
   /// Get the compile unit at the specified index for the DWO compile units.
   DWARFCompileUnit *getDWOCompileUnitAtIndex(unsigned index) {
-    if (DWOCUs.empty())
-      parseDWOCompileUnits();
+    parseDWOCompileUnits();
     return DWOCUs[index];
-  }
-
-  /// Get the type unit at the specified index for the DWO type units.
-  DWARFTypeUnit *getDWOTypeUnitAtIndex(unsigned index) {
-    if (DWOTUs.empty())
-      parseDWOTypeUnits();
-    return DWOTUs[index];
   }
 
   /// Get a pointer to the parsed DebugAbbrev object.

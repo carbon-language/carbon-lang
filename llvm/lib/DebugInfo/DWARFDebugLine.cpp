@@ -90,9 +90,9 @@ void DWARFDebugLine::LineTable::dump(raw_ostream &OS) const {
     OS << "Address            Line   Column File   ISA Discriminator Flags\n"
        << "------------------ ------ ------ ------ --- ------------- "
           "-------------\n";
-    for (std::vector<Row>::const_iterator pos = Rows.begin(),
-         end = Rows.end(); pos != end; ++pos)
-      pos->dump(OS);
+    for (const Row &R : Rows) {
+      R.dump(OS);
+    }
   }
 }
 

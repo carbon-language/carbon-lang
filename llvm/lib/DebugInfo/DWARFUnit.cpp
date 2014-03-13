@@ -331,11 +331,12 @@ DWARFUnit::buildAddressRangeTable(DWARFDebugAranges *debug_aranges,
 const DWARFDebugInfoEntryMinimal *
 DWARFUnit::getSubprogramForAddress(uint64_t Address) {
   extractDIEsIfNeeded(false);
-  for (size_t i = 0, n = DieArray.size(); i != n; i++)
-    if (DieArray[i].isSubprogramDIE() &&
-        DieArray[i].addressRangeContainsAddress(this, Address)) {
-      return &DieArray[i];
+  for (const DWARFDebugInfoEntryMinimal &DIE : DieArray) {
+    if (DIE.isSubprogramDIE() &&
+        DIE.addressRangeContainsAddress(this, Address)) {
+      return &DIE;
     }
+  }
   return 0;
 }
 

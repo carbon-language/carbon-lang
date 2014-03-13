@@ -18,7 +18,7 @@ void DWARFAbbreviationDeclaration::clear() {
   Code = 0;
   Tag = 0;
   HasChildren = false;
-  Attributes.clear();
+  AttributeSpecs.clear();
 }
 
 DWARFAbbreviationDeclaration::DWARFAbbreviationDeclaration() {
@@ -51,7 +51,8 @@ DWARFAbbreviationDeclaration::extract(DataExtractor Data, uint32_t* OffsetPtr) {
     }
     if (Attr == 0 && Form == 0)
       break;
-    Attributes.push_back(AttributeSpec(Attr, Form));
+    AttributeSpec AS = {Attr, Form};
+    AttributeSpecs.push_back(AS);
   }
 
   if (Tag == 0) {
@@ -69,19 +70,19 @@ void DWARFAbbreviationDeclaration::dump(raw_ostream &OS) const {
   else
     OS << format("DW_TAG_Unknown_%x", getTag());
   OS << "\tDW_CHILDREN_" << (hasChildren() ? "yes" : "no") << '\n';
-  for (unsigned i = 0, e = Attributes.size(); i != e; ++i) {
+  for (const AttributeSpec &Spec : AttributeSpecs) {
     OS << '\t';
-    const char *attrString = AttributeString(Attributes[i].Attr);
+    const char *attrString = AttributeString(Spec.Attr);
     if (attrString)
       OS << attrString;
     else
-      OS << format("DW_AT_Unknown_%x", Attributes[i].Attr);
+      OS << format("DW_AT_Unknown_%x", Spec.Attr);
     OS << '\t';
-    const char *formString = FormEncodingString(Attributes[i].Form);
+    const char *formString = FormEncodingString(Spec.Form);
     if (formString)
       OS << formString;
     else
-      OS << format("DW_FORM_Unknown_%x", Attributes[i].Form);
+      OS << format("DW_FORM_Unknown_%x", Spec.Form);
     OS << '\n';
   }
   OS << '\n';
@@ -89,8 +90,8 @@ void DWARFAbbreviationDeclaration::dump(raw_ostream &OS) const {
 
 uint32_t
 DWARFAbbreviationDeclaration::findAttributeIndex(uint16_t attr) const {
-  for (uint32_t i = 0, e = Attributes.size(); i != e; ++i) {
-    if (Attributes[i].Attr == attr)
+  for (uint32_t i = 0, e = AttributeSpecs.size(); i != e; ++i) {
+    if (AttributeSpecs[i].Attr == attr)
       return i;
   }
   return -1U;

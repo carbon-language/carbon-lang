@@ -60,9 +60,6 @@ public:
   bool isSubroutineDIE() const;
 
   uint32_t getOffset() const { return Offset; }
-  uint32_t getNumAttributes() const {
-    return !isNULL() ? AbbrevDecl->getNumAttributes() : 0;
-  }
   bool hasChildren() const { return !isNULL() && AbbrevDecl->hasChildren(); }
 
   // We know we are kept in a vector of contiguous entries, so we know

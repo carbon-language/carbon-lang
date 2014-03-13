@@ -42,5 +42,4 @@ private:
 
 } // namespace llvm
 
-#endif 
-
+#endif

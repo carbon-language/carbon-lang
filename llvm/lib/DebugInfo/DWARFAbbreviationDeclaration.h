@@ -23,23 +23,27 @@ class DWARFAbbreviationDeclaration {
   bool HasChildren;
 
   struct AttributeSpec {
-    AttributeSpec(uint16_t Attr, uint16_t Form) : Attr(Attr), Form(Form) {}
     uint16_t Attr;
     uint16_t Form;
   };
-  SmallVector<AttributeSpec, 8> Attributes;
+  typedef SmallVector<AttributeSpec, 8> AttributeSpecVector;
+  AttributeSpecVector AttributeSpecs;
 public:
   DWARFAbbreviationDeclaration();
 
   uint32_t getCode() const { return Code; }
   uint32_t getTag() const { return Tag; }
   bool hasChildren() const { return HasChildren; }
-  uint32_t getNumAttributes() const { return Attributes.size(); }
-  uint16_t getAttrByIndex(uint32_t idx) const {
-    return idx < Attributes.size() ? Attributes[idx].Attr : 0;
+
+  typedef iterator_range<AttributeSpecVector::const_iterator>
+  attr_iterator_range;
+
+  attr_iterator_range attributes() const {
+    return attr_iterator_range(AttributeSpecs.begin(), AttributeSpecs.end());
   }
+
   uint16_t getFormByIndex(uint32_t idx) const {
-    return idx < Attributes.size() ? Attributes[idx].Form : 0;
+    return idx < AttributeSpecs.size() ? AttributeSpecs[idx].Form : 0;
   }
 
   uint32_t findAttributeIndex(uint16_t attr) const;
