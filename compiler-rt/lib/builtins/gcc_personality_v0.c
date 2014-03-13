@@ -107,34 +107,34 @@ static uintptr_t readEncodedPointer(const uint8_t** data, uint8_t encoding)
     /* first get value */
     switch (encoding & 0x0F) {
         case DW_EH_PE_absptr:
-            result = *((uintptr_t*)p);
+            result = *((const uintptr_t*)p);
             p += sizeof(uintptr_t);
             break;
         case DW_EH_PE_uleb128:
             result = readULEB128(&p);
             break;
         case DW_EH_PE_udata2:
-            result = *((uint16_t*)p);
+            result = *((const uint16_t*)p);
             p += sizeof(uint16_t);
             break;
         case DW_EH_PE_udata4:
-            result = *((uint32_t*)p);
+            result = *((const uint32_t*)p);
             p += sizeof(uint32_t);
             break;
         case DW_EH_PE_udata8:
-            result = *((uint64_t*)p);
+            result = *((const uint64_t*)p);
             p += sizeof(uint64_t);
             break;
         case DW_EH_PE_sdata2:
-            result = *((int16_t*)p);
+            result = *((const int16_t*)p);
             p += sizeof(int16_t);
             break;
         case DW_EH_PE_sdata4:
-            result = *((int32_t*)p);
+            result = *((const int32_t*)p);
             p += sizeof(int32_t);
             break;
         case DW_EH_PE_sdata8:
-            result = *((int64_t*)p);
+            result = *((const int64_t*)p);
             p += sizeof(int64_t);
             break;
         case DW_EH_PE_sleb128:
@@ -164,7 +164,7 @@ static uintptr_t readEncodedPointer(const uint8_t** data, uint8_t encoding)
 
     /* then apply indirection */
     if (encoding & DW_EH_PE_indirect) {
-        result = *((uintptr_t*)result);
+        result = *((const uintptr_t*)result);
     }
 
     *data = p;
