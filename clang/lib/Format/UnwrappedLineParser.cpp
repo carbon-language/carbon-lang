@@ -357,6 +357,7 @@ void UnwrappedLineParser::calculateBraceTypes() {
         LBraceStack.pop_back();
       }
       break;
+    case tok::at:
     case tok::semi:
     case tok::kw_if:
     case tok::kw_while:
