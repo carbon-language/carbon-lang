@@ -339,7 +339,7 @@ unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
                                  unsigned FileNumber, unsigned CUID) {
   MCDwarfFileTable &Table = MCDwarfFileTablesCUMap[CUID];
   SmallVectorImpl<MCDwarfFile>& MCDwarfFiles = Table.getMCDwarfFiles();
-  SmallVectorImpl<StringRef>& MCDwarfDirs = Table.getMCDwarfDirs();
+  SmallVectorImpl<std::string>& MCDwarfDirs = Table.getMCDwarfDirs();
   // Make space for this FileNumber in the MCDwarfFiles vector if needed.
   if (FileNumber >= MCDwarfFiles.size()) {
     MCDwarfFiles.resize(FileNumber + 1);
@@ -374,11 +374,8 @@ unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
       if (Directory == MCDwarfDirs[DirIndex])
         break;
     }
-    if (DirIndex >= MCDwarfDirs.size()) {
-      char *Buf = static_cast<char *>(Allocate(Directory.size()));
-      memcpy(Buf, Directory.data(), Directory.size());
-      MCDwarfDirs.push_back(StringRef(Buf, Directory.size()));
-    }
+    if (DirIndex >= MCDwarfDirs.size())
+      MCDwarfDirs.push_back(Directory);
     // The DirIndex is one based, as DirIndex of 0 is used for FileNames with
     // no directories.  MCDwarfDirs[] is unlike MCDwarfFiles[] in that the
     // directory names are stored at MCDwarfDirs[DirIndex-1] where FileNames

@@ -325,7 +325,7 @@ namespace llvm {
     const SmallVectorImpl<MCDwarfFile> &getMCDwarfFiles(unsigned CUID = 0) {
       return getMCDwarfFileTable(CUID).getMCDwarfFiles();
     }
-    const SmallVectorImpl<StringRef> &getMCDwarfDirs(unsigned CUID = 0) {
+    const SmallVectorImpl<std::string> &getMCDwarfDirs(unsigned CUID = 0) {
       return getMCDwarfFileTable(CUID).getMCDwarfDirs();
     }
 

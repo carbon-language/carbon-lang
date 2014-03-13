@@ -596,8 +596,7 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
 
   // AT_name, the name of the source file.  Reconstruct from the first directory
   // and file table entries.
-  const SmallVectorImpl<StringRef> &MCDwarfDirs =
-    context.getMCDwarfDirs();
+  const SmallVectorImpl<std::string> &MCDwarfDirs = context.getMCDwarfDirs();
   if (MCDwarfDirs.size() > 0) {
     MCOS->EmitBytes(MCDwarfDirs[0]);
     MCOS->EmitBytes("/");

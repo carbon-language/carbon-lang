@@ -22,6 +22,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 #include <vector>
+#include <string>
 
 namespace llvm {
 class MCAsmBackend;
@@ -175,7 +176,7 @@ public:
 
 class MCDwarfFileTable {
   MCSymbol *Label;
-  SmallVector<StringRef, 3> MCDwarfDirs;
+  SmallVector<std::string, 3> MCDwarfDirs;
   SmallVector<MCDwarfFile, 3> MCDwarfFiles;
   MCLineSection MCLineSections;
 
@@ -189,11 +190,11 @@ public:
   //
   const MCSymbol *EmitCU(MCStreamer *MCOS) const;
 
-  const SmallVectorImpl<StringRef> &getMCDwarfDirs() const {
+  const SmallVectorImpl<std::string> &getMCDwarfDirs() const {
     return MCDwarfDirs;
   }
 
-  SmallVectorImpl<StringRef> &getMCDwarfDirs() {
+  SmallVectorImpl<std::string> &getMCDwarfDirs() {
     return MCDwarfDirs;
   }
 
