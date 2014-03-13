@@ -785,28 +785,33 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
     EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, OrderFail,
                  Size, Align, llvm::Acquire);
     Builder.CreateBr(ContBB);
-    SI->addCase(Builder.getInt32(1), AcquireBB);
-    SI->addCase(Builder.getInt32(2), AcquireBB);
+    SI->addCase(Builder.getInt32(AtomicExpr::AO_ABI_memory_order_consume),
+                AcquireBB);
+    SI->addCase(Builder.getInt32(AtomicExpr::AO_ABI_memory_order_acquire),
+                AcquireBB);
   }
   if (!IsLoad) {
     Builder.SetInsertPoint(ReleaseBB);
     EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, OrderFail,
                  Size, Align, llvm::Release);
     Builder.CreateBr(ContBB);
-    SI->addCase(Builder.getInt32(3), ReleaseBB);
+    SI->addCase(Builder.getInt32(AtomicExpr::AO_ABI_memory_order_release),
+                ReleaseBB);
   }
   if (!IsLoad && !IsStore) {
     Builder.SetInsertPoint(AcqRelBB);
     EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, OrderFail,
                  Size, Align, llvm::AcquireRelease);
     Builder.CreateBr(ContBB);
-    SI->addCase(Builder.getInt32(4), AcqRelBB);
+    SI->addCase(Builder.getInt32(AtomicExpr::AO_ABI_memory_order_acq_rel),
+                AcqRelBB);
   }
   Builder.SetInsertPoint(SeqCstBB);
   EmitAtomicOp(*this, E, Dest, Ptr, Val1, Val2, OrderFail,
                Size, Align, llvm::SequentiallyConsistent);
   Builder.CreateBr(ContBB);
-  SI->addCase(Builder.getInt32(5), SeqCstBB);
+  SI->addCase(Builder.getInt32(AtomicExpr::AO_ABI_memory_order_seq_cst),
+              SeqCstBB);
 
   // Cleanup and return
   Builder.SetInsertPoint(ContBB);
