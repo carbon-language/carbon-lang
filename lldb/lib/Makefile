@@ -88,6 +88,10 @@ LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
                    instrumentation ipo irreader selectiondag jit mc mcjit \
                    linker option
 
+ifeq ($(HOST_OS),MingW)
+  USEDLIBS += lldbHostWindows.a
+endif
+
 ifeq ($(HOST_OS),Darwin)
   USEDLIBS += lldbHostMacOSX.a \
               lldbPluginDynamicLoaderMacOSX.a \
@@ -124,6 +128,10 @@ ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
 endif
 
 include $(LEVEL)/Makefile.common
+
+ifeq ($(HOST_OS),MingW)
+    LLVMLibsOptions += -lws2_32
+endif
 
 ifeq ($(HOST_OS),Darwin)
     LLVMLibsOptions += -Wl,-all_load
