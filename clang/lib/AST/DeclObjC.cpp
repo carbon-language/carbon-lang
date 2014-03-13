@@ -463,10 +463,7 @@ ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(IdentifierInfo *ID,
       return I;
     }
 
-    for (ObjCInterfaceDecl::visible_extensions_iterator
-           Ext = ClassDecl->visible_extensions_begin(),
-           ExtEnd = ClassDecl->visible_extensions_end();
-         Ext != ExtEnd; ++Ext) {
+    for (const auto *Ext : ClassDecl->visible_extensions()) {
       if (ObjCIvarDecl *I = Ext->getIvarDecl(ID)) {
         clsDeclared = ClassDecl;
         return I;

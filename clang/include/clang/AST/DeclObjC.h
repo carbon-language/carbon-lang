@@ -1162,6 +1162,14 @@ public:
   typedef filtered_category_iterator<isVisibleExtension>
     visible_extensions_iterator;
 
+  typedef llvm::iterator_range<visible_extensions_iterator>
+    visible_extensions_range;
+
+  visible_extensions_range visible_extensions() const {
+    return visible_extensions_range(visible_extensions_begin(),
+                                    visible_extensions_end());
+  }
+
   /// \brief Retrieve an iterator to the beginning of the visible-extensions
   /// list.
   visible_extensions_iterator visible_extensions_begin() const {

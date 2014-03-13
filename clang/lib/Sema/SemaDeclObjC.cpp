@@ -1179,11 +1179,7 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
         continue;
       }
       // Check class extensions (unnamed categories) for duplicate ivars.
-      for (ObjCInterfaceDecl::visible_extensions_iterator
-           Ext = IDecl->visible_extensions_begin(),
-           ExtEnd = IDecl->visible_extensions_end();
-         Ext != ExtEnd; ++Ext) {
-        ObjCCategoryDecl *CDecl = *Ext;
+      for (const auto *CDecl : IDecl->visible_extensions()) {
         if (const ObjCIvarDecl *ClsExtIvar = 
             CDecl->getIvarDecl(ImplIvar->getIdentifier())) {
           Diag(ImplIvar->getLocation(), diag::err_duplicate_ivar_declaration); 
@@ -1883,21 +1879,16 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
     // i.e. when WarnCategoryMethodImpl is false, check declarations in class
     // extension; as well as those in categories.
     if (!WarnCategoryMethodImpl) {
-      for (auto *Cat : I->visible_categories()) {
+      for (auto *Cat : I->visible_categories())
         MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
                                    IMPDecl, Cat, IncompleteImpl, false,
                                    WarnCategoryMethodImpl);
-      }
     } else {
       // Also methods in class extensions need be looked at next.
-      for (ObjCInterfaceDecl::visible_extensions_iterator
-             Ext = I->visible_extensions_begin(),
-             ExtEnd = I->visible_extensions_end();
-           Ext != ExtEnd; ++Ext) {
+      for (auto *Ext : I->visible_extensions())
         MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
-                                   IMPDecl, *Ext, IncompleteImpl, false,
+                                   IMPDecl, Ext, IncompleteImpl, false,
                                    WarnCategoryMethodImpl);
-      }
     }
 
     // Check for any implementation of a methods declared in protocol.
@@ -2005,12 +1996,8 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
       CheckProtocolMethodDefs(*this, IMPDecl->getLocation(), PI, IncompleteImpl,
                               InsMap, ClsMap, I, ExplicitImplProtocols);
     // Check class extensions (unnamed categories)
-    for (ObjCInterfaceDecl::visible_extensions_iterator
-           Ext = I->visible_extensions_begin(),
-           ExtEnd = I->visible_extensions_end();
-         Ext != ExtEnd; ++Ext) {
-      ImplMethodsVsClassMethods(S, IMPDecl, *Ext, IncompleteImpl);
-    }
+    for (auto *Ext : I->visible_extensions())
+      ImplMethodsVsClassMethods(S, IMPDecl, Ext, IncompleteImpl);
   } else if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl)) {
     // For extended class, unimplemented methods in its protocols will
     // be reported in the primary class.
@@ -2655,10 +2642,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *> allMethods,
       // of the other class extensions. Mark them as synthesized as
       // property will be synthesized when property with same name is
       // seen in the @implementation.
-      for (ObjCInterfaceDecl::visible_extensions_iterator
-             Ext = IDecl->visible_extensions_begin(),
-             ExtEnd = IDecl->visible_extensions_end();
-           Ext != ExtEnd; ++Ext) {
+      for (const auto *Ext : IDecl->visible_extensions()) {
         for (const auto *Property : Ext->properties()) {
           // Skip over properties declared @dynamic
           if (const ObjCPropertyImplDecl *PIDecl
@@ -2667,10 +2651,7 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd, ArrayRef<Decl *> allMethods,
                   == ObjCPropertyImplDecl::Dynamic)
               continue;
 
-          for (ObjCInterfaceDecl::visible_extensions_iterator
-                 Ext = IDecl->visible_extensions_begin(),
-                 ExtEnd = IDecl->visible_extensions_end();
-               Ext != ExtEnd; ++Ext) {
+          for (const auto *Ext : IDecl->visible_extensions()) {
             if (ObjCMethodDecl *GetterMethod
                   = Ext->getInstanceMethod(Property->getGetterName()))
               GetterMethod->setPropertyAccessor(true);

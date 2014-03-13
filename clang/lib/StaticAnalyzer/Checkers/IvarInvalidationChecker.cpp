@@ -262,12 +262,8 @@ void IvarInvalidationCheckerImpl::containsInvalidationMethod(
 
     // Visit all categories in case the invalidation method is declared in
     // a category.
-    for (ObjCInterfaceDecl::visible_extensions_iterator
-           Ext = InterfD->visible_extensions_begin(),
-           ExtEnd = InterfD->visible_extensions_end();
-         Ext != ExtEnd; ++Ext) {
-      containsInvalidationMethod(*Ext, OutInfo, Partial);
-    }
+    for (const auto *Ext : InterfD->visible_extensions())
+      containsInvalidationMethod(Ext, OutInfo, Partial);
 
     containsInvalidationMethod(InterfD->getSuperClass(), OutInfo, Partial);
     return;
