@@ -13,6 +13,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/MutexGuard.h"
+#include "llvm/Support/ManagedStatic.h"
 
 using namespace llvm;
 
@@ -102,9 +103,8 @@ private:
 /// modify global variables.
 llvm::sys::Mutex JITDebugLock;
 
-/// Acquire the lock and do the registration.
+/// Do the registration.
 void NotifyDebugger(jit_code_entry* JITCodeEntry) {
-  llvm::MutexGuard locked(JITDebugLock);
   __jit_debug_descriptor.action_flag = JIT_REGISTER_FN;
 
   // Insert this entry at the head of the list.
@@ -121,7 +121,8 @@ void NotifyDebugger(jit_code_entry* JITCodeEntry) {
 
 GDBJITRegistrar::~GDBJITRegistrar() {
   // Free all registered object files.
- for (RegisteredObjectBufferMap::iterator I = ObjectBufferMap.begin(), E = ObjectBufferMap.end();
+  llvm::MutexGuard locked(JITDebugLock);
+  for (RegisteredObjectBufferMap::iterator I = ObjectBufferMap.begin(), E = ObjectBufferMap.end();
        I != E; ++I) {
     // Call the private method that doesn't update the map so our iterator
     // doesn't break.
@@ -136,6 +137,7 @@ void GDBJITRegistrar::registerObject(const ObjectBuffer &Object) {
   size_t      Size = Object.getBufferSize();
 
   assert(Buffer && "Attempt to register a null object with a debugger.");
+  llvm::MutexGuard locked(JITDebugLock);
   assert(ObjectBufferMap.find(Buffer) == ObjectBufferMap.end() &&
          "Second attempt to perform debug registration.");
   jit_code_entry* JITCodeEntry = new jit_code_entry();
@@ -155,6 +157,7 @@ void GDBJITRegistrar::registerObject(const ObjectBuffer &Object) {
 
 bool GDBJITRegistrar::deregisterObject(const ObjectBuffer& Object) {
   const char *Buffer = Object.getBufferStart();
+  llvm::MutexGuard locked(JITDebugLock);
   RegisteredObjectBufferMap::iterator I = ObjectBufferMap.find(Buffer);
 
   if (I != ObjectBufferMap.end()) {
@@ -170,9 +173,8 @@ void GDBJITRegistrar::deregisterObjectInternal(
 
   jit_code_entry*& JITCodeEntry = I->second.second;
 
-  // Acquire the lock and do the unregistration.
+  // Do the unregistration.
   {
-    llvm::MutexGuard locked(JITDebugLock);
     __jit_debug_descriptor.action_flag = JIT_UNREGISTER_FN;
 
     // Remove the jit_code_entry from the linked list.
@@ -199,22 +201,14 @@ void GDBJITRegistrar::deregisterObjectInternal(
   JITCodeEntry = NULL;
 }
 
+llvm::ManagedStatic<GDBJITRegistrar> TheRegistrar;
+
 } // end namespace
 
 namespace llvm {
 
 JITRegistrar& JITRegistrar::getGDBRegistrar() {
-  static GDBJITRegistrar* sRegistrar = NULL;
-  if (sRegistrar == NULL) {
-    // The mutex is here so that it won't slow down access once the registrar
-    // is instantiated
-    llvm::MutexGuard locked(JITDebugLock);
-    // Check again to be sure another thread didn't create this while we waited
-    if (sRegistrar == NULL) {
-      sRegistrar = new GDBJITRegistrar;
-    }
-  }
-  return *sRegistrar;
+  return *TheRegistrar;
 }
 
 } // namespace llvm
