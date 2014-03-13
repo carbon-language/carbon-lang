@@ -1172,11 +1172,7 @@ Target::ModulesDidLoad (ModuleList &module_list)
         m_breakpoint_list.UpdateBreakpoints (module_list, true, false);
         if (m_process_sp)
         {
-            SystemRuntime *sys_runtime = m_process_sp->GetSystemRuntime();
-            if (sys_runtime)
-            {
-                sys_runtime->ModulesDidLoad (module_list);
-            }
+            m_process_sp->ModulesDidLoad (module_list);
         }
         // TODO: make event data that packages up the module_list
         BroadcastEvent (eBroadcastBitModulesLoaded, NULL);

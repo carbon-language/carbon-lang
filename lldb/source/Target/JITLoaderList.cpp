@@ -67,3 +67,11 @@ JITLoaderList::DidAttach()
     for (auto const &jit_loader : m_jit_loaders_vec)
         jit_loader->DidAttach();
 }
+
+void
+JITLoaderList::ModulesDidLoad(ModuleList &module_list)
+{
+    Mutex::Locker locker(m_jit_loaders_mutex);
+    for (auto const &jit_loader : m_jit_loaders_vec)
+        jit_loader->ModulesDidLoad(module_list);
+}

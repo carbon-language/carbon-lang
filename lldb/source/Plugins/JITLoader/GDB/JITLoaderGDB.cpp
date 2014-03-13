@@ -55,37 +55,43 @@ struct jit_descriptor
 JITLoaderGDB::JITLoaderGDB (lldb_private::Process *process) :
     JITLoader(process),
     m_jit_objects(),
-    m_jit_break_id(LLDB_INVALID_BREAK_ID)
+    m_jit_break_id(LLDB_INVALID_BREAK_ID),
+    m_jit_descriptor_addr(LLDB_INVALID_ADDRESS)
 {
-    m_notification_callbacks.baton = this;
-    m_notification_callbacks.initialize = nullptr;
-    m_notification_callbacks.process_state_changed =
-        ProcessStateChangedCallback;
-    m_process->RegisterNotificationCallbacks(m_notification_callbacks);
 }
 
 JITLoaderGDB::~JITLoaderGDB ()
 {
     if (LLDB_BREAK_ID_IS_VALID(m_jit_break_id))
         m_process->GetTarget().RemoveBreakpointByID (m_jit_break_id);
-    m_jit_break_id = LLDB_INVALID_BREAK_ID;
 }
 
 void JITLoaderGDB::DidAttach()
 {
-    SetJITBreakpoint();
+    Target &target = m_process->GetTarget();
+    ModuleList &module_list = target.GetImages();
+    SetJITBreakpoint(module_list);
 }
 
 void JITLoaderGDB::DidLaunch()
 {
-    SetJITBreakpoint();
+    Target &target = m_process->GetTarget();
+    ModuleList &module_list = target.GetImages();
+    SetJITBreakpoint(module_list);
+}
+
+void
+JITLoaderGDB::ModulesDidLoad(ModuleList &module_list)
+{
+    if (!DidSetJITBreakpoint() && m_process->IsAlive())
+	SetJITBreakpoint(module_list);
 }
 
 //------------------------------------------------------------------
 // Setup the JIT Breakpoint
 //------------------------------------------------------------------
 void
-JITLoaderGDB::SetJITBreakpoint()
+JITLoaderGDB::SetJITBreakpoint(lldb_private::ModuleList &module_list)
 {
     Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_JIT_LOADER));
 
@@ -96,10 +102,21 @@ JITLoaderGDB::SetJITBreakpoint()
         log->Printf("JITLoaderGDB::%s looking for JIT register hook",
                     __FUNCTION__);
 
-    addr_t jit_addr = GetSymbolAddress(ConstString("__jit_debug_register_code"),
-                                       eSymbolTypeAny);
+    addr_t jit_addr = GetSymbolAddress(
+        module_list, ConstString("__jit_debug_register_code"), eSymbolTypeAny);
     if (jit_addr == LLDB_INVALID_ADDRESS)
         return;
+
+    m_jit_descriptor_addr = GetSymbolAddress(
+        module_list, ConstString("__jit_debug_descriptor"), eSymbolTypeData);
+    if (m_jit_descriptor_addr == LLDB_INVALID_ADDRESS)
+    {
+        if (log)
+            log->Printf(
+                "JITLoaderGDB::%s failed to find JIT descriptor address",
+                __FUNCTION__);
+        return;
+    }
 
     if (log)
         log->Printf("JITLoaderGDB::%s setting JIT breakpoint",
@@ -130,26 +147,18 @@ JITLoaderGDB::JITDebugBreakpointHit(void *baton,
 bool
 JITLoaderGDB::ReadJITDescriptor(bool all_entries)
 {
+    if (m_jit_descriptor_addr == LLDB_INVALID_ADDRESS)
+        return false;
+
     Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_JIT_LOADER));
     Target &target = m_process->GetTarget();
-    ModuleList &images = target.GetImages();
-
-    addr_t jit_addr = GetSymbolAddress(ConstString("__jit_debug_descriptor"),
-                                       eSymbolTypeData);
-    if (jit_addr == LLDB_INVALID_ADDRESS)
-    {
-        if (log)
-            log->Printf(
-                "JITLoaderGDB::%s failed to find JIT descriptor address",
-                __FUNCTION__);
-        return false;
-    }
+    ModuleList &module_list = target.GetImages();
 
     jit_descriptor jit_desc;
     const size_t jit_desc_size = sizeof(jit_desc);
     Error error;
-    size_t bytes_read =
-        m_process->DoReadMemory(jit_addr, &jit_desc, jit_desc_size, error);
+    size_t bytes_read = m_process->DoReadMemory(
+        m_jit_descriptor_addr, &jit_desc, jit_desc_size, error);
     if (bytes_read != jit_desc_size || !error.Success())
     {
         if (log)
@@ -208,7 +217,7 @@ JITLoaderGDB::ReadJITDescriptor(bool all_entries)
                 // load the symbol table right away
                 module_sp->GetObjectFile()->GetSymtab();
 
-                images.AppendIfNeeded(module_sp);
+                module_list.AppendIfNeeded(module_sp);
 
                 ModuleList module_list;
                 module_list.Append(module_sp);
@@ -250,7 +259,7 @@ JITLoaderGDB::ReadJITDescriptor(bool all_entries)
                         }
                     }
                 }
-                images.Remove(module_sp);
+                module_list.Remove(module_sp);
                 m_jit_objects.erase(it);
             }
         }
@@ -327,48 +336,15 @@ JITLoaderGDB::DidSetJITBreakpoint() const
     return LLDB_BREAK_ID_IS_VALID(m_jit_break_id);
 }
 
-void
-JITLoaderGDB::ProcessStateChangedCallback(void *baton,
-                                          lldb_private::Process *process,
-                                          lldb::StateType state)
-{
-    JITLoaderGDB* instance = static_cast<JITLoaderGDB*>(baton);
-
-    switch (state)
-    {
-    case eStateConnected:
-    case eStateAttaching:
-    case eStateLaunching:
-    case eStateInvalid:
-    case eStateUnloaded:
-    case eStateExited:
-    case eStateDetached:
-        // instance->Clear(false);
-        break;
-
-    case eStateRunning:
-    case eStateStopped:
-        // Keep trying to set our JIT breakpoint each time we stop until we
-        // succeed
-        if (!instance->DidSetJITBreakpoint() && process->IsAlive())
-            instance->SetJITBreakpoint();
-        break;
-
-    case eStateStepping:
-    case eStateCrashed:
-    case eStateSuspended:
-        break;
-    }
-}
-
 addr_t
-JITLoaderGDB::GetSymbolAddress(const ConstString &name, SymbolType symbol_type) const
+JITLoaderGDB::GetSymbolAddress(ModuleList &module_list, const ConstString &name,
+                               SymbolType symbol_type) const
 {
     SymbolContextList target_symbols;
     Target &target = m_process->GetTarget();
-    ModuleList &images = target.GetImages();
 
-    if (!images.FindSymbolsWithNameAndType(name, symbol_type, target_symbols))
+    if (!module_list.FindSymbolsWithNameAndType(name, symbol_type,
+                                                target_symbols))
         return LLDB_INVALID_ADDRESS;
 
     SymbolContext sym_ctx;

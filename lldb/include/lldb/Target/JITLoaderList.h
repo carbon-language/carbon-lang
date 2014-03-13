@@ -47,6 +47,9 @@ public:
     void
     DidAttach();
 
+    void
+    ModulesDidLoad (ModuleList &module_list);
+
 private:
     std::vector<lldb::JITLoaderSP> m_jit_loaders_vec;
     lldb_private::Mutex m_jit_loaders_mutex;

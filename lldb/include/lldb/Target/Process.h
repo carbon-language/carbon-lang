@@ -2575,6 +2575,9 @@ public:
     void
     SendAsyncInterrupt ();
     
+    void
+    ModulesDidLoad (ModuleList &module_list);
+
 protected:
     
     void

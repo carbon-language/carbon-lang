@@ -56,7 +56,7 @@ public:
     //------------------------------------------------------------------
     /// Called after attaching a process.
     ///
-    /// Allow DynamicLoader plug-ins to execute some code after
+    /// Allow JITLoader plug-ins to execute some code after
     /// attaching to a process.
     //------------------------------------------------------------------
     virtual void
@@ -65,11 +65,18 @@ public:
     //------------------------------------------------------------------
     /// Called after launching a process.
     ///
-    /// Allow DynamicLoader plug-ins to execute some code after
+    /// Allow JITLoader plug-ins to execute some code after
     /// the process has stopped for the first time on launch.
     //------------------------------------------------------------------
     virtual void
     DidLaunch () = 0;
+
+    //------------------------------------------------------------------
+    /// Called after a new shared object has been loaded so that it can
+    /// be probed for JIT entry point hooks.
+    //------------------------------------------------------------------
+    virtual void
+    ModulesDidLoad (lldb_private::ModuleList &module_list) = 0;
 
 protected:
     //------------------------------------------------------------------

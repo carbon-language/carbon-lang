@@ -3068,7 +3068,7 @@ Process::Launch (ProcessLaunchInfo &launch_info)
                         if (dyld)
                             dyld->DidLaunch();
 
-                        // GetJITLoaders().DidLaunch();
+                        GetJITLoaders().DidLaunch();
 
                         SystemRuntime *system_runtime = GetSystemRuntime ();
                         if (system_runtime)
@@ -3117,7 +3117,7 @@ Process::LoadCore ()
         if (dyld)
             dyld->DidAttach();
 
-        //GetJITLoaders().DidAttach();
+        GetJITLoaders().DidAttach();
         
         SystemRuntime *system_runtime = GetSystemRuntime ();
         if (system_runtime)
@@ -3396,7 +3396,7 @@ Process::CompleteAttach ()
     if (dyld)
         dyld->DidAttach();
 
-    // GetJITLoaders().DidAttach();
+    GetJITLoaders().DidAttach();
 
     SystemRuntime *system_runtime = GetSystemRuntime ();
     if (system_runtime)
@@ -6052,3 +6052,14 @@ Process::ResolveIndirectFunction(const Address *address, Error &error)
     return function_addr;
 }
 
+void
+Process::ModulesDidLoad (ModuleList &module_list)
+{
+  SystemRuntime *sys_runtime = GetSystemRuntime();
+  if (sys_runtime)
+  {
+    sys_runtime->ModulesDidLoad (module_list);
+  }
+
+  GetJITLoaders().ModulesDidLoad (module_list);
+}

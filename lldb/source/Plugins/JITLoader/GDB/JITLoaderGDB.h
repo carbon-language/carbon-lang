@@ -63,13 +63,17 @@ public:
     virtual void
     DidLaunch ();
 
+    virtual void
+    ModulesDidLoad (lldb_private::ModuleList &module_list);
+
 private:
     lldb::addr_t
-    GetSymbolAddress(const lldb_private::ConstString &name,
+    GetSymbolAddress(lldb_private::ModuleList &module_list,
+                     const lldb_private::ConstString &name,
                      lldb::SymbolType symbol_type) const;
 
     void
-    SetJITBreakpoint();
+    SetJITBreakpoint(lldb_private::ModuleList &module_list);
 
     bool
     DidSetJITBreakpoint() const;
@@ -93,7 +97,7 @@ private:
     JITObjectMap m_jit_objects;
 
     lldb::user_id_t m_jit_break_id;
-    lldb_private::Process::Notifications m_notification_callbacks;
+    lldb::addr_t m_jit_descriptor_addr;
 
 };
 
