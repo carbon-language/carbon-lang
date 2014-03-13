@@ -32,28 +32,28 @@ public:
     Secondary.reset(_Secondary);
   }
 
-  virtual void BeginSourceFile(const LangOptions &LO,
-                               const Preprocessor *PP) {
+  void BeginSourceFile(const LangOptions &LO,
+                       const Preprocessor *PP) override {
     Primary->BeginSourceFile(LO, PP);
     Secondary->BeginSourceFile(LO, PP);
   }
 
-  virtual void EndSourceFile() {
+  void EndSourceFile() override {
     Secondary->EndSourceFile();
     Primary->EndSourceFile();
   }
 
-  virtual void finish() {
+  void finish() override {
     Secondary->finish();
     Primary->finish();
   }
 
-  virtual bool IncludeInDiagnosticCounts() const {
+  bool IncludeInDiagnosticCounts() const override {
     return Primary->IncludeInDiagnosticCounts();
   }
 
-  virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                const Diagnostic &Info) {
+  void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
+                        const Diagnostic &Info) override {
     // Default implementation (Warnings/errors count).
     DiagnosticConsumer::HandleDiagnostic(DiagLevel, Info);
 

@@ -79,10 +79,10 @@ class FixitReceiver : public edit::EditsReceiver {
 public:
   FixitReceiver(SmallVectorImpl<FixItHint> &MergedFixits)
     : MergedFixits(MergedFixits) { }
-  virtual void insert(SourceLocation loc, StringRef text) {
+  void insert(SourceLocation loc, StringRef text) override {
     MergedFixits.push_back(FixItHint::CreateInsertion(loc, text));
   }
-  virtual void replace(CharSourceRange range, StringRef text) {
+  void replace(CharSourceRange range, StringRef text) override {
     MergedFixits.push_back(FixItHint::CreateReplacement(range, text));
   }
 };

@@ -123,34 +123,28 @@ public:
   }
 
   bool startNewLineIfNeeded(bool ShouldUpdateCurrentLine = true);
-  
-  virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           SrcMgr::CharacteristicKind FileType,
-                           FileID PrevFID);
-  virtual void InclusionDirective(SourceLocation HashLoc,
-                                  const Token &IncludeTok,
-                                  StringRef FileName,
-                                  bool IsAngled,
-                                  CharSourceRange FilenameRange,
-                                  const FileEntry *File,
-                                  StringRef SearchPath,
-                                  StringRef RelativePath,
-                                  const Module *Imported);
-  virtual void Ident(SourceLocation Loc, const std::string &str);
+
+  void FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                   SrcMgr::CharacteristicKind FileType,
+                   FileID PrevFID) override;
+  void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
+                          StringRef FileName, bool IsAngled,
+                          CharSourceRange FilenameRange, const FileEntry *File,
+                          StringRef SearchPath, StringRef RelativePath,
+                          const Module *Imported) override;
+  void Ident(SourceLocation Loc, const std::string &str) override;
   virtual void PragmaCaptured(SourceLocation Loc, StringRef Str);
-  virtual void PragmaMessage(SourceLocation Loc, StringRef Namespace,
-                             PragmaMessageKind Kind, StringRef Str);
-  virtual void PragmaDebug(SourceLocation Loc, StringRef DebugType);
-  virtual void PragmaDiagnosticPush(SourceLocation Loc,
-                                    StringRef Namespace);
-  virtual void PragmaDiagnosticPop(SourceLocation Loc,
-                                   StringRef Namespace);
-  virtual void PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
-                                diag::Mapping Map, StringRef Str);
-  virtual void PragmaWarning(SourceLocation Loc, StringRef WarningSpec,
-                             ArrayRef<int> Ids);
-  virtual void PragmaWarningPush(SourceLocation Loc, int Level);
-  virtual void PragmaWarningPop(SourceLocation Loc);
+  void PragmaMessage(SourceLocation Loc, StringRef Namespace,
+                     PragmaMessageKind Kind, StringRef Str) override;
+  void PragmaDebug(SourceLocation Loc, StringRef DebugType) override;
+  void PragmaDiagnosticPush(SourceLocation Loc, StringRef Namespace) override;
+  void PragmaDiagnosticPop(SourceLocation Loc, StringRef Namespace) override;
+  void PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
+                        diag::Mapping Map, StringRef Str) override;
+  void PragmaWarning(SourceLocation Loc, StringRef WarningSpec,
+                     ArrayRef<int> Ids) override;
+  void PragmaWarningPush(SourceLocation Loc, int Level) override;
+  void PragmaWarningPop(SourceLocation Loc) override;
 
   bool HandleFirstTokOnLine(Token &Tok);
 
@@ -174,10 +168,12 @@ public:
   void HandleNewlinesInToken(const char *TokStr, unsigned Len);
 
   /// MacroDefined - This hook is called whenever a macro definition is seen.
-  void MacroDefined(const Token &MacroNameTok, const MacroDirective *MD);
+  void MacroDefined(const Token &MacroNameTok,
+                    const MacroDirective *MD) override;
 
   /// MacroUndefined - This hook is called whenever a macro #undef is seen.
-  void MacroUndefined(const Token &MacroNameTok, const MacroDirective *MD);
+  void MacroUndefined(const Token &MacroNameTok,
+                      const MacroDirective *MD) override;
 };
 }  // end anonymous namespace
 
@@ -577,8 +573,8 @@ struct UnknownPragmaHandler : public PragmaHandler {
 
   UnknownPragmaHandler(const char *prefix, PrintPPOutputPPCallbacks *callbacks)
     : Prefix(prefix), Callbacks(callbacks) {}
-  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
-                            Token &PragmaTok) {
+  void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                    Token &PragmaTok) override {
     // Figure out what line we went to and insert the appropriate number of
     // newline characters.
     Callbacks->startNewLineIfNeeded();

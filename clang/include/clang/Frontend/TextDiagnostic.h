@@ -77,38 +77,38 @@ public:
                                      bool ShowColors);
 
 protected:
-  virtual void emitDiagnosticMessage(SourceLocation Loc,PresumedLoc PLoc,
-                                     DiagnosticsEngine::Level Level,
-                                     StringRef Message,
-                                     ArrayRef<CharSourceRange> Ranges,
-                                     const SourceManager *SM,
-                                     DiagOrStoredDiag D);
+  void emitDiagnosticMessage(SourceLocation Loc,PresumedLoc PLoc,
+                             DiagnosticsEngine::Level Level,
+                             StringRef Message,
+                             ArrayRef<CharSourceRange> Ranges,
+                             const SourceManager *SM,
+                             DiagOrStoredDiag D) override;
 
-  virtual void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
-                                 DiagnosticsEngine::Level Level,
-                                 ArrayRef<CharSourceRange> Ranges,
-                                 const SourceManager &SM);
-  
-  virtual void emitCodeContext(SourceLocation Loc,
-                               DiagnosticsEngine::Level Level,
-                               SmallVectorImpl<CharSourceRange>& Ranges,
-                               ArrayRef<FixItHint> Hints,
-                               const SourceManager &SM) {
+  void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
+                         DiagnosticsEngine::Level Level,
+                         ArrayRef<CharSourceRange> Ranges,
+                         const SourceManager &SM) override;
+
+  void emitCodeContext(SourceLocation Loc,
+                       DiagnosticsEngine::Level Level,
+                       SmallVectorImpl<CharSourceRange>& Ranges,
+                       ArrayRef<FixItHint> Hints,
+                       const SourceManager &SM) override {
     emitSnippetAndCaret(Loc, Level, Ranges, Hints, SM);
   }
-  
-  virtual void emitBasicNote(StringRef Message);
-  
-  virtual void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
-                                   const SourceManager &SM);
 
-  virtual void emitImportLocation(SourceLocation Loc, PresumedLoc PLoc,
+  void emitBasicNote(StringRef Message) override;
+
+  void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
+                           const SourceManager &SM) override;
+
+  void emitImportLocation(SourceLocation Loc, PresumedLoc PLoc,
+                          StringRef ModuleName,
+                          const SourceManager &SM) override;
+
+  void emitBuildingModuleLocation(SourceLocation Loc, PresumedLoc PLoc,
                                   StringRef ModuleName,
-                                  const SourceManager &SM);
-
-  virtual void emitBuildingModuleLocation(SourceLocation Loc, PresumedLoc PLoc,
-                                          StringRef ModuleName,
-                                          const SourceManager &SM);
+                                  const SourceManager &SM) override;
 
 private:
   void emitSnippetAndCaret(SourceLocation Loc, DiagnosticsEngine::Level Level,

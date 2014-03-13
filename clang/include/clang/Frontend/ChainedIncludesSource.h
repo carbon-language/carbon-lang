@@ -39,35 +39,35 @@ protected:
 // ExternalASTSource interface.
 //===----------------------------------------------------------------------===//
 
-  virtual Decl *GetExternalDecl(uint32_t ID);
-  virtual Selector GetExternalSelector(uint32_t ID);
-  virtual uint32_t GetNumExternalSelectors();
-  virtual Stmt *GetExternalDeclStmt(uint64_t Offset);
-  virtual CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset);
-  virtual bool FindExternalVisibleDeclsByName(const DeclContext *DC,
-                                              DeclarationName Name);
-  virtual ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
-                                        bool (*isKindWeWant)(Decl::Kind),
-                                        SmallVectorImpl<Decl*> &Result);
-  virtual void CompleteType(TagDecl *Tag);
-  virtual void CompleteType(ObjCInterfaceDecl *Class);
-  virtual void StartedDeserializing();
-  virtual void FinishedDeserializing();
-  virtual void StartTranslationUnit(ASTConsumer *Consumer);
-  virtual void PrintStats();
+  Decl *GetExternalDecl(uint32_t ID) override;
+  Selector GetExternalSelector(uint32_t ID) override;
+  uint32_t GetNumExternalSelectors() override;
+  Stmt *GetExternalDeclStmt(uint64_t Offset) override;
+  CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset) override;
+  bool FindExternalVisibleDeclsByName(const DeclContext *DC,
+                                      DeclarationName Name) override;
+  ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
+                                bool (*isKindWeWant)(Decl::Kind),
+                                SmallVectorImpl<Decl*> &Result) override;
+  void CompleteType(TagDecl *Tag) override;
+  void CompleteType(ObjCInterfaceDecl *Class) override;
+  void StartedDeserializing() override;
+  void FinishedDeserializing() override;
+  void StartTranslationUnit(ASTConsumer *Consumer) override;
+  void PrintStats() override;
 
   /// Return the amount of memory used by memory buffers, breaking down
   /// by heap-backed versus mmap'ed memory.
-  virtual void getMemoryBufferSizes(MemoryBufferSizes &sizes) const;
+  void getMemoryBufferSizes(MemoryBufferSizes &sizes) const override;
 
 //===----------------------------------------------------------------------===//
 // ExternalSemaSource interface.
 //===----------------------------------------------------------------------===//
 
-  virtual void InitializeSema(Sema &S);
-  virtual void ForgetSema();
-  virtual void ReadMethodPool(Selector Sel);
-  virtual bool LookupUnqualified(LookupResult &R, Scope *S);
+  void InitializeSema(Sema &S) override;
+  void ForgetSema() override;
+  void ReadMethodPool(Selector Sel) override;
+  bool LookupUnqualified(LookupResult &R, Scope *S) override;
 };
 
 }

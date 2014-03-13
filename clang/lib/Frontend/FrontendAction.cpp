@@ -43,29 +43,29 @@ public:
                                            ASTDeserializationListener *Previous)
     : Previous(Previous) { }
 
-  virtual void ReaderInitialized(ASTReader *Reader) {
+  void ReaderInitialized(ASTReader *Reader) override {
     if (Previous)
       Previous->ReaderInitialized(Reader);
   }
-  virtual void IdentifierRead(serialization::IdentID ID,
-                              IdentifierInfo *II) {
+  void IdentifierRead(serialization::IdentID ID,
+                      IdentifierInfo *II) override {
     if (Previous)
       Previous->IdentifierRead(ID, II);
   }
-  virtual void TypeRead(serialization::TypeIdx Idx, QualType T) {
+  void TypeRead(serialization::TypeIdx Idx, QualType T) override {
     if (Previous)
       Previous->TypeRead(Idx, T);
   }
-  virtual void DeclRead(serialization::DeclID ID, const Decl *D) {
+  void DeclRead(serialization::DeclID ID, const Decl *D) override {
     if (Previous)
       Previous->DeclRead(ID, D);
   }
-  virtual void SelectorRead(serialization::SelectorID ID, Selector Sel) {
+  void SelectorRead(serialization::SelectorID ID, Selector Sel) override {
     if (Previous)
       Previous->SelectorRead(ID, Sel);
   }
-  virtual void MacroDefinitionRead(serialization::PreprocessedEntityID PPID, 
-                                   MacroDefinition *MD) {
+  void MacroDefinitionRead(serialization::PreprocessedEntityID PPID,
+                           MacroDefinition *MD) override {
     if (Previous)
       Previous->MacroDefinitionRead(PPID, MD);
   }
@@ -77,7 +77,7 @@ public:
   explicit DeserializedDeclsDumper(ASTDeserializationListener *Previous)
     : DelegatingDeserializationListener(Previous) { }
 
-  virtual void DeclRead(serialization::DeclID ID, const Decl *D) {
+  void DeclRead(serialization::DeclID ID, const Decl *D) override {
     llvm::outs() << "PCH DECL: " << D->getDeclKindName();
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
       llvm::outs() << " - " << *ND;
@@ -100,7 +100,7 @@ public:
     : DelegatingDeserializationListener(Previous),
       Ctx(Ctx), NamesToCheck(NamesToCheck) { }
 
-  virtual void DeclRead(serialization::DeclID ID, const Decl *D) {
+  void DeclRead(serialization::DeclID ID, const Decl *D) override {
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
       if (NamesToCheck.find(ND->getNameAsString()) != NamesToCheck.end()) {
         unsigned DiagID

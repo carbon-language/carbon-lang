@@ -47,9 +47,10 @@ public:
   /// used.
   void setPrefix(std::string Value) { Prefix = Value; }
 
-  void BeginSourceFile(const LangOptions &LO, const Preprocessor *PP);
-  void EndSourceFile();
-  void HandleDiagnostic(DiagnosticsEngine::Level Level, const Diagnostic &Info);
+  void BeginSourceFile(const LangOptions &LO, const Preprocessor *PP) override;
+  void EndSourceFile() override;
+  void HandleDiagnostic(DiagnosticsEngine::Level Level,
+                        const Diagnostic &Info) override;
 };
 
 } // end namespace clang

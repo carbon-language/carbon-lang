@@ -516,7 +516,7 @@ public:
   ~StatListener() {}
 
   LookupResult getStat(const char *Path, FileData &Data, bool isFile,
-                       vfs::File **F, vfs::FileSystem &FS) {
+                       vfs::File **F, vfs::FileSystem &FS) override {
     LookupResult Result = statChained(Path, Data, isFile, F, FS);
 
     if (Result == CacheMissing) // Failed 'stat'.

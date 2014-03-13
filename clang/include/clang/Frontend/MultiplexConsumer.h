@@ -33,23 +33,23 @@ public:
   ~MultiplexConsumer();
 
   // ASTConsumer
-  virtual void Initialize(ASTContext &Context);
-  virtual void HandleCXXStaticMemberVarInstantiation(VarDecl *VD);
-  virtual bool HandleTopLevelDecl(DeclGroupRef D);
-  virtual void HandleInterestingDecl(DeclGroupRef D);
-  virtual void HandleTranslationUnit(ASTContext &Ctx);
-  virtual void HandleTagDeclDefinition(TagDecl *D);
-  virtual void HandleCXXImplicitFunctionInstantiation(FunctionDecl *D);
-  virtual void HandleTopLevelDeclInObjCContainer(DeclGroupRef D);
-  virtual void CompleteTentativeDefinition(VarDecl *D);
-  virtual void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired);
-  virtual ASTMutationListener *GetASTMutationListener();
-  virtual ASTDeserializationListener *GetASTDeserializationListener();
-  virtual void PrintStats();
+  void Initialize(ASTContext &Context) override;
+  void HandleCXXStaticMemberVarInstantiation(VarDecl *VD) override;
+  bool HandleTopLevelDecl(DeclGroupRef D) override;
+  void HandleInterestingDecl(DeclGroupRef D) override;
+  void HandleTranslationUnit(ASTContext &Ctx) override;
+  void HandleTagDeclDefinition(TagDecl *D) override;
+  void HandleCXXImplicitFunctionInstantiation(FunctionDecl *D) override;
+  void HandleTopLevelDeclInObjCContainer(DeclGroupRef D) override;
+  void CompleteTentativeDefinition(VarDecl *D) override;
+  void HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) override;
+  ASTMutationListener *GetASTMutationListener() override;
+  ASTDeserializationListener *GetASTDeserializationListener() override;
+  void PrintStats() override;
 
   // SemaConsumer
-  virtual void InitializeSema(Sema &S);
-  virtual void ForgetSema();
+  void InitializeSema(Sema &S) override;
+  void ForgetSema() override;
 
 private:
   std::vector<ASTConsumer*> Consumers;  // Owns these.

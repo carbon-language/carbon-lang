@@ -166,12 +166,12 @@ public:
                     StringRef Text, unsigned Min, unsigned Max)
     : Directive(DirectiveLoc, DiagnosticLoc, Text, Min, Max) { }
 
-  virtual bool isValid(std::string &Error) {
+  bool isValid(std::string &Error) override {
     // all strings are considered valid; even empty ones
     return true;
   }
 
-  virtual bool match(StringRef S) {
+  bool match(StringRef S) override {
     return S.find(Text) != StringRef::npos;
   }
 };
@@ -184,13 +184,13 @@ public:
                  StringRef Text, unsigned Min, unsigned Max, StringRef RegexStr)
     : Directive(DirectiveLoc, DiagnosticLoc, Text, Min, Max), Regex(RegexStr) { }
 
-  virtual bool isValid(std::string &Error) {
+  bool isValid(std::string &Error) override {
     if (Regex.isValid(Error))
       return true;
     return false;
   }
 
-  virtual bool match(StringRef S) {
+  bool match(StringRef S) override {
     return Regex.match(S);
   }
 

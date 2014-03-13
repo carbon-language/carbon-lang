@@ -53,20 +53,16 @@ public:
       AddMissingHeaderDeps(Opts.AddMissingHeaderDeps),
       SeenMissingHeader(false) {}
 
-  virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           SrcMgr::CharacteristicKind FileType,
-                           FileID PrevFID);
-  virtual void InclusionDirective(SourceLocation HashLoc,
-                                  const Token &IncludeTok,
-                                  StringRef FileName,
-                                  bool IsAngled,
-                                  CharSourceRange FilenameRange,
-                                  const FileEntry *File,
-                                  StringRef SearchPath,
-                                  StringRef RelativePath,
-                                  const Module *Imported);
+  void FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                   SrcMgr::CharacteristicKind FileType,
+                   FileID PrevFID) override;
+  void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
+                          StringRef FileName, bool IsAngled,
+                          CharSourceRange FilenameRange, const FileEntry *File,
+                          StringRef SearchPath, StringRef RelativePath,
+                          const Module *Imported) override;
 
-  virtual void EndOfMainFile() {
+  void EndOfMainFile() override {
     OutputDependencyFile();
   }
 
@@ -79,11 +75,11 @@ class DFGASTReaderListener : public ASTReaderListener {
 public:
   DFGASTReaderListener(DFGImpl &Parent)
   : Parent(Parent) { }
-  virtual bool needsInputFileVisitation() { return true; }
-  virtual bool needsSystemInputFileVisitation() {
+  bool needsInputFileVisitation() override { return true; }
+  bool needsSystemInputFileVisitation() override {
     return Parent.includeSystemHeaders();
   }
-  virtual bool visitInputFile(StringRef Filename, bool isSystem);
+  bool visitInputFile(StringRef Filename, bool isSystem) override;
 };
 }
 

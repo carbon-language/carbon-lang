@@ -76,8 +76,8 @@ public:
   Command(const Action &_Source, const Tool &_Creator, const char *_Executable,
           const llvm::opt::ArgStringList &_Arguments);
 
-  virtual void Print(llvm::raw_ostream &OS, const char *Terminator,
-                     bool Quote, bool CrashReport = false) const;
+  void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
+             bool CrashReport = false) const override;
 
   virtual int Execute(const StringRef **Redirects, std::string *ErrMsg,
                       bool *ExecutionFailed) const;
@@ -106,11 +106,11 @@ public:
                   const char *Executable_, const ArgStringList &Arguments_,
                   Command *Fallback_);
 
-  virtual void Print(llvm::raw_ostream &OS, const char *Terminator,
-                     bool Quote, bool CrashReport = false) const;
+  void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
+             bool CrashReport = false) const override;
 
-  virtual int Execute(const StringRef **Redirects, std::string *ErrMsg,
-                      bool *ExecutionFailed) const;
+  int Execute(const StringRef **Redirects, std::string *ErrMsg,
+              bool *ExecutionFailed) const override;
 
   static bool classof(const Job *J) {
     return J->getKind() == FallbackCommandClass;
@@ -135,8 +135,8 @@ public:
   JobList();
   virtual ~JobList();
 
-  virtual void Print(llvm::raw_ostream &OS, const char *Terminator,
-                     bool Quote, bool CrashReport = false) const;
+  void Print(llvm::raw_ostream &OS, const char *Terminator,
+             bool Quote, bool CrashReport = false) const override;
 
   /// Add a job to the list (taking ownership).
   void addJob(Job *J) { Jobs.push_back(J); }

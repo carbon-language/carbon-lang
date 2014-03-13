@@ -682,16 +682,13 @@ public:
                 const FrontendOptions &Opts);
 
   /// }
-  
-  virtual ModuleLoadResult loadModule(SourceLocation ImportLoc,
-                                      ModuleIdPath Path,
-                                      Module::NameVisibilityKind Visibility,
-                                      bool IsInclusionDirective);
 
-  virtual void makeModuleVisible(Module *Mod,
-                                 Module::NameVisibilityKind Visibility,
-                                 SourceLocation ImportLoc,
-                                 bool Complain);
+  ModuleLoadResult loadModule(SourceLocation ImportLoc, ModuleIdPath Path,
+                              Module::NameVisibilityKind Visibility,
+                              bool IsInclusionDirective) override;
+
+  void makeModuleVisible(Module *Mod, Module::NameVisibilityKind Visibility,
+                         SourceLocation ImportLoc, bool Complain) override;
 
   bool hadModuleLoaderFatalFailure() const {
     return ModuleLoader::HadFatalFailure;

@@ -858,19 +858,16 @@ public:
   ///
   /// \returns True if an error occurred, false otherwise.
   bool serialize(raw_ostream &OS);
-  
-  virtual ModuleLoadResult loadModule(SourceLocation ImportLoc,
-                                      ModuleIdPath Path,
-                                      Module::NameVisibilityKind Visibility,
-                                      bool IsInclusionDirective) {
+
+  ModuleLoadResult loadModule(SourceLocation ImportLoc, ModuleIdPath Path,
+                              Module::NameVisibilityKind Visibility,
+                              bool IsInclusionDirective) override {
     // ASTUnit doesn't know how to load modules (not that this matters).
     return ModuleLoadResult();
   }
 
-  virtual void makeModuleVisible(Module *Mod,
-                                 Module::NameVisibilityKind Visibility,
-                                 SourceLocation ImportLoc,
-                                 bool Complain) { }
+  void makeModuleVisible(Module *Mod, Module::NameVisibilityKind Visibility,
+                         SourceLocation ImportLoc, bool Complain) override {}
 
 };
 
