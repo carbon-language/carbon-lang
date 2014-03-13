@@ -2428,6 +2428,41 @@ struct StructByVal {
   int a, b, c, d, e, f;
 };
 
+static void vaargsfn_structbyval(int guard, ...) {
+  va_list vl;
+  va_start(vl, guard);
+  {
+    StructByVal s = va_arg(vl, StructByVal);
+    EXPECT_NOT_POISONED(s.a);
+    EXPECT_POISONED(s.b);
+    EXPECT_NOT_POISONED(s.c);
+    EXPECT_POISONED(s.d);
+    EXPECT_NOT_POISONED(s.e);
+    EXPECT_POISONED(s.f);
+  }
+  {
+    StructByVal s = va_arg(vl, StructByVal);
+    EXPECT_NOT_POISONED(s.a);
+    EXPECT_POISONED(s.b);
+    EXPECT_NOT_POISONED(s.c);
+    EXPECT_POISONED(s.d);
+    EXPECT_NOT_POISONED(s.e);
+    EXPECT_POISONED(s.f);
+  }
+  va_end(vl);
+}
+
+TEST(MemorySanitizer, VAArgStructByVal) {
+  StructByVal s;
+  s.a = 1;
+  s.b = *GetPoisoned<int>();
+  s.c = 2;
+  s.d = *GetPoisoned<int>();
+  s.e = 3;
+  s.f = *GetPoisoned<int>();
+  vaargsfn_structbyval(0, s, s);
+}
+
 NOINLINE void StructByValTestFunc(struct StructByVal s) {
   EXPECT_NOT_POISONED(s.a);
   EXPECT_POISONED(s.b);
