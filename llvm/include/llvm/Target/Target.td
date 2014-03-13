@@ -697,6 +697,15 @@ class InstrInfo {
   // generator has better support for complex operands and targets have
   // migrated away from using positionally encoded operands.
   bit decodePositionallyEncodedOperands = 0;
+
+  // When set, this indicates that there will be no overlap between those
+  // operands that are matched by ordering (positional operands) and those
+  // matched by name.
+  //
+  // This option is temporary; it will go away once the TableGen decoder
+  // generator has better support for complex operands and targets have
+  // migrated away from using positionally encoded operands.
+  bit noNamedPositionallyEncodedOperands = 0;
 }
 
 // Standard Pseudo Instructions.

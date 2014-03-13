@@ -288,6 +288,8 @@ def PPCInstrInfo : InstrInfo {
 
   // FIXME: Unset this when no longer needed!
   let decodePositionallyEncodedOperands = 1;
+
+  let noNamedPositionallyEncodedOperands = 1;
 }
 
 def PPCAsmParser : AsmParser {

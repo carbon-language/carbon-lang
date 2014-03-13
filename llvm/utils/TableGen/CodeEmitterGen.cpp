@@ -48,6 +48,7 @@ private:
   void AddCodeToMergeInOperand(Record *R, BitsInit *BI,
                                const std::string &VarName,
                                unsigned &NumberedOp,
+                               std::set<unsigned> &NamedOpIndices,
                                std::string &Case, CodeGenTarget &Target);
 
 };
@@ -71,6 +72,7 @@ int CodeEmitterGen::getVariableBit(const std::string &VarName,
 void CodeEmitterGen::
 AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
                         unsigned &NumberedOp,
+                        std::set<unsigned> &NamedOpIndices,
                         std::string &Case, CodeGenTarget &Target) {
   CodeGenInstruction &CGI = Target.getInstruction(R);
 
@@ -103,7 +105,9 @@ AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
     /// If this operand is not supposed to be emitted by the
     /// generated emitter, skip it.
     while (NumberedOp < NumberOps &&
-           CGI.Operands.isFlatOperandNotEmitted(NumberedOp))
+           (CGI.Operands.isFlatOperandNotEmitted(NumberedOp) ||
+              (NamedOpIndices.size() && NamedOpIndices.count(
+                CGI.Operands.getSubOperandNumber(NumberedOp).first))))
       ++NumberedOp;
 
     OpIdx = NumberedOp++;
@@ -180,6 +184,21 @@ std::string CodeEmitterGen::getInstructionCase(Record *R,
   const std::vector<RecordVal> &Vals = R->getValues();
   unsigned NumberedOp = 0;
 
+  std::set<unsigned> NamedOpIndices;
+  // Collect the set of operand indices that might correspond to named
+  // operand, and skip these when assigning operands based on position.
+  if (Target.getInstructionSet()->
+       getValueAsBit("noNamedPositionallyEncodedOperands")) {
+    CodeGenInstruction &CGI = Target.getInstruction(R);
+    for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
+      unsigned OpIdx;
+      if (!CGI.Operands.hasOperandNamed(Vals[i].getName(), OpIdx))
+        continue;
+
+      NamedOpIndices.insert(OpIdx);
+    }
+  }
+
   // Loop over all of the fields in the instruction, determining which are the
   // operands to the instruction.
   for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
@@ -188,7 +207,8 @@ std::string CodeEmitterGen::getInstructionCase(Record *R,
     if (Vals[i].getPrefix() || Vals[i].getValue()->isComplete())
       continue;
     
-    AddCodeToMergeInOperand(R, BI, Vals[i].getName(), NumberedOp, Case, Target);
+    AddCodeToMergeInOperand(R, BI, Vals[i].getName(), NumberedOp,
+                            NamedOpIndices, Case, Target);
   }
   
   std::string PostEmitter = R->getValueAsString("PostEncoderMethod");
