@@ -335,6 +335,13 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
         NewLoad->setAlignment(LI.getAlignment());
         NewLoad->setAtomic(LI.getOrdering(), LI.getSynchScope());
         // Now cast the result of the load.
+        PointerType *OldTy = dyn_cast<PointerType>(NewLoad->getType());
+        PointerType *NewTy = dyn_cast<PointerType>(LI.getType());
+        if (OldTy && NewTy &&
+            OldTy->getAddressSpace() != NewTy->getAddressSpace()) {
+          return new AddrSpaceCastInst(NewLoad, LI.getType());
+        }
+
         return new BitCastInst(NewLoad, LI.getType());
       }
     }
