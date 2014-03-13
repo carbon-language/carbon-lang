@@ -3495,14 +3495,11 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
   } else if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container)){
     if (AllowCategories) {
       // Look through categories.
-      for (ObjCInterfaceDecl::known_categories_iterator
-             Cat = IFace->known_categories_begin(),
-             CatEnd = IFace->known_categories_end();
-           Cat != CatEnd; ++Cat)
-        AddObjCProperties(*Cat, AllowCategories, AllowNullaryMethods,
-                          CurContext, AddedProperties, Results);
+      for (auto *Cat : IFace->known_categories())
+        AddObjCProperties(Cat, AllowCategories, AllowNullaryMethods, CurContext,
+                          AddedProperties, Results);
     }
-    
+
     // Look through protocols.
     for (auto *I : IFace->all_referenced_protocols())
       AddObjCProperties(I, AllowCategories, AllowNullaryMethods, CurContext,
@@ -4855,12 +4852,7 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                    CurContext, Selectors, AllowSameLength, Results, false);
   
   // Add methods in categories.
-  for (ObjCInterfaceDecl::known_categories_iterator
-         Cat = IFace->known_categories_begin(),
-         CatEnd = IFace->known_categories_end();
-       Cat != CatEnd; ++Cat) {
-    ObjCCategoryDecl *CatDecl = *Cat;
-    
+  for (auto *CatDecl : IFace->known_categories()) {
     AddObjCMethods(CatDecl, WantInstanceMethods, WantKind, SelIdents,
                    CurContext, Selectors, AllowSameLength,
                    Results, InOriginalClass);
@@ -5132,10 +5124,7 @@ static ObjCMethodDecl *AddSuperSendCompletion(
 
     // Check in categories or class extensions.
     if (!SuperMethod) {
-      for (ObjCInterfaceDecl::known_categories_iterator
-             Cat = Class->known_categories_begin(),
-             CatEnd = Class->known_categories_end();
-           Cat != CatEnd; ++Cat) {
+      for (const auto *Cat : Class->known_categories()) {
         if ((SuperMethod = Cat->getMethod(CurMethod->getSelector(),
                                                CurMethod->isInstanceMethod())))
           break;

@@ -3548,12 +3548,8 @@ bool ASTNodeImporter::ImportDefinition(ObjCInterfaceDecl *From,
   
   // Import categories. When the categories themselves are imported, they'll
   // hook themselves into this interface.
-  for (ObjCInterfaceDecl::known_categories_iterator
-         Cat = From->known_categories_begin(),
-         CatEnd = From->known_categories_end();
-       Cat != CatEnd; ++Cat) {
-    Importer.Import(*Cat);
-  }
+  for (auto *Cat : From->known_categories())
+    Importer.Import(Cat);
   
   // If we have an @implementation, import it as well.
   if (From->getImplementation()) {

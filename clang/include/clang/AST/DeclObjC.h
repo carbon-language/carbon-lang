@@ -1126,6 +1126,13 @@ public:
   /// \brief Iterator that walks over all of the known categories and
   /// extensions, including those that are hidden.
   typedef filtered_category_iterator<isKnownCategory> known_categories_iterator;
+  typedef llvm::iterator_range<known_categories_iterator>
+    known_categories_range;
+
+  known_categories_range known_categories() const {
+    return known_categories_range(known_categories_begin(),
+                                  known_categories_end());
+  }
 
   /// \brief Retrieve an iterator to the beginning of the known-categories
   /// list.

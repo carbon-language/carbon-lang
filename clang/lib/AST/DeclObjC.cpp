@@ -980,13 +980,8 @@ static void CollectOverriddenMethodsRecurse(const ObjCContainerDecl *Container,
     for (const auto *P : Interface->protocols())
       CollectOverriddenMethodsRecurse(P, Method, Methods, MovedToSuper);
 
-    for (ObjCInterfaceDecl::known_categories_iterator
-           Cat = Interface->known_categories_begin(),
-           CatEnd = Interface->known_categories_end();
-         Cat != CatEnd; ++Cat) {
-      CollectOverriddenMethodsRecurse(*Cat, Method, Methods,
-                                      MovedToSuper);
-    }
+    for (const auto *Cat : Interface->known_categories())
+      CollectOverriddenMethodsRecurse(Cat, Method, Methods, MovedToSuper);
 
     if (const ObjCInterfaceDecl *Super = Interface->getSuperClass())
       return CollectOverriddenMethodsRecurse(Super, Method, Methods,

@@ -2909,12 +2909,8 @@ private:
       return;
     
     //   - categories,
-    for (ObjCInterfaceDecl::known_categories_iterator
-           cat = iface->known_categories_begin(),
-           catEnd = iface->known_categories_end();
-         cat != catEnd; ++cat) {
-      search(*cat);
-    }
+    for (auto *Cat : iface->known_categories())
+      search(Cat);
 
     //   - the super class, and
     if (ObjCInterfaceDecl *super = iface->getSuperClass())
