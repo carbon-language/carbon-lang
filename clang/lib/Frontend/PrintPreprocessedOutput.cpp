@@ -133,7 +133,6 @@ public:
                           StringRef SearchPath, StringRef RelativePath,
                           const Module *Imported) override;
   void Ident(SourceLocation Loc, const std::string &str) override;
-  virtual void PragmaCaptured(SourceLocation Loc, StringRef Str);
   void PragmaMessage(SourceLocation Loc, StringRef Namespace,
                      PragmaMessageKind Kind, StringRef Str) override;
   void PragmaDebug(SourceLocation Loc, StringRef DebugType) override;
@@ -344,15 +343,6 @@ void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
   OS.write("#ident ", strlen("#ident "));
   OS.write(&S[0], S.size());
   EmittedTokensOnThisLine = true;
-}
-
-void PrintPPOutputPPCallbacks::PragmaCaptured(SourceLocation Loc,
-                                              StringRef Str) {
-  startNewLineIfNeeded();
-  MoveToLine(Loc);
-  OS << "#pragma captured";
-
-  setEmittedDirectiveOnThisLine();
 }
 
 /// MacroDefined - This hook is called whenever a macro definition is seen.
