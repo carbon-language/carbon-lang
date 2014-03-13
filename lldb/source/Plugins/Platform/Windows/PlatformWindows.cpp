@@ -12,7 +12,7 @@
 // C Includes
 #include <stdio.h>
 #if defined (_WIN32)
-#include "lldb/Host/windows/Windows.h"
+#include "lldb/Host/windows/windows.h"
 #include <winsock2.h>
 #endif
 
