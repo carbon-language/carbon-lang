@@ -29,8 +29,8 @@ using namespace polly;
 //                 |
 //                 v
 //              GuardBB
-//              /      \
-//     __  PreHeaderBB  \
+//              /      |
+//     __  PreHeaderBB  |
 //    /  \    /         |
 // latch  HeaderBB      |
 //    \  /    \         /
