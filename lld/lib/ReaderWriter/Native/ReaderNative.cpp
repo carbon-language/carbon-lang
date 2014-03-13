@@ -17,7 +17,6 @@
 #include "lld/Core/File.h"
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -369,7 +368,7 @@ public:
   }
 
   virtual ~File() {
-    // _buffer is automatically deleted because of OwningPtr<>
+    // _buffer is automatically deleted because of std::unique_ptr<>
 
     // All other ivar pointers are pointers into the MemoryBuffer, except
     // the _definedAtoms array which was allocated to contain an array

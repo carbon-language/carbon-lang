@@ -28,7 +28,6 @@ namespace llvm {
   class Twine;
   class MemoryBuffer;
   template<typename T> class ArrayRef;
-  template<class T> class OwningPtr;
   template<unsigned InternalLen> class SmallString;
   template<typename T, unsigned N> class SmallVector;
   template<typename T> class SmallVectorImpl;
@@ -63,7 +62,6 @@ namespace lld {
   using llvm::Twine;
   using llvm::MemoryBuffer;
   using llvm::ArrayRef;
-  using llvm::OwningPtr;
   using llvm::SmallString;
   using llvm::SmallVector;
   using llvm::SmallVectorImpl;

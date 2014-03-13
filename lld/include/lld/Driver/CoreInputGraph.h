@@ -20,9 +20,9 @@
 #include "lld/Core/InputGraph.h"
 #include "lld/ReaderWriter/CoreLinkingContext.h"
 #include "lld/ReaderWriter/Reader.h"
-#include "llvm/ADT/OwningPtr.h"
 
 #include <map>
+#include <memory>
 
 namespace lld {
 
@@ -45,11 +45,10 @@ public:
       return make_error_code(llvm::errc::no_such_file_or_directory);
 
     // Create a memory buffer
-    OwningPtr<MemoryBuffer> opmb;
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(*filePath, opmb))
+    std::unique_ptr<MemoryBuffer> mb;
+    if (error_code ec = MemoryBuffer::getFileOrSTDIN(*filePath, mb))
       return ec;
 
-    std::unique_ptr<MemoryBuffer> mb(opmb.take());
     _buffer = std::move(mb);
     return ctx.registry().parseFile(_buffer, _files);
   }

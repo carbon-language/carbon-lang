@@ -20,7 +20,6 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
@@ -34,6 +33,7 @@
 #include <algorithm>
 #include <cctype>
 #include <map>
+#include <memory>
 #include <sstream>
 
 namespace lld {
@@ -249,7 +249,7 @@ static bool parseSection(StringRef option, std::string &section,
 
 static bool readFile(PECOFFLinkingContext &ctx, StringRef path,
                      ArrayRef<uint8_t> &result) {
-  OwningPtr<MemoryBuffer> buf;
+  std::unique_ptr<MemoryBuffer> buf;
   if (MemoryBuffer::getFile(path, buf))
     return false;
   result = ctx.allocate(ArrayRef<uint8_t>(
@@ -351,10 +351,10 @@ static bool parseExport(StringRef option,
 // Read module-definition file.
 static llvm::Optional<moduledef::Directive *>
 parseDef(StringRef option, llvm::BumpPtrAllocator &alloc) {
-  OwningPtr<MemoryBuffer> buf;
+  std::unique_ptr<MemoryBuffer> buf;
   if (MemoryBuffer::getFile(option, buf))
     return llvm::None;
-  moduledef::Lexer lexer(std::unique_ptr<MemoryBuffer>(buf.take()));
+  moduledef::Lexer lexer(std::move(buf));
   moduledef::Parser parser(lexer, alloc);
   return parser.parse();
 }

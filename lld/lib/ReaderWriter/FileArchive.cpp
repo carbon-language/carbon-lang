@@ -11,7 +11,6 @@
 #include "lld/Core/LLVM.h"
 
 #include "llvm/ADT/Hashing.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
@@ -19,6 +18,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
 
+#include <memory>
 #include <set>
 #include <unordered_map>
 
@@ -51,10 +51,10 @@ public:
       return nullptr;
 
     if (dataSymbolOnly) {
-      OwningPtr<MemoryBuffer> buff;
+      std::unique_ptr<MemoryBuffer> buff;
       if (ci->getMemoryBuffer(buff, true))
         return nullptr;
-      if (isDataSymbol(buff.take(), name))
+      if (isDataSymbol(std::move(buff), name))
         return nullptr;
     }
 
@@ -101,20 +101,19 @@ protected:
   error_code
   instantiateMember(Archive::child_iterator member,
                     std::vector<std::unique_ptr<File>> &result) const {
-    OwningPtr<MemoryBuffer> buff;
-    if (error_code ec = member->getMemoryBuffer(buff, true))
+    std::unique_ptr<MemoryBuffer> mb;
+    if (error_code ec = member->getMemoryBuffer(mb, true))
       return ec;
     if (_logLoading)
-      llvm::outs() << buff->getBufferIdentifier() << "\n";
-    std::unique_ptr<MemoryBuffer> mb(buff.take());
+      llvm::outs() << mb->getBufferIdentifier() << "\n";
     _registry.parseFile(mb, result);
     const char *memberStart = member->getBuffer().data();
     _membersInstantiated.insert(memberStart);
     return error_code::success();
   }
 
-  error_code isDataSymbol(MemoryBuffer *mb, StringRef symbol) const {
-    auto objOrErr(ObjectFile::createObjectFile(mb));
+  error_code isDataSymbol(std::unique_ptr<MemoryBuffer> mb, StringRef symbol) const {
+    auto objOrErr(ObjectFile::createObjectFile(mb.release()));
     if (auto ec = objOrErr.getError())
       return ec;
     std::unique_ptr<ObjectFile> obj(objOrErr.get());

@@ -272,14 +272,14 @@ FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, error_code &ec)
   auto binaryOrErr = llvm::object::createBinary(mb.release());
   if ((ec = binaryOrErr.getError()))
     return;
-  OwningPtr<llvm::object::Binary> bin(binaryOrErr.get());
+  std::unique_ptr<llvm::object::Binary> bin(binaryOrErr.get());
 
   _obj.reset(dyn_cast<const llvm::object::COFFObjectFile>(bin.get()));
   if (!_obj) {
     ec = make_error_code(llvm::object::object_error::invalid_file_type);
     return;
   }
-  bin.take();
+  bin.release();
 
   // Read .drectve section if exists.
   ArrayRef<uint8_t> directives;
@@ -912,10 +912,9 @@ public:
     llvm::FileRemover coffFileRemover(*coffPath);
 
     // Read and parse the COFF
-    OwningPtr<MemoryBuffer> opmb;
-    if (error_code ec = MemoryBuffer::getFile(*coffPath, opmb))
+    std::unique_ptr<MemoryBuffer> newmb;
+    if (error_code ec = MemoryBuffer::getFile(*coffPath, newmb))
       return ec;
-    std::unique_ptr<MemoryBuffer> newmb(opmb.take());
     error_code ec;
     std::unique_ptr<FileCOFF> file(new FileCOFF(std::move(newmb), ec));
     if (ec)
@@ -938,7 +937,7 @@ private:
 
     // Write the memory buffer contents to .res file, so that we can run
     // cvtres.exe on it.
-    OwningPtr<llvm::FileOutputBuffer> buffer;
+    std::unique_ptr<llvm::FileOutputBuffer> buffer;
     if (error_code ec = llvm::FileOutputBuffer::create(
             tempFilePath.str(), mb->getBufferSize(), buffer))
       return ec;

@@ -26,12 +26,12 @@ int main(int argc, const char **argv) {
   llvm::PrettyStackTraceProgram X(argc, argv);
 
   {
-    llvm::OwningPtr<MemoryBuffer> mb;
+    std::unique_ptr<MemoryBuffer> mb;
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(argv[1], mb)) {
       llvm::errs() << ec.message() << "\n";
       return 1;
     }
-    Lexer l(std::unique_ptr<MemoryBuffer>(mb.take()));
+    Lexer l(std::move(mb));
     Token tok;
     while (true) {
       l.lex(tok);
@@ -41,12 +41,12 @@ int main(int argc, const char **argv) {
     }
   }
   {
-    llvm::OwningPtr<MemoryBuffer> mb;
+    std::unique_ptr<MemoryBuffer> mb;
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(argv[1], mb)) {
       llvm::errs() << ec.message() << "\n";
       return 1;
     }
-    Lexer l(std::unique_ptr<MemoryBuffer>(mb.take()));
+    Lexer l(std::move(mb));
     Parser p(l);
     LinkerScript *ls = p.parse();
     if (ls)

@@ -14,9 +14,10 @@
 #include "lld/ReaderWriter/Simple.h"
 #include "lld/ReaderWriter/Writer.h"
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
+
+#include <memory>
 
 using namespace lld;
 
@@ -36,11 +37,10 @@ void RoundTripNativePass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   // The file that is written would be kept around if there is a problem
   // writing to the file or when reading atoms back from the file.
   nativeWriter->writeFile(*mergedFile, tmpNativeFile.str());
-  OwningPtr<MemoryBuffer> buff;
-  if (MemoryBuffer::getFile(tmpNativeFile.str(), buff))
+  std::unique_ptr<MemoryBuffer> mb;
+  if (MemoryBuffer::getFile(tmpNativeFile.str(), mb))
     return;
 
-  std::unique_ptr<MemoryBuffer> mb(buff.take());
   error_code ec = _context.registry().parseFile(mb, _nativeFile);
   if (ec) {
     // Note: we need a way for Passes to report errors.

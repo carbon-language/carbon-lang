@@ -933,7 +933,7 @@ error_code MachOFileLayout::writeBinary(StringRef path) {
   if (_ec)
     return _ec;
   // Create FileOutputBuffer with calculated size.
-  OwningPtr<llvm::FileOutputBuffer> fob;
+  std::unique_ptr<llvm::FileOutputBuffer> fob;
   unsigned flags = 0;
   if (_file.fileType != llvm::MachO::MH_OBJECT)
     flags = llvm::FileOutputBuffer::F_executable;

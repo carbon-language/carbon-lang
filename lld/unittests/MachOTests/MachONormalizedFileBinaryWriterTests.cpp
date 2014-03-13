@@ -10,18 +10,17 @@
 #include "gtest/gtest.h"
 
 #include "../../lib/ReaderWriter/MachO/MachONormalizedFile.h"
-#include <llvm/ADT/OwningPtr.h>
 #include <llvm/ADT/Twine.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/MachO.h>
 #include <llvm/Support/system_error.h>
 
 #include <cassert>
+#include <memory>
 #include <vector>
 
 using llvm::StringRef;
 using llvm::MemoryBuffer;
-using llvm::OwningPtr;
 using llvm::SmallString;
 using llvm::Twine;
 using llvm::ErrorOr;
@@ -34,10 +33,8 @@ using namespace lld::mach_o::normalized;
 // Normalized file to nf parameter.
 static void fromBinary(StringRef path, std::unique_ptr<MemoryBuffer> &mb,
                        std::unique_ptr<NormalizedFile> &nf, StringRef archStr) {
-  OwningPtr<MemoryBuffer> opmb;
-  error_code ec = MemoryBuffer::getFile(path, opmb);
+  error_code ec = MemoryBuffer::getFile(path, mb);
   EXPECT_FALSE(ec);
-  mb.reset(opmb.take());
 
   ErrorOr<std::unique_ptr<NormalizedFile>> r =
       lld::mach_o::normalized::readBinary(

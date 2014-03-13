@@ -10,7 +10,8 @@
 #include "lld/Core/InputGraph.h"
 
 #include "lld/Core/Resolver.h"
-#include "llvm/ADT/OwningPtr.h"
+
+#include <memory>
 
 using namespace lld;
 
@@ -137,12 +138,11 @@ FileNode::FileNode(StringRef path, int64_t ordinal)
 /// \brief Read the file into _buffer.
 error_code FileNode::getBuffer(StringRef filePath) {
   // Create a memory buffer
-  OwningPtr<MemoryBuffer> opmb;
+  std::unique_ptr<MemoryBuffer> mb;
 
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(filePath, opmb))
+  if (error_code ec = MemoryBuffer::getFileOrSTDIN(filePath, mb))
     return ec;
 
-  std::unique_ptr<MemoryBuffer> mb(opmb.take());
   _buffer = std::move(mb);
 
   return error_code::success();

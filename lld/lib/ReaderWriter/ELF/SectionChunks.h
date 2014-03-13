@@ -21,7 +21,6 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Allocator.h"
@@ -30,6 +29,8 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileOutputBuffer.h"
+
+#include <memory>
 
 namespace lld {
 namespace elf {

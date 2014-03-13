@@ -1016,7 +1016,7 @@ error_code PECOFFWriter::writeFile(const File &linkedFile, StringRef path) {
   }
 
   uint64_t totalSize = _chunks.back()->fileOffset() + _chunks.back()->size();
-  OwningPtr<llvm::FileOutputBuffer> buffer;
+  std::unique_ptr<llvm::FileOutputBuffer> buffer;
   error_code ec = llvm::FileOutputBuffer::create(
       path, totalSize, buffer, llvm::FileOutputBuffer::F_executable);
   if (ec)
