@@ -767,6 +767,9 @@ error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
   case llvm::COFF::IMAGE_FILE_MACHINE_AMD64:
     result = Reference::KindArch::x86_64;
     return error_code::success();
+  case llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN:
+    result = Reference::KindArch::all;
+    return error_code::success();
   }
   llvm::errs() << "Unsupported machine type: " << header->Machine << "\n";
   return llvm::object::object_error::parse_failed;

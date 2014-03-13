@@ -1,0 +1,3 @@
+# RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t1.obj
+# RUN: yaml2obj %p/Inputs/machine-type-unknown.obj.yaml > %t2.obj
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /force -- %t1.obj %t2.obj
