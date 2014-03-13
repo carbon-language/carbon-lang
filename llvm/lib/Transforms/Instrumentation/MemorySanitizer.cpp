@@ -2328,27 +2328,40 @@ struct VarArgAMD64Helper : public VarArgHelper {
     for (CallSite::arg_iterator ArgIt = CS.arg_begin(), End = CS.arg_end();
          ArgIt != End; ++ArgIt) {
       Value *A = *ArgIt;
-      ArgKind AK = classifyArgument(A);
-      if (AK == AK_GeneralPurpose && GpOffset >= AMD64GpEndOffset)
-        AK = AK_Memory;
-      if (AK == AK_FloatingPoint && FpOffset >= AMD64FpEndOffset)
-        AK = AK_Memory;
-      Value *Base;
-      switch (AK) {
-      case AK_GeneralPurpose:
-        Base = getShadowPtrForVAArgument(A, IRB, GpOffset);
-        GpOffset += 8;
-        break;
-      case AK_FloatingPoint:
-        Base = getShadowPtrForVAArgument(A, IRB, FpOffset);
-        FpOffset += 16;
-        break;
-      case AK_Memory:
-        uint64_t ArgSize = MS.DL->getTypeAllocSize(A->getType());
-        Base = getShadowPtrForVAArgument(A, IRB, OverflowOffset);
+      unsigned ArgNo = CS.getArgumentNo(ArgIt);
+      bool IsByVal = CS.paramHasAttr(ArgNo + 1, Attribute::ByVal);
+      if (IsByVal) {
+        // ByVal arguments always go to the overflow area.
+        assert(A->getType()->isPointerTy());
+        Type *RealTy = A->getType()->getPointerElementType();
+        uint64_t ArgSize = MS.DL->getTypeAllocSize(RealTy);
+        Value *Base = getShadowPtrForVAArgument(RealTy, IRB, OverflowOffset);
         OverflowOffset += DataLayout::RoundUpAlignment(ArgSize, 8);
+        IRB.CreateMemCpy(Base, MSV.getShadowPtr(A, IRB.getInt8Ty(), IRB),
+                         ArgSize, kShadowTLSAlignment);
+      } else {
+        ArgKind AK = classifyArgument(A);
+        if (AK == AK_GeneralPurpose && GpOffset >= AMD64GpEndOffset)
+          AK = AK_Memory;
+        if (AK == AK_FloatingPoint && FpOffset >= AMD64FpEndOffset)
+          AK = AK_Memory;
+        Value *Base;
+        switch (AK) {
+          case AK_GeneralPurpose:
+            Base = getShadowPtrForVAArgument(A->getType(), IRB, GpOffset);
+            GpOffset += 8;
+            break;
+          case AK_FloatingPoint:
+            Base = getShadowPtrForVAArgument(A->getType(), IRB, FpOffset);
+            FpOffset += 16;
+            break;
+          case AK_Memory:
+            uint64_t ArgSize = MS.DL->getTypeAllocSize(A->getType());
+            Base = getShadowPtrForVAArgument(A->getType(), IRB, OverflowOffset);
+            OverflowOffset += DataLayout::RoundUpAlignment(ArgSize, 8);
+        }
+        IRB.CreateAlignedStore(MSV.getShadow(A), Base, kShadowTLSAlignment);
       }
-      IRB.CreateAlignedStore(MSV.getShadow(A), Base, kShadowTLSAlignment);
     }
     Constant *OverflowSize =
       ConstantInt::get(IRB.getInt64Ty(), OverflowOffset - AMD64FpEndOffset);
@@ -2356,11 +2369,11 @@ struct VarArgAMD64Helper : public VarArgHelper {
   }
 
   /// \brief Compute the shadow address for a given va_arg.
-  Value *getShadowPtrForVAArgument(Value *A, IRBuilder<> &IRB,
+  Value *getShadowPtrForVAArgument(Type *Ty, IRBuilder<> &IRB,
                                    int ArgOffset) {
     Value *Base = IRB.CreatePointerCast(MS.VAArgTLS, MS.IntptrTy);
     Base = IRB.CreateAdd(Base, ConstantInt::get(MS.IntptrTy, ArgOffset));
-    return IRB.CreateIntToPtr(Base, PointerType::get(MSV.getShadowTy(A), 0),
+    return IRB.CreateIntToPtr(Base, PointerType::get(MSV.getShadowTy(Ty), 0),
                               "_msarg");
   }
 
