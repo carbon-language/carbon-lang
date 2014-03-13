@@ -279,6 +279,7 @@ public:
     } else if (MO.isExpr()) {
       int64_t Value;
       bool Invalid = MO.getExpr()->EvaluateAsAbsolute(Value);
+      (void) Invalid;
       assert(!Invalid && "non-constant expression is not a valid SOImm operand");
       assert((Value >= INT32_MIN && Value <= INT32_MAX) &&
              "expression must be representable in 32 bits");
