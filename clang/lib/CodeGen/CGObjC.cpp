@@ -1362,11 +1362,9 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
     // Suppress the final autorelease in ARC.
     AutoreleaseResult = false;
 
-    for (ObjCImplementationDecl::init_const_iterator B = IMP->init_begin(),
-           E = IMP->init_end(); B != E; ++B) {
-      CXXCtorInitializer *IvarInit = (*B);
+    for (const auto *IvarInit : IMP->inits()) {
       FieldDecl *Field = IvarInit->getAnyMember();
-      ObjCIvarDecl  *Ivar = cast<ObjCIvarDecl>(Field);
+      ObjCIvarDecl *Ivar = cast<ObjCIvarDecl>(Field);
       LValue LV = EmitLValueForIvar(TypeOfSelfObject(), 
                                     LoadObjCSelf(), Ivar, 0);
       EmitAggExpr(IvarInit->getInit(),
