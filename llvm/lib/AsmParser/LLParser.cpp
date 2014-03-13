@@ -246,8 +246,6 @@ bool LLParser::ParseTopLevelEntities() {
     //               OptionalThreadLocal OptionalAddrSpace OptionalUnNammedAddr
     //               ('constant'|'global') ...
     case lltok::kw_private:             // OptionalLinkage
-    case lltok::kw_linker_private:      // OptionalLinkage
-    case lltok::kw_linker_private_weak: // OptionalLinkage
     case lltok::kw_internal:            // OptionalLinkage
     case lltok::kw_weak:                // OptionalLinkage
     case lltok::kw_weak_odr:            // OptionalLinkage
@@ -1278,8 +1276,6 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
 /// ParseOptionalLinkage
 ///   ::= /*empty*/
 ///   ::= 'private'
-///   ::= 'linker_private'
-///   ::= 'linker_private_weak'
 ///   ::= 'internal'
 ///   ::= 'weak'
 ///   ::= 'weak_odr'
@@ -1295,10 +1291,6 @@ bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
   switch (Lex.getKind()) {
   default:                       Res=GlobalValue::ExternalLinkage; return false;
   case lltok::kw_private:        Res = GlobalValue::PrivateLinkage;       break;
-  case lltok::kw_linker_private: Res = GlobalValue::LinkerPrivateLinkage; break;
-  case lltok::kw_linker_private_weak:
-    Res = GlobalValue::LinkerPrivateWeakLinkage;
-    break;
   case lltok::kw_internal:       Res = GlobalValue::InternalLinkage;      break;
   case lltok::kw_weak:           Res = GlobalValue::WeakAnyLinkage;       break;
   case lltok::kw_weak_odr:       Res = GlobalValue::WeakODRLinkage;       break;
@@ -2992,8 +2984,6 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       return Error(LinkageLoc, "invalid linkage for function definition");
     break;
   case GlobalValue::PrivateLinkage:
-  case GlobalValue::LinkerPrivateLinkage:
-  case GlobalValue::LinkerPrivateWeakLinkage:
   case GlobalValue::InternalLinkage:
   case GlobalValue::AvailableExternallyLinkage:
   case GlobalValue::LinkOnceAnyLinkage:

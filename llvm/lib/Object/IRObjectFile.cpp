@@ -110,8 +110,7 @@ uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
   uint32_t Res = BasicSymbolRef::SF_None;
   if (GV.isDeclaration() || GV.hasAvailableExternallyLinkage())
     Res |= BasicSymbolRef::SF_Undefined;
-  if (GV.hasPrivateLinkage() || GV.hasLinkerPrivateLinkage() ||
-      GV.hasLinkerPrivateWeakLinkage())
+  if (GV.hasPrivateLinkage())
     Res |= BasicSymbolRef::SF_FormatSpecific;
   if (!GV.hasLocalLinkage())
     Res |= BasicSymbolRef::SF_Global;

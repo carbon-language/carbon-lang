@@ -487,8 +487,6 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
   case GlobalValue::WeakODRLinkage:                  return 10;
   case GlobalValue::LinkOnceODRLinkage:              return 11;
   case GlobalValue::AvailableExternallyLinkage:      return 12;
-  case GlobalValue::LinkerPrivateLinkage:            return 13;
-  case GlobalValue::LinkerPrivateWeakLinkage:        return 14;
   }
   llvm_unreachable("Invalid linkage");
 }

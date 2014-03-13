@@ -88,8 +88,10 @@ static GlobalValue::LinkageTypes GetDecodedLinkage(unsigned Val) {
   case 10: return GlobalValue::WeakODRLinkage;
   case 11: return GlobalValue::LinkOnceODRLinkage;
   case 12: return GlobalValue::AvailableExternallyLinkage;
-  case 13: return GlobalValue::LinkerPrivateLinkage;
-  case 14: return GlobalValue::LinkerPrivateWeakLinkage;
+  case 13:
+    return GlobalValue::PrivateLinkage; // Obsolete LinkerPrivateLinkage
+  case 14:
+    return GlobalValue::PrivateLinkage; // Obsolete LinkerPrivateWeakLinkage
   }
 }
 

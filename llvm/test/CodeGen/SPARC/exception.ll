@@ -11,8 +11,8 @@
 
 @_ZTIi = external constant %struct.__fundamental_type_info_pseudo
 @_ZTIf = external constant %struct.__fundamental_type_info_pseudo
-@.cst = linker_private unnamed_addr constant [12 x i8] c"catched int\00", align 64
-@.cst1 = linker_private unnamed_addr constant [14 x i8] c"catched float\00", align 64
+@.cst = private unnamed_addr constant [12 x i8] c"catched int\00", align 64
+@.cst1 = private unnamed_addr constant [14 x i8] c"catched float\00", align 64
 
 ; V8ABS-LABEL: main:
 ; V8ABS:        .cfi_startproc

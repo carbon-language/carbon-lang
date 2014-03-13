@@ -7,7 +7,7 @@
 %struct.__jmp_buf_tag = type { [3 x i32], i32, %0 }
 
 @jenv = common unnamed_addr global %struct.jmpbuf_env* null
-@.cst = linker_private unnamed_addr constant [30 x i8] c"in bar with jmp_buf's id: %d\0A\00", align 64
+@.cst = private unnamed_addr constant [30 x i8] c"in bar with jmp_buf's id: %d\0A\00", align 64
 
 ; CHECK-LABEL: foo
 ; CHECK-DAG:   st {{.+}}, [%i0]

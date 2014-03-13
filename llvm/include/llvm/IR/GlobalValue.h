@@ -40,8 +40,6 @@ public:
     AppendingLinkage,   ///< Special purpose, only applies to global arrays
     InternalLinkage,    ///< Rename collisions when linking (static functions).
     PrivateLinkage,     ///< Like Internal, but omit from symbol table.
-    LinkerPrivateLinkage, ///< Like Private, but linker removes.
-    LinkerPrivateWeakLinkage, ///< Like LinkerPrivate, but weak.
     ExternalWeakLinkage,///< ExternalWeak linkage description.
     CommonLinkage       ///< Tentative definitions.
   };
@@ -158,15 +156,8 @@ public:
   static bool isPrivateLinkage(LinkageTypes Linkage) {
     return Linkage == PrivateLinkage;
   }
-  static bool isLinkerPrivateLinkage(LinkageTypes Linkage) {
-    return Linkage == LinkerPrivateLinkage;
-  }
-  static bool isLinkerPrivateWeakLinkage(LinkageTypes Linkage) {
-    return Linkage == LinkerPrivateWeakLinkage;
-  }
   static bool isLocalLinkage(LinkageTypes Linkage) {
-    return isInternalLinkage(Linkage) || isPrivateLinkage(Linkage) ||
-      isLinkerPrivateLinkage(Linkage) || isLinkerPrivateWeakLinkage(Linkage);
+    return isInternalLinkage(Linkage) || isPrivateLinkage(Linkage);
   }
   static bool isExternalWeakLinkage(LinkageTypes Linkage) {
     return Linkage == ExternalWeakLinkage;
@@ -185,11 +176,8 @@ public:
   /// by something non-equivalent at link time.  For example, if a function has
   /// weak linkage then the code defining it may be replaced by different code.
   static bool mayBeOverridden(LinkageTypes Linkage) {
-    return Linkage == WeakAnyLinkage ||
-           Linkage == LinkOnceAnyLinkage ||
-           Linkage == CommonLinkage ||
-           Linkage == ExternalWeakLinkage ||
-           Linkage == LinkerPrivateWeakLinkage;
+    return Linkage == WeakAnyLinkage || Linkage == LinkOnceAnyLinkage ||
+           Linkage == CommonLinkage || Linkage == ExternalWeakLinkage;
   }
 
   /// isWeakForLinker - Whether the definition of this global may be replaced at
@@ -197,14 +185,10 @@ public:
   /// always a mistake: when working at the IR level use mayBeOverridden instead
   /// as it knows about ODR semantics.
   static bool isWeakForLinker(LinkageTypes Linkage)  {
-    return Linkage == AvailableExternallyLinkage ||
-           Linkage == WeakAnyLinkage ||
-           Linkage == WeakODRLinkage ||
-           Linkage == LinkOnceAnyLinkage ||
-           Linkage == LinkOnceODRLinkage ||
-           Linkage == CommonLinkage ||
-           Linkage == ExternalWeakLinkage ||
-           Linkage == LinkerPrivateWeakLinkage;
+    return Linkage == AvailableExternallyLinkage || Linkage == WeakAnyLinkage ||
+           Linkage == WeakODRLinkage || Linkage == LinkOnceAnyLinkage ||
+           Linkage == LinkOnceODRLinkage || Linkage == CommonLinkage ||
+           Linkage == ExternalWeakLinkage;
   }
 
   bool hasExternalLinkage() const { return isExternalLinkage(Linkage); }
@@ -220,10 +204,6 @@ public:
   bool hasAppendingLinkage() const { return isAppendingLinkage(Linkage); }
   bool hasInternalLinkage() const { return isInternalLinkage(Linkage); }
   bool hasPrivateLinkage() const { return isPrivateLinkage(Linkage); }
-  bool hasLinkerPrivateLinkage() const { return isLinkerPrivateLinkage(Linkage); }
-  bool hasLinkerPrivateWeakLinkage() const {
-    return isLinkerPrivateWeakLinkage(Linkage);
-  }
   bool hasLocalLinkage() const { return isLocalLinkage(Linkage); }
   bool hasExternalWeakLinkage() const { return isExternalWeakLinkage(Linkage); }
   bool hasCommonLinkage() const { return isCommonLinkage(Linkage); }

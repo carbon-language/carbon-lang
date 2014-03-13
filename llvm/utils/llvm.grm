@@ -92,8 +92,6 @@ GVInternalLinkage
  | dllexport
  | common
  | private
- | "linker_private"
- | "linker_private_weak"
  ;
 
 GVExternalLinkage

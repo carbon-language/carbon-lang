@@ -197,16 +197,6 @@ linkage:
     private to be renamed as necessary to avoid collisions. Because the
     symbol is private to the module, all references can be updated. This
     doesn't show up in any symbol table in the object file.
-``linker_private``
-    Similar to ``private``, but the symbol is passed through the
-    assembler and evaluated by the linker. Unlike normal strong symbols,
-    they are removed by the linker from the final linked image
-    (executable or dynamic library).
-``linker_private_weak``
-    Similar to "``linker_private``", but the symbol is weak. Note that
-    ``linker_private_weak`` symbols are subject to coalescing by the
-    linker. The symbols are removed by the linker from the final linked
-    image (executable or dynamic library).
 ``internal``
     Similar to private, but the value shows as a local symbol
     (``STB_LOCAL`` in the case of ELF) in the object file. This
@@ -681,8 +671,7 @@ Syntax::
 
     @<Name> = [Visibility] [DLLStorageClass] alias [Linkage] <AliaseeTy> @<Aliasee>
 
-The linkage must be one of ``private``, ``linker_private``,
-``linker_private_weak``, ``internal``, ``linkonce``, ``weak``,
+The linkage must be one of ``private``, ``internal``, ``linkonce``, ``weak``,
 ``linkonce_odr``, ``weak_odr``, ``external``. Note that some system linkers
 might not correctly handle dropping a weak symbol that is aliased by a non-weak
 alias.

@@ -7,7 +7,7 @@
 ; Make sure that the string ends up the correct section.
 
 ; CHECK:        .section __TEXT,__cstring
-; CHECK-NEXT: l_.str3:
+; CHECK-NEXT: L_.str3:
 
 ; CHECK:        .section  __DATA,__cfstring
 ; CHECK-NEXT:   .align  4
@@ -15,13 +15,13 @@
 ; CHECK-NEXT:   .quad  ___CFConstantStringClassReference
 ; CHECK-NEXT:   .long  1992
 ; CHECK-NEXT:   .space  4
-; CHECK-NEXT:   .quad  l_.str3
+; CHECK-NEXT:   .quad  L_.str3
 ; CHECK-NEXT:   .long  0
 ; CHECK-NEXT:   .space  4
 
 @isLogVisible = global i8 0, align 1
 @__CFConstantStringClassReference = external global [0 x i32]
-@.str3 = linker_private unnamed_addr constant [1 x i8] zeroinitializer, align 1
+@.str3 = private unnamed_addr constant [1 x i8] zeroinitializer, align 1
 @_unnamed_cfstring_4 = private constant %struct.NSConstantString { i32* getelementptr inbounds ([0 x i32]* @__CFConstantStringClassReference, i32 0, i32 0), i32 1992, i8* getelementptr inbounds ([1 x i8]* @.str3, i32 0, i32 0), i32 0 }, section "__DATA,__cfstring"
 @null.array = weak_odr constant [1 x i8] zeroinitializer, align 1
 

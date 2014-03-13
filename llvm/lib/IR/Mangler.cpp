@@ -84,9 +84,6 @@ void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
       PrefixTy = Mangler::LinkerPrivate;
     else
       PrefixTy = Mangler::Private;
-  } else if (GV->hasLinkerPrivateLinkage() ||
-             GV->hasLinkerPrivateWeakLinkage()) {
-    PrefixTy = Mangler::LinkerPrivate;
   }
 
   if (!GV->hasName()) {

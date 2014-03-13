@@ -17,10 +17,10 @@
 ; CHECK: @private.var = private constant i32 0
 
 @linker_private.var = linker_private constant i32 0
-; CHECK: @linker_private.var = linker_private constant i32 0
+; CHECK: @linker_private.var = private constant i32 0
 
 @linker_private_weak.var = linker_private_weak constant i32 0
-; CHECK: @linker_private_weak.var = linker_private_weak constant i32 0
+; CHECK: @linker_private_weak.var = private constant i32 0
 
 @linker_private_weak_def_auto.var = linker_private_weak_def_auto constant i32 0
 ; CHECK: @linker_private_weak_def_auto.var = constant i32 0
@@ -59,13 +59,13 @@ define private void @private()
 }
 
 define linker_private void @linker_private()
-; CHECK: define linker_private void @linker_private
+; CHECK: define private void @linker_private
 {
   ret void;
 }
 
 define linker_private_weak void @linker_private_weak()
-; CHECK: define linker_private_weak void @linker_private_weak
+; CHECK: define private void @linker_private_weak
 {
   ret void;
 }

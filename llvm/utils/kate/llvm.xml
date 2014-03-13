@@ -39,8 +39,6 @@
     </list>
     <list name="linkage-types">
       <item> private </item>
-      <item> linker_private </item>
-      <item> linker_private_weak </item>
       <item> internal </item>
       <item> available_externally </item>
       <item> linkonce </item>

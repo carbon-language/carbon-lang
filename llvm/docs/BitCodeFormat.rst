@@ -688,7 +688,8 @@ global variable. The operand fields are:
   * ``weak_odr``: code 10
   * ``linkonce_odr``: code 11
   * ``available_externally``: code 12
-  * ``linker_private``: code 13
+  * deprecated : code 13
+  * deprecated : code 14
 
 * alignment*: The logarithm base 2 of the variable's requested alignment, plus 1
 
