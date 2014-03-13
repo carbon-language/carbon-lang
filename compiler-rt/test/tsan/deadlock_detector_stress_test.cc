@@ -408,6 +408,7 @@ class LockTest {
     // DISABLEDCHECK-RD: Starting Test15
     Init(5);
     RL(0); RL(0); RU(0); RU(0);  // Recusrive reader lock.
+    RL(0); RL(0); RL(0); RU(0); RU(0); RU(0);  // Recusrive reader lock.
   }
 
  private:
@@ -496,7 +497,7 @@ int main(int argc, char **argv) {
   LockTest().Test12();
   LockTest().Test13();
   LockTest().Test14();
-  // LockTest().Test15();  // FIXME: this is broken for PthreadRWLock
+  LockTest().Test15();
   fprintf(stderr, "ALL-DONE\n");
   // CHECK: ALL-DONE
 }

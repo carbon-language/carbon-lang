@@ -376,3 +376,33 @@ void RunOnFirstLockTest() {
 TEST(DeadlockDetector, onFirstLockTest) {
   RunOnFirstLockTest<BV2>();
 }
+
+template <class BV>
+void RunRecusriveLockTest() {
+  ScopedDD<BV> sdd;
+  DeadlockDetector<BV> &d = *sdd.dp;
+  DeadlockDetectorTLS<BV> &dtls = sdd.dtls;
+
+  uptr l0 = d.newNode(0);
+  uptr l1 = d.newNode(0);
+  uptr l2 = d.newNode(0);
+  uptr l3 = d.newNode(0);
+
+  EXPECT_FALSE(d.onLock(&dtls, l0));
+  EXPECT_FALSE(d.onLock(&dtls, l1));
+  EXPECT_FALSE(d.onLock(&dtls, l0));  // Recurisve.
+  EXPECT_FALSE(d.onLock(&dtls, l2));
+  d.onUnlock(&dtls, l0);
+  EXPECT_FALSE(d.onLock(&dtls, l3));
+  d.onUnlock(&dtls, l0);
+  d.onUnlock(&dtls, l1);
+  d.onUnlock(&dtls, l2);
+  d.onUnlock(&dtls, l3);
+  EXPECT_TRUE(d.testOnlyHasEdge(l0, l1));
+  EXPECT_TRUE(d.testOnlyHasEdge(l0, l2));
+  EXPECT_TRUE(d.testOnlyHasEdge(l0, l3));
+}
+
+TEST(DeadlockDetector, RecusriveLockTest) {
+  RunRecusriveLockTest<BV2>();
+}

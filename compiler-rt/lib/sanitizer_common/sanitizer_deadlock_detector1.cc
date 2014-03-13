@@ -106,7 +106,8 @@ void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
     return;
   SpinMutexLock lk(&mtx);
   MutexEnsureID(lt, m);
-  CHECK(!dd.isHeld(&lt->dd, m->id));
+  if (wlock)  // Only a recursive rlock may be held.
+    CHECK(!dd.isHeld(&lt->dd, m->id));
   // Printf("T%d MutexLock:   %zx\n", thr->tid, s->deadlock_detector_id);
   bool has_deadlock = trylock
       ? dd.onTryLock(&lt->dd, m->id)

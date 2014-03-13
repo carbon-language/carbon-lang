@@ -40,6 +40,7 @@ class DeadlockDetectorTLS {
   void clear() {
     bv_.clear();
     epoch_ = 0;
+    n_recursive_locks = 0;
   }
 
   bool empty() const { return bv_.empty(); }
@@ -52,14 +53,30 @@ class DeadlockDetectorTLS {
 
   uptr getEpoch() const { return epoch_; }
 
-  void addLock(uptr lock_id, uptr current_epoch) {
+  // Returns true if this is the first (non-recursive) acquisition of this lock.
+  bool addLock(uptr lock_id, uptr current_epoch) {
     // Printf("addLock: %zx %zx\n", lock_id, current_epoch);
     CHECK_EQ(epoch_, current_epoch);
-    CHECK(bv_.setBit(lock_id));
+    if (!bv_.setBit(lock_id)) {
+      // The lock is already held by this thread, it must be recursive.
+      CHECK_LT(n_recursive_locks, ARRAY_SIZE(recursive_locks));
+      recursive_locks[n_recursive_locks++] = lock_id;
+      return false;
+    }
+    return true;
   }
 
   void removeLock(uptr lock_id) {
     // Printf("remLock: %zx %zx\n", lock_id, current_epoch);
+    if (n_recursive_locks) {
+      for (sptr i = n_recursive_locks - 1; i >= 0; i--) {
+        if (recursive_locks[i] == lock_id) {
+          n_recursive_locks--;
+          Swap(recursive_locks[i], recursive_locks[n_recursive_locks]);
+          return;
+        }
+      }
+    }
     CHECK(bv_.clearBit(lock_id));
   }
 
@@ -71,6 +88,8 @@ class DeadlockDetectorTLS {
  private:
   BV bv_;
   uptr epoch_;
+  uptr recursive_locks[64];
+  uptr n_recursive_locks;
 };
 
 // DeadlockDetector.
@@ -143,8 +162,7 @@ class DeadlockDetector {
     uptr cur_idx = nodeToIndex(cur_node);
     bool is_reachable = g_.isReachable(cur_idx, dtls->getLocks(current_epoch_));
     g_.addEdges(dtls->getLocks(current_epoch_), cur_idx);
-    dtls->addLock(cur_idx, current_epoch_);
-    return is_reachable;
+    return dtls->addLock(cur_idx, current_epoch_) && is_reachable;
   }
 
   // Handles the try_lock event, returns false.
