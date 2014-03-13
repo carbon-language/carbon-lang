@@ -33,7 +33,7 @@ endif (OPENSCOP_FOUND)
 
 if (SCOPLIB_FOUND)
   set(POLLY_SCOPLIB_FILES
-      Pocc.cpp
+      Transform/Pocc.cpp
       Exchange/ScopLib.cpp
       Exchange/ScopLibExporter.cpp
       Exchange/ScopLibImporter.cpp)
@@ -66,7 +66,6 @@ add_polly_library(Polly
   Transform/DeadCodeElimination.cpp
   Transform/IndependentBlocks.cpp
   Transform/IndVarSimplify.cpp
-  Transform/Pocc.cpp
   Transform/ScheduleOptimizer.cpp
   ${POLLY_PLUTO_FILES}
   )
