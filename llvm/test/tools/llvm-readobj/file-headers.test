@@ -1,3 +1,5 @@
+RUN: llvm-readobj -h %p/Inputs/trivial.obj.coff-arm \
+RUN:   | FileCheck %s -check-prefix COFF-ARM
 RUN: llvm-readobj -h %p/Inputs/trivial.obj.coff-i386 \
 RUN:   | FileCheck %s -check-prefix COFF32
 RUN: llvm-readobj -h %p/Inputs/trivial.obj.coff-x86-64 \
@@ -12,6 +14,21 @@ RUN: llvm-readobj -h %p/Inputs/magic.coff-unknown \
 RUN:   | FileCheck %s -check-prefix COFF-UNKNOWN
 RUN: llvm-readobj -h %p/Inputs/magic.coff-importlib \
 RUN:   | FileCheck %s -check-prefix COFF-IMPORTLIB
+
+COFF-ARM:      File: {{(.*[/\\])?}}trivial.obj.coff-arm
+COFF-ARM-NEXT: Format: COFF-ARM
+COFF-ARM-NEXT: Arch: thumb
+COFF-ARM-NEXT: AddressSize: 32bit
+COFF-ARM-NEXT: ImageFileHeader {
+COFF-ARM-NEXT:   Machine: IMAGE_FILE_MACHINE_ARMNT (0x1C4)
+COFF-ARM-NEXT:   SectionCount: 2
+COFF-ARM-NEXT:   TimeDateStamp: 2014-03-13 02:48:34 (0x53211C82)
+COFF-ARM-NEXT:   PointerToSymbolTable: 0xFF
+COFF-ARM-NEXT:   SymbolCount: 6
+COFF-ARM-NEXT:   OptionalHeaderSize: 0
+COFF-ARM-NEXT:   Characteristics [ (0x0)
+COFF-ARM-NEXT:   ]
+COFF-ARM-NEXT: }
 
 COFF32:      File: {{(.*[/\\])?}}trivial.obj.coff-i386
 COFF32-NEXT: Format: COFF-i386

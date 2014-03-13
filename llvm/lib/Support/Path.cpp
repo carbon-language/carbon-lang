@@ -1016,6 +1016,7 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
     case 0x66: // MPS R4000 Windows
     case 0x50: // mc68K
     case 0x4c: // 80386 Windows
+    case 0xc4: // ARMNT Windows
       if (Magic[1] == 0x01)
         return file_magic::coff_object;
 
