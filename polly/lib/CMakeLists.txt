@@ -80,7 +80,7 @@ add_polly_loadable_module(LLVMPolly
 
 if (TARGET intrinsics_gen)
   # Check if we are building as part of an LLVM build
-  add_dependencies(LLVMPolly intrinsics_gen)
+  add_dependencies(Polly intrinsics_gen)
 endif()
 
 target_link_libraries(LLVMPolly Polly)
