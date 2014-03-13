@@ -1094,7 +1094,7 @@ named type.
 VALUE_SYMTAB_BLOCK Contents
 ---------------------------
 
-The ``VALUE_SYMTAB_BLOCK`` block (id 14) ... 
+The ``VALUE_SYMTAB_BLOCK`` block (id 14) ...
 
 .. _METADATA_BLOCK:
 
