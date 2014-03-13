@@ -141,7 +141,8 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec, bool try_lock) {
   thr->mset.Add(s->GetId(), true, thr->fast_state.epoch());
   if (flags()->detect_deadlocks && s->recursion == 1) {
     Callback cb(thr, pc);
-    ctx->dd->MutexBeforeLock(&cb, &s->dd, true);
+    if (!try_lock)
+      ctx->dd->MutexBeforeLock(&cb, &s->dd, true);
     ctx->dd->MutexAfterLock(&cb, &s->dd, true, try_lock);
   }
   s->mtx.Unlock();
@@ -216,7 +217,8 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr, bool trylock) {
   thr->mset.Add(s->GetId(), false, thr->fast_state.epoch());
   if (flags()->detect_deadlocks && s->recursion == 0) {
     Callback cb(thr, pc);
-    ctx->dd->MutexBeforeLock(&cb, &s->dd, false);
+    if (!trylock)
+      ctx->dd->MutexBeforeLock(&cb, &s->dd, false);
     ctx->dd->MutexAfterLock(&cb, &s->dd, false, trylock);
   }
   s->mtx.ReadUnlock();

@@ -67,7 +67,6 @@ class DeadlockDetectorTLS {
   }
 
   void removeLock(uptr lock_id) {
-    // Printf("remLock: %zx %zx\n", lock_id, current_epoch);
     if (n_recursive_locks) {
       for (sptr i = n_recursive_locks - 1; i >= 0; i--) {
         if (recursive_locks[i] == lock_id) {
@@ -77,6 +76,7 @@ class DeadlockDetectorTLS {
         }
       }
     }
+    // Printf("remLock: %zx %zx\n", lock_id, epoch_);
     CHECK(bv_.clearBit(lock_id));
   }
 
@@ -155,14 +155,30 @@ class DeadlockDetector {
     dtls->ensureCurrentEpoch(current_epoch_);
   }
 
-  // Handles the lock event, returns true if there is a cycle.
-  // FIXME: handle RW locks, recursive locks, etc.
-  bool onLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
+  // Returns true if there is a cycle in the graph after this lock event.
+  // Ideally should be called before the lock is acquired so that we can
+  // report a deadlock before a real deadlock happens.
+  bool onLockBefore(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
     ensureCurrentEpoch(dtls);
     uptr cur_idx = nodeToIndex(cur_node);
-    bool is_reachable = g_.isReachable(cur_idx, dtls->getLocks(current_epoch_));
+    return g_.isReachable(cur_idx, dtls->getLocks(current_epoch_));
+  }
+
+  // Returns true if a new edge has been added to the graph.
+  // Should be called before after the lock is acquired.
+  bool onLockAfter(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
+    ensureCurrentEpoch(dtls);
+    uptr cur_idx = nodeToIndex(cur_node);
     g_.addEdges(dtls->getLocks(current_epoch_), cur_idx);
-    return dtls->addLock(cur_idx, current_epoch_) && is_reachable;
+    return dtls->addLock(cur_idx, current_epoch_);
+  }
+
+  // Test-only function. Handles the before/after lock events,
+  // returns true if there is a cycle.
+  bool onLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
+    ensureCurrentEpoch(dtls);
+    bool is_reachable = onLockBefore(dtls, cur_node);
+    return onLockAfter(dtls, cur_node) && is_reachable;
   }
 
   // Handles the try_lock event, returns false.
@@ -189,14 +205,14 @@ class DeadlockDetector {
     return false;
   }
 
-  // Finds a path between the lock 'cur_node' (which is currently held in dtls)
-  // and some other currently held lock, returns the length of the path
+  // Finds a path between the lock 'cur_node' (currently not held in dtls)
+  // and some currently held lock, returns the length of the path
   // or 0 on failure.
-  uptr findPathToHeldLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node,
-                          uptr *path, uptr path_size) {
+  uptr findPathToLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node, uptr *path,
+                      uptr path_size) {
     tmp_bv_.copyFrom(dtls->getLocks(current_epoch_));
     uptr idx = nodeToIndex(cur_node);
-    CHECK(tmp_bv_.clearBit(idx));
+    CHECK(!tmp_bv_.getBit(idx));
     uptr res = g_.findShortestPath(idx, tmp_bv_, path, path_size);
     for (uptr i = 0; i < res; i++)
       path[i] = indexToNode(path[i]);

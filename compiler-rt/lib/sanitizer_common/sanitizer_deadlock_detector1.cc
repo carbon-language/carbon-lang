@@ -98,24 +98,15 @@ void DD::MutexEnsureID(DDLogicalThread *lt, DDMutex *m) {
 
 void DD::MutexBeforeLock(DDCallback *cb,
     DDMutex *m, bool wlock) {
-}
-
-void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
   DDLogicalThread *lt = cb->lt;
-  if (dd.onFirstLock(&lt->dd, m->id))
-    return;
+  if (lt->dd.empty()) return;  // This will be the first lock held by lt.
   SpinMutexLock lk(&mtx);
   MutexEnsureID(lt, m);
-  if (wlock)  // Only a recursive rlock may be held.
-    CHECK(!dd.isHeld(&lt->dd, m->id));
-  // Printf("T%d MutexLock:   %zx\n", thr->tid, s->deadlock_detector_id);
-  bool has_deadlock = trylock
-      ? dd.onTryLock(&lt->dd, m->id)
-       : dd.onLock(&lt->dd, m->id);
-  if (has_deadlock) {
+  if (dd.isHeld(&lt->dd, m->id))
+    return;  // FIXME: allow this only for recursive locks.
+  if (dd.onLockBefore(&lt->dd, m->id)) {
     uptr path[10];
-    uptr len = dd.findPathToHeldLock(&lt->dd, m->id,
-                                          path, ARRAY_SIZE(path));
+    uptr len = dd.findPathToLock(&lt->dd, m->id, path, ARRAY_SIZE(path));
     CHECK_GT(len, 0U);  // Hm.. cycle of 10 locks? I'd like to see that.
     lt->report_pending = true;
     DDReport *rep = &lt->rep;
@@ -131,9 +122,24 @@ void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
   }
 }
 
+void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
+  DDLogicalThread *lt = cb->lt;
+  // Printf("T%p MutexLock:   %zx\n", lt, m->id);
+  if (dd.onFirstLock(&lt->dd, m->id))
+    return;
+  SpinMutexLock lk(&mtx);
+  MutexEnsureID(lt, m);
+  if (wlock)  // Only a recursive rlock may be held.
+    CHECK(!dd.isHeld(&lt->dd, m->id));
+  bool edge_added =
+      trylock ? dd.onTryLock(&lt->dd, m->id) : dd.onLockAfter(&lt->dd, m->id);
+  if (edge_added) {
+    // Printf("Edge added\n");
+  }
+}
+
 void DD::MutexBeforeUnlock(DDCallback *cb, DDMutex *m, bool wlock) {
-  // Printf("T%d MutexUnlock: %zx; recursion %d\n", thr->tid,
-  //        s->deadlock_detector_id, s->recursion);
+  // Printf("T%p MutexUnLock: %zx\n", cb->lt, m->id);
   dd.onUnlock(&cb->lt->dd, m->id);
 }
 
