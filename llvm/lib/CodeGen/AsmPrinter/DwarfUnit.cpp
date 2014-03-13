@@ -1651,7 +1651,8 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
       // TAG_variable.
       addString(IsStaticMember && VariableSpecDIE ? VariableSpecDIE
                                                   : VariableDIE,
-                dwarf::DW_AT_MIPS_linkage_name,
+                DD->getDwarfVersion() >= 4 ? dwarf::DW_AT_linkage_name
+                                           : dwarf::DW_AT_MIPS_linkage_name,
                 GlobalValue::getRealLinkageName(LinkageName));
   } else if (const ConstantInt *CI =
                  dyn_cast_or_null<ConstantInt>(GV.getConstant())) {

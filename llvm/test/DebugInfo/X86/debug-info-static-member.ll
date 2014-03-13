@@ -1,7 +1,7 @@
-; RUN: llc %s -o %t -filetype=obj -O0 -mtriple=x86_64-unknown-linux-gnu
+; RUN: llc %s -o %t -filetype=obj -O0 -mtriple=x86_64-unknown-linux-gnu -dwarf-version=4
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=PRESENT
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=ABSENT
-; RUN: llc %s -o %t -filetype=obj -O0 -mtriple=x86_64-apple-darwin
+; RUN: llc %s -o %t -filetype=obj -O0 -mtriple=x86_64-apple-darwin -dwarf-version=4
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=DARWINP
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=DARWINA
 ; Verify that attributes we do want are PRESENT;
@@ -133,15 +133,15 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; PRESENT:      DW_TAG_variable
 ; PRESENT-NEXT: DW_AT_specification {{.*}} {0x[[DECL_A]]}
 ; PRESENT-NEXT: DW_AT_location
-; PRESENT-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1aE"
+; PRESENT-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1aE"
 ; PRESENT:      DW_TAG_variable
 ; PRESENT-NEXT: DW_AT_specification {{.*}} {0x[[DECL_B]]}
 ; PRESENT-NEXT: DW_AT_location
-; PRESENT-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1bE"
+; PRESENT-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1bE"
 ; PRESENT:      DW_TAG_variable
 ; PRESENT-NEXT: DW_AT_specification {{.*}} {0x[[DECL_C]]}
 ; PRESENT-NEXT: DW_AT_location
-; PRESENT-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1cE"
+; PRESENT-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1cE"
 
 ; For Darwin gdb:
 ; DARWINP:      .debug_info contents:
@@ -183,19 +183,19 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; DARWINP:      DW_TAG_variable
 ; DARWINP-NEXT: DW_AT_specification {{.*}} {0x[[DECL_A]]}
 ; DARWINP-NEXT: DW_AT_location
-; DARWINP-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1aE"
+; DARWINP-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1aE"
 ; DARWINP:      DW_TAG_variable
 ; DARWINP-NEXT: DW_AT_specification {{.*}} {0x[[DECL_B]]}
 ; DARWINP-NEXT: DW_AT_location
-; DARWINP-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1bE"
+; DARWINP-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1bE"
 ; DARWINP:      DW_TAG_variable
 ; DARWINP-NEXT: DW_AT_specification {{.*}} {0x[[DECL_C]]}
 ; DARWINP-NEXT: DW_AT_location
-; DARWINP-NEXT: DW_AT_MIPS_linkage_name {{.*}} "_ZN1C1cE"
+; DARWINP-NEXT: DW_AT_linkage_name {{.*}} "_ZN1C1cE"
 
 ; ABSENT verifies that static member declarations do not have either
 ; DW_AT_location or DW_AT_data_member_location; also, variables do not
-; have DW_AT_const_value and constants do not have DW_AT_MIPS_linkage_name.
+; have DW_AT_const_value and constants do not have DW_AT_linkage_name.
 ;
 ; ABSENT:      .debug_info contents:
 ; ABSENT:      DW_TAG_member
@@ -203,24 +203,24 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; ABSENT-NOT:  DW_AT_const_value
 ; ABSENT-NOT:  location
 ; ABSENT:      DW_AT_name {{.*}} "const_a"
-; ABSENT-NOT:  DW_AT_MIPS_linkage_name
+; ABSENT-NOT:  DW_AT_linkage_name
 ; ABSENT-NOT:  location
 ; ABSENT:      DW_AT_name {{.*}} "b"
 ; ABSENT-NOT:  DW_AT_const_value
 ; ABSENT-NOT:  location
 ; ABSENT:      DW_AT_name {{.*}} "const_b"
-; ABSENT-NOT:  DW_AT_MIPS_linkage_name
+; ABSENT-NOT:  DW_AT_linkage_name
 ; ABSENT-NOT:  location
 ; ABSENT:      DW_AT_name {{.*}} "c"
 ; ABSENT-NOT:  DW_AT_const_value
 ; ABSENT-NOT:  location
 ; ABSENT:      DW_AT_name {{.*}} "const_c"
-; ABSENT-NOT:  DW_AT_MIPS_linkage_name
+; ABSENT-NOT:  DW_AT_linkage_name
 ; ABSENT-NOT:  location
 ; While we're here, a normal member does not have a linkage name, constant
 ; value, or DW_AT_location.
 ; ABSENT:      DW_AT_name {{.*}} "d"
-; ABSENT-NOT:  DW_AT_MIPS_linkage_name
+; ABSENT-NOT:  DW_AT_linkage_name
 ; ABSENT-NOT:  DW_AT_const_value
 ; ABSENT-NOT:  DW_AT_location
 ; ABSENT:      NULL
@@ -232,24 +232,24 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; DARWINA-NOT:  DW_AT_const_value
 ; DARWINA-NOT:  location
 ; DARWINA:      DW_AT_name {{.*}} "const_a"
-; DARWINA-NOT:  DW_AT_MIPS_linkage_name
+; DARWINA-NOT:  DW_AT_linkage_name
 ; DARWINA-NOT:  location
 ; DARWINA:      DW_AT_name {{.*}} "b"
 ; DARWINA-NOT:  DW_AT_const_value
 ; DARWINA-NOT:  location
 ; DARWINA:      DW_AT_name {{.*}} "const_b"
-; DARWINA-NOT:  DW_AT_MIPS_linkage_name
+; DARWINA-NOT:  DW_AT_linkage_name
 ; DARWINA-NOT:  location
 ; DARWINA:      DW_AT_name {{.*}} "c"
 ; DARWINA-NOT:  DW_AT_const_value
 ; DARWINA-NOT:  location
 ; DARWINA:      DW_AT_name {{.*}} "const_c"
-; DARWINA-NOT:  DW_AT_MIPS_linkage_name
+; DARWINA-NOT:  DW_AT_linkage_name
 ; DARWINA-NOT:  location
 ; While we're here, a normal member does not have a linkage name, constant
 ; value, or DW_AT_location.
 ; DARWINA:      DW_AT_name {{.*}} "d"
-; DARWINA-NOT:  DW_AT_MIPS_linkage_name
+; DARWINA-NOT:  DW_AT_linkage_name
 ; DARWINA-NOT:  DW_AT_const_value
 ; DARWINA-NOT:  DW_AT_location
 ; DARWINA:      NULL
