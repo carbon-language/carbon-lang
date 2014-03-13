@@ -40,10 +40,9 @@ public:
 private:
   void printSymbol(symbol_iterator SymI);
 
-  void printRelocation(section_iterator SecI, relocation_iterator RelI);
+  void printRelocation(relocation_iterator RelI);
 
-  void printRelocation(const MachOObjectFile *Obj,
-                       section_iterator SecI, relocation_iterator RelI);
+  void printRelocation(const MachOObjectFile *Obj, relocation_iterator RelI);
 
   void printSections(const MachOObjectFile *Obj);
 
@@ -216,18 +215,16 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
   ListScope Group(W, "Sections");
 
   int SectionIndex = -1;
-  for (section_iterator SecI = Obj->section_begin(),
-                        SecE = Obj->section_end();
-       SecI != SecE; ++SecI) {
+  for (const SectionRef &Section : Obj->sections()) {
     ++SectionIndex;
 
-    MachOSection Section;
-    getSection(Obj, SecI->getRawDataRefImpl(), Section);
-    DataRefImpl DR = SecI->getRawDataRefImpl();
+    MachOSection MOSection;
+    getSection(Obj, Section.getRawDataRefImpl(), MOSection);
+    DataRefImpl DR = Section.getRawDataRefImpl();
 
     StringRef Name;
-    if (error(SecI->getName(Name)))
-        Name = "";
+    if (error(Section.getName(Name)))
+      Name = "";
 
     ArrayRef<char> RawName = Obj->getSectionRawName(DR);
     StringRef SegmentName = Obj->getSectionFinalSegmentName(DR);
@@ -237,34 +234,33 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
     W.printNumber("Index", SectionIndex);
     W.printBinary("Name", Name, RawName);
     W.printBinary("Segment", SegmentName, RawSegmentName);
-    W.printHex   ("Address", Section.Address);
-    W.printHex   ("Size", Section.Size);
-    W.printNumber("Offset", Section.Offset);
-    W.printNumber("Alignment", Section.Alignment);
-    W.printHex   ("RelocationOffset", Section.RelocationTableOffset);
-    W.printNumber("RelocationCount", Section.NumRelocationTableEntries);
-    W.printEnum  ("Type", Section.Flags & 0xFF,
-                  makeArrayRef(MachOSectionAttributes));
-    W.printFlags ("Attributes", Section.Flags >> 8,
-                  makeArrayRef(MachOSectionAttributes));
-    W.printHex   ("Reserved1", Section.Reserved1);
-    W.printHex   ("Reserved2", Section.Reserved2);
+    W.printHex("Address", MOSection.Address);
+    W.printHex("Size", MOSection.Size);
+    W.printNumber("Offset", MOSection.Offset);
+    W.printNumber("Alignment", MOSection.Alignment);
+    W.printHex("RelocationOffset", MOSection.RelocationTableOffset);
+    W.printNumber("RelocationCount", MOSection.NumRelocationTableEntries);
+    W.printEnum("Type", MOSection.Flags & 0xFF,
+                makeArrayRef(MachOSectionAttributes));
+    W.printFlags("Attributes", MOSection.Flags >> 8,
+                 makeArrayRef(MachOSectionAttributes));
+    W.printHex("Reserved1", MOSection.Reserved1);
+    W.printHex("Reserved2", MOSection.Reserved2);
 
     if (opts::SectionRelocations) {
       ListScope D(W, "Relocations");
-      for (relocation_iterator RelI = SecI->relocation_begin(),
-                               RelE = SecI->relocation_end();
+      for (relocation_iterator RelI = Section.relocation_begin(),
+                               RelE = Section.relocation_end();
            RelI != RelE; ++RelI)
-        printRelocation(SecI, RelI);
+        printRelocation(RelI);
     }
 
     if (opts::SectionSymbols) {
       ListScope D(W, "Symbols");
-      for (symbol_iterator SymI = Obj->symbol_begin(),
-                           SymE = Obj->symbol_end();
+      for (symbol_iterator SymI = Obj->symbol_begin(), SymE = Obj->symbol_end();
            SymI != SymE; ++SymI) {
         bool Contained = false;
-        if (SecI->containsSymbol(*SymI, Contained) || !Contained)
+        if (Section.containsSymbol(*SymI, Contained) || !Contained)
           continue;
 
         printSymbol(SymI);
@@ -273,7 +269,8 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
 
     if (opts::SectionData) {
       StringRef Data;
-      if (error(SecI->getContents(Data))) break;
+      if (error(Section.getContents(Data)))
+        break;
 
       W.printBinaryBlock("SectionData", Data);
     }
@@ -284,16 +281,14 @@ void MachODumper::printRelocations() {
   ListScope D(W, "Relocations");
 
   error_code EC;
-  for (section_iterator SecI = Obj->section_begin(),
-                        SecE = Obj->section_end();
-       SecI != SecE; ++SecI) {
+  for (const SectionRef &Section : Obj->sections()) {
     StringRef Name;
-    if (error(SecI->getName(Name)))
+    if (error(Section.getName(Name)))
       continue;
 
     bool PrintedGroup = false;
-    for (relocation_iterator RelI = SecI->relocation_begin(),
-                             RelE = SecI->relocation_end();
+    for (relocation_iterator RelI = Section.relocation_begin(),
+                             RelE = Section.relocation_end();
          RelI != RelE; ++RelI) {
       if (!PrintedGroup) {
         W.startLine() << "Section " << Name << " {\n";
@@ -301,7 +296,7 @@ void MachODumper::printRelocations() {
         PrintedGroup = true;
       }
 
-      printRelocation(SecI, RelI);
+      printRelocation(RelI);
     }
 
     if (PrintedGroup) {
@@ -311,13 +306,11 @@ void MachODumper::printRelocations() {
   }
 }
 
-void MachODumper::printRelocation(section_iterator SecI,
-                                  relocation_iterator RelI) {
-  return printRelocation(Obj, SecI, RelI);
+void MachODumper::printRelocation(relocation_iterator RelI) {
+  return printRelocation(Obj, RelI);
 }
 
 void MachODumper::printRelocation(const MachOObjectFile *Obj,
-                                  section_iterator SecI,
                                   relocation_iterator RelI) {
   uint64_t Offset;
   SmallString<32> RelocName;

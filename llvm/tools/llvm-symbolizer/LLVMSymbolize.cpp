@@ -279,14 +279,13 @@ static bool getGNUDebuglinkContents(const Binary *Bin, std::string &DebugName,
   const ObjectFile *Obj = dyn_cast<ObjectFile>(Bin);
   if (!Obj)
     return false;
-  for (section_iterator I = Obj->section_begin(), E = Obj->section_end();
-       I != E; ++I) {
+  for (const SectionRef &Section : Obj->sections()) {
     StringRef Name;
-    I->getName(Name);
+    Section.getName(Name);
     Name = Name.substr(Name.find_first_not_of("._"));
     if (Name == "gnu_debuglink") {
       StringRef Data;
-      I->getContents(Data);
+      Section.getContents(Data);
       DataExtractor DE(Data, Obj->isLittleEndian(), 0);
       uint32_t Offset = 0;
       if (const char *DebugNameStr = DE.getCStr(&Offset)) {

@@ -158,17 +158,14 @@ getSectionsAndSymbols(const MachO::mach_header Header,
        SI != SE; ++SI)
     Symbols.push_back(*SI);
 
-  for (section_iterator SI = MachOObj->section_begin(),
-                        SE = MachOObj->section_end();
-       SI != SE; ++SI) {
-    SectionRef SR = *SI;
+  for (const SectionRef &Section : MachOObj->sections()) {
     StringRef SectName;
-    SR.getName(SectName);
-    Sections.push_back(*SI);
+    Section.getName(SectName);
+    Sections.push_back(Section);
   }
 
   MachOObjectFile::LoadCommandInfo Command =
-    MachOObj->getFirstLoadCommandInfo();
+      MachOObj->getFirstLoadCommandInfo();
   bool BaseSegmentAddressSet = false;
   for (unsigned i = 0; ; ++i) {
     if (Command.C.cmd == MachO::LC_FUNCTION_STARTS) {

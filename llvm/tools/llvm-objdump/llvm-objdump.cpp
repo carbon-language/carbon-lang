@@ -385,28 +385,26 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   // Create a mapping, RelocSecs = SectionRelocMap[S], where sections
   // in RelocSecs contain the relocations for section S.
   error_code EC;
-  std::map<SectionRef, SmallVector<SectionRef, 1> > SectionRelocMap;
-  for (section_iterator I = Obj->section_begin(), E = Obj->section_end();
-       I != E; ++I) {
-    section_iterator Sec2 = I->getRelocatedSection();
+  std::map<SectionRef, SmallVector<SectionRef, 1>> SectionRelocMap;
+  for (const SectionRef &Section : Obj->sections()) {
+    section_iterator Sec2 = Section.getRelocatedSection();
     if (Sec2 != Obj->section_end())
-      SectionRelocMap[*Sec2].push_back(*I);
+      SectionRelocMap[*Sec2].push_back(Section);
   }
 
-  for (section_iterator I = Obj->section_begin(), E = Obj->section_end();
-       I != E; ++I) {
+  for (const SectionRef &Section : Obj->sections()) {
     bool Text;
-    if (error(I->isText(Text)))
+    if (error(Section.isText(Text)))
       break;
     if (!Text)
       continue;
 
     uint64_t SectionAddr;
-    if (error(I->getAddress(SectionAddr)))
+    if (error(Section.getAddress(SectionAddr)))
       break;
 
     uint64_t SectSize;
-    if (error(I->getSize(SectSize)))
+    if (error(Section.getSize(SectSize)))
       break;
 
     // Make a list of all the symbols in this section.
@@ -414,7 +412,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     for (symbol_iterator SI = Obj->symbol_begin(), SE = Obj->symbol_end();
          SI != SE; ++SI) {
       bool contains;
-      if (!error(I->containsSymbol(*SI, contains)) && contains) {
+      if (!error(Section.containsSymbol(*SI, contains)) && contains) {
         uint64_t Address;
         if (error(SI->getAddress(Address)))
           break;
@@ -437,7 +435,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     // Make a list of all the relocations for this section.
     std::vector<RelocationRef> Rels;
     if (InlineRelocs) {
-      SmallVectorImpl<SectionRef> *RelocSecs = &SectionRelocMap[*I];
+      SmallVectorImpl<SectionRef> *RelocSecs = &SectionRelocMap[Section];
       for (SmallVectorImpl<SectionRef>::iterator RelocSec = RelocSecs->begin(),
                                                  E = RelocSecs->end();
            RelocSec != E; ++RelocSec) {
@@ -453,11 +451,11 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
     StringRef SegmentName = "";
     if (const MachOObjectFile *MachO = dyn_cast<const MachOObjectFile>(Obj)) {
-      DataRefImpl DR = I->getRawDataRefImpl();
+      DataRefImpl DR = Section.getRawDataRefImpl();
       SegmentName = MachO->getSectionFinalSegmentName(DR);
     }
     StringRef name;
-    if (error(I->getName(name)))
+    if (error(Section.getName(name)))
       break;
     outs() << "Disassembly of section ";
     if (!SegmentName.empty())
@@ -474,7 +472,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     raw_svector_ostream CommentStream(Comments);
 
     StringRef Bytes;
-    if (error(I->getContents(Bytes)))
+    if (error(Section.getContents(Bytes)))
       break;
     StringRefMemoryObject memoryObject(Bytes, SectionAddr);
     uint64_t Size;
@@ -554,16 +552,16 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   }
 }
 
-static void PrintRelocations(const ObjectFile *o) {
-  for (section_iterator si = o->section_begin(), se = o->section_end();
-       si != se; ++si) {
-    if (si->relocation_begin() == si->relocation_end())
+static void PrintRelocations(const ObjectFile *Obj) {
+  for (const SectionRef &Section : Obj->sections()) {
+    if (Section.relocation_begin() == Section.relocation_end())
       continue;
     StringRef secname;
-    if (error(si->getName(secname))) continue;
+    if (error(Section.getName(secname)))
+      continue;
     outs() << "RELOCATION RECORDS FOR [" << secname << "]:\n";
-    for (relocation_iterator ri = si->relocation_begin(),
-                             re = si->relocation_end();
+    for (relocation_iterator ri = Section.relocation_begin(),
+                             re = Section.relocation_end();
          ri != re; ++ri) {
       bool hidden;
       uint64_t address;
@@ -580,43 +578,50 @@ static void PrintRelocations(const ObjectFile *o) {
   }
 }
 
-static void PrintSectionHeaders(const ObjectFile *o) {
+static void PrintSectionHeaders(const ObjectFile *Obj) {
   outs() << "Sections:\n"
             "Idx Name          Size      Address          Type\n";
   unsigned i = 0;
-  for (section_iterator si = o->section_begin(), se = o->section_end();
-       si != se; ++si) {
+  for (const SectionRef &Section : Obj->sections()) {
     StringRef Name;
-    if (error(si->getName(Name)))
+    if (error(Section.getName(Name)))
       return;
     uint64_t Address;
-    if (error(si->getAddress(Address))) return;
+    if (error(Section.getAddress(Address)))
+      return;
     uint64_t Size;
-    if (error(si->getSize(Size))) return;
+    if (error(Section.getSize(Size)))
+      return;
     bool Text, Data, BSS;
-    if (error(si->isText(Text))) return;
-    if (error(si->isData(Data))) return;
-    if (error(si->isBSS(BSS))) return;
+    if (error(Section.isText(Text)))
+      return;
+    if (error(Section.isData(Data)))
+      return;
+    if (error(Section.isBSS(BSS)))
+      return;
     std::string Type = (std::string(Text ? "TEXT " : "") +
                         (Data ? "DATA " : "") + (BSS ? "BSS" : ""));
-    outs() << format("%3d %-13s %08" PRIx64 " %016" PRIx64 " %s\n",
-                     i, Name.str().c_str(), Size, Address, Type.c_str());
+    outs() << format("%3d %-13s %08" PRIx64 " %016" PRIx64 " %s\n", i,
+                     Name.str().c_str(), Size, Address, Type.c_str());
     ++i;
   }
 }
 
-static void PrintSectionContents(const ObjectFile *o) {
+static void PrintSectionContents(const ObjectFile *Obj) {
   error_code EC;
-  for (section_iterator si = o->section_begin(), se = o->section_end();
-       si != se; ++si) {
+  for (const SectionRef &Section : Obj->sections()) {
     StringRef Name;
     StringRef Contents;
     uint64_t BaseAddr;
     bool BSS;
-    if (error(si->getName(Name))) continue;
-    if (error(si->getContents(Contents))) continue;
-    if (error(si->getAddress(BaseAddr))) continue;
-    if (error(si->isBSS(BSS))) continue;
+    if (error(Section.getName(Name)))
+      continue;
+    if (error(Section.getContents(Contents)))
+      continue;
+    if (error(Section.getAddress(BaseAddr)))
+      continue;
+    if (error(Section.isBSS(BSS)))
+      continue;
 
     outs() << "Contents of section " << Name << ":\n";
     if (BSS) {
