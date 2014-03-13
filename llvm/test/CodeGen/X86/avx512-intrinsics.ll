@@ -521,3 +521,19 @@ define i16 @test_vptestmd(<16 x i32> %a0, <16 x i32> %a1) {
   ret i16 %res
 }
 declare i16 @llvm.x86.avx512.mask.ptestm.d.512(<16 x i32>, <16 x i32>, i16)
+
+define void @test_store1(<16 x float> %data, i8* %ptr, i16 %mask) {
+; CHECK: vmovups {{.*}}encoding: [0x62,0xf1,0x7c,0x49,0x11,0x07]
+  call void @llvm.x86.avx512.mask.storeu.ps.512(i8* %ptr, <16 x float> %data, i16 %mask)
+  ret void
+}
+
+declare void @llvm.x86.avx512.mask.storeu.ps.512(i8*, <16 x float>, i16 )
+
+define void @test_store2(<8 x double> %data, i8* %ptr, i8 %mask) {
+; CHECK: vmovupd {{.*}}encoding: [0x62,0xf1,0xfd,0x49,0x11,0x07]
+  call void @llvm.x86.avx512.mask.storeu.pd.512(i8* %ptr, <8 x double> %data, i8 %mask)
+  ret void
+}
+
+declare void @llvm.x86.avx512.mask.storeu.pd.512(i8*, <8 x double>, i8 )

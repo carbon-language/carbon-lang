@@ -1321,6 +1321,12 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx_maskload_ps_256 : GCCBuiltin<"__builtin_ia32_maskloadps256">,
         Intrinsic<[llvm_v8f32_ty], [llvm_ptr_ty, llvm_v8f32_ty],
                   [IntrReadArgMem]>;
+  def int_x86_avx512_mask_loadu_ps_512 : GCCBuiltin<"__builtin_ia32_loadups512_mask">,
+        Intrinsic<[llvm_v16f32_ty], [llvm_ptr_ty, llvm_v16f32_ty, llvm_i16_ty],
+                  [IntrReadArgMem]>;
+  def int_x86_avx512_mask_loadu_pd_512 : GCCBuiltin<"__builtin_ia32_loadupd512_mask">,
+        Intrinsic<[llvm_v8f64_ty], [llvm_ptr_ty, llvm_v8f64_ty, llvm_i8_ty],
+                  [IntrReadArgMem]>;
 }
 
 // Conditional store ops
@@ -1339,6 +1345,14 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
         GCCBuiltin<"__builtin_ia32_maskstoreps256">,
         Intrinsic<[], [llvm_ptr_ty,
                   llvm_v8f32_ty, llvm_v8f32_ty], [IntrReadWriteArgMem]>;
+  def int_x86_avx512_mask_storeu_ps_512 :
+        GCCBuiltin<"__builtin_ia32_storeups512_mask">,
+        Intrinsic<[], [llvm_ptr_ty, llvm_v16f32_ty, llvm_i16_ty],
+                  [IntrReadWriteArgMem]>;
+  def int_x86_avx512_mask_storeu_pd_512 :
+        GCCBuiltin<"__builtin_ia32_storeupd512_mask">,
+        Intrinsic<[], [llvm_ptr_ty, llvm_v8f64_ty, llvm_i8_ty],
+                  [IntrReadWriteArgMem]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1753,6 +1767,12 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx2_maskload_q_256 : GCCBuiltin<"__builtin_ia32_maskloadq256">,
         Intrinsic<[llvm_v4i64_ty], [llvm_ptr_ty, llvm_v4i64_ty],
                   [IntrReadArgMem]>;
+  def int_x86_avx512_mask_loadu_d_512 : GCCBuiltin<"__builtin_ia32_loaddqusi512_mask">,
+        Intrinsic<[llvm_v16i32_ty], [llvm_ptr_ty, llvm_v16i32_ty, llvm_i16_ty],
+                  [IntrReadArgMem]>;
+  def int_x86_avx512_mask_loadu_q_512 : GCCBuiltin<"__builtin_ia32_loaddqudi512_mask">,
+        Intrinsic<[llvm_v8i64_ty], [llvm_ptr_ty, llvm_v8i64_ty, llvm_i8_ty],
+                  [IntrReadArgMem]>;
 }
 
 // Conditional store ops
@@ -1770,6 +1790,14 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx2_maskstore_q_256 :
         GCCBuiltin<"__builtin_ia32_maskstoreq256">,
         Intrinsic<[], [llvm_ptr_ty, llvm_v4i64_ty, llvm_v4i64_ty],
+                  [IntrReadWriteArgMem]>;
+  def int_x86_avx512_mask_storeu_d_512 :
+        GCCBuiltin<"__builtin_ia32_storedqusi512_mask">,
+        Intrinsic<[], [llvm_ptr_ty, llvm_v16i32_ty, llvm_i16_ty],
+                  [IntrReadWriteArgMem]>;
+  def int_x86_avx512_mask_storeu_q_512 :
+        GCCBuiltin<"__builtin_ia32_storedqudi512_mask">,
+        Intrinsic<[], [llvm_ptr_ty, llvm_v8i64_ty, llvm_i8_ty],
                   [IntrReadWriteArgMem]>;
 }
 
