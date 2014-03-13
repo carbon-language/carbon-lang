@@ -103,7 +103,14 @@ class TestQueues(TestBase):
         self.assertTrue(q3.GetNumPendingItems() == 0, "queue 3 should have 0 pending items")
         self.assertTrue(q3.GetNumRunningItems() == 4, "queue 3 should have 4 running item")
 
+        self.assertTrue(q0.GetNumThreads() == 1, "queue 0 should have 1 thread executing")
         self.assertTrue(q3.GetNumThreads() == 4, "queue 3 should have 4 threads executing")
+
+        self.assertTrue(q0.GetKind() == lldb.eQueueKindSerial, "queue 0 is a serial queue")
+        self.assertTrue(q1.GetKind() == lldb.eQueueKindSerial, "queue 1 is a serial queue")
+        self.assertTrue(q2.GetKind() == lldb.eQueueKindSerial, "queue 2 is a serial queue")
+        self.assertTrue(q3.GetKind() == lldb.eQueueKindConcurrent, "queue 3 is a concurrent queue")
+        
 
         self.assertTrue(q1.GetThreadAtIndex(0).GetQueueID() == q1.GetQueueID(), "queue 1's thread should be owned by the same QueueID")
         self.assertTrue(q1.GetThreadAtIndex(0).GetQueueName() == q1.GetName(), "queue 1's thread should have the same queue name")
@@ -117,7 +124,6 @@ class TestQueues(TestBase):
         self.assertTrue(q2.GetPendingItemAtIndex(9998).IsValid(), "queue 2's pending item #9998 is valid")
         self.assertTrue(q2.GetPendingItemAtIndex(9998).GetAddress().GetSymbol().GetName() == "doing_the_work_2", "queue 2's pending item #0 should be doing_the_work_2")
         self.assertTrue(q2.GetPendingItemAtIndex(9999).IsValid() == False, "queue 2's pending item #9999 is invalid")
-
 
         
 if __name__ == '__main__':
