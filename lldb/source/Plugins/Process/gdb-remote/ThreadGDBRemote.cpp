@@ -107,6 +107,25 @@ ThreadGDBRemote::GetQueueID ()
     return LLDB_INVALID_QUEUE_ID;
 }
 
+addr_t
+ThreadGDBRemote::GetQueueLibdispatchQueueAddress ()
+{
+    addr_t dispatch_queue_t_addr = LLDB_INVALID_ADDRESS;
+    if (m_thread_dispatch_qaddr != 0 || m_thread_dispatch_qaddr != LLDB_INVALID_ADDRESS)
+    {
+        ProcessSP process_sp (GetProcess());
+        if (process_sp)
+        {
+            SystemRuntime *runtime = process_sp->GetSystemRuntime ();
+            if (runtime)
+            {
+                dispatch_queue_t_addr = runtime->GetLibdispatchQueueAddressFromThreadQAddress (m_thread_dispatch_qaddr);
+            }
+        }
+    }
+    return dispatch_queue_t_addr;
+}
+
 void
 ThreadGDBRemote::WillResume (StateType resume_state)
 {

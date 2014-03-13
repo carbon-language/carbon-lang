@@ -168,6 +168,18 @@ public:
         m_pending_items.push_back (item);
     }
 
+    //------------------------------------------------------------------
+    /// Return the kind (serial, concurrent) of this queue
+    ///
+    /// @return
+    //      Whether this is a serial or a concurrent queue
+    //------------------------------------------------------------------
+    lldb::QueueKind
+    GetKind ();
+
+    void
+    SetKind (lldb::QueueKind kind);
+
 private:
     //------------------------------------------------------------------
     // For Queue only
@@ -180,6 +192,7 @@ private:
     uint32_t                        m_pending_work_items_count;
     std::vector<lldb::QueueItemSP>  m_pending_items;
     lldb::addr_t                    m_dispatch_queue_t_addr;  // address of libdispatch dispatch_queue_t for this Queue
+    lldb::QueueKind                 m_kind;
 
     DISALLOW_COPY_AND_ASSIGN (Queue);
 };

@@ -305,6 +305,21 @@ public:
     {
     }
 
+    //------------------------------------------------------------------
+    /// Retrieve the Queue ID for the queue currently using this Thread
+    ///
+    /// If this Thread is doing work on behalf of a libdispatch/GCD queue,
+    /// retrieve the QueueID.
+    ///
+    /// This is a unique identifier for the libdispatch/GCD queue in a 
+    /// process.  Often starting at 1 for the initial system-created 
+    /// queues and incrementing, a QueueID will not be reused for a
+    /// different queue during the lifetime of a proces.
+    ///
+    /// @return
+    ///     A QueueID if the Thread subclass implements this, else
+    ///     LLDB_INVALID_QUEUE_ID.
+    //------------------------------------------------------------------
     virtual lldb::queue_id_t
     GetQueueID ()
     {
@@ -316,6 +331,16 @@ public:
     {
     }
 
+    //------------------------------------------------------------------
+    /// Retrieve the Queue name for the queue currently using this Thread
+    ///
+    /// If this Thread is doing work on behalf of a libdispatch/GCD queue,
+    /// retrieve the Queue name.
+    ///
+    /// @return
+    ///     The Queue name, if the Thread subclass implements this, else
+    ///     NULL.
+    //------------------------------------------------------------------
     virtual const char *
     GetQueueName ()
     {
@@ -325,6 +350,28 @@ public:
     virtual void
     SetQueueName (const char *name)
     {
+    }
+
+    //------------------------------------------------------------------
+    /// Retrieve the address of the libdispatch_queue_t struct for queue
+    /// currently using this Thread
+    ///
+    /// If this Thread is doing work on behalf of a libdispatch/GCD queue,
+    /// retrieve the address of the libdispatch_queue_t structure describing
+    /// the queue.
+    ///
+    /// This address may be reused for different queues later in the Process
+    /// lifetime and should not be used to identify a queue uniquely.  Use
+    /// the GetQueueID() call for that.
+    ///
+    /// @return
+    ///     The Queue's libdispatch_queue_t address if the Thread subclass
+    ///     implements this, else LLDB_INVALID_ADDRESS.
+    //------------------------------------------------------------------
+    virtual lldb::addr_t
+    GetQueueLibdispatchQueueAddress ()
+    {
+        return LLDB_INVALID_ADDRESS;
     }
 
     virtual uint32_t

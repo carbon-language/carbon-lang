@@ -97,11 +97,17 @@ public:
     lldb::queue_id_t
     GetQueueIDFromThreadQAddress (lldb::addr_t dispatch_qaddr);
 
+    lldb::addr_t
+    GetLibdispatchQueueAddressFromThreadQAddress (lldb::addr_t dispatch_qaddr);
+
     void
     PopulatePendingItemsForQueue (lldb_private::Queue *queue);
 
     void
     CompleteQueueItem (lldb_private::QueueItem *queue_item, lldb::addr_t item_ref);
+
+    virtual lldb::QueueKind
+    GetQueueKind (lldb::addr_t dispatch_queue_addr);
 
     //------------------------------------------------------------------
     // PluginInterface protocol

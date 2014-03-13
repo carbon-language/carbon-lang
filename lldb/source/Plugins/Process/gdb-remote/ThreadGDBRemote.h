@@ -41,6 +41,9 @@ public:
     virtual lldb::queue_id_t
     GetQueueID ();
 
+    lldb::addr_t
+    GetQueueLibdispatchQueueAddress ();
+
     virtual lldb::RegisterContextSP
     GetRegisterContext ();
 

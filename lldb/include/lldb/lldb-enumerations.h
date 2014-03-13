@@ -741,6 +741,18 @@ namespace lldb {
         eQueueItemKindBlock
     } QueueItemKind;
 
+    //----------------------------------------------------------------------
+    // Queue type
+    // libdispatch aka Grand Central Dispatch (GCD) queues can be either serial
+    // (executing on one thread) or concurrent (executing on multiple threads).
+    //----------------------------------------------------------------------
+    typedef enum QueueKind
+    {
+        eQueueKindUnknown = 0,
+        eQueueKindSerial,
+        eQueueKindConcurrent
+    } QueueKind;
+
 } // namespace lldb
 
 

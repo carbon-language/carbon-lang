@@ -222,7 +222,7 @@ public:
     /// get the queue name and return it.
     ///
     /// @param [in] dispatch_qaddr
-    ///     The address of the dispatch_queue_t structure for this thread.
+    ///     The address of the dispatch_qaddr pointer for this thread.
     ///
     /// @return
     ///     The string of this queue's name.  An empty string is returned if the
@@ -244,7 +244,7 @@ public:
     /// get the queue ID and return it.
     /// 
     /// @param [in] dispatch_qaddr
-    ///     The address of the dispatch_queue_t structure for this thread.
+    ///     The address of the dispatch_qaddr pointer for this thread.
     ///
     /// @return
     ///     The queue ID, or if it could not be retrieved, LLDB_INVALID_QUEUE_ID.
@@ -253,6 +253,26 @@ public:
     GetQueueIDFromThreadQAddress (lldb::addr_t dispatch_qaddr)
     {
         return LLDB_INVALID_QUEUE_ID;
+    }
+
+    //------------------------------------------------------------------
+    /// Get the libdispatch_queue_t address for the queue given the thread's dispatch_qaddr.
+    ///
+    /// On systems using libdispatch queues, a thread may be associated with a queue.
+    /// There will be a call to get the thread's dispatch_qaddr.  
+    /// Given the thread's dispatch_qaddr, find the libdispatch_queue_t address and
+    /// return it.
+    /// 
+    /// @param [in] dispatch_qaddr
+    ///     The address of the dispatch_qaddr pointer for this thread.
+    ///
+    /// @return
+    ///     The libdispatch_queue_t address, or LLDB_INVALID_ADDRESS if unavailable/not found.
+    //------------------------------------------------------------------
+    virtual lldb::addr_t
+    GetLibdispatchQueueAddressFromThreadQAddress (lldb::addr_t dispatch_qaddr)
+    {
+        return LLDB_INVALID_ADDRESS;
     }
 
     //------------------------------------------------------------------

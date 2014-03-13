@@ -23,7 +23,8 @@ Queue::Queue (ProcessSP process_sp, lldb::queue_id_t queue_id, const char *queue
     m_running_work_items_count(0),
     m_pending_work_items_count(0),
     m_pending_items(),
-    m_dispatch_queue_t_addr(LLDB_INVALID_ADDRESS)
+    m_dispatch_queue_t_addr(LLDB_INVALID_ADDRESS),
+    m_kind (eQueueKindUnknown)
 {
     if (queue_name)
         m_queue_name = queue_name;
@@ -124,4 +125,16 @@ Queue::GetPendingItems ()
         }
     }
     return m_pending_items;
+}
+
+lldb::QueueKind
+Queue::GetKind ()
+{
+    return m_kind;
+}
+
+void
+Queue::SetKind (lldb::QueueKind kind)
+{
+    m_kind = kind;
 }

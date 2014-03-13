@@ -274,6 +274,17 @@ namespace lldb_private
             return result;
         }
 
+        lldb::QueueKind
+        GetKind ()
+        {
+            lldb::QueueKind kind = eQueueKindUnknown;
+            QueueSP queue_sp = m_queue_wp.lock();
+            if (queue_sp)
+                kind = queue_sp->GetKind();
+
+            return kind;
+        }
+
     private:
         lldb::QueueWP                   m_queue_wp;
         std::vector<lldb::ThreadWP>     m_threads;              // threads currently executing this queue's items
@@ -426,4 +437,10 @@ SBProcess
 SBQueue::GetProcess ()
 {
     return m_opaque_sp->GetProcess();
+}
+
+lldb::QueueKind
+SBQueue::GetKind ()
+{
+    return m_opaque_sp->GetKind();
 }

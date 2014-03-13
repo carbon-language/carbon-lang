@@ -65,6 +65,9 @@ public:
     uint32_t
     GetNumRunningItems ();
 
+    lldb::QueueKind
+    GetKind ();
+
 protected:
     friend class SBProcess;
 

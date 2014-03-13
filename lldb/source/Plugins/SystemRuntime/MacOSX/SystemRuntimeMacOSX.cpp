@@ -174,6 +174,46 @@ SystemRuntimeMacOSX::GetQueueNameFromThreadQAddress (addr_t dispatch_qaddr)
     return dispatch_queue_name;
 }
 
+lldb::addr_t
+SystemRuntimeMacOSX::GetLibdispatchQueueAddressFromThreadQAddress (addr_t dispatch_qaddr)
+{
+    addr_t libdispatch_queue_t_address = LLDB_INVALID_ADDRESS;
+    Error error;
+    libdispatch_queue_t_address = m_process->ReadPointerFromMemory (dispatch_qaddr, error);
+    if (!error.Success())
+    {
+        libdispatch_queue_t_address = LLDB_INVALID_ADDRESS;
+    }
+    return libdispatch_queue_t_address;
+}
+
+lldb::QueueKind
+SystemRuntimeMacOSX::GetQueueKind (addr_t dispatch_queue_addr)
+{
+    if (dispatch_queue_addr == LLDB_INVALID_ADDRESS || dispatch_queue_addr == 0)
+      return eQueueKindUnknown;
+
+    QueueKind kind = eQueueKindUnknown;
+    ReadLibdispatchOffsets ();
+    if (m_libdispatch_offsets.IsValid () && m_libdispatch_offsets.dqo_version >= 4)
+    {
+        Error error;
+        uint64_t width = m_process->ReadUnsignedIntegerFromMemory (dispatch_queue_addr + m_libdispatch_offsets.dqo_width, m_libdispatch_offsets.dqo_width_size, 0, error);
+        if (error.Success())
+        {
+            if (width == 1)
+            {
+                kind = eQueueKindSerial;
+            }
+            if (width > 1)
+            {
+                kind = eQueueKindConcurrent;
+            }
+        }
+    }
+    return kind;
+}
+
 lldb::queue_id_t
 SystemRuntimeMacOSX::GetQueueIDFromThreadQAddress (lldb::addr_t dispatch_qaddr)
 {
@@ -496,6 +536,8 @@ SystemRuntimeMacOSX::PopulateQueueList (lldb_private::QueueList &queue_list)
                 if (queue_list.FindQueueByID (thread_sp->GetQueueID()).get() == NULL)
                 {
                     QueueSP queue_sp (new Queue(m_process->shared_from_this(), thread_sp->GetQueueID(), thread_sp->GetQueueName()));
+                    queue_sp->SetKind (GetQueueKind (thread_sp->GetQueueLibdispatchQueueAddress()));
+                    queue_sp->SetLibdispatchQueueAddress (thread_sp->GetQueueLibdispatchQueueAddress());
                     queue_list.AddQueue (queue_sp);
                 }
             }
@@ -716,6 +758,7 @@ SystemRuntimeMacOSX::PopulateQueuesUsingLibBTR (lldb::addr_t queues_buffer, uint
             queue_sp->SetNumRunningWorkItems (running_work_items_count);
             queue_sp->SetNumPendingWorkItems (pending_work_items_count);
             queue_sp->SetLibdispatchQueueAddress (queue);
+            queue_sp->SetKind (GetQueueKind (queue));
             queue_list.AddQueue (queue_sp);
             queues_read++;
         }
