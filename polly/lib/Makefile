@@ -30,6 +30,9 @@ USEDLIBS += pollysupport.a
 DIRS += JSON
 USEDLIBS += pollyjson.a
 
+DIRS += Transform
+USEDLIBS += pollytransform.a
+
 # TODO: Export symbols for RTTI or EH?
 
 #
@@ -92,4 +95,15 @@ $(LibDir)/libpollyjson.a : $(LibDir)/.dir $(PROJ_OBJ_DIR)/JSON/$(BuildMode)/.dir
       $(CP) $(PROJ_SRC_DIR)/JSON/Makefile JSON/Makefile; \
     fi; \
     ($(MAKE) -C JSON $@ ) || exit 1; \
+  fi
+
+$(LibDir)/libpollytransform.a : $(LibDir)/.dir $(PROJ_OBJ_DIR)/Transform/$(BuildMode)/.dir \
+                              $(PROJ_SRC_DIR)/Transform/*
+	$(Verb) if [ -d $(PROJ_SRC_DIR)/Transform ]; then\
+    if ([ ! -f Transform/Makefile ] || \
+        command test Transform/Makefile -ot $(PROJ_SRC_DIR)/Transform/Makefile ); then \
+      $(MKDIR) Transform; \
+      $(CP) $(PROJ_SRC_DIR)/Transform/Makefile Transform/Makefile; \
+    fi; \
+    ($(MAKE) -C Transform $@ ) || exit 1; \
   fi
