@@ -1092,6 +1092,14 @@ public:
   typedef filtered_category_iterator<isVisibleCategory>
     visible_categories_iterator;
 
+  typedef llvm::iterator_range<visible_categories_iterator>
+    visible_categories_range;
+
+  visible_categories_range visible_categories() const {
+    return visible_categories_range(visible_categories_begin(),
+                                    visible_categories_end());
+  }
+
   /// \brief Retrieve an iterator to the beginning of the visible-categories
   /// list.
   visible_categories_iterator visible_categories_begin() const {

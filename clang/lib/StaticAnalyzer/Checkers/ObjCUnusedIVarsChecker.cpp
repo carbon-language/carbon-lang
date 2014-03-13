@@ -88,10 +88,7 @@ static void Scan(IvarUsageMap& M, const ObjCContainerDecl *D) {
       Scan(M, *I);
 
     // Scan the associated categories as well.
-    for (ObjCInterfaceDecl::visible_categories_iterator
-           Cat = ID->getClassInterface()->visible_categories_begin(),
-           CatEnd = ID->getClassInterface()->visible_categories_end();
-         Cat != CatEnd; ++Cat) {
+    for (const auto *Cat : ID->getClassInterface()->visible_categories()) {
       if (const ObjCCategoryImplDecl *CID = Cat->getImplementation())
         Scan(M, CID);
     }

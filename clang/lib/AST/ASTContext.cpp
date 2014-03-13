@@ -1822,12 +1822,8 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
     }
     
     // Categories of this Interface.
-    for (ObjCInterfaceDecl::visible_categories_iterator
-           Cat = OI->visible_categories_begin(),
-           CatEnd = OI->visible_categories_end();
-         Cat != CatEnd; ++Cat) {
-      CollectInheritedProtocols(*Cat, Protocols);
-    }
+    for (const auto *Cat : OI->visible_categories())
+      CollectInheritedProtocols(Cat, Protocols);
 
     if (ObjCInterfaceDecl *SD = OI->getSuperClass())
       while (SD) {

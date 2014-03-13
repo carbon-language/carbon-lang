@@ -1883,12 +1883,9 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
     // i.e. when WarnCategoryMethodImpl is false, check declarations in class
     // extension; as well as those in categories.
     if (!WarnCategoryMethodImpl) {
-      for (ObjCInterfaceDecl::visible_categories_iterator
-             Cat = I->visible_categories_begin(),
-           CatEnd = I->visible_categories_end();
-           Cat != CatEnd; ++Cat) {
+      for (auto *Cat : I->visible_categories()) {
         MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
-                                   IMPDecl, *Cat, IncompleteImpl, false,
+                                   IMPDecl, Cat, IncompleteImpl, false,
                                    WarnCategoryMethodImpl);
       }
     } else {

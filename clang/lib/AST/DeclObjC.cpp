@@ -112,11 +112,7 @@ ObjCContainerDecl::HasUserDeclaredSetterMethod(const ObjCPropertyDecl *Property)
   if (const ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(this)) {
     // Also look into categories, including class extensions, looking
     // for a user declared instance method.
-    for (ObjCInterfaceDecl::visible_categories_iterator
-         Cat = ID->visible_categories_begin(),
-         CatEnd = ID->visible_categories_end();
-         Cat != CatEnd;
-         ++Cat) {
+    for (const auto *Cat : ID->visible_categories()) {
       if (ObjCMethodDecl *MD = Cat->getInstanceMethod(Sel))
         if (!MD->isImplicit())
           return true;
@@ -214,10 +210,7 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
     case Decl::ObjCInterface: {
       const ObjCInterfaceDecl *OID = cast<ObjCInterfaceDecl>(this);
       // Look through categories (but not extensions).
-      for (ObjCInterfaceDecl::visible_categories_iterator
-             Cat = OID->visible_categories_begin(),
-             CatEnd = OID->visible_categories_end();
-           Cat != CatEnd; ++Cat) {
+      for (const auto *Cat : OID->visible_categories()) {
         if (!Cat->IsClassExtension())
           if (ObjCPropertyDecl *P = Cat->FindPropertyDeclaration(PropertyId))
             return P;
@@ -545,12 +538,9 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
         return MethodDecl;
     
     // Didn't find one yet - now look through categories.
-    for (ObjCInterfaceDecl::visible_categories_iterator
-         Cat = ClassDecl->visible_categories_begin(),
-         CatEnd = ClassDecl->visible_categories_end();
-         Cat != CatEnd; ++Cat) {
+    for (const auto *Cat : ClassDecl->visible_categories()) {
       if ((MethodDecl = Cat->getMethod(Sel, isInstance)))
-        if (C != (*Cat) || !MethodDecl->isImplicit())
+        if (C != Cat || !MethodDecl->isImplicit())
           return MethodDecl;
 
       if (!shallowCategoryLookup) {
@@ -560,7 +550,7 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
         for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
              E = Protocols.end(); I != E; ++I)
           if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
-            if (C != (*Cat) || !MethodDecl->isImplicit())
+            if (C != Cat || !MethodDecl->isImplicit())
               return MethodDecl;
       }
     }
@@ -1313,23 +1303,16 @@ ObjCInterfaceDecl::FindCategoryDeclaration(IdentifierInfo *CategoryId) const {
   if (data().ExternallyCompleted)
     LoadExternalDefinition();
 
-  for (visible_categories_iterator Cat = visible_categories_begin(),
-                                   CatEnd = visible_categories_end();
-       Cat != CatEnd;
-       ++Cat) {
+  for (auto *Cat : visible_categories())
     if (Cat->getIdentifier() == CategoryId)
-      return *Cat;
-  }
+      return Cat;
   
   return 0;
 }
 
 ObjCMethodDecl *
 ObjCInterfaceDecl::getCategoryInstanceMethod(Selector Sel) const {
-  for (visible_categories_iterator Cat = visible_categories_begin(),
-                                   CatEnd = visible_categories_end();
-       Cat != CatEnd;
-       ++Cat) {
+  for (const auto *Cat : visible_categories()) {
     if (ObjCCategoryImplDecl *Impl = Cat->getImplementation())
       if (ObjCMethodDecl *MD = Impl->getInstanceMethod(Sel))
         return MD;
@@ -1339,10 +1322,7 @@ ObjCInterfaceDecl::getCategoryInstanceMethod(Selector Sel) const {
 }
 
 ObjCMethodDecl *ObjCInterfaceDecl::getCategoryClassMethod(Selector Sel) const {
-  for (visible_categories_iterator Cat = visible_categories_begin(),
-                                   CatEnd = visible_categories_end();
-       Cat != CatEnd;
-       ++Cat) {
+  for (const auto *Cat : visible_categories()) {
     if (ObjCCategoryImplDecl *Impl = Cat->getImplementation())
       if (ObjCMethodDecl *MD = Impl->getClassMethod(Sel))
         return MD;
@@ -1378,10 +1358,7 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
 
   // 2nd, look up the category.
   if (lookupCategory)
-    for (visible_categories_iterator Cat = visible_categories_begin(),
-                                     CatEnd = visible_categories_end();
-         Cat != CatEnd;
-         ++Cat) {
+    for (const auto *Cat : visible_categories()) {
       for (ObjCCategoryDecl::protocol_iterator PI = Cat->protocol_begin(),
                                                E = Cat->protocol_end();
            PI != E; ++PI)

@@ -5863,12 +5863,8 @@ void Sema::CodeCompleteObjCInterfaceCategory(Scope *S,
   NamedDecl *CurClass
     = LookupSingleName(TUScope, ClassName, ClassNameLoc, LookupOrdinaryName);
   if (ObjCInterfaceDecl *Class = dyn_cast_or_null<ObjCInterfaceDecl>(CurClass)){
-    for (ObjCInterfaceDecl::visible_categories_iterator
-           Cat = Class->visible_categories_begin(),
-           CatEnd = Class->visible_categories_end();
-         Cat != CatEnd; ++Cat) {
+    for (const auto *Cat : Class->visible_categories())
       CategoryNames.insert(Cat->getIdentifier());
-    }
   }
 
   // Add all of the categories we know about.
@@ -5911,13 +5907,10 @@ void Sema::CodeCompleteObjCImplementationCategory(Scope *S,
   Results.EnterNewScope();
   bool IgnoreImplemented = true;
   while (Class) {
-    for (ObjCInterfaceDecl::visible_categories_iterator
-           Cat = Class->visible_categories_begin(),
-           CatEnd = Class->visible_categories_end();
-         Cat != CatEnd; ++Cat) {
+    for (const auto *Cat : Class->visible_categories()) {
       if ((!IgnoreImplemented || !Cat->getImplementation()) &&
           CategoryNames.insert(Cat->getIdentifier()))
-        Results.AddResult(Result(*Cat, Results.getBasePriority(*Cat), 0),
+        Results.AddResult(Result(Cat, Results.getBasePriority(Cat), 0),
                           CurContext, 0, false);
     }
     
@@ -6094,11 +6087,8 @@ static void FindImplementableMethods(ASTContext &Context,
                                KnownMethods, InOriginalClass);
 
     // Add methods from any class extensions and categories.
-    for (ObjCInterfaceDecl::visible_categories_iterator
-           Cat = IFace->visible_categories_begin(),
-           CatEnd = IFace->visible_categories_end();
-         Cat != CatEnd; ++Cat) {
-      FindImplementableMethods(Context, *Cat, WantInstanceMethods, ReturnType,
+    for (auto *Cat : IFace->visible_categories()) {
+      FindImplementableMethods(Context, Cat, WantInstanceMethods, ReturnType,
                                KnownMethods, false);      
     }
 
@@ -6958,14 +6948,9 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
       if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(SearchDecl))
         IFace = Category->getClassInterface();
     
-    if (IFace) {
-      for (ObjCInterfaceDecl::visible_categories_iterator
-             Cat = IFace->visible_categories_begin(),
-             CatEnd = IFace->visible_categories_end();
-           Cat != CatEnd; ++Cat) {
-        Containers.push_back(*Cat);
-      }
-    }
+    if (IFace)
+      for (auto *Cat : IFace->visible_categories())
+        Containers.push_back(Cat);
     
     for (unsigned I = 0, N = Containers.size(); I != N; ++I)
       for (auto *P : Containers[I]->properties())
