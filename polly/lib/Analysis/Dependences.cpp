@@ -42,12 +42,13 @@ static cl::opt<int>
 OptComputeOut("polly-dependences-computeout",
               cl::desc("Bound the dependence analysis by a maximal amount of "
                        "computational steps"),
-              cl::Hidden, cl::init(100000), cl::cat(PollyCategory));
+              cl::Hidden, cl::init(100000), cl::ZeroOrMore,
+              cl::cat(PollyCategory));
 
 static cl::opt<bool>
 LegalityCheckDisabled("disable-polly-legality",
                       cl::desc("Disable polly legality check"), cl::Hidden,
-                      cl::init(false), cl::cat(PollyCategory));
+                      cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 enum AnalysisType { VALUE_BASED_ANALYSIS, MEMORY_BASED_ANALYSIS };
 
@@ -59,7 +60,8 @@ static cl::opt<enum AnalysisType> OptAnalysisType(
                clEnumValN(MEMORY_BASED_ANALYSIS, "memory-based",
                           "Overapproximation of dependences"),
                clEnumValEnd),
-    cl::Hidden, cl::init(VALUE_BASED_ANALYSIS), cl::cat(PollyCategory));
+    cl::Hidden, cl::init(VALUE_BASED_ANALYSIS), cl::ZeroOrMore,
+    cl::cat(PollyCategory));
 
 //===----------------------------------------------------------------------===//
 Dependences::Dependences() : ScopPass(ID) { RAW = WAR = WAW = NULL; }

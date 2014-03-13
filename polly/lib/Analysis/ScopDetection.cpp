@@ -72,12 +72,14 @@ using namespace polly;
 static cl::opt<bool>
 DetectScopsWithoutLoops("polly-detect-scops-in-functions-without-loops",
                         cl::desc("Detect scops in functions without loops"),
-                        cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+                        cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                        cl::cat(PollyCategory));
 
 static cl::opt<bool>
 DetectRegionsWithoutLoops("polly-detect-scops-in-regions-without-loops",
                           cl::desc("Detect scops in regions without loops"),
-                          cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+                          cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                          cl::cat(PollyCategory));
 
 static cl::opt<std::string>
 OnlyFunction("polly-only-func", cl::desc("Only run on a single function"),
@@ -94,28 +96,31 @@ OnlyRegion("polly-only-region",
 static cl::opt<bool>
 IgnoreAliasing("polly-ignore-aliasing",
                cl::desc("Ignore possible aliasing of the array bases"),
-               cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+               cl::Hidden, cl::init(false), cl::ZeroOrMore,
+               cl::cat(PollyCategory));
 
 static cl::opt<bool>
 ReportLevel("polly-report",
             cl::desc("Print information about the activities of Polly"),
-            cl::init(false), cl::cat(PollyCategory));
+            cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool>
 AllowNonAffine("polly-allow-nonaffine",
                cl::desc("Allow non affine access functions in arrays"),
-               cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+               cl::Hidden, cl::init(false), cl::ZeroOrMore,
+               cl::cat(PollyCategory));
 
 static cl::opt<bool, true>
 TrackFailures("polly-detect-track-failures",
               cl::desc("Track failure strings in detecting scop regions"),
-              cl::location(PollyTrackFailures), cl::Hidden, cl::init(false),
-              cl::cat(PollyCategory));
+              cl::location(PollyTrackFailures), cl::Hidden, cl::ZeroOrMore,
+              cl::init(false), cl::cat(PollyCategory));
 
 static cl::opt<bool>
 VerifyScops("polly-detect-verify",
             cl::desc("Verify the detected SCoPs after each transformation"),
-            cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+            cl::Hidden, cl::init(false), cl::ZeroOrMore,
+            cl::cat(PollyCategory));
 
 bool polly::PollyTrackFailures = false;
 
