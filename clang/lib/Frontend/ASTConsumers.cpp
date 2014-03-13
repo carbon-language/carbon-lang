@@ -107,7 +107,7 @@ namespace {
 
     bool shouldWalkTypesOfTypeLocs() const { return false; }
 
-    virtual bool VisitNamedDecl(NamedDecl *D) {
+    bool VisitNamedDecl(NamedDecl *D) {
       D->printQualifiedName(Out);
       Out << '\n';
       return true;
