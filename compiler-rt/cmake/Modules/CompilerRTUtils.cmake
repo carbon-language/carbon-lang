@@ -46,13 +46,16 @@ macro(append_if condition value)
   endif()
 endmacro()
 
+# Appends value to all strings in ARGN, if the condition is true.
+macro(append_string_if condition value)
+  if(${condition})
+    foreach(str ${ARGN})
+      set(${str} "${${str}} ${value}")
+    endforeach()
+  endif()
+endmacro()
+
 macro(append_no_rtti_flag list)
   append_if(COMPILER_RT_HAS_FNO_RTTI_FLAG -fno-rtti ${list})
   append_if(COMPILER_RT_HAS_GR_FLAG /GR- ${list})
-endmacro()
-
-macro(add_definitions_if condition)
-  if(${condition})
-    add_definitions(${ARGN})
-  endif()
 endmacro()

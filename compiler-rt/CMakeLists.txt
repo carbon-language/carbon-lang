@@ -235,10 +235,14 @@ pythonize_bool(COMPILER_RT_DEBUG)
 #================================
 include(config-ix)
 
-add_definitions_if(COMPILER_RT_HAS_WALL_FLAG -Wall)
+if(MSVC)
+  append_string_if(COMPILER_RT_HAS_W3_FLAG /W3 CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+else()
+  append_string_if(COMPILER_RT_HAS_WALL_FLAG -Wall CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+endif()
 if(COMPILER_RT_ENABLE_WERROR)
-  add_definitions_if(COMPILER_RT_HAS_WERROR_FLAG -Werror)
-  add_definitions_if(COMPILER_RT_HAS_WX_FLAG /WX)
+  append_string_if(COMPILER_RT_HAS_WERROR_FLAG -Werror CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+  append_string_if(COMPILER_RT_HAS_WX_FLAG /WX CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
 endif()
 
 # Emulate C99 and C++11's __func__ for MSVC prior to 2013 CTP.
