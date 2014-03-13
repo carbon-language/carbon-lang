@@ -289,10 +289,10 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS) const {
 
   // Second the file table.
   for (unsigned i = 1; i < MCDwarfFiles.size(); i++) {
-    MCOS->EmitBytes(MCDwarfFiles[i]->getName()); // FileName
+    MCOS->EmitBytes(MCDwarfFiles[i]->Name); // FileName
     MCOS->EmitBytes(StringRef("\0", 1)); // the null term. of the string
     // the Directory num
-    MCOS->EmitULEB128IntValue(MCDwarfFiles[i]->getDirIndex());
+    MCOS->EmitULEB128IntValue(MCDwarfFiles[i]->DirIndex);
     MCOS->EmitIntValue(0, 1); // last modification timestamp (always 0)
     MCOS->EmitIntValue(0, 1); // filesize (always 0)
   }
@@ -410,16 +410,6 @@ void MCDwarfLineAddr::Encode(MCContext &Context, int64_t LineDelta,
   else
     OS << char(Temp);
 }
-
-void MCDwarfFile::print(raw_ostream &OS) const {
-  OS << '"' << getName() << '"';
-}
-
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-void MCDwarfFile::dump() const {
-  print(dbgs());
-}
-#endif
 
 // Utility function to write a tuple for .debug_abbrev.
 static void EmitAbbrev(MCStreamer *MCOS, uint64_t Name, uint64_t Form) {
@@ -614,7 +604,7 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
   }
   const SmallVectorImpl<MCDwarfFile *> &MCDwarfFiles =
     MCOS->getContext().getMCDwarfFiles();
-  MCOS->EmitBytes(MCDwarfFiles[1]->getName());
+  MCOS->EmitBytes(MCDwarfFiles[1]->Name);
   MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
 
   // AT_comp_dir, the working directory the assembly was done in.

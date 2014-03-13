@@ -1592,7 +1592,7 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info) {
     const SmallVectorImpl<MCDwarfFile *> &MCDwarfFiles =
         getContext().getMCDwarfFiles();
     if (CppHashFilename.size() != 0) {
-      if (MCDwarfFiles[getContext().getGenDwarfFileNumber()]->getName() !=
+      if (MCDwarfFiles[getContext().getGenDwarfFileNumber()]->Name !=
           CppHashFilename)
         getStreamer().EmitDwarfFileDirective(
             getContext().nextGenDwarfFileNumber(), StringRef(),

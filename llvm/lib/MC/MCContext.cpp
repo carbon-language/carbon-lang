@@ -391,7 +391,9 @@ unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
   // vector.
   char *Buf = static_cast<char *>(Allocate(FileName.size()));
   memcpy(Buf, FileName.data(), FileName.size());
-  File = new (*this) MCDwarfFile(StringRef(Buf, FileName.size()), DirIndex);
+  File = new (*this) MCDwarfFile;
+  File->Name = StringRef(Buf, FileName.size());
+  File->DirIndex = DirIndex;
 
   // return the allocated FileNumber.
   return FileNumber;

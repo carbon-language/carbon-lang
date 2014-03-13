@@ -37,40 +37,14 @@ class SMLoc;
 /// and MCDwarfFile's are created and unique'd by the MCContext class where
 /// the file number for each is its index into the vector of DwarfFiles (note
 /// index 0 is not used and not a valid dwarf file number).
-class MCDwarfFile {
+struct MCDwarfFile {
   // Name - the base name of the file without its directory path.
   // The StringRef references memory allocated in the MCContext.
   StringRef Name;
 
   // DirIndex - the index into the list of directory names for this file name.
   unsigned DirIndex;
-
-private: // MCContext creates and uniques these.
-  friend class MCContext;
-  MCDwarfFile(StringRef name, unsigned dirIndex)
-      : Name(name), DirIndex(dirIndex) {}
-
-  MCDwarfFile(const MCDwarfFile &) LLVM_DELETED_FUNCTION;
-  void operator=(const MCDwarfFile &) LLVM_DELETED_FUNCTION;
-
-public:
-  /// getName - Get the base name of this MCDwarfFile.
-  StringRef getName() const { return Name; }
-
-  /// getDirIndex - Get the dirIndex of this MCDwarfFile.
-  unsigned getDirIndex() const { return DirIndex; }
-
-  /// print - Print the value to the stream \p OS.
-  void print(raw_ostream &OS) const;
-
-  /// dump - Print the value to stderr.
-  void dump() const;
 };
-
-inline raw_ostream &operator<<(raw_ostream &OS, const MCDwarfFile &DwarfFile) {
-  DwarfFile.print(OS);
-  return OS;
-}
 
 /// MCDwarfLoc - Instances of this class represent the information from a
 /// dwarf .loc directive.
