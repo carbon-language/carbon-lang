@@ -3143,11 +3143,9 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
     }
 
     // Traverse protocols.
-    for (ObjCInterfaceDecl::all_protocol_iterator
-         I = IFace->all_referenced_protocol_begin(),
-         E = IFace->all_referenced_protocol_end(); I != E; ++I) {
+    for (auto *I : IFace->all_referenced_protocols()) {
       ShadowContextRAII Shadow(Visited);
-      LookupVisibleDecls(*I, Result, QualifiedNameLookup, false, Consumer,
+      LookupVisibleDecls(I, Result, QualifiedNameLookup, false, Consumer,
                          Visited);
     }
 

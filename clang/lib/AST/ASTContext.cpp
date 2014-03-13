@@ -1813,9 +1813,7 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
   if (const ObjCInterfaceDecl *OI = dyn_cast<ObjCInterfaceDecl>(CDecl)) {
     // We can use protocol_iterator here instead of
     // all_referenced_protocol_iterator since we are walking all categories.    
-    for (ObjCInterfaceDecl::all_protocol_iterator P = OI->all_referenced_protocol_begin(),
-         PE = OI->all_referenced_protocol_end(); P != PE; ++P) {
-      ObjCProtocolDecl *Proto = (*P);
+    for (auto *Proto : OI->all_referenced_protocols()) {
       Protocols.insert(Proto->getCanonicalDecl());
       for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
            PE = Proto->protocol_end(); P != PE; ++P) {

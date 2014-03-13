@@ -3504,10 +3504,8 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
     }
     
     // Look through protocols.
-    for (ObjCInterfaceDecl::all_protocol_iterator
-         I = IFace->all_referenced_protocol_begin(),
-         E = IFace->all_referenced_protocol_end(); I != E; ++I)
-      AddObjCProperties(*I, AllowCategories, AllowNullaryMethods, CurContext,
+    for (auto *I : IFace->all_referenced_protocols())
+      AddObjCProperties(I, AllowCategories, AllowNullaryMethods, CurContext,
                         AddedProperties, Results);
     
     // Look in the superclass.

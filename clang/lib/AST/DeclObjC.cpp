@@ -134,13 +134,10 @@ ObjCContainerDecl::HasUserDeclaredSetterMethod(const ObjCPropertyDecl *Property)
     }
     
     // Also look into protocols, for a user declared instance method.
-    for (ObjCInterfaceDecl::all_protocol_iterator P =
-         ID->all_referenced_protocol_begin(),
-         PE = ID->all_referenced_protocol_end(); P != PE; ++P) {
-      ObjCProtocolDecl *Proto = (*P);
+    for (const auto *Proto : ID->all_referenced_protocols())
       if (Proto->HasUserDeclaredSetterMethod(Property))
         return true;
-    }
+
     // And in its super class.
     ObjCInterfaceDecl *OSC = ID->getSuperClass();
     while (OSC) {
@@ -227,10 +224,8 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
       }
 
       // Look through protocols.
-      for (ObjCInterfaceDecl::all_protocol_iterator
-            I = OID->all_referenced_protocol_begin(),
-            E = OID->all_referenced_protocol_end(); I != E; ++I)
-        if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
+      for (const auto *I : OID->all_referenced_protocols())
+        if (ObjCPropertyDecl *P = I->FindPropertyDeclaration(PropertyId))
           return P;
 
       // Finally, check the super class.
@@ -274,10 +269,8 @@ ObjCInterfaceDecl::FindPropertyVisibleInPrimaryClass(
     return PD;
 
   // Look through protocols.
-  for (ObjCInterfaceDecl::all_protocol_iterator
-        I = all_referenced_protocol_begin(),
-        E = all_referenced_protocol_end(); I != E; ++I)
-    if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
+  for (const auto *I : all_referenced_protocols())
+    if (ObjCPropertyDecl *P = I->FindPropertyDeclaration(PropertyId))
       return P;
 
   return 0;
@@ -289,10 +282,8 @@ void ObjCInterfaceDecl::collectPropertiesToImplement(PropertyMap &PM,
     PM[Prop->getIdentifier()] = Prop;
     PO.push_back(Prop);
   }
-  for (ObjCInterfaceDecl::all_protocol_iterator
-      PI = all_referenced_protocol_begin(),
-      E = all_referenced_protocol_end(); PI != E; ++PI)
-    (*PI)->collectPropertiesToImplement(PM, PO);
+  for (const auto *PI : all_referenced_protocols())
+    PI->collectPropertiesToImplement(PM, PO);
   // Note, the properties declared only in class extensions are still copied
   // into the main @interface's property list, and therefore we don't
   // explicitly, have to search class extension properties.
@@ -338,10 +329,7 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
   for (unsigned i = 0; i < ExtNum; i++) {
     bool protocolExists = false;
     ObjCProtocolDecl *ProtoInExtension = ExtList[i];
-    for (all_protocol_iterator
-          p = all_referenced_protocol_begin(),
-          e = all_referenced_protocol_end(); p != e; ++p) {
-      ObjCProtocolDecl *Proto = (*p);
+    for (auto *Proto : all_referenced_protocols()) {
       if (C.ProtocolCompatibleWithProtocol(ProtoInExtension, Proto)) {
         protocolExists = true;
         break;
@@ -357,9 +345,8 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
     return;
 
   // Merge ProtocolRefs into class's protocol list;
-  for (all_protocol_iterator p = all_referenced_protocol_begin(), 
-        e = all_referenced_protocol_end(); p != e; ++p) {
-    ProtocolRefs.push_back(*p);
+  for (auto *P : all_referenced_protocols()) {
+    ProtocolRefs.push_back(P);
   }
 
   data().AllReferencedProtocols.set(ProtocolRefs.data(), ProtocolRefs.size(),C);
@@ -521,11 +508,9 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::lookupInheritedClass(
 
 ObjCProtocolDecl *
 ObjCInterfaceDecl::lookupNestedProtocol(IdentifierInfo *Name) {
-  for (ObjCInterfaceDecl::all_protocol_iterator P =
-       all_referenced_protocol_begin(), PE = all_referenced_protocol_end();
-       P != PE; ++P)
-    if ((*P)->lookupProtocolNamed(Name))
-      return (*P);
+  for (auto *P : all_referenced_protocols())
+    if (P->lookupProtocolNamed(Name))
+      return P;
   ObjCInterfaceDecl *SuperClass = getSuperClass();
   return SuperClass ? SuperClass->lookupNestedProtocol(Name) : NULL;
 }

@@ -227,11 +227,8 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
       }
     } else {
       // Slower path: look in all protocols we referenced.
-      for (ObjCInterfaceDecl::all_protocol_iterator
-             P = IFace->all_referenced_protocol_begin(),
-             PEnd = IFace->all_referenced_protocol_end();
-           P != PEnd; ++P) {
-        CheckPropertyAgainstProtocol(*this, Res, *P, KnownProtos);
+      for (auto *P : IFace->all_referenced_protocols()) {
+        CheckPropertyAgainstProtocol(*this, Res, P, KnownProtos);
       }
     }
   } else if (ObjCCategoryDecl *Cat = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
@@ -763,18 +760,14 @@ DiagnosePropertyMismatchDeclInProtocols(Sema &S, SourceLocation AtLoc,
                                         ObjCInterfaceDecl *ClassDecl,
                                         ObjCPropertyDecl *Property) {
   ObjCInterfaceDecl::ProtocolPropertyMap PropMap;
-  for (ObjCInterfaceDecl::all_protocol_iterator
-       PI = ClassDecl->all_referenced_protocol_begin(),
-       E = ClassDecl->all_referenced_protocol_end(); PI != E; ++PI) {
-    if (const ObjCProtocolDecl *PDecl = (*PI)->getDefinition())
+  for (const auto *PI : ClassDecl->all_referenced_protocols()) {
+    if (const ObjCProtocolDecl *PDecl = PI->getDefinition())
       PDecl->collectInheritedProtocolProperties(Property, PropMap);
   }
   if (ObjCInterfaceDecl *SDecl = ClassDecl->getSuperClass())
     while (SDecl) {
-      for (ObjCInterfaceDecl::all_protocol_iterator
-           PI = SDecl->all_referenced_protocol_begin(),
-           E = SDecl->all_referenced_protocol_end(); PI != E; ++PI) {
-        if (const ObjCProtocolDecl *PDecl = (*PI)->getDefinition())
+      for (const auto *PI : SDecl->all_referenced_protocols()) {
+        if (const ObjCProtocolDecl *PDecl = PI->getDefinition())
           PDecl->collectInheritedProtocolProperties(Property, PropMap);
       }
       SDecl = SDecl->getSuperClass();
@@ -1447,10 +1440,8 @@ static void CollectImmediateProperties(ObjCContainerDecl *CDecl,
       PropMap[Prop->getIdentifier()] = Prop;
     if (IncludeProtocols) {
       // Scan through class's protocols.
-      for (ObjCInterfaceDecl::all_protocol_iterator
-           PI = IDecl->all_referenced_protocol_begin(),
-           E = IDecl->all_referenced_protocol_end(); PI != E; ++PI)
-          CollectImmediateProperties((*PI), PropMap, SuperPropMap);
+      for (auto *PI : IDecl->all_referenced_protocols())
+        CollectImmediateProperties(PI, PropMap, SuperPropMap);
     }
   }
   if (ObjCCategoryDecl *CATDecl = dyn_cast<ObjCCategoryDecl>(CDecl)) {
@@ -1698,11 +1689,7 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
   if (IDecl) {
     std::unique_ptr<ObjCContainerDecl::PropertyMap> LazyMap;
 
-    for (ObjCInterfaceDecl::all_protocol_iterator
-          PI = IDecl->all_referenced_protocol_begin(),
-          PE = IDecl->all_referenced_protocol_end();
-          PI != PE; ++PI) {
-      ObjCProtocolDecl *PDecl = *PI;
+    for (auto *PDecl : IDecl->all_referenced_protocols()) {
       if (!PDecl->hasAttr<ObjCExplicitProtocolImplAttr>())
         continue;
       // Lazily construct a set of all the properties in the @interface

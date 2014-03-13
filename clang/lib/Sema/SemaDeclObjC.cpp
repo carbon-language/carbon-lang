@@ -1666,11 +1666,8 @@ static void findProtocolsWithExplicitImpls(const ObjCInterfaceDecl *Super,
   if (!Super)
     return;
 
-  for (ObjCInterfaceDecl::all_protocol_iterator
-        I = Super->all_referenced_protocol_begin(),
-        E = Super->all_referenced_protocol_end(); I != E; ++I) {
-    findProtocolsWithExplicitImpls(*I, PNS);
-  }
+  for (const auto *I : Super->all_referenced_protocols())
+    findProtocolsWithExplicitImpls(I, PNS);
 
   findProtocolsWithExplicitImpls(Super->getSuperClass(), PNS);
 }
@@ -1907,14 +1904,11 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
     }
 
     // Check for any implementation of a methods declared in protocol.
-    for (ObjCInterfaceDecl::all_protocol_iterator
-          PI = I->all_referenced_protocol_begin(),
-          E = I->all_referenced_protocol_end(); PI != E; ++PI)
+    for (auto *PI : I->all_referenced_protocols())
       MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
-                                 IMPDecl,
-                                 (*PI), IncompleteImpl, false, 
+                                 IMPDecl, PI, IncompleteImpl, false,
                                  WarnCategoryMethodImpl);
-    
+
     // FIXME. For now, we are not checking for extact match of methods 
     // in category implementation and its primary class's super class. 
     if (!WarnCategoryMethodImpl && I->getSuperClass())
@@ -2010,12 +2004,9 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
   LazyProtocolNameSet ExplicitImplProtocols;
 
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl> (CDecl)) {
-    for (ObjCInterfaceDecl::all_protocol_iterator
-          PI = I->all_referenced_protocol_begin(),
-          E = I->all_referenced_protocol_end(); PI != E; ++PI)
-      CheckProtocolMethodDefs(*this, IMPDecl->getLocation(), *PI,
-                              IncompleteImpl, InsMap, ClsMap, I,
-                              ExplicitImplProtocols);
+    for (auto *PI : I->all_referenced_protocols())
+      CheckProtocolMethodDefs(*this, IMPDecl->getLocation(), PI, IncompleteImpl,
+                              InsMap, ClsMap, I, ExplicitImplProtocols);
     // Check class extensions (unnamed categories)
     for (ObjCInterfaceDecl::visible_extensions_iterator
            Ext = I->visible_extensions_begin(),

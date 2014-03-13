@@ -878,7 +878,12 @@ public:
   }
 
   typedef ObjCList<ObjCProtocolDecl>::iterator all_protocol_iterator;
+  typedef llvm::iterator_range<all_protocol_iterator> all_protocol_range;
 
+  all_protocol_range all_referenced_protocols() const {
+    return all_protocol_range(all_referenced_protocol_begin(),
+                              all_referenced_protocol_end());
+  }
   all_protocol_iterator all_referenced_protocol_begin() const {
     // FIXME: Should make sure no callers ever do this.
     if (!hasDefinition())

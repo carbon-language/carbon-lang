@@ -2813,11 +2813,8 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(Twine Name,
                                                    Prop));
   }
   if (const ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(OCD)) {
-    for (ObjCInterfaceDecl::all_protocol_iterator
-         P = OID->all_referenced_protocol_begin(),
-         E = OID->all_referenced_protocol_end(); P != E; ++P)
-      PushProtocolProperties(PropertySet, Properties, Container, (*P), 
-                             ObjCTypes);
+    for (const auto *P : OID->all_referenced_protocols())
+      PushProtocolProperties(PropertySet, Properties, Container, P, ObjCTypes);
   }
   else if (const ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(OCD)) {
     for (ObjCCategoryDecl::protocol_iterator P = CD->protocol_begin(),
