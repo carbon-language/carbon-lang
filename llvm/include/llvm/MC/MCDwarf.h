@@ -23,6 +23,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <utility>
 
 namespace llvm {
 class MCAsmBackend;
@@ -174,38 +175,49 @@ public:
   }
 };
 
-class MCDwarfFileTable {
+struct MCDwarfLineTableHeader {
   MCSymbol *Label;
   SmallVector<std::string, 3> MCDwarfDirs;
   SmallVector<MCDwarfFile, 3> MCDwarfFiles;
+  unsigned getFile(StringRef Directory, StringRef FileName, unsigned FileNumber);
+  std::pair<MCSymbol *, MCSymbol *> Emit(MCStreamer *MCOS) const;
+};
+
+class MCDwarfFileTable {
+  MCDwarfLineTableHeader Header;
   MCLineSection MCLineSections;
 
 public:
-  //
   // This emits the Dwarf file and the line tables for all Compile Units.
-  //
   static const MCSymbol *Emit(MCStreamer *MCOS);
-  //
+
   // This emits the Dwarf file and the line tables for a given Compile Unit.
-  //
   const MCSymbol *EmitCU(MCStreamer *MCOS) const;
 
   unsigned getFile(StringRef Directory, StringRef FileName, unsigned FileNumber);
 
+  MCSymbol *getLabel() const {
+    return Header.Label;
+  }
+
+  void setLabel(MCSymbol *Label) {
+    Header.Label = Label;
+  }
+
   const SmallVectorImpl<std::string> &getMCDwarfDirs() const {
-    return MCDwarfDirs;
+    return Header.MCDwarfDirs;
   }
 
   SmallVectorImpl<std::string> &getMCDwarfDirs() {
-    return MCDwarfDirs;
+    return Header.MCDwarfDirs;
   }
 
   const SmallVectorImpl<MCDwarfFile> &getMCDwarfFiles() const {
-    return MCDwarfFiles;
+    return Header.MCDwarfFiles;
   }
 
   SmallVectorImpl<MCDwarfFile> &getMCDwarfFiles() {
-    return MCDwarfFiles;
+    return Header.MCDwarfFiles;
   }
 
   const MCLineSection &getMCLineSections() const {
@@ -213,14 +225,6 @@ public:
   }
   MCLineSection &getMCLineSections() {
     return MCLineSections;
-  }
-
-  MCSymbol *getLabel() const {
-    return Label;
-  }
-
-  void setLabel(MCSymbol *Label) {
-    this->Label = Label;
   }
 };
 

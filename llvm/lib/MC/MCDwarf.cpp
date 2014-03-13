@@ -224,10 +224,8 @@ const MCSymbol *MCDwarfFileTable::Emit(MCStreamer *MCOS) {
   return LineStartSym;
 }
 
-const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS) const {
+std::pair<MCSymbol *, MCSymbol *> MCDwarfLineTableHeader::Emit(MCStreamer *MCOS) const {
   MCContext &context = MCOS->getContext();
-
-
 
   // Create a symbol at the beginning of the line table.
   MCSymbol *LineStartSym = Label;
@@ -302,6 +300,14 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS) const {
   // end of the prologue (that was used in a previous expression).
   MCOS->EmitLabel(ProEndSym);
 
+  return std::make_pair(LineStartSym, LineEndSym);
+}
+
+const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS) const {
+  MCSymbol *LineStartSym;
+  MCSymbol *LineEndSym;
+  std::tie(LineStartSym, LineEndSym) = Header.Emit(MCOS);
+
   // Put out the line tables.
   for (const auto &LineSec : MCLineSections.getMCLineEntries())
     EmitDwarfLineTable(MCOS, LineSec.first, LineSec.second);
@@ -326,6 +332,10 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS) const {
 }
 
 unsigned MCDwarfFileTable::getFile(StringRef Directory, StringRef FileName, unsigned FileNumber) {
+  return Header.getFile(Directory, FileName, FileNumber);
+}
+
+unsigned MCDwarfLineTableHeader::getFile(StringRef Directory, StringRef FileName, unsigned FileNumber) {
   // Make space for this FileNumber in the MCDwarfFiles vector if needed.
   MCDwarfFiles.resize(FileNumber + 1);
 
