@@ -617,16 +617,6 @@ public:
   /// \brief Iterator that traverses the base classes of a class.
   typedef const CXXBaseSpecifier* base_class_const_iterator;
 
-  /// \brief Iterator that traverses the base classes of a class in reverse
-  /// order.
-  typedef std::reverse_iterator<base_class_iterator>
-    reverse_base_class_iterator;
-
-  /// \brief Iterator that traverses the base classes of a class in reverse
-  /// order.
-  typedef std::reverse_iterator<base_class_const_iterator>
-    reverse_base_class_const_iterator;
-
   CXXRecordDecl *getCanonicalDecl() override {
     return cast<CXXRecordDecl>(RecordDecl::getCanonicalDecl());
   }
@@ -695,18 +685,6 @@ public:
   base_class_const_iterator bases_end() const {
     return bases_begin() + data().NumBases;
   }
-  reverse_base_class_iterator       bases_rbegin() {
-    return reverse_base_class_iterator(bases_end());
-  }
-  reverse_base_class_const_iterator bases_rbegin() const {
-    return reverse_base_class_const_iterator(bases_end());
-  }
-  reverse_base_class_iterator bases_rend() {
-    return reverse_base_class_iterator(bases_begin());
-  }
-  reverse_base_class_const_iterator bases_rend() const {
-    return reverse_base_class_const_iterator(bases_begin());
-  }
 
   /// \brief Retrieves the number of virtual base classes of this class.
   unsigned getNumVBases() const { return data().NumVBases; }
@@ -717,18 +695,6 @@ public:
   base_class_const_iterator vbases_end() const {
     return vbases_begin() + data().NumVBases;
   }
-  reverse_base_class_iterator vbases_rbegin() {
-    return reverse_base_class_iterator(vbases_end());
-  }
-  reverse_base_class_const_iterator vbases_rbegin() const {
-    return reverse_base_class_const_iterator(vbases_end());
-  }
-  reverse_base_class_iterator vbases_rend() {
-    return reverse_base_class_iterator(vbases_begin());
-  }
-  reverse_base_class_const_iterator vbases_rend() const {
-    return reverse_base_class_const_iterator(vbases_begin());
- }
 
   /// \brief Determine whether this class has any dependent base classes which
   /// are not the current instantiation.
