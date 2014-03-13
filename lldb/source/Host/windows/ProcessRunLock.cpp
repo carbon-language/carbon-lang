@@ -22,10 +22,10 @@ namespace lldb_private {
 
     typedef struct Win32RWLOCK
     {
-        unsigned long int readlockcount;
+        long int readlockcount;
         HANDLE writable;
         CRITICAL_SECTION writelock;
-        unsigned long int writelocked;
+        long int writelocked;
     } Win32RWLOCK;
 
     typedef Win32RWLOCK* PWin32RWLOCK;
