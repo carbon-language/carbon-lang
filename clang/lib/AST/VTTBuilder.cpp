@@ -56,15 +56,13 @@ void VTTBuilder::AddVTablePointer(BaseSubobject Base, uint64_t VTableIndex,
 void VTTBuilder::LayoutSecondaryVTTs(BaseSubobject Base) {
   const CXXRecordDecl *RD = Base.getBase();
 
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
-    
+  for (const auto &I : RD->bases()) {    
     // Don't layout virtual bases.
-    if (I->isVirtual())
+    if (I.isVirtual())
         continue;
 
     const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      cast<CXXRecordDecl>(I.getType()->getAs<RecordType>()->getDecl());
 
     const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
     CharUnits BaseOffset = Base.getBaseOffset() + 
@@ -88,10 +86,9 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
   if (!RD->getNumVBases() && !BaseIsMorallyVirtual)
     return;
 
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
+  for (const auto &I : RD->bases()) {
     const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      cast<CXXRecordDecl>(I.getType()->getAs<RecordType>()->getDecl());
 
     // Itanium C++ ABI 2.6.2:
     //   Secondary virtual pointers are present for all bases with either
@@ -106,7 +103,7 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
     bool BaseDeclIsMorallyVirtual = BaseIsMorallyVirtual;
     bool BaseDeclIsNonVirtualPrimaryBase = false;
     CharUnits BaseOffset;
-    if (I->isVirtual()) {
+    if (I.isVirtual()) {
       // Ignore virtual bases that we've already visited.
       if (!VBases.insert(BaseDecl))
         continue;
@@ -153,13 +150,12 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
 
 void VTTBuilder::LayoutVirtualVTTs(const CXXRecordDecl *RD,
                                    VisitedVirtualBasesSetTy &VBases) {
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
+  for (const auto &I : RD->bases()) {
     const CXXRecordDecl *BaseDecl = 
-      cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      cast<CXXRecordDecl>(I.getType()->getAs<RecordType>()->getDecl());
     
     // Check if this is a virtual base.
-    if (I->isVirtual()) {
+    if (I.isVirtual()) {
       // Check if we've seen this base before.
       if (!VBases.insert(BaseDecl))
         continue;

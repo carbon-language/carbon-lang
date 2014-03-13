@@ -1472,12 +1472,10 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
 
             // Visit base classes
             CXXRecordDecl *Next = cast<CXXRecordDecl>(NextT->getDecl());
-            for (CXXRecordDecl::base_class_iterator Base = Next->bases_begin(),
-                                                 BaseEnd = Next->bases_end();
-                 Base != BaseEnd; ++Base) {
-              assert(Base->getType()->isRecordType() &&
+            for (const auto &Base : Next->bases()) {
+              assert(Base.getType()->isRecordType() &&
                      "Base class that isn't a record?");
-              ToVisit.push_back(Base->getType()->getAs<RecordType>());
+              ToVisit.push_back(Base.getType()->getAs<RecordType>());
             }
           }
 

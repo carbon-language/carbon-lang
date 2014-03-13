@@ -1818,31 +1818,29 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
                           const MultiLevelTemplateArgumentList &TemplateArgs) {
   bool Invalid = false;
   SmallVector<CXXBaseSpecifier*, 4> InstantiatedBases;
-  for (ClassTemplateSpecializationDecl::base_class_iterator
-         Base = Pattern->bases_begin(), BaseEnd = Pattern->bases_end();
-       Base != BaseEnd; ++Base) {
-    if (!Base->getType()->isDependentType()) {
-      if (const CXXRecordDecl *RD = Base->getType()->getAsCXXRecordDecl()) {
+  for (const auto Base : Pattern->bases()) {
+    if (!Base.getType()->isDependentType()) {
+      if (const CXXRecordDecl *RD = Base.getType()->getAsCXXRecordDecl()) {
         if (RD->isInvalidDecl())
           Instantiation->setInvalidDecl();
       }
-      InstantiatedBases.push_back(new (Context) CXXBaseSpecifier(*Base));
+      InstantiatedBases.push_back(new (Context) CXXBaseSpecifier(Base));
       continue;
     }
 
     SourceLocation EllipsisLoc;
     TypeSourceInfo *BaseTypeLoc;
-    if (Base->isPackExpansion()) {
+    if (Base.isPackExpansion()) {
       // This is a pack expansion. See whether we should expand it now, or
       // wait until later.
       SmallVector<UnexpandedParameterPack, 2> Unexpanded;
-      collectUnexpandedParameterPacks(Base->getTypeSourceInfo()->getTypeLoc(),
+      collectUnexpandedParameterPacks(Base.getTypeSourceInfo()->getTypeLoc(),
                                       Unexpanded);
       bool ShouldExpand = false;
       bool RetainExpansion = false;
       Optional<unsigned> NumExpansions;
-      if (CheckParameterPacksForExpansion(Base->getEllipsisLoc(), 
-                                          Base->getSourceRange(),
+      if (CheckParameterPacksForExpansion(Base.getEllipsisLoc(), 
+                                          Base.getSourceRange(),
                                           Unexpanded,
                                           TemplateArgs, ShouldExpand, 
                                           RetainExpansion,
@@ -1856,9 +1854,9 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
         for (unsigned I = 0; I != *NumExpansions; ++I) {
             Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(*this, I);
           
-          TypeSourceInfo *BaseTypeLoc = SubstType(Base->getTypeSourceInfo(),
+          TypeSourceInfo *BaseTypeLoc = SubstType(Base.getTypeSourceInfo(),
                                                   TemplateArgs,
-                                              Base->getSourceRange().getBegin(),
+                                              Base.getSourceRange().getBegin(),
                                                   DeclarationName());
           if (!BaseTypeLoc) {
             Invalid = true;
@@ -1867,9 +1865,9 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
           
           if (CXXBaseSpecifier *InstantiatedBase
                 = CheckBaseSpecifier(Instantiation,
-                                     Base->getSourceRange(),
-                                     Base->isVirtual(),
-                                     Base->getAccessSpecifierAsWritten(),
+                                     Base.getSourceRange(),
+                                     Base.isVirtual(),
+                                     Base.getAccessSpecifierAsWritten(),
                                      BaseTypeLoc,
                                      SourceLocation()))
             InstantiatedBases.push_back(InstantiatedBase);
@@ -1881,16 +1879,16 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
       }
       
       // The resulting base specifier will (still) be a pack expansion.
-      EllipsisLoc = Base->getEllipsisLoc();
+      EllipsisLoc = Base.getEllipsisLoc();
       Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(*this, -1);
-      BaseTypeLoc = SubstType(Base->getTypeSourceInfo(),
+      BaseTypeLoc = SubstType(Base.getTypeSourceInfo(),
                               TemplateArgs,
-                              Base->getSourceRange().getBegin(),
+                              Base.getSourceRange().getBegin(),
                               DeclarationName());
     } else {
-      BaseTypeLoc = SubstType(Base->getTypeSourceInfo(),
+      BaseTypeLoc = SubstType(Base.getTypeSourceInfo(),
                               TemplateArgs,
-                              Base->getSourceRange().getBegin(),
+                              Base.getSourceRange().getBegin(),
                               DeclarationName());
     }
     
@@ -1901,9 +1899,9 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
 
     if (CXXBaseSpecifier *InstantiatedBase
           = CheckBaseSpecifier(Instantiation,
-                               Base->getSourceRange(),
-                               Base->isVirtual(),
-                               Base->getAccessSpecifierAsWritten(),
+                               Base.getSourceRange(),
+                               Base.isVirtual(),
+                               Base.getAccessSpecifierAsWritten(),
                                BaseTypeLoc,
                                EllipsisLoc))
       InstantiatedBases.push_back(InstantiatedBase);

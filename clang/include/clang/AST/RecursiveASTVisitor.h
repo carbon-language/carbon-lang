@@ -1660,10 +1660,8 @@ bool RecursiveASTVisitor<Derived>::TraverseCXXRecordHelper(
   if (!TraverseRecordHelper(D))
     return false;
   if (D->isCompleteDefinition()) {
-    for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
-                                            E = D->bases_end();
-         I != E; ++I) {
-      TRY_TO(TraverseTypeLoc(I->getTypeSourceInfo()->getTypeLoc()));
+    for (const auto &I : D->bases()) {
+      TRY_TO(TraverseTypeLoc(I.getTypeSourceInfo()->getTypeLoc()));
     }
     // We don't traverse the friends or the conversions, as they are
     // already in decls_begin()/decls_end().

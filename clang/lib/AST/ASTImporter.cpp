@@ -1981,29 +1981,25 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
     ToData.IsLambda = FromData.IsLambda;
 
     SmallVector<CXXBaseSpecifier *, 4> Bases;
-    for (CXXRecordDecl::base_class_iterator 
-                  Base1 = FromCXX->bases_begin(),
-            FromBaseEnd = FromCXX->bases_end();
-         Base1 != FromBaseEnd;
-         ++Base1) {
-      QualType T = Importer.Import(Base1->getType());
+    for (const auto &Base1 : FromCXX->bases()) {
+      QualType T = Importer.Import(Base1.getType());
       if (T.isNull())
         return true;
 
       SourceLocation EllipsisLoc;
-      if (Base1->isPackExpansion())
-        EllipsisLoc = Importer.Import(Base1->getEllipsisLoc());
+      if (Base1.isPackExpansion())
+        EllipsisLoc = Importer.Import(Base1.getEllipsisLoc());
 
       // Ensure that we have a definition for the base.
-      ImportDefinitionIfNeeded(Base1->getType()->getAsCXXRecordDecl());
+      ImportDefinitionIfNeeded(Base1.getType()->getAsCXXRecordDecl());
         
       Bases.push_back(
                     new (Importer.getToContext()) 
-                      CXXBaseSpecifier(Importer.Import(Base1->getSourceRange()),
-                                       Base1->isVirtual(),
-                                       Base1->isBaseOfClass(),
-                                       Base1->getAccessSpecifierAsWritten(),
-                                   Importer.Import(Base1->getTypeSourceInfo()),
+                      CXXBaseSpecifier(Importer.Import(Base1.getSourceRange()),
+                                       Base1.isVirtual(),
+                                       Base1.isBaseOfClass(),
+                                       Base1.getAccessSpecifierAsWritten(),
+                                   Importer.Import(Base1.getTypeSourceInfo()),
                                        EllipsisLoc));
     }
     if (!Bases.empty())

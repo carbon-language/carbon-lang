@@ -93,26 +93,25 @@ void InheritanceHierarchyWriter::WriteNode(QualType Type, bool FromVirtual) {
   // Display the base classes.
   const CXXRecordDecl *Decl
     = static_cast<const CXXRecordDecl *>(Type->getAs<RecordType>()->getDecl());
-  for (CXXRecordDecl::base_class_const_iterator Base = Decl->bases_begin();
-       Base != Decl->bases_end(); ++Base) {
-    QualType CanonBaseType = Context.getCanonicalType(Base->getType());
+  for (const auto &Base : Decl->bases()) {
+    QualType CanonBaseType = Context.getCanonicalType(Base.getType());
 
     // If this is not virtual inheritance, bump the direct base
     // count for the type.
-    if (!Base->isVirtual())
+    if (!Base.isVirtual())
       ++DirectBaseCount[CanonBaseType];
 
     // Write out the node (if we need to).
-    WriteNode(Base->getType(), Base->isVirtual());
+    WriteNode(Base.getType(), Base.isVirtual());
 
     // Write out the edge.
     Out << "  ";
     WriteNodeReference(Type, FromVirtual);
     Out << " -> ";
-    WriteNodeReference(Base->getType(), Base->isVirtual());
+    WriteNodeReference(Base.getType(), Base.isVirtual());
 
     // Write out edge attributes to show the kind of inheritance.
-    if (Base->isVirtual()) {
+    if (Base.isVirtual()) {
       Out << " [ style=\"dashed\" ]";
     }
     Out << ";";

@@ -141,9 +141,8 @@ bool CXXRecordDecl::forallBases(ForallBasesCallback *BaseMatches,
   const CXXRecordDecl *Record = this;
   bool AllMatches = true;
   while (true) {
-    for (CXXRecordDecl::base_class_const_iterator
-           I = Record->bases_begin(), E = Record->bases_end(); I != E; ++I) {
-      const RecordType *Ty = I->getType()->getAs<RecordType>();
+    for (const auto &I : Record->bases()) {
+      const RecordType *Ty = I.getType()->getAs<RecordType>();
       if (!Ty) {
         if (AllowShortCircuit) return false;
         AllMatches = false;
@@ -186,14 +185,11 @@ bool CXXBasePaths::lookupInBases(ASTContext &Context,
   AccessSpecifier AccessToHere = ScratchPath.Access;
   bool IsFirstStep = ScratchPath.empty();
 
-  for (CXXRecordDecl::base_class_const_iterator BaseSpec = Record->bases_begin(),
-         BaseSpecEnd = Record->bases_end(); 
-       BaseSpec != BaseSpecEnd; 
-       ++BaseSpec) {
+  for (const auto &BaseSpec : Record->bases()) {
     // Find the record of the base class subobjects for this type.
-    QualType BaseType = Context.getCanonicalType(BaseSpec->getType())
-                                                          .getUnqualifiedType();
-    
+    QualType BaseType =
+        Context.getCanonicalType(BaseSpec.getType()).getUnqualifiedType();
+
     // C++ [temp.dep]p3:
     //   In the definition of a class template or a member of a class template,
     //   if a base class of the class template depends on a template-parameter,
@@ -208,7 +204,7 @@ bool CXXBasePaths::lookupInBases(ASTContext &Context,
     std::pair<bool, unsigned>& Subobjects = ClassSubobjects[BaseType];
     bool VisitBase = true;
     bool SetVirtual = false;
-    if (BaseSpec->isVirtual()) {
+    if (BaseSpec.isVirtual()) {
       VisitBase = !Subobjects.first;
       Subobjects.first = true;
       if (isDetectingVirtual() && DetectedVirtual == 0) {
@@ -223,9 +219,9 @@ bool CXXBasePaths::lookupInBases(ASTContext &Context,
     if (isRecordingPaths()) {
       // Add this base specifier to the current path.
       CXXBasePathElement Element;
-      Element.Base = &*BaseSpec;
+      Element.Base = &BaseSpec;
       Element.Class = Record;
-      if (BaseSpec->isVirtual())
+      if (BaseSpec.isVirtual())
         Element.SubobjectNumber = 0;
       else
         Element.SubobjectNumber = Subobjects.second;
@@ -247,16 +243,16 @@ bool CXXBasePaths::lookupInBases(ASTContext &Context,
       // 3. Otherwise, overall access is determined by the most restrictive
       //    access in the sequence.
       if (IsFirstStep)
-        ScratchPath.Access = BaseSpec->getAccessSpecifier();
+        ScratchPath.Access = BaseSpec.getAccessSpecifier();
       else
         ScratchPath.Access = CXXRecordDecl::MergeAccess(AccessToHere, 
-                                                 BaseSpec->getAccessSpecifier());
+                                                 BaseSpec.getAccessSpecifier());
     }
     
     // Track whether there's a path involving this specific base.
     bool FoundPathThroughBase = false;
     
-    if (BaseMatches(BaseSpec, ScratchPath, UserData)) {
+    if (BaseMatches(&BaseSpec, ScratchPath, UserData)) {
       // We've found a path that terminates at this base.
       FoundPath = FoundPathThroughBase = true;
       if (isRecordingPaths()) {
@@ -269,7 +265,7 @@ bool CXXBasePaths::lookupInBases(ASTContext &Context,
       }
     } else if (VisitBase) {
       CXXRecordDecl *BaseRecord
-        = cast<CXXRecordDecl>(BaseSpec->getType()->castAs<RecordType>()
+        = cast<CXXRecordDecl>(BaseSpec.getType()->castAs<RecordType>()
                                 ->getDecl());
       if (lookupInBases(Context, BaseRecord, BaseMatches, UserData)) {
         // C++ [class.member.lookup]p2:
@@ -501,14 +497,13 @@ void FinalOverriderCollector::Collect(const CXXRecordDecl *RD,
     SubobjectNumber
       = ++SubobjectCount[cast<CXXRecordDecl>(RD->getCanonicalDecl())];
 
-  for (CXXRecordDecl::base_class_const_iterator Base = RD->bases_begin(),
-         BaseEnd = RD->bases_end(); Base != BaseEnd; ++Base) {
-    if (const RecordType *RT = Base->getType()->getAs<RecordType>()) {
+  for (const auto &Base : RD->bases()) {
+    if (const RecordType *RT = Base.getType()->getAs<RecordType>()) {
       const CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(RT->getDecl());
       if (!BaseDecl->isPolymorphic())
         continue;
 
-      if (Overriders.empty() && !Base->isVirtual()) {
+      if (Overriders.empty() && !Base.isVirtual()) {
         // There are no other overriders of virtual member functions,
         // so let the base class fill in our overriders for us.
         Collect(BaseDecl, false, InVirtualSubobject, Overriders);
@@ -522,7 +517,7 @@ void FinalOverriderCollector::Collect(const CXXRecordDecl *RD,
       // its base classes) more than once.
       CXXFinalOverriderMap ComputedBaseOverriders;
       CXXFinalOverriderMap *BaseOverriders = &ComputedBaseOverriders;
-      if (Base->isVirtual()) {
+      if (Base.isVirtual()) {
         CXXFinalOverriderMap *&MyVirtualOverriders = VirtualOverriders[BaseDecl];
         BaseOverriders = MyVirtualOverriders;
         if (!MyVirtualOverriders) {
@@ -702,13 +697,12 @@ AddIndirectPrimaryBases(const CXXRecordDecl *RD, ASTContext &Context,
   if (Layout.isPrimaryBaseVirtual())
     Bases.insert(Layout.getPrimaryBase());
 
-  for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-       E = RD->bases_end(); I != E; ++I) {
-    assert(!I->getType()->isDependentType() &&
+  for (const auto &I : RD->bases()) {
+    assert(!I.getType()->isDependentType() &&
            "Cannot get indirect primary bases for class with dependent bases.");
 
     const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
+      cast<CXXRecordDecl>(I.getType()->castAs<RecordType>()->getDecl());
 
     // Only bases with virtual bases participate in computing the
     // indirect primary virtual base classes.
@@ -725,13 +719,12 @@ CXXRecordDecl::getIndirectPrimaryBases(CXXIndirectPrimaryBaseSet& Bases) const {
   if (!getNumVBases())
     return;
 
-  for (CXXRecordDecl::base_class_const_iterator I = bases_begin(),
-       E = bases_end(); I != E; ++I) {
-    assert(!I->getType()->isDependentType() &&
+  for (const auto &I : bases()) {
+    assert(!I.getType()->isDependentType() &&
            "Cannot get indirect primary bases for class with dependent bases.");
 
     const CXXRecordDecl *BaseDecl =
-      cast<CXXRecordDecl>(I->getType()->castAs<RecordType>()->getDecl());
+      cast<CXXRecordDecl>(I.getType()->castAs<RecordType>()->getDecl());
 
     // Only bases with virtual bases participate in computing the
     // indirect primary virtual base classes.

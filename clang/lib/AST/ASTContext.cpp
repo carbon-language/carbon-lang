@@ -481,11 +481,10 @@ comments::FullComment *ASTContext::getCommentForDecl(
       if (!(RD = RD->getDefinition()))
         return NULL;
       // Check non-virtual bases.
-      for (CXXRecordDecl::base_class_const_iterator I =
-           RD->bases_begin(), E = RD->bases_end(); I != E; ++I) {
-        if (I->isVirtual() || (I->getAccessSpecifier() != AS_public))
+      for (const auto &I : RD->bases()) {
+        if (I.isVirtual() || (I.getAccessSpecifier() != AS_public))
           continue;
-        QualType Ty = I->getType();
+        QualType Ty = I.getType();
         if (Ty.isNull())
           continue;
         if (const CXXRecordDecl *NonVirtualBase = Ty->getAsCXXRecordDecl()) {
@@ -5596,11 +5595,9 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
   const ASTRecordLayout &layout = getASTRecordLayout(RDecl);
 
   if (CXXRec) {
-    for (CXXRecordDecl::base_class_iterator
-           BI = CXXRec->bases_begin(),
-           BE = CXXRec->bases_end(); BI != BE; ++BI) {
-      if (!BI->isVirtual()) {
-        CXXRecordDecl *base = BI->getType()->getAsCXXRecordDecl();
+    for (const auto &BI : CXXRec->bases()) {
+      if (!BI.isVirtual()) {
+        CXXRecordDecl *base = BI.getType()->getAsCXXRecordDecl();
         if (base->isEmpty())
           continue;
         uint64_t offs = toBits(layout.getBaseClassOffset(base));

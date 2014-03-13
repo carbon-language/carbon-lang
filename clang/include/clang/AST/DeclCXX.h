@@ -678,6 +678,17 @@ public:
   /// \brief Retrieves the number of base classes of this class.
   unsigned getNumBases() const { return data().NumBases; }
 
+  typedef llvm::iterator_range<base_class_iterator> base_class_range;
+  typedef llvm::iterator_range<base_class_const_iterator>
+    base_class_const_range;
+
+  base_class_range bases() {
+    return base_class_range(bases_begin(), bases_end());
+  }
+  base_class_const_range bases() const {
+    return base_class_const_range(bases_begin(), bases_end());
+  }
+
   base_class_iterator bases_begin() { return data().getBases(); }
   base_class_const_iterator bases_begin() const { return data().getBases(); }
   base_class_iterator bases_end() { return bases_begin() + data().NumBases; }

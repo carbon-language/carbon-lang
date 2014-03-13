@@ -4243,21 +4243,19 @@ void Sema::CodeCompleteConstructorInitializer(
                                 Results.getCodeCompletionTUInfo());
   bool SawLastInitializer = Initializers.empty();
   CXXRecordDecl *ClassDecl = Constructor->getParent();
-  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
-                                       BaseEnd = ClassDecl->bases_end();
-       Base != BaseEnd; ++Base) {
-    if (!InitializedBases.insert(Context.getCanonicalType(Base->getType()))) {
+  for (const auto &Base : ClassDecl->bases()) {
+    if (!InitializedBases.insert(Context.getCanonicalType(Base.getType()))) {
       SawLastInitializer
         = !Initializers.empty() && 
           Initializers.back()->isBaseInitializer() &&
-          Context.hasSameUnqualifiedType(Base->getType(),
+          Context.hasSameUnqualifiedType(Base.getType(),
                QualType(Initializers.back()->getBaseClass(), 0));
       continue;
     }
     
     Builder.AddTypedTextChunk(
                Results.getAllocator().CopyString(
-                          Base->getType().getAsString(Policy)));
+                          Base.getType().getAsString(Policy)));
     Builder.AddChunk(CodeCompletionString::CK_LeftParen);
     Builder.AddPlaceholderChunk("args");
     Builder.AddChunk(CodeCompletionString::CK_RightParen);

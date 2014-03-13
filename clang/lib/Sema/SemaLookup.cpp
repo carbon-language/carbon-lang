@@ -2069,10 +2069,8 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
     Class = Bases.pop_back_val();
 
     // Visit the base classes.
-    for (CXXRecordDecl::base_class_iterator Base = Class->bases_begin(),
-                                         BaseEnd = Class->bases_end();
-         Base != BaseEnd; ++Base) {
-      const RecordType *BaseType = Base->getType()->getAs<RecordType>();
+    for (const auto &Base : Class->bases()) {
+      const RecordType *BaseType = Base.getType()->getAs<RecordType>();
       // In dependent contexts, we do ADL twice, and the first time around,
       // the base type might be a dependent TemplateSpecializationType, or a
       // TemplateTypeParmType. If that happens, simply ignore it.
@@ -3094,10 +3092,8 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
     if (!Record->hasDefinition())
       return;
 
-    for (CXXRecordDecl::base_class_iterator B = Record->bases_begin(),
-                                         BEnd = Record->bases_end();
-         B != BEnd; ++B) {
-      QualType BaseType = B->getType();
+    for (const auto &B : Record->bases()) {
+      QualType BaseType = B.getType();
 
       // Don't look into dependent bases, because name lookup can't look
       // there anyway.

@@ -1030,15 +1030,13 @@ void ASTDumper::VisitCXXRecordDecl(const CXXRecordDecl *D) {
   if (!D->isCompleteDefinition())
     return;
 
-  for (CXXRecordDecl::base_class_const_iterator I = D->bases_begin(),
-                                                E = D->bases_end();
-       I != E; ++I) {
+  for (const auto &I : D->bases()) {
     IndentScope Indent(*this);
-    if (I->isVirtual())
+    if (I.isVirtual())
       OS << "virtual ";
-    dumpAccessSpecifier(I->getAccessSpecifier());
-    dumpType(I->getType());
-    if (I->isPackExpansion())
+    dumpAccessSpecifier(I.getAccessSpecifier());
+    dumpType(I.getType());
+    if (I.isPackExpansion())
       OS << "...";
   }
 }

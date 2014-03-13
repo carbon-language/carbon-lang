@@ -634,9 +634,8 @@ llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualCall(
         AvoidVirtualOffset = true;
       } else {
         // Let's see if we try to call a destructor of a non-virtual base.
-        for (CXXRecordDecl::base_class_const_iterator I = CurRD->bases_begin(),
-             E = CurRD->bases_end(); I != E; ++I) {
-          if (I->getType()->getAsCXXRecordDecl() != MD->getParent())
+        for (const auto &I : CurRD->bases()) {
+          if (I.getType()->getAsCXXRecordDecl() != MD->getParent())
             continue;
           // If we call a base destructor for a non-virtual base, we statically
           // know where it expects the vfptr and "this" to be.

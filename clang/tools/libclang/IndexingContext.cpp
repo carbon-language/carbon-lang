@@ -123,9 +123,7 @@ AttrListInfo::create(const Decl *D, IndexingContext &IdxCtx) {
 IndexingContext::CXXBasesListInfo::CXXBasesListInfo(const CXXRecordDecl *D,
                                    IndexingContext &IdxCtx,
                                    ScratchAlloc &SA) {
-  for (CXXRecordDecl::base_class_const_iterator
-         I = D->bases_begin(), E = D->bases_end(); I != E; ++I) {
-    const CXXBaseSpecifier &Base = *I;
+  for (const auto &Base : D->bases()) {
     BaseEntities.push_back(EntityInfo());
     const NamedDecl *BaseD = 0;
     QualType T = Base.getType();

@@ -288,12 +288,10 @@ static AccessResult IsDerivedFromInclusive(const CXXRecordDecl *Derived,
     if (Derived->isDependentContext() && !Derived->hasDefinition())
       return AR_dependent;
     
-    for (CXXRecordDecl::base_class_const_iterator
-           I = Derived->bases_begin(), E = Derived->bases_end(); I != E; ++I) {
-
+    for (const auto &I : Derived->bases()) {
       const CXXRecordDecl *RD;
 
-      QualType T = I->getType();
+      QualType T = I.getType();
       if (const RecordType *RT = T->getAs<RecordType>()) {
         RD = cast<CXXRecordDecl>(RT->getDecl());
       } else if (const InjectedClassNameType *IT
@@ -646,18 +644,16 @@ struct ProtectedFriendContext {
       EverDependent = true;
 
     // Recurse into the base classes.
-    for (CXXRecordDecl::base_class_const_iterator
-           I = Cur->bases_begin(), E = Cur->bases_end(); I != E; ++I) {
-
+    for (const auto &I : Cur->bases()) {
       // If this is private inheritance, then a public member of the
       // base will not have any access in classes derived from Cur.
       unsigned BasePrivateDepth = PrivateDepth;
-      if (I->getAccessSpecifier() == AS_private)
+      if (I.getAccessSpecifier() == AS_private)
         BasePrivateDepth = CurPath.size() - 1;
 
       const CXXRecordDecl *RD;
 
-      QualType T = I->getType();
+      QualType T = I.getType();
       if (const RecordType *RT = T->getAs<RecordType>()) {
         RD = cast<CXXRecordDecl>(RT->getDecl());
       } else if (const InjectedClassNameType *IT

@@ -5327,12 +5327,11 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
              !RD->hasTrivialDefaultConstructor()) {
     Diag(RD->getLocation(), diag::note_non_literal_no_constexpr_ctors) << RD;
   } else if (RD->hasNonLiteralTypeFieldsOrBases()) {
-    for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
-         E = RD->bases_end(); I != E; ++I) {
-      if (!I->getType()->isLiteralType(Context)) {
-        Diag(I->getLocStart(),
+    for (const auto &I : RD->bases()) {
+      if (!I.getType()->isLiteralType(Context)) {
+        Diag(I.getLocStart(),
              diag::note_non_literal_base_class)
-          << RD << I->getType() << I->getSourceRange();
+          << RD << I.getType() << I.getSourceRange();
         return true;
       }
     }

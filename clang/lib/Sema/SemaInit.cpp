@@ -6263,10 +6263,8 @@ static bool DiagnoseUninitializedReference(Sema &S, SourceLocation Loc,
     }
   }
 
-  for (CXXRecordDecl::base_class_iterator BI = RD->bases_begin(),
-                                          BE = RD->bases_end();
-       BI != BE; ++BI) {
-    if (DiagnoseUninitializedReference(S, BI->getLocStart(), BI->getType())) {
+  for (const auto &BI : RD->bases()) {
+    if (DiagnoseUninitializedReference(S, BI.getLocStart(), BI.getType())) {
       S.Diag(Loc, diag::note_value_initialization_here) << RD;
       return true;
     }

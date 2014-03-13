@@ -1660,9 +1660,8 @@ bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
       return true;
 
   if (D->isCompleteDefinition()) {
-    for (CXXRecordDecl::base_class_iterator I = D->bases_begin(),
-         E = D->bases_end(); I != E; ++I) {
-      if (Visit(cxcursor::MakeCursorCXXBaseSpecifier(I, TU)))
+    for (const auto &I : D->bases()) {
+      if (Visit(cxcursor::MakeCursorCXXBaseSpecifier(&I, TU)))
         return true;
     }
   }

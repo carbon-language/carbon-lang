@@ -62,15 +62,14 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
 
   // Try to find a unique base class with a non-trivial destructor.
   const CXXRecordDecl *UniqueBase = 0;
-  for (CXXRecordDecl::base_class_const_iterator I = Class->bases_begin(),
-         E = Class->bases_end(); I != E; ++I) {
+  for (const auto &I : Class->bases()) {
 
     // We're in the base destructor, so skip virtual bases.
-    if (I->isVirtual()) continue;
+    if (I.isVirtual()) continue;
 
     // Skip base classes with trivial destructors.
     const CXXRecordDecl *Base
-      = cast<CXXRecordDecl>(I->getType()->getAs<RecordType>()->getDecl());
+      = cast<CXXRecordDecl>(I.getType()->getAs<RecordType>()->getDecl());
     if (Base->hasTrivialDestructor()) continue;
 
     // If we've already found a base class with a non-trivial

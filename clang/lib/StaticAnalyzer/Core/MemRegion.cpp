@@ -975,10 +975,8 @@ static bool isValidBaseClass(const CXXRecordDecl *BaseClass,
   if (IsVirtual)
     return Class->isVirtuallyDerivedFrom(BaseClass);
 
-  for (CXXRecordDecl::base_class_const_iterator I = Class->bases_begin(),
-                                                E = Class->bases_end();
-       I != E; ++I) {
-    if (I->getType()->getAsCXXRecordDecl()->getCanonicalDecl() == BaseClass)
+  for (const auto &I : Class->bases()) {
+    if (I.getType()->getAsCXXRecordDecl()->getCanonicalDecl() == BaseClass)
       return true;
   }
 
@@ -1176,10 +1174,8 @@ static bool isImmediateBase(const CXXRecordDecl *Child,
   // Note that we do NOT canonicalize the base class here, because
   // ASTRecordLayout doesn't either. If that leads us down the wrong path,
   // so be it; at least we won't crash.
-  for (CXXRecordDecl::base_class_const_iterator I = Child->bases_begin(),
-                                                E = Child->bases_end();
-       I != E; ++I) {
-    if (I->getType()->getAsCXXRecordDecl() == Base)
+  for (const auto &I : Child->bases()) {
+    if (I.getType()->getAsCXXRecordDecl() == Base)
       return true;
   }
 

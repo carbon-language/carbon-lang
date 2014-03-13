@@ -209,9 +209,8 @@ static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays) {
 
   // If this is a C++ record, check the bases first.
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
-    for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
-           e = CXXRD->bases_end(); i != e; ++i)
-      if (!isEmptyRecord(Context, i->getType(), true))
+    for (const auto &I : CXXRD->bases())
+      if (!isEmptyRecord(Context, I.getType(), true))
         return false;
 
   for (const auto *I : RD->fields())
@@ -241,10 +240,9 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
 
   // If this is a C++ record, check the bases first.
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
-    for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
-           e = CXXRD->bases_end(); i != e; ++i) {
+    for (const auto &I : CXXRD->bases()) {
       // Ignore empty records.
-      if (isEmptyRecord(Context, i->getType(), true))
+      if (isEmptyRecord(Context, I.getType(), true))
         continue;
 
       // If we already found an element then this isn't a single-element struct.
@@ -253,7 +251,7 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
 
       // If this is non-empty and not a single element struct, the composite
       // cannot be a single element struct.
-      Found = isSingleElementStruct(i->getType(), Context);
+      Found = isSingleElementStruct(I.getType(), Context);
       if (!Found)
         return 0;
     }
@@ -782,9 +780,8 @@ static bool isRecordWithSSEVectorType(ASTContext &Context, QualType Ty) {
 
   // If this is a C++ record, check the bases first.
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
-    for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
-           e = CXXRD->bases_end(); i != e; ++i)
-      if (!isRecordWithSSEVectorType(Context, i->getType()))
+    for (const auto &I : CXXRD->bases())
+      if (!isRecordWithSSEVectorType(Context, I.getType()))
         return false;
 
   for (const auto *i : RD->fields()) {
@@ -1739,12 +1736,11 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
 
     // If this is a C++ record, classify the bases first.
     if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
-      for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
-             e = CXXRD->bases_end(); i != e; ++i) {
-        assert(!i->isVirtual() && !i->getType()->isDependentType() &&
+      for (const auto &I : CXXRD->bases()) {
+        assert(!I.isVirtual() && !I.getType()->isDependentType() &&
                "Unexpected base class!");
         const CXXRecordDecl *Base =
-          cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+          cast<CXXRecordDecl>(I.getType()->getAs<RecordType>()->getDecl());
 
         // Classify this field.
         //
@@ -1754,7 +1750,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
         Class FieldLo, FieldHi;
         uint64_t Offset =
           OffsetBase + getContext().toBits(Layout.getBaseClassOffset(Base));
-        classify(i->getType(), Offset, FieldLo, FieldHi, isNamedArg);
+        classify(I.getType(), Offset, FieldLo, FieldHi, isNamedArg);
         Lo = merge(Lo, FieldLo);
         Hi = merge(Hi, FieldHi);
         if (Lo == Memory || Hi == Memory)
@@ -1984,19 +1980,18 @@ static bool BitsContainNoUserData(QualType Ty, unsigned StartBit,
 
     // If this is a C++ record, check the bases first.
     if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD)) {
-      for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
-           e = CXXRD->bases_end(); i != e; ++i) {
-        assert(!i->isVirtual() && !i->getType()->isDependentType() &&
+      for (const auto &I : CXXRD->bases()) {
+        assert(!I.isVirtual() && !I.getType()->isDependentType() &&
                "Unexpected base class!");
         const CXXRecordDecl *Base =
-          cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+          cast<CXXRecordDecl>(I.getType()->getAs<RecordType>()->getDecl());
 
         // If the base is after the span we care about, ignore it.
         unsigned BaseOffset = Context.toBits(Layout.getBaseClassOffset(Base));
         if (BaseOffset >= EndBit) continue;
 
         unsigned BaseStart = BaseOffset < StartBit ? StartBit-BaseOffset :0;
-        if (!BitsContainNoUserData(i->getType(), BaseStart,
+        if (!BitsContainNoUserData(I.getType(), BaseStart,
                                    EndBit-BaseOffset, Context))
           return false;
       }
@@ -4582,9 +4577,8 @@ bool SystemZABIInfo::isFPArgumentType(QualType Ty) const {
 
     // If this is a C++ record, check the bases first.
     if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
-      for (CXXRecordDecl::base_class_const_iterator I = CXXRD->bases_begin(),
-             E = CXXRD->bases_end(); I != E; ++I) {
-        QualType Base = I->getType();
+      for (const auto &I : CXXRD->bases()) {
+        QualType Base = I.getType();
 
         // Empty bases don't affect things either way.
         if (isEmptyRecord(getContext(), Base, true))

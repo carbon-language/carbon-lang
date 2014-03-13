@@ -131,9 +131,8 @@ isSafeToConvert(const RecordDecl *RD, CodeGenTypes &CGT,
   // when a class is translated, even though they aren't embedded by-value into
   // the class.
   if (const CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
-    for (CXXRecordDecl::base_class_const_iterator I = CRD->bases_begin(),
-         E = CRD->bases_end(); I != E; ++I)
-      if (!isSafeToConvert(I->getType()->getAs<RecordType>()->getDecl(),
+    for (const auto &I : CRD->bases())
+      if (!isSafeToConvert(I.getType()->getAs<RecordType>()->getDecl(),
                            CGT, AlreadyChecked))
         return false;
   }
@@ -650,11 +649,10 @@ llvm::StructType *CodeGenTypes::ConvertRecordDeclType(const RecordDecl *RD) {
   
   // Force conversion of non-virtual base classes recursively.
   if (const CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
-    for (CXXRecordDecl::base_class_const_iterator i = CRD->bases_begin(),
-         e = CRD->bases_end(); i != e; ++i) {
-      if (i->isVirtual()) continue;
+    for (const auto &I : CRD->bases()) {
+      if (I.isVirtual()) continue;
       
-      ConvertRecordDeclType(i->getType()->getAs<RecordType>()->getDecl());
+      ConvertRecordDeclType(I.getType()->getAs<RecordType>()->getDecl());
     }
   }
 

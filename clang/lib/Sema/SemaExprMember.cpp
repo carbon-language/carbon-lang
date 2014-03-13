@@ -559,11 +559,9 @@ class RecordMemberExprValidatorCCC : public CorrectionCandidateCallback {
 
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(Record)) {
       // Accept candidates that occur in any of the current class' base classes.
-      for (CXXRecordDecl::base_class_const_iterator BS = RD->bases_begin(),
-                                                    BSEnd = RD->bases_end();
-           BS != BSEnd; ++BS) {
+      for (const auto &BS : RD->bases()) {
         if (const RecordType *BSTy = dyn_cast_or_null<RecordType>(
-                BS->getType().getTypePtrOrNull())) {
+                BS.getType().getTypePtrOrNull())) {
           if (BSTy->getDecl()->containsDecl(ND))
             return true;
         }
