@@ -1026,3 +1026,241 @@ namespace dr387 { // dr387: yes
 }
 
 // FIXME: dr388 needs codegen test
+
+namespace dr389 { // dr389: no
+  struct S {
+    typedef struct {} A;
+    typedef enum {} B;
+    typedef struct {} const C; // expected-note 0-2{{here}}
+    typedef enum {} const D; // expected-note 0-1{{here}}
+  };
+  template<typename> struct T {};
+
+  struct WithLinkage1 {};
+  enum WithLinkage2 {};
+  typedef struct {} *WithLinkage3a, WithLinkage3b;
+  typedef enum {} WithLinkage4a, *WithLinkage4b;
+  typedef S::A WithLinkage5;
+  typedef const S::B WithLinkage6;
+  typedef int WithLinkage7;
+  typedef void (*WithLinkage8)(WithLinkage2 WithLinkage1::*, WithLinkage5 *);
+  typedef T<WithLinkage5> WithLinkage9;
+
+  typedef struct {} *WithoutLinkage1; // expected-note 0-1{{here}}
+  typedef enum {} const WithoutLinkage2; // expected-note 0-1{{here}}
+  // These two types don't have linkage even though they are externally visible
+  // and the ODR requires them to be merged across TUs.
+  typedef S::C WithoutLinkage3;
+  typedef S::D WithoutLinkage4;
+  typedef void (*WithoutLinkage5)(int (WithoutLinkage3::*)(char));
+
+#if __cplusplus >= 201103L
+  // This has linkage even though its template argument does not.
+  // FIXME: This is probably a defect.
+  typedef T<WithoutLinkage1> WithLinkage10;
+#else
+  typedef int WithLinkage10; // dummy
+
+  typedef T<WithLinkage1> GoodArg1;
+  typedef T<WithLinkage2> GoodArg2;
+  typedef T<WithLinkage3a> GoodArg3a;
+  typedef T<WithLinkage3b> GoodArg3b;
+  typedef T<WithLinkage4a> GoodArg4a;
+  typedef T<WithLinkage4b> GoodArg4b;
+  typedef T<WithLinkage5> GoodArg5;
+  typedef T<WithLinkage6> GoodArg6;
+  typedef T<WithLinkage7> GoodArg7;
+  typedef T<WithLinkage8> GoodArg8;
+  typedef T<WithLinkage9> GoodArg9;
+
+  typedef T<WithoutLinkage1> BadArg1; // expected-error{{template argument uses}}
+  typedef T<WithoutLinkage2> BadArg2; // expected-error{{template argument uses}}
+  typedef T<WithoutLinkage3> BadArg3; // expected-error{{template argument uses}}
+  typedef T<WithoutLinkage4> BadArg4; // expected-error{{template argument uses}}
+  typedef T<WithoutLinkage5> BadArg5; // expected-error{{template argument uses}}
+#endif
+
+  extern WithLinkage1 withLinkage1;
+  extern WithLinkage2 withLinkage2;
+  extern WithLinkage3a withLinkage3a;
+  extern WithLinkage3b withLinkage3b;
+  extern WithLinkage4a withLinkage4a;
+  extern WithLinkage4b withLinkage4b;
+  extern WithLinkage5 withLinkage5;
+  extern WithLinkage6 withLinkage6;
+  extern WithLinkage7 withLinkage7;
+  extern WithLinkage8 withLinkage8;
+  extern WithLinkage9 withLinkage9;
+  extern WithLinkage10 withLinkage10;
+
+  // FIXME: These are all ill-formed.
+  extern WithoutLinkage1 withoutLinkage1;
+  extern WithoutLinkage2 withoutLinkage2;
+  extern WithoutLinkage3 withoutLinkage3;
+  extern WithoutLinkage4 withoutLinkage4;
+  extern WithoutLinkage5 withoutLinkage5;
+
+  // OK, extern "C".
+  extern "C" {
+    extern WithoutLinkage1 dr389_withoutLinkage1;
+    extern WithoutLinkage2 dr389_withoutLinkage2;
+    extern WithoutLinkage3 dr389_withoutLinkage3;
+    extern WithoutLinkage4 dr389_withoutLinkage4;
+    extern WithoutLinkage5 dr389_withoutLinkage5;
+  }
+
+  // OK, defined.
+  WithoutLinkage1 withoutLinkageDef1;
+  WithoutLinkage2 withoutLinkageDef2 = WithoutLinkage2();
+  WithoutLinkage3 withoutLinkageDef3 = {};
+  WithoutLinkage4 withoutLinkageDef4 = WithoutLinkage4();
+  WithoutLinkage5 withoutLinkageDef5;
+
+  void use(const void *);
+  void use_all() {
+    use(&withLinkage1); use(&withLinkage2); use(&withLinkage3a); use(&withLinkage3b);
+    use(&withLinkage4a); use(&withLinkage4b); use(&withLinkage5); use(&withLinkage6);
+    use(&withLinkage7); use(&withLinkage8); use(&withLinkage9); use(&withLinkage10);
+
+    use(&withoutLinkage1); use(&withoutLinkage2); use(&withoutLinkage3);
+    use(&withoutLinkage4); use(&withoutLinkage5);
+
+    use(&dr389_withoutLinkage1); use(&dr389_withoutLinkage2);
+    use(&dr389_withoutLinkage3); use(&dr389_withoutLinkage4);
+    use(&dr389_withoutLinkage5);
+
+    use(&withoutLinkageDef1); use(&withoutLinkageDef2); use(&withoutLinkageDef3);
+    use(&withoutLinkageDef4); use(&withoutLinkageDef5);
+  }
+
+  void local() {
+    // FIXME: This is ill-formed.
+    extern WithoutLinkage1 withoutLinkageLocal;
+  }
+}
+
+namespace dr390 { // dr390: yes
+  template<typename T>
+  struct A {
+    A() { f(); } // expected-warning {{call to pure virt}}
+    virtual void f() = 0; // expected-note {{here}}
+    virtual ~A() = 0;
+  };
+  template<typename T> A<T>::~A() { T::error; } // expected-error {{cannot be used prior to}}
+  template<typename T> void A<T>::f() { T::error; } // ok, not odr-used
+  struct B : A<int> { // expected-note 2{{in instantiation of}}
+    void f() {}
+  } b;
+}
+
+namespace dr391 { // dr391: yes c++11
+  // FIXME: Should this apply to C++98 too?
+  class A { A(const A&); }; // expected-note 0-1{{here}}
+  A fa();
+  const A &a = fa();
+#if __cplusplus < 201103L
+  // expected-error@-2 {{C++98 requires an accessible copy constructor}}
+#endif
+
+  struct B { B(const B&) = delete; }; // expected-error 0-1{{extension}} expected-note 0-1{{here}}
+  B fb();
+  const B &b = fb();
+#if __cplusplus < 201103L
+  // expected-error@-2 {{deleted}}
+#endif
+
+  template<typename T>
+  struct C {
+    C(const C&) { T::error; }
+  };
+  C<int> fc();
+  const C<int> &c = fc();
+}
+
+// dr392 FIXME write codegen test
+// dr394: na
+
+namespace dr395 { // dr395: yes
+  struct S {
+    template <typename T, int N>(&operator T())[N]; // expected-error {{must use a typedef}}
+    template <typename T, int N> operator(T (&)[N])(); // expected-error {{expected ')'}} expected-note {{to match this '('}} expected-error +{{}}
+    template <typename T> operator T *() const { return 0; }
+    template <typename T, typename U> operator T U::*() const { return 0; }
+    template <typename T, typename U> operator T (U::*)()() const { return 0; } // expected-error +{{}}
+  };
+
+  struct null1_t {
+    template <class T, class U> struct ptr_mem_fun_t {
+      typedef T (U::*type)();
+    };
+
+    template <class T, class U>
+    operator typename ptr_mem_fun_t<T, U>::type() const { // expected-note {{couldn't infer}}
+      return 0;
+    }
+  } null1;
+  int (S::*p)() = null1; // expected-error {{no viable conversion}}
+
+  template <typename T> using id = T; // expected-error 0-1{{extension}}
+
+  struct T {
+    template <typename T, int N> operator id<T[N]> &();
+    template <typename T, typename U> operator id<T (U::*)()>() const;
+  };
+
+  struct null2_t {
+    template<class T, class U> using ptr_mem_fun_t = T (U::*)(); // expected-error 0-1{{extension}}
+    template<class T, class U> operator ptr_mem_fun_t<T, U>() const { return 0; };
+  } null2;
+  int (S::*q)() = null2;
+}
+
+namespace dr396 { // dr396: yes
+  void f() {
+    auto int a(); // expected-error {{storage class on function}}
+    int (i); // expected-note {{previous}}
+    auto int (i); // expected-error {{redefinition}}
+#if __cplusplus >= 201103L
+  // expected-error@-4 {{'auto' storage class}} expected-error@-2 {{'auto' storage class}}
+#endif
+  }
+}
+
+// dr397: sup 1823
+
+namespace dr398 { // dr398: yes
+  namespace example1 {
+    struct S {
+      static int const I = 42;
+    };
+    template <int N> struct X {};
+    template <typename T> void f(X<T::I> *) {}
+    template <typename T> void f(X<T::J> *) {}
+    void foo() { f<S>(0); }
+  }
+
+  namespace example2 {
+    template <int I> struct X {};
+    template <template <class T> class> struct Z {};
+    template <class T> void f(typename T::Y *) {} // expected-note 2{{substitution failure}}
+    template <class T> void g(X<T::N> *) {} // expected-note {{substitution failure}}
+    template <class T> void h(Z<T::template TT> *) {} // expected-note {{substitution failure}}
+    struct A {};
+    struct B {
+      int Y;
+    };
+    struct C {
+      typedef int N;
+    };
+    struct D {
+      typedef int TT;
+    };
+
+    void test() {
+      f<A>(0); // expected-error {{no matching function}}
+      f<B>(0); // expected-error {{no matching function}}
+      g<C>(0); // expected-error {{no matching function}}
+      h<D>(0); // expected-error {{no matching function}}
+    }
+  }
+}
