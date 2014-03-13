@@ -16,8 +16,7 @@ if(UNIX)
 else()
   set(command copy)
 endif()
-set(src "lld${CMAKE_EXECUTABLE_SUFFIX}")
-set(dst "link${CMAKE_EXECUTABLE_SUFFIX}")
+set(src "${LLVM_RUNTIME_OUTPUT_INTDIR}/lld${CMAKE_EXECUTABLE_SUFFIX}")
+set(dst "${LLVM_RUNTIME_OUTPUT_INTDIR}/link${CMAKE_EXECUTABLE_SUFFIX}")
 add_custom_command(TARGET lld POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E ${command} ${src} ${dst}
-  WORKING_DIRECTORY "${LLVM_RUNTIME_OUTPUT_INTDIR}")
+  COMMAND ${CMAKE_COMMAND} -E ${command} ${src} ${dst})
