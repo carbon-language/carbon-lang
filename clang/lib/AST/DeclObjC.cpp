@@ -1224,10 +1224,7 @@ ObjCIvarDecl *ObjCInterfaceDecl::all_declared_ivar_begin() {
         curIvar->setNextIvar(*I);
     }
 
-    for (ObjCInterfaceDecl::known_extensions_iterator
-           Ext = known_extensions_begin(),
-           ExtEnd = known_extensions_end();
-         Ext != ExtEnd; ++Ext) {
+    for (const auto *Ext : known_extensions()) {
       if (!Ext->ivar_empty()) {
         ObjCCategoryDecl::ivar_iterator
           I = Ext->ivar_begin(),

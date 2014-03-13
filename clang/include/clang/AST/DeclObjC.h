@@ -1196,6 +1196,13 @@ public:
   /// \brief Iterator that walks over all of the known extensions.
   typedef filtered_category_iterator<isKnownExtension>
     known_extensions_iterator;
+  typedef llvm::iterator_range<known_extensions_iterator>
+    known_extensions_range;
+
+  known_extensions_range known_extensions() const {
+    return known_extensions_range(known_extensions_begin(),
+                                  known_extensions_end());
+  }
 
   /// \brief Retrieve an iterator to the beginning of the known-extensions
   /// list.

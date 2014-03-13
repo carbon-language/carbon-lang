@@ -343,12 +343,9 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   if (CCPrimary) {
     // Check for duplicate declaration of this property in current and
     // other class extensions.
-    for (ObjCInterfaceDecl::known_extensions_iterator
-           Ext = CCPrimary->known_extensions_begin(),
-           ExtEnd = CCPrimary->known_extensions_end();
-         Ext != ExtEnd; ++Ext) {
+    for (const auto *Ext : CCPrimary->known_extensions()) {
       if (ObjCPropertyDecl *prevDecl
-            = ObjCPropertyDecl::findPropertyDecl(*Ext, PropertyId)) {
+            = ObjCPropertyDecl::findPropertyDecl(Ext, PropertyId)) {
         Diag(AtLoc, diag::err_duplicate_property);
         Diag(prevDecl->getLocation(), diag::note_property_declare);
         return 0;
@@ -868,9 +865,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       bool ReadWriteProperty = false;
       // Search into the class extensions and see if 'readonly property is
       // redeclared 'readwrite', then no warning is to be issued.
-      for (ObjCInterfaceDecl::known_extensions_iterator
-            Ext = IDecl->known_extensions_begin(),
-            ExtEnd = IDecl->known_extensions_end(); Ext != ExtEnd; ++Ext) {
+      for (auto *Ext : IDecl->known_extensions()) {
         DeclContext::lookup_result R = Ext->lookup(property->getDeclName());
         if (!R.empty())
           if (ObjCPropertyDecl *ExtProp = dyn_cast<ObjCPropertyDecl>(R[0])) {
