@@ -40,7 +40,7 @@ class SMLoc;
 struct MCDwarfFile {
   // Name - the base name of the file without its directory path.
   // The StringRef references memory allocated in the MCContext.
-  StringRef Name;
+  std::string Name;
 
   // DirIndex - the index into the list of directory names for this file name.
   unsigned DirIndex;
@@ -176,7 +176,7 @@ public:
 class MCDwarfFileTable {
   MCSymbol *Label;
   SmallVector<StringRef, 3> MCDwarfDirs;
-  SmallVector<MCDwarfFile *, 3> MCDwarfFiles;
+  SmallVector<MCDwarfFile, 3> MCDwarfFiles;
   MCLineSection MCLineSections;
 
 public:
@@ -197,11 +197,11 @@ public:
     return MCDwarfDirs;
   }
 
-  const SmallVectorImpl<MCDwarfFile *> &getMCDwarfFiles() const {
+  const SmallVectorImpl<MCDwarfFile> &getMCDwarfFiles() const {
     return MCDwarfFiles;
   }
 
-  SmallVectorImpl<MCDwarfFile *> &getMCDwarfFiles() {
+  SmallVectorImpl<MCDwarfFile> &getMCDwarfFiles() {
     return MCDwarfFiles;
   }
 

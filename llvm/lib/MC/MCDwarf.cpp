@@ -289,10 +289,10 @@ const MCSymbol *MCDwarfFileTable::EmitCU(MCStreamer *MCOS) const {
 
   // Second the file table.
   for (unsigned i = 1; i < MCDwarfFiles.size(); i++) {
-    MCOS->EmitBytes(MCDwarfFiles[i]->Name); // FileName
+    MCOS->EmitBytes(MCDwarfFiles[i].Name); // FileName
     MCOS->EmitBytes(StringRef("\0", 1)); // the null term. of the string
     // the Directory num
-    MCOS->EmitULEB128IntValue(MCDwarfFiles[i]->DirIndex);
+    MCOS->EmitULEB128IntValue(MCDwarfFiles[i].DirIndex);
     MCOS->EmitIntValue(0, 1); // last modification timestamp (always 0)
     MCOS->EmitIntValue(0, 1); // filesize (always 0)
   }
@@ -602,9 +602,9 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
     MCOS->EmitBytes(MCDwarfDirs[0]);
     MCOS->EmitBytes("/");
   }
-  const SmallVectorImpl<MCDwarfFile *> &MCDwarfFiles =
+  const SmallVectorImpl<MCDwarfFile> &MCDwarfFiles =
     MCOS->getContext().getMCDwarfFiles();
-  MCOS->EmitBytes(MCDwarfFiles[1]->Name);
+  MCOS->EmitBytes(MCDwarfFiles[1].Name);
   MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
 
   // AT_comp_dir, the working directory the assembly was done in.

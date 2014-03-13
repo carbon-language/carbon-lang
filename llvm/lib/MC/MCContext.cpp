@@ -338,20 +338,19 @@ const MCSectionCOFF *MCContext::getCOFFSection(StringRef Section) {
 unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
                                  unsigned FileNumber, unsigned CUID) {
   MCDwarfFileTable &Table = MCDwarfFileTablesCUMap[CUID];
-  SmallVectorImpl<MCDwarfFile *>& MCDwarfFiles = Table.getMCDwarfFiles();
+  SmallVectorImpl<MCDwarfFile>& MCDwarfFiles = Table.getMCDwarfFiles();
   SmallVectorImpl<StringRef>& MCDwarfDirs = Table.getMCDwarfDirs();
   // Make space for this FileNumber in the MCDwarfFiles vector if needed.
   if (FileNumber >= MCDwarfFiles.size()) {
     MCDwarfFiles.resize(FileNumber + 1);
-  } else {
-    MCDwarfFile *&ExistingFile = MCDwarfFiles[FileNumber];
-    if (ExistingFile)
-      // It is an error to use see the same number more than once.
-      return 0;
   }
 
   // Get the new MCDwarfFile slot for this FileNumber.
-  MCDwarfFile *&File = MCDwarfFiles[FileNumber];
+  MCDwarfFile &File = MCDwarfFiles[FileNumber];
+
+  // It is an error to use see the same number more than once.
+  if (!File.Name.empty())
+    return 0;
 
   if (Directory.empty()) {
     // Separate the directory part from the basename of the FileName.
@@ -387,13 +386,8 @@ unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
     DirIndex++;
   }
 
-  // Now make the MCDwarfFile entry and place it in the slot in the MCDwarfFiles
-  // vector.
-  char *Buf = static_cast<char *>(Allocate(FileName.size()));
-  memcpy(Buf, FileName.data(), FileName.size());
-  File = new (*this) MCDwarfFile;
-  File->Name = StringRef(Buf, FileName.size());
-  File->DirIndex = DirIndex;
+  File.Name = FileName;
+  File.DirIndex = DirIndex;
 
   // return the allocated FileNumber.
   return FileNumber;
@@ -402,11 +396,11 @@ unsigned MCContext::GetDwarfFile(StringRef Directory, StringRef FileName,
 /// isValidDwarfFileNumber - takes a dwarf file number and returns true if it
 /// currently is assigned and false otherwise.
 bool MCContext::isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID) {
-  const SmallVectorImpl<MCDwarfFile *>& MCDwarfFiles = getMCDwarfFiles(CUID);
+  const SmallVectorImpl<MCDwarfFile>& MCDwarfFiles = getMCDwarfFiles(CUID);
   if(FileNumber == 0 || FileNumber >= MCDwarfFiles.size())
     return false;
 
-  return MCDwarfFiles[FileNumber] != 0;
+  return !MCDwarfFiles[FileNumber].Name.empty();
 }
 
 void MCContext::FatalError(SMLoc Loc, const Twine &Msg) {
