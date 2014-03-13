@@ -212,7 +212,7 @@ void GlobalMerge::setMustKeepGlobalVariables(Module &M) {
        ++IFn) {
     for (Function::iterator IBB = IFn->begin(), IEndBB = IFn->end();
          IBB != IEndBB; ++IBB) {
-      // Follow the inwoke link to find the landing pad instruction
+      // Follow the invoke link to find the landing pad instruction
       const InvokeInst *II = dyn_cast<InvokeInst>(IBB->getTerminator());
       if (!II) continue;
 
