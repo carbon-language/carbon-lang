@@ -73,6 +73,9 @@ struct HeaderFileInfo {
   /// provided via a header map. This bit indicates when this is one of
   /// those framework headers.
   unsigned IndexHeaderMapHeader : 1;
+
+  /// \brief Whether this file had been looked up as a header.
+  unsigned IsValid : 1;
   
   /// \brief The number of times the file has been included already.
   unsigned short NumIncludes;
@@ -102,7 +105,7 @@ struct HeaderFileInfo {
     : isImport(false), isPragmaOnce(false), DirInfo(SrcMgr::C_User), 
       External(false), isModuleHeader(false), isCompilingModuleHeader(false),
       HeaderRole(ModuleMap::NormalHeader),
-      Resolved(false), IndexHeaderMapHeader(false),
+      Resolved(false), IndexHeaderMapHeader(false), IsValid(0),
       NumIncludes(0), ControllingMacroID(0), ControllingMacro(0)  {}
 
   /// \brief Retrieve the controlling macro for this header file, if
@@ -557,16 +560,20 @@ private:
   /// of the given search directory.
   void loadSubdirectoryModuleMaps(DirectoryLookup &SearchDir);
 
+  /// \brief Return the HeaderFileInfo structure for the specified FileEntry.
+  const HeaderFileInfo &getFileInfo(const FileEntry *FE) const {
+    return const_cast<HeaderSearch*>(this)->getFileInfo(FE);
+  }
+
 public:
   /// \brief Retrieve the module map.
   ModuleMap &getModuleMap() { return ModMap; }
   
   unsigned header_file_size() const { return FileInfo.size(); }
 
-  /// \brief Return the HeaderFileInfo structure for the specified FileEntry.
-  const HeaderFileInfo &getFileInfo(const FileEntry *FE) const {
-    return const_cast<HeaderSearch*>(this)->getFileInfo(FE);
-  }
+  /// \brief Get a \c HeaderFileInfo structure for the specified \c FileEntry,
+  /// if one exists.
+  bool tryGetFileInfo(const FileEntry *FE, HeaderFileInfo &Result) const;
 
   // Used by external tools
   typedef std::vector<DirectoryLookup>::const_iterator search_dir_iterator;

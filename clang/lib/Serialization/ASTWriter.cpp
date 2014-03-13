@@ -1547,10 +1547,10 @@ void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS, StringRef isysroot) {
 
     // Use HeaderSearch's getFileInfo to make sure we get the HeaderFileInfo
     // from the external source if it was not provided already.
-    const HeaderFileInfo &HFI = HS.getFileInfo(File);
-    if (HFI.External && Chain)
-      continue;
-    if (HFI.isModuleHeader && !HFI.isCompilingModuleHeader)
+    HeaderFileInfo HFI;
+    if (!HS.tryGetFileInfo(File, HFI) ||
+        (HFI.External && Chain) ||
+        (HFI.isModuleHeader && !HFI.isCompilingModuleHeader))
       continue;
 
     // Turn the file name into an absolute path, if it isn't already.

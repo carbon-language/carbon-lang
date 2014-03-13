@@ -988,7 +988,19 @@ HeaderFileInfo &HeaderSearch::getFileInfo(const FileEntry *FE) {
   HeaderFileInfo &HFI = FileInfo[FE->getUID()];
   if (ExternalSource && !HFI.Resolved)
     mergeHeaderFileInfo(HFI, ExternalSource->GetHeaderFileInfo(FE));
+  HFI.IsValid = 1;
   return HFI;
+}
+
+bool HeaderSearch::tryGetFileInfo(const FileEntry *FE, HeaderFileInfo &Result) const {
+  if (FE->getUID() >= FileInfo.size())
+    return false;
+  const HeaderFileInfo &HFI = FileInfo[FE->getUID()];
+  if (HFI.IsValid) {
+    Result = HFI;
+    return true;
+  }
+  return false;
 }
 
 bool HeaderSearch::isFileMultipleIncludeGuarded(const FileEntry *File) {
