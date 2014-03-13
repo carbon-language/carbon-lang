@@ -71,8 +71,12 @@ public:
       : PreservedPassIDs(Arg.PreservedPassIDs) {}
   PreservedAnalyses(PreservedAnalyses &&Arg)
       : PreservedPassIDs(std::move(Arg.PreservedPassIDs)) {}
+  friend void swap(PreservedAnalyses &LHS, PreservedAnalyses &RHS) {
+    using std::swap;
+    swap(LHS.PreservedPassIDs, RHS.PreservedPassIDs);
+  }
   PreservedAnalyses &operator=(PreservedAnalyses RHS) {
-    std::swap(*this, RHS);
+    swap(*this, RHS);
     return *this;
   }
 
@@ -212,8 +216,12 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT, true>
   // refuses to generate them.
   PassModel(const PassModel &Arg) : Pass(Arg.Pass) {}
   PassModel(PassModel &&Arg) : Pass(std::move(Arg.Pass)) {}
+  friend void swap(PassModel &LHS, PassModel &RHS) {
+    using std::swap;
+    swap(LHS.Pass, RHS.Pass);
+  }
   PassModel &operator=(PassModel RHS) {
-    std::swap(*this, RHS);
+    swap(*this, RHS);
     return *this;
   }
 
@@ -234,8 +242,12 @@ struct PassModel<IRUnitT, AnalysisManagerT, PassT, false>
   // refuses to generate them.
   PassModel(const PassModel &Arg) : Pass(Arg.Pass) {}
   PassModel(PassModel &&Arg) : Pass(std::move(Arg.Pass)) {}
+  friend void swap(PassModel &LHS, PassModel &RHS) {
+    using std::swap;
+    swap(LHS.Pass, RHS.Pass);
+  }
   PassModel &operator=(PassModel RHS) {
-    std::swap(*this, RHS);
+    swap(*this, RHS);
     return *this;
   }
 
@@ -306,8 +318,12 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT, false>
   AnalysisResultModel(const AnalysisResultModel &Arg) : Result(Arg.Result) {}
   AnalysisResultModel(AnalysisResultModel &&Arg)
       : Result(std::move(Arg.Result)) {}
+  friend void swap(AnalysisResultModel &LHS, AnalysisResultModel &RHS) {
+    using std::swap;
+    swap(LHS.Result, RHS.Result);
+  }
   AnalysisResultModel &operator=(AnalysisResultModel RHS) {
-    std::swap(*this, RHS);
+    swap(*this, RHS);
     return *this;
   }
 
@@ -334,8 +350,12 @@ struct AnalysisResultModel<IRUnitT, PassT, ResultT, true>
   AnalysisResultModel(const AnalysisResultModel &Arg) : Result(Arg.Result) {}
   AnalysisResultModel(AnalysisResultModel &&Arg)
       : Result(std::move(Arg.Result)) {}
+  friend void swap(AnalysisResultModel &LHS, AnalysisResultModel &RHS) {
+    using std::swap;
+    swap(LHS.Result, RHS.Result);
+  }
   AnalysisResultModel &operator=(AnalysisResultModel RHS) {
-    std::swap(*this, RHS);
+    swap(*this, RHS);
     return *this;
   }
 
@@ -382,8 +402,12 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, true>
   // refuses to generate them.
   AnalysisPassModel(const AnalysisPassModel &Arg) : Pass(Arg.Pass) {}
   AnalysisPassModel(AnalysisPassModel &&Arg) : Pass(std::move(Arg.Pass)) {}
+  friend void swap(AnalysisPassModel &LHS, AnalysisPassModel &RHS) {
+    using std::swap;
+    swap(LHS.Pass, RHS.Pass);
+  }
   AnalysisPassModel &operator=(AnalysisPassModel RHS) {
-    std::swap(*this, RHS);
+    swap(*this, RHS);
     return *this;
   }
 
@@ -412,8 +436,12 @@ struct AnalysisPassModel<IRUnitT, AnalysisManagerT, PassT, false>
   // refuses to generate them.
   AnalysisPassModel(const AnalysisPassModel &Arg) : Pass(Arg.Pass) {}
   AnalysisPassModel(AnalysisPassModel &&Arg) : Pass(std::move(Arg.Pass)) {}
+  friend void swap(AnalysisPassModel &LHS, AnalysisPassModel &RHS) {
+    using std::swap;
+    swap(LHS.Pass, RHS.Pass);
+  }
   AnalysisPassModel &operator=(AnalysisPassModel RHS) {
-    std::swap(*this, RHS);
+    swap(*this, RHS);
     return *this;
   }
 
@@ -809,7 +837,7 @@ public:
       : FAM(std::move(Arg.FAM)) {}
   FunctionAnalysisManagerModuleProxy &
   operator=(FunctionAnalysisManagerModuleProxy RHS) {
-    std::swap(*this, RHS);
+    std::swap(FAM, RHS.FAM);
     return *this;
   }
 
@@ -842,7 +870,7 @@ public:
   Result(const Result &Arg) : FAM(Arg.FAM) {}
   Result(Result &&Arg) : FAM(std::move(Arg.FAM)) {}
   Result &operator=(Result RHS) {
-    std::swap(*this, RHS);
+    std::swap(FAM, RHS.FAM);
     return *this;
   }
   ~Result();
@@ -889,7 +917,7 @@ public:
     Result(const Result &Arg) : MAM(Arg.MAM) {}
     Result(Result &&Arg) : MAM(std::move(Arg.MAM)) {}
     Result &operator=(Result RHS) {
-      std::swap(*this, RHS);
+      std::swap(MAM, RHS.MAM);
       return *this;
     }
 
@@ -915,7 +943,7 @@ public:
       : MAM(std::move(Arg.MAM)) {}
   ModuleAnalysisManagerFunctionProxy &
   operator=(ModuleAnalysisManagerFunctionProxy RHS) {
-    std::swap(*this, RHS);
+    std::swap(MAM, RHS.MAM);
     return *this;
   }
 
@@ -948,8 +976,12 @@ public:
       : Pass(Arg.Pass) {}
   ModuleToFunctionPassAdaptor(ModuleToFunctionPassAdaptor &&Arg)
       : Pass(std::move(Arg.Pass)) {}
+  friend void swap(ModuleToFunctionPassAdaptor &LHS, ModuleToFunctionPassAdaptor &RHS) {
+    using std::swap;
+    swap(LHS.Pass, RHS.Pass);
+  }
   ModuleToFunctionPassAdaptor &operator=(ModuleToFunctionPassAdaptor RHS) {
-    std::swap(*this, RHS);
+    swap(*this, RHS);
     return *this;
   }
 

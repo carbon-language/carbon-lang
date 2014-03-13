@@ -191,6 +191,39 @@ public:
                   "}\n")) {}
 };
 
+TEST_F(PassManagerTest, BasicPreservedAnalyses) {
+  PreservedAnalyses PA1 = PreservedAnalyses();
+  EXPECT_FALSE(PA1.preserved<TestFunctionAnalysis>());
+  EXPECT_FALSE(PA1.preserved<TestModuleAnalysis>());
+  PreservedAnalyses PA2 = PreservedAnalyses::none();
+  EXPECT_FALSE(PA2.preserved<TestFunctionAnalysis>());
+  EXPECT_FALSE(PA2.preserved<TestModuleAnalysis>());
+  PreservedAnalyses PA3 = PreservedAnalyses::all();
+  EXPECT_TRUE(PA3.preserved<TestFunctionAnalysis>());
+  EXPECT_TRUE(PA3.preserved<TestModuleAnalysis>());
+  PreservedAnalyses PA4 = PA1;
+  EXPECT_FALSE(PA4.preserved<TestFunctionAnalysis>());
+  EXPECT_FALSE(PA4.preserved<TestModuleAnalysis>());
+  PA4 = PA3;
+  EXPECT_TRUE(PA4.preserved<TestFunctionAnalysis>());
+  EXPECT_TRUE(PA4.preserved<TestModuleAnalysis>());
+  PA4 = std::move(PA2);
+  EXPECT_FALSE(PA4.preserved<TestFunctionAnalysis>());
+  EXPECT_FALSE(PA4.preserved<TestModuleAnalysis>());
+  PA4.preserve<TestFunctionAnalysis>();
+  EXPECT_TRUE(PA4.preserved<TestFunctionAnalysis>());
+  EXPECT_FALSE(PA4.preserved<TestModuleAnalysis>());
+  PA1.preserve<TestModuleAnalysis>();
+  EXPECT_FALSE(PA1.preserved<TestFunctionAnalysis>());
+  EXPECT_TRUE(PA1.preserved<TestModuleAnalysis>());
+  PA1.preserve<TestFunctionAnalysis>();
+  EXPECT_TRUE(PA1.preserved<TestFunctionAnalysis>());
+  EXPECT_TRUE(PA1.preserved<TestModuleAnalysis>());
+  PA1.intersect(PA4);
+  EXPECT_TRUE(PA1.preserved<TestFunctionAnalysis>());
+  EXPECT_FALSE(PA1.preserved<TestModuleAnalysis>());
+}
+
 TEST_F(PassManagerTest, Basic) {
   FunctionAnalysisManager FAM;
   int FunctionAnalysisRuns = 0;
@@ -209,10 +242,18 @@ TEST_F(PassManagerTest, Basic) {
   int AnalyzedInstrCount1 = 0;
   int AnalyzedFunctionCount1 = 0;
   {
+    // Pointless scoped copy to test move assignment.
+    ModulePassManager NestedMPM;
     FunctionPassManager FPM;
-    FPM.addPass(TestFunctionPass(FunctionPassRunCount1, AnalyzedInstrCount1,
-                                 AnalyzedFunctionCount1));
-    MPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+    {
+      // Pointless scope to test move assignment.
+      FunctionPassManager NestedFPM;
+      NestedFPM.addPass(TestFunctionPass(FunctionPassRunCount1, AnalyzedInstrCount1,
+                                   AnalyzedFunctionCount1));
+      FPM = std::move(NestedFPM);
+    }
+    NestedMPM.addPass(createModuleToFunctionPassAdaptor(std::move(FPM)));
+    MPM = std::move(NestedMPM);
   }
 
   // Count the runs over a module.
