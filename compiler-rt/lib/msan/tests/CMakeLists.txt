@@ -27,7 +27,7 @@ set(MSAN_LIBCXX_LINK_FLAGS
   -lc
   -lstdc++
   -fsanitize=memory)
-append_if(MSAN_LIBCXX_LINK_FLAGS COMPILER_RT_HAS_LIBPTHREAD -lpthread)
+append_if(COMPILER_RT_HAS_LIBPTHREAD -lpthread MSAN_LIBCXX_LINK_FLAGS)
 
 # Unittest sources and build flags.
 set(MSAN_UNITTEST_SOURCES msan_test.cc msan_test_main.cc)
@@ -64,7 +64,7 @@ set(MSAN_UNITTEST_LINK_FLAGS
   # FIXME: we build libcxx without cxxabi and need libstdc++ to provide it.
   -lstdc++
 )
-append_if(MSAN_UNITTEST_LINK_FLAGS COMPILER_RT_HAS_LIBDL -ldl)
+append_if(COMPILER_RT_HAS_LIBDL -ldl MSAN_UNITTEST_LINK_FLAGS)
 set(MSAN_LOADABLE_LINK_FLAGS
   -fsanitize=memory
   -shared

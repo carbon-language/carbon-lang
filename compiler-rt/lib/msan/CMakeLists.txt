@@ -12,9 +12,9 @@ set(MSAN_RTL_SOURCES
 
 set(MSAN_RTL_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 append_no_rtti_flag(MSAN_RTL_CFLAGS)
-append_if(MSAN_RTL_CFLAGS COMPILER_RT_HAS_FPIE_FLAG -fPIE)
+append_if(COMPILER_RT_HAS_FPIE_FLAG -fPIE MSAN_RTL_CFLAGS)
 # Prevent clang from generating libc calls.
-append_if(MSAN_RTL_CFLAGS COMPILER_RT_HAS_FFREESTANDING_FLAG -ffreestanding)
+append_if(COMPILER_RT_HAS_FFREESTANDING_FLAG -ffreestanding MSAN_RTL_CFLAGS)
 
 # Static runtime library.
 add_custom_target(msan)

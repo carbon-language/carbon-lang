@@ -7,14 +7,14 @@ set(DFSAN_RTL_SOURCES
   dfsan_interceptors.cc)
 set(DFSAN_COMMON_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 # Prevent clang from generating libc calls.
-append_if(DFSAN_COMMON_CFLAGS COMPILER_RT_HAS_FFREESTANDING_FLAG -ffreestanding)
+append_if(COMPILER_RT_HAS_FFREESTANDING_FLAG -ffreestanding DFSAN_COMMON_CFLAGS)
 
 # Static runtime library.
 add_custom_target(dfsan)
 set(arch "x86_64")
 if(CAN_TARGET_${arch})
   set(DFSAN_CFLAGS ${DFSAN_COMMON_CFLAGS})
-  append_if(DFSAN_CFLAGS COMPILER_RT_HAS_FPIE_FLAG -fPIE)
+  append_if(COMPILER_RT_HAS_FPIE_FLAG -fPIE DFSAN_CFLAGS)
   add_compiler_rt_static_runtime(clang_rt.dfsan-${arch} ${arch}
     SOURCES ${DFSAN_RTL_SOURCES}
             $<TARGET_OBJECTS:RTInterception.${arch}>

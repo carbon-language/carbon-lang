@@ -32,7 +32,7 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -Werror=sign-compare
   -g
   -O2)
-append_if(ASAN_UNITTEST_COMMON_CFLAGS COMPILER_RT_HAS_WNO_VARIADIC_MACROS_FLAG -Wno-variadic-macros)
+append_if(COMPILER_RT_HAS_WNO_VARIADIC_MACROS_FLAG -Wno-variadic-macros ASAN_UNITTEST_COMMON_CFLAGS)
 
 # Use -D instead of definitions to please custom compile command.
 list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
@@ -70,8 +70,8 @@ endif()
 
 set(ASAN_UNITTEST_NOINST_LINKFLAGS
   ${ASAN_UNITTEST_COMMON_LINKFLAGS} -lm)
-append_if(ASAN_UNITTEST_NOINST_LINKFLAGS COMPILER_RT_HAS_LIBDL -ldl)
-append_if(ASAN_UNITTEST_NOINST_LINKFLAGS COMPILER_RT_HAS_LIBPTHREAD -lpthread)
+append_if(COMPILER_RT_HAS_LIBDL -ldl ASAN_UNITTEST_NOINST_LINKFLAGS)
+append_if(COMPILER_RT_HAS_LIBPTHREAD -lpthread ASAN_UNITTEST_NOINST_LINKFLAGS)
 
 # Compile source for the given architecture, using compiler
 # options in ${ARGN}, and add it to the object list.
