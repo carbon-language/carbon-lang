@@ -952,9 +952,8 @@ public:
           break;
         }
         default:
-          // FIXME: Would be nice to highlight just the source range.
           SemaRef.Diag(IdLoc, diag::err_not_tag_in_scope)
-            << Kind << Id << DC;
+              << Kind << Id << DC << QualifierLoc.getSourceRange();
           break;
       }
       return QualType();
