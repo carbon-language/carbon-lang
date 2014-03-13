@@ -5284,10 +5284,9 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
       if (!Diagnose) return true;
 
       // Find any user-declared move constructor.
-      for (CXXRecordDecl::ctor_iterator I = RD->ctor_begin(),
-                                        E = RD->ctor_end(); I != E; ++I) {
+      for (auto *I : RD->ctors()) {
         if (I->isMoveConstructor()) {
-          UserDeclaredMove = *I;
+          UserDeclaredMove = I;
           break;
         }
       }
@@ -5393,11 +5392,10 @@ static bool findTrivialSpecialMember(Sema &S, CXXRecordDecl *RD,
       CXXConstructorDecl *DefCtor = 0;
       if (RD->needsImplicitDefaultConstructor())
         S.DeclareImplicitDefaultConstructor(RD);
-      for (CXXRecordDecl::ctor_iterator CI = RD->ctor_begin(),
-                                        CE = RD->ctor_end(); CI != CE; ++CI) {
+      for (auto *CI : RD->ctors()) {
         if (!CI->isDefaultConstructor())
           continue;
-        DefCtor = *CI;
+        DefCtor = CI;
         if (!DefCtor->isUserProvided())
           break;
       }
@@ -5486,10 +5484,9 @@ static bool findTrivialSpecialMember(Sema &S, CXXRecordDecl *RD,
 }
 
 static CXXConstructorDecl *findUserDeclaredCtor(CXXRecordDecl *RD) {
-  for (CXXRecordDecl::ctor_iterator CI = RD->ctor_begin(), CE = RD->ctor_end();
-       CI != CE; ++CI)
+  for (auto *CI : RD->ctors())
     if (!CI->isImplicit())
-      return *CI;
+      return CI;
 
   // Look for constructor templates.
   typedef CXXRecordDecl::specific_decl_iterator<FunctionTemplateDecl> tmpl_iter;
@@ -8296,10 +8293,8 @@ private:
 
   /// Process all constructors for a class.
   void visitAll(const CXXRecordDecl *RD, VisitFn Callback) {
-    for (CXXRecordDecl::ctor_iterator CtorIt = RD->ctor_begin(),
-                                      CtorE = RD->ctor_end();
-         CtorIt != CtorE; ++CtorIt)
-      (this->*Callback)(*CtorIt);
+    for (const auto *Ctor : RD->ctors())
+      (this->*Callback)(Ctor);
     for (CXXRecordDecl::specific_decl_iterator<FunctionTemplateDecl>
              I(RD->decls_begin()), E(RD->decls_end());
          I != E; ++I) {
@@ -9290,10 +9285,9 @@ static void diagnoseDeprecatedCopyOperation(Sema &S, CXXMethodDecl *CopyOp,
              RD->hasUserDeclaredCopyConstructor() &&
              !S.getLangOpts().MSVCCompat) {
     // Find any user-declared copy constructor.
-    for (CXXRecordDecl::ctor_iterator I = RD->ctor_begin(),
-                                      E = RD->ctor_end(); I != E; ++I) {
+    for (auto *I : RD->ctors()) {
       if (I->isCopyConstructor()) {
-        UserDeclaredOperation = *I;
+        UserDeclaredOperation = I;
         break;
       }
     }
