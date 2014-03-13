@@ -293,10 +293,10 @@ const char *InitializePlatform() {
     // we re-exec the program with limited stack size as a best effort.
     if (getlim(RLIMIT_STACK) == (rlim_t)-1) {
       const uptr kMaxStackSize = 32 * 1024 * 1024;
-      Report("WARNING: Program is run with unlimited stack size, which "
-             "wouldn't work with ThreadSanitizer.\n");
-      Report("Re-execing with stack size limited to %zd bytes.\n",
-             kMaxStackSize);
+      VReport(1, "Program is run with unlimited stack size, which wouldn't "
+                 "work with ThreadSanitizer.\n"
+                 "Re-execing with stack size limited to %zd bytes.\n",
+              kMaxStackSize);
       SetStackSizeLimitInBytes(kMaxStackSize);
       reexec = true;
     }
