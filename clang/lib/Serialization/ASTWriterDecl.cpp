@@ -493,10 +493,8 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     Record.push_back(Data.ReferencedProtocols.size());
     for (const auto *P : D->protocols())
       Writer.AddDeclRef(P, Record);
-    for (ObjCInterfaceDecl::protocol_loc_iterator PL = D->protocol_loc_begin(),
-         PLEnd = D->protocol_loc_end();
-         PL != PLEnd; ++PL)
-      Writer.AddSourceLocation(*PL, Record);
+    for (const auto &PL : D->protocol_locs())
+      Writer.AddSourceLocation(PL, Record);
     
     // Write out the protocols that are transitively referenced.
     Record.push_back(Data.AllReferencedProtocols.size());
