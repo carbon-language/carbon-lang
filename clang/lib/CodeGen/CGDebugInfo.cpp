@@ -1668,7 +1668,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   }
 
   // Create entries for all of the properties.
-  for (const auto *PD : ID->props()) {
+  for (const auto *PD : ID->properties()) {
     SourceLocation Loc = PD->getLocation();
     llvm::DIFile PUnit = getOrCreateFile(Loc);
     unsigned PLine = getLineNumber(Loc);

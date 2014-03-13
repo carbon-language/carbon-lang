@@ -2778,7 +2778,7 @@ PushProtocolProperties(llvm::SmallPtrSet<const IdentifierInfo*,16> &PropertySet,
   for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
          E = Proto->protocol_end(); P != E; ++P) 
     PushProtocolProperties(PropertySet, Properties, Container, (*P), ObjCTypes);
-  for (const auto *PD : Proto->props()) {
+  for (const auto *PD : Proto->properties()) {
     if (!PropertySet.insert(PD->getIdentifier()))
       continue;
     llvm::Constant *Prop[] = {
@@ -2807,7 +2807,7 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(Twine Name,
                                        const ObjCCommonTypesHelper &ObjCTypes) {
   SmallVector<llvm::Constant *, 16> Properties;
   llvm::SmallPtrSet<const IdentifierInfo*, 16> PropertySet;
-  for (const auto *PD : OCD->props()) {
+  for (const auto *PD : OCD->properties()) {
     PropertySet.insert(PD->getIdentifier());
     llvm::Constant *Prop[] = {
       GetPropertyName(PD->getIdentifier()),

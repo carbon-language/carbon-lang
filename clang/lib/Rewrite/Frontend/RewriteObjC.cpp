@@ -980,7 +980,7 @@ void RewriteObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
   // FIXME: handle category headers that are declared across multiple lines.
   ReplaceText(LocStart, 0, "// ");
 
-  for (auto *I : CatDecl->props())
+  for (auto *I : CatDecl->properties())
     RewriteProperty(I);
   
   for (ObjCCategoryDecl::instmeth_iterator
@@ -1013,7 +1013,7 @@ void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
        I != E; ++I)
     RewriteMethodDeclaration(*I);
 
-  for (auto *I : PDecl->props())
+  for (auto *I : PDecl->properties())
     RewriteProperty(I);
   
   // Lastly, comment out the @end.
@@ -1243,7 +1243,7 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   }
   RewriteObjCInternalStruct(ClassDecl, ResultStr);
 
-  for (auto *I : ClassDecl->props())
+  for (auto *I : ClassDecl->properties())
     RewriteProperty(I);
   for (ObjCInterfaceDecl::instmeth_iterator
          I = ClassDecl->instmeth_begin(), E = ClassDecl->instmeth_end();
