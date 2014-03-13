@@ -1105,8 +1105,7 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
         StringRef IDVal = getTok().getString();
         if (IDVal == "f" || IDVal == "b") {
           MCSymbol *Sym =
-            getContext().GetDirectionalLocalSymbol(IntVal,
-                                                   IDVal == "f" ? 1 : 0);
+              getContext().GetDirectionalLocalSymbol(IntVal, IDVal == "b");
           MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
           const MCExpr *Val = 
 	    MCSymbolRefExpr::Create(Sym, Variant, getContext());

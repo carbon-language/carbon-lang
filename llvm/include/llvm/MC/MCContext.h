@@ -70,6 +70,14 @@ namespace llvm {
     /// Symbols - Bindings of names to symbols.
     SymbolTable Symbols;
 
+    /// A maping from a local label number and an instance count to a symbol.
+    /// For example, in the assembly
+    ///     1:
+    ///     2:
+    ///     1:
+    /// We have three labels represented by the pairs (1, 0), (2, 0) and (1, 1)
+    DenseMap<std::pair<unsigned, unsigned>, MCSymbol*> LocalSymbols;
+
     /// UsedNames - Keeps tracks of names that were used both for used declared
     /// and artificial symbols.
     StringMap<bool, BumpPtrAllocator&> UsedNames;
@@ -82,10 +90,10 @@ namespace llvm {
     DenseMap<unsigned, MCLabel *> Instances;
     /// NextInstance() creates the next instance of the directional local label
     /// for the LocalLabelVal and adds it to the map if needed.
-    unsigned NextInstance(int64_t LocalLabelVal);
+    unsigned NextInstance(unsigned LocalLabelVal);
     /// GetInstance() gets the current instance of the directional local label
     /// for the LocalLabelVal and adds it to the map if needed.
-    unsigned GetInstance(int64_t LocalLabelVal);
+    unsigned GetInstance(unsigned LocalLabelVal);
 
     /// The file name of the log file from the environment variable
     /// AS_SECURE_LOG_FILE.  Which must be set before the .secure_log_unique
@@ -154,6 +162,9 @@ namespace llvm {
 
     MCSymbol *CreateSymbol(StringRef Name);
 
+    MCSymbol *getOrCreateDirectionalLocalSymbol(unsigned LocalLabelVal,
+                                                unsigned Instance);
+
   public:
     explicit MCContext(const MCAsmInfo *MAI, const MCRegisterInfo *MRI,
                        const MCObjectFileInfo *MOFI, const SourceMgr *Mgr = 0,
@@ -190,13 +201,13 @@ namespace llvm {
     /// symbol names.
     unsigned getUniqueSymbolID() { return NextUniqueID++; }
 
-    /// CreateDirectionalLocalSymbol - Create the definition of a directional
-    /// local symbol for numbered label (used for "1:" definitions).
-    MCSymbol *CreateDirectionalLocalSymbol(int64_t LocalLabelVal);
+    /// Create the definition of a directional local symbol for numbered label
+    /// (used for "1:" definitions).
+    MCSymbol *CreateDirectionalLocalSymbol(unsigned LocalLabelVal);
 
-    /// GetDirectionalLocalSymbol - Create and return a directional local
-    /// symbol for numbered label (used for "1b" or 1f" references).
-    MCSymbol *GetDirectionalLocalSymbol(int64_t LocalLabelVal, int bORf);
+    /// Create and return a directional local symbol for numbered label (used
+    /// for "1b" or 1f" references).
+    MCSymbol *GetDirectionalLocalSymbol(unsigned LocalLabelVal, bool Before);
 
     /// GetOrCreateSymbol - Lookup the symbol inside with the specified
     /// @p Name.  If it exists, return it.  If not, create a forward

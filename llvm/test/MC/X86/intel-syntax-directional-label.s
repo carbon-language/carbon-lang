@@ -8,9 +8,10 @@ FUNCTION_NAME:
 	.intel_syntax
 	cmp rdi, 1
 	jge 1f
-// CHECK:	jge	"L11"
+// CHECK:	jge	Ltmp0
 	add rdi, 2
+// CHECK: addq $2, %rdi
 1:
-// CHECK:	"L11":
+// CHECK:	Ltmp0:
 	add rdi, 1
 	ret

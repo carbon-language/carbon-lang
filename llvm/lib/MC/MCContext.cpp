@@ -162,32 +162,39 @@ MCSymbol *MCContext::CreateTempSymbol() {
   return CreateSymbol(NameSV);
 }
 
-unsigned MCContext::NextInstance(int64_t LocalLabelVal) {
+unsigned MCContext::NextInstance(unsigned LocalLabelVal) {
   MCLabel *&Label = Instances[LocalLabelVal];
   if (!Label)
     Label = new (*this) MCLabel(0);
   return Label->incInstance();
 }
 
-unsigned MCContext::GetInstance(int64_t LocalLabelVal) {
+unsigned MCContext::GetInstance(unsigned LocalLabelVal) {
   MCLabel *&Label = Instances[LocalLabelVal];
   if (!Label)
     Label = new (*this) MCLabel(0);
   return Label->getInstance();
 }
 
-MCSymbol *MCContext::CreateDirectionalLocalSymbol(int64_t LocalLabelVal) {
-  return GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
-                           Twine(LocalLabelVal) +
-                           "\2" +
-                           Twine(NextInstance(LocalLabelVal)));
+MCSymbol *MCContext::getOrCreateDirectionalLocalSymbol(unsigned LocalLabelVal,
+                                                       unsigned Instance) {
+  MCSymbol *&Sym = LocalSymbols[std::make_pair(LocalLabelVal, Instance)];
+  if (!Sym)
+    Sym = CreateTempSymbol();
+  return Sym;
 }
-MCSymbol *MCContext::GetDirectionalLocalSymbol(int64_t LocalLabelVal,
-                                               int bORf) {
-  return GetOrCreateSymbol(Twine(MAI->getPrivateGlobalPrefix()) +
-                           Twine(LocalLabelVal) +
-                           "\2" +
-                           Twine(GetInstance(LocalLabelVal) + bORf));
+
+MCSymbol *MCContext::CreateDirectionalLocalSymbol(unsigned LocalLabelVal) {
+  unsigned Instance = NextInstance(LocalLabelVal);
+  return getOrCreateDirectionalLocalSymbol(LocalLabelVal, Instance);
+}
+
+MCSymbol *MCContext::GetDirectionalLocalSymbol(unsigned LocalLabelVal,
+                                               bool Before) {
+  unsigned Instance = GetInstance(LocalLabelVal);
+  if (!Before)
+    ++Instance;
+  return getOrCreateDirectionalLocalSymbol(LocalLabelVal, Instance);
 }
 
 MCSymbol *MCContext::LookupSymbol(StringRef Name) const {
