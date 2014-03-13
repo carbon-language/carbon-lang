@@ -195,6 +195,7 @@ short _InterlockedAnd16(short volatile *_Value, short _Mask);
 static __inline__
 char _InterlockedAnd8(char volatile *_Value, char _Mask);
 unsigned char _interlockedbittestandreset(long volatile *, long);
+static __inline__
 unsigned char _interlockedbittestandset(long volatile *, long);
 static __inline__
 long __cdecl _InterlockedCompareExchange(long volatile *_Destination,
@@ -390,6 +391,7 @@ short _InterlockedAnd16_np(short volatile *_Value, short _Mask);
 __int64 _InterlockedAnd64_np(__int64 volatile *_Value, __int64 _Mask);
 char _InterlockedAnd8_np(char volatile *_Value, char _Mask);
 unsigned char _interlockedbittestandreset64(__int64 volatile *, __int64);
+static __inline__
 unsigned char _interlockedbittestandset64(__int64 volatile *, __int64);
 long _InterlockedCompareExchange_np(long volatile *_Destination, long _Exchange,
                                     long _Comparand);
@@ -572,6 +574,16 @@ _bittestandset(long *a, long b) {
   *a = *a | (1 << b);
   return x;
 }
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_interlockedbittestandset(long volatile *__BitBase, long __BitPos) {
+  unsigned char __Res;
+  __asm__ ("xor %0, %0\n"
+           "lock bts %2, %1\n"
+           "setc %0\n"
+           : "=r" (__Res), "+m"(*__BitBase)
+           : "Ir"(__BitPos));
+  return __Res;
+}
 #ifdef __x86_64__
 static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
 _BitScanForward64(unsigned long *_Index, unsigned __int64 _Mask) {
@@ -620,6 +632,16 @@ _bittestandset64(__int64 *a, __int64 b) {
   unsigned char x = (*a >> b) & 1;
   *a = *a | (1ll << b);
   return x;
+}
+static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
+_interlockedbittestandset64(__int64 volatile *__BitBase, __int64 __BitPos) {
+  unsigned char __Res;
+  __asm__ ("xor %0, %0\n"
+           "lock bts %2, %1\n"
+           "setc %0\n"
+           : "=r" (__Res), "+m"(*__BitBase)
+           : "Ir"(__BitPos));
+  return __Res;
 }
 #endif
 /*----------------------------------------------------------------------------*\
