@@ -260,11 +260,9 @@ public:
     // we should do better.
 
     IndexCtx.indexNestedNameSpecifierLoc(D->getQualifierLoc(), D);
-    for (UsingDecl::shadow_iterator
-           I = D->shadow_begin(), E = D->shadow_end(); I != E; ++I) {
-      IndexCtx.handleReference((*I)->getUnderlyingDecl(), D->getLocation(),
-                               D, D->getLexicalDeclContext());
-    }
+    for (const auto *I : D->shadows())
+      IndexCtx.handleReference(I->getUnderlyingDecl(), D->getLocation(), D,
+                               D->getLexicalDeclContext());
     return true;
   }
 

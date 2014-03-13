@@ -2882,6 +2882,11 @@ public:
     }
   };
 
+  typedef llvm::iterator_range<shadow_iterator> shadow_range;
+
+  shadow_range shadows() const {
+    return shadow_range(shadow_begin(), shadow_end());
+  }
   shadow_iterator shadow_begin() const {
     return shadow_iterator(FirstUsingShadow.getPointer());
   }

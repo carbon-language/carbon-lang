@@ -7856,9 +7856,8 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
     // Expand using declarations.
     if (isa<UsingDecl>(InstD)) {
       UsingDecl *UD = cast<UsingDecl>(InstD);
-      for (UsingDecl::shadow_iterator I = UD->shadow_begin(),
-             E = UD->shadow_end(); I != E; ++I)
-        R.addDecl(*I);
+      for (auto *I : UD->shadows())
+        R.addDecl(I);
       continue;
     }
 
@@ -8724,9 +8723,8 @@ TreeTransform<Derived>::TransformUnresolvedMemberExpr(UnresolvedMemberExpr *Old)
     // Expand using declarations.
     if (isa<UsingDecl>(InstD)) {
       UsingDecl *UD = cast<UsingDecl>(InstD);
-      for (UsingDecl::shadow_iterator I = UD->shadow_begin(),
-             E = UD->shadow_end(); I != E; ++I)
-        R.addDecl(*I);
+      for (auto *I : UD->shadows())
+        R.addDecl(I);
       continue;
     }
 
