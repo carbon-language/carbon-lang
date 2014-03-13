@@ -90,7 +90,8 @@ def FeatureBookE     : SubtargetFeature<"booke", "IsBookE", "true",
 def FeatureQPX       : SubtargetFeature<"qpx","HasQPX", "true",
                                         "Enable QPX instructions">;
 def FeatureVSX       : SubtargetFeature<"vsx","HasVSX", "true",
-                                        "Enable VSX instructions">;
+                                        "Enable VSX instructions",
+                                        [FeatureAltivec]>;
 
 def DeprecatedMFTB   : SubtargetFeature<"", "DeprecatedMFTB", "true",
                                         "Treat mftb as deprecated">;

@@ -229,7 +229,11 @@ PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   case PPC::F8RCRegClassID:
   case PPC::F4RCRegClassID:
   case PPC::VRRCRegClassID:
+  case PPC::VSLRCRegClassID:
+  case PPC::VSHRCRegClassID:
     return 32 - DefaultSafety;
+  case PPC::VSRCRegClassID:
+    return 64 - DefaultSafety;
   case PPC::CRRCRegClassID:
     return 8 - DefaultSafety;
   }

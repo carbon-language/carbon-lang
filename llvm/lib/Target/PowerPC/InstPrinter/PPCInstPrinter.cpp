@@ -199,6 +199,13 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
   printOperand(MI, OpNo+1, O);
 }
 
+void PPCInstPrinter::printU2ImmOperand(const MCInst *MI, unsigned OpNo,
+                                       raw_ostream &O) {
+  unsigned int Value = MI->getOperand(OpNo).getImm();
+  assert(Value <= 3 && "Invalid u2imm argument!");
+  O << (unsigned int)Value;
+}
+
 void PPCInstPrinter::printS5ImmOperand(const MCInst *MI, unsigned OpNo,
                                        raw_ostream &O) {
   int Value = MI->getOperand(OpNo).getImm();
@@ -316,7 +323,10 @@ static const char *stripRegisterPrefix(const char *RegName) {
   switch (RegName[0]) {
   case 'r':
   case 'f':
-  case 'v': return RegName + 1;
+  case 'v':
+    if (RegName[1] == 's')
+      return RegName + 2;
+    return RegName + 1;
   case 'c': if (RegName[1] == 'r') return RegName + 2;
   }
   

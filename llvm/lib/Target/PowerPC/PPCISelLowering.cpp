@@ -505,7 +505,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setOperationAction(ISD::MUL, MVT::v4f32, Legal);
     setOperationAction(ISD::FMA, MVT::v4f32, Legal);
 
-    if (TM.Options.UnsafeFPMath) {
+    if (TM.Options.UnsafeFPMath || Subtarget->hasVSX()) {
       setOperationAction(ISD::FDIV, MVT::v4f32, Legal);
       setOperationAction(ISD::FSQRT, MVT::v4f32, Legal);
     }
@@ -532,6 +532,40 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 
     setCondCodeAction(ISD::SETO,   MVT::v4f32, Expand);
     setCondCodeAction(ISD::SETONE, MVT::v4f32, Expand);
+
+    if (Subtarget->hasVSX()) {
+      setOperationAction(ISD::SCALAR_TO_VECTOR, MVT::v2f64, Legal);
+
+      setOperationAction(ISD::FFLOOR, MVT::v2f64, Legal);
+      setOperationAction(ISD::FCEIL, MVT::v2f64, Legal);
+      setOperationAction(ISD::FTRUNC, MVT::v2f64, Legal);
+      setOperationAction(ISD::FNEARBYINT, MVT::v2f64, Legal);
+      setOperationAction(ISD::FROUND, MVT::v2f64, Legal);
+
+      setOperationAction(ISD::FROUND, MVT::v4f32, Legal);
+
+      setOperationAction(ISD::MUL, MVT::v2f64, Legal);
+      setOperationAction(ISD::FMA, MVT::v2f64, Legal);
+
+      setOperationAction(ISD::FDIV, MVT::v2f64, Legal);
+      setOperationAction(ISD::FSQRT, MVT::v2f64, Legal);
+
+      // Share the Altivec comparison restrictions.
+      setCondCodeAction(ISD::SETUO, MVT::v2f64, Expand);
+      setCondCodeAction(ISD::SETUEQ, MVT::v2f64, Expand);
+      setCondCodeAction(ISD::SETUGT, MVT::v2f64, Expand);
+      setCondCodeAction(ISD::SETUGE, MVT::v2f64, Expand);
+      setCondCodeAction(ISD::SETULT, MVT::v2f64, Expand);
+      setCondCodeAction(ISD::SETULE, MVT::v2f64, Expand);
+
+      setCondCodeAction(ISD::SETO,   MVT::v2f64, Expand);
+      setCondCodeAction(ISD::SETONE, MVT::v2f64, Expand);
+
+      addRegisterClass(MVT::f64, &PPC::VSRCRegClass);
+
+      addRegisterClass(MVT::v4f32, &PPC::VSRCRegClass);
+      addRegisterClass(MVT::v2f64, &PPC::VSRCRegClass);
+    }
   }
 
   if (Subtarget->has64BitSupport()) {
@@ -2094,6 +2128,7 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
         case MVT::v8i16:
         case MVT::v4i32:
         case MVT::v4f32:
+        case MVT::v2f64:
           RC = &PPC::VRRCRegClass;
           break;
       }
@@ -2340,7 +2375,8 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
 
     // Varargs or 64 bit Altivec parameters are padded to a 16 byte boundary.
     if (ObjectVT==MVT::v4f32 || ObjectVT==MVT::v4i32 ||
-        ObjectVT==MVT::v8i16 || ObjectVT==MVT::v16i8) {
+        ObjectVT==MVT::v8i16 || ObjectVT==MVT::v16i8 ||
+        ObjectVT==MVT::v2f64) {
       if (isVarArg) {
         MinReservedArea = ((MinReservedArea+15)/16)*16;
         MinReservedArea += CalculateStackSlotSize(ObjectVT,
@@ -2497,6 +2533,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     case MVT::v4i32:
     case MVT::v8i16:
     case MVT::v16i8:
+    case MVT::v2f64:
       // Note that vector arguments in registers don't reserve stack space,
       // except in varargs functions.
       if (VR_idx != Num_VR_Regs) {
@@ -2959,7 +2996,8 @@ CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
     EVT ArgVT = Outs[i].VT;
     // Varargs Altivec parameters are padded to a 16 byte boundary.
     if (ArgVT==MVT::v4f32 || ArgVT==MVT::v4i32 ||
-        ArgVT==MVT::v8i16 || ArgVT==MVT::v16i8) {
+        ArgVT==MVT::v8i16 || ArgVT==MVT::v16i8 ||
+        ArgVT==MVT::v2f64) {
       if (!isVarArg && !isPPC64) {
         // Non-varargs Altivec parameters go after all the non-Altivec
         // parameters; handle those later so we know how much padding we need.
@@ -4143,6 +4181,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     case MVT::v4i32:
     case MVT::v8i16:
     case MVT::v16i8:
+    case MVT::v2f64:
       if (isVarArg) {
         // These go aligned on the stack, or in the corresponding R registers
         // when within range.  The Darwin PPC ABI doc claims they also go in
@@ -6917,7 +6956,8 @@ SDValue PPCTargetLowering::DAGCombineFastRecip(SDValue Op,
 
   if ((VT == MVT::f32 && PPCSubTarget.hasFRES()) ||
       (VT == MVT::f64 && PPCSubTarget.hasFRE())  ||
-      (VT == MVT::v4f32 && PPCSubTarget.hasAltivec())) {
+      (VT == MVT::v4f32 && PPCSubTarget.hasAltivec()) ||
+      (VT == MVT::v2f64 && PPCSubTarget.hasVSX())) {
 
     // Newton iteration for a function: F(X) is X_{i+1} = X_i - F(X_i)/F'(X_i)
     // For the reciprocal, we need to find the zero of the function:
@@ -6979,7 +7019,8 @@ SDValue PPCTargetLowering::DAGCombineFastRecipFSQRT(SDValue Op,
 
   if ((VT == MVT::f32 && PPCSubTarget.hasFRSQRTES()) ||
       (VT == MVT::f64 && PPCSubTarget.hasFRSQRTE())  ||
-      (VT == MVT::v4f32 && PPCSubTarget.hasAltivec())) {
+      (VT == MVT::v4f32 && PPCSubTarget.hasAltivec()) ||
+      (VT == MVT::v2f64 && PPCSubTarget.hasVSX())) {
 
     // Newton iteration for a function: F(X) is X_{i+1} = X_i - F(X_i)/F'(X_i)
     // For the reciprocal sqrt, we need to find the zero of the function:
@@ -7891,6 +7932,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     unsigned ABIAlignment = getDataLayout()->getABITypeAlignment(Ty);
     if (ISD::isNON_EXTLoad(N) && VT.isVector() &&
         TM.getSubtarget<PPCSubtarget>().hasAltivec() &&
+        // FIXME: Update this for VSX!
         (VT == MVT::v16i8 || VT == MVT::v8i16 ||
          VT == MVT::v4i32 || VT == MVT::v4f32) &&
         LD->getAlignment() < ABIAlignment) {
@@ -8314,6 +8356,9 @@ PPCTargetLowering::getConstraintType(const std::string &Constraint) const {
     }
   } else if (Constraint == "wc") { // individual CR bits.
     return C_RegisterClass;
+  } else if (Constraint == "wa" || Constraint == "wd" ||
+             Constraint == "wf" || Constraint == "ws") {
+    return C_RegisterClass; // VSX registers.
   }
   return TargetLowering::getConstraintType(Constraint);
 }
@@ -8335,6 +8380,13 @@ PPCTargetLowering::getSingleConstraintMatchWeight(
   // Look at the constraint type.
   if (StringRef(constraint) == "wc" && type->isIntegerTy(1))
     return CW_Register; // an individual CR bit.
+  else if ((StringRef(constraint) == "wa" ||
+            StringRef(constraint) == "wd" ||
+            StringRef(constraint) == "wf") &&
+           type->isVectorTy())
+    return CW_Register;
+  else if (StringRef(constraint) == "ws" && type->isDoubleTy())
+    return CW_Register;
 
   switch (*constraint) {
   default:
@@ -8393,6 +8445,9 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     }
   } else if (Constraint == "wc") { // an individual CR bit.
     return std::make_pair(0U, &PPC::CRBITRCRegClass);
+  } else if (Constraint == "wa" || Constraint == "wd" ||
+             Constraint == "wf" || Constraint == "ws") {
+    return std::make_pair(0U, &PPC::VSRCRegClass);
   }
 
   std::pair<unsigned, const TargetRegisterClass*> R =

@@ -16,6 +16,8 @@ def sub_gt : SubRegIndex<1, 1>;
 def sub_eq : SubRegIndex<1, 2>;
 def sub_un : SubRegIndex<1, 3>;
 def sub_32 : SubRegIndex<32>;
+def sub_64 : SubRegIndex<64>;
+def sub_128 : SubRegIndex<128>;
 }
 
 
@@ -52,6 +54,23 @@ class VR<bits<5> num, string n> : PPCReg<n> {
   let HWEncoding{4-0} = num;
 }
 
+// VSRL - One of the 32 128-bit VSX registers that overlap with the scalar
+// floating-point registers.
+class VSRL<FPR SubReg, string n> : PPCReg<n> {
+  let HWEncoding = SubReg.HWEncoding;
+  let SubRegs = [SubReg];
+  let SubRegIndices = [sub_64];
+}
+
+// VSRH - One of the 32 128-bit VSX registers that overlap with the vector
+// registers.
+class VSRH<VR SubReg, string n> : PPCReg<n> {
+  let HWEncoding{4-0} = SubReg.HWEncoding{4-0};
+  let HWEncoding{5} = 1;
+  let SubRegs = [SubReg];
+  let SubRegIndices = [sub_128];
+}
+
 // CR - One of the 8 4-bit condition registers
 class CR<bits<3> num, string n, list<Register> subregs> : PPCReg<n> {
   let HWEncoding{2-0} = num;
@@ -84,6 +103,16 @@ foreach Index = 0-31 in {
 foreach Index = 0-31 in {
   def V#Index : VR<Index, "v"#Index>,
                 DwarfRegNum<[!add(Index, 77), !add(Index, 77)]>;
+}
+
+// VSX registers
+foreach Index = 0-31 in {
+  def VSL#Index : VSRL<!cast<FPR>("F"#Index), "vs"#Index>,
+                  DwarfRegAlias<!cast<FPR>("F"#Index)>;
+}
+foreach Index = 0-31 in {
+  def VSH#Index : VSRH<!cast<VR>("V"#Index), "vs" # !add(Index, 32)>,
+                  DwarfRegAlias<!cast<VR>("V"#Index)>;
 }
 
 // The reprsentation of r0 when treated as the constant 0.
@@ -203,6 +232,20 @@ def VRRC : RegisterClass<"PPC", [v16i8,v8i16,v4i32,v4f32], 128,
                          (add V2, V3, V4, V5, V0, V1, V6, V7, V8, V9, V10, V11,
                              V12, V13, V14, V15, V16, V17, V18, V19, V31, V30,
                              V29, V28, V27, V26, V25, V24, V23, V22, V21, V20)>;
+
+// VSX register classes (the allocation order mirrors that of the corresponding
+// subregister classes).
+def VSLRC : RegisterClass<"PPC", [v4i32,v4f32,f64,v2f64], 128,
+                          (add (sequence "VSL%u", 0, 13),
+                               (sequence "VSL%u", 31, 14))>;
+def VSHRC : RegisterClass<"PPC", [v4i32,v4f32,f64,v2f64], 128,
+                          (add VSH2, VSH3, VSH4, VSH5, VSH0, VSH1, VSH6, VSH7,
+			       VSH8, VSH9, VSH10, VSH11, VSH12, VSH13, VSH14,
+                               VSH15, VSH16, VSH17, VSH18, VSH19, VSH31, VSH30,
+                               VSH29, VSH28, VSH27, VSH26, VSH25, VSH24, VSH23,
+                               VSH22, VSH21, VSH20)>;
+def VSRC  : RegisterClass<"PPC", [v4i32,v4f32,f64,v2f64], 128,
+                          (add VSLRC, VSHRC)>;
 
 def CRBITRC : RegisterClass<"PPC", [i1], 32,
   (add CR2LT, CR2GT, CR2EQ, CR2UN,

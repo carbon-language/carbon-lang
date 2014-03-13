@@ -35,6 +35,7 @@ namespace llvm {
   FunctionPass *createPPCCTRLoopsVerify();
 #endif
   FunctionPass *createPPCEarlyReturnPass();
+  FunctionPass *createPPCVSXCopyPass();
   FunctionPass *createPPCBranchSelectionPass();
   FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
   FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,

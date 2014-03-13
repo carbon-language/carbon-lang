@@ -160,6 +160,8 @@ bool PPCPassConfig::addInstSelector() {
     addPass(createPPCCTRLoopsVerify());
 #endif
 
+  addPass(createPPCVSXCopyPass());
+
   return false;
 }
 

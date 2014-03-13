@@ -139,7 +139,7 @@ void PPCTTI::getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const {
 unsigned PPCTTI::getNumberOfRegisters(bool Vector) const {
   if (Vector && !ST->hasAltivec())
     return 0;
-  return 32;
+  return ST->hasVSX() ? 64 : 32;
 }
 
 unsigned PPCTTI::getRegisterBitWidth(bool Vector) const {
@@ -207,6 +207,14 @@ unsigned PPCTTI::getVectorInstrCost(unsigned Opcode, Type *Val,
 
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
+
+  if (ST->hasVSX() && Val->getScalarType()->isDoubleTy()) {
+    // Double-precision scalars are already located in index #0.
+    if (Index == 0)
+      return 0;
+
+    return TargetTransformInfo::getVectorInstrCost(Opcode, Val, Index);
+  }
 
   // Estimated cost of a load-hit-store delay.  This was obtained
   // experimentally as a minimum needed to prevent unprofitable

@@ -412,6 +412,14 @@ def crrc : RegisterOperand<CRRC> {
   let ParserMatchClass = PPCRegCRRCAsmOperand;
 }
 
+def PPCU2ImmAsmOperand : AsmOperandClass {
+  let Name = "U2Imm"; let PredicateMethod = "isU2Imm";
+  let RenderMethod = "addImmOperands";
+}
+def u2imm   : Operand<i32> {
+  let PrintMethod = "printU2ImmOperand";
+  let ParserMatchClass = PPCU2ImmAsmOperand;
+}
 def PPCS5ImmAsmOperand : AsmOperandClass {
   let Name = "S5Imm"; let PredicateMethod = "isS5Imm";
   let RenderMethod = "addImmOperands";
@@ -2431,6 +2439,7 @@ def : Pat<(fcopysign f32:$frB, f64:$frA),
 
 include "PPCInstrAltivec.td"
 include "PPCInstr64Bit.td"
+include "PPCInstrVSX.td"
 
 def crnot : OutPatFrag<(ops node:$in),
                        (CRNOR $in, $in)>;

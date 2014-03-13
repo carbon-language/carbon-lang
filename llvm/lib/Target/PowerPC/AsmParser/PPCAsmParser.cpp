@@ -95,6 +95,25 @@ static unsigned VRegs[32] = {
   PPC::V24, PPC::V25, PPC::V26, PPC::V27,
   PPC::V28, PPC::V29, PPC::V30, PPC::V31
 };
+static unsigned VSRegs[64] = {
+  PPC::VSL0,  PPC::VSL1,  PPC::VSL2,  PPC::VSL3,
+  PPC::VSL4,  PPC::VSL5,  PPC::VSL6,  PPC::VSL7,
+  PPC::VSL8,  PPC::VSL9,  PPC::VSL10, PPC::VSL11,
+  PPC::VSL12, PPC::VSL13, PPC::VSL14, PPC::VSL15,
+  PPC::VSL16, PPC::VSL17, PPC::VSL18, PPC::VSL19,
+  PPC::VSL20, PPC::VSL21, PPC::VSL22, PPC::VSL23,
+  PPC::VSL24, PPC::VSL25, PPC::VSL26, PPC::VSL27,
+  PPC::VSL28, PPC::VSL29, PPC::VSL30, PPC::VSL31,
+
+  PPC::VSH0,  PPC::VSH1,  PPC::VSH2,  PPC::VSH3,
+  PPC::VSH4,  PPC::VSH5,  PPC::VSH6,  PPC::VSH7,
+  PPC::VSH8,  PPC::VSH9,  PPC::VSH10, PPC::VSH11,
+  PPC::VSH12, PPC::VSH13, PPC::VSH14, PPC::VSH15,
+  PPC::VSH16, PPC::VSH17, PPC::VSH18, PPC::VSH19,
+  PPC::VSH20, PPC::VSH21, PPC::VSH22, PPC::VSH23,
+  PPC::VSH24, PPC::VSH25, PPC::VSH26, PPC::VSH27,
+  PPC::VSH28, PPC::VSH29, PPC::VSH30, PPC::VSH31
+};
 static unsigned CRBITRegs[32] = {
   PPC::CR0LT, PPC::CR0GT, PPC::CR0EQ, PPC::CR0UN,
   PPC::CR1LT, PPC::CR1GT, PPC::CR1EQ, PPC::CR1UN,
@@ -345,6 +364,11 @@ public:
     return (unsigned) Imm.Val;
   }
 
+  unsigned getVSReg() const {
+    assert(isVSRegNumber() && "Invalid access!");
+    return (unsigned) Imm.Val;
+  }
+
   unsigned getCCReg() const {
     assert(isCCRegNumber() && "Invalid access!");
     return (unsigned) (Kind == Immediate ? Imm.Val : Expr.CRVal);
@@ -362,6 +386,7 @@ public:
 
   bool isToken() const { return Kind == Token; }
   bool isImm() const { return Kind == Immediate || Kind == Expression; }
+  bool isU2Imm() const { return Kind == Immediate && isUInt<2>(getImm()); }
   bool isU5Imm() const { return Kind == Immediate && isUInt<5>(getImm()); }
   bool isS5Imm() const { return Kind == Immediate && isInt<5>(getImm()); }
   bool isU6Imm() const { return Kind == Immediate && isUInt<6>(getImm()); }
@@ -382,6 +407,7 @@ public:
                                  (Kind == Immediate && isInt<16>(getImm()) &&
                                   (getImm() & 3) == 0); }
   bool isRegNumber() const { return Kind == Immediate && isUInt<5>(getImm()); }
+  bool isVSRegNumber() const { return Kind == Immediate && isUInt<6>(getImm()); }
   bool isCCRegNumber() const { return (Kind == Expression
                                        && isUInt<3>(getExprCRVal())) ||
                                       (Kind == Immediate
@@ -446,6 +472,11 @@ public:
   void addRegVRRCOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(VRegs[getReg()]));
+  }
+
+  void addRegVSRCOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(VSRegs[getVSReg()]));
   }
 
   void addRegCRBITRCOperands(MCInst &Inst, unsigned N) const {

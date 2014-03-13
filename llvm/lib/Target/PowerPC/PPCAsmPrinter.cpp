@@ -129,7 +129,10 @@ static const char *stripRegisterPrefix(const char *RegName) {
   switch (RegName[0]) {
     case 'r':
     case 'f':
-    case 'v': return RegName + 1;
+    case 'v':
+      if (RegName[1] == 's')
+        return RegName + 2;
+      return RegName + 1;
     case 'c': if (RegName[1] == 'r') return RegName + 2;
   }
   

@@ -572,7 +572,7 @@ SDValue PPCDAGToDAGISel::SelectCC(SDValue LHS, SDValue RHS,
     Opc = PPC::FCMPUS;
   } else {
     assert(LHS.getValueType() == MVT::f64 && "Unknown vt!");
-    Opc = PPC::FCMPUD;
+    Opc = PPCSubTarget.hasVSX() ? PPC::XSCMPUDP : PPC::FCMPUD;
   }
   return SDValue(CurDAG->getMachineNode(Opc, dl, MVT::i32, LHS, RHS), 0);
 }
@@ -640,7 +640,8 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool &Invert) {
 // getVCmpInst: return the vector compare instruction for the specified
 // vector type and condition code. Since this is for altivec specific code,
 // only support the altivec types (v16i8, v8i16, v4i32, and v4f32).
-static unsigned int getVCmpInst(MVT::SimpleValueType VecVT, ISD::CondCode CC) {
+static unsigned int getVCmpInst(MVT::SimpleValueType VecVT, ISD::CondCode CC,
+                                bool HasVSX) {
   switch (CC) {
     case ISD::SETEQ:
     case ISD::SETUEQ:
@@ -654,7 +655,9 @@ static unsigned int getVCmpInst(MVT::SimpleValueType VecVT, ISD::CondCode CC) {
         return PPC::VCMPEQUW;
       // v4f32 != v4f32 could be translate to unordered not equal
       else if (VecVT == MVT::v4f32)
-        return PPC::VCMPEQFP;
+        return HasVSX ? PPC::XVCMPEQSP : PPC::VCMPEQFP;
+      else if (VecVT == MVT::v2f64)
+        return PPC::XVCMPEQDP;
       break;
     case ISD::SETLT:
     case ISD::SETGT:
@@ -667,7 +670,9 @@ static unsigned int getVCmpInst(MVT::SimpleValueType VecVT, ISD::CondCode CC) {
       else if (VecVT == MVT::v4i32)
         return PPC::VCMPGTSW;
       else if (VecVT == MVT::v4f32)
-        return PPC::VCMPGTFP;
+        return HasVSX ? PPC::XVCMPGTSP : PPC::VCMPGTFP;
+      else if (VecVT == MVT::v2f64)
+        return PPC::XVCMPGTDP;
       break;
     case ISD::SETULT:
     case ISD::SETUGT:
@@ -682,17 +687,23 @@ static unsigned int getVCmpInst(MVT::SimpleValueType VecVT, ISD::CondCode CC) {
       break;
     case ISD::SETOEQ:
       if (VecVT == MVT::v4f32)
-        return PPC::VCMPEQFP;
+        return HasVSX ? PPC::XVCMPEQSP : PPC::VCMPEQFP;
+      else if (VecVT == MVT::v2f64)
+        return PPC::XVCMPEQDP;
       break;
     case ISD::SETOLT:
     case ISD::SETOGT:
     case ISD::SETOLE:
       if (VecVT == MVT::v4f32)
-        return PPC::VCMPGTFP;
+        return HasVSX ? PPC::XVCMPGTSP : PPC::VCMPGTFP;
+      else if (VecVT == MVT::v2f64)
+        return PPC::XVCMPGTDP;
       break;
     case ISD::SETOGE:
       if (VecVT == MVT::v4f32)
-        return PPC::VCMPGEFP;
+        return HasVSX ? PPC::XVCMPGESP : PPC::VCMPGEFP;
+      else if (VecVT == MVT::v2f64)
+        return PPC::XVCMPGEDP;
       break;
     default:
       break;
@@ -703,7 +714,7 @@ static unsigned int getVCmpInst(MVT::SimpleValueType VecVT, ISD::CondCode CC) {
 // getVCmpEQInst: return the equal compare instruction for the specified vector
 // type. Since this is for altivec specific code, only support the altivec
 // types (v16i8, v8i16, v4i32, and v4f32).
-static unsigned int getVCmpEQInst(MVT::SimpleValueType VecVT) {
+static unsigned int getVCmpEQInst(MVT::SimpleValueType VecVT, bool HasVSX) {
   switch (VecVT) {
     case MVT::v16i8:
       return PPC::VCMPEQUB;
@@ -712,12 +723,13 @@ static unsigned int getVCmpEQInst(MVT::SimpleValueType VecVT) {
     case MVT::v4i32:
       return PPC::VCMPEQUW;
     case MVT::v4f32:
-      return PPC::VCMPEQFP;
+      return HasVSX ? PPC::XVCMPEQSP : PPC::VCMPEQFP;
+    case MVT::v2f64:
+      return PPC::XVCMPEQDP;
     default:
       llvm_unreachable("Invalid integer vector compare condition");
   }
 }
-
 
 SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   SDLoc dl(N);
@@ -808,7 +820,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   if (LHS.getValueType().isVector()) {
     EVT VecVT = LHS.getValueType();
     MVT::SimpleValueType VT = VecVT.getSimpleVT().SimpleTy;
-    unsigned int VCmpInst = getVCmpInst(VT, CC);
+    unsigned int VCmpInst = getVCmpInst(VT, CC, PPCSubTarget.hasVSX());
 
     switch (CC) {
       case ISD::SETEQ:
@@ -839,7 +851,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
           return CurDAG->SelectNodeTo(N, VCmpInst, VecVT, LHS, RHS);
         } else {
           SDValue VCmpGT(CurDAG->getMachineNode(VCmpInst, dl, VecVT, LHS, RHS), 0);
-          unsigned int VCmpEQInst = getVCmpEQInst(VT);
+          unsigned int VCmpEQInst = getVCmpEQInst(VT, PPCSubTarget.hasVSX());
           SDValue VCmpEQ(CurDAG->getMachineNode(VCmpEQInst, dl, VecVT, LHS, RHS), 0);
           return CurDAG->SelectNodeTo(N, PPC::VOR, VecVT, VCmpGT, VCmpEQ);
         }
@@ -848,7 +860,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
       case ISD::SETOLE:
       case ISD::SETULE: {
         SDValue VCmpLE(CurDAG->getMachineNode(VCmpInst, dl, VecVT, RHS, LHS), 0);
-        unsigned int VCmpEQInst = getVCmpEQInst(VT);
+        unsigned int VCmpEQInst = getVCmpEQInst(VT, PPCSubTarget.hasVSX());
         SDValue VCmpEQ(CurDAG->getMachineNode(VCmpEQInst, dl, VecVT, LHS, RHS), 0);
         return CurDAG->SelectNodeTo(N, PPC::VOR, VecVT, VCmpLE, VCmpEQ);
       }
