@@ -1412,7 +1412,6 @@ bool DataRecursiveASTVisitor<Derived>::TraverseTemplateParameterListHelper(
 template<typename Derived>
 bool DataRecursiveASTVisitor<Derived>::TraverseClassInstantiations(
     ClassTemplateDecl *D) {
-  ClassTemplateDecl::spec_iterator end = D->spec_end();
   for (auto *SD : D->specializations()) {
     switch (SD->getSpecializationKind()) {
     // Visit the implicit instantiations with the requested pattern.
@@ -1459,7 +1458,6 @@ DEF_TRAVERSE_DECL(ClassTemplateDecl, {
 template <typename Derived>
 bool DataRecursiveASTVisitor<Derived>::TraverseVariableInstantiations(
     VarTemplateDecl *D) {
-  VarTemplateDecl::spec_iterator end = D->spec_end();
   for (auto *SD : D->specializations()) {
     switch (SD->getSpecializationKind()) {
     // Visit the implicit instantiations with the requested pattern.
@@ -1508,7 +1506,6 @@ DEF_TRAVERSE_DECL(
 template<typename Derived>
 bool DataRecursiveASTVisitor<Derived>::TraverseFunctionInstantiations(
     FunctionTemplateDecl *D) {
-  FunctionTemplateDecl::spec_iterator end = D->spec_end();
   for (auto *FD : D->specializations()) {
     switch (FD->getTemplateSpecializationKind()) {
     case TSK_Undeclared:

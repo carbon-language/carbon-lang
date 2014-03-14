@@ -1500,7 +1500,6 @@ bool RecursiveASTVisitor<Derived>::TraverseTemplateParameterListHelper(
 template<typename Derived>                                                   \
 bool RecursiveASTVisitor<Derived>::TraverseTemplateInstantiations(           \
     TMPLDECLKIND##TemplateDecl *D) {                                         \
-  TMPLDECLKIND##TemplateDecl::spec_iterator end = D->spec_end();             \
   for (auto *SD : D->specializations()) {                                    \
     switch (SD->getSpecializationKind()) {                                   \
     /* Visit the implicit instantiations with the requested pattern. */      \
@@ -1530,7 +1529,6 @@ DEF_TRAVERSE_TMPL_INST(Var)
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseTemplateInstantiations(
     FunctionTemplateDecl *D) {
-  FunctionTemplateDecl::spec_iterator end = D->spec_end();
   for (auto *FD : D->specializations()) {
     switch (FD->getTemplateSpecializationKind()) {
     case TSK_Undeclared:
