@@ -113,23 +113,21 @@ public:
 
     // For a 'dealloc' method use, find all property implementations in
     // this class implementation.
-    for (ObjCImplDecl::propimpl_iterator
-           I = IMD->propimpl_begin(), EI = IMD->propimpl_end(); I != EI; ++I) {
-        ObjCPropertyImplDecl *PID = *I;
-        if (PID->getPropertyImplementation() ==
-            ObjCPropertyImplDecl::Synthesize) {
-          ObjCPropertyDecl *PD = PID->getPropertyDecl();
-          ObjCMethodDecl *setterM = PD->getSetterMethodDecl();
-          if (!(setterM && setterM->isDefined())) {
-            ObjCPropertyDecl::PropertyAttributeKind AttrKind = 
-              PD->getPropertyAttributes();
-              if (AttrKind & 
-                  (ObjCPropertyDecl::OBJC_PR_retain | 
-                   ObjCPropertyDecl::OBJC_PR_copy   |
-                   ObjCPropertyDecl::OBJC_PR_strong))
-                SynthesizedProperties[PD] = PID;
-          }
+    for (auto *PID : IMD->property_impls()) {
+      if (PID->getPropertyImplementation() ==
+          ObjCPropertyImplDecl::Synthesize) {
+        ObjCPropertyDecl *PD = PID->getPropertyDecl();
+        ObjCMethodDecl *setterM = PD->getSetterMethodDecl();
+        if (!(setterM && setterM->isDefined())) {
+          ObjCPropertyDecl::PropertyAttributeKind AttrKind = 
+            PD->getPropertyAttributes();
+            if (AttrKind & 
+                (ObjCPropertyDecl::OBJC_PR_retain | 
+                  ObjCPropertyDecl::OBJC_PR_copy   |
+                  ObjCPropertyDecl::OBJC_PR_strong))
+              SynthesizedProperties[PD] = PID;
         }
+      }
     }
 
     // Now, remove all zeroing of ivars etc.

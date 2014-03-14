@@ -1404,12 +1404,8 @@ void RewriteModernObjC::RewriteImplementationDecl(Decl *OID) {
     const char *endBuf = SM->getCharacterData(LocEnd);
     ReplaceText(LocStart, endBuf-startBuf, ResultStr);
   }
-  for (ObjCCategoryImplDecl::propimpl_iterator
-       I = IMD ? IMD->propimpl_begin() : CID->propimpl_begin(),
-       E = IMD ? IMD->propimpl_end() : CID->propimpl_end();
-       I != E; ++I) {
-    RewritePropertyImplDecl(*I, IMD, CID);
-  }
+  for (auto *I : IMD ? IMD->property_impls() : CID->property_impls())
+    RewritePropertyImplDecl(I, IMD, CID);
 
   InsertText(IMD ? IMD->getLocEnd() : CID->getLocEnd(), "// ");
 }
@@ -7220,9 +7216,7 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   
   // If any of our property implementations have associated getters or
   // setters, produce metadata for them as well.
-  for (ObjCImplDecl::propimpl_iterator Prop = IDecl->propimpl_begin(),
-       PropEnd = IDecl->propimpl_end();
-       Prop != PropEnd; ++Prop) {
+  for (const auto *Prop : IDecl->property_impls()) {
     if (Prop->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic)
       continue;
     if (!Prop->getPropertyIvarDecl())
@@ -7475,9 +7469,7 @@ void RewriteModernObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   
   // If any of our property implementations have associated getters or
   // setters, produce metadata for them as well.
-  for (ObjCImplDecl::propimpl_iterator Prop = IDecl->propimpl_begin(),
-       PropEnd = IDecl->propimpl_end();
-       Prop != PropEnd; ++Prop) {
+  for (const auto *Prop : IDecl->property_impls()) {
     if (Prop->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic)
       continue;
     if (!Prop->getPropertyIvarDecl())

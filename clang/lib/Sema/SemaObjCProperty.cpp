@@ -1703,9 +1703,7 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
     return;
 
   llvm::DenseSet<ObjCPropertyDecl *> PropImplMap;
-  for (ObjCImplDecl::propimpl_iterator
-       I = IMPDecl->propimpl_begin(),
-       EI = IMPDecl->propimpl_end(); I != EI; ++I)
+  for (const auto *I : IMPDecl->property_impls())
     PropImplMap.insert(I->getPropertyDecl());
 
   SelectorSet InsMap;
@@ -1836,9 +1834,7 @@ void Sema::DiagnoseOwningPropertyGetterSynthesis(const ObjCImplementationDecl *D
   if (getLangOpts().getGC() == LangOptions::GCOnly)
     return;
 
-  for (ObjCImplementationDecl::propimpl_iterator
-         i = D->propimpl_begin(), e = D->propimpl_end(); i != e; ++i) {
-    ObjCPropertyImplDecl *PID = *i;
+  for (const auto *PID : D->property_impls()) {
     const ObjCPropertyDecl *PD = PID->getPropertyDecl();
     if (PD && !PD->hasAttr<NSReturnsNotRetainedAttr>() &&
         !D->getInstanceMethod(PD->getGetterName())) {

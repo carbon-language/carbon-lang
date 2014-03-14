@@ -404,10 +404,7 @@ static Stmt *createObjCPropertyGetter(ASTContext &Ctx,
   const ObjCImplementationDecl *ImplDecl =
     IVar->getContainingInterface()->getImplementation();
   if (ImplDecl) {
-    typedef ObjCImplementationDecl::propimpl_iterator propimpl_iterator;
-    for (propimpl_iterator I = ImplDecl->propimpl_begin(),
-                           E = ImplDecl->propimpl_end();
-         I != E; ++I) {
+    for (const auto *I : ImplDecl->property_impls()) {
       if (I->getPropertyDecl() != Prop)
         continue;
 

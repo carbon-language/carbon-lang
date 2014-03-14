@@ -1674,12 +1674,10 @@ void ObjCImplDecl::setClassInterface(ObjCInterfaceDecl *IFace) {
 ///
 ObjCPropertyImplDecl *ObjCImplDecl::
 FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
-  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
-    ObjCPropertyImplDecl *PID = *i;
+  for (auto *PID : property_impls())
     if (PID->getPropertyIvarDecl() &&
         PID->getPropertyIvarDecl()->getIdentifier() == ivarId)
       return PID;
-  }
   return 0;
 }
 
@@ -1689,11 +1687,9 @@ FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
 ///
 ObjCPropertyImplDecl *ObjCImplDecl::
 FindPropertyImplDecl(IdentifierInfo *Id) const {
-  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
-    ObjCPropertyImplDecl *PID = *i;
+  for (auto *PID : property_impls())
     if (PID->getPropertyDecl()->getIdentifier() == Id)
       return PID;
-  }
   return 0;
 }
 

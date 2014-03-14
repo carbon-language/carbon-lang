@@ -4936,22 +4936,14 @@ ASTContext::getObjCPropertyImplDeclForPropertyDecl(
     return 0;
   if (const ObjCCategoryImplDecl *CID =
       dyn_cast<ObjCCategoryImplDecl>(Container)) {
-    for (ObjCCategoryImplDecl::propimpl_iterator
-         i = CID->propimpl_begin(), e = CID->propimpl_end();
-         i != e; ++i) {
-      ObjCPropertyImplDecl *PID = *i;
-        if (PID->getPropertyDecl() == PD)
-          return PID;
-      }
+    for (auto *PID : CID->property_impls())
+      if (PID->getPropertyDecl() == PD)
+        return PID;
     } else {
       const ObjCImplementationDecl *OID=cast<ObjCImplementationDecl>(Container);
-      for (ObjCCategoryImplDecl::propimpl_iterator
-           i = OID->propimpl_begin(), e = OID->propimpl_end();
-           i != e; ++i) {
-        ObjCPropertyImplDecl *PID = *i;
+      for (auto *PID : OID->property_impls())
         if (PID->getPropertyDecl() == PD)
           return PID;
-      }
     }
   return 0;
 }

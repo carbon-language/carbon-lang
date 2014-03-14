@@ -83,9 +83,8 @@ static void Scan(IvarUsageMap& M, const ObjCContainerDecl *D) {
   if (const ObjCImplementationDecl *ID = dyn_cast<ObjCImplementationDecl>(D)) {
     // Scan for @synthesized property methods that act as setters/getters
     // to an ivar.
-    for (ObjCImplementationDecl::propimpl_iterator I = ID->propimpl_begin(),
-         E = ID->propimpl_end(); I!=E; ++I)
-      Scan(M, *I);
+    for (const auto *I : ID->property_impls())
+      Scan(M, I);
 
     // Scan the associated categories as well.
     for (const auto *Cat : ID->getClassInterface()->visible_categories()) {

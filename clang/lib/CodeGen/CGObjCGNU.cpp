@@ -2057,12 +2057,9 @@ llvm::Constant *CGObjCGNU::GeneratePropertyList(const ObjCImplementationDecl *OI
 
   // Add all of the property methods need adding to the method list and to the
   // property metadata list.
-  for (ObjCImplDecl::propimpl_iterator
-         iter = OID->propimpl_begin(), endIter = OID->propimpl_end();
-       iter != endIter ; iter++) {
+  for (auto *propertyImpl : OID->property_impls()) {
     std::vector<llvm::Constant*> Fields;
-    ObjCPropertyDecl *property = iter->getPropertyDecl();
-    ObjCPropertyImplDecl *propertyImpl = *iter;
+    ObjCPropertyDecl *property = propertyImpl->getPropertyDecl();
     bool isSynthesized = (propertyImpl->getPropertyImplementation() == 
         ObjCPropertyImplDecl::Synthesize);
     bool isDynamic = (propertyImpl->getPropertyImplementation() == 

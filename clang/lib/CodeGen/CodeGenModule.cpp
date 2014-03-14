@@ -2752,10 +2752,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalTemporary(
 /// properties for an implementation.
 void CodeGenModule::EmitObjCPropertyImplementations(const
                                                     ObjCImplementationDecl *D) {
-  for (ObjCImplementationDecl::propimpl_iterator
-         i = D->propimpl_begin(), e = D->propimpl_end(); i != e; ++i) {
-    ObjCPropertyImplDecl *PID = *i;
-
+  for (const auto *PID : D->property_impls()) {
     // Dynamic is just for type-checking.
     if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize) {
       ObjCPropertyDecl *PD = PID->getPropertyDecl();

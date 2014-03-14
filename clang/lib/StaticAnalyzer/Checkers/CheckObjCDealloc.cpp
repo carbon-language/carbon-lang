@@ -208,9 +208,7 @@ static void checkObjCDealloc(const CheckerBase *Checker,
 
   // Scan for missing and extra releases of ivars used by implementations
   // of synthesized properties
-  for (ObjCImplementationDecl::propimpl_iterator I = D->propimpl_begin(),
-       E = D->propimpl_end(); I!=E; ++I) {
-
+  for (const auto *I : D->property_impls()) {
     // We can only check the synthesized properties
     if (I->getPropertyImplementation() != ObjCPropertyImplDecl::Synthesize)
       continue;
@@ -258,7 +256,7 @@ static void checkObjCDealloc(const CheckerBase *Checker,
       }
 
       PathDiagnosticLocation SDLoc =
-        PathDiagnosticLocation::createBegin(*I, BR.getSourceManager());
+        PathDiagnosticLocation::createBegin(I, BR.getSourceManager());
 
       BR.EmitBasicReport(MD, Checker, name,
                          categories::CoreFoundationObjectiveC, os.str(), SDLoc);
