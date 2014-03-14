@@ -664,7 +664,6 @@ bool MatchASTVisitor::classIsDerivedFrom(const CXXRecordDecl *Declaration,
                                          BoundNodesTreeBuilder *Builder) {
   if (!Declaration->hasDefinition())
     return false;
-  typedef CXXRecordDecl::base_class_const_iterator BaseIterator;
   for (const auto &It : Declaration->bases()) {
     const Type *TypeNode = It.getType().getTypePtr();
 
