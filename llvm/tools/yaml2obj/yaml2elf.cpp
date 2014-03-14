@@ -326,7 +326,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
       unsigned Index;
       if (SN2I.lookupSection(Sec.Link, Index)) {
         errs() << "error: Unknown section referenced: '" << Sec.Link
-               << "' at YAML section number " << i << ".\n";
+               << "' at YAML section '" << Sec.Name << "'.\n";
         return 1;
       }
       SHeader.sh_link = Index;
