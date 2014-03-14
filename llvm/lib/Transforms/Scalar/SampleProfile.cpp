@@ -94,7 +94,7 @@ template <> struct DenseMapInfo<InstructionLocation> {
                                DiscriminatorInfo::getTombstoneKey());
   }
   static inline unsigned getHashValue(InstructionLocation Val) {
-    return DenseMapInfo<std::pair<int, unsigned> >::getHashValue(
+    return DenseMapInfo<std::pair<int, unsigned>>::getHashValue(
         std::pair<int, unsigned>(Val.LineOffset, Val.Discriminator));
   }
   static inline bool isEqual(InstructionLocation LHS, InstructionLocation RHS) {
@@ -110,7 +110,7 @@ typedef DenseMap<BasicBlock *, unsigned> BlockWeightMap;
 typedef DenseMap<BasicBlock *, BasicBlock *> EquivalenceClassMap;
 typedef std::pair<BasicBlock *, BasicBlock *> Edge;
 typedef DenseMap<Edge, unsigned> EdgeWeightMap;
-typedef DenseMap<BasicBlock *, SmallVector<BasicBlock *, 8> > BlockEdgeMap;
+typedef DenseMap<BasicBlock *, SmallVector<BasicBlock *, 8>> BlockEdgeMap;
 
 /// \brief Representation of the runtime profile for a function.
 ///
