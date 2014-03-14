@@ -106,11 +106,6 @@ static cl::opt<unsigned>
 DwarfVersionNumber("dwarf-version", cl::Hidden,
                    cl::desc("Generate DWARF for dwarf version."), cl::init(0));
 
-static cl::opt<bool>
-DwarfCURanges("generate-dwarf-cu-ranges", cl::Hidden,
-              cl::desc("Generate DW_AT_ranges for compile units"),
-              cl::init(false));
-
 static const char *const DWARFGroupName = "DWARF Emission";
 static const char *const DbgTimerName = "DWARF Debug Writer";
 
@@ -1067,13 +1062,12 @@ void DwarfDebug::endSections() {
     SectionMap[Section].push_back(SymbolCU(NULL, Sym));
   }
 
-  // For now only turn on CU ranges if we've explicitly asked for it,
-  // we have -ffunction-sections enabled, we've emitted a function
-  // into a unique section, or we're using LTO. If we're using LTO then
-  // we can't know that any particular function in the module is correlated
-  // to a particular CU and so we need to be conservative. At this point all
-  // sections should be finalized except for dwarf sections.
-  HasCURanges = DwarfCURanges || UsedNonDefaultText || (CUMap.size() > 1) ||
+  // For now only turn on CU ranges if we have -ffunction-sections enabled,
+  // we've emitted a function into a unique section, or we're using LTO. If
+  // we're using LTO then we can't know that any particular function in the
+  // module is correlated to a particular CU and so we need to be conservative.
+  // At this point all sections should be finalized except for dwarf sections.
+  HasCURanges = UsedNonDefaultText || (CUMap.size() > 1) ||
                 TargetMachine::getFunctionSections();
 }
 

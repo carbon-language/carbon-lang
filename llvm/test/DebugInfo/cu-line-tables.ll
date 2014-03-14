@@ -1,8 +1,8 @@
 ; REQUIRES: object-emission
-; RUN: %llc_dwarf -O0 -filetype=obj -generate-dwarf-cu-ranges %s -o %t
+; RUN: %llc_dwarf -O0 -filetype=obj %s -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
-; Check that we don't emit ranges even if the option is passed if we're emitting line tables only.
+; Check that we don't emit ranges if we're emitting line tables only.
 
 ; CHECK: DW_TAG_compile_unit
 ; CHECK-NOT: DW_AT_ranges
