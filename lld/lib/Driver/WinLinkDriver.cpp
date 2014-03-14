@@ -732,7 +732,7 @@ static bool maybeRunLibCommand(int argc, const char **argv, raw_ostream &diag) {
     vec.push_back(argv[i]);
   vec.push_back(nullptr);
 
-  if (llvm::sys::ExecuteAndWait(path.c_str(), &argv[0]) != 0)
+  if (llvm::sys::ExecuteAndWait(path.c_str(), &vec[0]) != 0)
     diag << "lib.exe failed\n";
   return true;
 }

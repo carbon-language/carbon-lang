@@ -5,4 +5,5 @@
 # RUN: lld -flavor link /lib >& %t.log
 # RUN: FileCheck %s < %t.log
 
+CHECK-NOT: unrecognized option '/lib'
 CHECK: usage: LIB
