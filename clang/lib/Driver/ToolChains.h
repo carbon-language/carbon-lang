@@ -553,7 +553,6 @@ public:
 
   bool IsMathErrnoDefault() const override { return false; }
   bool IsObjCNonFragileABIDefault() const override { return true; }
-  virtual bool IsObjCLegacyDispatchDefault() const { return false; }
 
   void
   AddClangCXXStdlibIncludeArgs(const llvm::opt::ArgList &DriverArgs,
