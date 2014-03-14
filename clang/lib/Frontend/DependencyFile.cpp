@@ -79,7 +79,8 @@ public:
   bool needsSystemInputFileVisitation() override {
     return Parent.includeSystemHeaders();
   }
-  bool visitInputFile(StringRef Filename, bool isSystem) override;
+  bool visitInputFile(StringRef Filename, bool isSystem,
+                      bool isOverridden) override;
 };
 }
 
@@ -258,8 +259,11 @@ void DFGImpl::OutputDependencyFile() {
 }
 
 bool DFGASTReaderListener::visitInputFile(llvm::StringRef Filename,
-                                          bool IsSystem) {
+                                          bool IsSystem, bool IsOverridden) {
   assert(!IsSystem || needsSystemInputFileVisitation());
+  if (IsOverridden)
+    return true;
+
   Parent.AddFilename(Filename);
   return true;
 }

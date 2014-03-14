@@ -119,9 +119,10 @@ bool ChainedASTReaderListener::needsSystemInputFileVisitation() {
   Second->needsSystemInputFileVisitation();
 }
 bool ChainedASTReaderListener::visitInputFile(StringRef Filename,
-                                              bool isSystem) {
-  return First->visitInputFile(Filename, isSystem) ||
-         Second->visitInputFile(Filename, isSystem);
+                                              bool isSystem,
+                                              bool isOverridden) {
+  return First->visitInputFile(Filename, isSystem, isOverridden) ||
+         Second->visitInputFile(Filename, isSystem, isOverridden);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2120,8 +2121,11 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       if (Listener && Listener->needsInputFileVisitation()) {
         unsigned N = Listener->needsSystemInputFileVisitation() ? NumInputs
                                                                 : NumUserInputs;
-        for (unsigned I = 0; I < N; ++I)
-          Listener->visitInputFile(getInputFileName(F, I+1), I >= NumUserInputs);
+        for (unsigned I = 0; I < N; ++I) {
+          bool IsSystem = I >= NumUserInputs;
+          InputFileInfo FI = readInputFileInfo(F, I+1);
+          Listener->visitInputFile(FI.Filename, IsSystem, FI.Overridden);
+        }
       }
 
       return Success;
@@ -3932,7 +3936,8 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
         bool shouldContinue = false;
         switch ((InputFileRecordTypes)Cursor.readRecord(Code, Record, &Blob)) {
         case INPUT_FILE:
-          shouldContinue = Listener.visitInputFile(Blob, isSystemFile);
+          bool Overridden = static_cast<bool>(Record[3]);
+          shouldContinue = Listener.visitInputFile(Blob, isSystemFile, Overridden);
           break;
         }
         if (!shouldContinue)

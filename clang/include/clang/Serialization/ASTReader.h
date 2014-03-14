@@ -183,7 +183,10 @@ public:
   /// system input files as well.
   ///
   /// \returns true to continue receiving the next input file, false to stop.
-  virtual bool visitInputFile(StringRef Filename, bool isSystem) { return true;}
+  virtual bool visitInputFile(StringRef Filename, bool isSystem,
+                              bool isOverridden) {
+    return true;
+  }
 };
 
 /// \brief Simple wrapper class for chaining listeners.
@@ -214,7 +217,8 @@ public:
   void ReadCounter(const serialization::ModuleFile &M, unsigned Value) override;
   bool needsInputFileVisitation() override;
   bool needsSystemInputFileVisitation() override;
-  bool visitInputFile(StringRef Filename, bool isSystem) override;
+  bool visitInputFile(StringRef Filename, bool isSystem,
+                      bool isOverridden) override;
 };
 
 /// \brief ASTReaderListener implementation to validate the information of
