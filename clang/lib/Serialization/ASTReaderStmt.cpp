@@ -399,13 +399,11 @@ void ASTStmtReader::VisitCapturedStmt(CapturedStmt *S) {
   S->getCapturedDecl()->setBody(S->getCapturedStmt());
 
   // Captures
-  for (CapturedStmt::capture_iterator I = S->capture_begin(),
-                                      E = S->capture_end();
-       I != E; ++I) {
-    I->VarAndKind.setPointer(ReadDeclAs<VarDecl>(Record, Idx));
-    I->VarAndKind
+  for (auto &I : S->captures()) {
+    I.VarAndKind.setPointer(ReadDeclAs<VarDecl>(Record, Idx));
+    I.VarAndKind
         .setInt(static_cast<CapturedStmt::VariableCaptureKind>(Record[Idx++]));
-    I->Loc = ReadSourceLocation(Record, Idx);
+    I.Loc = ReadSourceLocation(Record, Idx);
   }
 }
 

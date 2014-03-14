@@ -1100,15 +1100,14 @@ Stmt::child_range CapturedStmt::children() {
 }
 
 bool CapturedStmt::capturesVariable(const VarDecl *Var) const {
-  for (const_capture_iterator I = capture_begin(),
-                              E = capture_end(); I != E; ++I) {
-    if (!I->capturesVariable())
+  for (const auto &I : captures()) {
+    if (!I.capturesVariable())
       continue;
 
     // This does not handle variable redeclarations. This should be
     // extended to capture variables with redeclarations, for example
     // a thread-private variable in OpenMP.
-    if (I->getCapturedVar() == Var)
+    if (I.getCapturedVar() == Var)
       return true;
   }
 

@@ -2048,6 +2048,15 @@ public:
   /// \brief An iterator that walks over the captures.
   typedef Capture *capture_iterator;
   typedef const Capture *const_capture_iterator;
+  typedef llvm::iterator_range<capture_iterator> capture_range;
+  typedef llvm::iterator_range<const_capture_iterator> capture_const_range;
+
+  capture_range captures() {
+    return capture_range(capture_begin(), capture_end());
+  }
+  capture_const_range captures() const {
+    return capture_const_range(capture_begin(), capture_end());
+  }
 
   /// \brief Retrieve an iterator pointing to the first capture.
   capture_iterator capture_begin() { return getStoredCaptures(); }
