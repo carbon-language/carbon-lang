@@ -2060,14 +2060,12 @@ public:
   //===--------------------------------------------------------------------===//
   //                    Type Iterators.
   //===--------------------------------------------------------------------===//
+  typedef llvm::iterator_range<SmallVectorImpl<Type *>::const_iterator>
+    type_const_range;
 
-  typedef SmallVectorImpl<Type *>::iterator       type_iterator;
-  typedef SmallVectorImpl<Type *>::const_iterator const_type_iterator;
-
-  type_iterator types_begin() { return Types.begin(); }
-  type_iterator types_end() { return Types.end(); }
-  const_type_iterator types_begin() const { return Types.begin(); }
-  const_type_iterator types_end() const { return Types.end(); }
+  type_const_range types() const {
+    return type_const_range(Types.begin(), Types.end());
+  }
 
   //===--------------------------------------------------------------------===//
   //                    Integer Values

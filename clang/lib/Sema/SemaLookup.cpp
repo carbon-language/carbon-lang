@@ -4197,10 +4197,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       if (const Type *T = NNS->getAsType())
         SSIsTemplate = T->getTypeClass() == Type::TemplateSpecialization;
     }
-    for (ASTContext::type_iterator TI = Context.types_begin(),
-                                   TIEnd = Context.types_end();
-         TI != TIEnd; ++TI) {
-      if (CXXRecordDecl *CD = (*TI)->getAsCXXRecordDecl()) {
+    for (const auto *TI : Context.types()) {
+      if (CXXRecordDecl *CD = TI->getAsCXXRecordDecl()) {
         CD = CD->getCanonicalDecl();
         if (!CD->isDependentType() && !CD->isAnonymousStructOrUnion() &&
             !CD->isUnion() && CD->getIdentifier() &&
