@@ -159,17 +159,14 @@ class ELFState {
   /// \brief The accumulated contents of all sections so far.
   ContiguousBlobAccumulator &SectionContentAccum;
   typedef typename object::ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
-  /// \brief The ELF file header.
-  Elf_Ehdr &Header;
 
   SectionNameToIdxMap &SN2I;
 
 public:
-
-  ELFState(Elf_Ehdr &Header_, ContiguousBlobAccumulator &Accum,
-           unsigned DotStrtabSecNo_, SectionNameToIdxMap &SN2I_)
+  ELFState(ContiguousBlobAccumulator &Accum, unsigned DotStrtabSecNo_,
+           SectionNameToIdxMap &SN2I_)
       : DotStrtab(), DotStrtabSecNo(DotStrtabSecNo_),
-        SectionContentAccum(Accum), Header(Header_), SN2I(SN2I_) {}
+        SectionContentAccum(Accum), SN2I(SN2I_) {}
 
   unsigned getDotStrTabSecNo() const { return DotStrtabSecNo; }
   StringTableBuilder &getStringTable() { return DotStrtab; }
@@ -302,7 +299,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     }
   }
 
-  ELFState<ELFT> State(Header, CBA, DotStrtabSecNo, SN2I);
+  ELFState<ELFT> State(CBA, DotStrtabSecNo, SN2I);
 
   StringTableBuilder SHStrTab;
   std::vector<Elf_Shdr> SHeaders;
