@@ -109,6 +109,12 @@ Other x86-specific information
 
 * `Calling conventions for different C++ compilers and operating systems  <http://www.agner.org/optimize/calling_conventions.pdf>`_
 
+XCore
+-----
+
+* `The XMOS XS1 Architecture (ISA) <https://www.xmos.com/en/download/public/The-XMOS-XS1-Architecture%28X7879A%29.pdf>`_
+* `Tools Developement Guide (includes ABI) <https://www.xmos.com/download/public/Tools-Development-Guide%28X9114A%29.pdf>`_
+
 Other relevant lists
 --------------------
 
