@@ -313,10 +313,8 @@ public:
     else if (const DeclStmt *DS = dyn_cast<DeclStmt>(S))
       // Iterate through the decls.  Warn if any initializers are complex
       // expressions that are not live (never used).
-      for (DeclStmt::const_decl_iterator DI=DS->decl_begin(), DE=DS->decl_end();
-           DI != DE; ++DI) {
-
-        VarDecl *V = dyn_cast<VarDecl>(*DI);
+      for (const auto *DI : DS->decls()) {
+        const auto *V = dyn_cast<VarDecl>(DI);
 
         if (!V)
           continue;

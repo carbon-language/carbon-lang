@@ -485,7 +485,13 @@ public:
 
   typedef DeclGroupRef::iterator decl_iterator;
   typedef DeclGroupRef::const_iterator const_decl_iterator;
+  typedef llvm::iterator_range<decl_iterator> decl_range;
+  typedef llvm::iterator_range<const_decl_iterator> decl_const_range;
 
+  decl_range decls() { return decl_range(decl_begin(), decl_end()); }
+  decl_const_range decls() const {
+    return decl_const_range(decl_begin(), decl_end());
+  }
   decl_iterator decl_begin() { return DG.begin(); }
   decl_iterator decl_end() { return DG.end(); }
   const_decl_iterator decl_begin() const { return DG.begin(); }

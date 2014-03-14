@@ -851,11 +851,9 @@ void ConsumedStmtVisitor::VisitDeclRefExpr(const DeclRefExpr *DeclRef) {
 }
 
 void ConsumedStmtVisitor::VisitDeclStmt(const DeclStmt *DeclS) {
-  for (DeclStmt::const_decl_iterator DI = DeclS->decl_begin(),
-       DE = DeclS->decl_end(); DI != DE; ++DI) {
-    
-    if (isa<VarDecl>(*DI)) VisitVarDecl(cast<VarDecl>(*DI));
-  }
+  for (const auto *DI : DeclS->decls())    
+    if (isa<VarDecl>(DI))
+      VisitVarDecl(cast<VarDecl>(DI));
   
   if (DeclS->isSingleDecl())
     if (const VarDecl *Var = dyn_cast_or_null<VarDecl>(DeclS->getSingleDecl()))

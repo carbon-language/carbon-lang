@@ -4753,9 +4753,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
       RewriteObjCQualifiedInterfaceTypes(*DS->decl_begin());
 
     // Blocks rewrite rules.
-    for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
-         DI != DE; ++DI) {
-      Decl *SD = *DI;
+    for (auto *SD : DS->decls()) {
       if (ValueDecl *ND = dyn_cast<ValueDecl>(SD)) {
         if (isTopLevelBlockPointerType(ND->getType()))
           RewriteBlockPointerDecl(ND);

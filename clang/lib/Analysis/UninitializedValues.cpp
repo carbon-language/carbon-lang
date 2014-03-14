@@ -373,9 +373,8 @@ void ClassifyRefs::classify(const Expr *E, Class C) {
 }
 
 void ClassifyRefs::VisitDeclStmt(DeclStmt *DS) {
-  for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
-       DI != DE; ++DI) {
-    VarDecl *VD = dyn_cast<VarDecl>(*DI);
+  for (auto *DI : DS->decls()) {
+    VarDecl *VD = dyn_cast<VarDecl>(DI);
     if (VD && isTrackedVar(VD))
       if (const DeclRefExpr *DRE = getSelfInitExpr(VD))
         Classification[DRE] = SelfInit;
@@ -694,9 +693,8 @@ void TransferFunctions::VisitBinaryOperator(BinaryOperator *BO) {
 }
 
 void TransferFunctions::VisitDeclStmt(DeclStmt *DS) {
-  for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end();
-       DI != DE; ++DI) {
-    VarDecl *VD = dyn_cast<VarDecl>(*DI);
+  for (auto *DI : DS->decls()) {
+    VarDecl *VD = dyn_cast<VarDecl>(DI);
     if (VD && isTrackedVar(VD)) {
       if (getSelfInitExpr(VD)) {
         // If the initializer consists solely of a reference to itself, we

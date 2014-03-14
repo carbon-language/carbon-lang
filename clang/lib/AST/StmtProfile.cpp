@@ -79,9 +79,8 @@ void StmtProfiler::VisitStmt(const Stmt *S) {
 
 void StmtProfiler::VisitDeclStmt(const DeclStmt *S) {
   VisitStmt(S);
-  for (DeclStmt::const_decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
-       D != DEnd; ++D)
-    VisitDecl(*D);
+  for (const auto *D : S->decls())
+    VisitDecl(D);
 }
 
 void StmtProfiler::VisitNullStmt(const NullStmt *S) {

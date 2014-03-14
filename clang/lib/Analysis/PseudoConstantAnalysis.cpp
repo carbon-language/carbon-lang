@@ -171,10 +171,9 @@ void PseudoConstantAnalysis::RunAnalysis() {
     case Stmt::DeclStmtClass: {
       const DeclStmt *DS = cast<DeclStmt>(Head);
       // Iterate over each decl and see if any of them contain reference decls
-      for (DeclStmt::const_decl_iterator I = DS->decl_begin(),
-          E = DS->decl_end(); I != E; ++I) {
+      for (const auto *I : DS->decls()) {
         // We only care about VarDecls
-        const VarDecl *VD = dyn_cast<VarDecl>(*I);
+        const VarDecl *VD = dyn_cast<VarDecl>(I);
         if (!VD)
           continue;
 

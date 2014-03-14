@@ -1935,9 +1935,8 @@ void CStringChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
   // Record string length for char a[] = "abc";
   ProgramStateRef state = C.getState();
 
-  for (DeclStmt::const_decl_iterator I = DS->decl_begin(), E = DS->decl_end();
-       I != E; ++I) {
-    const VarDecl *D = dyn_cast<VarDecl>(*I);
+  for (const auto *I : DS->decls()) {
+    const VarDecl *D = dyn_cast<VarDecl>(I);
     if (!D)
       continue;
 

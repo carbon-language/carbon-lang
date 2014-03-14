@@ -961,11 +961,9 @@ LocalScope* CFGBuilder::addLocalScopeForDeclStmt(DeclStmt *DS,
   if (!BuildOpts.AddImplicitDtors)
     return Scope;
 
-  for (DeclStmt::decl_iterator DI = DS->decl_begin(), DE = DS->decl_end()
-      ; DI != DE; ++DI) {
-    if (VarDecl *VD = dyn_cast<VarDecl>(*DI))
+  for (auto *DI : DS->decls())
+    if (VarDecl *VD = dyn_cast<VarDecl>(DI))
       Scope = addLocalScopeForVarDecl(VD, Scope);
-  }
   return Scope;
 }
 

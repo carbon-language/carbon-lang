@@ -2072,9 +2072,8 @@ void EnqueueVisitor::VisitDependentScopeDeclRefExpr(
 void EnqueueVisitor::VisitDeclStmt(const DeclStmt *S) {
   unsigned size = WL.size();
   bool isFirst = true;
-  for (DeclStmt::const_decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
-       D != DEnd; ++D) {
-    AddDecl(*D, isFirst);
+  for (const auto *D : S->decls()) {
+    AddDecl(D, isFirst);
     isFirst = false;
   }
   if (size == WL.size())

@@ -3318,13 +3318,12 @@ static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
 
   case Stmt::DeclStmtClass: {
     const DeclStmt *DS = cast<DeclStmt>(S);
-    for (DeclStmt::const_decl_iterator DclIt = DS->decl_begin(),
-           DclEnd = DS->decl_end(); DclIt != DclEnd; ++DclIt) {
+    for (const auto *DclIt : DS->decls()) {
       // Each declaration initialization is its own full-expression.
       // FIXME: This isn't quite right; if we're performing aggregate
       // initialization, each braced subexpression is its own full-expression.
       FullExpressionRAII Scope(Info);
-      if (!EvaluateDecl(Info, *DclIt) && !Info.keepEvaluatingAfterFailure())
+      if (!EvaluateDecl(Info, DclIt) && !Info.keepEvaluatingAfterFailure())
         return ESR_Failed;
     }
     return ESR_Succeeded;

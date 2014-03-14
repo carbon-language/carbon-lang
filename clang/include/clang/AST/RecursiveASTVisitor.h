@@ -1950,9 +1950,8 @@ DEF_TRAVERSE_STMT(CXXCatchStmt, {
   })
 
 DEF_TRAVERSE_STMT(DeclStmt, {
-    for (DeclStmt::decl_iterator I = S->decl_begin(), E = S->decl_end();
-         I != E; ++I) {
-      TRY_TO(TraverseDecl(*I));
+    for (auto *I : S->decls()) {
+      TRY_TO(TraverseDecl(I));
     }
     // Suppress the default iteration over children() by
     // returning.  Here's why: A DeclStmt looks like 'type var [=

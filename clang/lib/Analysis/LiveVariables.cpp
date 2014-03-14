@@ -389,9 +389,8 @@ void TransferFunctions::VisitDeclRefExpr(DeclRefExpr *DR) {
 }
 
 void TransferFunctions::VisitDeclStmt(DeclStmt *DS) {
-  for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE = DS->decl_end();
-       DI != DE; ++DI)
-    if (VarDecl *VD = dyn_cast<VarDecl>(*DI)) {
+  for (const auto *DI : DS->decls())
+    if (const auto *VD = dyn_cast<VarDecl>(DI)) {
       if (!isAlwaysAlive(VD))
         val.liveDecls = LV.DSetFact.remove(val.liveDecls, VD);
     }

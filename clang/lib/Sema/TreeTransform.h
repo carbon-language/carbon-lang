@@ -5684,14 +5684,12 @@ StmtResult
 TreeTransform<Derived>::TransformDeclStmt(DeclStmt *S) {
   bool DeclChanged = false;
   SmallVector<Decl *, 4> Decls;
-  for (DeclStmt::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
-       D != DEnd; ++D) {
-    Decl *Transformed = getDerived().TransformDefinition((*D)->getLocation(),
-                                                         *D);
+  for (auto *D : S->decls()) {
+    Decl *Transformed = getDerived().TransformDefinition(D->getLocation(), D);
     if (!Transformed)
       return StmtError();
 
-    if (Transformed != *D)
+    if (Transformed != D)
       DeclChanged = true;
 
     Decls.push_back(Transformed);

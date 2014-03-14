@@ -1013,10 +1013,9 @@ static bool isCapturedBy(const VarDecl &var, const Expr *e) {
       }
       else if (DeclStmt *DS = dyn_cast<DeclStmt>((*BI))) {
           // special case declarations
-          for (DeclStmt::decl_iterator I = DS->decl_begin(), E = DS->decl_end();
-               I != E; ++I) {
-              if (VarDecl *VD = dyn_cast<VarDecl>((*I))) {
-                Expr *Init = VD->getInit();
+          for (const auto *I : DS->decls()) {
+              if (const auto *VD = dyn_cast<VarDecl>((I))) {
+                const Expr *Init = VD->getInit();
                 if (Init && isCapturedBy(var, Init))
                   return true;
               }

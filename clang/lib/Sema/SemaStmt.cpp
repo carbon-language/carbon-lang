@@ -1594,14 +1594,13 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
       // C99 6.8.5p3: The declaration part of a 'for' statement shall only
       // declare identifiers for objects having storage class 'auto' or
       // 'register'.
-      for (DeclStmt::decl_iterator DI=DS->decl_begin(), DE=DS->decl_end();
-           DI!=DE; ++DI) {
-        VarDecl *VD = dyn_cast<VarDecl>(*DI);
+      for (auto *DI : DS->decls()) {
+        VarDecl *VD = dyn_cast<VarDecl>(DI);
         if (VD && VD->isLocalVarDecl() && !VD->hasLocalStorage())
           VD = 0;
         if (VD == 0) {
-          Diag((*DI)->getLocation(), diag::err_non_local_variable_decl_in_for);
-          (*DI)->setInvalidDecl();
+          Diag(DI->getLocation(), diag::err_non_local_variable_decl_in_for);
+          DI->setInvalidDecl();
         }
       }
     }

@@ -813,9 +813,8 @@ static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
   // C++11 [dcl.constexpr]p3 and p4:
   //  The definition of a constexpr function(p3) or constructor(p4) [...] shall
   //  contain only
-  for (DeclStmt::decl_iterator DclIt = DS->decl_begin(),
-         DclEnd = DS->decl_end(); DclIt != DclEnd; ++DclIt) {
-    switch ((*DclIt)->getKind()) {
+  for (const auto *DclIt : DS->decls()) {
+    switch (DclIt->getKind()) {
     case Decl::StaticAssert:
     case Decl::Using:
     case Decl::UsingShadow:
@@ -831,7 +830,7 @@ static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
     case Decl::TypeAlias: {
       //   - typedef declarations and alias-declarations that do not define
       //     classes or enumerations,
-      TypedefNameDecl *TN = cast<TypedefNameDecl>(*DclIt);
+      const auto *TN = cast<TypedefNameDecl>(DclIt);
       if (TN->getUnderlyingType()->isVariablyModifiedType()) {
         // Don't allow variably-modified types in constexpr functions.
         TypeLoc TL = TN->getTypeSourceInfo()->getTypeLoc();
@@ -846,7 +845,7 @@ static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
     case Decl::Enum:
     case Decl::CXXRecord:
       // C++1y allows types to be defined, not just declared.
-      if (cast<TagDecl>(*DclIt)->isThisDeclarationADefinition())
+      if (cast<TagDecl>(DclIt)->isThisDeclarationADefinition())
         SemaRef.Diag(DS->getLocStart(),
                      SemaRef.getLangOpts().CPlusPlus1y
                        ? diag::warn_cxx11_compat_constexpr_type_definition
@@ -865,7 +864,7 @@ static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
       // C++1y [dcl.constexpr]p3 allows anything except:
       //   a definition of a variable of non-literal type or of static or
       //   thread storage duration or for which no initialization is performed.
-      VarDecl *VD = cast<VarDecl>(*DclIt);
+      const auto *VD = cast<VarDecl>(DclIt);
       if (VD->isThisDeclarationADefinition()) {
         if (VD->isStaticLocal()) {
           SemaRef.Diag(VD->getLocation(),
