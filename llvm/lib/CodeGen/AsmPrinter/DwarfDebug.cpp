@@ -364,6 +364,7 @@ bool DwarfDebug::isSubprogramContext(const MDNode *Context) {
 // scope then create and insert DIEs for these variables.
 DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit *SPCU,
                                           DISubprogram SP) {
+  SP = SPCU->getOdrUniqueSubprogram(resolve(SP.getContext()), SP);
   DIE *SPDie = SPCU->getDIE(SP);
 
   assert(SPDie && "Unable to find subprogram DIE!");

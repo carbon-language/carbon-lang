@@ -353,6 +353,9 @@ class DwarfDebug : public AsmPrinterHandler {
   /// of in DwarfCompileUnit.
   DenseMap<const MDNode *, DIE *> MDTypeNodeToDieMap;
 
+  // Used to unique C++ member function declarations.
+  StringMap<const MDNode *> OdrMemberMap;
+
   // Stores the current file ID for a given compile unit.
   DenseMap<unsigned, unsigned> FileIDCUMap;
   // Source id map, i.e. CUID, source filename and directory,
@@ -700,6 +703,11 @@ public:
   }
   DIE *getDIE(const MDNode *TypeMD) {
     return MDTypeNodeToDieMap.lookup(TypeMD);
+  }
+
+  /// \brief Look up or create an entry in the OdrMemberMap.
+  const MDNode *&getOrCreateOdrMember(StringRef Key) {
+    return OdrMemberMap.GetOrCreateValue(Key).getValue();
   }
 
   /// \brief Emit all Dwarf sections that should come prior to the

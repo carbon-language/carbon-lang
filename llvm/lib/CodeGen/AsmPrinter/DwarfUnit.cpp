@@ -1405,12 +1405,33 @@ DIE *DwarfUnit::getOrCreateNameSpace(DINameSpace NS) {
   return NDie;
 }
 
+/// Unique C++ member function declarations based on their
+/// context and mangled name.
+DISubprogram
+DwarfUnit::getOdrUniqueSubprogram(DIScope Context, DISubprogram SP) const {
+  if (!hasODR() ||
+      !Context.isCompositeType() ||
+      SP.getLinkageName().empty() ||
+      SP.isDefinition())
+    return SP;
+  // Create a key with the UID of the parent class and this SP's name.
+  Twine Key = SP.getContext().getName() + SP.getLinkageName();
+  const MDNode *&Entry = DD->getOrCreateOdrMember(Key.str());
+  if (!Entry)
+    Entry = &*SP;
+
+  return DISubprogram(Entry);
+}
+
 /// getOrCreateSubprogramDIE - Create new DIE using SP.
 DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE (as is the case for member function
   // declarations).
-  DIE *ContextDIE = getOrCreateContextDIE(resolve(SP.getContext()));
+  DIScope Context = resolve(SP.getContext());
+  DIE *ContextDIE = getOrCreateContextDIE(Context);
+  // Unique declarations based on the ODR, where applicable.
+  SP = getOdrUniqueSubprogram(Context, SP);
 
   DIE *SPDie = getDIE(SP);
   if (SPDie)
