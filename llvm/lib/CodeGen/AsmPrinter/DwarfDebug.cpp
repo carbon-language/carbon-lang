@@ -689,8 +689,10 @@ unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName, StringRef DirName,
     CUID = 0;
 
   // If FE did not provide a file name, then assume stdin.
-  if (FileName.empty())
-    return getOrCreateSourceID("<stdin>", StringRef(), CUID);
+  if (FileName.empty()) {
+    FileName = "<stdin>";
+    DirName = "";
+  }
 
   // TODO: this might not belong here. See if we can factor this better.
   if (DirName == CompilationDir)
