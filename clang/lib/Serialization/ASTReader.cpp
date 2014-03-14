@@ -118,6 +118,10 @@ bool ChainedASTReaderListener::needsSystemInputFileVisitation() {
   return First->needsSystemInputFileVisitation() ||
   Second->needsSystemInputFileVisitation();
 }
+void ChainedASTReaderListener::visitModuleFile(StringRef Filename) {
+  First->visitModuleFile(Filename);
+  Second->visitModuleFile(Filename);
+}
 bool ChainedASTReaderListener::visitInputFile(StringRef Filename,
                                               bool isSystem,
                                               bool isOverridden) {
@@ -2117,6 +2121,9 @@ ASTReader::ReadControlBlock(ModuleFile &F,
             return OutOfDate;
         }
       }
+
+      if (Listener)
+        Listener->visitModuleFile(F.FileName);
 
       if (Listener && Listener->needsInputFileVisitation()) {
         unsigned N = Listener->needsSystemInputFileVisitation() ? NumInputs

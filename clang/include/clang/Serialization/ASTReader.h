@@ -171,6 +171,9 @@ public:
   virtual void ReadCounter(const serialization::ModuleFile &M,
                            unsigned Value) {}
 
+  /// This is called for each AST file loaded.
+  virtual void visitModuleFile(StringRef Filename) {}
+
   /// \brief Returns true if this \c ASTReaderListener wants to receive the
   /// input files of the AST file via \c visitInputFile, false otherwise.
   virtual bool needsInputFileVisitation() { return false; }
@@ -217,6 +220,7 @@ public:
   void ReadCounter(const serialization::ModuleFile &M, unsigned Value) override;
   bool needsInputFileVisitation() override;
   bool needsSystemInputFileVisitation() override;
+  void visitModuleFile(StringRef Filename) override;
   bool visitInputFile(StringRef Filename, bool isSystem,
                       bool isOverridden) override;
 };
