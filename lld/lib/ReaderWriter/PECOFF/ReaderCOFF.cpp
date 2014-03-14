@@ -477,7 +477,8 @@ error_code FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
       continue;
 
     const coff_section *sec;
-    if (error_code ec = _obj->getSection(sym->SectionNumber, sec))
+    if (error_code ec =
+            _obj->getSection(static_cast<uint16_t>(sym->SectionNumber), sec))
       return ec;
     assert(sec && "SectionIndex > 0, Sec must be non-null!");
 
@@ -526,7 +527,8 @@ error_code FileCOFF::cacheSectionAttributes() {
       continue;
 
     const coff_section *sec;
-    if (error_code ec = _obj->getSection(sym->SectionNumber, sec))
+    if (error_code ec =
+            _obj->getSection(static_cast<uint16_t>(sym->SectionNumber), sec))
       return ec;
 
     if (_merge.count(sec))
