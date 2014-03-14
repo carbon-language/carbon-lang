@@ -5384,10 +5384,8 @@ void RewriteObjCFragileABI::RewriteObjCClassMetaData(ObjCImplementationDecl *IDe
     ObjCInterfaceDecl::ivar_iterator IVI, IVE;
     SmallVector<ObjCIvarDecl *, 8> IVars;
     if (!IDecl->ivar_empty()) {
-      for (ObjCInterfaceDecl::ivar_iterator
-           IV = IDecl->ivar_begin(), IVEnd = IDecl->ivar_end();
-           IV != IVEnd; ++IV)
-        IVars.push_back(*IV);
+      for (auto *IV : IDecl->ivars())
+        IVars.push_back(IV);
       IVI = IDecl->ivar_begin();
       IVE = IDecl->ivar_end();
     } else {

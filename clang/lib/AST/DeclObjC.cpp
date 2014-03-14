@@ -1239,19 +1239,17 @@ ObjCIvarDecl *ObjCInterfaceDecl::all_declared_ivar_begin() {
     data().IvarListMissingImplementation = false;
     if (!ImplDecl->ivar_empty()) {
       SmallVector<SynthesizeIvarChunk, 16> layout;
-      for (ObjCImplementationDecl::ivar_iterator I = ImplDecl->ivar_begin(),
-           E = ImplDecl->ivar_end(); I != E; ++I) {
-        ObjCIvarDecl *IV = *I;
+      for (auto *IV : ImplDecl->ivars()) {
         if (IV->getSynthesize() && !IV->isInvalidDecl()) {
           layout.push_back(SynthesizeIvarChunk(
                              IV->getASTContext().getTypeSize(IV->getType()), IV));
           continue;
         }
         if (!data().IvarList)
-          data().IvarList = *I;
+          data().IvarList = IV;
         else
-          curIvar->setNextIvar(*I);
-        curIvar = *I;
+          curIvar->setNextIvar(IV);
+        curIvar = IV;
       }
       
       if (!layout.empty()) {

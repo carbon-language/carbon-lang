@@ -961,10 +961,9 @@ void DeclPrinter::VisitObjCImplementationDecl(ObjCImplementationDecl *OID) {
   if (OID->ivar_size() > 0) {
     Out << "{\n";
     Indentation += Policy.Indentation;
-    for (ObjCImplementationDecl::ivar_iterator I = OID->ivar_begin(),
-         E = OID->ivar_end(); I != E; ++I) {
+    for (const auto *I : OID->ivars()) {
       Indent() << I->getASTContext().getUnqualifiedObjCPointerType(I->getType()).
-                    getAsString(Policy) << ' ' << **I << ";\n";
+                    getAsString(Policy) << ' ' << *I << ";\n";
     }
     Indentation -= Policy.Indentation;
     Out << "}\n";

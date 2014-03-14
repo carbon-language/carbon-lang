@@ -165,11 +165,8 @@ public:
 
     // Index the ivars first to make sure the synthesized ivars are indexed
     // before indexing the methods that can reference them.
-    for (ObjCImplementationDecl::ivar_iterator
-           IvarI = D->ivar_begin(),
-           IvarE = D->ivar_end(); IvarI != IvarE; ++IvarI) {
-      IndexCtx.indexDecl(*IvarI);
-    }
+    for (const auto *IvarI : D->ivars())
+      IndexCtx.indexDecl(IvarI);
     for (const auto *I : D->decls()) {
       if (!isa<ObjCIvarDecl>(I))
         IndexCtx.indexDecl(I);
