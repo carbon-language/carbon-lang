@@ -35,16 +35,12 @@ void CXXBasePaths::ComputeDeclsFound() {
   std::copy(Decls.begin(), Decls.end(), DeclsFound);
 }
 
-CXXBasePaths::decl_iterator CXXBasePaths::found_decls_begin() {
+CXXBasePaths::decl_range CXXBasePaths::found_decls() {
   if (NumDeclsFound == 0)
     ComputeDeclsFound();
-  return DeclsFound;
-}
 
-CXXBasePaths::decl_iterator CXXBasePaths::found_decls_end() {
-  if (NumDeclsFound == 0)
-    ComputeDeclsFound();
-  return DeclsFound + NumDeclsFound;
+  return decl_range(decl_iterator(DeclsFound),
+                    decl_iterator(DeclsFound + NumDeclsFound));
 }
 
 /// isAmbiguous - Determines whether the set of paths provided is

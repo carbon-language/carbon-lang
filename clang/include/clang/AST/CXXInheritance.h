@@ -190,8 +190,8 @@ public:
   CXXBasePath&       front()       { return Paths.front(); }
   const CXXBasePath& front() const { return Paths.front(); }
   
-  decl_iterator found_decls_begin();
-  decl_iterator found_decls_end();
+  typedef llvm::iterator_range<decl_iterator> decl_range;
+  decl_range found_decls();
   
   /// \brief Determine whether the path from the most-derived type to the
   /// given base type is ambiguous (i.e., it refers to multiple subobjects of

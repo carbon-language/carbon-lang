@@ -5941,9 +5941,8 @@ bool Sema::AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
   bool hasNonDeletedOverridenMethods = false;
   bool AddedAny = false;
   if (DC->lookupInBases(&FindOverriddenMethod, &Data, Paths)) {
-    for (CXXBasePaths::decl_iterator I = Paths.found_decls_begin(),
-         E = Paths.found_decls_end(); I != E; ++I) {
-      if (CXXMethodDecl *OldMD = dyn_cast<CXXMethodDecl>(*I)) {
+    for (auto *I : Paths.found_decls()) {
+      if (CXXMethodDecl *OldMD = dyn_cast<CXXMethodDecl>(I)) {
         MD->addOverriddenMethod(OldMD->getCanonicalDecl());
         if (!CheckOverridingFunctionReturnType(MD, OldMD) &&
             !CheckOverridingFunctionAttributes(MD, OldMD) &&
