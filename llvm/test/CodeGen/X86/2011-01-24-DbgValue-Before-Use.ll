@@ -9,6 +9,12 @@ target triple = "x86_64-apple-darwin10.0.0"
 ; CHECK: DW_TAG_variable
 ; CHECK: DW_TAG_variable
 ; CHECK-NEXT:   DW_AT_name {{.*}} "z_s"
+; CHECK-NEXT:   DW_AT_decl_file
+; CHECK-NEXT:   DW_AT_decl_line
+; CHECK-NEXT:   DW_AT_type{{.*}}{[[TYPE:.*]]}
+; CHECK-NEXT:   DW_AT_location
+; CHECK: [[TYPE]]:
+; CHECK-NEXT: DW_AT_name {{.*}} "int"
 
 
 @.str1 = private unnamed_addr constant [14 x i8] c"m=%u, z_s=%d\0A\00"
