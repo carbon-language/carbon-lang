@@ -846,7 +846,11 @@ public:
   }
 
   typedef SpecIterator<FunctionTemplateSpecializationInfo> spec_iterator;
+  typedef llvm::iterator_range<spec_iterator> spec_range;
 
+  spec_range specializations() const {
+    return spec_range(spec_begin(), spec_end());
+  }
   spec_iterator spec_begin() const {
     return makeSpecIterator(getSpecializations(), false);
   }

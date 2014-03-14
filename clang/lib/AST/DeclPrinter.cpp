@@ -885,10 +885,9 @@ void DeclPrinter::VisitTemplateDecl(const TemplateDecl *D) {
 void DeclPrinter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   if (PrintInstantiation) {
     TemplateParameterList *Params = D->getTemplateParameters();
-    for (FunctionTemplateDecl::spec_iterator I = D->spec_begin(), E = D->spec_end();
-         I != E; ++I) {
-      PrintTemplateParameters(Params, (*I)->getTemplateSpecializationArgs());
-      Visit(*I);
+    for (auto *I : D->specializations()) {
+      PrintTemplateParameters(Params, I->getTemplateSpecializationArgs());
+      Visit(I);
     }
   }
 

@@ -1513,9 +1513,7 @@ template<typename Derived>
 bool DataRecursiveASTVisitor<Derived>::TraverseFunctionInstantiations(
     FunctionTemplateDecl *D) {
   FunctionTemplateDecl::spec_iterator end = D->spec_end();
-  for (FunctionTemplateDecl::spec_iterator it = D->spec_begin(); it != end;
-       ++it) {
-    FunctionDecl* FD = *it;
+  for (auto *FD : D->specializations()) {
     switch (FD->getTemplateSpecializationKind()) {
     case TSK_Undeclared:
     case TSK_ImplicitInstantiation:

@@ -1151,11 +1151,9 @@ CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
       // Add any template specializations that have already been seen. Like
       // implicit member functions, these may have been added to a declaration
       // in the case of vtable-based debug info reduction.
-      for (FunctionTemplateDecl::spec_iterator SI = FTD->spec_begin(),
-                                               SE = FTD->spec_end();
-           SI != SE; ++SI) {
+      for (const auto *SI : FTD->specializations()) {
         llvm::DenseMap<const FunctionDecl *, llvm::WeakVH>::iterator MI =
-            SPCache.find(cast<CXXMethodDecl>(*SI)->getCanonicalDecl());
+            SPCache.find(cast<CXXMethodDecl>(SI)->getCanonicalDecl());
         if (MI != SPCache.end())
           EltTys.push_back(MI->second);
       }
