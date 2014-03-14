@@ -260,7 +260,9 @@ if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   find_library(SECURITY_LIBRARY Security)
   find_library(DEBUG_SYMBOLS_LIBRARY DebugSymbols PATHS "/System/Library/PrivateFrameworks")
 
-  set(LIBXML2_INCLUDE_DIR "/usr/include/libxml2")
+  if (NOT LIBXML2_FOUND)
+    find_package(LibXml2)
+  endif ()
   list(APPEND system_libs xml2 ncurses panel)
   list(APPEND system_libs ${CARBON_LIBRARY} ${FOUNDATION_LIBRARY}
   ${CORE_FOUNDATION_LIBRARY} ${CORE_SERVICES_LIBRARY} ${SECURITY_LIBRARY}
