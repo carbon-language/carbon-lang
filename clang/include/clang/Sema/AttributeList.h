@@ -389,44 +389,6 @@ public:
     return getArg(Arg).get<IdentifierLoc*>();
   }
 
-  class arg_iterator {
-    ArgsUnion const *X;
-    unsigned Idx;
-  public:
-    arg_iterator(ArgsUnion const *x, unsigned idx) : X(x), Idx(idx) {}
-
-    arg_iterator& operator++() {
-      ++Idx;
-      return *this;
-    }
-
-    bool operator==(const arg_iterator& I) const {
-      assert (X == I.X &&
-              "compared arg_iterators are for different argument lists");
-      return Idx == I.Idx;
-    }
-
-    bool operator!=(const arg_iterator& I) const {
-      return !operator==(I);
-    }
-
-    ArgsUnion operator*() const {
-      return X[Idx];
-    }
-
-    unsigned getArgNum() const {
-      return Idx+1;
-    }
-  };
-
-  arg_iterator arg_begin() const {
-    return arg_iterator(getArgsBuffer(), 0);
-  }
-
-  arg_iterator arg_end() const {
-    return arg_iterator(getArgsBuffer(), NumArgs);
-  }
-
   const AvailabilityChange &getAvailabilityIntroduced() const {
     assert(getKind() == AT_Availability && "Not an availability attribute");
     return getAvailabilitySlot(IntroducedSlot);
