@@ -28,6 +28,10 @@
 ; CHECK-NEXT:   DW_AT_MIPS_linkage_name {{.*}} "_ZL3barv"
 ; CHECK:      DW_TAG_class_type
 ; CHECK-NEXT:   DW_AT_name {{.*}} "A"
+; CHECK-NOT:  DW_TAG
+; CHECK:      DW_TAG_member
+; CHECK-NEXT:   DW_AT_name {{.*}} "data"
+; CHECK-NOT:  DW_TAG
 ; CHECK:      DW_TAG_subprogram
 ; CHECK-NEXT:   DW_AT_MIPS_linkage_name {{.*}} "_ZN1A6getFooEv"
 ; CHECK-NEXT:   DW_AT_name {{.*}} "getFoo"

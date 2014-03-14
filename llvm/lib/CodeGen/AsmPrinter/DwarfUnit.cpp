@@ -958,6 +958,9 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   DIE *ContextDIE = getOrCreateContextDIE(Context);
   assert(ContextDIE);
 
+  // Unique the type. This is a noop if the type has no unique identifier.
+  Ty = DIType(resolve(Ty.getRef()));
+
   DIE *TyDIE = getDIE(Ty);
   if (TyDIE)
     return TyDIE;
