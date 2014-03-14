@@ -132,7 +132,9 @@ void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
   // Printf("T%p MutexLock:   %zx\n", lt, m->id);
   if (dd.onFirstLock(&lt->dd, m->id))
     return;
-  // if (dd.hasAllEdges(&lt->dd, m->id)) return;
+  if (dd.onLockFast(&lt->dd, m->id))
+    return;
+
   SpinMutexLock lk(&mtx);
   MutexEnsureID(lt, m);
   if (wlock)  // Only a recursive rlock may be held.

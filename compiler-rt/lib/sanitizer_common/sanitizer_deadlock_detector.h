@@ -175,9 +175,12 @@ class DeadlockDetector {
   // Experimental *racy* fast path function.
   // Returns true if all edges from the currently held locks to cur_node exist.
   bool hasAllEdges(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
-    if (dtls->getEpoch() == nodeToEpoch(cur_node)) {
+    uptr local_epoch = dtls->getEpoch();
+    // Read from current_epoch_ is racy.
+    if (cur_node && local_epoch == current_epoch_ &&
+        local_epoch == nodeToEpoch(cur_node)) {
       uptr cur_idx = nodeToIndexUnchecked(cur_node);
-      return g_.hasAllEdges(dtls->getLocks(current_epoch_), cur_idx);
+      return g_.hasAllEdges(dtls->getLocks(local_epoch), cur_idx);
     }
     return false;
   }
@@ -265,6 +268,18 @@ class DeadlockDetector {
   void onUnlock(DeadlockDetectorTLS<BV> *dtls, uptr node) {
     if (dtls->getEpoch() == nodeToEpoch(node))
       dtls->removeLock(nodeToIndexUnchecked(node));
+  }
+
+  // Tries to handle the lock event w/o writing to global state.
+  // Returns true on success.
+  // This operation is thread-safe as it only touches the dtls
+  // (modulo racy nature of hasAllEdges).
+  bool onLockFast(DeadlockDetectorTLS<BV> *dtls, uptr node) {
+    if (hasAllEdges(dtls, node)) {
+      dtls->addLock(nodeToIndexUnchecked(node), nodeToEpoch(node));
+      return true;
+    }
+    return false;
   }
 
   bool isHeld(DeadlockDetectorTLS<BV> *dtls, uptr node) const {
