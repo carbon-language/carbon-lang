@@ -1797,6 +1797,9 @@ public:
   bool IsClassExtension() const { return getIdentifier() == 0; }
 
   typedef specific_decl_iterator<ObjCIvarDecl> ivar_iterator;
+  typedef llvm::iterator_range<specific_decl_iterator<ObjCIvarDecl>> ivar_range;
+
+  ivar_range ivars() const { return ivar_range(ivar_begin(), ivar_end()); }
   ivar_iterator ivar_begin() const {
     return ivar_iterator(decls_begin());
   }

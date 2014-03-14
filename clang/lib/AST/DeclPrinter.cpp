@@ -1052,11 +1052,9 @@ void DeclPrinter::VisitObjCCategoryDecl(ObjCCategoryDecl *PID) {
   if (PID->ivar_size() > 0) {
     Out << "{\n";
     Indentation += Policy.Indentation;
-    for (ObjCCategoryDecl::ivar_iterator I = PID->ivar_begin(),
-         E = PID->ivar_end(); I != E; ++I) {
+    for (const auto *I : PID->ivars())
       Indent() << I->getASTContext().getUnqualifiedObjCPointerType(I->getType()).
-                    getAsString(Policy) << ' ' << **I << ";\n";
-    }
+                    getAsString(Policy) << ' ' << *I << ";\n";
     Indentation -= Policy.Indentation;
     Out << "}\n";
   }
