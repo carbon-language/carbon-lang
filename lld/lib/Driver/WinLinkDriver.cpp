@@ -1144,15 +1144,22 @@ bool WinLinkDriver::doParse(int argc, const char *argv[],
     }
   }
 
-  // Move files with ".lib" extension at the end of the input file list. Say
-  // foo.obj depends on bar.lib. The linker needs to accept both "bar.lib
-  // foo.obj" and "foo.obj bar.lib".
-  auto compfn = [](StringRef a, StringRef b) {
-    return !a.endswith_lower(".lib") && b.endswith_lower(".lib");
-  };
-  std::stable_sort(inputFiles.begin(), inputFiles.end(), compfn);
-  for (StringRef path : inputFiles)
-    files.push_back(std::unique_ptr<FileNode>(new PECOFFFileNode(ctx, path)));
+  // Arguments after "--" are interpreted as filenames even if they
+  // start with a hypen or a slash. This is not compatible with link.exe
+  // but useful for us to test lld on Unix.
+  if (llvm::opt::Arg *dashdash = parsedArgs->getLastArg(OPT_DASH_DASH))
+    for (const StringRef value : dashdash->getValues())
+      inputFiles.push_back(value);
+
+  // Prepare objects to add them to input graph.
+  for (StringRef path : inputFiles) {
+    path = ctx.allocate(path);
+    if (path.endswith_lower(".lib")) {
+      libraries.push_back(std::unique_ptr<FileNode>(new PECOFFLibraryNode(ctx, path)));
+    } else {
+      files.push_back(std::unique_ptr<FileNode>(new PECOFFFileNode(ctx, path)));
+    }
+  }
 
   // Use the default entry name if /entry option is not given.
   if (ctx.entrySymbolName().empty() && !parsedArgs->getLastArg(OPT_noentry))
@@ -1179,17 +1186,6 @@ bool WinLinkDriver::doParse(int argc, const char *argv[],
   if (ctx.deadStrip())
     for (const StringRef symbolName : ctx.initialUndefinedSymbols())
       ctx.addDeadStripRoot(symbolName);
-
-  // Arguments after "--" are interpreted as filenames even if they
-  // start with a hypen or a slash. This is not compatible with link.exe
-  // but useful for us to test lld on Unix.
-  if (llvm::opt::Arg *dashdash = parsedArgs->getLastArg(OPT_DASH_DASH)) {
-    for (const StringRef value : dashdash->getValues()) {
-      std::unique_ptr<FileNode> elem(
-          new PECOFFFileNode(ctx, ctx.allocate(value)));
-      files.push_back(std::move(elem));
-    }
-  }
 
   // Add the libraries specified by /defaultlib unless they are already added
   // nor blacklisted by /nodefaultlib.
