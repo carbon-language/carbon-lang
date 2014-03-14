@@ -1196,7 +1196,7 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
   for (MachineRegisterInfo::reg_bundle_iterator
        RegI = MRI.reg_bundle_begin(Reg), E = MRI.reg_bundle_end();
        RegI != E; ) {
-    MachineInstr *MI = &*(RegI++);
+    MachineInstr *MI = getBundleStart(&*(RegI++));
 
     // Debug values are not allowed to affect codegen.
     if (MI->isDebugValue()) {
