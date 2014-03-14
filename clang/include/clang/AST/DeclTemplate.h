@@ -1988,17 +1988,6 @@ public:
     return makeSpecIterator(getSpecializations(), true);
   }
 
-  typedef SpecIterator<ClassTemplatePartialSpecializationDecl>
-          partial_spec_iterator;
-
-  partial_spec_iterator partial_spec_begin() {
-    return makeSpecIterator(getPartialSpecializations(), false);
-  }
-
-  partial_spec_iterator partial_spec_end() {
-    return makeSpecIterator(getPartialSpecializations(), true);
-  }
-
   // Implement isa/cast/dyncast support
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == ClassTemplate; }
