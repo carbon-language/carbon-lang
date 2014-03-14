@@ -316,6 +316,7 @@ X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
       return CSR_64_Intel_OCL_BI_AVX_RegMask;
     if (!HasAVX && !IsWin64 && Is64Bit)
       return CSR_64_Intel_OCL_BI_RegMask;
+    break;
   }
   case CallingConv::Cold:
     if (Is64Bit)
