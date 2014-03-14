@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -triple aarch64 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple aarch64 -emit-llvm -o - %s | FileCheck -check-prefix=CHECK --check-prefix=CHECK-LE %s
+// RUN: %clang_cc1 -triple aarch64_be -emit-llvm -o - %s | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s 
+
 #include <stdarg.h>
 
 // Obviously there's more than one way to implement va_arg. This test should at
@@ -22,6 +24,9 @@ int simple_int(void) {
 // CHECK: [[VAARG_IN_REG]]
 // CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 1)
 // CHECK: [[REG_ADDR:%[a-z_0-9]+]] = getelementptr i8* [[REG_TOP]], i32 [[GR_OFFS]]
+// CHECK-BE: [[REG_ADDR_VAL:%[0-9]+]] = ptrtoint i8* [[REG_ADDR]] to i64
+// CHECK-BE: [[REG_ADDR_VAL_ALIGNED:%align_be[0-9]*]] = add i64 [[REG_ADDR_VAL]], 4
+// CHECK-BE: [[REG_ADDR:%[0-9]+]] = inttoptr i64 [[REG_ADDR_VAL_ALIGNED]] to i8*
 // CHECK: [[FROMREG_ADDR:%[a-z_0-9]+]] = bitcast i8* [[REG_ADDR]] to i32*
 // CHECK: br label %[[VAARG_END:[a-z._0-9]+]]
 
@@ -29,6 +34,9 @@ int simple_int(void) {
 // CHECK: [[STACK:%[a-z_0-9]+]] = load i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
 // CHECK: [[NEW_STACK:%[a-z_0-9]+]] = getelementptr i8* [[STACK]], i32 8
 // CHECK: store i8* [[NEW_STACK]], i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 0)
+// CHECK-BE: [[STACK_VAL:%[0-9]+]] = ptrtoint i8* {{%stack[0-9]*}} to i64
+// CHECK-BE: [[STACK_VAL_ALIGNED:%align_be[0-9]*]] = add i64 [[STACK_VAL]], 4
+// CHECK-BE: [[STACK:%[0-9]+]] = inttoptr i64 [[STACK_VAL_ALIGNED]] to i8*
 // CHECK: [[FROMSTACK_ADDR:%[a-z_0-9]+]] = bitcast i8* [[STACK]] to i32*
 // CHECK: br label %[[VAARG_END]]
 
@@ -165,6 +173,9 @@ double simple_double(void) {
 // CHECK: [[VAARG_IN_REG]]
 // CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 2)
 // CHECK: [[REG_ADDR:%[a-z_0-9]+]] = getelementptr i8* [[REG_TOP]], i32 [[VR_OFFS]]
+// CHECK-BE: [[REG_ADDR_VAL:%[0-9]+]] = ptrtoint i8* [[REG_ADDR]] to i64
+// CHECK-BE: [[REG_ADDR_VAL_ALIGNED:%align_be[0-9]*]] = add i64 [[REG_ADDR_VAL]], 8
+// CHECK-BE: [[REG_ADDR:%[0-9]+]] = inttoptr i64 [[REG_ADDR_VAL_ALIGNED]] to i8*
 // CHECK: [[FROMREG_ADDR:%[a-z_0-9]+]] = bitcast i8* [[REG_ADDR]] to double*
 // CHECK: br label %[[VAARG_END]]
 
@@ -201,12 +212,14 @@ struct hfa simple_hfa(void) {
 // CHECK: [[VAARG_IN_REG]]
 // CHECK: [[REG_TOP:%[a-z_0-9]+]] = load i8** getelementptr inbounds (%struct.__va_list* @the_list, i32 0, i32 2)
 // CHECK: [[FIRST_REG:%[a-z_0-9]+]] = getelementptr i8* [[REG_TOP]], i32 [[VR_OFFS]]
-// CHECK: [[EL_ADDR:%[a-z_0-9]+]] = getelementptr i8* [[FIRST_REG]], i32 0
+// CHECK-LE: [[EL_ADDR:%[a-z_0-9]+]] = getelementptr i8* [[FIRST_REG]], i32 0
+// CHECK-BE: [[EL_ADDR:%[a-z_0-9]+]] = getelementptr i8* [[FIRST_REG]], i32 12
 // CHECK: [[EL_TYPED:%[a-z_0-9]+]] = bitcast i8* [[EL_ADDR]] to float*
 // CHECK: [[EL_TMPADDR:%[a-z_0-9]+]] = getelementptr inbounds [2 x float]* %[[TMP_HFA:[a-z_.0-9]+]], i32 0, i32 0
 // CHECK: [[EL:%[a-z_0-9]+]] = load float* [[EL_TYPED]]
 // CHECK: store float [[EL]], float* [[EL_TMPADDR]]
-// CHECK: [[EL_ADDR:%[a-z_0-9]+]] = getelementptr i8* [[FIRST_REG]], i32 16
+// CHECK-LE: [[EL_ADDR:%[a-z_0-9]+]] = getelementptr i8* [[FIRST_REG]], i32 16
+// CHECK-BE: [[EL_ADDR:%[a-z_0-9]+]] = getelementptr i8* [[FIRST_REG]], i32 28
 // CHECK: [[EL_TYPED:%[a-z_0-9]+]] = bitcast i8* [[EL_ADDR]] to float*
 // CHECK: [[EL_TMPADDR:%[a-z_0-9]+]] = getelementptr inbounds [2 x float]* %[[TMP_HFA]], i32 0, i32 1
 // CHECK: [[EL:%[a-z_0-9]+]] = load float* [[EL_TYPED]]
