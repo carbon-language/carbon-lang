@@ -320,10 +320,14 @@ void RunAddEdgesTest() {
   from.clear();
   from.setBit(1);
   EXPECT_EQ(1U, g.addEdges(from, 4, added_edges, kMaxEdges));
+  EXPECT_TRUE(g.hasAllEdges(from, 4));
+  EXPECT_FALSE(g.hasAllEdges(from, 5));
   EXPECT_EQ(1U, added_edges[0]);
   from.setBit(2);
   from.setBit(3);
+  EXPECT_FALSE(g.hasAllEdges(from, 4));
   EXPECT_EQ(2U, g.addEdges(from, 4, added_edges, kMaxEdges));
+  EXPECT_TRUE(g.hasAllEdges(from, 4));
   EXPECT_EQ(2U, added_edges[0]);
   EXPECT_EQ(3U, added_edges[1]);
 }

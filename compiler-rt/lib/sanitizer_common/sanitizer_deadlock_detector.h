@@ -172,6 +172,16 @@ class DeadlockDetector {
     dtls->addLock(cur_idx, current_epoch_);
   }
 
+  // Experimental *racy* fast path function.
+  // Returns true if all edges from the currently held locks to cur_node exist.
+  bool hasAllEdges(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
+    if (dtls->getEpoch() == nodeToEpoch(cur_node)) {
+      uptr cur_idx = nodeToIndexUnchecked(cur_node);
+      return g_.hasAllEdges(dtls->getLocks(current_epoch_), cur_idx);
+    }
+    return false;
+  }
+
   // Adds edges from currently held locks to cur_node,
   // returns the number of added edges, and puts the sources of added edges
   // into added_edges[].

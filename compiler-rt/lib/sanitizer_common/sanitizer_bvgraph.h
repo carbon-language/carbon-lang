@@ -60,6 +60,20 @@ class BVGraph {
     return res;
   }
 
+  // *EXPERIMENTAL*
+  // Returns true if all edges from=>to exist.
+  // This function does not use any global state except for 'this' itself,
+  // and thus can be called from different threads w/o locking.
+  // This would be racy.
+  // FIXME: investigate how much we can prove about this race being "benign".
+  bool hasAllEdges(const BV &from, uptr to) {
+    for (typename BV::Iterator it(from); it.hasNext(); ) {
+      uptr idx = it.next();
+      if (!v[idx].getBit(to)) return false;
+    }
+    return true;
+  }
+
   // Returns true if the edge from=>to was removed.
   bool removeEdge(uptr from, uptr to) {
     return v[from].clearBit(to);

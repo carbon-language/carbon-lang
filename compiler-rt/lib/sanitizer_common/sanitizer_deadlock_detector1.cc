@@ -100,6 +100,7 @@ void DD::MutexBeforeLock(DDCallback *cb,
     DDMutex *m, bool wlock) {
   DDLogicalThread *lt = cb->lt;
   if (lt->dd.empty()) return;  // This will be the first lock held by lt.
+  if (dd.hasAllEdges(&lt->dd, m->id)) return;  // We already have all edges.
   SpinMutexLock lk(&mtx);
   MutexEnsureID(lt, m);
   if (dd.isHeld(&lt->dd, m->id))
@@ -131,6 +132,7 @@ void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
   // Printf("T%p MutexLock:   %zx\n", lt, m->id);
   if (dd.onFirstLock(&lt->dd, m->id))
     return;
+  // if (dd.hasAllEdges(&lt->dd, m->id)) return;
   SpinMutexLock lk(&mtx);
   MutexEnsureID(lt, m);
   if (wlock)  // Only a recursive rlock may be held.
