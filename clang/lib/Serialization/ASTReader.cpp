@@ -1903,7 +1903,8 @@ ASTReader::readInputFileInfo(ModuleFile &F, unsigned ID) {
   Filename = Blob;
   MaybeAddSystemRootToFilename(F, Filename);
   
-  return { std::move(Filename), StoredSize, StoredTime, Overridden };
+  InputFileInfo R = { std::move(Filename), StoredSize, StoredTime, Overridden };
+  return R;
 }
 
 std::string ASTReader::getInputFileName(ModuleFile &F, unsigned int ID) {
