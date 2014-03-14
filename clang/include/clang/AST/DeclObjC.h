@@ -1774,6 +1774,11 @@ public:
   protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
   unsigned protocol_size() const { return ReferencedProtocols.size(); }
   typedef ObjCProtocolList::loc_iterator protocol_loc_iterator;
+  typedef llvm::iterator_range<protocol_loc_iterator> protocol_loc_range;
+
+  protocol_loc_range protocol_locs() const {
+    return protocol_loc_range(protocol_loc_begin(), protocol_loc_end());
+  }
   protocol_loc_iterator protocol_loc_begin() const {
     return ReferencedProtocols.loc_begin();
   }
