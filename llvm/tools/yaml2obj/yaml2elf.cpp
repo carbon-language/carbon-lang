@@ -357,6 +357,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   // Section header string table header.
   Elf_Shdr SHStrTabSHeader;
   zero(SHStrTabSHeader);
+  SHStrTabSHeader.sh_name = SHStrTab.addString(StringRef(".shstrtab"));
   createStringTableSectionHeader(SHStrTabSHeader, SHStrTab, CBA);
   SHeaders.push_back(SHStrTabSHeader);
 

@@ -33,3 +33,16 @@ Sections:
 # CHECK:          SectionData (
 # CHECK-NEXT:       0000: EBFE
 # CHECK-NEXT:     )
+#
+# CHECK:        Section {
+# CHECK:          Name: .symtab (7)
+# CHECK:          Type: SHT_SYMTAB (0x2)
+# CHECK:        }
+# CHECK:        Section {
+# CHECK:          Name: .strtab (15)
+# CHECK:          Type: SHT_STRTAB (0x3)
+# CHECK:        }
+# CHECK:        Section {
+# CHECK:          Name: .shstrtab (23)
+# CHECK:          Type: SHT_STRTAB (0x3)
+# CHECK:        }
