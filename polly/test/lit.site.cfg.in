@@ -25,8 +25,19 @@ except KeyError,e:
     key, = e.args
     lit_config.fatal("unable to find %r parameter, use '--param=%s=VALUE'" % (key,key))
 
-config.substitutions.append(('%loadPolly', '-load '
-                             + config.polly_lib_dir + '/LLVMPolly@LLVM_SHLIBEXT@'))
+if '@LINK_POLLY_INTO_TOOLS@' == '' or \
+   '@LINK_POLLY_INTO_TOOLS@'.lower() == '0' or \
+   '@LINK_POLLY_INTO_TOOLS@'.lower() == 'n' or \
+   '@LINK_POLLY_INTO_TOOLS@'.lower() == 'no' or \
+   '@LINK_POLLY_INTO_TOOLS@'.lower() == 'off' or \
+   '@LINK_POLLY_INTO_TOOLS@'.lower() == 'false' or \
+   '@LINK_POLLY_INTO_TOOLS@'.lower() == 'notfound' or \
+   '@LINK_POLLY_INTO_TOOLS@'.lower() == 'link_polly_into_tools-notfound':
+    config.substitutions.append(('%loadPolly', '-load '
+                                 + config.polly_lib_dir + '/LLVMPolly@LLVM_SHLIBEXT@'))
+else:
+    config.substitutions.append(('%loadPolly', ''))
+
 config.substitutions.append(('%defaultOpts', ' -basicaa -polly-prepare'))
 config.substitutions.append(('%polybenchOpts', ' -O3 -loop-simplify -indvars '))
 config.substitutions.append(('%vector-opt', '-polly-vectorizer=polly'))
