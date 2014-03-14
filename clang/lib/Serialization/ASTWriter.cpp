@@ -2204,9 +2204,7 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   // other consumers of this information.
   SourceManager &SrcMgr = PP->getSourceManager();
   ModuleMap &ModMap = PP->getHeaderSearchInfo().getModuleMap();
-  for (ASTContext::import_iterator I = Context->local_import_begin(),
-                                IEnd = Context->local_import_end();
-       I != IEnd; ++I) {
+  for (const auto *I : Context->local_imports()) {
     if (Module *ImportedFrom
           = ModMap.inferModuleFromLocation(FullSourceLoc(I->getLocation(), 
                                                          SrcMgr))) {
@@ -4276,9 +4274,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   if (!WritingModule) {
     // Write the submodules that were imported, if any.
     RecordData ImportedModules;
-    for (ASTContext::import_iterator I = Context.local_import_begin(),
-                                  IEnd = Context.local_import_end();
-         I != IEnd; ++I) {
+    for (const auto *I : Context.local_imports()) {
       assert(SubmoduleIDs.find(I->getImportedModule()) != SubmoduleIDs.end());
       ImportedModules.push_back(SubmoduleIDs[I->getImportedModule()]);
     }

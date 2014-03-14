@@ -626,6 +626,43 @@ public:
 private:
   mutable comments::CommandTraits CommentCommandTraits;
 
+  /// \brief Iterator that visits import declarations.
+  class import_iterator {
+    ImportDecl *Import;
+
+  public:
+    typedef ImportDecl               *value_type;
+    typedef ImportDecl               *reference;
+    typedef ImportDecl               *pointer;
+    typedef int                       difference_type;
+    typedef std::forward_iterator_tag iterator_category;
+
+    import_iterator() : Import() {}
+    explicit import_iterator(ImportDecl *Import) : Import(Import) {}
+
+    reference operator*() const { return Import; }
+    pointer operator->() const { return Import; }
+
+    import_iterator &operator++() {
+      Import = ASTContext::getNextLocalImport(Import);
+      return *this;
+    }
+
+    import_iterator operator++(int) {
+      import_iterator Other(*this);
+      ++(*this);
+      return Other;
+    }
+
+    friend bool operator==(import_iterator X, import_iterator Y) {
+      return X.Import == Y.Import;
+    }
+
+    friend bool operator!=(import_iterator X, import_iterator Y) {
+      return X.Import != Y.Import;
+    }
+  };
+
 public:
   comments::CommandTraits &getCommentCommandTraits() const {
     return CommentCommandTraits;
@@ -712,47 +749,10 @@ public:
     return Import->NextLocalImport;
   }
   
-  /// \brief Iterator that visits import declarations.
-  class import_iterator {
-    ImportDecl *Import;
-    
-  public:
-    typedef ImportDecl               *value_type;
-    typedef ImportDecl               *reference;
-    typedef ImportDecl               *pointer;
-    typedef int                       difference_type;
-    typedef std::forward_iterator_tag iterator_category;
-    
-    import_iterator() : Import() { }
-    explicit import_iterator(ImportDecl *Import) : Import(Import) { }
-    
-    reference operator*() const { return Import; }
-    pointer operator->() const { return Import; }
-    
-    import_iterator &operator++() {
-      Import = ASTContext::getNextLocalImport(Import);
-      return *this;
-    }
-
-    import_iterator operator++(int) {
-      import_iterator Other(*this);
-      ++(*this);
-      return Other;
-    }
-    
-    friend bool operator==(import_iterator X, import_iterator Y) {
-      return X.Import == Y.Import;
-    }
-
-    friend bool operator!=(import_iterator X, import_iterator Y) {
-      return X.Import != Y.Import;
-    }
-  };
-  
-  import_iterator local_import_begin() const { 
-    return import_iterator(FirstLocalImport); 
+  typedef llvm::iterator_range<import_iterator> import_range;
+  import_range local_imports() const {
+    return import_range(import_iterator(FirstLocalImport), import_iterator());
   }
-  import_iterator local_import_end() const { return import_iterator(); }
 
   Decl *getPrimaryMergedDecl(Decl *D) {
     Decl *Result = MergedDecls.lookup(D);
