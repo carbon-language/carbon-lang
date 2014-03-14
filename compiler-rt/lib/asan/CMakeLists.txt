@@ -85,8 +85,7 @@ if(APPLE)
               $<TARGET_OBJECTS:RTSanitizerCommon.${os}>
               $<TARGET_OBJECTS:RTLSanCommon.${os}>
       CFLAGS ${ASAN_CFLAGS}
-      DEFS ${ASAN_COMMON_DEFINITIONS}
-      LINKFLAGS ${ASAN_RUNTIME_LDFLAGS})
+      DEFS ${ASAN_COMMON_DEFINITIONS})
     add_dependencies(asan clang_rt.asan_${os}_dynamic)
   endforeach()
 
