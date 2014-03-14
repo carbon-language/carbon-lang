@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/X86BaseInfo.h"
+#include "X86AsmInstrumentation.h"
 #include "X86AsmParserCommon.h"
 #include "X86Operand.h"
 #include "llvm/ADT/APFloat.h"
@@ -30,6 +31,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
+#include <memory>
 
 using namespace llvm;
 
@@ -54,6 +56,7 @@ class X86AsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
   ParseInstructionInfo *InstInfo;
+  std::unique_ptr<X86AsmInstrumentation> Instrumentation;
 private:
   SMLoc consumeToken() {
     SMLoc Result = Parser.getTok().getLoc();
@@ -650,6 +653,12 @@ private:
   bool processInstruction(MCInst &Inst,
                           const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
 
+  /// Wrapper around MCStreamer::EmitInstruction(). Possibly adds
+  /// instrumentation around Inst.
+  void EmitInstruction(MCInst &Inst,
+                       SmallVectorImpl<MCParsedAsmOperand *> &Operands,
+                       MCStreamer &Out);
+
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out, unsigned &ErrorInfo,
@@ -706,6 +715,7 @@ public:
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
+    Instrumentation.reset(CreateX86AsmInstrumentation(STI));
   }
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
 
@@ -2239,6 +2249,14 @@ processInstruction(MCInst &Inst,
 }
 
 static const char *getSubtargetFeatureName(unsigned Val);
+
+void X86AsmParser::EmitInstruction(
+    MCInst &Inst, SmallVectorImpl<MCParsedAsmOperand *> &Operands,
+    MCStreamer &Out) {
+  Instrumentation->InstrumentInstruction(Inst, Operands, getContext(), Out);
+  Out.EmitInstruction(Inst, STI);
+}
+
 bool X86AsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
@@ -2261,7 +2279,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     Inst.setOpcode(X86::WAIT);
     Inst.setLoc(IDLoc);
     if (!MatchingInlineAsm)
-      Out.EmitInstruction(Inst, STI);
+      EmitInstruction(Inst, Operands, Out);
 
     const char *Repl =
       StringSwitch<const char*>(Op->getToken())
@@ -2297,7 +2315,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
     Inst.setLoc(IDLoc);
     if (!MatchingInlineAsm)
-      Out.EmitInstruction(Inst, STI);
+      EmitInstruction(Inst, Operands, Out);
     Opcode = Inst.getOpcode();
     return false;
   case Match_MissingFeature: {
@@ -2384,7 +2402,7 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   if (NumSuccessfulMatches == 1) {
     Inst.setLoc(IDLoc);
     if (!MatchingInlineAsm)
-      Out.EmitInstruction(Inst, STI);
+      EmitInstruction(Inst, Operands, Out);
     Opcode = Inst.getOpcode();
     return false;
   }
