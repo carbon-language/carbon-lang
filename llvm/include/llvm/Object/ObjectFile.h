@@ -287,9 +287,6 @@ protected:
 
 public:
 
-  symbol_iterator begin_symbols() const;
-  symbol_iterator end_symbols() const;
-
   virtual section_iterator section_begin() const = 0;
   virtual section_iterator section_end() const = 0;
 
@@ -342,20 +339,6 @@ public:
 // Inline function definitions.
 inline SymbolRef::SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner)
     : BasicSymbolRef(SymbolP, Owner) {}
-
-inline symbol_iterator ObjectFile::begin_symbols() const {
-  basic_symbol_iterator I = symbol_begin_impl();
-  const BasicSymbolRef &Ref = *I;
-  const SymbolRef &Cast = static_cast<const SymbolRef&>(Ref);
-  return symbol_iterator(Cast);
-}
-
-inline symbol_iterator ObjectFile::end_symbols() const {
-  basic_symbol_iterator I = symbol_end_impl();
-  const BasicSymbolRef &Ref = *I;
-  const SymbolRef &Cast = static_cast<const SymbolRef&>(Ref);
-  return symbol_iterator(Cast);
-}
 
 inline error_code SymbolRef::getName(StringRef &Result) const {
   return getObject()->getSymbolName(getRawDataRefImpl(), Result);
