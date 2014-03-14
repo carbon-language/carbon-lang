@@ -59,8 +59,6 @@ MCContext::MCContext(const MCAsmInfo *mai, const MCRegisterInfo *mri,
 
   if (SrcMgr && SrcMgr->getNumBuffers() > 0)
     MainFileName = SrcMgr->getMemoryBuffer(0)->getBufferIdentifier();
-  else
-    MainFileName = "";
 }
 
 MCContext::~MCContext() {
