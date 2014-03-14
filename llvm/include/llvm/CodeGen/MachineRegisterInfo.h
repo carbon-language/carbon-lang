@@ -856,11 +856,13 @@ public:
     // Retrieve a reference to the current operand.
     MachineInstr &operator*() const {
       assert(Op && "Cannot dereference end iterator!");
+      if (ByBundle) return *(getBundleStart(Op->getParent()));
       return *Op->getParent();
     }
 
     MachineInstr *operator->() const {
       assert(Op && "Cannot dereference end iterator!");
+      if (ByBundle) return getBundleStart(Op->getParent());
       return Op->getParent();
     }
   };
