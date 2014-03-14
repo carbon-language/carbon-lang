@@ -1,6 +1,9 @@
 // RUN: %clang_cc1 -triple aarch64 -emit-llvm -o - %s | FileCheck -check-prefix=CHECK --check-prefix=CHECK-LE %s
 // RUN: %clang_cc1 -triple aarch64_be -emit-llvm -o - %s | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s 
 
+// FIXME: Update this to work regardless of assertions.
+// REQUIRES: asserts
+
 #include <stdarg.h>
 
 // Obviously there's more than one way to implement va_arg. This test should at
