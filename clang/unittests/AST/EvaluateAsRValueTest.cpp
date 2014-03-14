@@ -1,0 +1,112 @@
+//===- unittests/AST/EvaluateAsRValueTest.cpp -----------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// \file
+// \brief Unit tests for evaluation of constant initializers.
+//
+//===----------------------------------------------------------------------===//
+
+#include <map>
+#include <string>
+
+#include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/Tooling/Tooling.h"
+#include "gtest/gtest.h"
+
+#include "clang/AST/ASTConsumer.h"
+
+using namespace clang::tooling;
+
+namespace {
+// For each variable name encountered, whether its initializer was a
+// constant.
+typedef std::map<std::string, bool> VarInfoMap;
+
+/// \brief Records information on variable initializers to a map.
+class EvaluateConstantInitializersVisitor
+    : public clang::RecursiveASTVisitor<EvaluateConstantInitializersVisitor> {
+ public:
+  explicit EvaluateConstantInitializersVisitor(VarInfoMap &VarInfo)
+      : VarInfo(VarInfo) {}
+
+  /// \brief Checks that isConstantInitializer and EvaluateAsRValue agree
+  /// and don't crash.
+  ///
+  /// For each VarDecl with an initializer this also records in VarInfo
+  /// whether the initializer could be evaluated as a constant.
+  bool VisitVarDecl(const clang::VarDecl *VD) {
+    if (const clang::Expr *Init = VD->getInit()) {
+      clang::Expr::EvalResult Result;
+      bool WasEvaluated = Init->EvaluateAsRValue(Result, VD->getASTContext());
+      VarInfo[VD->getNameAsString()] = WasEvaluated;
+      EXPECT_EQ(WasEvaluated, Init->isConstantInitializer(VD->getASTContext(),
+                                                          false /*ForRef*/));
+    }
+    return true;
+  }
+
+ private:
+  VarInfoMap &VarInfo;
+};
+
+class EvaluateConstantInitializersAction : public clang::ASTFrontendAction {
+ public:
+  clang::ASTConsumer *CreateASTConsumer(clang::CompilerInstance &Compiler,
+                                        llvm::StringRef FilePath) override {
+    return new Consumer;
+  }
+
+ private:
+  class Consumer : public clang::ASTConsumer {
+   public:
+    ~Consumer() override {}
+
+    void HandleTranslationUnit(clang::ASTContext &Ctx) override {
+      VarInfoMap VarInfo;
+      EvaluateConstantInitializersVisitor Evaluator(VarInfo);
+      Evaluator.TraverseDecl(Ctx.getTranslationUnitDecl());
+      EXPECT_EQ(2u, VarInfo.size());
+      EXPECT_FALSE(VarInfo["Dependent"]);
+      EXPECT_TRUE(VarInfo["Constant"]);
+      EXPECT_EQ(2u, VarInfo.size());
+    }
+  };
+};
+}
+
+TEST(EvaluateAsRValue, FailsGracefullyForUnknownTypes) {
+  // This is a regression test; the AST library used to trigger assertion
+  // failures because it assumed that the type of initializers was always
+  // known (which is true only after template instantiation).
+  std::string ModesToTest[] = {"-std=c++03", "-std=c++11", "-std=c++1y"};
+  for (std::string const &Mode : ModesToTest) {
+    std::vector<std::string> Args(1, Mode);
+    ASSERT_TRUE(runToolOnCodeWithArgs(
+      new EvaluateConstantInitializersAction(),
+      R"(template <typename T>
+         struct vector {
+           explicit vector(int size);
+         };
+         template <typename R>
+         struct S {
+           vector<R> intervals() const {
+             vector<R> Dependent(2);
+             return Dependent;
+           }
+         };
+         void doSomething() {
+           int Constant = 2 + 2;
+           (void) Constant;
+         }
+      )",
+      Args));
+  }
+}

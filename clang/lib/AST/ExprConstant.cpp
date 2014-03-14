@@ -8034,6 +8034,9 @@ static bool EvaluateInPlace(APValue &Result, EvalInfo &Info, const LValue &This,
 /// EvaluateAsRValue - Try to evaluate this expression, performing an implicit
 /// lvalue-to-rvalue cast if it is an lvalue.
 static bool EvaluateAsRValue(EvalInfo &Info, const Expr *E, APValue &Result) {
+  if (E->getType().isNull())
+    return false;
+
   if (!CheckLiteralType(Info, E))
     return false;
 
@@ -8059,6 +8062,13 @@ static bool FastEvaluateAsRValue(const Expr *Exp, Expr::EvalResult &Result,
     Result.Val = APValue(APSInt(L->getValue(),
                                 L->getType()->isUnsignedIntegerType()));
     IsConst = true;
+    return true;
+  }
+
+  // This case should be rare, but we need to check it before we check on
+  // the type below.
+  if (Exp->getType().isNull()) {
+    IsConst = false;
     return true;
   }
   
