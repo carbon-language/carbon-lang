@@ -600,7 +600,7 @@ const FileEntry *Preprocessor::LookupFile(
       Filename, FilenameLoc, isAngled, FromDir, CurDir, Includers, SearchPath,
       RelativePath, SuggestedModule, SkipCache);
   if (FE) {
-    if (SuggestedModule)
+    if (SuggestedModule && !LangOpts.AsmPreprocessor)
       HeaderInfo.getModuleMap().diagnoseHeaderInclusion(
           getModuleForLocation(FilenameLoc), FilenameLoc, Filename, FE);
     return FE;

@@ -42,6 +42,10 @@ module XG {
 module XH {
   header "h.h"
   header "h1.h"
+  header "s.h"
   use XC
   use XE
+}
+
+module XS {
 }
