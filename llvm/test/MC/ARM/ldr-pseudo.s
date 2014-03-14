@@ -16,20 +16,20 @@
 @ CHECK-LABEL: f3:
 f3:
   ldr r0, =0x10001
-@ CHECK: ldr r0, .Ltmp0
+@ CHECK: ldr r0, .Ltmp[[TMP0:[0-9]+]]
 
 @ loading multiple constants
 .section c,"ax",%progbits
 @ CHECK-LABEL: f4:
 f4:
   ldr r0, =0x10002
-@ CHECK: ldr r0, .Ltmp1
+@ CHECK: ldr r0, .Ltmp[[TMP1:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
   adds r0, r0, #1
   adds r0, r0, #1
   ldr r0, =0x10003
-@ CHECK: ldr r0, .Ltmp2
+@ CHECK: ldr r0, .Ltmp[[TMP2:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
 
@@ -38,7 +38,7 @@ f4:
 @ CHECK-LABEL: f5:
 f5:
   ldr r0, =0x10004
-@ CHECK: ldr r0, .Ltmp3
+@ CHECK: ldr r0, .Ltmp[[TMP3:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
   adds r0, r0, #1
@@ -47,7 +47,7 @@ f5:
   adds r0, r0, #1
   adds r0, r0, #1
   ldr r0, =0x10004
-@ CHECK: ldr r0, .Ltmp4
+@ CHECK: ldr r0, .Ltmp[[TMP4:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
   adds r0, r0, #1
@@ -60,7 +60,7 @@ f5:
 @ CHECK-LABEL: f6:
 f6:
   ldr r0, =0x10006
-@ CHECK: ldr r0, .Ltmp5
+@ CHECK: ldr r0, .Ltmp[[TMP5:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
   adds r0, r0, #1
@@ -77,7 +77,7 @@ f7:
 f8:
   adds r0, r0, #1
   ldr r0, =0x10007
-@ CHECK: ldr r0, .Ltmp6
+@ CHECK: ldr r0, .Ltmp[[TMP6:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
 
@@ -90,21 +90,21 @@ f8:
 @ CHECK-LABEL: f9:
 f9:
   ldr r0, =foo
-@ CHECK: ldr r0, .Ltmp7
+@ CHECK: ldr r0, .Ltmp[[TMP7:[0-9]+]]
 
 @ load a symbol from another section
 .section h,"ax",%progbits
 @ CHECK-LABEL: f10:
 f10:
   ldr r0, =f5
-@ CHECK: ldr r0, .Ltmp8
+@ CHECK: ldr r0, .Ltmp[[TMP8:[0-9]+]]
 
 @ load a symbol from the same section
 .section i,"ax",%progbits
 @ CHECK-LABEL: f11:
 f11:
   ldr r0, =f12
-@ CHECK: ldr r0, .Ltmp9
+@ CHECK: ldr r0, .Ltmp[[TMP9:[0-9]+]]
 
 @ CHECK-LABEL: f12:
 f12:
@@ -118,11 +118,11 @@ f13:
   adds r0, r0, #1
   adds r0, r0, #1
   ldr r0, =0x101
-@ CHECK: ldr r0, .Ltmp10
+@ CHECK: ldr r0, .Ltmp[[TMP10:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
   ldr r0, =bar
-@ CHECK: ldr r0, .Ltmp11
+@ CHECK: ldr r0, .Ltmp[[TMP11:[0-9]+]]
   adds r0, r0, #1
   adds r0, r0, #1
 @
@@ -138,18 +138,18 @@ f13:
 @ CHECK-LABEL: f14:
 f14:
   useit_in_a_macro
-@ CHECK: ldr r0, .Ltmp12
-@ CHECK: ldr r0, .Ltmp13
+@ CHECK: ldr r0, .Ltmp[[TMP12:[0-9]+]]
+@ CHECK: ldr r0, .Ltmp[[TMP13:[0-9]+]]
 
 @ usage with expressions
 .section l, "ax", %progbits
 @ CHECK-LABEL: f15:
 f15:
   ldr r0, =0x10001+8
-@ CHECK: ldr r0, .Ltmp14
+@ CHECK: ldr r0, .Ltmp[[TMP14:[0-9]+]]
   adds r0, r0, #1
   ldr r0, =bar+4
-@ CHECK: ldr r0, .Ltmp15
+@ CHECK: ldr r0, .Ltmp[[TMP15:[0-9]+]]
   adds r0, r0, #1
 
 @
@@ -157,28 +157,28 @@ f15:
 @
 @ CHECK: .section b,"ax",%progbits
 @ CHECK: .align 2
-@ CHECK-LABEL: .Ltmp0:
+@ CHECK: .Ltmp[[TMP0]]
 @ CHECK: .long 65537
 
 @ CHECK: .section c,"ax",%progbits
 @ CHECK: .align 2
-@ CHECK-LABEL: .Ltmp1:
+@ CHECK: .Ltmp[[TMP1]]
 @ CHECK: .long 65538
-@ CHECK-LABEL: .Ltmp2:
+@ CHECK: .Ltmp[[TMP2]]
 @ CHECK: .long 65539
 
 @ CHECK: .section d,"ax",%progbits
 @ CHECK: .align 2
-@ CHECK-LABEL: .Ltmp3:
+@ CHECK: .Ltmp[[TMP3]]
 @ CHECK: .long 65540
-@ CHECK-LABEL: .Ltmp4:
+@ CHECK: .Ltmp[[TMP4]]
 @ CHECK: .long 65540
 
 @ CHECK: .section e,"ax",%progbits
 @ CHECK: .align 2
-@ CHECK-LABEL: .Ltmp5:
+@ CHECK: .Ltmp[[TMP5]]
 @ CHECK: .long 65542
-@ CHECK-LABEL: .Ltmp6:
+@ CHECK: .Ltmp[[TMP6]]
 @ CHECK: .long 65543
 
 @ Should not switch to section because it has no constant pool
@@ -186,36 +186,36 @@ f15:
 
 @ CHECK: .section g,"ax",%progbits
 @ CHECK: .align 2
-@ CHECK-LABEL: .Ltmp7:
+@ CHECK: .Ltmp[[TMP7]]
 @ CHECK: .long foo
 
 @ CHECK: .section h,"ax",%progbits
 @ CHECK: .align 2
-@ CHECK-LABEL: .Ltmp8:
+@ CHECK: .Ltmp[[TMP8]]
 @ CHECK: .long f5
 
 @ CHECK: .section i,"ax",%progbits
 @ CHECK: .align 2
-@ CHECK-LABEL: .Ltmp9:
+@ CHECK: .Ltmp[[TMP9]]
 @ CHECK: .long f12
 
 @ CHECK: .section j,"ax",%progbits
 @ CHECK: .align 2
-@ CHECK-LABEL: .Ltmp10:
+@ CHECK: .Ltmp[[TMP10]]
 @ CHECK: .long 257
-@ CHECK-LABEL: .Ltmp11:
+@ CHECK: .Ltmp[[TMP11]]
 @ CHECK: .long bar
 
 @ CHECK: .section k,"ax",%progbits
 @ CHECK: .align 2
-@ CHECK-LABEL: .Ltmp12:
+@ CHECK: .Ltmp[[TMP12]]
 @ CHECK: .long 65544
-@ CHECK-LABEL: .Ltmp13:
+@ CHECK: .Ltmp[[TMP13]]
 @ CHECK: .long baz
 
 @ CHECK: .section l,"ax",%progbits
 @ CHECK: .align 2
-@ CHECK-LABEL: .Ltmp14:
+@ CHECK: .Ltmp[[TMP14]]
 @ CHECK: .long 65545
-@ CHECK-LABEL: .Ltmp15:
+@ CHECK: .Ltmp[[TMP15]]
 @ CHECK: .long bar+4
