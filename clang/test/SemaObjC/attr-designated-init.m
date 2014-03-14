@@ -2,33 +2,33 @@
 
 #define NS_DESIGNATED_INITIALIZER __attribute__((objc_designated_initializer))
 
-void fnfoo(void) NS_DESIGNATED_INITIALIZER; // expected-error {{only applies to init methods of interface declarations}}
+void fnfoo(void) NS_DESIGNATED_INITIALIZER; // expected-error {{only applies to init methods of interface or class extension declarations}}
 
 @protocol P1
--(id)init NS_DESIGNATED_INITIALIZER; // expected-error {{only applies to init methods of interface declarations}}
+-(id)init NS_DESIGNATED_INITIALIZER; // expected-error {{only applies to init methods of interface or class extension declarations}}
 @end
 
 __attribute__((objc_root_class))
 @interface I1
--(void)meth NS_DESIGNATED_INITIALIZER; // expected-error {{only applies to init methods of interface declarations}}
+-(void)meth NS_DESIGNATED_INITIALIZER; // expected-error {{only applies to init methods of interface or class extension declarations}}
 -(id)init NS_DESIGNATED_INITIALIZER;
-+(id)init NS_DESIGNATED_INITIALIZER; // expected-error {{only applies to init methods of interface declarations}}
++(id)init NS_DESIGNATED_INITIALIZER; // expected-error {{only applies to init methods of interface or class extension declarations}}
 @end
 
 @interface I1(cat)
--(id)init2 NS_DESIGNATED_INITIALIZER; // expected-error {{only applies to init methods of interface declarations}}
+-(id)init2 NS_DESIGNATED_INITIALIZER; // expected-error {{only applies to init methods of interface or class extension declarations}}
 @end
 
 @interface I1()
--(id)init3 NS_DESIGNATED_INITIALIZER; // expected-error {{only applies to init methods of interface declarations}}
+-(id)init3 NS_DESIGNATED_INITIALIZER;
 @end
 
 @implementation I1
 -(void)meth {}
--(id)init NS_DESIGNATED_INITIALIZER { return 0; } // expected-error {{only applies to init methods of interface declarations}}
+-(id)init NS_DESIGNATED_INITIALIZER { return 0; } // expected-error {{only applies to init methods of interface or class extension declarations}}
 +(id)init { return 0; }
 -(id)init3 { return 0; } // expected-warning {{secondary initializer missing a 'self' call to another initializer}}
--(id)init4 NS_DESIGNATED_INITIALIZER { return 0; } // expected-error {{only applies to init methods of interface declarations}} \
+-(id)init4 NS_DESIGNATED_INITIALIZER { return 0; } // expected-error {{only applies to init methods of interface or class extension declarations}} \
 									 			   // expected-warning {{secondary initializer missing a 'self' call to another initializer}}
 @end
 

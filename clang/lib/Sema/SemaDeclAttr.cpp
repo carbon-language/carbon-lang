@@ -3554,7 +3554,11 @@ static void handleObjCBridgeRelatedAttr(Sema &S, Scope *Sc, Decl *D,
 
 static void handleObjCDesignatedInitializer(Sema &S, Decl *D,
                                             const AttributeList &Attr) {
-  ObjCInterfaceDecl *IFace = cast<ObjCInterfaceDecl>(D->getDeclContext());
+  ObjCInterfaceDecl *IFace;
+  if (ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(D->getDeclContext()))
+    IFace = CatDecl->getClassInterface();
+  else
+    IFace = cast<ObjCInterfaceDecl>(D->getDeclContext());
   IFace->setHasDesignatedInitializers();
   D->addAttr(::new (S.Context)
                   ObjCDesignatedInitializerAttr(Attr.getRange(), S.Context,

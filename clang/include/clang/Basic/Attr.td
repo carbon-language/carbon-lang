@@ -90,7 +90,9 @@ def ObjCInstanceMethod : SubsetSubject<ObjCMethod,
 
 def ObjCInterfaceDeclInitMethod : SubsetSubject<ObjCMethod,
                                [{S->getMethodFamily() == OMF_init &&
-                                 isa<ObjCInterfaceDecl>(S->getDeclContext())}]>;
+                                 (isa<ObjCInterfaceDecl>(S->getDeclContext()) ||
+                                  (isa<ObjCCategoryDecl>(S->getDeclContext()) &&
+            cast<ObjCCategoryDecl>(S->getDeclContext())->IsClassExtension()))}]>;
 
 def Struct : SubsetSubject<Record,
                            [{!S->isUnion()}]>;

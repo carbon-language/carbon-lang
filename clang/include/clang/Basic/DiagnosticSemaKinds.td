@@ -2088,7 +2088,7 @@ def warn_attribute_wrong_decl_type : Warning<
   "variables and fields|variables, data members and tag types|"
   "types and namespaces|Objective-C interfaces|methods and properties|"
   "struct or union|struct, union or class|types|"
-  "Objective-C instance methods|init methods of interface declarations|"
+  "Objective-C instance methods|init methods of interface or class extension declarations|"
   "variables, functions and classes|Objective-C protocols|"
   "functions and global variables}1">,
   InGroup<IgnoredAttributes>;
