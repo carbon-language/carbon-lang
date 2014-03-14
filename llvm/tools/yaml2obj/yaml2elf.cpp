@@ -186,8 +186,7 @@ addSymbols(const std::vector<ELFYAML::Symbol> &Symbols, ELFState<ELFT> &State,
            std::vector<typename object::ELFFile<ELFT>::Elf_Sym> &Syms,
            unsigned SymbolBinding) {
   typedef typename object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
-  for (unsigned i = 0, e = Symbols.size(); i != e; ++i) {
-    const ELFYAML::Symbol &Sym = Symbols[i];
+  for (const auto &Sym : Symbols) {
     Elf_Sym Symbol;
     zero(Symbol);
     if (!Sym.Name.empty())
@@ -310,8 +309,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     zero(SHdr);
     SHeaders.push_back(SHdr);
   }
-  for (unsigned i = 0, e = Sections.size(); i != e; ++i) {
-    const ELFYAML::Section &Sec = Sections[i];
+  for (const auto &Sec : Sections) {
     Elf_Shdr SHeader;
     zero(SHeader);
     SHeader.sh_name = SHStrTab.addString(Sec.Name);
