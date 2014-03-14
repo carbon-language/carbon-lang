@@ -392,11 +392,14 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
     if (MDecl->getMethodFamily() == OMF_init) {
       if (MDecl->isDesignatedInitializerForTheInterface()) {
         getCurFunction()->ObjCIsDesignatedInit = true;
-        getCurFunction()->ObjCWarnForNoDesignatedInitChain =
+        // Don't issue this warning for unavaialable inits.
+        if (!MDecl->isUnavailable())
+          getCurFunction()->ObjCWarnForNoDesignatedInitChain =
             IC->getSuperClass() != 0;
       } else if (IC->hasDesignatedInitializers()) {
         getCurFunction()->ObjCIsSecondaryInit = true;
-        getCurFunction()->ObjCWarnForNoInitDelegation = true;
+        // Don't issue this warning for unavaialable inits.
+        getCurFunction()->ObjCWarnForNoInitDelegation = !MDecl->isUnavailable();
       }
     }
 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fblocks %s
+// RUN: %clang_cc1 -fsyntax-only -Wno-incomplete-implementation -verify -fblocks %s
 
 #define NS_DESIGNATED_INITIALIZER __attribute__((objc_designated_initializer))
 
@@ -246,5 +246,19 @@ __attribute__((objc_root_class))
 - (instancetype)initInProcess
 {
     return ((void*)0);
+}
+@end
+
+// rdar://16305460
+__attribute__((objc_root_class))
+@interface MyObject
+- (instancetype)initWithStuff:(id)stuff __attribute__((objc_designated_initializer));
+- (instancetype)init __attribute__((unavailable));
+@end
+
+@implementation MyObject
+- (instancetype)init
+{
+   return ((void*)0);
 }
 @end
