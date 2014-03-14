@@ -68,6 +68,10 @@ public:
   }
 };
 
+inline DeclContext::lookups_range DeclContext::lookups() const {
+  return lookups_range(lookups_begin(), lookups_end());
+}
+
 inline DeclContext::all_lookups_iterator DeclContext::lookups_begin() const {
   DeclContext *Primary = const_cast<DeclContext*>(this)->getPrimaryContext();
   if (Primary->hasExternalVisibleStorage())
@@ -84,6 +88,10 @@ inline DeclContext::all_lookups_iterator DeclContext::lookups_end() const {
   if (StoredDeclsMap *Map = Primary->buildLookup())
     return all_lookups_iterator(Map->end(), Map->end());
   return all_lookups_iterator();
+}
+
+inline DeclContext::lookups_range DeclContext::noload_lookups() const {
+  return lookups_range(noload_lookups_begin(), noload_lookups_end());
 }
 
 inline

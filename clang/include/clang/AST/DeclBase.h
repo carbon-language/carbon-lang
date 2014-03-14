@@ -1577,6 +1577,11 @@ public:
   /// of looking up every possible name.
   class all_lookups_iterator;
 
+  typedef llvm::iterator_range<all_lookups_iterator> lookups_range;
+
+  lookups_range lookups() const;
+  lookups_range noload_lookups() const;
+
   /// \brief Iterators over all possible lookups within this context.
   all_lookups_iterator lookups_begin() const;
   all_lookups_iterator lookups_end() const;
