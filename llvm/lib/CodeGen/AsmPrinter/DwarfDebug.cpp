@@ -60,10 +60,6 @@ static cl::opt<bool> UnknownLocations(
     cl::desc("Make an absence of debug location information explicit."),
     cl::init(false));
 
-static cl::opt<bool> GenerateCUHash("generate-cu-hash", cl::Hidden,
-                                    cl::desc("Add the CU hash as the dwo_id."),
-                                    cl::init(true));
-
 static cl::opt<bool>
 GenerateGnuPubSections("generate-gnu-dwarf-pub-sections", cl::Hidden,
                        cl::desc("Generate GNU-style pubnames and pubtypes"),
@@ -975,12 +971,8 @@ void DwarfDebug::finalizeModuleInfo() {
       DwarfCompileUnit *SkCU =
           static_cast<DwarfCompileUnit *>(TheU->getSkeleton());
       if (useSplitDwarf()) {
-        // This should be a unique identifier when we want to build .dwp files.
-        uint64_t ID = 0;
-        if (GenerateCUHash) {
-          DIEHash CUHash(Asm);
-          ID = CUHash.computeCUSignature(*TheU->getUnitDie());
-        }
+        // Emit a unique identifier for this CU.
+        uint64_t ID = DIEHash(Asm).computeCUSignature(*TheU->getUnitDie());
         TheU->addUInt(TheU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
                       dwarf::DW_FORM_data8, ID);
         SkCU->addUInt(SkCU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
