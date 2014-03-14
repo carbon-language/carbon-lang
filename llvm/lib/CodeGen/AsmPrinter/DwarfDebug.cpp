@@ -1462,8 +1462,10 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   // Grab the lexical scopes for the function, if we don't have any of those
   // then we're not going to be able to do anything.
   LScopes.initialize(*MF);
-  if (LScopes.empty())
+  if (LScopes.empty()) {
+    UsedNonDefaultText = true;
     return;
+  }
 
   assert(UserVariables.empty() && DbgValues.empty() && "Maps weren't cleaned");
 
