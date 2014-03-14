@@ -11,8 +11,7 @@ A *foo (A* x) {
   return a;
 }
 
-// Verify that we're not emitting a full definition of B in limit debug mode.
-// CHECK: ; [ DW_TAG_class_type ] [B] {{.*}} [decl]
+// CHECK: ; [ DW_TAG_class_type ] [B] {{.*}} [def]
 
 class B {
 public:

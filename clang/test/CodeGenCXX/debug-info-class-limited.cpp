@@ -24,7 +24,7 @@ foo *bar(foo *a) {
 }
 
 namespace test1 {
-// CHECK-DAG: [ DW_TAG_structure_type ] [foo] [line [[@LINE+1]], {{.*}} [decl]
+// CHECK-DAG: [ DW_TAG_structure_type ] [foo] [line [[@LINE+1]], {{.*}} [def]
 struct foo {
 };
 
