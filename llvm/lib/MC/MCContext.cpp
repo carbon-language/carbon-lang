@@ -353,7 +353,7 @@ void MCContext::FatalError(SMLoc Loc, const Twine &Msg) {
   // If we have a source manager and a location, use it. Otherwise just
   // use the generic report_fatal_error().
   if (!SrcMgr || Loc == SMLoc())
-    report_fatal_error(Msg);
+    report_fatal_error(Msg, false);
 
   // Use the source manager to print the message.
   SrcMgr->PrintMessage(Loc, SourceMgr::DK_Error, Msg);
