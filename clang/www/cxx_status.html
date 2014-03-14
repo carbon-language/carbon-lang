@@ -303,7 +303,7 @@ currently requires the C++ runtime library from g++-4.8 or later.</p>
     <tr>
       <td>Minimal support for garbage collection and reachability-based leak detection</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2670.htm">N2670</a></td>
-      <td class="na" align="center">N/A</td>
+      <td class="na" align="center">N/A <a href="#n2670">(2)</a></td>
     </tr>
     <tr>
       <td>Allowing move constructors to throw [noexcept]</td>
@@ -332,7 +332,7 @@ currently requires the C++ runtime library from g++-4.8 or later.</p>
     <tr>
       <td>Strong Compare and Exchange</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2748.html">N2748</a></td>
-      <td class="full" align="center">Clang 3.1 <a href="#n2748">(2)</a></td>
+      <td class="full" align="center">Clang 3.1 <a href="#n2748">(3)</a></td>
     </tr>
     <tr>
       <td>Bidirectional Fences</td>
@@ -348,17 +348,12 @@ currently requires the C++ runtime library from g++-4.8 or later.</p>
     <tr>
       <td>Data-dependency ordering: atomics and memory model</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2008/n2664.htm">N2664</a></td>
-      <td class="full" align="center">Clang 3.2 <a href="#n2664">(3)</a></td>
+      <td class="full" align="center">Clang 3.2 <a href="#n2664">(4)</a></td>
     </tr>
     <tr>
       <td>Propagating exceptions</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2179.html">N2179</a></td>
       <td class="full" align="center">Clang 2.9</td>
-    </tr>
-    <tr>
-      <td>Abandoning a process and at_quick_exit</td>
-      <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2440.htm">N2440</a></td>
-      <td class="na" align="center">N/A</td>
     </tr>
     <tr>
       <td>Allow atomics use in signal handlers</td>
@@ -397,20 +392,24 @@ currently requires the C++ runtime library from g++-4.8 or later.</p>
     <tr>
       <td>Extended integral types</td>
       <td><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n1988.pdf">N1988</a></td>
-      <td class="na" align="center">N/A <a href="#n1988">(4)</a></td>
+      <td class="na" align="center">N/A <a href="#n1988">(5)</a></td>
     </tr>
 </table>
 
 <p>
 <span id="n2761">(1): The <code>[[carries_dependency]]</code> attribute
 has no effect.</span><br>
-<span id="n2748">(2): All compare-exchange operations are emitted as
+<span id="n2670">(2): No compiler changes are required for an implementation
+such as Clang that does not provide garbage collection.</span><br>
+<span id="n2748">(3): All compare-exchange operations are emitted as
 strong compare-exchanges.</span><br>
-<span id="n2664">(3): <code>memory_order_consume</code> is lowered to
+<span id="n2664">(4): <code>memory_order_consume</code> is lowered to
 <code>memory_order_acquire</code>.</span><br>
-<span id="n1988">(4): <code>__int128</code> is not treated as an extended
-integer type, because changing <code>intmax_t</code> would be an
-ABI-incompatible change.</span>
+<span id="n1988">(5): No compiler changes are required for an implementation
+such as Clang that does not provide any extended integer types.
+<code>__int128</code> is not treated as an extended integer type,
+because changing <code>intmax_t</code> would be an ABI-incompatible
+change.</span>
 </p>
 
 <h2 id="cxx14">C++1y implementation status</h2>
