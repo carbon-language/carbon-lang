@@ -206,7 +206,8 @@ private:
   /// stage coming first has higher priority.
   /// On each explanation stage keep in mind total ordering properties.
   ///
-  /// 0. Before comparison we coerce pointer types of 0 address space to integer.
+  /// 0. Before comparison we coerce pointer types of 0 address space to
+  /// integer.
   /// We also don't bother with same type at left and right, so
   /// just return 0 in this case.
   ///
