@@ -300,10 +300,8 @@ void ASTStmtWriter::VisitCapturedStmt(CapturedStmt *S) {
   Writer.AddDeclRef(S->getCapturedRecordDecl(), Record);
 
   // Capture inits
-  for (CapturedStmt::capture_init_iterator I = S->capture_init_begin(),
-                                           E = S->capture_init_end();
-       I != E; ++I)
-    Writer.AddStmt(*I);
+  for (auto *I : S->capture_inits())
+    Writer.AddStmt(I);
 
   // Body
   Writer.AddStmt(S->getCapturedStmt());

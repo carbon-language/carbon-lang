@@ -2073,6 +2073,11 @@ public:
 
   /// \brief Iterator that walks over the capture initialization arguments.
   typedef Expr **capture_init_iterator;
+  typedef llvm::iterator_range<capture_init_iterator> capture_init_range;
+
+  capture_init_range capture_inits() const {
+    return capture_init_range(capture_init_begin(), capture_init_end());
+  }
 
   /// \brief Retrieve the first initialization argument.
   capture_init_iterator capture_init_begin() const {
