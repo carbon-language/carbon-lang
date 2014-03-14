@@ -9,6 +9,7 @@ config.polly_lib_dir = "@POLLY_LIB_DIR@"
 config.target_triple = "@TARGET_TRIPLE@"
 config.enable_gpgpu_codegen = "@CUDALIB_FOUND@"
 config.cloog_found = "@CLOOG_FOUND@"
+config.link_polly_into_tools = "@LINK_POLLY_INTO_TOOLS@"
 
 ## Check the current platform with regex
 import re
@@ -25,14 +26,14 @@ except KeyError,e:
     key, = e.args
     lit_config.fatal("unable to find %r parameter, use '--param=%s=VALUE'" % (key,key))
 
-if '@LINK_POLLY_INTO_TOOLS@' == '' or \
-   '@LINK_POLLY_INTO_TOOLS@'.lower() == '0' or \
-   '@LINK_POLLY_INTO_TOOLS@'.lower() == 'n' or \
-   '@LINK_POLLY_INTO_TOOLS@'.lower() == 'no' or \
-   '@LINK_POLLY_INTO_TOOLS@'.lower() == 'off' or \
-   '@LINK_POLLY_INTO_TOOLS@'.lower() == 'false' or \
-   '@LINK_POLLY_INTO_TOOLS@'.lower() == 'notfound' or \
-   '@LINK_POLLY_INTO_TOOLS@'.lower() == 'link_polly_into_tools-notfound':
+if config.link_polly_into_tools == '' or \
+   config.link_polly_into_tools.lower() == '0' or \
+   config.link_polly_into_tools.lower() == 'n' or \
+   config.link_polly_into_tools.lower() == 'no' or \
+   config.link_polly_into_tools.lower() == 'off' or \
+   config.link_polly_into_tools.lower() == 'false' or \
+   config.link_polly_into_tools.lower() == 'notfound' or \
+   config.link_polly_into_tools.lower() == 'link_polly_into_tools-notfound':
     config.substitutions.append(('%loadPolly', '-load '
                                  + config.polly_lib_dir + '/LLVMPolly@LLVM_SHLIBEXT@'))
 else:

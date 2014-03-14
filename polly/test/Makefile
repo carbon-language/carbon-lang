@@ -53,6 +53,7 @@ lit.site.cfg: FORCE
 	     -e "s#@TARGET_TRIPLE@#$(TARGET_TRIPLE)#g" \
 	     -e "s#@LLVM_SHLIBEXT@#$(SHLIBEXT)#g" \
              -e "s#@POLLY_LIB_DIR@#$(LibDir)#g" \
+             -e "s#@LINK_POLLY_INTO_TOOLS@#OFF#g" \
 	     $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
 
 clean::
