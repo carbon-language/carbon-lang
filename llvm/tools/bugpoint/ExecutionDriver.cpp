@@ -404,7 +404,7 @@ std::string BugDriver::compileSharedObject(const std::string &BitcodeFile,
   // Remove the intermediate C file
   sys::fs::remove(OutputFile);
 
-  return "./" + SharedObjectFile;
+  return SharedObjectFile;
 }
 
 /// createReferenceFile - calls compileProgram and then records the output
