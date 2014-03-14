@@ -112,6 +112,7 @@ class DeadlockDetector {
     available_nodes_.clear();
     recycled_nodes_.clear();
     g_.clear();
+    n_edges_ = 0;
   }
 
   // Allocate new deadlock detector node.
@@ -164,21 +165,49 @@ class DeadlockDetector {
     return g_.isReachable(cur_idx, dtls->getLocks(current_epoch_));
   }
 
-  // Returns true if a new edge has been added to the graph.
-  // Should be called before after the lock is acquired.
-  bool onLockAfter(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
+  // Add cur_node to the set of locks held currently by dtls.
+  void onLockAfter(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
     ensureCurrentEpoch(dtls);
     uptr cur_idx = nodeToIndex(cur_node);
-    g_.addEdges(dtls->getLocks(current_epoch_), cur_idx);
-    return dtls->addLock(cur_idx, current_epoch_);
+    dtls->addLock(cur_idx, current_epoch_);
+  }
+
+  // Adds edges from currently held locks to cur_node,
+  // returns the number of added edges, and puts the sources of added edges
+  // into added_edges[].
+  // Should be called before onLockAfter.
+  uptr addEdges(DeadlockDetectorTLS<BV> *dtls, uptr cur_node, u32 stk) {
+    ensureCurrentEpoch(dtls);
+    uptr cur_idx = nodeToIndex(cur_node);
+    uptr added_edges[40];
+    uptr n_added_edges = g_.addEdges(dtls->getLocks(current_epoch_), cur_idx,
+                                     added_edges, ARRAY_SIZE(added_edges));
+    for (uptr i = 0; i < n_added_edges; i++) {
+      if (n_edges_ < ARRAY_SIZE(edges_))
+        edges_[n_edges_++] = Edge((u16)added_edges[i], (u16)cur_idx, stk);
+      // Printf("Edge [%zd]: %u %zd=>%zd\n", i, stk, added_edges[i], cur_idx);
+    }
+    return n_added_edges;
+  }
+
+  u32 findEdge(uptr from_node, uptr to_node) {
+    uptr from_idx = nodeToIndex(from_node);
+    uptr to_idx = nodeToIndex(to_node);
+    for (uptr i = 0; i < n_edges_; i++) {
+      if (edges_[i].from == from_idx && edges_[i].to == to_idx)
+        return edges_[i].stk;
+    }
+    return 0;
   }
 
   // Test-only function. Handles the before/after lock events,
   // returns true if there is a cycle.
   bool onLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node) {
     ensureCurrentEpoch(dtls);
-    bool is_reachable = onLockBefore(dtls, cur_node);
-    return onLockAfter(dtls, cur_node) && is_reachable;
+    bool is_reachable = !isHeld(dtls, cur_node) && onLockBefore(dtls, cur_node);
+    addEdges(dtls, cur_node, 0);
+    onLockAfter(dtls, cur_node);
+    return is_reachable;
   }
 
   // Handles the try_lock event, returns false.
@@ -276,12 +305,23 @@ class DeadlockDetector {
     return indexToNode(idx);
   }
 
+  struct Edge {
+    u16 from;
+    u16 to;
+    u32 stk;
+    // FIXME: replace with initializer list once the tests are built as c++11.
+    Edge(u16 f, u16 t, u32 s) : from(f), to(t), stk(s) {}
+    Edge() {}
+  };
+
   uptr current_epoch_;
   BV available_nodes_;
   BV recycled_nodes_;
   BV tmp_bv_;
   BVGraph<BV> g_;
   uptr data_[BV::kSize];
+  Edge edges_[BV::kSize * 32];
+  uptr n_edges_;
 };
 
 } // namespace __sanitizer

@@ -301,3 +301,33 @@ TEST(BVGraph, ShortestPath) {
   ShortestPath<BV3>();
   ShortestPath<BV4>();
 }
+
+template <class BV>
+void RunAddEdgesTest() {
+  BVGraph<BV> g;
+  BV from;
+  const int kMaxEdges = 10;
+  uptr added_edges[kMaxEdges];
+  g.clear();
+  from.clear();
+  EXPECT_EQ(0U, g.addEdges(from, 0, added_edges, kMaxEdges));
+  EXPECT_EQ(0U, g.addEdges(from, 1, added_edges, kMaxEdges));
+  from.setBit(0);
+  EXPECT_EQ(1U, g.addEdges(from, 1, added_edges, kMaxEdges));
+  EXPECT_EQ(0U, added_edges[0]);
+  EXPECT_EQ(0U, g.addEdges(from, 1, added_edges, kMaxEdges));
+
+  from.clear();
+  from.setBit(1);
+  EXPECT_EQ(1U, g.addEdges(from, 4, added_edges, kMaxEdges));
+  EXPECT_EQ(1U, added_edges[0]);
+  from.setBit(2);
+  from.setBit(3);
+  EXPECT_EQ(2U, g.addEdges(from, 4, added_edges, kMaxEdges));
+  EXPECT_EQ(2U, added_edges[0]);
+  EXPECT_EQ(3U, added_edges[1]);
+}
+
+TEST(BVGraph, AddEdgesTest) {
+  RunAddEdgesTest<BV2>();
+}

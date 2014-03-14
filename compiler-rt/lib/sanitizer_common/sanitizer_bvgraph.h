@@ -47,12 +47,16 @@ class BVGraph {
   }
 
   // Returns true if at least one new edge was added.
-  bool addEdges(const BV &from, uptr to) {
-    bool res = false;
+  uptr addEdges(const BV &from, uptr to, uptr added_edges[],
+                uptr max_added_edges) {
+    uptr res = 0;
     t1.copyFrom(from);
-    while (!t1.empty())
-      if (v[t1.getAndClearFirstOne()].setBit(to))
-        res = true;
+    while (!t1.empty()) {
+      uptr node = t1.getAndClearFirstOne();
+      if (v[node].setBit(to))
+        if (res < max_added_edges)
+          added_edges[res++] = node;
+    }
     return res;
   }
 

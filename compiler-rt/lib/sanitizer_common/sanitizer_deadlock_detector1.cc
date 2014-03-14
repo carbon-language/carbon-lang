@@ -112,8 +112,12 @@ void DD::MutexBeforeLock(DDCallback *cb,
     DDReport *rep = &lt->rep;
     rep->n = len;
     for (uptr i = 0; i < len; i++) {
-      DDMutex *m0 = (DDMutex*)dd.getData(path[i]);
-      DDMutex *m1 = (DDMutex*)dd.getData(path[i < len - 1 ? i + 1 : 0]);
+      uptr from = path[i];
+      uptr to = path[(i + 1) % len];
+      DDMutex *m0 = (DDMutex*)dd.getData(from);
+      DDMutex *m1 = (DDMutex*)dd.getData(to);
+
+      Printf("Edge: %zd=>%zd: %u\n", from, to, dd.findEdge(from, to));
       rep->loop[i].thr_ctx = 0;  // don't know
       rep->loop[i].mtx_ctx0 = m0->ctx;
       rep->loop[i].mtx_ctx1 = m1->ctx;
@@ -131,11 +135,9 @@ void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
   MutexEnsureID(lt, m);
   if (wlock)  // Only a recursive rlock may be held.
     CHECK(!dd.isHeld(&lt->dd, m->id));
-  bool edge_added =
-      trylock ? dd.onTryLock(&lt->dd, m->id) : dd.onLockAfter(&lt->dd, m->id);
-  if (edge_added) {
-    // Printf("Edge added\n");
-  }
+  if (!trylock)
+    dd.addEdges(&lt->dd, m->id, cb->Unwind());
+  dd.onLockAfter(&lt->dd, m->id);
 }
 
 void DD::MutexBeforeUnlock(DDCallback *cb, DDMutex *m, bool wlock) {
