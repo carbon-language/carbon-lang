@@ -711,12 +711,40 @@ static bool hasLibrary(const PECOFFLinkingContext &ctx, FileNode *fileNode) {
   return false;
 }
 
+// If the first command line argument is "/lib", link.exe acts as if it's
+// "lib.exe" command. This feature is not documented and looks weird, or at
+// least seems redundant, but is needed for MSVC compatibility.
+static bool maybeRunLibCommand(int argc, const char **argv, raw_ostream &diag) {
+  if (argc <= 1)
+    return false;
+  if (!StringRef(argv[1]).equals_lower("/lib"))
+    return false;
+  std::string path = llvm::sys::FindProgramByName("lib.exe");
+  if (path.empty()) {
+    diag << "Unable to find lib.exe in PATH\n";
+    return true;
+  }
+
+  // Run lib.exe
+  std::vector<const char *> vec;
+  vec.push_back(path.c_str());
+  for (int i = 2; i < argc; ++i)
+    vec.push_back(argv[i]);
+  vec.push_back(nullptr);
+
+  if (llvm::sys::ExecuteAndWait(path.c_str(), &argv[0]) != 0)
+    diag << "lib.exe failed\n";
+  return true;
+}
+
 //
 // Main driver
 //
 
-bool WinLinkDriver::linkPECOFF(int argc, const char *argv[],
-                               raw_ostream &diag) {
+bool WinLinkDriver::linkPECOFF(int argc, const char **argv, raw_ostream &diag) {
+  if (maybeRunLibCommand(argc, argv, diag))
+    return true;
+
   PECOFFLinkingContext context;
   std::vector<const char *> newargv = processLinkEnv(context, argc, argv);
   processLibEnv(context);
