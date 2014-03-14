@@ -179,6 +179,7 @@ struct MCDwarfLineTableHeader {
   MCSymbol *Label;
   SmallVector<std::string, 3> MCDwarfDirs;
   SmallVector<MCDwarfFile, 3> MCDwarfFiles;
+  MCDwarfLineTableHeader() : Label(nullptr) {}
   unsigned getFile(StringRef Directory, StringRef FileName, unsigned FileNumber);
   std::pair<MCSymbol *, MCSymbol *> Emit(MCStreamer *MCOS) const;
 };
