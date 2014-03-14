@@ -172,8 +172,8 @@ namespace hexagon {
 
     bool hasIntegratedCPP() const override { return false; }
 
-    virtual void RenderExtraToolArgs(const JobAction &JA,
-                                     llvm::opt::ArgStringList &CmdArgs) const;
+    void RenderExtraToolArgs(const JobAction &JA,
+                             llvm::opt::ArgStringList &CmdArgs) const;
     void ConstructJob(Compilation &C, const JobAction &JA,
                       const InputInfo &Output, const InputInfoList &Inputs,
                       const llvm::opt::ArgList &TCArgs,
