@@ -325,16 +325,14 @@ static void DisassembleInputMachO2(StringRef Filename,
     bool symbolTableWorked = false;
 
     // Parse relocations.
-    std::vector<std::pair<uint64_t, SymbolRef> > Relocs;
-    for (relocation_iterator RI = Sections[SectIdx].relocation_begin(),
-                             RE = Sections[SectIdx].relocation_end();
-         RI != RE; ++RI) {
+    std::vector<std::pair<uint64_t, SymbolRef>> Relocs;
+    for (const RelocationRef &Reloc : Sections[SectIdx].relocations()) {
       uint64_t RelocOffset, SectionAddress;
-      RI->getOffset(RelocOffset);
+      Reloc.getOffset(RelocOffset);
       Sections[SectIdx].getAddress(SectionAddress);
       RelocOffset -= SectionAddress;
 
-      symbol_iterator RelocSym = RI->getSymbol();
+      symbol_iterator RelocSym = Reloc.getSymbol();
 
       Relocs.push_back(std::make_pair(RelocOffset, *RelocSym));
     }

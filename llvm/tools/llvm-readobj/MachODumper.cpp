@@ -40,9 +40,9 @@ public:
 private:
   void printSymbol(symbol_iterator SymI);
 
-  void printRelocation(relocation_iterator RelI);
+  void printRelocation(const RelocationRef &Reloc);
 
-  void printRelocation(const MachOObjectFile *Obj, relocation_iterator RelI);
+  void printRelocation(const MachOObjectFile *Obj, const RelocationRef &Reloc);
 
   void printSections(const MachOObjectFile *Obj);
 
@@ -249,10 +249,8 @@ void MachODumper::printSections(const MachOObjectFile *Obj) {
 
     if (opts::SectionRelocations) {
       ListScope D(W, "Relocations");
-      for (relocation_iterator RelI = Section.relocation_begin(),
-                               RelE = Section.relocation_end();
-           RelI != RelE; ++RelI)
-        printRelocation(RelI);
+      for (const RelocationRef &Reloc : Section.relocations())
+        printRelocation(Reloc);
     }
 
     if (opts::SectionSymbols) {
@@ -287,16 +285,14 @@ void MachODumper::printRelocations() {
       continue;
 
     bool PrintedGroup = false;
-    for (relocation_iterator RelI = Section.relocation_begin(),
-                             RelE = Section.relocation_end();
-         RelI != RelE; ++RelI) {
+    for (const RelocationRef &Reloc : Section.relocations()) {
       if (!PrintedGroup) {
         W.startLine() << "Section " << Name << " {\n";
         W.indent();
         PrintedGroup = true;
       }
 
-      printRelocation(RelI);
+      printRelocation(Reloc);
     }
 
     if (PrintedGroup) {
@@ -306,23 +302,24 @@ void MachODumper::printRelocations() {
   }
 }
 
-void MachODumper::printRelocation(relocation_iterator RelI) {
-  return printRelocation(Obj, RelI);
+void MachODumper::printRelocation(const RelocationRef &Reloc) {
+  return printRelocation(Obj, Reloc);
 }
 
 void MachODumper::printRelocation(const MachOObjectFile *Obj,
-                                  relocation_iterator RelI) {
+                                  const RelocationRef &Reloc) {
   uint64_t Offset;
   SmallString<32> RelocName;
   StringRef SymbolName;
-  if (error(RelI->getOffset(Offset))) return;
-  if (error(RelI->getTypeName(RelocName))) return;
-  symbol_iterator Symbol = RelI->getSymbol();
-  if (Symbol != Obj->symbol_end() &&
-      error(Symbol->getName(SymbolName)))
+  if (error(Reloc.getOffset(Offset)))
+    return;
+  if (error(Reloc.getTypeName(RelocName)))
+    return;
+  symbol_iterator Symbol = Reloc.getSymbol();
+  if (Symbol != Obj->symbol_end() && error(Symbol->getName(SymbolName)))
     return;
 
-  DataRefImpl DR = RelI->getRawDataRefImpl();
+  DataRefImpl DR = Reloc.getRawDataRefImpl();
   MachO::any_relocation_info RE = Obj->getRelocation(DR);
   bool IsScattered = Obj->isRelocationScattered(RE);
 

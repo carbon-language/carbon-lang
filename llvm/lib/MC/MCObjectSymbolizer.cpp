@@ -263,9 +263,7 @@ void MCObjectSymbolizer::buildRelocationByAddrMap() {
     RelSecI->isRequiredForExecution(RequiredForExec);
     if (RequiredForExec == false || Size == 0)
       continue;
-    for (relocation_iterator RI = Section.relocation_begin(),
-                             RE = Section.relocation_end();
-         RI != RE; ++RI) {
+    for (const RelocationRef &Reloc : Section.relocations()) {
       // FIXME: libObject is inconsistent regarding error handling. The
       // overwhelming majority of methods always return object_error::success,
       // and assert for simple errors.. Here, ELFObjectFile::getRelocationOffset
@@ -277,18 +275,18 @@ void MCObjectSymbolizer::buildRelocationByAddrMap() {
         if (ELFObj == 0)
           break;
         if (ELFObj->getELFFile()->getHeader()->e_type == ELF::ET_REL) {
-          RI->getOffset(Offset);
+          Reloc.getOffset(Offset);
           Offset += StartAddr;
         } else {
-          RI->getAddress(Offset);
+          Reloc.getAddress(Offset);
         }
       } else {
-        RI->getOffset(Offset);
+        Reloc.getOffset(Offset);
         Offset += StartAddr;
       }
       // At a specific address, only keep the first relocation.
       if (AddrToReloc.find(Offset) == AddrToReloc.end())
-        AddrToReloc[Offset] = *RI;
+        AddrToReloc[Offset] = Reloc;
     }
   }
 }

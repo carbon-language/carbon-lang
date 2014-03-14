@@ -112,6 +112,10 @@ public:
 
   relocation_iterator relocation_begin() const;
   relocation_iterator relocation_end() const;
+  typedef iterator_range<relocation_iterator> relocation_iterator_range;
+  relocation_iterator_range relocations() const {
+    return relocation_iterator_range(relocation_begin(), relocation_end());
+  }
   section_iterator getRelocatedSection() const;
 
   DataRefImpl getRawDataRefImpl() const;

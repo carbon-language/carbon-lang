@@ -699,26 +699,24 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj)
     if (Section.relocation_begin() != Section.relocation_end()) {
       uint64_t SectionSize;
       RelocatedSection->getSize(SectionSize);
-      for (object::relocation_iterator reloc_i = Section.relocation_begin(),
-                                       reloc_e = Section.relocation_end();
-           reloc_i != reloc_e; ++reloc_i) {
+      for (const RelocationRef &Reloc : Section.relocations()) {
         uint64_t Address;
-        reloc_i->getOffset(Address);
+        Reloc.getOffset(Address);
         uint64_t Type;
-        reloc_i->getType(Type);
+        Reloc.getType(Type);
         uint64_t SymAddr = 0;
         // ELF relocations may need the symbol address
         if (Obj->isELF()) {
-          object::symbol_iterator Sym = reloc_i->getSymbol();
+          object::symbol_iterator Sym = Reloc.getSymbol();
           Sym->getAddress(SymAddr);
         }
 
         object::RelocVisitor V(Obj->getFileFormatName());
         // The section address is always 0 for debug sections.
-        object::RelocToApply R(V.visit(Type, *reloc_i, 0, SymAddr));
+        object::RelocToApply R(V.visit(Type, Reloc, 0, SymAddr));
         if (V.error()) {
           SmallString<32> Name;
-          error_code ec(reloc_i->getTypeName(Name));
+          error_code ec(Reloc.getTypeName(Name));
           if (ec) {
             errs() << "Aaaaaa! Nameless relocation! Aaaaaa!\n";
           }

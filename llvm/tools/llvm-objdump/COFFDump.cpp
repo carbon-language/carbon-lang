@@ -390,10 +390,8 @@ static bool getPDataSection(const COFFObjectFile *Obj,
       continue;
 
     const coff_section *Pdata = Obj->getCOFFSection(SI);
-    for (relocation_iterator RI = SI->relocation_begin(),
-                             RE = SI->relocation_end();
-         RI != RE; ++RI)
-      Rels.push_back(*RI);
+    for (const RelocationRef &Reloc : SI->relocations())
+      Rels.push_back(Reloc);
 
     // Sort relocations by address.
     std::sort(Rels.begin(), Rels.end(), RelocAddressLess);

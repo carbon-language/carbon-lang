@@ -166,9 +166,7 @@ ObjectImage* RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
     StubMap Stubs;
     section_iterator RelocatedSection = SI->getRelocatedSection();
 
-    for (relocation_iterator I = SI->relocation_begin(),
-                             E = SI->relocation_end();
-         I != E; ++I) {
+    for (const RelocationRef &Reloc : SI->relocations()) {
       // If it's the first relocation in this section, find its SectionID
       if (IsFirstRelocation) {
         bool IsCode = false;
@@ -179,7 +177,7 @@ ObjectImage* RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
         IsFirstRelocation = false;
       }
 
-      processRelocationRef(SectionID, *I, *Obj, LocalSections, LocalSymbols,
+      processRelocationRef(SectionID, Reloc, *Obj, LocalSections, LocalSymbols,
                            Stubs);
     }
   }
@@ -306,13 +304,12 @@ unsigned RuntimeDyldImpl::computeSectionStubBufSize(ObjectImage &Obj,
     if (!(RelSecI == Section))
       continue;
 
-    for (relocation_iterator I = SI->relocation_begin(),
-                             E = SI->relocation_end();
-         I != E; ++I) {
+    for (const RelocationRef &Reloc : SI->relocations()) {
+      (void)Reloc;
       StubBufSize += StubSize;
     }
   }
-  
+
   // Get section data size and alignment
   uint64_t Alignment64;
   uint64_t DataSize;

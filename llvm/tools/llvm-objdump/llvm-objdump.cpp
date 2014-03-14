@@ -435,14 +435,10 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     // Make a list of all the relocations for this section.
     std::vector<RelocationRef> Rels;
     if (InlineRelocs) {
-      SmallVectorImpl<SectionRef> *RelocSecs = &SectionRelocMap[Section];
-      for (SmallVectorImpl<SectionRef>::iterator RelocSec = RelocSecs->begin(),
-                                                 E = RelocSecs->end();
-           RelocSec != E; ++RelocSec) {
-        for (relocation_iterator RI = RelocSec->relocation_begin(),
-                                 RE = RelocSec->relocation_end();
-             RI != RE; ++RI)
-          Rels.push_back(*RI);
+      for (const SectionRef &RelocSec : SectionRelocMap[Section]) {
+        for (const RelocationRef &Reloc : RelocSec.relocations()) {
+          Rels.push_back(Reloc);
+        }
       }
     }
 
@@ -560,18 +556,21 @@ static void PrintRelocations(const ObjectFile *Obj) {
     if (error(Section.getName(secname)))
       continue;
     outs() << "RELOCATION RECORDS FOR [" << secname << "]:\n";
-    for (relocation_iterator ri = Section.relocation_begin(),
-                             re = Section.relocation_end();
-         ri != re; ++ri) {
+    for (const RelocationRef &Reloc : Section.relocations()) {
       bool hidden;
       uint64_t address;
       SmallString<32> relocname;
       SmallString<32> valuestr;
-      if (error(ri->getHidden(hidden))) continue;
-      if (hidden) continue;
-      if (error(ri->getTypeName(relocname))) continue;
-      if (error(ri->getOffset(address))) continue;
-      if (error(ri->getValueString(valuestr))) continue;
+      if (error(Reloc.getHidden(hidden)))
+        continue;
+      if (hidden)
+        continue;
+      if (error(Reloc.getTypeName(relocname)))
+        continue;
+      if (error(Reloc.getOffset(address)))
+        continue;
+      if (error(Reloc.getValueString(valuestr)))
+        continue;
       outs() << address << " " << relocname << " " << valuestr << "\n";
     }
     outs() << "\n";

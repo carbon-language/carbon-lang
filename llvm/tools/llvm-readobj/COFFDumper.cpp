@@ -56,7 +56,7 @@ public:
 
 private:
   void printSymbol(symbol_iterator SymI);
-  void printRelocation(section_iterator SecI, relocation_iterator RelI);
+  void printRelocation(section_iterator SecI, const RelocationRef &Reloc);
   void printDataDirectory(uint32_t Index, const std::string &FieldName);
   void printX64UnwindInfo();
 
@@ -540,15 +540,12 @@ error_code COFFDumper::getSection(
 }
 
 void COFFDumper::cacheRelocations() {
-  for (section_iterator SecI = Obj->section_begin(),
-                        SecE = Obj->section_end();
+  for (section_iterator SecI = Obj->section_begin(), SecE = Obj->section_end();
        SecI != SecE; ++SecI) {
     const coff_section *Section = Obj->getCOFFSection(SecI);
 
-    for (relocation_iterator RelI = SecI->relocation_begin(),
-                             RelE = SecI->relocation_end();
-         RelI != RelE; ++RelI)
-      RelocMap[Section].push_back(*RelI);
+    for (const RelocationRef &Reloc : SecI->relocations())
+      RelocMap[Section].push_back(Reloc);
 
     // Sort relocations by address.
     std::sort(RelocMap[Section].begin(), RelocMap[Section].end(),
@@ -844,10 +841,8 @@ void COFFDumper::printSections() {
 
     if (opts::SectionRelocations) {
       ListScope D(W, "Relocations");
-      for (relocation_iterator RelI = SecI->relocation_begin(),
-                               RelE = SecI->relocation_end();
-           RelI != RelE; ++RelI)
-        printRelocation(SecI, RelI);
+      for (const RelocationRef &Reloc : SecI->relocations())
+        printRelocation(SecI, Reloc);
     }
 
     if (opts::SectionSymbols) {
@@ -888,16 +883,14 @@ void COFFDumper::printRelocations() {
       continue;
 
     bool PrintedGroup = false;
-    for (relocation_iterator RelI = SecI->relocation_begin(),
-                             RelE = SecI->relocation_end();
-         RelI != RelE; ++RelI) {
+    for (const RelocationRef &Reloc : SecI->relocations()) {
       if (!PrintedGroup) {
         W.startLine() << "Section (" << SectionNumber << ") " << Name << " {\n";
         W.indent();
         PrintedGroup = true;
       }
 
-      printRelocation(SecI, RelI);
+      printRelocation(SecI, Reloc);
     }
 
     if (PrintedGroup) {
@@ -908,18 +901,23 @@ void COFFDumper::printRelocations() {
 }
 
 void COFFDumper::printRelocation(section_iterator SecI,
-                                 relocation_iterator RelI) {
+                                 const RelocationRef &Reloc) {
   uint64_t Offset;
   uint64_t RelocType;
   SmallString<32> RelocName;
   StringRef SymbolName;
   StringRef Contents;
-  if (error(RelI->getOffset(Offset))) return;
-  if (error(RelI->getType(RelocType))) return;
-  if (error(RelI->getTypeName(RelocName))) return;
-  symbol_iterator Symbol = RelI->getSymbol();
-  if (error(Symbol->getName(SymbolName))) return;
-  if (error(SecI->getContents(Contents))) return;
+  if (error(Reloc.getOffset(Offset)))
+    return;
+  if (error(Reloc.getType(RelocType)))
+    return;
+  if (error(Reloc.getTypeName(RelocName)))
+    return;
+  symbol_iterator Symbol = Reloc.getSymbol();
+  if (error(Symbol->getName(SymbolName)))
+    return;
+  if (error(SecI->getContents(Contents)))
+    return;
 
   if (opts::ExpandRelocs) {
     DictScope Group(W, "Relocation");
