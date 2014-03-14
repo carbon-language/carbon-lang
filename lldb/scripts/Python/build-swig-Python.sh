@@ -36,12 +36,7 @@ else
     GenerateDependencies=0
 fi
 
-if [ $MakefileCalled -eq 0 ]
-then
-  swig_output_file=${SRC_ROOT}/source/LLDBWrapPython.cpp
-else
-  swig_output_file=${TARGET_DIR}/LLDBWrapPython.cpp
-fi
+swig_output_file=${TARGET_DIR}/LLDBWrapPython.cpp
 swig_input_file=${SRC_ROOT}/scripts/lldb.swig
 swig_python_extensions=${SRC_ROOT}/scripts/Python/python-extensions.swig
 swig_python_wrapper=${SRC_ROOT}/scripts/Python/python-wrapper.swig

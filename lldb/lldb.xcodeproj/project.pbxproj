@@ -1207,7 +1207,7 @@
 		26A0DA4D140F721D006DA411 /* HashedNameToDIE.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashedNameToDIE.h; sourceTree = "<group>"; };
 		26A3B4AC1181454800381BC2 /* ObjectContainerBSDArchive.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectContainerBSDArchive.cpp; sourceTree = "<group>"; };
 		26A3B4AD1181454800381BC2 /* ObjectContainerBSDArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectContainerBSDArchive.h; sourceTree = "<group>"; };
-		26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = LLDBWrapPython.cpp; path = source/LLDBWrapPython.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
+		26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; path = LLDBWrapPython.cpp; sourceTree = BUILT_PRODUCTS_DIR; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		26A527BD14E24F5F00F3A14A /* ProcessMachCore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessMachCore.cpp; sourceTree = "<group>"; };
 		26A527BE14E24F5F00F3A14A /* ProcessMachCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessMachCore.h; sourceTree = "<group>"; };
 		26A527BF14E24F5F00F3A14A /* ThreadMachCore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadMachCore.cpp; sourceTree = "<group>"; };
@@ -4313,7 +4313,7 @@
 			inputPaths = (
 				"$(BUILT_PRODUCTS_DIR)/lldb.py",
 				"$(SRCROOT)/source/Interpreter/embedded_interpreter.py",
-				"$(SRCROOT)/scripts/Python/LLDBWrapPython.o",
+				"$(OBJECT_FILE_DIR_normal)/$(CURRENT_ARCH)/LLDBWrapPython.o",
 			);
 			name = "Finish swig wrapper classes (lldb)";
 			outputPaths = (
