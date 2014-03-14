@@ -263,12 +263,12 @@ int FunctionComparator::cmpNumbers(uint64_t L, uint64_t R) const {
 /// See method declaration comments for more details.
 int FunctionComparator::cmpType(Type *TyL, Type *TyR) const {
 
-  PointerType *PTy1 = dyn_cast<PointerType>(TyL);
-  PointerType *PTy2 = dyn_cast<PointerType>(TyR);
+  PointerType *PTyL = dyn_cast<PointerType>(TyL);
+  PointerType *PTyR = dyn_cast<PointerType>(TyR);
 
   if (DL) {
-    if (PTy1 && PTy1->getAddressSpace() == 0) TyL = DL->getIntPtrType(TyL);
-    if (PTy2 && PTy2->getAddressSpace() == 0) TyR = DL->getIntPtrType(TyR);
+    if (PTyL && PTyL->getAddressSpace() == 0) TyL = DL->getIntPtrType(TyL);
+    if (PTyR && PTyR->getAddressSpace() == 0) TyR = DL->getIntPtrType(TyR);
   }
 
   if (TyL == TyR)
@@ -297,52 +297,52 @@ int FunctionComparator::cmpType(Type *TyL, Type *TyR) const {
     return 0;
 
   case Type::PointerTyID: {
-    assert(PTy1 && PTy2 && "Both types must be pointers here.");
-    return cmpNumbers(PTy1->getAddressSpace(), PTy2->getAddressSpace());
+    assert(PTyL && PTyR && "Both types must be pointers here.");
+    return cmpNumbers(PTyL->getAddressSpace(), PTyR->getAddressSpace());
   }
 
   case Type::StructTyID: {
-    StructType *STy1 = cast<StructType>(TyL);
-    StructType *STy2 = cast<StructType>(TyR);
-    if (STy1->getNumElements() != STy2->getNumElements())
-      return cmpNumbers(STy1->getNumElements(), STy2->getNumElements());
+    StructType *STyL = cast<StructType>(TyL);
+    StructType *STyR = cast<StructType>(TyR);
+    if (STyL->getNumElements() != STyR->getNumElements())
+      return cmpNumbers(STyL->getNumElements(), STyR->getNumElements());
 
-    if (STy1->isPacked() != STy2->isPacked())
-      return cmpNumbers(STy1->isPacked(), STy2->isPacked());
+    if (STyL->isPacked() != STyR->isPacked())
+      return cmpNumbers(STyL->isPacked(), STyR->isPacked());
 
-    for (unsigned i = 0, e = STy1->getNumElements(); i != e; ++i) {
-      if (int Res = cmpType(STy1->getElementType(i),
-                            STy2->getElementType(i)))
+    for (unsigned i = 0, e = STyL->getNumElements(); i != e; ++i) {
+      if (int Res = cmpType(STyL->getElementType(i),
+                            STyR->getElementType(i)))
         return Res;
     }
     return 0;
   }
 
   case Type::FunctionTyID: {
-    FunctionType *FTy1 = cast<FunctionType>(TyL);
-    FunctionType *FTy2 = cast<FunctionType>(TyR);
-    if (FTy1->getNumParams() != FTy2->getNumParams())
-      return cmpNumbers(FTy1->getNumParams(), FTy2->getNumParams());
+    FunctionType *FTyL = cast<FunctionType>(TyL);
+    FunctionType *FTyR = cast<FunctionType>(TyR);
+    if (FTyL->getNumParams() != FTyR->getNumParams())
+      return cmpNumbers(FTyL->getNumParams(), FTyR->getNumParams());
 
-    if (FTy1->isVarArg() != FTy2->isVarArg())
-      return cmpNumbers(FTy1->isVarArg(), FTy2->isVarArg());
+    if (FTyL->isVarArg() != FTyR->isVarArg())
+      return cmpNumbers(FTyL->isVarArg(), FTyR->isVarArg());
 
-    if (int Res = cmpType(FTy1->getReturnType(), FTy2->getReturnType()))
+    if (int Res = cmpType(FTyL->getReturnType(), FTyR->getReturnType()))
       return Res;
 
-    for (unsigned i = 0, e = FTy1->getNumParams(); i != e; ++i) {
-      if (int Res = cmpType(FTy1->getParamType(i), FTy2->getParamType(i)))
+    for (unsigned i = 0, e = FTyL->getNumParams(); i != e; ++i) {
+      if (int Res = cmpType(FTyL->getParamType(i), FTyR->getParamType(i)))
         return Res;
     }
     return 0;
   }
 
   case Type::ArrayTyID: {
-    ArrayType *ATy1 = cast<ArrayType>(TyL);
-    ArrayType *ATy2 = cast<ArrayType>(TyR);
-    if (ATy1->getNumElements() != ATy2->getNumElements())
-      return cmpNumbers(ATy1->getNumElements(), ATy2->getNumElements());
-    return cmpType(ATy1->getElementType(), ATy2->getElementType());
+    ArrayType *ATyL = cast<ArrayType>(TyL);
+    ArrayType *ATyR = cast<ArrayType>(TyR);
+    if (ATyL->getNumElements() != ATyR->getNumElements())
+      return cmpNumbers(ATyL->getNumElements(), ATyR->getNumElements());
+    return cmpType(ATyL->getElementType(), ATyR->getElementType());
   }
   }
 }
