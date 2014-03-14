@@ -663,7 +663,7 @@ class SimpleProgramPointTag : public ProgramPointTag {
   std::string Desc;
 public:
   SimpleProgramPointTag(StringRef MsgProvider, StringRef Msg);
-  StringRef getTagDescription() const;
+  StringRef getTagDescription() const override;
 };
 
 } // end namespace clang

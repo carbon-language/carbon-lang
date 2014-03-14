@@ -103,8 +103,8 @@ public:
     : Diags(diags), DiagClient(client), CapturedDiags(capturedDiags),
       HasBegunSourceFile(false) { }
 
-  virtual void BeginSourceFile(const LangOptions &Opts,
-                               const Preprocessor *PP) {
+  void BeginSourceFile(const LangOptions &Opts,
+                       const Preprocessor *PP) override {
     // Pass BeginSourceFile message onto DiagClient on first call.
     // The corresponding EndSourceFile call will be made from an
     // explicit call to FinishCapture.
@@ -128,8 +128,8 @@ public:
     assert(!HasBegunSourceFile && "FinishCapture not called!");
   }
 
-  virtual void HandleDiagnostic(DiagnosticsEngine::Level level,
-                                const Diagnostic &Info) {
+  void HandleDiagnostic(DiagnosticsEngine::Level level,
+                        const Diagnostic &Info) override {
     if (DiagnosticIDs::isARCDiagnostic(Info.getID()) ||
         level >= DiagnosticsEngine::Error || level == DiagnosticsEngine::Note) {
       if (Info.getLocation().isValid())
@@ -433,8 +433,8 @@ public:
   ARCMTMacroTrackerPPCallbacks(std::vector<SourceLocation> &ARCMTMacroLocs)
     : ARCMTMacroLocs(ARCMTMacroLocs) { }
 
-  virtual void MacroExpands(const Token &MacroNameTok, const MacroDirective *MD,
-                            SourceRange Range, const MacroArgs *Args) {
+  void MacroExpands(const Token &MacroNameTok, const MacroDirective *MD,
+                    SourceRange Range, const MacroArgs *Args) override {
     if (MacroNameTok.getIdentifierInfo()->getName() == getARCMTMacroName())
       ARCMTMacroLocs.push_back(MacroNameTok.getLocation());
   }
@@ -447,8 +447,8 @@ public:
   ARCMTMacroTrackerAction(std::vector<SourceLocation> &ARCMTMacroLocs)
     : ARCMTMacroLocs(ARCMTMacroLocs) { }
 
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         StringRef InFile) {
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override {
     CI.getPreprocessor().addPPCallbacks(
                               new ARCMTMacroTrackerPPCallbacks(ARCMTMacroLocs));
     return new ASTConsumer();
@@ -471,14 +471,14 @@ public:
       Listener->finish();
   }
 
-  virtual void insert(SourceLocation loc, StringRef text) {
+  void insert(SourceLocation loc, StringRef text) override {
     bool err = rewriter.InsertText(loc, text, /*InsertAfter=*/true,
                                    /*indentNewLines=*/true);
     if (!err && Listener)
       Listener->insert(loc, text);
   }
 
-  virtual void remove(CharSourceRange range) {
+  void remove(CharSourceRange range) override {
     Rewriter::RewriteOptions removeOpts;
     removeOpts.IncludeInsertsAtBeginOfRange = false;
     removeOpts.IncludeInsertsAtEndOfRange = false;
@@ -489,8 +489,8 @@ public:
       Listener->remove(range);
   }
 
-  virtual void increaseIndentation(CharSourceRange range,
-                                    SourceLocation parentIndent) {
+  void increaseIndentation(CharSourceRange range,
+                            SourceLocation parentIndent) override {
     rewriter.IncreaseIndentation(range, parentIndent);
   }
 };

@@ -120,26 +120,26 @@ public:
   }
 
 protected:
-  virtual void Initialize(ASTContext &Context) {
+  void Initialize(ASTContext &Context) override {
     NSAPIObj.reset(new NSAPI(Context));
     Editor.reset(new edit::EditedSource(Context.getSourceManager(),
                                         Context.getLangOpts(),
                                         PPRec, false));
   }
 
-  virtual bool HandleTopLevelDecl(DeclGroupRef DG) {
+  bool HandleTopLevelDecl(DeclGroupRef DG) override {
     for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
       migrateDecl(*I);
     return true;
   }
-  virtual void HandleInterestingDecl(DeclGroupRef DG) {
+  void HandleInterestingDecl(DeclGroupRef DG) override {
     // Ignore decls from the PCH.
   }
-  virtual void HandleTopLevelDeclInObjCContainer(DeclGroupRef DG) {
+  void HandleTopLevelDeclInObjCContainer(DeclGroupRef DG) override {
     ObjCMigrateASTConsumer::HandleTopLevelDecl(DG);
   }
 
-  virtual void HandleTranslationUnit(ASTContext &Ctx);
+  void HandleTranslationUnit(ASTContext &Ctx) override;
 
   bool canModifyFile(StringRef Path) {
     if (WhiteListFilenames.empty())
@@ -1610,10 +1610,10 @@ class RewritesReceiver : public edit::EditsReceiver {
 public:
   RewritesReceiver(Rewriter &Rewrite) : Rewrite(Rewrite) { }
 
-  virtual void insert(SourceLocation loc, StringRef text) {
+  void insert(SourceLocation loc, StringRef text) override {
     Rewrite.InsertText(loc, text);
   }
-  virtual void replace(CharSourceRange range, StringRef text) {
+  void replace(CharSourceRange range, StringRef text) override {
     Rewrite.ReplaceText(range.getBegin(), Rewrite.getRangeSize(range), text);
   }
 };
@@ -1676,20 +1676,20 @@ private:
     }
   };
  
-  virtual void insert(SourceLocation Loc, StringRef Text) {
+  void insert(SourceLocation Loc, StringRef Text) override {
     EntryWriter Writer(SourceMgr, OS);
     Writer.writeLoc(Loc);
     Writer.writeText(Text);
   }
 
-  virtual void replace(CharSourceRange Range, StringRef Text) {
+  void replace(CharSourceRange Range, StringRef Text) override {
     EntryWriter Writer(SourceMgr, OS);
     Writer.writeLoc(Range.getBegin());
     Writer.writeRemove(Range);
     Writer.writeText(Text);
   }
 
-  virtual void remove(CharSourceRange Range) {
+  void remove(CharSourceRange Range) override {
     EntryWriter Writer(SourceMgr, OS);
     Writer.writeLoc(Range.getBegin());
     Writer.writeRemove(Range);

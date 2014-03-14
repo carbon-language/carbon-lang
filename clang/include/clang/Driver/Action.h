@@ -142,7 +142,7 @@ public:
 };
 
 class PreprocessJobAction : public JobAction {
-  virtual void anchor();
+  void anchor() override;
 public:
   PreprocessJobAction(Action *Input, types::ID OutputType);
 
@@ -152,7 +152,7 @@ public:
 };
 
 class PrecompileJobAction : public JobAction {
-  virtual void anchor();
+  void anchor() override;
 public:
   PrecompileJobAction(Action *Input, types::ID OutputType);
 
@@ -162,7 +162,7 @@ public:
 };
 
 class AnalyzeJobAction : public JobAction {
-  virtual void anchor();
+  void anchor() override;
 public:
   AnalyzeJobAction(Action *Input, types::ID OutputType);
 
@@ -172,7 +172,7 @@ public:
 };
 
 class MigrateJobAction : public JobAction {
-  virtual void anchor();
+  void anchor() override;
 public:
   MigrateJobAction(Action *Input, types::ID OutputType);
 
@@ -182,7 +182,7 @@ public:
 };
 
 class CompileJobAction : public JobAction {
-  virtual void anchor();
+  void anchor() override;
 public:
   CompileJobAction(Action *Input, types::ID OutputType);
 
@@ -192,7 +192,7 @@ public:
 };
 
 class AssembleJobAction : public JobAction {
-  virtual void anchor();
+  void anchor() override;
 public:
   AssembleJobAction(Action *Input, types::ID OutputType);
 
@@ -202,7 +202,7 @@ public:
 };
 
 class LinkJobAction : public JobAction {
-  virtual void anchor();
+  void anchor() override;
 public:
   LinkJobAction(ActionList &Inputs, types::ID Type);
 
@@ -212,7 +212,7 @@ public:
 };
 
 class LipoJobAction : public JobAction {
-  virtual void anchor();
+  void anchor() override;
 public:
   LipoJobAction(ActionList &Inputs, types::ID Type);
 
@@ -222,7 +222,7 @@ public:
 };
 
 class DsymutilJobAction : public JobAction {
-  virtual void anchor();
+  void anchor() override;
 public:
   DsymutilJobAction(ActionList &Inputs, types::ID Type);
 
@@ -232,7 +232,7 @@ public:
 };
 
 class VerifyJobAction : public JobAction {
-  virtual void anchor();
+  void anchor() override;
 public:
   VerifyJobAction(ActionClass Kind, Action *Input, types::ID Type);
   VerifyJobAction(ActionClass Kind, ActionList &Inputs, types::ID Type);
@@ -243,7 +243,7 @@ public:
 };
 
 class VerifyDebugInfoJobAction : public VerifyJobAction {
-  virtual void anchor();
+  void anchor() override;
 public:
   VerifyDebugInfoJobAction(Action *Input, types::ID Type);
   static bool classof(const Action *A) {
@@ -252,7 +252,7 @@ public:
 };
 
 class VerifyPCHJobAction : public VerifyJobAction {
-  virtual void anchor();
+  void anchor() override;
 public:
   VerifyPCHJobAction(Action *Input, types::ID Type);
   static bool classof(const Action *A) {

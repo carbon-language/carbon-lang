@@ -127,29 +127,29 @@ public:
 
 class PropertyRewriteTraverser : public ASTTraverser {
 public:
-  virtual void traverseObjCImplementation(ObjCImplementationContext &ImplCtx);
+  void traverseObjCImplementation(ObjCImplementationContext &ImplCtx) override;
 };
 
 class BlockObjCVariableTraverser : public ASTTraverser {
 public:
-  virtual void traverseBody(BodyContext &BodyCtx);
+  void traverseBody(BodyContext &BodyCtx) override;
 };
 
 class ProtectedScopeTraverser : public ASTTraverser {
 public:
-  virtual void traverseBody(BodyContext &BodyCtx);
+  void traverseBody(BodyContext &BodyCtx) override;
 };
 
 // GC transformations
 
 class GCAttrsTraverser : public ASTTraverser {
 public:
-  virtual void traverseTU(MigrationContext &MigrateCtx);
+  void traverseTU(MigrationContext &MigrateCtx) override;
 };
 
 class GCCollectableCallsTraverser : public ASTTraverser {
 public:
-  virtual void traverseBody(BodyContext &BodyCtx);
+  void traverseBody(BodyContext &BodyCtx) override;
 };
 
 //===----------------------------------------------------------------------===//

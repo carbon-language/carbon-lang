@@ -19,7 +19,7 @@ namespace arcmt {
 
 class CheckAction : public WrapperFrontendAction {
 protected:
-  virtual bool BeginInvocation(CompilerInstance &CI);
+  bool BeginInvocation(CompilerInstance &CI) override;
 
 public:
   CheckAction(FrontendAction *WrappedAction);
@@ -27,7 +27,7 @@ public:
 
 class ModifyAction : public WrapperFrontendAction {
 protected:
-  virtual bool BeginInvocation(CompilerInstance &CI);
+  bool BeginInvocation(CompilerInstance &CI) override;
 
 public:
   ModifyAction(FrontendAction *WrappedAction);
@@ -36,9 +36,9 @@ public:
 class MigrateSourceAction : public ASTFrontendAction {
   FileRemapper Remapper;
 protected:
-  virtual bool BeginInvocation(CompilerInstance &CI);
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         StringRef InFile);
+  bool BeginInvocation(CompilerInstance &CI) override;
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override;
 };
 
 class MigrateAction : public WrapperFrontendAction {
@@ -46,7 +46,7 @@ class MigrateAction : public WrapperFrontendAction {
   std::string PlistOut;
   bool EmitPremigrationARCErros;
 protected:
-  virtual bool BeginInvocation(CompilerInstance &CI);
+  bool BeginInvocation(CompilerInstance &CI) override;
 
 public:
   MigrateAction(FrontendAction *WrappedAction, StringRef migrateDir,
@@ -65,8 +65,9 @@ public:
                     unsigned migrateAction);
 
 protected:
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,StringRef InFile);
-  virtual bool BeginInvocation(CompilerInstance &CI);
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override;
+  bool BeginInvocation(CompilerInstance &CI) override;
 };
 
 }

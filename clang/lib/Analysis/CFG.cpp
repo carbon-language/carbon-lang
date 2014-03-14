@@ -3629,7 +3629,7 @@ public:
   void setBlockID(signed i) { currentBlock = i; }
   void setStmtID(unsigned i) { currStmt = i; }
 
-  virtual bool handledStmt(Stmt *S, raw_ostream &OS) {
+  bool handledStmt(Stmt *S, raw_ostream &OS) override {
     StmtMapTy::iterator I = StmtMap.find(S);
 
     if (I == StmtMap.end())

@@ -792,8 +792,8 @@ struct PruneBlocksHandler : public UninitVariablesHandler {
   /// The current block to scribble use information.
   unsigned currentBlock;
 
-  virtual void handleUseOfUninitVariable(const VarDecl *vd,
-                                         const UninitUse &use) {
+  void handleUseOfUninitVariable(const VarDecl *vd,
+                                 const UninitUse &use) override {
     hadUse[currentBlock] = true;
     hadAnyUse = true;
   }
@@ -801,7 +801,7 @@ struct PruneBlocksHandler : public UninitVariablesHandler {
   /// Called when the uninitialized variable analysis detects the
   /// idiom 'int x = x'.  All other uses of 'x' within the initializer
   /// are handled by handleUseOfUninitVariable.
-  virtual void handleSelfInit(const VarDecl *vd) {
+  void handleSelfInit(const VarDecl *vd) override {
     hadUse[currentBlock] = true;
     hadAnyUse = true;
   }
