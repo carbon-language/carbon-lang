@@ -767,9 +767,9 @@ bool WinLinkDriver::linkPECOFF(int argc, const char **argv, raw_ostream &diag) {
   return link(context, diag);
 }
 
-bool WinLinkDriver::parse(int argc, const char *argv[],
-                          PECOFFLinkingContext &ctx, raw_ostream &diag,
-                          bool isReadingDirectiveSection) {
+bool WinLinkDriver::doParse(int argc, const char *argv[],
+                            PECOFFLinkingContext &ctx, raw_ostream &diag,
+                            bool isReadingDirectiveSection) {
   std::map<StringRef, StringRef> failIfMismatchMap;
   // Parse the options.
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs =
@@ -1249,6 +1249,18 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
   // Validate the combination of options used.
   return ctx.validate(diag);
+}
+
+// Parse may be called from multiple threads simultaneously to parse .drectve
+// sections. doParse() is not thread-safe because it mutates the context
+// object. This function wraps doParse() with a mutex.
+bool WinLinkDriver::parse(int argc, const char *argv[],
+                          PECOFFLinkingContext &ctx, raw_ostream &diag,
+                          bool isReadingDirectiveSection) {
+  ctx.lock();
+  bool r = doParse(argc, argv, ctx, diag, isReadingDirectiveSection);
+  ctx.unlock();
+  return r;
 }
 
 } // namespace lld
