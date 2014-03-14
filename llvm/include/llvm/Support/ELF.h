@@ -898,7 +898,8 @@ enum {
   R_MICROMIPS_TLS_DTPREL_LO16 = 165,
   R_MICROMIPS_TLS_TPREL_HI16  = 169,
   R_MICROMIPS_TLS_TPREL_LO16  = 170,
-  R_MIPS_NUM               = 218
+  R_MIPS_NUM               = 218,
+  R_MIPS_PC32              = 248
 };
 
 // Special values for the st_other field in the symbol table entry for MIPS.
