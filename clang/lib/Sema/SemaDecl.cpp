@@ -9831,14 +9831,19 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
           MD->isDesignatedInitializerForTheInterface(&InitMethod);
       assert(isDesignated && InitMethod);
       (void)isDesignated;
-      Diag(MD->getLocation(),
-           diag::warn_objc_designated_init_missing_super_call);
-      Diag(InitMethod->getLocation(),
-           diag::note_objc_designated_init_marked_here);
+      // Don't issue this warning for unavaialable inits.
+      if (!MD->isUnavailable()) {
+        Diag(MD->getLocation(),
+             diag::warn_objc_designated_init_missing_super_call);
+        Diag(InitMethod->getLocation(),
+             diag::note_objc_designated_init_marked_here);
+      }
       getCurFunction()->ObjCWarnForNoDesignatedInitChain = false;
     }
     if (getCurFunction()->ObjCWarnForNoInitDelegation) {
-      Diag(MD->getLocation(), diag::warn_objc_secondary_init_missing_init_call);
+      // Don't issue this warning for unavaialable inits.
+      if (!MD->isUnavailable())
+        Diag(MD->getLocation(), diag::warn_objc_secondary_init_missing_init_call);
       getCurFunction()->ObjCWarnForNoInitDelegation = false;
     }
   } else {
