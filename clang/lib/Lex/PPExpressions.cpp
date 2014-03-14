@@ -258,9 +258,10 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
       // large that it is unsigned" e.g. on 12345678901234567890 where intmax_t
       // is 64-bits.
       if (!Literal.isUnsigned && Result.Val.isNegative()) {
-        // Don't warn for a hex or octal literal: 0x8000..0 shouldn't warn.
+        // Octal, hexadecimal, and binary literals are implicitly unsigned if
+        // the value does not fit into a signed integer type.
         if (ValueLive && Literal.getRadix() == 10)
-          PP.Diag(PeekTok, diag::warn_integer_too_large_for_signed);
+          PP.Diag(PeekTok, diag::ext_integer_too_large_for_signed);
         Result.Val.setIsUnsigned(true);
       }
     }

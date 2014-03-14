@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (108):
+CHECK: Warnings without flags (106):
 CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_expected_semi_decl_list
 CHECK-NEXT:   ext_explicit_specialization_storage_class
@@ -35,7 +35,6 @@ CHECK-NEXT:   ext_typecheck_cond_incompatible_operands
 CHECK-NEXT:   ext_typecheck_cond_incompatible_operands_nonstandard
 CHECK-NEXT:   ext_typecheck_ordered_comparison_of_function_pointers
 CHECK-NEXT:   ext_typecheck_ordered_comparison_of_pointer_integer
-CHECK-NEXT:   ext_unknown_escape
 CHECK-NEXT:   ext_using_undefined_std
 CHECK-NEXT:   pp_include_next_absolute_path
 CHECK-NEXT:   pp_include_next_in_primary
@@ -83,7 +82,6 @@ CHECK-NEXT:   warn_implements_nscopying
 CHECK-NEXT:   warn_incompatible_qualified_id
 CHECK-NEXT:   warn_initializer_string_for_char_array_too_long
 CHECK-NEXT:   warn_inline_namespace_reopened_noninline
-CHECK-NEXT:   warn_integer_too_large_for_signed
 CHECK-NEXT:   warn_invalid_asm_cast_lvalue
 CHECK-NEXT:   warn_maynot_respond
 CHECK-NEXT:   warn_method_param_redefinition

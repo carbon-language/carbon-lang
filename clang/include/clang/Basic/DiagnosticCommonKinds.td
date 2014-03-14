@@ -104,8 +104,9 @@ def warn_cxx98_compat_longlong : Warning<
   InGroup<CXX98CompatPedantic>, DefaultIgnore;
 def err_integer_too_large : Error<
   "integer constant is larger than the largest unsigned integer type">;
-def warn_integer_too_large_for_signed : Warning<
-  "integer constant is larger than the largest signed integer type">;
+def ext_integer_too_large_for_signed : ExtWarn<
+  "integer constant is larger than the largest signed integer type">,
+  InGroup<DiagGroup<"implicitly-unsigned-literal">>;
 
 // Sema && AST
 def note_invalid_subexpr_in_const_expr : Note<
