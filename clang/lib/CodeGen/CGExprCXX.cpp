@@ -220,8 +220,10 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE,
     }
   }
 
-  if (MD->isVirtual())
-    This = CGM.getCXXABI().adjustThisArgumentForVirtualCall(*this, MD, This);
+  if (MD->isVirtual()) {
+    This = CGM.getCXXABI().adjustThisArgumentForVirtualFunctionCall(
+        *this, MD, This, UseVirtualCall);
+  }
 
   return EmitCXXMemberCall(MD, CE->getExprLoc(), Callee, ReturnValue, This,
                            /*ImplicitParam=*/0, QualType(),

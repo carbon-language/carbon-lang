@@ -148,9 +148,10 @@ public:
     return MD->getParent();
   }
 
-  llvm::Value *adjustThisArgumentForVirtualCall(CodeGenFunction &CGF,
-                                                GlobalDecl GD,
-                                                llvm::Value *This) override;
+  llvm::Value *
+  adjustThisArgumentForVirtualFunctionCall(CodeGenFunction &CGF, GlobalDecl GD,
+                                           llvm::Value *This,
+                                           bool VirtualCall) override;
 
   void addImplicitStructorParams(CodeGenFunction &CGF, QualType &ResTy,
                                  FunctionArgList &Params) override;
@@ -281,6 +282,8 @@ private:
   llvm::Value *getValueOrZeroInt(llvm::Value *C) {
     return C ? C : getZeroInt();
   }
+
+  CharUnits getVirtualFunctionPrologueThisAdjustment(GlobalDecl GD);
 
   void
   GetNullMemberPointerFields(const MemberPointerType *MPT,
@@ -582,12 +585,61 @@ void MicrosoftCXXABI::EmitCXXDestructors(const CXXDestructorDecl *D) {
   CGM.EmitGlobal(GlobalDecl(D, Dtor_Base));
 }
 
-llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualCall(
-    CodeGenFunction &CGF, GlobalDecl GD, llvm::Value *This) {
+CharUnits
+MicrosoftCXXABI::getVirtualFunctionPrologueThisAdjustment(GlobalDecl GD) {
   GD = GD.getCanonicalDecl();
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-  // FIXME: consider splitting the vdtor vs regular method code into two
-  // functions.
+
+  GlobalDecl LookupGD = GD;
+  if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+    // Complete destructors take a pointer to the complete object as a
+    // parameter, thus don't need this adjustment.
+    if (GD.getDtorType() == Dtor_Complete)
+      return CharUnits();
+
+    // There's no Dtor_Base in vftable but it shares the this adjustment with
+    // the deleting one, so look it up instead.
+    LookupGD = GlobalDecl(DD, Dtor_Deleting);
+  }
+
+  MicrosoftVTableContext::MethodVFTableLocation ML =
+      CGM.getMicrosoftVTableContext().getMethodVFTableLocation(LookupGD);
+  CharUnits Adjustment = ML.VFPtrOffset;
+
+  // Normal virtual instance methods need to adjust from the vfptr that first
+  // defined the virtual method to the virtual base subobject, but destructors
+  // do not.  The vector deleting destructor thunk applies this adjustment for
+  // us if necessary.
+  if (isa<CXXDestructorDecl>(MD))
+    Adjustment = CharUnits::Zero();
+
+  if (ML.VBase) {
+    const ASTRecordLayout &DerivedLayout =
+        CGM.getContext().getASTRecordLayout(MD->getParent());
+    Adjustment += DerivedLayout.getVBaseClassOffset(ML.VBase);
+  }
+
+  return Adjustment;
+}
+
+llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualFunctionCall(
+    CodeGenFunction &CGF, GlobalDecl GD, llvm::Value *This, bool VirtualCall) {
+  if (!VirtualCall) {
+    // If the call of a virtual function is not virtual, we just have to
+    // compensate for the adjustment the virtual function does in its prologue.
+    CharUnits Adjustment = getVirtualFunctionPrologueThisAdjustment(GD);
+    if (Adjustment.isZero())
+      return This;
+
+    unsigned AS = cast<llvm::PointerType>(This->getType())->getAddressSpace();
+    llvm::Type *charPtrTy = CGF.Int8Ty->getPointerTo(AS);
+    This = CGF.Builder.CreateBitCast(This, charPtrTy);
+    assert(Adjustment.isPositive());
+    return CGF.Builder.CreateConstGEP1_32(This, Adjustment.getQuantity());
+  }
+
+  GD = GD.getCanonicalDecl();
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
 
   GlobalDecl LookupGD = GD;
   if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
@@ -614,49 +666,10 @@ llvm::Value *MicrosoftCXXABI::adjustThisArgumentForVirtualCall(
     StaticOffset = CharUnits::Zero();
 
   if (ML.VBase) {
-    bool AvoidVirtualOffset = false;
-    if (isa<CXXDestructorDecl>(MD) && GD.getDtorType() == Dtor_Base) {
-      // A base destructor can only be called from a complete destructor of the
-      // same record type or another destructor of a more derived type;
-      // or a constructor of the same record type if an exception is thrown.
-      assert(isa<CXXDestructorDecl>(CGF.CurGD.getDecl()) ||
-             isa<CXXConstructorDecl>(CGF.CurGD.getDecl()));
-      const CXXRecordDecl *CurRD =
-          cast<CXXMethodDecl>(CGF.CurGD.getDecl())->getParent();
-
-      if (MD->getParent() == CurRD) {
-        if (isa<CXXDestructorDecl>(CGF.CurGD.getDecl()))
-          assert(CGF.CurGD.getDtorType() == Dtor_Complete);
-        if (isa<CXXConstructorDecl>(CGF.CurGD.getDecl()))
-          assert(CGF.CurGD.getCtorType() == Ctor_Complete);
-        // We're calling the main base dtor from a complete structor,
-        // so we know the "this" offset statically.
-        AvoidVirtualOffset = true;
-      } else {
-        // Let's see if we try to call a destructor of a non-virtual base.
-        for (const auto &I : CurRD->bases()) {
-          if (I.getType()->getAsCXXRecordDecl() != MD->getParent())
-            continue;
-          // If we call a base destructor for a non-virtual base, we statically
-          // know where it expects the vfptr and "this" to be.
-          // The total offset should reflect the adjustment done by
-          // adjustThisParameterInVirtualFunctionPrologue().
-          AvoidVirtualOffset = true;
-          break;
-        }
-      }
-    }
-
-    if (AvoidVirtualOffset) {
-      const ASTRecordLayout &Layout =
-          CGF.getContext().getASTRecordLayout(MD->getParent());
-      StaticOffset += Layout.getVBaseClassOffset(ML.VBase);
-    } else {
-      This = CGF.Builder.CreateBitCast(This, charPtrTy);
-      llvm::Value *VBaseOffset =
-          GetVirtualBaseClassOffset(CGF, This, MD->getParent(), ML.VBase);
-      This = CGF.Builder.CreateInBoundsGEP(This, VBaseOffset);
-    }
+    This = CGF.Builder.CreateBitCast(This, charPtrTy);
+    llvm::Value *VBaseOffset =
+        GetVirtualBaseClassOffset(CGF, This, MD->getParent(), ML.VBase);
+    This = CGF.Builder.CreateInBoundsGEP(This, VBaseOffset);
   }
   if (!StaticOffset.isZero()) {
     assert(StaticOffset.isPositive());
@@ -716,44 +729,12 @@ void MicrosoftCXXABI::addImplicitStructorParams(CodeGenFunction &CGF,
 
 llvm::Value *MicrosoftCXXABI::adjustThisParameterInVirtualFunctionPrologue(
     CodeGenFunction &CGF, GlobalDecl GD, llvm::Value *This) {
-  GD = GD.getCanonicalDecl();
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-
-  GlobalDecl LookupGD = GD;
-  if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
-    // Complete destructors take a pointer to the complete object as a
-    // parameter, thus don't need this adjustment.
-    if (GD.getDtorType() == Dtor_Complete)
-      return This;
-
-    // There's no Dtor_Base in vftable but it shares the this adjustment with
-    // the deleting one, so look it up instead.
-    LookupGD = GlobalDecl(DD, Dtor_Deleting);
-  }
-
   // In this ABI, every virtual function takes a pointer to one of the
   // subobjects that first defines it as the 'this' parameter, rather than a
   // pointer to the final overrider subobject. Thus, we need to adjust it back
   // to the final overrider subobject before use.
   // See comments in the MicrosoftVFTableContext implementation for the details.
-
-  MicrosoftVTableContext::MethodVFTableLocation ML =
-      CGM.getMicrosoftVTableContext().getMethodVFTableLocation(LookupGD);
-  CharUnits Adjustment = ML.VFPtrOffset;
-
-  // Normal virtual instance methods need to adjust from the vfptr that first
-  // defined the virtual method to the virtual base subobject, but destructors
-  // do not.  The vector deleting destructor thunk applies this adjustment for
-  // us if necessary.
-  if (isa<CXXDestructorDecl>(MD))
-    Adjustment = CharUnits::Zero();
-
-  if (ML.VBase) {
-    const ASTRecordLayout &DerivedLayout =
-        CGF.getContext().getASTRecordLayout(MD->getParent());
-    Adjustment += DerivedLayout.getVBaseClassOffset(ML.VBase);
-  }
-
+  CharUnits Adjustment = getVirtualFunctionPrologueThisAdjustment(GD);
   if (Adjustment.isZero())
     return This;
 
@@ -833,8 +814,12 @@ void MicrosoftCXXABI::EmitDestructorCall(CodeGenFunction &CGF,
                                          bool Delegating, llvm::Value *This) {
   llvm::Value *Callee = CGM.GetAddrOfCXXDestructor(DD, Type);
 
-  if (DD->isVirtual())
-    This = adjustThisArgumentForVirtualCall(CGF, GlobalDecl(DD, Type), This);
+  if (DD->isVirtual()) {
+    assert(Type != CXXDtorType::Dtor_Deleting &&
+           "The deleting destructor should only be called via a virtual call");
+    This = adjustThisArgumentForVirtualFunctionCall(CGF, GlobalDecl(DD, Type),
+                                                    This, false);
+  }
 
   // FIXME: Provide a source location here.
   CGF.EmitCXXMemberCall(DD, SourceLocation(), Callee, ReturnValueSlot(), This,
@@ -958,7 +943,8 @@ llvm::Value *MicrosoftCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
   CGBuilderTy &Builder = CGF.Builder;
 
   Ty = Ty->getPointerTo()->getPointerTo();
-  llvm::Value *VPtr = adjustThisArgumentForVirtualCall(CGF, GD, This);
+  llvm::Value *VPtr =
+      adjustThisArgumentForVirtualFunctionCall(CGF, GD, This, true);
   llvm::Value *VTable = CGF.GetVTablePtr(VPtr, Ty);
 
   MicrosoftVTableContext::MethodVFTableLocation ML =
@@ -988,7 +974,7 @@ void MicrosoftCXXABI::EmitVirtualDestructorCall(CodeGenFunction &CGF,
       llvm::ConstantInt::get(llvm::IntegerType::getInt32Ty(CGF.getLLVMContext()),
                              DtorType == Dtor_Deleting);
 
-  This = adjustThisArgumentForVirtualCall(CGF, GD, This);
+  This = adjustThisArgumentForVirtualFunctionCall(CGF, GD, This, true);
   CGF.EmitCXXMemberCall(Dtor, CallLoc, Callee, ReturnValueSlot(), This,
                         ImplicitParam, Context.IntTy, 0, 0);
 }

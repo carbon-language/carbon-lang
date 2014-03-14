@@ -258,10 +258,12 @@ public:
   }
 
   /// Perform ABI-specific "this" argument adjustment required prior to
-  /// a virtual function call.
-  virtual llvm::Value *adjustThisArgumentForVirtualCall(CodeGenFunction &CGF,
-                                                        GlobalDecl GD,
-                                                        llvm::Value *This) {
+  /// a call of a virtual function.
+  /// The "VirtualCall" argument is true iff the call itself is virtual.
+  virtual llvm::Value *
+  adjustThisArgumentForVirtualFunctionCall(CodeGenFunction &CGF, GlobalDecl GD,
+                                           llvm::Value *This,
+                                           bool VirtualCall) {
     return This;
   }
 

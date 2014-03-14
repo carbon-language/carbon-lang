@@ -339,3 +339,41 @@ void callC() { C x; }
 // CHECK2: ret
 
 }
+
+namespace test3 {
+// PR19104: A non-virtual call of a virtual method doesn't use vftable thunks,
+// so requires only static adjustment which is different to the one used
+// for virtual calls.
+struct A {
+  virtual void foo();
+};
+
+struct B : virtual A {
+  virtual void bar();
+};
+
+struct C : virtual A {
+  virtual void foo();
+};
+
+struct D : B, C {
+  virtual void bar();
+  int field;  // Laid out between C and A subobjects in D.
+};
+
+void D::bar() {
+  // CHECK-LABEL: define x86_thiscallcc void @"\01?bar@D@test3@@UAEXXZ"(%"struct.test3::D"* %this)
+
+  C::foo();
+  // Shouldn't need any vbtable lookups.  All we have to do is adjust to C*,
+  // then compensate for the adjustment performed in the C::foo() prologue.
+  // CHECK-NOT: load i8**
+  // CHECK: %[[OBJ_i8:.*]] = bitcast %"struct.test3::D"* %{{.*}} to i8*
+  // CHECK: %[[C_i8:.*]] = getelementptr inbounds i8* %[[OBJ_i8]], i32 8
+  // CHECK: %[[C:.*]] = bitcast i8* %[[C_i8]] to %"struct.test3::C"*
+  // CHECK: %[[C_i8:.*]] = bitcast %"struct.test3::C"* %[[C]] to i8*
+  // CHECK: %[[ARG:.*]] = getelementptr i8* %[[C_i8]], i32 4
+  // CHECK: call x86_thiscallcc void @"\01?foo@C@test3@@UAEXXZ"(i8* %[[ARG]])
+  // CHECK: ret
+}
+}

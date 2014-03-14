@@ -934,9 +934,6 @@ void ItaniumCXXABI::EmitDestructorCall(CodeGenFunction &CGF,
   if (!Callee)
     Callee = CGM.GetAddrOfCXXDestructor(DD, Type);
 
-  if (DD->isVirtual())
-    This = adjustThisArgumentForVirtualCall(CGF, GD, This);
-
   // FIXME: Provide a source location here.
   CGF.EmitCXXMemberCall(DD, SourceLocation(), Callee, ReturnValueSlot(), This,
                         VTT, VTTTy, 0, 0);
