@@ -974,7 +974,7 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     if (GenerateDwarfTypeUnits && !Ty.isForwardDecl())
       if (MDString *TypeId = CTy.getIdentifier()) {
         DD->addDwarfTypeUnitType(getCU(), TypeId->getString(), TyDIE, CTy);
-        // Skip updating the accellerator tables since this is not the full type
+        // Skip updating the accelerator tables since this is not the full type.
         return TyDIE;
       }
     constructTypeDIE(*TyDIE, CTy);
