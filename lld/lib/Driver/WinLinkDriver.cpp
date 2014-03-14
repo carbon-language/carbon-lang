@@ -24,6 +24,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
@@ -35,6 +36,7 @@
 #include <map>
 #include <memory>
 #include <sstream>
+#include <tuple>
 
 namespace lld {
 
@@ -607,11 +609,71 @@ static StringRef getDefaultEntrySymbolName(PECOFFLinkingContext &context) {
   return "";
 }
 
+namespace {
+class DriverStringSaver : public llvm::cl::StringSaver {
+public:
+  DriverStringSaver(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
+
+  const char *SaveString(const char *s) override {
+    return _ctx.allocate(StringRef(s)).data();
+  }
+
+private:
+  PECOFFLinkingContext &_ctx;
+};
+}
+
+// Tokenize command line options in a given file and add them to result.
+static bool readResponseFile(StringRef path, PECOFFLinkingContext &ctx,
+                             std::vector<const char *> &result) {
+  ArrayRef<uint8_t> contents;
+  if (!readFile(ctx, path, contents))
+    return false;
+  StringRef contentsStr(reinterpret_cast<const char *>(contents.data()));
+  DriverStringSaver saver(ctx);
+  SmallVector<const char *, 0> args;
+  llvm::cl::TokenizeWindowsCommandLine(contentsStr, saver, args);
+  for (const char *s : args)
+    result.push_back(s);
+  return true;
+}
+
+// Expand arguments starting with "@". It's an error if a specified file does
+// not exist. Returns true on success.
+static bool expandResponseFiles(int &argc, const char **&argv,
+                                PECOFFLinkingContext &ctx,
+                                raw_ostream &diagnostics) {
+  std::vector<const char *> newArgv;
+  bool expanded = false;
+  for (int i = 0; i < argc; ++i) {
+    if (argv[i][0] != '@') {
+      newArgv.push_back(argv[i]);
+      continue;
+    }
+    StringRef filename = StringRef(argv[i] + 1);
+    if (!readResponseFile(filename, ctx, newArgv)) {
+      diagnostics << "error: cannot read response file: " << filename << "\n";
+      return false;
+    }
+    expanded = true;
+  }
+  if (!expanded)
+    return true;
+  argc = newArgv.size();
+  newArgv.push_back(nullptr);
+  argv = &ctx.allocateCopy(newArgv)[0];
+  return true;
+}
+
 // Parses the given command line options and returns the result. Returns NULL if
 // there's an error in the options.
 static std::unique_ptr<llvm::opt::InputArgList>
-parseArgs(int argc, const char *argv[], raw_ostream &diagnostics,
-          bool isReadingDirectiveSection) {
+parseArgs(int argc, const char **argv, PECOFFLinkingContext &ctx,
+          raw_ostream &diagnostics, bool isReadingDirectiveSection) {
+  // Expand arguments starting with "@".
+  if (!expandResponseFiles(argc, argv, ctx, diagnostics))
+    return nullptr;
+
   // Parse command line options using WinLinkOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   WinLinkOptTable table;
@@ -685,8 +747,8 @@ WinLinkDriver::parse(int argc, const char *argv[], PECOFFLinkingContext &ctx,
                      raw_ostream &diagnostics, bool isReadingDirectiveSection) {
   std::map<StringRef, StringRef> failIfMismatchMap;
   // Parse the options.
-  std::unique_ptr<llvm::opt::InputArgList> parsedArgs = parseArgs(
-      argc, argv, diagnostics, isReadingDirectiveSection);
+  std::unique_ptr<llvm::opt::InputArgList> parsedArgs =
+      parseArgs(argc, argv, ctx, diagnostics, isReadingDirectiveSection);
   if (!parsedArgs)
     return false;
 

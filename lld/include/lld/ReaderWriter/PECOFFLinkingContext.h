@@ -247,6 +247,10 @@ public:
     return ArrayRef<uint8_t>(p, p + array.size());
   }
 
+  template <typename T> T &allocateCopy(const T &x) const {
+    return *new (_allocator) T(x);
+  }
+
   virtual bool hasInputGraph() { return !!_inputGraph; }
 
   void setLibraryGroup(Group *group) { _libraryGroup = group; }
