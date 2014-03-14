@@ -43,6 +43,7 @@ enum DiagnosticKind {
   DK_InlineAsm,
   DK_StackSize,
   DK_DebugMetadataVersion,
+  DK_SampleProfile,
   DK_FirstPluginKind
 };
 
@@ -191,6 +192,47 @@ public:
   static bool classof(const DiagnosticInfo *DI) {
     return DI->getKind() == DK_DebugMetadataVersion;
   }
+};
+
+/// Diagnostic information for the sample profiler.
+class DiagnosticInfoSampleProfile : public DiagnosticInfo {
+public:
+  DiagnosticInfoSampleProfile(const char *FileName, unsigned LineNum,
+                              const Twine &Msg,
+                              DiagnosticSeverity Severity = DS_Error)
+      : DiagnosticInfo(DK_SampleProfile, Severity), FileName(FileName),
+        LineNum(LineNum), Msg(Msg) {}
+  DiagnosticInfoSampleProfile(const char *FileName, const Twine &Msg,
+                              DiagnosticSeverity Severity = DS_Error)
+      : DiagnosticInfo(DK_SampleProfile, Severity), FileName(FileName),
+        LineNum(0), Msg(Msg) {}
+  DiagnosticInfoSampleProfile(const Twine &Msg,
+                              DiagnosticSeverity Severity = DS_Error)
+      : DiagnosticInfo(DK_SampleProfile, Severity), FileName(NULL),
+        LineNum(0), Msg(Msg) {}
+
+  /// \see DiagnosticInfo::print.
+  void print(DiagnosticPrinter &DP) const override;
+
+  /// Hand rolled RTTI.
+  static bool classof(const DiagnosticInfo *DI) {
+    return DI->getKind() == DK_SampleProfile;
+  }
+
+  const char *getFileName() const { return FileName; }
+  unsigned getLineNum() const { return LineNum; }
+  const Twine &getMsg() const { return Msg; }
+
+private:
+  /// Name of the input file associated with this diagnostic.
+  const char *FileName;
+
+  /// Line number where the diagnostic occured. If 0, no line number will
+  /// be emitted in the message.
+  unsigned LineNum;
+
+  /// Message to report.
+  const Twine &Msg;
 };
 
 } // End namespace llvm
