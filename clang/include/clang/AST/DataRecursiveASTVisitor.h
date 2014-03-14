@@ -1413,9 +1413,7 @@ template<typename Derived>
 bool DataRecursiveASTVisitor<Derived>::TraverseClassInstantiations(
     ClassTemplateDecl *D) {
   ClassTemplateDecl::spec_iterator end = D->spec_end();
-  for (ClassTemplateDecl::spec_iterator it = D->spec_begin(); it != end; ++it) {
-    ClassTemplateSpecializationDecl* SD = *it;
-
+  for (auto *SD : D->specializations()) {
     switch (SD->getSpecializationKind()) {
     // Visit the implicit instantiations with the requested pattern.
     case TSK_Undeclared:
