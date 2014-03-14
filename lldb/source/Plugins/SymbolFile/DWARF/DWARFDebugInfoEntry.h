@@ -209,7 +209,13 @@ public:
                     dw_addr_t& lo_pc,
                     dw_addr_t& hi_pc,
                     uint64_t fail_value) const;
-
+    
+    size_t      GetAttributeAddressRanges (
+                    SymbolFileDWARF* dwarf2Data,
+                    const DWARFCompileUnit* cu,
+                    DWARFDebugRanges::RangeList &ranges,
+                    bool check_hi_lo_pc) const;
+    
     dw_offset_t GetAttributeValueAsLocation(
                     SymbolFileDWARF* dwarf2Data,
                     const DWARFCompileUnit* cu,

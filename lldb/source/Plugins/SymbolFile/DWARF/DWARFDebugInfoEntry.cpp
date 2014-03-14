@@ -1485,6 +1485,40 @@ DWARFDebugInfoEntry::GetAttributeAddressRange
     hi_pc = fail_value;
     return false;
 }
+
+size_t
+DWARFDebugInfoEntry::GetAttributeAddressRanges(SymbolFileDWARF* dwarf2Data,
+                                               const DWARFCompileUnit* cu,
+                                               DWARFDebugRanges::RangeList &ranges,
+                                               bool check_hi_lo_pc) const
+{
+    ranges.Clear();
+    
+    dw_offset_t ranges_offset = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_ranges, DW_INVALID_OFFSET);
+    if (ranges_offset != DW_INVALID_OFFSET)
+    {
+        dw_offset_t debug_ranges_offset = GetAttributeValueAsUnsigned(dwarf2Data, cu, DW_AT_ranges, DW_INVALID_OFFSET);
+        if (debug_ranges_offset != DW_INVALID_OFFSET)
+        {
+            DWARFDebugRanges* debug_ranges = dwarf2Data->DebugRanges();
+            
+            debug_ranges->FindRanges(debug_ranges_offset, ranges);
+            ranges.Slide (cu->GetBaseAddress());
+        }
+    }
+    else if (check_hi_lo_pc)
+    {
+        dw_addr_t lo_pc = LLDB_INVALID_ADDRESS;
+        dw_addr_t hi_pc = LLDB_INVALID_ADDRESS;
+        if (GetAttributeAddressRange (dwarf2Data, cu, lo_pc, hi_pc, LLDB_INVALID_ADDRESS))
+        {
+            if (lo_pc < hi_pc)
+                ranges.Append(DWARFDebugRanges::RangeList::Entry(lo_pc, hi_pc - lo_pc));
+        }
+    }
+    return ranges.GetSize();
+}
+
 //----------------------------------------------------------------------
 // GetAttributeValueAsLocation
 //

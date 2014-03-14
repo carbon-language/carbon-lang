@@ -93,14 +93,13 @@ DWARFDebugAranges::Generate(SymbolFileDWARF* dwarf2Data)
     DWARFDebugInfo* debug_info = dwarf2Data->DebugInfo();
     if (debug_info)
     {
-        const bool clear_dies_if_already_not_parsed = true;
         uint32_t cu_idx = 0;
         const uint32_t num_compile_units = dwarf2Data->GetNumCompileUnits();
         for (cu_idx = 0; cu_idx < num_compile_units; ++cu_idx)
         {
             DWARFCompileUnit* cu = debug_info->GetCompileUnitAtIndex(cu_idx);
             if (cu)
-                cu->BuildAddressRangeTable(dwarf2Data, this, clear_dies_if_already_not_parsed);
+                cu->BuildAddressRangeTable(dwarf2Data, this);
         }
     }
     return !IsEmpty();

@@ -79,7 +79,6 @@ DWARFDebugInfo::GetCompileUnitAranges ()
         // Manually build arange data for everything that wasn't in the .debug_aranges table.
         bool printed = false;
         const size_t num_compile_units = GetNumCompileUnits();
-        const bool clear_dies_if_already_not_parsed = true;
         for (size_t idx = 0; idx < num_compile_units; ++idx)
         {
             DWARFCompileUnit* cu = GetCompileUnitAtIndex(idx);
@@ -94,7 +93,7 @@ DWARFDebugInfo::GetCompileUnitAranges ()
                                      m_dwarf2Data->GetObjectFile()->GetFileSpec().GetPath().c_str());
                     printed = true;
                 }
-                cu->BuildAddressRangeTable (m_dwarf2Data, m_cu_aranges_ap.get(), clear_dies_if_already_not_parsed);
+                cu->BuildAddressRangeTable (m_dwarf2Data, m_cu_aranges_ap.get());
             }
         }
 
