@@ -279,10 +279,8 @@ void OMPClauseProfiler::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
 
 template<typename T>
 void OMPClauseProfiler::VisitOMPClauseList(T *Node) {
-  for (typename T::varlist_const_iterator I = Node->varlist_begin(),
-                                          E = Node->varlist_end();
-         I != E; ++I)
-    Profiler->VisitStmt(*I);
+  for (auto *I : Node->varlists())
+    Profiler->VisitStmt(I);
 }
 
 void OMPClauseProfiler::VisitOMPPrivateClause(const OMPPrivateClause *C) {

@@ -110,9 +110,19 @@ protected:
 public:
   typedef llvm::MutableArrayRef<Expr *>::iterator varlist_iterator;
   typedef ArrayRef<const Expr *>::iterator varlist_const_iterator;
+  typedef llvm::iterator_range<varlist_iterator> varlist_range;
+  typedef llvm::iterator_range<varlist_const_iterator> varlist_const_range;
 
   unsigned varlist_size() const { return NumVars; }
   bool varlist_empty() const { return NumVars == 0; }
+
+  varlist_range varlists() {
+    return varlist_range(varlist_begin(), varlist_end());
+  }
+  varlist_const_range varlists() const {
+    return varlist_const_range(varlist_begin(), varlist_end());
+  }
+
   varlist_iterator varlist_begin() { return getVarRefs().begin(); }
   varlist_iterator varlist_end() { return getVarRefs().end(); }
   varlist_const_iterator varlist_begin() const { return getVarRefs().begin(); }

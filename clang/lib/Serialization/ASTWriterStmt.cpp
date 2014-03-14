@@ -1698,28 +1698,22 @@ void OMPClauseWriter::VisitOMPDefaultClause(OMPDefaultClause *C) {
 void OMPClauseWriter::VisitOMPPrivateClause(OMPPrivateClause *C) {
   Record.push_back(C->varlist_size());
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
-  for (OMPPrivateClause::varlist_iterator I = C->varlist_begin(),
-                                          E = C->varlist_end();
-       I != E; ++I)
-    Writer->Writer.AddStmt(*I);
+  for (auto *I : C->varlists())
+    Writer->Writer.AddStmt(I);
 }
 
 void OMPClauseWriter::VisitOMPFirstprivateClause(OMPFirstprivateClause *C) {
   Record.push_back(C->varlist_size());
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
-  for (OMPFirstprivateClause::varlist_iterator I = C->varlist_begin(),
-                                               E = C->varlist_end();
-       I != E; ++I)
-    Writer->Writer.AddStmt(*I);
+  for (auto *I : C->varlists())
+    Writer->Writer.AddStmt(I);
 }
 
 void OMPClauseWriter::VisitOMPSharedClause(OMPSharedClause *C) {
   Record.push_back(C->varlist_size());
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
-  for (OMPSharedClause::varlist_iterator I = C->varlist_begin(),
-                                         E = C->varlist_end();
-       I != E; ++I)
-    Writer->Writer.AddStmt(*I);
+  for (auto *I : C->varlists())
+    Writer->Writer.AddStmt(I);
 }
 
 //===----------------------------------------------------------------------===//

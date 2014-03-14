@@ -1476,10 +1476,8 @@ DEF_TRAVERSE_DECL(UsingDirectiveDecl, {
 DEF_TRAVERSE_DECL(UsingShadowDecl, { })
 
 DEF_TRAVERSE_DECL(OMPThreadPrivateDecl, {
-    for (OMPThreadPrivateDecl::varlist_iterator I = D->varlist_begin(),
-                                                E = D->varlist_end();
-         I != E; ++I) {
-      TRY_TO(TraverseStmt(*I));
+    for (auto *I : D->varlists()) {
+      TRY_TO(TraverseStmt(I));
     }
   })
 
@@ -2403,10 +2401,8 @@ bool RecursiveASTVisitor<Derived>::VisitOMPDefaultClause(OMPDefaultClause *C) {
 template<typename Derived>
 template<typename T>
 void RecursiveASTVisitor<Derived>::VisitOMPClauseList(T *Node) {
-  for (typename T::varlist_iterator I = Node->varlist_begin(),
-                                    E = Node->varlist_end();
-         I != E; ++I)
-    TraverseStmt(*I);
+  for (auto *I : Node->varlists())
+    TraverseStmt(I);
 }
 
 template<typename Derived>
