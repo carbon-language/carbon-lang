@@ -54,7 +54,7 @@ public:
     return Type::Unknown;
   }
 
-  virtual uint64_t size() const override {
+  uint64_t size() const override {
     return 0;
   }
 
