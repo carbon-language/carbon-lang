@@ -1820,7 +1820,7 @@ SpellingCache = {
             # 5 : CompletionChunk.Kind("CurrentParameter"),
             6: '(',   # CompletionChunk.Kind("LeftParen"),
             7: ')',   # CompletionChunk.Kind("RightParen"),
-            8: ']',   # CompletionChunk.Kind("LeftBracket"),
+            8: '[',   # CompletionChunk.Kind("LeftBracket"),
             9: ']',   # CompletionChunk.Kind("RightBracket"),
             10: '{',  # CompletionChunk.Kind("LeftBrace"),
             11: '}',  # CompletionChunk.Kind("RightBrace"),
