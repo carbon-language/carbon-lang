@@ -13,7 +13,7 @@
 ; CHECK: 00000000 <End of list>
 
 ; Function Attrs: nounwind uwtable
-define i32 @foo(i32 %a) #0 section "foo" {
+define i32 @foo(i32 %a) #0 section "__TEXT,__foo" {
 entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
