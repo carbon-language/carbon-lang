@@ -306,13 +306,13 @@ X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
       return CSR_64_RT_AllRegs_AVX_RegMask;
     return CSR_64_RT_AllRegs_RegMask;
   case CallingConv::Intel_OCL_BI: {
-    if (IsWin64 && HasAVX512)
+    if (HasAVX512 && IsWin64)
       return CSR_Win64_Intel_OCL_BI_AVX512_RegMask;
-    if (Is64Bit && HasAVX512)
+    if (HasAVX512 && Is64Bit)
       return CSR_64_Intel_OCL_BI_AVX512_RegMask;
-    if (IsWin64 && HasAVX)
+    if (HasAVX && IsWin64)
       return CSR_Win64_Intel_OCL_BI_AVX_RegMask;
-    if (Is64Bit && HasAVX)
+    if (HasAVX && Is64Bit)
       return CSR_64_Intel_OCL_BI_AVX_RegMask;
     if (!HasAVX && !IsWin64 && Is64Bit)
       return CSR_64_Intel_OCL_BI_RegMask;
@@ -325,6 +325,8 @@ X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
     break;
   }
 
+  // Unlike getCalleeSavedRegs(), we don't have MMI so we can't check
+  // callsEHReturn().
   if (Is64Bit) {
     if (IsWin64)
       return CSR_Win64_RegMask;
