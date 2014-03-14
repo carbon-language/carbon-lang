@@ -1298,6 +1298,9 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
   static const char *const AArch64LibDirs[] = { "/lib" };
   static const char *const AArch64Triples[] = { "aarch64-none-linux-gnu",
                                                 "aarch64-linux-gnu" };
+  static const char *const AArch64beLibDirs[] = { "/lib" };
+  static const char *const AArch64beTriples[] = { "aarch64_be-none-linux-gnu",
+                                                  "aarch64_be-linux-gnu" };
 
   static const char *const ARMLibDirs[] = { "/lib" };
   static const char *const ARMTriples[] = { "arm-linux-gnueabi",
@@ -1366,7 +1369,6 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
 
   switch (TargetTriple.getArch()) {
   case llvm::Triple::aarch64:
-  case llvm::Triple::aarch64_be:
     LibDirs.append(AArch64LibDirs,
                    AArch64LibDirs + llvm::array_lengthof(AArch64LibDirs));
     TripleAliases.append(AArch64Triples,
@@ -1375,6 +1377,16 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
                          AArch64LibDirs + llvm::array_lengthof(AArch64LibDirs));
     BiarchTripleAliases.append(
         AArch64Triples, AArch64Triples + llvm::array_lengthof(AArch64Triples));
+    break;
+  case llvm::Triple::aarch64_be:
+    LibDirs.append(AArch64beLibDirs,
+                   AArch64beLibDirs + llvm::array_lengthof(AArch64beLibDirs));
+    TripleAliases.append(AArch64beTriples,
+                         AArch64beTriples + llvm::array_lengthof(AArch64beTriples));
+    BiarchLibDirs.append(AArch64beLibDirs,
+                         AArch64beLibDirs + llvm::array_lengthof(AArch64beLibDirs));
+    BiarchTripleAliases.append(
+        AArch64beTriples, AArch64beTriples + llvm::array_lengthof(AArch64beTriples));
     break;
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
@@ -2788,9 +2800,12 @@ static std::string getMultiarchTriple(const llvm::Triple &TargetTriple,
       return "x86_64-linux-gnu";
     return TargetTriple.str();
   case llvm::Triple::aarch64:
-  case llvm::Triple::aarch64_be:
     if (llvm::sys::fs::exists(SysRoot + "/lib/aarch64-linux-gnu"))
       return "aarch64-linux-gnu";
+    return TargetTriple.str();
+  case llvm::Triple::aarch64_be:
+    if (llvm::sys::fs::exists(SysRoot + "/lib/aarch64_be-linux-gnu"))
+      return "aarch64_be-linux-gnu";
     return TargetTriple.str();
   case llvm::Triple::mips:
     if (llvm::sys::fs::exists(SysRoot + "/lib/mips-linux-gnu"))
