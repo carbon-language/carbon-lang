@@ -23,6 +23,7 @@ class DWARFAbbreviationDeclaration {
   bool HasChildren;
 
   struct AttributeSpec {
+    AttributeSpec(uint16_t Attr, uint16_t Form) : Attr(Attr), Form(Form) {}
     uint16_t Attr;
     uint16_t Form;
   };

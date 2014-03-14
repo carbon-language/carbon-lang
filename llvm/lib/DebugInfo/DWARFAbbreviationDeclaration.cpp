@@ -51,7 +51,7 @@ DWARFAbbreviationDeclaration::extract(DataExtractor Data, uint32_t* OffsetPtr) {
     }
     if (Attr == 0 && Form == 0)
       break;
-    AttributeSpecs.push_back(AttributeSpec{Attr, Form});
+    AttributeSpecs.push_back(AttributeSpec(Attr, Form));
   }
 
   if (Tag == 0) {
