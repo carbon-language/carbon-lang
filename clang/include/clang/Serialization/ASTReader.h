@@ -1022,10 +1022,15 @@ private:
   /// \brief Reads a statement from the specified cursor.
   Stmt *ReadStmtFromStream(ModuleFile &F);
 
+  struct InputFileInfo {
+    std::string Filename;
+    off_t StoredSize;
+    time_t StoredTime;
+    bool Overridden;
+  };
+
   /// \brief Reads the stored information about an input file.
-  void readInputFileInfo(ModuleFile &F, unsigned ID, std::string &Filename,
-                         off_t &StoredSize, time_t &StoredTime,
-                         bool &Overridden);
+  InputFileInfo readInputFileInfo(ModuleFile &F, unsigned ID);
   /// \brief A convenience method to read the filename from an input file.
   std::string getInputFileName(ModuleFile &F, unsigned ID);
 

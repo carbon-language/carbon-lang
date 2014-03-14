@@ -1870,9 +1870,8 @@ void ASTReader::installImportedMacro(IdentifierInfo *II, ModuleMacroInfo *MMI,
   PP.appendMacroDirective(II, MD);
 }
 
-void ASTReader::readInputFileInfo(ModuleFile &F, unsigned ID,
-                                 std::string &Filename, off_t &StoredSize,
-                                 time_t &StoredTime, bool &Overridden) {
+ASTReader::InputFileInfo
+ASTReader::readInputFileInfo(ModuleFile &F, unsigned ID) {
   // Go find this input file.
   BitstreamCursor &Cursor = F.InputFilesCursor;
   SavedStreamPosition SavedPosition(Cursor);
@@ -1887,21 +1886,23 @@ void ASTReader::readInputFileInfo(ModuleFile &F, unsigned ID,
          "invalid record type for input file");
   (void)Result;
 
+  std::string Filename;
+  off_t StoredSize;
+  time_t StoredTime;
+  bool Overridden;
+  
   assert(Record[0] == ID && "Bogus stored ID or offset");
   StoredSize = static_cast<off_t>(Record[1]);
   StoredTime = static_cast<time_t>(Record[2]);
   Overridden = static_cast<bool>(Record[3]);
   Filename = Blob;
   MaybeAddSystemRootToFilename(F, Filename);
+  
+  return { std::move(Filename), StoredSize, StoredTime, Overridden };
 }
 
 std::string ASTReader::getInputFileName(ModuleFile &F, unsigned int ID) {
-  off_t StoredSize;
-  time_t StoredTime;
-  bool Overridden;
-  std::string Filename;
-  readInputFileInfo(F, ID, Filename, StoredSize, StoredTime, Overridden);
-  return Filename;
+  return readInputFileInfo(F, ID).Filename;
 }
 
 InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
@@ -1921,11 +1922,11 @@ InputFile ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
   SavedStreamPosition SavedPosition(Cursor);
   Cursor.JumpToBit(F.InputFileOffsets[ID-1]);
   
-  off_t StoredSize;
-  time_t StoredTime;
-  bool Overridden;
-  std::string Filename;
-  readInputFileInfo(F, ID, Filename, StoredSize, StoredTime, Overridden);
+  InputFileInfo FI = readInputFileInfo(F, ID);
+  off_t StoredSize = FI.StoredSize;
+  time_t StoredTime = FI.StoredTime;
+  bool Overridden = FI.Overridden;
+  StringRef Filename = FI.Filename;
 
   const FileEntry *File
     = Overridden? FileMgr.getVirtualFile(Filename, StoredSize, StoredTime)
