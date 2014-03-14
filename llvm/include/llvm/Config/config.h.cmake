@@ -498,6 +498,9 @@
 /* Linker version detected at compile time. */
 #undef HOST_LINK_VERSION
 
+/* Define if we link Polly to the tools */
+#cmakedefine LINK_POLLY_INTO_TOOLS
+
 /* Installation directory for binary executables */
 #cmakedefine LLVM_BINDIR "${LLVM_BINDIR}"
 

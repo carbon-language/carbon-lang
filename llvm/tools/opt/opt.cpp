@@ -304,6 +304,12 @@ static TargetMachine* GetTargetMachine(Triple TheTriple) {
                                         GetCodeGenOptLevel());
 }
 
+#ifdef LINK_POLLY_INTO_TOOLS
+namespace polly {
+void initializePollyPasses(llvm::PassRegistry &Registry);
+}
+#endif
+
 //===----------------------------------------------------------------------===//
 // main for opt
 //
@@ -337,6 +343,10 @@ int main(int argc, char **argv) {
   // For codegen passes, only passes that do IR to IR transformation are
   // supported. For now, just add CodeGenPrepare.
   initializeCodeGenPreparePass(Registry);
+
+#ifdef LINK_POLLY_INTO_TOOLS
+  polly::initializePollyPasses(Registry);
+#endif
 
   cl::ParseCommandLineOptions(argc, argv,
     "llvm .bc -> .bc modular optimizer and analysis printer\n");

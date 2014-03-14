@@ -121,4 +121,7 @@
 /* Minor version of the LLVM API */
 #cmakedefine LLVM_VERSION_MINOR ${LLVM_VERSION_MINOR}
 
+/* Define if we link Polly to the tools */
+#cmakedefine LINK_POLLY_INTO_TOOLS
+
 #endif

@@ -503,6 +503,8 @@ endif()
 add_subdirectory(projects)
 
 option(WITH_POLLY "Build LLVM with Polly" ON)
+option(LINK_POLLY_INTO_TOOLS "Static link Polly into tools" OFF)
+
 if(WITH_POLLY)
   if(NOT EXISTS ${LLVM_MAIN_SRC_DIR}/tools/polly/CMakeLists.txt)
     set(WITH_POLLY OFF)

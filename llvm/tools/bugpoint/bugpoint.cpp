@@ -109,6 +109,12 @@ namespace {
   };
 }
 
+#ifdef LINK_POLLY_INTO_TOOLS
+namespace polly {
+void initializePollyPasses(llvm::PassRegistry &Registry);
+}
+#endif
+
 int main(int argc, char **argv) {
 #ifndef DEBUG_BUGPOINT
   llvm::sys::PrintStackTraceOnErrorSignal();
@@ -129,6 +135,10 @@ int main(int argc, char **argv) {
   initializeInstCombine(Registry);
   initializeInstrumentation(Registry);
   initializeTarget(Registry);
+
+#ifdef LINK_POLLY_INTO_TOOLS
+  polly::initializePollyPasses(Registry);
+#endif
 
   cl::ParseCommandLineOptions(argc, argv,
                               "LLVM automatic testcase reducer. See\nhttp://"
