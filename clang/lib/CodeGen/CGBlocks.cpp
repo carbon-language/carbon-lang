@@ -370,11 +370,10 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
   }
 
   // Next, all the block captures.
-  for (BlockDecl::capture_const_iterator ci = block->capture_begin(),
-         ce = block->capture_end(); ci != ce; ++ci) {
-    const VarDecl *variable = ci->getVariable();
+  for (const auto &CI : block->captures()) {
+    const VarDecl *variable = CI.getVariable();
 
-    if (ci->isByRef()) {
+    if (CI.isByRef()) {
       // We have to copy/dispose of the __block reference.
       info.NeedsCopyDispose = true;
 
@@ -387,8 +386,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
       maxFieldAlign = std::max(maxFieldAlign, tinfo.second);
 
       layout.push_back(BlockLayoutChunk(tinfo.second, tinfo.first,
-                                        Qualifiers::OCL_None,
-                                        &*ci, llvmType));
+                                        Qualifiers::OCL_None, &CI, llvmType));
       continue;
     }
 
@@ -422,7 +420,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
       lifetime = Qualifiers::OCL_Strong;
 
     // So do types that require non-trivial copy construction.
-    } else if (ci->hasCopyExpr()) {
+    } else if (CI.hasCopyExpr()) {
       info.NeedsCopyDispose = true;
       info.HasCXXObject = true;
 
@@ -446,7 +444,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
     llvm::Type *llvmType =
       CGM.getTypes().ConvertTypeForMem(VT);
     
-    layout.push_back(BlockLayoutChunk(align, size, lifetime, &*ci, llvmType));
+    layout.push_back(BlockLayoutChunk(align, size, lifetime, &CI, llvmType));
   }
 
   // If that was everything, we're done here.
@@ -581,14 +579,13 @@ static void enterBlockScope(CodeGenFunction &CGF, BlockDecl *block) {
 
   // Walk through the captures (in order) and find the ones not
   // captured by constant.
-  for (BlockDecl::capture_const_iterator ci = block->capture_begin(),
-         ce = block->capture_end(); ci != ce; ++ci) {
+  for (const auto &CI : block->captures()) {
     // Ignore __block captures; there's nothing special in the
     // on-stack block that we need to do for them.
-    if (ci->isByRef()) continue;
+    if (CI.isByRef()) continue;
 
     // Ignore variables that are constant-captured.
-    const VarDecl *variable = ci->getVariable();
+    const VarDecl *variable = CI.getVariable();
     CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
     if (capture.isConstant()) continue;
 
@@ -741,9 +738,8 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
   }
 
   // Next, captured variables.
-  for (BlockDecl::capture_const_iterator ci = blockDecl->capture_begin(),
-         ce = blockDecl->capture_end(); ci != ce; ++ci) {
-    const VarDecl *variable = ci->getVariable();
+  for (const auto &CI : blockDecl->captures()) {
+    const VarDecl *variable = CI.getVariable();
     const CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
 
     // Ignore constant captures.
@@ -761,7 +757,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
     // Compute the address of the thing we're going to move into the
     // block literal.
     llvm::Value *src;
-    if (BlockInfo && ci->isNested()) {
+    if (BlockInfo && CI.isNested()) {
       // We need to use the capture from the enclosing block.
       const CGBlockInfo::Capture &enclosingCapture =
         BlockInfo->getCapture(variable);
@@ -780,8 +776,8 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
       // emission.
       src = LocalDeclMap.lookup(variable);
       if (!src) {
-        DeclRefExpr declRef(const_cast<VarDecl*>(variable),
-                            /*refersToEnclosing*/ ci->isNested(), type,
+        DeclRefExpr declRef(const_cast<VarDecl *>(variable),
+                            /*refersToEnclosing*/ CI.isNested(), type,
                             VK_LValue, SourceLocation());
         src = EmitDeclRefLValue(&declRef).getAddress();
       }
@@ -791,9 +787,9 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
     // the block field.  There's no need to chase the forwarding
     // pointer at this point, since we're building something that will
     // live a shorter life than the stack byref anyway.
-    if (ci->isByRef()) {
+    if (CI.isByRef()) {
       // Get a void* that points to the byref struct.
-      if (ci->isNested())
+      if (CI.isNested())
         src = Builder.CreateAlignedLoad(src, align.getQuantity(),
                                         "byref.capture");
       else
@@ -803,7 +799,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
       Builder.CreateAlignedStore(src, blockField, align.getQuantity());
 
     // If we have a copy constructor, evaluate that into the block field.
-    } else if (const Expr *copyExpr = ci->getCopyExpr()) {
+    } else if (const Expr *copyExpr = CI.getCopyExpr()) {
       if (blockDecl->isConversionFromLambda()) {
         // If we have a lambda conversion, emit the expression
         // directly into the block instead.
@@ -851,7 +847,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
       // We use one of these or the other depending on whether the
       // reference is nested.
       DeclRefExpr declRef(const_cast<VarDecl*>(variable),
-                          /*refersToEnclosing*/ ci->isNested(), type,
+                          /*refersToEnclosing*/ CI.isNested(), type,
                           VK_LValue, SourceLocation());
 
       ImplicitCastExpr l2r(ImplicitCastExpr::OnStack, type, CK_LValueToRValue,
@@ -862,7 +858,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
     }
 
     // Activate the cleanup if layout pushed one.
-    if (!ci->isByRef()) {
+    if (!CI.isByRef()) {
       EHScopeStack::stable_iterator cleanup = capture.getCleanup();
       if (cleanup.isValid())
         ActivateCleanupBlock(cleanup, blockInfo.DominatingIP);
@@ -1175,9 +1171,8 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   }
 
   // Also force all the constant captures.
-  for (BlockDecl::capture_const_iterator ci = blockDecl->capture_begin(),
-         ce = blockDecl->capture_end(); ci != ce; ++ci) {
-    const VarDecl *variable = ci->getVariable();
+  for (const auto &CI : blockDecl->captures()) {
+    const VarDecl *variable = CI.getVariable();
     const CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
     if (!capture.isConstant()) continue;
 
@@ -1218,9 +1213,8 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   // Emit debug information for all the DeclRefExprs.
   // FIXME: also for 'this'
   if (CGDebugInfo *DI = getDebugInfo()) {
-    for (BlockDecl::capture_const_iterator ci = blockDecl->capture_begin(),
-           ce = blockDecl->capture_end(); ci != ce; ++ci) {
-      const VarDecl *variable = ci->getVariable();
+    for (const auto &CI : blockDecl->captures()) {
+      const VarDecl *variable = CI.getVariable();
       DI->EmitLocation(Builder, variable->getLocation());
 
       if (CGM.getCodeGenOpts().getDebugInfo()
@@ -1327,25 +1321,24 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
 
   const BlockDecl *blockDecl = blockInfo.getBlockDecl();
 
-  for (BlockDecl::capture_const_iterator ci = blockDecl->capture_begin(),
-         ce = blockDecl->capture_end(); ci != ce; ++ci) {
-    const VarDecl *variable = ci->getVariable();
+  for (const auto &CI : blockDecl->captures()) {
+    const VarDecl *variable = CI.getVariable();
     QualType type = variable->getType();
 
     const CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
     if (capture.isConstant()) continue;
 
-    const Expr *copyExpr = ci->getCopyExpr();
+    const Expr *copyExpr = CI.getCopyExpr();
     BlockFieldFlags flags;
 
     bool useARCWeakCopy = false;
     bool useARCStrongCopy = false;
 
     if (copyExpr) {
-      assert(!ci->isByRef());
+      assert(!CI.isByRef());
       // don't bother computing flags
 
-    } else if (ci->isByRef()) {
+    } else if (CI.isByRef()) {
       flags = BLOCK_FIELD_IS_BYREF;
       if (type.isObjCGCWeak())
         flags |= BLOCK_FIELD_IS_WEAK;
@@ -1425,7 +1418,7 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
         };
 
         bool copyCanThrow = false;
-        if (ci->isByRef() && variable->getType()->getAsCXXRecordDecl()) {
+        if (CI.isByRef() && variable->getType()->getAsCXXRecordDecl()) {
           const Expr *copyExpr =
             CGM.getContext().getBlockVarCopyInits(variable);
           if (copyExpr) {
@@ -1496,9 +1489,8 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
 
   CodeGenFunction::RunCleanupsScope cleanups(*this);
 
-  for (BlockDecl::capture_const_iterator ci = blockDecl->capture_begin(),
-         ce = blockDecl->capture_end(); ci != ce; ++ci) {
-    const VarDecl *variable = ci->getVariable();
+  for (const auto &CI : blockDecl->captures()) {
+    const VarDecl *variable = CI.getVariable();
     QualType type = variable->getType();
 
     const CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
@@ -1510,7 +1502,7 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
     bool useARCWeakDestroy = false;
     bool useARCStrongDestroy = false;
 
-    if (ci->isByRef()) {
+    if (CI.isByRef()) {
       flags = BLOCK_FIELD_IS_BYREF;
       if (type.isObjCGCWeak())
         flags |= BLOCK_FIELD_IS_WEAK;

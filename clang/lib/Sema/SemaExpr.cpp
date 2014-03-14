@@ -10575,10 +10575,8 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
 
     // It also gets a branch-protected scope if any of the captured
     // variables needs destruction.
-    for (BlockDecl::capture_const_iterator
-           ci = Result->getBlockDecl()->capture_begin(),
-           ce = Result->getBlockDecl()->capture_end(); ci != ce; ++ci) {
-      const VarDecl *var = ci->getVariable();
+    for (const auto &CI : Result->getBlockDecl()->captures()) {
+      const VarDecl *var = CI.getVariable();
       if (var->getType().isDestructedType() != QualType::DK_none) {
         getCurFunction()->setHasBranchProtectedScope();
         break;

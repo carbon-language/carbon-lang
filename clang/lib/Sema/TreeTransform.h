@@ -9343,9 +9343,8 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
   // In builds with assertions, make sure that we captured everything we
   // captured before.
   if (!SemaRef.getDiagnostics().hasErrorOccurred()) {
-    for (BlockDecl::capture_iterator i = oldBlock->capture_begin(),
-           e = oldBlock->capture_end(); i != e; ++i) {
-      VarDecl *oldCapture = i->getVariable();
+    for (const auto &I : oldBlock->captures()) {
+      VarDecl *oldCapture = I.getVariable();
 
       // Ignore parameter packs.
       if (isa<ParmVarDecl>(oldCapture) &&

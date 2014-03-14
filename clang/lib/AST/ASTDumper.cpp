@@ -1449,20 +1449,19 @@ void ASTDumper::VisitBlockDecl(const BlockDecl *D) {
     IndentScope Indent(*this);
     OS << "capture this";
   }
-  for (BlockDecl::capture_iterator I = D->capture_begin(), E = D->capture_end();
-       I != E; ++I) {
+  for (const auto &I : D->captures()) {
     IndentScope Indent(*this);
     OS << "capture";
-    if (I->isByRef())
+    if (I.isByRef())
       OS << " byref";
-    if (I->isNested())
+    if (I.isNested())
       OS << " nested";
-    if (I->getVariable()) {
+    if (I.getVariable()) {
       OS << ' ';
-      dumpBareDeclRef(I->getVariable());
+      dumpBareDeclRef(I.getVariable());
     }
-    if (I->hasCopyExpr())
-      dumpStmt(I->getCopyExpr());
+    if (I.hasCopyExpr())
+      dumpStmt(I.getCopyExpr());
   }
   lastChild();
   dumpStmt(D->getBody());

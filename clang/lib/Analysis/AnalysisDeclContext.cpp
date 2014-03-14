@@ -133,9 +133,8 @@ const ImplicitParamDecl *AnalysisDeclContext::getSelfDecl() const {
     return MD->getSelfDecl();
   if (const BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
     // See if 'self' was captured by the block.
-    for (BlockDecl::capture_const_iterator it = BD->capture_begin(),
-         et = BD->capture_end(); it != et; ++it) {
-      const VarDecl *VD = it->getVariable();
+    for (const auto &I : BD->captures()) {
+      const VarDecl *VD = I.getVariable();
       if (VD->getName() == "self")
         return dyn_cast<ImplicitParamDecl>(VD);
     }    
@@ -511,9 +510,8 @@ static DeclVec* LazyInitializeReferencedDecls(const BlockDecl *BD,
   new (BV) DeclVec(BC, 10);
 
   // Go through the capture list.
-  for (BlockDecl::capture_const_iterator CI = BD->capture_begin(),
-       CE = BD->capture_end(); CI != CE; ++CI) {
-    BV->push_back(CI->getVariable(), BC);
+  for (const auto &CI : BD->captures()) {
+    BV->push_back(CI.getVariable(), BC);
   }
 
   // Find the referenced global/static variables.

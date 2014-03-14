@@ -632,12 +632,11 @@ void TransferFunctions::VisitObjCForCollectionStmt(ObjCForCollectionStmt *FS) {
 
 void TransferFunctions::VisitBlockExpr(BlockExpr *be) {
   const BlockDecl *bd = be->getBlockDecl();
-  for (BlockDecl::capture_const_iterator i = bd->capture_begin(),
-        e = bd->capture_end() ; i != e; ++i) {
-    const VarDecl *vd = i->getVariable();
+  for (const auto &I : bd->captures()) {
+    const VarDecl *vd = I.getVariable();
     if (!isTrackedVar(vd))
       continue;
-    if (i->isByRef()) {
+    if (I.isByRef()) {
       vals[vd] = Initialized;
       continue;
     }

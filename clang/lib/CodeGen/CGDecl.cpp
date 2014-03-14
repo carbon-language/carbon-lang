@@ -530,9 +530,8 @@ static bool isAccessedBy(const VarDecl &var, const Stmt *s) {
       return (ref->getDecl() == &var);
     if (const BlockExpr *be = dyn_cast<BlockExpr>(e)) {
       const BlockDecl *block = be->getBlockDecl();
-      for (BlockDecl::capture_const_iterator i = block->capture_begin(),
-           e = block->capture_end(); i != e; ++i) {
-        if (i->getVariable() == &var)
+      for (const auto &I : block->captures()) {
+        if (I.getVariable() == &var)
           return true;
       }
     }
@@ -993,9 +992,8 @@ static bool isCapturedBy(const VarDecl &var, const Expr *e) {
 
   if (const BlockExpr *be = dyn_cast<BlockExpr>(e)) {
     const BlockDecl *block = be->getBlockDecl();
-    for (BlockDecl::capture_const_iterator i = block->capture_begin(),
-           e = block->capture_end(); i != e; ++i) {
-      if (i->getVariable() == &var)
+    for (const auto &I : block->captures()) {
+      if (I.getVariable() == &var)
         return true;
     }
 

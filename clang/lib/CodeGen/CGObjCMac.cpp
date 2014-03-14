@@ -1961,9 +1961,8 @@ llvm::Constant *CGObjCCommonMac::BuildGCBlockLayout(CodeGenModule &CGM,
   // to be GC'ed.
 
   // Walk the captured variables.
-  for (BlockDecl::capture_const_iterator ci = blockDecl->capture_begin(),
-         ce = blockDecl->capture_end(); ci != ce; ++ci) {
-    const VarDecl *variable = ci->getVariable();
+  for (const auto &CI : blockDecl->captures()) {
+    const VarDecl *variable = CI.getVariable();
     QualType type = variable->getType();
 
     const CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
@@ -1974,7 +1973,7 @@ llvm::Constant *CGObjCCommonMac::BuildGCBlockLayout(CodeGenModule &CGM,
     uint64_t fieldOffset = layout->getElementOffset(capture.getIndex());
 
     // __block variables are passed by their descriptor address.
-    if (ci->isByRef()) {
+    if (CI.isByRef()) {
       IvarsInfo.push_back(GC_IVAR(fieldOffset, /*size in words*/ 1));
       continue;
     }
@@ -2474,9 +2473,8 @@ llvm::Constant *CGObjCCommonMac::BuildRCBlockLayout(CodeGenModule &CGM,
                            blockInfo.BlockHeaderForcedGapOffset,
                            blockInfo.BlockHeaderForcedGapSize);
   // Walk the captured variables.
-  for (BlockDecl::capture_const_iterator ci = blockDecl->capture_begin(),
-       ce = blockDecl->capture_end(); ci != ce; ++ci) {
-    const VarDecl *variable = ci->getVariable();
+  for (const auto &CI : blockDecl->captures()) {
+    const VarDecl *variable = CI.getVariable();
     QualType type = variable->getType();
     
     const CGBlockInfo::Capture &capture = blockInfo.getCapture(variable);
@@ -2488,17 +2486,17 @@ llvm::Constant *CGObjCCommonMac::BuildRCBlockLayout(CodeGenModule &CGM,
        CharUnits::fromQuantity(layout->getElementOffset(capture.getIndex()));
     
     assert(!type->isArrayType() && "array variable should not be caught");
-    if (!ci->isByRef())
+    if (!CI.isByRef())
       if (const RecordType *record = type->getAs<RecordType>()) {
         BuildRCBlockVarRecordLayout(record, fieldOffset, hasUnion);
         continue;
       }
     CharUnits fieldSize;
-    if (ci->isByRef())
+    if (CI.isByRef())
       fieldSize = CharUnits::fromQuantity(WordSizeInBytes);
     else
       fieldSize = CGM.getContext().getTypeSizeInChars(type);
-    UpdateRunSkipBlockVars(ci->isByRef(), getBlockCaptureLifetime(type, false),
+    UpdateRunSkipBlockVars(CI.isByRef(), getBlockCaptureLifetime(type, false),
                            fieldOffset, fieldSize);
   }
   return getBitmapBlockLayout(false);

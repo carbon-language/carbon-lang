@@ -3354,6 +3354,16 @@ public:
 
   typedef const Capture *capture_iterator;
   typedef const Capture *capture_const_iterator;
+  typedef llvm::iterator_range<capture_iterator> capture_range;
+  typedef llvm::iterator_range<capture_const_iterator> capture_const_range;
+
+  capture_range captures() {
+    return capture_range(capture_begin(), capture_end());
+  }
+  capture_const_range captures() const {
+    return capture_const_range(capture_begin(), capture_end());
+  }
+
   capture_iterator capture_begin() { return Captures; }
   capture_iterator capture_end() { return Captures + NumCaptures; }
   capture_const_iterator capture_begin() const { return Captures; }

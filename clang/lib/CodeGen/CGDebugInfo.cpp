@@ -3031,10 +3031,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
   }
 
   // Variable captures.
-  for (BlockDecl::capture_const_iterator
-         i = blockDecl->capture_begin(), e = blockDecl->capture_end();
-       i != e; ++i) {
-    const BlockDecl::Capture &capture = *i;
+  for (const auto &capture : blockDecl->captures()) {
     const VarDecl *variable = capture.getVariable();
     const CGBlockInfo::Capture &captureInfo = block.getCapture(variable);
 

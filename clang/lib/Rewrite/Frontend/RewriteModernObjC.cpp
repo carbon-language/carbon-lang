@@ -5509,11 +5509,10 @@ Stmt *RewriteModernObjC::SynthBlockInitExpr(BlockExpr *Exp,
                                       SourceLocation());
       bool isNestedCapturedVar = false;
       if (block)
-        for (BlockDecl::capture_const_iterator ci = block->capture_begin(),
-             ce = block->capture_end(); ci != ce; ++ci) {
-          const VarDecl *variable = ci->getVariable();
-          if (variable == ND && ci->isNested()) {
-            assert (ci->isByRef() && 
+        for (const auto &CI : block->captures()) {
+          const VarDecl *variable = CI.getVariable();
+          if (variable == ND && CI.isNested()) {
+            assert (CI.isByRef() && 
                     "SynthBlockInitExpr - captured block variable is not byref");
             isNestedCapturedVar = true;
             break;
