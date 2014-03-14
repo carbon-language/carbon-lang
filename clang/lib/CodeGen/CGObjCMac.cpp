@@ -2816,10 +2816,8 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(Twine Name,
       PushProtocolProperties(PropertySet, Properties, Container, P, ObjCTypes);
   }
   else if (const ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(OCD)) {
-    for (ObjCCategoryDecl::protocol_iterator P = CD->protocol_begin(),
-         E = CD->protocol_end(); P != E; ++P)
-      PushProtocolProperties(PropertySet, Properties, Container, (*P), 
-                             ObjCTypes);
+    for (const auto *P : CD->protocols())
+      PushProtocolProperties(PropertySet, Properties, Container, P, ObjCTypes);
   }
 
   // Return null for empty list.

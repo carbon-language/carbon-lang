@@ -3167,10 +3167,9 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
                          Visited);
     }
   } else if (ObjCCategoryDecl *Category = dyn_cast<ObjCCategoryDecl>(Ctx)) {
-    for (ObjCCategoryDecl::protocol_iterator I = Category->protocol_begin(),
-           E = Category->protocol_end(); I != E; ++I) {
+    for (auto *I : Category->protocols()) {
       ShadowContextRAII Shadow(Visited);
-      LookupVisibleDecls(*I, Result, QualifiedNameLookup, false, Consumer,
+      LookupVisibleDecls(I, Result, QualifiedNameLookup, false, Consumer,
                          Visited);
     }
 

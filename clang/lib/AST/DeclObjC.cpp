@@ -227,11 +227,9 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
       const ObjCCategoryDecl *OCD = cast<ObjCCategoryDecl>(this);
       // Look through protocols.
       if (!OCD->IsClassExtension())
-        for (ObjCCategoryDecl::protocol_iterator
-              I = OCD->protocol_begin(), E = OCD->protocol_end(); I != E; ++I)
-        if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
-          return P;
-
+        for (const auto *I : OCD->protocols())
+          if (ObjCPropertyDecl *P = I->FindPropertyDeclaration(PropertyId))
+            return P;
       break;
     }
   }
@@ -943,10 +941,8 @@ static void CollectOverriddenMethodsRecurse(const ObjCContainerDecl *Container,
           return;
         }
 
-    for (ObjCCategoryDecl::protocol_iterator P = Category->protocol_begin(),
-                                          PEnd = Category->protocol_end();
-         P != PEnd; ++P)
-      CollectOverriddenMethodsRecurse(*P, Method, Methods, MovedToSuper);
+    for (const auto *P : Category->protocols())
+      CollectOverriddenMethodsRecurse(P, Method, Methods, MovedToSuper);
     return;
   }
 
@@ -1343,10 +1339,8 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
   // 2nd, look up the category.
   if (lookupCategory)
     for (const auto *Cat : visible_categories()) {
-      for (ObjCCategoryDecl::protocol_iterator PI = Cat->protocol_begin(),
-                                               E = Cat->protocol_end();
-           PI != E; ++PI)
-        if (getASTContext().ProtocolCompatibleWithProtocol(lProto, *PI))
+      for (auto *PI : Cat->protocols())
+        if (getASTContext().ProtocolCompatibleWithProtocol(lProto, PI))
           return true;
     }
 

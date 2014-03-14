@@ -3511,10 +3511,8 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
   } else if (const ObjCCategoryDecl *Category
                                     = dyn_cast<ObjCCategoryDecl>(Container)) {
     // Look through protocols.
-    for (ObjCCategoryDecl::protocol_iterator P = Category->protocol_begin(),
-                                          PEnd = Category->protocol_end(); 
-         P != PEnd; ++P)
-      AddObjCProperties(*P, AllowCategories, AllowNullaryMethods, CurContext,
+    for (auto *P : Category->protocols())
+      AddObjCProperties(P, AllowCategories, AllowNullaryMethods, CurContext,
                         AddedProperties, Results);
   }
 }

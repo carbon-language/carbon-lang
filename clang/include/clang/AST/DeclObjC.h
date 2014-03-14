@@ -1763,7 +1763,14 @@ public:
   }
 
   typedef ObjCProtocolList::iterator protocol_iterator;
-  protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
+  typedef llvm::iterator_range<protocol_iterator> protocol_range;
+
+  protocol_range protocols() const {
+    return protocol_range(protocol_begin(), protocol_end());
+  }
+  protocol_iterator protocol_begin() const {
+    return ReferencedProtocols.begin();
+  }
   protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
   unsigned protocol_size() const { return ReferencedProtocols.size(); }
   typedef ObjCProtocolList::loc_iterator protocol_loc_iterator;

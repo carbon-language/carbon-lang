@@ -1827,9 +1827,7 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
         SD = SD->getSuperClass();
       }
   } else if (const ObjCCategoryDecl *OC = dyn_cast<ObjCCategoryDecl>(CDecl)) {
-    for (ObjCCategoryDecl::protocol_iterator P = OC->protocol_begin(),
-         PE = OC->protocol_end(); P != PE; ++P) {
-      ObjCProtocolDecl *Proto = (*P);
+    for (auto *Proto : OC->protocols()) {
       Protocols.insert(Proto->getCanonicalDecl());
       for (const auto *P : Proto->protocols())
         CollectInheritedProtocols(P, Protocols);

@@ -229,11 +229,8 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
       }
     }
   } else if (ObjCCategoryDecl *Cat = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
-    for (ObjCCategoryDecl::protocol_iterator P = Cat->protocol_begin(),
-                                          PEnd = Cat->protocol_end();
-         P != PEnd; ++P) {
-      CheckPropertyAgainstProtocol(*this, Res, *P, KnownProtos);
-    }
+    for (auto *P : Cat->protocols())
+      CheckPropertyAgainstProtocol(*this, Res, P, KnownProtos);
   } else {
     ObjCProtocolDecl *Proto = cast<ObjCProtocolDecl>(ClassDecl);
     for (auto *P : Proto->protocols())
@@ -1439,9 +1436,8 @@ static void CollectImmediateProperties(ObjCContainerDecl *CDecl,
         PropMap[Prop->getIdentifier()] = Prop;
     if (IncludeProtocols) {
       // Scan through class's protocols.
-      for (ObjCCategoryDecl::protocol_iterator PI = CATDecl->protocol_begin(),
-           E = CATDecl->protocol_end(); PI != E; ++PI)
-        CollectImmediateProperties((*PI), PropMap, SuperPropMap);
+      for (auto *PI : CATDecl->protocols())
+        CollectImmediateProperties(PI, PropMap, SuperPropMap);
     }
   }
   else if (ObjCProtocolDecl *PDecl = dyn_cast<ObjCProtocolDecl>(CDecl)) {

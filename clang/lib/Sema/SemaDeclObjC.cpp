@@ -1998,9 +1998,8 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
     // For extended class, unimplemented methods in its protocols will
     // be reported in the primary class.
     if (!C->IsClassExtension()) {
-      for (ObjCCategoryDecl::protocol_iterator PI = C->protocol_begin(),
-           E = C->protocol_end(); PI != E; ++PI)
-        CheckProtocolMethodDefs(*this, IMPDecl->getLocation(), *PI,
+      for (auto *P : C->protocols())
+        CheckProtocolMethodDefs(*this, IMPDecl->getLocation(), P,
                                 IncompleteImpl, InsMap, ClsMap, CDecl,
                                 ExplicitImplProtocols);
       DiagnoseUnimplementedProperties(S, IMPDecl, CDecl,
