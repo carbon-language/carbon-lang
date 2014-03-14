@@ -3,3 +3,4 @@
 # RUN: FileCheck %s < %t.log
 
 CHECK: warning: ignoring unknown argument: -foo
+CHECK: warning: ignoring unknown argument: -bar\baz
