@@ -255,8 +255,8 @@ public:
     return false;
   }
 
-  virtual void observeStmt(const Stmt *S, const CFGBlock *block,
-                           const LiveVariables::LivenessValues &Live) {
+  void observeStmt(const Stmt *S, const CFGBlock *block,
+                   const LiveVariables::LivenessValues &Live) override {
 
     currentBlock = block;
     

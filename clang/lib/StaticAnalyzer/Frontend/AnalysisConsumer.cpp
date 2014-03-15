@@ -90,12 +90,12 @@ public:
   ClangDiagPathDiagConsumer(DiagnosticsEngine &Diag)
     : Diag(Diag), IncludePath(false) {}
   virtual ~ClangDiagPathDiagConsumer() {}
-  virtual StringRef getName() const { return "ClangDiags"; }
+  StringRef getName() const override { return "ClangDiags"; }
 
-  virtual bool supportsLogicalOpControlFlow() const { return true; }
-  virtual bool supportsCrossFileDiagnostics() const { return true; }
+  bool supportsLogicalOpControlFlow() const override { return true; }
+  bool supportsCrossFileDiagnostics() const override { return true; }
 
-  virtual PathGenerationScheme getGenerationScheme() const {
+  PathGenerationScheme getGenerationScheme() const override {
     return IncludePath ? Minimal : None;
   }
 
@@ -104,7 +104,7 @@ public:
   }
 
   void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
-                            FilesMade *filesMade) {
+                            FilesMade *filesMade) override {
     unsigned WarnID = Diag.getCustomDiagID(DiagnosticsEngine::Warning, "%0");
     unsigned NoteID = Diag.getCustomDiagID(DiagnosticsEngine::Note, "%0");
 
@@ -282,7 +282,7 @@ public:
     }
   }
 
-  virtual void Initialize(ASTContext &Context) {
+  void Initialize(ASTContext &Context) override {
     Ctx = &Context;
     checkerMgr.reset(createCheckerManager(*Opts, PP.getLangOpts(), Plugins,
                                           PP.getDiagnostics()));
@@ -298,10 +298,10 @@ public:
 
   /// \brief Store the top level decls in the set to be processed later on.
   /// (Doing this pre-processing avoids deserialization of data from PCH.)
-  virtual bool HandleTopLevelDecl(DeclGroupRef D);
-  virtual void HandleTopLevelDeclInObjCContainer(DeclGroupRef D);
+  bool HandleTopLevelDecl(DeclGroupRef D) override;
+  void HandleTopLevelDeclInObjCContainer(DeclGroupRef D) override;
 
-  virtual void HandleTranslationUnit(ASTContext &C);
+  void HandleTranslationUnit(ASTContext &C) override;
 
   /// \brief Determine which inlining mode should be used when this function is
   /// analyzed. This allows to redefine the default inlining policies when
@@ -716,7 +716,7 @@ public:
 
   ~UbigraphViz();
 
-  virtual void AddEdge(ExplodedNode *Src, ExplodedNode *Dst);
+  void AddEdge(ExplodedNode *Src, ExplodedNode *Dst) override;
 };
 
 } // end anonymous namespace

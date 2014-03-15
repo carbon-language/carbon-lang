@@ -40,15 +40,17 @@ namespace {
     virtual ~PlistDiagnostics() {}
 
     void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
-                              FilesMade *filesMade);
-    
-    virtual StringRef getName() const {
+                              FilesMade *filesMade) override;
+
+    virtual StringRef getName() const override {
       return "PlistDiagnostics";
     }
 
-    PathGenerationScheme getGenerationScheme() const { return Extensive; }
-    bool supportsLogicalOpControlFlow() const { return true; }
-    virtual bool supportsCrossFileDiagnostics() const {
+    PathGenerationScheme getGenerationScheme() const override {
+      return Extensive;
+    }
+    bool supportsLogicalOpControlFlow() const override { return true; }
+    bool supportsCrossFileDiagnostics() const override {
       return SupportsCrossFileDiagnostics;
     }
   };

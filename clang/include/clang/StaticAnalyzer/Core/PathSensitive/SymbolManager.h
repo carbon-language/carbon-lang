@@ -105,7 +105,7 @@ typedef unsigned SymbolID;
 /// \brief A symbol representing data which can be stored in a memory location
 /// (region).
 class SymbolData : public SymExpr {
-  virtual void anchor();
+  void anchor() override;
   const SymbolID Sym;
 
 protected:
@@ -138,13 +138,13 @@ public:
     profile.AddPointer(R);
   }
 
-  virtual void Profile(llvm::FoldingSetNodeID& profile) {
+  void Profile(llvm::FoldingSetNodeID& profile) override {
     Profile(profile, R);
   }
 
-  virtual void dumpToStream(raw_ostream &os) const;
+  void dumpToStream(raw_ostream &os) const override;
 
-  QualType getType() const;
+  QualType getType() const override;
 
   // Implement isa<T> support.
   static inline bool classof(const SymExpr *SE) {
@@ -173,9 +173,9 @@ public:
   unsigned getCount() const { return Count; }
   const void *getTag() const { return SymbolTag; }
 
-  QualType getType() const;
+  QualType getType() const override;
 
-  virtual void dumpToStream(raw_ostream &os) const;
+  void dumpToStream(raw_ostream &os) const override;
 
   static void Profile(llvm::FoldingSetNodeID& profile, const Stmt *S,
                       QualType T, unsigned Count, const LocationContext *LCtx,
@@ -188,7 +188,7 @@ public:
     profile.AddPointer(SymbolTag);
   }
 
-  virtual void Profile(llvm::FoldingSetNodeID& profile) {
+  void Profile(llvm::FoldingSetNodeID& profile) override {
     Profile(profile, S, T, Count, LCtx, SymbolTag);
   }
 
@@ -211,9 +211,9 @@ public:
   SymbolRef getParentSymbol() const { return parentSymbol; }
   const TypedValueRegion *getRegion() const { return R; }
 
-  QualType getType() const;
+  QualType getType() const override;
 
-  virtual void dumpToStream(raw_ostream &os) const;
+  void dumpToStream(raw_ostream &os) const override;
 
   static void Profile(llvm::FoldingSetNodeID& profile, SymbolRef parent,
                       const TypedValueRegion *r) {
@@ -222,7 +222,7 @@ public:
     profile.AddPointer(parent);
   }
 
-  virtual void Profile(llvm::FoldingSetNodeID& profile) {
+  void Profile(llvm::FoldingSetNodeID& profile) override {
     Profile(profile, parentSymbol, R);
   }
 
@@ -244,16 +244,16 @@ public:
 
   const SubRegion *getRegion() const { return R; }
 
-  QualType getType() const;
+  QualType getType() const override;
 
-  virtual void dumpToStream(raw_ostream &os) const;
+  void dumpToStream(raw_ostream &os) const override;
 
   static void Profile(llvm::FoldingSetNodeID& profile, const SubRegion *R) {
     profile.AddInteger((unsigned) ExtentKind);
     profile.AddPointer(R);
   }
 
-  virtual void Profile(llvm::FoldingSetNodeID& profile) {
+  void Profile(llvm::FoldingSetNodeID& profile) override {
     Profile(profile, R);
   }
 
@@ -283,9 +283,9 @@ public:
   unsigned getCount() const { return Count; }
   const void *getTag() const { return Tag; }
 
-  QualType getType() const;
+  QualType getType() const override;
 
-  virtual void dumpToStream(raw_ostream &os) const;
+  void dumpToStream(raw_ostream &os) const override;
 
   static void Profile(llvm::FoldingSetNodeID& profile, const MemRegion *R,
                       const Stmt *S, QualType T, unsigned Count,
@@ -298,7 +298,7 @@ public:
     profile.AddPointer(Tag);
   }
 
-  virtual void Profile(llvm::FoldingSetNodeID& profile) {
+  void Profile(llvm::FoldingSetNodeID& profile) override {
     Profile(profile, R, S, T, Count, Tag);
   }
 
@@ -320,11 +320,11 @@ public:
   SymbolCast(const SymExpr *In, QualType From, QualType To) :
     SymExpr(CastSymbolKind), Operand(In), FromTy(From), ToTy(To) { }
 
-  QualType getType() const { return ToTy; }
+  QualType getType() const override { return ToTy; }
 
   const SymExpr *getOperand() const { return Operand; }
 
-  virtual void dumpToStream(raw_ostream &os) const;
+  void dumpToStream(raw_ostream &os) const override;
 
   static void Profile(llvm::FoldingSetNodeID& ID,
                       const SymExpr *In, QualType From, QualType To) {
@@ -334,7 +334,7 @@ public:
     ID.Add(To);
   }
 
-  void Profile(llvm::FoldingSetNodeID& ID) {
+  void Profile(llvm::FoldingSetNodeID& ID) override {
     Profile(ID, Operand, FromTy, ToTy);
   }
 
@@ -356,7 +356,7 @@ protected:
 public:
   // FIXME: We probably need to make this out-of-line to avoid redundant
   // generation of virtual functions.
-  QualType getType() const { return T; }
+  QualType getType() const override { return T; }
 
   BinaryOperator::Opcode getOpcode() const { return Op; }
 
@@ -377,7 +377,7 @@ public:
              const llvm::APSInt& rhs, QualType t)
     : BinarySymExpr(SymIntKind, op, t), LHS(lhs), RHS(rhs) {}
 
-  virtual void dumpToStream(raw_ostream &os) const;
+  void dumpToStream(raw_ostream &os) const override;
 
   const SymExpr *getLHS() const { return LHS; }
   const llvm::APSInt &getRHS() const { return RHS; }
@@ -392,7 +392,7 @@ public:
     ID.Add(t);
   }
 
-  void Profile(llvm::FoldingSetNodeID& ID) {
+  void Profile(llvm::FoldingSetNodeID& ID) override {
     Profile(ID, LHS, getOpcode(), RHS, getType());
   }
 
@@ -412,7 +412,7 @@ public:
              const SymExpr *rhs, QualType t)
     : BinarySymExpr(IntSymKind, op, t), LHS(lhs), RHS(rhs) {}
 
-  virtual void dumpToStream(raw_ostream &os) const;
+  void dumpToStream(raw_ostream &os) const override;
 
   const SymExpr *getRHS() const { return RHS; }
   const llvm::APSInt &getLHS() const { return LHS; }
@@ -427,7 +427,7 @@ public:
     ID.Add(t);
   }
 
-  void Profile(llvm::FoldingSetNodeID& ID) {
+  void Profile(llvm::FoldingSetNodeID& ID) override {
     Profile(ID, LHS, getOpcode(), RHS, getType());
   }
 
@@ -450,7 +450,7 @@ public:
   const SymExpr *getLHS() const { return LHS; }
   const SymExpr *getRHS() const { return RHS; }
 
-  virtual void dumpToStream(raw_ostream &os) const;
+  void dumpToStream(raw_ostream &os) const override;
 
   static void Profile(llvm::FoldingSetNodeID& ID, const SymExpr *lhs,
                     BinaryOperator::Opcode op, const SymExpr *rhs, QualType t) {
@@ -461,7 +461,7 @@ public:
     ID.Add(t);
   }
 
-  void Profile(llvm::FoldingSetNodeID& ID) {
+  void Profile(llvm::FoldingSetNodeID& ID) override {
     Profile(ID, LHS, getOpcode(), RHS, getType());
   }
 

@@ -1563,7 +1563,7 @@ namespace {
     UseAfterRelease(const CheckerBase *checker)
         : CFRefBug(checker, "Use-after-release") {}
 
-    const char *getDescription() const {
+    const char *getDescription() const override {
       return "Reference-counted object is used after it is released";
     }
   };
@@ -1572,7 +1572,7 @@ namespace {
   public:
     BadRelease(const CheckerBase *checker) : CFRefBug(checker, "Bad release") {}
 
-    const char *getDescription() const {
+    const char *getDescription() const override {
       return "Incorrect decrement of the reference count of an object that is "
              "not owned at this point by the caller";
     }
@@ -1583,7 +1583,7 @@ namespace {
     DeallocGC(const CheckerBase *checker)
         : CFRefBug(checker, "-dealloc called while using garbage collection") {}
 
-    const char *getDescription() const {
+    const char *getDescription() const override {
       return "-dealloc called while using garbage collection";
     }
   };
@@ -1593,7 +1593,7 @@ namespace {
     DeallocNotOwned(const CheckerBase *checker)
         : CFRefBug(checker, "-dealloc sent to non-exclusively owned object") {}
 
-    const char *getDescription() const {
+    const char *getDescription() const override {
       return "-dealloc sent to object that may be referenced elsewhere";
     }
   };
@@ -1603,7 +1603,7 @@ namespace {
     OverAutorelease(const CheckerBase *checker)
         : CFRefBug(checker, "Object autoreleased too many times") {}
 
-    const char *getDescription() const {
+    const char *getDescription() const override {
       return "Object autoreleased too many times";
     }
   };
@@ -1613,7 +1613,7 @@ namespace {
     ReturnedNotOwnedForOwned(const CheckerBase *checker)
         : CFRefBug(checker, "Method should return an owned object") {}
 
-    const char *getDescription() const {
+    const char *getDescription() const override {
       return "Object with a +0 retain count returned to caller where a +1 "
              "(owning) retain count is expected";
     }
@@ -1626,9 +1626,9 @@ namespace {
       setSuppressOnSink(true);
     }
 
-    const char *getDescription() const { return ""; }
+    const char *getDescription() const override { return ""; }
 
-    bool isLeak() const { return true; }
+    bool isLeak() const override { return true; }
   };
 
   //===---------===//
@@ -1645,20 +1645,20 @@ namespace {
     CFRefReportVisitor(SymbolRef sym, bool gcEnabled, const SummaryLogTy &log)
        : Sym(sym), SummaryLog(log), GCEnabled(gcEnabled) {}
 
-    virtual void Profile(llvm::FoldingSetNodeID &ID) const {
+    void Profile(llvm::FoldingSetNodeID &ID) const override {
       static int x = 0;
       ID.AddPointer(&x);
       ID.AddPointer(Sym);
     }
 
-    virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
-                                           const ExplodedNode *PrevN,
-                                           BugReporterContext &BRC,
-                                           BugReport &BR);
+    PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
+                                   const ExplodedNode *PrevN,
+                                   BugReporterContext &BRC,
+                                   BugReport &BR) override;
 
-    virtual PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
-                                            const ExplodedNode *N,
-                                            BugReport &BR);
+    PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
+                                    const ExplodedNode *N,
+                                    BugReport &BR) override;
   };
 
   class CFRefLeakReportVisitor : public CFRefReportVisitor {
@@ -1669,9 +1669,9 @@ namespace {
 
     PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
                                     const ExplodedNode *N,
-                                    BugReport &BR);
+                                    BugReport &BR) override;
 
-    virtual BugReporterVisitor *clone() const {
+    BugReporterVisitor *clone() const override {
       // The curiously-recurring template pattern only works for one level of
       // subclassing. Rather than make a new template base for
       // CFRefReportVisitor, we simply override clone() to do the right thing.
@@ -1702,7 +1702,7 @@ namespace {
       addGCModeDescription(LOpts, GCEnabled);
     }
 
-    virtual std::pair<ranges_iterator, ranges_iterator> getRanges() {
+    std::pair<ranges_iterator, ranges_iterator> getRanges() override {
       const CFRefBug& BugTy = static_cast<CFRefBug&>(getBugType());
       if (!BugTy.isLeak())
         return BugReport::getRanges();
@@ -1719,7 +1719,7 @@ namespace {
                     CheckerContext &Ctx,
                     bool IncludeAllocationLine);
 
-    PathDiagnosticLocation getLocation(const SourceManager &SM) const {
+    PathDiagnosticLocation getLocation(const SourceManager &SM) const override {
       assert(Location.isValid());
       return Location;
     }
@@ -2472,7 +2472,7 @@ public:
   }
 
   void printState(raw_ostream &Out, ProgramStateRef State,
-                  const char *NL, const char *Sep) const;
+                  const char *NL, const char *Sep) const override;
 
   void checkBind(SVal loc, SVal val, const Stmt *S, CheckerContext &C) const;
   void checkPostStmt(const BlockExpr *BE, CheckerContext &C) const;
@@ -2550,7 +2550,7 @@ public:
   StopTrackingCallback(ProgramStateRef st) : state(st) {}
   ProgramStateRef getState() const { return state; }
 
-  bool VisitSymbol(SymbolRef sym) {
+  bool VisitSymbol(SymbolRef sym) override {
     state = state->remove<RefBindings>(sym);
     return true;
   }

@@ -112,12 +112,12 @@ public:
   /// returns true) indicates whether the diagnostics handled by this
   /// DiagnosticConsumer should be included in the number of diagnostics
   /// reported by DiagnosticsEngine.
-  virtual bool IncludeInDiagnosticCounts() const;
+  bool IncludeInDiagnosticCounts() const override;
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.
-  virtual void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                                const Diagnostic &Info);
+  void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
+                        const Diagnostic &Info) override;
 
   /// \brief Emit a diagnostic via the adapted diagnostic client.
   void Diag(SourceLocation Loc, unsigned DiagID);

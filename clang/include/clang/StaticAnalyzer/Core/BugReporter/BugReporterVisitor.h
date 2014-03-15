@@ -89,7 +89,7 @@ public:
 /// will have to provide your own implementation.)
 template <class DERIVED>
 class BugReporterVisitorImpl : public BugReporterVisitor {
-  virtual BugReporterVisitor *clone() const {
+  BugReporterVisitor *clone() const override {
     return new DERIVED(*static_cast<const DERIVED *>(this));
   }
 };
@@ -118,12 +118,12 @@ public:
     Satisfied(false),
     EnableNullFPSuppression(InEnableNullFPSuppression) {}
 
-  void Profile(llvm::FoldingSetNodeID &ID) const;
+  void Profile(llvm::FoldingSetNodeID &ID) const override;
 
   PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                  const ExplodedNode *PrevN,
                                  BugReporterContext &BRC,
-                                 BugReport &BR);
+                                 BugReport &BR) override;
 };
 
 class TrackConstraintBRVisitor
@@ -144,7 +144,7 @@ public:
     IsZeroCheck(!Assumption && Constraint.getAs<Loc>()),
     IsTrackingTurnedOn(false) {}
 
-  void Profile(llvm::FoldingSetNodeID &ID) const;
+  void Profile(llvm::FoldingSetNodeID &ID) const override;
 
   /// Return the tag associated with this visitor.  This tag will be used
   /// to make all PathDiagnosticPieces created by this visitor.
@@ -153,7 +153,7 @@ public:
   PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                  const ExplodedNode *PrevN,
                                  BugReporterContext &BRC,
-                                 BugReport &BR);
+                                 BugReport &BR) override;
 
 private:
   /// Checks if the constraint is valid in the current state.
@@ -166,8 +166,8 @@ private:
 class NilReceiverBRVisitor
   : public BugReporterVisitorImpl<NilReceiverBRVisitor> {
 public:
-  
-  void Profile(llvm::FoldingSetNodeID &ID) const {
+
+  void Profile(llvm::FoldingSetNodeID &ID) const override {
     static int x = 0;
     ID.AddPointer(&x);
   }
@@ -175,7 +175,7 @@ public:
   PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                  const ExplodedNode *PrevN,
                                  BugReporterContext &BRC,
-                                 BugReport &BR);
+                                 BugReport &BR) override;
 
   /// If the statement is a message send expression with nil receiver, returns
   /// the receiver expression. Returns NULL otherwise.
@@ -185,7 +185,7 @@ public:
 /// Visitor that tries to report interesting diagnostics from conditions.
 class ConditionBRVisitor : public BugReporterVisitorImpl<ConditionBRVisitor> {
 public:
-  void Profile(llvm::FoldingSetNodeID &ID) const {
+  void Profile(llvm::FoldingSetNodeID &ID) const  override{
     static int x = 0;
     ID.AddPointer(&x);
   }
@@ -193,11 +193,11 @@ public:
   /// Return the tag associated with this visitor.  This tag will be used
   /// to make all PathDiagnosticPieces created by this visitor.
   static const char *getTag();
-  
-  virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
-                                         const ExplodedNode *Prev,
-                                         BugReporterContext &BRC,
-                                         BugReport &BR);
+
+  PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
+                                 const ExplodedNode *Prev,
+                                 BugReporterContext &BRC,
+                                 BugReport &BR) override;
 
   PathDiagnosticPiece *VisitNodeImpl(const ExplodedNode *N,
                                      const ExplodedNode *Prev,
@@ -257,20 +257,20 @@ public:
     return static_cast<void *>(&Tag);
   }
 
-  void Profile(llvm::FoldingSetNodeID &ID) const {
+  void Profile(llvm::FoldingSetNodeID &ID) const override {
     ID.AddPointer(getTag());
   }
 
-  virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
-                                         const ExplodedNode *Prev,
-                                         BugReporterContext &BRC,
-                                         BugReport &BR) {
+  PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
+                                 const ExplodedNode *Prev,
+                                 BugReporterContext &BRC,
+                                 BugReport &BR) override {
     return 0;
   }
 
-  virtual PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
-                                          const ExplodedNode *N,
-                                          BugReport &BR);
+  PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
+                                  const ExplodedNode *N,
+                                  BugReport &BR) override;
 };
 
 /// \brief When a region containing undefined value or '0' value is passed 
@@ -287,7 +287,7 @@ class UndefOrNullArgVisitor
 public:
   UndefOrNullArgVisitor(const MemRegion *InR) : R(InR) {}
 
-  virtual void Profile(llvm::FoldingSetNodeID &ID) const {
+  void Profile(llvm::FoldingSetNodeID &ID) const override {
     static int Tag = 0;
     ID.AddPointer(&Tag);
     ID.AddPointer(R);
@@ -296,7 +296,7 @@ public:
   PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                  const ExplodedNode *PrevN,
                                  BugReporterContext &BRC,
-                                 BugReport &BR);
+                                 BugReport &BR) override;
 };
 
 class SuppressInlineDefensiveChecksVisitor
@@ -319,7 +319,7 @@ class SuppressInlineDefensiveChecksVisitor
 public:
   SuppressInlineDefensiveChecksVisitor(DefinedSVal Val, const ExplodedNode *N);
 
-  void Profile(llvm::FoldingSetNodeID &ID) const;
+  void Profile(llvm::FoldingSetNodeID &ID) const override;
 
   /// Return the tag associated with this visitor.  This tag will be used
   /// to make all PathDiagnosticPieces created by this visitor.
@@ -328,7 +328,7 @@ public:
   PathDiagnosticPiece *VisitNode(const ExplodedNode *Succ,
                                  const ExplodedNode *Pred,
                                  BugReporterContext &BRC,
-                                 BugReport &BR);
+                                 BugReport &BR) override;
 };
 
 namespace bugreporter {

@@ -67,17 +67,17 @@ public:
   ///
   /// FIXME: Currently FilePath must be an absolute path inside the
   /// source directory which does not have symlinks resolved.
-  virtual std::vector<CompileCommand> getCompileCommands(
-    StringRef FilePath) const;
+  std::vector<CompileCommand>
+  getCompileCommands(StringRef FilePath) const override;
 
   /// \brief Returns the list of all files available in the compilation database.
   ///
   /// These are the 'file' entries of the JSON objects.
-  virtual std::vector<std::string> getAllFiles() const;
+  std::vector<std::string> getAllFiles() const override;
 
   /// \brief Returns all compile commands for all the files in the compilation
   /// database.
-  virtual std::vector<CompileCommand> getAllCompileCommands() const;
+  std::vector<CompileCommand> getAllCompileCommands() const override;
 
 private:
   /// \brief Constructs a JSON compilation database on a memory buffer.

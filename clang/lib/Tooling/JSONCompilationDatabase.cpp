@@ -118,8 +118,8 @@ std::vector<std::string> unescapeCommandLine(
 }
 
 class JSONCompilationDatabasePlugin : public CompilationDatabasePlugin {
-  virtual CompilationDatabase *loadFromDirectory(
-      StringRef Directory, std::string &ErrorMessage) {
+  CompilationDatabase *loadFromDirectory(StringRef Directory,
+                                         std::string &ErrorMessage) override {
     SmallString<1024> JSONDatabasePath(Directory);
     llvm::sys::path::append(JSONDatabasePath, "compile_commands.json");
     std::unique_ptr<CompilationDatabase> Database(

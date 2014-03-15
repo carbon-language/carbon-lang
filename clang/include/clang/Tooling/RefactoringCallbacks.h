@@ -52,7 +52,7 @@ protected:
 class ReplaceStmtWithText : public RefactoringCallback {
 public:
   ReplaceStmtWithText(StringRef FromId, StringRef ToText);
-  virtual void run(const ast_matchers::MatchFinder::MatchResult &Result);
+  void run(const ast_matchers::MatchFinder::MatchResult &Result) override;
 
 private:
   std::string FromId;
@@ -64,7 +64,7 @@ private:
 class ReplaceStmtWithStmt : public RefactoringCallback {
 public:
   ReplaceStmtWithStmt(StringRef FromId, StringRef ToId);
-  virtual void run(const ast_matchers::MatchFinder::MatchResult &Result);
+  void run(const ast_matchers::MatchFinder::MatchResult &Result) override;
 
 private:
   std::string FromId;
@@ -77,7 +77,7 @@ private:
 class ReplaceIfStmtWithItsBody : public RefactoringCallback {
 public:
   ReplaceIfStmtWithItsBody(StringRef Id, bool PickTrueBranch);
-  virtual void run(const ast_matchers::MatchFinder::MatchResult &Result);
+  void run(const ast_matchers::MatchFinder::MatchResult &Result) override;
 
 private:
   std::string Id;

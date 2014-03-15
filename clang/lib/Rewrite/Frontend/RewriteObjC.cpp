@@ -165,7 +165,7 @@ namespace {
   public:
 
     // Top Level Driver code.
-    virtual bool HandleTopLevelDecl(DeclGroupRef D) {
+    bool HandleTopLevelDecl(DeclGroupRef D) override {
       for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I) {
         if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(*I)) {
           if (!Class->isThisDeclarationADefinition()) {
@@ -193,7 +193,7 @@ namespace {
 
     ~RewriteObjC() {}
 
-    virtual void HandleTranslationUnit(ASTContext &C);
+    void HandleTranslationUnit(ASTContext &C) override;
 
     void ReplaceStmt(Stmt *Old, Stmt *New) {
       Stmt *ReplacingStmt = ReplacedNodes[Old];
@@ -328,9 +328,9 @@ namespace {
     
     void RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
                                       std::string &Result);
-    
-    virtual void Initialize(ASTContext &context) = 0;
-    
+
+    virtual void Initialize(ASTContext &context) override = 0;
+
     // Metadata Rewriting.
     virtual void RewriteMetaDataIntoBuffer(std::string &Result) = 0;
     virtual void RewriteObjCProtocolListMetaData(const ObjCList<ObjCProtocolDecl> &Prots,
@@ -521,8 +521,8 @@ namespace {
                                                      silenceMacroWarn) {}
     
     ~RewriteObjCFragileABI() {}
-    virtual void Initialize(ASTContext &context);
-    
+    virtual void Initialize(ASTContext &context) override;
+
     // Rewriting metadata
     template<typename MethodIterator>
     void RewriteObjCMethodsMetaData(MethodIterator MethodBegin,
@@ -531,23 +531,22 @@ namespace {
                                     StringRef prefix,
                                     StringRef ClassName,
                                     std::string &Result);
-    virtual void RewriteObjCProtocolMetaData(ObjCProtocolDecl *Protocol,
-                                             StringRef prefix,
-                                             StringRef ClassName,
-                                             std::string &Result);
-    virtual void RewriteObjCProtocolListMetaData(
-                  const ObjCList<ObjCProtocolDecl> &Prots,
-                  StringRef prefix, StringRef ClassName, std::string &Result);
-    virtual void RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
-                                          std::string &Result);
-    virtual void RewriteMetaDataIntoBuffer(std::string &Result);
-    virtual void RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *CDecl,
-                                             std::string &Result);
-    
+    void RewriteObjCProtocolMetaData(ObjCProtocolDecl *Protocol,
+                                     StringRef prefix, StringRef ClassName,
+                                     std::string &Result) override;
+    void RewriteObjCProtocolListMetaData(
+          const ObjCList<ObjCProtocolDecl> &Prots,
+          StringRef prefix, StringRef ClassName, std::string &Result) override;
+    void RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
+                                  std::string &Result) override;
+    void RewriteMetaDataIntoBuffer(std::string &Result) override;
+    void RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *CDecl,
+                                     std::string &Result) override;
+
     // Rewriting ivar
-    virtual void RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
-                                              std::string &Result);
-    virtual Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV);
+    void RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
+                                      std::string &Result) override;
+    Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) override;
   };
 }
 

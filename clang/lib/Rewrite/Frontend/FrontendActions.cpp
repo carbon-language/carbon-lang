@@ -48,7 +48,7 @@ ASTConsumer *FixItAction::CreateASTConsumer(CompilerInstance &CI,
 namespace {
 class FixItRewriteInPlace : public FixItOptions {
 public:
-  std::string RewriteFilename(const std::string &Filename, int &fd) {
+  std::string RewriteFilename(const std::string &Filename, int &fd) override {
     fd = -1;
     return Filename;
   }
@@ -63,7 +63,7 @@ public:
       this->FixWhatYouCan = FixWhatYouCan;
   }
 
-  std::string RewriteFilename(const std::string &Filename, int &fd) {
+  std::string RewriteFilename(const std::string &Filename, int &fd) override {
     fd = -1;
     SmallString<128> Path(Filename);
     llvm::sys::path::replace_extension(Path,
@@ -74,7 +74,7 @@ public:
 
 class FixItRewriteToTemp : public FixItOptions {
 public:
-  std::string RewriteFilename(const std::string &Filename, int &fd) {
+  std::string RewriteFilename(const std::string &Filename, int &fd) override {
     SmallString<128> Path;
     llvm::sys::fs::createTemporaryFile(llvm::sys::path::filename(Filename),
                                        llvm::sys::path::extension(Filename), fd,

@@ -55,21 +55,16 @@ public:
     PredefinesBuffer = Buf;
   }
 private:
-  virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                           SrcMgr::CharacteristicKind FileType,
-                           FileID PrevFID);
-  virtual void FileSkipped(const FileEntry &ParentFile,
-                           const Token &FilenameTok,
-                           SrcMgr::CharacteristicKind FileType);
-  virtual void InclusionDirective(SourceLocation HashLoc,
-                                  const Token &IncludeTok,
-                                  StringRef FileName,
-                                  bool IsAngled,
-                                  CharSourceRange FilenameRange,
-                                  const FileEntry *File,
-                                  StringRef SearchPath,
-                                  StringRef RelativePath,
-                                  const Module *Imported);
+  void FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                   SrcMgr::CharacteristicKind FileType,
+                   FileID PrevFID) override;
+  void FileSkipped(const FileEntry &ParentFile, const Token &FilenameTok,
+                   SrcMgr::CharacteristicKind FileType) override;
+  void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
+                          StringRef FileName, bool IsAngled,
+                          CharSourceRange FilenameRange, const FileEntry *File,
+                          StringRef SearchPath, StringRef RelativePath,
+                          const Module *Imported) override;
   void WriteLineInfo(const char *Filename, int Line,
                      SrcMgr::CharacteristicKind FileType,
                      StringRef EOL, StringRef Extra = StringRef());

@@ -311,7 +311,7 @@ class NodeMapClosure : public BugReport::NodeResolver {
 public:
   NodeMapClosure(InterExplodedGraphMap &m) : M(m) {}
 
-  const ExplodedNode *getOriginalNode(const ExplodedNode *N) {
+  const ExplodedNode *getOriginalNode(const ExplodedNode *N) override {
     return M.lookup(N);
   }
 };
@@ -345,7 +345,7 @@ public:
     return getParentMap().getParent(S);
   }
 
-  virtual NodeMapClosure& getNodeResolver() { return NMC; }
+  NodeMapClosure& getNodeResolver() override { return NMC; }
 
   PathDiagnosticLocation getEnclosingStmtLocation(const Stmt *S);
 

@@ -22,8 +22,8 @@ class FixItOptions;
 
 class HTMLPrintAction : public ASTFrontendAction {
 protected:
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         StringRef InFile);
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override;
 };
 
 class FixItAction : public ASTFrontendAction {
@@ -31,15 +31,15 @@ protected:
   std::unique_ptr<FixItRewriter> Rewriter;
   std::unique_ptr<FixItOptions> FixItOpts;
 
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         StringRef InFile);
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override;
 
-  virtual bool BeginSourceFileAction(CompilerInstance &CI,
-                                     StringRef Filename);
+  bool BeginSourceFileAction(CompilerInstance &CI,
+                             StringRef Filename) override;
 
-  virtual void EndSourceFileAction();
+  void EndSourceFileAction() override;
 
-  virtual bool hasASTFileSupport() const { return false; }
+  bool hasASTFileSupport() const override { return false; }
 
 public:
   FixItAction();
@@ -54,28 +54,28 @@ public:
     : WrapperFrontendAction(WrappedAction) {}
 
 protected:
-  virtual bool BeginInvocation(CompilerInstance &CI);
+  bool BeginInvocation(CompilerInstance &CI) override;
 };
 
 class RewriteObjCAction : public ASTFrontendAction {
 protected:
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         StringRef InFile);
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override;
 };
 
 class RewriteMacrosAction : public PreprocessorFrontendAction {
 protected:
-  void ExecuteAction();
+  void ExecuteAction() override;
 };
 
 class RewriteTestAction : public PreprocessorFrontendAction {
 protected:
-  void ExecuteAction();
+  void ExecuteAction() override;
 };
 
 class RewriteIncludesAction : public PreprocessorFrontendAction {
 protected:
-  void ExecuteAction();
+  void ExecuteAction() override;
 };
 
 }  // end namespace clang

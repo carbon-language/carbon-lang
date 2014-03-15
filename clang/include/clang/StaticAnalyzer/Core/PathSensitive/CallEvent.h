@@ -390,11 +390,11 @@ protected:
 public:
   // This function is overridden by subclasses, but they must return
   // a FunctionDecl.
-  virtual const FunctionDecl *getDecl() const {
+  const FunctionDecl *getDecl() const override {
     return cast<FunctionDecl>(CallEvent::getDecl());
   }
 
-  virtual RuntimeDefinition getRuntimeDefinition() const {
+  RuntimeDefinition getRuntimeDefinition() const override {
     const FunctionDecl *FD = getDecl();
     // Note that the AnalysisDeclContext will have the FunctionDecl with
     // the definition (if one exists).
@@ -409,12 +409,12 @@ public:
     return RuntimeDefinition();
   }
 
-  virtual bool argumentsMayEscape() const;
+  bool argumentsMayEscape() const override;
 
-  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
-                                            BindingsTy &Bindings) const;
+  void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                    BindingsTy &Bindings) const override;
 
-  virtual ArrayRef<ParmVarDecl *> parameters() const;
+  ArrayRef<ParmVarDecl *> parameters() const override;
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() >= CE_BEG_FUNCTION_CALLS &&
@@ -434,7 +434,7 @@ protected:
     : AnyFunctionCall(CE, St, LCtx) {}
   SimpleFunctionCall(const SimpleFunctionCall &Other)
     : AnyFunctionCall(Other) {}
-  virtual void cloneTo(void *Dest) const {
+  void cloneTo(void *Dest) const override {
     new (Dest) SimpleFunctionCall(*this);
   }
 
@@ -443,15 +443,15 @@ public:
     return cast<CallExpr>(AnyFunctionCall::getOriginExpr());
   }
 
-  virtual const FunctionDecl *getDecl() const;
+  const FunctionDecl *getDecl() const override;
 
-  virtual unsigned getNumArgs() const { return getOriginExpr()->getNumArgs(); }
+  unsigned getNumArgs() const override { return getOriginExpr()->getNumArgs(); }
 
-  virtual const Expr *getArgExpr(unsigned Index) const {
+  const Expr *getArgExpr(unsigned Index) const override {
     return getOriginExpr()->getArg(Index);
   }
 
-  virtual Kind getKind() const { return CE_Function; }
+  Kind getKind() const override { return CE_Function; }
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_Function;
@@ -470,18 +470,18 @@ protected:
     : CallEvent(CE, St, LCtx) {}
 
   BlockCall(const BlockCall &Other) : CallEvent(Other) {}
-  virtual void cloneTo(void *Dest) const { new (Dest) BlockCall(*this); }
+  void cloneTo(void *Dest) const override { new (Dest) BlockCall(*this); }
 
-  virtual void getExtraInvalidatedValues(ValueList &Values) const;
+  void getExtraInvalidatedValues(ValueList &Values) const override;
 
 public:
   virtual const CallExpr *getOriginExpr() const {
     return cast<CallExpr>(CallEvent::getOriginExpr());
   }
 
-  virtual unsigned getNumArgs() const { return getOriginExpr()->getNumArgs(); }
+  unsigned getNumArgs() const override { return getOriginExpr()->getNumArgs(); }
 
-  virtual const Expr *getArgExpr(unsigned Index) const {
+  const Expr *getArgExpr(unsigned Index) const override {
     return getOriginExpr()->getArg(Index);
   }
 
@@ -490,27 +490,27 @@ public:
   /// This may be NULL if the block's origin is unknown.
   const BlockDataRegion *getBlockRegion() const;
 
-  virtual const BlockDecl *getDecl() const {
+  const BlockDecl *getDecl() const override {
     const BlockDataRegion *BR = getBlockRegion();
     if (!BR)
       return 0;
     return BR->getDecl();
   }
 
-  virtual RuntimeDefinition getRuntimeDefinition() const {
+  RuntimeDefinition getRuntimeDefinition() const override {
     return RuntimeDefinition(getDecl());
   }
 
-  virtual bool argumentsMayEscape() const {
+  bool argumentsMayEscape() const override {
     return true;
   }
 
-  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
-                                            BindingsTy &Bindings) const;
+  void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                    BindingsTy &Bindings) const override;
 
-  virtual ArrayRef<ParmVarDecl*> parameters() const;
+  ArrayRef<ParmVarDecl*> parameters() const override;
 
-  virtual Kind getKind() const { return CE_Block; }
+  Kind getKind() const override { return CE_Block; }
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_Block;
@@ -521,7 +521,7 @@ public:
 /// it is written.
 class CXXInstanceCall : public AnyFunctionCall {
 protected:
-  virtual void getExtraInvalidatedValues(ValueList &Values) const;
+  void getExtraInvalidatedValues(ValueList &Values) const override;
 
   CXXInstanceCall(const CallExpr *CE, ProgramStateRef St,
                   const LocationContext *LCtx)
@@ -540,12 +540,12 @@ public:
   /// \brief Returns the value of the implicit 'this' object.
   virtual SVal getCXXThisVal() const;
 
-  virtual const FunctionDecl *getDecl() const;
+  const FunctionDecl *getDecl() const override;
 
-  virtual RuntimeDefinition getRuntimeDefinition() const;
+  RuntimeDefinition getRuntimeDefinition() const override;
 
-  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
-                                            BindingsTy &Bindings) const;
+  void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                    BindingsTy &Bindings) const override;
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() >= CE_BEG_CXX_INSTANCE_CALLS &&
@@ -565,28 +565,28 @@ protected:
     : CXXInstanceCall(CE, St, LCtx) {}
 
   CXXMemberCall(const CXXMemberCall &Other) : CXXInstanceCall(Other) {}
-  virtual void cloneTo(void *Dest) const { new (Dest) CXXMemberCall(*this); }
+  void cloneTo(void *Dest) const override { new (Dest) CXXMemberCall(*this); }
 
 public:
   virtual const CXXMemberCallExpr *getOriginExpr() const {
     return cast<CXXMemberCallExpr>(CXXInstanceCall::getOriginExpr());
   }
 
-  virtual unsigned getNumArgs() const {
+  unsigned getNumArgs() const override {
     if (const CallExpr *CE = getOriginExpr())
       return CE->getNumArgs();
     return 0;
   }
 
-  virtual const Expr *getArgExpr(unsigned Index) const {
+  const Expr *getArgExpr(unsigned Index) const override {
     return getOriginExpr()->getArg(Index);
   }
 
-  virtual const Expr *getCXXThisExpr() const;
-  
-  virtual RuntimeDefinition getRuntimeDefinition() const;
+  const Expr *getCXXThisExpr() const override;
 
-  virtual Kind getKind() const { return CE_CXXMember; }
+  RuntimeDefinition getRuntimeDefinition() const override;
+
+  Kind getKind() const override { return CE_CXXMember; }
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXMember;
@@ -607,7 +607,7 @@ protected:
 
   CXXMemberOperatorCall(const CXXMemberOperatorCall &Other)
     : CXXInstanceCall(Other) {}
-  virtual void cloneTo(void *Dest) const {
+  void cloneTo(void *Dest) const override {
     new (Dest) CXXMemberOperatorCall(*this);
   }
 
@@ -616,16 +616,16 @@ public:
     return cast<CXXOperatorCallExpr>(CXXInstanceCall::getOriginExpr());
   }
 
-  virtual unsigned getNumArgs() const {
+  unsigned getNumArgs() const override {
     return getOriginExpr()->getNumArgs() - 1;
   }
-  virtual const Expr *getArgExpr(unsigned Index) const {
+  const Expr *getArgExpr(unsigned Index) const override {
     return getOriginExpr()->getArg(Index + 1);
   }
 
-  virtual const Expr *getCXXThisExpr() const;
+  const Expr *getCXXThisExpr() const override;
 
-  virtual Kind getKind() const { return CE_CXXMemberOperator; }
+  Kind getKind() const override { return CE_CXXMemberOperator; }
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXMemberOperator;
@@ -658,23 +658,23 @@ protected:
   }
 
   CXXDestructorCall(const CXXDestructorCall &Other) : CXXInstanceCall(Other) {}
-  virtual void cloneTo(void *Dest) const { new (Dest) CXXDestructorCall(*this); }
+  void cloneTo(void *Dest) const override {new (Dest) CXXDestructorCall(*this);}
 
 public:
-  virtual SourceRange getSourceRange() const { return Location; }
-  virtual unsigned getNumArgs() const { return 0; }
+  SourceRange getSourceRange() const override { return Location; }
+  unsigned getNumArgs() const override { return 0; }
 
-  virtual RuntimeDefinition getRuntimeDefinition() const;
+  RuntimeDefinition getRuntimeDefinition() const override;
 
   /// \brief Returns the value of the implicit 'this' object.
-  virtual SVal getCXXThisVal() const;
+  SVal getCXXThisVal() const override;
 
   /// Returns true if this is a call to a base class destructor.
   bool isBaseDestructor() const {
     return DtorDataTy::getFromOpaqueValue(Data).getInt();
   }
 
-  virtual Kind getKind() const { return CE_CXXDestructor; }
+  Kind getKind() const override { return CE_CXXDestructor; }
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXDestructor;
@@ -702,32 +702,32 @@ protected:
   }
 
   CXXConstructorCall(const CXXConstructorCall &Other) : AnyFunctionCall(Other){}
-  virtual void cloneTo(void *Dest) const { new (Dest) CXXConstructorCall(*this); }
+  void cloneTo(void *Dest) const override { new (Dest) CXXConstructorCall(*this); }
 
-  virtual void getExtraInvalidatedValues(ValueList &Values) const;
+  void getExtraInvalidatedValues(ValueList &Values) const override;
 
 public:
   virtual const CXXConstructExpr *getOriginExpr() const {
     return cast<CXXConstructExpr>(AnyFunctionCall::getOriginExpr());
   }
 
-  virtual const CXXConstructorDecl *getDecl() const {
+  const CXXConstructorDecl *getDecl() const override {
     return getOriginExpr()->getConstructor();
   }
 
-  virtual unsigned getNumArgs() const { return getOriginExpr()->getNumArgs(); }
+  unsigned getNumArgs() const override { return getOriginExpr()->getNumArgs(); }
 
-  virtual const Expr *getArgExpr(unsigned Index) const {
+  const Expr *getArgExpr(unsigned Index) const override {
     return getOriginExpr()->getArg(Index);
   }
 
   /// \brief Returns the value of the implicit 'this' object.
   SVal getCXXThisVal() const;
 
-  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
-                                            BindingsTy &Bindings) const;
+  void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                    BindingsTy &Bindings) const override;
 
-  virtual Kind getKind() const { return CE_CXXConstructor; }
+  Kind getKind() const override { return CE_CXXConstructor; }
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_CXXConstructor;
@@ -746,29 +746,29 @@ protected:
     : AnyFunctionCall(E, St, LCtx) {}
 
   CXXAllocatorCall(const CXXAllocatorCall &Other) : AnyFunctionCall(Other) {}
-  virtual void cloneTo(void *Dest) const { new (Dest) CXXAllocatorCall(*this); }
+  void cloneTo(void *Dest) const override { new (Dest) CXXAllocatorCall(*this); }
 
 public:
   virtual const CXXNewExpr *getOriginExpr() const {
     return cast<CXXNewExpr>(AnyFunctionCall::getOriginExpr());
   }
 
-  virtual const FunctionDecl *getDecl() const {
+  const FunctionDecl *getDecl() const override {
     return getOriginExpr()->getOperatorNew();
   }
 
-  virtual unsigned getNumArgs() const {
+  unsigned getNumArgs() const override {
     return getOriginExpr()->getNumPlacementArgs() + 1;
   }
 
-  virtual const Expr *getArgExpr(unsigned Index) const {
+  const Expr *getArgExpr(unsigned Index) const override {
     // The first argument of an allocator call is the size of the allocation.
     if (Index == 0)
       return 0;
     return getOriginExpr()->getPlacementArg(Index - 1);
   }
 
-  virtual Kind getKind() const { return CE_CXXAllocator; }
+  Kind getKind() const override { return CE_CXXAllocator; }
 
   static bool classof(const CallEvent *CE) {
     return CE->getKind() == CE_CXXAllocator;
@@ -801,9 +801,9 @@ protected:
   }
 
   ObjCMethodCall(const ObjCMethodCall &Other) : CallEvent(Other) {}
-  virtual void cloneTo(void *Dest) const { new (Dest) ObjCMethodCall(*this); }
+  void cloneTo(void *Dest) const override { new (Dest) ObjCMethodCall(*this); }
 
-  virtual void getExtraInvalidatedValues(ValueList &Values) const;
+  void getExtraInvalidatedValues(ValueList &Values) const override;
 
   /// Check if the selector may have multiple definitions (may have overrides).
   virtual bool canBeOverridenInSubclass(ObjCInterfaceDecl *IDecl,
@@ -813,13 +813,13 @@ public:
   virtual const ObjCMessageExpr *getOriginExpr() const {
     return cast<ObjCMessageExpr>(CallEvent::getOriginExpr());
   }
-  virtual const ObjCMethodDecl *getDecl() const {
+  const ObjCMethodDecl *getDecl() const override {
     return getOriginExpr()->getMethodDecl();
   }
-  virtual unsigned getNumArgs() const {
+  unsigned getNumArgs() const override {
     return getOriginExpr()->getNumArgs();
   }
-  virtual const Expr *getArgExpr(unsigned Index) const {
+  const Expr *getArgExpr(unsigned Index) const override {
     return getOriginExpr()->getArg(Index);
   }
 
@@ -833,7 +833,7 @@ public:
     return getOriginExpr()->getSelector();
   }
 
-  virtual SourceRange getSourceRange() const;
+  SourceRange getSourceRange() const override;
 
   /// \brief Returns the value of the receiver at the time of this call.
   SVal getReceiverSVal() const;
@@ -870,16 +870,16 @@ public:
     llvm_unreachable("Unknown message kind");
   }
 
-  virtual RuntimeDefinition getRuntimeDefinition() const;
+  RuntimeDefinition getRuntimeDefinition() const override;
 
-  virtual bool argumentsMayEscape() const;
+  bool argumentsMayEscape() const override;
 
-  virtual void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
-                                            BindingsTy &Bindings) const;
+  void getInitialStackFrameContents(const StackFrameContext *CalleeCtx,
+                                    BindingsTy &Bindings) const override;
 
-  virtual ArrayRef<ParmVarDecl*> parameters() const;
+  ArrayRef<ParmVarDecl*> parameters() const override;
 
-  virtual Kind getKind() const { return CE_ObjCMessage; }
+  Kind getKind() const override { return CE_ObjCMessage; }
 
   static bool classof(const CallEvent *CA) {
     return CA->getKind() == CE_ObjCMessage;

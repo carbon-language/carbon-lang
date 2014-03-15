@@ -196,7 +196,7 @@ public:
                                           PointerEscapeKind Kind) const;
 
   void printState(raw_ostream &Out, ProgramStateRef State,
-                  const char *NL, const char *Sep) const;
+                  const char *NL, const char *Sep) const override;
 
 private:
   mutable std::unique_ptr<BugType> BT_DoubleFree[CK_NumCheckKinds];
@@ -364,7 +364,7 @@ private:
 
     virtual ~MallocBugVisitor() {}
 
-    void Profile(llvm::FoldingSetNodeID &ID) const {
+    void Profile(llvm::FoldingSetNodeID &ID) const override {
       static int X = 0;
       ID.AddPointer(&X);
       ID.AddPointer(Sym);
@@ -406,11 +406,11 @@ private:
     PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                    const ExplodedNode *PrevN,
                                    BugReporterContext &BRC,
-                                   BugReport &BR);
+                                   BugReport &BR) override;
 
     PathDiagnosticPiece* getEndPath(BugReporterContext &BRC,
                                     const ExplodedNode *EndPathNode,
-                                    BugReport &BR) {
+                                    BugReport &BR) override {
       if (!IsLeak)
         return 0;
 
@@ -428,7 +428,8 @@ private:
       StackHintGeneratorForReallocationFailed(SymbolRef S, StringRef M)
         : StackHintGeneratorForSymbol(S, M) {}
 
-      virtual std::string getMessageForArg(const Expr *ArgE, unsigned ArgIndex) {
+      std::string getMessageForArg(const Expr *ArgE,
+                                   unsigned ArgIndex) override {
         // Printed parameters start at 1, not 0.
         ++ArgIndex;
 
@@ -441,7 +442,7 @@ private:
         return os.str();
       }
 
-      virtual std::string getMessageForReturn(const CallExpr *CallExpr) {
+      std::string getMessageForReturn(const CallExpr *CallExpr) override {
         return "Reallocation of returned value failed";
       }
     };
@@ -463,7 +464,7 @@ public:
   StopTrackingCallback(ProgramStateRef st) : state(st) {}
   ProgramStateRef getState() const { return state; }
 
-  bool VisitSymbol(SymbolRef sym) {
+  bool VisitSymbol(SymbolRef sym) override {
     state = state->remove<RegionState>(sym);
     return true;
   }

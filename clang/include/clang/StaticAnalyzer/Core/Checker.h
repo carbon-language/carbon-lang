@@ -457,7 +457,7 @@ class CheckerBase : public ProgramPointTag {
   friend class ::clang::ento::CheckerManager;
 
 public:
-  StringRef getTagDescription() const;
+  StringRef getTagDescription() const override;
   CheckName getCheckName() const;
 
   /// See CheckerManager::runCheckersForPrintState.

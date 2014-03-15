@@ -190,19 +190,19 @@ public:
   /// Will always return a vector with one entry that contains the directory
   /// and command line specified at construction with "clang-tool" as argv[0]
   /// and 'FilePath' as positional argument.
-  virtual std::vector<CompileCommand> getCompileCommands(
-    StringRef FilePath) const;
+  std::vector<CompileCommand>
+  getCompileCommands(StringRef FilePath) const override;
 
   /// \brief Returns the list of all files available in the compilation database.
   ///
   /// Note: This is always an empty list for the fixed compilation database.
-  virtual std::vector<std::string> getAllFiles() const;
+  std::vector<std::string> getAllFiles() const override;
 
   /// \brief Returns all compile commands for all the files in the compilation
   /// database.
   ///
   /// Note: This is always an empty list for the fixed compilation database.
-  virtual std::vector<CompileCommand> getAllCompileCommands() const;
+  std::vector<CompileCommand> getAllCompileCommands() const override;
 
 private:
   /// This is built up to contain a single entry vector to be returned from

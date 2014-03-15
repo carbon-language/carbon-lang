@@ -160,7 +160,7 @@ class SingleFrontendActionFactory : public FrontendActionFactory {
 public:
   SingleFrontendActionFactory(FrontendAction *Action) : Action(Action) {}
 
-  FrontendAction *create() { return Action; }
+  FrontendAction *create() override { return Action; }
 };
 
 }
@@ -380,7 +380,7 @@ public:
   ASTBuilderAction(std::vector<ASTUnit *> &ASTs) : ASTs(ASTs) {}
 
   bool runInvocation(CompilerInvocation *Invocation, FileManager *Files,
-                     DiagnosticConsumer *DiagConsumer) {
+                     DiagnosticConsumer *DiagConsumer) override {
     // FIXME: This should use the provided FileManager.
     ASTUnit *AST = ASTUnit::LoadFromCompilerInvocation(
         Invocation, CompilerInstance::createDiagnostics(

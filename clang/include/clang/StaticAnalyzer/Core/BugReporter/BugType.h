@@ -60,7 +60,7 @@ public:
 
 class BuiltinBug : public BugType {
   const std::string desc;
-  virtual void anchor();
+  void anchor() override;
 public:
   BuiltinBug(class CheckName check, const char *name, const char *description)
       : BugType(check, name, categories::LogicError), desc(description) {}

@@ -177,8 +177,8 @@ void StackAddrEscapeChecker::checkEndFunction(CheckerContext &Ctx) const {
     {}
     
     bool HandleBinding(StoreManager &SMgr, Store store,
-                       const MemRegion *region, SVal val) {
-      
+                       const MemRegion *region, SVal val) override {
+
       if (!isa<GlobalsSpaceRegion>(region->getMemorySpace()))
         return true;
       

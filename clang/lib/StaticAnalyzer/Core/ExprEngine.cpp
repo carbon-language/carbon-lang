@@ -1863,7 +1863,7 @@ public:
   CollectReachableSymbolsCallback(ProgramStateRef State) {}
   const InvalidatedSymbols &getSymbols() const { return Symbols; }
 
-  bool VisitSymbol(SymbolRef Sym) {
+  bool VisitSymbol(SymbolRef Sym) override {
     Symbols.insert(Sym);
     return true;
   }

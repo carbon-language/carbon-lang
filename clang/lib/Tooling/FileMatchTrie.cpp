@@ -24,7 +24,7 @@ namespace tooling {
 /// \brief Default \c PathComparator using \c llvm::sys::fs::equivalent().
 struct DefaultPathComparator : public PathComparator {
   virtual ~DefaultPathComparator() {}
-  virtual bool equivalent(StringRef FileA, StringRef FileB) const {
+  bool equivalent(StringRef FileA, StringRef FileB) const override {
     return FileA == FileB || llvm::sys::fs::equivalent(FileA, FileB);
   }
 };

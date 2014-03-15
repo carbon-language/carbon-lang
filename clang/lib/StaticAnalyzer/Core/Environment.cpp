@@ -123,11 +123,11 @@ class MarkLiveCallback : public SymbolVisitor {
   SymbolReaper &SymReaper;
 public:
   MarkLiveCallback(SymbolReaper &symreaper) : SymReaper(symreaper) {}
-  bool VisitSymbol(SymbolRef sym) {
+  bool VisitSymbol(SymbolRef sym) override {
     SymReaper.markLive(sym);
     return true;
   }
-  bool VisitMemRegion(const MemRegion *R) {
+  bool VisitMemRegion(const MemRegion *R) override {
     SymReaper.markLive(R);
     return true;
   }

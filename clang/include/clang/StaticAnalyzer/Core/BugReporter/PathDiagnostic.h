@@ -440,10 +440,10 @@ public:
     if (addPosRange && Pos.hasRange()) addRange(Pos.asRange());
   }
 
-  PathDiagnosticLocation getLocation() const { return Pos; }
-  virtual void flattenLocations() { Pos.flatten(); }
+  PathDiagnosticLocation getLocation() const override { return Pos; }
+  void flattenLocations() override { Pos.flatten(); }
 
-  virtual void Profile(llvm::FoldingSetNodeID &ID) const;
+  void Profile(llvm::FoldingSetNodeID &ID) const override;
 
   static bool classof(const PathDiagnosticPiece *P) {
     return P->getKind() == Event || P->getKind() == Macro;
@@ -479,7 +479,7 @@ public:
 
   /// \brief Search the call expression for the symbol Sym and dispatch the
   /// 'getMessageForX()' methods to construct a specific message.
-  virtual std::string getMessage(const ExplodedNode *N);
+  std::string getMessage(const ExplodedNode *N) override;
 
   /// Produces the message of the following form:
   ///   'Msg via Nth parameter'
@@ -534,7 +534,7 @@ public:
     return "";  
   }
 
-  virtual void dump() const;
+  void dump() const override;
 
   static inline bool classof(const PathDiagnosticPiece *P) {
     return P->getKind() == Event;
@@ -580,7 +580,7 @@ public:
     CallStackMessage = st;
   }
 
-  virtual PathDiagnosticLocation getLocation() const {
+  PathDiagnosticLocation getLocation() const override {
     return callEnter;
   }
   
@@ -589,7 +589,7 @@ public:
     getCallEnterWithinCallerEvent() const;
   IntrusiveRefCntPtr<PathDiagnosticEventPiece> getCallExitEvent() const;
 
-  virtual void flattenLocations() {
+  void flattenLocations() override {
     callEnter.flatten();
     callReturn.flatten();
     for (PathPieces::iterator I = path.begin(), 
@@ -602,10 +602,10 @@ public:
   
   static PathDiagnosticCallPiece *construct(PathPieces &pieces,
                                             const Decl *caller);
-  
-  virtual void dump() const;
 
-  virtual void Profile(llvm::FoldingSetNodeID &ID) const;
+  void dump() const override;
+
+  void Profile(llvm::FoldingSetNodeID &ID) const override;
 
   static inline bool classof(const PathDiagnosticPiece *P) {
     return P->getKind() == Call;
@@ -652,7 +652,7 @@ public:
 
   void push_back(const PathDiagnosticLocationPair &X) { LPairs.push_back(X); }
 
-  virtual PathDiagnosticLocation getLocation() const {
+  PathDiagnosticLocation getLocation() const override {
     return getStartLocation();
   }
 
@@ -660,7 +660,7 @@ public:
   iterator begin() { return LPairs.begin(); }
   iterator end()   { return LPairs.end(); }
 
-  virtual void flattenLocations() {
+  void flattenLocations() override {
     for (iterator I=begin(), E=end(); I!=E; ++I) I->flatten();
   }
 
@@ -673,9 +673,9 @@ public:
     return P->getKind() == ControlFlow;
   }
 
-  virtual void dump() const;
+  void dump() const override;
 
-  virtual void Profile(llvm::FoldingSetNodeID &ID) const;
+  void Profile(llvm::FoldingSetNodeID &ID) const override;
 };
 
 class PathDiagnosticMacroPiece : public PathDiagnosticSpotPiece {
@@ -689,7 +689,7 @@ public:
   
   bool containsEvent() const;
 
-  virtual void flattenLocations() {
+  void flattenLocations() override {
     PathDiagnosticSpotPiece::flattenLocations();
     for (PathPieces::iterator I = subPieces.begin(), 
          E = subPieces.end(); I != E; ++I) (*I)->flattenLocations();
@@ -699,9 +699,9 @@ public:
     return P->getKind() == Macro;
   }
 
-  virtual void dump() const;
+  void dump() const override;
 
-  virtual void Profile(llvm::FoldingSetNodeID &ID) const;
+  void Profile(llvm::FoldingSetNodeID &ID) const override;
 };
 
 /// PathDiagnostic - PathDiagnostic objects represent a single path-sensitive

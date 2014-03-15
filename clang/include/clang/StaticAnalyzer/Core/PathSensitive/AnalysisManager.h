@@ -65,8 +65,8 @@ public:
   StoreManagerCreator getStoreManagerCreator() {
     return CreateStoreMgr;
   }
-  
-  AnalyzerOptions& getAnalyzerOptions() {
+
+  AnalyzerOptions& getAnalyzerOptions() override {
     return options;
   }
 
@@ -76,15 +76,15 @@ public:
 
   CheckerManager *getCheckerManager() const { return CheckerMgr; }
 
-  virtual ASTContext &getASTContext() {
+  ASTContext &getASTContext() override {
     return Ctx;
   }
 
-  virtual SourceManager &getSourceManager() {
+  SourceManager &getSourceManager() override {
     return getASTContext().getSourceManager();
   }
 
-  virtual DiagnosticsEngine &getDiagnostic() {
+  DiagnosticsEngine &getDiagnostic() override {
     return Diags;
   }
 
@@ -92,7 +92,7 @@ public:
     return LangOpts;
   }
 
-  ArrayRef<PathDiagnosticConsumer*> getPathDiagnosticConsumers()  {
+  ArrayRef<PathDiagnosticConsumer*> getPathDiagnosticConsumers() override {
     return PathConsumers;
   }
 

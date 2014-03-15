@@ -43,22 +43,22 @@ namespace {
 class DFS : public WorkList {
   SmallVector<WorkListUnit,20> Stack;
 public:
-  virtual bool hasWork() const {
+  bool hasWork() const override {
     return !Stack.empty();
   }
 
-  virtual void enqueue(const WorkListUnit& U) {
+  void enqueue(const WorkListUnit& U) override {
     Stack.push_back(U);
   }
 
-  virtual WorkListUnit dequeue() {
+  WorkListUnit dequeue() override {
     assert (!Stack.empty());
     const WorkListUnit& U = Stack.back();
     Stack.pop_back(); // This technically "invalidates" U, but we are fine.
     return U;
   }
-  
-  virtual bool visitItemsInWorkList(Visitor &V) {
+
+  bool visitItemsInWorkList(Visitor &V) override {
     for (SmallVectorImpl<WorkListUnit>::iterator
          I = Stack.begin(), E = Stack.end(); I != E; ++I) {
       if (V.visit(*I))
@@ -71,21 +71,21 @@ public:
 class BFS : public WorkList {
   std::deque<WorkListUnit> Queue;
 public:
-  virtual bool hasWork() const {
+  bool hasWork() const override {
     return !Queue.empty();
   }
 
-  virtual void enqueue(const WorkListUnit& U) {
+  void enqueue(const WorkListUnit& U) override {
     Queue.push_back(U);
   }
 
-  virtual WorkListUnit dequeue() {
+  WorkListUnit dequeue() override {
     WorkListUnit U = Queue.front();
     Queue.pop_front();
     return U;
   }
-  
-  virtual bool visitItemsInWorkList(Visitor &V) {
+
+  bool visitItemsInWorkList(Visitor &V) override {
     for (std::deque<WorkListUnit>::iterator
          I = Queue.begin(), E = Queue.end(); I != E; ++I) {
       if (V.visit(*I))
@@ -109,18 +109,18 @@ namespace {
     std::deque<WorkListUnit> Queue;
     SmallVector<WorkListUnit,20> Stack;
   public:
-    virtual bool hasWork() const {
+    bool hasWork() const override {
       return !Queue.empty() || !Stack.empty();
     }
 
-    virtual void enqueue(const WorkListUnit& U) {
+    void enqueue(const WorkListUnit& U) override {
       if (U.getNode()->getLocation().getAs<BlockEntrance>())
         Queue.push_front(U);
       else
         Stack.push_back(U);
     }
 
-    virtual WorkListUnit dequeue() {
+    WorkListUnit dequeue() override {
       // Process all basic blocks to completion.
       if (!Stack.empty()) {
         const WorkListUnit& U = Stack.back();
@@ -135,7 +135,7 @@ namespace {
       Queue.pop_front();
       return U;
     }
-    virtual bool visitItemsInWorkList(Visitor &V) {
+    bool visitItemsInWorkList(Visitor &V) override {
       for (SmallVectorImpl<WorkListUnit>::iterator
            I = Stack.begin(), E = Stack.end(); I != E; ++I) {
         if (V.visit(*I))

@@ -122,7 +122,7 @@ public:
   /// getContext - Return the ASTContext associated with this analysis.
   ASTContext &getContext() const { return AMgr.getASTContext(); }
 
-  virtual AnalysisManager &getAnalysisManager() { return AMgr; }
+  AnalysisManager &getAnalysisManager() override { return AMgr; }
 
   CheckerManager &getCheckerManager() const {
     return *AMgr.getCheckerManager();
@@ -154,7 +154,7 @@ public:
 
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
-  ProgramStateRef getInitialState(const LocationContext *InitLoc);
+  ProgramStateRef getInitialState(const LocationContext *InitLoc) override;
 
   ExplodedGraph& getGraph() { return G; }
   const ExplodedGraph& getGraph() const { return G; }
@@ -192,7 +192,7 @@ public:
   /// processCFGElement - Called by CoreEngine. Used to generate new successor
   ///  nodes by processing the 'effects' of a CFG element.
   void processCFGElement(const CFGElement E, ExplodedNode *Pred,
-                         unsigned StmtIdx, NodeBuilderContext *Ctx);
+                         unsigned StmtIdx, NodeBuilderContext *Ctx) override;
 
   void ProcessStmt(const CFGStmt S, ExplodedNode *Pred);
 
@@ -214,10 +214,10 @@ public:
                             ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
   /// Called by CoreEngine when processing the entrance of a CFGBlock.
-  virtual void processCFGBlockEntrance(const BlockEdge &L,
-                                       NodeBuilderWithSinks &nodeBuilder,
-                                       ExplodedNode *Pred);
-  
+  void processCFGBlockEntrance(const BlockEdge &L,
+                               NodeBuilderWithSinks &nodeBuilder,
+                               ExplodedNode *Pred) override;
+ 
   /// ProcessBranch - Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a branch condition.
   void processBranch(const Stmt *Condition, const Stmt *Term, 
@@ -225,7 +225,7 @@ public:
                      ExplodedNode *Pred,
                      ExplodedNodeSet &Dst,
                      const CFGBlock *DstT,
-                     const CFGBlock *DstF);
+                     const CFGBlock *DstF) override;
 
   /// Called by CoreEngine.  Used to processing branching behavior
   /// at static initalizers.
@@ -234,20 +234,20 @@ public:
                                 ExplodedNode *Pred,
                                 ExplodedNodeSet &Dst,
                                 const CFGBlock *DstT,
-                                const CFGBlock *DstF);
+                                const CFGBlock *DstF) override;
 
   /// processIndirectGoto - Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a computed goto jump.
-  void processIndirectGoto(IndirectGotoNodeBuilder& builder);
+  void processIndirectGoto(IndirectGotoNodeBuilder& builder) override;
 
   /// ProcessSwitch - Called by CoreEngine.  Used to generate successor
   ///  nodes by processing the 'effects' of a switch statement.
-  void processSwitch(SwitchNodeBuilder& builder);
+  void processSwitch(SwitchNodeBuilder& builder) override;
 
   /// Called by CoreEngine.  Used to generate end-of-path
   /// nodes when the control reaches the end of a function.
   void processEndOfFunction(NodeBuilderContext& BC,
-                            ExplodedNode *Pred);
+                            ExplodedNode *Pred) override;
 
   /// Remove dead bindings/symbols before exiting a function.
   void removeDeadOnEndOfFunction(NodeBuilderContext& BC,
@@ -255,22 +255,23 @@ public:
                                  ExplodedNodeSet &Dst);
 
   /// Generate the entry node of the callee.
-  void processCallEnter(CallEnter CE, ExplodedNode *Pred);
+  void processCallEnter(CallEnter CE, ExplodedNode *Pred) override;
 
   /// Generate the sequence of nodes that simulate the call exit and the post
   /// visit for CallExpr.
-  void processCallExit(ExplodedNode *Pred);
+  void processCallExit(ExplodedNode *Pred) override;
 
   /// Called by CoreEngine when the analysis worklist has terminated.
-  void processEndWorklist(bool hasWorkRemaining);
+  void processEndWorklist(bool hasWorkRemaining) override;
 
   /// evalAssume - Callback function invoked by the ConstraintManager when
   ///  making assumptions about state values.
-  ProgramStateRef processAssume(ProgramStateRef state, SVal cond,bool assumption);
+  ProgramStateRef processAssume(ProgramStateRef state, SVal cond,
+                                bool assumption) override;
 
   /// wantsRegionChangeUpdate - Called by ProgramStateManager to determine if a
   ///  region change should trigger a processRegionChanges update.
-  bool wantsRegionChangeUpdate(ProgramStateRef state);
+  bool wantsRegionChangeUpdate(ProgramStateRef state) override;
 
   /// processRegionChanges - Called by ProgramStateManager whenever a change is made
   ///  to the store. Used to update checkers that track region values.
@@ -279,13 +280,13 @@ public:
                        const InvalidatedSymbols *invalidated,
                        ArrayRef<const MemRegion *> ExplicitRegions,
                        ArrayRef<const MemRegion *> Regions,
-                       const CallEvent *Call);
+                       const CallEvent *Call) override;
 
   /// printState - Called by ProgramStateManager to print checker-specific data.
   void printState(raw_ostream &Out, ProgramStateRef State,
-                  const char *NL, const char *Sep);
+                  const char *NL, const char *Sep) override;
 
-  virtual ProgramStateManager& getStateManager() { return StateMgr; }
+  ProgramStateManager& getStateManager() override { return StateMgr; }
 
   StoreManager& getStoreManager() { return StateMgr.getStoreManager(); }
 
@@ -480,17 +481,17 @@ protected:
 
   /// Call PointerEscape callback when a value escapes as a result of bind.
   ProgramStateRef processPointerEscapedOnBind(ProgramStateRef State,
-                                              SVal Loc, SVal Val);
+                                              SVal Loc, SVal Val) override;
   /// Call PointerEscape callback when a value escapes as a result of
   /// region invalidation.
   /// \param[in] ITraits Specifies invalidation traits for regions/symbols.
   ProgramStateRef notifyCheckersOfPointerEscape(
-                            ProgramStateRef State,
-                            const InvalidatedSymbols *Invalidated,
-                            ArrayRef<const MemRegion *> ExplicitRegions,
-                            ArrayRef<const MemRegion *> Regions,
-                            const CallEvent *Call,
-                            RegionAndSymbolInvalidationTraits &ITraits);
+                           ProgramStateRef State,
+                           const InvalidatedSymbols *Invalidated,
+                           ArrayRef<const MemRegion *> ExplicitRegions,
+                           ArrayRef<const MemRegion *> Regions,
+                           const CallEvent *Call,
+                           RegionAndSymbolInvalidationTraits &ITraits) override;
 
 public:
   // FIXME: 'tag' should be removed, and a LocationContext should be used

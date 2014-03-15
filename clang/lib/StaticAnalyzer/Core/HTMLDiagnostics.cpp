@@ -44,10 +44,10 @@ public:
 
   virtual ~HTMLDiagnostics() { FlushDiagnostics(NULL); }
 
-  virtual void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
-                                    FilesMade *filesMade);
+  void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
+                            FilesMade *filesMade) override;
 
-  virtual StringRef getName() const {
+  StringRef getName() const override {
     return "HTMLDiagnostics";
   }
 

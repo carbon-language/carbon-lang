@@ -1651,12 +1651,12 @@ private:
         HasBinPackedFunction || !HasOnePerLineFunction;
   }
 
-  virtual void consumeUnwrappedLine(const UnwrappedLine &TheLine) {
+  void consumeUnwrappedLine(const UnwrappedLine &TheLine) override {
     assert(!UnwrappedLines.empty());
     UnwrappedLines.back().push_back(TheLine);
   }
 
-  virtual void finishRun() {
+  void finishRun() override {
     UnwrappedLines.push_back(SmallVector<UnwrappedLine, 16>());
   }
 

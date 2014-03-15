@@ -156,7 +156,7 @@ public:
     return static_cast<void *>(&Tag);
   }
 
-  virtual void Profile(llvm::FoldingSetNodeID &ID) const {
+  void Profile(llvm::FoldingSetNodeID &ID) const override {
     ID.AddPointer(ReturnVisitor::getTag());
     ID.AddPointer(StackFrame);
     ID.AddBoolean(EnableNullFPSuppression);
@@ -386,7 +386,7 @@ public:
   PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                  const ExplodedNode *PrevN,
                                  BugReporterContext &BRC,
-                                 BugReport &BR) {
+                                 BugReport &BR) override {
     switch (Mode) {
     case Initial:
       return visitNodeInitial(N, PrevN, BRC, BR);
@@ -401,7 +401,7 @@ public:
 
   PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,
                                   const ExplodedNode *N,
-                                  BugReport &BR) {
+                                  BugReport &BR) override {
     if (EnableNullFPSuppression)
       BR.markInvalid(ReturnVisitor::getTag(), StackFrame);
     return 0;

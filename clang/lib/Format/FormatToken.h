@@ -432,17 +432,16 @@ public:
   CommaSeparatedList(const FormatStyle &Style)
       : TokenRole(Style), HasNestedBracedList(false) {}
 
-  virtual void precomputeFormattingInfos(const FormatToken *Token);
+  void precomputeFormattingInfos(const FormatToken *Token) override;
 
-  virtual unsigned formatAfterToken(LineState &State,
-                                    ContinuationIndenter *Indenter,
-                                    bool DryRun);
+  unsigned formatAfterToken(LineState &State, ContinuationIndenter *Indenter,
+                            bool DryRun) override;
 
-  virtual unsigned formatFromToken(LineState &State,
-                                   ContinuationIndenter *Indenter, bool DryRun);
+  unsigned formatFromToken(LineState &State, ContinuationIndenter *Indenter,
+                           bool DryRun) override;
 
   /// \brief Adds \p Token as the next comma to the \c CommaSeparated list.
-  virtual void CommaFound(const FormatToken *Token) { Commas.push_back(Token); }
+  void CommaFound(const FormatToken *Token) override { Commas.push_back(Token);}
 
 private:
   /// \brief A struct that holds information on how to format a given list with

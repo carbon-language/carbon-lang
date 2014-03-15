@@ -512,9 +512,8 @@ public:
   ///
   /// \return True if the report was valid and a path was generated,
   ///         false if the reports should be considered invalid.
-  virtual bool generatePathDiagnostic(PathDiagnostic &PD,
-                                      PathDiagnosticConsumer &PC,
-                                      ArrayRef<BugReport*> &bugReports);
+  bool generatePathDiagnostic(PathDiagnostic &PD, PathDiagnosticConsumer &PC,
+                              ArrayRef<BugReport*> &bugReports) override;
 
   /// classof - Used by isa<>, cast<>, and dyn_cast<>.
   static bool classof(const BugReporter* R) {

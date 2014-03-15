@@ -74,7 +74,7 @@ public:
     StructuralError = PreviousStructuralError;
   }
 
-  virtual FormatToken *getNextToken() {
+  FormatToken *getNextToken() override {
     // The \c UnwrappedLineParser guards against this by never calling
     // \c getNextToken() after it has encountered the first eof token.
     assert(!eof());
@@ -84,9 +84,9 @@ public:
     return Token;
   }
 
-  virtual unsigned getPosition() { return PreviousTokenSource->getPosition(); }
+  unsigned getPosition() override { return PreviousTokenSource->getPosition(); }
 
-  virtual FormatToken *setPosition(unsigned Position) {
+  FormatToken *setPosition(unsigned Position) override {
     Token = PreviousTokenSource->setPosition(Position);
     return Token;
   }
@@ -180,17 +180,17 @@ public:
   IndexedTokenSource(ArrayRef<FormatToken *> Tokens)
       : Tokens(Tokens), Position(-1) {}
 
-  virtual FormatToken *getNextToken() {
+  FormatToken *getNextToken() override {
     ++Position;
     return Tokens[Position];
   }
 
-  virtual unsigned getPosition() {
+  unsigned getPosition() override {
     assert(Position >= 0);
     return Position;
   }
 
-  virtual FormatToken *setPosition(unsigned P) {
+  FormatToken *setPosition(unsigned P) override {
     Position = P;
     return Tokens[Position];
   }

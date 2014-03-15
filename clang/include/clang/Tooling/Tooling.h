@@ -80,7 +80,7 @@ public:
 
   /// \brief Invokes the compiler with a FrontendAction created by create().
   bool runInvocation(clang::CompilerInvocation *Invocation, FileManager *Files,
-                     DiagnosticConsumer *DiagConsumer);
+                     DiagnosticConsumer *DiagConsumer) override;
 
   /// \brief Returns a new clang::FrontendAction.
   ///
@@ -306,7 +306,7 @@ template <typename T>
 FrontendActionFactory *newFrontendActionFactory() {
   class SimpleFrontendActionFactory : public FrontendActionFactory {
   public:
-    virtual clang::FrontendAction *create() { return new T; }
+    clang::FrontendAction *create() override { return new T; }
   };
 
   return new SimpleFrontendActionFactory;
@@ -321,7 +321,7 @@ inline FrontendActionFactory *newFrontendActionFactory(
                                           SourceFileCallbacks *Callbacks)
       : ConsumerFactory(ConsumerFactory), Callbacks(Callbacks) {}
 
-    virtual clang::FrontendAction *create() {
+    clang::FrontendAction *create() override {
       return new ConsumerFactoryAdaptor(ConsumerFactory, Callbacks);
     }
 
@@ -333,20 +333,20 @@ inline FrontendActionFactory *newFrontendActionFactory(
         : ConsumerFactory(ConsumerFactory), Callbacks(Callbacks) {}
 
       clang::ASTConsumer *CreateASTConsumer(clang::CompilerInstance &,
-                                            StringRef) {
+                                            StringRef) override {
         return ConsumerFactory->newASTConsumer();
       }
 
     protected:
-      virtual bool BeginSourceFileAction(CompilerInstance &CI,
-                                         StringRef Filename) override {
+      bool BeginSourceFileAction(CompilerInstance &CI,
+                                 StringRef Filename) override {
         if (!clang::ASTFrontendAction::BeginSourceFileAction(CI, Filename))
           return false;
         if (Callbacks != NULL)
           return Callbacks->handleBeginSource(CI, Filename);
         return true;
       }
-      virtual void EndSourceFileAction() override {
+      void EndSourceFileAction() override {
         if (Callbacks != NULL)
           Callbacks->handleEndSource();
         clang::ASTFrontendAction::EndSourceFileAction();

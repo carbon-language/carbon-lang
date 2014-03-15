@@ -139,7 +139,7 @@ private:
     SecKeychainBugVisitor(SymbolRef S) : Sym(S) {}
     virtual ~SecKeychainBugVisitor() {}
 
-    void Profile(llvm::FoldingSetNodeID &ID) const {
+    void Profile(llvm::FoldingSetNodeID &ID) const override {
       static int X = 0;
       ID.AddPointer(&X);
       ID.AddPointer(Sym);
@@ -148,7 +148,7 @@ private:
     PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                    const ExplodedNode *PrevN,
                                    BugReporterContext &BRC,
-                                   BugReport &BR);
+                                   BugReport &BR) override;
   };
 };
 }

@@ -74,7 +74,7 @@ public:
   void checkPostCall(const CallEvent &CE, CheckerContext &C) const;
 
   void printState(raw_ostream &Out, ProgramStateRef State,
-                  const char *NL, const char *Sep) const;
+                  const char *NL, const char *Sep) const override;
 };
 } // end anonymous namespace
 

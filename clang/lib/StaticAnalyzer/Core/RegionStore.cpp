@@ -372,9 +372,9 @@ public:
   ///  version of that lvalue (i.e., a pointer to the first element of
   ///  the array).  This is called by ExprEngine when evaluating
   ///  casts from arrays to pointers.
-  SVal ArrayToPointer(Loc Array, QualType ElementTy);
+  SVal ArrayToPointer(Loc Array, QualType ElementTy) override;
 
-  StoreRef getInitialStore(const LocationContext *InitLoc) {
+  StoreRef getInitialStore(const LocationContext *InitLoc) override {
     return StoreRef(RBFactory.getEmptyMap().getRootWithoutRetain(), *this);
   }
 
@@ -396,24 +396,24 @@ public:
                              InvalidatedSymbols &IS,
                              RegionAndSymbolInvalidationTraits &ITraits,
                              InvalidatedRegions *Invalidated,
-                             InvalidatedRegions *InvalidatedTopLevel);
+                             InvalidatedRegions *InvalidatedTopLevel) override;
 
   bool scanReachableSymbols(Store S, const MemRegion *R,
-                            ScanReachableSymbols &Callbacks);
+                            ScanReachableSymbols &Callbacks) override;
 
   RegionBindingsRef removeSubRegionBindings(RegionBindingsConstRef B,
                                             const SubRegion *R);
 
 public: // Part of public interface to class.
 
-  virtual StoreRef Bind(Store store, Loc LV, SVal V) {
+  StoreRef Bind(Store store, Loc LV, SVal V) override {
     return StoreRef(bind(getRegionBindings(store), LV, V).asStore(), *this);
   }
 
   RegionBindingsRef bind(RegionBindingsConstRef B, Loc LV, SVal V);
 
   // BindDefault is only used to initialize a region with a default value.
-  StoreRef BindDefault(Store store, const MemRegion *R, SVal V) {
+  StoreRef BindDefault(Store store, const MemRegion *R, SVal V) override {
     RegionBindingsRef B = getRegionBindings(store);
     assert(!B.lookup(R, BindingKey::Direct));
 
@@ -467,20 +467,20 @@ public: // Part of public interface to class.
   /// \brief Create a new store with the specified binding removed.
   /// \param ST the original store, that is the basis for the new store.
   /// \param L the location whose binding should be removed.
-  virtual StoreRef killBinding(Store ST, Loc L);
+  StoreRef killBinding(Store ST, Loc L) override;
 
-  void incrementReferenceCount(Store store) {
+  void incrementReferenceCount(Store store) override {
     getRegionBindings(store).manualRetain();    
   }
   
   /// If the StoreManager supports it, decrement the reference count of
   /// the specified Store object.  If the reference count hits 0, the memory
   /// associated with the object is recycled.
-  void decrementReferenceCount(Store store) {
+  void decrementReferenceCount(Store store) override {
     getRegionBindings(store).manualRelease();
   }
-  
-  bool includedInBindings(Store store, const MemRegion *region) const;
+
+  bool includedInBindings(Store store, const MemRegion *region) const override;
 
   /// \brief Return the value bound to specified location in a given state.
   ///
@@ -495,7 +495,7 @@ public: // Part of public interface to class.
   ///       return undefined
   ///     else
   ///       return symbolic
-  virtual SVal getBinding(Store S, Loc L, QualType T) {
+  SVal getBinding(Store S, Loc L, QualType T) override {
     return getBinding(getRegionBindings(S), L, T);
   }
 
@@ -560,15 +560,16 @@ public: // Part of public interface to class.
   /// removeDeadBindings - Scans the RegionStore of 'state' for dead values.
   ///  It returns a new Store with these values removed.
   StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
-                              SymbolReaper& SymReaper);
-  
+                              SymbolReaper& SymReaper) override;
+
   //===------------------------------------------------------------------===//
   // Region "extents".
   //===------------------------------------------------------------------===//
 
   // FIXME: This method will soon be eliminated; see the note in Store.h.
   DefinedOrUnknownSVal getSizeInElements(ProgramStateRef state,
-                                         const MemRegion* R, QualType EleTy);
+                                         const MemRegion* R,
+                                         QualType EleTy) override;
 
   //===------------------------------------------------------------------===//
   // Utility methods.
@@ -581,9 +582,9 @@ public: // Part of public interface to class.
   }
 
   void print(Store store, raw_ostream &Out, const char* nl,
-             const char *sep);
+             const char *sep) override;
 
-  void iterBindings(Store store, BindingsHandler& f) {
+  void iterBindings(Store store, BindingsHandler& f) override {
     RegionBindingsRef B = getRegionBindings(store);
     for (RegionBindingsRef::iterator I = B.begin(), E = B.end(); I != E; ++I) {
       const ClusterBindings &Cluster = I.getData();

@@ -312,7 +312,7 @@ public:
 /// \class NodeBuilderWithSinks
 /// \brief This node builder keeps track of the generated sink nodes.
 class NodeBuilderWithSinks: public NodeBuilder {
-  virtual void anchor();
+  void anchor() override;
 protected:
   SmallVector<ExplodedNode*, 2> sinksGenerated;
   ProgramPoint &Location;
@@ -399,7 +399,7 @@ public:
 /// \brief BranchNodeBuilder is responsible for constructing the nodes
 /// corresponding to the two branches of the if statement - true and false.
 class BranchNodeBuilder: public NodeBuilder {
-  virtual void anchor();
+  void anchor() override;
   const CFGBlock *DstT;
   const CFGBlock *DstF;
 
