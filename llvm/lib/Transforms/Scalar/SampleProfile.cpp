@@ -454,8 +454,7 @@ bool SampleModuleProfile::loadText() {
   error_code EC = MemoryBuffer::getFile(Filename, Buffer);
   if (EC) {
     std::string Msg(EC.message());
-    DiagnosticInfoSampleProfile Diag(Filename.data(), Msg);
-    M.getContext().diagnose(Diag);
+    M.getContext().diagnose(DiagnosticInfoSampleProfile(Filename.data(), Msg));
     return false;
   }
   line_iterator LineIt(*Buffer, '#');
@@ -973,9 +972,8 @@ unsigned SampleFunctionProfile::getFunctionLoc(Function &F) {
     }
   }
 
-  DiagnosticInfoSampleProfile Diag("No debug information found in function " +
-                                   F.getName());
-  F.getContext().diagnose(Diag);
+  Twine Msg = "No debug information found in function " + F.getName();
+  F.getContext().diagnose(DiagnosticInfoSampleProfile(Msg));
   return 0;
 }
 
