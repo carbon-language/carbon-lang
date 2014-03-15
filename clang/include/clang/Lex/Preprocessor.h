@@ -298,19 +298,13 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// \#included, and macros currently being expanded from, not counting
   /// CurLexer/CurTokenLexer.
   struct IncludeStackInfo {
-    enum CurLexerKind     CurLexerKind;
-    Module                *TheSubmodule;
-    Lexer                 *TheLexer;
-    PTHLexer              *ThePTHLexer;
-    PreprocessorLexer     *ThePPLexer;
-    TokenLexer            *TheTokenLexer;
-    const DirectoryLookup *TheDirLookup;
-
-    IncludeStackInfo(enum CurLexerKind K, Module *M, Lexer *L, PTHLexer *P,
-                     PreprocessorLexer *PPL, TokenLexer *TL,
-                     const DirectoryLookup *D)
-        : CurLexerKind(K), TheSubmodule(M), TheLexer(L), ThePTHLexer(P),
-          ThePPLexer(PPL), TheTokenLexer(TL), TheDirLookup(D) {}
+    enum CurLexerKind           CurLexerKind;
+    Module                     *TheSubmodule;
+    std::unique_ptr<Lexer>      TheLexer;
+    std::unique_ptr<PTHLexer>   ThePTHLexer;
+    PreprocessorLexer          *ThePPLexer;
+    std::unique_ptr<TokenLexer> TheTokenLexer;
+    const DirectoryLookup      *TheDirLookup;
   };
   std::vector<IncludeStackInfo> IncludeMacroStack;
 
@@ -1327,17 +1321,19 @@ public:
 private:
 
   void PushIncludeMacroStack() {
-    IncludeMacroStack.push_back(IncludeStackInfo(
-        CurLexerKind, CurSubmodule, CurLexer.release(), CurPTHLexer.release(),
-        CurPPLexer, CurTokenLexer.release(), CurDirLookup));
+    IncludeStackInfo Info = {CurLexerKind,        CurSubmodule,
+                             std::move(CurLexer), std::move(CurPTHLexer),
+                             CurPPLexer,          std::move(CurTokenLexer),
+                             CurDirLookup};
+    IncludeMacroStack.push_back(std::move(Info));
     CurPPLexer = 0;
   }
 
   void PopIncludeMacroStack() {
-    CurLexer.reset(IncludeMacroStack.back().TheLexer);
-    CurPTHLexer.reset(IncludeMacroStack.back().ThePTHLexer);
+    CurLexer = std::move(IncludeMacroStack.back().TheLexer);
+    CurPTHLexer = std::move(IncludeMacroStack.back().ThePTHLexer);
     CurPPLexer = IncludeMacroStack.back().ThePPLexer;
-    CurTokenLexer.reset(IncludeMacroStack.back().TheTokenLexer);
+    CurTokenLexer = std::move(IncludeMacroStack.back().TheTokenLexer);
     CurDirLookup  = IncludeMacroStack.back().TheDirLookup;
     CurSubmodule = IncludeMacroStack.back().TheSubmodule;
     CurLexerKind = IncludeMacroStack.back().CurLexerKind;
@@ -1461,7 +1457,7 @@ private:
   }
 
   static bool IsFileLexer(const IncludeStackInfo& I) {
-    return IsFileLexer(I.TheLexer, I.ThePPLexer);
+    return IsFileLexer(I.TheLexer.get(), I.ThePPLexer);
   }
 
   bool IsFileLexer() const {
