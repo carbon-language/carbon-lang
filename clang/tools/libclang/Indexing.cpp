@@ -253,8 +253,8 @@ public:
   IndexPPCallbacks(Preprocessor &PP, IndexingContext &indexCtx)
     : PP(PP), IndexCtx(indexCtx), IsMainFileEntered(false) { }
 
-  virtual void FileChanged(SourceLocation Loc, FileChangeReason Reason,
-                          SrcMgr::CharacteristicKind FileType, FileID PrevFID) {
+  void FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                 SrcMgr::CharacteristicKind FileType, FileID PrevFID) override {
     if (IsMainFileEntered)
       return;
 
@@ -267,15 +267,11 @@ public:
     }
   }
 
-  virtual void InclusionDirective(SourceLocation HashLoc,
-                                  const Token &IncludeTok,
-                                  StringRef FileName,
-                                  bool IsAngled,
-                                  CharSourceRange FilenameRange,
-                                  const FileEntry *File,
-                                  StringRef SearchPath,
-                                  StringRef RelativePath,
-                                  const Module *Imported) {
+  void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
+                          StringRef FileName, bool IsAngled,
+                          CharSourceRange FilenameRange, const FileEntry *File,
+                          StringRef SearchPath, StringRef RelativePath,
+                          const Module *Imported) override {
     bool isImport = (IncludeTok.is(tok::identifier) &&
             IncludeTok.getIdentifierInfo()->getPPKeywordID() == tok::pp_import);
     IndexCtx.ppIncludedFile(HashLoc, FileName, File, isImport, IsAngled,
@@ -283,25 +279,21 @@ public:
   }
 
   /// MacroDefined - This hook is called whenever a macro definition is seen.
-  virtual void MacroDefined(const Token &Id, const MacroDirective *MD) {
-  }
+  void MacroDefined(const Token &Id, const MacroDirective *MD) override {}
 
   /// MacroUndefined - This hook is called whenever a macro #undef is seen.
   /// MI is released immediately following this callback.
-  virtual void MacroUndefined(const Token &MacroNameTok,
-                              const MacroDirective *MD) {
-  }
+  void MacroUndefined(const Token &MacroNameTok,
+                      const MacroDirective *MD) override {}
 
   /// MacroExpands - This is called by when a macro invocation is found.
-  virtual void MacroExpands(const Token &MacroNameTok, const MacroDirective *MD,
-                            SourceRange Range, const MacroArgs *Args) {
-  }
+  void MacroExpands(const Token &MacroNameTok, const MacroDirective *MD,
+                    SourceRange Range, const MacroArgs *Args) override {}
 
   /// SourceRangeSkipped - This hook is called when a source range is skipped.
   /// \param Range The SourceRange that was skipped. The range begins at the
   /// #if/#else directive and ends after the #endif/#else directive.
-  virtual void SourceRangeSkipped(SourceRange Range) {
-  }
+  void SourceRangeSkipped(SourceRange Range) override {}
 };
 
 //===----------------------------------------------------------------------===//
@@ -318,24 +310,24 @@ public:
 
   // ASTConsumer Implementation
 
-  virtual void Initialize(ASTContext &Context) {
+  void Initialize(ASTContext &Context) override {
     IndexCtx.setASTContext(Context);
     IndexCtx.startedTranslationUnit();
   }
 
-  virtual void HandleTranslationUnit(ASTContext &Ctx) {
+  void HandleTranslationUnit(ASTContext &Ctx) override {
     if (SKCtrl)
       SKCtrl->finished();
   }
 
-  virtual bool HandleTopLevelDecl(DeclGroupRef DG) {
+  bool HandleTopLevelDecl(DeclGroupRef DG) override {
     IndexCtx.indexDeclGroupRef(DG);
     return !IndexCtx.shouldAbort();
   }
 
   /// \brief Handle the specified top-level declaration that occurred inside
   /// and ObjC container.
-  virtual void HandleTopLevelDeclInObjCContainer(DeclGroupRef D) {
+  void HandleTopLevelDeclInObjCContainer(DeclGroupRef D) override {
     // They will be handled after the interface is seen first.
     IndexCtx.addTUDeclInObjCContainer(D);
   }
@@ -343,9 +335,9 @@ public:
   /// \brief This is called by the AST reader when deserializing things.
   /// The default implementation forwards to HandleTopLevelDecl but we don't
   /// care about them when indexing, so have an empty definition.
-  virtual void HandleInterestingDecl(DeclGroupRef D) {}
+  void HandleInterestingDecl(DeclGroupRef D) override {}
 
-  virtual void HandleTagDeclDefinition(TagDecl *D) {
+  void HandleTagDeclDefinition(TagDecl *D) override {
     if (!IndexCtx.shouldIndexImplicitTemplateInsts())
       return;
 
@@ -353,14 +345,14 @@ public:
       IndexCtx.indexDecl(D);
   }
 
-  virtual void HandleCXXImplicitFunctionInstantiation(FunctionDecl *D) {
+  void HandleCXXImplicitFunctionInstantiation(FunctionDecl *D) override {
     if (!IndexCtx.shouldIndexImplicitTemplateInsts())
       return;
 
     IndexCtx.indexDecl(D);
   }
 
-  virtual bool shouldSkipFunctionBody(Decl *D) {
+  bool shouldSkipFunctionBody(Decl *D) override {
     if (!SKCtrl) {
       // Always skip bodies.
       return true;
@@ -395,8 +387,8 @@ class CaptureDiagnosticConsumer : public DiagnosticConsumer {
   SmallVector<StoredDiagnostic, 4> Errors;
 public:
 
-  virtual void HandleDiagnostic(DiagnosticsEngine::Level level,
-                                const Diagnostic &Info) {
+  void HandleDiagnostic(DiagnosticsEngine::Level level,
+                        const Diagnostic &Info) override {
     if (level >= DiagnosticsEngine::Error)
       Errors.push_back(StoredDiagnostic(level, Info));
   }
@@ -422,8 +414,8 @@ public:
     : IndexCtx(clientData, indexCallbacks, indexOptions, cxTU),
       CXTU(cxTU), SKData(skData) { }
 
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         StringRef InFile) {
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override {
     PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
 
     if (!PPOpts.ImplicitPCHInclude.empty()) {
@@ -446,17 +438,17 @@ public:
     return new IndexingConsumer(IndexCtx, SKCtrl.get());
   }
 
-  virtual void EndSourceFileAction() {
+  void EndSourceFileAction() override {
     indexDiagnostics(CXTU, IndexCtx);
   }
 
-  virtual TranslationUnitKind getTranslationUnitKind() {
+  TranslationUnitKind getTranslationUnitKind() override {
     if (IndexCtx.shouldIndexImplicitTemplateInsts())
       return TU_Complete;
     else
       return TU_Prefix;
   }
-  virtual bool hasCodeCompletionSupport() const { return false; }
+  bool hasCodeCompletionSupport() const override { return false; }
 };
 
 //===----------------------------------------------------------------------===//

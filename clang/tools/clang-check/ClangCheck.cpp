@@ -96,7 +96,7 @@ public:
     FixWhatYouCan = ::FixWhatYouCan;
   }
 
-  std::string RewriteFilename(const std::string& filename, int &fd) {
+  std::string RewriteFilename(const std::string& filename, int &fd) override {
     assert(llvm::sys::path::is_absolute(filename) &&
            "clang-fixit expects absolute paths only.");
 
@@ -123,15 +123,15 @@ public:
       : clang::FixItRewriter(Diags, SourceMgr, LangOpts, FixItOpts) {
   }
 
-  virtual bool IncludeInDiagnosticCounts() const { return false; }
+  bool IncludeInDiagnosticCounts() const override { return false; }
 };
 
 /// \brief Subclasses \c clang::FixItAction so that we can install the custom
 /// \c FixItRewriter.
 class FixItAction : public clang::FixItAction {
 public:
-  virtual bool BeginSourceFileAction(clang::CompilerInstance& CI,
-                                     StringRef Filename) {
+  bool BeginSourceFileAction(clang::CompilerInstance& CI,
+                             StringRef Filename) override {
     FixItOpts.reset(new FixItOptions);
     Rewriter.reset(new FixItRewriter(CI.getDiagnostics(), CI.getSourceManager(),
                                      CI.getLangOpts(), FixItOpts.get()));

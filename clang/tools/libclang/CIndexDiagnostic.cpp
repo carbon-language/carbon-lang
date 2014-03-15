@@ -51,32 +51,35 @@ public:
       Message(Msg), Loc(L) {}
 
   virtual ~CXDiagnosticCustomNoteImpl() {}
-  
-  CXDiagnosticSeverity getSeverity() const {
+
+  CXDiagnosticSeverity getSeverity() const override {
     return CXDiagnostic_Note;
   }
-  
-  CXSourceLocation getLocation() const {
+
+  CXSourceLocation getLocation() const override {
     return Loc;
   }
-  
-  CXString getSpelling() const {
+
+  CXString getSpelling() const override {
     return cxstring::createRef(Message.c_str());
   }
-  
-  CXString getDiagnosticOption(CXString *Disable) const {
+
+  CXString getDiagnosticOption(CXString *Disable) const override {
     if (Disable)
       *Disable = cxstring::createEmpty();
     return cxstring::createEmpty();
   }
-  
-  unsigned getCategory() const { return 0; }
-  CXString getCategoryText() const { return cxstring::createEmpty(); }
 
-  unsigned getNumRanges() const { return 0; }
-  CXSourceRange getRange(unsigned Range) const { return clang_getNullRange(); }
-  unsigned getNumFixIts() const { return 0; }
-  CXString getFixIt(unsigned FixIt, CXSourceRange *ReplacementRange) const {
+  unsigned getCategory() const override { return 0; }
+  CXString getCategoryText() const override { return cxstring::createEmpty(); }
+
+  unsigned getNumRanges() const override { return 0; }
+  CXSourceRange getRange(unsigned Range) const override {
+    return clang_getNullRange();
+  }
+  unsigned getNumFixIts() const override { return 0; }
+  CXString getFixIt(unsigned FixIt,
+                    CXSourceRange *ReplacementRange) const override {
     if (ReplacementRange)
       *ReplacementRange = clang_getNullRange();
     return cxstring::createEmpty();
@@ -93,9 +96,9 @@ public:
   
   virtual ~CXDiagnosticRenderer() {}
 
-  virtual void beginDiagnostic(DiagOrStoredDiag D,
-                               DiagnosticsEngine::Level Level) {    
-    
+  void beginDiagnostic(DiagOrStoredDiag D,
+                       DiagnosticsEngine::Level Level) override {
+
     const StoredDiagnostic *SD = D.dyn_cast<const StoredDiagnostic*>();
     if (!SD)
       return;
@@ -109,13 +112,13 @@ public:
     if (Level != DiagnosticsEngine::Note)
       CurrentSet = &CD->getChildDiagnostics();
   }
-  
-  virtual void emitDiagnosticMessage(SourceLocation Loc, PresumedLoc PLoc,
-                                     DiagnosticsEngine::Level Level,
-                                     StringRef Message,
-                                     ArrayRef<CharSourceRange> Ranges,
-                                     const SourceManager *SM,
-                                     DiagOrStoredDiag D) {
+
+  void emitDiagnosticMessage(SourceLocation Loc, PresumedLoc PLoc,
+                             DiagnosticsEngine::Level Level,
+                             StringRef Message,
+                             ArrayRef<CharSourceRange> Ranges,
+                             const SourceManager *SM,
+                             DiagOrStoredDiag D) override {
     if (!D.isNull())
       return;
     
@@ -127,20 +130,20 @@ public:
     CXDiagnosticImpl *CD = new CXDiagnosticCustomNoteImpl(Message, L);
     CurrentSet->appendDiagnostic(CD);
   }
-  
-  virtual void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
-                                 DiagnosticsEngine::Level Level,
-                                 ArrayRef<CharSourceRange> Ranges,
-                                 const SourceManager &SM) {}
 
-  virtual void emitCodeContext(SourceLocation Loc,
-                               DiagnosticsEngine::Level Level,
-                               SmallVectorImpl<CharSourceRange>& Ranges,
-                               ArrayRef<FixItHint> Hints,
-                               const SourceManager &SM) {}
-  
-  virtual void emitNote(SourceLocation Loc, StringRef Message,
-                        const SourceManager *SM) {
+  void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
+                         DiagnosticsEngine::Level Level,
+                         ArrayRef<CharSourceRange> Ranges,
+                         const SourceManager &SM) override {}
+
+  void emitCodeContext(SourceLocation Loc,
+                       DiagnosticsEngine::Level Level,
+                       SmallVectorImpl<CharSourceRange>& Ranges,
+                       ArrayRef<FixItHint> Hints,
+                       const SourceManager &SM) override {}
+
+  void emitNote(SourceLocation Loc, StringRef Message,
+                const SourceManager *SM) override {
     CXSourceLocation L;
     if (SM)
       L = translateSourceLocation(*SM, LangOpts, Loc);

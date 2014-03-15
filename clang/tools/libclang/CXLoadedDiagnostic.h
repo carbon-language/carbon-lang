@@ -29,36 +29,36 @@ public:
   virtual ~CXLoadedDiagnostic();
   
   /// \brief Return the severity of the diagnostic.
-  virtual CXDiagnosticSeverity getSeverity() const;
-  
+  CXDiagnosticSeverity getSeverity() const override;
+
   /// \brief Return the location of the diagnostic.
-  virtual CXSourceLocation getLocation() const;
-  
+  CXSourceLocation getLocation() const override;
+
   /// \brief Return the spelling of the diagnostic.
-  virtual CXString getSpelling() const;
-  
+  CXString getSpelling() const override;
+
   /// \brief Return the text for the diagnostic option.
-  virtual CXString getDiagnosticOption(CXString *Disable) const;
-  
+  CXString getDiagnosticOption(CXString *Disable) const override;
+
   /// \brief Return the category of the diagnostic.
-  virtual unsigned getCategory() const;
-  
+  unsigned getCategory() const override;
+
   /// \brief Return the category string of the diagnostic.
-  virtual CXString getCategoryText() const;
-  
+  CXString getCategoryText() const override;
+
   /// \brief Return the number of source ranges for the diagnostic.
-  virtual unsigned getNumRanges() const;
-  
+  unsigned getNumRanges() const override;
+
   /// \brief Return the source ranges for the diagnostic.
-  virtual CXSourceRange getRange(unsigned Range) const;
-  
+  CXSourceRange getRange(unsigned Range) const override;
+
   /// \brief Return the number of FixIts.
-  virtual unsigned getNumFixIts() const;
-  
+  unsigned getNumFixIts() const override;
+
   /// \brief Return the FixIt information (source range and inserted text).
-  virtual CXString getFixIt(unsigned FixIt,
-                            CXSourceRange *ReplacementRange) const;
-  
+  CXString getFixIt(unsigned FixIt,
+                    CXSourceRange *ReplacementRange) const override;
+
   static bool classof(const CXDiagnosticImpl *D) {
     return D->getKind() == LoadedDiagnosticKind;
   }

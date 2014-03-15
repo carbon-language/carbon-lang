@@ -62,7 +62,7 @@ class CLSNAME : public diagtool::DiagTool {\
 public:\
   CLSNAME() : DiagTool(NAME, DESC) {}\
   virtual ~CLSNAME() {}\
-  virtual int run(unsigned argc, char *argv[], llvm::raw_ostream &out);\
+  int run(unsigned argc, char *argv[], llvm::raw_ostream &out) override;\
 };\
 diagtool::RegisterDiagTool<CLSNAME> Register##CLSNAME;\
 }

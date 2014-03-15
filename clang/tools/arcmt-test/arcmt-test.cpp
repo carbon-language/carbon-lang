@@ -83,17 +83,17 @@ public:
   PrintTransforms(raw_ostream &OS)
     : Ctx(0), OS(OS) { }
 
-  virtual void start(ASTContext &ctx) { Ctx = &ctx; }
-  virtual void finish() { Ctx = 0; }
+  void start(ASTContext &ctx) override { Ctx = &ctx; }
+  void finish() override { Ctx = 0; }
 
-  virtual void insert(SourceLocation loc, StringRef text) {
+  void insert(SourceLocation loc, StringRef text) override {
     assert(Ctx);
     OS << "Insert: ";
     printSourceLocation(loc, *Ctx, OS);
     OS << " \"" << text << "\"\n";
   }
 
-  virtual void remove(CharSourceRange range) {
+  void remove(CharSourceRange range) override {
     assert(Ctx);
     OS << "Remove: ";
     printSourceRange(range, *Ctx, OS);
