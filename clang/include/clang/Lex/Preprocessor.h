@@ -305,6 +305,29 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
     PreprocessorLexer          *ThePPLexer;
     std::unique_ptr<TokenLexer> TheTokenLexer;
     const DirectoryLookup      *TheDirLookup;
+
+    // The following constructors are completely useless copies of the default
+    // versions, only needed to pacify MSVC.
+    IncludeStackInfo(enum CurLexerKind CurLexerKind, Module *TheSubmodule,
+                     std::unique_ptr<Lexer> &&TheLexer,
+                     std::unique_ptr<PTHLexer> &&ThePTHLexer,
+                     PreprocessorLexer *ThePPLexer,
+                     std::unique_ptr<TokenLexer> &&TheTokenLexer,
+                     const DirectoryLookup *TheDirLookup)
+        : CurLexerKind(std::move(CurLexerKind)),
+          TheSubmodule(std::move(TheSubmodule)), TheLexer(std::move(TheLexer)),
+          ThePTHLexer(std::move(ThePTHLexer)),
+          ThePPLexer(std::move(ThePPLexer)),
+          TheTokenLexer(std::move(TheTokenLexer)),
+          TheDirLookup(std::move(TheDirLookup)) {}
+    IncludeStackInfo(IncludeStackInfo &&RHS)
+        : CurLexerKind(std::move(RHS.CurLexerKind)),
+          TheSubmodule(std::move(RHS.TheSubmodule)),
+          TheLexer(std::move(RHS.TheLexer)),
+          ThePTHLexer(std::move(RHS.ThePTHLexer)),
+          ThePPLexer(std::move(RHS.ThePPLexer)),
+          TheTokenLexer(std::move(RHS.TheTokenLexer)),
+          TheDirLookup(std::move(RHS.TheDirLookup)) {}
   };
   std::vector<IncludeStackInfo> IncludeMacroStack;
 
@@ -1321,11 +1344,9 @@ public:
 private:
 
   void PushIncludeMacroStack() {
-    IncludeStackInfo Info = {CurLexerKind,        CurSubmodule,
-                             std::move(CurLexer), std::move(CurPTHLexer),
-                             CurPPLexer,          std::move(CurTokenLexer),
-                             CurDirLookup};
-    IncludeMacroStack.push_back(std::move(Info));
+    IncludeMacroStack.push_back(IncludeStackInfo(
+        CurLexerKind, CurSubmodule, std::move(CurLexer), std::move(CurPTHLexer),
+        CurPPLexer, std::move(CurTokenLexer), CurDirLookup));
     CurPPLexer = 0;
   }
 
