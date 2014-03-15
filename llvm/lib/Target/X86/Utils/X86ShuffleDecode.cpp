@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86ShuffleDecode.h"
-#include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/CodeGen/MachineValueType.h"
 
 //===----------------------------------------------------------------------===//
 //  Vector Mask Decoding

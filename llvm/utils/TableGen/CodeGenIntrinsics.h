@@ -14,7 +14,7 @@
 #ifndef CODEGEN_INTRINSIC_H
 #define CODEGEN_INTRINSIC_H
 
-#include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/CodeGen/MachineValueType.h"
 #include <string>
 #include <vector>
 
