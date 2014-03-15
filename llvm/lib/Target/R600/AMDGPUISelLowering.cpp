@@ -722,7 +722,6 @@ SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
     return SDValue();
 
 
-  unsigned Mask = (1 << Load->getMemoryVT().getSizeInBits()) - 1;
   SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Load->getBasePtr(),
                             DAG.getConstant(2, MVT::i32));
   SDValue Ret = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, Op.getValueType(),
@@ -734,17 +733,16 @@ SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
                                 DAG.getConstant(0x3, MVT::i32));
   SDValue ShiftAmt = DAG.getNode(ISD::SHL, DL, MVT::i32, ByteIdx,
                                  DAG.getConstant(3, MVT::i32));
+
   Ret = DAG.getNode(ISD::SRL, DL, MVT::i32, Ret, ShiftAmt);
-  Ret = DAG.getNode(ISD::AND, DL, MVT::i32, Ret,
-                    DAG.getConstant(Mask, MVT::i32));
+
+  EVT MemEltVT = MemVT.getScalarType();
   if (ExtType == ISD::SEXTLOAD) {
-    SDValue SExtShift = DAG.getConstant(
-        VT.getSizeInBits() - MemVT.getSizeInBits(), MVT::i32);
-    Ret = DAG.getNode(ISD::SHL, DL, MVT::i32, Ret, SExtShift);
-    Ret = DAG.getNode(ISD::SRA, DL, MVT::i32, Ret, SExtShift);
+    SDValue MemEltVTNode = DAG.getValueType(MemEltVT);
+    return DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, MVT::i32, Ret, MemEltVTNode);
   }
 
-  return Ret;
+  return DAG.getZeroExtendInReg(Ret, DL, MemEltVT);
 }
 
 SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
@@ -762,8 +760,9 @@ SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
     return SplitVectorStore(Op, DAG);
   }
 
+  EVT MemVT = Store->getMemoryVT();
   if (Store->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS &&
-      Store->getMemoryVT().bitsLT(MVT::i32)) {
+      MemVT.bitsLT(MVT::i32)) {
     unsigned Mask = 0;
     if (Store->getMemoryVT() == MVT::i8) {
       Mask = 0xff;
@@ -781,10 +780,12 @@ SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
                                    DAG.getConstant(3, MVT::i32));
     SDValue SExtValue = DAG.getNode(ISD::SIGN_EXTEND, DL, MVT::i32,
                                     Store->getValue());
-    SDValue MaskedValue = DAG.getNode(ISD::AND, DL, MVT::i32, SExtValue,
-                                      DAG.getConstant(Mask, MVT::i32));
+
+    SDValue MaskedValue = DAG.getZeroExtendInReg(SExtValue, DL, MemVT);
+
     SDValue ShiftedValue = DAG.getNode(ISD::SHL, DL, MVT::i32,
                                        MaskedValue, ShiftAmt);
+
     SDValue DstMask = DAG.getNode(ISD::SHL, DL, MVT::i32, DAG.getConstant(Mask, MVT::i32),
                                   ShiftAmt);
     DstMask = DAG.getNode(ISD::XOR, DL, MVT::i32, DstMask,
