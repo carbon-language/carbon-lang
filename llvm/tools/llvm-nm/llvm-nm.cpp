@@ -317,7 +317,9 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
     return Ret;
 
   uint32_t Characteristics = 0;
-  if (Symb->SectionNumber > 0) {
+  if (Symb->SectionNumber > 0 &&
+      Symb->SectionNumber != llvm::COFF::IMAGE_SYM_DEBUG &&
+      Symb->SectionNumber != llvm::COFF::IMAGE_SYM_ABSOLUTE) {
     section_iterator SecI = Obj.section_end();
     if (error(SymI->getSection(SecI)))
       return '?';

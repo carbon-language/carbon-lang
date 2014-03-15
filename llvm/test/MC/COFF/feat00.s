@@ -6,7 +6,7 @@
 // CHECK: Symbol {
 // CHECK:   Name: @feat.00
 // CHECK:   Value: 123
-// CHECK:   Section: (-1)
+// CHECK:   Section: (65535)
 // CHECK:   BaseType: Null (0x0)
 // CHECK:   ComplexType: Null (0x0)
 // CHECK:   StorageClass: External (0x2)

@@ -52,7 +52,7 @@ LBB0_2:                                 # %return
 // CHECK:      Symbol {
 // CHECK:        Name:                .weak._test_weak.default
 // CHECK-NEXT:   Value:               0
-// CHECK-NEXT:   Section:             (-1)
+// CHECK-NEXT:   Section:             (65535)
 // CHECK-NEXT:   BaseType:            Null
 // CHECK-NEXT:   ComplexType:         Null
 // CHECK-NEXT:   StorageClass:        External

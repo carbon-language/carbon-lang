@@ -138,8 +138,8 @@ namespace COFF {
   };
 
   enum SymbolSectionNumber {
-    IMAGE_SYM_DEBUG     = -2,
-    IMAGE_SYM_ABSOLUTE  = -1,
+    IMAGE_SYM_DEBUG     = 0xFFFE,
+    IMAGE_SYM_ABSOLUTE  = 0xFFFF,
     IMAGE_SYM_UNDEFINED = 0
   };
 

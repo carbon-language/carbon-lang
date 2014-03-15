@@ -193,7 +193,7 @@ struct coff_symbol {
   } Name;
 
   support::ulittle32_t Value;
-  support::little16_t SectionNumber;
+  support::ulittle16_t SectionNumber;
 
   support::ulittle16_t Type;
 
