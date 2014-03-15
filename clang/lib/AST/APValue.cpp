@@ -622,7 +622,7 @@ ArrayRef<const CXXRecordDecl*> APValue::getMemberPointerPath() const {
 
 void APValue::MakeLValue() {
   assert(isUninit() && "Bad state change");
-  assert(sizeof(LV) <= DataSize && "LV too big");
+  static_assert(sizeof(LV) <= DataSize, "LV too big");
   new ((void*)(char*)Data.buffer) LV();
   Kind = LValue;
 }

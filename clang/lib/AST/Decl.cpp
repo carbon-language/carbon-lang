@@ -1613,8 +1613,10 @@ VarDecl::VarDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
                  SourceLocation IdLoc, IdentifierInfo *Id, QualType T,
                  TypeSourceInfo *TInfo, StorageClass SC)
     : DeclaratorDecl(DK, DC, IdLoc, Id, T, TInfo, StartLoc), Init() {
-  assert(sizeof(VarDeclBitfields) <= sizeof(unsigned));
-  assert(sizeof(ParmVarDeclBitfields) <= sizeof(unsigned));
+  static_assert(sizeof(VarDeclBitfields) <= sizeof(unsigned),
+                "VarDeclBitfields too large!");
+  static_assert(sizeof(ParmVarDeclBitfields) <= sizeof(unsigned),
+                "ParmVarDeclBitfields too large!");
   AllBits = 0;
   VarDeclBits.SClass = SC;
   // Everything else is implicitly initialized to false.

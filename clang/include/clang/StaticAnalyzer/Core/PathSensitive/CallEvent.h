@@ -986,7 +986,8 @@ public:
 template <typename T>
 CallEventRef<T> CallEvent::cloneWithState(ProgramStateRef NewState) const {
   assert(isa<T>(*this) && "Cloning to unrelated type");
-  assert(sizeof(T) == sizeof(CallEvent) && "Subclasses may not add fields");
+  static_assert(sizeof(T) == sizeof(CallEvent),
+                "Subclasses may not add fields");
 
   if (NewState == State)
     return cast<T>(this);
