@@ -30,50 +30,6 @@ using namespace clang;
 // Core Reachability Analysis routines.
 //===----------------------------------------------------------------------===//
 
-static bool bodyEndsWithNoReturn(const CFGBlock *B) {
-  for (CFGBlock::const_reverse_iterator I = B->rbegin(), E = B->rend();
-       I != E; ++I) {
-    if (Optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
-      const Stmt *S = CS->getStmt();
-      if (const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(S))
-        S = EWC->getSubExpr();
-      if (const CallExpr *CE = dyn_cast<CallExpr>(S)) {
-        QualType CalleeType = CE->getCallee()->getType();
-        if (getFunctionExtInfo(*CalleeType).getNoReturn())
-          return true;
-      }
-      break;
-    }
-  }
-  return false;
-}
-
-static bool bodyEndsWithNoReturn(const CFGBlock::AdjacentBlock &AB) {
-  // If the predecessor is a normal CFG edge, then by definition
-  // the predecessor did not end with a 'noreturn'.
-  if (AB.getReachableBlock())
-    return false;
-
-  const CFGBlock *Pred = AB.getPossiblyUnreachableBlock();
-  assert(!AB.isReachable() && Pred);
-  return bodyEndsWithNoReturn(Pred);
-}
-
-static bool isBreakPrecededByNoReturn(const CFGBlock *B, const Stmt *S,
-                                      reachable_code::UnreachableKind &UK) {
-  if (!isa<BreakStmt>(S))
-    return false;
-
-  UK = reachable_code::UK_Break;
-
-  if (B->pred_empty())
-    return false;
-
-  assert(B->empty());
-  assert(B->pred_size() == 1);
-  return bodyEndsWithNoReturn(*B->pred_begin());
-}
-
 static bool isEnumConstant(const Expr *Ex) {
   const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Ex);
   if (!DR)
