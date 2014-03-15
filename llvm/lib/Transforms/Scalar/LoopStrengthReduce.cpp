@@ -56,6 +56,7 @@
 #define DEBUG_TYPE "loop-reduce"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallBitVector.h"
@@ -1114,11 +1115,7 @@ struct UniquifierDenseMapInfo {
   }
 
   static unsigned getHashValue(const SmallVector<const SCEV *, 4> &V) {
-    unsigned Result = 0;
-    for (SmallVectorImpl<const SCEV *>::const_iterator I = V.begin(),
-         E = V.end(); I != E; ++I)
-      Result ^= DenseMapInfo<const SCEV *>::getHashValue(*I);
-    return Result;
+    return static_cast<unsigned>(hash_combine_range(V.begin(), V.end()));
   }
 
   static bool isEqual(const SmallVector<const SCEV *, 4> &LHS,
@@ -1145,6 +1142,8 @@ public:
     ICmpZero ///< An equality icmp with both operands folded into one.
     // TODO: Add a generic icmp too?
   };
+
+  typedef PointerIntPair<const SCEV *, 2, KindType> SCEVUseKindPair;
 
   KindType Kind;
   Type *AccessTy;
@@ -1492,30 +1491,6 @@ static bool isAlwaysFoldable(const TargetTransformInfo &TTI,
 
 namespace {
 
-/// UseMapDenseMapInfo - A DenseMapInfo implementation for holding
-/// DenseMaps and DenseSets of pairs of const SCEV* and LSRUse::Kind.
-struct UseMapDenseMapInfo {
-  static std::pair<const SCEV *, LSRUse::KindType> getEmptyKey() {
-    return std::make_pair(reinterpret_cast<const SCEV *>(-1), LSRUse::Basic);
-  }
-
-  static std::pair<const SCEV *, LSRUse::KindType> getTombstoneKey() {
-    return std::make_pair(reinterpret_cast<const SCEV *>(-2), LSRUse::Basic);
-  }
-
-  static unsigned
-  getHashValue(const std::pair<const SCEV *, LSRUse::KindType> &V) {
-    unsigned Result = DenseMapInfo<const SCEV *>::getHashValue(V.first);
-    Result ^= DenseMapInfo<unsigned>::getHashValue(unsigned(V.second));
-    return Result;
-  }
-
-  static bool isEqual(const std::pair<const SCEV *, LSRUse::KindType> &LHS,
-                      const std::pair<const SCEV *, LSRUse::KindType> &RHS) {
-    return LHS == RHS;
-  }
-};
-
 /// IVInc - An individual increment in a Chain of IV increments.
 /// Relate an IV user to an expression that computes the IV it uses from the IV
 /// used by the previous link in the Chain.
@@ -1644,9 +1619,7 @@ class LSRInstance {
   }
 
   // Support for sharing of LSRUses between LSRFixups.
-  typedef DenseMap<std::pair<const SCEV *, LSRUse::KindType>,
-                   size_t,
-                   UseMapDenseMapInfo> UseMapTy;
+  typedef DenseMap<LSRUse::SCEVUseKindPair, size_t> UseMapTy;
   UseMapTy UseMap;
 
   bool reconcileNewOffset(LSRUse &LU, int64_t NewOffset, bool HasBaseReg,
@@ -2217,7 +2190,7 @@ LSRInstance::getUse(const SCEV *&Expr,
   }
 
   std::pair<UseMapTy::iterator, bool> P =
-    UseMap.insert(std::make_pair(std::make_pair(Expr, Kind), 0));
+    UseMap.insert(std::make_pair(LSRUse::SCEVUseKindPair(Expr, Kind), 0));
   if (!P.second) {
     // A use already existed with this base.
     size_t LUIdx = P.first->second;
