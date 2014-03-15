@@ -811,8 +811,8 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
       // output the string in hexadecimal format!  Note that loading and storing
       // floating point types changes the bits of NaNs on some hosts, notably
       // x86, so we must not use these types.
-      assert(sizeof(double) == sizeof(uint64_t) &&
-             "assuming that double is 64 bits!");
+      static_assert(sizeof(double) == sizeof(uint64_t),
+                    "assuming that double is 64 bits!");
       char Buffer[40];
       APFloat apf = CFP->getValueAPF();
       // Halves and floats are represented in ASCII IR as double, convert.

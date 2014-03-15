@@ -35,6 +35,9 @@ class ArrayRecycler {
     FreeList *Next;
   };
 
+  static_assert(Align >= AlignOf<FreeList>::Alignment, "Object underaligned");
+  static_assert(sizeof(T) >= sizeof(FreeList), "Objects are too small");
+
   // Keep a free list for each array size.
   SmallVector<FreeList*, 8> Bucket;
 
@@ -53,8 +56,6 @@ class ArrayRecycler {
   // Add an entry to the free list at Bucket[Idx].
   void push(unsigned Idx, T *Ptr) {
     assert(Ptr && "Cannot recycle NULL pointer");
-    assert(sizeof(T) >= sizeof(FreeList) && "Objects are too small");
-    assert(Align >= AlignOf<FreeList>::Alignment && "Object underaligned");
     FreeList *Entry = reinterpret_cast<FreeList*>(Ptr);
     if (Idx >= Bucket.size())
       Bucket.resize(size_t(Idx) + 1);

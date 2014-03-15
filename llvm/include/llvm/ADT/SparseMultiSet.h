@@ -76,6 +76,10 @@ template<typename ValueT,
          typename KeyFunctorT = llvm::identity<unsigned>,
          typename SparseT = uint8_t>
 class SparseMultiSet {
+  static_assert(std::numeric_limits<SparseT>::is_integer &&
+                !std::numeric_limits<SparseT>::is_signed,
+                "SparseT must be an unsigned integer type");
+
   /// The actual data that's stored, as a doubly-linked list implemented via
   /// indices into the DenseVector.  The doubly linked list is implemented
   /// circular in Prev indices, and INVALID-terminated in Next indices. This
@@ -344,9 +348,6 @@ public:
   ///
   iterator findIndex(unsigned Idx) {
     assert(Idx < Universe && "Key out of range");
-    assert(std::numeric_limits<SparseT>::is_integer &&
-           !std::numeric_limits<SparseT>::is_signed &&
-           "SparseT must be an unsigned integer type");
     const unsigned Stride = std::numeric_limits<SparseT>::max() + 1u;
     for (unsigned i = Sparse[Idx], e = Dense.size(); i < e; i += Stride) {
       const unsigned FoundIdx = sparseIndex(Dense[i]);

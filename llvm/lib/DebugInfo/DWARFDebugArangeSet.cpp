@@ -67,7 +67,9 @@ DWARFDebugArangeSet::extract(DataExtractor data, uint32_t *offset_ptr) {
 
     Descriptor arangeDescriptor;
 
-    assert(sizeof(arangeDescriptor.Address) == sizeof(arangeDescriptor.Length));
+    static_assert(sizeof(arangeDescriptor.Address) ==
+                      sizeof(arangeDescriptor.Length),
+                  "Different datatypes for addresses and sizes!");
     assert(sizeof(arangeDescriptor.Address) >= HeaderData.AddrSize);
 
     while (data.isValidOffset(*offset_ptr)) {
