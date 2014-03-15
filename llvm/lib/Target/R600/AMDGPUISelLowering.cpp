@@ -769,15 +769,18 @@ SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
     } else if (Store->getMemoryVT() == MVT::i16) {
       Mask = 0xffff;
     }
-    SDValue TruncPtr = DAG.getZExtOrTrunc(Store->getBasePtr(), DL, MVT::i32);
-    SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, TruncPtr,
+    SDValue BasePtr = Store->getBasePtr();
+    SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, BasePtr,
                               DAG.getConstant(2, MVT::i32));
     SDValue Dst = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, MVT::i32,
                               Chain, Ptr, DAG.getTargetConstant(0, MVT::i32));
-    SDValue ByteIdx = DAG.getNode(ISD::AND, DL, MVT::i32, TruncPtr,
+
+    SDValue ByteIdx = DAG.getNode(ISD::AND, DL, MVT::i32, BasePtr,
                                   DAG.getConstant(0x3, MVT::i32));
+
     SDValue ShiftAmt = DAG.getNode(ISD::SHL, DL, MVT::i32, ByteIdx,
                                    DAG.getConstant(3, MVT::i32));
+
     SDValue SExtValue = DAG.getNode(ISD::SIGN_EXTEND, DL, MVT::i32,
                                     Store->getValue());
 
