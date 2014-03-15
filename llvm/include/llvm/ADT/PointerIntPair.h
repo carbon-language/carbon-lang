@@ -45,6 +45,8 @@ class PointerIntPair {
   static_assert(PtrTraits::NumLowBitsAvailable <
                 std::numeric_limits<uintptr_t>::digits,
                 "cannot use a pointer type that has all bits free");
+  static_assert(IntBits <= PtrTraits::NumLowBitsAvailable,
+                "PointerIntPair with integer size too large for pointer");
   enum : uintptr_t {
     /// PointerBitMask - The bits that come from the pointer.
     PointerBitMask =
@@ -63,8 +65,6 @@ class PointerIntPair {
 public:
   PointerIntPair() : Value(0) {}
   PointerIntPair(PointerTy PtrVal, IntType IntVal) {
-    assert(IntBits <= PtrTraits::NumLowBitsAvailable &&
-           "PointerIntPair formed with integer size too large for pointer");
     setPointerAndInt(PtrVal, IntVal);
   }
   explicit PointerIntPair(PointerTy PtrVal) {
@@ -162,13 +162,13 @@ struct DenseMapInfo<PointerIntPair<PointerTy, IntBits, IntType> > {
   typedef PointerIntPair<PointerTy, IntBits, IntType> Ty;
   static Ty getEmptyKey() {
     uintptr_t Val = static_cast<uintptr_t>(-1);
-    Val <<= PointerLikeTypeTraits<PointerTy>::NumLowBitsAvailable;
-    return Ty(reinterpret_cast<PointerTy>(Val), IntType((1 << IntBits)-1));
+    Val <<= PointerLikeTypeTraits<Ty>::NumLowBitsAvailable;
+    return Ty::getFromOpaqueValue(reinterpret_cast<void *>(Val));
   }
   static Ty getTombstoneKey() {
     uintptr_t Val = static_cast<uintptr_t>(-2);
     Val <<= PointerLikeTypeTraits<PointerTy>::NumLowBitsAvailable;
-    return Ty(reinterpret_cast<PointerTy>(Val), IntType(0));
+    return Ty::getFromOpaqueValue(reinterpret_cast<void *>(Val));
   }
   static unsigned getHashValue(Ty V) {
     uintptr_t IV = reinterpret_cast<uintptr_t>(V.getOpaqueValue());
