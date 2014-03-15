@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=i386-unknown-unknown %s -o %t -filetype=obj
+; RUN: llc -mtriple=i386-unknown-unknown -mcpu=core2 %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump -debug-dump=line %t | FileCheck %s
 ;
 ; Generated from:
