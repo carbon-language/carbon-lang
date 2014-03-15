@@ -116,6 +116,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   IdentifierInfo *Ident__TIMESTAMP__;              // __TIMESTAMP__
   IdentifierInfo *Ident__COUNTER__;                // __COUNTER__
   IdentifierInfo *Ident_Pragma, *Ident__pragma;    // _Pragma, __pragma
+  IdentifierInfo *Ident__identifier;               // __identifier
   IdentifierInfo *Ident__VA_ARGS__;                // __VA_ARGS__
   IdentifierInfo *Ident__has_feature;              // __has_feature
   IdentifierInfo *Ident__has_extension;            // __has_extension

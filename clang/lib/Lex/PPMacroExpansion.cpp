@@ -97,6 +97,15 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__INCLUDE_LEVEL__ = RegisterBuiltinMacro(*this, "__INCLUDE_LEVEL__");
   Ident__TIMESTAMP__     = RegisterBuiltinMacro(*this, "__TIMESTAMP__");
 
+  // Microsoft Extensions.
+  if (LangOpts.MicrosoftExt) {
+    Ident__identifier = RegisterBuiltinMacro(*this, "__identifier");
+    Ident__pragma = RegisterBuiltinMacro(*this, "__pragma");
+  } else {
+    Ident__identifier = 0;
+    Ident__pragma = 0;
+  }
+
   // Clang Extensions.
   Ident__has_feature      = RegisterBuiltinMacro(*this, "__has_feature");
   Ident__has_extension    = RegisterBuiltinMacro(*this, "__has_extension");
@@ -119,12 +128,6 @@ void Preprocessor::RegisterBuiltinMacros() {
     Ident__building_module = 0;
     Ident__MODULE__ = 0;
   }
-  
-  // Microsoft Extensions.
-  if (LangOpts.MicrosoftExt) 
-    Ident__pragma = RegisterBuiltinMacro(*this, "__pragma");
-  else
-    Ident__pragma = 0;
 }
 
 /// isTrivialSingleTokenExpansion - Return true if MI, which has a single token
@@ -1481,6 +1484,44 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     IdentifierInfo *ModuleII = getIdentifierInfo(getLangOpts().CurrentModule);
     Tok.setIdentifierInfo(ModuleII);
     Tok.setKind(ModuleII->getTokenID());
+  } else if (II == Ident__identifier) {
+    SourceLocation Loc = Tok.getLocation();
+
+    // We're expecting '__identifier' '(' identifier ')'. Try to recover
+    // if the parens are missing.
+    LexNonComment(Tok);
+    if (Tok.isNot(tok::l_paren)) {
+      // No '(', use end of last token.
+      Diag(getLocForEndOfToken(Loc), diag::err_pp_expected_after)
+        << II << tok::l_paren;
+      // If the next token isn't valid as our argument, we can't recover.
+      if (!Tok.isAnnotation() && Tok.getIdentifierInfo())
+        Tok.setKind(tok::identifier);
+      return;
+    }
+
+    SourceLocation LParenLoc = Tok.getLocation();
+    LexNonComment(Tok);
+
+    if (!Tok.isAnnotation() && Tok.getIdentifierInfo())
+      Tok.setKind(tok::identifier);
+    else {
+      Diag(Tok.getLocation(), diag::err_pp_identifier_arg_not_identifier)
+        << Tok.getKind();
+      // Don't walk past anything that's not a real token.
+      if (Tok.is(tok::eof) || Tok.is(tok::eod) || Tok.isAnnotation())
+        return;
+    }
+
+    // Discard the ')', preserving 'Tok' as our result.
+    Token RParen;
+    LexNonComment(RParen);
+    if (RParen.isNot(tok::r_paren)) {
+      Diag(getLocForEndOfToken(Tok.getLocation()), diag::err_pp_expected_after)
+        << Tok.getKind() << tok::r_paren;
+      Diag(LParenLoc, diag::note_matching) << tok::l_paren;
+    }
+    return;
   } else {
     llvm_unreachable("Unknown identifier!");
   }

@@ -517,10 +517,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
       Builder.defineMacro("_WCHAR_T_DEFINED");
       Builder.defineMacro("_NATIVE_WCHAR_T_DEFINED");
     }
-    if (LangOpts.CPlusPlus) {
-      // FIXME: Support Microsoft's __identifier extension in the lexer.
-      Builder.append("#define __identifier(x) x");
-    }
   }
 
   if (LangOpts.Optimize)

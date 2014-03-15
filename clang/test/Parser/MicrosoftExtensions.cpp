@@ -325,6 +325,29 @@ class IF_EXISTS_CLASS_TEST {
 
 
 int __identifier(generic) = 3;
+int __identifier(int) = 4;
+struct __identifier(class) { __identifier(class) *__identifier(for); };
+__identifier(class) __identifier(struct) = { &__identifier(struct) };
+
+int __identifier for; // expected-error {{missing '(' after '__identifier'}}
+int __identifier(else} = __identifier(for); // expected-error {{missing ')' after identifier}} expected-note {{to match this '('}}
+#define identifier_weird(x) __identifier(x
+int k = identifier_weird(if)); // expected-error {{use of undeclared identifier 'if'}}
+
+// This is a bit weird, but the alternative tokens aren't keywords, and this
+// behavior matches MSVC. FIXME: Consider supporting this anyway.
+extern int __identifier(and) r; // expected-error {{cannot convert '&&' token to an identifier}}
+
+void f() {
+  __identifier(() // expected-error {{cannot convert '(' token to an identifier}}
+  __identifier(void) // expected-error {{use of undeclared identifier 'void'}}
+  __identifier()) // expected-error {{cannot convert ')' token to an identifier}}
+  // FIXME: We should pick a friendlier display name for this token kind.
+  __identifier(1) // expected-error {{cannot convert <numeric_constant> token to an identifier}}
+  __identifier(+) // expected-error {{cannot convert '+' token to an identifier}}
+  __identifier("foo") // expected-error {{cannot convert <string_literal> token to an identifier}}
+  __identifier(;) // expected-error {{cannot convert ';' token to an identifier}}
+}
 
 class inline_definition_pure_spec {
    virtual int f() = 0 { return 0; }// expected-warning {{function definition with pure-specifier is a Microsoft extension}}

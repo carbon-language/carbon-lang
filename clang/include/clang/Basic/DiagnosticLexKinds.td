@@ -403,6 +403,9 @@ def warn_has_warning_invalid_option :
    ExtWarn<"__has_warning expected option name (e.g. \"-Wundef\")">,
    InGroup<MalformedWarningCheck>;
 
+def err_pp_identifier_arg_not_identifier : Error<
+  "cannot convert %0 token to an identifier">;
+
 def warn_pragma_include_alias_mismatch_angle :
    ExtWarn<"angle-bracketed include <%0> cannot be aliased to double-quoted "
    "include \"%1\"">, InGroup<UnknownPragmas>;
