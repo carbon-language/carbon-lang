@@ -65,9 +65,22 @@ namespace {
   public:
     UnreachableCodeHandler(Sema &s) : S(s) {}
 
-    void HandleUnreachable(SourceLocation L, SourceRange R1,
+    void HandleUnreachable(reachable_code::UnreachableKind UK,
+                           SourceLocation L, SourceRange R1,
                            SourceRange R2) override {
-      S.Diag(L, diag::warn_unreachable) << R1 << R2;
+      unsigned diag = diag::warn_unreachable;
+      switch (UK) {
+        case reachable_code::UK_Break:
+          diag = diag::warn_unreachable_break;
+          break;
+        case reachable_code::UK_TrivialReturn:
+          diag = diag::warn_unreachable_trivial_return;
+          break;
+        case reachable_code::UK_Other:
+          break;
+      }
+
+      S.Diag(L, diag) << R1 << R2;
     }
   };
 }

@@ -1,4 +1,4 @@
-// RUN: %clang %s -fsyntax-only -Xclang -verify -fblocks -Wunreachable-code -Wno-unused-value -Wno-covered-switch-default
+// RUN: %clang %s -fsyntax-only -Xclang -verify -fblocks -Wunreachable-code-aggressive -Wno-unused-value -Wno-covered-switch-default
 
 // This previously triggered a warning from -Wunreachable-code because of
 // a busted CFG.

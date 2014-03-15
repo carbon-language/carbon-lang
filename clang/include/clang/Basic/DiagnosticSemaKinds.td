@@ -359,8 +359,17 @@ def warn_suggest_noreturn_function : Warning<
 def warn_suggest_noreturn_block : Warning<
   "block could be declared with attribute 'noreturn'">,
   InGroup<MissingNoreturn>, DefaultIgnore;
-def warn_unreachable : Warning<"will never be executed">,
-  InGroup<DiagGroup<"unreachable-code">>, DefaultIgnore;
+
+// Unreachable code.
+def warn_unreachable : Warning<
+  "will never be executed">,
+  InGroup<UnreachableCode>, DefaultIgnore;
+def warn_unreachable_break : Warning<
+  "'break' will never be executed">,
+  InGroup<UnreachableCodeBreak>, DefaultIgnore;
+def warn_unreachable_trivial_return : Warning<
+  "'return' will never be executed">,
+  InGroup<UnreachableCodeTrivialReturn>, DefaultIgnore;
 
 /// Built-in functions.
 def ext_implicit_lib_function_decl : ExtWarn<

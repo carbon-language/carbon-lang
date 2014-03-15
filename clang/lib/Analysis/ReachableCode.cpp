@@ -59,9 +59,14 @@ static bool bodyEndsWithNoReturn(const CFGBlock::AdjacentBlock &AB) {
   return bodyEndsWithNoReturn(Pred);
 }
 
-static bool isBreakPrecededByNoReturn(const CFGBlock *B,
-                                      const Stmt *S) {
-  if (!isa<BreakStmt>(S) || B->pred_empty())
+static bool isBreakPrecededByNoReturn(const CFGBlock *B, const Stmt *S,
+                                      reachable_code::UnreachableKind &UK) {
+  if (!isa<BreakStmt>(S))
+    return false;
+
+  UK = reachable_code::UK_Break;
+
+  if (B->pred_empty())
     return false;
 
   assert(B->empty());
@@ -131,22 +136,16 @@ static bool isTrivialExpression(const Expr *Ex) {
          isEnumConstant(Ex);
 }
 
-static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S) {
-  const Expr *Ex = dyn_cast<Expr>(S);
-
-  if (Ex && !isTrivialExpression(Ex))
-    return false;
-
+static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S,
+                                     reachable_code::UnreachableKind &UK) {
   // Check if the block ends with a do...while() and see if 'S' is the
   // condition.
   if (const Stmt *Term = B->getTerminator()) {
-    if (const DoStmt *DS = dyn_cast<DoStmt>(Term))
-      if (DS->getCond() == S)
-        return true;
+    if (const DoStmt *DS = dyn_cast<DoStmt>(Term)) {
+      const Expr *Cond = DS->getCond();
+      return Cond == S && isTrivialExpression(Cond);
+    }
   }
-
-  if (B->pred_size() != 1)
-    return false;
 
   // Look to see if the block ends with a 'return', and see if 'S'
   // is a substatement.  The 'return' may not be the last element in
@@ -155,17 +154,33 @@ static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S) {
        I != E; ++I) {
     if (Optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
       if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(CS->getStmt())) {
+        // Determine if we need to lock at the body of the block
+        // before the dead return.
         bool LookAtBody = false;
-        if (RS == S)
+        if (RS == S) {
           LookAtBody = true;
+          UK = reachable_code::UK_TrivialReturn;
+        }
         else {
           const Expr *RE = RS->getRetValue();
-          if (RE && stripExprSugar(RE->IgnoreParenCasts()) == Ex)
-            LookAtBody = true;
+          if (RE) {
+            RE = stripExprSugar(RE->IgnoreParenCasts());
+            if (RE == S) {
+              UK = reachable_code::UK_TrivialReturn;
+              LookAtBody = isTrivialExpression(RE);
+            }
+          }
         }
 
-        if (LookAtBody)
+        if (LookAtBody) {
+          // More than one predecessor?  Restrict the heuristic
+          // to looking at return statements directly dominated
+          // by a noreturn call.
+          if (B->pred_size() != 1)
+            return false;
+
           return bodyEndsWithNoReturn(*B->pred_begin());
+        }
       }
       break;
     }
@@ -588,19 +603,22 @@ static SourceLocation GetUnreachableLoc(const Stmt *S,
 void DeadCodeScan::reportDeadCode(const CFGBlock *B,
                                   const Stmt *S,
                                   clang::reachable_code::Callback &CB) {
+  // The kind of unreachable code found.
+  reachable_code::UnreachableKind UK = reachable_code::UK_Other;
+
   // Suppress idiomatic cases of calling a noreturn function just
   // before executing a 'break'.  If there is other code after the 'break'
   // in the block then don't suppress the warning.
-  if (isBreakPrecededByNoReturn(B, S))
+  if (isBreakPrecededByNoReturn(B, S, UK))
     return;
 
   // Suppress trivial 'return' statements that are dead.
-  if (isTrivialReturnOrDoWhile(B, S))
+  if (UK == reachable_code::UK_Other && isTrivialReturnOrDoWhile(B, S, UK))
     return;
 
   SourceRange R1, R2;
   SourceLocation Loc = GetUnreachableLoc(S, R1, R2);
-  CB.HandleUnreachable(Loc, R1, R2);
+  CB.HandleUnreachable(UK, Loc, R1, R2);
 }
 
 //===----------------------------------------------------------------------===//

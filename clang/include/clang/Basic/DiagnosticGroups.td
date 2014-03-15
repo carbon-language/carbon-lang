@@ -424,6 +424,21 @@ def CharSubscript : DiagGroup<"char-subscripts">;
 def LargeByValueCopy : DiagGroup<"large-by-value-copy">;
 def DuplicateArgDecl : DiagGroup<"duplicate-method-arg">;
 
+// Unreachable code warning groups.
+//
+//  The goal is make -Wunreachable-code on by default, in -Wall, or at
+//  least actively used, with more noisy versions of the warning covered
+//  under separate flags.
+//
+def UnreachableCode : DiagGroup<"unreachable-code">;
+def UnreachableCodeBreak : DiagGroup<"unreachable-code-break",
+                            [UnreachableCode]>;
+def UnreachableCodeTrivialReturn : DiagGroup<"unreachable-code-trivial-return",
+                                    [UnreachableCode]>;
+def UnreachableCodeAggressive : DiagGroup<"unreachable-code-aggressive",
+                                    [UnreachableCodeBreak,
+                                     UnreachableCodeTrivialReturn]>;
+
 // Aggregation warning settings.
 
 // -Widiomatic-parentheses contains warnings about 'idiomatic'

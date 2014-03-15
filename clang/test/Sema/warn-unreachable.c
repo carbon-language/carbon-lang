@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -fblocks -Wunreachable-code -Wno-unused-value -Wno-covered-switch-default -I %S/Inputs
+// RUN: %clang_cc1 %s -fsyntax-only -verify -fblocks -Wunreachable-code-aggressive -Wno-unused-value -Wno-covered-switch-default -I %S/Inputs
 
 #include "warn-unreachable.h"
 
