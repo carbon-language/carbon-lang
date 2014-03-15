@@ -972,8 +972,10 @@ unsigned SampleFunctionProfile::getFunctionLoc(Function &F) {
     }
   }
 
-  Twine Msg = "No debug information found in function " + F.getName();
-  F.getContext().diagnose(DiagnosticInfoSampleProfile(Msg));
+  StringRef FnName = F.getName();
+  Twine Msg = "No debug information found in function " + FnName;
+  DiagnosticInfoSampleProfile Diag(Msg);
+  F.getContext().diagnose(Diag);
   return 0;
 }
 
