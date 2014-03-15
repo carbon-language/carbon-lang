@@ -7506,7 +7506,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     CommuteVectorShuffleMask(M, NumElems);
     std::swap(V1, V2);
     std::swap(V1IsSplat, V2IsSplat);
-    Commuted = false;
 
     if (isUNPCKLMask(M, VT, HasInt256))
       return getTargetShuffleNode(X86ISD::UNPCKL, dl, VT, V1, V2, DAG);

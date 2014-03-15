@@ -422,7 +422,7 @@ void Formula::print(raw_ostream &OS) const {
     OS << ')';
   }
   if (UnfoldedOffset != 0) {
-    if (!First) OS << " + "; else First = false;
+    if (!First) OS << " + ";
     OS << "imm(" << UnfoldedOffset << ')';
   }
 }

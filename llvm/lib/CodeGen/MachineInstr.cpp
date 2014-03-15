@@ -317,7 +317,6 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
         OS << "tied";
         if (TiedTo != 15)
           OS << unsigned(TiedTo - 1);
-        NeedComma = true;
       }
       OS << '>';
     }
@@ -1687,7 +1686,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM,
       }
     }
   } else if (!debugLoc.isUnknown() && MF) {
-    if (!HaveSemi) OS << ";"; HaveSemi = true;
+    if (!HaveSemi) OS << ";";
     OS << " dbg:";
     printDebugLoc(debugLoc, MF, OS);
   }

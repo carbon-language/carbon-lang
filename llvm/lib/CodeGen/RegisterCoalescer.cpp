@@ -282,7 +282,6 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
     if (SrcSub) {
       Dst = TRI.getMatchingSuperReg(Dst, SrcSub, MRI.getRegClass(Src));
       if (!Dst) return false;
-      SrcSub = 0;
     } else if (!MRI.getRegClass(Src)->contains(Dst)) {
       return false;
     }

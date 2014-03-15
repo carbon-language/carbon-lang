@@ -6155,7 +6155,6 @@ ScalarEvolution::isKnownPredicateWithRanges(ICmpInst::Predicate Pred,
   default:
     llvm_unreachable("Unexpected ICmpInst::Predicate value!");
   case ICmpInst::ICMP_SGT:
-    Pred = ICmpInst::ICMP_SLT;
     std::swap(LHS, RHS);
   case ICmpInst::ICMP_SLT: {
     ConstantRange LHSRange = getSignedRange(LHS);
@@ -6167,7 +6166,6 @@ ScalarEvolution::isKnownPredicateWithRanges(ICmpInst::Predicate Pred,
     break;
   }
   case ICmpInst::ICMP_SGE:
-    Pred = ICmpInst::ICMP_SLE;
     std::swap(LHS, RHS);
   case ICmpInst::ICMP_SLE: {
     ConstantRange LHSRange = getSignedRange(LHS);
@@ -6179,7 +6177,6 @@ ScalarEvolution::isKnownPredicateWithRanges(ICmpInst::Predicate Pred,
     break;
   }
   case ICmpInst::ICMP_UGT:
-    Pred = ICmpInst::ICMP_ULT;
     std::swap(LHS, RHS);
   case ICmpInst::ICMP_ULT: {
     ConstantRange LHSRange = getUnsignedRange(LHS);
@@ -6191,7 +6188,6 @@ ScalarEvolution::isKnownPredicateWithRanges(ICmpInst::Predicate Pred,
     break;
   }
   case ICmpInst::ICMP_UGE:
-    Pred = ICmpInst::ICMP_ULE;
     std::swap(LHS, RHS);
   case ICmpInst::ICMP_ULE: {
     ConstantRange LHSRange = getUnsignedRange(LHS);
@@ -6597,7 +6593,7 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     IsSigned ? APIntOps::smin(getSignedRange(RHS).getSignedMax(), Limit)
              : APIntOps::umin(getUnsignedRange(RHS).getUnsignedMax(), Limit);
 
-  const SCEV *MaxBECount = getCouldNotCompute();
+  const SCEV *MaxBECount;
   if (isa<SCEVConstant>(BECount))
     MaxBECount = BECount;
   else
@@ -7114,7 +7110,6 @@ public:
           Operands.push_back(Expr->getOperand(i));
       }
     } else {
-      FoundGCDTerm = false;
       const SCEV *PartialGCD = One;
       for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
         if (PartialGCD == GCD) {
