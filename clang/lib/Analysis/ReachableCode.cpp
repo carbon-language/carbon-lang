@@ -236,7 +236,12 @@ static bool isConfigurationValue(const Stmt *S,
         // We could generalize this to local variables, but it isn't
         // clear if those truly represent configuration values that
         // gate unreachable code.
-        return !VD->hasLocalStorage();
+        if (!VD->hasLocalStorage())
+          return true;
+
+        // As a heuristic, locals that have been marked 'const' explicitly
+        // can be treated as configuration values as well.
+        return VD->getType().isLocalConstQualified();
       }
       return false;
     }
