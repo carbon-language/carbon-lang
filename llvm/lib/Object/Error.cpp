@@ -18,11 +18,11 @@ using namespace llvm;
 using namespace object;
 
 namespace {
-class _object_error_category : public _do_message {
+class _object_error_category : public error_category {
 public:
-  virtual const char* name() const;
-  virtual std::string message(int ev) const;
-  virtual error_condition default_error_condition(int ev) const;
+  const char* name() const override;
+  std::string message(int ev) const override;
+  error_condition default_error_condition(int ev) const override;
 };
 }
 

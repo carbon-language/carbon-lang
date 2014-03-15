@@ -3257,7 +3257,7 @@ error_code BitcodeReader::InitLazyStream() {
 }
 
 namespace {
-class BitcodeErrorCategoryType : public _do_message {
+class BitcodeErrorCategoryType : public error_category {
   const char *name() const override {
     return "llvm.bitcode";
   }

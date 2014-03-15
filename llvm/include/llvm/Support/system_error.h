@@ -628,8 +628,8 @@ class error_category
 public:
   virtual ~error_category();
 
-private:
   error_category();
+private:
   error_category(const error_category&) LLVM_DELETED_FUNCTION;
   error_category& operator=(const error_category&) LLVM_DELETED_FUNCTION;
 
