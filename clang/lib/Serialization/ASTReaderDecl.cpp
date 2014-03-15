@@ -2665,24 +2665,6 @@ void ASTReader::loadDeclUpdateRecords(serialization::DeclID ID, Decl *D) {
 }
 
 namespace {
-  struct CompareLocalRedeclarationsInfoToID {
-    bool operator()(const LocalRedeclarationsInfo &X, DeclID Y) {
-      return X.FirstID < Y;
-    }
-
-    bool operator()(DeclID X, const LocalRedeclarationsInfo &Y) {
-      return X < Y.FirstID;
-    }
-
-    bool operator()(const LocalRedeclarationsInfo &X, 
-                    const LocalRedeclarationsInfo &Y) {
-      return X.FirstID < Y.FirstID;
-    }
-    bool operator()(DeclID X, DeclID Y) {
-      return X < Y;
-    }
-  };
-  
   /// \brief Module visitor class that finds all of the redeclarations of a 
   /// 
   class RedeclChainVisitor {
@@ -2726,10 +2708,11 @@ namespace {
       
       // Perform a binary search to find the local redeclarations for this
       // declaration (if any).
+      const LocalRedeclarationsInfo Compare = { ID, 0 };
       const LocalRedeclarationsInfo *Result
         = std::lower_bound(M.RedeclarationsMap,
                            M.RedeclarationsMap + M.LocalNumRedeclarationsInMap, 
-                           ID, CompareLocalRedeclarationsInfoToID());
+                           Compare);
       if (Result == M.RedeclarationsMap + M.LocalNumRedeclarationsInMap ||
           Result->FirstID != ID) {
         // If we have a previously-canonical singleton declaration that was 
@@ -2804,24 +2787,6 @@ void ASTReader::loadPendingDeclChain(serialization::GlobalDeclID ID) {
 }
 
 namespace {
-  struct CompareObjCCategoriesInfo {
-    bool operator()(const ObjCCategoriesInfo &X, DeclID Y) {
-      return X.DefinitionID < Y;
-    }
-    
-    bool operator()(DeclID X, const ObjCCategoriesInfo &Y) {
-      return X < Y.DefinitionID;
-    }
-    
-    bool operator()(const ObjCCategoriesInfo &X, 
-                    const ObjCCategoriesInfo &Y) {
-      return X.DefinitionID < Y.DefinitionID;
-    }
-    bool operator()(DeclID X, DeclID Y) {
-      return X < Y;
-    }
-  };
-
   /// \brief Given an ObjC interface, goes through the modules and links to the
   /// interface all the categories for it.
   class ObjCCategoriesVisitor {
@@ -2911,10 +2876,11 @@ namespace {
 
       // Perform a binary search to find the local redeclarations for this
       // declaration (if any).
+      const ObjCCategoriesInfo Compare = { LocalID, 0 };
       const ObjCCategoriesInfo *Result
         = std::lower_bound(M.ObjCCategoriesMap,
                            M.ObjCCategoriesMap + M.LocalNumObjCCategoriesInMap, 
-                           LocalID, CompareObjCCategoriesInfo());
+                           Compare);
       if (Result == M.ObjCCategoriesMap + M.LocalNumObjCCategoriesInMap ||
           Result->DefinitionID != LocalID) {
         // We didn't find anything. If the class definition is in this module
