@@ -431,13 +431,12 @@ def DuplicateArgDecl : DiagGroup<"duplicate-method-arg">;
 //  under separate flags.
 //
 def UnreachableCode : DiagGroup<"unreachable-code">;
-def UnreachableCodeBreak : DiagGroup<"unreachable-code-break",
-                            [UnreachableCode]>;
-def UnreachableCodeTrivialReturn : DiagGroup<"unreachable-code-trivial-return",
-                                    [UnreachableCode]>;
+def UnreachableCodeBreak : DiagGroup<"unreachable-code-break">;
+def UnreachableCodeReturn : DiagGroup<"unreachable-code-return">;
 def UnreachableCodeAggressive : DiagGroup<"unreachable-code-aggressive",
-                                    [UnreachableCodeBreak,
-                                     UnreachableCodeTrivialReturn]>;
+                                    [UnreachableCode,
+                                     UnreachableCodeBreak,
+                                     UnreachableCodeReturn]>;
 
 // Aggregation warning settings.
 

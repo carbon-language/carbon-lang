@@ -136,8 +136,7 @@ static bool isTrivialExpression(const Expr *Ex) {
          isEnumConstant(Ex);
 }
 
-static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S,
-                                     reachable_code::UnreachableKind &UK) {
+static bool isTrivialDoWhile(const CFGBlock *B, const Stmt *S) {
   // Check if the block ends with a do...while() and see if 'S' is the
   // condition.
   if (const Stmt *Term = B->getTerminator()) {
@@ -146,7 +145,10 @@ static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S,
       return Cond == S && isTrivialExpression(Cond);
     }
   }
+  return false;
+}
 
+static bool isTrivialReturn(const CFGBlock *B, const Stmt *S) {
   // Look to see if the block ends with a 'return', and see if 'S'
   // is a substatement.  The 'return' may not be the last element in
   // the block because of destructors.
@@ -156,30 +158,11 @@ static bool isTrivialReturnOrDoWhile(const CFGBlock *B, const Stmt *S,
       if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(CS->getStmt())) {
         // Determine if we need to lock at the body of the block
         // before the dead return.
-        bool LookAtBody = false;
-        if (RS == S) {
-          LookAtBody = true;
-          UK = reachable_code::UK_TrivialReturn;
-        }
-        else {
-          const Expr *RE = RS->getRetValue();
-          if (RE) {
-            RE = stripExprSugar(RE->IgnoreParenCasts());
-            if (RE == S) {
-              UK = reachable_code::UK_TrivialReturn;
-              LookAtBody = isTrivialExpression(RE);
-            }
-          }
-        }
-
-        if (LookAtBody) {
-          // More than one predecessor?  Restrict the heuristic
-          // to looking at return statements directly dominated
-          // by a noreturn call.
-          if (B->pred_size() != 1)
-            return false;
-
-          return bodyEndsWithNoReturn(*B->pred_begin());
+        if (RS == S)
+          return true;
+        if (const Expr *RE = RS->getRetValue()) {
+          RE = stripExprSugar(RE->IgnoreParenCasts());
+          return RE == S && isTrivialExpression(RE);
         }
       }
       break;
@@ -606,15 +589,25 @@ void DeadCodeScan::reportDeadCode(const CFGBlock *B,
   // The kind of unreachable code found.
   reachable_code::UnreachableKind UK = reachable_code::UK_Other;
 
-  // Suppress idiomatic cases of calling a noreturn function just
-  // before executing a 'break'.  If there is other code after the 'break'
-  // in the block then don't suppress the warning.
-  if (isBreakPrecededByNoReturn(B, S, UK))
-    return;
+  do {
+    // Suppress idiomatic cases of calling a noreturn function just
+    // before executing a 'break'.  If there is other code after the 'break'
+    // in the block then don't suppress the warning.
+    if (isa<BreakStmt>(S)) {
+      UK = reachable_code::UK_Break;
+      break;
+    }
 
-  // Suppress trivial 'return' statements that are dead.
-  if (UK == reachable_code::UK_Other && isTrivialReturnOrDoWhile(B, S, UK))
-    return;
+    if (isTrivialDoWhile(B, S))
+      return;
+
+    // Suppress trivial 'return' statements that are dead.
+    if (isTrivialReturn(B, S)) {
+      UK = reachable_code::UK_TrivialReturn;
+      break;
+    }
+
+  } while(false);
 
   SourceRange R1, R2;
   SourceLocation Loc = GetUnreachableLoc(S, R1, R2);

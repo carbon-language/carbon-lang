@@ -367,9 +367,9 @@ def warn_unreachable : Warning<
 def warn_unreachable_break : Warning<
   "'break' will never be executed">,
   InGroup<UnreachableCodeBreak>, DefaultIgnore;
-def warn_unreachable_trivial_return : Warning<
+def warn_unreachable_return : Warning<
   "'return' will never be executed">,
-  InGroup<UnreachableCodeTrivialReturn>, DefaultIgnore;
+  InGroup<UnreachableCodeReturn>, DefaultIgnore;
 
 /// Built-in functions.
 def ext_implicit_lib_function_decl : ExtWarn<

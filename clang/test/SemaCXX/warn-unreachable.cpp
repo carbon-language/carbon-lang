@@ -142,7 +142,7 @@ typedef basic_string<char> string;
 
 std::string testStr() {
   raze();
-  return ""; // no-warning
+  return ""; // expected-warning {{'return' will never be executed}}
 }
 
 std::string testStrWarn(const char *s) {
@@ -152,7 +152,7 @@ std::string testStrWarn(const char *s) {
 
 bool testBool() {
   raze();
-  return true; // no-warning
+  return true; // expected-warning {{'return' will never be executed}}
 }
 
 static const bool ConditionVar = 1;

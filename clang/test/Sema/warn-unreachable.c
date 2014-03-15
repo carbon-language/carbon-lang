@@ -151,10 +151,10 @@ int test_break_preceded_by_noreturn(int i) {
   switch (i) {
     case 1:
       raze();
-      break; // no-warning
+      break; // expected-warning {{'break' will never be executed}}
     case 2:
       raze();
-      break; // no-warning
+      break; // expected-warning {{'break' will never be executed}}
       warn_here(); // expected-warning {{will never be executed}}
     case 3:
       return 1;
@@ -194,19 +194,17 @@ void unreachable_in_default(MyEnum e) {
 // Don't warn about trivial dead returns.
 int trivial_dead_return() {
   raze();
-  // Use the '()' to test that we unwrap such stuff
-  // when looking for dead code.
-  return ((0)); // no-warning
+  return ((0)); // expected-warning {{'return' will never be executed}}
 }
 
 void trivial_dead_return_void() {
   raze();
-  return; // no-warning
+  return; // expected-warning {{'return' will never be executed}}
 }
 
 MyEnum trival_dead_return_enum() {
   raze();
-  return Value1; // no-warning
+  return Value1; // expected-warning {{'return' will never be executed}}
 }
 
 MyEnum trivial_dead_return_enum_2(int x) {
@@ -222,12 +220,12 @@ MyEnum trivial_dead_return_enum_2(int x) {
 
 const char *trivial_dead_return_cstr() {
   raze();
-  return ""; // no-warning
+  return ""; // expected-warning {{return' will never be executed}}
 }
 
 char trivial_dead_return_char() {
   raze();
-  return ' '; // no-warning
+  return ' '; // expected-warning {{return' will never be executed}}
 }
 
 MyEnum nontrivial_dead_return_enum_2(int x) {
@@ -325,3 +323,45 @@ int test_do_while_nontrivial_cond(int x) {
   return x;
 }
 
+// Diagnostic control: -Wunreachable-code-return.
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunreachable-code-return"
+
+void trivial_dead_return_void_SUPPRESSED() {
+  raze();
+  return; // no-warning
+}
+
+MyEnum trival_dead_return_enum_SUPPRESSED() {
+  raze();
+  return Value1; // no-warning
+}
+
+#pragma clang diagnostic pop
+
+// Diagnostic control: -Wunreachable-code-break.
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunreachable-code-break"
+
+int test_break_preceded_by_noreturn_SUPPRESSED(int i) {
+  switch (i) {
+    case 1:
+      raze();
+      break; // no-warning
+    case 2:
+      raze();
+      break; // no-warning
+      warn_here(); // expected-warning {{will never be executed}}
+    case 3:
+      return 1;
+      break; // no-warning
+    default:
+      break;
+      break; // no-warning
+  }
+  return i;
+}
+
+#pragma clang diagnostic pop
