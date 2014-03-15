@@ -89,6 +89,7 @@ TEST(EvaluateAsRValue, FailsGracefullyForUnknownTypes) {
   std::string ModesToTest[] = {"-std=c++03", "-std=c++11", "-std=c++1y"};
   for (std::string const &Mode : ModesToTest) {
     std::vector<std::string> Args(1, Mode);
+    Args.push_back("-fno-delayed-template-parsing");
     ASSERT_TRUE(runToolOnCodeWithArgs(
       new EvaluateConstantInitializersAction(),
       "template <typename T>"
