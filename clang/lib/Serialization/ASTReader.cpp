@@ -5203,9 +5203,9 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     unsigned Idx = 0;
     QualType Parm = readType(*Loc.F, Record, Idx);
     QualType Replacement = readType(*Loc.F, Record, Idx);
-    return
-      Context.getSubstTemplateTypeParmType(cast<TemplateTypeParmType>(Parm),
-                                            Replacement);
+    return Context.getSubstTemplateTypeParmType(
+        cast<TemplateTypeParmType>(Parm),
+        Context.getCanonicalType(Replacement));
   }
 
   case TYPE_SUBST_TEMPLATE_TYPE_PARM_PACK: {
