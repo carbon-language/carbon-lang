@@ -1,6 +1,6 @@
 //===---- ObjectBuffer.h - Utility class to wrap object image memory -----===//
 //
-//		       The LLVM Compiler Infrastructure
+//                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
@@ -68,13 +68,13 @@ public:
 
     // Make the data accessible via the ObjectBuffer::Buffer
     Buffer.reset(MemoryBuffer::getMemBuffer(StringRef(SV.data(), SV.size()),
-					    "",
-					    false));
+                                            "",
+                                            false));
   }
 
 protected:
   SmallVector<char, 4096> SV; // Working buffer into which we JIT.
-  raw_svector_ostream	  OS; // streaming wrapper
+  raw_svector_ostream     OS; // streaming wrapper
 };
 
 } // namespace llvm

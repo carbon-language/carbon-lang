@@ -232,7 +232,7 @@ void SplitBlockAndInsertIfThenElse(Value *Cond, Instruction *SplitBefore,
 /// entered from if the condition is true, and the block that will be
 /// entered if the condition is false.
 Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
-		      BasicBlock *&IfFalse);
+                      BasicBlock *&IfFalse);
 } // End llvm namespace
 
 #endif
