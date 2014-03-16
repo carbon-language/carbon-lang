@@ -3640,8 +3640,11 @@ void Sema::BuildVariableInstantiation(
   Context.setStaticLocalNumber(NewVar, Context.getStaticLocalNumber(OldVar));
 
   // Delay instantiation of the initializer for variable templates until a
-  // definition of the variable is needed.
-  if (!isa<VarTemplateSpecializationDecl>(NewVar) && !InstantiatingVarTemplate)
+  // definition of the variable is needed. We need it right away if the type
+  // contains 'auto'.
+  if ((!isa<VarTemplateSpecializationDecl>(NewVar) &&
+       !InstantiatingVarTemplate) ||
+      NewVar->getType()->isUndeducedType())
     InstantiateVariableInitializer(NewVar, OldVar, TemplateArgs);
 
   // Diagnose unused local variables with dependent types, where the diagnostic

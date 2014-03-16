@@ -441,3 +441,10 @@ namespace PR18530 {
   template<typename T> int a;
   int a<int>; // expected-error {{requires 'template<>'}}
 }
+
+namespace PR19152 {
+#ifndef PRECXX11
+  template<typename T> const auto x = 1;
+  static_assert(x<int> == 1, "");
+#endif
+}
