@@ -36,7 +36,7 @@ __attribute__((objc_root_class))
 @interface B1
 -(id)initB1 NS_DESIGNATED_INITIALIZER; // expected-note 6 {{method marked as designated initializer of the class here}}
 -(id)initB2;
--(id)initB3 NS_DESIGNATED_INITIALIZER; // expected-note 3 {{method marked as designated initializer of the class here}}
+-(id)initB3 NS_DESIGNATED_INITIALIZER; // expected-note 4 {{method marked as designated initializer of the class here}}
 @end
 
 @implementation B1
@@ -131,7 +131,7 @@ __attribute__((objc_root_class))
   [s initB1];
   [self meth];
   void (^blk)(void) = ^{
-    [self initB1];
+    [self initB1]; // expected-warning {{designated initializer should only invoke a designated initializer on 'super'}}
   };
   return [super initB3];
 }
@@ -168,7 +168,7 @@ __attribute__((objc_root_class))
 -(id)initS5 {
   [super initB1]; // expected-warning {{secondary initializer should not invoke an initializer on 'super'}}
   void (^blk)(void) = ^{
-    [super initB1];
+    [super initB1]; // expected-warning {{secondary initializer should not invoke an initializer on 'super'}}
   };
   return [self initS1];
 }
@@ -260,5 +260,28 @@ __attribute__((objc_root_class))
 - (instancetype)init
 {
    return ((void*)0);
+}
+@end
+
+// rdar://16323233
+__attribute__((objc_root_class))
+@interface B4 
+-(id)initB4 NS_DESIGNATED_INITIALIZER; 
+@end
+
+@interface rdar16323233 : B4
+-(id)initS4 NS_DESIGNATED_INITIALIZER;
+@end
+
+@implementation rdar16323233
+-(id)initS4 {
+    static id sSharedObject = (void*)0;
+    (void)^(void) {
+        sSharedObject = [super initB4];
+    };
+    return 0;
+}
+-(id)initB4 {
+   return [self initS4];
 }
 @end

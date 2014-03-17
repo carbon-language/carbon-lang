@@ -1013,6 +1013,18 @@ public:
     return FunctionScopes.back();
   }
   
+  sema::FunctionScopeInfo *getEnclosingFunction() const {
+    if (FunctionScopes.empty())
+      return 0;
+    
+    for (int e = FunctionScopes.size()-1; e >= 0; --e) {
+      if (isa<sema::BlockScopeInfo>(FunctionScopes[e]))
+        continue;
+      return FunctionScopes[e];
+    }
+    return 0;
+  }
+  
   template <typename ExprT>
   void recordUseOfEvaluatedWeak(const ExprT *E, bool IsRead=true) {
     if (!isUnevaluatedContext())

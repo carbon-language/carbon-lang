@@ -2499,8 +2499,12 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     }
   }
 
-  if (Method && Method->getMethodFamily() == OMF_init &&
-      getCurFunction()->ObjCIsDesignatedInit &&
+  FunctionScopeInfo *DIFunctionScopeInfo =
+    (Method && Method->getMethodFamily() == OMF_init)
+      ? getEnclosingFunction() : 0;
+  
+  if (DIFunctionScopeInfo &&
+      DIFunctionScopeInfo->ObjCIsDesignatedInit &&
       (SuperLoc.isValid() || isSelfExpr(Receiver))) {
     bool isDesignatedInitChain = false;
     if (SuperLoc.isValid()) {
@@ -2512,7 +2516,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
           if (!ID->declaresOrInheritsDesignatedInitializers() ||
               ID->isDesignatedInitializer(Sel)) {
             isDesignatedInitChain = true;
-            getCurFunction()->ObjCWarnForNoDesignatedInitChain = false;
+            DIFunctionScopeInfo->ObjCWarnForNoDesignatedInitChain = false;
           }
         }
       }
@@ -2531,13 +2535,13 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     }
   }
 
-  if (Method && Method->getMethodFamily() == OMF_init &&
-      getCurFunction()->ObjCIsSecondaryInit &&
+  if (DIFunctionScopeInfo &&
+      DIFunctionScopeInfo->ObjCIsSecondaryInit &&
       (SuperLoc.isValid() || isSelfExpr(Receiver))) {
     if (SuperLoc.isValid()) {
       Diag(SelLoc, diag::warn_objc_secondary_init_super_init_call);
     } else {
-      getCurFunction()->ObjCWarnForNoInitDelegation = false;
+      DIFunctionScopeInfo->ObjCWarnForNoInitDelegation = false;
     }
   }
 
