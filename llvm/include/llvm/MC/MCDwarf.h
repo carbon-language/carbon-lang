@@ -181,6 +181,8 @@ struct MCDwarfLineTableHeader {
   SmallVector<std::string, 3> MCDwarfDirs;
   SmallVector<MCDwarfFile, 3> MCDwarfFiles;
   StringMap<unsigned> SourceIdMap;
+  StringRef CompilationDir;
+
   MCDwarfLineTableHeader() : Label(nullptr) {}
   unsigned getFile(StringRef &Directory, StringRef &FileName,
                    unsigned FileNumber = 0);
@@ -207,6 +209,10 @@ public:
 
   void setLabel(MCSymbol *Label) {
     Header.Label = Label;
+  }
+
+  void setCompilationDir(StringRef CompilationDir) {
+    Header.CompilationDir = CompilationDir;
   }
 
   const SmallVectorImpl<std::string> &getMCDwarfDirs() const {

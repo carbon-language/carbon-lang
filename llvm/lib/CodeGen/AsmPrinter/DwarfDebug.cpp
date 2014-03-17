@@ -679,10 +679,6 @@ unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName, StringRef DirName,
   if (Asm->OutStreamer.hasRawTextSupport())
     CUID = 0;
 
-  // TODO: this might not belong here. See if we can factor this better.
-  if (DirName == CompilationDir)
-    DirName = "";
-
   // Print out a .file directive to specify files for .loc directives.
   return Asm->OutStreamer.EmitDwarfFileDirective(0, DirName, FileName, CUID);
 }
@@ -704,6 +700,8 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   DwarfCompileUnit *NewCU = new DwarfCompileUnit(
       InfoHolder.getUnits().size(), Die, DIUnit, Asm, this, &InfoHolder);
   InfoHolder.addUnit(NewCU);
+  Asm->OutStreamer.getContext().setMCLineTableCompilationDir(
+      NewCU->getUniqueID(), CompilationDir);
 
   NewCU->addString(Die, dwarf::DW_AT_producer, DIUnit.getProducer());
   NewCU->addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,

@@ -340,6 +340,8 @@ unsigned MCDwarfLineTable::getFile(StringRef &Directory, StringRef &FileName,
 unsigned MCDwarfLineTableHeader::getFile(StringRef &Directory,
                                          StringRef &FileName,
                                          unsigned FileNumber) {
+  if (Directory == CompilationDir)
+    Directory = "";
   if (FileName.empty()) {
     FileName = "<stdin>";
     Directory = "";

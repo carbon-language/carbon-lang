@@ -347,6 +347,9 @@ namespace llvm {
     void setMCLineTableSymbol(MCSymbol *Sym, unsigned ID) {
       getMCDwarfLineTable(ID).setLabel(Sym);
     }
+    void setMCLineTableCompilationDir(unsigned CUID, StringRef CompilationDir) {
+      getMCDwarfLineTable(CUID).setCompilationDir(CompilationDir);
+    }
 
     /// setCurrentDwarfLoc - saves the information from the currently parsed
     /// dwarf .loc directive and sets DwarfLocSeen.  When the next instruction
