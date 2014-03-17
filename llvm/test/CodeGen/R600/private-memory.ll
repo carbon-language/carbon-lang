@@ -13,10 +13,10 @@
 ; R600-CHECK-NOT: ALU clause
 ; R600-CHECK: 0 + AR.x
 
-; SI-CHECK: V_READFIRSTLANE
+; SI-CHECK: V_READFIRSTLANE_B32 vcc_lo
 ; SI-CHECK: V_MOVRELD
 ; SI-CHECK: S_CBRANCH
-; SI-CHECK: V_READFIRSTLANE
+; SI-CHECK: V_READFIRSTLANE_B32 vcc_lo
 ; SI-CHECK: V_MOVRELD
 ; SI-CHECK: S_CBRANCH
 define void @mova_same_clause(i32 addrspace(1)* nocapture %out, i32 addrspace(1)* nocapture %in) {

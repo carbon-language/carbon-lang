@@ -631,7 +631,18 @@ let neverHasSideEffects = 1, isMoveImm = 1 in {
 defm V_MOV_B32 : VOP1_32 <0x00000001, "V_MOV_B32", []>;
 } // End neverHasSideEffects = 1, isMoveImm = 1
 
-defm V_READFIRSTLANE_B32 : VOP1_32 <0x00000002, "V_READFIRSTLANE_B32", []>;
+let Uses = [EXEC] in {
+
+def V_READFIRSTLANE_B32 : VOP1 <
+  0x00000002,
+  (outs SReg_32:$vdst),
+  (ins VReg_32:$src0),
+  "V_READFIRSTLANE_B32 $vdst, $src0",
+  []
+>;
+
+}
+
 defm V_CVT_I32_F64 : VOP1_32_64 <0x00000003, "V_CVT_I32_F64",
   [(set i32:$dst, (fp_to_sint f64:$src0))]
 >;

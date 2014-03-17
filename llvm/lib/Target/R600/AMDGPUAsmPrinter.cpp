@@ -210,7 +210,8 @@ void AMDGPUAsmPrinter::findNumUsedRegistersSI(MachineFunction &MF,
           continue;
         }
         unsigned reg = MO.getReg();
-        if (reg == AMDGPU::VCC) {
+        if (reg == AMDGPU::VCC || reg == AMDGPU::VCC_LO ||
+	    reg == AMDGPU::VCC_HI) {
           VCCUsed = true;
           continue;
         }
