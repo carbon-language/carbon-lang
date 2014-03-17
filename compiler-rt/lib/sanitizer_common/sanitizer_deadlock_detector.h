@@ -231,20 +231,24 @@ class DeadlockDetector {
                                      added_edges, ARRAY_SIZE(added_edges));
     for (uptr i = 0; i < n_added_edges; i++) {
       if (n_edges_ < ARRAY_SIZE(edges_))
-        edges_[n_edges_++] = Edge((u16)added_edges[i], (u16)cur_idx, stk);
+        edges_[n_edges_++] = Edge((u16)added_edges[i], (u16)cur_idx, stk,
+                                  dtls->findLockContext(added_edges[i]));
       // Printf("Edge [%zd]: %u %zd=>%zd\n", i, stk, added_edges[i], cur_idx);
     }
     return n_added_edges;
   }
 
-  u32 findEdge(uptr from_node, uptr to_node) {
+  bool findEdge(uptr from_node, uptr to_node, u32 *stk_from, u32 *stk_to) {
     uptr from_idx = nodeToIndex(from_node);
     uptr to_idx = nodeToIndex(to_node);
     for (uptr i = 0; i < n_edges_; i++) {
-      if (edges_[i].from == from_idx && edges_[i].to == to_idx)
-        return edges_[i].stk;
+      if (edges_[i].from == from_idx && edges_[i].to == to_idx) {
+        *stk_from = edges_[i].stk_from;
+        *stk_to = edges_[i].stk_to;
+        return true;
+      }
     }
-    return 0;
+    return false;
   }
 
   // Test-only function. Handles the before/after lock events,
@@ -367,9 +371,11 @@ class DeadlockDetector {
   struct Edge {
     u16 from;
     u16 to;
-    u32 stk;
+    u32 stk_from;
+    u32 stk_to;
     // FIXME: replace with initializer list once the tests are built as c++11.
-    Edge(u16 f, u16 t, u32 s) : from(f), to(t), stk(s) {}
+    Edge(u16 f, u16 t, u32 sf, u32 st)
+        : from(f), to(t), stk_from(sf), stk_to(st) {}
     Edge() {}
   };
 

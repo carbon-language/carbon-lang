@@ -106,9 +106,12 @@ void DD::MutexBeforeLock(DDCallback *cb,
   if (dd.isHeld(&lt->dd, m->id))
     return;  // FIXME: allow this only for recursive locks.
   if (dd.onLockBefore(&lt->dd, m->id)) {
+    // Actually add this edge now so that we have all the stack traces.
+    dd.addEdges(&lt->dd, m->id, cb->Unwind());
     uptr path[10];
     uptr len = dd.findPathToLock(&lt->dd, m->id, path, ARRAY_SIZE(path));
     CHECK_GT(len, 0U);  // Hm.. cycle of 10 locks? I'd like to see that.
+    CHECK_EQ(m->id, path[0]);
     lt->report_pending = true;
     DDReport *rep = &lt->rep;
     rep->n = len;
@@ -118,22 +121,25 @@ void DD::MutexBeforeLock(DDCallback *cb,
       DDMutex *m0 = (DDMutex*)dd.getData(from);
       DDMutex *m1 = (DDMutex*)dd.getData(to);
 
-      u32 stk = dd.findEdge(from, to);
-      // Printf("Edge: %zd=>%zd: %u\n", from, to, stk);
+      u32 stk_from = 0, stk_to = 0;
+      dd.findEdge(from, to, &stk_from, &stk_to);
+      // Printf("Edge: %zd=>%zd: %u/%u\n", from, to, stk_from, stk_to);
       rep->loop[i].thr_ctx = 0;  // don't know
       rep->loop[i].mtx_ctx0 = m0->ctx;
       rep->loop[i].mtx_ctx1 = m1->ctx;
-      rep->loop[i].stk = stk;
+      rep->loop[i].stk[0] = stk_from;
+      rep->loop[i].stk[1] = stk_to;
     }
   }
 }
 
 void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
   DDLogicalThread *lt = cb->lt;
+  u32 stk = cb->Unwind();  // FIXME: if this is hot, do this under a flag.
   // Printf("T%p MutexLock:   %zx\n", lt, m->id);
-  if (dd.onFirstLock(&lt->dd, m->id))
+  if (dd.onFirstLock(&lt->dd, m->id, stk))
     return;
-  if (dd.onLockFast(&lt->dd, m->id))
+  if (dd.onLockFast(&lt->dd, m->id, stk))
     return;
 
   SpinMutexLock lk(&mtx);
@@ -142,7 +148,7 @@ void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
     CHECK(!dd.isHeld(&lt->dd, m->id));
   if (!trylock)
     dd.addEdges(&lt->dd, m->id, cb->Unwind());
-  dd.onLockAfter(&lt->dd, m->id);
+  dd.onLockAfter(&lt->dd, m->id, stk);
 }
 
 void DD::MutexBeforeUnlock(DDCallback *cb, DDMutex *m, bool wlock) {

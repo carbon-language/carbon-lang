@@ -420,6 +420,10 @@ class LockTest {
     // CHECK: LockTest::Acquire1
     // CHECK-NEXT: LockTest::Acquire_0_then_1
     // CHECK: LockTest::Acquire0
+    // CHECK-NEXT: LockTest::Acquire_0_then_1
+    // CHECK: LockTest::Acquire0
+    // CHECK-NEXT: LockTest::Acquire_1_then_0
+    // CHECK: LockTest::Acquire1
     // CHECK-NEXT: LockTest::Acquire_1_then_0
     Init(5);
     Acquire_0_then_1();

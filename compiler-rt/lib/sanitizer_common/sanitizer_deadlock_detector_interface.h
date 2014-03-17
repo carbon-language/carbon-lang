@@ -47,13 +47,13 @@ struct DDMutex {
 };
 
 struct DDReport {
-  enum { kMaxLoopSize = 16 };
+  enum { kMaxLoopSize = 8 };
   int n;  // number of entries in loop
   struct {
     u64 thr_ctx;   // user thread context
     u64 mtx_ctx0;  // user mutex context, start of the edge
     u64 mtx_ctx1;  // user mutex context, end of the edge
-    u32 stk;       // stack id for the edge
+    u32 stk[2];  // stack ids for the edge
   } loop[kMaxLoopSize];
 };
 

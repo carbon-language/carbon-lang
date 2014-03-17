@@ -427,17 +427,17 @@ void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
   ScopedReport rep(ReportTypeDeadlock);
   for (int i = 0; i < r->n; i++)
     rep.AddMutex(r->loop[i].mtx_ctx0);
-  StackTrace stacks[DDReport::kMaxLoopSize];
+  StackTrace stacks[2 * DDReport::kMaxLoopSize];
   for (int i = 0; i < r->n; i++) {
-    if (!r->loop[i].stk) continue;
     uptr size;
-    const uptr *trace = StackDepotGet(r->loop[i].stk, &size);
-    stacks[i].Init(const_cast<uptr *>(trace), size);
-    rep.AddStack(&stacks[i]);
+    for (int j = 0; j < 2; j++) {
+      u32 stk = r->loop[i].stk[j];
+      if (!stk) continue;
+      const uptr *trace = StackDepotGet(stk, &size);
+      stacks[i].Init(const_cast<uptr *>(trace), size);
+      rep.AddStack(&stacks[i]);
+    }
   }
-  StackTrace trace;
-  trace.ObtainCurrent(thr, pc);
-  rep.AddStack(&trace);
   OutputReport(ctx, rep);
 #endif  // TSAN_GO
 }
