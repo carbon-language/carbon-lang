@@ -3026,6 +3026,12 @@ public:
     addAttribute(AttributeSet::FunctionIndex, Attribute::NoUnwind);
   }
 
+  /// \brief Determine if the invoke cannot be duplicated.
+  bool cannotDuplicate() const {return hasFnAttr(Attribute::NoDuplicate); }
+  void setCannotDuplicate() {
+    addAttribute(AttributeSet::FunctionIndex, Attribute::NoDuplicate);
+  }
+
   /// \brief Determine if the call returns a structure through first
   /// pointer argument.
   bool hasStructRetAttr() const {

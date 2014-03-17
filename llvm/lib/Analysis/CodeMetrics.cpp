@@ -65,11 +65,11 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
       ++NumVectorInsts;
 
     if (const CallInst *CI = dyn_cast<CallInst>(II))
-      if (CI->hasFnAttr(Attribute::NoDuplicate))
+      if (CI->cannotDuplicate())
         notDuplicatable = true;
 
     if (const InvokeInst *InvI = dyn_cast<InvokeInst>(II))
-      if (InvI->hasFnAttr(Attribute::NoDuplicate))
+      if (InvI->cannotDuplicate())
         notDuplicatable = true;
 
     NumInsts += TTI.getUserCost(&*II);

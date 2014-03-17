@@ -723,7 +723,7 @@ bool CallAnalyzer::visitCallSite(CallSite CS) {
     return false;
   }
   if (CS.isCall() &&
-      cast<CallInst>(CS.getInstruction())->hasFnAttr(Attribute::NoDuplicate))
+      cast<CallInst>(CS.getInstruction())->cannotDuplicate())
     ContainsNoDuplicateCall = true;
 
   if (Function *F = CS.getCalledFunction()) {

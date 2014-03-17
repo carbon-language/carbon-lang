@@ -218,12 +218,12 @@ bool Loop::isSafeToClone() const {
       return false;
 
     if (const InvokeInst *II = dyn_cast<InvokeInst>((*I)->getTerminator()))
-      if (II->hasFnAttr(Attribute::NoDuplicate))
+      if (II->cannotDuplicate())
         return false;
 
     for (BasicBlock::iterator BI = (*I)->begin(), BE = (*I)->end(); BI != BE; ++BI) {
       if (const CallInst *CI = dyn_cast<CallInst>(BI)) {
-        if (CI->hasFnAttr(Attribute::NoDuplicate))
+        if (CI->cannotDuplicate())
           return false;
       }
     }
