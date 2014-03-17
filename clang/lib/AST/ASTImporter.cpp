@@ -1598,10 +1598,8 @@ QualType ASTNodeImporter::VisitFunctionProtoType(const FunctionProtoType *T) {
   
   // Import argument types
   SmallVector<QualType, 4> ArgTypes;
-  for (FunctionProtoType::param_type_iterator A = T->param_type_begin(),
-                                              AEnd = T->param_type_end();
-       A != AEnd; ++A) {
-    QualType ArgType = Importer.Import(*A);
+  for (const auto &A : T->param_types()) {
+    QualType ArgType = Importer.Import(A);
     if (ArgType.isNull())
       return QualType();
     ArgTypes.push_back(ArgType);

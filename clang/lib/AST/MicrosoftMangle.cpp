@@ -1551,11 +1551,8 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
     Out << 'X';
   } else {
     // Happens for function pointer type arguments for example.
-    for (FunctionProtoType::param_type_iterator
-             Arg = Proto->param_type_begin(),
-             ArgEnd = Proto->param_type_end();
-         Arg != ArgEnd; ++Arg)
-      mangleArgumentType(*Arg, Range);
+    for (const auto &Arg : Proto->param_types())
+      mangleArgumentType(Arg, Range);
     // <builtin-type>      ::= Z  # ellipsis
     if (Proto->isVariadic())
       Out << 'Z';

@@ -26,6 +26,7 @@
 #include "clang/Basic/Visibility.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
@@ -3059,6 +3060,11 @@ public:
   }
 
   typedef const QualType *param_type_iterator;
+  typedef llvm::iterator_range<param_type_iterator> param_type_range;
+
+  param_type_range param_types() const {
+    return param_type_range(param_type_begin(), param_type_end());
+  }
   param_type_iterator param_type_begin() const {
     return reinterpret_cast<const QualType *>(this+1);
   }

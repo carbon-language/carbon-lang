@@ -10419,13 +10419,9 @@ void Sema::ActOnBlockArguments(SourceLocation CaretLoc, Declarator &ParamInfo,
   // Fake up parameter variables if we have a typedef, like
   //   ^ fntype { ... }
   } else if (const FunctionProtoType *Fn = T->getAs<FunctionProtoType>()) {
-    for (FunctionProtoType::param_type_iterator I = Fn->param_type_begin(),
-                                                E = Fn->param_type_end();
-         I != E; ++I) {
-      ParmVarDecl *Param =
-        BuildParmVarDeclForTypedef(CurBlock->TheDecl,
-                                   ParamInfo.getLocStart(),
-                                   *I);
+    for (const auto &I : Fn->param_types()) {
+      ParmVarDecl *Param = BuildParmVarDeclForTypedef(
+          CurBlock->TheDecl, ParamInfo.getLocStart(), I);
       Params.push_back(Param);
     }
   }

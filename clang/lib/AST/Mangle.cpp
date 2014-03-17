@@ -163,13 +163,9 @@ void MangleContext::mangleName(const NamedDecl *D, raw_ostream &Out) {
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD))
     if (!MD->isStatic())
       ++ArgWords;
-  for (FunctionProtoType::param_type_iterator Arg = Proto->param_type_begin(),
-                                              ArgEnd = Proto->param_type_end();
-       Arg != ArgEnd; ++Arg) {
-    QualType AT = *Arg;
+  for (const auto &AT : Proto->param_types())
     // Size should be aligned to DWORD boundary
     ArgWords += llvm::RoundUpToAlignment(ASTContext.getTypeSize(AT), 32) / 32;
-  }
   Out << 4 * ArgWords;
 }
 

@@ -5380,19 +5380,11 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       S += "@?";
       // Block parameters
       if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT)) {
-        for (FunctionProtoType::param_type_iterator I = FPT->param_type_begin(),
-                                                    E = FPT->param_type_end();
-             I && (I != E); ++I) {
-          getObjCEncodingForTypeImpl(*I, S, 
-                                     ExpandPointedToStructures, 
-                                     ExpandStructures, 
-                                     FD, 
-                                     false /* OutermostType */, 
-                                     EncodingProperty, 
-                                     false /* StructField */, 
-                                     EncodeBlockParameters, 
-                                     EncodeClassNames);
-        }
+        for (const auto &I : FPT->param_types())
+          getObjCEncodingForTypeImpl(
+              I, S, ExpandPointedToStructures, ExpandStructures, FD,
+              false /* OutermostType */, EncodingProperty,
+              false /* StructField */, EncodeBlockParameters, EncodeClassNames);
       }
       S += '>';
     }

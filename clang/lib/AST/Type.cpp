@@ -2232,10 +2232,8 @@ static CachedProperties computeCachedProperties(const Type *T) {
   case Type::FunctionProto: {
     const FunctionProtoType *FPT = cast<FunctionProtoType>(T);
     CachedProperties result = Cache::get(FPT->getReturnType());
-    for (FunctionProtoType::param_type_iterator ai = FPT->param_type_begin(),
-                                                ae = FPT->param_type_end();
-         ai != ae; ++ai)
-      result = merge(result, Cache::get(*ai));
+    for (const auto &ai : FPT->param_types())
+      result = merge(result, Cache::get(ai));
     return result;
   }
   case Type::ObjCInterface: {
@@ -2318,10 +2316,8 @@ static LinkageInfo computeLinkageInfo(const Type *T) {
   case Type::FunctionProto: {
     const FunctionProtoType *FPT = cast<FunctionProtoType>(T);
     LinkageInfo LV = computeLinkageInfo(FPT->getReturnType());
-    for (FunctionProtoType::param_type_iterator ai = FPT->param_type_begin(),
-                                                ae = FPT->param_type_end();
-         ai != ae; ++ai)
-      LV.merge(computeLinkageInfo(*ai));
+    for (const auto &ai : FPT->param_types())
+      LV.merge(computeLinkageInfo(ai));
     return LV;
   }
   case Type::ObjCInterface:

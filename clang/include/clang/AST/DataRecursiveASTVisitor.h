@@ -873,10 +873,8 @@ DEF_TRAVERSE_TYPE(FunctionNoProtoType,
 DEF_TRAVERSE_TYPE(FunctionProtoType, {
   TRY_TO(TraverseType(T->getReturnType()));
 
-  for (FunctionProtoType::param_type_iterator A = T->param_type_begin(),
-                                              AEnd = T->param_type_end();
-       A != AEnd; ++A) {
-    TRY_TO(TraverseType(*A));
+  for (const auto &A : T->param_types()) {
+    TRY_TO(TraverseType(A));
   }
 
   for (FunctionProtoType::exception_iterator E = T->exception_begin(),

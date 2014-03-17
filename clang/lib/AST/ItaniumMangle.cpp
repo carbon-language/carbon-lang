@@ -2012,10 +2012,8 @@ void CXXNameMangler::mangleBareFunctionType(const FunctionType *T,
     return;
   }
 
-  for (FunctionProtoType::param_type_iterator Arg = Proto->param_type_begin(),
-                                              ArgEnd = Proto->param_type_end();
-       Arg != ArgEnd; ++Arg)
-    mangleType(Context.getASTContext().getSignatureParameterType(*Arg));
+  for (const auto &Arg : Proto->param_types())
+    mangleType(Context.getASTContext().getSignatureParameterType(Arg));
 
   FunctionTypeDepth.pop(saved);
 

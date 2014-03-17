@@ -623,10 +623,8 @@ void RewriteModernObjC::RewriteBlocksInFunctionProtoType(QualType funcType,
                                                    NamedDecl *D) {
   if (const FunctionProtoType *fproto
       = dyn_cast<FunctionProtoType>(funcType.IgnoreParens())) {
-    for (FunctionProtoType::param_type_iterator I = fproto->param_type_begin(),
-                                                E = fproto->param_type_end();
-         I && (I != E); ++I)
-      if (isTopLevelBlockPointerType(*I)) {
+    for (const auto &I : fproto->param_types())
+      if (isTopLevelBlockPointerType(I)) {
         // All the args are checked/rewritten. Don't call twice!
         RewriteBlockPointerDecl(D);
         break;
@@ -4660,10 +4658,8 @@ QualType RewriteModernObjC::convertFunctionTypeOfBlocks(const FunctionType *FT) 
   bool modified = convertObjCTypeToCStyleType(Res);
   
   if (FTP) {
-    for (FunctionProtoType::param_type_iterator I = FTP->param_type_begin(),
-                                                E = FTP->param_type_end();
-         I && (I != E); ++I) {
-      QualType t = *I;
+    for (auto &I : FTP->param_types()) {
+      QualType t = I;
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
       if (convertObjCTypeToCStyleType(t))
         modified = true;
@@ -4729,10 +4725,8 @@ Stmt *RewriteModernObjC::SynthesizeBlockCall(CallExpr *Exp, const Expr *BlockExp
   // Push the block argument type.
   ArgTypes.push_back(PtrBlock);
   if (FTP) {
-    for (FunctionProtoType::param_type_iterator I = FTP->param_type_begin(),
-                                                E = FTP->param_type_end();
-         I && (I != E); ++I) {
-      QualType t = *I;
+    for (auto &I : FTP->param_types()) {
+      QualType t = I;
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
       if (!convertBlockPointerToFunctionPointer(t))
         convertToUnqualifiedObjCType(t);
@@ -4950,10 +4944,8 @@ bool RewriteModernObjC::PointerTypeTakesAnyBlockArguments(QualType QT) {
     FTP = BPT->getPointeeType()->getAs<FunctionProtoType>();
   }
   if (FTP) {
-    for (FunctionProtoType::param_type_iterator I = FTP->param_type_begin(),
-                                                E = FTP->param_type_end();
-         I != E; ++I)
-      if (isTopLevelBlockPointerType(*I))
+    for (const auto &I : FTP->param_types())
+      if (isTopLevelBlockPointerType(I))
         return true;
   }
   return false;
@@ -4970,13 +4962,11 @@ bool RewriteModernObjC::PointerTypeTakesAnyObjCQualifiedType(QualType QT) {
     FTP = BPT->getPointeeType()->getAs<FunctionProtoType>();
   }
   if (FTP) {
-    for (FunctionProtoType::param_type_iterator I = FTP->param_type_begin(),
-                                                E = FTP->param_type_end();
-         I != E; ++I) {
-      if ((*I)->isObjCQualifiedIdType())
+    for (const auto &I : FTP->param_types()) {
+      if (I->isObjCQualifiedIdType())
         return true;
-      if ((*I)->isObjCObjectPointerType() &&
-          (*I)->getPointeeType()->isObjCQualifiedInterfaceType())
+      if (I->isObjCObjectPointerType() &&
+          I->getPointeeType()->isObjCQualifiedInterfaceType())
         return true;
     }
         

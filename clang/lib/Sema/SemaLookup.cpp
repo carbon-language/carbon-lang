@@ -2180,11 +2180,8 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType Ty) {
     //        types and those associated with the return type.
     case Type::FunctionProto: {
       const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
-      for (FunctionProtoType::param_type_iterator
-               Arg = Proto->param_type_begin(),
-               ArgEnd = Proto->param_type_end();
-           Arg != ArgEnd; ++Arg)
-        Queue.push_back(Arg->getTypePtr());
+      for (const auto &Arg : Proto->param_types())
+        Queue.push_back(Arg.getTypePtr());
       // fallthrough
     }
     case Type::FunctionNoProto: {

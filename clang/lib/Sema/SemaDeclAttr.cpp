@@ -4611,10 +4611,8 @@ NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II,
     QualType FDTy = FD->getType();
     if (const FunctionProtoType *FT = FDTy->getAs<FunctionProtoType>()) {
       SmallVector<ParmVarDecl*, 16> Params;
-      for (FunctionProtoType::param_type_iterator AI = FT->param_type_begin(),
-                                                  AE = FT->param_type_end();
-           AI != AE; ++AI) {
-        ParmVarDecl *Param = BuildParmVarDeclForTypedef(NewFD, Loc, *AI);
+      for (const auto &AI : FT->param_types()) {
+        ParmVarDecl *Param = BuildParmVarDeclForTypedef(NewFD, Loc, AI);
         Param->setScopeInfo(0, Params.size());
         Params.push_back(Param);
       }

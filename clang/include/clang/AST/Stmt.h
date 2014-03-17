@@ -626,11 +626,11 @@ public:
 
   // Iterators
   child_range children() {
-    return child_range(&Body[0], &Body[0]+CompoundStmtBits.NumStmts);
+    return child_range(Body, Body + CompoundStmtBits.NumStmts);
   }
 
   const_child_range children() const {
-    return child_range(&Body[0], &Body[0]+CompoundStmtBits.NumStmts);
+    return child_range(Body, Body + CompoundStmtBits.NumStmts);
   }
 };
 
