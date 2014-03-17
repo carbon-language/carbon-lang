@@ -396,6 +396,7 @@ namespace dr428 { // dr428: yes
 }
 
 namespace dr429 { // dr429: yes c++11
+  // REQUIRES: LP64
   // FIXME: This rule is obviously intended to apply to C++98 as well.
   typedef __SIZE_TYPE__ size_t;
   struct A {

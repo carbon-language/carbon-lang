@@ -6,6 +6,7 @@
 // lwg404: yes
 // lwg2340: yes
 
+// REQUIRES: LP64
 typedef __SIZE_TYPE__ size_t;
 namespace std { struct bad_alloc {}; }
 int x;
