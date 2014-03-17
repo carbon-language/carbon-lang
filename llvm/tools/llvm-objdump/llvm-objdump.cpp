@@ -408,13 +408,12 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       break;
 
     // Make a list of all the symbols in this section.
-    std::vector<std::pair<uint64_t, StringRef> > Symbols;
-    for (symbol_iterator SI = Obj->symbol_begin(), SE = Obj->symbol_end();
-         SI != SE; ++SI) {
+    std::vector<std::pair<uint64_t, StringRef>> Symbols;
+    for (const SymbolRef &Symbol : Obj->symbols()) {
       bool contains;
-      if (!error(Section.containsSymbol(*SI, contains)) && contains) {
+      if (!error(Section.containsSymbol(Symbol, contains)) && contains) {
         uint64_t Address;
-        if (error(SI->getAddress(Address)))
+        if (error(Symbol.getAddress(Address)))
           break;
         if (Address == UnknownAddressOrSize)
           continue;
@@ -423,7 +422,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
           continue;
 
         StringRef Name;
-        if (error(SI->getName(Name)))
+        if (error(Symbol.getName(Name)))
           break;
         Symbols.push_back(std::make_pair(Address, Name));
       }
@@ -703,19 +702,23 @@ static void PrintSymbolTable(const ObjectFile *o) {
   if (const COFFObjectFile *coff = dyn_cast<const COFFObjectFile>(o))
     PrintCOFFSymbolTable(coff);
   else {
-    for (symbol_iterator si = o->symbol_begin(), se = o->symbol_end();
-         si != se; ++si) {
+    for (const SymbolRef &Symbol : o->symbols()) {
       StringRef Name;
       uint64_t Address;
       SymbolRef::Type Type;
       uint64_t Size;
-      uint32_t Flags = si->getFlags();
+      uint32_t Flags = Symbol.getFlags();
       section_iterator Section = o->section_end();
-      if (error(si->getName(Name))) continue;
-      if (error(si->getAddress(Address))) continue;
-      if (error(si->getType(Type))) continue;
-      if (error(si->getSize(Size))) continue;
-      if (error(si->getSection(Section))) continue;
+      if (error(Symbol.getName(Name)))
+        continue;
+      if (error(Symbol.getAddress(Address)))
+        continue;
+      if (error(Symbol.getType(Type)))
+        continue;
+      if (error(Symbol.getSize(Size)))
+        continue;
+      if (error(Symbol.getSection(Section)))
+        continue;
 
       bool Global = Flags & SymbolRef::SF_Global;
       bool Weak = Flags & SymbolRef::SF_Weak;

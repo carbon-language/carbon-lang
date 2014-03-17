@@ -37,13 +37,12 @@ MCObjectDisassembler::MCObjectDisassembler(const ObjectFile &Obj,
     : Obj(Obj), Dis(Dis), MIA(MIA), MOS(0) {}
 
 uint64_t MCObjectDisassembler::getEntrypoint() {
-  for (symbol_iterator SI = Obj.symbol_begin(), SE = Obj.symbol_end();
-       SI != SE; ++SI) {
+  for (const SymbolRef &Symbol : Obj.symbols()) {
     StringRef Name;
-    SI->getName(Name);
+    Symbol.getName(Name);
     if (Name == "main" || Name == "_main") {
       uint64_t Entrypoint;
-      SI->getAddress(Entrypoint);
+      Symbol.getAddress(Entrypoint);
       return getEffectiveLoadAddr(Entrypoint);
     }
   }
@@ -181,13 +180,12 @@ void MCObjectDisassembler::buildCFG(MCModule *Module) {
   AddressSetTy Splits;
   AddressSetTy Calls;
 
-  for (symbol_iterator SI = Obj.symbol_begin(), SE = Obj.symbol_end();
-       SI != SE; ++SI) {
+  for (const SymbolRef &Symbol : Obj.symbols()) {
     SymbolRef::Type SymType;
-    SI->getType(SymType);
+    Symbol.getType(SymType);
     if (SymType == SymbolRef::ST_Function) {
       uint64_t SymAddr;
-      SI->getAddress(SymAddr);
+      Symbol.getAddress(SymAddr);
       SymAddr = getEffectiveLoadAddr(SymAddr);
       Calls.push_back(SymAddr);
       Splits.push_back(SymAddr);

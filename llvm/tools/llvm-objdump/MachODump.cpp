@@ -146,17 +146,14 @@ static void DumpDataInCode(const char *bytes, uint64_t Size,
   }
 }
 
-static void
-getSectionsAndSymbols(const MachO::mach_header Header,
-                      MachOObjectFile *MachOObj,
-                      std::vector<SectionRef> &Sections,
-                      std::vector<SymbolRef> &Symbols,
-                      SmallVectorImpl<uint64_t> &FoundFns,
-                      uint64_t &BaseSegmentAddress) {
-  for (symbol_iterator SI = MachOObj->symbol_begin(),
-                       SE = MachOObj->symbol_end();
-       SI != SE; ++SI)
-    Symbols.push_back(*SI);
+static void getSectionsAndSymbols(const MachO::mach_header Header,
+                                  MachOObjectFile *MachOObj,
+                                  std::vector<SectionRef> &Sections,
+                                  std::vector<SymbolRef> &Symbols,
+                                  SmallVectorImpl<uint64_t> &FoundFns,
+                                  uint64_t &BaseSegmentAddress) {
+  for (const SymbolRef &Symbol : MachOObj->symbols())
+    Symbols.push_back(Symbol);
 
   for (const SectionRef &Section : MachOObj->sections()) {
     StringRef SectName;

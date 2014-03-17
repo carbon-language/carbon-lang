@@ -286,6 +286,10 @@ protected:
   virtual error_code getLibraryPath(DataRefImpl Lib, StringRef &Res) const = 0;
 
 public:
+  typedef iterator_range<symbol_iterator> symbol_iterator_range;
+  symbol_iterator_range symbols() const {
+    return symbol_iterator_range(symbol_begin(), symbol_end());
+  }
 
   virtual section_iterator section_begin() const = 0;
   virtual section_iterator section_end() const = 0;

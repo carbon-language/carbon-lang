@@ -202,9 +202,8 @@ static int DumpSymtabCommand(const MachOObjectFile &Obj) {
   // Dump the symbol table.
   outs() << "  ('_symbols', [\n";
   unsigned SymNum = 0;
-  for (symbol_iterator I = Obj.symbol_begin(), E = Obj.symbol_end(); I != E;
-       ++I, ++SymNum) {
-    DataRefImpl DRI = I->getRawDataRefImpl();
+  for (const SymbolRef &Symbol : Obj.symbols()) {
+    DataRefImpl DRI = Symbol.getRawDataRefImpl();
     if (Obj.is64Bit()) {
       MachO::nlist_64 STE = Obj.getSymbol64TableEntry(DRI);
       DumpSymbolTableEntryData(Obj, SymNum, STE.n_strx, STE.n_type,
@@ -216,6 +215,7 @@ static int DumpSymtabCommand(const MachOObjectFile &Obj) {
                                STE.n_sect, STE.n_desc, STE.n_value,
                                StringTable);
     }
+    SymNum++;
   }
   outs() << "  ])\n";
 
