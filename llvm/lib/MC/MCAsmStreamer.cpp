@@ -197,8 +197,9 @@ public:
                          unsigned char Value = 0) override;
 
   void EmitFileDirective(StringRef Filename) override;
-  bool EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
-                              StringRef Filename, unsigned CUID = 0) override;
+  unsigned EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
+                                  StringRef Filename,
+                                  unsigned CUID = 0) override;
   void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                              unsigned Column, unsigned Flags,
                              unsigned Isa, unsigned Discriminator,
@@ -843,8 +844,10 @@ void MCAsmStreamer::EmitFileDirective(StringRef Filename) {
   EmitEOL();
 }
 
-bool MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
-                                           StringRef Filename, unsigned CUID) {
+unsigned MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo,
+                                               StringRef Directory,
+                                               StringRef Filename,
+                                               unsigned CUID) {
   if (!UseDwarfDirectory && !Directory.empty()) {
     if (sys::path::is_absolute(Filename))
       return EmitDwarfFileDirective(FileNo, "", Filename, CUID);

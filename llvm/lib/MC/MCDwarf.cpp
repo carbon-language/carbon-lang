@@ -336,7 +336,18 @@ unsigned MCDwarfLineTable::getFile(StringRef Directory, StringRef FileName,
   return Header.getFile(Directory, FileName, FileNumber);
 }
 
-unsigned MCDwarfLineTableHeader::getFile(StringRef Directory, StringRef FileName, unsigned FileNumber) {
+unsigned MCDwarfLineTableHeader::getFile(StringRef Directory,
+                                         StringRef FileName,
+                                         unsigned FileNumber) {
+  if (FileNumber == 0) {
+    FileNumber = SourceIdMap.size() + 1;
+    assert((MCDwarfFiles.empty() || FileNumber == MCDwarfFiles.size()) &&
+           "Don't mix autonumbered and explicit numbered line table usage");
+    StringMapEntry<unsigned> &Ent = SourceIdMap.GetOrCreateValue(
+        (Directory + Twine('\0') + FileName).str(), FileNumber);
+    if (Ent.getValue() != FileNumber)
+      return Ent.getValue();
+  }
   // Make space for this FileNumber in the MCDwarfFiles vector if needed.
   MCDwarfFiles.resize(FileNumber + 1);
 

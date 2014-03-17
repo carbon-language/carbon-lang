@@ -4,6 +4,7 @@
 # 100 "t.s" 1
 .globl _bar
 _bar:
+	movl	$0, %eax
 # 3 "inc/g.s"
 	movl	$0, %eax
 L1:	leave

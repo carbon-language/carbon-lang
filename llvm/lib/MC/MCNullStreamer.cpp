@@ -85,10 +85,10 @@ namespace {
                            unsigned char Value = 0) override { return false; }
 
     void EmitFileDirective(StringRef Filename) override {}
-    bool EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
-                                StringRef Filename,
-                                unsigned CUID = 0) override {
-      return false;
+    unsigned EmitDwarfFileDirective(unsigned FileNo, StringRef Directory,
+                                    StringRef Filename,
+                                    unsigned CUID = 0) override {
+      return 0;
     }
     void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                unsigned Column, unsigned Flags,

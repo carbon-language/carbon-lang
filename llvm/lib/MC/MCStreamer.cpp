@@ -174,10 +174,10 @@ void MCStreamer::EmitZeros(uint64_t NumBytes) {
   EmitFill(NumBytes, 0);
 }
 
-bool MCStreamer::EmitDwarfFileDirective(unsigned FileNo,
-                                        StringRef Directory,
-                                        StringRef Filename, unsigned CUID) {
-  return getContext().GetDwarfFile(Directory, Filename, FileNo, CUID) == 0;
+unsigned MCStreamer::EmitDwarfFileDirective(unsigned FileNo,
+                                            StringRef Directory,
+                                            StringRef Filename, unsigned CUID) {
+  return getContext().GetDwarfFile(Directory, Filename, FileNo, CUID);
 }
 
 void MCStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,

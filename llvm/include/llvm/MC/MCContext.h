@@ -371,7 +371,9 @@ namespace llvm {
     bool getGenDwarfForAssembly() { return GenDwarfForAssembly; }
     void setGenDwarfForAssembly(bool Value) { GenDwarfForAssembly = Value; }
     unsigned getGenDwarfFileNumber() { return GenDwarfFileNumber; }
-    unsigned nextGenDwarfFileNumber() { return ++GenDwarfFileNumber; }
+    void setGenDwarfFileNumber(unsigned FileNumber) {
+      GenDwarfFileNumber = FileNumber;
+    }
     const MCSection *getGenDwarfSection() { return GenDwarfSection; }
     void setGenDwarfSection(const MCSection *Sec) { GenDwarfSection = Sec; }
     MCSymbol *getGenDwarfSectionStartSym() { return GenDwarfSectionStartSym; }
