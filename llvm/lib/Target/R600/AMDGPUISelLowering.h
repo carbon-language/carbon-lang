@@ -142,6 +142,10 @@ private:
   SDValue LowerSDIV24(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSDIV32(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSDIV64(SDValue Op, SelectionDAG &DAG) const;
+
+  SDValue ExpandSIGN_EXTEND_INREG(SDValue Op,
+                                  unsigned BitsDiff,
+                                  SelectionDAG &DAG) const;
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
   EVT genIntType(uint32_t size = 32, uint32_t numEle = 1) const;
   SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
@@ -171,6 +175,8 @@ enum {
   UMIN,
   URECIP,
   DOT4,
+  BFE_U32, // Extract range of bits with zero extension to 32-bits.
+  BFE_I32, // Extract range of bits with sign extension to 32-bits.
   TEXTURE_FETCH,
   EXPORT,
   CONST_ADDRESS,

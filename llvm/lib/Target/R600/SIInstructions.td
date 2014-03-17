@@ -1074,8 +1074,14 @@ def V_CUBEID_F32 : VOP3_32 <0x00000144, "V_CUBEID_F32", []>;
 def V_CUBESC_F32 : VOP3_32 <0x00000145, "V_CUBESC_F32", []>;
 def V_CUBETC_F32 : VOP3_32 <0x00000146, "V_CUBETC_F32", []>;
 def V_CUBEMA_F32 : VOP3_32 <0x00000147, "V_CUBEMA_F32", []>;
-def V_BFE_U32 : VOP3_32 <0x00000148, "V_BFE_U32", []>;
-def V_BFE_I32 : VOP3_32 <0x00000149, "V_BFE_I32", []>;
+
+let neverHasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
+def V_BFE_U32 : VOP3_32 <0x00000148, "V_BFE_U32",
+  [(set i32:$dst, (AMDGPUbfe_u32 i32:$src0, i32:$src1, i32:$src2))]>;
+def V_BFE_I32 : VOP3_32 <0x00000149, "V_BFE_I32",
+  [(set i32:$dst, (AMDGPUbfe_i32 i32:$src0, i32:$src1, i32:$src2))]>;
+}
+
 def V_BFI_B32 : VOP3_32 <0x0000014a, "V_BFI_B32", []>;
 defm : BFIPatterns <V_BFI_B32>;
 def V_FMA_F32 : VOP3_32 <0x0000014b, "V_FMA_F32",

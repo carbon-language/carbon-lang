@@ -1517,15 +1517,20 @@ let Predicates = [isEGorCayman] in {
   // Example Usage:
   // (Offset, Width)
   //
-  // (0, 8)           = (Input << 24) >> 24  = (Input &  0xff)       >> 0
-  // (8, 8)           = (Input << 16) >> 24  = (Input &  0xffff)     >> 8
-  // (16,8)           = (Input <<  8) >> 24  = (Input &  0xffffff)   >> 16
-  // (24,8)           = (Input <<  0) >> 24  = (Input &  0xffffffff) >> 24
+  // (0, 8)  = (Input << 24) >> 24 = (Input &  0xff)       >> 0
+  // (8, 8)  = (Input << 16) >> 24 = (Input &  0xffff)     >> 8
+  // (16, 8) = (Input <<  8) >> 24 = (Input &  0xffffff)   >> 16
+  // (24, 8) = (Input <<  0) >> 24 = (Input &  0xffffffff) >> 24
   def BFE_UINT_eg : R600_3OP <0x4, "BFE_UINT",
-    [(set i32:$dst, (int_AMDIL_bit_extract_u32 i32:$src0, i32:$src1,
-                                               i32:$src2))],
+    [(set i32:$dst, (AMDGPUbfe_u32 i32:$src0, i32:$src1, i32:$src2))],
     VecALU
   >;
+
+  def BFE_INT_eg : R600_3OP <0x4, "BFE_INT",
+    [(set i32:$dst, (AMDGPUbfe_i32 i32:$src0, i32:$src1, i32:$src2))],
+    VecALU
+  >;
+
 // XXX: This pattern is broken, disabling for now.  See comment in
 // AMDGPUInstructions.td for more info.
 //  def : BFEPattern <BFE_UINT_eg>;

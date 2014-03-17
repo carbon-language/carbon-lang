@@ -24,15 +24,11 @@ entry:
 ; The order of A and B does not matter.
 ; EG-CHECK: MUL_UINT24 {{[* ]*}}T{{[0-9]}}.[[MUL_CHAN:[XYZW]]], [[A]], [[B]]
 ; The result must be sign-extended
-; EG-CHECK: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_CHAN:[XYZW]]], PV.[[MUL_CHAN]], literal.x
-; EG-CHECK: 16
-; EG-CHECK: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_CHAN]], literal.x
+; EG-CHECK: BFE_INT {{[* ]*}}T{{[0-9]}}.{{[XYZW]}}, PV.[[MUL_CHAN]], 0.0, literal.x
 ; EG-CHECK: 16
 ; SI-CHECK-LABEL: @i16_mul24
 ; SI-CHECK: V_MUL_U32_U24_e{{(32|64)}} [[MUL:v[0-9]]], {{[sv][0-9], [sv][0-9]}}
-; SI-CHECK: V_LSHLREV_B32_e32 [[LSHL:v[0-9]]], 16, [[MUL]]
-; SI-CHECK: V_ASHRREV_I32_e32 v{{[0-9]}}, 16, [[LSHL]]
-
+; SI-CHECK: V_BFE_I32 v{{[0-9]}}, [[MUL]], 0, 16,
 define void @i16_mul24(i32 addrspace(1)* %out, i16 %a, i16 %b) {
 entry:
   %0 = mul i16 %a, %b
@@ -47,14 +43,10 @@ entry:
 ; The order of A and B does not matter.
 ; EG-CHECK: MUL_UINT24 {{[* ]*}}T{{[0-9]}}.[[MUL_CHAN:[XYZW]]], [[A]], [[B]]
 ; The result must be sign-extended
-; EG-CHECK: LSHL {{[* ]*}}T{{[0-9]}}.[[LSHL_CHAN:[XYZW]]], PV.[[MUL_CHAN]], literal.x
-; EG-CHECK: 24
-; EG-CHECK: ASHR {{[* ]*}}T{{[0-9]\.[XYZW]}}, PV.[[LSHL_CHAN]], literal.x
-; EG-CHECK: 24
+; EG-CHECK: BFE_INT {{[* ]*}}T{{[0-9]}}.{{[XYZW]}}, PV.[[MUL_CHAN]], 0.0, literal.x
 ; SI-CHECK-LABEL: @i8_mul24
 ; SI-CHECK: V_MUL_U32_U24_e{{(32|64)}} [[MUL:v[0-9]]], {{[sv][0-9], [sv][0-9]}}
-; SI-CHECK: V_LSHLREV_B32_e32 [[LSHL:v[0-9]]], 24, [[MUL]]
-; SI-CHECK: V_ASHRREV_I32_e32 v{{[0-9]}}, 24, [[LSHL]]
+; SI-CHECK: V_BFE_I32 v{{[0-9]}}, [[MUL]], 0, 8,
 
 define void @i8_mul24(i32 addrspace(1)* %out, i8 %a, i8 %b) {
 entry:

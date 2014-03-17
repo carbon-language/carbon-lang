@@ -1383,6 +1383,11 @@ SDValue R600TargetLowering::LowerFormalArguments(
     PointerType *PtrTy = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
                                                    AMDGPUAS::CONSTANT_BUFFER_0);
 
+    // i64 isn't a legal type, so the register type used ends up as i32, which
+    // isn't expected here. It attempts to create this sextload, but it ends up
+    // being invalid. Somehow this seems to work with i64 arguments, but breaks
+    // for <1 x i64>.
+
     // The first 36 bytes of the input buffer contains information about
     // thread group and global sizes.
     SDValue Arg = DAG.getExtLoad(ISD::SEXTLOAD, DL, VT, Chain,

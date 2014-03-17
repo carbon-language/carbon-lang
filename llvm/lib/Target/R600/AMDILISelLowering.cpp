@@ -94,9 +94,6 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
   for (unsigned int x  = 0; x < NumTypes; ++x) {
     MVT::SimpleValueType VT = (MVT::SimpleValueType)types[x];
 
-    //FIXME: SIGN_EXTEND_INREG is not meaningful for floating point types
-    // We cannot sextinreg, expand to shifts
-    setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Custom);
     setOperationAction(ISD::SUBE, VT, Expand);
     setOperationAction(ISD::SUBC, VT, Expand);
     setOperationAction(ISD::ADDE, VT, Expand);
@@ -191,14 +188,12 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
   setOperationAction(ISD::UDIV, MVT::v4i8, Expand);
   setOperationAction(ISD::UDIV, MVT::v2i16, Expand);
   setOperationAction(ISD::UDIV, MVT::v4i16, Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Custom);
   setOperationAction(ISD::SUBC, MVT::Other, Expand);
   setOperationAction(ISD::ADDE, MVT::Other, Expand);
   setOperationAction(ISD::ADDC, MVT::Other, Expand);
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
   setOperationAction(ISD::BRIND, MVT::Other, Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::Other, Expand);
 
 
   // Use the default implementation.
@@ -322,36 +317,6 @@ AMDGPUTargetLowering::LowerSREM(SDValue Op, SelectionDAG &DAG) const {
   return DST;
 }
 
-SDValue
-AMDGPUTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const {
-  SDValue Data = Op.getOperand(0);
-  VTSDNode *BaseType = cast<VTSDNode>(Op.getOperand(1));
-  SDLoc DL(Op);
-  EVT DVT = Data.getValueType();
-  EVT BVT = BaseType->getVT();
-  unsigned baseBits = BVT.getScalarType().getSizeInBits();
-  unsigned srcBits = DVT.isSimple() ? DVT.getScalarType().getSizeInBits() : 1;
-  unsigned shiftBits = srcBits - baseBits;
-  if (srcBits < 32) {
-    // If the op is less than 32 bits, then it needs to extend to 32bits
-    // so it can properly keep the upper bits valid.
-    EVT IVT = genIntType(32, DVT.isVector() ? DVT.getVectorNumElements() : 1);
-    Data = DAG.getNode(ISD::ZERO_EXTEND, DL, IVT, Data);
-    shiftBits = 32 - baseBits;
-    DVT = IVT;
-  }
-  SDValue Shift = DAG.getConstant(shiftBits, DVT);
-  // Shift left by 'Shift' bits.
-  Data = DAG.getNode(ISD::SHL, DL, DVT, Data, Shift);
-  // Signed shift Right by 'Shift' bits.
-  Data = DAG.getNode(ISD::SRA, DL, DVT, Data, Shift);
-  if (srcBits < 32) {
-    // Once the sign extension is done, the op needs to be converted to
-    // its original type.
-    Data = DAG.getSExtOrTrunc(Data, DL, Op.getOperand(0).getValueType());
-  }
-  return Data;
-}
 EVT
 AMDGPUTargetLowering::genIntType(uint32_t size, uint32_t numEle) const {
   int iSize = (size * numEle);
