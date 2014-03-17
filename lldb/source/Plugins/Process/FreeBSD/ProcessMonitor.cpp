@@ -727,7 +727,7 @@ KillOperation::Execute(ProcessMonitor *monitor)
 
 //------------------------------------------------------------------------------
 /// @class DetachOperation
-/// @brief Implements ProcessMonitor::BringProcessIntoLimbo.
+/// @brief Implements ProcessMonitor::Detach.
 class DetachOperation : public Operation
 {
 public:
