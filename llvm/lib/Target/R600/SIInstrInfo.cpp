@@ -349,21 +349,32 @@ bool SIInstrInfo::isSALUInstr(const MachineInstr &MI) const {
 }
 
 bool SIInstrInfo::isInlineConstant(const MachineOperand &MO) const {
-  if(MO.isImm()) {
-    return MO.getImm() >= -16 && MO.getImm() <= 64;
+
+  union {
+    int32_t I;
+    float F;
+  } Imm;
+
+  if (MO.isImm()) {
+    Imm.I = MO.getImm();
+  } else if (MO.isFPImm()) {
+    Imm.F = MO.getFPImm()->getValueAPF().convertToFloat();
+  } else {
+    return false;
   }
-  if (MO.isFPImm()) {
-    return MO.getFPImm()->isExactlyValue(0.0)  ||
-           MO.getFPImm()->isExactlyValue(0.5)  ||
-           MO.getFPImm()->isExactlyValue(-0.5) ||
-           MO.getFPImm()->isExactlyValue(1.0)  ||
-           MO.getFPImm()->isExactlyValue(-1.0) ||
-           MO.getFPImm()->isExactlyValue(2.0)  ||
-           MO.getFPImm()->isExactlyValue(-2.0) ||
-           MO.getFPImm()->isExactlyValue(4.0)  ||
-           MO.getFPImm()->isExactlyValue(-4.0);
-  }
-  return false;
+
+  // The actual type of the operand does not seem to matter as long
+  // as the bits match one of the inline immediate values.  For example:
+  //
+  // -nan has the hexadecimal encoding of 0xfffffffe which is -2 in decimal,
+  // so it is a legal inline immediate.
+  //
+  // 1065353216 has the hexadecimal encoding 0x3f800000 which is 1.0f in
+  // floating-point, so it is a legal inline immediate.
+  return (Imm.I >= -16 && Imm.I <= 64) ||
+          Imm.F == 0.0f || Imm.F == 0.5f || Imm.F == -0.5f || Imm.F == 1.0f ||
+          Imm.F == -1.0f || Imm.F == 2.0f || Imm.F == -2.0f || Imm.F == 4.0f ||
+          Imm.F == -4.0f;
 }
 
 bool SIInstrInfo::isLiteralConstant(const MachineOperand &MO) const {
