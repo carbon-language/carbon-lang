@@ -36,7 +36,7 @@ CHECK-NEXT:     AuxSymbolCount: 1
 CHECK-NEXT:     AuxCLRToken {
 CHECK-NEXT:       AuxType: 1
 CHECK-NEXT:       Reserved: 0
-CHECK-NEXT:       SymbolTableIndex: 19
+CHECK-NEXT:       SymbolTableIndex: ?PerAppDomain@@$$Q3HA (19)
 CHECK-NEXT:       Unused: (00 00 00 00 00 00 00 00 00 00 00 00)
 CHECK-NEXT:     }
 CHECK-NEXT:   }

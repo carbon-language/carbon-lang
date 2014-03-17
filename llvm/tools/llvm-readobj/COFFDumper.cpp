@@ -1058,10 +1058,19 @@ void COFFDumper::printSymbol(symbol_iterator SymI) {
       if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
         break;
 
+      const coff_symbol *ReferredSym;
+      StringRef ReferredName;
+      error_code EC;
+      if ((EC = Obj->getSymbol(Aux->SymbolTableIndex, ReferredSym)) ||
+          (EC = Obj->getSymbolName(ReferredSym, ReferredName))) {
+        ReferredName = "";
+        error(EC);
+      }
+
       DictScope AS(W, "AuxCLRToken");
       W.printNumber("AuxType", Aux->AuxType);
       W.printNumber("Reserved", Aux->Reserved);
-      W.printNumber("SymbolTableIndex", Aux->SymbolTableIndex);
+      W.printNumber("SymbolTableIndex", ReferredName, Aux->SymbolTableIndex);
       W.printBinary("Unused", Aux->Unused);
 
     } else {
