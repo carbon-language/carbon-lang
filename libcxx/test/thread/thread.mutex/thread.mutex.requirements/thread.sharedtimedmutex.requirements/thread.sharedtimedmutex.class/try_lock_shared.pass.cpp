@@ -9,9 +9,9 @@
 
 // <shared_mutex>
 
-// class shared_mutex;
+// class shared_timed_mutex;
 
-// void lock_shared();
+// bool try_lock_shared();
 
 #include <shared_mutex>
 #include <thread>
@@ -21,7 +21,7 @@
 
 #if _LIBCPP_STD_VER > 11
 
-std::shared_mutex m;
+std::shared_timed_mutex m;
 
 typedef std::chrono::system_clock Clock;
 typedef Clock::time_point time_point;
@@ -32,21 +32,15 @@ typedef std::chrono::nanoseconds ns;
 void f()
 {
     time_point t0 = Clock::now();
-    m.lock_shared();
+    assert(!m.try_lock_shared());
+    assert(!m.try_lock_shared());
+    assert(!m.try_lock_shared());
+    while(!m.try_lock_shared())
+        ;
     time_point t1 = Clock::now();
     m.unlock_shared();
     ns d = t1 - t0 - ms(250);
-    assert(d < ms(50));  // within 50ms
-}
-
-void g()
-{
-    time_point t0 = Clock::now();
-    m.lock_shared();
-    time_point t1 = Clock::now();
-    m.unlock_shared();
-    ns d = t1 - t0;
-    assert(d < ms(50));  // within 50ms
+    assert(d < ms(200));  // within 200ms
 }
 
 #endif  // _LIBCPP_STD_VER > 11
@@ -62,14 +56,5 @@ int main()
     m.unlock();
     for (auto& t : v)
         t.join();
-    m.lock_shared();
-    for (auto& t : v)
-        t = std::thread(g);
-    std::thread q(f);
-    std::this_thread::sleep_for(ms(250));
-    m.unlock_shared();
-    for (auto& t : v)
-        t.join();
-    q.join();
 #endif  // _LIBCPP_STD_VER > 11
 }

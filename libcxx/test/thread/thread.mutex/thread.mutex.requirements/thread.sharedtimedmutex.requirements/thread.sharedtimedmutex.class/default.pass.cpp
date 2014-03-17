@@ -9,18 +9,15 @@
 
 // <shared_mutex>
 
-// class shared_mutex;
+// class shared_timed_mutex;
 
-// shared_mutex(const shared_mutex&) = delete;
+// shared_timed_mutex();
 
 #include <shared_mutex>
 
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    std::shared_mutex m0;
-    std::shared_mutex m1(m0);
-#else
-#   error
+    std::shared_timed_mutex m;
 #endif
 }

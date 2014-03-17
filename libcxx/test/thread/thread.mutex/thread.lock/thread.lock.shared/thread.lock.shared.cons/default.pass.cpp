@@ -19,7 +19,7 @@
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    std::shared_lock<std::shared_mutex> ul;
+    std::shared_lock<std::shared_timed_mutex> ul;
     assert(!ul.owns_lock());
     assert(ul.mutex() == nullptr);
 #endif  // _LIBCPP_STD_VER > 11

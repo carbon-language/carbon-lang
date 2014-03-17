@@ -9,10 +9,10 @@
 
 // <shared_mutex>
 
-// class shared_mutex;
+// class shared_timed_mutex;
 
-// template <class Clock, class Duration>
-//     bool try_lock_shared_until(const chrono::time_point<Clock, Duration>& abs_time);
+// template <class Rep, class Period>
+//     bool try_lock_shared_for(const chrono::duration<Rep, Period>& rel_time);
 
 #include <shared_mutex>
 #include <thread>
@@ -22,7 +22,7 @@
 
 #if _LIBCPP_STD_VER > 11
 
-std::shared_mutex m;
+std::shared_timed_mutex m;
 
 typedef std::chrono::steady_clock Clock;
 typedef Clock::time_point time_point;
@@ -33,7 +33,7 @@ typedef std::chrono::nanoseconds ns;
 void f1()
 {
     time_point t0 = Clock::now();
-    assert(m.try_lock_shared_until(Clock::now() + ms(300)) == true);
+    assert(m.try_lock_shared_for(ms(300)) == true);
     time_point t1 = Clock::now();
     m.unlock_shared();
     ns d = t1 - t0 - ms(250);
@@ -43,7 +43,7 @@ void f1()
 void f2()
 {
     time_point t0 = Clock::now();
-    assert(m.try_lock_shared_until(Clock::now() + ms(250)) == false);
+    assert(m.try_lock_shared_for(ms(250)) == false);
     time_point t1 = Clock::now();
     ns d = t1 - t0 - ms(250);
     assert(d < ms(50));  // within 50ms

@@ -19,9 +19,9 @@
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    std::shared_mutex m;
+    std::shared_timed_mutex m;
     m.lock();
-    std::shared_lock<std::shared_mutex> lk(m, std::adopt_lock);
+    std::shared_lock<std::shared_timed_mutex> lk(m, std::adopt_lock);
     assert(lk.mutex() == &m);
     assert(lk.owns_lock() == true);
 #endif  // _LIBCPP_STD_VER > 11

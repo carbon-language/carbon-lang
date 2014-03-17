@@ -9,7 +9,7 @@
 
 // <shared_mutex>
 
-// class shared_mutex;
+// class shared_timed_mutex;
 
 // template <class Clock, class Duration>
 //     bool try_lock_until(const chrono::time_point<Clock, Duration>& abs_time);
@@ -21,7 +21,7 @@
 
 #if _LIBCPP_STD_VER > 11
 
-std::shared_mutex m;
+std::shared_timed_mutex m;
 
 typedef std::chrono::steady_clock Clock;
 typedef Clock::time_point time_point;

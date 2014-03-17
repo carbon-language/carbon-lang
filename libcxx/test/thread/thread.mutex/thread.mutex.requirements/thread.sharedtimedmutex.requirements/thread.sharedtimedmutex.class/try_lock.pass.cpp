@@ -9,7 +9,7 @@
 
 // <shared_mutex>
 
-// class shared_mutex;
+// class shared_timed_mutex;
 
 // bool try_lock();
 
@@ -20,7 +20,7 @@
 
 #if _LIBCPP_STD_VER > 11
 
-std::shared_mutex m;
+std::shared_timed_mutex m;
 
 typedef std::chrono::system_clock Clock;
 typedef Clock::time_point time_point;

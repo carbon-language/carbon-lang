@@ -21,7 +21,7 @@
 
 #if _LIBCPP_STD_VER > 11
 
-std::shared_mutex m;
+std::shared_timed_mutex m;
 
 typedef std::chrono::system_clock Clock;
 typedef Clock::time_point time_point;
@@ -33,20 +33,20 @@ void f()
 {
     time_point t0 = Clock::now();
     {
-        std::shared_lock<std::shared_mutex> lk(m, std::try_to_lock);
+        std::shared_lock<std::shared_timed_mutex> lk(m, std::try_to_lock);
         assert(lk.owns_lock() == false);
     }
     {
-        std::shared_lock<std::shared_mutex> lk(m, std::try_to_lock);
+        std::shared_lock<std::shared_timed_mutex> lk(m, std::try_to_lock);
         assert(lk.owns_lock() == false);
     }
     {
-        std::shared_lock<std::shared_mutex> lk(m, std::try_to_lock);
+        std::shared_lock<std::shared_timed_mutex> lk(m, std::try_to_lock);
         assert(lk.owns_lock() == false);
     }
     while (true)
     {
-        std::shared_lock<std::shared_mutex> lk(m, std::try_to_lock);
+        std::shared_lock<std::shared_timed_mutex> lk(m, std::try_to_lock);
         if (lk.owns_lock())
             break;
     }

@@ -18,16 +18,16 @@
 
 #if _LIBCPP_STD_VER > 11
 
-std::shared_mutex m;
+std::shared_timed_mutex m;
 
 #endif  // _LIBCPP_STD_VER > 11
 
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    std::shared_lock<std::shared_mutex> lk0;
+    std::shared_lock<std::shared_timed_mutex> lk0;
     assert(lk0.mutex() == nullptr);
-    std::shared_lock<std::shared_mutex> lk1(m);
+    std::shared_lock<std::shared_timed_mutex> lk1(m);
     assert(lk1.mutex() == &m);
     lk1.unlock();
     assert(lk1.mutex() == &m);

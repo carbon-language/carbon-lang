@@ -19,14 +19,14 @@
 namespace std
 {
 
-class shared_mutex
+class shared_timed_mutex
 {
 public:
-    shared_mutex();
-    ~shared_mutex();
+    shared_timed_mutex();
+    ~shared_timed_mutex();
 
-    shared_mutex(const shared_mutex&) = delete;
-    shared_mutex& operator=(const shared_mutex&) = delete;
+    shared_timed_mutex(const shared_timed_mutex&) = delete;
+    shared_timed_mutex& operator=(const shared_timed_mutex&) = delete;
 
     // Exclusive ownership
     void lock(); // blocking
@@ -114,7 +114,7 @@ template <class Mutex>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-class _LIBCPP_TYPE_VIS shared_mutex
+class _LIBCPP_TYPE_VIS shared_timed_mutex
 {
     mutex               __mut_;
     condition_variable  __gate1_;
@@ -124,11 +124,11 @@ class _LIBCPP_TYPE_VIS shared_mutex
     static const unsigned __write_entered_ = 1U << (sizeof(unsigned)*__CHAR_BIT__ - 1);
     static const unsigned __n_readers_ = ~__write_entered_;
 public:
-    shared_mutex();
-    _LIBCPP_INLINE_VISIBILITY ~shared_mutex() = default;
+    shared_timed_mutex();
+    _LIBCPP_INLINE_VISIBILITY ~shared_timed_mutex() = default;
 
-    shared_mutex(const shared_mutex&) = delete;
-    shared_mutex& operator=(const shared_mutex&) = delete;
+    shared_timed_mutex(const shared_timed_mutex&) = delete;
+    shared_timed_mutex& operator=(const shared_timed_mutex&) = delete;
 
     // Exclusive ownership
     void lock();
@@ -163,7 +163,7 @@ public:
 
 template <class _Clock, class _Duration>
 bool
-shared_mutex::try_lock_until(
+shared_timed_mutex::try_lock_until(
                         const chrono::time_point<_Clock, _Duration>& __abs_time)
 {
     unique_lock<mutex> __lk(__mut_);
@@ -198,7 +198,7 @@ shared_mutex::try_lock_until(
 
 template <class _Clock, class _Duration>
 bool
-shared_mutex::try_lock_shared_until(
+shared_timed_mutex::try_lock_shared_until(
                         const chrono::time_point<_Clock, _Duration>& __abs_time)
 {
     unique_lock<mutex> __lk(__mut_);

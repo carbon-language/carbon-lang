@@ -16,14 +16,14 @@
 #include <shared_mutex>
 
 #if _LIBCPP_STD_VER > 11
-std::shared_mutex m;
+std::shared_timed_mutex m;
 #endif  // _LIBCPP_STD_VER > 11
 
 int main()
 {
 #if _LIBCPP_STD_VER > 11
-    std::shared_lock<std::shared_mutex> lk0(m);
-    std::shared_lock<std::shared_mutex> lk = lk0;
+    std::shared_lock<std::shared_timed_mutex> lk0(m);
+    std::shared_lock<std::shared_timed_mutex> lk = lk0;
 #else
 #   error
 #endif  // _LIBCPP_STD_VER > 11
