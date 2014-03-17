@@ -1998,9 +1998,10 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
           break;
 
       if (FAI >= NParameters) {
+	assert(M && "expected macro to be defined");
         Error(IDLoc,
               "parameter named '" + FA.Name + "' does not exist for macro '" +
-              (M ? M->Name : "<unnamed>") + "'");
+              M->Name + "'");
         return true;
       }
       PI = FAI;
