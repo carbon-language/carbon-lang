@@ -76,6 +76,9 @@ ThreadPlanShouldStopHere::DefaultShouldStopHereCallback (ThreadPlan *current_pla
 {
     bool should_stop_here = true;
     StackFrame *frame = current_plan->GetThread().GetStackFrameAtIndex(0).get();
+    if (!frame)
+        return true;
+    
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if ((operation == eFrameCompareOlder && flags.Test(eStepOutAvoidNoDebug))
@@ -90,6 +93,17 @@ ThreadPlanShouldStopHere::DefaultShouldStopHereCallback (ThreadPlan *current_pla
         }
     }
     
+    // Always avoid code with line number 0.
+    // FIXME: At present the ShouldStop and the StepFromHere calculate this independently.  If this ever
+    // becomes expensive (this one isn't) we can try to have this set a state that the StepFromHere can use.
+    if (frame)
+    {
+        SymbolContext sc;
+        sc = frame->GetSymbolContext (eSymbolContextLineEntry);
+        if (sc.line_entry.line == 0)
+            should_stop_here = false;
+    }
+    
     return should_stop_here;
 }
 
@@ -99,16 +113,35 @@ ThreadPlanShouldStopHere::DefaultStepFromHereCallback (ThreadPlan *current_plan,
                                                          FrameComparison operation,
                                                          void *baton)
 {
-        const bool stop_others = false;
-        const size_t frame_index = 0;
-        ThreadPlanSP return_plan_sp = current_plan->GetThread().QueueThreadPlanForStepOutNoShouldStop (false,
-                                                                                                  NULL,
-                                                                                                  true,
-                                                                                                  stop_others,
-                                                                                                  eVoteNo,
-                                                                                                  eVoteNoOpinion,
-                                                                                                  frame_index);
+    const bool stop_others = false;
+    const size_t frame_index = 0;
+    ThreadPlanSP return_plan_sp;
+    // If we are stepping through code at line number 0, then we need to step over this range.  Otherwise
+    // we will step out.
+    StackFrame *frame = current_plan->GetThread().GetStackFrameAtIndex(0).get();
+    if (!frame)
         return return_plan_sp;
+    SymbolContext sc;
+    sc = frame->GetSymbolContext (eSymbolContextLineEntry);
+    if (sc.line_entry.line == 0)
+    {
+        AddressRange range = sc.line_entry.range;
+        return_plan_sp = current_plan->GetThread().QueueThreadPlanForStepOverRange(false,
+                                                                                   range,
+                                                                                   sc,
+                                                                                   eOnlyDuringStepping,
+                                                                                   eLazyBoolNo);
+    }
+    
+    if (!return_plan_sp)
+        return_plan_sp = current_plan->GetThread().QueueThreadPlanForStepOutNoShouldStop (false,
+                                                                                          NULL,
+                                                                                          true,
+                                                                                          stop_others,
+                                                                                          eVoteNo,
+                                                                                          eVoteNoOpinion,
+                                                                                          frame_index);
+    return return_plan_sp;
 }
 
 ThreadPlanSP
