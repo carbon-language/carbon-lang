@@ -14,7 +14,7 @@ L1:	leave
 // rdar://9275556
 
 // We check that the source name "t.s" is picked up
-// CHECK: include_directories[  1] = '{{.*}}/test/MC/MachO'
+// CHECK: include_directories[  1] = '{{.*[/\\]}}test{{[/\\]}}MC{{[/\\]}}MachO'
 // CHECK: include_directories[  2] = 'inc'
 // CHECK:                 Dir  Mod Time   File Len   File Name
 // CHECK:                 ---- ---------- ---------- ---------------------------
