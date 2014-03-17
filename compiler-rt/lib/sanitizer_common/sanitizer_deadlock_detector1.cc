@@ -118,11 +118,12 @@ void DD::MutexBeforeLock(DDCallback *cb,
       DDMutex *m0 = (DDMutex*)dd.getData(from);
       DDMutex *m1 = (DDMutex*)dd.getData(to);
 
-      Printf("Edge: %zd=>%zd: %u\n", from, to, dd.findEdge(from, to));
+      u32 stk = dd.findEdge(from, to);
+      // Printf("Edge: %zd=>%zd: %u\n", from, to, stk);
       rep->loop[i].thr_ctx = 0;  // don't know
       rep->loop[i].mtx_ctx0 = m0->ctx;
       rep->loop[i].mtx_ctx1 = m1->ctx;
-      rep->loop[i].stk = m0->stk;
+      rep->loop[i].stk = stk;
     }
   }
 }

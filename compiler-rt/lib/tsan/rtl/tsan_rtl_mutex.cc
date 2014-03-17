@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <sanitizer_common/sanitizer_deadlock_detector_interface.h>
+#include <sanitizer_common/sanitizer_stackdepot.h>
 
 #include "tsan_rtl.h"
 #include "tsan_flags.h"
@@ -425,6 +426,14 @@ void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
   ScopedReport rep(ReportTypeDeadlock);
   for (int i = 0; i < r->n; i++)
     rep.AddMutex(r->loop[i].mtx_ctx0);
+  StackTrace stacks[ARRAY_SIZE(DDReport::loop)];
+  for (int i = 0; i < r->n; i++) {
+    if (!r->loop[i].stk) continue;
+    uptr size;
+    const uptr *trace = StackDepotGet(r->loop[i].stk, &size);
+    stacks[i].Init(const_cast<uptr *>(trace), size);
+    rep.AddStack(&stacks[i]);
+  }
   StackTrace trace;
   trace.ObtainCurrent(thr, pc);
   rep.AddStack(&trace);
