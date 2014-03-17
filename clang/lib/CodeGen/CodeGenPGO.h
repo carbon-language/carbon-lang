@@ -52,7 +52,9 @@ public:
 class CodeGenPGO {
 private:
   CodeGenModule &CGM;
-  std::string *FuncName;
+  std::string *PrefixedFuncName;
+  StringRef RawFuncName;
+  llvm::GlobalValue::LinkageTypes FuncLinkage;
 
   unsigned NumRegionCounters;
   llvm::GlobalVariable *RegionCounters;
@@ -63,11 +65,11 @@ private:
 
 public:
   CodeGenPGO(CodeGenModule &CGM)
-    : CGM(CGM), FuncName(0), NumRegionCounters(0), RegionCounters(0),
+    : CGM(CGM), PrefixedFuncName(0), NumRegionCounters(0), RegionCounters(0),
       RegionCounterMap(0), StmtCountMap(0), RegionCounts(0),
       CurrentRegionCount(0) {}
   ~CodeGenPGO() {
-    if (FuncName) delete FuncName;
+    if (PrefixedFuncName) delete PrefixedFuncName;
   }
 
   /// Whether or not we have PGO region data for the current function. This is
@@ -77,7 +79,10 @@ public:
 
   /// Get the string used to identify this function in the profile data.
   /// For functions with local linkage, this includes the main file name.
-  const StringRef getFuncName() const { return StringRef(*FuncName); }
+  StringRef getFuncName() const { return StringRef(*PrefixedFuncName); }
+  std::string getFuncVarName(StringRef VarName) const {
+    return ("__llvm_pgo_" + VarName + "_" + RawFuncName).str();
+  }
 
   /// Return the counter value of the current region.
   uint64_t getCurrentRegionCount() const { return CurrentRegionCount; }
@@ -123,13 +128,12 @@ public:
   /// generates global variables or associates PGO data with each of the
   /// counters depending on whether we are generating or using instrumentation.
   void assignRegionCounters(const Decl *D, llvm::Function *Fn);
-  /// Emit code to write counts for a given function to disk, if necessary.
-  void emitWriteoutFunction();
+  /// Emit static data structures for instrumentation data.
+  void emitInstrumentationData();
   /// Clean up region counter state. Must be called if assignRegionCounters is
   /// used.
   void destroyRegionCounters();
-  /// Emit the logic to register region counter write out functions. Returns a
-  /// function that implements this logic.
+  /// Emit static initialization code, if any.
   static llvm::Function *emitInitialization(CodeGenModule &CGM);
 
 private:
@@ -139,6 +143,7 @@ private:
   void applyFunctionAttributes(PGOProfileData *PGOData, llvm::Function *Fn);
   void loadRegionCounts(PGOProfileData *PGOData);
   void emitCounterVariables();
+  llvm::GlobalVariable *buildDataVar();
 
   /// Emit code to increment the counter at the given index
   void emitCounterIncrement(CGBuilderTy &Builder, unsigned Counter);

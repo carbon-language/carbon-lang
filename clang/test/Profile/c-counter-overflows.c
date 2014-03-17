@@ -5,7 +5,6 @@
 
 typedef unsigned long long uint64_t;
 
-// PGOGEN: @[[MAIN:__llvm_pgo_ctr[0-9]*]] = private global [2 x i64] zeroinitializer
 int main(int argc, const char *argv[]) {
   // Need counts higher than 32-bits.
   // CHECK: br {{.*}} !prof ![[FOR:[0-9]+]]

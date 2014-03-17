@@ -3,16 +3,16 @@
 // RUN: %clang_cc1 -triple x86_64-apple-macosx10.9 -main-file-name c-general.c %s -o - -emit-llvm -fprofile-instr-generate | FileCheck -check-prefix=PGOGEN %s
 // RUN: %clang_cc1 -triple x86_64-apple-macosx10.9 -main-file-name c-general.c %s -o - -emit-llvm -fprofile-instr-use=%S/Inputs/c-general.profdata | FileCheck -check-prefix=PGOUSE %s
 
-// PGOGEN: @[[SLC:__llvm_pgo_ctr[0-9]*]] = private global [4 x i64] zeroinitializer
-// PGOGEN: @[[IFC:__llvm_pgo_ctr[0-9]*]] = private global [11 x i64] zeroinitializer
-// PGOGEN: @[[EEC:__llvm_pgo_ctr[0-9]*]] = private global [9 x i64] zeroinitializer
-// PGOGEN: @[[JMC:__llvm_pgo_ctr[0-9]*]] = private global [22 x i64] zeroinitializer
-// PGOGEN: @[[SWC:__llvm_pgo_ctr[0-9]*]] = private global [19 x i64] zeroinitializer
-// PGOGEN: @[[BSC:__llvm_pgo_ctr[0-9]*]] = private global [17 x i64] zeroinitializer
-// PGOGEN: @[[BOC:__llvm_pgo_ctr[0-9]*]] = private global [8 x i64]  zeroinitializer
-// PGOGEN: @[[BLC:__llvm_pgo_ctr[0-9]*]] = private global [9 x i64]  zeroinitializer
-// PGOGEN: @[[MAC:__llvm_pgo_ctr[0-9]*]] = private global [1 x i64]  zeroinitializer
-// PGOGEN: @[[STC:__llvm_pgo_ctr[0-9]*]] = private global [2 x i64]  zeroinitializer
+// PGOGEN: @[[SLC:__llvm_pgo_counters_simple_loops]] = global [4 x i64] zeroinitializer
+// PGOGEN: @[[IFC:__llvm_pgo_counters_conditionals]] = global [11 x i64] zeroinitializer
+// PGOGEN: @[[EEC:__llvm_pgo_counters_early_exits]] = global [9 x i64] zeroinitializer
+// PGOGEN: @[[JMC:__llvm_pgo_counters_jumps]] = global [22 x i64] zeroinitializer
+// PGOGEN: @[[SWC:__llvm_pgo_counters_switches]] = global [19 x i64] zeroinitializer
+// PGOGEN: @[[BSC:__llvm_pgo_counters_big_switch]] = global [17 x i64] zeroinitializer
+// PGOGEN: @[[BOC:__llvm_pgo_counters_boolean_operators]] = global [8 x i64] zeroinitializer
+// PGOGEN: @[[BLC:__llvm_pgo_counters_boolop_loops]] = global [9 x i64] zeroinitializer
+// PGOGEN: @[[MAC:__llvm_pgo_counters_main]] = global [1 x i64] zeroinitializer
+// PGOGEN: @[[STC:__llvm_pgo_counters_static_func]] = internal global [2 x i64] zeroinitializer
 
 // PGOGEN-LABEL: @simple_loops()
 // PGOUSE-LABEL: @simple_loops()

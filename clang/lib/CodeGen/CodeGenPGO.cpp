@@ -144,16 +144,16 @@ bool PGOProfileData::getFunctionCounts(StringRef FuncName,
 }
 
 void CodeGenPGO::setFuncName(llvm::Function *Fn) {
-  StringRef Func = Fn->getName();
+  RawFuncName = Fn->getName();
 
   // Function names may be prefixed with a binary '1' to indicate
   // that the backend should not modify the symbols due to any platform
   // naming convention. Do not include that '1' in the PGO profile name.
-  if (Func[0] == '\1')
-    Func = Func.substr(1);
+  if (RawFuncName[0] == '\1')
+    RawFuncName = RawFuncName.substr(1);
 
   if (!Fn->hasLocalLinkage()) {
-    FuncName = new std::string(Func);
+    PrefixedFuncName = new std::string(RawFuncName);
     return;
   }
 
@@ -161,102 +161,164 @@ void CodeGenPGO::setFuncName(llvm::Function *Fn) {
   // Do not include the full path in the file name since there's no guarantee
   // that it will stay the same, e.g., if the files are checked out from
   // version control in different locations.
-  FuncName = new std::string(CGM.getCodeGenOpts().MainFileName);
-  if (FuncName->empty())
-    FuncName->assign("<unknown>");
-  FuncName->append(":");
-  FuncName->append(Func);
+  PrefixedFuncName = new std::string(CGM.getCodeGenOpts().MainFileName);
+  if (PrefixedFuncName->empty())
+    PrefixedFuncName->assign("<unknown>");
+  PrefixedFuncName->append(":");
+  PrefixedFuncName->append(RawFuncName);
 }
 
-void CodeGenPGO::emitWriteoutFunction() {
+static llvm::Function *getRegisterFunc(CodeGenModule &CGM) {
+  return CGM.getModule().getFunction("__llvm_pgo_register_functions");
+}
+
+static llvm::BasicBlock *getOrInsertRegisterBB(CodeGenModule &CGM) {
+  // Only need to insert this once per module.
+  if (llvm::Function *RegisterF = getRegisterFunc(CGM))
+    return &RegisterF->getEntryBlock();
+
+  // Construct the function.
+  auto *VoidTy = llvm::Type::getVoidTy(CGM.getLLVMContext());
+  auto *RegisterFTy = llvm::FunctionType::get(VoidTy, false);
+  auto *RegisterF = llvm::Function::Create(RegisterFTy,
+                                           llvm::GlobalValue::InternalLinkage,
+                                           "__llvm_pgo_register_functions",
+                                           &CGM.getModule());
+  RegisterF->setUnnamedAddr(true);
+  RegisterF->addFnAttr(llvm::Attribute::NoInline);
+  if (CGM.getCodeGenOpts().DisableRedZone)
+    RegisterF->addFnAttr(llvm::Attribute::NoRedZone);
+
+  // Construct and return the entry block.
+  auto *BB = llvm::BasicBlock::Create(CGM.getLLVMContext(), "", RegisterF);
+  CGBuilderTy Builder(BB);
+  Builder.CreateRetVoid();
+  return BB;
+}
+
+static llvm::Constant *getOrInsertRuntimeRegister(CodeGenModule &CGM) {
+  auto *VoidTy = llvm::Type::getVoidTy(CGM.getLLVMContext());
+  auto *VoidPtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  auto *RuntimeRegisterTy = llvm::FunctionType::get(VoidTy, VoidPtrTy, false);
+  return CGM.getModule().getOrInsertFunction("__llvm_pgo_register_function",
+                                             RuntimeRegisterTy);
+}
+
+static llvm::Constant *getOrInsertRuntimeWriteAtExit(CodeGenModule &CGM) {
+  // TODO: make this depend on a command-line option.
+  auto *VoidTy = llvm::Type::getVoidTy(CGM.getLLVMContext());
+  auto *WriteAtExitTy = llvm::FunctionType::get(VoidTy, false);
+  return CGM.getModule().getOrInsertFunction("__llvm_pgo_register_write_atexit",
+                                             WriteAtExitTy);
+}
+
+static StringRef getCountersSection(const CodeGenModule &CGM) {
+  if (CGM.getTarget().getTriple().getObjectFormat() == llvm::Triple::MachO)
+    return "__DATA,__llvm_pgo_cnts";
+  else
+    return "__llvm_pgo_cnts";
+}
+
+static StringRef getNameSection(const CodeGenModule &CGM) {
+  if (CGM.getTarget().getTriple().getObjectFormat() == llvm::Triple::MachO)
+    return "__DATA,__llvm_pgo_names";
+  else
+    return "__llvm_pgo_names";
+}
+
+static StringRef getDataSection(const CodeGenModule &CGM) {
+  if (CGM.getTarget().getTriple().getObjectFormat() == llvm::Triple::MachO)
+    return "__DATA,__llvm_pgo_data";
+  else
+    return "__llvm_pgo_data";
+}
+
+llvm::GlobalVariable *CodeGenPGO::buildDataVar() {
+  // Create name variable.
+  llvm::LLVMContext &Ctx = CGM.getLLVMContext();
+  auto *VarName = llvm::ConstantDataArray::getString(Ctx, getFuncName(),
+                                                     false);
+  auto *Name = new llvm::GlobalVariable(CGM.getModule(), VarName->getType(),
+                                        true, FuncLinkage, VarName,
+                                        getFuncVarName("name"));
+  Name->setSection(getNameSection(CGM));
+  Name->setAlignment(1);
+
+  // Create data variable.
+  auto *Int32Ty = llvm::Type::getInt32Ty(Ctx);
+  auto *Int8PtrTy = llvm::Type::getInt8PtrTy(Ctx);
+  auto *Int64PtrTy = llvm::Type::getInt64PtrTy(Ctx);
+  llvm::Type *DataTypes[] = {
+    Int32Ty, Int32Ty, Int8PtrTy, Int64PtrTy
+  };
+  auto *DataTy = llvm::StructType::get(Ctx, makeArrayRef(DataTypes));
+  llvm::Constant *DataVals[] = {
+    llvm::ConstantInt::get(Int32Ty, getFuncName().size()),
+    llvm::ConstantInt::get(Int32Ty, NumRegionCounters),
+    llvm::ConstantExpr::getBitCast(Name, Int8PtrTy),
+    llvm::ConstantExpr::getBitCast(RegionCounters, Int64PtrTy)
+  };
+  auto *Data =
+    new llvm::GlobalVariable(CGM.getModule(), DataTy, true, FuncLinkage,
+                             llvm::ConstantStruct::get(DataTy, DataVals),
+                             getFuncVarName("data"));
+
+  // All the data should be packed into an array in its own section.
+  Data->setSection(getDataSection(CGM));
+  Data->setAlignment(8);
+
+  // Make sure the data doesn't get deleted.
+  CGM.addUsedGlobal(Data);
+  return Data;
+}
+
+void CodeGenPGO::emitInstrumentationData() {
   if (!CGM.getCodeGenOpts().ProfileInstrGenerate)
     return;
 
-  llvm::LLVMContext &Ctx = CGM.getLLVMContext();
+  // Build the data.
+  auto *Data = buildDataVar();
 
-  llvm::Type *Int32Ty = llvm::Type::getInt32Ty(Ctx);
-  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(Ctx);
-
-  llvm::Function *WriteoutF =
-    CGM.getModule().getFunction("__llvm_pgo_writeout");
-  if (!WriteoutF) {
-    llvm::FunctionType *WriteoutFTy =
-      llvm::FunctionType::get(llvm::Type::getVoidTy(Ctx), false);
-    WriteoutF = llvm::Function::Create(WriteoutFTy,
-                                       llvm::GlobalValue::InternalLinkage,
-                                       "__llvm_pgo_writeout", &CGM.getModule());
-  }
-  WriteoutF->setUnnamedAddr(true);
-  WriteoutF->addFnAttr(llvm::Attribute::NoInline);
-  if (CGM.getCodeGenOpts().DisableRedZone)
-    WriteoutF->addFnAttr(llvm::Attribute::NoRedZone);
-
-  llvm::BasicBlock *BB = WriteoutF->empty() ?
-    llvm::BasicBlock::Create(Ctx, "", WriteoutF) : &WriteoutF->getEntryBlock();
-
-  CGBuilderTy PGOBuilder(BB);
-
-  llvm::Instruction *I = BB->getTerminator();
-  if (!I)
-    I = PGOBuilder.CreateRetVoid();
-  PGOBuilder.SetInsertPoint(I);
-
-  llvm::Type *Int64PtrTy = llvm::Type::getInt64PtrTy(Ctx);
-  llvm::Type *Args[] = {
-    Int8PtrTy,                       // const char *FuncName
-    Int32Ty,                         // uint32_t NumCounters
-    Int64PtrTy                       // uint64_t *Counters
-  };
-  llvm::FunctionType *FTy =
-    llvm::FunctionType::get(PGOBuilder.getVoidTy(), Args, false);
-  llvm::Constant *EmitFunc =
-    CGM.getModule().getOrInsertFunction("llvm_pgo_emit", FTy);
-
-  llvm::Constant *NameString =
-    CGM.GetAddrOfConstantCString(getFuncName(), "__llvm_pgo_name");
-  NameString = llvm::ConstantExpr::getBitCast(NameString, Int8PtrTy);
-  PGOBuilder.CreateCall3(EmitFunc, NameString,
-                         PGOBuilder.getInt32(NumRegionCounters),
-                         PGOBuilder.CreateBitCast(RegionCounters, Int64PtrTy));
+  // Register the data.
+  //
+  // TODO: only register when static initialization is required.
+  CGBuilderTy Builder(getOrInsertRegisterBB(CGM)->getTerminator());
+  auto *VoidPtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  Builder.CreateCall(getOrInsertRuntimeRegister(CGM),
+                     Builder.CreateBitCast(Data, VoidPtrTy));
 }
 
 llvm::Function *CodeGenPGO::emitInitialization(CodeGenModule &CGM) {
-  llvm::Function *WriteoutF =
-    CGM.getModule().getFunction("__llvm_pgo_writeout");
-  if (!WriteoutF)
-    return NULL;
+  if (!CGM.getCodeGenOpts().ProfileInstrGenerate)
+    return 0;
 
-  // Create a small bit of code that registers the "__llvm_pgo_writeout" to
-  // be executed at exit.
-  llvm::Function *F = CGM.getModule().getFunction("__llvm_pgo_init");
-  if (F)
-    return NULL;
+  // Only need to create this once per module.
+  if (CGM.getModule().getFunction("__llvm_pgo_init"))
+    return 0;
 
-  llvm::LLVMContext &Ctx = CGM.getLLVMContext();
-  llvm::FunctionType *FTy = llvm::FunctionType::get(llvm::Type::getVoidTy(Ctx),
-                                                    false);
-  F = llvm::Function::Create(FTy, llvm::GlobalValue::InternalLinkage,
-                             "__llvm_pgo_init", &CGM.getModule());
+  // Get the functions to call at initialization.
+  llvm::Constant *RegisterF = getRegisterFunc(CGM);
+  llvm::Constant *WriteAtExitF = getOrInsertRuntimeWriteAtExit(CGM);
+  if (!RegisterF && !WriteAtExitF)
+    return 0;
+
+  // Create the initialization function.
+  auto *VoidTy = llvm::Type::getVoidTy(CGM.getLLVMContext());
+  auto *F = llvm::Function::Create(llvm::FunctionType::get(VoidTy, false),
+                                   llvm::GlobalValue::InternalLinkage,
+                                   "__llvm_pgo_init", &CGM.getModule());
   F->setUnnamedAddr(true);
-  F->setLinkage(llvm::GlobalValue::InternalLinkage);
   F->addFnAttr(llvm::Attribute::NoInline);
   if (CGM.getCodeGenOpts().DisableRedZone)
     F->addFnAttr(llvm::Attribute::NoRedZone);
 
-  llvm::BasicBlock *BB = llvm::BasicBlock::Create(CGM.getLLVMContext(), "", F);
-  CGBuilderTy PGOBuilder(BB);
-
-  FTy = llvm::FunctionType::get(PGOBuilder.getVoidTy(), false);
-  llvm::Type *Params[] = {
-    llvm::PointerType::get(FTy, 0)
-  };
-  FTy = llvm::FunctionType::get(PGOBuilder.getVoidTy(), Params, false);
-
-  // Inialize the environment and register the local writeout function.
-  llvm::Constant *PGOInit =
-    CGM.getModule().getOrInsertFunction("llvm_pgo_init", FTy);
-  PGOBuilder.CreateCall(PGOInit, WriteoutF);
-  PGOBuilder.CreateRetVoid();
+  // Add the basic block and the necessary calls.
+  CGBuilderTy Builder(llvm::BasicBlock::Create(CGM.getLLVMContext(), "", F));
+  if (RegisterF)
+    Builder.CreateCall(RegisterF);
+  if (WriteAtExitF)
+    Builder.CreateCall(WriteAtExitF);
+  Builder.CreateRetVoid();
 
   return F;
 }
@@ -764,6 +826,7 @@ void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
   if (!D)
     return;
   setFuncName(Fn);
+  FuncLinkage = Fn->getLinkage();
   mapRegionCounters(D);
   if (InstrumentRegions)
     emitCounterVariables();
@@ -819,10 +882,11 @@ void CodeGenPGO::emitCounterVariables() {
   llvm::ArrayType *CounterTy = llvm::ArrayType::get(llvm::Type::getInt64Ty(Ctx),
                                                     NumRegionCounters);
   RegionCounters =
-    new llvm::GlobalVariable(CGM.getModule(), CounterTy, false,
-                             llvm::GlobalVariable::PrivateLinkage,
+    new llvm::GlobalVariable(CGM.getModule(), CounterTy, false, FuncLinkage,
                              llvm::Constant::getNullValue(CounterTy),
-                             "__llvm_pgo_ctr");
+                             getFuncVarName("counters"));
+  RegionCounters->setAlignment(8);
+  RegionCounters->setSection(getCountersSection(CGM));
 }
 
 void CodeGenPGO::emitCounterIncrement(CGBuilderTy &Builder, unsigned Counter) {

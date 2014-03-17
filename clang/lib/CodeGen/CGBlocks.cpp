@@ -1199,7 +1199,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
     RegionCounter Cnt = getPGORegionCounter(blockDecl->getBody());
     Cnt.beginRegion(Builder);
     EmitStmt(blockDecl->getBody());
-    PGO.emitWriteoutFunction();
+    PGO.emitInstrumentationData();
     PGO.destroyRegionCounters();
   }
 

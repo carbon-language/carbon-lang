@@ -821,7 +821,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   if (!CurFn->doesNotThrow())
     TryMarkNoThrow(CurFn);
 
-  PGO.emitWriteoutFunction();
+  PGO.emitInstrumentationData();
   PGO.destroyRegionCounters();
 }
 
