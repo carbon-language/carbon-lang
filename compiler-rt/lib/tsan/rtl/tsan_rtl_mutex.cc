@@ -426,7 +426,7 @@ void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
   ScopedReport rep(ReportTypeDeadlock);
   for (int i = 0; i < r->n; i++)
     rep.AddMutex(r->loop[i].mtx_ctx0);
-  StackTrace stacks[ARRAY_SIZE(DDReport::loop)];
+  StackTrace stacks[DDReport::kMaxLoopSize];
   for (int i = 0; i < r->n; i++) {
     if (!r->loop[i].stk) continue;
     uptr size;

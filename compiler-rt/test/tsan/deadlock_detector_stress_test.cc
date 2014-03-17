@@ -411,6 +411,34 @@ class LockTest {
     RL(0); RL(0); RL(0); RU(0); RU(0); RU(0);  // Recusrive reader lock.
   }
 
+  // More detailed output test.
+  void Test16() {
+    if (test_number > 0 && test_number != 16) return;
+    fprintf(stderr, "Starting Test16: detailed output test with two locks\n");
+    // CHECK: Starting Test16
+    // CHECK: WARNING: ThreadSanitizer: lock-order-inversion
+    // CHECK: LockTest::Acquire_1
+    // CHECK-NEXT: LockTest::Acquire_0_then_1
+    // CHECK: LockTest::Acquire_0
+    // CHECK-NEXT: LockTest::Acquire_1_then_0
+    Init(5);
+    Acquire_0_then_1();
+    U(0); U(1);
+    Acquire_1_then_0();
+    U(0); U(1);
+  }
+
+  __attribute__((noinline)) void Acquire_1() { L(1); }
+  __attribute__((noinline)) void Acquire_0() { L(0); }
+  __attribute__((noinline)) void Acquire_1_then_0() {
+    Acquire_1();
+    Acquire_0();
+  }
+  __attribute__((noinline)) void Acquire_0_then_1() {
+    Acquire_0();
+    Acquire_1();
+  }
+
  private:
   void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
   void Lock_0_1() { Lock2(0, 1); }
@@ -498,6 +526,7 @@ int main(int argc, char **argv) {
   LockTest().Test13();
   LockTest().Test14();
   LockTest().Test15();
+  LockTest().Test16();
   fprintf(stderr, "ALL-DONE\n");
   // CHECK: ALL-DONE
 }
