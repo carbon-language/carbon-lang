@@ -571,6 +571,9 @@ public:
   unsigned size() const { return CompoundStmtBits.NumStmts; }
 
   typedef Stmt** body_iterator;
+  typedef llvm::iterator_range<body_iterator> body_range;
+
+  body_range body() { return body_range(body_begin(), body_end()); }
   body_iterator body_begin() { return Body; }
   body_iterator body_end() { return Body + size(); }
   Stmt *body_back() { return !body_empty() ? Body[size()-1] : 0; }
@@ -581,6 +584,11 @@ public:
   }
 
   typedef Stmt* const * const_body_iterator;
+  typedef llvm::iterator_range<const_body_iterator> body_const_range;
+
+  body_const_range body() const {
+    return body_const_range(body_begin(), body_end());
+  }
   const_body_iterator body_begin() const { return Body; }
   const_body_iterator body_end() const { return Body + size(); }
   const Stmt *body_back() const { return !body_empty() ? Body[size()-1] : 0; }

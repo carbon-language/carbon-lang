@@ -997,9 +997,8 @@ CheckConstexprFunctionStmt(Sema &SemaRef, const FunctionDecl *Dcl, Stmt *S,
       Cxx1yLoc = S->getLocStart();
 
     CompoundStmt *CompStmt = cast<CompoundStmt>(S);
-    for (CompoundStmt::body_iterator BodyIt = CompStmt->body_begin(),
-           BodyEnd = CompStmt->body_end(); BodyIt != BodyEnd; ++BodyIt) {
-      if (!CheckConstexprFunctionStmt(SemaRef, Dcl, *BodyIt, ReturnStmts,
+    for (auto *BodyIt : CompStmt->body()) {
+      if (!CheckConstexprFunctionStmt(SemaRef, Dcl, BodyIt, ReturnStmts,
                                       Cxx1yLoc))
         return false;
     }
@@ -1101,9 +1100,8 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
   //   [... list of cases ...]
   CompoundStmt *CompBody = cast<CompoundStmt>(Body);
   SourceLocation Cxx1yLoc;
-  for (CompoundStmt::body_iterator BodyIt = CompBody->body_begin(),
-         BodyEnd = CompBody->body_end(); BodyIt != BodyEnd; ++BodyIt) {
-    if (!CheckConstexprFunctionStmt(*this, Dcl, *BodyIt, ReturnStmts, Cxx1yLoc))
+  for (auto *BodyIt : CompBody->body()) {
+    if (!CheckConstexprFunctionStmt(*this, Dcl, BodyIt, ReturnStmts, Cxx1yLoc))
       return false;
   }
 

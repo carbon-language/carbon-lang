@@ -264,9 +264,8 @@ public:
   }
   
   bool VisitCompoundStmt(CompoundStmt *S) {
-    for (CompoundStmt::body_iterator
-        I = S->body_begin(), E = S->body_end(); I != E; ++I)
-      mark(*I);
+    for (auto *I : S->body())
+      mark(I);
     return true;
   }
   

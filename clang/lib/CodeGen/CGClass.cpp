@@ -1351,11 +1351,8 @@ void CodeGenFunction::emitImplicitAssignmentOperatorBody(FunctionArgList &Args) 
   LexicalScope Scope(*this, RootCS->getSourceRange());
 
   AssignmentMemcpyizer AM(*this, AssignOp, Args);
-  for (CompoundStmt::const_body_iterator I = RootCS->body_begin(),
-                                         E = RootCS->body_end();
-       I != E; ++I) {
-    AM.emitAssignment(*I);  
-  }
+  for (auto *I : RootCS->body())
+    AM.emitAssignment(I);  
   AM.finish();
 }
 

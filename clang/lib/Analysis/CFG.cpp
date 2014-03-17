@@ -939,9 +939,8 @@ void CFGBuilder::addLocalScopeForStmt(Stmt *S) {
 
   // For compound statement we will be creating explicit scope.
   if (CompoundStmt *CS = dyn_cast<CompoundStmt>(S)) {
-    for (CompoundStmt::body_iterator BI = CS->body_begin(), BE = CS->body_end()
-        ; BI != BE; ++BI) {
-      Stmt *SI = (*BI)->stripLabelLikeStatements();
+    for (auto *BI : CS->body()) {
+      Stmt *SI = BI->stripLabelLikeStatements();
       if (DeclStmt *DS = dyn_cast<DeclStmt>(SI))
         Scope = addLocalScopeForDeclStmt(DS, Scope);
     }

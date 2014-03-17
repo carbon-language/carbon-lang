@@ -114,9 +114,8 @@ namespace  {
 /// with no newline after the }.
 void StmtPrinter::PrintRawCompoundStmt(CompoundStmt *Node) {
   OS << "{\n";
-  for (CompoundStmt::body_iterator I = Node->body_begin(), E = Node->body_end();
-       I != E; ++I)
-    PrintStmt(*I);
+  for (auto *I : Node->body())
+    PrintStmt(I);
 
   Indent() << "}";
 }

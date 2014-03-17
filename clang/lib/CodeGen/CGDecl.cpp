@@ -1003,13 +1003,12 @@ static bool isCapturedBy(const VarDecl &var, const Expr *e) {
 
   if (const StmtExpr *SE = dyn_cast<StmtExpr>(e)) {
     const CompoundStmt *CS = SE->getSubStmt();
-    for (CompoundStmt::const_body_iterator BI = CS->body_begin(),
-	   BE = CS->body_end(); BI != BE; ++BI)
-      if (Expr *E = dyn_cast<Expr>((*BI))) {
+    for (const auto *BI : CS->body())
+      if (const auto *E = dyn_cast<Expr>(BI)) {
         if (isCapturedBy(var, E))
             return true;
       }
-      else if (DeclStmt *DS = dyn_cast<DeclStmt>((*BI))) {
+      else if (const auto *DS = dyn_cast<DeclStmt>(BI)) {
           // special case declarations
           for (const auto *I : DS->decls()) {
               if (const auto *VD = dyn_cast<VarDecl>((I))) {

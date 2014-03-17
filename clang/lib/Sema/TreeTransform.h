@@ -5273,13 +5273,12 @@ TreeTransform<Derived>::TransformCompoundStmt(CompoundStmt *S,
   bool SubStmtInvalid = false;
   bool SubStmtChanged = false;
   SmallVector<Stmt*, 8> Statements;
-  for (CompoundStmt::body_iterator B = S->body_begin(), BEnd = S->body_end();
-       B != BEnd; ++B) {
-    StmtResult Result = getDerived().TransformStmt(*B);
+  for (auto *B : S->body()) {
+    StmtResult Result = getDerived().TransformStmt(B);
     if (Result.isInvalid()) {
       // Immediately fail if this was a DeclStmt, since it's very
       // likely that this will cause problems for future statements.
-      if (isa<DeclStmt>(*B))
+      if (isa<DeclStmt>(B))
         return StmtError();
 
       // Otherwise, just keep processing substatements and fail later.
@@ -5287,7 +5286,7 @@ TreeTransform<Derived>::TransformCompoundStmt(CompoundStmt *S,
       continue;
     }
 
-    SubStmtChanged = SubStmtChanged || Result.get() != *B;
+    SubStmtChanged = SubStmtChanged || Result.get() != B;
     Statements.push_back(Result.takeAs<Stmt>());
   }
 

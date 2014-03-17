@@ -3341,9 +3341,8 @@ static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
     BlockScopeRAII Scope(Info);
 
     const CompoundStmt *CS = cast<CompoundStmt>(S);
-    for (CompoundStmt::const_body_iterator BI = CS->body_begin(),
-           BE = CS->body_end(); BI != BE; ++BI) {
-      EvalStmtResult ESR = EvaluateStmt(Result, Info, *BI, Case);
+    for (const auto *BI : CS->body()) {
+      EvalStmtResult ESR = EvaluateStmt(Result, Info, BI, Case);
       if (ESR == ESR_Succeeded)
         Case = 0;
       else if (ESR != ESR_CaseNotFound)
