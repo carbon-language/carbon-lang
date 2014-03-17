@@ -75,6 +75,7 @@ int fflush(FILE *);
 FILE *fopen(const char * __restrict, const char * __restrict) __asm(__FOPEN_NAME);
 FILE *fdopen(int, const char *) __asm(__FDOPEN_NAME);
 int fprintf(FILE * __restrict, const char * __restrict, ...);
+int fputc(int, FILE *);
 size_t fwrite(const void * __restrict, size_t, size_t, FILE * __restrict)
   __asm(__FWRITE_NAME);
 size_t fread(void * __restrict, size_t, size_t, FILE * __restrict);

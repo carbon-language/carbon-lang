@@ -32,68 +32,99 @@ typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 #endif
 
-static FILE *OutputFile = NULL;
+typedef struct __llvm_pgo_data {
+  const uint32_t NameSize;
+  const uint32_t NumCounters;
+  const char *const Name;
+  const uint64_t *const Counters;
+} __llvm_pgo_data;
 
-/*
- * A list of functions to write out the data.
+/* TODO: Calculate these with linker magic. */
+static __llvm_pgo_data *First = NULL;
+static __llvm_pgo_data *Final = NULL;
+/*!
+ * \brief Register an instrumented function.
+ *
+ * Calls to this are emitted by clang with -fprofile-instr-generate.  Such
+ * calls are only required (and only emitted) on targets where we haven't
+ * implemented linker magic to find the bounds of the section.
+ *
+ * For now, that's all targets.
  */
-typedef void (*writeout_fn)();
+void __llvm_pgo_register_function(void *Data_) {
+  /* TODO: Only emit this function if we can't use linker magic. */
+  __llvm_pgo_data *Data = (__llvm_pgo_data*)Data_;
+  if (!First || Data < First)
+    First = Data;
+  if (!Final || Data > Final)
+    Final = Data;
+}
 
-struct writeout_fn_node {
-  writeout_fn fn;
-  struct writeout_fn_node *next;
-};
+/*! \brief Get the first instrumentation record. */
+static __llvm_pgo_data *getFirst() {
+  /* TODO: Use extern + linker magic instead of a static variable. */
+  return First;
+}
 
-static struct writeout_fn_node *writeout_fn_head = NULL;
-static struct writeout_fn_node *writeout_fn_tail = NULL;
+/*! \brief Get the last instrumentation record. */
+static __llvm_pgo_data *getLast() {
+  /* TODO: Use extern + linker magic instead of a static variable. */
+  return Final + 1;
+}
 
-void llvm_pgo_emit(const char *MangledName, uint32_t NumCounters,
-                   uint64_t *Counters) {
-  uint32_t i;
-  fprintf(OutputFile, "%s %u\n", MangledName, NumCounters);
-  for (i = 0; i < NumCounters; ++i)
-    fprintf(OutputFile, "%" PRIu64 "\n", Counters[i]);
+/* TODO: void __llvm_pgo_get_size_for_buffer(void);  */
+/* TODO: void __llvm_pgo_write_buffer(char *Buffer); */
+
+static void writeFunction(FILE *OutputFile, const __llvm_pgo_data *Data) {
+  /* TODO: Requires libc: break requirement by writing directly to a buffer
+   * instead of a FILE stream.
+   */
+  uint32_t I;
+  for (I = 0; I < Data->NameSize; ++I)
+    fputc(Data->Name[I], OutputFile);
+  fprintf(OutputFile, " %u\n", Data->NumCounters);
+  for (I = 0; I < Data->NumCounters; ++I)
+    fprintf(OutputFile, "%" PRIu64 "\n", Data->Counters[I]);
   fprintf(OutputFile, "\n");
 }
 
-void llvm_pgo_register_writeout_function(writeout_fn fn) {
-  struct writeout_fn_node *new_node = malloc(sizeof(struct writeout_fn_node));
-  new_node->fn = fn;
-  new_node->next = NULL;
-
-  if (!writeout_fn_head) {
-    writeout_fn_head = writeout_fn_tail = new_node;
-  } else {
-    writeout_fn_tail->next = new_node;
-    writeout_fn_tail = new_node;
-  }
-}
-
-void llvm_pgo_writeout_files() {
-  const char *OutputName = getenv("LLVM_PROFILE_FILE");
-  if (OutputName == NULL || OutputName[0] == '\0')
-    OutputName = "default.profdata";
+/*! \brief Write instrumentation data to the given file. */
+void __llvm_pgo_write_file(const char *OutputName) {
+  /* TODO: Requires libc: move to separate translation unit. */
+  __llvm_pgo_data *I, *E;
+  FILE *OutputFile;
+  if (!OutputName || !OutputName[0])
+    return;
   OutputFile = fopen(OutputName, "w");
   if (!OutputFile) return;
 
-  while (writeout_fn_head) {
-    struct writeout_fn_node *node = writeout_fn_head;
-    writeout_fn_head = writeout_fn_head->next;
-    node->fn();
-    free(node);
-  }
+  /* TODO: mmap file to buffer of size __llvm_pgo_get_size_for_buffer() and
+   * call __llvm_pgo_write_buffer().
+   */
+  for (I = getFirst(), E = getLast(); I != E; ++I)
+    writeFunction(OutputFile, I);
 
   fclose(OutputFile);
 }
 
-void llvm_pgo_init(writeout_fn wfn) {
-  static int atexit_ran = 0;
+/*! \brief Write instrumentation data to the default file. */
+void __llvm_pgo_write_default_file() {
+  /* TODO: Requires libc: move to separate translation unit. */
+  const char *OutputName = getenv("LLVM_PROFILE_FILE");
+  if (OutputName == NULL || OutputName[0] == '\0')
+    OutputName = "default.profdata";
+  __llvm_pgo_write_file(OutputName);
+}
 
-  if (wfn)
-    llvm_pgo_register_writeout_function(wfn);
+/*!
+ * \brief Register to write instrumentation data to the default file at exit.
+ */
+void __llvm_pgo_register_write_atexit() {
+  /* TODO: Requires libc: move to separate translation unit. */
+  static int HasBeenRegistered = 0;
 
-  if (atexit_ran == 0) {
-    atexit_ran = 1;
-    atexit(llvm_pgo_writeout_files);
+  if (!HasBeenRegistered) {
+    HasBeenRegistered = 1;
+    atexit(__llvm_pgo_write_default_file);
   }
 }
