@@ -377,6 +377,47 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
   int Src1Idx = AMDGPU::getNamedOperandIdx(Opcode, AMDGPU::OpName::src1);
   int Src2Idx = AMDGPU::getNamedOperandIdx(Opcode, AMDGPU::OpName::src2);
 
+  // Make sure the number of operands is correct.
+  const MCInstrDesc &Desc = get(Opcode);
+  if (!Desc.isVariadic() &&
+      Desc.getNumOperands() != MI->getNumExplicitOperands()) {
+     ErrInfo = "Instruction has wrong number of operands.";
+     return false;
+  }
+
+  // Make sure the register classes are correct
+  for (unsigned i = 0, e = Desc.getNumOperands(); i != e; ++i) {
+    switch (Desc.OpInfo[i].OperandType) {
+    case MCOI::OPERAND_REGISTER:
+      break;
+    case MCOI::OPERAND_IMMEDIATE:
+      if (!MI->getOperand(i).isImm() && !MI->getOperand(i).isFPImm()) {
+        ErrInfo = "Expected immediate, but got non-immediate";
+        return false;
+      }
+      // Fall-through
+    default:
+      continue;
+    }
+
+    if (!MI->getOperand(i).isReg())
+      continue;
+
+    int RegClass = Desc.OpInfo[i].RegClass;
+    if (RegClass != -1) {
+      unsigned Reg = MI->getOperand(i).getReg();
+      if (TargetRegisterInfo::isVirtualRegister(Reg))
+        continue;
+
+      const TargetRegisterClass *RC = RI.getRegClass(RegClass);
+      if (!RC->contains(Reg)) {
+        ErrInfo = "Operand has incorrect register class.";
+        return false;
+      }
+    }
+  }
+
+
   // Verify VOP*
   if (isVOP1(Opcode) || isVOP2(Opcode) || isVOP3(Opcode) || isVOPC(Opcode)) {
     unsigned ConstantBusCount = 0;
