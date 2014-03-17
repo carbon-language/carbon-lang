@@ -32,16 +32,16 @@ typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 #endif
 
-typedef struct __ProfileData {
+typedef struct __llvm_pgo_data {
   const uint32_t NameSize;
   const uint32_t NumCounters;
   const char *const Name;
   const uint64_t *const Counters;
-} __ProfileData;
+} __llvm_pgo_data;
 
 /* TODO: Calculate these with linker magic. */
-static __ProfileData *First = NULL;
-static __ProfileData *Final = NULL;
+static __llvm_pgo_data *First = NULL;
+static __llvm_pgo_data *Final = NULL;
 /*!
  * \brief Register an instrumented function.
  *
@@ -53,7 +53,7 @@ static __ProfileData *Final = NULL;
  */
 void __llvm_pgo_register_function(void *Data_) {
   /* TODO: Only emit this function if we can't use linker magic. */
-  __ProfileData *Data = (__ProfileData*)Data_;
+  __llvm_pgo_data *Data = (__llvm_pgo_data*)Data_;
   if (!First || Data < First)
     First = Data;
   if (!Final || Data > Final)
@@ -61,13 +61,13 @@ void __llvm_pgo_register_function(void *Data_) {
 }
 
 /*! \brief Get the first instrumentation record. */
-static __ProfileData *getFirst() {
+static __llvm_pgo_data *getFirst() {
   /* TODO: Use extern + linker magic instead of a static variable. */
   return First;
 }
 
 /*! \brief Get the last instrumentation record. */
-static __ProfileData *getLast() {
+static __llvm_pgo_data *getLast() {
   /* TODO: Use extern + linker magic instead of a static variable. */
   return Final + 1;
 }
@@ -75,7 +75,7 @@ static __ProfileData *getLast() {
 /* TODO: void __llvm_pgo_get_size_for_buffer(void);  */
 /* TODO: void __llvm_pgo_write_buffer(char *Buffer); */
 
-static void writeFunction(FILE *OutputFile, const __ProfileData *Data) {
+static void writeFunction(FILE *OutputFile, const __llvm_pgo_data *Data) {
   /* TODO: Requires libc: break requirement by writing directly to a buffer
    * instead of a FILE stream.
    */
@@ -91,7 +91,7 @@ static void writeFunction(FILE *OutputFile, const __ProfileData *Data) {
 /*! \brief Write instrumentation data to the given file. */
 void __llvm_pgo_write_file(const char *OutputName) {
   /* TODO: Requires libc: move to separate translation unit. */
-  __ProfileData *I, *E;
+  __llvm_pgo_data *I, *E;
   FILE *OutputFile;
   if (!OutputName || !OutputName[0])
     return;
