@@ -426,8 +426,9 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
   } else if (NextNonComment->Type == TT_StartOfName ||
              Previous.isOneOf(tok::coloncolon, tok::equal)) {
     State.Column = ContinuationIndent;
-  } else if (PreviousNonComment &&
-             PreviousNonComment->Type == TT_ObjCMethodExpr) {
+  } else if (PreviousNonComment && PreviousNonComment->is(tok::colon) &&
+             (PreviousNonComment->Type == TT_ObjCMethodExpr ||
+              PreviousNonComment->Type == TT_DictLiteral)) {
     State.Column = ContinuationIndent;
     // FIXME: This is hacky, find a better way. The problem is that in an ObjC
     // method expression, the block should be aligned to the line starting it,

@@ -6011,6 +6011,11 @@ TEST_F(FormatTest, ObjCDictLiterals) {
       "  NSFontAttributeNameeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee : "
       "regularFont,\n"
       "};");
+  verifyFormat(
+      "@{\n"
+      "  NSFontAttributeNameeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee :\n"
+      "      reeeeeeeeeeeeeeeeeeeeeeeegularFont,\n"
+      "};");
 
   // We should try to be robust in case someone forgets the "@".
   verifyFormat(
