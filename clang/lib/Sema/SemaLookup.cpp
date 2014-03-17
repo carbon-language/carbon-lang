@@ -113,10 +113,8 @@ namespace {
         if (Ctx && Ctx->isFileContext()) {
           visit(Ctx, Ctx);
         } else if (!Ctx || Ctx->isFunctionOrMethod()) {
-          Scope::udir_iterator I = S->using_directives_begin(),
-                             End = S->using_directives_end();
-          for (; I != End; ++I)
-            visit(*I, InnermostFileDC);
+          for (auto *I : S->using_directives())
+            visit(I, InnermostFileDC);
         }
       }
     }
