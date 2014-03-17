@@ -50,8 +50,10 @@
 namespace __sanitizer {
 
 // This function is defined elsewhere if we intercepted pthread_attr_getstack.
+extern "C" {
 SANITIZER_WEAK_ATTRIBUTE int
 real_pthread_attr_getstack(void *attr, void **addr, size_t *size);
+}  // extern "C"
 
 static int my_pthread_attr_getstack(void *attr, void **addr, size_t *size) {
   if (real_pthread_attr_getstack)

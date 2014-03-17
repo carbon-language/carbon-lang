@@ -2880,9 +2880,11 @@ INTERCEPTOR(int, pthread_attr_getstack, void *attr, void **addr, SIZE_T *size) {
 // in sanitizer_common, but we don't want to include the interception headers
 // there. So, just define this function here.
 namespace __sanitizer {
+extern "C" {
 int real_pthread_attr_getstack(void *attr, void **addr, SIZE_T *size) {
   return REAL(pthread_attr_getstack)(attr, addr, size);
 }
+}  // extern "C"
 }  // namespace __sanitizer
 
 #define INIT_PTHREAD_ATTR_GET                             \
