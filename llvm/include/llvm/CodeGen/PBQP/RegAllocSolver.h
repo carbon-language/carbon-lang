@@ -12,7 +12,7 @@
 // optimality-preserving rules (see ReductionRules.h). When no low-degree (<3)
 // nodes are present, a heuristic derived from Brigg's graph coloring approach
 // is used.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_PBQP_REGALLOCSOLVER_H
@@ -35,8 +35,8 @@ namespace PBQP {
     /// Keeps track of the number of infinities in each row and column.
     class MatrixMetadata {
     private:
-      MatrixMetadata(const MatrixMetadata&) = delete;
-      void operator=(const MatrixMetadata&) = delete;
+      MatrixMetadata(const MatrixMetadata&);
+      void operator=(const MatrixMetadata&);
     public:
       MatrixMetadata(const PBQP::Matrix& M)
         : WorstRow(0), WorstCol(0),
