@@ -470,6 +470,7 @@ uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
     return Data->getCommonAlignment();
 
   const MCSymbol *Symbol = &Data->getSymbol();
+  const bool IsThumbFunc = OrigData.getFlags() & ELF_Other_ThumbFunc;
 
   uint64_t Res = 0;
   if (Symbol->isVariable()) {
@@ -479,7 +480,10 @@ uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
       return 0;
     if (Value.getSymB())
       return 0;
+
     Res = Value.getConstant();
+    if (IsThumbFunc)
+      Res |= 1;
 
     const MCSymbolRefExpr *A = Value.getSymA();
     if (!A)
@@ -496,8 +500,8 @@ uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
     return 0;
 
   Res += Layout.getSymbolOffset(Data);
-  if (Data->getFlags() & ELF_Other_ThumbFunc)
-    ++Res;
+  if (IsThumbFunc || Data->getFlags() & ELF_Other_ThumbFunc)
+    Res |= 1;
 
   return Res;
 }
@@ -590,6 +594,8 @@ void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
   // Binding and Type share the same byte as upper and lower nibbles
   uint8_t Binding = MCELF::GetBinding(OrigData);
   uint8_t Type = mergeTypeForSet(MCELF::GetType(OrigData), MCELF::GetType(Data));
+  if (OrigData.getFlags() & ELF_Other_ThumbFunc)
+    Type = ELF::STT_FUNC;
   uint8_t Info = (Binding << ELF_STB_Shift) | (Type << ELF_STT_Shift);
 
   // Other and Visibility share the same byte with Visibility using the lower
