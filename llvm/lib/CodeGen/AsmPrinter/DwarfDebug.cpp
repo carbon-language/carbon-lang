@@ -171,8 +171,7 @@ static unsigned getDwarfVersionFromModule(const Module *M) {
 }
 
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
-    : Asm(A), MMI(Asm->MMI), FirstCU(0), SourceIdMap(DIEValueAllocator),
-      PrevLabel(NULL), GlobalRangeCount(0),
+    : Asm(A), MMI(Asm->MMI), FirstCU(0), PrevLabel(NULL), GlobalRangeCount(0),
       InfoHolder(A, "info_string", DIEValueAllocator), HasCURanges(false),
       UsedNonDefaultText(false),
       SkeletonHolder(A, "skel_string", DIEValueAllocator) {
@@ -680,36 +679,12 @@ unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName, StringRef DirName,
   if (Asm->OutStreamer.hasRawTextSupport())
     CUID = 0;
 
-  // If FE did not provide a file name, then assume stdin.
-  if (FileName.empty()) {
-    FileName = "<stdin>";
-    DirName = "";
-  }
-
   // TODO: this might not belong here. See if we can factor this better.
   if (DirName == CompilationDir)
     DirName = "";
 
-  // FileIDCUMap stores the current ID for the given compile unit.
-  unsigned SrcId = FileIDCUMap[CUID] + 1;
-
-  // We look up the CUID/file/dir by concatenating them with a zero byte.
-  SmallString<128> NamePair;
-  NamePair += utostr(CUID);
-  NamePair += '\0';
-  NamePair += DirName;
-  NamePair += '\0'; // Zero bytes are not allowed in paths.
-  NamePair += FileName;
-
-  StringMapEntry<unsigned> &Ent = SourceIdMap.GetOrCreateValue(NamePair, SrcId);
-  if (Ent.getValue() != SrcId)
-    return Ent.getValue();
-
-  FileIDCUMap[CUID] = SrcId;
   // Print out a .file directive to specify files for .loc directives.
-  Asm->OutStreamer.EmitDwarfFileDirective(SrcId, DirName, FileName, CUID);
-
-  return SrcId;
+  return Asm->OutStreamer.EmitDwarfFileDirective(0, DirName, FileName, CUID);
 }
 
 void DwarfDebug::addGnuPubAttributes(DwarfUnit *U, DIE *D) const {
@@ -729,8 +704,6 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   DwarfCompileUnit *NewCU = new DwarfCompileUnit(
       InfoHolder.getUnits().size(), Die, DIUnit, Asm, this, &InfoHolder);
   InfoHolder.addUnit(NewCU);
-
-  FileIDCUMap[NewCU->getUniqueID()] = 0;
 
   NewCU->addString(Die, dwarf::DW_AT_producer, DIUnit.getProducer());
   NewCU->addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,

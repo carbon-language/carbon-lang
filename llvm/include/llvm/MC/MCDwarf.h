@@ -182,7 +182,8 @@ struct MCDwarfLineTableHeader {
   SmallVector<MCDwarfFile, 3> MCDwarfFiles;
   StringMap<unsigned> SourceIdMap;
   MCDwarfLineTableHeader() : Label(nullptr) {}
-  unsigned getFile(StringRef Directory, StringRef FileName, unsigned FileNumber = 0);
+  unsigned getFile(StringRef &Directory, StringRef &FileName,
+                   unsigned FileNumber = 0);
   std::pair<MCSymbol *, MCSymbol *> Emit(MCStreamer *MCOS) const;
 };
 
@@ -197,7 +198,8 @@ public:
   // This emits the Dwarf file and the line tables for a given Compile Unit.
   const MCSymbol *EmitCU(MCStreamer *MCOS) const;
 
-  unsigned getFile(StringRef Directory, StringRef FileName, unsigned FileNumber = 0);
+  unsigned getFile(StringRef &Directory, StringRef &FileName,
+                   unsigned FileNumber = 0);
 
   MCSymbol *getLabel() const {
     return Header.Label;

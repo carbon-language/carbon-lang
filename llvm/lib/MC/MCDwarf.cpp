@@ -287,6 +287,7 @@ std::pair<MCSymbol *, MCSymbol *> MCDwarfLineTableHeader::Emit(MCStreamer *MCOS)
 
   // Second the file table.
   for (unsigned i = 1; i < MCDwarfFiles.size(); i++) {
+    assert(!MCDwarfFiles[i].Name.empty());
     MCOS->EmitBytes(MCDwarfFiles[i].Name); // FileName
     MCOS->EmitBytes(StringRef("\0", 1)); // the null term. of the string
     // the Directory num
@@ -331,14 +332,19 @@ const MCSymbol *MCDwarfLineTable::EmitCU(MCStreamer *MCOS) const {
   return LineStartSym;
 }
 
-unsigned MCDwarfLineTable::getFile(StringRef Directory, StringRef FileName,
+unsigned MCDwarfLineTable::getFile(StringRef &Directory, StringRef &FileName,
                                    unsigned FileNumber) {
   return Header.getFile(Directory, FileName, FileNumber);
 }
 
-unsigned MCDwarfLineTableHeader::getFile(StringRef Directory,
-                                         StringRef FileName,
+unsigned MCDwarfLineTableHeader::getFile(StringRef &Directory,
+                                         StringRef &FileName,
                                          unsigned FileNumber) {
+  if (FileName.empty()) {
+    FileName = "<stdin>";
+    Directory = "";
+  }
+  assert(!FileName.empty());
   if (FileNumber == 0) {
     FileNumber = SourceIdMap.size() + 1;
     assert((MCDwarfFiles.empty() || FileNumber == MCDwarfFiles.size()) &&

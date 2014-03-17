@@ -848,13 +848,27 @@ unsigned MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo,
                                                StringRef Directory,
                                                StringRef Filename,
                                                unsigned CUID) {
+  assert(CUID == 0);
+
+  MCDwarfLineTable &Table = getContext().getMCDwarfLineTable(CUID);
+  unsigned NumFiles = Table.getMCDwarfFiles().size();
+  FileNo = Table.getFile(Directory, Filename, FileNo);
+  if (FileNo == 0)
+    return 0;
+  if (NumFiles == Table.getMCDwarfFiles().size())
+    return FileNo;
+
+  SmallString<128> FullPathName;
+
   if (!UseDwarfDirectory && !Directory.empty()) {
     if (sys::path::is_absolute(Filename))
-      return EmitDwarfFileDirective(FileNo, "", Filename, CUID);
-
-    SmallString<128> FullPathName = Directory;
-    sys::path::append(FullPathName, Filename);
-    return EmitDwarfFileDirective(FileNo, "", FullPathName, CUID);
+      Directory = "";
+    else {
+      FullPathName = Directory;
+      sys::path::append(FullPathName, Filename);
+      Directory = "";
+      Filename = FullPathName;
+    }
   }
 
   OS << "\t.file\t" << FileNo << ' ';
@@ -864,11 +878,8 @@ unsigned MCAsmStreamer::EmitDwarfFileDirective(unsigned FileNo,
   }
   PrintQuotedString(Filename, OS);
   EmitEOL();
-  // All .file will belong to a single CUID.
-  CUID = 0;
 
-  return this->MCStreamer::EmitDwarfFileDirective(FileNo, Directory, Filename,
-                                                  CUID);
+  return FileNo;
 }
 
 void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,

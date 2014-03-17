@@ -356,12 +356,6 @@ class DwarfDebug : public AsmPrinterHandler {
   // Used to unique C++ member function declarations.
   StringMap<const MDNode *> OdrMemberMap;
 
-  // Stores the current file ID for a given compile unit.
-  DenseMap<unsigned, unsigned> FileIDCUMap;
-  // Source id map, i.e. CUID, source filename and directory,
-  // separated by a zero byte, mapped to a unique id.
-  StringMap<unsigned, BumpPtrAllocator &> SourceIdMap;
-
   // List of all labels used in aranges generation.
   std::vector<SymbolCU> ArangeLabels;
 
