@@ -13,3 +13,16 @@
 + (int)  InstMeth;
 - (int) OK;
 @end
+
+// rdar://16312105
+@class NSObject;
+
+__attribute__((objc_root_class)) @interface AppDelegate
++ (void)someMethodWithArgument:(NSObject *)argument;
++ (void)someMethodWithArgument:(NSObject *)argument : (NSObject*) argument2; // expected-note {{previous declaration is here}}
+@end
+
+@interface AppDelegate ()
+- (void)someMethodWithArgument:(float)argument; // OK. No warning to be issued here.
++ (void)someMethodWithArgument:(float)argument : (float)argument2; // expected-error {{duplicate declaration of method 'someMethodWithArgument::'}}
+@end
