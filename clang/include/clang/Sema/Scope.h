@@ -235,10 +235,11 @@ public:
     return PrototypeIndex++;
   }
 
-  typedef DeclSetTy::iterator decl_iterator;
-  decl_iterator decl_begin() const { return DeclsInScope.begin(); }
-  decl_iterator decl_end()   const { return DeclsInScope.end(); }
-  bool decl_empty()          const { return DeclsInScope.empty(); }
+  typedef llvm::iterator_range<DeclSetTy::iterator> decl_range;
+  decl_range decls() const {
+    return decl_range(DeclsInScope.begin(), DeclsInScope.end());
+  }
+  bool decl_empty() const { return DeclsInScope.empty(); }
 
   void AddDecl(Decl *D) {
     DeclsInScope.insert(D);
