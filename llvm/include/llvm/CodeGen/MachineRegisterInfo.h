@@ -225,7 +225,7 @@ public:
   }
   static reg_iterator reg_end() { return reg_iterator(0); }
 
-  inline iterator_range<reg_iterator>  reg_operands(unsigned Reg) {
+  inline iterator_range<reg_iterator>  reg_operands(unsigned Reg) const {
     return iterator_range<reg_iterator>(reg_begin(Reg), reg_end());
   }
 
