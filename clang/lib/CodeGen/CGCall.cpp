@@ -497,10 +497,9 @@ CodeGenTypes::arrangeLLVMFunctionInfo(CanQualType resultType,
   if (retInfo.canHaveCoerceToType() && retInfo.getCoerceToType() == 0)
     retInfo.setCoerceToType(ConvertType(FI->getReturnType()));
 
-  for (CGFunctionInfo::arg_iterator I = FI->arg_begin(), E = FI->arg_end();
-       I != E; ++I)
-    if (I->info.canHaveCoerceToType() && I->info.getCoerceToType() == 0)
-      I->info.setCoerceToType(ConvertType(I->type));
+  for (auto &I : FI->arguments())
+    if (I.info.canHaveCoerceToType() && I.info.getCoerceToType() == 0)
+      I.info.setCoerceToType(ConvertType(I.type));
 
   bool erased = FunctionsBeingProcessed.erase(FI); (void)erased;
   assert(erased && "Not in set?");
@@ -1169,10 +1168,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
                                     llvm::AttributeSet::ReturnIndex,
                                     RetAttrs));
 
-  for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(),
-         ie = FI.arg_end(); it != ie; ++it) {
-    QualType ParamType = it->type;
-    const ABIArgInfo &AI = it->info;
+  for (const auto &I : FI.arguments()) {
+    QualType ParamType = I.type;
+    const ABIArgInfo &AI = I.info;
     llvm::AttrBuilder Attrs;
 
     if (AI.getPaddingType()) {

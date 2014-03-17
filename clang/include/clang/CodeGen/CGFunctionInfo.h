@@ -314,6 +314,14 @@ public:
   typedef const ArgInfo *const_arg_iterator;
   typedef ArgInfo *arg_iterator;
 
+  typedef llvm::iterator_range<arg_iterator> arg_range;
+  typedef llvm::iterator_range<const_arg_iterator> arg_const_range;
+
+  arg_range arguments() { return arg_range(arg_begin(), arg_end()); }
+  arg_const_range arguments() const {
+    return arg_const_range(arg_begin(), arg_end());
+  }
+
   const_arg_iterator arg_begin() const { return getArgsBuffer() + 1; }
   const_arg_iterator arg_end() const { return getArgsBuffer() + 1 + NumArgs; }
   arg_iterator arg_begin() { return getArgsBuffer() + 1; }
@@ -382,8 +390,8 @@ public:
     ID.AddInteger(RegParm);
     ID.AddInteger(Required.getOpaqueData());
     getReturnType().Profile(ID);
-    for (arg_iterator it = arg_begin(), ie = arg_end(); it != ie; ++it)
-      it->type.Profile(ID);
+    for (const auto &I : arguments())
+      I.type.Profile(ID);
   }
   static void Profile(llvm::FoldingSetNodeID &ID,
                       bool InstanceMethod,
