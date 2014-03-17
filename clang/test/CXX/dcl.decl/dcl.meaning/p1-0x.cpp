@@ -30,9 +30,12 @@ namespace inline_namespaces {
     inline namespace M {
       void f(); // expected-note {{possible target}}
       void g();
-      extern int m, n;
-      struct S; struct T;
-      enum E : int; enum F : int;
+      extern int m; // expected-note {{candidate}}
+      extern int n;
+      struct S; // expected-note {{candidate}}
+      struct T;
+      enum E : int; // expected-note {{candidate}}
+      enum F : int;
       template<typename T> void ft(); // expected-note {{here}}
       template<typename T> void gt(); // expected-note {{here}}
       template<typename T> extern int mt; // expected-note {{here}} expected-warning {{extension}}
@@ -44,16 +47,14 @@ namespace inline_namespaces {
     // When named by unqualified-id, we do *not* look in the inline namespace
     // set.
     void f() {} // expected-note {{possible target}}
-    int m;
-    struct S {};
-    enum E : int {};
+    int m; // expected-note {{candidate}}
+    struct S {}; // expected-note {{candidate}}
+    enum E : int {}; // expected-note {{candidate}}
 
     static_assert(&f != &M::f, ""); // expected-error {{reference to overloaded function could not be resolved}}
-    static_assert(&m != &M::m, "");
-    typedef S X; // expected-note {{previous}}
-    typedef M::S X; // expected-error {{different type}}
-    typedef E Y; // expected-note {{previous}}
-    typedef M::E Y; // expected-error {{different type}}
+    static_assert(&m != &M::m, ""); // expected-error {{ambiguous}}
+    typedef S X; // expected-error {{ambiguous}}
+    typedef E Y; // expected-error {{ambiguous}}
 
     // When named by (unqualified) template-id, we do look in the inline
     // namespace set.  See [namespace.def]p8, [temp.explicit]p3,

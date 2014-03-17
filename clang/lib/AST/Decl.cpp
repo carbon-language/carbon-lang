@@ -1381,6 +1381,7 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
   if (isa<ObjCMethodDecl>(this))
     return false;
 
+  // FIXME: Is this correct if one of the decls comes from an inline namespace?
   if (isa<ObjCInterfaceDecl>(this) && isa<ObjCCompatibleAliasDecl>(OldD))
     return true;
 
@@ -1407,14 +1408,19 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
 
   // A typedef of an Objective-C class type can replace an Objective-C class
   // declaration or definition, and vice versa.
+  // FIXME: Is this correct if one of the decls comes from an inline namespace?
   if ((isa<TypedefNameDecl>(this) && isa<ObjCInterfaceDecl>(OldD)) ||
       (isa<ObjCInterfaceDecl>(this) && isa<TypedefNameDecl>(OldD)))
     return true;
-  
+
   // For non-function declarations, if the declarations are of the
-  // same kind then this must be a redeclaration, or semantic analysis
-  // would not have given us the new declaration.
-  return this->getKind() == OldD->getKind();
+  // same kind and have the same parent then this must be a redeclaration,
+  // or semantic analysis would not have given us the new declaration.
+  // Note that inline namespaces can give us two declarations with the same
+  // name and kind in the same scope but different contexts.
+  return this->getKind() == OldD->getKind() &&
+         this->getDeclContext()->getRedeclContext()->Equals(
+             OldD->getDeclContext()->getRedeclContext());
 }
 
 bool NamedDecl::hasLinkage() const {

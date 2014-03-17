@@ -63,3 +63,14 @@ void test3() {
   Numbers2::f(f);
   Numbers2::g(f); // expected-error {{no viable conversion from 'float' to 'Numbers::Number'}}
 }
+
+namespace inline_ns {
+  int x; // expected-note 2{{found}}
+  inline namespace A { // expected-warning {{C++11}}
+    int x; // expected-note 2{{found}}
+    int y; // expected-note 2{{found}}
+  }
+  int y; // expected-note 2{{found}}
+  int k1 = x + y; // expected-error 2{{ambiguous}}
+  int k2 = inline_ns::x + inline_ns::y; // expected-error 2{{ambiguous}}
+}
