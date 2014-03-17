@@ -417,13 +417,13 @@ class LockTest {
     fprintf(stderr, "Starting Test16: detailed output test with two locks\n");
     // CHECK: Starting Test16
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion
+    // CHECK: LockTest::Acquire0
+    // CHECK-NEXT: LockTest::Acquire_0_then_1
     // CHECK: LockTest::Acquire1
     // CHECK-NEXT: LockTest::Acquire_0_then_1
-    // CHECK: LockTest::Acquire0
-    // CHECK-NEXT: LockTest::Acquire_0_then_1
-    // CHECK: LockTest::Acquire0
+    // CHECK: LockTest::Acquire1
     // CHECK-NEXT: LockTest::Acquire_1_then_0
-    // CHECK: LockTest::Acquire1
+    // CHECK: LockTest::Acquire0
     // CHECK-NEXT: LockTest::Acquire_1_then_0
     Init(5);
     Acquire_0_then_1();

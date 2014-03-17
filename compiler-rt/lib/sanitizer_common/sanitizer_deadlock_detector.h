@@ -231,8 +231,8 @@ class DeadlockDetector {
                                      added_edges, ARRAY_SIZE(added_edges));
     for (uptr i = 0; i < n_added_edges; i++) {
       if (n_edges_ < ARRAY_SIZE(edges_))
-        edges_[n_edges_++] = Edge((u16)added_edges[i], (u16)cur_idx, stk,
-                                  dtls->findLockContext(added_edges[i]));
+        edges_[n_edges_++] = Edge((u16)added_edges[i], (u16)cur_idx,
+                                  dtls->findLockContext(added_edges[i]), stk);
       // Printf("Edge [%zd]: %u %zd=>%zd\n", i, stk, added_edges[i], cur_idx);
     }
     return n_added_edges;
