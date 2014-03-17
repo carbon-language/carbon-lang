@@ -2449,17 +2449,21 @@ INTERCEPTOR(int, pthread_mutex_unlock, void *m) {
 #endif
 
 #if SANITIZER_INTERCEPT_PTHREAD_COND
-// nptl implementation of pthread_cond has 2 versions (2.2.5 and 2.3.2).
+// Problem:
+// NPTL implementation of pthread_cond has 2 versions (2.2.5 and 2.3.2).
 // pthread_cond_t has different size in the different versions.
-// We can't simply always call new REAL functions from interceptors,
-// because they will corrupt memory after pthread_cond_t (old cond is smaller).
-// We can't simply always call old REAL functions from interceptors,
-// because they do not support all the features (e.g. waiting against
+// If call new REAL functions for old pthread_cond_t, they will corrupt memory
+// after pthread_cond_t (old cond is smaller).
+// If we call old REAL functions for new pthread_cond_t, we will lose  some
+// functionality (e.g. old functions do not support waiting against
 // CLOCK_REALTIME).
 // Proper handling would require to have 2 versions of interceptors as well.
 // But this is messy, in particular requires linker scripts when sanitizer
 // runtime is linked into a shared library.
-// Instead we do the following trick.
+// Instead we assume we don't have dynamic libraries built against old
+// pthread (2.2.5 is dated by 2002). And provide legacy_pthread_cond flag
+// that allows to work with old libraries (but this mode does not support
+// some features, e.g. pthread_condattr_getpshared).
 static void *init_cond(void *c, bool force = false) {
   // sizeof(pthread_cond_t) >= sizeof(uptr) in both versions.
   // So we allocate additional memory on the side large enough to hold
@@ -2468,7 +2472,7 @@ static void *init_cond(void *c, bool force = false) {
   // Note: the code assumes that PTHREAD_COND_INITIALIZER initializes
   // first word of pthread_cond_t to zero.
   // It's all relevant only for linux.
-  if (!SI_LINUX_NOT_ANDROID)
+  if (!common_flags()->legacy_pthread_cond)
     return c;
   atomic_uintptr_t *p = (atomic_uintptr_t*)c;
   uptr cond = atomic_load(p, memory_order_acquire);
@@ -2518,6 +2522,9 @@ INTERCEPTOR(int, pthread_cond_wait, void *c, void *m) {
   int res = __sanitizer::call_pthread_cancel_with_cleanup(
       (int(*)(void *c, void *m, void *abstime))REAL(pthread_cond_wait),
       cond, m, 0, (void(*)(void *arg))cond_mutex_unlock, &arg);
+  if (res == errno_EOWNERDEAD)
+    COMMON_INTERCEPTOR_MUTEX_REPAIR(ctx, m);
+  COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m);
   return res;
 }
 
@@ -2533,6 +2540,9 @@ INTERCEPTOR(int, pthread_cond_timedwait, void *c, void *m, void *abstime) {
   int res = __sanitizer::call_pthread_cancel_with_cleanup(
       REAL(pthread_cond_timedwait), cond, m, abstime,
       (void(*)(void *arg))cond_mutex_unlock, &arg);
+  if (res == errno_EOWNERDEAD)
+    COMMON_INTERCEPTOR_MUTEX_REPAIR(ctx, m);
+  COMMON_INTERCEPTOR_MUTEX_LOCK(ctx, m);
   return res;
 }
 
@@ -2558,7 +2568,7 @@ INTERCEPTOR(int, pthread_cond_destroy, void *c) {
   COMMON_INTERCEPTOR_ENTER(ctx, pthread_cond_destroy, cond);
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, c, sizeof(uptr));
   int res = REAL(pthread_cond_destroy)(cond);
-  if (SI_LINUX_NOT_ANDROID) {
+  if (common_flags()->legacy_pthread_cond) {
     // Free our aux cond and zero the pointer to not leave dangling pointers.
     WRAP(free)(cond);
     atomic_store((atomic_uintptr_t*)c, 0, memory_order_relaxed);

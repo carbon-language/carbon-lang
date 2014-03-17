@@ -43,6 +43,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->detect_deadlocks = false;
   f->clear_shadow_mmap_threshold = 64 * 1024;
   f->color = "auto";
+  f->legacy_pthread_cond = false;
 }
 
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
@@ -68,6 +69,7 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   ParseFlag(str, &f->clear_shadow_mmap_threshold,
             "clear_shadow_mmap_threshold");
   ParseFlag(str, &f->color, "color");
+  ParseFlag(str, &f->legacy_pthread_cond, "legacy_pthread_cond");
 
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)

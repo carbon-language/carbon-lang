@@ -78,6 +78,8 @@ struct CommonFlags {
   uptr clear_shadow_mmap_threshold;
   // Colorize reports: (always|never|auto).
   const char *color;
+  // Enables support for dynamic libraries linked with libpthread 2.2.5.
+  bool legacy_pthread_cond;
 };
 
 inline CommonFlags *common_flags() {

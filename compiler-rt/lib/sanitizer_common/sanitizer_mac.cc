@@ -310,7 +310,7 @@ int call_pthread_cancel_with_cleanup(int(*fn)(void *c, void *m,
   int res;
   pthread_cleanup_push(cleanup, arg);
   res = fn(c, m, abstime);
-  pthread_cleanup_pop(1);
+  pthread_cleanup_pop(0);
   return res;
 }
 

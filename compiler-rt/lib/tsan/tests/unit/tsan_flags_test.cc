@@ -75,6 +75,7 @@ static const char *options1 =
   " leak_check_at_exit=0"
   " allocator_may_return_null=0"
   " print_summary=0"
+  " legacy_pthread_cond=0"
   "";
 
 static const char *options2 =
@@ -118,6 +119,7 @@ static const char *options2 =
   " leak_check_at_exit=true"
   " allocator_may_return_null=true"
   " print_summary=true"
+  " legacy_pthread_cond=true"
   "";
 
 void VerifyOptions1(Flags *f) {
@@ -161,6 +163,7 @@ void VerifyOptions1(Flags *f) {
   EXPECT_EQ(f->leak_check_at_exit, 0);
   EXPECT_EQ(f->allocator_may_return_null, 0);
   EXPECT_EQ(f->print_summary, 0);
+  EXPECT_EQ(f->legacy_pthread_cond, false);
 }
 
 void VerifyOptions2(Flags *f) {
@@ -204,6 +207,7 @@ void VerifyOptions2(Flags *f) {
   EXPECT_EQ(f->leak_check_at_exit, true);
   EXPECT_EQ(f->allocator_may_return_null, true);
   EXPECT_EQ(f->print_summary, true);
+  EXPECT_EQ(f->legacy_pthread_cond, true);
 }
 
 static const char *test_default_options;
