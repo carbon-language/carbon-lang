@@ -737,12 +737,6 @@ public:
     SymSize[Sym] = Size;
   }
 
-  /// \brief Look up the source id with the given directory and source file
-  /// names. If none currently exists, create a new id and insert it in the
-  /// SourceIds map.
-  unsigned getOrCreateSourceID(StringRef DirName, StringRef FullName,
-                               unsigned CUID);
-
   /// \brief Recursively Emits a debug information entry.
   void emitDIE(DIE *Die);
 

@@ -296,6 +296,17 @@ void DwarfCompileUnit::addLabelAddress(DIE *Die, dwarf::Attribute Attribute,
   }
 }
 
+unsigned DwarfCompileUnit::getOrCreateSourceID(StringRef FileName, StringRef DirName) {
+  // If we print assembly, we can't separate .file entries according to
+  // compile units. Thus all files will belong to the default compile unit.
+
+  // FIXME: add a better feature test than hasRawTextSupport. Even better,
+  // extend .file to support this.
+  return Asm->OutStreamer.EmitDwarfFileDirective(
+      0, DirName, FileName,
+      Asm->OutStreamer.hasRawTextSupport() ? 0 : getUniqueID());
+}
+
 /// addOpAddress - Add a dwarf op address data and value using the
 /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
 ///
@@ -383,8 +394,7 @@ void DwarfUnit::addSourceLine(DIE *Die, unsigned Line, StringRef File,
   if (Line == 0)
     return;
 
-  unsigned FileID =
-      DD->getOrCreateSourceID(File, Directory, getCU().getUniqueID());
+  unsigned FileID = getCU().getOrCreateSourceID(File, Directory);
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, None, Line);

@@ -602,6 +602,10 @@ public:
   void addLabelAddress(DIE *Die, dwarf::Attribute Attribute, MCSymbol *Label);
 
   DwarfCompileUnit &getCU() override { return *this; }
+
+  /// Look up the source ID with the given directory and source file names. If
+  /// none currently exists, create a new ID and insert it in the line table.
+  unsigned getOrCreateSourceID(StringRef FileName, StringRef DirName);
 };
 
 class DwarfTypeUnit : public DwarfUnit {

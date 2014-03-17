@@ -540,9 +540,9 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit *TheCU,
 
   // Add the call site information to the DIE.
   DILocation DL(Scope->getInlinedAt());
-  TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_file, None,
-                 getOrCreateSourceID(DL.getFilename(), DL.getDirectory(),
-                                     TheCU->getUniqueID()));
+  TheCU->addUInt(
+      ScopeDIE, dwarf::DW_AT_call_file, None,
+      TheCU->getOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
   TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_line, None, DL.getLineNumber());
 
   // Add name to the name table, we do this here because we're guaranteed
@@ -663,24 +663,6 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit *TheCU,
     TheCU->addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, ObjectPointer);
 
   return ScopeDIE;
-}
-
-// Look up the source id with the given directory and source file names.
-// If none currently exists, create a new id and insert it in the
-// SourceIds map. This can update DirectoryNames and SourceFileNames maps
-// as well.
-unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName, StringRef DirName,
-                                         unsigned CUID) {
-  // If we print assembly, we can't separate .file entries according to
-  // compile units. Thus all files will belong to the default compile unit.
-
-  // FIXME: add a better feature test than hasRawTextSupport. Even better,
-  // extend .file to support this.
-  if (Asm->OutStreamer.hasRawTextSupport())
-    CUID = 0;
-
-  // Print out a .file directive to specify files for .loc directives.
-  return Asm->OutStreamer.EmitDwarfFileDirective(0, DirName, FileName, CUID);
 }
 
 void DwarfDebug::addGnuPubAttributes(DwarfUnit *U, DIE *D) const {
@@ -1759,8 +1741,9 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
     } else
       llvm_unreachable("Unexpected scope info");
 
-    Src = getOrCreateSourceID(
-        Fn, Dir, Asm->OutStreamer.getContext().getDwarfCompileUnitID());
+    unsigned CUID = Asm->OutStreamer.getContext().getDwarfCompileUnitID();
+    Src = static_cast<DwarfCompileUnit *>(InfoHolder.getUnits()[CUID])
+              ->getOrCreateSourceID(Fn, Dir);
   }
   Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, Flags, 0,
                                          Discriminator, Fn);
