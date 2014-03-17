@@ -186,14 +186,14 @@ define <2 x i64> @ashr.v2i64(<2 x i64> %a, <2 x i64> %b) {
 
 define <1 x i64> @shl.v1i64.0(<1 x i64> %a) {
 ; CHECK-LABEL: shl.v1i64.0:
-; CHECK: shl d{{[0-9]+}}, d{{[0-9]+}}, #0
+; CHECK-NOT: shl d{{[0-9]+}}, d{{[0-9]+}}, #0
   %c = shl <1 x i64> %a, zeroinitializer
   ret <1 x i64> %c
 }
 
 define <2 x i32> @shl.v2i32.0(<2 x i32> %a) {
 ; CHECK-LABEL: shl.v2i32.0:
-; CHECK: shl v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, #0
+; CHECK-NOT: shl v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, #0
   %c = shl <2 x i32> %a, zeroinitializer
   ret <2 x i32> %c
 }
@@ -285,7 +285,7 @@ define <1 x i16> @shl.v1i16.imm(<1 x i16> %a) {
 
 define <1 x i32> @shl.v1i32.imm(<1 x i32> %a) {
 ; CHECK-LABEL: shl.v1i32.imm:
-; CHECK: shl v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, #0
+; CHECK-NOT: shl v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, #0
   %c = shl <1 x i32> %a, zeroinitializer
   ret <1 x i32> %c
 }

@@ -1522,6 +1522,11 @@ public:
                        unsigned MinSplatBits = 0,
                        bool isBigEndian = false) const;
 
+  /// isConstantSplat - Simpler form of isConstantSplat. Get the constant splat
+  /// when you only care about the value. Returns nullptr if this isn't a
+  /// constant splat vector.
+  ConstantSDNode *isConstantSplat() const;
+
   bool isConstant() const;
 
   static inline bool classof(const SDNode *N) {
