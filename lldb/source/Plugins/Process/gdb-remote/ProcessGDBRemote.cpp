@@ -2064,7 +2064,7 @@ ProcessGDBRemote::DoDestroy ()
         else
         {
             if (log)
-                log->Printf ("ProcessGDBRemote::DoDestroy - failed to send k packet");
+                log->Printf ("ProcessGDBRemote::DoDestroy - killed or interrupted while attaching");
             exit_string.assign ("killed or interrupted while attaching.");
         }
     }
