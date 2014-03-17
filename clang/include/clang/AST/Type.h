@@ -4554,7 +4554,9 @@ public:
   /// for convenience.  This will always iterate over the full set of
   /// protocols on a type, not just those provided directly.
   typedef ObjCObjectType::qual_iterator qual_iterator;
+  typedef llvm::iterator_range<qual_iterator> qual_range;
 
+  qual_range quals() const { return qual_range(qual_begin(), qual_end()); }
   qual_iterator qual_begin() const {
     return getObjectType()->qual_begin();
   }

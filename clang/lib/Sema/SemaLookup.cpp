@@ -4072,10 +4072,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
     // Look in qualified interfaces.
     if (OPT) {
-      for (ObjCObjectPointerType::qual_iterator
-             I = OPT->qual_begin(), E = OPT->qual_end();
-           I != E; ++I)
-        LookupVisibleDecls(*I, LookupKind, Consumer);
+      for (auto *I : OPT->quals())
+        LookupVisibleDecls(I, LookupKind, Consumer);
     }
   } else if (SS && SS->isSet()) {
     QualifiedDC = computeDeclContext(*SS, EnteringContext);

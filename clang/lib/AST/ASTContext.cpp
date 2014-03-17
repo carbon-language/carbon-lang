@@ -3514,9 +3514,7 @@ bool ASTContext::ObjCObjectAdoptsQTypeProtocols(QualType QT,
   
   if (const ObjCObjectPointerType *OPT = QT->getAs<ObjCObjectPointerType>()) {
     // If both the right and left sides have qualifiers.
-    for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
-         E = OPT->qual_end(); I != E; ++I) {
-      ObjCProtocolDecl *Proto = *I;
+    for (auto *Proto : OPT->quals()) {
       if (!IC->ClassImplementsProtocol(Proto, false))
         return false;
     }
@@ -3542,16 +3540,12 @@ bool ASTContext::QIdProtocolsAdoptObjCObjectProtocols(QualType QT,
   if (InheritedProtocols.empty())
     return false;
       
-  for (llvm::SmallPtrSet<ObjCProtocolDecl*,8>::iterator PI =
-       InheritedProtocols.begin(),
-       E = InheritedProtocols.end(); PI != E; ++PI) {
+  for (auto *PI : InheritedProtocols) {
     // If both the right and left sides have qualifiers.
     bool Adopts = false;
-    for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
-         E = OPT->qual_end(); I != E; ++I) {
-      ObjCProtocolDecl *Proto = *I;
+    for (auto *Proto : OPT->quals()) {
       // return 'true' if '*PI' is in the inheritance hierarchy of Proto
-      if ((Adopts = ProtocolCompatibleWithProtocol(*PI, Proto)))
+      if ((Adopts = ProtocolCompatibleWithProtocol(PI, Proto)))
         break;
     }
     if (!Adopts)
@@ -5455,10 +5449,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         // Note that we do extended encoding of protocol qualifer list
         // Only when doing ivar or property encoding.
         S += '"';
-        for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
-             E = OPT->qual_end(); I != E; ++I) {
+        for (const auto *I : OPT->quals()) {
           S += '<';
-          S += (*I)->getNameAsString();
+          S += I->getNameAsString();
           S += '>';
         }
         S += '"';
@@ -5501,10 +5494,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         (FD || EncodingProperty || EncodeClassNames)) {
       S += '"';
       S += OPT->getInterfaceDecl()->getIdentifier()->getName();
-      for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
-           E = OPT->qual_end(); I != E; ++I) {
+      for (const auto *I : OPT->quals()) {
         S += '<';
-        S += (*I)->getNameAsString();
+        S += I->getNameAsString();
         S += '>';
       }
       S += '"';
@@ -6377,13 +6369,9 @@ bool ASTContext::ObjCQualifiedClassTypesAreCompatible(QualType lhs,
   const ObjCObjectPointerType *rhsOPT = rhs->getAs<ObjCObjectPointerType>();
   assert ((lhsQID && rhsOPT) && "ObjCQualifiedClassTypesAreCompatible");
   
-  for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
-       E = lhsQID->qual_end(); I != E; ++I) {
+  for (auto *lhsProto : lhsQID->quals()) {
     bool match = false;
-    ObjCProtocolDecl *lhsProto = *I;
-    for (ObjCObjectPointerType::qual_iterator J = rhsOPT->qual_begin(),
-         E = rhsOPT->qual_end(); J != E; ++J) {
-      ObjCProtocolDecl *rhsProto = *J;
+    for (auto *rhsProto : rhsOPT->quals()) {
       if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto)) {
         match = true;
         break;
@@ -6416,12 +6404,11 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       // If the RHS is a unqualified interface pointer "NSString*",
       // make sure we check the class hierarchy.
       if (ObjCInterfaceDecl *rhsID = rhsOPT->getInterfaceDecl()) {
-        for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
-             E = lhsQID->qual_end(); I != E; ++I) {
+        for (auto *I : lhsQID->quals()) {
           // when comparing an id<P> on lhs with a static type on rhs,
           // see if static class implements all of id's protocols, directly or
           // through its super class and categories.
-          if (!rhsID->ClassImplementsProtocol(*I, true))
+          if (!rhsID->ClassImplementsProtocol(I, true))
             return false;
         }
       }
@@ -6429,17 +6416,13 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       return true;
     }
     // Both the right and left sides have qualifiers.
-    for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
-         E = lhsQID->qual_end(); I != E; ++I) {
-      ObjCProtocolDecl *lhsProto = *I;
+    for (auto *lhsProto : lhsQID->quals()) {
       bool match = false;
 
       // when comparing an id<P> on lhs with a static type on rhs,
       // see if static class implements all of id's protocols, directly or
       // through its super class and categories.
-      for (ObjCObjectPointerType::qual_iterator J = rhsOPT->qual_begin(),
-           E = rhsOPT->qual_end(); J != E; ++J) {
-        ObjCProtocolDecl *rhsProto = *J;
+      for (auto *rhsProto : rhsOPT->quals()) {
         if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
             (compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto))) {
           match = true;
@@ -6449,12 +6432,11 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       // If the RHS is a qualified interface pointer "NSString<P>*",
       // make sure we check the class hierarchy.
       if (ObjCInterfaceDecl *rhsID = rhsOPT->getInterfaceDecl()) {
-        for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
-             E = lhsQID->qual_end(); I != E; ++I) {
+        for (auto *I : lhsQID->quals()) {
           // when comparing an id<P> on lhs with a static type on rhs,
           // see if static class implements all of id's protocols, directly or
           // through its super class and categories.
-          if (rhsID->ClassImplementsProtocol(*I, true)) {
+          if (rhsID->ClassImplementsProtocol(I, true)) {
             match = true;
             break;
           }
@@ -6473,9 +6455,7 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
   if (const ObjCObjectPointerType *lhsOPT =
         lhs->getAsObjCInterfacePointerType()) {
     // If both the right and left sides have qualifiers.
-    for (ObjCObjectPointerType::qual_iterator I = lhsOPT->qual_begin(),
-         E = lhsOPT->qual_end(); I != E; ++I) {
-      ObjCProtocolDecl *lhsProto = *I;
+    for (auto *lhsProto : lhsOPT->quals()) {
       bool match = false;
 
       // when comparing an id<P> on rhs with a static type on lhs,
@@ -6483,9 +6463,7 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       // through its super class and categories.
       // First, lhs protocols in the qualifier list must be found, direct
       // or indirect in rhs's qualifier list or it is a mismatch.
-      for (ObjCObjectPointerType::qual_iterator J = rhsQID->qual_begin(),
-           E = rhsQID->qual_end(); J != E; ++J) {
-        ObjCProtocolDecl *rhsProto = *J;
+      for (auto *rhsProto : rhsQID->quals()) {
         if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
             (compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto))) {
           match = true;
@@ -6506,14 +6484,9 @@ bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       // assume that it is mismatch.
       if (LHSInheritedProtocols.empty() && lhsOPT->qual_empty())
         return false;
-      for (llvm::SmallPtrSet<ObjCProtocolDecl*,8>::iterator I =
-           LHSInheritedProtocols.begin(),
-           E = LHSInheritedProtocols.end(); I != E; ++I) {
+      for (auto *lhsProto : LHSInheritedProtocols) {
         bool match = false;
-        ObjCProtocolDecl *lhsProto = (*I);
-        for (ObjCObjectPointerType::qual_iterator J = rhsQID->qual_begin(),
-             E = rhsQID->qual_end(); J != E; ++J) {
-          ObjCProtocolDecl *rhsProto = *J;
+        for (auto *rhsProto : rhsQID->quals()) {
           if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
               (compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto))) {
             match = true;

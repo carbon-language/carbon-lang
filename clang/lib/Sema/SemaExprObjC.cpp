@@ -1478,9 +1478,7 @@ ObjCMethodDecl *Sema::LookupMethodInQualifiedType(Selector Sel,
                                               bool Instance)
 {
   ObjCMethodDecl *MD = 0;
-  for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
-       E = OPT->qual_end(); I != E; ++I) {
-    ObjCProtocolDecl *PROTO = (*I);
+  for (const auto *PROTO : OPT->quals()) {
     if ((MD = PROTO->lookupMethod(Sel, Instance))) {
       return MD;
     }
@@ -1589,9 +1587,8 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
                                                      MemberLoc, BaseExpr));
   }
   // Check protocols on qualified interfaces.
-  for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
-       E = OPT->qual_end(); I != E; ++I)
-    if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(Member)) {
+  for (const auto *I : OPT->quals())
+    if (ObjCPropertyDecl *PD = I->FindPropertyDeclaration(Member)) {
       // Check whether we can reference this property.
       if (DiagnoseUseOfDecl(PD, MemberLoc))
         return ExprError();
