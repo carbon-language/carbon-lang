@@ -280,6 +280,14 @@ namespace llvm {
       return getIntegerVT(Context, (EVTSize + 1) / 2);
     }
 
+    /// \brief Return a VT for an integer vector type with the size of the
+    /// elements doubled. The typed returned may be an extended type.
+    EVT widenIntegerVectorElementType(LLVMContext &Context) const {
+      EVT EltVT = getVectorElementType();
+      EltVT = EVT::getIntegerVT(Context, 2 * EltVT.getSizeInBits());
+      return EVT::getVectorVT(Context, EltVT, getVectorNumElements());
+    }
+
     /// isPow2VectorType - Returns true if the given vector is a power of 2.
     bool isPow2VectorType() const {
       unsigned NElts = getVectorNumElements();

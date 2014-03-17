@@ -1154,9 +1154,12 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::FNEG,               MVT::v4f64, Custom);
     setOperationAction(ISD::FABS,               MVT::v4f64, Custom);
 
-    setOperationAction(ISD::FP_TO_SINT,         MVT::v8i16, Custom);
-
+    // (fp_to_int:v8i16 (v8f32 ..)) requires the result type to be promoted
+    // even though v8i16 is a legal type.
+    setOperationAction(ISD::FP_TO_SINT,         MVT::v8i16, Promote);
+    setOperationAction(ISD::FP_TO_UINT,         MVT::v8i16, Promote);
     setOperationAction(ISD::FP_TO_SINT,         MVT::v8i32, Legal);
+
     setOperationAction(ISD::SINT_TO_FP,         MVT::v8i16, Promote);
     setOperationAction(ISD::SINT_TO_FP,         MVT::v8i32, Legal);
     setOperationAction(ISD::FP_ROUND,           MVT::v4f32, Legal);
@@ -9225,13 +9228,7 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
 SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op,
                                            SelectionDAG &DAG) const {
   MVT VT = Op.getSimpleValueType();
-  if (VT.isVector()) {
-    if (VT == MVT::v8i16)
-      return DAG.getNode(ISD::TRUNCATE, SDLoc(Op), VT,
-                         DAG.getNode(ISD::FP_TO_SINT, SDLoc(Op),
-                                     MVT::v8i32, Op.getOperand(0)));
-    return SDValue();
-  }
+  assert(!VT.isVector());
 
   std::pair<SDValue,SDValue> Vals = FP_TO_INTHelper(Op, DAG,
     /*IsSigned=*/ true, /*IsReplace=*/ false);

@@ -77,6 +77,10 @@ class VectorLegalizer {
   // Implements [SU]INT_TO_FP vector promotion; this is a [zs]ext of the input
   // operand to the next size up.
   SDValue PromoteVectorOpINT_TO_FP(SDValue Op);
+  // Implements FP_TO_[SU]INT vector promotion of the result type; it is
+  // promoted to the next size up integer type.  The result is then truncated
+  // back to the original type.
+  SDValue PromoteVectorOpFP_TO_INT(SDValue Op, bool isSigned);
 
   public:
   bool Run();
@@ -274,6 +278,12 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
       Result = PromoteVectorOpINT_TO_FP(Op);
       Changed = true;
       break;
+    case ISD::FP_TO_UINT:
+    case ISD::FP_TO_SINT:
+      // Promote the operation by extending the operand.
+      Result = PromoteVectorOpFP_TO_INT(Op, Op->getOpcode() == ISD::FP_TO_SINT);
+      Changed = true;
+      break;
     }
     break;
   case TargetLowering::Legal: break;
@@ -352,14 +362,9 @@ SDValue VectorLegalizer::PromoteVectorOpINT_TO_FP(SDValue Op) {
   //
   // Increase the bitwidth of the element to the next pow-of-two
   // (which is greater than 8 bits).
-  unsigned NumElts = VT.getVectorNumElements();
-  EVT EltVT = VT.getVectorElementType();
-  EltVT = EVT::getIntegerVT(*DAG.getContext(), 2 * EltVT.getSizeInBits());
-  assert(EltVT.isSimple() && "Promoting to a non-simple vector type!");
 
-  // Build a new vector type and check if it is legal.
-  MVT NVT = MVT::getVectorVT(EltVT.getSimpleVT(), NumElts);
-
+  EVT NVT = VT.widenIntegerVectorElementType(*DAG.getContext());
+  assert(NVT.isSimple() && "Promoting to a non-simple vector type!");
   SDLoc dl(Op);
   SmallVector<SDValue, 4> Operands(Op.getNumOperands());
 
@@ -374,6 +379,35 @@ SDValue VectorLegalizer::PromoteVectorOpINT_TO_FP(SDValue Op) {
 
   return DAG.getNode(Op.getOpcode(), dl, Op.getValueType(), &Operands[0],
                      Operands.size());
+}
+
+// For FP_TO_INT we promote the result type to a vector type with wider
+// elements and then truncate the result.  This is different from the default
+// PromoteVector which uses bitcast to promote thus assumning that the
+// promoted vector type has the same overall size.
+SDValue VectorLegalizer::PromoteVectorOpFP_TO_INT(SDValue Op, bool isSigned) {
+  assert(Op.getNode()->getNumValues() == 1 &&
+         "Can't promote a vector with multiple results!");
+  EVT VT = Op.getValueType();
+
+  EVT NewVT;
+  unsigned NewOpc;
+  while (1) {
+    NewVT = VT.widenIntegerVectorElementType(*DAG.getContext());
+    assert(NewVT.isSimple() && "Promoting to a non-simple vector type!");
+    if (TLI.isOperationLegalOrCustom(ISD::FP_TO_SINT, NewVT)) {
+      NewOpc = ISD::FP_TO_SINT;
+      break;
+    }
+    if (!isSigned && TLI.isOperationLegalOrCustom(ISD::FP_TO_UINT, NewVT)) {
+      NewOpc = ISD::FP_TO_UINT;
+      break;
+    }
+  }
+
+  SDLoc loc(Op);
+  SDValue promoted  = DAG.getNode(NewOpc, SDLoc(Op), NewVT, Op.getOperand(0));
+  return DAG.getNode(ISD::TRUNCATE, SDLoc(Op), VT, promoted);
 }
 
 
