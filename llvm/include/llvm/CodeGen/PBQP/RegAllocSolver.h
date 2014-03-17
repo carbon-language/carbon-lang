@@ -35,48 +35,48 @@ namespace PBQP {
     /// Keeps track of the number of infinities in each row and column.
     class MatrixMetadata {
     private:
-      MatrixMetadata(const MatrixMetadata&);
-      void operator=(const MatrixMetadata&);
+      MatrixMetadata(const MatrixMetadata&) = delete;
+      void operator=(const MatrixMetadata&) = delete;
     public:
-      MatrixMetadata(const PBQP::Matrix& m)
-        : worstRow(0), worstCol(0),
-          unsafeRows(new bool[m.getRows() - 1]()),
-          unsafeCols(new bool[m.getCols() - 1]()) {
+      MatrixMetadata(const PBQP::Matrix& M)
+        : WorstRow(0), WorstCol(0),
+          UnsafeRows(new bool[M.getRows() - 1]()),
+          UnsafeCols(new bool[M.getCols() - 1]()) {
 
-        unsigned* colCounts = new unsigned[m.getCols() - 1]();
+        unsigned* ColCounts = new unsigned[M.getCols() - 1]();
 
-        for (unsigned i = 1; i < m.getRows(); ++i) {
-          unsigned rowCount = 0;
-          for (unsigned j = 1; j < m.getCols(); ++j) {
-            if (m[i][j] == std::numeric_limits<PBQP::PBQPNum>::infinity()) {
-              ++rowCount;
-              ++colCounts[j - 1];
-              unsafeRows[i - 1] = true;
-              unsafeCols[j - 1] = true;
+        for (unsigned i = 1; i < M.getRows(); ++i) {
+          unsigned RowCount = 0;
+          for (unsigned j = 1; j < M.getCols(); ++j) {
+            if (M[i][j] == std::numeric_limits<PBQP::PBQPNum>::infinity()) {
+              ++RowCount;
+              ++ColCounts[j - 1];
+              UnsafeRows[i - 1] = true;
+              UnsafeCols[j - 1] = true;
             }
           }
-          worstRow = std::max(worstRow, rowCount);
+          WorstRow = std::max(WorstRow, RowCount);
         }
-        unsigned worstColCountForCurRow =
-          *std::max_element(colCounts, colCounts + m.getCols() - 1);
-        worstCol = std::max(worstCol, worstColCountForCurRow);
-        delete[] colCounts;
+        unsigned WorstColCountForCurRow =
+          *std::max_element(ColCounts, ColCounts + M.getCols() - 1);
+        WorstCol = std::max(WorstCol, WorstColCountForCurRow);
+        delete[] ColCounts;
       }
 
       ~MatrixMetadata() {
-        delete[] unsafeRows;
-        delete[] unsafeCols;
+        delete[] UnsafeRows;
+        delete[] UnsafeCols;
       }
 
-      unsigned getWorstRow() const { return worstRow; }
-      unsigned getWorstCol() const { return worstCol; }
-      const bool* getUnsafeRows() const { return unsafeRows; }
-      const bool* getUnsafeCols() const { return unsafeCols; }
+      unsigned getWorstRow() const { return WorstRow; }
+      unsigned getWorstCol() const { return WorstCol; }
+      const bool* getUnsafeRows() const { return UnsafeRows; }
+      const bool* getUnsafeCols() const { return UnsafeCols; }
 
     private:
-      unsigned worstRow, worstCol;
-      bool* unsafeRows;
-      bool* unsafeCols;
+      unsigned WorstRow, WorstCol;
+      bool* UnsafeRows;
+      bool* UnsafeCols;
     };
 
     class NodeMetadata {
@@ -86,44 +86,44 @@ namespace PBQP {
                      ConservativelyAllocatable,
                      NotProvablyAllocatable } ReductionState;
 
-      NodeMetadata() : rs(Unprocessed), deniedOpts(0), optUnsafeEdges(0) {}
-      ~NodeMetadata() { delete[] optUnsafeEdges; }
+      NodeMetadata() : RS(Unprocessed), DeniedOpts(0), OptUnsafeEdges(0) {}
+      ~NodeMetadata() { delete[] OptUnsafeEdges; }
 
-      void setup(const Vector& costs) {
-        numOpts = costs.getLength() - 1;
-        optUnsafeEdges = new unsigned[numOpts]();
+      void setup(const Vector& Costs) {
+        NumOpts = Costs.getLength() - 1;
+        OptUnsafeEdges = new unsigned[NumOpts]();
       }
 
-      ReductionState getReductionState() const { return rs; }
-      void setReductionState(ReductionState rs) { this->rs = rs; }
+      ReductionState getReductionState() const { return RS; }
+      void setReductionState(ReductionState RS) { this->RS = RS; }
 
-      void handleAddEdge(const MatrixMetadata& md, bool transpose) {
-        deniedOpts += transpose ? md.getWorstCol() : md.getWorstRow();
-        const bool* unsafeOpts =
-          transpose ? md.getUnsafeCols() : md.getUnsafeRows();
-        for (unsigned i = 0; i < numOpts; ++i)
-          optUnsafeEdges[i] += unsafeOpts[i];
+      void handleAddEdge(const MatrixMetadata& MD, bool Transpose) {
+        DeniedOpts += Transpose ? MD.getWorstCol() : MD.getWorstRow();
+        const bool* UnsafeOpts =
+          Transpose ? MD.getUnsafeCols() : MD.getUnsafeRows();
+        for (unsigned i = 0; i < NumOpts; ++i)
+          OptUnsafeEdges[i] += UnsafeOpts[i];
       }
 
-      void handleRemoveEdge(const MatrixMetadata& md, bool transpose) {
-        deniedOpts -= transpose ? md.getWorstCol() : md.getWorstRow();
-        const bool* unsafeOpts =
-          transpose ? md.getUnsafeCols() : md.getUnsafeRows();
-        for (unsigned i = 0; i < numOpts; ++i)
-          optUnsafeEdges[i] -= unsafeOpts[i];
+      void handleRemoveEdge(const MatrixMetadata& MD, bool Transpose) {
+        DeniedOpts -= Transpose ? MD.getWorstCol() : MD.getWorstRow();
+        const bool* UnsafeOpts =
+          Transpose ? MD.getUnsafeCols() : MD.getUnsafeRows();
+        for (unsigned i = 0; i < NumOpts; ++i)
+          OptUnsafeEdges[i] -= UnsafeOpts[i];
       }
 
       bool isConservativelyAllocatable() const {
-        return (deniedOpts < numOpts) ||
-               (std::find(optUnsafeEdges, optUnsafeEdges + numOpts, 0) !=
-                  optUnsafeEdges + numOpts);
+        return (DeniedOpts < NumOpts) ||
+               (std::find(OptUnsafeEdges, OptUnsafeEdges + NumOpts, 0) !=
+                  OptUnsafeEdges + NumOpts);
       }
 
     private:
-      ReductionState rs;
-      unsigned numOpts;
-      unsigned deniedOpts;
-      unsigned* optUnsafeEdges;
+      ReductionState RS;
+      unsigned NumOpts;
+      unsigned DeniedOpts;
+      unsigned* OptUnsafeEdges;
     };
 
     class RegAllocSolverImpl {
@@ -175,36 +175,36 @@ namespace PBQP {
       }
 
       void handleDisconnectEdge(EdgeId EId, NodeId NId) {
-        NodeMetadata& nMd = G.getNodeMetadata(NId);
-        const MatrixMetadata& mMd = G.getEdgeCosts(EId).getMetadata();
-        nMd.handleRemoveEdge(mMd, NId == G.getEdgeNode2Id(EId));
+        NodeMetadata& NMd = G.getNodeMetadata(NId);
+        const MatrixMetadata& MMd = G.getEdgeCosts(EId).getMetadata();
+        NMd.handleRemoveEdge(MMd, NId == G.getEdgeNode2Id(EId));
         if (G.getNodeDegree(NId) == 3) {
           // This node is becoming optimally reducible.
           moveToOptimallyReducibleNodes(NId);
-        } else if (nMd.getReductionState() ==
+        } else if (NMd.getReductionState() ==
                      NodeMetadata::NotProvablyAllocatable &&
-                   nMd.isConservativelyAllocatable()) {
+                   NMd.isConservativelyAllocatable()) {
           // This node just became conservatively allocatable.
           moveToConservativelyAllocatableNodes(NId);
         }
       }
 
       void handleReconnectEdge(EdgeId EId, NodeId NId) {
-        NodeMetadata& nMd = G.getNodeMetadata(NId);
-        const MatrixMetadata& mMd = G.getEdgeCosts(EId).getMetadata();
-        nMd.handleAddEdge(mMd, NId == G.getEdgeNode2Id(EId));
+        NodeMetadata& NMd = G.getNodeMetadata(NId);
+        const MatrixMetadata& MMd = G.getEdgeCosts(EId).getMetadata();
+        NMd.handleAddEdge(MMd, NId == G.getEdgeNode2Id(EId));
       }
 
       void handleSetEdgeCosts(EdgeId EId, const Matrix& NewCosts) {
         handleRemoveEdge(EId);
 
-        NodeId n1Id = G.getEdgeNode1Id(EId);
-        NodeId n2Id = G.getEdgeNode2Id(EId);
-        NodeMetadata& n1Md = G.getNodeMetadata(n1Id);
-        NodeMetadata& n2Md = G.getNodeMetadata(n2Id);
-        const MatrixMetadata& mMd = NewCosts.getMetadata();
-        n1Md.handleAddEdge(mMd, n1Id != G.getEdgeNode1Id(EId));
-        n2Md.handleAddEdge(mMd, n2Id != G.getEdgeNode1Id(EId));
+        NodeId N1Id = G.getEdgeNode1Id(EId);
+        NodeId N2Id = G.getEdgeNode2Id(EId);
+        NodeMetadata& N1Md = G.getNodeMetadata(N1Id);
+        NodeMetadata& N2Md = G.getNodeMetadata(N2Id);
+        const MatrixMetadata& MMd = NewCosts.getMetadata();
+        N1Md.handleAddEdge(MMd, N1Id != G.getEdgeNode1Id(EId));
+        N2Md.handleAddEdge(MMd, N2Id != G.getEdgeNode1Id(EId));
       }
 
     private:
@@ -281,9 +281,9 @@ namespace PBQP {
         // Consume worklists.
         while (true) {
           if (!OptimallyReducibleNodes.empty()) {
-            NodeSet::iterator nItr = OptimallyReducibleNodes.begin();
-            NodeId NId = *nItr;
-            OptimallyReducibleNodes.erase(nItr);
+            NodeSet::iterator NItr = OptimallyReducibleNodes.begin();
+            NodeId NId = *NItr;
+            OptimallyReducibleNodes.erase(NItr);
             NodeStack.push_back(NId);
             switch (G.getNodeDegree(NId)) {
               case 0:
@@ -303,19 +303,19 @@ namespace PBQP {
             // would be better to push nodes with lower 'expected' or worst-case
             // register costs first (since early nodes are the most
             // constrained).
-            NodeSet::iterator nItr = ConservativelyAllocatableNodes.begin();
-            NodeId NId = *nItr;
-            ConservativelyAllocatableNodes.erase(nItr);
+            NodeSet::iterator NItr = ConservativelyAllocatableNodes.begin();
+            NodeId NId = *NItr;
+            ConservativelyAllocatableNodes.erase(NItr);
             NodeStack.push_back(NId);
             G.disconnectAllNeighborsFromNode(NId);
 
           } else if (!NotProvablyAllocatableNodes.empty()) {
-            NodeSet::iterator nItr =
+            NodeSet::iterator NItr =
               std::min_element(NotProvablyAllocatableNodes.begin(),
                                NotProvablyAllocatableNodes.end(),
                                SpillCostComparator(G));
-            NodeId NId = *nItr;
-            NotProvablyAllocatableNodes.erase(nItr);
+            NodeId NId = *NItr;
+            NotProvablyAllocatableNodes.erase(NItr);
             NodeStack.push_back(NId);
             G.disconnectAllNeighborsFromNode(NId);
           } else
