@@ -238,7 +238,8 @@ public:
   }
   static reg_instr_iterator reg_instr_end() { return reg_instr_iterator(0); }
 
-  inline iterator_range<reg_instr_iterator>  reg_instructions(unsigned Reg) {
+  inline iterator_range<reg_instr_iterator>
+  reg_instructions(unsigned Reg) const {
     return iterator_range<reg_instr_iterator>(reg_instr_begin(Reg),
                                               reg_instr_end());
   }
@@ -252,7 +253,7 @@ public:
   }
   static reg_bundle_iterator reg_bundle_end() { return reg_bundle_iterator(0); }
 
-  inline iterator_range<reg_bundle_iterator>  reg_bundles(unsigned Reg) {
+  inline iterator_range<reg_bundle_iterator> reg_bundles(unsigned Reg) const {
     return iterator_range<reg_bundle_iterator>(reg_bundle_begin(Reg),
                                                reg_bundle_end());
   }
@@ -270,7 +271,8 @@ public:
   }
   static reg_nodbg_iterator reg_nodbg_end() { return reg_nodbg_iterator(0); }
 
-  inline iterator_range<reg_nodbg_iterator>  reg_nodbg_operands(unsigned Reg) {
+  inline iterator_range<reg_nodbg_iterator>
+  reg_nodbg_operands(unsigned Reg) const {
     return iterator_range<reg_nodbg_iterator>(reg_nodbg_begin(Reg),
                                               reg_nodbg_end());
   }
@@ -287,8 +289,8 @@ public:
     return reg_instr_nodbg_iterator(0);
   }
 
-  inline iterator_range<reg_instr_nodbg_iterator> 
-  reg_nodbg_instructions(unsigned Reg) {
+  inline iterator_range<reg_instr_nodbg_iterator>
+  reg_nodbg_instructions(unsigned Reg) const {
     return iterator_range<reg_instr_nodbg_iterator>(reg_instr_nodbg_begin(Reg),
                                                     reg_instr_nodbg_end());
   }
@@ -306,7 +308,7 @@ public:
   }
 
   inline iterator_range<reg_bundle_nodbg_iterator> 
-  reg_nodbg_bundles(unsigned Reg) {
+  reg_nodbg_bundles(unsigned Reg) const {
     return iterator_range<reg_bundle_nodbg_iterator>(reg_bundle_nodbg_begin(Reg),
                                                      reg_bundle_nodbg_end());
   }
