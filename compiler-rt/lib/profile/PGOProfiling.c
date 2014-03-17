@@ -81,7 +81,7 @@ static void writeFunction(FILE *OutputFile, const __llvm_pgo_data *Data) {
    */
   uint32_t I;
   for (I = 0; I < Data->NameSize; ++I)
-    fputc(Data->Name[I], OutputFile);
+    putc(Data->Name[I], OutputFile);
   fprintf(OutputFile, " %u\n", Data->NumCounters);
   for (I = 0; I < Data->NumCounters; ++I)
     fprintf(OutputFile, "%" PRIu64 "\n", Data->Counters[I]);
