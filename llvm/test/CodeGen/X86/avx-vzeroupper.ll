@@ -1,5 +1,6 @@
 ; RUN: llc < %s -x86-use-vzeroupper -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
 
+declare i32 @foo()
 declare <4 x float> @do_sse(<4 x float>)
 declare <8 x float> @do_avx(<8 x float>)
 declare <4 x float> @llvm.x86.avx.vextractf128.ps.256(<8 x float>, i8) nounwind readnone
@@ -36,20 +37,38 @@ entry:
   ret <8 x float> %c
 }
 
+;; Check that vzeroupper is emitted for tail calls.
+
+; CHECK: _test02
+define <4 x float> @test02(<8 x float> %a, <8 x float> %b) nounwind uwtable ssp {
+entry:
+  %add.i = fadd <8 x float> %a, %b
+  %add.low = call <4 x float> @llvm.x86.avx.vextractf128.ps.256(<8 x float> %add.i, i8 0)
+  ; CHECK: vzeroupper
+  ; CHECK: jmp _do_sse
+  %call3 = tail call <4 x float> @do_sse(<4 x float> %add.low) nounwind
+  ret <4 x float> %call3
+}
+
 ;; Test the pass convergence and also that vzeroupper is only issued when necessary,
 ;; for this function it should be only once
 
-; CHECK: _test02
-define <4 x float> @test02(<4 x float> %a, <4 x float> %b) nounwind uwtable ssp {
+; CHECK: _test03
+define <4 x float> @test03(<4 x float> %a, <4 x float> %b) nounwind uwtable ssp {
 entry:
   %add.i = fadd <4 x float> %a, %b
-  br label %for.body
+  br label %while.cond
 
-for.body:                                         ; preds = %for.body, %entry
+while.cond: 
+  %call = tail call i32 @foo()
+  %tobool = icmp eq i32 %call, 0
+  br i1 %tobool, label %for.body, label %while.cond
+
+for.body:
   ; CHECK: LBB
   ; CHECK-NOT: vzeroupper
-  %i.018 = phi i32 [ 0, %entry ], [ %1, %for.body ]
-  %c.017 = phi <4 x float> [ %add.i, %entry ], [ %call14, %for.body ]
+  %i.018 = phi i32 [ 0, %while.cond ], [ %1, %for.body ]
+  %c.017 = phi <4 x float> [ %add.i, %while.cond ], [ %call14, %for.body ]
   ; CHECK: callq _do_sse
   %call5 = tail call <4 x float> @do_sse(<4 x float> %c.017) nounwind
   ; CHECK-NEXT: callq _do_sse
@@ -63,14 +82,14 @@ for.body:                                         ; preds = %for.body, %entry
   %exitcond = icmp eq i32 %1, 4
   br i1 %exitcond, label %for.end, label %for.body
 
-for.end:                                          ; preds = %for.body
+for.end:
   ret <4 x float> %call14
 }
 
 ;; Check that we also perform vzeroupper when we return from a function.
 
-; CHECK: _test03
-define <4 x float> @test03(<4 x float> %a, <4 x float> %b) nounwind uwtable ssp {
+; CHECK: _test04
+define <4 x float> @test04(<4 x float> %a, <4 x float> %b) nounwind uwtable ssp {
 entry:
   %shuf = shufflevector <4 x float> %a, <4 x float> %b, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   ; CHECK-NOT: vzeroupper
