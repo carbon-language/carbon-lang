@@ -355,7 +355,7 @@ void DD::Report(DDPhysicalThread *pt, DDLogicalThread *lt, int npath) {
     rep->loop[i].thr_ctx = link->tid;
     rep->loop[i].mtx_ctx0 = link0->id;
     rep->loop[i].mtx_ctx1 = link->id;
-    rep->loop[i].stk = link->stk;
+    rep->loop[i].stk[1] = link->stk;
   }
   pt->report_pending = true;
 }
