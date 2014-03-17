@@ -325,7 +325,7 @@ public:
   }
   static def_iterator def_end() { return def_iterator(0); }
 
-  inline iterator_range<def_iterator> def_operands(unsigned Reg) {
+  inline iterator_range<def_iterator> def_operands(unsigned Reg) const {
     return iterator_range<def_iterator>(def_begin(Reg), def_end());
   }
 
@@ -338,7 +338,8 @@ public:
   }
   static def_instr_iterator def_instr_end() { return def_instr_iterator(0); }
 
-  inline iterator_range<def_instr_iterator> def_instructions(unsigned Reg) {
+  inline iterator_range<def_instr_iterator>
+  def_instructions(unsigned Reg) const {
     return iterator_range<def_instr_iterator>(def_instr_begin(Reg),
                                               def_instr_end());
   }
@@ -352,7 +353,7 @@ public:
   }
   static def_bundle_iterator def_bundle_end() { return def_bundle_iterator(0); }
 
-  inline iterator_range<def_bundle_iterator> def_bundles(unsigned Reg) {
+  inline iterator_range<def_bundle_iterator> def_bundles(unsigned Reg) const {
     return iterator_range<def_bundle_iterator>(def_bundle_begin(Reg),
                                                def_bundle_end());
   }
@@ -378,7 +379,7 @@ public:
   }
   static use_iterator use_end() { return use_iterator(0); }
 
-  inline iterator_range<use_iterator> use_operands(unsigned Reg) {
+  inline iterator_range<use_iterator> use_operands(unsigned Reg) const {
     return iterator_range<use_iterator>(use_begin(Reg), use_end());
   }
 
@@ -391,7 +392,8 @@ public:
   }
   static use_instr_iterator use_instr_end() { return use_instr_iterator(0); }
 
-  inline iterator_range<use_instr_iterator> use_instructions(unsigned Reg) {
+  inline iterator_range<use_instr_iterator>
+  use_instructions(unsigned Reg) const {
     return iterator_range<use_instr_iterator>(use_instr_begin(Reg),
                                               use_instr_end());
   }
@@ -405,7 +407,7 @@ public:
   }
   static use_bundle_iterator use_bundle_end() { return use_bundle_iterator(0); }
 
-  inline iterator_range<use_bundle_iterator> use_bundles(unsigned Reg) {
+  inline iterator_range<use_bundle_iterator> use_bundles(unsigned Reg) const {
     return iterator_range<use_bundle_iterator>(use_bundle_begin(Reg),
                                                use_bundle_end());
   }
@@ -432,7 +434,8 @@ public:
   }
   static use_nodbg_iterator use_nodbg_end() { return use_nodbg_iterator(0); }
 
-  inline iterator_range<use_nodbg_iterator> use_nodbg_operands(unsigned Reg) {
+  inline iterator_range<use_nodbg_iterator>
+  use_nodbg_operands(unsigned Reg) const {
     return iterator_range<use_nodbg_iterator>(use_nodbg_begin(Reg),
                                               use_nodbg_end());
   }
@@ -450,7 +453,7 @@ public:
   }
 
   inline iterator_range<use_instr_nodbg_iterator>
-  use_nodbg_instructions(unsigned Reg) {
+  use_nodbg_instructions(unsigned Reg) const {
     return iterator_range<use_instr_nodbg_iterator>(use_instr_nodbg_begin(Reg),
                                                     use_instr_nodbg_end());
   }
@@ -468,7 +471,7 @@ public:
   }
 
   inline iterator_range<use_bundle_nodbg_iterator>
-  use_nodbg_bundles(unsigned Reg) {
+  use_nodbg_bundles(unsigned Reg) const {
     return iterator_range<use_bundle_nodbg_iterator>(use_bundle_nodbg_begin(Reg),
                                                      use_bundle_nodbg_end());
   }
