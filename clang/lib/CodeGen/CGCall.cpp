@@ -2015,9 +2015,8 @@ static void emitWriteback(CodeGenFunction &CGF,
 
 static void emitWritebacks(CodeGenFunction &CGF,
                            const CallArgList &args) {
-  for (CallArgList::writeback_iterator
-         i = args.writeback_begin(), e = args.writeback_end(); i != e; ++i)
-    emitWriteback(CGF, *i);
+  for (const auto &I : args.writebacks())
+    emitWriteback(CGF, I);
 }
 
 static void deactivateArgCleanupsBeforeCall(CodeGenFunction &CGF,

@@ -99,9 +99,12 @@ namespace CodeGen {
 
     bool hasWritebacks() const { return !Writebacks.empty(); }
 
-    typedef SmallVectorImpl<Writeback>::const_iterator writeback_iterator;
-    writeback_iterator writeback_begin() const { return Writebacks.begin(); }
-    writeback_iterator writeback_end() const { return Writebacks.end(); }
+    typedef llvm::iterator_range<SmallVectorImpl<Writeback>::const_iterator>
+      writeback_const_range;
+
+    writeback_const_range writebacks() const {
+      return writeback_const_range(Writebacks.begin(), Writebacks.end());
+    }
 
     void addArgCleanupDeactivation(EHScopeStack::stable_iterator Cleanup,
                                    llvm::Instruction *IsActiveIP) {
