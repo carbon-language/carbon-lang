@@ -246,16 +246,13 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   case EST_Dynamic: {
     OS << "throw(";
     bool OnFirstException = true;
-    for (FunctionProtoType::exception_iterator E = OldProto->exception_begin(),
-                                            EEnd = OldProto->exception_end();
-         E != EEnd;
-         ++E) {
+    for (const auto &E : OldProto->exceptions()) {
       if (OnFirstException)
         OnFirstException = false;
       else
         OS << ", ";
       
-      OS << E->getAsString(getPrintingPolicy());
+      OS << E.getAsString(getPrintingPolicy());
     }
     OS << ")";
     break;
@@ -499,13 +496,11 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
   // Both have a dynamic exception spec. Collect the first set, then compare
   // to the second.
   llvm::SmallPtrSet<CanQualType, 8> OldTypes, NewTypes;
-  for (FunctionProtoType::exception_iterator I = Old->exception_begin(),
-       E = Old->exception_end(); I != E; ++I)
-    OldTypes.insert(Context.getCanonicalType(*I).getUnqualifiedType());
+  for (const auto &I : Old->exceptions())
+    OldTypes.insert(Context.getCanonicalType(I).getUnqualifiedType());
 
-  for (FunctionProtoType::exception_iterator I = New->exception_begin(),
-       E = New->exception_end(); I != E && Success; ++I) {
-    CanQualType TypePtr = Context.getCanonicalType(*I).getUnqualifiedType();
+  for (const auto &I : New->exceptions()) {
+    CanQualType TypePtr = Context.getCanonicalType(I).getUnqualifiedType();
     if(OldTypes.count(TypePtr))
       NewTypes.insert(TypePtr);
     else
@@ -613,10 +608,9 @@ bool Sema::CheckExceptionSpecSubset(
          "Exception spec subset: non-dynamic case slipped through.");
 
   // Neither contains everything or nothing. Do a proper comparison.
-  for (FunctionProtoType::exception_iterator SubI = Subset->exception_begin(),
-       SubE = Subset->exception_end(); SubI != SubE; ++SubI) {
+  for (const auto &SubI : Subset->exceptions()) {
     // Take one type from the subset.
-    QualType CanonicalSubT = Context.getCanonicalType(*SubI);
+    QualType CanonicalSubT = Context.getCanonicalType(SubI);
     // Unwrap pointers and references so that we can do checks within a class
     // hierarchy. Don't unwrap member pointers; they don't have hierarchy
     // conversions on the pointee.
@@ -635,10 +629,8 @@ bool Sema::CheckExceptionSpecSubset(
 
     bool Contained = false;
     // Make sure it's in the superset.
-    for (FunctionProtoType::exception_iterator SuperI =
-           Superset->exception_begin(), SuperE = Superset->exception_end();
-         SuperI != SuperE; ++SuperI) {
-      QualType CanonicalSuperT = Context.getCanonicalType(*SuperI);
+    for (const auto &SuperI : Superset->exceptions()) {
+      QualType CanonicalSuperT = Context.getCanonicalType(SuperI);
       // SubT must be SuperT or derived from it, or pointer or reference to
       // such types.
       if (const ReferenceType *RefTy = CanonicalSuperT->getAs<ReferenceType>())

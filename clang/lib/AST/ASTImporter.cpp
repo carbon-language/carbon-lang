@@ -1607,10 +1607,8 @@ QualType ASTNodeImporter::VisitFunctionProtoType(const FunctionProtoType *T) {
   
   // Import exception types
   SmallVector<QualType, 4> ExceptionTypes;
-  for (FunctionProtoType::exception_iterator E = T->exception_begin(),
-                                          EEnd = T->exception_end();
-       E != EEnd; ++E) {
-    QualType ExceptionType = Importer.Import(*E);
+  for (const auto &E : T->exceptions()) {
+    QualType ExceptionType = Importer.Import(E);
     if (ExceptionType.isNull())
       return QualType();
     ExceptionTypes.push_back(ExceptionType);

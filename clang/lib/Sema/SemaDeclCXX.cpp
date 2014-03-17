@@ -212,11 +212,9 @@ Sema::ImplicitExceptionSpecification::CalledDecl(SourceLocation CallLoc,
          "Shouldn't collect exceptions when throw-all is guaranteed.");
   ComputedEST = EST_Dynamic;
   // Record the exceptions in this function's exception specification.
-  for (FunctionProtoType::exception_iterator E = Proto->exception_begin(),
-                                          EEnd = Proto->exception_end();
-       E != EEnd; ++E)
-    if (ExceptionsSeen.insert(Self->Context.getCanonicalType(*E)))
-      Exceptions.push_back(*E);
+  for (const auto &E : Proto->exceptions())
+    if (ExceptionsSeen.insert(Self->Context.getCanonicalType(E)))
+      Exceptions.push_back(E);
 }
 
 void Sema::ImplicitExceptionSpecification::CalledExpr(Expr *E) {
@@ -12573,10 +12571,8 @@ bool Sema::checkThisInStaticMemberFunctionExceptionSpec(CXXMethodDecl *Method) {
       return true;
     
   case EST_Dynamic:
-    for (FunctionProtoType::exception_iterator E = Proto->exception_begin(),
-         EEnd = Proto->exception_end();
-         E != EEnd; ++E) {
-      if (!Finder.TraverseType(*E))
+    for (const auto &E : Proto->exceptions()) {
+      if (!Finder.TraverseType(E))
         return true;
     }
     break;

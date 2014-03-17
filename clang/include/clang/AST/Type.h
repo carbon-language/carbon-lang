@@ -3073,6 +3073,11 @@ public:
   }
 
   typedef const QualType *exception_iterator;
+  typedef llvm::iterator_range<exception_iterator> exception_range;
+
+  exception_range exceptions() const {
+    return exception_range(exception_begin(), exception_end());
+  }
   exception_iterator exception_begin() const {
     // exceptions begin where arguments end
     return param_type_end();
