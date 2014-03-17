@@ -9,7 +9,7 @@
 // REQUIRES: LP64
 typedef __SIZE_TYPE__ size_t;
 namespace std { struct bad_alloc {}; }
-int x;
+
 inline void* operator new(size_t) BAD_ALLOC; // expected-error {{cannot be declared 'inline'}}
 inline void* operator new[](size_t) BAD_ALLOC; // expected-error {{cannot be declared 'inline'}}
 inline void operator delete(void*) NOEXCEPT; // expected-error {{cannot be declared 'inline'}}
