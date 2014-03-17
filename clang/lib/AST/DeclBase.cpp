@@ -1523,13 +1523,13 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D, bool Internal) {
 
 /// Returns iterator range [First, Last) of UsingDirectiveDecls stored within
 /// this context.
-DeclContext::udir_range
-DeclContext::getUsingDirectives() const {
+DeclContext::udir_range DeclContext::using_directives() const {
   // FIXME: Use something more efficient than normal lookup for using
   // directives. In C++, using directives are looked up more than anything else.
   lookup_const_result Result = lookup(UsingDirectiveDecl::getName());
-  return udir_range(reinterpret_cast<udir_iterator>(Result.begin()),
-                             reinterpret_cast<udir_iterator>(Result.end()));
+  return udir_range(
+      reinterpret_cast<UsingDirectiveDecl *const *>(Result.begin()),
+      reinterpret_cast<UsingDirectiveDecl *const *>(Result.end()));
 }
 
 //===----------------------------------------------------------------------===//

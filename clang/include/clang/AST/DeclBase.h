@@ -1592,21 +1592,9 @@ public:
   all_lookups_iterator noload_lookups_begin() const;
   all_lookups_iterator noload_lookups_end() const;
 
-  /// udir_iterator - Iterates through the using-directives stored
-  /// within this context.
-  typedef UsingDirectiveDecl * const * udir_iterator;
+  typedef llvm::iterator_range<UsingDirectiveDecl * const *> udir_range;
 
-  typedef llvm::iterator_range<udir_iterator> udir_range;
-
-  udir_range getUsingDirectives() const;
-
-  udir_iterator using_directives_begin() const {
-    return getUsingDirectives().begin();
-  }
-
-  udir_iterator using_directives_end() const {
-    return getUsingDirectives().end();
-  }
+  udir_range using_directives() const;
 
   // These are all defined in DependentDiagnostic.h.
   class ddiag_iterator;
