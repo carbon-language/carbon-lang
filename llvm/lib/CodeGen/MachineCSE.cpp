@@ -364,15 +364,11 @@ bool MachineCSE::isProfitableToCSE(unsigned CSReg, unsigned Reg,
       TargetRegisterInfo::isVirtualRegister(Reg)) {
     MayIncreasePressure = false;
     SmallPtrSet<MachineInstr*, 8> CSUses;
-    for (MachineRegisterInfo::use_instr_nodbg_iterator
-         I = MRI->use_instr_nodbg_begin(CSReg), E = MRI->use_instr_nodbg_end();
-         I != E; ++I) {
-      CSUses.insert(&*I);
+    for (MachineInstr &MI : MRI->use_nodbg_instructions(CSReg)) {
+      CSUses.insert(&MI);
     }
-    for (MachineRegisterInfo::use_instr_nodbg_iterator
-         I = MRI->use_instr_nodbg_begin(Reg), E = MRI->use_instr_nodbg_end();
-         I != E; ++I) {
-      if (!CSUses.count(&*I)) {
+    for (MachineInstr &MI : MRI->use_nodbg_instructions(Reg)) {
+      if (!CSUses.count(&MI)) {
         MayIncreasePressure = true;
         break;
       }
@@ -403,11 +399,9 @@ bool MachineCSE::isProfitableToCSE(unsigned CSReg, unsigned Reg,
   }
   if (!HasVRegUse) {
     bool HasNonCopyUse = false;
-    for (MachineRegisterInfo::use_instr_nodbg_iterator
-         I =  MRI->use_instr_nodbg_begin(Reg), E = MRI->use_instr_nodbg_end();
-         I != E; ++I) {
+    for (MachineInstr &MI : MRI->use_nodbg_instructions(Reg)) {
       // Ignore copies.
-      if (!I->isCopyLike()) {
+      if (!MI.isCopyLike()) {
         HasNonCopyUse = true;
         break;
       }
@@ -420,11 +414,9 @@ bool MachineCSE::isProfitableToCSE(unsigned CSReg, unsigned Reg,
   // it unless the defined value is already used in the BB of the new use.
   bool HasPHI = false;
   SmallPtrSet<MachineBasicBlock*, 4> CSBBs;
-  for (MachineRegisterInfo::use_instr_nodbg_iterator
-       I =  MRI->use_instr_nodbg_begin(CSReg), E = MRI->use_instr_nodbg_end();
-       I != E; ++I) {
-    HasPHI |= I->isPHI();
-    CSBBs.insert(I->getParent());
+  for (MachineInstr &MI : MRI->use_nodbg_instructions(CSReg)) {
+    HasPHI |= MI.isPHI();
+    CSBBs.insert(MI.getParent());
   }
 
   if (!HasPHI)

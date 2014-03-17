@@ -978,26 +978,23 @@ bool MachineLICM::HasLoopPHIUse(const MachineInstr *MI) const {
       unsigned Reg = MO->getReg();
       if (!TargetRegisterInfo::isVirtualRegister(Reg))
         continue;
-      for (MachineRegisterInfo::use_instr_iterator
-           UI = MRI->use_instr_begin(Reg), UE = MRI->use_instr_end();
-           UI != UE; ++UI) {
-        MachineInstr *UseMI = &*UI;
+      for (MachineInstr &UseMI : MRI->use_instructions(Reg)) {
         // A PHI may cause a copy to be inserted.
-        if (UseMI->isPHI()) {
+        if (UseMI.isPHI()) {
           // A PHI inside the loop causes a copy because the live range of Reg is
           // extended across the PHI.
-          if (CurLoop->contains(UseMI))
+          if (CurLoop->contains(&UseMI))
             return true;
           // A PHI in an exit block can cause a copy to be inserted if the PHI
           // has multiple predecessors in the loop with different values.
           // For now, approximate by rejecting all exit blocks.
-          if (isExitBlock(UseMI->getParent()))
+          if (isExitBlock(UseMI.getParent()))
             return true;
           continue;
         }
         // Look past copies as well.
-        if (UseMI->isCopy() && CurLoop->contains(UseMI))
-          Work.push_back(UseMI);
+        if (UseMI.isCopy() && CurLoop->contains(&UseMI))
+          Work.push_back(&UseMI);
       }
     }
   } while (!Work.empty());
@@ -1012,23 +1009,20 @@ bool MachineLICM::HasHighOperandLatency(MachineInstr &MI,
   if (!InstrItins || InstrItins->isEmpty() || MRI->use_nodbg_empty(Reg))
     return false;
 
-  for (MachineRegisterInfo::use_instr_nodbg_iterator
-       I = MRI->use_instr_nodbg_begin(Reg), E = MRI->use_instr_nodbg_end();
-       I != E; ++I) {
-    MachineInstr *UseMI = &*I;
-    if (UseMI->isCopyLike())
+  for (MachineInstr &UseMI : MRI->use_nodbg_instructions(Reg)) {
+    if (UseMI.isCopyLike())
       continue;
-    if (!CurLoop->contains(UseMI->getParent()))
+    if (!CurLoop->contains(UseMI.getParent()))
       continue;
-    for (unsigned i = 0, e = UseMI->getNumOperands(); i != e; ++i) {
-      const MachineOperand &MO = UseMI->getOperand(i);
+    for (unsigned i = 0, e = UseMI.getNumOperands(); i != e; ++i) {
+      const MachineOperand &MO = UseMI.getOperand(i);
       if (!MO.isReg() || !MO.isUse())
         continue;
       unsigned MOReg = MO.getReg();
       if (MOReg != Reg)
         continue;
 
-      if (TII->hasHighOperandLatency(InstrItins, MRI, &MI, DefIdx, UseMI, i))
+      if (TII->hasHighOperandLatency(InstrItins, MRI, &MI, DefIdx, &UseMI, i))
         return true;
     }
 

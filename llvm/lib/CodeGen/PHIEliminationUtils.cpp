@@ -34,11 +34,9 @@ llvm::findPHICopyInsertPoint(MachineBasicBlock* MBB, MachineBasicBlock* SuccMBB,
   // Discover any defs/uses in this basic block.
   SmallPtrSet<MachineInstr*, 8> DefUsesInMBB;
   MachineRegisterInfo& MRI = MBB->getParent()->getRegInfo();
-  for (MachineRegisterInfo::reg_instr_iterator
-       RI = MRI.reg_instr_begin(SrcReg), RE = MRI.reg_instr_end();
-       RI != RE; ++RI) {
-    if (RI->getParent() == MBB)
-      DefUsesInMBB.insert(&*RI);
+  for (MachineInstr &RI : MRI.reg_instructions(SrcReg)) {
+    if (RI.getParent() == MBB)
+      DefUsesInMBB.insert(&RI);
   }
 
   MachineBasicBlock::iterator InsertPoint;

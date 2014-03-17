@@ -338,12 +338,10 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
 
 static bool isDefLiveOut(unsigned Reg, MachineBasicBlock *BB,
                          const MachineRegisterInfo *MRI) {
-  for (MachineRegisterInfo::use_instr_iterator UI = MRI->use_instr_begin(Reg),
-         UE = MRI->use_instr_end(); UI != UE; ++UI) {
-    MachineInstr *UseMI = &*UI;
-    if (UseMI->isDebugValue())
+  for (MachineInstr &UseMI : MRI->use_instructions(Reg)) {
+    if (UseMI.isDebugValue())
       continue;
-    if (UseMI->getParent() != BB)
+    if (UseMI.getParent() != BB)
       return true;
   }
   return false;

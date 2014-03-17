@@ -620,16 +620,15 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
 
   // If some of the uses of IntA.reg is already coalesced away, return false.
   // It's not possible to determine whether it's safe to perform the coalescing.
-  for (MachineRegisterInfo::use_nodbg_iterator UI =
-         MRI->use_nodbg_begin(IntA.reg),
-       UE = MRI->use_nodbg_end(); UI != UE; ++UI) {
-    MachineInstr *UseMI = UI->getParent();
+  for (MachineOperand &MO : MRI->use_nodbg_operands(IntA.reg)) {
+    MachineInstr *UseMI = MO.getParent();
+    unsigned OpNo = &MO - &UseMI->getOperand(0);
     SlotIndex UseIdx = LIS->getInstructionIndex(UseMI);
     LiveInterval::iterator US = IntA.FindSegmentContaining(UseIdx);
     if (US == IntA.end() || US->valno != AValNo)
       continue;
     // If this use is tied to a def, we can't rewrite the register.
-    if (UseMI->isRegTiedToDefOperand(UI.getOperandNo()))
+    if (UseMI->isRegTiedToDefOperand(OpNo))
       return false;
   }
 
@@ -910,10 +909,7 @@ bool RegisterCoalescer::eliminateUndefCopy(MachineInstr *CopyMI,
   DstInt->removeValNo(DeadVNI);
 
   // Find new undef uses.
-  for (MachineRegisterInfo::reg_nodbg_iterator
-         I = MRI->reg_nodbg_begin(DstInt->reg), E = MRI->reg_nodbg_end();
-       I != E; ++I) {
-    MachineOperand &MO = *I;
+  for (MachineOperand &MO : MRI->reg_nodbg_operands(DstInt->reg)) {
     if (MO.isDef() || MO.isUndef())
       continue;
     MachineInstr *MI = MO.getParent();

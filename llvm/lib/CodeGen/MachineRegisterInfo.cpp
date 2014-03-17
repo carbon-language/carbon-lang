@@ -77,11 +77,11 @@ MachineRegisterInfo::recomputeRegClass(unsigned Reg, const TargetMachine &TM) {
     return false;
 
   // Accumulate constraints from all uses.
-  for (reg_nodbg_iterator I = reg_nodbg_begin(Reg), E = reg_nodbg_end(); I != E;
-       ++I) {
+  for (MachineOperand &MO : reg_nodbg_operands(Reg)) {
     // Apply the effect of the given operand to NewRC.
-    MachineInstr *MI = I->getParent();
-    NewRC = MI->getRegClassConstraintEffect(I.getOperandNo(), NewRC, TII,
+    MachineInstr *MI = MO.getParent();
+    unsigned OpNo = &MO - &MI->getOperand(0);
+    NewRC = MI->getRegClassConstraintEffect(OpNo, NewRC, TII,
                                             getTargetRegisterInfo());
     if (!NewRC || NewRC == OldRC)
       return false;
@@ -126,8 +126,8 @@ void MachineRegisterInfo::clearVirtRegs() {
 void MachineRegisterInfo::verifyUseList(unsigned Reg) const {
 #ifndef NDEBUG
   bool Valid = true;
-  for (reg_iterator I = reg_begin(Reg), E = reg_end(); I != E; ++I) {
-    MachineOperand *MO = &*I;
+  for (MachineOperand &M : reg_operands(Reg)) {
+    MachineOperand *MO = &M;
     MachineInstr *MI = MO->getParent();
     if (!MI) {
       errs() << PrintReg(Reg, getTargetRegisterInfo())
@@ -329,8 +329,8 @@ bool MachineRegisterInfo::hasOneNonDBGUse(unsigned RegNo) const {
 /// optimization passes which extend register lifetimes and need only
 /// preserve conservative kill flag information.
 void MachineRegisterInfo::clearKillFlags(unsigned Reg) const {
-  for (use_iterator UI = use_begin(Reg), UE = use_end(); UI != UE; ++UI)
-    UI->setIsKill(false);
+  for (MachineOperand &MO : use_operands(Reg))
+    MO.setIsKill(false);
 }
 
 bool MachineRegisterInfo::isLiveIn(unsigned Reg) const {
@@ -392,8 +392,8 @@ MachineRegisterInfo::EmitLiveInCopies(MachineBasicBlock *EntryMBB,
 
 #ifndef NDEBUG
 void MachineRegisterInfo::dumpUses(unsigned Reg) const {
-  for (use_iterator I = use_begin(Reg), E = use_end(); I != E; ++I)
-    I->getParent()->dump();
+  for (MachineInstr &I : use_instructions(Reg))
+    I.dump();
 }
 #endif
 

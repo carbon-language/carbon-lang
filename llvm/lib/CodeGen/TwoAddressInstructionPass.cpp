@@ -315,9 +315,7 @@ bool TwoAddressInstructionPass::noUseAfterLastDef(unsigned Reg, unsigned Dist,
                                                   unsigned &LastDef) {
   LastDef = 0;
   unsigned LastUse = Dist;
-  for (MachineRegisterInfo::reg_iterator I = MRI->reg_begin(Reg),
-         E = MRI->reg_end(); I != E; ++I) {
-    MachineOperand &MO = *I;
+  for (MachineOperand &MO : MRI->reg_operands(Reg)) {
     MachineInstr *MI = MO.getParent();
     if (MI->getParent() != MBB || MI->isDebugValue())
       continue;
@@ -914,19 +912,17 @@ rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
 /// instruction too close to the defs of its register dependencies.
 bool TwoAddressInstructionPass::isDefTooClose(unsigned Reg, unsigned Dist,
                                               MachineInstr *MI) {
-  for (MachineRegisterInfo::def_instr_iterator DI = MRI->def_instr_begin(Reg),
-         DE = MRI->def_instr_end(); DI != DE; ++DI) {
-    MachineInstr *DefMI = &*DI;
-    if (DefMI->getParent() != MBB || DefMI->isCopy() || DefMI->isCopyLike())
+  for (MachineInstr &DefMI : MRI->def_instructions(Reg)) {
+    if (DefMI.getParent() != MBB || DefMI.isCopy() || DefMI.isCopyLike())
       continue;
-    if (DefMI == MI)
+    if (&DefMI == MI)
       return true; // MI is defining something KillMI uses
-    DenseMap<MachineInstr*, unsigned>::iterator DDI = DistanceMap.find(DefMI);
+    DenseMap<MachineInstr*, unsigned>::iterator DDI = DistanceMap.find(&DefMI);
     if (DDI == DistanceMap.end())
       return true;  // Below MI
     unsigned DefDist = DDI->second;
     assert(Dist > DefDist && "Visited def already?");
-    if (TII->getInstrLatency(InstrItins, DefMI) > (Dist - DefDist))
+    if (TII->getInstrLatency(InstrItins, &DefMI) > (Dist - DefDist))
       return true;
   }
   return false;

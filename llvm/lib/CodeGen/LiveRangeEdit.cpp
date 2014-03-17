@@ -167,10 +167,8 @@ bool LiveRangeEdit::foldAsLoad(LiveInterval *LI,
   MachineInstr *DefMI = 0, *UseMI = 0;
 
   // Check that there is a single def and a single use.
-  for (MachineRegisterInfo::reg_nodbg_iterator I = MRI.reg_nodbg_begin(LI->reg),
-       E = MRI.reg_nodbg_end(); I != E; ++I) {
-    MachineOperand &MO = *I;
-    MachineInstr *MI = I->getParent();
+  for (MachineOperand &MO : MRI.reg_nodbg_operands(LI->reg)) {
+    MachineInstr *MI = MO.getParent();
     if (MO.isDef()) {
       if (DefMI && DefMI != MI)
         return false;

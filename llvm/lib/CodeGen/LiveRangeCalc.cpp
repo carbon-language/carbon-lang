@@ -41,9 +41,8 @@ void LiveRangeCalc::createDeadDefs(LiveRange &LR, unsigned Reg) {
 
   // Visit all def operands. If the same instruction has multiple defs of Reg,
   // LR.createDeadDef() will deduplicate.
-  for (MachineRegisterInfo::def_iterator
-       I = MRI->def_begin(Reg), E = MRI->def_end(); I != E; ++I) {
-    const MachineInstr *MI = I->getParent();
+  for (MachineOperand &MO : MRI->def_operands(Reg)) {
+    const MachineInstr *MI = MO.getParent();
     // Find the corresponding slot index.
     SlotIndex Idx;
     if (MI->isPHI())
@@ -52,7 +51,7 @@ void LiveRangeCalc::createDeadDefs(LiveRange &LR, unsigned Reg) {
     else
       // Instructions are either normal 'r', or early clobber 'e'.
       Idx = Indexes->getInstructionIndex(MI)
-        .getRegSlot(I->isEarlyClobber());
+        .getRegSlot(MO.isEarlyClobber());
 
     // Create the def in LR. This may find an existing def.
     LR.createDeadDef(Idx, *Alloc);
@@ -64,9 +63,7 @@ void LiveRangeCalc::extendToUses(LiveRange &LR, unsigned Reg) {
   assert(MRI && Indexes && "call reset() first");
 
   // Visit all operands that read Reg. This may include partial defs.
-  for (MachineRegisterInfo::reg_nodbg_iterator I = MRI->reg_nodbg_begin(Reg),
-       E = MRI->reg_nodbg_end(); I != E; ++I) {
-    MachineOperand &MO = *I;
+  for (MachineOperand &MO : MRI->reg_nodbg_operands(Reg)) {
     // Clear all kill flags. They will be reinserted after register allocation
     // by LiveIntervalAnalysis::addKillFlags().
     if (MO.isUse())
@@ -75,7 +72,8 @@ void LiveRangeCalc::extendToUses(LiveRange &LR, unsigned Reg) {
       continue;
     // MI is reading Reg. We may have visited MI before if it happens to be
     // reading Reg multiple times. That is OK, extend() is idempotent.
-    const MachineInstr *MI = I->getParent();
+    const MachineInstr *MI = MO.getParent();
+    unsigned OpNo = (&MO - &MI->getOperand(0));
 
     // Find the SlotIndex being read.
     SlotIndex Idx;
@@ -83,7 +81,7 @@ void LiveRangeCalc::extendToUses(LiveRange &LR, unsigned Reg) {
       assert(!MO.isDef() && "Cannot handle PHI def of partial register.");
       // PHI operands are paired: (Reg, PredMBB).
       // Extend the live range to be live-out from PredMBB.
-      Idx = Indexes->getMBBEndIdx(MI->getOperand(I.getOperandNo()+1).getMBB());
+      Idx = Indexes->getMBBEndIdx(MI->getOperand(OpNo+1).getMBB());
     } else {
       // This is a normal instruction.
       Idx = Indexes->getInstructionIndex(MI).getRegSlot();
@@ -92,7 +90,7 @@ void LiveRangeCalc::extendToUses(LiveRange &LR, unsigned Reg) {
       if (MO.isDef()) {
         if (MO.isEarlyClobber())
           Idx = Idx.getRegSlot(true);
-      } else if (MI->isRegTiedToDefOperand(I.getOperandNo(), &DefIdx)) {
+      } else if (MI->isRegTiedToDefOperand(OpNo, &DefIdx)) {
         // FIXME: This would be a lot easier if tied early-clobber uses also
         // had an early-clobber flag.
         if (MI->getOperand(DefIdx).isEarlyClobber())

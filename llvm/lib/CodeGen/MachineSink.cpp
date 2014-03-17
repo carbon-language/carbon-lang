@@ -171,13 +171,12 @@ MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
   //   Predecessors according to CFG: BB#0 BB#1
   //     %reg16386<def> = PHI %reg16434, <BB#0>, %reg16385, <BB#1>
   BreakPHIEdge = true;
-  for (MachineRegisterInfo::use_nodbg_iterator
-         I = MRI->use_nodbg_begin(Reg), E = MRI->use_nodbg_end();
-       I != E; ++I) {
-    MachineInstr *UseInst = I->getParent();
+  for (MachineOperand &MO : MRI->use_nodbg_operands(Reg)) {
+    MachineInstr *UseInst = MO.getParent();
+    unsigned OpNo = &MO - &UseInst->getOperand(0);
     MachineBasicBlock *UseBlock = UseInst->getParent();
     if (!(UseBlock == MBB && UseInst->isPHI() &&
-          UseInst->getOperand(I.getOperandNo()+1).getMBB() == DefMBB)) {
+          UseInst->getOperand(OpNo+1).getMBB() == DefMBB)) {
       BreakPHIEdge = false;
       break;
     }
@@ -185,16 +184,15 @@ MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
   if (BreakPHIEdge)
     return true;
 
-  for (MachineRegisterInfo::use_nodbg_iterator
-         I = MRI->use_nodbg_begin(Reg), E = MRI->use_nodbg_end();
-       I != E; ++I) {
+  for (MachineOperand &MO : MRI->use_nodbg_operands(Reg)) {
     // Determine the block of the use.
-    MachineInstr *UseInst = I->getParent();
+    MachineInstr *UseInst = MO.getParent();
+    unsigned OpNo = &MO - &UseInst->getOperand(0);
     MachineBasicBlock *UseBlock = UseInst->getParent();
     if (UseInst->isPHI()) {
       // PHI nodes use the operand in the predecessor block, not the block with
       // the PHI.
-      UseBlock = UseInst->getOperand(I.getOperandNo()+1).getMBB();
+      UseBlock = UseInst->getOperand(OpNo+1).getMBB();
     } else if (UseBlock == DefMBB) {
       LocalUse = true;
       return false;
@@ -450,12 +448,9 @@ bool MachineSinking::isProfitableToSinkTo(unsigned Reg, MachineInstr *MI,
 
   // Check if only use in post dominated block is PHI instruction.
   bool NonPHIUse = false;
-  for (MachineRegisterInfo::use_instr_nodbg_iterator
-         I = MRI->use_instr_nodbg_begin(Reg), E = MRI->use_instr_nodbg_end();
-       I != E; ++I) {
-    MachineInstr *UseInst = &*I;
-    MachineBasicBlock *UseBlock = UseInst->getParent();
-    if (UseBlock == SuccToSinkTo && !UseInst->isPHI())
+  for (MachineInstr &UseInst : MRI->use_nodbg_instructions(Reg)) {
+    MachineBasicBlock *UseBlock = UseInst.getParent();
+    if (UseBlock == SuccToSinkTo && !UseInst.isPHI())
       NonPHIUse = true;
   }
   if (!NonPHIUse)

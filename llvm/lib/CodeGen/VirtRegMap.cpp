@@ -418,10 +418,8 @@ void VirtRegRewriter::rewrite() {
       // Check if this register has a use that will impact the rest of the
       // code. Uses in debug and noreturn instructions do not impact the
       // generated code.
-      for (MachineRegisterInfo::reg_instr_nodbg_iterator It =
-             MRI->reg_instr_nodbg_begin(Reg),
-             EndIt = MRI->reg_instr_nodbg_end(); It != EndIt; ++It) {
-        if (!NoReturnInsts.count(&(*It))) {
+      for (MachineInstr &It : MRI->reg_nodbg_instructions(Reg)) {
+        if (!NoReturnInsts.count(&It)) {
           MRI->setPhysRegUsed(Reg);
           break;
         }
