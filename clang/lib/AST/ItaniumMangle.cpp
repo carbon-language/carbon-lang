@@ -2299,9 +2299,8 @@ void CXXNameMangler::mangleType(const ObjCObjectType *T) {
     SmallString<64> QualStr;
     llvm::raw_svector_ostream QualOS(QualStr);
     QualOS << "objcproto";
-    ObjCObjectType::qual_iterator i = T->qual_begin(), e = T->qual_end();
-    for ( ; i != e; ++i) {
-      StringRef name = (*i)->getName();
+    for (const auto *I : T->quals()) {
+      StringRef name = I->getName();
       QualOS << name.size() << name;
     }
     QualOS.flush();

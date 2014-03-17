@@ -1259,13 +1259,12 @@ void TypePrinter::printObjCObjectBefore(const ObjCObjectType *T,
   print(T->getBaseType(), OS, StringRef());
   OS << '<';
   bool isFirst = true;
-  for (ObjCObjectType::qual_iterator
-         I = T->qual_begin(), E = T->qual_end(); I != E; ++I) {
+  for (const auto *I : T->quals()) {
     if (isFirst)
       isFirst = false;
     else
       OS << ',';
-    OS << (*I)->getName();
+    OS << I->getName();
   }
   OS << '>';
   spaceBeforePlaceHolder(OS);

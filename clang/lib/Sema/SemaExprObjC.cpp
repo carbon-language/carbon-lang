@@ -1464,9 +1464,8 @@ ObjCMethodDecl *Sema::LookupMethodInObjectType(Selector sel, QualType type,
   }
 
   // Check qualifiers.
-  for (ObjCObjectType::qual_iterator
-         i = objType->qual_begin(), e = objType->qual_end(); i != e; ++i)
-    if (ObjCMethodDecl *method = (*i)->lookupMethod(sel, isInstance))
+  for (const auto *I : objType->quals())
+    if (ObjCMethodDecl *method = I->lookupMethod(sel, isInstance))
       return method;
 
   return 0;

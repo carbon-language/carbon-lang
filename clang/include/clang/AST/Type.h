@@ -4350,7 +4350,9 @@ public:
   ObjCInterfaceDecl *getInterface() const;
 
   typedef ObjCProtocolDecl * const *qual_iterator;
+  typedef llvm::iterator_range<qual_iterator> qual_range;
 
+  qual_range quals() const { return qual_range(qual_begin(), qual_end()); }
   qual_iterator qual_begin() const { return getProtocolStorage(); }
   qual_iterator qual_end() const { return qual_begin() + getNumProtocols(); }
 

@@ -1780,11 +1780,9 @@ QualType ASTNodeImporter::VisitObjCObjectType(const ObjCObjectType *T) {
     return QualType();
 
   SmallVector<ObjCProtocolDecl *, 4> Protocols;
-  for (ObjCObjectType::qual_iterator P = T->qual_begin(), 
-                                     PEnd = T->qual_end();
-       P != PEnd; ++P) {
+  for (auto *P : T->quals()) {
     ObjCProtocolDecl *Protocol
-      = dyn_cast_or_null<ObjCProtocolDecl>(Importer.Import(*P));
+      = dyn_cast_or_null<ObjCProtocolDecl>(Importer.Import(P));
     if (!Protocol)
       return QualType();
     Protocols.push_back(Protocol);

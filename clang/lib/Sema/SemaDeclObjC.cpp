@@ -616,9 +616,8 @@ void Sema::ActOnTypedefedProtocols(SmallVectorImpl<Decl *> &ProtocolRefs,
     QualType T = TDecl->getUnderlyingType();
     if (T->isObjCObjectType())
       if (const ObjCObjectType *OPT = T->getAs<ObjCObjectType>())
-        for (ObjCObjectType::qual_iterator I = OPT->qual_begin(),
-             E = OPT->qual_end(); I != E; ++I)
-          ProtocolRefs.push_back(*I);
+        for (auto *I : OPT->quals())
+          ProtocolRefs.push_back(I);
   }
 }
 

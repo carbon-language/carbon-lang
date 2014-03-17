@@ -401,9 +401,8 @@ void ASTTypeWriter::VisitObjCInterfaceType(const ObjCInterfaceType *T) {
 void ASTTypeWriter::VisitObjCObjectType(const ObjCObjectType *T) {
   Writer.AddTypeRef(T->getBaseType(), Record);
   Record.push_back(T->getNumProtocols());
-  for (ObjCObjectType::qual_iterator I = T->qual_begin(),
-       E = T->qual_end(); I != E; ++I)
-    Writer.AddDeclRef(*I, Record);
+  for (const auto *I : T->quals())
+    Writer.AddDeclRef(I, Record);
   Code = TYPE_OBJC_OBJECT;
 }
 

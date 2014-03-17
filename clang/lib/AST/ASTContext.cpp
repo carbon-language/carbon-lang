@@ -6706,16 +6706,9 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectType *LHS,
       if (SuperClassInheritedProtocols.empty())
         return false;
       
-      for (ObjCObjectType::qual_iterator LHSPI = LHS->qual_begin(),
-           LHSPE = LHS->qual_end();
-           LHSPI != LHSPE; LHSPI++) {
-        bool SuperImplementsProtocol = false;
-        ObjCProtocolDecl *LHSProto = (*LHSPI);
-        
-        for (llvm::SmallPtrSet<ObjCProtocolDecl*,8>::iterator I =
-             SuperClassInheritedProtocols.begin(),
-             E = SuperClassInheritedProtocols.end(); I != E; ++I) {
-          ObjCProtocolDecl *SuperClassProto = (*I);
+      for (const auto *LHSProto : LHS->quals()) {
+        bool SuperImplementsProtocol = false;        
+        for (auto *SuperClassProto : SuperClassInheritedProtocols) {
           if (SuperClassProto->lookupProtocolNamed(LHSProto->getIdentifier())) {
             SuperImplementsProtocol = true;
             break;
@@ -6729,17 +6722,13 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectType *LHS,
     return false;
   }
 
-  for (ObjCObjectType::qual_iterator LHSPI = LHS->qual_begin(),
-                                     LHSPE = LHS->qual_end();
-       LHSPI != LHSPE; LHSPI++) {
+  for (const auto *LHSPI : LHS->quals()) {
     bool RHSImplementsProtocol = false;
 
     // If the RHS doesn't implement the protocol on the left, the types
     // are incompatible.
-    for (ObjCObjectType::qual_iterator RHSPI = RHS->qual_begin(),
-                                       RHSPE = RHS->qual_end();
-         RHSPI != RHSPE; RHSPI++) {
-      if ((*RHSPI)->lookupProtocolNamed((*LHSPI)->getIdentifier())) {
+    for (auto *RHSPI : RHS->quals()) {
+      if (RHSPI->lookupProtocolNamed(LHSPI->getIdentifier())) {
         RHSImplementsProtocol = true;
         break;
       }
