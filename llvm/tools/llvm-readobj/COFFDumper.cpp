@@ -1022,9 +1022,11 @@ void COFFDumper::printSymbol(symbol_iterator SymI) {
       DictScope AS(W, "AuxFileRecord");
       W.printString("FileName", StringRef(Aux->FileName));
 
+    // C++/CLI creates external ABS symbols for non-const appdomain globals.
+    // These are also followed by an auxiliary section definition.
     } else if (Symbol->StorageClass == COFF::IMAGE_SYM_CLASS_STATIC ||
                (Symbol->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
-                Symbol->SectionNumber != COFF::IMAGE_SYM_UNDEFINED)) {
+                Symbol->SectionNumber == COFF::IMAGE_SYM_ABSOLUTE)) {
       const coff_aux_section_definition *Aux;
       if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
         break;
