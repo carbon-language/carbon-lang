@@ -6,6 +6,7 @@
         .data
         .globl	sym_a
         .byte 42
+        .type sym_a, @object
 sym_a:
 
 // CHECK:       Symbol {
@@ -13,7 +14,7 @@ sym_a:
 // CHECK-NEXT:    Value: 0x1
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global
-// CHECK-NEXT:    Type: None
+// CHECK-NEXT:    Type: Object
 // CHECK-NEXT:    Other: 0
 // CHECK-NEXT:    Section: .data
 // CHECK-NEXT:  }
@@ -28,7 +29,7 @@ sym_c = sym_a
 // CHECK-NEXT:    Value: 0x1
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global
-// CHECK-NEXT:    Type: None
+// CHECK-NEXT:    Type: Object
 // CHECK-NEXT:    Other: 0
 // CHECK-NEXT:    Section: .data
 // CHECK-NEXT:  }
@@ -40,7 +41,7 @@ sym_d = sym_a + 1
 // CHECK-NEXT:    Value: 0x2
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global
-// CHECK-NEXT:    Type: None
+// CHECK-NEXT:    Type: Object
 // CHECK-NEXT:    Other: 0
 // CHECK-NEXT:    Section: .data
 // CHECK-NEXT:  }
@@ -52,7 +53,20 @@ sym_e = sym_a + (sym_b - sym_a) * 3
 // CHECK-NEXT:    Value: 0xD
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global
-// CHECK-NEXT:    Type: None
+// CHECK-NEXT:    Type: Object
+// CHECK-NEXT:    Other: 0
+// CHECK-NEXT:    Section: .data
+// CHECK-NEXT:  }
+
+
+        .globl sym_f
+sym_f = sym_a + (1 - 1)
+// CHECK:       Symbol {
+// CHECK:         Name: sym_f
+// CHECK-NEXT:    Value: 0x1
+// CHECK-NEXT:    Size: 0
+// CHECK-NEXT:    Binding: Global
+// CHECK-NEXT:    Type: Object
 // CHECK-NEXT:    Other: 0
 // CHECK-NEXT:    Section: .data
 // CHECK-NEXT:  }

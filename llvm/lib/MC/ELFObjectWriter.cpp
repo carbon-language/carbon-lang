@@ -580,8 +580,9 @@ void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
                                   ELFSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   MCSymbolData &OrigData = *MSD.SymbolData;
-  MCSymbolData &Data =
-    Layout.getAssembler().getSymbolData(OrigData.getSymbol().AliasedSymbol());
+  const MCSymbol *Base = OrigData.getSymbol().getBaseSymbol(Layout);
+  const MCSymbolData &Data =
+      Base ? Layout.getAssembler().getSymbolData(*Base) : OrigData;
 
   bool IsReserved = Data.isCommon() || Data.getSymbol().isAbsolute() ||
     Data.getSymbol().isVariable();
