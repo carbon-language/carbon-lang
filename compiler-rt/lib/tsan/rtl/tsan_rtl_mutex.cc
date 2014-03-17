@@ -419,6 +419,7 @@ void AcquireReleaseImpl(ThreadState *thr, uptr pc, SyncClock *c) {
 }
 
 void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
+#ifndef TSAN_GO
   if (r == 0)
     return;
   Context *ctx = CTX();
@@ -438,6 +439,7 @@ void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
   trace.ObtainCurrent(thr, pc);
   rep.AddStack(&trace);
   OutputReport(ctx, rep);
+#endif  // TSAN_GO
 }
 
 }  // namespace __tsan
