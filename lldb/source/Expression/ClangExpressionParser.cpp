@@ -55,11 +55,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/TargetSelect.h"
 
-#if defined (USE_STANDARD_JIT)
-#include "llvm/ExecutionEngine/JIT.h"
-#else
-#include "llvm/ExecutionEngine/MCJIT.h"
-#endif
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/ErrorHandling.h"
