@@ -985,7 +985,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
     } else if (
         Symbol->StorageClass   == COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL ||
         (Symbol->StorageClass  == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
-         Symbol->SectionNumber == 0 &&
+         Symbol->SectionNumber == COFF::IMAGE_SYM_UNDEFINED &&
          Symbol->Value         == 0)) {
       const coff_aux_weak_external_definition *Aux;
       if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))

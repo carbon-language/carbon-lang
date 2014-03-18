@@ -30,6 +30,9 @@
 namespace llvm {
 namespace COFF {
 
+  // The maximum number of sections that a COFF object can have (inclusive).
+  const int MaxNumberOfSections = 65299;
+
   // The PE signature bytes that follows the DOS stub header.
   static const char PEMagic[] = { 'P', 'E', '\0', '\0' };
 
@@ -624,6 +627,10 @@ namespace COFF {
     DEBUG_STRING_TABLE_SUBSECTION = 0xF3,
     DEBUG_INDEX_SUBSECTION        = 0xF4
   };
+
+  inline bool isReservedSectionNumber(int N) {
+    return N == IMAGE_SYM_UNDEFINED || N > MaxNumberOfSections;
+  }
 
 } // End namespace COFF.
 } // End namespace llvm.

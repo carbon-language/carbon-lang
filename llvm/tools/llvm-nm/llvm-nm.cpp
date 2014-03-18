@@ -27,6 +27,7 @@
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/COFF.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
@@ -317,9 +318,7 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
     return Ret;
 
   uint32_t Characteristics = 0;
-  if (Symb->SectionNumber > 0 &&
-      Symb->SectionNumber != llvm::COFF::IMAGE_SYM_DEBUG &&
-      Symb->SectionNumber != llvm::COFF::IMAGE_SYM_ABSOLUTE) {
+  if (!COFF::isReservedSectionNumber(Symb->SectionNumber)) {
     section_iterator SecI = Obj.section_end();
     if (error(SymI->getSection(SecI)))
       return '?';

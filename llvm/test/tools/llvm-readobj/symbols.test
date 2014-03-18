@@ -5,6 +5,24 @@ RUN:   | FileCheck %s -check-prefix ELF
 
 COFF:      Symbols [
 COFF-NEXT:   Symbol {
+COFF-NEXT:     Name: @comp.id
+COFF-NEXT:    Value: 14766605
+COFF-NEXT:    Section:  (65535)
+COFF-NEXT:     BaseType: Null (0x0)
+COFF-NEXT:     ComplexType: Null (0x0)
+COFF-NEXT:    StorageClass: Static (0x3)
+COFF-NEXT:    AuxSymbolCount: 0
+COFF-NEXT:   }
+COFF-NEXT:   Symbol {
+COFF-NEXT:    Name: @feat.00
+COFF-NEXT:    Value: 2147484049
+COFF-NEXT:     Section:  (65535)
+COFF-NEXT:     BaseType: Null (0x0)
+COFF-NEXT:    ComplexType: Null (0x0)
+COFF-NEXT:    StorageClass: Static (0x3)
+COFF-NEXT:     AuxSymbolCount: 0
+COFF-NEXT:   }
+COFF-NEXT:   Symbol {
 COFF-NEXT:     Name: .text
 COFF-NEXT:     Value: 0
 COFF-NEXT:     Section: .text (1)

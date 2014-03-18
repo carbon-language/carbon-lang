@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cctype>
@@ -177,7 +178,7 @@ error_code COFFObjectFile::getSymbolType(DataRefImpl Ref,
     Result = SymbolRef::ST_Function;
   } else {
     uint32_t Characteristics = 0;
-    if (Symb->SectionNumber > 0) {
+    if (!COFF::isReservedSectionNumber(Symb->SectionNumber)) {
       const coff_section *Section = NULL;
       if (error_code EC = getSection(Symb->SectionNumber, Section))
         return EC;
@@ -239,9 +240,9 @@ error_code COFFObjectFile::getSymbolSize(DataRefImpl Ref,
 error_code COFFObjectFile::getSymbolSection(DataRefImpl Ref,
                                             section_iterator &Result) const {
   const coff_symbol *Symb = toSymb(Ref);
-  if (Symb->SectionNumber <= COFF::IMAGE_SYM_UNDEFINED)
+  if (COFF::isReservedSectionNumber(Symb->SectionNumber)) {
     Result = section_end();
-  else {
+  } else {
     const coff_section *Sec = 0;
     if (error_code EC = getSection(Symb->SectionNumber, Sec)) return EC;
     DataRefImpl Ref;
@@ -721,9 +722,7 @@ error_code COFFObjectFile::getDataDirectory(uint32_t Index,
 error_code COFFObjectFile::getSection(int32_t Index,
                                       const coff_section *&Result) const {
   // Check for special index values.
-  if (Index == COFF::IMAGE_SYM_UNDEFINED ||
-      Index == COFF::IMAGE_SYM_ABSOLUTE ||
-      Index == COFF::IMAGE_SYM_DEBUG)
+  if (COFF::isReservedSectionNumber(Index))
     Result = NULL;
   else if (Index > 0 && Index <= COFFHeader->NumberOfSections)
     // We already verified the section table data, so no need to check again.

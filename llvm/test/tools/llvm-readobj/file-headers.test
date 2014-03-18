@@ -39,7 +39,7 @@ COFF32-NEXT:   Machine: IMAGE_FILE_MACHINE_I386 (0x14C)
 COFF32-NEXT:   SectionCount: 2
 COFF32-NEXT:   TimeDateStamp: 2013-03-20 17:56:46 (0x5149F85E)
 COFF32-NEXT:   PointerToSymbolTable: 0xA5
-COFF32-NEXT:   SymbolCount: 7
+COFF32-NEXT:   SymbolCount: 9
 COFF32-NEXT:   OptionalHeaderSize: 0
 COFF32-NEXT:   Characteristics [ (0x0)
 COFF32-NEXT:   ]
