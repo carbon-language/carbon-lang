@@ -125,7 +125,7 @@ void testImplicitSpecialMembers(SomeTemplate<char[1]> &a,
 // CHECK-NAMESPACE-N-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-NAMESPACE-N-NEXT: `-FunctionTemplate {{.*}} 'f'
 
-// CHECK-DUMP:      ClassTemplateDecl {{.*}} <{{.*}}/cxx-templates-common.h:1:1, {{.*}}> in cxx_templates_common SomeTemplate
+// CHECK-DUMP:      ClassTemplateDecl {{.*}} <{{.*[/\\]}}cxx-templates-common.h:1:1, {{.*}}> in cxx_templates_common SomeTemplate
 // CHECK-DUMP:        ClassTemplateSpecializationDecl {{.*}} prev [[CHAR2:[^ ]*]] {{.*}} SomeTemplate
 // CHECK-DUMP-NEXT:     TemplateArgument type 'char [2]'
 // CHECK-DUMP:        ClassTemplateSpecializationDecl [[CHAR2]] {{.*}} SomeTemplate definition
