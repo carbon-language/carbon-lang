@@ -249,8 +249,6 @@ class MemorySanitizer : public FunctionPass {
 
   /// \brief The run-time callback to print a warning.
   Value *WarningFn;
-  /// \brief Run-time helper that copies origin info for a memory range.
-  Value *MsanCopyOriginFn;
   /// \brief Run-time helper that generates a new origin value for a stack
   /// allocation.
   Value *MsanSetAllocaOrigin4Fn;
@@ -324,9 +322,6 @@ void MemorySanitizer::initializeCallbacks(Module &M) {
                                         : "__msan_warning_noreturn";
   WarningFn = M.getOrInsertFunction(WarningFnName, IRB.getVoidTy(), NULL);
 
-  MsanCopyOriginFn = M.getOrInsertFunction(
-    "__msan_copy_origin", IRB.getVoidTy(), IRB.getInt8PtrTy(),
-    IRB.getInt8PtrTy(), IntptrTy, NULL);
   MsanSetAllocaOrigin4Fn = M.getOrInsertFunction(
     "__msan_set_alloca_origin4", IRB.getVoidTy(), IRB.getInt8PtrTy(), IntptrTy,
     IRB.getInt8PtrTy(), IntptrTy, NULL);
