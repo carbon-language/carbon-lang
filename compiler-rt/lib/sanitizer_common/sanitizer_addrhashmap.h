@@ -229,6 +229,7 @@ void AddrHashMap<T, kSize>::acquire(Handle *h) {
     // Allocate a new add array.
     const uptr kInitSize = 64;
     add = (AddBucket*)InternalAlloc(kInitSize);
+    internal_memset(add, 0, kInitSize);
     add->cap = (kInitSize - sizeof(*add)) / sizeof(add->cells[0]) + 1;
     add->size = 0;
     atomic_store(&b->add, (uptr)add, memory_order_relaxed);
@@ -237,7 +238,8 @@ void AddrHashMap<T, kSize>::acquire(Handle *h) {
     // Grow existing add array.
     uptr oldsize = sizeof(*add) + (add->cap - 1) * sizeof(add->cells[0]);
     uptr newsize = oldsize * 2;
-    AddBucket *add1 = (AddBucket*)InternalAlloc(oldsize * 2);
+    AddBucket *add1 = (AddBucket*)InternalAlloc(newsize);
+    internal_memset(add1, 0, newsize);
     add1->cap = (newsize - sizeof(*add)) / sizeof(add->cells[0]) + 1;
     add1->size = add->size;
     internal_memcpy(add1->cells, add->cells, add->size * sizeof(add->cells[0]));
@@ -248,6 +250,7 @@ void AddrHashMap<T, kSize>::acquire(Handle *h) {
   // Store.
   uptr i = add->size++;
   Cell *c = &add->cells[i];
+  CHECK_EQ(atomic_load(&c->addr, memory_order_relaxed), 0);
   h->addidx_ = i;
   h->cell_ = c;
 }
@@ -274,18 +277,22 @@ void AddrHashMap<T, kSize>::release(Handle *h) {
     AddBucket *add = (AddBucket*)atomic_load(&b->add, memory_order_relaxed);
     if (h->addidx_ == -1U) {
       // Removed from embed array, move an add element into the freed cell.
-      if (add) {
+      if (add && add->size != 0) {
         uptr last = --add->size;
         Cell *c1 = &add->cells[last];
         c->val = c1->val;
         uptr addr1 = atomic_load(&c1->addr, memory_order_relaxed);
         atomic_store(&c->addr, addr1, memory_order_release);
+        atomic_store(&c1->addr, 0, memory_order_release);
       }
     } else {
       // Removed from add array, compact it.
       uptr last = --add->size;
       Cell *c1 = &add->cells[last];
-      *c = *c1;
+      if (c != c1) {
+        *c = *c1;
+        atomic_store(&c1->addr, 0, memory_order_relaxed);
+      }
     }
     if (add && add->size == 0) {
       // FIXME(dvyukov): free add?
