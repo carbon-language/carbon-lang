@@ -18,6 +18,7 @@
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
+  class MCAsmLayout;
   class MCExpr;
   class MCSection;
   class MCContext;
@@ -144,6 +145,11 @@ namespace llvm {
     // we ultimately point to. For a non-alias, this just returns the symbol
     // itself.
     const MCSymbol &AliasedSymbol() const;
+
+    // If this symbol is not a variable, return itself. If it is a variable,
+    // evaluate it and check if it is of the form Base + ConstantOffset. If so,
+    // return Base, if not, return nullptr.
+    const MCSymbol *getBaseSymbol(const MCAsmLayout &Layout) const;
 
     void setVariableValue(const MCExpr *Value);
 
