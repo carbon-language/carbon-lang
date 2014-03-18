@@ -134,22 +134,7 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
                                           VarDecl *D) {
   DSAVarData DVar;
   if (Iter == Stack.rend() - 1) {
-    // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
-    // in a region but not in construct]
-    //  File-scope or namespace-scope variables referenced in called routines
-    //  in the region are shared unless they appear in a threadprivate
-    //  directive.
-    // TODO
-    if (!D->isFunctionOrMethodVarDecl())
-      DVar.CKind = OMPC_shared;
-
-    // OpenMP [2.9.1.2, Data-sharing Attribute Rules for Variables Referenced
-    // in a region but not in construct]
-    //  Variables with static storage duration that are declared in called
-    //  routines in the region are shared.
-    if (D->hasGlobalStorage())
-      DVar.CKind = OMPC_shared;
-
+    DVar.CKind = OMPC_shared;
     return DVar;
   }
 
