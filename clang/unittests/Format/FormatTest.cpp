@@ -2287,30 +2287,30 @@ TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
                    "  ifstream(x)\n >> x;\n"
                    "}\n"));
   EXPECT_EQ("int q() {\n"
-            "  f(x)\n"
+            "  F(x)\n"
             "  if (1) {\n"
             "  }\n"
-            "  f(x)\n"
+            "  F(x)\n"
             "  while (1) {\n"
             "  }\n"
-            "  f(x)\n"
-            "  g(x);\n"
-            "  f(x)\n"
+            "  F(x)\n"
+            "  G(x);\n"
+            "  F(x)\n"
             "  try {\n"
-            "    q();\n"
+            "    Q();\n"
             "  }\n"
             "  catch (...) {\n"
             "  }\n"
             "}\n",
             format("int q() {\n"
-                   "f(x)\n"
+                   "F(x)\n"
                    "if (1) {}\n"
-                   "f(x)\n"
+                   "F(x)\n"
                    "while (1) {}\n"
-                   "f(x)\n"
-                   "g(x);\n"
-                   "f(x)\n"
-                   "try { q(); } catch (...) {}\n"
+                   "F(x)\n"
+                   "G(x);\n"
+                   "F(x)\n"
+                   "try { Q(); } catch (...) {}\n"
                    "}\n"));
   EXPECT_EQ("class A {\n"
             "  A() : t(0) {}\n"
@@ -2325,6 +2325,27 @@ TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
                    "  A(X x)\n"
                    "  try : t(0) {} catch (...) {}\n"
                    "};"));
+  EXPECT_EQ(
+      "class SomeClass {\n"
+      "public:\n"
+      "  SomeClass() EXCLUSIVE_LOCK_FUNCTION(mu_);\n"
+      "};",
+      format("class SomeClass {\n"
+             "public:\n"
+             "  SomeClass()\n"
+             "  EXCLUSIVE_LOCK_FUNCTION(mu_);\n"
+             "};"));
+  EXPECT_EQ(
+      "class SomeClass {\n"
+      "public:\n"
+      "  SomeClass()\n"
+      "      EXCLUSIVE_LOCK_FUNCTION(mu_);\n"
+      "};",
+      format("class SomeClass {\n"
+             "public:\n"
+             "  SomeClass()\n"
+             "  EXCLUSIVE_LOCK_FUNCTION(mu_);\n"
+             "};", getLLVMStyleWithColumns(40)));
 }
 
 TEST_F(FormatTest, LayoutMacroDefinitionsStatementsSpanningBlocks) {

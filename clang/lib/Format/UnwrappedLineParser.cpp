@@ -726,7 +726,7 @@ void UnwrappedLineParser::parseStructuralElement() {
         if (FormatTok->Tok.is(tok::l_paren)) {
           parseParens();
           if (FormatTok->NewlinesBefore > 0 &&
-              tokenCanStartNewLine(FormatTok->Tok)) {
+              tokenCanStartNewLine(FormatTok->Tok) && Text == Text.upper()) {
             addUnwrappedLine();
             return;
           }
