@@ -276,7 +276,7 @@ TEST_F(CloneFunc, Subprogram) {
   unsigned SubprogramCount = Finder->subprogram_count();
   EXPECT_EQ(2U, SubprogramCount);
 
-  DebugInfoFinder::iterator Iter = Finder->subprogram_begin();
+  auto Iter = Finder->subprograms().begin();
   DISubprogram Sub1(*Iter);
   EXPECT_TRUE(Sub1.Verify());
   Iter++;
@@ -292,7 +292,7 @@ TEST_F(CloneFunc, Subprogram) {
 TEST_F(CloneFunc, SubprogramInRightCU) {
   EXPECT_EQ(2U, Finder->compile_unit_count());
 
-  DebugInfoFinder::iterator Iter = Finder->compile_unit_begin();
+  auto Iter = Finder->compile_units().begin();
   DICompileUnit CU1(*Iter);
   EXPECT_TRUE(CU1.Verify());
   Iter++;

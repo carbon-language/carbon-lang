@@ -306,10 +306,7 @@ bool StripDeadDebugInfo::runOnModule(Module &M) {
   SmallVector<Value *, 64> LiveSubprograms;
   DenseSet<const MDNode *> VisitedSet;
 
-  for (DebugInfoFinder::iterator CI = F.compile_unit_begin(),
-         CE = F.compile_unit_end(); CI != CE; ++CI) {
-    // Create our compile unit.
-    DICompileUnit DIC(*CI);
+  for (DICompileUnit DIC : F.compile_units()) {
     assert(DIC.Verify() && "DIC must verify as a DICompileUnit.");
 
     // Create our live subprogram list.

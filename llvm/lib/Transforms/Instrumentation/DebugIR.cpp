@@ -183,8 +183,8 @@ public:
     if (Finder.compile_unit_count() > 1)
       report_fatal_error("DebugIR pass supports only a signle compile unit per "
                          "Module.");
-    createCompileUnit(
-        Finder.compile_unit_count() == 1 ? *Finder.compile_unit_begin() : 0);
+    createCompileUnit(Finder.compile_unit_count() == 1 ?
+                      (MDNode*)*Finder.compile_units().begin() : 0);
   }
 
   void visitFunction(Function &F) {
@@ -325,14 +325,11 @@ private:
                  << " subprogram nodes"
                  << "\n");
 
-    for (DebugInfoFinder::iterator i = Finder.subprogram_begin(),
-                                   e = Finder.subprogram_end();
-         i != e; ++i) {
-      DISubprogram S(*i);
+    for (DISubprogram S : Finder.subprograms()) {
       if (S.getFunction() == F) {
-        DEBUG(dbgs() << "Found DISubprogram " << *i << " for function "
+        DEBUG(dbgs() << "Found DISubprogram " << S << " for function "
                      << S.getFunction() << "\n");
-        return *i;
+        return S;
       }
     }
     DEBUG(dbgs() << "unable to find DISubprogram node for function "

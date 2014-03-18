@@ -838,10 +838,7 @@ void NVPTXAsmPrinter::recordAndEmitFilenames(Module &M) {
   DbgFinder.processModule(M);
 
   unsigned i = 1;
-  for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
-                                 E = DbgFinder.compile_unit_end();
-       I != E; ++I) {
-    DICompileUnit DIUnit(*I);
+  for (DICompileUnit DIUnit : DbgFinder.compile_units()) {
     StringRef Filename(DIUnit.getFilename());
     StringRef Dirname(DIUnit.getDirectory());
     SmallString<128> FullPathName = Dirname;
@@ -856,10 +853,7 @@ void NVPTXAsmPrinter::recordAndEmitFilenames(Module &M) {
     ++i;
   }
 
-  for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
-                                 E = DbgFinder.subprogram_end();
-       I != E; ++I) {
-    DISubprogram SP(*I);
+  for (DISubprogram SP : DbgFinder.subprograms()) {
     StringRef Filename(SP.getFilename());
     StringRef Dirname(SP.getDirectory());
     SmallString<128> FullPathName = Dirname;

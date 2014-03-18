@@ -154,10 +154,7 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 
 // Find the MDNode which corresponds to the DISubprogram data that described F.
 static MDNode* FindSubprogram(const Function *F, DebugInfoFinder &Finder) {
-  for (DebugInfoFinder::iterator I = Finder.subprogram_begin(),
-                                 E = Finder.subprogram_end();
-       I != E; ++I) {
-    DISubprogram Subprogram(*I);
+  for (DISubprogram Subprogram : Finder.subprograms()) {
     if (Subprogram.describes(F)) return Subprogram;
   }
   return NULL;
@@ -190,10 +187,7 @@ static void CloneDebugInfoMetadata(Function *NewFunc, const Function *OldFunc,
   VMap[OldFunc] = NewFunc;
   DISubprogram NewSubprogram(MapValue(OldSubprogramMDNode, VMap));
 
-  for (DebugInfoFinder::iterator CUIter = Finder.compile_unit_begin(),
-       CUEnd = Finder.compile_unit_end(); CUIter != CUEnd; ++CUIter) {
-    DICompileUnit CU(*CUIter);
-
+  for (DICompileUnit CU : Finder.compile_units()) {
     DIArray Subprograms(CU.getSubprograms());
 
     // If the compile unit's function list contains the old function, it should
