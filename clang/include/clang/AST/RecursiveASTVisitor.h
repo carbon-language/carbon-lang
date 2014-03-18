@@ -1488,35 +1488,59 @@ bool RecursiveASTVisitor<Derived>::TraverseTemplateParameterListHelper(
   return true;
 }
 
-#define DEF_TRAVERSE_TMPL_INST(TMPLDECLKIND)                                 \
-/* A helper method for traversing the implicit instantiations of a
-   class or variable template. */                                            \
-template<typename Derived>                                                   \
-bool RecursiveASTVisitor<Derived>::TraverseTemplateInstantiations(           \
-    TMPLDECLKIND##TemplateDecl *D) {                                         \
-  for (auto *SD : D->specializations()) {                                    \
-    switch (SD->getSpecializationKind()) {                                   \
-    /* Visit the implicit instantiations with the requested pattern. */      \
-    case TSK_Undeclared:                                                     \
-    case TSK_ImplicitInstantiation:                                          \
-      TRY_TO(TraverseDecl(SD));                                              \
-      break;                                                                 \
-                                                                             \
-    /* We don't need to do anything on an explicit instantiation             
-       or explicit specialization because there will be an explicit
-       node for it elsewhere. */                                             \
-    case TSK_ExplicitInstantiationDeclaration:                               \
-    case TSK_ExplicitInstantiationDefinition:                                \
-    case TSK_ExplicitSpecialization:                                         \
-      break;                                                                 \
-    }                                                                        \
-  }                                                                          \
-                                                                             \
-  return true;                                                               \
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseTemplateInstantiations(
+    ClassTemplateDecl *D) {
+  for (auto *SD : D->specializations()) {
+    for (auto *RD : SD->redecls()) {
+      // We don't want to visit injected-class-names in this traversal.
+      if (cast<CXXRecordDecl>(RD)->isInjectedClassName())
+        continue;
+
+      switch (cast<ClassTemplateSpecializationDecl>(RD)->
+                  getSpecializationKind()) {
+      // Visit the implicit instantiations with the requested pattern.
+      case TSK_Undeclared:
+      case TSK_ImplicitInstantiation:
+        TRY_TO(TraverseDecl(RD));
+        break;
+
+      // We don't need to do anything on an explicit instantiation
+      // or explicit specialization because there will be an explicit
+      // node for it elsewhere.
+      case TSK_ExplicitInstantiationDeclaration:
+      case TSK_ExplicitInstantiationDefinition:
+      case TSK_ExplicitSpecialization:
+        break;
+      }
+    }
+  }
+
+  return true;
 }
-   
-DEF_TRAVERSE_TMPL_INST(Class)
-DEF_TRAVERSE_TMPL_INST(Var)
+
+template<typename Derived>
+bool RecursiveASTVisitor<Derived>::TraverseTemplateInstantiations(
+    VarTemplateDecl *D) {
+  for (auto *SD : D->specializations()) {
+    for (auto *RD : SD->redecls()) {
+      switch (cast<VarTemplateSpecializationDecl>(RD)->
+                  getSpecializationKind()) {
+      case TSK_Undeclared:
+      case TSK_ImplicitInstantiation:
+        TRY_TO(TraverseDecl(RD));
+        break;
+
+      case TSK_ExplicitInstantiationDeclaration:
+      case TSK_ExplicitInstantiationDefinition:
+      case TSK_ExplicitSpecialization:
+        break;
+      }
+    }
+  }
+
+  return true;
+}
 
 // A helper method for traversing the instantiations of a
 // function while skipping its specializations.
@@ -1524,22 +1548,24 @@ template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseTemplateInstantiations(
     FunctionTemplateDecl *D) {
   for (auto *FD : D->specializations()) {
-    switch (FD->getTemplateSpecializationKind()) {
-    case TSK_Undeclared:
-    case TSK_ImplicitInstantiation:
-      // We don't know what kind of FunctionDecl this is.
-      TRY_TO(TraverseDecl(FD));
-      break;
+    for (auto *RD : FD->redecls()) {
+      switch (RD->getTemplateSpecializationKind()) {
+      case TSK_Undeclared:
+      case TSK_ImplicitInstantiation:
+        // We don't know what kind of FunctionDecl this is.
+        TRY_TO(TraverseDecl(RD));
+        break;
 
-    // FIXME: For now traverse explicit instantiations here. Change that
-    // once they are represented as dedicated nodes in the AST.
-    case TSK_ExplicitInstantiationDeclaration:
-    case TSK_ExplicitInstantiationDefinition:
-      TRY_TO(TraverseDecl(FD));
-      break;
+      // FIXME: For now traverse explicit instantiations here. Change that
+      // once they are represented as dedicated nodes in the AST.
+      case TSK_ExplicitInstantiationDeclaration:
+      case TSK_ExplicitInstantiationDefinition:
+        TRY_TO(TraverseDecl(RD));
+        break;
 
-    case TSK_ExplicitSpecialization:
-      break;
+      case TSK_ExplicitSpecialization:
+        break;
+      }
     }
   }
 

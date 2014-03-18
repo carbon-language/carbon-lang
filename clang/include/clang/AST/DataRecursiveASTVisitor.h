@@ -1407,20 +1407,27 @@ template<typename Derived>
 bool DataRecursiveASTVisitor<Derived>::TraverseClassInstantiations(
     ClassTemplateDecl *D) {
   for (auto *SD : D->specializations()) {
-    switch (SD->getSpecializationKind()) {
-    // Visit the implicit instantiations with the requested pattern.
-    case TSK_Undeclared:
-    case TSK_ImplicitInstantiation:
-      TRY_TO(TraverseDecl(SD));
-      break;
+    for (auto *RD : SD->redecls()) {
+      // We don't want to visit injected-class-names in this traversal.
+      if (cast<CXXRecordDecl>(RD)->isInjectedClassName())
+        continue;
 
-    // We don't need to do anything on an explicit instantiation
-    // or explicit specialization because there will be an explicit
-    // node for it elsewhere.
-    case TSK_ExplicitInstantiationDeclaration:
-    case TSK_ExplicitInstantiationDefinition:
-    case TSK_ExplicitSpecialization:
-      break;
+      switch (cast<ClassTemplateSpecializationDecl>(RD)->
+                  getSpecializationKind()) {
+      // Visit the implicit instantiations with the requested pattern.
+      case TSK_Undeclared:
+      case TSK_ImplicitInstantiation:
+        TRY_TO(TraverseDecl(RD));
+        break;
+
+      // We don't need to do anything on an explicit instantiation
+      // or explicit specialization because there will be an explicit
+      // node for it elsewhere.
+      case TSK_ExplicitInstantiationDeclaration:
+      case TSK_ExplicitInstantiationDefinition:
+      case TSK_ExplicitSpecialization:
+        break;
+      }
     }
   }
 
@@ -1453,20 +1460,23 @@ template <typename Derived>
 bool DataRecursiveASTVisitor<Derived>::TraverseVariableInstantiations(
     VarTemplateDecl *D) {
   for (auto *SD : D->specializations()) {
-    switch (SD->getSpecializationKind()) {
-    // Visit the implicit instantiations with the requested pattern.
-    case TSK_Undeclared:
-    case TSK_ImplicitInstantiation:
-      TRY_TO(TraverseDecl(SD));
-      break;
+    for (auto *RD : SD->redecls()) {
+      switch (cast<VarTemplateSpecializationDecl>(RD)->
+                  getSpecializationKind()) {
+      // Visit the implicit instantiations with the requested pattern.
+      case TSK_Undeclared:
+      case TSK_ImplicitInstantiation:
+        TRY_TO(TraverseDecl(RD));
+        break;
 
-    // We don't need to do anything on an explicit instantiation
-    // or explicit specialization because there will be an explicit
-    // node for it elsewhere.
-    case TSK_ExplicitInstantiationDeclaration:
-    case TSK_ExplicitInstantiationDefinition:
-    case TSK_ExplicitSpecialization:
-      break;
+      // We don't need to do anything on an explicit instantiation
+      // or explicit specialization because there will be an explicit
+      // node for it elsewhere.
+      case TSK_ExplicitInstantiationDeclaration:
+      case TSK_ExplicitInstantiationDefinition:
+      case TSK_ExplicitSpecialization:
+        break;
+      }
     }
   }
 
@@ -1501,21 +1511,25 @@ template<typename Derived>
 bool DataRecursiveASTVisitor<Derived>::TraverseFunctionInstantiations(
     FunctionTemplateDecl *D) {
   for (auto *FD : D->specializations()) {
-    switch (FD->getTemplateSpecializationKind()) {
-    case TSK_Undeclared:
-    case TSK_ImplicitInstantiation:
-      // We don't know what kind of FunctionDecl this is.
-      TRY_TO(TraverseDecl(FD));
-      break;
+    for (auto *RD : FD->redecls()) {
+      switch (RD->getTemplateSpecializationKind()) {
+      case TSK_Undeclared:
+      case TSK_ImplicitInstantiation:
+        // We don't know what kind of FunctionDecl this is.
+        TRY_TO(TraverseDecl(RD));
+        break;
 
-    // No need to visit explicit instantiations, we'll find the node
-    // eventually.
-    case TSK_ExplicitInstantiationDeclaration:
-    case TSK_ExplicitInstantiationDefinition:
-      break;
+      // No need to visit explicit instantiations, we'll find the node
+      // eventually.
+      // FIXME: This is incorrect; there is no other node for an explicit
+      // instantiation of a function template specialization.
+      case TSK_ExplicitInstantiationDeclaration:
+      case TSK_ExplicitInstantiationDefinition:
+        break;
 
-    case TSK_ExplicitSpecialization:
-      break;
+      case TSK_ExplicitSpecialization:
+        break;
+      }
     }
   }
 
