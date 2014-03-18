@@ -22,7 +22,6 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/LexicalScopes.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugLoc.h"
@@ -32,7 +31,9 @@
 
 namespace llvm {
 
+class AsmPrinter;
 class ByteStreamer;
+class DwarfDebug;
 class DwarfUnit;
 class DwarfCompileUnit;
 class ConstantInt;
