@@ -871,8 +871,8 @@ void ASTDumper::VisitIndirectFieldDecl(const IndirectFieldDecl *D) {
   dumpType(D->getType());
 
   ChildDumper Children(*this);
-  for (auto *D : D->chain())
-    Children.dumpRef(D);
+  for (auto *Child : D->chain())
+    Children.dumpRef(Child);
 }
 
 void ASTDumper::VisitFunctionDecl(const FunctionDecl *D) {
