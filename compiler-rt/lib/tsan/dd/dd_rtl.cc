@@ -45,8 +45,12 @@ static void ReportDeadlock(Thread *thr, DDReport *rep) {
     Printf("Thread %d locks mutex %llu while holding mutex %llu:\n",
       rep->loop[i].thr_ctx, rep->loop[i].mtx_ctx1, rep->loop[i].mtx_ctx0);
     PrintStackTrace(thr, rep->loop[i].stk[1]);
+    Printf("Mutex %llu was acquired here:\n",
+      rep->loop[i].mtx_ctx0);
+    PrintStackTrace(thr, rep->loop[i].stk[0]);
   }
   Printf("==============================\n");
+  Die();
 }
 
 Callback::Callback(Thread *thr)

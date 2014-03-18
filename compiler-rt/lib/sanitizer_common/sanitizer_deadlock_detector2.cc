@@ -43,13 +43,15 @@ struct Link {
   u32 id;
   u32 seq;
   u32 tid;
-  u32 stk;
+  u32 stk0;
+  u32 stk1;
 
-  explicit Link(u32 id = 0, u32 seq = 0, u32 tid = 0, u32 stk = 0)
+  explicit Link(u32 id = 0, u32 seq = 0, u32 tid = 0, u32 s0 = 0, u32 s1 = 0)
       : id(id)
       , seq(seq)
       , tid(tid)
-      , stk(stk) {
+      , stk0(s0)
+      , stk1(s1) {
   }
 };
 
@@ -61,10 +63,15 @@ struct DDPhysicalThread {
   Link path[kMaxMutex];
 };
 
+struct ThreadMutex {
+  u32 id;
+  u32 stk;
+};
+
 struct DDLogicalThread {
-  u64 ctx;
-  u32 locked[kMaxNesting];
-  int nlocked;
+  u64         ctx;
+  ThreadMutex locked[kMaxNesting];
+  int         nlocked;
 };
 
 struct Mutex {
@@ -201,7 +208,9 @@ void DD::MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock) {
   if (m->id == kNoId)
     m->id = allocateId(cb);
 
-  lt->locked[lt->nlocked++] = m->id;
+  ThreadMutex *tm = &lt->locked[lt->nlocked++];
+  tm->id = m->id;
+  tm->stk = cb->Unwind();
   if (lt->nlocked == 1) {
     VPrintf(3, "#%llu: DD::MutexBeforeLock first mutex\n",
         cb->lt->ctx);
@@ -211,7 +220,8 @@ void DD::MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock) {
   bool added = false;
   Mutex *mtx = getMutex(m->id);
   for (int i = 0; i < lt->nlocked - 1; i++) {
-    u32 id1 = lt->locked[i];
+    u32 id1 = lt->locked[i].id;
+    u32 stk1 = lt->locked[i].stk;
     Mutex *mtx1 = getMutex(id1);
     SpinMutexLock l(&mtx1->mtx);
     if (mtx1->nlink == kMaxLink) {
@@ -225,7 +235,8 @@ void DD::MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock) {
         if (link->seq != mtx->seq) {
           link->seq = mtx->seq;
           link->tid = lt->ctx;
-          link->stk = cb->Unwind();
+          link->stk0 = stk1;
+          link->stk1 = cb->Unwind();
           added = true;
           VPrintf(3, "#%llu: DD::MutexBeforeLock added %d->%d link\n",
               cb->lt->ctx, getMutexId(mtx1), m->id);
@@ -239,7 +250,8 @@ void DD::MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock) {
       link->id = m->id;
       link->seq = mtx->seq;
       link->tid = lt->ctx;
-      link->stk = cb->Unwind();
+      link->stk0 = stk1;
+      link->stk1 = cb->Unwind();
       added = true;
       VPrintf(3, "#%llu: DD::MutexBeforeLock added %d->%d link\n",
           cb->lt->ctx, getMutexId(mtx1), m->id);
@@ -282,7 +294,9 @@ void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock,
   CHECK_LE(lt->nlocked, kMaxNesting);
   if (m->id == kNoId)
     m->id = allocateId(cb);
-  lt->locked[lt->nlocked++] = m->id;
+  ThreadMutex *tm = &lt->locked[lt->nlocked++];
+  tm->id = m->id;
+  tm->stk = cb->Unwind();
 }
 
 void DD::MutexBeforeUnlock(DDCallback *cb, DDMutex *m, bool wlock) {
@@ -301,7 +315,7 @@ void DD::MutexBeforeUnlock(DDCallback *cb, DDMutex *m, bool wlock) {
   CHECK_NE(m->id, kNoId);
   int last = lt->nlocked - 1;
   for (int i = last; i >= 0; i--) {
-    if (cb->lt->locked[i] == m->id) {
+    if (cb->lt->locked[i].id == m->id) {
       lt->locked[i] = lt->locked[last];
       lt->nlocked--;
       break;
@@ -312,14 +326,30 @@ void DD::MutexBeforeUnlock(DDCallback *cb, DDMutex *m, bool wlock) {
 void DD::MutexDestroy(DDCallback *cb, DDMutex *m) {
   VPrintf(2, "#%llu: DD::MutexDestroy(%p)\n",
       cb->lt->ctx, m);
+  DDLogicalThread *lt = cb->lt;
+
   if (m->id == kNoId)
     return;
+
+  // Remove the mutex from lt->locked if there.
+  int last = lt->nlocked - 1;
+  for (int i = last; i >= 0; i--) {
+    if (lt->locked[i].id == m->id) {
+      lt->locked[i] = lt->locked[last];
+      lt->nlocked--;
+      break;
+    }
+  }
+
+  // Clear and invalidate the mutex descriptor.
   {
     Mutex *mtx = getMutex(m->id);
     SpinMutexLock l(&mtx->mtx);
     mtx->seq++;
     mtx->nlink = 0;
   }
+
+  // Return id to cache.
   {
     SpinMutexLock l(&mtx);
     free_id.push_back(m->id);
@@ -377,7 +407,8 @@ void DD::Report(DDPhysicalThread *pt, DDLogicalThread *lt, int npath) {
     rep->loop[i].thr_ctx = link->tid;
     rep->loop[i].mtx_ctx0 = link0->id;
     rep->loop[i].mtx_ctx1 = link->id;
-    rep->loop[i].stk[1] = link->stk;
+    rep->loop[i].stk[0] = link->stk0;
+    rep->loop[i].stk[1] = link->stk1;
   }
   pt->report_pending = true;
 }
