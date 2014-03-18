@@ -846,8 +846,13 @@ void DwarfDebug::beginModule() {
     for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i)
       CU->getOrCreateTypeDIE(EnumTypes.getElement(i));
     DIArray RetainedTypes = CUNode.getRetainedTypes();
-    for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i)
-      CU->getOrCreateTypeDIE(RetainedTypes.getElement(i));
+    for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i) {
+      DIType Ty(RetainedTypes.getElement(i));
+      // The retained types array by design contains pointers to
+      // MDNodes rather than DIRefs. Unique them here.
+      DIType UniqueTy(resolve(Ty.getRef()));
+      CU->getOrCreateTypeDIE(UniqueTy);
+    }
     // Emit imported_modules last so that the relevant context is already
     // available.
     for (unsigned i = 0, e = ImportedEntities.getNumElements(); i != e; ++i)

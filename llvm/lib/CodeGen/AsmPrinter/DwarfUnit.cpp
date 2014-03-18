@@ -971,15 +971,14 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 
   DIType Ty(TyNode);
   assert(Ty.isType());
+  assert(*&Ty == resolve(Ty.getRef()) &&
+         "type was not uniqued, possible ODR violation.");
 
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
   DIScope Context = resolve(Ty.getContext());
   DIE *ContextDIE = getOrCreateContextDIE(Context);
   assert(ContextDIE);
-
-  // Unique the type. This is a noop if the type has no unique identifier.
-  Ty = DIType(resolve(Ty.getRef()));
 
   DIE *TyDIE = getDIE(Ty);
   if (TyDIE)
