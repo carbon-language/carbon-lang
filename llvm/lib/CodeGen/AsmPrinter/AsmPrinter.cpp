@@ -178,6 +178,25 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   Mang = new Mangler(TM.getDataLayout());
 
+  // Emit the version-min deplyment target directive if needed.
+  //
+  // FIXME: If we end up with a collection of these sorts of Darwin-specific
+  // or ELF-specific things, it may make sense to have a platform helper class
+  // that will work with the target helper class. For now keep it here, as the
+  // alternative is duplicated code in each of the target asm printers that
+  // use the directive, where it would need the same conditionalization
+  // anyway.
+  Triple TT(getTargetTriple());
+  if (TT.isOSDarwin()) {
+    unsigned Major, Minor, Update;
+    TT.getOSVersion(Major, Minor, Update);
+    // If there is a version specified, Major will be non-zero.
+    if (Major)
+      OutStreamer.EmitVersionMin((TT.isMacOSX() ?
+                                  MCVM_OSXVersionMin : MCVM_IOSVersionMin),
+                                 Major, Minor, Update);
+  }
+
   // Allow the target to emit any magic that it wants at the start of the file.
   EmitStartOfAsmFile(M);
 
