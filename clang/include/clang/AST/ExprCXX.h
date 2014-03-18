@@ -1161,7 +1161,10 @@ public:
   const_arg_iterator arg_begin() const { return Args; }
   const_arg_iterator arg_end() const { return Args + NumArgs; }
 
-  Expr **getArgs() const { return reinterpret_cast<Expr **>(Args); }
+  Expr **getArgs() { return reinterpret_cast<Expr **>(Args); }
+  const Expr *const *getArgs() const {
+    return const_cast<CXXConstructExpr *>(this)->getArgs();
+  }
   unsigned getNumArgs() const { return NumArgs; }
 
   /// \brief Return the specified argument.
