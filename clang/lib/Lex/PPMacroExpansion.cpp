@@ -978,6 +978,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("is_abstract", LangOpts.CPlusPlus)
            .Case("is_base_of", LangOpts.CPlusPlus)
            .Case("is_class", LangOpts.CPlusPlus)
+           .Case("is_constructible", LangOpts.CPlusPlus)
            .Case("is_convertible_to", LangOpts.CPlusPlus)
            .Case("is_empty", LangOpts.CPlusPlus)
            .Case("is_enum", LangOpts.CPlusPlus)
