@@ -214,6 +214,14 @@ void SwapStruct(MachO::linker_options_command &C) {
 }
 
 template<>
+void SwapStruct(MachO::version_min_command&C) {
+  SwapValue(C.cmd);
+  SwapValue(C.cmdsize);
+  SwapValue(C.version);
+  SwapValue(C.reserved);
+}
+
+template<>
 void SwapStruct(MachO::data_in_code_entry &C) {
   SwapValue(C.offset);
   SwapValue(C.length);
@@ -1465,6 +1473,11 @@ MachOObjectFile::getSegment64LoadCommand(const LoadCommandInfo &L) const {
 MachO::linker_options_command
 MachOObjectFile::getLinkerOptionsLoadCommand(const LoadCommandInfo &L) const {
   return getStruct<MachO::linker_options_command>(this, L.Ptr);
+}
+
+MachO::version_min_command
+MachOObjectFile::getVersionMinLoadCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::version_min_command>(this, L.Ptr);
 }
 
 MachO::any_relocation_info

@@ -386,6 +386,10 @@ public:
   /// EmitDataRegion - Note in the output the specified region @p Kind.
   virtual void EmitDataRegion(MCDataRegionType Kind) {}
 
+  /// EmitVersionMin - Specify the MachO minimum deployment target version.
+  virtual void EmitVersionMin(MCVersionMinType, unsigned Major, unsigned Minor,
+                              unsigned Update) {}
+
   /// EmitThumbFunc - Note in the output that the specified @p Func is
   /// a Thumb mode function (ARM target only).
   virtual void EmitThumbFunc(MCSymbol *Func) = 0;

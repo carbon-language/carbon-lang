@@ -737,6 +737,8 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
 void MachObjectWriter::WriteObject(MCAssembler &Asm,
                                    const MCAsmLayout &Layout) {
   unsigned NumSections = Asm.size();
+  const MCAssembler::VersionMinInfoType &VersionInfo =
+    Layout.getAssembler().getVersionMinInfo();
 
   // The section data starts after the header, the segment load command (and
   // section headers) and the symbol table.
@@ -744,6 +746,12 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
   uint64_t LoadCommandsSize = is64Bit() ?
     sizeof(MachO::segment_command_64) + NumSections * sizeof(MachO::section_64):
     sizeof(MachO::segment_command) + NumSections * sizeof(MachO::section);
+
+  // Add the deployment target version info load command size, if used.
+  if (VersionInfo.Major != 0) {
+    ++NumLoadCommands;
+    LoadCommandsSize += sizeof(MachO::version_min_command);
+  }
 
   // Add the data-in-code load command size, if used.
   unsigned NumDataRegions = Asm.getDataRegions().size();
@@ -815,6 +823,20 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
     uint64_t SectionStart = SectionDataStart + getSectionAddress(it);
     WriteSection(Asm, Layout, *it, SectionStart, RelocTableEnd, NumRelocs);
     RelocTableEnd += NumRelocs * sizeof(MachO::any_relocation_info);
+  }
+
+  // Write out the deployment target information, if it's available.
+  if (VersionInfo.Major != 0) {
+    assert(VersionInfo.Update < 256 && "unencodable update target version");
+    assert(VersionInfo.Minor < 256 && "unencodable minor target version");
+    assert(VersionInfo.Major < 65536 && "unencodable major target version");
+    uint32_t EncodedVersion = VersionInfo.Update | (VersionInfo.Minor << 8) |
+      (VersionInfo.Major << 16);
+    Write32(VersionInfo.Kind == MCVM_OSXVersionMin ? MachO::LC_VERSION_MIN_MACOSX :
+            MachO::LC_VERSION_MIN_IPHONEOS);
+    Write32(sizeof(MachO::version_min_command));
+    Write32(EncodedVersion);
+    Write32(0);         // reserved.
   }
 
   // Write the data-in-code load command, if used.

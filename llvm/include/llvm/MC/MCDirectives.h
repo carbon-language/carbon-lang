@@ -60,6 +60,11 @@ enum MCDataRegionType {
   MCDR_DataRegionEnd          ///< .end_data_region
 };
 
+enum MCVersionMinType {
+  MCVM_IOSVersionMin,         ///< .ios_version_min
+  MCVM_OSXVersionMin          ///< .macosx_version_min
+};
+
 } // end namespace llvm
 
 #endif

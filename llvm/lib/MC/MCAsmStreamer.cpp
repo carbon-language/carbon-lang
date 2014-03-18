@@ -133,6 +133,8 @@ public:
   void EmitAssemblerFlag(MCAssemblerFlag Flag) override;
   void EmitLinkerOptions(ArrayRef<std::string> Options) override;
   void EmitDataRegion(MCDataRegionType Kind) override;
+  void EmitVersionMin(MCVersionMinType Kind, unsigned Major, unsigned Minor,
+                      unsigned Update) override;
   void EmitThumbFunc(MCSymbol *Func) override;
 
   void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) override;
@@ -377,6 +379,18 @@ void MCAsmStreamer::EmitDataRegion(MCDataRegionType Kind) {
   case MCDR_DataRegionJT32:        OS << "\t.data_region jt32"; break;
   case MCDR_DataRegionEnd:         OS << "\t.end_data_region"; break;
   }
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitVersionMin(MCVersionMinType Kind, unsigned Major,
+                                   unsigned Minor, unsigned Update) {
+  switch (Kind) {
+  case MCVM_IOSVersionMin:        OS << "\t.ios_version_min"; break;
+  case MCVM_OSXVersionMin:        OS << "\t.macosx_version_min"; break;
+  }
+  OS << " " << Major << ", " << Minor;
+  if (Update)
+    OS << ", " << Update;
   EmitEOL();
 }
 

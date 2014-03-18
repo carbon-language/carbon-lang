@@ -319,6 +319,15 @@ DumpLinkerOptionsCommand(const MachOObjectFile &Obj,
   return 0;
 }
 
+static int
+DumpVersionMin(const MachOObjectFile &Obj,
+               const MachOObjectFile::LoadCommandInfo &LCI) {
+  MachO::version_min_command VMLC = Obj.getVersionMinLoadCommand(LCI);
+  outs() << "  ('version, " << VMLC.version << ")\n"
+         << "  ('reserved, " << VMLC.reserved << ")\n";
+  return 0;
+}
+
 static int DumpLoadCommand(const MachOObjectFile &Obj,
                            MachOObjectFile::LoadCommandInfo &LCI) {
   switch (LCI.C.cmd) {
@@ -338,6 +347,9 @@ static int DumpLoadCommand(const MachOObjectFile &Obj,
     return DumpDataInCodeDataCommand(Obj, LCI);
   case MachO::LC_LINKER_OPTIONS:
     return DumpLinkerOptionsCommand(Obj, LCI);
+  case MachO::LC_VERSION_MIN_IPHONEOS:
+  case MachO::LC_VERSION_MIN_MACOSX:
+    return DumpVersionMin(Obj, LCI);
   default:
     Warning("unknown load command: " + Twine(LCI.C.cmd));
     return 0;

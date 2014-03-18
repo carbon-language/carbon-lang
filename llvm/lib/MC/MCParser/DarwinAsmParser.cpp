@@ -163,6 +163,9 @@ public:
     addDirectiveHandler<&DarwinAsmParser::ParseSectionDirectiveTLV>(".tlv");
 
     addDirectiveHandler<&DarwinAsmParser::ParseSectionDirectiveIdent>(".ident");
+    addDirectiveHandler<&DarwinAsmParser::ParseVersionMin>(".ios_version_min");
+    addDirectiveHandler<&DarwinAsmParser::ParseVersionMin>(
+      ".macosx_version_min");
   }
 
   bool ParseDirectiveDesc(StringRef, SMLoc);
@@ -360,6 +363,7 @@ public:
     return ParseSectionSwitch("__DATA", "__thread_init",
                          MachO::S_THREAD_LOCAL_INIT_FUNCTION_POINTERS);
   }
+  bool ParseVersionMin(StringRef, SMLoc);
 
 };
 
@@ -856,6 +860,50 @@ bool DarwinAsmParser::ParseDirectiveDataRegionEnd(StringRef, SMLoc) {
 
   Lex();
   getStreamer().EmitDataRegion(MCDR_DataRegionEnd);
+  return false;
+}
+
+/// ParseVersionMin
+///  ::= .ios_version_min major,minor[,update]
+///  ::= .macosx_version_min major,minor[,update]
+bool DarwinAsmParser::ParseVersionMin(StringRef Directive, SMLoc) {
+  int64_t Major = 0, Minor = 0, Update = 0;
+  int Kind = StringSwitch<int>(Directive)
+    .Case(".ios_version_min", MCVM_IOSVersionMin)
+    .Case(".macosx_version_min", MCVM_OSXVersionMin);
+  // Get the major version number.
+  if (getLexer().isNot(AsmToken::Integer))
+    return TokError("invalid OS major version number");
+  Major = getLexer().getTok().getIntVal();
+  if (Major > 65535 || Major <= 0)
+    return TokError("invalid OS major version number");
+  Lex();
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("minor OS version number required, comma expected");
+  Lex();
+  // Get the minor version number.
+  if (getLexer().isNot(AsmToken::Integer))
+    return TokError("invalid OS minor version number");
+  Minor = getLexer().getTok().getIntVal();
+  if (Minor > 255 || Minor < 0)
+    return TokError("invalid OS minor version number");
+  Lex();
+  // Get the update level, if specified
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    if (getLexer().isNot(AsmToken::Comma))
+      return TokError("invalid update specifier, comma expected");
+    Lex();
+    if (getLexer().isNot(AsmToken::Integer))
+      return TokError("invalid OS update number");
+    Update = getLexer().getTok().getIntVal();
+  if (Update > 255 || Update < 0)
+    return TokError("invalid OS update number");
+    Lex();
+  }
+
+  // We've parsed a correct version specifier, so send it to the streamer.
+  getStreamer().EmitVersionMin((MCVersionMinType)Kind, Major, Minor, Update);
+
   return false;
 }
 

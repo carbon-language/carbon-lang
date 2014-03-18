@@ -49,6 +49,8 @@ public:
   void EmitAssemblerFlag(MCAssemblerFlag Flag) override;
   void EmitLinkerOptions(ArrayRef<std::string> Options) override;
   void EmitDataRegion(MCDataRegionType Kind) override;
+  void EmitVersionMin(MCVersionMinType Kind, unsigned Major,
+                      unsigned Minor, unsigned Update) override;
   void EmitThumbFunc(MCSymbol *Func) override;
   bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) override;
   void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) override;
@@ -191,6 +193,11 @@ void MCMachOStreamer::EmitDataRegion(MCDataRegionType Kind) {
     EmitDataRegionEnd();
     return;
   }
+}
+
+void MCMachOStreamer::EmitVersionMin(MCVersionMinType Kind, unsigned Major,
+                                     unsigned Minor, unsigned Update) {
+  getAssembler().setVersionMinInfo(Kind, Major, Minor, Update);
 }
 
 void MCMachOStreamer::EmitThumbFunc(MCSymbol *Symbol) {

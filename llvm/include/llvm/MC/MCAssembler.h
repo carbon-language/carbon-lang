@@ -15,6 +15,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -840,6 +841,15 @@ public:
     const_data_region_iterator;
   typedef std::vector<DataRegionData>::iterator data_region_iterator;
 
+  /// MachO specific deployment target version info.
+  // A Major version of 0 indicates that no version information was supplied
+  // and so the corresponding load command should not be emitted.
+  typedef struct {
+    MCVersionMinType Kind;
+    unsigned Major;
+    unsigned Minor;
+    unsigned Update;
+  } VersionMinInfoType;
 private:
   MCAssembler(const MCAssembler&) LLVM_DELETED_FUNCTION;
   void operator=(const MCAssembler&) LLVM_DELETED_FUNCTION;
@@ -902,6 +912,8 @@ private:
   // Access to the flags is necessary in cases where assembler directives affect
   // which flags to be set.
   unsigned ELFHeaderEFlags;
+
+  VersionMinInfoType VersionMinInfo;
 private:
   /// Evaluate a fixup to a relocatable expression and the value which should be
   /// placed into the fixup.
@@ -982,6 +994,16 @@ public:
   /// ELF e_header flags
   unsigned getELFHeaderEFlags() const {return ELFHeaderEFlags;}
   void setELFHeaderEFlags(unsigned Flags) { ELFHeaderEFlags = Flags;}
+
+  /// MachO deployment target version information.
+  const VersionMinInfoType &getVersionMinInfo() const { return VersionMinInfo; }
+  void setVersionMinInfo(MCVersionMinType Kind, unsigned Major, unsigned Minor,
+                         unsigned Update) {
+    VersionMinInfo.Kind = Kind;
+    VersionMinInfo.Major = Major;
+    VersionMinInfo.Minor = Minor;
+    VersionMinInfo.Update = Update;
+  }
 
 public:
   /// Construct a new assembler instance.
