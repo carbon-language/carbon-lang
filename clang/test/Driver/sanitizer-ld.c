@@ -15,6 +15,29 @@
 // CHECK-ASAN-LINUX-NOT: "-export-dynamic"
 // CHECK-ASAN-LINUX: "--dynamic-list={{.*}}libclang_rt.asan-i386.a.syms"
 
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target i386-unknown-freebsd -fsanitize=address \
+// RUN:     -resource-dir=%S/Inputs/resource_dir \
+// RUN:     --sysroot=%S/Inputs/basic_freebsd_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-ASAN-FREEBSD %s
+//
+// CHECK-ASAN-FREEBSD: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
+// CHECK-ASAN-FREEBSD-NOT: "-lc"
+// CHECK-ASAN-FREEBSD: freebsd/libclang_rt.asan-i386.a"
+// CHECK-ASAN-FREEBSD: "-lpthread"
+// CHECK-ASAN-FREEBSD: "-lrt"
+// CHECK-ASAN-FREEBSD: "-export-dynamic"
+// CHECK-ASAN-FREEBSD-NOT: "--dynamic-list"
+
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target i386-unknown-freebsd -fsanitize=address \
+// RUN:     -resource-dir=%S/Inputs/resource_dir \
+// RUN:     --sysroot=%S/Inputs/basic_freebsd_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-ASAN-FREEBSD-LDL %s
+//
+// CHECK-ASAN-FREEBSD-LDL: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
+// CHECK-ASAN-FREEBSD-LDL-NOT: "-ldl"
+
 // RUN: %clangxx -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target i386-unknown-linux -fsanitize=address \
 // RUN:     -resource-dir=%S/Inputs/empty_resource_dir \

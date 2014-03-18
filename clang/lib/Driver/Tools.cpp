@@ -1775,7 +1775,11 @@ static StringRef getArchNameForCompilerRTLib(const ToolChain &TC) {
 static SmallString<128> getCompilerRTLibDir(const ToolChain &TC) {
   // The runtimes are located in the OS-specific resource directory.
   SmallString<128> Res(TC.getDriver().ResourceDir);
-  llvm::sys::path::append(Res, "lib", TC.getOS());
+  const llvm::Triple &Triple = TC.getTriple();
+  // TC.getOS() yield "freebsd10.0" whereas "freebsd" is expected.
+  StringRef OSLibName = (Triple.getOS() == llvm::Triple::FreeBSD) ?
+    "freebsd" : TC.getOS();
+  llvm::sys::path::append(Res, "lib", OSLibName);
   return Res;
 }
 
@@ -1836,8 +1840,10 @@ static void addSanitizerRTLinkFlags(
 
   CmdArgs.push_back("-lpthread");
   CmdArgs.push_back("-lrt");
-  CmdArgs.push_back("-ldl");
   CmdArgs.push_back("-lm");
+  // There's no libdl on FreeBSD.
+  if (TC.getTriple().getOS() != llvm::Triple::FreeBSD)
+    CmdArgs.push_back("-ldl");
 
   // If possible, use a dynamic symbols file to export the symbols from the
   // runtime library. If we can't do so, use -export-dynamic instead to export
@@ -6235,6 +6241,8 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtend.o")));
     CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
   }
+
+  addSanitizerRuntimes(getToolChain(), Args, CmdArgs);
 
   addProfileRT(ToolChain, Args, CmdArgs);
 
