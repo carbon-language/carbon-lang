@@ -1351,8 +1351,8 @@ void ASTDumper::VisitObjCProtocolDecl(const ObjCProtocolDecl *D) {
   dumpName(D);
 
   ChildDumper Children(*this);
-  for (auto *D : D->protocols())
-    Children.dumpRef(D);
+  for (auto *Child : D->protocols())
+    Children.dumpRef(Child);
 }
 
 void ASTDumper::VisitObjCInterfaceDecl(const ObjCInterfaceDecl *D) {
@@ -1361,8 +1361,8 @@ void ASTDumper::VisitObjCInterfaceDecl(const ObjCInterfaceDecl *D) {
 
   ChildDumper Children(*this);
   Children.dumpRef(D->getImplementation());
-  for (auto *D : D->protocols())
-    Children.dumpRef(D);
+  for (auto *Child : D->protocols())
+    Children.dumpRef(Child);
 }
 
 void ASTDumper::VisitObjCImplementationDecl(const ObjCImplementationDecl *D) {
