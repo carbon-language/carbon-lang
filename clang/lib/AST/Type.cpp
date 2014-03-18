@@ -1523,7 +1523,7 @@ StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
   case ULong:             return "unsigned long";
   case ULongLong:         return "unsigned long long";
   case UInt128:           return "unsigned __int128";
-  case Half:              return "half";
+  case Half:              return Policy.Half ? "half" : "__fp16";
   case Float:             return "float";
   case Double:            return "double";
   case LongDouble:        return "long double";

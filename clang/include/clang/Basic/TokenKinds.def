@@ -229,6 +229,7 @@ PUNCTUATOR(greatergreatergreater, ">>>")
 //   KEYALTIVEC - This is a keyword in AltiVec
 //   KEYBORLAND - This is a keyword if Borland extensions are enabled
 //   BOOLSUPPORT - This is a keyword if 'bool' is a built-in type
+//   HALFSUPPORT - This is a keyword if 'half' is a built-in type
 //   WCHARSUPPORT - This is a keyword if 'wchar_t' is a built-in type
 //
 KEYWORD(auto                        , KEYALL)
@@ -492,7 +493,7 @@ KEYWORD(__pixel                     , KEYALTIVEC)
 ALIAS("__fp16", half                , KEYALL)
 
 // OpenCL Extension.
-KEYWORD(half                        , KEYOPENCL)
+KEYWORD(half                        , HALFSUPPORT)
 
 // Objective-C ARC keywords.
 KEYWORD(__bridge                     , KEYARC)
