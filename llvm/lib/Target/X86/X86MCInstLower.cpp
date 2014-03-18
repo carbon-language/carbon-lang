@@ -296,12 +296,12 @@ static void SimplifyShortMoveForm(X86AsmPrinter &Printer, MCInst &Inst,
   unsigned RegOp = IsStore ? 0 : 5;
   unsigned AddrOp = AddrBase + 3;
   assert(Inst.getNumOperands() == 6 && Inst.getOperand(RegOp).isReg() &&
-         Inst.getOperand(AddrBase + 0).isReg() && // base
-         Inst.getOperand(AddrBase + 1).isImm() && // scale
-         Inst.getOperand(AddrBase + 2).isReg() && // index register
-         (Inst.getOperand(AddrOp).isExpr() ||     // address
-          Inst.getOperand(AddrOp).isImm())&&
-         Inst.getOperand(AddrBase + 4).isReg() && // segment
+         Inst.getOperand(AddrBase + X86::AddrBaseReg).isReg() &&
+         Inst.getOperand(AddrBase + X86::AddrScaleAmt).isImm() &&
+         Inst.getOperand(AddrBase + X86::AddrIndexReg).isReg() &&
+         Inst.getOperand(AddrBase + X86::AddrSegmentReg).isReg() &&
+         (Inst.getOperand(AddrOp).isExpr() ||
+          Inst.getOperand(AddrOp).isImm()) &&
          "Unexpected instruction!");
 
   // Check whether the destination register can be fixed.
@@ -321,14 +321,14 @@ static void SimplifyShortMoveForm(X86AsmPrinter &Printer, MCInst &Inst,
   }
 
   if (Absolute &&
-      (Inst.getOperand(AddrBase + 0).getReg() != 0 ||
-       Inst.getOperand(AddrBase + 2).getReg() != 0 ||
-       Inst.getOperand(AddrBase + 1).getImm() != 1))
+      (Inst.getOperand(AddrBase + X86::AddrBaseReg).getReg() != 0 ||
+       Inst.getOperand(AddrBase + X86::AddrScaleAmt).getImm() != 1 ||
+       Inst.getOperand(AddrBase + X86::AddrIndexReg).getReg() != 0))
     return;
 
   // If so, rewrite the instruction.
   MCOperand Saved = Inst.getOperand(AddrOp);
-  MCOperand Seg = Inst.getOperand(AddrBase + 4);
+  MCOperand Seg = Inst.getOperand(AddrBase + X86::AddrSegmentReg);
   Inst = MCInst();
   Inst.setOpcode(Opcode);
   Inst.addOperand(Saved);

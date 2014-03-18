@@ -111,19 +111,20 @@ inline static bool isScale(const MachineOperand &MO) {
 
 inline static bool isLeaMem(const MachineInstr *MI, unsigned Op) {
   if (MI->getOperand(Op).isFI()) return true;
-  return Op+4 <= MI->getNumOperands() &&
-    MI->getOperand(Op  ).isReg() && isScale(MI->getOperand(Op+1)) &&
-    MI->getOperand(Op+2).isReg() &&
-    (MI->getOperand(Op+3).isImm() ||
-     MI->getOperand(Op+3).isGlobal() ||
-     MI->getOperand(Op+3).isCPI() ||
-     MI->getOperand(Op+3).isJTI());
+  return Op+X86::AddrSegmentReg <= MI->getNumOperands() &&
+    MI->getOperand(Op+X86::AddrBaseReg).isReg() &&
+    isScale(MI->getOperand(Op+X86::AddrScaleAmt)) &&
+    MI->getOperand(Op+X86::AddrIndexReg).isReg() &&
+    (MI->getOperand(Op+X86::AddrDisp).isImm() ||
+     MI->getOperand(Op+X86::AddrDisp).isGlobal() ||
+     MI->getOperand(Op+X86::AddrDisp).isCPI() ||
+     MI->getOperand(Op+X86::AddrDisp).isJTI());
 }
 
 inline static bool isMem(const MachineInstr *MI, unsigned Op) {
   if (MI->getOperand(Op).isFI()) return true;
-  return Op+5 <= MI->getNumOperands() &&
-    MI->getOperand(Op+4).isReg() &&
+  return Op+X86::AddrNumOperands <= MI->getNumOperands() &&
+    MI->getOperand(Op+X86::AddrSegmentReg).isReg() &&
     isLeaMem(MI, Op);
 }
 
