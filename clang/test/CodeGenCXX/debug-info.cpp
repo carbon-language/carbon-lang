@@ -77,7 +77,7 @@ foo func(foo f) {
   return f; // reference 'f' for now because otherwise we hit another bug
 }
 
-// CHECK: [[FOO:![0-9]*]] = metadata !{i32 {{[0-9]*}}, metadata !{{[0-9]*}}, metadata [[PR14763:![0-9]*]], {{.*}} ; [ DW_TAG_structure_type ] [foo]
+// CHECK: metadata !{i32 {{[0-9]*}}, metadata !{{[0-9]*}}, metadata [[PR14763:![0-9]*]], {{.*}}, metadata !"[[FOO:.*]]"} ; [ DW_TAG_structure_type ] [foo]
 // CHECK: [[PR14763]] = {{.*}} ; [ DW_TAG_namespace ] [pr14763]
 // CHECK: [[INCTYPE:![0-9]*]] = {{.*}} ; [ DW_TAG_structure_type ] [incomplete]{{.*}} [decl]
 // CHECK: metadata [[A_MEM:![0-9]*]], i32 0, null, null, metadata !"_ZTSN7pr162141aE"} ; [ DW_TAG_structure_type ] [a]
@@ -97,7 +97,7 @@ incomplete (*x)[3];
 }
 
 // For some reason the argument for PR14763 ended up all the way down here
-// CHECK: = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], {{.*}}, metadata [[FOO]], i32 8192, i32 0} ; [ DW_TAG_arg_variable ] [f]
+// CHECK: = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], {{.*}}, metadata !"[[FOO]]", i32 8192, i32 0} ; [ DW_TAG_arg_variable ] [f]
 
 namespace pr16214 {
 struct a {

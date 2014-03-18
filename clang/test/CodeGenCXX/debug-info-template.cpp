@@ -50,8 +50,8 @@
 //
 
 
-// CHECK: [[TCNESTED:![0-9]*]] = metadata !{i32 {{[0-9]*}}, metadata !{{[0-9]*}}, metadata !"_ZTS2TCIjLj2EXadL_Z3glbEEXadL_ZN3foo1eEEEXadL_ZNS0_1fEvEEXadL_Z4funcvEE9tmpl_implJLi1ELi2ELi3EEE", {{.*}} ; [ DW_TAG_structure_type ] [nested]
-// CHECK: [[TCNT:![0-9]*]] = {{.*}}, metadata [[TCNARGS:![0-9]*]], metadata !"{{.*}}"} ; [ DW_TAG_structure_type ] [TC<int, -3, nullptr, nullptr, nullptr, nullptr, tmpl_impl>]
+// CHECK: metadata !{i32 {{[0-9]*}}, metadata !{{[0-9]*}}, metadata !"_ZTS2TCIjLj2EXadL_Z3glbEEXadL_ZN3foo1eEEEXadL_ZNS0_1fEvEEXadL_Z4funcvEE9tmpl_implJLi1ELi2ELi3EEE", {{.*}}, metadata !"[[TCNESTED:.*]]"} ; [ DW_TAG_structure_type ] [nested]
+// CHECK: metadata [[TCNARGS:![0-9]*]], metadata !"[[TCNT:.*]]"} ; [ DW_TAG_structure_type ] [TC<int, -3, nullptr, nullptr, nullptr, nullptr, tmpl_impl>]
 // CHECK: [[TCNARGS]] = metadata !{metadata [[TCNARG1:![0-9]*]], metadata [[TCNARG2:![0-9]*]], metadata [[TCNARG3:![0-9]*]], metadata [[TCNARG4:![0-9]*]], metadata [[TCNARG5:![0-9]*]], metadata [[TCNARG6:![0-9]*]], metadata [[TCARG7:![0-9]*]], metadata [[TCNARG8:![0-9]*]]}
 // CHECK: [[TCNARG1]] = {{.*}}metadata !"T", metadata [[INT]], {{.*}} ; [ DW_TAG_template_type_parameter ]
 // CHECK: [[TCNARG2]] = {{.*}}metadata !"", metadata [[INT]], i32 -3, {{.*}} ; [ DW_TAG_template_value_parameter ]
@@ -77,9 +77,9 @@
 // CHECK: [[PTOARG1]] = {{.*}}metadata !"", metadata [[CONST_PADDINGATEND_PTR:![0-9]*]], { i32, i8, [3 x i8] }* @PaddedObj, {{.*}} ; [ DW_TAG_template_value_parameter ]
 // CHECK: [[CONST_PADDINGATEND_PTR]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS12PaddingAtEnd]
 
-// CHECK: metadata [[TCNESTED]], i32 0, i32 1, %"struct.TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>::nested"* @tci, null} ; [ DW_TAG_variable ] [tci]
+// CHECK: metadata !"[[TCNESTED]]", i32 0, i32 1, %"struct.TC<unsigned int, 2, &glb, &foo::e, &foo::f, &func, tmpl_impl, 1, 2, 3>::nested"* @tci, null} ; [ DW_TAG_variable ] [tci]
 
-// CHECK: metadata [[TCNT:![0-9]*]], i32 0, i32 1, %struct.TC* @tcn, null} ; [ DW_TAG_variable ] [tcn]
+// CHECK: metadata !"[[TCNT]]", i32 0, i32 1, %struct.TC* @tcn, null} ; [ DW_TAG_variable ] [tcn]
 struct foo {
   char pad[8]; // make the member pointer to 'e' a bit more interesting (nonzero)
   int e;
