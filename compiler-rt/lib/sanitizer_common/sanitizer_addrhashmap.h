@@ -133,7 +133,7 @@ void AddrHashMap<T, kSize>::acquire(Handle *h) {
   Bucket *b = &table_[hash];
 
   h->created_ = false;
-  h->addidx_ = -1;
+  h->addidx_ = -1U;
   h->bucket_ = b;
   h->cell_ = 0;
 
@@ -272,7 +272,7 @@ void AddrHashMap<T, kSize>::release(Handle *h) {
     atomic_store(&c->addr, 0, memory_order_release);
     // See if we need to compact the bucket.
     AddBucket *add = (AddBucket*)atomic_load(&b->add, memory_order_relaxed);
-    if (h->addidx_ == -1) {
+    if (h->addidx_ == -1U) {
       // Removed from embed array, move an add element into the freed cell.
       if (add) {
         uptr last = --add->size;
@@ -293,7 +293,7 @@ void AddrHashMap<T, kSize>::release(Handle *h) {
     b->mtx.Unlock();
   } else {
     CHECK_EQ(addr1, h->addr_);
-    if (h->addidx_ != -1)
+    if (h->addidx_ != -1U)
       b->mtx.ReadUnlock();
   }
 }
