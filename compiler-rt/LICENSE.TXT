@@ -89,9 +89,3 @@ other licenses gives permission to use the names of the LLVM Team or the
 University of Illinois to endorse or promote products derived from this
 Software.
 
-The following pieces of software have additional or alternate copyrights,
-licenses, and/or restrictions:
-
-Program             Directory
--------             ---------
-android headers     third_party/android

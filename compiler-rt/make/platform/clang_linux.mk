@@ -111,7 +111,7 @@ ANDROID_COMMON_FLAGS := -target arm-linux-androideabi \
 	-B$(LLVM_ANDROID_TOOLCHAIN_DIR)
 CFLAGS.asan-arm-android := $(CFLAGS) -fPIC -fno-builtin \
 	$(ANDROID_COMMON_FLAGS) -fno-rtti \
-	-I$(ProjSrcRoot)/third_party/android/include
+	-I$(ProjSrcRoot)/android/include
 LDFLAGS.asan-arm-android := $(LDFLAGS) $(ANDROID_COMMON_FLAGS) -ldl -lm -llog \
 	-lstdc++ -Wl,-soname=libclang_rt.asan-arm-android.so -Wl,-z,defs
 
