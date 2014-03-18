@@ -224,6 +224,7 @@ template <typename T> class DIRef {
   friend DescTy DIDescriptor::getFieldAs(unsigned Elt) const;
   friend DIScopeRef DIScope::getContext() const;
   friend DIScopeRef DIScope::getRef() const;
+  friend class DIType;
 
   /// Val can be either a MDNode or a MDString, in the latter,
   /// MDString specifies the type identifier.
@@ -284,6 +285,11 @@ protected:
 
 public:
   explicit DIType(const MDNode *N = 0) : DIScope(N) {}
+  operator DITypeRef () const {
+    assert(isType() &&
+           "constructing DITypeRef from an MDNode that is not a type");
+    return DITypeRef(&*getRef());
+  }
 
   /// Verify - Verify that a type descriptor is well formed.
   bool Verify() const;
@@ -616,7 +622,7 @@ public:
   }
 
   unsigned getLineNumber() const { return getUnsignedField(7); }
-  DIType getType() const { return getFieldAs<DIType>(8); }
+  DITypeRef getType() const { return getFieldAs<DITypeRef>(8); }
   unsigned isLocalToUnit() const { return getUnsignedField(9); }
   unsigned isDefinition() const { return getUnsignedField(10); }
 
@@ -648,7 +654,7 @@ public:
     unsigned L = getUnsignedField(4);
     return L >> 24;
   }
-  DIType getType() const { return getFieldAs<DIType>(5); }
+  DITypeRef getType() const { return getFieldAs<DITypeRef>(5); }
 
   /// isArtificial - Return true if this variable is marked as "artificial".
   bool isArtificial() const {
@@ -681,7 +687,9 @@ public:
 
   /// isBlockByrefVariable - Return true if the variable was declared as
   /// a "__block" variable (Apple Blocks).
-  bool isBlockByrefVariable() const { return getType().isBlockByrefStruct(); }
+  bool isBlockByrefVariable(const DITypeIdentifierMap &Map) const {
+    return (getType().resolve(Map)).isBlockByrefStruct();
+  }
 
   /// isInlinedFnArgument - Return true if this variable provides debugging
   /// information for an inlined function arguments.

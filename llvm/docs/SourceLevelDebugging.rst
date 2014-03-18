@@ -567,7 +567,7 @@ Local variables
     metadata, ;; Reference to file where defined
     i32,      ;; 24 bit - Line number where defined
               ;; 8 bit - Argument number. 1 indicates 1st argument.
-    metadata, ;; Type descriptor
+    metadata, ;; Reference to the type descriptor
     i32,      ;; flags
     metadata  ;; (optional) Reference to inline location
   }

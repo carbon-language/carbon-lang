@@ -115,11 +115,17 @@ template <typename T> T DbgVariable::resolve(DIRef<T> Ref) const {
   return DD->resolve(Ref);
 }
 
+bool DbgVariable::isBlockByrefVariable() const {
+  assert(Var.isVariable() && "Invalid complex DbgVariable!");
+  return Var.isBlockByrefVariable(DD->getTypeIdentifierMap());
+}
+
+
 DIType DbgVariable::getType() const {
-  DIType Ty = Var.getType();
+  DIType Ty = Var.getType().resolve(DD->getTypeIdentifierMap());
   // FIXME: isBlockByrefVariable should be reformulated in terms of complex
   // addresses instead.
-  if (Var.isBlockByrefVariable()) {
+  if (Var.isBlockByrefVariable(DD->getTypeIdentifierMap())) {
     /* Byref variables, in Blocks, are declared by the programmer as
        "SomeType VarName;", but the compiler creates a
        __Block_byref_x_VarName struct, and gives the variable VarName
@@ -2301,7 +2307,7 @@ void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
                                    const DebugLocEntry &Entry) {
   DIVariable DV(Entry.getVariable());
   if (Entry.isInt()) {
-    DIBasicType BTy(DV.getType());
+    DIBasicType BTy(resolve(DV.getType()));
     if (BTy.Verify() && (BTy.getEncoding() == dwarf::DW_ATE_signed ||
                          BTy.getEncoding() == dwarf::DW_ATE_signed_char)) {
       Streamer.EmitInt8(dwarf::DW_OP_consts, "DW_OP_consts");

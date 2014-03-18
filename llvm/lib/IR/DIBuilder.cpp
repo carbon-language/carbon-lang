@@ -927,7 +927,7 @@ DISubrange DIBuilder::getOrCreateSubrange(int64_t Lo, int64_t Count) {
 DIGlobalVariable DIBuilder::createGlobalVariable(StringRef Name,
                                                  StringRef LinkageName,
                                                  DIFile F, unsigned LineNumber,
-                                                 DIType Ty, bool isLocalToUnit,
+                                                 DITypeRef Ty, bool isLocalToUnit,
                                                  Value *Val) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_variable),
@@ -951,7 +951,8 @@ DIGlobalVariable DIBuilder::createGlobalVariable(StringRef Name,
 
 /// \brief Create a new descriptor for the specified global.
 DIGlobalVariable DIBuilder::createGlobalVariable(StringRef Name, DIFile F,
-                                                 unsigned LineNumber, DIType Ty,
+                                                 unsigned LineNumber,
+                                                 DITypeRef Ty,
                                                  bool isLocalToUnit,
                                                  Value *Val) {
   return createGlobalVariable(Name, Name, F, LineNumber, Ty, isLocalToUnit,
@@ -964,7 +965,8 @@ DIGlobalVariable DIBuilder::createStaticVariable(DIDescriptor Context,
                                                  StringRef Name,
                                                  StringRef LinkageName,
                                                  DIFile F, unsigned LineNumber,
-                                                 DIType Ty, bool isLocalToUnit,
+                                                 DITypeRef Ty,
+                                                 bool isLocalToUnit,
                                                  Value *Val, MDNode *Decl) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_variable),
@@ -989,14 +991,12 @@ DIGlobalVariable DIBuilder::createStaticVariable(DIDescriptor Context,
 /// createVariable - Create a new descriptor for the specified variable.
 DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
                                           StringRef Name, DIFile File,
-                                          unsigned LineNo, DIType Ty,
+                                          unsigned LineNo, DITypeRef Ty,
                                           bool AlwaysPreserve, unsigned Flags,
                                           unsigned ArgNo) {
   DIDescriptor Context(getNonCompileUnitScope(Scope));
   assert((!Context || Context.isScope()) &&
          "createLocalVariable should be called with a valid Context");
-  assert(Ty.isType() &&
-         "createLocalVariable should be called with a valid type");
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
     getNonCompileUnitScope(Scope),
@@ -1027,7 +1027,8 @@ DIVariable DIBuilder::createLocalVariable(unsigned Tag, DIDescriptor Scope,
 DIVariable DIBuilder::createComplexVariable(unsigned Tag, DIDescriptor Scope,
                                             StringRef Name, DIFile F,
                                             unsigned LineNo,
-                                            DIType Ty, ArrayRef<Value *> Addr,
+                                            DITypeRef Ty,
+                                            ArrayRef<Value *> Addr,
                                             unsigned ArgNo) {
   SmallVector<Value *, 15> Elts;
   Elts.push_back(GetTagConstant(VMContext, Tag));

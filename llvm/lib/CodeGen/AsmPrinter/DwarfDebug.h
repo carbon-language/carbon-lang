@@ -199,10 +199,7 @@ public:
     assert(Var.isVariable() && "Invalid complex DbgVariable!");
     return Var.hasComplexAddress();
   }
-  bool isBlockByrefVariable() const {
-    assert(Var.isVariable() && "Invalid complex DbgVariable!");
-    return Var.isBlockByrefVariable();
-  }
+  bool isBlockByrefVariable() const;
   unsigned getNumAddrElements() const {
     assert(Var.isVariable() && "Invalid complex DbgVariable!");
     return Var.getNumAddrElements();
@@ -775,6 +772,11 @@ public:
   /// Find the MDNode for the given reference.
   template <typename T> T resolve(DIRef<T> Ref) const {
     return Ref.resolve(TypeIdentifierMap);
+  }
+
+  /// \brief Return the TypeIdentifierMap.
+  const DITypeIdentifierMap& getTypeIdentifierMap() const {
+    return TypeIdentifierMap;
   }
 
   /// Find the DwarfCompileUnit for the given CU Die.

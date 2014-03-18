@@ -1604,7 +1604,7 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
   assert(GV.isGlobalVariable());
 
   DIScope GVContext = GV.getContext();
-  DIType GTy = GV.getType();
+  DIType GTy = DD->resolve(GV.getType());
 
   // If this is a static data member definition, some attributes belong
   // to the declaration DIE.

@@ -466,7 +466,7 @@ namespace llvm {
     /// @param Val         llvm::Value of the variable.
     DIGlobalVariable
     createGlobalVariable(StringRef Name, DIFile File, unsigned LineNo,
-                         DIType Ty, bool isLocalToUnit, llvm::Value *Val);
+                         DITypeRef Ty, bool isLocalToUnit, llvm::Value *Val);
 
     /// \brief Create a new descriptor for the specified global.
     /// @param Name        Name of the variable.
@@ -479,7 +479,7 @@ namespace llvm {
     /// @param Val         llvm::Value of the variable.
     DIGlobalVariable
     createGlobalVariable(StringRef Name, StringRef LinkageName, DIFile File,
-                         unsigned LineNo, DIType Ty, bool isLocalToUnit,
+                         unsigned LineNo, DITypeRef Ty, bool isLocalToUnit,
                          llvm::Value *Val);
 
     /// createStaticVariable - Create a new descriptor for the specified
@@ -497,7 +497,7 @@ namespace llvm {
     DIGlobalVariable
     createStaticVariable(DIDescriptor Context, StringRef Name,
                          StringRef LinkageName, DIFile File, unsigned LineNo,
-                         DIType Ty, bool isLocalToUnit, llvm::Value *Val,
+                         DITypeRef Ty, bool isLocalToUnit, llvm::Value *Val,
                          MDNode *Decl = NULL);
 
 
@@ -518,7 +518,7 @@ namespace llvm {
     DIVariable createLocalVariable(unsigned Tag, DIDescriptor Scope,
                                    StringRef Name,
                                    DIFile File, unsigned LineNo,
-                                   DIType Ty, bool AlwaysPreserve = false,
+                                   DITypeRef Ty, bool AlwaysPreserve = false,
                                    unsigned Flags = 0,
                                    unsigned ArgNo = 0);
 
@@ -537,7 +537,7 @@ namespace llvm {
     ///                    number. 1 indicates 1st argument.
     DIVariable createComplexVariable(unsigned Tag, DIDescriptor Scope,
                                      StringRef Name, DIFile F, unsigned LineNo,
-                                     DIType Ty, ArrayRef<Value *> Addr,
+                                     DITypeRef Ty, ArrayRef<Value *> Addr,
                                      unsigned ArgNo = 0);
 
     /// createFunction - Create a new descriptor for the specified subprogram.

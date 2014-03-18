@@ -93,6 +93,6 @@ attributes #1 = { nounwind readnone }
 !21 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
 !22 = metadata !{metadata !"clang version 3.5.0 "}
 !23 = metadata !{i32 11, i32 0, metadata !15, null}
-!24 = metadata !{i32 786688, metadata !19, metadata !"a", metadata !16, i32 8, metadata !4, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [a] [line 8]
+!24 = metadata !{i32 786688, metadata !19, metadata !"a", metadata !16, i32 8, metadata !"_ZTS1A", i32 0, i32 0} ; [ DW_TAG_auto_variable ] [a] [line 8]
 !25 = metadata !{i32 8, i32 0, metadata !19, null} ; [ DW_TAG_imported_declaration ]
 !26 = metadata !{i32 9, i32 0, metadata !19, null}
