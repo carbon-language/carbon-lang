@@ -18,13 +18,8 @@
 #include "DIE.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/MapVector.h"
-#include "llvm/ADT/SetVector.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/LexicalScopes.h"
 #include "llvm/IR/DebugInfo.h"
-#include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/Support/Allocator.h"
@@ -33,21 +28,13 @@ namespace llvm {
 
 class AsmPrinter;
 class ByteStreamer;
-class DwarfDebug;
-class DwarfUnit;
-class DwarfCompileUnit;
 class ConstantInt;
 class ConstantFP;
-class DbgVariable;
-class MachineFrameInfo;
+class DwarfCompileUnit;
+class DwarfDebug;
+class DwarfTypeUnit;
+class DwarfUnit;
 class MachineModuleInfo;
-class MachineOperand;
-class MCAsmInfo;
-class MCObjectFileInfo;
-class DIEAbbrev;
-class DIE;
-class DIELoc;
-class DIEEntry;
 
 //===----------------------------------------------------------------------===//
 /// \brief This class is used to record source line correspondence.
