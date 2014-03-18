@@ -151,7 +151,7 @@ class LockTest {
     Lock_0_1();
     Lock_1_0();
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock)
-    // CHECK: path: [[M1:M[0-9]+]] => [[M2:M[0-9]+]] => [[M1]]
+    // CHECK: Path: [[M1:M[0-9]+]] => [[M2:M[0-9]+]] => [[M1]]
     // CHECK: Mutex [[M1]] ([[A1]]) created at:
     // CHECK: Mutex [[M2]] ([[A2]]) created at:
     // CHECK-NOT: WARNING: ThreadSanitizer:
@@ -169,7 +169,7 @@ class LockTest {
     Lock2(1, 2);
     Lock2(2, 0);
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock)
-    // CHECK: path: [[M1:M[0-9]+]] => [[M2:M[0-9]+]] => [[M3:M[0-9]+]] => [[M1]]
+    // CHECK: Path: [[M1:M[0-9]+]] => [[M2:M[0-9]+]] => [[M3:M[0-9]+]] => [[M1]]
     // CHECK: Mutex [[M1]] ([[A1]]) created at:
     // CHECK: Mutex [[M2]] ([[A2]]) created at:
     // CHECK: Mutex [[M3]] ([[A3]]) created at:

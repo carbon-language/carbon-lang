@@ -231,17 +231,25 @@ void PrintReport(const ReportDesc *rep) {
   Printf("%s", d.EndWarning());
 
   if (rep->typ == ReportTypeDeadlock) {
-    Printf("  path: ");
+    Printf("  Path: ");
     CHECK_GT(rep->mutexes.Size(), 0U);
+    CHECK_EQ(rep->mutexes.Size() * 2, rep->stacks.Size());
     for (uptr i = 0; i < rep->mutexes.Size(); i++)
       PrintMutexShort(rep->mutexes[i], " => ");
-    PrintMutexShort(rep->mutexes[0], "\n");
-  }
-
-  for (uptr i = 0; i < rep->stacks.Size(); i++) {
-    if (i)
-      Printf("  and:\n");
-    PrintStack(rep->stacks[i]);
+    PrintMutexShort(rep->mutexes[0], "\n\n");
+    for (uptr i = 0; i < rep->mutexes.Size(); i++) {
+      Printf("  Edge: ");
+      PrintMutexShort(rep->mutexes[i], " => ");
+      PrintMutexShort(rep->mutexes[(i+1) % rep->mutexes.Size()], "\n");
+      PrintStack(rep->stacks[2*i]);
+      PrintStack(rep->stacks[2*i+1]);
+    }
+  } else {
+    for (uptr i = 0; i < rep->stacks.Size(); i++) {
+      if (i)
+        Printf("  and:\n");
+      PrintStack(rep->stacks[i]);
+    }
   }
 
   for (uptr i = 0; i < rep->mops.Size(); i++)
