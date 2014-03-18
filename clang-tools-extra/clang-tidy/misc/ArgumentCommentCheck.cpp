@@ -21,6 +21,9 @@ using namespace clang::ast_matchers;
 namespace clang {
 namespace tidy {
 
+ArgumentCommentCheck::ArgumentCommentCheck()
+    : IdentRE("^(/\\* *)([_A-Za-z][_A-Za-z0-9]*)( *= *\\*/)$") {}
+
 void ArgumentCommentCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(callExpr(unless(operatorCallExpr())).bind("expr"), this);
   Finder->addMatcher(constructExpr().bind("expr"), this);

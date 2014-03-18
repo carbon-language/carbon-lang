@@ -19,11 +19,13 @@ namespace tidy {
 /// \brief Checks that argument comments match parameter names.
 class ArgumentCommentCheck : public ClangTidyCheck {
 public:
+  ArgumentCommentCheck();
+
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 
 private:
-  llvm::Regex IdentRE{ "^(/\\* *)([_A-Za-z][_A-Za-z0-9]*)( *= *\\*/)$" };
+  llvm::Regex IdentRE;
 
   bool isLikelyTypo(llvm::ArrayRef<ParmVarDecl *> Params, StringRef ArgName,
                     unsigned ArgIndex);
