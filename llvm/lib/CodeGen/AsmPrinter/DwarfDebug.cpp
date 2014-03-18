@@ -1060,6 +1060,7 @@ void DwarfDebug::endModule() {
     emitDebugStrDWO();
     emitDebugInfoDWO();
     emitDebugAbbrevDWO();
+    emitDebugLineDWO();
     // Emit DWO addresses.
     InfoHolder.emitAddresses(Asm->getObjFileLowering().getDwarfAddrSection());
   }
@@ -2658,7 +2659,6 @@ DwarfTypeUnit *DwarfDebug::constructSkeletonTU(DwarfTypeUnit *TU) {
   NewTU->setType(NULL);
   NewTU->initSection(
       Asm->getObjFileLowering().getDwarfTypesSection(TU->getTypeSignature()));
-  CU.applyStmtList(*Die);
 
   initSkeletonUnit(TU, Die, NewTU);
   return NewTU;
@@ -2678,6 +2678,13 @@ void DwarfDebug::emitDebugInfoDWO() {
 void DwarfDebug::emitDebugAbbrevDWO() {
   assert(useSplitDwarf() && "No split dwarf?");
   InfoHolder.emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevDWOSection());
+}
+
+void DwarfDebug::emitDebugLineDWO() {
+  assert(useSplitDwarf() && "No split dwarf?");
+  Asm->OutStreamer.SwitchSection(
+      Asm->getObjFileLowering().getDwarfLineDWOSection());
+  Asm->OutStreamer.EmitLabel(SplitTypeUnitFileTable.Emit(&Asm->OutStreamer).second);
 }
 
 // Emit the .debug_str.dwo section for separated dwarf. This contains the
@@ -2708,8 +2715,9 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   }
 
   DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
-  DwarfTypeUnit *NewTU = new DwarfTypeUnit(InfoHolder.getUnits().size(),
-                                           UnitDie, CU, Asm, this, &InfoHolder);
+  DwarfTypeUnit *NewTU = new DwarfTypeUnit(
+      InfoHolder.getUnits().size(), UnitDie, CU, Asm, this, &InfoHolder,
+      useSplitDwarf() ? &SplitTypeUnitFileTable : nullptr);
   TU = NewTU;
   InfoHolder.addUnit(NewTU);
 

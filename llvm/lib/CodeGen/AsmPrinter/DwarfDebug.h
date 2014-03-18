@@ -27,6 +27,7 @@
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MachineLocation.h"
+#include "llvm/MC/MCDwarf.h"
 #include "llvm/Support/Allocator.h"
 
 namespace llvm {
@@ -486,6 +487,10 @@ class DwarfDebug : public AsmPrinterHandler {
   // Holder for the skeleton information.
   DwarfFile SkeletonHolder;
 
+  // Store file names for type units under fission in a line table header that
+  // will be emitted into debug_line.dwo.
+  MCDwarfLineTableHeader SplitTypeUnitFileTable;
+
   void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
 
   const SmallVectorImpl<DwarfUnit *> &getUnits() {
@@ -620,6 +625,9 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Emit the debug abbrev dwo section.
   void emitDebugAbbrevDWO();
+
+  /// \brief Emit the debug line dwo section.
+  void emitDebugLineDWO();
 
   /// \brief Emit the debug str dwo section.
   void emitDebugStrDWO();

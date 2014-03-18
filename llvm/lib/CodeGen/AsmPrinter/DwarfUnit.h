@@ -23,6 +23,7 @@
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCDwarf.h"
 
 namespace llvm {
 
@@ -511,6 +512,10 @@ protected:
   /// getOrCreateStaticMemberDIE - Create new static data member DIE.
   DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);
 
+  /// Look up the source ID with the given directory and source file names. If
+  /// none currently exists, create a new ID and insert it in the line table.
+  virtual unsigned getOrCreateSourceID(StringRef File, StringRef Directory) = 0;
+
 private:
   /// constructTypeDIE - Construct basic type die from DIBasicType.
   void constructTypeDIE(DIE &Buffer, DIBasicType BTy);
@@ -603,9 +608,7 @@ public:
 
   DwarfCompileUnit &getCU() override { return *this; }
 
-  /// Look up the source ID with the given directory and source file names. If
-  /// none currently exists, create a new ID and insert it in the line table.
-  unsigned getOrCreateSourceID(StringRef FileName, StringRef DirName);
+  unsigned getOrCreateSourceID(StringRef FileName, StringRef DirName) override;
 };
 
 class DwarfTypeUnit : public DwarfUnit {
@@ -613,10 +616,12 @@ private:
   uint64_t TypeSignature;
   const DIE *Ty;
   DwarfCompileUnit &CU;
+  MCDwarfLineTableHeader *SplitLineTable;
 
 public:
   DwarfTypeUnit(unsigned UID, DIE *D, DwarfCompileUnit &CU, AsmPrinter *A,
-                DwarfDebug *DW, DwarfFile *DWU);
+                DwarfDebug *DW, DwarfFile *DWU,
+                MCDwarfLineTableHeader *SplitLineTable = nullptr);
 
   void setTypeSignature(uint64_t Signature) { TypeSignature = Signature; }
   uint64_t getTypeSignature() const { return TypeSignature; }
@@ -631,6 +636,9 @@ public:
   }
   void initSection(const MCSection *Section);
   DwarfCompileUnit &getCU() override { return CU; }
+
+protected:
+  unsigned getOrCreateSourceID(StringRef File, StringRef Directory) override;
 };
 } // end llvm namespace
 #endif

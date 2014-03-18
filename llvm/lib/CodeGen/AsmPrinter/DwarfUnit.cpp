@@ -56,8 +56,13 @@ DwarfCompileUnit::DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
 }
 
 DwarfTypeUnit::DwarfTypeUnit(unsigned UID, DIE *D, DwarfCompileUnit &CU,
-                             AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU)
-    : DwarfUnit(UID, D, CU.getCUNode(), A, DW, DWU), CU(CU) {}
+                             AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU,
+                             MCDwarfLineTableHeader *SplitLineTable)
+    : DwarfUnit(UID, D, CU.getCUNode(), A, DW, DWU), CU(CU),
+      SplitLineTable(SplitLineTable) {
+  if (SplitLineTable)
+    addSectionOffset(UnitDie.get(), dwarf::DW_AT_stmt_list, 0);
+}
 
 /// ~Unit - Destructor for compile unit.
 DwarfUnit::~DwarfUnit() {
@@ -307,6 +312,11 @@ unsigned DwarfCompileUnit::getOrCreateSourceID(StringRef FileName, StringRef Dir
       Asm->OutStreamer.hasRawTextSupport() ? 0 : getUniqueID());
 }
 
+unsigned DwarfTypeUnit::getOrCreateSourceID(StringRef FileName, StringRef DirName) {
+  return SplitLineTable ? SplitLineTable->getFile(DirName, FileName)
+                        : getCU().getOrCreateSourceID(FileName, DirName);
+}
+
 /// addOpAddress - Add a dwarf op address data and value using the
 /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
 ///
@@ -394,7 +404,7 @@ void DwarfUnit::addSourceLine(DIE *Die, unsigned Line, StringRef File,
   if (Line == 0)
     return;
 
-  unsigned FileID = getCU().getOrCreateSourceID(File, Directory);
+  unsigned FileID = getOrCreateSourceID(File, Directory);
   assert(FileID && "Invalid file id");
   addUInt(Die, dwarf::DW_AT_decl_file, None, FileID);
   addUInt(Die, dwarf::DW_AT_decl_line, None, Line);

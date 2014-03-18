@@ -76,9 +76,9 @@
 ; FISSION-NOT: type_signature
 ; FISSION-LABEL: type_signature = 0x1d02f3be30cc5688
 ; FISSION: DW_TAG_type_unit
-; FISSION: DW_AT_stmt_list [DW_FORM_sec_offset] (0x00000000)
-; FISSION: DW_AT_GNU_dwo_name{{.*}}"bar.dwo"
-; FISSION: DW_AT_comp_dir{{.*}}"/tmp/dbginfo"
+; FISSION-NEXT: DW_AT_GNU_dwo_name{{.*}}"bar.dwo"
+; FISSION-NEXT: DW_AT_GNU_addr_base
+; FISSION-NEXT: DW_AT_comp_dir{{.*}}"/tmp/dbginfo"
 ; FISSION-NOT: type_signature
 ; FISSION-LABEL: type_signature = 0xb04af47397402e77
 ; FISSION-NOT: type_signature
@@ -120,8 +120,7 @@
 ; CHECK-NOT: type_signature
 ; CHECK-LABEL: type_signature = 0xe94f6d3843e62d6b
 ; CHECK: DW_TAG_type_unit
-; SINGLE: DW_AT_stmt_list [DW_FORM_sec_offset] (0x00000000)
-; FISSION-NOT: DW_AT_stmt_list
+; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset] (0x00000000)
 ; CHECK-NOT: NULL
 ; CHECK-NOT: DW_AT_GNU_odr_signature
 ; CHECK: DW_TAG_structure_type
@@ -136,9 +135,17 @@
 ; CHECK-LABEL: .debug_line contents:
 ; CHECK: Line table prologue
 ; CHECK-NOT: file_names[
-; CHECK: file_names{{.*}} bar.h
+; SINGLE: file_names{{.*}} bar.h
 ; CHECK: file_names{{.*}} bar.cpp
 ; CHECK-NOT: file_names[
+
+; CHECK-LABEL: .debug_line.dwo contents:
+; FISSION: Line table prologue
+; FISSION-NOT: file_names[
+; FISSION: file_names{{.*}} bar.h
+; FISSION: file_names{{.*}} bar.cpp
+; FISSION-NOT: file_names[
+
 ; CHECK-LABEL: .debug_str contents:
 
 ; Use the unit size as a rough hash/identifier for the unit we're dealing with
