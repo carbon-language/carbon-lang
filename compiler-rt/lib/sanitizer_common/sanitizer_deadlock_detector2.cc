@@ -134,7 +134,7 @@ DDPhysicalThread* DD::CreatePhysicalThread() {
 
 void DD::DestroyPhysicalThread(DDPhysicalThread *pt) {
   pt->~DDPhysicalThread();
-  InternalFree(pt);
+  UnmapOrDie(pt, sizeof(DDPhysicalThread));
 }
 
 DDLogicalThread* DD::CreateLogicalThread(u64 ctx) {
