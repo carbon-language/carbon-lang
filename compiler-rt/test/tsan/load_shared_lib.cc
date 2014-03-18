@@ -9,19 +9,23 @@
 #include <dlfcn.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <stddef.h>
+#include <unistd.h>
 
 #include <string>
 
 int GLOB = 0;
 
 void *write_glob(void *unused) {
+  if (unused)
+    sleep(1);
   GLOB++;
   return NULL;
 }
 
 void race_two_threads(void *(*access_callback)(void *unused)) {
   pthread_t t1, t2;
-  pthread_create(&t1, NULL, access_callback, NULL);
+  pthread_create(&t1, NULL, access_callback, (void*)1);
   pthread_create(&t2, NULL, access_callback, NULL);
   pthread_join(t1, NULL);
   pthread_join(t2, NULL);

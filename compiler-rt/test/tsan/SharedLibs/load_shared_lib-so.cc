@@ -12,11 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include <stddef.h>
+#include <unistd.h>
 
 int GLOB_SHARED = 0;
 
 extern "C"
 void *write_from_so(void *unused) {
+  if (unused)
+    sleep(1);
   GLOB_SHARED++;
   return NULL;
 }
