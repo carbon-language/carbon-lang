@@ -278,7 +278,7 @@ TEST_F(TestDebugIR, ExistingMetadataRetained) {
   // verify DebugIR did not generate a file
   ASSERT_FALSE(removeIfExists(Path)) << "Unexpected file " << Path;
 
-  DICompileUnit CU(*Finder.compile_unit_begin());
+  DICompileUnit CU(*Finder.compile_units().begin());
 
   // Verify original CU information is retained
   ASSERT_EQ(Filename, CU.getFilename());
