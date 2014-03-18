@@ -475,8 +475,9 @@ bool ObjCARCContract::runOnFunction(Function &F) {
             for (unsigned i = 0, e = PHI->getNumIncomingValues(); i != e; ++i)
               if (PHI->getIncomingBlock(i) == BB) {
                 // Keep the UI iterator valid.
-                if (&PHI->getOperandUse(
-                        PHINode::getOperandNumForIncomingValue(i)) == &U)
+                if (UI != UE &&
+                    &PHI->getOperandUse(
+                        PHINode::getOperandNumForIncomingValue(i)) == &*UI)
                   ++UI;
                 PHI->setIncomingValue(i, Replacement);
               }
