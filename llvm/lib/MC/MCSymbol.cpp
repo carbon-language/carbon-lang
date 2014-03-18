@@ -9,7 +9,6 @@
 
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -50,22 +49,6 @@ const MCSymbol &MCSymbol::AliasedSymbol() const {
     S = &Ref->getSymbol();
   }
   return *S;
-}
-
-const MCSymbol *MCSymbol::getBaseSymbol(const MCAsmLayout &Layout) const {
-  if (!isVariable())
-    return this;
-
-  const MCExpr *Expr = getVariableValue();
-  MCValue Value;
-  if (!Expr->EvaluateAsRelocatable(Value, &Layout))
-    return nullptr;
-
-  if (Value.getSymB())
-    return nullptr;
-  if (const MCSymbolRefExpr *A = Value.getSymA())
-    return &A->getSymbol();
-  return nullptr;
 }
 
 void MCSymbol::setVariableValue(const MCExpr *Value) {

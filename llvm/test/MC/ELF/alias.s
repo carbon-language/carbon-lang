@@ -15,6 +15,9 @@ bar3 = foo3
 foo4:
 bar4 = foo4
 
+// Test that bar5 is also a function
+bar5 = bar4
+
         .long foo2
 
 // CHECK:      Symbols [
@@ -38,6 +41,15 @@ bar4 = foo4
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: bar4
+// CHECK-NEXT:     Value: 0x0
+// CHECK-NEXT:     Size: 0
+// CHECK-NEXT:     Binding: Local
+// CHECK-NEXT:     Type: Function
+// CHECK-NEXT:     Other: 0
+// CHECK-NEXT:     Section: .text
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Symbol {
+// CHECK-NEXT:     Name: bar5
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
