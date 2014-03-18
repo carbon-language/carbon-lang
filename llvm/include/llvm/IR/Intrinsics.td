@@ -69,6 +69,10 @@ class ReadNone<int argNo> : IntrinsicProperty {
 
 def IntrNoReturn : IntrinsicProperty;
 
+// IntrNoduplicate - Calls to this intrinsic cannot be duplicated.
+// Parallels the noduplicate attribute on LLVM IR functions.
+def IntrNoDuplicate : IntrinsicProperty;
+
 //===----------------------------------------------------------------------===//
 // Types used by intrinsics.
 //===----------------------------------------------------------------------===//

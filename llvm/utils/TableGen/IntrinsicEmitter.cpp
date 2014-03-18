@@ -502,6 +502,9 @@ struct AttributeComparator {
     if (L->canThrow != R->canThrow)
       return R->canThrow;
 
+    if (L->isNoDuplicate != R->isNoDuplicate)
+      return R->isNoDuplicate;
+
     if (L->isNoReturn != R->isNoReturn)
       return R->isNoReturn;
 
@@ -616,7 +619,8 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
 
     ModRefKind modRef = getModRefKind(intrinsic);
 
-    if (!intrinsic.canThrow || modRef || intrinsic.isNoReturn) {
+    if (!intrinsic.canThrow || modRef || intrinsic.isNoReturn ||
+        intrinsic.isNoDuplicate) {
       OS << "      const Attribute::AttrKind Atts[] = {";
       bool addComma = false;
       if (!intrinsic.canThrow) {
@@ -627,6 +631,12 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
         if (addComma)
           OS << ",";
         OS << "Attribute::NoReturn";
+        addComma = true;
+      }
+      if (intrinsic.isNoDuplicate) {
+        if (addComma)
+          OS << ",";
+        OS << "Attribute::NoDuplicate";
         addComma = true;
       }
 
