@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: absolute value
 
@@ -49,7 +49,7 @@ int test__absvti2(ti_int a)
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 //     if (test__absvti2(make_ti(0x8000000000000000LL, 0)))  // should abort
 //         return 1;

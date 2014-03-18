@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: convert a to a unsigned long long, rounding toward zero.
 //          Negative values all become zero.
@@ -51,7 +51,7 @@ char assumption_3[sizeof(float)*CHAR_BIT == 32] = {0};
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     if (test__fixunssfti(0.0F, 0))
         return 1;
 

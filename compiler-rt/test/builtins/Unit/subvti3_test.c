@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: a - b
 
@@ -49,7 +49,7 @@ int test__subvti3(ti_int a, ti_int b)
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 //     test__subvti3(make_ti(0x8000000000000000LL, 0), 1);  // should abort
 //     test__subvti3(0, make_ti(0x8000000000000000LL, 0));  // should abort
 //     test__subvti3(1, make_ti(0x8000000000000000LL, 0));  // should abort

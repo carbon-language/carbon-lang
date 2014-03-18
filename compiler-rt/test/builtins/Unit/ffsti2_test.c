@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: the index of the least significant 1-bit in a, or
 // the value zero if a is zero. The least significant bit is index one.
@@ -40,7 +40,7 @@ char assumption_1[sizeof(ti_int) == 2*sizeof(di_int)] = {0};
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     if (test__ffsti2(0x00000000, 0))
         return 1;
     if (test__ffsti2(0x00000001, 1))

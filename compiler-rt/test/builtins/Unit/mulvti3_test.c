@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: a * b
 
@@ -47,7 +47,7 @@ int test__mulvti3(ti_int a, ti_int b, ti_int expected)
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     if (test__mulvti3(0, 0, 0))
         return 1;
     if (test__mulvti3(0, 1, 0))

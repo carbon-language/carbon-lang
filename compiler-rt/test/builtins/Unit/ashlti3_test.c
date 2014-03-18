@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: a << b
 
@@ -49,7 +49,7 @@ char assumption_1[sizeof(ti_int) == 2*sizeof(di_int)] = {0};
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     if (test__ashlti3(make_ti(0xFEDCBA9876543215LL, 0xFEDCBA9876543215LL), 0,
                       make_ti(0xFEDCBA9876543215LL, 0xFEDCBA9876543215LL)))
         return 1;

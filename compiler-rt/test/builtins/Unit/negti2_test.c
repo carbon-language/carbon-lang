@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: -a
 
@@ -44,7 +44,7 @@ char assumption_1[sizeof(ti_int) == 2*sizeof(di_int)] = {0};
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     if (test__negti2(0, 0))
         return 1;
     if (test__negti2(1, -1))

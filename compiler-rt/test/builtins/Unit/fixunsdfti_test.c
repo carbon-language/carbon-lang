@@ -24,7 +24,7 @@
 
 // seee eeee eeee mmmm mmmm mmmm mmmm mmmm | mmmm mmmm mmmm mmmm mmmm mmmm mmmm mmmm
 
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 
 tu_int __fixunsdfti(double a);
 
@@ -51,7 +51,7 @@ char assumption_3[sizeof(double)*CHAR_BIT == 64] = {0};
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     if (test__fixunsdfti(0.0, 0))
         return 1;
 

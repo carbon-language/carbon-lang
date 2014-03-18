@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: the number of trailing 0-bits
 
@@ -41,7 +41,7 @@ char assumption_1[sizeof(ti_int) == 2*sizeof(di_int)] = {0};
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     if (test__ctzti2(0x00000001, 0))
         return 1;
     if (test__ctzti2(0x00000002, 1))

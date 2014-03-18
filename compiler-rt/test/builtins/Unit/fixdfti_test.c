@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: convert a to a signed long long, rounding toward zero.
 
@@ -49,7 +49,7 @@ char assumption_3[sizeof(double)*CHAR_BIT == 64] = {0};
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     if (test__fixdfti(0.0, 0))
         return 1;
 

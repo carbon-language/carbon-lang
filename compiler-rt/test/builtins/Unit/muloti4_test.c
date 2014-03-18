@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: a * b
 
@@ -67,7 +67,7 @@ int test__muloti4(ti_int a, ti_int b, ti_int expected, int expected_overflow)
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     if (test__muloti4(0, 0, 0, 0))
         return 1;
     if (test__muloti4(0, 1, 0, 0))

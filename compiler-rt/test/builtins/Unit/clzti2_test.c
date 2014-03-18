@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: the number of leading 0-bits
 
@@ -41,7 +41,7 @@ char assumption_1[sizeof(ti_int) == 2*sizeof(di_int)] = {0};
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     const int N = (int)(sizeof(ti_int) * CHAR_BIT);
 
     if (test__clzti2(0x00000001, N-1))

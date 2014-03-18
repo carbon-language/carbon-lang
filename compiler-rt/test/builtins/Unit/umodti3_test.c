@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: a % b
 
@@ -45,7 +45,7 @@ int test__umodti3(tu_int a, tu_int b, tu_int expected_r)
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     if (test__umodti3(0, 1, 0))
         return 1;
     if (test__umodti3(2, 1, 0))

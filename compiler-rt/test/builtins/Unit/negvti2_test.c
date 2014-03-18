@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: -a
 
@@ -46,7 +46,7 @@ int test__negvti2(ti_int a)
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
     if (test__negvti2(0))
         return 1;
     if (test__negvti2(1))

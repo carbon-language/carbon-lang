@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if __x86_64
-
 #include "int_lib.h"
 #include <stdio.h>
+
+#ifdef CRT_HAS_128BIT
 
 // Returns: a + b
 
@@ -48,7 +48,7 @@ int test__addvti3(ti_int a, ti_int b)
 
 int main()
 {
-#if __x86_64
+#ifdef CRT_HAS_128BIT
 // should abort
 //     test__addvti3(make_ti(0x8000000000000000LL, 0x0000000000000000LL),
 //                   make_ti(0xFFFFFFFFFFFFFFFFLL, 0xFFFFFFFFFFFFFFFFLL));
