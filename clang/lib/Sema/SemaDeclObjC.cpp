@@ -372,7 +372,6 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
       IC->lookupMethod(MDecl->getSelector(), MDecl->isInstanceMethod());
     
     if (IMD) {
-      ObjCCategoryDecl *CD = 0;
       ObjCImplDecl *ImplDeclOfMethodDef = 
         dyn_cast<ObjCImplDecl>(MDecl->getDeclContext());
       ObjCContainerDecl *ContDeclOfMethodDecl = 
@@ -380,20 +379,16 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
       ObjCImplDecl *ImplDeclOfMethodDecl = 0;
       if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(ContDeclOfMethodDecl))
         ImplDeclOfMethodDecl = OID->getImplementation();
-      else if ((CD = dyn_cast<ObjCCategoryDecl>(ContDeclOfMethodDecl))) {
-        ImplDeclOfMethodDecl = CD->getImplementation();
+      else if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(ContDeclOfMethodDecl)) {
+        if (CD->IsClassExtension()) {
+          if (ObjCInterfaceDecl *OID = CD->getClassInterface())
+            ImplDeclOfMethodDecl = OID->getImplementation();
+        } else
+            ImplDeclOfMethodDecl = CD->getImplementation();
       }
-      bool warn;
-      // No need to issue deprecated warning if deprecated method in class
-      // extension is being implemented in primary class implementation
-      // (no overriding is involved).
-      if (ImplDeclOfMethodDef && CD && CD->IsClassExtension())
-        warn = false;
-      else
       // No need to issue deprecated warning if deprecated mehod in class/category
       // is being implemented in its own implementation (no overriding is involved).
-        warn = (!ImplDeclOfMethodDecl || ImplDeclOfMethodDecl != ImplDeclOfMethodDef);
-      if (warn)
+      if (!ImplDeclOfMethodDecl || ImplDeclOfMethodDecl != ImplDeclOfMethodDef)
         DiagnoseObjCImplementedDeprecations(*this, 
                                           dyn_cast<NamedDecl>(IMD), 
                                           MDecl->getLocation(), 0);
