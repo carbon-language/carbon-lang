@@ -166,7 +166,7 @@ static error_code resolveSectionAndAddress(const COFFObjectFile *Obj,
   section_iterator iter(Obj->section_begin());
   if (error_code EC = Sym.getSection(iter))
     return EC;
-  ResolvedSection = Obj->getCOFFSection(iter);
+  ResolvedSection = Obj->getCOFFSection(*iter);
   return object_error::success;
 }
 
@@ -381,16 +381,15 @@ static void printExportTable(const COFFObjectFile *Obj) {
 static bool getPDataSection(const COFFObjectFile *Obj,
                             std::vector<RelocationRef> &Rels,
                             const RuntimeFunction *&RFStart, int &NumRFs) {
-  for (section_iterator SI = Obj->section_begin(), SE = Obj->section_end();
-       SI != SE; ++SI) {
+  for (const SectionRef &Section : Obj->sections()) {
     StringRef Name;
-    if (error(SI->getName(Name)))
+    if (error(Section.getName(Name)))
       continue;
     if (Name != ".pdata")
       continue;
 
-    const coff_section *Pdata = Obj->getCOFFSection(SI);
-    for (const RelocationRef &Reloc : SI->relocations())
+    const coff_section *Pdata = Obj->getCOFFSection(Section);
+    for (const RelocationRef &Reloc : Section.relocations())
       Rels.push_back(Reloc);
 
     // Sort relocations by address.

@@ -51,9 +51,8 @@ void COFFDumper::dumpHeader(const object::coff_file_header *Header) {
 
 void COFFDumper::dumpSections(unsigned NumSections) {
   std::vector<COFFYAML::Section> &Sections = YAMLObj.Sections;
-  for (object::section_iterator iter = Obj.section_begin();
-       iter != Obj.section_end(); ++iter) {
-    const object::coff_section *Sect = Obj.getCOFFSection(iter);
+  for (const auto &Section : Obj.sections()) {
+    const object::coff_section *Sect = Obj.getCOFFSection(Section);
     COFFYAML::Section Sec;
     Sec.Name = Sect->Name; // FIXME: check the null termination!
     uint32_t Characteristics = Sect->Characteristics;
@@ -65,11 +64,10 @@ void COFFDumper::dumpSections(unsigned NumSections) {
     Sec.SectionData = object::yaml::BinaryRef(sectionData);
 
     std::vector<COFFYAML::Relocation> Relocations;
-    for (object::relocation_iterator rIter = iter->relocation_begin();
-                       rIter != iter->relocation_end(); ++rIter) {
-      const object::coff_relocation *reloc = Obj.getCOFFRelocation(rIter);
+    for (const auto &Reloc : Section.relocations()) {
+      const object::coff_relocation *reloc = Obj.getCOFFRelocation(Reloc);
       COFFYAML::Relocation Rel;
-      object::symbol_iterator Sym = rIter->getSymbol();
+      object::symbol_iterator Sym = Reloc.getSymbol();
       Sym->getName(Rel.SymbolName);
       Rel.VirtualAddress = reloc->VirtualAddress;
       Rel.Type = reloc->Type;
@@ -82,9 +80,8 @@ void COFFDumper::dumpSections(unsigned NumSections) {
 
 void COFFDumper::dumpSymbols(unsigned NumSymbols) {
   std::vector<COFFYAML::Symbol> &Symbols = YAMLObj.Symbols;
-  for (object::symbol_iterator iter = Obj.symbol_begin();
-       iter != Obj.symbol_end(); ++iter) {
-    const object::coff_symbol *Symbol = Obj.getCOFFSymbol(iter);
+  for (const auto &S : Obj.symbols()) {
+    const object::coff_symbol *Symbol = Obj.getCOFFSymbol(S);
     COFFYAML::Symbol Sym;
     Obj.getSymbolName(Symbol, Sym.Name);
     Sym.SimpleType = COFF::SymbolBaseType(Symbol->getBaseType());

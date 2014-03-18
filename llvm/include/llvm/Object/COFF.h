@@ -356,9 +356,9 @@ public:
   section_iterator section_begin() const override;
   section_iterator section_end() const override;
 
-  const coff_section *getCOFFSection(section_iterator &It) const;
-  const coff_symbol *getCOFFSymbol(symbol_iterator &It) const;
-  const coff_relocation *getCOFFRelocation(relocation_iterator &It) const;
+  const coff_section *getCOFFSection(const SectionRef &Section) const;
+  const coff_symbol *getCOFFSymbol(const SymbolRef &Symbol) const;
+  const coff_relocation *getCOFFRelocation(const RelocationRef &Reloc) const;
 
   uint8_t getBytesInAddress() const override;
   StringRef getFileFormatName() const override;

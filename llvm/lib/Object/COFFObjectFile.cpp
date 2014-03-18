@@ -431,9 +431,8 @@ error_code COFFObjectFile::getVaPtr(uint64_t Addr, uintptr_t &Res) const {
 
 // Returns the file offset for the given RVA.
 error_code COFFObjectFile::getRvaPtr(uint32_t Addr, uintptr_t &Res) const {
-  for (section_iterator I = section_begin(), E = section_end(); I != E;
-       ++I) {
-    const coff_section *Section = getCOFFSection(I);
+  for (const SectionRef &S : sections()) {
+    const coff_section *Section = getCOFFSection(S);
     uint32_t SectionStart = Section->VirtualAddress;
     uint32_t SectionEnd = Section->VirtualAddress + Section->VirtualSize;
     if (SectionStart <= Addr && Addr < SectionEnd) {
@@ -872,21 +871,25 @@ error_code COFFObjectFile::getRelocationType(DataRefImpl Rel,
   return object_error::success;
 }
 
-const coff_section *COFFObjectFile::getCOFFSection(section_iterator &It) const {
-  return toSec(It->getRawDataRefImpl());
+const coff_section *
+COFFObjectFile::getCOFFSection(const SectionRef &Section) const {
+  return toSec(Section.getRawDataRefImpl());
 }
 
-const coff_symbol *COFFObjectFile::getCOFFSymbol(symbol_iterator &It) const {
-  return toSymb(It->getRawDataRefImpl());
+const coff_symbol *
+COFFObjectFile::getCOFFSymbol(const SymbolRef &Symbol) const {
+  return toSymb(Symbol.getRawDataRefImpl());
 }
 
 const coff_relocation *
-COFFObjectFile::getCOFFRelocation(relocation_iterator &It) const {
-  return toRel(It->getRawDataRefImpl());
+COFFObjectFile::getCOFFRelocation(const RelocationRef &Reloc) const {
+  return toRel(Reloc.getRawDataRefImpl());
 }
 
-#define LLVM_COFF_SWITCH_RELOC_TYPE_NAME(enum) \
-  case COFF::enum: Res = #enum; break;
+#define LLVM_COFF_SWITCH_RELOC_TYPE_NAME(reloc_type)                           \
+  case COFF::reloc_type:                                                       \
+    Res = #reloc_type;                                                         \
+    break;
 
 error_code COFFObjectFile::getRelocationTypeName(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
