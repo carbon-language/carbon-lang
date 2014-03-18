@@ -28,11 +28,15 @@ OptionGroupOutputFile::~OptionGroupOutputFile ()
 {
 }
 
+static const uint32_t SHORT_OPTION_APND = 0x61706e64;   // 'apnd'
+
 static OptionDefinition
 g_option_table[] =
 {
     { LLDB_OPT_SET_1 , false, "outfile", 'o', OptionParser::eRequiredArgument, NULL, 0, eArgTypeFilename , "Specify a path for capturing command output."},
-    { LLDB_OPT_SET_1 , false, "append-outfile" , 'apnd', OptionParser::eNoArgument, NULL, 0, eArgTypeNone , "Append to the the file specified with '--outfile <path>'."},
+    { LLDB_OPT_SET_1 , false, "append-outfile" , SHORT_OPTION_APND,
+      OptionParser::eNoArgument, NULL, 0, eArgTypeNone ,
+      "Append to the the file specified with '--outfile <path>'."},
 };
 
 uint32_t
@@ -61,7 +65,7 @@ OptionGroupOutputFile::SetOptionValue (CommandInterpreter &interpreter,
             error = m_file.SetValueFromCString (option_arg);
             break;
 
-        case 'apnd':
+        case SHORT_OPTION_APND:
             m_append.SetCurrentValue(true);
             break;
 

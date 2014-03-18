@@ -678,6 +678,9 @@ protected:
 
 class CommandObjectTargetVariable : public CommandObjectParsed
 {
+    static const uint32_t SHORT_OPTION_FILE = 0x66696c65;   // 'file'
+    static const uint32_t SHORT_OPTION_SHLB = 0x73686c62;   // 'shlb'
+
 public:
     CommandObjectTargetVariable (CommandInterpreter &interpreter) :
         CommandObjectParsed (interpreter,
@@ -688,8 +691,12 @@ public:
         m_option_group (interpreter),
         m_option_variable (false), // Don't include frame options
         m_option_format (eFormatDefault),
-        m_option_compile_units    (LLDB_OPT_SET_1, false, "file", 'file', 0, eArgTypeFilename, "A basename or fullpath to a file that contains global variables. This option can be specified multiple times."),
-        m_option_shared_libraries (LLDB_OPT_SET_1, false, "shlib",'shlb', 0, eArgTypeFilename, "A basename or fullpath to a shared library to use in the search for global variables. This option can be specified multiple times."),
+        m_option_compile_units    (LLDB_OPT_SET_1, false, "file",
+                                   SHORT_OPTION_FILE, 0, eArgTypeFilename,
+                                   "A basename or fullpath to a file that contains global variables. This option can be specified multiple times."),
+        m_option_shared_libraries (LLDB_OPT_SET_1, false, "shlib",
+                                   SHORT_OPTION_SHLB, 0, eArgTypeFilename,
+                                   "A basename or fullpath to a shared library to use in the search for global variables. This option can be specified multiple times."),
         m_varobj_options()
     {
         CommandArgumentEntry arg;
