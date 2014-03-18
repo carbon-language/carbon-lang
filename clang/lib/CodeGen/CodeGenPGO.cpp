@@ -213,21 +213,21 @@ static llvm::Constant *getOrInsertRuntimeWriteAtExit(CodeGenModule &CGM) {
 }
 
 static StringRef getCountersSection(const CodeGenModule &CGM) {
-  if (CGM.getTarget().getTriple().getObjectFormat() == llvm::Triple::MachO)
+  if (CGM.getTarget().getTriple().isOSBinFormatMachO())
     return "__DATA,__llvm_pgo_cnts";
   else
     return "__llvm_pgo_cnts";
 }
 
 static StringRef getNameSection(const CodeGenModule &CGM) {
-  if (CGM.getTarget().getTriple().getObjectFormat() == llvm::Triple::MachO)
+  if (CGM.getTarget().getTriple().isOSBinFormatMachO())
     return "__DATA,__llvm_pgo_names";
   else
     return "__llvm_pgo_names";
 }
 
 static StringRef getDataSection(const CodeGenModule &CGM) {
-  if (CGM.getTarget().getTriple().getObjectFormat() == llvm::Triple::MachO)
+  if (CGM.getTarget().getTriple().isOSBinFormatMachO())
     return "__DATA,__llvm_pgo_data";
   else
     return "__llvm_pgo_data";
