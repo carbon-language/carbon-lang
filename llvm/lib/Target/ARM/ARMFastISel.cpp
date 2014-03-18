@@ -73,7 +73,7 @@ namespace {
      }
   } Address;
 
-class ARMFastISel : public FastISel {
+class ARMFastISel final : public FastISel {
 
   /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
   /// make the right decision when generating code for different targets.

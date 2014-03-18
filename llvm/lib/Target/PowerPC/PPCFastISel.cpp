@@ -80,7 +80,7 @@ typedef struct Address {
    }
 } Address;
 
-class PPCFastISel : public FastISel {
+class PPCFastISel final : public FastISel {
 
   const TargetMachine &TM;
   const TargetInstrInfo &TII;
