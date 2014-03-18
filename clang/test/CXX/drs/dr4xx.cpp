@@ -2,6 +2,9 @@
 // RUN: %clang_cc1 -std=c++11 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 // RUN: %clang_cc1 -std=c++1y %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 
+// FIXME: __SIZE_TYPE__ expands to 'long long' on some targets.
+__extension__ typedef __SIZE_TYPE__ size_t;
+
 namespace dr400 { // dr400: yes
   struct A { int a; struct a {}; }; // expected-note 2{{conflicting}} expected-note {{ambiguous}}
   struct B { int a; struct a {}; }; // expected-note 2{{target}} expected-note {{ambiguous}}
@@ -396,9 +399,7 @@ namespace dr428 { // dr428: yes
 }
 
 namespace dr429 { // dr429: yes c++11
-  // REQUIRES: LP64
   // FIXME: This rule is obviously intended to apply to C++98 as well.
-  typedef __SIZE_TYPE__ size_t;
   struct A {
     static void *operator new(size_t, size_t);
     static void operator delete(void*, size_t);

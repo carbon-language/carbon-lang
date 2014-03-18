@@ -6,8 +6,8 @@
 // lwg404: yes
 // lwg2340: yes
 
-// REQUIRES: LP64
-typedef __SIZE_TYPE__ size_t;
+// FIXME: __SIZE_TYPE__ expands to 'long long' on some targets.
+__extension__ typedef __SIZE_TYPE__ size_t;
 namespace std { struct bad_alloc {}; }
 
 inline void* operator new(size_t) BAD_ALLOC; // expected-error {{cannot be declared 'inline'}}
