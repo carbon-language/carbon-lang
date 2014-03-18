@@ -9,6 +9,7 @@
 
 #include "dd_rtl.h"
 #include "interception/interception.h"
+#include "sanitizer_common/sanitizer_procmaps.h"
 #include <pthread.h>
 #include <stdlib.h>
 
@@ -20,12 +21,14 @@ extern "C" void __libc_free(void *ptr);
 static __thread Thread *thr;
 static __thread volatile int initing;
 static bool inited;
+static uptr g_data_start;
+static uptr g_data_end;
 
 static bool InitThread() {
-  if (thr != 0)
-    return true;
   if (initing)
     return false;
+  if (thr != 0)
+    return true;
   initing = true;
   if (!inited) {
     inited = true;
@@ -258,11 +261,37 @@ void __dsan_before_mutex_unlock(uptr m, int writelock) {
 void __dsan_mutex_destroy(uptr m) {
   if (!InitThread())
     return;
+  // if (m >= g_data_start && m < g_data_end)
+  //   return;
   MutexDestroy(thr, m);
 }
 }  // extern "C"
 
 namespace __dsan {
+
+static void InitDataSeg() {
+  MemoryMappingLayout proc_maps(true);
+  uptr start, end, offset;
+  char name[128];
+  bool prev_is_data = false;
+  while (proc_maps.Next(&start, &end, &offset, name, ARRAY_SIZE(name),
+                        /*protection*/ 0)) {
+    bool is_data = offset != 0 && name[0] != 0;
+    // BSS may get merged with [heap] in /proc/self/maps. This is not very
+    // reliable.
+    bool is_bss = offset == 0 &&
+      (name[0] == 0 || internal_strcmp(name, "[heap]") == 0) && prev_is_data;
+    if (g_data_start == 0 && is_data)
+      g_data_start = start;
+    if (is_bss)
+      g_data_end = end;
+    prev_is_data = is_data;
+  }
+  VPrintf(1, "guessed data_start=%p data_end=%p\n",  g_data_start, g_data_end);
+  CHECK_LT(g_data_start, g_data_end);
+  CHECK_GE((uptr)&g_data_start, g_data_start);
+  CHECK_LT((uptr)&g_data_start, g_data_end);
+}
 
 void InitializeInterceptors() {
   INTERCEPT_FUNCTION(pthread_mutex_destroy);
@@ -295,6 +324,8 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(realpath);
   INTERCEPT_FUNCTION(read);
   INTERCEPT_FUNCTION(pread);
+
+  InitDataSeg();
 }
 
 }  // namespace __dsan
