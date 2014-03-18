@@ -18,6 +18,9 @@
 
 namespace __dsan {
 
+struct Flags : CommonFlags, DDFlags {
+};
+
 struct Mutex {
   DDMutex dd;
 };
@@ -44,8 +47,9 @@ struct Context {
   MutexHashMap mutex_map;
 };
 
-inline CommonFlags* flags() {
-  return common_flags();
+inline Flags* flags() {
+  static Flags flags;
+  return &flags;
 }
 
 void Initialize();

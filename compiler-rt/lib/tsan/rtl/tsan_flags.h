@@ -15,10 +15,11 @@
 #define TSAN_FLAGS_H
 
 #include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_deadlock_detector_interface.h"
 
 namespace __tsan {
 
-struct Flags : CommonFlags {
+struct Flags : CommonFlags, DDFlags {
   // Enable dynamic annotations, otherwise they are no-ops.
   bool enable_annotations;
   // Supress a race report if we've already output another race report

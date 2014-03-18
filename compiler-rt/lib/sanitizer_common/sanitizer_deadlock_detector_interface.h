@@ -46,6 +46,10 @@ struct DDMutex {
   u64  ctx;
 };
 
+struct DDFlags {
+  bool second_deadlock_stack;
+};
+
 struct DDReport {
   enum { kMaxLoopSize = 8 };
   int n;  // number of entries in loop
@@ -65,7 +69,7 @@ struct DDCallback {
 };
 
 struct DDetector {
-  static DDetector *Create();
+  static DDetector *Create(const DDFlags *flags);
 
   virtual DDPhysicalThread* CreatePhysicalThread() { return 0; }
   virtual void DestroyPhysicalThread(DDPhysicalThread *pt) {}

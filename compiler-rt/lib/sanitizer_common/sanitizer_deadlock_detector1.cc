@@ -56,7 +56,8 @@ struct DD : public DDetector {
   void MutexEnsureID(DDLogicalThread *lt, DDMutex *m);
 };
 
-DDetector *DDetector::Create() {
+DDetector *DDetector::Create(const DDFlags *flags) {
+  (void)flags;
   void *mem = MmapOrDie(sizeof(DD), "deadlock detector");
   return new(mem) DD();
 }

@@ -45,9 +45,11 @@ static void ReportDeadlock(Thread *thr, DDReport *rep) {
     Printf("Thread %d locks mutex %llu while holding mutex %llu:\n",
       rep->loop[i].thr_ctx, rep->loop[i].mtx_ctx1, rep->loop[i].mtx_ctx0);
     PrintStackTrace(thr, rep->loop[i].stk[1]);
-    Printf("Mutex %llu was acquired here:\n",
-      rep->loop[i].mtx_ctx0);
-    PrintStackTrace(thr, rep->loop[i].stk[0]);
+    if (rep->loop[i].stk[0]) {
+      Printf("Mutex %llu was acquired here:\n",
+        rep->loop[i].mtx_ctx0);
+      PrintStackTrace(thr, rep->loop[i].stk[0]);
+    }
   }
   Printf("==============================\n");
   Die();
@@ -63,15 +65,32 @@ u32 Callback::Unwind() {
   return CurrentStackTrace(thr, 3);
 }
 
+void InitializeFlags(Flags *f, const char *env) {
+  internal_memset(f, 0, sizeof(*f));
+
+  // Default values.
+  f->second_deadlock_stack = false;
+
+  SetCommonFlagsDefaults(f);
+  // Override some common flags defaults.
+  f->allow_addr2line = true;
+
+  // Override from command line.
+  ParseFlag(env, &f->second_deadlock_stack, "second_deadlock_stack");
+  ParseCommonFlagsFromString(f, env);
+
+  // Copy back to common flags.
+  *common_flags() = *f;
+}
+
 void Initialize() {
   static u64 ctx_mem[sizeof(Context) / sizeof(u64) + 1];
   ctx = new(ctx_mem) Context();
 
   InitializeInterceptors();
-  ParseCommonFlagsFromString(flags(), GetEnv("DSAN_OPTIONS"));
-  //common_flags()->allow_addr2line = true;
+  InitializeFlags(flags(), GetEnv("DSAN_OPTIONS"));
   common_flags()->symbolize = true;
-  ctx->dd = DDetector::Create();
+  ctx->dd = DDetector::Create(flags());
 }
 
 void ThreadInit(Thread *thr) {
