@@ -35,6 +35,7 @@ typedef unsigned long long uint64_t;
 typedef struct __llvm_pgo_data {
   const uint32_t NameSize;
   const uint32_t NumCounters;
+  const uint64_t FuncHash;
   const char *const Name;
   const uint64_t *const Counters;
 } __llvm_pgo_data;
@@ -82,7 +83,7 @@ static void writeFunction(FILE *OutputFile, const __llvm_pgo_data *Data) {
   uint32_t I;
   for (I = 0; I < Data->NameSize; ++I)
     fputc(Data->Name[I], OutputFile);
-  fprintf(OutputFile, " %u\n", Data->NumCounters);
+  fprintf(OutputFile, "\n%" PRIu64 "\n%u\n", Data->FuncHash, Data->NumCounters);
   for (I = 0; I < Data->NumCounters; ++I)
     fprintf(OutputFile, "%" PRIu64 "\n", Data->Counters[I]);
   fprintf(OutputFile, "\n");
