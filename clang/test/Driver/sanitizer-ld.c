@@ -23,7 +23,7 @@
 //
 // CHECK-ASAN-FREEBSD: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-ASAN-FREEBSD-NOT: "-lc"
-// CHECK-ASAN-FREEBSD: freebsd/libclang_rt.asan-i386.a"
+// CHECK-ASAN-FREEBSD: freebsd{{/|\\+}}libclang_rt.asan-i386.a"
 // CHECK-ASAN-FREEBSD: "-lpthread"
 // CHECK-ASAN-FREEBSD: "-lrt"
 // CHECK-ASAN-FREEBSD: "-export-dynamic"
