@@ -22,7 +22,6 @@ namespace __sanitizer {
 
 // Concurrent uptr->T hashmap.
 // T must be a POD type, kSize is preferrably a prime but can be any number.
-// The hashmap is fixed size, it crashes on overflow.
 // Usage example:
 //
 // typedef AddrHashMap<uptr, 11> Map;
@@ -44,9 +43,22 @@ template<typename T, uptr kSize>
 class AddrHashMap {
  private:
   struct Cell {
-    StaticSpinMutex  mtx;
     atomic_uintptr_t addr;
     T                val;
+  };
+
+  struct AddBucket {
+    uptr cap;
+    uptr size;
+    Cell cells[1];  // variable len
+  };
+
+  static const uptr kBucketSize = 3;
+
+  struct Bucket {
+    RWMutex          mtx;
+    atomic_uintptr_t add;
+    Cell             cells[kBucketSize];
   };
 
  public:
@@ -61,23 +73,23 @@ class AddrHashMap {
     bool exists() const;
 
    private:
+    friend AddrHashMap<T, kSize>;
     AddrHashMap<T, kSize> *map_;
+    Bucket                *bucket_;
     Cell                  *cell_;
     uptr                   addr_;
+    uptr                   addidx_;
     bool                   created_;
     bool                   remove_;
   };
 
  private:
   friend class Handle;
-  Cell *table_;
+  Bucket *table_;
 
-  static const uptr kLocked = 1;
-  static const uptr kRemoved = 2;
-
-  Cell *acquire(uptr addr, bool remove, bool *created);
-  void  release(uptr addr, bool remove, bool created, Cell *c);
-  uptr hash(uptr addr);
+  void acquire(Handle *h);
+  void release(Handle *h);
+  uptr calcHash(uptr addr);
 };
 
 template<typename T, uptr kSize>
@@ -86,12 +98,12 @@ AddrHashMap<T, kSize>::Handle::Handle(AddrHashMap<T, kSize> *map, uptr addr,
   map_ = map;
   addr_ = addr;
   remove_ = remove;
-  cell_ = map_->acquire(addr_, remove_, &created_);
+  map_->acquire(this);
 }
 
 template<typename T, uptr kSize>
 AddrHashMap<T, kSize>::Handle::~Handle() {
-  map_->release(addr_, remove_, created_, cell_);
+  map_->release(this);
 }
 
 template<typename T, uptr kSize>
@@ -111,96 +123,183 @@ bool AddrHashMap<T, kSize>::Handle::exists() const {
 
 template<typename T, uptr kSize>
 AddrHashMap<T, kSize>::AddrHashMap() {
-  table_ = (Cell*)MmapOrDie(kSize * sizeof(Cell), "AddrHashMap");
+  table_ = (Bucket*)MmapOrDie(kSize * sizeof(table_[0]), "AddrHashMap");
 }
 
 template<typename T, uptr kSize>
-typename AddrHashMap<T, kSize>::Cell *AddrHashMap<T, kSize>::acquire(uptr addr,
-    bool remove, bool *created) {
-  // When we access the element associated with addr,
-  // we lock its home cell (the cell associated with hash(addr).
-  // If the element was just created or is going to be removed,
-  // we lock the cell in write mode. Otherwise we lock in read mode.
-  // The locking protects the object lifetime (it's not removed while
-  // somebody else accesses it). And also it helps to resolve concurrent
-  // inserts.
-  // Note that the home cell is not necessary the cell where the element is
-  // stored.
-  *created = false;
-  uptr h0 = hash(addr);
-  Cell *c0 = &table_[h0];
+void AddrHashMap<T, kSize>::acquire(Handle *h) {
+  uptr addr = h->addr_;
+  uptr hash = calcHash(addr);
+  Bucket *b = &table_[hash];
+
+  h->created_ = false;
+  h->addidx_ = -1;
+  h->bucket_ = b;
+  h->cell_ = 0;
+
+  // If we want to remove the element, we need exclusive access to the bucket,
+  // so skip the lock-free phase.
+  if (h->remove_)
+    goto locked;
+
+ retry:
   // First try to find an existing element w/o read mutex.
-  {
-    uptr h = h0;
-    for (;;) {
-      Cell *c = &table_[h];
-      uptr addr1 = atomic_load(&c->addr, memory_order_acquire);
-      if (addr1 == 0)  // empty cell denotes end of the cell chain for the elem
-        break;
-      // Locked cell means that another thread can be concurrently inserting
-      // the same element, fallback to mutex.
-      if (addr1 == kLocked)
-        break;
-      if (addr1 == addr)  // ok, found it
-        return c;
-      h++;
-      if (h == kSize)
-        h = 0;
-      CHECK_NE(h, h0);  // made the full cycle
-    }
-  }
-  if (remove)
-    return 0;
-  // Now try to create it under the mutex.
-  c0->mtx.Lock();
-  uptr h = h0;
-  for (;;) {
-    Cell *c = &table_[h];
+  CHECK(!h->remove_);
+  // Check the embed cells.
+  for (uptr i = 0; i < kBucketSize; i++) {
+    Cell *c = &b->cells[i];
     uptr addr1 = atomic_load(&c->addr, memory_order_acquire);
-    if (addr1 == addr) {  // another thread has inserted it ahead of us
-      c0->mtx.Unlock();
-      return c;
+    if (addr1 == addr) {
+      h->cell_ = c;
+      return;
     }
-    // Skip kLocked, since we hold the home cell mutex, it can't be our elem.
-    if ((addr1 == 0 || addr1 == kRemoved) &&
-        atomic_compare_exchange_strong(&c->addr, &addr1, kLocked,
-          memory_order_acq_rel)) {
-      // we've created the element
-      *created = true;
-      return c;
-    }
-    h++;
-    if (h == kSize)
-      h = 0;
-    CHECK_NE(h, h0);  // made the full cycle
   }
-}
 
-template<typename T, uptr kSize>
-void AddrHashMap<T, kSize>::release(uptr addr, bool remove, bool created,
-    Cell *c) {
-  if (c == 0)
+  // Check the add cells with read lock.
+  if (atomic_load(&b->add, memory_order_relaxed)) {
+    b->mtx.ReadLock();
+    AddBucket *add = (AddBucket*)atomic_load(&b->add, memory_order_relaxed);
+    for (uptr i = 0; i < add->size; i++) {
+      Cell *c = &add->cells[i];
+      uptr addr1 = atomic_load(&c->addr, memory_order_relaxed);
+      if (addr1 == addr) {
+        h->addidx_ = i;
+        h->cell_ = c;
+        return;
+      }
+    }
+    b->mtx.ReadUnlock();
+  }
+
+ locked:
+  // Re-check existence under write lock.
+  // Embed cells.
+  b->mtx.Lock();
+  for (uptr i = 0; i < kBucketSize; i++) {
+    Cell *c = &b->cells[i];
+    uptr addr1 = atomic_load(&c->addr, memory_order_relaxed);
+    if (addr1 == addr) {
+      if (h->remove_) {
+        h->cell_ = c;
+        return;
+      }
+      b->mtx.Unlock();
+      goto retry;
+    }
+  }
+
+  // Add cells.
+  AddBucket *add = (AddBucket*)atomic_load(&b->add, memory_order_relaxed);
+  if (add) {
+    for (uptr i = 0; i < add->size; i++) {
+      Cell *c = &add->cells[i];
+      uptr addr1 = atomic_load(&c->addr, memory_order_relaxed);
+      if (addr1 == addr) {
+        if (h->remove_) {
+          h->addidx_ = i;
+          h->cell_ = c;
+          return;
+        }
+        b->mtx.Unlock();
+        goto retry;
+      }
+    }
+  }
+
+  // The element does not exist, no need to create it if we want to remove.
+  if (h->remove_) {
+    b->mtx.Unlock();
     return;
-  // if we are going to remove, we must hold write lock
-  uptr addr1 = atomic_load(&c->addr, memory_order_relaxed);
-  if (created) {
-    // denote completion of insertion
-    atomic_store(&c->addr, addr, memory_order_release);
-    // unlock the home cell
-    uptr h0 = hash(addr);
-    Cell *c0 = &table_[h0];
-    c0->mtx.Unlock();
-  } else {
-    CHECK_EQ(addr, addr1);
-    if (remove) {
-      // denote that the cell is empty now
-      atomic_store(&c->addr, kRemoved, memory_order_release);
+  }
+
+  // Now try to create it under the mutex.
+  h->created_ = true;
+  // See if we have a free embed cell.
+  for (uptr i = 0; i < kBucketSize; i++) {
+    Cell *c = &b->cells[i];
+    uptr addr1 = atomic_load(&c->addr, memory_order_relaxed);
+    if (addr1 == 0) {
+      h->cell_ = c;
+      return;
     }
+  }
+
+  // Store in the add cells.
+  if (add == 0) {
+    // Allocate a new add array.
+    const uptr kInitSize = 64;
+    add = (AddBucket*)InternalAlloc(kInitSize);
+    add->cap = (kInitSize - sizeof(*add)) / sizeof(add->cells[0]) + 1;
+    add->size = 0;
+    atomic_store(&b->add, (uptr)add, memory_order_relaxed);
+  }
+  if (add->size == add->cap) {
+    // Grow existing add array.
+    uptr oldsize = sizeof(*add) + (add->cap - 1) * sizeof(add->cells[0]);
+    uptr newsize = oldsize * 2;
+    AddBucket *add1 = (AddBucket*)InternalAlloc(oldsize * 2);
+    add1->cap = (newsize - sizeof(*add)) / sizeof(add->cells[0]) + 1;
+    add1->size = add->size;
+    internal_memcpy(add1->cells, add->cells, add->size * sizeof(add->cells[0]));
+    InternalFree(add);
+    atomic_store(&b->add, (uptr)add1, memory_order_relaxed);
+    add = add1;
+  }
+  // Store.
+  uptr i = add->size++;
+  Cell *c = &add->cells[i];
+  h->addidx_ = i;
+  h->cell_ = c;
+}
+
+template<typename T, uptr kSize>
+void AddrHashMap<T, kSize>::release(Handle *h) {
+  if (h->cell_ == 0)
+    return;
+  Bucket *b = h->bucket_;
+  Cell *c = h->cell_;
+  uptr addr1 = atomic_load(&c->addr, memory_order_relaxed);
+  if (h->created_) {
+    // Denote completion of insertion.
+    CHECK_EQ(addr1, 0);
+    // After the following store, the element becomes available
+    // for lock-free reads.
+    atomic_store(&c->addr, h->addr_, memory_order_release);
+    b->mtx.Unlock();
+  } else if (h->remove_) {
+    // Denote that the cell is empty now.
+    CHECK_EQ(addr1, h->addr_);
+    atomic_store(&c->addr, 0, memory_order_release);
+    // See if we need to compact the bucket.
+    AddBucket *add = (AddBucket*)atomic_load(&b->add, memory_order_relaxed);
+    if (h->addidx_ == -1) {
+      // Removed from embed array, move an add element into the freed cell.
+      if (add) {
+        uptr last = --add->size;
+        Cell *c1 = &add->cells[last];
+        c->val = c1->val;
+        uptr addr1 = atomic_load(&c1->addr, memory_order_relaxed);
+        atomic_store(&c->addr, addr1, memory_order_release);
+      }
+    } else {
+      // Removed from add array, compact it.
+      uptr last = --add->size;
+      Cell *c1 = &add->cells[last];
+      *c = *c1;
+    }
+    if (add && add->size == 0) {
+      // FIXME(dvyukov): free add?
+    }
+    b->mtx.Unlock();
+  } else {
+    CHECK_EQ(addr1, h->addr_);
+    if (h->addidx_ != -1)
+      b->mtx.ReadUnlock();
   }
 }
 
 template<typename T, uptr kSize>
-uptr AddrHashMap<T, kSize>::hash(uptr addr) {
+uptr AddrHashMap<T, kSize>::calcHash(uptr addr) {
   addr += addr << 10;
   addr ^= addr >> 6;
   return addr % kSize;
