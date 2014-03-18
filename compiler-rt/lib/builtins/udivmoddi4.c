@@ -137,7 +137,7 @@ __udivmoddi4(du_int a, du_int b, du_int* rem)
             }
             /* K X
              * ---
-             *0 K
+             * 0 K
              */
             sr = 1 + n_uword_bits + __builtin_clz(d.s.low) - __builtin_clz(n.s.high);
             /* 2 <= sr <= n_udword_bits - 1
