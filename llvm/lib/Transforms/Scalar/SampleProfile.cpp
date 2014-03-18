@@ -251,7 +251,7 @@ public:
     return Profiles[F.getName()];
   }
 
-  /// \brief Report a parse error message and stop compilation.
+  /// \brief Report a parse error message.
   void reportParseError(int64_t LineNumber, Twine Msg) const {
     DiagnosticInfoSampleProfile Diag(Filename.data(), LineNumber, Msg);
     M.getContext().diagnose(Diag);
@@ -462,15 +462,21 @@ bool SampleModuleProfile::loadText() {
   // Read the profile of each function. Since each function may be
   // mentioned more than once, and we are collecting flat profiles,
   // accumulate samples as we parse them.
-  Regex HeadRE("^([^:]+):([0-9]+):([0-9]+)$");
+  Regex HeadRE("^([^0-9].*):([0-9]+):([0-9]+)$");
   Regex LineSample("^([0-9]+)\\.?([0-9]+)?: ([0-9]+)(.*)$");
   while (!LineIt.is_at_eof()) {
-    // Read the header of each function. The function header should
-    // have this format:
+    // Read the header of each function.
     //
-    //        function_name:total_samples:total_head_samples
+    // Note that for function identifiers we are actually expecting
+    // mangled names, but we may not always get them. This happens when
+    // the compiler decides not to emit the function (e.g., it was inlined
+    // and removed). In this case, the binary will not have the linkage
+    // name for the function, so the profiler will emit the function's
+    // unmangled name, which may contain characters like ':' and '>' in its
+    // name (member functions, templates, etc).
     //
-    // See above for an explanation of each field.
+    // The only requirement we place on the identifier, then, is that it
+    // should not begin with a number.
     SmallVector<StringRef, 3> Matches;
     if (!HeadRE.match(*LineIt, &Matches)) {
       reportParseError(LineIt.line_number(),
