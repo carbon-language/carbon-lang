@@ -98,7 +98,7 @@ void Dependences::collectInfo(Scop &S, isl_union_map **Read,
 void Dependences::calculateDependences(Scop &S) {
   isl_union_map *Read, *Write, *MayWrite, *Schedule;
 
-  DEBUG(dbgs() << "Scop: " << S << "\n");
+  DEBUG(dbgs() << "Scop: \n" << S << "\n");
 
   collectInfo(S, &Read, &Write, &MayWrite, &Schedule);
 

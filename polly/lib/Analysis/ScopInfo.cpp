@@ -943,6 +943,9 @@ void Scop::printStatements(raw_ostream &OS) const {
 }
 
 void Scop::print(raw_ostream &OS) const {
+  OS.indent(4) << "Function: "
+               << getRegion().getEntry()->getParent()->getName() << "\n";
+  OS.indent(4) << "Region: " << getNameStr() << "\n";
   printContext(OS.indent(4));
   printStatements(OS.indent(4));
 }
