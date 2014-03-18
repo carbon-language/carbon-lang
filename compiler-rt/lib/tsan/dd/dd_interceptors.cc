@@ -18,13 +18,24 @@ extern "C" void *__libc_malloc(uptr size);
 extern "C" void __libc_free(void *ptr);
 
 static __thread Thread *thr;
+static __thread volatile int initing;
+static bool inited;
 
-static void InitThread() {
+static bool InitThread() {
   if (thr != 0)
-    return;
+    return true;
+  if (initing)
+    return false;
+  initing = true;
+  if (!inited) {
+    inited = true;
+    Initialize();
+  }
   thr = (Thread*)InternalAlloc(sizeof(*thr));
   internal_memset(thr, 0, sizeof(*thr));
   ThreadInit(thr);
+  initing = false;
+  return true;
 }
 
 INTERCEPTOR(int, pthread_mutex_destroy, pthread_mutex_t *m) {
@@ -209,18 +220,47 @@ INTERCEPTOR(int, pthread_cond_destroy, pthread_cond_t *c) {
   return res;
 }
 
-
+// for symbolizer
 INTERCEPTOR(char*, realpath, const char *path, char *resolved_path) {
+  InitThread();
   return REAL(realpath)(path, resolved_path);
 }
 
 INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
+  InitThread();
   return REAL(read)(fd, ptr, count);
 }
 
 INTERCEPTOR(SSIZE_T, pread, int fd, void *ptr, SIZE_T count, OFF_T offset) {
+  InitThread();
   return REAL(pread)(fd, ptr, count, offset);
 }
+
+extern "C" {
+void __dsan_before_mutex_lock(uptr m, int writelock) {
+  if (!InitThread())
+    return;
+  MutexBeforeLock(thr, m, writelock);
+}
+
+void __dsan_after_mutex_lock(uptr m, int writelock, int trylock) {
+  if (!InitThread())
+    return;
+  MutexAfterLock(thr, m, writelock, trylock);
+}
+
+void __dsan_before_mutex_unlock(uptr m, int writelock) {
+  if (!InitThread())
+    return;
+  MutexBeforeUnlock(thr, m, writelock);
+}
+
+void __dsan_mutex_destroy(uptr m) {
+  if (!InitThread())
+    return;
+  MutexDestroy(thr, m);
+}
+}  // extern "C"
 
 namespace __dsan {
 
@@ -258,13 +298,3 @@ void InitializeInterceptors() {
 }
 
 }  // namespace __dsan
-
-#if DYNAMIC
-static void __local_dsan_init() __attribute__((constructor));
-void __local_dsan_init() {
-  __dsan::Initialize();
-}
-#else
-__attribute__((section(".preinit_array"), used))
-void (*__local_dsan_preinit)(void) = __dsan::Initialize;
-#endif
