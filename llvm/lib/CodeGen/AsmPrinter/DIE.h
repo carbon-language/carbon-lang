@@ -16,15 +16,13 @@
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/MC/MCExpr.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Dwarf.h"
 #include <vector>
 
 namespace llvm {
 class AsmPrinter;
+class MCExpr;
 class MCSymbol;
-class MCSymbolRefExpr;
 class raw_ostream;
 class DwarfTypeUnit;
 

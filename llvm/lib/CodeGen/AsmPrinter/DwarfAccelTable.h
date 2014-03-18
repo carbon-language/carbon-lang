@@ -24,7 +24,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
-#include <map>
 #include <vector>
 
 // The dwarf accelerator tables are an indirect hash table optimized
@@ -62,7 +61,6 @@
 namespace llvm {
 
 class AsmPrinter;
-class DIE;
 class DwarfFile;
 
 class DwarfAccelTable {
