@@ -36,7 +36,7 @@ struct Callback : DDCallback {
   virtual u32 Unwind();
 };
 
-typedef AddrHashMap<Mutex, 1000003> MutexHashMap;
+typedef AddrHashMap<Mutex, 31051> MutexHashMap;
 
 struct Context {
   DDetector *dd;

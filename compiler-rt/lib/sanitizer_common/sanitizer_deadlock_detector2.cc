@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_deadlock_detector_interface.h"
+#include "sanitizer_common.h"
 #include "sanitizer_allocator_internal.h"
 #include "sanitizer_placement_new.h"
 #include "sanitizer_mutex.h"
@@ -20,11 +21,13 @@
 
 namespace __sanitizer {
 
-const int kMaxMutex = 1024;
 const int kMaxNesting = 64;
 const u32 kNoId = -1;
 const u32 kEndId = -2;
 const int kMaxLink = 8;
+const int kL1Size = 1024;
+const int kL2Size = 1024;
+const int kMaxMutex = kL1Size * kL2Size;
 
 struct Id {
   u32 id;
@@ -91,13 +94,16 @@ struct DD : public DDetector {
 
   void CycleCheck(DDPhysicalThread *pt, DDLogicalThread *lt, DDMutex *mtx);
   void Report(DDPhysicalThread *pt, DDLogicalThread *lt, int npath);
+  u32 allocateId(DDCallback *cb);
+  Mutex *getMutex(u32 id);
+  u32 getMutexId(Mutex *m);
 
   SpinMutex mtx;
-  u32 free_id[kMaxMutex];
-  int nfree_id;
+  InternalMmapVector<u32> free_id;
+
   int id_gen;
 
-  Mutex mutex[kMaxMutex];
+  Mutex* mutex[kL1Size];
 };
 
 DDetector *DDetector::Create() {
@@ -105,8 +111,8 @@ DDetector *DDetector::Create() {
   return new(mem) DD();
 }
 
-DD::DD() {
-  nfree_id = 0;
+DD::DD()
+    : free_id(1024) {
   id_gen = 0;
 }
 
@@ -141,6 +147,41 @@ void DD::MutexInit(DDCallback *cb, DDMutex *m) {
   atomic_store(&m->owner, 0, memory_order_relaxed);
 }
 
+Mutex *DD::getMutex(u32 id) {
+  return &mutex[id / kL2Size][id % kL2Size];
+}
+
+u32 DD::getMutexId(Mutex *m) {
+  for (int i = 0; i < kL1Size; i++) {
+    Mutex *tab = mutex[i];
+    if (tab == 0)
+      break;
+    if (m >= tab && m < tab + kL2Size)
+      return i * kL2Size + (m - tab);
+  }
+  return -1;
+}
+
+u32 DD::allocateId(DDCallback *cb) {
+  u32 id = -1;
+  SpinMutexLock l(&mtx);
+  if (free_id.size() > 0) {
+    id = free_id.back();
+    free_id.pop_back();
+  } else {
+    CHECK_LT(id_gen, kMaxMutex);
+    if ((id_gen % kL2Size) == 0) {
+      mutex[id_gen / kL2Size] = (Mutex*)MmapOrDie(kL2Size * sizeof(Mutex),
+          "deadlock detector (mutex table)");
+    }
+    id = id_gen++;
+  }
+  CHECK_LE(id, kMaxMutex);
+  VPrintf(3, "#%llu: DD::allocateId assign id %d\n",
+      cb->lt->ctx, id);
+  return id;
+}
+
 void DD::MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock) {
   VPrintf(2, "#%llu: DD::MutexBeforeLock(%p, wlock=%d) nlocked=%d\n",
       cb->lt->ctx, m, wlock, cb->lt->nlocked);
@@ -156,17 +197,9 @@ void DD::MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock) {
 
   CHECK_LE(lt->nlocked, kMaxNesting);
 
-  if (m->id == kNoId) {
-    // FIXME(dvyukov): don't allocate id if lt->nlocked == 0
-    SpinMutexLock l(&mtx);
-    if (nfree_id > 0)
-      m->id = free_id[--nfree_id];
-    else
-      m->id = id_gen++;
-    CHECK_LE(id_gen, kMaxMutex);
-    VPrintf(3, "#%llu: DD::MutexBeforeLock assign id %d\n",
-        cb->lt->ctx, m->id);
-  }
+  // FIXME(dvyukov): don't allocate id if lt->nlocked == 0?
+  if (m->id == kNoId)
+    m->id = allocateId(cb);
 
   lt->locked[lt->nlocked++] = m->id;
   if (lt->nlocked == 1) {
@@ -176,10 +209,10 @@ void DD::MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock) {
   }
 
   bool added = false;
-  Mutex *mtx = &mutex[m->id];
+  Mutex *mtx = getMutex(m->id);
   for (int i = 0; i < lt->nlocked - 1; i++) {
     u32 id1 = lt->locked[i];
-    Mutex *mtx1 = &mutex[id1];
+    Mutex *mtx1 = getMutex(id1);
     SpinMutexLock l(&mtx1->mtx);
     if (mtx1->nlink == kMaxLink) {
       // FIXME(dvyukov): check stale links
@@ -195,7 +228,7 @@ void DD::MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock) {
           link->stk = cb->Unwind();
           added = true;
           VPrintf(3, "#%llu: DD::MutexBeforeLock added %d->%d link\n",
-              cb->lt->ctx, mtx1 - mutex, m->id);
+              cb->lt->ctx, getMutexId(mtx1), m->id);
         }
         break;
       }
@@ -209,7 +242,7 @@ void DD::MutexBeforeLock(DDCallback *cb, DDMutex *m, bool wlock) {
       link->stk = cb->Unwind();
       added = true;
       VPrintf(3, "#%llu: DD::MutexBeforeLock added %d->%d link\n",
-          cb->lt->ctx, mtx1 - mutex, m->id);
+          cb->lt->ctx, getMutexId(mtx1), m->id);
     }
   }
 
@@ -247,17 +280,8 @@ void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock,
     return;
 
   CHECK_LE(lt->nlocked, kMaxNesting);
-  if (m->id == kNoId) {
-    // FIXME(dvyukov): don't allocate id if lt->nlocked == 0
-    SpinMutexLock l(&mtx);
-    if (nfree_id > 0)
-      m->id = free_id[--nfree_id];
-    else
-      m->id = id_gen++;
-    CHECK_LE(id_gen, kMaxMutex);
-    VPrintf(3, "#%llu: DD::MutexAfterLock assign id %d\n", cb->lt->ctx, m->id);
-  }
-
+  if (m->id == kNoId)
+    m->id = allocateId(cb);
   lt->locked[lt->nlocked++] = m->id;
 }
 
@@ -291,26 +315,24 @@ void DD::MutexDestroy(DDCallback *cb, DDMutex *m) {
   if (m->id == kNoId)
     return;
   {
-    Mutex *mtx = &mutex[m->id];
+    Mutex *mtx = getMutex(m->id);
     SpinMutexLock l(&mtx->mtx);
     mtx->seq++;
     mtx->nlink = 0;
   }
   {
     SpinMutexLock l(&mtx);
-    free_id[nfree_id++] = m->id;
-    m->id = kNoId;
+    free_id.push_back(m->id);
   }
 }
 
 void DD::CycleCheck(DDPhysicalThread *pt, DDLogicalThread *lt,
     DDMutex *m) {
-  // Mutex *mtx = &mutex[m->id];
   internal_memset(pt->visited, 0, sizeof(pt->visited));
   int npath = 0;
   int npending = 0;
   {
-    Mutex *mtx = &mutex[m->id];
+    Mutex *mtx = getMutex(m->id);
     SpinMutexLock l(&mtx->mtx);
     for (int li = 0; li < mtx->nlink; li++)
       pt->pending[npending++] = mtx->link[li];
@@ -323,7 +345,7 @@ void DD::CycleCheck(DDPhysicalThread *pt, DDLogicalThread *lt,
     }
     if (pt->visited[link.id])
       continue;
-    Mutex *mtx1 = &mutex[link.id];
+    Mutex *mtx1 = getMutex(link.id);
     SpinMutexLock l(&mtx1->mtx);
     if (mtx1->seq != link.seq)
       continue;
@@ -336,7 +358,7 @@ void DD::CycleCheck(DDPhysicalThread *pt, DDLogicalThread *lt,
       return Report(pt, lt, npath);  // Bingo!
     for (int li = 0; li < mtx1->nlink; li++) {
       Link *link1 = &mtx1->link[li];
-      // Mutex *mtx2 = &mutex[link->id];
+      // Mutex *mtx2 = getMutex(link->id);
       // FIXME(dvyukov): fast seq check
       // FIXME(dvyukov): fast nlink != 0 check
       // FIXME(dvyukov): fast pending check?
