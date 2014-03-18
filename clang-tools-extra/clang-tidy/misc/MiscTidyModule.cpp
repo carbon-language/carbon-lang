@@ -10,6 +10,7 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "ArgumentCommentCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -17,6 +18,9 @@ namespace tidy {
 class MiscModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+     CheckFactories.addCheckFactory(
+       "misc-argument-comment",
+       new ClangTidyCheckFactory<ArgumentCommentCheck>());
   }
 };
 
