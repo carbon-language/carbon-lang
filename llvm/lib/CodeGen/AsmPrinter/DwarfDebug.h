@@ -754,7 +754,7 @@ public:
   }
 
   /// \brief Return the TypeIdentifierMap.
-  const DITypeIdentifierMap& getTypeIdentifierMap() const {
+  const DITypeIdentifierMap &getTypeIdentifierMap() const {
     return TypeIdentifierMap;
   }
 
