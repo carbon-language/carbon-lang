@@ -37,9 +37,6 @@ Non-comprehensive list of changes in this release
 * All backends have been changed to use the MC asm printer and support for the
   non MC one has been removed.
 
-* The ARM back-end now has the EHABI exception handling enabled by default. Use
-  `-arm-disable-ehabi` to turn it off (both landing pads and unwind tables).
-
 * Clang can now successfully self-host itself on Linux/Sparc64 and on
   FreeBSD/Sparc64.
 
@@ -73,6 +70,38 @@ Non-comprehensive list of changes in this release
    -------------------
 
    Makes programs 10x faster by doing Special New Thing.
+
+Changes to the ARM Backend
+--------------------------
+
+Since release 3.3, a lot of new features have been included in the ARM
+back-end but weren't production ready (ie. well tested) on release 3.4.
+Just after the 3.4 release, we started heavily testing two major parts
+of the back-end: the integrated assembler (IAS) and the ARM exception
+handling (EHABI), and now they are enabled by default on LLVM/Clang.
+
+The IAS received a lot of GNU extensions and directives, as well as some
+specific pre-UAL instructions. Not all remaining directives will be
+implemented, as we made judgement calls on the need versus the complexity,
+and have chosen simplicity and future compatibility where hard decisions
+had to be made. The major difference is, as stated above, the IAS validates
+all inline ASM, not just for object emission, and that cause trouble with
+some uses of inline ASM as pre-processor magic.
+
+So, while the IAS is good enough to compile large projects (including most
+of the Linux kernel), there are a few things that we can't (and probably
+won't) do. For those cases, please use ``-fno-integrated-as`` in Clang.
+
+Exception handling is another big change. After extensive testing and
+changes to cooperate with Dwarf unwinding, EHABI is enabled by default.
+The options ``-arm-enable-ehabi`` and ``-arm-enable-ehabi-descriptors``,
+which were used to enable EHABI in the previous releases, are removed now.
+
+This means all ARM code will emit EH unwind tables, or CFI unwinding (for
+debug/profiling), or both. To avoid run-time inconsistencies, C code will
+also emit EH tables (in case they interoperate with C++ code), as is the
+case for other architectures (ex. x86_64). You can disable them via the
+flag ``-fno-unwind-tables`` in Clang.
 
 External Open Source Projects Using LLVM 3.5
 ============================================
