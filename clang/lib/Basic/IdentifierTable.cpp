@@ -130,7 +130,7 @@ static void AddKeyword(StringRef Keyword,
   else if (LangOpts.MicrosoftExt && (Flags & KEYMS)) AddResult = 1;
   else if (LangOpts.Borland && (Flags & KEYBORLAND)) AddResult = 1;
   else if (LangOpts.Bool && (Flags & BOOLSUPPORT)) AddResult = 2;
-  else if (LangOpts.Half && (Flags && HALFSUPPORT)) AddResult = 2;
+  else if (LangOpts.Half && (Flags & HALFSUPPORT)) AddResult = 2;
   else if (LangOpts.WChar && (Flags & WCHARSUPPORT)) AddResult = 2;
   else if (LangOpts.AltiVec && (Flags & KEYALTIVEC)) AddResult = 2;
   else if (LangOpts.OpenCL && (Flags & KEYOPENCL)) AddResult = 2;
