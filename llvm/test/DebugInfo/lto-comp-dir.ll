@@ -1,4 +1,5 @@
 ; RUN: %llc_dwarf < %s -filetype=obj | llvm-dwarfdump -debug-dump=line - | FileCheck %s
+; RUN: %llc_dwarf < %s -filetype=asm | FileCheck --check-prefix=ASM %s
 
 ; CHECK: .debug_line contents:
 ; CHECK-NEXT: Line table prologue:
@@ -10,6 +11,9 @@
 ; CHECK-NOT: include_directories
 ; CHECK: file_names[   1]   0 {{.*}} b.cpp
 ; CHECK-NOT: file_names
+
+; ASM: .file   1 "/tmp/dbginfo/a/a.cpp"
+; ASM: .file   2 "/tmp/dbginfo/b/b.cpp"
 
 ; Generated from the following source compiled to bitcode from within their
 ; respective directories (with debug info) and linked together with llvm-link

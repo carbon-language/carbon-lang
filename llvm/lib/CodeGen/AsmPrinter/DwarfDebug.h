@@ -630,7 +630,8 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Create new DwarfCompileUnit for the given metadata node with tag
   /// DW_TAG_compile_unit.
-  DwarfCompileUnit *constructDwarfCompileUnit(DICompileUnit DIUnit);
+  DwarfCompileUnit *constructDwarfCompileUnit(DICompileUnit DIUnit,
+                                              bool Singular);
 
   /// \brief Construct subprogram DIE.
   void constructSubprogramDIE(DwarfCompileUnit *TheCU, const MDNode *N);

@@ -674,7 +674,8 @@ void DwarfDebug::addGnuPubAttributes(DwarfUnit *U, DIE *D) const {
 
 // Create new DwarfCompileUnit for the given metadata node with tag
 // DW_TAG_compile_unit.
-DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
+DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit,
+                                                        bool Singular) {
   StringRef FN = DIUnit.getFilename();
   CompilationDir = DIUnit.getDirectory();
 
@@ -682,8 +683,9 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   DwarfCompileUnit *NewCU = new DwarfCompileUnit(
       InfoHolder.getUnits().size(), Die, DIUnit, Asm, this, &InfoHolder);
   InfoHolder.addUnit(NewCU);
-  Asm->OutStreamer.getContext().setMCLineTableCompilationDir(
-      NewCU->getUniqueID(), CompilationDir);
+  if (!Asm->OutStreamer.hasRawTextSupport() || Singular)
+    Asm->OutStreamer.getContext().setMCLineTableCompilationDir(
+        NewCU->getUniqueID(), CompilationDir);
 
   NewCU->addString(Die, dwarf::DW_AT_producer, DIUnit.getProducer());
   NewCU->addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
@@ -814,9 +816,13 @@ void DwarfDebug::beginModule() {
   // Emit initial sections so we can reference labels later.
   emitSectionLabels();
 
-  for (MDNode *N : CU_Nodes->operands()) {
+  auto Operands = CU_Nodes->operands();
+
+  bool SingleCU = std::next(Operands.begin()) == Operands.end();
+
+  for (MDNode *N : Operands) {
     DICompileUnit CUNode(N);
-    DwarfCompileUnit *CU = constructDwarfCompileUnit(CUNode);
+    DwarfCompileUnit *CU = constructDwarfCompileUnit(CUNode, SingleCU);
     DIArray ImportedEntities = CUNode.getImportedEntities();
     for (unsigned i = 0, e = ImportedEntities.getNumElements(); i != e; ++i)
       ScopesWithImportedEntities.push_back(std::make_pair(
