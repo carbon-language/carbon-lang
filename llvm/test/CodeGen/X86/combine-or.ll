@@ -251,6 +251,7 @@ define <2 x i64> @test20(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK-LABEL: test20
 ; CHECK-NOT: xorps
 ; CHECK: orps
+; CHECK-NEXT: movq
 ; CHECK-NEXT: ret
 
 
@@ -262,6 +263,7 @@ define <2 x i64> @test21(<2 x i64> %a, <2 x i64> %b) {
 }
 ; CHECK-LABEL: test21
 ; CHECK: por
+; CHECK-NEXT: pslldq
 ; CHECK-NEXT: ret
 
 

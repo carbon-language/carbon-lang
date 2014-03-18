@@ -2518,35 +2518,66 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   // The type-legalizer generates this pattern when loading illegal
   // vector types from memory. In many cases this allows additional shuffle
   // optimizations.
-  if (N0.getOpcode() == ISD::VECTOR_SHUFFLE && Level < AfterLegalizeDAG &&
-      N0.getOperand(1).getOpcode() == ISD::UNDEF &&
-      N1.getOperand(1).getOpcode() == ISD::UNDEF) {
+  // There are other cases where moving the shuffle after the xor/and/or
+  // is profitable even if shuffles don't perform a swizzle.
+  // If both shuffles use the same mask, and both shuffles have the same first
+  // or second operand, then it might still be profitable to move the shuffle
+  // after the xor/and/or operation.
+  if (N0.getOpcode() == ISD::VECTOR_SHUFFLE && Level < AfterLegalizeDAG) {
     ShuffleVectorSDNode *SVN0 = cast<ShuffleVectorSDNode>(N0);
     ShuffleVectorSDNode *SVN1 = cast<ShuffleVectorSDNode>(N1);
 
-    assert(N0.getOperand(0).getValueType() == N1.getOperand(1).getValueType() &&
+    assert(N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType() &&
            "Inputs to shuffles are not the same type");
-
-    unsigned NumElts = VT.getVectorNumElements();
-
+ 
     // Check that both shuffles use the same mask. The masks are known to be of
     // the same length because the result vector type is the same.
-    bool SameMask = true;
-    for (unsigned i = 0; i != NumElts; ++i) {
-      int Idx0 = SVN0->getMaskElt(i);
-      int Idx1 = SVN1->getMaskElt(i);
-      if (Idx0 != Idx1) {
-        SameMask = false;
-        break;
-      }
-    }
+    // Check also that shuffles have only one use to avoid introducing extra
+    // instructions.
+    if (SVN0->hasOneUse() && SVN1->hasOneUse() &&
+        SVN0->getMask().equals(SVN1->getMask())) {
+      SDValue ShOp = N0->getOperand(1);
 
-    if (SameMask) {
-      SDValue Op = DAG.getNode(N->getOpcode(), SDLoc(N), VT,
-                               N0.getOperand(0), N1.getOperand(0));
-      AddToWorkList(Op.getNode());
-      return DAG.getVectorShuffle(VT, SDLoc(N), Op,
-                                  DAG.getUNDEF(VT), &SVN0->getMask()[0]);
+      // Don't try to fold this node if it requires introducing a
+      // build vector of all zeros that might be illegal at this stage.
+      if (N->getOpcode() == ISD::XOR && ShOp.getOpcode() != ISD::UNDEF) {
+        if (!LegalTypes)
+          ShOp = DAG.getConstant(0, VT);
+        else
+          ShOp = SDValue();
+      }
+
+      // (AND (shuf (A, C), shuf (B, C)) -> shuf (AND (A, B), C)
+      // (OR  (shuf (A, C), shuf (B, C)) -> shuf (OR  (A, B), C)
+      // (XOR (shuf (A, C), shuf (B, C)) -> shuf (XOR (A, B), V_0)
+      if (N0.getOperand(1) == N1.getOperand(1) && ShOp.getNode()) {
+        SDValue NewNode = DAG.getNode(N->getOpcode(), SDLoc(N), VT,
+                                      N0->getOperand(0), N1->getOperand(0));
+        AddToWorkList(NewNode.getNode());
+        return DAG.getVectorShuffle(VT, SDLoc(N), NewNode, ShOp,
+                                    &SVN0->getMask()[0]);
+      }
+
+      // Don't try to fold this node if it requires introducing a
+      // build vector of all zeros that might be illegal at this stage.
+      ShOp = N0->getOperand(0);
+      if (N->getOpcode() == ISD::XOR && ShOp.getOpcode() != ISD::UNDEF) {
+        if (!LegalTypes)
+          ShOp = DAG.getConstant(0, VT);
+        else
+          ShOp = SDValue();
+      }
+
+      // (AND (shuf (C, A), shuf (C, B)) -> shuf (C, AND (A, B))
+      // (OR  (shuf (C, A), shuf (C, B)) -> shuf (C, OR  (A, B))
+      // (XOR (shuf (C, A), shuf (C, B)) -> shuf (V_0, XOR (A, B))
+      if (N0->getOperand(0) == N1->getOperand(0) && ShOp.getNode()) {
+        SDValue NewNode = DAG.getNode(N->getOpcode(), SDLoc(N), VT,
+                                      N0->getOperand(1), N1->getOperand(1));
+        AddToWorkList(NewNode.getNode());
+        return DAG.getVectorShuffle(VT, SDLoc(N), ShOp, NewNode,
+                                    &SVN0->getMask()[0]);
+      }
     }
   }
 
