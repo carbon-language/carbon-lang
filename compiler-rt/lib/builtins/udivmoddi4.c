@@ -143,43 +143,29 @@ __udivmoddi4(du_int a, du_int b, du_int* rem)
             /* 2 <= sr <= n_udword_bits - 1
              * q.all = n.all << (n_udword_bits - sr);
              * r.all = n.all >> sr;
-             * if (sr == n_uword_bits)
-             * {
-             *     q.s.low = 0;
-             *     q.s.high = n.s.low;
-             *     r.s.high = 0;
-             *     r.s.low = n.s.high;
-             * }
-             * else if (sr < n_uword_bits)  // 2 <= sr <= n_uword_bits - 1
-             * {
-             *     q.s.low = 0;
-             *     q.s.high = n.s.low << (n_uword_bits - sr);
-             *     r.s.high = n.s.high >> sr;
-             *     r.s.low = (n.s.high << (n_uword_bits - sr)) | (n.s.low >> sr);
-             * }
-             * else              // n_uword_bits + 1 <= sr <= n_udword_bits - 1
-             * {
-             *     q.s.low = n.s.low << (n_udword_bits - sr);
-             *     q.s.high = (n.s.high << (n_udword_bits - sr)) |
-             *              (n.s.low >> (sr - n_uword_bits));
-             *     r.s.high = 0;
-             *     r.s.low = n.s.high >> (sr - n_uword_bits);
-             * }
              */
-            q.s.low =  (n.s.low << (n_udword_bits - sr)) &
-                     ((si_int)(n_uword_bits - sr) >> (n_uword_bits-1));
-            q.s.high = ((n.s.low << ( n_uword_bits - sr))                       &
-                     ((si_int)(sr - n_uword_bits - 1) >> (n_uword_bits-1))) |
-                     (((n.s.high << (n_udword_bits - sr))                     |
-                     (n.s.low >> (sr - n_uword_bits)))                        &
-                     ((si_int)(n_uword_bits - sr) >> (n_uword_bits-1)));
-            r.s.high = (n.s.high >> sr) &
-                     ((si_int)(sr - n_uword_bits) >> (n_uword_bits-1));
-            r.s.low =  ((n.s.high >> (sr - n_uword_bits))                       &
-                     ((si_int)(n_uword_bits - sr - 1) >> (n_uword_bits-1))) |
-                     (((n.s.high << (n_uword_bits - sr))                      |
-                     (n.s.low >> sr))                                         &
-                     ((si_int)(sr - n_uword_bits) >> (n_uword_bits-1)));
+            if (sr == n_uword_bits)
+            {
+                q.s.low = 0;
+                q.s.high = n.s.low;
+                r.s.high = 0;
+                r.s.low = n.s.high;
+            }
+            else if (sr < n_uword_bits)  // 2 <= sr <= n_uword_bits - 1
+            {
+                q.s.low = 0;
+                q.s.high = n.s.low << (n_uword_bits - sr);
+                r.s.high = n.s.high >> sr;
+                r.s.low = (n.s.high << (n_uword_bits - sr)) | (n.s.low >> sr);
+            }
+            else              // n_uword_bits + 1 <= sr <= n_udword_bits - 1
+            {
+                q.s.low = n.s.low << (n_udword_bits - sr);
+                q.s.high = (n.s.high << (n_udword_bits - sr)) |
+                           (n.s.low >> (sr - n_uword_bits));
+                r.s.high = 0;
+                r.s.low = n.s.high >> (sr - n_uword_bits);
+            }
         }
         else
         {
@@ -191,7 +177,7 @@ __udivmoddi4(du_int a, du_int b, du_int* rem)
             /* 0 <= sr <= n_uword_bits - 1 or sr large */
             if (sr > n_uword_bits - 1)
             {
-               if (rem)
+                if (rem)
                     *rem = n.all;
                 return 0;
             }
@@ -199,24 +185,18 @@ __udivmoddi4(du_int a, du_int b, du_int* rem)
             /* 1 <= sr <= n_uword_bits */
             /*  q.all = n.all << (n_udword_bits - sr); */
             q.s.low = 0;
-            q.s.high = n.s.low << (n_uword_bits - sr);
-            /* r.all = n.all >> sr;
-             * if (sr < n_uword_bits)
-             * {
-             *     r.s.high = n.s.high >> sr;
-             *     r.s.low = (n.s.high << (n_uword_bits - sr)) | (n.s.low >> sr);
-             * }
-             * else
-             * {
-             *     r.s.high = 0;
-             *     r.s.low = n.s.high;
-             * }
-             */
-            r.s.high = (n.s.high >> sr) &
-                     ((si_int)(sr - n_uword_bits) >> (n_uword_bits-1));
-            r.s.low = (n.s.high << (n_uword_bits - sr)) |
-                    ((n.s.low >> sr)                  &
-                    ((si_int)(sr - n_uword_bits) >> (n_uword_bits-1)));
+            if (sr == n_uword_bits)
+            {
+                q.s.high = n.s.low;
+                r.s.high = 0;
+                r.s.low = n.s.high;
+            }
+            else
+            {
+                q.s.high = n.s.low << (n_uword_bits - sr);
+                r.s.high = n.s.high >> sr;
+                r.s.low = (n.s.high << (n_uword_bits - sr)) | (n.s.low >> sr);
+            }
         }
     }
     /* Not a special case
