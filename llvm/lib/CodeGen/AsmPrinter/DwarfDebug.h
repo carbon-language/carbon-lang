@@ -489,7 +489,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   // Store file names for type units under fission in a line table header that
   // will be emitted into debug_line.dwo.
-  MCDwarfLineTableHeader SplitTypeUnitFileTable;
+  MCDwarfDwoLineTable SplitTypeUnitFileTable;
 
   void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
 

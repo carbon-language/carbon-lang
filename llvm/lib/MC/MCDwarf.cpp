@@ -224,7 +224,33 @@ const MCSymbol *MCDwarfLineTable::Emit(MCStreamer *MCOS) {
   return LineStartSym;
 }
 
+void MCDwarfDwoLineTable::Emit(MCStreamer &MCOS) const {
+  MCOS.EmitLabel(Header.Emit(&MCOS, None).second);
+}
+
 std::pair<MCSymbol *, MCSymbol *> MCDwarfLineTableHeader::Emit(MCStreamer *MCOS) const {
+  static const char StandardOpcodeLengths[] = {
+      0, // length of DW_LNS_copy
+      1, // length of DW_LNS_advance_pc
+      1, // length of DW_LNS_advance_line
+      1, // length of DW_LNS_set_file
+      1, // length of DW_LNS_set_column
+      0, // length of DW_LNS_negate_stmt
+      0, // length of DW_LNS_set_basic_block
+      0, // length of DW_LNS_const_add_pc
+      1, // length of DW_LNS_fixed_advance_pc
+      0, // length of DW_LNS_set_prologue_end
+      0, // length of DW_LNS_set_epilogue_begin
+      1  // DW_LNS_set_isa
+  };
+  assert(array_lengthof(StandardOpcodeLengths) == (DWARF2_LINE_OPCODE_BASE - 1));
+  return Emit(MCOS, StandardOpcodeLengths);
+}
+
+std::pair<MCSymbol *, MCSymbol *>
+MCDwarfLineTableHeader::Emit(MCStreamer *MCOS,
+                             ArrayRef<char> StandardOpcodeLengths) const {
+
   MCContext &context = MCOS->getContext();
 
   // Create a symbol at the beginning of the line table.
@@ -260,21 +286,11 @@ std::pair<MCSymbol *, MCSymbol *> MCDwarfLineTableHeader::Emit(MCStreamer *MCOS)
   MCOS->EmitIntValue(DWARF2_LINE_DEFAULT_IS_STMT, 1);
   MCOS->EmitIntValue(DWARF2_LINE_BASE, 1);
   MCOS->EmitIntValue(DWARF2_LINE_RANGE, 1);
-  MCOS->EmitIntValue(DWARF2_LINE_OPCODE_BASE, 1);
+  MCOS->EmitIntValue(StandardOpcodeLengths.size() + 1, 1);
 
   // Standard opcode lengths
-  MCOS->EmitIntValue(0, 1); // length of DW_LNS_copy
-  MCOS->EmitIntValue(1, 1); // length of DW_LNS_advance_pc
-  MCOS->EmitIntValue(1, 1); // length of DW_LNS_advance_line
-  MCOS->EmitIntValue(1, 1); // length of DW_LNS_set_file
-  MCOS->EmitIntValue(1, 1); // length of DW_LNS_set_column
-  MCOS->EmitIntValue(0, 1); // length of DW_LNS_negate_stmt
-  MCOS->EmitIntValue(0, 1); // length of DW_LNS_set_basic_block
-  MCOS->EmitIntValue(0, 1); // length of DW_LNS_const_add_pc
-  MCOS->EmitIntValue(1, 1); // length of DW_LNS_fixed_advance_pc
-  MCOS->EmitIntValue(0, 1); // length of DW_LNS_set_prologue_end
-  MCOS->EmitIntValue(0, 1); // length of DW_LNS_set_epilogue_begin
-  MCOS->EmitIntValue(1, 1); // DW_LNS_set_isa
+  for (char Length : StandardOpcodeLengths)
+    MCOS->EmitIntValue(Length, 1);
 
   // Put out the directory and file tables.
 

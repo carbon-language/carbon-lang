@@ -15,6 +15,7 @@
 #ifndef LLVM_MC_MCDWARF_H
 #define LLVM_MC_MCDWARF_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/MapVector.h"
@@ -187,6 +188,17 @@ struct MCDwarfLineTableHeader {
   unsigned getFile(StringRef &Directory, StringRef &FileName,
                    unsigned FileNumber = 0);
   std::pair<MCSymbol *, MCSymbol *> Emit(MCStreamer *MCOS) const;
+  std::pair<MCSymbol *, MCSymbol *>
+  Emit(MCStreamer *MCOS, ArrayRef<char> SpecialOpcodeLengths) const;
+};
+
+class MCDwarfDwoLineTable {
+  MCDwarfLineTableHeader Header;
+public:
+  unsigned getFile(StringRef Directory, StringRef FileName) {
+    return Header.getFile(Directory, FileName);
+  }
+  void Emit(MCStreamer &MCOS) const;
 };
 
 class MCDwarfLineTable {

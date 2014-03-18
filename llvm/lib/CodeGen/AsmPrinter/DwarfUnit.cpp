@@ -57,7 +57,7 @@ DwarfCompileUnit::DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
 
 DwarfTypeUnit::DwarfTypeUnit(unsigned UID, DIE *D, DwarfCompileUnit &CU,
                              AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU,
-                             MCDwarfLineTableHeader *SplitLineTable)
+                             MCDwarfDwoLineTable *SplitLineTable)
     : DwarfUnit(UID, D, CU.getCUNode(), A, DW, DWU), CU(CU),
       SplitLineTable(SplitLineTable) {
   if (SplitLineTable)

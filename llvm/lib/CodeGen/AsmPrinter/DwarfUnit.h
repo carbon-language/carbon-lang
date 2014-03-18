@@ -616,12 +616,12 @@ private:
   uint64_t TypeSignature;
   const DIE *Ty;
   DwarfCompileUnit &CU;
-  MCDwarfLineTableHeader *SplitLineTable;
+  MCDwarfDwoLineTable *SplitLineTable;
 
 public:
   DwarfTypeUnit(unsigned UID, DIE *D, DwarfCompileUnit &CU, AsmPrinter *A,
                 DwarfDebug *DW, DwarfFile *DWU,
-                MCDwarfLineTableHeader *SplitLineTable = nullptr);
+                MCDwarfDwoLineTable *SplitLineTable = nullptr);
 
   void setTypeSignature(uint64_t Signature) { TypeSignature = Signature; }
   uint64_t getTypeSignature() const { return TypeSignature; }

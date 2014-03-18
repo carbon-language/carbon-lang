@@ -2684,7 +2684,7 @@ void DwarfDebug::emitDebugLineDWO() {
   assert(useSplitDwarf() && "No split dwarf?");
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfLineDWOSection());
-  Asm->OutStreamer.EmitLabel(SplitTypeUnitFileTable.Emit(&Asm->OutStreamer).second);
+  SplitTypeUnitFileTable.Emit(Asm->OutStreamer);
 }
 
 // Emit the .debug_str.dwo section for separated dwarf. This contains the
