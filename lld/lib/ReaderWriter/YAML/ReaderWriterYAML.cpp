@@ -340,6 +340,7 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::Merge> {
     io.enumCase(value, "by-content",   lld::DefinedAtom::mergeByContent);
     io.enumCase(value, "same-name-and-size",
                 lld::DefinedAtom::mergeSameNameAndSize);
+    io.enumCase(value, "largest", lld::DefinedAtom::mergeByLargestSection);
   }
 };
 

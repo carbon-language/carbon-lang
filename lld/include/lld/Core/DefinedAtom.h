@@ -99,6 +99,7 @@ public:
     mergeAsWeakAndAddressUsed, // Is C++ definition inline definition whose
                                // address was taken.
     mergeSameNameAndSize,   // Another atom with different size is error
+    mergeByLargestSection,  // Choose an atom whose section is the largest.
     mergeByContent,         // Merge with other constants with same content.
   };
 

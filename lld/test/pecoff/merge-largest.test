@@ -1,0 +1,24 @@
+# RUN: yaml2obj %p/Inputs/merge-largest1.obj.yaml > %t1.obj
+# RUN: yaml2obj %p/Inputs/merge-largest2.obj.yaml > %t2.obj
+#
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /opt:noref /force \
+# RUN:   -- %t1.obj %t2.obj 2>&1 > %t.log
+#
+# FileCheck complains if the input files is empty, so add a dummy line.
+# RUN: echo foo >> %t.log
+# RUN: FileCheck -check-prefix=STDERR %s < %t.log
+#
+# RUN: llvm-readobj -sections %t.exe | FileCheck -check-prefix=READOBJ %s
+
+STDERR-NOT: duplicate symbol error
+
+READOBJ:      Format: COFF-i386
+READOBJ-NEXT: Arch: i386
+READOBJ-NEXT: AddressSize: 32bit
+READOBJ-NEXT: Sections [
+READOBJ-NEXT:   Section {
+READOBJ-NEXT:     Number: 1
+READOBJ-NEXT:     Name: .text (2E 74 65 78 74 00 00 00)
+READOBJ-NEXT:     VirtualSize: 0x8
+READOBJ-NEXT:     VirtualAddress: 0x1000
+READOBJ-NEXT:     RawDataSize: 8

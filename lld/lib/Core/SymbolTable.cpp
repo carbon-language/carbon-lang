@@ -102,13 +102,14 @@ enum MergeResolution {
   MCR_Error
 };
 
-static MergeResolution mergeCases[][5] = {
-  // no          tentative      weak          weakAddress   sameNameAndSize
-  {MCR_Error,    MCR_First,     MCR_First,    MCR_First,    MCR_SameSize}, // no
-  {MCR_Second,   MCR_Largest,   MCR_Second,   MCR_Second,   MCR_SameSize}, // tentative
-  {MCR_Second,   MCR_First,     MCR_First,    MCR_Second,   MCR_SameSize}, // weak
-  {MCR_Second,   MCR_First,     MCR_First,    MCR_First,    MCR_SameSize}, // weakAddress
-  {MCR_SameSize, MCR_SameSize,  MCR_SameSize, MCR_SameSize, MCR_SameSize}, // sameSize
+static MergeResolution mergeCases[][6] = {
+  // no          tentative      weak          weakAddress   sameNameAndSize largest
+  {MCR_Error,    MCR_First,     MCR_First,    MCR_First,    MCR_SameSize,   MCR_Largest},  // no
+  {MCR_Second,   MCR_Largest,   MCR_Second,   MCR_Second,   MCR_SameSize,   MCR_Largest},  // tentative
+  {MCR_Second,   MCR_First,     MCR_First,    MCR_Second,   MCR_SameSize,   MCR_Largest},  // weak
+  {MCR_Second,   MCR_First,     MCR_First,    MCR_First,    MCR_SameSize,   MCR_Largest},  // weakAddress
+  {MCR_SameSize, MCR_SameSize,  MCR_SameSize, MCR_SameSize, MCR_SameSize,   MCR_SameSize}, // sameSize
+  {MCR_Largest,  MCR_Largest,   MCR_Largest,  MCR_Largest,  MCR_SameSize,   MCR_Largest},  // largest
 };
 
 static MergeResolution mergeSelect(DefinedAtom::Merge first,
@@ -116,6 +117,33 @@ static MergeResolution mergeSelect(DefinedAtom::Merge first,
   assert(first != DefinedAtom::mergeByContent);
   assert(second != DefinedAtom::mergeByContent);
   return mergeCases[first][second];
+}
+
+static uint64_t getSizeFollowReferences(const DefinedAtom *atom, uint32_t kind) {
+  uint64_t size = 0;
+redo:
+  while (atom) {
+    for (const Reference *r : *atom) {
+      if (r->kindNamespace() == Reference::KindNamespace::all &&
+          r->kindArch() == Reference::KindArch::all &&
+          r->kindValue() == kind) {
+        atom = cast<DefinedAtom>(r->target());
+        size += atom->size();
+        goto redo;
+      }
+    }
+    break;
+  }
+  return size;
+}
+
+// Returns the size of the section containing the given atom. Atoms in the same
+// section are connected by layout-before and layout-after edges, so this
+// function traverses them to get the total size of atoms in the same section.
+static uint64_t sectionSize(const DefinedAtom *atom) {
+  return atom->size()
+      + getSizeFollowReferences(atom, lld::Reference::kindLayoutBefore)
+      + getSizeFollowReferences(atom, lld::Reference::kindLayoutAfter);
 }
 
 void SymbolTable::addByName(const Atom &newAtom) {
@@ -148,19 +176,22 @@ void SymbolTable::addByName(const Atom &newAtom) {
     case MCR_Second:
       useNew = true;
       break;
-    case MCR_Largest:
-      useNew = true;
+    case MCR_Largest: {
+      uint64_t existingSize = sectionSize((DefinedAtom*)existing);
+      uint64_t newSize = sectionSize((DefinedAtom*)&newAtom);
+      useNew = (newSize >= existingSize);
       break;
+    }
     case MCR_SameSize: {
-      uint64_t sa = ((DefinedAtom*)existing)->size();
-      uint64_t sb = ((DefinedAtom*)&newAtom)->size();
-      if (sa == sb) {
+      uint64_t existingSize = sectionSize((DefinedAtom*)existing);
+      uint64_t newSize = sectionSize((DefinedAtom*)&newAtom);
+      if (existingSize == newSize) {
         useNew = true;
         break;
       }
       llvm::errs() << "Size mismatch: "
-                   << existing->name() << " (" << sa << ") "
-                   << newAtom.name() << " (" << sb << ")\n";
+                   << existing->name() << " (" << existingSize << ") "
+                   << newAtom.name() << " (" << newSize << ")\n";
       // fallthrough
     }
     case MCR_Error:
