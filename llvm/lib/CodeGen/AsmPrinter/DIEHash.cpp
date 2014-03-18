@@ -283,15 +283,15 @@ void DIEHash::hashBlockData(const SmallVectorImpl<DIEValue *> &Values) {
 
 // Hash the contents of a loclistptr class.
 void DIEHash::hashLocList(const DIELocList &LocList) {
-  SmallVectorImpl<DotDebugLocEntry>::const_iterator Start =
+  SmallVectorImpl<DebugLocEntry>::const_iterator Start =
       AP->getDwarfDebug()->getDebugLocEntries().begin();
   Start += LocList.getValue();
   HashingByteStreamer Streamer(*this);
-  for (SmallVectorImpl<DotDebugLocEntry>::const_iterator
+  for (SmallVectorImpl<DebugLocEntry>::const_iterator
            I = Start,
            E = AP->getDwarfDebug()->getDebugLocEntries().end();
        I != E; ++I) {
-    const DotDebugLocEntry &Entry = *I;
+    const DebugLocEntry &Entry = *I;
     // Go through the entries until we hit the end of the list,
     // which is the next empty entry.
     if (Entry.isEmpty())

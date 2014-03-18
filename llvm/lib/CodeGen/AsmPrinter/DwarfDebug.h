@@ -68,18 +68,13 @@ public:
 
 /// \brief This struct describes location entries emitted in the .debug_loc
 /// section.
-class DotDebugLocEntry {
+class DebugLocEntry {
   // Begin and end symbols for the address range that this location is valid.
   const MCSymbol *Begin;
   const MCSymbol *End;
 
   // Type of entry that this represents.
-  enum EntryType {
-    E_Location,
-    E_Integer,
-    E_ConstantFP,
-    E_ConstantInt
-  };
+  enum EntryType { E_Location, E_Integer, E_ConstantFP, E_ConstantInt };
   enum EntryType EntryKind;
 
   union {
@@ -98,27 +93,26 @@ class DotDebugLocEntry {
   bool Merged;
 
 public:
-  DotDebugLocEntry() : Begin(0), End(0), Variable(0), Merged(false) {
+  DebugLocEntry() : Begin(0), End(0), Variable(0), Merged(false) {
     Constants.Int = 0;
   }
-  DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, MachineLocation &L,
-                   const MDNode *V)
+  DebugLocEntry(const MCSymbol *B, const MCSymbol *E, MachineLocation &L,
+                const MDNode *V)
       : Begin(B), End(E), Loc(L), Variable(V), Merged(false) {
     Constants.Int = 0;
     EntryKind = E_Location;
   }
-  DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, int64_t i)
+  DebugLocEntry(const MCSymbol *B, const MCSymbol *E, int64_t i)
       : Begin(B), End(E), Variable(0), Merged(false) {
     Constants.Int = i;
     EntryKind = E_Integer;
   }
-  DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantFP *FPtr)
+  DebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantFP *FPtr)
       : Begin(B), End(E), Variable(0), Merged(false) {
     Constants.CFP = FPtr;
     EntryKind = E_ConstantFP;
   }
-  DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E,
-                   const ConstantInt *IPtr)
+  DebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantInt *IPtr)
       : Begin(B), End(E), Variable(0), Merged(false) {
     Constants.CIP = IPtr;
     EntryKind = E_ConstantInt;
@@ -128,7 +122,7 @@ public:
   /// labels are referenced is used to find debug_loc offset for a given DIE.
   bool isEmpty() const { return Begin == 0 && End == 0; }
   bool isMerged() const { return Merged; }
-  void Merge(DotDebugLocEntry *Next) {
+  void Merge(DebugLocEntry *Next) {
     if (!(Begin && Loc == Next->Loc && End == Next->Begin))
       return;
     Next->Begin = Begin;
@@ -383,8 +377,8 @@ class DwarfDebug : public AsmPrinterHandler {
   // Collection of abstract variables.
   DenseMap<const MDNode *, DbgVariable *> AbstractVariables;
 
-  // Collection of DotDebugLocEntry.
-  SmallVector<DotDebugLocEntry, 4> DotDebugLocEntries;
+  // Collection of DebugLocEntry.
+  SmallVector<DebugLocEntry, 4> DotDebugLocEntries;
 
   // Collection of subprogram DIEs that are marked (at the end of the module)
   // as DW_AT_inline.
@@ -769,13 +763,13 @@ public:
   MCSymbol *getDebugLocSym() const { return DwarfDebugLocSectionSym; }
 
   /// Returns the entries for the .debug_loc section.
-  const SmallVectorImpl<DotDebugLocEntry> &getDebugLocEntries() const {
+  const SmallVectorImpl<DebugLocEntry> &getDebugLocEntries() const {
     return DotDebugLocEntries;
   }
 
   /// \brief Emit an entry for the debug loc section. This can be used to
   /// handle an entry that's going to be emitted into the debug loc section.
-  void emitDebugLocEntry(ByteStreamer &Streamer, const DotDebugLocEntry &Entry);
+  void emitDebugLocEntry(ByteStreamer &Streamer, const DebugLocEntry &Entry);
 
   /// Find the MDNode for the given reference.
   template <typename T> T resolve(DIRef<T> Ref) const {

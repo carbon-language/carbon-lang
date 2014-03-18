@@ -1163,7 +1163,7 @@ static bool isDbgValueInDefinedReg(const MachineInstr *MI) {
 }
 
 // Get .debug_loc entry for the instruction range starting at MI.
-static DotDebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
+static DebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
                                          const MCSymbol *FLabel,
                                          const MCSymbol *SLabel,
                                          const MachineInstr *MI) {
@@ -1178,14 +1178,14 @@ static DotDebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
       MLoc.set(MI->getOperand(0).getReg());
     else
       MLoc.set(MI->getOperand(0).getReg(), MI->getOperand(1).getImm());
-    return DotDebugLocEntry(FLabel, SLabel, MLoc, Var);
+    return DebugLocEntry(FLabel, SLabel, MLoc, Var);
   }
   if (MI->getOperand(0).isImm())
-    return DotDebugLocEntry(FLabel, SLabel, MI->getOperand(0).getImm());
+    return DebugLocEntry(FLabel, SLabel, MI->getOperand(0).getImm());
   if (MI->getOperand(0).isFPImm())
-    return DotDebugLocEntry(FLabel, SLabel, MI->getOperand(0).getFPImm());
+    return DebugLocEntry(FLabel, SLabel, MI->getOperand(0).getFPImm());
   if (MI->getOperand(0).isCImm())
-    return DotDebugLocEntry(FLabel, SLabel, MI->getOperand(0).getCImm());
+    return DebugLocEntry(FLabel, SLabel, MI->getOperand(0).getCImm());
 
   llvm_unreachable("Unexpected 3 operand DBG_VALUE instruction!");
 }
@@ -1278,7 +1278,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
       DotDebugLocEntries.push_back(
           getDebugLocEntry(Asm, FLabel, SLabel, Begin));
     }
-    DotDebugLocEntries.push_back(DotDebugLocEntry());
+    DotDebugLocEntries.push_back(DebugLocEntry());
   }
 
   // Collect info for variables that were optimized out.
@@ -2296,7 +2296,7 @@ void DwarfDebug::emitDebugStr() {
 }
 
 void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
-                                   const DotDebugLocEntry &Entry) {
+                                   const DebugLocEntry &Entry) {
   DIVariable DV(Entry.getVariable());
   if (Entry.isInt()) {
     DIBasicType BTy(DV.getType());
@@ -2359,11 +2359,11 @@ void DwarfDebug::emitDebugLoc() {
   if (DotDebugLocEntries.empty())
     return;
 
-  for (SmallVectorImpl<DotDebugLocEntry>::iterator
+  for (SmallVectorImpl<DebugLocEntry>::iterator
            I = DotDebugLocEntries.begin(),
            E = DotDebugLocEntries.end();
        I != E; ++I) {
-    DotDebugLocEntry &Entry = *I;
+    DebugLocEntry &Entry = *I;
     if (I + 1 != DotDebugLocEntries.end())
       Entry.Merge(I + 1);
   }
@@ -2374,11 +2374,11 @@ void DwarfDebug::emitDebugLoc() {
   unsigned char Size = Asm->getDataLayout().getPointerSize();
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", 0));
   unsigned index = 1;
-  for (SmallVectorImpl<DotDebugLocEntry>::const_iterator
+  for (SmallVectorImpl<DebugLocEntry>::const_iterator
            I = DotDebugLocEntries.begin(),
            E = DotDebugLocEntries.end();
        I != E; ++I, ++index) {
-    const DotDebugLocEntry &Entry = *I;
+    const DebugLocEntry &Entry = *I;
     if (Entry.isMerged())
       continue;
 
