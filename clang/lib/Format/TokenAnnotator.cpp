@@ -34,6 +34,7 @@ public:
       : Style(Style), Line(Line), CurrentToken(Line.First),
         KeywordVirtualFound(false), AutoFound(false), Ident_in(Ident_in) {
     Contexts.push_back(Context(tok::unknown, 1, /*IsExpression=*/false));
+    resetTokenMetadata(CurrentToken);
   }
 
 private:
@@ -571,6 +572,22 @@ public:
   }
 
 private:
+  void resetTokenMetadata(FormatToken *Token) {
+    if (Token == nullptr) return;
+
+    // Reset token type in case we have already looked at it and then
+    // recovered from an error (e.g. failure to find the matching >).
+    if (CurrentToken->Type != TT_LambdaLSquare &&
+        CurrentToken->Type != TT_FunctionLBrace &&
+        CurrentToken->Type != TT_ImplicitStringLiteral &&
+        CurrentToken->Type != TT_TrailingReturnArrow)
+      CurrentToken->Type = TT_Unknown;
+    if (CurrentToken->Role)
+      CurrentToken->Role.reset(NULL);
+    CurrentToken->FakeLParens.clear();
+    CurrentToken->FakeRParens = 0;
+  }
+
   void next() {
     if (CurrentToken != NULL) {
       determineTokenType(*CurrentToken);
@@ -581,19 +598,7 @@ private:
     if (CurrentToken != NULL)
       CurrentToken = CurrentToken->Next;
 
-    if (CurrentToken != NULL) {
-      // Reset token type in case we have already looked at it and then
-      // recovered from an error (e.g. failure to find the matching >).
-      if (CurrentToken->Type != TT_LambdaLSquare &&
-          CurrentToken->Type != TT_FunctionLBrace &&
-          CurrentToken->Type != TT_ImplicitStringLiteral &&
-          CurrentToken->Type != TT_TrailingReturnArrow)
-        CurrentToken->Type = TT_Unknown;
-      if (CurrentToken->Role)
-        CurrentToken->Role.reset(NULL);
-      CurrentToken->FakeLParens.clear();
-      CurrentToken->FakeRParens = 0;
-    }
+    resetTokenMetadata(CurrentToken);
   }
 
   /// \brief A struct to hold information valid in a specific context, e.g.

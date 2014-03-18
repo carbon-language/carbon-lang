@@ -8173,5 +8173,19 @@ TEST_F(FormatTest, SpacesInAngles) {
   verifyFormat("A<A<int>>();", Spaces);
 }
 
+TEST_F(FormatTest, HandleUnbalancedImplicitBracesAcrossPPBranches) {
+  std::string code = "#if A\n"
+                     "#if B\n"
+                     "a.\n"
+                     "#endif\n"
+                     "    a = 1;\n"
+                     "#else\n"
+                     "#endif\n"
+                     "#if C\n"
+                     "#else\n"
+                     "#endif\n";
+  EXPECT_EQ(code, format(code));
+}
+
 } // end namespace tooling
 } // end namespace clang

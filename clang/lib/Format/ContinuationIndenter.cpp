@@ -217,8 +217,8 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
                                                unsigned ExtraSpaces) {
   const FormatToken &Current = *State.NextToken;
 
-  if (State.Stack.size() == 0 ||
-      (Current.Type == TT_ImplicitStringLiteral &&
+  assert(!State.Stack.empty());
+  if ((Current.Type == TT_ImplicitStringLiteral &&
        (Current.Previous->Tok.getIdentifierInfo() == NULL ||
         Current.Previous->Tok.getIdentifierInfo()->getPPKeywordID() ==
             tok::pp_not_keyword))) {
@@ -628,8 +628,14 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         //   SomeFunction(a, [] {
         //                     f();  // break
         //                   });
-        for (unsigned i = 0; i != Current.MatchingParen->FakeRParens; ++i)
+        for (unsigned i = 0; i != Current.MatchingParen->FakeRParens; ++i) {
+          assert(State.Stack.size() > 1);
+          if (State.Stack.size() == 1) {
+            // Do not pop the last element.
+            break;
+          }
           State.Stack.pop_back();
+        }
         bool IsObjCBlock =
             Previous &&
             (Previous->is(tok::caret) ||
@@ -709,6 +715,11 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     // as they will have been removed early (see above).
     for (unsigned i = 0, e = Current.FakeRParens; i != e; ++i) {
       unsigned VariablePos = State.Stack.back().VariablePos;
+      assert(State.Stack.size() > 1);
+      if (State.Stack.size() == 1) {
+        // Do not pop the last element.
+        break;
+      }
       State.Stack.pop_back();
       State.Stack.back().VariablePos = VariablePos;
     }
