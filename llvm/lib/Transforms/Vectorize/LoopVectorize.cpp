@@ -1067,8 +1067,8 @@ struct LoopVectorize : public FunctionPass {
     // We only handle inner loops, so if there are children just recurse.
     if (!L->empty()) {
       bool Changed = false;
-      for (Loop::iterator I = L->begin(), E = L->begin(); I != E; ++I)
-        Changed |= processLoop(*I);
+      for (Loop *InnerL : *L)
+        Changed |= processLoop(InnerL);
       return Changed;
     }
 
