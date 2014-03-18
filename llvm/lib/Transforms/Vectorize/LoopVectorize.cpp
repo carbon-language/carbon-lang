@@ -1064,14 +1064,7 @@ struct LoopVectorize : public FunctionPass {
   }
 
   bool processLoop(Loop *L) {
-    // We only handle inner loops, so if there are children just recurse.
-    if (!L->empty()) {
-      bool Changed = false;
-      for (Loop *InnerL : *L)
-        Changed |= processLoop(InnerL);
-      return Changed;
-    }
-
+    assert(L->empty() && "Only process inner loops.");
     DEBUG(dbgs() << "LV: Checking a loop in \"" <<
           L->getHeader()->getParent()->getName() << "\"\n");
 
