@@ -71,7 +71,7 @@ ModulePass *createAddressSanitizerModulePass(
     bool CheckInitOrder = true, StringRef BlacklistFile = StringRef());
 
 // Insert MemorySanitizer instrumentation (detection of uninitialized reads)
-FunctionPass *createMemorySanitizerPass(bool TrackOrigins = false,
+FunctionPass *createMemorySanitizerPass(int TrackOrigins = 0,
                                         StringRef BlacklistFile = StringRef());
 
 // Insert ThreadSanitizer (race detection) instrumentation

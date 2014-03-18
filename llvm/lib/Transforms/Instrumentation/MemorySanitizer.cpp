@@ -133,9 +133,9 @@ static const unsigned kShadowTLSAlignment = 8;
 ///
 /// Adds a section to MemorySanitizer report that points to the allocation
 /// (stack or heap) the uninitialized bits came from originally.
-static cl::opt<bool> ClTrackOrigins("msan-track-origins",
+static cl::opt<int> ClTrackOrigins("msan-track-origins",
        cl::desc("Track origins (allocation sites) of poisoned memory"),
-       cl::Hidden, cl::init(false));
+       cl::Hidden, cl::init(0));
 static cl::opt<bool> ClKeepGoing("msan-keep-going",
        cl::desc("keep going after reporting a UMR"),
        cl::Hidden, cl::init(false));
@@ -199,10 +199,10 @@ namespace {
 /// uninitialized reads.
 class MemorySanitizer : public FunctionPass {
  public:
-  MemorySanitizer(bool TrackOrigins = false,
+  MemorySanitizer(int TrackOrigins = 0,
                   StringRef BlacklistFile = StringRef())
       : FunctionPass(ID),
-        TrackOrigins(TrackOrigins || ClTrackOrigins),
+        TrackOrigins(std::max(TrackOrigins, (int)ClTrackOrigins)),
         DL(0),
         WarningFn(0),
         BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile : BlacklistFile),
@@ -216,7 +216,7 @@ class MemorySanitizer : public FunctionPass {
   void initializeCallbacks(Module &M);
 
   /// \brief Track origins (allocation points) of uninitialized values.
-  bool TrackOrigins;
+  int TrackOrigins;
 
   const DataLayout *DL;
   LLVMContext *C;
@@ -250,6 +250,9 @@ class MemorySanitizer : public FunctionPass {
   Value *MsanSetAllocaOrigin4Fn;
   /// \brief Run-time helper that poisons stack on function entry.
   Value *MsanPoisonStackFn;
+  /// \brief Run-time helper that records a store (or any event) of an
+  /// uninitialized value and returns an updated origin id encoding this info.
+  Value *MsanChainOriginFn;
   /// \brief MSan runtime replacements for memmove, memcpy and memset.
   Value *MemmoveFn, *MemcpyFn, *MemsetFn;
 
@@ -286,7 +289,7 @@ INITIALIZE_PASS(MemorySanitizer, "msan",
                 "MemorySanitizer: detects uninitialized reads.",
                 false, false)
 
-FunctionPass *llvm::createMemorySanitizerPass(bool TrackOrigins,
+FunctionPass *llvm::createMemorySanitizerPass(int TrackOrigins,
                                               StringRef BlacklistFile) {
   return new MemorySanitizer(TrackOrigins, BlacklistFile);
 }
@@ -323,6 +326,8 @@ void MemorySanitizer::initializeCallbacks(Module &M) {
     IRB.getInt8PtrTy(), IntptrTy, NULL);
   MsanPoisonStackFn = M.getOrInsertFunction(
     "__msan_poison_stack", IRB.getVoidTy(), IRB.getInt8PtrTy(), IntptrTy, NULL);
+  MsanChainOriginFn = M.getOrInsertFunction(
+    "__msan_chain_origin", IRB.getInt32Ty(), IRB.getInt32Ty(), NULL);
   MemmoveFn = M.getOrInsertFunction(
     "__msan_memmove", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
     IRB.getInt8PtrTy(), IntptrTy, NULL);
@@ -520,6 +525,11 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
                  << F.getName() << "'\n");
   }
 
+  Value *updateOrigin(Value *V, IRBuilder<> &IRB) {
+    if (MS.TrackOrigins <= 1) return V;
+    return IRB.CreateCall(MS.MsanChainOriginFn, V);
+  }
+
   void materializeStores() {
     for (size_t i = 0, n = StoreList.size(); i < n; i++) {
       StoreInst& I = *dyn_cast<StoreInst>(StoreList[i]);
@@ -544,8 +554,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       if (MS.TrackOrigins) {
         unsigned Alignment = std::max(kMinOriginAlignment, I.getAlignment());
         if (isa<StructType>(Shadow->getType())) {
-          IRB.CreateAlignedStore(getOrigin(Val), getOriginPtr(Addr, IRB),
-                                 Alignment);
+          IRB.CreateAlignedStore(updateOrigin(getOrigin(Val), IRB),
+                                 getOriginPtr(Addr, IRB), Alignment);
         } else {
           Value *ConvertedShadow = convertToShadowTyNoVec(Shadow, IRB);
 
@@ -560,8 +570,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
           Instruction *CheckTerm =
               SplitBlockAndInsertIfThen(Cmp, &I, false, MS.OriginStoreWeights);
           IRBuilder<> IRBNew(CheckTerm);
-          IRBNew.CreateAlignedStore(getOrigin(Val), getOriginPtr(Addr, IRBNew),
-                                    Alignment);
+          IRBNew.CreateAlignedStore(updateOrigin(getOrigin(Val), IRBNew),
+                                    getOriginPtr(Addr, IRBNew), Alignment);
         }
       }
     }
