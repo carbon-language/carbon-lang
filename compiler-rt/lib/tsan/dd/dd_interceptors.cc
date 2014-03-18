@@ -209,6 +209,19 @@ INTERCEPTOR(int, pthread_cond_destroy, pthread_cond_t *c) {
   return res;
 }
 
+
+INTERCEPTOR(char*, realpath, const char *path, char *resolved_path) {
+  return REAL(realpath)(path, resolved_path);
+}
+
+INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
+  return REAL(read)(fd, ptr, count);
+}
+
+INTERCEPTOR(SSIZE_T, pread, int fd, void *ptr, SIZE_T count, OFF_T offset) {
+  return REAL(pread)(fd, ptr, count, offset);
+}
+
 namespace __dsan {
 
 void InitializeInterceptors() {
@@ -237,6 +250,11 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION_VER(pthread_cond_wait, "GLIBC_2.3.2");
   INTERCEPT_FUNCTION_VER(pthread_cond_timedwait, "GLIBC_2.3.2");
   INTERCEPT_FUNCTION_VER(pthread_cond_destroy, "GLIBC_2.3.2");
+
+  // for symbolizer
+  INTERCEPT_FUNCTION(realpath);
+  INTERCEPT_FUNCTION(read);
+  INTERCEPT_FUNCTION(pread);
 }
 
 }  // namespace __dsan
