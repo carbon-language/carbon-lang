@@ -42,7 +42,8 @@ public:
   PGOProfileData(CodeGenModule &CGM, std::string Path);
   /// Fill Counts with the profile data for the given function name. Returns
   /// false on success.
-  bool getFunctionCounts(StringRef FuncName, std::vector<uint64_t> &Counts);
+  bool getFunctionCounts(StringRef FuncName, uint64_t &FuncHash,
+                         std::vector<uint64_t> &Counts);
   /// Return the maximum of all known function counts.
   uint64_t getMaximumFunctionCount() { return MaxFunctionCount; }
 };
@@ -57,6 +58,7 @@ private:
   llvm::GlobalValue::LinkageTypes FuncLinkage;
 
   unsigned NumRegionCounters;
+  uint64_t FunctionHash;
   llvm::GlobalVariable *RegionCounters;
   llvm::DenseMap<const Stmt*, unsigned> *RegionCounterMap;
   llvm::DenseMap<const Stmt*, uint64_t> *StmtCountMap;
@@ -65,9 +67,9 @@ private:
 
 public:
   CodeGenPGO(CodeGenModule &CGM)
-    : CGM(CGM), PrefixedFuncName(0), NumRegionCounters(0), RegionCounters(0),
-      RegionCounterMap(0), StmtCountMap(0), RegionCounts(0),
-      CurrentRegionCount(0) {}
+      : CGM(CGM), PrefixedFuncName(0), NumRegionCounters(0), FunctionHash(0),
+        RegionCounters(0), RegionCounterMap(0), StmtCountMap(0),
+        RegionCounts(0), CurrentRegionCount(0) {}
   ~CodeGenPGO() {
     if (PrefixedFuncName) delete PrefixedFuncName;
   }

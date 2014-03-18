@@ -58,9 +58,14 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
       ReportBadPGOData(CGM, "pgo data file has malformed function entry");
       return;
     }
-    while (*--CurPtr != ' ')
-      ;
     StringRef FuncName(FuncStart, CurPtr - FuncStart);
+
+    // Skip over the function hash.
+    CurPtr = strchr(++CurPtr, '\n');
+    if (!CurPtr) {
+      ReportBadPGOData(CGM, "pgo data file is missing the function hash");
+      return;
+    }
 
     // Read the number of counters.
     char *EndPtr;
@@ -99,7 +104,7 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
   MaxFunctionCount = MaxCount;
 }
 
-bool PGOProfileData::getFunctionCounts(StringRef FuncName,
+bool PGOProfileData::getFunctionCounts(StringRef FuncName, uint64_t &FuncHash,
                                        std::vector<uint64_t> &Counts) {
   // Find the relevant section of the pgo-data file.
   llvm::StringMap<unsigned>::const_iterator OffsetIter =
@@ -111,11 +116,15 @@ bool PGOProfileData::getFunctionCounts(StringRef FuncName,
   // Skip over the function name.
   CurPtr = strchr(CurPtr, '\n');
   assert(CurPtr && "pgo-data has corrupted function entry");
-  while (*--CurPtr != ' ')
-    ;
+
+  char *EndPtr;
+  // Read the function hash.
+  FuncHash = strtoll(++CurPtr, &EndPtr, 10);
+  assert(EndPtr != CurPtr && *EndPtr == '\n' &&
+         "pgo-data file has corrupted function hash");
+  CurPtr = EndPtr;
 
   // Read the number of counters.
-  char *EndPtr;
   unsigned NumCounters = strtol(++CurPtr, &EndPtr, 10);
   assert(EndPtr != CurPtr && *EndPtr == '\n' && NumCounters > 0 &&
          "pgo-data file has corrupted number of counters");
@@ -246,15 +255,17 @@ llvm::GlobalVariable *CodeGenPGO::buildDataVar() {
 
   // Create data variable.
   auto *Int32Ty = llvm::Type::getInt32Ty(Ctx);
+  auto *Int64Ty = llvm::Type::getInt64Ty(Ctx);
   auto *Int8PtrTy = llvm::Type::getInt8PtrTy(Ctx);
   auto *Int64PtrTy = llvm::Type::getInt64PtrTy(Ctx);
   llvm::Type *DataTypes[] = {
-    Int32Ty, Int32Ty, Int8PtrTy, Int64PtrTy
+    Int32Ty, Int32Ty, Int64Ty, Int8PtrTy, Int64PtrTy
   };
   auto *DataTy = llvm::StructType::get(Ctx, makeArrayRef(DataTypes));
   llvm::Constant *DataVals[] = {
     llvm::ConstantInt::get(Int32Ty, getFuncName().size()),
     llvm::ConstantInt::get(Int32Ty, NumRegionCounters),
+    llvm::ConstantInt::get(Int64Ty, FunctionHash),
     llvm::ConstantExpr::getBitCast(Name, Int8PtrTy),
     llvm::ConstantExpr::getBitCast(RegionCounters, Int64PtrTy)
   };
@@ -847,6 +858,8 @@ void CodeGenPGO::mapRegionCounters(const Decl *D) {
   else if (const BlockDecl *BD = dyn_cast_or_null<BlockDecl>(D))
     Walker.VisitBlockDecl(BD);
   NumRegionCounters = Walker.NextCounter;
+  // FIXME: The number of counters isn't sufficient for the hash
+  FunctionHash = NumRegionCounters;
 }
 
 void CodeGenPGO::computeRegionCounts(const Decl *D) {
@@ -905,8 +918,9 @@ void CodeGenPGO::loadRegionCounts(PGOProfileData *PGOData) {
   // ignore counts when the input changes in various ways, e.g., by comparing a
   // hash value based on some characteristics of the input.
   RegionCounts = new std::vector<uint64_t>();
-  if (PGOData->getFunctionCounts(getFuncName(), *RegionCounts) ||
-      RegionCounts->size() != NumRegionCounters) {
+  uint64_t Hash;
+  if (PGOData->getFunctionCounts(getFuncName(), Hash, *RegionCounts) ||
+      Hash != FunctionHash || RegionCounts->size() != NumRegionCounters) {
     delete RegionCounts;
     RegionCounts = 0;
   }
