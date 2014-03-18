@@ -1452,6 +1452,11 @@ public:
   void getNameForDiagnostic(raw_ostream &OS, const PrintingPolicy &Policy,
                             bool Qualified) const override;
 
+  // FIXME: This is broken. CXXRecordDecl::getMostRecentDecl() returns a
+  // different "most recent" declaration from this function for the same
+  // declaration, because we don't override getMostRecentDeclImpl(). But
+  // it's not clear that we should override that, because the most recent
+  // declaration as a CXXRecordDecl sometimes is the injected-class-name.
   ClassTemplateSpecializationDecl *getMostRecentDecl() {
     CXXRecordDecl *Recent = static_cast<CXXRecordDecl *>(
                               this)->getMostRecentDecl();
@@ -1520,17 +1525,11 @@ public:
   llvm::PointerUnion<ClassTemplateDecl *,
                      ClassTemplatePartialSpecializationDecl *>
   getInstantiatedFrom() const {
-    if (getSpecializationKind() != TSK_ImplicitInstantiation &&
-        getSpecializationKind() != TSK_ExplicitInstantiationDefinition &&
-        getSpecializationKind() != TSK_ExplicitInstantiationDeclaration)
+    if (!isTemplateInstantiation(getSpecializationKind()))
       return llvm::PointerUnion<ClassTemplateDecl *,
                                 ClassTemplatePartialSpecializationDecl *>();
 
-    if (SpecializedPartialSpecialization *PartialSpec
-          = SpecializedTemplate.dyn_cast<SpecializedPartialSpecialization*>())
-      return PartialSpec->PartialSpecialization;
-
-    return SpecializedTemplate.get<ClassTemplateDecl*>();
+    return getSpecializedTemplateOrPartial();
   }
 
   /// \brief Retrieve the class template or class template partial
