@@ -487,28 +487,6 @@ public:
 
   virtual DwarfCompileUnit &getCU() = 0;
 
-  /// \brief Return whether this compilation unit has the
-  /// one-definition-rule (ODR).  In C++ this allows the compiler to
-  /// perform type unique during LTO.
-  bool hasODR() const {
-    switch (getLanguage()) {
-    case dwarf::DW_LANG_C_plus_plus:
-    case dwarf::DW_LANG_C_plus_plus_03:
-    case dwarf::DW_LANG_C_plus_plus_11:
-      // For all we care, the C++ part of the language has the ODR and
-      // ObjC methods are not represented in a way that they could be
-      // confused with C++ member functions.
-    case dwarf::DW_LANG_ObjC_plus_plus:
-      return true;
-    default:
-      return false;
-    }
-  }
-
-  /// \brief Unique C++ member function declarations based on their
-  /// context+mangled name.
-  DISubprogram getOdrUniqueSubprogram(DIScope Context, DISubprogram SP) const;
-
 protected:
   /// getOrCreateStaticMemberDIE - Create new static data member DIE.
   DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);

@@ -346,9 +346,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// of in DwarfCompileUnit.
   DenseMap<const MDNode *, DIE *> MDTypeNodeToDieMap;
 
-  // Used to unique C++ member function declarations.
-  StringMap<const MDNode *> OdrMemberMap;
-
   // List of all labels used in aranges generation.
   std::vector<SymbolCU> ArangeLabels;
 
@@ -698,11 +695,6 @@ public:
   }
   DIE *getDIE(const MDNode *TypeMD) {
     return MDTypeNodeToDieMap.lookup(TypeMD);
-  }
-
-  /// \brief Look up or create an entry in the OdrMemberMap.
-  const MDNode *&getOrCreateOdrMember(StringRef Key) {
-    return OdrMemberMap.GetOrCreateValue(Key).getValue();
   }
 
   /// \brief Emit all Dwarf sections that should come prior to the
