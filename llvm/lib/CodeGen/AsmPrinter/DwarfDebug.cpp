@@ -1416,6 +1416,8 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   // then we're not going to be able to do anything.
   LScopes.initialize(*MF);
   if (LScopes.empty()) {
+    // If we don't have a lexical scope for this function then there will
+    // be a hole in the range information. Keep note of this.
     UsedNonDefaultText = true;
     return;
   }
