@@ -32,6 +32,12 @@
 #define MEM_IS_SHADOW(mem) \
   ((uptr)mem >= 0x200000000000ULL && (uptr)mem <= 0x400000000000ULL)
 
+// Chained stack trace format.
+#define TRACE_MAGIC_MASK 0xFFFFFFFF00000000LLU
+#define TRACE_MAKE_CHAINED(id) ((uptr)id | TRACE_MAGIC_MASK)
+#define TRACE_TO_CHAINED_ID(u) ((uptr)u & (~TRACE_MAGIC_MASK))
+#define TRACE_IS_CHAINED(u) ((((uptr)u) & TRACE_MAGIC_MASK) == TRACE_MAGIC_MASK)
+
 const int kMsanParamTlsSizeInWords = 100;
 const int kMsanRetvalTlsSizeInWords = 100;
 
@@ -82,10 +88,26 @@ void ReportAtExitStatistics();
 void UnpoisonParam(uptr n);
 void UnpoisonThreadLocalState();
 
+void CopyOrigin(void *dst, const void *src, uptr size, StackTrace *stack);
+void MovePoison(void *dst, const void *src, uptr size, StackTrace *stack);
+void CopyPoison(void *dst, const void *src, uptr size, StackTrace *stack);
+
+// Returns a "chained" origin id, pointing to the given stack trace followed by
+// the previous origin id.
+u32 ChainOrigin(u32 id, StackTrace *stack);
+
 #define GET_MALLOC_STACK_TRACE                                     \
   StackTrace stack;                                                \
   stack.size = 0;                                                  \
   if (__msan_get_track_origins() && msan_inited)                   \
+    GetStackTrace(&stack, common_flags()->malloc_context_size,     \
+        StackTrace::GetCurrentPc(), GET_CURRENT_FRAME(),           \
+        common_flags()->fast_unwind_on_malloc)
+
+#define GET_STORE_STACK_TRACE                                      \
+  StackTrace stack;                                                \
+  stack.size = 0;                                                  \
+  if (__msan_get_track_origins() > 1 && msan_inited)               \
     GetStackTrace(&stack, common_flags()->malloc_context_size,     \
         StackTrace::GetCurrentPc(), GET_CURRENT_FRAME(),           \
         common_flags()->fast_unwind_on_malloc)

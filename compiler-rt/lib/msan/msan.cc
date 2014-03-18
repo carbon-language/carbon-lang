@@ -20,6 +20,7 @@
 #include "sanitizer_common/sanitizer_procmaps.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
+#include "sanitizer_common/sanitizer_stackdepot.h"
 
 
 // ACHTUNG! No system header includes in this file.
@@ -232,6 +233,13 @@ const char *GetOriginDescrIfStack(u32 id, uptr *pc) {
   CHECK_LT(id, kNumStackOriginDescrs);
   if (pc) *pc = StackOriginPC[id];
   return StackOriginDescr[id];
+}
+
+u32 ChainOrigin(u32 id, StackTrace *stack) {
+  uptr idx = Min(stack->size, kStackTraceMax - 1);
+  stack->trace[idx] = TRACE_MAKE_CHAINED(id);
+  u32 new_id = StackDepotPut(stack->trace, idx + 1);
+  return new_id;
 }
 
 }  // namespace __msan
@@ -470,6 +478,11 @@ void __msan_set_alloca_origin4(void *a, uptr size, const char *descr, uptr pc) {
   if (print)
     Printf("__msan_set_alloca_origin: descr=%s id=%x\n", descr + 4, id);
   __msan_set_origin(a, size, id);
+}
+
+u32 __msan_chain_origin(u32 id) {
+  GET_STORE_STACK_TRACE;
+  return ChainOrigin(id, &stack);
 }
 
 const char *__msan_get_origin_descr_if_stack(u32 id) {

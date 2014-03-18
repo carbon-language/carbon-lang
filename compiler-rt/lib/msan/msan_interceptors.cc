@@ -208,60 +208,67 @@ INTERCEPTOR(SIZE_T, strnlen, const char *s, SIZE_T n) {
 
 INTERCEPTOR(char *, strcpy, char *dest, const char *src) {  // NOLINT
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   SIZE_T n = REAL(strlen)(src);
   char *res = REAL(strcpy)(dest, src);  // NOLINT
-  __msan_copy_poison(dest, src, n + 1);
+  CopyPoison(dest, src, n + 1, &stack);
   return res;
 }
 
 INTERCEPTOR(char *, strncpy, char *dest, const char *src, SIZE_T n) {  // NOLINT
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   SIZE_T copy_size = REAL(strnlen)(src, n);
   if (copy_size < n)
     copy_size++;  // trailing \0
   char *res = REAL(strncpy)(dest, src, n);  // NOLINT
-  __msan_copy_poison(dest, src, copy_size);
+  CopyPoison(dest, src, copy_size, &stack);
   return res;
 }
 
 INTERCEPTOR(char *, stpcpy, char *dest, const char *src) {  // NOLINT
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   SIZE_T n = REAL(strlen)(src);
   char *res = REAL(stpcpy)(dest, src);  // NOLINT
-  __msan_copy_poison(dest, src, n + 1);
+  CopyPoison(dest, src, n + 1, &stack);
   return res;
 }
 
 INTERCEPTOR(char *, strdup, char *src) {
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   SIZE_T n = REAL(strlen)(src);
   char *res = REAL(strdup)(src);
-  __msan_copy_poison(res, src, n + 1);
+  CopyPoison(res, src, n + 1, &stack);
   return res;
 }
 
 INTERCEPTOR(char *, __strdup, char *src) {
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   SIZE_T n = REAL(strlen)(src);
   char *res = REAL(__strdup)(src);
-  __msan_copy_poison(res, src, n + 1);
+  CopyPoison(res, src, n + 1, &stack);
   return res;
 }
 
 INTERCEPTOR(char *, strndup, char *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   SIZE_T copy_size = REAL(strnlen)(src, n);
   char *res = REAL(strndup)(src, n);
-  __msan_copy_poison(res, src, copy_size);
+  CopyPoison(res, src, copy_size, &stack);
   __msan_unpoison(res + copy_size, 1); // \0
   return res;
 }
 
 INTERCEPTOR(char *, __strndup, char *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   SIZE_T copy_size = REAL(strnlen)(src, n);
   char *res = REAL(__strndup)(src, n);
-  __msan_copy_poison(res, src, copy_size);
+  CopyPoison(res, src, copy_size, &stack);
   __msan_unpoison(res + copy_size, 1); // \0
   return res;
 }
@@ -279,19 +286,21 @@ INTERCEPTOR(char *, gcvt, double number, SIZE_T ndigit, char *buf) {
 
 INTERCEPTOR(char *, strcat, char *dest, const char *src) {  // NOLINT
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   SIZE_T src_size = REAL(strlen)(src);
   SIZE_T dest_size = REAL(strlen)(dest);
   char *res = REAL(strcat)(dest, src);  // NOLINT
-  __msan_copy_poison(dest + dest_size, src, src_size + 1);
+  CopyPoison(dest + dest_size, src, src_size + 1, &stack);
   return res;
 }
 
 INTERCEPTOR(char *, strncat, char *dest, const char *src, SIZE_T n) {  // NOLINT
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   SIZE_T dest_size = REAL(strlen)(dest);
   SIZE_T copy_size = REAL(strnlen)(src, n);
   char *res = REAL(strncat)(dest, src, n);  // NOLINT
-  __msan_copy_poison(dest + dest_size, src, copy_size);
+  CopyPoison(dest + dest_size, src, copy_size, &stack);
   __msan_unpoison(dest + dest_size + copy_size, 1); // \0
   return res;
 }
@@ -459,23 +468,26 @@ INTERCEPTOR(wchar_t *, wcschr, void *s, wchar_t wc, void *ps) {
 // wchar_t *wcscpy(wchar_t *dest, const wchar_t *src);
 INTERCEPTOR(wchar_t *, wcscpy, wchar_t *dest, const wchar_t *src) {
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   wchar_t *res = REAL(wcscpy)(dest, src);
-  __msan_copy_poison(dest, src, sizeof(wchar_t) * (REAL(wcslen)(src) + 1));
+  CopyPoison(dest, src, sizeof(wchar_t) * (REAL(wcslen)(src) + 1), &stack);
   return res;
 }
 
 // wchar_t *wmemcpy(wchar_t *dest, const wchar_t *src, SIZE_T n);
 INTERCEPTOR(wchar_t *, wmemcpy, wchar_t *dest, const wchar_t *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   wchar_t *res = REAL(wmemcpy)(dest, src, n);
-  __msan_copy_poison(dest, src, n * sizeof(wchar_t));
+  CopyPoison(dest, src, n * sizeof(wchar_t), &stack);
   return res;
 }
 
 INTERCEPTOR(wchar_t *, wmempcpy, wchar_t *dest, const wchar_t *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   wchar_t *res = REAL(wmempcpy)(dest, src, n);
-  __msan_copy_poison(dest, src, n * sizeof(wchar_t));
+  CopyPoison(dest, src, n * sizeof(wchar_t), &stack);
   return res;
 }
 
@@ -489,8 +501,9 @@ INTERCEPTOR(wchar_t *, wmemset, wchar_t *s, wchar_t c, SIZE_T n) {
 
 INTERCEPTOR(wchar_t *, wmemmove, wchar_t *dest, const wchar_t *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   wchar_t *res = REAL(wmemmove)(dest, src, n);
-  __msan_move_poison(dest, src, n * sizeof(wchar_t));
+  MovePoison(dest, src, n * sizeof(wchar_t), &stack);
   return res;
 }
 
@@ -1336,55 +1349,11 @@ u32 get_origin_if_poisoned(uptr a, uptr size) {
   return 0;
 }
 
-void __msan_copy_origin(void *dst, const void *src, uptr size) {
-  if (!__msan_get_track_origins()) return;
-  if (!MEM_IS_APP(dst) || !MEM_IS_APP(src)) return;
-  uptr d = (uptr)dst;
-  uptr beg = d & ~3UL;
-  // Copy left unaligned origin if that memory is poisoned.
-  if (beg < d) {
-    u32 o = get_origin_if_poisoned(beg, d - beg);
-    if (o)
-      *(u32 *)MEM_TO_ORIGIN(beg) = o;
-    beg += 4;
-  }
-
-  uptr end = (d + size + 3) & ~3UL;
-  // Copy right unaligned origin if that memory is poisoned.
-  if (end > d + size) {
-    u32 o = get_origin_if_poisoned(d + size, end - d - size);
-    if (o)
-      *(u32 *)MEM_TO_ORIGIN(end - 4) = o;
-    end -= 4;
-  }
-
-  if (beg < end) {
-    // Align src up.
-    uptr s = ((uptr)src + 3) & ~3UL;
-    fast_memcpy((void*)MEM_TO_ORIGIN(beg), (void*)MEM_TO_ORIGIN(s), end - beg);
-  }
-}
-
-void __msan_copy_poison(void *dst, const void *src, uptr size) {
-  if (!MEM_IS_APP(dst)) return;
-  if (!MEM_IS_APP(src)) return;
-  fast_memcpy((void*)MEM_TO_SHADOW((uptr)dst),
-              (void*)MEM_TO_SHADOW((uptr)src), size);
-  __msan_copy_origin(dst, src, size);
-}
-
-void __msan_move_poison(void *dst, const void *src, uptr size) {
-  if (!MEM_IS_APP(dst)) return;
-  if (!MEM_IS_APP(src)) return;
-  internal_memmove((void*)MEM_TO_SHADOW((uptr)dst),
-         (void*)MEM_TO_SHADOW((uptr)src), size);
-  __msan_copy_origin(dst, src, size);
-}
-
 void *__msan_memcpy(void *dest, const void *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   void *res = fast_memcpy(dest, src, n);
-  __msan_copy_poison(dest, src, n);
+  CopyPoison(dest, src, n, &stack);
   return res;
 }
 
@@ -1397,12 +1366,84 @@ void *__msan_memset(void *s, int c, SIZE_T n) {
 
 void *__msan_memmove(void *dest, const void *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
+  GET_STORE_STACK_TRACE;
   void *res = REAL(memmove)(dest, src, n);
-  __msan_move_poison(dest, src, n);
+  MovePoison(dest, src, n, &stack);
   return res;
 }
 
 namespace __msan {
+
+void CopyOrigin(void *dst, const void *src, uptr size, StackTrace *stack) {
+  if (!__msan_get_track_origins()) return;
+  if (!MEM_IS_APP(dst) || !MEM_IS_APP(src)) return;
+
+  uptr d = (uptr)dst;
+  uptr beg = d & ~3UL;
+  // Copy left unaligned origin if that memory is poisoned.
+  if (beg < d) {
+    u32 o = get_origin_if_poisoned(beg, d - beg);
+    if (o) {
+      if (__msan_get_track_origins() > 1) o = ChainOrigin(o, stack);
+      *(u32 *)MEM_TO_ORIGIN(beg) = o;
+    }
+    beg += 4;
+  }
+
+  uptr end = (d + size + 3) & ~3UL;
+  // Copy right unaligned origin if that memory is poisoned.
+  if (end > d + size) {
+    u32 o = get_origin_if_poisoned(d + size, end - d - size);
+    if (o) {
+      if (__msan_get_track_origins() > 1) o = ChainOrigin(o, stack);
+      *(u32 *)MEM_TO_ORIGIN(end - 4) = o;
+    }
+    end -= 4;
+  }
+
+  if (beg < end) {
+    // Align src up.
+    uptr s = ((uptr)src + 3) & ~3UL;
+    // FIXME: factor out to msan_copy_origin_aligned
+    if (__msan_get_track_origins() > 1) {
+      u32 *src = (u32 *)MEM_TO_ORIGIN(s);
+      u32 *src_s = (u32 *)MEM_TO_SHADOW(s);
+      u32 *src_end = src + (end - beg);
+      u32 *dst = (u32 *)MEM_TO_ORIGIN(beg);
+      u32 src_o = 0;
+      u32 dst_o = 0;
+      for (; src < src_end; ++src, ++src_s, ++dst) {
+        if (!*src_s) continue;
+        if (*src != src_o) {
+          src_o = *src;
+          dst_o = ChainOrigin(src_o, stack);
+        }
+        *dst = dst_o;
+      }
+    } else {
+      fast_memcpy((void *)MEM_TO_ORIGIN(beg), (void *)MEM_TO_ORIGIN(s),
+                  end - beg);
+    }
+  }
+}
+
+void MovePoison(void *dst, const void *src, uptr size, StackTrace *stack) {
+  if (!MEM_IS_APP(dst)) return;
+  if (!MEM_IS_APP(src)) return;
+  if (src == dst) return;
+  internal_memmove((void *)MEM_TO_SHADOW((uptr)dst),
+                   (void *)MEM_TO_SHADOW((uptr)src), size);
+  CopyOrigin(dst, src, size, stack);
+}
+
+void CopyPoison(void *dst, const void *src, uptr size, StackTrace *stack) {
+  if (!MEM_IS_APP(dst)) return;
+  if (!MEM_IS_APP(src)) return;
+  fast_memcpy((void *)MEM_TO_SHADOW((uptr)dst),
+              (void *)MEM_TO_SHADOW((uptr)src), size);
+  CopyOrigin(dst, src, size, stack);
+}
+
 void InitializeInterceptors() {
   static int inited = 0;
   CHECK_EQ(inited, 0);
