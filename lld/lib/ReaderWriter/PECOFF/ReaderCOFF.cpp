@@ -545,9 +545,8 @@ error_code FileCOFF::cacheSectionAttributes() {
 
   // The sections that does not have auxiliary symbol are regular sections, in
   // which symbols are not allowed to be merged.
-  for (auto si = _obj->section_begin(), se = _obj->section_end(); si != se;
-       ++si) {
-    const coff_section *sec = _obj->getCOFFSection(si);
+  for (const auto &section : _obj->sections()) {
+    const coff_section *sec = _obj->getCOFFSection(section);
     if (!_merge.count(sec))
       _merge[sec] = DefinedAtom::mergeNo;
   }
@@ -778,9 +777,8 @@ error_code FileCOFF::getReferenceArch(Reference::KindArch &result) {
 /// Add relocation information to atoms.
 error_code FileCOFF::addRelocationReferenceToAtoms() {
   // Relocation entries are defined for each section.
-  for (auto si = _obj->section_begin(), se = _obj->section_end(); si != se;
-       ++si) {
-    const coff_section *section = _obj->getCOFFSection(si);
+  for (const auto &sec : _obj->sections()) {
+    const coff_section *section = _obj->getCOFFSection(sec);
 
     // Skip there's no atom for the section. Currently we do not create any
     // atoms for some sections, such as "debug$S", and such sections need to
@@ -788,9 +786,8 @@ error_code FileCOFF::addRelocationReferenceToAtoms() {
     if (_sectionAtoms.find(section) == _sectionAtoms.end())
       continue;
 
-    for (auto ri = si->relocation_begin(), re = si->relocation_end();
-         ri != re; ++ri) {
-      const coff_relocation *rel = _obj->getCOFFRelocation(ri);
+    for (const auto &reloc : sec.relocations()) {
+      const coff_relocation *rel = _obj->getCOFFRelocation(reloc);
       if (auto ec =
               addRelocationReference(rel, section, _sectionAtoms[section]))
         return ec;
@@ -846,9 +843,8 @@ error_code FileCOFF::maybeCreateSXDataAtoms() {
 
 /// Find a section by name.
 error_code FileCOFF::findSection(StringRef name, const coff_section *&result) {
-  for (auto si = _obj->section_begin(), se = _obj->section_end(); si != se;
-       ++si) {
-    const coff_section *section = _obj->getCOFFSection(si);
+  for (const auto &sec : _obj->sections()) {
+    const coff_section *section = _obj->getCOFFSection(sec);
     StringRef sectionName;
     if (auto ec = _obj->getSectionName(section, sectionName))
       return ec;
