@@ -13,5 +13,7 @@ define void @test1(%struct.foo* nocapture %x, i32 %y, i8* %z) nounwind {
 
 ; CHECK-LABEL: test1:
 ; CHECK: movl %esp, %esi
-; CHECK-NOT: rep;movsl
+; CHECK: movl %esi, %edx
+; CHECK: rep;movsl
+; CHECK: movl %edx, %esi
 }
