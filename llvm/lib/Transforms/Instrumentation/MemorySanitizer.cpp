@@ -160,10 +160,6 @@ static cl::opt<bool> ClHandleICmpExact("msan-handle-icmp-exact",
        cl::desc("exact handling of relational integer ICmp"),
        cl::Hidden, cl::init(false));
 
-static cl::opt<bool> ClStoreCleanOrigin("msan-store-clean-origin",
-       cl::desc("store origin for clean (fully initialized) values"),
-       cl::Hidden, cl::init(false));
-
 // This flag controls whether we check the shadow of the address
 // operand of load or store. Such bugs are very rare, since load from
 // a garbage address typically results in SEGV, but still happen
@@ -547,7 +543,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
       if (MS.TrackOrigins) {
         unsigned Alignment = std::max(kMinOriginAlignment, I.getAlignment());
-        if (ClStoreCleanOrigin || isa<StructType>(Shadow->getType())) {
+        if (isa<StructType>(Shadow->getType())) {
           IRB.CreateAlignedStore(getOrigin(Val), getOriginPtr(Addr, IRB),
                                  Alignment);
         } else {
