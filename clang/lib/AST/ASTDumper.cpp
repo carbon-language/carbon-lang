@@ -254,6 +254,11 @@ namespace  {
     void VisitTypeAliasTemplateDecl(const TypeAliasTemplateDecl *D);
     void VisitCXXRecordDecl(const CXXRecordDecl *D);
     void VisitStaticAssertDecl(const StaticAssertDecl *D);
+    template<typename SpecializationDecl>
+    void VisitTemplateDeclSpecialization(ChildDumper &Children,
+                                         const SpecializationDecl *D,
+                                         bool DumpExplicitInst,
+                                         bool DumpRefOnly);
     template<typename TemplateDecl>
     void VisitTemplateDecl(const TemplateDecl *D, bool DumpExplicitInst);
     void VisitFunctionTemplateDecl(const FunctionTemplateDecl *D);
@@ -1075,6 +1080,46 @@ void ASTDumper::VisitStaticAssertDecl(const StaticAssertDecl *D) {
   dumpStmt(D->getMessage());
 }
 
+template<typename SpecializationDecl>
+void ASTDumper::VisitTemplateDeclSpecialization(ChildDumper &Children,
+                                                const SpecializationDecl *D,
+                                                bool DumpExplicitInst,
+                                                bool DumpRefOnly) {
+  bool DumpedAny = false;
+  for (auto *RedeclWithBadType : D->redecls()) {
+    // FIXME: The redecls() range sometimes has elements of a less-specific
+    // type. (In particular, ClassTemplateSpecializationDecl::redecls() gives
+    // us TagDecls, and should give CXXRecordDecls).
+    auto *Redecl = dyn_cast<SpecializationDecl>(RedeclWithBadType);
+    if (!Redecl) {
+      // Found the injected-class-name for a class template. This will be dumped
+      // as part of its surrounding class so we don't need to dump it here.
+      assert(isa<CXXRecordDecl>(RedeclWithBadType) &&
+             "expected an injected-class-name");
+      continue;
+    }
+
+    switch (Redecl->getTemplateSpecializationKind()) {
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ExplicitInstantiationDefinition:
+      if (!DumpExplicitInst)
+        break;
+      // Fall through.
+    case TSK_Undeclared:
+    case TSK_ImplicitInstantiation:
+      Children.dump(Redecl, DumpRefOnly);
+      DumpedAny = true;
+      break;
+    case TSK_ExplicitSpecialization:
+      break;
+    }
+  }
+
+  // Ensure we dump at least one decl for each specialization.
+  if (!DumpedAny)
+    Children.dumpRef(D);
+}
+
 template<typename TemplateDecl>
 void ASTDumper::VisitTemplateDecl(const TemplateDecl *D,
                                   bool DumpExplicitInst) {
@@ -1084,22 +1129,9 @@ void ASTDumper::VisitTemplateDecl(const TemplateDecl *D,
   ChildDumper Children(*this);
   Children.dump(D->getTemplatedDecl());
 
-  for (auto *Child : D->specializations()) {
-    switch (Child->getTemplateSpecializationKind()) {
-    case TSK_Undeclared:
-    case TSK_ImplicitInstantiation:
-      Children.dump(Child, /*Ref*/D != D->getCanonicalDecl());
-      break;
-    case TSK_ExplicitInstantiationDeclaration:
-    case TSK_ExplicitInstantiationDefinition:
-      Children.dump(Child, /*Ref*/D != D->getCanonicalDecl() ||
-                                  !DumpExplicitInst);
-      break;
-    case TSK_ExplicitSpecialization:
-      Children.dumpRef(Child);
-      break;
-    }
-  }
+  for (auto *Child : D->specializations())
+    VisitTemplateDeclSpecialization(Children, Child, DumpExplicitInst,
+                                    !D->isCanonicalDecl());
 }
 
 void ASTDumper::VisitFunctionTemplateDecl(const FunctionTemplateDecl *D) {
