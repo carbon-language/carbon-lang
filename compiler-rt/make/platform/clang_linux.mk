@@ -86,7 +86,7 @@ endif
 ###
 
 CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer
-SANITIZER_CFLAGS := -fPIE -fno-builtin -gline-tables-only
+SANITIZER_CFLAGS := -std=c++11 -fPIE -fno-builtin -gline-tables-only
 
 CFLAGS.full-i386 := $(CFLAGS) -m32
 CFLAGS.full-x86_64 := $(CFLAGS) -m64
