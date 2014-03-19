@@ -20,6 +20,7 @@ class ExprCommandCallFunctionTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
+    @expectedFailureDarwin(16361880) # <rdar://problem/16361880>, we get the result correctly, but fail to invoke the Summary formatter.
     def test_with_dsym(self):
         """Test calling std::String member function."""
         self.buildDsym()
@@ -29,6 +30,7 @@ class ExprCommandCallFunctionTestCase(TestBase):
     @expectedFailureFreeBSD('llvm.org/pr17807') # Fails on FreeBSD buildbot
     @expectedFailureGcc # llvm.org/pr14437, fails with GCC 4.6.3 and 4.7.2
     @expectedFailureIcc # llvm.org/pr14437, fails with ICC 13.1
+    @expectedFailureDarwin(16361880) # <rdar://problem/16361880>, we get the result correctly, but fail to invoke the Summary formatter.
     def test_with_dwarf(self):
         """Test calling std::String member function."""
         self.buildDwarf()
@@ -46,12 +48,8 @@ class ExprCommandCallFunctionTestCase(TestBase):
         self.expect("print str",
             substrs = ['Hello world'])
 
-        # Should be fixed with r142717.
-        #
-        # rdar://problem/9471744 test failure: ./dotest.py -C clang -v -w -t -p CallStdString
-        # runCmd: print str.c_str()
-        # runCmd failed!
-        # error: Couldn't convert the expression to DWARF
+        # Calling this function now succeeds, but we follow the typedef return type through to
+        # const char *, and thus don't invoke the Summary formatter.
         self.expect("print str.c_str()",
             substrs = ['Hello world'])
 
