@@ -44,7 +44,7 @@ set(MSAN_UNITTEST_COMMON_CFLAGS
   -I${COMPILER_RT_SOURCE_DIR}/include
   -I${COMPILER_RT_SOURCE_DIR}/lib
   -I${COMPILER_RT_SOURCE_DIR}/lib/msan
-  -std=c++0x
+  -std=c++11
   -stdlib=libc++
   -g
   -O2

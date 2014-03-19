@@ -30,6 +30,7 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -Wno-format
   -Werror
   -Werror=sign-compare
+  -std=c++11
   -g
   -O2)
 append_if(COMPILER_RT_HAS_WNO_VARIADIC_MACROS_FLAG -Wno-variadic-macros ASAN_UNITTEST_COMMON_CFLAGS)
