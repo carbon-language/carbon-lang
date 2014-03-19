@@ -1,4 +1,4 @@
-//===- PassManager.h - Infrastructure for managing & running IR passes ----===//
+//===- PassManager.cpp - Infrastructure for managing & running IR passes --===//
 //
 //                     The LLVM Compiler Infrastructure
 //
