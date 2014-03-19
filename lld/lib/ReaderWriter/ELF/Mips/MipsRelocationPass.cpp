@@ -125,8 +125,11 @@ private:
   /// \brief Owner of all the Atoms created by this pass.
   RelocationPassFile _file;
 
-  /// \brief Map Atoms to their GOT entries.
-  llvm::DenseMap<const Atom *, GOTAtom *> _gotLocalMap;
+  /// \brief Map Atoms and addend to local GOT entries.
+  typedef std::pair<const Atom *, int64_t> LocalGotMapKeyT;
+  llvm::DenseMap<LocalGotMapKeyT, GOTAtom *> _gotLocalMap;
+
+  /// \brief Map Atoms to global GOT entries.
   llvm::DenseMap<const Atom *, GOTAtom *> _gotGlobalMap;
 
   /// \brief the list of local GOT atoms.
@@ -160,7 +163,7 @@ private:
   void handlePLT(const Reference &ref);
   void handleGOT(const Reference &ref);
 
-  const GOTAtom *getLocalGOTEntry(const Atom *a);
+  const GOTAtom *getLocalGOTEntry(const Reference &ref);
   const GOTAtom *getGlobalGOTEntry(const Atom *a);
   const PLTAtom *getPLTEntry(const Atom *a);
   const ObjectAtom *getObjectEntry(const SharedLibraryAtom *a);
@@ -302,7 +305,7 @@ void RelocationPass::handlePLT(const Reference &ref) {
 
 void RelocationPass::handleGOT(const Reference &ref) {
   if (requireLocalGOT(ref.target()))
-    const_cast<Reference &>(ref).setTarget(getLocalGOTEntry(ref.target()));
+    const_cast<Reference &>(ref).setTarget(getLocalGOTEntry(ref));
   else
     const_cast<Reference &>(ref).setTarget(getGlobalGOTEntry(ref.target()));
 }
@@ -327,18 +330,23 @@ bool RelocationPass::requireLocalGOT(const Atom *a) {
   return false;
 }
 
-const GOTAtom *RelocationPass::getLocalGOTEntry(const Atom *a) {
-  auto got = _gotLocalMap.find(a);
+const GOTAtom *RelocationPass::getLocalGOTEntry(const Reference &ref) {
+  const Atom *a = ref.target();
+  LocalGotMapKeyT key(a, ref.addend());
+
+  auto got = _gotLocalMap.find(key);
   if (got != _gotLocalMap.end())
     return got->second;
 
   auto ga = new (_file._alloc) GOT0Atom(_file);
-  _gotLocalMap[a] = ga;
+  _gotLocalMap[key] = ga;
 
   _localGotVector.push_back(ga);
 
-  if (const DefinedAtom *da = dyn_cast<DefinedAtom>(a))
-    ga->addReferenceELF_Mips(R_MIPS_32, 0, da, 0);
+  if (isLocal(a))
+    ga->addReferenceELF_Mips(LLD_R_MIPS_32_HI16, 0, a, ref.addend());
+  else
+    ga->addReferenceELF_Mips(R_MIPS_32, 0, a, 0);
 
   DEBUG_WITH_TYPE("MipsGOT", {
     ga->_name = "__got_";

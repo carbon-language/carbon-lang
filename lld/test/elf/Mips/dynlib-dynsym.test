@@ -83,7 +83,7 @@
 # CHECK-GOT:     section-name:    .got
 # CHECK-GOT:     permissions:     rw-
 # CHECK-GOT:     references:
-# CHECK-GOT:       - kind:            R_MIPS_32
+# CHECK-GOT:       - kind:            LLD_R_MIPS_32_HI16
 # CHECK-GOT:         offset:          0
 # CHECK-GOT:         target:          L003
 # CHECK-GOT:   - ref-name:        L004
@@ -94,7 +94,7 @@
 # CHECK-GOT:     section-name:    .got
 # CHECK-GOT:     permissions:     rw-
 # CHECK-GOT:     references:
-# CHECK-GOT:       - kind:            R_MIPS_32
+# CHECK-GOT:       - kind:            LLD_R_MIPS_32_HI16
 # CHECK-GOT:         offset:          0
 # CHECK-GOT:         target:          L005
 # CHECK-GOT:   - ref-name:        L006

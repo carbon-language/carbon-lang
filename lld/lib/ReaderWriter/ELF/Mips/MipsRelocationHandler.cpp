@@ -105,6 +105,11 @@ void relocCall16(uint8_t *location, uint64_t P, uint64_t S, int64_t A,
   applyReloc(location, G, 0xffff);
 }
 
+/// \brief LLD_R_MIPS_32_HI16
+void reloc32hi16(uint8_t *location, uint64_t S, int64_t A) {
+  applyReloc(location, (S + A) & 0xffff0000, 0xffffffff);
+}
+
 /// \brief LLD_R_MIPS_HI16
 void relocLldHi16(uint8_t *location, uint64_t S) {
   applyReloc(location, (S + 0x8000) >> 16, 0xffff);
@@ -163,6 +168,9 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     break;
   case LLD_R_MIPS_GLOBAL_GOT:
     // Do nothing.
+    break;
+  case LLD_R_MIPS_32_HI16:
+    reloc32hi16(location, targetVAddress, ref.addend());
     break;
   case LLD_R_MIPS_GLOBAL_26:
     reloc26ext(location, targetVAddress, ref.addend());

@@ -78,6 +78,7 @@ private:
       break;
     case R_MIPS_HI16:
     case R_MIPS_LO16:
+    case R_MIPS_GOT16:
       ref->setAddend(*(int16_t *)ap);
       break;
     }

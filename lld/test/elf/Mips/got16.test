@@ -6,105 +6,141 @@
 # RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t2 %t1
 # RUN: llvm-objdump -t -disassemble %t2 | FileCheck -check-prefix RAW %s
 
+# Local GOT entries:
+# YAML:       - ref-name:        L003
+# YAML-NEXT:    type:            got
+# YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
+# YAML-NEXT:    alignment:       2^2
+# YAML-NEXT:    section-choice:  custom-required
+# YAML-NEXT:    section-name:    .got
+# YAML-NEXT:    permissions:     rw-
+# YAML-NEXT:    references:
+# YAML-NEXT:      - kind:            LLD_R_MIPS_32_HI16
+# YAML-NEXT:        offset:          0
+# YAML-NEXT:        target:          L006
+# YAML-NEXT:  - ref-name:        L005
+# YAML-NEXT:    type:            got
+# YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
+# YAML-NEXT:    alignment:       2^2
+# YAML-NEXT:    section-choice:  custom-required
+# YAML-NEXT:    section-name:    .got
+# YAML-NEXT:    permissions:     rw-
+# YAML-NEXT:    references:
+# YAML-NEXT:      - kind:            LLD_R_MIPS_32_HI16
+# YAML-NEXT:        offset:          0
+# YAML-NEXT:        target:          L006
+# YAML-NEXT:        addend:          66048
+# YAML-NEXT:  - ref-name:        L007
+# YAML-NEXT:    type:            got
+# YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
+# YAML-NEXT:    alignment:       2^2
+# YAML-NEXT:    section-choice:  custom-required
+# YAML-NEXT:    section-name:    .got
+# YAML-NEXT:    permissions:     rw-
+# YAML-NEXT:    references:
+# YAML-NEXT:      - kind:            R_MIPS_32
+# YAML-NEXT:        offset:          0
+# YAML-NEXT:        target:          hidden
 
-# YAML: - ref-name:        [[L002:[-a-zA-Z0-9_]+]]
-# YAML:   type:            got
-# YAML:   content:         [ 00, 00, 00, 00 ]
-# YAML:   alignment:       2^2
-# YAML:   section-choice:  custom-required
-# YAML:   section-name:    .got
-# YAML:   permissions:     rw-
-# YAML:   references:
-# YAML:     - kind:            R_MIPS_32
-# YAML:       offset:          0
-# YAML:       target:          [[L003:[-a-zA-Z0-9_]+]]
-# YAML: - ref-name:        [[L004:[-a-zA-Z0-9_]+]]
-# YAML:   type:            got
-# YAML:   content:         [ 00, 00, 00, 00 ]
-# YAML:   alignment:       2^2
-# YAML:   section-choice:  custom-required
-# YAML:   section-name:    .got
-# YAML:   permissions:     rw-
-# YAML:   references:
-# YAML:     - kind:            R_MIPS_32
-# YAML:       offset:          0
-# YAML:       target:          hidden
-# YAML: - ref-name:        [[L005:[-a-zA-Z0-9_]+]]
-# YAML:   type:            got
-# YAML:   content:         [ 00, 00, 00, 00 ]
-# YAML:   alignment:       2^2
-# YAML:   section-choice:  custom-required
-# YAML:   section-name:    .got
-# YAML:   permissions:     rw-
-# YAML:   references:
-# YAML:     - kind:            LLD_R_MIPS_GLOBAL_GOT
-# YAML:       offset:          0
-# YAML:       target:          glob
-# YAML:     - kind:            R_MIPS_32
-# YAML:       offset:          0
-# YAML:       target:          glob
-# YAML: - ref-name:        [[L006:[-a-zA-Z0-9_]+]]
-# YAML:   type:            got
-# YAML:   content:         [ 00, 00, 00, 00 ]
-# YAML:   alignment:       2^2
-# YAML:   section-choice:  custom-required
-# YAML:   section-name:    .got
-# YAML:   permissions:     rw-
-# YAML:   references:
-# YAML:     - kind:            LLD_R_MIPS_GLOBAL_GOT
-# YAML:       offset:          0
-# YAML:       target:          extern
-# YAML: - ref-name:        [[L007:[-a-zA-Z0-9_]+]]
-# YAML:   alignment:       2^2
-# YAML:   references:
-# YAML:     - kind:            layout-after
-# YAML:       offset:          0
-# YAML:       target:          glob
-# YAML: - name:            glob
-# YAML:   scope:           global
-# YAML:   content:         [ 00, 00, 84, 8F, 00, 00, 84, 24, 00, 00, 84, 8F,
-# YAML:                      00, 00, 84, 8F, 00, 00, 84, 8F ]
-# YAML:   alignment:       2^2
-# YAML:   references:
-# YAML:     - kind:            R_MIPS_LO16
-# YAML:       offset:          4
-# YAML:       target:          [[L003]]
-# YAML:     - kind:            R_MIPS_GOT16
-# YAML:       offset:          8
-# YAML:       target:          [[L004]]
-# YAML:     - kind:            R_MIPS_CALL16
-# YAML:       offset:          12
-# YAML:       target:          [[L005]]
-# YAML:     - kind:            R_MIPS_CALL16
-# YAML:       offset:          16
-# YAML:       target:          [[L006]]
+# Global GOT entries:
+# YAML-NEXT:  - ref-name:        L008
+# YAML-NEXT:    type:            got
+# YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
+# YAML-NEXT:    alignment:       2^2
+# YAML-NEXT:    section-choice:  custom-required
+# YAML-NEXT:    section-name:    .got
+# YAML-NEXT:    permissions:     rw-
+# YAML-NEXT:    references:
+# YAML-NEXT:      - kind:            LLD_R_MIPS_GLOBAL_GOT
+# YAML-NEXT:        offset:          0
+# YAML-NEXT:        target:          glob
+# YAML-NEXT:      - kind:            R_MIPS_32
+# YAML-NEXT:        offset:          0
+# YAML-NEXT:        target:          glob
+# YAML-NEXT:  - ref-name:        L009
+# YAML-NEXT:    type:            got
+# YAML-NEXT:    content:         [ 00, 00, 00, 00 ]
+# YAML-NEXT:    alignment:       2^2
+# YAML-NEXT:    section-choice:  custom-required
+# YAML-NEXT:    section-name:    .got
+# YAML-NEXT:    permissions:     rw-
+# YAML-NEXT:    references:
+# YAML-NEXT:      - kind:            LLD_R_MIPS_GLOBAL_GOT
+# YAML-NEXT:        offset:          0
+# YAML-NEXT:        target:          extern
+
+# Function glob
+# YAML:       - name:            glob
+# YAML-NEXT:    scope:           global
+# YAML-NEXT:    content:         [ 00, 00, 84, 8F, 00, 00, 84, 24, 01, 00, 84, 8F,
+# YAML-NEXT:                       00, 02, 84, 24, 00, 00, 84, 8F, 00, 00, 84, 8F,
+# YAML-NEXT:                       00, 00, 84, 8F ]
+# YAML-NEXT:    alignment:       2^2
+# YAML-NEXT:    references:
+# YAML-NEXT:      - kind:            R_MIPS_GOT16
+# YAML-NEXT:        offset:          0
+# YAML-NEXT:        target:          L003
+# YAML-NEXT:      - kind:            R_MIPS_LO16
+# YAML-NEXT:        offset:          4
+# YAML-NEXT:        target:          L006
+# YAML-NEXT:      - kind:            R_MIPS_GOT16
+# YAML-NEXT:        offset:          8
+# YAML-NEXT:        target:          L005
+# YAML-NEXT:        addend:          66048
+# YAML-NEXT:      - kind:            R_MIPS_LO16
+# YAML-NEXT:        offset:          12
+# YAML-NEXT:        target:          L006
+# YAML-NEXT:        addend:          512
+# YAML-NEXT:      - kind:            R_MIPS_GOT16
+# YAML-NEXT:        offset:          16
+# YAML-NEXT:        target:          L007
+# YAML-NEXT:      - kind:            R_MIPS_CALL16
+# YAML-NEXT:        offset:          20
+# YAML-NEXT:        target:          L008
+# YAML-NEXT:      - kind:            R_MIPS_CALL16
+# YAML-NEXT:        offset:          24
+# YAML-NEXT:        target:          L009
 
 # RAW: Disassembly of section .text:
 # RAW: glob:
-# RAW-NEXT:   148:  18 80 84 8f  lw      $4, -32744($gp)
-# RAW-NEXT:   14c:  00 20 84 24  addiu   $4, $4, 8192
-# RAW-NEXT:   150:  1c 80 84 8f  lw      $4, -32740($gp)
-# RAW-NEXT:   154:  20 80 84 8f  lw      $4, -32736($gp)
-# RAW-NEXT:   158:  24 80 84 8f  lw      $4, -32732($gp)
+# RAW-NEXT:   12c:  18 80 84 8f  lw      $4, -32744($gp)
+# RAW-NEXT:   130:  00 20 84 24  addiu   $4, $4, 8192
+# RAW-NEXT:   134:  1c 80 84 8f  lw      $4, -32740($gp)
+# RAW-NEXT:   138:  00 22 84 24  addiu   $4, $4, 8704
+# RAW-NEXT:   13c:  20 80 84 8f  lw      $4, -32736($gp)
+# RAW-NEXT:   140:  24 80 84 8f  lw      $4, -32732($gp)
+# RAW-NEXT:   144:  28 80 84 8f  lw      $4, -32728($gp)
 
 # RAW: SYMBOL TABLE:
 # RAW: 00000000       *UND*  00000000
-# RAW: 00002000 l     .data  00000000 local
+# RAW: 00002000 l     .data  00000000 str1
+# RAW: 00012200 l     .data  00000005 str2
+# RAW: 0000012c g   F .text  0000001c glob
+# RAW: 00012205 g     .data  00000004 hidden
 
     .global glob
     .ent    glob
 glob:
-    lw      $4,%got(local)($28)      # G(local)
-    addiu   $4,$4,%lo(local)         # local (0x2000)
+    lw      $4,%got(str1)($28)       # G(str1)
+    addiu   $4,$4,%lo(str1)          # str1
+    lw      $4,%got(str2)($28)       # G(str2)
+    addiu   $4,$4,%lo(str2)          # str2
     lw      $4,%got(hidden)($28)     # G(hidden)
     lw      $4,%call16(glob)($28)    # G(glob)
     lw      $4,%call16(extern)($28)  # G(extern)
     .end    glob
+
     .data
-    .type   local,%object
-    .size   local,4
-local:
-    .word   undef
+    .type   str1, %object
+    .size   str1, 0x10200
+str1:
+    .ascii  "str1\000"
+    .space  0x101fb
+
+    .type str2, @object
+    .size str2, 5
+str2:
+    .ascii  "str2\000"
 
     .globl  hidden
     .hidden hidden
