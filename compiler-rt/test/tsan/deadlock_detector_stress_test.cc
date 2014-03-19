@@ -1,5 +1,6 @@
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadMutex
-// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s
+// RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-NOT-SECOND
+// TSAN_OPTIONS="detect_deadlocks=1 second_deadlock_stack=1" not %t 2>&1 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-SECOND
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadSpinLock
 // RUN: TSAN_OPTIONS=detect_deadlocks=1 not %t 2>&1 | FileCheck %s
 // RUN: %clangxx_tsan %s -o %t -DLockType=PthreadRWLock
@@ -152,6 +153,14 @@ class LockTest {
     Lock_1_0();
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock)
     // CHECK: Path: [[M1:M[0-9]+]] => [[M2:M[0-9]+]] => [[M1]]
+    // CHECK: Edge: [[M1]] => [[M2]]
+    // CHECK:   #0 pthread_
+    // CHECK-SECOND:   #0 pthread_
+    // CHECK-NOT-SECOND-NOT:   #0 pthread_
+    // CHECK: Edge: [[M2]] => [[M1]]
+    // CHECK:   #0 pthread_
+    // CHECK-SECOND:   #0 pthread_
+    // CHECK-NOT-SECOND-NOT:   #0 pthread_
     // CHECK: Mutex [[M1]] ([[A1]]) created at:
     // CHECK: Mutex [[M2]] ([[A2]]) created at:
     // CHECK-NOT: WARNING: ThreadSanitizer:
@@ -417,14 +426,14 @@ class LockTest {
     fprintf(stderr, "Starting Test16: detailed output test with two locks\n");
     // CHECK: Starting Test16
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion
-    // CHECK: LockTest::Acquire0
-    // CHECK-NEXT: LockTest::Acquire_0_then_1
     // CHECK: LockTest::Acquire1
     // CHECK-NEXT: LockTest::Acquire_0_then_1
-    // CHECK: LockTest::Acquire1
-    // CHECK-NEXT: LockTest::Acquire_1_then_0
+    // CHECK-SECOND: LockTest::Acquire0
+    // CHECK-SECOND-NEXT: LockTest::Acquire_0_then_1
     // CHECK: LockTest::Acquire0
     // CHECK-NEXT: LockTest::Acquire_1_then_0
+    // CHECK-SECOND: LockTest::Acquire1
+    // CHECK-SECOND-NEXT: LockTest::Acquire_1_then_0
     Init(5);
     Acquire_0_then_1();
     U(0); U(1);

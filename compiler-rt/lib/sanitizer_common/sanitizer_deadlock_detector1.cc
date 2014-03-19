@@ -36,8 +36,9 @@ struct DDLogicalThread {
 struct DD : public DDetector {
   SpinMutex mtx;
   DeadlockDetector<DDBV> dd;
+  DDFlags flags;
 
-  DD();
+  explicit DD(const DDFlags *flags);
 
   DDPhysicalThread* CreatePhysicalThread();
   void DestroyPhysicalThread(DDPhysicalThread *pt);
@@ -60,10 +61,11 @@ struct DD : public DDetector {
 DDetector *DDetector::Create(const DDFlags *flags) {
   (void)flags;
   void *mem = MmapOrDie(sizeof(DD), "deadlock detector");
-  return new(mem) DD();
+  return new(mem) DD(flags);
 }
 
-DD::DD() {
+DD::DD(const DDFlags *flags)
+    : flags(*flags) {
   dd.clear();
 }
 
@@ -135,14 +137,16 @@ void DD::ReportDeadlock(DDCallback *cb, DDMutex *m) {
     rep->loop[i].thr_ctx = 0;  // don't know
     rep->loop[i].mtx_ctx0 = m0->ctx;
     rep->loop[i].mtx_ctx1 = m1->ctx;
-    rep->loop[i].stk[0] = stk_from;
-    rep->loop[i].stk[1] = stk_to;
+    rep->loop[i].stk[0] = stk_to;
+    rep->loop[i].stk[1] = stk_from;
   }
 }
 
 void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
   DDLogicalThread *lt = cb->lt;
-  u32 stk = cb->Unwind();  // FIXME: if this is hot, do this under a flag.
+  u32 stk = 0;
+  if (flags.second_deadlock_stack)
+    stk = cb->Unwind();
   // Printf("T%p MutexLock:   %zx stk %u\n", lt, m->id, stk);
   if (dd.onFirstLock(&lt->dd, m->id, stk))
     return;

@@ -441,7 +441,7 @@ void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
   }
   // FIXME: use all stacks for suppressions, not just the second stack of the
   // first edge.
-  OutputReport(ctx, rep, rep.GetReport()->stacks[1]);
+  OutputReport(ctx, rep, rep.GetReport()->stacks[0]);
 }
 
 }  // namespace __tsan
