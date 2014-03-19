@@ -153,6 +153,14 @@ class DeadlockDetector {
     if (!available_nodes_.empty())
       return getAvailableNode(data);
     if (!recycled_nodes_.empty()) {
+      // Printf("recycling: n_edges_ %zd\n", n_edges_);
+      for (sptr i = n_edges_ - 1; i >= 0; i--) {
+        if (recycled_nodes_.getBit(edges_[i].from) ||
+            recycled_nodes_.getBit(edges_[i].to)) {
+          Swap(edges_[i], edges_[n_edges_ - 1]);
+          n_edges_--;
+        }
+      }
       CHECK(available_nodes_.empty());
       // removeEdgesFrom was called in removeNode.
       g_.removeEdgesTo(recycled_nodes_);
@@ -233,7 +241,7 @@ class DeadlockDetector {
       if (n_edges_ < ARRAY_SIZE(edges_))
         edges_[n_edges_++] = Edge((u16)added_edges[i], (u16)cur_idx,
                                   dtls->findLockContext(added_edges[i]), stk);
-      // Printf("Edge [%zd]: %u %zd=>%zd\n", i, stk, added_edges[i], cur_idx);
+      // Printf("E%zd: %u %zd=>%zd\n", n_edges_, stk, added_edges[i], cur_idx);
     }
     return n_added_edges;
   }
@@ -256,7 +264,7 @@ class DeadlockDetector {
   bool onLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node, u32 stk = 0) {
     ensureCurrentEpoch(dtls);
     bool is_reachable = !isHeld(dtls, cur_node) && onLockBefore(dtls, cur_node);
-    addEdges(dtls, cur_node, 0);
+    addEdges(dtls, cur_node, stk);
     onLockAfter(dtls, cur_node, stk);
     return is_reachable;
   }
