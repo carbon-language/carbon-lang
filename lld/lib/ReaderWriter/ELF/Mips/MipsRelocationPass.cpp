@@ -163,7 +163,7 @@ private:
   const PLTAtom *getPLTEntry(const Atom *a);
   const ObjectAtom *getObjectEntry(const SharedLibraryAtom *a);
 
-  bool isLocal(const Atom *a);
+  bool isLocal(const Atom *a) const;
   bool requireLocalGOT(const Atom *a);
   void createPLTHeader();
 };
@@ -276,7 +276,7 @@ void RelocationPass::handleReference(const DefinedAtom &atom,
   }
 }
 
-bool RelocationPass::isLocal(const Atom *a) {
+bool RelocationPass::isLocal(const Atom *a) const {
   if (auto *da = dyn_cast<DefinedAtom>(a))
     return da->scope() == Atom::scopeTranslationUnit;
   return false;
