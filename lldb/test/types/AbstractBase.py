@@ -29,12 +29,14 @@ class GenericTester(TestBase):
         # module cacheing subsystem to be confused with executable name "a.out"
         # used for all the test cases.
         self.exe_name = self.testMethodName
+        self.golden_filename = os.path.join(os.getcwd(), "golden-output.txt")
 
     def tearDown(self):
         """Cleanup the test byproducts."""
         TestBase.tearDown(self)
         #print "Removing golden-output.txt..."
-        os.remove("golden-output.txt")
+        if os.path.exists(self.golden_filename):
+            os.remove(self.golden_filename)
 
     #==========================================================================#
     # Functions build_and_run() and build_and_run_expr() are generic functions #
@@ -86,8 +88,8 @@ class GenericTester(TestBase):
 
         # First, capture the golden output emitted by the oracle, i.e., the
         # series of printf statements.
-        self.runCmd("process launch -o golden-output.txt")
-        with open("golden-output.txt") as f:
+        self.runCmd('process launch -o "%s"'%(self.golden_filename))
+        with open(self.golden_filename) as f:
             go = f.read()
 
         # This golden list contains a list of (variable, value) pairs extracted
@@ -167,8 +169,8 @@ class GenericTester(TestBase):
 
         # First, capture the golden output emitted by the oracle, i.e., the
         # series of printf statements.
-        self.runCmd("process launch -o golden-output.txt")
-        with open("golden-output.txt") as f:
+        self.runCmd('process launch -o "%s"'%(self.golden_filename))
+        with open(self.golden_filename) as f:
             go = f.read()
 
         # This golden list contains a list of (variable, value) pairs extracted
