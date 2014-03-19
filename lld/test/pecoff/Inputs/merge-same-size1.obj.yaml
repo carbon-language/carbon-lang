@@ -14,8 +14,13 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   0700000000000000C979F796000003000000
+    SectionDefinition:
+      Length:          7
+      NumberOfRelocations: 0
+      NumberOfLinenumbers: 0
+      CheckSum:        2532800969
+      Number:          0
+      Selection:       IMAGE_COMDAT_SELECT_SAME_SIZE
   - Name:            "_foo"
     Value:           0
     SectionNumber:   1

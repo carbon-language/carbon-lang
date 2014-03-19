@@ -32,6 +32,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_WEAK_EXTERNAL
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   020000000300000000000000000000000000
+    WeakExternal:
+      TagIndex:        2
+      Characteristics: IMAGE_WEAK_EXTERN_SEARCH_ALIAS
 ...

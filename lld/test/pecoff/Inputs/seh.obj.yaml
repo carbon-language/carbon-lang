@@ -134,24 +134,37 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   F00000000000000000000000000000000000
+    SectionDefinition:
+      Length:          240
+      NumberOfRelocations: 0
+      NumberOfLinenumbers: 0
+      CheckSum:        0
+      Number:          0
   - Name:            '.debug$S'
     Value:           0
     SectionNumber:   2
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   6C0000000000000000000000000000000000
+    SectionDefinition:
+      Length:          108
+      NumberOfRelocations: 0
+      NumberOfLinenumbers: 0
+      CheckSum:        0
+      Number:          0
   - Name:            .rdata
     Value:           0
     SectionNumber:   3
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   010000000000000000000000000002000000
+    SectionDefinition:
+      Length:          1
+      NumberOfRelocations: 0
+      NumberOfLinenumbers: 0
+      CheckSum:        0
+      Number:          0
+      Selection:       IMAGE_COMDAT_SELECT_ANY
   - Name:            '?value@?$integral_constant@_N$0A@@std@@2_NB'
     Value:           0
     SectionNumber:   3
@@ -164,8 +177,13 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   010000000000000096300777000002000000
+    SectionDefinition:
+      Length:          1
+      NumberOfRelocations: 0
+      NumberOfLinenumbers: 0
+      CheckSum:        1996959894
+      Number:          0
+      Selection:       IMAGE_COMDAT_SELECT_ANY
   - Name:            '?value@?$integral_constant@_N$00@std@@2_NB'
     Value:           0
     SectionNumber:   4
@@ -178,8 +196,12 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   63000000000000004E69FDA6000000000000
+    SectionDefinition:
+      Length:          99
+      NumberOfRelocations: 0
+      NumberOfLinenumbers: 0
+      CheckSum:        2801625422
+      Number:          0
   - Name:            '$SG73531'
     Value:           0
     SectionNumber:   5
@@ -204,16 +226,25 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   4F01000011000000394E4F94000000000000
+    SectionDefinition:
+      Length:          335
+      NumberOfRelocations: 17
+      NumberOfLinenumbers: 0
+      CheckSum:        2488225337
+      Number:          0
   - Name:            '.text$mn'
     Value:           0
     SectionNumber:   7
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   19000000020000002DFF8C0C000002000000
+    SectionDefinition:
+      Length:          25
+      NumberOfRelocations: 2
+      NumberOfLinenumbers: 0
+      CheckSum:        210566957
+      Number:          0
+      Selection:       IMAGE_COMDAT_SELECT_ANY
   - Name:            __imp__printf
     Value:           0
     SectionNumber:   0
@@ -298,8 +329,12 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   3C00000004000000E076DCAC000000000000
+    SectionDefinition:
+      Length:          60
+      NumberOfRelocations: 4
+      NumberOfLinenumbers: 0
+      CheckSum:        2900129504
+      Number:          0
   - Name:            '__sehtable$?foo@@YAXXZ'
     Value:           32
     SectionNumber:   8
@@ -318,8 +353,13 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   180000000000000039E9484D000002000000
+    SectionDefinition:
+      Length:          24
+      NumberOfRelocations: 0
+      NumberOfLinenumbers: 0
+      CheckSum:        1296623929
+      Number:          0
+      Selection:       IMAGE_COMDAT_SELECT_ANY
   - Name:            '??_C@_0BI@BBHGNMOG@Destroying?5TestClass?$CB?$AN?6?$AA@'
     Value:           0
     SectionNumber:   9
@@ -338,6 +378,10 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   040000000000000000000000000000000000
+    SectionDefinition:
+      Length:          4
+      NumberOfRelocations: 0
+      NumberOfLinenumbers: 0
+      CheckSum:        0
+      Number:          0
 ...

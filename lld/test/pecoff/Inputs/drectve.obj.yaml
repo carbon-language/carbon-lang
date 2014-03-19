@@ -28,8 +28,12 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   1F000000030000008C7450D6000000000000
+    SectionDefinition:
+      Length:          31
+      NumberOfRelocations: 3
+      NumberOfLinenumbers: 0
+      CheckSum:        3595596940
+      Number:          0
   - Name:            __imp__fn
     Value:           0
     SectionNumber:   0
@@ -60,6 +64,10 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   0D0000000000000000000000000000000000
+    SectionDefinition:
+      Length:          13
+      NumberOfRelocations: 0
+      NumberOfLinenumbers: 0
+      CheckSum:        0
+      Number:          0
 ...

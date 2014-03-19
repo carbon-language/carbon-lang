@@ -14,8 +14,12 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-    NumberOfAuxSymbols: 1
-    AuxiliaryData:   1C0000000400000000000000000000000000
+    SectionDefinition:
+      Length:          28
+      NumberOfRelocations: 4
+      NumberOfLinenumbers: 0
+      CheckSum:        0
+      Number:          0
   - Name:            _init
     Value:           0
     SectionNumber:   1
