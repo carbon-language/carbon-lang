@@ -15,6 +15,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/IOHandler.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/ValueObjectRegister.h"
@@ -2309,6 +2310,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                                     ConstString broadcaster_class (broadcaster->GetBroadcasterClass());
                                     if (broadcaster_class == broadcaster_class_process)
                                     {
+                                        debugger.GetCommandInterpreter().UpdateExecutionContext(NULL);
                                         update = true;
                                         continue; // Don't get any key, just update our view
                                     }
@@ -2323,6 +2325,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                     switch (key_result)
                     {
                         case eKeyHandled:
+                            debugger.GetCommandInterpreter().UpdateExecutionContext(NULL);
                             update = true;
                             break;
                         case eKeyNotHandled:
@@ -2514,6 +2517,7 @@ public:
     TreeItem (TreeItem *parent, TreeDelegate &delegate, bool might_have_children) :
         m_parent (parent),
         m_delegate (delegate),
+        m_user_data (NULL),
         m_identifier (0),
         m_row_idx (-1),
         m_children (),
@@ -2529,6 +2533,7 @@ public:
         {
             m_parent = rhs.m_parent;
             m_delegate = rhs.m_delegate;
+            m_user_data = rhs.m_user_data;
             m_identifier = rhs.m_identifier;
             m_row_idx = rhs.m_row_idx;
             m_children = rhs.m_children;
@@ -2594,11 +2599,14 @@ public:
         SetRowIndex(row_idx);
         ++row_idx;
 
-        // The root item must calculate its children
-        if (m_parent == NULL)
+        const bool expanded = IsExpanded();
+
+        // The root item must calculate its children,
+        // or we must calculate the number of children
+        // if the item is expanded
+        if (m_parent == NULL || expanded)
             GetNumChildren();
         
-        const bool expanded = IsExpanded();
         for (auto &item : m_children)
         {
             if (expanded)
@@ -2756,17 +2764,18 @@ public:
         return NULL;
     }
     
-//    void *
-//    GetUserData() const
-//    {
-//        return m_user_data;
-//    }
-//    
-//    void
-//    SetUserData (void *user_data)
-//    {
-//        m_user_data = user_data;
-//    }
+    void *
+    GetUserData() const
+    {
+        return m_user_data;
+    }
+    
+    void
+    SetUserData (void *user_data)
+    {
+        m_user_data = user_data;
+    }
+
     uint64_t
     GetIdentifier() const
     {
@@ -2780,10 +2789,16 @@ public:
     }
     
 
+    void
+    SetMightHaveChildren (bool b)
+    {
+        m_might_have_children = b;
+    }
+
 protected:
     TreeItem *m_parent;
     TreeDelegate &m_delegate;
-    //void *m_user_data;
+    void *m_user_data;
     uint64_t m_identifier;
     int m_row_idx; // Zero based visible row index, -1 if not visible or for the root item
     std::vector<TreeItem> m_children;
@@ -3025,12 +3040,9 @@ protected:
 class FrameTreeDelegate : public TreeDelegate
 {
 public:
-    FrameTreeDelegate (const ThreadSP &thread_sp) :
-        TreeDelegate(),
-        m_thread_wp()
+    FrameTreeDelegate () :
+        TreeDelegate()
     {
-        if (thread_sp)
-            m_thread_wp = thread_sp;
     }
     
     virtual ~FrameTreeDelegate()
@@ -3040,11 +3052,11 @@ public:
     virtual void
     TreeDelegateDrawTreeItem (TreeItem &item, Window &window)
     {
-        ThreadSP thread_sp = m_thread_wp.lock();
-        if (thread_sp)
+        Thread* thread = (Thread*)item.GetUserData();
+        if (thread)
         {
             const uint64_t frame_idx = item.GetIdentifier();
-            StackFrameSP frame_sp = thread_sp->GetStackFrameAtIndex(frame_idx);
+            StackFrameSP frame_sp = thread->GetStackFrameAtIndex(frame_idx);
             if (frame_sp)
             {
                 StreamString strm;
@@ -3069,23 +3081,16 @@ public:
     virtual bool
     TreeDelegateItemSelected (TreeItem &item)
     {
-        ThreadSP thread_sp = m_thread_wp.lock();
-        if (thread_sp)
+        Thread* thread = (Thread*)item.GetUserData();
+        if (thread)
         {
+            thread->GetProcess()->GetThreadList().SetSelectedThreadByID(thread->GetID());
             const uint64_t frame_idx = item.GetIdentifier();
-            thread_sp->SetSelectedFrameByIndex(frame_idx);
+            thread->SetSelectedFrameByIndex(frame_idx);
             return true;
         }
         return false;
     }
-    void
-    SetThread (ThreadSP thread_sp)
-    {
-        m_thread_wp = thread_sp;
-    }
-    
-protected:
-    ThreadWP m_thread_wp;
 };
 
 class ThreadTreeDelegate : public TreeDelegate
@@ -3094,7 +3099,6 @@ public:
     ThreadTreeDelegate (Debugger &debugger) :
         TreeDelegate(),
         m_debugger (debugger),
-        m_thread_wp (),
         m_tid (LLDB_INVALID_THREAD_ID),
         m_stop_id (UINT32_MAX)
     {
@@ -3105,10 +3109,25 @@ public:
     {
     }
     
+    ProcessSP
+    GetProcess ()
+    {
+        return m_debugger.GetCommandInterpreter().GetExecutionContext().GetProcessSP();
+    }
+
+    ThreadSP
+    GetThread (const TreeItem &item)
+    {
+        ProcessSP process_sp = GetProcess ();
+        if (process_sp)
+            return process_sp->GetThreadList().FindThreadByID(item.GetIdentifier());
+        return ThreadSP();
+    }
+    
     virtual void
     TreeDelegateDrawTreeItem (TreeItem &item, Window &window)
     {
-        ThreadSP thread_sp = m_thread_wp.lock();
+        ThreadSP thread_sp = GetThread (item);
         if (thread_sp)
         {
             StreamString strm;
@@ -3124,43 +3143,36 @@ public:
     virtual void
     TreeDelegateGenerateChildren (TreeItem &item)
     {
-        TargetSP target_sp (m_debugger.GetSelectedTarget());
-        if (target_sp)
+        ProcessSP process_sp = GetProcess ();
+        if (process_sp && process_sp->IsAlive())
         {
-            ProcessSP process_sp = target_sp->GetProcessSP();
-            if (process_sp && process_sp->IsAlive())
+            StateType state = process_sp->GetState();
+            if (StateIsStoppedState(state, true))
             {
-                StateType state = process_sp->GetState();
-                if (StateIsStoppedState(state, true))
+                ThreadSP thread_sp = GetThread (item);
+                if (thread_sp)
                 {
-                    ThreadSP thread_sp = process_sp->GetThreadList().GetSelectedThread();
-                    if (thread_sp)
+                    if (m_stop_id == process_sp->GetStopID() && thread_sp->GetID() == m_tid)
+                        return; // Children are already up to date
+                    if (!m_frame_delegate_sp)
                     {
-                        if (m_stop_id == process_sp->GetStopID() && thread_sp->GetID() == m_tid)
-                            return; // Children are already up to date
-                        if (m_frame_delegate_sp)
-                            m_frame_delegate_sp->SetThread(thread_sp);
-                        else
-                        {
-                            // Always expand the thread item the first time we show it
-                            item.Expand();
-                            m_frame_delegate_sp.reset (new FrameTreeDelegate(thread_sp));
-                        }
-
-                        m_stop_id = process_sp->GetStopID();
-                        m_thread_wp = thread_sp;
-                        m_tid = thread_sp->GetID();
-                        
-                        TreeItem t (&item, *m_frame_delegate_sp, false);
-                        size_t num_frames = thread_sp->GetStackFrameCount();
-                        item.Resize (num_frames, t);
-                        for (size_t i=0; i<num_frames; ++i)
-                        {
-                            item[i].SetIdentifier(i);
-                        }
+                        // Always expand the thread item the first time we show it
+                        m_frame_delegate_sp.reset (new FrameTreeDelegate());
                     }
-                    return;
+
+                    m_stop_id = process_sp->GetStopID();
+                    m_tid = thread_sp->GetID();
+                    
+                    TreeItem t (&item, *m_frame_delegate_sp, false);
+                    size_t num_frames = thread_sp->GetStackFrameCount();
+                    item.Resize (num_frames, t);
+                    for (size_t i=0; i<num_frames; ++i)
+                    {
+                        item[i].SetUserData(thread_sp.get());
+                        item[i].SetIdentifier(i);
+                    }
                 }
+                return;
             }
         }
         item.ClearChildren();
@@ -3169,16 +3181,24 @@ public:
     virtual bool
     TreeDelegateItemSelected (TreeItem &item)
     {
-        ThreadSP thread_sp = m_thread_wp.lock();
-        if (thread_sp)
+        ProcessSP process_sp = GetProcess ();
+        if (process_sp && process_sp->IsAlive())
         {
-            ThreadList &thread_list = thread_sp->GetProcess()->GetThreadList();
-            Mutex::Locker locker (thread_list.GetMutex());
-            ThreadSP selected_thread_sp = thread_list.GetSelectedThread();
-            if (selected_thread_sp->GetID() != thread_sp->GetID())
+            StateType state = process_sp->GetState();
+            if (StateIsStoppedState(state, true))
             {
-                thread_list.SetSelectedThreadByID(thread_sp->GetID());
-                return true;
+                ThreadSP thread_sp = GetThread (item);
+                if (thread_sp)
+                {
+                    ThreadList &thread_list = thread_sp->GetProcess()->GetThreadList();
+                    Mutex::Locker locker (thread_list.GetMutex());
+                    ThreadSP selected_thread_sp = thread_list.GetSelectedThread();
+                    if (selected_thread_sp->GetID() != thread_sp->GetID())
+                    {
+                        thread_list.SetSelectedThreadByID(thread_sp->GetID());
+                        return true;
+                    }
+                }
             }
         }
         return false;
@@ -3186,9 +3206,97 @@ public:
 
 protected:
     Debugger &m_debugger;
-    ThreadWP m_thread_wp;
     std::shared_ptr<FrameTreeDelegate> m_frame_delegate_sp;
     lldb::user_id_t m_tid;
+    uint32_t m_stop_id;
+};
+
+class ThreadsTreeDelegate : public TreeDelegate
+{
+public:
+    ThreadsTreeDelegate (Debugger &debugger) :
+        TreeDelegate(),
+        m_thread_delegate_sp (),
+        m_debugger (debugger),
+        m_stop_id (UINT32_MAX)
+    {
+    }
+    
+    virtual
+    ~ThreadsTreeDelegate()
+    {
+    }
+    
+    ProcessSP
+    GetProcess ()
+    {
+        return m_debugger.GetCommandInterpreter().GetExecutionContext().GetProcessSP();
+    }
+
+    virtual void
+    TreeDelegateDrawTreeItem (TreeItem &item, Window &window)
+    {
+        ProcessSP process_sp = GetProcess ();
+        if (process_sp && process_sp->IsAlive())
+        {
+            StreamString strm;
+            ExecutionContext exe_ctx (process_sp);
+            const char *format = "process ${process.id}{, name = ${process.name}}";
+            if (Debugger::FormatPrompt (format, NULL, &exe_ctx, NULL, strm))
+            {
+                int right_pad = 1;
+                window.PutCStringTruncated(strm.GetString().c_str(), right_pad);
+            }
+        }
+    }
+
+    virtual void
+    TreeDelegateGenerateChildren (TreeItem &item)
+    {
+        ProcessSP process_sp = GetProcess ();
+        if (process_sp && process_sp->IsAlive())
+        {
+            StateType state = process_sp->GetState();
+            if (StateIsStoppedState(state, true))
+            {
+                const uint32_t stop_id = process_sp->GetStopID();
+                if (m_stop_id == stop_id)
+                    return; // Children are already up to date
+                
+                m_stop_id = stop_id;
+
+                if (!m_thread_delegate_sp)
+                {
+                    // Always expand the thread item the first time we show it
+                    //item.Expand();
+                    m_thread_delegate_sp.reset (new ThreadTreeDelegate(m_debugger));
+                }
+                
+                TreeItem t (&item, *m_thread_delegate_sp, false);
+                ThreadList &threads = process_sp->GetThreadList();
+                Mutex::Locker locker (threads.GetMutex());
+                size_t num_threads = threads.GetSize();
+                item.Resize (num_threads, t);
+                for (size_t i=0; i<num_threads; ++i)
+                {
+                    item[i].SetIdentifier(threads.GetThreadAtIndex(i)->GetID());
+                    item[i].SetMightHaveChildren(true);
+                }
+                return;
+            }
+        }
+        item.ClearChildren();
+    }
+    
+    virtual bool
+    TreeDelegateItemSelected (TreeItem &item)
+    {
+        return false;
+    }
+    
+protected:
+    std::shared_ptr<ThreadTreeDelegate> m_thread_delegate_sp;
+    Debugger &m_debugger;
     uint32_t m_stop_id;
 };
 
@@ -4413,6 +4521,7 @@ public:
         m_disassembly_scope (NULL),
         m_disassembly_sp (),
         m_disassembly_range (),
+        m_title (),
         m_line_width (4),
         m_selected_line (0),
         m_pc_line (0),
@@ -4496,7 +4605,7 @@ public:
         }
         
         m_min_x = 1;
-        m_min_y = 1;
+        m_min_y = 2;
         m_max_x = window.GetMaxX()-1;
         m_max_y = window.GetMaxY()-1;
         
@@ -4533,9 +4642,17 @@ public:
             const bool stop_id_changed = stop_id != m_stop_id;
             bool frame_changed = false;
             m_stop_id = stop_id;
+            m_title.Clear();
             if (frame_sp)
             {
                 m_sc = frame_sp->GetSymbolContext(eSymbolContextEverything);
+                if (m_sc.module_sp)
+                {
+                    m_title.Printf("%s", m_sc.module_sp->GetFileSpec().GetFilename().GetCString());
+                    ConstString func_name = m_sc.GetFunctionName();
+                    if (func_name)
+                        m_title.Printf("`%s", func_name.GetCString());
+                }
                 const uint32_t frame_idx = frame_sp->GetFrameIndex();
                 frame_changed = frame_idx != m_frame_idx;
                 m_frame_idx = frame_idx;
@@ -4657,10 +4774,23 @@ public:
             }
         }
         
-            
+        
+        const int window_width = window.GetWidth();
         window.Erase();
         window.DrawTitleBox ("Sources");
-        
+        if (!m_title.GetString().empty())
+        {
+            window.AttributeOn(A_REVERSE);
+            window.MoveCursor(1, 1);
+            window.PutChar(' ');
+            window.PutCStringTruncated(m_title.GetString().c_str(), 1);
+            int x = window.GetCursorX();
+            if (x < window_width - 1)
+            {
+                window.Printf ("%*s", window_width - x - 1, "");
+            }
+            window.AttributeOff(A_REVERSE);
+        }
 
         Target *target = exe_ctx.GetTargetPtr();
         const size_t num_source_lines = GetNumSourceLines();
@@ -4700,7 +4830,7 @@ public:
                 const uint32_t curr_line = m_first_visible_line + i;
                 if (curr_line < num_source_lines)
                 {
-                    const int line_y = 1+i;
+                    const int line_y = m_min_y+i;
                     window.MoveCursor(1, line_y);
                     const bool is_pc_line = curr_line == m_pc_line;
                     const bool line_is_selected = m_selected_line == curr_line;
@@ -4748,15 +4878,15 @@ public:
                             if (stop_description && stop_description[0])
                             {
                                 size_t stop_description_len = strlen(stop_description);
-                                int desc_x = window.GetWidth() - stop_description_len - 16;
+                                int desc_x = window_width - stop_description_len - 16;
                                 window.Printf ("%*s", desc_x - window.GetCursorX(), "");
-                                //window.MoveCursor(window.GetWidth() - stop_description_len - 15, line_y);
+                                //window.MoveCursor(window_width - stop_description_len - 15, line_y);
                                 window.Printf ("<<< Thread %u: %s ", thread->GetIndexID(), stop_description);
                             }
                         }
                         else
                         {
-                            window.Printf ("%*s", window.GetWidth() - window.GetCursorX() - 1, "");
+                            window.Printf ("%*s", window_width - window.GetCursorX() - 1, "");
                         }
                     }
                     if (highlight_attr)
@@ -4834,7 +4964,8 @@ public:
                     if (!inst)
                         break;
                     
-                    window.MoveCursor(1, i+1);
+                    const int line_y = m_min_y+i;
+                    window.MoveCursor(1, line_y);
                     const bool is_pc_line = frame_sp && inst_idx == pc_idx;
                     const bool line_is_selected = m_selected_line == inst_idx;
                     // Highlight the line as the PC line first, then if the selected line
@@ -4901,15 +5032,15 @@ public:
                             if (stop_description && stop_description[0])
                             {
                                 size_t stop_description_len = strlen(stop_description);
-                                int desc_x = window.GetWidth() - stop_description_len - 16;
+                                int desc_x = window_width - stop_description_len - 16;
                                 window.Printf ("%*s", desc_x - window.GetCursorX(), "");
-                                //window.MoveCursor(window.GetWidth() - stop_description_len - 15, line_y);
+                                //window.MoveCursor(window_width - stop_description_len - 15, line_y);
                                 window.Printf ("<<< Thread %u: %s ", thread->GetIndexID(), stop_description);
                             }
                         }
                         else
                         {
-                            window.Printf ("%*s", window.GetWidth() - window.GetCursorX() - 1, "");
+                            window.Printf ("%*s", window_width - window.GetCursorX() - 1, "");
                         }
                     }
                     if (highlight_attr)
@@ -5142,6 +5273,7 @@ protected:
     SymbolContextScope *m_disassembly_scope;
     lldb::DisassemblerSP m_disassembly_sp;
     AddressRange m_disassembly_range;
+    StreamString m_title;
     lldb::user_id_t m_tid;
     char m_line_format[8];
     int m_line_width;
@@ -5255,7 +5387,7 @@ IOHandlerCursesGUI::Activate ()
         main_window_sp->SetDelegate (std::static_pointer_cast<WindowDelegate>(app_delegate_sp));
         source_window_sp->SetDelegate (WindowDelegateSP(new SourceFileWindowDelegate(m_debugger)));
         variables_window_sp->SetDelegate (WindowDelegateSP(new FrameVariablesWindowDelegate(m_debugger)));
-        TreeDelegateSP thread_delegate_sp (new ThreadTreeDelegate(m_debugger));
+        TreeDelegateSP thread_delegate_sp (new ThreadsTreeDelegate(m_debugger));
         threads_window_sp->SetDelegate (WindowDelegateSP(new TreeWindowDelegate(m_debugger, thread_delegate_sp)));
         status_window_sp->SetDelegate (WindowDelegateSP(new StatusBarWindowDelegate(m_debugger)));
 
