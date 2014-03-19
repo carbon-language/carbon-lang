@@ -223,6 +223,22 @@ struct coff_relocation {
   support::ulittle16_t Type;
 };
 
+struct coff_aux_function_definition {
+  support::ulittle32_t TagIndex;
+  support::ulittle32_t TotalSize;
+  support::ulittle32_t PointerToLinenumber;
+  support::ulittle32_t PointerToNextFunction;
+  char Unused[2];
+};
+
+struct coff_aux_bf_and_ef_symbol {
+  char Unused1[4];
+  support::ulittle16_t Linenumber;
+  char Unused2[6];
+  support::ulittle32_t PointerToNextFunction;
+  char Unused3[2];
+};
+
 struct coff_aux_weak_external {
   support::ulittle32_t TagIndex;
   support::ulittle32_t Characteristics;
@@ -237,6 +253,13 @@ struct coff_aux_section_definition {
   support::ulittle16_t Number;
   support::ulittle8_t Selection;
   char Unused[3];
+};
+
+struct coff_aux_clr_token {
+  support::ulittle8_t AuxType;
+  support::ulittle8_t Reserved;
+  support::ulittle32_t SymbolTableIndex;
+  char Unused[12];
 };
 
 struct coff_load_configuration32 {

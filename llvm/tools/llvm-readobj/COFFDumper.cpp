@@ -430,29 +430,8 @@ static const EnumEntry<unsigned> UnwindOpInfo[] = {
 
 // Some additional COFF structures not defined by llvm::object.
 namespace {
-  struct coff_aux_function_definition {
-    support::ulittle32_t TagIndex;
-    support::ulittle32_t TotalSize;
-    support::ulittle32_t PointerToLineNumber;
-    support::ulittle32_t PointerToNextFunction;
-    uint8_t Unused[2];
-  };
-
-  struct coff_aux_weak_external_definition {
-    support::ulittle32_t TagIndex;
-    support::ulittle32_t Characteristics;
-    uint8_t Unused[10];
-  };
-
   struct coff_aux_file_record {
     char FileName[18];
-  };
-
-  struct coff_aux_clr_token {
-    support::ulittle8_t AuxType;
-    support::ulittle8_t Reserved;
-    support::ulittle32_t SymbolTableIndex;
-    uint8_t Unused[12];
   };
 } // namespace
 
@@ -970,7 +949,9 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
     if (Symbol->StorageClass     == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
         Symbol->getBaseType()    == COFF::IMAGE_SYM_TYPE_NULL &&
         Symbol->getComplexType() == COFF::IMAGE_SYM_DTYPE_FUNCTION &&
-        Symbol->SectionNumber > 0) {
+        Symbol->SectionNumber != COFF::IMAGE_SYM_DEBUG &&
+        Symbol->SectionNumber != COFF::IMAGE_SYM_ABSOLUTE &&
+        Symbol->SectionNumber != COFF::IMAGE_SYM_UNDEFINED) {
       const coff_aux_function_definition *Aux;
       if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
         break;
@@ -978,7 +959,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       DictScope AS(W, "AuxFunctionDef");
       W.printNumber("TagIndex", Aux->TagIndex);
       W.printNumber("TotalSize", Aux->TotalSize);
-      W.printHex("PointerToLineNumber", Aux->PointerToLineNumber);
+      W.printHex("PointerToLineNumber", Aux->PointerToLinenumber);
       W.printHex("PointerToNextFunction", Aux->PointerToNextFunction);
       W.printBinary("Unused", makeArrayRef(Aux->Unused));
 
@@ -987,7 +968,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
         (Symbol->StorageClass  == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
          Symbol->SectionNumber == COFF::IMAGE_SYM_UNDEFINED &&
          Symbol->Value         == 0)) {
-      const coff_aux_weak_external_definition *Aux;
+      const coff_aux_weak_external *Aux;
       if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
         break;
 
@@ -1004,7 +985,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       W.printNumber("Linked", LinkedName, Aux->TagIndex);
       W.printEnum  ("Search", Aux->Characteristics,
                     makeArrayRef(WeakExternalCharacteristics));
-      W.printBinary("Unused", Aux->Unused);
+      W.printBinary("Unused", makeArrayRef(Aux->Unused));
 
     } else if (Symbol->StorageClass == COFF::IMAGE_SYM_CLASS_FILE) {
       const coff_aux_file_record *Aux;
@@ -1063,7 +1044,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       W.printNumber("AuxType", Aux->AuxType);
       W.printNumber("Reserved", Aux->Reserved);
       W.printNumber("SymbolTableIndex", ReferredName, Aux->SymbolTableIndex);
-      W.printBinary("Unused", Aux->Unused);
+      W.printBinary("Unused", makeArrayRef(Aux->Unused));
 
     } else {
       W.startLine() << "<unhandled auxiliary record>\n";
