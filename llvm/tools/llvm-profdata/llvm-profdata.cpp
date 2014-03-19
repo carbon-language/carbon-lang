@@ -22,17 +22,6 @@
 
 using namespace llvm;
 
-static cl::opt<std::string> Filename1(cl::Positional, cl::Required,
-                                      cl::desc("file1"));
-static cl::opt<std::string> Filename2(cl::Positional, cl::Required,
-                                      cl::desc("file2"));
-
-static cl::opt<std::string> OutputFilename("output", cl::value_desc("output"),
-                                           cl::init("-"),
-                                           cl::desc("Output file"));
-static cl::alias OutputFilenameA("o", cl::desc("Alias for --output"),
-                                 cl::aliasopt(OutputFilename));
-
 static void exitWithError(const std::string &Message,
                           const std::string &Filename, int64_t Line = -1) {
   errs() << "error: " << Filename;
@@ -43,11 +32,17 @@ static void exitWithError(const std::string &Message,
 }
 
 //===----------------------------------------------------------------------===//
-int main(int argc, char **argv) {
-  // Print a stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal();
-  PrettyStackTraceProgram X(argc, argv);
-  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
+int merge_main(int argc, const char *argv[]) {
+  cl::opt<std::string> Filename1(cl::Positional, cl::Required,
+                                 cl::desc("file1"));
+  cl::opt<std::string> Filename2(cl::Positional, cl::Required,
+                                 cl::desc("file2"));
+
+  cl::opt<std::string> OutputFilename("output", cl::value_desc("output"),
+                                      cl::init("-"),
+                                      cl::desc("Output file"));
+  cl::alias OutputFilenameA("o", cl::desc("Alias for --output"),
+                                 cl::aliasopt(OutputFilename));
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM profile data merger\n");
 
@@ -126,4 +121,44 @@ int main(int argc, char **argv) {
     exitWithError("truncated file", Filename1, I1.line_number());
 
   return 0;
+}
+
+int main(int argc, const char *argv[]) {
+  // Print a stack trace if we signal out.
+  sys::PrintStackTraceOnErrorSignal();
+  PrettyStackTraceProgram X(argc, argv);
+  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
+
+  StringRef ProgName(sys::path::filename(argv[0]));
+  if (argc > 1) {
+    int (*func)(int, const char *[]) = 0;
+
+    if (strcmp(argv[1], "merge") == 0)
+      func = merge_main;
+
+    if (func) {
+      std::string Invocation(ProgName.str() + " " + argv[1]);
+      argv[1] = Invocation.c_str();
+      return func(argc - 1, argv + 1);
+    }
+
+    if (strcmp(argv[1], "-h") == 0 ||
+        strcmp(argv[1], "-help") == 0 ||
+        strcmp(argv[1], "--help") == 0) {
+
+      errs() << "OVERVIEW: LLVM profile data tools\n\n"
+             << "USAGE: " << ProgName << " <command> [args...]\n"
+             << "USAGE: " << ProgName << " <command> -help\n\n"
+             << "Available commands: merge\n";
+      return 0;
+    }
+  }
+
+  if (argc < 2)
+    errs() << ProgName << ": No command specified!\n";
+  else
+    errs() << ProgName << ": Unknown command!\n";
+
+  errs() << "USAGE: " << ProgName << " <merge|show|generate> [args...]\n";
+  return 1;
 }
