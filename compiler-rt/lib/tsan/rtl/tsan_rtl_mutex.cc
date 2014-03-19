@@ -37,11 +37,7 @@ struct Callback : DDCallback {
   }
 
   virtual u32 Unwind() {
-#ifdef TSAN_GO
-    return 0;
-#else
     return CurrentStackId(thr, pc);
-#endif
   }
 };
 
@@ -419,7 +415,6 @@ void AcquireReleaseImpl(ThreadState *thr, uptr pc, SyncClock *c) {
 }
 
 void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
-#ifndef TSAN_GO
   if (r == 0)
     return;
   Context *ctx = CTX();
@@ -447,7 +442,6 @@ void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
   // FIXME: use all stacks for suppressions, not just the second stack of the
   // first edge.
   OutputReport(ctx, rep, rep.GetReport()->stacks[1]);
-#endif  // TSAN_GO
 }
 
 }  // namespace __tsan

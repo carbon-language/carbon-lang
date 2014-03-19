@@ -314,11 +314,26 @@ static void PrintThread(const ReportThread *rt) {
 
 void PrintReport(const ReportDesc *rep) {
   Printf("==================\n");
-  Printf("WARNING: DATA RACE");
-  for (uptr i = 0; i < rep->mops.Size(); i++)
-    PrintMop(rep->mops[i], i == 0);
-  for (uptr i = 0; i < rep->threads.Size(); i++)
-    PrintThread(rep->threads[i]);
+  if (rep->typ == ReportTypeRace) {
+    Printf("WARNING: DATA RACE");
+    for (uptr i = 0; i < rep->mops.Size(); i++)
+      PrintMop(rep->mops[i], i == 0);
+    for (uptr i = 0; i < rep->threads.Size(); i++)
+      PrintThread(rep->threads[i]);
+  } else if (rep->typ == ReportTypeDeadlock) {
+    Printf("WARNING: DEADLOCK\n");
+    for (uptr i = 0; i < rep->mutexes.Size(); i++) {
+      Printf("Goroutine %d lock mutex %d while holding mutex %d:\n",
+          999, rep->mutexes[i]->id,
+          rep->mutexes[(i+1) % rep->mutexes.Size()]->id);
+      PrintStack(rep->stacks[2*i]);
+      Printf("\n");
+      Printf("Mutex %d was previously locked here:\n",
+          rep->mutexes[(i+1) % rep->mutexes.Size()]->id);
+      PrintStack(rep->stacks[2*i + 1]);
+      Printf("\n");
+    }
+  }
   Printf("==================\n");
 }
 

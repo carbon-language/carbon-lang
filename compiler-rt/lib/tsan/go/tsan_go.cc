@@ -187,6 +187,23 @@ void __tsan_finalizer_goroutine(ThreadState *thr) {
   AcquireGlobal(thr, 0);
 }
 
+void __tsan_mutex_before_lock(ThreadState *thr, uptr addr, bool write) {
+}
+
+void __tsan_mutex_after_lock(ThreadState *thr, uptr addr, bool write) {
+  if (write)
+    MutexLock(thr, 0, addr);
+  else
+    MutexReadLock(thr, 0, addr);
+}
+
+void __tsan_mutex_before_unlock(ThreadState *thr, uptr addr, bool write) {
+  if (write)
+    MutexUnlock(thr, 0, addr);
+  else
+    MutexReadUnlock(thr, 0, addr);
+}
+
 }  // extern "C"
 }  // namespace __tsan
 

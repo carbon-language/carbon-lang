@@ -17,12 +17,13 @@ SRCS="
 	../rtl/tsan_sync.cc
 	../../sanitizer_common/sanitizer_allocator.cc
 	../../sanitizer_common/sanitizer_common.cc
-	../../sanitizer_common/sanitizer_deadlock_detector1.cc
+	../../sanitizer_common/sanitizer_deadlock_detector2.cc
 	../../sanitizer_common/sanitizer_flags.cc
 	../../sanitizer_common/sanitizer_libc.cc
 	../../sanitizer_common/sanitizer_printf.cc
 	../../sanitizer_common/sanitizer_suppressions.cc
 	../../sanitizer_common/sanitizer_thread_registry.cc
+	../../sanitizer_common/sanitizer_stackdepot.cc
 "
 
 if [ "`uname -a | grep Linux`" != "" ]; then
@@ -68,7 +69,7 @@ for F in $SRCS; do
 	cat $F >> gotsan.cc
 done
 
-FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -m64 -Wall -fno-exceptions -fno-rtti -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4 $OSCFLAGS"
+FLAGS=" -I../rtl -I../.. -I../../sanitizer_common -I../../../include -m64 -Wall -fno-exceptions -fno-rtti -DTSAN_GO -DSANITIZER_GO -DTSAN_SHADOW_COUNT=4 -DSANITIZER_DEADLOCK_DETECTOR_VERSION=2 $OSCFLAGS"
 if [ "$DEBUG" == "" ]; then
 	FLAGS+=" -DTSAN_DEBUG=0 -O3 -fomit-frame-pointer"
 else

@@ -358,7 +358,6 @@ void ForkChildAfter(ThreadState *thr, uptr pc) {
 }
 #endif
 
-#ifndef TSAN_GO
 u32 CurrentStackId(ThreadState *thr, uptr pc) {
   if (thr->shadow_stack_pos == 0)  // May happen during bootstrap.
     return 0;
@@ -372,7 +371,6 @@ u32 CurrentStackId(ThreadState *thr, uptr pc) {
     thr->shadow_stack_pos--;
   return id;
 }
-#endif
 
 void TraceSwitch(ThreadState *thr) {
   thr->nomalloc++;
