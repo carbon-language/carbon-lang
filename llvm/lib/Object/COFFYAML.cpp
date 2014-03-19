@@ -23,6 +23,31 @@ Object::Object() { memset(&Header, 0, sizeof(COFF::header)); }
 }
 
 namespace yaml {
+void ScalarEnumerationTraits<COFFYAML::COMDATType>::enumeration(
+    IO &IO, COFFYAML::COMDATType &Value) {
+  IO.enumCase(Value, "0", 0);
+  ECase(IMAGE_COMDAT_SELECT_NODUPLICATES);
+  ECase(IMAGE_COMDAT_SELECT_ANY);
+  ECase(IMAGE_COMDAT_SELECT_SAME_SIZE);
+  ECase(IMAGE_COMDAT_SELECT_EXACT_MATCH);
+  ECase(IMAGE_COMDAT_SELECT_ASSOCIATIVE);
+  ECase(IMAGE_COMDAT_SELECT_LARGEST);
+  ECase(IMAGE_COMDAT_SELECT_NEWEST);
+}
+
+void
+ScalarEnumerationTraits<COFFYAML::WeakExternalCharacteristics>::enumeration(
+    IO &IO, COFFYAML::WeakExternalCharacteristics &Value) {
+  ECase(IMAGE_WEAK_EXTERN_SEARCH_NOLIBRARY);
+  ECase(IMAGE_WEAK_EXTERN_SEARCH_LIBRARY);
+  ECase(IMAGE_WEAK_EXTERN_SEARCH_ALIAS);
+}
+
+void ScalarEnumerationTraits<COFFYAML::AuxSymbolType>::enumeration(
+    IO &IO, COFFYAML::AuxSymbolType &Value) {
+  ECase(IMAGE_AUX_SYMBOL_TYPE_TOKEN_DEF);
+}
+
 void ScalarEnumerationTraits<COFF::MachineTypes>::enumeration(
     IO &IO, COFF::MachineTypes &Value) {
   ECase(IMAGE_FILE_MACHINE_UNKNOWN);
@@ -187,6 +212,24 @@ void ScalarBitSetTraits<COFF::SectionCharacteristics>::bitset(
 #undef BCase
 
 namespace {
+struct NSectionSelectionType {
+  NSectionSelectionType(IO &)
+      : SelectionType(COFFYAML::COMDATType(0)) {}
+  NSectionSelectionType(IO &, uint8_t C)
+      : SelectionType(COFFYAML::COMDATType(C)) {}
+  uint8_t denormalize(IO &) { return SelectionType; }
+  COFFYAML::COMDATType SelectionType;
+};
+
+struct NWeakExternalCharacteristics {
+  NWeakExternalCharacteristics(IO &)
+      : Characteristics(COFFYAML::WeakExternalCharacteristics(0)) {}
+  NWeakExternalCharacteristics(IO &, uint32_t C)
+      : Characteristics(COFFYAML::WeakExternalCharacteristics(C)) {}
+  uint32_t denormalize(IO &) { return Characteristics; }
+  COFFYAML::WeakExternalCharacteristics Characteristics;
+};
+
 struct NSectionCharacteristics {
   NSectionCharacteristics(IO &)
       : Characteristics(COFF::SectionCharacteristics(0)) {}
@@ -194,6 +237,15 @@ struct NSectionCharacteristics {
       : Characteristics(COFF::SectionCharacteristics(C)) {}
   uint32_t denormalize(IO &) { return Characteristics; }
   COFF::SectionCharacteristics Characteristics;
+};
+
+struct NAuxTokenType {
+  NAuxTokenType(IO &)
+      : AuxType(COFFYAML::AuxSymbolType(0)) {}
+  NAuxTokenType(IO &, uint8_t C)
+      : AuxType(COFFYAML::AuxSymbolType(C)) {}
+  uint32_t denormalize(IO &) { return AuxType; }
+  COFFYAML::AuxSymbolType AuxType;
 };
 
 struct NStorageClass {
@@ -247,6 +299,48 @@ void MappingTraits<COFF::header>::mapping(IO &IO, COFF::header &H) {
   IO.mapOptional("Characteristics", NC->Characteristics);
 }
 
+void MappingTraits<COFF::AuxiliaryFunctionDefinition>::mapping(
+    IO &IO, COFF::AuxiliaryFunctionDefinition &AFD) {
+  IO.mapRequired("TagIndex", AFD.TagIndex);
+  IO.mapRequired("TotalSize", AFD.TotalSize);
+  IO.mapRequired("PointerToLinenumber", AFD.PointerToLinenumber);
+  IO.mapRequired("PointerToNextFunction", AFD.PointerToNextFunction);
+}
+
+void MappingTraits<COFF::AuxiliarybfAndefSymbol>::mapping(
+    IO &IO, COFF::AuxiliarybfAndefSymbol &AAS) {
+  IO.mapRequired("Linenumber", AAS.Linenumber);
+  IO.mapRequired("PointerToNextFunction", AAS.PointerToNextFunction);
+}
+
+void MappingTraits<COFF::AuxiliaryWeakExternal>::mapping(
+    IO &IO, COFF::AuxiliaryWeakExternal &AWE) {
+  MappingNormalization<NWeakExternalCharacteristics, uint32_t> NWEC(
+      IO, AWE.Characteristics);
+  IO.mapRequired("TagIndex", AWE.TagIndex);
+  IO.mapRequired("Characteristics", NWEC->Characteristics);
+}
+
+void MappingTraits<COFF::AuxiliarySectionDefinition>::mapping(
+    IO &IO, COFF::AuxiliarySectionDefinition &ASD) {
+  MappingNormalization<NSectionSelectionType, uint8_t> NSST(
+      IO, ASD.Selection);
+
+  IO.mapRequired("Length", ASD.Length);
+  IO.mapRequired("NumberOfRelocations", ASD.NumberOfRelocations);
+  IO.mapRequired("NumberOfLinenumbers", ASD.NumberOfLinenumbers);
+  IO.mapRequired("CheckSum", ASD.CheckSum);
+  IO.mapRequired("Number", ASD.Number);
+  IO.mapOptional("Selection", NSST->SelectionType, COFFYAML::COMDATType(0));
+}
+
+void MappingTraits<COFF::AuxiliaryCLRToken>::mapping(
+    IO &IO, COFF::AuxiliaryCLRToken &ACT) {
+  MappingNormalization<NAuxTokenType, uint8_t> NATT(IO, ACT.AuxType);
+  IO.mapRequired("AuxType", NATT->AuxType);
+  IO.mapRequired("SymbolTableIndex", ACT.SymbolTableIndex);
+}
+
 void MappingTraits<COFFYAML::Symbol>::mapping(IO &IO, COFFYAML::Symbol &S) {
   MappingNormalization<NStorageClass, uint8_t> NS(IO, S.Header.StorageClass);
 
@@ -256,9 +350,12 @@ void MappingTraits<COFFYAML::Symbol>::mapping(IO &IO, COFFYAML::Symbol &S) {
   IO.mapRequired("SimpleType", S.SimpleType);
   IO.mapRequired("ComplexType", S.ComplexType);
   IO.mapRequired("StorageClass", NS->StorageClass);
-  IO.mapOptional("NumberOfAuxSymbols", S.Header.NumberOfAuxSymbols,
-                 (uint8_t) 0);
-  IO.mapOptional("AuxiliaryData", S.AuxiliaryData, object::yaml::BinaryRef());
+  IO.mapOptional("FunctionDefinition", S.FunctionDefinition);
+  IO.mapOptional("bfAndefSymbol", S.bfAndefSymbol);
+  IO.mapOptional("WeakExternal", S.WeakExternal);
+  IO.mapOptional("File", S.File, StringRef());
+  IO.mapOptional("SectionDefinition", S.SectionDefinition);
+  IO.mapOptional("CLRToken", S.CLRToken);
 }
 
 void MappingTraits<COFFYAML::Section>::mapping(IO &IO, COFFYAML::Section &Sec) {

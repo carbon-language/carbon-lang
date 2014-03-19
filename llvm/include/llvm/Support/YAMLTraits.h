@@ -13,6 +13,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -421,6 +422,11 @@ public:
   }
 
   template <typename T>
+  void mapOptional(const char* Key, Optional<T> &Val) {
+    processKeyWithDefault(Key, Val, Optional<T>(), /*Required=*/false);
+  }
+
+  template <typename T>
   typename std::enable_if<!has_SequenceTraits<T>::value,void>::type
   mapOptional(const char* Key, T& Val) {
     this->processKey(Key, Val, false);
@@ -432,6 +438,26 @@ public:
   }
   
 private:
+  template <typename T>
+  void processKeyWithDefault(const char *Key, Optional<T> &Val,
+                             const Optional<T> &DefaultValue, bool Required) {
+    assert(DefaultValue.hasValue() == false &&
+           "Optional<T> shouldn't have a value!");
+    void *SaveInfo;
+    bool UseDefault;
+    const bool sameAsDefault = outputting() && !Val.hasValue();
+    if (!outputting() && !Val.hasValue())
+      Val = T();
+    if (this->preflightKey(Key, Required, sameAsDefault, UseDefault,
+                           SaveInfo)) {
+      yamlize(*this, Val.getValue(), Required);
+      this->postflightKey(SaveInfo);
+    } else {
+      if (UseDefault)
+        Val = DefaultValue;
+    }
+  }
+
   template <typename T>
   void processKeyWithDefault(const char *Key, T &Val, const T& DefaultValue,
                                                                 bool Required) {

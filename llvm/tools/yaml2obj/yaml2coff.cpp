@@ -14,6 +14,7 @@
 
 #include "yaml2obj.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -153,13 +154,22 @@ static bool layoutCOFF(COFFParser &CP) {
   for (std::vector<COFFYAML::Symbol>::iterator i = CP.Obj.Symbols.begin(),
                                                e = CP.Obj.Symbols.end();
                                                i != e; ++i) {
-    unsigned AuxBytes = i->AuxiliaryData.binary_size();
-    if (AuxBytes % COFF::SymbolSize != 0) {
-      errs() << "AuxiliaryData size not a multiple of symbol size!\n";
-      return false;
-    }
-    i->Header.NumberOfAuxSymbols = AuxBytes / COFF::SymbolSize;
-    NumberOfSymbols += 1 + i->Header.NumberOfAuxSymbols;
+    uint32_t NumberOfAuxSymbols = 0;
+    if (i->FunctionDefinition)
+      NumberOfAuxSymbols += 1;
+    if (i->bfAndefSymbol)
+      NumberOfAuxSymbols += 1;
+    if (i->WeakExternal)
+      NumberOfAuxSymbols += 1;
+    if (!i->File.empty())
+      NumberOfAuxSymbols +=
+          (i->File.size() + COFF::SymbolSize - 1) / COFF::SymbolSize;
+    if (i->SectionDefinition)
+      NumberOfAuxSymbols += 1;
+    if (i->CLRToken)
+      NumberOfAuxSymbols += 1;
+    i->Header.NumberOfAuxSymbols = NumberOfAuxSymbols;
+    NumberOfSymbols += 1 + NumberOfAuxSymbols;
   }
 
   // Store all the allocated start addresses in the header.
@@ -192,6 +202,24 @@ raw_ostream &operator <<( raw_ostream &OS
 template <typename value_type>
 binary_le_impl<value_type> binary_le(value_type V) {
   return binary_le_impl<value_type>(V);
+}
+
+template <size_t NumBytes>
+struct zeros_impl {
+  zeros_impl() {}
+};
+
+template <size_t NumBytes>
+raw_ostream &operator<<(raw_ostream &OS, const zeros_impl<NumBytes> &) {
+  char Buffer[NumBytes];
+  memset(Buffer, 0, sizeof(Buffer));
+  OS.write(Buffer, sizeof(Buffer));
+  return OS;
+}
+
+template <typename T>
+zeros_impl<sizeof(T)> zeros(const T &) {
+  return zeros_impl<sizeof(T)>();
 }
 
 bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
@@ -253,7 +281,45 @@ bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
        << binary_le(i->Header.Type)
        << binary_le(i->Header.StorageClass)
        << binary_le(i->Header.NumberOfAuxSymbols);
-    i->AuxiliaryData.writeAsBinary(OS);
+
+    if (i->FunctionDefinition)
+      OS << binary_le(i->FunctionDefinition->TagIndex)
+         << binary_le(i->FunctionDefinition->TotalSize)
+         << binary_le(i->FunctionDefinition->PointerToLinenumber)
+         << binary_le(i->FunctionDefinition->PointerToNextFunction)
+         << zeros(i->FunctionDefinition->unused);
+    if (i->bfAndefSymbol)
+      OS << zeros(i->bfAndefSymbol->unused1)
+         << binary_le(i->bfAndefSymbol->Linenumber)
+         << zeros(i->bfAndefSymbol->unused2)
+         << binary_le(i->bfAndefSymbol->PointerToNextFunction)
+         << zeros(i->bfAndefSymbol->unused3);
+    if (i->WeakExternal)
+      OS << binary_le(i->WeakExternal->TagIndex)
+         << binary_le(i->WeakExternal->Characteristics)
+         << zeros(i->WeakExternal->unused);
+    if (!i->File.empty()) {
+      uint32_t NumberOfAuxRecords =
+          (i->File.size() + COFF::SymbolSize - 1) / COFF::SymbolSize;
+      uint32_t NumberOfAuxBytes = NumberOfAuxRecords * COFF::SymbolSize;
+      uint32_t NumZeros = NumberOfAuxBytes - i->File.size();
+      OS.write(i->File.data(), i->File.size());
+      for (uint32_t Padding = 0; Padding < NumZeros; ++Padding)
+        OS.write(0);
+    }
+    if (i->SectionDefinition)
+      OS << binary_le(i->SectionDefinition->Length)
+         << binary_le(i->SectionDefinition->NumberOfRelocations)
+         << binary_le(i->SectionDefinition->NumberOfLinenumbers)
+         << binary_le(i->SectionDefinition->CheckSum)
+         << binary_le(i->SectionDefinition->Number)
+         << binary_le(i->SectionDefinition->Selection)
+         << zeros(i->SectionDefinition->unused);
+    if (i->CLRToken)
+      OS << binary_le(i->CLRToken->AuxType)
+         << zeros(i->CLRToken->unused1)
+         << binary_le(i->CLRToken->SymbolTableIndex)
+         << zeros(i->CLRToken->unused2);
   }
 
   // Output string table.

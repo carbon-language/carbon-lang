@@ -202,6 +202,37 @@ struct coff_symbol {
   uint8_t getBaseType() const { return Type & 0x0F; }
 
   uint8_t getComplexType() const { return (Type & 0xF0) >> 4; }
+
+  bool isFunctionDefinition() const {
+    return StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
+           getBaseType() == COFF::IMAGE_SYM_TYPE_NULL &&
+           getComplexType() == COFF::IMAGE_SYM_DTYPE_FUNCTION &&
+           COFF::isReservedSectionNumber(SectionNumber);
+  }
+
+  bool isWeakExternal() const {
+    return StorageClass == COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL ||
+           (StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
+            SectionNumber == COFF::IMAGE_SYM_UNDEFINED && Value == 0);
+  }
+
+  bool isFileRecord() const {
+    return StorageClass == COFF::IMAGE_SYM_CLASS_FILE;
+  }
+
+  bool isSectionDefinition() const {
+    // C++/CLI creates external ABS symbols for non-const appdomain globals.
+    // These are also followed by an auxiliary section definition.
+    bool isAppdomainGlobal = StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
+                             SectionNumber == COFF::IMAGE_SYM_ABSOLUTE;
+    bool isOrdinarySection =
+        StorageClass == COFF::IMAGE_SYM_CLASS_STATIC && Value == 0;
+    return isAppdomainGlobal || isOrdinarySection;
+  }
+
+  bool isCLRToken() const {
+    return StorageClass == COFF::IMAGE_SYM_CLASS_CLR_TOKEN;
+  }
 };
 
 struct coff_section {

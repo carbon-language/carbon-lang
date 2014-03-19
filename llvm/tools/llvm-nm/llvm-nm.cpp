@@ -344,8 +344,7 @@ static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
       return 'i';
 
     // Check for section symbol.
-    else if (Symb->StorageClass == COFF::IMAGE_SYM_CLASS_STATIC &&
-             Symb->Value == 0)
+    else if (Symb->isSectionDefinition())
       return 's';
   }
 

@@ -663,8 +663,7 @@ static void PrintCOFFSymbolTable(const COFFObjectFile *coff) {
   for (int i = 0, e = header->NumberOfSymbols; i != e; ++i) {
     if (aux_count--) {
       // Figure out which type of aux this is.
-      if (symbol->StorageClass == COFF::IMAGE_SYM_CLASS_STATIC
-          && symbol->Value == 0) { // Section definition.
+      if (symbol->isSectionDefinition()) { // Section definition.
         const coff_aux_section_definition *asd;
         if (error(coff->getAuxSymbol<coff_aux_section_definition>(i, asd)))
           return;

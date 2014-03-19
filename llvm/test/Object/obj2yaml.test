@@ -36,8 +36,12 @@ COFF-I386-NEXT:    SectionNumber: 1
 COFF-I386-NEXT:    SimpleType: IMAGE_SYM_TYPE_NULL
 COFF-I386-NEXT:    ComplexType: IMAGE_SYM_DTYPE_NULL
 COFF-I386-NEXT:    StorageClass: IMAGE_SYM_CLASS_STATIC
-COFF-I386-NEXT:    NumberOfAuxSymbols: 1
-COFF-I386-NEXT:    AuxiliaryData: 240000000300000000000000010000000000
+COFF-I386-NEXT:    SectionDefinition:
+COFF-I386-NEXT:      Length:          36
+COFF-I386-NEXT:      NumberOfRelocations: 3
+COFF-I386-NEXT:      NumberOfLinenumbers: 0
+COFF-I386-NEXT:      CheckSum:        0
+COFF-I386-NEXT:      Number:          1
 
 COFF-I386:       - Name: .data
 COFF-I386-NEXT:    Value: 0
@@ -45,8 +49,12 @@ COFF-I386-NEXT:    SectionNumber: 2
 COFF-I386-NEXT:    SimpleType: IMAGE_SYM_TYPE_NULL
 COFF-I386-NEXT:    ComplexType: IMAGE_SYM_DTYPE_NULL
 COFF-I386-NEXT:    StorageClass: IMAGE_SYM_CLASS_STATIC
-COFF-I386-NEXT:    NumberOfAuxSymbols: 1
-COFF-I386-NEXT:    AuxiliaryData: 0D0000000000000000000000020000000000
+COFF-I386-NEXT:    SectionDefinition:
+COFF-I386-NEXT:      Length:          13
+COFF-I386-NEXT:      NumberOfRelocations: 0
+COFF-I386-NEXT:      NumberOfLinenumbers: 0
+COFF-I386-NEXT:      CheckSum:        0
+COFF-I386-NEXT:      Number:          2
 
 COFF-I386:       - Name: _main
 COFF-I386-NEXT:    Value: 0
@@ -111,8 +119,12 @@ COFF-X86-64-NEXT:     SectionNumber: 1
 COFF-X86-64-NEXT:     SimpleType: IMAGE_SYM_TYPE_NULL
 COFF-X86-64-NEXT:     ComplexType: IMAGE_SYM_DTYPE_NULL
 COFF-X86-64-NEXT:     StorageClass: IMAGE_SYM_CLASS_STATIC
-COFF-X86-64-NEXT:     NumberOfAuxSymbols: 1
-COFF-X86-64-NEXT:     AuxiliaryData: 260000000300000000000000010000000000
+COFF-X86-64-NEXT:    SectionDefinition:
+COFF-X86-64-NEXT:      Length:          38
+COFF-X86-64-NEXT:      NumberOfRelocations: 3
+COFF-X86-64-NEXT:      NumberOfLinenumbers: 0
+COFF-X86-64-NEXT:      CheckSum:        0
+COFF-X86-64-NEXT:      Number:          1
 
 COFF-X86-64:        - Name: .data
 COFF-X86-64-NEXT:     Value: 0
@@ -120,8 +132,12 @@ COFF-X86-64-NEXT:     SectionNumber: 2
 COFF-X86-64-NEXT:     SimpleType: IMAGE_SYM_TYPE_NULL
 COFF-X86-64-NEXT:     ComplexType: IMAGE_SYM_DTYPE_NULL
 COFF-X86-64-NEXT:     StorageClass: IMAGE_SYM_CLASS_STATIC
-COFF-X86-64-NEXT:     NumberOfAuxSymbols: 1
-COFF-X86-64-NEXT:     AuxiliaryData: 0D0000000000000000000000020000000000
+COFF-X86-64-NEXT:    SectionDefinition:
+COFF-X86-64-NEXT:      Length:          13
+COFF-X86-64-NEXT:      NumberOfRelocations: 0
+COFF-X86-64-NEXT:      NumberOfLinenumbers: 0
+COFF-X86-64-NEXT:      CheckSum:        0
+COFF-X86-64-NEXT:      Number:          2
 
 COFF-X86-64:        - Name: main
 COFF-X86-64-NEXT:     Value: 0

@@ -946,12 +946,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
   W.printNumber("AuxSymbolCount", Symbol->NumberOfAuxSymbols);
 
   for (unsigned I = 0; I < Symbol->NumberOfAuxSymbols; ++I) {
-    if (Symbol->StorageClass     == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
-        Symbol->getBaseType()    == COFF::IMAGE_SYM_TYPE_NULL &&
-        Symbol->getComplexType() == COFF::IMAGE_SYM_DTYPE_FUNCTION &&
-        Symbol->SectionNumber != COFF::IMAGE_SYM_DEBUG &&
-        Symbol->SectionNumber != COFF::IMAGE_SYM_ABSOLUTE &&
-        Symbol->SectionNumber != COFF::IMAGE_SYM_UNDEFINED) {
+    if (Symbol->isFunctionDefinition()) {
       const coff_aux_function_definition *Aux;
       if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
         break;
@@ -963,11 +958,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       W.printHex("PointerToNextFunction", Aux->PointerToNextFunction);
       W.printBinary("Unused", makeArrayRef(Aux->Unused));
 
-    } else if (
-        Symbol->StorageClass   == COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL ||
-        (Symbol->StorageClass  == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
-         Symbol->SectionNumber == COFF::IMAGE_SYM_UNDEFINED &&
-         Symbol->Value         == 0)) {
+    } else if (Symbol->isWeakExternal()) {
       const coff_aux_weak_external *Aux;
       if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
         break;
@@ -987,7 +978,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
                     makeArrayRef(WeakExternalCharacteristics));
       W.printBinary("Unused", makeArrayRef(Aux->Unused));
 
-    } else if (Symbol->StorageClass == COFF::IMAGE_SYM_CLASS_FILE) {
+    } else if (Symbol->isFileRecord()) {
       const coff_aux_file_record *Aux;
       if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
         break;
@@ -995,11 +986,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
       DictScope AS(W, "AuxFileRecord");
       W.printString("FileName", StringRef(Aux->FileName));
 
-    // C++/CLI creates external ABS symbols for non-const appdomain globals.
-    // These are also followed by an auxiliary section definition.
-    } else if (Symbol->StorageClass == COFF::IMAGE_SYM_CLASS_STATIC ||
-               (Symbol->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
-                Symbol->SectionNumber == COFF::IMAGE_SYM_ABSOLUTE)) {
+    } else if (Symbol->isSectionDefinition()) {
       const coff_aux_section_definition *Aux;
       if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
         break;
@@ -1026,7 +1013,7 @@ void COFFDumper::printSymbol(const SymbolRef &Sym) {
 
         W.printNumber("AssocSection", AssocName, Aux->Number);
       }
-    } else if (Symbol->StorageClass == COFF::IMAGE_SYM_CLASS_CLR_TOKEN) {
+    } else if (Symbol->isCLRToken()) {
       const coff_aux_clr_token *Aux;
       if (error(getSymbolAuxData(Obj, Symbol + I, Aux)))
         break;
