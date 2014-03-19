@@ -15,16 +15,15 @@
 #ifndef X86ISELLOWERING_H
 #define X86ISELLOWERING_H
 
-#include "X86MachineFunctionInfo.h"
-#include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
 #include "llvm/CodeGen/CallingConvLower.h"
-#include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 
 namespace llvm {
+  class X86TargetMachine;
+
   namespace X86ISD {
     // X86 Specific DAG Nodes
     enum NodeType {

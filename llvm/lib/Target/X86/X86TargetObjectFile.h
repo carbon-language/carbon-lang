@@ -12,7 +12,6 @@
 
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
-#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 

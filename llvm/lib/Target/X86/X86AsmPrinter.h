@@ -10,13 +10,10 @@
 #ifndef X86ASMPRINTER_H
 #define X86ASMPRINTER_H
 
-#include "X86.h"
-#include "X86MachineFunctionInfo.h"
-#include "X86TargetMachine.h"
+#include "X86Subtarget.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/StackMaps.h"
-#include "llvm/Support/Compiler.h"
+#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 

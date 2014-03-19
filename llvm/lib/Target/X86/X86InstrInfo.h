@@ -14,7 +14,7 @@
 #ifndef X86INSTRUCTIONINFO_H
 #define X86INSTRUCTIONINFO_H
 
-#include "X86.h"
+#include "MCTargetDesc/X86BaseInfo.h"
 #include "X86RegisterInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Target/TargetInstrInfo.h"

@@ -15,14 +15,12 @@
 #ifndef TARGET_X86_H
 #define TARGET_X86_H
 
-#include "MCTargetDesc/X86BaseInfo.h"
-#include "MCTargetDesc/X86MCTargetDesc.h"
-#include "llvm/Support/DataTypes.h"
-#include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/CodeGen.h"
 
 namespace llvm {
 
 class FunctionPass;
+class ImmutablePass;
 class JITCodeEmitter;
 class X86TargetMachine;
 

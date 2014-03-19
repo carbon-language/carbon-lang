@@ -18,7 +18,7 @@
 #define X86BASEINFO_H
 
 #include "X86MCTargetDesc.h"
-#include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 

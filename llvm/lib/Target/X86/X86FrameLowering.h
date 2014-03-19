@@ -15,7 +15,6 @@
 #define X86_FRAMELOWERING_H
 
 #include "X86Subtarget.h"
-#include "llvm/MC/MCDwarf.h"
 #include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {

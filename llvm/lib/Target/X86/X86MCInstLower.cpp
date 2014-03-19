@@ -14,12 +14,14 @@
 
 #include "X86AsmPrinter.h"
 #include "InstPrinter/X86ATTInstPrinter.h"
-#include "X86COFFMachineModuleInfo.h"
+#include "MCTargetDesc/X86BaseInfo.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/StackMaps.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Mangler.h"
-#include "llvm/IR/Type.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -27,7 +29,6 @@
 #include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
 namespace {

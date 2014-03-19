@@ -13,7 +13,6 @@
 
 #include "X86TargetMachine.h"
 #include "X86.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
