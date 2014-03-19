@@ -9,9 +9,14 @@ $BB0_2:
     .frame    $sp,0,$ra
     .mask     0x00000000,0
     .fmask    0x00000000,0
+
+# CHECK: .set noreorder
 # CHECK:   b 1332               # encoding: [0x10,0x00,0x01,0x4d]
+# CHECK-NOT: nop
 # CHECK:   j 1328               # encoding: [0x08,0x00,0x01,0x4c]
+# CHECK-NOT: nop
 # CHECK:   jal 1328             # encoding: [0x0c,0x00,0x01,0x4c]
+# CHECK-NOT: nop
 
     .set    noreorder
      b 1332
