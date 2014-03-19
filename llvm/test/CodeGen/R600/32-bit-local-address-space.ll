@@ -69,7 +69,7 @@ define void @mul_32bit_ptr(float addrspace(1)* %out, [3 x float] addrspace(3)* %
 
 ; CHECK-LABEL: @infer_ptr_alignment_global_offset:
 ; CHECK: V_MOV_B32_e32 [[REG:v[0-9]+]], 0
-; CHECK: DS_READ_B32 v{{[0-9]+}}, 0, [[REG]]
+; CHECK: DS_READ_B32 v{{[0-9]+}}, [[REG]]
 define void @infer_ptr_alignment_global_offset(float addrspace(1)* %out, i32 %tid) {
   %val = load float addrspace(3)* @g_lds
   store float %val, float addrspace(1)* %out

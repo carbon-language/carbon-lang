@@ -395,7 +395,7 @@ class DS_Load_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
   op,
   (outs regClass:$vdst),
   (ins i1imm:$gds, VReg_32:$addr, i16imm:$offset),
-  asm#" $gds, $vdst, $addr, $offset, [M0]",
+  asm#" $vdst, $addr, $offset, [M0]",
   []> {
   let data0 = 0;
   let data1 = 0;
@@ -407,7 +407,7 @@ class DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
   op,
   (outs),
   (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, i16imm:$offset),
-  asm#" $gds, $addr, $data0, $offset [M0]",
+  asm#" $addr, $data0, $offset [M0]",
   []> {
   let data1 = 0;
   let mayStore = 1;
@@ -419,7 +419,7 @@ class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
   op,
   (outs rc:$vdst),
   (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, i16imm:$offset),
-  asm#" $gds, $vdst, $addr, $data0, $offset, [M0]",
+  asm#" $vdst, $addr, $data0, $offset, [M0]",
   []> {
 
   let data1 = 0;
