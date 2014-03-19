@@ -207,7 +207,7 @@ struct coff_symbol {
     return StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
            getBaseType() == COFF::IMAGE_SYM_TYPE_NULL &&
            getComplexType() == COFF::IMAGE_SYM_DTYPE_FUNCTION &&
-           COFF::isReservedSectionNumber(SectionNumber);
+           !COFF::isReservedSectionNumber(SectionNumber);
   }
 
   bool isWeakExternal() const {
