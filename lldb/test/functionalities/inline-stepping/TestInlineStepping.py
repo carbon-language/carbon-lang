@@ -1,6 +1,6 @@
 """Test stepping over and into inlined functions."""
 
-import os, time
+import os, time, sys
 import unittest2
 import lldb
 import lldbutil
@@ -53,7 +53,7 @@ class TestInlineStepping(TestBase):
             self.source_lines[name] = line_number(self.main_source, "// In " + name + ".")
         self.main_source_spec = lldb.SBFileSpec (self.main_source)
 
-    def do_step(self, step_type, destination_line_entry):
+    def do_step(self, step_type, destination_line_entry, test_stack_depth):
         expected_stack_depth = self.thread.GetNumFrames()
         if step_type == "into":
             expected_stack_depth += 1
@@ -90,7 +90,7 @@ class TestInlineStepping(TestBase):
 
         real_stack_depth = self.thread.GetNumFrames()
 
-        if real_stack_depth != expected_stack_depth:
+        if test_stack_depth and real_stack_depth != expected_stack_depth:
             destination_description = lldb.SBStream()
             destination_line_entry.GetDescription(destination_description)
             self.fail ("Step %s to %s got wrong number of frames, should be: %d was: %d."%(step_type, destination_description.GetData(), expected_stack_depth, real_stack_depth))
@@ -105,10 +105,16 @@ class TestInlineStepping(TestBase):
         target_line_entry = lldb.SBLineEntry()
         target_line_entry.SetFileSpec(self.main_source_spec)
 
+        test_stack_depth = True
+        # Work around for <rdar://problem/16363195>, the darwin unwinder seems flakey about whether it duplicates the first frame 
+        # or not, which makes counting stack depth unreliable.
+        if "darwin" in sys.platform:
+            test_stack_depth = False
+
         for step_pattern in step_sequence:
             step_stop_line = line_number (self.main_source, step_pattern[0])
             target_line_entry.SetLine(step_stop_line)
-            self.do_step (step_pattern[1], target_line_entry)
+            self.do_step (step_pattern[1], target_line_entry, test_stack_depth)
         
 
     def inline_stepping(self):
