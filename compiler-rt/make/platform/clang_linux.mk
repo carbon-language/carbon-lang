@@ -86,7 +86,7 @@ endif
 ###
 
 CFLAGS := -Wall -Werror -O3 -fomit-frame-pointer
-SANITIZER_CFLAGS := -std=c++11 -fPIE -fno-builtin -gline-tables-only
+SANITIZER_CFLAGS := -fPIE -fno-builtin -gline-tables-only
 
 CFLAGS.full-i386 := $(CFLAGS) -m32
 CFLAGS.full-x86_64 := $(CFLAGS) -m64
@@ -109,7 +109,7 @@ SHARED_LIBRARY.asan-arm-android := 1
 ANDROID_COMMON_FLAGS := -target arm-linux-androideabi \
 	--sysroot=$(LLVM_ANDROID_TOOLCHAIN_DIR)/sysroot \
 	-B$(LLVM_ANDROID_TOOLCHAIN_DIR)
-CFLAGS.asan-arm-android := $(CFLAGS) -fPIC -fno-builtin \
+CFLAGS.asan-arm-android := $(CFLAGS) $(SANITIZER_CFLAGS) \
 	$(ANDROID_COMMON_FLAGS) -fno-rtti \
 	-I$(ProjSrcRoot)/android/include
 LDFLAGS.asan-arm-android := $(LDFLAGS) $(ANDROID_COMMON_FLAGS) -ldl -lm -llog \
