@@ -143,6 +143,7 @@
 ; FISSION: Line table prologue
 ; FISSION: opcode_base: 1
 ; FISSION-NOT: standard_opcode_lengths
+; FISSION-NOT: include_directories
 ; FISSION-NOT: file_names[
 ; FISSION: file_names{{.*}} bar.h
 ; FISSION: file_names{{.*}} bar.cpp

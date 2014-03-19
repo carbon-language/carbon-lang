@@ -680,8 +680,7 @@ void DwarfDebug::addGnuPubAttributes(DwarfUnit *U, DIE *D) const {
 
 // Create new DwarfCompileUnit for the given metadata node with tag
 // DW_TAG_compile_unit.
-DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit,
-                                                        bool Singular) {
+DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   StringRef FN = DIUnit.getFilename();
   CompilationDir = DIUnit.getDirectory();
 
@@ -689,7 +688,7 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit,
   DwarfCompileUnit *NewCU = new DwarfCompileUnit(
       InfoHolder.getUnits().size(), Die, DIUnit, Asm, this, &InfoHolder);
   InfoHolder.addUnit(NewCU);
-  if (!Asm->OutStreamer.hasRawTextSupport() || Singular)
+  if (!Asm->OutStreamer.hasRawTextSupport() || SingleCU)
     Asm->OutStreamer.getContext().setMCLineTableCompilationDir(
         NewCU->getUniqueID(), CompilationDir);
 
@@ -822,13 +821,11 @@ void DwarfDebug::beginModule() {
   // Emit initial sections so we can reference labels later.
   emitSectionLabels();
 
-  auto Operands = CU_Nodes->operands();
+  SingleCU = CU_Nodes->getNumOperands() == 1;
 
-  bool SingleCU = std::next(Operands.begin()) == Operands.end();
-
-  for (MDNode *N : Operands) {
+  for (MDNode *N : CU_Nodes->operands()) {
     DICompileUnit CUNode(N);
-    DwarfCompileUnit *CU = constructDwarfCompileUnit(CUNode, SingleCU);
+    DwarfCompileUnit *CU = constructDwarfCompileUnit(CUNode);
     DIArray ImportedEntities = CUNode.getImportedEntities();
     for (unsigned i = 0, e = ImportedEntities.getNumElements(); i != e; ++i)
       ScopesWithImportedEntities.push_back(std::make_pair(
@@ -2712,6 +2709,14 @@ void DwarfDebug::emitDebugStrDWO() {
                          OffSec, StrSym);
 }
 
+MCDwarfDwoLineTable *DwarfDebug::getDwoLineTable(const DwarfCompileUnit &CU) {
+  if (!useSplitDwarf())
+    return nullptr;
+  if (SingleCU)
+    SplitTypeUnitFileTable.setCompilationDir(CU.getCUNode().getDirectory());
+  return &SplitTypeUnitFileTable;
+}
+
 void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
                                       StringRef Identifier, DIE *RefDie,
                                       DICompositeType CTy) {
@@ -2728,9 +2733,9 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   }
 
   DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
-  DwarfTypeUnit *NewTU = new DwarfTypeUnit(
-      InfoHolder.getUnits().size(), UnitDie, CU, Asm, this, &InfoHolder,
-      useSplitDwarf() ? &SplitTypeUnitFileTable : nullptr);
+  DwarfTypeUnit *NewTU =
+      new DwarfTypeUnit(InfoHolder.getUnits().size(), UnitDie, CU, Asm, this,
+                        &InfoHolder, getDwoLineTable(CU));
   TU = NewTU;
   InfoHolder.addUnit(NewTU);
 

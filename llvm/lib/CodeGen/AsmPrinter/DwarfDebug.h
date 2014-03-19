@@ -467,9 +467,17 @@ class DwarfDebug : public AsmPrinterHandler {
   // Holder for the skeleton information.
   DwarfFile SkeletonHolder;
 
-  // Store file names for type units under fission in a line table header that
-  // will be emitted into debug_line.dwo.
+  /// Store file names for type units under fission in a line table header that
+  /// will be emitted into debug_line.dwo.
+  // FIXME: replace this with a map from comp_dir to table so that we can emit
+  // multiple tables during LTO each of which uses directory 0, referencing the
+  // comp_dir of all the type units that use it.
   MCDwarfDwoLineTable SplitTypeUnitFileTable;
+
+  // True iff there are multiple CUs in this module.
+  bool SingleCU;
+
+  MCDwarfDwoLineTable *getDwoLineTable(const DwarfCompileUnit &);
 
   void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
 
@@ -618,8 +626,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Create new DwarfCompileUnit for the given metadata node with tag
   /// DW_TAG_compile_unit.
-  DwarfCompileUnit *constructDwarfCompileUnit(DICompileUnit DIUnit,
-                                              bool Singular);
+  DwarfCompileUnit *constructDwarfCompileUnit(DICompileUnit DIUnit);
 
   /// \brief Construct subprogram DIE.
   void constructSubprogramDIE(DwarfCompileUnit *TheCU, const MDNode *N);

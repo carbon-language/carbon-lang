@@ -195,6 +195,9 @@ struct MCDwarfLineTableHeader {
 class MCDwarfDwoLineTable {
   MCDwarfLineTableHeader Header;
 public:
+  void setCompilationDir(StringRef CompilationDir) {
+    Header.CompilationDir = CompilationDir;
+  }
   unsigned getFile(StringRef Directory, StringRef FileName) {
     return Header.getFile(Directory, FileName);
   }
