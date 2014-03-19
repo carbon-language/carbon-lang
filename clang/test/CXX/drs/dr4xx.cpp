@@ -603,6 +603,236 @@ namespace dr450 { // dr450: yes
 #endif
 }
 
+namespace dr451 { // dr451: yes
+  const int a = 1 / 0; // expected-warning {{undefined}}
+  const int b = 1 / 0; // expected-warning {{undefined}}
+  int arr[b]; // expected-error +{{variable length arr}}
+}
+
+namespace dr452 { // dr452: yes
+  struct A {
+    int a, b, c;
+    A *p;
+    int f();
+    A() : a(f()), b(this->f() + a), c(this->a), p(this) {}
+  };
+}
+
+// dr454 FIXME write a codegen test
+
+namespace dr456 { // dr456: yes
+  // sup 903 c++11
+  const int null = 0;
+  void *p = null;
+#if __cplusplus >= 201103L
+  // expected-error@-2 {{cannot initialize}}
+#else
+  // expected-warning@-4 {{null}}
+#endif
+
+  const bool f = false;
+  void *q = f;
+#if __cplusplus >= 201103L
+  // expected-error@-2 {{cannot initialize}}
+#else
+  // expected-warning@-4 {{null}}
+#endif
+}
+
+namespace dr457 { // dr457: yes
+  const int a = 1;
+  const volatile int b = 1;
+  int ax[a];
+  int bx[b]; // expected-error +{{variable length array}}
+
+  enum E {
+    ea = a,
+    eb = b // expected-error {{not an integral constant}} expected-note {{read of volatile-qualified}}
+  };
+}
+
+namespace dr458 { // dr458: no
+  struct A {
+    int T;
+    int f();
+    template<typename> int g();
+  };
+
+  template<typename> struct B : A {
+    int f();
+    template<typename> int g();
+    template<typename> int h();
+  };
+
+  int A::f() {
+    return T;
+  }
+  template<typename T>
+  int A::g() {
+    return T; // FIXME: this is invalid, it finds the template parameter
+  }
+
+  template<typename T>
+  int B<T>::f() {
+    return T;
+  }
+  template<typename T> template<typename U>
+  int B<T>::g() {
+    return T;
+  }
+  template<typename U> template<typename T>
+  int B<U>::h() {
+    return T; // FIXME: this is invalid, it finds the template parameter
+  }
+}
+
+namespace dr460 { // dr460: yes
+  namespace X { namespace Q { int n; } }
+  namespace Y {
+    using X; // expected-error {{requires a qualified name}}
+    using dr460::X; // expected-error {{cannot refer to namespace}}
+    using X::Q; // expected-error {{cannot refer to namespace}}
+  }
+}
+
+// dr461: na
+// dr462 FIXME write a codegen test
+// dr463: na
+// dr464: na
+// dr465: na
+
+namespace dr466 { // dr466: no
+  typedef int I;
+  typedef const int CI;
+  typedef volatile int VI;
+  void f(int *a, CI *b, VI *c) {
+    a->~I();
+    a->~CI();
+    a->~VI();
+    a->I::~I();
+    a->CI::~CI();
+    a->VI::~VI();
+
+    a->CI::~VI(); // FIXME: This is invalid; CI and VI are not the same scalar type.
+
+    b->~I();
+    b->~CI();
+    b->~VI();
+    b->I::~I();
+    b->CI::~CI();
+    b->VI::~VI();
+
+    c->~I();
+    c->~CI();
+    c->~VI();
+    c->I::~I();
+    c->CI::~CI();
+    c->VI::~VI();
+  }
+}
+
+namespace dr467 { // dr467: yes
+  int stuff();
+
+  int f() {
+    static bool done;
+    if (done)
+      goto later;
+    static int k = stuff();
+    done = true;
+  later:
+    return k;
+  }
+  int g() {
+    goto later; // expected-error {{protected scope}}
+    int k = stuff(); // expected-note {{bypasses variable initialization}}
+  later:
+    return k;
+  }
+}
+
+namespace dr468 { // dr468: yes c++11
+  // FIXME: Should we allow this in C++98 too?
+  template<typename> struct A {
+    template<typename> struct B {
+      static int C;
+    };
+  };
+  int k = dr468::template A<int>::template B<char>::C;
+#if __cplusplus < 201103L
+  // expected-error@-2 2{{'template' keyword outside of a template}}
+#endif
+}
+
+namespace dr469 { // dr469: no
+  // FIXME: The core issue here didn't really answer the question. We don't
+  // deduce 'const T' from a function or reference type in a class template...
+  template<typename T> struct X; // expected-note 2{{here}}
+  template<typename T> struct X<const T> {};
+  X<int&> x; // expected-error {{undefined}}
+  X<int()> y; // expected-error {{undefined}}
+
+  // ... but we do in a function template. GCC and EDG fail deduction of 'f'
+  // and the second 'h'.
+  template<typename T> void f(const T *);
+  template<typename T> void g(T *, const T * = 0);
+  template<typename T> void h(T *) { T::error; }
+  template<typename T> void h(const T *);
+  void i() {
+    f(&i);
+    g(&i);
+    h(&i);
+  }
+}
+
+namespace dr470 { // dr470: yes
+  template<typename T> struct A {
+    struct B {};
+  };
+  template<typename T> struct C {
+  };
+
+  template struct A<int>; // expected-note {{previous}}
+  template struct A<int>::B; // expected-error {{duplicate explicit instantiation}}
+
+  // ok, instantiating C<char> doesn't instantiate base class members.
+  template struct A<char>;
+  template struct C<char>;
+}
+
+namespace dr471 { // dr471: yes
+  struct A { int n; };
+  struct B : private virtual A {};
+  struct C : protected virtual A {};
+  struct D : B, C { int f() { return n; } };
+  struct E : private virtual A {
+    using A::n;
+  };
+  struct F : E, B { int f() { return n; } };
+  struct G : virtual A {
+  private:
+    using A::n; // expected-note {{here}}
+  };
+  struct H : B, G { int f() { return n; } }; // expected-error {{private}}
+}
+
+namespace dr474 { // dr474: yes
+  namespace N {
+    struct S {
+      void f();
+    };
+  }
+  void N::S::f() {
+    void g(); // expected-note {{previous}}
+  }
+  int g();
+  namespace N {
+    int g(); // expected-error {{cannot be overloaded}}
+  }
+}
+
+// dr475 FIXME write a codegen test
+
 namespace dr482 { // dr482: 3.5
   extern int a;
   void f();
