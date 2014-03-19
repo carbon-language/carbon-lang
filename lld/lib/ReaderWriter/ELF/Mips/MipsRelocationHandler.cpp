@@ -25,13 +25,6 @@ void applyReloc(uint8_t *loc, uint32_t result, uint32_t mask) {
   *target = (uint32_t(*target) & ~mask) | (result & mask);
 }
 
-/// \brief Calculate AHL value combines addends from 'hi' and 'lo' relocations.
-inline int64_t calcAHL(int64_t AHI, int64_t ALO) {
-  AHI &= 0xffff;
-  ALO &= 0xffff;
-  return (AHI << 16) + (int16_t)ALO;
-}
-
 template <size_t BITS, class T> inline T signExtend(T val) {
   if (val & (T(1) << (BITS - 1)))
     val |= T(-1) << BITS;
