@@ -101,7 +101,7 @@ typedef std::vector<Hex8> ContentBytes;
 typedef std::vector<uint32_t> IndirectSymbols;
 
 /// A typedef so that YAML I/O can encode/decode section attributes.
-LLVM_YAML_STRONG_TYPEDEF(uint32_t, SectionAttr);
+LLVM_YAML_STRONG_TYPEDEF(uint32_t, SectionAttr)
 
 /// Mach-O has a 32-bit and 64-bit section record.  This normalized form
 /// can support either kind.
@@ -122,10 +122,10 @@ struct Section {
 
 
 /// A typedef so that YAML I/O can encode/decode the scope bits of an nlist.
-LLVM_YAML_STRONG_TYPEDEF(uint8_t, SymbolScope);
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, SymbolScope)
 
 /// A typedef so that YAML I/O can encode/decode the desc bits of an nlist.
-LLVM_YAML_STRONG_TYPEDEF(uint16_t, SymbolDesc);
+LLVM_YAML_STRONG_TYPEDEF(uint16_t, SymbolDesc)
 
 /// Mach-O has a 32-bit and 64-bit symbol table entry (nlist), and the symbol
 /// type and scope and mixed in the same n_type field.  This normalized form
@@ -142,7 +142,7 @@ struct Symbol {
 };
 
 /// A typedef so that YAML I/O can (de/en)code the protection bits of a segment.
-LLVM_YAML_STRONG_TYPEDEF(uint32_t, VMProtect);
+LLVM_YAML_STRONG_TYPEDEF(uint32_t, VMProtect)
 
 /// Segments are only used in normalized final linked images (not in relocatable
 /// object files). They specify how a range of the file is loaded.
@@ -179,7 +179,7 @@ struct BindLocation {
 };
 
 /// A typedef so that YAML I/O can encode/decode export flags.
-LLVM_YAML_STRONG_TYPEDEF(uint32_t, ExportFlags);
+LLVM_YAML_STRONG_TYPEDEF(uint32_t, ExportFlags)
 
 /// A normalized export entry.  Only used in normalized final linked images.
 struct Export {
@@ -193,7 +193,7 @@ struct Export {
 
 
 /// A typedef so that YAML I/O can encode/decode mach_header.flags.
-LLVM_YAML_STRONG_TYPEDEF(uint32_t, FileFlags);
+LLVM_YAML_STRONG_TYPEDEF(uint32_t, FileFlags)
 
 ///
 struct NormalizedFile {
