@@ -29,7 +29,6 @@
 ; CHECK: DW_AT_GNU_addr_base     DW_FORM_sec_offset
 ; CHECK: DW_AT_comp_dir  DW_FORM_strp
 ; CHECK: DW_AT_GNU_dwo_id        DW_FORM_data8
-; CHECK: DW_AT_low_pc    DW_FORM_addr
 
 ; Check that we're using the right forms.
 ; CHECK: .debug_abbrev.dwo contents:
@@ -63,7 +62,6 @@
 ; CHECK: DW_AT_GNU_addr_base [DW_FORM_sec_offset]                   (0x00000000)
 ; CHECK: DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000008] = "/usr/local/google/home/echristo/tmp")
 ; CHECK: DW_AT_GNU_dwo_id [DW_FORM_data8]  (0x1f1f859683d49324)
-; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
 
 ; Check that the rest of the compile units have information.
 ; CHECK: .debug_info.dwo contents:

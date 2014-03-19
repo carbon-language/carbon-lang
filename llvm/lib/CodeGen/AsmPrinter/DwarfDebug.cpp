@@ -178,7 +178,7 @@ static unsigned getDwarfVersionFromModule(const Module *M) {
 
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     : Asm(A), MMI(Asm->MMI), FirstCU(0), PrevLabel(NULL), GlobalRangeCount(0),
-      InfoHolder(A, "info_string", DIEValueAllocator), HasCURanges(false),
+      InfoHolder(A, "info_string", DIEValueAllocator),
       UsedNonDefaultText(false),
       SkeletonHolder(A, "skel_string", DIEValueAllocator) {
 
@@ -947,26 +947,34 @@ void DwarfDebug::finalizeModuleInfo() {
                       dwarf::DW_FORM_data8, ID);
       }
 
-      // If we have code split among multiple sections or we've requested
-      // it then emit a DW_AT_ranges attribute on the unit that will remain
-      // in the .o file, otherwise add a DW_AT_low_pc.
-      // FIXME: Also add a high pc if we can.
-      // FIXME: We should use ranges if we have multiple compile units or
-      // allow reordering of code ala .subsections_via_symbols in mach-o.
+      // If we have code split among multiple sections or non-contiguous
+      // ranges of code then emit a DW_AT_ranges attribute on the unit that will
+      // remain in the .o file, otherwise add a DW_AT_low_pc.
+      // FIXME: We should use ranges allow reordering of code ala
+      // .subsections_via_symbols in mach-o. This would mean turning on
+      // ranges for all subprogram DIEs for mach-o.
       DwarfCompileUnit *U = SkCU ? SkCU : static_cast<DwarfCompileUnit *>(TheU);
-      if (useCURanges() && TheU->getRanges().size()) {
-        addSectionLabel(Asm, U, U->getUnitDie(), dwarf::DW_AT_ranges,
-                        Asm->GetTempSymbol("cu_ranges", U->getUniqueID()),
-                        DwarfDebugRangeSectionSym);
+      unsigned NumRanges = TheU->getRanges().size();
+      if (NumRanges) {
+        if (NumRanges > 1) {
+          addSectionLabel(Asm, U, U->getUnitDie(), dwarf::DW_AT_ranges,
+                          Asm->GetTempSymbol("cu_ranges", U->getUniqueID()),
+                          DwarfDebugRangeSectionSym);
 
-        // A DW_AT_low_pc attribute may also be specified in combination with
-        // DW_AT_ranges to specify the default base address for use in location
-        // lists (see Section 2.6.2) and range lists (see Section 2.17.3).
-        U->addUInt(U->getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-                   0);
-      } else
-        U->addUInt(U->getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-                   0);
+          // A DW_AT_low_pc attribute may also be specified in combination with
+          // DW_AT_ranges to specify the default base address for use in
+          // location lists (see Section 2.6.2) and range lists (see Section
+          // 2.17.3).
+          U->addUInt(U->getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
+                     0);
+        } else {
+          RangeSpan &Range = TheU->getRanges().back();
+          U->addLocalLabelAddress(U->getUnitDie(), dwarf::DW_AT_low_pc,
+                                  Range.getStart());
+          U->addLabelDelta(U->getUnitDie(), dwarf::DW_AT_high_pc,
+                           Range.getEnd(), Range.getStart());
+        }
+      }
     }
   }
 
@@ -1021,14 +1029,6 @@ void DwarfDebug::endSections() {
     // Insert a final terminator.
     SectionMap[Section].push_back(SymbolCU(NULL, Sym));
   }
-
-  // For now only turn on CU ranges if we have -ffunction-sections enabled,
-  // we've emitted a function into a unique section, or we're using LTO. If
-  // we're using LTO then we can't know that any particular function in the
-  // module is correlated to a particular CU and so we need to be conservative.
-  // At this point all sections should be finalized except for dwarf sections.
-  HasCURanges = UsedNonDefaultText || (CUMap.size() > 1) ||
-                TargetMachine::getFunctionSections();
 }
 
 // Emit all Dwarf sections that should come after the content.
@@ -1423,12 +1423,8 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   // Grab the lexical scopes for the function, if we don't have any of those
   // then we're not going to be able to do anything.
   LScopes.initialize(*MF);
-  if (LScopes.empty()) {
-    // If we don't have a lexical scope for this function then there will
-    // be a hole in the range information. Keep note of this.
-    UsedNonDefaultText = true;
+  if (LScopes.empty())
     return;
-  }
 
   assert(UserVariables.empty() && DbgValues.empty() && "Maps weren't cleaned");
 
@@ -1446,12 +1442,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
   else
     Asm->OutStreamer.getContext().setDwarfCompileUnitID(TheCU->getUniqueID());
-
-  // Check the current section against the standard text section. If different
-  // keep track so that we will know when we're emitting functions into multiple
-  // sections.
-  if (Asm->getObjFileLowering().getTextSection() != Asm->getCurrentSection())
-    UsedNonDefaultText = true;
 
   // Emit a label for the function so that we have a beginning address.
   FunctionBeginSym = Asm->GetTempSymbol("func_begin", Asm->getFunctionNumber());
@@ -1658,6 +1648,11 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   assert(CurFn != 0);
 
   if (!MMI->hasDebugInfo() || LScopes.empty()) {
+    // If we don't have a lexical scope for this function then there will
+    // be a hole in the range information. Keep note of this by setting the
+    // previously used section to nullptr.
+    PrevSection = nullptr;
+    PrevCU = nullptr;
     CurFn = 0;
     return;
   }
@@ -1708,6 +1703,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // Add the range of this function to the list of ranges for the CU.
   RangeSpan Span(FunctionBeginSym, FunctionEndSym);
   TheCU->addRange(std::move(Span));
+  PrevSection = Asm->getCurrentSection();
+  PrevCU = TheCU;
 
   // Clear debug info
   for (auto &I : ScopeVariables)
@@ -2597,7 +2594,7 @@ void DwarfDebug::emitDebugRanges() {
     }
 
     // Now emit a range for the CU itself.
-    if (useCURanges() && TheCU->getRanges().size()) {
+    if (TheCU->getRanges().size() > 1) {
       Asm->OutStreamer.EmitLabel(
           Asm->GetTempSymbol("cu_ranges", TheCU->getUniqueID()));
       for (const RangeSpan &Range : TheCU->getRanges()) {
