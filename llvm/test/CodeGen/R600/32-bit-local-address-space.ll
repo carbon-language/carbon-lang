@@ -34,7 +34,7 @@ entry:
 ; CHECK-LABEL: @local_address_gep_const_offset
 ; CHECK: S_ADD_I32 [[SPTR:s[0-9]]]
 ; CHECK: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
-; CHECK: DS_READ_B32 [[VPTR]]
+; CHECK: DS_READ_B32 v{{[0-9]+}}, [[VPTR]]
 define void @local_address_gep_const_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
   %0 = getelementptr i32 addrspace(3)* %in, i32 1
