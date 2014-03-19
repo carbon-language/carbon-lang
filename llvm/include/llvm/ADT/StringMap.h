@@ -387,7 +387,17 @@ public:
   }
 
   ~StringMap() {
-    clear();
+    // Delete all the elements in the map, but don't reset the elements
+    // to default values.  This is a copy of clear(), but avoids unnecessary
+    // work not required in the destructor.
+    if (!empty()) {
+      for (unsigned I = 0, E = NumBuckets; I != E; ++I) {
+        StringMapEntryBase *Bucket = TheTable[I];
+        if (Bucket && Bucket != getTombstoneVal()) {
+          static_cast<MapEntryTy*>(Bucket)->Destroy(Allocator);
+        }
+      }
+    }
     free(TheTable);
   }
 };
