@@ -10,6 +10,7 @@ import lldbutil
 class ClassTypesTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
+    failing_compilers = ['clang', 'gcc']
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
@@ -58,6 +59,27 @@ class ClassTypesTestCase(TestBase):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
         self.buildDwarf()
         self.class_types_expr_parser()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    # rdar://problem/8557478
+    # test/class_types test failures: runCmd: expr this->m_c_int
+    @dsym_test
+    @expectedFailureDarwin(16362674)
+    def test_with_dsym_and_constructor_name(self):
+        """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
+        self.buildDsym()
+        self.class_types_constructor_name()
+
+    # rdar://problem/8557478
+    # test/class_types test failures: runCmd: expr this->m_c_int
+    @dwarf_test
+    @expectedFailureFreeBSD('llvm.org/pr14540')
+    @expectedFailureLinux('llvm.org/pr14540', failing_compilers)
+    @expectedFailureDarwin(16362674)
+    def test_with_dwarf_and_constructor_name (self):
+        """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""
+        self.buildDwarf()
+        self.class_types_constructor_name()
 
     def setUp(self):
         # Call super's setUp().
@@ -205,6 +227,55 @@ class ClassTypesTestCase(TestBase):
         self.expect("expression this->m_c_int", VARIABLES_DISPLAYED_CORRECTLY,
             patterns = ['\(int\) \$[0-9]+ = 66'])
 
+
+    def class_types_constructor_name (self):
+        """Check whether the constructor name has the class name prepended."""
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+
+        filespec = target.GetExecutable()
+        self.assertTrue(filespec, VALID_FILESPEC)
+
+        fsDir = filespec.GetDirectory()
+        fsFile = filespec.GetFilename()
+
+        self.assertTrue(fsDir == os.getcwd() and fsFile == "a.out",
+                        "FileSpec matches the executable")
+
+        bpfilespec = lldb.SBFileSpec("main.cpp", False)
+
+        breakpoint = target.BreakpointCreateByLocation(bpfilespec, self.line)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
+
+        # Verify the breakpoint just created.
+        self.expect(str(breakpoint), BREAKPOINT_CREATED, exe=False,
+            substrs = ['main.cpp',
+                       str(self.line)])
+
+        # Now launch the process, and do not stop at entry point.
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
+
+        if not process:
+            self.fail("SBTarget.Launch() failed")
+
+        if process.GetState() != lldb.eStateStopped:
+            self.fail("Process should be in the 'stopped' state, "
+                      "instead the actual state is: '%s'" %
+                      lldbutil.state_type_to_str(process.GetState()))
+
+        # The stop reason of the thread should be breakpoint.
+        thread = process.GetThreadAtIndex(0)
+        if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
+            from lldbutil import stop_reason_to_str
+            self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
+                      stop_reason_to_str(thread.GetStopReason()))
+
+        frame = thread.frames[0]
+        self.assertTrue (frame.IsValid(), "Got a valid frame.")
+
+        self.assertTrue ("C::C" in frame.name, "Constructor name includes class name.")
 
 if __name__ == '__main__':
     import atexit
