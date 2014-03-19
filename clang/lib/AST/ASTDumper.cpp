@@ -2069,7 +2069,7 @@ void ASTDumper::visitParamCommandComment(const ParamCommandComment *C) {
       OS << " Param=\"" << C->getParamNameAsWritten() << "\"";
   }
 
-  if (C->isParamIndexValid())
+  if (C->isParamIndexValid() && !C->isVarArgParam())
     OS << " ParamIndex=" << C->getParamIndex();
 }
 

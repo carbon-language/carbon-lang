@@ -67,3 +67,11 @@ int Test_VerbatimBlockComment;
 // CHECK:      VarDecl{{.*}}Test_VerbatimBlockComment
 // CHECK:        VerbatimBlockComment{{.*}} Name="verbatim" CloseName="endverbatim"
 // CHECK-NEXT:     VerbatimBlockLineComment{{.*}} Text=" Aaa"
+
+/// \param ... More arguments
+template<typename T>
+void Test_TemplatedFunctionVariadic(int arg, ...);
+// CHECK:      FunctionTemplateDecl{{.*}}Test_TemplatedFunctionVariadic
+// CHECK:        ParamCommandComment{{.*}} [in] implicitly Param="..."
+// CHECK-NEXT:     ParagraphComment
+// CHECK-NEXT:       TextComment{{.*}} Text=" More arguments"
