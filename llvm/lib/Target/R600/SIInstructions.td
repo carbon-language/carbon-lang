@@ -1917,7 +1917,7 @@ def : Pat <
 
 class DSReadPat <DS inst, ValueType vt, PatFrag frag> : Pat <
   (frag i32:$src0),
-  (vt (inst 0, $src0, $src0, $src0, 0, 0))
+  (vt (inst 0, $src0, 0))
 >;
 
 def : DSReadPat <DS_READ_I8,  i32, sextloadi8_local>;
@@ -1927,12 +1927,12 @@ def : DSReadPat <DS_READ_U16, i32, az_extloadi16_local>;
 def : DSReadPat <DS_READ_B32, i32, local_load>;
 def : Pat <
     (local_load i32:$src0),
-    (i32 (DS_READ_B32 0, $src0, $src0, $src0, 0, 0))
+    (i32 (DS_READ_B32 0, $src0, 0))
 >;
 
 class DSWritePat <DS inst, ValueType vt, PatFrag frag> : Pat <
   (frag i32:$src1, i32:$src0),
-  (inst 0, $src0, $src1, $src1, 0, 0)
+  (inst 0, $src0, $src1, 0)
 >;
 
 def : DSWritePat <DS_WRITE_B8, i32, truncstorei8_local>;
@@ -1940,10 +1940,10 @@ def : DSWritePat <DS_WRITE_B16, i32, truncstorei16_local>;
 def : DSWritePat <DS_WRITE_B32, i32, local_store>;
 
 def : Pat <(atomic_load_add_local i32:$ptr, i32:$val),
-           (DS_ADD_U32_RTN 0, $ptr, $val, 0, 0)>;
+           (DS_ADD_U32_RTN 0, $ptr, $val, 0)>;
 
 def : Pat <(atomic_load_sub_local i32:$ptr, i32:$val),
-           (DS_SUB_U32_RTN 0, $ptr, $val, 0, 0)>;
+           (DS_SUB_U32_RTN 0, $ptr, $val, 0)>;
 
 /********** ================== **********/
 /**********   SMRD Patterns    **********/

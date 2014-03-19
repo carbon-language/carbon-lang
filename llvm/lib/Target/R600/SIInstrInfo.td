@@ -383,39 +383,48 @@ class VOP3_64 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
 // Vector I/O classes
 //===----------------------------------------------------------------------===//
 
-class DS_Load_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
+class DS_1A <bits<8> op, dag outs, dag ins, string asm, list<dag> pat> :
+    DS <op, outs, ins, asm, pat> {
+  bits<16> offset;
+
+  let offset0 = offset{7-0};
+  let offset1 = offset{15-8};
+}
+
+class DS_Load_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
   op,
   (outs regClass:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, VReg_32:$data1,
-       i8imm:$offset0, i8imm:$offset1),
-  asm#" $vdst, $gds, $addr, $data0, $data1, $offset0, $offset1, [M0]",
+  (ins i1imm:$gds, VReg_32:$addr, i16imm:$offset),
+  asm#" $gds, $vdst, $addr, $offset, [M0]",
   []> {
+  let data0 = 0;
+  let data1 = 0;
   let mayLoad = 1;
   let mayStore = 0;
 }
 
-class DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
+class DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
   op,
   (outs),
-  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, VReg_32:$data1,
-       i8imm:$offset0, i8imm:$offset1),
-  asm#" $gds, $addr, $data0, $data1, $offset0, $offset1, [M0]",
+  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, i16imm:$offset),
+  asm#" $gds, $addr, $data0, $offset [M0]",
   []> {
+  let data1 = 0;
   let mayStore = 1;
   let mayLoad = 0;
   let vdst = 0;
 }
 
-class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc> : DS <
+class DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
   op,
   (outs rc:$vdst),
-  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, i8imm:$offset0,
-       i8imm:$offset1),
-  asm#" $gds, $vdst, $addr, $data0, $offset0, $offset1, [M0]",
+  (ins i1imm:$gds, VReg_32:$addr, VReg_32:$data0, i16imm:$offset),
+  asm#" $gds, $vdst, $addr, $data0, $offset, [M0]",
   []> {
+
+  let data1 = 0;
   let mayStore = 1;
   let mayLoad = 1;
-  let data1 = 0;
 }
 
 class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBUF <
