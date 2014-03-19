@@ -69,7 +69,7 @@
 # YAML:     - kind:            R_MIPS_LO16
 # YAML:       offset:          4
 # YAML:       target:          [[L003]]
-# YAML:     - kind:            LLD_R_MIPS_GLOBAL_GOT16
+# YAML:     - kind:            R_MIPS_GOT16
 # YAML:       offset:          8
 # YAML:       target:          [[L004]]
 # YAML:     - kind:            R_MIPS_CALL16

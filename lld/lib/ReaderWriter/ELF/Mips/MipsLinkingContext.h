@@ -18,8 +18,6 @@ namespace elf {
 enum {
   /// \brief Do nothing but mark GOT entry as a global one.
   LLD_R_MIPS_GLOBAL_GOT = 1024,
-  /// \brief The same as R_MIPS_GOT16 but for global symbols.
-  LLD_R_MIPS_GLOBAL_GOT16 = 1025,
   /// \brief The same as R_MIPS_26 but for global symbols.
   LLD_R_MIPS_GLOBAL_26 = 1026,
   /// \brief Setup hi 16 bits using the symbol this reference refers to.

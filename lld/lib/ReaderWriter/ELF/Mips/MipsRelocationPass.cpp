@@ -301,9 +301,6 @@ void RelocationPass::handlePLT(const Reference &ref) {
 }
 
 void RelocationPass::handleGOT(const Reference &ref) {
-  if (ref.kindValue() == R_MIPS_GOT16 && !isLocal(ref.target()))
-    const_cast<Reference &>(ref).setKindValue(LLD_R_MIPS_GLOBAL_GOT16);
-
   if (requireLocalGOT(ref.target()))
     const_cast<Reference &>(ref).setTarget(getLocalGOTEntry(ref.target()));
   else

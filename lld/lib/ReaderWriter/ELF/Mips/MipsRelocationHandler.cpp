@@ -164,9 +164,6 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   case LLD_R_MIPS_GLOBAL_GOT:
     // Do nothing.
     break;
-  case LLD_R_MIPS_GLOBAL_GOT16:
-    relocGOT16(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
-    break;
   case LLD_R_MIPS_GLOBAL_26:
     reloc26ext(location, targetVAddress, ref.addend());
     break;
