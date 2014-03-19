@@ -56,7 +56,7 @@ class DeadlockDetectorTLS {
 
   // Returns true if this is the first (non-recursive) acquisition of this lock.
   bool addLock(uptr lock_id, uptr current_epoch, u32 stk) {
-    // Printf("addLock: %zx %zx\n", lock_id, current_epoch);
+    // Printf("addLock: %zx %zx stk %u\n", lock_id, current_epoch, stk);
     CHECK_EQ(epoch_, current_epoch);
     if (!bv_.setBit(lock_id)) {
       // The lock is already held by this thread, it must be recursive.
@@ -66,9 +66,9 @@ class DeadlockDetectorTLS {
     }
     if (stk) {
       CHECK_LT(n_all_locks_, ARRAY_SIZE(all_locks_with_contexts_));
-      LockWithContext &l = all_locks_with_contexts_[n_all_locks_++];
-      l.lock = static_cast<u32>(lock_id);  // lock_id is small index into bv_.
-      l.stk = stk;
+      // lock_id < BV::kSize, can cast to a smaller int.
+      u32 lock_id_short = static_cast<u32>(lock_id);
+      all_locks_with_contexts_[n_all_locks_++] = {lock_id_short, stk};
     }
     return true;
   }
@@ -239,8 +239,8 @@ class DeadlockDetector {
                                      added_edges, ARRAY_SIZE(added_edges));
     for (uptr i = 0; i < n_added_edges; i++) {
       if (n_edges_ < ARRAY_SIZE(edges_))
-        edges_[n_edges_++] = Edge((u16)added_edges[i], (u16)cur_idx,
-                                  dtls->findLockContext(added_edges[i]), stk);
+        edges_[n_edges_++] = {(u16)added_edges[i], (u16)cur_idx,
+                              dtls->findLockContext(added_edges[i]), stk};
       // Printf("E%zd: %u %zd=>%zd\n", n_edges_, stk, added_edges[i], cur_idx);
     }
     return n_added_edges;
@@ -322,7 +322,7 @@ class DeadlockDetector {
   // (modulo racy nature of hasAllEdges).
   bool onLockFast(DeadlockDetectorTLS<BV> *dtls, uptr node, u32 stk = 0) {
     if (hasAllEdges(dtls, node)) {
-      dtls->addLock(nodeToIndexUnchecked(node), nodeToEpoch(node), 0);
+      dtls->addLock(nodeToIndexUnchecked(node), nodeToEpoch(node), stk);
       return true;
     }
     return false;
@@ -381,10 +381,6 @@ class DeadlockDetector {
     u16 to;
     u32 stk_from;
     u32 stk_to;
-    // FIXME: replace with initializer list once the tests are built as c++11.
-    Edge(u16 f, u16 t, u32 sf, u32 st)
-        : from(f), to(t), stk_from(sf), stk_to(st) {}
-    Edge() {}
   };
 
   uptr current_epoch_;

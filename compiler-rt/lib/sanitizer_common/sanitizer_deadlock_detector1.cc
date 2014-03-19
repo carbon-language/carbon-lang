@@ -143,7 +143,7 @@ void DD::ReportDeadlock(DDCallback *cb, DDMutex *m) {
 void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
   DDLogicalThread *lt = cb->lt;
   u32 stk = cb->Unwind();  // FIXME: if this is hot, do this under a flag.
-  // Printf("T%p MutexLock:   %zx\n", lt, m->id);
+  // Printf("T%p MutexLock:   %zx stk %u\n", lt, m->id, stk);
   if (dd.onFirstLock(&lt->dd, m->id, stk))
     return;
   if (dd.onLockFast(&lt->dd, m->id, stk))
