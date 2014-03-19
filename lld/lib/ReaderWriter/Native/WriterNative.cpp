@@ -159,7 +159,7 @@ private:
       v1.kindArch = v2.kindArch;
       v1.kindValue = v2.kindValue;
       v1.targetIndex = (v2.targetIndex == NativeReferenceIvarsV2::noTarget) ?
-          NativeReferenceIvarsV1::noTarget : v2.targetIndex;
+          (uint16_t)NativeReferenceIvarsV1::noTarget : v2.targetIndex;
       v1.addendIndex = this->getAddendIndex(v2.addend);
       _referencesV1.push_back(v1);
     }
