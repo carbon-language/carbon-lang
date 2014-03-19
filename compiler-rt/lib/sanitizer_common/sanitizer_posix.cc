@@ -64,7 +64,8 @@ void *MmapOrDie(uptr size, const char *mem_type) {
       Die();
     }
     recursion_count++;
-    Report("ERROR: %s failed to allocate 0x%zx (%zd) bytes of %s: %d\n",
+    Report("ERROR: %s failed to "
+           "allocate 0x%zx (%zd) bytes of %s (errno: %d)\n",
            SanitizerToolName, size, size, mem_type, reserrno);
     DumpProcessMap();
     CHECK("unable to mmap" && 0);
@@ -91,8 +92,8 @@ void *MmapNoReserveOrDie(uptr size, const char *mem_type) {
       -1, 0);
   int reserrno;
   if (internal_iserror(p, &reserrno)) {
-    Report("ERROR: "
-           "%s failed to allocate noreserve 0x%zx (%zd) bytes for '%s' (%d)\n",
+    Report("ERROR: %s failed to "
+           "allocate noreserve 0x%zx (%zd) bytes for '%s' (errno: %d)\n",
            SanitizerToolName, size, size, mem_type, reserrno);
     CHECK("unable to mmap" && 0);
   }
@@ -108,8 +109,8 @@ void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
       -1, 0);
   int reserrno;
   if (internal_iserror(p, &reserrno))
-    Report("ERROR: "
-           "%s failed to allocate 0x%zx (%zd) bytes at address %zu (%d)\n",
+    Report("ERROR: %s failed to "
+           "allocate 0x%zx (%zd) bytes at address %zu (errno: %d)\n",
            SanitizerToolName, size, size, fixed_addr, reserrno);
   return (void *)p;
 }
@@ -123,8 +124,8 @@ void *MmapFixedOrDie(uptr fixed_addr, uptr size) {
       -1, 0);
   int reserrno;
   if (internal_iserror(p, &reserrno)) {
-    Report("ERROR:"
-           " %s failed to allocate 0x%zx (%zd) bytes at address %zu (%d)\n",
+    Report("ERROR: %s failed to "
+           "allocate 0x%zx (%zd) bytes at address %zu (errno: %d)\n",
            SanitizerToolName, size, size, fixed_addr, reserrno);
     CHECK("unable to mmap" && 0);
   }

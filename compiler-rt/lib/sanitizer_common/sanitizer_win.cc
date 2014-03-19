@@ -80,8 +80,9 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
 void *MmapOrDie(uptr size, const char *mem_type) {
   void *rv = VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
   if (rv == 0) {
-    Report("ERROR: Failed to allocate 0x%zx (%zd) bytes of %s\n",
-           size, size, mem_type);
+    Report("ERROR: %s failed to "
+           "allocate 0x%zx (%zd) bytes of %s (error code: %d)\n",
+           SanitizerToolName, size, size, mem_type, GetLastError());
     CHECK("unable to mmap" && 0);
   }
   return rv;
@@ -89,8 +90,9 @@ void *MmapOrDie(uptr size, const char *mem_type) {
 
 void UnmapOrDie(void *addr, uptr size) {
   if (VirtualFree(addr, size, MEM_DECOMMIT) == 0) {
-    Report("ERROR: Failed to deallocate 0x%zx (%zd) bytes at address %p\n",
-           size, size, addr);
+    Report("ERROR: %s failed to "
+           "deallocate 0x%zx (%zd) bytes at address %p (error code: %d)\n",
+           SanitizerToolName, size, size, addr, GetLastError());
     CHECK("unable to unmap" && 0);
   }
 }
@@ -101,8 +103,9 @@ void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
   void *p = VirtualAlloc((LPVOID)fixed_addr, size,
       MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
   if (p == 0)
-    Report("ERROR: Failed to allocate 0x%zx (%zd) bytes at %p (%d)\n",
-           size, size, fixed_addr, GetLastError());
+    Report("ERROR: %s failed to "
+           "allocate %p (%zd) bytes at %p (error code: %d)\n",
+           SanitizerToolName, size, size, fixed_addr, GetLastError());
   return p;
 }
 
