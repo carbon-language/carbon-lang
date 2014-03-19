@@ -2,16 +2,17 @@
 
 # Build shared library
 # RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic \
-# RUN:         -o=%t1 %p/Inputs/ext.s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t2 %t1
+# RUN:         -o=%t-pic-o %p/Inputs/ext.s
+# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-pic-o
 
 # Build executable
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t3 %s
-# RUN: llvm-readobj -relocations %t3 | FileCheck -check-prefix=OBJ-REL %s
-# RUN: lld -flavor gnu -target mipsel -e glob -o %t4 %t3 %t2
-# RUN: llvm-objdump -section-headers -disassemble %t4 | \
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-npic-o %s
+# RUN: llvm-readobj -relocations %t-npic-o | \
+# RUN:   FileCheck -check-prefix=OBJ-REL %s
+# RUN: lld -flavor gnu -target mipsel -e glob -o %t-exe %t-npic-o %t-so
+# RUN: llvm-objdump -section-headers -disassemble %t-exe | \
 # RUN:   FileCheck -check-prefix=EXE %s
-# RUN: llvm-readobj -relocations %t4 | FileCheck -check-prefix=EXE-REL %s
+# RUN: llvm-readobj -relocations %t-exe | FileCheck -check-prefix=EXE-REL %s
 
 # Object file has three R_MIPS_26 relocations
 # OBJ-REL: Relocations [
