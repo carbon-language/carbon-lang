@@ -16,22 +16,19 @@
 namespace lld {
 namespace elf {
 
-class HexagonLinkingContext;
 class HexagonTargetHandler;
 
 class HexagonTargetRelocationHandler final :
     public TargetRelocationHandler<HexagonELFType> {
 public:
-  HexagonTargetRelocationHandler(HexagonLinkingContext &context,
-                                 HexagonTargetLayout<HexagonELFType> &layout)
-      : _hexagonLinkingContext(context), _hexagonTargetLayout(layout) {}
+  HexagonTargetRelocationHandler(HexagonTargetLayout<HexagonELFType> &layout)
+      : _hexagonTargetLayout(layout) {}
 
   virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                      const lld::AtomLayout &,
                                      const Reference &) const;
 
 private:
-  HexagonLinkingContext &_hexagonLinkingContext LLVM_ATTRIBUTE_UNUSED;
   HexagonTargetLayout<HexagonELFType> &_hexagonTargetLayout;
 };
 } // elf

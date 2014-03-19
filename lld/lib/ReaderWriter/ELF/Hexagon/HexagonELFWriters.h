@@ -52,7 +52,7 @@ protected:
   }
 
 private:
-  HexagonLinkingContext &_hexagonLinkingContext LLVM_ATTRIBUTE_UNUSED;
+  HexagonLinkingContext &_hexagonLinkingContext;
   HexagonTargetLayout<ELFT> &_hexagonTargetLayout;
 };
 
