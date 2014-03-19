@@ -23,10 +23,10 @@ N: Howard Hinnant
 E: hhinnant@apple.com
 D: Architect and primary author of compiler-rt
 
+N: Joerg Sonnenberger
+E: joerg@NetBSD.org
+D: Maintains NetBSD port.
+
 N: Matt Thomas
 E: matt@NetBSD.org
 D: ARM improvements.
-
-N: Joerg Sonnenberger
-E: joerg@NetBSD.org
-D: Maintains port.
