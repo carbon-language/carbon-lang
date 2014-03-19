@@ -19,8 +19,7 @@
 #include "llvm/Support/Endian.h"
 
 namespace llvm {
-  template <typename T>
-  class ArrayRef;
+template <typename T> class ArrayRef;
 
 namespace object {
 class ImportDirectoryEntryRef;
@@ -66,8 +65,8 @@ struct coff_file_header {
 /// The 32-bit PE header that follows the COFF header.
 struct pe32_header {
   support::ulittle16_t Magic;
-  uint8_t  MajorLinkerVersion;
-  uint8_t  MinorLinkerVersion;
+  uint8_t MajorLinkerVersion;
+  uint8_t MinorLinkerVersion;
   support::ulittle32_t SizeOfCode;
   support::ulittle32_t SizeOfInitializedData;
   support::ulittle32_t SizeOfUninitializedData;
@@ -100,8 +99,8 @@ struct pe32_header {
 /// The 64-bit PE header that follows the COFF header.
 struct pe32plus_header {
   support::ulittle16_t Magic;
-  uint8_t  MajorLinkerVersion;
-  uint8_t  MinorLinkerVersion;
+  uint8_t MajorLinkerVersion;
+  uint8_t MinorLinkerVersion;
   support::ulittle32_t SizeOfCode;
   support::ulittle32_t SizeOfInitializedData;
   support::ulittle32_t SizeOfUninitializedData;
@@ -197,16 +196,12 @@ struct coff_symbol {
 
   support::ulittle16_t Type;
 
-  support::ulittle8_t  StorageClass;
-  support::ulittle8_t  NumberOfAuxSymbols;
+  support::ulittle8_t StorageClass;
+  support::ulittle8_t NumberOfAuxSymbols;
 
-  uint8_t getBaseType() const {
-    return Type & 0x0F;
-  }
+  uint8_t getBaseType() const { return Type & 0x0F; }
 
-  uint8_t getComplexType() const {
-    return (Type & 0xF0) >> 4;
-  }
+  uint8_t getComplexType() const { return (Type & 0xF0) >> 4; }
 };
 
 struct coff_section {
@@ -278,26 +273,26 @@ private:
   friend class ImportDirectoryEntryRef;
   friend class ExportDirectoryEntryRef;
   const coff_file_header *COFFHeader;
-  const pe32_header      *PE32Header;
-  const pe32plus_header  *PE32PlusHeader;
-  const data_directory   *DataDirectory;
-  const coff_section     *SectionTable;
-  const coff_symbol      *SymbolTable;
-  const char             *StringTable;
-        uint32_t          StringTableSize;
+  const pe32_header *PE32Header;
+  const pe32plus_header *PE32PlusHeader;
+  const data_directory *DataDirectory;
+  const coff_section *SectionTable;
+  const coff_symbol *SymbolTable;
+  const char *StringTable;
+  uint32_t StringTableSize;
   const import_directory_table_entry *ImportDirectory;
-        uint32_t          NumberOfImportDirectory;
+  uint32_t NumberOfImportDirectory;
   const export_directory_table_entry *ExportDirectory;
 
-        error_code        getString(uint32_t offset, StringRef &Res) const;
+  error_code getString(uint32_t offset, StringRef &Res) const;
 
-  const coff_symbol      *toSymb(DataRefImpl Symb) const;
-  const coff_section     *toSec(DataRefImpl Sec) const;
-  const coff_relocation  *toRel(DataRefImpl Rel) const;
+  const coff_symbol *toSymb(DataRefImpl Symb) const;
+  const coff_section *toSec(DataRefImpl Sec) const;
+  const coff_relocation *toRel(DataRefImpl Rel) const;
 
-        error_code        initSymbolTablePtr();
-        error_code        initImportTablePtr();
-        error_code        initExportTablePtr();
+  error_code initSymbolTablePtr();
+  error_code initImportTablePtr();
+  error_code initExportTablePtr();
 
 protected:
   void moveSymbolNext(DataRefImpl &Symb) const override;
@@ -337,10 +332,12 @@ protected:
   error_code getRelocationOffset(DataRefImpl Rel, uint64_t &Res) const override;
   symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
   error_code getRelocationType(DataRefImpl Rel, uint64_t &Res) const override;
-  error_code getRelocationTypeName(DataRefImpl Rel,
-                                  SmallVectorImpl<char> &Result) const override;
-  error_code getRelocationValueString(DataRefImpl Rel,
-                                  SmallVectorImpl<char> &Result) const override;
+  error_code
+  getRelocationTypeName(DataRefImpl Rel,
+                        SmallVectorImpl<char> &Result) const override;
+  error_code
+  getRelocationValueString(DataRefImpl Rel,
+                           SmallVectorImpl<char> &Result) const override;
 
   error_code getLibraryNext(DataRefImpl LibData,
                             LibraryRef &Result) const override;
@@ -381,7 +378,7 @@ public:
   error_code getAuxSymbol(uint32_t index, const T *&Res) const {
     const coff_symbol *s;
     error_code ec = getSymbol(index, s);
-    Res = reinterpret_cast<const T*>(s);
+    Res = reinterpret_cast<const T *>(s);
     return ec;
   }
   error_code getSymbolName(const coff_symbol *symbol, StringRef &Res) const;
@@ -395,9 +392,7 @@ public:
   error_code getRvaPtr(uint32_t Rva, uintptr_t &Res) const;
   error_code getHintName(uint32_t Rva, uint16_t &Hint, StringRef &Name) const;
 
-  static inline bool classof(const Binary *v) {
-    return v->isCOFF();
-  }
+  static inline bool classof(const Binary *v) { return v->isCOFF(); }
 };
 
 // The iterator for the import directory table.
