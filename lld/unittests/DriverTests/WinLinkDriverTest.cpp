@@ -347,13 +347,13 @@ const uint32_t write = llvm::COFF::IMAGE_SCN_MEM_WRITE;
     EXPECT_EQ(expect, _context.getSectionAttributes(".text", execute | read)); \
   }
 
-TEST_SECTION(SectionD, "d", execute | read | discardable);
-TEST_SECTION(SectionE, "e", execute);
-TEST_SECTION(SectionK, "k", execute | read | not_cached);
-TEST_SECTION(SectionP, "p", execute | read | not_paged);
-TEST_SECTION(SectionR, "r", read);
-TEST_SECTION(SectionS, "s", execute | read | shared);
-TEST_SECTION(SectionW, "w", write);
+TEST_SECTION(SectionD, "d", execute | read | discardable)
+TEST_SECTION(SectionE, "e", execute)
+TEST_SECTION(SectionK, "k", execute | read | not_cached)
+TEST_SECTION(SectionP, "p", execute | read | not_paged)
+TEST_SECTION(SectionR, "r", read)
+TEST_SECTION(SectionS, "s", execute | read | shared)
+TEST_SECTION(SectionW, "w", write)
 
 #undef TEST_SECTION
 
