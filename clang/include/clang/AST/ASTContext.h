@@ -2272,17 +2272,17 @@ private:
   void getObjCEncodingForStructureImpl(RecordDecl *RD, std::string &S,
                                        const FieldDecl *Field,
                                        bool includeVBases = true) const;
-
+public:
   // Adds the encoding of a method parameter or return type.
   void getObjCEncodingForMethodParameter(Decl::ObjCDeclQualifier QT,
                                          QualType T, std::string& S,
                                          bool Extended) const;
-
+  
+private:
   const ASTRecordLayout &
   getObjCLayout(const ObjCInterfaceDecl *D,
                 const ObjCImplementationDecl *Impl) const;
 
-private:
   /// \brief A set of deallocations that should be performed when the
   /// ASTContext is destroyed.
   typedef llvm::SmallDenseMap<void(*)(void*), llvm::SmallVector<void*, 16> >
