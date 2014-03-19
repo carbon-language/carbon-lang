@@ -792,11 +792,14 @@ bool Sema::isAnyFunctionDecl() {
 }
 
 bool Sema::isFunctionOrMethodVariadic() {
-  if (!isAnyFunctionDecl() && !isObjCMethodDecl())
+  if (!isAnyFunctionDecl() && !isObjCMethodDecl() && !isFunctionTemplateDecl())
     return false;
   if (const FunctionDecl *FD =
         dyn_cast<FunctionDecl>(ThisDeclInfo->CurrentDecl))
     return FD->isVariadic();
+  if (const FunctionTemplateDecl *FTD =
+        dyn_cast<FunctionTemplateDecl>(ThisDeclInfo->CurrentDecl))
+    return FTD->getTemplatedDecl()->isVariadic();
   if (const ObjCMethodDecl *MD =
         dyn_cast<ObjCMethodDecl>(ThisDeclInfo->CurrentDecl))
     return MD->isVariadic();
