@@ -428,17 +428,25 @@ void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
   for (int i = 0; i < r->n; i++)
     rep.AddMutex(r->loop[i].mtx_ctx0);
   StackTrace stacks[2 * DDReport::kMaxLoopSize];
+  uptr dummy_pc = 0x42;
   for (int i = 0; i < r->n; i++) {
     uptr size;
     for (int j = 0; j < 2; j++) {
       u32 stk = r->loop[i].stk[j];
-      if (!stk) continue;
-      const uptr *trace = StackDepotGet(stk, &size);
-      stacks[i].Init(const_cast<uptr *>(trace), size);
+      if (stk) {
+        const uptr *trace = StackDepotGet(stk, &size);
+        stacks[i].Init(const_cast<uptr *>(trace), size);
+      } else {
+        // Sometimes we fail to extract the stack trace (FIXME: investigate),
+        // but we should still produce some stack trace in the report.
+        stacks[i].Init(&dummy_pc, 1);
+      }
       rep.AddStack(&stacks[i]);
     }
   }
-  OutputReport(ctx, rep);
+  // FIXME: use all stacks for suppressions, not just the second stack of the
+  // first edge.
+  OutputReport(ctx, rep, rep.GetReport()->stacks[1]);
 #endif  // TSAN_GO
 }
 

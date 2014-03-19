@@ -26,6 +26,7 @@ enum SuppressionType {
   SuppressionSignal,
   SuppressionLeak,
   SuppressionLib,
+  SuppressionDeadlock,
   SuppressionTypeCount
 };
 

@@ -107,6 +107,8 @@ SuppressionType conv(ReportType typ) {
     return SuppressionSignal;
   else if (typ == ReportTypeErrnoInSignal)
     return SuppressionNone;
+  else if (typ == ReportTypeDeadlock)
+    return SuppressionDeadlock;
   Printf("ThreadSanitizer: unknown report type %d\n", typ),
   Die();
 }

@@ -20,8 +20,8 @@
 namespace __sanitizer {
 
 static const char *const kTypeStrings[SuppressionTypeCount] = {
-  "none", "race", "mutex", "thread", "signal", "leak", "called_from_lib"
-};
+    "none",   "race", "mutex",           "thread",
+    "signal", "leak", "called_from_lib", "deadlock"};
 
 bool TemplateMatch(char *templ, const char *str) {
   if (str == 0 || str[0] == 0)
