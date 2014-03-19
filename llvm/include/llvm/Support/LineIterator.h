@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_SUPPORT_LINEITERATOR_H__
+#define LLVM_SUPPORT_LINEITERATOR_H__
+
 #include "llvm/ADT/StringRef.h"
 #include <iterator>
 
@@ -53,6 +56,11 @@ public:
     advance();
     return *this;
   }
+  line_iterator operator++(int) {
+    line_iterator tmp(*this);
+    advance();
+    return tmp;
+  }
 
   /// \brief Get the current line as a \c StringRef.
   StringRef operator*() const { return CurrentLine; }
@@ -72,3 +80,5 @@ private:
   void advance();
 };
 }
+
+#endif // LLVM_SUPPORT_LINEITERATOR_H__
