@@ -12,6 +12,8 @@ namespace test {
 TEST(ExplicitConstructorCheckTest, SingleArgumentConstructorsOnly) {
   EXPECT_NO_CHANGES(ExplicitConstructorCheck, "class C { C(); };");
   EXPECT_NO_CHANGES(ExplicitConstructorCheck, "class C { C(int i, int j); };");
+  EXPECT_NO_CHANGES(ExplicitConstructorCheck,
+                    "class C { C(const C&) = delete; };");
 }
 
 TEST(ExplicitConstructorCheckTest, Basic) {
