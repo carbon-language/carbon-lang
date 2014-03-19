@@ -9,7 +9,6 @@
 
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -50,27 +49,6 @@ const MCSymbol &MCSymbol::AliasedSymbol() const {
     S = &Ref->getSymbol();
   }
   return *S;
-}
-
-const MCSymbol *MCSymbol::getBaseSymbol(const MCAsmLayout &Layout) const {
-  // FIXME: shouldn't EvaluateAsRelocatable be responsible for following as many
-  // variables as possible?
-
-  const MCSymbol *S = this;
-  while (S->isVariable()) {
-    const MCExpr *Expr = S->getVariableValue();
-    MCValue Value;
-    if (!Expr->EvaluateAsRelocatable(Value, &Layout))
-      return nullptr;
-
-    if (Value.getSymB())
-      return nullptr;
-    const MCSymbolRefExpr *A = Value.getSymA();
-    if (!A)
-      return nullptr;
-    S = &A->getSymbol();
-  }
-  return S;
 }
 
 void MCSymbol::setVariableValue(const MCExpr *Value) {
