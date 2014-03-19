@@ -150,7 +150,7 @@ sub GetCCArgs {
   close(TO_PARENT);
   my $line;
   while (<FROM_CHILD>) {
-    next if (!/-cc1/);
+    next if (!/\b-cc1\b/);
     $line = $_;
   }
 
@@ -496,7 +496,7 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     next;
   }
   # Handle the case where there isn't a space after -iquote
-  if ($Arg =~ /-iquote.*/) {
+  if ($Arg =~ /^-iquote.*/) {
     push @CompileOpts,$Arg;
     next;
   }
@@ -556,7 +556,7 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     next;
   }
 
-  if ($Arg =~ /-m.*/) {
+  if ($Arg =~ /^-m.*/) {
     push @CompileOpts,$Arg;
     next;
   }
