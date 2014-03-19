@@ -117,54 +117,6 @@ void relocLldLo16(uint8_t *location, uint64_t S) {
 
 } // end anon namespace
 
-MipsTargetRelocationHandler::~MipsTargetRelocationHandler() {
-  assert(_pairedRelocations.empty());
-}
-
-void
-MipsTargetRelocationHandler::savePairedRelocation(const lld::AtomLayout &atom,
-                                                  const Reference &ref) const {
-  auto pi = _pairedRelocations.find(&atom);
-  if (pi == _pairedRelocations.end())
-    pi = _pairedRelocations.emplace(&atom, PairedRelocationsT()).first;
-
-  pi->second.push_back(&ref);
-}
-
-void MipsTargetRelocationHandler::applyPairedRelocations(
-    ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
-    int64_t gpAddr, int64_t loAddend) const {
-  auto pi = _pairedRelocations.find(&atom);
-  if (pi == _pairedRelocations.end())
-    return;
-
-  for (auto ri : pi->second) {
-    uint8_t *atomContent = buf.getBufferStart() + atom._fileOffset;
-    uint8_t *location = atomContent + ri->offsetInAtom();
-    uint64_t targetVAddress = writer.addressOfAtom(ri->target());
-    uint64_t relocVAddress = atom._virtualAddr + ri->offsetInAtom();
-
-    int64_t ahl = calcAHL(ri->addend(), loAddend);
-
-    if (ri->kindNamespace() != lld::Reference::KindNamespace::ELF)
-      continue;
-    assert(ri->kindArch() == Reference::KindArch::Mips);
-    switch (ri->kindValue()) {
-    case R_MIPS_HI16:
-      relocHi16(location, relocVAddress, targetVAddress, ahl, gpAddr,
-                ri->target()->name() == "_gp_disp");
-      break;
-    case R_MIPS_GOT16:
-      relocGOT16(location, relocVAddress, targetVAddress, ahl, gpAddr);
-      break;
-    default:
-      llvm_unreachable("Unknown type of paired relocation.");
-    }
-  }
-
-  _pairedRelocations.erase(pi);
-}
-
 error_code MipsTargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
@@ -190,15 +142,15 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     reloc26loc(location, relocVAddress, targetVAddress, ref.addend());
     break;
   case R_MIPS_HI16:
-    savePairedRelocation(atom, ref);
+    relocHi16(location, relocVAddress, targetVAddress, ref.addend(), gpAddr,
+              ref.target()->name() == "_gp_disp");
     break;
   case R_MIPS_LO16:
-    relocLo16(location, relocVAddress, targetVAddress, calcAHL(0, ref.addend()),
-              gpAddr, ref.target()->name() == "_gp_disp");
-    applyPairedRelocations(writer, buf, atom, gpAddr, ref.addend());
+    relocLo16(location, relocVAddress, targetVAddress, ref.addend(), gpAddr,
+              ref.target()->name() == "_gp_disp");
     break;
   case R_MIPS_GOT16:
-    savePairedRelocation(atom, ref);
+    relocGOT16(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
     break;
   case R_MIPS_CALL16:
     relocCall16(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);

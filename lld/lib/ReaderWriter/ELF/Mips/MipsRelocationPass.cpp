@@ -152,6 +152,9 @@ private:
   /// \brief Handle a specific reference.
   void handleReference(const DefinedAtom &atom, const Reference &ref);
 
+  /// \brief Calculate AHL addendums for the atom's references.
+  void calculateAHLs(const DefinedAtom &atom);
+
   void handlePlain(const Reference &ref);
   void handlePLT(const Reference &ref);
   void handleGOT(const Reference &ref);
@@ -172,6 +175,9 @@ RelocationPass::RelocationPass(MipsLinkingContext &context)
 }
 
 void RelocationPass::perform(std::unique_ptr<MutableFile> &mf) {
+  for (const auto &atom : mf->defined())
+    calculateAHLs(*atom);
+
   // Process all references.
   for (const auto &atom : mf->defined())
     for (const auto &ref : *atom)
@@ -211,6 +217,41 @@ void RelocationPass::perform(std::unique_ptr<MutableFile> &mf) {
     obj->setOrdinal(ordinal++);
     mf->addAtom(*obj);
   }
+}
+
+/// \brief Calculate AHL value combines addends from 'hi' and 'lo' relocations.
+inline int64_t calcAHL(int64_t AHI, int64_t ALO) {
+  AHI &= 0xffff;
+  ALO &= 0xffff;
+  return (AHI << 16) + (int16_t)ALO;
+}
+
+void RelocationPass::calculateAHLs(const DefinedAtom &atom) {
+  std::vector<Reference *> references;
+  for (const auto &ref : atom) {
+    if (ref->kindNamespace() != lld::Reference::KindNamespace::ELF)
+      continue;
+    assert(ref->kindArch() == Reference::KindArch::Mips);
+    switch (ref->kindValue()) {
+      case R_MIPS_HI16:
+        references.push_back(const_cast<Reference *>(ref));
+        break;
+      case R_MIPS_GOT16:
+        if (isLocal(ref->target()))
+          references.push_back(const_cast<Reference *>(ref));
+        break;
+      case R_MIPS_LO16:
+        for (auto &sr : references)
+          sr->setAddend(calcAHL(sr->addend(), ref->addend()));
+        references.clear();
+        break;
+    }
+  }
+  if (!references.empty()) {
+    for (auto &sr : references)
+      sr->setAddend(0);
+  }
+  assert(references.empty());
 }
 
 void RelocationPass::handleReference(const DefinedAtom &atom,

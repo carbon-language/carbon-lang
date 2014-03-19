@@ -22,25 +22,11 @@ public:
   MipsTargetRelocationHandler(MipsTargetLayout<Mips32ElELFType> &layout)
       : _mipsTargetLayout(layout) {}
 
-  ~MipsTargetRelocationHandler();
-
   error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                              const lld::AtomLayout &,
                              const Reference &) const override;
 
 private:
-  typedef std::vector<const Reference *> PairedRelocationsT;
-  typedef std::unordered_map<const lld::AtomLayout *, PairedRelocationsT>
-  PairedRelocationMapT;
-
-  mutable PairedRelocationMapT _pairedRelocations;
-
-  void savePairedRelocation(const lld::AtomLayout &atom,
-                            const Reference &ref) const;
-  void applyPairedRelocations(ELFWriter &writer, llvm::FileOutputBuffer &buf,
-                              const lld::AtomLayout &atom, int64_t gpAddr,
-                              int64_t loAddend) const;
-
   MipsTargetLayout<Mips32ElELFType> &_mipsTargetLayout;
 };
 
