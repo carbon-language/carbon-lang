@@ -30,7 +30,6 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -Wno-format
   -Werror
   -Werror=sign-compare
-  -std=c++11
   -g
   -O2)
 append_if(COMPILER_RT_HAS_WNO_VARIADIC_MACROS_FLAG -Wno-variadic-macros ASAN_UNITTEST_COMMON_CFLAGS)
@@ -147,7 +146,7 @@ macro(add_asan_tests_for_arch arch)
   set(ASAN_INST_TEST_OBJECTS)
   foreach(src ${ASAN_INST_TEST_SOURCES})
     asan_compile(ASAN_INST_TEST_OBJECTS ${src} ${arch}
-                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
+                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} -std=c++11)
   endforeach()
   if (APPLE)
     # Add Mac-specific helper.
@@ -181,7 +180,7 @@ macro(add_asan_tests_for_arch arch)
   set(ASAN_NOINST_TEST_OBJECTS)
   foreach(src ${ASAN_NOINST_TEST_SOURCES})
     asan_compile(ASAN_NOINST_TEST_OBJECTS ${src} ${arch}
-                 ${ASAN_UNITTEST_COMMON_CFLAGS})
+                 ${ASAN_UNITTEST_COMMON_CFLAGS} -std=c++11)
   endforeach()
   add_asan_test(AsanUnitTests "Asan-${arch}-Noinst-Test" ${arch}
                 OBJECTS ${ASAN_NOINST_TEST_OBJECTS}
@@ -192,7 +191,7 @@ macro(add_asan_tests_for_arch arch)
   set(ASAN_BENCHMARKS_OBJECTS)
   foreach(src ${ASAN_BENCHMARKS_SOURCES})
     asan_compile(ASAN_BENCHMARKS_OBJECTS ${src} ${arch}
-                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
+                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} -std=c++11)
   endforeach()
   add_asan_test(AsanBenchmarks "Asan-${arch}-Benchmark" ${arch}
                 OBJECTS ${ASAN_BENCHMARKS_OBJECTS}
