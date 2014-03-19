@@ -144,7 +144,7 @@ Module maps
 -----------
 The crucial link between modules and headers is described by a *module map*, which describes how a collection of existing headers maps on to the (logical) structure of a module. For example, one could imagine a module ``std`` covering the C standard library. Each of the C standard library headers (``<stdio.h>``, ``<stdlib.h>``, ``<math.h>``, etc.) would contribute to the ``std`` module, by placing their respective APIs into the corresponding submodule (``std.io``, ``std.lib``, ``std.math``, etc.). Having a list of the headers that are part of the ``std`` module allows the compiler to build the ``std`` module as a standalone entity, and having the mapping from header names to (sub)modules allows the automatic translation of ``#include`` directives to module imports.
 
-Module maps are specified as separate files (each named ``module.map``) alongside the headers they describe, which allows them to be added to existing software libraries without having to change the library headers themselves (in most cases [#]_). The actual `Module map language`_ is described in a later section.
+Module maps are specified as separate files (each named ``module.modulemap``) alongside the headers they describe, which allows them to be added to existing software libraries without having to change the library headers themselves (in most cases [#]_). The actual `Module map language`_ is described in a later section.
 
 .. note::
 
@@ -237,9 +237,12 @@ Module Map Language
 
 The module map language describes the mapping from header files to the
 logical structure of modules. To enable support for using a library as
-a module, one must write a ``module.map`` file for that library. The
-``module.map`` file is placed alongside the header files themselves,
+a module, one must write a ``module.modulemap`` file for that library. The
+``module.modulemap`` file is placed alongside the header files themselves,
 and is written in the module map language described below.
+
+.. note::
+    For compatibility with previous releases, if a module map file named ``module.modulemap`` is not found, Clang will also search for a file named ``module.map``. This behavior is deprecated and we plan to eventually remove it.
 
 As an example, the module map file for the C standard library might look a bit like this:
 
@@ -319,7 +322,7 @@ The ``framework`` qualifier specifies that this module corresponds to a Darwin-s
 .. parsed-literal::
 
   Name.framework/
-    module.map                Module map for the framework
+    Modules/module.modulemap  Module map for the framework
     Headers/                  Subdirectory containing framework headers
     Frameworks/               Subdirectory containing embedded frameworks
     Resources/                Subdirectory containing additional resources
