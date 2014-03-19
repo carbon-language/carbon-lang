@@ -99,8 +99,16 @@ def as_i32imm: SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getSExtValue(), MVT::i32);
 }]>;
 
+def IMM8bit : PatLeaf <(imm),
+  [{return isUInt<8>(N->getZExtValue());}]
+>;
+
 def IMM12bit : PatLeaf <(imm),
   [{return isUInt<12>(N->getZExtValue());}]
+>;
+
+def IMM16bit : PatLeaf <(imm),
+  [{return isUInt<16>(N->getZExtValue());}]
 >;
 
 def mubuf_vaddr_offset : PatFrag<
@@ -387,6 +395,7 @@ class DS_1A <bits<8> op, dag outs, dag ins, string asm, list<dag> pat> :
     DS <op, outs, ins, asm, pat> {
   bits<16> offset;
 
+  // Single load interpret the 2 i8imm operands as a single i16 offset.
   let offset0 = offset{7-0};
   let offset1 = offset{15-8};
 }

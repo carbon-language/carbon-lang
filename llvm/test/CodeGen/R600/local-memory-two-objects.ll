@@ -24,11 +24,12 @@
 ; EG-CHECK: GROUP_BARRIER
 ; EG-CHECK-NEXT: ALU clause
 
-; Make sure the lds reads are using different addresses.
+; Make sure the lds reads are using different addresses, at different
+; constant offsets.
 ; EG-CHECK: LDS_READ_RET {{[*]*}} OQAP, {{PV|T}}[[ADDRR:[0-9]*\.[XYZW]]]
 ; EG-CHECK-NOT: LDS_READ_RET {{[*]*}} OQAP, T[[ADDRR]]
-; SI-CHECK: DS_READ_B32 {{v[0-9]+}}, [[ADDRR:v[0-9]+]]
-; SI-CHECK-NOT: DS_READ_B32 {{v[0-9]+}}, [[ADDRR]]
+; SI-CHECK: DS_READ_B32 {{v[0-9]+}}, [[ADDRR:v[0-9]+]], 16
+; SI-CHECK: DS_READ_B32 {{v[0-9]+}}, [[ADDRR]], 0,
 
 define void @local_memory_two_objects(i32 addrspace(1)* %out) {
 entry:

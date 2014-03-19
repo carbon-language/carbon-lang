@@ -2,8 +2,18 @@
 
 define void @use_gep_address_space([1024 x i32] addrspace(3)* %array) nounwind {
 ; CHECK-LABEL: @use_gep_address_space:
-; CHECK: S_ADD_I32
+; CHECK: V_MOV_B32_e32 [[PTR:v[0-9]+]], s{{[0-9]+}}
+; CHECK: DS_WRITE_B32 [[PTR]], v{{[0-9]+}}, 64
   %p = getelementptr [1024 x i32] addrspace(3)* %array, i16 0, i16 16
+  store i32 99, i32 addrspace(3)* %p
+  ret void
+}
+
+define void @use_gep_address_space_large_offset([1024 x i32] addrspace(3)* %array) nounwind {
+; CHECK-LABEL: @use_gep_address_space_large_offset:
+; CHECK: S_ADD_I32
+; CHECK: DS_WRITE_B32
+  %p = getelementptr [1024 x i32] addrspace(3)* %array, i16 0, i16 16384
   store i32 99, i32 addrspace(3)* %p
   ret void
 }
