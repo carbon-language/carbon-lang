@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <Accelerate/Accelerate.h>
-#include <vecLib/vecLibTypes.h>
 
 int main()
 {
