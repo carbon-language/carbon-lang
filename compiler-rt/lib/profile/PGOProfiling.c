@@ -22,7 +22,7 @@
 
 #if defined(_MSC_VER)
 typedef unsigned int uint32_t;
-typedef unsigned int uint64_t;
+typedef unsigned long long uint64_t;
 #elif I386_FREEBSD
 /* System headers define 'size_t' incorrectly on x64 FreeBSD (prior to
  * FreeBSD 10, r232261) when compiled in 32-bit mode.
