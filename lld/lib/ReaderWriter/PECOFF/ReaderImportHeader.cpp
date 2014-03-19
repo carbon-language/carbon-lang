@@ -184,7 +184,7 @@ public:
                              buf + offsetof(COFF::ImportHeader, SizeOfData));
 
     // Check if the total size is valid.
-    if (end - buf != sizeof(COFF::ImportHeader) + dataSize) {
+    if (std::size_t(end - buf) != sizeof(COFF::ImportHeader) + dataSize) {
       ec = make_error_code(NativeReaderError::unknown_file_format);
       return;
     }
