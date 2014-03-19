@@ -6,7 +6,7 @@
 // DEBUGGER: r
 // DEBUGGER: p v
 // CHECK: ${{[0-9]+}} =
-// CHECK:  Data = 0x0{{(0*)}}
+// CHECK:  Data ={{.*}} 0x0{{(0*)}}
 // CHECK:  Kind = 2142
 
 class SVal {
