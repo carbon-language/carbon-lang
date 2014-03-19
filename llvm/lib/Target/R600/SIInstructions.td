@@ -413,6 +413,7 @@ def DS_READ_I8 : DS_Load_Helper <0x00000039, "DS_READ_I8", VReg_32>;
 def DS_READ_U8 : DS_Load_Helper <0x0000003a, "DS_READ_U8", VReg_32>;
 def DS_READ_I16 : DS_Load_Helper <0x0000003b, "DS_READ_I16", VReg_32>;
 def DS_READ_U16 : DS_Load_Helper <0x0000003c, "DS_READ_U16", VReg_32>;
+def DS_READ_B64 : DS_Load_Helper <0x00000076, "DS_READ_B64", VReg_64>;
 
 //def BUFFER_LOAD_FORMAT_X : MUBUF_ <0x00000000, "BUFFER_LOAD_FORMAT_X", []>;
 //def BUFFER_LOAD_FORMAT_XY : MUBUF_ <0x00000001, "BUFFER_LOAD_FORMAT_XY", []>;
@@ -1932,6 +1933,7 @@ defm : DSReadPat <DS_READ_U8,  i32, az_extloadi8_local>;
 defm : DSReadPat <DS_READ_I16, i32, sextloadi16_local>;
 defm : DSReadPat <DS_READ_U16, i32, az_extloadi16_local>;
 defm : DSReadPat <DS_READ_B32, i32, local_load>;
+defm : DSReadPat <DS_READ_B64, i64, local_load>;
 
 multiclass DSWritePat <DS inst, ValueType vt, PatFrag frag> {
   def : Pat <
