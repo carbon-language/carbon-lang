@@ -1,4 +1,4 @@
-//===-- sanitizer_deadlock_detector1.cc -----------------------------------===//
+//===-- sanitizer_deadlock_detector2.cc -----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Deadlock detector implementation based on NxN adjacency bit matrix.
+// Deadlock detector implementation based on adjacency lists.
 //
 //===----------------------------------------------------------------------===//
 
