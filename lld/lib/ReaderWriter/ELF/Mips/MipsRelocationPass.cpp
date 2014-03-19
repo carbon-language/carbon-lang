@@ -126,7 +126,8 @@ private:
   RelocationPassFile _file;
 
   /// \brief Map Atoms to their GOT entries.
-  llvm::DenseMap<const Atom *, GOTAtom *> _gotMap;
+  llvm::DenseMap<const Atom *, GOTAtom *> _gotLocalMap;
+  llvm::DenseMap<const Atom *, GOTAtom *> _gotGlobalMap;
 
   /// \brief the list of local GOT atoms.
   std::vector<GOTAtom *> _localGotVector;
@@ -159,7 +160,8 @@ private:
   void handlePLT(const Reference &ref);
   void handleGOT(const Reference &ref);
 
-  const GOTAtom *getGOTEntry(const Atom *a);
+  const GOTAtom *getLocalGOTEntry(const Atom *a);
+  const GOTAtom *getGlobalGOTEntry(const Atom *a);
   const PLTAtom *getPLTEntry(const Atom *a);
   const ObjectAtom *getObjectEntry(const SharedLibraryAtom *a);
 
@@ -302,7 +304,10 @@ void RelocationPass::handleGOT(const Reference &ref) {
   if (ref.kindValue() == R_MIPS_GOT16 && !isLocal(ref.target()))
     const_cast<Reference &>(ref).setKindValue(LLD_R_MIPS_GLOBAL_GOT16);
 
-  const_cast<Reference &>(ref).setTarget(getGOTEntry(ref.target()));
+  if (requireLocalGOT(ref.target()))
+    const_cast<Reference &>(ref).setTarget(getLocalGOTEntry(ref.target()));
+  else
+    const_cast<Reference &>(ref).setTarget(getGlobalGOTEntry(ref.target()));
 }
 
 bool RelocationPass::requireLocalGOT(const Atom *a) {
@@ -325,22 +330,15 @@ bool RelocationPass::requireLocalGOT(const Atom *a) {
   return false;
 }
 
-const GOTAtom *RelocationPass::getGOTEntry(const Atom *a) {
-  auto got = _gotMap.find(a);
-  if (got != _gotMap.end())
+const GOTAtom *RelocationPass::getLocalGOTEntry(const Atom *a) {
+  auto got = _gotLocalMap.find(a);
+  if (got != _gotLocalMap.end())
     return got->second;
 
   auto ga = new (_file._alloc) GOT0Atom(_file);
-  _gotMap[a] = ga;
+  _gotLocalMap[a] = ga;
 
-  bool localGOT = requireLocalGOT(a);
-
-  if (localGOT)
-    _localGotVector.push_back(ga);
-  else {
-    _globalGotVector.push_back(ga);
-    ga->addReferenceELF_Mips(LLD_R_MIPS_GLOBAL_GOT, 0, a, 0);
-  }
+  _localGotVector.push_back(ga);
 
   if (const DefinedAtom *da = dyn_cast<DefinedAtom>(a))
     ga->addReferenceELF_Mips(R_MIPS_32, 0, da, 0);
@@ -348,8 +346,30 @@ const GOTAtom *RelocationPass::getGOTEntry(const Atom *a) {
   DEBUG_WITH_TYPE("MipsGOT", {
     ga->_name = "__got_";
     ga->_name += a->name();
-    llvm::dbgs() << "[ GOT ] Create " << (localGOT ? "L " : "G ") << a->name()
-                 << "\n";
+    llvm::dbgs() << "[ GOT ] Create L " << a->name() << "\n";
+  });
+
+  return ga;
+}
+
+const GOTAtom *RelocationPass::getGlobalGOTEntry(const Atom *a) {
+  auto got = _gotGlobalMap.find(a);
+  if (got != _gotGlobalMap.end())
+    return got->second;
+
+  auto ga = new (_file._alloc) GOT0Atom(_file);
+  _gotGlobalMap[a] = ga;
+
+  _globalGotVector.push_back(ga);
+  ga->addReferenceELF_Mips(LLD_R_MIPS_GLOBAL_GOT, 0, a, 0);
+
+  if (const DefinedAtom *da = dyn_cast<DefinedAtom>(a))
+    ga->addReferenceELF_Mips(R_MIPS_32, 0, da, 0);
+
+  DEBUG_WITH_TYPE("MipsGOT", {
+    ga->_name = "__got_";
+    ga->_name += a->name();
+    llvm::dbgs() << "[ GOT ] Create G " << a->name() << "\n";
   });
 
   return ga;
