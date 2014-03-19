@@ -11,7 +11,7 @@
 
 /* TODO: Calculate these with linker magic. */
 static __llvm_pgo_data *First = NULL;
-static __llvm_pgo_data *Final = NULL;
+static __llvm_pgo_data *Last = NULL;
 
 /*!
  * \brief Register an instrumented function.
@@ -27,8 +27,8 @@ void __llvm_pgo_register_function(void *Data_) {
   __llvm_pgo_data *Data = (__llvm_pgo_data*)Data_;
   if (!First || Data < First)
     First = Data;
-  if (!Final || Data > Final)
-    Final = Data;
+  if (!Last || Data >= Last)
+    Last = Data + 1;
 }
 
 /*! \brief Get the first instrumentation record. */
@@ -40,7 +40,7 @@ static __llvm_pgo_data *getFirst() {
 /*! \brief Get the last instrumentation record. */
 static __llvm_pgo_data *getLast() {
   /* TODO: Use extern + linker magic instead of a static variable. */
-  return Final + 1;
+  return Last;
 }
 
 /* TODO: void __llvm_pgo_get_size_for_buffer(void);  */
@@ -67,4 +67,3 @@ void __llvm_pgo_write_buffer(FILE *OutputFile) {
   for (I = getFirst(), E = getLast(); I != E; ++I)
     writeFunction(OutputFile, I);
 }
-
