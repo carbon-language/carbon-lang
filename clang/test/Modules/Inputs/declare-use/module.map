@@ -37,6 +37,7 @@ module XG {
   header "g1.h"
   use XC
   use XE
+  use XJ
 }
 
 module XH {
@@ -45,6 +46,10 @@ module XH {
   header "s.h"
   use XC
   use XE
+}
+
+module XJ {
+  header "j.h"
 }
 
 module XS {
