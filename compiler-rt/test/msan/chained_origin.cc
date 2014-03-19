@@ -41,11 +41,11 @@ int main(int argc, char *argv[]) {
 // CHECK: {{#0 .* in main.*chained_origin.cc:37}}
 
 // CHECK: Uninitialized value was stored to memory at
-// CHECK: {{#.* in fn_h.*chained_origin.cc:26}}
+// CHECK: {{#.* in fn_h.*chained_origin.cc:25}}
 // CHECK: {{#.* in main.*chained_origin.cc:36}}
 
 // CHECK: Uninitialized value was stored to memory at
-// CHECK: {{#.* in fn_g.*chained_origin.cc:16}}
+// CHECK: {{#.* in fn_g.*chained_origin.cc:15}}
 // CHECK: {{#.* in fn_f.*chained_origin.cc:20}}
 // CHECK: {{#.* in main.*chained_origin.cc:35}}
 

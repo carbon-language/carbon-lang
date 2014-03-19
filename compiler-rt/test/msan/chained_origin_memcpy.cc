@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 // CHECK: {{#.* in fn_h.*chained_origin_memcpy.cc:28}}
 
 // CHECK: Uninitialized value was stored to memory at
-// CHECK: {{#.* in fn_g.*chained_origin_memcpy.cc:.*}}
+// CHECK: {{#.* in fn_g.*chained_origin_memcpy.cc:18}}
 // CHECK: {{#.* in fn_f.*chained_origin_memcpy.cc:23}}
 
 // CHECK-Z1: Uninitialized value was created by an allocation of 'z1' in the stack frame of function 'main'
