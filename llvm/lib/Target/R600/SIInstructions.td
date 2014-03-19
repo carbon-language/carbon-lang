@@ -408,6 +408,8 @@ def DS_SUB_U32_RTN : DS_1A1D_RET <0x21, "DS_SUB_U32_RTN", VReg_32>;
 def DS_WRITE_B32 : DS_Store_Helper <0x0000000d, "DS_WRITE_B32", VReg_32>;
 def DS_WRITE_B8 : DS_Store_Helper <0x00000001e, "DS_WRITE_B8", VReg_32>;
 def DS_WRITE_B16 : DS_Store_Helper <0x00000001f, "DS_WRITE_B16", VReg_32>;
+def DS_WRITE_B64 : DS_Store_Helper <0x00000004d, "DS_WRITE_B64", VReg_64>;
+
 def DS_READ_B32 : DS_Load_Helper <0x00000036, "DS_READ_B32", VReg_32>;
 def DS_READ_I8 : DS_Load_Helper <0x00000039, "DS_READ_I8", VReg_32>;
 def DS_READ_U8 : DS_Load_Helper <0x0000003a, "DS_READ_U8", VReg_32>;
@@ -1942,7 +1944,7 @@ multiclass DSWritePat <DS inst, ValueType vt, PatFrag frag> {
   >;
 
   def : Pat <
-    (frag i32:$src1, i32:$src0),
+    (frag vt:$src1, i32:$src0),
     (inst 0, $src0, $src1, 0)
   >;
 }
@@ -1950,6 +1952,7 @@ multiclass DSWritePat <DS inst, ValueType vt, PatFrag frag> {
 defm : DSWritePat <DS_WRITE_B8, i32, truncstorei8_local>;
 defm : DSWritePat <DS_WRITE_B16, i32, truncstorei16_local>;
 defm : DSWritePat <DS_WRITE_B32, i32, local_store>;
+defm : DSWritePat <DS_WRITE_B64, i64, local_store>;
 
 def : Pat <(atomic_load_add_local i32:$ptr, i32:$val),
            (DS_ADD_U32_RTN 0, $ptr, $val, 0)>;
