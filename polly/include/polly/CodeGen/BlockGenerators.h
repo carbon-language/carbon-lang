@@ -265,7 +265,15 @@ private:
   /// %vector_ptr= bitcast double* %p to <4 x double>*
   /// %vec_full = load <4 x double>* %vector_ptr
   ///
-  Value *generateStrideOneLoad(const LoadInst *Load, ValueMapT &BBMap);
+  /// @param NegativeStride This is used to indicate a -1 stride. In such
+  ///                       a case we load the end of a base address and
+  ///                       shuffle the accesses in reverse order into the
+  ///                       vector. By default we would do only positive
+  ///                       strides.
+  ///
+  Value *generateStrideOneLoad(const LoadInst *Load,
+                               VectorValueMapT &ScalarMaps,
+                               bool NegativeStride);
 
   /// @brief Load a vector initialized from a single scalar in memory
   ///

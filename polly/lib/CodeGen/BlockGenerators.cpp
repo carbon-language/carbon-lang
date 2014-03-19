@@ -439,18 +439,34 @@ Type *VectorBlockGenerator::getVectorPtrTy(const Value *Val, int Width) {
   return PointerType::getUnqual(VectorType);
 }
 
-Value *VectorBlockGenerator::generateStrideOneLoad(const LoadInst *Load,
-                                                   ValueMapT &BBMap) {
+Value *
+VectorBlockGenerator::generateStrideOneLoad(const LoadInst *Load,
+                                            VectorValueMapT &ScalarMaps,
+                                            bool NegativeStride = false) {
+  unsigned VectorWidth = getVectorWidth();
   const Value *Pointer = Load->getPointerOperand();
-  Type *VectorPtrType = getVectorPtrTy(Pointer, getVectorWidth());
-  Value *NewPointer =
-      getNewValue(Pointer, BBMap, GlobalMaps[0], VLTS[0], getLoopForInst(Load));
+  Type *VectorPtrType = getVectorPtrTy(Pointer, VectorWidth);
+  unsigned Offset = NegativeStride ? VectorWidth - 1 : 0;
+
+  Value *NewPointer = NULL;
+  NewPointer = getNewValue(Pointer, ScalarMaps[Offset], GlobalMaps[Offset],
+                           VLTS[Offset], getLoopForInst(Load));
   Value *VectorPtr =
       Builder.CreateBitCast(NewPointer, VectorPtrType, "vector_ptr");
   LoadInst *VecLoad =
       Builder.CreateLoad(VectorPtr, Load->getName() + "_p_vec_full");
   if (!Aligned)
     VecLoad->setAlignment(8);
+
+  if (NegativeStride) {
+    SmallVector<Constant *, 16> Indices;
+    for (int i = VectorWidth - 1; i >= 0; i--)
+      Indices.push_back(ConstantInt::get(Builder.getInt32Ty(), i));
+    Constant *SV = llvm::ConstantVector::get(Indices);
+    Value *RevVecLoad = Builder.CreateShuffleVector(
+        VecLoad, VecLoad, SV, Load->getName() + "_reverse");
+    return RevVecLoad;
+  }
 
   return VecLoad;
 }
@@ -516,7 +532,9 @@ void VectorBlockGenerator::generateLoad(const LoadInst *Load,
   if (Access.isStrideZero(isl_map_copy(Schedule)))
     NewLoad = generateStrideZeroLoad(Load, ScalarMaps[0]);
   else if (Access.isStrideOne(isl_map_copy(Schedule)))
-    NewLoad = generateStrideOneLoad(Load, ScalarMaps[0]);
+    NewLoad = generateStrideOneLoad(Load, ScalarMaps);
+  else if (Access.isStrideX(isl_map_copy(Schedule), -1))
+    NewLoad = generateStrideOneLoad(Load, ScalarMaps, true);
   else
     NewLoad = generateUnknownStrideLoad(Load, ScalarMaps);
 
