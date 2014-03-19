@@ -14,11 +14,13 @@ class LogTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
     def test_with_dsym (self):
+        self.skipTest ("This test case depends on the exact output of lldb log.  Why is that useful?")
         self.buildDsym ()
         self.command_log_tests ("dsym")
 
     @dwarf_test
     def test_with_dwarf (self):
+        self.skipTest ("This test case depends on the exact output of lldb log.  Why is that useful?")
         self.buildDwarf ()
         self.command_log_tests ("dwarf")
 
