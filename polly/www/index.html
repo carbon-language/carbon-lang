@@ -73,6 +73,15 @@
 
   <table id="news">
   <tr><td><b>2014</b></td></tr>
+  <tr><td width="120"><p>March</p></td>
+  <td>
+  <h4>Static link Polly into tools</h4> Polly can now be configured with 'cmake
+  -D LINK_POLLY_INTO_TOOLS:Bool=ON' to be statically linked in the tools (opt,
+  bugpoint, and clang.) This makes it easier to use polly without having to load
+  a shared library, and it also reduces the complexity of compiling Polly on
+  Windows.
+  </td>
+  </tr>
   <tr><td width="120"><p>February</p></td>
   <td>
   <h4>Polly presentation at FOSDEM 2014</h4> Polly was <a
@@ -82,7 +91,7 @@
   The set of <a href="http://lab.llvm.org:8011/console?category=polly">Polly
   buildbots</a> has been extended. We now have 16 new blades that track
   correctness and performance when compiling the LLVM test-suite. For now five
-  of of them are used to provide <a
+  of them are used to provide <a
   href="http://llvm.org/perf/db_default/v4/nts/22463">fine granularity
   reports</a> (almost per-commit)
   for 'clang -O3' (no polly). We also have six machines that track different
