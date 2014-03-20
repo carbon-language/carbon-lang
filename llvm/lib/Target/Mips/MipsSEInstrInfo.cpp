@@ -84,11 +84,15 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                   unsigned DestReg, unsigned SrcReg,
                                   bool KillSrc) const {
   unsigned Opc = 0, ZeroReg = 0;
+  bool isMicroMips = TM.getSubtarget<MipsSubtarget>().inMicroMipsMode();
 
   if (Mips::GPR32RegClass.contains(DestReg)) { // Copy to CPU Reg.
-    if (Mips::GPR32RegClass.contains(SrcReg))
-      Opc = Mips::ADDu, ZeroReg = Mips::ZERO;
-    else if (Mips::CCRRegClass.contains(SrcReg))
+    if (Mips::GPR32RegClass.contains(SrcReg)) {
+      if (isMicroMips)
+        Opc = Mips::MOVE16_MM;
+      else
+        Opc = Mips::ADDu, ZeroReg = Mips::ZERO;
+    } else if (Mips::CCRRegClass.contains(SrcReg))
       Opc = Mips::CFC1;
     else if (Mips::FGR32RegClass.contains(SrcReg))
       Opc = Mips::MFC1;

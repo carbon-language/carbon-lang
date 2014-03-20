@@ -70,6 +70,31 @@ class LoadMM<string opstr, DAGOperand RO, SDPatternOperator OpNode = null_frag,
   let mayLoad = 1;
 }
 
+class MoveMM16<string opstr, RegisterOperand RO, bit isComm = 0,
+               InstrItinClass Itin = NoItinerary> :
+  MicroMipsInst16<(outs RO:$rd), (ins RO:$rs),
+                  !strconcat(opstr, "\t$rd, $rs"), [], Itin, FrmR> {
+  let isCommutable = isComm;
+  let isReMaterializable = 1;
+}
+
+// MicroMIPS Call
+def MicroMipsJmpLink : SDNode<"MipsISD::JmpLinkMM",SDT_MipsJmpLink,
+                              [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
+                              SDNPVariadic]>;
+
+// 16-bit Jump and Link (Call)
+class JumpLinkRegMM16<string opstr, RegisterOperand RO> :
+  MicroMipsInst16<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"),
+           [(MicroMipsJmpLink RO:$rs)], IIBranch, FrmR> {
+  let isCall = 1;
+  let hasDelaySlot = 1;
+  let Defs = [RA];
+}
+
+def MOVE16_MM : MoveMM16<"move", GPR32Opnd>, MOVE_FM_MM16<0x03>;
+def JALR16_MM : JumpLinkRegMM16<"jalr", GPR32Opnd>, JALR_FM_MM16<0x0e>;
+
 let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   /// Arithmetic Instructions (ALU Immediate)
   def ADDiu_MM : MMRel, ArithLogicI<"addiu", simm16, GPR32Opnd>,
@@ -207,7 +232,7 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
     def JAL_MM      : MMRel, JumpLink<"jal", calltarget_mm>, J_FM_MM<0x3d>;
   }
   def JR_MM   : MMRel, IndirectBranch<"jr", GPR32Opnd>, JR_FM_MM<0x3c>;
-  def JALR_MM : MMRel, JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM_MM<0x03c>;
+  def JALR_MM : JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM_MM<0x03c>;
   def RET_MM : MMRel, RetBase<"ret", GPR32Opnd>, JR_FM_MM<0x3c>;
 
   /// Branch Instructions

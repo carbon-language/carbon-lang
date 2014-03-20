@@ -616,7 +616,7 @@ let isCall=1, hasDelaySlot=1, Defs = [RA] in {
 
   class JumpLinkReg<string opstr, RegisterOperand RO>:
     InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
-           [], IIBranch, FrmR, opstr>;
+           [], IIBranch, FrmR>;
 
   class BGEZAL_FT<string opstr, DAGOperand opnd, RegisterOperand RO> :
     InstSE<(outs), (ins RO:$rs, opnd:$offset),
@@ -1042,7 +1042,9 @@ def BLTZ    : MMRel, CBranchZero<"bltz", brtarget, setlt, GPR32Opnd>,
 def B       : UncondBranch<BEQ>;
 
 def JAL  : MMRel, JumpLink<"jal", calltarget>, FJ<3>;
-def JALR : MMRel, JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM;
+let Predicates = [NotInMicroMips] in {
+def JALR : JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM;
+}
 def JALX  : JumpLink<"jalx", calltarget>, FJ<0x1D>;
 def JALRPseudo : JumpLinkRegPseudo<GPR32Opnd, JALR, RA>;
 def BGEZAL : MMRel, BGEZAL_FT<"bgezal", brtarget, GPR32Opnd>, BGEZAL_FM<0x11>;
@@ -1148,7 +1150,7 @@ def MTC2 : MFC3OP<"mtc2", GPR32Opnd>, MFC3OP_FM<0x12, 4>;
 //===----------------------------------------------------------------------===//
 def : InstAlias<"move $dst, $src",
                 (ADDu GPR32Opnd:$dst, GPR32Opnd:$src,ZERO), 1>,
-      Requires<[NotMips64]>;
+      Requires<[NotMips64, NotInMicroMips]>;
 def : InstAlias<"bal $offset", (BGEZAL ZERO, brtarget:$offset), 0>;
 def : InstAlias<"addu $rs, $rt, $imm",
                 (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
@@ -1157,7 +1159,9 @@ def : InstAlias<"add $rs, $rt, $imm",
 def : InstAlias<"and $rs, $rt, $imm",
                 (ANDi GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
 def : InstAlias<"j $rs", (JR GPR32Opnd:$rs), 0>;
+let Predicates = [NotInMicroMips] in {
 def : InstAlias<"jalr $rs", (JALR RA, GPR32Opnd:$rs), 0>;
+}
 def : InstAlias<"jal $rs", (JALR RA, GPR32Opnd:$rs), 0>;
 def : InstAlias<"jal $rd,$rs", (JALR GPR32Opnd:$rd, GPR32Opnd:$rs), 0>;
 def : InstAlias<"not $rt, $rs",

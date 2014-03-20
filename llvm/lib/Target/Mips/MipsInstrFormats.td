@@ -375,7 +375,7 @@ class LUI_FM : StdArch {
   let Inst{15-0}  = imm16;
 }
 
-class JALR_FM : StdArch {
+class JALR_FM {
   bits<5> rd;
   bits<5> rs;
 
