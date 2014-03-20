@@ -1,5 +1,5 @@
-; RUN: llc < %s -relocation-model=pic -disable-cfi -mtriple=x86_64-pc-solaris2.11 -disable-cgp-branch-opts | FileCheck %s -check-prefix=X64
-; RUN: llc < %s -relocation-model=pic -disable-cfi -mtriple=i386-pc-solaris2.11 -disable-cgp-branch-opts | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -relocation-model=pic -mtriple=x86_64-pc-solaris2.11 | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -relocation-model=pic -mtriple=i386-pc-solaris2.11 | FileCheck %s -check-prefix=X32
 ; PR1632
 
 define void @_Z1fv() {
