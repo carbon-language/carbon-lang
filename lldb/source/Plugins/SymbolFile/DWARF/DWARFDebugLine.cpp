@@ -256,7 +256,13 @@ DWARFDebugLine::DumpStatementOpcodes(Log *log, const DWARFDataExtractor& debug_l
                             prologue.file_names.push_back(fileEntry);
                         }
                         break;
-
+                            
+                    case DW_LNE_set_discriminator:
+                        {
+                            uint64_t discriminator = debug_line_data.GetULEB128(&offset);
+                            log->Printf( "0x%8.8x: DW_LNE_set_discriminator (0x%" PRIx64 ")", op_offset, discriminator);
+                        }
+                        break;
                     default:
                         log->Printf( "0x%8.8x: DW_LNE_??? (%2.2x) - Skipping unknown upcode", op_offset, opcode);
                         // Length doesn't include the zero opcode byte or the length itself, but
