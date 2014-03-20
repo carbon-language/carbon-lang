@@ -95,50 +95,52 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseCommonFlagsFromString(cf, str);
   CHECK((uptr)cf->malloc_context_size <= kStackTraceMax);
 
-  ParseFlag(str, &f->quarantine_size, "quarantine_size");
-  ParseFlag(str, &f->redzone, "redzone");
-  ParseFlag(str, &f->max_redzone, "max_redzone");
+  ParseFlag(str, &f->quarantine_size, "quarantine_size", "");
+  ParseFlag(str, &f->redzone, "redzone", "");
+  ParseFlag(str, &f->max_redzone, "max_redzone", "");
   CHECK_GE(f->redzone, 16);
   CHECK_GE(f->max_redzone, f->redzone);
   CHECK_LE(f->max_redzone, 2048);
   CHECK(IsPowerOfTwo(f->redzone));
   CHECK(IsPowerOfTwo(f->max_redzone));
 
-  ParseFlag(str, &f->debug, "debug");
-  ParseFlag(str, &f->report_globals, "report_globals");
-  ParseFlag(str, &f->check_initialization_order, "check_initialization_order");
+  ParseFlag(str, &f->debug, "debug", "");
+  ParseFlag(str, &f->report_globals, "report_globals", "");
+  ParseFlag(str, &f->check_initialization_order,
+            "check_initialization_order", "");
 
-  ParseFlag(str, &f->replace_str, "replace_str");
-  ParseFlag(str, &f->replace_intrin, "replace_intrin");
-  ParseFlag(str, &f->mac_ignore_invalid_free, "mac_ignore_invalid_free");
+  ParseFlag(str, &f->replace_str, "replace_str", "");
+  ParseFlag(str, &f->replace_intrin, "replace_intrin", "");
+  ParseFlag(str, &f->mac_ignore_invalid_free, "mac_ignore_invalid_free", "");
   ParseFlag(str, &f->detect_stack_use_after_return,
-            "detect_stack_use_after_return");
-  ParseFlag(str, &f->min_uar_stack_size_log, "min_uar_stack_size_log");
-  ParseFlag(str, &f->max_uar_stack_size_log, "max_uar_stack_size_log");
-  ParseFlag(str, &f->uar_noreserve, "uar_noreserve");
-  ParseFlag(str, &f->max_malloc_fill_size, "max_malloc_fill_size");
-  ParseFlag(str, &f->malloc_fill_byte, "malloc_fill_byte");
-  ParseFlag(str, &f->exitcode, "exitcode");
-  ParseFlag(str, &f->allow_user_poisoning, "allow_user_poisoning");
-  ParseFlag(str, &f->sleep_before_dying, "sleep_before_dying");
-  ParseFlag(str, &f->check_malloc_usable_size, "check_malloc_usable_size");
-  ParseFlag(str, &f->unmap_shadow_on_exit, "unmap_shadow_on_exit");
-  ParseFlag(str, &f->abort_on_error, "abort_on_error");
-  ParseFlag(str, &f->print_stats, "print_stats");
-  ParseFlag(str, &f->print_legend, "print_legend");
-  ParseFlag(str, &f->atexit, "atexit");
-  ParseFlag(str, &f->coverage, "coverage");
-  ParseFlag(str, &f->disable_core, "disable_core");
-  ParseFlag(str, &f->allow_reexec, "allow_reexec");
-  ParseFlag(str, &f->print_full_thread_history, "print_full_thread_history");
-  ParseFlag(str, &f->poison_heap, "poison_heap");
-  ParseFlag(str, &f->poison_partial, "poison_partial");
-  ParseFlag(str, &f->alloc_dealloc_mismatch, "alloc_dealloc_mismatch");
-  ParseFlag(str, &f->strict_memcmp, "strict_memcmp");
-  ParseFlag(str, &f->strict_init_order, "strict_init_order");
-  ParseFlag(str, &f->start_deactivated, "start_deactivated");
+            "detect_stack_use_after_return", "");
+  ParseFlag(str, &f->min_uar_stack_size_log, "min_uar_stack_size_log", "");
+  ParseFlag(str, &f->max_uar_stack_size_log, "max_uar_stack_size_log", "");
+  ParseFlag(str, &f->uar_noreserve, "uar_noreserve", "");
+  ParseFlag(str, &f->max_malloc_fill_size, "max_malloc_fill_size", "");
+  ParseFlag(str, &f->malloc_fill_byte, "malloc_fill_byte", "");
+  ParseFlag(str, &f->exitcode, "exitcode", "");
+  ParseFlag(str, &f->allow_user_poisoning, "allow_user_poisoning", "");
+  ParseFlag(str, &f->sleep_before_dying, "sleep_before_dying", "");
+  ParseFlag(str, &f->check_malloc_usable_size, "check_malloc_usable_size", "");
+  ParseFlag(str, &f->unmap_shadow_on_exit, "unmap_shadow_on_exit", "");
+  ParseFlag(str, &f->abort_on_error, "abort_on_error", "");
+  ParseFlag(str, &f->print_stats, "print_stats", "");
+  ParseFlag(str, &f->print_legend, "print_legend", "");
+  ParseFlag(str, &f->atexit, "atexit", "");
+  ParseFlag(str, &f->coverage, "coverage", "");
+  ParseFlag(str, &f->disable_core, "disable_core", "");
+  ParseFlag(str, &f->allow_reexec, "allow_reexec", "");
+  ParseFlag(str, &f->print_full_thread_history,
+            "print_full_thread_history", "");
+  ParseFlag(str, &f->poison_heap, "poison_heap", "");
+  ParseFlag(str, &f->poison_partial, "poison_partial", "");
+  ParseFlag(str, &f->alloc_dealloc_mismatch, "alloc_dealloc_mismatch", "");
+  ParseFlag(str, &f->strict_memcmp, "strict_memcmp", "");
+  ParseFlag(str, &f->strict_init_order, "strict_init_order", "");
+  ParseFlag(str, &f->start_deactivated, "start_deactivated", "");
   ParseFlag(str, &f->detect_invalid_pointer_pairs,
-            "detect_invalid_pointer_pairs");
+            "detect_invalid_pointer_pairs", "");
 }
 
 void InitializeFlags(Flags *f, const char *env) {
@@ -196,6 +198,9 @@ void InitializeFlags(Flags *f, const char *env) {
 
   // Override from command line.
   ParseFlagsFromString(f, env);
+  if (common_flags()->help) {
+    PrintFlagDescriptions();
+  }
 
 #if !CAN_SANITIZE_LEAKS
   if (cf->detect_leaks) {

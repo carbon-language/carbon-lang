@@ -76,7 +76,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->allow_addr2line = true;
 
   // Override from command line.
-  ParseFlag(env, &f->second_deadlock_stack, "second_deadlock_stack");
+  ParseFlag(env, &f->second_deadlock_stack, "second_deadlock_stack", "");
   ParseCommonFlagsFromString(f, env);
 
   // Copy back to common flags.

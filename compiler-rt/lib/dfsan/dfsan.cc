@@ -235,9 +235,9 @@ static void InitializeFlags(Flags &f, const char *env) {
   f.warn_nonzero_labels = false;
   f.strict_data_dependencies = true;
 
-  ParseFlag(env, &f.warn_unimplemented, "warn_unimplemented");
-  ParseFlag(env, &f.warn_nonzero_labels, "warn_nonzero_labels");
-  ParseFlag(env, &f.strict_data_dependencies, "strict_data_dependencies");
+  ParseFlag(env, &f.warn_unimplemented, "warn_unimplemented", "");
+  ParseFlag(env, &f.warn_nonzero_labels, "warn_nonzero_labels", "");
+  ParseFlag(env, &f.strict_data_dependencies, "strict_data_dependencies", "");
 }
 
 #ifdef DFSAN_NOLIBC

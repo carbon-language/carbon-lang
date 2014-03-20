@@ -20,6 +20,14 @@ namespace __sanitizer {
 
 CommonFlags common_flags_dont_use;
 
+struct FlagDescriptionList {
+  const char *name;
+  const char *description;
+  FlagDescriptionList *next;
+};
+
+FlagDescriptionList *flag_descriptions = 0, *last_flag_description = 0;
+
 void SetCommonFlagsDefaults(CommonFlags *f) {
   f->symbolize = true;
   f->external_symbolizer_path = 0;
@@ -47,29 +55,31 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
 }
 
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
-  ParseFlag(str, &f->symbolize, "symbolize");
-  ParseFlag(str, &f->external_symbolizer_path, "external_symbolizer_path");
-  ParseFlag(str, &f->allow_addr2line, "allow_addr2line");
-  ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix");
-  ParseFlag(str, &f->fast_unwind_on_fatal, "fast_unwind_on_fatal");
-  ParseFlag(str, &f->fast_unwind_on_malloc, "fast_unwind_on_malloc");
-  ParseFlag(str, &f->handle_ioctl, "handle_ioctl");
-  ParseFlag(str, &f->malloc_context_size, "malloc_context_size");
-  ParseFlag(str, &f->log_path, "log_path");
-  ParseFlag(str, &f->verbosity, "verbosity");
-  ParseFlag(str, &f->detect_leaks, "detect_leaks");
-  ParseFlag(str, &f->leak_check_at_exit, "leak_check_at_exit");
-  ParseFlag(str, &f->allocator_may_return_null, "allocator_may_return_null");
-  ParseFlag(str, &f->print_summary, "print_summary");
-  ParseFlag(str, &f->check_printf, "check_printf");
-  ParseFlag(str, &f->handle_segv, "handle_segv");
-  ParseFlag(str, &f->allow_user_segv_handler, "allow_user_segv_handler");
-  ParseFlag(str, &f->use_sigaltstack, "use_sigaltstack");
-  ParseFlag(str, &f->detect_deadlocks, "detect_deadlocks");
+  ParseFlag(str, &f->symbolize, "symbolize", "");
+  ParseFlag(str, &f->external_symbolizer_path, "external_symbolizer_path", "");
+  ParseFlag(str, &f->allow_addr2line, "allow_addr2line", "");
+  ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix", "");
+  ParseFlag(str, &f->fast_unwind_on_fatal, "fast_unwind_on_fatal", "");
+  ParseFlag(str, &f->fast_unwind_on_malloc, "fast_unwind_on_malloc", "");
+  ParseFlag(str, &f->handle_ioctl, "handle_ioctl", "");
+  ParseFlag(str, &f->malloc_context_size, "malloc_context_size", "");
+  ParseFlag(str, &f->log_path, "log_path", "");
+  ParseFlag(str, &f->verbosity, "verbosity", "");
+  ParseFlag(str, &f->detect_leaks, "detect_leaks", "");
+  ParseFlag(str, &f->leak_check_at_exit, "leak_check_at_exit", "");
+  ParseFlag(str, &f->allocator_may_return_null, "allocator_may_return_null",
+            "");
+  ParseFlag(str, &f->print_summary, "print_summary", "");
+  ParseFlag(str, &f->check_printf, "check_printf", "");
+  ParseFlag(str, &f->handle_segv, "handle_segv", "");
+  ParseFlag(str, &f->allow_user_segv_handler, "allow_user_segv_handler", "");
+  ParseFlag(str, &f->use_sigaltstack, "use_sigaltstack", "");
+  ParseFlag(str, &f->detect_deadlocks, "detect_deadlocks", "");
   ParseFlag(str, &f->clear_shadow_mmap_threshold,
-            "clear_shadow_mmap_threshold");
-  ParseFlag(str, &f->color, "color");
-  ParseFlag(str, &f->legacy_pthread_cond, "legacy_pthread_cond");
+            "clear_shadow_mmap_threshold", "");
+  ParseFlag(str, &f->color, "color", "");
+  ParseFlag(str, &f->legacy_pthread_cond, "legacy_pthread_cond", "");
+  ParseFlag(str, &f->help, "help", "");
 
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)
@@ -124,9 +134,49 @@ static bool StartsWith(const char *flag, int flag_length, const char *value) {
          (0 == internal_strncmp(flag, value, value_length));
 }
 
-void ParseFlag(const char *env, bool *flag, const char *name) {
+static LowLevelAllocator allocator_for_flags;
+
+// The linear scan is suboptimal, but the number of flags is relatively small.
+bool FlagInDescriptionList(const char *name) {
+  FlagDescriptionList *descr = flag_descriptions;
+  while (descr) {
+    if (!internal_strcmp(descr->name, name)) return true;
+    descr = descr->next;
+  }
+  return false;
+}
+
+void AddFlagDescription(const char *name, const char *description) {
+  if (FlagInDescriptionList(name)) return;
+  FlagDescriptionList *new_description =
+      (FlagDescriptionList*)allocator_for_flags.Allocate(
+          sizeof(FlagDescriptionList));
+  if (!last_flag_description) {
+    flag_descriptions = new_description;
+  } else {
+    last_flag_description->next = new_description;
+  }
+  new_description->name = name;
+  new_description->description = description;
+  new_description->next = 0;
+  last_flag_description = new_description;
+}
+
+// TODO(glider): put the descriptions inside CommonFlags.
+void PrintFlagDescriptions() {
+  FlagDescriptionList *descr = flag_descriptions;
+  Printf("Available flags for %s:\n", SanitizerToolName);
+  while (descr) {
+    Printf("\t%s - %s\n", descr->name, descr->description);
+    descr = descr->next;
+  }
+}
+
+void ParseFlag(const char *env, bool *flag,
+               const char *name, const char *descr) {
   const char *value;
   int value_length;
+  AddFlagDescription(name, descr);
   if (!GetFlagValue(env, name, &value, &value_length))
     return;
   if (StartsWith(value, value_length, "0") ||
@@ -139,27 +189,31 @@ void ParseFlag(const char *env, bool *flag, const char *name) {
     *flag = true;
 }
 
-void ParseFlag(const char *env, int *flag, const char *name) {
+void ParseFlag(const char *env, int *flag,
+               const char *name, const char *descr) {
   const char *value;
   int value_length;
+  AddFlagDescription(name, descr);
   if (!GetFlagValue(env, name, &value, &value_length))
     return;
   *flag = static_cast<int>(internal_atoll(value));
 }
 
-void ParseFlag(const char *env, uptr *flag, const char *name) {
+void ParseFlag(const char *env, uptr *flag,
+               const char *name, const char *descr) {
   const char *value;
   int value_length;
+  AddFlagDescription(name, descr);
   if (!GetFlagValue(env, name, &value, &value_length))
     return;
   *flag = static_cast<uptr>(internal_atoll(value));
 }
 
-static LowLevelAllocator allocator_for_flags;
-
-void ParseFlag(const char *env, const char **flag, const char *name) {
+void ParseFlag(const char *env, const char **flag,
+               const char *name, const char *descr) {
   const char *value;
   int value_length;
+  AddFlagDescription(name, descr);
   if (!GetFlagValue(env, name, &value, &value_length))
     return;
   // Copy the flag value. Don't use locks here, as flags are parsed at

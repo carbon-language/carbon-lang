@@ -107,24 +107,24 @@ static atomic_uint32_t NumStackOriginDescrs;
 static void ParseFlagsFromString(Flags *f, const char *str) {
   CommonFlags *cf = common_flags();
   ParseCommonFlagsFromString(cf, str);
-  ParseFlag(str, &f->poison_heap_with_zeroes, "poison_heap_with_zeroes");
-  ParseFlag(str, &f->poison_stack_with_zeroes, "poison_stack_with_zeroes");
-  ParseFlag(str, &f->poison_in_malloc, "poison_in_malloc");
-  ParseFlag(str, &f->poison_in_free, "poison_in_free");
-  ParseFlag(str, &f->exit_code, "exit_code");
+  ParseFlag(str, &f->poison_heap_with_zeroes, "poison_heap_with_zeroes", "");
+  ParseFlag(str, &f->poison_stack_with_zeroes, "poison_stack_with_zeroes", "");
+  ParseFlag(str, &f->poison_in_malloc, "poison_in_malloc", "");
+  ParseFlag(str, &f->poison_in_free, "poison_in_free", "");
+  ParseFlag(str, &f->exit_code, "exit_code", "");
   if (f->exit_code < 0 || f->exit_code > 127) {
     Printf("Exit code not in [0, 128) range: %d\n", f->exit_code);
     Die();
   }
-  ParseFlag(str, &f->report_umrs, "report_umrs");
-  ParseFlag(str, &f->wrap_signals, "wrap_signals");
+  ParseFlag(str, &f->report_umrs, "report_umrs", "");
+  ParseFlag(str, &f->wrap_signals, "wrap_signals", "");
 
   // keep_going is an old name for halt_on_error,
   // and it has inverse meaning.
   f->halt_on_error = !f->halt_on_error;
-  ParseFlag(str, &f->halt_on_error, "keep_going");
+  ParseFlag(str, &f->halt_on_error, "keep_going", "");
   f->halt_on_error = !f->halt_on_error;
-  ParseFlag(str, &f->halt_on_error, "halt_on_error");
+  ParseFlag(str, &f->halt_on_error, "halt_on_error", "");
 }
 
 static void InitializeFlags(Flags *f, const char *options) {
@@ -277,6 +277,7 @@ void __msan_init() {
 
   const char *msan_options = GetEnv("MSAN_OPTIONS");
   InitializeFlags(&msan_flags, msan_options);
+  if (common_flags()->help) PrintFlagDescriptions();
   __sanitizer_set_report_path(common_flags()->log_path);
 
   InitializeInterceptors();

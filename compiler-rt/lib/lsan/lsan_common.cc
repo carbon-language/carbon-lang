@@ -57,23 +57,23 @@ static void InitializeFlags() {
 
   const char *options = GetEnv("LSAN_OPTIONS");
   if (options) {
-    ParseFlag(options, &f->use_registers, "use_registers");
-    ParseFlag(options, &f->use_globals, "use_globals");
-    ParseFlag(options, &f->use_stacks, "use_stacks");
-    ParseFlag(options, &f->use_tls, "use_tls");
-    ParseFlag(options, &f->use_root_regions, "use_root_regions");
-    ParseFlag(options, &f->use_unaligned, "use_unaligned");
-    ParseFlag(options, &f->use_poisoned, "use_poisoned");
-    ParseFlag(options, &f->report_objects, "report_objects");
-    ParseFlag(options, &f->resolution, "resolution");
+    ParseFlag(options, &f->use_registers, "use_registers", "");
+    ParseFlag(options, &f->use_globals, "use_globals", "");
+    ParseFlag(options, &f->use_stacks, "use_stacks", "");
+    ParseFlag(options, &f->use_tls, "use_tls", "");
+    ParseFlag(options, &f->use_root_regions, "use_root_regions", "");
+    ParseFlag(options, &f->use_unaligned, "use_unaligned", "");
+    ParseFlag(options, &f->use_poisoned, "use_poisoned", "");
+    ParseFlag(options, &f->report_objects, "report_objects", "");
+    ParseFlag(options, &f->resolution, "resolution", "");
     CHECK_GE(&f->resolution, 0);
-    ParseFlag(options, &f->max_leaks, "max_leaks");
+    ParseFlag(options, &f->max_leaks, "max_leaks", "");
     CHECK_GE(&f->max_leaks, 0);
-    ParseFlag(options, &f->log_pointers, "log_pointers");
-    ParseFlag(options, &f->log_threads, "log_threads");
-    ParseFlag(options, &f->exitcode, "exitcode");
-    ParseFlag(options, &f->print_suppressions, "print_suppressions");
-    ParseFlag(options, &f->suppressions, "suppressions");
+    ParseFlag(options, &f->log_pointers, "log_pointers", "");
+    ParseFlag(options, &f->log_threads, "log_threads", "");
+    ParseFlag(options, &f->exitcode, "exitcode", "");
+    ParseFlag(options, &f->print_suppressions, "print_suppressions", "");
+    ParseFlag(options, &f->suppressions, "suppressions", "");
   }
 }
 

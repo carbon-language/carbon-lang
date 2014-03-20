@@ -18,10 +18,14 @@
 
 namespace __sanitizer {
 
-void ParseFlag(const char *env, bool *flag, const char *name);
-void ParseFlag(const char *env, int *flag, const char *name);
-void ParseFlag(const char *env, uptr *flag, const char *name);
-void ParseFlag(const char *env, const char **flag, const char *name);
+void ParseFlag(const char *env, bool *flag,
+    const char *name, const char *descr);
+void ParseFlag(const char *env, int *flag,
+    const char *name, const char *descr);
+void ParseFlag(const char *env, uptr *flag,
+    const char *name, const char *descr);
+void ParseFlag(const char *env, const char **flag,
+    const char *name, const char *descr);
 
 struct CommonFlags {
   // If set, use the online symbolizer from common sanitizer runtime to turn
@@ -80,6 +84,8 @@ struct CommonFlags {
   const char *color;
   // Enables support for dynamic libraries linked with libpthread 2.2.5.
   bool legacy_pthread_cond;
+  // Print help and exit.
+  bool help;
 };
 
 inline CommonFlags *common_flags() {
@@ -89,6 +95,7 @@ inline CommonFlags *common_flags() {
 
 void SetCommonFlagsDefaults(CommonFlags *f);
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str);
+void PrintFlagDescriptions();
 
 }  // namespace __sanitizer
 

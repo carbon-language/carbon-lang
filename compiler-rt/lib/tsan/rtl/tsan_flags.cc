@@ -34,34 +34,34 @@ const char *WEAK __tsan_default_options() {
 #endif
 
 static void ParseFlags(Flags *f, const char *env) {
-  ParseFlag(env, &f->enable_annotations, "enable_annotations");
-  ParseFlag(env, &f->suppress_equal_stacks, "suppress_equal_stacks");
-  ParseFlag(env, &f->suppress_equal_addresses, "suppress_equal_addresses");
-  ParseFlag(env, &f->suppress_java, "suppress_java");
-  ParseFlag(env, &f->report_bugs, "report_bugs");
-  ParseFlag(env, &f->report_thread_leaks, "report_thread_leaks");
-  ParseFlag(env, &f->report_destroy_locked, "report_destroy_locked");
-  ParseFlag(env, &f->report_signal_unsafe, "report_signal_unsafe");
-  ParseFlag(env, &f->report_atomic_races, "report_atomic_races");
-  ParseFlag(env, &f->force_seq_cst_atomics, "force_seq_cst_atomics");
-  ParseFlag(env, &f->suppressions, "suppressions");
-  ParseFlag(env, &f->print_suppressions, "print_suppressions");
-  ParseFlag(env, &f->print_benign, "print_benign");
-  ParseFlag(env, &f->exitcode, "exitcode");
-  ParseFlag(env, &f->halt_on_error, "halt_on_error");
-  ParseFlag(env, &f->atexit_sleep_ms, "atexit_sleep_ms");
-  ParseFlag(env, &f->profile_memory, "profile_memory");
-  ParseFlag(env, &f->flush_memory_ms, "flush_memory_ms");
-  ParseFlag(env, &f->flush_symbolizer_ms, "flush_symbolizer_ms");
-  ParseFlag(env, &f->memory_limit_mb, "memory_limit_mb");
-  ParseFlag(env, &f->stop_on_start, "stop_on_start");
-  ParseFlag(env, &f->running_on_valgrind, "running_on_valgrind");
-  ParseFlag(env, &f->history_size, "history_size");
-  ParseFlag(env, &f->io_sync, "io_sync");
-  ParseFlag(env, &f->die_after_fork, "die_after_fork");
+  ParseFlag(env, &f->enable_annotations, "enable_annotations", "");
+  ParseFlag(env, &f->suppress_equal_stacks, "suppress_equal_stacks", "");
+  ParseFlag(env, &f->suppress_equal_addresses, "suppress_equal_addresses", "");
+  ParseFlag(env, &f->suppress_java, "suppress_java", "");
+  ParseFlag(env, &f->report_bugs, "report_bugs", "");
+  ParseFlag(env, &f->report_thread_leaks, "report_thread_leaks", "");
+  ParseFlag(env, &f->report_destroy_locked, "report_destroy_locked", "");
+  ParseFlag(env, &f->report_signal_unsafe, "report_signal_unsafe", "");
+  ParseFlag(env, &f->report_atomic_races, "report_atomic_races", "");
+  ParseFlag(env, &f->force_seq_cst_atomics, "force_seq_cst_atomics", "");
+  ParseFlag(env, &f->suppressions, "suppressions", "");
+  ParseFlag(env, &f->print_suppressions, "print_suppressions", "");
+  ParseFlag(env, &f->print_benign, "print_benign", "");
+  ParseFlag(env, &f->exitcode, "exitcode", "");
+  ParseFlag(env, &f->halt_on_error, "halt_on_error", "");
+  ParseFlag(env, &f->atexit_sleep_ms, "atexit_sleep_ms", "");
+  ParseFlag(env, &f->profile_memory, "profile_memory", "");
+  ParseFlag(env, &f->flush_memory_ms, "flush_memory_ms", "");
+  ParseFlag(env, &f->flush_symbolizer_ms, "flush_symbolizer_ms", "");
+  ParseFlag(env, &f->memory_limit_mb, "memory_limit_mb", "");
+  ParseFlag(env, &f->stop_on_start, "stop_on_start", "");
+  ParseFlag(env, &f->running_on_valgrind, "running_on_valgrind", "");
+  ParseFlag(env, &f->history_size, "history_size", "");
+  ParseFlag(env, &f->io_sync, "io_sync", "");
+  ParseFlag(env, &f->die_after_fork, "die_after_fork", "");
 
   // DDFlags
-  ParseFlag(env, &f->second_deadlock_stack, "second_deadlock_stack");
+  ParseFlag(env, &f->second_deadlock_stack, "second_deadlock_stack", "");
 }
 
 void InitializeFlags(Flags *f, const char *env) {
@@ -117,6 +117,8 @@ void InitializeFlags(Flags *f, const char *env) {
     f->report_destroy_locked = false;
     f->report_signal_unsafe = false;
   }
+
+  if (f->help) PrintFlagDescriptions();
 
   if (f->history_size < 0 || f->history_size > 7) {
     Printf("ThreadSanitizer: incorrect value for history_size"

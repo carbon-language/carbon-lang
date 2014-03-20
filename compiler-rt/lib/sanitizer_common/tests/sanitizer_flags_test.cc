@@ -24,14 +24,14 @@ static const char kFlagName[] = "flag_name";
 template <typename T>
 static void TestFlag(T start_value, const char *env, T final_value) {
   T flag = start_value;
-  ParseFlag(env, &flag, kFlagName);
+  ParseFlag(env, &flag, kFlagName, "flag description");
   EXPECT_EQ(final_value, flag);
 }
 
 static void TestStrFlag(const char *start_value, const char *env,
                         const char *final_value) {
   const char *flag = start_value;
-  ParseFlag(env, &flag, kFlagName);
+  ParseFlag(env, &flag, kFlagName, "flag description");
   EXPECT_EQ(0, internal_strcmp(final_value, flag));
 }
 
@@ -70,8 +70,8 @@ static void TestTwoFlags(const char *env, bool expected_flag1,
                          const char *expected_flag2) {
   bool flag1 = !expected_flag1;
   const char *flag2 = "";
-  ParseFlag(env, &flag1, "flag1");
-  ParseFlag(env, &flag2, "flag2");
+  ParseFlag(env, &flag1, "flag1", "flag1 description");
+  ParseFlag(env, &flag2, "flag2", "flag2 description");
   EXPECT_EQ(expected_flag1, flag1);
   EXPECT_EQ(0, internal_strcmp(flag2, expected_flag2));
 }
