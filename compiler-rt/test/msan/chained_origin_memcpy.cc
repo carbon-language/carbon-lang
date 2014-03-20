@@ -1,8 +1,8 @@
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -mllvm -msan-track-origins=2 -m64 -DOFFSET=0 -O3 %s -o %t && \
+// RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -m64 -DOFFSET=0 -O3 %s -o %t && \
 // RUN:     not %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-Z1 < %t.out
 
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -mllvm -msan-track-origins=2 -DOFFSET=10 -m64 -O3 %s -o %t && \
+// RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -DOFFSET=10 -m64 -O3 %s -o %t && \
 // RUN:     not %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-Z2 < %t.out
 
