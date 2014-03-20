@@ -15,18 +15,19 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
+#include "sanitizer_list.h"
 
 namespace __sanitizer {
 
 CommonFlags common_flags_dont_use;
 
-struct FlagDescriptionList {
+struct FlagDescription {
   const char *name;
   const char *description;
-  FlagDescriptionList *next;
+  FlagDescription *next;
 };
 
-FlagDescriptionList *flag_descriptions = 0, *last_flag_description = 0;
+IntrusiveList<FlagDescription> flag_descriptions;
 
 void SetCommonFlagsDefaults(CommonFlags *f) {
   f->symbolize = true;
@@ -138,37 +139,30 @@ static LowLevelAllocator allocator_for_flags;
 
 // The linear scan is suboptimal, but the number of flags is relatively small.
 bool FlagInDescriptionList(const char *name) {
-  FlagDescriptionList *descr = flag_descriptions;
-  while (descr) {
-    if (!internal_strcmp(descr->name, name)) return true;
-    descr = descr->next;
+  IntrusiveList<FlagDescription>::Iterator it(&flag_descriptions);
+  while (it.hasNext()) {
+    if (!internal_strcmp(it.next()->name, name)) return true;
   }
   return false;
 }
 
 void AddFlagDescription(const char *name, const char *description) {
   if (FlagInDescriptionList(name)) return;
-  FlagDescriptionList *new_description =
-      (FlagDescriptionList*)allocator_for_flags.Allocate(
-          sizeof(FlagDescriptionList));
-  if (!last_flag_description) {
-    flag_descriptions = new_description;
-  } else {
-    last_flag_description->next = new_description;
-  }
+  FlagDescription *new_description =
+      (FlagDescription*)allocator_for_flags.Allocate(
+          sizeof(FlagDescription));
   new_description->name = name;
   new_description->description = description;
-  new_description->next = 0;
-  last_flag_description = new_description;
+  flag_descriptions.push_back(new_description);
 }
 
 // TODO(glider): put the descriptions inside CommonFlags.
 void PrintFlagDescriptions() {
-  FlagDescriptionList *descr = flag_descriptions;
+  IntrusiveList<FlagDescription>::Iterator it(&flag_descriptions);
   Printf("Available flags for %s:\n", SanitizerToolName);
-  while (descr) {
+  while (it.hasNext()) {
+    FlagDescription *descr = it.next();
     Printf("\t%s - %s\n", descr->name, descr->description);
-    descr = descr->next;
   }
 }
 
