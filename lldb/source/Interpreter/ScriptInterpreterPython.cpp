@@ -62,13 +62,6 @@ static ScriptInterpreter::SWIGPythonScriptKeyword_Target g_swig_run_script_keywo
 static ScriptInterpreter::SWIGPythonScriptKeyword_Frame g_swig_run_script_keyword_frame = NULL;
 static ScriptInterpreter::SWIGPython_GetDynamicSetting g_swig_plugin_get = NULL;
 
-static int
-_check_and_flush (FILE *stream)
-{
-  int prev_fail = ferror (stream);
-  return fflush (stream) || prev_fail ? EOF : 0;
-}
-
 static std::string
 ReadPythonBacktrace (PyObject* py_backtrace);
 

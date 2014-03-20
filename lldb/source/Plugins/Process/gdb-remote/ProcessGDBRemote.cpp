@@ -166,8 +166,6 @@ namespace {
     
 } // anonymous namespace end
 
-static bool rand_initialized = false;
-
 // TODO Randomly assigning a port is unsafe.  We should get an unused
 // ephemeral port from the kernel and make sure we reserve it before passing
 // it to debugserver.
@@ -180,19 +178,22 @@ static bool rand_initialized = false;
 #define HIGH_PORT   (49151u)
 #endif
 
+#if defined(__APPLE__) && defined(__arm__)
+static bool rand_initialized = false;
+
 static inline uint16_t
 get_random_port ()
 {
     if (!rand_initialized)
     {
         time_t seed = time(NULL);
-        
+
         rand_initialized = true;
         srand(seed);
     }
     return (rand() % (HIGH_PORT - LOW_PORT)) + LOW_PORT;
 }
-
+#endif
 
 lldb_private::ConstString
 ProcessGDBRemote::GetPluginNameStatic()

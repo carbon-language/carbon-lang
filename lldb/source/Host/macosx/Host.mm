@@ -1069,30 +1069,6 @@ Host::GetOSVersion
 }
 
 static bool
-GetMacOSXProcessName (const ProcessInstanceInfoMatch *match_info_ptr,
-                      ProcessInstanceInfo &process_info)
-{
-    if (process_info.ProcessIDIsValid())
-    {
-        char process_name[MAXCOMLEN * 2 + 1];
-        int name_len = ::proc_name(process_info.GetProcessID(), process_name, MAXCOMLEN * 2);
-        if (name_len == 0)
-            return false;
-        
-        if (match_info_ptr == NULL || NameMatches(process_name,
-                                                  match_info_ptr->GetNameMatchType(),
-                                                  match_info_ptr->GetProcessInfo().GetName()))
-        {
-            process_info.GetExecutableFile().SetFile (process_name, false);
-            return true;
-        }
-    }
-    process_info.GetExecutableFile().Clear();
-    return false;
-}
-
-
-static bool
 GetMacOSXProcessCPUType (ProcessInstanceInfo &process_info)
 {
     if (process_info.ProcessIDIsValid())

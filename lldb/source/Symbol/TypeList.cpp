@@ -179,49 +179,6 @@ TypeList::Dump(Stream *s, bool show_context)
     }
 }
 
-// depending on implementation details, type lookup might fail because of
-// embedded spurious namespace:: prefixes. this call strips them, paying
-// attention to the fact that a type might have namespace'd type names as
-// arguments to templates, and those must not be stripped off
-static bool
-GetTypeScopeAndBasename(const char* name_cstr, std::string &scope, std::string &basename, bool *exact_ptr)
-{
-    // Protect against null c string.
-    
-    if (name_cstr && name_cstr[0])
-    {
-        const char *basename_cstr = name_cstr;
-        const char* namespace_separator = ::strstr (basename_cstr, "::");
-        if (namespace_separator)
-        {
-            const char* template_arg_char = ::strchr (basename_cstr, '<');
-            while (namespace_separator != NULL)
-            {
-                if (template_arg_char && namespace_separator > template_arg_char) // but namespace'd template arguments are still good to go
-                    break;
-                basename_cstr = namespace_separator + 2;
-                namespace_separator = strstr(basename_cstr, "::");
-            }
-            if (basename_cstr > name_cstr)
-            {
-                scope.assign (name_cstr, basename_cstr - name_cstr);
-                if (scope.size() >= 2 && scope[0] == ':' && scope[1] == ':')
-                {
-                    // The typename passed in started with "::" so make sure we only do exact matches
-                    if (exact_ptr)
-                        *exact_ptr = true;
-                    // Strip the leading "::" as this won't ever show in qualified typenames we get
-                    // from clang.
-                    scope.erase(0,2);
-                }
-                basename.assign (basename_cstr);
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 void
 TypeList::RemoveMismatchedTypes (const char *qualified_typename,
                                  bool exact_match)

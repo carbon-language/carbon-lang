@@ -63,16 +63,6 @@ xdigit_to_sint (char ch)
     return ch - '0';
 }
 
-static inline unsigned int
-xdigit_to_uint (uint8_t ch)
-{
-    if (ch >= 'a' && ch <= 'f')
-        return 10u + ch - 'a';
-    if (ch >= 'A' && ch <= 'F')
-        return 10u + ch - 'A';
-    return ch - '0';
-}
-
 //----------------------------------------------------------------------
 // StringExtractor constructor
 //----------------------------------------------------------------------

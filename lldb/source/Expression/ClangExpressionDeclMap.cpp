@@ -1440,43 +1440,43 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
     }
 }
 
-static clang_type_t
-MaybePromoteToBlockPointerType
-(
-    ASTContext *ast_context,
-    clang_type_t candidate_type
-)
-{
-    if (!candidate_type)
-        return candidate_type;
-    
-    QualType candidate_qual_type = QualType::getFromOpaquePtr(candidate_type);
-    
-    const PointerType *candidate_pointer_type = dyn_cast<PointerType>(candidate_qual_type);
-    
-    if (!candidate_pointer_type)
-        return candidate_type;
-    
-    QualType pointee_qual_type = candidate_pointer_type->getPointeeType();
-    
-    const RecordType *pointee_record_type = dyn_cast<RecordType>(pointee_qual_type);
-    
-    if (!pointee_record_type)
-        return candidate_type;
-    
-    RecordDecl *pointee_record_decl = pointee_record_type->getDecl();
-    
-    if (!pointee_record_decl->isRecord())
-        return candidate_type;
-    
-    if (!pointee_record_decl->getName().startswith(llvm::StringRef("__block_literal_")))
-        return candidate_type;
-    
-    QualType generic_function_type = ast_context->getFunctionNoProtoType(ast_context->UnknownAnyTy);
-    QualType block_pointer_type = ast_context->getBlockPointerType(generic_function_type);
-    
-    return block_pointer_type.getAsOpaquePtr();
-}
+//static clang_type_t
+//MaybePromoteToBlockPointerType
+//(
+//    ASTContext *ast_context,
+//    clang_type_t candidate_type
+//)
+//{
+//    if (!candidate_type)
+//        return candidate_type;
+//
+//    QualType candidate_qual_type = QualType::getFromOpaquePtr(candidate_type);
+//
+//    const PointerType *candidate_pointer_type = dyn_cast<PointerType>(candidate_qual_type);
+//
+//    if (!candidate_pointer_type)
+//        return candidate_type;
+//
+//    QualType pointee_qual_type = candidate_pointer_type->getPointeeType();
+//
+//    const RecordType *pointee_record_type = dyn_cast<RecordType>(pointee_qual_type);
+//
+//    if (!pointee_record_type)
+//        return candidate_type;
+//
+//    RecordDecl *pointee_record_decl = pointee_record_type->getDecl();
+//
+//    if (!pointee_record_decl->isRecord())
+//        return candidate_type;
+//
+//    if (!pointee_record_decl->getName().startswith(llvm::StringRef("__block_literal_")))
+//        return candidate_type;
+//
+//    QualType generic_function_type = ast_context->getFunctionNoProtoType(ast_context->UnknownAnyTy);
+//    QualType block_pointer_type = ast_context->getBlockPointerType(generic_function_type);
+//
+//    return block_pointer_type.getAsOpaquePtr();
+//}
 
 bool
 ClangExpressionDeclMap::GetVariableValue (VariableSP &var,

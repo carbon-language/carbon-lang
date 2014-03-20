@@ -166,17 +166,6 @@ ThreadPlanAssemblyTracer::TracingEnded ()
     m_register_values.clear();
 }
 
-static void
-PadOutTo (StreamString &stream, int target)
-{
-    stream.Flush();
-
-    int length = stream.GetString().length();
-
-    if (length + 1 < target)
-        stream.Printf("%*s", target - (length + 1) + 1, "");
-}
-
 void 
 ThreadPlanAssemblyTracer::Log ()
 {

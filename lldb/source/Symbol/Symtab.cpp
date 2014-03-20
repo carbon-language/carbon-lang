@@ -867,32 +867,6 @@ typedef struct
 } SymbolSearchInfo;
 
 static int
-SymbolWithFileAddress (SymbolSearchInfo *info, const uint32_t *index_ptr)
-{
-    const Symbol *curr_symbol = info->symtab->SymbolAtIndex (index_ptr[0]);
-    if (curr_symbol == NULL)
-        return -1;
-
-    const addr_t info_file_addr = info->file_addr;
-
-    // lldb::Symbol::GetAddressRangePtr() will only return a non NULL address
-    // range if the symbol has a section!
-    if (curr_symbol->ValueIsAddress())
-    {
-        const addr_t curr_file_addr = curr_symbol->GetAddress().GetFileAddress();
-        if (info_file_addr < curr_file_addr)
-            return -1;
-        if (info_file_addr > curr_file_addr)
-            return +1;
-        info->match_symbol = const_cast<Symbol *>(curr_symbol);
-        info->match_index_ptr = index_ptr;
-        return 0;
-    }
-
-    return -1;
-}
-
-static int
 SymbolWithClosestFileAddress (SymbolSearchInfo *info, const uint32_t *index_ptr)
 {
     const Symbol *symbol = info->symtab->SymbolAtIndex (index_ptr[0]);
@@ -920,19 +894,6 @@ SymbolWithClosestFileAddress (SymbolSearchInfo *info, const uint32_t *index_ptr)
     }
     return -1;
 }
-
-static SymbolSearchInfo
-FindIndexPtrForSymbolContainingAddress(Symtab* symtab, addr_t file_addr, const uint32_t* indexes, uint32_t num_indexes)
-{
-    SymbolSearchInfo info = { symtab, file_addr, NULL, NULL, 0 };
-    ::bsearch (&info, 
-               indexes, 
-               num_indexes, 
-               sizeof(uint32_t), 
-               (ComparisonFunction)SymbolWithClosestFileAddress);
-    return info;
-}
-
 
 void
 Symtab::InitAddressIndexes()

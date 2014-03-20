@@ -57,11 +57,6 @@ Condition::Signal ()
     return ::pthread_cond_signal (&m_condition);
 }
 
-/* convert struct timeval to ms(milliseconds) */
-static unsigned long int tv2ms(struct timeval a) {
-    return ((a.tv_sec * 1000) + (a.tv_usec / 1000));
-}
-
 //----------------------------------------------------------------------
 // The Wait() function atomically blocks the current thread
 // waiting on the owned condition variable, and unblocks the mutex

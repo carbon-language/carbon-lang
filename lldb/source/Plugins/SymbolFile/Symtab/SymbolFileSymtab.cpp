@@ -366,20 +366,6 @@ SymbolFileSymtab::FindFunctions(const RegularExpression& regex, bool include_inl
     return 0;
 }
 
-static int CountMethodArgs(const char *method_signature)
-{
-    int num_args = 0;
-    
-    for (const char *colon_pos = strchr(method_signature, ':');
-         colon_pos != NULL;
-         colon_pos = strchr(colon_pos + 1, ':'))
-    {
-        num_args++;
-    }
-    
-    return num_args;
-}
-
 uint32_t
 SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, 
                              const lldb_private::ConstString &name, 

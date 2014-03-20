@@ -768,28 +768,6 @@ AddStringSummary(TypeCategoryImpl::SharedPointer category_sp,
 
 #ifndef LLDB_DISABLE_PYTHON
 static void
-AddScriptSummary(TypeCategoryImpl::SharedPointer category_sp,
-                 const char* funct_name,
-                 ConstString type_name,
-                 TypeSummaryImpl::Flags flags,
-                 bool regex = false)
-{
-    
-    std::string code("     ");
-    code.append(funct_name).append("(valobj,internal_dict)");
-    
-    lldb::TypeSummaryImplSP summary_sp(new ScriptSummaryFormat(flags,
-                                                               funct_name,
-                                                               code.c_str()));
-    if (regex)
-        category_sp->GetRegexTypeSummariesContainer()->Add(RegularExpressionSP(new RegularExpression(type_name.AsCString())),summary_sp);
-    else
-        category_sp->GetTypeSummariesContainer()->Add(type_name, summary_sp);
-}
-#endif
-
-#ifndef LLDB_DISABLE_PYTHON
-static void
 AddCXXSummary (TypeCategoryImpl::SharedPointer category_sp,
                CXXFunctionSummaryFormat::Callback funct,
                const char* description,

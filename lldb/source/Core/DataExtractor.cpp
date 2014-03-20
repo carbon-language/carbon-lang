@@ -52,7 +52,7 @@ ReadInt16(const unsigned char* ptr, offset_t offset)
 }
 
 static inline uint32_t
-ReadInt32 (const unsigned char* ptr, offset_t offset)
+ReadInt32 (const unsigned char* ptr, offset_t offset = 0)
 {
     uint32_t value;
     memcpy (&value, ptr + offset, 4);
@@ -60,7 +60,7 @@ ReadInt32 (const unsigned char* ptr, offset_t offset)
 }
 
 static inline uint64_t 
-ReadInt64(const unsigned char* ptr, offset_t offset)
+ReadInt64(const unsigned char* ptr, offset_t offset = 0)
 {
     uint64_t value;
     memcpy (&value, ptr + offset, 8);
@@ -72,22 +72,6 @@ ReadInt16(const void* ptr)
 {
     uint16_t value;
     memcpy (&value, ptr, 2);
-    return value;
-}
-
-static inline uint32_t
-ReadInt32 (const void* ptr)
-{
-    uint32_t value;
-    memcpy (&value, ptr, 4);
-    return value;
-}
-
-static inline uint64_t
-ReadInt64(const void* ptr)
-{
-    uint64_t value;
-    memcpy (&value, ptr, 8);
     return value;
 }
 

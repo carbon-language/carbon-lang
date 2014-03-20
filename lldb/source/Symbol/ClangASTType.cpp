@@ -4340,22 +4340,6 @@ IsOperator (const char *name, OverloadedOperatorKind &op_kind)
     return true;
 }
 
-static inline bool
-check_op_param (uint32_t op_kind, bool unary, bool binary, uint32_t num_params)
-{
-    // Special-case call since it can take any number of operands
-    if(op_kind == OO_Call)
-        return true;
-    
-    // The parameter count doens't include "this"
-    if (num_params == 0)
-        return unary;
-    if (num_params == 1)
-        return binary;
-    else
-        return false;
-}
-
 clang::RecordDecl *
 ClangASTType::GetAsRecordDecl () const
 {

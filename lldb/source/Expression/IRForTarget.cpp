@@ -687,27 +687,6 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     return true;
 }
 
-static void DebugUsers(lldb_private::Log *log, Value *value, uint8_t depth)
-{    
-    if (!depth)
-        return;
-    
-    depth--;
-    
-    if (log)
-        log->Printf("  <Begin %d users>", value->getNumUses());
-    
-    for (llvm::User *u : value->users())
-    {
-        if (log)
-            log->Printf("  <Use %p> %s", u, PrintValue(u).c_str());
-        DebugUsers(log, u, depth);
-    }
-    
-    if (log)
-        log->Printf("  <End uses>");
-}
-
 bool
 IRForTarget::RewriteObjCConstString (llvm::GlobalVariable *ns_str,
                                      llvm::GlobalVariable *cstr)

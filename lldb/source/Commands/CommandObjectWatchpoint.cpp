@@ -28,6 +28,8 @@
 #include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/Target.h"
 
+#include "llvm/ADT/StringRef.h"
+
 #include <vector>
 
 using namespace lldb;
@@ -60,14 +62,6 @@ CheckTargetForWatchpointOperations(Target *target, CommandReturnObject &result)
     }
     // Target passes our checks, return true.
     return true;
-}
-
-// FIXME: This doesn't seem to be the right place for this functionality.
-#include "llvm/ADT/StringRef.h"
-static inline void StripLeadingSpaces(llvm::StringRef &Str)
-{
-    while (!Str.empty() && isspace(Str[0]))
-        Str = Str.substr(1);
 }
 
 // Equivalent class: {"-", "to", "To", "TO"} of range specifier array.

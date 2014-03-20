@@ -396,20 +396,20 @@ ApplyObjcCastHack(std::string &expr)
 // hopefully we'll figure out a way to #include the same environment as is
 // present in the original source file rather than try to hack specific type
 // definitions in as needed.
-static void
-ApplyUnicharHack(std::string &expr)
-{
-#define UNICHAR_HACK_FROM "unichar"
-#define UNICHAR_HACK_TO   "unsigned short"
-    
-    size_t from_offset;
-    
-    while ((from_offset = expr.find(UNICHAR_HACK_FROM)) != expr.npos)
-        expr.replace(from_offset, sizeof(UNICHAR_HACK_FROM) - 1, UNICHAR_HACK_TO);
-    
-#undef UNICHAR_HACK_TO
-#undef UNICHAR_HACK_FROM
-}
+//static void
+//ApplyUnicharHack(std::string &expr)
+//{
+//#define UNICHAR_HACK_FROM "unichar"
+//#define UNICHAR_HACK_TO   "unsigned short"
+//
+//    size_t from_offset;
+//
+//    while ((from_offset = expr.find(UNICHAR_HACK_FROM)) != expr.npos)
+//        expr.replace(from_offset, sizeof(UNICHAR_HACK_FROM) - 1, UNICHAR_HACK_TO);
+//
+//#undef UNICHAR_HACK_TO
+//#undef UNICHAR_HACK_FROM
+//}
 
 bool
 ClangUserExpression::Parse (Stream &error_stream, 
