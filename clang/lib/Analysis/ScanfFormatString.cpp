@@ -379,21 +379,23 @@ ArgType ScanfSpecifier::getArgType(ASTContext &Ctx) const {
   return ArgType();
 }
 
-bool ScanfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
+bool ScanfSpecifier::fixType(QualType QT, QualType RawQT,
+                             const LangOptions &LangOpt,
                              ASTContext &Ctx) {
-  if (!QT->isPointerType())
-    return false;
 
   // %n is different from other conversion specifiers; don't try to fix it.
   if (CS.getKind() == ConversionSpecifier::nArg)
     return false;
 
+  if (!QT->isPointerType())
+    return false;
+
   QualType PT = QT->getPointeeType();
 
   // If it's an enum, get its underlying type.
-  if (const EnumType *ETy = QT->getAs<EnumType>())
-    QT = ETy->getDecl()->getIntegerType();
-  
+  if (const EnumType *ETy = PT->getAs<EnumType>())
+    PT = ETy->getDecl()->getIntegerType();
+
   const BuiltinType *BT = PT->getAs<BuiltinType>();
   if (!BT)
     return false;
@@ -405,6 +407,15 @@ bool ScanfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
       LM.setKind(LengthModifier::AsWideChar);
     else
       LM.setKind(LengthModifier::None);
+
+    // If we know the target array length, we can use it as a field width.
+    if (const ConstantArrayType *CAT = Ctx.getAsConstantArrayType(RawQT)) {
+      if (CAT->getSizeModifier() == ArrayType::Normal)
+        FieldWidth = OptionalAmount(OptionalAmount::Constant,
+                                    CAT->getSize().getZExtValue() - 1,
+                                    "", 0, false);
+
+    }
     return true;
   }
 

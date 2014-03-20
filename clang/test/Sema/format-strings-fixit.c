@@ -14,6 +14,7 @@ typedef __SIZE_TYPE__ size_t;
 typedef __INTMAX_TYPE__ intmax_t;
 typedef __UINTMAX_TYPE__ uintmax_t;
 typedef __PTRDIFF_TYPE__ ptrdiff_t;
+typedef __WCHAR_TYPE__ wchar_t;
 
 void test() {
   // Basic types
@@ -97,11 +98,14 @@ void test() {
 
 int scanf(char const *, ...);
 
-void test2() {
+void test2(int intSAParm[static 2]) {
   char str[100];
+  char *vstr = "abc";
+  wchar_t wstr[100];
   short shortVar;
   unsigned short uShortVar;
   int intVar;
+  int intAVar[2];
   unsigned uIntVar;
   float floatVar;
   double doubleVar;
@@ -114,11 +118,22 @@ void test2() {
   intmax_t intmaxVar;
   uintmax_t uIntmaxVar;
   ptrdiff_t ptrdiffVar;
+  enum {A, B, C} enumVar;
 
+  // Some string types.
   scanf("%lf", str);
+  scanf("%lf", vstr);
+  scanf("%ls", str);
+  scanf("%f", wstr); // FIXME: wchar_t should resolve to %ls, not %d.
+  scanf("%s", wstr); // FIXME: wchar_t should resolve to %ls, not %d.
+  scanf("%ls", str);
+
+  // Some integer types.
   scanf("%f", &shortVar);
   scanf("%f", &uShortVar);
   scanf("%p", &intVar);
+  scanf("%f", intAVar);
+  scanf("%f", intSAParm);
   scanf("%Lf", &uIntVar);
   scanf("%ld", &floatVar);
   scanf("%f", &doubleVar);
@@ -127,6 +142,7 @@ void test2() {
   scanf("%f", &uLongVar);
   scanf("%f", &longLongVar);
   scanf("%f", &uLongLongVar);
+  scanf("%d", &enumVar); // FIXME: We ought to fix specifiers for enums.
 
   // Some named ints.
   scanf("%f", &sizeVar);
@@ -206,10 +222,17 @@ void test2() {
 // CHECK: printf("%La", (long double) 42);
 // CHECK: printf("%LA", (long double) 42);
 
-// CHECK: scanf("%s", str);
+// CHECK: scanf("%99s", str);
+// CHECK: scanf("%s", vstr);
+// CHECK: scanf("%99s", str);
+// CHECK: scanf("%d", wstr);
+// CHECK: scanf("%d", wstr);
+// CHECK: scanf("%99s", str);
 // CHECK: scanf("%hd", &shortVar);
 // CHECK: scanf("%hu", &uShortVar);
 // CHECK: scanf("%d", &intVar);
+// CHECK: scanf("%d", intAVar);
+// CHECK: scanf("%d", intSAParm);
 // CHECK: scanf("%u", &uIntVar);
 // CHECK: scanf("%f", &floatVar);
 // CHECK: scanf("%lf", &doubleVar);
@@ -218,6 +241,7 @@ void test2() {
 // CHECK: scanf("%lu", &uLongVar);
 // CHECK: scanf("%lld", &longLongVar);
 // CHECK: scanf("%llu", &uLongLongVar);
+// CHECK: scanf("%d", &enumVar);
 // CHECK: scanf("%zu", &sizeVar);
 // CHECK: scanf("%jd", &intmaxVar);
 // CHECK: scanf("%ju", &uIntmaxVar);

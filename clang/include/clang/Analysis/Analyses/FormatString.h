@@ -572,7 +572,8 @@ public:
 
   ArgType getArgType(ASTContext &Ctx) const;
 
-  bool fixType(QualType QT, const LangOptions &LangOpt, ASTContext &Ctx);
+  bool fixType(QualType QT, QualType RawQT, const LangOptions &LangOpt,
+               ASTContext &Ctx);
 
   void toString(raw_ostream &os) const;
 
