@@ -154,7 +154,7 @@ private:
   std::vector<ObjectAtom *> _objectVector;
 
   /// \brief Handle a specific reference.
-  void handleReference(const DefinedAtom &atom, const Reference &ref);
+  void handleReference(const Reference &ref);
 
   /// \brief Calculate AHL addendums for the atom's references.
   void calculateAHLs(const DefinedAtom &atom);
@@ -186,7 +186,7 @@ void RelocationPass::perform(std::unique_ptr<MutableFile> &mf) {
   // Process all references.
   for (const auto &atom : mf->defined())
     for (const auto &ref : *atom)
-      handleReference(*atom, *ref);
+      handleReference(*ref);
 
   uint64_t ordinal = 0;
 
@@ -259,8 +259,7 @@ void RelocationPass::calculateAHLs(const DefinedAtom &atom) {
   assert(references.empty());
 }
 
-void RelocationPass::handleReference(const DefinedAtom &atom,
-                                     const Reference &ref) {
+void RelocationPass::handleReference(const Reference &ref) {
   if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
     return;
   assert(ref.kindArch() == Reference::KindArch::Mips);
