@@ -1223,30 +1223,9 @@ Module *HeaderSearch::loadFrameworkModule(StringRef Name,
     return ModMap.findModule(Name);
   }
 
-  // Figure out the top-level framework directory and the submodule path from
-  // that top-level framework to the requested framework.
-  SmallVector<std::string, 2> SubmodulePath;
-  SubmodulePath.push_back(Name);
-  const DirectoryEntry *TopFrameworkDir
-    = ::getTopFrameworkDir(FileMgr, Dir->getName(), SubmodulePath);
 
-
-  // Try to infer a module map from the top-level framework directory.
-  Module *Result = ModMap.inferFrameworkModule(SubmodulePath.back(), 
-                                               TopFrameworkDir,
-                                               IsSystem,
-                                               /*Parent=*/0);
-  if (!Result)
-    return 0;
-  
-  // Follow the submodule path to find the requested (sub)framework module
-  // within the top-level framework module.
-  SubmodulePath.pop_back();
-  while (!SubmodulePath.empty() && Result) {
-    Result = ModMap.lookupModuleQualified(SubmodulePath.back(), Result);
-    SubmodulePath.pop_back();
-  }
-  return Result;
+  // Try to infer a module map from the framework directory.
+  return ModMap.inferFrameworkModule(Name, Dir, IsSystem, /*Parent=*/0);
 }
 
 
