@@ -462,6 +462,21 @@ public:
     llvm_unreachable("No support for an object cache");
   }
 
+  /// setProcessAllSections (MCJIT Only): By default, only sections that are
+  /// "required for execution" are passed to the RTDyldMemoryManager, and other
+  /// sections are discarded. Passing 'true' to this method will cause
+  /// RuntimeDyld to pass all sections to its RTDyldMemoryManager regardless
+  /// of whether they are "required to execute" in the usual sense.
+  ///
+  /// Rationale: Some MCJIT clients want to be able to inspect metadata
+  /// sections (e.g. Dwarf, Stack-maps) to enable functionality or analyze
+  /// performance. Passing these sections to the memory manager allows the
+  /// client to make policy about the relevant sections, rather than having
+  /// MCJIT do it.
+  virtual void setProcessAllSections(bool ProcessAllSections) {
+    llvm_unreachable("No support for ProcessAllSections option");
+  }
+
   /// Return the target machine (if available).
   virtual TargetMachine *getTargetMachine() { return NULL; }
 

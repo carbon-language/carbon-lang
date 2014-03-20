@@ -187,6 +187,10 @@ protected:
   Triple::ArchType Arch;
   bool IsTargetLittleEndian;
 
+  // True if all sections should be passed to the memory manager, false if only
+  // sections containing relocations should be. Defaults to 'false'.
+  bool ProcessAllSections;
+
   // This mutex prevents simultaneously loading objects from two different
   // threads.  This keeps us from having to protect individual data structures
   // and guarantees that section allocation requests to the memory manager
@@ -320,9 +324,14 @@ protected:
   unsigned computeSectionStubBufSize(ObjectImage &Obj, const SectionRef &Section); 
 
 public:
-  RuntimeDyldImpl(RTDyldMemoryManager *mm) : MemMgr(mm), HasError(false) {}
+  RuntimeDyldImpl(RTDyldMemoryManager *mm)
+    : MemMgr(mm), ProcessAllSections(false), HasError(false) {}
 
   virtual ~RuntimeDyldImpl();
+
+  void setProcessAllSections(bool ProcessAllSections) {
+    this->ProcessAllSections = ProcessAllSections;
+  }
 
   ObjectImage* loadObject(ObjectImage* InputObject);
 

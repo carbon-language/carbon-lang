@@ -251,6 +251,10 @@ public:
   /// Sets the object manager that MCJIT should use to avoid compilation.
   void setObjectCache(ObjectCache *manager) override;
 
+  void setProcessAllSections(bool ProcessAllSections) override {
+    Dyld.setProcessAllSections(ProcessAllSections);
+  }
+
   void generateCodeForModule(Module *M) override;
 
   /// finalizeObject - ensure the module is fully processed and is usable.

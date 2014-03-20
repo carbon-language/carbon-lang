@@ -161,25 +161,22 @@ ObjectImage* RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
   DEBUG(dbgs() << "Parse relocations:\n");
   for (section_iterator SI = Obj->begin_sections(), SE = Obj->end_sections();
        SI != SE; ++SI) {
-    bool IsFirstRelocation = true;
     unsigned SectionID = 0;
     StubMap Stubs;
     section_iterator RelocatedSection = SI->getRelocatedSection();
 
-    for (const RelocationRef &Reloc : SI->relocations()) {
-      // If it's the first relocation in this section, find its SectionID
-      if (IsFirstRelocation) {
-        bool IsCode = false;
-        Check(RelocatedSection->isText(IsCode));
-        SectionID =
-            findOrEmitSection(*Obj, *RelocatedSection, IsCode, LocalSections);
-        DEBUG(dbgs() << "\tSectionID: " << SectionID << "\n");
-        IsFirstRelocation = false;
-      }
+    if ((SI->relocation_begin() != SI->relocation_end()) ||
+        ProcessAllSections) {
+      bool IsCode = false;
+      Check(RelocatedSection->isText(IsCode));
+      SectionID =
+        findOrEmitSection(*Obj, *RelocatedSection, IsCode, LocalSections);
+      DEBUG(dbgs() << "\tSectionID: " << SectionID << "\n");
+    }
 
+    for (const RelocationRef &Reloc : SI->relocations())
       processRelocationRef(SectionID, Reloc, *Obj, LocalSections, LocalSymbols,
                            Stubs);
-    }
   }
 
   // Give the subclasses a chance to tie-up any loose ends.
@@ -665,10 +662,27 @@ RuntimeDyld::RuntimeDyld(RTDyldMemoryManager *mm) {
   // permissions are applied.
   Dyld = 0;
   MM = mm;
+  ProcessAllSections = false;
 }
 
 RuntimeDyld::~RuntimeDyld() {
   delete Dyld;
+}
+
+static std::unique_ptr<RuntimeDyldELF> createRuntimeDyldELF(
+                                                   RTDyldMemoryManager *MM,
+                                                   bool ProcessAllSections) {
+  std::unique_ptr<RuntimeDyldELF> Dyld(new RuntimeDyldELF(MM));
+  Dyld->setProcessAllSections(ProcessAllSections);
+  return Dyld;
+}
+
+static std::unique_ptr<RuntimeDyldMachO> createRuntimeDyldMachO(
+                                                   RTDyldMemoryManager *MM,
+                                                   bool ProcessAllSections) {
+  std::unique_ptr<RuntimeDyldMachO> Dyld(new RuntimeDyldMachO(MM));
+  Dyld->setProcessAllSections(ProcessAllSections);
+  return Dyld;
 }
 
 ObjectImage *RuntimeDyld::loadObject(ObjectFile *InputObject) {
@@ -677,11 +691,11 @@ ObjectImage *RuntimeDyld::loadObject(ObjectFile *InputObject) {
   if (InputObject->isELF()) {
     InputImage.reset(RuntimeDyldELF::createObjectImageFromFile(InputObject));
     if (!Dyld)
-      Dyld = new RuntimeDyldELF(MM);
+      Dyld = createRuntimeDyldELF(MM, ProcessAllSections).release();
   } else if (InputObject->isMachO()) {
     InputImage.reset(RuntimeDyldMachO::createObjectImageFromFile(InputObject));
     if (!Dyld)
-      Dyld = new RuntimeDyldMachO(MM);
+      Dyld = createRuntimeDyldMachO(MM, ProcessAllSections).release();
   } else
     report_fatal_error("Incompatible object format!");
 
@@ -704,7 +718,7 @@ ObjectImage *RuntimeDyld::loadObject(ObjectBuffer *InputBuffer) {
   case sys::fs::file_magic::elf_core:
     InputImage.reset(RuntimeDyldELF::createObjectImage(InputBuffer));
     if (!Dyld)
-      Dyld = new RuntimeDyldELF(MM);
+      Dyld = createRuntimeDyldELF(MM, ProcessAllSections).release();
     break;
   case sys::fs::file_magic::macho_object:
   case sys::fs::file_magic::macho_executable:
@@ -718,7 +732,7 @@ ObjectImage *RuntimeDyld::loadObject(ObjectBuffer *InputBuffer) {
   case sys::fs::file_magic::macho_dsym_companion:
     InputImage.reset(RuntimeDyldMachO::createObjectImage(InputBuffer));
     if (!Dyld)
-      Dyld = new RuntimeDyldMachO(MM);
+      Dyld = createRuntimeDyldMachO(MM, ProcessAllSections).release();
     break;
   case sys::fs::file_magic::unknown:
   case sys::fs::file_magic::bitcode:

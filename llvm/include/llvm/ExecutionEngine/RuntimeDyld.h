@@ -36,6 +36,7 @@ class RuntimeDyld {
   // interface.
   RuntimeDyldImpl *Dyld;
   RTDyldMemoryManager *MM;
+  bool ProcessAllSections;
 protected:
   // Change the address associated with a section when resolving relocations.
   // Any relocations already associated with the symbol will be re-resolved.
@@ -84,6 +85,19 @@ public:
   void deregisterEHFrames();
 
   StringRef getErrorString();
+
+  /// By default, only sections that are "required for execution" are passed to
+  /// the RTDyldMemoryManager, and other sections are discarded. Passing 'true'
+  /// to this method will cause RuntimeDyld to pass all sections to its
+  /// memory manager regardless of whether they are "required to execute" in the
+  /// usual sense. This is useful for inspecting metadata sections that may not
+  /// contain relocations, E.g. Debug info, stackmaps.
+  ///
+  /// Must be called before the first object file is loaded.
+  void setProcessAllSections(bool ProcessAllSections) {
+    assert(!Dyld && "setProcessAllSections must be called before loadObject.");
+    this->ProcessAllSections = ProcessAllSections;
+  }
 };
 
 } // end namespace llvm
