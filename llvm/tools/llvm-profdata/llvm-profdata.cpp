@@ -31,7 +31,6 @@ static void exitWithError(const std::string &Message,
   ::exit(1);
 }
 
-//===----------------------------------------------------------------------===//
 int merge_main(int argc, const char *argv[]) {
   cl::opt<std::string> Filename1(cl::Positional, cl::Required,
                                  cl::desc("file1"));
