@@ -579,7 +579,12 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
     {
         if (address_type == eAddressTypeHost)
         {
-            // The address is an address in this process, so just copy it
+            // The address is an address in this process, so just copy it.
+            if (address == 0)
+            {
+                error.SetErrorStringWithFormat("trying to read from host address of 0.");
+                return error;
+            }
             memcpy (dst, (uint8_t*)NULL + address, byte_size);
         }
         else if ((address_type == eAddressTypeLoad) || (address_type == eAddressTypeFile))
