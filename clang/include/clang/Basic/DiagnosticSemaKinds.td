@@ -362,7 +362,7 @@ def warn_suggest_noreturn_block : Warning<
 
 // Unreachable code.
 def warn_unreachable : Warning<
-  "will never be executed">,
+  "code will never be executed">,
   InGroup<UnreachableCode>, DefaultIgnore;
 def warn_unreachable_break : Warning<
   "'break' will never be executed">,

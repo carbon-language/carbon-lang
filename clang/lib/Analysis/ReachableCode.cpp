@@ -18,6 +18,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/AST/ParentMap.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Basic/SourceManager.h"
@@ -35,53 +36,6 @@ static bool isEnumConstant(const Expr *Ex) {
   if (!DR)
     return false;
   return isa<EnumConstantDecl>(DR->getDecl());
-}
-
-static const Expr *stripStdStringCtor(const Expr *Ex) {
-  // Go crazy pattern matching an implicit construction of std::string("").
-  const ExprWithCleanups *EWC = dyn_cast<ExprWithCleanups>(Ex);
-  if (!EWC)
-    return 0;
-  const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(EWC->getSubExpr());
-  if (!CCE)
-    return 0;
-  QualType Ty = CCE->getType();
-  if (const ElaboratedType *ET = dyn_cast<ElaboratedType>(Ty))
-    Ty = ET->getNamedType();
-  const TypedefType *TT = dyn_cast<TypedefType>(Ty);
-  StringRef Name = TT->getDecl()->getName();
-  if (Name != "string")
-    return 0;
-  if (CCE->getNumArgs() != 1)
-    return 0;
-  const MaterializeTemporaryExpr *MTE =
-    dyn_cast<MaterializeTemporaryExpr>(CCE->getArg(0));
-  if (!MTE)
-    return 0;
-  CXXBindTemporaryExpr *CBT =
-    dyn_cast<CXXBindTemporaryExpr>(MTE->GetTemporaryExpr()->IgnoreParenCasts());
-  if (!CBT)
-    return 0;
-  Ex = CBT->getSubExpr()->IgnoreParenCasts();
-  CCE = dyn_cast<CXXConstructExpr>(Ex);
-  if (!CCE)
-    return 0;
-  if (CCE->getNumArgs() != 1)
-    return 0;
-  return dyn_cast<StringLiteral>(CCE->getArg(0)->IgnoreParenCasts());
-}
-
-/// Strip away "sugar" around trivial expressions that are for the
-/// purpose of this analysis considered uninteresting for dead code warnings.
-static const Expr *stripExprSugar(const Expr *Ex) {
-  Ex = Ex->IgnoreParenCasts();
-  // If 'Ex' is a constructor for a std::string, strip that
-  // away.  We can only get here if the trivial expression was
-  // something like a C string literal, with the std::string
-  // just wrapping that value.
-  if (const Expr *StdStringVal = stripStdStringCtor(Ex))
-    return StdStringVal;
-  return Ex;
 }
 
 static bool isTrivialExpression(const Expr *Ex) {
@@ -104,7 +58,7 @@ static bool isTrivialDoWhile(const CFGBlock *B, const Stmt *S) {
   return false;
 }
 
-static bool isTrivialReturn(const CFGBlock *B, const Stmt *S) {
+static bool isDeadReturn(const CFGBlock *B, const Stmt *S) {
   // Look to see if the block ends with a 'return', and see if 'S'
   // is a substatement.  The 'return' may not be the last element in
   // the block because of destructors.
@@ -112,13 +66,19 @@ static bool isTrivialReturn(const CFGBlock *B, const Stmt *S) {
        I != E; ++I) {
     if (Optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
       if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(CS->getStmt())) {
-        // Determine if we need to lock at the body of the block
-        // before the dead return.
         if (RS == S)
           return true;
         if (const Expr *RE = RS->getRetValue()) {
-          RE = stripExprSugar(RE->IgnoreParenCasts());
-          return RE == S && isTrivialExpression(RE);
+          RE = RE->IgnoreParenCasts();
+          if (RE == S)
+            return true;
+          ParentMap PM(const_cast<Expr*>(RE));
+          // If 'S' is in the ParentMap, it is a subexpression of
+          // the return statement.  Note also that we are restricting
+          // to looking at return statements in the same CFGBlock,
+          // so this will intentionally not catch cases where the
+          // return statement contains nested control-flow.
+          return PM.getParent(S);
         }
       }
       break;
@@ -547,28 +507,18 @@ static SourceLocation GetUnreachableLoc(const Stmt *S,
 void DeadCodeScan::reportDeadCode(const CFGBlock *B,
                                   const Stmt *S,
                                   clang::reachable_code::Callback &CB) {
-  // The kind of unreachable code found.
+  // Classify the unreachable code found, or suppress it in some cases.
   reachable_code::UnreachableKind UK = reachable_code::UK_Other;
 
-  do {
-    // Suppress idiomatic cases of calling a noreturn function just
-    // before executing a 'break'.  If there is other code after the 'break'
-    // in the block then don't suppress the warning.
-    if (isa<BreakStmt>(S)) {
-      UK = reachable_code::UK_Break;
-      break;
-    }
-
-    if (isTrivialDoWhile(B, S))
-      return;
-
-    // Suppress trivial 'return' statements that are dead.
-    if (isTrivialReturn(B, S)) {
-      UK = reachable_code::UK_TrivialReturn;
-      break;
-    }
-
-  } while(false);
+  if (isa<BreakStmt>(S)) {
+    UK = reachable_code::UK_Break;
+  }
+  else if (isTrivialDoWhile(B, S)) {
+    return;
+  }
+  else if (isDeadReturn(B, S)) {
+    UK = reachable_code::UK_Return;
+  }
 
   SourceRange R1, R2;
   SourceLocation Loc = GetUnreachableLoc(S, R1, R2);

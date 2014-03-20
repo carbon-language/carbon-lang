@@ -218,3 +218,19 @@ int test_treat_non_const_bool_local_as_non_config_value() {
   return 0;
 }
 
+class Frobozz {
+public:
+  Frobozz(int x);
+  ~Frobozz();
+};
+
+Frobozz test_return_object(int flag) {
+  return Frobozz(flag);
+  return Frobozz(42);  // expected-warning {{'return' will never be executed}}
+}
+
+Frobozz test_return_object_control_flow(int flag) {
+  return Frobozz(flag);
+  return Frobozz(flag ? 42 : 24); // expected-warning {{code will never be executed}}
+}
+

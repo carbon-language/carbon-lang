@@ -73,7 +73,7 @@ namespace {
         case reachable_code::UK_Break:
           diag = diag::warn_unreachable_break;
           break;
-        case reachable_code::UK_TrivialReturn:
+        case reachable_code::UK_Return:
           diag = diag::warn_unreachable_return;
           break;
         case reachable_code::UK_Other:
