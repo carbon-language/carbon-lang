@@ -55,7 +55,7 @@ private:
   CodeGenModule &CGM;
   std::string *PrefixedFuncName;
   StringRef RawFuncName;
-  llvm::GlobalValue::LinkageTypes FuncLinkage;
+  llvm::GlobalValue::LinkageTypes VarLinkage;
 
   unsigned NumRegionCounters;
   uint64_t FunctionHash;

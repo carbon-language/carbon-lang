@@ -238,7 +238,7 @@ llvm::GlobalVariable *CodeGenPGO::buildDataVar() {
   auto *VarName = llvm::ConstantDataArray::getString(Ctx, getFuncName(),
                                                      false);
   auto *Name = new llvm::GlobalVariable(CGM.getModule(), VarName->getType(),
-                                        true, FuncLinkage, VarName,
+                                        true, VarLinkage, VarName,
                                         getFuncVarName("name"));
   Name->setSection(getNameSection(CGM));
   Name->setAlignment(1);
@@ -260,7 +260,7 @@ llvm::GlobalVariable *CodeGenPGO::buildDataVar() {
     llvm::ConstantExpr::getBitCast(RegionCounters, Int64PtrTy)
   };
   auto *Data =
-    new llvm::GlobalVariable(CGM.getModule(), DataTy, true, FuncLinkage,
+    new llvm::GlobalVariable(CGM.getModule(), DataTy, true, VarLinkage,
                              llvm::ConstantStruct::get(DataTy, DataVals),
                              getFuncVarName("data"));
 
@@ -824,7 +824,7 @@ void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
   if (!D)
     return;
   setFuncName(Fn);
-  FuncLinkage = Fn->getLinkage();
+  VarLinkage = Fn->getLinkage();
   mapRegionCounters(D);
   if (InstrumentRegions)
     emitCounterVariables();
@@ -882,7 +882,7 @@ void CodeGenPGO::emitCounterVariables() {
   llvm::ArrayType *CounterTy = llvm::ArrayType::get(llvm::Type::getInt64Ty(Ctx),
                                                     NumRegionCounters);
   RegionCounters =
-    new llvm::GlobalVariable(CGM.getModule(), CounterTy, false, FuncLinkage,
+    new llvm::GlobalVariable(CGM.getModule(), CounterTy, false, VarLinkage,
                              llvm::Constant::getNullValue(CounterTy),
                              getFuncVarName("counters"));
   RegionCounters->setAlignment(8);
