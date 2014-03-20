@@ -198,7 +198,6 @@ static llvm::BasicBlock *getOrInsertRegisterBB(CodeGenModule &CGM) {
                                            "__llvm_pgo_register_functions",
                                            &CGM.getModule());
   RegisterF->setUnnamedAddr(true);
-  RegisterF->addFnAttr(llvm::Attribute::NoInline);
   if (CGM.getCodeGenOpts().DisableRedZone)
     RegisterF->addFnAttr(llvm::Attribute::NoRedZone);
 
@@ -215,14 +214,6 @@ static llvm::Constant *getOrInsertRuntimeRegister(CodeGenModule &CGM) {
   auto *RuntimeRegisterTy = llvm::FunctionType::get(VoidTy, VoidPtrTy, false);
   return CGM.getModule().getOrInsertFunction("__llvm_pgo_register_function",
                                              RuntimeRegisterTy);
-}
-
-static llvm::Constant *getOrInsertRuntimeWriteAtExit(CodeGenModule &CGM) {
-  // TODO: make this depend on a command-line option.
-  auto *VoidTy = llvm::Type::getVoidTy(CGM.getLLVMContext());
-  auto *WriteAtExitTy = llvm::FunctionType::get(VoidTy, false);
-  return CGM.getModule().getOrInsertFunction("__llvm_pgo_register_write_atexit",
-                                             WriteAtExitTy);
 }
 
 static bool isMachO(const CodeGenModule &CGM) {
@@ -307,10 +298,9 @@ llvm::Function *CodeGenPGO::emitInitialization(CodeGenModule &CGM) {
   if (CGM.getModule().getFunction("__llvm_pgo_init"))
     return nullptr;
 
-  // Get the functions to call at initialization.
+  // Get the function to call at initialization.
   llvm::Constant *RegisterF = getRegisterFunc(CGM);
-  llvm::Constant *WriteAtExitF = getOrInsertRuntimeWriteAtExit(CGM);
-  if (!RegisterF && !WriteAtExitF)
+  if (!RegisterF)
     return nullptr;
 
   // Create the initialization function.
@@ -325,10 +315,7 @@ llvm::Function *CodeGenPGO::emitInitialization(CodeGenModule &CGM) {
 
   // Add the basic block and the necessary calls.
   CGBuilderTy Builder(llvm::BasicBlock::Create(CGM.getLLVMContext(), "", F));
-  if (RegisterF)
-    Builder.CreateCall(RegisterF);
-  if (WriteAtExitF)
-    Builder.CreateCall(WriteAtExitF);
+  Builder.CreateCall(RegisterF);
   Builder.CreateRetVoid();
 
   return F;
