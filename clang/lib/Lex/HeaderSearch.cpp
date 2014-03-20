@@ -1156,6 +1156,7 @@ bool HeaderSearch::loadModuleMapFile(const FileEntry *File, bool IsSystem) {
   case LMM_InvalidModuleMap:
     return true;
   }
+  llvm_unreachable("Unknown load module map result");
 }
 
 HeaderSearch::LoadModuleMapResult
