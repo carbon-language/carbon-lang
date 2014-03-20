@@ -37,7 +37,7 @@ typedef struct __llvm_pgo_data {
   const uint32_t NumCounters;
   const uint64_t FuncHash;
   const char *const Name;
-  const uint64_t *const Counters;
+  uint64_t *const Counters;
 } __llvm_pgo_data;
 
 /* TODO: void __llvm_pgo_get_size_for_buffer(void);  */
@@ -55,5 +55,5 @@ const __llvm_pgo_data *__llvm_pgo_data_begin();
 const __llvm_pgo_data *__llvm_pgo_data_end();
 const char *__llvm_pgo_names_begin();
 const char *__llvm_pgo_names_end();
-const uint64_t *__llvm_pgo_counters_begin();
-const uint64_t *__llvm_pgo_counters_end();
+uint64_t *__llvm_pgo_counters_begin();
+uint64_t *__llvm_pgo_counters_end();

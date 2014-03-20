@@ -13,8 +13,8 @@ static const __llvm_pgo_data *DataFirst = NULL;
 static const __llvm_pgo_data *DataLast = NULL;
 static const char *NamesFirst = NULL;
 static const char *NamesLast = NULL;
-static const uint64_t *CountersFirst = NULL;
-static const uint64_t *CountersLast = NULL;
+static uint64_t *CountersFirst = NULL;
+static uint64_t *CountersLast = NULL;
 
 /*!
  * \brief Register an instrumented function.
@@ -55,5 +55,5 @@ const __llvm_pgo_data *__llvm_pgo_data_begin() { return DataFirst; }
 const __llvm_pgo_data *__llvm_pgo_data_end() { return DataLast; }
 const char *__llvm_pgo_names_begin() { return NamesFirst; }
 const char *__llvm_pgo_names_end() { return NamesLast; }
-const uint64_t *__llvm_pgo_counters_begin() { return CountersFirst; }
-const uint64_t *__llvm_pgo_counters_end() { return CountersLast; }
+uint64_t *__llvm_pgo_counters_begin() { return CountersFirst; }
+uint64_t *__llvm_pgo_counters_end() { return CountersLast; }

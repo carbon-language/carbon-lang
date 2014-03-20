@@ -21,5 +21,5 @@ const __llvm_pgo_data *__llvm_pgo_data_begin() { return &DataStart; }
 const __llvm_pgo_data *__llvm_pgo_data_end()   { return &DataEnd; }
 const char *__llvm_pgo_names_begin() { return &NamesStart; }
 const char *__llvm_pgo_names_end()   { return &NamesEnd; }
-const uint64_t *__llvm_pgo_counters_begin() { return &CountersStart; }
-const uint64_t *__llvm_pgo_counters_end()   { return &CountersEnd; }
+uint64_t *__llvm_pgo_counters_begin() { return &CountersStart; }
+uint64_t *__llvm_pgo_counters_end()   { return &CountersEnd; }

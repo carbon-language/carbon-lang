@@ -8,6 +8,7 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "InstrProfiling.h"
+#include <string.h>
 
 /* TODO: void __llvm_pgo_get_size_for_buffer(void);  */
 
@@ -33,4 +34,11 @@ void __llvm_pgo_write_buffer(FILE *OutputFile) {
   for (I = __llvm_pgo_data_begin(), E = __llvm_pgo_data_end();
        I != E; ++I)
     writeFunction(OutputFile, I);
+}
+
+void __llvm_pgo_reset_counters(void) {
+  uint64_t *I = __llvm_pgo_counters_begin();
+  uint64_t *E = __llvm_pgo_counters_end();
+
+  memset(I, 0, sizeof(uint64_t)*(E - I));
 }
