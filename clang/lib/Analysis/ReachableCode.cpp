@@ -139,6 +139,11 @@ static bool isConfigurationValue(const Stmt *S,
     S = Ex->IgnoreParenCasts();
 
   switch (S->getStmtClass()) {
+    case Stmt::CallExprClass: {
+      const FunctionDecl *Callee =
+        dyn_cast_or_null<FunctionDecl>(cast<CallExpr>(S)->getCalleeDecl());
+      return Callee ? Callee->isConstexpr() : false;
+    }
     case Stmt::DeclRefExprClass: {
       const DeclRefExpr *DR = cast<DeclRefExpr>(S);
       const ValueDecl *D = DR->getDecl();

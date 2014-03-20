@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fcxx-exceptions -fexceptions -fsyntax-only -verify -fblocks -Wunreachable-code-aggressive -Wno-unused-value
+// RUN: %clang_cc1 %s -fcxx-exceptions -fexceptions -fsyntax-only -verify -fblocks -std=c++11 -Wunreachable-code-aggressive -Wno-unused-value
 
 int &halt() __attribute__((noreturn));
 int &live();
@@ -233,4 +233,25 @@ Frobozz test_return_object_control_flow(int flag) {
   return Frobozz(flag);
   return Frobozz(flag ? 42 : 24); // expected-warning {{code will never be executed}}
 }
+
+void somethingToCall();
+
+ static constexpr bool isConstExprConfigValue() { return true; }
+ 
+ int test_const_expr_config_value() {
+   if (isConstExprConfigValue()) {
+     somethingToCall();
+     return 0;
+   }
+   somethingToCall(); // no-warning
+   return 1;
+ }
+ int test_const_expr_config_value_2() {
+   if (!isConstExprConfigValue()) {
+     somethingToCall(); // no-warning
+     return 0;
+   }
+   somethingToCall();
+   return 1;
+ }
 
