@@ -89,24 +89,11 @@ private:
   std::string CheckName;
 };
 
-/// \brief Filters checks by name.
-class ChecksFilter {
-public:
-  ChecksFilter(StringRef EnableChecksRegex, StringRef DisableChecksRegex);
-  bool IsCheckEnabled(StringRef Name);
-
-private:
-  llvm::Regex EnableChecks;
-  llvm::Regex DisableChecks;
-};
-
 class ClangTidyCheckFactories;
 
 class ClangTidyASTConsumerFactory {
 public:
-  ClangTidyASTConsumerFactory(StringRef EnableChecksRegex,
-                              StringRef DisableChecksRegex,
-                              ClangTidyContext &Context);
+  ClangTidyASTConsumerFactory(ClangTidyContext &Context);
   ~ClangTidyASTConsumerFactory();
 
   /// \brief Returns an ASTConsumer that runs the specified clang-tidy checks.
@@ -120,7 +107,6 @@ private:
   typedef std::vector<std::pair<std::string, bool> > CheckersList;
   CheckersList getCheckersControlList();
 
-  ChecksFilter Filter;
   SmallVector<ClangTidyCheck *, 8> Checks;
   ClangTidyContext &Context;
   ast_matchers::MatchFinder Finder;

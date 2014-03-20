@@ -113,6 +113,19 @@ ClangTidyMessage::ClangTidyMessage(StringRef Message,
 ClangTidyError::ClangTidyError(StringRef CheckName)
     : CheckName(CheckName) {}
 
+ChecksFilter::ChecksFilter(StringRef EnableChecksRegex,
+                           StringRef DisableChecksRegex)
+    : EnableChecks(EnableChecksRegex), DisableChecks(DisableChecksRegex) {}
+
+bool ChecksFilter::isCheckEnabled(StringRef Name) {
+  return EnableChecks.match(Name) && !DisableChecks.match(Name);
+}
+
+ClangTidyContext::ClangTidyContext(SmallVectorImpl<ClangTidyError> *Errors,
+                                   StringRef EnableChecksRegex,
+                                   StringRef DisableChecksRegex)
+    : Errors(Errors), Filter(EnableChecksRegex, DisableChecksRegex) {}
+
 DiagnosticBuilder ClangTidyContext::diag(
     StringRef CheckName, SourceLocation Loc, StringRef Description,
     DiagnosticIDs::Level Level /* = DiagnosticIDs::Warning*/) {
@@ -179,7 +192,14 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
            "A diagnostic note can only be appended to a message.");
   } else {
     finalizeLastError();
-    Errors.push_back(ClangTidyError(Context.getCheckName(Info.getID())));
+    StringRef WarningOption =
+        Context.DiagEngine->getDiagnosticIDs()->getWarningOptionForDiag(
+            Info.getID());
+    std::string CheckName = !WarningOption.empty()
+                                ? ("clang-diagnostic-" + WarningOption).str()
+                                : Context.getCheckName(Info.getID()).str();
+
+    Errors.push_back(ClangTidyError(CheckName));
   }
 
   // FIXME: Provide correct LangOptions for each file.
@@ -218,7 +238,8 @@ void ClangTidyDiagnosticConsumer::finish() {
   finalizeLastError();
   std::set<const ClangTidyError*, LessClangTidyError> UniqueErrors;
   for (const ClangTidyError &Error : Errors) {
-    if (UniqueErrors.insert(&Error).second)
+    if (Context.getChecksFilter().isCheckEnabled(Error.CheckName) &&
+        UniqueErrors.insert(&Error).second)
       Context.storeError(Error);
   }
   Errors.clear();

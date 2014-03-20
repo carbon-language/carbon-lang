@@ -14,6 +14,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Tooling/Refactoring.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/Regex.h"
 
 namespace clang {
 
@@ -55,6 +56,17 @@ struct ClangTidyError {
   SmallVector<ClangTidyMessage, 1> Notes;
 };
 
+/// \brief Filters checks by name.
+class ChecksFilter {
+public:
+  ChecksFilter(StringRef EnableChecksRegex, StringRef DisableChecksRegex);
+  bool isCheckEnabled(StringRef Name);
+
+private:
+  llvm::Regex EnableChecks;
+  llvm::Regex DisableChecks;
+};
+
 /// \brief Every \c ClangTidyCheck reports errors through a \c DiagnosticEngine
 /// provided by this context.
 ///
@@ -66,8 +78,8 @@ struct ClangTidyError {
 /// \endcode
 class ClangTidyContext {
 public:
-  ClangTidyContext(SmallVectorImpl<ClangTidyError> *Errors)
-      : Errors(Errors), DiagEngine(0) {}
+  ClangTidyContext(SmallVectorImpl<ClangTidyError> *Errors,
+                   StringRef EnableChecksRegex, StringRef DisableChecksRegex);
 
   /// \brief Report any errors detected using this method.
   ///
@@ -93,6 +105,8 @@ public:
   /// diagnostic ID.
   StringRef getCheckName(unsigned DiagnosticID) const;
 
+  ChecksFilter &getChecksFilter() { return Filter; }
+
 private:
   friend class ClangTidyDiagnosticConsumer; // Calls storeError().
 
@@ -100,7 +114,9 @@ private:
   void storeError(const ClangTidyError &Error);
 
   SmallVectorImpl<ClangTidyError> *Errors;
-  DiagnosticsEngine *DiagEngine;
+  DiagnosticsEngine *DiagEngine{nullptr};
+  ChecksFilter Filter;
+
   llvm::DenseMap<unsigned, std::string> CheckNamesByDiagnosticID;
 };
 

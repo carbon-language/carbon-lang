@@ -93,10 +93,8 @@ private:
 } // namespace
 
 ClangTidyASTConsumerFactory::ClangTidyASTConsumerFactory(
-    StringRef EnableChecksRegex, StringRef DisableChecksRegex,
     ClangTidyContext &Context)
-    : Filter(EnableChecksRegex, DisableChecksRegex), Context(Context),
-      CheckFactories(new ClangTidyCheckFactories) {
+    : Context(Context), CheckFactories(new ClangTidyCheckFactories) {
   for (ClangTidyModuleRegistry::iterator I = ClangTidyModuleRegistry::begin(),
                                          E = ClangTidyModuleRegistry::end();
        I != E; ++I) {
@@ -104,7 +102,7 @@ ClangTidyASTConsumerFactory::ClangTidyASTConsumerFactory(
     Module->addCheckFactories(*CheckFactories);
   }
 
-  CheckFactories->createChecks(Filter, Checks);
+  CheckFactories->createChecks(Context.getChecksFilter(), Checks);
 
   for (ClangTidyCheck *Check : Checks) {
     Check->setContext(&Context);
@@ -149,7 +147,7 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
 std::vector<std::string> ClangTidyASTConsumerFactory::getCheckNames() {
   std::vector<std::string> CheckNames;
   for (const auto &CheckFactory : *CheckFactories) {
-    if (Filter.IsCheckEnabled(CheckFactory.first))
+    if (Context.getChecksFilter().isCheckEnabled(CheckFactory.first))
       CheckNames.push_back(CheckFactory.first);
   }
 
@@ -168,7 +166,8 @@ ClangTidyASTConsumerFactory::getCheckersControlList() {
   for (StringRef CheckName : StaticAnalyzerChecks) {
     std::string Checker((AnalyzerCheckNamePrefix + CheckName).str());
     AnalyzerChecksEnabled |=
-        Filter.IsCheckEnabled(Checker) && !CheckName.startswith("debug");
+        Context.getChecksFilter().isCheckEnabled(Checker) &&
+        !CheckName.startswith("debug");
   }
 
   if (AnalyzerChecksEnabled) {
@@ -183,19 +182,12 @@ ClangTidyASTConsumerFactory::getCheckersControlList() {
       std::string Checker((AnalyzerCheckNamePrefix + CheckName).str());
 
       if (CheckName.startswith("core") ||
-          (!CheckName.startswith("debug") && Filter.IsCheckEnabled(Checker)))
+          (!CheckName.startswith("debug") &&
+           Context.getChecksFilter().isCheckEnabled(Checker)))
         List.push_back(std::make_pair(CheckName, true));
     }
   }
   return List;
-}
-
-ChecksFilter::ChecksFilter(StringRef EnableChecksRegex,
-                           StringRef DisableChecksRegex)
-    : EnableChecks(EnableChecksRegex), DisableChecks(DisableChecksRegex) {}
-
-bool ChecksFilter::IsCheckEnabled(StringRef Name) {
-  return EnableChecks.match(Name) && !DisableChecks.match(Name);
 }
 
 DiagnosticBuilder ClangTidyCheck::diag(SourceLocation Loc, StringRef Message,
@@ -216,9 +208,9 @@ void ClangTidyCheck::setName(StringRef Name) {
 std::vector<std::string> getCheckNames(StringRef EnableChecksRegex,
                                        StringRef DisableChecksRegex) {
   SmallVector<ClangTidyError, 8> Errors;
-  clang::tidy::ClangTidyContext Context(&Errors);
-  ClangTidyASTConsumerFactory Factory(EnableChecksRegex, DisableChecksRegex,
-                                      Context);
+  clang::tidy::ClangTidyContext Context(&Errors, EnableChecksRegex,
+                                        DisableChecksRegex);
+  ClangTidyASTConsumerFactory Factory(Context);
   return Factory.getCheckNames();
 }
 
@@ -229,7 +221,8 @@ void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,
   // FIXME: Ranges are currently full files. Support selecting specific
   // (line-)ranges.
   ClangTool Tool(Compilations, Ranges);
-  clang::tidy::ClangTidyContext Context(Errors);
+  clang::tidy::ClangTidyContext Context(Errors, EnableChecksRegex,
+                                        DisableChecksRegex);
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
 
   Tool.setDiagnosticConsumer(&DiagConsumer);
@@ -256,8 +249,7 @@ void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,
     ClangTidyASTConsumerFactory *ConsumerFactory;
   };
 
-  Tool.run(new ActionFactory(new ClangTidyASTConsumerFactory(
-      EnableChecksRegex, DisableChecksRegex, Context)));
+  Tool.run(new ActionFactory(new ClangTidyASTConsumerFactory(Context)));
 }
 
 static SourceLocation getLocation(SourceManager &SourceMgr, StringRef FilePath,

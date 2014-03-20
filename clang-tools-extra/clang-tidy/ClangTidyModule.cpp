@@ -29,7 +29,7 @@ void ClangTidyCheckFactories::addCheckFactory(StringRef Name,
 void ClangTidyCheckFactories::createChecks(
     ChecksFilter &Filter, SmallVectorImpl<ClangTidyCheck *> &Checks) {
   for (const auto &Factory : Factories) {
-    if (Filter.IsCheckEnabled(Factory.first)) {
+    if (Filter.isCheckEnabled(Factory.first)) {
       ClangTidyCheck *Check = Factory.second->createCheck();
       Check->setName(Factory.first);
       Checks.push_back(Check);

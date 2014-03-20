@@ -42,7 +42,7 @@ private:
 template <typename T> std::string runCheckOnCode(StringRef Code) {
   T Check;
   SmallVector<ClangTidyError, 16> Errors;
-  ClangTidyContext Context(&Errors);
+  ClangTidyContext Context(&Errors, ".*", "");
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
   Check.setContext(&Context);
 
