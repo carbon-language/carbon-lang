@@ -4659,15 +4659,6 @@ computeImplicitExceptionSpec(Sema &S, SourceLocation Loc, CXXMethodDecl *MD) {
   return S.ComputeInheritingCtorExceptionSpec(cast<CXXConstructorDecl>(MD));
 }
 
-static void
-updateExceptionSpec(Sema &S, FunctionDecl *FD, const FunctionProtoType *FPT,
-                    const Sema::ImplicitExceptionSpecification &ExceptSpec) {
-  FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-  ExceptSpec.getEPI(EPI);
-  FD->setType(S.Context.getFunctionType(FPT->getReturnType(),
-                                        FPT->getParamTypes(), EPI));
-}
-
 static FunctionProtoType::ExtProtoInfo getImplicitMethodEPI(Sema &S,
                                                             CXXMethodDecl *MD) {
   FunctionProtoType::ExtProtoInfo EPI;
@@ -4692,8 +4683,11 @@ void Sema::EvaluateImplicitExceptionSpec(SourceLocation Loc, CXXMethodDecl *MD) 
   ImplicitExceptionSpecification ExceptSpec =
       computeImplicitExceptionSpec(*this, Loc, MD);
 
+  FunctionProtoType::ExtProtoInfo EPI;
+  ExceptSpec.getEPI(EPI);
+
   // Update the type of the special member to use it.
-  updateExceptionSpec(*this, MD, FPT, ExceptSpec);
+  UpdateExceptionSpec(MD, EPI);
 
   // A user-provided destructor can be defined outside the class. When that
   // happens, be sure to update the exception specification on both
@@ -4701,8 +4695,7 @@ void Sema::EvaluateImplicitExceptionSpec(SourceLocation Loc, CXXMethodDecl *MD) 
   const FunctionProtoType *CanonicalFPT =
     MD->getCanonicalDecl()->getType()->castAs<FunctionProtoType>();
   if (CanonicalFPT->getExceptionSpecType() == EST_Unevaluated)
-    updateExceptionSpec(*this, MD->getCanonicalDecl(),
-                        CanonicalFPT, ExceptSpec);
+    UpdateExceptionSpec(MD->getCanonicalDecl(), EPI);
 }
 
 void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {

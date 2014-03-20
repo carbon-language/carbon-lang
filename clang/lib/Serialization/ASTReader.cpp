@@ -5036,23 +5036,8 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     EPI.HasTrailingReturn = Record[Idx++];
     EPI.TypeQuals = Record[Idx++];
     EPI.RefQualifier = static_cast<RefQualifierKind>(Record[Idx++]);
-    ExceptionSpecificationType EST =
-        static_cast<ExceptionSpecificationType>(Record[Idx++]);
-    EPI.ExceptionSpecType = EST;
-    SmallVector<QualType, 2> Exceptions;
-    if (EST == EST_Dynamic) {
-      EPI.NumExceptions = Record[Idx++];
-      for (unsigned I = 0; I != EPI.NumExceptions; ++I)
-        Exceptions.push_back(readType(*Loc.F, Record, Idx));
-      EPI.Exceptions = Exceptions.data();
-    } else if (EST == EST_ComputedNoexcept) {
-      EPI.NoexceptExpr = ReadExpr(*Loc.F);
-    } else if (EST == EST_Uninstantiated) {
-      EPI.ExceptionSpecDecl = ReadDeclAs<FunctionDecl>(*Loc.F, Record, Idx);
-      EPI.ExceptionSpecTemplate = ReadDeclAs<FunctionDecl>(*Loc.F, Record, Idx);
-    } else if (EST == EST_Unevaluated) {
-      EPI.ExceptionSpecDecl = ReadDeclAs<FunctionDecl>(*Loc.F, Record, Idx);
-    }
+    SmallVector<QualType, 8> ExceptionStorage;
+    readExceptionSpec(*Loc.F, ExceptionStorage, EPI, Record, Idx);
     return Context.getFunctionType(ResultType, ParamTypes, EPI);
   }
 
@@ -5305,6 +5290,29 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
   }
   }
   llvm_unreachable("Invalid TypeCode!");
+}
+
+void ASTReader::readExceptionSpec(ModuleFile &ModuleFile,
+                                  SmallVectorImpl<QualType> &Exceptions,
+                                  FunctionProtoType::ExtProtoInfo &EPI,
+                                  const RecordData &Record, unsigned &Idx) {
+  ExceptionSpecificationType EST =
+      static_cast<ExceptionSpecificationType>(Record[Idx++]);
+  EPI.ExceptionSpecType = EST;
+  if (EST == EST_Dynamic) {
+    EPI.NumExceptions = Record[Idx++];
+    for (unsigned I = 0; I != EPI.NumExceptions; ++I)
+      Exceptions.push_back(readType(ModuleFile, Record, Idx));
+    EPI.Exceptions = Exceptions.data();
+  } else if (EST == EST_ComputedNoexcept) {
+    EPI.NoexceptExpr = ReadExpr(ModuleFile);
+  } else if (EST == EST_Uninstantiated) {
+    EPI.ExceptionSpecDecl = ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
+    EPI.ExceptionSpecTemplate =
+        ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
+  } else if (EST == EST_Unevaluated) {
+    EPI.ExceptionSpecDecl = ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
+  }
 }
 
 class clang::TypeLocReader : public TypeLocVisitor<TypeLocReader> {

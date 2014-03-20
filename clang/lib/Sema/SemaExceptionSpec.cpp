@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaInternal.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
@@ -130,6 +131,25 @@ Sema::ResolveExceptionSpec(SourceLocation Loc, const FunctionProtoType *FPT) {
     InstantiateExceptionSpec(Loc, SourceDecl);
 
   return SourceDecl->getType()->castAs<FunctionProtoType>();
+}
+
+void Sema::UpdateExceptionSpec(FunctionDecl *FD,
+                               const FunctionProtoType::ExtProtoInfo &EPI) {
+  const FunctionProtoType *Proto = FD->getType()->castAs<FunctionProtoType>();
+
+  // Overwrite the exception spec and rebuild the function type.
+  FunctionProtoType::ExtProtoInfo NewEPI = Proto->getExtProtoInfo();
+  NewEPI.ExceptionSpecType = EPI.ExceptionSpecType;
+  NewEPI.NumExceptions = EPI.NumExceptions;
+  NewEPI.Exceptions = EPI.Exceptions;
+  NewEPI.NoexceptExpr = EPI.NoexceptExpr;
+  FD->setType(Context.getFunctionType(Proto->getReturnType(),
+                                      Proto->getParamTypes(), NewEPI));
+
+  // If we've fully resolved the exception specification, notify listeners.
+  if (!isUnresolvedExceptionSpec(EPI.ExceptionSpecType))
+    if (auto *Listener = getASTMutationListener())
+      Listener->ResolvedExceptionSpec(FD);
 }
 
 /// Determine whether a function has an implicitly-generated exception

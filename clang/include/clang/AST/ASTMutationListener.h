@@ -65,6 +65,10 @@ public:
   virtual void AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
                                               const FunctionDecl *D) {}
 
+  /// \brief A function's exception specification has been evaluated or
+  /// instantiated.
+  virtual void ResolvedExceptionSpec(const FunctionDecl *FD) {}
+
   /// \brief A function's return type has been deduced.
   virtual void DeducedReturnType(const FunctionDecl *FD, QualType ReturnType);
 

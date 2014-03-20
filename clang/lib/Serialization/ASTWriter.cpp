@@ -194,15 +194,8 @@ void ASTTypeWriter::VisitFunctionNoProtoType(const FunctionNoProtoType *T) {
   Code = TYPE_FUNCTION_NO_PROTO;
 }
 
-void ASTTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
-  VisitFunctionType(T);
-  Record.push_back(T->getNumParams());
-  for (unsigned I = 0, N = T->getNumParams(); I != N; ++I)
-    Writer.AddTypeRef(T->getParamType(I), Record);
-  Record.push_back(T->isVariadic());
-  Record.push_back(T->hasTrailingReturn());
-  Record.push_back(T->getTypeQuals());
-  Record.push_back(static_cast<unsigned>(T->getRefQualifier()));
+static void addExceptionSpec(ASTWriter &Writer, const FunctionProtoType *T,
+                             ASTWriter::RecordDataImpl &Record) {
   Record.push_back(T->getExceptionSpecType());
   if (T->getExceptionSpecType() == EST_Dynamic) {
     Record.push_back(T->getNumExceptions());
@@ -216,6 +209,18 @@ void ASTTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
   } else if (T->getExceptionSpecType() == EST_Unevaluated) {
     Writer.AddDeclRef(T->getExceptionSpecDecl(), Record);
   }
+}
+
+void ASTTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
+  VisitFunctionType(T);
+  Record.push_back(T->getNumParams());
+  for (unsigned I = 0, N = T->getNumParams(); I != N; ++I)
+    Writer.AddTypeRef(T->getParamType(I), Record);
+  Record.push_back(T->isVariadic());
+  Record.push_back(T->hasTrailingReturn());
+  Record.push_back(T->getTypeQuals());
+  Record.push_back(static_cast<unsigned>(T->getRefQualifier()));
+  addExceptionSpec(Writer, T, Record);
   Code = TYPE_FUNCTION_PROTO;
 }
 
@@ -4341,6 +4346,13 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
         AddSourceLocation(Update.getLoc(), Record);
         break;
 
+      case UPD_CXX_RESOLVED_EXCEPTION_SPEC:
+        addExceptionSpec(
+            *this,
+            cast<FunctionDecl>(D)->getType()->castAs<FunctionProtoType>(),
+            Record);
+        break;
+
       case UPD_CXX_DEDUCED_RETURN_TYPE:
         Record.push_back(GetOrCreateTypeID(Update.getType()));
         break;
@@ -5303,6 +5315,15 @@ void ASTWriter::AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
     return; // Not a source specialization added to a template from PCH.
 
   DeclUpdates[TD].push_back({UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION, D});
+}
+
+void ASTWriter::ResolvedExceptionSpec(const FunctionDecl *FD) {
+  assert(!WritingAST && "Already writing the AST!");
+  FD = FD->getCanonicalDecl();
+  if (!FD->isFromASTFile())
+    return; // Not a function declared in PCH and defined outside.
+
+  DeclUpdates[FD].push_back(UPD_CXX_RESOLVED_EXCEPTION_SPEC);
 }
 
 void ASTWriter::DeducedReturnType(const FunctionDecl *FD, QualType ReturnType) {
