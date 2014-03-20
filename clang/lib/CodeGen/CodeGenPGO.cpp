@@ -824,7 +824,22 @@ void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
   if (!D)
     return;
   setFuncName(Fn);
+
+  // Set the linkage for variables based on the function linkage.  Usually, we
+  // want to match it, but available_externally and extern_weak both have the
+  // wrong semantics.
   VarLinkage = Fn->getLinkage();
+  switch (VarLinkage) {
+  case llvm::GlobalValue::ExternalWeakLinkage:
+    VarLinkage = llvm::GlobalValue::LinkOnceAnyLinkage;
+    break;
+  case llvm::GlobalValue::AvailableExternallyLinkage:
+    VarLinkage = llvm::GlobalValue::LinkOnceODRLinkage;
+    break;
+  default:
+    break;
+  }
+
   mapRegionCounters(D);
   if (InstrumentRegions)
     emitCounterVariables();
