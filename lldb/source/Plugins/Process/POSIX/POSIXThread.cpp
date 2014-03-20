@@ -167,7 +167,7 @@ POSIXThread::GetRegisterContext()
                     case llvm::Triple::x86:
                         reg_interface = new RegisterContextFreeBSD_i386(target_arch);
                         break;
-                    case llvm::Triple::X86_64:
+                    case llvm::Triple::x86_64:
                         reg_interface = new RegisterContextFreeBSD_x86_64(target_arch);
                         break;
                     default:
@@ -179,7 +179,7 @@ POSIXThread::GetRegisterContext()
                 switch (target_arch.GetMachine())
                 {
                     case llvm::Triple::x86:
-                    case llvm::Triple::X86_64:
+                    case llvm::Triple::x86_64:
                         if (Host::GetArchitecture().GetAddressByteSize() == 4)
                         {
                             // 32-bit hosts run with a RegisterContextLinux_i386 context.
@@ -212,7 +212,7 @@ POSIXThread::GetRegisterContext()
                     break;
                 }
             case llvm::Triple::x86:
-            case llvm::Triple::X86_64:
+            case llvm::Triple::x86_64:
                 {
                     RegisterContextPOSIXProcessMonitor_x86_64 *reg_ctx = new RegisterContextPOSIXProcessMonitor_x86_64(*this, 0, reg_interface);
                     m_posix_thread = reg_ctx;
