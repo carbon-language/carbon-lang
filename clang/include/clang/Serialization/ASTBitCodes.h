@@ -213,9 +213,6 @@ namespace clang {
       /// types and decls used within the AST file.
       DECLTYPES_BLOCK_ID,
 
-      /// \brief The block containing DECL_UPDATES records.
-      DECL_UPDATES_BLOCK_ID,
-      
       /// \brief The block containing the detailed preprocessing record.
       PREPROCESSOR_DETAIL_BLOCK_ID,
       

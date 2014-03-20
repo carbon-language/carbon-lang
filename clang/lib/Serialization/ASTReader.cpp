@@ -2352,14 +2352,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
           return true;
         }
         break;
-        
-      case DECL_UPDATES_BLOCK_ID:
-        if (Stream.SkipBlock()) {
-          Error("malformed block record in AST file");
-          return true;
-        }
-        break;
-        
+
       case PREPROCESSOR_BLOCK_ID:
         F.MacroCursor = Stream;
         if (!PP.getExternalSource())
@@ -2707,9 +2700,9 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
 
       // Initialize the remapping table.
       // Invalid stays invalid.
-      F.SLocRemap.insert(std::make_pair(0U, 0));
+      F.SLocRemap.insertOrReplace(std::make_pair(0U, 0));
       // This module. Base was 2 when being compiled.
-      F.SLocRemap.insert(std::make_pair(2U,
+      F.SLocRemap.insertOrReplace(std::make_pair(2U,
                                   static_cast<int>(F.SLocEntryBaseOffset - 2)));
       
       TotalNumSLocEntries += F.LocalNumSLocEntries;
@@ -2720,7 +2713,13 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       // Additional remapping information.
       const unsigned char *Data = (const unsigned char*)Blob.data();
       const unsigned char *DataEnd = Data + Blob.size();
-      
+
+      // If we see this entry before SOURCE_LOCATION_OFFSETS, add placeholders.
+      if (F.SLocRemap.find(0) == F.SLocRemap.end()) {
+        F.SLocRemap.insert(std::make_pair(0U, 0));
+        F.SLocRemap.insert(std::make_pair(2U, 1));
+      }
+
       // Continuous range maps we may be updating in our module.
       ContinuousRangeMap<uint32_t, int, 2>::Builder SLocRemap(F.SLocRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder 

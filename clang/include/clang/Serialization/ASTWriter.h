@@ -448,7 +448,7 @@ private:
                             bool IsModule);
   void WriteAttributes(ArrayRef<const Attr*> Attrs, RecordDataImpl &Record);
   void ResolveDeclUpdatesBlocks();
-  void WriteDeclUpdatesBlocks();
+  void WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord);
   void WriteDeclReplacementsBlock();
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
   void WriteFPPragmaOptions(const FPOptions &Opts);

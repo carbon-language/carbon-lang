@@ -4104,9 +4104,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
     }
   }
 
-  // Resolve any declaration pointers within the declaration updates block.
-  ResolveDeclUpdatesBlocks();
-  
   // Form the record of special types.
   RecordData SpecialTypes;
   AddTypeRef(Context.getRawCFConstantStringType(), SpecialTypes);
@@ -4118,30 +4115,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   AddTypeRef(Context.ObjCSelRedefinitionType, SpecialTypes);
   AddTypeRef(Context.getucontext_tType(), SpecialTypes);
 
-  // Keep writing types and declarations until all types and
-  // declarations have been written.
-  Stream.EnterSubblock(DECLTYPES_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
-  WriteDeclsBlockAbbrevs();
-  for (DeclsToRewriteTy::iterator I = DeclsToRewrite.begin(), 
-                                  E = DeclsToRewrite.end(); 
-       I != E; ++I)
-    DeclTypesToEmit.push(const_cast<Decl*>(*I));
-  while (!DeclTypesToEmit.empty()) {
-    DeclOrType DOT = DeclTypesToEmit.front();
-    DeclTypesToEmit.pop();
-    if (DOT.isType())
-      WriteType(DOT.getType());
-    else
-      WriteDecl(Context, DOT.getDecl());
-  }
-  Stream.ExitBlock();
-
-  DoneWritingDeclsAndTypes = true;
-
-  WriteFileDeclIDsMap();
-  WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
-  WriteComments();
-  
   if (Chain) {
     // Write the mapping information describing our module dependencies and how
     // each of those modules were mapped into our own offset/ID space, so that
@@ -4186,6 +4159,44 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
     Stream.EmitRecordWithBlob(ModuleOffsetMapAbbrev, Record,
                               Buffer.data(), Buffer.size());
   }
+
+  // Resolve any declaration pointers within the declaration updates block.
+  // FIXME: Fold this into WriteDeclUpdatesBlocks.
+  ResolveDeclUpdatesBlocks();
+
+  RecordData DeclUpdatesOffsetsRecord;
+
+  // Keep writing types and declarations until all types and
+  // declarations have been written.
+  Stream.EnterSubblock(DECLTYPES_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
+  WriteDeclsBlockAbbrevs();
+  for (DeclsToRewriteTy::iterator I = DeclsToRewrite.begin(),
+                                  E = DeclsToRewrite.end();
+       I != E; ++I)
+    DeclTypesToEmit.push(const_cast<Decl*>(*I));
+  while (!DeclTypesToEmit.empty()) {
+    DeclOrType DOT = DeclTypesToEmit.front();
+    DeclTypesToEmit.pop();
+    if (DOT.isType())
+      WriteType(DOT.getType());
+    else
+      WriteDecl(Context, DOT.getDecl());
+  }
+  WriteDeclUpdatesBlocks(DeclUpdatesOffsetsRecord);
+  Stream.ExitBlock();
+
+  if (!DeclUpdatesOffsetsRecord.empty())
+    Stream.EmitRecord(DECL_UPDATE_OFFSETS, DeclUpdatesOffsetsRecord);
+
+  DoneWritingDeclsAndTypes = true;
+
+  // These things can only be done once we've written out decls and types.
+  WriteTypeDeclOffsets();
+  WriteCXXBaseSpecifiersOffsets();
+  WriteFileDeclIDsMap();
+  WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
+
+  WriteComments();
   WritePreprocessor(PP, isModule);
   WriteHeaderSearch(PP.getHeaderSearchInfo(), isysroot);
   WriteSelectors(SemaRef);
@@ -4193,12 +4204,8 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   WriteIdentifierTable(PP, SemaRef.IdResolver, isModule);
   WriteFPPragmaOptions(SemaRef.getFPOptions());
   WriteOpenCLExtensions(SemaRef);
-
-  WriteTypeDeclOffsets();
   WritePragmaDiagnosticMappings(Context.getDiagnostics(), isModule);
 
-  WriteCXXBaseSpecifiersOffsets();
-  
   // If we're emitting a module, write out the submodule information.  
   if (WritingModule)
     WriteSubmodules(WritingModule);
@@ -4290,7 +4297,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
     }
   }
 
-  WriteDeclUpdatesBlocks();
   WriteDeclReplacementsBlock();
   WriteRedeclarations();
   WriteMergedDecls();
@@ -4343,12 +4349,10 @@ void ASTWriter::ResolveDeclUpdatesBlocks() {
   }
 }
 
-void ASTWriter::WriteDeclUpdatesBlocks() {
+void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
   if (DeclUpdates.empty())
     return;
 
-  RecordData OffsetsRecord;
-  Stream.EnterSubblock(DECL_UPDATES_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
   for (DeclUpdateMap::iterator
          I = DeclUpdates.begin(), E = DeclUpdates.end(); I != E; ++I) {
     const Decl *D = I->first;
@@ -4360,11 +4364,12 @@ void ASTWriter::WriteDeclUpdatesBlocks() {
     uint64_t Offset = Stream.GetCurrentBitNo();
     Stream.EmitRecord(DECL_UPDATES, URec);
 
+    // Flush any statements that were written as part of this update record.
+    FlushStmts();
+
     OffsetsRecord.push_back(GetDeclRef(D));
     OffsetsRecord.push_back(Offset);
   }
-  Stream.ExitBlock();
-  Stream.EmitRecord(DECL_UPDATE_OFFSETS, OffsetsRecord);
 }
 
 void ASTWriter::WriteDeclReplacementsBlock() {
