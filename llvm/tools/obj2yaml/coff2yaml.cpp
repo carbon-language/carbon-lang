@@ -157,7 +157,7 @@ void COFFDumper::dumpSymbols(unsigned NumSymbols) {
             reinterpret_cast<const object::coff_aux_function_definition *>(
                 AuxData.data());
         dumpFunctionDefinition(&Sym, ObjFD);
-      } else if (Symbol->StorageClass == COFF::IMAGE_SYM_CLASS_FUNCTION) {
+      } else if (Symbol->isFunctionLineInfo()) {
         // This symbol describes function line number information.
         assert(Symbol->NumberOfAuxSymbols == 1 &&
                "Exepected a single aux symbol to describe this section!");

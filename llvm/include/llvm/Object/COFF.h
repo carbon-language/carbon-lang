@@ -210,6 +210,10 @@ struct coff_symbol {
            !COFF::isReservedSectionNumber(SectionNumber);
   }
 
+  bool isFunctionLineInfo() const {
+    return StorageClass == COFF::IMAGE_SYM_CLASS_FUNCTION;
+  }
+
   bool isWeakExternal() const {
     return StorageClass == COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL ||
            (StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
