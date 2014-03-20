@@ -79,6 +79,8 @@ public:
 
   // Allow a target to add behavior to the EmitLabel of MCStreamer.
   virtual void emitLabel(MCSymbol *Symbol);
+  // Allow a target to add behavior to the emitAssignment of MCStreamer.
+  virtual void emitAssignment(MCSymbol *Symbol, const MCExpr *Value);
 
   virtual void finish();
 };
@@ -395,7 +397,7 @@ public:
   virtual void EmitThumbFunc(MCSymbol *Func) = 0;
 
   /// getOrCreateSymbolData - Get symbol data for given symbol.
-  virtual MCSymbolData &getOrCreateSymbolData(MCSymbol *Symbol);
+  virtual MCSymbolData &getOrCreateSymbolData(const MCSymbol *Symbol);
 
   /// EmitAssignment - Emit an assignment of @p Value to @p Symbol.
   ///
@@ -408,7 +410,7 @@ public:
   ///
   /// @param Symbol - The symbol being assigned to.
   /// @param Value - The value for the symbol.
-  virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) = 0;
+  virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
 
   /// EmitWeakReference - Emit an weak reference from @p Alias to @p Symbol.
   ///

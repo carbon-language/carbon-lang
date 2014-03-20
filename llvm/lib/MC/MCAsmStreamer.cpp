@@ -408,8 +408,7 @@ void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   OS << *Symbol << " = " << *Value;
   EmitEOL();
 
-  // FIXME: Lift context changes into super class.
-  Symbol->setVariableValue(Value);
+  MCStreamer::EmitAssignment(Symbol, Value);
 }
 
 void MCAsmStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {

@@ -86,6 +86,7 @@ public:
   MipsTargetELFStreamer(MCStreamer &S, const MCSubtargetInfo &STI);
 
   virtual void emitLabel(MCSymbol *Symbol) override;
+  virtual void emitAssignment(MCSymbol *Symbol, const MCExpr *Value) override;
   void finish() override;
 
   virtual void emitDirectiveSetMicroMips();

@@ -219,6 +219,26 @@ void MipsTargetELFStreamer::finish() {
   }
 }
 
+void MipsTargetELFStreamer::emitAssignment(MCSymbol *Symbol,
+                                           const MCExpr *Value) {
+  // If on rhs is micromips symbol then mark Symbol as microMips.
+  if (Value->getKind() != MCExpr::SymbolRef)
+    return;
+  const MCSymbol &RhsSym =
+    static_cast<const MCSymbolRefExpr *>(Value)->getSymbol();
+  MCSymbolData &Data = getStreamer().getOrCreateSymbolData(&RhsSym);
+  uint8_t Type = MCELF::GetType(Data);
+  if ((Type != ELF::STT_FUNC)
+      || !(MCELF::getOther(Data) & (ELF::STO_MIPS_MICROMIPS >> 2)))
+    return;
+
+  MCSymbolData &SymbolData = getStreamer().getOrCreateSymbolData(Symbol);
+  // The "other" values are stored in the last 6 bits of the second byte.
+  // The traditional defines for STO values assume the full byte and thus
+  // the shift to pack it.
+  MCELF::setOther(SymbolData, ELF::STO_MIPS_MICROMIPS >> 2);
+}
+
 MCELFStreamer &MipsTargetELFStreamer::getStreamer() {
   return static_cast<MCELFStreamer &>(Streamer);
 }
