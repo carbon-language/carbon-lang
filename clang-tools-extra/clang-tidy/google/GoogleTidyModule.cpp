@@ -34,7 +34,7 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
   // Do not be confused: isExplicit means 'explicit' keyword is present,
   // isImplicit means that it's a compiler-generated constructor.
   if (Ctor->isOutOfLine() || Ctor->isExplicit() || Ctor->isImplicit() ||
-      Ctor->isDeleted())
+      Ctor->isDeleted() || Ctor->isCopyOrMoveConstructor())
     return;
   if (Ctor->getNumParams() == 0 || Ctor->getMinRequiredArguments() > 1)
     return;
