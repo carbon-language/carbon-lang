@@ -221,25 +221,20 @@ static llvm::Constant *getOrInsertRuntimeWriteAtExit(CodeGenModule &CGM) {
                                              WriteAtExitTy);
 }
 
+static bool isMachO(const CodeGenModule &CGM) {
+  return CGM.getTarget().getTriple().isOSBinFormatMachO();
+}
+
 static StringRef getCountersSection(const CodeGenModule &CGM) {
-  if (CGM.getTarget().getTriple().isOSBinFormatMachO())
-    return "__DATA,__llvm_pgo_cnts";
-  else
-    return "__llvm_pgo_cnts";
+  return isMachO(CGM) ? "__DATA,__llvm_pgo_cnts" : "__llvm_pgo_cnts";
 }
 
 static StringRef getNameSection(const CodeGenModule &CGM) {
-  if (CGM.getTarget().getTriple().isOSBinFormatMachO())
-    return "__DATA,__llvm_pgo_names";
-  else
-    return "__llvm_pgo_names";
+  return isMachO(CGM) ? "__DATA,__llvm_pgo_names" : "__llvm_pgo_names";
 }
 
 static StringRef getDataSection(const CodeGenModule &CGM) {
-  if (CGM.getTarget().getTriple().isOSBinFormatMachO())
-    return "__DATA,__llvm_pgo_data";
-  else
-    return "__llvm_pgo_data";
+  return isMachO(CGM) ? "__DATA,__llvm_pgo_data" : "__llvm_pgo_data";
 }
 
 llvm::GlobalVariable *CodeGenPGO::buildDataVar() {
