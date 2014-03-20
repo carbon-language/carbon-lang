@@ -283,7 +283,33 @@ private:
   llvm::DenseMap<const MacroDefinition *, serialization::PreprocessedEntityID>
       MacroDefinitions;
 
-  typedef SmallVector<uint64_t, 2> UpdateRecord;
+  /// An update to a Decl.
+  class DeclUpdate {
+    /// A DeclUpdateKind.
+    unsigned Kind;
+    union {
+      const Decl *Dcl;
+      void *Type;
+      unsigned Loc;
+    };
+
+  public:
+    DeclUpdate(unsigned Kind) : Kind(Kind), Dcl(0) {}
+    DeclUpdate(unsigned Kind, const Decl *Dcl) : Kind(Kind), Dcl(Dcl) {}
+    DeclUpdate(unsigned Kind, QualType Type)
+        : Kind(Kind), Type(Type.getAsOpaquePtr()) {}
+    DeclUpdate(unsigned Kind, SourceLocation Loc)
+        : Kind(Kind), Loc(Loc.getRawEncoding()) {}
+
+    unsigned getKind() const { return Kind; }
+    const Decl *getDecl() const { return Dcl; }
+    QualType getType() const { return QualType::getFromOpaquePtr(Type); }
+    SourceLocation getLoc() const {
+      return SourceLocation::getFromRawEncoding(Loc);
+    }
+  };
+
+  typedef SmallVector<DeclUpdate, 1> UpdateRecord;
   typedef llvm::DenseMap<const Decl *, UpdateRecord> DeclUpdateMap;
   /// \brief Mapping from declarations that came from a chained PCH to the
   /// record containing modifications to them.
@@ -447,7 +473,6 @@ private:
   void WriteIdentifierTable(Preprocessor &PP, IdentifierResolver &IdResolver,
                             bool IsModule);
   void WriteAttributes(ArrayRef<const Attr*> Attrs, RecordDataImpl &Record);
-  void ResolveDeclUpdatesBlocks();
   void WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord);
   void WriteDeclReplacementsBlock();
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
