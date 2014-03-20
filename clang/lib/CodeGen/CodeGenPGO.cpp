@@ -301,17 +301,17 @@ void CodeGenPGO::emitInstrumentationData() {
 
 llvm::Function *CodeGenPGO::emitInitialization(CodeGenModule &CGM) {
   if (!CGM.getCodeGenOpts().ProfileInstrGenerate)
-    return 0;
+    return nullptr;
 
   // Only need to create this once per module.
   if (CGM.getModule().getFunction("__llvm_pgo_init"))
-    return 0;
+    return nullptr;
 
   // Get the functions to call at initialization.
   llvm::Constant *RegisterF = getRegisterFunc(CGM);
   llvm::Constant *WriteAtExitF = getOrInsertRuntimeWriteAtExit(CGM);
   if (!RegisterF && !WriteAtExitF)
-    return 0;
+    return nullptr;
 
   // Create the initialization function.
   auto *VoidTy = llvm::Type::getVoidTy(CGM.getLLVMContext());
@@ -963,7 +963,7 @@ llvm::MDNode *CodeGenPGO::createBranchWeights(uint64_t TrueCount,
                                               uint64_t FalseCount) {
   // Check for empty weights.
   if (!TrueCount && !FalseCount)
-    return 0;
+    return nullptr;
 
   // Calculate how to scale down to 32-bits.
   uint64_t Scale = calculateWeightScale(std::max(TrueCount, FalseCount));
@@ -976,7 +976,7 @@ llvm::MDNode *CodeGenPGO::createBranchWeights(uint64_t TrueCount,
 llvm::MDNode *CodeGenPGO::createBranchWeights(ArrayRef<uint64_t> Weights) {
   // We need at least two elements to create meaningful weights.
   if (Weights.size() < 2)
-    return 0;
+    return nullptr;
 
   // Calculate how to scale down to 32-bits.
   uint64_t Scale = calculateWeightScale(*std::max_element(Weights.begin(),
@@ -994,14 +994,14 @@ llvm::MDNode *CodeGenPGO::createBranchWeights(ArrayRef<uint64_t> Weights) {
 llvm::MDNode *CodeGenPGO::createLoopWeights(const Stmt *Cond,
                                             RegionCounter &Cnt) {
   if (!haveRegionCounts())
-    return 0;
+    return nullptr;
   uint64_t LoopCount = Cnt.getCount();
   uint64_t CondCount = 0;
   bool Found = getStmtCount(Cond, CondCount);
   assert(Found && "missing expected loop condition count");
   (void)Found;
   if (CondCount == 0)
-    return 0;
+    return nullptr;
   return createBranchWeights(LoopCount,
                              std::max(CondCount, LoopCount) - LoopCount);
 }
