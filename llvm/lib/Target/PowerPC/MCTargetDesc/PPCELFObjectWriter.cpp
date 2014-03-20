@@ -74,6 +74,7 @@ static MCSymbolRefExpr::VariantKind getAccessVariant(const MCFixup &Fixup) {
   case PPCMCExpr::VK_PPC_HIGHESTA:
     return MCSymbolRefExpr::VK_PPC_HIGHESTA;
   }
+  llvm_unreachable("unknown PPCMCExpr kind");
 }
 
 unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,

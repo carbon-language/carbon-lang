@@ -29,6 +29,7 @@ static MCSymbolRefExpr::VariantKind getAccessVariant(const MCExpr *Expr) {
     return getAccessVariant(ABE->getLHS());
   }
   }
+  llvm_unreachable("unknown MCExpr kind");
 }
 
 MCSymbolRefExpr::VariantKind MCFixup::getAccessVariant() const {
