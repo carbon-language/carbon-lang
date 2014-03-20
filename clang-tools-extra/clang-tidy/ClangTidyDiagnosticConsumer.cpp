@@ -124,7 +124,8 @@ bool ChecksFilter::isCheckEnabled(StringRef Name) {
 ClangTidyContext::ClangTidyContext(SmallVectorImpl<ClangTidyError> *Errors,
                                    StringRef EnableChecksRegex,
                                    StringRef DisableChecksRegex)
-    : Errors(Errors), Filter(EnableChecksRegex, DisableChecksRegex) {}
+    : Errors(Errors), DiagEngine(nullptr),
+      Filter(EnableChecksRegex, DisableChecksRegex) {}
 
 DiagnosticBuilder ClangTidyContext::diag(
     StringRef CheckName, SourceLocation Loc, StringRef Description,

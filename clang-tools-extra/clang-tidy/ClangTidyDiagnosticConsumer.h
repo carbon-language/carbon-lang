@@ -114,7 +114,7 @@ private:
   void storeError(const ClangTidyError &Error);
 
   SmallVectorImpl<ClangTidyError> *Errors;
-  DiagnosticsEngine *DiagEngine{nullptr};
+  DiagnosticsEngine *DiagEngine;
   ChecksFilter Filter;
 
   llvm::DenseMap<unsigned, std::string> CheckNamesByDiagnosticID;
