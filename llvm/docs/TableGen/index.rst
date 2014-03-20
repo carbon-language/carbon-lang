@@ -23,7 +23,7 @@ amount of duplication in the description, reduces the chance of error, and makes
 it easier to structure domain specific information.
 
 The core part of TableGen parses a file, instantiates the declarations, and
-hands the result off to a domain-specific `backends`_ for processing.
+hands the result off to a domain-specific `backend`_ for processing.
 
 The current major users of TableGen are :doc:`../CodeGenerator`
 and the
@@ -145,11 +145,10 @@ of the x86 architecture.  ``def ADD32rr`` defines a record named
 ``ADD32rr``, and the comment at the end of the line indicates the superclasses
 of the definition.  The body of the record contains all of the data that
 TableGen assembled for the record, indicating that the instruction is part of
-the "X86" namespace, the pattern indicating how the instruction should be
-emitted into the assembly file, that it is a two-address instruction, has a
-particular encoding, etc.  The contents and semantics of the information in the
-record are specific to the needs of the X86 backend, and are only shown as an
-example.
+the "X86" namespace, the pattern indicating how the instruction is selected by
+the code generator, that it is a two-address instruction, has a particular
+encoding, etc.  The contents and semantics of the information in the record are
+specific to the needs of the X86 backend, and are only shown as an example.
 
 As you can see, a lot of information is needed for every instruction supported
 by the code generator, and specifying it all manually would be unmaintainable,
@@ -182,7 +181,7 @@ refer to ``NAME`` anywhere she desires to use the ultimate name of the ``def``.
 Syntax
 ======
 
-TableGen has a syntax that is losely based on C++ templates, with built-in
+TableGen has a syntax that is loosely based on C++ templates, with built-in
 types and specification. In addition, TableGen's syntax introduces some
 automation concepts like multiclass, foreach, let, etc.
 
