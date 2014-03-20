@@ -66,10 +66,14 @@ public:
 
   /// \brief Parse the group members.
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override {
+    auto *pctx = (PECOFFLinkingContext *)(&ctx);
+    error_code ec = error_code::success();
+    pctx->lock();
     for (auto &elem : _elements)
-      if (error_code ec = elem->parse(ctx, diagnostics))
-        return ec;
-    return error_code::success();
+      if ((ec = elem->parse(ctx, diagnostics)))
+        break;
+    pctx->unlock();
+    return ec;
   }
 };
 
