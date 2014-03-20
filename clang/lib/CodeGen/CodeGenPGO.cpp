@@ -182,6 +182,10 @@ static llvm::Function *getRegisterFunc(CodeGenModule &CGM) {
 }
 
 static llvm::BasicBlock *getOrInsertRegisterBB(CodeGenModule &CGM) {
+  // Don't do this for Darwin.  compiler-rt uses linker magic.
+  if (CGM.getTarget().getTriple().isOSDarwin())
+    return nullptr;
+
   // Only need to insert this once per module.
   if (llvm::Function *RegisterF = getRegisterFunc(CGM))
     return &RegisterF->getEntryBlock();
@@ -286,9 +290,10 @@ void CodeGenPGO::emitInstrumentationData() {
   auto *Data = buildDataVar();
 
   // Register the data.
-  //
-  // TODO: only register when static initialization is required.
-  CGBuilderTy Builder(getOrInsertRegisterBB(CGM)->getTerminator());
+  auto *RegisterBB = getOrInsertRegisterBB(CGM);
+  if (!RegisterBB)
+    return;
+  CGBuilderTy Builder(RegisterBB->getTerminator());
   auto *VoidPtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   Builder.CreateCall(getOrInsertRuntimeRegister(CGM),
                      Builder.CreateBitCast(Data, VoidPtrTy));
