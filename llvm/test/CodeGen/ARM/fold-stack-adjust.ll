@@ -1,6 +1,7 @@
 ; RUN: llc -mtriple=thumbv7-apple-none-macho < %s | FileCheck %s
 ; RUN: llc -mtriple=thumbv6m-apple-none-macho -disable-fp-elim < %s | FileCheck %s --check-prefix=CHECK-T1
 ; RUN: llc -mtriple=thumbv7-apple-darwin-ios -disable-fp-elim < %s | FileCheck %s --check-prefix=CHECK-IOS
+; RUN: llc -mtriple=thumbv7--linux-gnueabi -disable-fp-elim < %s | FileCheck %s --check-prefix=CHECK-LINUX
 
 
 declare void @bar(i8*)
@@ -184,4 +185,34 @@ define void @test_varsize(...) minsize {
   %var = alloca i8, i32 8
   call void @bar(i8* %var)
   ret void
+}
+
+%"MyClass" = type { i8*, i32, i32, float, float, float, [2 x i8], i32, i32* }
+
+declare float @foo()
+
+declare void @bar3()
+
+declare %"MyClass"* @bar2(%"MyClass"* returned, i16*, i32, float, float, i32, i32, i1 zeroext, i1 zeroext, i32)
+
+define fastcc float @check_vfp_no_return_clobber2(i16* %r, i16* %chars, i32 %length, i1 zeroext %flag) minsize {
+entry:
+; CHECK-LINUX-LABEL: check_vfp_no_return_clobber2
+; CHECK-LINUX: vpush	{d0, d1, d2, d3, d4, d5, d6, d7, d8}
+; CHECK-NOT: sub sp,
+; ...
+; CHECK-LINUX: add sp
+; CHECK-LINUX: vpop {d8}
+  %run = alloca %"MyClass", align 4
+  %call = call %"MyClass"* @bar2(%"MyClass"* %run, i16* %chars, i32 %length, float 0.000000e+00, float 0.000000e+00, i32 1, i32 1, i1 zeroext false, i1 zeroext true, i32 3)
+  %call1 = call float @foo()
+  %cmp = icmp eq %"MyClass"* %run, null
+  br i1 %cmp, label %exit, label %if.then
+
+if.then:                                          ; preds = %entry
+  call void @bar3()
+  br label %exit
+
+exit:                                             ; preds = %if.then, %entry
+  ret float %call1
 }
