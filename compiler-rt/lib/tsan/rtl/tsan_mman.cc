@@ -90,7 +90,6 @@ void AllocatorPrintStats() {
 static void SignalUnsafeCall(ThreadState *thr, uptr pc) {
   if (!thr->in_signal_handler || !flags()->report_signal_unsafe)
     return;
-  Context *ctx = CTX();
   StackTrace stack;
   stack.ObtainCurrent(thr, pc);
   ThreadRegistryLock l(ctx->thread_registry);
@@ -109,7 +108,7 @@ void *user_alloc(ThreadState *thr, uptr pc, uptr sz, uptr align) {
     return 0;
   MBlock *b = new(allocator()->GetMetaData(p)) MBlock;
   b->Init(sz, thr->tid, CurrentStackId(thr, pc));
-  if (CTX() && CTX()->initialized) {
+  if (ctx && ctx->initialized) {
     if (thr->ignore_reads_and_writes == 0)
       MemoryRangeImitateWrite(thr, pc, (uptr)p, sz);
     else
@@ -136,7 +135,7 @@ void user_free(ThreadState *thr, uptr pc, void *p) {
     }
     b->ListReset();
   }
-  if (CTX() && CTX()->initialized) {
+  if (ctx && ctx->initialized) {
     if (thr->ignore_reads_and_writes == 0)
       MemoryRangeFreed(thr, pc, (uptr)p, b->Size());
   }
@@ -180,7 +179,6 @@ MBlock *user_mblock(ThreadState *thr, void *p) {
 }
 
 void invoke_malloc_hook(void *ptr, uptr size) {
-  Context *ctx = CTX();
   ThreadState *thr = cur_thread();
   if (ctx == 0 || !ctx->initialized || thr->ignore_interceptors)
     return;
@@ -188,7 +186,6 @@ void invoke_malloc_hook(void *ptr, uptr size) {
 }
 
 void invoke_free_hook(void *ptr) {
-  Context *ctx = CTX();
   ThreadState *thr = cur_thread();
   if (ctx == 0 || !ctx->initialized || thr->ignore_interceptors)
     return;

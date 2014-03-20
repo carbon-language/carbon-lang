@@ -849,7 +849,7 @@ extern "C" void *__tsan_thread_start_func(void *arg) {
 TSAN_INTERCEPTOR(int, pthread_create,
     void *th, void *attr, void *(*callback)(void*), void * param) {
   SCOPED_INTERCEPTOR_RAW(pthread_create, th, attr, callback, param);
-  if (CTX()->after_multithreaded_fork) {
+  if (ctx->after_multithreaded_fork) {
     if (flags()->die_after_fork) {
       Printf("ThreadSanitizer: starting new threads after muti-threaded"
           " fork is not supported. Dying (set die_after_fork=0 to override)\n");
@@ -1672,7 +1672,6 @@ static void CallUserSignalHandler(ThreadState *thr, bool sync, bool sigact,
   // from rtl_generic_sighandler) we have not yet received the reraised
   // signal; and it looks too fragile to intercept all ways to reraise a signal.
   if (flags()->report_bugs && !sync && sig != SIGTERM && errno != 99) {
-    Context *ctx = CTX();
     __tsan::StackTrace stack;
     stack.ObtainCurrent(thr, pc);
     ThreadRegistryLock l(ctx->thread_registry);
@@ -1998,7 +1997,7 @@ static void HandleRecvmsg(ThreadState *thr, uptr pc,
   ThreadSetName(((TsanInterceptorContext *) ctx)->thr, name)
 
 #define COMMON_INTERCEPTOR_SET_PTHREAD_NAME(ctx, thread, name) \
-  CTX()->thread_registry->SetThreadNameByUserId(thread, name)
+  __tsan::ctx->thread_registry->SetThreadNameByUserId(thread, name)
 
 #define COMMON_INTERCEPTOR_BLOCK_REAL(name) BLOCK_REAL(name)
 

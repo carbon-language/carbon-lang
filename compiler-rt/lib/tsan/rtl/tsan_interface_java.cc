@@ -132,7 +132,7 @@ SyncVar* GetJavaSync(ThreadState *thr, uptr pc, uptr addr,
   }
   if (s == 0 && create) {
     DPrintf("#%d: creating new sync for %p\n", thr->tid, addr);
-    s = CTX()->synctab.Create(thr, pc, addr);
+    s = ctx->synctab.Create(thr, pc, addr);
     s->next = b->head;
     b->head = s;
   }

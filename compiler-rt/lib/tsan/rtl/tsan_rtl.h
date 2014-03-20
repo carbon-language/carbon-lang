@@ -471,8 +471,6 @@ struct ThreadState {
                        uptr tls_addr, uptr tls_size);
 };
 
-Context *CTX();
-
 #ifndef TSAN_GO
 extern THREADLOCAL char cur_thread_placeholder[];
 INLINE ThreadState *cur_thread() {
@@ -552,6 +550,8 @@ struct Context {
   u64 int_alloc_siz[MBlockTypeCount];
 };
 
+extern Context *ctx;  // The one and the only global runtime context.
+
 struct ScopedIgnoreInterceptors {
   ScopedIgnoreInterceptors() {
 #ifndef TSAN_GO
@@ -584,7 +584,6 @@ class ScopedReport {
   const ReportDesc *GetReport() const;
 
  private:
-  Context *ctx_;
   ReportDesc *rep_;
   // Symbolizer makes lots of intercepted calls. If we try to process them,
   // at best it will cause deadlocks on internal mutexes.

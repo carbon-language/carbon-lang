@@ -79,7 +79,6 @@ struct OnStartedArgs {
 };
 
 void ThreadContext::OnStarted(void *arg) {
-  Context *ctx = CTX();
   OnStartedArgs *args = static_cast<OnStartedArgs*>(arg);
   thr = args->thr;
   // RoundUp so that one trace part does not contain events
@@ -123,7 +122,6 @@ void ThreadContext::OnStarted(void *arg) {
 }
 
 void ThreadContext::OnFinished() {
-  Context *ctx = CTX();
   if (!detached) {
     thr->fast_state.IncrementEpoch();
     // Can't increment epoch w/o writing to the trace as well.
@@ -185,7 +183,7 @@ static void ReportIgnoresEnabled(ThreadContext *tctx, IgnoreSet *set) {
 }
 
 static void ThreadCheckIgnore(ThreadState *thr) {
-  if (CTX()->after_multithreaded_fork)
+  if (ctx->after_multithreaded_fork)
     return;
   if (thr->ignore_reads_and_writes)
     ReportIgnoresEnabled(thr->tctx, &thr->mop_ignore_set);
@@ -201,21 +199,20 @@ void ThreadFinalize(ThreadState *thr) {
 #ifndef TSAN_GO
   if (!flags()->report_thread_leaks)
     return;
-  ThreadRegistryLock l(CTX()->thread_registry);
+  ThreadRegistryLock l(ctx->thread_registry);
   Vector<ThreadLeak> leaks(MBlockScopedBuf);
-  CTX()->thread_registry->RunCallbackForEachThreadLocked(
+  ctx->thread_registry->RunCallbackForEachThreadLocked(
       MaybeReportThreadLeak, &leaks);
   for (uptr i = 0; i < leaks.Size(); i++) {
     ScopedReport rep(ReportTypeThreadLeak);
     rep.AddThread(leaks[i].tctx);
     rep.SetCount(leaks[i].count);
-    OutputReport(CTX(), rep);
+    OutputReport(ctx, rep);
   }
 #endif
 }
 
 int ThreadCount(ThreadState *thr) {
-  Context *ctx = CTX();
   uptr result;
   ctx->thread_registry->GetNumberOfThreads(0, 0, &result);
   return (int)result;
@@ -223,7 +220,6 @@ int ThreadCount(ThreadState *thr) {
 
 int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
   StatInc(thr, StatThreadCreate);
-  Context *ctx = CTX();
   OnCreatedArgs args = { thr, pc };
   int tid = ctx->thread_registry->CreateThread(uid, detached, thr->tid, &args);
   DPrintf("#%d: ThreadCreate tid=%d uid=%zu\n", thr->tid, tid, uid);
@@ -232,7 +228,6 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
 }
 
 void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
-  Context *ctx = CTX();
   uptr stk_addr = 0;
   uptr stk_size = 0;
   uptr tls_addr = 0;
@@ -283,7 +278,6 @@ void ThreadFinish(ThreadState *thr) {
   if (thr->tls_addr && thr->tls_size)
     DontNeedShadowFor(thr->tls_addr, thr->tls_size);
   thr->is_alive = false;
-  Context *ctx = CTX();
   ctx->thread_registry->FinishThread(thr->tid);
 }
 
@@ -297,7 +291,6 @@ static bool FindThreadByUid(ThreadContextBase *tctx, void *arg) {
 }
 
 int ThreadTid(ThreadState *thr, uptr pc, uptr uid) {
-  Context *ctx = CTX();
   int res = ctx->thread_registry->FindThread(FindThreadByUid, (void*)uid);
   DPrintf("#%d: ThreadTid uid=%zu tid=%d\n", thr->tid, uid, res);
   return res;
@@ -307,19 +300,17 @@ void ThreadJoin(ThreadState *thr, uptr pc, int tid) {
   CHECK_GT(tid, 0);
   CHECK_LT(tid, kMaxTid);
   DPrintf("#%d: ThreadJoin tid=%d\n", thr->tid, tid);
-  Context *ctx = CTX();
   ctx->thread_registry->JoinThread(tid, thr);
 }
 
 void ThreadDetach(ThreadState *thr, uptr pc, int tid) {
   CHECK_GT(tid, 0);
   CHECK_LT(tid, kMaxTid);
-  Context *ctx = CTX();
   ctx->thread_registry->DetachThread(tid);
 }
 
 void ThreadSetName(ThreadState *thr, const char *name) {
-  CTX()->thread_registry->SetThreadName(thr->tid, name);
+  ctx->thread_registry->SetThreadName(thr->tid, name);
 }
 
 void MemoryAccessRange(ThreadState *thr, uptr pc, uptr addr,

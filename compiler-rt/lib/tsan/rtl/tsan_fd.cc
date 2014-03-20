@@ -65,7 +65,7 @@ static void unref(ThreadState *thr, uptr pc, FdSync *s) {
       CHECK_NE(s, &fdctx.globsync);
       CHECK_NE(s, &fdctx.filesync);
       CHECK_NE(s, &fdctx.socksync);
-      SyncVar *v = CTX()->synctab.GetAndRemove(thr, pc, (uptr)s);
+      SyncVar *v = ctx->synctab.GetAndRemove(thr, pc, (uptr)s);
       if (v)
         DestroyAndFree(v);
       internal_free(s);

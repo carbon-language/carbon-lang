@@ -37,6 +37,7 @@ namespace __tsan {
 THREADLOCAL char cur_thread_placeholder[sizeof(ThreadState)] ALIGNED(64);
 #endif
 static char ctx_placeholder[sizeof(Context)] ALIGNED(64);
+Context *ctx;
 
 // Can be overriden by a front-end.
 #ifdef TSAN_EXTERNAL_HOOKS
@@ -50,11 +51,6 @@ bool WEAK OnFinalize(bool failed) {
 SANITIZER_INTERFACE_ATTRIBUTE
 void WEAK OnInitialize() {}
 #endif
-
-static Context *ctx;
-Context *CTX() {
-  return ctx;
-}
 
 static char thread_registry_placeholder[sizeof(ThreadRegistry)];
 
@@ -118,7 +114,6 @@ static void MemoryProfiler(Context *ctx, fd_t fd, int i) {
 }
 
 static void BackgroundThread(void *arg) {
-  Context *ctx = CTX();
   // This is a non-initialized non-user thread, nothing to see here.
   ScopedIgnoreInterceptors ignore;
   const u64 kMs2Ns = 1000 * 1000;
@@ -324,19 +319,16 @@ int Finalize(ThreadState *thr) {
 
 #ifndef TSAN_GO
 void ForkBefore(ThreadState *thr, uptr pc) {
-  Context *ctx = CTX();
   ctx->report_mtx.Lock();
   ctx->thread_registry->Lock();
 }
 
 void ForkParentAfter(ThreadState *thr, uptr pc) {
-  Context *ctx = CTX();
   ctx->thread_registry->Unlock();
   ctx->report_mtx.Unlock();
 }
 
 void ForkChildAfter(ThreadState *thr, uptr pc) {
-  Context *ctx = CTX();
   ctx->thread_registry->Unlock();
   ctx->report_mtx.Unlock();
 

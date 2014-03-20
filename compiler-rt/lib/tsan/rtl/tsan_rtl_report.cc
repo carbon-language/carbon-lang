@@ -148,18 +148,17 @@ static ReportStack *SymbolizeStack(const StackTrace& trace) {
 }
 
 ScopedReport::ScopedReport(ReportType typ) {
-  ctx_ = CTX();
-  ctx_->thread_registry->CheckLocked();
+  ctx->thread_registry->CheckLocked();
   void *mem = internal_alloc(MBlockReport, sizeof(ReportDesc));
   rep_ = new(mem) ReportDesc;
   rep_->typ = typ;
-  ctx_->report_mtx.Lock();
+  ctx->report_mtx.Lock();
   CommonSanitizerReportMutex.Lock();
 }
 
 ScopedReport::~ScopedReport() {
   CommonSanitizerReportMutex.Unlock();
-  ctx_->report_mtx.Unlock();
+  ctx->report_mtx.Unlock();
   DestroyAndFree(rep_);
 }
 
@@ -206,7 +205,6 @@ void ScopedReport::AddThread(const ThreadContext *tctx) {
 
 #ifndef TSAN_GO
 static ThreadContext *FindThreadByUidLocked(int unique_id) {
-  Context *ctx = CTX();
   ctx->thread_registry->CheckLocked();
   for (unsigned i = 0; i < kMaxTid; i++) {
     ThreadContext *tctx = static_cast<ThreadContext*>(
@@ -219,7 +217,6 @@ static ThreadContext *FindThreadByUidLocked(int unique_id) {
 }
 
 static ThreadContext *FindThreadByTidLocked(int tid) {
-  Context *ctx = CTX();
   ctx->thread_registry->CheckLocked();
   return static_cast<ThreadContext*>(
       ctx->thread_registry->GetThreadLocked(tid));
@@ -237,7 +234,6 @@ static bool IsInStackOrTls(ThreadContextBase *tctx_base, void *arg) {
 }
 
 ThreadContext *IsThreadStackOrTls(uptr addr, bool *is_stack) {
-  Context *ctx = CTX();
   ctx->thread_registry->CheckLocked();
   ThreadContext *tctx = static_cast<ThreadContext*>(
       ctx->thread_registry->FindThreadContextLocked(IsInStackOrTls,
@@ -269,7 +265,7 @@ u64 ScopedReport::AddMutex(u64 id) {
   u64 uid = 0;
   u64 mid = id;
   uptr addr = SyncVar::SplitId(id, &uid);
-  SyncVar *s = ctx_->synctab.GetIfExistsAndLock(addr, false);
+  SyncVar *s = ctx->synctab.GetIfExistsAndLock(addr, false);
   // Check that the mutex is still alive.
   // Another mutex can be created at the same address,
   // so check uid as well.
@@ -374,7 +370,6 @@ void RestoreStack(int tid, const u64 epoch, StackTrace *stk, MutexSet *mset) {
   // This function restores stack trace and mutex set for the thread/epoch.
   // It does so by getting stack trace and mutex set at the beginning of
   // trace part, and then replaying the trace till the given epoch.
-  Context *ctx = CTX();
   ctx->thread_registry->CheckLocked();
   ThreadContext *tctx = static_cast<ThreadContext*>(
       ctx->thread_registry->GetThreadLocked(tid));
@@ -439,7 +434,6 @@ void RestoreStack(int tid, const u64 epoch, StackTrace *stk, MutexSet *mset) {
 
 static bool HandleRacyStacks(ThreadState *thr, const StackTrace (&traces)[2],
     uptr addr_min, uptr addr_max) {
-  Context *ctx = CTX();
   bool equal_stack = false;
   RacyStacks hash;
   if (flags()->suppress_equal_stacks) {
@@ -479,7 +473,6 @@ static bool HandleRacyStacks(ThreadState *thr, const StackTrace (&traces)[2],
 
 static void AddRacyStacks(ThreadState *thr, const StackTrace (&traces)[2],
     uptr addr_min, uptr addr_max) {
-  Context *ctx = CTX();
   if (flags()->suppress_equal_stacks) {
     RacyStacks hash;
     hash.hash[0] = md5_hash(traces[0].Begin(), traces[0].Size() * sizeof(uptr));
@@ -584,7 +577,7 @@ static bool IsJavaNonsense(const ReportDesc *rep) {
           && frame->module == 0)) {
         if (frame) {
           FiredSuppression supp = {rep->typ, frame->pc, 0};
-          CTX()->fired_suppressions.push_back(supp);
+          ctx->fired_suppressions.push_back(supp);
         }
         return true;
       }
@@ -638,7 +631,6 @@ void ReportRace(ThreadState *thr) {
       return;
   }
 
-  Context *ctx = CTX();
   ThreadRegistryLock l0(ctx->thread_registry);
 
   ReportType typ = ReportTypeRace;

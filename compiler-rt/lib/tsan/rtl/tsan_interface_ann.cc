@@ -305,7 +305,7 @@ void INTERFACE_ATTRIBUTE AnnotateFlushExpectedRaces(char *f, int l) {
   while (dyn_ann_ctx->expect.next != &dyn_ann_ctx->expect) {
     ExpectRace *race = dyn_ann_ctx->expect.next;
     if (race->hitcount == 0) {
-      CTX()->nmissed_expected++;
+      ctx->nmissed_expected++;
       ReportMissedExpectedRace(race);
     }
     race->prev->next = race->next;

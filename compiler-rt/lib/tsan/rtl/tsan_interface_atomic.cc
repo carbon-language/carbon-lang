@@ -289,7 +289,7 @@ static T AtomicLoad(ThreadState *thr, uptr pc, const volatile T *a,
     MemoryReadAtomic(thr, pc, (uptr)a, SizeLog<T>());
     return NoTsanAtomicLoad(a, mo);
   }
-  SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, false);
+  SyncVar *s = ctx->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, false);
   AcquireImpl(thr, pc, &s->clock);
   T v = NoTsanAtomicLoad(a, mo);
   s->mtx.ReadUnlock();
@@ -321,7 +321,7 @@ static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
     return;
   }
   __sync_synchronize();
-  SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, true);
+  SyncVar *s = ctx->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, true);
   thr->fast_state.IncrementEpoch();
   // Can't increment epoch w/o writing to the trace as well.
   TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);
@@ -335,7 +335,7 @@ static T AtomicRMW(ThreadState *thr, uptr pc, volatile T *a, T v, morder mo) {
   MemoryWriteAtomic(thr, pc, (uptr)a, SizeLog<T>());
   SyncVar *s = 0;
   if (mo != mo_relaxed) {
-    s = CTX()->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, true);
+    s = ctx->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, true);
     thr->fast_state.IncrementEpoch();
     // Can't increment epoch w/o writing to the trace as well.
     TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);
@@ -456,7 +456,7 @@ static bool AtomicCAS(ThreadState *thr, uptr pc,
   MemoryWriteAtomic(thr, pc, (uptr)a, SizeLog<T>());
   SyncVar *s = 0;
   if (mo != mo_relaxed) {
-    s = CTX()->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, true);
+    s = ctx->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, true);
     thr->fast_state.IncrementEpoch();
     // Can't increment epoch w/o writing to the trace as well.
     TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);

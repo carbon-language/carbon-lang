@@ -20,7 +20,7 @@
 namespace __tsan {
 
 Flags *flags() {
-  return &CTX()->flags;
+  return &ctx->flags;
 }
 
 // Can be overriden in frontend.
