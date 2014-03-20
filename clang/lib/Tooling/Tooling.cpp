@@ -52,7 +52,7 @@ FrontendActionFactory::~FrontendActionFactory() {}
 /// \brief Builds a clang driver initialized for running clang tools.
 static clang::driver::Driver *newDriver(clang::DiagnosticsEngine *Diagnostics,
                                         const char *BinaryName) {
-  const std::string DefaultOutputName = "a.out";
+  const char *DefaultOutputName = "a.out";
   clang::driver::Driver *CompilerDriver = new clang::driver::Driver(
     BinaryName, llvm::sys::getDefaultTargetTriple(),
     DefaultOutputName, *Diagnostics);
@@ -165,17 +165,17 @@ public:
 
 }
 
-ToolInvocation::ToolInvocation(ArrayRef<std::string> CommandLine,
+ToolInvocation::ToolInvocation(std::vector<std::string> CommandLine,
                                ToolAction *Action, FileManager *Files)
-    : CommandLine(CommandLine.vec()),
+    : CommandLine(std::move(CommandLine)),
       Action(Action),
       OwnsAction(false),
       Files(Files),
       DiagConsumer(NULL) {}
 
-ToolInvocation::ToolInvocation(ArrayRef<std::string> CommandLine,
+ToolInvocation::ToolInvocation(std::vector<std::string> CommandLine,
                                FrontendAction *FAction, FileManager *Files)
-    : CommandLine(CommandLine.vec()),
+    : CommandLine(std::move(CommandLine)),
       Action(new SingleFrontendActionFactory(FAction)),
       OwnsAction(true),
       Files(Files),
@@ -198,8 +198,8 @@ void ToolInvocation::mapVirtualFile(StringRef FilePath, StringRef Content) {
 
 bool ToolInvocation::run() {
   std::vector<const char*> Argv;
-  for (int I = 0, E = CommandLine.size(); I != E; ++I)
-    Argv.push_back(CommandLine[I].c_str());
+  for (const std::string &Str : CommandLine)
+    Argv.push_back(Str.c_str());
   const char *const BinaryName = Argv[0];
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   TextDiagnosticPrinter DiagnosticPrinter(
@@ -221,13 +221,10 @@ bool ToolInvocation::run() {
   }
   std::unique_ptr<clang::CompilerInvocation> Invocation(
       newInvocation(&Diagnostics, *CC1Args));
-  for (llvm::StringMap<StringRef>::const_iterator
-           It = MappedFileContents.begin(), End = MappedFileContents.end();
-       It != End; ++It) {
+  for (const auto &It : MappedFileContents) {
     // Inject the code as the given file name into the preprocessor options.
-    const llvm::MemoryBuffer *Input =
-        llvm::MemoryBuffer::getMemBuffer(It->getValue());
-    Invocation->getPreprocessorOpts().addRemappedFile(It->getKey(), Input);
+    auto *Input = llvm::MemoryBuffer::getMemBuffer(It.getValue());
+    Invocation->getPreprocessorOpts().addRemappedFile(It.getKey(), Input);
   }
   return runInvocation(BinaryName, Compilation.get(), Invocation.release());
 }
@@ -277,15 +274,15 @@ ClangTool::ClangTool(const CompilationDatabase &Compilations,
     : Files(new FileManager(FileSystemOptions())), DiagConsumer(NULL) {
   ArgsAdjusters.push_back(new ClangStripOutputAdjuster());
   ArgsAdjusters.push_back(new ClangSyntaxOnlyAdjuster());
-  for (unsigned I = 0, E = SourcePaths.size(); I != E; ++I) {
-    SmallString<1024> File(getAbsolutePath(SourcePaths[I]));
+  for (const auto &SourcePath : SourcePaths) {
+    std::string File(getAbsolutePath(SourcePath));
 
     std::vector<CompileCommand> CompileCommandsForFile =
-      Compilations.getCompileCommands(File.str());
+      Compilations.getCompileCommands(File);
     if (!CompileCommandsForFile.empty()) {
-      for (int I = 0, E = CompileCommandsForFile.size(); I != E; ++I) {
-        CompileCommands.push_back(std::make_pair(File.str(),
-                                  CompileCommandsForFile[I]));
+      for (CompileCommand &CompileCommand : CompileCommandsForFile) {
+        CompileCommands.push_back(
+            std::make_pair(File, std::move(CompileCommand)));
       }
     } else {
       // FIXME: There are two use cases here: doing a fuzzy
@@ -334,8 +331,7 @@ int ClangTool::run(ToolAction *Action) {
       llvm::sys::fs::getMainExecutable("clang_tool", &StaticSymbol);
 
   bool ProcessingFailed = false;
-  for (unsigned I = 0; I < CompileCommands.size(); ++I) {
-    std::string File = CompileCommands[I].first;
+  for (const auto &Command : CompileCommands) {
     // FIXME: chdir is thread hostile; on the other hand, creating the same
     // behavior as chdir is complex: chdir resolves the path once, thus
     // guaranteeing that all subsequent relative path operations work
@@ -343,28 +339,27 @@ int ClangTool::run(ToolAction *Action) {
     // for example on network filesystems, where symlinks might be switched
     // during runtime of the tool. Fixing this depends on having a file system
     // abstraction that allows openat() style interactions.
-    if (chdir(CompileCommands[I].second.Directory.c_str()))
+    if (chdir(Command.second.Directory.c_str()))
       llvm::report_fatal_error("Cannot chdir into \"" +
-                               CompileCommands[I].second.Directory + "\n!");
-    std::vector<std::string> CommandLine = CompileCommands[I].second.CommandLine;
-    for (unsigned I = 0, E = ArgsAdjusters.size(); I != E; ++I)
-      CommandLine = ArgsAdjusters[I]->Adjust(CommandLine);
+                               Twine(Command.second.Directory) + "\n!");
+    std::vector<std::string> CommandLine = Command.second.CommandLine;
+    for (ArgumentsAdjuster *Adjuster : ArgsAdjusters)
+      CommandLine = Adjuster->Adjust(CommandLine);
     assert(!CommandLine.empty());
     CommandLine[0] = MainExecutable;
     // FIXME: We need a callback mechanism for the tool writer to output a
     // customized message for each file.
     DEBUG({
-      llvm::dbgs() << "Processing: " << File << ".\n";
+      llvm::dbgs() << "Processing: " << Command.first << ".\n";
     });
-    ToolInvocation Invocation(CommandLine, Action, Files.getPtr());
+    ToolInvocation Invocation(std::move(CommandLine), Action, Files.getPtr());
     Invocation.setDiagnosticConsumer(DiagConsumer);
-    for (int I = 0, E = MappedFileContents.size(); I != E; ++I) {
-      Invocation.mapVirtualFile(MappedFileContents[I].first,
-                                MappedFileContents[I].second);
+    for (const auto &MappedFile : MappedFileContents) {
+      Invocation.mapVirtualFile(MappedFile.first, MappedFile.second);
     }
     if (!Invocation.run()) {
       // FIXME: Diagnostics should be used instead.
-      llvm::errs() << "Error while processing " << File << ".\n";
+      llvm::errs() << "Error while processing " << Command.first << ".\n";
       ProcessingFailed = true;
     }
   }

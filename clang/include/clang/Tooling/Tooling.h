@@ -186,7 +186,7 @@ class ToolInvocation {
   /// \param FAction The action to be executed. Class takes ownership.
   /// \param Files The FileManager used for the execution. Class does not take
   /// ownership.
-  ToolInvocation(ArrayRef<std::string> CommandLine, FrontendAction *FAction,
+  ToolInvocation(std::vector<std::string> CommandLine, FrontendAction *FAction,
                  FileManager *Files);
 
   /// \brief Create a tool invocation.
@@ -194,7 +194,7 @@ class ToolInvocation {
   /// \param CommandLine The command line arguments to clang.
   /// \param Action The action to be executed.
   /// \param Files The FileManager used for the execution.
-  ToolInvocation(ArrayRef<std::string> CommandLine, ToolAction *Action,
+  ToolInvocation(std::vector<std::string> CommandLine, ToolAction *Action,
                  FileManager *Files);
 
   ~ToolInvocation();
