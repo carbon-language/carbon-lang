@@ -6,7 +6,7 @@ if(APPLE)
   set(PROFILE_SOURCES
     GCDAProfiling.c
     InstrProfiling.c
-    InstrProfilingDarwin.c
+    InstrProfilingPlatformDarwin.c
     InstrProfilingExtras.c)
 
   add_compiler_rt_osx_static_runtime(clang_rt.profile_osx
@@ -17,7 +17,7 @@ else()
   set(PROFILE_SOURCES
     GCDAProfiling.c
     InstrProfiling.c
-    InstrProfilingDefault.c
+    InstrProfilingPlatformOther.c
     InstrProfilingExtras.c)
 
   foreach(arch ${PROFILE_SUPPORTED_ARCH})
