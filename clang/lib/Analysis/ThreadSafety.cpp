@@ -1933,19 +1933,13 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
   for(unsigned i = 0; i < ArgAttrs.size(); ++i) {
     Attr *At = const_cast<Attr*>(ArgAttrs[i]);
     switch (At->getKind()) {
-      // When we encounter an exclusive lock function, we need to add the lock
-      // to our lockset with kind exclusive.
-      case attr::ExclusiveLockFunction: {
-        ExclusiveLockFunctionAttr *A = cast<ExclusiveLockFunctionAttr>(At);
-        Analyzer->getMutexIDs(ExclusiveLocksToAdd, A, Exp, D, VD);
-        break;
-      }
-
-      // When we encounter a shared lock function, we need to add the lock
-      // to our lockset with kind shared.
-      case attr::SharedLockFunction: {
-        SharedLockFunctionAttr *A = cast<SharedLockFunctionAttr>(At);
-        Analyzer->getMutexIDs(SharedLocksToAdd, A, Exp, D, VD);
+      // When we encounter a lock function, we need to add the lock to our
+      // lockset.
+      case attr::AcquireCapability: {
+        auto *A = cast<AcquireCapabilityAttr>(At);
+        Analyzer->getMutexIDs(A->isShared() ? SharedLocksToAdd
+                                            : ExclusiveLocksToAdd,
+                              A, Exp, D, VD);
         break;
       }
 
@@ -1977,8 +1971,8 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
 
       // When we encounter an unlock function, we need to remove unlocked
       // mutexes from the lockset, and flag a warning if they are not there.
-      case attr::UnlockFunction: {
-        UnlockFunctionAttr *A = cast<UnlockFunctionAttr>(At);
+      case attr::ReleaseCapability: {
+        auto *A = cast<ReleaseCapabilityAttr>(At);
         Analyzer->getMutexIDs(LocksToRemove, A, Exp, D, VD);
         break;
       }
@@ -2351,7 +2345,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
       if (RequiresCapabilityAttr *A = dyn_cast<RequiresCapabilityAttr>(Attr)) {
         getMutexIDs(A->isShared() ? SharedLocksToAdd : ExclusiveLocksToAdd, A,
                     0, D);
-      } else if (UnlockFunctionAttr *A = dyn_cast<UnlockFunctionAttr>(Attr)) {
+      } else if (auto *A = dyn_cast<ReleaseCapabilityAttr>(Attr)) {
         // UNLOCK_FUNCTION() is used to hide the underlying lock implementation.
         // We must ignore such methods.
         if (A->args_size() == 0)
@@ -2359,16 +2353,12 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
         // FIXME -- deal with exclusive vs. shared unlock functions?
         getMutexIDs(ExclusiveLocksToAdd, A, (Expr*) 0, D);
         getMutexIDs(LocksReleased, A, (Expr*) 0, D);
-      } else if (ExclusiveLockFunctionAttr *A
-                   = dyn_cast<ExclusiveLockFunctionAttr>(Attr)) {
+      } else if (auto *A = dyn_cast<AcquireCapabilityAttr>(Attr)) {
         if (A->args_size() == 0)
           return;
-        getMutexIDs(ExclusiveLocksAcquired, A, (Expr*) 0, D);
-      } else if (SharedLockFunctionAttr *A
-                   = dyn_cast<SharedLockFunctionAttr>(Attr)) {
-        if (A->args_size() == 0)
-          return;
-        getMutexIDs(SharedLocksAcquired, A, (Expr*) 0, D);
+        getMutexIDs(A->isShared() ? SharedLocksAcquired
+                                  : ExclusiveLocksAcquired,
+                    A, nullptr, D);
       } else if (isa<ExclusiveTrylockFunctionAttr>(Attr)) {
         // Don't try to check trylock functions for now
         return;

@@ -599,33 +599,6 @@ static bool checkLockFunAttrCommon(Sema &S, Decl *D,
   return true;
 }
 
-static void handleSharedLockFunctionAttr(Sema &S, Decl *D,
-                                         const AttributeList &Attr) {
-  SmallVector<Expr*, 1> Args;
-  if (!checkLockFunAttrCommon(S, D, Attr, Args))
-    return;
-
-  unsigned Size = Args.size();
-  Expr **StartArg = Size == 0 ? 0 : &Args[0];
-  D->addAttr(::new (S.Context)
-             SharedLockFunctionAttr(Attr.getRange(), S.Context, StartArg, Size,
-                                    Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleExclusiveLockFunctionAttr(Sema &S, Decl *D,
-                                            const AttributeList &Attr) {
-  SmallVector<Expr*, 1> Args;
-  if (!checkLockFunAttrCommon(S, D, Attr, Args))
-    return;
-
-  unsigned Size = Args.size();
-  Expr **StartArg = Size == 0 ? 0 : &Args[0];
-  D->addAttr(::new (S.Context)
-             ExclusiveLockFunctionAttr(Attr.getRange(), S.Context,
-                                       StartArg, Size,
-                                       Attr.getAttributeSpellingListIndex()));
-}
-
 static void handleAssertSharedLockAttr(Sema &S, Decl *D,
                                        const AttributeList &Attr) {
   SmallVector<Expr*, 1> Args;
@@ -696,20 +669,6 @@ static void handleExclusiveTrylockFunctionAttr(Sema &S, Decl *D,
                                           Attr.getArgAsExpr(0),
                                           Args.data(), Args.size(),
                                           Attr.getAttributeSpellingListIndex()));
-}
-
-static void handleUnlockFunAttr(Sema &S, Decl *D,
-                                const AttributeList &Attr) {
-  // zero or more arguments ok
-  // check that all arguments are lockable objects
-  SmallVector<Expr*, 1> Args;
-  checkAttrArgsAreLockableObjs(S, D, Attr, Args, 0, /*ParamIdxOk=*/true);
-  unsigned Size = Args.size();
-  Expr **StartArg = Size == 0 ? 0 : &Args[0];
-
-  D->addAttr(::new (S.Context)
-             UnlockFunctionAttr(Attr.getRange(), S.Context, StartArg, Size,
-                                Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleLockReturnedAttr(Sema &S, Decl *D,
@@ -3912,12 +3871,7 @@ static void handleAssertCapabilityAttr(Sema &S, Decl *D,
 static void handleAcquireCapabilityAttr(Sema &S, Decl *D,
                                         const AttributeList &Attr) {
   SmallVector<Expr*, 1> Args;
-  if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
-    return;
-
-  // Check that all arguments are lockable objects.
-  checkAttrArgsAreLockableObjs(S, D, Attr, Args);
-  if (Args.empty())
+  if (!checkLockFunAttrCommon(S, D, Attr, Args))
     return;
 
   D->addAttr(::new (S.Context) AcquireCapabilityAttr(Attr.getRange(),
@@ -3942,19 +3896,13 @@ static void handleTryAcquireCapabilityAttr(Sema &S, Decl *D,
 
 static void handleReleaseCapabilityAttr(Sema &S, Decl *D,
                                         const AttributeList &Attr) {
-  SmallVector<Expr*, 1> Args;
-  if (!checkAttributeAtLeastNumArgs(S, Attr, 1))
-    return;
-
   // Check that all arguments are lockable objects.
-  checkAttrArgsAreLockableObjs(S, D, Attr, Args);
-  if (Args.empty())
-    return;
+  SmallVector<Expr *, 1> Args;
+  checkAttrArgsAreLockableObjs(S, D, Attr, Args, 0, true);
 
-  D->addAttr(::new (S.Context) ReleaseCapabilityAttr(Attr.getRange(),
-                                                     S.Context,
-                                                     Args.data(), Args.size(),
-                                        Attr.getAttributeSpellingListIndex()));
+  D->addAttr(::new (S.Context) ReleaseCapabilityAttr(
+      Attr.getRange(), S.Context, Args.data(), Args.size(),
+      Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleRequiresCapabilityAttr(Sema &S, Decl *D,
@@ -4417,9 +4365,6 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_PtGuardedBy:
     handlePtGuardedByAttr(S, D, Attr);
     break;
-  case AttributeList::AT_ExclusiveLockFunction:
-    handleExclusiveLockFunctionAttr(S, D, Attr);
-    break;
   case AttributeList::AT_ExclusiveTrylockFunction:
     handleExclusiveTrylockFunctionAttr(S, D, Attr);
     break;
@@ -4429,14 +4374,8 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_LocksExcluded:
     handleLocksExcludedAttr(S, D, Attr);
     break;
-  case AttributeList::AT_SharedLockFunction:
-    handleSharedLockFunctionAttr(S, D, Attr);
-    break;
   case AttributeList::AT_SharedTrylockFunction:
     handleSharedTrylockFunctionAttr(S, D, Attr);
-    break;
-  case AttributeList::AT_UnlockFunction:
-    handleUnlockFunAttr(S, D, Attr);
     break;
   case AttributeList::AT_AcquiredBefore:
     handleAcquiredBeforeAttr(S, D, Attr);
