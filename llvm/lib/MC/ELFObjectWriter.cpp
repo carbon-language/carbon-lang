@@ -472,18 +472,21 @@ uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &Data,
   if (Symbol.isAbsolute() && Symbol.isVariable()) {
     if (const MCExpr *Value = Symbol.getVariableValue()) {
       int64_t IntValue;
-      if (Value->EvaluateAsAbsolute(IntValue, Layout))
-        return (uint64_t)IntValue;
+      if (Value->EvaluateAsAbsolute(IntValue, Layout)) {
+        if (Data.getFlags() & ELF_Other_ThumbFunc)
+          return static_cast<uint64_t>(IntValue | 1);
+        else
+          return static_cast<uint64_t>(IntValue);
+      }
     }
   }
 
   if (!Symbol.isInSection())
     return 0;
 
-
   if (Data.getFragment()) {
     if (Data.getFlags() & ELF_Other_ThumbFunc)
-      return Layout.getSymbolOffset(&Data)+1;
+      return Layout.getSymbolOffset(&Data) | 1;
     else
       return Layout.getSymbolOffset(&Data);
   }
@@ -578,6 +581,8 @@ void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
   // Binding and Type share the same byte as upper and lower nibbles
   uint8_t Binding = MCELF::GetBinding(OrigData);
   uint8_t Type = mergeTypeForSet(MCELF::GetType(OrigData), MCELF::GetType(Data));
+  if (OrigData.getFlags() & ELF_Other_ThumbFunc)
+    Type = ELF::STT_FUNC;
   uint8_t Info = (Binding << ELF_STB_Shift) | (Type << ELF_STT_Shift);
 
   // Other and Visibility share the same byte with Visibility using the lower
@@ -587,6 +592,8 @@ void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
   Other |= Visibility;
 
   uint64_t Value = SymbolValue(Data, Layout);
+  if (OrigData.getFlags() & ELF_Other_ThumbFunc)
+    Value |= 1;
   uint64_t Size = 0;
 
   assert(!(Data.isCommon() && !Data.isExternal()));
