@@ -3103,6 +3103,8 @@ void VFTableBuilder::dumpLayout(raw_ostream &Out) {
       Out << '\n';
     }
   }
+
+  Out.flush();
 }
 
 static bool setsIntersect(const llvm::SmallPtrSet<const CXXRecordDecl *, 4> &A,
@@ -3359,6 +3361,8 @@ void MicrosoftVTableContext::dumpMethodLocations(
     }
     Out << '\n';
   }
+
+  Out.flush();
 }
 
 const VirtualBaseInfo *MicrosoftVTableContext::computeVBTableRelatedInformation(
