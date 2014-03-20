@@ -178,7 +178,7 @@ void CodeGenPGO::setFuncName(llvm::Function *Fn) {
 }
 
 static llvm::Function *getRegisterFunc(CodeGenModule &CGM) {
-  return CGM.getModule().getFunction("__llvm_pgo_register_functions");
+  return CGM.getModule().getFunction("__llvm_profile_register_functions");
 }
 
 static llvm::BasicBlock *getOrInsertRegisterBB(CodeGenModule &CGM) {
@@ -195,7 +195,7 @@ static llvm::BasicBlock *getOrInsertRegisterBB(CodeGenModule &CGM) {
   auto *RegisterFTy = llvm::FunctionType::get(VoidTy, false);
   auto *RegisterF = llvm::Function::Create(RegisterFTy,
                                            llvm::GlobalValue::InternalLinkage,
-                                           "__llvm_pgo_register_functions",
+                                           "__llvm_profile_register_functions",
                                            &CGM.getModule());
   RegisterF->setUnnamedAddr(true);
   if (CGM.getCodeGenOpts().DisableRedZone)
@@ -212,7 +212,7 @@ static llvm::Constant *getOrInsertRuntimeRegister(CodeGenModule &CGM) {
   auto *VoidTy = llvm::Type::getVoidTy(CGM.getLLVMContext());
   auto *VoidPtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   auto *RuntimeRegisterTy = llvm::FunctionType::get(VoidTy, VoidPtrTy, false);
-  return CGM.getModule().getOrInsertFunction("__llvm_pgo_register_function",
+  return CGM.getModule().getOrInsertFunction("__llvm_profile_register_function",
                                              RuntimeRegisterTy);
 }
 
@@ -221,15 +221,15 @@ static bool isMachO(const CodeGenModule &CGM) {
 }
 
 static StringRef getCountersSection(const CodeGenModule &CGM) {
-  return isMachO(CGM) ? "__DATA,__llvm_pgo_cnts" : "__llvm_pgo_cnts";
+  return isMachO(CGM) ? "__DATA,__llvm_prf_cnts" : "__llvm_prf_cnts";
 }
 
 static StringRef getNameSection(const CodeGenModule &CGM) {
-  return isMachO(CGM) ? "__DATA,__llvm_pgo_names" : "__llvm_pgo_names";
+  return isMachO(CGM) ? "__DATA,__llvm_prf_names" : "__llvm_prf_names";
 }
 
 static StringRef getDataSection(const CodeGenModule &CGM) {
-  return isMachO(CGM) ? "__DATA,__llvm_pgo_data" : "__llvm_pgo_data";
+  return isMachO(CGM) ? "__DATA,__llvm_prf_data" : "__llvm_prf_data";
 }
 
 llvm::GlobalVariable *CodeGenPGO::buildDataVar() {
@@ -295,7 +295,7 @@ llvm::Function *CodeGenPGO::emitInitialization(CodeGenModule &CGM) {
     return nullptr;
 
   // Only need to create this once per module.
-  if (CGM.getModule().getFunction("__llvm_pgo_init"))
+  if (CGM.getModule().getFunction("__llvm_profile_init"))
     return nullptr;
 
   // Get the function to call at initialization.
@@ -307,7 +307,7 @@ llvm::Function *CodeGenPGO::emitInitialization(CodeGenModule &CGM) {
   auto *VoidTy = llvm::Type::getVoidTy(CGM.getLLVMContext());
   auto *F = llvm::Function::Create(llvm::FunctionType::get(VoidTy, false),
                                    llvm::GlobalValue::InternalLinkage,
-                                   "__llvm_pgo_init", &CGM.getModule());
+                                   "__llvm_profile_init", &CGM.getModule());
   F->setUnnamedAddr(true);
   F->addFnAttr(llvm::Attribute::NoInline);
   if (CGM.getCodeGenOpts().DisableRedZone)

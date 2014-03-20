@@ -9,8 +9,8 @@
 // RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/cxx-throws.profdata -target %itanium_abi_triple | FileCheck -check-prefix=PGOUSE %s
 // RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/cxx-throws.profdata -target %itanium_abi_triple | FileCheck -check-prefix=PGOUSE-EXC %s
 
-// PGOGEN: @[[THC:__llvm_pgo_counters__Z6throwsv]] = global [9 x i64] zeroinitializer
-// PGOGEN-EXC: @[[THC:__llvm_pgo_counters__Z6throwsv]] = global [9 x i64] zeroinitializer
+// PGOGEN: @[[THC:__llvm_profile_counters__Z6throwsv]] = global [9 x i64] zeroinitializer
+// PGOGEN-EXC: @[[THC:__llvm_profile_counters__Z6throwsv]] = global [9 x i64] zeroinitializer
 
 // PGOGEN-LABEL: @_Z6throwsv()
 // PGOUSE-LABEL: @_Z6throwsv()

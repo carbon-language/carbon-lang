@@ -329,7 +329,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     // there are no calls to the runtime in the code.
     if (Args.hasArg(options::OPT_fprofile_instr_generate)) {
       CmdArgs.push_back("-u");
-      CmdArgs.push_back("___llvm_pgo_runtime");
+      CmdArgs.push_back("___llvm_profile_runtime");
     }
 
     // Select the appropriate runtime library for the target.

@@ -29,9 +29,9 @@ struct NSFastEnumerationState;
 @end;
 #endif
 
-// PGOGEN: @[[FRC:"__llvm_pgo_counters_\+\[A foreach:\]"]] = internal global [2 x i64] zeroinitializer
-// PGOGEN: @[[BLC:"__llvm_pgo_counters___13\+\[A foreach:\]_block_invoke"]] = internal global [2 x i64] zeroinitializer
-// PGOGEN: @[[MAC:__llvm_pgo_counters_main]] = global [1 x i64] zeroinitializer
+// PGOGEN: @[[FRC:"__llvm_profile_counters_\+\[A foreach:\]"]] = internal global [2 x i64] zeroinitializer
+// PGOGEN: @[[BLC:"__llvm_profile_counters___13\+\[A foreach:\]_block_invoke"]] = internal global [2 x i64] zeroinitializer
+// PGOGEN: @[[MAC:__llvm_profile_counters_main]] = global [1 x i64] zeroinitializer
 
 @interface A : NSObject
 + (void)foreach: (NSArray *)array;
