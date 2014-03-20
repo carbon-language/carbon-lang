@@ -180,13 +180,12 @@ RelocationPass::RelocationPass(MipsLinkingContext &context)
 }
 
 void RelocationPass::perform(std::unique_ptr<MutableFile> &mf) {
-  for (const auto &atom : mf->defined())
-    calculateAHLs(*atom);
-
   // Process all references.
-  for (const auto &atom : mf->defined())
+  for (const auto &atom : mf->defined()) {
+    calculateAHLs(*atom);
     for (const auto &ref : *atom)
       handleReference(*ref);
+  }
 
   uint64_t ordinal = 0;
 
