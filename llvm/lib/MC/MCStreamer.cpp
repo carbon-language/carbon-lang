@@ -73,8 +73,8 @@ const MCExpr *MCStreamer::BuildSymbolDiff(MCContext &Context,
 }
 
 const MCExpr *MCStreamer::ForceExpAbs(const MCExpr* Expr) {
-  if (Context.getAsmInfo()->hasAggressiveSymbolFolding() ||
-      isa<MCSymbolRefExpr>(Expr))
+  assert(!isa<MCSymbolRefExpr>(Expr));
+  if (Context.getAsmInfo()->hasAggressiveSymbolFolding())
     return Expr;
 
   MCSymbol *ABS = Context.CreateTempSymbol();

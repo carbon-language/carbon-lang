@@ -619,7 +619,7 @@ static void EmitGenDwarfAranges(MCStreamer *MCOS,
     context.getGenDwarfSectionStartSym(), MCSymbolRefExpr::VK_None, context);
   const MCExpr *Size = MakeStartMinusEndExpr(*MCOS,
     *context.getGenDwarfSectionStartSym(), *SectionEndSym, 0);
-  MCOS->EmitAbsValue(Addr, AddrSize);
+  MCOS->EmitValue(Addr, AddrSize);
   MCOS->EmitAbsValue(Size, AddrSize);
 
   // And finally the pair of terminating zeros.
@@ -682,12 +682,12 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
   // AT_low_pc, the first address of the default .text section.
   const MCExpr *Start = MCSymbolRefExpr::Create(
     context.getGenDwarfSectionStartSym(), MCSymbolRefExpr::VK_None, context);
-  MCOS->EmitAbsValue(Start, AddrSize);
+  MCOS->EmitValue(Start, AddrSize);
 
   // AT_high_pc, the last address of the default .text section.
   const MCExpr *End = MCSymbolRefExpr::Create(
     context.getGenDwarfSectionEndSym(), MCSymbolRefExpr::VK_None, context);
-  MCOS->EmitAbsValue(End, AddrSize);
+  MCOS->EmitValue(End, AddrSize);
 
   // AT_name, the name of the source file.  Reconstruct from the first directory
   // and file table entries.
@@ -756,7 +756,7 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
     // AT_low_pc, start address of the label.
     const MCExpr *AT_low_pc = MCSymbolRefExpr::Create(Entry->getLabel(),
                                              MCSymbolRefExpr::VK_None, context);
-    MCOS->EmitAbsValue(AT_low_pc, AddrSize);
+    MCOS->EmitValue(AT_low_pc, AddrSize);
 
     // DW_AT_prototyped, a one byte flag value of 0 saying we have no prototype.
     MCOS->EmitIntValue(0, 1);
