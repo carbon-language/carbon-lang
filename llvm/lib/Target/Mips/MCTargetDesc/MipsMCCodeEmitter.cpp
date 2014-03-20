@@ -11,155 +11,42 @@
 //
 //===----------------------------------------------------------------------===//
 //
+
 #define DEBUG_TYPE "mccodeemitter"
-#include "MCTargetDesc/MipsBaseInfo.h"
+
+#include "MipsMCCodeEmitter.h"
 #include "MCTargetDesc/MipsFixupKinds.h"
 #include "MCTargetDesc/MipsMCExpr.h"
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
-#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/raw_ostream.h"
 
 #define GET_INSTRMAP_INFO
 #include "MipsGenInstrInfo.inc"
+#undef GET_INSTRMAP_INFO
 
-using namespace llvm;
-
-namespace {
-class MipsMCCodeEmitter : public MCCodeEmitter {
-  MipsMCCodeEmitter(const MipsMCCodeEmitter &) LLVM_DELETED_FUNCTION;
-  void operator=(const MipsMCCodeEmitter &) LLVM_DELETED_FUNCTION;
-  const MCInstrInfo &MCII;
-  MCContext &Ctx;
-  bool IsLittleEndian;
-
-  bool isMicroMips(const MCSubtargetInfo &STI) const {
-    return STI.getFeatureBits() & Mips::FeatureMicroMips;
-  }
-
-public:
-  MipsMCCodeEmitter(const MCInstrInfo &mcii, MCContext &Ctx_, bool IsLittle) :
-    MCII(mcii), Ctx(Ctx_), IsLittleEndian(IsLittle) { }
-
-  ~MipsMCCodeEmitter() {}
-
-  void EmitByte(unsigned char C, raw_ostream &OS) const {
-    OS << (char)C;
-  }
-
-  void EmitInstruction(uint64_t Val, unsigned Size, const MCSubtargetInfo &STI,
-                       raw_ostream &OS) const {
-    // Output the instruction encoding in little endian byte order.
-    // Little-endian byte ordering:
-    //   mips32r2:   4 | 3 | 2 | 1
-    //   microMIPS:  2 | 1 | 4 | 3
-    if (IsLittleEndian && Size == 4 && isMicroMips(STI)) {
-      EmitInstruction(Val>>16, 2, STI, OS);
-      EmitInstruction(Val, 2, STI, OS);
-    } else {
-      for (unsigned i = 0; i < Size; ++i) {
-        unsigned Shift = IsLittleEndian ? i * 8 : (Size - 1 - i) * 8;
-        EmitByte((Val >> Shift) & 0xff, OS);
-      }
-    }
-  }
-
-  void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
-                         SmallVectorImpl<MCFixup> &Fixups,
-                         const MCSubtargetInfo &STI) const;
-
-  // getBinaryCodeForInstr - TableGen'erated function for getting the
-  // binary encoding for an instruction.
-  uint64_t getBinaryCodeForInstr(const MCInst &MI,
-                                 SmallVectorImpl<MCFixup> &Fixups,
-                                 const MCSubtargetInfo &STI) const;
-
-  // getBranchJumpOpValue - Return binary encoding of the jump
-  // target operand. If the machine operand requires relocation,
-  // record the relocation and return zero.
-  unsigned getJumpTargetOpValue(const MCInst &MI, unsigned OpNo,
-                                SmallVectorImpl<MCFixup> &Fixups,
-                                const MCSubtargetInfo &STI) const;
-
-  // getBranchJumpOpValueMM - Return binary encoding of the microMIPS jump
-  // target operand. If the machine operand requires relocation,
-  // record the relocation and return zero.
-  unsigned getJumpTargetOpValueMM(const MCInst &MI, unsigned OpNo,
-                                  SmallVectorImpl<MCFixup> &Fixups,
-                                  const MCSubtargetInfo &STI) const;
-
-   // getBranchTargetOpValue - Return binary encoding of the branch
-   // target operand. If the machine operand requires relocation,
-   // record the relocation and return zero.
-  unsigned getBranchTargetOpValue(const MCInst &MI, unsigned OpNo,
-                                  SmallVectorImpl<MCFixup> &Fixups,
-                                  const MCSubtargetInfo &STI) const;
-
-  // getBranchTargetOpValue - Return binary encoding of the microMIPS branch
-  // target operand. If the machine operand requires relocation,
-  // record the relocation and return zero.
-  unsigned getBranchTargetOpValueMM(const MCInst &MI, unsigned OpNo,
-                                    SmallVectorImpl<MCFixup> &Fixups,
-                                    const MCSubtargetInfo &STI) const;
-
-   // getMachineOpValue - Return binary encoding of operand. If the machin
-   // operand requires relocation, record the relocation and return zero.
-  unsigned getMachineOpValue(const MCInst &MI,const MCOperand &MO,
-                             SmallVectorImpl<MCFixup> &Fixups,
-                             const MCSubtargetInfo &STI) const;
-
-  unsigned getMSAMemEncoding(const MCInst &MI, unsigned OpNo,
-                             SmallVectorImpl<MCFixup> &Fixups,
-                             const MCSubtargetInfo &STI) const;
-
-  unsigned getMemEncoding(const MCInst &MI, unsigned OpNo,
-                          SmallVectorImpl<MCFixup> &Fixups,
-                          const MCSubtargetInfo &STI) const;
-  unsigned getMemEncodingMMImm12(const MCInst &MI, unsigned OpNo,
-                                 SmallVectorImpl<MCFixup> &Fixups,
-                                 const MCSubtargetInfo &STI) const;
-  unsigned getSizeExtEncoding(const MCInst &MI, unsigned OpNo,
-                              SmallVectorImpl<MCFixup> &Fixups,
-                              const MCSubtargetInfo &STI) const;
-  unsigned getSizeInsEncoding(const MCInst &MI, unsigned OpNo,
-                              SmallVectorImpl<MCFixup> &Fixups,
-                              const MCSubtargetInfo &STI) const;
-
-  // getLSAImmEncoding - Return binary encoding of LSA immediate.
-  unsigned getLSAImmEncoding(const MCInst &MI, unsigned OpNo,
-                             SmallVectorImpl<MCFixup> &Fixups,
-                             const MCSubtargetInfo &STI) const;
-
-  unsigned
-  getExprOpValue(const MCExpr *Expr,SmallVectorImpl<MCFixup> &Fixups,
-                 const MCSubtargetInfo &STI) const;
-
-}; // class MipsMCCodeEmitter
-}  // namespace
-
-MCCodeEmitter *llvm::createMipsMCCodeEmitterEB(const MCInstrInfo &MCII,
-                                               const MCRegisterInfo &MRI,
-                                               const MCSubtargetInfo &STI,
-                                               MCContext &Ctx)
-{
+namespace llvm {
+MCCodeEmitter *createMipsMCCodeEmitterEB(const MCInstrInfo &MCII,
+                                         const MCRegisterInfo &MRI,
+                                         const MCSubtargetInfo &STI,
+                                         MCContext &Ctx) {
   return new MipsMCCodeEmitter(MCII, Ctx, false);
 }
 
-MCCodeEmitter *llvm::createMipsMCCodeEmitterEL(const MCInstrInfo &MCII,
-                                               const MCRegisterInfo &MRI,
-                                               const MCSubtargetInfo &STI,
-                                               MCContext &Ctx)
-{
+MCCodeEmitter *createMipsMCCodeEmitterEL(const MCInstrInfo &MCII,
+                                         const MCRegisterInfo &MRI,
+                                         const MCSubtargetInfo &STI,
+                                         MCContext &Ctx) {
   return new MipsMCCodeEmitter(MCII, Ctx, true);
 }
-
+} // End of namespace llvm.
 
 // If the D<shift> instruction has a shift amount that is greater
 // than 31 (checked in calling routine), lower it to a D<shift>32 instruction
@@ -224,6 +111,32 @@ static void LowerDextDins(MCInst& InstIn) {
   InstIn.getOperand(3).setImm(size - 32);
   InstIn.setOpcode((Opcode == Mips::DEXT) ? Mips::DEXTM : Mips::DINSM);
   return;
+}
+
+bool MipsMCCodeEmitter::isMicroMips(const MCSubtargetInfo &STI) const {
+  return STI.getFeatureBits() & Mips::FeatureMicroMips;
+}
+
+void MipsMCCodeEmitter::EmitByte(unsigned char C, raw_ostream &OS) const {
+  OS << (char)C;
+}
+
+void MipsMCCodeEmitter::EmitInstruction(uint64_t Val, unsigned Size,
+                                        const MCSubtargetInfo &STI,
+                                        raw_ostream &OS) const {
+  // Output the instruction encoding in little endian byte order.
+  // Little-endian byte ordering:
+  //   mips32r2:   4 | 3 | 2 | 1
+  //   microMIPS:  2 | 1 | 4 | 3
+  if (IsLittleEndian && Size == 4 && isMicroMips(STI)) {
+    EmitInstruction(Val >> 16, 2, STI, OS);
+    EmitInstruction(Val, 2, STI, OS);
+  } else {
+    for (unsigned i = 0; i < Size; ++i) {
+      unsigned Shift = IsLittleEndian ? i * 8 : (Size - 1 - i) * 8;
+      EmitByte((Val >> Shift) & 0xff, OS);
+    }
+  }
 }
 
 /// EncodeInstruction - Emit the instruction.
