@@ -178,7 +178,8 @@ void COFFDumper::dumpSymbols(unsigned NumSymbols) {
       } else if (Symbol->isFileRecord()) {
         // This symbol represents a file record.
         Sym.File = StringRef(reinterpret_cast<const char *>(AuxData.data()),
-                             Symbol->NumberOfAuxSymbols * COFF::SymbolSize);
+                             Symbol->NumberOfAuxSymbols * COFF::SymbolSize)
+                       .rtrim(StringRef("\0", /*length=*/1));
       } else if (Symbol->isSectionDefinition()) {
         // This symbol represents a section definition.
         assert(Symbol->NumberOfAuxSymbols == 1 &&
