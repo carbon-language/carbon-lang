@@ -194,7 +194,7 @@ which are considered 'records'.
 **TableGen records** have a unique name, a list of values, and a list of
 superclasses.  The list of values is the main data that TableGen builds for each
 record; it is this that holds the domain specific information for the
-application.  The interpretation of this data is left to a specific `backends`_,
+application.  The interpretation of this data is left to a specific `backend`_,
 but the structure and format rules are taken care of and are fixed by
 TableGen.
 
@@ -295,11 +295,11 @@ the basic concepts via custom-made back-ends, which can pervert the original
 design and make it very hard for newcomers to understand the evil TableGen
 file.
 
-There are some in favour of extending the semantics even more, but makeing sure
-back-ends adhere to strict rules. Others suggesting we should move to less,
+There are some in favour of extending the semantics even more, but making sure
+back-ends adhere to strict rules. Others are suggesting we should move to less,
 more powerful DSLs designed with specific purposes, or even re-using existing
 DSLs.
 
-Either way, this is a discussion that is likely spanning across several years,
+Either way, this is a discussion that will likely span across several years,
 if not decades. You can read more in the `TableGen Deficiencies <Deficiencies.html>`_
 document.
