@@ -148,14 +148,14 @@ unsigned TargetTransformInfo::getIntImmCost(const APInt &Imm, Type *Ty) const {
   return PrevTTI->getIntImmCost(Imm, Ty);
 }
 
-unsigned TargetTransformInfo::getIntImmCost(unsigned Opcode, const APInt &Imm,
-                                            Type *Ty) const {
-  return PrevTTI->getIntImmCost(Opcode, Imm, Ty);
+unsigned TargetTransformInfo::getIntImmCost(unsigned Opc, unsigned Idx,
+                                            const APInt &Imm, Type *Ty) const {
+  return PrevTTI->getIntImmCost(Opc, Idx, Imm, Ty);
 }
 
-unsigned TargetTransformInfo::getIntImmCost(Intrinsic::ID IID, const APInt &Imm,
-                                            Type *Ty) const {
-  return PrevTTI->getIntImmCost(IID, Imm, Ty);
+unsigned TargetTransformInfo::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
+                                            const APInt &Imm, Type *Ty) const {
+  return PrevTTI->getIntImmCost(IID, Idx, Imm, Ty);
 }
 
 unsigned TargetTransformInfo::getNumberOfRegisters(bool Vector) const {
@@ -539,12 +539,12 @@ struct NoTTI final : ImmutablePass, TargetTransformInfo {
     return TCC_Basic;
   }
 
-  unsigned getIntImmCost(unsigned Opcode, const APInt &Imm,
+  unsigned getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
                          Type *Ty) const override {
     return TCC_Free;
   }
 
-  unsigned getIntImmCost(Intrinsic::ID IID, const APInt &Imm,
+  unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
                          Type *Ty) const override {
     return TCC_Free;
   }
