@@ -423,7 +423,7 @@ void TargetPassConfig::addPassesToHandleExceptions() {
     addPass(createDwarfEHPass(TM));
     break;
   case ExceptionHandling::None:
-    addPass(createLowerInvokePass(TM));
+    addPass(createLowerInvokePass());
 
     // The lower invoke pass may create unreachable code. Remove it.
     addPass(createUnreachableBlockEliminationPass());

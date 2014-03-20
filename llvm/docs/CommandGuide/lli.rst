@@ -190,12 +190,6 @@ CODE GENERATION OPTIONS
 
 
 
-**-enable-correct-eh-support**
-
- Make the -lowerinvoke pass insert expensive, but correct, EH code.
-
-
-
 **-jit-enable-eh**
 
  Exception handling should be enabled in the just-in-time compiler.

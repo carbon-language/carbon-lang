@@ -112,11 +112,6 @@ End-user Options
  optimizations allow the code generator to make use of some instructions which
  would otherwise not be usable (such as ``fsin`` on X86).
 
-.. option:: --enable-correct-eh-support
-
- Instruct the **lowerinvoke** pass to insert code for correct exception
- handling support.  This is expensive and is by default omitted for efficiency.
-
 .. option:: --stats
 
  Print statistics recorded by code-generation passes.

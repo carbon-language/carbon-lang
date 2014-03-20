@@ -262,16 +262,10 @@ extern char &LowerSwitchID;
 
 //===----------------------------------------------------------------------===//
 //
-// LowerInvoke - This pass converts invoke and unwind instructions to use sjlj
-// exception handling mechanisms.  Note that after this pass runs the CFG is not
-// entirely accurate (exceptional control flow edges are not correct anymore) so
-// only very simple things should be done after the lowerinvoke pass has run
-// (like generation of native code).  This should *NOT* be used as a general
-// purpose "my LLVM-to-LLVM pass doesn't support the invoke instruction yet"
-// lowering pass.
+// LowerInvoke - This pass removes invoke instructions, converting them to call
+// instructions.
 //
-FunctionPass *createLowerInvokePass(const TargetMachine *TM = 0,
-                                    bool useExpensiveEHSupport = false);
+FunctionPass *createLowerInvokePass();
 extern char &LowerInvokePassID;
 
 //===----------------------------------------------------------------------===//
