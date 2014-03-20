@@ -45,15 +45,16 @@ template <typename T> std::string runCheckOnCode(StringRef Code) {
   ClangTidyContext Context(&Errors, ".*", "");
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
   Check.setContext(&Context);
+  std::vector<std::string> ArgCXX11(1, "-std=c++11");
 
   if (!tooling::runToolOnCodeWithArgs(new TestPPAction(Check, &Context), Code,
-                                      {"-std=c++11"}))
+                                      ArgCXX11))
     return "";
   ast_matchers::MatchFinder Finder;
   Check.registerMatchers(&Finder);
   std::unique_ptr<tooling::FrontendActionFactory> Factory(
       tooling::newFrontendActionFactory(&Finder));
-  if (!tooling::runToolOnCodeWithArgs(Factory->create(), Code, {"-std=c++11"}))
+  if (!tooling::runToolOnCodeWithArgs(Factory->create(), Code, ArgCXX11))
     return "";
   DiagConsumer.finish();
   tooling::Replacements Fixes;
