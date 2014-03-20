@@ -101,7 +101,6 @@ int scanf(char const *, ...);
 void test2(int intSAParm[static 2]) {
   char str[100];
   char *vstr = "abc";
-  wchar_t wstr[100];
   short shortVar;
   unsigned short uShortVar;
   int intVar;
@@ -124,8 +123,6 @@ void test2(int intSAParm[static 2]) {
   scanf("%lf", str);
   scanf("%lf", vstr);
   scanf("%ls", str);
-  scanf("%f", wstr); // FIXME: wchar_t should resolve to %ls, not %d.
-  scanf("%s", wstr); // FIXME: wchar_t should resolve to %ls, not %d.
   scanf("%ls", str);
 
   // Some integer types.
@@ -225,8 +222,6 @@ void test2(int intSAParm[static 2]) {
 // CHECK: scanf("%99s", str);
 // CHECK: scanf("%s", vstr);
 // CHECK: scanf("%99s", str);
-// CHECK: scanf("{{%d|%hu}}", wstr);
-// CHECK: scanf("{{%d|%hu}}", wstr);
 // CHECK: scanf("%99s", str);
 // CHECK: scanf("%hd", &shortVar);
 // CHECK: scanf("%hu", &uShortVar);
