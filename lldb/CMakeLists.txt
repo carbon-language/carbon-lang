@@ -129,14 +129,16 @@ endif()
 # Disable GCC warnings
 check_cxx_compiler_flag("-Wno-deprecated-declarations"
                         CXX_SUPPORTS_NO_DEPRECATED_DECLARATIONS)
-append_if(CXX_SUPPORTS_NO_DEPRECATED_DECLARATIONS
-          "-Wno-deprecated-declarations" CMAKE_CXX_FLAGS)
+if (CXX_SUPPORTS_NO_DEPRECATED_DECLARATIONS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+endif ()
 
 # Disable Clang warnings
 check_cxx_compiler_flag("-Wno-deprecated-register"
                         CXX_SUPPORTS_NO_DEPRECATED_REGISTER)
-append_if(CXX_SUPPORTS_NO_DEPRECATED_REGISTER
-          "-Wno-deprecated-register" CMAKE_CXX_FLAGS)
+if (CXX_SUPPORTS_NO_DEPRECATED_REGISTER)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register")
+endif ()
 
 # Disable MSVC warnings
 if( MSVC )
