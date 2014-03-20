@@ -1,0 +1,14 @@
+RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/use-shared2.x86-64 \
+RUN:   %p/Inputs/shared.so-x86-64 %p/Inputs/libundef.so -o %t -e main \
+RUN:   --noinhibit-exec
+RUN: lld -flavor gnu -target x86_64-linux %p/Inputs/use-shared2.x86-64 \
+RUN:   %p/Inputs/libundef.so %p/Inputs/shared.so-x86-64 -o %t2 -e main \
+RUN:   --noinhibit-exec
+RUN: llvm-readobj -dynamic-table %t | FileCheck --check-prefix=ORDER1 %s
+RUN: llvm-readobj -dynamic-table %t2 | FileCheck --check-prefix=ORDER2 %s
+
+ORDER1: NEEDED SharedLibrary (shared.so
+ORDER1: NEEDED SharedLibrary (libundef.so
+
+ORDER2: NEEDED SharedLibrary (libundef.so
+ORDER2: NEEDED SharedLibrary (shared.so
