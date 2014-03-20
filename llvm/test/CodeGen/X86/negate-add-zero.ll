@@ -827,7 +827,9 @@ declare void @_ZN11MatrixTools9transposeI11FixedMatrixIdLi6ELi6ELi0ELi0EEEENT_13
 declare void @_ZN21HNodeTranslateRotate311toCartesianEv(%struct.HNodeTranslateRotate3*)
 
 define linkonce void @_ZN21HNodeTranslateRotate36setVelERK9CDSVectorIdLi1EN3CDS12DefaultAllocEE(%struct.HNodeTranslateRotate3* %this, %"struct.CDSVector<double,0,CDS::DefaultAlloc>"* %velv) {
-	%1 = getelementptr double* null, i32 -1		; <double*> [#uses=1]
+entry:
+	%0 = add i32 0, -1		; <i32> [#uses=1]
+	%1 = getelementptr double* null, i32 %0		; <double*> [#uses=1]
 	%2 = load double* %1, align 8		; <double> [#uses=1]
 	%3 = load double* null, align 8		; <double> [#uses=2]
 	%4 = load double* null, align 8		; <double> [#uses=2]
@@ -888,12 +890,13 @@ define linkonce void @_ZN21HNodeTranslateRotate36setVelERK9CDSVectorIdLi1EN3CDS1
 	store double %52, double* %55, align 8
 	%56 = getelementptr %struct.HNodeTranslateRotate3* %this, i32 0, i32 0, i32 10, i32 0, i32 0, i32 2		; <double*> [#uses=1]
 	store double %53, double* %56, align 8
-	%57 = getelementptr %"struct.SubVector<CDSVector<double, 1, CDS::DefaultAlloc> >"* null, i32 0, i32 0		; <%"struct.CDSVector<double,0,CDS::DefaultAlloc>"**> [#uses=1]
-	store %"struct.CDSVector<double,0,CDS::DefaultAlloc>"* %velv, %"struct.CDSVector<double,0,CDS::DefaultAlloc>"** %57, align 8
-	%58 = getelementptr %"struct.SubVector<CDSVector<double, 1, CDS::DefaultAlloc> >"* null, i32 0, i32 1		; <i32*> [#uses=1]
-	store i32 4, i32* %58, align 4
-	%59 = getelementptr %"struct.SubVector<CDSVector<double, 1, CDS::DefaultAlloc> >"* null, i32 0, i32 2		; <i32*> [#uses=1]
-	store i32 3, i32* %59, align 8
+	%57 = add i32 0, 4		; <i32> [#uses=1]
+	%58 = getelementptr %"struct.SubVector<CDSVector<double, 1, CDS::DefaultAlloc> >"* null, i32 0, i32 0		; <%"struct.CDSVector<double,0,CDS::DefaultAlloc>"**> [#uses=1]
+	store %"struct.CDSVector<double,0,CDS::DefaultAlloc>"* %velv, %"struct.CDSVector<double,0,CDS::DefaultAlloc>"** %58, align 8
+	%59 = getelementptr %"struct.SubVector<CDSVector<double, 1, CDS::DefaultAlloc> >"* null, i32 0, i32 1		; <i32*> [#uses=1]
+	store i32 %57, i32* %59, align 4
+	%60 = getelementptr %"struct.SubVector<CDSVector<double, 1, CDS::DefaultAlloc> >"* null, i32 0, i32 2		; <i32*> [#uses=1]
+	store i32 3, i32* %60, align 8
 	unreachable
 }
 

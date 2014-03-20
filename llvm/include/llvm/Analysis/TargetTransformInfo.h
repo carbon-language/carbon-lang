@@ -297,10 +297,10 @@ public:
   /// \brief Return the expected cost of materialization for the given integer
   /// immediate of the specified type for a given instruction. The cost can be
   /// zero if the immediate can be folded into the specified instruction.
-  virtual unsigned getIntImmCost(unsigned Opc, unsigned Idx, const APInt &Imm,
+  virtual unsigned getIntImmCost(unsigned Opcode, const APInt &Imm,
                                  Type *Ty) const;
-  virtual unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx,
-                                 const APInt &Imm, Type *Ty) const;
+  virtual unsigned getIntImmCost(Intrinsic::ID IID, const APInt &Imm,
+                                 Type *Ty) const;
   /// @}
 
   /// \name Vector Target Information

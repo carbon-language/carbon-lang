@@ -103,9 +103,9 @@ public:
 
   unsigned getIntImmCost(const APInt &Imm, Type *Ty) const override;
 
-  unsigned getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
+  unsigned getIntImmCost(unsigned Opcode, const APInt &Imm,
                          Type *Ty) const override;
-  unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
+  unsigned getIntImmCost(Intrinsic::ID IID, const APInt &Imm,
                          Type *Ty) const override;
 
   /// @}
@@ -776,9 +776,6 @@ unsigned X86TTI::getIntImmCost(const APInt &Imm, Type *Ty) const {
   if (BitSize == 0)
     return ~0U;
 
-  if (Imm == 0)
-    return TCC_Free;
-
   if (Imm.getBitWidth() <= 64 &&
       (isInt<32>(Imm.getSExtValue()) || isUInt<32>(Imm.getZExtValue())))
     return TCC_Basic;
@@ -786,7 +783,7 @@ unsigned X86TTI::getIntImmCost(const APInt &Imm, Type *Ty) const {
     return 2 * TCC_Basic;
 }
 
-unsigned X86TTI::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
+unsigned X86TTI::getIntImmCost(unsigned Opcode, const APInt &Imm,
                                Type *Ty) const {
   assert(Ty->isIntegerTy());
 
@@ -794,15 +791,7 @@ unsigned X86TTI::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
   if (BitSize == 0)
     return ~0U;
 
-  unsigned ImmIdx = ~0U;
   switch (Opcode) {
-  default: return TCC_Free;
-  case Instruction::GetElementPtr:
-    if (Idx != 0)
-      return TCC_Free;
-  case Instruction::Store:
-    ImmIdx = 0;
-    break;
   case Instruction::Add:
   case Instruction::Sub:
   case Instruction::Mul:
@@ -817,31 +806,28 @@ unsigned X86TTI::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
   case Instruction::Or:
   case Instruction::Xor:
   case Instruction::ICmp:
-    ImmIdx = 1;
-    break;
+    if (Imm.getBitWidth() <= 64 && isInt<32>(Imm.getSExtValue()))
+      return TCC_Free;
+    else
+      return X86TTI::getIntImmCost(Imm, Ty);
   case Instruction::Trunc:
   case Instruction::ZExt:
   case Instruction::SExt:
   case Instruction::IntToPtr:
   case Instruction::PtrToInt:
   case Instruction::BitCast:
-  case Instruction::PHI:
   case Instruction::Call:
   case Instruction::Select:
   case Instruction::Ret:
   case Instruction::Load:
-    break;
+  case Instruction::Store:
+    return X86TTI::getIntImmCost(Imm, Ty);
   }
-
-  if ((Idx == ImmIdx) &&
-      Imm.getBitWidth() <= 64 && isInt<32>(Imm.getSExtValue()))
-    return TCC_Free;
-
-  return X86TTI::getIntImmCost(Imm, Ty);
+  return TargetTransformInfo::getIntImmCost(Opcode, Imm, Ty);
 }
 
-unsigned X86TTI::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
-                               const APInt &Imm, Type *Ty) const {
+unsigned X86TTI::getIntImmCost(Intrinsic::ID IID, const APInt &Imm,
+                               Type *Ty) const {
   assert(Ty->isIntegerTy());
 
   unsigned BitSize = Ty->getPrimitiveSizeInBits();
@@ -849,24 +835,21 @@ unsigned X86TTI::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
     return ~0U;
 
   switch (IID) {
-  default: return TCC_Free;
+  default: return TargetTransformInfo::getIntImmCost(IID, Imm, Ty);
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::uadd_with_overflow:
   case Intrinsic::ssub_with_overflow:
   case Intrinsic::usub_with_overflow:
   case Intrinsic::smul_with_overflow:
   case Intrinsic::umul_with_overflow:
-    if ((Idx == 1) && Imm.getBitWidth() <= 64 && isInt<32>(Imm.getSExtValue()))
+    if (Imm.getBitWidth() <= 64 && isInt<32>(Imm.getSExtValue()))
       return TCC_Free;
     else
       return X86TTI::getIntImmCost(Imm, Ty);
   case Intrinsic::experimental_stackmap:
-    if (Idx < 2)
-      return TCC_Free;
   case Intrinsic::experimental_patchpoint_void:
   case Intrinsic::experimental_patchpoint_i64:
-    if ((Idx < 4 ) ||
-        (Imm.getBitWidth() <= 64 && isInt<64>(Imm.getSExtValue())))
+    if (Imm.getBitWidth() <= 64 && isInt<64>(Imm.getSExtValue()))
       return TCC_Free;
     else
       return X86TTI::getIntImmCost(Imm, Ty);

@@ -35,14 +35,15 @@
 
 #define DEBUG_TYPE "consthoist"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -50,80 +51,42 @@ using namespace llvm;
 STATISTIC(NumConstantsHoisted, "Number of constants hoisted");
 STATISTIC(NumConstantsRebased, "Number of constants rebased");
 
+
 namespace {
-struct ConstantUser;
-struct RebasedConstantInfo;
-
-typedef SmallVector<ConstantUser, 8> ConstantUseListType;
-typedef SmallVector<RebasedConstantInfo, 4> RebasedConstantListType;
-
-/// \brief Keeps track of the user of a constant and the operand index where the
-/// constant is used.
-struct ConstantUser {
-  Instruction *Inst;
-  unsigned OpndIdx;
-
-  ConstantUser(Instruction *Inst, unsigned Idx) : Inst(Inst), OpndIdx(Idx) { }
-};
-
-/// \brief Keeps track of a constant candidate and its usees.
+typedef SmallVector<User *, 4> ConstantUseListType;
 struct ConstantCandidate {
-  ConstantUseListType Uses;
-  ConstantInt *ConstInt;
   unsigned CumulativeCost;
-
-  ConstantCandidate(ConstantInt *ConstInt)
-    : ConstInt(ConstInt), CumulativeCost(0) { }
-
-  /// \brief Add the user to the use list and update the cost.
-  void addUser(Instruction *Inst, unsigned Idx, unsigned Cost) {
-    CumulativeCost += Cost;
-    Uses.push_back(ConstantUser(Inst, Idx));
-  }
-};
-
-/// \brief This represents a constant that has been rebased with respect to a
-/// base constant. The difference to the base constant is recorded in Offset.
-struct RebasedConstantInfo {
   ConstantUseListType Uses;
-  Constant *Offset;
-  mutable BasicBlock *IDom;
-
-  RebasedConstantInfo(ConstantUseListType &&Uses, Constant *Offset)
-    : Uses(Uses), Offset(Offset), IDom(nullptr) { }
 };
 
-/// \brief A base constant and all its rebased constants.
 struct ConstantInfo {
   ConstantInt *BaseConstant;
+  struct RebasedConstantInfo {
+    ConstantInt *OriginalConstant;
+    Constant *Offset;
+    ConstantUseListType Uses;
+  };
+  typedef SmallVector<RebasedConstantInfo, 4> RebasedConstantListType;
   RebasedConstantListType RebasedConstants;
 };
 
-/// \brief The constant hoisting pass.
 class ConstantHoisting : public FunctionPass {
-  typedef DenseMap<ConstantInt *, unsigned> ConstCandMapType;
-  typedef std::vector<ConstantCandidate> ConstCandVecType;
-
   const TargetTransformInfo *TTI;
   DominatorTree *DT;
-  BasicBlock *Entry;
 
-  /// Keeps track of constant candidates found in the function.
-  ConstCandMapType ConstCandMap;
-  ConstCandVecType ConstCandVec;
-
-  /// Keep track of cast instructions we already cloned.
-  SmallDenseMap<Instruction *, Instruction *> ClonedCastMap;
+  /// Keeps track of expensive constants found in the function.
+  typedef MapVector<ConstantInt *, ConstantCandidate> ConstantMapType;
+  ConstantMapType ConstantMap;
 
   /// These are the final constants we decided to hoist.
-  SmallVector<ConstantInfo, 8> ConstantVec;
+  SmallVector<ConstantInfo, 4> Constants;
 public:
   static char ID; // Pass identification, replacement for typeid
-  ConstantHoisting() : FunctionPass(ID), TTI(0), DT(0), Entry(0) {
+  ConstantHoisting() : FunctionPass(ID), TTI(0) {
     initializeConstantHoistingPass(*PassRegistry::getPassRegistry());
   }
 
-  bool runOnFunction(Function &Fn) override;
+  bool runOnFunction(Function &F) override;
 
   const char *getPassName() const override { return "Constant Hoisting"; }
 
@@ -134,49 +97,19 @@ public:
   }
 
 private:
-  /// \brief Initialize the pass.
-  void setup(Function &Fn) {
-    DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-    TTI = &getAnalysis<TargetTransformInfo>();
-    Entry = &Fn.getEntryBlock();
-  }
-
-  /// \brief Cleanup.
-  void cleanup() {
-    ConstantVec.clear();
-    ClonedCastMap.clear();
-    ConstCandVec.clear();
-    ConstCandMap.clear();
-
-    TTI = nullptr;
-    DT = nullptr;
-    Entry = nullptr;
-  }
-
-  /// \brief Find the common dominator of all uses and cache the result for
-  /// future lookup.
-  BasicBlock *getIDom(const RebasedConstantInfo &RCI) const {
-    if (RCI.IDom)
-      return RCI.IDom;
-    RCI.IDom = findIDomOfAllUses(RCI.Uses);
-    assert(RCI.IDom && "Invalid IDom.");
-    return RCI.IDom;
-  }
-
-  BasicBlock *findIDomOfAllUses(const ConstantUseListType &Uses) const;
-  Instruction *findMatInsertPt(Instruction *I, unsigned Idx = ~0U) const;
-  Instruction *findConstantInsertionPoint(const ConstantInfo &CI) const;
-  void collectConstantCandidates(Instruction *I, unsigned Idx, ConstantInt *C);
-  void collectConstantCandidates(Instruction *I);
-  void collectConstantCandidates(Function &Fn);
-  void findAndMakeBaseConstant(ConstCandVecType::iterator S,
-                               ConstCandVecType::iterator E);
-  void findBaseConstants();
-  void emitBaseConstants(Instruction *Base, Constant *Offset,
-                         const ConstantUser &CU);
-  bool emitBaseConstants();
-  void deleteDeadCastInst() const;
-  bool optimizeConstants(Function &F);
+  void CollectConstant(User *U, unsigned Opcode, Intrinsic::ID IID,
+                        ConstantInt *C);
+  void CollectConstants(Instruction *I);
+  void CollectConstants(Function &F);
+  void FindAndMakeBaseConstant(ConstantMapType::iterator S,
+                               ConstantMapType::iterator E);
+  void FindBaseConstants();
+  Instruction *FindConstantInsertionPoint(Function &F,
+                                          const ConstantInfo &CI) const;
+  void EmitBaseConstants(Function &F, User *U, Instruction *Base,
+                         Constant *Offset, ConstantInt *OriginalConstant);
+  bool EmitBaseConstants(Function &F);
+  bool OptimizeConstants(Function &F);
 };
 }
 
@@ -193,352 +126,297 @@ FunctionPass *llvm::createConstantHoistingPass() {
 }
 
 /// \brief Perform the constant hoisting optimization for the given function.
-bool ConstantHoisting::runOnFunction(Function &Fn) {
-  DEBUG(dbgs() << "********** Begin Constant Hoisting **********\n");
-  DEBUG(dbgs() << "********** Function: " << Fn.getName() << '\n');
+bool ConstantHoisting::runOnFunction(Function &F) {
+  DEBUG(dbgs() << "********** Constant Hoisting **********\n");
+  DEBUG(dbgs() << "********** Function: " << F.getName() << '\n');
 
-  setup(Fn);
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  TTI = &getAnalysis<TargetTransformInfo>();
 
-  bool MadeChange = optimizeConstants(Fn);
-
-  if (MadeChange) {
-    DEBUG(dbgs() << "********** Function after Constant Hoisting: "
-                 << Fn.getName() << '\n');
-    DEBUG(dbgs() << Fn);
-  }
-  DEBUG(dbgs() << "********** End Constant Hoisting **********\n");
-
-  cleanup();
-
-  return MadeChange;
+  return OptimizeConstants(F);
 }
 
-/// \brief Find nearest common dominator of all uses.
-/// FIXME: Replace this with NearestCommonDominator once it is in common code.
-BasicBlock *
-ConstantHoisting::findIDomOfAllUses(const ConstantUseListType &Uses) const {
-  // Collect all basic blocks.
-  SmallPtrSet<BasicBlock *, 8> BBs;
-  for (auto const &U : Uses)
-    BBs.insert(findMatInsertPt(U.Inst, U.OpndIdx)->getParent());
-
-  if (BBs.count(Entry))
-    return Entry;
-
-  while (BBs.size() >= 2) {
-    BasicBlock *BB, *BB1, *BB2;
-    BB1 = *BBs.begin();
-    BB2 = *std::next(BBs.begin());
-    BB = DT->findNearestCommonDominator(BB1, BB2);
-    if (BB == Entry)
-      return Entry;
-    BBs.erase(BB1);
-    BBs.erase(BB2);
-    BBs.insert(BB);
-  }
-  assert((BBs.size() == 1) && "Expected only one element.");
-  return *BBs.begin();
-}
-
-/// \brief Find the constant materialization insertion point.
-Instruction *ConstantHoisting::findMatInsertPt(Instruction *Inst,
-                                               unsigned Idx) const {
-  // The simple and common case.
-  if (!isa<PHINode>(Inst) && !isa<LandingPadInst>(Inst))
-    return Inst;
-
-  // We can't insert directly before a phi node or landing pad. Insert before
-  // the terminator of the incoming or dominating block.
-  assert(Entry != Inst->getParent() && "PHI or landing pad in entry block!");
-  if (Idx != ~0U && isa<PHINode>(Inst))
-    return cast<PHINode>(Inst)->getIncomingBlock(Idx)->getTerminator();
-
-  BasicBlock *IDom = DT->getNode(Inst->getParent())->getIDom()->getBlock();
-  return IDom->getTerminator();
-}
-
-/// \brief Find an insertion point that dominates all uses.
-Instruction *ConstantHoisting::
-findConstantInsertionPoint(const ConstantInfo &ConstInfo) const {
-  assert(!ConstInfo.RebasedConstants.empty() && "Invalid constant info entry.");
-  // Collect all IDoms.
-  SmallPtrSet<BasicBlock *, 8> BBs;
-  for (auto const &RCI : ConstInfo.RebasedConstants)
-    BBs.insert(getIDom(RCI));
-
-  assert(!BBs.empty() && "No dominators!?");
-
-  if (BBs.count(Entry))
-    return &Entry->front();
-
-  while (BBs.size() >= 2) {
-    BasicBlock *BB, *BB1, *BB2;
-    BB1 = *BBs.begin();
-    BB2 = *std::next(BBs.begin());
-    BB = DT->findNearestCommonDominator(BB1, BB2);
-    if (BB == Entry)
-      return &Entry->front();
-    BBs.erase(BB1);
-    BBs.erase(BB2);
-    BBs.insert(BB);
-  }
-  assert((BBs.size() == 1) && "Expected only one element.");
-  Instruction &FirstInst = (*BBs.begin())->front();
-  return findMatInsertPt(&FirstInst);
-}
-
-
-/// \brief Record constant integer ConstInt for instruction Inst at operand
-/// index Idx.
-///
-/// The operand at index Idx is not necessarily the constant inetger itself. It
-/// could also be a cast instruction or a constant expression that uses the
-// constant integer.
-void ConstantHoisting::collectConstantCandidates(Instruction *Inst,
-                                                 unsigned Idx,
-                                                 ConstantInt *ConstInt) {
+void ConstantHoisting::CollectConstant(User * U, unsigned Opcode,
+                                       Intrinsic::ID IID, ConstantInt *C) {
   unsigned Cost;
-  // Ask the target about the cost of materializing the constant for the given
-  // instruction and operand index.
-  if (auto IntrInst = dyn_cast<IntrinsicInst>(Inst))
-    Cost = TTI->getIntImmCost(IntrInst->getIntrinsicID(), Idx,
-                              ConstInt->getValue(), ConstInt->getType());
+  if (Opcode)
+    Cost = TTI->getIntImmCost(Opcode, C->getValue(), C->getType());
   else
-    Cost = TTI->getIntImmCost(Inst->getOpcode(), Idx, ConstInt->getValue(),
-                              ConstInt->getType());
+    Cost = TTI->getIntImmCost(IID, C->getValue(), C->getType());
 
-  // Ignore cheap integer constants.
   if (Cost > TargetTransformInfo::TCC_Basic) {
-    ConstCandMapType::iterator Itr;
-    bool Inserted;
-    std::tie(Itr, Inserted) = ConstCandMap.insert(std::make_pair(ConstInt, 0));
-    if (Inserted) {
-      ConstCandVec.push_back(ConstantCandidate(ConstInt));
-      Itr->second = ConstCandVec.size() - 1;
-    }
-    ConstCandVec[Itr->second].addUser(Inst, Idx, Cost);
-    DEBUG(if (auto ConstInt = dyn_cast<ConstantInt>(Inst->getOperand(Idx)))
-            dbgs() << "Collect constant " << *ConstInt << " from " << *Inst
-                   << " with cost " << Cost << '\n';
-          else
-          dbgs() << "Collect constant " << *ConstInt << " indirectly from "
-                 << *Inst << " via " << *Inst->getOperand(Idx) << " with cost "
-                 << Cost << '\n';
-    );
+    ConstantCandidate &CC = ConstantMap[C];
+    CC.CumulativeCost += Cost;
+    CC.Uses.push_back(U);
+    DEBUG(dbgs() << "Collect constant " << *C << " with cost " << Cost
+                 << " from " << *U << '\n');
   }
 }
 
-/// \brief Scan the instruction for expensive integer constants and record them
-/// in the constant candidate vector.
-void ConstantHoisting::collectConstantCandidates(Instruction *Inst) {
-  // Skip all cast instructions. They are visited indirectly later on.
-  if (Inst->isCast())
-    return;
-
-  // Can't handle inline asm. Skip it.
-  if (auto Call = dyn_cast<CallInst>(Inst))
-    if (isa<InlineAsm>(Call->getCalledValue()))
-      return;
+/// \brief Scan the instruction or constant expression for expensive integer
+/// constants and record them in the constant map.
+void ConstantHoisting::CollectConstants(Instruction *I) {
+  unsigned Opcode = 0;
+  Intrinsic::ID IID = Intrinsic::not_intrinsic;
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
+    IID = II->getIntrinsicID();
+  else
+    Opcode = I->getOpcode();
 
   // Scan all operands.
-  for (unsigned Idx = 0, E = Inst->getNumOperands(); Idx != E; ++Idx) {
-    Value *Opnd = Inst->getOperand(Idx);
-
-    // Vist constant integers.
-    if (auto ConstInt = dyn_cast<ConstantInt>(Opnd)) {
-      collectConstantCandidates(Inst, Idx, ConstInt);
+  for (User::op_iterator O = I->op_begin(), E = I->op_end(); O != E; ++O) {
+    if (ConstantInt *C = dyn_cast<ConstantInt>(O)) {
+      CollectConstant(I, Opcode, IID, C);
       continue;
     }
-
-    // Visit cast instructions that have constant integers.
-    if (auto CastInst = dyn_cast<Instruction>(Opnd)) {
-      // Only visit cast instructions, which have been skipped. All other
-      // instructions should have already been visited.
-      if (!CastInst->isCast())
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(O)) {
+      // We only handle constant cast expressions.
+      if (!CE->isCast())
         continue;
 
-      if (auto *ConstInt = dyn_cast<ConstantInt>(CastInst->getOperand(0))) {
-        // Pretend the constant is directly used by the instruction and ignore
-        // the cast instruction.
-        collectConstantCandidates(Inst, Idx, ConstInt);
+      if (ConstantInt *C = dyn_cast<ConstantInt>(CE->getOperand(0))) {
+        // Ignore the cast expression and use the opcode of the instruction.
+        CollectConstant(CE, Opcode, IID, C);
         continue;
       }
     }
-
-    // Visit constant expressions that have constant integers.
-    if (auto ConstExpr = dyn_cast<ConstantExpr>(Opnd)) {
-      // Only visit constant cast expressions.
-      if (!ConstExpr->isCast())
-        continue;
-
-      if (auto ConstInt = dyn_cast<ConstantInt>(ConstExpr->getOperand(0))) {
-        // Pretend the constant is directly used by the instruction and ignore
-        // the constant expression.
-        collectConstantCandidates(Inst, Idx, ConstInt);
-        continue;
-      }
-    }
-  } // end of for all operands
+  }
 }
 
 /// \brief Collect all integer constants in the function that cannot be folded
 /// into an instruction itself.
-void ConstantHoisting::collectConstantCandidates(Function &Fn) {
-  for (Function::iterator BB : Fn)
-    for (BasicBlock::iterator I : *BB)
-      collectConstantCandidates(I);
+void ConstantHoisting::CollectConstants(Function &F) {
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      CollectConstants(I);
 }
 
 /// \brief Find the base constant within the given range and rebase all other
 /// constants with respect to the base constant.
-void ConstantHoisting::findAndMakeBaseConstant(ConstCandVecType::iterator S,
-                                               ConstCandVecType::iterator E) {
-  auto MaxCostItr = S;
+void ConstantHoisting::FindAndMakeBaseConstant(ConstantMapType::iterator S,
+                                               ConstantMapType::iterator E) {
+  ConstantMapType::iterator MaxCostItr = S;
   unsigned NumUses = 0;
   // Use the constant that has the maximum cost as base constant.
-  for (auto ConstCand = S; ConstCand != E; ++ConstCand) {
-    NumUses += ConstCand->Uses.size();
-    if (ConstCand->CumulativeCost > MaxCostItr->CumulativeCost)
-      MaxCostItr = ConstCand;
+  for (ConstantMapType::iterator I = S; I != E; ++I) {
+    NumUses += I->second.Uses.size();
+    if (I->second.CumulativeCost > MaxCostItr->second.CumulativeCost)
+      MaxCostItr = I;
   }
 
   // Don't hoist constants that have only one use.
   if (NumUses <= 1)
     return;
 
-  ConstantInfo ConstInfo;
-  ConstInfo.BaseConstant = MaxCostItr->ConstInt;
-  Type *Ty = ConstInfo.BaseConstant->getType();
-
+  ConstantInfo CI;
+  CI.BaseConstant = MaxCostItr->first;
+  Type *Ty = CI.BaseConstant->getType();
   // Rebase the constants with respect to the base constant.
-  for (auto ConstCand = S; ConstCand != E; ++ConstCand) {
-    APInt Diff = ConstCand->ConstInt->getValue() -
-                 ConstInfo.BaseConstant->getValue();
-    Constant *Offset = Diff == 0 ? nullptr : ConstantInt::get(Ty, Diff);
-    ConstInfo.RebasedConstants.push_back(
-      RebasedConstantInfo(std::move(ConstCand->Uses), Offset));
+  for (ConstantMapType::iterator I = S; I != E; ++I) {
+    APInt Diff = I->first->getValue() - CI.BaseConstant->getValue();
+    ConstantInfo::RebasedConstantInfo RCI;
+    RCI.OriginalConstant = I->first;
+    RCI.Offset = ConstantInt::get(Ty, Diff);
+    RCI.Uses = std::move(I->second.Uses);
+    CI.RebasedConstants.push_back(RCI);
   }
-  ConstantVec.push_back(ConstInfo);
+  Constants.push_back(CI);
 }
 
-/// \brief Finds and combines constant candidates that can be easily
-/// rematerialized with an add from a common base constant.
-void ConstantHoisting::findBaseConstants() {
-  // Sort the constants by value and type. This invalidates the mapping!
-  std::sort(ConstCandVec.begin(), ConstCandVec.end(),
-            [](const ConstantCandidate &LHS, const ConstantCandidate &RHS) {
-              if (LHS.ConstInt->getType() != RHS.ConstInt->getType())
-                return LHS.ConstInt->getType()->getBitWidth() <
-                       RHS.ConstInt->getType()->getBitWidth();
-              return LHS.ConstInt->getValue().ult(RHS.ConstInt->getValue());
-            });
+/// \brief Finds and combines constants that can be easily rematerialized with
+/// an add from a common base constant.
+void ConstantHoisting::FindBaseConstants() {
+  // Sort the constants by value and type. This invalidates the mapping.
+  std::sort(ConstantMap.begin(), ConstantMap.end(),
+            [](const std::pair<ConstantInt *, ConstantCandidate> &LHS,
+               const std::pair<ConstantInt *, ConstantCandidate> &RHS) {
+    if (LHS.first->getType() != RHS.first->getType())
+      return LHS.first->getType()->getBitWidth() <
+             RHS.first->getType()->getBitWidth();
+    return LHS.first->getValue().ult(RHS.first->getValue());
+  });
 
-  // Simple linear scan through the sorted constant candidate vector for viable
-  // merge candidates.
-  auto MinValItr = ConstCandVec.begin();
-  for (auto CC = std::next(ConstCandVec.begin()), E = ConstCandVec.end();
-       CC != E; ++CC) {
-    if (MinValItr->ConstInt->getType() == CC->ConstInt->getType()) {
+  // Simple linear scan through the sorted constant map for viable merge
+  // candidates.
+  ConstantMapType::iterator MinValItr = ConstantMap.begin();
+  for (ConstantMapType::iterator I = std::next(ConstantMap.begin()),
+       E = ConstantMap.end(); I != E; ++I) {
+    if (MinValItr->first->getType() == I->first->getType()) {
       // Check if the constant is in range of an add with immediate.
-      APInt Diff = CC->ConstInt->getValue() - MinValItr->ConstInt->getValue();
+      APInt Diff = I->first->getValue() - MinValItr->first->getValue();
       if ((Diff.getBitWidth() <= 64) &&
           TTI->isLegalAddImmediate(Diff.getSExtValue()))
         continue;
     }
     // We either have now a different constant type or the constant is not in
     // range of an add with immediate anymore.
-    findAndMakeBaseConstant(MinValItr, CC);
+    FindAndMakeBaseConstant(MinValItr, I);
     // Start a new base constant search.
-    MinValItr = CC;
+    MinValItr = I;
   }
   // Finalize the last base constant search.
-  findAndMakeBaseConstant(MinValItr, ConstCandVec.end());
+  FindAndMakeBaseConstant(MinValItr, ConstantMap.end());
+}
+
+/// \brief Records the basic block of the instruction or all basic blocks of the
+/// users of the constant expression.
+static void CollectBasicBlocks(SmallPtrSet<BasicBlock *, 4> &BBs, Function &F,
+                               User *U) {
+  if (Instruction *I = dyn_cast<Instruction>(U))
+    BBs.insert(I->getParent());
+  else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U))
+    // Find all users of this constant expression.
+    for (User *UU : CE->users())
+      // Only record users that are instructions. We don't want to go down a
+      // nested constant expression chain. Also check if the instruction is even
+      // in the current function.
+      if (Instruction *I = dyn_cast<Instruction>(UU))
+        if(I->getParent()->getParent() == &F)
+          BBs.insert(I->getParent());
+}
+
+/// \brief Find the instruction we should insert the constant materialization
+/// before.
+static Instruction *getMatInsertPt(Instruction *I, const DominatorTree *DT) {
+  if (!isa<PHINode>(I) && !isa<LandingPadInst>(I)) // Simple case.
+    return I;
+
+  // We can't insert directly before a phi node or landing pad. Insert before
+  // the terminator of the dominating block.
+  assert(&I->getParent()->getParent()->getEntryBlock() != I->getParent() &&
+         "PHI or landing pad in entry block!");
+  BasicBlock *IDom = DT->getNode(I->getParent())->getIDom()->getBlock();
+  return IDom->getTerminator();
+}
+
+/// \brief Find an insertion point that dominates all uses.
+Instruction *ConstantHoisting::
+FindConstantInsertionPoint(Function &F, const ConstantInfo &CI) const {
+  BasicBlock *Entry = &F.getEntryBlock();
+
+  // Collect all basic blocks.
+  SmallPtrSet<BasicBlock *, 4> BBs;
+  ConstantInfo::RebasedConstantListType::const_iterator RCI, RCE;
+  for (RCI = CI.RebasedConstants.begin(), RCE = CI.RebasedConstants.end();
+       RCI != RCE; ++RCI)
+    for (SmallVectorImpl<User *>::const_iterator U = RCI->Uses.begin(),
+         E = RCI->Uses.end(); U != E; ++U)
+      CollectBasicBlocks(BBs, F, *U);
+
+  if (BBs.count(Entry))
+    return getMatInsertPt(&Entry->front(), DT);
+
+  while (BBs.size() >= 2) {
+    BasicBlock *BB, *BB1, *BB2;
+    BB1 = *BBs.begin();
+    BB2 = *std::next(BBs.begin());
+    BB = DT->findNearestCommonDominator(BB1, BB2);
+    if (BB == Entry)
+      return getMatInsertPt(&Entry->front(), DT);
+    BBs.erase(BB1);
+    BBs.erase(BB2);
+    BBs.insert(BB);
+  }
+  assert((BBs.size() == 1) && "Expected only one element.");
+  Instruction &FirstInst = (*BBs.begin())->front();
+  return getMatInsertPt(&FirstInst, DT);
 }
 
 /// \brief Emit materialization code for all rebased constants and update their
 /// users.
-void ConstantHoisting::emitBaseConstants(Instruction *Base, Constant *Offset,
-                                         const ConstantUser &CU) {
-  Instruction *Mat = Base;
-  if (Offset) {
-    Instruction *InsertionPt = findMatInsertPt(CU.Inst, CU.OpndIdx);
-    Mat = BinaryOperator::Create(Instruction::Add, Base, Offset,
-                                 "const_mat", InsertionPt);
+void ConstantHoisting::EmitBaseConstants(Function &F, User *U,
+                                         Instruction *Base, Constant *Offset,
+                                         ConstantInt *OriginalConstant) {
+  if (Instruction *I = dyn_cast<Instruction>(U)) {
+    Instruction *Mat = Base;
+    if (!Offset->isNullValue()) {
+      Mat = BinaryOperator::Create(Instruction::Add, Base, Offset,
+                                   "const_mat", getMatInsertPt(I, DT));
 
-    DEBUG(dbgs() << "Materialize constant (" << *Base->getOperand(0)
-                 << " + " << *Offset << ") in BB "
-                 << Mat->getParent()->getName() << '\n' << *Mat << '\n');
-    Mat->setDebugLoc(CU.Inst->getDebugLoc());
-  }
-  Value *Opnd = CU.Inst->getOperand(CU.OpndIdx);
+      // Use the same debug location as the instruction we are about to update.
+      Mat->setDebugLoc(I->getDebugLoc());
 
-  // Visit constant integer.
-  if (isa<ConstantInt>(Opnd)) {
-    DEBUG(dbgs() << "Update: " << *CU.Inst << '\n');
-    CU.Inst->setOperand(CU.OpndIdx, Mat);
-    DEBUG(dbgs() << "To    : " << *CU.Inst << '\n');
-    return;
-  }
-
-  // Visit cast instruction.
-  if (auto CastInst = dyn_cast<Instruction>(Opnd)) {
-    assert(CastInst->isCast() && "Expected an cast instruction!");
-    // Check if we already have visited this cast instruction before to avoid
-    // unnecessary cloning.
-    Instruction *&ClonedCastInst = ClonedCastMap[CastInst];
-    if (!ClonedCastInst) {
-      ClonedCastInst = CastInst->clone();
-      ClonedCastInst->setOperand(0, Mat);
-      ClonedCastInst->insertAfter(CastInst);
-      // Use the same debug location as the original cast instruction.
-      ClonedCastInst->setDebugLoc(CastInst->getDebugLoc());
-      DEBUG(dbgs() << "Clone instruction: " << *ClonedCastInst << '\n'
-                   << "To               : " << *CastInst << '\n');
+      DEBUG(dbgs() << "Materialize constant (" << *Base->getOperand(0)
+                   << " + " << *Offset << ") in BB "
+                   << I->getParent()->getName() << '\n' << *Mat << '\n');
     }
-
-    DEBUG(dbgs() << "Update: " << *CU.Inst << '\n');
-    CU.Inst->setOperand(CU.OpndIdx, ClonedCastInst);
-    DEBUG(dbgs() << "To    : " << *CU.Inst << '\n');
+    DEBUG(dbgs() << "Update: " << *I << '\n');
+    I->replaceUsesOfWith(OriginalConstant, Mat);
+    DEBUG(dbgs() << "To: " << *I << '\n');
     return;
   }
+  assert(isa<ConstantExpr>(U) && "Expected a ConstantExpr.");
+  ConstantExpr *CE = cast<ConstantExpr>(U);
+  SmallVector<std::pair<Instruction *, Instruction *>, 8> WorkList;
+  DEBUG(dbgs() << "Visit ConstantExpr " << *CE << '\n');
+  for (User *UU : CE->users()) {
+    DEBUG(dbgs() << "Check user "; UU->print(dbgs()); dbgs() << '\n');
+    // We only handel instructions here and won't walk down a ConstantExpr chain
+    // to replace all ConstExpr with instructions.
+    if (Instruction *I = dyn_cast<Instruction>(UU)) {
+      // Only update constant expressions in the current function.
+      if (I->getParent()->getParent() != &F) {
+        DEBUG(dbgs() << "Not in the same function - skip.\n");
+        continue;
+      }
 
-  // Visit constant expression.
-  if (auto ConstExpr = dyn_cast<ConstantExpr>(Opnd)) {
-    Instruction *ConstExprInst = ConstExpr->getAsInstruction();
-    ConstExprInst->setOperand(0, Mat);
-    ConstExprInst->insertBefore(findMatInsertPt(CU.Inst, CU.OpndIdx));
+      Instruction *Mat = Base;
+      Instruction *InsertBefore = getMatInsertPt(I, DT);
+      if (!Offset->isNullValue()) {
+        Mat = BinaryOperator::Create(Instruction::Add, Base, Offset,
+                                     "const_mat", InsertBefore);
 
-    // Use the same debug location as the instruction we are about to update.
-    ConstExprInst->setDebugLoc(CU.Inst->getDebugLoc());
+        // Use the same debug location as the instruction we are about to
+        // update.
+        Mat->setDebugLoc(I->getDebugLoc());
 
-    DEBUG(dbgs() << "Create instruction: " << *ConstExprInst << '\n'
-                 << "From              : " << *ConstExpr << '\n');
-    DEBUG(dbgs() << "Update: " << *CU.Inst << '\n');
-    CU.Inst->setOperand(CU.OpndIdx, ConstExprInst);
-    DEBUG(dbgs() << "To    : " << *CU.Inst << '\n');
-    return;
+        DEBUG(dbgs() << "Materialize constant (" << *Base->getOperand(0)
+                     << " + " << *Offset << ") in BB "
+                     << I->getParent()->getName() << '\n' << *Mat << '\n');
+      }
+      Instruction *ICE = CE->getAsInstruction();
+      ICE->replaceUsesOfWith(OriginalConstant, Mat);
+      ICE->insertBefore(InsertBefore);
+
+      // Use the same debug location as the instruction we are about to update.
+      ICE->setDebugLoc(I->getDebugLoc());
+
+      WorkList.push_back(std::make_pair(I, ICE));
+    } else {
+      DEBUG(dbgs() << "Not an instruction - skip.\n");
+    }
+  }
+  SmallVectorImpl<std::pair<Instruction *, Instruction *> >::iterator I, E;
+  for (I = WorkList.begin(), E = WorkList.end(); I != E; ++I) {
+    DEBUG(dbgs() << "Create instruction: " << *I->second << '\n');
+    DEBUG(dbgs() << "Update: " << *I->first << '\n');
+    I->first->replaceUsesOfWith(CE, I->second);
+    DEBUG(dbgs() << "To: " << *I->first << '\n');
   }
 }
 
 /// \brief Hoist and hide the base constant behind a bitcast and emit
 /// materialization code for derived constants.
-bool ConstantHoisting::emitBaseConstants() {
+bool ConstantHoisting::EmitBaseConstants(Function &F) {
   bool MadeChange = false;
-  for (auto const &ConstInfo : ConstantVec) {
+  SmallVectorImpl<ConstantInfo>::iterator CI, CE;
+  for (CI = Constants.begin(), CE = Constants.end(); CI != CE; ++CI) {
     // Hoist and hide the base constant behind a bitcast.
-    Instruction *IP = findConstantInsertionPoint(ConstInfo);
-    IntegerType *Ty = ConstInfo.BaseConstant->getType();
-    Instruction *Base =
-      new BitCastInst(ConstInfo.BaseConstant, Ty, "const", IP);
-    DEBUG(dbgs() << "Hoist constant (" << *ConstInfo.BaseConstant << ") to BB "
-                 << IP->getParent()->getName() << '\n' << *Base << '\n');
+    Instruction *IP = FindConstantInsertionPoint(F, *CI);
+    IntegerType *Ty = CI->BaseConstant->getType();
+    Instruction *Base = new BitCastInst(CI->BaseConstant, Ty, "const", IP);
+    DEBUG(dbgs() << "Hoist constant (" << *CI->BaseConstant << ") to BB "
+                 << IP->getParent()->getName() << '\n');
     NumConstantsHoisted++;
 
     // Emit materialization code for all rebased constants.
-    for (auto const &RCI : ConstInfo.RebasedConstants) {
+    ConstantInfo::RebasedConstantListType::iterator RCI, RCE;
+    for (RCI = CI->RebasedConstants.begin(), RCE = CI->RebasedConstants.end();
+         RCI != RCE; ++RCI) {
       NumConstantsRebased++;
-      for (auto const &U : RCI.Uses)
-        emitBaseConstants(Base, RCI.Offset, U);
+      for (SmallVectorImpl<User *>::iterator U = RCI->Uses.begin(),
+           E = RCI->Uses.end(); U != E; ++U)
+        EmitBaseConstants(F, *U, Base, RCI->Offset, RCI->OriginalConstant);
     }
 
     // Use the same debug location as the last user of the constant.
@@ -554,37 +432,27 @@ bool ConstantHoisting::emitBaseConstants() {
   return MadeChange;
 }
 
-/// \brief Check all cast instructions we made a copy of and remove them if they
-/// have no more users.
-void ConstantHoisting::deleteDeadCastInst() const {
-  for (auto const &I : ClonedCastMap)
-    if (I.first->use_empty())
-      I.first->removeFromParent();
-}
-
 /// \brief Optimize expensive integer constants in the given function.
-bool ConstantHoisting::optimizeConstants(Function &Fn) {
-  // Collect all constant candidates.
-  collectConstantCandidates(Fn);
+bool ConstantHoisting::OptimizeConstants(Function &F) {
+  bool MadeChange = false;
 
-  // There are no constant candidates to worry about.
-  if (ConstCandVec.empty())
-    return false;
+  // Collect all constant candidates.
+  CollectConstants(F);
+
+  // There are no constants to worry about.
+  if (ConstantMap.empty())
+    return MadeChange;
 
   // Combine constants that can be easily materialized with an add from a common
   // base constant.
-  findBaseConstants();
-
-  // There are no constants to emit.
-  if (ConstantVec.empty())
-    return false;
+  FindBaseConstants();
 
   // Finally hoist the base constant and emit materializating code for dependent
   // constants.
-  bool MadeChange = emitBaseConstants();
+  MadeChange |= EmitBaseConstants(F);
 
-  // Cleanup dead instructions.
-  deleteDeadCastInst();
+  ConstantMap.clear();
+  Constants.clear();
 
   return MadeChange;
 }
