@@ -1017,10 +1017,10 @@ def DERET : MMRel, ER_FT<"deret">, ER_FM<0x1f>;
 def EI : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM<1>;
 def DI : MMRel, DEI_FT<"di", GPR32Opnd>, EI_FM<0>;
 
-def WAIT : MMRel, WAIT_FT<"wait">, WAIT_FM;
+let Predicates = [NotInMicroMips] in {
+def WAIT : WAIT_FT<"wait">, WAIT_FM;
 
 /// Load-linked, Store-conditional
-let Predicates = [NotInMicroMips] in {
 def LL : LLBase<"ll", GPR32Opnd>, LW_FM<0x30>;
 def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>;
 }

@@ -23,6 +23,7 @@
 # CHECK-EL:    ei                         # encoding: [0x00,0x00,0x7c,0x57]
 # CHECK-EL:    ei  $10                    # encoding: [0x0a,0x00,0x7c,0x57]
 # CHECK-EL:    wait                       # encoding: [0x00,0x00,0x7c,0x93]
+# CHECK-EL:    wait 17                    # encoding: [0x11,0x00,0x7c,0x93]
 #------------------------------------------------------------------------------
 # Big endian
 #------------------------------------------------------------------------------
@@ -40,6 +41,7 @@
 # CHECK-EB:   ei                          # encoding: [0x00,0x00,0x57,0x7c]
 # CHECK-EB:   ei  $10                     # encoding: [0x00,0x0a,0x57,0x7c]
 # CHECK-EB:   wait                        # encoding: [0x00,0x00,0x93,0x7c]
+# CHECK-EB:   wait 17                     # encoding: [0x00,0x11,0x93,0x7c]
 
     break
     break 7
@@ -55,3 +57,4 @@
     ei $0
     ei $10
     wait
+    wait 17

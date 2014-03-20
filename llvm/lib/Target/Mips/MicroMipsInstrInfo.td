@@ -95,6 +95,10 @@ class JumpLinkRegMM16<string opstr, RegisterOperand RO> :
 def MOVE16_MM : MoveMM16<"move", GPR32Opnd>, MOVE_FM_MM16<0x03>;
 def JALR16_MM : JumpLinkRegMM16<"jalr", GPR32Opnd>, JALR_FM_MM16<0x0e>;
 
+class WaitMM<string opstr> :
+  InstSE<(outs), (ins uimm10:$code_), !strconcat(opstr, "\t$code_"), [],
+         NoItinerary, FrmOther, opstr>;
+
 let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   /// Arithmetic Instructions (ALU Immediate)
   def ADDiu_MM : MMRel, ArithLogicI<"addiu", simm16, GPR32Opnd>,
@@ -257,7 +261,7 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   def SYNC_MM    : MMRel, SYNC_FT<"sync">, SYNC_FM_MM;
   def BREAK_MM   : MMRel, BRK_FT<"break">, BRK_FM_MM;
   def SYSCALL_MM : MMRel, SYS_FT<"syscall">, SYS_FM_MM;
-  def WAIT_MM    : MMRel, WAIT_FT<"wait">, WAIT_FM_MM;
+  def WAIT_MM    : WaitMM<"wait">, WAIT_FM_MM;
   def ERET_MM    : MMRel, ER_FT<"eret">, ER_FM_MM<0x3cd>;
   def DERET_MM   : MMRel, ER_FT<"deret">, ER_FM_MM<0x38d>;
   def EI_MM      : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM_MM<0x15d>;
@@ -281,4 +285,12 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
   /// Load-linked, Store-conditional
   def LL_MM : LLBaseMM<"ll", GPR32Opnd>, LL_FM_MM<0x3>;
   def SC_MM : SCBaseMM<"sc", GPR32Opnd>, LL_FM_MM<0xb>;
+}
+
+//===----------------------------------------------------------------------===//
+// MicroMips instruction aliases
+//===----------------------------------------------------------------------===//
+
+let Predicates = [InMicroMips] in {
+  def : InstAlias<"wait", (WAIT_MM 0x0), 1>;
 }

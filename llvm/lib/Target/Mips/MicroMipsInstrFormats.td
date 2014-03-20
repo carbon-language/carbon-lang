@@ -375,11 +375,12 @@ class SYS_FM_MM : MMArch {
   let Inst{5-0}   = 0x3c;
 }
 
-class WAIT_FM_MM : MMArch {
+class WAIT_FM_MM {
+  bits<10> code_;
   bits<32> Inst;
 
   let Inst{31-26} = 0x00;
-  let Inst{25-16} = 0x00;
+  let Inst{25-16} = code_;
   let Inst{15-6}  = 0x24d;
   let Inst{5-0}   = 0x3c;
 }
