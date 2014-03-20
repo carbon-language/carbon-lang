@@ -968,11 +968,16 @@ are listed below.
    Extra features of MemorySanitizer (require explicit
    ``-fsanitize=memory``):
 
-   -  ``-fsanitize-memory-track-origins``: Enables origin tracking in
+   -  ``-fsanitize-memory-track-origins[=level]``: Enables origin tracking in
       MemorySanitizer. Adds a second section to MemorySanitizer
       reports pointing to the heap or stack allocation the
       uninitialized bits came from. Slows down execution by additional
       1.5x-2x.
+
+      Possible values for level are 0 (off), 1 (default), 2. Level 2 adds more
+      sections to MemorySanitizer reports describing the order of memory stores
+      the uninitialized value went through. Beware, this mode may use a lot of
+      extra memory.
 
    Extra features of UndefinedBehaviorSanitizer:
 

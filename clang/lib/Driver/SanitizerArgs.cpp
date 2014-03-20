@@ -11,6 +11,7 @@
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/ToolChain.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
@@ -23,7 +24,7 @@ using namespace llvm::opt;
 void SanitizerArgs::clear() {
   Kind = 0;
   BlacklistFile = "";
-  MsanTrackOrigins = false;
+  MsanTrackOrigins = 0;
   AsanZeroBaseShadow = false;
   UbsanTrapOnError = false;
 }
@@ -146,12 +147,27 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       BlacklistFile = BLPath;
   }
 
-  // Parse -f(no-)sanitize-memory-track-origins options.
-  if (NeedsMsan)
-    MsanTrackOrigins =
-      Args.hasFlag(options::OPT_fsanitize_memory_track_origins,
-                   options::OPT_fno_sanitize_memory_track_origins,
-                   /* Default */false);
+  // Parse -f[no-]sanitize-memory-track-origins[=level] options.
+  if (NeedsMsan) {
+    if (Arg *A =
+            Args.getLastArg(options::OPT_fsanitize_memory_track_origins_EQ,
+                            options::OPT_fsanitize_memory_track_origins,
+                            options::OPT_fno_sanitize_memory_track_origins)) {
+      if (A->getOption().matches(options::OPT_fsanitize_memory_track_origins)) {
+        MsanTrackOrigins = 1;
+      } else if (A->getOption().matches(
+                     options::OPT_fno_sanitize_memory_track_origins)) {
+        MsanTrackOrigins = 0;
+      } else {
+        StringRef S = A->getValue();
+        if (S.getAsInteger(0, MsanTrackOrigins) || MsanTrackOrigins < 0 ||
+            MsanTrackOrigins > 2) {
+          D.Diag(diag::err_drv_invalid_value) << A->getAsString(Args) << S;
+        }
+      }
+    }
+  }
+
   if (NeedsAsan)
     AsanZeroBaseShadow =
         (TC.getTriple().getEnvironment() == llvm::Triple::Android);
@@ -175,7 +191,8 @@ void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
   }
 
   if (MsanTrackOrigins)
-    CmdArgs.push_back(Args.MakeArgString("-fsanitize-memory-track-origins"));
+    CmdArgs.push_back(Args.MakeArgString("-fsanitize-memory-track-origins=" +
+                                         llvm::utostr(MsanTrackOrigins)));
 
   // Workaround for PR16386.
   if (needsMsanRt())

@@ -56,12 +56,10 @@ future).
 
 .. code-block:: console
 
-    % ./a.out 2>log
-    % projects/compiler-rt/lib/asan/scripts/asan_symbolize.py / < log | c++filt
-    ==30106==  WARNING: MemorySanitizer: UMR (uninitialized-memory-read)
+    % ./a.out
+    WARNING: MemorySanitizer: use-of-uninitialized-value
         #0 0x7f45944b418a in main umr.cc:6
         #1 0x7f45938b676c in __libc_start_main libc-start.c:226
-    Exiting
 
 By default, MemorySanitizer exits on the first detected error.
 
@@ -101,6 +99,13 @@ checks for certain source files and functions. All "Use of uninitialized value"
 warnings will be suppressed and all values loaded from memory will be
 considered fully initialized.
 
+Report symbolization
+====================
+
+MemorySanitizer uses an external symbolizer to print files and line numbers in
+reports. Make sure that ``llvm-symbolizer`` binary is in ``PATH``,
+or set environment variable ``MSAN_SYMBOLIZER_PATH`` to point to it.
+
 Origin Tracking
 ===============
 
@@ -112,29 +117,59 @@ the example above,
 .. code-block:: console
 
     % clang -fsanitize=memory -fsanitize-memory-track-origins -fno-omit-frame-pointer -g -O2 umr.cc
-    % ./a.out 2>log
-    % projects/compiler-rt/lib/asan/scripts/asan_symbolize.py / < log | c++filt
-    ==14425==  WARNING: MemorySanitizer: UMR (uninitialized-memory-read)
-    ==14425== WARNING: Trying to symbolize code, but external symbolizer is not initialized!
-        #0 0x7f8bdda3824b in main umr.cc:6
-        #1 0x7f8bdce3a76c in __libc_start_main libc-start.c:226
-      raw origin id: 2030043137
-      ORIGIN: heap allocation:
-        #0 0x7f8bdda4034b in operator new[](unsigned long) msan_new_delete.cc:39
-        #1 0x7f8bdda3814d in main umr.cc:4
-        #2 0x7f8bdce3a76c in __libc_start_main libc-start.c:226
-    Exiting
+    % ./a.out
+    WARNING: MemorySanitizer: use-of-uninitialized-value
+        #0 0x7f7893912f0b in main umr2.cc:6
+        #1 0x7f789249b76c in __libc_start_main libc-start.c:226
 
-Origin tracking has proved to be very useful for debugging UMR
+      Uninitialized value was created by a heap allocation
+        #0 0x7f7893901cbd in operator new[](unsigned long) msan_new_delete.cc:44
+        #1 0x7f7893912e06 in main umr2.cc:4
+
+Origin tracking has proved to be very useful for debugging MemorySanitizer
 reports. It slows down program execution by a factor of 1.5x-2x on top
 of the usual MemorySanitizer slowdown.
+
+MemorySanitizer can provide even more information with
+``-fsanitize-memory-track-origins=2`` flag. In this mode reports
+include information about intermediate stores the uninitialized value went
+through.
+
+.. code-block:: console
+
+    % cat umr2.cc
+    #include <stdio.h>
+
+    int main(int argc, char** argv) {
+      int* a = new int[10];
+      a[5] = 0;
+      volatile int b = a[argc];
+      if (b)
+        printf("xx\n");
+      return 0;
+    }
+
+    % clang -fsanitize=memory -fsanitize-memory-track-origins=2 -fno-omit-frame-pointer -g -O2 umr2.cc
+    % ./a.out
+    WARNING: MemorySanitizer: use-of-uninitialized-value
+        #0 0x7f7893912f0b in main umr2.cc:7
+        #1 0x7f789249b76c in __libc_start_main libc-start.c:226
+
+      Uninitialized value was stored to memory at
+        #0 0x7f78938b5c25 in __msan_chain_origin msan.cc:484
+        #1 0x7f7893912ecd in main umr2.cc:6
+
+      Uninitialized value was created by a heap allocation
+        #0 0x7f7893901cbd in operator new[](unsigned long) msan_new_delete.cc:44
+        #1 0x7f7893912e06 in main umr2.cc:4
+
 
 Handling external code
 ============================
 
 MemorySanitizer requires that all program code is instrumented. This
 also includes any libraries that the program depends on, even libc.
-Failing to achieve this may result in false UMR reports.
+Failing to achieve this may result in false reports.
 
 Full MemorySanitizer instrumentation is very difficult to achieve. To
 make it easier, MemorySanitizer runtime library includes 70+

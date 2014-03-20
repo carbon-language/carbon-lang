@@ -48,7 +48,7 @@ class SanitizerArgs {
   unsigned Kind;
 
   std::string BlacklistFile;
-  bool MsanTrackOrigins;
+  int MsanTrackOrigins;
   bool AsanZeroBaseShadow;
   bool UbsanTrapOnError;
 
