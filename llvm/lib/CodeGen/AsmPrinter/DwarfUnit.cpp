@@ -282,31 +282,22 @@ void DwarfUnit::addSectionOffset(DIE *Die, dwarf::Attribute Attribute,
 /// DW_FORM_addr or DW_FORM_GNU_addr_index.
 ///
 void DwarfCompileUnit::addLabelAddress(DIE *Die, dwarf::Attribute Attribute,
-                                       const MCSymbol *Label) {
-
-  if (!DD->useSplitDwarf())
-    return addLocalLabelAddress(Die, Attribute, Label);
-
+                                       MCSymbol *Label) {
   if (Label)
     DD->addArangeLabel(SymbolCU(this, Label));
 
-  unsigned idx = DU->getAddrPoolIndex(Label);
-  DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
-  Die->addValue(Attribute, dwarf::DW_FORM_GNU_addr_index, Value);
-}
-
-void DwarfCompileUnit::addLocalLabelAddress(DIE *Die,
-                                            dwarf::Attribute Attribute,
-                                            const MCSymbol *Label) {
-  if (Label)
-    DD->addArangeLabel(SymbolCU(this, Label));
-
-  if (Label) {
-    DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
-    Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
+  if (!DD->useSplitDwarf()) {
+    if (Label) {
+      DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
+      Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
+    } else {
+      DIEValue *Value = new (DIEValueAllocator) DIEInteger(0);
+      Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
+    }
   } else {
-    DIEValue *Value = new (DIEValueAllocator) DIEInteger(0);
-    Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
+    unsigned idx = DU->getAddrPoolIndex(Label);
+    DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
+    Die->addValue(Attribute, dwarf::DW_FORM_GNU_addr_index, Value);
   }
 }
 
@@ -2041,27 +2032,6 @@ void DwarfUnit::emitHeader(const MCSection *ASection,
   Asm->EmitSectionOffset(ASectionSym, ASectionSym);
   Asm->OutStreamer.AddComment("Address Size (in bytes)");
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
-}
-
-void DwarfUnit::addRange(RangeSpan Range) {
-  // Only add a range for this unit if we're emitting full debug.
-  if (getCUNode().getEmissionKind() == DIBuilder::FullDebug) {
-    // If we have no current ranges just add the range and return, otherwise,
-    // check the current section and CU against the previous section and CU we
-    // emitted into and the subprogram was contained within. If these are the
-    // same then extend our current range, otherwise add this as a new range.
-    if (CURanges.size() == 0 ||
-        this != DD->getPrevCU() ||
-        Asm->getCurrentSection() != DD->getPrevSection()) {
-      CURanges.push_back(Range);
-      return;
-    }
-
-    assert(&(CURanges.back().getEnd()->getSection()) ==
-               &(Range.getEnd()->getSection()) &&
-           "We can only append to a range in the same section!");
-    CURanges.back().setEnd(Range.getEnd());
-  }
 }
 
 void DwarfCompileUnit::initStmtList(MCSymbol *DwarfLineSectionSym) {

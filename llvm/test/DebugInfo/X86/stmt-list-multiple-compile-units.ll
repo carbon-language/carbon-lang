@@ -8,20 +8,13 @@
 ; CHECK: .debug_info contents:
 ; CHECK: DW_TAG_compile_unit
 ; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset]   (0x00000000)
+; CHECK: DW_AT_ranges [DW_FORM_sec_offset]      (0x00000000)
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]            (0x0000000000000000)
-; CHECK: DW_AT_high_pc [DW_FORM_data4]          (0x00000010)
-; CHECK: DW_TAG_subprogram
-; CHECK: DW_AT_low_pc [DW_FORM_addr]            (0x0000000000000000)
-; CHECK: DW_AT_high_pc [DW_FORM_data4]          (0x00000010)
 
 ; CHECK: DW_TAG_compile_unit
 ; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset]   (0x0000003c)
-; CHECK: DW_AT_low_pc [DW_FORM_addr]            (0x0000000000000010)
-; CHECK: DW_AT_high_pc [DW_FORM_data4]          (0x00000009)
-; CHECK: DW_TAG_subprogram
-; CHECK: DW_AT_low_pc [DW_FORM_addr]            (0x0000000000000010)
-; CHECK: DW_AT_high_pc [DW_FORM_data4]          (0x00000009)
-
+; CHECK: DW_AT_ranges [DW_FORM_sec_offset]      (0x00000020)
+; CHECK: DW_AT_low_pc [DW_FORM_addr]            (0x0000000000000000)
 
 ; CHECK: .debug_line contents:
 ; CHECK-NEXT: Line table prologue:
@@ -35,10 +28,13 @@
 ; DWARF3: .debug_info contents:
 ; DWARF3: DW_TAG_compile_unit
 ; DWARF3: DW_AT_stmt_list [DW_FORM_data4]    (0x00000000)
+; DWARF3: DW_AT_ranges [DW_FORM_data4]       (0x00000000)
+; DWARF3: DW_AT_low_pc [DW_FORM_addr]        (0x0000000000000000)
 
 ; DWARF3: DW_TAG_compile_unit
 ; DWARF3: DW_AT_stmt_list [DW_FORM_data4]   (0x0000003c)
-
+; DWARF3: DW_AT_ranges [DW_FORM_data4]      (0x00000020)
+; DWARF3: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
 
 ; DWARF3: .debug_line contents:
 ; DWARF3-NEXT: Line table prologue:
