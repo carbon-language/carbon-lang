@@ -684,6 +684,8 @@ class CONSUMABLE(unconsumed)
   int code;
 
 public:
+  static Status OK;
+
   Status() RETURN_TYPESTATE(consumed);
   Status(int c) RETURN_TYPESTATE(unconsumed);
 
@@ -692,6 +694,8 @@ public:
 
   Status& operator=(const Status &other) CALLABLE_WHEN("unknown", "consumed");
   Status& operator=(Status &&other) CALLABLE_WHEN("unknown", "consumed");
+
+  bool operator==(const Status &other) const SET_TYPESTATE(consumed);
 
   bool check()  const SET_TYPESTATE(consumed);
   void ignore() const SET_TYPESTATE(consumed);
@@ -709,6 +713,11 @@ void   handleStatus(const Status& s RETURN_TYPESTATE(consumed));
 void   handleStatusRef(Status& s);
 void   handleStatusPtr(Status* s);
 void   handleStatusUnmarked(const Status& s);
+
+void   log(const char* msg);
+void   fail() __attribute__((noreturn));
+void   checkStat(const Status& s);
+
 
 void testSimpleTemporaries0() {
   doSomething(); // expected-warning {{invalid invocation of method '~Status' on a temporary object while it is in the 'unconsumed' state}}
@@ -870,6 +879,29 @@ Status testReturnAutocast() {
   return s;   // should autocast back to unconsumed
 }
 
+
+namespace TestParens {
+
+void test3() {
+  checkStat((doSomething()));
+}
+
+void test4() {
+  Status s = (doSomething());
+  s.check();
+}
+
+void test5() {
+  (doSomething()).check();
+}
+
+void test6() {
+  if ((doSomething()) == Status::OK)
+    return;
+}
+
+} // end namespace TestParens
+
 } // end namespace InitializerAssertionFailTest
 
 
@@ -899,3 +931,4 @@ namespace PR18260 {
     std::__1::move(x);
   }
 } // end namespace PR18260
+
