@@ -956,7 +956,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
             {
                 char response[256];
                 const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port + m_port_offset);
-                assert (response_len < sizeof(response));
+                assert (response_len < (int)sizeof(response));
                 PacketResult packet_result = SendPacketNoLock (response, response_len);
 
                 if (packet_result != PacketResult::Success)
