@@ -180,6 +180,7 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_DTPOFF: return "DTPOFF";
   case VK_TLVP: return "TLVP";
   case VK_SECREL: return "SECREL32";
+  case VK_WEAKREF: return "WEAKREF";
   case VK_ARM_NONE: return "none";
   case VK_ARM_TARGET1: return "target1";
   case VK_ARM_TARGET2: return "target2";
@@ -630,17 +631,31 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
   case SymbolRef: {
     const MCSymbolRefExpr *SRE = cast<MCSymbolRefExpr>(this);
     const MCSymbol &Sym = SRE->getSymbol();
+    const MCAsmInfo &MCAsmInfo = SRE->getMCAsmInfo();
 
     // Evaluate recursively if this is a variable.
-    if (Sym.isVariable() && SRE->getKind() == MCSymbolRefExpr::VK_None) {
-      bool Ret = Sym.getVariableValue()->EvaluateAsRelocatableImpl(Res, Asm,
-                                                                   Layout,
-                                                                   Addrs,
-                                                                   true);
-      // If we failed to simplify this to a constant, let the target
-      // handle it.
-      if (Ret && !Res.getSymA() && !Res.getSymB())
-        return true;
+    if (Sym.isVariable()) {
+      if (Sym.getVariableValue()->EvaluateAsRelocatableImpl(Res, Asm, Layout,
+                                                            Addrs, true)) {
+        const MCSymbolRefExpr *A = Res.getSymA();
+        const MCSymbolRefExpr *B = Res.getSymB();
+
+        if (MCAsmInfo.hasSubsectionsViaSymbols()) {
+          // FIXME: This is small hack. Given
+          // a = b + 4
+          // .long a
+          // the OS X assembler will completely drop the 4. We should probably
+          // include it in the relocation or produce an error if that is not
+          // possible.
+          if (!A && !B)
+            return true;
+        } else {
+          bool IsSymbol = A && A->getSymbol().isDefined();
+          bool IsWeakRef = SRE->getKind() == MCSymbolRefExpr::VK_WEAKREF;
+          if (!IsSymbol && !IsWeakRef)
+            return true;
+        }
+      }
     }
 
     Res = MCValue::get(SRE, 0, 0);

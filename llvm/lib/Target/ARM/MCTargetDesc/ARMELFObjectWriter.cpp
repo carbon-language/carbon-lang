@@ -71,17 +71,16 @@ const MCSymbol *ARMELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
   bool InNormalSection = true;
   unsigned RelocType = 0;
   RelocType = GetRelocTypeInner(Target, Fixup, IsPCRel);
+  assert(!Target.getSymB() ||
+         Target.getSymB()->getKind() == MCSymbolRefExpr::VK_None);
 
   DEBUG(
-      const MCSymbolRefExpr::VariantKind Kind = Target.getSymA()->getKind();
-      MCSymbolRefExpr::VariantKind Kind2;
-      Kind2 = Target.getSymB() ?  Target.getSymB()->getKind() :
-        MCSymbolRefExpr::VK_None;
+      MCSymbolRefExpr::VariantKind Kind = Fixup.getAccessVariant();
       dbgs() << "considering symbol "
         << Section.getSectionName() << "/"
         << Symbol.getName() << "/"
         << " Rel:" << (unsigned)RelocType
-        << " Kind: " << (int)Kind << "/" << (int)Kind2
+        << " Kind: " << (int)Kind
         << " Tmp:"
         << Symbol.isAbsolute() << "/" << Symbol.isDefined() << "/"
         << Symbol.isVariable() << "/" << Symbol.isTemporary()
@@ -152,8 +151,7 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
 unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
                                                const MCFixup &Fixup,
                                                bool IsPCRel) const  {
-  MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
-    MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
+  MCSymbolRefExpr::VariantKind Modifier = Fixup.getAccessVariant();
 
   unsigned Type = 0;
   if (IsPCRel) {

@@ -46,8 +46,7 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
                                           int64_t Addend) const {
   // determine the type of the relocation
 
-  MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
-    MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
+  MCSymbolRefExpr::VariantKind Modifier = Fixup.getAccessVariant();
   unsigned Type;
   if (getEMachine() == ELF::EM_X86_64) {
     if (IsPCRel) {

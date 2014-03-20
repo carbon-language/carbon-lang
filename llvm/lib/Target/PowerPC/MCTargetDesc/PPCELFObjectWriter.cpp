@@ -9,6 +9,7 @@
 
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "MCTargetDesc/PPCFixupKinds.h"
+#include "MCTargetDesc/PPCMCExpr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCExpr.h"
@@ -49,12 +50,37 @@ PPCELFObjectWriter::PPCELFObjectWriter(bool Is64Bit, uint8_t OSABI)
 PPCELFObjectWriter::~PPCELFObjectWriter() {
 }
 
+static MCSymbolRefExpr::VariantKind getAccessVariant(const MCFixup &Fixup) {
+  const MCExpr *Expr = Fixup.getValue();
+
+  if (Expr->getKind() != MCExpr::Target)
+    return Fixup.getAccessVariant();
+
+  switch (cast<PPCMCExpr>(Expr)->getKind()) {
+  case PPCMCExpr::VK_PPC_None:
+    return MCSymbolRefExpr::VK_None;
+  case PPCMCExpr::VK_PPC_LO:
+    return MCSymbolRefExpr::VK_PPC_LO;
+  case PPCMCExpr::VK_PPC_HI:
+    return MCSymbolRefExpr::VK_PPC_HI;
+  case PPCMCExpr::VK_PPC_HA:
+    return MCSymbolRefExpr::VK_PPC_HA;
+  case PPCMCExpr::VK_PPC_HIGHERA:
+    return MCSymbolRefExpr::VK_PPC_HIGHERA;
+  case PPCMCExpr::VK_PPC_HIGHER:
+    return MCSymbolRefExpr::VK_PPC_HIGHER;
+  case PPCMCExpr::VK_PPC_HIGHEST:
+    return MCSymbolRefExpr::VK_PPC_HIGHEST;
+  case PPCMCExpr::VK_PPC_HIGHESTA:
+    return MCSymbolRefExpr::VK_PPC_HIGHESTA;
+  }
+}
+
 unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
                                                const MCFixup &Fixup,
                                                bool IsPCRel) const
 {
-  MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
-    MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
+  MCSymbolRefExpr::VariantKind Modifier = getAccessVariant(Fixup);
 
   // determine the type of the relocation
   unsigned Type;
@@ -368,8 +394,7 @@ const MCSymbol *PPCELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
                                                    const MCFixup &Fixup,
                                                    bool IsPCRel) const {
   assert(Target.getSymA() && "SymA cannot be 0");
-  MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
-    MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
+  MCSymbolRefExpr::VariantKind Modifier = Fixup.getAccessVariant();
 
   bool EmitThisSym;
   switch (Modifier) {

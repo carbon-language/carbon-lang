@@ -778,7 +778,7 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
         Index = 0;
       }
     } else {
-      if (Asm.getSymbolData(Symbol).getFlags() & ELF_Other_Weakref)
+      if (Target.getSymA()->getKind() == MCSymbolRefExpr::VK_WEAKREF)
         WeakrefUsedInReloc.insert(RelocSymbol);
       else
         UsedInReloc.insert(RelocSymbol);
@@ -823,16 +823,20 @@ ELFObjectWriter::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
 bool ELFObjectWriter::isInSymtab(const MCAssembler &Asm,
                                  const MCSymbolData &Data,
                                  bool Used, bool Renamed) {
-  if (Data.getFlags() & ELF_Other_Weakref)
-    return false;
+  const MCSymbol &Symbol = Data.getSymbol();
+  if (Symbol.isVariable()) {
+    const MCExpr *Expr = Symbol.getVariableValue();
+    if (const MCSymbolRefExpr *Ref = dyn_cast<MCSymbolRefExpr>(Expr)) {
+      if (Ref->getKind() == MCSymbolRefExpr::VK_WEAKREF)
+        return false;
+    }
+  }
 
   if (Used)
     return true;
 
   if (Renamed)
     return false;
-
-  const MCSymbol &Symbol = Data.getSymbol();
 
   if (Symbol.getName() == "_GLOBAL_OFFSET_TABLE_")
     return true;

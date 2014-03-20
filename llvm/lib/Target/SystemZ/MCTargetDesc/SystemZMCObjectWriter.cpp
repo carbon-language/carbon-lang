@@ -88,9 +88,7 @@ unsigned SystemZObjectWriter::GetRelocType(const MCValue &Target,
                                            bool IsPCRel,
                                            bool IsRelocWithSymbol,
                                            int64_t Addend) const {
-  MCSymbolRefExpr::VariantKind Modifier = (Target.isAbsolute() ?
-                                           MCSymbolRefExpr::VK_None :
-                                           Target.getSymA()->getKind());
+  MCSymbolRefExpr::VariantKind Modifier = Fixup.getAccessVariant();
   unsigned Kind = Fixup.getKind();
   switch (Modifier) {
   case MCSymbolRefExpr::VK_None:

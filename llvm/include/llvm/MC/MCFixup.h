@@ -10,6 +10,7 @@
 #ifndef LLVM_MC_MCFIXUP_H
 #define LLVM_MC_MCFIXUP_H
 
+#include "llvm/MC/MCExpr.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SMLoc.h"
@@ -86,6 +87,8 @@ public:
   }
 
   MCFixupKind getKind() const { return MCFixupKind(Kind); }
+
+  MCSymbolRefExpr::VariantKind getAccessVariant() const;
 
   uint32_t getOffset() const { return Offset; }
   void setOffset(uint32_t Value) { Offset = Value; }

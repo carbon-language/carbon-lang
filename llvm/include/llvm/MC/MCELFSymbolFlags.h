@@ -51,8 +51,7 @@ namespace llvm {
       ELF_STV_Hidden    = (ELF::STV_HIDDEN    << ELF_STV_Shift),
       ELF_STV_Protected = (ELF::STV_PROTECTED << ELF_STV_Shift),
 
-      ELF_Other_Weakref = (1                  << ELF_Other_Shift),
-      ELF_Other_ThumbFunc = (2                << ELF_Other_Shift)
+      ELF_Other_ThumbFunc = (1                << ELF_Other_Shift)
   };
 
 } // end namespace llvm

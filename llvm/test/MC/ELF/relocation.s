@@ -25,6 +25,9 @@ bar:
 	.word   foo-bar
 	.byte   foo-bar
 
+	zed = foo +2
+	call zed@PLT
+
 // CHECK:        Section {
 // CHECK:          Name: .rela.text
 // CHECK:          Relocations [
@@ -49,6 +52,7 @@ bar:
 // CHECK-NEXT:       0x85 R_X86_64_TPOFF64 baz 0x0
 // CHECK-NEXT:       0x8D R_X86_64_PC16 foo 0x8D
 // CHECK-NEXT:       0x8F R_X86_64_PC8 foo 0x8F
+// CHECK-NEXT:       0x91 R_X86_64_PLT32 foo 0xFFFFFFFFFFFFFFFE
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }
 
