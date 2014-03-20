@@ -51,10 +51,8 @@ void BinaryRef::writeAsBinary(raw_ostream &OS) const {
 }
 
 void BinaryRef::writeAsHex(raw_ostream &OS) const {
-  if (binary_size() == 0) {
-    OS << "\"\"";
+  if (binary_size() == 0)
     return;
-  }
   if (DataIsHexString) {
     OS.write((const char *)Data.data(), Data.size());
     return;

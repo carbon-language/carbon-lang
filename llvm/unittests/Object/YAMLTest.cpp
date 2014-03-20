@@ -34,5 +34,5 @@ TEST(ObjectYAML, BinaryRef) {
   llvm::raw_svector_ostream OS(Buf);
   yaml::Output YOut(OS);
   YOut << BH;
-  EXPECT_NE(OS.str().find("\"\""), StringRef::npos);
+  EXPECT_NE(OS.str().find("''"), StringRef::npos);
 }
