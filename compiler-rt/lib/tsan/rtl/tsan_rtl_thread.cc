@@ -59,11 +59,7 @@ void ThreadContext::OnCreated(void *arg) {
   // Can't increment epoch w/o writing to the trace as well.
   TraceAddEvent(args->thr, args->thr->fast_state, EventTypeMop, 0);
   ReleaseImpl(args->thr, 0, &sync);
-#ifdef TSAN_GO
-  creation_stack.ObtainCurrent(args->thr, args->pc);
-#else
   creation_stack_id = CurrentStackId(args->thr, args->pc);
-#endif
   if (reuse_count == 0)
     StatInc(args->thr, StatThreadMaxTid);
 }

@@ -104,8 +104,9 @@ static void StackStripMain(ReportStack *stack) {
 #endif
 }
 
-#ifndef TSAN_GO
 ReportStack *SymbolizeStackId(u32 stack_id) {
+  if (stack_id == 0)
+    return 0;
   uptr ssz = 0;
   const uptr *stack = StackDepotGet(stack_id, &ssz);
   if (stack == 0)
@@ -114,7 +115,6 @@ ReportStack *SymbolizeStackId(u32 stack_id) {
   trace.Init(stack, ssz);
   return SymbolizeStack(trace);
 }
-#endif
 
 static ReportStack *SymbolizeStack(const StackTrace& trace) {
   if (trace.IsEmpty())
@@ -201,11 +201,7 @@ void ScopedReport::AddThread(const ThreadContext *tctx) {
   rt->name = internal_strdup(tctx->name);
   rt->parent_tid = tctx->parent_tid;
   rt->stack = 0;
-#ifdef TSAN_GO
-  rt->stack = SymbolizeStack(tctx->creation_stack);
-#else
   rt->stack = SymbolizeStackId(tctx->creation_stack_id);
-#endif
 }
 
 #ifndef TSAN_GO
@@ -266,10 +262,7 @@ void ScopedReport::AddMutex(const SyncVar *s) {
   rm->id = s->uid;
   rm->addr = s->addr;
   rm->destroyed = false;
-  rm->stack = 0;
-#ifndef TSAN_GO
   rm->stack = SymbolizeStackId(s->creation_stack_id);
-#endif
 }
 
 u64 ScopedReport::AddMutex(u64 id) {

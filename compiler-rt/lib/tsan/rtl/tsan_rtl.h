@@ -485,11 +485,7 @@ class ThreadContext : public ThreadContextBase {
   explicit ThreadContext(int tid);
   ~ThreadContext();
   ThreadState *thr;
-#ifdef TSAN_GO
-  StackTrace creation_stack;
-#else
   u32 creation_stack_id;
-#endif
   SyncClock sync;
   // Epoch at which the thread had started.
   // If we see an event from the thread stamped by an older epoch,
