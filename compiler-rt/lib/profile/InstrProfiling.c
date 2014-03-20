@@ -9,40 +9,6 @@
 
 #include "InstrProfiling.h"
 
-/* TODO: Calculate these with linker magic. */
-static const __llvm_pgo_data *First = NULL;
-static const __llvm_pgo_data *Last = NULL;
-
-/*!
- * \brief Register an instrumented function.
- *
- * Calls to this are emitted by clang with -fprofile-instr-generate.  Such
- * calls are only required (and only emitted) on targets where we haven't
- * implemented linker magic to find the bounds of the section.
- *
- * For now, that's all targets.
- */
-void __llvm_pgo_register_function(void *Data_) {
-  /* TODO: Only emit this function if we can't use linker magic. */
-  const __llvm_pgo_data *Data = (__llvm_pgo_data*)Data_;
-  if (!First || Data < First)
-    First = Data;
-  if (!Last || Data >= Last)
-    Last = Data + 1;
-}
-
-/*! \brief Get the first instrumentation record. */
-static const __llvm_pgo_data *getFirst() {
-  /* TODO: Use extern + linker magic instead of a static variable. */
-  return First;
-}
-
-/*! \brief Get the last instrumentation record. */
-static const __llvm_pgo_data *getLast() {
-  /* TODO: Use extern + linker magic instead of a static variable. */
-  return Last;
-}
-
 /* TODO: void __llvm_pgo_get_size_for_buffer(void);  */
 
 static void writeFunction(FILE *OutputFile, const __llvm_pgo_data *Data) {
@@ -64,6 +30,7 @@ void __llvm_pgo_write_buffer(FILE *OutputFile) {
    */
   const __llvm_pgo_data *I, *E;
 
-  for (I = getFirst(), E = getLast(); I != E; ++I)
+  for (I = __llvm_pgo_data_begin(), E = __llvm_pgo_data_end();
+       I != E; ++I)
     writeFunction(OutputFile, I);
 }

@@ -1,6 +1,7 @@
 set(PROFILE_SOURCES
   GCDAProfiling.c
   InstrProfiling.c
+  InstrProfilingDefault.c
   InstrProfilingExtras.c)
 
 filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 arm)

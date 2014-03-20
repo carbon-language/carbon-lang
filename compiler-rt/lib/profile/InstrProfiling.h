@@ -50,3 +50,10 @@ typedef struct __llvm_pgo_data {
  * to it.
  */
 void __llvm_pgo_write_buffer(FILE *OutputFile);
+
+const __llvm_pgo_data *__llvm_pgo_data_begin();
+const __llvm_pgo_data *__llvm_pgo_data_end();
+const char *__llvm_pgo_names_begin();
+const char *__llvm_pgo_names_end();
+const uint64_t *__llvm_pgo_counters_begin();
+const uint64_t *__llvm_pgo_counters_end();
