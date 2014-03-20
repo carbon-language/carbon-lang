@@ -168,13 +168,8 @@ _LIBUNWIND_EXPORT int unw_set_reg(unw_cursor_t *cursor, unw_regnum_t regNum,
     co->setReg(regNum, (pint_t)value);
     // specical case altering IP to re-find info (being called by personality
     // function)
-    if (regNum == UNW_REG_IP) {
-      unw_proc_info_t info;
-      co->getInfo(&info);
-      pint_t orgArgSize = (pint_t)info.gp;
-      uint64_t orgFuncStart = info.start_ip;
+    if (regNum == UNW_REG_IP)
       co->setInfoBasedOnIPRegister(false);
-    }
     return UNW_ESUCCESS;
   }
   return UNW_EBADREG;
