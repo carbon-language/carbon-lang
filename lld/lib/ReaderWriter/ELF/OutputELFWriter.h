@@ -18,7 +18,7 @@
 #include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "lld/ReaderWriter/Writer.h"
 
-#include <unordered_set>
+#include "llvm/ADT/StringSet.h"
 
 namespace lld {
 namespace elf {
@@ -129,6 +129,7 @@ protected:
   LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>) _dynamicSymbolTable;
   LLD_UNIQUE_BUMP_PTR(StringTable<ELFT>) _dynamicStringTable;
   LLD_UNIQUE_BUMP_PTR(HashSection<ELFT>) _hashTable;
+  llvm::StringSet<> _soNeeded;
   /// @}
 };
 
@@ -164,12 +165,6 @@ void OutputELFWriter<ELFT>::buildStaticSymbolTable(const File &file) {
     _symtab->addSymbol(a, ELF::SHN_UNDEF);
 }
 
-struct StringRefFilePairHash {
-  std::size_t operator()(const std::pair<StringRef, const File *> &v) const {
-    return llvm::hash_combine(v.first, v.second);
-  }
-};
-
 template <class ELFT>
 void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
   ScopedTask task(getDefaultDomain(), "buildDynamicSymbolTable");
@@ -181,26 +176,14 @@ void OutputELFWriter<ELFT>::buildDynamicSymbolTable(const File &file) {
           _dynamicSymbolTable->addSymbol(atom->_atom, section->ordinal(),
                                          atom->_virtualAddr, atom);
       }
-  std::unordered_set<std::pair<StringRef, const File *>, StringRefFilePairHash>
-    soNeeded;
   for (const auto sla : file.sharedLibrary()) {
     _dynamicSymbolTable->addSymbol(sla, ELF::SHN_UNDEF);
-    soNeeded.insert(std::make_pair(sla->loadName(), &sla->file()));
+    _soNeeded.insert(sla->loadName());
   }
-  // Sort needed entries by command line order. This is needed so the correct
-  // dynamic symbol is loaded in cases where multiple dynamic libraries define
-  // the same symbol.
-  std::vector<std::pair<StringRef, const File *>> sortedSoNeeded(
-      soNeeded.begin(), soNeeded.end());
-  std::sort(sortedSoNeeded.begin(), sortedSoNeeded.end(),
-            [](const std::pair<StringRef, const File *> &a,
-               const std::pair<StringRef, const File *> &b) {
-    return a.second->ordinal() < b.second->ordinal();
-  });
-  for (auto const &lib : sortedSoNeeded) {
+  for (const auto &loadName : _soNeeded) {
     Elf_Dyn dyn;
     dyn.d_tag = DT_NEEDED;
-    dyn.d_un.d_val = _dynamicStringTable->addString(lib.first);
+    dyn.d_un.d_val = _dynamicStringTable->addString(loadName.getKey());
     _dynamicTable->addEntry(dyn);
   }
   const auto &rpathList = _context.getRpathList();
