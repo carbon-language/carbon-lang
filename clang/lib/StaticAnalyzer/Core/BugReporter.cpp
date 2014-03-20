@@ -1263,8 +1263,8 @@ static void reversePropagateIntererstingSymbols(BugReport &R,
           SVal ChildV = State->getSVal(child, LCtx);
           R.markInteresting(ChildV);
         }
-        break;
       }
+      break;
     }
   }
   
