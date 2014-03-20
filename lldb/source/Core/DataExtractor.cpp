@@ -1823,13 +1823,10 @@ DataExtractor::Dump (Stream *s,
                             else if (item_bit_size == ast->getTypeSize(ast->LongDoubleTy))
                             {
                                 llvm::APInt apint;
-                                switch (target_sp->GetArchitecture().GetCore())
+                                switch (target_sp->GetArchitecture().GetMachine())
                                 {
-                                    case ArchSpec::eCore_x86_32_i386:
-                                    case ArchSpec::eCore_x86_32_i486:
-                                    case ArchSpec::eCore_x86_32_i486sx:
-                                    case ArchSpec::eCore_x86_64_x86_64:
-                                    case ArchSpec::eCore_x86_64_x86_64h:
+                                    case llvm::Triple::x86:
+                                    case llvm::Triple::x86_64:
                                         // clang will assert when contructing the apfloat if we use a 16 byte integer value
                                         if (GetAPInt (*this, &offset, 10, apint))
                                         {

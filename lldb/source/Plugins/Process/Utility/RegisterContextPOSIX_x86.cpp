@@ -383,11 +383,9 @@ RegisterContextPOSIX_x86::RegisterContextPOSIX_x86(Thread &thread,
 {
     m_register_info_ap.reset(register_info);
 
-    switch (register_info->m_target_arch.GetCore())
+    switch (register_info->m_target_arch.GetMachine())
     {
-        case ArchSpec::eCore_x86_32_i386:
-        case ArchSpec::eCore_x86_32_i486:
-        case ArchSpec::eCore_x86_32_i486sx:
+        case llvm::Triple::x86:
             m_reg_info.num_registers        = k_num_registers_i386;
             m_reg_info.num_gpr_registers    = k_num_gpr_registers_i386;
             m_reg_info.num_fpr_registers    = k_num_fpr_registers_i386;
@@ -406,7 +404,7 @@ RegisterContextPOSIX_x86::RegisterContextPOSIX_x86(Thread &thread,
             m_reg_info.first_dr             = dr0_i386;
             m_reg_info.gpr_flags            = gpr_eflags_i386;
             break;
-        case ArchSpec::eCore_x86_64_x86_64:
+        case llvm::Triple::x86_64:
             m_reg_info.num_registers        = k_num_registers_x86_64;
             m_reg_info.num_gpr_registers    = k_num_gpr_registers_x86_64;
             m_reg_info.num_fpr_registers    = k_num_fpr_registers_x86_64;
@@ -536,13 +534,11 @@ RegisterContextPOSIX_x86::GetRegisterSet(size_t set)
 {
     if (IsRegisterSetAvailable(set))
     {
-        switch (m_register_info_ap->m_target_arch.GetCore())
+        switch (m_register_info_ap->m_target_arch.GetMachine())
         {
-            case ArchSpec::eCore_x86_32_i386:
-            case ArchSpec::eCore_x86_32_i486:
-            case ArchSpec::eCore_x86_32_i486sx:
+            case llvm::Triple::x86:
                 return &g_reg_sets_i386[set];
-            case ArchSpec::eCore_x86_64_x86_64:
+            case llvm::Triple::x86_64:
                 return &g_reg_sets_x86_64[set];
             default:
                 assert(false && "Unhandled target architecture.");

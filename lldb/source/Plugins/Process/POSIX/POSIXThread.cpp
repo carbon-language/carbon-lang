@@ -159,17 +159,15 @@ POSIXThread::GetRegisterContext()
         switch (target_arch.GetTriple().getOS())
         {
             case llvm::Triple::FreeBSD:
-                switch (target_arch.GetCore())
+                switch (target_arch.GetMachine())
                 {
-                    case ArchSpec::eCore_mips64:
+                    case llvm::Triple::mips64:
                         reg_interface = new RegisterContextFreeBSD_mips64(target_arch);
                         break;
-                    case ArchSpec::eCore_x86_32_i386:
-                    case ArchSpec::eCore_x86_32_i486:
-                    case ArchSpec::eCore_x86_32_i486sx:
+                    case llvm::Triple::x86:
                         reg_interface = new RegisterContextFreeBSD_i386(target_arch);
                         break;
-                    case ArchSpec::eCore_x86_64_x86_64:
+                    case llvm::Triple::X86_64:
                         reg_interface = new RegisterContextFreeBSD_x86_64(target_arch);
                         break;
                     default:
@@ -178,12 +176,10 @@ POSIXThread::GetRegisterContext()
                 break;
 
             case llvm::Triple::Linux:
-                switch (target_arch.GetCore())
+                switch (target_arch.GetMachine())
                 {
-                    case ArchSpec::eCore_x86_32_i386:
-                    case ArchSpec::eCore_x86_32_i486:
-                    case ArchSpec::eCore_x86_32_i486sx:
-                    case ArchSpec::eCore_x86_64_x86_64:
+                    case llvm::Triple::x86:
+                    case llvm::Triple::X86_64:
                         if (Host::GetArchitecture().GetAddressByteSize() == 4)
                         {
                             // 32-bit hosts run with a RegisterContextLinux_i386 context.
@@ -206,19 +202,17 @@ POSIXThread::GetRegisterContext()
 
         assert(reg_interface && "OS or CPU not supported!");
 
-        switch (target_arch.GetCore())
+        switch (target_arch.GetMachine())
         {
-            case ArchSpec::eCore_mips64:
+            case llvm::Triple::mips64:
                 {
                     RegisterContextPOSIXProcessMonitor_mips64 *reg_ctx = new RegisterContextPOSIXProcessMonitor_mips64(*this, 0, reg_interface);
                     m_posix_thread = reg_ctx;
                     m_reg_context_sp.reset(reg_ctx);
                     break;
                 }
-            case ArchSpec::eCore_x86_32_i386:
-            case ArchSpec::eCore_x86_32_i486:
-            case ArchSpec::eCore_x86_32_i486sx:
-            case ArchSpec::eCore_x86_64_x86_64:
+            case llvm::Triple::x86:
+            case llvm::Triple::X86_64:
                 {
                     RegisterContextPOSIXProcessMonitor_x86_64 *reg_ctx = new RegisterContextPOSIXProcessMonitor_x86_64(*this, 0, reg_interface);
                     m_posix_thread = reg_ctx;
@@ -609,17 +603,15 @@ POSIXThread::GetRegisterIndexFromOffset(unsigned offset)
     unsigned reg = LLDB_INVALID_REGNUM;
     ArchSpec arch = Host::GetArchitecture();
 
-    switch (arch.GetCore())
+    switch (arch.GetMachine())
     {
     default:
         llvm_unreachable("CPU type not supported!");
         break;
 
-    case ArchSpec::eCore_mips64:
-    case ArchSpec::eCore_x86_32_i386:
-    case ArchSpec::eCore_x86_32_i486:
-    case ArchSpec::eCore_x86_32_i486sx:
-    case ArchSpec::eCore_x86_64_x86_64:
+    case llvm::Triple::mips64:
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
         {
             POSIXBreakpointProtocol* reg_ctx = GetPOSIXBreakpointProtocol();
             reg = reg_ctx->GetRegisterIndexFromOffset(offset);
@@ -641,17 +633,15 @@ POSIXThread::GetRegisterName(unsigned reg)
     const char * name = nullptr;
     ArchSpec arch = Host::GetArchitecture();
 
-    switch (arch.GetCore())
+    switch (arch.GetMachine())
     {
     default:
         assert(false && "CPU type not supported!");
         break;
 
-    case ArchSpec::eCore_mips64:
-    case ArchSpec::eCore_x86_32_i386:
-    case ArchSpec::eCore_x86_32_i486:
-    case ArchSpec::eCore_x86_32_i486sx:
-    case ArchSpec::eCore_x86_64_x86_64:
+    case llvm::Triple::mips64:
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
         name = GetRegisterContext()->GetRegisterName(reg);
         break;
     }

@@ -113,11 +113,9 @@ RegisterContextLinux_i386::GetGPRSize()
 const RegisterInfo *
 RegisterContextLinux_i386::GetRegisterInfo()
 {
-    switch (m_target_arch.GetCore())
+    switch (m_target_arch.GetMachine())
     {
-        case ArchSpec::eCore_x86_32_i386:
-        case ArchSpec::eCore_x86_32_i486:
-        case ArchSpec::eCore_x86_32_i486sx:
+        case llvm::Triple::x86:            
             return g_register_infos_i386;
         default:
             assert(false && "Unhandled target architecture.");

@@ -279,11 +279,10 @@ PlatformWindows::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite
     const uint8_t *trap_opcode = NULL;
     size_t trap_opcode_size = 0;
 
-    switch (arch.GetCore())
+    switch (arch.GetMachine())
     {
-    case ArchSpec::eCore_x86_32_i386:
-    case ArchSpec::eCore_x86_64_x86_64:
-    case ArchSpec::eCore_x86_64_x86_64h:
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
         {
             static const uint8_t g_i386_opcode[] = { 0xCC };
             trap_opcode = g_i386_opcode;
@@ -291,7 +290,7 @@ PlatformWindows::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite
         }
         break;
 
-    case ArchSpec::eCore_hexagon_generic:
+    case llvm::Triple::hexagon:
         return 0;
     default:
         llvm_unreachable("Unhandled architecture in PlatformWindows::GetSoftwareBreakpointTrapOpcode()");
