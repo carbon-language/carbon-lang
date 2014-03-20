@@ -222,6 +222,7 @@ For API clients and LLVM developers.
    LinkTimeOptimization
    SegmentedStacks
    TableGenFundamentals
+   TableGen/index
    DebuggingJITedCode
    GoldPlugin
    MarkedUpDisassembly
@@ -231,7 +232,6 @@ For API clients and LLVM developers.
    WritingAnLLVMBackend
    GarbageCollection
    WritingAnLLVMPass
-   TableGen/LangRef
    HowToUseAttributes
    NVPTXUsage
    StackMaps
