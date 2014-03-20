@@ -154,14 +154,14 @@ private:
   std::vector<ObjectAtom *> _objectVector;
 
   /// \brief Handle a specific reference.
-  void handleReference(const Reference &ref);
+  void handleReference(Reference &ref);
 
   /// \brief Calculate AHL addendums for the atom's references.
   void calculateAHLs(const DefinedAtom &atom);
 
-  void handlePlain(const Reference &ref);
-  void handlePLT(const Reference &ref);
-  void handleGOT(const Reference &ref);
+  void handlePlain(Reference &ref);
+  void handlePLT(Reference &ref);
+  void handleGOT(Reference &ref);
 
   const GOTAtom *getLocalGOTEntry(const Reference &ref);
   const GOTAtom *getGlobalGOTEntry(const Atom *a);
@@ -184,7 +184,7 @@ void RelocationPass::perform(std::unique_ptr<MutableFile> &mf) {
   for (const auto &atom : mf->defined()) {
     calculateAHLs(*atom);
     for (const auto &ref : *atom)
-      handleReference(*ref);
+      handleReference(const_cast<Reference &>(*ref));
   }
 
   uint64_t ordinal = 0;
@@ -254,7 +254,7 @@ void RelocationPass::calculateAHLs(const DefinedAtom &atom) {
   assert(references.empty());
 }
 
-void RelocationPass::handleReference(const Reference &ref) {
+void RelocationPass::handleReference(Reference &ref) {
   if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
     return;
   assert(ref.kindArch() == Reference::KindArch::Mips);
@@ -281,27 +281,27 @@ bool RelocationPass::isLocal(const Atom *a) const {
   return false;
 }
 
-void RelocationPass::handlePlain(const Reference &ref) {
+void RelocationPass::handlePlain(Reference &ref) {
   if (!ref.target())
     return;
   auto sla = dyn_cast<SharedLibraryAtom>(ref.target());
   if (sla && sla->type() == SharedLibraryAtom::Type::Data)
-    const_cast<Reference &>(ref).setTarget(getObjectEntry(sla));
+    ref.setTarget(getObjectEntry(sla));
 }
 
-void RelocationPass::handlePLT(const Reference &ref) {
+void RelocationPass::handlePLT(Reference &ref) {
   if (ref.kindValue() == R_MIPS_26 && !isLocal(ref.target()))
-    const_cast<Reference &>(ref).setKindValue(LLD_R_MIPS_GLOBAL_26);
+    ref.setKindValue(LLD_R_MIPS_GLOBAL_26);
 
   if (isa<SharedLibraryAtom>(ref.target()))
-    const_cast<Reference &>(ref).setTarget(getPLTEntry(ref.target()));
+    ref.setTarget(getPLTEntry(ref.target()));
 }
 
-void RelocationPass::handleGOT(const Reference &ref) {
+void RelocationPass::handleGOT(Reference &ref) {
   if (requireLocalGOT(ref.target()))
-    const_cast<Reference &>(ref).setTarget(getLocalGOTEntry(ref));
+    ref.setTarget(getLocalGOTEntry(ref));
   else
-    const_cast<Reference &>(ref).setTarget(getGlobalGOTEntry(ref.target()));
+    ref.setTarget(getGlobalGOTEntry(ref.target()));
 }
 
 bool RelocationPass::requireLocalGOT(const Atom *a) {
