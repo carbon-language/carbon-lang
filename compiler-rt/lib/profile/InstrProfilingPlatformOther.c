@@ -9,8 +9,8 @@
 
 #include "InstrProfiling.h"
 
-static const __llvm_pgo_data *DataFirst = NULL;
-static const __llvm_pgo_data *DataLast = NULL;
+static const __llvm_profile_data *DataFirst = NULL;
+static const __llvm_profile_data *DataLast = NULL;
 static const char *NamesFirst = NULL;
 static const char *NamesLast = NULL;
 static uint64_t *CountersFirst = NULL;
@@ -23,9 +23,9 @@ static uint64_t *CountersLast = NULL;
  * calls are only required (and only emitted) on targets where we haven't
  * implemented linker magic to find the bounds of the sections.
  */
-void __llvm_pgo_register_function(void *Data_) {
+void __llvm_profile_register_function(void *Data_) {
   /* TODO: Only emit this function if we can't use linker magic. */
-  const __llvm_pgo_data *Data = (__llvm_pgo_data*)Data_;
+  const __llvm_profile_data *Data = (__llvm_profile_data*)Data_;
   if (!DataFirst) {
     DataFirst = Data;
     DataLast = Data + 1;
@@ -51,9 +51,9 @@ void __llvm_pgo_register_function(void *Data_) {
 #undef UPDATE_LAST
 }
 
-const __llvm_pgo_data *__llvm_pgo_data_begin() { return DataFirst; }
-const __llvm_pgo_data *__llvm_pgo_data_end() { return DataLast; }
-const char *__llvm_pgo_names_begin() { return NamesFirst; }
-const char *__llvm_pgo_names_end() { return NamesLast; }
-uint64_t *__llvm_pgo_counters_begin() { return CountersFirst; }
-uint64_t *__llvm_pgo_counters_end() { return CountersLast; }
+const __llvm_profile_data *__llvm_profile_data_begin() { return DataFirst; }
+const __llvm_profile_data *__llvm_profile_data_end() { return DataLast; }
+const char *__llvm_profile_names_begin() { return NamesFirst; }
+const char *__llvm_profile_names_end() { return NamesLast; }
+uint64_t *__llvm_profile_counters_begin() { return CountersFirst; }
+uint64_t *__llvm_profile_counters_end() { return CountersLast; }

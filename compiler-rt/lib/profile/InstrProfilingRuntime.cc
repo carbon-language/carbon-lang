@@ -11,8 +11,8 @@ extern "C" {
 
 #include "InstrProfilingExtras.h"
 
-extern int __llvm_pgo_runtime;
-int __llvm_pgo_runtime;
+extern int __llvm_profile_runtime;
+int __llvm_profile_runtime;
 
 }
 
@@ -20,7 +20,7 @@ namespace {
 
 class RegisterAtExit {
 public:
-  RegisterAtExit() { __llvm_pgo_register_write_file_atexit(); }
+  RegisterAtExit() { __llvm_profile_register_write_file_atexit(); }
 };
 
 RegisterAtExit Registration;

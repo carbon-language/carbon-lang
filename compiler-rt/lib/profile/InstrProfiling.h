@@ -32,15 +32,15 @@ typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 #endif
 
-typedef struct __llvm_pgo_data {
+typedef struct __llvm_profile_data {
   const uint32_t NameSize;
   const uint32_t NumCounters;
   const uint64_t FuncHash;
   const char *const Name;
   uint64_t *const Counters;
-} __llvm_pgo_data;
+} __llvm_profile_data;
 
-/* TODO: void __llvm_pgo_get_size_for_buffer(void);  */
+/* TODO: void __llvm_profile_get_size_for_buffer(void);  */
 
 /*!
  * \brief Write instrumentation data to the given buffer.
@@ -49,11 +49,11 @@ typedef struct __llvm_pgo_data {
  * It should be changed to take a char* buffer, and write binary data directly
  * to it.
  */
-void __llvm_pgo_write_buffer(FILE *OutputFile);
+void __llvm_profile_write_buffer(FILE *OutputFile);
 
-const __llvm_pgo_data *__llvm_pgo_data_begin();
-const __llvm_pgo_data *__llvm_pgo_data_end();
-const char *__llvm_pgo_names_begin();
-const char *__llvm_pgo_names_end();
-uint64_t *__llvm_pgo_counters_begin();
-uint64_t *__llvm_pgo_counters_end();
+const __llvm_profile_data *__llvm_profile_data_begin();
+const __llvm_profile_data *__llvm_profile_data_end();
+const char *__llvm_profile_names_begin();
+const char *__llvm_profile_names_end();
+uint64_t *__llvm_profile_counters_begin();
+uint64_t *__llvm_profile_counters_end();
