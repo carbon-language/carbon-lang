@@ -29,7 +29,7 @@ void __llvm_profile_set_filename(const char *Filename) {
   CurrentFilename = Filename;
 }
 
-void __llvm_profile_write_file() {
+void __llvm_profile_write_file(void) {
   const char *Filename = CurrentFilename;
 
 #define UPDATE_FILENAME(NextFilename) \
@@ -41,7 +41,7 @@ void __llvm_profile_write_file() {
   __llvm_profile_write_file_with_name(Filename);
 }
 
-void __llvm_profile_register_write_file_atexit() {
+void __llvm_profile_register_write_file_atexit(void) {
   static int HasBeenRegistered = 0;
 
   if (!HasBeenRegistered) {

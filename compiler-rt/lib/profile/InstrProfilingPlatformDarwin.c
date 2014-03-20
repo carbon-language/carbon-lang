@@ -17,9 +17,13 @@ extern char NamesEnd   __asm("section$end$__DATA$__llvm_prf_names");
 extern uint64_t CountersStart __asm("section$start$__DATA$__llvm_prf_cnts");
 extern uint64_t CountersEnd   __asm("section$end$__DATA$__llvm_prf_cnts");
 
-const __llvm_profile_data *__llvm_profile_data_begin() { return &DataStart; }
-const __llvm_profile_data *__llvm_profile_data_end()   { return &DataEnd; }
-const char *__llvm_profile_names_begin() { return &NamesStart; }
-const char *__llvm_profile_names_end()   { return &NamesEnd; }
-uint64_t *__llvm_profile_counters_begin() { return &CountersStart; }
-uint64_t *__llvm_profile_counters_end()   { return &CountersEnd; }
+const __llvm_profile_data *__llvm_profile_data_begin(void) {
+  return &DataStart;
+}
+const __llvm_profile_data *__llvm_profile_data_end(void) {
+  return &DataEnd;
+}
+const char *__llvm_profile_names_begin(void) { return &NamesStart; }
+const char *__llvm_profile_names_end(void) { return &NamesEnd; }
+uint64_t *__llvm_profile_counters_begin(void) { return &CountersStart; }
+uint64_t *__llvm_profile_counters_end(void) { return &CountersEnd; }

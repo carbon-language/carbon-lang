@@ -51,9 +51,9 @@ typedef struct __llvm_profile_data {
  */
 void __llvm_profile_write_buffer(FILE *OutputFile);
 
-const __llvm_profile_data *__llvm_profile_data_begin();
-const __llvm_profile_data *__llvm_profile_data_end();
-const char *__llvm_profile_names_begin();
-const char *__llvm_profile_names_end();
-uint64_t *__llvm_profile_counters_begin();
-uint64_t *__llvm_profile_counters_end();
+const __llvm_profile_data *__llvm_profile_data_begin(void);
+const __llvm_profile_data *__llvm_profile_data_end(void);
+const char *__llvm_profile_names_begin(void);
+const char *__llvm_profile_names_end(void);
+uint64_t *__llvm_profile_counters_begin(void);
+uint64_t *__llvm_profile_counters_end(void);

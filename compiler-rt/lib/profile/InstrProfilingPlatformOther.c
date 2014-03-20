@@ -51,9 +51,13 @@ void __llvm_profile_register_function(void *Data_) {
 #undef UPDATE_LAST
 }
 
-const __llvm_profile_data *__llvm_profile_data_begin() { return DataFirst; }
-const __llvm_profile_data *__llvm_profile_data_end() { return DataLast; }
-const char *__llvm_profile_names_begin() { return NamesFirst; }
-const char *__llvm_profile_names_end() { return NamesLast; }
-uint64_t *__llvm_profile_counters_begin() { return CountersFirst; }
-uint64_t *__llvm_profile_counters_end() { return CountersLast; }
+const __llvm_profile_data *__llvm_profile_data_begin(void) {
+  return DataFirst;
+}
+const __llvm_profile_data *__llvm_profile_data_end(void) {
+  return DataLast;
+}
+const char *__llvm_profile_names_begin(void) { return NamesFirst; }
+const char *__llvm_profile_names_end(void) { return NamesLast; }
+uint64_t *__llvm_profile_counters_begin(void) { return CountersFirst; }
+uint64_t *__llvm_profile_counters_end(void) { return CountersLast; }
