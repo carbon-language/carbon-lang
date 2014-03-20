@@ -10,8 +10,8 @@
 #include "InstrProfiling.h"
 
 /* TODO: Calculate these with linker magic. */
-static __llvm_pgo_data *First = NULL;
-static __llvm_pgo_data *Last = NULL;
+static const __llvm_pgo_data *First = NULL;
+static const __llvm_pgo_data *Last = NULL;
 
 /*!
  * \brief Register an instrumented function.
@@ -24,7 +24,7 @@ static __llvm_pgo_data *Last = NULL;
  */
 void __llvm_pgo_register_function(void *Data_) {
   /* TODO: Only emit this function if we can't use linker magic. */
-  __llvm_pgo_data *Data = (__llvm_pgo_data*)Data_;
+  const __llvm_pgo_data *Data = (__llvm_pgo_data*)Data_;
   if (!First || Data < First)
     First = Data;
   if (!Last || Data >= Last)
@@ -32,13 +32,13 @@ void __llvm_pgo_register_function(void *Data_) {
 }
 
 /*! \brief Get the first instrumentation record. */
-static __llvm_pgo_data *getFirst() {
+static const __llvm_pgo_data *getFirst() {
   /* TODO: Use extern + linker magic instead of a static variable. */
   return First;
 }
 
 /*! \brief Get the last instrumentation record. */
-static __llvm_pgo_data *getLast() {
+static const __llvm_pgo_data *getLast() {
   /* TODO: Use extern + linker magic instead of a static variable. */
   return Last;
 }
@@ -62,7 +62,7 @@ void __llvm_pgo_write_buffer(FILE *OutputFile) {
   /* TODO: Requires libc: break requirement by taking a char* buffer instead of
    * a FILE stream.
    */
-  __llvm_pgo_data *I, *E;
+  const __llvm_pgo_data *I, *E;
 
   for (I = getFirst(), E = getLast(); I != E; ++I)
     writeFunction(OutputFile, I);
