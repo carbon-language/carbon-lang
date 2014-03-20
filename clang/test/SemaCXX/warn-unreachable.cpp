@@ -236,22 +236,41 @@ Frobozz test_return_object_control_flow(int flag) {
 
 void somethingToCall();
 
- static constexpr bool isConstExprConfigValue() { return true; }
- 
- int test_const_expr_config_value() {
-   if (isConstExprConfigValue()) {
-     somethingToCall();
-     return 0;
-   }
-   somethingToCall(); // no-warning
-   return 1;
- }
- int test_const_expr_config_value_2() {
-   if (!isConstExprConfigValue()) {
-     somethingToCall(); // no-warning
-     return 0;
-   }
+static constexpr bool isConstExprConfigValue() { return true; }
+
+int test_const_expr_config_value() {
+ if (isConstExprConfigValue()) {
    somethingToCall();
-   return 1;
+   return 0;
  }
+ somethingToCall(); // no-warning
+ return 1;
+}
+int test_const_expr_config_value_2() {
+ if (!isConstExprConfigValue()) {
+   somethingToCall(); // no-warning
+   return 0;
+ }
+ somethingToCall();
+ return 1;
+}
+
+class Frodo {
+public:
+  static const bool aHobbit = true;
+};
+
+void test_static_class_var() {
+  if (Frodo::aHobbit)
+    somethingToCall();
+  else
+    somethingToCall(); // no-warning
+}
+
+void test_static_class_var(Frodo &F) {
+  if (F.aHobbit)
+    somethingToCall();
+  else
+    somethingToCall(); // no-warning
+}
 

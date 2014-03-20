@@ -122,6 +122,8 @@ static bool isExpandedFromConfigurationMacro(const Stmt *S,
   return false;
 }
 
+static bool isConfigurationValue(const ValueDecl *D, Preprocessor &PP);
+
 /// Returns true if the statement represents a configuration value.
 ///
 /// A configuration value is something usually determined at compile-time
@@ -144,34 +146,15 @@ static bool isConfigurationValue(const Stmt *S,
         dyn_cast_or_null<FunctionDecl>(cast<CallExpr>(S)->getCalleeDecl());
       return Callee ? Callee->isConstexpr() : false;
     }
-    case Stmt::DeclRefExprClass: {
-      const DeclRefExpr *DR = cast<DeclRefExpr>(S);
-      const ValueDecl *D = DR->getDecl();
-      if (const EnumConstantDecl *ED = dyn_cast<EnumConstantDecl>(D))
-        return isConfigurationValue(ED->getInitExpr(), PP);
-      if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-        // As a heuristic, treat globals as configuration values.  Note
-        // that we only will get here if Sema evaluated this
-        // condition to a constant expression, which means the global
-        // had to be declared in a way to be a truly constant value.
-        // We could generalize this to local variables, but it isn't
-        // clear if those truly represent configuration values that
-        // gate unreachable code.
-        if (!VD->hasLocalStorage())
-          return true;
-
-        // As a heuristic, locals that have been marked 'const' explicitly
-        // can be treated as configuration values as well.
-        return VD->getType().isLocalConstQualified();
-      }
-      return false;
-    }
+    case Stmt::DeclRefExprClass:
+      return isConfigurationValue(cast<DeclRefExpr>(S)->getDecl(), PP);
     case Stmt::IntegerLiteralClass:
       return IncludeIntegers ? isExpandedFromConfigurationMacro(S, PP)
                              : false;
+    case Stmt::MemberExprClass:
+      return isConfigurationValue(cast<MemberExpr>(S)->getMemberDecl(), PP);
     case Stmt::ObjCBoolLiteralExprClass:
       return isExpandedFromConfigurationMacro(S, PP, /* IgnoreYES_NO */ true);
-
     case Stmt::UnaryExprOrTypeTraitExprClass:
       return true;
     case Stmt::BinaryOperatorClass: {
@@ -191,6 +174,27 @@ static bool isConfigurationValue(const Stmt *S,
     default:
       return false;
   }
+}
+
+static bool isConfigurationValue(const ValueDecl *D, Preprocessor &PP) {
+  if (const EnumConstantDecl *ED = dyn_cast<EnumConstantDecl>(D))
+    return isConfigurationValue(ED->getInitExpr(), PP);
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    // As a heuristic, treat globals as configuration values.  Note
+    // that we only will get here if Sema evaluated this
+    // condition to a constant expression, which means the global
+    // had to be declared in a way to be a truly constant value.
+    // We could generalize this to local variables, but it isn't
+    // clear if those truly represent configuration values that
+    // gate unreachable code.
+    if (!VD->hasLocalStorage())
+      return true;
+
+    // As a heuristic, locals that have been marked 'const' explicitly
+    // can be treated as configuration values as well.
+    return VD->getType().isLocalConstQualified();
+  }
+  return false;
 }
 
 /// Returns true if we should always explore all successors of a block.
