@@ -9,8 +9,7 @@
 
 #include "InstrProfiling.h"
 
-void __llvm_pgo_write_file(const char *OutputName) {
-  /* TODO: Requires libc: move to separate translation unit. */
+static void __llvm_pgo_write_file_with_name(const char *OutputName) {
   FILE *OutputFile;
   if (!OutputName || !OutputName[0])
     return;
@@ -25,20 +24,28 @@ void __llvm_pgo_write_file(const char *OutputName) {
   fclose(OutputFile);
 }
 
-void __llvm_pgo_write_default_file() {
-  /* TODO: Requires libc: move to separate translation unit. */
-  const char *OutputName = getenv("LLVM_PROFILE_FILE");
-  if (OutputName == NULL || OutputName[0] == '\0')
-    OutputName = "default.profdata";
-  __llvm_pgo_write_file(OutputName);
+static const char *CurrentFilename = NULL;
+void __llvm_pgo_set_filename(const char *Filename) {
+  CurrentFilename = Filename;
 }
 
-void __llvm_pgo_register_write_atexit() {
-  /* TODO: Requires libc: move to separate translation unit. */
+void __llvm_pgo_write_file() {
+  const char *Filename = CurrentFilename;
+
+#define UPDATE_FILENAME(NextFilename) \
+  if (!Filename || !Filename[0]) Filename = NextFilename
+  UPDATE_FILENAME(getenv("LLVM_PROFILE_FILE"));
+  UPDATE_FILENAME("default.profdata");
+#undef UPDATE_FILENAME
+
+  __llvm_pgo_write_file_with_name(Filename);
+}
+
+void __llvm_pgo_register_write_file_atexit() {
   static int HasBeenRegistered = 0;
 
   if (!HasBeenRegistered) {
     HasBeenRegistered = 1;
-    atexit(__llvm_pgo_write_default_file);
+    atexit(__llvm_pgo_write_file);
   }
 }

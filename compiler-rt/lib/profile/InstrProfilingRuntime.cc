@@ -20,7 +20,7 @@ namespace {
 
 class RegisterAtExit {
 public:
-  RegisterAtExit() { __llvm_pgo_register_write_atexit(); }
+  RegisterAtExit() { __llvm_pgo_register_write_file_atexit(); }
 };
 
 RegisterAtExit Registration;
