@@ -51,7 +51,7 @@ static bool isTrivialDoWhile(const CFGBlock *B, const Stmt *S) {
   // condition.
   if (const Stmt *Term = B->getTerminator()) {
     if (const DoStmt *DS = dyn_cast<DoStmt>(Term)) {
-      const Expr *Cond = DS->getCond();
+      const Expr *Cond = DS->getCond()->IgnoreParenCasts();
       return Cond == S && isTrivialExpression(Cond);
     }
   }

@@ -218,6 +218,14 @@ int test_treat_non_const_bool_local_as_non_config_value() {
   return 0;
 }
 
+void test_do_while(int x) {
+  // Handle trivial expressions with
+  // implicit casts to bool.
+  do {
+    break;
+  } while (0); // no-warning
+}
+
 class Frobozz {
 public:
   Frobozz(int x);
