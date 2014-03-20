@@ -150,7 +150,7 @@ sub GetCCArgs {
   close(TO_PARENT);
   my $line;
   while (<FROM_CHILD>) {
-    next if (!/\b-cc1\b/);
+    next if (!/\s-cc1\s/);
     $line = $_;
   }
 
