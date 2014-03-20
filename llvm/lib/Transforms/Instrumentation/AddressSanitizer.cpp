@@ -927,6 +927,8 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
       DEBUG(dbgs() << "Ignoring a cstring literal: " << *G << "\n");
       return false;
     }
+    // Globals from llvm.metadata aren't emitted, do not instrument them.
+    if (Section == "llvm.metadata") return false;
   }
 
   return true;
