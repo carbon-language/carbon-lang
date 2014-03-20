@@ -81,31 +81,37 @@ class DebugLocEntry {
   // The variable to which this location entry corresponds.
   const MDNode *Variable;
 
+  // The compile unit to which this location entry is referenced by.
+  const DwarfCompileUnit *Unit;
+
   // Whether this location has been merged.
   bool Merged;
 
 public:
-  DebugLocEntry() : Begin(0), End(0), Variable(0), Merged(false) {
+  DebugLocEntry() : Begin(0), End(0), Variable(0), Unit(0), Merged(false) {
     Constants.Int = 0;
   }
   DebugLocEntry(const MCSymbol *B, const MCSymbol *E, MachineLocation &L,
-                const MDNode *V)
-      : Begin(B), End(E), Loc(L), Variable(V), Merged(false) {
+                const MDNode *V, const DwarfCompileUnit *U)
+      : Begin(B), End(E), Loc(L), Variable(V), Unit(U), Merged(false) {
     Constants.Int = 0;
     EntryKind = E_Location;
   }
-  DebugLocEntry(const MCSymbol *B, const MCSymbol *E, int64_t i)
-      : Begin(B), End(E), Variable(0), Merged(false) {
+  DebugLocEntry(const MCSymbol *B, const MCSymbol *E, int64_t i,
+                const DwarfCompileUnit *U)
+      : Begin(B), End(E), Variable(0), Unit(U), Merged(false) {
     Constants.Int = i;
     EntryKind = E_Integer;
   }
-  DebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantFP *FPtr)
-      : Begin(B), End(E), Variable(0), Merged(false) {
+  DebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantFP *FPtr,
+                const DwarfCompileUnit *U)
+      : Begin(B), End(E), Variable(0), Unit(U), Merged(false) {
     Constants.CFP = FPtr;
     EntryKind = E_ConstantFP;
   }
-  DebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantInt *IPtr)
-      : Begin(B), End(E), Variable(0), Merged(false) {
+  DebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantInt *IPtr,
+                const DwarfCompileUnit *U)
+      : Begin(B), End(E), Variable(0), Unit(U), Merged(false) {
     Constants.CIP = IPtr;
     EntryKind = E_ConstantInt;
   }
@@ -130,6 +136,7 @@ public:
   const MDNode *getVariable() const { return Variable; }
   const MCSymbol *getBeginSym() const { return Begin; }
   const MCSymbol *getEndSym() const { return End; }
+  const DwarfCompileUnit *getCU() const { return Unit; }
   MachineLocation getLoc() const { return Loc; }
 };
 
@@ -405,6 +412,13 @@ class DwarfDebug : public AsmPrinterHandler {
 
   // If nonnull, stores the current machine instruction we're processing.
   const MachineInstr *CurMI;
+
+  // If nonnull, stores the section that the previous function was allocated to
+  // emitting.
+  const MCSection *PrevSection;
+
+  // If nonnull, stores the CU in which the previous subprogram was contained.
+  const DwarfCompileUnit *PrevCU;
 
   // Section Symbols: these are assembler temporary labels that are emitted at
   // the beginning of each supported dwarf section.  These are used to form
@@ -741,14 +755,17 @@ public:
   /// split dwarf proposal support.
   bool useSplitDwarf() const { return HasSplitDwarf; }
 
-  /// \brief Returns whether or not to use AT_ranges for compilation units.
-  bool useCURanges() const { return HasCURanges; }
-
   /// Returns the Dwarf Version.
   unsigned getDwarfVersion() const { return DwarfVersion; }
 
   /// Returns the section symbol for the .debug_loc section.
   MCSymbol *getDebugLocSym() const { return DwarfDebugLocSectionSym; }
+
+  /// Returns the previous section that was emitted into.
+  const MCSection *getPrevSection() const { return PrevSection; }
+
+  /// Returns the previous CU that was being updated
+  const DwarfCompileUnit *getPrevCU() const { return PrevCU; }
 
   /// Returns the entries for the .debug_loc section.
   const SmallVectorImpl<DebugLocEntry> &getDebugLocEntries() const {
