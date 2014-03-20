@@ -377,3 +377,45 @@ void D::bar() {
   // CHECK: ret
 }
 }
+
+namespace test4{
+// PR19172: We used to merge method vftable locations wrong.
+
+struct A {
+  virtual ~A() {}
+};
+
+struct B {
+  virtual ~B() {}
+};
+
+struct C : virtual A, B {
+  virtual ~C();
+};
+
+void foo(void*);
+
+C::~C() {
+  // CHECK-LABEL: define x86_thiscallcc void @"\01??1C@test4@@UAE@XZ"(%"struct.test4::C"* %this)
+
+  // In this case "this" points to the most derived class, so no GEPs needed.
+  // CHECK-NOT: getelementptr
+  // CHECK-NOT: bitcast
+  // CHECK: %[[VFPTR_i8:.*]] = bitcast %"struct.test4::C"* %{{.*}} to [1 x i8*]**
+  // CHECK: store [1 x i8*]* @"\01??_7C@test4@@6BB@1@@", [1 x i8*]** %[[VFPTR_i8]]
+
+  foo(this);
+}
+
+void destroy(C *obj) {
+  // CHECK-LABEL: define void @"\01?destroy@test4@@YAXPAUC@1@@Z"(%"struct.test4::C"* %obj)
+
+  delete obj;
+  // CHECK: %[[VPTR:.*]] = bitcast %"struct.test4::C"* %[[OBJ:.*]] to void (%"struct.test4::C"*, i32)***
+  // CHECK: %[[VFTABLE:.*]] = load void (%"struct.test4::C"*, i32)*** %[[VPTR]]
+  // CHECK: %[[VFTENTRY:.*]] = getelementptr inbounds void (%"struct.test4::C"*, i32)** %[[VFTABLE]], i64 0
+  // CHECK: %[[VFUN:.*]] = load void (%"struct.test4::C"*, i32)** %[[VFTENTRY]]
+  // CHECK: call x86_thiscallcc void %[[VFUN]](%"struct.test4::C"* %[[OBJ]], i32 1)
+}
+
+}

@@ -2414,6 +2414,9 @@ public:
   typedef llvm::DenseMap<GlobalDecl, MethodVFTableLocation>
     MethodVFTableLocationsTy;
 
+  typedef llvm::iterator_range<MethodVFTableLocationsTy::const_iterator>
+    method_locations_range;
+
 private:
   /// VTables - Global vtable information.
   MicrosoftVTableContext &VTables;
@@ -2576,12 +2579,9 @@ public:
 
   ThunksMapTy::const_iterator thunks_end() const { return Thunks.end(); }
 
-  MethodVFTableLocationsTy::const_iterator vtable_indices_begin() const {
-    return MethodVFTableLocations.begin();
-  }
-
-  MethodVFTableLocationsTy::const_iterator vtable_indices_end() const {
-    return MethodVFTableLocations.end();
+  method_locations_range vtable_locations() const {
+    return method_locations_range(MethodVFTableLocations.begin(),
+                                  MethodVFTableLocations.end());
   }
 
   uint64_t getNumVTableComponents() const { return Components.size(); }
@@ -3291,9 +3291,15 @@ void MicrosoftVTableContext::computeVTableRelatedInformation(
     VFTableLayouts[id] = new VTableLayout(
         Builder.getNumVTableComponents(), Builder.vtable_component_begin(),
         VTableThunks.size(), VTableThunks.data(), EmptyAddressPointsMap, true);
-    NewMethodLocations.insert(Builder.vtable_indices_begin(),
-                              Builder.vtable_indices_end());
     Thunks.insert(Builder.thunks_begin(), Builder.thunks_end());
+
+    for (const auto &I : Builder.vtable_locations()) {
+      GlobalDecl GD = I.first;
+      MethodVFTableLocation NewLoc = I.second;
+      auto M = NewMethodLocations.find(GD);
+      if (M == NewMethodLocations.end() || NewLoc < M->second)
+        NewMethodLocations[GD] = NewLoc;
+    }
   }
 
   MethodVFTableLocations.insert(NewMethodLocations.begin(),

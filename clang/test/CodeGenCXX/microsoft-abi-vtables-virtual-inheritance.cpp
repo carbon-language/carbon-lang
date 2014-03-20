@@ -21,6 +21,7 @@
 // RUN: FileCheck --check-prefix=VDTORS-U %s < %t
 // RUN: FileCheck --check-prefix=VDTORS-V %s < %t
 // RUN: FileCheck --check-prefix=VDTORS-P %s < %t
+// RUN: FileCheck --check-prefix=VDTORS-R %s < %t
 // RUN: FileCheck --check-prefix=RET-W %s < %t
 // RUN: FileCheck --check-prefix=RET-T %s < %t
 // RUN: FileCheck --check-prefix=RET-V %s < %t
@@ -542,6 +543,30 @@ struct P : T, Y {
 };
 
 P p;
+
+struct Q {
+  virtual ~Q();
+};
+
+// PR19172: Yet another diamond we miscompiled.
+struct R : virtual Q, X {
+  // VDTORS-R: VFTable for 'vdtors::Q' in 'vdtors::R' (1 entry).
+  // VDTORS-R-NEXT: 0 | vdtors::R::~R() [scalar deleting]
+  // VDTORS-R-NEXT:     [this adjustment: -8 non-virtual]
+
+  // VDTORS-R: Thunks for 'vdtors::R::~R()' (1 entry).
+  // VDTORS-R-NEXT: 0 | [this adjustment: -8 non-virtual]
+
+  // VDTORS-R: VFTable for 'vdtors::X' in 'vdtors::R' (2 entries).
+  // VDTORS-R-NEXT: 0 | vdtors::R::~R() [scalar deleting]
+  // VDTORS-R-NEXT: 1 | void vdtors::X::zzz()
+
+  // VDTORS-R: VFTable indices for 'vdtors::R' (1 entry).
+  // VDTORS-R-NEXT: 0 | vdtors::R::~R() [scalar deleting]
+  virtual ~R();
+};
+
+R r;
 
 }
 
