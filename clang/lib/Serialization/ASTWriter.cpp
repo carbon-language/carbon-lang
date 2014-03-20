@@ -4166,23 +4166,25 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
 
   RecordData DeclUpdatesOffsetsRecord;
 
-  // Keep writing types and declarations until all types and
-  // declarations have been written.
+  // Keep writing types, declarations, and declaration update records
+  // until we've emitted all of them.
   Stream.EnterSubblock(DECLTYPES_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
   WriteDeclsBlockAbbrevs();
   for (DeclsToRewriteTy::iterator I = DeclsToRewrite.begin(),
                                   E = DeclsToRewrite.end();
        I != E; ++I)
     DeclTypesToEmit.push(const_cast<Decl*>(*I));
-  while (!DeclTypesToEmit.empty()) {
-    DeclOrType DOT = DeclTypesToEmit.front();
-    DeclTypesToEmit.pop();
-    if (DOT.isType())
-      WriteType(DOT.getType());
-    else
-      WriteDecl(Context, DOT.getDecl());
-  }
-  WriteDeclUpdatesBlocks(DeclUpdatesOffsetsRecord);
+  do {
+    WriteDeclUpdatesBlocks(DeclUpdatesOffsetsRecord);
+    while (!DeclTypesToEmit.empty()) {
+      DeclOrType DOT = DeclTypesToEmit.front();
+      DeclTypesToEmit.pop();
+      if (DOT.isType())
+        WriteType(DOT.getType());
+      else
+        WriteDecl(Context, DOT.getDecl());
+    }
+  } while (!DeclUpdates.empty());
   Stream.ExitBlock();
 
   if (!DeclUpdatesOffsetsRecord.empty())
@@ -4353,10 +4355,12 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
   if (DeclUpdates.empty())
     return;
 
-  for (DeclUpdateMap::iterator
-         I = DeclUpdates.begin(), E = DeclUpdates.end(); I != E; ++I) {
-    const Decl *D = I->first;
-    UpdateRecord &URec = I->second;
+  DeclUpdateMap LocalUpdates;
+  LocalUpdates.swap(DeclUpdates);
+
+  for (auto &Update : LocalUpdates) {
+    const Decl *D = Update.first;
+    UpdateRecord &URec = Update.second;
 
     if (isRewritten(D))
       continue; // The decl will be written completely,no need to store updates.
