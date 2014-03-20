@@ -3,6 +3,10 @@
 ; RUN: %llc_dwarf < %s -filetype=obj | llvm-dwarfdump -debug-dump=line - | FileCheck %s
 ; RUN: %llc_dwarf < %s -filetype=asm | FileCheck --check-prefix=ASM %s
 
+; If multiple line tables are emitted, one per CU, those line tables can
+; unambiguously rely on the comp_dir of their owning CU and use directory '0'
+; to refer to it.
+
 ; CHECK: .debug_line contents:
 ; CHECK-NEXT: Line table prologue:
 ; CHECK-NOT: include_directories
@@ -13,6 +17,11 @@
 ; CHECK-NOT: include_directories
 ; CHECK: file_names[   1]   0 {{.*}} b.cpp
 ; CHECK-NOT: file_names
+
+; However, if a single line table is emitted and shared between CUs, the
+; comp_dir is ambiguous and relying on it would lead to different path
+; interpretations depending on which CU lead to the table - so ensure that
+; full paths are always emitted in this case, never comp_dir relative.
 
 ; ASM: .file   1 "/tmp/dbginfo/a{{[/\\]+}}a.cpp"
 ; ASM: .file   2 "/tmp/dbginfo/b{{[/\\]+}}b.cpp"

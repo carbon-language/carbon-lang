@@ -688,6 +688,11 @@ DwarfCompileUnit *DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   DwarfCompileUnit *NewCU = new DwarfCompileUnit(
       InfoHolder.getUnits().size(), Die, DIUnit, Asm, this, &InfoHolder);
   InfoHolder.addUnit(NewCU);
+
+  // LTO with assembly output shares a single line table amongst multiple CUs.
+  // To avoid the compilation directory being ambiguous, let the line table
+  // explicitly describe the directory of all files, never relying on the
+  // compilation directory.
   if (!Asm->OutStreamer.hasRawTextSupport() || SingleCU)
     Asm->OutStreamer.getContext().setMCLineTableCompilationDir(
         NewCU->getUniqueID(), CompilationDir);
