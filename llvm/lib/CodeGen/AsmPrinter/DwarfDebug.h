@@ -339,7 +339,7 @@ class DwarfDebug : public AsmPrinterHandler {
   // Maps a CU DIE with its corresponding DwarfCompileUnit.
   DenseMap<const DIE *, DwarfCompileUnit *> CUDieMap;
 
-  /// Maps MDNodes for type sysstem with the corresponding DIEs. These DIEs can
+  /// Maps MDNodes for type system with the corresponding DIEs. These DIEs can
   /// be shared across CUs, that is why we keep the map here instead
   /// of in DwarfCompileUnit.
   DenseMap<const MDNode *, DIE *> MDTypeNodeToDieMap;
