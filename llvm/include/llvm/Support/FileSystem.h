@@ -454,8 +454,7 @@ inline bool is_regular_file(const Twine &Path) {
 ///        directory, regular file, or symlink?
 ///
 /// @param status A file_status previously returned from status.
-/// @returns exists(s) && !is_regular_file(s) && !is_directory(s) &&
-///          !is_symlink(s)
+/// @returns exists(s) && !is_regular_file(s) && !is_directory(s)
 bool is_other(file_status status);
 
 /// @brief Is path something that exists but is not a directory,
@@ -467,21 +466,6 @@ bool is_other(file_status status);
 /// @returns errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
 error_code is_other(const Twine &path, bool &result);
-
-/// @brief Does status represent a symlink?
-///
-/// @param status A file_status previously returned from stat.
-/// @returns status.type() == symlink_file.
-bool is_symlink(file_status status);
-
-/// @brief Is path a symlink?
-///
-/// @param path Input path.
-/// @param result Set to true if \a path is a symlink, false if it is not.
-///               Undefined otherwise.
-/// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
-error_code is_symlink(const Twine &path, bool &result);
 
 /// @brief Get file status as if by POSIX stat().
 ///
