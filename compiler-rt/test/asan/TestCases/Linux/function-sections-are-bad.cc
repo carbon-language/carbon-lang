@@ -1,8 +1,10 @@
 // Check that --gc-sections does not throw away (or localize) parts of sanitizer
 // interface.
-// RUN: %clang_asan -m64 %s -Wl,--gc-sections -o %t
-// RUN: %clang_asan -m64 %s -DBUILD_SO -fPIC -o %t-so.so -shared
+// RUN: %clang_asan %s -Wl,--gc-sections -o %t
+// RUN: %clang_asan %s -DBUILD_SO -fPIC -o %t-so.so -shared
 // RUN: %t 2>&1
+
+// REQUIRES: asan-64-bits
 
 #ifndef BUILD_SO
 #include <assert.h>
@@ -30,7 +32,7 @@ int main(int argc, char *argv[]) {
 
 #else // BUILD_SO
 
-#include <sanitizer/msan_interface.h>
+#include <sanitizer/asan_interface.h>
 extern "C" void call_rtl_from_dso() {
   volatile int32_t x;
   volatile int32_t y = __sanitizer_unaligned_load32((void *)&x);
