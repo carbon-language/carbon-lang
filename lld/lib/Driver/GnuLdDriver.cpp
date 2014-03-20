@@ -126,8 +126,6 @@ bool GnuLdDriver::linkELF(int argc, const char *argv[],
 
 static llvm::Optional<llvm::Triple::ArchType>
 getArchType(const llvm::Triple &triple, StringRef value) {
-  if (triple.getOS() != llvm::Triple::NetBSD)
-    return llvm::None;
   switch (triple.getArch()) {
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
