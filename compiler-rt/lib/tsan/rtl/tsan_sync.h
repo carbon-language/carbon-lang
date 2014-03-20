@@ -22,8 +22,6 @@
 
 namespace __tsan {
 
-class SlabCache;
-
 class StackTrace {
  public:
   StackTrace();
