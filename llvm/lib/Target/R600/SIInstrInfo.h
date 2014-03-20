@@ -25,12 +25,6 @@ class SIInstrInfo : public AMDGPUInstrInfo {
 private:
   const SIRegisterInfo RI;
 
-  MachineInstrBuilder buildIndirectIndexLoop(MachineBasicBlock &MBB,
-                                             MachineBasicBlock::iterator I,
-                                             unsigned OffsetVGPR,
-                                             unsigned MovRelOp,
-                                             unsigned Dst,
-                                             unsigned Src0) const;
 public:
   explicit SIInstrInfo(AMDGPUTargetMachine &tm);
 
