@@ -83,6 +83,10 @@ def FeatureMSA : SubtargetFeature<"msa", "HasMSA", "true", "Mips MSA ASE">;
 def FeatureMicroMips  : SubtargetFeature<"micromips", "InMicroMipsMode", "true",
                                          "microMips mode">;
 
+def FeatureCnMips     : SubtargetFeature<"cnmips", "HasCnMips",
+                                "true", "Octeon cnMIPS Support",
+                                [FeatureMips64r2]>;
+
 //===----------------------------------------------------------------------===//
 // Mips processors supported.
 //===----------------------------------------------------------------------===//
@@ -95,6 +99,7 @@ def : Proc<"mips32r2", [FeatureMips32r2, FeatureO32]>;
 def : Proc<"mips64", [FeatureMips64, FeatureN64]>;
 def : Proc<"mips64r2", [FeatureMips64r2, FeatureN64]>;
 def : Proc<"mips16", [FeatureMips16, FeatureO32]>;
+def : Proc<"octeon", [FeatureMips64r2, FeatureN64, FeatureCnMips]>;
 
 def MipsAsmParser : AsmParser {
   let ShouldEmitMatchRegisterName = 0;

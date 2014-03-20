@@ -245,6 +245,15 @@ let Namespace = "Mips" in {
   def MSARequest : MipsReg<5, "5">;
   def MSAMap     : MipsReg<6, "6">;
   def MSAUnmap   : MipsReg<7, "7">;
+
+  // Octeon multiplier and product registers
+  def MPL0 : MipsReg<0, "mpl0">;
+  def MPL1 : MipsReg<1, "mpl1">;
+  def MPL2 : MipsReg<2, "mpl2">;
+  def P0 : MipsReg<0, "p0">;
+  def P1 : MipsReg<1, "p1">;
+  def P2 : MipsReg<2, "p2">;
+
 }
 
 //===----------------------------------------------------------------------===//
@@ -375,6 +384,12 @@ def DSPCC : RegisterClass<"Mips", [v4i8, v2i16], 32, (add DSPCCond)>;
 // Coprocessor 2 registers.
 def COP2 : RegisterClass<"Mips", [i32], 32, (sequence "COP2%u", 0, 31)>,
            Unallocatable;
+
+// Octeon multiplier and product registers
+def OCTEON_MPL : RegisterClass<"Mips", [i64], 64, (add MPL0, MPL1, MPL2)>,
+                 Unallocatable;
+def OCTEON_P : RegisterClass<"Mips", [i64], 64, (add P0, P1, P2)>,
+               Unallocatable;
 
 // Register Operands.
 

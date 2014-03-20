@@ -295,8 +295,13 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::FP_TO_UINT,        MVT::i32,   Expand);
   setOperationAction(ISD::FP_TO_UINT,        MVT::i64,   Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1,    Expand);
-  setOperationAction(ISD::CTPOP,             MVT::i32,   Expand);
-  setOperationAction(ISD::CTPOP,             MVT::i64,   Expand);
+  if (Subtarget->hasCnMips()) {
+    setOperationAction(ISD::CTPOP,           MVT::i32,   Legal);
+    setOperationAction(ISD::CTPOP,           MVT::i64,   Legal);
+  } else {
+    setOperationAction(ISD::CTPOP,           MVT::i32,   Expand);
+    setOperationAction(ISD::CTPOP,           MVT::i64,   Expand);
+  }
   setOperationAction(ISD::CTTZ,              MVT::i32,   Expand);
   setOperationAction(ISD::CTTZ,              MVT::i64,   Expand);
   setOperationAction(ISD::CTTZ_ZERO_UNDEF,   MVT::i32,   Expand);

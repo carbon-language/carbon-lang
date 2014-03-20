@@ -227,6 +227,44 @@ let isCodeGenOnly = 1, rs = 0, shamt = 0 in {
   def SLL64_64 : FR<0x0, 0x00, (outs GPR64:$rd), (ins GPR64:$rt),
                     "sll\t$rd, $rt, 0", [], II_SLL>;
 }
+
+// Cavium Octeon cmMIPS instructions
+let Predicates = [HasCnMips] in {
+
+class Count1s<string opstr, RegisterOperand RO>:
+  InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
+         [(set RO:$rd, (ctpop RO:$rs))], II_POP, FrmR, opstr>;
+
+class SetCC64_R<string opstr, PatFrag cond_op> :
+  InstSE<(outs GPR64Opnd:$rd), (ins GPR64Opnd:$rs, GPR64Opnd:$rt),
+         !strconcat(opstr, "\t$rd, $rs, $rt"),
+         [(set GPR64Opnd:$rd, (cond_op GPR64Opnd:$rs, GPR64Opnd:$rt))],
+         II_SEQ_SNE, FrmR, opstr>;
+
+// Unsigned Byte Add
+def BADDu  : InstSE<(outs GPR64Opnd:$rd), (ins GPR64Opnd:$rs, GPR64Opnd:$rt),
+                    "baddu\t$rd, $rs, $rt",
+                    [(set GPR64Opnd:$rd, (and (add GPR64Opnd:$rs,
+                                                   GPR64Opnd:$rt), 255))],
+                    II_BADDU, FrmR, "baddu">, ADD_FM<0x1c, 0x28> {
+  let isCommutable = 1;
+  let isReMaterializable = 1;
+}
+
+// Multiply Doubleword to GPR
+let Defs = [HI0, LO0, P0, P1, P2] in
+def DMUL  : ArithLogicR<"dmul", GPR64Opnd, 1, II_DMUL, mul>,
+                              ADD_FM<0x1c, 0x03>;
+
+// Count Ones in a Word/Doubleword
+def POP   : Count1s<"pop", GPR32Opnd>, POP_FM<0x2c>;
+def DPOP  : Count1s<"dpop", GPR64Opnd>, POP_FM<0x2d>;
+
+// Set on equal/not equal
+def SEQ   : SetCC64_R<"seq", seteq>, SEQ_FM<0x2a>;
+def SNE   : SetCC64_R<"sne", setne>, SEQ_FM<0x2b>;
+}
+
 }
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions

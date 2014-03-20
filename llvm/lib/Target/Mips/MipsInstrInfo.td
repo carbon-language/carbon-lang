@@ -170,6 +170,8 @@ def IsN64       :     Predicate<"Subtarget.isABI_N64()">,
                       AssemblerPredicate<"FeatureN64">;
 def InMips16Mode :    Predicate<"Subtarget.inMips16Mode()">,
                       AssemblerPredicate<"FeatureMips16">;
+def HasCnMips    :    Predicate<"Subtarget.hasCnMips()">,
+                      AssemblerPredicate<"FeatureCnMips">;
 def RelocStatic :     Predicate<"TM.getRelocationModel() == Reloc::Static">,
                       AssemblerPredicate<"FeatureMips32">;
 def RelocPIC    :     Predicate<"TM.getRelocationModel() == Reloc::PIC_">,
@@ -771,7 +773,6 @@ class CountLeading1<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
          [(set RO:$rd, (ctlz (not RO:$rs)))], II_CLO, FrmR, opstr>,
   Requires<[HasBitCount, HasStdEnc]>;
-
 
 // Sign Extend in Register.
 class SignExtInReg<string opstr, ValueType vt, RegisterOperand RO,
