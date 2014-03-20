@@ -326,11 +326,10 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
       Args.hasArg(options::OPT_fcreate_profile) ||
       Args.hasArg(options::OPT_coverage)) {
     // Select the appropriate runtime library for the target.
-    if (isTargetIOSBased()) {
+    if (isTargetIOSBased())
       AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.profile_ios.a");
-    } else {
+    else
       AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.profile_osx.a");
-    }
   }
 
   const SanitizerArgs &Sanitize = getSanitizerArgs();
