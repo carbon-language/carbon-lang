@@ -1832,7 +1832,6 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
             dyn_cast<ImplicitCastExpr>((*I)->getParentMap().getParent(M));
           if (!PE || PE->getCastKind() != CK_ArrayToPointerDecay) {
             llvm_unreachable("should always be wrapped in ArrayToPointerDecay");
-            L = UnknownVal();
           }
         }
 
