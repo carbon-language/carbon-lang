@@ -252,10 +252,6 @@ void RelocationPass::calculateAHLs(const DefinedAtom &atom) {
         break;
     }
   }
-  if (!references.empty()) {
-    for (auto &sr : references)
-      sr->setAddend(0);
-  }
   assert(references.empty());
 }
 
