@@ -174,9 +174,6 @@ _LIBUNWIND_EXPORT int unw_set_reg(unw_cursor_t *cursor, unw_regnum_t regNum,
       pint_t orgArgSize = (pint_t)info.gp;
       uint64_t orgFuncStart = info.start_ip;
       co->setInfoBasedOnIPRegister(false);
-      // and adjust REG_SP if there was a DW_CFA_GNU_args_size
-      if ((orgFuncStart == info.start_ip) && (orgArgSize != 0))
-        co->setReg(UNW_REG_SP, co->getReg(UNW_REG_SP) + orgArgSize);
     }
     return UNW_ESUCCESS;
   }
