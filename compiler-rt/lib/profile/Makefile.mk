@@ -10,8 +10,8 @@
 ModuleName := profile
 SubDirs :=
 
-Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))
-ObjNames := $(Sources:%.c=%.o)
+Sources := $(foreach file,$(wildcard $(Dir)/*.c $(Dir)/*.cc),$(notdir $(file)))
+ObjNames := $(patsubst %.c,%.o,$(patsubst %.cc,%.o,$(Sources)))
 Implementation := Generic
 
 # FIXME: use automatic dependencies?

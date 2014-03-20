@@ -7,6 +7,7 @@ if(APPLE)
     GCDAProfiling.c
     InstrProfiling.c
     InstrProfilingPlatformDarwin.c
+    InstrProfilingRuntime.cc
     InstrProfilingExtras.c)
 
   add_compiler_rt_osx_static_runtime(clang_rt.profile_osx
@@ -18,6 +19,7 @@ else()
     GCDAProfiling.c
     InstrProfiling.c
     InstrProfilingPlatformOther.c
+    InstrProfilingRuntime.cc
     InstrProfilingExtras.c)
 
   foreach(arch ${PROFILE_SUPPORTED_ARCH})

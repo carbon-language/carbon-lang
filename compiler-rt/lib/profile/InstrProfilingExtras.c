@@ -9,7 +9,6 @@
 
 #include "InstrProfiling.h"
 
-/*! \brief Write instrumentation data to the given file. */
 void __llvm_pgo_write_file(const char *OutputName) {
   /* TODO: Requires libc: move to separate translation unit. */
   FILE *OutputFile;
@@ -26,7 +25,6 @@ void __llvm_pgo_write_file(const char *OutputName) {
   fclose(OutputFile);
 }
 
-/*! \brief Write instrumentation data to the default file. */
 void __llvm_pgo_write_default_file() {
   /* TODO: Requires libc: move to separate translation unit. */
   const char *OutputName = getenv("LLVM_PROFILE_FILE");
@@ -35,9 +33,6 @@ void __llvm_pgo_write_default_file() {
   __llvm_pgo_write_file(OutputName);
 }
 
-/*!
- * \brief Register to write instrumentation data to the default file at exit.
- */
 void __llvm_pgo_register_write_atexit() {
   /* TODO: Requires libc: move to separate translation unit. */
   static int HasBeenRegistered = 0;
