@@ -225,8 +225,8 @@ void test2(int intSAParm[static 2]) {
 // CHECK: scanf("%99s", str);
 // CHECK: scanf("%s", vstr);
 // CHECK: scanf("%99s", str);
-// CHECK: scanf("%d", wstr);
-// CHECK: scanf("%d", wstr);
+// CHECK: scanf("{{%d|%hu}}", wstr);
+// CHECK: scanf("{{%d|%hu}}", wstr);
 // CHECK: scanf("%99s", str);
 // CHECK: scanf("%hd", &shortVar);
 // CHECK: scanf("%hu", &uShortVar);
