@@ -1,10 +1,12 @@
 // RUN: %clang_tsan -O1 %s -o %t && not %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 int Global;
 
 void *Thread1(void *x) {
+  sleep(1);
   Global = 42;
   return NULL;
 }
