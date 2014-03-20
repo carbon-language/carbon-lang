@@ -59,6 +59,16 @@ clang_VirtualFileOverlay_addFileMapping(CXVirtualFileOverlay,
                                         const char *realPath);
 
 /**
+ * \brief Set the case sensitivity for the \c CXVirtualFileOverlay object.
+ * The \c CXVirtualFileOverlay object is case-sensitive by default, this
+ * option can be used to override the default.
+ * \returns 0 for success, non-zero to indicate an error.
+ */
+CINDEX_LINKAGE enum CXErrorCode
+clang_VirtualFileOverlay_setCaseSensitivity(CXVirtualFileOverlay,
+											int caseSensitive);
+
+/**
  * \brief Write out the \c CXVirtualFileOverlay object to a char buffer.
  *
  * \param options is reserved, always pass 0.

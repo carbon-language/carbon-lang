@@ -140,6 +140,29 @@ TEST(libclang, VirtualFileOverlay) {
     T.map("/path/virtual/dir/foo3.h", "/real/foo3.h");
     T.map("/path/virtual/dir/in/subdir/foo4.h", "/real/foo4.h");
   }
+  {
+    const char *contents =
+    "{\n"
+    "  'version': 0,\n"
+    "  'case-sensitive': 'false',\n"
+    "  'roots': [\n"
+    "    {\n"
+    "      'type': 'directory',\n"
+    "      'name': \"/path/virtual\",\n"
+    "      'contents': [\n"
+    "        {\n"
+    "          'type': 'file',\n"
+    "          'name': \"foo.h\",\n"
+    "          'external-contents': \"/real/foo.h\"\n"
+    "        }\n"
+    "      ]\n"
+    "    }\n"
+    "  ]\n"
+    "}\n";
+    TestVFO T(contents);
+    T.map("/path/virtual/foo.h", "/real/foo.h");
+    clang_VirtualFileOverlay_setCaseSensitivity(T.VFO, false);
+  }
 }
 
 TEST(libclang, ModuleMapDescriptor) {
