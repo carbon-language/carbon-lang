@@ -1,4 +1,4 @@
-; RUN: opt < %s -asan -S | FileCheck %s
+; RUN: opt < %s -asan -asan-module -S | FileCheck %s
 ; AddressSanitizer must insert __asan_handle_no_return
 ; before every noreturn call or invoke.
 
