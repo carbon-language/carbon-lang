@@ -298,7 +298,7 @@ namespace N4 {
 #endif
   unsigned read(Base* s) {
     // FIXME: We should widen this load as long as the function isn't being
-    // instrumented by thread-sanitizer.
+    // instrumented by ThreadSanitizer.
     //
     // CHECK-X86-64-LABEL: define i32 @_ZN2N44read
     // CHECK-X86-64:   %[[gep:.*]] = getelementptr inbounds {{.*}}* %{{.*}}, i32 0, i32 1
@@ -378,8 +378,8 @@ namespace N6 {
   // Zero-length bitfields partition the memory locations of bitfields for the
   // purposes of the memory model. That means stores must not span zero-length
   // bitfields and loads may only span them when we are not instrumenting with
-  // thread sanitizer.
-  // FIXME: We currently don't widen loads even without thread sanitizer, even
+  // ThreadSanitizer.
+  // FIXME: We currently don't widen loads even without ThreadSanitizer, even
   // though we could.
   struct S {
     unsigned b1 : 24;
@@ -448,7 +448,7 @@ namespace N7 {
 #endif
   unsigned read(B2* s) {
     // FIXME: We should widen this load as long as the function isn't being
-    // instrumented by thread-sanitizer.
+    // instrumented by ThreadSanitizer.
     //
     // CHECK-X86-64-LABEL: define i32 @_ZN2N74read
     // CHECK-X86-64:   %[[gep:.*]] = getelementptr inbounds {{.*}}* %{{.*}}, i32 0, i32 1

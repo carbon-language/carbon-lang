@@ -357,10 +357,6 @@ def fapple_kext : Flag<["-"], "fapple-kext">, Group<f_Group>, Flags<[CC1Option]>
   HelpText<"Use Apple's kernel extensions ABI">;
 def fapple_pragma_pack : Flag<["-"], "fapple-pragma-pack">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable Apple gcc-compatible #pragma pack handling">;
-def faddress_sanitizer : Flag<["-"], "faddress-sanitizer">, Group<f_Group>;
-def fno_address_sanitizer : Flag<["-"], "fno-address-sanitizer">, Group<f_Group>;
-def fthread_sanitizer : Flag<["-"], "fthread-sanitizer">, Group<f_Group>;
-def fno_thread_sanitizer : Flag<["-"], "fno-thread-sanitizer">, Group<f_Group>;
 def fasm : Flag<["-"], "fasm">, Group<f_Group>;
 
 def fasm_blocks : Flag<["-"], "fasm-blocks">, Group<f_Group>, Flags<[CC1Option]>;
@@ -401,7 +397,6 @@ def fbounds_checking_EQ : Joined<["-"], "fbounds-checking=">, Flags<[CC1Option]>
   Group<f_Group>;
 def fbuiltin : Flag<["-"], "fbuiltin">, Group<f_Group>;
 def fcaret_diagnostics : Flag<["-"], "fcaret-diagnostics">, Group<f_Group>;
-def fcatch_undefined_behavior : Flag<["-"], "fcatch-undefined-behavior">, Group<f_Group>;
 def fclasspath_EQ : Joined<["-"], "fclasspath=">, Group<f_Group>;
 def fcolor_diagnostics : Flag<["-"], "fcolor-diagnostics">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Use colors in diagnostics">;

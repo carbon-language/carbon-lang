@@ -71,30 +71,14 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   }
 
   UbsanTrapOnError =
-    Args.hasArg(options::OPT_fcatch_undefined_behavior) ||
     Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
                  options::OPT_fno_sanitize_undefined_trap_on_error, false);
 
-  if (Args.hasArg(options::OPT_fcatch_undefined_behavior) &&
-      !Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
-                    options::OPT_fno_sanitize_undefined_trap_on_error, true)) {
-    D.Diag(diag::err_drv_argument_not_allowed_with)
-      << "-fcatch-undefined-behavior"
-      << "-fno-sanitize-undefined-trap-on-error";
-  }
-
   // Warn about undefined sanitizer options that require runtime support.
   if (UbsanTrapOnError && notAllowedWithTrap()) {
-    if (Args.hasArg(options::OPT_fcatch_undefined_behavior))
-      D.Diag(diag::err_drv_argument_not_allowed_with)
-        << lastArgumentForKind(D, Args, NotAllowedWithTrap)
-        << "-fcatch-undefined-behavior";
-    else if (Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
-                          options::OPT_fno_sanitize_undefined_trap_on_error,
-                          false))
-      D.Diag(diag::err_drv_argument_not_allowed_with)
-        << lastArgumentForKind(D, Args, NotAllowedWithTrap)
-        << "-fsanitize-undefined-trap-on-error";
+    D.Diag(diag::err_drv_argument_not_allowed_with)
+      << lastArgumentForKind(D, Args, NotAllowedWithTrap)
+      << "-fsanitize-undefined-trap-on-error";
   }
 
   // Only one runtime library can be used at once.
@@ -279,24 +263,8 @@ bool SanitizerArgs::parse(const Driver &D, const llvm::opt::ArgList &Args,
   Add = 0;
   Remove = 0;
   const char *DeprecatedReplacement = 0;
-  if (A->getOption().matches(options::OPT_faddress_sanitizer)) {
-    Add = Address;
-    DeprecatedReplacement = "-fsanitize=address";
-  } else if (A->getOption().matches(options::OPT_fno_address_sanitizer)) {
-    Remove = Address;
-    DeprecatedReplacement = "-fno-sanitize=address";
-  } else if (A->getOption().matches(options::OPT_fthread_sanitizer)) {
-    Add = Thread;
-    DeprecatedReplacement = "-fsanitize=thread";
-  } else if (A->getOption().matches(options::OPT_fno_thread_sanitizer)) {
-    Remove = Thread;
-    DeprecatedReplacement = "-fno-sanitize=thread";
-  } else if (A->getOption().matches(options::OPT_fcatch_undefined_behavior)) {
-    Add = UndefinedTrap;
-    DeprecatedReplacement =
-      "-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error";
-  } else if (A->getOption().matches(options::OPT_fbounds_checking) ||
-             A->getOption().matches(options::OPT_fbounds_checking_EQ)) {
+  if (A->getOption().matches(options::OPT_fbounds_checking) ||
+      A->getOption().matches(options::OPT_fbounds_checking_EQ)) {
     Add = LocalBounds;
     DeprecatedReplacement = "-fsanitize=local-bounds";
   } else if (A->getOption().matches(options::OPT_fsanitize_EQ)) {

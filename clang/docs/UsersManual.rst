@@ -999,18 +999,6 @@ are listed below.
    program. The ``-fsanitize=undefined`` checks can be combined with other
    sanitizers.
 
-**-f[no-]address-sanitizer**
-   Deprecated synonym for :ref:`-f[no-]sanitize=address
-   <opt_fsanitize_address>`.
-**-f[no-]thread-sanitizer**
-   Deprecated synonym for :ref:`-f[no-]sanitize=thread
-   <opt_fsanitize_thread>`.
-
-.. option:: -fcatch-undefined-behavior
-
-   Deprecated synonym for :ref:`-fsanitize=undefined
-   <opt_fsanitize_undefined>`.
-
 .. option:: -fno-assume-sane-operator-new
 
    Don't assume that the C++'s new operator is sane.

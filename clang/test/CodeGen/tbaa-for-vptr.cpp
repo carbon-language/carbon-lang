@@ -6,7 +6,7 @@
 // RUN: %clang_cc1 -triple %itanium_abi_triple -emit-llvm -o - -O2  -relaxed-aliasing %s | FileCheck %s --check-prefix=NOTBAA
 //
 // Check that we generate TBAA for vtable pointer loads and stores.
-// When -fthread-sanitizer is used TBAA should be generated at all opt levels
+// When -fsanitize=thread is used TBAA should be generated at all opt levels
 // even if -relaxed-aliasing is present.
 struct A {
   virtual int foo() const ;

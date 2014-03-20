@@ -89,7 +89,7 @@ SANITIZER_GROUP("undefined", Undefined,
                 ObjectSize | Return | Shift | SignedIntegerOverflow |
                 Unreachable | VLABound | Vptr)
 
-// -fsanitize=undefined-trap (and its alias -fcatch-undefined-behavior) includes
+// -fsanitize=undefined-trap includes
 // all sanitizers included by -fsanitize=undefined, except those that require
 // runtime support.  This group is generally used in conjunction with the
 // -fsanitize-undefined-trap-on-error flag.

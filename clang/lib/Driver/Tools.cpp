@@ -3137,8 +3137,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     true))
     CmdArgs.push_back("-fno-sanitize-recover");
 
-  if (Args.hasArg(options::OPT_fcatch_undefined_behavior) ||
-      Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
+  if (Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
                    options::OPT_fno_sanitize_undefined_trap_on_error, false))
     CmdArgs.push_back("-fsanitize-undefined-trap-on-error");
 
