@@ -6,4 +6,4 @@
 foo:
 	b.w	bar
 
-@ CHECK: {{[0-9]+}} R_ARM_THM_JUMP24 bar
+@ CHECK: {{[0-9a-f]+}} R_ARM_THM_JUMP24 bar
