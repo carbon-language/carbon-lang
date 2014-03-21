@@ -10,19 +10,22 @@
 #include "InstrProfiling.h"
 #include <string.h>
 
-static void __llvm_profile_write_file_with_name(const char *OutputName) {
+static int __llvm_profile_write_file_with_name(const char *OutputName) {
+  int RetVal;
   FILE *OutputFile;
   if (!OutputName || !OutputName[0])
-    return;
+    return -1;
   OutputFile = fopen(OutputName, "w");
-  if (!OutputFile) return;
+  if (!OutputFile)
+    return -1;
 
   /* TODO: mmap file to buffer of size __llvm_profile_get_size_for_buffer() and
    * pass the buffer in, instead of the file.
    */
-  __llvm_profile_write_buffer(OutputFile);
+  RetVal = __llvm_profile_write_buffer(OutputFile);
 
   fclose(OutputFile);
+  return RetVal;
 }
 
 static const char *CurrentFilename = NULL;
@@ -31,9 +34,10 @@ void __llvm_profile_set_filename(const char *Filename) {
 }
 
 int getpid(void);
-void __llvm_profile_write_file(void) {
+int __llvm_profile_write_file(void) {
   char *AllocatedFilename = NULL;
   int I, J;
+  int RetVal;
 
 #define MAX_PID_SIZE 16
   char PidChars[MAX_PID_SIZE] = { 0 };
@@ -54,13 +58,13 @@ void __llvm_profile_write_file(void) {
       if (!NumPids++) {
         PidLength = snprintf(PidChars, MAX_PID_SIZE, "%d", getpid());
         if (PidLength <= 0)
-          return;
+          return -1;
       }
   if (NumPids) {
     // Allocate enough space for the substituted filename.
     AllocatedFilename = (char*)malloc(I + NumPids*(PidLength - 2) + 1);
     if (!AllocatedFilename)
-      return;
+      return -1;
 
     // Construct the new filename.
     for (I = 0, J = 0; Filename[I]; ++I)
@@ -79,18 +83,23 @@ void __llvm_profile_write_file(void) {
   }
 
   // Write the file.
-  __llvm_profile_write_file_with_name(Filename);
+  RetVal = __llvm_profile_write_file_with_name(Filename);
 
   // Free the filename.
   if (AllocatedFilename)
     free(AllocatedFilename);
+
+  return RetVal;
 }
 
+static void writeFileWithoutReturn(void) {
+  __llvm_profile_write_file();
+}
 void __llvm_profile_register_write_file_atexit(void) {
   static int HasBeenRegistered = 0;
 
   if (!HasBeenRegistered) {
     HasBeenRegistered = 1;
-    atexit(__llvm_profile_write_file);
+    atexit(writeFileWithoutReturn);
   }
 }

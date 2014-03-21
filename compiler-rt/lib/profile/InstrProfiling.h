@@ -49,7 +49,7 @@ typedef struct __llvm_profile_data {
  * It should be changed to take a char* buffer, and write binary data directly
  * to it.
  */
-void __llvm_profile_write_buffer(FILE *OutputFile);
+int __llvm_profile_write_buffer(FILE *OutputFile);
 
 const __llvm_profile_data *__llvm_profile_data_begin(void);
 const __llvm_profile_data *__llvm_profile_data_end(void);

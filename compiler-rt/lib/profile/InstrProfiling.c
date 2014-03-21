@@ -12,20 +12,27 @@
 
 /* TODO: void __llvm_profile_get_size_for_buffer(void);  */
 
-static void writeFunction(FILE *OutputFile, const __llvm_profile_data *Data) {
+static int writeFunction(FILE *OutputFile, const __llvm_profile_data *Data) {
   /* TODO: Requires libc: break requirement by writing directly to a buffer
    * instead of a FILE stream.
    */
   uint32_t I;
   for (I = 0; I < Data->NameSize; ++I)
-    fputc(Data->Name[I], OutputFile);
-  fprintf(OutputFile, "\n%" PRIu64 "\n%u\n", Data->FuncHash, Data->NumCounters);
+    if (fputc(Data->Name[I], OutputFile) != Data->Name[I])
+      return -1;
+  if (fprintf(OutputFile, "\n%" PRIu64 "\n%u\n", Data->FuncHash,
+              Data->NumCounters) < 0)
+    return -1;
   for (I = 0; I < Data->NumCounters; ++I)
-    fprintf(OutputFile, "%" PRIu64 "\n", Data->Counters[I]);
-  fprintf(OutputFile, "\n");
+    if (fprintf(OutputFile, "%" PRIu64 "\n", Data->Counters[I]) < 0)
+      return -1;
+  if (fprintf(OutputFile, "\n") < 0)
+    return -1;
+
+  return 0;
 }
 
-void __llvm_profile_write_buffer(FILE *OutputFile) {
+int __llvm_profile_write_buffer(FILE *OutputFile) {
   /* TODO: Requires libc: break requirement by taking a char* buffer instead of
    * a FILE stream.
    */
@@ -33,7 +40,10 @@ void __llvm_profile_write_buffer(FILE *OutputFile) {
 
   for (I = __llvm_profile_data_begin(), E = __llvm_profile_data_end();
        I != E; ++I)
-    writeFunction(OutputFile, I);
+    if (writeFunction(OutputFile, I))
+      return -1;
+
+  return 0;
 }
 
 void __llvm_profile_reset_counters(void) {
