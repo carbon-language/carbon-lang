@@ -271,20 +271,8 @@ public:
   unsigned getSOImmOpValue(const MCInst &MI, unsigned Op,
                            SmallVectorImpl<MCFixup> &Fixups,
                            const MCSubtargetInfo &STI) const {
-    int SoImmVal = -1;
-
-    const MCOperand &MO = MI.getOperand(Op);
-    if (MO.isImm()) {
-      SoImmVal = ARM_AM::getSOImmVal(MO.getImm());
-    } else if (MO.isExpr()) {
-      int64_t Value;
-      bool Invalid = MO.getExpr()->EvaluateAsAbsolute(Value);
-      (void) Invalid;
-      assert(!Invalid && "non-constant expression is not a valid SOImm operand");
-      assert((Value >= INT32_MIN && Value <= INT32_MAX) &&
-             "expression must be representable in 32 bits");
-      SoImmVal = Value;
-    }
+    unsigned SoImm = MI.getOperand(Op).getImm();
+    int SoImmVal = ARM_AM::getSOImmVal(SoImm);
     assert(SoImmVal != -1 && "Not a valid so_imm value!");
 
     // Encode rotate_imm.
