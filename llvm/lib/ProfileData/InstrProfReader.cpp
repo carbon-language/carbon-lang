@@ -90,14 +90,14 @@ RawInstrProfReader::RawInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer)
 
 static uint64_t getRawMagic() {
   return
-    uint64_t('l') << 56 |
-    uint64_t('p') << 48 |
-    uint64_t('r') << 40 |
-    uint64_t('o') << 32 |
-    uint64_t('f') << 24 |
-    uint64_t('r') << 16 |
-    uint64_t('a') <<  8 |
-    uint64_t('w');
+    uint64_t(255) << 56 |
+    uint64_t('l') << 48 |
+    uint64_t('p') << 40 |
+    uint64_t('r') << 32 |
+    uint64_t('o') << 24 |
+    uint64_t('f') << 16 |
+    uint64_t('r') <<  8 |
+    uint64_t(129);
 }
 
 bool RawInstrProfReader::hasFormat(const MemoryBuffer &DataBuffer) {
