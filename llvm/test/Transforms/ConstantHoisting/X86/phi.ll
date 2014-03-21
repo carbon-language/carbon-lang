@@ -19,11 +19,11 @@ return:
   ret i8* %retval.0
 
 ; CHECK-LABEL: @test1
-; CHECK: entry:
+; CHECK: if.end:
 ; CHECK: %const_mat = add i64 %const, 1
 ; CHECK-NEXT: %1 = inttoptr i64 %const_mat to i8*
-; CHECK-NEXT: br i1 %cmp
-; CHECK: %retval.0 = phi i8* [ null, %entry ], [ %1, %if.end ]
+; CHECK: return:
+; CHECK-NEXT: %retval.0 = phi i8* [ null, %entry ], [ inttoptr (i64 68719476736 to i8*), %if.end ]
 }
 
 define void @test2(i1 %cmp, i64** %tmp) {
