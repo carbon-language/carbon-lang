@@ -293,8 +293,10 @@ protected:
   /// \param Value Target symbol address to apply the relocation action
   virtual void resolveRelocation(const RelocationEntry &RE, uint64_t Value) = 0;
 
-  /// \brief Parses the object file relocation and stores it to Relocations
-  ///        or SymbolRelocations (this depends on the object file type).
+  /// \brief Parses one or more object file relocations (some object files use
+  ///        relocation pairs) and stores it to Relocations or SymbolRelocations
+  ///        (this depends on the object file type).
+  /// \return Iterator to the next relocation that needs to be parsed.
   virtual relocation_iterator
   processRelocationRef(unsigned SectionID, relocation_iterator RelI,
                        ObjectImage &Obj, ObjSectionToIDMap &ObjSectionToID,
