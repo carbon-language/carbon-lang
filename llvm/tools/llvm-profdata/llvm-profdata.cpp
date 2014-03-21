@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/LineIterator.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -22,12 +22,11 @@
 
 using namespace llvm;
 
-static void exitWithError(const std::string &Message,
-                          const std::string &Filename, int64_t Line = -1) {
-  errs() << "error: " << Filename;
-  if (Line >= 0)
-    errs() << ":" << Line;
-  errs() << ": " << Message << "\n";
+static void exitWithError(const Twine &Message, StringRef Whence = "") {
+  errs() << "error: ";
+  if (!Whence.empty())
+    errs() << Whence << ": ";
+  errs() << Message << "\n";
   ::exit(1);
 }
 
@@ -45,11 +44,10 @@ int merge_main(int argc, const char *argv[]) {
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM profile data merger\n");
 
-  std::unique_ptr<MemoryBuffer> File1;
-  std::unique_ptr<MemoryBuffer> File2;
-  if (error_code ec = MemoryBuffer::getFile(Filename1, File1))
+  std::unique_ptr<InstrProfReader> Reader1, Reader2;
+  if (error_code ec = InstrProfReader::create(Filename1, Reader1))
     exitWithError(ec.message(), Filename1);
-  if (error_code ec = MemoryBuffer::getFile(Filename2, File2))
+  if (error_code ec = InstrProfReader::create(Filename2, Reader2))
     exitWithError(ec.message(), Filename2);
 
   if (OutputFilename.empty())
@@ -60,64 +58,32 @@ int merge_main(int argc, const char *argv[]) {
   if (!ErrorInfo.empty())
     exitWithError(ErrorInfo, OutputFilename);
 
-  enum {ReadName, ReadHash, ReadCount, ReadCounters} State = ReadName;
-  uint64_t N1, N2, NumCounters;
-  line_iterator I1(*File1, '#'), I2(*File2, '#');
-  for (; !I1.is_at_end() && !I2.is_at_end(); ++I1, ++I2) {
-    if (I1->empty()) {
-      if (!I2->empty())
-        exitWithError("data mismatch", Filename2, I2.line_number());
-      Output << "\n";
-      continue;
+  for (InstrProfIterator I1 = Reader1->begin(), E1 = Reader1->end(),
+                         I2 = Reader2->begin(), E2 = Reader2->end();
+       I1 != E1 && I2 != E2; ++I1, ++I2) {
+    if (I1->Name != I2->Name)
+      exitWithError("Function name mismatch, " + I1->Name + " != " + I2->Name);
+    if (I1->Hash != I2->Hash)
+      exitWithError("Function hash mismatch for " + I1->Name);
+    if (I1->Counts.size() != I2->Counts.size())
+      exitWithError("Function count mismatch for " + I1->Name);
+
+    Output << I1->Name << "\n" << I1->Hash << "\n" << I1->Counts.size() << "\n";
+
+    for (size_t II = 0, EE = I1->Counts.size(); II < EE; ++II) {
+      uint64_t Sum = I1->Counts[II] + I2->Counts[II];
+      if (Sum < I1->Counts[II])
+        exitWithError("Counter overflow for " + I1->Name);
+      Output << Sum << "\n";
     }
-    switch (State) {
-    case ReadName:
-      if (*I1 != *I2)
-        exitWithError("function name mismatch", Filename2, I2.line_number());
-      Output << *I1 << "\n";
-      State = ReadHash;
-      break;
-    case ReadHash:
-      if (I1->getAsInteger(10, N1))
-        exitWithError("bad function hash", Filename1, I1.line_number());
-      if (I2->getAsInteger(10, N2))
-        exitWithError("bad function hash", Filename2, I2.line_number());
-      if (N1 != N2)
-        exitWithError("function hash mismatch", Filename2, I2.line_number());
-      Output << N1 << "\n";
-      State = ReadCount;
-      break;
-    case ReadCount:
-      if (I1->getAsInteger(10, N1))
-        exitWithError("bad function count", Filename1, I1.line_number());
-      if (I2->getAsInteger(10, N2))
-        exitWithError("bad function count", Filename2, I2.line_number());
-      if (N1 != N2)
-        exitWithError("function count mismatch", Filename2, I2.line_number());
-      Output << N1 << "\n";
-      NumCounters = N1;
-      State = ReadCounters;
-      break;
-    case ReadCounters:
-      if (I1->getAsInteger(10, N1))
-        exitWithError("invalid counter", Filename1, I1.line_number());
-      if (I2->getAsInteger(10, N2))
-        exitWithError("invalid counter", Filename2, I2.line_number());
-      uint64_t Sum = N1 + N2;
-      if (Sum < N1)
-        exitWithError("counter overflow", Filename2, I2.line_number());
-      Output << N1 + N2 << "\n";
-      if (--NumCounters == 0)
-        State = ReadName;
-      break;
-    }
+    Output << "\n";
   }
-  if (!I1.is_at_end())
-    exitWithError("truncated file", Filename1, I1.line_number());
-  if (!I2.is_at_end())
-    exitWithError("truncated file", Filename2, I2.line_number());
-  if (State != ReadName)
-    exitWithError("truncated file", Filename1, I1.line_number());
+  if (Reader1->hasError())
+    exitWithError(Reader1->getError().message(), Filename1);
+  if (Reader2->hasError())
+    exitWithError(Reader2->getError().message(), Filename2);
+  if (!Reader1->isEOF() || !Reader2->isEOF())
+    exitWithError("Number of instrumented functions differ.");
 
   return 0;
 }
@@ -158,6 +124,6 @@ int main(int argc, const char *argv[]) {
   else
     errs() << ProgName << ": Unknown command!\n";
 
-  errs() << "USAGE: " << ProgName << " <merge|show|generate> [args...]\n";
+  errs() << "USAGE: " << ProgName << " <merge> [args...]\n";
   return 1;
 }

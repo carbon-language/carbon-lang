@@ -1,19 +1,19 @@
 RUN: not llvm-profdata merge %p/Inputs/empty.profdata %p/Inputs/foo3-1.profdata 2>&1 | FileCheck %s --check-prefix=LENGTH
 RUN: not llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/foo3bar3-1.profdata 2>&1 | FileCheck %s --check-prefix=LENGTH
 RUN: not llvm-profdata merge %p/Inputs/foo4-1.profdata %p/Inputs/empty.profdata 2>&1 | FileCheck %s --check-prefix=LENGTH
-LENGTH: error: {{.*}}: truncated file
+LENGTH: error: Number of instrumented functions differ
 
 RUN: not llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/bar3-1.profdata 2>&1 | FileCheck %s --check-prefix=NAME
-NAME: error: {{.*}}: function name mismatch
+NAME: error: Function name mismatch, foo != bar
 
 RUN: not llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/foo4-1.profdata 2>&1 | FileCheck %s --check-prefix=HASH
-HASH: error: {{.*}}: function hash mismatch
+HASH: error: Function hash mismatch for foo
 
 RUN: not llvm-profdata merge %p/Inputs/overflow.profdata %p/Inputs/overflow.profdata 2>&1 | FileCheck %s --check-prefix=OVERFLOW
-OVERFLOW: error: {{.*}}: counter overflow
+OVERFLOW: error: Counter overflow for overflow
 
 RUN: not llvm-profdata merge %p/Inputs/invalid-count-later.profdata %p/Inputs/invalid-count-later.profdata 2>&1 | FileCheck %s --check-prefix=INVALID-COUNT-LATER
-INVALID-COUNT-LATER: error: {{.*}}: invalid counter
+INVALID-COUNT-LATER: error: {{.*}}: Malformed profile data
 
 RUN: not llvm-profdata merge %p/Inputs/bad-hash.profdata %p/Inputs/bad-hash.profdata 2>&1 | FileCheck %s --check-prefix=BAD-HASH
-BAD-HASH: error: {{.*}}: bad function hash
+BAD-HASH: error: {{.*}}: Malformed profile data

@@ -1,4 +1,4 @@
-##===- tools/llvm-profdata/Makefile ------------------------*- Makefile -*-===##
+##===- lib/ProfileData/Makefile ----------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,11 +7,8 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL := ../..
-TOOLNAME := llvm-profdata
-LINK_COMPONENTS := core profiledata support
-
-# This tool has no plugins, optimize startup time.
-TOOL_NO_EXPORTS := 1
+LEVEL = ../..
+LIBRARYNAME = LLVMProfileData
+BUILD_ARCHIVE := 1
 
 include $(LEVEL)/Makefile.common
