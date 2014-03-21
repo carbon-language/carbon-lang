@@ -54,7 +54,9 @@ run_lint ${LLVM_LINT_FILTER} --filter=${LLVM_LINT_FILTER} \
   lib/Transforms/Instrumentation/*Sanitizer.cpp \
   lib/Transforms/Utils/SpecialCaseList.cpp &
 
-COMPILER_RT=projects/compiler-rt
+if [ "${COMPILER_RT}" == "" ]; then
+  COMPILER_RT=projects/compiler-rt
+fi
 LIT_TESTS=${COMPILER_RT}/test
 # Headers
 SANITIZER_INCLUDES=${COMPILER_RT}/include/sanitizer
