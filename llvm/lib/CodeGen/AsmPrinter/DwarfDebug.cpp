@@ -604,7 +604,7 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit *TheCU,
     return NULL;
 
   // Unique scope where applicable.
-  DIScope DS(resolve(DIScope(Scope->getScopeNode()).getRef()));
+  DIScope DS(Scope->getScopeNode());
 
   SmallVector<DIE *, 8> Children;
   DIE *ObjectPointer = NULL;
