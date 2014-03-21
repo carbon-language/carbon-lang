@@ -9,7 +9,7 @@ target_link_libraries(lld
 install(TARGETS lld
   RUNTIME DESTINATION bin)
 
-# Create the link[.exe] symlink in the build directory. If symlink is not
+# Create the lld-link[.exe] symlink in the build directory. If symlink is not
 # supported by the operating system, create a copy instead.
 if(UNIX)
   set(command create_symlink)
@@ -17,6 +17,6 @@ else()
   set(command copy)
 endif()
 set(src "${LLVM_RUNTIME_OUTPUT_INTDIR}/lld${CMAKE_EXECUTABLE_SUFFIX}")
-set(dst "${LLVM_RUNTIME_OUTPUT_INTDIR}/link${CMAKE_EXECUTABLE_SUFFIX}")
+set(dst "${LLVM_RUNTIME_OUTPUT_INTDIR}/lld-link${CMAKE_EXECUTABLE_SUFFIX}")
 add_custom_command(TARGET lld POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E ${command} ${src} ${dst})
