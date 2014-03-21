@@ -333,9 +333,8 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
   _followOnNexts.resize(range.size());
   for (const DefinedAtom *ai : range) {
     for (const Reference *r : *ai) {
-      if (r->kindNamespace() != lld::Reference::KindNamespace::all)
-        continue;
-      if (r->kindValue() != lld::Reference::kindLayoutAfter)
+      if (r->kindNamespace() != lld::Reference::KindNamespace::all ||
+          r->kindValue() != lld::Reference::kindLayoutAfter)
         continue;
       const DefinedAtom *targetAtom = dyn_cast<DefinedAtom>(r->target());
       _followOnNexts[ai] = targetAtom;
@@ -350,31 +349,33 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
         // If the targetAtom is not a root of any chain, let's make the root of
         // the targetAtom to the root of the current chain.
         _followOnRoots[targetAtom] = _followOnRoots[ai];
-      } else if (iter->second == targetAtom) {
+        continue;
+      }
+      if (iter->second == targetAtom) {
         // If the targetAtom is the root of a chain, the chain becomes part of
         // the current chain. Rewrite the subchain's root to the current
         // chain's root.
         setChainRoot(targetAtom, _followOnRoots[ai]);
-      } else {
-        // The targetAtom is already a part of a chain. If the current atom is
-        // of size zero, we can insert it in the middle of the chain just
-        // before the target atom, while not breaking other atom's followon
-        // relationships. If it's not, we can only insert the current atom at
-        // the beginning of the chain. All the atoms followed by the target
-        // atom must be of size zero in that case to satisfy the followon
-        // relationships.
-        size_t currentAtomSize = ai->size();
-        if (currentAtomSize == 0) {
-          const DefinedAtom *targetPrevAtom = findAtomFollowedBy(targetAtom);
-          _followOnNexts[targetPrevAtom] = ai;
-          _followOnRoots[ai] = _followOnRoots[targetPrevAtom];
-        } else {
-          if (!checkAllPrevAtomsZeroSize(targetAtom))
-            break;
-          _followOnNexts[ai] = _followOnRoots[targetAtom];
-          setChainRoot(_followOnRoots[targetAtom], _followOnRoots[ai]);
-        }
+        continue;
       }
+      // The targetAtom is already a part of a chain. If the current atom is
+      // of size zero, we can insert it in the middle of the chain just
+      // before the target atom, while not breaking other atom's followon
+      // relationships. If it's not, we can only insert the current atom at
+      // the beginning of the chain. All the atoms followed by the target
+      // atom must be of size zero in that case to satisfy the followon
+      // relationships.
+      size_t currentAtomSize = ai->size();
+      if (currentAtomSize == 0) {
+        const DefinedAtom *targetPrevAtom = findAtomFollowedBy(targetAtom);
+        _followOnNexts[targetPrevAtom] = ai;
+        _followOnRoots[ai] = _followOnRoots[targetPrevAtom];
+        continue;
+      }
+      if (!checkAllPrevAtomsZeroSize(targetAtom))
+        break;
+      _followOnNexts[ai] = _followOnRoots[targetAtom];
+      setChainRoot(_followOnRoots[targetAtom], _followOnRoots[ai]);
     }
   }
 }
@@ -396,54 +397,53 @@ void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
   // references so that we have only one table
   for (const DefinedAtom *ai : range) {
     for (const Reference *r : *ai) {
-      if (r->kindNamespace() != lld::Reference::KindNamespace::all)
+      if (r->kindNamespace() != lld::Reference::KindNamespace::all ||
+          r->kindValue() != lld::Reference::kindInGroup)
         continue;
-      if (r->kindValue() == lld::Reference::kindInGroup) {
-        const DefinedAtom *rootAtom = dyn_cast<DefinedAtom>(r->target());
-        // If the root atom is not part of any root
-        // create a new root
-        if (_followOnRoots.count(rootAtom) == 0) {
-          _followOnRoots[rootAtom] = rootAtom;
-        }
-        // If the current Atom has not been seen yet and there is no root
-        // that has been set, set the root of the atom to the targetAtom
-        // as the targetAtom points to the ingroup root
-        auto iter = _followOnRoots.find(ai);
-        if (iter == _followOnRoots.end()) {
-          _followOnRoots[ai] = rootAtom;
-        } else if (iter->second == ai) {
-          if (iter->second != rootAtom)
-            setChainRoot(iter->second, rootAtom);
-        } else {
-          // TODO : Flag an error that the root of the tree
-          // is different, Here is an example
-          // Say there are atoms
-          // chain 1 : a->b->c
-          // chain 2 : d->e->f
-          // and e,f have their ingroup reference as a
-          // this could happen only if the root of e,f that is d
-          // has root as 'a'
-          continue;
-        }
-
-        // Check if the current atom is part of the chain
-        bool isAtomInChain = false;
-        const DefinedAtom *lastAtom = rootAtom;
-        for (;;) {
-          AtomToAtomT::iterator followOnAtomsIter =
-              _followOnNexts.find(lastAtom);
-          if (followOnAtomsIter != _followOnNexts.end()) {
-            lastAtom = followOnAtomsIter->second;
-            if (lastAtom != ai)
-              continue;
-            isAtomInChain = true;
-          }
-          break;
-        }
-
-        if (!isAtomInChain)
-          _followOnNexts[lastAtom] = ai;
+      const DefinedAtom *rootAtom = dyn_cast<DefinedAtom>(r->target());
+      // If the root atom is not part of any root
+      // create a new root
+      if (_followOnRoots.count(rootAtom) == 0) {
+        _followOnRoots[rootAtom] = rootAtom;
       }
+      // If the current Atom has not been seen yet and there is no root
+      // that has been set, set the root of the atom to the targetAtom
+      // as the targetAtom points to the ingroup root
+      auto iter = _followOnRoots.find(ai);
+      if (iter == _followOnRoots.end()) {
+        _followOnRoots[ai] = rootAtom;
+      } else if (iter->second == ai) {
+        if (iter->second != rootAtom)
+          setChainRoot(iter->second, rootAtom);
+      } else {
+        // TODO : Flag an error that the root of the tree
+        // is different, Here is an example
+        // Say there are atoms
+        // chain 1 : a->b->c
+        // chain 2 : d->e->f
+        // and e,f have their ingroup reference as a
+        // this could happen only if the root of e,f that is d
+        // has root as 'a'
+        continue;
+      }
+
+      // Check if the current atom is part of the chain
+      bool isAtomInChain = false;
+      const DefinedAtom *lastAtom = rootAtom;
+      for (;;) {
+        AtomToAtomT::iterator followOnAtomsIter =
+            _followOnNexts.find(lastAtom);
+        if (followOnAtomsIter != _followOnNexts.end()) {
+          lastAtom = followOnAtomsIter->second;
+          if (lastAtom != ai)
+            continue;
+          isAtomInChain = true;
+        }
+        break;
+      }
+
+      if (!isAtomInChain)
+        _followOnNexts[lastAtom] = ai;
     }
   }
 }
@@ -468,50 +468,53 @@ void LayoutPass::buildPrecededByTable(MutableFile::DefinedAtomRange &range) {
   // references so that we have only one table
   for (const DefinedAtom *ai : range) {
     for (const Reference *r : *ai) {
-      if (r->kindNamespace() != lld::Reference::KindNamespace::all)
+      if (r->kindNamespace() != lld::Reference::KindNamespace::all ||
+          r->kindValue() != lld::Reference::kindLayoutBefore)
         continue;
-      if (r->kindValue() == lld::Reference::kindLayoutBefore) {
-        const DefinedAtom *targetAtom = dyn_cast<DefinedAtom>(r->target());
-        // Is the targetAtom not chained
-        if (_followOnRoots.count(targetAtom) == 0) {
-          // Is the current atom not part of any root ?
-          if (_followOnRoots.count(ai) == 0) {
-            _followOnRoots[ai] = ai;
-            _followOnNexts[ai] = targetAtom;
-            _followOnRoots[targetAtom] = _followOnRoots[ai];
-          } else if (_followOnNexts.count(ai) == 0) {
-            // Chain the targetAtom to the current Atom
-            // if the currentAtom has no followon references
-            _followOnNexts[ai] = targetAtom;
-            _followOnRoots[targetAtom] = _followOnRoots[ai];
-          }
-        } else if (_followOnRoots.find(targetAtom)->second == targetAtom) {
-          // Is the targetAtom in chain with the targetAtom as the root ?
-          bool changeRoots = false;
-          if (_followOnRoots.count(ai) == 0) {
-            _followOnRoots[ai] = ai;
-            _followOnNexts[ai] = targetAtom;
-            _followOnRoots[targetAtom] = _followOnRoots[ai];
-            changeRoots = true;
-          } else if (_followOnNexts.count(ai) == 0) {
-            // Chain the targetAtom to the current Atom
-            // if the currentAtom has no followon references
-            if (_followOnRoots[ai] != _followOnRoots[targetAtom]) {
-              _followOnNexts[ai] = targetAtom;
-              _followOnRoots[targetAtom] = _followOnRoots[ai];
-              changeRoots = true;
-            }
-          }
-          // Change the roots of the targetAtom and its chain to
-          // the current atoms root
-          if (changeRoots) {
-            setChainRoot(_followOnRoots[targetAtom], _followOnRoots[ai]);
-          }
-        }   // Is targetAtom root
-      }     // kindLayoutBefore
-    }       // Reference
-  }         // atom iteration
-}           // end function
+      const DefinedAtom *targetAtom = dyn_cast<DefinedAtom>(r->target());
+      // Is the targetAtom not chained
+      if (_followOnRoots.count(targetAtom) == 0) {
+        // Is the current atom not part of any root?
+        if (_followOnRoots.count(ai) == 0) {
+          _followOnRoots[ai] = ai;
+          _followOnNexts[ai] = targetAtom;
+          _followOnRoots[targetAtom] = _followOnRoots[ai];
+          continue;
+        }
+        if (_followOnNexts.count(ai) == 0) {
+          // Chain the targetAtom to the current Atom
+          // if the currentAtom has no followon references
+          _followOnNexts[ai] = targetAtom;
+          _followOnRoots[targetAtom] = _followOnRoots[ai];
+        }
+        continue;
+      }
+      if (_followOnRoots.find(targetAtom)->second != targetAtom)
+        continue;
+      // Is the targetAtom in chain with the targetAtom as the root?
+      bool changeRoots = false;
+      if (_followOnRoots.count(ai) == 0) {
+        _followOnRoots[ai] = ai;
+        _followOnNexts[ai] = targetAtom;
+        _followOnRoots[targetAtom] = _followOnRoots[ai];
+        changeRoots = true;
+      } else if (_followOnNexts.count(ai) == 0) {
+        // Chain the targetAtom to the current Atom
+        // if the currentAtom has no followon references
+        if (_followOnRoots[ai] != _followOnRoots[targetAtom]) {
+          _followOnNexts[ai] = targetAtom;
+          _followOnRoots[targetAtom] = _followOnRoots[ai];
+          changeRoots = true;
+        }
+      }
+      // Change the roots of the targetAtom and its chain to
+      // the current atoms root
+      if (changeRoots) {
+        setChainRoot(_followOnRoots[targetAtom], _followOnRoots[ai]);
+      }
+    }
+  }
+}
 
 
 /// Build an ordinal override map by traversing the followon chain, and
@@ -526,13 +529,13 @@ void LayoutPass::buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range) {
     if (_ordinalOverrideMap.find(atom) != _ordinalOverrideMap.end())
       continue;
     AtomToAtomT::iterator start = _followOnRoots.find(atom);
-    if (start != _followOnRoots.end()) {
-      for (const DefinedAtom *nextAtom = start->second; nextAtom != NULL;
-           nextAtom = _followOnNexts[nextAtom]) {
-        AtomToOrdinalT::iterator pos = _ordinalOverrideMap.find(nextAtom);
-        if (pos == _ordinalOverrideMap.end())
-          _ordinalOverrideMap[nextAtom] = index++;
-      }
+    if (start == _followOnRoots.end())
+      continue;
+    for (const DefinedAtom *nextAtom = start->second; nextAtom != NULL;
+         nextAtom = _followOnNexts[nextAtom]) {
+      AtomToOrdinalT::iterator pos = _ordinalOverrideMap.find(nextAtom);
+      if (pos == _ordinalOverrideMap.end())
+        _ordinalOverrideMap[nextAtom] = index++;
     }
   }
 }
