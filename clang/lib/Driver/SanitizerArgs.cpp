@@ -279,12 +279,7 @@ bool SanitizerArgs::parse(const Driver &D, const llvm::opt::ArgList &Args,
                           unsigned &Remove, bool DiagnoseErrors) {
   Add = 0;
   Remove = 0;
-  const char *DeprecatedReplacement = 0;
-  if (A->getOption().matches(options::OPT_fbounds_checking) ||
-      A->getOption().matches(options::OPT_fbounds_checking_EQ)) {
-    Add = LocalBounds;
-    DeprecatedReplacement = "-fsanitize=local-bounds";
-  } else if (A->getOption().matches(options::OPT_fsanitize_EQ)) {
+  if (A->getOption().matches(options::OPT_fsanitize_EQ)) {
     Add = parse(D, A, DiagnoseErrors);
   } else if (A->getOption().matches(options::OPT_fno_sanitize_EQ)) {
     Remove = parse(D, A, DiagnoseErrors);
@@ -292,11 +287,6 @@ bool SanitizerArgs::parse(const Driver &D, const llvm::opt::ArgList &Args,
     // Flag is not relevant to sanitizers.
     return false;
   }
-  // If this is a deprecated synonym, produce a warning directing users
-  // towards the new spelling.
-  if (DeprecatedReplacement && DiagnoseErrors)
-    D.Diag(diag::warn_drv_deprecated_arg)
-      << A->getAsString(Args) << DeprecatedReplacement;
   return true;
 }
 
