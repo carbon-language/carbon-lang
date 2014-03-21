@@ -462,36 +462,44 @@ void ELFObjectWriter::WriteSymbolEntry(MCDataFragment *SymtabF,
   }
 }
 
-uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &Data,
+uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
                                       const MCAsmLayout &Layout) {
-  if (Data.isCommon() && Data.isExternal())
-    return Data.getCommonAlignment();
+  MCSymbolData *Data = &OrigData;
+  if (Data->isCommon() && Data->isExternal())
+    return Data->getCommonAlignment();
 
-  const MCSymbol &Symbol = Data.getSymbol();
+  const MCSymbol *Symbol = &Data->getSymbol();
+  bool IsThumbFunc = OrigData.getFlags() & ELF_Other_ThumbFunc;
 
-  if (Symbol.isAbsolute() && Symbol.isVariable()) {
-    if (const MCExpr *Value = Symbol.getVariableValue()) {
-      int64_t IntValue;
-      if (Value->EvaluateAsAbsolute(IntValue, Layout)) {
-        if (Data.getFlags() & ELF_Other_ThumbFunc)
-          return static_cast<uint64_t>(IntValue | 1);
-        else
-          return static_cast<uint64_t>(IntValue);
-      }
+  uint64_t Res = 0;
+  if (Symbol->isVariable()) {
+    const MCExpr *Expr = Symbol->getVariableValue();
+    MCValue Value;
+    if (!Expr->EvaluateAsRelocatable(Value, &Layout))
+      llvm_unreachable("Invalid expression");
+
+    assert(!Value.getSymB());
+
+    Res = Value.getConstant();
+
+    if (const MCSymbolRefExpr *A = Value.getSymA()) {
+      Symbol = &A->getSymbol();
+      Data = &Layout.getAssembler().getSymbolData(*Symbol);
+    } else {
+      Symbol = 0;
+      Data = 0;
     }
   }
 
-  if (!Symbol.isInSection())
-    return 0;
+  if (IsThumbFunc)
+    Res |= 1;
 
-  if (Data.getFragment()) {
-    if (Data.getFlags() & ELF_Other_ThumbFunc)
-      return Layout.getSymbolOffset(&Data) | 1;
-    else
-      return Layout.getSymbolOffset(&Data);
-  }
+  if (!Symbol || !Symbol->isInSection())
+    return Res;
 
-  return 0;
+  Res += Layout.getSymbolOffset(Data);
+
+  return Res;
 }
 
 void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
@@ -591,7 +599,7 @@ void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
   uint8_t Other = MCELF::getOther(OrigData) << (ELF_STO_Shift - ELF_STV_Shift);
   Other |= Visibility;
 
-  uint64_t Value = SymbolValue(Data, Layout);
+  uint64_t Value = SymbolValue(OrigData, Layout);
   if (OrigData.getFlags() & ELF_Other_ThumbFunc)
     Value |= 1;
   uint64_t Size = 0;
