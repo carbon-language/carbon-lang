@@ -1,4 +1,4 @@
-; RUN: llc < %s -disable-cfi -mtriple=i386-apple-darwin9 -relocation-model=pic -disable-fp-elim | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin9 -relocation-model=pic -disable-fp-elim | FileCheck %s
 
 
 
@@ -48,8 +48,3 @@ return:                                           ; preds = %entry
   %retval1 = load i32* %retval                    ; <i32> [#uses=1]
   ret i32 %retval1
 }
-
-; CHECK: .private_extern _func.eh
-; CHECK: .private_extern _main.eh
-
-
