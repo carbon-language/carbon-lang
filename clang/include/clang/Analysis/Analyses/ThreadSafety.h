@@ -39,7 +39,8 @@ enum ProtectedOperationKind {
 /// mutex.
 enum LockKind {
   LK_Shared, ///< Shared/reader lock of a mutex.
-  LK_Exclusive ///< Exclusive/writer lock of a mutex.
+  LK_Exclusive, ///< Exclusive/writer lock of a mutex.
+  LK_Generic  ///<  Can be either Shared or Exclusive
 };
 
 /// This enum distinguishes between different ways to access (read or write) a
@@ -81,6 +82,18 @@ public:
   /// in the error message.
   /// \param Loc -- The SourceLocation of the Unlock
   virtual void handleUnmatchedUnlock(Name LockName, SourceLocation Loc) {}
+
+  /// Warn about an unlock function call that attempts to unlock a lock with
+  /// the incorrect lock kind. For instance, a shared lock being unlocked
+  /// exclusively, or vice versa.
+  /// \param LockName -- A StringRef name for the lock expression, to be printed
+  /// in the error message.
+  /// \param Expected -- the kind of lock expected.
+  /// \param Received -- the kind of lock received.
+  /// \param Loc -- The SourceLocation of the Unlock.
+  virtual void handleIncorrectUnlockKind(Name LockName, LockKind Expected,
+                                         LockKind Received,
+                                         SourceLocation Loc) {}
 
   /// Warn about lock function calls for locks which are already held.
   /// \param LockName -- A StringRef name for the lock expression, to be printed

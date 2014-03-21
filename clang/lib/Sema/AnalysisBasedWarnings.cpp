@@ -1452,7 +1452,15 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
   void handleUnmatchedUnlock(Name LockName, SourceLocation Loc) override {
     warnLockMismatch(diag::warn_unlock_but_no_lock, LockName, Loc);
   }
-
+  void handleIncorrectUnlockKind(Name LockName, LockKind Expected,
+                                 LockKind Received,
+                                 SourceLocation Loc) override {
+    if (Loc.isInvalid())
+      Loc = FunLocation;
+    PartialDiagnosticAt Warning(Loc, S.PDiag(diag::warn_unlock_kind_mismatch)
+                                         << LockName << Received << Expected);
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+  }
   void handleDoubleLock(Name LockName, SourceLocation Loc) override {
     warnLockMismatch(diag::warn_double_lock, LockName, Loc);
   }

@@ -1388,7 +1388,8 @@ def ReleaseCapability : InheritableAttr {
                      CXX11<"clang", "release_shared_capability">]>,
                    Accessor<"isGeneric",
                      [GNU<"release_generic_capability">,
-                      CXX11<"clang", "release_generic_capability">]>];
+                      CXX11<"clang", "release_generic_capability">,
+                      GNU<"unlock_function">]>];
   let Documentation = [ReleaseCapabilityDocs];
 }
 

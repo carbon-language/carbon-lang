@@ -1430,7 +1430,7 @@ public:
 
   void addLock(FactSet &FSet, const SExpr &Mutex, const LockData &LDat);
   void removeLock(FactSet &FSet, const SExpr &Mutex,
-                  SourceLocation UnlockLoc, bool FullyRemove=false);
+                  SourceLocation UnlockLoc, bool FullyRemove, LockKind Kind);
 
   template <typename AttrType>
   void getMutexIDs(MutexIDList &Mtxs, AttrType *Attr, Expr *Exp,
@@ -1486,16 +1486,23 @@ void ThreadSafetyAnalyzer::addLock(FactSet &FSet, const SExpr &Mutex,
 /// \brief Remove a lock from the lockset, warning if the lock is not there.
 /// \param Mutex The lock expression corresponding to the lock to be removed
 /// \param UnlockLoc The source location of the unlock (only used in error msg)
-void ThreadSafetyAnalyzer::removeLock(FactSet &FSet,
-                                      const SExpr &Mutex,
+void ThreadSafetyAnalyzer::removeLock(FactSet &FSet, const SExpr &Mutex,
                                       SourceLocation UnlockLoc,
-                                      bool FullyRemove) {
+                                      bool FullyRemove, LockKind ReceivedKind) {
   if (Mutex.shouldIgnore())
     return;
 
   const LockData *LDat = FSet.findLock(FactMan, Mutex);
   if (!LDat) {
     Handler.handleUnmatchedUnlock(Mutex.toString(), UnlockLoc);
+    return;
+  }
+
+  // Generic lock removal doesn't care about lock kind mismatches, but
+  // otherwise diagnose when the lock kinds are mismatched.
+  if (ReceivedKind != LK_Generic && LDat->LKind != ReceivedKind) {
+    Handler.handleIncorrectUnlockKind(Mutex.toString(), LDat->LKind,
+                                      ReceivedKind, UnlockLoc);
     return;
   }
 
@@ -1926,9 +1933,8 @@ void BuildLockset::checkPtAccess(const Expr *Exp, AccessKind AK) {
 void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
   SourceLocation Loc = Exp->getExprLoc();
   const AttrVec &ArgAttrs = D->getAttrs();
-  MutexIDList ExclusiveLocksToAdd;
-  MutexIDList SharedLocksToAdd;
-  MutexIDList LocksToRemove;
+  MutexIDList ExclusiveLocksToAdd, SharedLocksToAdd;
+  MutexIDList ExclusiveLocksToRemove, SharedLocksToRemove, GenericLocksToRemove;
 
   for(unsigned i = 0; i < ArgAttrs.size(); ++i) {
     Attr *At = const_cast<Attr*>(ArgAttrs[i]);
@@ -1973,7 +1979,12 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
       // mutexes from the lockset, and flag a warning if they are not there.
       case attr::ReleaseCapability: {
         auto *A = cast<ReleaseCapabilityAttr>(At);
-        Analyzer->getMutexIDs(LocksToRemove, A, Exp, D, VD);
+        if (A->isGeneric())
+          Analyzer->getMutexIDs(GenericLocksToRemove, A, Exp, D, VD);
+        else if (A->isShared())
+          Analyzer->getMutexIDs(SharedLocksToRemove, A, Exp, D, VD);
+        else
+          Analyzer->getMutexIDs(ExclusiveLocksToRemove, A, Exp, D, VD);
         break;
       }
 
@@ -2014,14 +2025,10 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
   }
 
   // Add locks.
-  for (unsigned i=0,n=ExclusiveLocksToAdd.size(); i<n; ++i) {
-    Analyzer->addLock(FSet, ExclusiveLocksToAdd[i],
-                            LockData(Loc, LK_Exclusive, isScopedVar));
-  }
-  for (unsigned i=0,n=SharedLocksToAdd.size(); i<n; ++i) {
-    Analyzer->addLock(FSet, SharedLocksToAdd[i],
-                            LockData(Loc, LK_Shared, isScopedVar));
-  }
+  for (const auto &M : ExclusiveLocksToAdd)
+    Analyzer->addLock(FSet, M, LockData(Loc, LK_Exclusive, isScopedVar));
+  for (const auto &M : SharedLocksToAdd)
+    Analyzer->addLock(FSet, M, LockData(Loc, LK_Shared, isScopedVar));
 
   // Add the managing object as a dummy mutex, mapped to the underlying mutex.
   // FIXME -- this doesn't work if we acquire multiple locks.
@@ -2030,22 +2037,21 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
     DeclRefExpr DRE(VD, false, VD->getType(), VK_LValue, VD->getLocation());
     SExpr SMutex(&DRE, 0, 0);
 
-    for (unsigned i=0,n=ExclusiveLocksToAdd.size(); i<n; ++i) {
-      Analyzer->addLock(FSet, SMutex, LockData(MLoc, LK_Exclusive,
-                                               ExclusiveLocksToAdd[i]));
-    }
-    for (unsigned i=0,n=SharedLocksToAdd.size(); i<n; ++i) {
-      Analyzer->addLock(FSet, SMutex, LockData(MLoc, LK_Shared,
-                                               SharedLocksToAdd[i]));
-    }
+    for (const auto &M : ExclusiveLocksToAdd)
+      Analyzer->addLock(FSet, SMutex, LockData(MLoc, LK_Exclusive, M));
+    for (const auto &M : SharedLocksToAdd)
+      Analyzer->addLock(FSet, SMutex, LockData(MLoc, LK_Shared, M));
   }
 
   // Remove locks.
   // FIXME -- should only fully remove if the attribute refers to 'this'.
   bool Dtor = isa<CXXDestructorDecl>(D);
-  for (unsigned i=0,n=LocksToRemove.size(); i<n; ++i) {
-    Analyzer->removeLock(FSet, LocksToRemove[i], Loc, Dtor);
-  }
+  for (const auto &M : ExclusiveLocksToRemove)
+    Analyzer->removeLock(FSet, M, Loc, Dtor, LK_Exclusive);
+  for (const auto &M : SharedLocksToRemove)
+    Analyzer->removeLock(FSet, M, Loc, Dtor, LK_Shared);
+  for (const auto &M : GenericLocksToRemove)
+    Analyzer->removeLock(FSet, M, Loc, Dtor, LK_Generic);
 }
 
 
