@@ -33,8 +33,8 @@ static int writeFile(FILE *File) {
     DataSize,
     CountersSize,
     NamesSize,
-    (uint64_t)CountersBegin,
-    (uint64_t)NamesBegin
+    (uintptr_t)CountersBegin,
+    (uintptr_t)NamesBegin
   };
 
   /* Write the data. */

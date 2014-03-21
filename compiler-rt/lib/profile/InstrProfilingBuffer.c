@@ -41,8 +41,8 @@ int __llvm_profile_write_buffer(char *Buffer) {
     DataSize,
     CountersSize,
     NamesSize,
-    (uint64_t)CountersBegin,
-    (uint64_t)NamesBegin
+    (uintptr_t)CountersBegin,
+    (uintptr_t)NamesBegin
   };
 
   /* Write the data. */
