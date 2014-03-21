@@ -19,18 +19,6 @@
 
 using namespace llvm;
 
-static uint64_t getRawMagic() {
-  return
-    uint64_t('l') << 56 |
-    uint64_t('p') << 48 |
-    uint64_t('r') << 40 |
-    uint64_t('o') << 32 |
-    uint64_t('f') << 24 |
-    uint64_t('r') << 16 |
-    uint64_t('a') <<  8 |
-    uint64_t('w');
-}
-
 error_code InstrProfReader::create(std::string Path,
                                    std::unique_ptr<InstrProfReader> &Result) {
   std::unique_ptr<MemoryBuffer> Buffer;
@@ -41,17 +29,13 @@ error_code InstrProfReader::create(std::string Path,
   if (Buffer->getBufferSize() > std::numeric_limits<unsigned>::max())
     return instrprof_error::too_large;
 
-  if (Buffer->getBufferSize() < sizeof(uint64_t)) {
-    Result.reset(new TextInstrProfReader(Buffer));
-    return Result->readHeader();
-  }
-
-  uint64_t Magic = *(uint64_t *)Buffer->getBufferStart();
-  uint64_t SwappedMagic = sys::SwapByteOrder(Magic);
-  if (Magic == getRawMagic() || SwappedMagic == getRawMagic())
+  // Create the reader.
+  if (RawInstrProfReader::hasFormat(*Buffer))
     Result.reset(new RawInstrProfReader(Buffer));
   else
     Result.reset(new TextInstrProfReader(Buffer));
+
+  // Read the header and return the result.
   return Result->readHeader();
 }
 
@@ -101,27 +85,41 @@ error_code TextInstrProfReader::readNextRecord(InstrProfRecord &Record) {
   return success();
 }
 
-static uint64_t getRawVersion() {
-  return 1;
-}
-namespace {
-}
 RawInstrProfReader::RawInstrProfReader(std::unique_ptr<MemoryBuffer> &DataBuffer)
     : DataBuffer(DataBuffer.release()) { }
 
+static uint64_t getRawMagic() {
+  return
+    uint64_t('l') << 56 |
+    uint64_t('p') << 48 |
+    uint64_t('r') << 40 |
+    uint64_t('o') << 32 |
+    uint64_t('f') << 24 |
+    uint64_t('r') << 16 |
+    uint64_t('a') <<  8 |
+    uint64_t('w');
+}
+
+bool RawInstrProfReader::hasFormat(const MemoryBuffer &DataBuffer) {
+  if (DataBuffer.getBufferSize() < sizeof(getRawMagic()))
+    return false;
+  const RawHeader *Header = (const RawHeader *)DataBuffer.getBufferStart();
+  return getRawMagic() == Header->Magic ||
+    sys::SwapByteOrder(getRawMagic()) == Header->Magic;
+}
+
 error_code RawInstrProfReader::readHeader() {
+  if (!hasFormat(*DataBuffer))
+    return error(instrprof_error::bad_magic);
   if (DataBuffer->getBufferSize() < sizeof(RawHeader))
     return error(instrprof_error::bad_header);
-  const RawHeader *Header = (RawHeader *)DataBuffer->getBufferStart();
-  if (Header->Magic == getRawMagic())
-    ShouldSwapBytes = false;
-  else {
-    if (sys::SwapByteOrder(Header->Magic) != getRawMagic())
-      return error(instrprof_error::bad_magic);
-
-    ShouldSwapBytes = true;
-  }
+  const RawHeader *Header = (const RawHeader *)DataBuffer->getBufferStart();
+  ShouldSwapBytes = Header->Magic != getRawMagic();
   return readHeader(*Header);
+}
+
+static uint64_t getRawVersion() {
+  return 1;
 }
 
 error_code RawInstrProfReader::readHeader(const RawHeader &Header) {

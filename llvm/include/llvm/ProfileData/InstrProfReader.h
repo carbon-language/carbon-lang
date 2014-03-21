@@ -163,6 +163,7 @@ private:
 public:
   RawInstrProfReader(std::unique_ptr<MemoryBuffer> &DataBuffer);
 
+  static bool hasFormat(const MemoryBuffer &DataBuffer);
   error_code readHeader() override;
   error_code readNextRecord(InstrProfRecord &Record) override;
 
