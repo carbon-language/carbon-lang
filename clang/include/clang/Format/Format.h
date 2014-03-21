@@ -58,6 +58,9 @@ struct FormatStyle {
   /// \brief The maximum number of consecutive empty lines to keep.
   unsigned MaxEmptyLinesToKeep;
 
+  /// \brief If true, empty lines at the start of blocks are kept.
+  bool KeepEmptyLinesAtTheStartOfBlocks;
+
   /// \brief The penalty for each line break introduced inside a comment.
   unsigned PenaltyBreakComment;
 
@@ -333,6 +336,8 @@ struct FormatStyle {
                R.IndentFunctionDeclarationAfterType &&
            IndentWidth == R.IndentWidth && Language == R.Language &&
            MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
+           KeepEmptyLinesAtTheStartOfBlocks ==
+               R.KeepEmptyLinesAtTheStartOfBlocks &&
            NamespaceIndentation == R.NamespaceIndentation &&
            ObjCSpaceAfterProperty == R.ObjCSpaceAfterProperty &&
            ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&

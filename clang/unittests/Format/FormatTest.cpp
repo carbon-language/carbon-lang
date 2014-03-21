@@ -182,9 +182,27 @@ TEST_F(FormatTest, RemovesEmptyLines) {
             format("namespace N {\n"
                    "\n"
                    "int    i;\n"
-                   "}"));
+                   "}",
+                   getGoogleStyle()));
 
   // Remove empty lines at the beginning and end of blocks.
+  EXPECT_EQ("void f() {\n"
+            "\n"
+            "  if (a) {\n"
+            "\n"
+            "    f();\n"
+            "  }\n"
+            "}",
+            format("void f() {\n"
+                   "\n"
+                   "  if (a) {\n"
+                   "\n"
+                   "    f();\n"
+                   "\n"
+                   "  }\n"
+                   "\n"
+                   "}",
+                   getLLVMStyle()));
   EXPECT_EQ("void f() {\n"
             "  if (a) {\n"
             "    f();\n"
@@ -198,7 +216,8 @@ TEST_F(FormatTest, RemovesEmptyLines) {
                    "\n"
                    "  }\n"
                    "\n"
-                   "}"));
+                   "}",
+                   getGoogleStyle()));
 
   // Don't remove empty lines in more complex control statements.
   EXPECT_EQ("void f() {\n"
@@ -7490,6 +7509,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE_BOOL(ConstructorInitializerAllOnOneLineOrOnePerLine);
   CHECK_PARSE_BOOL(DerivePointerBinding);
   CHECK_PARSE_BOOL(IndentCaseLabels);
+  CHECK_PARSE_BOOL(KeepEmptyLinesAtTheStartOfBlocks);
   CHECK_PARSE_BOOL(ObjCSpaceAfterProperty);
   CHECK_PARSE_BOOL(ObjCSpaceBeforeProtocolList);
   CHECK_PARSE_BOOL(PointerBindsToType);
