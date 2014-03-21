@@ -770,6 +770,9 @@ private:
   struct ImportedSubmodule {
     serialization::SubmoduleID ID;
     SourceLocation ImportLoc;
+
+    ImportedSubmodule(serialization::SubmoduleID ID, SourceLocation ImportLoc)
+      : ID(ID), ImportLoc(ImportLoc) {}
   };
 
   /// \brief A list of modules that were imported by precompiled headers or

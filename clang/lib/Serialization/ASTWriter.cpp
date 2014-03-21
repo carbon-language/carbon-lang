@@ -4082,7 +4082,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   if (NamespaceDecl *NS = TU->getAnonymousNamespace()) {
     ASTWriter::UpdateRecord &Record = DeclUpdates[TU];
     if (Record.empty())
-      Record.push_back({UPD_CXX_ADDED_ANONYMOUS_NAMESPACE, NS});
+      Record.push_back(DeclUpdate(UPD_CXX_ADDED_ANONYMOUS_NAMESPACE, NS));
   }
 
   // Add update records for all mangling numbers and static local numbers.
@@ -4090,11 +4090,12 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   // tagging this rare extra data onto the declarations.
   for (const auto &Number : Context.MangleNumbers)
     if (!Number.first->isFromASTFile())
-      DeclUpdates[Number.first].push_back({UPD_MANGLING_NUMBER, Number.second});
+      DeclUpdates[Number.first].push_back(DeclUpdate(UPD_MANGLING_NUMBER,
+                                                     Number.second));
   for (const auto &Number : Context.StaticLocalNumbers)
     if (!Number.first->isFromASTFile())
-      DeclUpdates[Number.first].push_back({UPD_STATIC_LOCAL_NUMBER,
-                                           Number.second});
+      DeclUpdates[Number.first].push_back(DeclUpdate(UPD_STATIC_LOCAL_NUMBER,
+                                                     Number.second));
 
   // Make sure visible decls, added to DeclContexts previously loaded from
   // an AST file, are registered for serialization.
@@ -4291,12 +4292,16 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
 
   if (!WritingModule) {
     // Write the submodules that were imported, if any.
-    struct ModuleInfo { uint64_t ID; Module *M; };
+    struct ModuleInfo {
+      uint64_t ID;
+      Module *M;
+      ModuleInfo(uint64_t ID, Module *M) : ID(ID), M(M) {}
+    };
     llvm::SmallVector<ModuleInfo, 64> Imports;
     for (const auto *I : Context.local_imports()) {
       assert(SubmoduleIDs.find(I->getImportedModule()) != SubmoduleIDs.end());
-      Imports.push_back({SubmoduleIDs[I->getImportedModule()],
-                         I->getImportedModule()});
+      Imports.push_back(ModuleInfo(SubmoduleIDs[I->getImportedModule()],
+                         I->getImportedModule()));
     }
 
     if (!Imports.empty()) {
@@ -5309,7 +5314,7 @@ void ASTWriter::AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D) {
 
   // A decl coming from PCH was modified.
   assert(RD->isCompleteDefinition());
-  DeclUpdates[RD].push_back({UPD_CXX_ADDED_IMPLICIT_MEMBER, D});
+  DeclUpdates[RD].push_back(DeclUpdate(UPD_CXX_ADDED_IMPLICIT_MEMBER, D));
 }
 
 void ASTWriter::AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
@@ -5320,7 +5325,8 @@ void ASTWriter::AddedCXXTemplateSpecialization(const ClassTemplateDecl *TD,
   if (!(!D->isFromASTFile() && TD->isFromASTFile()))
     return; // Not a source specialization added to a template from PCH.
 
-  DeclUpdates[TD].push_back({UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION, D});
+  DeclUpdates[TD].push_back(DeclUpdate(UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION,
+                                       D));
 }
 
 void ASTWriter::AddedCXXTemplateSpecialization(
@@ -5331,7 +5337,8 @@ void ASTWriter::AddedCXXTemplateSpecialization(
   if (!(!D->isFromASTFile() && TD->isFromASTFile()))
     return; // Not a source specialization added to a template from PCH.
 
-  DeclUpdates[TD].push_back({UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION, D});
+  DeclUpdates[TD].push_back(DeclUpdate(UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION,
+                                       D));
 }
 
 void ASTWriter::AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
@@ -5342,7 +5349,8 @@ void ASTWriter::AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
   if (!(!D->isFromASTFile() && TD->isFromASTFile()))
     return; // Not a source specialization added to a template from PCH.
 
-  DeclUpdates[TD].push_back({UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION, D});
+  DeclUpdates[TD].push_back(DeclUpdate(UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION,
+                                       D));
 }
 
 void ASTWriter::ResolvedExceptionSpec(const FunctionDecl *FD) {
@@ -5360,7 +5368,7 @@ void ASTWriter::DeducedReturnType(const FunctionDecl *FD, QualType ReturnType) {
   if (!FD->isFromASTFile())
     return; // Not a function declared in PCH and defined outside.
 
-  DeclUpdates[FD].push_back({UPD_CXX_DEDUCED_RETURN_TYPE, ReturnType});
+  DeclUpdates[FD].push_back(DeclUpdate(UPD_CXX_DEDUCED_RETURN_TYPE, ReturnType));
 }
 
 void ASTWriter::CompletedImplicitDefinition(const FunctionDecl *D) {
@@ -5381,8 +5389,8 @@ void ASTWriter::StaticDataMemberInstantiated(const VarDecl *D) {
   // Since the actual instantiation is delayed, this really means that we need
   // to update the instantiation location.
   DeclUpdates[D].push_back(
-      {UPD_CXX_INSTANTIATED_STATIC_DATA_MEMBER,
-       D->getMemberSpecializationInfo()->getPointOfInstantiation()});
+      DeclUpdate(UPD_CXX_INSTANTIATED_STATIC_DATA_MEMBER,
+       D->getMemberSpecializationInfo()->getPointOfInstantiation()));
 }
 
 void ASTWriter::AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
@@ -5416,5 +5424,5 @@ void ASTWriter::DeclarationMarkedUsed(const Decl *D) {
   if (!D->isFromASTFile())
     return;
 
-  DeclUpdates[D].push_back({UPD_DECL_MARKED_USED});
+  DeclUpdates[D].push_back(DeclUpdate(UPD_DECL_MARKED_USED));
 }

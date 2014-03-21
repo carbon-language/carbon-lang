@@ -3017,7 +3017,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
           unsigned GlobalID = getGlobalSubmoduleID(F, Record[I++]);
           SourceLocation Loc = ReadSourceLocation(F, Record, I);
           if (GlobalID)
-            ImportedModules.push_back({GlobalID, Loc});
+            ImportedModules.push_back(ImportedSubmodule(GlobalID, Loc));
         }
       }
       break;
