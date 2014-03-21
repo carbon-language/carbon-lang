@@ -3,26 +3,24 @@
 ; The inner loop should require only one add (and no leas either).
 ; rdar://8100380
 
-; CHECK:      BB0_3:
-; CHECK-NEXT:   movb    $0, flags(%rdx)
-; CHECK-NEXT:   addq    %rax, %rdx
-; CHECK-NEXT:   cmpq    $8192, %rdx
+; CHECK:      BB0_2:
+; CHECK-NEXT:   movb    $0, flags(%rcx)
+; CHECK-NEXT:   addq    %rax, %rcx
+; CHECK-NEXT:   cmpq    $8192, %rcx
 ; CHECK-NEXT:   jl
 
 @flags = external global [8192 x i8], align 16 ; <[8192 x i8]*> [#uses=1]
 
 define void @foo() nounwind {
 entry:
-  %tmp = icmp slt i64 2, 8192                     ; <i1> [#uses=1]
-  br i1 %tmp, label %bb, label %bb21
+  br label %bb
 
 bb:                                               ; preds = %entry
   br label %bb7
 
 bb7:                                              ; preds = %bb, %bb17
   %tmp8 = phi i64 [ %tmp18, %bb17 ], [ 2, %bb ]   ; <i64> [#uses=2]
-  %tmp9 = icmp slt i64 2, 8192                    ; <i1> [#uses=1]
-  br i1 %tmp9, label %bb10, label %bb17
+  br label %bb10
 
 bb10:                                             ; preds = %bb7
   br label %bb11

@@ -29,7 +29,7 @@
 // certain transformations on them, which would create a new expensive constant.
 //
 // This optimization is only applied to integer constants in instructions and
-// simple (this means not nested) constant cast experessions. For example:
+// simple (this means not nested) constant cast expressions. For example:
 // %0 = load i64* inttoptr (i64 big_constant to i64*)
 //===----------------------------------------------------------------------===//
 
@@ -66,7 +66,7 @@ struct ConstantUser {
   ConstantUser(Instruction *Inst, unsigned Idx) : Inst(Inst), OpndIdx(Idx) { }
 };
 
-/// \brief Keeps track of a constant candidate and its usees.
+/// \brief Keeps track of a constant candidate and its uses.
 struct ConstantCandidate {
   ConstantUseListType Uses;
   ConstantInt *ConstInt;
@@ -292,7 +292,7 @@ findConstantInsertionPoint(const ConstantInfo &ConstInfo) const {
 /// \brief Record constant integer ConstInt for instruction Inst at operand
 /// index Idx.
 ///
-/// The operand at index Idx is not necessarily the constant inetger itself. It
+/// The operand at index Idx is not necessarily the constant integer itself. It
 /// could also be a cast instruction or a constant expression that uses the
 // constant integer.
 void ConstantHoisting::collectConstantCandidates(Instruction *Inst,
@@ -300,12 +300,12 @@ void ConstantHoisting::collectConstantCandidates(Instruction *Inst,
                                                  ConstantInt *ConstInt) {
   unsigned Cost;
   // Ask the target about the cost of materializing the constant for the given
-  // instruction.
+  // instruction and operand index.
   if (auto IntrInst = dyn_cast<IntrinsicInst>(Inst))
-    Cost = TTI->getIntImmCost(IntrInst->getIntrinsicID(),
+    Cost = TTI->getIntImmCost(IntrInst->getIntrinsicID(), Idx,
                               ConstInt->getValue(), ConstInt->getType());
   else
-    Cost = TTI->getIntImmCost(Inst->getOpcode(), ConstInt->getValue(),
+    Cost = TTI->getIntImmCost(Inst->getOpcode(), Idx, ConstInt->getValue(),
                               ConstInt->getType());
 
   // Ignore cheap integer constants.
@@ -582,7 +582,7 @@ bool ConstantHoisting::optimizeConstants(Function &Fn) {
   if (ConstantVec.empty())
     return false;
 
-  // Finally hoist the base constant and emit materializating code for dependent
+  // Finally hoist the base constant and emit materialization code for dependent
   // constants.
   bool MadeChange = emitBaseConstants();
 
