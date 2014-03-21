@@ -113,8 +113,8 @@ private:
   TextInstrProfReader &operator=(const TextInstrProfReader &)
     LLVM_DELETED_FUNCTION;
 public:
-  TextInstrProfReader(std::unique_ptr<MemoryBuffer> &DataBuffer_)
-      : DataBuffer(DataBuffer_.release()), Line(*DataBuffer, '#') {}
+  TextInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer_)
+      : DataBuffer(std::move(DataBuffer_)), Line(*DataBuffer, '#') {}
 
   /// Read the header.
   error_code readHeader() override { return success(); }
@@ -161,7 +161,7 @@ private:
   RawInstrProfReader &operator=(const TextInstrProfReader &)
     LLVM_DELETED_FUNCTION;
 public:
-  RawInstrProfReader(std::unique_ptr<MemoryBuffer> &DataBuffer);
+  RawInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer);
 
   static bool hasFormat(const MemoryBuffer &DataBuffer);
   error_code readHeader() override;

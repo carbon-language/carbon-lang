@@ -31,9 +31,9 @@ error_code InstrProfReader::create(std::string Path,
 
   // Create the reader.
   if (RawInstrProfReader::hasFormat(*Buffer))
-    Result.reset(new RawInstrProfReader(Buffer));
+    Result.reset(new RawInstrProfReader(std::move(Buffer)));
   else
-    Result.reset(new TextInstrProfReader(Buffer));
+    Result.reset(new TextInstrProfReader(std::move(Buffer)));
 
   // Read the header and return the result.
   return Result->readHeader();
@@ -85,8 +85,8 @@ error_code TextInstrProfReader::readNextRecord(InstrProfRecord &Record) {
   return success();
 }
 
-RawInstrProfReader::RawInstrProfReader(std::unique_ptr<MemoryBuffer> &DataBuffer)
-    : DataBuffer(DataBuffer.release()) { }
+RawInstrProfReader::RawInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer)
+    : DataBuffer(std::move(DataBuffer)) { }
 
 static uint64_t getRawMagic() {
   return
