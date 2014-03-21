@@ -50,7 +50,7 @@ LinuxSignals::Reset()
 #endif
     ADDSIGNAL(CHLD,   false,  false, true, "child process exit");
     ADDSIGNAL(CONT,   false,  true,  true, "process continue");
-    ADDSIGNAL(STOP,   false,  true,  true, "process stop");
+    ADDSIGNAL(STOP,   true,   true,  true, "process stop");
     ADDSIGNAL(TSTP,   false,  true,  true, "tty stop");
     ADDSIGNAL(TTIN,   false,  true,  true, "background tty read");
     ADDSIGNAL(TTOU,   false,  true,  true, "background tty write");

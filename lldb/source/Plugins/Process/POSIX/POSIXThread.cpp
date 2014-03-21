@@ -558,18 +558,14 @@ void
 POSIXThread::SignalNotify(const ProcessMessage &message)
 {
     int signo = message.GetSignal();
-
     SetStopInfo (StopInfo::CreateStopReasonWithSignal(*this, signo));
-    SetResumeSignal(signo);
 }
 
 void
 POSIXThread::SignalDeliveredNotify(const ProcessMessage &message)
 {
     int signo = message.GetSignal();
-
     SetStopInfo (StopInfo::CreateStopReasonWithSignal(*this, signo));
-    SetResumeSignal(signo);
 }
 
 void
@@ -588,7 +584,6 @@ POSIXThread::CrashNotify(const ProcessMessage &message)
     SetStopInfo (lldb::StopInfoSP(new POSIXCrashStopInfo(*this, signo,
                                                          message.GetCrashReason(),
                                                          message.GetFaultAddress())));
-    SetResumeSignal(signo);
 }
 
 void
