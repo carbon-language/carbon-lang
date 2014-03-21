@@ -162,6 +162,12 @@ static void PrintMutexShort(const ReportMutex *rm, const char *after) {
   Printf("%sM%zd%s%s", d.Mutex(), rm->id, d.EndMutex(), after);
 }
 
+static void PrintMutexShortWitAddress(const ReportMutex *rm,
+                                      const char *after) {
+  Decorator d;
+  Printf("%sM%zd (%p)%s%s", d.Mutex(), rm->id, rm->addr, d.EndMutex(), after);
+}
+
 static void PrintMutex(const ReportMutex *rm) {
   Decorator d;
   if (rm->destroyed) {
@@ -231,18 +237,30 @@ void PrintReport(const ReportDesc *rep) {
   Printf("%s", d.EndWarning());
 
   if (rep->typ == ReportTypeDeadlock) {
-    Printf("  Path: ");
-    CHECK_GT(rep->mutexes.Size(), 0U);
-    CHECK_EQ(rep->mutexes.Size() * 2, rep->stacks.Size());
+    Printf("  Cycle in lock order graph: ");
     for (uptr i = 0; i < rep->mutexes.Size(); i++)
-      PrintMutexShort(rep->mutexes[i], " => ");
+      PrintMutexShortWitAddress(rep->mutexes[i], " => ");
     PrintMutexShort(rep->mutexes[0], "\n\n");
+    CHECK_GT(rep->mutexes.Size(), 0U);
+    CHECK_EQ(rep->mutexes.Size() * (flags()->second_deadlock_stack ? 2 : 1),
+             rep->stacks.Size());
     for (uptr i = 0; i < rep->mutexes.Size(); i++) {
-      Printf("  Edge: ");
-      PrintMutexShort(rep->mutexes[i], " => ");
-      PrintMutexShort(rep->mutexes[(i+1) % rep->mutexes.Size()], "\n");
-      PrintStack(rep->stacks[2*i]);
-      PrintStack(rep->stacks[2*i+1]);
+      Printf("  Mutex ");
+      PrintMutexShort(rep->mutexes[(i + 1) % rep->mutexes.Size()],
+                      " acquired here while holding mutex ");
+      PrintMutexShort(rep->mutexes[i], ":\n");
+      if (flags()->second_deadlock_stack) {
+        PrintStack(rep->stacks[2*i]);
+        Printf("  Mutex ");
+        PrintMutexShort(rep->mutexes[i],
+                        " previously acquired by the same thread here:\n");
+        PrintStack(rep->stacks[2*i+1]);
+      } else {
+        PrintStack(rep->stacks[i]);
+        if (i == 0)
+          Printf("    Hint: use TSAN_OPTIONS=second_deadlock_stack=1 "
+                 "to get more informative warning message\n\n");
+      }
     }
   } else {
     for (uptr i = 0; i < rep->stacks.Size(); i++) {
@@ -261,8 +279,10 @@ void PrintReport(const ReportDesc *rep) {
   for (uptr i = 0; i < rep->locs.Size(); i++)
     PrintLocation(rep->locs[i]);
 
-  for (uptr i = 0; i < rep->mutexes.Size(); i++)
-    PrintMutex(rep->mutexes[i]);
+  if (rep->typ != ReportTypeDeadlock) {
+    for (uptr i = 0; i < rep->mutexes.Size(); i++)
+      PrintMutex(rep->mutexes[i]);
+  }
 
   for (uptr i = 0; i < rep->threads.Size(); i++)
     PrintThread(rep->threads[i]);

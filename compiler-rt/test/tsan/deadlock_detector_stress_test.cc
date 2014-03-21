@@ -152,17 +152,18 @@ class LockTest {
     Lock_0_1();
     Lock_1_0();
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock)
-    // CHECK: Path: [[M1:M[0-9]+]] => [[M2:M[0-9]+]] => [[M1]]
-    // CHECK: Edge: [[M1]] => [[M2]]
+    // CHECK: Cycle in lock order graph: [[M1:M[0-9]+]] ([[A1]]) => [[M2:M[0-9]+]] ([[A2]]) => [[M1]]
+    // CHECK: Mutex [[M2]] acquired here while holding mutex [[M1]]
     // CHECK:   #0 pthread_
+    // CHECK-SECOND:   Mutex [[M1]] previously acquired by the same thread here:
+    // CHECK-SECOND:   #0 pthread_
+    // CHECK-NOT-SECOND:   second_deadlock_stack=1 to get more informative warning message
+    // CHECK-NOT-SECOND-NOT:   #0 pthread_
+    // CHECK: Mutex [[M1]] acquired here while holding mutex [[M2]]
+    // CHECK:   #0 pthread_
+    // CHECK-SECOND:   Mutex [[M2]] previously acquired by the same thread here:
     // CHECK-SECOND:   #0 pthread_
     // CHECK-NOT-SECOND-NOT:   #0 pthread_
-    // CHECK: Edge: [[M2]] => [[M1]]
-    // CHECK:   #0 pthread_
-    // CHECK-SECOND:   #0 pthread_
-    // CHECK-NOT-SECOND-NOT:   #0 pthread_
-    // CHECK: Mutex [[M1]] ([[A1]]) created at:
-    // CHECK: Mutex [[M2]] ([[A2]]) created at:
     // CHECK-NOT: WARNING: ThreadSanitizer:
   }
 
@@ -178,10 +179,7 @@ class LockTest {
     Lock2(1, 2);
     Lock2(2, 0);
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion (potential deadlock)
-    // CHECK: Path: [[M1:M[0-9]+]] => [[M2:M[0-9]+]] => [[M3:M[0-9]+]] => [[M1]]
-    // CHECK: Mutex [[M1]] ([[A1]]) created at:
-    // CHECK: Mutex [[M2]] ([[A2]]) created at:
-    // CHECK: Mutex [[M3]] ([[A3]]) created at:
+    // CHECK: Cycle in lock order graph: [[M1:M[0-9]+]] ([[A1]]) => [[M2:M[0-9]+]] ([[A2]]) => [[M3:M[0-9]+]] ([[A3]]) => [[M1]]
     // CHECK-NOT: WARNING: ThreadSanitizer:
   }
 
@@ -426,12 +424,16 @@ class LockTest {
     fprintf(stderr, "Starting Test16: detailed output test with two locks\n");
     // CHECK: Starting Test16
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion
+    // CHECK: acquired here while holding mutex
     // CHECK: LockTest::Acquire1
     // CHECK-NEXT: LockTest::Acquire_0_then_1
+    // CHECK-SECOND: previously acquired by the same thread here
     // CHECK-SECOND: LockTest::Acquire0
     // CHECK-SECOND-NEXT: LockTest::Acquire_0_then_1
+    // CHECK: acquired here while holding mutex
     // CHECK: LockTest::Acquire0
     // CHECK-NEXT: LockTest::Acquire_1_then_0
+    // CHECK-SECOND: previously acquired by the same thread here
     // CHECK-SECOND: LockTest::Acquire1
     // CHECK-SECOND-NEXT: LockTest::Acquire_1_then_0
     Init(5);

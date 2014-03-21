@@ -417,7 +417,7 @@ void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
   uptr dummy_pc = 0x42;
   for (int i = 0; i < r->n; i++) {
     uptr size;
-    for (int j = 0; j < 2; j++) {
+    for (int j = 0; j < (flags()->second_deadlock_stack ? 2 : 1); j++) {
       u32 stk = r->loop[i].stk[j];
       if (stk) {
         const uptr *trace = StackDepotGet(stk, &size);
