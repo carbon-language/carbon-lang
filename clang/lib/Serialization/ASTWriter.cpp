@@ -4281,20 +4281,33 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
 
   if (!WritingModule) {
     // Write the submodules that were imported, if any.
-    RecordData ImportedModules;
+    struct ModuleInfo { uint64_t ID; Module *M; };
+    llvm::SmallVector<ModuleInfo, 64> Imports;
     for (const auto *I : Context.local_imports()) {
       assert(SubmoduleIDs.find(I->getImportedModule()) != SubmoduleIDs.end());
-      ImportedModules.push_back(SubmoduleIDs[I->getImportedModule()]);
+      Imports.push_back({SubmoduleIDs[I->getImportedModule()],
+                         I->getImportedModule()});
     }
-    if (!ImportedModules.empty()) {
-      // Sort module IDs.
-      llvm::array_pod_sort(ImportedModules.begin(), ImportedModules.end());
-      
-      // Unique module IDs.
-      ImportedModules.erase(std::unique(ImportedModules.begin(), 
-                                        ImportedModules.end()),
-                            ImportedModules.end());
-      
+
+    if (!Imports.empty()) {
+      auto Cmp = [](const ModuleInfo &A, const ModuleInfo &B) {
+        return A.ID < B.ID;
+      };
+
+      // Sort and deduplicate module IDs.
+      std::sort(Imports.begin(), Imports.end(), Cmp);
+      Imports.erase(std::unique(Imports.begin(), Imports.end(), Cmp),
+                    Imports.end());
+
+      RecordData ImportedModules;
+      for (const auto &Import : Imports) {
+        ImportedModules.push_back(Import.ID);
+        // FIXME: If the module has macros imported then later has declarations
+        // imported, this location won't be the right one as a location for the
+        // declaration imports.
+        AddSourceLocation(Import.M->MacroVisibilityLoc, ImportedModules);
+      }
+
       Stream.EmitRecord(IMPORTED_MODULES, ImportedModules);
     }
   }

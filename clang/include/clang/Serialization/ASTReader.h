@@ -767,9 +767,14 @@ private:
   // \brief A list of late parsed template function data.
   SmallVector<uint64_t, 1> LateParsedTemplates;
 
+  struct ImportedSubmodule {
+    serialization::SubmoduleID ID;
+    SourceLocation ImportLoc;
+  };
+
   /// \brief A list of modules that were imported by precompiled headers or
   /// any other non-module AST file.
-  SmallVector<serialization::SubmoduleID, 2> ImportedModules;
+  SmallVector<ImportedSubmodule, 2> ImportedModules;
   //@}
 
   /// \brief The directory that the PCH we are reading is stored in.

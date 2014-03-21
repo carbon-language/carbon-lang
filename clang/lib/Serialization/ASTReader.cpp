@@ -1811,6 +1811,7 @@ void ASTReader::installImportedMacro(IdentifierInfo *II, ModuleMacroInfo *MMI,
     // Use the location at which the containing module file was first imported
     // for now.
     ImportLoc = MMI->F->DirectImportLoc;
+    assert(ImportLoc.isValid() && "no import location for a visible macro?");
   }
 
   llvm::SmallVectorImpl<DefMacroDirective*> *Prev =
@@ -3012,9 +3013,11 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
         // If we aren't loading a module (which has its own exports), make
         // all of the imported modules visible.
         // FIXME: Deal with macros-only imports.
-        for (unsigned I = 0, N = Record.size(); I != N; ++I) {
-          if (unsigned GlobalID = getGlobalSubmoduleID(F, Record[I]))
-            ImportedModules.push_back(GlobalID);
+        for (unsigned I = 0, N = Record.size(); I != N; /**/) {
+          unsigned GlobalID = getGlobalSubmoduleID(F, Record[I++]);
+          SourceLocation Loc = ReadSourceLocation(F, Record, I);
+          if (GlobalID)
+            ImportedModules.push_back({GlobalID, Loc});
         }
       }
       break;
@@ -3669,12 +3672,14 @@ void ASTReader::InitializeContext() {
     Context.setcudaConfigureCallDecl(
                            cast<FunctionDecl>(GetDecl(CUDASpecialDeclRefs[0])));
   }
-  
+
   // Re-export any modules that were imported by a non-module AST file.
-  for (unsigned I = 0, N = ImportedModules.size(); I != N; ++I) {
-    if (Module *Imported = getSubmodule(ImportedModules[I]))
+  // FIXME: This does not make macro-only imports visible again. It also doesn't
+  // make #includes mapped to module imports visible.
+  for (auto &Import : ImportedModules) {
+    if (Module *Imported = getSubmodule(Import.ID))
       makeModuleVisible(Imported, Module::AllVisible,
-                        /*ImportLoc=*/SourceLocation(),
+                        /*ImportLoc=*/Import.ImportLoc,
                         /*Complain=*/false);
   }
   ImportedModules.clear();
