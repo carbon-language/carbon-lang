@@ -37,8 +37,16 @@ def ReadDiv : SchedRead;
 // Loads
 def WriteLd : SchedWrite;
 def WritePreLd : SchedWrite;
+def WriteVecLd : SchedWrite;
 def ReadLd : SchedRead;
 def ReadPreLd : SchedRead;
+def ReadVecLd : SchedRead;
+
+// Stores
+def WriteSt : SchedWrite;
+def WriteVecSt : SchedWrite;
+def ReadSt : SchedRead;
+def ReadVecSt : SchedRead;
 
 // Branches
 def WriteBr : SchedWrite;

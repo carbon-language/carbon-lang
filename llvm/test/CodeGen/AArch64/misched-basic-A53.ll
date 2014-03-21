@@ -4,13 +4,15 @@
 ; The Cortex-A53 machine model will cause the MADD instruction to be scheduled
 ; much higher than the ADD instructions in order to hide latency. When not
 ; specifying a subtarget, the MADD will remain near the end of the block.
+;
+; CHECK: ********** MI Scheduling **********
 ; CHECK: main
 ; CHECK: *** Final schedule for BB#2 ***
 ; CHECK: SU(13)
 ; CHECK: MADDwwww
 ; CHECK: SU(4)
 ; CHECK: ADDwwi_lsl0_s
-; CHECK: ********** MI Scheduling **********
+; CHECK: ********** INTERVALS **********
 @main.x = private unnamed_addr constant [8 x i32] [i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1], align 4
 @main.y = private unnamed_addr constant [8 x i32] [i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2, i32 2], align 4
 
@@ -74,6 +76,33 @@ for.end:                                          ; preds = %for.cond
   %13 = load i32* %yy, align 4
   %add6 = add nsw i32 %12, %13
   ret i32 %add6
+}
+
+
+; The Cortex-A53 machine model will cause the FDIVvvv_42 to be raised to
+; hide latency. Whereas normally there would only be a single FADDvvv_4s
+; after it, this test checks to make sure there are more than one.
+;
+; CHECK: ********** MI Scheduling **********
+; CHECK: neon4xfloat:BB#0
+; CHECK: *** Final schedule for BB#0 ***
+; CHECK: FDIVvvv_4S
+; CHECK: FADDvvv_4S
+; CHECK: FADDvvv_4S
+; CHECK: ********** INTERVALS **********
+define <4 x float> @neon4xfloat(<4 x float> %A, <4 x float> %B) {
+        %tmp1 = fadd <4 x float> %A, %B;
+        %tmp2 = fadd <4 x float> %A, %tmp1;
+        %tmp3 = fadd <4 x float> %A, %tmp2;
+        %tmp4 = fadd <4 x float> %A, %tmp3;
+        %tmp5 = fadd <4 x float> %A, %tmp4;
+        %tmp6 = fadd <4 x float> %A, %tmp5;
+        %tmp7 = fadd <4 x float> %A, %tmp6;
+        %tmp8 = fadd <4 x float> %A, %tmp7;
+        %tmp9 = fdiv <4 x float> %A, %B;
+        %tmp10 = fadd <4 x float> %tmp8, %tmp9;
+
+        ret <4 x float> %tmp10
 }
 
 ; Function Attrs: nounwind

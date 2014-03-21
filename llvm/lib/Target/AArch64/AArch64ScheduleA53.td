@@ -71,9 +71,18 @@ def : WriteRes<WriteMAC, [A53UnitMAC]> { let Latency = 4; }
 // Div
 def : WriteRes<WriteDiv, [A53UnitDiv]> { let Latency = 4; }
 
-// Load
+// Load - Note: Vector loads take 1-5 cycles to issue. For the WriteVecLd below,
+//        choosing the median of 3 which makes the latency 6. May model this more
+//        carefully in the future.
 def : WriteRes<WriteLd, [A53UnitLdSt]> { let Latency = 4; }
 def : WriteRes<WritePreLd, [A53UnitLdSt]> { let Latency = 4; }
+def : WriteRes<WriteVecLd, [A53UnitLdSt]> { let Latency = 6; }
+
+// Store - Note: Vector stores take 1-3 cycles to issue. For the ReadVecSt below,
+//         choosing the median of 2 which makes the latency 5. May model this more
+//         carefully in the future.
+def : WriteRes<WriteSt, [A53UnitLdSt]> { let Latency = 4; }
+def : WriteRes<WriteVecSt, [A53UnitLdSt]> { let Latency = 5; }
 
 // Branch
 def : WriteRes<WriteBr, [A53UnitB]>;
@@ -114,9 +123,14 @@ def : ReadAdvance<ReadMAC, 0>;
 // No forwarding defined for ReadDiv yet.
 def : ReadAdvance<ReadDiv, 0>;
 
-// No forwarding defined for ReadLd, ReadPreLd yet.
+// No forwarding defined for ReadLd, ReadPreLd, ReadVecLd yet.
 def : ReadAdvance<ReadLd, 0>;
 def : ReadAdvance<ReadPreLd, 0>;
+def : ReadAdvance<ReadVecLd, 0>;
+
+// No forwarding defined for ReadSt and ReadVecSt yet.
+def : ReadAdvance<ReadSt, 0>;
+def : ReadAdvance<ReadVecSt, 0>;
 
 // No forwarding defined for ReadFPALU yet.
 def : ReadAdvance<ReadFPALU, 0>;
