@@ -1114,6 +1114,27 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
         Current->SpacesRequiredBefore = Style.Cpp11BracedListStyle ? 0 : 1;
       else
         Current->SpacesRequiredBefore = Style.SpacesBeforeTrailingComments;
+
+      // If we find a trailing comment, iterate backwards to determine whether
+      // it seems to relate to a specific parameter. If so, break before that
+      // parameter to avoid changing the comment's meaning. E.g. don't move 'b'
+      // to the previous line in:
+      //   SomeFunction(a,
+      //                b, // comment
+      //                c);
+      if (Current->isTrailingComment()) {
+        for (FormatToken *Parameter = Current->Previous; Parameter;
+             Parameter = Parameter->Previous) {
+          if (Parameter->isOneOf(tok::comment, tok::r_brace))
+            break;
+          if (Parameter->Previous && Parameter->Previous->is(tok::comma)) {
+            if (Parameter->Previous->Type != TT_CtorInitializerComma &&
+                Parameter->HasUnescapedNewline)
+              Parameter->MustBreakBefore = true;
+            break;
+          }
+        }
+      }
     } else if (Current->SpacesRequiredBefore == 0 &&
              spaceRequiredBefore(Line, *Current)) {
       Current->SpacesRequiredBefore = 1;

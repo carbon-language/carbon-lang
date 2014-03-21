@@ -777,6 +777,25 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
                    "otherLine();"));
 }
 
+TEST_F(FormatTest, KeepsParameterWithTrailingCommentsOnTheirOwnLine) {
+  EXPECT_EQ("SomeFunction(a,\n"
+            "             b, // comment\n"
+            "             c);",
+            format("SomeFunction(a,\n"
+                   "          b, // comment\n"
+                   "      c);"));
+  EXPECT_EQ("SomeFunction(a, b, // comment (unclear relation)\n"
+            "             c);",
+            format("SomeFunction(a, b, // comment (unclear relation)\n"
+                   "      c);"));
+  EXPECT_EQ("SomeFunction(a, // comment\n"
+            "             b,\n"
+            "             c); // comment",
+            format("SomeFunction(a,     // comment\n"
+                   "          b,\n"
+                   "      c); // comment"));
+}
+
 TEST_F(FormatTest, CanFormatCommentsLocally) {
   EXPECT_EQ("int a;    // comment\n"
             "int    b; // comment",
