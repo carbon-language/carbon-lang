@@ -919,17 +919,18 @@ void RuntimeDyldELF::resolveRelocation(const SectionEntry &Section,
   }
 }
 
-void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
-                                          RelocationRef RelI,
-                                          ObjectImage &Obj,
-                                          ObjSectionToIDMap &ObjSectionToID,
-                                          const SymbolTableMap &Symbols,
-                                          StubMap &Stubs) {
+relocation_iterator
+RuntimeDyldELF::processRelocationRef(unsigned SectionID,
+                                     relocation_iterator RelI,
+                                     ObjectImage &Obj,
+                                     ObjSectionToIDMap &ObjSectionToID,
+                                     const SymbolTableMap &Symbols,
+                                     StubMap &Stubs) {
   uint64_t RelType;
-  Check(RelI.getType(RelType));
+  Check(RelI->getType(RelType));
   int64_t Addend;
-  Check(getELFRelocationAddend(RelI, Addend));
-  symbol_iterator Symbol = RelI.getSymbol();
+  Check(getELFRelocationAddend(*RelI, Addend));
+  symbol_iterator Symbol = RelI->getSymbol();
 
   // Obtain the symbol name which is referenced in the relocation
   StringRef TargetName;
@@ -1001,7 +1002,7 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
     }
   }
   uint64_t Offset;
-  Check(RelI.getOffset(Offset));
+  Check(RelI->getOffset(Offset));
 
   DEBUG(dbgs() << "\t\tSectionID: " << SectionID
                << " Offset: " << Offset
@@ -1337,6 +1338,7 @@ void RuntimeDyldELF::processRelocationRef(unsigned SectionID,
     else
       addRelocationForSection(RE, Value.SectionID);
   }
+  return ++RelI;
 }
 
 void RuntimeDyldELF::updateGOTEntries(StringRef Name, uint64_t Addr) {

@@ -300,12 +300,10 @@ protected:
 
   /// \brief Parses the object file relocation and stores it to Relocations
   ///        or SymbolRelocations (this depends on the object file type).
-  virtual void processRelocationRef(unsigned SectionID,
-                                    RelocationRef RelI,
-                                    ObjectImage &Obj,
-                                    ObjSectionToIDMap &ObjSectionToID,
-                                    const SymbolTableMap &Symbols,
-                                    StubMap &Stubs) = 0;
+  virtual relocation_iterator
+  processRelocationRef(unsigned SectionID, relocation_iterator RelI,
+                       ObjectImage &Obj, ObjSectionToIDMap &ObjSectionToID,
+                       const SymbolTableMap &Symbols, StubMap &Stubs) = 0;
 
   /// \brief Resolve relocations to external symbols.
   void resolveExternalSymbols();
@@ -321,7 +319,8 @@ protected:
                              uint64_t& DataSizeRW); 
   
   // \brief Compute the stub buffer size required for a section
-  unsigned computeSectionStubBufSize(ObjectImage &Obj, const SectionRef &Section); 
+  unsigned computeSectionStubBufSize(ObjectImage &Obj,
+                                     const SectionRef &Section);
 
 public:
   RuntimeDyldImpl(RTDyldMemoryManager *mm)

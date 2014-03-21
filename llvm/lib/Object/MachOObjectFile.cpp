@@ -818,6 +818,16 @@ MachOObjectFile::section_rel_end(DataRefImpl Sec) const {
   return relocation_iterator(RelocationRef(Ret, this));
 }
 
+bool MachOObjectFile::section_rel_empty(DataRefImpl Sec) const {
+  if (is64Bit()) {
+    MachO::section_64 Sect = getSection64(Sec);
+    return Sect.nreloc == 0;
+  } else {
+    MachO::section Sect = getSection(Sec);
+    return Sect.nreloc == 0;
+  }
+}
+
 void MachOObjectFile::moveRelocationNext(DataRefImpl &Rel) const {
   const MachO::any_relocation_info *P =
     reinterpret_cast<const MachO::any_relocation_info *>(Rel.p);

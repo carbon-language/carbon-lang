@@ -165,18 +165,19 @@ ObjectImage* RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
     StubMap Stubs;
     section_iterator RelocatedSection = SI->getRelocatedSection();
 
-    if ((SI->relocation_begin() != SI->relocation_end()) ||
-        ProcessAllSections) {
-      bool IsCode = false;
-      Check(RelocatedSection->isText(IsCode));
-      SectionID =
-        findOrEmitSection(*Obj, *RelocatedSection, IsCode, LocalSections);
-      DEBUG(dbgs() << "\tSectionID: " << SectionID << "\n");
-    }
+    if (SI->relocation_empty() && !ProcessAllSections)
+      continue;
 
-    for (const RelocationRef &Reloc : SI->relocations())
-      processRelocationRef(SectionID, Reloc, *Obj, LocalSections, LocalSymbols,
-                           Stubs);
+    bool IsCode = false;
+    Check(RelocatedSection->isText(IsCode));
+    SectionID =
+      findOrEmitSection(*Obj, *RelocatedSection, IsCode, LocalSections);
+    DEBUG(dbgs() << "\tSectionID: " << SectionID << "\n");
+
+    for (relocation_iterator I = SI->relocation_begin(),
+         E = SI->relocation_end(); I != E;)
+      I = processRelocationRef(SectionID, I, *Obj, LocalSections, LocalSymbols,
+                               Stubs);
   }
 
   // Give the subclasses a chance to tie-up any loose ends.

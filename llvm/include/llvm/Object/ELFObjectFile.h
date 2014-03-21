@@ -91,6 +91,7 @@ protected:
                                    bool &Result) const override;
   relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
   relocation_iterator section_rel_end(DataRefImpl Sec) const override;
+  bool section_rel_empty(DataRefImpl Sec) const override;
   section_iterator getRelocatedSection(DataRefImpl Sec) const override;
 
   void moveRelocationNext(DataRefImpl &Rel) const override;
@@ -555,6 +556,12 @@ ELFObjectFile<ELFT>::section_rel_end(DataRefImpl Sec) const {
     RelData.d.b = S->sh_size / S->sh_entsize;
 
   return relocation_iterator(RelocationRef(RelData, this));
+}
+
+template <class ELFT>
+bool ELFObjectFile<ELFT>::section_rel_empty(DataRefImpl Sec) const {
+  const Elf_Shdr *S = reinterpret_cast<const Elf_Shdr *>(Sec.p);
+  return S->sh_size == 0;
 }
 
 template <class ELFT>

@@ -320,15 +320,17 @@ bool RuntimeDyldMachO::resolveARMRelocation(uint8_t *LocalAddress,
   return false;
 }
 
-void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
-                                            RelocationRef RelI,
-                                            ObjectImage &Obj,
-                                            ObjSectionToIDMap &ObjSectionToID,
-                                            const SymbolTableMap &Symbols,
-                                            StubMap &Stubs) {
+relocation_iterator
+RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
+                                       relocation_iterator RelI,
+                                       ObjectImage &Obj,
+                                       ObjSectionToIDMap &ObjSectionToID,
+                                       const SymbolTableMap &Symbols,
+                                       StubMap &Stubs) {
   const ObjectFile *OF = Obj.getObjectFile();
   const MachOObjectFile *MachO = static_cast<const MachOObjectFile*>(OF);
-  MachO::any_relocation_info RE= MachO->getRelocation(RelI.getRawDataRefImpl());
+  MachO::any_relocation_info RE =
+    MachO->getRelocation(RelI->getRawDataRefImpl());
 
   uint32_t RelType = MachO->getAnyRelocationType(RE);
 
@@ -339,7 +341,7 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
   //        Note: This will fail horribly where the relocations *do* need to be
   //        applied, but that was already the case.
   if (MachO->isRelocationScattered(RE))
-    return;
+    return ++RelI;
 
   RelocationValueRef Value;
   SectionEntry &Section = Sections[SectionID];
@@ -348,7 +350,7 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
   bool IsPCRel = MachO->getAnyRelocationPCRel(RE);
   unsigned Size = MachO->getAnyRelocationLength(RE);
   uint64_t Offset;
-  RelI.getOffset(Offset);
+  RelI->getOffset(Offset);
   uint8_t *LocalAddress = Section.Address + Offset;
   unsigned NumBytes = 1 << Size;
   uint64_t Addend = 0;
@@ -356,7 +358,7 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
 
   if (isExtern) {
     // Obtain the symbol name which is referenced in the relocation
-    symbol_iterator Symbol = RelI.getSymbol();
+    symbol_iterator Symbol = RelI->getSymbol();
     StringRef TargetName;
     Symbol->getName(TargetName);
     // First search for the symbol in the local symbol table
@@ -443,6 +445,7 @@ void RuntimeDyldMachO::processRelocationRef(unsigned SectionID,
     else
       addRelocationForSection(RE, Value.SectionID);
   }
+  return ++RelI;
 }
 
 

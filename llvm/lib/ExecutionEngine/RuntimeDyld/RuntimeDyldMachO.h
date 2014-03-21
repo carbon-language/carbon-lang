@@ -88,10 +88,10 @@ public:
   RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
   void resolveRelocation(const RelocationEntry &RE, uint64_t Value) override;
-  void processRelocationRef(unsigned SectionID, RelocationRef RelI,
-                            ObjectImage &Obj, ObjSectionToIDMap &ObjSectionToID,
-                            const SymbolTableMap &Symbols,
-                            StubMap &Stubs) override;
+  relocation_iterator
+  processRelocationRef(unsigned SectionID, relocation_iterator RelI,
+                       ObjectImage &Obj, ObjSectionToIDMap &ObjSectionToID,
+                       const SymbolTableMap &Symbols, StubMap &Stubs) override;
   bool isCompatibleFormat(const ObjectBuffer *Buffer) const override;
   bool isCompatibleFile(const object::ObjectFile *Obj) const override;
   void registerEHFrames() override;

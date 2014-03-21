@@ -35,6 +35,10 @@ inline bool operator==(const DataRefImpl &a, const DataRefImpl &b) {
   return std::memcmp(&a, &b, sizeof(DataRefImpl)) == 0;
 }
 
+inline bool operator!=(const DataRefImpl &a, const DataRefImpl &b) {
+  return !operator==(a, b);
+}
+
 inline bool operator<(const DataRefImpl &a, const DataRefImpl &b) {
   // Check bitwise identical. This is the only legal way to compare a union w/o
   // knowing which member is in use.

@@ -390,6 +390,7 @@ protected:
                                    bool &Result) const override;
   relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
   relocation_iterator section_rel_end(DataRefImpl Sec) const override;
+  bool section_rel_empty(DataRefImpl Sec) const override;
 
   void moveRelocationNext(DataRefImpl &Rel) const override;
   error_code getRelocationAddress(DataRefImpl Rel,
