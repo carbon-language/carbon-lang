@@ -39,6 +39,9 @@ struct Callback : DDCallback {
   virtual u32 Unwind() {
     return CurrentStackId(thr, pc);
   }
+  virtual int UniqueTid() {
+    return thr->unique_id;
+  }
 };
 
 void DDMutexInit(ThreadState *thr, uptr pc, SyncVar *s) {
@@ -411,8 +414,11 @@ void ReportDeadlock(ThreadState *thr, uptr pc, DDReport *r) {
     return;
   ThreadRegistryLock l(ctx->thread_registry);
   ScopedReport rep(ReportTypeDeadlock);
-  for (int i = 0; i < r->n; i++)
+  for (int i = 0; i < r->n; i++) {
     rep.AddMutex(r->loop[i].mtx_ctx0);
+    rep.AddUniqueTid((int)r->loop[i].thr_ctx);
+    rep.AddThread((int)r->loop[i].thr_ctx);
+  }
   StackTrace stacks[2 * DDReport::kMaxLoopSize];
   uptr dummy_pc = 0x42;
   for (int i = 0; i < r->n; i++) {

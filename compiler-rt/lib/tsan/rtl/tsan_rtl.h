@@ -575,6 +575,8 @@ class ScopedReport {
   void AddMemoryAccess(uptr addr, Shadow s, const StackTrace *stack,
                        const MutexSet *mset);
   void AddThread(const ThreadContext *tctx);
+  void AddThread(int unique_tid);
+  void AddUniqueTid(int unique_tid);
   void AddMutex(const SyncVar *s);
   u64 AddMutex(u64 id);
   void AddLocation(uptr addr, uptr size);

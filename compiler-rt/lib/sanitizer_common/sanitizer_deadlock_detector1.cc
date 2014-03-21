@@ -111,7 +111,7 @@ void DD::MutexBeforeLock(DDCallback *cb,
     return;  // FIXME: allow this only for recursive locks.
   if (dd.onLockBefore(&lt->dd, m->id)) {
     // Actually add this edge now so that we have all the stack traces.
-    dd.addEdges(&lt->dd, m->id, cb->Unwind());
+    dd.addEdges(&lt->dd, m->id, cb->Unwind(), cb->UniqueTid());
     ReportDeadlock(cb, m);
   }
 }
@@ -131,10 +131,12 @@ void DD::ReportDeadlock(DDCallback *cb, DDMutex *m) {
     DDMutex *m0 = (DDMutex*)dd.getData(from);
     DDMutex *m1 = (DDMutex*)dd.getData(to);
 
-    u32 stk_from = 0, stk_to = 0;
-    dd.findEdge(from, to, &stk_from, &stk_to);
-    // Printf("Edge: %zd=>%zd: %u/%u\n", from, to, stk_from, stk_to);
-    rep->loop[i].thr_ctx = 0;  // don't know
+    u32 stk_from = -1U, stk_to = -1U;
+    int unique_tid = 0;
+    dd.findEdge(from, to, &stk_from, &stk_to, &unique_tid);
+    // Printf("Edge: %zd=>%zd: %u/%u T%d\n", from, to, stk_from, stk_to,
+    //    unique_tid);
+    rep->loop[i].thr_ctx = unique_tid;
     rep->loop[i].mtx_ctx0 = m0->ctx;
     rep->loop[i].mtx_ctx1 = m1->ctx;
     rep->loop[i].stk[0] = stk_to;
@@ -158,7 +160,7 @@ void DD::MutexAfterLock(DDCallback *cb, DDMutex *m, bool wlock, bool trylock) {
   if (wlock)  // Only a recursive rlock may be held.
     CHECK(!dd.isHeld(&lt->dd, m->id));
   if (!trylock)
-    dd.addEdges(&lt->dd, m->id, cb->Unwind());
+    dd.addEdges(&lt->dd, m->id, stk ? stk : cb->Unwind(), cb->UniqueTid());
   dd.onLockAfter(&lt->dd, m->id, stk);
 }
 

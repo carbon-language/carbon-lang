@@ -231,7 +231,8 @@ class DeadlockDetector {
   // returns the number of added edges, and puts the sources of added edges
   // into added_edges[].
   // Should be called before onLockAfter.
-  uptr addEdges(DeadlockDetectorTLS<BV> *dtls, uptr cur_node, u32 stk = 0) {
+  uptr addEdges(DeadlockDetectorTLS<BV> *dtls, uptr cur_node, u32 stk,
+                int unique_tid) {
     ensureCurrentEpoch(dtls);
     uptr cur_idx = nodeToIndex(cur_node);
     uptr added_edges[40];
@@ -240,19 +241,23 @@ class DeadlockDetector {
     for (uptr i = 0; i < n_added_edges; i++) {
       if (n_edges_ < ARRAY_SIZE(edges_))
         edges_[n_edges_++] = {(u16)added_edges[i], (u16)cur_idx,
-                              dtls->findLockContext(added_edges[i]), stk};
-      // Printf("E%zd: %u %zd=>%zd\n", n_edges_, stk, added_edges[i], cur_idx);
+                              dtls->findLockContext(added_edges[i]), stk,
+                              unique_tid};
+      // Printf("Edge%zd: %u %zd=>%zd in T%d\n",
+      //        n_edges_, stk, added_edges[i], cur_idx, unique_tid);
     }
     return n_added_edges;
   }
 
-  bool findEdge(uptr from_node, uptr to_node, u32 *stk_from, u32 *stk_to) {
+  bool findEdge(uptr from_node, uptr to_node, u32 *stk_from, u32 *stk_to,
+                int *unique_tid) {
     uptr from_idx = nodeToIndex(from_node);
     uptr to_idx = nodeToIndex(to_node);
     for (uptr i = 0; i < n_edges_; i++) {
       if (edges_[i].from == from_idx && edges_[i].to == to_idx) {
         *stk_from = edges_[i].stk_from;
         *stk_to = edges_[i].stk_to;
+        *unique_tid = edges_[i].unique_tid;
         return true;
       }
     }
@@ -264,7 +269,7 @@ class DeadlockDetector {
   bool onLock(DeadlockDetectorTLS<BV> *dtls, uptr cur_node, u32 stk = 0) {
     ensureCurrentEpoch(dtls);
     bool is_reachable = !isHeld(dtls, cur_node) && onLockBefore(dtls, cur_node);
-    addEdges(dtls, cur_node, stk);
+    addEdges(dtls, cur_node, stk, 0);
     onLockAfter(dtls, cur_node, stk);
     return is_reachable;
   }
@@ -381,6 +386,7 @@ class DeadlockDetector {
     u16 to;
     u32 stk_from;
     u32 stk_to;
+    int unique_tid;
   };
 
   uptr current_epoch_;

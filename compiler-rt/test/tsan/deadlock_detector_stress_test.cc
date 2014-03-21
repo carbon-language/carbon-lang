@@ -222,6 +222,11 @@ class LockTest {
     Init(5);
     RunThreads(&LockTest::Lock_0_1, &LockTest::Lock_1_0);
     // CHECK: WARNING: ThreadSanitizer: lock-order-inversion
+    // CHECK: Cycle in lock order graph: [[M1:M[0-9]+]] ({{.*}}) => [[M2:M[0-9]+]] ({{.*}}) => [[M1]]
+    // CHECK: Mutex [[M2]] acquired here while holding mutex [[M1]] in thread [[T1:T[0-9]+]]
+    // CHECK: Mutex [[M1]] acquired here while holding mutex [[M2]] in thread [[T2:T[0-9]+]]
+    // CHECK: Thread [[T1]] {{.*}} created by main thread
+    // CHECK: Thread [[T2]] {{.*}} created by main thread
     // CHECK-NOT: WARNING: ThreadSanitizer:
   }
 

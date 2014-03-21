@@ -103,6 +103,7 @@ class ReportDesc {
   Vector<ReportLocation*> locs;
   Vector<ReportMutex*> mutexes;
   Vector<ReportThread*> threads;
+  Vector<int> unique_tids;
   ReportStack *sleep;
   int count;
 

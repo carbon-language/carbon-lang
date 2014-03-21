@@ -186,6 +186,10 @@ void ScopedReport::AddMemoryAccess(uptr addr, Shadow s,
   }
 }
 
+void ScopedReport::AddUniqueTid(int unique_tid) {
+  rep_->unique_tids.PushBack(unique_tid);
+}
+
 void ScopedReport::AddThread(const ThreadContext *tctx) {
   for (uptr i = 0; i < rep_->threads.Size(); i++) {
     if ((u32)rep_->threads[i]->id == tctx->tid)
@@ -246,6 +250,12 @@ ThreadContext *IsThreadStackOrTls(uptr addr, bool *is_stack) {
   return tctx;
 }
 #endif
+
+void ScopedReport::AddThread(int unique_tid) {
+#ifndef TSAN_GO
+  AddThread(FindThreadByUidLocked(unique_tid));
+#endif
+}
 
 void ScopedReport::AddMutex(const SyncVar *s) {
   for (uptr i = 0; i < rep_->mutexes.Size(); i++) {

@@ -452,6 +452,7 @@ void RunRemoveEdgesTest() {
   DeadlockDetectorTLS<BV> &dtls = sdd.dtls;
   vector<uptr> node(BV::kSize);
   u32 stk_from = 0, stk_to = 0;
+  int unique_tid = 0;
   for (size_t i = 0; i < BV::kSize; i++)
     node[i] = d.newNode(0);
 
@@ -459,7 +460,8 @@ void RunRemoveEdgesTest() {
     EXPECT_FALSE(d.onLock(&dtls, node[i], i + 1));
   for (size_t i = 0; i < BV::kSize; i++) {
     for (uptr j = i + 1; j < BV::kSize; j++) {
-      EXPECT_TRUE(d.findEdge(node[i], node[j], &stk_from, &stk_to));
+      EXPECT_TRUE(
+          d.findEdge(node[i], node[j], &stk_from, &stk_to, &unique_tid));
       EXPECT_EQ(stk_from, i + 1);
       EXPECT_EQ(stk_to, j + 1);
     }
@@ -475,9 +477,11 @@ void RunRemoveEdgesTest() {
   for (size_t i = 0; i < BV::kSize; i++) {
     for (uptr j = i + 1; j < BV::kSize; j++) {
       if ((i % 2) || (j % 2))
-        EXPECT_FALSE(d.findEdge(node[i], node[j], &stk_from, &stk_to));
+        EXPECT_FALSE(
+            d.findEdge(node[i], node[j], &stk_from, &stk_to, &unique_tid));
       else
-        EXPECT_TRUE(d.findEdge(node[i], node[j], &stk_from, &stk_to));
+        EXPECT_TRUE(
+            d.findEdge(node[i], node[j], &stk_from, &stk_to, &unique_tid));
     }
   }
 }

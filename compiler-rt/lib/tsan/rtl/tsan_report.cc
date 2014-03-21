@@ -40,6 +40,7 @@ ReportDesc::ReportDesc()
     , locs(MBlockReportLoc)
     , mutexes(MBlockReportMutex)
     , threads(MBlockReportThread)
+    , unique_tids(MBlockReportThread)
     , sleep()
     , count() {
 }
@@ -162,8 +163,8 @@ static void PrintMutexShort(const ReportMutex *rm, const char *after) {
   Printf("%sM%zd%s%s", d.Mutex(), rm->id, d.EndMutex(), after);
 }
 
-static void PrintMutexShortWitAddress(const ReportMutex *rm,
-                                      const char *after) {
+static void PrintMutexShortWithAddress(const ReportMutex *rm,
+                                       const char *after) {
   Decorator d;
   Printf("%sM%zd (%p)%s%s", d.Mutex(), rm->id, rm->addr, d.EndMutex(), after);
 }
@@ -237,9 +238,10 @@ void PrintReport(const ReportDesc *rep) {
   Printf("%s", d.EndWarning());
 
   if (rep->typ == ReportTypeDeadlock) {
+    char thrbuf[kThreadBufSize];
     Printf("  Cycle in lock order graph: ");
     for (uptr i = 0; i < rep->mutexes.Size(); i++)
-      PrintMutexShortWitAddress(rep->mutexes[i], " => ");
+      PrintMutexShortWithAddress(rep->mutexes[i], " => ");
     PrintMutexShort(rep->mutexes[0], "\n\n");
     CHECK_GT(rep->mutexes.Size(), 0U);
     CHECK_EQ(rep->mutexes.Size() * (flags()->second_deadlock_stack ? 2 : 1),
@@ -248,7 +250,10 @@ void PrintReport(const ReportDesc *rep) {
       Printf("  Mutex ");
       PrintMutexShort(rep->mutexes[(i + 1) % rep->mutexes.Size()],
                       " acquired here while holding mutex ");
-      PrintMutexShort(rep->mutexes[i], ":\n");
+      PrintMutexShort(rep->mutexes[i], " in ");
+      Printf("%s", d.ThreadDescription());
+      Printf("%s:\n", thread_name(thrbuf, rep->unique_tids[i]));
+      Printf("%s", d.EndThreadDescription());
       if (flags()->second_deadlock_stack) {
         PrintStack(rep->stacks[2*i]);
         Printf("  Mutex ");

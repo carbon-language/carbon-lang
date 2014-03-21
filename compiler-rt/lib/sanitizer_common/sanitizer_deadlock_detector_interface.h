@@ -66,6 +66,7 @@ struct DDCallback {
   DDLogicalThread  *lt;
 
   virtual u32 Unwind() { return 0; }
+  virtual int UniqueTid() { return 0; }
 };
 
 struct DDetector {
