@@ -28,63 +28,28 @@ void ParseFlag(const char *env, const char **flag,
     const char *name, const char *descr);
 
 struct CommonFlags {
-  // If set, use the online symbolizer from common sanitizer runtime to turn
-  // virtual addresses to file/line locations.
   bool symbolize;
-  // Path to external symbolizer. If it is NULL, symbolizer will be looked for
-  // in PATH. If it is empty (or if "symbolize" is false), external symbolizer
-  // will not be started.
   const char *external_symbolizer_path;
-  // If set, allows online symbolizer to run addr2line binary to symbolize
-  // stack traces (addr2line will only be used if llvm-symbolizer binary is not
-  // available.
   bool allow_addr2line;
-  // Strips this prefix from file paths in error reports.
   const char *strip_path_prefix;
-  // Use fast (frame-pointer-based) unwinder on fatal errors (if available).
   bool fast_unwind_on_fatal;
-  // Use fast (frame-pointer-based) unwinder on malloc/free (if available).
   bool fast_unwind_on_malloc;
-  // Intercept and handle ioctl requests.
   bool handle_ioctl;
-  // Max number of stack frames kept for each allocation/deallocation.
   int malloc_context_size;
-  // Write logs to "log_path.pid".
-  // The special values are "stdout" and "stderr".
-  // The default is "stderr".
   const char *log_path;
-  // Verbosity level (0 - silent, 1 - a bit of output, 2+ - more output).
   int  verbosity;
-  // Enable memory leak detection.
   bool detect_leaks;
-  // Invoke leak checking in an atexit handler. Has no effect if
-  // detect_leaks=false, or if __lsan_do_leak_check() is called before the
-  // handler has a chance to run.
   bool leak_check_at_exit;
-  // If false, the allocator will crash instead of returning 0 on out-of-memory.
   bool allocator_may_return_null;
-  // If false, disable printing error summaries in addition to error reports.
   bool print_summary;
-  // Check printf arguments.
   bool check_printf;
-  // If set, registers the tool's custom SEGV handler (both SIGBUS and SIGSEGV
-  // on OSX).
   bool handle_segv;
-  // If set, allows user to register a SEGV handler even if the tool registers
-  // one.
   bool allow_user_segv_handler;
-  // If set, uses alternate stack for signal handling.
   bool use_sigaltstack;
-  // If set, deadlock detection is enabled.
   bool detect_deadlocks;
-  // Large shadow regions are zero-filled using mmap(NORESERVE) instead of
-  // memset. This is the threshold size in bytes.
   uptr clear_shadow_mmap_threshold;
-  // Colorize reports: (always|never|auto).
   const char *color;
-  // Enables support for dynamic libraries linked with libpthread 2.2.5.
   bool legacy_pthread_cond;
-  // Print help and exit.
   bool help;
 };
 

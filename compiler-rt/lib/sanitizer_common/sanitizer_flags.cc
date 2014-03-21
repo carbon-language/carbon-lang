@@ -56,31 +56,66 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
 }
 
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
-  ParseFlag(str, &f->symbolize, "symbolize", "");
-  ParseFlag(str, &f->external_symbolizer_path, "external_symbolizer_path", "");
-  ParseFlag(str, &f->allow_addr2line, "allow_addr2line", "");
-  ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix", "");
-  ParseFlag(str, &f->fast_unwind_on_fatal, "fast_unwind_on_fatal", "");
-  ParseFlag(str, &f->fast_unwind_on_malloc, "fast_unwind_on_malloc", "");
-  ParseFlag(str, &f->handle_ioctl, "handle_ioctl", "");
-  ParseFlag(str, &f->malloc_context_size, "malloc_context_size", "");
-  ParseFlag(str, &f->log_path, "log_path", "");
-  ParseFlag(str, &f->verbosity, "verbosity", "");
-  ParseFlag(str, &f->detect_leaks, "detect_leaks", "");
-  ParseFlag(str, &f->leak_check_at_exit, "leak_check_at_exit", "");
+  ParseFlag(str, &f->symbolize, "symbolize",
+      "If set, use the online symbolizer from common sanitizer runtime to turn "
+      "virtual addresses to file/line locations.");
+  ParseFlag(str, &f->external_symbolizer_path, "external_symbolizer_path",
+      "Path to external symbolizer. If empty, the tool will search $PATH for "
+      "the symbolizer.");
+  ParseFlag(str, &f->allow_addr2line, "allow_addr2line",
+      "If set, allows online symbolizer to run addr2line binary to symbolize "
+      "stack traces (addr2line will only be used if llvm-symbolizer binary is "
+      "unavailable.");
+  ParseFlag(str, &f->strip_path_prefix, "strip_path_prefix",
+      "Strips this prefix from file paths in error reports.");
+  ParseFlag(str, &f->fast_unwind_on_fatal, "fast_unwind_on_fatal",
+      "If available, use the fast frame-pointer-based unwinder on fatal "
+      "errors.");
+  ParseFlag(str, &f->fast_unwind_on_malloc, "fast_unwind_on_malloc",
+      "If available, use the fast frame-pointer-based unwinder on "
+      "malloc/free.");
+  ParseFlag(str, &f->handle_ioctl, "handle_ioctl",
+      "Intercept and handle ioctl requests.");
+  ParseFlag(str, &f->malloc_context_size, "malloc_context_size",
+      "Max number of stack frames kept for each allocation/deallocation.");
+  ParseFlag(str, &f->log_path, "log_path",
+      "Write logs to \"log_path.pid\". The special values are \"stdout\" and "
+      "\"stderr\". The default is \"stderr\".");
+  ParseFlag(str, &f->verbosity, "verbosity",
+      "Verbosity level (0 - silent, 1 - a bit of output, 2+ - more output).");
+  ParseFlag(str, &f->detect_leaks, "detect_leaks",
+      "Enable memory leak detection.");
+  ParseFlag(str, &f->leak_check_at_exit, "leak_check_at_exit",
+      "Invoke leak checking in an atexit handler. Has no effect if "
+      "detect_leaks=false, or if __lsan_do_leak_check() is called before the "
+      "handler has a chance to run.");
   ParseFlag(str, &f->allocator_may_return_null, "allocator_may_return_null",
-            "");
-  ParseFlag(str, &f->print_summary, "print_summary", "");
-  ParseFlag(str, &f->check_printf, "check_printf", "");
-  ParseFlag(str, &f->handle_segv, "handle_segv", "");
-  ParseFlag(str, &f->allow_user_segv_handler, "allow_user_segv_handler", "");
-  ParseFlag(str, &f->use_sigaltstack, "use_sigaltstack", "");
-  ParseFlag(str, &f->detect_deadlocks, "detect_deadlocks", "");
+      "If false, the allocator will crash instead of returning 0 on "
+      "out-of-memory.");
+  ParseFlag(str, &f->print_summary, "print_summary",
+      "If false, disable printing error summaries in addition to error "
+      "reports.");
+  ParseFlag(str, &f->check_printf, "check_printf",
+      "Check printf arguments.");
+  ParseFlag(str, &f->handle_segv, "handle_segv",
+      "If set, registers the tool's custom SEGV handler (both SIGBUS and "
+      "SIGSEGV on OSX).");
+  ParseFlag(str, &f->allow_user_segv_handler, "allow_user_segv_handler",
+      "If set, allows user to register a SEGV handler even if the tool "
+      "registers one.");
+  ParseFlag(str, &f->use_sigaltstack, "use_sigaltstack",
+      "If set, uses alternate stack for signal handling.");
+  ParseFlag(str, &f->detect_deadlocks, "detect_deadlocks",
+      "If set, deadlock detection is enabled.");
   ParseFlag(str, &f->clear_shadow_mmap_threshold,
-            "clear_shadow_mmap_threshold", "");
-  ParseFlag(str, &f->color, "color", "");
-  ParseFlag(str, &f->legacy_pthread_cond, "legacy_pthread_cond", "");
-  ParseFlag(str, &f->help, "help", "");
+            "clear_shadow_mmap_threshold",
+      "Large shadow regions are zero-filled using mmap(NORESERVE) instead of "
+      "memset(). This is the threshold size in bytes.");
+  ParseFlag(str, &f->color, "color",
+      "Colorize reports: (always|never|auto).");
+  ParseFlag(str, &f->legacy_pthread_cond, "legacy_pthread_cond",
+      "Enables support for dynamic libraries linked with libpthread 2.2.5.");
+  ParseFlag(str, &f->help, "help", "Print the flag descriptions.");
 
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)
@@ -149,8 +184,7 @@ bool FlagInDescriptionList(const char *name) {
 void AddFlagDescription(const char *name, const char *description) {
   if (FlagInDescriptionList(name)) return;
   FlagDescription *new_description =
-      (FlagDescription*)allocator_for_flags.Allocate(
-          sizeof(FlagDescription));
+      new(allocator_for_flags) FlagDescription();
   new_description->name = name;
   new_description->description = description;
   flag_descriptions.push_back(new_description);
@@ -162,7 +196,7 @@ void PrintFlagDescriptions() {
   Printf("Available flags for %s:\n", SanitizerToolName);
   while (it.hasNext()) {
     FlagDescription *descr = it.next();
-    Printf("\t%s - %s\n", descr->name, descr->description);
+    Printf("\t%s\n\t\t- %s\n", descr->name, descr->description);
   }
 }
 
