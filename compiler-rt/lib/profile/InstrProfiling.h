@@ -10,8 +10,6 @@
 #ifndef PROFILE_INSTRPROFILING_H__
 #define PROFILE_INSTRPROFILING_H__
 
-#include <stdio.h>
-
 #define I386_FREEBSD (defined(__FreeBSD__) && defined(__i386__))
 
 #if !I386_FREEBSD
@@ -42,16 +40,18 @@ typedef struct __llvm_profile_data {
   uint64_t *const Counters;
 } __llvm_profile_data;
 
-/* TODO: void __llvm_profile_get_size_for_buffer(void); */
+/*!
+ * \brief Get required size for profile buffer.
+ */
+uint64_t __llvm_profile_get_size_for_buffer(void);
 
 /*!
  * \brief Write instrumentation data to the given buffer.
  *
- * This function is currently broken:  it shouldn't rely on libc, but it does.
- * It should be changed to take a char* buffer, and write binary data directly
- * to it.
+ * \pre \c Buffer is the start of a buffer at least as big as \a
+ * __llvm_profile_get_size_for_buffer().
  */
-int __llvm_profile_write_buffer(FILE *OutputFile);
+int __llvm_profile_write_buffer(char *Buffer);
 
 const __llvm_profile_data *__llvm_profile_data_begin(void);
 const __llvm_profile_data *__llvm_profile_data_end(void);
