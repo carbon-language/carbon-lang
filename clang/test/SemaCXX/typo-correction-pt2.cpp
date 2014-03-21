@@ -243,3 +243,16 @@ void func() {
   bar();  // expected-error-re {{use of undeclared identifier 'bar'{{$}}}}
 }
 }
+
+namespace std {
+class bernoulli_distribution {
+ public:
+  double p() const;
+};
+}
+void test() {
+  // Make sure that typo correction doesn't suggest changing 'p' to
+  // 'std::bernoulli_distribution::p' as that is most likely wrong.
+  if (p)  // expected-error-re {{use of undeclared identifier 'p'{{$}}}}
+    return;
+}

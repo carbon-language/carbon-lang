@@ -4209,13 +4209,17 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
                                               IEnd = DI->second.end();
          I != IEnd; /* Increment in loop. */) {
       // If we only want nested name specifier corrections, ignore potential
-      // corrections that have a different base identifier from the typo.
-      if (AllowOnlyNNSChanges &&
-          I->second.front().getCorrectionAsIdentifierInfo() != Typo) {
-        TypoCorrectionConsumer::result_iterator Prev = I;
-        ++I;
-        DI->second.erase(Prev);
-        continue;
+      // corrections that have a different base identifier from the typo or
+      // which have a normalized edit distance longer than the typo itself.
+      if (AllowOnlyNNSChanges) {
+        TypoCorrection &TC = I->second.front();
+        if (TC.getCorrectionAsIdentifierInfo() != Typo ||
+            TC.getEditDistance(true) > TypoLen) {
+          TypoCorrectionConsumer::result_iterator Prev = I;
+          ++I;
+          DI->second.erase(Prev);
+          continue;
+        }
       }
 
       // If the item already has been looked up or is a keyword, keep it.
