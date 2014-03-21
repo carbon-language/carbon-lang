@@ -603,7 +603,6 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit *TheCU,
   if (!Scope || !Scope->getScopeNode())
     return NULL;
 
-  // Unique scope where applicable.
   DIScope DS(Scope->getScopeNode());
 
   SmallVector<DIE *, 8> Children;
