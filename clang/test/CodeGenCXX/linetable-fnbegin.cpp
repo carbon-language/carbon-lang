@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -emit-llvm -g %s -o - | FileCheck %s
 // Test that the line table info for Foo<T>::bar() is pointing to the
 // right header file.
-// CHECK: define{{.*}} @_ZN3FooIiE3barEv
+// CHECK: define{{.*}}bar
 // CHECK-NOT: define
 // CHECK: ret {{.*}}, !dbg ![[DBG:.*]]
 // CHECK: ![[HPP:.*]] = metadata !{metadata !"./template.hpp",
