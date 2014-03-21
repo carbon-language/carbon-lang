@@ -627,7 +627,8 @@ static bool readResponseFile(StringRef path, PECOFFLinkingContext &ctx,
   ArrayRef<uint8_t> contents;
   if (!readFile(ctx, path, contents))
     return false;
-  StringRef contentsStr(reinterpret_cast<const char *>(contents.data()));
+  StringRef contentsStr(reinterpret_cast<const char *>(contents.data()),
+                        contents.size());
   DriverStringSaver saver(ctx);
   SmallVector<const char *, 0> args;
   llvm::cl::TokenizeWindowsCommandLine(contentsStr, saver, args);
