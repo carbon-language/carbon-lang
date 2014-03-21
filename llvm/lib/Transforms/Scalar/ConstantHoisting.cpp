@@ -87,9 +87,10 @@ struct ConstantCandidate {
 struct RebasedConstantInfo {
   ConstantUseListType Uses;
   Constant *Offset;
+  mutable BasicBlock *IDom;
 
   RebasedConstantInfo(ConstantUseListType &&Uses, Constant *Offset)
-    : Uses(Uses), Offset(Offset) { }
+    : Uses(Uses), Offset(Offset), IDom(nullptr) { }
 };
 
 /// \brief A base constant and all its rebased constants.
@@ -152,6 +153,17 @@ private:
     Entry = nullptr;
   }
 
+  /// \brief Find the common dominator of all uses and cache the result for
+  /// future lookup.
+  BasicBlock *getIDom(const RebasedConstantInfo &RCI) const {
+    if (RCI.IDom)
+      return RCI.IDom;
+    RCI.IDom = findIDomOfAllUses(RCI.Uses);
+    assert(RCI.IDom && "Invalid IDom.");
+    return RCI.IDom;
+  }
+
+  BasicBlock *findIDomOfAllUses(const ConstantUseListType &Uses) const;
   Instruction *findMatInsertPt(Instruction *Inst, unsigned Idx = ~0U) const;
   Instruction *findConstantInsertionPoint(const ConstantInfo &ConstInfo) const;
   void collectConstantCandidates(Instruction *Inst, unsigned Idx,
@@ -202,6 +214,32 @@ bool ConstantHoisting::runOnFunction(Function &Fn) {
   return MadeChange;
 }
 
+/// \brief Find nearest common dominator of all uses.
+/// FIXME: Replace this with NearestCommonDominator once it is in common code.
+BasicBlock *
+ConstantHoisting::findIDomOfAllUses(const ConstantUseListType &Uses) const {
+  // Collect all basic blocks.
+  SmallPtrSet<BasicBlock *, 8> BBs;
+  for (auto const &U : Uses)
+    BBs.insert(findMatInsertPt(U.Inst, U.OpndIdx)->getParent());
+
+  if (BBs.count(Entry))
+    return Entry;
+
+  while (BBs.size() >= 2) {
+    BasicBlock *BB, *BB1, *BB2;
+    BB1 = *BBs.begin();
+    BB2 = *std::next(BBs.begin());
+    BB = DT->findNearestCommonDominator(BB1, BB2);
+    if (BB == Entry)
+      return Entry;
+    BBs.erase(BB1);
+    BBs.erase(BB2);
+    BBs.insert(BB);
+  }
+  assert((BBs.size() == 1) && "Expected only one element.");
+  return *BBs.begin();
+}
 
 /// \brief Find the constant materialization insertion point.
 Instruction *ConstantHoisting::findMatInsertPt(Instruction *Inst,
@@ -224,11 +262,12 @@ Instruction *ConstantHoisting::findMatInsertPt(Instruction *Inst,
 Instruction *ConstantHoisting::
 findConstantInsertionPoint(const ConstantInfo &ConstInfo) const {
   assert(!ConstInfo.RebasedConstants.empty() && "Invalid constant info entry.");
-  // Collect all basic blocks.
+  // Collect all IDoms.
   SmallPtrSet<BasicBlock *, 8> BBs;
   for (auto const &RCI : ConstInfo.RebasedConstants)
-    for (auto const &U : RCI.Uses)
-      BBs.insert(U.Inst->getParent());
+    BBs.insert(getIDom(RCI));
+
+  assert(!BBs.empty() && "No dominators!?");
 
   if (BBs.count(Entry))
     return &Entry->front();
