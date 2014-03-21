@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/LiveRangeEdit.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
+#include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -440,7 +441,20 @@ void InlineSpiller::propagateSiblingValue(SibValueMap::iterator SVIIter,
           // Also hoist spills to blocks with smaller loop depth, but make sure
           // that the new value dominates.  Non-phi dependents are always
           // dominated, phis need checking.
+
+          const BranchProbability MarginProb(4, 5); // 80%
+          // Hoist a spill to outer loop if there are multiple dependents (it
+          // can be beneficial if more than one dependents are hoisted) or
+          // if DepSV (the hoisting source) is hotter than SV (the hoisting
+          // destination) (we add a 80% margin to bias a little towards
+          // loop depth).
+          bool HoistCondition =
+            (MBFI.getBlockFreq(DepSV.SpillMBB) >=
+             (MBFI.getBlockFreq(SV.SpillMBB) * MarginProb)) ||
+            Deps->size() > 1;
+
           if ((Loops.getLoopDepth(DepSV.SpillMBB) > SpillDepth) &&
+              HoistCondition &&
               (!DepSVI->first->isPHIDef() ||
                MDT.dominates(SV.SpillMBB, DepSV.SpillMBB))) {
             Changed = true;
