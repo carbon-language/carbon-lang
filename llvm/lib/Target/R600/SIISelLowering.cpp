@@ -398,10 +398,10 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
       static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
     MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
     unsigned SuperReg = MI->getOperand(0).getReg();
-    unsigned SubRegLo = MRI.createVirtualRegister(&AMDGPU::SReg_64RegClass);
-    unsigned SubRegHi = MRI.createVirtualRegister(&AMDGPU::SReg_64RegClass);
-    unsigned SubRegHiHi = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
-    unsigned SubRegHiLo = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
+    unsigned SubRegLo = MRI.createVirtualRegister(&AMDGPU::SGPR_64RegClass);
+    unsigned SubRegHi = MRI.createVirtualRegister(&AMDGPU::SGPR_64RegClass);
+    unsigned SubRegHiHi = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
+    unsigned SubRegHiLo = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
     BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::S_MOV_B64), SubRegLo)
             .addOperand(MI->getOperand(1));
     BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::S_MOV_B32), SubRegHiLo)
