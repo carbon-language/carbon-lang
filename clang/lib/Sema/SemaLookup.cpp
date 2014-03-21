@@ -4177,11 +4177,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         KnownNamespaces[ExternalKnownNamespaces[I]] = true;
     }
 
-    for (llvm::MapVector<NamespaceDecl*, bool>::iterator
-           KNI = KnownNamespaces.begin(),
-           KNIEnd = KnownNamespaces.end();
-         KNI != KNIEnd; ++KNI)
-      Namespaces.AddNameSpecifier(KNI->first);
+    for (auto KNPair : KnownNamespaces)
+      Namespaces.AddNameSpecifier(KNPair.first);
 
     bool SSIsTemplate = false;
     if (NestedNameSpecifier *NNS =
@@ -4291,10 +4288,8 @@ retry_lookup:
       case LookupResult::FoundOverloaded: {
         TypoCorrectionConsumer::result_iterator Prev = I;
         // Store all of the Decls for overloaded symbols
-        for (LookupResult::iterator TRD = TmpRes.begin(),
-                                 TRDEnd = TmpRes.end();
-             TRD != TRDEnd; ++TRD)
-          Candidate.addCorrectionDecl(*TRD);
+        for (auto *TRD : TmpRes)
+          Candidate.addCorrectionDecl(TRD);
         ++I;
         if (!isCandidateViable(CCC, Candidate)) {
           QualifiedResults.push_back(Candidate);
@@ -4326,15 +4321,10 @@ retry_lookup:
     // Only perform the qualified lookups for C++
     if (SearchNamespaces) {
       TmpRes.suppressDiagnostics();
-      for (SmallVector<TypoCorrection,
-                       16>::iterator QRI = QualifiedResults.begin(),
-                                  QRIEnd = QualifiedResults.end();
-           QRI != QRIEnd; ++QRI) {
-        for (NamespaceSpecifierSet::iterator NI = Namespaces.begin(),
-                                          NIEnd = Namespaces.end();
-             NI != NIEnd; ++NI) {
-          DeclContext *Ctx = NI->DeclCtx;
-          const Type *NSType = NI->NameSpecifier->getAsType();
+      for (auto QR : QualifiedResults) {
+        for (auto NSI : Namespaces) {
+          DeclContext *Ctx = NSI.DeclCtx;
+          const Type *NSType = NSI.NameSpecifier->getAsType();
 
           // If the current NestedNameSpecifier refers to a class and the
           // current correction candidate is the name of that class, then skip
@@ -4342,26 +4332,26 @@ retry_lookup:
           // is an appropriate correction.
           if (CXXRecordDecl *NSDecl =
                   NSType ? NSType->getAsCXXRecordDecl() : 0) {
-            if (NSDecl->getIdentifier() == QRI->getCorrectionAsIdentifierInfo())
+            if (NSDecl->getIdentifier() == QR.getCorrectionAsIdentifierInfo())
               continue;
           }
 
-          TypoCorrection TC(*QRI);
+          TypoCorrection TC(QR);
           TC.ClearCorrectionDecls();
-          TC.setCorrectionSpecifier(NI->NameSpecifier);
-          TC.setQualifierDistance(NI->EditDistance);
+          TC.setCorrectionSpecifier(NSI.NameSpecifier);
+          TC.setQualifierDistance(NSI.EditDistance);
           TC.setCallbackDistance(0); // Reset the callback distance
 
           // If the current correction candidate and namespace combination are
           // too far away from the original typo based on the normalized edit
           // distance, then skip performing a qualified name lookup.
           unsigned TmpED = TC.getEditDistance(true);
-          if (QRI->getCorrectionAsIdentifierInfo() != Typo &&
+          if (QR.getCorrectionAsIdentifierInfo() != Typo &&
               TmpED && TypoLen / TmpED < 3)
             continue;
 
           TmpRes.clear();
-          TmpRes.setLookupName(QRI->getCorrectionAsIdentifierInfo());
+          TmpRes.setLookupName(QR.getCorrectionAsIdentifierInfo());
           if (!LookupQualifiedName(TmpRes, Ctx)) continue;
 
           // Any corrections added below will be validated in subsequent
