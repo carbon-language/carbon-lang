@@ -77,7 +77,6 @@ public:
 };
 
 class Comparison {
-
   const SCEV *LHS;
   const SCEV *RHS;
 

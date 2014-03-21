@@ -181,7 +181,6 @@ void OpenScop::initializeStatements() {
 }
 
 void OpenScop::freeStatement(openscop_statement_p stmt) {
-
   if (stmt->read)
     openscop_matrix_free(stmt->read);
   stmt->read = NULL;
@@ -279,7 +278,6 @@ int OpenScop::domainToMatrix_basic_set(isl_basic_set *bset, void *user) {
 /// @param PS The set to be translated
 /// @return A OpenScop Matrix
 openscop_matrix_p OpenScop::domainToMatrix(isl_set *PS) {
-
   // Create a canonical copy of this set.
   isl_set *set = isl_set_copy(PS);
   set = isl_set_compute_divs(set);
@@ -373,7 +371,6 @@ int OpenScop::scatteringToMatrix_basic_map(isl_basic_map *bmap, void *user) {
 /// @param map The map to be translated
 /// @return A OpenScop Matrix
 openscop_matrix_p OpenScop::scatteringToMatrix(isl_map *pmap) {
-
   // Create a canonical copy of this set.
   isl_map *map = isl_map_copy(pmap);
   map = isl_map_compute_divs(map);
@@ -472,7 +469,6 @@ int OpenScop::accessToMatrix_basic_map(isl_basic_map *bmap, void *user) {
 ///
 /// @return The memory access matrix, as it is required by openscop.
 openscop_matrix_p OpenScop::createAccessMatrix(ScopStmt *S, bool isRead) {
-
   unsigned NbColumns = S->getNumIterators() + S->getNumParams() + 2;
   openscop_matrix_p m = openscop_matrix_malloc(0, NbColumns);
 

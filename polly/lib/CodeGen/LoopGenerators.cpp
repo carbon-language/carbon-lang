@@ -50,7 +50,6 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
                          PollyIRBuilder &Builder, Pass *P, BasicBlock *&ExitBB,
                          ICmpInst::Predicate Predicate,
                          LoopAnnotator *Annotator, bool Parallel) {
-
   DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LoopInfo &LI = P->getAnalysis<LoopInfo>();
   Function *F = Builder.GetInsertBlock()->getParent();

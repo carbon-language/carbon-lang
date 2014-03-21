@@ -77,7 +77,6 @@ void TempScop::print(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI) const {
 
 void TempScop::printDetail(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI,
                            const Region *CurR, unsigned ind) const {
-
   // FIXME: Print other details rather than memory accesses.
   for (const auto &CurBlock : CurR->blocks()) {
     AccFuncMapType::const_iterator AccSetIt = AccFuncMap.find(CurBlock);

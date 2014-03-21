@@ -992,7 +992,6 @@ const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
 /// WidenIVUse - Determine whether an individual user of the narrow IV can be
 /// widened. If so, return the wide clone of the user.
 Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
-
   // Stop traversing the def-use chain at inner-loop phis or post-loop phis.
   if (isa<PHINode>(DU.NarrowUse) &&
       LI->getLoopFor(DU.NarrowUse->getParent()) != L)
@@ -1537,7 +1536,6 @@ static Value *genLoopLimit(PHINode *IndVar, const SCEV *IVCount, Loop *L,
   // GEP. Avoid running SCEVExpander on a new pointer value, instead reusing
   // the existing GEPs whenever possible.
   if (IndVar->getType()->isPointerTy() && !IVCount->getType()->isPointerTy()) {
-
     Type *OfsTy = SE->getEffectiveSCEVType(IVInit->getType());
     const SCEV *IVOffset = SE->getTruncateOrSignExtend(IVCount, OfsTy);
 

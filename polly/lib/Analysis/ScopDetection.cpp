@@ -198,7 +198,6 @@ public:
 int DiagnosticScopFound::PluginDiagnosticKind = 10;
 
 void DiagnosticScopFound::print(DiagnosticPrinter &DP) const {
-
   DP << "Polly detected an optimizable loop region (scop) in function '" << F
      << "'\n";
 
@@ -617,7 +616,6 @@ static unsigned eraseAllChildren(std::set<const Region *> &Regs,
 }
 
 void ScopDetection::findScops(Region &R) {
-
   if (!DetectRegionsWithoutLoops && regionWithoutLoops(R, LI))
     return;
 

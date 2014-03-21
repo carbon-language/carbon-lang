@@ -26,7 +26,6 @@ using namespace llvm;
 namespace llvm {
 template <>
 struct GraphTraits<ScopDetection *> : public GraphTraits<RegionInfo *> {
-
   static NodeType *getEntryNode(ScopDetection *SD) {
     return GraphTraits<RegionInfo *>::getEntryNode(SD->getRI());
   }
@@ -39,11 +38,9 @@ struct GraphTraits<ScopDetection *> : public GraphTraits<RegionInfo *> {
 };
 
 template <> struct DOTGraphTraits<RegionNode *> : public DefaultDOTGraphTraits {
-
   DOTGraphTraits(bool isSimple = false) : DefaultDOTGraphTraits(isSimple) {}
 
   std::string getNodeLabel(RegionNode *Node, RegionNode *Graph) {
-
     if (!Node->isSubRegion()) {
       BasicBlock *BB = Node->getNodeAs<BasicBlock>();
 
@@ -68,7 +65,6 @@ struct DOTGraphTraits<ScopDetection *> : public DOTGraphTraits<RegionNode *> {
   std::string getEdgeAttributes(RegionNode *srcNode,
                                 GraphTraits<RegionInfo *>::ChildIteratorType CI,
                                 ScopDetection *SD) {
-
     RegionNode *destNode = *CI;
 
     if (srcNode->isSubRegion() || destNode->isSubRegion())
@@ -103,7 +99,6 @@ struct DOTGraphTraits<ScopDetection *> : public DOTGraphTraits<RegionNode *> {
 
     for (std::string::iterator SI = String.begin(), SE = String.end(); SI != SE;
          ++SI) {
-
       if (*SI == '"')
         Escaped += '\\';
 

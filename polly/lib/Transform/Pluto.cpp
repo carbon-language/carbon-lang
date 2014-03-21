@@ -126,7 +126,6 @@ static std::string convertInt(int number) {
 }
 
 class PlutoOptimizer : public ScopPass {
-
 public:
   static char ID;
   explicit PlutoOptimizer() : ScopPass(ID) {}

@@ -37,7 +37,6 @@ PTXGenerator::PTXGenerator(PollyIRBuilder &Builder, Pass *P,
                            const std::string &Triple)
     : Builder(Builder), P(P), GPUTriple(Triple), GridWidth(1), GridHeight(1),
       BlockWidth(1), BlockHeight(1), OutputBytes(0) {
-
   InitializeGPUDataTypes();
 }
 

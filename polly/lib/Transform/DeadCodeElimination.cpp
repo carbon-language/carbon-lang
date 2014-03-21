@@ -53,7 +53,6 @@ cl::opt<int> DCEPreciseSteps(
     cl::ZeroOrMore, cl::init(-1));
 
 class DeadCodeElim : public ScopPass {
-
 public:
   static char ID;
   explicit DeadCodeElim() : ScopPass(ID) {}

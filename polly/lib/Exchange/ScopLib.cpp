@@ -127,7 +127,6 @@ void ScopLib::initializeStatements() {
 }
 
 void ScopLib::freeStatement(scoplib_statement_p stmt) {
-
   if (stmt->read)
     scoplib_matrix_free(stmt->read);
   stmt->read = NULL;
@@ -445,7 +444,6 @@ int ScopLib::accessToMatrix_basic_map(isl_basic_map *bmap, void *user) {
 ///
 /// @return The memory access matrix, as it is required by scoplib.
 scoplib_matrix_p ScopLib::createAccessMatrix(ScopStmt *S, bool isRead) {
-
   unsigned NbColumns = S->getNumIterators() + S->getNumParams() + 2;
   scoplib_matrix_p m = scoplib_matrix_malloc(0, NbColumns);
 
@@ -644,7 +642,6 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, __isl_take isl_space *Space) {
 /// @return An isl_map describing the scattering.
 isl_map *scatteringForStmt(scoplib_matrix_p m, ScopStmt *PollyStmt,
                            int scatteringDims) {
-
   unsigned NbParam = PollyStmt->getNumParams();
   unsigned NbIterators = PollyStmt->getNumIterators();
   unsigned NbScattering;

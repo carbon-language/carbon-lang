@@ -220,7 +220,6 @@ Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
 
 void BlockGenerator::copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
                                     ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
-
   // We do not generate debug intrinsics as we did not investigate how to
   // copy them correctly. At the current state, they just crash the code
   // generation as the meta-data operands are not correctly copied.
@@ -257,7 +256,6 @@ void BlockGenerator::copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
 std::vector<Value *> BlockGenerator::getMemoryAccessIndex(
     __isl_keep isl_map *AccessRelation, Value *BaseAddress, ValueMapT &BBMap,
     ValueMapT &GlobalMap, LoopToScevMapT &LTS, Loop *L) {
-
   assert((isl_map_dim(AccessRelation, isl_dim_out) == 1) &&
          "Only single dimensional access functions supported");
 

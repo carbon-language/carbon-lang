@@ -81,7 +81,6 @@ MaximizeBandDepth("polly-opt-maximize-bands",
 namespace {
 
 class IslScheduleOptimizer : public ScopPass {
-
 public:
   static char ID;
   explicit IslScheduleOptimizer() : ScopPass(ID) { LastSchedule = NULL; }
