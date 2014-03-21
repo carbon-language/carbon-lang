@@ -19,6 +19,7 @@
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Support/LineIterator.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Endian.h"
 
 #include <iterator>
 
@@ -59,20 +60,25 @@ public:
   InstrProfReader() : LastError(instrprof_error::success) {}
   virtual ~InstrProfReader() {}
 
+  /// Read the header.  Required before reading first record.
+  virtual error_code readHeader() = 0;
   /// Read a single record.
   virtual error_code readNextRecord(InstrProfRecord &Record) = 0;
   /// Iterator over profile data.
   InstrProfIterator begin() { return InstrProfIterator(this); }
   InstrProfIterator end() { return InstrProfIterator(); }
 
+protected:
   /// Set the current error_code and return same.
   error_code error(error_code EC) {
     LastError = EC;
     return EC;
   }
+
   /// Clear the current error code and return a successful one.
   error_code success() { return error(instrprof_error::success); }
 
+public:
   /// Return true if the reader has finished reading the profile data.
   bool isEOF() { return LastError == instrprof_error::eof; }
   /// Return true if the reader encountered an error reading profiling data.
@@ -110,8 +116,70 @@ public:
   TextInstrProfReader(std::unique_ptr<MemoryBuffer> &DataBuffer_)
       : DataBuffer(DataBuffer_.release()), Line(*DataBuffer, '#') {}
 
+  /// Read the header.
+  error_code readHeader() override { return success(); }
   /// Read a single record.
   error_code readNextRecord(InstrProfRecord &Record) override;
+};
+
+/// Reader for the raw instrprof binary format from runtime.
+///
+/// This format is a raw memory dump of the instrumentation-baed profiling data
+/// from the runtime.  It has no index.
+class RawInstrProfReader : public InstrProfReader {
+private:
+  /// The profile data file contents.
+  std::unique_ptr<MemoryBuffer> DataBuffer;
+  /// The current set of counter values.
+  std::vector<uint64_t> Counts;
+  struct ProfileData {
+    const uint32_t NameSize;
+    const uint32_t NumCounters;
+    const uint64_t FuncHash;
+    const uint64_t NamePtr;
+    const uint64_t CounterPtr;
+  };
+  struct RawHeader {
+    const uint64_t Magic;
+    const uint64_t Version;
+    const uint64_t DataSize;
+    const uint64_t CountersSize;
+    const uint64_t NamesSize;
+    const uint64_t CountersDelta;
+    const uint64_t NamesDelta;
+  };
+
+  bool ShouldSwapBytes;
+  uint64_t CountersDelta;
+  uint64_t NamesDelta;
+  const ProfileData *Data;
+  const ProfileData *DataEnd;
+  const uint64_t *CountersStart;
+  const char *NamesStart;
+
+  RawInstrProfReader(const TextInstrProfReader &) LLVM_DELETED_FUNCTION;
+  RawInstrProfReader &operator=(const TextInstrProfReader &)
+    LLVM_DELETED_FUNCTION;
+public:
+  RawInstrProfReader(std::unique_ptr<MemoryBuffer> &DataBuffer);
+
+  error_code readHeader() override;
+  error_code readNextRecord(InstrProfRecord &Record) override;
+
+private:
+  error_code readHeader(const RawHeader &Header);
+  template <class IntT>
+  IntT swap(IntT Int) const {
+    return ShouldSwapBytes ? sys::SwapByteOrder(Int) : Int;
+  }
+  const uint64_t *getCounter(uint64_t CounterPtr) const {
+    ptrdiff_t Offset = (swap(CounterPtr) - CountersDelta) / sizeof(uint64_t);
+    return CountersStart + Offset;
+  }
+  const char *getName(uint64_t NamePtr) const {
+    ptrdiff_t Offset = (swap(NamePtr) - NamesDelta) / sizeof(char);
+    return NamesStart + Offset;
+  }
 };
 
 } // end namespace llvm
