@@ -68,7 +68,11 @@ bool LockFileManager::processStillExecuting(StringRef Hostname, int PID) {
 LockFileManager::LockFileManager(StringRef FileName)
 {
   this->FileName = FileName;
-  LockFileName = FileName;
+  if (error_code EC = sys::fs::make_absolute(this->FileName)) {
+    Error = EC;
+    return;
+  }
+  LockFileName = this->FileName;
   LockFileName += ".lock";
 
   // If the lock file already exists, don't bother to try to create our own
@@ -116,8 +120,7 @@ LockFileManager::LockFileManager(StringRef FileName)
   while (1) {
     // Create a link from the lock file name. If this succeeds, we're done.
     error_code EC =
-        sys::fs::create_link(sys::path::filename(UniqueLockFileName.str()),
-                             LockFileName.str());
+        sys::fs::create_link(UniqueLockFileName.str(), LockFileName.str());
     if (EC == errc::success)
       return;
 
