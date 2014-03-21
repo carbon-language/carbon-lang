@@ -35,15 +35,14 @@
 
 #define DEBUG_TYPE "consthoist"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
@@ -51,12 +50,15 @@ using namespace llvm;
 STATISTIC(NumConstantsHoisted, "Number of constants hoisted");
 STATISTIC(NumConstantsRebased, "Number of constants rebased");
 
-
 namespace {
 typedef SmallVector<User *, 4> ConstantUseListType;
 struct ConstantCandidate {
-  unsigned CumulativeCost;
   ConstantUseListType Uses;
+  ConstantInt *ConstInt;
+  unsigned CumulativeCost;
+
+  ConstantCandidate(ConstantInt *ConstInt)
+    : ConstInt(ConstInt), CumulativeCost(0) { }
 };
 
 struct ConstantInfo {
@@ -71,12 +73,15 @@ struct ConstantInfo {
 };
 
 class ConstantHoisting : public FunctionPass {
+  typedef DenseMap<ConstantInt *, unsigned> ConstCandMapType;
+  typedef std::vector<ConstantCandidate> ConstCandVecType;
+
   const TargetTransformInfo *TTI;
   DominatorTree *DT;
 
-  /// Keeps track of expensive constants found in the function.
-  typedef MapVector<ConstantInt *, ConstantCandidate> ConstantMapType;
-  ConstantMapType ConstantMap;
+  /// Keeps track of constant candidates found in the function.
+  ConstCandMapType ConstCandMap;
+  ConstCandVecType ConstCandVec;
 
   /// These are the final constants we decided to hoist.
   SmallVector<ConstantInfo, 4> Constants;
@@ -101,8 +106,8 @@ private:
                         ConstantInt *C);
   void CollectConstants(Instruction *I);
   void CollectConstants(Function &F);
-  void FindAndMakeBaseConstant(ConstantMapType::iterator S,
-                               ConstantMapType::iterator E);
+  void FindAndMakeBaseConstant(ConstCandVecType::iterator S,
+                               ConstCandVecType::iterator E);
   void FindBaseConstants();
   Instruction *FindConstantInsertionPoint(Function &F,
                                           const ConstantInfo &CI) const;
@@ -144,8 +149,16 @@ void ConstantHoisting::CollectConstant(User * U, unsigned Opcode,
   else
     Cost = TTI->getIntImmCost(IID, C->getValue(), C->getType());
 
+  // Ignore cheap integer constants.
   if (Cost > TargetTransformInfo::TCC_Basic) {
-    ConstantCandidate &CC = ConstantMap[C];
+    ConstCandMapType::iterator Itr;
+    bool Inserted;
+    std::tie(Itr, Inserted) = ConstCandMap.insert(std::make_pair(C, 0));
+    if (Inserted) {
+      ConstCandVec.push_back(ConstantCandidate(C));
+      Itr->second = ConstCandVec.size() - 1;
+    }
+    ConstantCandidate &CC = ConstCandVec[Itr->second];
     CC.CumulativeCost += Cost;
     CC.Uses.push_back(U);
     DEBUG(dbgs() << "Collect constant " << *C << " with cost " << Cost
@@ -193,14 +206,14 @@ void ConstantHoisting::CollectConstants(Function &F) {
 
 /// \brief Find the base constant within the given range and rebase all other
 /// constants with respect to the base constant.
-void ConstantHoisting::FindAndMakeBaseConstant(ConstantMapType::iterator S,
-                                               ConstantMapType::iterator E) {
-  ConstantMapType::iterator MaxCostItr = S;
+void ConstantHoisting::FindAndMakeBaseConstant(ConstCandVecType::iterator S,
+                                               ConstCandVecType::iterator E) {
+  ConstCandVecType::iterator MaxCostItr = S;
   unsigned NumUses = 0;
   // Use the constant that has the maximum cost as base constant.
-  for (ConstantMapType::iterator I = S; I != E; ++I) {
-    NumUses += I->second.Uses.size();
-    if (I->second.CumulativeCost > MaxCostItr->second.CumulativeCost)
+  for (ConstCandVecType::iterator I = S; I != E; ++I) {
+    NumUses += I->Uses.size();
+    if (I->CumulativeCost > MaxCostItr->CumulativeCost)
       MaxCostItr = I;
   }
 
@@ -209,15 +222,15 @@ void ConstantHoisting::FindAndMakeBaseConstant(ConstantMapType::iterator S,
     return;
 
   ConstantInfo CI;
-  CI.BaseConstant = MaxCostItr->first;
+  CI.BaseConstant = MaxCostItr->ConstInt;
   Type *Ty = CI.BaseConstant->getType();
   // Rebase the constants with respect to the base constant.
-  for (ConstantMapType::iterator I = S; I != E; ++I) {
-    APInt Diff = I->first->getValue() - CI.BaseConstant->getValue();
+  for (ConstCandVecType::iterator I = S; I != E; ++I) {
+    APInt Diff = I->ConstInt->getValue() - CI.BaseConstant->getValue();
     ConstantInfo::RebasedConstantInfo RCI;
-    RCI.OriginalConstant = I->first;
+    RCI.OriginalConstant = I->ConstInt;
     RCI.Offset = ConstantInt::get(Ty, Diff);
-    RCI.Uses = std::move(I->second.Uses);
+    RCI.Uses = std::move(I->Uses);
     CI.RebasedConstants.push_back(RCI);
   }
   Constants.push_back(CI);
@@ -227,23 +240,22 @@ void ConstantHoisting::FindAndMakeBaseConstant(ConstantMapType::iterator S,
 /// an add from a common base constant.
 void ConstantHoisting::FindBaseConstants() {
   // Sort the constants by value and type. This invalidates the mapping.
-  std::sort(ConstantMap.begin(), ConstantMap.end(),
-            [](const std::pair<ConstantInt *, ConstantCandidate> &LHS,
-               const std::pair<ConstantInt *, ConstantCandidate> &RHS) {
-    if (LHS.first->getType() != RHS.first->getType())
-      return LHS.first->getType()->getBitWidth() <
-             RHS.first->getType()->getBitWidth();
-    return LHS.first->getValue().ult(RHS.first->getValue());
+  std::sort(ConstCandVec.begin(), ConstCandVec.end(),
+            [](const ConstantCandidate &LHS, const ConstantCandidate &RHS) {
+    if (LHS.ConstInt->getType() != RHS.ConstInt->getType())
+      return LHS.ConstInt->getType()->getBitWidth() <
+             RHS.ConstInt->getType()->getBitWidth();
+    return LHS.ConstInt->getValue().ult(RHS.ConstInt->getValue());
   });
 
   // Simple linear scan through the sorted constant map for viable merge
   // candidates.
-  ConstantMapType::iterator MinValItr = ConstantMap.begin();
-  for (ConstantMapType::iterator I = std::next(ConstantMap.begin()),
-       E = ConstantMap.end(); I != E; ++I) {
-    if (MinValItr->first->getType() == I->first->getType()) {
+  ConstCandVecType::iterator MinValItr = ConstCandVec.begin();
+  for (ConstCandVecType::iterator I = std::next(ConstCandVec.begin()),
+       E = ConstCandVec.end(); I != E; ++I) {
+    if (MinValItr->ConstInt->getType() == I->ConstInt->getType()) {
       // Check if the constant is in range of an add with immediate.
-      APInt Diff = I->first->getValue() - MinValItr->first->getValue();
+      APInt Diff = I->ConstInt->getValue() - MinValItr->ConstInt->getValue();
       if ((Diff.getBitWidth() <= 64) &&
           TTI->isLegalAddImmediate(Diff.getSExtValue()))
         continue;
@@ -255,7 +267,7 @@ void ConstantHoisting::FindBaseConstants() {
     MinValItr = I;
   }
   // Finalize the last base constant search.
-  FindAndMakeBaseConstant(MinValItr, ConstantMap.end());
+  FindAndMakeBaseConstant(MinValItr, ConstCandVec.end());
 }
 
 /// \brief Records the basic block of the instruction or all basic blocks of the
@@ -439,9 +451,9 @@ bool ConstantHoisting::OptimizeConstants(Function &F) {
   // Collect all constant candidates.
   CollectConstants(F);
 
-  // There are no constants to worry about.
-  if (ConstantMap.empty())
-    return MadeChange;
+  // There are no constant candidates to worry about.
+  if (ConstCandVec.empty())
+    return false;
 
   // Combine constants that can be easily materialized with an add from a common
   // base constant.
@@ -451,7 +463,8 @@ bool ConstantHoisting::OptimizeConstants(Function &F) {
   // constants.
   MadeChange |= EmitBaseConstants(F);
 
-  ConstantMap.clear();
+  ConstCandMap.clear();
+  ConstCandVec.clear();
   Constants.clear();
 
   return MadeChange;
