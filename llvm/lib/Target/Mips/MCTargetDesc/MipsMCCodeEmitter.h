@@ -20,7 +20,6 @@
 
 using namespace llvm;
 
-// Forward declarations.
 namespace llvm {
 class MCContext;
 class MCExpr;
@@ -30,9 +29,6 @@ class MCFixup;
 class MCOperand;
 class MCSubtargetInfo;
 class raw_ostream;
-}
-
-namespace {
 
 class MipsMCCodeEmitter : public MCCodeEmitter {
   MipsMCCodeEmitter(const MipsMCCodeEmitter &) LLVM_DELETED_FUNCTION;
@@ -124,6 +120,6 @@ public:
                           const MCSubtargetInfo &STI) const;
 
 }; // class MipsMCCodeEmitter
-} // namespace
+} // namespace llvm.
 
 #endif
