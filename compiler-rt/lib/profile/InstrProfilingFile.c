@@ -13,6 +13,7 @@
 #include <string.h>
 
 static int writeFile(FILE *File) {
+  /* Match logic in __llvm_profile_write_buffer(). */
   const __llvm_profile_data *DataBegin = __llvm_profile_data_begin();
   const __llvm_profile_data *DataEnd = __llvm_profile_data_end();
   const uint64_t *CountersBegin = __llvm_profile_counters_begin();
@@ -25,29 +26,24 @@ static int writeFile(FILE *File) {
   const uint64_t CountersSize = CountersEnd - CountersBegin;
   const uint64_t NamesSize = NamesEnd - NamesBegin;
 
-  /* Get rest of header data. */
-  const uint64_t Magic = __llvm_profile_get_magic();
-  const uint64_t Version = __llvm_profile_get_version();
-  const uint64_t CountersDelta = (uint64_t)CountersBegin;
-  const uint64_t NamesDelta = (uint64_t)NamesBegin;
-
-#define CHECK_fwrite(Data, Size, Length, File) \
-  do { if (fwrite(Data, Size, Length, File) != Length) return -1; } while (0)
-
-  /* Write the header. */
-  CHECK_fwrite(&Magic,         sizeof(uint64_t), 1, File);
-  CHECK_fwrite(&Version,       sizeof(uint64_t), 1, File);
-  CHECK_fwrite(&DataSize,      sizeof(uint64_t), 1, File);
-  CHECK_fwrite(&CountersSize,  sizeof(uint64_t), 1, File);
-  CHECK_fwrite(&NamesSize,     sizeof(uint64_t), 1, File);
-  CHECK_fwrite(&CountersDelta, sizeof(uint64_t), 1, File);
-  CHECK_fwrite(&NamesDelta,    sizeof(uint64_t), 1, File);
+  /* Create the header. */
+  uint64_t Header[PROFILE_HEADER_SIZE] = {
+    __llvm_profile_get_magic(),
+    __llvm_profile_get_version(),
+    DataSize,
+    CountersSize,
+    NamesSize,
+    (uint64_t)CountersBegin,
+    (uint64_t)NamesBegin
+  };
 
   /* Write the data. */
-  CHECK_fwrite(DataBegin, sizeof(__llvm_profile_data), DataSize, File);
+#define CHECK_fwrite(Data, Size, Length, File) \
+  do { if (fwrite(Data, Size, Length, File) != Length) return -1; } while (0)
+  CHECK_fwrite(Header,        sizeof(uint64_t), PROFILE_HEADER_SIZE, File);
+  CHECK_fwrite(DataBegin,     sizeof(__llvm_profile_data), DataSize, File);
   CHECK_fwrite(CountersBegin, sizeof(uint64_t), CountersSize, File);
-  CHECK_fwrite(NamesBegin, sizeof(char), NamesSize, File);
-
+  CHECK_fwrite(NamesBegin,    sizeof(char), NamesSize, File);
 #undef CHECK_fwrite
 
    return 0;

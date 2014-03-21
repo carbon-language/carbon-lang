@@ -32,6 +32,8 @@ typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 #endif
 
+#define PROFILE_HEADER_SIZE 7
+
 typedef struct __llvm_profile_data {
   const uint32_t NameSize;
   const uint32_t NumCounters;
