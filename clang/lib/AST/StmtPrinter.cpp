@@ -613,6 +613,12 @@ void OMPClausePrinter::VisitOMPNumThreadsClause(OMPNumThreadsClause *Node) {
   OS << ")";
 }
 
+void OMPClausePrinter::VisitOMPSafelenClause(OMPSafelenClause *Node) {
+  OS << "safelen(";
+  Node->getSafelen()->printPretty(OS, 0, Policy, 0);
+  OS << ")";
+}
+
 void OMPClausePrinter::VisitOMPDefaultClause(OMPDefaultClause *Node) {
   OS << "default("
      << getOpenMPSimpleClauseTypeName(OMPC_default, Node->getDefaultKind())

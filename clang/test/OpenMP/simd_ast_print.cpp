@@ -33,18 +33,46 @@ template<class T> struct S {
     T val;
 // CHECK: T res;
 // CHECK: T val;
-#pragma omp simd private(val)
-// CHECK-NEXT: #pragma omp simd private(val)
+    #pragma omp simd private(val)  safelen(7)
+// CHECK-NEXT: #pragma omp simd private(val) safelen(7)
     for (T i = 7; i < m_a; ++i) {
       val = v[i-7] + m_a;
       res = val;
     }
+    const T clen = 3;
+// CHECK: T clen = 3;
+    #pragma omp simd safelen(clen-1)
+// CHECK-NEXT: #pragma omp simd safelen(clen - 1)
+    for(T i = clen+2; i < 20; ++i) {
+// CHECK-NEXT: for (T i = clen + 2; i < 20; ++i) {
+      v[i] = v[v-clen] + 1;
+// CHECK-NEXT: v[i] = v[v - clen] + 1;
+    }
+// CHECK-NEXT: }
     return res;
   }
   ~S()
   {}
   T m_a;
 };
+
+template<int LEN> struct S2 {
+  static void func(int n, float *a, float *b, float *c) {
+#pragma omp simd safelen(LEN)
+    for(int i = 0; i < n; i++) {
+      c[i] = a[i] + b[i];
+    }
+  }
+};
+
+// S2<4>::func is called below in main.
+// CHECK: template <int LEN = 4> struct S2 {
+// CHECK-NEXT: static void func(int n, float *a, float *b, float *c)     {
+// CHECK-NEXT: #pragma omp simd safelen(4)
+// CHECK-NEXT:   for (int i = 0; i < n; i++) {
+// CHECK-NEXT:     c[i] = a[i] + b[i];
+// CHECK-NEXT:   }
+// CHECK-NEXT: }
 
 int main (int argc, char **argv) {
   int b = argc, c, d, e, f, g;
@@ -69,11 +97,16 @@ int main (int argc, char **argv) {
   for (int i = 0; i < 10; ++i)foo();
 // CHECK-NEXT: for (int i = 0; i < 10; ++i)
 // CHECK-NEXT: foo();
-#pragma omp simd
-// CHECK-NEXT: #pragma omp simd
+  const int CLEN = 4;
+// CHECK-NEXT: const int CLEN = 4;
+  #pragma omp simd safelen(CLEN)
+// CHECK-NEXT: #pragma omp simd safelen(CLEN)
   for (int i = 0; i < 10; ++i)foo();
 // CHECK-NEXT: for (int i = 0; i < 10; ++i)
 // CHECK-NEXT: foo();
+
+  float arr[16];
+  S2<4>::func(0,arr,arr,arr);
   return (0);
 }
 

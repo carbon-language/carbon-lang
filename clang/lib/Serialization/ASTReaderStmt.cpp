@@ -1677,6 +1677,9 @@ OMPClause *OMPClauseReader::readClause() {
   case OMPC_num_threads:
     C = new (Context) OMPNumThreadsClause();
     break;
+  case OMPC_safelen:
+    C = new (Context) OMPSafelenClause();
+    break;
   case OMPC_default:
     C = new (Context) OMPDefaultClause();
     break;
@@ -1704,6 +1707,11 @@ void OMPClauseReader::VisitOMPIfClause(OMPIfClause *C) {
 
 void OMPClauseReader::VisitOMPNumThreadsClause(OMPNumThreadsClause *C) {
   C->setNumThreads(Reader->Reader.ReadSubExpr());
+  C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
+}
+
+void OMPClauseReader::VisitOMPSafelenClause(OMPSafelenClause *C) {
+  C->setSafelen(Reader->Reader.ReadSubExpr());
   C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
 }
 

@@ -37,12 +37,13 @@ OPENMP_DIRECTIVE(simd)
 // OpenMP clauses.
 OPENMP_CLAUSE(if, OMPIfClause)
 OPENMP_CLAUSE(num_threads, OMPNumThreadsClause)
+OPENMP_CLAUSE(safelen, OMPSafelenClause)
 OPENMP_CLAUSE(default, OMPDefaultClause)
 OPENMP_CLAUSE(private, OMPPrivateClause)
 OPENMP_CLAUSE(firstprivate, OMPFirstprivateClause)
 OPENMP_CLAUSE(shared,  OMPSharedClause)
 
-// Clauses allowed for OpenMP directives.
+// Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
 OPENMP_PARALLEL_CLAUSE(num_threads)
 OPENMP_PARALLEL_CLAUSE(default)
@@ -52,6 +53,7 @@ OPENMP_PARALLEL_CLAUSE(shared)
 
 // FIXME: more clauses allowed for directive 'omp simd'.
 OPENMP_SIMD_CLAUSE(private)
+OPENMP_SIMD_CLAUSE(safelen)
 
 // Static attributes for 'default' clause.
 OPENMP_DEFAULT_KIND(none)

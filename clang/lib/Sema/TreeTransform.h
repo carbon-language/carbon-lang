@@ -1323,6 +1323,16 @@ public:
                                                  LParenLoc, EndLoc);
   }
 
+  /// \brief Build a new OpenMP 'safelen' clause.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OMPClause *RebuildOMPSafelenClause(Expr *Len, SourceLocation StartLoc,
+                                     SourceLocation LParenLoc,
+                                     SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPSafelenClause(Len, StartLoc, LParenLoc, EndLoc);
+  }
+
   /// \brief Build a new OpenMP 'default' clause.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -6338,6 +6348,16 @@ TreeTransform<Derived>::TransformOMPNumThreadsClause(OMPNumThreadsClause *C) {
                                                  C->getLocStart(),
                                                  C->getLParenLoc(),
                                                  C->getLocEnd());
+}
+
+template <typename Derived>
+OMPClause *
+TreeTransform<Derived>::TransformOMPSafelenClause(OMPSafelenClause *C) {
+  ExprResult E = getDerived().TransformExpr(C->getSafelen());
+  if (E.isInvalid())
+    return 0;
+  return getDerived().RebuildOMPSafelenClause(
+      E.take(), C->getLocStart(), C->getLParenLoc(), C->getLocEnd());
 }
 
 template<typename Derived>

@@ -274,6 +274,11 @@ void OMPClauseProfiler::VisitOMPNumThreadsClause(const OMPNumThreadsClause *C) {
     Profiler->VisitStmt(C->getNumThreads());
 }
 
+void OMPClauseProfiler::VisitOMPSafelenClause(const OMPSafelenClause *C) {
+  if (C->getSafelen())
+    Profiler->VisitStmt(C->getSafelen());
+}
+
 void OMPClauseProfiler::VisitOMPDefaultClause(const OMPDefaultClause *C) { }
 
 template<typename T>
