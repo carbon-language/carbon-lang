@@ -1,5 +1,5 @@
-; RUN: llc < %s -disable-cfi -mtriple=x86_64-apple-darwin9 -disable-cgp-branch-opts | FileCheck %s -check-prefix=X64
-; RUN: llc < %s -disable-cfi -mtriple=i386-apple-darwin9 -disable-cgp-branch-opts | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -mtriple=x86_64-apple-darwin9 | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mtriple=i386-apple-darwin9 | FileCheck %s -check-prefix=X32
 ; PR1632
 
 define void @_Z1fv() {
@@ -41,15 +41,10 @@ declare void @__cxa_end_catch()
 
 declare i32 @__gxx_personality_v0(...)
 
-; X64:      zPLR
-; X64:      .byte 155
-; X64-NEXT: .long	___gxx_personality_v0@GOTPCREL+4
+; X64: .cfi_personality 155, ___gxx_personality_v0
+
+; X32: .cfi_personality 155, L___gxx_personality_v0$non_lazy_ptr
 
 ; X32:        .section	__IMPORT,__pointers,non_lazy_symbol_pointers
 ; X32-NEXT: L___gxx_personality_v0$non_lazy_ptr:
 ; X32-NEXT:   .indirect_symbol ___gxx_personality_v0
-
-; X32:      zPLR
-; X32:      .byte 155
-; X32-NEXT: :
-; X32-NEXT: .long	L___gxx_personality_v0$non_lazy_ptr-
