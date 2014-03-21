@@ -85,9 +85,6 @@ error_code TextInstrProfReader::readNextRecord(InstrProfRecord &Record) {
   return success();
 }
 
-RawInstrProfReader::RawInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer)
-    : DataBuffer(std::move(DataBuffer)) { }
-
 static uint64_t getRawMagic() {
   return
     uint64_t(255) << 56 |

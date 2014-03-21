@@ -161,7 +161,8 @@ private:
   RawInstrProfReader &operator=(const TextInstrProfReader &)
     LLVM_DELETED_FUNCTION;
 public:
-  RawInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer);
+  RawInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer)
+      : DataBuffer(std::move(DataBuffer)) { }
 
   static bool hasFormat(const MemoryBuffer &DataBuffer);
   error_code readHeader() override;
