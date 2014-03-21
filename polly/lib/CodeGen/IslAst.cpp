@@ -157,6 +157,10 @@ static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
   isl_space *ScheduleSpace;
   unsigned Dimension, IsParallel;
 
+  if (!D->hasValidDependences()) {
+    return false;
+  }
+
   Schedule = isl_ast_build_get_schedule(Build);
   ScheduleSpace = isl_ast_build_get_schedule_space(Build);
 
@@ -169,7 +173,7 @@ static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
   if (isl_union_map_is_empty(Deps)) {
     isl_union_map_free(Deps);
     isl_space_free(ScheduleSpace);
-    return 1;
+    return true;
   }
 
   ScheduleDeps = isl_map_from_union_map(Deps);

@@ -257,6 +257,11 @@ bool Dependences::isParallelDimension(__isl_take isl_set *ScheduleSubset,
   isl_map *ScheduleDeps;
   Scop *S = &getCurScop();
 
+  if (!hasValidDependences()) {
+    isl_set_free(ScheduleSubset);
+    return false;
+  }
+
   Deps = getDependences(TYPE_ALL);
 
   if (isl_union_map_is_empty(Deps)) {
