@@ -1,4 +1,4 @@
-; RUN: not llc %s -verify-machineinstrs -mtriple=armv7-none-linux-gnu -mattr=+neon 2>&1 | FileCheck %s
+; RUN: not llc < %s -verify-machineinstrs -mtriple=armv7-none-linux-gnu -mattr=+neon 2>&1 | FileCheck %s
 
 %struct.float4 = type { float, float, float, float }
 
