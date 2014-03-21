@@ -1,4 +1,4 @@
-; RUN: llc < %s -disable-cfi | FileCheck %s
+; RUN: llc < %s | FileCheck %s
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 target triple = "i386-apple-darwin8"
 
@@ -11,6 +11,8 @@ define internal void @""() {
 	call i32 @_Z3barv( )		; <i32>:4 [#uses=1]
 	ret void
 }
-; CHECK: unnamed_1.eh
+
+; CHECK:      ___unnamed_1:
+; CHECK-NEXT: .cfi_startproc
 
 declare i32 @_Z3barv()
