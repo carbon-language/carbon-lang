@@ -937,7 +937,9 @@ OMPClause *Sema::ActOnOpenMPDefaultClause(OpenMPDefaultClauseKind Kind,
                                           SourceLocation EndLoc) {
   if (Kind == OMPC_DEFAULT_unknown) {
     std::string Values;
-    std::string Sep(NUM_OPENMP_DEFAULT_KINDS > 1 ? ", " : "");
+    static_assert(NUM_OPENMP_DEFAULT_KINDS > 1,
+                  "NUM_OPENMP_DEFAULT_KINDS not greater than 1");
+    std::string Sep(", ");
     for (unsigned i = OMPC_DEFAULT_unknown + 1;
          i < NUM_OPENMP_DEFAULT_KINDS; ++i) {
       Values += "'";
