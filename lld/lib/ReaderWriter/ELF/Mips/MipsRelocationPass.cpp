@@ -237,18 +237,18 @@ void RelocationPass::calculateAHLs(const DefinedAtom &atom) {
       continue;
     assert(ref->kindArch() == Reference::KindArch::Mips);
     switch (ref->kindValue()) {
-      case R_MIPS_HI16:
+    case R_MIPS_HI16:
+      references.push_back(const_cast<Reference *>(ref));
+      break;
+    case R_MIPS_GOT16:
+      if (isLocal(ref->target()))
         references.push_back(const_cast<Reference *>(ref));
-        break;
-      case R_MIPS_GOT16:
-        if (isLocal(ref->target()))
-          references.push_back(const_cast<Reference *>(ref));
-        break;
-      case R_MIPS_LO16:
-        for (auto &sr : references)
-          sr->setAddend(calcAHL(sr->addend(), ref->addend()));
-        references.clear();
-        break;
+      break;
+    case R_MIPS_LO16:
+      for (auto &sr : references)
+        sr->setAddend(calcAHL(sr->addend(), ref->addend()));
+      references.clear();
+      break;
     }
   }
   assert(references.empty());
