@@ -250,6 +250,13 @@ struct coff_section {
   support::ulittle16_t NumberOfRelocations;
   support::ulittle16_t NumberOfLinenumbers;
   support::ulittle32_t Characteristics;
+
+  // Returns true if the actual number of relocations is stored in
+  // VirtualAddress field of the first relocation table entry.
+  bool hasExtendedRelocations() const {
+    return Characteristics & COFF::IMAGE_SCN_LNK_NRELOC_OVFL &&
+        NumberOfRelocations == UINT16_MAX;
+  };
 };
 
 struct coff_relocation {
