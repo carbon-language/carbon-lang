@@ -1122,7 +1122,7 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
       //   SomeFunction(a,
       //                b, // comment
       //                c);
-      if (Current->isTrailingComment()) {
+      if (!Current->HasUnescapedNewline) {
         for (FormatToken *Parameter = Current->Previous; Parameter;
              Parameter = Parameter->Previous) {
           if (Parameter->isOneOf(tok::comment, tok::r_brace))
