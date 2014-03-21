@@ -176,8 +176,9 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
       setOperationAction(ISD::SMUL_LOHI, VT, Custom);
       setOperationAction(ISD::UMUL_LOHI, VT, Custom);
 
-      // We have instructions for signed but not unsigned FP conversion.
-      setOperationAction(ISD::FP_TO_UINT, VT, Expand);
+      // Only z196 and above have native support for conversions to unsigned.
+      if (!Subtarget.hasFPExtension())
+        setOperationAction(ISD::FP_TO_UINT, VT, Expand);
     }
   }
 
@@ -197,10 +198,12 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm)
   setOperationAction(ISD::ATOMIC_LOAD_UMAX, MVT::i32, Custom);
   setOperationAction(ISD::ATOMIC_CMP_SWAP,  MVT::i32, Custom);
 
-  // We have instructions for signed but not unsigned FP conversion.
+  // z10 has instructions for signed but not unsigned FP conversion.
   // Handle unsigned 32-bit types as signed 64-bit types.
-  setOperationAction(ISD::UINT_TO_FP, MVT::i32, Promote);
-  setOperationAction(ISD::UINT_TO_FP, MVT::i64, Expand);
+  if (!Subtarget.hasFPExtension()) {
+    setOperationAction(ISD::UINT_TO_FP, MVT::i32, Promote);
+    setOperationAction(ISD::UINT_TO_FP, MVT::i64, Expand);
+  }
 
   // We have native support for a 64-bit CTLZ, via FLOGR.
   setOperationAction(ISD::CTLZ, MVT::i32, Promote);

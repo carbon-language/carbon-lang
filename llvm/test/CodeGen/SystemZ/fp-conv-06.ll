@@ -1,6 +1,6 @@
-; Test conversions of unsigned i32s to floating-point values.
+; Test conversions of unsigned i32s to floating-point values (z10 only).
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=s390x-linux-gnu -mcpu=z10 | FileCheck %s
 
 ; Check i32->f32.  There is no native instruction, so we must promote
 ; to i64 first.

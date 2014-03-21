@@ -386,6 +386,16 @@
 	cdb	%f0, -1
 	cdb	%f0, 4096
 
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: cdlfbr	%f0, 0, %r0, 0
+
+	cdlfbr	%f0, 0, %r0, 0
+
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: cdlgbr	%f0, 0, %r0, 0
+
+	cdlgbr	%f0, 0, %r0, 0
+
 #CHECK: error: invalid operand
 #CHECK: ceb	%f0, -1
 #CHECK: error: invalid operand
@@ -393,6 +403,16 @@
 
 	ceb	%f0, -1
 	ceb	%f0, 4096
+
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: celfbr	%f0, 0, %r0, 0
+
+	celfbr	%f0, 0, %r0, 0
+
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: celgbr	%f0, 0, %r0, 0
+
+	celgbr	%f0, 0, %r0, 0
 
 #CHECK: error: invalid operand
 #CHECK: cfdbr	%r0, -1, %f0
@@ -784,6 +804,16 @@
 
 	clhf	%r0, 0
 
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: clfdbr	%r0, 0, %f0, 0
+
+	clfdbr	%r0, 0, %f0, 0
+
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: clfebr	%r0, 0, %f0, 0
+
+	clfebr	%r0, 0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: clfhsi	-1, 0
 #CHECK: error: invalid operand
@@ -809,6 +839,11 @@
 	clfi	%r0, -1
 	clfi	%r0, (1 << 32)
 
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: clfxbr	%r0, 0, %f0, 0
+
+	clfxbr	%r0, 0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: clg	%r0, -524289
 #CHECK: error: invalid operand
@@ -816,6 +851,16 @@
 
 	clg	%r0, -524289
 	clg	%r0, 524288
+
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: clgdbr	%r0, 0, %f0, 0
+
+	clgdbr	%r0, 0, %f0, 0
+
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: clgebr	%r0, 0, %f0, 0
+
+	clgebr	%r0, 0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: clgf	%r0, -524289
@@ -935,6 +980,11 @@
 	clgrl	%r0, -1
 	clgrl	%r0, 1
 	clgrl	%r0, 0x100000000
+
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: clgxbr	%r0, 0, %f0, 0
+
+	clgxbr	%r0, 0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: clhhsi	-1, 0
@@ -1166,6 +1216,16 @@
 #CHECK: cxgbr	%f2, %r0
 
 	cxgbr	%f2, %r0
+
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: cxlfbr	%f0, 0, %r0, 0
+
+	cxlfbr	%f0, 0, %r0, 0
+
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: cxlgbr	%f0, 0, %r0, 0
+
+	cxlgbr	%f0, 0, %r0, 0
 
 #CHECK: error: invalid operand
 #CHECK: cy	%r0, -524289

@@ -157,6 +157,25 @@ def CEGBR : UnaryRRE<"cegb", 0xB3A4, sint_to_fp, FP32,  GR64>;
 def CDGBR : UnaryRRE<"cdgb", 0xB3A5, sint_to_fp, FP64,  GR64>;
 def CXGBR : UnaryRRE<"cxgb", 0xB3A6, sint_to_fp, FP128, GR64>;
 
+// Convert am unsigned integer register value to a floating-point one.
+let Predicates = [FeatureFPExtension] in {
+  def CELFBR : UnaryRRF4<"celfbr", 0xB390, FP32,  GR32>;
+  def CDLFBR : UnaryRRF4<"cdlfbr", 0xB391, FP64,  GR32>;
+  def CXLFBR : UnaryRRF4<"cxlfbr", 0xB392, FP128, GR32>;
+
+  def CELGBR : UnaryRRF4<"celgbr", 0xB3A0, FP32,  GR64>;
+  def CDLGBR : UnaryRRF4<"cdlgbr", 0xB3A1, FP64,  GR64>;
+  def CXLGBR : UnaryRRF4<"cxlgbr", 0xB3A2, FP128, GR64>;
+
+  def : Pat<(f32  (uint_to_fp GR32:$src)), (CELFBR 0, GR32:$src, 0)>;
+  def : Pat<(f64  (uint_to_fp GR32:$src)), (CDLFBR 0, GR32:$src, 0)>;
+  def : Pat<(f128 (uint_to_fp GR32:$src)), (CXLFBR 0, GR32:$src, 0)>;
+
+  def : Pat<(f32  (uint_to_fp GR64:$src)), (CELGBR 0, GR64:$src, 0)>;
+  def : Pat<(f64  (uint_to_fp GR64:$src)), (CDLGBR 0, GR64:$src, 0)>;
+  def : Pat<(f128 (uint_to_fp GR64:$src)), (CXLGBR 0, GR64:$src, 0)>;
+}
+
 // Convert a floating-point register value to a signed integer value,
 // with the second operand (modifier M3) specifying the rounding mode.
 let Defs = [CC] in {
@@ -177,6 +196,28 @@ def : Pat<(i32 (fp_to_sint FP128:$src)), (CFXBR 5, FP128:$src)>;
 def : Pat<(i64 (fp_to_sint FP32:$src)),  (CGEBR 5, FP32:$src)>;
 def : Pat<(i64 (fp_to_sint FP64:$src)),  (CGDBR 5, FP64:$src)>;
 def : Pat<(i64 (fp_to_sint FP128:$src)), (CGXBR 5, FP128:$src)>;
+
+// Convert a floating-point register value to an unsigned integer value.
+let Predicates = [FeatureFPExtension] in {
+  let Defs = [CC] in {
+    def CLFEBR : UnaryRRF4<"clfebr", 0xB39C, GR32, FP32>;
+    def CLFDBR : UnaryRRF4<"clfdbr", 0xB39D, GR32, FP64>;
+    def CLFXBR : UnaryRRF4<"clfxbr", 0xB39E, GR32, FP128>;
+
+    def CLGEBR : UnaryRRF4<"clgebr", 0xB3AC, GR64, FP32>;
+    def CLGDBR : UnaryRRF4<"clgdbr", 0xB3AD, GR64, FP64>;
+    def CLGXBR : UnaryRRF4<"clgxbr", 0xB3AE, GR64, FP128>;
+  }
+
+  def : Pat<(i32 (fp_to_uint FP32:$src)),  (CLFEBR 5, FP32:$src,  0)>;
+  def : Pat<(i32 (fp_to_uint FP64:$src)),  (CLFDBR 5, FP64:$src,  0)>;
+  def : Pat<(i32 (fp_to_uint FP128:$src)), (CLFXBR 5, FP128:$src, 0)>;
+
+  def : Pat<(i64 (fp_to_uint FP32:$src)),  (CLGEBR 5, FP32:$src,  0)>;
+  def : Pat<(i64 (fp_to_uint FP64:$src)),  (CLGDBR 5, FP64:$src,  0)>;
+  def : Pat<(i64 (fp_to_uint FP128:$src)), (CLGXBR 5, FP128:$src, 0)>;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Unary arithmetic
