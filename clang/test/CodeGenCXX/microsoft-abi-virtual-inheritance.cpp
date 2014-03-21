@@ -405,6 +405,7 @@ C::~C() {
   // CHECK: store [1 x i8*]* @"\01??_7C@test4@@6BB@1@@", [1 x i8*]** %[[VFPTR_i8]]
 
   foo(this);
+  // CHECK: ret
 }
 
 void destroy(C *obj) {
@@ -416,6 +417,46 @@ void destroy(C *obj) {
   // CHECK: %[[VFTENTRY:.*]] = getelementptr inbounds void (%"struct.test4::C"*, i32)** %[[VFTABLE]], i64 0
   // CHECK: %[[VFUN:.*]] = load void (%"struct.test4::C"*, i32)** %[[VFTENTRY]]
   // CHECK: call x86_thiscallcc void %[[VFUN]](%"struct.test4::C"* %[[OBJ]], i32 1)
+  // CHECK: ret
+}
+
+struct D {
+  virtual void d();
+};
+
+// The first non-virtual base doesn't have a vdtor,
+// but "this adjustment" is not needed.
+struct E : D, B, virtual A {
+  virtual ~E();
+};
+
+E::~E() {
+  // CHECK-LABEL: define x86_thiscallcc void @"\01??1E@test4@@UAE@XZ"(%"struct.test4::E"* %this)
+
+  // In this case "this" points to the most derived class, so no GEPs needed.
+  // CHECK-NOT: getelementptr
+  // CHECK-NOT: bitcast
+  // CHECK: %[[VFPTR_i8:.*]] = bitcast %"struct.test4::E"* %{{.*}} to [1 x i8*]**
+  // CHECK: store [1 x i8*]* @"\01??_7E@test4@@6BD@1@@", [1 x i8*]** %[[VFPTR_i8]]
+  foo(this);
+}
+
+void destroy(E *obj) {
+  // CHECK-LABEL: define void @"\01?destroy@test4@@YAXPAUE@1@@Z"(%"struct.test4::E"* %obj)
+
+  // CHECK-NOT: getelementptr
+  // CHECK: %[[OBJ_i8:.*]] = bitcast %"struct.test4::E"* %[[OBJ:.*]] to i8*
+  // CHECK: %[[B_i8:.*]] = getelementptr inbounds i8* %[[OBJ_i8]], i32 4
+  // CHECK: %[[VPTR:.*]] = bitcast i8* %[[B_i8]] to void (%"struct.test4::E"*, i32)***
+  // CHECK: %[[VFTABLE:.*]] = load void (%"struct.test4::E"*, i32)*** %[[VPTR]]
+  // CHECK: %[[VFTENTRY:.*]] = getelementptr inbounds void (%"struct.test4::E"*, i32)** %[[VFTABLE]], i64 0
+  // CHECK: %[[VFUN:.*]] = load void (%"struct.test4::E"*, i32)** %[[VFTENTRY]]
+  // CHECK: %[[OBJ_i8:.*]] = bitcast %"struct.test4::E"* %[[OBJ]] to i8*
+  // CHECK: %[[B_i8:.*]] = getelementptr inbounds i8* %[[OBJ_i8]], i32 4
+  // FIXME: in fact, the call should take i8* and the bitcast is redundant.
+  // CHECK: %[[B_as_E:.*]] = bitcast i8* %[[B_i8]] to %"struct.test4::E"*
+  // CHECK: call x86_thiscallcc void %[[VFUN]](%"struct.test4::E"* %[[B_as_E]], i32 1)
+  delete obj;
 }
 
 }
