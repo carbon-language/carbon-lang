@@ -6,9 +6,10 @@ if(APPLE)
   set(PROFILE_SOURCES
     GCDAProfiling.c
     InstrProfiling.c
+    InstrProfilingBuffer.c
+    InstrProfilingFile.c
     InstrProfilingPlatformDarwin.c
-    InstrProfilingRuntime.cc
-    InstrProfilingExtras.c)
+    InstrProfilingRuntime.cc)
 
   add_compiler_rt_osx_static_runtime(clang_rt.profile_osx
     ARCH ${PROFILE_SUPPORTED_ARCH}
@@ -18,9 +19,10 @@ else()
   set(PROFILE_SOURCES
     GCDAProfiling.c
     InstrProfiling.c
+    InstrProfilingBuffer.c
+    InstrProfilingFile.c
     InstrProfilingPlatformOther.c
-    InstrProfilingRuntime.cc
-    InstrProfilingExtras.c)
+    InstrProfilingRuntime.cc)
 
   foreach(arch ${PROFILE_SUPPORTED_ARCH})
     add_compiler_rt_static_runtime(clang_rt.profile-${arch}

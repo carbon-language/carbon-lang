@@ -1,4 +1,4 @@
-/*===- InstrProfilingDarwin.c - Profile data on Darwin --------------------===*\
+/*===- InstrProfilingPlatformDarwin.c - Profile data on Darwin ------------===*\
 |*
 |*                     The LLVM Compiler Infrastructure
 |*

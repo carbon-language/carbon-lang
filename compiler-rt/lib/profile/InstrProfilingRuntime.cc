@@ -9,7 +9,7 @@
 
 extern "C" {
 
-#include "InstrProfilingExtras.h"
+#include "InstrProfiling.h"
 
 extern int __llvm_profile_runtime;
 int __llvm_profile_runtime;

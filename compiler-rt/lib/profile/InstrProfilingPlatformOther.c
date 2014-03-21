@@ -1,4 +1,4 @@
-/*===- InstrProfilingDefault.c - Profile data default platfrom ------------===*\
+/*===- InstrProfilingPlatformOther.c - Profile data default platfrom ------===*\
 |*
 |*                     The LLVM Compiler Infrastructure
 |*
@@ -8,6 +8,7 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "InstrProfiling.h"
+#include <stdlib.h>
 
 static const __llvm_profile_data *DataFirst = NULL;
 static const __llvm_profile_data *DataLast = NULL;
