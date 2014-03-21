@@ -11,6 +11,7 @@
 #include "MipsRelocationPass.h"
 
 #include "Atoms.h"
+#include "MipsELFFile.h"
 
 namespace {
 
@@ -42,6 +43,14 @@ const uint8_t mipsPltAAtomContent[] = {
   0x00, 0x00, 0xf9, 0x8d, // l[wd] $25, %lo(.got.plt entry)($15)
   0x08, 0x00, 0x20, 0x03, // jr    $25
   0x00, 0x00, 0xf8, 0x25  // addiu $24, $15, %lo(.got.plt entry)
+};
+
+// LA25 stub entry
+const uint8_t mipsLA25AtomContent[] = {
+  0x00, 0x00, 0x19, 0x3c, // lui   $25, %hi(func)
+  0x00, 0x00, 0x00, 0x08, // j     func
+  0x00, 0x00, 0x39, 0x27, // addiu $25, $25, %lo(func)
+  0x00, 0x00, 0x00, 0x00  // nop
 };
 
 /// \brief Abstract base class represent MIPS GOT entries.
@@ -102,6 +111,16 @@ public:
   }
 };
 
+/// \brief LA25 stub atom
+class LA25Atom : public PLTAtom {
+public:
+  LA25Atom(const File &f) : PLTAtom(f, ".text") {}
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return llvm::makeArrayRef(mipsLA25AtomContent);
+  }
+};
+
 class RelocationPassFile : public SimpleFile {
 public:
   RelocationPassFile(const ELFLinkingContext &ctx)
@@ -112,7 +131,7 @@ public:
   llvm::BumpPtrAllocator _alloc;
 };
 
-class RelocationPass : public Pass {
+template <typename ELFT> class RelocationPass : public Pass {
 public:
   RelocationPass(MipsLinkingContext &context);
 
@@ -144,6 +163,9 @@ private:
   /// \brief Map Atoms to their Object entries.
   llvm::DenseMap<const Atom *, ObjectAtom *> _objectMap;
 
+  /// \brief Map Atoms to their LA25 entries.
+  llvm::DenseMap<const Atom *, LA25Atom *> _la25Map;
+
   /// \brief the list of PLT atoms.
   std::vector<PLTAtom *> _pltVector;
 
@@ -152,6 +174,9 @@ private:
 
   /// \brief the list of Object entries.
   std::vector<ObjectAtom *> _objectVector;
+
+  /// \brief the list of LA25 entries.
+  std::vector<LA25Atom *> _la25Vector;
 
   /// \brief Handle a specific reference.
   void handleReference(Reference &ref);
@@ -166,20 +191,24 @@ private:
   const GOTAtom *getLocalGOTEntry(const Reference &ref);
   const GOTAtom *getGlobalGOTEntry(const Atom *a);
   const PLTAtom *getPLTEntry(const Atom *a);
+  const LA25Atom *getLA25Entry(const Atom *a);
   const ObjectAtom *getObjectEntry(const SharedLibraryAtom *a);
 
   bool isLocal(const Atom *a) const;
   bool requireLocalGOT(const Atom *a);
+  bool requireLA25Stub(const Atom *a);
   void createPLTHeader();
 };
 
-RelocationPass::RelocationPass(MipsLinkingContext &context)
+template <typename ELFT>
+RelocationPass<ELFT>::RelocationPass(MipsLinkingContext &context)
     : _context(context), _file(context) {
   _localGotVector.push_back(new (_file._alloc) GOT0Atom(_file));
   _localGotVector.push_back(new (_file._alloc) GOTModulePointerAtom(_file));
 }
 
-void RelocationPass::perform(std::unique_ptr<MutableFile> &mf) {
+template <typename ELFT>
+void RelocationPass<ELFT>::perform(std::unique_ptr<MutableFile> &mf) {
   // Process all references.
   for (const auto &atom : mf->defined()) {
     calculateAHLs(*atom);
@@ -221,6 +250,11 @@ void RelocationPass::perform(std::unique_ptr<MutableFile> &mf) {
     obj->setOrdinal(ordinal++);
     mf->addAtom(*obj);
   }
+
+  for (auto la25 : _la25Vector) {
+    la25->setOrdinal(ordinal++);
+    mf->addAtom(*la25);
+  }
 }
 
 /// \brief Calculate AHL value combines addends from 'hi' and 'lo' relocations.
@@ -230,7 +264,8 @@ inline int64_t calcAHL(int64_t AHI, int64_t ALO) {
   return (AHI << 16) + (int16_t)ALO;
 }
 
-void RelocationPass::calculateAHLs(const DefinedAtom &atom) {
+template <typename ELFT>
+void RelocationPass<ELFT>::calculateAHLs(const DefinedAtom &atom) {
   std::vector<Reference *> references;
   for (const auto &ref : atom) {
     if (ref->kindNamespace() != lld::Reference::KindNamespace::ELF)
@@ -254,7 +289,8 @@ void RelocationPass::calculateAHLs(const DefinedAtom &atom) {
   assert(references.empty());
 }
 
-void RelocationPass::handleReference(Reference &ref) {
+template <typename ELFT>
+void RelocationPass<ELFT>::handleReference(Reference &ref) {
   if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
     return;
   assert(ref.kindArch() == Reference::KindArch::Mips);
@@ -275,13 +311,15 @@ void RelocationPass::handleReference(Reference &ref) {
   }
 }
 
-bool RelocationPass::isLocal(const Atom *a) const {
+template <typename ELFT>
+bool RelocationPass<ELFT>::isLocal(const Atom *a) const {
   if (auto *da = dyn_cast<DefinedAtom>(a))
     return da->scope() == Atom::scopeTranslationUnit;
   return false;
 }
 
-void RelocationPass::handlePlain(Reference &ref) {
+template <typename ELFT>
+void RelocationPass<ELFT>::handlePlain(Reference &ref) {
   if (!ref.target())
     return;
   auto sla = dyn_cast<SharedLibraryAtom>(ref.target());
@@ -289,22 +327,27 @@ void RelocationPass::handlePlain(Reference &ref) {
     ref.setTarget(getObjectEntry(sla));
 }
 
-void RelocationPass::handlePLT(Reference &ref) {
-  if (ref.kindValue() == R_MIPS_26 && !isLocal(ref.target()))
+template <typename ELFT> void RelocationPass<ELFT>::handlePLT(Reference &ref) {
+  if (ref.kindValue() == R_MIPS_26 && !isLocal(ref.target())) {
     ref.setKindValue(LLD_R_MIPS_GLOBAL_26);
+
+    if (requireLA25Stub(ref.target()))
+      const_cast<Reference &>(ref).setTarget(getLA25Entry(ref.target()));
+  }
 
   if (isa<SharedLibraryAtom>(ref.target()))
     ref.setTarget(getPLTEntry(ref.target()));
 }
 
-void RelocationPass::handleGOT(Reference &ref) {
+template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {
   if (requireLocalGOT(ref.target()))
     ref.setTarget(getLocalGOTEntry(ref));
   else
     ref.setTarget(getGlobalGOTEntry(ref.target()));
 }
 
-bool RelocationPass::requireLocalGOT(const Atom *a) {
+template <typename ELFT>
+bool RelocationPass<ELFT>::requireLocalGOT(const Atom *a) {
   Atom::Scope scope;
   if (auto *da = dyn_cast<DefinedAtom>(a))
     scope = da->scope();
@@ -324,7 +367,15 @@ bool RelocationPass::requireLocalGOT(const Atom *a) {
   return false;
 }
 
-const GOTAtom *RelocationPass::getLocalGOTEntry(const Reference &ref) {
+template <typename ELFT>
+bool RelocationPass<ELFT>::requireLA25Stub(const Atom *a) {
+  if (auto *da = dyn_cast<DefinedAtom>(a))
+    return static_cast<const MipsELFDefinedAtom<ELFT> *>(da)->file().isPIC();
+  return false;
+}
+
+template <typename ELFT>
+const GOTAtom *RelocationPass<ELFT>::getLocalGOTEntry(const Reference &ref) {
   const Atom *a = ref.target();
   LocalGotMapKeyT key(a, ref.addend());
 
@@ -351,7 +402,8 @@ const GOTAtom *RelocationPass::getLocalGOTEntry(const Reference &ref) {
   return ga;
 }
 
-const GOTAtom *RelocationPass::getGlobalGOTEntry(const Atom *a) {
+template <typename ELFT>
+const GOTAtom *RelocationPass<ELFT>::getGlobalGOTEntry(const Atom *a) {
   auto got = _gotGlobalMap.find(a);
   if (got != _gotGlobalMap.end())
     return got->second;
@@ -374,7 +426,7 @@ const GOTAtom *RelocationPass::getGlobalGOTEntry(const Atom *a) {
   return ga;
 }
 
-void RelocationPass::createPLTHeader() {
+template <typename ELFT> void RelocationPass<ELFT>::createPLTHeader() {
   assert(_pltVector.empty() && _gotpltVector.empty());
 
   auto pa = new (_file._alloc) PLT0Atom(_file);
@@ -400,7 +452,8 @@ void RelocationPass::createPLTHeader() {
   });
 }
 
-const PLTAtom *RelocationPass::getPLTEntry(const Atom *a) {
+template <typename ELFT>
+const PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
   auto plt = _pltMap.find(a);
   if (plt != _pltMap.end())
     return plt->second;
@@ -437,7 +490,32 @@ const PLTAtom *RelocationPass::getPLTEntry(const Atom *a) {
   return pa;
 }
 
-const ObjectAtom *RelocationPass::getObjectEntry(const SharedLibraryAtom *a) {
+template <typename ELFT>
+const LA25Atom *RelocationPass<ELFT>::getLA25Entry(const Atom *a) {
+  auto la25 = _la25Map.find(a);
+  if (la25 != _la25Map.end())
+    return la25->second;
+
+  auto sa = new (_file._alloc) LA25Atom(_file);
+  _la25Map[a] = sa;
+  _la25Vector.push_back(sa);
+
+  // Setup reference to fixup the LA25 stub entry.
+  sa->addReferenceELF_Mips(R_MIPS_HI16, 0, a, 0);
+  sa->addReferenceELF_Mips(R_MIPS_26, 4, a, 0);
+  sa->addReferenceELF_Mips(R_MIPS_LO16, 8, a, 0);
+
+  DEBUG_WITH_TYPE("MipsGOT", {
+    sa->_name = ".pic.";
+    sa->_name += a->name();
+  });
+
+  return sa;
+}
+
+template <typename ELFT>
+const ObjectAtom *
+RelocationPass<ELFT>::getObjectEntry(const SharedLibraryAtom *a) {
   auto obj = _objectMap.find(a);
   if (obj != _objectMap.end())
     return obj->second;
@@ -460,7 +538,7 @@ lld::elf::createMipsRelocationPass(MipsLinkingContext &ctx) {
   switch (ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
   case llvm::ELF::ET_DYN:
-    return std::unique_ptr<Pass>(new RelocationPass(ctx));
+    return std::unique_ptr<Pass>(new RelocationPass<Mips32ElELFType>(ctx));
   case llvm::ELF::ET_REL:
     return std::unique_ptr<Pass>();
   default:

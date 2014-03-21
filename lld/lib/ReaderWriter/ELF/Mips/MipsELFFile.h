@@ -15,6 +15,28 @@
 namespace lld {
 namespace elf {
 
+template <class ELFT> class MipsELFFile;
+
+template <class ELFT>
+class MipsELFDefinedAtom : public ELFDefinedAtom<ELFT> {
+  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
+  typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
+
+public:
+  MipsELFDefinedAtom(const MipsELFFile<ELFT> &file, StringRef symbolName,
+                     StringRef sectionName, const Elf_Sym *symbol,
+                     const Elf_Shdr *section, ArrayRef<uint8_t> contentData,
+                     unsigned int referenceStart, unsigned int referenceEnd,
+                     std::vector<ELFReference<ELFT> *> &referenceList)
+      : ELFDefinedAtom<ELFT>(file, symbolName, sectionName, symbol, section,
+                             contentData, referenceStart, referenceEnd,
+                             referenceList) {}
+
+  const MipsELFFile<ELFT>& file() const override {
+    return static_cast<const MipsELFFile<ELFT> &>(this->_owningFile);
+  }
+};
+
 template <class ELFT> class MipsELFFile : public ELFFile<ELFT> {
 public:
   MipsELFFile(StringRef name, bool atomizeStrings)
@@ -57,9 +79,24 @@ public:
     return std::move(file);
   }
 
+  bool isPIC() const {
+    return this->_objFile->getHeader()->e_flags & llvm::ELF::EF_MIPS_PIC;
+  }
+
 private:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
+  typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
+
+  ErrorOr<ELFDefinedAtom<ELFT> *> handleDefinedSymbol(
+      StringRef symName, StringRef sectionName, const Elf_Sym *sym,
+      const Elf_Shdr *sectionHdr, ArrayRef<uint8_t> contentData,
+      unsigned int referenceStart, unsigned int referenceEnd,
+      std::vector<ELFReference<ELFT> *> &referenceList) override {
+    return new (this->_readerStorage) MipsELFDefinedAtom<ELFT>(
+        *this, symName, sectionName, sym, sectionHdr, contentData,
+        referenceStart, referenceEnd, referenceList);
+  }
 
   ELFReference<ELFT> *
   createRelocationReference(const Elf_Sym &symbol, const Elf_Rel &ri,
@@ -70,15 +107,15 @@ private:
                            ri.getType(isMips64EL), ri.getSymbol(isMips64EL));
     const uint8_t *ap = content.data() + ri.r_offset - symbol.st_value;
     switch (ri.getType(isMips64EL)) {
-    case R_MIPS_32:
+      case llvm::ELF::R_MIPS_32:
       ref->setAddend(*(int32_t *)ap);
       break;
-    case R_MIPS_26:
+    case llvm::ELF::R_MIPS_26:
       ref->setAddend(*(int32_t *)ap & 0x3ffffff);
       break;
-    case R_MIPS_HI16:
-    case R_MIPS_LO16:
-    case R_MIPS_GOT16:
+    case llvm::ELF::R_MIPS_HI16:
+    case llvm::ELF::R_MIPS_LO16:
+    case llvm::ELF::R_MIPS_GOT16:
       ref->setAddend(*(int16_t *)ap);
       break;
     }

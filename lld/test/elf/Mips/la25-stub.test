@@ -1,0 +1,55 @@
+# Check LA25 stubs creation when PIC code is called from non-PIC routines.
+
+# Build executable from pic and non-pic code.
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-npic-o %p/Inputs/ext.s
+# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic \
+# RUN:         -o=%t-pic-o %p/Inputs/ext1.s
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-main-o %s
+# RUN: lld -flavor gnu -target mipsel -e glob -o %t-exe \
+# RUN:         %t-npic-o %t-pic-o %t-main-o
+#
+# RUN: llvm-objdump -disassemble %t-exe | FileCheck -check-prefix=EXE %s
+
+# EXE: Disassembly of section .text:
+# EXE: ext1:
+# EXE-NEXT:   400140:       00 00 00 00  nop
+
+# EXE: ext4:
+# EXE-NEXT:   40014c:       00 00 00 00  nop
+
+# EXE: glob:
+# EXE-NEXT:   400158:       09 f8 20 03  jalr    $25
+# EXE-NEXT:   40015c:       00 00 00 00  nop
+
+# Jump to 'loc' label address
+# EXE-NEXT:   400160:       5a 00 10 0c  jal     4194664
+# EXE-NEXT:   400164:       00 00 00 00  nop
+#
+# EXE: loc:
+# Jump to 'glob' non-pic symbol
+# EXE-NEXT:   400168:       56 00 10 0c  jal     4194648
+# EXE-NEXT:   40016c:       00 00 00 00  nop
+# Jump to 'ext1' non-pic symbol
+# EXE-NEXT:   400170:       50 00 10 0c  jal     4194624
+# EXE-NEXT:   400174:       00 00 00 00  nop
+# Jump to LA25 stub for 'ext4' pic symbol
+# EXE-NEXT:   400178:       60 00 10 0c  jal     4194688
+# EXE-NEXT:   40017c:       00 00 00 00  nop
+
+# LA25 Stub
+# EXE-NEXT:   400180:       40 00 19 3c  lui     $25, 64
+# Jump to 'ext4' label address
+# EXE-NEXT:   400184:       53 00 10 08  j       4194636
+# EXE-NEXT:   400188:       4c 01 39 27  addiu   $25, $25, 332
+# EXE-NEXT:   40018c:       00 00 00 00  nop
+
+    .global glob
+    .ent    glob
+glob:
+    jal     $t9
+    jal     loc
+loc:
+    jal     glob
+    jal     ext1
+    jal     ext4
+    .end    glob

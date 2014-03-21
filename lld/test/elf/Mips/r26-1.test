@@ -61,7 +61,6 @@
 # EXE:   6 .plt          00000030 0000000000400170 TEXT DATA
 # EXE:  10 .got.plt      0000000c 0000000000402000 DATA
 
-    .abicalls
     .global glob
     .ent    glob
 glob:
