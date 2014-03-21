@@ -3,7 +3,7 @@
 /***************/
 
 #menu {
-	width:15em;
+	width: 18em;
         float: left;
         margin-right: 3em;
 }
@@ -50,9 +50,33 @@
         color: #3b4567;
 }
 
+
 #menu a:hover {
         background: #93aaff;
 
 }
 #menu a:visited {
+}
+
+#menu .submenu2 {
+        margin-top: 2em;
+}
+
+#menu .submenu2 label {
+	background-color: #f35555;
+}
+
+#menu a.rss_item:hover {
+  background-color: white;
+}
+
+.rss_item {
+  line-height: 0.5em;
+  padding-top: 1em;
+}
+
+.rss_date {
+  font-size: 0.8em;
+  color: #f35555;
+  padding-left: 0.4em;
 }

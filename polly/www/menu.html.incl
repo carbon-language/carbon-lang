@@ -38,4 +38,12 @@ Optimizations</span></h2>
     </a>
     <a href="http://repo.or.cz/w/polly-mirror.git">Browse (GitWeb)</a>
   </div>
+
+  <div class="submenu2">
+  <label>polyhedral.info news</label>
+  <script language="JavaScript"
+  src="http://itde.vccs.edu/rss2js/feed2js.php?src=http%3A%2F%2Fpolyhedral.info%2Frss.xml&chan=n&num=5&desc=0&date=y&targ=n"
+  type="text/javascript"></script>
+  </div>
 </div>
+
