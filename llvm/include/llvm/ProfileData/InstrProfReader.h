@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PROFILEDATA_INSTRPROF_READER_H__
-#define LLVM_PROFILEDATA_INSTRPROF_READER_H__
+#ifndef LLVM_PROFILEDATA_INSTRPROF_READER_H_
+#define LLVM_PROFILEDATA_INSTRPROF_READER_H_
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ProfileData/InstrProf.h"
@@ -184,4 +184,4 @@ private:
 
 } // end namespace llvm
 
-#endif // LLVM_PROFILEDATA_INSTRPROF_READER_H__
+#endif // LLVM_PROFILEDATA_INSTRPROF_READER_H_

@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PROFILEDATA_INSTRPROF_H__
-#define LLVM_PROFILEDATA_INSTRPROF_H__
+#ifndef LLVM_PROFILEDATA_INSTRPROF_H_
+#define LLVM_PROFILEDATA_INSTRPROF_H_
 
 #include "llvm/Support/system_error.h"
 
@@ -52,4 +52,4 @@ template <> struct is_error_code_enum<instrprof_error::ErrorType>
 
 } // end namespace llvm
 
-#endif // LLVM_PROFILEDATA_INSTRPROF_H__
+#endif // LLVM_PROFILEDATA_INSTRPROF_H_
