@@ -33,8 +33,6 @@ AArch64ELFMCAsmInfo::AArch64ELFMCAsmInfo(StringRef TT) {
   Data32bitsDirective = "\t.word\t";
   Data64bitsDirective = "\t.xword\t";
 
-  UseDataRegionDirectives = true;
-
   HasLEB128 = true;
   SupportsDebugInformation = true;
 
