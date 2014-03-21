@@ -174,6 +174,16 @@ TEST_F(FormatTest, RemovesEmptyLines) {
                    "\n"
                    "};"));
 
+  // Don't remove empty lines at the start of namespaces.
+  EXPECT_EQ("namespace N {\n"
+            "\n"
+            "int i;\n"
+            "}",
+            format("namespace N {\n"
+                   "\n"
+                   "int    i;\n"
+                   "}"));
+
   // Remove empty lines at the beginning and end of blocks.
   EXPECT_EQ("void f() {\n"
             "  if (a) {\n"

@@ -889,7 +889,8 @@ private:
       Newlines = 1;
 
     // Remove empty lines after "{".
-    if (PreviousLine && PreviousLine->Last->is(tok::l_brace))
+    if (PreviousLine && PreviousLine->Last->is(tok::l_brace) &&
+        PreviousLine->First->isNot(tok::kw_namespace))
       Newlines = 1;
 
     // Insert extra new line before access specifiers.
