@@ -39,6 +39,12 @@ class InstrProfErrorCategoryType : public error_category {
       return "Malformed profile data";
     case instrprof_error::unknown_function:
       return "No profile data available for function";
+    case instrprof_error::hash_mismatch:
+      return "Function hash mismatch";
+    case instrprof_error::count_mismatch:
+      return "Function count mismatch";
+    case instrprof_error::counter_overflow:
+      return "Counter overflow";
     }
     llvm_unreachable("A value of instrprof_error has no message.");
   }

@@ -31,7 +31,10 @@ struct instrprof_error {
     too_large,
     truncated,
     malformed,
-    unknown_function
+    unknown_function,
+    hash_mismatch,
+    count_mismatch,
+    counter_overflow
   };
   ErrorType V;
 

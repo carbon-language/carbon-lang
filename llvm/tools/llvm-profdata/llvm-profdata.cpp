@@ -13,6 +13,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ProfileData/InstrProfReader.h"
+#include "llvm/ProfileData/InstrProfWriter.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -31,10 +32,8 @@ static void exitWithError(const Twine &Message, StringRef Whence = "") {
 }
 
 int merge_main(int argc, const char *argv[]) {
-  cl::opt<std::string> Filename1(cl::Positional, cl::Required,
-                                 cl::desc("file1"));
-  cl::opt<std::string> Filename2(cl::Positional, cl::Required,
-                                 cl::desc("file2"));
+  cl::list<std::string> Inputs(cl::Positional, cl::Required, cl::OneOrMore,
+                               cl::desc("<filenames...>"));
 
   cl::opt<std::string> OutputFilename("output", cl::value_desc("output"),
                                       cl::init("-"),
@@ -44,12 +43,6 @@ int merge_main(int argc, const char *argv[]) {
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM profile data merger\n");
 
-  std::unique_ptr<InstrProfReader> Reader1, Reader2;
-  if (error_code ec = InstrProfReader::create(Filename1, Reader1))
-    exitWithError(ec.message(), Filename1);
-  if (error_code ec = InstrProfReader::create(Filename2, Reader2))
-    exitWithError(ec.message(), Filename2);
-
   if (OutputFilename.empty())
     OutputFilename = "-";
 
@@ -58,32 +51,19 @@ int merge_main(int argc, const char *argv[]) {
   if (!ErrorInfo.empty())
     exitWithError(ErrorInfo, OutputFilename);
 
-  for (InstrProfIterator I1 = Reader1->begin(), E1 = Reader1->end(),
-                         I2 = Reader2->begin(), E2 = Reader2->end();
-       I1 != E1 && I2 != E2; ++I1, ++I2) {
-    if (I1->Name != I2->Name)
-      exitWithError("Function name mismatch, " + I1->Name + " != " + I2->Name);
-    if (I1->Hash != I2->Hash)
-      exitWithError("Function hash mismatch for " + I1->Name);
-    if (I1->Counts.size() != I2->Counts.size())
-      exitWithError("Function count mismatch for " + I1->Name);
+  InstrProfWriter Writer;
+  for (const auto &Filename : Inputs) {
+    std::unique_ptr<InstrProfReader> Reader;
+    if (error_code ec = InstrProfReader::create(Filename, Reader))
+      exitWithError(ec.message(), Filename);
 
-    Output << I1->Name << "\n" << I1->Hash << "\n" << I1->Counts.size() << "\n";
-
-    for (size_t II = 0, EE = I1->Counts.size(); II < EE; ++II) {
-      uint64_t Sum = I1->Counts[II] + I2->Counts[II];
-      if (Sum < I1->Counts[II])
-        exitWithError("Counter overflow for " + I1->Name);
-      Output << Sum << "\n";
-    }
-    Output << "\n";
+    for (const auto &I : *Reader)
+      if (error_code EC = Writer.addFunctionCounts(I.Name, I.Hash, I.Counts))
+        errs() << Filename << ": " << I.Name << ": " << EC.message() << "\n";
+    if (Reader->hasError())
+      exitWithError(Reader->getError().message(), Filename);
   }
-  if (Reader1->hasError())
-    exitWithError(Reader1->getError().message(), Filename1);
-  if (Reader2->hasError())
-    exitWithError(Reader2->getError().message(), Filename2);
-  if (!Reader1->isEOF() || !Reader2->isEOF())
-    exitWithError("Number of instrumented functions differ.");
+  Writer.write(Output);
 
   return 0;
 }
