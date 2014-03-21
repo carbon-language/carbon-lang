@@ -58,7 +58,9 @@ define void @vshf_v16i8_3(<16 x i8>* %c, <16 x i8>* %a, <16 x i8>* %b) nounwind 
   %3 = shufflevector <16 x i8> %1, <16 x i8> %2, <16 x i32> <i32 17, i32 24, i32 25, i32 18, i32 19, i32 20, i32 28, i32 19, i32 1, i32 8, i32 9, i32 2, i32 3, i32 4, i32 12, i32 3>
   ; CHECK-DAG: addiu [[PTR_A:\$[0-9]+]], {{.*}}, %lo($
   ; CHECK-DAG: ld.b [[R3:\$w[0-9]+]], 0([[PTR_A]])
-  ; CHECK-DAG: vshf.b [[R3]], [[R1]], [[R2]]
+  ; The concatenation step of vshf is bitwise not vectorwise so we must reverse
+  ; the operands to get the right answer.
+  ; CHECK-DAG: vshf.b [[R3]], [[R2]], [[R1]]
   store <16 x i8> %3, <16 x i8>* %c
   ; CHECK-DAG: st.b [[R3]], 0($4)
 
@@ -137,7 +139,9 @@ define void @vshf_v8i16_3(<8 x i16>* %c, <8 x i16>* %a, <8 x i16>* %b) nounwind 
   %3 = shufflevector <8 x i16> %1, <8 x i16> %2, <8 x i32> <i32 1, i32 8, i32 9, i32 2, i32 3, i32 4, i32 12, i32 3>
   ; CHECK-DAG: addiu [[PTR_A:\$[0-9]+]], {{.*}}, %lo($
   ; CHECK-DAG: ld.h [[R3:\$w[0-9]+]], 0([[PTR_A]])
-  ; CHECK-DAG: vshf.h [[R3]], [[R1]], [[R2]]
+  ; The concatenation step of vshf is bitwise not vectorwise so we must reverse
+  ; the operands to get the right answer.
+  ; CHECK-DAG: vshf.h [[R3]], [[R2]], [[R1]]
   store <8 x i16> %3, <8 x i16>* %c
   ; CHECK-DAG: st.h [[R3]], 0($4)
 
@@ -215,7 +219,9 @@ define void @vshf_v4i32_3(<4 x i32>* %c, <4 x i32>* %a, <4 x i32>* %b) nounwind 
   %3 = shufflevector <4 x i32> %1, <4 x i32> %2, <4 x i32> <i32 1, i32 5, i32 6, i32 4>
   ; CHECK-DAG: addiu [[PTR_A:\$[0-9]+]], {{.*}}, %lo($
   ; CHECK-DAG: ld.w [[R3:\$w[0-9]+]], 0([[PTR_A]])
-  ; CHECK-DAG: vshf.w [[R3]], [[R1]], [[R2]]
+  ; The concatenation step of vshf is bitwise not vectorwise so we must reverse
+  ; the operands to get the right answer.
+  ; CHECK-DAG: vshf.w [[R3]], [[R2]], [[R1]]
   store <4 x i32> %3, <4 x i32>* %c
   ; CHECK-DAG: st.w [[R3]], 0($4)
 
@@ -294,7 +300,9 @@ define void @vshf_v2i64_3(<2 x i64>* %c, <2 x i64>* %a, <2 x i64>* %b) nounwind 
   %3 = shufflevector <2 x i64> %1, <2 x i64> %2, <2 x i32> <i32 1, i32 2>
   ; CHECK-DAG: addiu [[PTR_A:\$[0-9]+]], {{.*}}, %lo($
   ; CHECK-DAG: ld.d [[R3:\$w[0-9]+]], 0([[PTR_A]])
-  ; CHECK-DAG: vshf.d [[R3]], [[R1]], [[R2]]
+  ; The concatenation step of vshf is bitwise not vectorwise so we must reverse
+  ; the operands to get the right answer.
+  ; CHECK-DAG: vshf.d [[R3]], [[R2]], [[R1]]
   store <2 x i64> %3, <2 x i64>* %c
   ; CHECK-DAG: st.d [[R3]], 0($4)
 

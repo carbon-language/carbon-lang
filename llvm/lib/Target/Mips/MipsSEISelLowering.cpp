@@ -2566,7 +2566,14 @@ static SDValue lowerVECTOR_SHUFFLE_VSHF(SDValue Op, EVT ResTy,
   else
     llvm_unreachable("shuffle vector mask references neither vector operand?");
 
-  return DAG.getNode(MipsISD::VSHF, DL, ResTy, MaskVec, Op0, Op1);
+  // VECTOR_SHUFFLE concatenates the vectors in an vectorwise fashion.
+  // <0b00, 0b01> + <0b10, 0b11> -> <0b00, 0b01, 0b10, 0b11>
+  // VSHF concatenates the vectors in a bitwise fashion:
+  // <0b00, 0b01> + <0b10, 0b11> ->
+  // 0b0100       + 0b1110       -> 0b01001110
+  //                                <0b10, 0b11, 0b00, 0b01>
+  // We must therefore swap the operands to get the correct result.
+  return DAG.getNode(MipsISD::VSHF, DL, ResTy, MaskVec, Op1, Op0);
 }
 
 // Lower VECTOR_SHUFFLE into one of a number of instructions depending on the
