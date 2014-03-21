@@ -23,15 +23,20 @@
   <h1>About Polly</h1>
   <!--*********************************************************************-->
 
-  <p> Polly is a polyhedral optimizer for LLVM. Using an abstract mathematical
-      representation it analyzes and optimizes the memory access pattern of a
-      program. This includes data-locality optimizations for cache locality as
-      well as automatic parallelization for thread-level and SIMD parallelism.
-      Our overall goal is an integrated optimizer for data-locality and
-      parallelism that takes advantage of multi-cores, cache hierarchies, short
-      vector instructions as well as dedicated accelerators.</p>
-  <p>See <a href="http://polyhedral.info">polyhedral.info</a> for general
-     information about polyhedral compilation.
+  <p> Polly is a high-level loop and data-locality optimizer and optimization
+  infrastructure for LLVM. It uses an abstract mathematical representation based
+  on integer polyhedra to analyze and optimize the memory access pattern of a
+  program. We currently perform classical loop transformations, especially
+  tiling and loop fusion to improve data-locality. Polly can also exploit
+  OpenMP level parallelism, expose SIMDization opportunities. Work has also be
+  done in the area of automatic GPU code generation.</p>
+
+  However, for many users not, especially researchers and compiler writers, not
+  the existing optimizations in Polly are of most interest, but the new analyses
+  and optimizations that are enabled by the Polly infrastructure. At
+  <a href="http://polyhedral.info">polyhedral.info</a> you can get an idea of
+  what has already been done and what is possible in the context of polyhedral
+  compilation.
 
   <p>
   <div class="video-js-box" style="margin:auto; margin-top: 1em; margin-bottom: 1em">
