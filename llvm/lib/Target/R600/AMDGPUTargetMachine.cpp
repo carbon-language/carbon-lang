@@ -165,6 +165,9 @@ bool AMDGPUPassConfig::addPreRegAlloc() {
     addPass(createR600VectorRegMerger(*TM));
   } else {
     addPass(createSIFixSGPRCopiesPass(*TM));
+    // SIFixSGPRCopies can generate a lot of duplicate instructions,
+    // so we need to run MachineCSE afterwards.
+    addPass(&MachineCSEID);
   }
   return false;
 }

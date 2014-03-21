@@ -25,6 +25,13 @@ class SIInstrInfo : public AMDGPUInstrInfo {
 private:
   const SIRegisterInfo RI;
 
+  unsigned buildExtractSubReg(MachineBasicBlock::iterator MI,
+                              MachineRegisterInfo &MRI,
+                              MachineOperand &SuperReg,
+                              const TargetRegisterClass *SuperRC,
+                              unsigned SubIdx,
+                              const TargetRegisterClass *SubRC) const;
+
 public:
   explicit SIInstrInfo(AMDGPUTargetMachine &tm);
 
@@ -141,6 +148,9 @@ namespace AMDGPU {
   int getVOPe64(uint16_t Opcode);
   int getCommuteRev(uint16_t Opcode);
   int getCommuteOrig(uint16_t Opcode);
+
+  const uint64_t RSRC_DATA_FORMAT = 0xf00000000000LL;
+
 
 } // End namespace AMDGPU
 

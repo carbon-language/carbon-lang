@@ -369,6 +369,7 @@ class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let EXP_CNT = 1;
 
   let neverHasSideEffects = 1;
+  let UseNamedOperandTable = 1;
 }
 
 class MTBUF <bits<3> op, dag outs, dag ins, string asm, list<dag> pattern> :
