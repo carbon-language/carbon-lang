@@ -4901,6 +4901,9 @@ TEST_F(FormatTest, LayoutBraceInitializersInReturnStatement) {
 
 TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
   verifyFormat("vector<int> x{1, 2, 3, 4};");
+  verifyFormat("vector<int> x{\n"
+               "    1, 2, 3, 4,\n"
+               "};");
   verifyFormat("vector<T> x{{}, {}, {}, {}};");
   verifyFormat("f({1, 2});");
   verifyFormat("auto v = Foo{-1};");
@@ -5036,8 +5039,9 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
                getLLVMStyleWithColumns(43));
 
   // Trailing commas.
-  verifyFormat("vector<int> x = {1, 1, 1, 1,\n"
-               "                 1, 1, 1, 1, };",
+  verifyFormat("vector<int> x = {\n"
+               "    1, 1, 1, 1, 1, 1, 1, 1,\n"
+               "};",
                getLLVMStyleWithColumns(39));
   verifyFormat("vector<int> x = {1, 1, 1, 1,\n"
                "                 1, 1, 1, 1, //\n"
@@ -6028,10 +6032,12 @@ TEST_F(FormatTest, ObjCDictLiterals) {
   verifyFormat("@{}");
   verifyFormat("@{@\"one\" : @1}");
   verifyFormat("return @{@\"one\" : @1;");
-  verifyFormat("@{@\"one\" : @1, }");
+  verifyFormat("@{@\"one\" : @1}");
 
   verifyFormat("@{@\"one\" : @{@2 : @1}}");
-  verifyFormat("@{@\"one\" : @{@2 : @1}, }");
+  verifyFormat("@{\n"
+               "  @\"one\" : @{@2 : @1},\n"
+               "}");
 
   verifyFormat("@{1 > 2 ? @\"one\" : @\"two\" : 1 > 2 ? @1 : @2}");
   verifyFormat("[self setDict:@{}");

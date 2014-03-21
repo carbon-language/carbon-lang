@@ -1478,6 +1478,7 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
 
 bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
                                      const FormatToken &Right) {
+  const FormatToken &Left = *Right.Previous;
   if (Right.is(tok::comment)) {
     return Right.Previous->BlockKind != BK_BracedInit &&
            Right.Previous->Type != TT_CtorInitializerColon &&
@@ -1513,6 +1514,13 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
   } else if (Right.Previous->is(tok::l_brace) && Right.NestingLevel == 1 &&
              Style.Language == FormatStyle::LK_Proto) {
     // Don't enums onto single lines in protocol buffers.
+    return true;
+  } else if ((Left.is(tok::l_brace) && Left.MatchingParen &&
+              Left.MatchingParen->Previous &&
+              Left.MatchingParen->Previous->is(tok::comma)) ||
+             (Right.is(tok::r_brace) && Left.is(tok::comma))) {
+    // If the last token before a '}' is a comma, the intention is to insert a
+    // line break after it in order to make shuffling around entries easier.
     return true;
   }
   return false;
