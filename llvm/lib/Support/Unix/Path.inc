@@ -305,7 +305,7 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
   StringRef p = path.toNullTerminatedStringRef(path_storage);
 
   struct stat buf;
-  if (stat(p.begin(), &buf) != 0) {
+  if (lstat(p.begin(), &buf) != 0) {
     if (errno != errc::no_such_file_or_directory || !IgnoreNonExisting)
       return error_code(errno, system_category());
     return error_code::success();
@@ -316,7 +316,7 @@ error_code remove(const Twine &path, bool IgnoreNonExisting) {
   // check ensures that what we're trying to erase is a regular file. It
   // effectively prevents LLVM from erasing things like /dev/null, any block
   // special file, or other things that aren't "regular" files.
-  if (!S_ISREG(buf.st_mode) && !S_ISDIR(buf.st_mode))
+  if (!S_ISREG(buf.st_mode) && !S_ISDIR(buf.st_mode) && !S_ISLNK(buf.st_mode))
     return make_error_code(errc::operation_not_permitted);
 
   if (::remove(p.begin()) == -1) {
