@@ -496,6 +496,9 @@ unsigned SIInstrInfo::getVALUOp(const MachineInstr &MI) {
   case AMDGPU::REG_SEQUENCE: return AMDGPU::REG_SEQUENCE;
   case AMDGPU::COPY: return AMDGPU::COPY;
   case AMDGPU::PHI: return AMDGPU::PHI;
+  case AMDGPU::S_MOV_B32:
+    return MI.getOperand(1).isReg() ?
+           TargetOpcode::COPY : AMDGPU::V_MOV_B32_e32;
   case AMDGPU::S_ADD_I32: return AMDGPU::V_ADD_I32_e32;
   case AMDGPU::S_ADDC_U32: return AMDGPU::V_ADDC_U32_e32;
   case AMDGPU::S_SUB_I32: return AMDGPU::V_SUB_I32_e32;
@@ -680,11 +683,56 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
 
   while (!Worklist.empty()) {
     MachineInstr *Inst = Worklist.pop_back_val();
+    MachineBasicBlock *MBB = Inst->getParent();
+    MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
+
+    // Handle some special cases
+    switch(Inst->getOpcode()) {
+      case AMDGPU::S_MOV_B64: {
+        DebugLoc DL = Inst->getDebugLoc();
+
+        // If the source operand is a register we can replace this with a
+        // copy
+        if (Inst->getOperand(1).isReg()) {
+          MachineInstr *Copy = BuildMI(*MBB, Inst, DL,
+                                       get(TargetOpcode::COPY))
+                                       .addOperand(Inst->getOperand(0))
+                                       .addOperand(Inst->getOperand(1));
+          Worklist.push_back(Copy);
+        } else {
+          // Otherwise, we need to split this into two movs, because there is
+          // no 64-bit VALU move instruction.
+          unsigned LoDst, HiDst, Dst;
+          LoDst = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
+          HiDst = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
+          Dst = MRI.createVirtualRegister(
+              MRI.getRegClass(Inst->getOperand(0).getReg()));
+
+          MachineInstr *Lo = BuildMI(*MBB, Inst, DL, get(AMDGPU::S_MOV_B32),
+                                     LoDst)
+                             .addImm(Inst->getOperand(1).getImm() & 0xFFFFFFFF);
+          MachineInstr *Hi = BuildMI(*MBB, Inst, DL, get(AMDGPU::S_MOV_B32),
+                                     HiDst)
+                                    .addImm(Inst->getOperand(1).getImm() >> 32);
+
+          BuildMI(*MBB, Inst, DL, get(TargetOpcode::REG_SEQUENCE), Dst)
+                  .addReg(LoDst)
+                  .addImm(AMDGPU::sub0)
+                  .addReg(HiDst)
+                  .addImm(AMDGPU::sub1);
+
+          MRI.replaceRegWith(Inst->getOperand(0).getReg(), Dst);
+          Worklist.push_back(Lo);
+          Worklist.push_back(Hi);
+        }
+        Inst->eraseFromParent();
+        continue;
+      }
+    }
+
     unsigned NewOpcode = getVALUOp(*Inst);
     if (NewOpcode == AMDGPU::INSTRUCTION_LIST_END)
       continue;
-
-    MachineRegisterInfo &MRI = Inst->getParent()->getParent()->getRegInfo();
 
     // Use the new VALU Opcode.
     const MCInstrDesc &NewDesc = get(NewOpcode);
