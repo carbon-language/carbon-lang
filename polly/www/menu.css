@@ -3,9 +3,12 @@
 /***************/
 
 #menu {
+        line-height:1.3;
 	width: 18em;
         float: left;
         margin-right: 3em;
+        padding: 1em;
+        background-color: #edf7ff;
 }
 /**************/
 /* menu style */
@@ -52,8 +55,8 @@
 
 
 #menu a:hover {
-        background: #93aaff;
-
+        background: #f35555;
+        color: #3b4567;
 }
 #menu a:visited {
 }
@@ -67,7 +70,8 @@
 }
 
 #menu a.rss_item:hover {
-  background-color: white;
+  background-color: transparent;
+  color: none;
 }
 
 .rss_item {

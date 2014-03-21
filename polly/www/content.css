@@ -3,13 +3,12 @@ html { margin: 0px; } body { margin: 8px; }
 html, body {
   padding:0px;
   font-family:"Lucida Grande", "Lucida Sans Unicode", Arial, Verdana, Helvetica, sans-serif; background-color: #fff; color: #222;
-  line-height:1.5;
 }
 
 #box {
   margin-left: auto;
   margin-right: auto;
-  max-width: 80em;
+  max-width: 70em;
 }
 [id=content] {
 	/* *****  EDIT THIS VALUE IF CONTENT OVERLAPS MENU ***** */
@@ -57,7 +56,7 @@ tr { vertical-align:top }
     background-image:url(images/header-background.png);
     background-repeat:no-repeat;
     background-position: right;
-    max-width: 89em;
+    max-width: 70em;
     margin-bottom: 1em
 
 
