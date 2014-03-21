@@ -40,6 +40,8 @@ void __msan_warning_noreturn();
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_unpoison(const void *a, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_unpoison_string(const char *s);
+SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_clear_and_unpoison(void *a, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
 void* __msan_memcpy(void *dst, const void *src, uptr size);

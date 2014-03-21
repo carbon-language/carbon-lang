@@ -1372,6 +1372,11 @@ void *__msan_memmove(void *dest, const void *src, SIZE_T n) {
   return res;
 }
 
+void __msan_unpoison_string(const char* s) {
+  if (!MEM_IS_APP(s)) return;
+  __msan_unpoison(s, REAL(strlen)(s) + 1);
+}
+
 namespace __msan {
 
 void CopyOrigin(void *dst, const void *src, uptr size, StackTrace *stack) {

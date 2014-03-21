@@ -38,6 +38,10 @@ extern "C" {
   /* Make memory region fully initialized (without changing its contents). */
   void __msan_unpoison(const volatile void *a, size_t size);
 
+  /* Make a null-terminated string fully initialized (without changing its
+     contents). */
+  void __msan_unpoison_string(const volatile char *a);
+
   /* Make memory region fully uninitialized (without changing its contents). */
   void __msan_poison(const volatile void *a, size_t size);
 
