@@ -11,6 +11,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -115,7 +116,8 @@ LockFileManager::LockFileManager(StringRef FileName)
   while (1) {
     // Create a link from the lock file name. If this succeeds, we're done.
     error_code EC =
-        sys::fs::create_link(UniqueLockFileName.str(), LockFileName.str());
+        sys::fs::create_link(sys::path::filename(UniqueLockFileName.str()),
+                             LockFileName.str());
     if (EC == errc::success)
       return;
 
