@@ -2522,7 +2522,7 @@ void EmitClangAttrDump(RecordKeeper &Records, raw_ostream &OS) {
 
       // Code for detecting the last child.
       OS << "    bool OldMoreChildren = hasMoreChildren();\n";
-      OS << "    bool MoreChildren = OldMoreChildren;\n";     
+      OS << "    bool MoreChildren;\n";
 
       for (auto AI = Args.begin(), AE = Args.end(); AI != AE; ++AI) {
         // More code for detecting the last child.
