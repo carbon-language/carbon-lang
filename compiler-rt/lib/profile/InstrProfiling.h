@@ -10,27 +10,21 @@
 #ifndef PROFILE_INSTRPROFILING_H_
 #define PROFILE_INSTRPROFILING_H_
 
-#define I386_FREEBSD (defined(__FreeBSD__) && defined(__i386__))
+#if defined(__FreeBSD__) && defined(__i386__)
 
-#if !I386_FREEBSD
-#include <inttypes.h>
-#endif
-
-#if !defined(_MSC_VER) && !I386_FREEBSD
-#include <stdint.h>
-#endif
-
-#if defined(_MSC_VER)
-typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
-#elif I386_FREEBSD
 /* System headers define 'size_t' incorrectly on x64 FreeBSD (prior to
  * FreeBSD 10, r232261) when compiled in 32-bit mode.
  */
 #define PRIu64 "llu"
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
-#endif
+
+#else /* defined(__FreeBSD__) && defined(__i386__) */
+
+#include <inttypes.h>
+#include <stdint.h>
+
+#endif /* defined(__FreeBSD__) && defined(__i386__) */
 
 #define PROFILE_HEADER_SIZE 7
 
