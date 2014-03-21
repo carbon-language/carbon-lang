@@ -2694,7 +2694,9 @@ bool AsmParser::parseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
 
   // Check whether we should use optimal code alignment for this .align
   // directive.
-  bool UseCodeAlign = getStreamer().getCurrentSection().first->UseCodeAlign();
+  const MCSection *Section = getStreamer().getCurrentSection().first;
+  assert(Section && "must have section to emit alignment");
+  bool UseCodeAlign = Section->UseCodeAlign();
   if ((!HasFillExpr || Lexer.getMAI().getTextAlignFillValue() == FillExpr) &&
       ValueSize == 1 && UseCodeAlign) {
     getStreamer().EmitCodeAlignment(Alignment, MaxBytesToFill);
