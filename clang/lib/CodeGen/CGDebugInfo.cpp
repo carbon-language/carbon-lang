@@ -2577,9 +2577,12 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   if (HasDecl)
     DeclCache.insert(std::make_pair(D->getCanonicalDecl(), llvm::WeakVH(SP)));
 
-  // Push function on region stack.
+  // Push the function onto the lexical block stack.
   llvm::MDNode *SPN = SP;
   LexicalBlockStack.push_back(SPN);
+  // Initialize PrevLoc to the location of the function header.
+  PrevLoc = Loc;
+
   if (HasDecl)
     RegionMap[D] = llvm::WeakVH(SP);
 }
