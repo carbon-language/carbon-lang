@@ -40,3 +40,12 @@ int test_CONFIG() {
   else
     return 0;
 }
+
+// FIXME: This should at some point report a warning
+// that the loop increment is unreachable.
+void test_loop_increment(id container) {
+  for (id x in container) { // no-warning
+    break;
+  }
+}
+

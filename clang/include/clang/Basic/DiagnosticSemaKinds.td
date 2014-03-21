@@ -370,6 +370,9 @@ def warn_unreachable_break : Warning<
 def warn_unreachable_return : Warning<
   "'return' will never be executed">,
   InGroup<UnreachableCodeReturn>, DefaultIgnore;
+def warn_unreachable_loop_increment : Warning<
+  "loop will run at most once (loop increment never executed)">,
+  InGroup<UnreachableCodeLoopIncrement>, DefaultIgnore;
 
 /// Built-in functions.
 def ext_implicit_lib_function_decl : ExtWarn<

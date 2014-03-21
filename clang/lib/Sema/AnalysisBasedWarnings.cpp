@@ -76,6 +76,9 @@ namespace {
         case reachable_code::UK_Return:
           diag = diag::warn_unreachable_return;
           break;
+        case reachable_code::UK_Loop_Increment:
+          diag = diag::warn_unreachable_loop_increment;
+          break;
         case reachable_code::UK_Other:
           break;
       }
@@ -1688,7 +1691,8 @@ clang::sema::AnalysisBasedWarnings::AnalysisBasedWarnings(Sema &s)
   DefaultPolicy.enableCheckUnreachable =
     isEnabled(D, warn_unreachable) ||
     isEnabled(D, warn_unreachable_break) ||
-    isEnabled(D, warn_unreachable_return);
+    isEnabled(D, warn_unreachable_return) ||
+    isEnabled(D, warn_unreachable_loop_increment);
 
   DefaultPolicy.enableThreadSafetyAnalysis =
     isEnabled(D, warn_double_lock);

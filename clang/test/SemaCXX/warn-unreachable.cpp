@@ -282,3 +282,15 @@ void test_static_class_var(Frodo &F) {
     somethingToCall(); // no-warning
 }
 
+void test_unreachable_for_null_increment() {
+  for (unsigned i = 0; i < 10 ; ) // no-warning
+    break;
+}
+
+void test_unreachable_forrange_increment() {
+  int x[10] = { 0 };
+  for (auto i : x) { // expected-warning {{loop will run at most once (loop increment never executed)}}
+    break;
+  }
+}
+

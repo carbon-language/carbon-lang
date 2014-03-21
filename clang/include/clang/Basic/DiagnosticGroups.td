@@ -430,7 +430,9 @@ def DuplicateArgDecl : DiagGroup<"duplicate-method-arg">;
 //  least actively used, with more noisy versions of the warning covered
 //  under separate flags.
 //
-def UnreachableCode : DiagGroup<"unreachable-code">;
+def UnreachableCodeLoopIncrement : DiagGroup<"unreachable-code-loop-increment">;
+def UnreachableCode : DiagGroup<"unreachable-code",
+                                [UnreachableCodeLoopIncrement]>;
 def UnreachableCodeBreak : DiagGroup<"unreachable-code-break">;
 def UnreachableCodeReturn : DiagGroup<"unreachable-code-return">;
 def UnreachableCodeAggressive : DiagGroup<"unreachable-code-aggressive",
