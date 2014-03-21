@@ -1049,15 +1049,15 @@ let Defs = [CC] in {
 
 // Forms of RISBG that only affect one word of the destination register.
 // They do not set CC.
-def RISBMux : RotateSelectRIEfPseudo<GRX32, GRX32>, Requires<[FeatureHighWord]>;
-def RISBLL  : RotateSelectAliasRIEf<GR32,  GR32>,  Requires<[FeatureHighWord]>;
-def RISBLH  : RotateSelectAliasRIEf<GR32,  GRH32>, Requires<[FeatureHighWord]>;
-def RISBHL  : RotateSelectAliasRIEf<GRH32, GR32>,  Requires<[FeatureHighWord]>;
-def RISBHH  : RotateSelectAliasRIEf<GRH32, GRH32>, Requires<[FeatureHighWord]>;
-def RISBLG  : RotateSelectRIEf<"risblg", 0xEC51, GR32, GR64>,
-              Requires<[FeatureHighWord]>;
-def RISBHG  : RotateSelectRIEf<"risbhg", 0xEC5D, GRH32, GR64>,
-              Requires<[FeatureHighWord]>;
+let Predicates = [FeatureHighWord] in {
+  def RISBMux : RotateSelectRIEfPseudo<GRX32, GRX32>;
+  def RISBLL  : RotateSelectAliasRIEf<GR32,  GR32>;
+  def RISBLH  : RotateSelectAliasRIEf<GR32,  GRH32>;
+  def RISBHL  : RotateSelectAliasRIEf<GRH32, GR32>;
+  def RISBHH  : RotateSelectAliasRIEf<GRH32, GRH32>;
+  def RISBLG  : RotateSelectRIEf<"risblg", 0xEC51, GR32, GR64>;
+  def RISBHG  : RotateSelectRIEf<"risbhg", 0xEC5D, GRH32, GR64>;
+}
 
 // Rotate second operand left and perform a logical operation with selected
 // bits of the first operand.  The CC result only describes the selected bits,

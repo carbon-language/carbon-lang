@@ -258,15 +258,6 @@ def FIEBR : UnaryRRF<"fieb", 0xB357, FP32,  FP32>;
 def FIDBR : UnaryRRF<"fidb", 0xB35F, FP64,  FP64>;
 def FIXBR : UnaryRRF<"fixb", 0xB347, FP128, FP128>;
 
-// Extended forms of the previous three instructions.  M4 can be set to 4
-// to suppress detection of inexact conditions.
-def FIEBRA : UnaryRRF4<"fiebra", 0xB357, FP32,  FP32>,
-             Requires<[FeatureFPExtension]>;
-def FIDBRA : UnaryRRF4<"fidbra", 0xB35F, FP64,  FP64>,
-             Requires<[FeatureFPExtension]>;
-def FIXBRA : UnaryRRF4<"fixbra", 0xB347, FP128, FP128>,
-             Requires<[FeatureFPExtension]>;
-
 // frint rounds according to the current mode (modifier 0) and detects
 // inexact conditions.
 def : Pat<(frint FP32:$src),  (FIEBR 0, FP32:$src)>;
@@ -274,6 +265,12 @@ def : Pat<(frint FP64:$src),  (FIDBR 0, FP64:$src)>;
 def : Pat<(frint FP128:$src), (FIXBR 0, FP128:$src)>;
 
 let Predicates = [FeatureFPExtension] in {
+  // Extended forms of the FIxBR instructions.  M4 can be set to 4
+  // to suppress detection of inexact conditions.
+  def FIEBRA : UnaryRRF4<"fiebra", 0xB357, FP32,  FP32>;
+  def FIDBRA : UnaryRRF4<"fidbra", 0xB35F, FP64,  FP64>;
+  def FIXBRA : UnaryRRF4<"fixbra", 0xB347, FP128, FP128>;
+
   // fnearbyint is like frint but does not detect inexact conditions.
   def : Pat<(fnearbyint FP32:$src),  (FIEBRA 0, FP32:$src,  4)>;
   def : Pat<(fnearbyint FP64:$src),  (FIDBRA 0, FP64:$src,  4)>;
