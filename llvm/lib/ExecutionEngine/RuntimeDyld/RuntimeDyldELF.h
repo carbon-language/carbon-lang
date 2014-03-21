@@ -22,65 +22,41 @@ using namespace llvm;
 namespace llvm {
 
 namespace {
-  // Helper for extensive error checking in debug builds.
-  error_code Check(error_code Err) {
-    if (Err) {
-      report_fatal_error(Err.message());
-    }
-    return Err;
+// Helper for extensive error checking in debug builds.
+error_code Check(error_code Err) {
+  if (Err) {
+    report_fatal_error(Err.message());
   }
+  return Err;
+}
 } // end anonymous namespace
 
 class RuntimeDyldELF : public RuntimeDyldImpl {
-  void resolveRelocation(const SectionEntry &Section,
-                         uint64_t Offset,
-                         uint64_t Value,
-                         uint32_t Type,
-                         int64_t Addend,
-                         uint64_t SymOffset=0);
+  void resolveRelocation(const SectionEntry &Section, uint64_t Offset,
+                         uint64_t Value, uint32_t Type, int64_t Addend,
+                         uint64_t SymOffset = 0);
 
-  void resolveX86_64Relocation(const SectionEntry &Section,
-                               uint64_t Offset,
-                               uint64_t Value,
-                               uint32_t Type,
-                               int64_t  Addend,
+  void resolveX86_64Relocation(const SectionEntry &Section, uint64_t Offset,
+                               uint64_t Value, uint32_t Type, int64_t Addend,
                                uint64_t SymOffset);
 
-  void resolveX86Relocation(const SectionEntry &Section,
-                            uint64_t Offset,
-                            uint32_t Value,
-                            uint32_t Type,
-                            int32_t Addend);
+  void resolveX86Relocation(const SectionEntry &Section, uint64_t Offset,
+                            uint32_t Value, uint32_t Type, int32_t Addend);
 
-  void resolveAArch64Relocation(const SectionEntry &Section,
-                                uint64_t Offset,
-                                uint64_t Value,
-                                uint32_t Type,
-                                int64_t Addend);
+  void resolveAArch64Relocation(const SectionEntry &Section, uint64_t Offset,
+                                uint64_t Value, uint32_t Type, int64_t Addend);
 
-  void resolveARMRelocation(const SectionEntry &Section,
-                            uint64_t Offset,
-                            uint32_t Value,
-                            uint32_t Type,
-                            int32_t Addend);
+  void resolveARMRelocation(const SectionEntry &Section, uint64_t Offset,
+                            uint32_t Value, uint32_t Type, int32_t Addend);
 
-  void resolveMIPSRelocation(const SectionEntry &Section,
-                             uint64_t Offset,
-                             uint32_t Value,
-                             uint32_t Type,
-                             int32_t Addend);
+  void resolveMIPSRelocation(const SectionEntry &Section, uint64_t Offset,
+                             uint32_t Value, uint32_t Type, int32_t Addend);
 
-  void resolvePPC64Relocation(const SectionEntry &Section,
-                              uint64_t Offset,
-                              uint64_t Value,
-                              uint32_t Type,
-                              int64_t Addend);
+  void resolvePPC64Relocation(const SectionEntry &Section, uint64_t Offset,
+                              uint64_t Value, uint32_t Type, int64_t Addend);
 
-  void resolveSystemZRelocation(const SectionEntry &Section,
-                                uint64_t Offset,
-                                uint64_t Value,
-                                uint32_t Type,
-                                int64_t Addend);
+  void resolveSystemZRelocation(const SectionEntry &Section, uint64_t Offset,
+                                uint64_t Value, uint32_t Type, int64_t Addend);
 
   unsigned getMaxStubSize() override {
     if (Arch == Triple::aarch64)
@@ -107,8 +83,7 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
   }
 
   uint64_t findPPC64TOC() const;
-  void findOPDEntrySection(ObjectImage &Obj,
-                           ObjSectionToIDMap &LocalSections,
+  void findOPDEntrySection(ObjectImage &Obj, ObjSectionToIDMap &LocalSections,
                            RelocationValueRef &Rel);
 
   uint64_t findGOTEntry(uint64_t LoadAddr, uint64_t Offset);
@@ -129,8 +104,7 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
   SmallVector<SID, 2> RegisteredEHFrameSections;
 
 public:
-  RuntimeDyldELF(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm)
-                                          {}
+  RuntimeDyldELF(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
   void resolveRelocation(const RelocationEntry &RE, uint64_t Value) override;
   relocation_iterator

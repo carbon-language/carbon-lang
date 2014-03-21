@@ -39,7 +39,6 @@ namespace llvm {
 class ObjectBuffer;
 class Twine;
 
-
 /// SectionEntry - represents a section emitted into memory by the dynamic
 /// linker.
 class SectionEntry {
@@ -69,8 +68,9 @@ public:
 
   SectionEntry(StringRef name, uint8_t *address, size_t size,
                uintptr_t objAddress)
-    : Name(name), Address(address), Size(size), LoadAddress((uintptr_t)address),
-      StubOffset(size), ObjAddress(objAddress) {}
+      : Name(name), Address(address), Size(size),
+        LoadAddress((uintptr_t)address), StubOffset(size),
+        ObjAddress(objAddress) {}
 };
 
 /// RelocationEntry - used to represent relocations internally in the dynamic
@@ -101,33 +101,33 @@ public:
   unsigned Size;
 
   RelocationEntry(unsigned id, uint64_t offset, uint32_t type, int64_t addend)
-    : SectionID(id), Offset(offset), RelType(type), Addend(addend),
-      SymOffset(0), IsPCRel(false), Size(0) {}
+      : SectionID(id), Offset(offset), RelType(type), Addend(addend),
+        SymOffset(0), IsPCRel(false), Size(0) {}
 
   RelocationEntry(unsigned id, uint64_t offset, uint32_t type, int64_t addend,
                   uint64_t symoffset)
-    : SectionID(id), Offset(offset), RelType(type), Addend(addend),
-      SymOffset(symoffset), IsPCRel(false), Size(0) {}
+      : SectionID(id), Offset(offset), RelType(type), Addend(addend),
+        SymOffset(symoffset), IsPCRel(false), Size(0) {}
 
   RelocationEntry(unsigned id, uint64_t offset, uint32_t type, int64_t addend,
                   bool IsPCRel, unsigned Size)
-    : SectionID(id), Offset(offset), RelType(type), Addend(addend),
-      SymOffset(0), IsPCRel(IsPCRel), Size(Size) {}
+      : SectionID(id), Offset(offset), RelType(type), Addend(addend),
+        SymOffset(0), IsPCRel(IsPCRel), Size(Size) {}
 };
 
 class RelocationValueRef {
 public:
-  unsigned  SectionID;
-  uint64_t  Offset;
-  int64_t   Addend;
+  unsigned SectionID;
+  uint64_t Offset;
+  int64_t Addend;
   const char *SymbolName;
-  RelocationValueRef(): SectionID(0), Offset(0), Addend(0), SymbolName(0) {}
+  RelocationValueRef() : SectionID(0), Offset(0), Addend(0), SymbolName(0) {}
 
   inline bool operator==(const RelocationValueRef &Other) const {
     return SectionID == Other.SectionID && Offset == Other.Offset &&
            Addend == Other.Addend && SymbolName == Other.SymbolName;
   }
-  inline bool operator <(const RelocationValueRef &Other) const {
+  inline bool operator<(const RelocationValueRef &Other) const {
     if (SectionID != Other.SectionID)
       return SectionID < Other.SectionID;
     if (Offset != Other.Offset)
@@ -149,7 +149,7 @@ protected:
   SectionList Sections;
 
   typedef unsigned SID; // Type for SectionIDs
-  #define RTDYLD_INVALID_SECTION_ID ((SID)(-1))
+#define RTDYLD_INVALID_SECTION_ID ((SID)(-1))
 
   // Keep a map of sections from object file to the SectionID which
   // references it.
@@ -221,52 +221,49 @@ protected:
   }
 
   uint8_t *getSectionAddress(unsigned SectionID) {
-    return (uint8_t*)Sections[SectionID].Address;
+    return (uint8_t *)Sections[SectionID].Address;
   }
 
   void writeInt16BE(uint8_t *Addr, uint16_t Value) {
     if (IsTargetLittleEndian)
       Value = sys::SwapByteOrder(Value);
-    *Addr     = (Value >> 8) & 0xFF;
-    *(Addr+1) = Value & 0xFF;
+    *Addr       = (Value >> 8) & 0xFF;
+    *(Addr + 1) = Value & 0xFF;
   }
 
   void writeInt32BE(uint8_t *Addr, uint32_t Value) {
     if (IsTargetLittleEndian)
       Value = sys::SwapByteOrder(Value);
-    *Addr     = (Value >> 24) & 0xFF;
-    *(Addr+1) = (Value >> 16) & 0xFF;
-    *(Addr+2) = (Value >> 8) & 0xFF;
-    *(Addr+3) = Value & 0xFF;
+    *Addr       = (Value >> 24) & 0xFF;
+    *(Addr + 1) = (Value >> 16) & 0xFF;
+    *(Addr + 2) = (Value >> 8) & 0xFF;
+    *(Addr + 3) = Value & 0xFF;
   }
 
   void writeInt64BE(uint8_t *Addr, uint64_t Value) {
     if (IsTargetLittleEndian)
       Value = sys::SwapByteOrder(Value);
-    *Addr     = (Value >> 56) & 0xFF;
-    *(Addr+1) = (Value >> 48) & 0xFF;
-    *(Addr+2) = (Value >> 40) & 0xFF;
-    *(Addr+3) = (Value >> 32) & 0xFF;
-    *(Addr+4) = (Value >> 24) & 0xFF;
-    *(Addr+5) = (Value >> 16) & 0xFF;
-    *(Addr+6) = (Value >> 8) & 0xFF;
-    *(Addr+7) = Value & 0xFF;
+    *Addr       = (Value >> 56) & 0xFF;
+    *(Addr + 1) = (Value >> 48) & 0xFF;
+    *(Addr + 2) = (Value >> 40) & 0xFF;
+    *(Addr + 3) = (Value >> 32) & 0xFF;
+    *(Addr + 4) = (Value >> 24) & 0xFF;
+    *(Addr + 5) = (Value >> 16) & 0xFF;
+    *(Addr + 6) = (Value >> 8) & 0xFF;
+    *(Addr + 7) = Value & 0xFF;
   }
 
   /// \brief Given the common symbols discovered in the object file, emit a
   /// new section for them and update the symbol mappings in the object and
   /// symbol table.
-  void emitCommonSymbols(ObjectImage &Obj,
-                         const CommonSymbolMap &CommonSymbols,
-                         uint64_t TotalSize,
-                         SymbolTableMap &SymbolTable);
+  void emitCommonSymbols(ObjectImage &Obj, const CommonSymbolMap &CommonSymbols,
+                         uint64_t TotalSize, SymbolTableMap &SymbolTable);
 
   /// \brief Emits section data from the object file to the MemoryManager.
   /// \param IsCode if it's true then allocateCodeSection() will be
   ///        used for emits, else allocateDataSection() will be used.
   /// \return SectionID.
-  unsigned emitSection(ObjectImage &Obj,
-                       const SectionRef &Section,
+  unsigned emitSection(ObjectImage &Obj, const SectionRef &Section,
                        bool IsCode);
 
   /// \brief Find Section in LocalSections. If the secton is not found - emit
@@ -274,10 +271,8 @@ protected:
   /// \param IsCode if it's true then allocateCodeSection() will be
   ///        used for emmits, else allocateDataSection() will be used.
   /// \return SectionID.
-  unsigned findOrEmitSection(ObjectImage &Obj,
-                             const SectionRef &Section,
-                             bool IsCode,
-                             ObjSectionToIDMap &LocalSections);
+  unsigned findOrEmitSection(ObjectImage &Obj, const SectionRef &Section,
+                             bool IsCode, ObjSectionToIDMap &LocalSections);
 
   // \brief Add a relocation entry that uses the given section.
   void addRelocationForSection(const RelocationEntry &RE, unsigned SectionID);
@@ -288,7 +283,7 @@ protected:
 
   /// \brief Emits long jump instruction to Addr.
   /// \return Pointer to the memory area for emitting target address.
-  uint8_t* createStubFunction(uint8_t *Addr);
+  uint8_t *createStubFunction(uint8_t *Addr);
 
   /// \brief Resolves relocations from Relocs list with address from Value.
   void resolveRelocationList(const RelocationList &Relocs, uint64_t Value);
@@ -312,19 +307,18 @@ protected:
   // The base class does nothing.  ELF overrides this.
   virtual void updateGOTEntries(StringRef Name, uint64_t Addr) {}
 
-  // \brief Compute an upper bound of the memory that is required to load all sections
-  void computeTotalAllocSize(ObjectImage &Obj, 
-                             uint64_t& CodeSize, 
-                             uint64_t& DataSizeRO, 
-                             uint64_t& DataSizeRW); 
-  
+  // \brief Compute an upper bound of the memory that is required to load all
+  // sections
+  void computeTotalAllocSize(ObjectImage &Obj, uint64_t &CodeSize,
+                             uint64_t &DataSizeRO, uint64_t &DataSizeRW);
+
   // \brief Compute the stub buffer size required for a section
   unsigned computeSectionStubBufSize(ObjectImage &Obj,
                                      const SectionRef &Section);
 
 public:
   RuntimeDyldImpl(RTDyldMemoryManager *mm)
-    : MemMgr(mm), ProcessAllSections(false), HasError(false) {}
+      : MemMgr(mm), ProcessAllSections(false), HasError(false) {}
 
   virtual ~RuntimeDyldImpl();
 
@@ -332,7 +326,7 @@ public:
     this->ProcessAllSections = ProcessAllSections;
   }
 
-  ObjectImage* loadObject(ObjectImage* InputObject);
+  ObjectImage *loadObject(ObjectImage *InputObject);
 
   void *getSymbolAddress(StringRef Name) {
     // FIXME: Just look up as a function for now. Overly simple of course.
