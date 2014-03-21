@@ -88,6 +88,10 @@ respectively.  `-integrated-as` and `-no-integrated-as` are now considered
 legacy flags (but are available as an alias to prevent breaking existing users),
 and users are encouraged to switch to the equivalent new feature flag.
 
+Deprecated flags `-faddress-sanitizer`, `-fthread-sanitizer`,
+`-fcatch-undefined-behavior` and `-fbounds-checking` were removed in favor of
+`-fsanitize=` family of flags.
+
 C Language Changes in Clang
 ---------------------------
 

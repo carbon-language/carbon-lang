@@ -94,7 +94,7 @@ refactoring tools, e.g. to do a reformatting of all the lines changed during a
 renaming.
 
 ``clang-modernize``
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 ``clang-modernize`` migrates C++ code to use C++11 features where appropriate.
 Currently it can:
 
