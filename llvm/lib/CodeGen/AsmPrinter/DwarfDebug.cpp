@@ -2637,13 +2637,6 @@ void DwarfDebug::initSkeletonUnit(const DwarfUnit *U, DIE *Die,
   NewU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
                        U->getCUNode().getSplitDebugFilename());
 
-  // Relocate to the beginning of the addr_base section, else 0 for the
-  // beginning of the one for this compile unit.
-  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    NewU->addSectionLabel(Die, dwarf::DW_AT_GNU_addr_base, DwarfAddrSectionSym);
-  else
-    NewU->addSectionOffset(Die, dwarf::DW_AT_GNU_addr_base, 0);
-
   if (!CompilationDir.empty())
     NewU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
 
@@ -2667,6 +2660,13 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
   NewCU->initStmtList(DwarfLineSectionSym);
 
   initSkeletonUnit(CU, Die, NewCU);
+
+  // Relocate to the beginning of the addr_base section, else 0 for the
+  // beginning of the one for this compile unit.
+  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+    NewCU->addSectionLabel(Die, dwarf::DW_AT_GNU_addr_base, DwarfAddrSectionSym);
+  else
+    NewCU->addSectionOffset(Die, dwarf::DW_AT_GNU_addr_base, 0);
 
   return NewCU;
 }

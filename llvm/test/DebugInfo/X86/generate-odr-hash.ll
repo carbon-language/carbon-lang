@@ -77,7 +77,6 @@
 ; FISSION-LABEL: type_signature = 0x1d02f3be30cc5688
 ; FISSION: DW_TAG_type_unit
 ; FISSION-NEXT: DW_AT_GNU_dwo_name{{.*}}"bar.dwo"
-; FISSION-NEXT: DW_AT_GNU_addr_base
 ; FISSION-NEXT: DW_AT_comp_dir{{.*}}"/tmp/dbginfo"
 ; FISSION-NOT: type_signature
 ; FISSION-LABEL: type_signature = 0xb04af47397402e77
