@@ -88,6 +88,100 @@ int merge_main(int argc, const char *argv[]) {
   return 0;
 }
 
+struct HashPrinter {
+  uint64_t Hash;
+  HashPrinter(uint64_t Hash) : Hash(Hash) {}
+  void print(raw_ostream &OS) const {
+    char Buf[18], *Cur = Buf;
+    *Cur++ = '0'; *Cur++ = 'x';
+    for (unsigned I = 16; I;) {
+      char Digit = 0xF & (Hash >> (--I * 4));
+      *Cur++ = (Digit < 10 ? '0' + Digit : 'A' + Digit - 10);
+    }
+    OS.write(Buf, 18);
+  }
+};
+static raw_ostream &operator<<(raw_ostream &OS, const HashPrinter &Hash) {
+  Hash.print(OS);
+  return OS;
+}
+
+int show_main(int argc, const char *argv[]) {
+  cl::opt<std::string> Filename(cl::Positional, cl::Required,
+                                cl::desc("<profdata-file>"));
+
+  cl::opt<bool> ShowCounts("counts", cl::init(false),
+                           cl::desc("Show counter values for shown functions"));
+  cl::opt<bool> ShowAllFunctions("all-functions", cl::init(false),
+                                 cl::desc("Details for every function"));
+  cl::opt<std::string> ShowFunction("function",
+                                    cl::desc("Details for matching functions"));
+
+  cl::opt<std::string> OutputFilename("output", cl::value_desc("output"),
+                                      cl::init("-"),
+                                      cl::desc("Output file"));
+  cl::alias OutputFilenameA("o", cl::desc("Alias for --output"),
+                            cl::aliasopt(OutputFilename));
+
+  cl::ParseCommandLineOptions(argc, argv, "LLVM profile data summary\n");
+
+  std::unique_ptr<InstrProfReader> Reader;
+  if (error_code EC = InstrProfReader::create(Filename, Reader))
+    exitWithError(EC.message(), Filename);
+
+  if (OutputFilename.empty())
+    OutputFilename = "-";
+
+  std::string ErrorInfo;
+  raw_fd_ostream OS(OutputFilename.data(), ErrorInfo, sys::fs::F_Text);
+  if (!ErrorInfo.empty())
+    exitWithError(ErrorInfo, OutputFilename);
+
+  if (ShowAllFunctions && !ShowFunction.empty())
+    errs() << "warning: -function argument ignored: showing all functions\n";
+
+  uint64_t MaxFunctionCount = 0, MaxBlockCount = 0;
+  size_t ShownFunctions = 0, TotalFunctions = 0;
+  for (const auto &Func : *Reader) {
+    bool Show = ShowAllFunctions ||
+                (!ShowFunction.empty() &&
+                 Func.Name.find(ShowFunction) != Func.Name.npos);
+
+    ++TotalFunctions;
+    if (Func.Counts[0] > MaxFunctionCount)
+      MaxFunctionCount = Func.Counts[0];
+
+    if (Show) {
+      if (!ShownFunctions)
+        OS << "Counters:\n";
+      ++ShownFunctions;
+
+      OS << "  " << Func.Name << ":\n"
+         << "    Hash: " << HashPrinter(Func.Hash) << "\n"
+         << "    Counters: " << Func.Counts.size() << "\n"
+         << "    Function count: " << Func.Counts[0] << "\n";
+    }
+
+    if (Show && ShowCounts)
+      OS << "    Block counts: [";
+    for (size_t I = 1, E = Func.Counts.size(); I < E; ++I) {
+      if (Func.Counts[I] > MaxBlockCount)
+        MaxBlockCount = Func.Counts[I];
+      if (Show && ShowCounts)
+        OS << (I == 1 ? "" : ", ") << Func.Counts[I];
+    }
+    if (Show && ShowCounts)
+      OS << "]\n";
+  }
+
+  if (ShowAllFunctions || !ShowFunction.empty())
+    OS << "Functions shown: " << ShownFunctions << "\n";
+  OS << "Total functions: " << TotalFunctions << "\n";
+  OS << "Maximum function count: " << MaxFunctionCount << "\n";
+  OS << "Maximum internal block count: " << MaxBlockCount << "\n";
+  return 0;
+}
+
 int main(int argc, const char *argv[]) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -100,6 +194,8 @@ int main(int argc, const char *argv[]) {
 
     if (strcmp(argv[1], "merge") == 0)
       func = merge_main;
+    else if (strcmp(argv[1], "show") == 0)
+      func = show_main;
 
     if (func) {
       std::string Invocation(ProgName.str() + " " + argv[1]);
@@ -114,7 +210,7 @@ int main(int argc, const char *argv[]) {
       errs() << "OVERVIEW: LLVM profile data tools\n\n"
              << "USAGE: " << ProgName << " <command> [args...]\n"
              << "USAGE: " << ProgName << " <command> -help\n\n"
-             << "Available commands: merge\n";
+             << "Available commands: merge, show\n";
       return 0;
     }
   }
@@ -124,6 +220,6 @@ int main(int argc, const char *argv[]) {
   else
     errs() << ProgName << ": Unknown command!\n";
 
-  errs() << "USAGE: " << ProgName << " <merge> [args...]\n";
+  errs() << "USAGE: " << ProgName << " <merge|show> [args...]\n";
   return 1;
 }
