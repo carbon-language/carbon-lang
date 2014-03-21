@@ -10,8 +10,9 @@
 LLDB_LEVEL := ../..
 LIBRARYNAME := lldbInterpreter
 BUILD_ARCHIVE = 1
+include $(LLDB_LEVEL)/../../Makefile.config
 
-ifeq (,$(findstring -DLLDB_DISABLE_PYTHON,$(CXXFLAGS)))
+ifneq ($(HOST_OS),MingW)
 BUILT_SOURCES := LLDBWrapPython.cpp
 endif
 
