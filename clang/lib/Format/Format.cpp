@@ -888,6 +888,10 @@ private:
     if (Newlines == 0 && !RootToken.IsFirst)
       Newlines = 1;
 
+    // Remove empty lines after "{".
+    if (PreviousLine && PreviousLine->Last->is(tok::l_brace))
+      Newlines = 1;
+
     // Insert extra new line before access specifiers.
     if (PreviousLine && PreviousLine->Last->isOneOf(tok::semi, tok::r_brace) &&
         RootToken.isAccessSpecifier() && RootToken.NewlinesBefore == 1)
