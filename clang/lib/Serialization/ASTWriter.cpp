@@ -4085,6 +4085,17 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
       Record.push_back({UPD_CXX_ADDED_ANONYMOUS_NAMESPACE, NS});
   }
 
+  // Add update records for all mangling numbers and static local numbers.
+  // These aren't really update records, but this is a convenient way of
+  // tagging this rare extra data onto the declarations.
+  for (const auto &Number : Context.MangleNumbers)
+    if (!Number.first->isFromASTFile())
+      DeclUpdates[Number.first].push_back({UPD_MANGLING_NUMBER, Number.second});
+  for (const auto &Number : Context.StaticLocalNumbers)
+    if (!Number.first->isFromASTFile())
+      DeclUpdates[Number.first].push_back({UPD_STATIC_LOCAL_NUMBER,
+                                           Number.second});
+
   // Make sure visible decls, added to DeclContexts previously loaded from
   // an AST file, are registered for serialization.
   for (SmallVectorImpl<const Decl *>::iterator
@@ -4187,13 +4198,12 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   } while (!DeclUpdates.empty());
   Stream.ExitBlock();
 
-  if (!DeclUpdatesOffsetsRecord.empty())
-    Stream.EmitRecord(DECL_UPDATE_OFFSETS, DeclUpdatesOffsetsRecord);
-
   DoneWritingDeclsAndTypes = true;
 
   // These things can only be done once we've written out decls and types.
   WriteTypeDeclOffsets();
+  if (!DeclUpdatesOffsetsRecord.empty())
+    Stream.EmitRecord(DECL_UPDATE_OFFSETS, DeclUpdatesOffsetsRecord);
   WriteCXXBaseSpecifiersOffsets();
   WriteFileDeclIDsMap();
   WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
@@ -4371,6 +4381,11 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
         break;
 
       case UPD_DECL_MARKED_USED:
+        break;
+
+      case UPD_MANGLING_NUMBER:
+      case UPD_STATIC_LOCAL_NUMBER:
+        Record.push_back(Update.getNumber());
         break;
       }
     }

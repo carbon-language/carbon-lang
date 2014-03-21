@@ -291,6 +291,7 @@ private:
       const Decl *Dcl;
       void *Type;
       unsigned Loc;
+      unsigned Val;
     };
 
   public:
@@ -300,6 +301,8 @@ private:
         : Kind(Kind), Type(Type.getAsOpaquePtr()) {}
     DeclUpdate(unsigned Kind, SourceLocation Loc)
         : Kind(Kind), Loc(Loc.getRawEncoding()) {}
+    DeclUpdate(unsigned Kind, unsigned Val)
+        : Kind(Kind), Val(Val) {}
 
     unsigned getKind() const { return Kind; }
     const Decl *getDecl() const { return Dcl; }
@@ -307,6 +310,7 @@ private:
     SourceLocation getLoc() const {
       return SourceLocation::getFromRawEncoding(Loc);
     }
+    unsigned getNumber() const { return Val; }
   };
 
   typedef SmallVector<DeclUpdate, 1> UpdateRecord;

@@ -2968,6 +2968,14 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       D->Used = true;
       break;
     }
+
+    case UPD_MANGLING_NUMBER:
+      Reader.Context.setManglingNumber(cast<NamedDecl>(D), Record[Idx++]);
+      break;
+
+    case UPD_STATIC_LOCAL_NUMBER:
+      Reader.Context.setStaticLocalNumber(cast<VarDecl>(D), Record[Idx++]);
+      break;
     }
   }
 }
