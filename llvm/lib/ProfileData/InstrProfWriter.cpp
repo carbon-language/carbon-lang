@@ -23,7 +23,9 @@ error_code InstrProfWriter::addFunctionCounts(StringRef FunctionName,
   auto Where = FunctionData.find(FunctionName);
   if (Where == FunctionData.end()) {
     // If this is the first time we've seen this function, just add it.
-    FunctionData[FunctionName] = {FunctionHash, Counters};
+    auto &Data = FunctionData[FunctionName];
+    Data.Hash = FunctionHash;
+    Data.Counts = Counters;
     return instrprof_error::success;;
   }
 
