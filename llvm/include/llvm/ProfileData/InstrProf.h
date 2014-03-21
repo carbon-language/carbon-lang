@@ -27,6 +27,7 @@ struct instrprof_error {
     success = 0,
     eof,
     bad_magic,
+    bad_header,
     unsupported_version,
     too_large,
     truncated,

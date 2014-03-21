@@ -1,0 +1,6 @@
+RUN: printf "warforpl" > %t
+RUN: not llvm-profdata show %t 2>&1 | FileCheck %s
+RUN: printf "lprofraw" > %t
+RUN: not llvm-profdata show %t 2>&1 | FileCheck %s
+
+CHECK: error: {{.+}}: Invalid header

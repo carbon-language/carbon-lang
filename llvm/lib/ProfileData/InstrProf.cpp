@@ -29,6 +29,8 @@ class InstrProfErrorCategoryType : public error_category {
       return "End of File";
     case instrprof_error::bad_magic:
       return "Invalid file format (bad magic)";
+    case instrprof_error::bad_header:
+      return "Invalid header";
     case instrprof_error::unsupported_version:
       return "Unsupported format version";
     case instrprof_error::too_large:

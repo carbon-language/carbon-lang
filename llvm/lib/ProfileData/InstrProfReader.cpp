@@ -43,8 +43,7 @@ error_code InstrProfReader::create(std::string Path,
 
   if (Buffer->getBufferSize() < sizeof(uint64_t)) {
     Result.reset(new TextInstrProfReader(Buffer));
-    Result->readHeader();
-    return instrprof_error::success;
+    return Result->readHeader();
   }
 
   uint64_t Magic = *(uint64_t *)Buffer->getBufferStart();
@@ -53,8 +52,7 @@ error_code InstrProfReader::create(std::string Path,
     Result.reset(new RawInstrProfReader(Buffer));
   else
     Result.reset(new TextInstrProfReader(Buffer));
-  Result->readHeader();
-  return instrprof_error::success;
+  return Result->readHeader();
 }
 
 void InstrProfIterator::Increment() {
@@ -113,13 +111,13 @@ RawInstrProfReader::RawInstrProfReader(std::unique_ptr<MemoryBuffer> &DataBuffer
 
 error_code RawInstrProfReader::readHeader() {
   if (DataBuffer->getBufferSize() < sizeof(RawHeader))
-    return error(instrprof_error::malformed);
+    return error(instrprof_error::bad_header);
   const RawHeader *Header = (RawHeader *)DataBuffer->getBufferStart();
   if (Header->Magic == getRawMagic())
     ShouldSwapBytes = false;
   else {
     if (sys::SwapByteOrder(Header->Magic) != getRawMagic())
-      return error(instrprof_error::malformed);
+      return error(instrprof_error::bad_magic);
 
     ShouldSwapBytes = true;
   }
@@ -142,7 +140,7 @@ error_code RawInstrProfReader::readHeader(const RawHeader &Header) {
   size_t FileSize = NamesOffset + sizeof(char) * NamesSize;
 
   if (FileSize != DataBuffer->getBufferSize())
-    return error(instrprof_error::malformed);
+    return error(instrprof_error::bad_header);
 
   Data = (ProfileData *)(DataBuffer->getBufferStart() + DataOffset);
   DataEnd = Data + DataSize;
