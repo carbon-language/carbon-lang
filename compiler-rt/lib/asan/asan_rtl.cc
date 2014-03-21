@@ -94,53 +94,131 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   CommonFlags *cf = common_flags();
   ParseCommonFlagsFromString(cf, str);
   CHECK((uptr)cf->malloc_context_size <= kStackTraceMax);
-
-  ParseFlag(str, &f->quarantine_size, "quarantine_size", "");
-  ParseFlag(str, &f->redzone, "redzone", "");
-  ParseFlag(str, &f->max_redzone, "max_redzone", "");
+  // Please write meaningful flag descriptions when adding new flags.
+  ParseFlag(str, &f->quarantine_size, "quarantine_size",
+            "Size (in bytes) of quarantine used to detect use-after-free "
+            "errors. Lower value may reduce memory usage but increase the "
+            "chance of false negatives.");
+  ParseFlag(str, &f->redzone, "redzone",
+            "Minimal size (in bytes) of redzones around heap objects. "
+            "Requirement: redzone >= 16, is a power of two.");
+  ParseFlag(str, &f->max_redzone, "max_redzone",
+            "Maximal size (in bytes) of redzones around heap objects.");
   CHECK_GE(f->redzone, 16);
   CHECK_GE(f->max_redzone, f->redzone);
   CHECK_LE(f->max_redzone, 2048);
   CHECK(IsPowerOfTwo(f->redzone));
   CHECK(IsPowerOfTwo(f->max_redzone));
 
-  ParseFlag(str, &f->debug, "debug", "");
-  ParseFlag(str, &f->report_globals, "report_globals", "");
-  ParseFlag(str, &f->check_initialization_order,
-            "check_initialization_order", "");
+  ParseFlag(str, &f->debug, "debug",
+      "If set, prints some debugging information and does additional checks.");
+  ParseFlag(str, &f->report_globals, "report_globals",
+      "Controls the way to handle globals (0 - don't detect buffer overflow on "
+      "globals, 1 - detect buffer overflow, 2 - print data about registered "
+      "globals).");
 
-  ParseFlag(str, &f->replace_str, "replace_str", "");
-  ParseFlag(str, &f->replace_intrin, "replace_intrin", "");
-  ParseFlag(str, &f->mac_ignore_invalid_free, "mac_ignore_invalid_free", "");
+  ParseFlag(str, &f->check_initialization_order,
+      "check_initialization_order",
+      "If set, attempts to catch initialization order issues.");
+
+  ParseFlag(str, &f->replace_str, "replace_str",
+      "If set, uses custom wrappers and replacements for libc string functions "
+      "to find more errors.");
+
+  ParseFlag(str, &f->replace_intrin, "replace_intrin",
+      "If set, uses custom wrappers for memset/memcpy/memmove intinsics.");
+  ParseFlag(str, &f->mac_ignore_invalid_free, "mac_ignore_invalid_free",
+      "Ignore invalid free() calls to work around some bugs. Used on OS X "
+      "only.");
   ParseFlag(str, &f->detect_stack_use_after_return,
-            "detect_stack_use_after_return", "");
-  ParseFlag(str, &f->min_uar_stack_size_log, "min_uar_stack_size_log", "");
-  ParseFlag(str, &f->max_uar_stack_size_log, "max_uar_stack_size_log", "");
-  ParseFlag(str, &f->uar_noreserve, "uar_noreserve", "");
-  ParseFlag(str, &f->max_malloc_fill_size, "max_malloc_fill_size", "");
-  ParseFlag(str, &f->malloc_fill_byte, "malloc_fill_byte", "");
-  ParseFlag(str, &f->exitcode, "exitcode", "");
-  ParseFlag(str, &f->allow_user_poisoning, "allow_user_poisoning", "");
-  ParseFlag(str, &f->sleep_before_dying, "sleep_before_dying", "");
-  ParseFlag(str, &f->check_malloc_usable_size, "check_malloc_usable_size", "");
-  ParseFlag(str, &f->unmap_shadow_on_exit, "unmap_shadow_on_exit", "");
-  ParseFlag(str, &f->abort_on_error, "abort_on_error", "");
-  ParseFlag(str, &f->print_stats, "print_stats", "");
-  ParseFlag(str, &f->print_legend, "print_legend", "");
-  ParseFlag(str, &f->atexit, "atexit", "");
-  ParseFlag(str, &f->coverage, "coverage", "");
-  ParseFlag(str, &f->disable_core, "disable_core", "");
-  ParseFlag(str, &f->allow_reexec, "allow_reexec", "");
+      "detect_stack_use_after_return",
+      "Enables stack-use-after-return checking at run-time.");
+  ParseFlag(str, &f->min_uar_stack_size_log, "min_uar_stack_size_log",
+      "Minimum fake stack size log.");
+  ParseFlag(str, &f->max_uar_stack_size_log, "max_uar_stack_size_log",
+      "Maximum fake stack size log.");
+  ParseFlag(str, &f->uar_noreserve, "uar_noreserve",
+      "Use mmap with 'norserve' flag to allocate fake stack.");
+  ParseFlag(str, &f->max_malloc_fill_size, "max_malloc_fill_size",
+      "ASan allocator flag. max_malloc_fill_size is the maximal amount of "
+      "bytes that will be filled with malloc_fill_byte on malloc.");
+  ParseFlag(str, &f->malloc_fill_byte, "malloc_fill_byte",
+      "Value used to fill the newly allocated memory.");
+  ParseFlag(str, &f->exitcode, "exitcode",
+      "Override the program exit status if the tool found an error.");
+  ParseFlag(str, &f->allow_user_poisoning, "allow_user_poisoning",
+      "If set, user may manually mark memory regions as poisoned or "
+      "unpoisoned.");
+  ParseFlag(str, &f->sleep_before_dying, "sleep_before_dying",
+      "Number of seconds to sleep between printing an error report and "
+      "terminating the program. Useful for debugging purposes (e.g. when one "
+      "needs to attach gdb).");
+
+  ParseFlag(str, &f->check_malloc_usable_size, "check_malloc_usable_size",
+      "Allows the users to work around the bug in Nvidia drivers prior to "
+      "295.*.");
+
+  ParseFlag(str, &f->unmap_shadow_on_exit, "unmap_shadow_on_exit",
+      "If set, explicitly unmaps the (huge) shadow at exit.");
+  ParseFlag(str, &f->abort_on_error, "abort_on_error",
+      "If set, the tool calls abort() instead of _exit() after printing the "
+      "error report.");
+  ParseFlag(str, &f->print_stats, "print_stats",
+      "Print various statistics after printing an error message or if "
+      "atexit=1.");
+  ParseFlag(str, &f->print_legend, "print_legend",
+      "Print the legend for the shadow bytes.");
+  ParseFlag(str, &f->atexit, "atexit",
+      "If set, prints ASan exit stats even after program terminates "
+      "successfully.");
+  ParseFlag(str, &f->coverage, "coverage",
+      "If set, coverage information will be dumped at program shutdown (if the "
+      "coverage instrumentation was enabled at compile time).");
+
+  ParseFlag(str, &f->disable_core, "disable_core",
+      "Disable core dumping. By default, disable_core=1 on 64-bit to avoid "
+      "dumping a 16T+ core file.");
+
+  ParseFlag(str, &f->allow_reexec, "allow_reexec",
+      "Allow the tool to re-exec the program. This may interfere badly with "
+      "the debugger.");
+
   ParseFlag(str, &f->print_full_thread_history,
-            "print_full_thread_history", "");
-  ParseFlag(str, &f->poison_heap, "poison_heap", "");
-  ParseFlag(str, &f->poison_partial, "poison_partial", "");
-  ParseFlag(str, &f->alloc_dealloc_mismatch, "alloc_dealloc_mismatch", "");
-  ParseFlag(str, &f->strict_memcmp, "strict_memcmp", "");
-  ParseFlag(str, &f->strict_init_order, "strict_init_order", "");
-  ParseFlag(str, &f->start_deactivated, "start_deactivated", "");
+      "print_full_thread_history",
+      "If set, prints thread creation stacks for the threads involved in the "
+      "report and their ancestors up to the main thread.");
+
+  ParseFlag(str, &f->poison_heap, "poison_heap",
+      "Poison (or not) the heap memory on [de]allocation. Zero value is useful "
+      "for benchmarking the allocator or instrumentator.");
+
+  ParseFlag(str, &f->poison_partial, "poison_partial",
+      "If true, poison partially addressable 8-byte aligned words "
+      "(default=true). This flag affects heap and global buffers, but not "
+      "stack buffers.");
+
+  ParseFlag(str, &f->alloc_dealloc_mismatch, "alloc_dealloc_mismatch",
+      "Report errors on malloc/delete, new/free, new/delete[], etc.");
+  ParseFlag(str, &f->strict_memcmp, "strict_memcmp",
+      "If true, assume that memcmp(p1, p2, n) always reads n bytes before "
+      "comparing p1 and p2.");
+
+  ParseFlag(str, &f->strict_init_order, "strict_init_order",
+      "If true, assume that dynamic initializers can never access globals from "
+      "other modules, even if the latter are already initialized.");
+
+  ParseFlag(str, &f->start_deactivated, "start_deactivated",
+      "If true, ASan tweaks a bunch of other flags (quarantine, redzone, heap "
+      "poisoning) to reduce memory consumption as much as possible, and "
+      "restores them to original values when the first instrumented module is "
+      "loaded into the process. This is mainly intended to be used on "
+      "Android. ");
+
   ParseFlag(str, &f->detect_invalid_pointer_pairs,
-            "detect_invalid_pointer_pairs", "");
+      "detect_invalid_pointer_pairs",
+      "If non-zero, try to detect operations like <, <=, >, >= and - on "
+      "invalid pointer pairs (e.g. when pointers belong to different objects). "
+      "The bigger the value the harder we try.");
 }
 
 void InitializeFlags(Flags *f, const char *env) {
