@@ -50,6 +50,7 @@
 #include <clc/math/rint.h>
 #include <clc/math/round.h>
 #include <clc/math/sin.h>
+#include <clc/math/sincos.h>
 #include <clc/math/sqrt.h>
 #include <clc/math/trunc.h>
 #include <clc/math/native_cos.h>

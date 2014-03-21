@@ -33,6 +33,7 @@ math/hypot.cl
 math/mad.cl
 math/clc_nextafter.cl
 math/nextafter.cl
+math/sincos.cl
 relational/any.cl
 relational/isnan.cl
 shared/clamp.cl
