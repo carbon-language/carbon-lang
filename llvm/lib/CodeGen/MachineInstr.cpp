@@ -1674,7 +1674,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM,
 
   // Print debug location information.
   if (isDebugValue() && getOperand(e - 1).isMetadata()) {
-    if (!HaveSemi) OS << ";"; HaveSemi = true;
+    if (!HaveSemi) OS << ";";
     DIVariable DV(getOperand(e - 1).getMetadata());
     OS << " line no:" <<  DV.getLineNumber();
     if (MDNode *InlinedAt = DV.getInlinedAt()) {
