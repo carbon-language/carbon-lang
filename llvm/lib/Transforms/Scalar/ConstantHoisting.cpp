@@ -595,7 +595,7 @@ bool ConstantHoisting::emitBaseConstants() {
 void ConstantHoisting::deleteDeadCastInst() const {
   for (auto const &I : ClonedCastMap)
     if (I.first->use_empty())
-      I.first->removeFromParent();
+      I.first->eraseFromParent();
 }
 
 /// \brief Optimize expensive integer constants in the given function.
