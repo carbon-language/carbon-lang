@@ -12,6 +12,7 @@
 #include "clang/Sema/SemaInternal.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/DependentDiagnostic.h"
@@ -3439,7 +3440,8 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
     PerformDependentDiagnostics(PatternDecl, TemplateArgs);
 
-    // FIXME: Notify the ASTMutationListener that we did this.
+    if (auto *Listener = getASTMutationListener())
+      Listener->FunctionDefinitionInstantiated(Function);
 
     savedContext.pop();
   }

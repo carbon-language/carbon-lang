@@ -503,6 +503,7 @@ private:
 
   void WriteDeclsBlockAbbrevs();
   void WriteDecl(ASTContext &Context, Decl *D);
+  void AddFunctionDefinition(const FunctionDecl *FD, RecordData &Record);
 
   void WriteASTCore(Sema &SemaRef,
                     StringRef isysroot, const std::string &OutputFile,
@@ -766,6 +767,7 @@ public:
   void DeducedReturnType(const FunctionDecl *FD, QualType ReturnType) override;
   void CompletedImplicitDefinition(const FunctionDecl *D) override;
   void StaticDataMemberInstantiated(const VarDecl *D) override;
+  void FunctionDefinitionInstantiated(const FunctionDecl *D) override;
   void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
                                     const ObjCInterfaceDecl *IFD) override;
   void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,

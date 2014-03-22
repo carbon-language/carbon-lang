@@ -4358,6 +4358,7 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
     OffsetsRecord.push_back(GetDeclRef(D));
     OffsetsRecord.push_back(Stream.GetCurrentBitNo());
 
+    bool HasUpdatedBody = false;
     RecordData Record;
     for (auto &Update : DeclUpdate.second) {
       DeclUpdateKind Kind = (DeclUpdateKind)Update.getKind();
@@ -4372,6 +4373,13 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
 
       case UPD_CXX_INSTANTIATED_STATIC_DATA_MEMBER:
         AddSourceLocation(Update.getLoc(), Record);
+        break;
+
+      case UPD_CXX_INSTANTIATED_FUNCTION_DEFINITION:
+        // An updated body is emitted last, so that the reader doesn't need
+        // to skip over the lazy body to reach statements for other records.
+        Record.pop_back();
+        HasUpdatedBody = true;
         break;
 
       case UPD_CXX_RESOLVED_EXCEPTION_SPEC:
@@ -4393,6 +4401,14 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
         Record.push_back(Update.getNumber());
         break;
       }
+    }
+
+    if (HasUpdatedBody) {
+      const FunctionDecl *Def = cast<FunctionDecl>(D);
+      Record.push_back(UPD_CXX_INSTANTIATED_FUNCTION_DEFINITION);
+      Record.push_back(Def->isInlined());
+      AddSourceLocation(Def->getInnerLocStart(), Record);
+      AddFunctionDefinition(Def, Record);
     }
 
     Stream.EmitRecord(DECL_UPDATES, Record);
@@ -5379,6 +5395,17 @@ void ASTWriter::CompletedImplicitDefinition(const FunctionDecl *D) {
   // Implicit decl from a PCH was defined.
   // FIXME: Should implicit definition be a separate FunctionDecl?
   RewriteDecl(D);
+}
+
+void ASTWriter::FunctionDefinitionInstantiated(const FunctionDecl *D) {
+  assert(!WritingAST && "Already writing the AST!");
+  if (!D->isFromASTFile())
+    return;
+
+  // Since the actual instantiation is delayed, this really means that we need
+  // to update the instantiation location.
+  DeclUpdates[D].push_back(
+      DeclUpdate(UPD_CXX_INSTANTIATED_FUNCTION_DEFINITION));
 }
 
 void ASTWriter::StaticDataMemberInstantiated(const VarDecl *D) {

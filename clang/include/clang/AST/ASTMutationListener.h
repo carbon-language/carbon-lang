@@ -78,6 +78,9 @@ public:
   /// \brief A static data member was implicitly instantiated.
   virtual void StaticDataMemberInstantiated(const VarDecl *D) {}
 
+  /// \brief A function template's definition was instantiated.
+  virtual void FunctionDefinitionInstantiated(const FunctionDecl *D) {}
+
   /// \brief A new objc category class was added for an interface.
   virtual void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
                                             const ObjCInterfaceDecl *IFD) {}

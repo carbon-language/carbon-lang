@@ -2944,6 +2944,24 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
           Reader.ReadSourceLocation(ModuleFile, Record, Idx));
       break;
 
+    case UPD_CXX_INSTANTIATED_FUNCTION_DEFINITION: {
+      FunctionDecl *FD = cast<FunctionDecl>(D);
+      if (FD->hasBody() || Reader.PendingBodies[FD])
+        // FIXME: Maybe check for ODR violations.
+        break;
+
+      if (Record[Idx++])
+        FD->setImplicitlyInline();
+      FD->setInnerLocStart(Reader.ReadSourceLocation(ModuleFile, Record, Idx));
+      if (auto *CD = dyn_cast<CXXConstructorDecl>(FD))
+        std::tie(CD->CtorInitializers, CD->NumCtorInitializers) =
+            Reader.ReadCXXCtorInitializers(ModuleFile, Record, Idx);
+      // Store the offset of the body so we can lazily load it later.
+      Reader.PendingBodies[FD] = GetCurrentCursorOffset();
+      assert(Idx == Record.size() && "lazy body must be last");
+      break;
+    }
+
     case UPD_CXX_RESOLVED_EXCEPTION_SPEC: {
       auto *FD = cast<FunctionDecl>(D);
       auto *FPT = FD->getType()->castAs<FunctionProtoType>();
