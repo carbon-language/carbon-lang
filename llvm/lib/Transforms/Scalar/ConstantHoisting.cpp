@@ -456,6 +456,34 @@ void ConstantHoisting::findBaseConstants() {
   findAndMakeBaseConstant(MinValItr, ConstCandVec.end());
 }
 
+/// \brief Updates the operand at Idx in instruction Inst with the result of
+///        instruction Mat. If the instruction is a PHI node then special
+///        handling for duplicate values form the same incomming basic block is
+///        required.
+/// \return The update will always succeed, but the return value indicated if
+///         Mat was used for the update or not.
+static bool updateOperand(Instruction *Inst, unsigned Idx, Instruction *Mat) {
+  if (auto PHI = dyn_cast<PHINode>(Inst)) {
+    // Check if any previous operand of the PHI node has the same incoming basic
+    // block. This is a very odd case that happens when the incoming basic block
+    // has a switch statement. In this case use the same value as the previous
+    // operand(s), otherwise we will fail verification due to different values.
+    // The values are actually the same, but the variable names are different
+    // and the verifier doesn't like that.
+    BasicBlock *IncomingBB = PHI->getIncomingBlock(Idx);
+    for (unsigned i = 0; i < Idx; ++i) {
+      if (PHI->getIncomingBlock(i) == IncomingBB) {
+        Value *IncomingVal = PHI->getIncomingValue(i);
+        Inst->setOperand(Idx, IncomingVal);
+        return false;
+      }
+    }
+  }
+
+  Inst->setOperand(Idx, Mat);
+  return true;
+}
+
 /// \brief Emit materialization code for all rebased constants and update their
 /// users.
 void ConstantHoisting::emitBaseConstants(Instruction *Base, Constant *Offset,
@@ -477,7 +505,8 @@ void ConstantHoisting::emitBaseConstants(Instruction *Base, Constant *Offset,
   // Visit constant integer.
   if (isa<ConstantInt>(Opnd)) {
     DEBUG(dbgs() << "Update: " << *ConstUser.Inst << '\n');
-    ConstUser.Inst->setOperand(ConstUser.OpndIdx, Mat);
+    if (!updateOperand(ConstUser.Inst, ConstUser.OpndIdx, Mat) && Offset)
+      Mat->eraseFromParent();
     DEBUG(dbgs() << "To    : " << *ConstUser.Inst << '\n');
     return;
   }
@@ -499,7 +528,7 @@ void ConstantHoisting::emitBaseConstants(Instruction *Base, Constant *Offset,
     }
 
     DEBUG(dbgs() << "Update: " << *ConstUser.Inst << '\n');
-    ConstUser.Inst->setOperand(ConstUser.OpndIdx, ClonedCastInst);
+    updateOperand(ConstUser.Inst, ConstUser.OpndIdx, ClonedCastInst);
     DEBUG(dbgs() << "To    : " << *ConstUser.Inst << '\n');
     return;
   }
@@ -517,7 +546,11 @@ void ConstantHoisting::emitBaseConstants(Instruction *Base, Constant *Offset,
     DEBUG(dbgs() << "Create instruction: " << *ConstExprInst << '\n'
                  << "From              : " << *ConstExpr << '\n');
     DEBUG(dbgs() << "Update: " << *ConstUser.Inst << '\n');
-    ConstUser.Inst->setOperand(ConstUser.OpndIdx, ConstExprInst);
+    if (!updateOperand(ConstUser.Inst, ConstUser.OpndIdx, ConstExprInst)) {
+      ConstExprInst->eraseFromParent();
+      if (Offset)
+        Mat->eraseFromParent();
+    }
     DEBUG(dbgs() << "To    : " << *ConstUser.Inst << '\n');
     return;
   }

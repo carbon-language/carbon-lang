@@ -68,3 +68,49 @@ if.then8:                                         ; preds = %if.end3
 if.end9:                                          ; preds = %if.then8, %if.end3
   ret i32 undef
 }
+
+; <rdar://problem/16394449>
+define i64 @switch_test1(i64 %a) {
+; CHECK-LABEL: @switch_test1
+; CHECK: %0 = phi i64 [ %const, %case2 ], [ %const_mat, %Entry ], [ %const_mat, %Entry ]
+Entry:
+  %sel = add i64 %a, 4519019440
+  switch i64 %sel, label %fail [
+    i64 462, label %continuation
+    i64 449, label %case2
+    i64 443, label %continuation
+  ]
+
+case2:
+  br label %continuation
+
+continuation:
+  %0 = phi i64 [ 4519019440, %case2 ], [ 4519019460, %Entry ], [ 4519019460, %Entry ]
+  ret i64 0;
+
+fail:
+  ret i64 -1;
+}
+
+define i64 @switch_test2(i64 %a) {
+; CHECK-LABEL: @switch_test2
+; CHECK: %2 = phi i64* [ %1, %case2 ], [ %0, %Entry ], [ %0, %Entry ]
+Entry:
+  %sel = add i64 %a, 4519019440
+  switch i64 %sel, label %fail [
+    i64 462, label %continuation
+    i64 449, label %case2
+    i64 443, label %continuation
+  ]
+
+case2:
+  br label %continuation
+
+continuation:
+  %0 = phi i64* [ inttoptr(i64 4519019440 to i64*), %case2 ], [ inttoptr(i64 4519019460 to i64*), %Entry ], [ inttoptr(i64 4519019460 to i64*), %Entry ]
+  ret i64 0;
+
+fail:
+  ret i64 -1;
+}
+
