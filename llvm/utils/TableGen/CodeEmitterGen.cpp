@@ -107,8 +107,19 @@ AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
     while (NumberedOp < NumberOps &&
            (CGI.Operands.isFlatOperandNotEmitted(NumberedOp) ||
               (NamedOpIndices.size() && NamedOpIndices.count(
-                CGI.Operands.getSubOperandNumber(NumberedOp).first))))
+                CGI.Operands.getSubOperandNumber(NumberedOp).first)))) {
       ++NumberedOp;
+
+      if (NumberedOp >= CGI.Operands.back().MIOperandNo +
+                        CGI.Operands.back().MINumOperands) {
+        errs() << "Too few operands in record " << R->getName() <<
+                  " (no match for variable " << VarName << "):\n";
+        errs() << *R;
+        errs() << '\n';
+
+        return;
+      }
+    }
 
     OpIdx = NumberedOp++;
   }
