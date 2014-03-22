@@ -37,10 +37,8 @@ entry:
   %v = fadd <2 x double> %a, %b
   ret <2 x double> %v
 
-; FIXME: Check that the ABI for the return value is correct here!
-
 ; CHECK-LABEL: @test4
-; CHECK: xvadddp {{[0-9]+}}, 34, 35
+; CHECK: xvadddp 34, 34, 35
 ; CHECK: blr
 }
 
