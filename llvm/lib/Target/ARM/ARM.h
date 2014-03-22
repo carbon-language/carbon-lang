@@ -15,19 +15,18 @@
 #ifndef TARGET_ARM_H
 #define TARGET_ARM_H
 
-#include "MCTargetDesc/ARMBaseInfo.h"
-#include "MCTargetDesc/ARMMCTargetDesc.h"
-#include "llvm/Support/DataTypes.h"
-#include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/CodeGen.h"
 
 namespace llvm {
 
 class ARMAsmPrinter;
 class ARMBaseTargetMachine;
 class FunctionPass;
+class ImmutablePass;
 class JITCodeEmitter;
 class MachineInstr;
 class MCInst;
+class TargetLowering;
 
 FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM,
                                CodeGenOpt::Level OptLevel);

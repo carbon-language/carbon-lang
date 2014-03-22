@@ -14,7 +14,7 @@
 #ifndef TARGET_ARM_FEATURES_H
 #define TARGET_ARM_FEATURES_H
 
-#include "ARM.h"
+#include "MCTargetDesc/ARMMCTargetDesc.h"
 
 template<typename InstrType> // could be MachineInstr or MCInst
 bool IsCPSRDead(InstrType *Instr);

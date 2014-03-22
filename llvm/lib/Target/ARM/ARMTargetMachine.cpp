@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARMTargetMachine.h"
 #include "ARM.h"
+#include "ARMTargetMachine.h"
 #include "ARMFrameLowering.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/MC/MCAsmInfo.h"

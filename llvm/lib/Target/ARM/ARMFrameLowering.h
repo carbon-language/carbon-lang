@@ -14,7 +14,6 @@
 #ifndef ARM_FRAMEINFO_H
 #define ARM_FRAMEINFO_H
 
-#include "ARM.h"
 #include "ARMSubtarget.h"
 #include "llvm/Target/TargetFrameLowering.h"
 

@@ -14,6 +14,7 @@
 
 #include "ARM.h"
 #include "ARMAsmPrinter.h"
+#include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMMCExpr.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/Constants.h"

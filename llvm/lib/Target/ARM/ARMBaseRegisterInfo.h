@@ -14,7 +14,7 @@
 #ifndef ARMBASEREGISTERINFO_H
 #define ARMBASEREGISTERINFO_H
 
-#include "ARM.h"
+#include "MCTargetDesc/ARMBaseInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 #define GET_REGINFO_HEADER

@@ -14,11 +14,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM.h"
-#include "ARMBaseInstrInfo.h"
+#include "ARMBaseRegisterInfo.h"
 #include "ARMCallingConv.h"
 #include "ARMConstantPoolValue.h"
+#include "ARMISelLowering.h"
+#include "ARMMachineFunctionInfo.h"
 #include "ARMSubtarget.h"
-#include "ARMTargetMachine.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/Analysis.h"

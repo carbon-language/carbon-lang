@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Thumb2InstrInfo.h"
-#include "ARM.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMMachineFunctionInfo.h"
 #include "MCTargetDesc/ARMAddressingModes.h"

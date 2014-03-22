@@ -14,7 +14,6 @@
 
 #define DEBUG_TYPE "arm-isel"
 #include "ARMISelLowering.h"
-#include "ARM.h"
 #include "ARMCallingConv.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMMachineFunctionInfo.h"
@@ -46,7 +45,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 #include <utility>
 using namespace llvm;

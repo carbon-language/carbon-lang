@@ -14,7 +14,6 @@
 #ifndef __THUMB_FRAMEINFO_H_
 #define __THUMB_FRAMEINFO_H_
 
-#include "ARM.h"
 #include "ARMFrameLowering.h"
 #include "ARMSubtarget.h"
 #include "Thumb1InstrInfo.h"
@@ -22,7 +21,6 @@
 #include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
-  class ARMSubtarget;
 
 class Thumb1FrameLowering : public ARMFrameLowering {
 public:

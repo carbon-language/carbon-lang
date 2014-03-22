@@ -15,7 +15,6 @@
 #ifndef THUMB1REGISTERINFO_H
 #define THUMB1REGISTERINFO_H
 
-#include "ARM.h"
 #include "ARMBaseRegisterInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 

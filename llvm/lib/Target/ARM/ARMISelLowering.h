@@ -15,17 +15,15 @@
 #ifndef ARMISELLOWERING_H
 #define ARMISELLOWERING_H
 
-#include "ARM.h"
-#include "ARMSubtarget.h"
+#include "MCTargetDesc/ARMBaseInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"
-#include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include <vector>
 
 namespace llvm {
   class ARMConstantPoolValue;
+  class ARMSubtarget;
 
   namespace ARMISD {
     // ARM Specific DAG Nodes

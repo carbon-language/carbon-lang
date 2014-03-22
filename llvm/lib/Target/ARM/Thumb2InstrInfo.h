@@ -14,7 +14,6 @@
 #ifndef THUMB2INSTRUCTIONINFO_H
 #define THUMB2INSTRUCTIONINFO_H
 
-#include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "Thumb2RegisterInfo.h"
 

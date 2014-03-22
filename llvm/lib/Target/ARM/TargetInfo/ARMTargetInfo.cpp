@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ARM.h"
+#include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;

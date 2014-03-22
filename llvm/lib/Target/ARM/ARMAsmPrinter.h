@@ -10,14 +10,16 @@
 #ifndef ARMASMPRINTER_H
 #define ARMASMPRINTER_H
 
-#include "ARM.h"
-#include "ARMTargetMachine.h"
+#include "ARMSubtarget.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/Support/Compiler.h"
+#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 
+class ARMFunctionInfo;
 class MCOperand;
+class MachineConstantPool;
+class MachineOperand;
 
 namespace ARM {
   enum DW_ISA {

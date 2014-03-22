@@ -13,10 +13,9 @@
 
 #define DEBUG_TYPE "jit"
 #include "ARMJITInfo.h"
-#include "ARM.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMRelocations.h"
-#include "ARMSubtarget.h"
+#include "MCTargetDesc/ARMBaseInfo.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/Debug.h"

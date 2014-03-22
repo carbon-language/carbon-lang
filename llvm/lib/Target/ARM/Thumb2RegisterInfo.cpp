@@ -14,7 +14,6 @@
 
 #include "Thumb2RegisterInfo.h"
 #include "ARM.h"
-#include "ARMBaseInstrInfo.h"
 #include "ARMSubtarget.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -22,6 +21,8 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 Thumb2RegisterInfo::Thumb2RegisterInfo(const ARMSubtarget &sti)

@@ -13,8 +13,6 @@
 #include "MCTargetDesc/ARMArchName.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMMCExpr.h"
-#include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"

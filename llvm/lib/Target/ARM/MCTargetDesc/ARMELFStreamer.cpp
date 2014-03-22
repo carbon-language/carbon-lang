@@ -17,7 +17,6 @@
 #include "ARMFPUName.h"
 #include "ARMRegisterInfo.h"
 #include "ARMUnwindOpAsm.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmBackend.h"

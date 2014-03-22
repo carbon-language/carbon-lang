@@ -14,7 +14,7 @@
 #ifndef ARMBASEINSTRUCTIONINFO_H
 #define ARMBASEINSTRUCTIONINFO_H
 
-#include "ARM.h"
+#include "MCTargetDesc/ARMBaseInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

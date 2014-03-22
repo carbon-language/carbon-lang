@@ -16,7 +16,6 @@
 #define ARM_UNWIND_OP_ASM_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ARMEHABI.h"
 #include "llvm/Support/DataTypes.h"
 

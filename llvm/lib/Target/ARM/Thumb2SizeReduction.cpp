@@ -10,7 +10,6 @@
 #define DEBUG_TYPE "t2-reduce-size"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
-#include "ARMBaseRegisterInfo.h"
 #include "ARMSubtarget.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "Thumb2InstrInfo.h"
@@ -23,7 +22,7 @@
 #include "llvm/IR/Function.h"        // To access Function attributes
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 STATISTIC(NumNarrows,  "Number of 32-bit instrs reduced to 16-bit ones");
