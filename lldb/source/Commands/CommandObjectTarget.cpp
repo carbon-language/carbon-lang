@@ -2707,8 +2707,6 @@ protected:
                         }
                         else
                         {
-                            flush = true;
-                            
                             StreamString strm;
                             module_spec.GetUUID().Dump (&strm);
                             if (module_spec.GetFileSpec())

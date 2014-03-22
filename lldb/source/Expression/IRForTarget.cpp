@@ -1993,7 +1993,6 @@ IRForTarget::ReplaceStaticLiterals (llvm::BasicBlock &basic_block)
             const size_t mask = (align - 1);
             uint64_t aligned_offset = (offset + mask) & ~mask;
             m_data_allocator.GetStream().PutNHex8(aligned_offset - offset, 0);
-            offset = aligned_offset;
             
             m_data_allocator.GetStream().Write(data.GetBytes(), operand_data_size);
             

@@ -1357,7 +1357,6 @@ ObjectFileELF::ParseSymbolTable(Symtab *symbol_table, user_id_t start_id, lldb_p
     user_id_t strtab_id = symtab_hdr->sh_link + 1;
     Section *strtab = section_list->FindSectionByID(strtab_id).get();
 
-    unsigned num_symbols = 0;
     if (symtab && strtab)
     {
         assert (symtab->GetObjectFile() == this);
@@ -1370,13 +1369,12 @@ ObjectFileELF::ParseSymbolTable(Symtab *symbol_table, user_id_t start_id, lldb_p
         {
             size_t num_symbols = symtab_data.GetByteSize() / symtab_hdr->sh_entsize;
 
-            num_symbols = ParseSymbols(symbol_table, start_id, 
-                                       section_list, num_symbols,
-                                       symtab_data, strtab_data);
+            return ParseSymbols(symbol_table, start_id, section_list,
+                                num_symbols, symtab_data, strtab_data);
         }
     }
 
-    return num_symbols;
+    return 0;
 }
 
 size_t

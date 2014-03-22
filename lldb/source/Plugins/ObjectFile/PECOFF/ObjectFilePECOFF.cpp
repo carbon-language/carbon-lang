@@ -232,7 +232,6 @@ ObjectFilePECOFF::SetLoadAddress(Target &target, addr_t value, bool value_is_off
                 }
             }
             changed = num_loaded_sections > 0;
-            return num_loaded_sections > 0;
         }
     }
     return changed;

@@ -277,8 +277,6 @@ CommandObjectExpression::EvaluateExpression
     {
         lldb::ValueObjectSP result_valobj_sp;
 
-        ExecutionResults exe_results;
-        
         bool keep_in_memory = true;
 
         EvaluateExpressionOptions options;
@@ -294,11 +292,9 @@ CommandObjectExpression::EvaluateExpression
             options.SetTimeoutUsec(m_command_options.timeout);
         else
             options.SetTimeoutUsec(0);
-        
-        exe_results = target->EvaluateExpression (expr, 
-                                                  exe_ctx.GetFramePtr(),
-                                                  result_valobj_sp,
-                                                  options);
+
+        target->EvaluateExpression(expr, exe_ctx.GetFramePtr(),
+                                   result_valobj_sp, options);
 
         if (result_valobj_sp)
         {

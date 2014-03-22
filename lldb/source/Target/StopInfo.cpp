@@ -452,8 +452,6 @@ protected:
                                 error_sp->PutCString (err_str);
                                 error_sp->EOL();
                                 error_sp->Flush();
-                                // If the condition fails to be parsed or run, we should stop.
-                                condition_says_stop = true;
                             }
                             else
                             {

@@ -959,7 +959,7 @@ Module::FindTypes (const SymbolContext& sc,
         {
             // The "type_name_cstr" will have been modified if we have a valid type class
             // prefix (like "struct", "class", "union", "typedef" etc).
-            num_matches = FindTypes_Impl(sc, ConstString(type_name_cstr), NULL, append, max_matches, types);
+            FindTypes_Impl(sc, ConstString(type_name_cstr), NULL, append, max_matches, types);
             types.RemoveMismatchedTypes (type_class);
             num_matches = types.GetSize();
         }
