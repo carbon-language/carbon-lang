@@ -79,8 +79,7 @@ beta:
 
 @ CHECK: Symbol {
 @ CHECK:   Name: alpha
-@ CHECK:   Value: 0x6
-@ XFAIL-CHECK:   Value: 0x7
+@ CHECK:   Value: 0x7
 @ CHECK:   Type: Function
 @ CHECK: }
 

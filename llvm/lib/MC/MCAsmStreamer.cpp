@@ -57,6 +57,8 @@ private:
                        EHPrivateExtern  = 1 << 2 };
   DenseMap<const MCSymbol*, unsigned> FlagMap;
 
+  DenseMap<const MCSymbol*, MCSymbolData*> SymbolMap;
+
   bool needsSet(const MCExpr *Value);
 
   void EmitRegisterName(int64_t Register);
@@ -252,6 +254,8 @@ public:
   void EmitRawTextImpl(StringRef String) override;
 
   void FinishImpl() override;
+
+  virtual MCSymbolData &getOrCreateSymbolData(const MCSymbol *Symbol) override;
 };
 
 } // end anonymous namespace.
@@ -1415,6 +1419,15 @@ void MCAsmStreamer::FinishImpl() {
 
   if (!UseCFI)
     EmitFrames(AsmBackend.get(), false);
+}
+
+MCSymbolData &MCAsmStreamer::getOrCreateSymbolData(const MCSymbol *Symbol) {
+  MCSymbolData *&Entry = SymbolMap[Symbol];
+
+  if (!Entry)
+    Entry = new MCSymbolData(*Symbol, 0, 0, 0);
+
+  return *Entry;
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
