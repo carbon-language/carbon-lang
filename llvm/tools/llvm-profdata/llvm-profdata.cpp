@@ -47,7 +47,8 @@ int merge_main(int argc, const char *argv[]) {
     OutputFilename = "-";
 
   std::string ErrorInfo;
-  raw_fd_ostream Output(OutputFilename.data(), ErrorInfo, sys::fs::F_Text);
+  // FIXME: F_Text would be available if line_iterator could accept CRLF.
+  raw_fd_ostream Output(OutputFilename.data(), ErrorInfo, sys::fs::F_None);
   if (!ErrorInfo.empty())
     exitWithError(ErrorInfo, OutputFilename);
 
