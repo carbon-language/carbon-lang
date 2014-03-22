@@ -44,6 +44,7 @@ TEST(LockFileManagerTest, Basic) {
   ASSERT_FALSE(EC);
 }
 
+#if !defined(_WIN32)
 TEST(LockFileManagerTest, LinkLockExists) {
   SmallString<64> TmpDir;
   error_code EC;
@@ -112,5 +113,6 @@ TEST(LockFileManagerTest, RelativePath) {
 
   chdir(OrigPath);
 }
+#endif
 
 } // end anonymous namespace
