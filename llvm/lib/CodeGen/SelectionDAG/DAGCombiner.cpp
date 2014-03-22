@@ -667,7 +667,7 @@ static ConstantSDNode *isConstOrConstSplat(SDValue N) {
     return CN;
 
   if (BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(N))
-    return BV->isConstantSplat();
+    return BV->getConstantSplatValue();
 
   return nullptr;
 }
