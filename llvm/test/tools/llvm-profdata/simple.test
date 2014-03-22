@@ -1,5 +1,5 @@
-RUN: llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/foo3-2.profdata 2>&1 | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO3
-RUN: llvm-profdata merge %p/Inputs/foo3-2.profdata %p/Inputs/foo3-1.profdata 2>&1 | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO3
+RUN: llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/foo3-2.profdata | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO3
+RUN: llvm-profdata merge %p/Inputs/foo3-2.profdata %p/Inputs/foo3-1.profdata | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO3
 FOO3: foo:
 FOO3: Counters: 3
 FOO3: Function count: 8
@@ -8,8 +8,8 @@ FOO3: Total functions: 1
 FOO3: Maximum function count: 8
 FOO3: Maximum internal block count: 7
 
-RUN: llvm-profdata merge %p/Inputs/foo4-1.profdata %p/Inputs/foo4-2.profdata 2>&1 | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO4
-RUN: llvm-profdata merge %p/Inputs/foo4-2.profdata %p/Inputs/foo4-1.profdata 2>&1 | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO4
+RUN: llvm-profdata merge %p/Inputs/foo4-1.profdata %p/Inputs/foo4-2.profdata | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO4
+RUN: llvm-profdata merge %p/Inputs/foo4-2.profdata %p/Inputs/foo4-1.profdata | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO4
 FOO4: foo:
 FOO4: Counters: 4
 FOO4: Function count: 18
@@ -18,8 +18,8 @@ FOO4: Total functions: 1
 FOO4: Maximum function count: 18
 FOO4: Maximum internal block count: 48
 
-RUN: llvm-profdata merge %p/Inputs/foo3bar3-1.profdata %p/Inputs/foo3bar3-2.profdata 2>&1 | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO3BAR3
-RUN: llvm-profdata merge %p/Inputs/foo3bar3-2.profdata %p/Inputs/foo3bar3-1.profdata 2>&1 | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO3BAR3
+RUN: llvm-profdata merge %p/Inputs/foo3bar3-1.profdata %p/Inputs/foo3bar3-2.profdata | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO3BAR3
+RUN: llvm-profdata merge %p/Inputs/foo3bar3-2.profdata %p/Inputs/foo3bar3-1.profdata | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO3BAR3
 FOO3BAR3: foo:
 FOO3BAR3: Counters: 3
 FOO3BAR3: Function count: 19
@@ -32,7 +32,7 @@ FOO3BAR3: Total functions: 2
 FOO3BAR3: Maximum function count: 36
 FOO3BAR3: Maximum internal block count: 50
 
-RUN: llvm-profdata merge %p/Inputs/empty.profdata %p/Inputs/foo3-1.profdata 2>&1 | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO3EMPTY
+RUN: llvm-profdata merge %p/Inputs/empty.profdata %p/Inputs/foo3-1.profdata | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO3EMPTY
 FOO3EMPTY: foo:
 FOO3EMPTY: Counters: 3
 FOO3EMPTY: Function count: 1
@@ -41,7 +41,7 @@ FOO3EMPTY: Total functions: 1
 FOO3EMPTY: Maximum function count: 1
 FOO3EMPTY: Maximum internal block count: 3
 
-RUN: llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/foo3bar3-1.profdata 2>&1 | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO3FOO3BAR3
+RUN: llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/foo3bar3-1.profdata | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=FOO3FOO3BAR3
 FOO3FOO3BAR3: foo:
 FOO3FOO3BAR3: Counters: 3
 FOO3FOO3BAR3: Function count: 3
@@ -54,7 +54,7 @@ FOO3FOO3BAR3: Total functions: 2
 FOO3FOO3BAR3: Maximum function count: 7
 FOO3FOO3BAR3: Maximum internal block count: 13
 
-RUN: llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/bar3-1.profdata 2>&1 | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=DISJOINT
+RUN: llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/bar3-1.profdata | llvm-profdata show - -all-functions -counts | FileCheck %s --check-prefix=DISJOINT
 DISJOINT: foo:
 DISJOINT: Counters: 3
 DISJOINT: Function count: 1
