@@ -3439,6 +3439,8 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
     PerformDependentDiagnostics(PatternDecl, TemplateArgs);
 
+    // FIXME: Notify the ASTMutationListener that we did this.
+
     savedContext.pop();
   }
 
@@ -4592,14 +4594,6 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
 /// \brief Performs template instantiation for all implicit template
 /// instantiations we have seen until this point.
 void Sema::PerformPendingInstantiations(bool LocalOnly) {
-  // Load pending instantiations from the external source.
-  if (!LocalOnly && ExternalSource) {
-    SmallVector<PendingImplicitInstantiation, 4> Pending;
-    ExternalSource->ReadPendingInstantiations(Pending);
-    PendingInstantiations.insert(PendingInstantiations.begin(),
-                                 Pending.begin(), Pending.end());
-  }
-
   while (!PendingLocalImplicitInstantiations.empty() ||
          (!LocalOnly && !PendingInstantiations.empty())) {
     PendingImplicitInstantiation Inst;

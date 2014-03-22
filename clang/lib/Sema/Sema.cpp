@@ -620,7 +620,15 @@ void Sema::ActOnEndOfTranslationUnit() {
     // so it will find some names that are not required to be found. This is
     // valid, but we could do better by diagnosing if an instantiation uses a
     // name that was not visible at its first point of instantiation.
+    if (ExternalSource) {
+      // Load pending instantiations from the external source.
+      SmallVector<PendingImplicitInstantiation, 4> Pending;
+      ExternalSource->ReadPendingInstantiations(Pending);
+      PendingInstantiations.insert(PendingInstantiations.begin(),
+                                   Pending.begin(), Pending.end());
+    }
     PerformPendingInstantiations();
+
     CheckDelayedMemberExceptionSpecs();
   }
 
