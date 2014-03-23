@@ -2892,6 +2892,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
         Error("invalid DECL_UPDATE_OFFSETS block in AST file");
         return true;
       }
+      // FIXME: If we've already loaded the decl, perform the updates now.
       for (unsigned I = 0, N = Record.size(); I != N; I += 2)
         DeclUpdateOffsets[getGlobalDeclID(F, Record[I])]
           .push_back(std::make_pair(&F, Record[I+1]));
@@ -6313,6 +6314,15 @@ static void PassObjCImplDeclToConsumer(ObjCImplDecl *ImplD,
 
 void ASTReader::PassInterestingDeclsToConsumer() {
   assert(Consumer);
+
+  if (PassingDeclsToConsumer)
+    return;
+
+  // Guard variable to avoid recursively redoing the process of passing
+  // decls to consumer.
+  SaveAndRestore<bool> GuardPassingDeclsToConsumer(PassingDeclsToConsumer,
+                                                   true);
+
   while (!InterestingDecls.empty()) {
     Decl *D = InterestingDecls.front();
     InterestingDecls.pop_front();
@@ -7922,20 +7932,10 @@ void ASTReader::FinishedDeserializing() {
   }
   --NumCurrentElementsDeserializing;
 
-  if (NumCurrentElementsDeserializing == 0 &&
-      Consumer && !PassingDeclsToConsumer) {
-    // Guard variable to avoid recursively redoing the process of passing
-    // decls to consumer.
-    SaveAndRestore<bool> GuardPassingDeclsToConsumer(PassingDeclsToConsumer,
-                                                     true);
-
-    while (!InterestingDecls.empty()) {
-      // We are not in recursive loading, so it's safe to pass the "interesting"
-      // decls to the consumer.
-      Decl *D = InterestingDecls.front();
-      InterestingDecls.pop_front();
-      PassInterestingDeclToConsumer(D);
-    }
+  if (NumCurrentElementsDeserializing == 0 && Consumer) {
+    // We are not in recursive loading, so it's safe to pass the "interesting"
+    // decls to the consumer.
+    PassInterestingDeclsToConsumer();
   }
 }
 
