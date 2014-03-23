@@ -15,3 +15,9 @@ namespace Std {
     friend bool operator!=(const WithFriend &A, const WithFriend &B) { return false; }
   };
 }
+
+namespace Std {
+  template<typename T> void f() {
+    extern T g();
+  }
+}

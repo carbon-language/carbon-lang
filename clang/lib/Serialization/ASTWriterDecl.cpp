@@ -185,8 +185,9 @@ void ASTDeclWriter::VisitDecl(Decl *D) {
   // function with a local extern declaration, for instance.
   if (D->isOutOfLine()) {
     auto *NS = dyn_cast<NamespaceDecl>(D->getDeclContext()->getRedeclContext());
+    // FIXME: Also update surrounding inline namespaces.
     if (NS && NS->isFromASTFile())
-      Writer.AddUpdatedDeclContext(NS);
+      Writer.AddUpdatedDeclContext(NS->getPrimaryContext());
   }
 }
 

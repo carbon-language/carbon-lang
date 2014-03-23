@@ -121,6 +121,11 @@ bool testFriendInClassTemplate(Std::WithFriend<int> wfi) {
   return wfi != wfi;
 }
 
+namespace Std {
+  void g(); // expected-error {{functions that differ only in their return type cannot be overloaded}}
+  // expected-note@cxx-templates-common.h:21 {{previous}}
+}
+
 // CHECK-GLOBAL:      DeclarationName 'f'
 // CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-GLOBAL-NEXT: `-FunctionTemplate {{.*}} 'f'
