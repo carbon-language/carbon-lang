@@ -127,7 +127,6 @@ class PPCFastISel final : public FastISel {
     bool SelectStore(const Instruction *I);
     bool SelectBranch(const Instruction *I);
     bool SelectIndirectBr(const Instruction *I);
-    bool SelectCmp(const Instruction *I);
     bool SelectFPExt(const Instruction *I);
     bool SelectFPTrunc(const Instruction *I);
     bool SelectIToFP(const Instruction *I, bool IsSigned);

@@ -384,15 +384,11 @@ namespace {
     unsigned getOffsetOf(MachineInstr *MI) const;
     unsigned getUserOffset(CPUser&) const;
     void dumpBBs();
-    void verify();
 
     bool isOffsetInRange(unsigned UserOffset, unsigned TrialOffset,
                          unsigned Disp, bool NegativeOK);
     bool isOffsetInRange(unsigned UserOffset, unsigned TrialOffset,
                          const CPUser &U);
-
-    bool isLongFormOffsetInRange(unsigned UserOffset, unsigned TrialOffset,
-                                const CPUser &U);
 
     void computeBlockSize(MachineBasicBlock *MBB);
     MachineBasicBlock *splitBlockBeforeInstr(MachineInstr *MI);
@@ -426,14 +422,6 @@ namespace {
 
   char MipsConstantIslands::ID = 0;
 } // end of anonymous namespace
-
-
-bool MipsConstantIslands::isLongFormOffsetInRange
-  (unsigned UserOffset, unsigned TrialOffset,
-   const CPUser &U) {
-  return isOffsetInRange(UserOffset, TrialOffset,
-                         U.getLongFormMaxDisp(), U.NegOk);
-}
 
 bool MipsConstantIslands::isOffsetInRange
   (unsigned UserOffset, unsigned TrialOffset,

@@ -105,7 +105,6 @@ public:
   void RewriteUse(MachineOperand &U);
 
 private:
-  void ReplaceRegWith(unsigned OldReg, unsigned NewReg);
   unsigned GetValueAtEndOfBlockInternal(MachineBasicBlock *BB);
 
   void operator=(const MachineSSAUpdater&) LLVM_DELETED_FUNCTION;

@@ -41,8 +41,6 @@ public:
 
   void run(raw_ostream &o);
 private:
-  void emitMachineOpEmitter(raw_ostream &o, const std::string &Namespace);
-  void emitGetValueBit(raw_ostream &o, const std::string &Namespace);
   int getVariableBit(const std::string &VarName, BitsInit *BI, int bit);
   std::string getInstructionCase(Record *R, CodeGenTarget &Target);
   void AddCodeToMergeInOperand(Record *R, BitsInit *BI,

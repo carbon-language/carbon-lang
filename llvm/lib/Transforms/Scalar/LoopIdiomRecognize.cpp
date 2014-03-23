@@ -79,9 +79,6 @@ namespace {
       return dyn_cast<BranchInst>(BB->getTerminator());
     }
 
-    /// Return the condition of the branch terminating the given basic block.
-    static Value *getBrCondtion(BasicBlock *);
-
     /// Derive the precondition block (i.e the block that guards the loop
     /// preheader) from the given preheader.
     static BasicBlock *getPrecondBb(BasicBlock *PreHead);
@@ -290,11 +287,6 @@ bool LIRUtil::isAlmostEmpty(BasicBlock *BB) {
     return Br->isUnconditional() && BB->size() == 1;
   }
   return false;
-}
-
-Value *LIRUtil::getBrCondtion(BasicBlock *BB) {
-  BranchInst *Br = getBranch(BB);
-  return Br ? Br->getCondition() : 0;
 }
 
 BasicBlock *LIRUtil::getPrecondBb(BasicBlock *PreHead) {

@@ -175,7 +175,6 @@ namespace {
     void ReleaseSuccessors(SUnit *SU);
     void ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle);
     void ListScheduleTopDown();
-    void StartBlockForKills(MachineBasicBlock *BB);
 
     void dumpSchedule() const;
     void emitNoop(unsigned CurCycle);

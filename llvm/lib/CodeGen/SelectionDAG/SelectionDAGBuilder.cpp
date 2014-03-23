@@ -627,16 +627,6 @@ namespace {
       }
     }
 
-    /// areValueTypesLegal - Return true if types of all the values are legal.
-    bool areValueTypesLegal(const TargetLowering &TLI) {
-      for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
-        MVT RegisterVT = RegVTs[Value];
-        if (!TLI.isTypeLegal(RegisterVT))
-          return false;
-      }
-      return true;
-    }
-
     /// append - Add the specified values to this one.
     void append(const RegsForValue &RHS) {
       ValueVTs.append(RHS.ValueVTs.begin(), RHS.ValueVTs.end());

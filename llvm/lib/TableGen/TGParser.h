@@ -167,7 +167,6 @@ private:  // Parser methods.
   SubClassReference ParseSubClassReference(Record *CurRec, bool isDefm);
   SubMultiClassReference ParseSubMultiClassReference(MultiClass *CurMC);
 
-  Init *ParseIDValue(Record *CurRec, IDParseMode Mode = ParseValueMode);
   Init *ParseIDValue(Record *CurRec, const std::string &Name, SMLoc NameLoc,
                      IDParseMode Mode = ParseValueMode);
   Init *ParseSimpleValue(Record *CurRec, RecTy *ItemType = 0,

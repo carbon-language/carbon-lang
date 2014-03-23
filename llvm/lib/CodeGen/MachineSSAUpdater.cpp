@@ -230,16 +230,6 @@ void MachineSSAUpdater::RewriteUse(MachineOperand &U) {
   U.setReg(NewVR);
 }
 
-void MachineSSAUpdater::ReplaceRegWith(unsigned OldReg, unsigned NewReg) {
-  MRI->replaceRegWith(OldReg, NewReg);
-
-  AvailableValsTy &AvailableVals = getAvailableVals(AV);
-  for (DenseMap<MachineBasicBlock*, unsigned>::iterator
-         I = AvailableVals.begin(), E = AvailableVals.end(); I != E; ++I)
-    if (I->second == OldReg)
-      I->second = NewReg;
-}
-
 /// SSAUpdaterTraits<MachineSSAUpdater> - Traits for the SSAUpdaterImpl
 /// template, specialized for MachineSSAUpdater.
 namespace llvm {

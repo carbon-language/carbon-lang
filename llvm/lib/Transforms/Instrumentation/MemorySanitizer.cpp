@@ -501,7 +501,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     Instruction *OrigIns;
     ShadowOriginAndInsertPoint(Value *S, Value *O, Instruction *I)
       : Shadow(S), Origin(O), OrigIns(I) { }
-    ShadowOriginAndInsertPoint() : Shadow(0), Origin(0), OrigIns(0) { }
   };
   SmallVector<ShadowOriginAndInsertPoint, 16> InstrumentationList;
   SmallVector<Instruction*, 16> StoreList;

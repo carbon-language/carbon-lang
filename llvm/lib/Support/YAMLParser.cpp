@@ -378,9 +378,6 @@ private:
   ///          sequence of ns-uri-char.
   StringRef scan_ns_uri_char();
 
-  /// @brief Scan ns-plain-one-line[133] starting at \a Cur.
-  StringRef scan_ns_plain_one_line();
-
   /// @brief Consume a minimal well-formed code unit subsequence starting at
   ///        \a Cur. Return false if it is not the same Unicode scalar value as
   ///        \a Expected. This updates \a Column.
@@ -871,42 +868,6 @@ StringRef Scanner::scan_ns_uri_char() {
       break;
   }
   return StringRef(Start, Current - Start);
-}
-
-StringRef Scanner::scan_ns_plain_one_line() {
-  StringRef::iterator start = Current;
-  // The first character must already be verified.
-  ++Current;
-  while (true) {
-    if (Current == End) {
-      break;
-    } else if (*Current == ':') {
-      // Check if the next character is a ns-char.
-      if (Current + 1 == End)
-        break;
-      StringRef::iterator i = skip_ns_char(Current + 1);
-      if (Current + 1 != i) {
-        Current = i;
-        Column += 2; // Consume both the ':' and ns-char.
-      } else
-        break;
-    } else if (*Current == '#') {
-      // Check if the previous character was a ns-char.
-      // The & 0x80 check is to check for the trailing byte of a utf-8
-      if (*(Current - 1) & 0x80 || skip_ns_char(Current - 1) == Current) {
-        ++Current;
-        ++Column;
-      } else
-        break;
-    } else {
-      StringRef::iterator i = skip_nb_char(Current);
-      if (i == Current)
-        break;
-      Current = i;
-      ++Column;
-    }
-  }
-  return StringRef(start, Current - start);
 }
 
 bool Scanner::consume(uint32_t Expected) {

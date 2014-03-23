@@ -854,9 +854,6 @@ private:
   /// processType - Process DIType.
   void processType(DIType DT);
 
-  /// processLexicalBlock - Process DILexicalBlock.
-  void processLexicalBlock(DILexicalBlock LB);
-
   /// processSubprogram - Process DISubprogram.
   void processSubprogram(DISubprogram SP);
 

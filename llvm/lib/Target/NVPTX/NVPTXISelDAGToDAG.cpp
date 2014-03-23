@@ -2440,24 +2440,3 @@ bool NVPTXDAGToDAGISel::SelectInlineAsmMemoryOperand(
   }
   return true;
 }
-
-// Return true if N is a undef or a constant.
-// If N was undef, return a (i8imm 0) in Retval
-// If N was imm, convert it to i8imm and return in Retval
-// Note: The convert to i8imm is required, otherwise the
-// pattern matcher inserts a bunch of IMOVi8rr to convert
-// the imm to i8imm, and this causes instruction selection
-// to fail.
-bool NVPTXDAGToDAGISel::UndefOrImm(SDValue Op, SDValue N, SDValue &Retval) {
-  if (!(N.getOpcode() == ISD::UNDEF) && !(N.getOpcode() == ISD::Constant))
-    return false;
-
-  if (N.getOpcode() == ISD::UNDEF)
-    Retval = CurDAG->getTargetConstant(0, MVT::i8);
-  else {
-    ConstantSDNode *cn = cast<ConstantSDNode>(N.getNode());
-    unsigned retval = cn->getZExtValue();
-    Retval = CurDAG->getTargetConstant(retval, MVT::i8);
-  }
-  return true;
-}

@@ -59,8 +59,6 @@ private:
 
   DenseMap<const MCSymbol*, MCSymbolData*> SymbolMap;
 
-  bool needsSet(const MCExpr *Value);
-
   void EmitRegisterName(int64_t Register);
   void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) override;
   void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) override;

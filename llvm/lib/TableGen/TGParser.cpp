@@ -722,22 +722,6 @@ RecTy *TGParser::ParseType() {
   }
 }
 
-/// ParseIDValue - Parse an ID as a value and decode what it means.
-///
-///  IDValue ::= ID [def local value]
-///  IDValue ::= ID [def template arg]
-///  IDValue ::= ID [multiclass local value]
-///  IDValue ::= ID [multiclass template argument]
-///  IDValue ::= ID [def name]
-///
-Init *TGParser::ParseIDValue(Record *CurRec, IDParseMode Mode) {
-  assert(Lex.getCode() == tgtok::Id && "Expected ID in ParseIDValue");
-  std::string Name = Lex.getCurStrVal();
-  SMLoc Loc = Lex.getLoc();
-  Lex.Lex();
-  return ParseIDValue(CurRec, Name, Loc);
-}
-
 /// ParseIDValue - This is just like ParseIDValue above, but it assumes the ID
 /// has already been read.
 Init *TGParser::ParseIDValue(Record *CurRec,

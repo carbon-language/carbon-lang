@@ -62,8 +62,6 @@ namespace {
 
     BasicBlock *getTrapBB();
     void emitBranchToTrap(Value *Cmp = 0);
-    bool computeAllocSize(Value *Ptr, APInt &Offset, Value* &OffsetValue,
-                          APInt &Size, Value* &SizeValue);
     bool instrument(Value *Ptr, Value *Val);
  };
 }

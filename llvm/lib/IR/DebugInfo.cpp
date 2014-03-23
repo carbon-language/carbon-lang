@@ -1087,18 +1087,6 @@ void DebugInfoFinder::processScope(DIScope Scope) {
   }
 }
 
-/// processLexicalBlock
-void DebugInfoFinder::processLexicalBlock(DILexicalBlock LB) {
-  DIScope Context = LB.getContext();
-  if (Context.isLexicalBlock())
-    return processLexicalBlock(DILexicalBlock(Context));
-  else if (Context.isLexicalBlockFile()) {
-    DILexicalBlockFile DBF = DILexicalBlockFile(Context);
-    return processLexicalBlock(DILexicalBlock(DBF.getScope()));
-  } else
-    return processSubprogram(DISubprogram(Context));
-}
-
 /// processSubprogram - Process DISubprogram.
 void DebugInfoFinder::processSubprogram(DISubprogram SP) {
   if (!addSubprogram(SP))

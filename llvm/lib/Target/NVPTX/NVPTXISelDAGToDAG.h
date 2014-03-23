@@ -91,7 +91,5 @@ private:
 
   bool ChkMemSDNodeAddressSpace(SDNode *N, unsigned int spN) const;
 
-  bool UndefOrImm(SDValue Op, SDValue N, SDValue &Retval);
-
 };
 }

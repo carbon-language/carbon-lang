@@ -326,9 +326,7 @@ struct AddressSanitizer : public FunctionPass {
  private:
   void initializeCallbacks(Module &M);
 
-  bool ShouldInstrumentGlobal(GlobalVariable *G);
   bool LooksLikeCodeInBug11395(Instruction *I);
-  void FindDynamicInitializers(Module &M);
   bool GlobalIsLinkerInitialized(GlobalVariable *G);
   bool InjectCoverage(Function &F, const ArrayRef<BasicBlock*> AllBlocks);
   void InjectCoverageAtBlock(Function &F, BasicBlock &BB);
