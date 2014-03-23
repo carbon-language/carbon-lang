@@ -4372,7 +4372,6 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
       // Value = 0x0000nnff: Op=x, Cmode=1100.
       OpCmode = 0xc;
       Imm = SplatBits >> 8;
-      SplatBits |= 0xff;
       break;
     }
 
@@ -4381,7 +4380,6 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
       // Value = 0x00nnffff: Op=x, Cmode=1101.
       OpCmode = 0xd;
       Imm = SplatBits >> 16;
-      SplatBits |= 0xffff;
       break;
     }
 
@@ -4412,7 +4410,6 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
     }
     // Op=1, Cmode=1110.
     OpCmode = 0x1e;
-    SplatBits = Val;
     VT = is128Bits ? MVT::v2i64 : MVT::v1i64;
     break;
   }
