@@ -768,18 +768,23 @@ static const char *getCOFFSectionNameForUniqueGlobal(SectionKind Kind) {
 const MCSection *TargetLoweringObjectFileCOFF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler &Mang, const TargetMachine &TM) const {
+  // If we have -ffunction-sections then we should emit the global value to a
+  // uniqued section specifically for it.
+  // TODO: Implement -fdata-sections.
+  bool EmitUniquedSection = Kind.isText() && TM.getFunctionSections();
 
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
-  if (GV->isWeakForLinker()) {
+  if (GV->isWeakForLinker() || EmitUniquedSection) {
     const char *Name = getCOFFSectionNameForUniqueGlobal(Kind);
     unsigned Characteristics = getCOFFSectionFlags(Kind);
 
     Characteristics |= COFF::IMAGE_SCN_LNK_COMDAT;
     MCSymbol *Sym = TM.getSymbol(GV, Mang);
-    return getContext().getCOFFSection(Name, Characteristics,
-                                       Kind, Sym->getName(),
-                                       COFF::IMAGE_COMDAT_SELECT_ANY);
+    return getContext().getCOFFSection(
+        Name, Characteristics, Kind, Sym->getName(),
+        GV->isWeakForLinker() ? COFF::IMAGE_COMDAT_SELECT_ANY
+                              : COFF::IMAGE_COMDAT_SELECT_NODUPLICATES);
   }
 
   if (Kind.isText())

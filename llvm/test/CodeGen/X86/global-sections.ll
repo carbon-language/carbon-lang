@@ -3,6 +3,7 @@
 ; RUN: llc < %s -mtriple=i386-apple-darwin10 -relocation-model=static | FileCheck %s -check-prefix=DARWIN-STATIC
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin10 | FileCheck %s -check-prefix=DARWIN64
 ; RUN: llc < %s -mtriple=i386-unknown-linux-gnu -fdata-sections | FileCheck %s -check-prefix=LINUX-SECTIONS
+; RUN: llc < %s -mtriple=i686-pc-win32 -ffunction-sections | FileCheck %s -check-prefix=WIN32-SECTIONS
 
 
 ; int G1;
@@ -176,3 +177,10 @@
 ; LINUX-SECTIONS: .LG14:
 ; LINUX-SECTIONS:        .asciz  "foo"
 ; LINUX-SECTIONS:        .size   .LG14, 4
+
+define void @G15() {
+  ret void
+}
+
+; WIN32-SECTIONS: .section        .text,"xr",one_only,_G15
+; WIN32-SECTIONS: .globl _G15
