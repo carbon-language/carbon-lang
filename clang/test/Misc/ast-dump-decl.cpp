@@ -308,7 +308,8 @@ namespace TestTemplateTypeParmDecl {
 // CHECK:      NamespaceDecl{{.*}} TestTemplateTypeParmDecl
 // CHECK-NEXT:   FunctionTemplateDecl
 // CHECK-NEXT:     TemplateTypeParmDecl{{.*}} typename ... T
-// CHECK-NEXT:     TemplateTypeParmDecl{{.*}} class U 'int'
+// CHECK-NEXT:     TemplateTypeParmDecl{{.*}} class U
+// CHECK-NEXT:       TemplateArgument type 'int'
 
 namespace TestNonTypeTemplateParmDecl {
   template<int I = 1, int ... J> void foo();
@@ -316,7 +317,8 @@ namespace TestNonTypeTemplateParmDecl {
 // CHECK:      NamespaceDecl{{.*}} TestNonTypeTemplateParmDecl
 // CHECK-NEXT:   FunctionTemplateDecl
 // CHECK-NEXT:     NonTypeTemplateParmDecl{{.*}} 'int' I
-// CHECK-NEXT:       IntegerLiteral{{.*}} 'int' 1
+// CHECK-NEXT:       TemplateArgument expr
+// CHECK-NEXT:         IntegerLiteral{{.*}} 'int' 1
 // CHECK-NEXT:     NonTypeTemplateParmDecl{{.*}} 'int' ... J
 
 namespace TestTemplateTemplateParmDecl {

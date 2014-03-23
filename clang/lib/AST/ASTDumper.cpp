@@ -1188,8 +1188,10 @@ void ASTDumper::VisitTemplateTypeParmDecl(const TemplateTypeParmDecl *D) {
   if (D->isParameterPack())
     OS << " ...";
   dumpName(D);
-  if (D->hasDefaultArgument())
-    dumpType(D->getDefaultArgument());
+  if (D->hasDefaultArgument()) {
+    lastChild();
+    dumpTemplateArgument(D->getDefaultArgument());
+  }
 }
 
 void ASTDumper::VisitNonTypeTemplateParmDecl(const NonTypeTemplateParmDecl *D) {
@@ -1197,8 +1199,10 @@ void ASTDumper::VisitNonTypeTemplateParmDecl(const NonTypeTemplateParmDecl *D) {
   if (D->isParameterPack())
     OS << " ...";
   dumpName(D);
-  if (D->hasDefaultArgument())
-    dumpStmt(D->getDefaultArgument());
+  if (D->hasDefaultArgument()) {
+    lastChild();
+    dumpTemplateArgument(D->getDefaultArgument());
+  }
 }
 
 void ASTDumper::VisitTemplateTemplateParmDecl(
@@ -1207,8 +1211,10 @@ void ASTDumper::VisitTemplateTemplateParmDecl(
     OS << " ...";
   dumpName(D);
   dumpTemplateParameters(D->getTemplateParameters());
-  if (D->hasDefaultArgument())
+  if (D->hasDefaultArgument()) {
+    lastChild();
     dumpTemplateArgumentLoc(D->getDefaultArgument());
+  }
 }
 
 void ASTDumper::VisitUsingDecl(const UsingDecl *D) {
