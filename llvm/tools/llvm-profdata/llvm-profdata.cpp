@@ -137,6 +137,8 @@ int show_main(int argc, const char *argv[]) {
     if (Show && ShowCounts)
       OS << "]\n";
   }
+  if (Reader->hasError())
+    exitWithError(Reader->getError().message(), Filename);
 
   if (ShowAllFunctions || !ShowFunction.empty())
     OS << "Functions shown: " << ShownFunctions << "\n";
