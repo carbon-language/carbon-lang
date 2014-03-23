@@ -1,5 +1,4 @@
 #include "ClangTidyTest.h"
-#include "google/GoogleTidyModule.h"
 #include "misc/ArgumentCommentCheck.h"
 #include "gtest/gtest.h"
 
