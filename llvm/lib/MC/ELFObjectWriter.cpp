@@ -575,6 +575,22 @@ static uint8_t mergeTypeForSet(uint8_t origType, uint8_t newType) {
   return Type;
 }
 
+static const MCSymbol *getBaseSymbol(const MCAsmLayout &Layout,
+                                     const MCSymbol &Symbol) {
+  if (!Symbol.isVariable())
+    return &Symbol;
+
+  const MCExpr *Expr = Symbol.getVariableValue();
+  MCValue Value;
+  if (!Expr->EvaluateAsRelocatable(Value, &Layout))
+    llvm_unreachable("Invalid Expression");
+  assert(!Value.getSymB());
+  const MCSymbolRefExpr *A = Value.getSymA();
+  if (!A)
+    return nullptr;
+  return getBaseSymbol(Layout, A->getSymbol());
+}
+
 void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
                                   MCDataFragment *ShndxF,
                                   ELFSymbolData &MSD,
@@ -588,7 +604,12 @@ void ELFObjectWriter::WriteSymbol(MCDataFragment *SymtabF,
 
   // Binding and Type share the same byte as upper and lower nibbles
   uint8_t Binding = MCELF::GetBinding(OrigData);
-  uint8_t Type = mergeTypeForSet(MCELF::GetType(OrigData), MCELF::GetType(Data));
+  uint8_t Type = MCELF::GetType(OrigData);
+  const MCSymbol *Base = getBaseSymbol(Layout, OrigData.getSymbol());
+  if (Base) {
+    MCSymbolData BaseSD = Layout.getAssembler().getSymbolData(*Base);
+    Type = mergeTypeForSet(Type, MCELF::GetType(BaseSD));
+  }
   if (OrigData.getFlags() & ELF_Other_ThumbFunc)
     Type = ELF::STT_FUNC;
   uint8_t Info = (Binding << ELF_STB_Shift) | (Type << ELF_STT_Shift);
