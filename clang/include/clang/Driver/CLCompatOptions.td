@@ -62,6 +62,10 @@ def _SLASH_GR : CLFlag<"GR">, HelpText<"Enable RTTI">, Alias<frtti>;
 def _SLASH_GR_ : CLFlag<"GR-">, HelpText<"Disable RTTI">, Alias<fno_rtti>;
 def _SLASH_GF_ : CLFlag<"GF-">, HelpText<"Disable string pooling">,
   Alias<fwritable_strings>;
+def _SLASH_Gy : CLFlag<"Gy">, HelpText<"Put each function in it's own section">,
+  Alias<ffunction_sections>;
+def _SLASH_Gy_ : CLFlag<"Gy-">, HelpText<"Don't put each function in it's own section">,
+  Alias<fno_function_sections>;
 def _SLASH_help : CLFlag<"help">, Alias<help>,
   HelpText<"Display available options">;
 def _SLASH_HELP : CLFlag<"HELP">, Alias<help>;
@@ -225,8 +229,6 @@ def _SLASH_GS : CLFlag<"GS">;
 def _SLASH_Gs : CLJoined<"Gs">;
 def _SLASH_GT : CLFlag<"GT">;
 def _SLASH_GX : CLFlag<"GX">;
-def _SLASH_Gy : CLFlag<"Gy">;
-def _SLASH_Gy_ : CLFlag<"Gy-">;
 def _SLASH_Gz : CLFlag<"Gz">;
 def _SLASH_GZ : CLFlag<"GZ">;
 def _SLASH_H : CLFlag<"H">;

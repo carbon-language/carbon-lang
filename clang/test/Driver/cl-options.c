@@ -24,6 +24,12 @@
 // RUN: %clang_cl /GR- -### -- %s 2>&1 | FileCheck -check-prefix=GR_ %s
 // GR_: -fno-rtti
 
+// RUN: %clang_cl /Gy -### -- %s 2>&1 | FileCheck -check-prefix=Gy %s
+// Gy: -ffunction-sections
+
+// RUN: %clang_cl /Gy /Gy- -### -- %s 2>&1 | FileCheck -check-prefix=Gy_ %s
+// Gy_-NOT: -ffunction-sections
+
 // RUN: %clang_cl /Imyincludedir -### -- %s 2>&1 | FileCheck -check-prefix=SLASH_I %s
 // RUN: %clang_cl /I myincludedir -### -- %s 2>&1 | FileCheck -check-prefix=SLASH_I %s
 // SLASH_I: "-I" "myincludedir"
@@ -198,8 +204,6 @@
 // RUN:     /Gs1000 \
 // RUN:     /GT \
 // RUN:     /GX \
-// RUN:     /Gy \
-// RUN:     /Gy- \
 // RUN:     /Gz \
 // RUN:     /GZ \
 // RUN:     /H \
