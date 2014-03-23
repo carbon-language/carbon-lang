@@ -184,10 +184,15 @@ void ASTDeclWriter::VisitDecl(Decl *D) {
   // This happens when we instantiate a class with a friend declaration or a
   // function with a local extern declaration, for instance.
   if (D->isOutOfLine()) {
-    auto *NS = dyn_cast<NamespaceDecl>(D->getDeclContext()->getRedeclContext());
-    // FIXME: Also update surrounding inline namespaces.
-    if (NS && NS->isFromASTFile())
+    auto *DC = D->getDeclContext();
+    while (auto *NS = dyn_cast<NamespaceDecl>(DC->getRedeclContext())) {
+      if (!NS->isFromASTFile())
+        break;
       Writer.AddUpdatedDeclContext(NS->getPrimaryContext());
+      if (!NS->isInlineNamespace())
+        break;
+      DC = NS->getParent();
+    }
   }
 }
 

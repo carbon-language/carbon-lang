@@ -198,6 +198,10 @@ module cxx_inline_namespace {
   header "cxx-inline-namespace.h"
 }
 
+module cxx_inline_namespace_b {
+  header "cxx-inline-namespace-b.h"
+}
+
 module cxx_linkage_cache {
   header "cxx-linkage-cache.h"
 }
