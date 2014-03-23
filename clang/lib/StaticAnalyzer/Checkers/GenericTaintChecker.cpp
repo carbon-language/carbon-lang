@@ -34,7 +34,6 @@ public:
   static void *getTag() { static int Tag; return &Tag; }
 
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
-  void checkPostStmt(const DeclRefExpr *DRE, CheckerContext &C) const;
 
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
 

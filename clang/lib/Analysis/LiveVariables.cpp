@@ -37,7 +37,6 @@ public:
       POV(Ctx.getAnalysis<PostOrderCFGView>()) {}
   
   void enqueueBlock(const CFGBlock *block);
-  void enqueueSuccessors(const CFGBlock *block);
   void enqueuePredecessors(const CFGBlock *block);
 
   const CFGBlock *dequeue();
@@ -52,19 +51,6 @@ void DataflowWorklist::enqueueBlock(const clang::CFGBlock *block) {
     enqueuedBlocks[block->getBlockID()] = true;
     worklist.push_back(block);
   }
-}
-  
-void DataflowWorklist::enqueueSuccessors(const clang::CFGBlock *block) {
-  const unsigned OldWorklistSize = worklist.size();
-  for (CFGBlock::const_succ_iterator I = block->succ_begin(),
-       E = block->succ_end(); I != E; ++I) {
-    enqueueBlock(*I);
-  }
-
-  if (OldWorklistSize == 0 || OldWorklistSize == worklist.size())
-    return;
-
-  sortWorklist();
 }
 
 void DataflowWorklist::enqueuePredecessors(const clang::CFGBlock *block) {

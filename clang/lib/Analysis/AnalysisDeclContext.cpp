@@ -458,11 +458,6 @@ public:
                             BumpVectorContext &bc)
   : BEVals(bevals), BC(bc) {}
 
-  bool IsTrackedDecl(const VarDecl *VD) {
-    const DeclContext *DC = VD->getDeclContext();
-    return IgnoredContexts.count(DC) == 0;
-  }
-
   void VisitStmt(Stmt *S) {
     for (Stmt::child_range I = S->children(); I; ++I)
       if (Stmt *child = *I)

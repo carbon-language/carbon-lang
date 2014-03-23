@@ -347,14 +347,6 @@ private:
     return false;    
   }
 
-  bool hasAllIvarsBacked(PropsTy &props) const {
-    for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I)
-      if (!isUserDeclared(I->IvarD))
-        return false;
-
-    return true;
-  }
-
   // \brief Returns true if all declarations in the @property have GC __weak.
   bool hasGCWeak(PropsTy &props, SourceLocation atLoc) const {
     if (!Pass.isGCMigration())
