@@ -2572,25 +2572,67 @@ CodeGenModule::GetConstantArrayFromStringLiteral(const StringLiteral *E) {
 llvm::Constant *
 CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
   CharUnits Align = getContext().getAlignOfGlobalVarInChars(S->getType());
-  if (S->isAscii() || S->isUTF8()) {
-    SmallString<64> Str(S->getString());
-    
-    // Resize the string to the right size, which is indicated by its type.
-    const ConstantArrayType *CAT = Context.getAsConstantArrayType(S->getType());
-    Str.resize(CAT->getSize().getZExtValue());
-    return GetAddrOfConstantString(Str, /*GlobalName*/ 0, Align.getQuantity());
+
+  llvm::StringMapEntry<llvm::GlobalVariable *> *Entry = nullptr;
+  llvm::GlobalVariable *GV = nullptr;
+  if (!LangOpts.WritableStrings) {
+    llvm::StringMap<llvm::GlobalVariable *> *ConstantStringMap = nullptr;
+    switch (S->getCharByteWidth()) {
+    case 1:
+      ConstantStringMap = &Constant1ByteStringMap;
+      break;
+    case 2:
+      ConstantStringMap = &Constant2ByteStringMap;
+      break;
+    case 4:
+      ConstantStringMap = &Constant4ByteStringMap;
+      break;
+    default:
+      llvm_unreachable("unhandled byte width!");
+    }
+    Entry = &ConstantStringMap->GetOrCreateValue(S->getBytes());
+    GV = Entry->getValue();
   }
 
-  // FIXME: the following does not memoize wide strings.
-  llvm::Constant *C = GetConstantArrayFromStringLiteral(S);
-  llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(getModule(),C->getType(),
-                             !LangOpts.WritableStrings,
-                             llvm::GlobalValue::PrivateLinkage,
-                             C,".str");
+  if (!GV) {
+    StringRef GlobalVariableName;
+    llvm::GlobalValue::LinkageTypes LT;
+    if (!LangOpts.WritableStrings &&
+        getCXXABI().getMangleContext().shouldMangleStringLiteral(S)) {
+      LT = llvm::GlobalValue::LinkOnceODRLinkage;
 
-  GV->setAlignment(Align.getQuantity());
-  GV->setUnnamedAddr(true);
+      SmallString<256> Buffer;
+      llvm::raw_svector_ostream Out(Buffer);
+      getCXXABI().getMangleContext().mangleStringLiteral(S, Out);
+      Out.flush();
+
+      size_t Length = Buffer.size();
+      char *Name = MangledNamesAllocator.Allocate<char>(Length);
+      std::copy(Buffer.begin(), Buffer.end(), Name);
+      GlobalVariableName = StringRef(Name, Length);
+    } else {
+      LT = llvm::GlobalValue::PrivateLinkage;;
+      GlobalVariableName = ".str";
+    }
+
+    // OpenCL v1.2 s6.5.3: a string literal is in the constant address space.
+    unsigned AddrSpace = 0;
+    if (getLangOpts().OpenCL)
+      AddrSpace = getContext().getTargetAddressSpace(LangAS::opencl_constant);
+
+    llvm::Constant *C = GetConstantArrayFromStringLiteral(S);
+    GV = new llvm::GlobalVariable(
+        getModule(), C->getType(), !LangOpts.WritableStrings, LT, C,
+        GlobalVariableName, /*InsertBefore=*/nullptr,
+        llvm::GlobalVariable::NotThreadLocal, AddrSpace);
+    GV->setUnnamedAddr(true);
+    if (Entry)
+      Entry->setValue(GV);
+  }
+
+  if (Align.getQuantity() > GV->getAlignment())
+    GV->setAlignment(Align.getQuantity());
+
   return GV;
 }
 
@@ -2615,7 +2657,7 @@ static llvm::GlobalVariable *GenerateStringLiteral(StringRef str,
   llvm::Constant *C =
       llvm::ConstantDataArray::getString(CGM.getLLVMContext(), str, false);
 
-  // OpenCL v1.1 s6.5.3: a string literal is in the constant address space.
+  // OpenCL v1.2 s6.5.3: a string literal is in the constant address space.
   unsigned AddrSpace = 0;
   if (CGM.getLangOpts().OpenCL)
     AddrSpace = CGM.getContext().getTargetAddressSpace(LangAS::opencl_constant);
@@ -2654,7 +2696,7 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(StringRef Str,
     return GenerateStringLiteral(Str, false, *this, GlobalName, Alignment);
 
   llvm::StringMapEntry<llvm::GlobalVariable *> &Entry =
-    ConstantStringMap.GetOrCreateValue(Str);
+    Constant1ByteStringMap.GetOrCreateValue(Str);
 
   if (llvm::GlobalVariable *GV = Entry.getValue()) {
     if (Alignment > GV->getAlignment()) {

@@ -319,7 +319,10 @@ class CodeGenModule : public CodeGenTypeCache {
   llvm::StringMap<llvm::Constant*> AnnotationStrings;
 
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
-  llvm::StringMap<llvm::GlobalVariable*> ConstantStringMap;
+
+  llvm::StringMap<llvm::GlobalVariable *> Constant1ByteStringMap;
+  llvm::StringMap<llvm::GlobalVariable *> Constant2ByteStringMap;
+  llvm::StringMap<llvm::GlobalVariable *> Constant4ByteStringMap;
   llvm::DenseMap<const Decl*, llvm::Constant *> StaticLocalDeclMap;
   llvm::DenseMap<const Decl*, llvm::GlobalVariable*> StaticLocalDeclGuardMap;
   llvm::DenseMap<const Expr*, llvm::Constant *> MaterializedGlobalTemporaryMap;
