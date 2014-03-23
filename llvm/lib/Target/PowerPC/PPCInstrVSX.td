@@ -414,25 +414,31 @@ let Uses = [RM] in {
                       "xscvdpsp $XT, $XB", IIC_VecFP, []>;
   def XSCVDPSXDS : XX2Form<60, 344,
                       (outs vsrc:$XT), (ins vsrc:$XB),
-                      "xscvdpsxds $XT, $XB", IIC_VecFP, []>;
+                      "xscvdpsxds $XT, $XB", IIC_VecFP,
+                      [(set f64:$XT, (PPCfctidz f64:$XB))]>;
   def XSCVDPSXWS : XX2Form<60, 88,
                       (outs vsrc:$XT), (ins vsrc:$XB),
-                      "xscvdpsxws $XT, $XB", IIC_VecFP, []>;
+                      "xscvdpsxws $XT, $XB", IIC_VecFP,
+                      [(set f64:$XT, (PPCfctiwz f64:$XB))]>;
   def XSCVDPUXDS : XX2Form<60, 328,
                       (outs vsrc:$XT), (ins vsrc:$XB),
-                      "xscvdpuxds $XT, $XB", IIC_VecFP, []>;
+                      "xscvdpuxds $XT, $XB", IIC_VecFP,
+                      [(set f64:$XT, (PPCfctiduz f64:$XB))]>;
   def XSCVDPUXWS : XX2Form<60, 72,
                       (outs vsrc:$XT), (ins vsrc:$XB),
-                      "xscvdpuxws $XT, $XB", IIC_VecFP, []>;
+                      "xscvdpuxws $XT, $XB", IIC_VecFP,
+                      [(set f64:$XT, (PPCfctiwuz f64:$XB))]>;
   def XSCVSPDP : XX2Form<60, 329,
                       (outs vsrc:$XT), (ins vsrc:$XB),
                       "xscvspdp $XT, $XB", IIC_VecFP, []>;
   def XSCVSXDDP : XX2Form<60, 376,
                       (outs vsrc:$XT), (ins vsrc:$XB),
-                      "xscvsxddp $XT, $XB", IIC_VecFP, []>;
+                      "xscvsxddp $XT, $XB", IIC_VecFP,
+                      [(set f64:$XT, (PPCfcfid f64:$XB))]>;
   def XSCVUXDDP : XX2Form<60, 360,
                       (outs vsrc:$XT), (ins vsrc:$XB),
-                      "xscvuxddp $XT, $XB", IIC_VecFP, []>;
+                      "xscvuxddp $XT, $XB", IIC_VecFP,
+                      [(set f64:$XT, (PPCfcfidu f64:$XB))]>;
 
   def XVCVDPSP : XX2Form<60, 393,
                       (outs vsrc:$XT), (ins vsrc:$XB),
