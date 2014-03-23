@@ -67,6 +67,9 @@
 // RUN: %clang_cl /U mymacro -### -- %s 2>&1 | FileCheck -check-prefix=U %s
 // U: "-U" "mymacro"
 
+// RUN: %clang_cl /vd2 -### -- %s 2>&1 | FileCheck -check-prefix=VD2 %s
+// VD2: -vtordisp-mode=2
+
 // RUN: %clang_cl /vmg -### -- %s 2>&1 | FileCheck -check-prefix=VMG %s
 // VMG: "-fms-memptr-rep=virtual"
 
@@ -215,7 +218,6 @@
 // RUN:     /Qvec-report:2 \
 // RUN:     /u \
 // RUN:     /V \
-// RUN:     /vd2 \
 // RUN:     /volatile \
 // RUN:     /wfoo \
 // RUN:     /WL \
