@@ -126,6 +126,10 @@ public:
 ///
 /// This format is a raw memory dump of the instrumentation-baed profiling data
 /// from the runtime.  It has no index.
+///
+/// Templated on the unsigned type whose size matches pointers on the platform
+/// that wrote the profile.
+template <class IntPtrT>
 class RawInstrProfReader : public InstrProfReader {
 private:
   /// The profile data file contents.
@@ -136,8 +140,8 @@ private:
     const uint32_t NameSize;
     const uint32_t NumCounters;
     const uint64_t FuncHash;
-    const uint64_t NamePtr;
-    const uint64_t CounterPtr;
+    const IntPtrT NamePtr;
+    const IntPtrT CounterPtr;
   };
   struct RawHeader {
     const uint64_t Magic;
@@ -174,15 +178,18 @@ private:
   IntT swap(IntT Int) const {
     return ShouldSwapBytes ? sys::SwapByteOrder(Int) : Int;
   }
-  const uint64_t *getCounter(uint64_t CounterPtr) const {
+  const uint64_t *getCounter(IntPtrT CounterPtr) const {
     ptrdiff_t Offset = (swap(CounterPtr) - CountersDelta) / sizeof(uint64_t);
     return CountersStart + Offset;
   }
-  const char *getName(uint64_t NamePtr) const {
+  const char *getName(IntPtrT NamePtr) const {
     ptrdiff_t Offset = (swap(NamePtr) - NamesDelta) / sizeof(char);
     return NamesStart + Offset;
   }
 };
+
+typedef RawInstrProfReader<uint32_t> RawInstrProfReader32;
+typedef RawInstrProfReader<uint64_t> RawInstrProfReader64;
 
 } // end namespace llvm
 
