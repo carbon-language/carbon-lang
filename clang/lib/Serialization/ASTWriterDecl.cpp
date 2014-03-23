@@ -176,6 +176,18 @@ void ASTDeclWriter::VisitDecl(Decl *D) {
   Record.push_back(D->getAccess());
   Record.push_back(D->isModulePrivate());
   Record.push_back(Writer.inferSubmoduleIDFromLocation(D->getLocation()));
+
+  // If this declaration injected a name into a context different from its
+  // lexical context, and that context is an imported namespace, we need to
+  // update its visible declarations to include this name.
+  //
+  // This happens when we instantiate a class with a friend declaration or a
+  // function with a local extern declaration, for instance.
+  if (D->isOutOfLine()) {
+    auto *NS = dyn_cast<NamespaceDecl>(D->getDeclContext()->getRedeclContext());
+    if (NS && NS->isFromASTFile())
+      Writer.AddUpdatedDeclContext(NS);
+  }
 }
 
 void ASTDeclWriter::VisitTranslationUnitDecl(TranslationUnitDecl *D) {

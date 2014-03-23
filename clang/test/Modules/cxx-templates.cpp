@@ -117,6 +117,10 @@ void testImplicitSpecialMembers(SomeTemplate<char[1]> &a,
   c = d;
 }
 
+bool testFriendInClassTemplate(Std::WithFriend<int> wfi) {
+  return wfi != wfi;
+}
+
 // CHECK-GLOBAL:      DeclarationName 'f'
 // CHECK-GLOBAL-NEXT: |-FunctionTemplate {{.*}} 'f'
 // CHECK-GLOBAL-NEXT: `-FunctionTemplate {{.*}} 'f'
