@@ -37,11 +37,11 @@ int ExternGlobalDeclInit = 1; // expected-error{{definition of dllimport data}}
 __declspec(dllimport) int GlobalDeclInit;
 int GlobalDeclInit = 1; // expected-error{{definition of dllimport data}}
 
-int *__attribute__((dllimport)) GlobalDeclChunkAttrInit; // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
-int *GlobalDeclChunkAttrInit = 0; // expected-warning{{'GlobalDeclChunkAttrInit' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+int *__attribute__((dllimport)) GlobalDeclChunkAttrInit;
+int *GlobalDeclChunkAttrInit = 0; // expected-error{{definition of dllimport data}}
 
-int GlobalDeclAttrInit __attribute__((dllimport)); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
-int GlobalDeclAttrInit = 1; // expected-warning{{'GlobalDeclAttrInit' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+int GlobalDeclAttrInit __attribute__((dllimport));
+int GlobalDeclAttrInit = 1; // expected-error{{definition of dllimport data}}
 
 // Redeclarations
 __declspec(dllimport) extern int GlobalRedecl1;
