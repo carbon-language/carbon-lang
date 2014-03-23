@@ -4923,6 +4923,31 @@ static bool shouldConsiderLinkage(const FunctionDecl *FD) {
   llvm_unreachable("Unexpected context");
 }
 
+static bool hasParsedAttr(Scope *S, const AttributeList *AttrList,
+                          AttributeList::Kind Kind) {
+  for (const AttributeList *L = AttrList; L; L = L->getNext())
+    if (L->getKind() == Kind)
+      return true;
+  return false;
+}
+
+static bool hasParsedAttr(Scope *S, const Declarator &PD,
+                          AttributeList::Kind Kind) {
+  // Check decl attributes on the DeclSpec.
+  if (hasParsedAttr(S, PD.getDeclSpec().getAttributes().getList(), Kind))
+    return true;
+
+  // Walk the declarator structure, checking decl attributes that were in a type
+  // position to the decl itself.
+  for (unsigned I = 0, E = PD.getNumTypeObjects(); I != E; ++I) {
+    if (hasParsedAttr(S, PD.getTypeObject(I).getAttrs(), Kind))
+      return true;
+  }
+
+  // Finally, check attributes on the decl itself.
+  return hasParsedAttr(S, PD.getAttributes(), Kind);
+}
+
 /// Adjust the \c DeclContext for a function or variable that might be a
 /// function-local external declaration.
 bool Sema::adjustContextForLocalExternDecl(DeclContext *&DC) {
@@ -4958,6 +4983,12 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   DeclSpec::SCS SCSpec = D.getDeclSpec().getStorageClassSpec();
   VarDecl::StorageClass SC =
     StorageClassSpecToVarDeclStorageClass(D.getDeclSpec());
+
+  // dllimport globals without explicit storage class are treated as extern. We
+  // have to change the storage class this early to get the right DeclContext.
+  if (SC == SC_None && !DC->isRecord() &&
+      hasParsedAttr(S, D, AttributeList::AT_DLLImport))
+    SC = SC_Extern;
 
   DeclContext *OriginalDC = DC;
   bool IsLocalExternDecl = SC == SC_Extern &&
@@ -5325,6 +5356,13 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       NewVD->setStorageClass(SC_Static);
     }
   }
+
+  // Ensure that dllimport globals without explicit storage class are treated as
+  // extern. The storage class is set above using parsed attributes. Now we can
+  // check the VarDecl itself.
+  assert(!NewVD->hasAttr<DLLImportAttr>() ||
+         NewVD->getAttr<DLLImportAttr>()->isInherited() ||
+         NewVD->isStaticDataMember() || NewVD->getStorageClass() != SC_None);
 
   // In auto-retain/release, infer strong retension for variables of
   // retainable type.
