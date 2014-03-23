@@ -3120,9 +3120,6 @@ static Value *packTBLDVectorList(CodeGenFunction &CGF, ArrayRef<Value *> Ops,
                                                      ZeroTbl, SV, Name));
   }
 
-  TblTy = llvm::VectorType::get(TblTy->getElementType(),
-                                2*TblTy->getNumElements());
-
   Function *TblF;
   TblOps.push_back(IndexOp);
   TblF = CGF.CGM.getIntrinsic(IntID, ResTy);
@@ -3190,7 +3187,6 @@ static Value *EmitAArch64TblBuiltinExpr(CodeGenFunction &CGF,
     Ops.push_back(CGF.EmitScalarExpr(E->getArg(i)));
   }
 
-  Arg = E->getArg(TblPos);
   unsigned nElts = VTy->getNumElements();  
 
   // AArch64 scalar builtins are not overloaded, they do not have an extra

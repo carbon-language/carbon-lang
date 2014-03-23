@@ -805,8 +805,6 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
     if (!result)
       return ExprError();
 
-    baseObjectIsPointer = false;
-    
     // FIXME: check qualified member access
   }
   
