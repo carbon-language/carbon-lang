@@ -15,6 +15,7 @@
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/ProfileData/InstrProfWriter.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -69,24 +70,6 @@ int merge_main(int argc, const char *argv[]) {
   return 0;
 }
 
-struct HashPrinter {
-  uint64_t Hash;
-  HashPrinter(uint64_t Hash) : Hash(Hash) {}
-  void print(raw_ostream &OS) const {
-    char Buf[18], *Cur = Buf;
-    *Cur++ = '0'; *Cur++ = 'x';
-    for (unsigned I = 16; I;) {
-      char Digit = 0xF & (Hash >> (--I * 4));
-      *Cur++ = (Digit < 10 ? '0' + Digit : 'A' + Digit - 10);
-    }
-    OS.write(Buf, 18);
-  }
-};
-static raw_ostream &operator<<(raw_ostream &OS, const HashPrinter &Hash) {
-  Hash.print(OS);
-  return OS;
-}
-
 int show_main(int argc, const char *argv[]) {
   cl::opt<std::string> Filename(cl::Positional, cl::Required,
                                 cl::desc("<profdata-file>"));
@@ -138,7 +121,7 @@ int show_main(int argc, const char *argv[]) {
       ++ShownFunctions;
 
       OS << "  " << Func.Name << ":\n"
-         << "    Hash: " << HashPrinter(Func.Hash) << "\n"
+         << "    Hash: " << format("0x%016" PRIx64, Func.Hash) << "\n"
          << "    Counters: " << Func.Counts.size() << "\n"
          << "    Function count: " << Func.Counts[0] << "\n";
     }
