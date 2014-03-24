@@ -92,6 +92,10 @@ public:
             const TimeValue *object_mod_time_ptr = NULL);
 
     Module (const ModuleSpec &module_spec);
+    
+    static lldb::ModuleSP
+    CreateJITModule (const lldb::ObjectFileJITDelegateSP &delegate_sp);
+    
     //------------------------------------------------------------------
     /// Destructor.
     //------------------------------------------------------------------
@@ -1170,7 +1174,9 @@ protected:
     friend class SymbolFile;
 
 private:
-
+    
+    Module (); // Only used internally by CreateJITModule ()
+    
     size_t
     FindTypes_Impl (const SymbolContext& sc, 
                     const ConstString &name,

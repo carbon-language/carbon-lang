@@ -128,6 +128,7 @@ class   OptionGroup;
 class   OptionGroupOptions;
 class   OptionGroupPlatform;
 class   ObjectFile;
+class   ObjectFileJITDelegate;
 class   OperatingSystem;
 class   Options;
 class   OptionValue;
@@ -316,6 +317,8 @@ namespace lldb {
     typedef std::weak_ptr<lldb_private::Module> ModuleWP;
     typedef std::shared_ptr<lldb_private::ObjectFile> ObjectFileSP;
     typedef std::weak_ptr<lldb_private::ObjectFile> ObjectFileWP;
+    typedef std::shared_ptr<lldb_private::ObjectFileJITDelegate> ObjectFileJITDelegateSP;
+    typedef std::weak_ptr<lldb_private::ObjectFileJITDelegate> ObjectFileJITDelegateWP;
     typedef std::shared_ptr<lldb_private::OptionValue> OptionValueSP;
     typedef std::weak_ptr<lldb_private::OptionValue> OptionValueWP;
     typedef std::shared_ptr<lldb_private::OptionValueArch> OptionValueArchSP;

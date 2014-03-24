@@ -168,10 +168,10 @@ public:
     
 private:
     std::unique_ptr<ClangExpressionDeclMap>  m_expr_decl_map;    ///< The map to use when parsing and materializing the expression.
-    std::unique_ptr<IRExecutionUnit>         m_execution_unit_ap;
-    
-    std::string                             m_function_text;    ///< The text of the function.  Must be a well-formed translation unit.
-    std::string                             m_function_name;    ///< The name of the function.
+    std::shared_ptr<IRExecutionUnit>         m_execution_unit_sp;
+    lldb::ModuleWP                           m_jit_module_wp;
+    std::string                              m_function_text;    ///< The text of the function.  Must be a well-formed translation unit.
+    std::string                              m_function_name;    ///< The name of the function.
 };
 
 } // namespace lldb_private

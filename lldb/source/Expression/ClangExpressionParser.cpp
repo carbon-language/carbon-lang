@@ -15,6 +15,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Disassembler.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
@@ -24,6 +25,8 @@
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Expression/IRInterpreter.h"
+#include "lldb/Host/File.h"
+#include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Process.h"
@@ -93,7 +96,8 @@ std::string GetBuiltinIncludePath(const char *Argv0) {
 //===----------------------------------------------------------------------===//
 
 ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
-                                              ClangExpression &expr) :
+                                              ClangExpression &expr,
+                                              bool generate_debug_info) :
     m_expr (expr),
     m_compiler (),
     m_code_generator ()
@@ -228,6 +232,10 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     m_compiler->getCodeGenOpts().InstrumentFunctions = false;
     m_compiler->getCodeGenOpts().DisableFPElim = true;
     m_compiler->getCodeGenOpts().OmitLeafFramePointer = false;
+    if (generate_debug_info)
+        m_compiler->getCodeGenOpts().setDebugInfo(CodeGenOptions::FullDebugInfo);
+    else
+        m_compiler->getCodeGenOpts().setDebugInfo(CodeGenOptions::NoDebugInfo);
     
     // Disable some warnings.
     m_compiler->getDiagnostics().setDiagnosticGroupMapping("unused-value", clang::diag::MAP_IGNORE, SourceLocation());
@@ -299,8 +307,48 @@ ClangExpressionParser::Parse (Stream &stream)
         
     diag_buf->FlushDiagnostics (m_compiler->getDiagnostics());
     
-    MemoryBuffer *memory_buffer = MemoryBuffer::getMemBufferCopy(m_expr.Text(), __FUNCTION__);
-    m_compiler->getSourceManager().createMainFileIDForMemBuffer (memory_buffer);
+    const char *expr_text = m_expr.Text();
+    
+    bool created_main_file = false;
+    if (m_compiler->getCodeGenOpts().getDebugInfo() == CodeGenOptions::FullDebugInfo)
+    {
+        std::string temp_source_path;
+        
+        FileSpec tmpdir_file_spec;
+        if (Host::GetLLDBPath (ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
+        {
+            tmpdir_file_spec.GetFilename().SetCString("expr.XXXXXX");
+            temp_source_path = std::move(tmpdir_file_spec.GetPath());
+        }
+        else
+        {
+            temp_source_path = "/tmp/expr.XXXXXX";
+        }
+        
+        if (mktemp(&temp_source_path[0]))
+        {
+            lldb_private::File file (temp_source_path.c_str(),
+                                     File::eOpenOptionWrite | File::eOpenOptionCanCreateNewOnly,
+                                     lldb::eFilePermissionsFileDefault);
+            const size_t expr_text_len = strlen(expr_text);
+            size_t bytes_written = expr_text_len;
+            if (file.Write(expr_text, bytes_written).Success())
+            {
+                if (bytes_written == expr_text_len)
+                {
+                    file.Close();
+                    m_compiler->getSourceManager().createMainFileID(m_file_manager->getFile(temp_source_path));
+                    created_main_file = true;
+                }
+            }
+        }
+    }
+    
+    if (!created_main_file)
+    {
+        MemoryBuffer *memory_buffer = MemoryBuffer::getMemBufferCopy(expr_text, __FUNCTION__);
+        m_compiler->getSourceManager().createMainFileIDForMemBuffer (memory_buffer);
+    }
     
     diag_buf->BeginSourceFile(m_compiler->getLangOpts(), &m_compiler->getPreprocessor());
     
@@ -370,7 +418,7 @@ static bool FindFunctionInModule (ConstString &mangled_name,
 Error
 ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr, 
                                             lldb::addr_t &func_end,
-                                            std::unique_ptr<IRExecutionUnit> &execution_unit_ap,
+                                            std::shared_ptr<IRExecutionUnit> &execution_unit_sp,
                                             ExecutionContext &exe_ctx,
                                             bool &can_interpret,
                                             ExecutionPolicy execution_policy)
@@ -379,13 +427,11 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
 	func_end = LLDB_INVALID_ADDRESS;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-    std::unique_ptr<llvm::ExecutionEngine> execution_engine_ap;
-    
     Error err;
     
-    std::unique_ptr<llvm::Module> module_ap (m_code_generator->ReleaseModule());
+    std::unique_ptr<llvm::Module> llvm_module_ap (m_code_generator->ReleaseModule());
 
-    if (!module_ap.get())
+    if (!llvm_module_ap.get())
     {
         err.SetErrorToGenericError();
         err.SetErrorString("IR doesn't contain a module");
@@ -396,7 +442,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
     
     ConstString function_name;
     
-    if (!FindFunctionInModule(function_name, module_ap.get(), m_expr.FunctionName()))
+    if (!FindFunctionInModule(function_name, llvm_module_ap.get(), m_expr.FunctionName()))
     {
         err.SetErrorToGenericError();
         err.SetErrorStringWithFormat("Couldn't find %s() in the module", m_expr.FunctionName());
@@ -408,12 +454,12 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
             log->Printf("Found function %s for %s", function_name.AsCString(), m_expr.FunctionName());
     }
     
-    m_execution_unit.reset(new IRExecutionUnit(m_llvm_context, // handed off here
-                                               module_ap, // handed off here
-                                               function_name,
-                                               exe_ctx.GetTargetSP(),
-                                               m_compiler->getTargetOpts().Features));
-        
+    execution_unit_sp.reset(new IRExecutionUnit (m_llvm_context, // handed off here
+                                                 llvm_module_ap, // handed off here
+                                                 function_name,
+                                                 exe_ctx.GetTargetSP(),
+                                                 m_compiler->getTargetOpts().Features));
+    
     ClangExpressionDeclMap *decl_map = m_expr.DeclMap(); // result can be NULL
     
     if (decl_map)
@@ -425,15 +471,15 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
     
         IRForTarget ir_for_target(decl_map,
                                   m_expr.NeedsVariableResolution(),
-                                  *m_execution_unit,
+                                  *execution_unit_sp,
                                   error_stream,
                                   function_name.AsCString());
         
-        bool ir_can_run = ir_for_target.runOnModule(*m_execution_unit->GetModule());
+        bool ir_can_run = ir_for_target.runOnModule(*execution_unit_sp->GetModule());
         
         Error interpret_error;
         
-        can_interpret = IRInterpreter::CanInterpret(*m_execution_unit->GetModule(), *m_execution_unit->GetFunction(), interpret_error);
+        can_interpret = IRInterpreter::CanInterpret(*execution_unit_sp->GetModule(), *execution_unit_sp->GetFunction(), interpret_error);
         
         Process *process = exe_ctx.GetProcessPtr();
         
@@ -483,7 +529,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
                 
                 IRDynamicChecks ir_dynamic_checks(*process->GetDynamicCheckers(), function_name.AsCString());
                 
-                if (!ir_dynamic_checks.runOnModule(*m_execution_unit->GetModule()))
+                if (!ir_dynamic_checks.runOnModule(*execution_unit_sp->GetModule()))
                 {
                     err.SetErrorToGenericError();
                     err.SetErrorString("Couldn't add dynamic checks to the expression");
@@ -491,15 +537,21 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_addr,
                 }
             }
             
-            m_execution_unit->GetRunnableInfo(err, func_addr, func_end);
+            execution_unit_sp->GetRunnableInfo(err, func_addr, func_end);
         }
     }
     else
     {
-        m_execution_unit->GetRunnableInfo(err, func_addr, func_end);
+        execution_unit_sp->GetRunnableInfo(err, func_addr, func_end);
     }
     
-    execution_unit_ap.reset (m_execution_unit.release());
-        
     return err;
+}
+
+bool
+ClangExpressionParser::GetGenerateDebugInfo () const
+{
+    if (m_compiler)
+        return m_compiler->getCodeGenOpts().getDebugInfo() == CodeGenOptions::FullDebugInfo;
+    return false;
 }

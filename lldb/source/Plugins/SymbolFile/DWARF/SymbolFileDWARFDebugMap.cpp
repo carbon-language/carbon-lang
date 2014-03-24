@@ -341,6 +341,7 @@ SymbolFileDWARFDebugMap::InitOSO()
         case ObjectFile::eTypeObjectFile:
         case ObjectFile::eTypeStubLibrary:
         case ObjectFile::eTypeUnknown:
+        case ObjectFile::eTypeJIT:
             return;
             
         case ObjectFile::eTypeExecutable:

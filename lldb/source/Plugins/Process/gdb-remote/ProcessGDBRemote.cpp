@@ -244,6 +244,7 @@ ProcessGDBRemote::CanDebug (Target &target, bool plugin_specified_by_name)
             case ObjectFile::eTypeObjectFile:
             case ObjectFile::eTypeSharedLibrary:
             case ObjectFile::eTypeStubLibrary:
+            case ObjectFile::eTypeJIT:
                 return false;
             case ObjectFile::eTypeExecutable:
             case ObjectFile::eTypeDynamicLinker:

@@ -66,7 +66,7 @@ public:
     uint32_t GetAddressByteSize();
     
     // This function can return NULL.
-    ExecutionContextScope *GetBestExecutionContextScope();
+    ExecutionContextScope *GetBestExecutionContextScope() const;
 
 protected:
     // This function should only be used if you know you are using the JIT.

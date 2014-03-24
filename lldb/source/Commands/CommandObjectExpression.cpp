@@ -288,6 +288,12 @@ CommandObjectExpression::EvaluateExpression
         options.SetTryAllThreads(m_command_options.try_all_threads);
         options.SetDebug(m_command_options.debug);
         
+        // If there is any chance we are going to stop and want to see
+        // what went wrong with our expression, we should generate debug info
+        if (!m_command_options.ignore_breakpoints ||
+            !m_command_options.unwind_on_error)
+            options.SetGenerateDebugInfo(true);
+        
         if (m_command_options.timeout > 0)
             options.SetTimeoutUsec(m_command_options.timeout);
         else

@@ -51,7 +51,8 @@ public:
     ///     The expression to be parsed.
     //------------------------------------------------------------------
     ClangExpressionParser (ExecutionContextScope *exe_scope,
-                           ClangExpression &expr);
+                           ClangExpression &expr,
+                           bool generate_debug_info);
     
     //------------------------------------------------------------------
     /// Destructor
@@ -84,9 +85,9 @@ public:
     ///     and func_end do not delimit an allocated region; the allocated
     ///     region may begin before func_addr.)
     ///
-    /// @param[in] execution_unit_ap
+    /// @param[in] execution_unit_sp
     ///     After parsing, ownership of the execution unit for
-    ///     for the expression is handed to this unique pointer.
+    ///     for the expression is handed to this shared pointer.
     ///
     /// @param[in] exe_ctx
     ///     The execution context to write the function into.
@@ -112,7 +113,7 @@ public:
     Error
     PrepareForExecution (lldb::addr_t &func_addr,
                          lldb::addr_t &func_end,
-                         std::unique_ptr<IRExecutionUnit> &execution_unit_ap,
+                         std::shared_ptr<IRExecutionUnit> &execution_unit_sp,
                          ExecutionContext &exe_ctx,
                          bool &can_interpret,
                          lldb_private::ExecutionPolicy execution_policy);
@@ -134,6 +135,9 @@ public:
     DisassembleFunction (Stream &stream, 
                          ExecutionContext &exe_ctx);
     
+    bool
+    GetGenerateDebugInfo () const;
+    
 private:
     ClangExpression &                       m_expr;                 ///< The expression to be parsed
     std::unique_ptr<llvm::LLVMContext>       m_llvm_context;         ///< The LLVM context to generate IR into
@@ -143,7 +147,6 @@ private:
     std::unique_ptr<clang::SelectorTable>    m_selector_table;       ///< Selector table for Objective-C methods
     std::unique_ptr<clang::ASTContext>       m_ast_context;          ///< The AST context used to hold types and names for the parser
     std::unique_ptr<clang::CodeGenerator>    m_code_generator;       ///< The Clang object that generates IR
-    std::unique_ptr<IRExecutionUnit>         m_execution_unit;       ///< The container for the finished Module
 };
     
 }

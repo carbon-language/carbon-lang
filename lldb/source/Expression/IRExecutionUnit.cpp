@@ -19,6 +19,8 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
+#include "lldb/Core/Section.h"
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Target.h"
@@ -333,6 +335,9 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
         m_module_ap.release(); // ownership was transferred
     }
     
+    // Make sure we see all sections, including ones that don't have relocations...
+    m_execution_engine_ap->setProcessAllSections(true);
+    
     m_execution_engine_ap->DisableLazyCompilation();
     
     // We don't actually need the function pointer here, this just forces it to get resolved.
@@ -433,6 +438,9 @@ IRExecutionUnit::MemoryManager::MemoryManager (IRExecutionUnit &parent) :
 {
 }
 
+IRExecutionUnit::MemoryManager::~MemoryManager ()
+{
+}
 void
 IRExecutionUnit::MemoryManager::setMemoryWritable ()
 {
@@ -464,8 +472,11 @@ IRExecutionUnit::MemoryManager::allocateStub(const llvm::GlobalValue* F,
 
     m_parent.m_records.push_back(AllocationRecord((uintptr_t)return_value,
                                                   lldb::ePermissionsReadable | lldb::ePermissionsWritable,
+                                                  GetSectionTypeFromSectionName (llvm::StringRef(), AllocationKind::Stub),
                                                   StubSize,
-                                                  Alignment));
+                                                  Alignment,
+                                                  eSectionIDInvalid,
+                                                  NULL));
 
     if (log)
     {
@@ -484,6 +495,115 @@ IRExecutionUnit::MemoryManager::endFunctionBody(const llvm::Function *F,
     m_default_mm_ap->endFunctionBody(F, FunctionStart, FunctionEnd);
 }
 
+lldb::SectionType
+IRExecutionUnit::GetSectionTypeFromSectionName (const llvm::StringRef &name, IRExecutionUnit::AllocationKind alloc_kind)
+{
+    lldb::SectionType sect_type = lldb::eSectionTypeCode;
+    switch (alloc_kind)
+    {
+        case AllocationKind::Stub:  sect_type = lldb::eSectionTypeCode; break;
+        case AllocationKind::Code:  sect_type = lldb::eSectionTypeCode; break;
+        case AllocationKind::Data:  sect_type = lldb::eSectionTypeData; break;
+        case AllocationKind::Global:sect_type = lldb::eSectionTypeData; break;
+        case AllocationKind::Bytes: sect_type = lldb::eSectionTypeOther; break;
+    }
+    
+    if (!name.empty())
+    {
+        if (name.equals("__text") || name.equals(".text"))
+            sect_type = lldb::eSectionTypeCode;
+        else if (name.equals("__data") || name.equals(".data"))
+            sect_type = lldb::eSectionTypeCode;
+        else if (name.startswith("__debug_") || name.startswith(".debug_"))
+        {
+            const uint32_t name_idx = name[0] == '_' ? 8 : 7;
+            llvm::StringRef dwarf_name(name.substr(name_idx));
+            switch (dwarf_name[0])
+            {
+                case 'a':
+                    if (dwarf_name.equals("abbrev"))
+                        sect_type = lldb::eSectionTypeDWARFDebugAbbrev;
+                    else if (dwarf_name.equals("aranges"))
+                        sect_type = lldb::eSectionTypeDWARFDebugAranges;
+                    break;
+                    
+                case 'f':
+                    if (dwarf_name.equals("frame"))
+                        sect_type = lldb::eSectionTypeDWARFDebugFrame;
+                    break;
+                    
+                case 'i':
+                    if (dwarf_name.equals("info"))
+                        sect_type = lldb::eSectionTypeDWARFDebugInfo;
+                    break;
+                    
+                case 'l':
+                    if (dwarf_name.equals("line"))
+                        sect_type = lldb::eSectionTypeDWARFDebugLine;
+                    else if (dwarf_name.equals("loc"))
+                        sect_type = lldb::eSectionTypeDWARFDebugLoc;
+                    break;
+                    
+                case 'm':
+                    if (dwarf_name.equals("macinfo"))
+                        sect_type = lldb::eSectionTypeDWARFDebugMacInfo;
+                    break;
+                    
+                case 'p':
+                    if (dwarf_name.equals("pubnames"))
+                        sect_type = lldb::eSectionTypeDWARFDebugPubNames;
+                    else if (dwarf_name.equals("pubtypes"))
+                        sect_type = lldb::eSectionTypeDWARFDebugPubTypes;
+                    break;
+                    
+                case 's':
+                    if (dwarf_name.equals("str"))
+                        sect_type = lldb::eSectionTypeDWARFDebugStr;
+                    break;
+                    
+                case 'r':
+                    if (dwarf_name.equals("ranges"))
+                        sect_type = lldb::eSectionTypeDWARFDebugRanges;
+                    break;
+                    
+                default:
+                    break;
+            }
+        }
+        else if (name.startswith("__apple_") || name.startswith(".apple_"))
+        {
+#if 0
+            const uint32_t name_idx = name[0] == '_' ? 8 : 7;
+            llvm::StringRef apple_name(name.substr(name_idx));
+            switch (apple_name[0])
+            {
+                case 'n':
+                    if (apple_name.equals("names"))
+                        sect_type = lldb::eSectionTypeDWARFAppleNames;
+                    else if (apple_name.equals("namespac") || apple_name.equals("namespaces"))
+                        sect_type = lldb::eSectionTypeDWARFAppleNamespaces;
+                    break;
+                case 't':
+                    if (apple_name.equals("types"))
+                        sect_type = lldb::eSectionTypeDWARFAppleTypes;
+                    break;
+                case 'o':
+                    if (apple_name.equals("objc"))
+                        sect_type = lldb::eSectionTypeDWARFAppleObjC;
+                    break;
+                default:
+                    break;
+            }
+#else
+            sect_type = lldb::eSectionTypeInvalid;
+#endif
+        }
+        else if (name.equals("__objc_imageinfo"))
+            sect_type = lldb::eSectionTypeOther;
+    }
+    return sect_type;
+}
+
 uint8_t *
 IRExecutionUnit::MemoryManager::allocateSpace(intptr_t Size, unsigned Alignment)
 {
@@ -493,8 +613,11 @@ IRExecutionUnit::MemoryManager::allocateSpace(intptr_t Size, unsigned Alignment)
     
     m_parent.m_records.push_back(AllocationRecord((uintptr_t)return_value,
                                                   lldb::ePermissionsReadable | lldb::ePermissionsWritable,
+                                                  GetSectionTypeFromSectionName (llvm::StringRef(), AllocationKind::Bytes),
                                                   Size,
-                                                  Alignment));
+                                                  Alignment,
+                                                  eSectionIDInvalid,
+                                                  NULL));
     
     if (log)
     {
@@ -517,9 +640,11 @@ IRExecutionUnit::MemoryManager::allocateCodeSection(uintptr_t Size,
     
     m_parent.m_records.push_back(AllocationRecord((uintptr_t)return_value,
                                                   lldb::ePermissionsReadable | lldb::ePermissionsExecutable,
+                                                  GetSectionTypeFromSectionName (SectionName, AllocationKind::Code),
                                                   Size,
                                                   Alignment,
-                                                  SectionID));
+                                                  SectionID,
+                                                  SectionName.str().c_str()));
     
     if (log)
     {
@@ -542,10 +667,12 @@ IRExecutionUnit::MemoryManager::allocateDataSection(uintptr_t Size,
     uint8_t *return_value = m_default_mm_ap->allocateDataSection(Size, Alignment, SectionID, SectionName, IsReadOnly);
     
     m_parent.m_records.push_back(AllocationRecord((uintptr_t)return_value,
-                                                  lldb::ePermissionsReadable | lldb::ePermissionsWritable,
+                                                  lldb::ePermissionsReadable | (IsReadOnly ? 0 : lldb::ePermissionsWritable),
+                                                  GetSectionTypeFromSectionName (SectionName, AllocationKind::Data),
                                                   Size,
                                                   Alignment,
-                                                  SectionID));
+                                                  SectionID,
+                                                  SectionName.str().c_str()));
     if (log)
     {
         log->Printf("IRExecutionUnit::allocateDataSection(Size=0x%" PRIx64 ", Alignment=%u, SectionID=%u) = %p",
@@ -565,8 +692,11 @@ IRExecutionUnit::MemoryManager::allocateGlobal(uintptr_t Size,
     
     m_parent.m_records.push_back(AllocationRecord((uintptr_t)return_value,
                                                   lldb::ePermissionsReadable | lldb::ePermissionsWritable,
+                                                  GetSectionTypeFromSectionName (llvm::StringRef(), AllocationKind::Global),
                                                   Size,
-                                                  Alignment));
+                                                  Alignment,
+                                                  eSectionIDInvalid,
+                                                  NULL));
     
     if (log)
     {
@@ -646,12 +776,34 @@ IRExecutionUnit::CommitAllocations (lldb::ProcessSP &process_sp)
         if (record.m_process_address != LLDB_INVALID_ADDRESS)
             continue;
         
-        
-        record.m_process_address = Malloc(record.m_size,
-                                          record.m_alignment,
-                                          record.m_permissions,
-                                          eAllocationPolicyProcessOnly,
-                                          err);
+        switch (record.m_sect_type)
+        {
+        case lldb::eSectionTypeInvalid:
+        case lldb::eSectionTypeDWARFDebugAbbrev:
+        case lldb::eSectionTypeDWARFDebugAranges:
+        case lldb::eSectionTypeDWARFDebugFrame:
+        case lldb::eSectionTypeDWARFDebugInfo:
+        case lldb::eSectionTypeDWARFDebugLine:
+        case lldb::eSectionTypeDWARFDebugLoc:
+        case lldb::eSectionTypeDWARFDebugMacInfo:
+        case lldb::eSectionTypeDWARFDebugPubNames:
+        case lldb::eSectionTypeDWARFDebugPubTypes:
+        case lldb::eSectionTypeDWARFDebugRanges:
+        case lldb::eSectionTypeDWARFDebugStr:
+        case lldb::eSectionTypeDWARFAppleNames:
+        case lldb::eSectionTypeDWARFAppleTypes:
+        case lldb::eSectionTypeDWARFAppleNamespaces:
+        case lldb::eSectionTypeDWARFAppleObjC:
+            err.Clear();
+            break;
+        default:
+            record.m_process_address = Malloc (record.m_size,
+                                               record.m_alignment,
+                                               record.m_permissions,
+                                               eAllocationPolicyProcessOnly,
+                                               err);
+            break;
+        }
         
         if (!err.Success())
         {
@@ -696,17 +848,18 @@ IRExecutionUnit::ReportAllocations (llvm::ExecutionEngine &engine)
 bool
 IRExecutionUnit::WriteData (lldb::ProcessSP &process_sp)
 {
+    bool wrote_something = false;
     for (AllocationRecord &record : m_records)
     {
-        if (record.m_process_address == LLDB_INVALID_ADDRESS)
-            return false;
-        
-        lldb_private::Error err;
-
-        WriteMemory (record.m_process_address, (uint8_t*)record.m_host_address, record.m_size, err);
+        if (record.m_process_address != LLDB_INVALID_ADDRESS)
+        {
+            lldb_private::Error err;
+            WriteMemory (record.m_process_address, (uint8_t*)record.m_host_address, record.m_size, err);
+            if (err.Success())
+                wrote_something = true;
+        }
     }
-    
-    return true;
+    return wrote_something;
 }
 
 void 
@@ -721,4 +874,80 @@ IRExecutionUnit::AllocationRecord::dump (Log *log)
                 (unsigned long long)m_process_address,
                 (unsigned)m_alignment,
                 (unsigned)m_section_id);
+}
+
+
+lldb::ByteOrder
+IRExecutionUnit::GetByteOrder () const
+{
+    ExecutionContext exe_ctx (GetBestExecutionContextScope());
+    return exe_ctx.GetByteOrder();
+}
+
+uint32_t
+IRExecutionUnit::GetAddressByteSize () const
+{
+    ExecutionContext exe_ctx (GetBestExecutionContextScope());
+    return exe_ctx.GetAddressByteSize();
+}
+
+void
+IRExecutionUnit::PopulateSymtab (lldb_private::ObjectFile *obj_file,
+                                 lldb_private::Symtab &symtab)
+{
+    // No symbols yet...
+}
+
+
+void
+IRExecutionUnit::PopulateSectionList (lldb_private::ObjectFile *obj_file,
+                                      lldb_private::SectionList &section_list)
+{
+    for (AllocationRecord &record : m_records)
+    {
+        if (record.m_size > 0)
+        {
+            lldb::SectionSP section_sp (new lldb_private::Section (obj_file->GetModule(),
+                                                                   obj_file,
+                                                                   record.m_section_id,
+                                                                   ConstString(record.m_name),
+                                                                   record.m_sect_type,
+                                                                   record.m_process_address,
+                                                                   record.m_size,
+                                                                   record.m_host_address,   // file_offset (which is the host address for the data)
+                                                                   record.m_size,           // file_size
+                                                                   record.m_permissions));  // flags
+            section_list.AddSection (section_sp);
+        }
+    }
+}
+
+bool
+IRExecutionUnit::GetArchitecture (lldb_private::ArchSpec &arch)
+{
+    ExecutionContext exe_ctx (GetBestExecutionContextScope());
+    Target *target = exe_ctx.GetTargetPtr();
+    if (target)
+        arch = target->GetArchitecture();
+    else
+        arch.Clear();
+    return arch.IsValid();
+}
+
+lldb::ModuleSP
+IRExecutionUnit::GetJITModule ()
+{
+    ExecutionContext exe_ctx (GetBestExecutionContextScope());
+    Target *target = exe_ctx.GetTargetPtr();
+    if (target)
+    {
+        lldb::ModuleSP jit_module_sp = lldb_private::Module::CreateJITModule (std::static_pointer_cast<lldb_private::ObjectFileJITDelegate>(shared_from_this()));
+        if (jit_module_sp)
+        {
+            bool changed = false;
+            jit_module_sp->SetLoadAddress(*target, 0, true, changed);
+        }
+        return jit_module_sp;
+    }
+    return lldb::ModuleSP();
 }

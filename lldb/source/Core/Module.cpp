@@ -37,6 +37,8 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Symbol/SymbolFile.h"
 
+#include "Plugins/ObjectFile/JIT/ObjectFileJIT.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -145,6 +147,7 @@ Module::Module (const ModuleSpec &module_spec) :
     m_symfile_ap (),
     m_ast (),
     m_source_mappings (),
+    m_sections_ap(),
     m_did_load_objfile (false),
     m_did_load_symbol_vendor (false),
     m_did_parse_uuid (false),
@@ -219,6 +222,7 @@ Module::Module(const FileSpec& file_spec,
     m_symfile_ap (),
     m_ast (),
     m_source_mappings (),
+    m_sections_ap(),
     m_did_load_objfile (false),
     m_did_load_symbol_vendor (false),
     m_did_parse_uuid (false),
@@ -248,6 +252,35 @@ Module::Module(const FileSpec& file_spec,
                      m_object_name.IsEmpty() ? "" : "(",
                      m_object_name.IsEmpty() ? "" : m_object_name.AsCString(""),
                      m_object_name.IsEmpty() ? "" : ")");
+}
+
+Module::Module () :
+    m_mutex (Mutex::eMutexTypeRecursive),
+    m_mod_time (),
+    m_arch (),
+    m_uuid (),
+    m_file (),
+    m_platform_file(),
+    m_remote_install_file (),
+    m_symfile_spec (),
+    m_object_name (),
+    m_object_offset (0),
+    m_object_mod_time (),
+    m_objfile_sp (),
+    m_symfile_ap (),
+    m_ast (),
+    m_source_mappings (),
+    m_sections_ap(),
+    m_did_load_objfile (false),
+    m_did_load_symbol_vendor (false),
+    m_did_parse_uuid (false),
+    m_did_init_ast (false),
+    m_is_dynamic_loader_module (false),
+    m_file_has_changed (false),
+    m_first_file_changed_log (false)
+{
+    Mutex::Locker locker (GetAllocationModuleCollectionMutex());
+    GetModuleCollection().push_back(this);
 }
 
 Module::~Module()
@@ -1722,3 +1755,27 @@ Module::PrepareForFunctionNameLookup (const ConstString &name,
         match_name_after_lookup = false;
     }
 }
+
+ModuleSP
+Module::CreateJITModule (const lldb::ObjectFileJITDelegateSP &delegate_sp)
+{
+    if (delegate_sp)
+    {
+        // Must create a module and place it into a shared pointer before
+        // we can create an object file since it has a std::weak_ptr back
+        // to the module, so we need to control the creation carefully in
+        // this static function
+        ModuleSP module_sp(new Module());
+        module_sp->m_objfile_sp.reset (new ObjectFileJIT (module_sp, delegate_sp));
+        if (module_sp->m_objfile_sp)
+        {
+            // Once we get the object file, update our module with the object file's
+            // architecture since it might differ in vendor/os if some parts were
+            // unknown.
+            module_sp->m_objfile_sp->GetArchitecture (module_sp->m_arch);
+        }
+        return module_sp;
+    }
+    return ModuleSP();
+}
+

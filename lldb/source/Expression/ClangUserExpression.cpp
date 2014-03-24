@@ -20,6 +20,7 @@
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectConstResult.h"
@@ -36,6 +37,8 @@
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Function.h"
+#include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 #include "lldb/Symbol/VariableList.h"
@@ -63,6 +66,11 @@ ClangUserExpression::ClangUserExpression (const char *expr,
     m_language (language),
     m_transformed_text (),
     m_desired_type (desired_type),
+    m_expr_decl_map(),
+    m_execution_unit_sp(),
+    m_materializer_ap(),
+    m_result_synthesizer(),
+    m_jit_module_wp(),
     m_enforce_valid_object (true),
     m_cplusplus (false),
     m_objectivec (false),
@@ -91,6 +99,12 @@ ClangUserExpression::ClangUserExpression (const char *expr,
 
 ClangUserExpression::~ClangUserExpression ()
 {
+    if (m_target)
+    {
+        lldb::ModuleSP jit_module_sp (m_jit_module_wp.lock());
+        if (jit_module_sp)
+            m_target->GetImages().Remove(jit_module_sp);
+    }
 }
 
 clang::ASTConsumer *
@@ -415,7 +429,8 @@ bool
 ClangUserExpression::Parse (Stream &error_stream, 
                             ExecutionContext &exe_ctx,
                             lldb_private::ExecutionPolicy execution_policy,
-                            bool keep_result_in_memory)
+                            bool keep_result_in_memory,
+                            bool generate_debug_info)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -514,7 +529,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     if (!exe_scope)
         exe_scope = exe_ctx.GetTargetPtr();
     
-    ClangExpressionParser parser(exe_scope, *this);
+    ClangExpressionParser parser(exe_scope, *this, generate_debug_info);
     
     unsigned num_errors = parser.Parse (error_stream);
     
@@ -533,10 +548,41 @@ ClangUserExpression::Parse (Stream &error_stream,
             
     Error jit_error = parser.PrepareForExecution (m_jit_start_addr,
                                                   m_jit_end_addr,
-                                                  m_execution_unit_ap,
+                                                  m_execution_unit_sp,
                                                   exe_ctx,
                                                   m_can_interpret,
                                                   execution_policy);
+    
+    if (generate_debug_info)
+    {
+        lldb::ModuleSP jit_module_sp ( m_execution_unit_sp->GetJITModule());
+    
+        if (jit_module_sp)
+        {
+            ConstString const_func_name(FunctionName());
+            FileSpec jit_file;
+            jit_file.GetFilename() = const_func_name;
+            jit_module_sp->SetFileSpecAndObjectName (jit_file, ConstString());
+            m_jit_module_wp = jit_module_sp;
+            target->GetImages().Append(jit_module_sp);
+        }
+//        lldb_private::ObjectFile *jit_obj_file = jit_module_sp->GetObjectFile();
+//        StreamFile strm (stdout, false);
+//        if (jit_obj_file)
+//        {
+//            jit_obj_file->GetSectionList();
+//            jit_obj_file->GetSymtab();
+//            jit_obj_file->Dump(&strm);
+//        }
+//        lldb_private::SymbolVendor *jit_sym_vendor = jit_module_sp->GetSymbolVendor();
+//        if (jit_sym_vendor)
+//        {
+//            lldb_private::SymbolContextList sc_list;
+//            jit_sym_vendor->FindFunctions(const_func_name, NULL, lldb::eFunctionNameTypeFull, true, false, sc_list);
+//            sc_list.Dump(&strm, target);
+//            jit_sym_vendor->Dump(&strm);
+//        }
+    }
     
     m_expr_decl_map.reset(); // Make this go away since we don't need any of its state after parsing.  This also gets rid of any ClangASTImporter::Minions.
         
@@ -667,7 +713,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
             
             IRMemoryMap::AllocationPolicy policy = m_can_interpret ? IRMemoryMap::eAllocationPolicyHostOnly : IRMemoryMap::eAllocationPolicyMirror;
             
-            m_materialized_address = m_execution_unit_ap->Malloc(m_materializer_ap->GetStructByteSize(),
+            m_materialized_address = m_execution_unit_sp->Malloc(m_materializer_ap->GetStructByteSize(),
                                                                  m_materializer_ap->GetStructAlignment(),
                                                                  lldb::ePermissionsReadable | lldb::ePermissionsWritable,
                                                                  policy,
@@ -688,7 +734,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
 
             const size_t stack_frame_size = 512 * 1024;
             
-            m_stack_frame_bottom = m_execution_unit_ap->Malloc(stack_frame_size,
+            m_stack_frame_bottom = m_execution_unit_sp->Malloc(stack_frame_size,
                                                                8,
                                                                lldb::ePermissionsReadable | lldb::ePermissionsWritable,
                                                                IRMemoryMap::eAllocationPolicyHostOnly,
@@ -705,7 +751,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
                 
         Error materialize_error;
         
-        m_dematerializer_sp = m_materializer_ap->Materialize(frame, *m_execution_unit_ap, struct_address, materialize_error);
+        m_dematerializer_sp = m_materializer_ap->Materialize(frame, *m_execution_unit_sp, struct_address, materialize_error);
         
         if (!materialize_error.Success())
         {
@@ -781,8 +827,8 @@ ClangUserExpression::Execute (Stream &error_stream,
         
         if (m_can_interpret)
         {            
-            llvm::Module *module = m_execution_unit_ap->GetModule();
-            llvm::Function *function = m_execution_unit_ap->GetFunction();
+            llvm::Module *module = m_execution_unit_sp->GetModule();
+            llvm::Function *function = m_execution_unit_sp->GetFunction();
             
             if (!module || !function)
             {
@@ -810,7 +856,7 @@ ClangUserExpression::Execute (Stream &error_stream,
             IRInterpreter::Interpret (*module,
                                       *function,
                                       args,
-                                      *m_execution_unit_ap.get(),
+                                      *m_execution_unit_sp.get(),
                                       interpreter_error,
                                       function_stack_bottom,
                                       function_stack_top);
@@ -965,8 +1011,13 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
         log->Printf("== [ClangUserExpression::Evaluate] Parsing expression %s ==", expr_cstr);
     
     const bool keep_expression_in_memory = true;
+    const bool generate_debug_info = options.GetGenerateDebugInfo();
     
-    if (!user_expression_sp->Parse (error_stream, exe_ctx, execution_policy, keep_expression_in_memory))
+    if (!user_expression_sp->Parse (error_stream,
+                                    exe_ctx,
+                                    execution_policy,
+                                    keep_expression_in_memory,
+                                    generate_debug_info))
     {
         if (error_stream.GetString().empty())
             error.SetErrorString ("expression failed to parse, unknown error");

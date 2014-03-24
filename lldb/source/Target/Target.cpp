@@ -1142,32 +1142,39 @@ void
 Target::ModuleAdded (const ModuleList& module_list, const ModuleSP &module_sp)
 {
     // A module is being added to this target for the first time
-    ModuleList my_module_list;
-    my_module_list.Append(module_sp);
-    LoadScriptingResourceForModule(module_sp, this);
-    ModulesDidLoad (my_module_list);
+    if (m_valid)
+    {
+        ModuleList my_module_list;
+        my_module_list.Append(module_sp);
+        LoadScriptingResourceForModule(module_sp, this);
+        ModulesDidLoad (my_module_list);
+    }
 }
 
 void
 Target::ModuleRemoved (const ModuleList& module_list, const ModuleSP &module_sp)
 {
     // A module is being added to this target for the first time
-    ModuleList my_module_list;
-    my_module_list.Append(module_sp);
-    ModulesDidUnload (my_module_list, false);
+    if (m_valid)
+    {
+        ModuleList my_module_list;
+        my_module_list.Append(module_sp);
+        ModulesDidUnload (my_module_list, false);
+    }
 }
 
 void
 Target::ModuleUpdated (const ModuleList& module_list, const ModuleSP &old_module_sp, const ModuleSP &new_module_sp)
 {
     // A module is replacing an already added module
-    m_breakpoint_list.UpdateBreakpointsWhenModuleIsReplaced(old_module_sp, new_module_sp);
+    if (m_valid)
+        m_breakpoint_list.UpdateBreakpointsWhenModuleIsReplaced(old_module_sp, new_module_sp);
 }
 
 void
 Target::ModulesDidLoad (ModuleList &module_list)
 {
-    if (module_list.GetSize())
+    if (m_valid && module_list.GetSize())
     {
         m_breakpoint_list.UpdateBreakpoints (module_list, true, false);
         if (m_process_sp)
@@ -1182,7 +1189,7 @@ Target::ModulesDidLoad (ModuleList &module_list)
 void
 Target::SymbolsDidLoad (ModuleList &module_list)
 {
-    if (module_list.GetSize())
+    if (m_valid && module_list.GetSize())
     {
         if (m_process_sp)
         {
@@ -1202,7 +1209,7 @@ Target::SymbolsDidLoad (ModuleList &module_list)
 void
 Target::ModulesDidUnload (ModuleList &module_list, bool delete_locations)
 {
-    if (module_list.GetSize())
+    if (m_valid && module_list.GetSize())
     {
         m_breakpoint_list.UpdateBreakpoints (module_list, false, delete_locations);
         // TODO: make event data that packages up the module_list

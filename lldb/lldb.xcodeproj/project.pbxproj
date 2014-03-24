@@ -542,6 +542,8 @@
 		26E152261419CAD4007967D0 /* ObjectFilePECOFF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26E152231419CACA007967D0 /* ObjectFilePECOFF.cpp */; };
 		26ECA04313665FED008D1F18 /* ARM_DWARF_Registers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.cpp */; };
 		26ED3D6D13C563810017D45E /* OptionGroupVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26ED3D6C13C563810017D45E /* OptionGroupVariable.cpp */; };
+		26EFC4CD18CFAF0D00865D87 /* ObjectFileJIT.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26EFC4CA18CFAF0D00865D87 /* ObjectFileJIT.cpp */; };
+		26EFC4CE18CFAF0D00865D87 /* ObjectFileJIT.h in Headers */ = {isa = PBXBuildFile; fileRef = 26EFC4CB18CFAF0D00865D87 /* ObjectFileJIT.h */; };
 		26F4A21C13FBA31A0064B613 /* ThreadMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F4A21A13FBA31A0064B613 /* ThreadMemory.cpp */; };
 		26F5C27710F3D9E4009D5894 /* Driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F5C27310F3D9E4009D5894 /* Driver.cpp */; };
 		26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */; };
@@ -1593,6 +1595,8 @@
 		26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ARM_DWARF_Registers.cpp; path = source/Utility/ARM_DWARF_Registers.cpp; sourceTree = "<group>"; };
 		26ED3D6C13C563810017D45E /* OptionGroupVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupVariable.cpp; path = source/Interpreter/OptionGroupVariable.cpp; sourceTree = "<group>"; };
 		26ED3D6F13C5638A0017D45E /* OptionGroupVariable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupVariable.h; path = include/lldb/Interpreter/OptionGroupVariable.h; sourceTree = "<group>"; };
+		26EFC4CA18CFAF0D00865D87 /* ObjectFileJIT.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectFileJIT.cpp; sourceTree = "<group>"; };
+		26EFC4CB18CFAF0D00865D87 /* ObjectFileJIT.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectFileJIT.h; sourceTree = "<group>"; };
 		26F4A21A13FBA31A0064B613 /* ThreadMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadMemory.cpp; path = Utility/ThreadMemory.cpp; sourceTree = "<group>"; };
 		26F4A21B13FBA31A0064B613 /* ThreadMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadMemory.h; path = Utility/ThreadMemory.h; sourceTree = "<group>"; };
 		26F5C26A10F3D9A4009D5894 /* lldb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = lldb; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -2184,6 +2188,7 @@
 			isa = PBXGroup;
 			children = (
 				260C898310F57C5600BB2B04 /* ELF */,
+				26EFC4C718CFAF0D00865D87 /* JIT */,
 				260C898710F57C5600BB2B04 /* Mach-O */,
 				26E152221419CACA007967D0 /* PECOFF */,
 			);
@@ -3582,6 +3587,15 @@
 			path = PECOFF;
 			sourceTree = "<group>";
 		};
+		26EFC4C718CFAF0D00865D87 /* JIT */ = {
+			isa = PBXGroup;
+			children = (
+				26EFC4CA18CFAF0D00865D87 /* ObjectFileJIT.cpp */,
+				26EFC4CB18CFAF0D00865D87 /* ObjectFileJIT.h */,
+			);
+			path = JIT;
+			sourceTree = "<group>";
+		};
 		26F5C22410F3D950009D5894 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
@@ -3973,6 +3987,7 @@
 				26474CCE18D0CB5B0073DEBA /* RegisterContextPOSIX_x86.h in Headers */,
 				26474CAD18D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.h in Headers */,
 				490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */,
+				26EFC4CE18CFAF0D00865D87 /* ObjectFileJIT.h in Headers */,
 				260CC63615D04377002BF2E0 /* OptionValueFormat.h in Headers */,
 				26D1804516CEE12500EDFB5B /* KQueue.h in Headers */,
 				260CC63715D04377002BF2E0 /* OptionValueSInt64.h in Headers */,
@@ -4759,6 +4774,7 @@
 				49A71FE7141FFA5C00D59478 /* IRInterpreter.cpp in Sources */,
 				49A71FE8141FFACF00D59478 /* DataEncoder.cpp in Sources */,
 				B207C4931429607D00F36E4E /* CommandObjectWatchpoint.cpp in Sources */,
+				26EFC4CD18CFAF0D00865D87 /* ObjectFileJIT.cpp in Sources */,
 				49A1CAC51430E8DE00306AC9 /* ExpressionSourceCode.cpp in Sources */,
 				494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */,
 				49DA65031485C92A005FF180 /* AppleObjCTypeVendor.cpp in Sources */,

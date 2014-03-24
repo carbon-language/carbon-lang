@@ -61,6 +61,12 @@ namespace lldb_private {
 class IRForTarget : public llvm::ModulePass
 {
 public:
+    enum class LookupResult {
+        Success,
+        Fail,
+        Ignore
+    };
+    
     //------------------------------------------------------------------
     /// Constructor
     ///
@@ -201,7 +207,7 @@ private:
     /// @return
     ///     The pointer.
     //------------------------------------------------------------------ 
-    bool 
+    LookupResult
     GetFunctionAddress (llvm::Function *function,
                         uint64_t &ptr,
                         lldb_private::ConstString &name,

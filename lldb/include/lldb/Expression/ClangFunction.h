@@ -410,7 +410,8 @@ private:
     //------------------------------------------------------------------
 
     std::unique_ptr<ClangExpressionParser> m_parser;                 ///< The parser responsible for compiling the function.
-    std::unique_ptr<IRExecutionUnit> m_execution_unit_ap;
+    std::shared_ptr<IRExecutionUnit> m_execution_unit_sp;
+    lldb::ModuleWP                  m_jit_module_wp;
     
     Function                       *m_function_ptr;                 ///< The function we're going to call.  May be NULL if we don't have debug info for the function.
     Address                         m_function_addr;                ///< If we don't have the FunctionSP, we at least need the address & return type.

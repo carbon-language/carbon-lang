@@ -239,7 +239,7 @@ ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp,
                         const FileSpec *file_spec_ptr,
                         lldb::offset_t file_offset,
                         lldb::offset_t length,
-                        lldb::DataBufferSP& data_sp,
+                        const lldb::DataBufferSP& data_sp,
                         lldb::offset_t data_offset
 ) :
     ModuleChild (module_sp),

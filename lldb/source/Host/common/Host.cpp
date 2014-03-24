@@ -12,6 +12,7 @@
 // C includes
 #include <errno.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #ifdef _WIN32
 #include "lldb/Host/windows/windows.h"
@@ -1008,6 +1009,20 @@ Host::GetModuleFileSpecForHostAddress (const void *host_addr)
 
 #endif
 
+
+static void CleanupProcessSpecificLLDBTempDir ()
+{
+    // Get the process specific LLDB temporary directory and delete it.
+    FileSpec tmpdir_file_spec;
+    if (Host::GetLLDBPath (ePathTypeLLDBTempSystemDir, tmpdir_file_spec))
+    {
+        // Remove the LLDB temporary directory if we have one. Set "recurse" to
+        // true to all files that were created for the LLDB process can be cleaned up.
+        const bool recurse = true;
+        Host::RemoveDirectory(tmpdir_file_spec.GetDirectory().GetCString(), recurse);
+    }
+}
+
 bool
 Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
 {
@@ -1279,9 +1294,22 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                 }
                 if (tmpdir_cstr)
                 {
-                    g_lldb_tmp_dir.SetCString(tmpdir_cstr);
-                    if (log)
-                        log->Printf("Host::GetLLDBPath(ePathTypeLLDBTempSystemDir) => '%s'", g_lldb_tmp_dir.GetCString());
+                    StreamString pid_tmpdir;
+                    pid_tmpdir.Printf("%s/lldb", tmpdir_cstr);
+                    if (Host::MakeDirectory(pid_tmpdir.GetString().c_str(), eFilePermissionsDirectoryDefault).Success())
+                    {
+                        pid_tmpdir.Printf("/%" PRIu64, Host::GetCurrentProcessID());
+                        if (Host::MakeDirectory(pid_tmpdir.GetString().c_str(), eFilePermissionsDirectoryDefault).Success())
+                        {
+                            // Make an atexit handler to clean up the process specify LLDB temp dir
+                            // and all of its contents.
+                            ::atexit (CleanupProcessSpecificLLDBTempDir);
+                            g_lldb_tmp_dir.SetCString(pid_tmpdir.GetString().c_str());
+                            if (log)
+                                log->Printf("Host::GetLLDBPath(ePathTypeLLDBTempSystemDir) => '%s'", g_lldb_tmp_dir.GetCString());
+                            
+                        }
+                    }
                 }
             }
             file_spec.GetDirectory() = g_lldb_tmp_dir;
@@ -2141,6 +2169,14 @@ Host::Unlink (const char *path)
     return error;
 }
 
+Error
+Host::RemoveDirectory (const char* path, bool recurse)
+{
+    Error error;
+    error.SetErrorStringWithFormat("%s is not supported on this host", __PRETTY_FUNCTION__);
+    return error;
+}
+
 #else
 
 Error
@@ -2181,6 +2217,33 @@ Host::MakeDirectory (const char* path, uint32_t file_permissions)
                 }
                 break;
             }
+        }
+    }
+    else
+    {
+        error.SetErrorString("empty path");
+    }
+    return error;
+}
+                                                                    
+Error
+Host::RemoveDirectory (const char* path, bool recurse)
+{
+    Error error;
+    if (path && path[0])
+    {
+        if (recurse)
+        {
+            StreamString command;
+            command.Printf("rm -rf \"%s\"", path);
+            int status = ::system(command.GetString().c_str());
+            if (status != 0)
+                error.SetError(status, eErrorTypeGeneric);
+        }
+        else
+        {
+            if (::rmdir(path) != 0)
+                error.SetErrorToErrno();
         }
     }
     else

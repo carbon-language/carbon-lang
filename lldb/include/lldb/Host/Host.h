@@ -539,6 +539,9 @@ public:
     MakeDirectory (const char* path, uint32_t mode);
     
     static Error
+    RemoveDirectory (const char* path, bool recurse);
+    
+    static Error
     GetFilePermissions (const char* path, uint32_t &file_permissions);
 
     static Error

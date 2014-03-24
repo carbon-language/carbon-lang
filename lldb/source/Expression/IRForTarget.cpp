@@ -157,7 +157,7 @@ IRForTarget::FixFunctionLinkage(llvm::Function &llvm_function)
     return true;
 }
 
-bool 
+IRForTarget::LookupResult
 IRForTarget::GetFunctionAddress (llvm::Function *fun,
                                  uint64_t &fun_addr,
                                  lldb_private::ConstString &name,
@@ -182,7 +182,7 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
             if (m_error_stream)
                 m_error_stream->Printf("Internal error [IRForTarget]: Call to unhandled compiler intrinsic '%s'\n", Intrinsic::getName(intrinsic_id).c_str());
             
-            return false;
+                return LookupResult::Fail;
         case Intrinsic::memcpy:
             {
                 static lldb_private::ConstString g_memcpy_str ("memcpy");
@@ -195,6 +195,8 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
                 name = g_memset_str;
             }
             break;
+        case Intrinsic::dbg_declare:
+            return LookupResult::Ignore;
         }
         
         if (log && name)
@@ -258,7 +260,7 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
                         m_error_stream->Printf("error: call to a function '%s' that is not present in the target\n",
                                                mangled_name.GetName().GetCString());
                 }
-                return false;
+                return LookupResult::Fail;
             }
         }
     }
@@ -272,14 +274,14 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
             if (m_error_stream)
                 m_error_stream->Printf("Error [IRForTarget]: Call to a symbol-only function '%s' that is not present in the target\n", name.GetCString());
             
-            return false;
+            return LookupResult::Fail;
         }
     }
     
     if (log)
         log->Printf("Found \"%s\" at 0x%" PRIx64, name.GetCString(), fun_addr);
     
-    return true;
+    return LookupResult::Success;
 }
 
 llvm::Constant *
@@ -339,34 +341,46 @@ IRForTarget::ResolveFunctionPointers(llvm::Module &llvm_module)
         lldb_private::ConstString name;
         Constant **value_ptr = NULL;
         
-        if (!GetFunctionAddress(fun,
-                                addr,
-                                name,
-                                value_ptr))
+        LookupResult result = GetFunctionAddress(fun,
+                                                 addr,
+                                                 name,
+                                                 value_ptr);
+        
+        switch (result)
+        {
+        case LookupResult::Fail:
             return false; // GetFunctionAddress reports its own errors
-        
-        Constant *value = BuildFunctionPointer(fun->getFunctionType(), addr);
-        
-        RegisterFunctionMetadata (llvm_module.getContext(), fun, name.AsCString());
-        
-        if (value_ptr)
-            *value_ptr = value;
+                
+        case LookupResult::Ignore:
+            break; // Nothing to do
+                
+        case LookupResult::Success:
+            {
+                Constant *value = BuildFunctionPointer(fun->getFunctionType(), addr);
+                
+                RegisterFunctionMetadata (llvm_module.getContext(), fun, name.AsCString());
+                
+                if (value_ptr)
+                    *value_ptr = value;
 
-        // If we are replacing a function with the nobuiltin attribute, it may
-        // be called with the builtin attribute on call sites. Remove any such
-        // attributes since it's illegal to have a builtin call to something
-        // other than a nobuiltin function.
-        if (fun->hasFnAttribute(llvm::Attribute::NoBuiltin)) {
-            llvm::Attribute builtin = llvm::Attribute::get(fun->getContext(), llvm::Attribute::Builtin);
+                // If we are replacing a function with the nobuiltin attribute, it may
+                // be called with the builtin attribute on call sites. Remove any such
+                // attributes since it's illegal to have a builtin call to something
+                // other than a nobuiltin function.
+                if (fun->hasFnAttribute(llvm::Attribute::NoBuiltin)) {
+                    llvm::Attribute builtin = llvm::Attribute::get(fun->getContext(), llvm::Attribute::Builtin);
 
-            for (auto u : fun->users()) {
-                if (auto call = dyn_cast<CallInst>(u)) {
-                    call->removeAttribute(AttributeSet::FunctionIndex, builtin);
+                    for (auto u : fun->users()) {
+                        if (auto call = dyn_cast<CallInst>(u)) {
+                            call->removeAttribute(AttributeSet::FunctionIndex, builtin);
+                        }
+                    }
                 }
+                
+                fun->replaceAllUsesWith(value);
             }
+            break;
         }
-        
-        fun->replaceAllUsesWith(value);
     }
     
     return true;

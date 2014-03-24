@@ -21,6 +21,36 @@
 #include "lldb/Symbol/UnwindTable.h"
 
 namespace lldb_private {
+    
+class ObjectFileJITDelegate
+{
+public:
+    ObjectFileJITDelegate ()
+    {
+    }
+    
+    virtual
+    ~ObjectFileJITDelegate()
+    {
+    }
+    
+    virtual lldb::ByteOrder
+    GetByteOrder () const = 0;
+    
+    virtual uint32_t
+    GetAddressByteSize () const = 0;
+    
+    virtual void
+    PopulateSymtab (lldb_private::ObjectFile *obj_file,
+                    lldb_private::Symtab &symtab) = 0;
+    
+    virtual void
+    PopulateSectionList (lldb_private::ObjectFile *obj_file,
+                         lldb_private::SectionList &section_list) = 0;
+    
+    virtual bool
+    GetArchitecture (lldb_private::ArchSpec &arch) = 0;
+};
 
 //----------------------------------------------------------------------
 /// @class ObjectFile ObjectFile.h "lldb/Symbol/ObjectFile.h"
@@ -68,6 +98,7 @@ public:
         eTypeObjectFile,    /// An intermediate object file
         eTypeSharedLibrary, /// A shared library that can be used during execution
         eTypeStubLibrary,   /// A library that can be linked against but not used for execution
+        eTypeJIT,           /// JIT code that has symbols, sections and possibly debug info
         eTypeUnknown
     } Type;
 
@@ -77,7 +108,8 @@ public:
         eStrataUnknown,
         eStrataUser,
         eStrataKernel,
-        eStrataRawImage
+        eStrataRawImage,
+        eStrataJIT
     } Strata;
 
     //------------------------------------------------------------------
@@ -91,7 +123,7 @@ public:
                 const FileSpec *file_spec_ptr, 
                 lldb::offset_t file_offset,
                 lldb::offset_t length,
-                lldb::DataBufferSP& data_sp,
+                const lldb::DataBufferSP& data_sp,
                 lldb::offset_t data_offset);
 
     ObjectFile (const lldb::ModuleSP &module_sp, 
@@ -756,12 +788,12 @@ public:
     size_t
     CopyData (off_t offset, size_t length, void *dst) const;
     
-    size_t
+    virtual size_t
     ReadSectionData (const Section *section, 
                      off_t section_offset, 
                      void *dst, 
                      size_t dst_len) const;
-    size_t
+    virtual size_t
     ReadSectionData (const Section *section, 
                      DataExtractor& section_data) const;
     

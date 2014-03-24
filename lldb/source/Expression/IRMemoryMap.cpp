@@ -185,7 +185,7 @@ IRMemoryMap::GetAddressByteSize()
 }
 
 ExecutionContextScope *
-IRMemoryMap::GetBestExecutionContextScope()
+IRMemoryMap::GetBestExecutionContextScope() const
 {
     lldb::ProcessSP process_sp = m_process_wp.lock();
     

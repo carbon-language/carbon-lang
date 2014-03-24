@@ -163,15 +163,17 @@ RegisterContextLLDB::InitializeZerothFrame()
         UnwindLogMsg ("using architectural default unwind method");
     }
 
-    // We require that eSymbolContextSymbol be successfully filled in or this context is of no use to us.
+    // We require either a symbol or function in the symbols context to be successfully
+    // filled in or this context is of no use to us.
+    const uint32_t resolve_scope = eSymbolContextFunction | eSymbolContextSymbol;
     if (pc_module_sp.get()
-        && (pc_module_sp->ResolveSymbolContextForAddress (m_current_pc, eSymbolContextFunction| eSymbolContextSymbol, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
+        && (pc_module_sp->ResolveSymbolContextForAddress (m_current_pc, resolve_scope, m_sym_ctx) & resolve_scope))
     {
         m_sym_ctx_valid = true;
     }
 
     AddressRange addr_range;
-    m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, addr_range);
+    m_sym_ctx.GetAddressRange (resolve_scope, 0, false, addr_range);
 
     if (IsTrapHandlerSymbol (process, m_sym_ctx))
     {
@@ -417,18 +419,20 @@ RegisterContextLLDB::InitializeNonZerothFrame()
                                            // a function/symbol because it is beyond the bounds of the correct
                                            // function and there's no symbol there.  ResolveSymbolContextForAddress
                                            // will fail to find a symbol, back up the pc by 1 and re-search.
+    const uint32_t resolve_scope = eSymbolContextFunction | eSymbolContextSymbol;
     uint32_t resolved_scope = pc_module_sp->ResolveSymbolContextForAddress (m_current_pc,
-                                                                            eSymbolContextFunction | eSymbolContextSymbol,
+                                                                            resolve_scope,
                                                                             m_sym_ctx, resolve_tail_call_address);
 
-    // We require that eSymbolContextSymbol be successfully filled in or this context is of no use to us.
-    if ((resolved_scope & eSymbolContextSymbol) == eSymbolContextSymbol)
+    // We require either a symbol or function in the symbols context to be successfully
+    // filled in or this context is of no use to us.
+    if (resolve_scope & resolved_scope)
     {
         m_sym_ctx_valid = true;
     }
 
     AddressRange addr_range;
-    if (!m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, addr_range))
+    if (!m_sym_ctx.GetAddressRange (resolve_scope, 0, false, addr_range))
     {
         m_sym_ctx_valid = false;
     }
@@ -461,13 +465,12 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         temporary_pc.SetOffset(m_current_pc.GetOffset() - 1);
         m_sym_ctx.Clear(false);
         m_sym_ctx_valid = false;
-        if ((pc_module_sp->ResolveSymbolContextForAddress (temporary_pc, eSymbolContextFunction| eSymbolContextSymbol, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
+        uint32_t resolve_scope = eSymbolContextFunction | eSymbolContextSymbol;
+        
+        if (pc_module_sp->ResolveSymbolContextForAddress (temporary_pc, resolve_scope, m_sym_ctx) & resolve_scope)
         {
-            m_sym_ctx_valid = true;
-        }
-        if (!m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false,  addr_range))
-        {
-            m_sym_ctx_valid = false;
+            if (m_sym_ctx.GetAddressRange (resolve_scope, 0, false,  addr_range))
+                m_sym_ctx_valid = true;
         }
     }
 
@@ -707,7 +710,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     // Note, if we have a symbol context & a symbol, we don't want to follow this code path.  This is
     // for jumping to memory regions without any information available.
 
-    if ((!m_sym_ctx_valid || m_sym_ctx.symbol == NULL) && behaves_like_zeroth_frame && m_current_pc.IsValid())
+    if ((!m_sym_ctx_valid || (m_sym_ctx.function == NULL && m_sym_ctx.symbol == NULL)) && behaves_like_zeroth_frame && m_current_pc.IsValid())
     {
         uint32_t permissions;
         addr_t current_pc_addr = m_current_pc.GetLoadAddress (exe_ctx.GetTargetPtr());
