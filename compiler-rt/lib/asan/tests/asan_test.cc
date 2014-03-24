@@ -565,7 +565,7 @@ NOINLINE void TouchStackFunc() {
     A[i] = i*i;
 }
 
-// Test that we handle longjmp and do not report fals positives on stack.
+// Test that we handle longjmp and do not report false positives on stack.
 TEST(AddressSanitizer, LongJmpTest) {
   static jmp_buf buf;
   if (!setjmp(buf)) {
@@ -587,7 +587,8 @@ TEST(AddressSanitizer, BuiltinLongJmpTest) {
     TouchStackFunc();
   }
 }
-#endif  // not defined(__ANDROID__)
+#endif  // !defined(__ANDROID__) && !defined(__powerpc64__) &&
+        // !defined(__powerpc__)
 
 TEST(AddressSanitizer, UnderscopeLongJmpTest) {
   static jmp_buf buf;
