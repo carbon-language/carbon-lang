@@ -110,5 +110,6 @@
 ; OBJ-NEXT: }
 
 ; HDR-NOT: .debug_aranges
+; HDR-NOT: .rela.{{.*}}.dwo
 
 !9 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}

@@ -2690,7 +2690,7 @@ DwarfTypeUnit *DwarfDebug::constructSkeletonTU(DwarfTypeUnit *TU) {
 // compile units that would normally be in debug_info.
 void DwarfDebug::emitDebugInfoDWO() {
   assert(useSplitDwarf() && "No split dwarf debug info?");
-  InfoHolder.emitUnits(this, DwarfAbbrevDWOSectionSym);
+  InfoHolder.emitUnits(this, nullptr);
 }
 
 // Emit the .debug_abbrev.dwo section for separated dwarf. This contains the

@@ -2037,7 +2037,11 @@ void DwarfUnit::emitHeader(const MCSymbol *ASectionSym) const {
   // We share one abbreviations table across all units so it's always at the
   // start of the section. Use a relocatable offset where needed to ensure
   // linking doesn't invalidate that offset.
-  Asm->EmitSectionOffset(ASectionSym, ASectionSym);
+  if (ASectionSym)
+    Asm->EmitSectionOffset(ASectionSym, ASectionSym);
+  else
+    // Use a constant value in the dwo file, to avoid relocations
+    Asm->EmitInt32(0);
   Asm->OutStreamer.AddComment("Address Size (in bytes)");
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 }
