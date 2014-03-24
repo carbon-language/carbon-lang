@@ -1957,10 +1957,11 @@ static const CXXMethodDecl *computeKeyFunction(ASTContext &Context,
   if (!RD->isExternallyVisible())
     return 0;
 
-  // Template instantiations don't have key functions,see Itanium C++ ABI 5.2.6.
+  // Template instantiations don't have key functions per Itanium C++ ABI 5.2.6.
   // Same behavior as GCC.
   TemplateSpecializationKind TSK = RD->getTemplateSpecializationKind();
   if (TSK == TSK_ImplicitInstantiation ||
+      TSK == TSK_ExplicitInstantiationDeclaration ||
       TSK == TSK_ExplicitInstantiationDefinition)
     return 0;
 
