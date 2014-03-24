@@ -39,6 +39,7 @@ def II_C_CC_D           : InstrItinClass; // Any c.<cc>.d instruction
 def II_C_CC_S           : InstrItinClass; // Any c.<cc>.s instruction
 def II_DADDIU           : InstrItinClass;
 def II_DADDU            : InstrItinClass;
+def II_DADD             : InstrItinClass;
 def II_DDIV             : InstrItinClass;
 def II_DDIVU            : InstrItinClass;
 def II_DIV              : InstrItinClass;
@@ -63,6 +64,7 @@ def II_DSRL             : InstrItinClass;
 def II_DSRL32           : InstrItinClass;
 def II_DSRLV            : InstrItinClass;
 def II_DSUBU            : InstrItinClass;
+def II_DSUB             : InstrItinClass;
 def II_FLOOR            : InstrItinClass;
 def II_LB               : InstrItinClass;
 def II_LBU              : InstrItinClass;
@@ -185,6 +187,7 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_CLZ             , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DADDIU          , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DADDU           , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DADD            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DSLL            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DSRL            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DSRA            , [InstrStage<1,  [ALU]>]>,
@@ -192,6 +195,7 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_DSRLV           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DSRAV           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DSUBU           , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_DSUB            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DROTR           , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DROTRV          , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_LUI             , [InstrStage<1,  [ALU]>]>,

@@ -81,6 +81,7 @@
 # CHECK:  msubu  $6, $7          # encoding: [0x05,0x00,0xc7,0x70]
 # CHECK:  mult   $3, $5          # encoding: [0x18,0x00,0x65,0x00]
 # CHECK:  multu  $3, $5          # encoding: [0x19,0x00,0x65,0x00]
+# CHECK:  dsub    $9, $6, $7     # encoding: [0x2e,0x48,0xc7,0x00]
 # CHECK:  dsubu   $4, $3, $5     # encoding: [0x2f,0x20,0x65,0x00]
 # CHECK:  move    $7, $8         # encoding: [0x2d,0x38,0x00,0x01]
 # CHECK:  .set    push
@@ -104,6 +105,28 @@
     msubu  $6,$7
     mult   $3,$5
     multu  $3,$5
+    dsub    $9,$6,$7
     dsubu   $4,$3,$5
     move   $7,$8
     rdhwr   $5, $29
+
+#------------------------------------------------------------------------------
+# Shortcuts for arithmetic instructions
+#------------------------------------------------------------------------------
+
+# CHECK:	dadd	$9, $9, $3	# encoding: [0x2c,0x48,0x23,0x01]
+# CHECK:	daddu	$9, $9, $3	# encoding: [0x2d,0x48,0x23,0x01]
+# CHECK:	daddi	$9, $9, 10	# encoding: [0x0a,0x00,0x29,0x61]
+# CHECK:	daddiu	$9, $9, 10	# encoding: [0x0a,0x00,0x29,0x65]
+# CHECK:	dsub	$9, $9, $3	# encoding: [0x2e,0x48,0x23,0x01]
+# CHECK:	dsubu	$9, $9, $3	# encoding: [0x2f,0x48,0x23,0x01]
+# CHECK:	daddi	$9, $9, -10	# encoding: [0xf6,0xff,0x29,0x61]
+# CHECK:	daddiu	$9, $9, -10	# encoding: [0xf6,0xff,0x29,0x65]
+	dadd	$9, $3
+	daddu	$9, $3
+	dadd	$9, 10
+	daddu	$9, 10
+	dsub	$9, $3
+	dsubu	$9, $3
+	dsub	$9, 10
+	dsubu	$9, 10
