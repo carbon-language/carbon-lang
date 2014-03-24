@@ -87,6 +87,8 @@ public:
   virtual bool isFNegFree(EVT VT) const override;
   virtual bool isTruncateFree(EVT Src, EVT Dest) const override;
   virtual bool isTruncateFree(Type *Src, Type *Dest) const override;
+  virtual bool isNarrowingProfitable(EVT VT1, EVT VT2) const override;
+
   virtual MVT getVectorIdxTy() const override;
   virtual bool isLoadBitCastBeneficial(EVT, EVT) const override;
   virtual SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,

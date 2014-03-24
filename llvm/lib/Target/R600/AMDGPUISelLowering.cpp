@@ -273,6 +273,16 @@ bool AMDGPUTargetLowering::isTruncateFree(Type *Source, Type *Dest) const {
          (Dest->getPrimitiveSizeInBits() % 32 == 0);
 }
 
+bool AMDGPUTargetLowering::isNarrowingProfitable(EVT SrcVT, EVT DestVT) const {
+  // There aren't really 64-bit registers, but pairs of 32-bit ones and only a
+  // limited number of native 64-bit operations. Shrinking an operation to fit
+  // in a single 32-bit register should always be helpful. As currently used,
+  // this is much less general than the name suggests, and is only used in
+  // places trying to reduce the sizes of loads. Shrinking loads to < 32-bits is
+  // not profitable, and may actually be harmful.
+  return SrcVT.getSizeInBits() > 32 && DestVT.getSizeInBits() == 32;
+}
+
 //===---------------------------------------------------------------------===//
 // TargetLowering Callbacks
 //===---------------------------------------------------------------------===//
