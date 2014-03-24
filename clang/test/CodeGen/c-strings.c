@@ -1,18 +1,14 @@
-// RUN: %clang_cc1 -triple %itanium_abi_triple -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK --check-prefix=ITANIUM
-// RUN: %clang_cc1 -triple %ms_abi_triple -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK --check-prefix=MSABI
+// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
 
 // Should be 3 hello strings, two global (of different sizes), the rest are
 // shared.
 
 // CHECK: @align = global i8 [[ALIGN:[0-9]+]]
-// ITANIUM: @.str = private unnamed_addr constant [6 x i8] c"hello\00"
-// MSABI: @"\01??_C@_05CJBACGMB@hello?$AA@" = linkonce_odr unnamed_addr constant [6 x i8] c"hello\00", align 1
-// ITANIUM: @f1.x = internal global i8* getelementptr inbounds ([6 x i8]* @.str, i32 0, i32 0)
-// MSABI: @f1.x = internal global i8* getelementptr inbounds ([6 x i8]* @"\01??_C@_05CJBACGMB@hello?$AA@", i32 0, i32 0)
+// CHECK: @.str = private unnamed_addr constant [6 x i8] c"hello\00"
+// CHECK: @f1.x = internal global i8* getelementptr inbounds ([6 x i8]* @.str, i32 0, i32 0)
 // CHECK: @f2.x = internal global [6 x i8] c"hello\00", align [[ALIGN]]
 // CHECK: @f3.x = internal global [8 x i8] c"hello\00\00\00", align [[ALIGN]]
-// ITANIUM: @f4.x = internal global %struct.s { i8* getelementptr inbounds ([6 x i8]* @.str, i32 0, i32 0) }
-// MSABI: @f4.x = internal global %struct.s { i8* getelementptr inbounds ([6 x i8]* @"\01??_C@_05CJBACGMB@hello?$AA@", i32 0, i32 0) }
+// CHECK: @f4.x = internal global %struct.s { i8* getelementptr inbounds ([6 x i8]* @.str, i32 0, i32 0) }
 // CHECK: @x = global [3 x i8] c"ola", align [[ALIGN]]
 
 #if defined(__s390x__)
@@ -26,8 +22,7 @@ void bar(const char *);
 // CHECK-LABEL: define void @f0()
 void f0() {
   bar("hello");
-  // ITANIUM: call void @bar({{.*}} @.str
-  // MSABI: call void @bar({{.*}} @"\01??_C@_05CJBACGMB@hello?$AA@"
+  // CHECK: call void @bar({{.*}} @.str
 }
 
 // CHECK-LABEL: define void @f1()
