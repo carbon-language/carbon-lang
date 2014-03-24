@@ -415,6 +415,9 @@ class UMUL24Pattern <Instruction UMUL24> : Pat <
 */
 
 include "R600Instructions.td"
+include "R700Instructions.td"
+include "EvergreenInstructions.td"
+include "CaymanInstructions.td"
 
 include "SIInstrInfo.td"
 
