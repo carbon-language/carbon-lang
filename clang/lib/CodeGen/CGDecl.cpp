@@ -183,7 +183,7 @@ static std::string GetStaticDeclName(CodeGenFunction &CGF, const VarDecl &D,
   return ContextName + Separator + D.getNameAsString();
 }
 
-llvm::GlobalVariable *
+llvm::Constant *
 CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
                                      const char *Separator,
                                      llvm::GlobalValue::LinkageTypes Linkage) {
@@ -211,6 +211,13 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
 
   if (D.getTLSKind())
     CGM.setTLSMode(GV, D);
+
+  // Make sure the result is of the correct type.
+  unsigned ExpectedAddrSpace = CGM.getContext().getTargetAddressSpace(Ty);
+  if (AddrSpace != ExpectedAddrSpace) {
+    llvm::PointerType *PTy = llvm::PointerType::get(LTy, ExpectedAddrSpace);
+    return llvm::ConstantExpr::getAddrSpaceCast(GV, PTy);
+  }
 
   return GV;
 }
@@ -298,12 +305,8 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   llvm::Constant *addr =
     CGM.getStaticLocalDeclAddress(&D);
 
-  llvm::GlobalVariable *var;
-  if (addr) {
-    var = cast<llvm::GlobalVariable>(addr->stripPointerCasts());
-  } else {
-    addr = var = CreateStaticVarDecl(D, ".", Linkage);
-  }
+  if (!addr)
+    addr = CreateStaticVarDecl(D, ".", Linkage);
 
   // Store into LocalDeclMap before generating initializer to handle
   // circular references.
@@ -319,6 +322,8 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   // Save the type in case adding the initializer forces a type change.
   llvm::Type *expectedType = addr->getType();
 
+  llvm::GlobalVariable *var =
+    cast<llvm::GlobalVariable>(addr->stripPointerCasts());
   // If this value has an initializer, emit it.
   if (D.getInit())
     var = AddInitializerToStaticVarDecl(D, var);
@@ -339,7 +344,8 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   //
   // FIXME: It is really dangerous to store this in the map; if anyone
   // RAUW's the GV uses of this constant will be invalid.
-  llvm::Constant *castedAddr = llvm::ConstantExpr::getBitCast(var, expectedType);
+  llvm::Constant *castedAddr =
+    llvm::ConstantExpr::getPointerBitCastOrAddrSpaceCast(var, expectedType);
   DMEntry = castedAddr;
   CGM.setStaticLocalDeclAddress(&D, castedAddr);
 
