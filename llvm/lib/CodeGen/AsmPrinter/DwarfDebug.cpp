@@ -1260,6 +1260,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     // Handle multiple DBG_VALUE instructions describing one variable.
     RegVar->setDotDebugLocOffset(DotDebugLocEntries.size());
 
+    SmallVector<DebugLocEntry, 4> DebugLoc;
     for (SmallVectorImpl<const MachineInstr *>::const_iterator
              HI = History.begin(),
              HE = History.end();
@@ -1298,10 +1299,10 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
       LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
       DwarfCompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
       DebugLocEntry Loc = getDebugLocEntry(Asm, FLabel, SLabel, Begin, TheCU);
-      if (DotDebugLocEntries.empty() || !DotDebugLocEntries.back().Merge(Loc))
-        DotDebugLocEntries.push_back(std::move(Loc));
+      if (DebugLoc.empty() || !DebugLoc.back().Merge(Loc))
+        DebugLoc.push_back(std::move(Loc));
     }
-    DotDebugLocEntries.push_back(DebugLocEntry());
+    DotDebugLocEntries.push_back(std::move(DebugLoc));
   }
 
   // Collect info for variables that were optimized out.
@@ -2383,19 +2384,10 @@ void DwarfDebug::emitDebugLoc() {
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfLocSection());
   unsigned char Size = Asm->getDataLayout().getPointerSize();
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", 0));
-  unsigned index = 1;
-  for (SmallVectorImpl<DebugLocEntry>::const_iterator
-           I = DotDebugLocEntries.begin(),
-           E = DotDebugLocEntries.end();
-       I != E; ++I, ++index) {
-    const DebugLocEntry &Entry = *I;
-
-    if (Entry.isEmpty()) {
-      Asm->OutStreamer.EmitIntValue(0, Size);
-      Asm->OutStreamer.EmitIntValue(0, Size);
-      Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", index));
-    } else {
+  unsigned index = 0;
+  for (const auto &DebugLoc : DotDebugLocEntries) {
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", index));
+    for (const auto &Entry : DebugLoc) {
       // Set up the range. This range is relative to the entry point of the
       // compile unit. This is a hard coded 0 for low_pc when we're emitting
       // ranges, or the DW_AT_low_pc on the compile unit otherwise.
@@ -2420,6 +2412,9 @@ void DwarfDebug::emitDebugLoc() {
       // Close the range.
       Asm->OutStreamer.EmitLabel(end);
     }
+    Asm->OutStreamer.EmitIntValue(0, Size);
+    Asm->OutStreamer.EmitIntValue(0, Size);
+    ++index;
   }
 }
 

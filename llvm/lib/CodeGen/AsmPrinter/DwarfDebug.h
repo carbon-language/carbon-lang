@@ -366,7 +366,7 @@ class DwarfDebug : public AsmPrinterHandler {
   DenseMap<const MDNode *, DbgVariable *> AbstractVariables;
 
   // Collection of DebugLocEntry.
-  SmallVector<DebugLocEntry, 4> DotDebugLocEntries;
+  SmallVector<SmallVector<DebugLocEntry, 4>, 4> DotDebugLocEntries;
 
   // Collection of subprogram DIEs that are marked (at the end of the module)
   // as DW_AT_inline.
@@ -763,7 +763,8 @@ public:
   const DwarfCompileUnit *getPrevCU() const { return PrevCU; }
 
   /// Returns the entries for the .debug_loc section.
-  const SmallVectorImpl<DebugLocEntry> &getDebugLocEntries() const {
+  const SmallVectorImpl<SmallVector<DebugLocEntry, 4>> &
+  getDebugLocEntries() const {
     return DotDebugLocEntries;
   }
 
