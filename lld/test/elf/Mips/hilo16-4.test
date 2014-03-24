@@ -1,0 +1,40 @@
+# Check handling HI16/LO16 relocations go in mixed order.
+#
+# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s
+# RUN: lld -flavor gnu -target mipsel -e A -o %t-exe %t-obj
+# RUN: llvm-objdump -t -disassemble %t-exe | FileCheck %s
+
+# CHECK: Disassembly of section .text:
+# CHECK: A:
+# CHECK-NEXT: 400128:  42 00 08 3c  lui  $8, 66
+# CHECK-NEXT: 40012c:  40 00 08 3c  lui  $8, 64
+# CHECK-NEXT: 400130:  28 01 08 85  lh   $8, 296($8)
+# CHECK-NEXT: 400134:  38 01 08 85  lh   $8, 312($8)
+
+# CHECK: B:
+# CHECK-NEXT: 400138:  42 00 08 3c  lui  $8, 66
+# CHECK-NEXT: 40013c:  40 00 08 3c  lui  $8, 64
+# CHECK-NEXT: 400140:  38 01 08 85  lh   $8, 312($8)
+# CHECK-NEXT: 400144:  28 01 08 85  lh   $8, 296($8)
+
+# CHECK: SYMBOL TABLE:
+# CHECK: 00400128 g F .text  00000010 A
+# CHECK: 00400138 g F .text  00000010 B
+
+    .global A
+    .ent    A
+A:
+    lui     $t0,%hi(A+0x1ffff)
+    lui     $t0,%hi(B)
+    lh      $t0,%lo(A)($t0)
+    lh      $t0,%lo(B)($t0)
+    .end    A
+
+    .global B
+    .ent    B
+B:
+    lui     $t0,%hi(A+0x1ffff)
+    lui     $t0,%hi(B)
+    lh      $t0,%lo(B)($t0)
+    lh      $t0,%lo(A)($t0)
+    .end    B
