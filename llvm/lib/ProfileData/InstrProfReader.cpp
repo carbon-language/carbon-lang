@@ -118,11 +118,12 @@ uint64_t getRawMagic<uint32_t>() {
 
 template <class IntPtrT>
 bool RawInstrProfReader<IntPtrT>::hasFormat(const MemoryBuffer &DataBuffer) {
-  if (DataBuffer.getBufferSize() < sizeof(getRawMagic<IntPtrT>()))
+  if (DataBuffer.getBufferSize() < sizeof(uint64_t))
     return false;
-  const RawHeader *Header = (const RawHeader *)DataBuffer.getBufferStart();
-  return getRawMagic<IntPtrT>() == Header->Magic ||
-    sys::SwapByteOrder(getRawMagic<IntPtrT>()) == Header->Magic;
+  uint64_t Magic =
+    *reinterpret_cast<const uint64_t *>(DataBuffer.getBufferStart());
+  return getRawMagic<IntPtrT>() == Magic ||
+    sys::SwapByteOrder(getRawMagic<IntPtrT>()) == Magic;
 }
 
 template <class IntPtrT>
@@ -131,7 +132,8 @@ error_code RawInstrProfReader<IntPtrT>::readHeader() {
     return error(instrprof_error::bad_magic);
   if (DataBuffer->getBufferSize() < sizeof(RawHeader))
     return error(instrprof_error::bad_header);
-  const RawHeader *Header = (const RawHeader *)DataBuffer->getBufferStart();
+  auto *Header =
+    reinterpret_cast<const RawHeader *>(DataBuffer->getBufferStart());
   ShouldSwapBytes = Header->Magic != getRawMagic<IntPtrT>();
   return readHeader(*Header);
 }
@@ -159,10 +161,11 @@ error_code RawInstrProfReader<IntPtrT>::readHeader(const RawHeader &Header) {
   if (FileSize != DataBuffer->getBufferSize())
     return error(instrprof_error::bad_header);
 
-  Data = (ProfileData *)(DataBuffer->getBufferStart() + DataOffset);
+  const char *Start = DataBuffer->getBufferStart();
+  Data = reinterpret_cast<const ProfileData *>(Start + DataOffset);
   DataEnd = Data + DataSize;
-  CountersStart = (uint64_t *)(DataBuffer->getBufferStart() + CountersOffset);
-  NamesStart = DataBuffer->getBufferStart() + NamesOffset;
+  CountersStart = reinterpret_cast<const uint64_t *>(Start + CountersOffset);
+  NamesStart = Start + NamesOffset;
 
   return success();
 }
@@ -179,10 +182,11 @@ RawInstrProfReader<IntPtrT>::readNextRecord(InstrProfRecord &Record) {
                                 swap(Data->NumCounters));
 
   // Check bounds.
+  auto *NamesStartAsCounter = reinterpret_cast<const uint64_t *>(NamesStart);
   if (RawName.data() < NamesStart ||
       RawName.data() + RawName.size() > DataBuffer->getBufferEnd() ||
       RawCounts.data() < CountersStart ||
-      RawCounts.data() + RawCounts.size() > (uint64_t *)NamesStart)
+      RawCounts.data() + RawCounts.size() > NamesStartAsCounter)
     return error(instrprof_error::malformed);
 
   // Store the data in Record, byte-swapping as necessary.
