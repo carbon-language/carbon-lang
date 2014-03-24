@@ -2595,21 +2595,17 @@ CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
   }
 
   if (!GV) {
+    SmallString<256> MangledNameBuffer;
     StringRef GlobalVariableName;
     llvm::GlobalValue::LinkageTypes LT;
     if (!LangOpts.WritableStrings &&
         getCXXABI().getMangleContext().shouldMangleStringLiteral(S)) {
-      LT = llvm::GlobalValue::LinkOnceODRLinkage;
-
-      SmallString<256> Buffer;
-      llvm::raw_svector_ostream Out(Buffer);
+      llvm::raw_svector_ostream Out(MangledNameBuffer);
       getCXXABI().getMangleContext().mangleStringLiteral(S, Out);
       Out.flush();
 
-      size_t Length = Buffer.size();
-      char *Name = MangledNamesAllocator.Allocate<char>(Length);
-      std::copy(Buffer.begin(), Buffer.end(), Name);
-      GlobalVariableName = StringRef(Name, Length);
+      LT = llvm::GlobalValue::LinkOnceODRLinkage;
+      GlobalVariableName = MangledNameBuffer;
     } else {
       LT = llvm::GlobalValue::PrivateLinkage;;
       GlobalVariableName = ".str";

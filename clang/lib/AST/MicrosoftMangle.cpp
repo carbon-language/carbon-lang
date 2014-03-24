@@ -30,8 +30,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/MathExtras.h"
 
-#include <algorithm>
-
 using namespace clang;
 
 namespace {
@@ -2413,73 +2411,80 @@ void MicrosoftMangleContextImpl::mangleStringLiteral(const StringLiteral *SL,
   // (including null-terminator bytes) of the StringLiteral.
   // Each character is encoded by splitting them into bytes and then encoding
   // the constituent bytes.
-  auto MangleCharacter = [&Mangler](char Byte) {
+  auto MangleByte = [&Mangler](char Byte) {
     // There are five different manglings for characters:
-    // - ?[0-9]: The set of [,/\:. \n\t'-].
     // - [a-zA-Z0-9_$]: A one-to-one mapping.
     // - ?[a-z]: The range from \xe1 to \xfa.
     // - ?[A-Z]: The range from \xc1 to \xda.
+    // - ?[0-9]: The set of [,/\:. \n\t'-].
     // - ?$XX: A fallback which maps nibbles.
-    static const char SpecialMap[] = {',', '/',  '\\', ':',  '.',
-                                      ' ', '\n', '\t', '\'', '-'};
-    const char *SpecialMapI =
-        std::find(std::begin(SpecialMap), std::end(SpecialMap), Byte);
-    if (SpecialMapI != std::end(SpecialMap)) {
-      Mangler.getStream() << '?' << SpecialMapI - SpecialMap;
-    } else if ((Byte >= 'a' && Byte <= 'z') || (Byte >= 'A' && Byte <= 'Z') ||
-               (Byte >= '0' && Byte <= '9') || Byte == '_' || Byte == '$') {
+    if ((Byte >= 'a' && Byte <= 'z') || (Byte >= 'A' && Byte <= 'Z') ||
+        (Byte >= '0' && Byte <= '9') || Byte == '_' || Byte == '$') {
       Mangler.getStream() << Byte;
     } else if (Byte >= '\xe1' && Byte <= '\xfa') {
-      Mangler.getStream() << '?' << (char)('a' + Byte - '\xe1');
+      Mangler.getStream() << '?' << static_cast<char>('a' + (Byte - '\xe1'));
     } else if (Byte >= '\xc1' && Byte <= '\xda') {
-      Mangler.getStream() << '?' << (char)('A' + Byte - '\xc1');
+      Mangler.getStream() << '?' << static_cast<char>('A' + (Byte - '\xc1'));
     } else {
-      Mangler.getStream() << "?$";
-      Mangler.getStream() << (char)('A' + ((Byte >> 4) & 0xf));
-      Mangler.getStream() << (char)('A' + (Byte & 0xf));
+      switch (Byte) {
+        case ',':
+          Mangler.getStream() << "?0";
+          break;
+        case '/':
+          Mangler.getStream() << "?1";
+          break;
+        case '\\':
+          Mangler.getStream() << "?2";
+          break;
+        case ':':
+          Mangler.getStream() << "?3";
+          break;
+        case '.':
+          Mangler.getStream() << "?4";
+          break;
+        case ' ':
+          Mangler.getStream() << "?5";
+          break;
+        case '\n':
+          Mangler.getStream() << "?6";
+          break;
+        case '\t':
+          Mangler.getStream() << "?7";
+          break;
+        case '\'':
+          Mangler.getStream() << "?8";
+          break;
+        case '-':
+          Mangler.getStream() << "?9";
+          break;
+        default:
+          Mangler.getStream() << "?$";
+          Mangler.getStream() << static_cast<char>('A' + ((Byte >> 4) & 0xf));
+          Mangler.getStream() << static_cast<char>('A' + (Byte & 0xf));
+          break;
+      }
+    }
+  };
+
+  auto MangleChar = [&Mangler, &MangleByte, &SL](uint32_t CodeUnit) {
+    if (SL->getCharByteWidth() == 1) {
+      MangleByte(static_cast<char>(CodeUnit));
+    } else if (SL->getCharByteWidth() == 2) {
+      MangleByte(static_cast<char>((CodeUnit >> 16) & 0xff));
+      MangleByte(static_cast<char>(CodeUnit & 0xff));
+    } else {
+      llvm_unreachable("unsupported CharByteWidth");
     }
   };
 
   // Enforce our 32 character max.
-  unsigned MaxBytes = 32 * SL->getCharByteWidth();
-  StringRef Bytes = SL->getBytes().substr(0, MaxBytes);
-  size_t BytesLength = Bytes.size();
+  unsigned NumCharsToMangle = std::min(32U, SL->getLength());
+  for (unsigned i = 0; i < NumCharsToMangle; ++i)
+    MangleChar(SL->getCodeUnit(i));
 
-  if (SL->isAscii()) {
-    // A character maps directly to a byte for ASCII StringLiterals.
-    for (char Byte : Bytes)
-      MangleCharacter(Byte);
-  } else if (SL->isWide()) {
-    // The ordering of bytes in a wide StringLiteral is like so:
-    //   A B C D ...
-    // However, they are mangled in the following order:
-    //   B A D C ...
-    for (size_t i = 0; i != BytesLength;) {
-      char FirstByte = Bytes[i];
-      ++i;
-      if (i != BytesLength) {
-        char SecondByte = Bytes[i];
-        ++i;
-        MangleCharacter(SecondByte);
-      }
-      MangleCharacter(FirstByte);
-    }
-  } else {
-    llvm_unreachable("unexpected string literal kind!");
-    // TODO: This needs to be updated when MSVC gains support for Unicode
-    // literals.
-  }
-
-  // We should also encode the NUL terminator(s) if we encoded less than 32
-  // characters.
-  if (BytesLength < MaxBytes) {
-    size_t PaddingBytes = SL->getCharByteWidth();
-    size_t BytesLeft = MaxBytes - BytesLength;
-    if (BytesLeft < PaddingBytes)
-      PaddingBytes = BytesLeft;
-    for (unsigned i = 0; i < PaddingBytes; ++i)
-      MangleCharacter('\x00');
-  }
+  // Encode the NUL terminator if there is room.
+  if (NumCharsToMangle < 32)
+    MangleChar(0);
 
   Mangler.getStream() << '@';
 }
