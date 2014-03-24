@@ -939,6 +939,7 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   // Target properties.
   if (getTriple().getArch() == llvm::Triple::ppc64le) {
     Builder.defineMacro("_LITTLE_ENDIAN");
+    Builder.defineMacro("_CALL_ELF","2");
   } else {
     if (getTriple().getOS() != llvm::Triple::NetBSD &&
         getTriple().getOS() != llvm::Triple::OpenBSD)
