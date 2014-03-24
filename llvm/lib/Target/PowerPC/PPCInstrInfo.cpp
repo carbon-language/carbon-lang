@@ -710,12 +710,14 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   else if (PPC::VRRCRegClass.contains(DestReg, SrcReg))
     Opc = PPC::VOR;
   else if (PPC::VSRCRegClass.contains(DestReg, SrcReg))
-    // FIXME: There are really two different ways this can be done, and we
-    // should pick the better one depending on the situation:
+    // There are two different ways this can be done:
     //   1. xxlor : This has lower latency (on the P7), 2 cycles, but can only
     //      issue in VSU pipeline 0.
     //   2. xmovdp/xmovsp: This has higher latency (on the P7), 6 cycles, but
     //      can go to either pipeline.
+    // We'll always use xxlor here, because in practically all cases where
+    // copies are generated, they are close enough to some use that the
+    // lower-latency form is preferable.
     Opc = PPC::XXLOR;
   else if (PPC::CRBITRCRegClass.contains(DestReg, SrcReg))
     Opc = PPC::CROR;
