@@ -13,6 +13,8 @@
 #include <stdint.h>
 
 // C++ Includes
+#include <mutex> // std::once
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Log.h"
