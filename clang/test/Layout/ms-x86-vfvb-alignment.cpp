@@ -33,14 +33,14 @@ struct A : B0, virtual B1 { __declspec(align(16)) int a; A() : a(0xf000000A) {} 
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct A
 // CHECK-X64-NEXT:    0 |   (A vftable pointer)
-// CHECK-X64-NEXT:    8 |   struct B0 (base)
-// CHECK-X64-NEXT:    8 |     int a
-// CHECK-X64-NEXT:   16 |   (A vbtable pointer)
-// CHECK-X64-NEXT:   32 |   int a
-// CHECK-X64-NEXT:   48 |   struct B1 (virtual base)
-// CHECK-X64-NEXT:   48 |     char a
-// CHECK-X64-NEXT:      | [sizeof=64, align=16
-// CHECK-X64-NEXT:      |  nvsize=48, nvalign=16]
+// CHECK-X64-NEXT:   16 |   struct B0 (base)
+// CHECK-X64-NEXT:   16 |     int a
+// CHECK-X64-NEXT:   24 |   (A vbtable pointer)
+// CHECK-X64-NEXT:   48 |   int a
+// CHECK-X64-NEXT:   64 |   struct B1 (virtual base)
+// CHECK-X64-NEXT:   64 |     char a
+// CHECK-X64-NEXT:      | [sizeof=80, align=16
+// CHECK-X64-NEXT:      |  nvsize=64, nvalign=16]
 
 struct B : A, B2 { int a; B() : a(0xf000000B) {} virtual void f() { printf("B"); } };
 
@@ -66,18 +66,18 @@ struct B : A, B2 { int a; B() : a(0xf000000B) {} virtual void f() { printf("B");
 // CHECK-X64-NEXT:    0 | struct B
 // CHECK-X64-NEXT:    0 |   struct A (primary base)
 // CHECK-X64-NEXT:    0 |     (A vftable pointer)
-// CHECK-X64-NEXT:    8 |     struct B0 (base)
-// CHECK-X64-NEXT:    8 |       int a
-// CHECK-X64-NEXT:   16 |     (A vbtable pointer)
-// CHECK-X64-NEXT:   32 |     int a
-// CHECK-X64-NEXT:   48 |   struct B2 (base)
-// CHECK-X64-NEXT:   48 |     (B2 vbtable pointer)
-// CHECK-X64-NEXT:   56 |     int a
-// CHECK-X64-NEXT:   64 |   int a
-// CHECK-X64-NEXT:   80 |   struct B1 (virtual base)
-// CHECK-X64-NEXT:   80 |     char a
-// CHECK-X64-NEXT:      | [sizeof=96, align=16
-// CHECK-X64-NEXT:      |  nvsize=80, nvalign=16]
+// CHECK-X64-NEXT:   16 |     struct B0 (base)
+// CHECK-X64-NEXT:   16 |       int a
+// CHECK-X64-NEXT:   24 |     (A vbtable pointer)
+// CHECK-X64-NEXT:   48 |     int a
+// CHECK-X64-NEXT:   64 |   struct B2 (base)
+// CHECK-X64-NEXT:   64 |     (B2 vbtable pointer)
+// CHECK-X64-NEXT:   72 |     int a
+// CHECK-X64-NEXT:   80 |   int a
+// CHECK-X64-NEXT:   96 |   struct B1 (virtual base)
+// CHECK-X64-NEXT:   96 |     char a
+// CHECK-X64-NEXT:      | [sizeof=112, align=16
+// CHECK-X64-NEXT:      |  nvsize=96, nvalign=16]
 
 struct C : B4 { int a; C() : a(0xf000000C) {} virtual void f() { printf("C"); } };
 
@@ -189,11 +189,11 @@ struct F : B3, virtual B0 { int a; F() : a(0xf000000F) {} virtual void f() { pri
 // CHECK-X64-NEXT:   16 |   struct B3 (base)
 // CHECK-X64-NEXT:   16 |     int a
 // CHECK-X64-NEXT:   32 |   (F vbtable pointer)
-// CHECK-X64-NEXT:   40 |   int a
-// CHECK-X64-NEXT:   48 |   struct B0 (virtual base)
-// CHECK-X64-NEXT:   48 |     int a
-// CHECK-X64-NEXT:      | [sizeof=64, align=16
-// CHECK-X64-NEXT:      |  nvsize=48, nvalign=16]
+// CHECK-X64-NEXT:   48 |   int a
+// CHECK-X64-NEXT:   64 |   struct B0 (virtual base)
+// CHECK-X64-NEXT:   64 |     int a
+// CHECK-X64-NEXT:      | [sizeof=80, align=16
+// CHECK-X64-NEXT:      |  nvsize=64, nvalign=16]
 
 struct G : B2, B6, virtual B1 { int a; G() : a(0xf0000010) {} };
 
@@ -274,8 +274,8 @@ struct I : B0, virtual B1 { int a; int a1; __declspec(align(16)) int a2; I() : a
 // CHECK-X64-NEXT:    0 |   struct B0 (base)
 // CHECK-X64-NEXT:    0 |     int a
 // CHECK-X64-NEXT:    8 |   (I vbtable pointer)
-// CHECK-X64-NEXT:   16 |   int a
-// CHECK-X64-NEXT:   20 |   int a1
+// CHECK-X64-NEXT:   20 |   int a
+// CHECK-X64-NEXT:   24 |   int a1
 // CHECK-X64-NEXT:   32 |   int a2
 // CHECK-X64-NEXT:   48 |   struct B1 (virtual base)
 // CHECK-X64-NEXT:   48 |     char a
@@ -304,12 +304,12 @@ struct J : B0, B3, virtual B1 { int a; int a1; J() : a(0xf0000012), a1(0xf000001
 // CHECK-X64-NEXT:   16 |   struct B3 (base)
 // CHECK-X64-NEXT:   16 |     int a
 // CHECK-X64-NEXT:   32 |   (J vbtable pointer)
-// CHECK-X64-NEXT:   40 |   int a
-// CHECK-X64-NEXT:   44 |   int a1
-// CHECK-X64-NEXT:   48 |   struct B1 (virtual base)
-// CHECK-X64-NEXT:   48 |     char a
-// CHECK-X64-NEXT:      | [sizeof=64, align=16
-// CHECK-X64-NEXT:      |  nvsize=48, nvalign=16]
+// CHECK-X64-NEXT:   48 |   int a
+// CHECK-X64-NEXT:   52 |   int a1
+// CHECK-X64-NEXT:   64 |   struct B1 (virtual base)
+// CHECK-X64-NEXT:   64 |     char a
+// CHECK-X64-NEXT:      | [sizeof=80, align=16
+// CHECK-X64-NEXT:      |  nvsize=64, nvalign=16]
 
 struct K { int a; K() : a(0xf0000013) {} virtual void f() { printf("K"); } };
 

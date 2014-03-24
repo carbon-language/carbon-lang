@@ -240,7 +240,7 @@ struct G : virtual C0, virtual B0, virtual B1, D0, virtual C1 {
 // CHECK-X64-NEXT:    0 |   struct D0 (primary base)
 // CHECK-X64-NEXT:    0 |     (D0 vftable pointer)
 // CHECK-X64-NEXT:    8 |   (G vbtable pointer)
-// CHECK-X64-NEXT:   16 |   int a
+// CHECK-X64-NEXT:   24 |   int a
 // CHECK-X64-NEXT:   32 |   struct C0 (virtual base)
 // CHECK-X64-NEXT:   32 |     int a
 // CHECK-X64-NEXT:   40 |   struct B0 (virtual base) (empty)

@@ -612,9 +612,9 @@ struct G : B8, B1, virtual B0 {
 // CHECK-X64-NEXT:    0 | struct G
 // CHECK-X64-NEXT:    0 |   struct B8 (base)
 // CHECK-X64-NEXT:    0 |     char [5] c
-// CHECK-X64-NEXT:   16 |   struct B1 (base) (empty)
+// CHECK-X64-NEXT:   21 |   struct B1 (base) (empty)
 // CHECK-X64-NEXT:    8 |   (G vbtable pointer)
-// CHECK-X64-NEXT:   16 |   int a
+// CHECK-X64-NEXT:   24 |   int a
 // CHECK-X64-NEXT:   32 |   int a1
 // CHECK-X64-NEXT:   48 |   struct B0 (virtual base) (empty)
 // CHECK-X64-NEXT:      | [sizeof=48, align=16
@@ -651,7 +651,7 @@ struct AX : B1X, B2X, B3X, B4X, virtual B0X {
 // CHECK-X64-NEXT:    0 |   struct B1X (base) (empty)
 // CHECK-X64-NEXT:   16 |   struct B2X (base) (empty)
 // CHECK-X64-NEXT:   18 |   struct B3X (base) (empty)
-// CHECK-X64-NEXT:   33 |   struct B4X (base) (empty)
+// CHECK-X64-NEXT:   35 |   struct B4X (base) (empty)
 // CHECK-X64-NEXT:   24 |   (AX vbtable pointer)
 // CHECK-X64-NEXT:   36 |   int a
 // CHECK-X64-NEXT:   48 |   struct B0X (virtual base) (empty)
@@ -679,7 +679,7 @@ struct BX : B2X, B1X, B3X, B4X, virtual B0X {
 // CHECK-X64-NEXT:    0 |   struct B2X (base) (empty)
 // CHECK-X64-NEXT:    1 |   struct B1X (base) (empty)
 // CHECK-X64-NEXT:    2 |   struct B3X (base) (empty)
-// CHECK-X64-NEXT:   17 |   struct B4X (base) (empty)
+// CHECK-X64-NEXT:   19 |   struct B4X (base) (empty)
 // CHECK-X64-NEXT:    8 |   (BX vbtable pointer)
 // CHECK-X64-NEXT:   20 |   int a
 // CHECK-X64-NEXT:   32 |   struct B0X (virtual base) (empty)
@@ -706,7 +706,7 @@ struct CX : B1X, B3X, B2X, virtual B0X {
 // CHECK-X64-NEXT:    0 |   struct B1X (base) (empty)
 // CHECK-X64-NEXT:    2 |   struct B3X (base) (empty)
 // CHECK-X64-NEXT:   32 |   struct B2X (base) (empty)
-// CHECK-X64-NEXT:    8 |   (CX vbtable pointer)
+// CHECK-X64-NEXT:   16 |   (CX vbtable pointer)
 // CHECK-X64-NEXT:   32 |   int a
 // CHECK-X64-NEXT:   48 |   struct B0X (virtual base) (empty)
 // CHECK-X64-NEXT:      | [sizeof=48, align=16

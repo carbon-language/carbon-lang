@@ -2137,7 +2137,6 @@ public:
                             const ASTRecordLayout *&PreviousBaseLayout);
   void injectVFPtr(const CXXRecordDecl *RD);
   void injectVBPtr(const CXXRecordDecl *RD);
-  void injectVPtrs(const CXXRecordDecl *RD);
   /// \brief Lays out the fields of the record.  Also rounds size up to
   /// alignment.
   void layoutFields(const RecordDecl *RD);
@@ -2300,7 +2299,10 @@ void MicrosoftRecordLayoutBuilder::cxxLayout(const CXXRecordDecl *RD) {
   initializeCXXLayout(RD);
   layoutNonVirtualBases(RD);
   layoutFields(RD);
-  injectVPtrs(RD);
+  injectVBPtr(RD);
+  injectVFPtr(RD);
+  if (HasOwnVFPtr || (HasVBPtr && !SharedVBPtrBase))
+    Alignment = std::max(Alignment, PointerInfo.Alignment);
   NonVirtualSize = Size = Size.RoundUpToAlignment(Alignment);
   RequiredAlignment = std::max(
       RequiredAlignment, Context.toCharUnitsFromBits(RD->getMaxAlignment()));
@@ -2568,76 +2570,6 @@ void MicrosoftRecordLayoutBuilder::injectVFPtr(const CXXRecordDecl *RD) {
   for (BaseOffsetsMapTy::iterator i = Bases.begin(), e = Bases.end();
        i != e; ++i)
     i->second += Offset;
-}
-
-void MicrosoftRecordLayoutBuilder::injectVPtrs(const CXXRecordDecl *RD) {
-  if (!(HasOwnVFPtr || (HasVBPtr && !SharedVBPtrBase)))
-    return;
-  if (!Is64BitMode || RequiredAlignment <= CharUnits::fromQuantity(8)) {
-    // Note that the VBPtr is injected first.  It depends on the alignment of
-    // the object *before* the alignment is updated by inserting a pointer into
-    // the record.
-    injectVBPtr(RD);
-    injectVFPtr(RD);
-    Alignment = std::max(Alignment, PointerInfo.Alignment);
-    return;
-  }
-  // In 64-bit mode, structs with RequiredAlignment greater than 8 get special
-  // layout rules.  Likely this is to avoid excessive padding intruced around
-  // the vfptrs and vbptrs.  The special rules involve re-laying out the struct
-  // and inserting the vfptr and vbptr as if they were fields/bases.
-  FieldOffsets.clear();
-  Bases.clear();
-  Size = CharUnits::Zero();
-  Alignment = std::max(Alignment, PointerInfo.Alignment);
-  if (HasOwnVFPtr)
-    Size = PointerInfo.Size;
-  layoutNonVirtualBases(RD);
-  if (HasVBPtr && !SharedVBPtrBase) {
-    const CXXRecordDecl *PenultBaseDecl = 0;
-    const CXXRecordDecl *LastBaseDecl = 0;
-    // Iterate through the bases and find the last two non-virtual bases.
-    for (const auto &I : RD->bases()) {
-      if (I.isVirtual())
-        continue;
-      const CXXRecordDecl *BaseDecl = I.getType()->getAsCXXRecordDecl();
-      if (!LastBaseDecl || Bases[BaseDecl] > Bases[LastBaseDecl]) {
-        PenultBaseDecl = LastBaseDecl;
-        LastBaseDecl = BaseDecl;
-      }
-    }
-    const ASTRecordLayout *PenultBaseLayout = PenultBaseDecl ?
-        &Context.getASTRecordLayout(PenultBaseDecl) : 0;
-    const ASTRecordLayout *LastBaseLayout = LastBaseDecl ?
-        &Context.getASTRecordLayout(LastBaseDecl) : 0;
-    // Calculate the vbptr offset.  The rule is different than in the general
-    // case layout.  Particularly, if the last two non-virtual bases are both
-    // zero sized, the site of the vbptr is *before* the padding that occurs
-    // between the two zero sized bases and the vbptr potentially aliases with
-    // the first of these two bases.  We have no understanding of why this is
-    // different from the general case layout but it may have to do with lazy
-    // placement of zero sized bases.
-    VBPtrOffset = Size;
-    if (LastBaseLayout && LastBaseLayout->getNonVirtualSize().isZero()) {
-      VBPtrOffset = Bases[LastBaseDecl];
-      if (PenultBaseLayout && PenultBaseLayout->getNonVirtualSize().isZero())
-        VBPtrOffset = Bases[PenultBaseDecl];
-    }
-    // Once we've located a spot for the vbptr, place it.
-    VBPtrOffset = VBPtrOffset.RoundUpToAlignment(PointerInfo.Alignment);
-    Size = VBPtrOffset + PointerInfo.Size;
-    if (LastBaseLayout && LastBaseLayout->getNonVirtualSize().isZero()) {
-      // Add the padding between zero sized bases after the vbptr.
-      if (PenultBaseLayout && PenultBaseLayout->getNonVirtualSize().isZero())
-        Size += CharUnits::One();
-      Size = Size.RoundUpToAlignment(LastBaseLayout->getRequiredAlignment());
-      Bases[LastBaseDecl] = Size;
-    }
-  }
-  layoutFields(RD);
-  // The presence of a vbptr suppresses zero sized objects that are not in
-  // virtual bases.
-  HasZeroSizedSubObject = false;
 }
 
 void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {

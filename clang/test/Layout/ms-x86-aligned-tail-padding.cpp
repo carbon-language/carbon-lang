@@ -105,11 +105,11 @@ struct A : B1, B0, B2, virtual V {
 // CHECK-X64-NEXT:   16 |   struct B2 (base)
 // CHECK-X64-NEXT:   16 |     int a
 // CHECK-X64-NEXT:   32 |   (A vbtable pointer)
-// CHECK-X64-NEXT:   40 |   int a
-// CHECK-X64-NEXT:   48 |   struct V (virtual base)
-// CHECK-X64-NEXT:   48 |     char a
-// CHECK-X64-NEXT:      | [sizeof=64, align=16
-// CHECK-X64-NEXT:      |  nvsize=48, nvalign=16]
+// CHECK-X64-NEXT:   48 |   int a
+// CHECK-X64-NEXT:   64 |   struct V (virtual base)
+// CHECK-X64-NEXT:   64 |     char a
+// CHECK-X64-NEXT:      | [sizeof=80, align=16
+// CHECK-X64-NEXT:      |  nvsize=64, nvalign=16]
 
 struct B : B2, B0, B1, virtual V {
 	int a;
@@ -139,7 +139,7 @@ struct B : B2, B0, B1, virtual V {
 // CHECK-X64-NEXT:   32 |   struct B1 (base)
 // CHECK-X64-NEXT:   32 |     int a
 // CHECK-X64-NEXT:   40 |   (B vbtable pointer)
-// CHECK-X64-NEXT:   48 |   int a
+// CHECK-X64-NEXT:   52 |   int a
 // CHECK-X64-NEXT:   64 |   struct V (virtual base)
 // CHECK-X64-NEXT:   64 |     char a
 // CHECK-X64-NEXT:      | [sizeof=80, align=16
@@ -171,12 +171,12 @@ struct C : B1, B0, virtual V {
 // CHECK-X64-NEXT:    4 |   struct B0 (base)
 // CHECK-X64-NEXT:    4 |     int a
 // CHECK-X64-NEXT:    8 |   (C vbtable pointer)
-// CHECK-X64-NEXT:   16 |   int a
-// CHECK-X64-NEXT:   24 |   long long a1
-// CHECK-X64-NEXT:   32 |   struct V (virtual base)
-// CHECK-X64-NEXT:   32 |     char a
-// CHECK-X64-NEXT:      | [sizeof=48, align=16
-// CHECK-X64-NEXT:      |  nvsize=32, nvalign=16]
+// CHECK-X64-NEXT:   24 |   int a
+// CHECK-X64-NEXT:   32 |   long long a1
+// CHECK-X64-NEXT:   48 |   struct V (virtual base)
+// CHECK-X64-NEXT:   48 |     char a
+// CHECK-X64-NEXT:      | [sizeof=64, align=16
+// CHECK-X64-NEXT:      |  nvsize=48, nvalign=16]
 
 struct D : B2, B0, virtual V {
 	int a;
@@ -202,7 +202,7 @@ struct D : B2, B0, virtual V {
 // CHECK-X64-NEXT:   16 |   struct B0 (base)
 // CHECK-X64-NEXT:   16 |     int a
 // CHECK-X64-NEXT:   24 |   (D vbtable pointer)
-// CHECK-X64-NEXT:   32 |   int a
+// CHECK-X64-NEXT:   36 |   int a
 // CHECK-X64-NEXT:   48 |   struct V (virtual base)
 // CHECK-X64-NEXT:   48 |     char a
 // CHECK-X64-NEXT:      | [sizeof=64, align=16
@@ -236,7 +236,7 @@ struct E : B3, B0, virtual V {
 // CHECK-X64-NEXT:   16 |   struct B0 (base)
 // CHECK-X64-NEXT:   16 |     int a
 // CHECK-X64-NEXT:   24 |   (E vbtable pointer)
-// CHECK-X64-NEXT:   32 |   int a
+// CHECK-X64-NEXT:   36 |   int a
 // CHECK-X64-NEXT:   48 |   struct V (virtual base)
 // CHECK-X64-NEXT:   48 |     char a
 // CHECK-X64-NEXT:      | [sizeof=64, align=16
@@ -269,13 +269,13 @@ struct F : B0, virtual V1 {
 // CHECK-X64-NEXT:    0 |   struct B0 (base)
 // CHECK-X64-NEXT:    0 |     int a
 // CHECK-X64-NEXT:    8 |   (F vbtable pointer)
-// CHECK-X64-NEXT:   16 |   int a
-// CHECK-X64-NEXT:   60 |   (vtordisp for vbase V1)
-// CHECK-X64-NEXT:   64 |   struct V1 (virtual base)
-// CHECK-X64-NEXT:   64 |     (V1 vftable pointer)
-// CHECK-X64-NEXT:   96 |     struct A16 (base) (empty)
-// CHECK-X64-NEXT:      | [sizeof=96, align=32
-// CHECK-X64-NEXT:      |  nvsize=32, nvalign=32]
+// CHECK-X64-NEXT:   32 |   int a
+// CHECK-X64-NEXT:   92 |   (vtordisp for vbase V1)
+// CHECK-X64-NEXT:   96 |   struct V1 (virtual base)
+// CHECK-X64-NEXT:   96 |     (V1 vftable pointer)
+// CHECK-X64-NEXT:  128 |     struct A16 (base) (empty)
+// CHECK-X64-NEXT:      | [sizeof=128, align=32
+// CHECK-X64-NEXT:      |  nvsize=48, nvalign=32]
 
 struct G : virtual V2, virtual V3 {
 	int a;
@@ -389,7 +389,7 @@ struct AX : B0X, virtual B2X, virtual B6X, virtual B3X {
 // CHECK-X64-NEXT:   16 |     int a
 // CHECK-X64-NEXT:   20 |     int a1
 // CHECK-X64-NEXT:   24 |   (AX vbtable pointer)
-// CHECK-X64-NEXT:   32 |   int a
+// CHECK-X64-NEXT:   40 |   int a
 // CHECK-X64-NEXT:   48 |   struct B2X (virtual base)
 // CHECK-X64-NEXT:   48 |     int a
 // CHECK-X64-NEXT:   52 |   struct B6X (virtual base)
@@ -439,17 +439,17 @@ struct BX : B4X, virtual B2X, virtual B6X, virtual B3X {
 // CHECK-X64-NEXT:   16 |     int a
 // CHECK-X64-NEXT:   20 |     int a1
 // CHECK-X64-NEXT:   32 |   (BX vbtable pointer)
-// CHECK-X64-NEXT:   40 |   int a
-// CHECK-X64-NEXT:   48 |   struct B2X (virtual base)
-// CHECK-X64-NEXT:   48 |     int a
-// CHECK-X64-NEXT:   52 |   struct B6X (virtual base)
-// CHECK-X64-NEXT:   52 |     int a
-// CHECK-X64-NEXT:   76 |   (vtordisp for vbase B3X)
-// CHECK-X64-NEXT:   80 |   struct B3X (virtual base)
-// CHECK-X64-NEXT:   80 |     (B3X vftable pointer)
-// CHECK-X64-NEXT:   88 |     int a
-// CHECK-X64-NEXT:      | [sizeof=96, align=16
-// CHECK-X64-NEXT:      |  nvsize=48, nvalign=16]
+// CHECK-X64-NEXT:   48 |   int a
+// CHECK-X64-NEXT:   64 |   struct B2X (virtual base)
+// CHECK-X64-NEXT:   64 |     int a
+// CHECK-X64-NEXT:   68 |   struct B6X (virtual base)
+// CHECK-X64-NEXT:   68 |     int a
+// CHECK-X64-NEXT:   92 |   (vtordisp for vbase B3X)
+// CHECK-X64-NEXT:   96 |   struct B3X (virtual base)
+// CHECK-X64-NEXT:   96 |     (B3X vftable pointer)
+// CHECK-X64-NEXT:  104 |     int a
+// CHECK-X64-NEXT:      | [sizeof=112, align=16
+// CHECK-X64-NEXT:      |  nvsize=64, nvalign=16]
 
 struct CX : B5X, virtual B2X, virtual B6X, virtual B3X {
 	int a;

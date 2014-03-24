@@ -35,14 +35,14 @@ struct A : B0, virtual B1 {
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct A
 // CHECK-X64-NEXT:    0 |   (A vftable pointer)
-// CHECK-X64-NEXT:    8 |   struct B0 (base)
-// CHECK-X64-NEXT:    8 |     int a
-// CHECK-X64-NEXT:   16 |   (A vbtable pointer)
-// CHECK-X64-NEXT:   32 |   int a
-// CHECK-X64-NEXT:   48 |   struct B1 (virtual base)
-// CHECK-X64-NEXT:   48 |     int a
-// CHECK-X64-NEXT:      | [sizeof=64, align=16
-// CHECK-X64-NEXT:      |  nvsize=48, nvalign=16]
+// CHECK-X64-NEXT:   16 |   struct B0 (base)
+// CHECK-X64-NEXT:   16 |     int a
+// CHECK-X64-NEXT:   24 |   (A vbtable pointer)
+// CHECK-X64-NEXT:   48 |   int a
+// CHECK-X64-NEXT:   64 |   struct B1 (virtual base)
+// CHECK-X64-NEXT:   64 |     int a
+// CHECK-X64-NEXT:      | [sizeof=80, align=16
+// CHECK-X64-NEXT:      |  nvsize=64, nvalign=16]
 
 struct B : B2, B0, virtual B1 {
 	__declspec(align(16)) int a;
@@ -100,10 +100,10 @@ struct C : B3, B0, virtual B1 {
 // CHECK-X64: *** Dumping AST Record Layout
 // CHECK-X64-NEXT:    0 | struct C
 // CHECK-X64-NEXT:    0 |   (C vftable pointer)
-// CHECK-X64-NEXT:    8 |   struct B3 (base)
-// CHECK-X64-NEXT:    8 |     (B3 vbtable pointer)
-// CHECK-X64-NEXT:   16 |   struct B0 (base)
-// CHECK-X64-NEXT:   16 |     int a
+// CHECK-X64-NEXT:   16 |   struct B3 (base)
+// CHECK-X64-NEXT:   16 |     (B3 vbtable pointer)
+// CHECK-X64-NEXT:   24 |   struct B0 (base)
+// CHECK-X64-NEXT:   24 |     int a
 // CHECK-X64-NEXT:   32 |   int a
 // CHECK-X64-NEXT:   48 |   struct B1 (virtual base)
 // CHECK-X64-NEXT:   48 |     int a
