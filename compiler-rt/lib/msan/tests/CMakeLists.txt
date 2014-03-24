@@ -13,9 +13,9 @@ set(MSAN_LIBCXX_CFLAGS
   -fsanitize-memory-track-origins
   -fPIC
   -Wno-\#warnings
+  -Wno-pedantic
   -g
   -O2
-  -std=c++0x
   -fstrict-aliasing
   -fno-exceptions
   -nostdinc++
@@ -44,7 +44,6 @@ set(MSAN_UNITTEST_COMMON_CFLAGS
   -I${COMPILER_RT_SOURCE_DIR}/include
   -I${COMPILER_RT_SOURCE_DIR}/lib
   -I${COMPILER_RT_SOURCE_DIR}/lib/msan
-  -std=c++11
   -stdlib=libc++
   -g
   -O2
@@ -52,6 +51,9 @@ set(MSAN_UNITTEST_COMMON_CFLAGS
   -fno-omit-frame-pointer
   -mno-omit-leaf-frame-pointer
   -Wno-deprecated-declarations
+  -Wno-unused-variable
+  -Wno-zero-length-array
+  -Werror=sign-compare
 )
 set(MSAN_UNITTEST_INSTRUMENTED_CFLAGS
   ${MSAN_UNITTEST_COMMON_CFLAGS}

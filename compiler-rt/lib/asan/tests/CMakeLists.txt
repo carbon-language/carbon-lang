@@ -26,9 +26,7 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -I${COMPILER_RT_SOURCE_DIR}/lib
   -I${COMPILER_RT_SOURCE_DIR}/lib/asan
   -I${COMPILER_RT_SOURCE_DIR}/lib/sanitizer_common/tests
-  -Wall
   -Wno-format
-  -Werror
   -Werror=sign-compare
   -g
   -O2)
@@ -146,7 +144,7 @@ macro(add_asan_tests_for_arch arch)
   set(ASAN_INST_TEST_OBJECTS)
   foreach(src ${ASAN_INST_TEST_SOURCES})
     asan_compile(ASAN_INST_TEST_OBJECTS ${src} ${arch}
-                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} -std=c++11)
+                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
   endforeach()
   if (APPLE)
     # Add Mac-specific helper.
@@ -180,7 +178,7 @@ macro(add_asan_tests_for_arch arch)
   set(ASAN_NOINST_TEST_OBJECTS)
   foreach(src ${ASAN_NOINST_TEST_SOURCES})
     asan_compile(ASAN_NOINST_TEST_OBJECTS ${src} ${arch}
-                 ${ASAN_UNITTEST_COMMON_CFLAGS} -std=c++11)
+                 ${ASAN_UNITTEST_COMMON_CFLAGS})
   endforeach()
   add_asan_test(AsanUnitTests "Asan-${arch}-Noinst-Test" ${arch}
                 OBJECTS ${ASAN_NOINST_TEST_OBJECTS}
@@ -191,7 +189,7 @@ macro(add_asan_tests_for_arch arch)
   set(ASAN_BENCHMARKS_OBJECTS)
   foreach(src ${ASAN_BENCHMARKS_SOURCES})
     asan_compile(ASAN_BENCHMARKS_OBJECTS ${src} ${arch}
-                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} -std=c++11)
+                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
   endforeach()
   add_asan_test(AsanBenchmarks "Asan-${arch}-Benchmark" ${arch}
                 OBJECTS ${ASAN_BENCHMARKS_OBJECTS}
