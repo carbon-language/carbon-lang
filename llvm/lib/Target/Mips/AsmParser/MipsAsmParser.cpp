@@ -1174,7 +1174,12 @@ bool MipsAssemblerOptions::setATReg(unsigned Reg) {
   return true;
 }
 
-int MipsAsmParser::getATReg() { return Options.getATRegNum(); }
+int MipsAsmParser::getATReg() {
+  int AT = Options.getATRegNum();
+  if (AT == 0)
+    TokError("Pseudo instruction requires $at, which is not available");
+  return AT;
+}
 
 unsigned MipsAsmParser::getReg(int RC, int RegNo) {
   return *(getContext().getRegisterInfo()->getRegClass(RC).begin() + RegNo);
