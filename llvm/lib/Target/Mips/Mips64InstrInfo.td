@@ -403,6 +403,9 @@ def DSUBi : MipsInst<(outs GPR64Opnd: $rt), (ins GPR64Opnd: $rs, simm16_64: $imm
 def DSUBiu : MipsInst<(outs GPR64Opnd: $rt), (ins GPR64Opnd: $rs, simm16_64: $imm),
                     "ssubu\t$rt, $rs, $imm", [], II_DSUB, Pseudo>;
 }
+def : InstAlias<"dsubu $rt, $rs, $imm",
+                (DSUBiu GPR64Opnd:$rt, GPR64Opnd:$rs, simm16_64: $imm),
+                0>;
 def : InstAlias<"sub $rs, $imm",
                 (SUBi GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
                 0>;

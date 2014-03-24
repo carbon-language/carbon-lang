@@ -83,6 +83,7 @@
 # CHECK:  multu  $3, $5          # encoding: [0x19,0x00,0x65,0x00]
 # CHECK:  dsub    $9, $6, $7     # encoding: [0x2e,0x48,0xc7,0x00]
 # CHECK:  dsubu   $4, $3, $5     # encoding: [0x2f,0x20,0x65,0x00]
+# CHECK:  daddiu  $9, $6, -17767 # encoding: [0x99,0xba,0xc9,0x64]
 # CHECK:  move    $7, $8         # encoding: [0x2d,0x38,0x00,0x01]
 # CHECK:  .set    push
 # CHECK:  .set    mips32r2
@@ -107,6 +108,7 @@
     multu  $3,$5
     dsub    $9,$6,$7
     dsubu   $4,$3,$5
+    dsubu   $9,$6,17767
     move   $7,$8
     rdhwr   $5, $29
 
