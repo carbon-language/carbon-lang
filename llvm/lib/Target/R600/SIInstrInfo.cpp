@@ -879,6 +879,30 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
       Inst->eraseFromParent();
       continue;
     }
+    case AMDGPU::S_AND_B64:
+      splitScalar64BitOp(Worklist, Inst, AMDGPU::S_AND_B32);
+      Inst->eraseFromParent();
+      continue;
+
+    case AMDGPU::S_OR_B64:
+      splitScalar64BitOp(Worklist, Inst, AMDGPU::S_OR_B32);
+      Inst->eraseFromParent();
+      continue;
+
+    case AMDGPU::S_XOR_B64:
+      splitScalar64BitOp(Worklist, Inst, AMDGPU::S_XOR_B32);
+      Inst->eraseFromParent();
+      continue;
+
+    case AMDGPU::S_NOT_B64:
+      splitScalar64BitOp(Worklist, Inst, AMDGPU::S_NOT_B32);
+      Inst->eraseFromParent();
+      continue;
+
+    case AMDGPU::S_BFE_U64:
+    case AMDGPU::S_BFE_I64:
+    case AMDGPU::S_BFM_B64:
+      llvm_unreachable("Moving this op to VALU not implemented");
     }
 
     unsigned NewOpcode = getVALUOp(*Inst);
@@ -966,6 +990,58 @@ unsigned SIInstrInfo::calculateIndirectAddress(unsigned RegIndex,
 
 const TargetRegisterClass *SIInstrInfo::getIndirectAddrRegClass() const {
   return &AMDGPU::VReg_32RegClass;
+}
+
+void SIInstrInfo::splitScalar64BitOp(SmallVectorImpl<MachineInstr *> &Worklist,
+                                     MachineInstr *Inst,
+                                     unsigned Opcode) const {
+  MachineBasicBlock &MBB = *Inst->getParent();
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+
+  // We shouldn't need to worry about immediate operands here.
+  MachineOperand &Dest = Inst->getOperand(0);
+  MachineOperand &Src0 = Inst->getOperand(1);
+  MachineOperand &Src1 = Inst->getOperand(2);
+  DebugLoc DL = Inst->getDebugLoc();
+
+  MachineBasicBlock::iterator MII = Inst;
+
+  const MCInstrDesc &InstDesc = get(Opcode);
+  const TargetRegisterClass *RC = MRI.getRegClass(Src0.getReg());
+  const TargetRegisterClass *SubRC = RI.getSubRegClass(RC, AMDGPU::sub0);
+  unsigned SrcReg0Sub0 = buildExtractSubReg(MII, MRI, Src0, RC,
+                                            AMDGPU::sub0, SubRC);
+  unsigned SrcReg1Sub0 = buildExtractSubReg(MII, MRI, Src1, RC,
+                                            AMDGPU::sub0, SubRC);
+
+  unsigned DestSub0 = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
+  MachineInstr *LoHalf = BuildMI(MBB, MII, DL, InstDesc, DestSub0)
+    .addReg(SrcReg0Sub0)
+    .addReg(SrcReg1Sub0);
+
+  unsigned SrcReg0Sub1 = buildExtractSubReg(MII, MRI, Src0, RC,
+                                            AMDGPU::sub1, SubRC);
+  unsigned SrcReg1Sub1 = buildExtractSubReg(MII, MRI, Src1, RC,
+                                            AMDGPU::sub1, SubRC);
+
+  unsigned DestSub1 = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
+  MachineInstr *HiHalf = BuildMI(MBB, MII, DL, InstDesc, DestSub1)
+    .addReg(SrcReg0Sub1)
+    .addReg(SrcReg1Sub1);
+
+  unsigned FullDestReg = MRI.createVirtualRegister(&AMDGPU::VReg_64RegClass);
+  BuildMI(MBB, MII, DL, get(TargetOpcode::REG_SEQUENCE), FullDestReg)
+    .addReg(DestSub0)
+    .addImm(AMDGPU::sub0)
+    .addReg(DestSub1)
+    .addImm(AMDGPU::sub1);
+
+  MRI.replaceRegWith(Dest.getReg(), FullDestReg);
+
+  // Try to legalize the operands in case we need to swap the order to keep it
+  // valid.
+  Worklist.push_back(LoHalf);
+  Worklist.push_back(HiHalf);
 }
 
 MachineInstrBuilder SIInstrInfo::buildIndirectWrite(

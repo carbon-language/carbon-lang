@@ -38,6 +38,10 @@ private:
                          const TargetRegisterClass *RC,
                          const MachineOperand &Op) const;
 
+  void splitScalar64BitOp(SmallVectorImpl<MachineInstr *> &Worklist,
+                          MachineInstr *Inst, unsigned Opcode) const;
+
+
 public:
   explicit SIInstrInfo(AMDGPUTargetMachine &tm);
 
@@ -92,6 +96,7 @@ public:
 
   bool isSALUInstr(const MachineInstr &MI) const;
   static unsigned getVALUOp(const MachineInstr &MI);
+
   bool isSALUOpSupportedOnVALU(const MachineInstr &MI) const;
 
   /// \brief Return the correct register class for \p OpNo.  For target-specific

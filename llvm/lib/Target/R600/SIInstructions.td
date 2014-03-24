@@ -1222,7 +1222,7 @@ def S_OR_B32 : SOP2_32 <0x00000010, "S_OR_B32",
 >;
 
 def S_OR_B64 : SOP2_64 <0x00000011, "S_OR_B64",
-  []
+  [(set i64:$dst, (or i64:$src0, i64:$src1))]
 >;
 
 def : Pat <

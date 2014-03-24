@@ -56,15 +56,34 @@ define void @vector_or_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %a, i32 %b)
   ret void
 }
 
-; EG-CHECK-LABEL: @or_i64
+; EG-CHECK-LABEL: @scalar_or_i64
 ; EG-CHECK-DAG: OR_INT * T{{[0-9]\.[XYZW]}}, KC0[2].W, KC0[3].Y
 ; EG-CHECK-DAG: OR_INT * T{{[0-9]\.[XYZW]}}, KC0[3].X, KC0[3].Z
-; SI-CHECK-LABEL: @or_i64
+; SI-CHECK-LABEL: @scalar_or_i64
+; SI-CHECK: S_OR_B64
+define void @scalar_or_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) {
+  %or = or i64 %a, %b
+  store i64 %or, i64 addrspace(1)* %out
+  ret void
+}
+
+; SI-CHECK-LABEL: @vector_or_i64
 ; SI-CHECK: V_OR_B32_e32 v{{[0-9]}}
 ; SI-CHECK: V_OR_B32_e32 v{{[0-9]}}
-define void @or_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) {
-entry:
-	%0 = or i64 %a, %b
-	store i64 %0, i64 addrspace(1)* %out
-	ret void
+define void @vector_or_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 addrspace(1)* %b) {
+  %loada = load i64 addrspace(1)* %a, align 8
+  %loadb = load i64 addrspace(1)* %a, align 8
+  %or = or i64 %loada, %loadb
+  store i64 %or, i64 addrspace(1)* %out
+  ret void
+}
+
+; SI-CHECK-LABEL: @scalar_vector_or_i64
+; SI-CHECK: V_OR_B32_e32 v{{[0-9]}}
+; SI-CHECK: V_OR_B32_e32 v{{[0-9]}}
+define void @scalar_vector_or_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64 %b) {
+  %loada = load i64 addrspace(1)* %a
+  %or = or i64 %loada, %b
+  store i64 %or, i64 addrspace(1)* %out
+  ret void
 }
