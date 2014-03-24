@@ -175,10 +175,10 @@ g_register_infos_x86_64[] =
     DEFINE_FPR(fstat,     fstat,          gcc_dwarf_fstat_x86_64, gcc_dwarf_fstat_x86_64, LLDB_INVALID_REGNUM, gdb_fstat_x86_64),
     DEFINE_FPR(ftag,      ftag,           LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_ftag_x86_64),
     DEFINE_FPR(fop,       fop,            LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_fop_x86_64),
-    DEFINE_FPR(fiseg,     ptr.i386.fiseg, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_fiseg_x86_64),
-    DEFINE_FPR(fioff,     ptr.i386.fioff, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_fioff_x86_64),
-    DEFINE_FPR(foseg,     ptr.i386.foseg, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_foseg_x86_64),
-    DEFINE_FPR(fooff,     ptr.i386.fooff, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_fooff_x86_64),
+    DEFINE_FPR(fiseg,     ptr.i386_.fiseg, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_fiseg_x86_64),
+    DEFINE_FPR(fioff,     ptr.i386_.fioff, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_fioff_x86_64),
+    DEFINE_FPR(foseg,     ptr.i386_.foseg, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_foseg_x86_64),
+    DEFINE_FPR(fooff,     ptr.i386_.fooff, LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, gdb_fooff_x86_64),
     DEFINE_FPR(mxcsr,     mxcsr,          gcc_dwarf_mxcsr_x86_64, gcc_dwarf_mxcsr_x86_64, LLDB_INVALID_REGNUM, gdb_mxcsr_x86_64),
     DEFINE_FPR(mxcsrmask, mxcsrmask,      LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM,    LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM),
 
@@ -343,10 +343,10 @@ do {                                                                            
     UPDATE_FPR_INFO(fstat,     fstat);
     UPDATE_FPR_INFO(ftag,      ftag);
     UPDATE_FPR_INFO(fop,       fop);
-    UPDATE_FPR_INFO(fiseg,     ptr.i386.fiseg);
-    UPDATE_FPR_INFO(fioff,     ptr.i386.fioff);
-    UPDATE_FPR_INFO(fooff,     ptr.i386.fooff);
-    UPDATE_FPR_INFO(foseg,     ptr.i386.foseg);
+    UPDATE_FPR_INFO(fiseg,     ptr.i386_.fiseg);
+    UPDATE_FPR_INFO(fioff,     ptr.i386_.fioff);
+    UPDATE_FPR_INFO(fooff,     ptr.i386_.fooff);
+    UPDATE_FPR_INFO(foseg,     ptr.i386_.foseg);
     UPDATE_FPR_INFO(mxcsr,     mxcsr);
     UPDATE_FPR_INFO(mxcsrmask, mxcsrmask);
 
