@@ -455,8 +455,9 @@ static bool AtomicCAS(ThreadState *thr, uptr pc,
   (void)fmo;  // Unused because llvm does not pass it yet.
   MemoryWriteAtomic(thr, pc, (uptr)a, SizeLog<T>());
   SyncVar *s = 0;
+  bool write_lock = mo != mo_acquire && mo != mo_consume;
   if (mo != mo_relaxed) {
-    s = ctx->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, true);
+    s = ctx->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, write_lock);
     thr->fast_state.IncrementEpoch();
     // Can't increment epoch w/o writing to the trace as well.
     TraceAddEvent(thr, thr->fast_state, EventTypeMop, 0);
@@ -469,8 +470,12 @@ static bool AtomicCAS(ThreadState *thr, uptr pc,
   }
   T cc = *c;
   T pr = func_cas(a, cc, v);
-  if (s)
-    s->mtx.Unlock();
+  if (s) {
+    if (write_lock)
+      s->mtx.Unlock();
+    else
+      s->mtx.ReadUnlock();
+  }
   if (pr == cc)
     return true;
   *c = pr;
