@@ -2030,8 +2030,7 @@ DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT) {
   return StaticMemberDIE;
 }
 
-void DwarfUnit::emitHeader(const MCSection *ASection,
-                           const MCSymbol *ASectionSym) const {
+void DwarfUnit::emitHeader(const MCSymbol *ASectionSym) const {
   Asm->OutStreamer.AddComment("DWARF version number");
   Asm->EmitInt16(DD->getDwarfVersion());
   Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
@@ -2098,9 +2097,8 @@ void DwarfCompileUnit::applyStmtList(DIE &D) {
              UnitDie->getValues()[stmtListIndex]);
 }
 
-void DwarfTypeUnit::emitHeader(const MCSection *ASection,
-                               const MCSymbol *ASectionSym) const {
-  DwarfUnit::emitHeader(ASection, ASectionSym);
+void DwarfTypeUnit::emitHeader(const MCSymbol *ASectionSym) const {
+  DwarfUnit::emitHeader(ASectionSym);
   Asm->OutStreamer.AddComment("Type Signature");
   Asm->OutStreamer.EmitIntValue(TypeSignature, sizeof(TypeSignature));
   Asm->OutStreamer.AddComment("Type DIE Offset");

@@ -479,8 +479,7 @@ public:
   }
 
   /// Emit the header for this unit, not including the initial length field.
-  virtual void emitHeader(const MCSection *ASection,
-                          const MCSymbol *ASectionSym) const;
+  virtual void emitHeader(const MCSymbol *ASectionSym) const;
 
   virtual DwarfCompileUnit &getCU() = 0;
 
@@ -610,8 +609,7 @@ public:
   void setType(const DIE *Ty) { this->Ty = Ty; }
 
   /// Emit the header for this unit, not including the initial length field.
-  void emitHeader(const MCSection *ASection, const MCSymbol *ASectionSym) const
-      override;
+  void emitHeader(const MCSymbol *ASectionSym) const override;
   unsigned getHeaderSize() const override {
     return DwarfUnit::getHeaderSize() + sizeof(uint64_t) + // Type Signature
            sizeof(uint32_t);                               // Type DIE Offset

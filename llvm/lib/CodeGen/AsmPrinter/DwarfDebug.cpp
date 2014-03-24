@@ -1943,7 +1943,7 @@ void DwarfFile::emitUnits(DwarfDebug *DD, const MCSection *ASection,
     Asm->OutStreamer.AddComment("Length of Unit");
     Asm->EmitInt32(TheU->getHeaderSize() + Die->getSize());
 
-    TheU->emitHeader(ASection, ASectionSym);
+    TheU->emitHeader(ASectionSym);
 
     DD->emitDIE(Die);
     Asm->OutStreamer.EmitLabel(TheU->getLabelEnd());
