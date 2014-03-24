@@ -23,9 +23,11 @@ int main(int argc, char **argv) {
     bench_niter = atoi(argv[2]);
 
   // Grow thread's clock.
-  const int kClockSize = 1000;
-  pthread_barrier_init(&glow_clock_barrier, 0, kClockSize);
-  start_thread_group(kClockSize, grow_clock_worker);
+  int clock_size = 10;
+  if (argc > 1)
+    clock_size = 1000;
+  pthread_barrier_init(&glow_clock_barrier, 0, clock_size);
+  start_thread_group(clock_size, grow_clock_worker);
   pthread_barrier_destroy(&glow_clock_barrier);
   __atomic_load_n(&grow_clock_var, __ATOMIC_ACQUIRE);
 
