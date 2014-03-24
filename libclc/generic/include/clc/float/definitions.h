@@ -9,6 +9,8 @@
 #define FLT_MIN 	0x1.0p-126f
 #define FLT_EPSILON 	0x1.0p-23f
 
+#define M_PI_F 0x1.921fb6p+1
+
 #ifdef cl_khr_fp64
 
 #define DBL_DIG 	15
