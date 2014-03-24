@@ -980,7 +980,7 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 
   DIType Ty(TyNode);
   assert(Ty.isType());
-  assert(*&Ty == resolve(Ty.getRef()) &&
+  assert(Ty == resolve(Ty.getRef()) &&
          "type was not uniqued, possible ODR violation.");
 
   // Construct the context before querying for the existence of the DIE in case
