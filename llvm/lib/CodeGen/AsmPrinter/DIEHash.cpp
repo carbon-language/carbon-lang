@@ -296,8 +296,6 @@ void DIEHash::hashLocList(const DIELocList &LocList) {
     // which is the next empty entry.
     if (Entry.isEmpty())
       return;
-    else if (Entry.isMerged())
-      continue;
     else
       AP->getDwarfDebug()->emitDebugLocEntry(Streamer, Entry);
   }

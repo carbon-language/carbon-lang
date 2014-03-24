@@ -1297,8 +1297,9 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
       // The value is valid until the next DBG_VALUE or clobber.
       LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
       DwarfCompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
-      DotDebugLocEntries.push_back(
-          getDebugLocEntry(Asm, FLabel, SLabel, Begin, TheCU));
+      DebugLocEntry Loc = getDebugLocEntry(Asm, FLabel, SLabel, Begin, TheCU);
+      if (DotDebugLocEntries.empty() || !DotDebugLocEntries.back().Merge(Loc))
+        DotDebugLocEntries.push_back(std::move(Loc));
     }
     DotDebugLocEntries.push_back(DebugLocEntry());
   }
@@ -2378,15 +2379,6 @@ void DwarfDebug::emitDebugLoc() {
   if (DotDebugLocEntries.empty())
     return;
 
-  for (SmallVectorImpl<DebugLocEntry>::iterator
-           I = DotDebugLocEntries.begin(),
-           E = DotDebugLocEntries.end();
-       I != E; ++I) {
-    DebugLocEntry &Entry = *I;
-    if (I + 1 != DotDebugLocEntries.end())
-      Entry.Merge(I + 1);
-  }
-
   // Start the dwarf loc section.
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfLocSection());
@@ -2398,8 +2390,6 @@ void DwarfDebug::emitDebugLoc() {
            E = DotDebugLocEntries.end();
        I != E; ++I, ++index) {
     const DebugLocEntry &Entry = *I;
-    if (Entry.isMerged())
-      continue;
 
     if (Entry.isEmpty()) {
       Asm->OutStreamer.EmitIntValue(0, Size);

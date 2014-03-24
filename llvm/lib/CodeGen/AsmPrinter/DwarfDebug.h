@@ -84,34 +84,31 @@ class DebugLocEntry {
   // The compile unit to which this location entry is referenced by.
   const DwarfCompileUnit *Unit;
 
-  // Whether this location has been merged.
-  bool Merged;
-
 public:
-  DebugLocEntry() : Begin(0), End(0), Variable(0), Unit(0), Merged(false) {
+  DebugLocEntry() : Begin(0), End(0), Variable(0), Unit(0) {
     Constants.Int = 0;
   }
   DebugLocEntry(const MCSymbol *B, const MCSymbol *E, MachineLocation &L,
                 const MDNode *V, const DwarfCompileUnit *U)
-      : Begin(B), End(E), Loc(L), Variable(V), Unit(U), Merged(false) {
+      : Begin(B), End(E), Loc(L), Variable(V), Unit(U) {
     Constants.Int = 0;
     EntryKind = E_Location;
   }
   DebugLocEntry(const MCSymbol *B, const MCSymbol *E, int64_t i,
                 const DwarfCompileUnit *U)
-      : Begin(B), End(E), Variable(0), Unit(U), Merged(false) {
+      : Begin(B), End(E), Variable(0), Unit(U) {
     Constants.Int = i;
     EntryKind = E_Integer;
   }
   DebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantFP *FPtr,
                 const DwarfCompileUnit *U)
-      : Begin(B), End(E), Variable(0), Unit(U), Merged(false) {
+      : Begin(B), End(E), Variable(0), Unit(U) {
     Constants.CFP = FPtr;
     EntryKind = E_ConstantFP;
   }
   DebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantInt *IPtr,
                 const DwarfCompileUnit *U)
-      : Begin(B), End(E), Variable(0), Unit(U), Merged(false) {
+      : Begin(B), End(E), Variable(0), Unit(U) {
     Constants.CIP = IPtr;
     EntryKind = E_ConstantInt;
   }
@@ -119,12 +116,11 @@ public:
   /// \brief Empty entries are also used as a trigger to emit temp label. Such
   /// labels are referenced is used to find debug_loc offset for a given DIE.
   bool isEmpty() const { return Begin == 0 && End == 0; }
-  bool isMerged() const { return Merged; }
-  void Merge(DebugLocEntry *Next) {
-    if (!(Begin && Loc == Next->Loc && End == Next->Begin))
-      return;
-    Next->Begin = Begin;
-    Merged = true;
+  bool Merge(const DebugLocEntry &Next) {
+    if (!(Begin && Loc == Next.Loc && End == Next.Begin))
+      return false;
+    End = Next.End;
+    return true;
   }
   bool isLocation() const { return EntryKind == E_Location; }
   bool isInt() const { return EntryKind == E_Integer; }
