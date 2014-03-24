@@ -16,7 +16,6 @@ set(NVPTXCodeGen_sources
   NVPTXRegisterInfo.cpp
   NVPTXSubtarget.cpp
   NVPTXTargetMachine.cpp
-  NVPTXSplitBBatBar.cpp
   NVPTXLowerAggrCopies.cpp
   NVPTXutil.cpp
   NVPTXAllocaHoisting.cpp

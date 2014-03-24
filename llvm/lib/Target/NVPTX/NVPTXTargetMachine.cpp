@@ -16,7 +16,6 @@
 #include "NVPTX.h"
 #include "NVPTXAllocaHoisting.h"
 #include "NVPTXLowerAggrCopies.h"
-#include "NVPTXSplitBBatBar.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -145,7 +144,6 @@ void NVPTXPassConfig::addIRPasses() {
 
 bool NVPTXPassConfig::addInstSelector() {
   addPass(createLowerAggrCopies());
-  addPass(createSplitBBatBarPass());
   addPass(createAllocaHoisting());
   addPass(createNVPTXISelDag(getNVPTXTargetMachine(), getOptLevel()));
   return false;
