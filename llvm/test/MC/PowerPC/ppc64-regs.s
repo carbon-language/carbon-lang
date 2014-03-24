@@ -1,4 +1,5 @@
 # RUN: llvm-mc -triple powerpc64-unknown-unknown --show-encoding %s | FileCheck %s
+# RUN: llvm-mc -triple powerpc64le-unknown-unknown --show-encoding %s | FileCheck %s
 
 #CHECK: .cfi_startproc
 #CHECK: .cfi_offset r0, 0

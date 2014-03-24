@@ -35,10 +35,11 @@ class PPCMCCodeEmitter : public MCCodeEmitter {
 
   const MCInstrInfo &MCII;
   const MCContext &CTX;
+  bool IsLittleEndian;
 
 public:
-  PPCMCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx)
-    : MCII(mcii), CTX(ctx) {
+  PPCMCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx, bool isLittle)
+    : MCII(mcii), CTX(ctx), IsLittleEndian(isLittle) {
   }
   
   ~PPCMCCodeEmitter() {}
@@ -98,12 +99,19 @@ public:
 
     uint64_t Bits = getBinaryCodeForInstr(MI, Fixups, STI);
 
-    // Output the constant in big endian byte order.
+    // Output the constant in big/little endian byte order.
     unsigned Size = Desc.getSize();
-    int ShiftValue = (Size * 8) - 8;
-    for (unsigned i = 0; i != Size; ++i) {
-      OS << (char)(Bits >> ShiftValue);
-      Bits <<= 8;
+    if (IsLittleEndian) {
+      for (unsigned i = 0; i != Size; ++i) {
+        OS << (char)Bits;
+        Bits >>= 8;
+      }
+    } else {
+      int ShiftValue = (Size * 8) - 8;
+      for (unsigned i = 0; i != Size; ++i) {
+        OS << (char)(Bits >> ShiftValue);
+        Bits <<= 8;
+      }
     }
     
     ++MCNumEmitted;  // Keep track of the # of mi's emitted.
@@ -117,7 +125,9 @@ MCCodeEmitter *llvm::createPPCMCCodeEmitter(const MCInstrInfo &MCII,
                                             const MCRegisterInfo &MRI,
                                             const MCSubtargetInfo &STI,
                                             MCContext &Ctx) {
-  return new PPCMCCodeEmitter(MCII, Ctx);
+  Triple TT(STI.getTargetTriple());
+  bool IsLittleEndian = TT.getArch() == Triple::ppc64le;
+  return new PPCMCCodeEmitter(MCII, Ctx, IsLittleEndian);
 }
 
 unsigned PPCMCCodeEmitter::
@@ -178,7 +188,7 @@ unsigned PPCMCCodeEmitter::getImm16Encoding(const MCInst &MI, unsigned OpNo,
   if (MO.isReg() || MO.isImm()) return getMachineOpValue(MI, MO, Fixups, STI);
   
   // Add a fixup for the immediate field.
-  Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
+  Fixups.push_back(MCFixup::Create(IsLittleEndian? 0 : 2, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_half16));
   return 0;
 }
@@ -196,7 +206,7 @@ unsigned PPCMCCodeEmitter::getMemRIEncoding(const MCInst &MI, unsigned OpNo,
     return (getMachineOpValue(MI, MO, Fixups, STI) & 0xFFFF) | RegBits;
   
   // Add a fixup for the displacement field.
-  Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
+  Fixups.push_back(MCFixup::Create(IsLittleEndian? 0 : 2, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_half16));
   return RegBits;
 }
@@ -215,7 +225,7 @@ unsigned PPCMCCodeEmitter::getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
     return ((getMachineOpValue(MI, MO, Fixups, STI) >> 2) & 0x3FFF) | RegBits;
   
   // Add a fixup for the displacement field.
-  Fixups.push_back(MCFixup::Create(2, MO.getExpr(),
+  Fixups.push_back(MCFixup::Create(IsLittleEndian? 0 : 2, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_half16ds));
   return RegBits;
 }

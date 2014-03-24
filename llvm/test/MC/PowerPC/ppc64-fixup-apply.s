@@ -1,6 +1,8 @@
 
 # RUN: llvm-mc -triple powerpc64-unknown-unknown -filetype=obj %s | \
-# RUN: llvm-readobj -s -sd | FileCheck %s
+# RUN: llvm-readobj -s -sd | FileCheck -check-prefix=CHECK -check-prefix=CHECK-BE %s
+# RUN: llvm-mc -triple powerpc64le-unknown-unknown -filetype=obj %s | \
+# RUN: llvm-readobj -s -sd | FileCheck -check-prefix=CHECK -check-prefix=CHECK-LE %s
 
 # This checks that fixups that can be resolved within the same
 # object file are applied correctly.
@@ -72,10 +74,14 @@ addis 1, 1, target7@highesta
 # CHECK-NEXT:    AddressAlignment: 4
 # CHECK-NEXT:    EntrySize: 0
 # CHECK-NEXT:    SectionData (
-# CHECK-NEXT:      0000: 38211234 3C211234 38215678 3C211234
-# CHECK-NEXT:      0010: 38214444 3C211111 38218001 3C211001
-# CHECK-NEXT:      0020: 38210008 3C210000 38214321 3C214321
-# CHECK-NEXT:      0030: 3821FFFF 3C211234 38210000 3C211235
+# CHECK-BE-NEXT:   0000: 38211234 3C211234 38215678 3C211234
+# CHECK-LE-NEXT:   0000: 34122138 3412213C 78562138 3412213C
+# CHECK-BE-NEXT:   0010: 38214444 3C211111 38218001 3C211001
+# CHECK-LE-NEXT:   0010: 44442138 1111213C 01802138 0110213C
+# CHECK-BE-NEXT:   0020: 38210008 3C210000 38214321 3C214321
+# CHECK-LE-NEXT:   0020: 08002138 0000213C 21432138 2143213C
+# CHECK-BE-NEXT:   0030: 3821FFFF 3C211234 38210000 3C211235
+# CHECK-LE-NEXT:   0030: FFFF2138 3412213C 00002138 3512213C
 # CHECK-NEXT:    )
 # CHECK-NEXT:  }
 
@@ -94,7 +100,8 @@ addis 1, 1, target7@highesta
 # CHECK-NEXT:     AddressAlignment: 4
 # CHECK-NEXT:     EntrySize: 0
 # CHECK-NEXT:     SectionData (
-# CHECK-NEXT:       0000: 12345678 9ABCDEF0 87654321 BEEF42
+# CHECK-BE-NEXT:    0000: 12345678 9ABCDEF0 87654321 BEEF42
+# CHECK-LE-NEXT:    0000: F0DEBC9A 78563412 21436587 EFBE42
 # CHECK-NEXT:     )
 # CHECK-NEXT:   }
 

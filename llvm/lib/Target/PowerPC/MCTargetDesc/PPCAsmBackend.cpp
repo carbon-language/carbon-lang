@@ -71,14 +71,16 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
 namespace {
 
 class PPCAsmBackend : public MCAsmBackend {
-const Target &TheTarget;
+  const Target &TheTarget;
+  bool IsLittleEndian;
 public:
-  PPCAsmBackend(const Target &T) : MCAsmBackend(), TheTarget(T) {}
+  PPCAsmBackend(const Target &T, bool isLittle) : MCAsmBackend(), TheTarget(T),
+    IsLittleEndian(isLittle) {}
 
   unsigned getNumFixupKinds() const { return PPC::NumTargetFixupKinds; }
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
-    const static MCFixupKindInfo Infos[PPC::NumTargetFixupKinds] = {
+    const static MCFixupKindInfo InfosBE[PPC::NumTargetFixupKinds] = {
       // name                    offset  bits  flags
       { "fixup_ppc_br24",        6,      24,   MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_ppc_brcond14",    16,     14,   MCFixupKindInfo::FKF_IsPCRel },
@@ -88,13 +90,23 @@ public:
       { "fixup_ppc_half16ds",     0,     14,   0 },
       { "fixup_ppc_nofixup",      0,      0,   0 }
     };
+    const static MCFixupKindInfo InfosLE[PPC::NumTargetFixupKinds] = {
+      // name                    offset  bits  flags
+      { "fixup_ppc_br24",        2,      24,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ppc_brcond14",    2,      14,   MCFixupKindInfo::FKF_IsPCRel },
+      { "fixup_ppc_br24abs",     2,      24,   0 },
+      { "fixup_ppc_brcond14abs", 2,      14,   0 },
+      { "fixup_ppc_half16",      0,      16,   0 },
+      { "fixup_ppc_half16ds",    2,      14,   0 },
+      { "fixup_ppc_nofixup",     0,       0,   0 }
+    };
 
     if (Kind < FirstTargetFixupKind)
       return MCAsmBackend::getFixupKindInfo(Kind);
 
     assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
            "Invalid kind!");
-    return Infos[Kind - FirstTargetFixupKind];
+    return (IsLittleEndian? InfosLE : InfosBE)[Kind - FirstTargetFixupKind];
   }
 
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
@@ -108,8 +120,10 @@ public:
     // For each byte of the fragment that the fixup touches, mask in the bits
     // from the fixup value. The Value has been "split up" into the appropriate
     // bitfields above.
-    for (unsigned i = 0; i != NumBytes; ++i)
-      Data[Offset + i] |= uint8_t((Value >> ((NumBytes - i - 1)*8)) & 0xff);
+    for (unsigned i = 0; i != NumBytes; ++i) {
+      unsigned Idx = IsLittleEndian ? i : (NumBytes - 1 - i);
+      Data[Offset + i] |= uint8_t((Value >> (Idx * 8)) & 0xff);
+    }
   }
 
   bool mayNeedRelaxation(const MCInst &Inst) const {
@@ -152,6 +166,10 @@ public:
     assert(Name == "ppc32" && "Unknown target name!");
     return 4;
   }
+
+  bool isLittleEndian() const {
+    return IsLittleEndian;
+  }
 };
 } // end anonymous namespace
 
@@ -160,7 +178,7 @@ public:
 namespace {
   class DarwinPPCAsmBackend : public PPCAsmBackend {
   public:
-    DarwinPPCAsmBackend(const Target &T) : PPCAsmBackend(T) { }
+    DarwinPPCAsmBackend(const Target &T) : PPCAsmBackend(T, false) { }
 
     MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
       bool is64 = getPointerSize() == 8;
@@ -175,13 +193,13 @@ namespace {
   class ELFPPCAsmBackend : public PPCAsmBackend {
     uint8_t OSABI;
   public:
-    ELFPPCAsmBackend(const Target &T, uint8_t OSABI) :
-      PPCAsmBackend(T), OSABI(OSABI) { }
+    ELFPPCAsmBackend(const Target &T, bool IsLittleEndian, uint8_t OSABI) :
+      PPCAsmBackend(T, IsLittleEndian), OSABI(OSABI) { }
 
 
     MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
       bool is64 = getPointerSize() == 8;
-      return createPPCELFObjectWriter(OS, is64, OSABI);
+      return createPPCELFObjectWriter(OS, is64, isLittleEndian(), OSABI);
     }
   };
 
@@ -194,5 +212,6 @@ MCAsmBackend *llvm::createPPCAsmBackend(const Target &T,
     return new DarwinPPCAsmBackend(T);
 
   uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(Triple(TT).getOS());
-  return new ELFPPCAsmBackend(T, OSABI);
+  bool IsLittleEndian = Triple(TT).getArch() == Triple::ppc64le;
+  return new ELFPPCAsmBackend(T, IsLittleEndian, OSABI);
 }

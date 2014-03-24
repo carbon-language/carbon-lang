@@ -1,7 +1,11 @@
 # RUN: llvm-mc -triple=powerpc64-unknown-linux-gnu -filetype=obj -relocation-model=static %s | \
-# RUN: llvm-readobj -s -sr -sd | FileCheck %s -check-prefix=STATIC
+# RUN: llvm-readobj -s -sr -sd | FileCheck %s -check-prefix=STATIC -check-prefix=STATIC-BE
 # RUN: llvm-mc -triple=powerpc64-unknown-linux-gnu -filetype=obj -relocation-model=pic %s | \
-# RUN: llvm-readobj -s -sr -sd | FileCheck %s -check-prefix=PIC
+# RUN: llvm-readobj -s -sr -sd | FileCheck %s -check-prefix=PIC -check-prefix=PIC-BE
+# RUN: llvm-mc -triple=powerpc64le-unknown-linux-gnu -filetype=obj -relocation-model=static %s | \
+# RUN: llvm-readobj -s -sr -sd | FileCheck %s -check-prefix=STATIC -check-prefix=STATIC-LE
+# RUN: llvm-mc -triple=powerpc64le-unknown-linux-gnu -filetype=obj -relocation-model=pic %s | \
+# RUN: llvm-readobj -s -sr -sd | FileCheck %s -check-prefix=PIC -check-prefix=PIC-LE
 
         .cfi_startproc
         nop
@@ -23,9 +27,12 @@
 # STATIC-NEXT:   Relocations [
 # STATIC-NEXT:   ]
 # STATIC-NEXT:   SectionData (
-# STATIC-NEXT:     0000: 00000010 00000000 017A5200 04784101
-# STATIC-NEXT:     0010: 1B0C0100 00000010 00000018 00000000
-# STATIC-NEXT:     0020: 00000004 00000000
+# STATIC-BE-NEXT:  0000: 00000010 00000000 017A5200 04784101
+# STATIC-LE-NEXT:  0000: 10000000 00000000 017A5200 04784101
+# STATIC-BE-NEXT:  0010: 1B0C0100 00000010 00000018 00000000
+# STATIC-LE-NEXT:  0010: 1B0C0100 10000000 18000000 00000000
+# STATIC-BE-NEXT:  0020: 00000004 00000000
+# STATIC-LE-NEXT:  0020: 04000000 00000000
 # STATIC-NEXT:   )
 # STATIC-NEXT: }
 
@@ -61,9 +68,12 @@
 # PIC-NEXT:   Relocations [
 # PIC-NEXT:   ]
 # PIC-NEXT:   SectionData (
-# PIC-NEXT:     0000: 00000010 00000000 017A5200 04784101
-# PIC-NEXT:     0010: 1B0C0100 00000010 00000018 00000000
-# PIC-NEXT:     0020: 00000004 00000000
+# PIC-BE-NEXT:  0000: 00000010 00000000 017A5200 04784101
+# PIC-LE-NEXT:  0000: 10000000 00000000 017A5200 04784101
+# PIC-BE-NEXT:  0010: 1B0C0100 00000010 00000018 00000000
+# PIC-LE-NEXT:  0010: 1B0C0100 10000000 18000000 00000000
+# PIC-BE-NEXT:  0020: 00000004 00000000
+# PIC-LE-NEXT:  0020: 04000000 00000000
 # PIC-NEXT:   )
 # PIC-NEXT: }
 

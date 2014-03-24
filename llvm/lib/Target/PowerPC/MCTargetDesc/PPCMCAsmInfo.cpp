@@ -48,7 +48,7 @@ PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit, const Triple& T) {
   if (is64Bit) {
     PointerSize = CalleeSaveStackSlotSize = 8;
   }
-  IsLittleEndian = false;
+  IsLittleEndian = T.getArch() == Triple::ppc64le;
 
   // ".comm align is in bytes but .align is pow-2."
   AlignmentIsInBytes = false;
