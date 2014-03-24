@@ -23,7 +23,7 @@
 # CHECK-DYN:     Binding: Local (0x0)
 # CHECK-DYN:     Type: None (0x0)
 # CHECK-DYN:     Other: 0
-# CHECK-DYN:     Section:  (0x0)
+# CHECK-DYN:     Section: Undefined (0x0)
 # CHECK-DYN:   }
 # CHECK-DYN:   Symbol {
 # CHECK-DYN:     Name: bar@ (5)
@@ -50,7 +50,7 @@
 # CHECK-DYN:     Binding: Global (0x1)
 # CHECK-DYN:     Type: None (0x0)
 # CHECK-DYN:     Other: 0
-# CHECK-DYN:     Section:  (0x0)
+# CHECK-DYN:     Section: Undefined (0x0)
 # CHECK-DYN:   }
 # CHECK-DYN:   Symbol {
 # CHECK-DYN:     Name: ext2@ (14)
@@ -59,7 +59,7 @@
 # CHECK-DYN:     Binding: Global (0x1)
 # CHECK-DYN:     Type: None (0x0)
 # CHECK-DYN:     Other: 0
-# CHECK-DYN:     Section:  (0x0)
+# CHECK-DYN:     Section: Undefined (0x0)
 # CHECK-DYN:   }
 # CHECK-DYN: ]
 

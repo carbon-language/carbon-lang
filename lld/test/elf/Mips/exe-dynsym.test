@@ -23,7 +23,7 @@
 # CHECK-DYN:     Binding: Local (0x0)
 # CHECK-DYN:     Type: None (0x0)
 # CHECK-DYN:     Other: 0
-# CHECK-DYN:     Section:  (0x0)
+# CHECK-DYN:     Section: Undefined (0x0)
 # CHECK-DYN:   }
 # CHECK-DYN:   Symbol {
 # CHECK-DYN:     Name: weakf@ (1)
@@ -32,7 +32,7 @@
 # CHECK-DYN:     Binding: Weak (0x2)
 # CHECK-DYN:     Type: None (0x0)
 # CHECK-DYN:     Other: 0
-# CHECK-DYN:     Section:  (0x0)
+# CHECK-DYN:     Section: Undefined (0x0)
 # CHECK-DYN:   }
 # CHECK-DYN: ]
 
