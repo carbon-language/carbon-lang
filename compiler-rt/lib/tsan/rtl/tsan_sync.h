@@ -56,8 +56,6 @@ struct SyncVar {
   Mutex mtx;
   uptr addr;
   const u64 uid;  // Globally unique id.
-  SyncClock clock;
-  SyncClock read_clock;  // Used for rw mutexes only.
   u32 creation_stack_id;
   int owner_tid;  // Set only by exclusive owners.
   u64 last_lock;
@@ -68,6 +66,10 @@ struct SyncVar {
   bool is_linker_init;
   SyncVar *next;  // In SyncTab hashtable.
   DDMutex dd;
+  SyncClock read_clock;  // Used for rw mutexes only.
+  // The clock is placed last, so that it is situated on a different cache line
+  // with the mtx. This reduces contention for hot sync objects.
+  SyncClock clock;
 
   u64 GetId() const {
     // 47 lsb is addr, then 14 bits is low part of uid, then 3 zero bits.
