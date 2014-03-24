@@ -10,6 +10,8 @@
 #include "lldb/Core/ModuleList.h"
 
 // C Includes
+#include <stdint.h>
+
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
@@ -40,7 +42,8 @@ ModuleList::ModuleList() :
 //----------------------------------------------------------------------
 ModuleList::ModuleList(const ModuleList& rhs) :
     m_modules(),
-    m_modules_mutex (Mutex::eMutexTypeRecursive)
+    m_modules_mutex (Mutex::eMutexTypeRecursive),
+    m_notifier(NULL)
 {
     Mutex::Locker lhs_locker(m_modules_mutex);
     Mutex::Locker rhs_locker(rhs.m_modules_mutex);
@@ -62,9 +65,28 @@ ModuleList::operator= (const ModuleList& rhs)
 {
     if (this != &rhs)
     {
-        Mutex::Locker lhs_locker(m_modules_mutex);
-        Mutex::Locker rhs_locker(rhs.m_modules_mutex);
-        m_modules = rhs.m_modules;
+        // That's probably me nit-picking, but in theoretical situation:
+        //
+        // * that two threads A B and
+        // * two ModuleList's x y do opposite assignemnts ie.:
+        //
+        //  in thread A: | in thread B:
+        //    x = y;     |   y = x;
+        //
+        // This establishes correct(same) lock taking order and thus
+        // avoids priority inversion.
+        if (uintptr_t(this) > uintptr_t(&rhs))
+        {
+            Mutex::Locker lhs_locker(m_modules_mutex);
+            Mutex::Locker rhs_locker(rhs.m_modules_mutex);
+            m_modules = rhs.m_modules;
+        }
+        else
+        {
+            Mutex::Locker rhs_locker(rhs.m_modules_mutex);
+            Mutex::Locker lhs_locker(m_modules_mutex);
+            m_modules = rhs.m_modules;
+        }
     }
     return *this;
 }
@@ -832,13 +854,15 @@ ModuleList::GetIndexForModule (const Module *module) const
 static ModuleList &
 GetSharedModuleList ()
 {
-    // NOTE: Intentionally leak the module list so a program doesn't have to
-    // cleanup all modules and object files as it exits. This just wastes time
-    // doing a bunch of cleanup that isn't required.
     static ModuleList *g_shared_module_list = NULL;
-    if (g_shared_module_list == NULL)
-        g_shared_module_list = new ModuleList(); // <--- Intentional leak!!!
-    
+    static std::once_flag g_once_flag;
+    std::call_once(g_once_flag, [](){
+        // NOTE: Intentionally leak the module list so a program doesn't have to
+        // cleanup all modules and object files as it exits. This just wastes time
+        // doing a bunch of cleanup that isn't required.
+        if (g_shared_module_list == NULL)
+            g_shared_module_list = new ModuleList(); // <--- Intentional leak!!!
+    });
     return *g_shared_module_list;
 }
 
