@@ -565,8 +565,10 @@ NOINLINE void TouchStackFunc() {
     A[i] = i*i;
 }
 
+// 3 tests below are disabled due to http://llvm.org/bugs/show_bug.cgi?id=19207
+
 // Test that we handle longjmp and do not report false positives on stack.
-TEST(AddressSanitizer, LongJmpTest) {
+TEST(AddressSanitizer, DISABLED_LongJmpTest) {
   static jmp_buf buf;
   if (!setjmp(buf)) {
     LongJmpFunc1(buf);
@@ -590,7 +592,7 @@ TEST(AddressSanitizer, BuiltinLongJmpTest) {
 #endif  // !defined(__ANDROID__) && !defined(__powerpc64__) &&
         // !defined(__powerpc__)
 
-TEST(AddressSanitizer, UnderscopeLongJmpTest) {
+TEST(AddressSanitizer, DISABLED_UnderscopeLongJmpTest) {
   static jmp_buf buf;
   if (!_setjmp(buf)) {
     UnderscopeLongJmpFunc1(buf);
@@ -599,7 +601,7 @@ TEST(AddressSanitizer, UnderscopeLongJmpTest) {
   }
 }
 
-TEST(AddressSanitizer, SigLongJmpTest) {
+TEST(AddressSanitizer, DISABLED_SigLongJmpTest) {
   static sigjmp_buf buf;
   if (!sigsetjmp(buf, 1)) {
     SigLongJmpFunc1(buf);
