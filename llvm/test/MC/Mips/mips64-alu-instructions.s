@@ -132,3 +132,15 @@
 	dsubu	$9, $3
 	dsub	$9, 10
 	dsubu	$9, 10
+
+#------------------------------------------------------------------------------
+# Did you know that GAS supports complex arithmetic expressions in assembly?
+#------------------------------------------------------------------------------
+# CHECK:	daddiu	$9, $3, 32	# encoding: [0x20,0x00,0x69,0x64]
+# CHECK:	daddiu	$9, $3, 32	# encoding: [0x20,0x00,0x69,0x64]
+# CHECK:	daddiu	$9, $3, -32	# encoding: [0xe0,0xff,0x69,0x64]
+# CHECK:	daddiu	$9, $3, -32	# encoding: [0xe0,0xff,0x69,0x64] 
+	daddiu	$9, $3, 8 * 4
+	daddiu	$9, $3, (8 * 4)
+	dsubu	$9, $3, 8 * 4
+	dsubu	$9, $3, (8 * 4)
