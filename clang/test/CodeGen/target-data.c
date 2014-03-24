@@ -90,6 +90,10 @@
 // RUN: FileCheck %s -check-prefix=PPC64-LINUX
 // PPC64-LINUX: target datalayout = "E-m:e-i64:64-n32:64"
 
+// RUN: %clang_cc1 -triple powerpc64le-linux -o - -emit-llvm %s | \
+// RUN: FileCheck %s -check-prefix=PPC64LE-LINUX
+// PPC64LE-LINUX: target datalayout = "e-m:e-i64:64-n32:64"
+
 // RUN: %clang_cc1 -triple powerpc-darwin -o - -emit-llvm %s | \
 // RUN: FileCheck %s -check-prefix=PPC32-DARWIN
 // PPC32-DARWIN: target datalayout = "E-m:o-p:32:32-f64:32:64-n32"
