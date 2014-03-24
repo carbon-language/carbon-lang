@@ -85,7 +85,7 @@ int __llvm_profile_write_file(void) {
 #define UPDATE_FILENAME(NextFilename) \
   if (!Filename || !Filename[0]) Filename = NextFilename
   UPDATE_FILENAME(getenv("LLVM_PROFILE_FILE"));
-  UPDATE_FILENAME("default.profdata");
+  UPDATE_FILENAME("default.profraw");
 #undef UPDATE_FILENAME
 
   /* Check the filename for "%p", which indicates a pid-substitution. */
