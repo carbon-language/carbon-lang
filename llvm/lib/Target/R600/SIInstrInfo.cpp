@@ -591,6 +591,36 @@ unsigned SIInstrInfo::buildExtractSubReg(MachineBasicBlock::iterator MI,
   return SubReg;
 }
 
+unsigned SIInstrInfo::split64BitImm(SmallVectorImpl<MachineInstr *> &Worklist,
+                                    MachineBasicBlock::iterator MI,
+                                    MachineRegisterInfo &MRI,
+                                    const TargetRegisterClass *RC,
+                                    const MachineOperand &Op) const {
+  MachineBasicBlock *MBB = MI->getParent();
+  DebugLoc DL = MI->getDebugLoc();
+  unsigned LoDst = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
+  unsigned HiDst = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
+  unsigned Dst = MRI.createVirtualRegister(RC);
+
+  MachineInstr *Lo = BuildMI(*MBB, MI, DL, get(AMDGPU::S_MOV_B32),
+                             LoDst)
+    .addImm(Op.getImm() & 0xFFFFFFFF);
+  MachineInstr *Hi = BuildMI(*MBB, MI, DL, get(AMDGPU::S_MOV_B32),
+                             HiDst)
+    .addImm(Op.getImm() >> 32);
+
+  BuildMI(*MBB, MI, DL, get(TargetOpcode::REG_SEQUENCE), Dst)
+    .addReg(LoDst)
+    .addImm(AMDGPU::sub0)
+    .addReg(HiDst)
+    .addImm(AMDGPU::sub1);
+
+  Worklist.push_back(Lo);
+  Worklist.push_back(Hi);
+
+  return Dst;
+}
+
 void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
   MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
   int Src0Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
@@ -825,46 +855,30 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
 
     // Handle some special cases
     switch(Inst->getOpcode()) {
-      case AMDGPU::S_MOV_B64: {
-        DebugLoc DL = Inst->getDebugLoc();
+    case AMDGPU::S_MOV_B64: {
+      DebugLoc DL = Inst->getDebugLoc();
 
-        // If the source operand is a register we can replace this with a
-        // copy
-        if (Inst->getOperand(1).isReg()) {
-          MachineInstr *Copy = BuildMI(*MBB, Inst, DL,
-                                       get(TargetOpcode::COPY))
-                                       .addOperand(Inst->getOperand(0))
-                                       .addOperand(Inst->getOperand(1));
-          Worklist.push_back(Copy);
-        } else {
-          // Otherwise, we need to split this into two movs, because there is
-          // no 64-bit VALU move instruction.
-          unsigned LoDst, HiDst, Dst;
-          LoDst = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
-          HiDst = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
-          Dst = MRI.createVirtualRegister(
-              MRI.getRegClass(Inst->getOperand(0).getReg()));
-
-          MachineInstr *Lo = BuildMI(*MBB, Inst, DL, get(AMDGPU::S_MOV_B32),
-                                     LoDst)
-                             .addImm(Inst->getOperand(1).getImm() & 0xFFFFFFFF);
-          MachineInstr *Hi = BuildMI(*MBB, Inst, DL, get(AMDGPU::S_MOV_B32),
-                                     HiDst)
-                                    .addImm(Inst->getOperand(1).getImm() >> 32);
-
-          BuildMI(*MBB, Inst, DL, get(TargetOpcode::REG_SEQUENCE), Dst)
-                  .addReg(LoDst)
-                  .addImm(AMDGPU::sub0)
-                  .addReg(HiDst)
-                  .addImm(AMDGPU::sub1);
-
-          MRI.replaceRegWith(Inst->getOperand(0).getReg(), Dst);
-          Worklist.push_back(Lo);
-          Worklist.push_back(Hi);
-        }
-        Inst->eraseFromParent();
-        continue;
+      // If the source operand is a register we can replace this with a
+      // copy.
+      if (Inst->getOperand(1).isReg()) {
+        MachineInstr *Copy = BuildMI(*MBB, Inst, DL, get(TargetOpcode::COPY))
+          .addOperand(Inst->getOperand(0))
+          .addOperand(Inst->getOperand(1));
+        Worklist.push_back(Copy);
+      } else {
+        // Otherwise, we need to split this into two movs, because there is
+        // no 64-bit VALU move instruction.
+        unsigned Reg = Inst->getOperand(0).getReg();
+        unsigned Dst = split64BitImm(Worklist,
+                                     Inst,
+                                     MRI,
+                                     MRI.getRegClass(Reg),
+                                     Inst->getOperand(1));
+        MRI.replaceRegWith(Reg, Dst);
       }
+      Inst->eraseFromParent();
+      continue;
+    }
     }
 
     unsigned NewOpcode = getVALUOp(*Inst);
