@@ -25,6 +25,7 @@ class ExprFormattersTestCase(TestBase):
         self.buildDsym()
         self.do_my_test()
 
+    @expectedFailureFreeBSD('llvm.org/pr19011') # Newer Clang omits C1 complete object constructor
     @dwarf_test
     def test_with_dwarf(self):
         """Test expr + formatters for good interoperability."""
