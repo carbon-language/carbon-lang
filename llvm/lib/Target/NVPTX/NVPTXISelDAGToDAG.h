@@ -67,6 +67,7 @@ private:
   SDNode *SelectLoadParam(SDNode *N);
   SDNode *SelectStoreRetval(SDNode *N);
   SDNode *SelectStoreParam(SDNode *N);
+  SDNode *SelectAddrSpaceCast(SDNode *N);
         
   inline SDValue getI32Imm(unsigned Imm) {
     return CurDAG->getTargetConstant(Imm, MVT::i32);

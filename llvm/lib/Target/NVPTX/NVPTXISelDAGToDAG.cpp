@@ -162,6 +162,9 @@ SDNode *NVPTXDAGToDAGISel::Select(SDNode *N) {
   case NVPTXISD::StoreParamU32:
     ResNode = SelectStoreParam(N);
     break;
+  case ISD::ADDRSPACECAST:
+    ResNode = SelectAddrSpaceCast(N);
+    break;
   default:
     break;
   }
@@ -189,6 +192,66 @@ static unsigned int getCodeAddrSpace(MemSDNode *N,
     }
   }
   return NVPTX::PTXLdStInstCode::GENERIC;
+}
+
+SDNode *NVPTXDAGToDAGISel::SelectAddrSpaceCast(SDNode *N) {
+  SDValue Src = N->getOperand(0);
+  AddrSpaceCastSDNode *CastN = cast<AddrSpaceCastSDNode>(N);
+  unsigned SrcAddrSpace = CastN->getSrcAddressSpace();
+  unsigned DstAddrSpace = CastN->getDestAddressSpace();
+
+  assert(SrcAddrSpace != DstAddrSpace &&
+         "addrspacecast must be between different address spaces");
+
+  if (DstAddrSpace == ADDRESS_SPACE_GENERIC) {
+    // Specific to generic
+    unsigned Opc;
+    switch (SrcAddrSpace) {
+    default: report_fatal_error("Bad address space in addrspacecast");
+    case ADDRESS_SPACE_GLOBAL:
+      Opc = Subtarget.is64Bit() ? NVPTX::cvta_global_yes_64
+                                : NVPTX::cvta_global_yes;
+      break;
+    case ADDRESS_SPACE_SHARED:
+      Opc = Subtarget.is64Bit() ? NVPTX::cvta_shared_yes_64
+                                : NVPTX::cvta_shared_yes;
+      break;
+    case ADDRESS_SPACE_CONST:
+      Opc = Subtarget.is64Bit() ? NVPTX::cvta_const_yes_64
+                                : NVPTX::cvta_const_yes;
+      break;
+    case ADDRESS_SPACE_LOCAL:
+      Opc = Subtarget.is64Bit() ? NVPTX::cvta_local_yes_64
+                                : NVPTX::cvta_local_yes;
+      break;
+    }
+    return CurDAG->getMachineNode(Opc, SDLoc(N), N->getValueType(0), Src);
+  } else {
+    // Generic to specific
+    if (SrcAddrSpace != 0)
+      report_fatal_error("Cannot cast between two non-generic address spaces");
+    unsigned Opc;
+    switch (DstAddrSpace) {
+    default: report_fatal_error("Bad address space in addrspacecast");
+    case ADDRESS_SPACE_GLOBAL:
+      Opc = Subtarget.is64Bit() ? NVPTX::cvta_to_global_yes_64
+                                : NVPTX::cvta_to_global_yes;
+      break;
+    case ADDRESS_SPACE_SHARED:
+      Opc = Subtarget.is64Bit() ? NVPTX::cvta_to_shared_yes_64
+                                : NVPTX::cvta_to_shared_yes;
+      break;
+    case ADDRESS_SPACE_CONST:
+      Opc = Subtarget.is64Bit() ? NVPTX::cvta_to_const_yes_64
+                                : NVPTX::cvta_to_const_yes;
+      break;
+    case ADDRESS_SPACE_LOCAL:
+      Opc = Subtarget.is64Bit() ? NVPTX::cvta_to_local_yes_64
+                                : NVPTX::cvta_to_local_yes;
+      break;
+    }
+    return CurDAG->getMachineNode(Opc, SDLoc(N), N->getValueType(0), Src);
+  }
 }
 
 SDNode *NVPTXDAGToDAGISel::SelectLoad(SDNode *N) {
