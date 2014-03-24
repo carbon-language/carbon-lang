@@ -100,8 +100,7 @@ which were used to enable EHABI in the previous releases, are removed now.
 This means all ARM code will emit EH unwind tables, or CFI unwinding (for
 debug/profiling), or both. To avoid run-time inconsistencies, C code will
 also emit EH tables (in case they interoperate with C++ code), as is the
-case for other architectures (ex. x86_64). You can disable them via the
-flag ``-fno-unwind-tables`` in Clang.
+case for other architectures (ex. x86_64).
 
 External Open Source Projects Using LLVM 3.5
 ============================================
