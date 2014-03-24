@@ -1,5 +1,14 @@
 ; RUN: llc -split-dwarf=Enable -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
-; RUN: llvm-dwarfdump -debug-dump=all %t | FileCheck %s
+; RUN: llvm-dwarfdump -debug-dump=info.dwo %t | FileCheck %s
+; RUN: llvm-objdump -r %t | FileCheck --check-prefix=RELA %s
+
+; CHECK: DW_AT_ranges [DW_FORM_sec_offset]   (0x000000a0)
+
+; Make sure we don't produce any relocations in any .dwo section (though in particular, debug_info.dwo)
+; FIXME: There should be no relocations in .dwo sections at all, but for now there are debug_loc relocs here.
+; RELA: RELOCATION RECORDS FOR [.rela.debug_info.dwo]
+; RELA-NOT: R_X86_64_32 .debug_ranges
+; RELA: RELOCATION RECORDS FOR
 
 ; From the code:
 
@@ -28,8 +37,6 @@
 ; compiled with:
 
 ; clang -g -S -gsplit-dwarf -O1 small.c
-
-; CHECK: DW_AT_ranges
 
 @c = external global i32
 

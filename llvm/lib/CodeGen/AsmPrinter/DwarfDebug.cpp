@@ -456,8 +456,15 @@ void DwarfDebug::addScopeRangeList(DwarfCompileUnit *TheCU, DIE *ScopeDIE,
   // Emit offset in .debug_range as a relocatable label. emitDIE will handle
   // emitting it appropriately.
   MCSymbol *RangeSym = Asm->GetTempSymbol("debug_ranges", GlobalRangeCount++);
-  addSectionLabel(Asm, TheCU, ScopeDIE, dwarf::DW_AT_ranges, RangeSym,
-                  DwarfDebugRangeSectionSym);
+
+  // Under fission, ranges are specified by constant offsets relative to the
+  // CU's DW_AT_GNU_ranges_base.
+  if (useSplitDwarf())
+    TheCU->addSectionDelta(ScopeDIE, dwarf::DW_AT_ranges, RangeSym,
+                           DwarfDebugRangeSectionSym);
+  else
+    addSectionLabel(Asm, TheCU, ScopeDIE, dwarf::DW_AT_ranges, RangeSym,
+                    DwarfDebugRangeSectionSym);
 
   RangeSpanList List(RangeSym);
   for (const InsnRange &R : Range) {
