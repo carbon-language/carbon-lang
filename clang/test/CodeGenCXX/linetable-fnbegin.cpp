@@ -4,9 +4,9 @@
 // CHECK: define{{.*}}bar
 // CHECK-NOT: define
 // CHECK: ret {{.*}}, !dbg ![[DBG:.*]]
-// CHECK: ![[HPP:.*]] = metadata !{metadata !"./template.hpp",
-// CHECK:![[BLOCK:.*]] = metadata !{{{.*}}, metadata ![[HPP]], {{.*}}} ; [ DW_TAG_lexical_block ]
-// CHECK: [[DBG]] = metadata !{i32 23, i32 0, metadata ![[BLOCK]], null}
+// CHECK-DAG: ![[HPP:.*]] = metadata !{metadata !"./template.hpp",
+// CHECK-DAG: ![[BLOCK:.*]] = metadata !{{{.*}}, metadata ![[HPP]], {{.*}}} ; [ DW_TAG_lexical_block ]
+// CHECK-DAG: ![[DBG]] = metadata !{i32 23, i32 0, metadata ![[BLOCK]], null}
 # 1 "./template.h" 1
 template <typename T>
 class Foo {
