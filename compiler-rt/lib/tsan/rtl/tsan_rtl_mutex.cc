@@ -376,7 +376,7 @@ void AfterSleep(ThreadState *thr, uptr pc) {
 void AcquireImpl(ThreadState *thr, uptr pc, SyncClock *c) {
   if (thr->ignore_sync)
     return;
-  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  thr->clock.set(thr->fast_state.epoch());
   thr->clock.acquire(c);
   StatInc(thr, StatSyncAcquire);
 }
@@ -384,7 +384,7 @@ void AcquireImpl(ThreadState *thr, uptr pc, SyncClock *c) {
 void ReleaseImpl(ThreadState *thr, uptr pc, SyncClock *c) {
   if (thr->ignore_sync)
     return;
-  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  thr->clock.set(thr->fast_state.epoch());
   thr->fast_synch_epoch = thr->fast_state.epoch();
   thr->clock.release(c);
   StatInc(thr, StatSyncRelease);
@@ -393,7 +393,7 @@ void ReleaseImpl(ThreadState *thr, uptr pc, SyncClock *c) {
 void ReleaseStoreImpl(ThreadState *thr, uptr pc, SyncClock *c) {
   if (thr->ignore_sync)
     return;
-  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  thr->clock.set(thr->fast_state.epoch());
   thr->fast_synch_epoch = thr->fast_state.epoch();
   thr->clock.ReleaseStore(c);
   StatInc(thr, StatSyncRelease);
@@ -402,7 +402,7 @@ void ReleaseStoreImpl(ThreadState *thr, uptr pc, SyncClock *c) {
 void AcquireReleaseImpl(ThreadState *thr, uptr pc, SyncClock *c) {
   if (thr->ignore_sync)
     return;
-  thr->clock.set(thr->tid, thr->fast_state.epoch());
+  thr->clock.set(thr->fast_state.epoch());
   thr->fast_synch_epoch = thr->fast_state.epoch();
   thr->clock.acq_rel(c);
   StatInc(thr, StatSyncAcquire);

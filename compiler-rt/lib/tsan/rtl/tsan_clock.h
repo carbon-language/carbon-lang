@@ -18,6 +18,8 @@
 
 namespace __tsan {
 
+const u64 kClkMask = (1ULL << kClkBits) - 1;
+
 // The clock that lives in sync variables (mutexes, atomics, etc).
 class SyncClock {
  public:
@@ -27,38 +29,44 @@ class SyncClock {
     return clk_.Size();
   }
 
-  void Reset() {
-    clk_.Reset();
+  u64 get(unsigned tid) const {
+    DCHECK_LT(tid, clk_.Size());
+    return clk_[tid] & kClkMask;
   }
 
+  void Reset();
+
+  void DebugDump(int(*printf)(const char *s, ...));
+
  private:
-  Vector<u64> clk_;
+  u64 release_seq_;
+  unsigned release_store_tid_;
+  static const uptr kDirtyTids = 2;
+  unsigned dirty_tids_[kDirtyTids];
+  mutable Vector<u64> clk_;
   friend struct ThreadClock;
 };
 
 // The clock that lives in threads.
 struct ThreadClock {
  public:
-  ThreadClock();
+  explicit ThreadClock(unsigned tid);
 
   u64 get(unsigned tid) const {
     DCHECK_LT(tid, kMaxTidInClock);
+    DCHECK_EQ(clk_[tid], clk_[tid] & kClkMask);
     return clk_[tid];
   }
 
-  void set(unsigned tid, u64 v) {
-    DCHECK_LT(tid, kMaxTid);
-    DCHECK_GE(v, clk_[tid]);
-    clk_[tid] = v;
-    if (nclk_ <= tid)
-      nclk_ = tid + 1;
+  void set(unsigned tid, u64 v);
+
+  void set(u64 v) {
+    DCHECK_GE(v, clk_[tid_]);
+    clk_[tid_] = v;
   }
 
-  void tick(unsigned tid) {
-    DCHECK_LT(tid, kMaxTid);
-    clk_[tid]++;
-    if (nclk_ <= tid)
-      nclk_ = tid + 1;
+  void tick() {
+    clk_[tid_]++;
   }
 
   uptr size() const {
@@ -70,9 +78,17 @@ struct ThreadClock {
   void acq_rel(SyncClock *dst);
   void ReleaseStore(SyncClock *dst) const;
 
+  void DebugDump(int(*printf)(const char *s, ...));
+
  private:
+  static const uptr kDirtyTids = SyncClock::kDirtyTids;
+  const unsigned tid_;
+  u64 last_acquire_;
   uptr nclk_;
   u64 clk_[kMaxTidInClock];
+
+  bool IsAlreadyAcquired(const SyncClock *src) const;
+  void UpdateCurrentThread(SyncClock *dst) const;
 };
 
 }  // namespace __tsan

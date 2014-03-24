@@ -69,6 +69,33 @@ enum StatType {
   StatSyncAcquire,
   StatSyncRelease,
 
+  // Clocks - acquire.
+  StatClockAcquire,
+  StatClockAcquireEmpty,
+  StatClockAcquireFastRelease,
+  StatClockAcquireLarge,
+  StatClockAcquireRepeat,
+  StatClockAcquireFull,
+  StatClockAcquiredSomething,
+  // Clocks - release.
+  StatClockRelease,
+  StatClockReleaseResize,
+  StatClockReleaseFast1,
+  StatClockReleaseFast2,
+  StatClockReleaseFast3,
+  StatClockReleaseFull,
+  StatClockReleaseAcquired,
+  StatClockReleaseClearTail,
+  StatClockReleaseLastOverflow,
+  // Clocks - release store.
+  StatClockStore,
+  StatClockStoreResize,
+  StatClockStoreFast,
+  StatClockStoreFull,
+  StatClockStoreTail,
+  // Clocks - acquire-release.
+  StatClockAcquireRelease,
+
   // Atomics.
   StatAtomic,
   StatAtomicLoad,

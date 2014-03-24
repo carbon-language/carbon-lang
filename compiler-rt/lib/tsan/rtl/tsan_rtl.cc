@@ -90,6 +90,7 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
   // they may be accessed before the ctor.
   // , ignore_reads_and_writes()
   // , ignore_interceptors()
+  , clock(tid)
 #ifndef TSAN_GO
   , jmp_bufs(MBlockJmpBuf)
 #endif
@@ -98,7 +99,11 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
   , stk_addr(stk_addr)
   , stk_size(stk_size)
   , tls_addr(tls_addr)
-  , tls_size(tls_size) {
+  , tls_size(tls_size)
+#ifndef TSAN_GO
+  , last_sleep_clock(tid)
+#endif
+{
 }
 
 static void MemoryProfiler(Context *ctx, fd_t fd, int i) {

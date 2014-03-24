@@ -74,6 +74,29 @@ void StatOutput(u64 *stat) {
   name[StatSyncAcquire]                  = "             acquired             ";
   name[StatSyncRelease]                  = "             released             ";
 
+  name[StatClockAcquire]                 = "Clock acquire                     ";
+  name[StatClockAcquireEmpty]            = "  empty clock                     ";
+  name[StatClockAcquireFastRelease]      = "  fast from release-store         ";
+  name[StatClockAcquireLarge]            = "  contains my tid                 ";
+  name[StatClockAcquireRepeat]           = "  repeated (fast)                 ";
+  name[StatClockAcquireFull]             = "  full (slow)                     ";
+  name[StatClockAcquiredSomething]       = "  acquired something              ";
+  name[StatClockRelease]                 = "Clock release                     ";
+  name[StatClockReleaseResize]           = "  resize                          ";
+  name[StatClockReleaseFast1]            = "  fast1                           ";
+  name[StatClockReleaseFast2]            = "  fast2                           ";
+  name[StatClockReleaseFast3]            = "  fast3                           ";
+  name[StatClockReleaseFull]             = "  full (slow)                     ";
+  name[StatClockReleaseAcquired]         = "  was acquired                    ";
+  name[StatClockReleaseClearTail]        = "  clear tail                      ";
+  name[StatClockReleaseLastOverflow]     = "  last overflow                   ";
+  name[StatClockStore]                   = "Clock release store               ";
+  name[StatClockStoreResize]             = "  resize                          ";
+  name[StatClockStoreFast]               = "  fast                            ";
+  name[StatClockStoreFull]               = "  slow                            ";
+  name[StatClockStoreTail]               = "  clear tail                      ";
+  name[StatClockAcquireRelease]          = "Clock acquire-release             ";
+
   name[StatAtomic]                       = "Atomic operations                 ";
   name[StatAtomicLoad]                   = "  Including load                  ";
   name[StatAtomicStore]                  = "            store                 ";
@@ -150,7 +173,7 @@ void StatOutput(u64 *stat) {
 
   Printf("Statistics:\n");
   for (int i = 0; i < StatCnt; i++)
-    Printf("%s: %zu\n", name[i], (uptr)stat[i]);
+    Printf("%s: %16zu\n", name[i], (uptr)stat[i]);
 }
 
 }  // namespace __tsan
