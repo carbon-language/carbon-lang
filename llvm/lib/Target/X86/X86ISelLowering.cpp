@@ -9454,6 +9454,7 @@ static SDValue LowerVectorAllZeroTest(SDValue Op, const X86Subtarget *Subtarget,
 
   SmallVector<SDValue, 8> Opnds;
   DenseMap<SDValue, unsigned> VecInMap;
+  SmallVector<SDValue, 8> VecIns;
   EVT VT = MVT::Other;
 
   // Recognize a special case where a vector is casted into wide integer to
@@ -9493,6 +9494,7 @@ static SDValue LowerVectorAllZeroTest(SDValue Op, const X86Subtarget *Subtarget,
           VT != VecInMap.begin()->first.getValueType())
         return SDValue();
       M = VecInMap.insert(std::make_pair(ExtractedFromVec, 0)).first;
+      VecIns.push_back(ExtractedFromVec);
     }
     M->second |= 1U << cast<ConstantSDNode>(Idx)->getZExtValue();
   }
@@ -9501,14 +9503,12 @@ static SDValue LowerVectorAllZeroTest(SDValue Op, const X86Subtarget *Subtarget,
          "Not extracted from 128-/256-bit vector.");
 
   unsigned FullMask = (1U << VT.getVectorNumElements()) - 1U;
-  SmallVector<SDValue, 8> VecIns;
 
   for (DenseMap<SDValue, unsigned>::const_iterator
         I = VecInMap.begin(), E = VecInMap.end(); I != E; ++I) {
     // Quit if not all elements are used.
     if (I->second != FullMask)
       return SDValue();
-    VecIns.push_back(I->first);
   }
 
   EVT TestVT = VT.is128BitVector() ? MVT::v2i64 : MVT::v4i64;
