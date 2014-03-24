@@ -353,11 +353,11 @@ int gb_var_arg_8 GUARDED_BY(muPointer);
 
 // illegal attribute arguments
 int gb_var_arg_bad_1 GUARDED_BY(1); // \
-  // expected-warning {{'guarded_by' attribute requires arguments that are class type or point to class type; type here is 'int'}}
+  // expected-warning {{'guarded_by' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'int'}}
 int gb_var_arg_bad_2 GUARDED_BY("mu"); // \
   // expected-warning {{ignoring 'guarded_by' attribute because its argument is invalid}}
 int gb_var_arg_bad_3 GUARDED_BY(muDoublePointer); // \
-  // expected-warning {{'guarded_by' attribute requires arguments that are class type or point to class type; type here is 'Mutex **'}}
+  // expected-warning {{'guarded_by' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 int gb_var_arg_bad_4 GUARDED_BY(umu); // \
   // expected-warning {{'guarded_by' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'UnlockableMu'}}
 
@@ -424,11 +424,11 @@ int * pgb_var_arg_8 PT_GUARDED_BY(muPointer);
 
 // illegal attribute arguments
 int * pgb_var_arg_bad_1 PT_GUARDED_BY(1); // \
-  // expected-warning {{'pt_guarded_by' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'pt_guarded_by' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'int'}}
 int * pgb_var_arg_bad_2 PT_GUARDED_BY("mu"); // \
   // expected-warning {{ignoring 'pt_guarded_by' attribute because its argument is invalid}}
 int * pgb_var_arg_bad_3 PT_GUARDED_BY(muDoublePointer); // \
-  // expected-warning {{'pt_guarded_by' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'pt_guarded_by' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 int * pgb_var_arg_bad_4 PT_GUARDED_BY(umu); // \
   // expected-warning {{'pt_guarded_by' attribute requires arguments whose type is annotated with 'capability' attribute}}
 
@@ -485,11 +485,11 @@ Mutex aa_var_arg_8 ACQUIRED_AFTER(muPointer);
 
 // illegal attribute arguments
 Mutex aa_var_arg_bad_1 ACQUIRED_AFTER(1); // \
-  // expected-warning {{'acquired_after' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'acquired_after' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'int'}}
 Mutex aa_var_arg_bad_2 ACQUIRED_AFTER("mu"); // \
   // expected-warning {{ignoring 'acquired_after' attribute because its argument is invalid}}
 Mutex aa_var_arg_bad_3 ACQUIRED_AFTER(muDoublePointer); // \
-  // expected-warning {{'acquired_after' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'acquired_after' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 Mutex aa_var_arg_bad_4 ACQUIRED_AFTER(umu); // \
   // expected-warning {{'acquired_after' attribute requires arguments whose type is annotated with 'capability' attribute}}
 UnlockableMu aa_var_arg_bad_5 ACQUIRED_AFTER(mu_aa); // \
@@ -548,11 +548,11 @@ Mutex ab_var_arg_8 ACQUIRED_BEFORE(muPointer);
 
 // illegal attribute arguments
 Mutex ab_var_arg_bad_1 ACQUIRED_BEFORE(1); // \
-  // expected-warning {{'acquired_before' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'acquired_before' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'int'}}
 Mutex ab_var_arg_bad_2 ACQUIRED_BEFORE("mu"); // \
   // expected-warning {{ignoring 'acquired_before' attribute because its argument is invalid}}
 Mutex ab_var_arg_bad_3 ACQUIRED_BEFORE(muDoublePointer); // \
-  // expected-warning {{'acquired_before' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'acquired_before' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 Mutex ab_var_arg_bad_4 ACQUIRED_BEFORE(umu); // \
   // expected-warning {{'acquired_before' attribute requires arguments whose type is annotated with 'capability' attribute}}
 UnlockableMu ab_var_arg_bad_5 ACQUIRED_BEFORE(mu_ab); // \
@@ -617,7 +617,7 @@ int elf_function_9(Mutex x, Mutex y) EXCLUSIVE_LOCK_FUNCTION(1,2);
 int elf_function_bad_2() EXCLUSIVE_LOCK_FUNCTION("mu"); // \
   // expected-warning {{ignoring 'exclusive_lock_function' attribute because its argument is invalid}}
 int elf_function_bad_3() EXCLUSIVE_LOCK_FUNCTION(muDoublePointer); // \
-  // expected-warning {{'exclusive_lock_function' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'exclusive_lock_function' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 int elf_function_bad_4() EXCLUSIVE_LOCK_FUNCTION(umu); // \
   // expected-warning {{'exclusive_lock_function' attribute requires arguments whose type is annotated with 'capability' attribute}}
 
@@ -689,7 +689,7 @@ int slf_function_9(Mutex x, Mutex y) SHARED_LOCK_FUNCTION(1,2);
 int slf_function_bad_2() SHARED_LOCK_FUNCTION("mu"); // \
   // expected-warning {{ignoring 'shared_lock_function' attribute because its argument is invalid}}
 int slf_function_bad_3() SHARED_LOCK_FUNCTION(muDoublePointer); // \
-  // expected-warning {{'shared_lock_function' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'shared_lock_function' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 int slf_function_bad_4() SHARED_LOCK_FUNCTION(umu); // \
   // expected-warning {{'shared_lock_function' attribute requires arguments whose type is annotated with 'capability' attribute}}
 
@@ -771,7 +771,7 @@ int etf_function_bad_3() EXCLUSIVE_TRYLOCK_FUNCTION(muDoublePointer); // \
 int etf_function_bad_4() EXCLUSIVE_TRYLOCK_FUNCTION(1, "mu"); // \
   // expected-warning {{ignoring 'exclusive_trylock_function' attribute because its argument is invalid}}
 int etf_function_bad_5() EXCLUSIVE_TRYLOCK_FUNCTION(1, muDoublePointer); // \
-  // expected-warning {{'exclusive_trylock_function' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'exclusive_trylock_function' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 int etf_function_bad_6() EXCLUSIVE_TRYLOCK_FUNCTION(1, umu); // \
   // expected-warning {{'exclusive_trylock_function' attribute requires arguments whose type is annotated with 'capability' attribute}}
 
@@ -845,7 +845,7 @@ int stf_function_bad_3() SHARED_TRYLOCK_FUNCTION(muDoublePointer); // \
 int stf_function_bad_4() SHARED_TRYLOCK_FUNCTION(1, "mu"); // \
   // expected-warning {{ignoring 'shared_trylock_function' attribute because its argument is invalid}}
 int stf_function_bad_5() SHARED_TRYLOCK_FUNCTION(1, muDoublePointer); // \
-  // expected-warning {{'shared_trylock_function' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'shared_trylock_function' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 int stf_function_bad_6() SHARED_TRYLOCK_FUNCTION(1, umu); // \
   // expected-warning {{'shared_trylock_function' attribute requires arguments whose type is annotated with 'capability' attribute}}
 
@@ -908,7 +908,7 @@ int uf_function_9(Mutex x, Mutex y) UNLOCK_FUNCTION(1,2);
 int uf_function_bad_2() UNLOCK_FUNCTION("mu"); // \
   // expected-warning {{ignoring 'unlock_function' attribute because its argument is invalid}}
 int uf_function_bad_3() UNLOCK_FUNCTION(muDoublePointer); // \
-  // expected-warning {{'unlock_function' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'unlock_function' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 int uf_function_bad_4() UNLOCK_FUNCTION(umu); // \
   // expected-warning {{'unlock_function' attribute requires arguments whose type is annotated with 'capability' attribute}}
 
@@ -980,11 +980,11 @@ int lr_function_8() LOCK_RETURNED(muPointer);
 
 // illegal attribute arguments
 int lr_function_bad_1() LOCK_RETURNED(1); // \
-  // expected-warning {{'lock_returned' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'lock_returned' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'int'}}
 int lr_function_bad_2() LOCK_RETURNED("mu"); // \
   // expected-warning {{ignoring 'lock_returned' attribute because its argument is invalid}}
 int lr_function_bad_3() LOCK_RETURNED(muDoublePointer); // \
-  // expected-warning {{'lock_returned' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'lock_returned' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 int lr_function_bad_4() LOCK_RETURNED(umu); // \
   // expected-warning {{'lock_returned' attribute requires arguments whose type is annotated with 'capability' attribute}}
 
@@ -1047,11 +1047,11 @@ int le_function_8() LOCKS_EXCLUDED(muPointer);
 
 // illegal attribute arguments
 int le_function_bad_1() LOCKS_EXCLUDED(1); // \
-  // expected-warning {{'locks_excluded' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'locks_excluded' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'int'}}
 int le_function_bad_2() LOCKS_EXCLUDED("mu"); // \
   // expected-warning {{ignoring 'locks_excluded' attribute because its argument is invalid}}
 int le_function_bad_3() LOCKS_EXCLUDED(muDoublePointer); // \
-  // expected-warning {{'locks_excluded' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'locks_excluded' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 int le_function_bad_4() LOCKS_EXCLUDED(umu); // \
   // expected-warning {{'locks_excluded' attribute requires arguments whose type is annotated with 'capability' attribute}}
 
@@ -1114,11 +1114,11 @@ int elr_function_8() EXCLUSIVE_LOCKS_REQUIRED(muPointer);
 
 // illegal attribute arguments
 int elr_function_bad_1() EXCLUSIVE_LOCKS_REQUIRED(1); // \
-  // expected-warning {{'exclusive_locks_required' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'exclusive_locks_required' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'int'}}
 int elr_function_bad_2() EXCLUSIVE_LOCKS_REQUIRED("mu"); // \
   // expected-warning {{ignoring 'exclusive_locks_required' attribute because its argument is invalid}}
 int elr_function_bad_3() EXCLUSIVE_LOCKS_REQUIRED(muDoublePointer); // \
-  // expected-warning {{'exclusive_locks_required' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'exclusive_locks_required' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 int elr_function_bad_4() EXCLUSIVE_LOCKS_REQUIRED(umu); // \
   // expected-warning {{'exclusive_locks_required' attribute requires arguments whose type is annotated with 'capability' attribute}}
 
@@ -1182,11 +1182,11 @@ int slr_function_8() SHARED_LOCKS_REQUIRED(muPointer);
 
 // illegal attribute arguments
 int slr_function_bad_1() SHARED_LOCKS_REQUIRED(1); // \
-  // expected-warning {{'shared_locks_required' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'shared_locks_required' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'int'}}
 int slr_function_bad_2() SHARED_LOCKS_REQUIRED("mu"); // \
   // expected-warning {{ignoring 'shared_locks_required' attribute because its argument is invalid}}
 int slr_function_bad_3() SHARED_LOCKS_REQUIRED(muDoublePointer); // \
-  // expected-warning {{'shared_locks_required' attribute requires arguments that are class type or point to class type}}
+  // expected-warning {{'shared_locks_required' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'Mutex **'}}
 int slr_function_bad_4() SHARED_LOCKS_REQUIRED(umu); // \
   // expected-warning {{'shared_locks_required' attribute requires arguments whose type is annotated with 'capability' attribute}}
 

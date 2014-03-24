@@ -363,63 +363,78 @@ static const RecordType *getRecordType(QualType QT) {
   return 0;
 }
 
-
-static bool checkBaseClassIsLockableCallback(const CXXBaseSpecifier *Specifier,
-                                             CXXBasePath &Path, void *Unused) {
-  const RecordType *RT = Specifier->getType()->getAs<RecordType>();
-  return RT->getDecl()->hasAttr<CapabilityAttr>();
-}
-
-
-/// \brief Thread Safety Analysis: Checks that the passed in RecordType
-/// resolves to a lockable object.
-static void checkForLockableRecord(Sema &S, Decl *D, const AttributeList &Attr,
-                                   QualType Ty) {
+static bool checkRecordTypeForCapability(Sema &S, const AttributeList &Attr,
+                                         QualType Ty) {
   const RecordType *RT = getRecordType(Ty);
 
-  // Warn if could not get record type for this argument.
-  if (!RT) {
-    S.Diag(Attr.getLoc(), diag::warn_thread_attribute_argument_not_class)
-      << Attr.getName() << Ty;
-    return;
-  }
+  if (!RT)
+    return false;
 
-  // Don't check for lockable if the class hasn't been defined yet.
+  // Don't check for the capability if the class hasn't been defined yet.
   if (RT->isIncompleteType())
-    return;
+    return true;
 
-  // Allow smart pointers to be used as lockable objects.
+  // Allow smart pointers to be used as capability objects.
   // FIXME -- Check the type that the smart pointer points to.
   if (threadSafetyCheckIsSmartPointer(S, RT))
-    return;
+    return true;
 
-  // Check if the type is lockable.
+  // Check if the record itself has a capability.
   RecordDecl *RD = RT->getDecl();
   if (RD->hasAttr<CapabilityAttr>())
-    return;
+    return true;
 
-  // Else check if any base classes are lockable.
+  // Else check if any base classes have a capability.
   if (CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(RD)) {
     CXXBasePaths BPaths(false, false);
-    if (CRD->lookupInBases(checkBaseClassIsLockableCallback, 0, BPaths))
-      return;
+    if (CRD->lookupInBases([](const CXXBaseSpecifier *BS, CXXBasePath &P,
+      void *) {
+      return BS->getType()->getAs<RecordType>()
+        ->getDecl()->hasAttr<CapabilityAttr>();
+    }, 0, BPaths))
+      return true;
   }
+  return false;
+}
+
+static bool checkTypedefTypeForCapability(Sema &S, const AttributeList &Attr,
+                                          QualType Ty) {
+  const auto *TD = Ty->getAs<TypedefType>();
+  if (!TD)
+    return false;
+
+  TypedefNameDecl *TN = TD->getDecl();
+  if (!TN)
+    return false;
+
+  return TN->hasAttr<CapabilityAttr>();
+}
+
+/// \brief Checks that the passed in type is qualified as a capability. This
+/// type can either be a struct, or a typedef to a built-in type (such as int).
+static void checkForCapability(Sema &S, const AttributeList &Attr,
+                               QualType Ty) {
+  if (checkTypedefTypeForCapability(S, Attr, Ty))
+    return;
+
+  if (checkRecordTypeForCapability(S, Attr, Ty))
+    return;
 
   S.Diag(Attr.getLoc(), diag::warn_thread_attribute_argument_not_lockable)
     << Attr.getName() << Ty;
 }
 
-/// \brief Thread Safety Analysis: Checks that all attribute arguments, starting
-/// from Sidx, resolve to a lockable object.
+/// \brief Checks that all attribute arguments, starting from Sidx, resolve to
+/// a capability object.
 /// \param Sidx The attribute argument index to start checking with.
 /// \param ParamIdxOk Whether an argument can be indexing into a function
 /// parameter list.
-static void checkAttrArgsAreLockableObjs(Sema &S, Decl *D,
-                                         const AttributeList &Attr,
-                                         SmallVectorImpl<Expr*> &Args,
-                                         int Sidx = 0,
-                                         bool ParamIdxOk = false) {
-  for(unsigned Idx = Sidx; Idx < Attr.getNumArgs(); ++Idx) {
+static void checkAttrArgsAreCapabilityObjs(Sema &S, Decl *D,
+                                           const AttributeList &Attr,
+                                           SmallVectorImpl<Expr *> &Args,
+                                           int Sidx = 0,
+                                           bool ParamIdxOk = false) {
+  for (unsigned Idx = Sidx; Idx < Attr.getNumArgs(); ++Idx) {
     Expr *ArgExp = Attr.getArgAsExpr(Idx);
 
     if (ArgExp->isTypeDependent()) {
@@ -455,7 +470,7 @@ static void checkAttrArgsAreLockableObjs(Sema &S, Decl *D,
           if (DRE->getDecl()->isCXXInstanceMember())
             ArgTy = DRE->getDecl()->getType();
 
-    // First see if we can just cast to record type, or point to record type.
+    // First see if we can just cast to record type, or pointer to record type.
     const RecordType *RT = getRecordType(ArgTy);
 
     // Now check if we index into a record type function param.
@@ -476,7 +491,7 @@ static void checkAttrArgsAreLockableObjs(Sema &S, Decl *D,
       }
     }
 
-    checkForLockableRecord(S, D, Attr, ArgTy);
+    checkForCapability(S, Attr, ArgTy);
 
     Args.push_back(ArgExp);
   }
@@ -505,7 +520,7 @@ static bool checkGuardedByAttrCommon(Sema &S, Decl *D,
                                      Expr* &Arg) {
   SmallVector<Expr*, 1> Args;
   // check that all arguments are lockable objects
-  checkAttrArgsAreLockableObjs(S, D, Attr, Args);
+  checkAttrArgsAreCapabilityObjs(S, D, Attr, Args);
   unsigned Size = Args.size();
   if (Size != 1)
     return false;
@@ -556,7 +571,7 @@ static bool checkAcquireOrderAttrCommon(Sema &S, Decl *D,
   }
 
   // Check that all arguments are lockable objects.
-  checkAttrArgsAreLockableObjs(S, D, Attr, Args);
+  checkAttrArgsAreCapabilityObjs(S, D, Attr, Args);
   if (Args.empty())
     return false;
 
@@ -594,7 +609,7 @@ static bool checkLockFunAttrCommon(Sema &S, Decl *D,
                                    SmallVectorImpl<Expr *> &Args) {
   // zero or more arguments ok
   // check that all arguments are lockable objects
-  checkAttrArgsAreLockableObjs(S, D, Attr, Args, 0, /*ParamIdxOk=*/true);
+  checkAttrArgsAreCapabilityObjs(S, D, Attr, Args, 0, /*ParamIdxOk=*/true);
 
   return true;
 }
@@ -640,7 +655,7 @@ static bool checkTryLockFunAttrCommon(Sema &S, Decl *D,
   }
 
   // check that all arguments are lockable objects
-  checkAttrArgsAreLockableObjs(S, D, Attr, Args, 1);
+  checkAttrArgsAreCapabilityObjs(S, D, Attr, Args, 1);
 
   return true;
 }
@@ -675,7 +690,7 @@ static void handleLockReturnedAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   // check that the argument is lockable object
   SmallVector<Expr*, 1> Args;
-  checkAttrArgsAreLockableObjs(S, D, Attr, Args);
+  checkAttrArgsAreCapabilityObjs(S, D, Attr, Args);
   unsigned Size = Args.size();
   if (Size == 0)
     return;
@@ -692,7 +707,7 @@ static void handleLocksExcludedAttr(Sema &S, Decl *D,
 
   // check that all arguments are lockable objects
   SmallVector<Expr*, 1> Args;
-  checkAttrArgsAreLockableObjs(S, D, Attr, Args);
+  checkAttrArgsAreCapabilityObjs(S, D, Attr, Args);
   unsigned Size = Args.size();
   if (Size == 0)
     return;
@@ -3898,7 +3913,7 @@ static void handleReleaseCapabilityAttr(Sema &S, Decl *D,
                                         const AttributeList &Attr) {
   // Check that all arguments are lockable objects.
   SmallVector<Expr *, 1> Args;
-  checkAttrArgsAreLockableObjs(S, D, Attr, Args, 0, true);
+  checkAttrArgsAreCapabilityObjs(S, D, Attr, Args, 0, true);
 
   D->addAttr(::new (S.Context) ReleaseCapabilityAttr(
       Attr.getRange(), S.Context, Args.data(), Args.size(),
@@ -3912,7 +3927,7 @@ static void handleRequiresCapabilityAttr(Sema &S, Decl *D,
 
   // check that all arguments are lockable objects
   SmallVector<Expr*, 1> Args;
-  checkAttrArgsAreLockableObjs(S, D, Attr, Args);
+  checkAttrArgsAreCapabilityObjs(S, D, Attr, Args);
   if (Args.empty())
     return;
 
