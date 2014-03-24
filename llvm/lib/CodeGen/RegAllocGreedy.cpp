@@ -306,6 +306,15 @@ private:
                     SmallVectorImpl<unsigned>&, unsigned = ~0u);
   unsigned tryRegionSplit(LiveInterval&, AllocationOrder&,
                           SmallVectorImpl<unsigned>&);
+  /// Calculate cost of region splitting.
+  unsigned calculateRegionSplitCost(LiveInterval &VirtReg,
+                                    AllocationOrder &Order,
+                                    BlockFrequency &BestCost,
+                                    unsigned &NumCands);
+  /// Perform region splitting.
+  unsigned doRegionSplit(LiveInterval &VirtReg, unsigned BestCand,
+                         bool HasCompact,
+                         SmallVectorImpl<unsigned> &NewVRegs);
   unsigned tryBlockSplit(LiveInterval&, AllocationOrder&,
                          SmallVectorImpl<unsigned>&);
   unsigned tryInstructionSplit(LiveInterval&, AllocationOrder&,
@@ -1231,9 +1240,7 @@ void RAGreedy::splitAroundRegion(LiveRangeEdit &LREdit,
 unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
                                   SmallVectorImpl<unsigned> &NewVRegs) {
   unsigned NumCands = 0;
-  unsigned BestCand = NoCand;
   BlockFrequency BestCost;
-  SmallVector<unsigned, 8> UsedCands;
 
   // Check if we can split this live range around a compact region.
   bool HasCompact = calcCompactRegion(GlobalCand.front());
@@ -1249,6 +1256,21 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
                  MBFI->printBlockFreq(dbgs(), BestCost) << '\n');
   }
 
+  unsigned BestCand =
+      calculateRegionSplitCost(VirtReg, Order, BestCost, NumCands);
+
+  // No solutions found, fall back to single block splitting.
+  if (!HasCompact && BestCand == NoCand)
+    return 0;
+
+  return doRegionSplit(VirtReg, BestCand, HasCompact, NewVRegs);
+}
+
+unsigned RAGreedy::calculateRegionSplitCost(LiveInterval &VirtReg,
+                                            AllocationOrder &Order,
+                                            BlockFrequency &BestCost,
+                                            unsigned &NumCands) {
+  unsigned BestCand = NoCand;
   Order.rewind();
   while (unsigned PhysReg = Order.next()) {
     // Discard bad candidates before we run out of interference cache cursors.
@@ -1317,11 +1339,13 @@ unsigned RAGreedy::tryRegionSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     }
     ++NumCands;
   }
+  return BestCand;
+}
 
-  // No solutions found, fall back to single block splitting.
-  if (!HasCompact && BestCand == NoCand)
-    return 0;
-
+unsigned RAGreedy::doRegionSplit(LiveInterval &VirtReg, unsigned BestCand,
+                                 bool HasCompact,
+                                 SmallVectorImpl<unsigned> &NewVRegs) {
+  SmallVector<unsigned, 8> UsedCands;
   // Prepare split editor.
   LiveRangeEdit LREdit(&VirtReg, NewVRegs, *MF, *LIS, VRM, this);
   SE->reset(LREdit, SplitSpillMode);
