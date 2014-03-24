@@ -1929,8 +1929,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
 
 // Emit the various dwarf units to the unit section USection with
 // the abbreviations going into ASection.
-void DwarfFile::emitUnits(DwarfDebug *DD, const MCSection *ASection,
-                          const MCSymbol *ASectionSym) {
+void DwarfFile::emitUnits(DwarfDebug *DD, const MCSymbol *ASectionSym) {
   for (DwarfUnit *TheU : CUs) {
     DIE *Die = TheU->getUnitDie();
     const MCSection *USection = TheU->getSection();
@@ -1954,8 +1953,7 @@ void DwarfFile::emitUnits(DwarfDebug *DD, const MCSection *ASection,
 void DwarfDebug::emitDebugInfo() {
   DwarfFile &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
 
-  Holder.emitUnits(this, Asm->getObjFileLowering().getDwarfAbbrevSection(),
-                   DwarfAbbrevSectionSym);
+  Holder.emitUnits(this, DwarfAbbrevSectionSym);
 }
 
 // Emit the abbreviation section.
@@ -2692,9 +2690,7 @@ DwarfTypeUnit *DwarfDebug::constructSkeletonTU(DwarfTypeUnit *TU) {
 // compile units that would normally be in debug_info.
 void DwarfDebug::emitDebugInfoDWO() {
   assert(useSplitDwarf() && "No split dwarf debug info?");
-  InfoHolder.emitUnits(this,
-                       Asm->getObjFileLowering().getDwarfAbbrevDWOSection(),
-                       DwarfAbbrevDWOSectionSym);
+  InfoHolder.emitUnits(this, DwarfAbbrevDWOSectionSym);
 }
 
 // Emit the .debug_abbrev.dwo section for separated dwarf. This contains the

@@ -271,8 +271,7 @@ public:
 
   /// \brief Emit all of the units to the section listed with the given
   /// abbreviation section.
-  void emitUnits(DwarfDebug *DD, const MCSection *ASection,
-                 const MCSymbol *ASectionSym);
+  void emitUnits(DwarfDebug *DD, const MCSymbol *ASectionSym);
 
   /// \brief Emit a set of abbreviations to the specific section.
   void emitAbbrevs(const MCSection *);
