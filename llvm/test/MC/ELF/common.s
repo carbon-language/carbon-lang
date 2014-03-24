@@ -60,7 +60,7 @@
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: (0xFFF2)
+// CHECK-NEXT:     Section: Common (0xFFF2)
 // CHECK-NEXT:   }
 
 
@@ -82,7 +82,7 @@ foo:
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: (0xFFF2)
+// CHECK-NEXT:     Section: Common (0xFFF2)
 // CHECK-NEXT:   }
 
 
@@ -95,5 +95,5 @@ foo:
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Object
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: (0xFFF2)
+// CHECK-NEXT:     Section: Common (0xFFF2)
 // CHECK-NEXT:   }

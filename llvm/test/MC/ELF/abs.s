@@ -13,5 +13,5 @@
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: (0xFFF1)
+// CHECK-NEXT:     Section: Absolute (0xFFF1)
 // CHECK-NEXT:   }

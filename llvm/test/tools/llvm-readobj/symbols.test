@@ -49,7 +49,7 @@ ELF-NEXT:     Size: 0
 ELF-NEXT:     Binding: Local (0x0)
 ELF-NEXT:     Type: None (0x0)
 ELF-NEXT:     Other: 0
-ELF-NEXT:     Section:  (0x0)
+ELF-NEXT:     Section: Undefined (0x0)
 ELF-NEXT:   }
 ELF-NEXT:   Symbol {
 ELF-NEXT:     Name: trivial.ll (1)
@@ -58,7 +58,7 @@ ELF-NEXT:     Size: 0
 ELF-NEXT:     Binding: Local (0x0)
 ELF-NEXT:     Type: File (0x4)
 ELF-NEXT:     Other: 0
-ELF-NEXT:     Section:  (0xFFF1)
+ELF-NEXT:     Section: Absolute (0xFFF1)
 ELF-NEXT:   }
 ELF-NEXT:   Symbol {
 ELF-NEXT:     Name: .L.str (39)

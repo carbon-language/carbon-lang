@@ -14,7 +14,7 @@ mov %eax,bar
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: (0x0)
+// CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: foo (1)
@@ -23,5 +23,5 @@ mov %eax,bar
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: (0x0)
+// CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }

@@ -11,7 +11,7 @@
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: (0xFFF1)
+// CHECK-NEXT:     Section: Absolute (0xFFF1)
 // CHECK-NEXT:   }
 
 // Test that we accept .set of a symbol after it has been used in a statement.
@@ -32,5 +32,5 @@
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: (0x0)
+// CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }

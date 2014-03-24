@@ -37,4 +37,4 @@ Symbols:
 # CHECK:          Section: .text
 # CHECK:        Symbol {
 # CHECK:          Name: undefined_symbol
-# CHECK:          Section:  (0x0)
+# CHECK:          Section: Undefined (0x0)

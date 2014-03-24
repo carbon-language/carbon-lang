@@ -191,7 +191,7 @@ ELF:   Symbol {
 ELF:     Name: shared.ll
 ELF:     Binding: Local
 ELF:     Type: File
-ELF:     Section: (0xFFF1)
+ELF:     Section: Absolute (0xFFF1)
 ELF:   }
 ELF:   Symbol {
 ELF:     Name: local_func
@@ -203,13 +203,13 @@ ELF:   Symbol {
 ELF:     Name: _GLOBAL_OFFSET_TABLE_
 ELF:     Binding: Local
 ELF:     Type: Object
-ELF:     Section: (0xFFF1)
+ELF:     Section: Absolute (0xFFF1)
 ELF:   }
 ELF:   Symbol {
 ELF:     Name: _DYNAMIC
 ELF:     Binding: Local
 ELF:     Type: Object
-ELF:     Section: (0xFFF1)
+ELF:     Section: Absolute (0xFFF1)
 ELF:   }
 ELF:   Symbol {
 ELF:     Name: common_sym
@@ -233,13 +233,13 @@ ELF:   Symbol {
 ELF:     Name: __bss_start
 ELF:     Binding: Global
 ELF:     Type: None
-ELF:     Section: (0xFFF1)
+ELF:     Section: Absolute (0xFFF1)
 ELF:   }
 ELF:   Symbol {
 ELF:     Name: _end
 ELF:     Binding: Global
 ELF:     Type: None
-ELF:     Section: (0xFFF1)
+ELF:     Section: Absolute (0xFFF1)
 ELF:   }
 ELF:   Symbol {
 ELF:     Name: global_func
@@ -251,7 +251,7 @@ ELF:   Symbol {
 ELF:     Name: _edata
 ELF:     Binding: Global
 ELF:     Type: None
-ELF:     Section: (0xFFF1)
+ELF:     Section: Absolute (0xFFF1)
 ELF:   }
 ELF: ]
 
@@ -278,13 +278,13 @@ ELF:   Symbol {
 ELF:     Name: __bss_start
 ELF:     Binding: Global
 ELF:     Type: None
-ELF:     Section: (0xFFF1)
+ELF:     Section: Absolute (0xFFF1)
 ELF:   }
 ELF:   Symbol {
 ELF:     Name: _end
 ELF:     Binding: Global
 ELF:     Type: None
-ELF:     Section: (0xFFF1)
+ELF:     Section: Absolute (0xFFF1)
 ELF:   }
 ELF:   Symbol {
 ELF:     Name: global_func
@@ -296,7 +296,7 @@ ELF:   Symbol {
 ELF:     Name: _edata
 ELF:     Binding: Global
 ELF:     Type: None
-ELF:     Section: (0xFFF1)
+ELF:     Section: Absolute (0xFFF1)
 ELF:   }
 ELF: ]
 

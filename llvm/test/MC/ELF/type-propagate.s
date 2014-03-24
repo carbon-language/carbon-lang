@@ -84,7 +84,7 @@ sym10:
 // CHECK-NEXT:    Binding: Local (0x0)
 // CHECK-NEXT:    Type: None (0x0)
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section:  (0xFFF1)
+// CHECK-NEXT:    Section: Absolute (0xFFF1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
 // CHECK-NEXT:    Name: sym07
@@ -93,7 +93,7 @@ sym10:
 // CHECK-NEXT:    Binding: Local (0x0)
 // CHECK-NEXT:    Type: None (0x0)
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section:  (0xFFF1)
+// CHECK-NEXT:    Section: Absolute (0xFFF1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
 // CHECK-NEXT:    Name: sym08

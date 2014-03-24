@@ -12,7 +12,7 @@ foa:
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: File
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: (0xFFF1)
+// CHECK-NEXT:     Section: Absolute (0xFFF1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: foa (5)

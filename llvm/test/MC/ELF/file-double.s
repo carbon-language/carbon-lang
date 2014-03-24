@@ -17,7 +17,7 @@ bar.c:
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: File
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: (0xFFF1)
+// CHECK-NEXT:     Section: Absolute (0xFFF1)
 // CHECK-NEXT:   }
 // CHECK:          Name: bar.c (7)
 // CHECK-NEXT:     Value: 0x0
@@ -25,7 +25,7 @@ bar.c:
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: File
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: (0xFFF1)
+// CHECK-NEXT:     Section: Absolute (0xFFF1)
 // CHECK-NEXT:   }
 // CHECK:        Symbol {
 // CHECK:        Name: bar.c (7)

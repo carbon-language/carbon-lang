@@ -33,7 +33,7 @@ ELF32:   Symbol {
 ELF32:     Name: puts@GLIBC_2.0
 ELF32:     Binding: Global
 ELF32:     Type: Function
-ELF32:     Section:  (0x0)
+ELF32:     Section: Undefined (0x0)
 ELF32:   }
 ELF32: ]
 ELF64: DynamicSymbols [
@@ -41,6 +41,6 @@ ELF64:   Symbol {
 ELF64:     Name: puts@GLIBC_2.2.5
 ELF64:     Binding: Global
 ELF64:     Type: Function
-ELF64:     Section:  (0x0)
+ELF64:     Section: Undefined (0x0)
 ELF64:   }
 ELF64: ]
