@@ -214,6 +214,10 @@ asm(
     ".text\n"
     ".align 2\n"
     ".globl PPC64CompilationCallback\n"
+#if _CALL_ELF == 2
+    ".type PPC64CompilationCallback,@function\n"
+"PPC64CompilationCallback:\n"
+#else
     ".section \".opd\",\"aw\",@progbits\n"
     ".align 3\n"
 "PPC64CompilationCallback:\n"
@@ -223,6 +227,7 @@ asm(
     ".align 4\n"
     ".type PPC64CompilationCallback,@function\n"
 ".L.PPC64CompilationCallback:\n"
+#endif
 #  else
 asm(
     ".text\n"
