@@ -127,6 +127,9 @@ include $(LEVEL)/Makefile.common
 
 ifeq ($(HOST_OS),MingW)
     LLVMLibsOptions += -lws2_32
+    # Include everything from the .a's into the shared library.
+    ProjLibsOptions := -Wl,--whole-archive $(ProjLibsOptions) \
+                       -Wl,--no-whole-archive
 endif
 
 ifeq ($(HOST_OS),Darwin)
