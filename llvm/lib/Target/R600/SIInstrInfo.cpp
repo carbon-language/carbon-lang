@@ -498,7 +498,7 @@ unsigned SIInstrInfo::getVALUOp(const MachineInstr &MI) {
   case AMDGPU::PHI: return AMDGPU::PHI;
   case AMDGPU::S_MOV_B32:
     return MI.getOperand(1).isReg() ?
-           TargetOpcode::COPY : AMDGPU::V_MOV_B32_e32;
+           AMDGPU::COPY : AMDGPU::V_MOV_B32_e32;
   case AMDGPU::S_ADD_I32: return AMDGPU::V_ADD_I32_e32;
   case AMDGPU::S_ADDC_U32: return AMDGPU::V_ADDC_U32_e32;
   case AMDGPU::S_SUB_I32: return AMDGPU::V_SUB_I32_e32;
