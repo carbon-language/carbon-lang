@@ -160,7 +160,8 @@ bool PPCPassConfig::addInstSelector() {
     addPass(createPPCCTRLoopsVerify());
 #endif
 
-  addPass(createPPCVSXCopyPass());
+  if (getPPCSubtarget().hasVSX())
+    addPass(createPPCVSXCopyPass());
 
   return false;
 }
