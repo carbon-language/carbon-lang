@@ -105,6 +105,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
     return;
   }
   pthread_attr_t attr;
+  pthread_attr_init(&attr);
   CHECK_EQ(pthread_getattr_np(pthread_self(), &attr), 0);
   uptr stacksize = 0;
   void *stackaddr = 0;
@@ -269,7 +270,9 @@ void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
     trace[size++] = frames[i].absolute_pc + 2;
 }
 
+#if !SANITIZER_FREEBSD
 static uptr g_tls_size;
+#endif
 
 #ifdef __i386__
 # define DL_INTERNAL_FUNCTION __attribute__((regparm(3), stdcall))
@@ -278,7 +281,7 @@ static uptr g_tls_size;
 #endif
 
 void InitTlsSize() {
-#if !SANITIZER_ANDROID
+#if !SANITIZER_FREEBSD && !SANITIZER_ANDROID
   typedef void (*get_tls_func)(size_t*, size_t*) DL_INTERNAL_FUNCTION;
   get_tls_func get_tls;
   void *get_tls_static_info_ptr = dlsym(RTLD_NEXT, "_dl_get_tls_static_info");
@@ -290,11 +293,7 @@ void InitTlsSize() {
   size_t tls_align = 0;
   IndirectExternCall(get_tls)(&tls_size, &tls_align);
   g_tls_size = tls_size;
-#endif
-}
-
-uptr GetTlsSize() {
-  return g_tls_size;
+#endif  // !SANITIZER_FREEBSD && !SANITIZER_ANDROID
 }
 
 #if (defined(__x86_64__) || defined(__i386__)) && SANITIZER_LINUX
@@ -402,6 +401,16 @@ static void GetTls(uptr *addr, uptr *size) {
   }
 #else
 # error "Unknown OS"
+#endif
+}
+
+uptr GetTlsSize() {
+#if SANITIZER_FREEBSD
+  uptr addr, size;
+  GetTls(&addr, &size);
+  return size;
+#else
+  return g_tls_size;
 #endif
 }
 
