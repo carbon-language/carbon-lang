@@ -904,18 +904,6 @@ def : Pat <
   (EXTRACT_SUBREG $val, sub0)
 >;
 
-//use two V_CNDMASK_B32_e64 instructions for f64
-def : Pat <
-  (f64 (select i1:$src2, f64:$src1, f64:$src0)),
-  (INSERT_SUBREG (INSERT_SUBREG (f64 (IMPLICIT_DEF)),
-  (V_CNDMASK_B32_e64 (EXTRACT_SUBREG $src0, sub0),
-                     (EXTRACT_SUBREG $src1, sub0),
-                     $src2), sub0),
-  (V_CNDMASK_B32_e64 (EXTRACT_SUBREG $src0, sub1),
-                     (EXTRACT_SUBREG $src1, sub1),
-                     $src2), sub1)
->;
-
 def V_READLANE_B32 : VOP2 <
   0x00000001,
   (outs SReg_32:$vdst),

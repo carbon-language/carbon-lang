@@ -104,6 +104,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::STORE, MVT::v4i32, Custom);
 
   setOperationAction(ISD::SELECT, MVT::i64, Custom);
+  setOperationAction(ISD::SELECT, MVT::f64, Promote);
+  AddPromotedToType(ISD::SELECT, MVT::f64, MVT::i64);
 
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
