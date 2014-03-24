@@ -324,6 +324,7 @@ def STVXL : XForm_8<31, 487, (outs), (ins vrrc:$rS, memrr:$dst),
 
 let PPC970_Unit = 5 in {  // VALU Operations.
 // VA-Form instructions.  3-input AltiVec ops.
+let isCommutable = 1 in {
 def VMADDFP : VAForm_1<46, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vC, vrrc:$vB),
                        "vmaddfp $vD, $vA, $vC, $vB", IIC_VecFP,
                        [(set v4f32:$vD,
@@ -333,12 +334,13 @@ def VMADDFP : VAForm_1<46, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vC, vrrc:$vB),
 def VNMSUBFP: VAForm_1<47, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vC, vrrc:$vB),
                        "vnmsubfp $vD, $vA, $vC, $vB", IIC_VecFP,
                        [(set v4f32:$vD, (fneg (fma v4f32:$vA, v4f32:$vC,
-                                                  (fneg v4f32:$vB))))]>; 
+                                                  (fneg v4f32:$vB))))]>;
 
 def VMHADDSHS  : VA1a_Int_Ty<32, "vmhaddshs", int_ppc_altivec_vmhaddshs, v8i16>;
 def VMHRADDSHS : VA1a_Int_Ty<33, "vmhraddshs", int_ppc_altivec_vmhraddshs,
                              v8i16>;
 def VMLADDUHM  : VA1a_Int_Ty<34, "vmladduhm", int_ppc_altivec_vmladduhm, v8i16>;
+} // isCommutable
 
 def VPERM      : VA1a_Int_Ty3<43, "vperm", int_ppc_altivec_vperm,
                               v4i32, v4i32, v16i8>;
@@ -351,6 +353,7 @@ def VSLDOI  : VAForm_2<44, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB, u5imm:$SH),
                          (vsldoi_shuffle:$SH v16i8:$vA, v16i8:$vB))]>;
 
 // VX-Form instructions.  AltiVec arithmetic ops.
+let isCommutable = 1 in {
 def VADDFP : VXForm_1<10, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
                       "vaddfp $vD, $vA, $vB", IIC_VecFP,
                       [(set v4f32:$vD, (fadd v4f32:$vA, v4f32:$vB))]>;
@@ -372,8 +375,9 @@ def VADDSWS : VX1_Int_Ty<896, "vaddsws", int_ppc_altivec_vaddsws, v4i32>;
 def VADDUBS : VX1_Int_Ty<512, "vaddubs", int_ppc_altivec_vaddubs, v16i8>;
 def VADDUHS : VX1_Int_Ty<576, "vadduhs", int_ppc_altivec_vadduhs, v8i16>;
 def VADDUWS : VX1_Int_Ty<640, "vadduws", int_ppc_altivec_vadduws, v4i32>;
-                             
-                             
+} // isCommutable
+
+let isCommutable = 1 in
 def VAND : VXForm_1<1028, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
                     "vand $vD, $vA, $vB", IIC_VecFP,
                     [(set v4i32:$vD, (and v4i32:$vA, v4i32:$vB))]>;
@@ -423,6 +427,7 @@ def VCTSXS_0 : VXForm_1<970, (outs vrrc:$vD), (ins vrrc:$vB),
 def VEXPTEFP : VX2_Int_SP<394, "vexptefp", int_ppc_altivec_vexptefp>;
 def VLOGEFP  : VX2_Int_SP<458, "vlogefp",  int_ppc_altivec_vlogefp>;
 
+let isCommutable = 1 in {
 def VAVGSB : VX1_Int_Ty<1282, "vavgsb", int_ppc_altivec_vavgsb, v16i8>;
 def VAVGSH : VX1_Int_Ty<1346, "vavgsh", int_ppc_altivec_vavgsh, v8i16>;
 def VAVGSW : VX1_Int_Ty<1410, "vavgsw", int_ppc_altivec_vavgsw, v4i32>;
@@ -444,6 +449,7 @@ def VMINSW : VX1_Int_Ty< 898, "vminsw", int_ppc_altivec_vminsw, v4i32>;
 def VMINUB : VX1_Int_Ty< 514, "vminub", int_ppc_altivec_vminub, v16i8>;
 def VMINUH : VX1_Int_Ty< 578, "vminuh", int_ppc_altivec_vminuh, v8i16>;
 def VMINUW : VX1_Int_Ty< 642, "vminuw", int_ppc_altivec_vminuw, v4i32>;
+} // isCommutable
 
 def VMRGHB : VXForm_1< 12, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
                       "vmrghb $vD, $vA, $vB", IIC_VecFP,
@@ -477,6 +483,7 @@ def VMSUMUHM : VA1a_Int_Ty3<38, "vmsumuhm", int_ppc_altivec_vmsumuhm,
 def VMSUMUHS : VA1a_Int_Ty3<39, "vmsumuhs", int_ppc_altivec_vmsumuhs,
                             v4i32, v8i16, v4i32>;
 
+let isCommutable = 1 in {
 def VMULESB : VX1_Int_Ty2<776, "vmulesb", int_ppc_altivec_vmulesb,
                           v8i16, v16i8>;
 def VMULESH : VX1_Int_Ty2<840, "vmulesh", int_ppc_altivec_vmulesh,
@@ -493,6 +500,7 @@ def VMULOUB : VX1_Int_Ty2<  8, "vmuloub", int_ppc_altivec_vmuloub,
                           v8i16, v16i8>;
 def VMULOUH : VX1_Int_Ty2< 72, "vmulouh", int_ppc_altivec_vmulouh,
                           v4i32, v8i16>;
+} // isCommutable
                        
 def VREFP     : VX2_Int_SP<266, "vrefp",     int_ppc_altivec_vrefp>;
 def VRFIM     : VX2_Int_SP<714, "vrfim",     int_ppc_altivec_vrfim>;
@@ -537,12 +545,14 @@ def VNOR : VXForm_1<1284, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
                     "vnor $vD, $vA, $vB", IIC_VecFP,
                     [(set v4i32:$vD, (vnot_ppc (or v4i32:$vA,
                                                    v4i32:$vB)))]>;
+let isCommutable = 1 in {
 def VOR : VXForm_1<1156, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
                       "vor $vD, $vA, $vB", IIC_VecFP,
                       [(set v4i32:$vD, (or v4i32:$vA, v4i32:$vB))]>;
 def VXOR : VXForm_1<1220, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
                       "vxor $vD, $vA, $vB", IIC_VecFP,
                       [(set v4i32:$vD, (xor v4i32:$vA, v4i32:$vB))]>;
+} // isCommutable
 
 def VRLB   : VX1_Int_Ty<   4, "vrlb", int_ppc_altivec_vrlb, v16i8>;
 def VRLH   : VX1_Int_Ty<  68, "vrlh", int_ppc_altivec_vrlh, v8i16>;

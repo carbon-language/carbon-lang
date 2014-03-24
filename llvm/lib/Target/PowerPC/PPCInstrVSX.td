@@ -127,6 +127,7 @@ let Uses = [RM] in {
                         [(set v4f32:$XT, (fsub v4f32:$XA, v4f32:$XB))]>;
 
   // FMA Instructions
+  let isCommutable = 1 in
   def XSMADDADP : XX3Form<60, 33,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xsmaddadp $XT, $XA, $XB", IIC_VecFP,
@@ -140,6 +141,7 @@ let Uses = [RM] in {
   // no further uses. We probably want to do this after scheduling but before
   // register allocation.
 
+  let isCommutable = 1 in
   def XSMSUBADP : XX3Form<60, 49,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xsmsubadp $XT, $XA, $XB", IIC_VecFP,
@@ -150,6 +152,7 @@ let Uses = [RM] in {
                           "xsmsubmdp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
 
+  let isCommutable = 1 in
   def XSNMADDADP : XX3Form<60, 161,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xsnmaddadp $XT, $XA, $XB", IIC_VecFP,
@@ -160,6 +163,7 @@ let Uses = [RM] in {
                           "xsnmaddmdp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
 
+  let isCommutable = 1 in
   def XSNMSUBADP : XX3Form<60, 177,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xsnmsubadp $XT, $XA, $XB", IIC_VecFP,
@@ -170,6 +174,7 @@ let Uses = [RM] in {
                           "xsnmsubmdp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
 
+  let isCommutable = 1 in
   def XVMADDADP : XX3Form<60, 97,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvmaddadp $XT, $XA, $XB", IIC_VecFP,
@@ -180,6 +185,7 @@ let Uses = [RM] in {
                           "xvmaddmdp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
 
+  let isCommutable = 1 in
   def XVMADDASP : XX3Form<60, 65,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvmaddasp $XT, $XA, $XB", IIC_VecFP,
@@ -190,6 +196,7 @@ let Uses = [RM] in {
                           "xvmaddmsp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
 
+  let isCommutable = 1 in
   def XVMSUBADP : XX3Form<60, 113,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvmsubadp $XT, $XA, $XB", IIC_VecFP,
@@ -200,6 +207,7 @@ let Uses = [RM] in {
                           "xvmsubmdp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
 
+  let isCommutable = 1 in
   def XVMSUBASP : XX3Form<60, 81,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvmsubasp $XT, $XA, $XB", IIC_VecFP,
@@ -210,6 +218,7 @@ let Uses = [RM] in {
                           "xvmsubmsp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
 
+  let isCommutable = 1 in
   def XVNMADDADP : XX3Form<60, 225,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvnmaddadp $XT, $XA, $XB", IIC_VecFP,
@@ -220,6 +229,7 @@ let Uses = [RM] in {
                           "xvnmaddmdp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
 
+  let isCommutable = 1 in
   def XVNMADDASP : XX3Form<60, 193,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvnmaddasp $XT, $XA, $XB", IIC_VecFP,
@@ -230,6 +240,7 @@ let Uses = [RM] in {
                           "xvnmaddmsp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
 
+  let isCommutable = 1 in
   def XVNMSUBADP : XX3Form<60, 241,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvnmsubadp $XT, $XA, $XB", IIC_VecFP,
@@ -240,6 +251,7 @@ let Uses = [RM] in {
                           "xvnmsubmdp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
 
+  let isCommutable = 1 in
   def XVNMSUBASP : XX3Form<60, 209,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvnmsubasp $XT, $XA, $XB", IIC_VecFP,
@@ -561,6 +573,7 @@ let Uses = [RM] in {
                       [(set v4f32:$XT, (ftrunc v4f32:$XB))]>;
 
   // Max/Min Instructions
+  let isCommutable = 1 in {
   def XSMAXDP : XX3Form<60, 160,
                         (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                         "xsmaxdp $XT, $XA, $XB", IIC_VecFP, []>;
@@ -581,15 +594,18 @@ let Uses = [RM] in {
   def XVMINSP : XX3Form<60, 200,
                         (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                         "xvminsp $XT, $XA, $XB", IIC_VecFP, []>;
+  } // isCommutable
 } // Uses = [RM]
 
   // Logical Instructions
+  let isCommutable = 1 in
   def XXLAND : XX3Form<60, 130,
                        (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                        "xxland $XT, $XA, $XB", IIC_VecGeneral, []>;
   def XXLANDC : XX3Form<60, 138,
                         (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                         "xxlandc $XT, $XA, $XB", IIC_VecGeneral, []>;
+  let isCommutable = 1 in {
   def XXLNOR : XX3Form<60, 162,
                        (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                        "xxlnor $XT, $XA, $XB", IIC_VecGeneral, []>;
@@ -599,6 +615,7 @@ let Uses = [RM] in {
   def XXLXOR : XX3Form<60, 154,
                        (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                        "xxlxor $XT, $XA, $XB", IIC_VecGeneral, []>;
+  } // isCommutable
 
   // Permutation Instructions
   def XXMRGHW : XX3Form<60, 18,

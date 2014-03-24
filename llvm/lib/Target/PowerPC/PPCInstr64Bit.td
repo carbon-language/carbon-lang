@@ -376,30 +376,36 @@ def LIS8 : DForm_2_r0<15, (outs g8rc:$rD), (ins s17imm64:$imm),
 }
 
 // Logical ops.
+let isCommutable = 1 in {
 defm NAND8: XForm_6r<31, 476, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
                      "nand", "$rA, $rS, $rB", IIC_IntSimple,
                      [(set i64:$rA, (not (and i64:$rS, i64:$rB)))]>;
 defm AND8 : XForm_6r<31,  28, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
                      "and", "$rA, $rS, $rB", IIC_IntSimple,
                      [(set i64:$rA, (and i64:$rS, i64:$rB))]>;
+} // isCommutable
 defm ANDC8: XForm_6r<31,  60, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
                      "andc", "$rA, $rS, $rB", IIC_IntSimple,
                      [(set i64:$rA, (and i64:$rS, (not i64:$rB)))]>;
+let isCommutable = 1 in {
 defm OR8  : XForm_6r<31, 444, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
                      "or", "$rA, $rS, $rB", IIC_IntSimple,
                      [(set i64:$rA, (or i64:$rS, i64:$rB))]>;
 defm NOR8 : XForm_6r<31, 124, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
                      "nor", "$rA, $rS, $rB", IIC_IntSimple,
                      [(set i64:$rA, (not (or i64:$rS, i64:$rB)))]>;
+} // isCommutable
 defm ORC8 : XForm_6r<31, 412, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
                      "orc", "$rA, $rS, $rB", IIC_IntSimple,
                      [(set i64:$rA, (or i64:$rS, (not i64:$rB)))]>;
+let isCommutable = 1 in {
 defm EQV8 : XForm_6r<31, 284, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
                      "eqv", "$rA, $rS, $rB", IIC_IntSimple,
                      [(set i64:$rA, (not (xor i64:$rS, i64:$rB)))]>;
 defm XOR8 : XForm_6r<31, 316, (outs g8rc:$rA), (ins g8rc:$rS, g8rc:$rB),
                      "xor", "$rA, $rS, $rB", IIC_IntSimple,
                      [(set i64:$rA, (xor i64:$rS, i64:$rB))]>;
+} // let isCommutable = 1
 
 // Logical ops with immediate.
 let Defs = [CR0] in {
@@ -425,6 +431,7 @@ def XORIS8  : DForm_4<27, (outs g8rc:$dst), (ins g8rc:$src1, u16imm64:$src2),
                       "xoris $dst, $src1, $src2", IIC_IntSimple,
                    [(set i64:$dst, (xor i64:$src1, imm16ShiftedZExt:$src2))]>;
 
+let isCommutable = 1 in
 defm ADD8  : XOForm_1r<31, 266, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
                        "add", "$rT, $rA, $rB", IIC_IntSimple,
                        [(set i64:$rT, (add i64:$rA, i64:$rB))]>;
@@ -434,10 +441,12 @@ def ADD8TLS  : XOForm_1<31, 266, 0, (outs g8rc:$rT), (ins g8rc:$rA, tlsreg:$rB),
                         "add $rT, $rA, $rB", IIC_IntSimple,
                         [(set i64:$rT, (add i64:$rA, tglobaltlsaddr:$rB))]>;
                      
+let isCommutable = 1 in
 defm ADDC8 : XOForm_1rc<31, 10, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
                         "addc", "$rT, $rA, $rB", IIC_IntGeneral,
                         [(set i64:$rT, (addc i64:$rA, i64:$rB))]>,
                         PPC970_DGroup_Cracked;
+
 let Defs = [CARRY] in
 def ADDIC8 : DForm_2<12, (outs g8rc:$rD), (ins g8rc:$rA, s16imm64:$imm),
                      "addic $rD, $rA, $imm", IIC_IntGeneral,
@@ -465,6 +474,7 @@ defm NEG8    : XOForm_3r<31, 104, 0, (outs g8rc:$rT), (ins g8rc:$rA),
                         "neg", "$rT, $rA", IIC_IntSimple,
                         [(set i64:$rT, (ineg i64:$rA))]>;
 let Uses = [CARRY] in {
+let isCommutable = 1 in
 defm ADDE8   : XOForm_1rc<31, 138, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
                           "adde", "$rT, $rA, $rB", IIC_IntGeneral,
                           [(set i64:$rT, (adde i64:$rA, i64:$rB))]>;
@@ -493,12 +503,14 @@ let isAsmParserOnly = 1 in
 def ADD8TLS_ : XOForm_1<31, 266, 0, (outs g8rc:$rT), (ins g8rc:$rA, tlsreg:$rB),
                         "add $rT, $rA, $rB", IIC_IntSimple, []>;
 
+let isCommutable = 1 in {
 defm MULHD : XOForm_1r<31, 73, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
                        "mulhd", "$rT, $rA, $rB", IIC_IntMulHW,
                        [(set i64:$rT, (mulhs i64:$rA, i64:$rB))]>;
 defm MULHDU : XOForm_1r<31, 9, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
                        "mulhdu", "$rT, $rA, $rB", IIC_IntMulHWU,
                        [(set i64:$rT, (mulhu i64:$rA, i64:$rB))]>;
+} // isCommutable
 }
 } // Interpretation64Bit
 
@@ -575,6 +587,7 @@ defm DIVDU : XOForm_1r<31, 457, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
                        "divdu", "$rT, $rA, $rB", IIC_IntDivD,
                        [(set i64:$rT, (udiv i64:$rA, i64:$rB))]>, isPPC64,
                        PPC970_DGroup_First, PPC970_DGroup_Cracked;
+let isCommutable = 1 in
 defm MULLD : XOForm_1r<31, 233, 0, (outs g8rc:$rT), (ins g8rc:$rA, g8rc:$rB),
                        "mulld", "$rT, $rA, $rB", IIC_IntMulHD,
                        [(set i64:$rT, (mul i64:$rA, i64:$rB))]>, isPPC64;
