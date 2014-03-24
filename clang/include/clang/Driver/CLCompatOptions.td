@@ -62,9 +62,9 @@ def _SLASH_GR : CLFlag<"GR">, HelpText<"Enable RTTI">, Alias<frtti>;
 def _SLASH_GR_ : CLFlag<"GR-">, HelpText<"Disable RTTI">, Alias<fno_rtti>;
 def _SLASH_GF_ : CLFlag<"GF-">, HelpText<"Disable string pooling">,
   Alias<fwritable_strings>;
-def _SLASH_Gy : CLFlag<"Gy">, HelpText<"Put each function in it's own section">,
+def _SLASH_Gy : CLFlag<"Gy">, HelpText<"Put each function in its own section">,
   Alias<ffunction_sections>;
-def _SLASH_Gy_ : CLFlag<"Gy-">, HelpText<"Don't put each function in it's own section">,
+def _SLASH_Gy_ : CLFlag<"Gy-">, HelpText<"Don't put each function in its own section">,
   Alias<fno_function_sections>;
 def _SLASH_help : CLFlag<"help">, Alias<help>,
   HelpText<"Display available options">;
