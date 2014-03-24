@@ -2651,8 +2651,7 @@ void DwarfDebug::initSkeletonUnit(const DwarfUnit *U, DIE *Die,
 
 // This DIE has the following attributes: DW_AT_comp_dir, DW_AT_stmt_list,
 // DW_AT_low_pc, DW_AT_high_pc, DW_AT_ranges, DW_AT_dwo_name, DW_AT_dwo_id,
-// DW_AT_ranges_base, DW_AT_addr_base.
-// TODO: Implement DW_AT_ranges_base.
+// DW_AT_addr_base, DW_AT_ranges_base.
 DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
@@ -2667,10 +2666,16 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
 
   // Relocate to the beginning of the addr_base section, else 0 for the
   // beginning of the one for this compile unit.
-  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
+  // We could shave off some space if we deferred adding these attributes until
+  // the end of the CU to see if we have a non-empty debug_addr and debug_ranges
+  // sections so we don't bother with extra attributes and relocations.
+  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections()) {
     NewCU->addSectionLabel(Die, dwarf::DW_AT_GNU_addr_base, DwarfAddrSectionSym);
-  else
+    NewCU->addSectionLabel(Die, dwarf::DW_AT_GNU_ranges_base, DwarfDebugRangeSectionSym);
+  } else {
     NewCU->addSectionOffset(Die, dwarf::DW_AT_GNU_addr_base, 0);
+    NewCU->addSectionOffset(Die, dwarf::DW_AT_GNU_ranges_base, 0);
+  }
 
   return NewCU;
 }
