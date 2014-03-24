@@ -66,7 +66,7 @@
 # include <immintrin.h>
 #endif
 
-static const int kPageSize = 4096;
+static const size_t kPageSize = 4096;
 
 typedef unsigned char      U1;
 typedef unsigned short     U2;  // NOLINT
@@ -638,8 +638,9 @@ TEST(MemorySanitizer, readv) {
   int fd = open("/proc/self/stat", O_RDONLY);
   ASSERT_GT(fd, 0);
   int sz = readv(fd, iov, 2);
+  ASSERT_GE(sz, 0);
   ASSERT_LT(sz, 5 + 2000);
-  ASSERT_GT(sz, iov[0].iov_len);
+  ASSERT_GT((size_t)sz, iov[0].iov_len);
   EXPECT_POISONED(buf[0]);
   EXPECT_NOT_POISONED(buf[1]);
   EXPECT_NOT_POISONED(buf[5]);
@@ -661,8 +662,9 @@ TEST(MemorySanitizer, preadv) {
   int fd = open("/proc/self/stat", O_RDONLY);
   ASSERT_GT(fd, 0);
   int sz = preadv(fd, iov, 2, 3);
+  ASSERT_GE(sz, 0);
   ASSERT_LT(sz, 5 + 2000);
-  ASSERT_GT(sz, iov[0].iov_len);
+  ASSERT_GT((size_t)sz, iov[0].iov_len);
   EXPECT_POISONED(buf[0]);
   EXPECT_NOT_POISONED(buf[1]);
   EXPECT_NOT_POISONED(buf[5]);
@@ -928,10 +930,10 @@ TEST(MemorySanitizer, getnameinfo) {
   EXPECT_NOT_POISONED(host[0]);
   EXPECT_POISONED(host[sizeof(host) - 1]);
 
-  ASSERT_NE(0, strlen(host));
+  ASSERT_NE(0U, strlen(host));
   EXPECT_NOT_POISONED(serv[0]);
   EXPECT_POISONED(serv[sizeof(serv) - 1]);
-  ASSERT_NE(0, strlen(serv));
+  ASSERT_NE(0U, strlen(serv));
 }
 
 #define EXPECT_HOSTENT_NOT_POISONED(he)        \
@@ -1549,11 +1551,11 @@ TEST(MemorySanitizer, strncat_overflow) {  // NOLINT
   EXPECT_POISONED(a[7]);
 }
 
-#define TEST_STRTO_INT(func_name)         \
-  TEST(MemorySanitizer, func_name) {      \
-    char *e;                              \
-    EXPECT_EQ(1, func_name("1", &e, 10)); \
-    EXPECT_NOT_POISONED((S8)e);           \
+#define TEST_STRTO_INT(func_name)          \
+  TEST(MemorySanitizer, func_name) {       \
+    char *e;                               \
+    EXPECT_EQ(1U, func_name("1", &e, 10)); \
+    EXPECT_NOT_POISONED((S8)e);            \
   }
 
 #define TEST_STRTO_FLOAT(func_name)     \
@@ -1576,7 +1578,7 @@ TEST(MemorySanitizer, strncat_overflow) {  // NOLINT
   TEST(MemorySanitizer, func_name) {                             \
     locale_t loc = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0); \
     char *e;                                                     \
-    ASSERT_EQ(1, func_name("1", &e, 10, loc));                   \
+    ASSERT_EQ(1U, func_name("1", &e, 10, loc));                  \
     EXPECT_NOT_POISONED((S8)e);                                  \
     freelocale(loc);                                             \
   }
@@ -1609,7 +1611,7 @@ TEST(MemorySanitizer, DISABLED_strtoimax) {
 // https://code.google.com/p/memory-sanitizer/issues/detail?id=36
 TEST(MemorySanitizer, DISABLED_strtoumax) {
   char *e;
-  ASSERT_EQ(1, strtoumax("1", &e, 10));
+  ASSERT_EQ(1U, strtoumax("1", &e, 10));
   EXPECT_NOT_POISONED((S8) e);
 }
 
@@ -1768,7 +1770,7 @@ TEST(MemorySanitizer, snprintf) {
 
 TEST(MemorySanitizer, swprintf) {
   wchar_t buff[10];
-  ASSERT_EQ(sizeof(wchar_t), 4);
+  ASSERT_EQ(4U, sizeof(wchar_t));
   break_optimization(buff);
   EXPECT_POISONED(buff[0]);
   int res = swprintf(buff, 9, L"%d", 1234567);
@@ -1869,8 +1871,8 @@ TEST(MemorySanitizer, gettimeofday) {
   struct timezone tz;
   break_optimization(&tv);
   break_optimization(&tz);
-  ASSERT_EQ(sizeof(tv), 16);
-  ASSERT_EQ(sizeof(tz), 8);
+  ASSERT_EQ(16U, sizeof(tv));
+  ASSERT_EQ(8U, sizeof(tz));
   EXPECT_POISONED(tv.tv_sec);
   EXPECT_POISONED(tv.tv_usec);
   EXPECT_POISONED(tz.tz_minuteswest);
@@ -1965,7 +1967,7 @@ TEST(MemorySanitizer, localtime) {
   EXPECT_NOT_POISONED(time->tm_hour);
   EXPECT_NOT_POISONED(time->tm_year);
   EXPECT_NOT_POISONED(time->tm_isdst);
-  EXPECT_NE(0, strlen(time->tm_zone));
+  EXPECT_NE(0U, strlen(time->tm_zone));
 }
 
 TEST(MemorySanitizer, localtime_r) {
@@ -1977,17 +1979,17 @@ TEST(MemorySanitizer, localtime_r) {
   EXPECT_NOT_POISONED(time.tm_hour);
   EXPECT_NOT_POISONED(time.tm_year);
   EXPECT_NOT_POISONED(time.tm_isdst);
-  EXPECT_NE(0, strlen(time.tm_zone));
+  EXPECT_NE(0U, strlen(time.tm_zone));
 }
 
 TEST(MemorySanitizer, getmntent) {
   FILE *fp = setmntent("/etc/fstab", "r");
   struct mntent *mnt = getmntent(fp);
   ASSERT_TRUE(mnt != NULL);
-  ASSERT_NE(0, strlen(mnt->mnt_fsname));
-  ASSERT_NE(0, strlen(mnt->mnt_dir));
-  ASSERT_NE(0, strlen(mnt->mnt_type));
-  ASSERT_NE(0, strlen(mnt->mnt_opts));
+  ASSERT_NE(0U, strlen(mnt->mnt_fsname));
+  ASSERT_NE(0U, strlen(mnt->mnt_dir));
+  ASSERT_NE(0U, strlen(mnt->mnt_type));
+  ASSERT_NE(0U, strlen(mnt->mnt_opts));
   EXPECT_NOT_POISONED(mnt->mnt_freq);
   EXPECT_NOT_POISONED(mnt->mnt_passno);
   fclose(fp);
@@ -1999,10 +2001,10 @@ TEST(MemorySanitizer, getmntent_r) {
   char buf[1000];
   struct mntent *mnt = getmntent_r(fp, &mntbuf, buf, sizeof(buf));
   ASSERT_TRUE(mnt != NULL);
-  ASSERT_NE(0, strlen(mnt->mnt_fsname));
-  ASSERT_NE(0, strlen(mnt->mnt_dir));
-  ASSERT_NE(0, strlen(mnt->mnt_type));
-  ASSERT_NE(0, strlen(mnt->mnt_opts));
+  ASSERT_NE(0U, strlen(mnt->mnt_fsname));
+  ASSERT_NE(0U, strlen(mnt->mnt_dir));
+  ASSERT_NE(0U, strlen(mnt->mnt_type));
+  ASSERT_NE(0U, strlen(mnt->mnt_opts));
   EXPECT_NOT_POISONED(mnt->mnt_freq);
   EXPECT_NOT_POISONED(mnt->mnt_passno);
   fclose(fp);
@@ -2019,12 +2021,12 @@ TEST(MemorySanitizer, ether) {
   EXPECT_NOT_POISONED(addr);
 
   char *s = ether_ntoa(&addr);
-  ASSERT_NE(0, strlen(s));
+  ASSERT_NE(0U, strlen(s));
 
   char buf[100];
   s = ether_ntoa_r(&addr, buf);
   ASSERT_EQ(s, buf);
-  ASSERT_NE(0, strlen(buf));
+  ASSERT_NE(0U, strlen(buf));
 }
 
 TEST(MemorySanitizer, mmap) {
@@ -2703,7 +2705,8 @@ static int PathToLoadable(char *buf, size_t sz) {
   assert(last_slash);
   int res =
       snprintf(buf, sz, "%.*s/%s", int(last_slash - argv0), argv0, basename);
-  return res < sz ? 0 : res;
+  assert(res >= 0);
+  return (size_t)res < sz ? 0 : res;
 }
 
 TEST(MemorySanitizer, dl_iterate_phdr) {
@@ -3074,7 +3077,7 @@ TEST(MemorySanitizer, getpwuid) {
   ASSERT_TRUE(p->pw_name != NULL);
   EXPECT_NOT_POISONED(p->pw_name[0]);
   EXPECT_NOT_POISONED(p->pw_uid);
-  ASSERT_EQ(p->pw_uid, 0);
+  ASSERT_EQ(0U, p->pw_uid);
 }
 
 TEST(MemorySanitizer, getpwuid_r) {
@@ -3087,7 +3090,7 @@ TEST(MemorySanitizer, getpwuid_r) {
   ASSERT_TRUE(pwd.pw_name != NULL);
   EXPECT_NOT_POISONED(pwd.pw_name[0]);
   EXPECT_NOT_POISONED(pwd.pw_uid);
-  ASSERT_EQ(pwd.pw_uid, 0);
+  ASSERT_EQ(0U, pwd.pw_uid);
   EXPECT_NOT_POISONED(pwdres);
 }
 
@@ -3101,7 +3104,7 @@ TEST(MemorySanitizer, getpwnam_r) {
   ASSERT_TRUE(pwd.pw_name != NULL);
   EXPECT_NOT_POISONED(pwd.pw_name[0]);
   EXPECT_NOT_POISONED(pwd.pw_uid);
-  ASSERT_EQ(pwd.pw_uid, 0);
+  ASSERT_EQ(0U, pwd.pw_uid);
   EXPECT_NOT_POISONED(pwdres);
 }
 
@@ -3142,7 +3145,7 @@ TEST(MemorySanitizer, wordexp) {
   wordexp_t w;
   int res = wordexp("a b c", &w, 0);
   ASSERT_EQ(0, res);
-  ASSERT_EQ(3, w.we_wordc);
+  ASSERT_EQ(3U, w.we_wordc);
   ASSERT_STREQ("a", w.we_wordv[0]);
   ASSERT_STREQ("b", w.we_wordv[1]);
   ASSERT_STREQ("c", w.we_wordv[2]);
@@ -3490,11 +3493,11 @@ TEST(MemorySanitizerOrigins, SetGet) {
   if (!TrackingOrigins()) return;
   int x;
   __msan_set_origin(&x, sizeof(x), 1234);
-  EXPECT_EQ(1234, __msan_get_origin(&x));
+  EXPECT_EQ(1234U, __msan_get_origin(&x));
   __msan_set_origin(&x, sizeof(x), 5678);
-  EXPECT_EQ(5678, __msan_get_origin(&x));
+  EXPECT_EQ(5678U, __msan_get_origin(&x));
   __msan_set_origin(&x, sizeof(x), 0);
-  EXPECT_EQ(0, __msan_get_origin(&x));
+  EXPECT_EQ(0U, __msan_get_origin(&x));
 }
 
 namespace {
@@ -3805,25 +3808,25 @@ TEST(MemorySanitizerAllocator, get_allocated_size_and_ownership) {
   int *int_ptr = new int;
 
   EXPECT_TRUE(__msan_get_ownership(array));
-  EXPECT_EQ(100, __msan_get_allocated_size(array));
+  EXPECT_EQ(100U, __msan_get_allocated_size(array));
 
   EXPECT_TRUE(__msan_get_ownership(int_ptr));
   EXPECT_EQ(sizeof(*int_ptr), __msan_get_allocated_size(int_ptr));
 
   void *wild_addr = reinterpret_cast<void*>(0x1);
   EXPECT_FALSE(__msan_get_ownership(wild_addr));
-  EXPECT_EQ(0, __msan_get_allocated_size(wild_addr));
+  EXPECT_EQ(0U, __msan_get_allocated_size(wild_addr));
 
   EXPECT_FALSE(__msan_get_ownership(array + 50));
-  EXPECT_EQ(0, __msan_get_allocated_size(array + 50));
+  EXPECT_EQ(0U, __msan_get_allocated_size(array + 50));
 
   // NULL is a valid argument for GetAllocatedSize but is not owned.                                                  
   EXPECT_FALSE(__msan_get_ownership(NULL));
-  EXPECT_EQ(0, __msan_get_allocated_size(NULL));
+  EXPECT_EQ(0U, __msan_get_allocated_size(NULL));
  
   free(array);
   EXPECT_FALSE(__msan_get_ownership(array));
-  EXPECT_EQ(0, __msan_get_allocated_size(array));
+  EXPECT_EQ(0U, __msan_get_allocated_size(array));
 
   delete int_ptr;
 }
