@@ -8431,6 +8431,31 @@ let Predicates = [HasAVX2] in {
               (VBROADCASTSSYrr (COPY_TO_REGCLASS GR32:$src, VR128))>;
     def : Pat<(v4i64 (X86VBroadcast GR64:$src)),
               (VBROADCASTSDYrr (COPY_TO_REGCLASS GR64:$src, VR128))>;
+
+    def : Pat<(v16i8 (X86VBroadcast GR8:$src)),
+          (VPBROADCASTBrr (COPY_TO_REGCLASS
+                           (i32 (SUBREG_TO_REG (i32 0), GR8:$src, sub_8bit)),
+                           VR128))>;
+    def : Pat<(v32i8 (X86VBroadcast GR8:$src)),
+          (VPBROADCASTBYrr (COPY_TO_REGCLASS
+                            (i32 (SUBREG_TO_REG (i32 0), GR8:$src, sub_8bit)),
+                            VR128))>;
+
+    def : Pat<(v8i16 (X86VBroadcast GR16:$src)),
+          (VPBROADCASTWrr (COPY_TO_REGCLASS
+                           (i32 (SUBREG_TO_REG (i32 0), GR16:$src, sub_16bit)),
+                           VR128))>;
+    def : Pat<(v16i16 (X86VBroadcast GR16:$src)),
+          (VPBROADCASTWYrr (COPY_TO_REGCLASS
+                            (i32 (SUBREG_TO_REG (i32 0), GR16:$src, sub_16bit)),
+                            VR128))>;
+
+    // The patterns for VPBROADCASTD are not needed because they would match
+    // the exact same thing as VBROADCASTSS patterns.
+
+    def : Pat<(v2i64 (X86VBroadcast GR64:$src)),
+          (VPBROADCASTQrr (COPY_TO_REGCLASS GR64:$src, VR128))>;
+    // The v4i64 pattern is not needed because VBROADCASTSDYrr already match.
   }
 }
 
