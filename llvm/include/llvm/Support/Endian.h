@@ -34,6 +34,7 @@ namespace detail {
 } // end namespace detail
 
 namespace endian {
+/// Swap the bytes of value to match the given endianness.
 template<typename value_type, endianness endian>
 inline value_type byte_swap(value_type value) {
   if (endian != native && sys::IsBigEndianHost != (endian == big))
@@ -41,6 +42,7 @@ inline value_type byte_swap(value_type value) {
   return value;
 }
 
+/// Read a value of a particular endianness from memory.
 template<typename value_type,
          endianness endian,
          std::size_t alignment>
@@ -54,6 +56,7 @@ inline value_type read(const void *memory) {
   return byte_swap<value_type, endian>(ret);
 }
 
+/// Write a value to memory with a particular endianness.
 template<typename value_type,
          endianness endian,
          std::size_t alignment>
