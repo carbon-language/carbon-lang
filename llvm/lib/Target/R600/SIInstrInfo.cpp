@@ -591,6 +591,28 @@ unsigned SIInstrInfo::buildExtractSubReg(MachineBasicBlock::iterator MI,
   return SubReg;
 }
 
+MachineOperand SIInstrInfo::buildExtractSubRegOrImm(
+  MachineBasicBlock::iterator MII,
+  MachineRegisterInfo &MRI,
+  MachineOperand &Op,
+  const TargetRegisterClass *SuperRC,
+  unsigned SubIdx,
+  const TargetRegisterClass *SubRC) const {
+  if (Op.isImm()) {
+    // XXX - Is there a better way to do this?
+    if (SubIdx == AMDGPU::sub0)
+      return MachineOperand::CreateImm(Op.getImm() & 0xFFFFFFFF);
+    if (SubIdx == AMDGPU::sub1)
+      return MachineOperand::CreateImm(Op.getImm() >> 32);
+
+    llvm_unreachable("Unhandled register index for immediate");
+  }
+
+  unsigned SubReg = buildExtractSubReg(MII, MRI, Op, SuperRC,
+                                       SubIdx, SubRC);
+  return MachineOperand::CreateReg(SubReg, false);
+}
+
 unsigned SIInstrInfo::split64BitImm(SmallVectorImpl<MachineInstr *> &Worklist,
                                     MachineBasicBlock::iterator MI,
                                     MachineRegisterInfo &MRI,
@@ -998,7 +1020,6 @@ void SIInstrInfo::splitScalar64BitOp(SmallVectorImpl<MachineInstr *> &Worklist,
   MachineBasicBlock &MBB = *Inst->getParent();
   MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
 
-  // We shouldn't need to worry about immediate operands here.
   MachineOperand &Dest = Inst->getOperand(0);
   MachineOperand &Src0 = Inst->getOperand(1);
   MachineOperand &Src1 = Inst->getOperand(2);
@@ -1009,27 +1030,27 @@ void SIInstrInfo::splitScalar64BitOp(SmallVectorImpl<MachineInstr *> &Worklist,
   const MCInstrDesc &InstDesc = get(Opcode);
   const TargetRegisterClass *RC = MRI.getRegClass(Src0.getReg());
   const TargetRegisterClass *SubRC = RI.getSubRegClass(RC, AMDGPU::sub0);
-  unsigned SrcReg0Sub0 = buildExtractSubReg(MII, MRI, Src0, RC,
-                                            AMDGPU::sub0, SubRC);
-  unsigned SrcReg1Sub0 = buildExtractSubReg(MII, MRI, Src1, RC,
-                                            AMDGPU::sub0, SubRC);
+  MachineOperand SrcReg0Sub0 = buildExtractSubRegOrImm(MII, MRI, Src0, RC,
+                                                       AMDGPU::sub0, SubRC);
+  MachineOperand SrcReg1Sub0 = buildExtractSubRegOrImm(MII, MRI, Src1, RC,
+                                                       AMDGPU::sub0, SubRC);
 
-  unsigned DestSub0 = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
+  unsigned DestSub0 = MRI.createVirtualRegister(SubRC);
   MachineInstr *LoHalf = BuildMI(MBB, MII, DL, InstDesc, DestSub0)
-    .addReg(SrcReg0Sub0)
-    .addReg(SrcReg1Sub0);
+    .addOperand(SrcReg0Sub0)
+    .addOperand(SrcReg1Sub0);
 
-  unsigned SrcReg0Sub1 = buildExtractSubReg(MII, MRI, Src0, RC,
-                                            AMDGPU::sub1, SubRC);
-  unsigned SrcReg1Sub1 = buildExtractSubReg(MII, MRI, Src1, RC,
-                                            AMDGPU::sub1, SubRC);
+  MachineOperand SrcReg0Sub1 = buildExtractSubRegOrImm(MII, MRI, Src0, RC,
+                                                       AMDGPU::sub1, SubRC);
+  MachineOperand SrcReg1Sub1 = buildExtractSubRegOrImm(MII, MRI, Src1, RC,
+                                                       AMDGPU::sub1, SubRC);
 
-  unsigned DestSub1 = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
+  unsigned DestSub1 = MRI.createVirtualRegister(SubRC);
   MachineInstr *HiHalf = BuildMI(MBB, MII, DL, InstDesc, DestSub1)
-    .addReg(SrcReg0Sub1)
-    .addReg(SrcReg1Sub1);
+    .addOperand(SrcReg0Sub1)
+    .addOperand(SrcReg1Sub1);
 
-  unsigned FullDestReg = MRI.createVirtualRegister(&AMDGPU::VReg_64RegClass);
+  unsigned FullDestReg = MRI.createVirtualRegister(RC);
   BuildMI(MBB, MII, DL, get(TargetOpcode::REG_SEQUENCE), FullDestReg)
     .addReg(DestSub0)
     .addImm(AMDGPU::sub0)

@@ -31,6 +31,12 @@ private:
                               const TargetRegisterClass *SuperRC,
                               unsigned SubIdx,
                               const TargetRegisterClass *SubRC) const;
+  MachineOperand buildExtractSubRegOrImm(MachineBasicBlock::iterator MI,
+                                         MachineRegisterInfo &MRI,
+                                         MachineOperand &SuperReg,
+                                         const TargetRegisterClass *SuperRC,
+                                         unsigned SubIdx,
+                                         const TargetRegisterClass *SubRC) const;
 
   unsigned split64BitImm(SmallVectorImpl<MachineInstr *> &Worklist,
                          MachineBasicBlock::iterator MI,
@@ -38,7 +44,7 @@ private:
                          const TargetRegisterClass *RC,
                          const MachineOperand &Op) const;
 
-  void splitScalar64BitOp(SmallVectorImpl<MachineInstr *> &Worklist,
+  void splitScalar64BitOp(SmallVectorImpl<MachineInstr *> & Worklist,
                           MachineInstr *Inst, unsigned Opcode) const;
 
 
