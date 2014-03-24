@@ -234,72 +234,103 @@ Clang BackEnds
 ClangAttrClasses
 ----------------
 
-Generate clang attribute clases.
+**Purpose**: Creates Attrs.inc, which contains semantic attribute class
+declarations for any attribute in ``Attr.td`` that has not set ``ASTNode = 0``.
+This file is included as part of ``Attr.h``.
 
 ClangAttrParserStringSwitches
 -----------------------------
 
-Generate all parser-related attribute string switches.
+**Purpose**: Creates AttrParserStringSwitches.inc, which contains
+StringSwitch::Case statements for parser-related string switches. Each switch
+is given its own macro (such as ``CLANG_ATTR_ARG_CONTEXT_LIST``, or
+``CLANG_ATTR_IDENTIFIER_ARG_LIST``), which is expected to be defined before
+including AttrParserStringSwitches.inc, and undefined after.
 
 ClangAttrImpl
 -------------
 
-Generate clang attribute implementations.
+**Purpose**: Creates AttrImpl.inc, which contains semantic attribute class
+definitions for any attribute in ``Attr.td`` that has not set ``ASTNode = 0``.
+This file is included as part of ``AttrImpl.cpp``.
 
 ClangAttrList
 -------------
 
-Generate a clang attribute list.
+**Purpose**: Creates AttrList.inc, which is used when a list of semantic
+attribute identifiers is required. For instance, ``AttrKinds.h`` includes this
+file to generate the list of ``attr::Kind`` enumeration values. This list is
+separated out into multiple categories: attributes, inheritable attributes, and
+inheritable parameter attributes. This categorization happens automatically
+based on information in ``Attr.td`` and is used to implement the ``classof``
+functionality required for ``dyn_cast`` and similar APIs.
 
 ClangAttrPCHRead
 ----------------
 
-Generate clang PCH attribute reader.
+**Purpose**: Creates AttrPCHRead.inc, which is used to deserialize attributes
+in the ``ASTReader::ReadAttributes`` function.
 
 ClangAttrPCHWrite
 -----------------
 
-Generate clang PCH attribute writer.
+**Purpose**: Creates AttrPCHWrite.inc, which is used to serialize attributes in
+the ``ASTWriter::WriteAttributes`` function.
 
-ClangAttrSpellingList
+ClangAttrSpellings
 ---------------------
 
-Generate a clang attribute spelling list.
+**Purpose**: Creates AttrSpellings.inc, which is used to implement the
+``__has_attribute`` feature test macro.
 
 ClangAttrSpellingListIndex
 --------------------------
 
-Generate a clang attribute spelling index.
+**Purpose**: Creates AttrSpellingListIndex.inc, which is used to map parsed
+attribute spellings (including which syntax or scope was used) to an attribute
+spelling list index. These spelling list index values are internal
+implementation details exposed via
+``AttributeList::getAttributeSpellingListIndex``.
 
-ClangAttrASTVisitor
+ClangAttrVisitor
 -------------------
 
-Generate a recursive AST visitor for clang attribute.
+**Purpose**: Creates AttrVisitor.inc, which is used when implementing 
+recursive AST visitors.
 
 ClangAttrTemplateInstantiate
 ----------------------------
 
-Generate a clang template instantiate code.
+**Purpose**: Creates AttrTemplateInstantiate.inc, which implements the
+``instantiateTemplateAttribute`` function, used when instantiating a template
+that requires an attribute to be cloned.
 
 ClangAttrParsedAttrList
 -----------------------
 
-Generate a clang parsed attribute list.
+**Purpose**: Creates AttrParsedAttrList.inc, which is used to generate the
+``AttributeList::Kind`` parsed attribute enumeration.
 
 ClangAttrParsedAttrImpl
 -----------------------
 
-Generate the clang parsed attribute helpers.
+**Purpose**: Creates AttrParsedAttrImpl.inc, which is used by
+``AttributeList.cpp`` to implement several functions on the ``AttributeList``
+class. This functionality is implemented via the ``AttrInfoMap ParsedAttrInfo``
+array, which contains one element per parsed attribute object.
 
 ClangAttrParsedAttrKinds
 ------------------------
 
-Generate a clang parsed attribute kinds.
+**Purpose**: Creates AttrParsedAttrKinds.inc, which is used to implement the
+``AttributeList::getKind`` function, mapping a string (and syntax) to a parsed
+attribute ``AttributeList::Kind`` enumeration.
 
 ClangAttrDump
 -------------
 
-Generate clang attribute dumper.
+**Purpose**: Creates AttrDump.inc, which dumps information about an attribute.
+It is used to implement ``ASTDumper::dumpAttr``.
 
 ClangDiagsDefs
 --------------
@@ -379,7 +410,8 @@ Generate ARM NEON tests for clang.
 AttrDocs
 --------
 
-Generate attribute documentation.
+**Purpose**: Creates ``AttributeReference.rst`` from ``AttrDocs.td``, and is
+used for documenting user-facing attributes.
 
 How to write a back-end
 =======================
