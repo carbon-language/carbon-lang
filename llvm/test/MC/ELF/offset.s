@@ -23,5 +23,5 @@ sym_d = sym_a + 1
 // CHECK-NEXT:    Binding: Local (0x0)
 // CHECK-NEXT:    Type: None (0x0)
 // CHECK-NEXT:    Other: 0
-// CHECK-NEXT:    Section:  (0xFFF1)
+// CHECK-NEXT:    Section: .text (0x1)
 // CHECK-NEXT:  }

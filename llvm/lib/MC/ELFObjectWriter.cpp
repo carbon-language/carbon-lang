@@ -264,13 +264,13 @@ class ELFObjectWriter : public MCObjectWriter {
     // Map from a section to its offset
     typedef DenseMap<const MCSectionELF*, uint64_t> SectionOffsetMapTy;
 
-    /// ComputeSymbolTable - Compute the symbol table data
+    /// Compute the symbol table data
     ///
     /// \param Asm - The assembler.
     /// \param SectionIndexMap - Maps a section to its index.
     /// \param RevGroupMap - Maps a signature symbol to the group section.
     /// \param NumRegularSections - Number of non-relocation sections.
-    void ComputeSymbolTable(MCAssembler &Asm,
+    void computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
                             const SectionIndexMapTy &SectionIndexMap,
                             RevGroupMapTy RevGroupMap,
                             unsigned NumRegularSections);
@@ -937,10 +937,11 @@ void ELFObjectWriter::ComputeIndexMap(MCAssembler &Asm,
   }
 }
 
-void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
-                                      const SectionIndexMapTy &SectionIndexMap,
-                                         RevGroupMapTy RevGroupMap,
-                                         unsigned NumRegularSections) {
+void
+ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
+                                    const SectionIndexMapTy &SectionIndexMap,
+                                    RevGroupMapTy RevGroupMap,
+                                    unsigned NumRegularSections) {
   // FIXME: Is this the correct place to do this?
   // FIXME: Why is an undefined reference to _GLOBAL_OFFSET_TABLE_ needed?
   if (NeedsGOT) {
@@ -988,33 +989,33 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
 
     ELFSymbolData MSD;
     MSD.SymbolData = it;
-    const MCSymbol &RefSymbol = Symbol.AliasedSymbol();
+    const MCSymbol *BaseSymbol = getBaseSymbol(Layout, Symbol);
 
     // Undefined symbols are global, but this is the first place we
     // are able to set it.
     bool Local = isLocal(*it, isSignature, Used);
     if (!Local && MCELF::GetBinding(*it) == ELF::STB_LOCAL) {
-      MCSymbolData &SD = Asm.getSymbolData(RefSymbol);
+      assert(BaseSymbol);
+      MCSymbolData &SD = Asm.getSymbolData(*BaseSymbol);
       MCELF::SetBinding(*it, ELF::STB_GLOBAL);
       MCELF::SetBinding(SD, ELF::STB_GLOBAL);
     }
 
-    if (RefSymbol.isUndefined() && !Used && WeakrefUsed)
-      MCELF::SetBinding(*it, ELF::STB_WEAK);
-
-    if (it->isCommon()) {
+    if (!BaseSymbol) {
+      MSD.SectionIndex = ELF::SHN_ABS;
+    } else if (it->isCommon()) {
       assert(!Local);
       MSD.SectionIndex = ELF::SHN_COMMON;
-    } else if (Symbol.isAbsolute() || RefSymbol.isVariable()) {
-      MSD.SectionIndex = ELF::SHN_ABS;
-    } else if (RefSymbol.isUndefined()) {
+    } else if (BaseSymbol->isUndefined()) {
       if (isSignature && !Used)
         MSD.SectionIndex = SectionIndexMap.lookup(RevGroupMap[&Symbol]);
       else
         MSD.SectionIndex = ELF::SHN_UNDEF;
+      if (!Used && WeakrefUsed)
+        MCELF::SetBinding(*it, ELF::STB_WEAK);
     } else {
       const MCSectionELF &Section =
-        static_cast<const MCSectionELF&>(RefSymbol.getSection());
+        static_cast<const MCSectionELF&>(BaseSymbol->getSection());
       MSD.SectionIndex = SectionIndexMap.lookup(&Section);
       if (MSD.SectionIndex >= ELF::SHN_LORESERVE)
         NeedsSymtabShndx = true;
@@ -1600,8 +1601,8 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   unsigned NumRegularSections = NumUserSections + NumIndexedSections;
 
   // Compute symbol table information.
-  ComputeSymbolTable(Asm, SectionIndexMap, RevGroupMap, NumRegularSections);
-
+  computeSymbolTable(Asm, Layout, SectionIndexMap, RevGroupMap,
+                     NumRegularSections);
 
   WriteRelocations(Asm, const_cast<MCAsmLayout&>(Layout), RelMap);
 
