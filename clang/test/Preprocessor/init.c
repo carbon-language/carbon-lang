@@ -2317,6 +2317,7 @@
 // PPC64LE:#define _ARCH_PWR6 1
 // PPC64LE:#define _ARCH_PWR6X 1
 // PPC64LE:#define _ARCH_PWR7 1
+// PPC64LE:#define _CALL_ELF 2
 // PPC64LE:#define _LITTLE_ENDIAN 1
 // PPC64LE:#define _LP64 1
 // PPC64LE:#define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
