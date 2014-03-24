@@ -183,8 +183,7 @@ bool FlagInDescriptionList(const char *name) {
 
 void AddFlagDescription(const char *name, const char *description) {
   if (FlagInDescriptionList(name)) return;
-  FlagDescription *new_description =
-      new(allocator_for_flags) FlagDescription();
+  FlagDescription *new_description = new(allocator_for_flags) FlagDescription;
   new_description->name = name;
   new_description->description = description;
   flag_descriptions.push_back(new_description);
