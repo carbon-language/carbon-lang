@@ -83,8 +83,28 @@ void User::operator delete(void *Usr) {
 //                             Operator Class
 //===----------------------------------------------------------------------===//
 
+#if defined(_MSC_VER)
+// In Release modes, Visual Studio complains that the Operator destructor
+// never returns, which is true by design. 
+// This does *not* depend on llvm_unreachable being dependent on NDEBUG:
+// even if llvm_unreachable is replaced by __assume(false), VC still warns in
+// Release modes but not in Debug modes. The real reason is optimization flags.
+// With /Od in Debug modes the warning is not issued whereas with /O1 it is.
+// I could not find any documentation to this effect, it is reproducable:
+// Try compiling http://msdn.microsoft.com/en-us/library/khwfyc5d(v=vs.90).aspx
+// with /O1 and then with /Od.
+// Anyhow, solution is same as lib/Support/Process.cpp:~self_process().
+
+#pragma warning(push)
+#pragma warning(disable:4722)
+#endif
+
 Operator::~Operator() {
   llvm_unreachable("should never destroy an Operator");
 }
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 } // End llvm namespace
