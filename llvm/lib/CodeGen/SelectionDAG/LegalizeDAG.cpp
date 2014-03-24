@@ -3990,7 +3990,8 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
   }
   case ISD::SELECT: {
     unsigned ExtOp, TruncOp;
-    if (Node->getValueType(0).isVector()) {
+    if (Node->getValueType(0).isVector() ||
+        Node->getValueType(0).getSizeInBits() == NVT.getSizeInBits()) {
       ExtOp   = ISD::BITCAST;
       TruncOp = ISD::BITCAST;
     } else if (Node->getValueType(0).isInteger()) {
