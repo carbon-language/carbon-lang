@@ -6522,8 +6522,9 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-many");
   } else if (getToolChain().getArch() == llvm::Triple::ppc64le) {
     CmdArgs.push_back("-a64");
-    CmdArgs.push_back("-mppc64le");
+    CmdArgs.push_back("-mppc64");
     CmdArgs.push_back("-many");
+    CmdArgs.push_back("-mlittle-endian");
   } else if (getToolChain().getArch() == llvm::Triple::sparc) {
     CmdArgs.push_back("-32");
     CmdArgs.push_back("-Av8plusa");
@@ -6778,6 +6779,8 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("elf32ppclinux");
   else if (ToolChain.getArch() == llvm::Triple::ppc64)
     CmdArgs.push_back("elf64ppc");
+  else if (ToolChain.getArch() == llvm::Triple::ppc64le)
+    CmdArgs.push_back("elf64lppc");
   else if (ToolChain.getArch() == llvm::Triple::sparc)
     CmdArgs.push_back("elf32_sparc");
   else if (ToolChain.getArch() == llvm::Triple::sparcv9)
