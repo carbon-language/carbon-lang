@@ -790,7 +790,7 @@ bool AMDGPUCFGStructurizer::prepare() {
 bool AMDGPUCFGStructurizer::run() {
 
   //Assume reducible CFG...
-  DEBUG(dbgs() << "AMDGPUCFGStructurizer::run\n";FuncRep->viewCFG(););
+  DEBUG(dbgs() << "AMDGPUCFGStructurizer::run\n");
 
 #ifdef STRESSTEST
   //Use the worse block ordering to test the algorithm.
@@ -862,8 +862,7 @@ bool AMDGPUCFGStructurizer::run() {
           ContNextScc = false;
           DEBUG(
             dbgs() << "repeat processing SCC" << getSCCNum(MBB)
-                   << "sccNumIter = " << SccNumIter << "\n";
-            FuncRep->viewCFG();
+                   << "sccNumIter = " << SccNumIter << '\n';
           );
         } else {
           // Finish the current scc.
@@ -919,12 +918,10 @@ bool AMDGPUCFGStructurizer::run() {
   BlockInfoMap.clear();
   LLInfoMap.clear();
 
-  DEBUG(
-    FuncRep->viewCFG();
-  );
-
-  if (!Finish)
-    llvm_unreachable("IRREDUCIBL_CF");
+  if (!Finish) {
+    DEBUG(FuncRep->viewCFG());
+    llvm_unreachable("IRREDUCIBLE_CFG");
+  }
 
   return true;
 }
