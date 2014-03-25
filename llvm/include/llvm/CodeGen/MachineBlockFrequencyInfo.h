@@ -50,7 +50,7 @@ public:
   ///
   BlockFrequency getBlockFreq(const MachineBasicBlock *MBB) const;
 
-  MachineFunction *getFunction() const;
+  const MachineFunction *getFunction() const;
   void view() const;
 
   // Print the block frequency Freq to OS using the current functions entry

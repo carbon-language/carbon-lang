@@ -165,7 +165,7 @@ getBlockFreq(const MachineBasicBlock *MBB) const {
   return MBFI->getBlockFreq(MBB);
 }
 
-MachineFunction *MachineBlockFrequencyInfo::getFunction() const {
+const MachineFunction *MachineBlockFrequencyInfo::getFunction() const {
   return MBFI->Fn;
 }
 

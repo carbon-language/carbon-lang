@@ -77,8 +77,9 @@ getEdgeWeight(const MachineBasicBlock *Src,
   return getEdgeWeight(Src, std::find(Src->succ_begin(), Src->succ_end(), Dst));
 }
 
-bool MachineBranchProbabilityInfo::isEdgeHot(MachineBasicBlock *Src,
-                                             MachineBasicBlock *Dst) const {
+bool
+MachineBranchProbabilityInfo::isEdgeHot(const MachineBasicBlock *Src,
+                                        const MachineBasicBlock *Dst) const {
   // Hot probability is at least 4/5 = 80%
   // FIXME: Compare against a static "hot" BranchProbability.
   return getEdgeProbability(Src, Dst) > BranchProbability(4, 5);
@@ -103,9 +104,8 @@ MachineBranchProbabilityInfo::getHotSucc(MachineBasicBlock *MBB) const {
   return 0;
 }
 
-BranchProbability
-MachineBranchProbabilityInfo::getEdgeProbability(MachineBasicBlock *Src,
-                                                 MachineBasicBlock *Dst) const {
+BranchProbability MachineBranchProbabilityInfo::getEdgeProbability(
+    const MachineBasicBlock *Src, const MachineBasicBlock *Dst) const {
   uint32_t Scale = 1;
   uint32_t D = getSumForBlock(Src, Scale);
   uint32_t N = getEdgeWeight(Src, Dst) / Scale;
@@ -113,13 +113,13 @@ MachineBranchProbabilityInfo::getEdgeProbability(MachineBasicBlock *Src,
   return BranchProbability(N, D);
 }
 
-raw_ostream &MachineBranchProbabilityInfo::
-printEdgeProbability(raw_ostream &OS, MachineBasicBlock *Src,
-                     MachineBasicBlock *Dst) const {
+raw_ostream &MachineBranchProbabilityInfo::printEdgeProbability(
+    raw_ostream &OS, const MachineBasicBlock *Src,
+    const MachineBasicBlock *Dst) const {
 
   const BranchProbability Prob = getEdgeProbability(Src, Dst);
   OS << "edge MBB#" << Src->getNumber() << " -> MBB#" << Dst->getNumber()
-     << " probability is "  << Prob 
+     << " probability is " << Prob
      << (isEdgeHot(Src, Dst) ? " [HOT edge]\n" : "\n");
 
   return OS;
