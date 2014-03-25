@@ -18,34 +18,34 @@ namespace __tsan {
 
 TEST(Clock, VectorBasic) {
   ThreadClock clk(0);
-  ASSERT_EQ(clk.size(), 1);
+  ASSERT_EQ(clk.size(), 1U);
   clk.tick();
-  ASSERT_EQ(clk.size(), 1);
-  ASSERT_EQ(clk.get(0), 1);
+  ASSERT_EQ(clk.size(), 1U);
+  ASSERT_EQ(clk.get(0), 1U);
   clk.set(3, clk.get(3) + 1);
-  ASSERT_EQ(clk.size(), 4);
-  ASSERT_EQ(clk.get(0), 1);
-  ASSERT_EQ(clk.get(1), 0);
-  ASSERT_EQ(clk.get(2), 0);
-  ASSERT_EQ(clk.get(3), 1);
+  ASSERT_EQ(clk.size(), 4U);
+  ASSERT_EQ(clk.get(0), 1U);
+  ASSERT_EQ(clk.get(1), 0U);
+  ASSERT_EQ(clk.get(2), 0U);
+  ASSERT_EQ(clk.get(3), 1U);
   clk.set(3, clk.get(3) + 1);
-  ASSERT_EQ(clk.get(3), 2);
+  ASSERT_EQ(clk.get(3), 2U);
 }
 
 TEST(Clock, ChunkedBasic) {
   ThreadClock vector(0);
   SyncClock chunked;
-  ASSERT_EQ(vector.size(), 1);
-  ASSERT_EQ(chunked.size(), 0);
+  ASSERT_EQ(vector.size(), 1U);
+  ASSERT_EQ(chunked.size(), 0U);
   vector.acquire(&chunked);
-  ASSERT_EQ(vector.size(), 1);
-  ASSERT_EQ(chunked.size(), 0);
+  ASSERT_EQ(vector.size(), 1U);
+  ASSERT_EQ(chunked.size(), 0U);
   vector.release(&chunked);
-  ASSERT_EQ(vector.size(), 1);
-  ASSERT_EQ(chunked.size(), 1);
+  ASSERT_EQ(vector.size(), 1U);
+  ASSERT_EQ(chunked.size(), 1U);
   vector.acq_rel(&chunked);
-  ASSERT_EQ(vector.size(), 1);
-  ASSERT_EQ(chunked.size(), 1);
+  ASSERT_EQ(vector.size(), 1U);
+  ASSERT_EQ(chunked.size(), 1U);
 }
 
 TEST(Clock, AcquireRelease) {
@@ -53,19 +53,19 @@ TEST(Clock, AcquireRelease) {
   vector1.tick();
   SyncClock chunked;
   vector1.release(&chunked);
-  ASSERT_EQ(chunked.size(), 101);
+  ASSERT_EQ(chunked.size(), 101U);
   ThreadClock vector2(0);
   vector2.acquire(&chunked);
-  ASSERT_EQ(vector2.size(), 101);
-  ASSERT_EQ(vector2.get(0), 0);
-  ASSERT_EQ(vector2.get(1), 0);
-  ASSERT_EQ(vector2.get(99), 0);
-  ASSERT_EQ(vector2.get(100), 1);
+  ASSERT_EQ(vector2.size(), 101U);
+  ASSERT_EQ(vector2.get(0), 0U);
+  ASSERT_EQ(vector2.get(1), 0U);
+  ASSERT_EQ(vector2.get(99), 0U);
+  ASSERT_EQ(vector2.get(100), 1U);
 }
 
 TEST(Clock, ManyThreads) {
   SyncClock chunked;
-  for (int i = 0; i < 100; i++) {
+  for (unsigned i = 0; i < 100; i++) {
     ThreadClock vector(0);
     vector.tick();
     vector.set(i, 1);
@@ -75,13 +75,13 @@ TEST(Clock, ManyThreads) {
     ASSERT_EQ(i + 1, vector.size());
   }
 
-  for (int i = 0; i < 100; i++)
+  for (unsigned i = 0; i < 100; i++)
     ASSERT_EQ(1U, chunked.get(i));
 
   ThreadClock vector(1);
   vector.acquire(&chunked);
-  ASSERT_EQ(100, vector.size());
-  for (int i = 0; i < 100; i++)
+  ASSERT_EQ(100U, vector.size());
+  for (unsigned i = 0; i < 100; i++)
     ASSERT_EQ(1U, vector.get(i));
 }
 
@@ -94,28 +94,28 @@ TEST(Clock, DifferentSizes) {
     {
       SyncClock chunked;
       vector1.release(&chunked);
-      ASSERT_EQ(chunked.size(), 11);
+      ASSERT_EQ(chunked.size(), 11U);
       vector2.release(&chunked);
-      ASSERT_EQ(chunked.size(), 21);
+      ASSERT_EQ(chunked.size(), 21U);
     }
     {
       SyncClock chunked;
       vector2.release(&chunked);
-      ASSERT_EQ(chunked.size(), 21);
+      ASSERT_EQ(chunked.size(), 21U);
       vector1.release(&chunked);
-      ASSERT_EQ(chunked.size(), 21);
+      ASSERT_EQ(chunked.size(), 21U);
     }
     {
       SyncClock chunked;
       vector1.release(&chunked);
       vector2.acquire(&chunked);
-      ASSERT_EQ(vector2.size(), 21);
+      ASSERT_EQ(vector2.size(), 21U);
     }
     {
       SyncClock chunked;
       vector2.release(&chunked);
       vector1.acquire(&chunked);
-      ASSERT_EQ(vector1.size(), 21);
+      ASSERT_EQ(vector1.size(), 21U);
     }
   }
 }
