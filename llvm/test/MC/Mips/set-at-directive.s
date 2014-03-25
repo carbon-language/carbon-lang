@@ -2,130 +2,160 @@
 # RUN: FileCheck %s
 # Check that the assembler can handle the documented syntax
 # for ".set at" and set the correct value.
-# XFAIL:
     .text
 foo:
-# CHECK:   jr    $1                      # encoding: [0x08,0x00,0x20,0x00]
+# CHECK: lui  $1, 1
+# CHECK: addu $1, $1, $2
+# CHECK: lw   $2, 0($1)
     .set    at=$1
-    jr    $at
-    nop
-# CHECK:   jr    $2                      # encoding: [0x08,0x00,0x40,0x00]
+        lw      $2, 65536($2)
+# CHECK: lui  $2, 1
+# CHECK: addu $2, $2, $1
+# CHECK: lw   $1, 0($2)
     .set    at=$2
-    jr    $at
-    nop
-# CHECK:   jr    $3                      # encoding: [0x08,0x00,0x60,0x00]
+        lw      $1, 65536($1)
+# CHECK: lui  $3, 1
+# CHECK: addu $3, $3, $1
+# CHECK: lw   $1, 0($3)
     .set    at=$3
-    jr    $at
-    nop
-# CHECK:   jr    $4                      # encoding: [0x08,0x00,0x80,0x00]
+        lw      $1, 65536($1)
+# CHECK: lui  $4, 1
+# CHECK: addu $4, $4, $1
+# CHECK: lw   $1, 0($4)
     .set    at=$a0
-    jr    $at
-    nop
-# CHECK:   jr    $5                      # encoding: [0x08,0x00,0xa0,0x00]
+        lw      $1, 65536($1)
+# CHECK: lui  $5, 1
+# CHECK: addu $5, $5, $1
+# CHECK: lw   $1, 0($5)
     .set    at=$a1
-    jr    $at
-    nop
-# CHECK:   jr    $6                      # encoding: [0x08,0x00,0xc0,0x00]
+        lw      $1, 65536($1)
+# CHECK: lui  $6, 1
+# CHECK: addu $6, $6, $1
+# CHECK: lw   $1, 0($6)
     .set    at=$a2
-    jr    $at
-    nop
-# CHECK:   jr $7                # encoding: [0x08,0x00,0xe0,0x00]
+        lw      $1, 65536($1)
+# CHECK: lui  $7, 1
+# CHECK: addu $7, $7, $1
+# CHECK: lw   $1, 0($7)
     .set    at=$a3
-    jr    $at
-    nop
-# CHECK:   jr    $8                      # encoding: [0x08,0x00,0x00,0x01]
+        lw      $1, 65536($1)
+# CHECK: lui  $8, 1
+# CHECK: addu $8, $8, $1
+# CHECK: lw   $1, 0($8)
     .set    at=$8
-    jr    $at
-    nop
-# CHECK:   jr    $9                      # encoding: [0x08,0x00,0x20,0x01]
+        lw      $1, 65536($1)
+# CHECK: lui  $9, 1
+# CHECK: addu $9, $9, $1
+# CHECK: lw   $1, 0($9)
     .set    at=$9
-    jr    $at
-    nop
-# CHECK:   jr    $10                     # encoding: [0x08,0x00,0x40,0x01]
+        lw      $1, 65536($1)
+# CHECK: lui  $10, 1
+# CHECK: addu $10, $10, $1
+# CHECK: lw   $1, 0($10)
     .set    at=$10
-    jr    $at
-    nop
-# CHECK:   jr    $11                     # encoding: [0x08,0x00,0x60,0x01]
+        lw      $1, 65536($1)
+# CHECK: lui  $11, 1
+# CHECK: addu $11, $11, $1
+# CHECK: lw   $1, 0($11)
     .set    at=$11
-    jr    $at
-    nop
-# CHECK:   jr    $12                     # encoding: [0x08,0x00,0x80,0x01]
+        lw      $1, 65536($1)
+# CHECK: lui  $12, 1
+# CHECK: addu $12, $12, $1
+# CHECK: lw   $1, 0($12)
     .set    at=$12
-    jr    $at
-    nop
-# CHECK:   jr    $13                     # encoding: [0x08,0x00,0xa0,0x01]
+        lw      $1, 65536($1)
+# CHECK: lui  $13, 1
+# CHECK: addu $13, $13, $1
+# CHECK: lw   $1, 0($13)
     .set    at=$13
-    jr    $at
-    nop
-# CHECK:   jr    $14                     # encoding: [0x08,0x00,0xc0,0x01]
+        lw      $1, 65536($1)
+# CHECK: lui  $14, 1
+# CHECK: addu $14, $14, $1
+# CHECK: lw   $1, 0($14)
     .set    at=$14
-    jr    $at
-    nop
-# CHECK:   jr    $15                     # encoding: [0x08,0x00,0xe0,0x01]
+        lw      $1, 65536($1)
+# CHECK: lui  $15, 1
+# CHECK: addu $15, $15, $1
+# CHECK: lw   $1, 0($15)
     .set    at=$15
-    jr    $at
-    nop
-# CHECK:   jr    $16                     # encoding: [0x08,0x00,0x00,0x02]
+        lw      $1, 65536($1)
+# CHECK: lui  $16, 1
+# CHECK: addu $16, $16, $1
+# CHECK: lw   $1, 0($16)
     .set    at=$s0
-    jr    $at
-    nop
-# CHECK:   jr    $17                     # encoding: [0x08,0x00,0x20,0x02]
+        lw      $1, 65536($1)
+# CHECK: lui  $17, 1
+# CHECK: addu $17, $17, $1
+# CHECK: lw   $1, 0($17)
     .set    at=$s1
-    jr    $at
-    nop
-# CHECK:   jr    $18                     # encoding: [0x08,0x00,0x40,0x02]
+        lw      $1, 65536($1)
+# CHECK: lui  $18, 1
+# CHECK: addu $18, $18, $1
+# CHECK: lw   $1, 0($18)
     .set    at=$s2
-    jr    $at
-    nop
-# CHECK:   jr    $19                     # encoding: [0x08,0x00,0x60,0x02]
+        lw      $1, 65536($1)
+# CHECK: lui  $19, 1
+# CHECK: addu $19, $19, $1
+# CHECK: lw   $1, 0($19)
     .set    at=$s3
-    jr    $at
-    nop
-# CHECK:   jr    $20                     # encoding: [0x08,0x00,0x80,0x02]
+        lw      $1, 65536($1)
+# CHECK: lui  $20, 1
+# CHECK: addu $20, $20, $1
+# CHECK: lw   $1, 0($20)
     .set    at=$s4
-    jr    $at
-    nop
-# CHECK:   jr    $21                     # encoding: [0x08,0x00,0xa0,0x02]
+        lw      $1, 65536($1)
+# CHECK: lui  $21, 1
+# CHECK: addu $21, $21, $1
+# CHECK: lw   $1, 0($21)
     .set    at=$s5
-    jr    $at
-    nop
-# CHECK:   jr    $22                     # encoding: [0x08,0x00,0xc0,0x02]
+        lw      $1, 65536($1)
+# CHECK: lui  $22, 1
+# CHECK: addu $22, $22, $1
+# CHECK: lw   $1, 0($22)
     .set    at=$s6
-    jr    $at
-    nop
-# CHECK:   jr    $23                     # encoding: [0x08,0x00,0xe0,0x02]
+        lw      $1, 65536($1)
+# CHECK: lui  $23, 1
+# CHECK: addu $23, $23, $1
+# CHECK: lw   $1, 0($23)
     .set    at=$s7
-    jr    $at
-    nop
-# CHECK:   jr    $24                     # encoding: [0x08,0x00,0x00,0x03]
+        lw      $1, 65536($1)
+# CHECK: lui  $24, 1
+# CHECK: addu $24, $24, $1
+# CHECK: lw   $1, 0($24)
     .set    at=$24
-    jr    $at
-    nop
-# CHECK:   jr    $25                     # encoding: [0x08,0x00,0x20,0x03]
+        lw      $1, 65536($1)
+# CHECK: lui  $25, 1
+# CHECK: addu $25, $25, $1
+# CHECK: lw   $1, 0($25)
     .set    at=$25
-    jr    $at
-    nop
-# CHECK:   jr    $26                     # encoding: [0x08,0x00,0x40,0x03]
+        lw      $1, 65536($1)
+# CHECK: lui  $26, 1
+# CHECK: addu $26, $26, $1
+# CHECK: lw   $1, 0($26)
     .set    at=$26
-    jr    $at
-    nop
-# CHECK:   jr    $27                     # encoding: [0x08,0x00,0x60,0x03]
+        lw      $1, 65536($1)
+# CHECK: lui  $27, 1
+# CHECK: addu $27, $27, $1
+# CHECK: lw   $1, 0($27)
     .set    at=$27
-    jr    $at
-    nop
-# CHECK:   jr    $gp                     # encoding: [0x08,0x00,0x80,0x03]
+        lw      $1, 65536($1)
+# CHECK: lui  $gp, 1
+# CHECK: addu $gp, $gp, $1
+# CHECK: lw   $1, 0($gp)
     .set    at=$gp
-    jr    $at
-    nop
-# CHECK:   jr    $fp                     # encoding: [0x08,0x00,0xc0,0x03]
+        lw      $1, 65536($1)
+# CHECK: lui  $fp, 1
+# CHECK: addu $fp, $fp, $1
+# CHECK: lw   $1, 0($fp)
     .set    at=$fp
-    jr    $at
-    nop
-# CHECK:   jr    $sp                     # encoding: [0x08,0x00,0xa0,0x03]
+        lw      $1, 65536($1)
+# CHECK: lui  $sp, 1
+# CHECK: addu $sp, $sp, $1
+# CHECK: lw   $1, 0($sp)
     .set    at=$sp
-    jr    $at
-    nop
-# CHECK:   jr    $ra                     # encoding: [0x08,0x00,0xe0,0x03]
+        lw      $1, 65536($1)
+# CHECK: lui  $ra, 1
+# CHECK: addu $ra, $ra, $1
+# CHECK: lw   $1, 0($ra)
     .set    at=$ra
-    jr    $at
-    nop
+        lw      $1, 65536($1)

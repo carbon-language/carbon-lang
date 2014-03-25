@@ -250,6 +250,9 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   int getATReg();
 
+  // Warn if RegNo is the current assembler temporary.
+  void warnIfAssemblerTemporary(int RegNo);
+
   bool processInstruction(MCInst &Inst, SMLoc IDLoc,
                           SmallVectorImpl<MCInst> &Instructions);
 
@@ -982,19 +985,23 @@ bool MipsAsmParser::MatchAndEmitInstruction(
   return true;
 }
 
+void MipsAsmParser::warnIfAssemblerTemporary(int RegNo) {
+  if ((RegNo != 0) && ((int)Options.getATRegNum() == RegNo)) {
+    if (RegNo == 1)
+      Warning(getLexer().getLoc(), "Used $at without \".set noat\"");
+    else
+      Warning(getLexer().getLoc(), Twine("Used $") + Twine(RegNo) +
+                                       " with \".set at=$" + Twine(RegNo) +
+                                       "\"");
+  }
+}
+
 int MipsAsmParser::matchCPURegisterName(StringRef Name) {
   int CC;
 
-  if (Name == "at") {
-    // If noat is set then the at register is 0, otherwise it's defined as a
-    // specific register.  Warn if the assembler is free to use it.
-    if (Options.getATRegNum() != 0)
-      Warning(getLexer().getLoc(), "Used $at without \".set noat\"");
-    return 1;
-  }
-
   CC = StringSwitch<unsigned>(Name)
            .Case("zero", 0)
+           .Case("at", 1)
            .Case("a0", 4)
            .Case("a1", 5)
            .Case("a2", 6)
@@ -1044,9 +1051,7 @@ int MipsAsmParser::matchCPURegisterName(StringRef Name) {
              .Case("s8", 30)
              .Default(-1);
 
-  if ((CC != 0) && ((int)Options.getATRegNum() == CC))
-      Warning(getLexer().getLoc(), Twine("Used $") + Name + " with \".set at=$"
-          + Name + "\"");
+  warnIfAssemblerTemporary(CC);
 
   return CC;
 }
@@ -1198,6 +1203,9 @@ int MipsAsmParser::matchRegisterByNumber(unsigned RegNum, unsigned RegClass) {
   if (RegNum >
       getContext().getRegisterInfo()->getRegClass(RegClass).getNumRegs())
     return -1;
+
+  if (RegClass == Mips::GPR32RegClassID || RegClass == Mips::GPR64RegClassID)
+    warnIfAssemblerTemporary(RegNum);
 
   return getReg(RegClass, RegNum);
 }
