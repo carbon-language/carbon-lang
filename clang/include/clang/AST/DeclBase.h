@@ -1655,7 +1655,7 @@ public:
   void dumpLookups(llvm::raw_ostream &OS) const;
 
 private:
-  void reconcileExternalVisibleStorage();
+  void reconcileExternalVisibleStorage() const;
   void LoadLexicalDeclsFromExternalStorage() const;
 
   /// @brief Makes a declaration visible within this context, but
