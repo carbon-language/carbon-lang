@@ -59,14 +59,18 @@ TEST(LockFileManagerTest, LinkLockExists) {
   SmallString<64> TmpFileLock(TmpDir);
   sys::path::append(TmpFileLock, "file.lock-000");
 
-  EC = sys::fs::create_link(TmpFileLock.str(), FileLocK.str());
-#if defined(_WIN32)
-  // Win32 cannot create link with nonexistent file, since create_link is
-  // implemented as hard link.
-  ASSERT_EQ(EC, errc::no_such_file_or_directory);
-#else
+  int FD;
+  EC = sys::fs::openFileForWrite(StringRef(TmpFileLock), FD, sys::fs::F_None);
   ASSERT_FALSE(EC);
-#endif
+
+  int Ret = close(FD);
+  ASSERT_EQ(Ret, 0);
+
+  EC = sys::fs::create_link(TmpFileLock.str(), FileLocK.str());
+  ASSERT_FALSE(EC);
+
+  EC = sys::fs::remove(StringRef(TmpFileLock));
+  ASSERT_FALSE(EC);
 
   {
     // The lock file doesn't point to a real file, so we should successfully
@@ -113,20 +117,11 @@ TEST(LockFileManagerTest, RelativePath) {
 
   EC = sys::fs::remove("inner");
   ASSERT_FALSE(EC);
-  EC = sys::fs::remove(StringRef(TmpDir));
-#if defined(_WIN32)
-  // Win32 cannot remove working directory.
-  ASSERT_EQ(EC, errc::permission_denied);
-#else
-  ASSERT_FALSE(EC);
-#endif
 
   chdir(OrigPath);
 
-#if defined(_WIN32)
   EC = sys::fs::remove(StringRef(TmpDir));
   ASSERT_FALSE(EC);
-#endif
 }
 
 } // end anonymous namespace
