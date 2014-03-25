@@ -1062,6 +1062,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       }
 
       Var = R.getAsSingle<VarDecl>();
+      if (Var && DiagnoseUseOfDecl(Var, C->Loc))
+        continue;
     }
 
     // C++11 [expr.prim.lambda]p8:

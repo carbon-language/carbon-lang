@@ -359,3 +359,7 @@ namespace PR18473 {
   };
   template void f<NoCopy>(); // expected-note {{instantiation}}
 }
+
+void PR19249() {
+  auto x = [&x]{}; // expected-error {{cannot appear in its own init}}
+}
