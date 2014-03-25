@@ -313,7 +313,7 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect('frame variable myclass',
                     substrs = ['(Class) myclass = NSValue'])
         self.expect('frame variable myclass2',
-                    substrs = ['(Class) myclass2 = __NSCFConstantString'])
+                    substrs = ['(Class) myclass2 = NS','String'])
         self.expect('frame variable myclass3',
                     substrs = ['(Class) myclass3 = Molecule'])
         self.expect('frame variable myclass4',
