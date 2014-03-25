@@ -535,6 +535,8 @@ public:
                 m_temporary_allocation = map.Malloc(data.GetByteSize(), byte_align, lldb::ePermissionsReadable | lldb::ePermissionsWritable, IRMemoryMap::eAllocationPolicyMirror, alloc_error);
                 m_temporary_allocation_size = data.GetByteSize();
                 
+                m_original_data.reset(new DataBufferHeap(data.GetDataStart(), data.GetByteSize()));
+                
                 if (!alloc_error.Success())
                 {
                     err.SetErrorStringWithFormat("couldn't allocate a temporary region for %s: %s", m_variable_sp->GetName().AsCString(), alloc_error.AsCString());
@@ -607,14 +609,28 @@ public:
                 return;
             }
             
+            bool actually_write = true;
+            
+            if (m_original_data)
+            {
+                if ((data.GetByteSize() == m_original_data->GetByteSize()) &&
+                    memcmp(m_original_data->GetBytes(), data.GetDataStart(), data.GetByteSize()))
+                {
+                    actually_write = false;
+                }
+            }
+            
             Error set_error;
             
-            valobj_sp->SetData(data, set_error);
-            
-            if (!set_error.Success())
+            if (actually_write)
             {
-                err.SetErrorStringWithFormat("couldn't write the new contents of %s back into the variable", m_variable_sp->GetName().AsCString());
-                return;
+                valobj_sp->SetData(data, set_error);
+                
+                if (!set_error.Success())
+                {
+                    err.SetErrorStringWithFormat("couldn't write the new contents of %s back into the variable", m_variable_sp->GetName().AsCString());
+                    return;
+                }
             }
             
             Error free_error;
@@ -627,6 +643,7 @@ public:
                 return;
             }
             
+            m_original_data.reset();
             m_temporary_allocation = LLDB_INVALID_ADDRESS;
             m_temporary_allocation_size = 0;
         }
@@ -722,6 +739,7 @@ private:
     bool                m_is_reference;
     lldb::addr_t        m_temporary_allocation;
     size_t              m_temporary_allocation_size;
+    lldb::DataBufferSP  m_original_data;
 };
 
 uint32_t
