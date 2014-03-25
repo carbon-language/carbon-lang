@@ -1,7 +1,8 @@
 # RUN: not llvm-mc %s -triple=mips-unknown-linux 2>%t0 | FileCheck %s
 # RUN: FileCheck -check-prefix=ERROR %s < %t0
+# Check that using the assembler temporary when .set noat is in effect is an error.
 
-# We start with $at enabled
+# We start with the assembler temporary enabled
 # CHECK-LABEL: test1:
 # CHECK:  lui   $1, 1
 # CHECK:  addu  $1, $1, $2
@@ -9,10 +10,8 @@
 test1:
         lw      $2, 65536($2)
 
-# Check that using $at when .set noat is in effect is an error.
 # FIXME: It would be better if the error pointed at the mnemonic instead of the newline
-# ERROR: mips-noat.s:[[@LINE+5]]:1: error: Pseudo instruction requires $at, which is not available
-# ERROR-NOT: error
+# ERROR: mips-noat.s:[[@LINE+4]]:1: error: Pseudo instruction requires $at, which is not available
 test2:
         .set noat
         lw      $2, 65536($2)
@@ -25,3 +24,11 @@ test2:
 test3:
         .set at
         lw      $2, 65536($2)
+
+# FIXME: It would be better if the error pointed at the mnemonic instead of the newline
+# ERROR: mips-noat.s:[[@LINE+4]]:1: error: Pseudo instruction requires $at, which is not available
+test4:
+        .set at=$0
+        lw      $2, 65536($2)
+
+# ERROR-NOT: error

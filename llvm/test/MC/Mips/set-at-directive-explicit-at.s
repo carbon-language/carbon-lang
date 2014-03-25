@@ -26,6 +26,9 @@ foo:
 # CHECK:   jr    $1                      # encoding: [0x08,0x00,0x20,0x00]
     .set noat
     jr    $at
+# CHECK:   jr    $1                      # encoding: [0x08,0x00,0x20,0x00]
+    .set at=$0
+    jr    $at
 
 # CHECK:   jr    $16                     # encoding: [0x08,0x00,0x00,0x02]
 # WARNINGS: :[[@LINE+2]]:12: warning: Used $16 with ".set at=$16"

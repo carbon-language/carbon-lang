@@ -2352,7 +2352,7 @@ bool MipsAsmParser::parseSetAtDirective() {
       return false;
     }
 
-    if (AtRegNo < 1 || AtRegNo > 31) {
+    if (AtRegNo < 0 || AtRegNo > 31) {
       reportParseError("unexpected token in statement");
       return false;
     }
