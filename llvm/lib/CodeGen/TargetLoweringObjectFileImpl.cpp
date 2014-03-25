@@ -770,12 +770,18 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler &Mang, const TargetMachine &TM) const {
   // If we have -ffunction-sections then we should emit the global value to a
   // uniqued section specifically for it.
-  // TODO: Implement -fdata-sections.
-  bool EmitUniquedSection = Kind.isText() && TM.getFunctionSections();
+  bool EmitUniquedSection;
+  if (Kind.isText())
+    EmitUniquedSection = TM.getFunctionSections();
+  else
+    EmitUniquedSection = TM.getDataSections();
 
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
-  if (GV->isWeakForLinker() || EmitUniquedSection) {
+  // Section names depend on the name of the symbol which is not feasible if the
+  // symbol has private linkage.
+  if ((GV->isWeakForLinker() || EmitUniquedSection) &&
+      !GV->hasPrivateLinkage()) {
     const char *Name = getCOFFSectionNameForUniqueGlobal(Kind);
     unsigned Characteristics = getCOFFSectionFlags(Kind);
 
