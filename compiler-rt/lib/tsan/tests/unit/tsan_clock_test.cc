@@ -76,13 +76,13 @@ TEST(Clock, ManyThreads) {
   }
 
   for (int i = 0; i < 100; i++)
-    ASSERT_EQ(1, chunked.get(i));
+    ASSERT_EQ(1U, chunked.get(i));
 
   ThreadClock vector(1);
   vector.acquire(&chunked);
   ASSERT_EQ(100, vector.size());
   for (int i = 0; i < 100; i++)
-    ASSERT_EQ(1, vector.get(i));
+    ASSERT_EQ(1U, vector.get(i));
 }
 
 TEST(Clock, DifferentSizes) {
