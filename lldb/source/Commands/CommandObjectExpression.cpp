@@ -173,7 +173,7 @@ CommandObjectExpression::CommandOptions::OptionParsingStarting (CommandInterpret
     }
     else
     {
-        ignore_breakpoints = false;
+        ignore_breakpoints = true;
         unwind_on_error = true;
     }
     
