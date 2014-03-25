@@ -42,6 +42,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginLanguageRuntimeObjCAppleObjCRuntime.a \
 	lldbPluginObjectContainerBSDArchive.a \
 	lldbPluginObjectFileELF.a \
+	lldbPluginObjectFileJIT.a \
 	lldbPluginSymbolVendorELF.a \
 	lldbPluginObjectFilePECOFF.a \
 	lldbPluginOperatingSystemPython.a \

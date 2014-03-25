@@ -52,6 +52,7 @@ set( LLDB_USED_LIBS
 
   lldbPluginObjectFileMachO
   lldbPluginObjectFileELF
+  lldbPluginObjectFileJIT
   lldbPluginSymbolVendorELF
   lldbPluginObjectContainerBSDArchive
   lldbPluginObjectContainerMachOArchive
