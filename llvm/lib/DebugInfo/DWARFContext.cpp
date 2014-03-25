@@ -96,6 +96,11 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
     getDebugLoc()->dump(OS);
   }
 
+  if (DumpType == DIDT_All || DumpType == DIDT_LocDwo) {
+    OS << "\n.debug_loc.dwo contents:\n";
+    getDebugLocDWO()->dump(OS);
+  }
+
   if (DumpType == DIDT_All || DumpType == DIDT_Frames) {
     OS << "\n.debug_frame contents:\n";
     getDebugFrame()->dump(OS);
@@ -235,6 +240,16 @@ const DWARFDebugLoc *DWARFContext::getDebugLoc() {
   if (getNumCompileUnits())
     Loc->parse(LocData, getCompileUnitAtIndex(0)->getAddressByteSize());
   return Loc.get();
+}
+
+const DWARFDebugLocDWO *DWARFContext::getDebugLocDWO() {
+  if (LocDWO)
+    return LocDWO.get();
+
+  DataExtractor LocData(getLocDWOSection().Data, isLittleEndian(), 0);
+  LocDWO.reset(new DWARFDebugLocDWO());
+  LocDWO->parse(LocData);
+  return LocDWO.get();
 }
 
 const DWARFDebugAranges *DWARFContext::getDebugAranges() {
@@ -648,6 +663,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj)
             .Case("debug_gnu_pubtypes", &GnuPubTypesSection)
             .Case("debug_info.dwo", &InfoDWOSection.Data)
             .Case("debug_abbrev.dwo", &AbbrevDWOSection)
+            .Case("debug_loc.dwo", &LocDWOSection.Data)
             .Case("debug_line.dwo", &LineDWOSection.Data)
             .Case("debug_str.dwo", &StringDWOSection)
             .Case("debug_str_offsets.dwo", &StringOffsetDWOSection)

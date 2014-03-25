@@ -42,6 +42,7 @@ class DWARFContext : public DIContext {
   CUVector DWOCUs;
   TUVector DWOTUs;
   std::unique_ptr<DWARFDebugAbbrev> AbbrevDWO;
+  std::unique_ptr<DWARFDebugLocDWO> LocDWO;
 
   DWARFContext(DWARFContext &) LLVM_DELETED_FUNCTION;
   DWARFContext &operator=(DWARFContext &) LLVM_DELETED_FUNCTION;
@@ -148,6 +149,9 @@ public:
   /// Get a pointer to the parsed dwo abbreviations object.
   const DWARFDebugAbbrev *getDebugAbbrevDWO();
 
+  /// Get a pointer to the parsed DebugLoc object.
+  const DWARFDebugLocDWO *getDebugLocDWO();
+
   /// Get a pointer to the parsed DebugAranges object.
   const DWARFDebugAranges *getDebugAranges();
 
@@ -173,6 +177,7 @@ public:
   virtual const TypeSectionMap &getTypesSections() = 0;
   virtual StringRef getAbbrevSection() = 0;
   virtual const Section &getLocSection() = 0;
+  virtual const Section &getLocDWOSection() = 0;
   virtual StringRef getARangeSection() = 0;
   virtual StringRef getDebugFrameSection() = 0;
   virtual const Section &getLineSection() = 0;
@@ -216,6 +221,7 @@ class DWARFContextInMemory : public DWARFContext {
   TypeSectionMap TypesSections;
   StringRef AbbrevSection;
   Section LocSection;
+  Section LocDWOSection;
   StringRef ARangeSection;
   StringRef DebugFrameSection;
   Section LineSection;
@@ -246,6 +252,7 @@ public:
   const TypeSectionMap &getTypesSections() override { return TypesSections; }
   StringRef getAbbrevSection() override { return AbbrevSection; }
   const Section &getLocSection() override { return LocSection; }
+  const Section &getLocDWOSection() override { return LocDWOSection; }
   StringRef getARangeSection() override { return ARangeSection; }
   StringRef getDebugFrameSection() override { return DebugFrameSection; }
   const Section &getLineSection() override { return LineSection; }

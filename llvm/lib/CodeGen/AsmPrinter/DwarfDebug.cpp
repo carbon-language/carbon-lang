@@ -184,7 +184,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = DwarfStrSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = DwarfLineSectionSym = 0;
-  DwarfAddrSectionSym = 0;
+  DwarfAddrSectionSym = DwarfDebugLocDWOSectionSym = 0;
   DwarfAbbrevDWOSectionSym = DwarfStrDWOSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
   CurFn = 0;
@@ -1865,7 +1865,6 @@ void DwarfDebug::emitSectionLabels() {
 
   DwarfLineSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfLineSection(), "section_line");
-  emitSectionSym(Asm, TLOF.getDwarfLocSection());
   if (GenerateGnuPubSections) {
     DwarfGnuPubNamesSectionSym =
         emitSectionSym(Asm, TLOF.getDwarfGnuPubNamesSection());
@@ -1883,12 +1882,13 @@ void DwarfDebug::emitSectionLabels() {
         emitSectionSym(Asm, TLOF.getDwarfStrDWOSection(), "skel_string");
     DwarfAddrSectionSym =
         emitSectionSym(Asm, TLOF.getDwarfAddrSection(), "addr_sec");
-  }
+    DwarfDebugLocDWOSectionSym =
+        emitSectionSym(Asm, TLOF.getDwarfLocDWOSection(), "skel_loc");
+  } else
+    DwarfDebugLocSectionSym =
+        emitSectionSym(Asm, TLOF.getDwarfLocSection(), "section_debug_loc");
   DwarfDebugRangeSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfRangesSection(), "debug_range");
-
-  DwarfDebugLocSectionSym =
-      emitSectionSym(Asm, TLOF.getDwarfLocSection(), "section_debug_loc");
 }
 
 // Recursively emits a debug information entry.
@@ -2379,7 +2379,8 @@ void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
 void DwarfDebug::emitDebugLoc() {
   // Start the dwarf loc section.
   Asm->OutStreamer.SwitchSection(
-      Asm->getObjFileLowering().getDwarfLocSection());
+      useSplitDwarf() ? Asm->getObjFileLowering().getDwarfLocDWOSection()
+                      : Asm->getObjFileLowering().getDwarfLocSection());
   unsigned char Size = Asm->getDataLayout().getPointerSize();
   unsigned index = 0;
   for (const auto &DebugLoc : DotDebugLocEntries) {
@@ -2389,7 +2390,16 @@ void DwarfDebug::emitDebugLoc() {
       // compile unit. This is a hard coded 0 for low_pc when we're emitting
       // ranges, or the DW_AT_low_pc on the compile unit otherwise.
       const DwarfCompileUnit *CU = Entry.getCU();
-      if (CU->getRanges().size() == 1) {
+      if (useSplitDwarf()) {
+        // Just always use start_length for now - at least that's one address
+        // rather than two. We could get fancier and try to, say, reuse an
+        // address we know we've emitted elsewhere (the start of the function?
+        // The start of the CU or CU subrange that encloses this range?)
+        Asm->EmitInt8(dwarf::DW_LLE_start_length_entry);
+        unsigned idx = InfoHolder.getAddrPoolIndex(Entry.getBeginSym());
+        Asm->EmitULEB128(idx);
+        Asm->EmitLabelDifference(Entry.getEndSym(), Entry.getBeginSym(), 4);
+      } else if (CU->getRanges().size() == 1) {
         // Grab the begin symbol from the first range as our base.
         const MCSymbol *Base = CU->getRanges()[0].getStart();
         Asm->EmitLabelDifference(Entry.getBeginSym(), Base, Size);
@@ -2409,8 +2419,12 @@ void DwarfDebug::emitDebugLoc() {
       // Close the range.
       Asm->OutStreamer.EmitLabel(end);
     }
-    Asm->OutStreamer.EmitIntValue(0, Size);
-    Asm->OutStreamer.EmitIntValue(0, Size);
+    if (useSplitDwarf())
+      Asm->EmitInt8(dwarf::DW_LLE_end_of_list_entry);
+    else {
+      Asm->OutStreamer.EmitIntValue(0, Size);
+      Asm->OutStreamer.EmitIntValue(0, Size);
+    }
     ++index;
   }
 }

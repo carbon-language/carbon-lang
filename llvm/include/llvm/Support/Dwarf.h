@@ -771,6 +771,14 @@ enum Constants {
   DW_EH_PE_indirect = 0x80
 };
 
+enum LocationListEntry : unsigned char {
+  DW_LLE_end_of_list_entry,
+  DW_LLE_base_address_selection_entry,
+  DW_LLE_start_end_entry,
+  DW_LLE_start_length_entry,
+  DW_LLE_offset_pair_entry
+};
+
 enum ApplePropertyAttributes {
   // Apple Objective-C Property Attributes
   DW_APPLE_PROPERTY_readonly = 0x01,

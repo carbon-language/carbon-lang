@@ -55,6 +55,27 @@ public:
   /// specified address size to interpret the address ranges.
   void parse(DataExtractor data, unsigned AddressSize);
 };
+
+class DWARFDebugLocDWO {
+  struct Entry {
+    uint64_t Start;
+    uint32_t Length;
+    SmallVector<unsigned char, 4> Loc;
+  };
+
+  struct LocationList {
+    unsigned Offset;
+    SmallVector<Entry, 2> Entries;
+  };
+
+  typedef SmallVector<LocationList, 4> LocationLists;
+
+  LocationLists Locations;
+
+public:
+  void parse(DataExtractor data);
+  void dump(raw_ostream &OS) const;
+};
 }
 
 #endif

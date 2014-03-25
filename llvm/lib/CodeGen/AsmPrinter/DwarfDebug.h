@@ -423,7 +423,7 @@ class DwarfDebug : public AsmPrinterHandler {
   MCSymbol *DwarfDebugLocSectionSym, *DwarfLineSectionSym, *DwarfAddrSectionSym;
   MCSymbol *FunctionBeginSym, *FunctionEndSym;
   MCSymbol *DwarfInfoDWOSectionSym, *DwarfAbbrevDWOSectionSym;
-  MCSymbol *DwarfStrDWOSectionSym;
+  MCSymbol *DwarfStrDWOSectionSym, *DwarfDebugLocDWOSectionSym;
   MCSymbol *DwarfGnuPubNamesSectionSym, *DwarfGnuPubTypesSectionSym;
 
   // As an optimization, there is no need to emit an entry in the directory
@@ -755,6 +755,9 @@ public:
 
   /// Returns the section symbol for the .debug_loc section.
   MCSymbol *getDebugLocSym() const { return DwarfDebugLocSectionSym; }
+
+  /// Returns the section symbol for the .debug_loc section.
+  MCSymbol *getDebugLocDWOSym() const { return DwarfDebugLocDWOSectionSym; }
 
   /// Returns the previous section that was emitted into.
   const MCSection *getPrevSection() const { return PrevSection; }

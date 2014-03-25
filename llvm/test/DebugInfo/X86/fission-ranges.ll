@@ -1,14 +1,39 @@
 ; RUN: llc -split-dwarf=Enable -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
-; RUN: llvm-dwarfdump -debug-dump=info.dwo %t | FileCheck %s
-; RUN: llvm-objdump -r %t | FileCheck --check-prefix=RELA %s
+; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llvm-objdump -h %t | FileCheck --check-prefix=HDR %s
 
+; CHECK: .debug_info.dwo contents:
+; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[A:0x[0-9a-z]*]])
+; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[E:0x[0-9a-z]*]])
+; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[B:0x[0-9a-z]*]])
+; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[D:0x[0-9a-z]*]])
 ; CHECK: DW_AT_ranges [DW_FORM_sec_offset]   (0x000000a0)
+; CHECK: .debug_loc contents:
+; CHECK-NOT: Beginning address offset
+; CHECK: .debug_loc.dwo contents:
+
+; Don't assume these locations are entirely correct - feel free to update them
+; if they've changed due to a bugfix, change in register allocation, etc.
+
+; CHECK: [[A]]: Beginning address index: 2
+; CHECK-NEXT:                    Length: 199
+; CHECK-NEXT:      Location description: 10 00
+; CHECK-NEXT: {{^$}}
+; CHECK-NEXT:   Beginning address index: 3
+; CHECK-NEXT:                    Length: 23
+; CHECK-NEXT:      Location description: 50 93 04
+; CHECK: [[E]]: Beginning address index: 4
+; CHECK-NEXT:                    Length: 21
+; CHECK-NEXT:      Location description: 50 93 04
+; CHECK: [[B]]: Beginning address index: 5
+; CHECK-NEXT:                    Length: 19
+; CHECK-NEXT:      Location description: 50 93 04
+; CHECK: [[D]]: Beginning address index: 6
+; CHECK-NEXT:                    Length: 23
+; CHECK-NEXT:      Location description: 50 93 04
 
 ; Make sure we don't produce any relocations in any .dwo section (though in particular, debug_info.dwo)
-; FIXME: There should be no relocations in .dwo sections at all, but for now there are debug_loc relocs here.
-; RELA: RELOCATION RECORDS FOR [.rela.debug_info.dwo]
-; RELA-NOT: R_X86_64_32 .debug_ranges
-; RELA: RELOCATION RECORDS FOR
+; HDR-NOT: .rela.{{.*}}.dwo
 
 ; From the code:
 
