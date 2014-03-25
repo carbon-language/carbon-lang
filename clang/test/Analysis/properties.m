@@ -186,10 +186,12 @@ void rdar6611873() {
 // Property accessor synthesis
 //------
 
+extern void doSomethingWithPerson(Person *p);
+extern void doSomethingWithName(NSString *name);
+
 void testConsistencyRetain(Person *p) {
   clang_analyzer_eval(p.name == p.name); // expected-warning{{TRUE}}
 
-  extern void doSomethingWithPerson(Person *p);
   id origName = p.name;
   clang_analyzer_eval(p.name == origName); // expected-warning{{TRUE}}
   doSomethingWithPerson(p);
@@ -199,7 +201,6 @@ void testConsistencyRetain(Person *p) {
 void testConsistencyAssign(Person *p) {
   clang_analyzer_eval(p.friend == p.friend); // expected-warning{{TRUE}}
 
-  extern void doSomethingWithPerson(Person *p);
   id origFriend = p.friend;
   clang_analyzer_eval(p.friend == origFriend); // expected-warning{{TRUE}}
   doSomethingWithPerson(p);
@@ -208,11 +209,55 @@ void testConsistencyAssign(Person *p) {
 
 #if !__has_feature(objc_arc)
 void testOverrelease(Person *p, int coin) {
-  if (coin)
+  switch (coin) {
+  case 0:
     [p.name release]; // expected-warning{{not owned}}
-  else
+    break;
+  case 1:
     [p.friend release]; // expected-warning{{not owned}}
+    break;
+  case 2: {
+    id friend = p.friend;
+    doSomethingWithPerson(p);
+    [friend release]; // expected-warning{{not owned}}
+  }
+  }
 }
+
+// <rdar://problem/16333368>
+@implementation Person (Rdar16333368)
+
+- (void)testDeliberateRelease:(Person *)other {
+  doSomethingWithName(self.name);
+  [_name release]; // no-warning
+  self->_name = 0;
+
+  doSomethingWithName(other->_name);
+  [other.name release]; // expected-warning{{not owned}}
+}
+
+- (void)deliberateReleaseFalseNegative {
+  // This is arguably a false negative because the result of p.friend shouldn't
+  // be released, even though we are manipulating the ivar in between the two
+  // actions.
+  id name = self.name;
+  _name = 0;
+  [name release];
+}
+
+- (void)testRetainAndRelease {
+  [self.name retain];
+  [self.name release];
+  [self.name release]; // expected-warning{{not owned}}
+}
+
+- (void)testRetainAndReleaseIVar {
+  [self.name retain];
+  [_name release];
+  [_name release]; // expected-warning{{not owned}}
+}
+
+@end
 #endif
 
 @interface IntWrapper
