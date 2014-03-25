@@ -2377,9 +2377,6 @@ void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
 
 // Emit locations into the debug loc section.
 void DwarfDebug::emitDebugLoc() {
-  if (DotDebugLocEntries.empty())
-    return;
-
   // Start the dwarf loc section.
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfLocSection());
