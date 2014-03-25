@@ -626,7 +626,7 @@ template <class ELFT>
 void ELFDumper<ELFT>::printSymbol(typename ELFO::Elf_Sym_Iter Symbol) {
   StringRef SymbolName = errorOrDefault(Obj->getSymbolName(Symbol));
 
-  unsigned SectionIndex = Obj->getSymbolTableIndex(&*Symbol);
+  unsigned SectionIndex = Symbol->st_shndx;
   StringRef SectionName;
   if (SectionIndex == SHN_UNDEF) {
     SectionName = "Undefined";
@@ -641,6 +641,8 @@ void ELFDumper<ELFT>::printSymbol(typename ELFO::Elf_Sym_Iter Symbol) {
   } else if (SectionIndex == SHN_COMMON) {
     SectionName = "Common";
   } else {
+    if (SectionIndex == SHN_XINDEX)
+      SectionIndex = Obj->getSymbolTableIndex(&*Symbol);
     assert(SectionIndex != SHN_XINDEX &&
            "getSymbolTableIndex should handle this");
     const Elf_Shdr *Sec = Obj->getSection(SectionIndex);
@@ -666,7 +668,7 @@ void ELFDumper<ELFT>::printSymbol(typename ELFO::Elf_Sym_Iter Symbol) {
                   makeArrayRef(ElfSymbolBindings));
   W.printEnum  ("Type", Symbol->getType(), makeArrayRef(ElfSymbolTypes));
   W.printNumber("Other", Symbol->st_other);
-  W.printHex   ("Section", SectionName, Symbol->st_shndx);
+  W.printHex("Section", SectionName, SectionIndex);
 }
 
 #define LLVM_READOBJ_TYPE_CASE(name) \

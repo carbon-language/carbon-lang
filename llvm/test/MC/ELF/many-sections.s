@@ -1,24 +1,21 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o %t
+// RUN:  llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o %t
 // RUN: llvm-readobj -s %t | FileCheck --check-prefix=SECTIONS %s
 // RUN: llvm-readobj -t %t | FileCheck --check-prefix=SYMBOLS %s
 
-// Test that we create a .symtab_shndx if a symbol points to a section
-// numbered SHN_LORESERVE (0xFF00) or higher.
+// Test that we don't create a .symtab_shndx since we are one section short of
+// SHN_LORESERVE (0xFF00).
 
-// SECTIONS: Name: .symtab_shndx
+// SECTIONS-NOT: Name: .symtab_shndx
 
-// Test that we don't create a symbol for the symtab_shndx section.
-// SYMBOLS-NOT: symtab_shndx
+// Check the last referenced section.
 
-// Test that this file has one section too many.
-
-// SYMBOLS:         Name: last (0)
+// SYMBOLS:         Name: dm (0)
 // SYMBOLS-NEXT:    Value: 0x0
 // SYMBOLS-NEXT:    Size: 0
 // SYMBOLS-NEXT:    Binding: Local (0x0)
 // SYMBOLS-NEXT:    Type: Section (0x3)
 // SYMBOLS-NEXT:    Other: 0
-// SYMBOLS-NEXT:    Section: last (0xFF00)
+// SYMBOLS-NEXT:    Section: dm (0xFEFF)
 // SYMBOLS-NEXT:  }
 // SYMBOLS-NEXT:]
 
@@ -107,5 +104,3 @@ gen_sections32 j
 gen_sections16 k
 gen_sections8 l
 gen_sections4 m
-
-.section last
