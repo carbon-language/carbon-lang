@@ -521,15 +521,14 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   // the same size.  Instead of casting the pointer before
   // the store, cast the value to be stored.
   Value *NewCast;
-  Value *SIOp0 = SI.getOperand(0);
   Instruction::CastOps opcode = Instruction::BitCast;
-  Type* CastSrcTy = SIOp0->getType();
+  Type* CastSrcTy = DestPTy;
   Type* CastDstTy = SrcPTy;
   if (CastDstTy->isPointerTy()) {
     if (CastSrcTy->isIntegerTy())
       opcode = Instruction::IntToPtr;
   } else if (CastDstTy->isIntegerTy()) {
-    if (SIOp0->getType()->isPointerTy())
+    if (CastSrcTy->isPointerTy())
       opcode = Instruction::PtrToInt;
   }
 
@@ -538,6 +537,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   if (!NewGEPIndices.empty())
     CastOp = IC.Builder->CreateInBoundsGEP(CastOp, NewGEPIndices);
 
+  Value *SIOp0 = SI.getOperand(0);
   NewCast = IC.Builder->CreateCast(opcode, SIOp0, CastDstTy,
                                    SIOp0->getName()+".c");
   SI.setOperand(0, NewCast);
