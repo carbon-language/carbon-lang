@@ -5744,6 +5744,16 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L, bool IsSubExpr) {
       getUDivExpr(Distance, CountDown ? getNegativeSCEV(Step) : Step);
     return ExitLimit(Exact, Exact, /*MustExit=*/false);
   }
+
+  // If Step is a power of two that evenly divides Start we know that the loop
+  // will always terminate.  Start may not be a constant so we just have the
+  // number of trailing zeros available.  This is safe even in presence of
+  // overflow as the recurrence will overflow to exactly 0.
+  const APInt &StepV = StepC->getValue()->getValue();
+  if (StepV.isPowerOf2() &&
+      GetMinTrailingZeros(getNegativeSCEV(Start)) >= StepV.countTrailingZeros())
+    return getUDivExactExpr(Distance, CountDown ? getNegativeSCEV(Step) : Step);
+
   // Then, try to solve the above equation provided that Start is constant.
   if (const SCEVConstant *StartC = dyn_cast<SCEVConstant>(Start))
     return SolveLinEquationWithOverflow(StepC->getValue()->getValue(),
