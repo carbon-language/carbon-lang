@@ -121,13 +121,9 @@ char MachineBlockFrequencyInfo::ID = 0;
 MachineBlockFrequencyInfo::
 MachineBlockFrequencyInfo() :MachineFunctionPass(ID) {
   initializeMachineBlockFrequencyInfoPass(*PassRegistry::getPassRegistry());
-  MBFI = new BlockFrequencyImpl<MachineBasicBlock, MachineFunction,
-                                MachineBranchProbabilityInfo>();
 }
 
-MachineBlockFrequencyInfo::~MachineBlockFrequencyInfo() {
-  delete MBFI;
-}
+MachineBlockFrequencyInfo::~MachineBlockFrequencyInfo() {}
 
 void MachineBlockFrequencyInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineBranchProbabilityInfo>();
@@ -138,6 +134,8 @@ void MachineBlockFrequencyInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 bool MachineBlockFrequencyInfo::runOnMachineFunction(MachineFunction &F) {
   MachineBranchProbabilityInfo &MBPI =
     getAnalysis<MachineBranchProbabilityInfo>();
+  if (!MBFI)
+    MBFI.reset(new ImplType);
   MBFI->doFunction(&F, &MBPI);
 #ifndef NDEBUG
   if (ViewMachineBlockFreqPropagationDAG != GVDT_None) {
@@ -146,6 +144,8 @@ bool MachineBlockFrequencyInfo::runOnMachineFunction(MachineFunction &F) {
 #endif
   return false;
 }
+
+void MachineBlockFrequencyInfo::releaseMemory() { MBFI.reset(); }
 
 /// Pop up a ghostview window with the current block frequency propagation
 /// rendered using dot.
@@ -162,25 +162,25 @@ void MachineBlockFrequencyInfo::view() const {
 
 BlockFrequency MachineBlockFrequencyInfo::
 getBlockFreq(const MachineBasicBlock *MBB) const {
-  return MBFI->getBlockFreq(MBB);
+  return MBFI ? MBFI->getBlockFreq(MBB) : 0;
 }
 
 const MachineFunction *MachineBlockFrequencyInfo::getFunction() const {
-  return MBFI->Fn;
+  return MBFI ? MBFI->Fn : nullptr;
 }
 
 raw_ostream &
 MachineBlockFrequencyInfo::printBlockFreq(raw_ostream &OS,
                                           const BlockFrequency Freq) const {
-  return MBFI->printBlockFreq(OS, Freq);
+  return MBFI ? MBFI->printBlockFreq(OS, Freq) : OS;
 }
 
 raw_ostream &
 MachineBlockFrequencyInfo::printBlockFreq(raw_ostream &OS,
                                           const MachineBasicBlock *MBB) const {
-  return MBFI->printBlockFreq(OS, MBB);
+  return MBFI ? MBFI->printBlockFreq(OS, MBB) : OS;
 }
 
 uint64_t MachineBlockFrequencyInfo::getEntryFreq() const {
-  return MBFI->getEntryFreq();
+  return MBFI ? MBFI->getEntryFreq() : 0;
 }

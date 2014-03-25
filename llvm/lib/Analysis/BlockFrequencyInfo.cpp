@@ -114,12 +114,9 @@ char BlockFrequencyInfo::ID = 0;
 
 BlockFrequencyInfo::BlockFrequencyInfo() : FunctionPass(ID) {
   initializeBlockFrequencyInfoPass(*PassRegistry::getPassRegistry());
-  BFI = new BlockFrequencyImpl<BasicBlock, Function, BranchProbabilityInfo>();
 }
 
-BlockFrequencyInfo::~BlockFrequencyInfo() {
-  delete BFI;
-}
+BlockFrequencyInfo::~BlockFrequencyInfo() {}
 
 void BlockFrequencyInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<BranchProbabilityInfo>();
@@ -128,6 +125,8 @@ void BlockFrequencyInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool BlockFrequencyInfo::runOnFunction(Function &F) {
   BranchProbabilityInfo &BPI = getAnalysis<BranchProbabilityInfo>();
+  if (!BFI)
+    BFI.reset(new ImplType);
   BFI->doFunction(&F, &BPI);
 #ifndef NDEBUG
   if (ViewBlockFreqPropagationDAG != GVDT_None)
@@ -136,12 +135,14 @@ bool BlockFrequencyInfo::runOnFunction(Function &F) {
   return false;
 }
 
+void BlockFrequencyInfo::releaseMemory() { BFI.reset(); }
+
 void BlockFrequencyInfo::print(raw_ostream &O, const Module *) const {
   if (BFI) BFI->print(O);
 }
 
 BlockFrequency BlockFrequencyInfo::getBlockFreq(const BasicBlock *BB) const {
-  return BFI->getBlockFreq(BB);
+  return BFI ? BFI->getBlockFreq(BB) : 0;
 }
 
 /// Pop up a ghostview window with the current block frequency propagation
@@ -157,20 +158,20 @@ void BlockFrequencyInfo::view() const {
 }
 
 const Function *BlockFrequencyInfo::getFunction() const {
-  return BFI->Fn;
+  return BFI ? BFI->Fn : nullptr;
 }
 
 raw_ostream &BlockFrequencyInfo::
 printBlockFreq(raw_ostream &OS, const BlockFrequency Freq) const {
-  return BFI->printBlockFreq(OS, Freq);
+  return BFI ? BFI->printBlockFreq(OS, Freq) : OS;
 }
 
 raw_ostream &
 BlockFrequencyInfo::printBlockFreq(raw_ostream &OS,
                                    const BasicBlock *BB) const {
-  return BFI->printBlockFreq(OS, BB);
+  return BFI ? BFI->printBlockFreq(OS, BB) : OS;
 }
 
 uint64_t BlockFrequencyInfo::getEntryFreq() const {
-  return BFI->getEntryFreq();
+  return BFI ? BFI->getEntryFreq() : 0;
 }

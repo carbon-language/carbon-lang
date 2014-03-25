@@ -27,8 +27,9 @@ class BlockFrequencyImpl;
 /// BlockFrequencyInfo pass uses BlockFrequencyImpl implementation to estimate
 /// IR basic block frequencies.
 class BlockFrequencyInfo : public FunctionPass {
-
-  BlockFrequencyImpl<BasicBlock, Function, BranchProbabilityInfo> *BFI;
+  typedef BlockFrequencyImpl<BasicBlock, Function, BranchProbabilityInfo>
+  ImplType;
+  std::unique_ptr<ImplType> BFI;
 
 public:
   static char ID;
@@ -40,6 +41,7 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 
   bool runOnFunction(Function &F) override;
+  void releaseMemory() override;
   void print(raw_ostream &O, const Module *M) const override;
   const Function *getFunction() const;
   void view() const;
