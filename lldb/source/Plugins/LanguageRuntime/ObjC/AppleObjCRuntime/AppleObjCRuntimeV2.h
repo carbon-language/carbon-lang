@@ -226,15 +226,9 @@ private:
         GetClassDescriptor (lldb::addr_t ptr);
     protected:
         TaggedPointerVendorLegacy (AppleObjCRuntimeV2& runtime) :
-        TaggedPointerVendor (runtime),
-        m_Foundation_version(0)
+        TaggedPointerVendor (runtime)
         {
         }
-        
-        static uint32_t
-        GetFoundationVersion (Target& target);
-        
-        uint32_t m_Foundation_version;
         
         friend class AppleObjCRuntimeV2::TaggedPointerVendor;
         

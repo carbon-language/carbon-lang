@@ -13,6 +13,9 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
+
+#include "llvm/ADT/Optional.h"
+
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Target/LanguageRuntime.h"
@@ -103,6 +106,9 @@ public:
     virtual lldb::SearchFilterSP
     CreateExceptionSearchFilter ();
     
+    uint32_t
+    GetFoundationVersion ();
+    
 protected:
     Address *
     GetPrintForDebuggerAddr();
@@ -112,11 +118,14 @@ protected:
     std::unique_ptr<lldb_private::AppleObjCTrampolineHandler> m_objc_trampoline_handler_ap;
     lldb::BreakpointSP m_objc_exception_bp_sp;
     lldb::ModuleWP m_objc_module_wp;
+    
+    llvm::Optional<uint32_t> m_Foundation_major;
 
     AppleObjCRuntime(Process *process) :
         lldb_private::ObjCLanguageRuntime(process),
         m_read_objc_library (false),
-        m_objc_trampoline_handler_ap ()
+        m_objc_trampoline_handler_ap (),
+        m_Foundation_major()
      {
          // Call CreateInstance instead.
      }

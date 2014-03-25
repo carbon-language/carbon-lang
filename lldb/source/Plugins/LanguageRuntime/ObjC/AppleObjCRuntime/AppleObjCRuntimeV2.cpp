@@ -2472,45 +2472,22 @@ AppleObjCRuntimeV2::TaggedPointerVendorLegacy::IsPossibleTaggedPointer (lldb::ad
     return (ptr & 1);
 }
 
-// we use the version of Foundation to make assumptions about the ObjC runtime on a target
-uint32_t
-AppleObjCRuntimeV2::TaggedPointerVendorLegacy::GetFoundationVersion (Target &target)
-{
-    const ModuleList& modules = target.GetImages();
-    uint32_t major = UINT32_MAX;
-    for (uint32_t idx = 0; idx < modules.GetSize(); idx++)
-    {
-        lldb::ModuleSP module_sp = modules.GetModuleAtIndex(idx);
-        if (!module_sp)
-            continue;
-        if (strcmp(module_sp->GetFileSpec().GetFilename().AsCString(""),"Foundation") == 0)
-        {
-            module_sp->GetVersion(&major,1);
-            break;
-        }
-    }
-    return major;
-}
-
 ObjCLanguageRuntime::ClassDescriptorSP
 AppleObjCRuntimeV2::TaggedPointerVendorLegacy::GetClassDescriptor (lldb::addr_t ptr)
 {
     if (!IsPossibleTaggedPointer(ptr))
         return ObjCLanguageRuntime::ClassDescriptorSP();
 
-    Process* process(m_runtime.GetProcess());
+    uint32_t foundation_version = m_runtime.GetFoundationVersion();
     
-    if (m_Foundation_version == 0)
-        m_Foundation_version = GetFoundationVersion(process->GetTarget());
-    
-    if (m_Foundation_version == UINT32_MAX)
+    if (foundation_version == LLDB_INVALID_MODULE_VERSION)
         return ObjCLanguageRuntime::ClassDescriptorSP();
     
     uint64_t class_bits = (ptr & 0xE) >> 1;
     ConstString name;
     
     // TODO: make a table
-    if (m_Foundation_version >= 900)
+    if (foundation_version >= 900)
     {
         switch (class_bits)
         {

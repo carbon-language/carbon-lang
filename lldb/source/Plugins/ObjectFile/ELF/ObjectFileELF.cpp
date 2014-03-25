@@ -526,7 +526,7 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                                 for (ProgramHeaderCollConstIter I = program_headers.begin();
                                      I != program_headers.end(); ++I)
                                 {
-                                     segment_data_end = std::max (I->p_offset + I->p_filesz, segment_data_end);
+                                     segment_data_end = std::max<unsigned long long> (I->p_offset + I->p_filesz, segment_data_end);
                                 }
 
                                 if (segment_data_end > data_sp->GetByteSize())

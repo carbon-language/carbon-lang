@@ -1646,7 +1646,7 @@ Module::GetVersion (uint32_t *versions, uint32_t num_versions)
     if (versions && num_versions)
     {
         for (uint32_t i=0; i<num_versions; ++i)
-            versions[i] = UINT32_MAX;
+            versions[i] = LLDB_INVALID_MODULE_VERSION;
     }
     return 0;
 }
