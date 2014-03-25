@@ -15,6 +15,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Utility/Iterable.h"
 
 namespace lldb_private {
 
@@ -576,6 +577,14 @@ protected:
     mutable Mutex m_modules_mutex;
 
     Notifier* m_notifier;
+    
+public:
+    typedef LockingAdaptedIterable<collection, lldb::ModuleSP, vector_adapter> ModuleIterable;
+    ModuleIterable
+    Modules()
+    {
+        return ModuleIterable(m_modules, GetMutex());
+    }
     
 };
 
