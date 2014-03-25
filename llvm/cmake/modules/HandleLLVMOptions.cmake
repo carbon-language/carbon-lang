@@ -256,13 +256,14 @@ if( MSVC )
     -wd4180 # Suppress 'qualifier applied to function type has no meaning; ignored'
     -wd4244 # Suppress ''argument' : conversion from 'type1' to 'type2', possible loss of data'
     -wd4267 # Suppress ''var' : conversion from 'size_t' to 'type', possible loss of data'
+    -wd4291 # Suppress ''declaration' : no matching operator delete found; memory will not be freed if initialization throws an exception'
     -wd4345 # Suppress 'behavior change: an object of POD type constructed with an initializer of the form () will be default-initialized'
     -wd4351 # Suppress 'new behavior: elements of array 'array' will be default initialized'
     -wd4355 # Suppress ''this' : used in base member initializer list'
     -wd4503 # Suppress ''identifier' : decorated name length exceeded, name was truncated'
     -wd4624 # Suppress ''derived class' : destructor could not be generated because a base class destructor is inaccessible'
+    -wd4722 # Suppress 'function' : destructor never returns, potential memory leak
     -wd4800 # Suppress ''type' : forcing value to bool 'true' or 'false' (performance warning)'
-    -wd4291 # Suppress ''declaration' : no matching operator delete found; memory will not be freed if initialization throws an exception'
     
     # Promoted warnings.
     -w14062 # Promote 'enumerator in switch of enum is not handled' to level 1 warning.

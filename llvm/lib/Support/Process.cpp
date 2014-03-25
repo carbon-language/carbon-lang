@@ -34,14 +34,6 @@ self_process *process::get_self() {
   return SP;
 }
 
-#if defined(_MSC_VER)
-// Visual Studio complains that the self_process destructor never exits. This
-// doesn't make much sense, as that's the whole point of calling abort... Just
-// silence this warning.
-#pragma warning(push)
-#pragma warning(disable:4722)
-#endif
-
 // The destructor for the self_process subclass must never actually be
 // executed. There should be at most one instance of this class, and that
 // instance should live until the process terminates to avoid the potential for
@@ -73,11 +65,6 @@ static volatile TimeValue DummyTimeValue = getElapsedWallTime();
 TimeValue self_process::get_wall_time() const {
   return getElapsedWallTime();
 }
-
-
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
 
 #define COLOR(FGBG, CODE, BOLD) "\033[0;" BOLD FGBG CODE "m"
