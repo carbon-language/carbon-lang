@@ -20,6 +20,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -56,6 +57,29 @@ PrintType(const Type *type, bool truncate = false)
     if (truncate)
         s.resize(s.length() - 1);
     return s;
+}
+
+static bool
+CanIgnoreCall (const CallInst *call)
+{
+    const llvm::Function *called_function = call->getCalledFunction();
+    
+    if (!called_function)
+        return false;
+    
+    if (called_function->isIntrinsic())
+    {
+        switch (called_function->getIntrinsicID())
+        {
+        default:
+            break;
+        case llvm::Intrinsic::dbg_declare:
+        case llvm::Intrinsic::dbg_value:
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 class InterpreterStackFrame
@@ -471,6 +495,27 @@ IRInterpreter::CanInterpret (llvm::Module &module,
             case Instruction::Alloca:
             case Instruction::BitCast:
             case Instruction::Br:
+                break;
+            case Instruction::Call:
+                {
+                    CallInst *call_inst = dyn_cast<CallInst>(ii);
+                    
+                    if (!call_inst)
+                    {
+                        error.SetErrorToGenericError();
+                        error.SetErrorString(interpreter_internal_error);
+                        return false;
+                    }
+                    
+                    if (!CanIgnoreCall(call_inst))
+                    {
+                        if (log)
+                            log->Printf("Unsupported instruction: %s", PrintValue(ii).c_str());
+                        error.SetErrorToGenericError();
+                        error.SetErrorString(unsupported_opcode_error);
+                        return false;
+                    }
+                }
             case Instruction::GetElementPtr:
                 break;
             case Instruction::ICmp:
@@ -621,6 +666,29 @@ IRInterpreter::Interpret (llvm::Module &module,
         switch (inst->getOpcode())
         {
             default:
+                break;
+            case Instruction::Call:
+            {
+                const CallInst *call_inst = dyn_cast<CallInst>(inst);
+                
+                if (!call_inst)
+                {
+                    if (log)
+                        log->Printf("getOpcode() returns %s, but instruction is not a CallInst", inst->getOpcodeName());
+                    error.SetErrorToGenericError();
+                    error.SetErrorString(interpreter_internal_error);
+                    return false;
+                }
+                
+                if (!CanIgnoreCall(call_inst))
+                {
+                    if (log)
+                        log->Printf("The interpreter shouldn't have accepted %s", PrintValue(call_inst).c_str());
+                    error.SetErrorToGenericError();
+                    error.SetErrorString(interpreter_internal_error);
+                    return false;
+                }
+            }
                 break;
             case Instruction::Add:
             case Instruction::Sub:
