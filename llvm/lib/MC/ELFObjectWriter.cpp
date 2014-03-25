@@ -28,6 +28,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <vector>
@@ -37,7 +38,18 @@ using namespace llvm;
 #define DEBUG_TYPE "reloc-info"
 
 namespace {
+
+class FragmentWriter {
+  bool IsLittleEndian;
+
+public:
+  FragmentWriter(bool IsLittleEndian);
+  template <typename T> void write(MCDataFragment &F, T Val);
+};
+
 class ELFObjectWriter : public MCObjectWriter {
+  FragmentWriter FWriter;
+
   protected:
 
     static bool isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind);
@@ -147,12 +159,10 @@ class ELFObjectWriter : public MCObjectWriter {
     }
 
   public:
-    ELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                    raw_ostream &_OS, bool IsLittleEndian)
-      : MCObjectWriter(_OS, IsLittleEndian),
-        TargetObjectWriter(MOTW),
-        NeedsGOT(false), NeedsSymtabShndx(false) {
-    }
+    ELFObjectWriter(MCELFObjectTargetWriter *MOTW, raw_ostream &_OS,
+                    bool IsLittleEndian)
+        : MCObjectWriter(_OS, IsLittleEndian), FWriter(IsLittleEndian),
+          TargetObjectWriter(MOTW), NeedsGOT(false), NeedsSymtabShndx(false) {}
 
     virtual ~ELFObjectWriter();
 
@@ -163,78 +173,17 @@ class ELFObjectWriter : public MCObjectWriter {
         Write32(W);
     }
 
-    void StringLE16(char *buf, uint16_t Value) {
-      buf[0] = char(Value >> 0);
-      buf[1] = char(Value >> 8);
-    }
-
-    void StringLE32(char *buf, uint32_t Value) {
-      StringLE16(buf, uint16_t(Value >> 0));
-      StringLE16(buf + 2, uint16_t(Value >> 16));
-    }
-
-    void StringLE64(char *buf, uint64_t Value) {
-      StringLE32(buf, uint32_t(Value >> 0));
-      StringLE32(buf + 4, uint32_t(Value >> 32));
-    }
-
-    void StringBE16(char *buf ,uint16_t Value) {
-      buf[0] = char(Value >> 8);
-      buf[1] = char(Value >> 0);
-    }
-
-    void StringBE32(char *buf, uint32_t Value) {
-      StringBE16(buf, uint16_t(Value >> 16));
-      StringBE16(buf + 2, uint16_t(Value >> 0));
-    }
-
-    void StringBE64(char *buf, uint64_t Value) {
-      StringBE32(buf, uint32_t(Value >> 32));
-      StringBE32(buf + 4, uint32_t(Value >> 0));
-    }
-
-    void String8(MCDataFragment &F, uint8_t Value) {
-      char buf[1];
-      buf[0] = Value;
-      F.getContents().append(&buf[0], &buf[1]);
-    }
-
-    void String16(MCDataFragment &F, uint16_t Value) {
-      char buf[2];
-      if (isLittleEndian())
-        StringLE16(buf, Value);
-      else
-        StringBE16(buf, Value);
-      F.getContents().append(&buf[0], &buf[2]);
-    }
-
-    void String32(MCDataFragment &F, uint32_t Value) {
-      char buf[4];
-      if (isLittleEndian())
-        StringLE32(buf, Value);
-      else
-        StringBE32(buf, Value);
-      F.getContents().append(&buf[0], &buf[4]);
-    }
-
-    void String64(MCDataFragment &F, uint64_t Value) {
-      char buf[8];
-      if (isLittleEndian())
-        StringLE64(buf, Value);
-      else
-        StringBE64(buf, Value);
-      F.getContents().append(&buf[0], &buf[8]);
+    template <typename T> void write(MCDataFragment &F, T Value) {
+      FWriter.write(F, Value);
     }
 
     void WriteHeader(const MCAssembler &Asm,
                      uint64_t SectionDataSize,
                      unsigned NumberOfSections);
 
-    void WriteSymbolEntry(MCDataFragment *SymtabF,
-                          MCDataFragment *ShndxF,
-                          uint64_t name, uint8_t info,
-                          uint64_t value, uint64_t size,
-                          uint8_t other, uint32_t shndx,
+    void WriteSymbolEntry(MCDataFragment *SymtabF, MCDataFragment *ShndxF,
+                          uint32_t name, uint8_t info, uint64_t value,
+                          uint64_t size, uint8_t other, uint32_t shndx,
                           bool Reserved);
 
     void WriteSymbol(MCDataFragment *SymtabF,  MCDataFragment *ShndxF,
@@ -333,6 +282,18 @@ class ELFObjectWriter : public MCObjectWriter {
   };
 }
 
+FragmentWriter::FragmentWriter(bool IsLittleEndian)
+    : IsLittleEndian(IsLittleEndian) {}
+
+template <typename T> void FragmentWriter::write(MCDataFragment &F, T Val) {
+  if (IsLittleEndian)
+    Val = support::endian::byte_swap<T, support::little>(Val);
+  else
+    Val = support::endian::byte_swap<T, support::big>(Val);
+  const char *Start = (const char *)&Val;
+  F.getContents().append(Start, Start + sizeof(T));
+}
+
 bool ELFObjectWriter::isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind) {
   const MCFixupKindInfo &FKI =
     Asm.getBackend().getFixupKindInfo((MCFixupKind) Kind);
@@ -429,36 +390,34 @@ void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
 }
 
 void ELFObjectWriter::WriteSymbolEntry(MCDataFragment *SymtabF,
-                                       MCDataFragment *ShndxF,
-                                       uint64_t name,
+                                       MCDataFragment *ShndxF, uint32_t name,
                                        uint8_t info, uint64_t value,
                                        uint64_t size, uint8_t other,
-                                       uint32_t shndx,
-                                       bool Reserved) {
+                                       uint32_t shndx, bool Reserved) {
   if (ShndxF) {
     if (shndx >= ELF::SHN_LORESERVE && !Reserved)
-      String32(*ShndxF, shndx);
+      write(*ShndxF, shndx);
     else
-      String32(*ShndxF, 0);
+      write(*ShndxF, uint32_t(0));
   }
 
   uint16_t Index = (shndx >= ELF::SHN_LORESERVE && !Reserved) ?
     uint16_t(ELF::SHN_XINDEX) : shndx;
 
   if (is64Bit()) {
-    String32(*SymtabF, name);  // st_name
-    String8(*SymtabF, info);   // st_info
-    String8(*SymtabF, other);  // st_other
-    String16(*SymtabF, Index); // st_shndx
-    String64(*SymtabF, value); // st_value
-    String64(*SymtabF, size);  // st_size
+    write(*SymtabF, name);  // st_name
+    write(*SymtabF, info);  // st_info
+    write(*SymtabF, other); // st_other
+    write(*SymtabF, Index); // st_shndx
+    write(*SymtabF, value); // st_value
+    write(*SymtabF, size);  // st_size
   } else {
-    String32(*SymtabF, name);  // st_name
-    String32(*SymtabF, value); // st_value
-    String32(*SymtabF, size);  // st_size
-    String8(*SymtabF, info);   // st_info
-    String8(*SymtabF, other);  // st_other
-    String16(*SymtabF, Index); // st_shndx
+    write(*SymtabF, name);            // st_name
+    write(*SymtabF, uint32_t(value)); // st_value
+    write(*SymtabF, uint32_t(size));  // st_size
+    write(*SymtabF, info);            // st_info
+    write(*SymtabF, other);           // st_other
+    write(*SymtabF, Index);           // st_shndx
   }
 }
 
@@ -1163,36 +1122,37 @@ void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
 
     if (!entry.Index)
       ;
+    // FIXME: this is most likely a bug if index overflows.
     else if (entry.Index < 0)
       entry.Index = getSymbolIndexInSymbolTable(Asm, entry.Symbol);
     else
       entry.Index += FileSymbolData.size() + LocalSymbolData.size();
     if (is64Bit()) {
-      String64(*F, entry.r_offset);
+      write(*F, entry.r_offset);
       if (TargetObjectWriter->isN64()) {
-        String32(*F, entry.Index);
+        write(*F, uint32_t(entry.Index));
 
-        String8(*F, TargetObjectWriter->getRSsym(entry.Type));
-        String8(*F, TargetObjectWriter->getRType3(entry.Type));
-        String8(*F, TargetObjectWriter->getRType2(entry.Type));
-        String8(*F, TargetObjectWriter->getRType(entry.Type));
+        write(*F, TargetObjectWriter->getRSsym(entry.Type));
+        write(*F, TargetObjectWriter->getRType3(entry.Type));
+        write(*F, TargetObjectWriter->getRType2(entry.Type));
+        write(*F, TargetObjectWriter->getRType(entry.Type));
       }
       else {
         struct ELF::Elf64_Rela ERE64;
         ERE64.setSymbolAndType(entry.Index, entry.Type);
-        String64(*F, ERE64.r_info);
+        write(*F, ERE64.r_info);
       }
       if (hasRelocationAddend())
-        String64(*F, entry.r_addend);
+        write(*F, entry.r_addend);
     } else {
-      String32(*F, entry.r_offset);
+      write(*F, uint32_t(entry.r_offset));
 
       struct ELF::Elf32_Rela ERE32;
       ERE32.setSymbolAndType(entry.Index, entry.Type);
-      String32(*F, ERE32.r_info);
+      write(*F, ERE32.r_info);
 
       if (hasRelocationAddend())
-        String32(*F, entry.r_addend);
+        write(*F, uint32_t(entry.r_addend));
     }
   }
 }
@@ -1340,7 +1300,7 @@ void ELFObjectWriter::CreateIndexedSections(MCAssembler &Asm,
       MCSectionData &Data = Asm.getOrCreateSectionData(*Group);
       Data.setAlignment(4);
       MCDataFragment *F = new MCDataFragment(&Data);
-      String32(*F, ELF::GRP_COMDAT);
+      write(*F, uint32_t(ELF::GRP_COMDAT));
     }
     GroupMap[Group] = SignatureSymbol;
   }
@@ -1358,8 +1318,8 @@ void ELFObjectWriter::CreateIndexedSections(MCAssembler &Asm,
     MCSectionData &Data = Asm.getOrCreateSectionData(*Group);
     // FIXME: we could use the previous fragment
     MCDataFragment *F = new MCDataFragment(&Data);
-    unsigned Index = SectionIndexMap.lookup(&Section);
-    String32(*F, Index);
+    uint32_t Index = SectionIndexMap.lookup(&Section);
+    write(*F, Index);
   }
 }
 

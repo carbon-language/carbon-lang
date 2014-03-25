@@ -107,16 +107,16 @@ public:
 #define R_SSYM_MASK 0x00ffffff
 
   // N64 relocation type accessors
-  unsigned getRType(uint32_t Type) const {
+  uint8_t getRType(uint32_t Type) const {
     return (unsigned)((Type >> R_TYPE_SHIFT) & 0xff);
   }
-  unsigned getRType2(uint32_t Type) const {
+  uint8_t getRType2(uint32_t Type) const {
     return (unsigned)((Type >> R_TYPE2_SHIFT) & 0xff);
   }
-  unsigned getRType3(uint32_t Type) const {
+  uint8_t getRType3(uint32_t Type) const {
     return (unsigned)((Type >> R_TYPE3_SHIFT) & 0xff);
   }
-  unsigned getRSsym(uint32_t Type) const {
+  uint8_t getRSsym(uint32_t Type) const {
     return (unsigned)((Type >> R_SSYM_SHIFT) & 0xff);
   }
 
