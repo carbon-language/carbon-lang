@@ -858,17 +858,16 @@ unsigned X86TTI::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
   case Intrinsic::umul_with_overflow:
     if ((Idx == 1) && Imm.getBitWidth() <= 64 && isInt<32>(Imm.getSExtValue()))
       return TCC_Free;
-    else
-      return X86TTI::getIntImmCost(Imm, Ty);
+    break;
   case Intrinsic::experimental_stackmap:
-    if (Idx < 2)
+    if ((Idx < 2) || (Imm.getBitWidth() <= 64 && isInt<64>(Imm.getSExtValue())))
       return TCC_Free;
+    break;
   case Intrinsic::experimental_patchpoint_void:
   case Intrinsic::experimental_patchpoint_i64:
-    if ((Idx < 4 ) ||
-        (Imm.getBitWidth() <= 64 && isInt<64>(Imm.getSExtValue())))
+    if ((Idx < 4) || (Imm.getBitWidth() <= 64 && isInt<64>(Imm.getSExtValue())))
       return TCC_Free;
-    else
-      return X86TTI::getIntImmCost(Imm, Ty);
+    break;
   }
+  return X86TTI::getIntImmCost(Imm, Ty);
 }
