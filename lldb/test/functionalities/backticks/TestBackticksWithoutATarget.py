@@ -11,6 +11,7 @@ class BackticksWithNoTargetTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @unittest2.expectedFailure # llvm.org/pr19241 IRInterpreter does not handle metadata
     def test_backticks_no_target(self):
         """A simple test of backticks without a target."""
         self.expect("print `1+2-3`",
