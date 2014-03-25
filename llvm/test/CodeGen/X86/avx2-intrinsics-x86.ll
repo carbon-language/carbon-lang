@@ -1142,7 +1142,7 @@ define <8 x float>  @test_gather_mask(<8 x float> %a0, float* %a,
                                       <8 x i32> %idx, <8 x float> %mask,
                                       float* nocapture %out) {
 ; CHECK: test_gather_mask
-; CHECK: vmovdqa %ymm2, [[DEST:%.*]]
+; CHECK: vmovaps %ymm2, [[DEST:%.*]]
 ; CHECK: vgatherdps [[DEST]]
 ;; gather with mask
   %a_i8 = bitcast float* %a to i8*
