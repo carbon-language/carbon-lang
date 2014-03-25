@@ -112,9 +112,6 @@ public:
     return N;
   }
 
-// Functions defined in AMDILISelLowering.cpp
-public:
-
   /// \brief Determine which of the bits specified in \p Mask are known to be
   /// either zero or one and return them in the \p KnownZero and \p KnownOne
   /// bitsets.
@@ -122,8 +119,10 @@ public:
                                               APInt &KnownZero,
                                               APInt &KnownOne,
                                               const SelectionDAG &DAG,
-                                              unsigned Depth = 0) const;
+                                              unsigned Depth = 0) const override;
 
+// Functions defined in AMDILISelLowering.cpp
+public:
   virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info,
                                   const CallInst &I, unsigned Intrinsic) const;
 

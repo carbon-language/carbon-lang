@@ -1156,3 +1156,12 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(TBUFFER_STORE_FORMAT)
   }
 }
+
+void AMDGPUTargetLowering::computeMaskedBitsForTargetNode(
+  const SDValue Op,
+  APInt &KnownZero,
+  APInt &KnownOne,
+  const SelectionDAG &DAG,
+  unsigned Depth) const {
+  KnownZero = KnownOne = APInt(KnownOne.getBitWidth(), 0); // Don't know anything.
+}

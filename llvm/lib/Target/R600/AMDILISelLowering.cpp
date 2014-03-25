@@ -243,41 +243,6 @@ AMDGPUTargetLowering::ShouldShrinkFPConstant(EVT VT) const {
 // be zero. Op is expected to be a target specific node. Used by DAG
 // combiner.
 
-void
-AMDGPUTargetLowering::computeMaskedBitsForTargetNode(
-    const SDValue Op,
-    APInt &KnownZero,
-    APInt &KnownOne,
-    const SelectionDAG &DAG,
-    unsigned Depth) const {
-  APInt KnownZero2;
-  APInt KnownOne2;
-  KnownZero = KnownOne = APInt(KnownOne.getBitWidth(), 0); // Don't know anything
-  switch (Op.getOpcode()) {
-    default: break;
-    case ISD::SELECT_CC:
-             DAG.ComputeMaskedBits(
-                 Op.getOperand(1),
-                 KnownZero,
-                 KnownOne,
-                 Depth + 1
-                 );
-             DAG.ComputeMaskedBits(
-                 Op.getOperand(0),
-                 KnownZero2,
-                 KnownOne2
-                 );
-             assert((KnownZero & KnownOne) == 0
-                 && "Bits known to be one AND zero?");
-             assert((KnownZero2 & KnownOne2) == 0
-                 && "Bits known to be one AND zero?");
-             // Only known if known in both the LHS and RHS
-             KnownOne &= KnownOne2;
-             KnownZero &= KnownZero2;
-             break;
-  };
-}
-
 //===----------------------------------------------------------------------===//
 //                           Other Lowering Hooks
 //===----------------------------------------------------------------------===//
