@@ -212,8 +212,8 @@ public:
     return getMemoizationData() < Other.getMemoizationData();
   }
   bool operator==(const DynTypedNode &Other) const {
-    // Nodes with different types cannot be equal.
-    if (!NodeKind.isSame(Other.NodeKind))
+    if (!NodeKind.isBaseOf(Other.NodeKind) &&
+        !Other.NodeKind.isBaseOf(NodeKind))
       return false;
 
     // FIXME: Implement for other types.

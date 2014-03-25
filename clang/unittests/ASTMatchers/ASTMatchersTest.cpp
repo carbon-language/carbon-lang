@@ -4260,7 +4260,6 @@ TEST(EqualsBoundNodeMatcher, Type) {
 }
 
 TEST(EqualsBoundNodeMatcher, UsingForEachDescendant) {
-
   EXPECT_TRUE(matchAndVerifyResultTrue(
       "int f() {"
       "  if (1) {"
@@ -4292,6 +4291,38 @@ TEST(EqualsBoundNodeMatcher, FiltersMatchedCombinations) {
           hasName("f"), forEachDescendant(varDecl().bind("d")),
           forEachDescendant(declRefExpr(to(decl(equalsBoundNode("d")))))),
       new VerifyIdIsBoundTo<VarDecl>("d", 5)));
+}
+
+TEST(EqualsBoundNodeMatcher, UnlessDescendantsOfAncestorsMatch) {
+  EXPECT_TRUE(matchAndVerifyResultTrue(
+      "struct StringRef { int size() const; const char* data() const; };"
+      "void f(StringRef v) {"
+      "  v.data();"
+      "}",
+      memberCallExpr(
+          callee(methodDecl(hasName("data"))),
+          on(declRefExpr(to(varDecl(hasType(recordDecl(hasName("StringRef"))))
+                                .bind("var")))),
+          unless(hasAncestor(stmt(hasDescendant(memberCallExpr(
+              callee(methodDecl(anyOf(hasName("size"), hasName("length")))),
+              on(declRefExpr(to(varDecl(equalsBoundNode("var")))))))))))
+          .bind("data"),
+      new VerifyIdIsBoundTo<Expr>("data", 1)));
+
+  EXPECT_FALSE(matches(
+      "struct StringRef { int size() const; const char* data() const; };"
+      "void f(StringRef v) {"
+      "  v.data();"
+      "  v.size();"
+      "}",
+      memberCallExpr(
+          callee(methodDecl(hasName("data"))),
+          on(declRefExpr(to(varDecl(hasType(recordDecl(hasName("StringRef"))))
+                                .bind("var")))),
+          unless(hasAncestor(stmt(hasDescendant(memberCallExpr(
+              callee(methodDecl(anyOf(hasName("size"), hasName("length")))),
+              on(declRefExpr(to(varDecl(equalsBoundNode("var")))))))))))
+          .bind("data")));
 }
 
 } // end namespace ast_matchers
