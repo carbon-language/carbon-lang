@@ -127,140 +127,197 @@ let Uses = [RM] in {
                         [(set v4f32:$XT, (fsub v4f32:$XA, v4f32:$XB))]>;
 
   // FMA Instructions
+  let BaseName = "XSMADDADP" in {
   let isCommutable = 1 in
   def XSMADDADP : XX3Form<60, 33,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xsmaddadp $XT, $XA, $XB", IIC_VecFP,
                           [(set f64:$XT, (fma f64:$XA, f64:$XB, f64:$XTi))]>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
   def XSMADDMDP : XX3Form<60, 41,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xsmaddmdp $XT, $XA, $XB", IIC_VecFP, []>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
-  // TODO: Select between these based first on whether one of the operands has
-  // no further uses. We probably want to do this after scheduling but before
-  // register allocation.
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 
+  let BaseName = "XSMSUBADP" in {
   let isCommutable = 1 in
   def XSMSUBADP : XX3Form<60, 49,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xsmsubadp $XT, $XA, $XB", IIC_VecFP,
                           [(set f64:$XT, (fma f64:$XA, f64:$XB, (fneg f64:$XTi)))]>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
   def XSMSUBMDP : XX3Form<60, 57,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xsmsubmdp $XT, $XA, $XB", IIC_VecFP, []>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 
+  let BaseName = "XSNMADDADP" in {
   let isCommutable = 1 in
   def XSNMADDADP : XX3Form<60, 161,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xsnmaddadp $XT, $XA, $XB", IIC_VecFP,
                           [(set f64:$XT, (fneg (fma f64:$XA, f64:$XB, f64:$XTi)))]>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
   def XSNMADDMDP : XX3Form<60, 169,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xsnmaddmdp $XT, $XA, $XB", IIC_VecFP, []>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 
+  let BaseName = "XSNMSUBADP" in {
   let isCommutable = 1 in
   def XSNMSUBADP : XX3Form<60, 177,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xsnmsubadp $XT, $XA, $XB", IIC_VecFP,
                           [(set f64:$XT, (fneg (fma f64:$XA, f64:$XB, (fneg f64:$XTi))))]>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
   def XSNMSUBMDP : XX3Form<60, 185,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xsnmsubmdp $XT, $XA, $XB", IIC_VecFP, []>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 
+  let BaseName = "XVMADDADP" in {
   let isCommutable = 1 in
   def XVMADDADP : XX3Form<60, 97,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvmaddadp $XT, $XA, $XB", IIC_VecFP,
                           [(set v2f64:$XT, (fma v2f64:$XA, v2f64:$XB, v2f64:$XTi))]>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
   def XVMADDMDP : XX3Form<60, 105,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvmaddmdp $XT, $XA, $XB", IIC_VecFP, []>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 
+  let BaseName = "XVMADDASP" in {
   let isCommutable = 1 in
   def XVMADDASP : XX3Form<60, 65,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvmaddasp $XT, $XA, $XB", IIC_VecFP,
                           [(set v4f32:$XT, (fma v4f32:$XA, v4f32:$XB, v4f32:$XTi))]>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
   def XVMADDMSP : XX3Form<60, 73,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvmaddmsp $XT, $XA, $XB", IIC_VecFP, []>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 
+  let BaseName = "XVMSUBADP" in {
   let isCommutable = 1 in
   def XVMSUBADP : XX3Form<60, 113,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvmsubadp $XT, $XA, $XB", IIC_VecFP,
                           [(set v2f64:$XT, (fma v2f64:$XA, v2f64:$XB, (fneg v2f64:$XTi)))]>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
   def XVMSUBMDP : XX3Form<60, 121,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvmsubmdp $XT, $XA, $XB", IIC_VecFP, []>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 
+  let BaseName = "XVMSUBASP" in {
   let isCommutable = 1 in
   def XVMSUBASP : XX3Form<60, 81,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvmsubasp $XT, $XA, $XB", IIC_VecFP,
                           [(set v4f32:$XT, (fma v4f32:$XA, v4f32:$XB, (fneg v4f32:$XTi)))]>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
   def XVMSUBMSP : XX3Form<60, 89,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvmsubmsp $XT, $XA, $XB", IIC_VecFP, []>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 
+  let BaseName = "XVNMADDADP" in {
   let isCommutable = 1 in
   def XVNMADDADP : XX3Form<60, 225,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvnmaddadp $XT, $XA, $XB", IIC_VecFP,
                           [(set v2f64:$XT, (fneg (fma v2f64:$XA, v2f64:$XB, v2f64:$XTi)))]>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
   def XVNMADDMDP : XX3Form<60, 233,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvnmaddmdp $XT, $XA, $XB", IIC_VecFP, []>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 
+  let BaseName = "XVNMADDASP" in {
   let isCommutable = 1 in
   def XVNMADDASP : XX3Form<60, 193,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvnmaddasp $XT, $XA, $XB", IIC_VecFP,
                           [(set v4f32:$XT, (fneg (fma v4f32:$XA, v4f32:$XB, v4f32:$XTi)))]>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
   def XVNMADDMSP : XX3Form<60, 201,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvnmaddmsp $XT, $XA, $XB", IIC_VecFP, []>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 
+  let BaseName = "XVNMSUBADP" in {
   let isCommutable = 1 in
   def XVNMSUBADP : XX3Form<60, 241,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvnmsubadp $XT, $XA, $XB", IIC_VecFP,
                           [(set v2f64:$XT, (fneg (fma v2f64:$XA, v2f64:$XB, (fneg v2f64:$XTi))))]>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
   def XVNMSUBMDP : XX3Form<60, 249,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvnmsubmdp $XT, $XA, $XB", IIC_VecFP, []>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 
+  let BaseName = "XVNMSUBASP" in {
   let isCommutable = 1 in
   def XVNMSUBASP : XX3Form<60, 209,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvnmsubasp $XT, $XA, $XB", IIC_VecFP,
                           [(set v4f32:$XT, (fneg (fma v4f32:$XA, v4f32:$XB, (fneg v4f32:$XTi))))]>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
   def XVNMSUBMSP : XX3Form<60, 217,
                           (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
                           "xvnmsubmsp $XT, $XA, $XB", IIC_VecFP, []>,
-                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">;
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 
   // Division Instructions
   def XSDIVDP : XX3Form<60, 56,

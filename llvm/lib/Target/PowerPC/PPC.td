@@ -113,6 +113,12 @@ def DeprecatedDST    : SubtargetFeature<"", "DeprecatedDST", "true",
 // their record-form variants.
 class RecFormRel;
 
+// AltVSXFMARel - Filter class used to relate the primary addend-killing VSX
+// FMA instruction forms with their corresponding factor-killing forms.
+class AltVSXFMARel {
+  bit IsVSXFMAAlt = 0;
+}
+
 //===----------------------------------------------------------------------===//
 // Relation Map Definitions.
 //===----------------------------------------------------------------------===//
@@ -141,6 +147,19 @@ def getNonRecordFormOpcode : InstrMapping {
   let KeyCol = ["1"];
   // Value columns are RC=0
   let ValueCols = [["0"]];
+}
+
+def getAltVSXFMAOpcode : InstrMapping {
+  let FilterClass = "AltVSXFMARel";
+  // Instructions with the same BaseName and Interpretation64Bit values
+  // form a row.
+  let RowFields = ["BaseName"];
+  // Instructions with the same RC value form a column.
+  let ColFields = ["IsVSXFMAAlt"];
+  // The key column are the (default) addend-killing instructions.
+  let KeyCol = ["0"];
+  // Value columns IsVSXFMAAlt=1
+  let ValueCols = [["1"]];
 }
 
 //===----------------------------------------------------------------------===//
