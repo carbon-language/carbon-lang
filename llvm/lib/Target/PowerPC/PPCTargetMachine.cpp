@@ -26,6 +26,10 @@ static cl::
 opt<bool> DisableCTRLoops("disable-ppc-ctrloops", cl::Hidden,
                         cl::desc("Disable CTR loops for PPC"));
 
+static cl::opt<bool>
+VSXFMAMutateEarly("schedule-ppc-vsx-fma-mutation-early",
+  cl::Hidden, cl::desc("Schedule VSX FMA instruction mutation early"));
+
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
   RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);
@@ -126,6 +130,7 @@ public:
   virtual bool addPreISel();
   virtual bool addILPOpts();
   virtual bool addInstSelector();
+  virtual bool addPreRegAlloc();
   virtual bool addPreSched2();
   virtual bool addPreEmitPass();
 };
@@ -162,6 +167,16 @@ bool PPCPassConfig::addInstSelector() {
 
   if (getPPCSubtarget().hasVSX())
     addPass(createPPCVSXCopyPass());
+
+  return false;
+}
+
+bool PPCPassConfig::addPreRegAlloc() {
+  if (getPPCSubtarget().hasVSX()) {
+    initializePPCVSXFMAMutatePass(*PassRegistry::getPassRegistry());
+    insertPass(VSXFMAMutateEarly ? &RegisterCoalescerID : &MachineSchedulerID,
+               &PPCVSXFMAMutateID);
+  }
 
   return false;
 }
