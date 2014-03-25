@@ -3791,6 +3791,26 @@ TEST(MemorySanitizer, Select) {
   EXPECT_POISONED(z);
 }
 
+TEST(MemorySanitizer, DISABLED_SelectPartial) {
+  // Precise instrumentation of select.
+  // Some bits of the result do not depend on select condition, and must stay
+  // initialized even if select condition is not. These are the bits that are
+  // equal and initialized in both left and right select arguments.
+  U4 x = 0xFFFFABCDU;
+  U4 x_s = 0xFFFF0000U;
+  __msan_partial_poison(&x, &x_s, sizeof(x));
+  U4 y = 0xAB00;
+  U1 cond = true;
+  __msan_poison(&cond, sizeof(cond));
+  U4 z = cond ? x : y;
+  __msan_print_shadow(&z, sizeof(z));
+  EXPECT_POISONED(z & 0xFFU);
+  EXPECT_NOT_POISONED(z & 0xFF00U);
+  EXPECT_POISONED(z & 0xFF0000U);
+  EXPECT_POISONED(z & 0xFF000000U);
+  EXPECT_EQ(0xAB00, z & 0xFF00U);
+}
+
 TEST(MemorySanitizerStress, DISABLED_MallocStackTrace) {
   RecursiveMalloc(22);
 }
