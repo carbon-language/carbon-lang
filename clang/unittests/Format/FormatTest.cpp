@@ -4527,6 +4527,8 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   FormatStyle PointerLeft = getLLVMStyle();
   PointerLeft.PointerBindsToType = true;
   verifyFormat("delete *x;", PointerLeft);
+  verifyFormat("STATIC_ASSERT((a & b) == 0);");
+  verifyFormat("STATIC_ASSERT(0 == (a & b));");
 }
 
 TEST_F(FormatTest, UnderstandsAttributes) {
