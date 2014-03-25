@@ -31,6 +31,7 @@
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/DataFormatters/DataVisualization.h"
 #include "lldb/DataFormatters/FormatManager.h"
+#include "lldb/DataFormatters/TypeSummary.h"
 #include "lldb/Host/DynamicLibrary.h"
 #include "lldb/Host/Terminal.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -2241,16 +2242,30 @@ FormatPromptRecurse
                                                     const size_t num_args = args.GetSize();
                                                     for (size_t arg_idx = 0; arg_idx < num_args; ++arg_idx)
                                                     {
+                                                        std::string buffer;
+                                                        
                                                         VariableSP var_sp (args.GetVariableAtIndex (arg_idx));
                                                         ValueObjectSP var_value_sp (ValueObjectVariable::Create (exe_scope, var_sp));
+                                                        const char *var_representation = nullptr;
                                                         const char *var_name = var_value_sp->GetName().GetCString();
-                                                        const char *var_value = var_value_sp->GetValueAsCString();
+                                                        if (var_value_sp->GetClangType().IsAggregateType() &&
+                                                            DataVisualization::ShouldPrintAsOneLiner(*var_value_sp.get()))
+                                                        {
+                                                            static StringSummaryFormat format(TypeSummaryImpl::Flags()
+                                                                                              .SetHideItemNames(false)
+                                                                                              .SetShowMembersOneLiner(true),
+                                                                                              "");
+                                                            format.FormatObject(var_value_sp.get(), buffer);
+                                                            var_representation = buffer.c_str();
+                                                        }
+                                                        else
+                                                            var_representation = var_value_sp->GetValueAsCString();
                                                         if (arg_idx > 0)
                                                             s.PutCString (", ");
                                                         if (var_value_sp->GetError().Success())
                                                         {
-                                                            if (var_value)
-                                                                s.Printf ("%s=%s", var_name, var_value);
+                                                            if (var_representation)
+                                                                s.Printf ("%s=%s", var_name, var_representation);
                                                             else
                                                                 s.Printf ("%s=%s at %s", var_name, var_value_sp->GetTypeName().GetCString(), var_value_sp->GetLocationAsCString());
                                                         }
