@@ -253,10 +253,10 @@ entry:
 ; CHECK-DAG: or i32
 ; CHECK-DAG: xor i32
 ; CHECK: or i32
-; CHECK-NEXT: select i1
-; CHECK-ORIGINS: select
-; CHECK-ORIGINS: select
-; CHECK-NEXT: select i1
+; CHECK-DAG: select i1
+; CHECK-ORIGINS-DAG: select
+; CHECK-ORIGINS-DAG: select
+; CHECK-DAG: select i1
 ; CHECK: store i32{{.*}}@__msan_retval_tls
 ; CHECK-ORIGINS: store i32{{.*}}@__msan_retval_origin_tls
 ; CHECK: ret i32
@@ -277,10 +277,10 @@ entry:
 ; CHECK-DAG: or <8 x i16>
 ; CHECK-DAG: xor <8 x i16>
 ; CHECK: or <8 x i16>
-; CHECK-NEXT: select <8 x i1>
-; CHECK-ORIGINS: select
-; CHECK-ORIGINS: select
-; CHECK-NEXT: select <8 x i1>
+; CHECK-DAG: select <8 x i1>
+; CHECK-ORIGINS-DAG: select
+; CHECK-ORIGINS-DAG: select
+; CHECK-DAG: select <8 x i1>
 ; CHECK: store <8 x i16>{{.*}}@__msan_retval_tls
 ; CHECK-ORIGINS: store i32{{.*}}@__msan_retval_origin_tls
 ; CHECK: ret <8 x i16>
@@ -301,10 +301,10 @@ entry:
 ; CHECK-DAG: or <8 x i16>
 ; CHECK-DAG: xor <8 x i16>
 ; CHECK: or <8 x i16>
-; CHECK: select i1
-; CHECK-ORIGINS: select i1
-; CHECK-ORIGINS: select i1
-; CHECK: select i1
+; CHECK-DAG: select i1
+; CHECK-ORIGINS-DAG: select i1
+; CHECK-ORIGINS-DAG: select i1
+; CHECK-DAG: select i1
 ; CHECK: ret <8 x i16>
 
 
