@@ -4135,6 +4135,12 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   if (!Args.hasArg(options::OPT_frtti, options::OPT_fno_rtti))
     CmdArgs.push_back("-fno-rtti");
 
+  // Let -ffunction-sections imply -fdata-sections.
+  if (Arg * A = Args.getLastArg(options::OPT_ffunction_sections,
+                                options::OPT_fno_function_sections))
+    if (A->getOption().matches(options::OPT_ffunction_sections))
+      CmdArgs.push_back("-fdata-sections");
+
   const Driver &D = getToolChain().getDriver();
   Arg *MostGeneralArg = Args.getLastArg(options::OPT__SLASH_vmg);
   Arg *BestCaseArg = Args.getLastArg(options::OPT__SLASH_vmb);
