@@ -10,10 +10,10 @@ entry:
   ret i32 %r
 }
 
-; CHECK-LABEL: caller
+; CHECK-TAIL-LABEL: caller
 ; CHECK-TAIL: b callee
 
-; CHECK-LABEL: caller
+; CHECK-NO-TAIL-LABEL: caller
 ; CHECK-NO-TAIL: push {lr}
 ; CHECK-NO-TAIL: bl callee
 ; CHECK-NO-TAIL: pop {lr}
