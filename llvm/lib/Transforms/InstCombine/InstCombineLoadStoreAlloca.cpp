@@ -508,13 +508,25 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   if (!SrcPTy->isIntegerTy() && !SrcPTy->isPointerTy())
     return 0;
 
-  // If the pointers point into different address spaces or if they point to
-  // values with different sizes, we can't do the transformation.
+  // If the pointers point into different address spaces don't do the
+  // transformation.
+  if (SrcTy->getAddressSpace() !=
+      cast<PointerType>(CI->getType())->getAddressSpace())
+    return 0;
+
+  // If the pointers point to values of different sizes don't do the
+  // transformation.
   if (!IC.getDataLayout() ||
-      SrcTy->getAddressSpace() !=
-        cast<PointerType>(CI->getType())->getAddressSpace() ||
       IC.getDataLayout()->getTypeSizeInBits(SrcPTy) !=
       IC.getDataLayout()->getTypeSizeInBits(DestPTy))
+    return 0;
+
+  // If the pointers point to pointers to different address spaces don't do the
+  // transformation. It is not safe to introduce an addrspacecast instruction in
+  // this case since, depending on the target, addrspacecast may not be a no-op
+  // cast.
+  if (SrcPTy->isPointerTy() && DestPTy->isPointerTy() &&
+      SrcPTy->getPointerAddressSpace() != DestPTy->getPointerAddressSpace())
     return 0;
 
   // Okay, we are casting from one integer or pointer type to another of
