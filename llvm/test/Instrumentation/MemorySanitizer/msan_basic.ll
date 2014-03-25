@@ -249,13 +249,16 @@ entry:
 }
 
 ; CHECK: @Select
-; CHECK: select
-; CHECK-NEXT: sext i1 {{.*}} to i32
+; CHECK: select i1
 ; CHECK-NEXT: or i32
-; CHECK-NEXT: select
+; CHECK-NEXT: xor i32
+; CHECK-NEXT: or i32
+; CHECK-NEXT: select i1
 ; CHECK-ORIGINS: select
 ; CHECK-ORIGINS: select
-; CHECK: select
+; CHECK-NEXT: select i1
+; CHECK: store i32{{.*}}@__msan_retval_tls
+; CHECK-ORIGINS: store i32{{.*}}@__msan_retval_origin_tls
 ; CHECK: ret i32
 
 
@@ -271,17 +274,16 @@ entry:
 
 ; CHECK: @SelectVector
 ; CHECK: select <8 x i1>
-; CHECK-NEXT: sext <8 x i1> {{.*}} to <8 x i16>
 ; CHECK-NEXT: or <8 x i16>
-; CHECK-ORIGINS: bitcast <8 x i1> {{.*}} to i8
-; CHECK-ORIGINS: icmp ne i8 {{.*}}, 0
-; CHECK-ORIGINS: bitcast <8 x i1> {{.*}} to i8
-; CHECK-ORIGINS: icmp ne i8 {{.*}}, 0
-; CHECK-ORIGINS: select i1
-; CHECK-ORIGINS: select i1
-; CHECK: select <8 x i1>
+; CHECK-NEXT: xor <8 x i16>
+; CHECK-NEXT: or <8 x i16>
+; CHECK-NEXT: select <8 x i1>
+; CHECK-ORIGINS: select
+; CHECK-ORIGINS: select
+; CHECK-NEXT: select <8 x i1>
+; CHECK: store <8 x i16>{{.*}}@__msan_retval_tls
+; CHECK-ORIGINS: store i32{{.*}}@__msan_retval_origin_tls
 ; CHECK: ret <8 x i16>
-
 
 
 ; Check that we propagate origin for "select" with scalar condition and vector
@@ -296,9 +298,10 @@ entry:
 
 ; CHECK: @SelectVector2
 ; CHECK: select i1
-; CHECK: sext i1 {{.*}} to i128
-; CHECK: bitcast i128 {{.*}} to <8 x i16>
 ; CHECK: or <8 x i16>
+; CHECK: xor <8 x i16>
+; CHECK: or <8 x i16>
+; CHECK: select i1
 ; CHECK-ORIGINS: select i1
 ; CHECK-ORIGINS: select i1
 ; CHECK: select i1
@@ -318,6 +321,21 @@ entry:
 ; CHECK-ORIGINS: select i1
 ; CHECK-NEXT: select i1 {{.*}}, { i64, i64 }
 ; CHECK: ret { i64, i64 }
+
+
+define { i64*, double } @SelectStruct2(i1 zeroext %x, { i64*, double } %a, { i64*, double } %b) readnone sanitize_memory {
+entry:
+  %c = select i1 %x, { i64*, double } %a, { i64*, double } %b
+  ret { i64*, double } %c
+}
+
+; CHECK: @SelectStruct2
+; CHECK: select i1 {{.*}}, { i64, i64 }
+; CHECK-NEXT: select i1 {{.*}}, { i64, i64 } { i64 -1, i64 -1 }, { i64, i64 }
+; CHECK-ORIGINS: select i1
+; CHECK-ORIGINS: select i1
+; CHECK-NEXT: select i1 {{.*}}, { i64*, double }
+; CHECK: ret { i64*, double }
 
 
 define i8* @IntToPtr(i64 %x) nounwind uwtable readnone sanitize_memory {

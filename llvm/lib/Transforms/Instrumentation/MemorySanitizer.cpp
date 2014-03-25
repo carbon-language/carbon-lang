@@ -1324,6 +1324,17 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     // TODO: handle struct types.
   }
 
+  /// \brief Cast an application value to the type of its own shadow.
+  Value *CreateAppToShadowCast(IRBuilder<> &IRB, Value *V) {
+    Type *ShadowTy = getShadowTy(V);
+    if (V->getType() == ShadowTy)
+      return V;
+    if (V->getType()->isPtrOrPtrVectorTy())
+      return IRB.CreatePtrToInt(V, ShadowTy);
+    else
+      return IRB.CreateBitCast(V, ShadowTy);
+  }
+
   /// \brief Propagate shadow for arbitrary operation.
   void handleShadowOr(Instruction &I) {
     IRBuilder<> IRB(&I);
@@ -2180,40 +2191,51 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   void visitSelectInst(SelectInst& I) {
     IRBuilder<> IRB(&I);
     // a = select b, c, d
-    Value *S = IRB.CreateSelect(I.getCondition(), getShadow(I.getTrueValue()),
-                                getShadow(I.getFalseValue()));
+    Value *B = I.getCondition();
+    Value *C = I.getTrueValue();
+    Value *D = I.getFalseValue();
+    Value *Sb = getShadow(B);
+    Value *Sc = getShadow(C);
+    Value *Sd = getShadow(D);
+
+    // Result shadow if condition shadow is 0.
+    Value *Sa0 = IRB.CreateSelect(B, Sc, Sd);
+    Value *Sa1;
     if (I.getType()->isAggregateType()) {
       // To avoid "sign extending" i1 to an arbitrary aggregate type, we just do
       // an extra "select". This results in much more compact IR.
       // Sa = select Sb, poisoned, (select b, Sc, Sd)
-      S = IRB.CreateSelect(getShadow(I.getCondition()),
-                           getPoisonedShadow(getShadowTy(I.getType())), S,
-                           "_msprop_select_agg");
+      Sa1 = getPoisonedShadow(getShadowTy(I.getType()));
     } else {
-      // Sa = (sext Sb) | (select b, Sc, Sd)
-      S = IRB.CreateOr(S, CreateShadowCast(IRB, getShadow(I.getCondition()),
-                                           S->getType(), true),
-                       "_msprop_select");
+      // Sa = select Sb, [ (c^d) | Sc | Sd ], [ b ? Sc : Sd ]
+      // If Sb (condition is poisoned), look for bits in c and d that are equal
+      // and both unpoisoned.
+      // If !Sb (condition is unpoisoned), simply pick one of Sc and Sd.
+
+      // Cast arguments to shadow-compatible type.
+      C = CreateAppToShadowCast(IRB, C);
+      D = CreateAppToShadowCast(IRB, D);
+
+      // Result shadow if condition shadow is 1.
+      Sa1 = IRB.CreateOr(IRB.CreateXor(C, D), IRB.CreateOr(Sc, Sd));
     }
-    setShadow(&I, S);
+    Value *Sa = IRB.CreateSelect(Sb, Sa1, Sa0, "_msprop_select");
+    setShadow(&I, Sa);
     if (MS.TrackOrigins) {
       // Origins are always i32, so any vector conditions must be flattened.
       // FIXME: consider tracking vector origins for app vectors?
-      Value *Cond = I.getCondition();
-      Value *CondShadow = getShadow(Cond);
-      if (Cond->getType()->isVectorTy()) {
-        Type *FlatTy = getShadowTyNoVec(Cond->getType());
-        Cond = IRB.CreateICmpNE(IRB.CreateBitCast(Cond, FlatTy),
+      if (B->getType()->isVectorTy()) {
+        Type *FlatTy = getShadowTyNoVec(B->getType());
+        B = IRB.CreateICmpNE(IRB.CreateBitCast(B, FlatTy),
                                 ConstantInt::getNullValue(FlatTy));
-        CondShadow = IRB.CreateICmpNE(IRB.CreateBitCast(CondShadow, FlatTy),
+        Sb = IRB.CreateICmpNE(IRB.CreateBitCast(Sb, FlatTy),
                                       ConstantInt::getNullValue(FlatTy));
       }
       // a = select b, c, d
       // Oa = Sb ? Ob : (b ? Oc : Od)
       setOrigin(&I, IRB.CreateSelect(
-                        CondShadow, getOrigin(I.getCondition()),
-                        IRB.CreateSelect(Cond, getOrigin(I.getTrueValue()),
-                                         getOrigin(I.getFalseValue()))));
+                        Sb, getOrigin(I.getCondition()),
+                        IRB.CreateSelect(B, getOrigin(C), getOrigin(D))));
     }
   }
 
