@@ -599,10 +599,6 @@ ProcessKDP::DoDetach(bool keep_stopped)
     }
     else
     {
-        DisableAllBreakpointSites ();
-        
-        m_thread_list.DiscardThreadPlans();
-        
         // If we are going to keep the target stopped, then don't send the disconnect message.
         if (!keep_stopped && m_comm.IsConnected())
         {

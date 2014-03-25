@@ -3692,6 +3692,9 @@ Process::Detach (bool keep_stopped)
             }
         }
     
+        m_thread_list.DiscardThreadPlans();
+        DisableAllBreakpointSites();
+
         error = DoDetach(keep_stopped);
         if (error.Success())
         {

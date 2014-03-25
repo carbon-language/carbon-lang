@@ -1866,10 +1866,6 @@ ProcessGDBRemote::DoDetach(bool keep_stopped)
     if (log)
         log->Printf ("ProcessGDBRemote::DoDetach(keep_stopped: %i)", keep_stopped);
  
-    DisableAllBreakpointSites ();
-
-    m_thread_list.DiscardThreadPlans();
-
     error = m_gdb_comm.Detach (keep_stopped);
     if (log)
     {

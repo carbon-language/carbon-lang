@@ -133,8 +133,6 @@ ProcessFreeBSD::DoDetach(bool keep_stopped)
         return error;
     }
 
-    DisableAllBreakpointSites();
-
     error = m_monitor->Detach(GetID());
 
     if (error.Success())
