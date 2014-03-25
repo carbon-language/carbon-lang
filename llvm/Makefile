@@ -112,6 +112,11 @@ cross-compile-build-tools:
 	  cd BuildTools ; \
 	  unset CFLAGS ; \
 	  unset CXXFLAGS ; \
+	  AR=$(BUILD_AR) ; \
+	  AS=$(BUILD_AS) ; \
+	  LD=$(BUILD_LD) ; \
+	  CC=$(BUILD_CC) ; \
+	  CXX=$(BUILD_CXX) ; \
 	  unset SDKROOT ; \
 	  unset UNIVERSAL_SDK_PATH ; \
 	  configure_opts= ; \
