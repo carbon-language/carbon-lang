@@ -516,6 +516,7 @@ IRInterpreter::CanInterpret (llvm::Module &module,
                         return false;
                     }
                 }
+                break;
             case Instruction::GetElementPtr:
                 break;
             case Instruction::ICmp:
