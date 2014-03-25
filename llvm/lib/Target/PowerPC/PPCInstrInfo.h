@@ -119,6 +119,9 @@ public:
   // rotate amt is zero.  We also have to munge the immediates a bit.
   virtual MachineInstr *commuteInstruction(MachineInstr *MI, bool NewMI) const;
 
+  virtual bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
+                                     unsigned &SrcOpIdx2) const;
+
   virtual void insertNoop(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MI) const;
 

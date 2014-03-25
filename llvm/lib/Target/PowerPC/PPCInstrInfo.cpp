@@ -282,6 +282,21 @@ PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
   return MI;
 }
 
+bool PPCInstrInfo::findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
+                                         unsigned &SrcOpIdx2) const {
+  // For VSX A-Type FMA instructions, it is the first two operands that can be
+  // commuted, however, because the non-encoded tied input operand is listed
+  // first, the operands to swap are actually the second and third.
+
+  int AltOpc = PPC::getAltVSXFMAOpcode(MI->getOpcode());
+  if (AltOpc == -1)
+    return TargetInstrInfo::findCommutedOpIndices(MI, SrcOpIdx1, SrcOpIdx2);
+
+  SrcOpIdx1 = 2;
+  SrcOpIdx2 = 3;
+  return true;
+}
+
 void PPCInstrInfo::insertNoop(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MI) const {
   // This function is used for scheduling, and the nop wanted here is the type
