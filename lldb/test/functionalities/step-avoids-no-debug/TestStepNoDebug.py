@@ -6,6 +6,7 @@ import os
 import re
 import unittest2
 import lldb, lldbutil
+import sys
 from lldbtest import *
 
 class ReturnValueTestCase(TestBase):
@@ -40,6 +41,7 @@ class ReturnValueTestCase(TestBase):
 
     @python_api_test
     @dwarf_test
+    @skipIfLinux # intermittent failure - llvm.org/pr19247
     def test_step_over_with_dwarf_python(self):
         """Test stepping over using avoid-no-debug with dwarf."""
         self.buildDwarf()
@@ -57,6 +59,7 @@ class ReturnValueTestCase(TestBase):
 
     @python_api_test
     @dwarf_test
+    @skipIfLinux # intermittent failure - llvm.org/pr19247
     def test_step_in_with_dwarf_python(self):
         """Test stepping in using avoid-no-debug with dwarf."""
         self.buildDwarf()

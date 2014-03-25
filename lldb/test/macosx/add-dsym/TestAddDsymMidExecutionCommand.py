@@ -4,6 +4,7 @@ import os, time
 import unittest2
 import lldb
 import pexpect
+import sys
 from lldbtest import *
 
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")

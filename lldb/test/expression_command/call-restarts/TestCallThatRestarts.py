@@ -27,6 +27,7 @@ class ExprCommandThatRestartsTestCase(TestBase):
         self.call_function()
 
     @dwarf_test
+    @skipIfLinux # llvm.org/pr19246: intermittent failure
     def test_with_dwarf(self):
         """Test calling std::String member function."""
         self.buildDwarf()
