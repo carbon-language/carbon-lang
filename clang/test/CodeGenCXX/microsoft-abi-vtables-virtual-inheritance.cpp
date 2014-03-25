@@ -659,3 +659,26 @@ C c;
 // MANGLING-DAG: @"\01??_7C@pr17748@@6BA@1@@"
 // MANGLING-DAG: @"\01??_7C@pr17748@@6BB@1@@"
 }
+
+namespace pr19240 {
+struct A {
+  virtual void c();
+};
+
+struct B : virtual A {
+  virtual void c();
+};
+
+struct C { };
+
+struct D : virtual A, virtual C, B {};
+
+D obj;
+
+// Each MDC only has one vftable.
+
+// MANGLING-DAG: @"\01??_7D@pr19240@@6B@"
+// MANGLING-DAG: @"\01??_7A@pr19240@@6B@"
+// MANGLING-DAG: @"\01??_7B@pr19240@@6B@"
+
+}
