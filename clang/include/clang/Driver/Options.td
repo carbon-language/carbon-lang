@@ -898,8 +898,7 @@ def g_Flag : Flag<["-"], "g">, Group<g_Group>,
   HelpText<"Generate source level debug information">, Flags<[CC1Option]>;
 def gline_tables_only : Flag<["-"], "gline-tables-only">, Group<g_Group>,
   HelpText<"Emit debug line number tables only">, Flags<[CC1Option]>;
-def gmlt : Flag<["-"], "gmlt">, Group<g_Group>,
-  HelpText<"Emit debug line number tables only">, Flags<[DriverOption,HelpHidden]>;
+def gmlt : Flag<["-"], "gmlt">, Alias<gline_tables_only>;
 def g0 : Flag<["-"], "g0">, Group<g_Group>;
 def g1 : Flag<["-"], "g1">, Group<g_Group>;
 def g2 : Flag<["-"], "g2">, Group<g_Group>;
