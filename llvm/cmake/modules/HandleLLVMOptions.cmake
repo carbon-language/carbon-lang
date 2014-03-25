@@ -205,14 +205,8 @@ if( MSVC_IDE )
     if( LLVM_COMPILER_JOBS STREQUAL "0" )
       add_llvm_definitions( /MP )
     else()
-      if (MSVC10)
-        message(FATAL_ERROR
-          "Due to a bug in CMake only 0 and 1 is supported for "
-          "LLVM_COMPILER_JOBS when generating for Visual Studio 2010")
-      else()
-        message(STATUS "Number of parallel compiler jobs set to " ${LLVM_COMPILER_JOBS})
-        add_llvm_definitions( /MP${LLVM_COMPILER_JOBS} )
-      endif()
+      message(STATUS "Number of parallel compiler jobs set to " ${LLVM_COMPILER_JOBS})
+      add_llvm_definitions( /MP${LLVM_COMPILER_JOBS} )
     endif()
   else()
     message(STATUS "Parallel compilation disabled")
@@ -231,13 +225,7 @@ if( MSVC )
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:10000000")
   endif()
 
-  if( MSVC10 )
-    # MSVC 10 will complain about headers in the STL not being exported, but
-    # will not complain in MSVC 11.
-    add_llvm_definitions(
-      -wd4275 # Suppress 'An exported class was derived from a class that was not exported.'
-    )
-  elseif( MSVC11 )
+  if( MSVC11 )
     add_llvm_definitions(-D_VARIADIC_MAX=10)
   endif()
   
