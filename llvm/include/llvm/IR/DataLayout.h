@@ -281,7 +281,7 @@ public:
   /// fitsInLegalInteger - This function returns true if the specified type fits
   /// in a native integer type supported by the CPU.  For example, if the CPU
   /// only supports i32 as a native integer type, then i27 fits in a legal
-  // integer type but i45 does not.
+  /// integer type but i45 does not.
   bool fitsInLegalInteger(unsigned Width) const {
     for (unsigned LegalIntWidth : LegalIntWidths)
       if (Width <= LegalIntWidth)
