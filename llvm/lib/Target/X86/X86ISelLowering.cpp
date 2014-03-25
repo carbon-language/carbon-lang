@@ -6283,6 +6283,59 @@ LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
   return DAG.getNode(ISD::BITCAST, dl, VT, Ret);
 }
 
+/// In vector type \p VT, return true if the element at index \p InputIdx
+/// falls on a different 128-bit lane than \p OutputIdx.
+static bool ShuffleCrosses128bitLane(MVT VT, unsigned InputIdx,
+                                     unsigned OutputIdx) {
+  unsigned EltSize = VT.getVectorElementType().getSizeInBits();
+  return InputIdx * EltSize / 128 != OutputIdx * EltSize / 128;
+}
+
+/// Generate a PSHUFB if possible.  Selects elements from \p V1 according to
+/// \p MaskVals.  MaskVals[OutputIdx] = InputIdx specifies that we want to
+/// shuffle the element at InputIdx in V1 to OutputIdx in the result.  If \p
+/// MaskVals refers to elements outside of \p V1 or is undef (-1), insert a
+/// zero.
+static SDValue getPSHUFB(ArrayRef<int> MaskVals, SDValue V1, SDLoc &dl,
+                         SelectionDAG &DAG) {
+  MVT VT = V1.getSimpleValueType();
+  assert(VT.is128BitVector() || VT.is256BitVector());
+
+  MVT EltVT = VT.getVectorElementType();
+  unsigned EltSizeInBytes = EltVT.getSizeInBits() / 8;
+  unsigned NumElts = VT.getVectorNumElements();
+
+  SmallVector<SDValue, 32> PshufbMask;
+  for (unsigned OutputIdx = 0; OutputIdx < NumElts; ++OutputIdx) {
+    int InputIdx = MaskVals[OutputIdx];
+    unsigned InputByteIdx;
+
+    if (InputIdx < 0 || NumElts <= (unsigned)InputIdx)
+      InputByteIdx = 0x80;
+    else {
+      // Cross lane is not allowed.
+      if (ShuffleCrosses128bitLane(VT, InputIdx, OutputIdx))
+        return SDValue();
+      InputByteIdx = InputIdx * EltSizeInBytes;
+      // Index is an byte offset within the 128-bit lane.
+      InputByteIdx &= 0xf;
+    }
+
+    for (unsigned j = 0; j < EltSizeInBytes; ++j) {
+      PshufbMask.push_back(DAG.getConstant(InputByteIdx, MVT::i8));
+      if (InputByteIdx != 0x80)
+        ++InputByteIdx;
+    }
+  }
+
+  MVT ShufVT = MVT::getVectorVT(MVT::i8, PshufbMask.size());
+  if (ShufVT != VT)
+    V1 = DAG.getNode(ISD::BITCAST, dl, ShufVT, V1);
+  return DAG.getNode(X86ISD::PSHUFB, dl, ShufVT, V1,
+                     DAG.getNode(ISD::BUILD_VECTOR, dl, ShufVT,
+                                 PshufbMask.data(), PshufbMask.size()));
+}
+
 // v8i16 shuffles - Prefer shuffles in the following order:
 // 1. [all]   pshuflw, pshufhw, optional move
 // 2. [ssse3] 1 x pshufb
@@ -6300,8 +6353,12 @@ LowerVECTOR_SHUFFLEv8i16(SDValue Op, const X86Subtarget *Subtarget,
   // Determine if more than 1 of the words in each of the low and high quadwords
   // of the result come from the same quadword of one of the two inputs.  Undef
   // mask values count as coming from any quadword, for better codegen.
+  //
+  // Lo/HiQuad[i] = j indicates how many words from the ith quad of the input
+  // feeds this quad.  For i, 0 and 1 refer to V1, 2 and 3 refer to V2.
   unsigned LoQuad[] = { 0, 0, 0, 0 };
   unsigned HiQuad[] = { 0, 0, 0, 0 };
+  // Indices of quads used.
   std::bitset<4> InputQuads;
   for (unsigned i = 0; i < 8; ++i) {
     unsigned *Quad = i < 4 ? LoQuad : HiQuad;
@@ -6338,7 +6395,7 @@ LowerVECTOR_SHUFFLEv8i16(SDValue Op, const X86Subtarget *Subtarget,
 
   // For SSSE3, If all 8 words of the result come from only 1 quadword of each
   // of the two input vectors, shuffle them into one input vector so only a
-  // single pshufb instruction is necessary. If There are more than 2 input
+  // single pshufb instruction is necessary. If there are more than 2 input
   // quads, disable the next transformation since it does not help SSSE3.
   bool V1Used = InputQuads[0] || InputQuads[1];
   bool V2Used = InputQuads[2] || InputQuads[3];
@@ -6430,34 +6487,14 @@ LowerVECTOR_SHUFFLEv8i16(SDValue Op, const X86Subtarget *Subtarget,
     // mask, and elements that come from V1 in the V2 mask, so that the two
     // results can be OR'd together.
     bool TwoInputs = V1Used && V2Used;
-    for (unsigned i = 0; i != 8; ++i) {
-      int EltIdx = MaskVals[i] * 2;
-      int Idx0 = (TwoInputs && (EltIdx >= 16)) ? 0x80 : EltIdx;
-      int Idx1 = (TwoInputs && (EltIdx >= 16)) ? 0x80 : EltIdx+1;
-      pshufbMask.push_back(DAG.getConstant(Idx0, MVT::i8));
-      pshufbMask.push_back(DAG.getConstant(Idx1, MVT::i8));
-    }
-    V1 = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, V1);
-    V1 = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v16i8, V1,
-                     DAG.getNode(ISD::BUILD_VECTOR, dl,
-                                 MVT::v16i8, &pshufbMask[0], 16));
+    V1 = getPSHUFB(MaskVals, V1, dl, DAG);
     if (!TwoInputs)
       return DAG.getNode(ISD::BITCAST, dl, MVT::v8i16, V1);
 
     // Calculate the shuffle mask for the second input, shuffle it, and
     // OR it with the first shuffled input.
-    pshufbMask.clear();
-    for (unsigned i = 0; i != 8; ++i) {
-      int EltIdx = MaskVals[i] * 2;
-      int Idx0 = (EltIdx < 16) ? 0x80 : EltIdx - 16;
-      int Idx1 = (EltIdx < 16) ? 0x80 : EltIdx - 15;
-      pshufbMask.push_back(DAG.getConstant(Idx0, MVT::i8));
-      pshufbMask.push_back(DAG.getConstant(Idx1, MVT::i8));
-    }
-    V2 = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, V2);
-    V2 = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v16i8, V2,
-                     DAG.getNode(ISD::BUILD_VECTOR, dl,
-                                 MVT::v16i8, &pshufbMask[0], 16));
+    CommuteVectorShuffleMask(MaskVals, 8);
+    V2 = getPSHUFB(MaskVals, V2, dl, DAG);
     V1 = DAG.getNode(ISD::OR, dl, MVT::v16i8, V1, V2);
     return DAG.getNode(ISD::BITCAST, dl, MVT::v8i16, V1);
   }
@@ -6697,22 +6734,7 @@ SDValue LowerVECTOR_SHUFFLEv32i8(ShuffleVectorSDNode *SVOp,
     CommuteVectorShuffleMask(MaskVals, 32);
     V1 = V2;
   }
-  SmallVector<SDValue, 32> pshufbMask;
-  for (unsigned i = 0; i != 32; i++) {
-    int EltIdx = MaskVals[i];
-    if (EltIdx < 0 || EltIdx >= 32)
-      EltIdx = 0x80;
-    else {
-      if ((EltIdx >= 16 && i < 16) || (EltIdx < 16 && i >= 16))
-        // Cross lane is not allowed.
-        return SDValue();
-      EltIdx &= 0xf;
-    }
-    pshufbMask.push_back(DAG.getConstant(EltIdx, MVT::i8));
-  }
-  return DAG.getNode(X86ISD::PSHUFB, dl, MVT::v32i8, V1,
-                      DAG.getNode(ISD::BUILD_VECTOR, dl,
-                                  MVT::v32i8, &pshufbMask[0], 32));
+  return getPSHUFB(MaskVals, V1, dl, DAG);
 }
 
 /// RewriteAsNarrowerShuffle - Try rewriting v8i16 and v16i8 shuffles as 4 wide
