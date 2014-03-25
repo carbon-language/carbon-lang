@@ -1509,9 +1509,13 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::Value *zero = llvm::Constant::getNullValue(UnsignedLongLTy);
 
   // If the limit pointer was zero to begin with, the collection is
-  // empty; skip all this.
+  // empty; skip all this. Set the branch weight assuming this has the same
+  // probability of exiting the loop as any other loop exit.
+  uint64_t EntryCount = PGO.getCurrentRegionCount();
+  RegionCounter Cnt = getPGORegionCounter(&S);
   Builder.CreateCondBr(Builder.CreateICmpEQ(initialBufferLimit, zero, "iszero"),
-                       EmptyBB, LoopInitBB);
+                       EmptyBB, LoopInitBB,
+                       PGO.createBranchWeights(EntryCount, Cnt.getCount()));
 
   // Otherwise, initialize the loop.
   EmitBlock(LoopInitBB);
@@ -1540,7 +1544,6 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::PHINode *count = Builder.CreatePHI(UnsignedLongLTy, 3, "forcoll.count");
   count->addIncoming(initialBufferLimit, LoopInitBB);
 
-  RegionCounter Cnt = getPGORegionCounter(&S);
   Cnt.beginRegion(Builder);
 
   // Check whether the mutations value has changed from where it was
@@ -1649,10 +1652,13 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::Value *indexPlusOne
     = Builder.CreateAdd(index, llvm::ConstantInt::get(UnsignedLongLTy, 1));
 
-  // TODO: We should probably model this as a "continue" for PGO
   // If we haven't overrun the buffer yet, we can continue.
+  // Set the branch weights based on the simplifying assumption that this is
+  // like a while-loop, i.e., ignoring that the false branch fetches more
+  // elements and then returns to the loop.
   Builder.CreateCondBr(Builder.CreateICmpULT(indexPlusOne, count),
-                       LoopBodyBB, FetchMoreBB);
+                       LoopBodyBB, FetchMoreBB,
+                       PGO.createBranchWeights(Cnt.getCount(), EntryCount));
 
   index->addIncoming(indexPlusOne, AfterBody.getBlock());
   count->addIncoming(count, AfterBody.getBlock());
@@ -1673,8 +1679,6 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   index->addIncoming(zero, Builder.GetInsertBlock());
   count->addIncoming(refetchCount, Builder.GetInsertBlock());
 
-  // TODO: We should be applying PGO weights here, but this needs to handle the
-  // branch before FetchMoreBB or we risk getting the numbers wrong.
   Builder.CreateCondBr(Builder.CreateICmpEQ(refetchCount, zero),
                        EmptyBB, LoopBodyBB);
 
@@ -1697,7 +1701,6 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     PopCleanupBlock();
 
   EmitBlock(LoopEnd.getBlock());
-  // TODO: Once we calculate PGO weights above, set the region count here
 }
 
 void CodeGenFunction::EmitObjCAtTryStmt(const ObjCAtTryStmt &S) {
