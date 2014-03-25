@@ -640,9 +640,9 @@ static bool readResponseFile(StringRef path, PECOFFLinkingContext &ctx,
 // Expand arguments starting with "@". It's an error if a specified file does
 // not exist. Returns true on success.
 static bool expandResponseFiles(int &argc, const char **&argv,
-                                PECOFFLinkingContext &ctx, raw_ostream &diag) {
+                                PECOFFLinkingContext &ctx, raw_ostream &diag,
+                                bool &expanded) {
   std::vector<const char *> newArgv;
-  bool expanded = false;
   for (int i = 0; i < argc; ++i) {
     if (argv[i][0] != '@') {
       newArgv.push_back(argv[i]);
@@ -669,7 +669,8 @@ static std::unique_ptr<llvm::opt::InputArgList>
 parseArgs(int argc, const char **argv, PECOFFLinkingContext &ctx,
           raw_ostream &diag, bool isReadingDirectiveSection) {
   // Expand arguments starting with "@".
-  if (!expandResponseFiles(argc, argv, ctx, diag))
+  bool expanded = false;
+  if (!expandResponseFiles(argc, argv, ctx, diag, expanded))
     return nullptr;
 
   // Parse command line options using WinLinkOptions.td
@@ -696,6 +697,17 @@ parseArgs(int argc, const char **argv, PECOFFLinkingContext &ctx,
       continue;
     diag << "warning: ignoring unknown argument: " << arg << "\n";
   }
+
+  // If we have expaneded response files and /verbose is given, print out the
+  // final command line.
+  if (!isReadingDirectiveSection && expanded &&
+      parsedArgs->getLastArg(OPT_verbose)) {
+    diag << "Command line:";
+    for (int i = 0; i < argc; ++i)
+      diag << " " << argv[i];
+    diag << "\n\n";
+  }
+
   return parsedArgs;
 }
 
