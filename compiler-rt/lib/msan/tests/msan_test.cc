@@ -3791,7 +3791,7 @@ TEST(MemorySanitizer, Select) {
   EXPECT_POISONED(z);
 }
 
-TEST(MemorySanitizer, DISABLED_SelectPartial) {
+TEST(MemorySanitizer, SelectPartial) {
   // Precise instrumentation of select.
   // Some bits of the result do not depend on select condition, and must stay
   // initialized even if select condition is not. These are the bits that are
