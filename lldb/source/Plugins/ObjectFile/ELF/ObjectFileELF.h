@@ -214,6 +214,7 @@ private:
 
     /// Version of this reader common to all plugins based on this class.
     static const uint32_t m_plugin_version = 1;
+    static const uint32_t g_core_uuid_magic;
 
     /// ELF file header.
     elf::ELFHeader m_header;
@@ -248,6 +249,17 @@ private:
     /// Returns a 1 based index of the given section header.
     size_t
     SectionIndex(const SectionHeaderCollConstIter &I) const;
+
+    // Parses the ELF program headers.
+    static size_t
+    GetProgramHeaderInfo(ProgramHeaderColl &program_headers,
+                         lldb_private::DataExtractor &data,
+                         const elf::ELFHeader &header);
+
+    // Finds PT_NOTE segments and calculates their crc sum.
+    static uint32_t
+    CalculateELFNotesSegmentsCRC32(const ProgramHeaderColl& program_headers,
+                                   lldb_private::DataExtractor &data);
 
     /// Parses all section headers present in this object file and populates
     /// m_program_headers.  This method will compute the header list only once.

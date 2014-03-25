@@ -22,6 +22,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/Timer.h"
 #include "lldb/Symbol/DWARFCallFrameInfo.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/SectionLoadList.h"
@@ -231,6 +232,10 @@ ELFNote::Parse(const DataExtractor &data, lldb::offset_t *offset)
     return true;
 }
 
+// Arbitrary constant used as UUID prefix for core files.
+const uint32_t
+ObjectFileELF::g_core_uuid_magic(0xE210C);
+
 //------------------------------------------------------------------
 // Static methods.
 //------------------------------------------------------------------
@@ -348,7 +353,7 @@ ObjectFileELF::MagicBytesMatch (DataBufferSP& data_sp,
  *   code or tables extracted from it, as desired without restriction.
  */
 static uint32_t
-calc_gnu_debuglink_crc32(const void *buf, size_t size)
+calc_crc32(uint32_t crc, const void *buf, size_t size)
 {
     static const uint32_t g_crc32_tab[] =
     {
@@ -397,12 +402,49 @@ calc_gnu_debuglink_crc32(const void *buf, size_t size)
         0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
     };    
     const uint8_t *p = (const uint8_t *)buf;
-    uint32_t crc;
 
-    crc = ~0U;
+    crc = crc ^ ~0U;
     while (size--)
         crc = g_crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
     return crc ^ ~0U;
+}
+
+static uint32_t
+calc_gnu_debuglink_crc32(const void *buf, size_t size)
+{
+    return calc_crc32(0U, buf, size);
+}
+
+uint32_t
+ObjectFileELF::CalculateELFNotesSegmentsCRC32 (const ProgramHeaderColl& program_headers,
+                                               DataExtractor& object_data)
+{
+    typedef ProgramHeaderCollConstIter Iter;
+
+    uint32_t core_notes_crc = 0;
+
+    for (Iter I = program_headers.begin(); I != program_headers.end(); ++I)
+    {
+        if (I->p_type == llvm::ELF::PT_NOTE)
+        {
+            const elf_off ph_offset = I->p_offset;
+            const size_t ph_size = I->p_filesz;
+
+            DataExtractor segment_data;
+            if (segment_data.SetData(object_data, ph_offset, ph_size) != ph_size)
+            {
+                // The ELF program header contained incorrect data,
+                // prabably corefile is incomplete or corrupted.
+                break;
+            }
+
+            core_notes_crc = calc_crc32(core_notes_crc,
+                                        segment_data.GetDataStart(),
+                                        segment_data.GetByteSize());
+        }
+    }
+
+    return core_notes_crc;
 }
 
 size_t
@@ -454,19 +496,66 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                     lldb_private::UUID &uuid = spec.GetUUID();
                     GetSectionHeaderInfo(section_headers, data, header, uuid, gnu_debuglink_file, gnu_debuglink_crc);
 
+
                     if (!uuid.IsValid())
                     {
+                        uint32_t core_notes_crc = 0;
+
                         if (!gnu_debuglink_crc)
                         {
-                            // Need to map entire file into memory to calculate the crc.
-                            data_sp = file.MemoryMapFileContents (file_offset, SIZE_MAX);
-                            data.SetData(data_sp);
-                            gnu_debuglink_crc = calc_gnu_debuglink_crc32 (data.GetDataStart(), data.GetByteSize());
+                            lldb_private::Timer scoped_timer (__PRETTY_FUNCTION__,
+                                                              "Calculating module crc32 %s with size %" PRIu64 " KiB",
+                                                              file.GetLastPathComponent().AsCString(),
+                                                              (file.GetByteSize()-file_offset)/1024);
+
+                            // For core files - which usually don't happen to have a gnu_debuglink,
+                            // and are pretty bulky - calulating whole contents crc32 would be too much of luxury.
+                            // Thus we will need to fallback to something simpler.
+                            if (header.e_type == llvm::ELF::ET_CORE)
+                            {
+                                size_t program_headers_end = header.e_phoff + header.e_phnum * header.e_phentsize;
+                                if (program_headers_end > data_sp->GetByteSize())
+                                {
+                                    data_sp = file.MemoryMapFileContents(file_offset, program_headers_end);
+                                    data.SetData(data_sp);
+                                }
+                                ProgramHeaderColl program_headers;
+                                GetProgramHeaderInfo(program_headers, data, header);
+
+                                size_t segment_data_end = 0;
+                                for (ProgramHeaderCollConstIter I = program_headers.begin();
+                                     I != program_headers.end(); ++I)
+                                {
+                                     segment_data_end = std::max (I->p_offset + I->p_filesz, segment_data_end);
+                                }
+
+                                if (segment_data_end > data_sp->GetByteSize())
+                                {
+                                    data_sp = file.MemoryMapFileContents(file_offset, segment_data_end);
+                                    data.SetData(data_sp);
+                                }
+
+                                core_notes_crc = CalculateELFNotesSegmentsCRC32 (program_headers, data);
+                            }
+                            else
+                            {
+                                // Need to map entire file into memory to calculate the crc.
+                                data_sp = file.MemoryMapFileContents (file_offset, SIZE_MAX);
+                                data.SetData(data_sp);
+                                gnu_debuglink_crc = calc_gnu_debuglink_crc32 (data.GetDataStart(), data.GetByteSize());
+                            }
                         }
                         if (gnu_debuglink_crc)
                         {
                             // Use 4 bytes of crc from the .gnu_debuglink section.
                             uint32_t uuidt[4] = { gnu_debuglink_crc, 0, 0, 0 };
+                            uuid.SetBytes (uuidt, sizeof(uuidt));
+                        }
+                        else if (core_notes_crc)
+                        {
+                            // Use 8 bytes - first 4 bytes for *magic* prefix, mainly to make it look different form
+                            // .gnu_debuglink crc followed by 4 bytes of note segments crc.
+                            uint32_t uuidt[4] = { g_core_uuid_magic, core_notes_crc, 0, 0 };
                             uuid.SetBytes (uuidt, sizeof(uuidt));
                         }
                     }
@@ -620,7 +709,7 @@ bool
 ObjectFileELF::GetUUID(lldb_private::UUID* uuid)
 {
     // Need to parse the section list to get the UUIDs, so make sure that's been done.
-    if (!ParseSectionHeaders())
+    if (!ParseSectionHeaders() && GetType() != ObjectFile::eTypeCoreFile)
         return false;
 
     if (m_uuid.IsValid())
@@ -629,7 +718,25 @@ ObjectFileELF::GetUUID(lldb_private::UUID* uuid)
         *uuid = m_uuid;
         return true;
     }
-    else 
+    else if (GetType() == ObjectFile::eTypeCoreFile)
+    {
+        uint32_t core_notes_crc = 0;
+
+        if (!ParseProgramHeaders())
+            return false;
+
+        core_notes_crc = CalculateELFNotesSegmentsCRC32(m_program_headers, m_data);
+
+        if (core_notes_crc)
+        {
+            // Use 8 bytes - first 4 bytes for *magic* prefix, mainly to make it
+            // look different form .gnu_debuglink crc - followed by 4 bytes of note
+            // segments crc.
+            uint32_t uuidt[4] = { g_core_uuid_magic, core_notes_crc, 0, 0 };
+            m_uuid.SetBytes (uuidt, sizeof(uuidt));
+        }
+    }
+    else
     {
         if (!m_gnu_debuglink_crc)
             m_gnu_debuglink_crc = calc_gnu_debuglink_crc32 (m_data.GetDataStart(), m_data.GetByteSize());
@@ -637,9 +744,14 @@ ObjectFileELF::GetUUID(lldb_private::UUID* uuid)
         {
             // Use 4 bytes of crc from the .gnu_debuglink section.
             uint32_t uuidt[4] = { m_gnu_debuglink_crc, 0, 0, 0 };
-            uuid->SetBytes (uuidt, sizeof(uuidt));
-            return true;
+            m_uuid.SetBytes (uuidt, sizeof(uuidt));
         }
+    }
+
+    if (m_uuid.IsValid())
+    {
+        *uuid = m_uuid;
+        return true;
     }
 
     return false;
@@ -801,41 +913,53 @@ ObjectFileELF::ParseDependentModules()
 }
 
 //----------------------------------------------------------------------
+// GetProgramHeaderInfo
+//----------------------------------------------------------------------
+size_t
+ObjectFileELF::GetProgramHeaderInfo(ProgramHeaderColl &program_headers,
+                                    DataExtractor &object_data,
+                                    const ELFHeader &header)
+{
+    // We have already parsed the program headers
+    if (!program_headers.empty())
+        return program_headers.size();
+
+    // If there are no program headers to read we are done.
+    if (header.e_phnum == 0)
+        return 0;
+
+    program_headers.resize(header.e_phnum);
+    if (program_headers.size() != header.e_phnum)
+        return 0;
+
+    const size_t ph_size = header.e_phnum * header.e_phentsize;
+    const elf_off ph_offset = header.e_phoff;
+    DataExtractor data;
+    if (data.SetData(object_data, ph_offset, ph_size) != ph_size)
+        return 0;
+
+    uint32_t idx;
+    lldb::offset_t offset;
+    for (idx = 0, offset = 0; idx < header.e_phnum; ++idx)
+    {
+        if (program_headers[idx].Parse(data, &offset) == false)
+            break;
+    }
+
+    if (idx < program_headers.size())
+        program_headers.resize(idx);
+
+    return program_headers.size();
+
+}
+
+//----------------------------------------------------------------------
 // ParseProgramHeaders
 //----------------------------------------------------------------------
 size_t
 ObjectFileELF::ParseProgramHeaders()
 {
-    // We have already parsed the program headers
-    if (!m_program_headers.empty())
-        return m_program_headers.size();
-
-    // If there are no program headers to read we are done.
-    if (m_header.e_phnum == 0)
-        return 0;
-
-    m_program_headers.resize(m_header.e_phnum);
-    if (m_program_headers.size() != m_header.e_phnum)
-        return 0;
-
-    const size_t ph_size = m_header.e_phnum * m_header.e_phentsize;
-    const elf_off ph_offset = m_header.e_phoff;
-    DataExtractor data;
-    if (GetData (ph_offset, ph_size, data) != ph_size)
-        return 0;
-
-    uint32_t idx;
-    lldb::offset_t offset;
-    for (idx = 0, offset = 0; idx < m_header.e_phnum; ++idx)
-    {
-        if (m_program_headers[idx].Parse(data, &offset) == false)
-            break;
-    }
-
-    if (idx < m_program_headers.size())
-        m_program_headers.resize(idx);
-
-    return m_program_headers.size();
+    return GetProgramHeaderInfo(m_program_headers, m_data, m_header);
 }
 
 static bool
