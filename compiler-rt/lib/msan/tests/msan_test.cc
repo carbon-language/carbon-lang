@@ -3799,7 +3799,7 @@ TEST(MemorySanitizer, DISABLED_SelectPartial) {
   U4 x = 0xFFFFABCDU;
   U4 x_s = 0xFFFF0000U;
   __msan_partial_poison(&x, &x_s, sizeof(x));
-  U4 y = 0xAB00;
+  U4 y = 0xAB00U;
   U1 cond = true;
   __msan_poison(&cond, sizeof(cond));
   U4 z = cond ? x : y;
@@ -3808,7 +3808,7 @@ TEST(MemorySanitizer, DISABLED_SelectPartial) {
   EXPECT_NOT_POISONED(z & 0xFF00U);
   EXPECT_POISONED(z & 0xFF0000U);
   EXPECT_POISONED(z & 0xFF000000U);
-  EXPECT_EQ(0xAB00, z & 0xFF00U);
+  EXPECT_EQ(0xAB00U, z & 0xFF00U);
 }
 
 TEST(MemorySanitizerStress, DISABLED_MallocStackTrace) {
