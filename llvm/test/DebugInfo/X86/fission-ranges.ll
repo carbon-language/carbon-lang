@@ -2,6 +2,15 @@
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 ; RUN: llvm-objdump -h %t | FileCheck --check-prefix=HDR %s
 
+; CHECK: .debug_info contents:
+; CHECK: DW_TAG_compile_unit
+; CHECK-NEXT: DW_AT_stmt_list
+; CHECK-NEXT: DW_AT_GNU_dwo_name
+; CHECK-NEXT: DW_AT_comp_dir
+; CHECK-NEXT: DW_AT_GNU_dwo_id
+; CHECK-NEXT: DW_AT_GNU_addr_base [DW_FORM_sec_offset]                   (0x00000000)
+
+
 ; CHECK: .debug_info.dwo contents:
 ; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[A:0x[0-9a-z]*]])
 ; CHECK: DW_AT_location [DW_FORM_sec_offset]   ([[E:0x[0-9a-z]*]])

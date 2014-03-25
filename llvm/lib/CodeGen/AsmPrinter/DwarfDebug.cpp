@@ -956,6 +956,17 @@ void DwarfDebug::finalizeModuleInfo() {
                       dwarf::DW_FORM_data8, ID);
         SkCU->addUInt(SkCU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
                       dwarf::DW_FORM_data8, ID);
+
+        // We don't keep track of which addresses are used in which CU so this
+        // is a bit pessimistic under LTO.
+        if (!InfoHolder.getAddrPool()->empty())
+          addSectionLabel(Asm, SkCU, SkCU->getUnitDie(),
+                          dwarf::DW_AT_GNU_addr_base, DwarfAddrSectionSym,
+                          DwarfAddrSectionSym);
+        if (!TheU->getRangeLists().empty())
+          addSectionLabel(Asm, SkCU, SkCU->getUnitDie(),
+                          dwarf::DW_AT_GNU_ranges_base,
+                          DwarfDebugRangeSectionSym, DwarfDebugRangeSectionSym);
       }
 
       // If we have code split among multiple sections or non-contiguous
@@ -2659,19 +2670,6 @@ DwarfCompileUnit *DwarfDebug::constructSkeletonCU(const DwarfCompileUnit *CU) {
   NewCU->initStmtList(DwarfLineSectionSym);
 
   initSkeletonUnit(CU, Die, NewCU);
-
-  // Relocate to the beginning of the addr_base section, else 0 for the
-  // beginning of the one for this compile unit.
-  // We could shave off some space if we deferred adding these attributes until
-  // the end of the CU to see if we have a non-empty debug_addr and debug_ranges
-  // sections so we don't bother with extra attributes and relocations.
-  if (Asm->MAI->doesDwarfUseRelocationsAcrossSections()) {
-    NewCU->addSectionLabel(Die, dwarf::DW_AT_GNU_addr_base, DwarfAddrSectionSym);
-    NewCU->addSectionLabel(Die, dwarf::DW_AT_GNU_ranges_base, DwarfDebugRangeSectionSym);
-  } else {
-    NewCU->addSectionOffset(Die, dwarf::DW_AT_GNU_addr_base, 0);
-    NewCU->addSectionOffset(Die, dwarf::DW_AT_GNU_ranges_base, 0);
-  }
 
   return NewCU;
 }

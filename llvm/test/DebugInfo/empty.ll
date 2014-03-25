@@ -1,6 +1,7 @@
 ; REQUIRES: object-emission
 
 ; RUN: %llc_dwarf < %s -filetype=obj | llvm-dwarfdump - | FileCheck %s
+; RUN: %llc_dwarf -split-dwarf=Enable < %s -filetype=obj | llvm-dwarfdump - | FileCheck --check-prefix=FISSION %s
 
 ; darwin has a workaround for a linker bug so it always emits one line table entry
 ; XFAIL: darwin
@@ -16,6 +17,9 @@
 
 ; CHECK: .debug_pubtypes contents:
 ; CHECK-NOT: Offset
+
+; Don't emit DW_AT_addr_base when there are no addresses.
+; FISSION-NOT: DW_AT_GNU_addr_base [DW_FORM_sec_offset]
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!5}
