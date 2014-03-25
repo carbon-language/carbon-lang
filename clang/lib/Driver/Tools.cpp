@@ -7364,6 +7364,11 @@ Command *visualstudio::Compile::GetCommand(Compilation &C, const JobAction &JA,
   if (Arg *A = Args.getLastArg(options::OPT_frtti, options::OPT_fno_rtti))
     CmdArgs.push_back(A->getOption().getID() == options::OPT_frtti ? "/GR"
                                                                    : "/GR-");
+  if (Arg *A = Args.getLastArg(options::OPT_ffunction_sections,
+                               options::OPT_fno_function_sections))
+    CmdArgs.push_back(A->getOption().getID() == options::OPT_ffunction_sections
+                          ? "/Gy"
+                          : "/Gy-");
   if (Args.hasArg(options::OPT_fsyntax_only))
     CmdArgs.push_back("/Zs");
   if (Args.hasArg(options::OPT_g_Flag, options::OPT_gline_tables_only))
