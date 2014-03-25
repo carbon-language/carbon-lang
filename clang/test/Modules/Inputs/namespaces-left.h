@@ -2,6 +2,11 @@ namespace RedeclAcrossImport {
   enum E { e };
 }
 
+namespace AddAndReexportBeforeImport {
+  struct S {};
+  extern struct S t;
+}
+
 @import namespaces_top;
 
 namespace RedeclAcrossImport {

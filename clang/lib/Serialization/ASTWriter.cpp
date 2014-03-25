@@ -17,6 +17,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclContextInternals.h"
 #include "clang/AST/DeclFriend.h"
+#include "clang/AST/DeclLookups.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
@@ -3400,6 +3401,78 @@ public:
 };
 } // end anonymous namespace
 
+uint32_t
+ASTWriter::GenerateNameLookupTable(const DeclContext *DC,
+                                   llvm::SmallVectorImpl<char> &LookupTable) {
+  assert(!DC->LookupPtr.getInt() && "must call buildLookups first");
+  assert(DC == DC->getPrimaryContext() && "only primary DC has lookup table");
+
+  OnDiskChainedHashTableGenerator<ASTDeclContextNameLookupTrait> Generator;
+  ASTDeclContextNameLookupTrait Trait(*this);
+
+  // Create the on-disk hash table representation.
+  DeclarationName ConversionName;
+  SmallVector<NamedDecl *, 4> ConversionDecls;
+
+  auto AddLookupResult = [&](DeclarationName Name,
+                             DeclContext::lookup_result Result) {
+    if (Result.empty())
+      return;
+
+    if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
+      // Hash all conversion function names to the same name. The actual
+      // type information in conversion function name is not used in the
+      // key (since such type information is not stable across different
+      // modules), so the intended effect is to coalesce all of the conversion
+      // functions under a single key.
+      if (!ConversionName)
+        ConversionName = Name;
+      ConversionDecls.append(Result.begin(), Result.end());
+      return;
+    }
+
+    Generator.insert(Name, Result, Trait);
+  };
+
+  SmallVector<DeclarationName, 16> ExternalNames;
+  for (auto &Lookup : *DC->getLookupPtr()) {
+    if (Lookup.second.hasExternalDecls() ||
+        DC->NeedToReconcileExternalVisibleStorage) {
+      // We don't know for sure what declarations are found by this name,
+      // because the external source might have a different set from the set
+      // that are in the lookup map, and we can't update it now without
+      // risking invalidating our lookup iterator. So add it to a queue to
+      // deal with later.
+      ExternalNames.push_back(Lookup.first);
+      continue;
+    }
+
+    AddLookupResult(Lookup.first, Lookup.second.getLookupResult());
+  }
+
+  // Add the names we needed to defer. Note, this shouldn't add any new decls
+  // to the list we need to serialize: any new declarations we find here should
+  // be imported from an external source.
+  // FIXME: What if the external source isn't an ASTReader?
+  for (const auto &Name : ExternalNames)
+    // FIXME: const_cast since OnDiskHashTable wants a non-const lookup result.
+    AddLookupResult(Name, const_cast<DeclContext*>(DC)->lookup(Name));
+
+  // Add the conversion functions
+  if (!ConversionDecls.empty()) {
+    Generator.insert(ConversionName,
+                     DeclContext::lookup_result(ConversionDecls.begin(),
+                                                ConversionDecls.end()),
+                     Trait);
+  }
+
+  // Create the on-disk hash table in a buffer.
+  llvm::raw_svector_ostream Out(LookupTable);
+  // Make sure that no bucket is at offset 0
+  clang::io::Emit32(Out, 0);
+  return Generator.Emit(Out, Trait);
+}
+
 /// \brief Write the block containing all of the declaration IDs
 /// visible from the given DeclContext.
 ///
@@ -3430,50 +3503,9 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   if (!Map || Map->empty())
     return 0;
 
-  OnDiskChainedHashTableGenerator<ASTDeclContextNameLookupTrait> Generator;
-  ASTDeclContextNameLookupTrait Trait(*this);
-
-  // Create the on-disk hash table representation.
-  DeclarationName ConversionName;
-  SmallVector<NamedDecl *, 4> ConversionDecls;
-  for (StoredDeclsMap::iterator D = Map->begin(), DEnd = Map->end();
-       D != DEnd; ++D) {
-    DeclarationName Name = D->first;
-    DeclContext::lookup_result Result = D->second.getLookupResult();
-    if (!Result.empty()) {
-      if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
-        // Hash all conversion function names to the same name. The actual
-        // type information in conversion function name is not used in the
-        // key (since such type information is not stable across different
-        // modules), so the intended effect is to coalesce all of the conversion
-        // functions under a single key.
-        if (!ConversionName)
-          ConversionName = Name;
-        ConversionDecls.append(Result.begin(), Result.end());
-        continue;
-      }
-      
-      Generator.insert(Name, Result, Trait);
-    }
-  }
-
-  // Add the conversion functions
-  if (!ConversionDecls.empty()) {
-    Generator.insert(ConversionName, 
-                     DeclContext::lookup_result(ConversionDecls.begin(),
-                                                ConversionDecls.end()),
-                     Trait);
-  }
-  
   // Create the on-disk hash table in a buffer.
   SmallString<4096> LookupTable;
-  uint32_t BucketOffset;
-  {
-    llvm::raw_svector_ostream Out(LookupTable);
-    // Make sure that no bucket is at offset 0
-    clang::io::Emit32(Out, 0);
-    BucketOffset = Generator.Emit(Out, Trait);
-  }
+  uint32_t BucketOffset = GenerateNameLookupTable(DC, LookupTable);
 
   // Write the lookup table
   RecordData Record;
@@ -3494,33 +3526,13 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
 /// (in C++), for namespaces, and for classes with forward-declared unscoped
 /// enumeration members (in C++11).
 void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
-  StoredDeclsMap *Map = static_cast<StoredDeclsMap*>(DC->getLookupPtr());
+  StoredDeclsMap *Map = DC->getLookupPtr();
   if (!Map || Map->empty())
     return;
 
-  OnDiskChainedHashTableGenerator<ASTDeclContextNameLookupTrait> Generator;
-  ASTDeclContextNameLookupTrait Trait(*this);
-
-  // Create the hash table.
-  for (StoredDeclsMap::iterator D = Map->begin(), DEnd = Map->end();
-       D != DEnd; ++D) {
-    DeclarationName Name = D->first;
-    DeclContext::lookup_result Result = D->second.getLookupResult();
-    // For any name that appears in this table, the results are complete, i.e.
-    // they overwrite results from previous PCHs. Merging is always a mess.
-    if (!Result.empty())
-      Generator.insert(Name, Result, Trait);
-  }
-
   // Create the on-disk hash table in a buffer.
   SmallString<4096> LookupTable;
-  uint32_t BucketOffset;
-  {
-    llvm::raw_svector_ostream Out(LookupTable);
-    // Make sure that no bucket is at offset 0
-    clang::io::Emit32(Out, 0);
-    BucketOffset = Generator.Emit(Out, Trait);
-  }
+  uint32_t BucketOffset = GenerateNameLookupTable(DC, LookupTable);
 
   // Write the lookup table
   RecordData Record;

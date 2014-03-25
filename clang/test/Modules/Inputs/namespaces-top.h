@@ -17,3 +17,7 @@ namespace N13 {
   int f(int);
   void (*p)() = &f;
 }
+
+namespace AddAndReexportBeforeImport {
+  int S;
+}

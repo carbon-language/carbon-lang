@@ -36,6 +36,9 @@ void test() {
   double &dr3 = global(1.0);
   double &dr4 = ::global2(1.0);
   double &dr5 = LookupBeforeImport::f(1.0);
+
+  struct AddAndReexportBeforeImport::S s;
+  int k = AddAndReexportBeforeImport::S;
 }
 
 // Test namespaces merged without a common first declaration.
