@@ -6576,6 +6576,25 @@ LowerVECTOR_SHUFFLEv8i16(SDValue Op, const X86Subtarget *Subtarget,
   return NewV;
 }
 
+/// \brief v16i16 shuffles
+///
+/// FIXME: We only support generation of a single pshufb currently.  We can
+/// generalize the other applicable cases from LowerVECTOR_SHUFFLEv8i16 as
+/// well (e.g 2 x pshufb + 1 x por).
+static SDValue
+LowerVECTOR_SHUFFLEv16i16(SDValue Op, SelectionDAG &DAG) {
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  SDValue V1 = SVOp->getOperand(0);
+  SDValue V2 = SVOp->getOperand(1);
+  SDLoc dl(SVOp);
+
+  if (V2.getOpcode() != ISD::UNDEF)
+    return SDValue();
+
+  SmallVector<int, 16> MaskVals(SVOp->getMask().begin(), SVOp->getMask().end());
+  return getPSHUFB(MaskVals, V1, dl, DAG);
+}
+
 // v16i8 shuffles - Prefer shuffles in the following order:
 // 1. [ssse3] 1 x pshufb
 // 2. [ssse3] 2 x pshufb + 1 x por
@@ -7631,6 +7650,12 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // Handle v8i16 specifically since SSE can do byte extraction and insertion.
   if (VT == MVT::v8i16) {
     SDValue NewOp = LowerVECTOR_SHUFFLEv8i16(Op, Subtarget, DAG);
+    if (NewOp.getNode())
+      return NewOp;
+  }
+
+  if (VT == MVT::v16i16 && Subtarget->hasInt256()) {
+    SDValue NewOp = LowerVECTOR_SHUFFLEv16i16(Op, DAG);
     if (NewOp.getNode())
       return NewOp;
   }
