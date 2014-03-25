@@ -985,8 +985,13 @@ bool MipsAsmParser::MatchAndEmitInstruction(
 int MipsAsmParser::matchCPURegisterName(StringRef Name) {
   int CC;
 
-  if (Name == "at")
-    return getATReg();
+  if (Name == "at") {
+    // If noat is set then the at register is 0, otherwise it's defined as a
+    // specific register.  Warn if the assembler is free to use it.
+    if (Options.getATRegNum() != 0)
+      Warning(getLexer().getLoc(), "Used $at without \".set noat\"");
+    return 1;
+  }
 
   CC = StringSwitch<unsigned>(Name)
            .Case("zero", 0)
@@ -1038,6 +1043,10 @@ int MipsAsmParser::matchCPURegisterName(StringRef Name) {
              .Case("kt1", 27)
              .Case("s8", 30)
              .Default(-1);
+
+  if ((CC != 0) && ((int)Options.getATRegNum() == CC))
+      Warning(getLexer().getLoc(), Twine("Used $") + Name + " with \".set at=$"
+          + Name + "\"");
 
   return CC;
 }

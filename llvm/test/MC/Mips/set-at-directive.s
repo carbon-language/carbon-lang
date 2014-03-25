@@ -2,7 +2,7 @@
 # RUN: FileCheck %s
 # Check that the assembler can handle the documented syntax
 # for ".set at" and set the correct value.
-
+# XFAIL:
     .text
 foo:
 # CHECK:   jr    $1                      # encoding: [0x08,0x00,0x20,0x00]
