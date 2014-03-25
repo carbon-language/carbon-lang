@@ -798,8 +798,9 @@ unsigned X86TTI::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
   switch (Opcode) {
   default: return TCC_Free;
   case Instruction::GetElementPtr:
-    if (Idx != 0)
-      return TCC_Free;
+    if (Idx == 0)
+      return 2 * TCC_Basic;
+    return TCC_Free;
   case Instruction::Store:
     ImmIdx = 0;
     break;
