@@ -844,6 +844,7 @@ void RuntimeDyldELF::resolveRelocation(const SectionEntry &Section,
                          (uint32_t)(Addend & 0xffffffffL));
     break;
   case Triple::aarch64:
+  case Triple::aarch64_be:
     resolveAArch64Relocation(Section, Offset, Value, Type, Addend);
     break;
   case Triple::arm: // Fall through.
