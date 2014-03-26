@@ -105,6 +105,10 @@ void MipsTargetAsmStreamer::emitDirectiveSetMips32R2() {
   OS << "\t.set\tmips32r2\n";
 }
 
+void MipsTargetAsmStreamer::emitDirectiveSetMips64() {
+  OS << "\t.set\tmips64\n";
+}
+
 void MipsTargetAsmStreamer::emitDirectiveSetMips64R2() {
   OS << "\t.set\tmips64r2\n";
 }
@@ -356,6 +360,10 @@ void MipsTargetELFStreamer::emitFMask(unsigned FPUBitmask,
 }
 
 void MipsTargetELFStreamer::emitDirectiveSetMips32R2() {
+  // No action required for ELF output.
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetMips64() {
   // No action required for ELF output.
 }
 

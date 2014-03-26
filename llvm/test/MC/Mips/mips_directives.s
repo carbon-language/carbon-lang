@@ -65,6 +65,11 @@ $BB0_4:
     luxc1   $f0, $6($5)
     lwxc1   $f6, $2($5)
 
+# CHECK: .set mips64
+# CHECK: dadd $3, $3, $3
+    .set mips64
+    dadd   $3, $3, $3                  # encoding: [0x00,0x62,0x18,0x2c]
+
 # CHECK: .set mips64r2
 # CHECK: drotr $9, $6, 30              # encoding: [0x00,0x26,0x4f,0xba]
     .set mips64r2

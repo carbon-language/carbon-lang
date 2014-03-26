@@ -42,6 +42,7 @@ public:
   virtual void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff) = 0;
 
   virtual void emitDirectiveSetMips32R2() = 0;
+  virtual void emitDirectiveSetMips64() = 0;
   virtual void emitDirectiveSetMips64R2() = 0;
   virtual void emitDirectiveSetDsp() = 0;
 };
@@ -75,6 +76,7 @@ public:
   virtual void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff);
 
   virtual void emitDirectiveSetMips32R2();
+  virtual void emitDirectiveSetMips64();
   virtual void emitDirectiveSetMips64R2();
   virtual void emitDirectiveSetDsp();
 };
@@ -117,6 +119,7 @@ public:
   virtual void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff);
 
   virtual void emitDirectiveSetMips32R2();
+  virtual void emitDirectiveSetMips64();
   virtual void emitDirectiveSetMips64R2();
   virtual void emitDirectiveSetDsp();
 };
