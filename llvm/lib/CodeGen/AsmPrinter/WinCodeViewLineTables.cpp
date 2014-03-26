@@ -131,9 +131,12 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   // For each function there is a separate subsection
   // which holds the PC to file:line table.
   const MCSymbol *Fn = Asm->getSymbol(GV);
-  const FunctionInfo &FI = FnDebugInfo[GV];
   assert(Fn);
-  assert(FI.Instrs.size() > 0);
+
+  const FunctionInfo &FI = FnDebugInfo[GV];
+  if (FI.Instrs.empty())
+    return;
+  assert(FI.End && "Don't know where the function ends?");
 
   // PCs/Instructions are grouped into segments sharing the same filename.
   // Pre-calculate the lengths (in instructions) of these segments and store
@@ -264,12 +267,6 @@ void WinCodeViewLineTables::beginFunction(const MachineFunction *MF) {
   if (!Asm || !Asm->MMI->hasDebugInfo())
     return;
 
-  // Grab the lexical scopes for the function, if we don't have any of those
-  // then we're not going to be able to do anything.
-  LScopes.initialize(*MF);
-  if (LScopes.empty())
-    return;
-
   const Function *GV = MF->getFunction();
   assert(FnDebugInfo.count(GV) == false);
   VisitedFunctions.push_back(GV);
@@ -311,13 +308,12 @@ void WinCodeViewLineTables::endFunction(const MachineFunction *) {
   if (!Asm || !CurFn)  // We haven't created any debug info for this function.
     return;
 
-  if (CurFn->Instrs.empty())
-    llvm_unreachable("Can this ever happen?");
-
-  // Define end label for subprogram.
-  MCSymbol *FunctionEndSym = Asm->OutStreamer.getContext().CreateTempSymbol();
-  Asm->OutStreamer.EmitLabel(FunctionEndSym);
-  CurFn->End = FunctionEndSym;
+  if (!CurFn->Instrs.empty()) {
+    // Define end label for subprogram.
+    MCSymbol *FunctionEndSym = Asm->OutStreamer.getContext().CreateTempSymbol();
+    Asm->OutStreamer.EmitLabel(FunctionEndSym);
+    CurFn->End = FunctionEndSym;
+  }
   CurFn = 0;
 }
 

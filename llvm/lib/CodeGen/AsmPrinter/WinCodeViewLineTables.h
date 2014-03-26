@@ -32,13 +32,13 @@ namespace llvm {
 class WinCodeViewLineTables : public AsmPrinterHandler {
   AsmPrinter *Asm;
   DebugLoc PrevInstLoc;
-  LexicalScopes LScopes;
 
   // For each function, store a vector of labels to its instructions, as well as
   // to the end of the function.
   struct FunctionInfo {
     SmallVector<MCSymbol *, 10> Instrs;
     MCSymbol *End;
+    FunctionInfo() : End(0) {}
   } *CurFn;
 
   typedef DenseMap<const Function *, FunctionInfo> FnDebugInfoTy;
