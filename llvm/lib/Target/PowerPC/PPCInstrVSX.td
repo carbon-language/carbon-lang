@@ -57,8 +57,7 @@ let Uses = [RM] in {
 
     def LXVW4X : XForm_1<31, 780,
                          (outs vsrc:$XT), (ins memrr:$src),
-                         "lxvw4x $XT, $src", IIC_LdStLFD,
-                         [(set v4f32:$XT, (load xoaddr:$src))]>;
+                         "lxvw4x $XT, $src", IIC_LdStLFD, []>;
   }
 
   // Store indexed instructions
@@ -75,8 +74,7 @@ let Uses = [RM] in {
 
     def STXVW4X : XX1Form<31, 908,
                          (outs), (ins vsrc:$XT, memrr:$dst),
-                         "stxvw4x $XT, $dst", IIC_LdStSTFD,
-                         [(store v4f32:$XT, xoaddr:$dst)]>;
+                         "stxvw4x $XT, $dst", IIC_LdStSTFD, []>;
   }
 
   // Add/Mul Instructions
