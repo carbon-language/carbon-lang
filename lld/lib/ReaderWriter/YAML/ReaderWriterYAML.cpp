@@ -71,6 +71,15 @@ public:
       if (!atom->name().empty())
         buildDuplicateNameMap(*atom);
 
+      if (atom->contentType() == DefinedAtom::typeGroupComdat) {
+        for (const lld::Reference *ref : *atom) {
+          if (ref->kindNamespace() != lld::Reference::KindNamespace::all)
+            continue;
+          if (ref->kindValue() == lld::Reference::kindGroupChild)
+            buildDuplicateNameMap(*ref->target());
+        }
+      }
+
       // Find references to unnamed atoms and create ref-names for them.
       for (const lld::Reference *ref : *atom) {
         // create refname for any unnamed reference target
@@ -176,16 +185,59 @@ public:
     NameToAtom::const_iterator pos = _nameMap.find(name);
     if (pos != _nameMap.end()) {
       return pos->second;
+    } else if ((pos = _groupChild.find(name)) != _groupChild.end()) {
+      return pos->second;
     } else {
       _io.setError(Twine("no such atom name: ") + name);
       return nullptr;
     }
   }
 
+  /// \brief Lookup a group parent when there is a reference of type
+  /// kindGroupParent. If there was no group-parent produce an appropriate
+  /// error.
+  const lld::Atom *lookupGroupParent(StringRef name) const {
+    NameToAtom::const_iterator pos = _groupMap.find(name);
+    if (pos != _groupMap.end())
+      return pos->second;
+    _io.setError(Twine("no such group name: ") + name);
+    return nullptr;
+  }
+
+  /// \brief Lookup a group child when there is a reference of type
+  /// kindGroupChild. If there was no group-child produce an appropriate
+  /// error.
+  const lld::Atom *lookupGroupChild(StringRef name) const {
+    NameToAtom::const_iterator pos = _groupChild.find(name);
+    if (pos != _groupChild.end())
+      return pos->second;
+    _io.setError(Twine("no such group child: ") + name);
+    return nullptr;
+  }
+
 private:
   typedef llvm::StringMap<const lld::Atom *> NameToAtom;
 
-  void add(StringRef name, const lld::Atom *atom) {
+  void add(StringRef name, const lld::Atom *atom, bool isGroupChild = false) {
+    if (isGroupChild) {
+      if (_groupChild.count(name)) {
+        _io.setError(Twine("duplicate group child: ") + name);
+      } else {
+        _groupChild[name] = atom;
+      }
+      return;
+    }
+
+    if (const lld::DefinedAtom *da = dyn_cast<DefinedAtom>(atom)) {
+      if (da->contentType() == DefinedAtom::typeGroupComdat) {
+        if (_groupMap.count(name)) {
+          _io.setError(Twine("duplicate group name: ") + name);
+        } else {
+          _groupMap[name] = atom;
+        }
+        return;
+      }
+    }
     if (_nameMap.count(name)) {
       _io.setError(Twine("duplicate atom name: ") + name);
     } else {
@@ -195,6 +247,8 @@ private:
 
   IO &_io;
   NameToAtom _nameMap;
+  NameToAtom _groupMap;
+  NameToAtom _groupChild;
 };
 
 // Used in NormalizedFile to hold the atoms lists.
@@ -422,6 +476,7 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
     io.enumCase(value, "ro-note",         DefinedAtom::typeRONote);
     io.enumCase(value, "rw-note",         DefinedAtom::typeRWNote);
     io.enumCase(value, "no-alloc",        DefinedAtom::typeNoAlloc);
+    io.enumCase(value, "group-comdat", DefinedAtom::typeGroupComdat);
   }
 };
 
@@ -761,7 +816,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
   public:
     NormalizedAtom(IO &io)
         : _file(fileFromContext(io)), _name(), _refName(), _contentType(),
-          _alignment(0), _content(), _references() {
+          _alignment(0), _content(), _references(), _isGroupChild(false) {
       static uint32_t ordinalCounter = 1;
       _ordinal = ordinalCounter++;
     }
@@ -774,8 +829,15 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
           _deadStrip(atom->deadStrip()), _dynamicExport(atom->dynamicExport()),
           _permissions(atom->permissions()), _size(atom->size()),
           _sectionName(atom->customSectionName()) {
-      for (const lld::Reference *r : *atom)
+      for (const lld::Reference *r : *atom) {
+        // If this is not a group child as yet, lets keep looking
+        // at all the references.
+        if (!_isGroupChild &&
+            r->kindNamespace() == lld::Reference::KindNamespace::all &&
+            r->kindValue() == lld::Reference::kindGroupParent)
+          _isGroupChild = true;
         _references.push_back(r);
+      }
       if (!atom->occupiesDiskSpace())
         return;
       ArrayRef<uint8_t> cont = atom->rawContent();
@@ -824,6 +886,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     DynamicExport dynamicExport() const override { return _dynamicExport; }
     ContentPermissions permissions() const override { return _permissions; }
     bool isAlias() const override { return false; }
+    bool isGroupChild() const { return _isGroupChild; }
     ArrayRef<uint8_t> rawContent() const override {
       if (!occupiesDiskSpace())
         return ArrayRef<uint8_t>();
@@ -872,6 +935,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     uint64_t                            _size;
     StringRef                           _sectionName;
     std::vector<const lld::Reference *> _references;
+    bool _isGroupChild;
   };
 
   static void mapping(IO &io, const lld::DefinedAtom *&atom) {
@@ -917,6 +981,16 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
                                          DefinedAtom::permissions(
                                                           keys->_contentType));
     io.mapOptional("references",       keys->_references);
+    for (const lld::Reference *r : keys->_references) {
+      // If this is not a group child as yet, lets keep looking
+      // at all the references.
+      if (!keys->_isGroupChild &&
+          r->kindNamespace() == lld::Reference::KindNamespace::all &&
+          r->kindValue() == lld::Reference::kindGroupParent) {
+        keys->_isGroupChild = true;
+        break;
+      }
+    }
   }
 };
 
@@ -1121,9 +1195,9 @@ RefNameResolver::RefNameResolver(const lld::File *file, IO &io) : _io(io) {
   for (const lld::DefinedAtom *a : file->defined()) {
     NormalizedAtom *na = (NormalizedAtom *)a;
     if (!na->_refName.empty())
-      add(na->_refName, a);
+      add(na->_refName, a, na->isGroupChild());
     else if (!na->_name.empty())
-      add(na->_name, a);
+      add(na->_name, a, na->isGroupChild());
   }
 
   for (const lld::UndefinedAtom *a : file->undefined())
@@ -1153,6 +1227,14 @@ MappingTraits<const lld::File *>::NormalizedFile::denormalize(IO &io) {
     NormalizedAtom *normAtom = (NormalizedAtom *)a;
     normAtom->bind(nameResolver);
   }
+
+  _definedAtoms._atoms.erase(std::remove_if(_definedAtoms._atoms.begin(),
+                                            _definedAtoms._atoms.end(),
+                                            [](const DefinedAtom *a) {
+                               return ((NormalizedAtom *)a)->isGroupChild();
+                             }),
+                             _definedAtoms._atoms.end());
+
   return this;
 }
 
@@ -1168,6 +1250,16 @@ inline void MappingTraits<const lld::DefinedAtom *>::NormalizedAtom::bind(
 
 inline void MappingTraits<const lld::Reference *>::NormalizedReference::bind(
     const RefNameResolver &resolver) {
+  if (_mappedKind.ns == lld::Reference::KindNamespace::all) {
+    if (_mappedKind.value == lld::Reference::kindGroupParent) {
+      _target = resolver.lookupGroupParent(_targetName);
+      return;
+    }
+    if (_mappedKind.value == lld::Reference::kindGroupChild) {
+      _target = resolver.lookupGroupChild(_targetName);
+      return;
+    }
+  }
   _target = resolver.lookup(_targetName);
 }
 

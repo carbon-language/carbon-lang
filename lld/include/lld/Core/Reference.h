@@ -76,9 +76,11 @@ public:
 
   /// KindValues used with KindNamespace::all and KindArch::all.
   enum {
-    kindInGroup      = 1,
-    kindLayoutAfter  = 2,
-    kindLayoutBefore = 3
+    kindInGroup = 1,
+    kindLayoutAfter = 2,
+    kindLayoutBefore = 3,
+    kindGroupChild = 4,
+    kindGroupParent = 5
   };
 
   // A value to be added to the value of a target

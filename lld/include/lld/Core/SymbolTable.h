@@ -72,6 +72,13 @@ public:
   /// @brief if atom has been coalesced away, return replacement, else return atom
   const Atom *replacement(const Atom *);
 
+  /// @brief Find a group atom.
+  const Atom *findGroup(StringRef name);
+
+  /// @brief Add a group atom and returns true/false depending on whether the
+  /// previously existed.
+  bool addGroup(const DefinedAtom &da);
+
 private:
   typedef llvm::DenseMap<const Atom *, const Atom *> AtomToAtom;
 
@@ -101,6 +108,7 @@ private:
   const LinkingContext &_context;
   AtomToAtom _replacedAtoms;
   NameToAtom _nameTable;
+  NameToAtom _groupTable;
   AtomContentSet _contentTable;
 };
 

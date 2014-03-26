@@ -54,11 +54,12 @@ Registry::parseFile(std::unique_ptr<MemoryBuffer> &mb,
 }
 
 static const Registry::KindStrings kindStrings[] = {
-  { Reference::kindInGroup,      "in-group" },
-  { Reference::kindLayoutAfter,  "layout-after" },
-  { Reference::kindLayoutBefore, "layout-before" },
-  LLD_KIND_STRING_END
-};
+    {Reference::kindInGroup, "in-group"},
+    {Reference::kindLayoutAfter, "layout-after"},
+    {Reference::kindLayoutBefore, "layout-before"},
+    {Reference::kindGroupChild, "group-child"},
+    {Reference::kindGroupParent, "group-parent"},
+    LLD_KIND_STRING_END};
 
 Registry::Registry() {
   addKindTable(Reference::KindNamespace::all, Reference::KindArch::all,

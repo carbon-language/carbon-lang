@@ -183,6 +183,25 @@ void Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
   _symbolTable.add(atom);
 }
 
+/// \brief Add the section group and the group-child reference members.
+void Resolver::maybeAddSectionGroup(const DefinedAtom &atom) {
+  // First time adding a group ?
+  bool isFirstTime = _symbolTable.addGroup(atom);
+  if (!isFirstTime)
+    return;
+
+  for (const Reference *r : atom) {
+    if ((r->kindNamespace() == lld::Reference::KindNamespace::all) &&
+        (r->kindValue() == lld::Reference::kindGroupChild)) {
+      const DefinedAtom *target = llvm::dyn_cast<DefinedAtom>(r->target());
+      assert(target && "Internal Error: kindGroupChild references need to "
+                       "be associated with Defined Atoms only");
+      _atoms.push_back(target);
+      _symbolTable.add(*target);
+    }
+  }
+}
+
 // called on each atom when a file is added
 void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   DEBUG_WITH_TYPE("resolver", llvm::dbgs()
@@ -210,8 +229,10 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   // add to list of known atoms
   _atoms.push_back(&atom);
 
-  // tell symbol table
-  _symbolTable.add(atom);
+  if (atom.contentType() == DefinedAtom::typeGroupComdat)
+    maybeAddSectionGroup(atom);
+  else
+    _symbolTable.add(atom);
 
   if (_context.deadStrip()) {
     // add to set of dead-strip-roots, all symbols that

@@ -67,6 +67,9 @@ public:
 private:
   typedef std::function<void(StringRef, bool)> UndefCallback;
 
+  /// \brief Add section group if it does not exist previously.
+  void maybeAddSectionGroup(const DefinedAtom &atom);
+
   /// \brief The main function that iterates over the files to resolve
   bool resolveUndefines();
   void updateReferences();

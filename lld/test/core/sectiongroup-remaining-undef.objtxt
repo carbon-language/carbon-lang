@@ -1,0 +1,113 @@
+# RUN: lld -core %s | FileCheck %s
+
+#
+# Test that section groups are parsed and the first group selected for symbol
+# resolution. The second file which has the same group has a unresolved
+# undefined symbol. lets make sure that the symbol is kept around in the final
+# link and remains undefined.
+#
+
+---
+defined-atoms:
+  - name:            f1
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            f2
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            g1
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            d1
+    scope:           global
+    type:            data
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            g1
+    scope:           global
+    type:            group-comdat
+    references:
+      - kind:            group-child
+        target:          f1
+      - kind:            group-child
+        target:          f2
+      - kind:            group-child
+        target:          g1
+      - kind:            group-child
+        target:          d1
+---
+defined-atoms:
+  - name:            anotherfunction
+    scope:           global
+    type:            data
+    references:
+      - kind:            layout-before
+        target:          f3
+  - name:            f1
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            f2
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            f3
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            g1
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            d1
+    scope:           global
+    type:            data
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            g1
+    scope:           global
+    type:            group-comdat
+    references:
+      - kind:            group-child
+        target:          f1
+      - kind:            group-child
+        target:          f2
+      - kind:            group-child
+        target:          f3
+      - kind:            group-child
+        target:          g1
+      - kind:            group-child
+        target:          d1
+undefined-atoms:
+    - name:              f3
+      can-be-null:       never
+...
+
+#CHECK:   - name:            anotherfunction
+#CHECK:     scope:           global
+#CHECK:     type:            data
+#CHECK:     references:
+#CHECK:       - kind:            layout-before
+#CHECK:         offset:          0
+#CHECK:         target:          f3
+#CHECK: undefined-atoms:
+#CHECK:   - name:            f3

@@ -32,17 +32,11 @@
 namespace lld {
 SymbolTable::SymbolTable(const LinkingContext &context) : _context(context) {}
 
-void SymbolTable::add(const UndefinedAtom &atom) {
-  this->addByName(atom);
-}
+void SymbolTable::add(const UndefinedAtom &atom) { addByName(atom); }
 
-void SymbolTable::add(const SharedLibraryAtom &atom) {
-  this->addByName(atom);
-}
+void SymbolTable::add(const SharedLibraryAtom &atom) { addByName(atom); }
 
-void SymbolTable::add(const AbsoluteAtom &atom) {
-  this->addByName(atom);
-}
+void SymbolTable::add(const AbsoluteAtom &atom) { addByName(atom); }
 
 void SymbolTable::add(const DefinedAtom &atom) {
   if (!atom.name().empty() &&
@@ -50,14 +44,33 @@ void SymbolTable::add(const DefinedAtom &atom) {
     // Named atoms cannot be merged by content.
     assert(atom.merge() != DefinedAtom::mergeByContent);
     // Track named atoms that are not scoped to file (static).
-    this->addByName(atom);
+    addByName(atom);
     return;
   }
   if (atom.merge() == DefinedAtom::mergeByContent) {
     // Named atoms cannot be merged by content.
     assert(atom.name().empty());
-    this->addByContent(atom);
+    addByContent(atom);
   }
+}
+
+const Atom *SymbolTable::findGroup(StringRef sym) {
+  NameToAtom::iterator pos = _groupTable.find(sym);
+  if (pos == _groupTable.end())
+    return nullptr;
+  return pos->second;
+}
+
+bool SymbolTable::addGroup(const DefinedAtom &da) {
+  StringRef name = da.name();
+  assert(!name.empty());
+  const Atom *existing = findGroup(name);
+  if (existing == nullptr) {
+    _groupTable[name] = &da;
+    return true;
+  }
+  _replacedAtoms[&da] = existing;
+  return false;
 }
 
 enum NameCollisionResolution {
@@ -149,7 +162,7 @@ static uint64_t sectionSize(const DefinedAtom *atom) {
 void SymbolTable::addByName(const Atom &newAtom) {
   StringRef name = newAtom.name();
   assert(!name.empty());
-  const Atom *existing = this->findByName(name);
+  const Atom *existing = findByName(name);
   if (existing == nullptr) {
     // Name is not in symbol table yet, add it associate with this atom.
     _nameTable[name] = &newAtom;
@@ -351,7 +364,7 @@ const Atom *SymbolTable::findByName(StringRef sym) {
 }
 
 bool SymbolTable::isDefined(StringRef sym) {
-  const Atom *atom = this->findByName(sym);
+  const Atom *atom = findByName(sym);
   if (atom == nullptr)
     return false;
   return atom->definition() != Atom::definitionUndefined;
@@ -367,7 +380,7 @@ const Atom *SymbolTable::replacement(const Atom *atom) {
   if (pos == _replacedAtoms.end())
     return atom;
   // might be chain, recurse to end
-  return this->replacement(pos->second);
+  return replacement(pos->second);
 }
 
 unsigned int SymbolTable::size() {

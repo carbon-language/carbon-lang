@@ -38,6 +38,22 @@ public:
     // visit all atoms
     for ( const DefinedAtom *defAtom : file.defined() ) {
       this->addIVarsForDefinedAtom(*defAtom);
+      // We are trying to process all atoms, but the defined() iterator does not
+      // return group children. So, when a group parent is found, we need to
+      // handle each child atom.
+      if (defAtom->contentType() == DefinedAtom::typeGroupComdat) {
+        for (const Reference *r : *defAtom) {
+          if (r->kindNamespace() != lld::Reference::KindNamespace::all)
+            continue;
+          if (r->kindValue() == lld::Reference::kindGroupChild) {
+            const DefinedAtom *target =
+                llvm::dyn_cast<DefinedAtom>(r->target());
+            assert(target && "Internal Error: kindGroupChild references need "
+                             "to be associated with Defined Atoms only");
+            this->addIVarsForDefinedAtom(*target);
+          }
+        }
+      }
     }
     for ( const UndefinedAtom *undefAtom : file.undefined() ) {
       this->addIVarsForUndefinedAtom(*undefAtom);
