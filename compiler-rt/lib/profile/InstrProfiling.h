@@ -18,6 +18,7 @@
 #define PRIu64 "llu"
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
+typedef uint32_t uintptr_t;
 
 #else /* defined(__FreeBSD__) && defined(__i386__) */
 
