@@ -47,3 +47,13 @@
 # CHECK-NEXT:    :{{[0-9]+}}:{{[0-9]+}}: error: unexpected token in .option pic0 directive
 # CHECK-NEXT:    .option pic0 pic2
 # CHECK-NEXT:                 ^
+
+    .option pic2,
+# CHECK-NEXT:    :{{[0-9]+}}:{{[0-9]+}}: error: unexpected token in .option pic2 directive
+# CHECK-NEXT:    .option pic2,
+# CHECK-NEXT:                ^
+
+    .option pic2 pic3
+# CHECK-NEXT:    :{{[0-9]+}}:{{[0-9]+}}: error: unexpected token in .option pic2 directive
+# CHECK-NEXT:    .option pic2 pic3
+# CHECK-NEXT:                 ^

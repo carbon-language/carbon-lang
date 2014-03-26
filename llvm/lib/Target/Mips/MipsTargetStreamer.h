@@ -35,6 +35,7 @@ public:
   virtual void emitDirectiveEnt(const MCSymbol &Symbol) = 0;
   virtual void emitDirectiveAbiCalls() = 0;
   virtual void emitDirectiveOptionPic0() = 0;
+  virtual void emitDirectiveOptionPic2() = 0;
   virtual void emitFrame(unsigned StackReg, unsigned StackSize,
                          unsigned ReturnReg) = 0;
   virtual void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff) = 0;
@@ -66,6 +67,7 @@ public:
   virtual void emitDirectiveEnt(const MCSymbol &Symbol);
   virtual void emitDirectiveAbiCalls();
   virtual void emitDirectiveOptionPic0();
+  virtual void emitDirectiveOptionPic2();
   virtual void emitFrame(unsigned StackReg, unsigned StackSize,
                          unsigned ReturnReg);
   virtual void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff);
@@ -79,6 +81,7 @@ public:
 class MipsTargetELFStreamer : public MipsTargetStreamer {
   bool MicroMipsEnabled;
   const MCSubtargetInfo &STI;
+  bool Pic;
 
 public:
   bool isMicroMipsEnabled() const { return MicroMipsEnabled; }
@@ -105,6 +108,7 @@ public:
   virtual void emitDirectiveEnt(const MCSymbol &Symbol);
   virtual void emitDirectiveAbiCalls();
   virtual void emitDirectiveOptionPic0();
+  virtual void emitDirectiveOptionPic2();
   virtual void emitFrame(unsigned StackReg, unsigned StackSize,
                          unsigned ReturnReg);
   virtual void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff);

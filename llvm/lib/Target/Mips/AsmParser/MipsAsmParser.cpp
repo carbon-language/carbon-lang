@@ -2596,6 +2596,17 @@ bool MipsAsmParser::parseDirectiveOption() {
     return false;
   }
 
+  if (Option == "pic2") {
+    getTargetStreamer().emitDirectiveOptionPic2();
+    Parser.Lex();
+    if (Parser.getTok().isNot(AsmToken::EndOfStatement)) {
+      Error(Parser.getTok().getLoc(),
+            "unexpected token in .option pic2 directive");
+      Parser.eatToEndOfStatement();
+    }
+    return false;
+  }
+
   // Unknown option.
   Warning(Parser.getTok().getLoc(), "unknown option in .option directive");
   Parser.eatToEndOfStatement();

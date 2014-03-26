@@ -89,6 +89,10 @@ void MipsTargetAsmStreamer::emitDirectiveOptionPic0() {
   OS << "\t.option\tpic0\n";
 }
 
+void MipsTargetAsmStreamer::emitDirectiveOptionPic2() {
+  OS << "\t.option\tpic2\n";
+}
+
 void MipsTargetAsmStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
                                       unsigned ReturnReg) {
   OS << "\t.frame\t$"
@@ -132,6 +136,9 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
   MCAssembler &MCA = getStreamer().getAssembler();
   uint64_t Features = STI.getFeatureBits();
   Triple T(STI.getTargetTriple());
+  Pic = (MCA.getContext().getObjectFileInfo()->getRelocM() ==  Reloc::PIC_)
+            ? true
+            : false;
 
   // Update e_header flags
   unsigned EFlags = 0;
@@ -311,7 +318,21 @@ void MipsTargetELFStreamer::emitDirectiveAbiCalls() {
 void MipsTargetELFStreamer::emitDirectiveOptionPic0() {
   MCAssembler &MCA = getStreamer().getAssembler();
   unsigned Flags = MCA.getELFHeaderEFlags();
+  // This option overrides other PIC options like -KPIC.
+  Pic = false;
   Flags &= ~ELF::EF_MIPS_PIC;
+  MCA.setELFHeaderEFlags(Flags);
+}
+
+void MipsTargetELFStreamer::emitDirectiveOptionPic2() {
+  MCAssembler &MCA = getStreamer().getAssembler();
+  unsigned Flags = MCA.getELFHeaderEFlags();
+  Pic = true;
+  // NOTE: We are following the GAS behaviour here which means the directive
+  // 'pic2' also sets the CPIC bit in the ELF header. This is different from
+  // what is stated in the SYSV ABI which consider the bits EF_MIPS_PIC and
+  // EF_MIPS_CPIC to be mutually exclusive.
+  Flags |= ELF::EF_MIPS_PIC | ELF::EF_MIPS_CPIC;
   MCA.setELFHeaderEFlags(Flags);
 }
 
