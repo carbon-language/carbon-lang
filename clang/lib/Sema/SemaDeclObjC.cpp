@@ -2402,11 +2402,15 @@ ObjCMethodDecl *Sema::LookupImplementedMethodInGlobalPool(Selector Sel) {
     return 0;
 
   GlobalMethods &Methods = Pos->second;
-
-  if (Methods.first.Method && Methods.first.Method->isDefined())
-    return Methods.first.Method;
-  if (Methods.second.Method && Methods.second.Method->isDefined())
-    return Methods.second.Method;
+  for (const ObjCMethodList *Method = &Methods.first; Method;
+       Method = Method->getNext())
+    if (Method->Method && Method->Method->isDefined())
+      return Method->Method;
+  
+  for (const ObjCMethodList *Method = &Methods.second; Method;
+       Method = Method->getNext())
+    if (Method->Method && Method->Method->isDefined())
+      return Method->Method;
   return 0;
 }
 
