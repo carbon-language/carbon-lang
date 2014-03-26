@@ -584,6 +584,11 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::STORE, MVT::v2i64, Promote);
       AddPromotedToType (ISD::STORE, MVT::v2i64, MVT::v2f64);
 
+      setOperationAction(ISD::SINT_TO_FP, MVT::v2i64, Legal);
+      setOperationAction(ISD::UINT_TO_FP, MVT::v2i64, Legal);
+      setOperationAction(ISD::FP_TO_SINT, MVT::v2i64, Legal);
+      setOperationAction(ISD::FP_TO_UINT, MVT::v2i64, Legal);
+
       addRegisterClass(MVT::v2i64, &PPC::VSRCRegClass);
     }
   }

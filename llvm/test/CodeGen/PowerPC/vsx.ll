@@ -332,3 +332,75 @@ define void @test31(<2 x i64>* %a, <2 x i64> %b) {
 ; CHECK: blr
 }
 
+define <2 x double> @test40(<2 x i64> %a) {
+  %v = uitofp <2 x i64> %a to <2 x double>
+  ret <2 x double> %v
+
+; CHECK-LABEL: @test40
+; CHECK: xvcvuxddp 34, 34
+; CHECK: blr
+}
+
+define <2 x double> @test41(<2 x i64> %a) {
+  %v = sitofp <2 x i64> %a to <2 x double>
+  ret <2 x double> %v
+
+; CHECK-LABEL: @test41
+; CHECK: xvcvsxddp 34, 34
+; CHECK: blr
+}
+
+define <2 x i64> @test42(<2 x double> %a) {
+  %v = fptoui <2 x double> %a to <2 x i64>
+  ret <2 x i64> %v
+
+; CHECK-LABEL: @test42
+; CHECK: xvcvdpuxds 34, 34
+; CHECK: blr
+}
+
+define <2 x i64> @test43(<2 x double> %a) {
+  %v = fptosi <2 x double> %a to <2 x i64>
+  ret <2 x i64> %v
+
+; CHECK-LABEL: @test43
+; CHECK: xvcvdpsxds 34, 34
+; CHECK: blr
+}
+
+define <2 x float> @test44(<2 x i64> %a) {
+  %v = uitofp <2 x i64> %a to <2 x float>
+  ret <2 x float> %v
+
+; CHECK-LABEL: @test44
+; FIXME: The code quality here looks pretty bad.
+; CHECK: blr
+}
+
+define <2 x float> @test45(<2 x i64> %a) {
+  %v = sitofp <2 x i64> %a to <2 x float>
+  ret <2 x float> %v
+
+; CHECK-LABEL: @test45
+; FIXME: The code quality here looks pretty bad.
+; CHECK: blr
+}
+
+define <2 x i64> @test46(<2 x float> %a) {
+  %v = fptoui <2 x float> %a to <2 x i64>
+  ret <2 x i64> %v
+
+; CHECK-LABEL: @test46
+; FIXME: The code quality here looks pretty bad.
+; CHECK: blr
+}
+
+define <2 x i64> @test47(<2 x float> %a) {
+  %v = fptosi <2 x float> %a to <2 x i64>
+  ret <2 x i64> %v
+
+; CHECK-LABEL: @test47
+; FIXME: The code quality here looks pretty bad.
+; CHECK: blr
+}
+
