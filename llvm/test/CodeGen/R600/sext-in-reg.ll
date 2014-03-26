@@ -86,6 +86,20 @@ define void @sext_in_reg_i16_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) noun
   ret void
 }
 
+; FUNC-LABEL: @sext_in_reg_i32_to_i64
+; SI: S_LOAD_DWORDX2
+; SI: S_ADD_I32
+; SI-NEXT: S_ADDC_U32
+; SI-NEXT: S_ASHR_I32 s{{[0-9]+}}, s{{[0-9]+}}, 31
+; SI: BUFFER_STORE_DWORDX2
+define void @sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
+  %c = add i64 %a, %b
+  %shl = shl i64 %c, 32
+  %ashr = ashr i64 %shl, 32
+  store i64 %ashr, i64 addrspace(1)* %out, align 8
+  ret void
+}
+
 ; This is broken on Evergreen for some reason related to the <1 x i64> kernel arguments.
 ; XFUNC-LABEL: @sext_in_reg_i8_to_v1i64
 ; XSI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 8

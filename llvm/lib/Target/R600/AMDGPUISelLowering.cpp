@@ -224,6 +224,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i16, Custom);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i16, Custom);
 
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i32, Custom);
+
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::Other, Custom);
 }
 
