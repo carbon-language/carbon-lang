@@ -1,9 +1,12 @@
 # RUN: llvm-mc %s -triple=mips64-unknown-freebsd -show-encoding | FileCheck %s
+# RUN: llvm-mc %s -triple=mips64-unknown-freebsd -show-encoding \
+# RUN:     -mattr=-n64,+n32 | FileCheck %s
 
-# Check that the register names are mapped to their correct numbers for n64
+# Check that the register names are mapped to their correct numbers for n32/n64
 # Second byte of addiu with $zero at rt contains the number of the source
 # register.
 
+.set noat
 daddiu	$zero, $zero, 0 # CHECK: encoding: [0x64,0x00,0x00,0x00]
 daddiu	$at, $zero, 0   # CHECK: encoding: [0x64,0x01,0x00,0x00]
 daddiu	$v0, $zero, 0   # CHECK: encoding: [0x64,0x02,0x00,0x00]

@@ -4,6 +4,7 @@
 # Second byte of addiu with $zero at rt contains the number of the source
 # register.
 
+.set noat
 addiu	$zero, $zero, 0 # CHECK: encoding: [0x24,0x00,0x00,0x00]
 addiu	$at, $zero, 0   # CHECK: encoding: [0x24,0x01,0x00,0x00]
 addiu	$v0, $zero, 0   # CHECK: encoding: [0x24,0x02,0x00,0x00]

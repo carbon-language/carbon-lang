@@ -222,6 +222,7 @@ class MipsAsmParser : public MCTargetAsmParser {
     return (STI.getFeatureBits() & Mips::FeatureFP64Bit) != 0;
   }
 
+  bool isN32() const { return STI.getFeatureBits() & Mips::FeatureN32; }
   bool isN64() const { return STI.getFeatureBits() & Mips::FeatureN64; }
 
   bool isMicroMips() const {
@@ -1035,21 +1036,23 @@ int MipsAsmParser::matchCPURegisterName(StringRef Name) {
            .Case("t9", 25)
            .Default(-1);
 
-  // Although SGI documentation just cuts out t0-t3 for n32/n64,
-  // GNU pushes the values of t0-t3 to override the o32/o64 values for t4-t7
-  // We are supporting both cases, so for t0-t3 we'll just push them to t4-t7.
-  if (isMips64() && 8 <= CC && CC <= 11)
-    CC += 4;
+  if (isN32() || isN64()) {
+    // Although SGI documentation just cuts out t0-t3 for n32/n64,
+    // GNU pushes the values of t0-t3 to override the o32/o64 values for t4-t7
+    // We are supporting both cases, so for t0-t3 we'll just push them to t4-t7.
+    if (8 <= CC && CC <= 11)
+      CC += 4;
 
-  if (CC == -1 && isMips64())
-    CC = StringSwitch<unsigned>(Name)
-             .Case("a4", 8)
-             .Case("a5", 9)
-             .Case("a6", 10)
-             .Case("a7", 11)
-             .Case("kt0", 26)
-             .Case("kt1", 27)
-             .Default(-1);
+    if (CC == -1)
+      CC = StringSwitch<unsigned>(Name)
+               .Case("a4", 8)
+               .Case("a5", 9)
+               .Case("a6", 10)
+               .Case("a7", 11)
+               .Case("kt0", 26)
+               .Case("kt1", 27)
+               .Default(-1);
+  }
 
   warnIfAssemblerTemporary(CC);
 
