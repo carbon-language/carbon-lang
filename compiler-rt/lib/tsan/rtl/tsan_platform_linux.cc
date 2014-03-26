@@ -150,7 +150,8 @@ static void MapRodata() {
   // Fill the file with kShadowRodata.
   const uptr kMarkerSize = 512 * 1024 / sizeof(u64);
   InternalScopedBuffer<u64> marker(kMarkerSize);
-  for (u64 *p = marker.data(); p < marker.data() + kMarkerSize; p++)
+  // volatile to prevent insertion of memset
+  for (volatile u64 *p = marker.data(); p < marker.data() + kMarkerSize; p++)
     *p = kShadowRodata;
   internal_write(fd, marker.data(), marker.size());
   // Map the file into memory.
