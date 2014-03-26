@@ -2531,6 +2531,7 @@ private:
     BasesSetVectorTy VisitedBases;
     AddMethods(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 0, 0,
                VisitedBases);
+    assert(Components.size() && "vftable can't be empty");
 
     assert(MethodVFTableLocations.empty());
     for (MethodInfoMapTy::const_iterator I = MethodInfoMap.begin(),
@@ -2793,6 +2794,14 @@ bool VFTableBuilder::NeedsReturnAdjustingThunk(const CXXMethodDecl *MD) {
   return false;
 }
 
+static bool isDirectVBase(const CXXRecordDecl *Base, const CXXRecordDecl *RD) {
+  for (const auto &B : RD->bases()) {
+    if (B.isVirtual() && B.getType()->getAsCXXRecordDecl() == Base)
+      return true;
+  }
+  return false;
+}
+
 void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
                                 const CXXRecordDecl *LastVBase,
                                 BasesSetVectorTy &VisitedBases) {
@@ -2808,7 +2817,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
   CharUnits NextBaseOffset;
   if (BaseDepth < WhichVFPtr.PathToBaseWithVPtr.size()) {
     NextBase = WhichVFPtr.PathToBaseWithVPtr[BaseDepth];
-    if (Layout.getVBaseOffsetsMap().count(NextBase)) {
+    if (isDirectVBase(NextBase, RD)) {
       NextLastVBase = NextBase;
       NextBaseOffset = MostDerivedClassLayout.getVBaseClassOffset(NextBase);
     } else {
