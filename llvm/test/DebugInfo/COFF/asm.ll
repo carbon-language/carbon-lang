@@ -12,7 +12,7 @@
 ;  5   g();
 ;  6 }
 
-; X86: _f:
+; X86-LABEL: _f:
 ; X86-NEXT: # BB
 ; X86-NEXT: [[ASM_LINE:^L.*]]:{{$}}
 ; X86:      [[CALL_LINE:^L.*]]:{{$}}
@@ -21,7 +21,7 @@
 ; X86-NEXT: ret
 ; X86-NEXT: [[END_OF_F:.*]]:
 ;
-; X86: .section        .debug$S,"rn"
+; X86-LABEL: .section        .debug$S,"rn"
 ; X86-NEXT: .long   4
 ; X86-NEXT: .long   242
 ; X86-NEXT: .long [[F2_END:.*]]-[[F2_START:.*]]
@@ -78,7 +78,7 @@
 ; OBJ32-NEXT: ]
 ; OBJ32:    }
 
-; X64: f:
+; X64-LABEL: f:
 ; X64-NEXT: [[START:.*]]:{{$}}
 ; X64-NEXT: # BB
 ; X64-NEXT: subq    $40, %rsp
@@ -90,7 +90,7 @@
 ; X64-NEXT: ret
 ; X64-NEXT: [[END_OF_F:.*]]:
 ;
-; X64: .section        .debug$S,"rn"
+; X64-LABEL: .section        .debug$S,"rn"
 ; X64-NEXT: .long   4
 ; X64-NEXT: .long   242
 ; X64-NEXT: .long [[F2_END:.*]]-[[F2_START:.*]]
