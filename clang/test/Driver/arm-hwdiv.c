@@ -37,3 +37,8 @@
 // CHECK-ALT: "-target-feature" "+hwdiv-arm"
 // CHECK-ALT: "-target-feature" "-hwdiv"
 
+// RUN: %clang -### -target arm %s --mhwdiv=arm -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-ALT-EQ %s
+// CHECK-ALT-EQ: "-target-feature" "+hwdiv-arm"
+// CHECK-ALT-EQ: "-target-feature" "-hwdiv"
+
