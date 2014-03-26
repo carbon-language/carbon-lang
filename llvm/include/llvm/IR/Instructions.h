@@ -1297,12 +1297,14 @@ public:
 
   /// arg_operands - iteration adapter for range-for loops.
   iterator_range<op_iterator> arg_operands() {
-    return iterator_range<op_iterator>(op_begin(), op_end());
+    // The last operand in the op list is the callee - it's not one of the args
+    // so we don't want to iterate over it.
+    return iterator_range<op_iterator>(op_begin(), op_end() - 1);
   }
 
   /// arg_operands - iteration adapter for range-for loops.
   iterator_range<const_op_iterator> arg_operands() const {
-    return iterator_range<const_op_iterator>(op_begin(), op_end());
+    return iterator_range<const_op_iterator>(op_begin(), op_end() - 1);
   }
 
   /// \brief Wrappers for getting the \c Use of a call argument.
@@ -2954,12 +2956,12 @@ public:
 
   /// arg_operands - iteration adapter for range-for loops.
   iterator_range<op_iterator> arg_operands() {
-    return iterator_range<op_iterator>(op_begin(), op_end());
+    return iterator_range<op_iterator>(op_begin(), op_end() - 3);
   }
 
   /// arg_operands - iteration adapter for range-for loops.
   iterator_range<const_op_iterator> arg_operands() const {
-    return iterator_range<const_op_iterator>(op_begin(), op_end());
+    return iterator_range<const_op_iterator>(op_begin(), op_end() - 3);
   }
 
   /// \brief Wrappers for getting the \c Use of a invoke argument.

@@ -14,11 +14,14 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 #include "gtest/gtest.h"
+#include <memory>
 
 namespace llvm {
 namespace {
@@ -45,6 +48,29 @@ TEST(InstructionsTest, ReturnInst) {
   // clean up
   delete r0;
   delete r1;
+}
+
+TEST(InstructionsTest, CallInst) {
+  LLVMContext &C(getGlobalContext());
+  std::unique_ptr<Module> M(new Module("MyModule", C));
+
+  Type *ArgTypes[] = {Type::getInt8Ty(C), Type::getInt32Ty(C),
+                      Type::getInt64Ty(C)};
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(C), ArgTypes, false);
+  Function *F = Function::Create(FTy, Function::ExternalLinkage, "", M.get());
+
+  Value *Args[] = {ConstantInt::get(Type::getInt8Ty(C), 20),
+                   ConstantInt::get(Type::getInt32Ty(C), 9999),
+                   ConstantInt::get(Type::getInt64Ty(C), 42)};
+  CallInst *Call = CallInst::Create(F, Args);
+
+  // Make sure iteration over a call's arguments works as expected.
+  unsigned Idx = 0;
+  for (Value *Arg : Call->arg_operands()) {
+    EXPECT_EQ(ArgTypes[Idx], Arg->getType());
+    EXPECT_EQ(Call->getArgOperand(Idx)->getType(), Arg->getType());
+    Idx++;
+  }
 }
 
 TEST(InstructionsTest, BranchInst) {
