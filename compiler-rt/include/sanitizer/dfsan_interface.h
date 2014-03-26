@@ -74,6 +74,9 @@ int dfsan_has_label(dfsan_label label, dfsan_label elem);
 /// that label, else returns 0.
 dfsan_label dfsan_has_label_with_desc(dfsan_label label, const char *desc);
 
+/// Returns the number of labels allocated.
+size_t dfsan_get_label_count(void);
+
 #ifdef __cplusplus
 }  // extern "C"
 
