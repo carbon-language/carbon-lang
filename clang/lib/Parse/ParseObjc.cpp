@@ -81,9 +81,9 @@ Parser::DeclGroupPtrTy Parser::ParseObjCAtDirectives() {
   case tok::objc_import:
     if (getLangOpts().Modules)
       return ParseModuleImport(AtLoc);
-      
-    // Fall through
-      
+    Diag(AtLoc, diag::err_atimport);
+    SkipUntil(tok::semi);
+    return Actions.ConvertDeclToDeclGroup(0);
   default:
     Diag(AtLoc, diag::err_unexpected_at);
     SkipUntil(tok::semi);

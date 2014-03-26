@@ -224,6 +224,8 @@ def err_expected_selector_for_method : Error<
 def err_expected_property_name : Error<"expected property name">;
 
 def err_unexpected_at : Error<"unexpected '@' in program">;
+def err_atimport : Error<
+"use of '@import' when modules are disabled, add -fmodules">;
 
 def err_invalid_reference_qualifier_application : Error<
   "'%0' qualifier may not be applied to a reference">;
