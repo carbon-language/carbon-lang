@@ -3,6 +3,8 @@
 
 // We need shell for cd
 // REQUIRES: shell
+// llvm-cov doesn't work on big endian yet
+// XFAIL: powerpc64, s390x, mips-, mips64-, sparc
 
 // RUN: rm -rf %t
 // RUN: mkdir %t
