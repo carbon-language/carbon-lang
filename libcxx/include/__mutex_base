@@ -282,7 +282,7 @@ public:
     void notify_one() _NOEXCEPT;
     void notify_all() _NOEXCEPT;
 
-    void wait(unique_lock<mutex>& __lk);
+    void wait(unique_lock<mutex>& __lk) _NOEXCEPT;
     template <class _Predicate>
         void wait(unique_lock<mutex>& __lk, _Predicate __pred);
 
@@ -313,7 +313,7 @@ public:
 
 private:
     void __do_timed_wait(unique_lock<mutex>& __lk,
-                 chrono::time_point<chrono::system_clock, chrono::nanoseconds>);
+       chrono::time_point<chrono::system_clock, chrono::nanoseconds>) _NOEXCEPT;
 };
 
 template <class _To, class _Rep, class _Period>
