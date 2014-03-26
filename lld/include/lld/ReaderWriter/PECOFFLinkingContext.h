@@ -265,8 +265,7 @@ public:
   void setLibraryGroup(Group *group) { _libraryGroup = group; }
   Group *getLibraryGroup() const { return _libraryGroup; }
 
-  void lock() { _mutex.lock(); }
-  void unlock() { _mutex.unlock(); }
+  std::recursive_mutex &getMutex() { return _mutex; }
 
 protected:
   /// Method to create a internal file for the entry symbol

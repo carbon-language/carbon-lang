@@ -115,9 +115,6 @@ public:
                     bool isDirective = false);
 
 private:
-  static bool doParse(int argc, const char *argv[], PECOFFLinkingContext &info,
-                      raw_ostream &diagnostics, bool isDirective);
-
   WinLinkDriver() LLVM_DELETED_FUNCTION;
 };
 
