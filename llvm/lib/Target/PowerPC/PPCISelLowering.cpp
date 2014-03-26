@@ -570,6 +570,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::LOAD, MVT::v2f64, Legal);
       setOperationAction(ISD::STORE, MVT::v2f64, Legal);
 
+      setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v2f64, Legal);
+
       addRegisterClass(MVT::f64, &PPC::VSRCRegClass);
 
       addRegisterClass(MVT::v4f32, &PPC::VSRCRegClass);
@@ -583,6 +585,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       AddPromotedToType (ISD::LOAD, MVT::v2i64, MVT::v2f64);
       setOperationAction(ISD::STORE, MVT::v2i64, Promote);
       AddPromotedToType (ISD::STORE, MVT::v2i64, MVT::v2f64);
+
+      setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v2i64, Legal);
 
       setOperationAction(ISD::SINT_TO_FP, MVT::v2i64, Legal);
       setOperationAction(ISD::UINT_TO_FP, MVT::v2i64, Legal);
@@ -872,8 +876,8 @@ bool PPC::isVPKUWUMShuffleMask(ShuffleVectorSDNode *N, bool isUnary) {
 ///
 static bool isVMerge(ShuffleVectorSDNode *N, unsigned UnitSize,
                      unsigned LHSStart, unsigned RHSStart) {
-  assert(N->getValueType(0) == MVT::v16i8 &&
-         "PPC only supports shuffles by bytes!");
+  if (N->getValueType(0) != MVT::v16i8)
+    return false;
   assert((UnitSize == 1 || UnitSize == 2 || UnitSize == 4) &&
          "Unsupported merge size!");
 
@@ -910,8 +914,8 @@ bool PPC::isVMRGHShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
 /// isVSLDOIShuffleMask - If this is a vsldoi shuffle mask, return the shift
 /// amount, otherwise return -1.
 int PPC::isVSLDOIShuffleMask(SDNode *N, bool isUnary) {
-  assert(N->getValueType(0) == MVT::v16i8 &&
-         "PPC only supports shuffles by bytes!");
+  if (N->getValueType(0) != MVT::v16i8)
+    return false;
 
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
 

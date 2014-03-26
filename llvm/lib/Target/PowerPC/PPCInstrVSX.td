@@ -53,7 +53,6 @@ let Uses = [RM] in {
     def LXVDSX : XForm_1<31, 332,
                          (outs vsrc:$XT), (ins memrr:$src),
                          "lxvdsx $XT, $src", IIC_LdStLFD, []>;
-    // TODO: match load + splat to lxvdsx.
 
     def LXVW4X : XForm_1<31, 780,
                          (outs vsrc:$XT), (ins memrr:$src),

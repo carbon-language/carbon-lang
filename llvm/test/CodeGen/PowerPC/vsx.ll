@@ -422,3 +422,68 @@ define <2 x i64> @test47(<2 x float> %a) {
 ; CHECK: blr
 }
 
+define <2 x double> @test50(double* %a) {
+  %v = load double* %a, align 8
+  %w = insertelement <2 x double> undef, double %v, i32 0
+  %x = insertelement <2 x double> %w, double %v, i32 1
+  ret <2 x double> %x
+
+; CHECK-LABEL: @test50
+; CHECK: lxvdsx 34, 0, 3
+; CHECK: blr
+}
+
+define <2 x double> @test51(<2 x double> %a, <2 x double> %b) {
+  %v = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 0, i32 0>
+  ret <2 x double> %v
+
+; CHECK-LABEL: @test51
+; CHECK: xxpermdi 34, 34, 34, 0
+; CHECK: blr
+}
+
+define <2 x double> @test52(<2 x double> %a, <2 x double> %b) {
+  %v = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 0, i32 2>
+  ret <2 x double> %v
+
+; CHECK-LABEL: @test52
+; CHECK: xxpermdi 34, 34, 35, 0
+; CHECK: blr
+}
+
+define <2 x double> @test53(<2 x double> %a, <2 x double> %b) {
+  %v = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 2, i32 0>
+  ret <2 x double> %v
+
+; CHECK-LABEL: @test53
+; CHECK: xxpermdi 34, 35, 34, 0
+; CHECK: blr
+}
+
+define <2 x double> @test54(<2 x double> %a, <2 x double> %b) {
+  %v = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 1, i32 2>
+  ret <2 x double> %v
+
+; CHECK-LABEL: @test54
+; CHECK: xxpermdi 34, 34, 35, 1
+; CHECK: blr
+}
+
+define <2 x double> @test55(<2 x double> %a, <2 x double> %b) {
+  %v = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 1, i32 3>
+  ret <2 x double> %v
+
+; CHECK-LABEL: @test55
+; CHECK: xxpermdi 34, 34, 35, 3
+; CHECK: blr
+}
+
+define <2 x i64> @test56(<2 x i64> %a, <2 x i64> %b) {
+  %v = shufflevector <2 x i64> %a, <2 x i64> %b, <2 x i32> <i32 1, i32 3>
+  ret <2 x i64> %v
+
+; CHECK-LABEL: @test56
+; CHECK: xxpermdi 34, 34, 35, 3
+; CHECK: blr
+}
+

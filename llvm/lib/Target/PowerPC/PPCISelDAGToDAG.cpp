@@ -1336,6 +1336,43 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     }
 
     break;
+  case ISD::VECTOR_SHUFFLE:
+    if (PPCSubTarget.hasVSX() && (N->getValueType(0) == MVT::v2f64 ||
+                                  N->getValueType(0) == MVT::v2i64)) {
+      ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
+      
+      SDValue Op1 = N->getOperand(SVN->getMaskElt(0) < 2 ? 0 : 1),
+              Op2 = N->getOperand(SVN->getMaskElt(1) < 2 ? 0 : 1);
+      unsigned DM[2];
+
+      for (int i = 0; i < 2; ++i)
+        if (SVN->getMaskElt(i) <= 0 || SVN->getMaskElt(i) == 2)
+          DM[i] = 0;
+        else
+          DM[i] = 1;
+
+      SDValue DMV = CurDAG->getTargetConstant(DM[0] | (DM[1] << 1), MVT::i32);
+
+      if (Op1 == Op2 && DM[0] == 0 && DM[1] == 0 &&
+          Op1.getOpcode() == ISD::SCALAR_TO_VECTOR &&
+          isa<LoadSDNode>(Op1.getOperand(0))) {
+        LoadSDNode *LD = cast<LoadSDNode>(Op1.getOperand(0));
+        SDValue Base, Offset;
+
+        if (LD->isUnindexed() &&
+            SelectAddrIdxOnly(LD->getBasePtr(), Base, Offset)) {
+          SDValue Chain = LD->getChain();
+          SDValue Ops[] = { Base, Offset, Chain };
+          return CurDAG->SelectNodeTo(N, PPC::LXVDSX,
+                                      N->getValueType(0), Ops, 3);
+        }
+      }
+
+      SDValue Ops[] = { Op1, Op2, DMV };
+      return CurDAG->SelectNodeTo(N, PPC::XXPERMDI, N->getValueType(0), Ops, 3);
+    }
+
+    break;
   case PPCISD::BDNZ:
   case PPCISD::BDZ: {
     bool IsPPC64 = PPCSubTarget.isPPC64();
