@@ -1018,9 +1018,10 @@ int MipsAsmParser::matchCPURegisterName(StringRef Name) {
            .Case("s7", 23)
            .Case("k0", 26)
            .Case("k1", 27)
+           .Case("gp", 28)
            .Case("sp", 29)
            .Case("fp", 30)
-           .Case("gp", 28)
+           .Case("s8", 30)
            .Case("ra", 31)
            .Case("t0", 8)
            .Case("t1", 9)
@@ -1048,7 +1049,6 @@ int MipsAsmParser::matchCPURegisterName(StringRef Name) {
              .Case("a7", 11)
              .Case("kt0", 26)
              .Case("kt1", 27)
-             .Case("s8", 30)
              .Default(-1);
 
   warnIfAssemblerTemporary(CC);
