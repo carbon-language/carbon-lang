@@ -212,13 +212,6 @@ namespace PBQP {
       }
 
       EdgeEntry &NE = getEdge(EId);
-      NodeEntry &N1 = getNode(NE.getN1Id());
-      NodeEntry &N2 = getNode(NE.getN2Id());
-
-      // Sanity check on matrix dimensions:
-      assert((N1.Costs->getLength() == NE.Costs->getRows()) &&
-             (N2.Costs->getLength() == NE.Costs->getCols()) &&
-             "Edge cost dimensions do not match node costs dimensions.");
 
       // Add the edge to the adjacency sets of its nodes.
       NE.connect(*this, EId);
