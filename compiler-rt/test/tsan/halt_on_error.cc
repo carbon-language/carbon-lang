@@ -1,10 +1,12 @@
 // RUN: %clang_tsan -O1 %s -o %t && TSAN_OPTIONS="$TSAN_OPTIONS halt_on_error=1" not %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 int X;
 
 void *Thread(void *x) {
+  sleep(1);
   X = 42;
   return 0;
 }
