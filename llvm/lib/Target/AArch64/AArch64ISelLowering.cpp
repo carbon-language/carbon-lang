@@ -1324,8 +1324,11 @@ AArch64TargetLowering::LowerFormalArguments(SDValue Chain,
       int Size = Flags.getByValSize();
       unsigned NumRegs = (Size + 7) / 8;
 
+      uint32_t BEAlign = 0;
+      if (Size < 8 && !getSubtarget()->isLittle())
+        BEAlign = 8-Size;
       unsigned FrameIdx = MFI->CreateFixedObject(8 * NumRegs,
-                                                 VA.getLocMemOffset(),
+                                                 VA.getLocMemOffset() + BEAlign,
                                                  false);
       SDValue FrameIdxN = DAG.getFrameIndex(FrameIdx, PtrTy);
       InVals.push_back(FrameIdxN);
@@ -1634,7 +1637,13 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
       // loaded before this eventual operation. Otherwise they'll be clobbered.
       Chain = addTokenForArgument(Chain, DAG, MF.getFrameInfo(), FI);
     } else {
-      SDValue PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset());
+      uint32_t OpSize = Flags.isByVal() ? Flags.getByValSize()*8 :
+                                          VA.getLocVT().getSizeInBits();
+      OpSize = (OpSize + 7) / 8;
+      uint32_t BEAlign = 0;
+      if (OpSize < 8 && !getSubtarget()->isLittle())
+        BEAlign = 8-OpSize;
+      SDValue PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset() + BEAlign);
 
       DstAddr = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr, PtrOff);
       DstInfo = MachinePointerInfo::getStack(VA.getLocMemOffset());

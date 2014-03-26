@@ -1,5 +1,7 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-LE %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 
 %myStruct = type { i64 , i8, i32 }
 
@@ -146,7 +148,8 @@ define i32 @struct_on_stack(i8 %var0, i16 %var1, i32 %var2, i64 %var3, i128 %var
 
     %retval = load volatile i32* %stacked
     ret i32 %retval
-; CHECK: ldr w0, [sp, #16]
+; CHECK-LE: ldr w0, [sp, #16]
+; CHECK-BE: ldr w0, [sp, #20]
 }
 
 define void @stacked_fpu(float %var0, double %var1, float %var2, float %var3,
@@ -180,8 +183,10 @@ define void @check_i128_stackalign(i32 %val0, i32 %val1, i32 %val2, i32 %val3,
 ; CHECK: check_i128_stackalign
     store i128 %stack2, i128* @var128
     ; Nothing local on stack in current codegen, so first stack is 16 away
-; CHECK: add     x[[REG:[0-9]+]], sp, #16
-; CHECK: ldr {{x[0-9]+}}, [x[[REG]], #8]
+; CHECK-LE: add     x[[REG:[0-9]+]], sp, #16
+; CHECK-LE: ldr {{x[0-9]+}}, [x[[REG]], #8]
+; CHECK-BE: ldr {{x[0-9]+}}, [sp, #24]
+
     ; Important point is that we address sp+24 for second dword
 ; CHECK: ldr     {{x[0-9]+}}, [sp, #16]
     ret void
