@@ -51,29 +51,115 @@ namespace PBQP {
 
     class NodeEntry {
     public:
-      typedef std::set<NodeId> AdjEdgeList;
+      typedef std::vector<EdgeId> AdjEdgeList;
+      typedef AdjEdgeList::size_type AdjEdgeIdx;
       typedef AdjEdgeList::const_iterator AdjEdgeItr;
+
+      static AdjEdgeIdx getInvalidAdjEdgeIdx() {
+        return std::numeric_limits<AdjEdgeIdx>::max();
+      }
+
       NodeEntry(VectorPtr Costs) : Costs(Costs) {}
+
+      AdjEdgeIdx addAdjEdgeId(EdgeId EId) {
+        AdjEdgeIdx Idx = AdjEdgeIds.size();
+        AdjEdgeIds.push_back(EId);
+        return Idx;
+      }
+
+      // If a swap is performed, returns the new EdgeId that must be
+      // updated, otherwise returns invalidEdgeId().
+      EdgeId removeAdjEdgeId(AdjEdgeIdx Idx) {
+        EdgeId EIdToUpdate = Graph::invalidEdgeId();
+        if (Idx < AdjEdgeIds.size() - 1) {
+          std::swap(AdjEdgeIds[Idx], AdjEdgeIds.back());
+          EIdToUpdate = AdjEdgeIds[Idx];
+        }
+        AdjEdgeIds.pop_back();
+        return EIdToUpdate;
+      }
+
+      const AdjEdgeList& getAdjEdgeIds() const { return AdjEdgeIds; }
 
       VectorPtr Costs;
       NodeMetadata Metadata;
+    private:
       AdjEdgeList AdjEdgeIds;
     };
 
     class EdgeEntry {
     public:
       EdgeEntry(NodeId N1Id, NodeId N2Id, MatrixPtr Costs)
-        : Costs(Costs), N1Id(N1Id), N2Id(N2Id) {}
+        : Costs(Costs) {
+        NIds[0] = N1Id;
+        NIds[1] = N2Id;
+        ThisEdgeAdjIdxs[0] = NodeEntry::getInvalidAdjEdgeIdx();
+        ThisEdgeAdjIdxs[1] = NodeEntry::getInvalidAdjEdgeIdx();
+      }
+
       void invalidate() {
-        N1Id = N2Id = Graph::invalidNodeId();
+        NIds[0] = NIds[1] = Graph::invalidNodeId();
+        ThisEdgeAdjIdxs[0] = ThisEdgeAdjIdxs[1] =
+          NodeEntry::getInvalidAdjEdgeIdx();
         Costs = nullptr;
       }
-      NodeId getN1Id() const { return N1Id; }
-      NodeId getN2Id() const { return N2Id; }
+
+      void connectToN(Graph &G, EdgeId ThisEdgeId, unsigned NIdx) {
+        assert(ThisEdgeAdjIdxs[NIdx] == NodeEntry::getInvalidAdjEdgeIdx() &&
+               "Edge already connected to NIds[NIdx].");
+        NodeEntry &N = G.getNode(NIds[NIdx]);
+        ThisEdgeAdjIdxs[NIdx] = N.addAdjEdgeId(ThisEdgeId);
+      }
+
+      void connectTo(Graph &G, EdgeId ThisEdgeId, NodeId NId) {
+        if (NId == NIds[0])
+          connectToN(G, ThisEdgeId, 0);
+        else {
+          assert(NId == NIds[1] && "Edge does not connect NId.");
+          connectToN(G, ThisEdgeId, 1);
+        }
+      }
+
+      void connect(Graph &G, EdgeId ThisEdgeId) {
+        connectToN(G, ThisEdgeId, 0);
+        connectToN(G, ThisEdgeId, 1);
+      }
+
+      void updateAdjEdgeIdx(NodeId NId, typename NodeEntry::AdjEdgeIdx NewIdx) {
+        if (NId == NIds[0])
+          ThisEdgeAdjIdxs[0] = NewIdx;
+        else {
+          assert(NId == NIds[1] && "Edge not connected to NId");
+          ThisEdgeAdjIdxs[1] = NewIdx;
+        }
+      }
+
+      void disconnectFromN(Graph &G, unsigned NIdx) {
+        assert(ThisEdgeAdjIdxs[NIdx] != NodeEntry::getInvalidAdjEdgeIdx() &&
+               "Edge not connected to NIds[NIdx].");
+        NodeEntry &N = G.getNode(NIds[NIdx]);
+        EdgeId EIdToUpdate = N.removeAdjEdgeId(ThisEdgeAdjIdxs[NIdx]);
+        if (EIdToUpdate != Graph::invalidEdgeId())
+          G.getEdge(EIdToUpdate).updateAdjEdgeIdx(NIds[NIdx], ThisEdgeAdjIdxs[NIdx]);
+        ThisEdgeAdjIdxs[NIdx] = NodeEntry::getInvalidAdjEdgeIdx();
+      }
+
+      void disconnectFrom(Graph &G, NodeId NId) {
+        if (NId == NIds[0])
+          disconnectFromN(G, 0);
+        else {
+          assert(NId == NIds[1] && "Edge does not connect NId");
+          disconnectFromN(G, 1);
+        }
+      }
+
+      NodeId getN1Id() const { return NIds[0]; }
+      NodeId getN2Id() const { return NIds[1]; }
       MatrixPtr Costs;
       EdgeMetadata Metadata;
     private:
-      NodeId N1Id, N2Id;
+      NodeId NIds[2];
+      typename NodeEntry::AdjEdgeIdx ThisEdgeAdjIdxs[2];
     };
 
     // ----- MEMBERS -----
@@ -134,8 +220,8 @@ namespace PBQP {
              (N2.Costs->getLength() == NE.Costs->getCols()) &&
              "Edge cost dimensions do not match node costs dimensions.");
 
-      N1.AdjEdgeIds.insert(EId);
-      N2.AdjEdgeIds.insert(EId);
+      // Add the edge to the adjacency sets of its nodes.
+      NE.connect(*this, EId);
       return EId;
     }
 
@@ -228,14 +314,14 @@ namespace PBQP {
     public:
       AdjEdgeIdSet(const NodeEntry &NE) : NE(NE) { }
       typename NodeEntry::AdjEdgeItr begin() const {
-        return NE.AdjEdgeIds.begin();
+        return NE.getAdjEdgeIds().begin();
       }
       typename NodeEntry::AdjEdgeItr end() const {
-        return NE.AdjEdgeIds.end();
+        return NE.getAdjEdgeIds().end();
       }
-      bool empty() const { return NE.AdjEdges.empty(); }
+      bool empty() const { return NE.getAdjEdgeIds().empty(); }
       typename NodeEntry::AdjEdgeList::size_type size() const {
-        return NE.AdjEdgeIds.size();
+        return NE.getAdjEdgeIds().size();
       }
     private:
       const NodeEntry &NE;
@@ -336,7 +422,7 @@ namespace PBQP {
     }
 
     typename NodeEntry::AdjEdgeList::size_type getNodeDegree(NodeId NId) const {
-      return getNode(NId).AdjEdgeIds.size();
+      return getNode(NId).getAdjEdgeIds().size();
     }
 
     /// \brief Set an edge's cost matrix.
@@ -459,8 +545,9 @@ namespace PBQP {
     void disconnectEdge(EdgeId EId, NodeId NId) {
       if (Solver)
         Solver->handleDisconnectEdge(EId, NId);
-      NodeEntry &N = getNode(NId);
-      N.AdjEdgeIds.erase(EId);
+
+      EdgeEntry &E = getEdge(EId);
+      E.disconnectFrom(*this, NId);
     }
 
     /// \brief Convenience method to disconnect all neighbours from the given
@@ -475,8 +562,8 @@ namespace PBQP {
     /// Adds an edge that had been previously disconnected back into the
     /// adjacency set of the nodes that the edge connects.
     void reconnectEdge(EdgeId EId, NodeId NId) {
-      NodeEntry &N = getNode(NId);
-      N.addAdjEdge(EId);
+      EdgeEntry &E = getEdge(EId);
+      E.connectTo(*this, EId, NId);
       if (Solver)
         Solver->handleReconnectEdge(EId, NId);
     }
@@ -487,10 +574,7 @@ namespace PBQP {
       if (Solver)
         Solver->handleRemoveEdge(EId);
       EdgeEntry &E = getEdge(EId);
-      NodeEntry &N1 = getNode(E.getNode1());
-      NodeEntry &N2 = getNode(E.getNode2());
-      N1.removeEdge(EId);
-      N2.removeEdge(EId);
+      E.disconnect();
       FreeEdgeIds.push_back(EId);
       Edges[EId].invalidate();
     }
