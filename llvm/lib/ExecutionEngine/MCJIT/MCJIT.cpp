@@ -115,7 +115,7 @@ bool MCJIT::removeModule(Module *M) {
 
 void MCJIT::addObjectFile(object::ObjectFile *Obj) {
   ObjectImage *LoadedObject = Dyld.loadObject(Obj);
-  if (!LoadedObject)
+  if (!LoadedObject || Dyld.hasError())
     report_fatal_error(Dyld.getErrorString());
 
   LoadedObjects.push_back(LoadedObject);

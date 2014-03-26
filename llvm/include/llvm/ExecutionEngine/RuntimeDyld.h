@@ -84,6 +84,7 @@ public:
 
   void deregisterEHFrames();
 
+  bool hasError();
   StringRef getErrorString();
 
   /// By default, only sections that are "required for execution" are passed to

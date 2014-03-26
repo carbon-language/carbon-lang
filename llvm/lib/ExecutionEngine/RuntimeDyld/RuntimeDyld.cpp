@@ -761,6 +761,8 @@ void RuntimeDyld::mapSectionAddress(const void *LocalAddress,
   Dyld->mapSectionAddress(LocalAddress, TargetAddress);
 }
 
+bool RuntimeDyld::hasError() { return Dyld->hasError(); }
+
 StringRef RuntimeDyld::getErrorString() { return Dyld->getErrorString(); }
 
 void RuntimeDyld::registerEHFrames() {
