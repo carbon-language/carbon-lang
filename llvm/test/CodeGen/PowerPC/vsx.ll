@@ -296,3 +296,39 @@ define <2 x i64> @test27(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK: blr
 }
 
+define <2 x double> @test28(<2 x double>* %a) {
+  %v = load <2 x double>* %a, align 16
+  ret <2 x double> %v
+
+; CHECK-LABEL: @test28
+; CHECK: lxvd2x 34, 0, 3
+; CHECK: blr
+}
+
+define void @test29(<2 x double>* %a, <2 x double> %b) {
+  store <2 x double> %b, <2 x double>* %a, align 16
+  ret void
+
+; CHECK-LABEL: @test29
+; CHECK: stxvd2x 34, 0, 3
+; CHECK: blr
+}
+
+define <2 x i64> @test30(<2 x i64>* %a) {
+  %v = load <2 x i64>* %a, align 16
+  ret <2 x i64> %v
+
+; CHECK-LABEL: @test30
+; CHECK: lxvd2x 34, 0, 3
+; CHECK: blr
+}
+
+define void @test31(<2 x i64>* %a, <2 x i64> %b) {
+  store <2 x i64> %b, <2 x i64>* %a, align 16
+  ret void
+
+; CHECK-LABEL: @test31
+; CHECK: stxvd2x 34, 0, 3
+; CHECK: blr
+}
+

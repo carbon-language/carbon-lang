@@ -567,6 +567,9 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setCondCodeAction(ISD::SETO,   MVT::v2f64, Expand);
       setCondCodeAction(ISD::SETONE, MVT::v2f64, Expand);
 
+      setOperationAction(ISD::LOAD, MVT::v2f64, Legal);
+      setOperationAction(ISD::STORE, MVT::v2f64, Legal);
+
       addRegisterClass(MVT::f64, &PPC::VSRCRegClass);
 
       addRegisterClass(MVT::v4f32, &PPC::VSRCRegClass);
@@ -575,6 +578,11 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       // VSX v2i64 only supports non-arithmetic operations.
       setOperationAction(ISD::ADD, MVT::v2i64, Expand);
       setOperationAction(ISD::SUB, MVT::v2i64, Expand);
+
+      setOperationAction(ISD::LOAD, MVT::v2i64, Promote);
+      AddPromotedToType (ISD::LOAD, MVT::v2i64, MVT::v2f64);
+      setOperationAction(ISD::STORE, MVT::v2i64, Promote);
+      AddPromotedToType (ISD::STORE, MVT::v2i64, MVT::v2f64);
 
       addRegisterClass(MVT::v2i64, &PPC::VSRCRegClass);
     }
