@@ -80,6 +80,7 @@ void UnixAPIChecker::CheckOpen(CheckerContext &C, const CallExpr *CE) const {
       // FIXME: We need a more general way of getting the O_CREAT value.
       // We could possibly grovel through the preprocessor state, but
       // that would require passing the Preprocessor object to the ExprEngine.
+      // See also: MallocChecker.cpp / M_ZERO.
       return;
     }
   }
