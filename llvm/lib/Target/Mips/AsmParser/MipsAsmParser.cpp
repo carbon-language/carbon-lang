@@ -209,7 +209,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool parseSetAssignment();
 
-  bool parseDirectiveWord(unsigned Size, SMLoc L);
+  bool parseDataDirective(unsigned Size, SMLoc L);
   bool parseDirectiveGpWord();
 
   MCSymbolRefExpr::VariantKind getVariantKind(StringRef Symbol);
@@ -2545,9 +2545,9 @@ bool MipsAsmParser::parseDirectiveSet() {
   return true;
 }
 
-/// parseDirectiveWord
+/// parseDataDirective
 ///  ::= .word [ expression (, expression)* ]
-bool MipsAsmParser::parseDirectiveWord(unsigned Size, SMLoc L) {
+bool MipsAsmParser::parseDataDirective(unsigned Size, SMLoc L) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       const MCExpr *Value;
@@ -2670,7 +2670,7 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   }
 
   if (IDVal == ".word") {
-    parseDirectiveWord(4, DirectiveID.getLoc());
+    parseDataDirective(4, DirectiveID.getLoc());
     return false;
   }
 
