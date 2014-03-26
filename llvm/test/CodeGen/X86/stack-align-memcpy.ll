@@ -15,9 +15,7 @@ define void @test1(%struct.foo* nocapture %x, i32 %y) nounwind {
 ; CHECK-LABEL: test1:
 ; CHECK: andl $-16, %esp
 ; CHECK: movl %esp, %esi
-; CHECK: movl %esi, %edx
-; CHECK: rep;movsl
-; CHECK: movl %edx, %esi
+; CHECK-NOT: rep;movsl
 }
 
 ; PR19012
@@ -30,9 +28,7 @@ define void @test2(%struct.foo* nocapture %x, i32 %y, i8* %z) nounwind {
 
 ; CHECK-LABEL: test2:
 ; CHECK: movl %esp, %esi
-; CHECK: movl %esi, %edx
-; CHECK: rep;movsl
-; CHECK: movl %edx, %esi
+; CHECK-NOT: rep;movsl
 }
 
 ; Check that we do use rep movs if we make the alloca static.
@@ -43,6 +39,5 @@ define void @test3(%struct.foo* nocapture %x, i32 %y, i8* %z) nounwind {
   ret void
 
 ; CHECK-LABEL: test3:
-; CHECK-NOT: movl %esi, %edx
 ; CHECK: rep;movsl
 }

@@ -200,11 +200,13 @@ X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
       SrcPtrInfo.getAddrSpace() >= 256)
     return SDValue();
 
-  // If ESI is used as a base pointer, we must preserve it when doing rep movs.
+  // ESI might be used as a base pointer, in that case we can't simply overwrite
+  // the register.  Fall back to generic code.
   const X86RegisterInfo *TRI =
       static_cast<const X86RegisterInfo *>(DAG.getTarget().getRegisterInfo());
-  bool PreserveESI = TRI->hasBasePointer(DAG.getMachineFunction()) &&
-                     TRI->getBaseRegister() == X86::ESI;
+  if (TRI->hasBasePointer(DAG.getMachineFunction()) &&
+      TRI->getBaseRegister() == X86::ESI)
+    return SDValue();
 
   MVT AVT;
   if (Align & 1)
@@ -223,45 +225,27 @@ X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
   SDValue Count = DAG.getIntPtrConstant(CountVal);
   unsigned BytesLeft = SizeVal % UBytes;
 
-
-  if (PreserveESI) {
-    // Save ESI to a physical register. (We cannot use a virtual register
-    // because if it is spilled we wouldn't be able to reload it.)
-    // We don't glue this because the register dependencies are explicit.
-    Chain = DAG.getCopyToReg(Chain, dl, X86::EDX,
-                             DAG.getRegister(X86::ESI, MVT::i32));
-  }
-
-  SDValue InGlue(0, 0);
+  SDValue InFlag(0, 0);
   Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RCX :
                                                               X86::ECX,
-                            Count, InGlue);
-  InGlue = Chain.getValue(1);
+                            Count, InFlag);
+  InFlag = Chain.getValue(1);
   Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RDI :
                                                               X86::EDI,
-                            Dst, InGlue);
-  InGlue = Chain.getValue(1);
+                            Dst, InFlag);
+  InFlag = Chain.getValue(1);
   Chain  = DAG.getCopyToReg(Chain, dl, Subtarget->is64Bit() ? X86::RSI :
                                                               X86::ESI,
-                            Src, InGlue);
-  InGlue = Chain.getValue(1);
+                            Src, InFlag);
+  InFlag = Chain.getValue(1);
 
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
-  SDValue Ops[] = { Chain, DAG.getValueType(AVT), InGlue };
-  // FIXME: Make X86rep_movs explicitly use FCX, RDI, RSI instead of glue.
+  SDValue Ops[] = { Chain, DAG.getValueType(AVT), InFlag };
   SDValue RepMovs = DAG.getNode(X86ISD::REP_MOVS, dl, Tys, Ops,
                                 array_lengthof(Ops));
 
-  if (PreserveESI) {
-    InGlue = RepMovs.getValue(1);
-    RepMovs = DAG.getCopyToReg(RepMovs, dl, X86::ESI,
-                               DAG.getRegister(X86::EDX, MVT::i32), InGlue);
-  }
-
   SmallVector<SDValue, 4> Results;
   Results.push_back(RepMovs);
-
-
   if (BytesLeft) {
     // Handle the last 1 - 7 bytes.
     unsigned Offset = SizeVal - BytesLeft;
