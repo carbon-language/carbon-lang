@@ -82,13 +82,14 @@ Editline::Editline (const char *prog,       // prog can't be NULL
         ::el_set (m_editline, EL_HIST, history, m_history);
     }
     ::el_set (m_editline, EL_ADDFN, "lldb-complete", "Editline completion function", Editline::CallbackComplete);
+    ::el_set (m_editline, EL_ADDFN, "lldb_complete", "Editline completion function", Editline::CallbackComplete); // Keep old "lldb_complete" mapping for older clients that used this in their .editrc
     ::el_set (m_editline, EL_ADDFN, "lldb-edit-prev-line", "Editline edit prev line", Editline::CallbackEditPrevLine);
     ::el_set (m_editline, EL_ADDFN, "lldb-edit-next-line", "Editline edit next line", Editline::CallbackEditNextLine);
 
     ::el_set (m_editline, EL_BIND, "^r", "em-inc-search-prev", NULL); // Cycle through backwards search, entering string
     ::el_set (m_editline, EL_BIND, "^w", "ed-delete-prev-word", NULL); // Delete previous word, behave like bash does.
     ::el_set (m_editline, EL_BIND, "\033[3~", "ed-delete-next-char", NULL); // Fix the delete key.
-    ::el_set (m_editline, EL_BIND, "\t", "lldb-complete", NULL); // Bind TAB to be autocompelte
+    ::el_set (m_editline, EL_BIND, "\t", "lldb-complete", NULL); // Bind TAB to be auto complete
     
     // Source $PWD/.editrc then $HOME/.editrc
     ::el_source (m_editline, NULL);
