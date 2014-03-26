@@ -67,16 +67,16 @@ namespace PBQP {
         return Idx;
       }
 
-      // If a swap is performed, returns the new EdgeId that must be
-      // updated, otherwise returns invalidEdgeId().
-      EdgeId removeAdjEdgeId(AdjEdgeIdx Idx) {
-        EdgeId EIdToUpdate = Graph::invalidEdgeId();
-        if (Idx < AdjEdgeIds.size() - 1) {
-          std::swap(AdjEdgeIds[Idx], AdjEdgeIds.back());
-          EIdToUpdate = AdjEdgeIds[Idx];
-        }
+      void removeAdjEdgeId(Graph &G, NodeId ThisNId, AdjEdgeIdx Idx) {
+        // Swap-and-pop for fast removal.
+        //   1) Update the adj index of the edge currently at back().
+        //   2) Swap Edge at Idx with back().
+        //   3) pop_back()
+        // If Idx == size() - 1 then the updateAdjEdgeIdx and swap are
+        // redundant, but both operations are cheap.
+        G.getEdge(AdjEdgeIds.back()).updateAdjEdgeIdx(ThisNId, Idx);
+        std::swap(AdjEdgeIds[Idx], AdjEdgeIds.back());
         AdjEdgeIds.pop_back();
-        return EIdToUpdate;
       }
 
       const AdjEdgeList& getAdjEdgeIds() const { return AdjEdgeIds; }
@@ -138,9 +138,7 @@ namespace PBQP {
         assert(ThisEdgeAdjIdxs[NIdx] != NodeEntry::getInvalidAdjEdgeIdx() &&
                "Edge not connected to NIds[NIdx].");
         NodeEntry &N = G.getNode(NIds[NIdx]);
-        EdgeId EIdToUpdate = N.removeAdjEdgeId(ThisEdgeAdjIdxs[NIdx]);
-        if (EIdToUpdate != Graph::invalidEdgeId())
-          G.getEdge(EIdToUpdate).updateAdjEdgeIdx(NIds[NIdx], ThisEdgeAdjIdxs[NIdx]);
+        N.removeAdjEdgeId(G, NIds[NIdx], ThisEdgeAdjIdxs[NIdx]);
         ThisEdgeAdjIdxs[NIdx] = NodeEntry::getInvalidAdjEdgeIdx();
       }
 
