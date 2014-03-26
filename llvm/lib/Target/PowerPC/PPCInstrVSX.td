@@ -658,20 +658,27 @@ let Uses = [RM] in {
   let isCommutable = 1 in
   def XXLAND : XX3Form<60, 130,
                        (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
-                       "xxland $XT, $XA, $XB", IIC_VecGeneral, []>;
+                       "xxland $XT, $XA, $XB", IIC_VecGeneral,
+                       [(set v4i32:$XT, (and v4i32:$XA, v4i32:$XB))]>;
   def XXLANDC : XX3Form<60, 138,
                         (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
-                        "xxlandc $XT, $XA, $XB", IIC_VecGeneral, []>;
+                        "xxlandc $XT, $XA, $XB", IIC_VecGeneral,
+                        [(set v4i32:$XT, (and v4i32:$XA,
+                                              (vnot_ppc v4i32:$XB)))]>;
   let isCommutable = 1 in {
   def XXLNOR : XX3Form<60, 162,
                        (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
-                       "xxlnor $XT, $XA, $XB", IIC_VecGeneral, []>;
+                       "xxlnor $XT, $XA, $XB", IIC_VecGeneral,
+                       [(set v4i32:$XT, (vnot_ppc (or v4i32:$XA,
+                                                   v4i32:$XB)))]>;
   def XXLOR : XX3Form<60, 146,
                       (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
-                      "xxlor $XT, $XA, $XB", IIC_VecGeneral, []>;
+                      "xxlor $XT, $XA, $XB", IIC_VecGeneral,
+                      [(set v4i32:$XT, (or v4i32:$XA, v4i32:$XB))]>;
   def XXLXOR : XX3Form<60, 154,
                        (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
-                       "xxlxor $XT, $XA, $XB", IIC_VecGeneral, []>;
+                       "xxlxor $XT, $XA, $XB", IIC_VecGeneral,
+                       [(set v4i32:$XT, (xor v4i32:$XA, v4i32:$XB))]>;
   } // isCommutable
 
   // Permutation Instructions
