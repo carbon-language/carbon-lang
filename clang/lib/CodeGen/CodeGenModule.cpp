@@ -217,7 +217,7 @@ void CodeGenModule::checkAliases() {
     StringRef MangledName = getMangledName(GD);
     llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
     llvm::GlobalAlias *Alias = cast<llvm::GlobalAlias>(Entry);
-    llvm::GlobalValue *GV = Alias->getAliasedGlobal();
+    llvm::GlobalValue *GV = Alias->resolveAliasedGlobal(/*stopOnWeak*/ false);
     if (!GV) {
       Error = true;
       getDiags().Report(AA->getLocation(), diag::err_cyclic_alias);
