@@ -236,10 +236,10 @@ void GlobalAlias::setAliasee(Constant *Aliasee) {
   setOperand(0, Aliasee);
 }
 
-GlobalValue *GlobalAlias::getAliasedGlobal() {
-  Constant *C = getAliasee();
-  if (C == 0) return 0;
-  
+static GlobalValue *getAliaseeGV(GlobalAlias *GA) {
+  Constant *C = GA->getAliasee();
+  assert(C && "Must alias something");
+
   if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
     return GV;
 
@@ -248,30 +248,23 @@ GlobalValue *GlobalAlias::getAliasedGlobal() {
           CE->getOpcode() == Instruction::AddrSpaceCast ||
           CE->getOpcode() == Instruction::GetElementPtr) &&
          "Unsupported aliasee");
-  
+
   return cast<GlobalValue>(CE->getOperand(0));
 }
 
-GlobalValue *GlobalAlias::resolveAliasedGlobal(bool stopOnWeak) {
+GlobalValue *GlobalAlias::getAliasedGlobal() {
   SmallPtrSet<GlobalValue*, 3> Visited;
 
-  // Check if we need to stop early.
-  if (stopOnWeak && mayBeOverridden())
-    return this;
+  GlobalAlias *GA = this;
 
-  GlobalValue *GV = getAliasedGlobal();
-  Visited.insert(GV);
-
-  // Iterate over aliasing chain, stopping on weak alias if necessary.
-  while (GlobalAlias *GA = dyn_cast<GlobalAlias>(GV)) {
-    if (stopOnWeak && GA->mayBeOverridden())
-      break;
-
-    GV = GA->getAliasedGlobal();
-
+  for (;;) {
+    GlobalValue *GV = getAliaseeGV(GA);
     if (!Visited.insert(GV))
       return 0;
-  }
 
-  return GV;
+    // Iterate over aliasing chain.
+    GA = dyn_cast<GlobalAlias>(GV);
+    if (!GA)
+      return GV;
+  }
 }

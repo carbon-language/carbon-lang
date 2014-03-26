@@ -277,7 +277,7 @@ getGlobalAddressWrapper(SDValue GA, const GlobalValue *GV,
   const GlobalValue *UnderlyingGV = GV;
   // If GV is an alias then use the aliasee to determine the wrapper type
   if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-    UnderlyingGV = GA->resolveAliasedGlobal();
+    UnderlyingGV = GA->getAliasedGlobal();
   if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(UnderlyingGV)) {
     if (  ( GVar->isConstant() &&
             UnderlyingGV->isLocalLinkage(GV->getLinkage()) )

@@ -8509,7 +8509,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
     // If GV is an alias then use the aliasee for determining
     // thread-localness.
     if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-      GV = GA->resolveAliasedGlobal(false);
+      GV = GA->getAliasedGlobal();
     SDLoc dl(GA);
     SDValue Chain = DAG.getEntryNode();
 
