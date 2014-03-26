@@ -133,7 +133,7 @@ typedef int *T;
 T __ptr32 wrong10; // expected-error {{'__ptr32' attribute only applies to pointer arguments}}
 
 typedef char *my_va_list;
-void __cdecl __va_start(my_va_list *ap, ...); // expected-note {{passing argument to parameter 'ap' here}}
+void __va_start(my_va_list *ap, ...); // expected-note {{passing argument to parameter 'ap' here}}
 void vmyprintf(const char *f, my_va_list ap);
 void myprintf(const char *f, ...) {
   my_va_list ap;
