@@ -10470,7 +10470,7 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
   Diag(VD->getLocation(), diag::warn_exit_time_destructor);
 
   // TODO: this should be re-enabled for static locals by !CXAAtExit
-  if (!VD->isStaticLocal())
+  if (!Destructor->isTrivial() && !VD->isStaticLocal())
     Diag(VD->getLocation(), diag::warn_global_destructor);
 }
 
