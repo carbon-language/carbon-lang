@@ -571,6 +571,12 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 
       addRegisterClass(MVT::v4f32, &PPC::VSRCRegClass);
       addRegisterClass(MVT::v2f64, &PPC::VSRCRegClass);
+
+      // VSX v2i64 only supports non-arithmetic operations.
+      setOperationAction(ISD::ADD, MVT::v2i64, Expand);
+      setOperationAction(ISD::SUB, MVT::v2i64, Expand);
+
+      addRegisterClass(MVT::v2i64, &PPC::VSRCRegClass);
     }
   }
 
@@ -2135,6 +2141,7 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
         case MVT::v4i32:
         case MVT::v4f32:
         case MVT::v2f64:
+        case MVT::v2i64:
           RC = &PPC::VRRCRegClass;
           break;
       }
@@ -2382,7 +2389,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     // Varargs or 64 bit Altivec parameters are padded to a 16 byte boundary.
     if (ObjectVT==MVT::v4f32 || ObjectVT==MVT::v4i32 ||
         ObjectVT==MVT::v8i16 || ObjectVT==MVT::v16i8 ||
-        ObjectVT==MVT::v2f64) {
+        ObjectVT==MVT::v2f64 || ObjectVT==MVT::v2i64) {
       if (isVarArg) {
         MinReservedArea = ((MinReservedArea+15)/16)*16;
         MinReservedArea += CalculateStackSlotSize(ObjectVT,
@@ -2540,6 +2547,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     case MVT::v8i16:
     case MVT::v16i8:
     case MVT::v2f64:
+    case MVT::v2i64:
       // Note that vector arguments in registers don't reserve stack space,
       // except in varargs functions.
       if (VR_idx != Num_VR_Regs) {
@@ -3003,7 +3011,7 @@ CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
     // Varargs Altivec parameters are padded to a 16 byte boundary.
     if (ArgVT==MVT::v4f32 || ArgVT==MVT::v4i32 ||
         ArgVT==MVT::v8i16 || ArgVT==MVT::v16i8 ||
-        ArgVT==MVT::v2f64) {
+        ArgVT==MVT::v2f64 || ArgVT==MVT::v2i64) {
       if (!isVarArg && !isPPC64) {
         // Non-varargs Altivec parameters go after all the non-Altivec
         // parameters; handle those later so we know how much padding we need.
@@ -4188,6 +4196,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     case MVT::v8i16:
     case MVT::v16i8:
     case MVT::v2f64:
+    case MVT::v2i64:
       if (isVarArg) {
         // These go aligned on the stack, or in the corresponding R registers
         // when within range.  The Darwin PPC ABI doc claims they also go in

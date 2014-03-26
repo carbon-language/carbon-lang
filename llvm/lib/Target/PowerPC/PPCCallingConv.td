@@ -36,7 +36,7 @@ def RetCC_PPC : CallingConv<[
   CCIfType<[f64], CCAssignToReg<[F1, F2, F3, F4]>>,
   
   // Vector types are always returned in V2.
-  CCIfType<[v16i8, v8i16, v4i32, v4f32, v2f64], CCAssignToReg<[V2]>>
+  CCIfType<[v16i8, v8i16, v4i32, v4f32, v2f64, v2i64], CCAssignToReg<[V2]>>
 ]>;
 
 
@@ -70,7 +70,7 @@ def RetCC_PPC64_ELF_FIS : CallingConv<[
   CCIfType<[i128], CCAssignToReg<[X3, X4, X5, X6]>>,
   CCIfType<[f32],  CCAssignToReg<[F1, F2]>>,
   CCIfType<[f64],  CCAssignToReg<[F1, F2, F3, F4]>>,
-  CCIfType<[v16i8, v8i16, v4i32, v4f32, v2f64], CCAssignToReg<[V2]>>
+  CCIfType<[v16i8, v8i16, v4i32, v4f32, v2f64, v2i64], CCAssignToReg<[V2]>>
 ]>;
 
 //===----------------------------------------------------------------------===//
@@ -104,7 +104,7 @@ def CC_PPC32_SVR4_Common : CallingConv<[
   CCIfType<[f32,f64], CCAssignToStack<8, 8>>,  
 
   // Vectors get 16-byte stack slots that are 16-byte aligned.
-  CCIfType<[v16i8, v8i16, v4i32, v4f32, v2f64], CCAssignToStack<16, 16>>
+  CCIfType<[v16i8, v8i16, v4i32, v4f32, v2f64, v2i64], CCAssignToStack<16, 16>>
 ]>;
 
 // This calling convention puts vector arguments always on the stack. It is used
@@ -118,7 +118,7 @@ def CC_PPC32_SVR4_VarArg : CallingConv<[
 // put vector arguments in vector registers before putting them on the stack.
 def CC_PPC32_SVR4 : CallingConv<[
   // The first 12 Vector arguments are passed in AltiVec registers.
-  CCIfType<[v16i8, v8i16, v4i32, v4f32, v2f64],
+  CCIfType<[v16i8, v8i16, v4i32, v4f32, v2f64, v2i64],
            CCAssignToReg<[V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13]>>,
            
   CCDelegateTo<CC_PPC32_SVR4_Common>

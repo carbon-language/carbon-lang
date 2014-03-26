@@ -761,6 +761,20 @@ def : Pat<(v8i16 (bitconvert v2f64:$A)),
 def : Pat<(v16i8 (bitconvert v2f64:$A)),
           (COPY_TO_REGCLASS $A, VRRC)>;
 
+def : Pat<(v2i64 (bitconvert v4i32:$A)),
+          (COPY_TO_REGCLASS $A, VSRC)>;
+def : Pat<(v2i64 (bitconvert v8i16:$A)),
+          (COPY_TO_REGCLASS $A, VSRC)>;
+def : Pat<(v2i64 (bitconvert v16i8:$A)),
+          (COPY_TO_REGCLASS $A, VSRC)>;
+
+def : Pat<(v4i32 (bitconvert v2i64:$A)),
+          (COPY_TO_REGCLASS $A, VRRC)>;
+def : Pat<(v8i16 (bitconvert v2i64:$A)),
+          (COPY_TO_REGCLASS $A, VRRC)>;
+def : Pat<(v16i8 (bitconvert v2i64:$A)),
+          (COPY_TO_REGCLASS $A, VRRC)>;
+
 } // AddedComplexity
 } // HasVSX
 

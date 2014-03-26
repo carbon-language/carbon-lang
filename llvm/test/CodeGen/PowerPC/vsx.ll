@@ -271,7 +271,28 @@ entry:
   ret <2 x double> %v
 
 ; CHECK-LABEL: @test25
-; FIXME: This currently is scalarized because v2i64 is not a legal type.
+; CHECK: xvcmpeqdp [[V1:[0-9]+]], 36, 37
+; CHECK: xxsel 34, 35, 34, [[V1]]
+; CHECK: blr
+}
+
+define <2 x i64> @test26(<2 x i64> %a, <2 x i64> %b) {
+  %v = add <2 x i64> %a, %b
+  ret <2 x i64> %v
+
+; CHECK-LABEL: @test26
+; FIXME: The code quality here is not good; just make sure we do something for now.
+; CHECK: add
+; CHECK: add
+; CHECK: blr
+}
+
+define <2 x i64> @test27(<2 x i64> %a, <2 x i64> %b) {
+  %v = and <2 x i64> %a, %b
+  ret <2 x i64> %v
+
+; CHECK-LABEL: @test27
+; CHECK: xxland 34, 34, 35
 ; CHECK: blr
 }
 

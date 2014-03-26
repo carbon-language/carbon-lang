@@ -235,16 +235,16 @@ def VRRC : RegisterClass<"PPC", [v16i8,v8i16,v4i32,v4f32], 128,
 
 // VSX register classes (the allocation order mirrors that of the corresponding
 // subregister classes).
-def VSLRC : RegisterClass<"PPC", [v4i32,v4f32,f64,v2f64], 128,
+def VSLRC : RegisterClass<"PPC", [v4i32,v4f32,f64,v2f64,v2i64], 128,
                           (add (sequence "VSL%u", 0, 13),
                                (sequence "VSL%u", 31, 14))>;
-def VSHRC : RegisterClass<"PPC", [v4i32,v4f32,f64,v2f64], 128,
+def VSHRC : RegisterClass<"PPC", [v4i32,v4f32,f64,v2f64,v2i64], 128,
                           (add VSH2, VSH3, VSH4, VSH5, VSH0, VSH1, VSH6, VSH7,
 			       VSH8, VSH9, VSH10, VSH11, VSH12, VSH13, VSH14,
                                VSH15, VSH16, VSH17, VSH18, VSH19, VSH31, VSH30,
                                VSH29, VSH28, VSH27, VSH26, VSH25, VSH24, VSH23,
                                VSH22, VSH21, VSH20)>;
-def VSRC  : RegisterClass<"PPC", [v4i32,v4f32,f64,v2f64], 128,
+def VSRC  : RegisterClass<"PPC", [v4i32,v4f32,f64,v2f64,v2i64], 128,
                           (add VSLRC, VSHRC)>;
 
 def CRBITRC : RegisterClass<"PPC", [i1], 32,
