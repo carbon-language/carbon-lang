@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
+; RUN: llc -mtriple=x86_64-apple-darwin -filetype=obj %s -o %t
 ; RUN: llvm-dwarfdump -debug-dump=line %t | FileCheck %s
 
 ; Check that the line table starts at 7, not 4, but that the first
