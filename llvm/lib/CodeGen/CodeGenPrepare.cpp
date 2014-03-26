@@ -2438,7 +2438,14 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
                  cast<IntegerType>(V->getType())->getBitWidth()) {
         V = Builder.CreateTrunc(V, IntPtrTy, "sunkaddr");
       } else {
-        V = Builder.CreateSExt(V, IntPtrTy, "sunkaddr");
+        // It is only safe to sign extend the BaseReg if we know that the math
+        // required to create it did not overflow before we extend it. Since
+        // the original IR value was tossed in favor of a constant back when
+        // the AddrMode was created we need to bail out gracefully if widths
+        // do not match instead of extending it.
+        if (Result != AddrMode.BaseReg)
+            cast<Instruction>(Result)->eraseFromParent();
+        return false;
       }
       if (AddrMode.Scale != 1)
         V = Builder.CreateMul(V, ConstantInt::get(IntPtrTy, AddrMode.Scale),
