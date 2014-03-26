@@ -422,6 +422,7 @@ static __inline__
 __int64 _InterlockedExchange64(__int64 volatile *_Target, __int64 _Value);
 static __inline__
 __int64 _InterlockedExchangeAdd64(__int64 volatile *_Addend, __int64 _Value);
+static __inline__
 void *_InterlockedExchangePointer(void *volatile *_Target, void *_Value);
 static __inline__
 __int64 _InterlockedIncrement64(__int64 volatile *_Addend);
@@ -792,6 +793,11 @@ _InterlockedExchange(long volatile *_Target, long _Value) {
 #ifdef __x86_64__
 static __inline__ __int64 __attribute__((__always_inline__, __nodebug__))
 _InterlockedExchange64(__int64 volatile *_Target, __int64 _Value) {
+  __atomic_exchange(_Target, &_Value, &_Value, 0);
+  return _Value;
+}
+static __inline__ void *__attribute__((__always_inline__, __nodebug__))
+_InterlockedExchangePointer(void *volatile *_Target, void *_Value) {
   __atomic_exchange(_Target, &_Value, &_Value, 0);
   return _Value;
 }
