@@ -162,7 +162,7 @@ void CodeGenPGO::setFuncName(llvm::Function *Fn) {
     RawFuncName = RawFuncName.substr(1);
 
   if (!Fn->hasLocalLinkage()) {
-    PrefixedFuncName = new std::string(RawFuncName);
+    PrefixedFuncName.reset(new std::string(RawFuncName));
     return;
   }
 
@@ -170,7 +170,7 @@ void CodeGenPGO::setFuncName(llvm::Function *Fn) {
   // Do not include the full path in the file name since there's no guarantee
   // that it will stay the same, e.g., if the files are checked out from
   // version control in different locations.
-  PrefixedFuncName = new std::string(CGM.getCodeGenOpts().MainFileName);
+  PrefixedFuncName.reset(new std::string(CGM.getCodeGenOpts().MainFileName));
   if (PrefixedFuncName->empty())
     PrefixedFuncName->assign("<unknown>");
   PrefixedFuncName->append(":");
@@ -849,7 +849,7 @@ void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
 }
 
 void CodeGenPGO::mapRegionCounters(const Decl *D) {
-  RegionCounterMap = new llvm::DenseMap<const Stmt*, unsigned>();
+  RegionCounterMap.reset(new llvm::DenseMap<const Stmt *, unsigned>);
   MapRegionCounters Walker(*RegionCounterMap);
   if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
     Walker.VisitFunctionDecl(FD);
@@ -863,7 +863,7 @@ void CodeGenPGO::mapRegionCounters(const Decl *D) {
 }
 
 void CodeGenPGO::computeRegionCounts(const Decl *D) {
-  StmtCountMap = new llvm::DenseMap<const Stmt*, uint64_t>();
+  StmtCountMap.reset(new llvm::DenseMap<const Stmt *, uint64_t>);
   ComputeRegionCounts Walker(*StmtCountMap, *this);
   if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D))
     Walker.VisitFunctionDecl(FD);
@@ -917,22 +917,17 @@ void CodeGenPGO::loadRegionCounts(PGOProfileData *PGOData) {
   // counters does not match. This could be tightened down in the future to
   // ignore counts when the input changes in various ways, e.g., by comparing a
   // hash value based on some characteristics of the input.
-  RegionCounts = new std::vector<uint64_t>();
+  RegionCounts.reset(new std::vector<uint64_t>);
   uint64_t Hash;
   if (PGOData->getFunctionCounts(getFuncName(), Hash, *RegionCounts) ||
-      Hash != FunctionHash || RegionCounts->size() != NumRegionCounters) {
-    delete RegionCounts;
-    RegionCounts = 0;
-  }
+      Hash != FunctionHash || RegionCounts->size() != NumRegionCounters)
+    RegionCounts.reset();
 }
 
 void CodeGenPGO::destroyRegionCounters() {
-  if (RegionCounterMap != 0)
-    delete RegionCounterMap;
-  if (StmtCountMap != 0)
-    delete StmtCountMap;
-  if (RegionCounts != 0)
-    delete RegionCounts;
+  RegionCounterMap.reset();
+  StmtCountMap.reset();
+  RegionCounts.reset();
 }
 
 /// \brief Calculate what to divide by to scale weights.
