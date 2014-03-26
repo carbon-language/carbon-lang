@@ -1019,12 +1019,12 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   }
 
   // Add the path prefixes which are implicitly treated as being system headers.
-  for (arg_iterator I = Args.filtered_begin(OPT_isystem_prefix,
-                                            OPT_ino_system_prefix),
+  for (arg_iterator I = Args.filtered_begin(OPT_system_header_prefix,
+                                            OPT_no_system_header_prefix),
                     E = Args.filtered_end();
        I != E; ++I)
-    Opts.AddSystemHeaderPrefix((*I)->getValue(),
-                               (*I)->getOption().matches(OPT_isystem_prefix));
+    Opts.AddSystemHeaderPrefix(
+        (*I)->getValue(), (*I)->getOption().matches(OPT_system_header_prefix));
 
   for (arg_iterator I = Args.filtered_begin(OPT_ivfsoverlay),
        E = Args.filtered_end(); I != E; ++I)

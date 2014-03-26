@@ -1297,6 +1297,16 @@ def stdlib_EQ : Joined<["-", "--"], "stdlib=">, Flags<[CC1Option]>,
   HelpText<"C++ standard library to use">;
 def sub__library : JoinedOrSeparate<["-"], "sub_library">;
 def sub__umbrella : JoinedOrSeparate<["-"], "sub_umbrella">;
+def system_header_prefix : Joined<["--"], "system-header-prefix=">,
+  Group<clang_i_Group>, Flags<[CC1Option]>, MetaVarName<"<prefix>">,
+  HelpText<"Treat all #include paths starting with <prefix> as including a "
+           "system header.">;
+def : Separate<["--"], "system-header-prefix">, Alias<system_header_prefix>;
+def no_system_header_prefix : Joined<["--"], "no-system-header-prefix=">,
+  Group<clang_i_Group>, Flags<[CC1Option]>, MetaVarName<"<prefix>">,
+  HelpText<"Treat all #include paths starting with <prefix> as not including a "
+           "system header.">;
+def : Separate<["--"], "no-system-header-prefix">, Alias<no_system_header_prefix>;
 def s : Flag<["-"], "s">;
 def target : Joined<["--"], "target=">, Flags<[DriverOption]>,
   HelpText<"Generate code for the given target">;

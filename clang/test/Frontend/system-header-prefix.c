@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -isystem-prefix libs/ -ino-system-prefix libs/mylib/ -I%S/Inputs/SystemHeaderPrefix -Wundef -E %s 2>&1 | FileCheck %s
+// RUN: %clang --system-header-prefix=libs/ --no-system-header-prefix=libs/mylib/ -I%S/Inputs/SystemHeaderPrefix -Wundef -E %s 2>&1 | FileCheck %s
+// RUN: %clang --system-header-prefix libs/ --no-system-header-prefix libs/mylib/ -I%S/Inputs/SystemHeaderPrefix -Wundef -E %s 2>&1 | FileCheck %s
 
 #include "src/all.h"
 
