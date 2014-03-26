@@ -195,6 +195,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   const MCExpr *evaluateRelocExpr(const MCExpr *Expr, StringRef RelocStr);
 
   bool isEvaluated(const MCExpr *Expr);
+  bool parseSetFeature(uint64_t Feature);
   bool parseDirectiveSet();
   bool parseDirectiveOption();
 
@@ -204,7 +205,6 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetNoMacroDirective();
   bool parseSetReorderDirective();
   bool parseSetNoReorderDirective();
-  bool parseSetMips16Directive();
   bool parseSetNoMips16Directive();
 
   bool parseSetAssignment();
@@ -2432,18 +2432,6 @@ bool MipsAsmParser::parseSetNoMacroDirective() {
   return false;
 }
 
-bool MipsAsmParser::parseSetMips16Directive() {
-  Parser.Lex();
-  // If this is not the end of the statement, report an error.
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    reportParseError("unexpected token in statement");
-    return false;
-  }
-  getTargetStreamer().emitDirectiveSetMips16();
-  Parser.Lex(); // Consume the EndOfStatement.
-  return false;
-}
-
 bool MipsAsmParser::parseSetNoMips16Directive() {
   Parser.Lex();
   // If this is not the end of the statement, report an error.
@@ -2480,6 +2468,31 @@ bool MipsAsmParser::parseSetAssignment() {
   return false;
 }
 
+bool MipsAsmParser::parseSetFeature(uint64_t Feature) {
+  Parser.Lex();
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return reportParseError("unexpected token in .set directive");
+
+  switch(Feature) {
+    default: llvm_unreachable("Unimplemented feature");
+    case Mips::FeatureDSP:
+      setFeatureBits(Mips::FeatureDSP, "dsp");
+      getTargetStreamer().emitDirectiveSetDsp();
+    break;
+    case Mips::FeatureMicroMips:
+      getTargetStreamer().emitDirectiveSetMicroMips();
+    break;
+    case Mips::FeatureMips16:
+      getTargetStreamer().emitDirectiveSetMips16();
+    break;
+    case Mips::FeatureMips32r2:
+      setFeatureBits(Mips::FeatureMips32r2, "mips32r2");
+      getTargetStreamer().emitDirectiveSetMips32R2();
+    break;
+  }
+  return false;
+}
+
 bool MipsAsmParser::parseDirectiveSet() {
 
   // Get the next token.
@@ -2498,7 +2511,7 @@ bool MipsAsmParser::parseDirectiveSet() {
   } else if (Tok.getString() == "nomacro") {
     return parseSetNoMacroDirective();
   } else if (Tok.getString() == "mips16") {
-    return parseSetMips16Directive();
+    return parseSetFeature(Mips::FeatureMips16);
   } else if (Tok.getString() == "nomips16") {
     return parseSetNoMips16Directive();
   } else if (Tok.getString() == "nomicromips") {
@@ -2506,23 +2519,11 @@ bool MipsAsmParser::parseDirectiveSet() {
     Parser.eatToEndOfStatement();
     return false;
   } else if (Tok.getString() == "micromips") {
-    getTargetStreamer().emitDirectiveSetMicroMips();
-    Parser.eatToEndOfStatement();
-    return false;
+      return parseSetFeature(Mips::FeatureMicroMips);
   } else if (Tok.getString() == "mips32r2") {
-    Parser.Lex(); // Eat token.
-    if (getLexer().isNot(AsmToken::EndOfStatement))
-      return reportParseError("unexpected token in .set directive");
-    setFeatureBits(Mips::FeatureMips32r2,"mips32r2");
-    getTargetStreamer().emitDirectiveSetMips32R2();
-    return false;
+      return parseSetFeature(Mips::FeatureMips32r2);
   } else if (Tok.getString() == "dsp") {
-    Parser.Lex(); // Eat token.
-    if (getLexer().isNot(AsmToken::EndOfStatement))
-      return reportParseError("unexpected token in .set directive");
-    setFeatureBits(Mips::FeatureDSP, "dsp");
-    getTargetStreamer().emitDirectiveSetDsp();
-    return false;
+      return parseSetFeature(Mips::FeatureDSP);
   } else {
     // It is just an identifier, look for an assignment.
     parseSetAssignment();
