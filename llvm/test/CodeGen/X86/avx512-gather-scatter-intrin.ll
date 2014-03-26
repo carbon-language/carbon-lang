@@ -223,3 +223,81 @@ define void @gather_qpi(<8 x i64> %ind, i8* %base, i8* %stbuf)  {
   call void @llvm.x86.avx512.scatter.qpi.512 (i8* %stbuf, <8 x i64>%ind2, <8 x i32> %x, i32 4)
   ret void
 }
+
+;CHECK-LABEL: gather_mask_dpd_execdomain
+;CHECK: vgatherdpd
+;CHECK: vmovapd
+;CHECK: ret
+define void @gather_mask_dpd_execdomain(<8 x i32> %ind, <8 x double> %src, i8 %mask, i8* %base, <8 x double>* %stbuf)  {
+  %x = call <8 x double> @llvm.x86.avx512.gather.dpd.mask.512 (<8 x double> %src, i8 %mask, <8 x i32>%ind, i8* %base, i32 4)
+  store <8 x double> %x, <8 x double>* %stbuf
+  ret void
+}
+
+;CHECK-LABEL: gather_mask_qpd_execdomain
+;CHECK: vgatherqpd
+;CHECK: vmovapd
+;CHECK: ret
+define void @gather_mask_qpd_execdomain(<8 x i64> %ind, <8 x double> %src, i8 %mask, i8* %base, <8 x double>* %stbuf)  {
+  %x = call <8 x double> @llvm.x86.avx512.gather.qpd.mask.512 (<8 x double> %src, i8 %mask, <8 x i64>%ind, i8* %base, i32 4)
+  store <8 x double> %x, <8 x double>* %stbuf
+  ret void
+}
+
+;CHECK-LABEL: gather_mask_dps_execdomain
+;CHECK: vgatherdps
+;CHECK: vmovaps 
+;CHECK: ret
+define <16 x float> @gather_mask_dps_execdomain(<16 x i32> %ind, <16 x float> %src, i16 %mask, i8* %base)  {
+  %res = call <16 x float> @llvm.x86.avx512.gather.dps.mask.512 (<16 x float> %src, i16 %mask, <16 x i32>%ind, i8* %base, i32 4)
+  ret <16 x float> %res;
+}
+
+;CHECK-LABEL: gather_mask_qps_execdomain
+;CHECK: vgatherqps
+;CHECK: vmovaps
+;CHECK: ret
+define <8 x float> @gather_mask_qps_execdomain(<8 x i64> %ind, <8 x float> %src, i8 %mask, i8* %base)  {
+  %res = call <8 x float> @llvm.x86.avx512.gather.qps.mask.512 (<8 x float> %src, i8 %mask, <8 x i64>%ind, i8* %base, i32 4)
+  ret <8 x float> %res;
+}
+
+;CHECK-LABEL: scatter_mask_dpd_execdomain
+;CHECK: vmovapd
+;CHECK: vscatterdpd
+;CHECK: ret
+define void @scatter_mask_dpd_execdomain(<8 x i32> %ind, <8 x double>* %src, i8 %mask, i8* %base, i8* %stbuf)  {
+  %x = load <8 x double>* %src, align 64 
+  call void @llvm.x86.avx512.scatter.dpd.mask.512 (i8* %stbuf, i8 %mask, <8 x i32>%ind, <8 x double> %x, i32 4)
+  ret void
+}
+
+;CHECK-LABEL: scatter_mask_qpd_execdomain
+;CHECK: vmovapd
+;CHECK: vscatterqpd
+;CHECK: ret
+define void @scatter_mask_qpd_execdomain(<8 x i64> %ind, <8 x double>* %src, i8 %mask, i8* %base, i8* %stbuf)  {
+  %x = load <8 x double>* %src, align 64
+  call void @llvm.x86.avx512.scatter.qpd.mask.512 (i8* %stbuf, i8 %mask, <8 x i64>%ind, <8 x double> %x, i32 4)
+  ret void
+}
+
+;CHECK-LABEL: scatter_mask_dps_execdomain
+;CHECK: vmovaps
+;CHECK: vscatterdps
+;CHECK: ret
+define void @scatter_mask_dps_execdomain(<16 x i32> %ind, <16 x float>* %src, i16 %mask, i8* %base, i8* %stbuf)  {
+  %x = load <16 x float>* %src, align 64
+  call void @llvm.x86.avx512.scatter.dps.mask.512 (i8* %stbuf, i16 %mask, <16 x i32>%ind, <16 x float> %x, i32 4)
+  ret void
+}
+
+;CHECK-LABEL: scatter_mask_qps_execdomain
+;CHECK: vmovaps
+;CHECK: vscatterqps
+;CHECK: ret
+define void @scatter_mask_qps_execdomain(<8 x i64> %ind, <8 x float>* %src, i8 %mask, i8* %base, i8* %stbuf)  {
+  %x = load <8 x float>* %src, align 32 
+  call void @llvm.x86.avx512.scatter.qps.mask.512 (i8* %stbuf, i8 %mask, <8 x i64>%ind, <8 x float> %x, i32 4)
+  ret void
+}

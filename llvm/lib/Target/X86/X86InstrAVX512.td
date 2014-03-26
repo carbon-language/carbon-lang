@@ -3809,15 +3809,20 @@ let mayLoad = 1,
             " \t{$src2, ${dst} {${mask}}|${dst} {${mask}}, $src2}"),
             []>, EVEX, EVEX_K;
 }
+
+let ExeDomain = SSEPackedDouble in {
 defm VGATHERDPDZ : avx512_gather<0x92, "vgatherdpd", VK8WM, VR512, vy64xmem>,
                                  EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
-defm VGATHERDPSZ : avx512_gather<0x92, "vgatherdps", VK16WM, VR512, vz32mem>,
-                                 EVEX_V512, EVEX_CD8<32, CD8VT1>;
-
 defm VGATHERQPDZ : avx512_gather<0x93, "vgatherqpd", VK8WM, VR512, vz64mem>,
                                  EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+}
+
+let ExeDomain = SSEPackedSingle in {
+defm VGATHERDPSZ : avx512_gather<0x92, "vgatherdps", VK16WM, VR512, vz32mem>,
+                                 EVEX_V512, EVEX_CD8<32, CD8VT1>;
 defm VGATHERQPSZ : avx512_gather<0x93, "vgatherqps", VK8WM, VR256X, vz64mem>,
                                  EVEX_V512, EVEX_CD8<32, CD8VT1>;
+}
   
 defm VPGATHERDQZ : avx512_gather<0x90, "vpgatherdq", VK8WM, VR512,  vy64xmem>,
                                  EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
@@ -3839,16 +3844,20 @@ let mayStore = 1, Constraints = "$mask = $mask_wb" in
             []>, EVEX, EVEX_K;
 }
 
+let ExeDomain = SSEPackedDouble in {
 defm VSCATTERDPDZ : avx512_scatter<0xA2, "vscatterdpd", VK8WM, VR512, vy64xmem>,
                                    EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
-defm VSCATTERDPSZ : avx512_scatter<0xA2, "vscatterdps", VK16WM, VR512, vz32mem>,
-                                   EVEX_V512, EVEX_CD8<32, CD8VT1>;
-
 defm VSCATTERQPDZ : avx512_scatter<0xA3, "vscatterqpd", VK8WM, VR512, vz64mem>,
                                    EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+}
+
+let ExeDomain = SSEPackedSingle in {
+defm VSCATTERDPSZ : avx512_scatter<0xA2, "vscatterdps", VK16WM, VR512, vz32mem>,
+                                   EVEX_V512, EVEX_CD8<32, CD8VT1>;
 defm VSCATTERQPSZ : avx512_scatter<0xA3, "vscatterqps", VK8WM, VR256X, vz64mem>,
                                    EVEX_V512, EVEX_CD8<32, CD8VT1>;
-  
+}
+
 defm VPSCATTERDQZ : avx512_scatter<0xA0, "vpscatterdq", VK8WM, VR512, vy64xmem>,
                                    EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
 defm VPSCATTERDDZ : avx512_scatter<0xA0, "vpscatterdd", VK16WM, VR512, vz32mem>,
