@@ -129,7 +129,7 @@ TLSModel::Model TargetMachine::getTLSModel(const GlobalValue *GV) const {
   // If GV is an alias then use the aliasee for determining
   // thread-localness.
   if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-    GV = GA->getAliasedGlobal();
+    GV = GA->resolveAliasedGlobal(false);
   const GlobalVariable *Var = cast<GlobalVariable>(GV);
 
   bool isLocal = Var->hasLocalLinkage();

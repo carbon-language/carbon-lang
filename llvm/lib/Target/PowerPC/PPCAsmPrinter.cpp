@@ -381,8 +381,8 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     if (MO.isGlobal()) {
       const GlobalValue *GValue = MO.getGlobal();
       const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
-      const GlobalValue *RealGValue =
-          GAlias ? GAlias->getAliasedGlobal() : GValue;
+      const GlobalValue *RealGValue = GAlias ?
+        GAlias->resolveAliasedGlobal(false) : GValue;
       MOSymbol = getSymbol(RealGValue);
       const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
       IsExternal = GVar && !GVar->hasInitializer();
@@ -428,8 +428,8 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     else if (MO.isGlobal()) {
       const GlobalValue *GValue = MO.getGlobal();
       const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
-      const GlobalValue *RealGValue =
-          GAlias ? GAlias->getAliasedGlobal() : GValue;
+      const GlobalValue *RealGValue = GAlias ?
+        GAlias->resolveAliasedGlobal(false) : GValue;
       MOSymbol = getSymbol(RealGValue);
       const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
     
@@ -463,8 +463,8 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     if (MO.isGlobal()) {
       const GlobalValue *GValue = MO.getGlobal();
       const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
-      const GlobalValue *RealGValue =
-          GAlias ? GAlias->getAliasedGlobal() : GValue;
+      const GlobalValue *RealGValue = GAlias ?
+        GAlias->resolveAliasedGlobal(false) : GValue;
       MOSymbol = getSymbol(RealGValue);
       const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
       IsExternal = GVar && !GVar->hasInitializer();

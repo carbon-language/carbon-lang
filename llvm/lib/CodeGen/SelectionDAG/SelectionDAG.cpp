@@ -1172,7 +1172,7 @@ SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV, SDLoc DL,
   if (!GVar) {
     // If GV is an alias then use the aliasee for determining thread-localness.
     if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
-      GVar = dyn_cast_or_null<GlobalVariable>(GA->getAliasedGlobal());
+      GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal(false));
   }
 
   unsigned Opc;

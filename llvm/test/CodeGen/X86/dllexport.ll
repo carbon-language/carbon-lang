@@ -80,7 +80,7 @@ define weak_odr dllexport void @weak1() {
 @alias2 = dllexport alias void()* @f1
 
 ; CHECK: .globl _alias3
-; CHECK: _alias3 = _notExported
+; CHECK: _alias3 = _alias
 @alias3 = dllexport alias void()* @alias
 
 ; CHECK: .weak _weak_alias

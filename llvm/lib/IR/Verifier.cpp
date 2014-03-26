@@ -502,14 +502,10 @@ void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
     }
   }
   Assert1(!GV->isDeclaration(), "Alias must point to a definition", &GA);
-  if (const GlobalAlias *GAAliasee = dyn_cast<GlobalAlias>(GV)) {
-    Assert1(!GAAliasee->mayBeOverridden(), "Alias cannot point to a weak alias",
-            &GA);
-  }
 
-  const GlobalValue *AG = GA.getAliasedGlobal();
-  Assert1(AG, "Aliasing chain should end with function or global variable",
-          &GA);
+  const GlobalValue* Resolved = GA.resolveAliasedGlobal(/*stopOnWeak*/ false);
+  Assert1(Resolved,
+          "Aliasing chain should end with function or global variable", &GA);
 
   visitGlobalValue(GA);
 }

@@ -363,7 +363,7 @@ bool X86FastISel::handleConstantAddresses(const Value *V, X86AddressMode &AM) {
     // it works...).
     if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
       if (const GlobalVariable *GVar =
-              dyn_cast_or_null<GlobalVariable>(GA->getAliasedGlobal()))
+            dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal(false)))
         if (GVar->isThreadLocal())
           return false;
 

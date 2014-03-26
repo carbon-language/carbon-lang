@@ -681,10 +681,6 @@ the aliasee.
 
 The aliasee must be a definition.
 
-Aliases are not allowed to point to aliases with linkages that can be
-overridden. Since they are only a second name, the possibility of the
-intermediate alias being overridden cannot be represented in an object file.
-
 .. _namedmetadatastructure:
 
 Named Metadata

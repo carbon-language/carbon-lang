@@ -14,7 +14,7 @@
 define i32 @foo_f() {
   ret i32 0
 }
-@bar_f = alias weak_odr %FunTy* @foo_f
+@bar_f = alias weak %FunTy* @foo_f
 @bar_ff = alias i32()* @bar_f
 
 @bar_i = alias internal i32* @bar
