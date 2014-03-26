@@ -612,13 +612,15 @@ void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
   MCSymbolData &Data =
     Layout.getAssembler().getSymbolData(OrigData.getSymbol().AliasedSymbol());
 
-  bool IsReserved = Data.isCommon() || Data.getSymbol().isAbsolute() ||
-    Data.getSymbol().isVariable();
+  const MCSymbol *Base = getBaseSymbol(Layout, OrigData.getSymbol());
+
+  // This has to be in sync with when computeSymbolTable uses SHN_ABS or
+  // SHN_COMMON.
+  bool IsReserved = !Base || OrigData.isCommon();
 
   // Binding and Type share the same byte as upper and lower nibbles
   uint8_t Binding = MCELF::GetBinding(OrigData);
   uint8_t Type = MCELF::GetType(OrigData);
-  const MCSymbol *Base = getBaseSymbol(Layout, OrigData.getSymbol());
   if (Base) {
     MCSymbolData BaseSD = Layout.getAssembler().getSymbolData(*Base);
     Type = mergeTypeForSet(Type, MCELF::GetType(BaseSD));

@@ -10,8 +10,28 @@
 // Test that we don't create a symbol for the symtab_shndx section.
 // SYMBOLS-NOT: symtab_shndx
 
-// Test that this file has one section too many.
 
+// Test that both a and b show up in the correct section.
+// SYMBOLS:         Name: a (1)
+// SYMBOLS-NEXT:    Value: 0x0
+// SYMBOLS-NEXT:    Size: 0
+// SYMBOLS-NEXT:    Binding: Local (0x0)
+// SYMBOLS-NEXT:    Type: None (0x0)
+// SYMBOLS-NEXT:    Other: 0
+// SYMBOLS-NEXT:    Section: last (0xFF00)
+// SYMBOLS-NEXT:  }
+// SYMBOLS-NEXT:  Symbol {
+// SYMBOLS-NEXT:    Name: b (3)
+// SYMBOLS-NEXT:    Value: 0x1
+// SYMBOLS-NEXT:    Size: 0
+// SYMBOLS-NEXT:    Binding: Local (0x0)
+// SYMBOLS-NEXT:    Type: None (0x0)
+// SYMBOLS-NEXT:    Other: 0
+// SYMBOLS-NEXT:    Section: last (0xFF00)
+// SYMBOLS-NEXT:  }
+
+
+// Test that this file has one section too many.
 // SYMBOLS:         Name: last (0)
 // SYMBOLS-NEXT:    Value: 0x0
 // SYMBOLS-NEXT:    Size: 0
@@ -109,3 +129,5 @@ gen_sections8 l
 gen_sections4 m
 
 .section last
+a:
+b = a + 1
