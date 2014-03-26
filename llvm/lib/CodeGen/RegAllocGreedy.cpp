@@ -2122,6 +2122,11 @@ unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
         CSRFirstUse = true;
 
     BlockFrequency CSRCost(CSRFirstTimeCost);
+    // Using a CSR for the first time has a cost because it causes push|pop
+    // to be added to prologue|epilogue. Splitting a cold section of the live
+    // range can have lower cost than using the CSR for the first time;
+    // Spilling a live range in the cold path can have lower cost than using
+    // the CSR for the first time.
     if (getStage(VirtReg) == RS_Spill && CSRFirstUse && NewVRegs.empty() &&
         CSRFirstTimeCost > 0 && VirtReg.isSpillable()) {
       // We choose spill over using the CSR for the first time if the spill cost
