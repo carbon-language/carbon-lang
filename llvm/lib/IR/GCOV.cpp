@@ -308,6 +308,11 @@ void GCOVFunction::dump() const {
 /// collectLineCounts - Collect line counts. This must be used after
 /// reading .gcno and .gcda files.
 void GCOVFunction::collectLineCounts(FileInfo &FI) {
+  // If the line number is zero, this is a function that doesn't actually appear
+  // in the source file, so there isn't anything we can do with it.
+  if (LineNumber == 0)
+    return;
+
   for (SmallVectorImpl<GCOVBlock *>::iterator I = Blocks.begin(),
          E = Blocks.end(); I != E; ++I)
     (*I)->collectLineCounts(FI);
