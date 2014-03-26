@@ -6952,32 +6952,25 @@ Syntax:
 Overview:
 """""""""
 
-The '``llvm.clear_cache``' intrinsic provides access to the systemcall
-that flushes the cache at the range specified. Some targets need this
-to specifically flush the instruction cache when executable data changes
-in memory (self-modifying code). Other targets have unified intruction
-and data cache, so they don't need any calls.
+The '``llvm.clear_cache``' intrinsic ensures visibility of modifications
+in the specified range to the execution unit of the processor. On
+targets with non-unified instruction and data cache, the implementation
+flushes the instruction cache.
 
 Semantics:
 """"""""""
 
-When directly supported, this intrinsic will either return a call to
-the appropriate cache clearing system call (usually ``__clear_cache``)
-when the caches are not unified (ARM, Mips) or just remove the call
-altogether when they are (ex. x86_64). Some targets can lower these
-directly into special instructions, if they have it.
+On platforms with coherent instruction and data caches (e.g. x86), this
+intrinsic is a nop. On platforms with non-coherent instruction and data
+cache (e.g. ARM, MIPS), the intrinsic is lowered either to appropiate
+instructions or a system call, if cache flushing requires special
+privileges.
 
-The default behaviour is to emit a call to ``__clear_cache``, so in
-case a target doesn't support it, the user gets a linker error rather
-than a compiler internal error. It also provides a work around to
-the user (implement an empty function called ``__clear_cache``) while
-LLVM doesn't implement it in the target's back-end.
+The default behavior is to emit a call to ``__clear_cache'' from the run
+time library.
 
-Please note that the caller is responsible for ensuring the cache
-is actually cleared. This is most important in targets that don't
-need to flush the cache directly (ex. x86_64) and could potentially
-still execute old instructions while the cache is not cleared. LLVM
-will *not* insert nops or busy-wait sequences.
+This instrinsic does *not* empty the instruction pipeline. Modifications
+of the current function are outside the scope of the intrinsic.
 
 Standard C Library Intrinsics
 -----------------------------
