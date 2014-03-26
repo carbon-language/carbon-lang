@@ -426,6 +426,7 @@ class ArithLogicR<string opstr, RegisterOperand RO, bit isComm = 0,
          [(set RO:$rd, (OpNode RO:$rs, RO:$rt))], Itin, FrmR, opstr> {
   let isCommutable = isComm;
   let isReMaterializable = 1;
+  let TwoOperandAliasConstraint = "$rd = $rs";
 }
 
 // Arithmetic and logical instructions with 2 register operands.

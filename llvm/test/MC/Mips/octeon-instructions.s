@@ -2,6 +2,7 @@
 
 # CHECK: baddu $9, $6, $7             # encoding: [0x70,0xc7,0x48,0x28]
 # CHECK: baddu $17, $18, $19          # encoding: [0x72,0x53,0x88,0x28]
+# CHECK: dmul  $9, $9, $6             # encoding: [0x71,0x26,0x48,0x03]
 # CHECK: dmul  $9, $6, $7             # encoding: [0x70,0xc7,0x48,0x03]
 # CHECK: dmul  $19, $24, $25          # encoding: [0x73,0x19,0x98,0x03]
 # CHECK: dpop  $9, $6                 # encoding: [0x70,0xc0,0x48,0x2d]
@@ -13,6 +14,7 @@
 
   baddu $9, $6, $7
   baddu $17, $18, $19
+  dmul  $9, $6
   dmul  $9, $6, $7
   dmul  $19, $24, $25
   dpop  $9, $6

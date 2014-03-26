@@ -116,6 +116,7 @@
 # Shortcuts for arithmetic instructions
 #------------------------------------------------------------------------------
 
+# CHECK:	and	$9, $9, $3	# encoding: [0x24,0x48,0x23,0x01]
 # CHECK:	dadd	$9, $9, $3	# encoding: [0x2c,0x48,0x23,0x01]
 # CHECK:	daddu	$9, $9, $3	# encoding: [0x2d,0x48,0x23,0x01]
 # CHECK:	daddi	$9, $9, 10	# encoding: [0x0a,0x00,0x29,0x61]
@@ -124,6 +125,9 @@
 # CHECK:	dsubu	$9, $9, $3	# encoding: [0x2f,0x48,0x23,0x01]
 # CHECK:	daddi	$9, $9, -10	# encoding: [0xf6,0xff,0x29,0x61]
 # CHECK:	daddiu	$9, $9, -10	# encoding: [0xf6,0xff,0x29,0x65]
+# CHECK:	or	$9, $9, $3	# encoding: [0x25,0x48,0x23,0x01]
+# CHECK:	xor	$9, $9, $3	# encoding: [0x26,0x48,0x23,0x01]
+	and	$9, $3
 	dadd	$9, $3
 	daddu	$9, $3
 	dadd	$9, 10
@@ -132,6 +136,8 @@
 	dsubu	$9, $3
 	dsub	$9, 10
 	dsubu	$9, 10
+	or	$9, $3
+	xor	$9, $3
 
 #------------------------------------------------------------------------------
 # Did you know that GAS supports complex arithmetic expressions in assembly?

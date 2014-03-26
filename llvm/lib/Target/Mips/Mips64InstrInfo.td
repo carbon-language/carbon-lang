@@ -363,35 +363,11 @@ def : InstAlias<"daddu $rs, $imm",
 def : InstAlias<"dadd $rs, $imm",
                 (DADDi GPR64Opnd:$rs, GPR64Opnd:$rs, simm16_64:$imm),
                 0>;
-def : InstAlias<"dadd $rs, $rt",
-                (DADD GPR64Opnd:$rs, GPR64Opnd:$rs, GPR64Opnd:$rt),
-                0>;
-def : InstAlias<"daddu $rs, $rt",
-                (DADDu GPR64Opnd:$rs, GPR64Opnd:$rs, GPR64Opnd:$rt),
-                0>;
-def : InstAlias<"dsub $rs, $rt",
-                (DSUB GPR64Opnd:$rs, GPR64Opnd:$rs, GPR64Opnd:$rt),
-                0>;
-def : InstAlias<"dsubu $rs, $rt",
-                (DSUBu GPR64Opnd:$rs, GPR64Opnd:$rs, GPR64Opnd:$rt),
-                0>;
 def : InstAlias<"add $rs, $imm",
                 (ADDi GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
                 0>;
 def : InstAlias<"addu $rs, $imm",
                 (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
-                0>;
-def : InstAlias<"add $rs, $rt",
-                (ADD GPR32Opnd:$rs, GPR32Opnd:$rs, GPR32Opnd:$rt),
-                0>;
-def : InstAlias<"addu $rs, $rt",
-                (ADDu GPR32Opnd:$rs, GPR32Opnd:$rs, GPR32Opnd:$rt),
-                0>;
-def : InstAlias<"sub $rs, $rt",
-                (SUB GPR32Opnd:$rs, GPR32Opnd:$rs, GPR32Opnd:$rt),
-                0>;
-def : InstAlias<"subu $rs, $rt",
-                (SUBu GPR32Opnd:$rs, GPR32Opnd:$rs, GPR32Opnd:$rt),
                 0>;
 let isPseudo=1, usesCustomInserter=1, isCodeGenOnly=1 in {
 def SUBi : MipsInst<(outs GPR32Opnd: $rt), (ins GPR32Opnd: $rs, simm16: $imm),
