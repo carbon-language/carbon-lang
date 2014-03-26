@@ -3022,13 +3022,16 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     default:
       break;
 
+    case Intrinsic::arm_ldaexd:
     case Intrinsic::arm_ldrexd: {
-      SDValue MemAddr = N->getOperand(2);
       SDLoc dl(N);
       SDValue Chain = N->getOperand(0);
-
+      SDValue MemAddr = N->getOperand(2);
       bool isThumb = Subtarget->isThumb() && Subtarget->hasThumb2();
-      unsigned NewOpc = isThumb ? ARM::t2LDREXD :ARM::LDREXD;
+
+      bool IsAcquire = IntNo == Intrinsic::arm_ldaexd;
+      unsigned NewOpc = isThumb ? (IsAcquire ? ARM::t2LDAEXD : ARM::t2LDREXD)
+                                : (IsAcquire ? ARM::LDAEXD : ARM::LDREXD);
 
       // arm_ldrexd returns a i64 value in {i32, i32}
       std::vector<EVT> ResTys;
@@ -3080,7 +3083,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       ReplaceUses(SDValue(N, 2), OutChain);
       return NULL;
     }
-
+    case Intrinsic::arm_stlexd:
     case Intrinsic::arm_strexd: {
       SDLoc dl(N);
       SDValue Chain = N->getOperand(0);
@@ -3106,7 +3109,9 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
       Ops.push_back(CurDAG->getRegister(0, MVT::i32));
       Ops.push_back(Chain);
 
-      unsigned NewOpc = isThumb ? ARM::t2STREXD : ARM::STREXD;
+      bool IsRelease = IntNo == Intrinsic::arm_stlexd;
+      unsigned NewOpc = isThumb ? (IsRelease ? ARM::t2STLEXD : ARM::t2STREXD)
+                                : (IsRelease ? ARM::STLEXD : ARM::STREXD);
 
       SDNode *St = CurDAG->getMachineNode(NewOpc, dl, ResTys, Ops);
       // Transfer memoperands.
