@@ -429,6 +429,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::readcyclecounter);
     return RValue::get(Builder.CreateCall(F));
   }
+  case Builtin::BI__builtin___clear_cache: {
+    Value *Begin = EmitScalarExpr(E->getArg(0));
+    Value *End = EmitScalarExpr(E->getArg(1));
+    Value *F = CGM.getIntrinsic(Intrinsic::clear_cache);
+    return RValue::get(Builder.CreateCall2(F, Begin, End));
+  }
   case Builtin::BI__builtin_trap: {
     Value *F = CGM.getIntrinsic(Intrinsic::trap);
     return RValue::get(Builder.CreateCall(F));
