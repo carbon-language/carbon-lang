@@ -324,18 +324,18 @@ int Finalize(ThreadState *thr) {
 
 #ifndef TSAN_GO
 void ForkBefore(ThreadState *thr, uptr pc) {
-  ctx->report_mtx.Lock();
   ctx->thread_registry->Lock();
+  ctx->report_mtx.Lock();
 }
 
 void ForkParentAfter(ThreadState *thr, uptr pc) {
-  ctx->thread_registry->Unlock();
   ctx->report_mtx.Unlock();
+  ctx->thread_registry->Unlock();
 }
 
 void ForkChildAfter(ThreadState *thr, uptr pc) {
-  ctx->thread_registry->Unlock();
   ctx->report_mtx.Unlock();
+  ctx->thread_registry->Unlock();
 
   uptr nthread = 0;
   ctx->thread_registry->GetNumberOfThreads(0, 0, &nthread /* alive threads */);
