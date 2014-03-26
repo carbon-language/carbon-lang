@@ -462,11 +462,11 @@
 // AARCH64-NETBSD:#define __FLT_RADIX__ 2
 // AARCH64-NETBSD:#define __INT16_TYPE__ short
 // AARCH64-NETBSD:#define __INT32_TYPE__ int
-// AARCH64-NETBSD:#define __INT64_C_SUFFIX__ L
-// AARCH64-NETBSD:#define __INT64_TYPE__ long int
+// AARCH64-NETBSD:#define __INT64_C_SUFFIX__ LL
+// AARCH64-NETBSD:#define __INT64_TYPE__ long long int
 // AARCH64-NETBSD:#define __INT8_TYPE__ char
-// AARCH64-NETBSD:#define __INTMAX_MAX__ 9223372036854775807L
-// AARCH64-NETBSD:#define __INTMAX_TYPE__ long int
+// AARCH64-NETBSD:#define __INTMAX_MAX__ 9223372036854775807LL
+// AARCH64-NETBSD:#define __INTMAX_TYPE__ long long int
 // AARCH64-NETBSD:#define __INTMAX_WIDTH__ 64
 // AARCH64-NETBSD:#define __INTPTR_TYPE__ long int
 // AARCH64-NETBSD:#define __INTPTR_WIDTH__ 64
@@ -510,7 +510,7 @@
 // AARCH64-NETBSD:#define __SIZE_MAX__ 18446744073709551615UL
 // AARCH64-NETBSD:#define __SIZE_TYPE__ long unsigned int
 // AARCH64-NETBSD:#define __SIZE_WIDTH__ 64
-// AARCH64-NETBSD:#define __UINTMAX_TYPE__ long unsigned int
+// AARCH64-NETBSD:#define __UINTMAX_TYPE__ long long unsigned int
 // AARCH64-NETBSD:#define __USER_LABEL_PREFIX__
 // AARCH64-NETBSD:#define __WCHAR_MAX__ 2147483647
 // AARCH64-NETBSD:#define __WCHAR_TYPE__ int

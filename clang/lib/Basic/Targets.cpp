@@ -3386,19 +3386,23 @@ class AArch64TargetInfo : public TargetInfo {
 
 public:
   AArch64TargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
-    IntMaxType = SignedLong;
-    UIntMaxType = UnsignedLong;
-    Int64Type = SignedLong;
     LongWidth = LongAlign = 64;
     LongDoubleWidth = LongDoubleAlign = 128;
     PointerWidth = PointerAlign = 64;
     SuitableAlign = 128;
 
     WCharType = UnsignedInt;
-    if (getTriple().getOS() == llvm::Triple::NetBSD)
+    if (getTriple().getOS() == llvm::Triple::NetBSD) {
       WCharType = SignedInt;
-    else
+      Int64Type = SignedLongLong;
+      IntMaxType = SignedLongLong;
+      UIntMaxType = UnsignedLongLong;
+    } else {
       WCharType = UnsignedInt;
+      Int64Type = SignedLong;
+      IntMaxType = SignedLong;
+      UIntMaxType = UnsignedLong;
+    }
     LongDoubleFormat = &llvm::APFloat::IEEEquad;
 
     // AArch64 backend supports 64-bit operations at the moment. In principle
