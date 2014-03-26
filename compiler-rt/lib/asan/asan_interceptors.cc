@@ -384,10 +384,7 @@ INTERCEPTOR(void*, memcpy, void *to, const void *from, uptr size) {
     ASAN_READ_RANGE(from, size);
     ASAN_WRITE_RANGE(to, size);
   }
-  // Interposing of resolver functions is broken on Mac OS 10.7 and 10.8, so
-  // calling REAL(memcpy) here leads to infinite recursion.
-  // See also http://code.google.com/p/address-sanitizer/issues/detail?id=116.
-  return internal_memcpy(to, from, size);
+  return REAL(memcpy)(to, from, size);
 #else
   // At least on 10.7 and 10.8 both memcpy() and memmove() are being replaced
   // with WRAP(memcpy). As a result, false positives are reported for memmove()
