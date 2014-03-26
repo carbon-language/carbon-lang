@@ -403,7 +403,7 @@
 @ CHECK: vld4.8	{d16[1], d17[1], d18[1], d19[1]}, [r1:32]! @ encoding: [0x3d,0x03,0xe1,0xf4]
 @ CHECK: vld4.16 {d16[1], d17[1], d18[1], d19[1]}, [r2:64]! @ encoding: [0x5d,0x07,0xe2,0xf4]
 @ CHECK: vld4.32 {d16[1], d17[1], d18[1], d19[1]}, [r3:128]! @ encoding: [0xad,0x0b,0xe3,0xf4]
-@ CHECK: vld4.16 {d17[1], d18[1], d19[1], d20[1]}, [r7]! @ encoding: [0x6d,0x17,0xe7,0xf4]
+@ CHECK: vld4.16 {d17[1], d19[1], d21[1], d23[1]}, [r7]! @ encoding: [0x6d,0x17,0xe7,0xf4]
 @ CHECK: vld4.32 {d16[1], d18[1], d20[1], d22[1]}, [r8]! @ encoding: [0xcd,0x0b,0xe8,0xf4]
 @ CHECK: vld4.8	{d16[1], d17[1], d18[1], d19[1]}, [r1:32], r8 @ encoding: [0x38,0x03,0xe1,0xf4]
 @ CHECK: vld4.16 {d16[1], d17[1], d18[1], d19[1]}, [r2], r7 @ encoding: [0x47,0x07,0xe2,0xf4]
