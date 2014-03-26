@@ -6964,10 +6964,20 @@ Semantics:
 When directly supported, this intrinsic will either return a call to
 the appropriate cache clearing system call (usually ``__clear_cache``)
 when the caches are not unified (ARM, Mips) or just remove the call
-altogether when they are (ex. x86_64).
+altogether when they are (ex. x86_64). Some targets can lower these
+directly into special instructions, if they have it.
 
-Targets must implement it directly to have either behaviour, as the
-default is to bail with "Not Implemented" message.
+The default behaviour is to emit a call to ``__clear_cache``, so in
+case a target doesn't support it, the user gets a linker error rather
+than a compiler internal error. It also provides a work around to
+the user (implement an empty function called ``__clear_cache``) while
+LLVM doesn't implement it in the target's back-end.
+
+Please note that the caller is responsible for ensuring the cache
+is actually cleared. This is most important in targets that don't
+need to flush the cache directly (ex. x86_64) and could potentially
+still execute old instructions while the cache is not cleared. LLVM
+will *not* insert nops or busy-wait sequences.
 
 Standard C Library Intrinsics
 -----------------------------

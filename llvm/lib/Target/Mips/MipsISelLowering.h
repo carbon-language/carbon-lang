@@ -585,11 +585,6 @@ namespace llvm {
                                     bool MemcpyStrSrc,
                                     MachineFunction &MF) const;
 
-    /// Clear cache library call
-    const char * getClearCacheBuiltinName() const {
-      return "__clear_cache";
-    }
-
     /// isFPImmLegal - Returns true if the target can instruction select the
     /// specified FP immediate natively. If false, the legalizer will
     /// materialize the FP immediate as a load from a constant pool.

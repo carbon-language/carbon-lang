@@ -2109,8 +2109,9 @@ public:
   }
 
   /// Return the builtin name for the __builtin___clear_cache intrinsic
+  /// Default is to invoke the clear cache library call
   virtual const char * getClearCacheBuiltinName() const {
-    llvm_unreachable("Not Implemented");
+    return "__clear_cache";
   }
 
   /// Return the type that should be used to zero or sign extend a

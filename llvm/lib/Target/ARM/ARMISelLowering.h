@@ -384,11 +384,6 @@ namespace llvm {
     bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                            Type *Ty) const override;
 
-    /// Clear cache library call
-    const char * getClearCacheBuiltinName() const {
-      return "__clear_cache";
-    }
-
   protected:
     std::pair<const TargetRegisterClass*, uint8_t>
     findRepresentativeClass(MVT VT) const override;
