@@ -6939,6 +6939,36 @@ is lowered to a constant 0.
 Note that runtime support may be conditional on the privilege-level code is
 running at and the host platform.
 
+'``llvm.clear_cache``' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      declare void @llvm.clear_cache(i8*, i8*)
+
+Overview:
+"""""""""
+
+The '``llvm.clear_cache``' intrinsic provides access to the systemcall
+that flushes the cache at the range specified. Some targets need this
+to specifically flush the instruction cache when executable data changes
+in memory (self-modifying code). Other targets have unified intruction
+and data cache, so they don't need any calls.
+
+Semantics:
+""""""""""
+
+When directly supported, this intrinsic will either return a call to
+the appropriate cache clearing system call (usually ``__clear_cache``)
+when the caches are not unified (ARM, Mips) or just remove the call
+altogether when they are (ex. x86_64).
+
+Targets must implement it directly to have either behaviour, as the
+default is to bail with "Not Implemented" message.
+
 Standard C Library Intrinsics
 -----------------------------
 

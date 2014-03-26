@@ -513,6 +513,11 @@ def int_convertus  : Intrinsic<[llvm_anyint_ty],
 def int_convertuu  : Intrinsic<[llvm_anyint_ty],
                                [llvm_anyint_ty, llvm_i32_ty, llvm_i32_ty]>;
 
+// Clear cache intrinsic, default to ignore (ie. emit nothing)
+// maps to void __clear_cache() on supporting platforms
+def int_clear_cache : Intrinsic<[], [llvm_ptr_ty, llvm_ptr_ty],
+                                [], "llvm.clear_cache">;
+
 //===----------------------------------------------------------------------===//
 // Target-specific intrinsics
 //===----------------------------------------------------------------------===//

@@ -2108,6 +2108,11 @@ public:
     return false;
   }
 
+  /// Return the builtin name for the __builtin___clear_cache intrinsic
+  virtual const char * getClearCacheBuiltinName() const {
+    llvm_unreachable("Not Implemented");
+  }
+
   /// Return the type that should be used to zero or sign extend a
   /// zeroext/signext integer argument or return value.  FIXME: Most C calling
   /// convention requires the return type to be promoted, but this is not true

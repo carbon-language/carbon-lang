@@ -770,6 +770,11 @@ namespace llvm {
     bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                            Type *Ty) const override;
 
+    /// Intel processors have a unified instruction and data cache
+    const char * getClearCacheBuiltinName() const {
+      return 0; // nothing to do, move along.
+    }
+
     /// createFastISel - This method returns a target specific FastISel object,
     /// or null if the target does not support "fast" ISel.
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
