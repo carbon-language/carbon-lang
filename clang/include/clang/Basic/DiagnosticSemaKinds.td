@@ -2350,7 +2350,7 @@ def warn_impcast_floating_point_to_bool : Warning<
 def warn_impcast_pointer_to_bool : Warning<
     "address of%select{| function| array}0 '%1' will always evaluate to "
     "'true'">,
-    InGroup<BoolConversion>;
+    InGroup<PointerBoolConversion>;
 def warn_null_pointer_compare : Warning<
     "comparison of %select{address of|function|array}0 '%1' %select{not |}2"
     "equal to a null pointer is always %select{true|false}2">,
@@ -6375,7 +6375,7 @@ def warn_comparison_always : Warning<
 def warn_stringcompare : Warning<
   "result of comparison against %select{a string literal|@encode}0 is "
   "unspecified (use strncmp instead)">,
-  InGroup<DiagGroup<"string-compare">>;
+  InGroup<StringCompare>;
 
 def warn_identity_field_assign : Warning<
   "assigning %select{field|instance variable}0 to itself">,
