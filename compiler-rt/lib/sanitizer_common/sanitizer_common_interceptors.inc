@@ -3411,6 +3411,65 @@ INTERCEPTOR(int, capset, void *hdrp, const void *datap) {
 #define INIT_CAPGET
 #endif
 
+#if SANITIZER_INTERCEPT_AEABI_MEM
+DECLARE_REAL_AND_INTERCEPTOR(void *, memmove, void *, const void *, uptr);
+DECLARE_REAL_AND_INTERCEPTOR(void *, memcpy, void *, const void *, uptr);
+DECLARE_REAL_AND_INTERCEPTOR(void *, memset, void *, int, uptr);
+
+INTERCEPTOR(void *, __aeabi_memmove, void *to, const void *from, uptr size) {
+  return WRAP(memmove)(to, from, size);
+}
+INTERCEPTOR(void *, __aeabi_memmove4, void *to, const void *from, uptr size) {
+  return WRAP(memmove)(to, from, size);
+}
+INTERCEPTOR(void *, __aeabi_memmove8, void *to, const void *from, uptr size) {
+  return WRAP(memmove)(to, from, size);
+}
+INTERCEPTOR(void *, __aeabi_memcpy, void *to, const void *from, uptr size) {
+  return WRAP(memcpy)(to, from, size);
+}
+INTERCEPTOR(void *, __aeabi_memcpy4, void *to, const void *from, uptr size) {
+  return WRAP(memcpy)(to, from, size);
+}
+INTERCEPTOR(void *, __aeabi_memcpy8, void *to, const void *from, uptr size) {
+  return WRAP(memcpy)(to, from, size);
+}
+// Note the argument order.
+INTERCEPTOR(void *, __aeabi_memset, void *block, uptr size, int c) {
+  return WRAP(memset)(block, c, size);
+}
+INTERCEPTOR(void *, __aeabi_memset4, void *block, uptr size, int c) {
+  return WRAP(memset)(block, c, size);
+}
+INTERCEPTOR(void *, __aeabi_memset8, void *block, uptr size, int c) {
+  return WRAP(memset)(block, c, size);
+}
+INTERCEPTOR(void *, __aeabi_memclr, void *block, uptr size) {
+  return WRAP(memset)(block, 0, size);
+}
+INTERCEPTOR(void *, __aeabi_memclr4, void *block, uptr size) {
+  return WRAP(memset)(block, 0, size);
+}
+INTERCEPTOR(void *, __aeabi_memclr8, void *block, uptr size) {
+  return WRAP(memset)(block, 0, size);
+}
+#define INIT_AEABI_MEM                         \
+  COMMON_INTERCEPT_FUNCTION(__aeabi_memmove);  \
+  COMMON_INTERCEPT_FUNCTION(__aeabi_memmove4); \
+  COMMON_INTERCEPT_FUNCTION(__aeabi_memmove8); \
+  COMMON_INTERCEPT_FUNCTION(__aeabi_memcpy);   \
+  COMMON_INTERCEPT_FUNCTION(__aeabi_memcpy4);  \
+  COMMON_INTERCEPT_FUNCTION(__aeabi_memcpy8);  \
+  COMMON_INTERCEPT_FUNCTION(__aeabi_memset);   \
+  COMMON_INTERCEPT_FUNCTION(__aeabi_memset4);  \
+  COMMON_INTERCEPT_FUNCTION(__aeabi_memset8);  \
+  COMMON_INTERCEPT_FUNCTION(__aeabi_memclr);   \
+  COMMON_INTERCEPT_FUNCTION(__aeabi_memclr4);  \
+  COMMON_INTERCEPT_FUNCTION(__aeabi_memclr8);
+#else
+#define INIT_AEABI_MEM
+#endif  // SANITIZER_INTERCEPT_AEABI_MEM
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_TEXTDOMAIN;                         \
   INIT_STRCMP;                             \
@@ -3532,5 +3591,6 @@ INTERCEPTOR(int, capset, void *hdrp, const void *datap) {
   INIT_GETRESID;                           \
   INIT_GETIFADDRS;                         \
   INIT_IF_INDEXTONAME;                     \
-  INIT_CAPGET;
+  INIT_CAPGET;                             \
+  INIT_AEABI_MEM;
 /**/
