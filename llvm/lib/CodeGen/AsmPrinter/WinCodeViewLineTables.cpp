@@ -304,11 +304,18 @@ void WinCodeViewLineTables::beginFunction(const MachineFunction *MF) {
   }
 }
 
-void WinCodeViewLineTables::endFunction(const MachineFunction *) {
+void WinCodeViewLineTables::endFunction(const MachineFunction *MF) {
   if (!Asm || !CurFn)  // We haven't created any debug info for this function.
     return;
 
-  if (!CurFn->Instrs.empty()) {
+  const Function *GV = MF->getFunction();
+  assert(FnDebugInfo.count(GV) == true);
+  assert(CurFn == &FnDebugInfo[GV]);
+
+  if (CurFn->Instrs.empty()) {
+    FnDebugInfo.erase(GV);
+    VisitedFunctions.pop_back();
+  } else {
     // Define end label for subprogram.
     MCSymbol *FunctionEndSym = Asm->OutStreamer.getContext().CreateTempSymbol();
     Asm->OutStreamer.EmitLabel(FunctionEndSym);
