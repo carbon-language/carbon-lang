@@ -62,7 +62,7 @@ TEST(InstructionsTest, CallInst) {
   Value *Args[] = {ConstantInt::get(Type::getInt8Ty(C), 20),
                    ConstantInt::get(Type::getInt32Ty(C), 9999),
                    ConstantInt::get(Type::getInt64Ty(C), 42)};
-  CallInst *Call = CallInst::Create(F, Args);
+  std::unique_ptr<CallInst> Call(CallInst::Create(F, Args));
 
   // Make sure iteration over a call's arguments works as expected.
   unsigned Idx = 0;
