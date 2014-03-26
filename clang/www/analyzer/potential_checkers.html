@@ -1050,32 +1050,6 @@ void test() {
 }
 </pre></td><td class="aligned"></td></tr>
 
-<tr><td><span class="name">different.IdenticalExprBinOp
-<br>(C)</span><br><br>
-There are identical sub-expressions to the left and to the right of the 
-operator
-</td><td><pre>
-#define A 1
-#define B 1
-
-bool isNan(double d) { 
-  return d != d; // ok
-}
-
-int f();
-
-void test() {
-  int i = 0;
-  if (i != 0 && i != 0) {} // warn
-
-  if(i == A || i == B) {} // ok
-
-  if (++i != 0 && ++i != 0) {} // ok
-
-  if (f() && f()) {} // ok
-}
-</pre></td><td class="aligned"></td></tr>
-
 <tr><td><span class="name">different.FuncPtrInsteadOfCall
 <br>(C)</span><br><br>
 Possibly a function call should be used instead of a pointer to function
@@ -1084,18 +1058,6 @@ int f();
 
 void test() {
   if (f == 0) {} // warn
-}
-</pre></td><td class="aligned"></td></tr>
-
-<tr><td><span class="name">different.IdenticalCondIfElseIf
-<br>(C)</span><br><br>
-The use of 'if (A) {...} else if (A) {...}' pattern was detected. There is a 
-probability of logical error presence
-</td><td><pre>
-void test() { 
-  int i = 7;
-  if (i == 1) {}
-  else if (i == 1) {} // warn
 }
 </pre></td><td class="aligned"></td></tr>
 
@@ -1143,21 +1105,6 @@ S* f();
 void test() {
   S *p = f();
   if (p-&gt;b && p) {}; // warn
-}
-</pre></td><td class="aligned"></td></tr>
-
-<tr><td><span class="name">different.IdenticalStmtThenElse
-<br>(C)</span><br><br>
-The 'else' statement is equivalent to the 'then' statement
-</td><td><pre>
-void test() {
-  int i;
-  if (i==1) {
-    i++;
-  }
-  else { // warn
-    i++;
-  }
 }
 </pre></td><td class="aligned"></td></tr>
 
@@ -1278,16 +1225,6 @@ void test() {
     c += 1;
   if (c &gt; 5) // warn
     c -= 1;
-}
-</pre></td><td class="aligned"></td></tr>
-
-<tr><td><span class="name">different.CondOpIdenticalReturn
-<br>(C)</span><br><br>
-The return expressions of the '?:' operator are identical
-</td><td><pre>
-void test() {
-  unsigned a;
-  a = a > 5 ? a : a; // warn
 }
 </pre></td><td class="aligned"></td></tr>
 
