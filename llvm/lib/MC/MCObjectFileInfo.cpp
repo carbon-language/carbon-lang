@@ -679,6 +679,33 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                         COFF::IMAGE_SCN_MEM_DISCARDABLE |
                         COFF::IMAGE_SCN_MEM_READ,
                         SectionKind::getMetadata());
+  DwarfInfoDWOSection =
+      Ctx->getCOFFSection(".debug_info.dwo", COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                                COFF::IMAGE_SCN_MEM_READ,
+                          SectionKind::getMetadata());
+  DwarfAbbrevDWOSection =
+      Ctx->getCOFFSection(".debug_abbrev.dwo", COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                                  COFF::IMAGE_SCN_MEM_READ,
+                          SectionKind::getMetadata());
+  DwarfStrDWOSection =
+      Ctx->getCOFFSection(".debug_str.dwo", COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                               COFF::IMAGE_SCN_MEM_READ,
+                          SectionKind::getMetadata());
+  DwarfLineDWOSection =
+      Ctx->getCOFFSection(".debug_line.dwo", COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                                COFF::IMAGE_SCN_MEM_READ,
+                          SectionKind::getMetadata());
+  DwarfLocDWOSection =
+      Ctx->getCOFFSection(".debug_loc.dwo", COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                               COFF::IMAGE_SCN_MEM_READ,
+                          SectionKind::getMetadata());
+  DwarfStrOffDWOSection =
+      Ctx->getCOFFSection(".debug_str_offsets.dwo", COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                                  COFF::IMAGE_SCN_MEM_READ,
+                          SectionKind::getMetadata());
+  DwarfAddrSection = Ctx->getCOFFSection(
+      ".debug_addr", COFF::IMAGE_SCN_MEM_DISCARDABLE | COFF::IMAGE_SCN_MEM_READ,
+      SectionKind::getMetadata());
 
   DrectveSection =
     Ctx->getCOFFSection(".drectve",
