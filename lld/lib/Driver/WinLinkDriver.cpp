@@ -1246,7 +1246,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
   // Add the library group to the input graph.
   if (!isReadingDirectiveSection) {
-    auto group = std::unique_ptr<Group>(new PECOFFGroup());
+    auto group = std::unique_ptr<Group>(new PECOFFGroup(ctx));
     ctx.setLibraryGroup(group.get());
     ctx.inputGraph().addInputElement(std::move(group));
   }

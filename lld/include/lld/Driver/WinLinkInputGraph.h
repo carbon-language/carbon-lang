@@ -59,20 +59,22 @@ public:
 /// \brief Represents a ELF control node
 class PECOFFGroup : public Group {
 public:
-  PECOFFGroup() : Group(0) {}
+  PECOFFGroup(PECOFFLinkingContext &ctx) : Group(0), _ctx(ctx) {}
 
   bool validate() override { return true; }
   bool dump(raw_ostream &) override { return true; }
 
   /// \brief Parse the group members.
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override {
-    auto *pctx = (PECOFFLinkingContext *)(&ctx);
-    std::lock_guard<std::recursive_mutex> lock(pctx->getMutex());
+    std::lock_guard<std::recursive_mutex> lock(_ctx.getMutex());
     for (auto &elem : _elements)
       if (error_code ec = elem->parse(ctx, diagnostics))
         return ec;
     return error_code::success();
   }
+
+private:
+  PECOFFLinkingContext &_ctx;
 };
 
 } // namespace lld
