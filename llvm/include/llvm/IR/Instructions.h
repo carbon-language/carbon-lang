@@ -17,6 +17,7 @@
 #define LLVM_IR_INSTRUCTIONS_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/CallingConv.h"
@@ -1293,6 +1294,16 @@ public:
   ///
   Value *getArgOperand(unsigned i) const { return getOperand(i); }
   void setArgOperand(unsigned i, Value *v) { setOperand(i, v); }
+
+  /// arg_operands - iteration adapter for range-for loops.
+  iterator_range<op_iterator> arg_operands() {
+    return iterator_range<op_iterator>(op_begin(), op_end());
+  }
+
+  /// arg_operands - iteration adapter for range-for loops.
+  iterator_range<const_op_iterator> arg_operands() const {
+    return iterator_range<const_op_iterator>(op_begin(), op_end());
+  }
 
   /// \brief Wrappers for getting the \c Use of a call argument.
   const Use &getArgOperandUse(unsigned i) const { return getOperandUse(i); }
@@ -2941,7 +2952,17 @@ public:
   Value *getArgOperand(unsigned i) const { return getOperand(i); }
   void setArgOperand(unsigned i, Value *v) { setOperand(i, v); }
 
-  /// \brief Wrappers for getting the \c Use of a call argument.
+  /// arg_operands - iteration adapter for range-for loops.
+  iterator_range<op_iterator> arg_operands() {
+    return iterator_range<op_iterator>(op_begin(), op_end());
+  }
+
+  /// arg_operands - iteration adapter for range-for loops.
+  iterator_range<const_op_iterator> arg_operands() const {
+    return iterator_range<const_op_iterator>(op_begin(), op_end());
+  }
+
+  /// \brief Wrappers for getting the \c Use of a invoke argument.
   const Use &getArgOperandUse(unsigned i) const { return getOperandUse(i); }
   Use &getArgOperandUse(unsigned i) { return getOperandUse(i); }
 
