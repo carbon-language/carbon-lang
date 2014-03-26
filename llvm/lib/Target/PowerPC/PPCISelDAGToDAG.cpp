@@ -831,7 +831,9 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
       case ISD::SETONE:
       case ISD::SETUNE: {
         SDValue VCmp(CurDAG->getMachineNode(VCmpInst, dl, VecVT, LHS, RHS), 0);
-        return CurDAG->SelectNodeTo(N, PPC::VNOR, VecVT, VCmp, VCmp);
+        return CurDAG->SelectNodeTo(N, PPCSubTarget.hasVSX() ? PPC::XXLNOR :
+                                                               PPC::VNOR,
+                                    VecVT, VCmp, VCmp);
       } 
       case ISD::SETLT:
       case ISD::SETOLT:
@@ -853,7 +855,9 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
           SDValue VCmpGT(CurDAG->getMachineNode(VCmpInst, dl, VecVT, LHS, RHS), 0);
           unsigned int VCmpEQInst = getVCmpEQInst(VT, PPCSubTarget.hasVSX());
           SDValue VCmpEQ(CurDAG->getMachineNode(VCmpEQInst, dl, VecVT, LHS, RHS), 0);
-          return CurDAG->SelectNodeTo(N, PPC::VOR, VecVT, VCmpGT, VCmpEQ);
+          return CurDAG->SelectNodeTo(N, PPCSubTarget.hasVSX() ? PPC::XXLOR :
+                                                                 PPC::VOR,
+                                      VecVT, VCmpGT, VCmpEQ);
         }
       }
       case ISD::SETLE:
@@ -862,7 +866,9 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
         SDValue VCmpLE(CurDAG->getMachineNode(VCmpInst, dl, VecVT, RHS, LHS), 0);
         unsigned int VCmpEQInst = getVCmpEQInst(VT, PPCSubTarget.hasVSX());
         SDValue VCmpEQ(CurDAG->getMachineNode(VCmpEQInst, dl, VecVT, LHS, RHS), 0);
-        return CurDAG->SelectNodeTo(N, PPC::VOR, VecVT, VCmpLE, VCmpEQ);
+        return CurDAG->SelectNodeTo(N, PPCSubTarget.hasVSX() ? PPC::XXLOR :
+                                                               PPC::VOR,
+                                    VecVT, VCmpLE, VCmpEQ);
       }
       default:
         llvm_unreachable("Invalid vector compare type: should be expanded by legalize");
@@ -1323,6 +1329,13 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
                         getI32Imm(BROpc) };
     return CurDAG->SelectNodeTo(N, SelectCCOp, N->getValueType(0), Ops, 4);
   }
+  case ISD::VSELECT:
+    if (PPCSubTarget.hasVSX()) {
+      SDValue Ops[] = { N->getOperand(2), N->getOperand(1), N->getOperand(0) };
+      return CurDAG->SelectNodeTo(N, PPC::XXSEL, N->getValueType(0), Ops, 3);
+    }
+
+    break;
   case PPCISD::BDNZ:
   case PPCISD::BDZ: {
     bool IsPPC64 = PPCSubTarget.isPPC64();

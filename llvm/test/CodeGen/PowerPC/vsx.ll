@@ -198,3 +198,80 @@ entry:
 ; CHECK: blr
 }
 
+define <4 x i32> @test20(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c, <4 x i32> %d) {
+entry:
+  %m = icmp eq <4 x i32> %c, %d
+  %v = select <4 x i1> %m, <4 x i32> %a, <4 x i32> %b
+  ret <4 x i32> %v
+
+; CHECK-LABEL: @test20
+; CHECK: vcmpequw {{[0-9]+}}, 4, 5
+; CHECK: xxsel 34, 35, 34, {{[0-9]+}}
+; CHECK: blr
+}
+
+define <4 x float> @test21(<4 x float> %a, <4 x float> %b, <4 x float> %c, <4 x float> %d) {
+entry:
+  %m = fcmp oeq <4 x float> %c, %d
+  %v = select <4 x i1> %m, <4 x float> %a, <4 x float> %b
+  ret <4 x float> %v
+
+; CHECK-LABEL: @test21
+; CHECK: xvcmpeqsp [[V1:[0-9]+]], 36, 37
+; CHECK: xxsel 34, 35, 34, [[V1]]
+; CHECK: blr
+}
+
+define <4 x float> @test22(<4 x float> %a, <4 x float> %b, <4 x float> %c, <4 x float> %d) {
+entry:
+  %m = fcmp ueq <4 x float> %c, %d
+  %v = select <4 x i1> %m, <4 x float> %a, <4 x float> %b
+  ret <4 x float> %v
+
+; CHECK-LABEL: @test22
+; CHECK-DAG: xvcmpeqsp {{[0-9]+}}, 37, 37
+; CHECK-DAG: xvcmpeqsp {{[0-9]+}}, 36, 36
+; CHECK-DAG: xvcmpeqsp {{[0-9]+}}, 36, 37
+; CHECK-DAG: xxlnor
+; CHECK-DAG: xxlnor
+; CHECK-DAG: xxlor
+; CHECK-DAG: xxlor
+; CHECK: xxsel 34, 35, 34, {{[0-9]+}}
+; CHECK: blr
+}
+
+define <8 x i16> @test23(<8 x i16> %a, <8 x i16> %b, <8 x i16> %c, <8 x i16> %d) {
+entry:
+  %m = icmp eq <8 x i16> %c, %d
+  %v = select <8 x i1> %m, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %v
+
+; CHECK-LABEL: @test23
+; CHECK: vcmpequh {{[0-9]+}}, 4, 5
+; CHECK: xxsel 34, 35, 34, {{[0-9]+}}
+; CHECK: blr
+}
+
+define <16 x i8> @test24(<16 x i8> %a, <16 x i8> %b, <16 x i8> %c, <16 x i8> %d) {
+entry:
+  %m = icmp eq <16 x i8> %c, %d
+  %v = select <16 x i1> %m, <16 x i8> %a, <16 x i8> %b
+  ret <16 x i8> %v
+
+; CHECK-LABEL: @test24
+; CHECK: vcmpequb {{[0-9]+}}, 4, 5
+; CHECK: xxsel 34, 35, 34, {{[0-9]+}}
+; CHECK: blr
+}
+
+define <2 x double> @test25(<2 x double> %a, <2 x double> %b, <2 x double> %c, <2 x double> %d) {
+entry:
+  %m = fcmp oeq <2 x double> %c, %d
+  %v = select <2 x i1> %m, <2 x double> %a, <2 x double> %b
+  ret <2 x double> %v
+
+; CHECK-LABEL: @test25
+; FIXME: This currently is scalarized because v2i64 is not a legal type.
+; CHECK: blr
+}
+

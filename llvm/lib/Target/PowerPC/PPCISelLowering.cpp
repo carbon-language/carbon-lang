@@ -550,6 +550,12 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::FDIV, MVT::v2f64, Legal);
       setOperationAction(ISD::FSQRT, MVT::v2f64, Legal);
 
+      setOperationAction(ISD::VSELECT, MVT::v16i8, Legal);
+      setOperationAction(ISD::VSELECT, MVT::v8i16, Legal);
+      setOperationAction(ISD::VSELECT, MVT::v4i32, Legal);
+      setOperationAction(ISD::VSELECT, MVT::v4f32, Legal);
+      setOperationAction(ISD::VSELECT, MVT::v2f64, Legal);
+
       // Share the Altivec comparison restrictions.
       setCondCodeAction(ISD::SETUO, MVT::v2f64, Expand);
       setCondCodeAction(ISD::SETUEQ, MVT::v2f64, Expand);
