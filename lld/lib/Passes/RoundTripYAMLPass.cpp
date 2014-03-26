@@ -18,11 +18,6 @@
 
 #include <memory>
 
-// Skip YAML files larger than this to avoid OOM error. The YAML reader consumes
-// excessively large amount of memory when parsing a large file.
-// TODO: Fix the YAML reader to reduce memory footprint.
-static const size_t MAX_YAML_FILE_SIZE = 50 * 1024 * 1024;
-
 using namespace lld;
 
 /// Perform the actual pass
@@ -45,15 +40,12 @@ void RoundTripYAMLPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   if (MemoryBuffer::getFile(tmpYAMLFile.str(), mb))
     return;
 
-  if (mb->getBufferSize() < MAX_YAML_FILE_SIZE) {
-    error_code ec = _context.registry().parseFile(mb, _yamlFile);
-    if (ec) {
-      // Note: we need a way for Passes to report errors.
-      llvm_unreachable("yaml reader not registered or read error");
-    }
-    File *objFile = _yamlFile[0].get();
-    mergedFile.reset(new FileToMutable(_context, *objFile));
+  error_code ec = _context.registry().parseFile(mb, _yamlFile);
+  if (ec) {
+    // Note: we need a way for Passes to report errors.
+    llvm_unreachable("yaml reader not registered or read error");
   }
-
+  File *objFile = _yamlFile[0].get();
+  mergedFile.reset(new FileToMutable(_context, *objFile));
   llvm::sys::fs::remove(tmpYAMLFile.str());
 }
