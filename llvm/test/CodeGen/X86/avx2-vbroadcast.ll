@@ -98,7 +98,7 @@ entry:
   %qf = insertelement <16 x i16> %qe, i16 %q, i32 15
   ret <16 x i16> %qf
 }
-; CHECK: vpbroadcastd (%
+; CHECK: vbroadcastss (%
 define <4 x i32> @D32(i32* %ptr) nounwind uwtable readnone ssp {
 entry:
   %q = load i32* %ptr, align 4
@@ -108,7 +108,7 @@ entry:
   %q3 = insertelement <4 x i32> %q2, i32 %q, i32 3
   ret <4 x i32> %q3
 }
-; CHECK: vpbroadcastd (%
+; CHECK: vbroadcastss (%
 define <8 x i32> @DD32(i32* %ptr) nounwind uwtable readnone ssp {
 entry:
   %q = load i32* %ptr, align 4
@@ -130,7 +130,7 @@ entry:
   %q1 = insertelement <2 x i64> %q0, i64 %q, i32 1
   ret <2 x i64> %q1
 }
-; CHECK: vpbroadcastq (%
+; CHECK: vbroadcastsd (%
 define <4 x i64> @QQ64(i64* %ptr) nounwind uwtable readnone ssp {
 entry:
   %q = load i64* %ptr, align 4
@@ -293,7 +293,7 @@ define   <8 x i16> @_inreg8xi16(<8 x i16> %a) {
 
 
 ;CHECK-LABEL: _inreg4xi64:
-;CHECK: vpbroadcastq
+;CHECK: vbroadcastsd
 ;CHECK: ret
 define   <4 x i64> @_inreg4xi64(<4 x i64> %a) {
   %b = shufflevector <4 x i64> %a, <4 x i64> undef, <4 x i32> zeroinitializer
@@ -325,7 +325,7 @@ define   <2 x double> @_inreg2xdouble(<2 x double> %a) {
 }
 
 ;CHECK-LABEL: _inreg8xi32:
-;CHECK: vpbroadcastd
+;CHECK: vbroadcastss
 ;CHECK: ret
 define   <8 x i32> @_inreg8xi32(<8 x i32> %a) {
   %b = shufflevector <8 x i32> %a, <8 x i32> undef, <8 x i32> zeroinitializer
@@ -333,7 +333,7 @@ define   <8 x i32> @_inreg8xi32(<8 x i32> %a) {
 }
 
 ;CHECK-LABEL: _inreg4xi32:
-;CHECK: vpbroadcastd
+;CHECK: vbroadcastss
 ;CHECK: ret
 define   <4 x i32> @_inreg4xi32(<4 x i32> %a) {
   %b = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> zeroinitializer

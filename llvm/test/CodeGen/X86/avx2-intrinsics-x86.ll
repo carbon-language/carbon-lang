@@ -753,7 +753,7 @@ declare <16 x i16> @llvm.x86.avx2.pbroadcastw.256(<8 x i16>) nounwind readonly
 
 
 define <4 x i32> @test_x86_avx2_pbroadcastd_128(<4 x i32> %a0) {
-  ; CHECK: vpbroadcastd
+  ; CHECK: vbroadcastss
   %res = call <4 x i32> @llvm.x86.avx2.pbroadcastd.128(<4 x i32> %a0) ; <<4 x i32>> [#uses=1]
   ret <4 x i32> %res
 }
@@ -761,7 +761,7 @@ declare <4 x i32> @llvm.x86.avx2.pbroadcastd.128(<4 x i32>) nounwind readonly
 
 
 define <8 x i32> @test_x86_avx2_pbroadcastd_256(<4 x i32> %a0) {
-  ; CHECK: vpbroadcastd
+  ; CHECK: vbroadcastss {{[^,]+}}, %ymm{{[0-9]+}}
   %res = call <8 x i32> @llvm.x86.avx2.pbroadcastd.256(<4 x i32> %a0) ; <<8 x i32>> [#uses=1]
   ret <8 x i32> %res
 }
@@ -777,7 +777,7 @@ declare <2 x i64> @llvm.x86.avx2.pbroadcastq.128(<2 x i64>) nounwind readonly
 
 
 define <4 x i64> @test_x86_avx2_pbroadcastq_256(<2 x i64> %a0) {
-  ; CHECK: vpbroadcastq
+  ; CHECK: vbroadcastsd {{[^,]+}}, %ymm{{[0-9]+}}
   %res = call <4 x i64> @llvm.x86.avx2.pbroadcastq.256(<2 x i64> %a0) ; <<4 x i64>> [#uses=1]
   ret <4 x i64> %res
 }
