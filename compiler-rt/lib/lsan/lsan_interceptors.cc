@@ -152,7 +152,7 @@ INTERCEPTOR(void*, pvalloc, uptr size) {
   return Allocate(stack, size, GetPageSizeCached(), kAlwaysClearMemory);
 }
 
-INTERCEPTOR(void, cfree, void *p) ALIAS("free");
+INTERCEPTOR(void, cfree, void *p) ALIAS(WRAPPER_NAME(free));
 
 #define OPERATOR_NEW_BODY                              \
   ENSURE_LSAN_INITED;                                  \
@@ -185,7 +185,8 @@ void operator delete[](void *ptr, std::nothrow_t const &) {
 
 // We need this to intercept the __libc_memalign calls that are used to
 // allocate dynamic TLS space in ld-linux.so.
-INTERCEPTOR(void *, __libc_memalign, uptr align, uptr s) ALIAS("memalign");
+INTERCEPTOR(void *, __libc_memalign, uptr align, uptr s)
+    ALIAS(WRAPPER_NAME(memalign));
 
 ///// Thread initialization and finalization. /////
 
