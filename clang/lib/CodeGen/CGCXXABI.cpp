@@ -280,8 +280,9 @@ void CGCXXABI::EmitThreadLocalInitFuncs(
     llvm::Function *InitFunc) {
 }
 
-LValue CGCXXABI::EmitThreadLocalDeclRefExpr(CodeGenFunction &CGF,
-                                          const DeclRefExpr *DRE) {
+LValue CGCXXABI::EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF,
+                                              const VarDecl *VD,
+                                              QualType LValType) {
   ErrorUnsupportedABI(CGF, "odr-use of thread_local global");
   return LValue();
 }

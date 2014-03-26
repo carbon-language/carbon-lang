@@ -481,8 +481,9 @@ public:
   /// Emit a reference to a non-local thread_local variable (including
   /// triggering the initialization of all thread_local variables in its
   /// translation unit).
-  virtual LValue EmitThreadLocalDeclRefExpr(CodeGenFunction &CGF,
-                                            const DeclRefExpr *DRE);
+  virtual LValue EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF,
+                                              const VarDecl *VD,
+                                              QualType LValType);
 };
 
 // Create an instance of a C++ ABI class:

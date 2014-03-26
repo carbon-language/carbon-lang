@@ -214,8 +214,8 @@ public:
   void EmitThreadLocalInitFuncs(
       llvm::ArrayRef<std::pair<const VarDecl *, llvm::GlobalVariable *> > Decls,
       llvm::Function *InitFunc) override;
-  LValue EmitThreadLocalDeclRefExpr(CodeGenFunction &CGF,
-                                    const DeclRefExpr *DRE) override;
+  LValue EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF, const VarDecl *VD,
+                                      QualType LValType) override;
 
   bool NeedsVTTParameter(GlobalDecl GD) override;
 };
@@ -1647,9 +1647,9 @@ void ItaniumCXXABI::EmitThreadLocalInitFuncs(
   }
 }
 
-LValue ItaniumCXXABI::EmitThreadLocalDeclRefExpr(CodeGenFunction &CGF,
-                                                 const DeclRefExpr *DRE) {
-  const VarDecl *VD = cast<VarDecl>(DRE->getDecl());
+LValue ItaniumCXXABI::EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF,
+                                                   const VarDecl *VD,
+                                                   QualType LValType) {
   QualType T = VD->getType();
   llvm::Type *Ty = CGF.getTypes().ConvertTypeForMem(T);
   llvm::Value *Val = CGF.CGM.GetAddrOfGlobalVar(VD, Ty);
@@ -1660,10 +1660,9 @@ LValue ItaniumCXXABI::EmitThreadLocalDeclRefExpr(CodeGenFunction &CGF,
 
   LValue LV;
   if (VD->getType()->isReferenceType())
-    LV = CGF.MakeNaturalAlignAddrLValue(Val, T);
+    LV = CGF.MakeNaturalAlignAddrLValue(Val, LValType);
   else
-    LV = CGF.MakeAddrLValue(Val, DRE->getType(),
-                            CGF.getContext().getDeclAlign(VD));
+    LV = CGF.MakeAddrLValue(Val, LValType, CGF.getContext().getDeclAlign(VD));
   // FIXME: need setObjCGCLValueClass?
   return LV;
 }

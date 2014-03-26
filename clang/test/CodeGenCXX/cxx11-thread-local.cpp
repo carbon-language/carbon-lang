@@ -135,6 +135,16 @@ int PR15991() {
   return l();
 }
 
+struct PR19254 {
+  static thread_local int n;
+  int f();
+};
+// CHECK: define {{.*}} @_ZN7PR192541fEv(
+int PR19254::f() {
+  // CHECK: call void @_ZTHN7PR192541nE(
+  return this->n;
+}
+
 // CHECK: define {{.*}} @[[V_M_INIT:.*]]()
 // CHECK: load i8* bitcast (i64* @_ZGVN1VIiE1mE to i8*)
 // CHECK: %[[V_M_INITIALIZED:.*]] = icmp eq i8 %{{.*}}, 0
