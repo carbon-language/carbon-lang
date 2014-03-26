@@ -2629,6 +2629,11 @@ bool MipsAsmParser::parseDirectiveOption() {
 bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getString();
 
+  if (IDVal == ".dword") {
+    parseDataDirective(8, DirectiveID.getLoc());
+    return false;
+  }
+
   if (IDVal == ".ent") {
     // Ignore this directive for now.
     Parser.Lex();
