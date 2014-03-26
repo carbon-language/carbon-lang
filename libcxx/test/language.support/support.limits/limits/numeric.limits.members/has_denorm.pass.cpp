@@ -42,6 +42,10 @@ int main()
     test<unsigned long, std::denorm_absent>();
     test<long long, std::denorm_absent>();
     test<unsigned long long, std::denorm_absent>();
+#ifndef _LIBCPP_HAS_NO_INT128
+    test<__int128_t, std::denorm_absent>();
+    test<__uint128_t, std::denorm_absent>();
+#endif
     test<float, std::denorm_present>();
     test<double, std::denorm_present>();
     test<long double, std::denorm_present>();

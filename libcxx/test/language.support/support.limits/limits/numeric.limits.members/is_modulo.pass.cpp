@@ -42,6 +42,10 @@ int main()
     test<unsigned long, true>();
     test<long long, true>();
     test<unsigned long long, true>();
+#ifndef _LIBCPP_HAS_NO_INT128
+    test<__int128_t, true>();
+    test<__uint128_t, true>();
+#endif
     test<float, false>();
     test<double, false>();
     test<long double, false>();

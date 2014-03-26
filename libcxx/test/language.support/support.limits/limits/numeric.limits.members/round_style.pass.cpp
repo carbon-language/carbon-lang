@@ -42,6 +42,10 @@ int main()
     test<unsigned long, std::round_toward_zero>();
     test<long long, std::round_toward_zero>();
     test<unsigned long long, std::round_toward_zero>();
+#ifndef _LIBCPP_HAS_NO_INT128
+    test<__int128_t, std::round_toward_zero>();
+    test<__uint128_t, std::round_toward_zero>();
+#endif
     test<float, std::round_to_nearest>();
     test<double, std::round_to_nearest>();
     test<long double, std::round_to_nearest>();

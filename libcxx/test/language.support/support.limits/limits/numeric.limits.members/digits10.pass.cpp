@@ -47,6 +47,10 @@ int main()
     test<unsigned long, sizeof(long) == 4 ? 9 : 19>();
     test<long long, 18>();
     test<unsigned long long, 19>();
+#ifndef _LIBCPP_HAS_NO_INT128
+    test<__int128_t, 38>();
+    test<__uint128_t, 38>();
+#endif
     test<float, FLT_DIG>();
     test<double, DBL_DIG>();
     test<long double, LDBL_DIG>();

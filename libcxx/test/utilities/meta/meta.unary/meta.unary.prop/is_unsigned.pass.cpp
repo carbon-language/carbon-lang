@@ -51,4 +51,9 @@ int main()
 
     test_is_unsigned<bool>();
     test_is_unsigned<unsigned>();
+
+#ifndef _LIBCPP_HAS_NO_INT128
+    test_is_unsigned<__uint128_t>();
+    test_is_not_unsigned<__int128_t>();
+#endif
 }

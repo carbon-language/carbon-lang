@@ -43,6 +43,10 @@ int main()
     test<unsigned long>(0);
     test<long long>(0);
     test<unsigned long long>(0);
+#ifndef _LIBCPP_HAS_NO_INT128
+    test<__int128_t>(0);
+    test<__uint128_t>(0);
+#endif
     test<float>(__FLT_DENORM_MIN__);
     test<double>(__DBL_DENORM_MIN__);
     test<long double>(__LDBL_DENORM_MIN__);
