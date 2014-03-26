@@ -1519,7 +1519,7 @@ SDValue MipsTargetLowering::lowerGlobalAddress(SDValue Op,
   }
 
   if (GV->hasInternalLinkage() || (GV->hasLocalLinkage() && !isa<Function>(GV)))
-    return getAddrLocal(N, Ty, DAG, HasMips64);
+    return getAddrLocal(N, Ty, DAG, isN32() || IsN64);
 
   if (LargeGOT)
     return getAddrGlobalLargeGOT(N, Ty, DAG, MipsII::MO_GOT_HI16,
@@ -1539,7 +1539,7 @@ SDValue MipsTargetLowering::lowerBlockAddress(SDValue Op,
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64)
     return getAddrNonPIC(N, Ty, DAG);
 
-  return getAddrLocal(N, Ty, DAG, HasMips64);
+  return getAddrLocal(N, Ty, DAG, isN32() || IsN64);
 }
 
 SDValue MipsTargetLowering::
@@ -1632,7 +1632,7 @@ lowerJumpTable(SDValue Op, SelectionDAG &DAG) const
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64)
     return getAddrNonPIC(N, Ty, DAG);
 
-  return getAddrLocal(N, Ty, DAG, HasMips64);
+  return getAddrLocal(N, Ty, DAG, isN32() || IsN64);
 }
 
 SDValue MipsTargetLowering::
@@ -1653,7 +1653,7 @@ lowerConstantPool(SDValue Op, SelectionDAG &DAG) const
   if (getTargetMachine().getRelocationModel() != Reloc::PIC_ && !IsN64)
     return getAddrNonPIC(N, Ty, DAG);
 
-  return getAddrLocal(N, Ty, DAG, HasMips64);
+  return getAddrLocal(N, Ty, DAG, isN32() || IsN64);
 }
 
 SDValue MipsTargetLowering::lowerVASTART(SDValue Op, SelectionDAG &DAG) const {
@@ -2510,7 +2510,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       InternalLinkage = Val->hasInternalLinkage();
 
       if (InternalLinkage)
-        Callee = getAddrLocal(G, Ty, DAG, HasMips64);
+        Callee = getAddrLocal(G, Ty, DAG, isN32() || IsN64);
       else if (LargeGOT)
         Callee = getAddrGlobalLargeGOT(G, Ty, DAG, MipsII::MO_CALL_HI16,
                                        MipsII::MO_CALL_LO16, Chain,
