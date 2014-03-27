@@ -724,13 +724,12 @@ def : InstAlias<"xxswapd $XT, $XB",
 
 let AddedComplexity = 400 in { // Prefer VSX patterns over non-VSX patterns.
 def : Pat<(v2f64 (scalar_to_vector f64:$A)),
-          (INSERT_SUBREG (v2f64 (IMPLICIT_DEF)), $A, sub_64)>;
+          (v2f64 (COPY_TO_REGCLASS $A, VSRC))>;
 
 def : Pat<(f64 (vector_extract v2f64:$S, 0)),
-          (EXTRACT_SUBREG (v2f64 (COPY_TO_REGCLASS $S, VSLRC)), sub_64)>;
+          (f64 (COPY_TO_REGCLASS $S, VSRC))>;
 def : Pat<(f64 (vector_extract v2f64:$S, 1)),
-          (EXTRACT_SUBREG (v2f64 (COPY_TO_REGCLASS (XXPERMDI $S, $S, 3),
-                                                   VSLRC)), sub_64)>;
+          (f64 (COPY_TO_REGCLASS (XXPERMDI $S, $S, 2), VSRC))>;
 
 // Additional fnmsub patterns: -a*c + b == -(a*c - b)
 def : Pat<(fma (fneg f64:$A), f64:$C, f64:$B),

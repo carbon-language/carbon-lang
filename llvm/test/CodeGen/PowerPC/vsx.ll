@@ -529,3 +529,21 @@ define <2 x i64> @test62(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK: blr
 }
 
+define double @test63(<2 x double> %a) {
+  %v = extractelement <2 x double> %a, i32 0
+  ret double %v
+
+; CHECK-LABEL: @test63
+; CHECK: xxlor 1, 34, 34
+; CHECK: blr
+}
+
+define double @test64(<2 x double> %a) {
+  %v = extractelement <2 x double> %a, i32 1
+  ret double %v
+
+; CHECK-LABEL: @test64
+; CHECK: xxpermdi 1, 34, 34, 2
+; CHECK: blr
+}
+
