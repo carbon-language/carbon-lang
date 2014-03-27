@@ -55,9 +55,9 @@ TEST(InstructionsTest, ReturnInst) {
 class ModuleWithFunctionTest : public testing::Test {
 protected:
   ModuleWithFunctionTest() : M(new Module("MyModule", Ctx)) {
-	FArgTypes.push_back(Type::getInt8Ty(Ctx));
-	FArgTypes.push_back(Type::getInt32Ty(Ctx));
-	FArgTypes.push_back(Type::getInt64Ty(Ctx));
+    FArgTypes.push_back(Type::getInt8Ty(Ctx));
+    FArgTypes.push_back(Type::getInt32Ty(Ctx));
+    FArgTypes.push_back(Type::getInt64Ty(Ctx));
     FunctionType *FTy =
         FunctionType::get(Type::getVoidTy(Ctx), FArgTypes, false);
     F = Function::Create(FTy, Function::ExternalLinkage, "", M.get());
