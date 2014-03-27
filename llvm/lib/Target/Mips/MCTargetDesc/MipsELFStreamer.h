@@ -25,12 +25,11 @@ class MCContext;
 class MCSubtargetInfo;
 
 class MipsELFStreamer : public MCELFStreamer {
-  const MCSubtargetInfo &STI;
 
 public:
   MipsELFStreamer(MCContext &Context, MCAsmBackend &MAB, raw_ostream &OS,
                   MCCodeEmitter *Emitter, const MCSubtargetInfo &STI)
-      : MCELFStreamer(Context, MAB, OS, Emitter), STI(STI) {}
+      : MCELFStreamer(Context, MAB, OS, Emitter) {}
 
   virtual ~MipsELFStreamer() {}
 };
