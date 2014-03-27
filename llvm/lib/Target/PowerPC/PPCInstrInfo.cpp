@@ -51,6 +51,10 @@ cl::desc("Disable compare instruction optimization"), cl::Hidden);
 static cl::opt<bool> DisableVSXFMAMutate("disable-ppc-vsx-fma-mutation",
 cl::desc("Disable VSX FMA instruction mutation"), cl::Hidden);
 
+static cl::opt<bool> VSXSelfCopyCrash("crash-on-ppc-vsx-self-copy",
+cl::desc("Causes the backend to crash instead of generating a nop VSX copy"),
+cl::Hidden);
+
 // Pin the vtable to this file.
 void PPCInstrInfo::anchor() {}
 
@@ -679,15 +683,15 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                unsigned DestReg, unsigned SrcReg,
                                bool KillSrc) const {
   // We can end up with self copies and similar things as a result of VSX copy
-  // legalization. Promote (or just ignore) them here.
+  // legalization. Promote them here.
   const TargetRegisterInfo *TRI = &getRegisterInfo();
   if (PPC::F8RCRegClass.contains(DestReg) &&
       PPC::VSLRCRegClass.contains(SrcReg)) {
     unsigned SuperReg =
       TRI->getMatchingSuperReg(DestReg, PPC::sub_64, &PPC::VSRCRegClass);
 
-    if (SrcReg == SuperReg)
-      return;
+    if (VSXSelfCopyCrash && SrcReg == SuperReg)
+      llvm_unreachable("nop VSX copy");
 
     DestReg = SuperReg;
   } else if (PPC::VRRCRegClass.contains(DestReg) &&
@@ -695,8 +699,8 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     unsigned SuperReg =
       TRI->getMatchingSuperReg(DestReg, PPC::sub_128, &PPC::VSRCRegClass);
 
-    if (SrcReg == SuperReg)
-      return;
+    if (VSXSelfCopyCrash && SrcReg == SuperReg)
+      llvm_unreachable("nop VSX copy");
 
     DestReg = SuperReg;
   } else if (PPC::F8RCRegClass.contains(SrcReg) &&
@@ -704,8 +708,8 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     unsigned SuperReg =
       TRI->getMatchingSuperReg(SrcReg, PPC::sub_64, &PPC::VSRCRegClass);
 
-    if (DestReg == SuperReg)
-      return;
+    if (VSXSelfCopyCrash && DestReg == SuperReg)
+      llvm_unreachable("nop VSX copy");
 
     SrcReg = SuperReg;
   } else if (PPC::VRRCRegClass.contains(SrcReg) &&
@@ -713,8 +717,8 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     unsigned SuperReg =
       TRI->getMatchingSuperReg(SrcReg, PPC::sub_128, &PPC::VSRCRegClass);
 
-    if (DestReg == SuperReg)
-      return;
+    if (VSXSelfCopyCrash && DestReg == SuperReg)
+      llvm_unreachable("nop VSX copy");
 
     SrcReg = SuperReg;
   }
