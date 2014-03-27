@@ -50,8 +50,8 @@ namespace llvm {
           DisableTailCalls(false), StackAlignmentOverride(0),
           EnableFastISel(false), PositionIndependentExecutable(false),
           EnableSegmentedStacks(false), UseInitArray(false),
-          DisableIntegratedAS(false), TrapFuncName(""),
-          FloatABIType(FloatABI::Default),
+          DisableIntegratedAS(false), CompressDebugSections(false),
+          TrapFuncName(""), FloatABIType(FloatABI::Default),
           AllowFPOpFusion(FPOpFusion::Standard) {}
 
     /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
@@ -160,6 +160,9 @@ namespace llvm {
 
     /// Disable the integrated assembler.
     unsigned DisableIntegratedAS : 1;
+
+    /// Compress DWARF debug sections.
+    unsigned CompressDebugSections : 1;
 
     /// getTrapFunctionName - If this returns a non-empty string, this means
     /// isel should lower Intrinsic::trap to a call to the specified function

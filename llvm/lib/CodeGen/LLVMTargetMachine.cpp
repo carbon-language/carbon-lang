@@ -75,6 +75,9 @@ void LLVMTargetMachine::initAsmInfo() {
   if (Options.DisableIntegratedAS)
     TmpAsmInfo->setUseIntegratedAssembler(false);
 
+  if (Options.CompressDebugSections)
+    TmpAsmInfo->setCompressDebugSections(true);
+
   AsmInfo = TmpAsmInfo;
 }
 
