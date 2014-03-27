@@ -83,57 +83,62 @@ public:
   void Deallocate(MemSlab *Slab) override;
 };
 
-/// BumpPtrAllocator - This allocator is useful for containers that need
-/// very simple memory allocation strategies.  In particular, this just keeps
-/// allocating memory, and never deletes it until the entire block is dead. This
-/// makes allocation speedy, but must only be used when the trade-off is ok.
+/// \brief Allocate memory in an ever growing pool, as if by bump-pointer.
+///
+/// This isn't strictly a bump-pointer allocator as it uses backing slabs of
+/// memory rather than relying on boundless contiguous heap. However, it has
+/// bump-pointer semantics in that is a monotonically growing pool of memory
+/// where every allocation is found by merely allocating the next N bytes in
+/// the slab, or the next N bytes in the next slab.
+///
+/// Note that this also has a threshold for forcing allocations above a certain
+/// size into their own slab.
 class BumpPtrAllocator {
   BumpPtrAllocator(const BumpPtrAllocator &) LLVM_DELETED_FUNCTION;
   void operator=(const BumpPtrAllocator &) LLVM_DELETED_FUNCTION;
 
-  /// SlabSize - Allocate data into slabs of this size unless we get an
-  /// allocation above SizeThreshold.
+  /// \brief Allocate at least this many bytes of memory in a slab.
   size_t SlabSize;
 
-  /// SizeThreshold - For any allocation larger than this threshold, we should
-  /// allocate a separate slab.
+  /// \brief Threshold above which allocations to go into a dedicated slab.
   size_t SizeThreshold;
 
-  /// \brief the default allocator used if one is not provided
+  /// \brief The default allocator used if one is not provided.
   MallocSlabAllocator DefaultSlabAllocator;
 
-  /// Allocator - The underlying allocator we use to get slabs of memory.  This
-  /// defaults to MallocSlabAllocator, which wraps malloc, but it could be
+  /// \brief The underlying allocator we use to get slabs of memory.
+  ///
+  /// This defaults to MallocSlabAllocator, which wraps malloc, but it could be
   /// changed to use a custom allocator.
   SlabAllocator &Allocator;
 
-  /// CurSlab - The slab that we are currently allocating into.
-  ///
+  /// \brief The slab that we are currently allocating into.
   MemSlab *CurSlab;
 
-  /// CurPtr - The current pointer into the current slab.  This points to the
-  /// next free byte in the slab.
+  /// \brief The current pointer into the current slab.
+  ///
+  /// This points to the next free byte in the slab.
   char *CurPtr;
 
-  /// End - The end of the current slab.
-  ///
+  /// \brief The end of the current slab.
   char *End;
 
-  /// BytesAllocated - This field tracks how many bytes we've allocated, so
-  /// that we can compute how much space was wasted.
+  /// \brief How many bytes we've allocated.
+  ///
+  /// Used so that we can compute how much space was wasted.
   size_t BytesAllocated;
 
-  /// AlignPtr - Align Ptr to Alignment bytes, rounding up.  Alignment should
-  /// be a power of two.  This method rounds up, so AlignPtr(7, 4) == 8 and
-  /// AlignPtr(8, 4) == 8.
+  /// \brief Aligns \c Ptr to \c Alignment bytes, rounding up.
+  ///
+  /// Alignment should be a power of two.  This method rounds up, so
+  /// AlignPtr(7, 4) == 8 and AlignPtr(8, 4) == 8.
   static char *AlignPtr(char *Ptr, size_t Alignment);
 
-  /// StartNewSlab - Allocate a new slab and move the bump pointers over into
-  /// the new slab.  Modifies CurPtr and End.
+  /// \brief Allocate a new slab and move the bump pointers over into the new
+  /// slab, modifying CurPtr and End.
   void StartNewSlab();
 
-  /// DeallocateSlabs - Deallocate all memory slabs after and including this
-  /// one.
+  /// \brief Deallocate all memory slabs after and including this one.
   void DeallocateSlabs(MemSlab *Slab);
 
   template<typename T> friend class SpecificBumpPtrAllocator;
@@ -142,30 +147,27 @@ public:
   BumpPtrAllocator(size_t size, size_t threshold, SlabAllocator &allocator);
   ~BumpPtrAllocator();
 
-  /// Reset - Deallocate all but the current slab and reset the current pointer
+  /// \brief Deallocate all but the current slab and reset the current pointer
   /// to the beginning of it, freeing all memory allocated so far.
   void Reset();
 
-  /// Allocate - Allocate space at the specified alignment.
-  ///
+  /// \brief Allocate space at the specified alignment.
   void *Allocate(size_t Size, size_t Alignment);
 
-  /// Allocate space, but do not construct, one object.
-  ///
+  /// \brief Allocate space for one object without constructing it.
   template <typename T>
   T *Allocate() {
     return static_cast<T*>(Allocate(sizeof(T),AlignOf<T>::Alignment));
   }
 
-  /// Allocate space for an array of objects.  This does not construct the
-  /// objects though.
+  /// \brief Allocate space for an array of objects without constructing them.
   template <typename T>
   T *Allocate(size_t Num) {
     return static_cast<T*>(Allocate(Num * sizeof(T), AlignOf<T>::Alignment));
   }
 
-  /// Allocate space for a specific count of elements and with a specified
-  /// alignment.
+  /// \brief Allocate space for an array of objects with the specified alignment
+  /// and without constructing them.
   template <typename T>
   T *Allocate(size_t Num, size_t Alignment) {
     // Round EltSize up to the specified alignment.
@@ -178,14 +180,16 @@ public:
   unsigned GetNumSlabs() const;
 
   void PrintStats() const;
-  
-  /// Compute the total physical memory allocated by this allocator.
+
+  /// \brief Returns the total physical memory allocated by this allocator.
   size_t getTotalMemory() const;
 };
 
-/// SpecificBumpPtrAllocator - Same as BumpPtrAllocator but allows only
-/// elements of one type to be allocated. This allows calling the destructor
-/// in DestroyAll() and when the allocator is destroyed.
+/// \brief A BumpPtrAllocator that allows only elements of a specific type to be
+/// allocated.
+///
+/// This allows calling the destructor in DestroyAll() and when the allocator is
+/// destroyed.
 template <typename T>
 class SpecificBumpPtrAllocator {
   BumpPtrAllocator Allocator;
@@ -218,7 +222,7 @@ public:
     Allocator.Reset();
   }
 
-  /// Allocate space for a specific count of elements.
+  /// \brief Allocate space for an array of objects without constructing them.
   T *Allocate(size_t num = 1) {
     return Allocator.Allocate<T>(num);
   }
