@@ -27,8 +27,8 @@ void functionBeforeImports(void);
 
 /// method1_isdoxy1 IS_DOXYGEN_SINGLE
 - (void)method1_isdoxy1;
-- (void)method1_isdoxy2; /*!< method1_isdoxy2 IS_DOXYGEN_SINGLE */
-- (void)method1_isdoxy3; /*!< method1_isdoxy3 IS_DOXYGEN_SINGLE */
+- (void)method1_isdoxy2; ///< method1_isdoxy2 IS_DOXYGEN_SINGLE
+- (void)method1_isdoxy3; /**< method1_isdoxy3 IS_DOXYGEN_SINGLE */
 - (void)method1_isdoxy4; /*!< method1_isdoxy4 IS_DOXYGEN_SINGLE */
 @end
 
