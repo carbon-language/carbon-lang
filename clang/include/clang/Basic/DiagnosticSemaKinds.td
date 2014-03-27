@@ -6816,6 +6816,8 @@ def err_static_kernel : Error<
   "kernel functions cannot be declared static">;
 def err_opencl_ptrptr_kernel_param : Error<
   "kernel parameter cannot be declared as a pointer to a pointer">;
+def err_opencl_private_ptr_kernel_param : Error<
+  "kernel parameter cannot be declared as a pointer to the __private address space">;
 def err_static_function_scope : Error<
   "variables in function scope cannot be declared static">;
 def err_opencl_bitfields : Error<
