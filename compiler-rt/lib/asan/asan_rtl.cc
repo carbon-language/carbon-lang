@@ -565,6 +565,7 @@ static void AsanInitInternal() {
     ReserveShadowMemoryRange(kHighShadowBeg, kHighShadowEnd);
     // protect the gap.
     ProtectGap(kShadowGapBeg, kShadowGapEnd - kShadowGapBeg + 1);
+    CHECK_EQ(kShadowGapEnd, kHighShadowBeg - 1);
   } else if (kMidMemBeg &&
       MemoryRangeIsAvailable(shadow_start, kMidMemBeg - 1) &&
       MemoryRangeIsAvailable(kMidMemEnd + 1, kHighShadowEnd)) {

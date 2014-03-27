@@ -43,10 +43,19 @@
 // || `[0x00007fff8000, 0x00008fff6fff]` || LowShadow  ||
 // || `[0x000000000000, 0x00007fff7fff]` || LowMem     ||
 //
-// Default Linux/i386 mapping:
+// Default Linux/i386 mapping on x86_64 machine:
 // || `[0x40000000, 0xffffffff]` || HighMem    ||
 // || `[0x28000000, 0x3fffffff]` || HighShadow ||
 // || `[0x24000000, 0x27ffffff]` || ShadowGap  ||
+// || `[0x20000000, 0x23ffffff]` || LowShadow  ||
+// || `[0x00000000, 0x1fffffff]` || LowMem     ||
+//
+// Default Linux/i386 mapping on i386 machine
+// (addresses starting with 0xc0000000 are reserved
+// for kernel and thus not sanitized):
+// || `[0x38000000, 0xbfffffff]` || HighMem    ||
+// || `[0x27000000, 0x37ffffff]` || HighShadow ||
+// || `[0x24000000, 0x26ffffff]` || ShadowGap  ||
 // || `[0x20000000, 0x23ffffff]` || LowShadow  ||
 // || `[0x00000000, 0x1fffffff]` || LowMem     ||
 //

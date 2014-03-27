@@ -22,12 +22,31 @@
 
 #include <sys/mman.h>
 
+#if SANITIZER_LINUX
+#include <sys/utsname.h>
+#endif
+
 namespace __sanitizer {
 
 // ------------- sanitizer_common.h
 uptr GetMmapGranularity() {
   return GetPageSize();
 }
+
+#if SANITIZER_WORDSIZE == 32
+// Take care of unusable kernel area in top gigabyte
+static uptr GetKernelStartAddress() {
+#if SANITIZER_LINUX
+  // 64-bit Linux provides 32-bit apps with full address space
+  struct utsname uname_info;
+  return 0 == uname(&uname_info) && !internal_strstr(uname_info.machine, "64")
+    ? 1ULL << 30
+    : 0;
+#else
+  return 0;
+#endif  // SANITIZER_LINUX
+}
+#endif  // SANITIZER_WORDSIZE == 32
 
 uptr GetMaxVirtualAddress() {
 #if SANITIZER_WORDSIZE == 64
@@ -44,8 +63,10 @@ uptr GetMaxVirtualAddress() {
   return (1ULL << 47) - 1;  // 0x00007fffffffffffUL;
 # endif
 #else  // SANITIZER_WORDSIZE == 32
-  // FIXME: We can probably lower this on Android?
-  return (1ULL << 32) - 1;  // 0xffffffff;
+  uptr res = (1ULL << 32) - 1;  // 0xffffffff;
+  res -= GetKernelStartAddress();
+  CHECK_LT(reinterpret_cast<uptr>(&res), res);
+  return res;
 #endif  // SANITIZER_WORDSIZE
 }
 
