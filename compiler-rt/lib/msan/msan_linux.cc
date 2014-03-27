@@ -80,6 +80,8 @@ bool InitShadow(bool prot1, bool prot2, bool map_shadow, bool init_origins) {
 }
 
 void MsanDie() {
+  if (death_callback)
+    death_callback();
   _exit(flags()->exit_code);
 }
 

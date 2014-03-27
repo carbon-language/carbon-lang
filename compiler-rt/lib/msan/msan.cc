@@ -97,6 +97,8 @@ bool msan_init_is_running;
 
 int msan_report_count = 0;
 
+void (*death_callback)(void);
+
 // Array of stack origins.
 // FIXME: make it resizable.
 static const uptr kNumStackOriginDescrs = 1024 * 1024;
@@ -540,6 +542,10 @@ void __sanitizer_unaligned_store64(uu64 *p, u64 x) {
     if (uu32 o = __msan_param_origin_tls[2])
       __msan_set_origin(p, 8, o);
   *p = x;
+}
+
+void __msan_set_death_callback(void (*callback)(void)) {
+  death_callback = callback;
 }
 
 void *__msan_wrap_indirect_call(void *target) {

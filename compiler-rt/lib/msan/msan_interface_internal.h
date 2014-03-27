@@ -177,6 +177,9 @@ void *__msan_wrap_indirect_call(void *target);
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_set_indirect_call_wrapper(uptr wrapper);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_set_death_callback(void (*callback)(void));
 }  // extern "C"
 
 #endif  // MSAN_INTERFACE_INTERNAL_H

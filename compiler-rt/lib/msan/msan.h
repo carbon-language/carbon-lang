@@ -121,6 +121,9 @@ class ScopedThreadLocalStateBackup {
  private:
   u64 va_arg_overflow_size_tls;
 };
+
+extern void (*death_callback)(void);
+
 }  // namespace __msan
 
 #define MSAN_MALLOC_HOOK(ptr, size) \
