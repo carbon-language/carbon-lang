@@ -512,6 +512,11 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
     { ISD::UINT_TO_FP,  MVT::v4f64, MVT::v4i8,  2 },
     { ISD::UINT_TO_FP,  MVT::v4f64, MVT::v4i16, 2 },
     { ISD::UINT_TO_FP,  MVT::v4f64, MVT::v4i32, 6 },
+    // The generic code to compute the scalar overhead is currently broken.
+    // Workaround this limitation by estimating the scalarization overhead
+    // here. We have roughly 10 instructions per scalar element.
+    // Multiply that by the vector width.
+    // FIXME: remove that when PR19268 is fixed.
     { ISD::UINT_TO_FP,  MVT::v2f64, MVT::v2i64, 2*10 },
     { ISD::UINT_TO_FP,  MVT::v4f64, MVT::v4i64, 4*10 },
 
