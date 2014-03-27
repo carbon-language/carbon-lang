@@ -76,9 +76,6 @@ private:
   bool parseParens(bool LookForDecls = false) {
     if (CurrentToken == NULL)
       return false;
-    bool AfterCaret = Contexts.back().CaretFound;
-    Contexts.back().CaretFound = false;
-
     ScopedContextCreator ContextCreator(*this, tok::l_paren, 1);
 
     // FIXME: This is a bit of a hack. Do better.
@@ -109,7 +106,7 @@ private:
                Left->Previous->MatchingParen->Type == TT_LambdaLSquare) {
       // This is a parameter list of a lambda expression.
       Contexts.back().IsExpression = false;
-    } else if (AfterCaret) {
+    } else if (Contexts[Contexts.size() - 2].CaretFound) {
       // This is the parameter list of an ObjC block.
       Contexts.back().IsExpression = false;
     } else if (Left->Previous && Left->Previous->is(tok::kw___attribute)) {
@@ -273,6 +270,11 @@ private:
   bool parseBrace() {
     if (CurrentToken != NULL) {
       FormatToken *Left = CurrentToken->Previous;
+
+      if (Contexts.back().CaretFound)
+        Left->Type = TT_ObjCBlockLBrace;
+      Contexts.back().CaretFound = false;
+
       ScopedContextCreator ContextCreator(*this, tok::l_brace, 1);
       Contexts.back().ColonIsDictLiteral = true;
 

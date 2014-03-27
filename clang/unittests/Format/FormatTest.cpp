@@ -8167,6 +8167,10 @@ TEST_F(FormatTest, FormatsBlocks) {
                "    secondBlock:^(Bar *b) {\n"
                "        // ...\n"
                "        int i;\n"
+               "    }\n"
+               "    thirdBlock:^Foo(Bar *b) {\n"
+               "        // ...\n"
+               "        int i;\n"
                "    }];");
 
   verifyFormat("f(^{\n"

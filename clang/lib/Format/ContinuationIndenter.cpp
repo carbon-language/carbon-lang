@@ -636,16 +636,11 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
           }
           State.Stack.pop_back();
         }
-        bool IsObjCBlock =
-            Previous &&
-            (Previous->is(tok::caret) ||
-             (Previous->is(tok::r_paren) && Previous->MatchingParen &&
-              Previous->MatchingParen->Previous &&
-              Previous->MatchingParen->Previous->is(tok::caret)));
         // For some reason, ObjC blocks are indented like continuations.
         NewIndent =
-            State.Stack.back().LastSpace +
-            (IsObjCBlock ? Style.ContinuationIndentWidth : Style.IndentWidth);
+            State.Stack.back().LastSpace + (Current.Type == TT_ObjCBlockLBrace
+                                                ? Style.ContinuationIndentWidth
+                                                : Style.IndentWidth);
         ++NewIndentLevel;
         BreakBeforeParameter = true;
       } else {

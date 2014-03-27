@@ -45,6 +45,7 @@ enum TokenType {
   TT_LambdaLSquare,
   TT_LineComment,
   TT_ObjCBlockLParen,
+  TT_ObjCBlockLBrace,
   TT_ObjCDecl,
   TT_ObjCForIn,
   TT_ObjCMethodExpr,
