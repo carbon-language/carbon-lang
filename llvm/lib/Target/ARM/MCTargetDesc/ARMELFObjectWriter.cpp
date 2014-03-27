@@ -35,8 +35,7 @@ namespace {
     virtual ~ARMELFObjectWriter();
 
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                          bool IsPCRel, bool IsRelocWithSymbol,
-                          int64_t Addend) const override;
+                          bool IsPCRel, bool IsRelocWithSymbol) const override;
     const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
                                    const MCValue &Target, const MCFragment &F,
                                    const MCFixup &Fixup,
@@ -143,8 +142,7 @@ const MCSymbol *ARMELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
 unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
                                           const MCFixup &Fixup,
                                           bool IsPCRel,
-                                          bool IsRelocWithSymbol,
-                                          int64_t Addend) const {
+                                          bool IsRelocWithSymbol) const {
   return GetRelocTypeInner(Target, Fixup, IsPCRel);
 }
 

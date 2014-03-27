@@ -182,7 +182,7 @@ class ELFObjectWriter : public MCObjectWriter {
                           bool IsPCRel, bool IsRelocWithSymbol,
                           int64_t Addend) const {
       return TargetObjectWriter->GetRelocType(Target, Fixup, IsPCRel,
-                                              IsRelocWithSymbol, Addend);
+                                              IsRelocWithSymbol);
     }
 
   public:

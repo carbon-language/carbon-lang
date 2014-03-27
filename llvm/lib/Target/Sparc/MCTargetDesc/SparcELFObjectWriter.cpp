@@ -28,9 +28,8 @@ namespace {
 
     virtual ~SparcELFObjectWriter() {}
   protected:
-    virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                                  bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend) const;
+    unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
+                          bool IsPCRel, bool IsRelocWithSymbol) const override;
 
     virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
                                            const MCValue &Target,
@@ -40,12 +39,9 @@ namespace {
   };
 }
 
-
 unsigned SparcELFObjectWriter::GetRelocType(const MCValue &Target,
-                                            const MCFixup &Fixup,
-                                            bool IsPCRel,
-                                            bool IsRelocWithSymbol,
-                                            int64_t Addend) const {
+                                            const MCFixup &Fixup, bool IsPCRel,
+                                            bool IsRelocWithSymbol) const {
 
   if (const SparcMCExpr *SExpr = dyn_cast<SparcMCExpr>(Fixup.getValue())) {
     if (SExpr->getKind() == SparcMCExpr::VK_Sparc_R_DISP32)

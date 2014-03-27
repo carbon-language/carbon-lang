@@ -28,9 +28,8 @@ namespace {
     virtual unsigned getRelocTypeInner(const MCValue &Target,
                                        const MCFixup &Fixup,
                                        bool IsPCRel) const;
-    virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                                  bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend) const;
+    unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
+                          bool IsPCRel, bool IsRelocWithSymbol) const override;
     virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
                                            const MCValue &Target,
                                            const MCFragment &F,
@@ -384,8 +383,7 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
 unsigned PPCELFObjectWriter::GetRelocType(const MCValue &Target,
                                           const MCFixup &Fixup,
                                           bool IsPCRel,
-                                          bool IsRelocWithSymbol,
-                                          int64_t Addend) const {
+                                          bool IsRelocWithSymbol) const {
   return getRelocTypeInner(Target, Fixup, IsPCRel);
 }
 
