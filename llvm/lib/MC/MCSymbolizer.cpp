@@ -8,13 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCSymbolizer.h"
-#include "llvm/MC/MCRelocationInfo.h"
 
 using namespace llvm;
-
-MCSymbolizer::MCSymbolizer(MCContext &Ctx,
-                           std::unique_ptr<MCRelocationInfo> RelInfo)
-    : Ctx(Ctx), RelInfo(std::move(RelInfo)) {}
 
 MCSymbolizer::~MCSymbolizer() {
 }
