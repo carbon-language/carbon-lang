@@ -196,6 +196,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool isEvaluated(const MCExpr *Expr);
   bool parseSetFeature(uint64_t Feature);
+  bool parseDirectiveCPSetup();
   bool parseDirectiveSet();
   bool parseDirectiveOption();
 
@@ -229,6 +230,10 @@ class MipsAsmParser : public MCTargetAsmParser {
     return STI.getFeatureBits() & Mips::FeatureMicroMips;
   }
 
+  bool parseRegister(unsigned &RegNum);
+
+  bool eatComma(StringRef ErrorStr);
+
   int matchRegisterName(StringRef Symbol, bool is64BitReg);
 
   int matchCPURegisterName(StringRef Symbol);
@@ -248,6 +253,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   int regKindToRegClass(int RegKind);
 
   unsigned getReg(int RC, int RegNo);
+
+  unsigned getGPR(int RegNo);
 
   int getATReg();
 
@@ -1201,6 +1208,12 @@ int MipsAsmParser::getATReg() {
 unsigned MipsAsmParser::getReg(int RC, int RegNo) {
   return *(getContext().getRegisterInfo()->getRegClass(RC).begin() + RegNo);
 }
+
+unsigned MipsAsmParser::getGPR(int RegNo) {
+  return getReg((isMips64()) ? Mips::GPR64RegClassID : Mips::GPR32RegClassID,
+                 RegNo);
+}
+
 
 int MipsAsmParser::matchRegisterByNumber(unsigned RegNum, unsigned RegClass) {
   if (RegNum >
@@ -2501,6 +2514,123 @@ bool MipsAsmParser::parseSetFeature(uint64_t Feature) {
   return false;
 }
 
+bool MipsAsmParser::parseRegister(unsigned &RegNum) {
+  if (!getLexer().is(AsmToken::Dollar))
+    return false;
+
+  Parser.Lex();
+
+  const AsmToken &Reg = Parser.getTok();
+  if (Reg.is(AsmToken::Identifier)) {
+    RegNum = matchCPURegisterName(Reg.getIdentifier());
+  } else if (Reg.is(AsmToken::Integer)) {
+    RegNum = Reg.getIntVal();
+  } else {
+    return false;
+  }
+
+  Parser.Lex();
+  return true;
+}
+
+bool MipsAsmParser::eatComma(StringRef ErrorStr) {
+  if (getLexer().isNot(AsmToken::Comma)) {
+    SMLoc Loc = getLexer().getLoc();
+    Parser.eatToEndOfStatement();
+    return Error(Loc, ErrorStr);
+  }
+
+  Parser.Lex();  // Eat the comma.
+  return true;
+}
+
+bool MipsAsmParser::parseDirectiveCPSetup() {
+  unsigned FuncReg;
+  unsigned Save;
+  bool SaveIsReg = true;
+
+  if (!parseRegister(FuncReg))
+    return reportParseError("expected register containing function address");
+  FuncReg = getGPR(FuncReg);
+
+  if (!eatComma("expected comma parsing directive"))
+    return true;
+
+  if (!parseRegister(Save)) {
+    const AsmToken &Tok = Parser.getTok();
+    if (Tok.is(AsmToken::Integer)) {
+      Save = Tok.getIntVal();
+      SaveIsReg = false;
+      Parser.Lex();
+    } else
+      return reportParseError("expected save register or stack offset");
+  } else
+    Save = getGPR(Save);
+
+  if (!eatComma("expected comma parsing directive"))
+    return true;
+
+  StringRef Name;
+  if (Parser.parseIdentifier(Name))
+    reportParseError("expected identifier");
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+  unsigned GPReg = getGPR(matchCPURegisterName("gp"));
+
+  // FIXME: The code below this point should be in the TargetStreamers.
+  // Only N32 and N64 emit anything for .cpsetup
+  // FIXME: We should only emit something for PIC mode too.
+  if (!isN32() && !isN64())
+    return false;
+
+  MCStreamer &TS = getStreamer();
+  MCInst Inst;
+  // Either store the old $gp in a register or on the stack
+  if (SaveIsReg) {
+    // move $save, $gpreg
+    Inst.setOpcode(Mips::DADDu);
+    Inst.addOperand(MCOperand::CreateReg(Save));
+    Inst.addOperand(MCOperand::CreateReg(GPReg));
+    Inst.addOperand(MCOperand::CreateReg(getGPR(0)));
+  } else {
+    // sd $gpreg, offset($sp)
+    Inst.setOpcode(Mips::SD);
+    Inst.addOperand(MCOperand::CreateReg(GPReg));
+    Inst.addOperand(MCOperand::CreateReg(getGPR(matchCPURegisterName("sp"))));
+    Inst.addOperand(MCOperand::CreateImm(Save));
+  }
+  TS.EmitInstruction(Inst, STI);
+  Inst.clear();
+
+  const MCSymbolRefExpr *HiExpr = MCSymbolRefExpr::Create(
+      Sym->getName(), MCSymbolRefExpr::VK_Mips_GPOFF_HI,
+      getContext());
+  const MCSymbolRefExpr *LoExpr = MCSymbolRefExpr::Create(
+      Sym->getName(), MCSymbolRefExpr::VK_Mips_GPOFF_LO,
+      getContext());
+  // lui $gp, %hi(%neg(%gp_rel(funcSym)))
+  Inst.setOpcode(Mips::LUi);
+  Inst.addOperand(MCOperand::CreateReg(GPReg));
+  Inst.addOperand(MCOperand::CreateExpr(HiExpr));
+  TS.EmitInstruction(Inst, STI);
+  Inst.clear();
+
+  // addiu  $gp, $gp, %lo(%neg(%gp_rel(funcSym)))
+  Inst.setOpcode(Mips::ADDiu);
+  Inst.addOperand(MCOperand::CreateReg(GPReg));
+  Inst.addOperand(MCOperand::CreateReg(GPReg));
+  Inst.addOperand(MCOperand::CreateExpr(LoExpr));
+  TS.EmitInstruction(Inst, STI);
+  Inst.clear();
+
+  // daddu  $gp, $gp, $funcreg
+  Inst.setOpcode(Mips::DADDu);
+  Inst.addOperand(MCOperand::CreateReg(GPReg));
+  Inst.addOperand(MCOperand::CreateReg(GPReg));
+  Inst.addOperand(MCOperand::CreateReg(FuncReg));
+  TS.EmitInstruction(Inst, STI);
+  return false;
+}
+
 bool MipsAsmParser::parseDirectiveSet() {
 
   // Get the next token.
@@ -2691,6 +2821,9 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
     }
     return false;
   }
+
+  if (IDVal == ".cpsetup")
+    return parseDirectiveCPSetup();
 
   return true;
 }
