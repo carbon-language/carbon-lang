@@ -1,5 +1,5 @@
 CLANG_LEVEL := ../..
-DIRS := AST Basic Driver Lex Parse Sema Serialization
+DIRS := AST Basic Driver Parse Sema Serialization
 
 include $(CLANG_LEVEL)/Makefile
 
