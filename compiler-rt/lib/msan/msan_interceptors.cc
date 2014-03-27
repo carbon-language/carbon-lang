@@ -188,6 +188,32 @@ INTERCEPTOR(void, free, void *ptr) {
   MsanDeallocate(&stack, ptr);
 }
 
+INTERCEPTOR(void, cfree, void *ptr) {
+  GET_MALLOC_STACK_TRACE;
+  if (ptr == 0) return;
+  MsanDeallocate(&stack, ptr);
+}
+
+INTERCEPTOR(uptr, malloc_usable_size, void *ptr) {
+  return __msan_get_allocated_size(ptr);
+}
+
+// This function actually returns a struct by value, but we can't unpoison a
+// temporary! The following is equivalent on all supported platforms, and we
+// have a test to confirm that.
+INTERCEPTOR(void, mallinfo, __sanitizer_mallinfo *sret) {
+  REAL(memset)(sret, 0, sizeof(*sret));
+  __msan_unpoison(sret, sizeof(*sret));
+}
+
+INTERCEPTOR(int, mallopt, int cmd, int value) {
+  return -1;
+}
+
+INTERCEPTOR(void, malloc_stats, void) {
+  // FIXME: implement, but don't call REAL(malloc_stats)!
+}
+
 INTERCEPTOR(SIZE_T, strlen, const char *s) {
   ENSURE_MSAN_INITED();
   SIZE_T res = REAL(strlen)(s);
@@ -1464,6 +1490,11 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(calloc);
   INTERCEPT_FUNCTION(realloc);
   INTERCEPT_FUNCTION(free);
+  INTERCEPT_FUNCTION(cfree);
+  INTERCEPT_FUNCTION(malloc_usable_size);
+  INTERCEPT_FUNCTION(mallinfo);
+  INTERCEPT_FUNCTION(mallopt);
+  INTERCEPT_FUNCTION(malloc_stats);
   INTERCEPT_FUNCTION(fread);
   INTERCEPT_FUNCTION(fread_unlocked);
   INTERCEPT_FUNCTION(readlink);

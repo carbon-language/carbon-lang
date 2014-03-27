@@ -47,6 +47,7 @@
 #endif
 
 #if SANITIZER_LINUX
+#include <malloc.h>
 #include <mntent.h>
 #include <netinet/ether.h>
 #include <sys/sysinfo.h>
@@ -1072,6 +1073,10 @@ COMPILER_CHECK(offsetof(__sanitizer_ifaddrs, ifa_dstaddr) ==
 CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_dstaddr);
 #endif  // SANITIZER_LINUX
 CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_data);
+#endif
+
+#if SANITIZER_LINUX
+COMPILER_CHECK(sizeof(__sanitizer_mallinfo) == sizeof(struct mallinfo));
 #endif
 
 #endif  // SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_MAC

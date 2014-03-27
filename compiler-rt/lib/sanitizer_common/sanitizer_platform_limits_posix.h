@@ -138,7 +138,17 @@ namespace __sanitizer {
   const unsigned old_sigset_t_sz = sizeof(unsigned long);
 #endif // SANITIZER_LINUX || SANITIZER_FREEBSD
 
+#if SANITIZER_ANDROID
+  struct __sanitizer_mallinfo {
+    size_t v[10];
+  };
+#endif
+
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
+  struct __sanitizer_mallinfo {
+    int v[10];
+  };
+
   extern unsigned struct_ustat_sz;
   extern unsigned struct_rlimit64_sz;
   extern unsigned struct_statvfs64_sz;

@@ -16,6 +16,8 @@
 #include "msan_test_config.h"
 #endif // MSAN_EXTERNAL_TEST_CONFIG
 
+#include "sanitizer_common/tests/sanitizer_test_utils.h"
+
 #include "sanitizer/msan_interface.h"
 #include "msandr_test_so.h"
 
@@ -172,15 +174,6 @@ T *GetPoisonedO(int i, U4 origin, T val = 0) {
   __msan_poison(&poisoned_array[i], sizeof(T));
   __msan_set_origin(&poisoned_array[i], sizeof(T), origin);
   return res;
-}
-
-// This function returns its parameter but in such a way that compiler
-// can not prove it.
-template<class T>
-NOINLINE
-static T Ident(T t) {
-  volatile T ret = t;
-  return ret;
 }
 
 template<class T> NOINLINE T ReturnPoisoned() { return *GetPoisoned<T>(); }
@@ -3880,3 +3873,16 @@ TEST(MemorySanitizer, LargeAllocatorUnpoisonsOnFree) {
 
   munmap(q, 4096);
 }
+
+#if SANITIZER_TEST_HAS_MALLOC_USABLE_SIZE
+TEST(MemorySanitizer, MallocUsableSizeTest) {
+  const size_t kArraySize = 100;
+  char *array = Ident((char*)malloc(kArraySize));
+  int *int_ptr = Ident(new int);
+  EXPECT_EQ(0U, malloc_usable_size(NULL));
+  EXPECT_EQ(kArraySize, malloc_usable_size(array));
+  EXPECT_EQ(sizeof(int), malloc_usable_size(int_ptr));
+  free(array);
+  delete int_ptr;
+}
+#endif  // SANITIZER_TEST_HAS_MALLOC_USABLE_SIZE
