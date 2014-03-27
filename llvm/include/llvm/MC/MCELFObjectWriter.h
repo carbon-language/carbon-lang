@@ -72,7 +72,7 @@ public:
   virtual ~MCELFObjectTargetWriter() {}
 
   virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                                bool IsPCRel, bool IsRelocWithSymbol) const = 0;
+                                bool IsPCRel) const = 0;
   virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
                                          const MCValue &Target,
                                          const MCFragment &F,

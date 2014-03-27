@@ -179,10 +179,8 @@ class ELFObjectWriter : public MCObjectWriter {
       return TargetObjectWriter->hasRelocationAddend();
     }
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                          bool IsPCRel, bool IsRelocWithSymbol,
-                          int64_t Addend) const {
-      return TargetObjectWriter->GetRelocType(Target, Fixup, IsPCRel,
-                                              IsRelocWithSymbol);
+                          bool IsPCRel) const {
+      return TargetObjectWriter->GetRelocType(Target, Fixup, IsPCRel);
     }
 
   public:
@@ -839,8 +837,7 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   }
 
   FixedValue = Value;
-  unsigned Type = GetRelocType(Target, Fixup, IsPCRel,
-                               (RelocSymbol != 0), Addend);
+  unsigned Type = GetRelocType(Target, Fixup, IsPCRel);
   MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
     MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
   if (RelocNeedsGOT(Modifier))

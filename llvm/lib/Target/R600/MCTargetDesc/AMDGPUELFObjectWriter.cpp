@@ -20,7 +20,7 @@ public:
   AMDGPUELFObjectWriter();
 protected:
   unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                        bool IsPCRel, bool IsRelocWithSymbol) const override {
+                        bool IsPCRel) const override {
     llvm_unreachable("Not implemented");
   }
 

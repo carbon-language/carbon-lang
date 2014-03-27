@@ -25,7 +25,7 @@ public:
 protected:
   // Override MCELFObjectTargetWriter.
   unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                        bool IsPCRel, bool IsRelocWithSymbol) const override;
+                        bool IsPCRel) const override;
   const MCSymbol *ExplicitRelSym(const MCAssembler &Asm, const MCValue &Target,
                                  const MCFragment &F, const MCFixup &Fixup,
                                  bool IsPCRel) const override;
@@ -83,8 +83,8 @@ static unsigned getPLTReloc(unsigned Kind) {
 }
 
 unsigned SystemZObjectWriter::GetRelocType(const MCValue &Target,
-                                           const MCFixup &Fixup, bool IsPCRel,
-                                           bool IsRelocWithSymbol) const {
+                                           const MCFixup &Fixup,
+                                           bool IsPCRel) const {
   MCSymbolRefExpr::VariantKind Modifier = Fixup.getAccessVariant();
   unsigned Kind = Fixup.getKind();
   switch (Modifier) {
