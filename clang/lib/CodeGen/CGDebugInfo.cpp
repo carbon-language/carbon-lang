@@ -2567,6 +2567,11 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   if (!HasDecl || D->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
 
+  // FIXME: The function declaration we're constructing here is mostly reusing
+  // declarations from CXXMethodDecl and not constructing new ones for arbitrary
+  // FunctionDecls. When/if we fix this we can have FDContext be TheCU/null for
+  // all subprograms instead of the actual context since subprogram definitions
+  // are emitted as CU level entities by the backend.
   llvm::DISubprogram SP =
       DBuilder.createFunction(FDContext, Name, LinkageName, Unit, LineNo,
                               getOrCreateFunctionType(D, FnType, Unit),
