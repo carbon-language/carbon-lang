@@ -65,7 +65,7 @@ protected:
 
   LLVMContext Ctx;
   std::unique_ptr<Module> M;
-  std::vector<Type *> FArgTypes;
+  SmallVector<Type *, 3> FArgTypes;
   Function *F;
 };
 
