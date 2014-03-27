@@ -329,10 +329,7 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
                                                  bool DryRun) {
   FormatToken &Current = *State.NextToken;
   const FormatToken &Previous = *State.NextToken->Previous;
-  // If we are continuing an expression, we want to use the continuation indent.
-  unsigned ContinuationIndent =
-      std::max(State.Stack.back().LastSpace, State.Stack.back().Indent) +
-      Style.ContinuationIndentWidth;
+
   // Extra penalty that needs to be added because of the way certain line
   // breaks are chosen.
   unsigned Penalty = 0;
@@ -358,78 +355,25 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
        State.Stack.back().BreakBeforeParameter))
     Penalty += Style.PenaltyBreakFirstLessLess;
 
-  if (NextNonComment->is(tok::l_brace) &&
-      NextNonComment->BlockKind == BK_Block) {
-    State.Column =
-        State.ParenLevel == 0 ? State.FirstIndent : State.Stack.back().Indent;
-  } else if (Current.isOneOf(tok::r_brace, tok::r_square)) {
-    if (Current.closesBlockTypeList(Style) ||
-        (Current.MatchingParen &&
-         Current.MatchingParen->BlockKind == BK_BracedInit))
-      State.Column = State.Stack[State.Stack.size() - 2].LastSpace;
-    else
-      State.Column = State.FirstIndent;
-  } else if (NextNonComment->isStringLiteral() &&
-             State.StartOfStringLiteral != 0) {
-    State.Column = State.StartOfStringLiteral;
-    State.Stack.back().BreakBeforeParameter = true;
-  } else if (NextNonComment->is(tok::lessless) &&
-             State.Stack.back().FirstLessLess != 0) {
-    State.Column = State.Stack.back().FirstLessLess;
-  } else if (NextNonComment->isMemberAccess()) {
-    if (State.Stack.back().CallContinuation == 0) {
-      State.Column = ContinuationIndent;
+  State.Column = getNewLineColumn(State);
+  if (NextNonComment->isMemberAccess()) {
+    if (State.Stack.back().CallContinuation == 0)
       State.Stack.back().CallContinuation = State.Column;
-    } else {
-      State.Column = State.Stack.back().CallContinuation;
-    }
-  } else if (State.Stack.back().QuestionColumn != 0 &&
-             (NextNonComment->Type == TT_ConditionalExpr ||
-              Previous.Type == TT_ConditionalExpr)) {
-    State.Column = State.Stack.back().QuestionColumn;
-  } else if (Previous.is(tok::comma) && State.Stack.back().VariablePos != 0) {
-    State.Column = State.Stack.back().VariablePos;
-  } else if ((PreviousNonComment &&
-              (PreviousNonComment->ClosesTemplateDeclaration ||
-               PreviousNonComment->Type == TT_AttributeParen)) ||
-             ((NextNonComment->Type == TT_StartOfName ||
-               NextNonComment->is(tok::kw_operator)) &&
-              State.ParenLevel == 0 &&
-              (!Style.IndentFunctionDeclarationAfterType ||
-               State.Line->StartsDefinition))) {
-    State.Column =
-        std::max(State.Stack.back().LastSpace, State.Stack.back().Indent);
   } else if (NextNonComment->Type == TT_ObjCSelectorName) {
     if (!State.Stack.back().ObjCSelectorNameFound) {
       if (NextNonComment->LongestObjCSelectorName == 0) {
-        State.Column = State.Stack.back().Indent;
         State.Stack.back().AlignColons = false;
       } else {
         State.Stack.back().ColonPos =
             State.Stack.back().Indent + NextNonComment->LongestObjCSelectorName;
-        State.Column =
-            State.Stack.back().ColonPos - NextNonComment->ColumnWidth;
       }
-    } else if (!State.Stack.back().AlignColons) {
-      State.Column = State.Stack.back().Indent;
-    } else if (State.Stack.back().ColonPos > NextNonComment->ColumnWidth) {
-      State.Column = State.Stack.back().ColonPos - NextNonComment->ColumnWidth;
-    } else {
-      State.Column = State.Stack.back().Indent;
+    } else if (State.Stack.back().AlignColons &&
+               State.Stack.back().ColonPos <= NextNonComment->ColumnWidth) {
       State.Stack.back().ColonPos = State.Column + NextNonComment->ColumnWidth;
     }
-  } else if (NextNonComment->Type == TT_ArraySubscriptLSquare) {
-    if (State.Stack.back().StartOfArraySubscripts != 0)
-      State.Column = State.Stack.back().StartOfArraySubscripts;
-    else
-      State.Column = ContinuationIndent;
-  } else if (NextNonComment->Type == TT_StartOfName ||
-             Previous.isOneOf(tok::coloncolon, tok::equal)) {
-    State.Column = ContinuationIndent;
   } else if (PreviousNonComment && PreviousNonComment->is(tok::colon) &&
              (PreviousNonComment->Type == TT_ObjCMethodExpr ||
               PreviousNonComment->Type == TT_DictLiteral)) {
-    State.Column = ContinuationIndent;
     // FIXME: This is hacky, find a better way. The problem is that in an ObjC
     // method expression, the block should be aligned to the line starting it,
     // e.g.:
@@ -440,18 +384,9 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     // Thus, we set LastSpace of the next higher ParenLevel, to which we move
     // when we consume all of the "}"'s FakeRParens at the "{".
     if (State.Stack.size() > 1)
-      State.Stack[State.Stack.size() - 2].LastSpace = ContinuationIndent;
-  } else if (NextNonComment->Type == TT_CtorInitializerColon) {
-    State.Column = State.FirstIndent + Style.ConstructorInitializerIndentWidth;
-  } else if (NextNonComment->Type == TT_CtorInitializerComma) {
-    State.Column = State.Stack.back().Indent;
-  } else {
-    State.Column = State.Stack.back().Indent;
-    // Ensure that we fall back to the continuation indent width instead of just
-    // flushing continuations left.
-    if (State.Column == State.FirstIndent &&
-        PreviousNonComment->isNot(tok::r_brace))
-      State.Column += Style.ContinuationIndentWidth;
+      State.Stack[State.Stack.size() - 2].LastSpace =
+          std::max(State.Stack.back().LastSpace, State.Stack.back().Indent) +
+          Style.ContinuationIndentWidth;
   }
 
   if ((Previous.isOneOf(tok::comma, tok::semi) &&
@@ -508,6 +443,97 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
   }
 
   return Penalty;
+}
+
+unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
+  FormatToken &Current = *State.NextToken;
+  const FormatToken &Previous = *State.NextToken->Previous;
+  // If we are continuing an expression, we want to use the continuation indent.
+  unsigned ContinuationIndent =
+      std::max(State.Stack.back().LastSpace, State.Stack.back().Indent) +
+      Style.ContinuationIndentWidth;
+  const FormatToken *PreviousNonComment = Current.getPreviousNonComment();
+  const FormatToken *NextNonComment = Previous.getNextNonComment();
+  if (!NextNonComment)
+    NextNonComment = &Current;
+  if (NextNonComment->is(tok::l_brace) &&
+      NextNonComment->BlockKind == BK_Block)
+    return State.ParenLevel == 0 ? State.FirstIndent
+                                 : State.Stack.back().Indent;
+  if (Current.isOneOf(tok::r_brace, tok::r_square)) {
+    if (Current.closesBlockTypeList(Style) ||
+        (Current.MatchingParen &&
+         Current.MatchingParen->BlockKind == BK_BracedInit))
+      return State.Stack[State.Stack.size() - 2].LastSpace;
+    else
+      return State.FirstIndent;
+  }
+  if (NextNonComment->isStringLiteral() && State.StartOfStringLiteral != 0)
+    return State.StartOfStringLiteral;
+  if (NextNonComment->is(tok::lessless) &&
+      State.Stack.back().FirstLessLess != 0)
+    return State.Stack.back().FirstLessLess;
+  if (NextNonComment->isMemberAccess()) {
+    if (State.Stack.back().CallContinuation == 0) {
+      return ContinuationIndent;
+    } else {
+      return State.Stack.back().CallContinuation;
+    }
+  }
+  if (State.Stack.back().QuestionColumn != 0 &&
+      (NextNonComment->Type == TT_ConditionalExpr ||
+       Previous.Type == TT_ConditionalExpr))
+    return State.Stack.back().QuestionColumn;
+  if (Previous.is(tok::comma) && State.Stack.back().VariablePos != 0)
+    return State.Stack.back().VariablePos;
+  if ((PreviousNonComment && (PreviousNonComment->ClosesTemplateDeclaration ||
+                              PreviousNonComment->Type == TT_AttributeParen)) ||
+      ((NextNonComment->Type == TT_StartOfName ||
+        NextNonComment->is(tok::kw_operator)) &&
+       State.ParenLevel == 0 && (!Style.IndentFunctionDeclarationAfterType ||
+                                 State.Line->StartsDefinition)))
+    return std::max(State.Stack.back().LastSpace, State.Stack.back().Indent);
+  if (NextNonComment->Type == TT_ObjCSelectorName) {
+    if (!State.Stack.back().ObjCSelectorNameFound) {
+      if (NextNonComment->LongestObjCSelectorName == 0) {
+        return State.Stack.back().Indent;
+      } else {
+        return State.Stack.back().Indent +
+               NextNonComment->LongestObjCSelectorName -
+               NextNonComment->ColumnWidth;
+      }
+    } else if (!State.Stack.back().AlignColons) {
+      return State.Stack.back().Indent;
+    } else if (State.Stack.back().ColonPos > NextNonComment->ColumnWidth) {
+      return State.Stack.back().ColonPos - NextNonComment->ColumnWidth;
+    } else {
+      return State.Stack.back().Indent;
+    }
+  }
+  if (NextNonComment->Type == TT_ArraySubscriptLSquare) {
+    if (State.Stack.back().StartOfArraySubscripts != 0)
+      return State.Stack.back().StartOfArraySubscripts;
+    else
+      return ContinuationIndent;
+  }
+  if (NextNonComment->Type == TT_StartOfName ||
+      Previous.isOneOf(tok::coloncolon, tok::equal)) {
+    return ContinuationIndent;
+  }
+  if (PreviousNonComment && PreviousNonComment->is(tok::colon) &&
+      (PreviousNonComment->Type == TT_ObjCMethodExpr ||
+       PreviousNonComment->Type == TT_DictLiteral))
+    return ContinuationIndent;
+  if (NextNonComment->Type == TT_CtorInitializerColon)
+    return State.FirstIndent + Style.ConstructorInitializerIndentWidth;
+  if (NextNonComment->Type == TT_CtorInitializerComma)
+    return State.Stack.back().Indent;
+  if (State.Stack.back().Indent == State.FirstIndent &&
+      PreviousNonComment->isNot(tok::r_brace))
+    // Ensure that we fall back to the continuation indent width instead of
+    // just flushing continuations left.
+    return State.Stack.back().Indent + Style.ContinuationIndentWidth;
+  return State.Stack.back().Indent;
 }
 
 unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,

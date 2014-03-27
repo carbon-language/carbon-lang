@@ -104,6 +104,9 @@ private:
   /// \c Replacement.
   unsigned addTokenOnNewLine(LineState &State, bool DryRun);
 
+  /// \brief Calculate the new column for a line wrap before the next token.
+  unsigned getNewLineColumn(const LineState &State);
+
   /// \brief Adds a multiline token to the \p State.
   ///
   /// \returns Extra penalty for the first line of the literal: last line is
