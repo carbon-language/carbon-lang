@@ -689,6 +689,11 @@ public:
   /// debugging downstream codegen failures exposed by regalloc.
   virtual bool mayOverrideLocalAssignment() const { return true; }
 
+  /// Allow the target to override the cost of using a callee-saved register for
+  /// the first time. Default value of 0 means we will use a callee-saved
+  /// register if it is available.
+  virtual unsigned getCSRFirstUseCost() const { return 0; }
+
   /// requiresRegisterScavenging - returns true if the target requires (and can
   /// make use of) the register scavenger.
   virtual bool requiresRegisterScavenging(const MachineFunction &MF) const {

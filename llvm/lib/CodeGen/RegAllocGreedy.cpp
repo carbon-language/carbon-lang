@@ -2123,7 +2123,10 @@ unsigned RAGreedy::tryAssignCSRFirstTime(LiveInterval &VirtReg,
                                          unsigned PhysReg,
                                          unsigned &CostPerUseLimit,
                                          SmallVectorImpl<unsigned> &NewVRegs) {
-  BlockFrequency CSRCost(CSRFirstTimeCost);
+  // We use the larger one out of the command-line option and the value report
+  // by TRI.
+  BlockFrequency CSRCost(std::max((unsigned)CSRFirstTimeCost,
+                                  TRI->getCSRFirstUseCost()));
   if (getStage(VirtReg) == RS_Spill && VirtReg.isSpillable()) {
     // We choose spill over using the CSR for the first time if the spill cost
     // is lower than CSRCost.
@@ -2172,7 +2175,8 @@ unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
     // When NewVRegs is not empty, we may have made decisions such as evicting
     // a virtual register, go with the earlier decisions and use the physical
     // register.
-    if (CSRFirstTimeCost > 0 && CSRFirstUse && NewVRegs.empty()) {
+    if ((CSRFirstTimeCost || TRI->getCSRFirstUseCost()) &&
+        CSRFirstUse && NewVRegs.empty()) {
       unsigned CSRReg = tryAssignCSRFirstTime(VirtReg, Order, PhysReg,
                                               CostPerUseLimit, NewVRegs);
       if (CSRReg || !NewVRegs.empty())
