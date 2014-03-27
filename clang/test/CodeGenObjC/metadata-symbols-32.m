@@ -4,6 +4,8 @@
 
 // CHECK: @"\01L_OBJC_METH_VAR_NAME_{{[0-9]*}}" = private global {{.*}}section "__TEXT,__cstring,cstring_literals", align 1
 // CHECK: @"\01L_OBJC_METH_VAR_TYPE_{{[0-9]*}}" = private global {{.*}}section "__TEXT,__cstring,cstring_literals", align 1
+// CHECK: @"\01l_OBJC_PROTOCOLEXT_P" = private global
+// CHECK-NOT: section
 // CHECK: @"\01L_OBJC_CLASS_NAME_{{[0-9]*}}" = private global {{.*}}section "__TEXT,__cstring,cstring_literals", align 1
 // CHECK: @"\01L_OBJC_PROTOCOL_INSTANCE_METHODS_P" = private global {{.*}}section "__OBJC,__cat_inst_meth,regular,no_dead_strip", align 4
 // CHECK: @"\01L_OBJC_PROTOCOL_CLASS_METHODS_P" = private global {{.*}}section "__OBJC,__cat_cls_meth,regular,no_dead_strip", align 4

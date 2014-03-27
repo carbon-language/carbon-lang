@@ -2718,7 +2718,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
     llvm::ConstantStruct::get(ObjCTypes.ProtocolExtensionTy, Values);
 
   // No special section, but goes in llvm.used
-  return CreateMetadataVar("\01L_OBJC_PROTOCOLEXT_" + PD->getName(),
+  return CreateMetadataVar("\01l_OBJC_PROTOCOLEXT_" + PD->getName(),
                            Init,
                            0, 0, true);
 }
