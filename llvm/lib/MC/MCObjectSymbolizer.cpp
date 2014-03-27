@@ -35,7 +35,7 @@ class MCMachObjectSymbolizer : public MCObjectSymbolizer {
 
 public:
   MCMachObjectSymbolizer(MCContext &Ctx,
-                         std::unique_ptr<MCRelocationInfo> &RelInfo,
+                         std::unique_ptr<MCRelocationInfo> RelInfo,
                          const MachOObjectFile *MOOF);
 
   StringRef findExternalFunctionAt(uint64_t Addr) override;
@@ -46,10 +46,10 @@ public:
 } // End unnamed namespace
 
 MCMachObjectSymbolizer::MCMachObjectSymbolizer(
-    MCContext &Ctx, std::unique_ptr<MCRelocationInfo> &RelInfo,
+    MCContext &Ctx, std::unique_ptr<MCRelocationInfo> RelInfo,
     const MachOObjectFile *MOOF)
-    : MCObjectSymbolizer(Ctx, RelInfo, MOOF), MOOF(MOOF), StubsStart(0),
-      StubsCount(0), StubSize(0), StubsIndSymIndex(0) {
+  : MCObjectSymbolizer(Ctx, std::move(RelInfo), MOOF), MOOF(MOOF),
+    StubsStart(0), StubsCount(0), StubSize(0), StubsIndSymIndex(0) {
 
   for (const SectionRef &Section : MOOF->sections()) {
     StringRef Name;
@@ -121,9 +121,10 @@ tryAddingPcLoadReferenceComment(raw_ostream &cStream, int64_t Value,
 //===- MCObjectSymbolizer -------------------------------------------------===//
 
 MCObjectSymbolizer::MCObjectSymbolizer(
-    MCContext &Ctx, std::unique_ptr<MCRelocationInfo> &RelInfo,
-    const ObjectFile *Obj)
-    : MCSymbolizer(Ctx, RelInfo), Obj(Obj), SortedSections(), AddrToReloc() {}
+  MCContext &Ctx, std::unique_ptr<MCRelocationInfo> RelInfo,
+  const ObjectFile *Obj)
+  : MCSymbolizer(Ctx, std::move(RelInfo)), Obj(Obj), SortedSections(),
+    AddrToReloc() {}
 
 bool MCObjectSymbolizer::
 tryAddingSymbolicOperand(MCInst &MI, raw_ostream &cStream,
@@ -191,11 +192,11 @@ StringRef MCObjectSymbolizer::findExternalFunctionAt(uint64_t Addr) {
 }
 
 MCObjectSymbolizer *MCObjectSymbolizer::createObjectSymbolizer(
-    MCContext &Ctx, std::unique_ptr<MCRelocationInfo> &RelInfo,
+    MCContext &Ctx, std::unique_ptr<MCRelocationInfo> RelInfo,
     const ObjectFile *Obj) {
   if (const MachOObjectFile *MOOF = dyn_cast<MachOObjectFile>(Obj))
-    return new MCMachObjectSymbolizer(Ctx, RelInfo, MOOF);
-  return new MCObjectSymbolizer(Ctx, RelInfo, Obj);
+    return new MCMachObjectSymbolizer(Ctx, std::move(RelInfo), MOOF);
+  return new MCObjectSymbolizer(Ctx, std::move(RelInfo), Obj);
 }
 
 // SortedSections implementation.

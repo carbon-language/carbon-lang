@@ -25,8 +25,9 @@ void MCDisassembler::setupForSymbolicDisassembly(
   this->Ctx = Ctx;
   assert(Ctx != 0 && "No MCContext given for symbolic disassembly");
   if (!Symbolizer)
-    Symbolizer.reset(new MCExternalSymbolizer(*Ctx, RelInfo, GetOpInfo,
-                                              SymbolLookUp, DisInfo));
+    Symbolizer.reset(new MCExternalSymbolizer(*Ctx, std::move(RelInfo),
+                                              GetOpInfo, SymbolLookUp,
+                                              DisInfo));
 }
 
 void MCDisassembler::setupForSymbolicDisassembly(

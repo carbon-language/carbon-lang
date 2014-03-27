@@ -191,8 +191,8 @@ MCSymbolizer *createMCSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
                                  MCRelocationInfo *RelInfo) {
   assert(Ctx != 0 && "No MCContext given for symbolic disassembly");
 
-  std::unique_ptr<MCRelocationInfo> RelInfoOwingPtr(RelInfo);
-  return new MCExternalSymbolizer(*Ctx, RelInfoOwingPtr, GetOpInfo,
-                                  SymbolLookUp, DisInfo);
+  return new MCExternalSymbolizer(*Ctx,
+                                  std::unique_ptr<MCRelocationInfo>(RelInfo),
+                                  GetOpInfo, SymbolLookUp, DisInfo);
 }
 }

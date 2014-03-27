@@ -325,7 +325,8 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
         TheTarget->createMCRelocationInfo(TripleName, *Ctx.get()));
     if (RelInfo) {
       std::unique_ptr<MCSymbolizer> Symzer(
-          MCObjectSymbolizer::createObjectSymbolizer(*Ctx.get(), RelInfo, Obj));
+        MCObjectSymbolizer::createObjectSymbolizer(*Ctx.get(),
+                                                   std::move(RelInfo), Obj));
       if (Symzer)
         DisAsm->setSymbolizer(std::move(Symzer));
     }

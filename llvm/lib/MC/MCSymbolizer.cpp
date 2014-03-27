@@ -13,8 +13,8 @@
 using namespace llvm;
 
 MCSymbolizer::MCSymbolizer(MCContext &Ctx,
-                           std::unique_ptr<MCRelocationInfo> &RelInfo)
-    : Ctx(Ctx), RelInfo(RelInfo.release()) {}
+                           std::unique_ptr<MCRelocationInfo> RelInfo)
+    : Ctx(Ctx), RelInfo(std::move(RelInfo)) {}
 
 MCSymbolizer::~MCSymbolizer() {
 }

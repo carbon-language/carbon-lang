@@ -46,7 +46,7 @@ protected:
 
 public:
   /// \brief Construct an MCSymbolizer, taking ownership of \p RelInfo.
-  MCSymbolizer(MCContext &Ctx, std::unique_ptr<MCRelocationInfo> &RelInfo);
+  MCSymbolizer(MCContext &Ctx, std::unique_ptr<MCRelocationInfo> RelInfo);
   virtual ~MCSymbolizer();
 
   /// \brief Try to add a symbolic operand instead of \p Value to the MCInst.
