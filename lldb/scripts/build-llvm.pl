@@ -82,6 +82,7 @@ our @archive_files = (
     "$llvm_configuration/lib/libLLVMCodeGen.a",
     "$llvm_configuration/lib/libLLVMCore.a",
     "$llvm_configuration/lib/libLLVMExecutionEngine.a",
+    "$llvm_configuration/lib/libLLVMProfileData.a",
     "$llvm_configuration/lib/libLLVMInstCombine.a",
     "$llvm_configuration/lib/libLLVMInstrumentation.a",
     "$llvm_configuration/lib/libLLVMipa.a",
