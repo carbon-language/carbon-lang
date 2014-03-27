@@ -432,9 +432,10 @@ namespace llvm {
     // Subtarget Info
     const MipsSubtarget *Subtarget;
 
-    bool HasMips64, IsN64, IsO32;
-
+    bool hasMips64() const { return Subtarget->hasMips64(); }
+    bool isO32() const { return Subtarget->isABI_O32(); }
     bool isN32() const { return Subtarget->isABI_N32(); }
+    bool isN64() const { return Subtarget->isABI_N64(); }
 
   private:
     // Create a TargetGlobalAddress node.

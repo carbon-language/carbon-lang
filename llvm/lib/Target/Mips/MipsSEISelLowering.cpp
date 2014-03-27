@@ -38,7 +38,7 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
   // Set up the register classes
   addRegisterClass(MVT::i32, &Mips::GPR32RegClass);
 
-  if (HasMips64)
+  if (hasMips64())
     addRegisterClass(MVT::i64, &Mips::GPR64RegClass);
 
   if (Subtarget->hasDSP() || Subtarget->hasMSA()) {
@@ -119,10 +119,10 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
 
   if (Subtarget->hasCnMips())
     setOperationAction(ISD::MUL,              MVT::i64, Legal);
-  else if (HasMips64)
+  else if (hasMips64())
     setOperationAction(ISD::MUL,              MVT::i64, Custom);
 
-  if (HasMips64) {
+  if (hasMips64()) {
     setOperationAction(ISD::MULHS,            MVT::i64, Custom);
     setOperationAction(ISD::MULHU,            MVT::i64, Custom);
   }
@@ -1626,7 +1626,7 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_copy_s_w:
     return lowerMSACopyIntr(Op, DAG, MipsISD::VEXTRACT_SEXT_ELT);
   case Intrinsic::mips_copy_s_d:
-    if (HasMips64)
+    if (hasMips64())
       // Lower directly into VEXTRACT_SEXT_ELT since i64 is legal on Mips64.
       return lowerMSACopyIntr(Op, DAG, MipsISD::VEXTRACT_SEXT_ELT);
     else {
@@ -1641,7 +1641,7 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_copy_u_w:
     return lowerMSACopyIntr(Op, DAG, MipsISD::VEXTRACT_ZEXT_ELT);
   case Intrinsic::mips_copy_u_d:
-    if (HasMips64)
+    if (hasMips64())
       // Lower directly into VEXTRACT_ZEXT_ELT since i64 is legal on Mips64.
       return lowerMSACopyIntr(Op, DAG, MipsISD::VEXTRACT_ZEXT_ELT);
     else {
