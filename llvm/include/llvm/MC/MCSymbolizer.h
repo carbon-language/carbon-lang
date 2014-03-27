@@ -19,6 +19,7 @@
 #include "llvm/MC/MCRelocationInfo.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
+#include <cassert>
 #include <memory>
 
 namespace llvm {
