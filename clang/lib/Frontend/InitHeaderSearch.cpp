@@ -268,7 +268,6 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
 
   switch (os) {
   case llvm::Triple::Linux:
-  case llvm::Triple::Win32:
     llvm_unreachable("Include management is handled in the driver.");
 
   case llvm::Triple::Haiku:
@@ -307,10 +306,13 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     break;
   case llvm::Triple::RTEMS:
     break;
-  case llvm::Triple::Cygwin:
-    AddPath("/usr/include/w32api", System, false);
-    break;
-  case llvm::Triple::MinGW32: { 
+  case llvm::Triple::Win32:
+    switch (triple.getEnvironment()) {
+    default: llvm_unreachable("Include management is handled in the driver.");
+    case llvm::Triple::Cygnus:
+      AddPath("/usr/include/w32api", System, false);
+      break;
+    case llvm::Triple::GNU:
       // mingw-w64 crt include paths
       // <sysroot>/i686-w64-mingw32/include
       SmallString<128> P = StringRef(HSOpts.ResourceDir);
@@ -331,9 +333,9 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
 #if defined(LLVM_ON_WIN32)
       AddPath("c:/mingw/include", System, false); 
 #endif
+      break;
     }
     break;
-      
   default:
     break;
   }
@@ -382,37 +384,40 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
 
   switch (os) {
   case llvm::Triple::Linux:
-  case llvm::Triple::Win32:
     llvm_unreachable("Include management is handled in the driver.");
 
-  case llvm::Triple::Cygwin:
-    // Cygwin-1.7
-    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.7.3");
-    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.5.3");
-    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.4");
-    // g++-4 / Cygwin-1.5
-    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.2");
-    break;
-  case llvm::Triple::MinGW32:
-    // mingw-w64 C++ include paths (i686-w64-mingw32 and x86_64-w64-mingw32)
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.0");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.1");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.2");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.3");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.8.0");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.8.1");
-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.8.2");
-    // mingw.org C++ include paths
+  case llvm::Triple::Win32:
+    switch (triple.getEnvironment()) {
+    default: llvm_unreachable("Include management is handled in the driver.");
+    case llvm::Triple::Cygnus:
+      // Cygwin-1.7
+      AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.7.3");
+      AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.5.3");
+      AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.4");
+      // g++-4 / Cygwin-1.5
+      AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.2");
+      break;
+    case llvm::Triple::GNU:
+      // mingw-w64 C++ include paths (i686-w64-mingw32 and x86_64-w64-mingw32)
+      AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.0");
+      AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.1");
+      AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.2");
+      AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.3");
+      AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.8.0");
+      AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.8.1");
+      AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.8.2");
+      // mingw.org C++ include paths
 #if defined(LLVM_ON_WIN32)
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.0");
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.1");
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.2");
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.3");
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.8.0");
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.8.1");
-    AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.8.2");
+      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.0");
+      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.1");
+      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.2");
+      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.7.3");
+      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.8.0");
+      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.8.1");
+      AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.8.2");
 #endif
-    break;
+      break;
+    }
   case llvm::Triple::DragonFly:
     if (llvm::sys::fs::exists("/usr/lib/gcc47"))
       AddPath("/usr/include/c++/4.7", CXXSystem, false);
@@ -457,8 +462,13 @@ void InitHeaderSearch::AddDefaultIncludePaths(const LangOptions &Lang,
     break; // Everything else continues to use this routine's logic.
 
   case llvm::Triple::Linux:
-  case llvm::Triple::Win32:
     return;
+
+  case llvm::Triple::Win32:
+    if (triple.getEnvironment() == llvm::Triple::MSVC ||
+        triple.getEnvironment() == llvm::Triple::Itanium)
+      return;
+    break;
   }
 
   if (Lang.CPlusPlus && HSOpts.UseStandardCXXIncludes &&

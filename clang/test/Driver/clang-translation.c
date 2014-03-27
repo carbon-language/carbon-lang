@@ -203,7 +203,7 @@
 // AMD64-MINGW: clang
 // AMD64-MINGW: "-cc1"
 // AMD64-MINGW: "-triple"
-// AMD64-MINGW: "amd64--mingw32"
+// AMD64-MINGW: "amd64--windows-gnu"
 // AMD64-MINGW: "-munwind-tables"
 
 // RUN: %clang -target i686-linux-android -### -S %s 2>&1 \

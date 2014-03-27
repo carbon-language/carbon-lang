@@ -105,8 +105,9 @@ TEST(NameableDeclaration, REMatchesVariousDecls) {
 
 TEST(DeclarationMatcher, MatchClass) {
   DeclarationMatcher ClassMatcher(recordDecl());
-  if (llvm::Triple(llvm::sys::getDefaultTargetTriple()).getOS() !=
-      llvm::Triple::Win32)
+  llvm::Triple Triple(llvm::sys::getDefaultTargetTriple());
+  if (Triple.getOS() != llvm::Triple::Win32 ||
+      Triple.getEnvironment() != llvm::Triple::MSVC)
     EXPECT_FALSE(matches("", ClassMatcher));
   else
     // Matches class type_info.

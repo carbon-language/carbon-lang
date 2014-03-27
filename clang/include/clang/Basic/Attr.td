@@ -234,7 +234,7 @@ def TargetARM : TargetArch<["arm", "thumb"]>;
 def TargetMSP430 : TargetArch<["msp430"]>;
 def TargetX86 : TargetArch<["x86"]>;
 def TargetX86Win : TargetArch<["x86", "x86_64"]> {
-  let OSes = ["Win32", "MinGW32"];
+  let OSes = ["Win32"];
 }
 def TargetMips : TargetArch<["mips", "mipsel"]>;
 

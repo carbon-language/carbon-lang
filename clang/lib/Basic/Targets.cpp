@@ -5889,12 +5889,18 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new MinixTargetInfo<X86_32TargetInfo>(Triple);
     case llvm::Triple::Solaris:
       return new SolarisTargetInfo<X86_32TargetInfo>(Triple);
-    case llvm::Triple::Cygwin:
-      return new CygwinX86_32TargetInfo(Triple);
-    case llvm::Triple::MinGW32:
-      return new MinGWX86_32TargetInfo(Triple);
-    case llvm::Triple::Win32:
-      return new VisualStudioWindowsX86_32TargetInfo(Triple);
+    case llvm::Triple::Win32: {
+      switch (Triple.getEnvironment()) {
+      default:
+        return new X86_32TargetInfo(Triple);
+      case llvm::Triple::Cygnus:
+        return new CygwinX86_32TargetInfo(Triple);
+      case llvm::Triple::GNU:
+        return new MinGWX86_32TargetInfo(Triple);
+      case llvm::Triple::MSVC:
+        return new VisualStudioWindowsX86_32TargetInfo(Triple);
+      }
+    }
     case llvm::Triple::Haiku:
       return new HaikuX86_32TargetInfo(Triple);
     case llvm::Triple::RTEMS:
@@ -5906,7 +5912,7 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
     }
 
   case llvm::Triple::x86_64:
-    if (Triple.isOSDarwin() || Triple.getObjectFormat() == llvm::Triple::MachO)
+    if (Triple.isOSDarwin() || Triple.isOSBinFormatMachO())
       return new DarwinX86_64TargetInfo(Triple);
 
     switch (os) {
@@ -5928,10 +5934,16 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new KFreeBSDTargetInfo<X86_64TargetInfo>(Triple);
     case llvm::Triple::Solaris:
       return new SolarisTargetInfo<X86_64TargetInfo>(Triple);
-    case llvm::Triple::MinGW32:
-      return new MinGWX86_64TargetInfo(Triple);
-    case llvm::Triple::Win32:   // This is what Triple.h supports now.
-      return new VisualStudioWindowsX86_64TargetInfo(Triple);
+    case llvm::Triple::Win32: {
+      switch (Triple.getEnvironment()) {
+      default:
+        return new X86_64TargetInfo(Triple);
+      case llvm::Triple::GNU:
+        return new MinGWX86_64TargetInfo(Triple);
+      case llvm::Triple::MSVC:
+        return new VisualStudioWindowsX86_64TargetInfo(Triple);
+      }
+    }
     case llvm::Triple::NaCl:
       return new NaClTargetInfo<X86_64TargetInfo>(Triple);
     default:
