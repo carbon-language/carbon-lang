@@ -20,6 +20,7 @@
 #define DEBUG_TYPE "mips-mc-nacl"
 
 #include "Mips.h"
+#include "MipsELFStreamer.h"
 #include "MipsMCNaCl.h"
 #include "llvm/MC/MCELFStreamer.h"
 
@@ -33,11 +34,11 @@ const unsigned LoadStoreStackMaskReg = Mips::T7;
 /// Extend the generic MCELFStreamer class so that it can mask dangerous
 /// instructions.
 
-class MipsNaClELFStreamer : public MCELFStreamer {
+class MipsNaClELFStreamer : public MipsELFStreamer {
 public:
   MipsNaClELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_ostream &OS,
-                      MCCodeEmitter *Emitter)
-    : MCELFStreamer(Context, TAB, OS, Emitter), PendingCall(false) {}
+                      MCCodeEmitter *Emitter, const MCSubtargetInfo &STI)
+    : MipsELFStreamer(Context, TAB, OS, Emitter, STI), PendingCall(false) {}
 
   ~MipsNaClELFStreamer() {}
 
@@ -81,7 +82,7 @@ private:
     MaskInst.addOperand(MCOperand::CreateReg(AddrReg));
     MaskInst.addOperand(MCOperand::CreateReg(AddrReg));
     MaskInst.addOperand(MCOperand::CreateReg(MaskReg));
-    MCELFStreamer::EmitInstruction(MaskInst, STI);
+    MipsELFStreamer::EmitInstruction(MaskInst, STI);
   }
 
   // Sandbox indirect branch or return instruction by inserting mask operation
@@ -91,7 +92,7 @@ private:
 
     EmitBundleLock(false);
     emitMask(AddrReg, IndirectBranchMaskReg, STI);
-    MCELFStreamer::EmitInstruction(MI, STI);
+    MipsELFStreamer::EmitInstruction(MI, STI);
     EmitBundleUnlock();
   }
 
@@ -106,7 +107,7 @@ private:
       unsigned BaseReg = MI.getOperand(AddrIdx).getReg();
       emitMask(BaseReg, LoadStoreStackMaskReg, STI);
     }
-    MCELFStreamer::EmitInstruction(MI, STI);
+    MipsELFStreamer::EmitInstruction(MI, STI);
     if (MaskAfter) {
       // Sandbox SP change.
       unsigned SPReg = MI.getOperand(0).getReg();
@@ -145,7 +146,7 @@ public:
       if (MaskBefore || MaskAfter)
         sandboxLoadStoreStackChange(Inst, AddrIdx, STI, MaskBefore, MaskAfter);
       else
-        MCELFStreamer::EmitInstruction(Inst, STI);
+        MipsELFStreamer::EmitInstruction(Inst, STI);
       return;
     }
 
@@ -162,20 +163,20 @@ public:
         unsigned TargetReg = Inst.getOperand(1).getReg();
         emitMask(TargetReg, IndirectBranchMaskReg, STI);
       }
-      MCELFStreamer::EmitInstruction(Inst, STI);
+      MipsELFStreamer::EmitInstruction(Inst, STI);
       PendingCall = true;
       return;
     }
     if (PendingCall) {
       // Finish the sandboxing sequence by emitting branch delay.
-      MCELFStreamer::EmitInstruction(Inst, STI);
+      MipsELFStreamer::EmitInstruction(Inst, STI);
       EmitBundleUnlock();
       PendingCall = false;
       return;
     }
 
     // None of the sandboxing applies, just emit the instruction.
-    MCELFStreamer::EmitInstruction(Inst, STI);
+    MipsELFStreamer::EmitInstruction(Inst, STI);
   }
 };
 
@@ -235,9 +236,11 @@ bool baseRegNeedsLoadStoreMask(unsigned Reg) {
 
 MCELFStreamer *createMipsNaClELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                                          raw_ostream &OS,
-                                         MCCodeEmitter *Emitter, bool RelaxAll,
-                                         bool NoExecStack) {
-  MipsNaClELFStreamer *S = new MipsNaClELFStreamer(Context, TAB, OS, Emitter);
+                                         MCCodeEmitter *Emitter,
+                                         const MCSubtargetInfo &STI,
+                                         bool RelaxAll, bool NoExecStack) {
+  MipsNaClELFStreamer *S = new MipsNaClELFStreamer(Context, TAB, OS, Emitter,
+                                                   STI);
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);
   if (NoExecStack)

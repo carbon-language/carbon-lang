@@ -116,7 +116,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
     S = createMipsELFStreamer(Context, MAB, OS, Emitter, STI, RelaxAll,
                               NoExecStack);
   else
-    S = createMipsNaClELFStreamer(Context, MAB, OS, Emitter, RelaxAll,
+    S = createMipsNaClELFStreamer(Context, MAB, OS, Emitter, STI, RelaxAll,
                                   NoExecStack);
   new MipsTargetELFStreamer(*S, STI);
   return S;
