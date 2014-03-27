@@ -201,6 +201,11 @@ WRAP_W_WWW(_realloc_dbg)
 WRAP_W_WWW(_recalloc)
 
 WRAP_W_W(_msize)
+WRAP_W_W(_expand)
+WRAP_W_W(_expand_dbg)
+
+// TODO(timurrrr): Might want to add support for _aligned_* allocation
+// functions to detect a bit more bugs.  Those functions seem to wrap malloc().
 
 // TODO(timurrrr): Do we need to add _Crt* stuff here? (see asan_malloc_win.cc).
 
