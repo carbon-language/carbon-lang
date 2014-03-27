@@ -1193,9 +1193,9 @@ OMPSharedClause *OMPSharedClause::CreateEmpty(const ASTContext &C,
 }
 
 void OMPExecutableDirective::setClauses(ArrayRef<OMPClause *> Clauses) {
-  assert(Clauses.size() == this->Clauses.size() &&
+  assert(Clauses.size() == getNumClauses() &&
          "Number of clauses is not the same as the preallocated buffer");
-  std::copy(Clauses.begin(), Clauses.end(), this->Clauses.begin());
+  std::copy(Clauses.begin(), Clauses.end(), getClauses().begin());
 }
 
 OMPParallelDirective *OMPParallelDirective::Create(

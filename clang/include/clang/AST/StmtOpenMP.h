@@ -38,10 +38,22 @@ class OMPExecutableDirective : public Stmt {
   SourceLocation StartLoc;
   /// \brief Ending location of the directive.
   SourceLocation EndLoc;
-  /// \brief Pointer to the list of clauses.
-  llvm::MutableArrayRef<OMPClause *> Clauses;
-  /// \brief Associated statement (if any) and expressions.
-  llvm::MutableArrayRef<Stmt *> StmtAndExpressions;
+  /// \brief Numbers of clauses.
+  const unsigned NumClauses;
+  /// \brief Number of child expressions/stmts.
+  const unsigned NumChildren;
+  /// \brief Offset from this to the start of clauses.
+  /// There are NumClauses pointers to clauses, they are followed by
+  /// NumChildren pointers to child stmts/exprs (if the directive type
+  /// requires an associated stmt, then it has to be the first of them).
+  const unsigned ClausesOffset;
+
+  /// \brief Get the clauses storage.
+  llvm::MutableArrayRef<OMPClause *> getClauses() {
+    OMPClause **ClauseStorage = reinterpret_cast<OMPClause **>(
+        reinterpret_cast<char *>(this) + ClausesOffset);
+    return llvm::MutableArrayRef<OMPClause *>(ClauseStorage, NumClauses);
+  }
 
 protected:
   /// \brief Build instance of directive of class \a K.
@@ -54,15 +66,11 @@ protected:
   template <typename T>
   OMPExecutableDirective(const T *, StmtClass SC, OpenMPDirectiveKind K,
                          SourceLocation StartLoc, SourceLocation EndLoc,
-                         unsigned NumClauses, unsigned NumberOfExpressions)
+                         unsigned NumClauses, unsigned NumChildren)
       : Stmt(SC), Kind(K), StartLoc(StartLoc), EndLoc(EndLoc),
-        Clauses(reinterpret_cast<OMPClause **>(
-                    reinterpret_cast<char *>(this) +
-                    llvm::RoundUpToAlignment(sizeof(T),
-                                             llvm::alignOf<OMPClause *>())),
-                NumClauses),
-        StmtAndExpressions(reinterpret_cast<Stmt **>(Clauses.end()),
-                           NumberOfExpressions) {}
+        NumClauses(NumClauses), NumChildren(NumChildren),
+        ClausesOffset(llvm::RoundUpToAlignment(sizeof(T),
+                                               llvm::alignOf<OMPClause *>())) {}
 
   /// \brief Sets the list of variables for this clause.
   ///
@@ -74,7 +82,7 @@ protected:
   ///
   /// /param S Associated statement.
   ///
-  void setAssociatedStmt(Stmt *S) { StmtAndExpressions[0] = S; }
+  void setAssociatedStmt(Stmt *S) { *child_begin() = S; }
 
 public:
   /// \brief Returns starting location of directive kind.
@@ -94,19 +102,16 @@ public:
   void setLocEnd(SourceLocation Loc) { EndLoc = Loc; }
 
   /// \brief Get number of clauses.
-  unsigned getNumClauses() const { return Clauses.size(); }
+  unsigned getNumClauses() const { return NumClauses; }
 
   /// \brief Returns specified clause.
   ///
   /// \param i Number of clause.
   ///
-  OMPClause *getClause(unsigned i) const {
-    assert(i < Clauses.size() && "index out of bound!");
-    return Clauses[i];
-  }
+  OMPClause *getClause(unsigned i) const { return clauses()[i]; }
 
   /// \brief Returns statement associated with the directive.
-  Stmt *getAssociatedStmt() const { return StmtAndExpressions[0]; }
+  Stmt *getAssociatedStmt() const { return const_cast<Stmt *>(*child_begin()); }
 
   OpenMPDirectiveKind getDirectiveKind() const { return Kind; }
 
@@ -116,12 +121,15 @@ public:
   }
 
   child_range children() {
-    return child_range(StmtAndExpressions.begin(), StmtAndExpressions.end());
+    Stmt **ChildStorage = reinterpret_cast<Stmt **>(getClauses().end());
+    return child_range(ChildStorage, ChildStorage + NumChildren);
   }
 
-  ArrayRef<OMPClause *> clauses() { return Clauses; }
+  ArrayRef<OMPClause *> clauses() { return getClauses(); }
 
-  ArrayRef<OMPClause *> clauses() const { return Clauses; }
+  ArrayRef<OMPClause *> clauses() const {
+    return const_cast<OMPExecutableDirective *>(this)->getClauses();
+  }
 };
 
 /// \brief This represents '#pragma omp parallel' directive.
