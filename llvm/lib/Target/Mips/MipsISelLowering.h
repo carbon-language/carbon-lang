@@ -433,6 +433,7 @@ namespace llvm {
     const MipsSubtarget *Subtarget;
 
     bool hasMips64() const { return Subtarget->hasMips64(); }
+    bool isGP64bit() const { return Subtarget->isGP64bit(); }
     bool isO32() const { return Subtarget->isABI_O32(); }
     bool isN32() const { return Subtarget->isABI_N32(); }
     bool isN64() const { return Subtarget->isABI_N64(); }

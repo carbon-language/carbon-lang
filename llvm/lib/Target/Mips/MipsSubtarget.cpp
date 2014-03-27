@@ -117,8 +117,8 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
           ((getFeatureBits() & Mips::FeatureN64) != 0)) == 1);
 
   // Check if Architecture and ABI are compatible.
-  assert(((!hasMips64() && (isABI_O32() || isABI_EABI())) ||
-          (hasMips64() && (isABI_N32() || isABI_N64()))) &&
+  assert(((!isGP64bit() && (isABI_O32() || isABI_EABI())) ||
+          (isGP64bit() && (isABI_N32() || isABI_N64()))) &&
          "Invalid  Arch & ABI pair.");
 
   if (hasMSA() && !isFP64bit())
@@ -143,8 +143,8 @@ MipsSubtarget::enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                                      RegClassVector &CriticalPathRCs) const {
   Mode = TargetSubtargetInfo::ANTIDEP_NONE;
   CriticalPathRCs.clear();
-  CriticalPathRCs.push_back(hasMips64() ?
-                            &Mips::GPR64RegClass : &Mips::GPR32RegClass);
+  CriticalPathRCs.push_back(isGP64bit() ? &Mips::GPR64RegClass
+                                        : &Mips::GPR32RegClass);
   return OptLevel >= CodeGenOpt::Aggressive;
 }
 
