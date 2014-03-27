@@ -163,12 +163,125 @@ define <8 x i64> @vpaddq_test(<8 x i64> %i, <8 x i64> %j) nounwind readnone {
   ret <8 x i64> %x
 }
 
+; CHECK-LABEL: vpaddq_fold_test
+; CHECK: vpaddq (%
+; CHECK: ret
+define <8 x i64> @vpaddq_fold_test(<8 x i64> %i, <8 x i64>* %j) nounwind {
+  %tmp = load <8 x i64>* %j, align 4
+  %x = add <8 x i64> %i, %tmp
+  ret <8 x i64> %x
+}
+
+; CHECK-LABEL: vpaddq_broadcast_test
+; CHECK: vpaddq LCP{{.*}}(%rip){1to8}
+; CHECK: ret
+define <8 x i64> @vpaddq_broadcast_test(<8 x i64> %i) nounwind {
+  %x = add <8 x i64> %i, <i64 1, i64 1, i64 1, i64 1, i64 1, i64 1, i64 1, i64 1>
+  ret <8 x i64> %x
+}
+
+; CHECK-LABEL: vpaddq_broadcast2_test
+; CHECK: vpaddq (%rdi){1to8}
+; CHECK: ret
+define <8 x i64> @vpaddq_broadcast2_test(<8 x i64> %i, i64* %j) nounwind {
+  %tmp = load i64* %j
+  %j.0 = insertelement <8 x i64> undef, i64 %tmp, i32 0
+  %j.1 = insertelement <8 x i64> %j.0, i64 %tmp, i32 1
+  %j.2 = insertelement <8 x i64> %j.1, i64 %tmp, i32 2
+  %j.3 = insertelement <8 x i64> %j.2, i64 %tmp, i32 3
+  %j.4 = insertelement <8 x i64> %j.3, i64 %tmp, i32 4
+  %j.5 = insertelement <8 x i64> %j.4, i64 %tmp, i32 5
+  %j.6 = insertelement <8 x i64> %j.5, i64 %tmp, i32 6
+  %j.7 = insertelement <8 x i64> %j.6, i64 %tmp, i32 7
+  %x = add <8 x i64> %i, %j.7
+  ret <8 x i64> %x
+}
+
 ; CHECK-LABEL: vpaddd_test
 ; CHECK: vpaddd %zmm
 ; CHECK: ret
 define <16 x i32> @vpaddd_test(<16 x i32> %i, <16 x i32> %j) nounwind readnone {
   %x = add <16 x i32> %i, %j
   ret <16 x i32> %x
+}
+
+; CHECK-LABEL: vpaddd_fold_test
+; CHECK: vpaddd (%
+; CHECK: ret
+define <16 x i32> @vpaddd_fold_test(<16 x i32> %i, <16 x i32>* %j) nounwind {
+  %tmp = load <16 x i32>* %j, align 4
+  %x = add <16 x i32> %i, %tmp
+  ret <16 x i32> %x
+}
+
+; CHECK-LABEL: vpaddd_broadcast_test
+; CHECK: vpaddd LCP{{.*}}(%rip){1to16}
+; CHECK: ret
+define <16 x i32> @vpaddd_broadcast_test(<16 x i32> %i) nounwind {
+  %x = add <16 x i32> %i, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  ret <16 x i32> %x
+}
+
+; CHECK-LABEL: vpaddd_mask_test
+; CHECK: vpaddd {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]} }}
+; CHECK: ret
+define <16 x i32> @vpaddd_mask_test(<16 x i32> %i, <16 x i32> %j, <16 x i32> %mask1) nounwind readnone {
+  %mask = icmp ne <16 x i32> %mask1, zeroinitializer
+  %x = add <16 x i32> %i, %j
+  %r = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> %i
+  ret <16 x i32> %r
+}
+
+; CHECK-LABEL: vpaddd_maskz_test
+; CHECK: vpaddd {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]} {z} }}
+; CHECK: ret
+define <16 x i32> @vpaddd_maskz_test(<16 x i32> %i, <16 x i32> %j, <16 x i32> %mask1) nounwind readnone {
+  %mask = icmp ne <16 x i32> %mask1, zeroinitializer
+  %x = add <16 x i32> %i, %j
+  %r = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> zeroinitializer
+  ret <16 x i32> %r
+}
+
+; CHECK-LABEL: vpaddd_mask_fold_test
+; CHECK: vpaddd (%rdi), {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]} }}
+; CHECK: ret
+define <16 x i32> @vpaddd_mask_fold_test(<16 x i32> %i, <16 x i32>* %j.ptr, <16 x i32> %mask1) nounwind readnone {
+  %mask = icmp ne <16 x i32> %mask1, zeroinitializer
+  %j = load <16 x i32>* %j.ptr
+  %x = add <16 x i32> %i, %j
+  %r = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> %i
+  ret <16 x i32> %r
+}
+
+; CHECK-LABEL: vpaddd_mask_broadcast_test
+; CHECK: vpaddd LCP{{.*}}(%rip){1to16}, {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]} }}
+; CHECK: ret
+define <16 x i32> @vpaddd_mask_broadcast_test(<16 x i32> %i, <16 x i32> %mask1) nounwind readnone {
+  %mask = icmp ne <16 x i32> %mask1, zeroinitializer
+  %x = add <16 x i32> %i, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  %r = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> %i
+  ret <16 x i32> %r
+}
+
+; CHECK-LABEL: vpaddd_maskz_fold_test
+; CHECK: vpaddd (%rdi), {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}} {z}
+; CHECK: ret
+define <16 x i32> @vpaddd_maskz_fold_test(<16 x i32> %i, <16 x i32>* %j.ptr, <16 x i32> %mask1) nounwind readnone {
+  %mask = icmp ne <16 x i32> %mask1, zeroinitializer
+  %j = load <16 x i32>* %j.ptr
+  %x = add <16 x i32> %i, %j
+  %r = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> zeroinitializer
+  ret <16 x i32> %r
+}
+
+; CHECK-LABEL: vpaddd_maskz_broadcast_test
+; CHECK: vpaddd LCP{{.*}}(%rip){1to16}, {{%zmm[0-9]{1,2}, %zmm[0-9]{1,2} {%k[1-7]}}} {z}
+; CHECK: ret
+define <16 x i32> @vpaddd_maskz_broadcast_test(<16 x i32> %i, <16 x i32> %mask1) nounwind readnone {
+  %mask = icmp ne <16 x i32> %mask1, zeroinitializer
+  %x = add <16 x i32> %i, <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  %r = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> zeroinitializer
+  ret <16 x i32> %r
 }
 
 ; CHECK-LABEL: vpsubq_test
