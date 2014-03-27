@@ -37,13 +37,14 @@ void functionBeforeImports(void);
 
 // RUN: rm -rf %t
 // RUN: mkdir %t
+// RUN: mkdir %t/module-cache
 
 // Check that we serialize comment source locations properly.
 // RUN: %clang_cc1 -emit-pch -o %t/out.pch -F %S/Inputs/Frameworks %s
 // RUN: %clang_cc1 -include-pch %t/out.pch -F %S/Inputs/Frameworks -fsyntax-only %s
 
 // RUN: c-index-test -test-load-source all -comments-xml-schema=%S/../../bindings/xml/comment-xml-schema.rng %s -F %S/Inputs/Frameworks > %t/out.c-index-direct
-// RUN: c-index-test -test-load-source all -comments-xml-schema=%S/../../bindings/xml/comment-xml-schema.rng %s -F %S/Inputs/Frameworks -fmodules > %t/out.c-index-modules
+// RUN: c-index-test -test-load-source all -comments-xml-schema=%S/../../bindings/xml/comment-xml-schema.rng %s -F %S/Inputs/Frameworks -fmodules -fmodules-cache-path=%t/module-cache > %t/out.c-index-modules
 // RUN: c-index-test -test-load-tu %t/out.pch all -F %S/Inputs/Frameworks > %t/out.c-index-pch
 
 // RUN: FileCheck %s -check-prefix=WRONG < %t/out.c-index-direct
