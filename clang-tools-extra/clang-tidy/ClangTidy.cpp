@@ -100,7 +100,7 @@ public:
         Diags(IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs), &*DiagOpts,
               DiagPrinter),
         SourceMgr(Diags, Files), Rewrite(SourceMgr, LangOpts),
-        ApplyFixes(ApplyFixes) {
+        ApplyFixes(ApplyFixes), TotalFixes(0), AppliedFixes(0) {
     DiagOpts->ShowColors = llvm::sys::Process::StandardOutHasColors();
     DiagPrinter->BeginSourceFile(LangOpts);
   }
@@ -166,8 +166,8 @@ private:
   SourceManager SourceMgr;
   Rewriter Rewrite;
   bool ApplyFixes;
-  unsigned TotalFixes = 0;
-  unsigned AppliedFixes = 0;
+  unsigned TotalFixes;
+  unsigned AppliedFixes;
 };
 
 } // namespace
