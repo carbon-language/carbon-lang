@@ -59,6 +59,7 @@ if (NOT COMPILER_RT_STANDALONE_BUILD)
         ${LLVM_ENABLE_WERROR})
   # Use just-built Clang to compile/link tests.
   set(COMPILER_RT_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang)
+  set(COMPILER_RT_TEST_COMPILER_ID Clang)
 else()
   # Take output dir and install path from the user.
   set(COMPILER_RT_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH
@@ -70,7 +71,8 @@ else()
   option(COMPILER_RT_INCLUDE_TESTS "Generate and build compiler-rt unit tests." OFF)
   option(COMPILER_RT_ENABLE_WERROR "Fail and stop if warning is triggered" OFF)
   # Use a host compiler to compile/link tests.
-  option(COMPILER_RT_TEST_COMPILER "Compiler to use for testing" ${CMAKE_C_COMPILER})
+  set(COMPILER_RT_TEST_COMPILER ${CMAKE_C_COMPILER})
+  set(COMPILER_RT_TEST_COMPILER_ID ${CMAKE_C_COMPILER_ID})
 
   if (NOT LLVM_CONFIG_PATH)
     find_program(LLVM_CONFIG_PATH "llvm-config"
@@ -116,12 +118,6 @@ else()
     set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
   endif()
   set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
-endif()
-
-if("${COMPILER_RT_TEST_COMPILER}" MATCHES "clang[+]*$")
-  set(COMPILER_RT_TEST_COMPILER_ID Clang)
-else()
-  set(COMPILER_RT_TEST_COMPILER_ID GNU)
 endif()
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} COMPILER_RT_OS_DIR)
