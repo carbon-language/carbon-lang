@@ -321,6 +321,11 @@ private:
   unsigned doRegionSplit(LiveInterval &VirtReg, unsigned BestCand,
                          bool HasCompact,
                          SmallVectorImpl<unsigned> &NewVRegs);
+  /// Check other options before using a callee-saved register for the first
+  /// time.
+  unsigned tryAssignCSRFirstTime(LiveInterval &VirtReg, AllocationOrder &Order,
+                                 unsigned PhysReg, unsigned &CostPerUseLimit,
+                                 SmallVectorImpl<unsigned> &NewVRegs);
   unsigned tryBlockSplit(LiveInterval&, AllocationOrder&,
                          SmallVectorImpl<unsigned>&);
   unsigned tryInstructionSplit(LiveInterval&, AllocationOrder&,
@@ -2107,6 +2112,49 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   return selectOrSplitImpl(VirtReg, NewVRegs, FixedRegisters);
 }
 
+/// Using a CSR for the first time has a cost because it causes push|pop
+/// to be added to prologue|epilogue. Splitting a cold section of the live
+/// range can have lower cost than using the CSR for the first time;
+/// Spilling a live range in the cold path can have lower cost than using
+/// the CSR for the first time. Returns the physical register if we decide
+/// to use the CSR; otherwise return 0.
+unsigned RAGreedy::tryAssignCSRFirstTime(LiveInterval &VirtReg,
+                                         AllocationOrder &Order,
+                                         unsigned PhysReg,
+                                         unsigned &CostPerUseLimit,
+                                         SmallVectorImpl<unsigned> &NewVRegs) {
+  BlockFrequency CSRCost(CSRFirstTimeCost);
+  if (getStage(VirtReg) == RS_Spill && VirtReg.isSpillable()) {
+    // We choose spill over using the CSR for the first time if the spill cost
+    // is lower than CSRCost.
+    SA->analyze(&VirtReg);
+    if (calcSpillCost() >= CSRCost)
+      return PhysReg;
+
+    // We are going to spill, set CostPerUseLimit to 1 to make sure that
+    // we will not use a callee-saved register in tryEvict.
+    CostPerUseLimit = 1;
+    return 0;
+  }
+  if (getStage(VirtReg) < RS_Split) {
+    // We choose pre-splitting over using the CSR for the first time if
+    // the cost of splitting is lower than CSRCost.
+    SA->analyze(&VirtReg);
+    unsigned NumCands = 0;
+    unsigned BestCand =
+      calculateRegionSplitCost(VirtReg, Order, CSRCost, NumCands,
+                               true/*IgnoreCSR*/);
+    if (BestCand == NoCand)
+      // Use the CSR if we can't find a region split below CSRCost.
+      return PhysReg;
+
+    // Perform the actual pre-splitting.
+    doRegionSplit(VirtReg, BestCand, false/*HasCompact*/, NewVRegs);
+    return 0;
+  }
+  return PhysReg;
+}
+
 unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
                                      SmallVectorImpl<unsigned> &NewVRegs,
                                      SmallVirtRegSet &FixedRegisters,
@@ -2121,41 +2169,16 @@ unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
       if (!MRI->isPhysRegUsed(CSR))
         CSRFirstUse = true;
 
-    BlockFrequency CSRCost(CSRFirstTimeCost);
-    // Using a CSR for the first time has a cost because it causes push|pop
-    // to be added to prologue|epilogue. Splitting a cold section of the live
-    // range can have lower cost than using the CSR for the first time;
-    // Spilling a live range in the cold path can have lower cost than using
-    // the CSR for the first time.
-    if (getStage(VirtReg) == RS_Spill && CSRFirstUse && NewVRegs.empty() &&
-        CSRFirstTimeCost > 0 && VirtReg.isSpillable()) {
-      // We choose spill over using the CSR for the first time if the spill cost
-      // is lower than CSRCost.
-      SA->analyze(&VirtReg);
-      if (calcSpillCost() >= CSRCost)
-        return PhysReg;
-
-      // We are going to spill, set CostPerUseLimit to 1 to make sure that
-      // we will not use a callee-saved register in tryEvict.
-      CostPerUseLimit = 1;
-    }
-    else if (getStage(VirtReg) < RS_Split && CSRFirstUse &&
-             NewVRegs.empty() && CSRFirstTimeCost > 0) {
-      // We choose pre-splitting over using the CSR for the first time if
-      // the cost of splitting is lower than CSRCost.
-      SA->analyze(&VirtReg);
-      unsigned NumCands = 0;
-      unsigned BestCand =
-        calculateRegionSplitCost(VirtReg, Order, CSRCost, NumCands,
-                                 true/*IgnoreCSR*/);
-      if (BestCand == NoCand)
-        // Use the CSR if we can't find a region split below CSRCost.
-        return PhysReg;
-
-      // Perform the actual pre-splitting.
-      doRegionSplit(VirtReg, BestCand, false/*HasCompact*/, NewVRegs);
-      if (!NewVRegs.empty())
-        return 0;
+    // When NewVRegs is not empty, we may have made decisions such as evicting
+    // a virtual register, go with the earlier decisions and use the physical
+    // register.
+    if (CSRFirstTimeCost > 0 && CSRFirstUse && NewVRegs.empty()) {
+      unsigned CSRReg = tryAssignCSRFirstTime(VirtReg, Order, PhysReg,
+                                              CostPerUseLimit, NewVRegs);
+      if (CSRReg || !NewVRegs.empty())
+        // Return now if we decide to use a CSR or create new vregs due to
+        // pre-splitting.
+        return CSRReg;
     } else
       return PhysReg;
   }
