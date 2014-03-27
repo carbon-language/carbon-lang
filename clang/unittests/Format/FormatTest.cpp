@@ -6552,11 +6552,10 @@ TEST_F(FormatTest, CountsCharactersInMultilineRawStringLiterals) {
                    getGoogleStyleWithColumns(20)));
   EXPECT_EQ("fffffffffff(R\"x(\n"
             "multiline raw string literal xxxxxxxxxxxxxx\n"
-            ")x\" +\n"
-            "            bbbbbb);",
+            ")x\" + bbbbbb);",
             format("fffffffffff(R\"x(\n"
                    "multiline raw string literal xxxxxxxxxxxxxx\n"
-                   ")x\" + bbbbbb);",
+                   ")x\" +   bbbbbb);",
                    getGoogleStyleWithColumns(20)));
   EXPECT_EQ("fffffffffff(\n"
             "    R\"x(\n"

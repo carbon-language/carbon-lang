@@ -144,7 +144,13 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
        Previous.Type == TT_ArrayInitializerLSquare) &&
       getLengthToMatchingParen(Previous) + State.Column > getColumnLimit(State))
     return true;
+  if (Current.Type == TT_CtorInitializerColon &&
+      (!Style.AllowShortFunctionsOnASingleLine ||
+       Style.BreakConstructorInitializersBeforeComma || Style.ColumnLimit != 0))
+    return true;
 
+  if (State.Column < getNewLineColumn(State))
+    return false;
   if (!Style.BreakBeforeBinaryOperators) {
     // If we need to break somewhere inside the LHS of a binary expression, we
     // should also break after the operator. Otherwise, the formatting would
@@ -203,10 +209,6 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
   // into the ColumnLimit, they are checked here in the ContinuationIndenter.
   if (Previous.BlockKind == BK_Block && Previous.is(tok::l_brace) &&
       !Current.isOneOf(tok::r_brace, tok::comment))
-    return true;
-  if (Current.Type == TT_CtorInitializerColon &&
-      (!Style.AllowShortFunctionsOnASingleLine ||
-       Style.BreakConstructorInitializersBeforeComma || Style.ColumnLimit != 0))
     return true;
 
   return false;
@@ -446,6 +448,8 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
 }
 
 unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
+  if (!State.NextToken || !State.NextToken->Previous)
+    return 0;
   FormatToken &Current = *State.NextToken;
   const FormatToken &Previous = *State.NextToken->Previous;
   // If we are continuing an expression, we want to use the continuation indent.
@@ -528,7 +532,7 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
     return State.FirstIndent + Style.ConstructorInitializerIndentWidth;
   if (NextNonComment->Type == TT_CtorInitializerComma)
     return State.Stack.back().Indent;
-  if (State.Stack.back().Indent == State.FirstIndent &&
+  if (State.Stack.back().Indent == State.FirstIndent && PreviousNonComment &&
       PreviousNonComment->isNot(tok::r_brace))
     // Ensure that we fall back to the continuation indent width instead of
     // just flushing continuations left.
