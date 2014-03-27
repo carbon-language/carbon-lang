@@ -566,7 +566,7 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                         COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
                         COFF::IMAGE_SCN_MEM_READ,
                         SectionKind::getReadOnly());
-  if (T.getOS() == Triple::Win32) {
+  if (T.isKnownWindowsMSVCEnvironment()) {
     StaticCtorSection =
       Ctx->getCOFFSection(".CRT$XCU",
                           COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
@@ -582,7 +582,7 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
   }
 
 
-  if (T.getOS() == Triple::Win32) {
+  if (T.isKnownWindowsMSVCEnvironment()) {
     StaticDtorSection =
       Ctx->getCOFFSection(".CRT$XTX",
                           COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |

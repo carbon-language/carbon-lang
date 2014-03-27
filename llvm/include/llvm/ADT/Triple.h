@@ -125,6 +125,10 @@ public:
     EABI,
     EABIHF,
     Android,
+
+    MSVC,
+    Itanium,
+    Cygnus,
   };
   enum ObjectFormatType {
     UnknownObjectFormat,
@@ -328,9 +332,29 @@ public:
     return isMacOSX() || isiOS();
   }
 
+  bool isWindowsMSVCEnvironment() const {
+    return getOS() == Triple::Win32 &&
+           (getEnvironment() == Triple::UnknownEnvironment ||
+            getEnvironment() == Triple::MSVC);
+  }
+
+  bool isKnownWindowsMSVCEnvironment() const {
+    return getOS() == Triple::Win32 && getEnvironment() == Triple::MSVC;
+  }
+
+  bool isWindowsCygwinEnvironment() const {
+    return getOS() == Triple::Cygwin ||
+           (getOS() == Triple::Win32 && getEnvironment() == Triple::Cygnus);
+  }
+
+  bool isWindowsGNUEnvironment() const {
+    return getOS() == Triple::MinGW32 ||
+           (getOS() == Triple::Win32 && getEnvironment() == Triple::GNU);
+  }
+
   /// \brief Tests for either Cygwin or MinGW OS
   bool isOSCygMing() const {
-    return getOS() == Triple::Cygwin || getOS() == Triple::MinGW32;
+    return isWindowsCygwinEnvironment() || isWindowsGNUEnvironment();
   }
 
   /// \brief Is this a "Windows" OS targeting a "MSVCRT.dll" environment.

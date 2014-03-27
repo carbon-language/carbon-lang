@@ -129,7 +129,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case NetBSD: return "netbsd";
   case OpenBSD: return "openbsd";
   case Solaris: return "solaris";
-  case Win32: return "win32";
+  case Win32: return "windows";
   case Haiku: return "haiku";
   case Minix: return "minix";
   case RTEMS: return "rtems";
@@ -155,6 +155,9 @@ const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
   case EABI: return "eabi";
   case EABIHF: return "eabihf";
   case Android: return "android";
+  case MSVC: return "msvc";
+  case Itanium: return "itanium";
+  case Cygnus: return "cygnus";
   }
 
   llvm_unreachable("Invalid EnvironmentType!");
@@ -287,6 +290,7 @@ static Triple::OSType parseOS(StringRef OSName) {
     .StartsWith("openbsd", Triple::OpenBSD)
     .StartsWith("solaris", Triple::Solaris)
     .StartsWith("win32", Triple::Win32)
+    .StartsWith("windows", Triple::Win32)
     .StartsWith("haiku", Triple::Haiku)
     .StartsWith("minix", Triple::Minix)
     .StartsWith("rtems", Triple::RTEMS)
@@ -309,6 +313,9 @@ static Triple::EnvironmentType parseEnvironment(StringRef EnvironmentName) {
     .StartsWith("code16", Triple::CODE16)
     .StartsWith("gnu", Triple::GNU)
     .StartsWith("android", Triple::Android)
+    .StartsWith("msvc", Triple::MSVC)
+    .StartsWith("itanium", Triple::Itanium)
+    .StartsWith("cygnus", Triple::Cygnus)
     .Default(Triple::UnknownEnvironment);
 }
 
@@ -515,6 +522,21 @@ std::string Triple::normalize(StringRef Str) {
 
   // Special case logic goes here.  At this point Arch, Vendor and OS have the
   // correct values for the computed components.
+
+  if (OS == Triple::Win32) {
+    Components.resize(4);
+    Components[2] = "windows";
+    if (Environment == UnknownEnvironment && ObjectFormat == UnknownObjectFormat)
+      Components[3] = "msvc";
+  } else if (OS == Triple::MinGW32) {
+    Components.resize(4);
+    Components[2] = "windows";
+    Components[3] = (ObjectFormat == Triple::ELF) ? "gnuelf" : "gnu";
+  } else if (OS == Triple::Cygwin) {
+    Components.resize(4);
+    Components[2] = "windows";
+    Components[3] = "cygnus";
+  }
 
   // Stick the corrected components back together to form the normalized string.
   std::string Normalized;

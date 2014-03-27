@@ -417,7 +417,7 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
     TLI.setUnavailable(LibFunc::fiprintf);
   }
 
-  if (T.getOS() == Triple::Win32) {
+  if (T.isKnownWindowsMSVCEnvironment()) {
     // Win32 does not support long double
     TLI.setUnavailable(LibFunc::acosl);
     TLI.setUnavailable(LibFunc::asinl);

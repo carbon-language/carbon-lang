@@ -343,9 +343,14 @@ public:
   bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
   bool isTargetNaCl32() const { return isTargetNaCl() && !is64Bit(); }
   bool isTargetNaCl64() const { return isTargetNaCl() && is64Bit(); }
-  bool isTargetWindows() const { return TargetTriple.getOS() == Triple::Win32; }
-  bool isTargetMingw() const { return TargetTriple.getOS() == Triple::MinGW32; }
-  bool isTargetCygwin() const { return TargetTriple.getOS() == Triple::Cygwin; }
+  bool isTargetWindows() const {
+    return TargetTriple.isOSWindows() &&
+           !TargetTriple.isWindowsGNUEnvironment();
+  }
+  bool isTargetMingw() const { return TargetTriple.isWindowsGNUEnvironment(); }
+  bool isTargetCygwin() const {
+    return TargetTriple.isWindowsCygwinEnvironment();
+  }
   bool isTargetCygMing() const { return TargetTriple.isOSCygMing(); }
 
   bool isOSWindows() const { return TargetTriple.isOSWindows(); }
