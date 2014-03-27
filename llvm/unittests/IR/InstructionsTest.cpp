@@ -54,10 +54,10 @@ TEST(InstructionsTest, ReturnInst) {
 // for tests that need to refer to the function in some way.
 class ModuleWithFunctionTest : public testing::Test {
 protected:
-  ModuleWithFunctionTest()
-      : M(new Module("MyModule", Ctx)),
-        FArgTypes{Type::getInt8Ty(Ctx), Type::getInt32Ty(Ctx),
-                  Type::getInt64Ty(Ctx)} {
+  ModuleWithFunctionTest() : M(new Module("MyModule", Ctx)) {
+	FArgTypes.push_back(Type::getInt8Ty(Ctx));
+	FArgTypes.push_back(Type::getInt32Ty(Ctx));
+	FArgTypes.push_back(Type::getInt64Ty(Ctx));
     FunctionType *FTy =
         FunctionType::get(Type::getVoidTy(Ctx), FArgTypes, false);
     F = Function::Create(FTy, Function::ExternalLinkage, "", M.get());
