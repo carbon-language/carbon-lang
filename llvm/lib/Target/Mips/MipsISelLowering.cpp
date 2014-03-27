@@ -1523,8 +1523,8 @@ SDValue MipsTargetLowering::lowerGlobalAddress(SDValue Op,
                                  MipsII::MO_GOT_LO16, DAG.getEntryNode(),
                                  MachinePointerInfo::getGOT());
 
-  return getAddrGlobal(N, Ty, DAG,
-                       hasMips64() ? MipsII::MO_GOT_DISP : MipsII::MO_GOT16,
+  return getAddrGlobal(N, Ty, DAG, (isN32() || isN64()) ? MipsII::MO_GOT_DISP
+                                                        : MipsII::MO_GOT16,
                        DAG.getEntryNode(), MachinePointerInfo::getGOT());
 }
 
