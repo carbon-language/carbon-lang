@@ -527,8 +527,11 @@ void CXXRecordDecl::addedMember(Decl *D) {
   if (CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D)) {
     SMKind |= SMF_Destructor;
 
-    if (!DD->isImplicit())
+    if (DD->isUserProvided())
       data().HasIrrelevantDestructor = false;
+    // If the destructor is explicitly defaulted and not trivial or not public
+    // or if the destructor is deleted, we clear HasIrrelevantDestructor in
+    // finishedDefaultedOrDeletedMember.
 
     // C++11 [class.dtor]p5:
     //   A destructor is trivial if [...] the destructor is not virtual.
@@ -936,9 +939,11 @@ void CXXRecordDecl::finishedDefaultedOrDeletedMember(CXXMethodDecl *D) {
     else if (Constructor->isConstexpr())
       // We may now know that the constructor is constexpr.
       data().HasConstexprNonCopyMoveConstructor = true;
-  } else if (isa<CXXDestructorDecl>(D))
+  } else if (isa<CXXDestructorDecl>(D)) {
     SMKind |= SMF_Destructor;
-  else if (D->isCopyAssignmentOperator())
+    if (!D->isTrivial() || D->getAccess() != AS_public || D->isDeleted())
+      data().HasIrrelevantDestructor = false;
+  } else if (D->isCopyAssignmentOperator())
     SMKind |= SMF_CopyAssignment;
   else if (D->isMoveAssignmentOperator())
     SMKind |= SMF_MoveAssignment;
