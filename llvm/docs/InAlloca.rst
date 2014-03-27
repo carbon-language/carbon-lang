@@ -5,8 +5,6 @@ Design and Usage of the InAlloca Attribute
 Introduction
 ============
 
-.. Warning:: This feature is unstable and not fully implemented.
-
 The :ref:`inalloca <attr_inalloca>` attribute is designed to allow
 taking the address of an aggregate argument that is being passed by
 value through memory.  Primarily, this feature is required for
@@ -54,11 +52,11 @@ that passes two default-constructed ``Foo`` objects to ``g`` in the
     entry:
       %base = call i8* @llvm.stacksave()
       %memargs = alloca <{ %struct.Foo, %struct.Foo }>
-      %b = getelementptr <{ %struct.Foo, %struct.Foo }>*, i32 1
+      %b = getelementptr <{ %struct.Foo, %struct.Foo }>* %memargs, i32 1
       call void @Foo_ctor(%struct.Foo* %b)
 
       ; If a's ctor throws, we must destruct b.
-      %a = getelementptr <{ %struct.Foo, %struct.Foo }>*, i32 0
+      %a = getelementptr <{ %struct.Foo, %struct.Foo }>* %memargs, i32 0
       invoke void @Foo_ctor(%struct.Foo* %a)
           to label %invoke.cont unwind %invoke.unwind
 
