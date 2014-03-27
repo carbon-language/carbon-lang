@@ -32,6 +32,32 @@ void functionBeforeImports(void);
 - (void)method1_isdoxy4; /*!< method1_isdoxy4 IS_DOXYGEN_SINGLE */
 @end
 
+//===---
+// rdar://14348912
+// Check that we attach comments to enums declared using the NS_ENUM macro.
+//===---
+
+#define NS_ENUM(_type, _name) enum _name : _type _name; enum _name : _type
+
+/// An_NS_ENUM_isdoxy1 IS_DOXYGEN_SINGLE
+typedef NS_ENUM(int, An_NS_ENUM_isdoxy1) { Red, Green, Blue };
+
+// In the implementation of attaching comments to enums declared using the
+// NS_ENUM macro, it is tempting to use the fact that enum decl is embedded in
+// the typedef.  Make sure that the heuristic is strong enough that it does not
+// attach unrelated comments in the following cases where tag decls are
+// embedded in declarators.
+
+#define DECLARE_FUNCTION() \
+    void functionFromMacro() { \
+      typedef struct Struct_notdoxy Struct_notdoxy; \
+    }
+
+/// IS_DOXYGEN_NOT_ATTACHED
+DECLARE_FUNCTION()
+
+/// typedef_isdoxy1 IS_DOXYGEN_SINGLE
+typedef struct Struct_notdoxy *typedef_isdoxy1;
 
 #endif
 
@@ -91,4 +117,8 @@ void functionBeforeImports(void);
 // CHECK: annotate-comments-objc.m:30:9: ObjCInstanceMethodDecl=method1_isdoxy2:{{.*}} method1_isdoxy2 IS_DOXYGEN_SINGLE
 // CHECK: annotate-comments-objc.m:31:9: ObjCInstanceMethodDecl=method1_isdoxy3:{{.*}} method1_isdoxy3 IS_DOXYGEN_SINGLE
 // CHECK: annotate-comments-objc.m:32:9: ObjCInstanceMethodDecl=method1_isdoxy4:{{.*}} method1_isdoxy4 IS_DOXYGEN_SINGLE
+// CHECK: annotate-comments-objc.m:43:22: EnumDecl=An_NS_ENUM_isdoxy1:{{.*}} An_NS_ENUM_isdoxy1 IS_DOXYGEN_SINGLE
+// CHECK: annotate-comments-objc.m:43:22: TypedefDecl=An_NS_ENUM_isdoxy1:{{.*}} An_NS_ENUM_isdoxy1 IS_DOXYGEN_SINGLE
+// CHECK: annotate-comments-objc.m:43:22: EnumDecl=An_NS_ENUM_isdoxy1:{{.*}} An_NS_ENUM_isdoxy1 IS_DOXYGEN_SINGLE
+// CHECK: annotate-comments-objc.m:60:32: TypedefDecl=typedef_isdoxy1:{{.*}} typedef_isdoxy1 IS_DOXYGEN_SINGLE
 

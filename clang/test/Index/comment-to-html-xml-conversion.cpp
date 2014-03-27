@@ -1015,17 +1015,5 @@ void comment_to_xml_conversion_exceptions_5();
 // CHECK-NEXT:         (CXComment_Paragraph
 // CHECK-NEXT:           (CXComment_Text Text=[ Ccc.]))))]
 
-
-// rdar://14348912
-#define NS_ENUM(_type, _name) enum _name : _type _name; enum _name : _type
-
-/**! Documentation comment */
-typedef NS_ENUM(int, Color) { Red, Green, Blue };
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:22: TypedefDecl=Color:[[@LINE-1]]:22
-// CHECK-NEXT:  CommentAST=[
-// CHECK-NEXT:    (CXComment_FullComment
-// CHECK-NEXT:       (CXComment_Paragraph
-// CHECK-NEXT:         (CXComment_Text Text=[! Documentation comment ])))] 
-
 #endif
 
