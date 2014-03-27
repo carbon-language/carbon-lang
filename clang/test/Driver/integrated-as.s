@@ -31,10 +31,7 @@
 
 // RUN: %clang -### -c -integrated-as -Wa,-compress-debug-sections %s 2>&1 | FileCheck --check-prefix=COMPRESS_DEBUG %s
 // RUN: %clang -### -c -integrated-as -Wa,--compress-debug-sections %s 2>&1 | FileCheck --check-prefix=COMPRESS_DEBUG %s
-// COMPRESS_DEBUG: warning: DWARF compression is not implemented
-// COMPRESS_DEBUG: -cc1as
+// COMPRESS_DEBUG: "-compress-debug-sections"
 
-// RUN: %clang -### -c -integrated-as -Wa,-compress-debug-sections -Wno-missing-debug-compression %s 2>&1 | FileCheck --check-prefix=COMPRESS_DEBUG_QUIET %s
-// COMPRESS_DEBUG_QUIET-NOT: warning: DWARF compression is not implemented
-// COMPRESS_DEBUG_QUIET-NOT: warning: argument unused during compilation
-// COMPRESS_DEBUG_QUIET: -cc1as
+// RUN: %clang -### -c -integrated-as -Wa,-compress-debug-sections -Wa,-nocompress-debug-sections %s 2>&1 | FileCheck --check-prefix=NOCOMPRESS_DEBUG %s
+// NOCOMPRESS_DEBUG-NOT: "-compress-debug-sections"

@@ -83,6 +83,9 @@ def mrelax_all : Flag<["-"], "mrelax-all">,
 def mno_exec_stack : Flag<["-"], "mnoexecstack">,
     HelpText<"Mark the file as not needing an executable stack">;
 
+def compress_debug_sections : Flag<["-"], "compress-debug-sections">,
+    HelpText<"Compress DWARF debug sections using zlib">;
+
 def g : Flag<["-"], "g">, HelpText<"Generate source level debug information">;
 
 def fdebug_compilation_dir : Separate<["-"], "fdebug-compilation-dir">,

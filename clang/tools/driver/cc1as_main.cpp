@@ -85,6 +85,7 @@ struct AssemblerInvocation {
   unsigned NoInitialTextSection : 1;
   unsigned SaveTemporaryLabels : 1;
   unsigned GenDwarfForAssembly : 1;
+  unsigned CompressDebugSections : 1;
   std::string DwarfDebugFlags;
   std::string DwarfDebugProducer;
   std::string DebugCompilationDir;
@@ -186,6 +187,7 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   Opts.NoInitialTextSection = Args->hasArg(OPT_n);
   Opts.SaveTemporaryLabels = Args->hasArg(OPT_msave_temp_labels);
   Opts.GenDwarfForAssembly = Args->hasArg(OPT_g);
+  Opts.CompressDebugSections = Args->hasArg(OPT_compress_debug_sections);
   Opts.DwarfDebugFlags = Args->getLastArgValue(OPT_dwarf_debug_flags);
   Opts.DwarfDebugProducer = Args->getLastArgValue(OPT_dwarf_debug_producer);
   Opts.DebugCompilationDir = Args->getLastArgValue(OPT_fdebug_compilation_dir);
@@ -318,6 +320,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     Ctx.setCompilationDir(Opts.DebugCompilationDir);
   if (!Opts.MainFileName.empty())
     Ctx.setMainFileName(StringRef(Opts.MainFileName));
+  if (Opts.CompressDebugSections)
+    MAI->setCompressDebugSections(true);
 
   // Build up the feature string from the target feature list.
   std::string FS;

@@ -1724,6 +1724,7 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
 
     // When using an integrated assembler, translate -Wa, and -Xassembler
     // options.
+    bool CompressDebugSections = false;
     for (arg_iterator it = Args.filtered_begin(options::OPT_Wa_COMMA,
                                                options::OPT_Xassembler),
            ie = Args.filtered_end(); it != ie; ++it) {
@@ -1749,7 +1750,10 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
           CmdArgs.push_back("-mnoexecstack");
         } else if (Value == "-compress-debug-sections" ||
                    Value == "--compress-debug-sections") {
-          D.Diag(diag::warn_missing_debug_compression);
+          CompressDebugSections = true;
+        } else if (Value == "-nocompress-debug-sections" ||
+                   Value == "--nocompress-debug-sections") {
+          CompressDebugSections = false;
         } else if (Value.startswith("-I")) {
           CmdArgs.push_back(Value.data());
           // We need to consume the next argument if the current arg is a plain
@@ -1762,6 +1766,8 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
         }
       }
     }
+    if (CompressDebugSections)
+      CmdArgs.push_back("-compress-debug-sections");
 }
 
 // Until ARM libraries are build separately, we have them all in one library
