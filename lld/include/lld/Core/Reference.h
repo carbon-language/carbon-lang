@@ -78,6 +78,9 @@ public:
   enum {
     kindInGroup = 1,
     kindLayoutAfter = 2,
+    // kindLayoutBefore is currently used only by dead-stripping pass in
+    // the Resolver. Will be removed soon. To enforce layout, use
+    // kindLayoutAfter instead.
     kindLayoutBefore = 3,
     kindGroupChild = 4,
     kindGroupParent = 5
