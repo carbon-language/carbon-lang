@@ -105,7 +105,18 @@ namespace referencemember {
 namespace pr19253 {
   struct A { ~A() = default; };
   A a;
-  struct B { ~B() {} };
+
+  struct B { ~B(); };
   struct C : B { ~C() = default; };
   C c; // expected-warning {{global destructor}}
+
+  class D {
+    friend struct E;
+    ~D() = default;
+  };
+  struct E : D {
+    D d;
+    ~E() = default;
+  };
+  E e;
 }

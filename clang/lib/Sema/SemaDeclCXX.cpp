@@ -10463,6 +10463,7 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
                         << VD->getType());
   DiagnoseUseOfDecl(Destructor, VD->getLocation());
 
+  if (Destructor->isTrivial()) return;
   if (!VD->hasGlobalStorage()) return;
 
   // Emit warning for non-trivial dtor in global scope (a real global,
@@ -10470,7 +10471,7 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
   Diag(VD->getLocation(), diag::warn_exit_time_destructor);
 
   // TODO: this should be re-enabled for static locals by !CXAAtExit
-  if (!Destructor->isTrivial() && !VD->isStaticLocal())
+  if (!VD->isStaticLocal())
     Diag(VD->getLocation(), diag::warn_global_destructor);
 }
 

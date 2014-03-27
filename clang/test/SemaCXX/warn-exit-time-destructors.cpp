@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wexit-time-destructors %s -verify
+// RUN: %clang_cc1 -std=c++11 -fsyntax-only -Wexit-time-destructors %s -verify
 
 namespace test1 {
   struct A { ~A(); };
@@ -23,5 +23,23 @@ void f() {
   static A &e = b[5];
   static A &f = c[5][7];
 }
+}
 
+namespace test3 {
+  struct A { ~A() = default; };
+  A a;
+
+  struct B { ~B(); };
+  struct C : B { ~C() = default; };
+  C c; // expected-warning {{exit-time destructor}}
+
+  class D {
+    friend struct E;
+    ~D() = default;
+  };
+  struct E : D {
+    D d;
+    ~E() = default;
+  };
+  E e;
 }
