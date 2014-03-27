@@ -2541,10 +2541,15 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
          DebugKind <= CodeGenOptions::DebugLineTablesOnly))
       LinkageName = StringRef();
 
-    // If we aren't in line table only mode then grab a full context and
-    // template parameters for the function.
     if (DebugKind >= CodeGenOptions::LimitedDebugInfo) {
-      FDContext = getContextDescriptor(cast<Decl>(FD->getDeclContext()));
+      if (const NamespaceDecl *NSDecl =
+              dyn_cast_or_null<NamespaceDecl>(FD->getDeclContext()))
+        FDContext = getOrCreateNameSpace(NSDecl);
+      else if (const RecordDecl *RDecl =
+                   dyn_cast_or_null<RecordDecl>(FD->getDeclContext()))
+        FDContext = getContextDescriptor(cast<Decl>(RDecl));
+
+      // Collect template parameters.
       TParamsArray = CollectFunctionTemplateParams(FD, Unit);
     }
   } else if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D)) {

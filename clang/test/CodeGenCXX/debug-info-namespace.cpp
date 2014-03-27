@@ -52,8 +52,8 @@ using B::i;
 // CHECK: [[BAR:![0-9]*]] {{.*}} ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [decl] [from ]
 // CHECK: [[F1:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] [line 4] [def] [f1]
 // CHECK: [[FUNC:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
-// CHECK: [[I:![0-9]*]] = {{.*}}, metadata [[NS]], metadata !"i", {{.*}} ; [ DW_TAG_variable ] [i]
 // CHECK: [[FILE2]]} ; [ DW_TAG_file_type ] [{{.*}}foo.cpp]
+// CHECK: [[I:![0-9]*]] = {{.*}}, metadata [[NS]], metadata !"i", {{.*}} ; [ DW_TAG_variable ] [i]
 // CHECK: [[MODULES]] = metadata !{metadata [[M1:![0-9]*]], metadata [[M2:![0-9]*]], metadata [[M3:![0-9]*]], metadata [[M4:![0-9]*]], metadata [[M5:![0-9]*]], metadata [[M6:![0-9]*]], metadata [[M7:![0-9]*]], metadata [[M8:![0-9]*]], metadata [[M9:![0-9]*]], metadata [[M10:![0-9]*]], metadata [[M11:![0-9]*]], metadata [[M12:![0-9]*]], metadata [[M13:![0-9]*]]}
 // CHECK: [[M1]] = metadata !{i32 {{[0-9]*}}, metadata [[CTXT]], metadata [[NS]], i32 11} ; [ DW_TAG_imported_module ]
 // CHECK: [[M2]] = metadata !{i32 {{[0-9]*}}, metadata [[CU]], metadata [[CTXT]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_module ]
