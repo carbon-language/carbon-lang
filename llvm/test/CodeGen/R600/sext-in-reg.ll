@@ -1,6 +1,9 @@
 ; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc < %s -march=r600 -mcpu=cypress | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
+declare i32 @llvm.AMDGPU.imax(i32, i32) nounwind readnone
+
+
 ; FUNC-LABEL: @sext_in_reg_i1_i32
 ; SI: S_LOAD_DWORD [[ARG:s[0-9]+]],
 ; SI: V_BFE_I32 [[EXTRACT:v[0-9]+]], [[ARG]], 0, 1
@@ -246,5 +249,23 @@ define void @testcase_3(i8 addrspace(1)* %out, i8 %a) nounwind {
   %sel1 = select i1 %cmp_eq, i8 0, i8 %a
   %xor = xor i8 %sel0, %sel1
   store i8 %xor, i8 addrspace(1)* %out
+  ret void
+}
+
+; FIXME: The BFE should really be eliminated. I think it should happen
+; when computeMaskedBitsForTargetNode is implemented for imax.
+
+; FUNC-LABEL: @sext_in_reg_to_illegal_type
+; SI: BUFFER_LOAD_SBYTE
+; SI: V_MAX_I32
+; SI: V_BFE_I32
+; SI: BUFFER_STORE_SHORT
+define void @sext_in_reg_to_illegal_type(i16 addrspace(1)* nocapture %out, i8 addrspace(1)* nocapture %src) nounwind {
+  %tmp5 = load i8 addrspace(1)* %src, align 1
+  %tmp2 = sext i8 %tmp5 to i32
+  %tmp3 = tail call i32 @llvm.AMDGPU.imax(i32 %tmp2, i32 0) nounwind readnone
+  %tmp4 = trunc i32 %tmp3 to i8
+  %tmp6 = sext i8 %tmp4 to i16
+  store i16 %tmp6, i16 addrspace(1)* %out, align 2
   ret void
 }

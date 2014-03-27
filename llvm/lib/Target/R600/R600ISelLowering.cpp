@@ -762,7 +762,9 @@ void R600TargetLowering::ReplaceNodeResults(SDNode *N,
                                             SmallVectorImpl<SDValue> &Results,
                                             SelectionDAG &DAG) const {
   switch (N->getOpcode()) {
-  default: return;
+  default:
+    AMDGPUTargetLowering::ReplaceNodeResults(N, Results, DAG);
+    return;
   case ISD::FP_TO_UINT: Results.push_back(LowerFPTOUINT(N->getOperand(0), DAG));
     return;
   case ISD::LOAD: {

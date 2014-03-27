@@ -333,6 +333,24 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
   return Op;
 }
 
+void AMDGPUTargetLowering::ReplaceNodeResults(SDNode *N,
+                                              SmallVectorImpl<SDValue> &Results,
+                                              SelectionDAG &DAG) const {
+  switch (N->getOpcode()) {
+  case ISD::SIGN_EXTEND_INREG:
+    // Different parts of legalization seem to interpret which type of
+    // sign_extend_inreg is the one to check for custom lowering. The extended
+    // from type is what really matters, but some places check for custom
+    // lowering of the result type. This results in trying to use
+    // ReplaceNodeResults to sext_in_reg to an illegal type, so we'll just do
+    // nothing here and let the illegal result integer be handled normally.
+    return;
+
+  default:
+    return;
+  }
+}
+
 SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
                                                        const GlobalValue *GV,
                                                        const SDValue &InitPtr,
