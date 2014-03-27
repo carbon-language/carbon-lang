@@ -29,7 +29,7 @@ enum ActionType {
   GenClangAttrList,
   GenClangAttrPCHRead,
   GenClangAttrPCHWrite,
-  GenClangAttrHasAttributeImpl,
+  GenClangAttrSpellingList,
   GenClangAttrSpellingListIndex,
   GenClangAttrASTVisitor,
   GenClangAttrTemplateInstantiate,
@@ -72,8 +72,7 @@ cl::opt<ActionType> Action(
                    "Generate clang PCH attribute reader"),
         clEnumValN(GenClangAttrPCHWrite, "gen-clang-attr-pch-write",
                    "Generate clang PCH attribute writer"),
-        clEnumValN(GenClangAttrHasAttributeImpl,
-                   "gen-clang-attr-has-attribute-impl",
+        clEnumValN(GenClangAttrSpellingList, "gen-clang-attr-spelling-list",
                    "Generate a clang attribute spelling list"),
         clEnumValN(GenClangAttrSpellingListIndex,
                    "gen-clang-attr-spelling-index",
@@ -160,8 +159,8 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
   case GenClangAttrPCHWrite:
     EmitClangAttrPCHWrite(Records, OS);
     break;
-  case GenClangAttrHasAttributeImpl:
-    EmitClangAttrHasAttrImpl(Records, OS);
+  case GenClangAttrSpellingList:
+    EmitClangAttrSpellingList(Records, OS);
     break;
   case GenClangAttrSpellingListIndex:
     EmitClangAttrSpellingListIndex(Records, OS);

@@ -6,7 +6,6 @@ BUILT_SOURCES = \
 	DiagnosticFrontendKinds.inc DiagnosticLexKinds.inc \
 	DiagnosticParseKinds.inc DiagnosticSemaKinds.inc \
 	DiagnosticSerializationKinds.inc \
-	AttrHasAttributeImpl.inc \
 	DiagnosticIndexName.inc DiagnosticGroups.inc AttrList.inc arm_neon.inc \
 	Version.inc
 
@@ -48,12 +47,6 @@ $(ObjDir)/AttrList.inc.tmp : Attr.td $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang attribute list with tblgen"
 	$(Verb) $(ClangTableGen) -gen-clang-attr-list -o $(call SYSPATH, $@) \
 	  -I $(PROJ_SRC_DIR)/../.. $<
-
-$(ObjDir)/AttrHasAttributeImpl.inc.tmp : Attr.td $(CLANG_TBLGEN) \
-                                  $(ObjDir)/.dir
-	$(Echo) "Building Clang __has_attribute implementation with tblgen"
-	$(Verb) $(ClangTableGen) -gen-clang-attr-has-attribute-impl -o $(call SYSPATH, $@) \
-		-I $(PROJ_SRC_DIR)/../../ $<
 
 $(ObjDir)/arm_neon.inc.tmp : arm_neon.td $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang arm_neon.inc with tblgen"
