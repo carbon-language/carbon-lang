@@ -3593,9 +3593,6 @@ void Sema::BuildVariableInstantiation(
 
   InstantiateAttrs(TemplateArgs, OldVar, NewVar, LateAttrs, StartingScope);
 
-  if (NewVar->hasAttrs())
-    CheckAlignasUnderalignment(NewVar);
-
   LookupResult Previous(
       *this, NewVar->getDeclName(), NewVar->getLocation(),
       NewVar->isLocalExternDecl() ? Sema::LookupRedeclarationWithLinkage

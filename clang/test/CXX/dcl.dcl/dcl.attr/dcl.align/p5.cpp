@@ -9,6 +9,7 @@ alignas(1) alignas(4) int n6 alignas(2); // ok
 alignas(1) int n7 alignas(2), // expected-error {{less than minimum alignment}}
                n8 alignas(4); // ok
 alignas(8) int n9 alignas(2); // ok, overaligned
+alignas(1) extern int n10; // expected-error {{less than minimum alignment}}
 
 enum alignas(1) E1 {}; // expected-error {{requested alignment is less than minimum alignment of 4 for type 'E1'}}
 enum alignas(1) E2 : char {}; // ok

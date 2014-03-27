@@ -48,3 +48,5 @@ static_assert(alignof(int(int)) >= 1, "alignof(function) not positive"); // expe
 
 [[__carries_dependency__]]  // expected-warning{{unknown attribute '__carries_dependency__' ignored}}
 void func(void);
+
+alignas(4) auto PR19252 = 0;
