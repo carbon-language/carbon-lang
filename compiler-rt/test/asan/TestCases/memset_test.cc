@@ -47,11 +47,12 @@ int main(int argc, char **argv) {
 #if defined(TEST_MEMCPY)
   memcpy(q, p, 3000);
   // CHECK-MEMCPY: AddressSanitizer: use-after-poison on address
-  // CHECK-MEMCPY: in {{.*}}memcpy
+  // On Mac, memmove and memcpy are the same. Accept either one.
+  // CHECK-MEMCPY: in {{.*(memmove|memcpy)}}
 #elif defined(TEST_MEMMOVE)
   memmove(q, p, 3000);
   // CHECK-MEMMOVE: AddressSanitizer: use-after-poison on address
-  // CHECK-MEMMOVE: in {{.*}}memmove
+  // CHECK-MEMMOVE: in {{.*(memmove|memcpy)}}
 #endif
   assert(q[1] == 0);
   free(q);

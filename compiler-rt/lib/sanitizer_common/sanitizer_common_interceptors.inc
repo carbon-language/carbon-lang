@@ -3470,6 +3470,17 @@ INTERCEPTOR(void *, __aeabi_memclr8, void *block, uptr size) {
 #define INIT_AEABI_MEM
 #endif  // SANITIZER_INTERCEPT_AEABI_MEM
 
+#if SANITIZER_INTERCEPT___BZERO
+DECLARE_REAL_AND_INTERCEPTOR(void *, memset, void *, int, uptr);
+
+INTERCEPTOR(void *, __bzero, void *block, uptr size) {
+  return WRAP(memset)(block, 0, size);
+}
+#define INIT___BZERO COMMON_INTERCEPT_FUNCTION(__bzero);
+#else
+#define INIT___BZERO
+#endif  // SANITIZER_INTERCEPT___BZERO
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_TEXTDOMAIN;                         \
   INIT_STRCMP;                             \
@@ -3592,5 +3603,6 @@ INTERCEPTOR(void *, __aeabi_memclr8, void *block, uptr size) {
   INIT_GETIFADDRS;                         \
   INIT_IF_INDEXTONAME;                     \
   INIT_CAPGET;                             \
-  INIT_AEABI_MEM;
+  INIT_AEABI_MEM;                          \
+  INIT___BZERO;
 /**/
