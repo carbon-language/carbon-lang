@@ -46,7 +46,6 @@ that passes two default-constructed ``Foo`` objects to ``g`` in the
 .. code-block:: llvm
 
     %struct.Foo = type { i32, i32 }
-    %callframe.f = type <{ %struct.Foo, %struct.Foo }>
     declare void @Foo_ctor(%struct.Foo* %this)
     declare void @Foo_dtor(%struct.Foo* %this)
     declare void @g(<{ %struct.Foo, %struct.Foo }>* inalloca %memargs)
