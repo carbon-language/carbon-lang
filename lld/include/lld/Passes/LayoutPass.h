@@ -55,10 +55,6 @@ private:
   // reference type
   void buildInGroupTable(MutableFile::DefinedAtomRange &range);
 
-  // Build the PrecededBy Table as specified by the kindLayoutBefore
-  // reference type
-  void buildPrecededByTable(MutableFile::DefinedAtomRange &range);
-
   // Build a map of Atoms to ordinals for sorting the atoms
   void buildOrdinalOverrideMap(MutableFile::DefinedAtomRange &range);
 

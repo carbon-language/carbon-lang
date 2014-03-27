@@ -159,8 +159,7 @@ void LayoutPass::checkFollowonChain(MutableFile::DefinedAtomRange &range) {
 
 /// The function compares atoms by sorting atoms in the following order
 /// a) Sorts atoms by Section position preference
-/// b) Sorts atoms by their ordinal overrides
-///    (layout-after/layout-before/ingroup)
+/// b) Sorts atoms by their ordinal overrides (layout-after/ingroup)
 /// c) Sorts atoms by their permissions
 /// d) Sorts atoms by their content
 /// e) Sorts atoms on how they appear using File Ordinality
@@ -448,75 +447,6 @@ void LayoutPass::buildInGroupTable(MutableFile::DefinedAtomRange &range) {
   }
 }
 
-/// This pass builds the followon tables using Preceded By relationships
-/// The algorithm follows a very simple approach
-/// a) If the targetAtom is not part of any root and the current atom is not
-///    part of any root, create a chain with the current atom as root and
-///    the targetAtom as following the current atom
-/// b) Chain the targetAtom to the current Atom if the targetAtom is not part
-///    of any chain and the currentAtom has no followOn's
-/// c) If the targetAtom is part of a different tree and the root of the
-///    targetAtom is itself, and if the current atom is not part of any root
-///    chain all the atoms together
-/// d) If the current atom has no followon and the root of the targetAtom is
-///    not equal to the root of the current atom(the targetAtom is not in the
-///    same chain), chain all the atoms that are lead by the targetAtom into
-///    the current chain
-void LayoutPass::buildPrecededByTable(MutableFile::DefinedAtomRange &range) {
-  ScopedTask task(getDefaultDomain(), "LayoutPass::buildPrecededByTable");
-  // This table would convert precededby references to follow on
-  // references so that we have only one table
-  for (const DefinedAtom *ai : range) {
-    for (const Reference *r : *ai) {
-      if (r->kindNamespace() != lld::Reference::KindNamespace::all ||
-          r->kindValue() != lld::Reference::kindLayoutBefore)
-        continue;
-      const DefinedAtom *targetAtom = dyn_cast<DefinedAtom>(r->target());
-      // Is the targetAtom not chained
-      if (_followOnRoots.count(targetAtom) == 0) {
-        // Is the current atom not part of any root?
-        if (_followOnRoots.count(ai) == 0) {
-          _followOnRoots[ai] = ai;
-          _followOnNexts[ai] = targetAtom;
-          _followOnRoots[targetAtom] = _followOnRoots[ai];
-          continue;
-        }
-        if (_followOnNexts.count(ai) == 0) {
-          // Chain the targetAtom to the current Atom
-          // if the currentAtom has no followon references
-          _followOnNexts[ai] = targetAtom;
-          _followOnRoots[targetAtom] = _followOnRoots[ai];
-        }
-        continue;
-      }
-      if (_followOnRoots.find(targetAtom)->second != targetAtom)
-        continue;
-      // Is the targetAtom in chain with the targetAtom as the root?
-      bool changeRoots = false;
-      if (_followOnRoots.count(ai) == 0) {
-        _followOnRoots[ai] = ai;
-        _followOnNexts[ai] = targetAtom;
-        _followOnRoots[targetAtom] = _followOnRoots[ai];
-        changeRoots = true;
-      } else if (_followOnNexts.count(ai) == 0) {
-        // Chain the targetAtom to the current Atom
-        // if the currentAtom has no followon references
-        if (_followOnRoots[ai] != _followOnRoots[targetAtom]) {
-          _followOnNexts[ai] = targetAtom;
-          _followOnRoots[targetAtom] = _followOnRoots[ai];
-          changeRoots = true;
-        }
-      }
-      // Change the roots of the targetAtom and its chain to
-      // the current atoms root
-      if (changeRoots) {
-        setChainRoot(_followOnRoots[targetAtom], _followOnRoots[ai]);
-      }
-    }
-  }
-}
-
-
 /// Build an ordinal override map by traversing the followon chain, and
 /// assigning ordinals to each atom, if the atoms have their ordinals
 /// already assigned skip the atom and move to the next. This is the
@@ -571,9 +501,6 @@ void LayoutPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
 
   // Build Ingroup reference table
   buildInGroupTable(atomRange);
-
-  // Build preceded by tables
-  buildPrecededByTable(atomRange);
 
   // Check the structure of followon graph if running in debug mode.
   DEBUG(checkFollowonChain(atomRange));
