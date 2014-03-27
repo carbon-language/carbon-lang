@@ -140,7 +140,7 @@ namespace __sanitizer {
 
 #if SANITIZER_ANDROID
   struct __sanitizer_mallinfo {
-    size_t v[10];
+    uptr v[10];
   };
 #endif
 
