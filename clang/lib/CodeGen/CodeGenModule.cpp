@@ -208,6 +208,9 @@ void CodeGenModule::applyReplacements() {
 }
 
 void CodeGenModule::checkAliases() {
+  // Check if the constructed aliases are well formed. It is really unfortunate
+  // that we have to do this in CodeGen, but we only construct mangled names
+  // and aliases during codegen.
   bool Error = false;
   for (std::vector<GlobalDecl>::iterator I = Aliases.begin(),
          E = Aliases.end(); I != E; ++I) {
@@ -217,13 +220,38 @@ void CodeGenModule::checkAliases() {
     StringRef MangledName = getMangledName(GD);
     llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
     llvm::GlobalAlias *Alias = cast<llvm::GlobalAlias>(Entry);
-    llvm::GlobalValue *GV = Alias->resolveAliasedGlobal(/*stopOnWeak*/ false);
+    llvm::GlobalValue *GV = Alias->getAliasedGlobal();
     if (!GV) {
       Error = true;
       getDiags().Report(AA->getLocation(), diag::err_cyclic_alias);
     } else if (GV->isDeclaration()) {
       Error = true;
       getDiags().Report(AA->getLocation(), diag::err_alias_to_undefined);
+    }
+
+    // We have to handle alias to weak aliases in here. LLVM itself disallows
+    // this since the object semantics would not match the IL one. For
+    // compatibility with gcc we implement it by just pointing the alias
+    // to its aliasee's aliasee. We also warn, since the user is probably
+    // expecting the link to be weak.
+    llvm::Constant *Aliasee = Alias->getAliasee();
+    llvm::GlobalValue *AliaseeGV;
+    if (auto CE = dyn_cast<llvm::ConstantExpr>(Aliasee)) {
+      assert((CE->getOpcode() == llvm::Instruction::BitCast ||
+              CE->getOpcode() == llvm::Instruction::AddrSpaceCast) &&
+             "Unsupported aliasee");
+      AliaseeGV = cast<llvm::GlobalValue>(CE->getOperand(0));
+    } else {
+      AliaseeGV = cast<llvm::GlobalValue>(Aliasee);
+    }
+    if (auto GA = dyn_cast<llvm::GlobalAlias>(AliaseeGV)) {
+      if (GA->mayBeOverridden()) {
+        getDiags().Report(AA->getLocation(), diag::warn_alias_to_weak_alias)
+          << GA->getAliasedGlobal()->getName() << GA->getName();
+        Aliasee = llvm::ConstantExpr::getPointerBitCastOrAddrSpaceCast(
+            GA->getAliasee(), Alias->getType());
+        Alias->setAliasee(Aliasee);
+      }
     }
   }
   if (!Error)

@@ -52,3 +52,7 @@ extern int b3;
 
 extern int a4 __attribute__((alias("b4"))); // expected-error {{alias must point to a defined variable or function}}
 typedef int b4;
+
+void test2_bar() {}
+void test2_foo() __attribute__((weak, alias("test2_bar")));
+void test2_zed() __attribute__((alias("test2_foo"))); // expected-warning {{alias will always resolve to test2_bar even if weak definition of alias test2_foo is overridden}}
