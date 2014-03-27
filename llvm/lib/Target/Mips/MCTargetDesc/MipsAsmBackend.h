@@ -22,7 +22,7 @@
 namespace llvm {
 
 class MCAssembler;
-class MCFixupKindInfo;
+struct MCFixupKindInfo;
 class Target;
 class MCObjectWriter;
 
