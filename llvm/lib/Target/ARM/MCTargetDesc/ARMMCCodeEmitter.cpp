@@ -271,23 +271,7 @@ public:
   unsigned getSOImmOpValue(const MCInst &MI, unsigned Op,
                            SmallVectorImpl<MCFixup> &Fixups,
                            const MCSubtargetInfo &STI) const {
-
-    const MCOperand &MO = MI.getOperand(Op);
-
-    // We expect MO to be an immediate or an expression,
-    // if it is an immediate - that's fine, just encode the value.
-    // Otherwise - create a Fixup.
-    if (MO.isExpr()) {
-      const MCExpr *Expr = MO.getExpr();
-      // In instruction code this value always encoded as lowest 12 bits,
-      // so we don't have to perform any specific adjustments and
-      // can use just 2-bytes fixup.
-      MCFixupKind Kind = MCFixupKind(FK_Data_2);
-      Fixups.push_back(MCFixup::Create(0, Expr, Kind, MI.getLoc()));
-      return 0;
-    }
-
-    unsigned SoImm = MO.getImm();
+    unsigned SoImm = MI.getOperand(Op).getImm();
     int SoImmVal = ARM_AM::getSOImmVal(SoImm);
     assert(SoImmVal != -1 && "Not a valid so_imm value!");
 
