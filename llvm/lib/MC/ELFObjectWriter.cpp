@@ -609,9 +609,6 @@ static const MCSymbol *getBaseSymbol(const MCAsmLayout &Layout,
 void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   MCSymbolData &OrigData = *MSD.SymbolData;
-  MCSymbolData &Data =
-    Layout.getAssembler().getSymbolData(OrigData.getSymbol().AliasedSymbol());
-
   const MCSymbol *Base = getBaseSymbol(Layout, OrigData.getSymbol());
 
   // This has to be in sync with when computeSymbolTable uses SHN_ABS or
@@ -621,9 +618,10 @@ void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
   // Binding and Type share the same byte as upper and lower nibbles
   uint8_t Binding = MCELF::GetBinding(OrigData);
   uint8_t Type = MCELF::GetType(OrigData);
+  MCSymbolData *BaseSD = nullptr;
   if (Base) {
-    MCSymbolData BaseSD = Layout.getAssembler().getSymbolData(*Base);
-    Type = mergeTypeForSet(Type, MCELF::GetType(BaseSD));
+    BaseSD = &Layout.getAssembler().getSymbolData(*Base);
+    Type = mergeTypeForSet(Type, MCELF::GetType(*BaseSD));
   }
   if (OrigData.getFlags() & ELF_Other_ThumbFunc)
     Type = ELF::STT_FUNC;
@@ -640,9 +638,10 @@ void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
     Value |= 1;
   uint64_t Size = 0;
 
-  assert(!(Data.isCommon() && !Data.isExternal()));
+  const MCExpr *ESize = OrigData.getSize();
+  if (!ESize && Base)
+    ESize = BaseSD->getSize();
 
-  const MCExpr *ESize = Data.getSize();
   if (ESize) {
     int64_t Res;
     if (!ESize->EvaluateAsAbsolute(Res, Layout))
