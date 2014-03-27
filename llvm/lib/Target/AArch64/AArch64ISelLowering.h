@@ -232,6 +232,9 @@ public:
                           SDLoc dl, SelectionDAG &DAG,
                           SmallVectorImpl<SDValue> &InVals) const;
 
+  SDValue LowerShiftLeftParts(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerShiftRightParts(SDValue Op, SelectionDAG &DAG) const;
+
   bool isConcatVector(SDValue Op, SelectionDAG &DAG, SDValue V0, SDValue V1,
                       const int *Mask, SDValue &Res) const;
 
