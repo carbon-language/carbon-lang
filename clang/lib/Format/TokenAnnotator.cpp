@@ -44,6 +44,11 @@ private:
     ScopedContextCreator ContextCreator(*this, tok::less, 10);
     FormatToken *Left = CurrentToken->Previous;
     Contexts.back().IsExpression = false;
+    // If there's a template keyword before the opening angle bracket, this is a
+    // template parameter, not an argument.
+    Contexts.back().InTemplateArgument =
+        Left->Previous != NULL && Left->Previous->Tok.isNot(tok::kw_template);
+
     while (CurrentToken != NULL) {
       if (CurrentToken->is(tok::greater)) {
         Left->MatchingParen = CurrentToken;
@@ -615,7 +620,8 @@ private:
           ColonIsForRangeExpr(false), ColonIsDictLiteral(false),
           ColonIsObjCMethodExpr(false), FirstObjCSelectorName(NULL),
           FirstStartOfName(NULL), IsExpression(IsExpression),
-          CanBeExpression(true), InCtorInitializer(false), CaretFound(false) {}
+          CanBeExpression(true), InTemplateArgument(false),
+          InCtorInitializer(false), CaretFound(false) {}
 
     tok::TokenKind ContextKind;
     unsigned BindingStrength;
@@ -628,6 +634,7 @@ private:
     FormatToken *FirstStartOfName;
     bool IsExpression;
     bool CanBeExpression;
+    bool InTemplateArgument;
     bool InCtorInitializer;
     bool CaretFound;
   };
@@ -705,7 +712,8 @@ private:
       } else if (Current.isOneOf(tok::star, tok::amp, tok::ampamp)) {
         Current.Type =
             determineStarAmpUsage(Current, Contexts.back().CanBeExpression &&
-                                               Contexts.back().IsExpression);
+                                               Contexts.back().IsExpression,
+                                  Contexts.back().InTemplateArgument);
       } else if (Current.isOneOf(tok::minus, tok::plus, tok::caret)) {
         Current.Type = determinePlusMinusCaretUsage(Current);
         if (Current.Type == TT_UnaryOperator) {
@@ -821,7 +829,8 @@ private:
   }
 
   /// \brief Return the type of the given token assuming it is * or &.
-  TokenType determineStarAmpUsage(const FormatToken &Tok, bool IsExpression) {
+  TokenType determineStarAmpUsage(const FormatToken &Tok, bool IsExpression,
+                                  bool InTemplateArgument) {
     const FormatToken *PrevToken = Tok.getPreviousNonComment();
     if (PrevToken == NULL)
       return TT_UnaryOperator;
@@ -851,7 +860,11 @@ private:
 
     if (PrevToken->Tok.isLiteral() ||
         PrevToken->isOneOf(tok::r_paren, tok::r_square) ||
-        NextToken->Tok.isLiteral() || NextToken->isUnaryOperator())
+        NextToken->Tok.isLiteral() || NextToken->isUnaryOperator() ||
+        // If we know we're in a template argument, there are no named
+        // declarations. Thus, having an identifier on the right-hand side
+        // indicates a binary operator.
+        (InTemplateArgument && NextToken->Tok.isAnyIdentifier()))
       return TT_BinaryOperator;
 
     // It is very unlikely that we are going to find a pointer or reference type
