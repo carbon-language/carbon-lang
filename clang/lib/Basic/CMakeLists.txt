@@ -4,6 +4,7 @@ set(LLVM_LINK_COMPONENTS
   )
 
 add_clang_library(clangBasic
+  Attributes.cpp
   Builtins.cpp
   CharInfo.cpp
   Diagnostic.cpp
