@@ -23,8 +23,12 @@
 #include <cstdlib>
 
 namespace llvm {
-template <typename T> struct ReferenceAdder { typedef T& result; };
-template <typename T> struct ReferenceAdder<T&> { typedef T result; };
+template <typename T> struct ReferenceAdder {
+  typedef T &result;
+};
+template <typename T> struct ReferenceAdder<T &> {
+  typedef T result;
+};
 
 class MallocAllocator {
 public:
@@ -35,15 +39,15 @@ public:
 
   void *Allocate(size_t Size, size_t /*Alignment*/) { return malloc(Size); }
 
-  template <typename T>
-  T *Allocate() { return static_cast<T*>(malloc(sizeof(T))); }
-
-  template <typename T>
-  T *Allocate(size_t Num) {
-    return static_cast<T*>(malloc(sizeof(T)*Num));
+  template <typename T> T *Allocate() {
+    return static_cast<T *>(malloc(sizeof(T)));
   }
 
-  void Deallocate(const void *Ptr) { free(const_cast<void*>(Ptr)); }
+  template <typename T> T *Allocate(size_t Num) {
+    return static_cast<T *>(malloc(sizeof(T) * Num));
+  }
+
+  void Deallocate(const void *Ptr) { free(const_cast<void *>(Ptr)); }
 
   void PrintStats() const {}
 };
@@ -77,7 +81,7 @@ class MallocSlabAllocator : public SlabAllocator {
   MallocAllocator Allocator;
 
 public:
-  MallocSlabAllocator() : Allocator() { }
+  MallocSlabAllocator() : Allocator() {}
   virtual ~MallocSlabAllocator();
   MemSlab *Allocate(size_t Size) override;
   void Deallocate(MemSlab *Slab) override;
@@ -141,7 +145,8 @@ class BumpPtrAllocator {
   /// \brief Deallocate all memory slabs after and including this one.
   void DeallocateSlabs(MemSlab *Slab);
 
-  template<typename T> friend class SpecificBumpPtrAllocator;
+  template <typename T> friend class SpecificBumpPtrAllocator;
+
 public:
   BumpPtrAllocator(size_t size = 4096, size_t threshold = 4096);
   BumpPtrAllocator(size_t size, size_t threshold, SlabAllocator &allocator);
@@ -155,24 +160,21 @@ public:
   void *Allocate(size_t Size, size_t Alignment);
 
   /// \brief Allocate space for one object without constructing it.
-  template <typename T>
-  T *Allocate() {
-    return static_cast<T*>(Allocate(sizeof(T),AlignOf<T>::Alignment));
+  template <typename T> T *Allocate() {
+    return static_cast<T *>(Allocate(sizeof(T), AlignOf<T>::Alignment));
   }
 
   /// \brief Allocate space for an array of objects without constructing them.
-  template <typename T>
-  T *Allocate(size_t Num) {
-    return static_cast<T*>(Allocate(Num * sizeof(T), AlignOf<T>::Alignment));
+  template <typename T> T *Allocate(size_t Num) {
+    return static_cast<T *>(Allocate(Num * sizeof(T), AlignOf<T>::Alignment));
   }
 
   /// \brief Allocate space for an array of objects with the specified alignment
   /// and without constructing them.
-  template <typename T>
-  T *Allocate(size_t Num, size_t Alignment) {
+  template <typename T> T *Allocate(size_t Num, size_t Alignment) {
     // Round EltSize up to the specified alignment.
-    size_t EltSize = (sizeof(T)+Alignment-1)&(-Alignment);
-    return static_cast<T*>(Allocate(Num * EltSize, Alignment));
+    size_t EltSize = (sizeof(T) + Alignment - 1) & (-Alignment);
+    return static_cast<T *>(Allocate(Num * EltSize, Alignment));
   }
 
   void Deallocate(const void * /*Ptr*/) {}
@@ -190,19 +192,17 @@ public:
 ///
 /// This allows calling the destructor in DestroyAll() and when the allocator is
 /// destroyed.
-template <typename T>
-class SpecificBumpPtrAllocator {
+template <typename T> class SpecificBumpPtrAllocator {
   BumpPtrAllocator Allocator;
+
 public:
   SpecificBumpPtrAllocator(size_t size = 4096, size_t threshold = 4096)
-    : Allocator(size, threshold) {}
+      : Allocator(size, threshold) {}
   SpecificBumpPtrAllocator(size_t size, size_t threshold,
                            SlabAllocator &allocator)
-    : Allocator(size, threshold, allocator) {}
+      : Allocator(size, threshold, allocator) {}
 
-  ~SpecificBumpPtrAllocator() {
-    DestroyAll();
-  }
+  ~SpecificBumpPtrAllocator() { DestroyAll(); }
 
   /// Call the destructor of each allocated object and deallocate all but the
   /// current slab and reset the current pointer to the beginning of it, freeing
@@ -210,12 +210,12 @@ public:
   void DestroyAll() {
     MemSlab *Slab = Allocator.CurSlab;
     while (Slab) {
-      char *End = Slab == Allocator.CurSlab ? Allocator.CurPtr :
-                                              (char *)Slab + Slab->Size;
-      for (char *Ptr = (char*)(Slab+1); Ptr < End; Ptr += sizeof(T)) {
+      char *End = Slab == Allocator.CurSlab ? Allocator.CurPtr
+                                            : (char *)Slab + Slab->Size;
+      for (char *Ptr = (char *)(Slab + 1); Ptr < End; Ptr += sizeof(T)) {
         Ptr = Allocator.AlignPtr(Ptr, alignOf<T>());
         if (Ptr + sizeof(T) <= End)
-          reinterpret_cast<T*>(Ptr)->~T();
+          reinterpret_cast<T *>(Ptr)->~T();
       }
       Slab = Slab->NextPtr;
     }
@@ -223,9 +223,7 @@ public:
   }
 
   /// \brief Allocate space for an array of objects without constructing them.
-  T *Allocate(size_t num = 1) {
-    return Allocator.Allocate<T>(num);
-  }
+  T *Allocate(size_t num = 1) { return Allocator.Allocate<T>(num); }
 };
 
 }  // end namespace llvm
