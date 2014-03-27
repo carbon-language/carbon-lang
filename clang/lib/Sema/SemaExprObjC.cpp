@@ -1003,8 +1003,8 @@ static bool HelperToDiagnoseMismatchedMethodsInGlobalPool(Sema &S,
 
 static void DiagnoseMismatchedSelectors(Sema &S, SourceLocation AtLoc,
                                         ObjCMethodDecl *Method) {
-  unsigned DIAG = diag::warning_multiple_selectors;
-  if (S.Diags.getDiagnosticLevel(DIAG, SourceLocation())
+  if (S.Diags.getDiagnosticLevel(diag::warning_multiple_selectors,
+                                 SourceLocation())
         == DiagnosticsEngine::Ignored)
     return;
   bool Warned = false;

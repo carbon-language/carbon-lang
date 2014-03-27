@@ -905,8 +905,9 @@ def warn_unimplemented_selector:  Warning<
 def warn_unimplemented_protocol_method : Warning<
   "method %0 in protocol %1 not implemented">, InGroup<Protocol>;
 def warning_multiple_selectors: Warning<
-  "several methods with selector %0 of mismatched types are found for the @selector expression">,
-  InGroup<SelectorTypeMismatch>;
+  "several methods with selector %0 of mismatched types are found "
+  "for the @selector expression">,
+  InGroup<SelectorTypeMismatch>, DefaultIgnore;
 // C++ declarations
 def err_static_assert_expression_is_not_constant : Error<
   "static_assert expression is not an integral constant expression">;
