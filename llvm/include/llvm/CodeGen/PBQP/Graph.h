@@ -70,12 +70,12 @@ namespace PBQP {
       void removeAdjEdgeId(Graph &G, NodeId ThisNId, AdjEdgeIdx Idx) {
         // Swap-and-pop for fast removal.
         //   1) Update the adj index of the edge currently at back().
-        //   2) Swap Edge at Idx with back().
+        //   2) Move last Edge down to Idx.
         //   3) pop_back()
-        // If Idx == size() - 1 then the updateAdjEdgeIdx and swap are
+        // If Idx == size() - 1 then the setAdjEdgeIdx and swap are
         // redundant, but both operations are cheap.
-        G.getEdge(AdjEdgeIds.back()).updateAdjEdgeIdx(ThisNId, Idx);
-        std::swap(AdjEdgeIds[Idx], AdjEdgeIds.back());
+        G.getEdge(AdjEdgeIds.back()).setAdjEdgeIdx(ThisNId, Idx);
+        AdjEdgeIds[Idx] = AdjEdgeIds.back();
         AdjEdgeIds.pop_back();
       }
 
@@ -125,7 +125,7 @@ namespace PBQP {
         connectToN(G, ThisEdgeId, 1);
       }
 
-      void updateAdjEdgeIdx(NodeId NId, typename NodeEntry::AdjEdgeIdx NewIdx) {
+      void setAdjEdgeIdx(NodeId NId, typename NodeEntry::AdjEdgeIdx NewIdx) {
         if (NId == NIds[0])
           ThisEdgeAdjIdxs[0] = NewIdx;
         else {
