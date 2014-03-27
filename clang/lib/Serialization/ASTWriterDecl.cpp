@@ -1030,6 +1030,7 @@ void ASTDeclWriter::VisitCXXMethodDecl(CXXMethodDecl *D) {
 void ASTDeclWriter::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
   VisitCXXMethodDecl(D);
 
+  Writer.AddDeclRef(D->getInheritedConstructor(), Record);
   Record.push_back(D->IsExplicitSpecified);
   Writer.AddCXXCtorInitializers(D->CtorInitializers, D->NumCtorInitializers,
                                 Record);

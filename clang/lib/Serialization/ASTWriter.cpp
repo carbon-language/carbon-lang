@@ -3411,7 +3411,9 @@ ASTWriter::GenerateNameLookupTable(const DeclContext *DC,
   ASTDeclContextNameLookupTrait Trait(*this);
 
   // Create the on-disk hash table representation.
+  DeclarationName ConstructorName;
   DeclarationName ConversionName;
+  SmallVector<NamedDecl *, 8> ConstructorDecls;
   SmallVector<NamedDecl *, 4> ConversionDecls;
 
   auto AddLookupResult = [&](DeclarationName Name,
@@ -3419,16 +3421,25 @@ ASTWriter::GenerateNameLookupTable(const DeclContext *DC,
     if (Result.empty())
       return;
 
-    if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
-      // Hash all conversion function names to the same name. The actual
-      // type information in conversion function name is not used in the
-      // key (since such type information is not stable across different
-      // modules), so the intended effect is to coalesce all of the conversion
-      // functions under a single key.
+    // Different DeclarationName values of certain kinds are mapped to
+    // identical serialized keys, because we don't want to use type
+    // identifiers in the keys (since type ids are local to the module).
+    switch (Name.getNameKind()) {
+    case DeclarationName::CXXConstructorName:
+      // There may be different CXXConstructorName DeclarationName values
+      // in a DeclContext because a UsingDecl that inherits constructors
+      // has the DeclarationName of the inherited constructors.
+      if (!ConstructorName)
+        ConstructorName = Name;
+      ConstructorDecls.append(Result.begin(), Result.end());
+      return;
+    case DeclarationName::CXXConversionFunctionName:
       if (!ConversionName)
         ConversionName = Name;
       ConversionDecls.append(Result.begin(), Result.end());
       return;
+    default:
+      break;
     }
 
     Generator.insert(Name, Result, Trait);
@@ -3458,7 +3469,14 @@ ASTWriter::GenerateNameLookupTable(const DeclContext *DC,
     // FIXME: const_cast since OnDiskHashTable wants a non-const lookup result.
     AddLookupResult(Name, const_cast<DeclContext*>(DC)->lookup(Name));
 
-  // Add the conversion functions
+  // Add the constructors.
+  if (!ConstructorDecls.empty()) {
+    Generator.insert(ConstructorName,
+                     DeclContext::lookup_result(ConstructorDecls.begin(),
+                                                ConstructorDecls.end()),
+                     Trait);
+  }
+  // Add the conversion functions.
   if (!ConversionDecls.empty()) {
     Generator.insert(ConversionName,
                      DeclContext::lookup_result(ConversionDecls.begin(),
