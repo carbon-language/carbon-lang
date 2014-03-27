@@ -67,7 +67,11 @@ private:
       // parameters.
       // FIXME: This is getting out of hand, write a decent parser.
       if (CurrentToken->Previous->isOneOf(tok::pipepipe, tok::ampamp) &&
-          (CurrentToken->Previous->Type == TT_BinaryOperator ||
+          ((CurrentToken->Previous->Type == TT_BinaryOperator &&
+            // Toplevel bool expressions do not make lots of sense;
+            // If we're on the top level, it contains only the base context and
+            // the context for the current opening angle bracket.
+            Contexts.size() > 2) ||
            Contexts[Contexts.size() - 2].IsExpression) &&
           Line.First->isNot(tok::kw_template))
         return false;
@@ -858,9 +862,9 @@ private:
         PrevToken->MatchingParen->Previous->is(tok::kw_typeof))
       return TT_PointerOrReference;
 
-    if (PrevToken->Tok.isLiteral() ||
+    if (PrevToken->isLiteral() ||
         PrevToken->isOneOf(tok::r_paren, tok::r_square) ||
-        NextToken->Tok.isLiteral() || NextToken->isUnaryOperator() ||
+        NextToken->isLiteral() || NextToken->isUnaryOperator() ||
         // If we know we're in a template argument, there are no named
         // declarations. Thus, having an identifier on the right-hand side
         // indicates a binary operator.

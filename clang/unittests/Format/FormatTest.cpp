@@ -4537,6 +4537,12 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("vector<int *const **const *> v;");
   verifyFormat("vector<int *volatile> v;");
   verifyFormat("vector<a * b> v;");
+  verifyFormat("foo<b && false>();");
+  verifyFormat("foo<b & 1>();");
+
+  // FIXME: We cannot handle this case yet; we might be able to figure out that
+  // foo<x> d > v; doesn't make sense.
+  verifyFormat("foo<a < b && c> d > v;");
 }
 
 TEST_F(FormatTest, UnderstandsAttributes) {
