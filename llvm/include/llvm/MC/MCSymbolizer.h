@@ -47,7 +47,10 @@ protected:
 public:
   /// \brief Construct an MCSymbolizer, taking ownership of \p RelInfo.
   MCSymbolizer(MCContext &Ctx, std::unique_ptr<MCRelocationInfo> RelInfo)
-    : Ctx(Ctx), RelInfo(std::move(RelInfo)) {}
+    : Ctx(Ctx), RelInfo(std::move(RelInfo)) {
+    assert(this->RelInfo != nullptr &&
+           "Cannot construct MCSymbolizer without relocation info.");
+  }
 
   virtual ~MCSymbolizer();
 
