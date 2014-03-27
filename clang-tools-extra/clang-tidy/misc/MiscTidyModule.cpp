@@ -11,6 +11,7 @@
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
 #include "ArgumentCommentCheck.h"
+#include "RedundantSmartptrGet.h"
 
 namespace clang {
 namespace tidy {
@@ -18,9 +19,12 @@ namespace tidy {
 class MiscModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
-     CheckFactories.addCheckFactory(
-       "misc-argument-comment",
-       new ClangTidyCheckFactory<ArgumentCommentCheck>());
+    CheckFactories.addCheckFactory(
+        "misc-argument-comment",
+        new ClangTidyCheckFactory<ArgumentCommentCheck>());
+    CheckFactories.addCheckFactory(
+        "misc-redundant-smartptr-get",
+        new ClangTidyCheckFactory<RedundantSmartptrGet>());
   }
 };
 
