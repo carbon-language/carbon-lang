@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Basic/Attributes.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -1048,6 +1047,20 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
            .Default(false);
 }
 
+/// HasAttribute -  Return true if we recognize and implement the attribute
+/// specified by the given identifier.
+static bool HasAttribute(const IdentifierInfo *II, const llvm::Triple &T) {
+  StringRef Name = II->getName();
+  // Normalize the attribute name, __foo__ becomes foo.
+  if (Name.size() >= 4 && Name.startswith("__") && Name.endswith("__"))
+    Name = Name.substr(2, Name.size() - 4);
+
+  // FIXME: Do we need to handle namespaces here?
+  return llvm::StringSwitch<bool>(Name)
+#include "clang/Lex/AttrSpellings.inc"
+        .Default(false);
+}
+
 /// EvaluateHasIncludeCommon - Process a '__has_include("path")'
 /// or '__has_include_next("path")' expression.
 /// Returns true if successful.
@@ -1386,8 +1399,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       // Check for a builtin is trivial.
       Value = FeatureII->getBuiltinID() != 0;
     } else if (II == Ident__has_attribute)
-      Value = HasAttribute(AttrSyntax::Generic, nullptr, FeatureII,
-                           getTargetInfo().getTriple(), getLangOpts());
+      Value = HasAttribute(FeatureII, getTargetInfo().getTriple());
     else if (II == Ident__has_extension)
       Value = HasExtension(*this, FeatureII);
     else {

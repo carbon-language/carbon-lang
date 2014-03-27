@@ -1720,16 +1720,22 @@ void EmitClangAttrPCHWrite(RecordKeeper &Records, raw_ostream &OS) {
   OS << "  }\n";
 }
 
-static void GenerateHasAttrSpellingStringSwitch(
-    const std::vector<Record *> &Attrs, raw_ostream &OS,
-    const std::string &Variety = "", const std::string &Scope = "") {
-  for (const auto *Attr : Attrs) {
+// Emits the list of spellings for attributes.
+void EmitClangAttrSpellingList(RecordKeeper &Records, raw_ostream &OS) {
+  emitSourceFileHeader("llvm::StringSwitch code to match attributes based on "
+                       "the target triple, T", OS);
+
+  std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr");
+  
+  for (auto I : Attrs) {
+    Record &Attr = *I;
+
     // It is assumed that there will be an llvm::Triple object named T within
     // scope that can be used to determine whether the attribute exists in
     // a given target.
     std::string Test;
-    if (Attr->isSubClassOf("TargetSpecificAttr")) {
-      const Record *R = Attr->getValueAsDef("Target");
+    if (Attr.isSubClassOf("TargetSpecificAttr")) {
+      const Record *R = Attr.getValueAsDef("Target");
       std::vector<std::string> Arches = R->getValueAsListOfStrings("Arches");
 
       Test += "(";
@@ -1754,79 +1760,13 @@ static void GenerateHasAttrSpellingStringSwitch(
         }
         Test += ")";
       }
-      
-      // If this is the C++11 variety, also add in the LangOpts test.
-      if (Variety == "CXX11")
-        Test += " && LangOpts.CPlusPlus11";      
-    } else if (Variety == "CXX11")
-      // C++11 mode should be checked against LangOpts, which is presumed to be
-      // present in the caller.
-      Test = "LangOpts.CPlusPlus11";
-    else
+    } else
       Test = "true";
 
-    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(*Attr);
+    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
     for (const auto &S : Spellings)
-      if (Variety.empty() || (Variety == S.variety() &&
-                              (Scope.empty() || Scope == S.nameSpace())))
-        OS << "    .Case(\"" << S.name() << "\", " << Test << ")\n";
+      OS << ".Case(\"" << S.name() << "\", " << Test << ")\n";
   }
-  OS << "    .Default(false);\n";
-}
-
-// Emits the list of spellings for attributes.
-void EmitClangAttrHasAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
-  emitSourceFileHeader("Code to implement the __has_attribute logic", OS);
-
-  // Separate all of the attributes out into four group: generic, C++11, GNU,
-  // and declspecs. Then generate a big switch statement for each of them.
-  std::vector<Record *> Attrs = Records.getAllDerivedDefinitions("Attr");
-  std::vector<Record *> Declspec, GNU;
-  std::map<std::string, std::vector<Record *>> CXX;
-
-  // Walk over the list of all attributes, and split them out based on the
-  // spelling variety.
-  for (auto *R : Attrs) {
-    std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(*R);
-    for (const auto &SI : Spellings) {
-      std::string Variety = SI.variety();
-      if (Variety == "GNU")
-        GNU.push_back(R);
-      else if (Variety == "Declspec")
-        Declspec.push_back(R);
-      else if (Variety == "CXX11") {
-        CXX[SI.nameSpace()].push_back(R);
-      }
-    }
-  }
-
-  OS << "switch (Syntax) {\n";
-  OS << "case AttrSyntax::Generic:\n";
-  OS << "  return llvm::StringSwitch<bool>(Name)\n";
-  GenerateHasAttrSpellingStringSwitch(Attrs, OS);
-  OS << "case AttrSyntax::GNU:\n";
-  OS << "  return llvm::StringSwitch<bool>(Name)\n";
-  GenerateHasAttrSpellingStringSwitch(GNU, OS, "GNU");
-  OS << "case AttrSyntax::Declspec:\n";
-  OS << "  return llvm::StringSwitch<bool>(Name)\n";
-  GenerateHasAttrSpellingStringSwitch(Declspec, OS, "Declspec");
-  OS << "case AttrSyntax::CXX: {\n";
-  // C++11-style attributes are further split out based on the Scope.
-  for (std::map<std::string, std::vector<Record *>>::iterator I = CXX.begin(),
-                                                              E = CXX.end();
-       I != E; ++I) {
-    if (I != CXX.begin())
-      OS << " else ";
-    if (I->first.empty())
-      OS << "if (!Scope || Scope->getName() == \"\") {\n";
-    else
-      OS << "if (Scope->getName() == \"" << I->first << "\") {\n";
-    OS << "  return llvm::StringSwitch<bool>(Name)\n";
-    GenerateHasAttrSpellingStringSwitch(I->second, OS, "CXX11", I->first);
-    OS << "}";
-  }
-  OS << "\n}\n";
-  OS << "}\n";
 }
 
 void EmitClangAttrSpellingListIndex(RecordKeeper &Records, raw_ostream &OS) {
