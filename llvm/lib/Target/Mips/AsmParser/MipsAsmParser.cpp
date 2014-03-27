@@ -1217,7 +1217,7 @@ unsigned MipsAsmParser::getGPR(int RegNo) {
 
 int MipsAsmParser::matchRegisterByNumber(unsigned RegNum, unsigned RegClass) {
   if (RegNum >
-      getContext().getRegisterInfo()->getRegClass(RegClass).getNumRegs())
+      getContext().getRegisterInfo()->getRegClass(RegClass).getNumRegs() - 1)
     return -1;
 
   if (RegClass == Mips::GPR32RegClassID || RegClass == Mips::GPR64RegClassID)
