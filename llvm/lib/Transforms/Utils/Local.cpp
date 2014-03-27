@@ -1036,17 +1036,16 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
 bool llvm::LowerDbgDeclare(Function &F) {
   DIBuilder DIB(*F.getParent());
   SmallVector<DbgDeclareInst *, 4> Dbgs;
-  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
-    for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); BI != BE; ++BI) {
-      if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
+  for (auto &FI : F)
+    for (BasicBlock::iterator BI : FI)
+      if (auto DDI = dyn_cast<DbgDeclareInst>(BI))
         Dbgs.push_back(DDI);
-    }
+
   if (Dbgs.empty())
     return false;
 
-  for (SmallVectorImpl<DbgDeclareInst *>::iterator I = Dbgs.begin(),
-         E = Dbgs.end(); I != E; ++I) {
-    DbgDeclareInst *DDI = *I;
+  for (auto &I : Dbgs) {
+    DbgDeclareInst *DDI = I;
     AllocaInst *AI = dyn_cast_or_null<AllocaInst>(DDI->getAddress());
     // If this is an alloca for a scalar variable, insert a dbg.value
     // at each load and store to the alloca and erase the dbg.declare.
