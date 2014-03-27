@@ -50,7 +50,7 @@ public:
                const bool FCommitInSystemHeader = true)
     : SourceMgr(SM), LangOpts(LangOpts), PPRec(PPRec),
       ForceCommitInSystemHeader(FCommitInSystemHeader),
-      StrAlloc(/*size=*/512) { }
+      StrAlloc() { }
 
   const SourceManager &getSourceManager() const { return SourceMgr; }
   const LangOptions &getLangOpts() const { return LangOpts; }
