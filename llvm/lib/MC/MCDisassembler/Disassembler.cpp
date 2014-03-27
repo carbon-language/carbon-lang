@@ -24,9 +24,6 @@
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
 
-namespace llvm {
-class Target;
-} // namespace llvm
 using namespace llvm;
 
 // LLVMCreateDisasm() creates a disassembler for the TripleName.  Symbolic
