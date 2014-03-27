@@ -1463,8 +1463,8 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(GA)) {
       const GlobalValue *GValue = G->getGlobal();
       const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
-      const GlobalValue *RealGValue = GAlias ?
-        GAlias->resolveAliasedGlobal(false) : GValue;
+      const GlobalValue *RealGValue =
+          GAlias ? GAlias->getAliasedGlobal() : GValue;
       const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
       assert((GVar || isa<Function>(RealGValue)) &&
              "Unexpected global value subclass!");

@@ -554,8 +554,7 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
     ++i;
     // Don't stop on weak.  We assume people aren't playing games with the
     // instrumentedness of overridden weak aliases.
-    if (Function *F = dyn_cast<Function>(
-            GA->resolveAliasedGlobal(/*stopOnWeak=*/false))) {
+    if (Function *F = dyn_cast<Function>(GA->getAliasedGlobal())) {
       bool GAInst = isInstrumented(GA), FInst = isInstrumented(F);
       if (GAInst && FInst) {
         addGlobalNamePrefix(GA);
