@@ -487,3 +487,45 @@ define <2 x i64> @test56(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK: blr
 }
 
+define <2 x i64> @test60(<2 x i64> %a, <2 x i64> %b) {
+  %v = shl <2 x i64> %a, %b
+  ret <2 x i64> %v
+
+; CHECK-LABEL: @test60
+; This should scalarize, and the current code quality is not good.
+; CHECK: stxvd2x
+; CHECK: stxvd2x
+; CHECK: sld
+; CHECK: sld
+; CHECK: lxvd2x
+; CHECK: blr
+}
+
+define <2 x i64> @test61(<2 x i64> %a, <2 x i64> %b) {
+  %v = lshr <2 x i64> %a, %b
+  ret <2 x i64> %v
+
+; CHECK-LABEL: @test61
+; This should scalarize, and the current code quality is not good.
+; CHECK: stxvd2x
+; CHECK: stxvd2x
+; CHECK: srd
+; CHECK: srd
+; CHECK: lxvd2x
+; CHECK: blr
+}
+
+define <2 x i64> @test62(<2 x i64> %a, <2 x i64> %b) {
+  %v = ashr <2 x i64> %a, %b
+  ret <2 x i64> %v
+
+; CHECK-LABEL: @test62
+; This should scalarize, and the current code quality is not good.
+; CHECK: stxvd2x
+; CHECK: stxvd2x
+; CHECK: srad
+; CHECK: srad
+; CHECK: lxvd2x
+; CHECK: blr
+}
+
