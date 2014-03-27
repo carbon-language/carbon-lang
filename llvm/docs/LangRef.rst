@@ -765,8 +765,6 @@ Currently, only the following parameter attributes are defined:
 
 ``inalloca``
 
-.. Warning:: This feature is unstable and not fully implemented.
-
     The ``inalloca`` argument attribute allows the caller to take the
     address of outgoing stack arguments.  An ``inalloca`` argument must
     be a pointer to stack memory produced by an ``alloca`` instruction.
