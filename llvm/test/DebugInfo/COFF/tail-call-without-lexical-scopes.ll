@@ -11,6 +11,9 @@
 ; 7 void spam(void) {
 ; 8   bar(42);
 ; 9 }
+;
+; The bar function happens to have no lexical scopes, yet it has one instruction
+; with debug information available.
 
 ; X86-LABEL: {{^}}"?bar@@YAXHZZ":
 ; X86-NEXT: # BB

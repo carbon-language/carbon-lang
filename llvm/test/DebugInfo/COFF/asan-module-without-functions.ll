@@ -4,8 +4,9 @@
 ; -fsanitize=address
 ; D:\asan.c:
 ; 1 unsigned char c = 42;
-
-; Just make sure we don't try to emit the line table.
+;
+; This file defines no functions, so just make sure we don't try to emit
+; the line table for functions of zero size.
 ; X86-NOT: .section        .debug$S,"rn"
 
 ; ModuleID = 'asan.c'
