@@ -2211,6 +2211,11 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
                                Clobbers, MII, IP, Callback))
     return StmtError();
 
+  // Filter out "fpsw".  Clang doesn't accept it, and it always lists flags and
+  // fpsr as clobbers.
+  auto End = std::remove(Clobbers.begin(), Clobbers.end(), "fpsw");
+  Clobbers.erase(End, Clobbers.end());
+
   // Build the vector of clobber StringRefs.
   unsigned NumClobbers = Clobbers.size();
   ClobberRefs.resize(NumClobbers);

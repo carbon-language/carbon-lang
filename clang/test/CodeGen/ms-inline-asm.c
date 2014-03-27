@@ -460,3 +460,12 @@ void t39() {
   // CHECK: call void asm sideeffect inteldialect "mov eax, [eax] .4", "~{eax},~{dirflag},~{fpsr},~{flags}"()
   // CHECK: call void asm sideeffect inteldialect "mov eax, fs:[$$0] .4", "~{eax},~{dirflag},~{fpsr},~{flags}"()
 }
+
+void t40(float a) {
+  int i;
+  __asm fld a
+  __asm fistp i
+  // CHECK-LABEL: define void @t40
+  // CHECK: call void asm sideeffect inteldialect "fld dword ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(float* {{.*}})
+  // CHECK: call void asm sideeffect inteldialect "fistp dword ptr $0", "=*m,~{dirflag},~{fpsr},~{flags}"(i32* {{.*}})
+}
