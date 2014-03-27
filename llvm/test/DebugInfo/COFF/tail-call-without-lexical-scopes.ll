@@ -13,7 +13,7 @@
 ; 9 }
 ;
 ; The bar function happens to have no lexical scopes, yet it has one instruction
-; with debug information available.
+; with debug information available.  This used to be PR19239.
 
 ; X86-LABEL: {{^}}"?bar@@YAXHZZ":
 ; X86-NEXT: # BB
