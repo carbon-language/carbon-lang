@@ -141,6 +141,8 @@ protected:
   std::unique_ptr<InputGraph> _inputGraph;
 };
 
+} // end anonymous namespace
+
 TEST_F(InputGraphTest, Basic) {
   EXPECT_EQ(0, inputFileCount());
   ErrorOr<InputElement *> nextElement = inputGraph().getNextInputElement();
@@ -618,6 +620,4 @@ TEST_F(InputGraphTest, HiddenNodeTests) {
 
   nextElement = inputGraph().getNextInputElement();
   EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
-}
-
 }

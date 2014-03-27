@@ -20,17 +20,15 @@ using namespace llvm;
 using namespace lld;
 
 namespace {
-
 class GnuLdParserTest
     : public ParserTest<GnuLdDriver, std::unique_ptr<ELFLinkingContext>> {
 protected:
   const LinkingContext *linkingContext() override { return _context.get(); }
 };
+}
 
 TEST_F(GnuLdParserTest, Empty) {
   EXPECT_FALSE(parse("ld", nullptr));
   EXPECT_EQ(linkingContext(), nullptr);
   EXPECT_EQ("No input files\n", errorMessage());
 }
-
-}  // end anonymous namespace

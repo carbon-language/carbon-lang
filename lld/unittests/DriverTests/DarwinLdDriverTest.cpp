@@ -22,12 +22,12 @@ using namespace llvm;
 using namespace lld;
 
 namespace {
-
 class DarwinLdParserTest
     : public ParserTest<DarwinLdDriver, MachOLinkingContext> {
 protected:
   const LinkingContext *linkingContext() override { return &_context; }
 };
+}
 
 TEST_F(DarwinLdParserTest, Basic) {
   EXPECT_TRUE(parse("ld", "foo.o", "bar.o", nullptr));
@@ -229,6 +229,3 @@ TEST_F(DarwinLdParserTest, llvmOptions) {
   EXPECT_EQ(strcmp(options[0],"-debug-only"), 0);
   EXPECT_EQ(strcmp(options[1],"foo"), 0);
 }
-
-
-}  // end anonymous namespace

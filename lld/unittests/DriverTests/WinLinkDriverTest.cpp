@@ -25,12 +25,12 @@ using namespace llvm;
 using namespace lld;
 
 namespace {
-
 class WinLinkParserTest
     : public ParserTest<WinLinkDriver, PECOFFLinkingContext> {
 protected:
   const LinkingContext *linkingContext() override { return &_context; }
 };
+}
 
 TEST_F(WinLinkParserTest, Basic) {
   EXPECT_TRUE(parse("link.exe", "/subsystem:console", "/out:a.exe",
@@ -682,5 +682,3 @@ TEST_F(WinLinkParserTest, DefEntryNameWindows) {
   EXPECT_TRUE(parse("link.exe", "/subsystem:windows", "a.obj", nullptr));
   EXPECT_EQ("_WinMainCRTStartup", _context.entrySymbolName());
 }
-
-} // end anonymous namespace

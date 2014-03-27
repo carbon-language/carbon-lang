@@ -68,9 +68,11 @@ public:
   GnuLdOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable)){}
 };
 
+} // anonymous namespace
+
 // Get the Input file magic for creating appropriate InputGraph nodes.
-error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
-                        llvm::sys::fs::file_magic &magic) {
+static error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
+                               llvm::sys::fs::file_magic &magic) {
   error_code ec = llvm::sys::fs::identify_magic(path, magic);
   if (ec)
     return ec;
@@ -85,8 +87,6 @@ error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
   }
   return make_error_code(ReaderError::unknown_file_format);
 }
-
-} // namespace
 
 llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
   if (!_isDashlPrefix)

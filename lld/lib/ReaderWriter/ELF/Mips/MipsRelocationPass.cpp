@@ -13,20 +13,18 @@
 #include "Atoms.h"
 #include "MipsELFFile.h"
 
-namespace {
-
 using namespace lld;
 using namespace lld::elf;
 using namespace llvm::ELF;
 
 // Lazy resolver
-const uint8_t mipsGot0AtomContent[] = { 0x00, 0x00, 0x00, 0x00 };
+static const uint8_t mipsGot0AtomContent[] = { 0x00, 0x00, 0x00, 0x00 };
 
 // Module pointer
-const uint8_t mipsGotModulePointerAtomContent[] = { 0x00, 0x00, 0x00, 0x80 };
+static const uint8_t mipsGotModulePointerAtomContent[] = { 0x00, 0x00, 0x00, 0x80 };
 
 // PLT0 entry
-const uint8_t mipsPlt0AtomContent[] = {
+static const uint8_t mipsPlt0AtomContent[] = {
   0x00, 0x00, 0x1c, 0x3c, // lui   $28, %hi(&GOTPLT[0])
   0x00, 0x00, 0x99, 0x8f, // lw    $25, %lo(&GOTPLT[0])($28)
   0x00, 0x00, 0x9c, 0x27, // addiu $28, $28, %lo(&GOTPLT[0])
@@ -38,7 +36,7 @@ const uint8_t mipsPlt0AtomContent[] = {
 };
 
 // Regular PLT entry
-const uint8_t mipsPltAAtomContent[] = {
+static const uint8_t mipsPltAAtomContent[] = {
   0x00, 0x00, 0x0f, 0x3c, // lui   $15, %hi(.got.plt entry)
   0x00, 0x00, 0xf9, 0x8d, // l[wd] $25, %lo(.got.plt entry)($15)
   0x08, 0x00, 0x20, 0x03, // jr    $25
@@ -46,12 +44,14 @@ const uint8_t mipsPltAAtomContent[] = {
 };
 
 // LA25 stub entry
-const uint8_t mipsLA25AtomContent[] = {
+static const uint8_t mipsLA25AtomContent[] = {
   0x00, 0x00, 0x19, 0x3c, // lui   $25, %hi(func)
   0x00, 0x00, 0x00, 0x08, // j     func
   0x00, 0x00, 0x39, 0x27, // addiu $25, $25, %lo(func)
   0x00, 0x00, 0x00, 0x00  // nop
 };
+
+namespace {
 
 /// \brief Abstract base class represent MIPS GOT entries.
 class MipsGOTAtom : public GOTAtom {

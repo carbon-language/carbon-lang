@@ -74,23 +74,25 @@ enum class Flavor {
   core          // -flavor core OR -core
 };
 
-Flavor strToFlavor(StringRef str) {
-  return llvm::StringSwitch<Flavor>(str)
-           .Case("gnu", Flavor::gnu_ld)
-           .Case("link", Flavor::win_link)
-           .Case("lld-link", Flavor::win_link)
-           .Case("darwin", Flavor::darwin_ld)
-           .Case("core", Flavor::core)
-           .Case("ld", Flavor::gnu_ld) // deprecated
-           .Default(Flavor::invalid);
-}
-
 struct ProgramNameParts {
   StringRef _target;
   StringRef _flavor;
 };
 
-ProgramNameParts parseProgramName(StringRef programName) {
+} // anonymous namespace
+
+static Flavor strToFlavor(StringRef str) {
+  return llvm::StringSwitch<Flavor>(str)
+      .Case("gnu", Flavor::gnu_ld)
+      .Case("link", Flavor::win_link)
+      .Case("lld-link", Flavor::win_link)
+      .Case("darwin", Flavor::darwin_ld)
+      .Case("core", Flavor::core)
+      .Case("ld", Flavor::gnu_ld) // deprecated
+      .Default(Flavor::invalid);
+}
+
+static ProgramNameParts parseProgramName(StringRef programName) {
   SmallVector<StringRef, 3> components;
   llvm::SplitString(programName, components, "-");
   ProgramNameParts ret;
@@ -120,9 +122,8 @@ ProgramNameParts parseProgramName(StringRef programName) {
   return ret;
 }
 
-} // namespace
-
 namespace lld {
+
 bool UniversalDriver::link(int argc, const char *argv[],
                            raw_ostream &diagnostics) {
   // Parse command line options using GnuLdOptions.td
@@ -181,4 +182,5 @@ bool UniversalDriver::link(int argc, const char *argv[],
   }
   llvm_unreachable("Unrecognised flavor");
 }
+
 } // end namespace lld
