@@ -1,6 +1,6 @@
 // PR18931
-// RUN: llvm-mc < %s -triple=arm-linux-gnueabi -filetype=obj -o - \
-// RUN: | llvm-objdump --disassemble -arch=arm - | FileCheck %s
+// RUN: llvm-mc %s -triple=arm-linux-gnueabi -filetype=obj -o %t
+// RUN: llvm-objdump --disassemble -arch=arm %t | FileCheck %s
 
     .text
 // CHECK: cmp r2, #1
