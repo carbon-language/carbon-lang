@@ -50,6 +50,9 @@ static cl::opt<bool>
 ShowEncoding("show-encoding", cl::desc("Show instruction encodings"));
 
 static cl::opt<bool>
+CompressDebugSections("compress-debug-sections", cl::desc("Compress DWARF debug sections"));
+
+static cl::opt<bool>
 ShowInst("show-inst", cl::desc("Show internal instruction representation"));
 
 static cl::opt<bool>
@@ -380,6 +383,9 @@ int main(int argc, char **argv) {
 
   std::unique_ptr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(*MRI, TripleName));
   assert(MAI && "Unable to create target asm info!");
+
+  if (CompressDebugSections)
+    MAI->setCompressDebugSections(true);
 
   // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.

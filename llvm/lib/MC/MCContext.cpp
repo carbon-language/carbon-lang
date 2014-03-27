@@ -37,13 +37,13 @@ typedef std::map<SectionGroupPair, const MCSectionCOFF *> COFFUniqueMapTy;
 
 MCContext::MCContext(const MCAsmInfo *mai, const MCRegisterInfo *mri,
                      const MCObjectFileInfo *mofi, const SourceMgr *mgr,
-                     bool DoAutoReset) :
-  SrcMgr(mgr), MAI(mai), MRI(mri), MOFI(mofi),
-  Allocator(), Symbols(Allocator), UsedNames(Allocator),
-  NextUniqueID(0),
-  CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0),
-  DwarfLocSeen(false), GenDwarfForAssembly(false), GenDwarfFileNumber(0),
-  AllowTemporaryLabels(true), DwarfCompileUnitID(0), AutoReset(DoAutoReset) {
+                     bool DoAutoReset)
+    : SrcMgr(mgr), MAI(mai), MRI(mri), MOFI(mofi), Allocator(),
+      Symbols(Allocator), UsedNames(Allocator), NextUniqueID(0),
+      CurrentDwarfLoc(0, 0, 0, DWARF2_FLAG_IS_STMT, 0, 0), DwarfLocSeen(false),
+      GenDwarfForAssembly(false), GenDwarfFileNumber(0),
+      AllowTemporaryLabels(true), DwarfCompileUnitID(0),
+      AutoReset(DoAutoReset) {
 
   error_code EC = llvm::sys::fs::current_path(CompilationDir);
   if (EC)
@@ -250,6 +250,11 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
   if (ELFUniquingMap == 0)
     ELFUniquingMap = new ELFUniqueMapTy();
   ELFUniqueMapTy &Map = *(ELFUniqueMapTy*)ELFUniquingMap;
+
+  SmallString<32> ZDebugName;
+  if (MAI->compressDebugSections() && Section.startswith(".debug_") &&
+      Section != ".debug_frame")
+    Section = (".z" + Section.drop_front(1)).toStringRef(ZDebugName);
 
   // Do the lookup, if we have a hit, return it.
   std::pair<ELFUniqueMapTy::iterator, bool> Entry = Map.insert(
