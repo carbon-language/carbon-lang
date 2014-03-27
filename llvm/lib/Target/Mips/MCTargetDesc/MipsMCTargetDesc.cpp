@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstPrinter/MipsInstPrinter.h"
+#include "MipsELFStreamer.h"
 #include "MipsMCAsmInfo.h"
 #include "MipsMCNaCl.h"
 #include "MipsMCTargetDesc.h"
@@ -112,7 +113,8 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     bool RelaxAll, bool NoExecStack) {
   MCStreamer *S;
   if (!Triple(TT).isOSNaCl())
-    S = createELFStreamer(Context, MAB, OS, Emitter, RelaxAll, NoExecStack);
+    S = createMipsELFStreamer(Context, MAB, OS, Emitter, STI, RelaxAll,
+                              NoExecStack);
   else
     S = createMipsNaClELFStreamer(Context, MAB, OS, Emitter, RelaxAll,
                                   NoExecStack);
