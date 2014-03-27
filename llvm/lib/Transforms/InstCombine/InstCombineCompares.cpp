@@ -3010,7 +3010,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       return FoldICmpAddOpCst(I, X, Cst, I.getSwappedPredicate());
 
     ConstantInt *Cst2;
-    if (match(Op1, m_ConstantInt(Cst)) &&
+    if (I.isSigned() &&
+        match(Op1, m_ConstantInt(Cst)) &&
         match(Op0, m_Add(m_Value(X), m_ConstantInt(Cst2))) &&
         cast<BinaryOperator>(Op0)->hasNoSignedWrap()) {
       // icmp X+Cst2, Cst --> icmp X, Cst-Cst2

@@ -1409,3 +1409,13 @@ entry:
   %conv = zext i1 %cmp to i32
   ret i32 %conv
 }
+
+; CHECK-LABEL: icmp_add_const_ult
+; CHECK: %cmp = icmp ult i32 %add, 6
+define i32 @icmp_add_const_ult(i32 %a) #0 {
+entry:
+  %add = add nsw i32 %a, -49
+  %cmp = icmp ult i32 %add, 6
+  %conv = zext i1 %cmp to i32
+  ret i32 %conv
+}
