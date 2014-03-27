@@ -251,3 +251,15 @@ void RawCommentList::addComment(const RawComment &RC,
     Comments.push_back(new (Allocator) RawComment(RC));
   }
 }
+
+void RawCommentList::addDeserializedComments(ArrayRef<RawComment *> DeserializedComments) {
+  std::vector<RawComment *> MergedComments;
+  MergedComments.reserve(Comments.size() + DeserializedComments.size());
+
+  std::merge(Comments.begin(), Comments.end(),
+             DeserializedComments.begin(), DeserializedComments.end(),
+             std::back_inserter(MergedComments),
+             BeforeThanCompare<RawComment>(SourceMgr));
+  std::swap(Comments, MergedComments);
+}
+

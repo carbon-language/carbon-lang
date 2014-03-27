@@ -63,6 +63,13 @@ enum FloatingRank {
 RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   if (!CommentsLoaded && ExternalSource) {
     ExternalSource->ReadComments();
+
+#ifndef NDEBUG
+    ArrayRef<RawComment *> RawComments = Comments.getComments();
+    assert(std::is_sorted(RawComments.begin(), RawComments.end(),
+                          BeforeThanCompare<RawComment>(SourceMgr)));
+#endif
+
     CommentsLoaded = true;
   }
 

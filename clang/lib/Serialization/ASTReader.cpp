@@ -7688,6 +7688,7 @@ void ASTReader::ReadComments() {
        I = CommentsCursors.begin(),
        E = CommentsCursors.end();
        I != E; ++I) {
+    Comments.clear();
     BitstreamCursor &Cursor = I->first;
     serialization::ModuleFile &F = *I->second;
     SavedStreamPosition SavedPosition(Cursor);
@@ -7696,7 +7697,7 @@ void ASTReader::ReadComments() {
     while (true) {
       llvm::BitstreamEntry Entry =
         Cursor.advanceSkippingSubblocks(BitstreamCursor::AF_DontPopBlockAtEnd);
-      
+
       switch (Entry.Kind) {
       case llvm::BitstreamEntry::SubBlock: // Handled for us already.
       case llvm::BitstreamEntry::Error:
@@ -7726,9 +7727,9 @@ void ASTReader::ReadComments() {
       }
       }
     }
-  NextCursor:;
+  NextCursor:
+    Context.Comments.addDeserializedComments(Comments);
   }
-  Context.Comments.addCommentsToFront(Comments);
 }
 
 void ASTReader::finishPendingActions() {
