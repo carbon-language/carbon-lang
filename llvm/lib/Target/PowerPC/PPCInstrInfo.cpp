@@ -1970,6 +1970,80 @@ FunctionPass*
 llvm::createPPCVSXCopyPass() { return new PPCVSXCopy(); }
 
 #undef DEBUG_TYPE
+#define DEBUG_TYPE "ppc-vsx-copy-cleanup"
+
+namespace llvm {
+  void initializePPCVSXCopyCleanupPass(PassRegistry&);
+}
+
+namespace {
+  // PPCVSXCopyCleanup pass - We sometimes end up generating self copies of VSX
+  // registers (mostly because the ABI code still places all values into the
+  // "traditional" floating-point and vector registers). Remove them here.
+  struct PPCVSXCopyCleanup : public MachineFunctionPass {
+    static char ID;
+    PPCVSXCopyCleanup() : MachineFunctionPass(ID) {
+      initializePPCVSXCopyCleanupPass(*PassRegistry::getPassRegistry());
+    }
+
+    const PPCTargetMachine *TM;
+    const PPCInstrInfo *TII;
+
+protected:
+    bool processBlock(MachineBasicBlock &MBB) {
+      bool Changed = false;
+
+      SmallVector<MachineInstr *, 4> ToDelete;
+      for (MachineBasicBlock::iterator I = MBB.begin(), IE = MBB.end();
+           I != IE; ++I) {
+        MachineInstr *MI = I;
+        if (MI->getOpcode() == PPC::XXLOR &&
+            MI->getOperand(0).getReg() == MI->getOperand(1).getReg() &&
+            MI->getOperand(0).getReg() == MI->getOperand(2).getReg())
+          ToDelete.push_back(MI);
+      }
+
+      if (!ToDelete.empty())
+        Changed = true;
+
+      for (unsigned i = 0, ie = ToDelete.size(); i != ie; ++i) {
+        DEBUG(dbgs() << "Removing VSX self-copy: " << *ToDelete[i]);
+        ToDelete[i]->eraseFromParent();
+      }
+
+      return Changed;
+    }
+
+public:
+    virtual bool runOnMachineFunction(MachineFunction &MF) {
+      TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
+      TII = TM->getInstrInfo();
+
+      bool Changed = false;
+
+      for (MachineFunction::iterator I = MF.begin(); I != MF.end();) {
+        MachineBasicBlock &B = *I++;
+        if (processBlock(B))
+          Changed = true;
+      }
+
+      return Changed;
+    }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      MachineFunctionPass::getAnalysisUsage(AU);
+    }
+  };
+}
+
+INITIALIZE_PASS(PPCVSXCopyCleanup, DEBUG_TYPE,
+                "PowerPC VSX Copy Cleanup", false, false)
+
+char PPCVSXCopyCleanup::ID = 0;
+FunctionPass*
+llvm::createPPCVSXCopyCleanupPass() { return new PPCVSXCopyCleanup(); }
+
+#undef DEBUG_TYPE
 #define DEBUG_TYPE "ppc-early-ret"
 STATISTIC(NumBCLR, "Number of early conditional returns");
 STATISTIC(NumBLR,  "Number of early returns");

@@ -182,6 +182,9 @@ bool PPCPassConfig::addPreRegAlloc() {
 }
 
 bool PPCPassConfig::addPreSched2() {
+  if (getPPCSubtarget().hasVSX())
+    addPass(createPPCVSXCopyCleanupPass());
+
   if (getOptLevel() != CodeGenOpt::None)
     addPass(&IfConverterID);
 
