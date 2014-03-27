@@ -1807,6 +1807,13 @@ static void addProfileRT(
         Args.hasArg(options::OPT_coverage)))
     return;
 
+  // Pull in runtime for -fprofile-inst-generate.  This is required since there
+  // are no calls to the runtime in the code.
+  if (Args.hasArg(options::OPT_fprofile_instr_generate)) {
+    CmdArgs.push_back("-u");
+    CmdArgs.push_back("___llvm_profile_runtime");
+  }
+
   SmallString<128> LibProfile = getCompilerRTLibDir(TC);
   llvm::sys::path::append(LibProfile,
       Twine("libclang_rt.profile-") + getArchNameForCompilerRTLib(TC) + ".a");
