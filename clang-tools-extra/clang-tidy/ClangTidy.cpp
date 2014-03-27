@@ -25,6 +25,7 @@
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/MultiplexConsumer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Lex/PPCallbacks.h"
@@ -38,6 +39,7 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Signals.h"
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 using namespace clang::ast_matchers;
@@ -88,6 +90,84 @@ public:
 
 private:
   ClangTidyContext &Context;
+};
+
+class ErrorReporter {
+public:
+  ErrorReporter(bool ApplyFixes)
+      : Files(FileSystemOptions()), DiagOpts(new DiagnosticOptions()),
+        DiagPrinter(new TextDiagnosticPrinter(llvm::outs(), &*DiagOpts)),
+        Diags(IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs), &*DiagOpts,
+              DiagPrinter),
+        SourceMgr(Diags, Files), Rewrite(SourceMgr, LangOpts),
+        ApplyFixes(ApplyFixes) {
+    DiagOpts->ShowColors = llvm::sys::Process::StandardOutHasColors();
+    DiagPrinter->BeginSourceFile(LangOpts);
+  }
+
+  void reportDiagnostic(const ClangTidyMessage &Message,
+                        DiagnosticsEngine::Level Level,
+                        const tooling::Replacements *Fixes = nullptr) {
+    SourceLocation Loc = getLocation(Message.FilePath, Message.FileOffset);
+    // Contains a pair for each attempted fix: location and whether the fix was
+    // applied successfully.
+    SmallVector<std::pair<SourceLocation, bool>, 4> FixLocations;
+    {
+      DiagnosticBuilder Diag =
+          Diags.Report(Loc, Diags.getCustomDiagID(Level, "%0"))
+          << Message.Message;
+      if (Fixes != NULL) {
+        for (const tooling::Replacement &Fix : *Fixes) {
+          SourceLocation FixLoc =
+              getLocation(Fix.getFilePath(), Fix.getOffset());
+          SourceLocation FixEndLoc = FixLoc.getLocWithOffset(Fix.getLength());
+          Diag << FixItHint::CreateReplacement(SourceRange(FixLoc, FixEndLoc),
+                                               Fix.getReplacementText());
+          ++TotalFixes;
+          if (ApplyFixes) {
+            bool Success = Fix.isApplicable() && Fix.apply(Rewrite);
+            if (Success)
+              ++AppliedFixes;
+            FixLocations.push_back(std::make_pair(FixLoc, Success));
+          }
+        }
+      }
+    }
+    for (auto Fix : FixLocations) {
+      Diags.Report(Fix.first, Fix.second ? diag::note_fixit_applied
+                                         : diag::note_fixit_failed);
+    }
+  }
+
+  void Finish() {
+    // FIXME: Run clang-format on changes.
+    if (ApplyFixes && TotalFixes > 0) {
+      llvm::errs() << "clang-tidy applied " << AppliedFixes << " of "
+                   << TotalFixes << " suggested fixes.\n";
+      Rewrite.overwriteChangedFiles();
+    }
+  }
+
+private:
+  SourceLocation getLocation(StringRef FilePath, unsigned Offset) {
+    if (FilePath.empty())
+      return SourceLocation();
+
+    const FileEntry *File = SourceMgr.getFileManager().getFile(FilePath);
+    FileID ID = SourceMgr.createFileID(File, SourceLocation(), SrcMgr::C_User);
+    return SourceMgr.getLocForStartOfFile(ID).getLocWithOffset(Offset);
+  }
+
+  FileManager Files;
+  LangOptions LangOpts; // FIXME: use langopts from each original file
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
+  DiagnosticConsumer *DiagPrinter;
+  DiagnosticsEngine Diags;
+  SourceManager SourceMgr;
+  Rewriter Rewrite;
+  bool ApplyFixes;
+  unsigned TotalFixes = 0;
+  unsigned AppliedFixes = 0;
 };
 
 } // namespace
@@ -252,59 +332,15 @@ void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,
   Tool.run(new ActionFactory(new ClangTidyASTConsumerFactory(Context)));
 }
 
-static SourceLocation getLocation(SourceManager &SourceMgr, StringRef FilePath,
-                                  unsigned Offset) {
-  if (FilePath.empty())
-    return SourceLocation();
-
-  const FileEntry *File = SourceMgr.getFileManager().getFile(FilePath);
-  FileID ID = SourceMgr.createFileID(File, SourceLocation(), SrcMgr::C_User);
-  return SourceMgr.getLocForStartOfFile(ID).getLocWithOffset(Offset);
-}
-
-static void reportDiagnostic(const ClangTidyMessage &Message,
-                             SourceManager &SourceMgr,
-                             DiagnosticsEngine::Level Level,
-                             DiagnosticsEngine &Diags,
-                             const tooling::Replacements *Fixes = NULL) {
-  SourceLocation Loc =
-      getLocation(SourceMgr, Message.FilePath, Message.FileOffset);
-  DiagnosticBuilder Diag = Diags.Report(Loc, Diags.getCustomDiagID(Level, "%0"))
-                           << Message.Message;
-  if (Fixes != NULL) {
-    for (const tooling::Replacement &Fix : *Fixes) {
-      SourceLocation FixLoc =
-          getLocation(SourceMgr, Fix.getFilePath(), Fix.getOffset());
-      Diag << FixItHint::CreateReplacement(
-                  SourceRange(FixLoc, FixLoc.getLocWithOffset(Fix.getLength())),
-                  Fix.getReplacementText());
-    }
-  }
-}
-
 void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {
-  FileManager Files((FileSystemOptions()));
-  LangOptions LangOpts; // FIXME: use langopts from each original file
-  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
-  DiagOpts->ShowColors = llvm::sys::Process::StandardOutHasColors();
-  DiagnosticConsumer *DiagPrinter =
-      new TextDiagnosticPrinter(llvm::outs(), &*DiagOpts);
-  DiagnosticsEngine Diags(IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
-                          &*DiagOpts, DiagPrinter);
-  DiagPrinter->BeginSourceFile(LangOpts);
-  SourceManager SourceMgr(Diags, Files);
-  Rewriter Rewrite(SourceMgr, LangOpts);
+  ErrorReporter Reporter(Fix);
   for (const ClangTidyError &Error : Errors) {
-    reportDiagnostic(Error.Message, SourceMgr, DiagnosticsEngine::Warning, Diags,
-                     &Error.Fix);
+    Reporter.reportDiagnostic(Error.Message, DiagnosticsEngine::Warning,
+                              &Error.Fix);
     for (const ClangTidyMessage &Note : Error.Notes)
-      reportDiagnostic(Note, SourceMgr, DiagnosticsEngine::Note, Diags);
-
-    tooling::applyAllReplacements(Error.Fix, Rewrite);
+      Reporter.reportDiagnostic(Note, DiagnosticsEngine::Note);
   }
-  // FIXME: Run clang-format on changes.
-  if (Fix)
-    Rewrite.overwriteChangedFiles();
+  Reporter.Finish();
 }
 
 } // namespace tidy
