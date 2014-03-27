@@ -114,3 +114,16 @@ define void @vector_or_i64_imm(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64
   store i64 %or, i64 addrspace(1)* %out
   ret void
 }
+
+; SI-LABEL: @trunc_i64_or_to_i32
+; SI: S_LOAD_DWORD [[SREG0:s[0-9]+]],
+; SI: S_LOAD_DWORD [[SREG1:s[0-9]+]],
+; SI: S_OR_B32 [[SRESULT:s[0-9]+]], [[SREG1]], [[SREG0]]
+; SI: V_MOV_B32_e32 [[VRESULT:v[0-9]+]], [[SRESULT]]
+; SI: BUFFER_STORE_DWORD [[VRESULT]],
+define void @trunc_i64_or_to_i32(i32 addrspace(1)* %out, i64 %a, i64 %b) {
+  %add = or i64 %b, %a
+  %trunc = trunc i64 %add to i32
+  store i32 %trunc, i32 addrspace(1)* %out, align 8
+  ret void
+}

@@ -40,3 +40,15 @@ define void @test4(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
   store <4 x i32> %result, <4 x i32> addrspace(1)* %out
   ret void
 }
+
+; SI-CHECK-LABEL: @trunc_i64_mul_to_i32
+; SI-CHECK: S_LOAD_DWORD
+; SI-CHECK: S_LOAD_DWORD
+; SI-CHECK: V_MUL_LO_I32
+; SI-CHECK: BUFFER_STORE_DWORD
+define void @trunc_i64_mul_to_i32(i32 addrspace(1)* %out, i64 %a, i64 %b) {
+  %mul = mul i64 %b, %a
+  %trunc = trunc i64 %mul to i32
+  store i32 %trunc, i32 addrspace(1)* %out, align 8
+  ret void
+}

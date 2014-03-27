@@ -275,6 +275,22 @@ bool AMDGPUTargetLowering::isTruncateFree(Type *Source, Type *Dest) const {
          (Dest->getPrimitiveSizeInBits() % 32 == 0);
 }
 
+bool AMDGPUTargetLowering::isZExtFree(Type *Src, Type *Dest) const {
+  const DataLayout *DL = getDataLayout();
+  unsigned SrcSize = DL->getTypeSizeInBits(Src->getScalarType());
+  unsigned DestSize = DL->getTypeSizeInBits(Dest->getScalarType());
+
+  return SrcSize == 32 && DestSize == 64;
+}
+
+bool AMDGPUTargetLowering::isZExtFree(EVT Src, EVT Dest) const {
+  // Any register load of a 64-bit value really requires 2 32-bit moves. For all
+  // practical purposes, the extra mov 0 to load a 64-bit is free.  As used,
+  // this will enable reducing 64-bit operations the 32-bit, which is always
+  // good.
+  return Src == MVT::i32 && Dest == MVT::i64;
+}
+
 bool AMDGPUTargetLowering::isNarrowingProfitable(EVT SrcVT, EVT DestVT) const {
   // There aren't really 64-bit registers, but pairs of 32-bit ones and only a
   // limited number of native 64-bit operations. Shrinking an operation to fit

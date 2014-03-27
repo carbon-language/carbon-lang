@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck --check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI %s
 
 
 declare i32 @llvm.r600.read.tidig.x() readnone
@@ -66,5 +66,19 @@ define void @test_v2i64_vreg(<2 x i64> addrspace(1)* noalias %out, <2 x i64> add
   %b = load <2 x i64> addrspace(1)* %b_ptr
   %result = add <2 x i64> %a, %b
   store <2 x i64> %result, <2 x i64> addrspace(1)* %out
+  ret void
+}
+
+; SI-LABEL: @trunc_i64_add_to_i32
+; SI: S_LOAD_DWORD [[SREG0:s[0-9]+]],
+; SI: S_LOAD_DWORD [[SREG1:s[0-9]+]],
+; SI: S_ADD_I32 [[SRESULT:s[0-9]+]], [[SREG1]], [[SREG0]]
+; SI-NOT: ADDC
+; SI: V_MOV_B32_e32 [[VRESULT:v[0-9]+]], [[SRESULT]]
+; SI: BUFFER_STORE_DWORD [[VRESULT]],
+define void @trunc_i64_add_to_i32(i32 addrspace(1)* %out, i64 %a, i64 %b) {
+  %add = add i64 %b, %a
+  %trunc = trunc i64 %add to i32
+  store i32 %trunc, i32 addrspace(1)* %out, align 8
   ret void
 }

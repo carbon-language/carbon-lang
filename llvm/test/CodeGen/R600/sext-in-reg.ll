@@ -90,10 +90,10 @@ define void @sext_in_reg_i16_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) noun
 }
 
 ; FUNC-LABEL: @sext_in_reg_i32_to_i64
-; SI: S_LOAD_DWORDX2
-; SI: S_ADD_I32
-; SI-NEXT: S_ADDC_U32
-; SI-NEXT: S_ASHR_I32 s{{[0-9]+}}, s{{[0-9]+}}, 31
+; SI: S_LOAD_DWORD
+; SI: S_LOAD_DWORD
+; SI: S_ADD_I32 [[ADD:s[0-9]+]],
+; SI: S_ASHR_I32 s{{[0-9]+}}, [[ADD]], 31
 ; SI: BUFFER_STORE_DWORDX2
 define void @sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
   %c = add i64 %a, %b

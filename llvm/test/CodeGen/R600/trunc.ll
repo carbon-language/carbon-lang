@@ -34,11 +34,12 @@ define void @trunc_load_shl_i64(i32 addrspace(1)* %out, i64 %a) {
 ; SI: V_ADD_I32_e32 v[[LO_ADD:[0-9]+]], s[[LO_SREG]],
 ; SI: V_LSHL_B64 v{{\[}}[[LO_VREG:[0-9]+]]:{{[0-9]+\]}}, v{{\[}}[[LO_ADD]]:{{[0-9]+\]}}, 2
 ; SI: BUFFER_STORE_DWORD v[[LO_VREG]],
-define void @trunc_shl_i64(i32 addrspace(1)* %out, i64 %a) {
+define void @trunc_shl_i64(i64 addrspace(1)* %out2, i32 addrspace(1)* %out, i64 %a) {
   %aa = add i64 %a, 234 ; Prevent shrinking store.
   %b = shl i64 %aa, 2
   %result = trunc i64 %b to i32
   store i32 %result, i32 addrspace(1)* %out, align 4
+  store i64 %b, i64 addrspace(1)* %out2, align 8 ; Prevent reducing ops to 32-bits
   ret void
 }
 
