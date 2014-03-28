@@ -335,9 +335,11 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   // FIXME: DefaultTargetTriple is used by the target-prefixed calls to as/ld
   // and getToolChain is const.
   if (IsCLMode()) {
-    // clang-cl targets Win32.
+    // clang-cl targets MSVC-style Win32.
     llvm::Triple T(DefaultTargetTriple);
     T.setOSName(llvm::Triple::getOSTypeName(llvm::Triple::Win32));
+    T.setEnvironmentName(llvm::Triple::getEnvironmentTypeName(
+          llvm::Triple::MSVC));
     DefaultTargetTriple = T.str();
   }
   if (const Arg *A = Args->getLastArg(options::OPT_target))
