@@ -56,26 +56,22 @@ public:
                   edgeKind),
         _target(nullptr), _targetSymbolIndex(0), _offsetInAtom(0), _addend(0) {}
 
-  virtual uint64_t offsetInAtom() const { return _offsetInAtom; }
+  uint64_t offsetInAtom() const override { return _offsetInAtom; }
 
-  virtual const Atom *target() const {
-    return _target;
-  }
+  const Atom *target() const override { return _target; }
 
   /// \brief The symbol table index that contains the target reference.
   uint64_t targetSymbolIndex() const {
     return _targetSymbolIndex;
   }
 
-  virtual Addend addend() const {
-    return _addend;
-  }
+  Addend addend() const override { return _addend; }
 
   virtual void setOffset(uint64_t off) { _offsetInAtom = off; }
 
-  virtual void setAddend(Addend A) { _addend = A; }
+  void setAddend(Addend A) override { _addend = A; }
 
-  virtual void setTarget(const Atom *newAtom) { _target = newAtom; }
+  void setTarget(const Atom *newAtom) override { _target = newAtom; }
 
 private:
   const Atom *_target;
@@ -96,11 +92,9 @@ public:
       : _owningFile(file), _name(name), _symbol(symbol), _value(value) {
   }
 
-  virtual const ELFFile<ELFT> &file() const {
-    return _owningFile;
-  }
+  const ELFFile<ELFT> &file() const override { return _owningFile; }
 
-  virtual Scope scope() const {
+  Scope scope() const override {
     if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
     if (_symbol->getBinding() == llvm::ELF::STB_LOCAL)
@@ -109,13 +103,9 @@ public:
       return scopeGlobal;
   }
 
-  virtual StringRef name() const {
-    return _name;
-  }
+  StringRef name() const override { return _name; }
 
-  virtual uint64_t value() const {
-    return _value;
-  }
+  uint64_t value() const override { return _value; }
 
 private:
   const ELFFile<ELFT> &_owningFile;
@@ -133,14 +123,14 @@ public:
   ELFUndefinedAtom(const File &file, StringRef name, const Elf_Sym *symbol)
       : _owningFile(file), _name(name), _symbol(symbol) {}
 
-  virtual const File &file() const { return _owningFile; }
+  const File &file() const override { return _owningFile; }
 
-  virtual StringRef name() const { return _name; }
+  StringRef name() const override { return _name; }
 
   // FIXME: What distinguishes a symbol in ELF that can help decide if the
   // symbol is undefined only during build and not runtime? This will make us
   // choose canBeNullAtBuildtime and canBeNullAtRuntime.
-  virtual CanBeNull canBeNull() const {
+  CanBeNull canBeNull() const override {
     if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return CanBeNull::canBeNullAtBuildtime;
     else
@@ -173,23 +163,17 @@ public:
 
   ~ELFDefinedAtom() {}
 
-  virtual const ELFFile<ELFT> &file() const {
-    return _owningFile;
-  }
+  const ELFFile<ELFT> &file() const override { return _owningFile; }
 
-  virtual StringRef name() const {
-    return _symbolName;
-  }
+  StringRef name() const override { return _symbolName; }
 
-  virtual uint64_t ordinal() const {
-    return _ordinal;
-  }
+  uint64_t ordinal() const override { return _ordinal; }
 
   const Elf_Sym *symbol() const { return _symbol; }
 
   const Elf_Shdr *section() const { return _section; }
 
-  virtual uint64_t size() const {
+  uint64_t size() const override {
     // Common symbols are not allocated in object files,
     // so use st_size to tell how many bytes are required.
     if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
@@ -199,7 +183,7 @@ public:
     return _contentData.size();
   }
 
-  virtual Scope scope() const {
+  Scope scope() const override {
     if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
     else if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
@@ -209,12 +193,10 @@ public:
   }
 
   // FIXME: Need to revisit this in future.
-  virtual Interposable interposable() const {
-    return interposeNo;
-  }
+  Interposable interposable() const override { return interposeNo; }
 
   // FIXME: What ways can we determine this in ELF?
-  virtual Merge merge() const {
+  Merge merge() const override {
     if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return mergeAsWeak;
 
@@ -225,7 +207,7 @@ public:
     return mergeNo;
   }
 
-  virtual ContentType contentType() const {
+  ContentType contentType() const override {
     if (_contentType != typeUnknown)
       return _contentType;
 
@@ -301,7 +283,7 @@ public:
     return _contentType = ret;
   }
 
-  virtual Alignment alignment() const {
+  Alignment alignment() const override {
     // Unallocated common symbols specify their alignment constraints in
     // st_value.
     if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
@@ -313,7 +295,7 @@ public:
   }
 
   // Do we have a choice for ELF?  All symbols live in explicit sections.
-  virtual SectionChoice sectionChoice() const {
+  SectionChoice sectionChoice() const override {
     switch (contentType()) {
     case typeCode:
     case typeData:
@@ -331,24 +313,22 @@ public:
     return sectionCustomRequired;
   }
 
-  virtual StringRef customSectionName() const {
+  StringRef customSectionName() const override {
     if ((contentType() == typeZeroFill) ||
         (_symbol->st_shndx == llvm::ELF::SHN_COMMON))
       return ".bss";
     return _sectionName;
   }
 
-  virtual SectionPosition sectionPosition() const {
+  SectionPosition sectionPosition() const override {
     return sectionPositionAny;
   }
 
   // It isn't clear that __attribute__((used)) is transmitted to the ELF object
   // file.
-  virtual DeadStripKind deadStrip() const {
-    return deadStripNormal;
-  }
+  DeadStripKind deadStrip() const override { return deadStripNormal; }
 
-  virtual ContentPermissions permissions() const {
+  ContentPermissions permissions() const override {
     if (_permissions != permUnknown)
       return _permissions;
 
@@ -402,34 +382,30 @@ public:
   }
 
   // FIXME: Not Sure if ELF supports alias atoms. Find out more.
-  virtual bool isAlias() const {
-    return false;
-  }
+  bool isAlias() const override { return false; }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
-    return _contentData;
-  }
+  ArrayRef<uint8_t> rawContent() const override { return _contentData; }
 
-  DefinedAtom::reference_iterator begin() const {
+  DefinedAtom::reference_iterator begin() const override {
     uintptr_t index = _referenceStartIndex;
     const void *it = reinterpret_cast<const void*>(index);
     return reference_iterator(*this, it);
   }
 
-  DefinedAtom::reference_iterator end() const {
+  DefinedAtom::reference_iterator end() const override {
     uintptr_t index = _referenceEndIndex;
     const void *it = reinterpret_cast<const void*>(index);
     return reference_iterator(*this, it);
   }
 
-  const Reference *derefIterator(const void *It) const {
+  const Reference *derefIterator(const void *It) const override {
     uintptr_t index = reinterpret_cast<uintptr_t>(It);
     assert(index >= _referenceStartIndex);
     assert(index < _referenceEndIndex);
     return ((_referenceList)[index]);
   }
 
-  void incrementIterator(const void *&It) const {
+  void incrementIterator(const void *&It) const override {
     uintptr_t index = reinterpret_cast<uintptr_t>(It);
     ++index;
     It = reinterpret_cast<const void *>(index);
@@ -471,13 +447,9 @@ public:
         _contentData(contentData), _offset(offset) {
   }
 
-  virtual const ELFFile<ELFT> &file() const {
-    return _owningFile;
-  }
+  const ELFFile<ELFT> &file() const override { return _owningFile; }
 
-  virtual StringRef name() const {
-    return "";
-  }
+  StringRef name() const override { return ""; }
 
   virtual uint64_t section() const { return _section->sh_name; }
 
@@ -485,53 +457,57 @@ public:
 
   virtual void setOrdinal(uint64_t ord) { _ordinal = ord; }
 
-  virtual uint64_t ordinal() const { return _ordinal; }
+  uint64_t ordinal() const override { return _ordinal; }
 
-  virtual uint64_t size() const { return _contentData.size(); }
+  uint64_t size() const override { return _contentData.size(); }
 
-  virtual Scope scope() const { return scopeTranslationUnit; }
+  Scope scope() const override { return scopeTranslationUnit; }
 
-  virtual Interposable interposable() const { return interposeNo; }
+  Interposable interposable() const override { return interposeNo; }
 
-  virtual Merge merge() const { return mergeByContent; }
+  Merge merge() const override { return mergeByContent; }
 
-  virtual ContentType contentType() const { return typeConstant; }
+  ContentType contentType() const override { return typeConstant; }
 
-  virtual Alignment alignment() const {
+  Alignment alignment() const override {
     return Alignment(llvm::Log2_64(_section->sh_addralign));
   }
 
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
 
-  virtual StringRef customSectionName() const { return _sectionName; }
+  StringRef customSectionName() const override { return _sectionName; }
 
-  virtual SectionPosition sectionPosition() const { return sectionPositionAny; }
+  SectionPosition sectionPosition() const override {
+    return sectionPositionAny;
+  }
 
-  virtual DeadStripKind deadStrip() const { return deadStripNormal; }
+  DeadStripKind deadStrip() const override { return deadStripNormal; }
 
-  virtual ContentPermissions permissions() const { return permR__; }
+  ContentPermissions permissions() const override { return permR__; }
 
   virtual bool isThumb() const { return false; }
 
-  virtual bool isAlias() const { return false; }
+  bool isAlias() const override { return false; }
 
-  virtual ArrayRef<uint8_t> rawContent() const { return _contentData; }
+  ArrayRef<uint8_t> rawContent() const override { return _contentData; }
 
-  DefinedAtom::reference_iterator begin() const {
+  DefinedAtom::reference_iterator begin() const override {
     uintptr_t index = 0;
     const void *it = reinterpret_cast<const void *>(index);
     return reference_iterator(*this, it);
   }
 
-  DefinedAtom::reference_iterator end() const {
+  DefinedAtom::reference_iterator end() const override {
     uintptr_t index = 0;
     const void *it = reinterpret_cast<const void *>(index);
     return reference_iterator(*this, it);
   }
 
-  const Reference *derefIterator(const void *It) const { return nullptr; }
+  const Reference *derefIterator(const void *It) const override {
+    return nullptr;
+  }
 
-  void incrementIterator(const void *&It) const {}
+  void incrementIterator(const void *&It) const override {}
 
 private:
 
@@ -554,25 +530,17 @@ public:
         _symbolName(symbolName),
         _symbol(symbol) {}
 
-  virtual const ELFFile<ELFT> &file() const {
-    return _owningFile;
-  }
+  const ELFFile<ELFT> &file() const override { return _owningFile; }
 
-  virtual StringRef name() const {
-    return _symbolName;
-  }
+  StringRef name() const override { return _symbolName; }
 
-  virtual uint64_t ordinal() const {
-    return _ordinal;
-  }
+  uint64_t ordinal() const override { return _ordinal; }
 
   virtual void setOrdinal(uint64_t ord) { _ordinal = ord; }
 
-  virtual uint64_t size() const {
-    return _symbol->st_size;
-  }
+  uint64_t size() const override { return _symbol->st_size; }
 
-  virtual Scope scope() const {
+  Scope scope() const override {
     if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
     else if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
@@ -581,57 +549,39 @@ public:
       return scopeTranslationUnit;
   }
 
-  virtual Interposable interposable() const {
-    return interposeNo;
-  }
+  Interposable interposable() const override { return interposeNo; }
 
-  virtual Merge merge() const {
-    return mergeAsTentative;
-  }
+  Merge merge() const override { return mergeAsTentative; }
 
-  virtual ContentType contentType() const {
-    return typeZeroFill;
-  }
+  ContentType contentType() const override { return typeZeroFill; }
 
-  virtual Alignment alignment() const {
+  Alignment alignment() const override {
     return Alignment(llvm::Log2_64(_symbol->st_value));
   }
 
-  virtual SectionChoice sectionChoice() const {
-    return sectionBasedOnContent;
-  }
+  SectionChoice sectionChoice() const override { return sectionBasedOnContent; }
 
-  virtual StringRef customSectionName() const {
-    return ".bss";
-  }
+  StringRef customSectionName() const override { return ".bss"; }
 
-  virtual SectionPosition sectionPosition() const {
+  SectionPosition sectionPosition() const override {
     return sectionPositionAny;
   }
 
-  virtual DeadStripKind deadStrip() const {
-    return deadStripNormal;
-  }
+  DeadStripKind deadStrip() const override { return deadStripNormal; }
 
-  virtual ContentPermissions permissions() const {
-    return permRW_;
-  }
+  ContentPermissions permissions() const override { return permRW_; }
 
-  virtual bool isAlias() const {
-    return false;
-  }
+  bool isAlias() const override { return false; }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>();
-  }
+  ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 
-  virtual DefinedAtom::reference_iterator begin() const {
+  DefinedAtom::reference_iterator begin() const override {
     uintptr_t index = 0;
     const void *it = reinterpret_cast<const void *>(index);
     return reference_iterator(*this, it);
   }
 
-  virtual DefinedAtom::reference_iterator end() const {
+  DefinedAtom::reference_iterator end() const override {
     uintptr_t index = 0;
     const void *it = reinterpret_cast<const void *>(index);
     return reference_iterator(*this, it);
@@ -640,11 +590,11 @@ protected:
 
   virtual ~ELFCommonAtom() {}
 
-  virtual const Reference *derefIterator(const void *iter) const {
+  const Reference *derefIterator(const void *iter) const override {
     return nullptr;
   }
 
-  virtual void incrementIterator(const void *&iter) const {}
+  void incrementIterator(const void *&iter) const override {}
 
   const ELFFile<ELFT> &_owningFile;
   StringRef _symbolName;
@@ -663,13 +613,9 @@ public:
         _symbol(symbol) {
   }
 
-  virtual const DynamicFile<ELFT> &file() const {
-    return _owningFile;
-  }
+  const DynamicFile<ELFT> &file() const override { return _owningFile; }
 
-  virtual StringRef name() const {
-    return _symbolName;
-  }
+  StringRef name() const override { return _symbolName; }
 
   virtual Scope scope() const {
     if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
@@ -680,13 +626,13 @@ public:
       return scopeTranslationUnit;
   }
 
-  virtual StringRef loadName() const { return _loadName; }
+  StringRef loadName() const override { return _loadName; }
 
-  virtual bool canBeNullAtRuntime() const {
+  bool canBeNullAtRuntime() const override {
     return _symbol->getBinding() == llvm::ELF::STB_WEAK;
   }
 
-  virtual Type type() const {
+  Type type() const override {
     switch (_symbol->getType()) {
     case llvm::ELF::STT_FUNC:
     case llvm::ELF::STT_GNU_IFUNC:
@@ -748,28 +694,26 @@ class ObjectAtom : public SimpleELFDefinedAtom {
 public:
   ObjectAtom(const File &f) : SimpleELFDefinedAtom(f) {}
 
-  virtual Scope scope() const { return scopeGlobal; }
+  Scope scope() const override { return scopeGlobal; }
 
-  virtual SectionChoice sectionChoice() const { return sectionBasedOnContent; }
+  SectionChoice sectionChoice() const override { return sectionBasedOnContent; }
 
-  virtual ContentType contentType() const { return typeZeroFill; }
+  ContentType contentType() const override { return typeZeroFill; }
 
-  virtual uint64_t size() const { return _size; }
+  uint64_t size() const override { return _size; }
 
-  virtual DynamicExport dynamicExport() const { return dynamicExportAlways; }
+  DynamicExport dynamicExport() const override { return dynamicExportAlways; }
 
-  virtual ContentPermissions permissions() const { return permRW_; }
+  ContentPermissions permissions() const override { return permRW_; }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>();
-  }
+  ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 
-  virtual Alignment alignment() const {
+  Alignment alignment() const override {
     // The alignment should be 8 byte aligned
     return Alignment(3);
   }
 
-  virtual StringRef name() const { return _name; }
+  StringRef name() const override { return _name; }
 
   std::string _name;
   uint64_t _size;
@@ -782,27 +726,27 @@ public:
   GOTAtom(const File &f, StringRef secName)
       : SimpleELFDefinedAtom(f), _section(secName) {}
 
-  virtual Scope scope() const { return scopeTranslationUnit; }
+  Scope scope() const override { return scopeTranslationUnit; }
 
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
 
-  virtual StringRef customSectionName() const { return _section; }
+  StringRef customSectionName() const override { return _section; }
 
-  virtual ContentType contentType() const { return typeGOT; }
+  ContentType contentType() const override { return typeGOT; }
 
-  virtual uint64_t size() const { return rawContent().size(); }
+  uint64_t size() const override { return rawContent().size(); }
 
-  virtual ContentPermissions permissions() const { return permRW_; }
+  ContentPermissions permissions() const override { return permRW_; }
 
   virtual ArrayRef<uint8_t> rawContent() const = 0;
 
-  virtual Alignment alignment() const {
+  Alignment alignment() const override {
     // The alignment should be 8 byte aligned
     return Alignment(3);
   }
 
 #ifndef NDEBUG
-  virtual StringRef name() const { return _name; }
+  StringRef name() const override { return _name; }
 
   std::string _name;
 #else
@@ -817,26 +761,26 @@ public:
   PLTAtom(const File &f, StringRef secName)
       : SimpleELFDefinedAtom(f), _section(secName) {}
 
-  virtual Scope scope() const { return scopeTranslationUnit; }
+  Scope scope() const override { return scopeTranslationUnit; }
 
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
 
-  virtual StringRef customSectionName() const { return _section; }
+  StringRef customSectionName() const override { return _section; }
 
-  virtual ContentType contentType() const { return typeStub; }
+  ContentType contentType() const override { return typeStub; }
 
-  virtual uint64_t size() const { return rawContent().size(); }
+  uint64_t size() const override { return rawContent().size(); }
 
-  virtual ContentPermissions permissions() const { return permR_X; }
+  ContentPermissions permissions() const override { return permR_X; }
 
   virtual ArrayRef<uint8_t> rawContent() const = 0;
 
-  virtual Alignment alignment() const {
+  Alignment alignment() const override {
     return Alignment(4); // 16
   }
 
 #ifndef NDEBUG
-  virtual StringRef name() const { return _name; }
+  StringRef name() const override { return _name; }
 
   std::string _name;
 #else
@@ -858,78 +802,76 @@ class GLOBAL_OFFSET_TABLEAtom : public SimpleELFDefinedAtom {
 public:
   GLOBAL_OFFSET_TABLEAtom(const File &f) : SimpleELFDefinedAtom(f) {}
 
-  virtual StringRef name() const { return "_GLOBAL_OFFSET_TABLE_"; }
+  StringRef name() const override { return "_GLOBAL_OFFSET_TABLE_"; }
 
-  virtual Scope scope() const { return scopeGlobal; }
+  Scope scope() const override { return scopeGlobal; }
 
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
 
-  virtual StringRef customSectionName() const { return ".got.plt"; }
+  StringRef customSectionName() const override { return ".got.plt"; }
 
-  virtual ContentType contentType() const { return typeGOT; }
+  ContentType contentType() const override { return typeGOT; }
 
-  virtual uint64_t size() const { return 0; }
+  uint64_t size() const override { return 0; }
 
-  virtual ContentPermissions permissions() const { return permRW_; }
+  ContentPermissions permissions() const override { return permRW_; }
 
-  virtual Alignment alignment() const {
+  Alignment alignment() const override {
     // Needs 8 byte alignment
     return Alignment(3);
   }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
-    return ArrayRef<uint8_t>();
-  }
+  ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 };
 
 class TLSGETADDRAtom : public SimpleELFDefinedAtom {
 public:
   TLSGETADDRAtom(const File &f) : SimpleELFDefinedAtom(f) {}
 
-  virtual StringRef name() const { return "__tls_get_addr"; }
+  StringRef name() const override { return "__tls_get_addr"; }
 
-  virtual Scope scope() const { return scopeGlobal; }
+  Scope scope() const override { return scopeGlobal; }
 
-  virtual Merge merge() const { return mergeAsWeak; }
+  Merge merge() const override { return mergeAsWeak; }
 
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
 
-  virtual StringRef customSectionName() const { return ".text"; }
+  StringRef customSectionName() const override { return ".text"; }
 
-  virtual ContentType contentType() const { return typeCode; }
+  ContentType contentType() const override { return typeCode; }
 
-  virtual uint64_t size() const { return 0; }
+  uint64_t size() const override { return 0; }
 
-  virtual ContentPermissions permissions() const { return permR_X; }
+  ContentPermissions permissions() const override { return permR_X; }
 
-  virtual Alignment alignment() const { return Alignment(0); }
+  Alignment alignment() const override { return Alignment(0); }
 
-  virtual ArrayRef<uint8_t> rawContent() const { return ArrayRef<uint8_t>(); }
+  ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 };
 
 class DYNAMICAtom : public SimpleELFDefinedAtom {
 public:
   DYNAMICAtom(const File &f) : SimpleELFDefinedAtom(f) {}
 
-  virtual StringRef name() const { return "_DYNAMIC"; }
+  StringRef name() const override { return "_DYNAMIC"; }
 
-  virtual Scope scope() const { return scopeLinkageUnit; }
+  Scope scope() const override { return scopeLinkageUnit; }
 
-  virtual Merge merge() const { return mergeNo; }
+  Merge merge() const override { return mergeNo; }
 
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
 
-  virtual StringRef customSectionName() const { return ".dynamic"; }
+  StringRef customSectionName() const override { return ".dynamic"; }
 
-  virtual ContentType contentType() const { return typeData; }
+  ContentType contentType() const override { return typeData; }
 
-  virtual uint64_t size() const { return 0; }
+  uint64_t size() const override { return 0; }
 
-  virtual ContentPermissions permissions() const { return permRW_; }
+  ContentPermissions permissions() const override { return permRW_; }
 
-  virtual Alignment alignment() const { return Alignment(0); }
+  Alignment alignment() const override { return Alignment(0); }
 
-  virtual ArrayRef<uint8_t> rawContent() const { return ArrayRef<uint8_t>(); }
+  ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 };
 
 class InitFiniAtom : public SimpleELFDefinedAtom {
@@ -939,24 +881,24 @@ public:
   InitFiniAtom(const File &f, StringRef secName)
       : SimpleELFDefinedAtom(f), _section(secName) {}
 
-  virtual Scope scope() const { return scopeGlobal; }
+  Scope scope() const override { return scopeGlobal; }
 
-  virtual SectionChoice sectionChoice() const { return sectionCustomRequired; }
+  SectionChoice sectionChoice() const override { return sectionCustomRequired; }
 
-  virtual StringRef customSectionName() const { return _section; }
+  StringRef customSectionName() const override { return _section; }
 
-  virtual ContentType contentType() const { return typeData; }
+  ContentType contentType() const override { return typeData; }
 
-  virtual uint64_t size() const { return rawContent().size(); }
+  uint64_t size() const override { return rawContent().size(); }
 
-  virtual ContentPermissions permissions() const { return permRW_; }
+  ContentPermissions permissions() const override { return permRW_; }
 
   virtual ArrayRef<uint8_t> rawContent() const = 0;
 
-  virtual Alignment alignment() const { return size(); }
+  Alignment alignment() const override { return size(); }
 
 #ifndef NDEBUG
-  virtual StringRef name() const { return _name; }
+  StringRef name() const override { return _name; }
 
   std::string _name;
 #else

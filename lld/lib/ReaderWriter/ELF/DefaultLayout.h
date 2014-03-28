@@ -171,8 +171,8 @@ public:
   DefaultLayout(const ELFLinkingContext &context) : _context(context) {}
 
   /// \brief Return the section order for a input section
-  virtual SectionOrder getSectionOrder(StringRef name, int32_t contentType,
-                                       int32_t contentPermissions);
+  SectionOrder getSectionOrder(StringRef name, int32_t contentType,
+                               int32_t contentPermissions) override;
 
   /// \brief This maps the input sections to the output section names
   virtual StringRef getSectionName(const DefinedAtom *da) const;
@@ -190,7 +190,7 @@ public:
   static bool hasOutputSegment(Section<ELFT> *section);
 
   // Adds an atom to the section
-  virtual ErrorOr<const lld::AtomLayout &> addAtom(const Atom *atom);
+  ErrorOr<const lld::AtomLayout &> addAtom(const Atom *atom) override;
 
   /// \brief Find an output Section given a section name.
   MergedSections<ELFT> *findOutputSection(StringRef name) {
@@ -209,13 +209,13 @@ public:
   // Merge sections with the same name into a MergedSections
   void mergeSimilarSections();
 
-  void assignSectionsToSegments();
+  void assignSectionsToSegments() override;
 
-  void assignVirtualAddress();
+  void assignVirtualAddress() override;
 
   void assignOffsetsForMiscSections();
 
-  void assignFileOffsets();
+  void assignFileOffsets() override;
 
   /// Inline functions
   inline range<AbsoluteAtomIterT> absoluteAtoms() { return _absoluteAtoms; }
@@ -235,7 +235,7 @@ public:
       si->doPreFlight();
   }
 
-  inline bool findAtomAddrByName(StringRef name, uint64_t &addr) {
+  inline bool findAtomAddrByName(StringRef name, uint64_t &addr) override {
     for (auto sec : _sections)
       if (auto section = dyn_cast<Section<ELFT> >(sec))
         if (section->findAtomAddrByName(name, addr))

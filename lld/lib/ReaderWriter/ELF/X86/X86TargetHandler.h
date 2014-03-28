@@ -33,9 +33,9 @@ public:
                              X86TargetLayout<X86ELFType> &layout)
       : _x86Context(context), _x86TargetLayout(layout) {}
 
-  virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                     const lld::AtomLayout &,
-                                     const Reference &) const;
+  error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                             const lld::AtomLayout &,
+                             const Reference &) const override;
 
   static const Registry::KindStrings kindStrings[];
 
@@ -49,17 +49,17 @@ class X86TargetHandler final
 public:
   X86TargetHandler(X86LinkingContext &context);
 
-  virtual X86TargetLayout<X86ELFType> &getTargetLayout() {
+  X86TargetLayout<X86ELFType> &getTargetLayout() override {
     return *(_x86TargetLayout.get());
   }
 
-  virtual void registerRelocationNames(Registry &registry);
+  void registerRelocationNames(Registry &registry) override;
 
-  virtual const X86TargetRelocationHandler &getRelocationHandler() const {
+  const X86TargetRelocationHandler &getRelocationHandler() const override {
     return *(_x86RelocationHandler.get());
   }
 
-  virtual std::unique_ptr<Writer> getWriter();
+  std::unique_ptr<Writer> getWriter() override;
 
 protected:
   static const Registry::KindStrings kindStrings[];

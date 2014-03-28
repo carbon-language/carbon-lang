@@ -26,10 +26,10 @@ public:
       : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
                                       new PPCTargetHandler(*this))) {}
 
-  virtual bool isLittleEndian() const { return false; }
+  bool isLittleEndian() const override { return false; }
 
   /// \brief PPC has no relative relocations defined
-  virtual bool isRelativeReloc(const Reference &) const { return false; }
+  bool isRelativeReloc(const Reference &) const override { return false; }
 };
 
 } // elf

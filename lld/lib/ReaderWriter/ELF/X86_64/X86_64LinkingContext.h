@@ -33,16 +33,16 @@ public:
       : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
                                       new X86_64TargetHandler(*this))) {}
 
-  virtual void addPasses(PassManager &);
+  void addPasses(PassManager &) override;
 
-  virtual uint64_t getBaseAddress() const {
+  uint64_t getBaseAddress() const override {
     if (_baseAddress == 0)
       return 0x400000;
     return _baseAddress;
   }
 
-  virtual bool isDynamicRelocation(const DefinedAtom &,
-                                   const Reference &r) const {
+  bool isDynamicRelocation(const DefinedAtom &,
+                           const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)
       return false;
     assert(r.kindArch() == Reference::KindArch::x86_64);
@@ -56,7 +56,8 @@ public:
     }
   }
 
-  virtual bool isPLTRelocation(const DefinedAtom &, const Reference &r) const {
+  virtual bool isPLTRelocation(const DefinedAtom &,
+                               const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)
       return false;
     assert(r.kindArch() == Reference::KindArch::x86_64);
@@ -72,7 +73,7 @@ public:
   /// \brief X86_64 has two relative relocations
   /// a) for supporting IFUNC - R_X86_64_IRELATIVE
   /// b) for supporting relative relocs - R_X86_64_RELATIVE
-  virtual bool isRelativeReloc(const Reference &r) const {
+  bool isRelativeReloc(const Reference &r) const override {
     if (r.kindNamespace() != Reference::KindNamespace::ELF)
       return false;
     assert(r.kindArch() == Reference::KindArch::x86_64);
@@ -86,8 +87,7 @@ public:
   }
 
   /// \brief Create Internal files for Init/Fini
-  void createInternalFiles(std::vector<std::unique_ptr<File> > &) const;
-
+  void createInternalFiles(std::vector<std::unique_ptr<File>> &) const override;
 };
 } // end namespace elf
 } // end namespace lld

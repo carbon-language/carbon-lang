@@ -32,7 +32,7 @@ public:
 
   virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                      const lld::AtomLayout &,
-                                     const Reference &) const;
+                                     const Reference &) const override;
 
 protected:
   PPCLinkingContext &_ppcContext;
@@ -44,17 +44,17 @@ class PPCTargetHandler final
 public:
   PPCTargetHandler(PPCLinkingContext &context);
 
-  virtual PPCTargetLayout<PPCELFType> &getTargetLayout() {
+  PPCTargetLayout<PPCELFType> &getTargetLayout() override {
     return *(_ppcTargetLayout.get());
   }
 
-  virtual void registerRelocationNames(Registry &registry);
+  void registerRelocationNames(Registry &registry) override;
 
-  virtual const PPCTargetRelocationHandler &getRelocationHandler() const {
+  const PPCTargetRelocationHandler &getRelocationHandler() const override {
     return *(_ppcRelocationHandler.get());
   }
 
-  virtual std::unique_ptr<Writer> getWriter();
+  std::unique_ptr<Writer> getWriter() override;
 
 private:
   static const Registry::KindStrings kindStrings[];

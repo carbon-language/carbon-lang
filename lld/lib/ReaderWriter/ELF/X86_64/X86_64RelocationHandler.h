@@ -24,9 +24,9 @@ public:
   X86_64TargetRelocationHandler(X86_64TargetLayout<X86_64ELFType> &layout)
       : _tlsSize(0), _x86_64Layout(layout) {}
 
-  virtual error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
-                                     const lld::AtomLayout &,
-                                     const Reference &) const;
+  error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
+                             const lld::AtomLayout &,
+                             const Reference &) const override;
 
   virtual int64_t relocAddend(const Reference &) const;
 

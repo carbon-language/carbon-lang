@@ -43,9 +43,9 @@ public:
   HexagonELFObjectReader(bool atomizeStrings)
       : ELFObjectReader(atomizeStrings) {}
 
-  virtual error_code
+  error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const {
+            std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
     auto f = createELF<HexagonELFFileCreateELFTraits>(
@@ -62,9 +62,9 @@ class HexagonELFDSOReader : public ELFDSOReader {
 public:
   HexagonELFDSOReader(bool useUndefines) : ELFDSOReader(useUndefines) {}
 
-  virtual error_code
+  error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const class Registry &,
-            std::vector<std::unique_ptr<File>> &result) const {
+            std::vector<std::unique_ptr<File>> &result) const override {
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
     auto f = createELF<HexagonDynamicFileCreateELFTraits>(

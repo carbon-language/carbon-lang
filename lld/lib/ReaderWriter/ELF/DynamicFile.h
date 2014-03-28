@@ -27,24 +27,24 @@ public:
   static ErrorOr<std::unique_ptr<DynamicFile>>
   create(std::unique_ptr<llvm::MemoryBuffer> mb, bool useShlibUndefines);
 
-  virtual const atom_collection<DefinedAtom> &defined() const {
+  const atom_collection<DefinedAtom> &defined() const override {
     return _definedAtoms;
   }
 
-  virtual const atom_collection<UndefinedAtom> &undefined() const {
+  const atom_collection<UndefinedAtom> &undefined() const override {
     return _undefinedAtoms;
   }
 
-  virtual const atom_collection<SharedLibraryAtom> &sharedLibrary() const {
+  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
     return _sharedLibraryAtoms;
   }
 
-  virtual const atom_collection<AbsoluteAtom> &absolute() const {
+  const atom_collection<AbsoluteAtom> &absolute() const override {
     return _absoluteAtoms;
   }
 
-  virtual const SharedLibraryAtom *exports(StringRef name,
-                                           bool dataSymbolOnly) const {
+  const SharedLibraryAtom *exports(StringRef name,
+                                   bool dataSymbolOnly) const override {
     assert(!dataSymbolOnly && "Invalid option for ELF exports!");
     // See if we have the symbol.
     auto sym = _nameToSym.find(name);

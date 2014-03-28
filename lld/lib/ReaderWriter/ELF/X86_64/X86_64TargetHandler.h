@@ -33,17 +33,17 @@ class X86_64TargetHandler final
 public:
   X86_64TargetHandler(X86_64LinkingContext &context);
 
-  virtual X86_64TargetLayout<X86_64ELFType> &getTargetLayout() {
+  X86_64TargetLayout<X86_64ELFType> &getTargetLayout() override {
     return *(_x86_64TargetLayout.get());
   }
 
-  virtual void registerRelocationNames(Registry &registry);
+  void registerRelocationNames(Registry &registry) override;
 
-  virtual const X86_64TargetRelocationHandler &getRelocationHandler() const {
+  const X86_64TargetRelocationHandler &getRelocationHandler() const override {
     return *(_x86_64RelocationHandler.get());
   }
 
-  virtual std::unique_ptr<Writer> getWriter();
+  std::unique_ptr<Writer> getWriter() override;
 
 private:
   static const Registry::KindStrings kindStrings[];

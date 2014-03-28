@@ -49,7 +49,7 @@ protected:
   virtual void createDefaultSections();
 
   // Build all the output sections
-  virtual void buildChunks(const File &file);
+  void buildChunks(const File &file) override;
 
   // Build the output file
   virtual error_code buildOutput(const File &file);
@@ -58,7 +58,7 @@ protected:
   virtual error_code setELFHeader();
 
   // Write the file to the path specified
-  virtual error_code writeFile(const File &File, StringRef path);
+  error_code writeFile(const File &File, StringRef path) override;
 
   // Write to the output file.
   virtual error_code writeOutput(const File &file, StringRef path);
@@ -87,13 +87,13 @@ protected:
   virtual void addDefaultAtoms() = 0;
 
   // Add any runtime files and their atoms to the output
-  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File> > &);
+  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) override;
 
   // Finalize the default atom values
   virtual void finalizeDefaultAtomValues() = 0;
 
   // This is called by the write section to apply relocations
-  virtual uint64_t addressOfAtom(const Atom *atom) {
+  uint64_t addressOfAtom(const Atom *atom) override {
     auto addr = _atomToAddressMap.find(atom);
     return addr == _atomToAddressMap.end() ? 0 : addr->second;
   }
