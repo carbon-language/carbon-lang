@@ -3232,6 +3232,18 @@ INTERCEPTOR(int, lrand48_r, void *buffer, long *result) {
 #define INIT_DRAND48_R
 #endif
 
+#if SANITIZER_INTERCEPT_RAND_R
+INTERCEPTOR(int, rand_r, unsigned *seedp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, rand_r, seedp);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, seedp, sizeof(*seedp));
+  return REAL(rand_r)(seedp);
+}
+#define INIT_RAND_R COMMON_INTERCEPT_FUNCTION(rand_r);
+#else
+#define INIT_RAND_R
+#endif
+
 #if SANITIZER_INTERCEPT_GETLINE
 INTERCEPTOR(SSIZE_T, getline, char **lineptr, SIZE_T *n, void *stream) {
   void *ctx;
@@ -3704,6 +3716,7 @@ INTERCEPTOR(int, ftime, __sanitizer_timeb *tp) {
   INIT_LGAMMA;                             \
   INIT_LGAMMA_R;                           \
   INIT_DRAND48_R;                          \
+  INIT_RAND_R;                             \
   INIT_GETLINE;                            \
   INIT_ICONV;                              \
   INIT_TIMES;                              \
