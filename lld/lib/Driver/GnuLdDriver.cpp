@@ -323,6 +323,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       ctx->setUseShlibUndefines(true);
       break;
 
+    case OPT_allow_multiple_definition:
+      ctx->setAllowDuplicates(true);
+      break;
+
     case OPT_dynamic_linker:
       ctx->setInterpreter(inputArg->getValue());
       break;

@@ -190,6 +190,7 @@ public:
   }
 
   void setDeadStripping(bool enable) { _deadStrip = enable; }
+  void setAllowDuplicates(bool enable) { _allowDuplicates = enable; }
   void setGlobalsAreDeadStripRoots(bool v) { _globalsAreDeadStripRoots = v; }
   void setSearchArchivesToOverrideTentativeDefinitions(bool search) {
     _searchArchivesToOverrideTentativeDefinitions = search;
@@ -211,6 +212,10 @@ public:
   }
   void setAllowShlibUndefines(bool allow) { _allowShlibUndefines = allow; }
   void setLogInputFiles(bool log) { _logInputFiles = log; }
+
+  // Returns true if multiple definitions should not be treated as a
+  // fatal error.
+  bool getAllowDuplicates() const { return _allowDuplicates; }
 
   void appendLLVMOption(const char *opt) { _llvmOptions.push_back(opt); }
   virtual void setInputGraph(std::unique_ptr<InputGraph> inputGraph) {
@@ -332,6 +337,7 @@ protected:
   StringRef _outputPath;
   StringRef _entrySymbolName;
   bool _deadStrip;
+  bool _allowDuplicates;
   bool _globalsAreDeadStripRoots;
   bool _searchArchivesToOverrideTentativeDefinitions;
   bool _searchSharedLibrariesToOverrideTentativeDefinitions;

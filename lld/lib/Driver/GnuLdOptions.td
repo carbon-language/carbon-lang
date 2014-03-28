@@ -187,6 +187,9 @@ def allow_shlib_undefs : Flag<["--"], "allow-shlib-undefined">,
 def use_shlib_undefs: Flag<["--"], "use-shlib-undefines">,
     HelpText<"Resolve undefined symbols from dynamic libraries">,
     Group<grp_resolveropt>;
+def allow_multiple_definition: Flag<["--"], "allow-multiple-definition">,
+    HelpText<"Allow multiple definitions">,
+    Group<grp_resolveropt>;
 
 //===----------------------------------------------------------------------===//
 /// Custom Options

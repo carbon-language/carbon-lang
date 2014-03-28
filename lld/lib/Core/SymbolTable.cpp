@@ -208,16 +208,19 @@ void SymbolTable::addByName(const Atom &newAtom) {
       // fallthrough
     }
     case MCR_Error:
-      llvm::errs() << "Duplicate symbols: "
-                   << existing->name()
-                   << ":"
-                   << existing->file().path()
-                   << " and "
-                   << newAtom.name()
-                   << ":"
-                   << newAtom.file().path()
-                   << "\n";
-      llvm::report_fatal_error("duplicate symbol error");
+      if (!_context.getAllowDuplicates()) {
+        llvm::errs() << "Duplicate symbols: "
+                     << existing->name()
+                     << ":"
+                     << existing->file().path()
+                     << " and "
+                     << newAtom.name()
+                     << ":"
+                     << newAtom.file().path()
+                     << "\n";
+        llvm::report_fatal_error("duplicate symbol error");
+      }
+      useNew = false;
       break;
     }
     break;

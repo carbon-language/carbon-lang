@@ -17,7 +17,8 @@
 namespace lld {
 
 LinkingContext::LinkingContext()
-    : _deadStrip(false), _globalsAreDeadStripRoots(false),
+    : _deadStrip(false), _allowDuplicates(false),
+      _globalsAreDeadStripRoots(false),
       _searchArchivesToOverrideTentativeDefinitions(false),
       _searchSharedLibrariesToOverrideTentativeDefinitions(false),
       _warnIfCoalesableAtomsHaveDifferentCanBeNull(false),

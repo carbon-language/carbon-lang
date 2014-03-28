@@ -1,0 +1,48 @@
+# RUN: lld -flavor gnu -target x86_64 --allow-multiple-definition -r %s \
+# RUN:     --output-filetype=yaml | FileCheck %s
+#
+# RUN: not lld -flavor gnu -target x86_64 -r %s --output-filetype=yaml 2>&1 \
+# RUN:   | FileCheck -check-prefix=ERROR %s
+
+---
+defined-atoms:
+  - name:            .text
+    alignment:       2^4
+    section-choice:  custom-required
+    section-name:    .text
+  - name:            main
+    scope:           global
+    content:         [ B8, 00, 00, 00, 00, C7, 44, 24, FC, 00, 00, 00,
+                       00, C3 ]
+    alignment:       2^4
+    section-choice:  custom-required
+    section-name:    .text
+---
+defined-atoms:
+  - name:            .text
+    alignment:       2^4
+    section-choice:  custom-required
+    section-name:    .text
+  - name:            main
+    scope:           global
+    content:         [ B8, 00, 00, 00, 00, C7, 44, 24, FC, 00, 00, 00,
+                       00, C3 ]
+    alignment:       2^4
+    section-choice:  custom-required
+    section-name:    .text
+---
+
+# CHECK: defined-atoms:
+# CHECK:   - name:            .text
+# CHECK:     alignment:       2^4
+# CHECK:     section-choice:  custom-required
+# CHECK:     section-name:    .text
+# CHECK:   - name:            main
+# CHECK:     scope:           global
+# CHECK:     content:         [ B8, 00, 00, 00, 00, C7, 44, 24, FC, 00, 00, 00,
+# CHECK:                        00, C3 ]
+# CHECK:     alignment:       2^4
+# CHECK:     section-choice:  custom-required
+# CHECK:     section-name:    .text
+
+# ERROR: duplicate symbol error
