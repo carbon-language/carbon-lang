@@ -1998,7 +1998,7 @@ bool SLPVectorizer::vectorizeStoreChain(ArrayRef<Value *> Chain,
   if (!isPowerOf2_32(Sz) || VF < 2)
     return false;
 
-  // Keep track of values that were delete by vectorizing in the loop below.
+  // Keep track of values that were deleted by vectorizing in the loop below.
   SmallVector<WeakVH, 8> TrackValues(Chain.begin(), Chain.end());
 
   bool Changed = false;
@@ -2182,7 +2182,7 @@ bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
     int Cost = R.getTreeCost();
 
     if (Cost < -SLPCostThreshold) {
-      DEBUG(dbgs() << "SLP: Vectorizing pair at cost:" << Cost << ".\n");
+      DEBUG(dbgs() << "SLP: Vectorizing list at cost:" << Cost << ".\n");
       Value *VectorizedRoot = R.vectorizeTree();
 
       // Reconstruct the build vector by extracting the vectorized root. This
