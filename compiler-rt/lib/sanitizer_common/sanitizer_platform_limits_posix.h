@@ -276,6 +276,13 @@ namespace __sanitizer {
   typedef unsigned __sanitizer_pthread_key_t;
 #endif
 
+  struct __sanitizer_timeb {
+    long time;
+    unsigned short millitm;
+    short timezone;
+    short dstflag;
+  };
+
   struct __sanitizer_ether_addr {
     u8 octet[6];
   };

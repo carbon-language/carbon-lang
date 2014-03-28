@@ -3481,6 +3481,20 @@ INTERCEPTOR(void *, __bzero, void *block, uptr size) {
 #define INIT___BZERO
 #endif  // SANITIZER_INTERCEPT___BZERO
 
+#if SANITIZER_INTERCEPT_FTIME
+INTERCEPTOR(int, ftime, __sanitizer_timeb *tp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, ftime, tp);
+  int res = REAL(ftime)(tp);
+  if (tp)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, tp, sizeof(*tp));
+  return res;
+}
+#define INIT_FTIME COMMON_INTERCEPT_FUNCTION(ftime);
+#else
+#define INIT_FTIME
+#endif  // SANITIZER_INTERCEPT_FTIME
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_TEXTDOMAIN;                         \
   INIT_STRCMP;                             \
@@ -3604,5 +3618,6 @@ INTERCEPTOR(void *, __bzero, void *block, uptr size) {
   INIT_IF_INDEXTONAME;                     \
   INIT_CAPGET;                             \
   INIT_AEABI_MEM;                          \
-  INIT___BZERO;
+  INIT___BZERO;                            \
+  INIT_FTIME;
 /**/

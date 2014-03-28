@@ -35,6 +35,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/timeb.h>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
@@ -1078,5 +1079,11 @@ CHECK_SIZE_AND_OFFSET(ifaddrs, ifa_data);
 #if SANITIZER_LINUX
 COMPILER_CHECK(sizeof(__sanitizer_mallinfo) == sizeof(struct mallinfo));
 #endif
+
+CHECK_TYPE_SIZE(timeb);
+CHECK_SIZE_AND_OFFSET(timeb, time);
+CHECK_SIZE_AND_OFFSET(timeb, millitm);
+CHECK_SIZE_AND_OFFSET(timeb, timezone);
+CHECK_SIZE_AND_OFFSET(timeb, dstflag);
 
 #endif  // SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_MAC
