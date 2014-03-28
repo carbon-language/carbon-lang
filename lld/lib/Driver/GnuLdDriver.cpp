@@ -103,16 +103,11 @@ maybeExpandResponseFiles(int argc, const char **argv, BumpPtrAllocator &alloc) {
   DriverStringSaver saver(alloc);
   llvm::cl::ExpandResponseFiles(saver, llvm::cl::TokenizeGNUCommandLine, smallvec);
 
-  // Pack the results to a C-array.
+  // Pack the results to a C-array and return it.
   argc = smallvec.size();
-  std::vector<const char *> result;
-  for (size_t i = 0, e = smallvec.size(); i < e; ++i)
-    result.push_back(smallvec[i]);
-  result.push_back(nullptr);  // terminate ARGV with NULL
-
-  // Allocate memory for the result and return it.
   const char **copy = alloc.Allocate<const char *>(argc + 1);
   std::copy(smallvec.begin(), smallvec.end(), copy);
+  copy[argc] = nullptr;
   return std::make_tuple(argc, copy);
 }
 
