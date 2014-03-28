@@ -25,6 +25,22 @@
 
 namespace lld {
 
+class CommandLineAbsoluteAtom : public AbsoluteAtom {
+public:
+  CommandLineAbsoluteAtom(const File &file, StringRef name, uint64_t value)
+      : _file(file), _name(name), _value(value) {}
+
+  const File &file() const override { return _file; }
+  StringRef name() const override { return _name; }
+  uint64_t value() const override { return _value; }
+  Scope scope() const override { return scopeGlobal; }
+
+private:
+  const File &_file;
+  StringRef _name;
+  uint64_t _value;
+};
+
 class CommandLineUndefinedAtom : public SimpleUndefinedAtom {
 public:
   CommandLineUndefinedAtom(const File &f, StringRef name)
@@ -179,6 +195,19 @@ ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
   return libName;
 }
 
+void ELFLinkingContext::createInternalFiles(
+    std::vector<std::unique_ptr<File>> &files) const {
+  std::unique_ptr<SimpleFile> file(
+      new SimpleFile("<internal file for --defsym>"));
+  for (auto i : getAbsoluteSymbols()) {
+    StringRef sym = i.first;
+    uint64_t val = i.second;
+    file->addAtom(*(new (_allocator) CommandLineAbsoluteAtom(*file, sym, val)));
+  }
+  files.push_back(std::move(file));
+  LinkingContext::createInternalFiles(files);
+}
+
 std::unique_ptr<File> ELFLinkingContext::createUndefinedSymbolFile() const {
   if (_initialUndefinedSymbols.empty())
     return nullptr;
@@ -186,7 +215,7 @@ std::unique_ptr<File> ELFLinkingContext::createUndefinedSymbolFile() const {
       new SimpleFile("command line option -u"));
   for (auto undefSymStr : _initialUndefinedSymbols)
     undefinedSymFile->addAtom(*(new (_allocator) CommandLineUndefinedAtom(
-                                   *undefinedSymFile, undefSymStr)));
+        *undefinedSymFile, undefSymStr)));
   return std::move(undefinedSymFile);
 }
 

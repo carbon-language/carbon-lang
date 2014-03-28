@@ -44,7 +44,7 @@ bool LinkingContext::createImplicitFiles(
 }
 
 std::unique_ptr<File> LinkingContext::createEntrySymbolFile() const {
-  return createEntrySymbolFile("command line option -e");
+  return createEntrySymbolFile("<command line option -e>");
 }
 
 std::unique_ptr<File>
@@ -58,7 +58,7 @@ LinkingContext::createEntrySymbolFile(StringRef filename) const {
 }
 
 std::unique_ptr<File> LinkingContext::createUndefinedSymbolFile() const {
-  return createUndefinedSymbolFile("command line option -u");
+  return createUndefinedSymbolFile("<command line option -u or --defsym>");
 }
 
 std::unique_ptr<File>

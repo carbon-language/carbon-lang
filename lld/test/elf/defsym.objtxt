@@ -1,0 +1,9 @@
+# RUN: lld -flavor gnu -target x86_64 --defsym=foo=0x1234 -r %s \
+# RUN:     --output-filetype=yaml | FileCheck %s
+
+absolute-atoms:
+
+# CHECK: absolute-atoms:
+# CHECK:   - name:            foo
+# CHECK:     scope:           global
+# CHECK:     value:           0x0000000000001234

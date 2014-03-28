@@ -93,11 +93,12 @@ bool PECOFFLinkingContext::validateImpl(raw_ostream &diagnostics) {
 }
 
 std::unique_ptr<File> PECOFFLinkingContext::createEntrySymbolFile() const {
-  return LinkingContext::createEntrySymbolFile("command line option /entry");
+  return LinkingContext::createEntrySymbolFile("<command line option /entry>");
 }
 
 std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() const {
-  return LinkingContext::createUndefinedSymbolFile("command line option /include");
+  return LinkingContext::createUndefinedSymbolFile(
+      "<command line option /include>");
 }
 
 bool PECOFFLinkingContext::createImplicitFiles(

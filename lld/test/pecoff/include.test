@@ -4,5 +4,5 @@
 # RUN:   /subsystem:console -- %t.obj 2> %t.log
 # RUN: FileCheck %s < %t.log
 
-CHECK: Undefined symbol: command line option /include: sym1
-CHECK: Undefined symbol: command line option /include: sym2
+CHECK: Undefined symbol: <command line option /include>: sym1
+CHECK: Undefined symbol: <command line option /include>: sym2

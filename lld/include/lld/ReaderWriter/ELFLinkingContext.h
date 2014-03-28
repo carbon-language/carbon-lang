@@ -151,8 +151,9 @@ public:
   void setIsStaticExecutable(bool v) { _isStaticExecutable = v; }
   void setMergeCommonStrings(bool v) { _mergeCommonStrings = v; }
   void setUseShlibUndefines(bool use) { _useShlibUndefines = use; }
-
   void setOutputELFType(uint32_t type) { _outputELFType = type; }
+
+  void createInternalFiles(std::vector<std::unique_ptr<File>> &) const override;
 
   /// \brief Set the dynamic linker path
   void setInterpreter(StringRef dynamicLinker) {
@@ -180,6 +181,11 @@ public:
 
   /// add to the list of finalizer functions
   void addFiniFunction(StringRef name) { _finiFunctions.push_back(name); }
+
+  /// Add an absolute symbol. Used for --defsym.
+  void addInitialAbsoluteSymbol(StringRef name, uint64_t addr) {
+    _absoluteSymbols[name] = addr;
+  }
 
   /// Return the list of initializer symbols that are specified in the
   /// linker command line, using the -init option.
@@ -223,6 +229,10 @@ public:
       return false;
     _undefinedAtomsFromFile[s] = true;
     return true;
+  }
+
+  const std::map<std::string, uint64_t> &getAbsoluteSymbols() const {
+    return _absoluteSymbols;
   }
 
   /// \brief Helper function to allocate strings.
@@ -272,6 +282,7 @@ protected:
   StringRefVector _rpathList;
   StringRefVector _rpathLinkList;
   std::map<const SharedLibraryFile *, bool> _undefinedAtomsFromFile;
+  std::map<std::string, uint64_t> _absoluteSymbols;
 };
 } // end namespace lld
 

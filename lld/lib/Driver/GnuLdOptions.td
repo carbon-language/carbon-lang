@@ -190,6 +190,9 @@ def use_shlib_undefs: Flag<["--"], "use-shlib-undefines">,
 def allow_multiple_definition: Flag<["--"], "allow-multiple-definition">,
     HelpText<"Allow multiple definitions">,
     Group<grp_resolveropt>;
+def defsym : Joined<["--"], "defsym=">,
+     HelpText<"Create a defined symbol">,
+     Group<grp_resolveropt>;
 
 //===----------------------------------------------------------------------===//
 /// Custom Options
@@ -243,4 +246,3 @@ def alias_output_filetype: Joined<["--"], "output-filetype=">,
 //===----------------------------------------------------------------------===//
 def help : Flag<["--"], "help">,
      HelpText<"Display this help message">;
-

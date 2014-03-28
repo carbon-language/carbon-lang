@@ -88,6 +88,19 @@ static error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
   return make_error_code(ReaderError::unknown_file_format);
 }
 
+// Parses an argument of --defsym. A given string must be in the form
+// of <symbol>=<number>. Note that we don't support symbol-relative
+// aliases yet.
+static bool parseDefsymOption(StringRef opt, StringRef &sym, uint64_t &addr) {
+  size_t equalPos = opt.find('=');
+  if (equalPos == StringRef::npos)
+    return false;
+  sym = opt.substr(0, equalPos);
+  if (opt.substr(equalPos + 1).getAsInteger(0, addr))
+    return false;
+  return true;
+}
+
 llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
   if (!_isDashlPrefix)
     return _path;
@@ -362,6 +375,17 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     case OPT_no_as_needed:
       asNeeded = false;
       break;
+
+    case OPT_defsym: {
+      StringRef sym;
+      uint64_t addr;
+      if (!parseDefsymOption(inputArg->getValue(), sym, addr)) {
+        diagnostics << "invalid --defsym: " << inputArg->getValue() << "\n";
+        return false;
+      }
+      ctx->addInitialAbsoluteSymbol(sym, addr);
+      break;
+    }
 
     case OPT_start_group: {
       std::unique_ptr<InputElement> controlStart(new ELFGroup(*ctx, index++));
