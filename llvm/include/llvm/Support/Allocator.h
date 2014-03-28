@@ -101,6 +101,46 @@ class BumpPtrAllocator {
   BumpPtrAllocator(const BumpPtrAllocator &) LLVM_DELETED_FUNCTION;
   void operator=(const BumpPtrAllocator &) LLVM_DELETED_FUNCTION;
 
+public:
+  BumpPtrAllocator(size_t size = 4096, size_t threshold = 4096);
+  BumpPtrAllocator(size_t size, size_t threshold, SlabAllocator &allocator);
+  ~BumpPtrAllocator();
+
+  /// \brief Deallocate all but the current slab and reset the current pointer
+  /// to the beginning of it, freeing all memory allocated so far.
+  void Reset();
+
+  /// \brief Allocate space at the specified alignment.
+  void *Allocate(size_t Size, size_t Alignment);
+
+  /// \brief Allocate space for one object without constructing it.
+  template <typename T> T *Allocate() {
+    return static_cast<T *>(Allocate(sizeof(T), AlignOf<T>::Alignment));
+  }
+
+  /// \brief Allocate space for an array of objects without constructing them.
+  template <typename T> T *Allocate(size_t Num) {
+    return static_cast<T *>(Allocate(Num * sizeof(T), AlignOf<T>::Alignment));
+  }
+
+  /// \brief Allocate space for an array of objects with the specified alignment
+  /// and without constructing them.
+  template <typename T> T *Allocate(size_t Num, size_t Alignment) {
+    // Round EltSize up to the specified alignment.
+    size_t EltSize = (sizeof(T) + Alignment - 1) & (-Alignment);
+    return static_cast<T *>(Allocate(Num * EltSize, Alignment));
+  }
+
+  void Deallocate(const void * /*Ptr*/) {}
+
+  size_t GetNumSlabs() const { return NumSlabs; }
+
+  void PrintStats() const;
+
+  /// \brief Returns the total physical memory allocated by this allocator.
+  size_t getTotalMemory() const;
+
+private:
   /// \brief Allocate at least this many bytes of memory in a slab.
   size_t SlabSize;
 
@@ -146,45 +186,6 @@ class BumpPtrAllocator {
   void DeallocateSlabs(MemSlab *Slab);
 
   template <typename T> friend class SpecificBumpPtrAllocator;
-
-public:
-  BumpPtrAllocator(size_t size = 4096, size_t threshold = 4096);
-  BumpPtrAllocator(size_t size, size_t threshold, SlabAllocator &allocator);
-  ~BumpPtrAllocator();
-
-  /// \brief Deallocate all but the current slab and reset the current pointer
-  /// to the beginning of it, freeing all memory allocated so far.
-  void Reset();
-
-  /// \brief Allocate space at the specified alignment.
-  void *Allocate(size_t Size, size_t Alignment);
-
-  /// \brief Allocate space for one object without constructing it.
-  template <typename T> T *Allocate() {
-    return static_cast<T *>(Allocate(sizeof(T), AlignOf<T>::Alignment));
-  }
-
-  /// \brief Allocate space for an array of objects without constructing them.
-  template <typename T> T *Allocate(size_t Num) {
-    return static_cast<T *>(Allocate(Num * sizeof(T), AlignOf<T>::Alignment));
-  }
-
-  /// \brief Allocate space for an array of objects with the specified alignment
-  /// and without constructing them.
-  template <typename T> T *Allocate(size_t Num, size_t Alignment) {
-    // Round EltSize up to the specified alignment.
-    size_t EltSize = (sizeof(T) + Alignment - 1) & (-Alignment);
-    return static_cast<T *>(Allocate(Num * EltSize, Alignment));
-  }
-
-  void Deallocate(const void * /*Ptr*/) {}
-
-  size_t GetNumSlabs() const { return NumSlabs; }
-
-  void PrintStats() const;
-
-  /// \brief Returns the total physical memory allocated by this allocator.
-  size_t getTotalMemory() const;
 };
 
 /// \brief A BumpPtrAllocator that allows only elements of a specific type to be
