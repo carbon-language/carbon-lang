@@ -353,6 +353,20 @@ ObjCInterfaceDecl::findInterfaceWithDesignatedInitializers() const {
   return 0;
 }
 
+static bool isIntroducingInitializers(const ObjCInterfaceDecl *D) {
+  for (const auto *MD : D->instance_methods()) {
+    if (MD->getMethodFamily() == OMF_init && !MD->isOverriding())
+      return true;
+  }
+  for (const auto *Ext : D->visible_extensions()) {
+    for (const auto *MD : Ext->instance_methods()) {
+      if (MD->getMethodFamily() == OMF_init && !MD->isOverriding())
+        return true;
+    }
+  }
+  return false;
+}
+
 bool ObjCInterfaceDecl::inheritsDesignatedInitializers() const {
   switch (data().InheritedDesignatedInitializers) {
   case DefinitionData::IDI_Inherited:
@@ -360,17 +374,10 @@ bool ObjCInterfaceDecl::inheritsDesignatedInitializers() const {
   case DefinitionData::IDI_NotInherited:
     return false;
   case DefinitionData::IDI_Unknown: {
-    bool isIntroducingInitializers = false;
-    for (const auto *MD : instance_methods()) {
-      if (MD->getMethodFamily() == OMF_init && !MD->isOverriding()) {
-        isIntroducingInitializers = true;
-        break;
-      }
-    }
     // If the class introduced initializers we conservatively assume that we
     // don't know if any of them is a designated initializer to avoid possible
     // misleading warnings.
-    if (isIntroducingInitializers) {
+    if (isIntroducingInitializers(this)) {
       data().InheritedDesignatedInitializers = DefinitionData::IDI_NotInherited;
       return false;
     } else {
@@ -398,6 +405,11 @@ void ObjCInterfaceDecl::getDesignatedInitializers(
   for (const auto *MD : IFace->instance_methods())
     if (MD->isThisDeclarationADesignatedInitializer())
       Methods.push_back(MD);
+  for (const auto *Ext : IFace->visible_extensions()) {
+    for (const auto *MD : Ext->instance_methods())
+      if (MD->isThisDeclarationADesignatedInitializer())
+        Methods.push_back(MD);
+  }
 }
 
 bool ObjCInterfaceDecl::isDesignatedInitializer(Selector Sel,
@@ -412,11 +424,20 @@ bool ObjCInterfaceDecl::isDesignatedInitializer(Selector Sel,
   if (!IFace)
     return false;
 
-  if (const ObjCMethodDecl *MD = IFace->getMethod(Sel, /*isInstance=*/true)) {
+  if (const ObjCMethodDecl *MD = IFace->getInstanceMethod(Sel)) {
     if (MD->isThisDeclarationADesignatedInitializer()) {
       if (InitMethod)
         *InitMethod = MD;
       return true;
+    }
+  }
+  for (const auto *Ext : IFace->visible_extensions()) {
+    if (const ObjCMethodDecl *MD = Ext->getInstanceMethod(Sel)) {
+      if (MD->isThisDeclarationADesignatedInitializer()) {
+        if (InitMethod)
+          *InitMethod = MD;
+        return true;
+      }
     }
   }
   return false;

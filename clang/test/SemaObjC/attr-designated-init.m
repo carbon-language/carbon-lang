@@ -27,7 +27,7 @@ __attribute__((objc_root_class))
 -(void)meth {}
 -(id)init NS_DESIGNATED_INITIALIZER { return 0; } // expected-error {{only applies to init methods of interface or class extension declarations}}
 +(id)init { return 0; }
--(id)init3 { return 0; } // expected-warning {{secondary initializer missing a 'self' call to another initializer}}
+-(id)init3 { return 0; }
 -(id)init4 NS_DESIGNATED_INITIALIZER { return 0; } // expected-error {{only applies to init methods of interface or class extension declarations}} \
 									 			   // expected-warning {{secondary initializer missing a 'self' call to another initializer}}
 @end
@@ -36,8 +36,11 @@ __attribute__((objc_root_class))
 @interface B1
 -(id)initB1 NS_DESIGNATED_INITIALIZER; // expected-note 6 {{method marked as designated initializer of the class here}}
 -(id)initB2;
--(id)initB3 NS_DESIGNATED_INITIALIZER; // expected-note 4 {{method marked as designated initializer of the class here}}
 @end
+
+@interface B1()
+-(id)initB3 NS_DESIGNATED_INITIALIZER; // expected-note 4 {{method marked as designated initializer of the class here}}
+@end;
 
 @implementation B1
 -(id)initB1 { return 0; }
@@ -49,8 +52,11 @@ __attribute__((objc_root_class))
 -(id)initS1 NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
 -(id)initS2 NS_DESIGNATED_INITIALIZER;
 -(id)initS3 NS_DESIGNATED_INITIALIZER; // expected-note 2 {{method marked as designated initializer of the class here}}
--(id)initS4 NS_DESIGNATED_INITIALIZER; // expected-note 2 {{method marked as designated initializer of the class here}}
 -(id)initB1;
+@end
+
+@interface S1()
+-(id)initS4 NS_DESIGNATED_INITIALIZER; // expected-note 2 {{method marked as designated initializer of the class here}}
 @end
 
 @implementation S1
