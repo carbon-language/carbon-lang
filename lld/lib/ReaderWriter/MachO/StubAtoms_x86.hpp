@@ -36,19 +36,19 @@ public:
                        &lazyPointer, 0);
   }
 
-  virtual ContentType contentType() const {
+  ContentType contentType() const override {
     return DefinedAtom::typeStub;
   }
 
-  virtual uint64_t size() const {
+  uint64_t size() const override {
     return 6;
   }
 
-  virtual ContentPermissions permissions() const {
+  ContentPermissions permissions() const override {
     return DefinedAtom::permR_X;
   }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     static const uint8_t instructions[] =
         { 0xFF, 0x25, 0x00, 0x00, 0x00, 0x00 }; // jmp *lazyPointer
     assert(sizeof(instructions) == this->size());
@@ -73,19 +73,19 @@ public:
                        &binder, 0);
   }
 
-  virtual ContentType contentType() const {
+  ContentType contentType() const override {
     return DefinedAtom::typeStubHelper;
   }
 
-  virtual uint64_t size() const {
+  uint64_t size() const override {
     return 12;
   }
 
-  virtual ContentPermissions permissions() const {
+  ContentPermissions permissions() const override {
     return DefinedAtom::permR_X;
   }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     static const uint8_t instructions[] =
         { 0x68, 0x00, 0x00, 0x00, 0x00,         // pushl $dyld_ImageLoaderCache
           0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,   // jmp *_fast_lazy_bind
@@ -111,19 +111,19 @@ public:
                        &helperCommon, 0);
   }
 
-  virtual ContentType contentType() const {
+  ContentType contentType() const override {
     return DefinedAtom::typeStubHelper;
   }
 
-  virtual uint64_t size() const {
+  uint64_t size() const override {
     return 10;
   }
 
-  virtual ContentPermissions permissions() const {
+  ContentPermissions permissions() const override {
     return DefinedAtom::permR_X;
   }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     static const uint8_t instructions[] =
         { 0x68, 0x00, 0x00, 0x00, 0x00,   // pushq $lazy-info-offset
           0xE9, 0x00, 0x00, 0x00, 0x00 }; // jmp helperhelper
@@ -148,23 +148,23 @@ public:
                        &shlib, 0);
   }
 
-  virtual ContentType contentType() const {
+  ContentType contentType() const override {
     return DefinedAtom::typeLazyPointer;
   }
 
-  virtual Alignment alignment() const {
+  Alignment alignment() const override {
     return Alignment(2);
   }
 
-  virtual uint64_t size() const {
+  uint64_t size() const override {
     return 4;
   }
 
-  virtual ContentPermissions permissions() const {
+  ContentPermissions permissions() const override {
     return DefinedAtom::permRW_;
   }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     static const uint8_t bytes[] = { 0x00, 0x00, 0x00, 0x00 };
     return makeArrayRef(bytes);
   }
@@ -186,23 +186,23 @@ public:
                        &shlib, 0);
   }
 
-  virtual ContentType contentType() const {
+  ContentType contentType() const override {
     return DefinedAtom::typeGOT;
   }
 
-  virtual Alignment alignment() const {
+  Alignment alignment() const override {
     return Alignment(2);
   }
 
-  virtual uint64_t size() const {
+  uint64_t size() const override {
     return 4;
   }
 
-  virtual ContentPermissions permissions() const {
+  ContentPermissions permissions() const override {
     return DefinedAtom::permRW_;
   }
 
-  virtual ArrayRef<uint8_t> rawContent() const {
+  ArrayRef<uint8_t> rawContent() const override {
     static const uint8_t bytes[] = { 0x00, 0x00, 0x00, 0x0 };
     return makeArrayRef(bytes);
   }

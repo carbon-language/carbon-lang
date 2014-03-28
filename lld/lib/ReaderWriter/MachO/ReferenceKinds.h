@@ -78,30 +78,29 @@ public:
   static const Registry::KindStrings kindStrings[];
 
   virtual ~KindHandler_x86_64();
-  virtual bool isCallSite(const Reference &);
-  virtual bool isPointer(const Reference &);
-  virtual bool isLazyImmediate(const Reference &);
-  virtual bool isLazyTarget(const Reference &);
+  bool isCallSite(const Reference &) override;
+  bool isPointer(const Reference &) override;
+  bool isLazyImmediate(const Reference &) override;
+  bool isLazyTarget(const Reference &) override;
   virtual void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
                           Reference::KindValue kindValue, uint64_t addend,
                           uint8_t *location, uint64_t fixupAddress,
-                          uint64_t targetAddress);
+                          uint64_t targetAddress) override;
 };
-
 
 class KindHandler_x86 : public KindHandler {
 public:
   static const Registry::KindStrings kindStrings[];
 
   virtual ~KindHandler_x86();
-  virtual bool isCallSite(const Reference &);
-  virtual bool isPointer(const Reference &);
-  virtual bool isLazyImmediate(const Reference &);
-  virtual bool isLazyTarget(const Reference &);
+  bool isCallSite(const Reference &) override;
+  bool isPointer(const Reference &) override;
+  bool isLazyImmediate(const Reference &) override;
+  bool isLazyTarget(const Reference &) override;
   virtual void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
                           Reference::KindValue kindValue, uint64_t addend,
                           uint8_t *location, uint64_t fixupAddress,
-                          uint64_t targetAddress);
+                          uint64_t targetAddress) override;
 };
 
 class KindHandler_arm : public KindHandler {
@@ -109,17 +108,15 @@ public:
   static const Registry::KindStrings kindStrings[];
 
   virtual ~KindHandler_arm();
-  virtual bool isCallSite(const Reference &);
-  virtual bool isPointer(const Reference &);
-  virtual bool isLazyImmediate(const Reference &);
-  virtual bool isLazyTarget(const Reference &);
-  virtual void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
-                          Reference::KindValue kindValue, uint64_t addend,
-                          uint8_t *location, uint64_t fixupAddress,
-                          uint64_t targetAddress);
+  bool isCallSite(const Reference &) override;
+  bool isPointer(const Reference &) override;
+  bool isLazyImmediate(const Reference &) override;
+  bool isLazyTarget(const Reference &) override;
+  void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
+                  Reference::KindValue kindValue, uint64_t addend,
+                  uint8_t *location, uint64_t fixupAddress,
+                  uint64_t targetAddress) override;
 };
-
-
 
 } // namespace mach_o
 } // namespace lld

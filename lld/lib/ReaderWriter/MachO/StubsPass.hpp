@@ -37,15 +37,15 @@ public:
     , _helperBinderAtom(nullptr) {
   }
 
-  virtual bool noTextRelocs() {
+  bool noTextRelocs() override {
     return true;
   }
 
-  virtual bool isCallSite(const Reference &ref) {
+  bool isCallSite(const Reference &ref) override {
     return _kindHandler.isCallSite(ref);
   }
 
-  virtual const DefinedAtom* getStub(const Atom& target) {
+  const DefinedAtom* getStub(const Atom& target) override {
     auto pos = _targetToStub.find(&target);
     if ( pos != _targetToStub.end() ) {
       // Reuse an existing stub.
@@ -121,7 +121,7 @@ public:
   }
 
 
-  virtual void addStubAtoms(MutableFile &mergedFile) {
+  void addStubAtoms(MutableFile &mergedFile) override {
     // Exit early if no stubs needed.
     if (_targetToStub.empty())
       return;

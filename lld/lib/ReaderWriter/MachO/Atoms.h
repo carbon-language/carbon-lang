@@ -21,15 +21,15 @@ public:
                    const ArrayRef<uint8_t> content, Scope scope)
       : SimpleDefinedAtom(f), _name(name), _content(content), _scope(scope) {}
 
-  virtual uint64_t size() const { return rawContent().size(); }
+  uint64_t size() const override { return rawContent().size(); }
 
-  virtual ContentType contentType() const { return DefinedAtom::typeCode; }
+  ContentType contentType() const override { return DefinedAtom::typeCode; }
 
-  virtual StringRef name() const { return _name; }
+  StringRef name() const override { return _name; }
 
-  virtual Scope scope() const { return _scope; }
+  Scope scope() const override { return _scope; }
 
-  virtual ArrayRef<uint8_t> rawContent() const { return _content; }
+  ArrayRef<uint8_t> rawContent() const override { return _content; }
 
 private:
   const StringRef _name;

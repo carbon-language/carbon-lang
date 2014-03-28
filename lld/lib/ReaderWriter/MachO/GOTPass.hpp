@@ -25,19 +25,19 @@ namespace mach_o {
 
 class GOTPass : public lld::GOTPass {
 public:
-  virtual bool noTextRelocs() {
+  bool noTextRelocs() override {
     return true;
   }
 
-  virtual bool isGOTAccess(const Reference &, bool &canBypassGOT) {
+  bool isGOTAccess(const Reference &, bool &canBypassGOT) override {
     return false;
   }
 
-  virtual void updateReferenceToGOT(const Reference*, bool targetIsNowGOT) {
+  void updateReferenceToGOT(const Reference*, bool targetIsNowGOT) override {
 
   }
 
-  virtual const DefinedAtom* makeGOTEntry(const Atom&) {
+  const DefinedAtom* makeGOTEntry(const Atom&) override {
     return nullptr;
   }
 
