@@ -269,11 +269,37 @@ bool ELFAsmParser::ParseSectionName(StringRef &SectionName) {
   return false;
 }
 
-static SectionKind computeSectionKind(unsigned Flags) {
+static SectionKind computeSectionKind(unsigned Flags, unsigned ElemSize) {
   if (Flags & ELF::SHF_EXECINSTR)
     return SectionKind::getText();
   if (Flags & ELF::SHF_TLS)
     return SectionKind::getThreadData();
+  if (Flags & ELF::SHF_MERGE) {
+    if (Flags & ELF::SHF_STRINGS) {
+      switch (ElemSize) {
+      default:
+        break;
+      case 1:
+        return SectionKind::getMergeable1ByteCString();
+      case 2:
+        return SectionKind::getMergeable2ByteCString();
+      case 4:
+        return SectionKind::getMergeable4ByteCString();
+      }
+    } else {
+      switch (ElemSize) {
+      default:
+        break;
+      case 4:
+        return SectionKind::getMergeableConst4();
+      case 8:
+        return SectionKind::getMergeableConst8();
+      case 16:
+        return SectionKind::getMergeableConst16();
+      }
+    }
+  }
+
   return SectionKind::getDataRel();
 }
 
@@ -518,7 +544,7 @@ EndStmt:
       }
   }
 
-  SectionKind Kind = computeSectionKind(Flags);
+  SectionKind Kind = computeSectionKind(Flags, Size);
   getStreamer().SwitchSection(getContext().getELFSection(SectionName, Type,
                                                          Flags, Kind, Size,
                                                          GroupName),
