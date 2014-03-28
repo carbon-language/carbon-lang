@@ -1756,14 +1756,16 @@ GDBRemoteCommunicationClient::Detach (bool keep_stopped)
         }
         else
         {
-            PacketResult packet_result = SendPacket ("D1", 2);
+            StringExtractorGDBRemote response;
+            PacketResult packet_result = SendPacketAndWaitForResponse ("D1", 1, response, false);
             if (packet_result != PacketResult::Success)
                 error.SetErrorString ("Sending extended disconnect packet failed.");
         }
     }
     else
     {
-        PacketResult packet_result = SendPacket ("D", 1);
+        StringExtractorGDBRemote response;
+        PacketResult packet_result = SendPacketAndWaitForResponse ("D", 1, response, false);
         if (packet_result != PacketResult::Success)
             error.SetErrorString ("Sending disconnect packet failed.");
     }

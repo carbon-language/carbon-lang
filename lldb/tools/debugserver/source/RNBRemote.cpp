@@ -3605,9 +3605,17 @@ RNBRemote::HandlePacket_C (const char *p)
 rnb_err_t
 RNBRemote::HandlePacket_D (const char *p)
 {
-    SendPacket ("OK");
     if (m_ctx.HasValidProcessID())
-        DNBProcessDetach(m_ctx.ProcessID());
+    {
+        if (DNBProcessDetach(m_ctx.ProcessID()))
+            SendPacket ("OK");
+        else
+            SendPacket ("E");
+    }
+    else
+    {
+        SendPacket ("E");
+    }
     return rnb_success;
 }
 
