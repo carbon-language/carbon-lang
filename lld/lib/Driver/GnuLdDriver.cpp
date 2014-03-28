@@ -159,21 +159,11 @@ bool GnuLdDriver::applyEmulation(llvm::Triple &triple,
 void GnuLdDriver::addPlatformSearchDirs(ELFLinkingContext &ctx,
                                        llvm::Triple &triple,
                                        llvm::Triple &baseTriple) {
-  switch (triple.getOS()) {
-  case llvm::Triple::NetBSD:
-    switch (triple.getArch()) {
-    case llvm::Triple::x86:
-      if (baseTriple.getArch() == llvm::Triple::x86_64) {
-        ctx.addSearchPath("=/usr/lib/i386");
-        return;
-      }
-      break;
-    default:
-      break;
-    }
-    break;
-  default:
-    break;
+  if (triple.getOS() == llvm::Triple::NetBSD &&
+      triple.getArch() == llvm::Triple::x86 &&
+      baseTriple.getArch() == llvm::Triple::x86_64) {
+    ctx.addSearchPath("=/usr/lib/i386");
+    return;
   }
   ctx.addSearchPath("=/usr/lib");
 }
