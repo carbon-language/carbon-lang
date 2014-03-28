@@ -29,7 +29,7 @@ CODEGENOPT(Name, Bits, Default)
 #endif
 
 CODEGENOPT(DisableIntegratedAS, 1, 0) ///< -no-integrated-as
-CODEGENOPT(CompressDebugSections, 1, 0) //< -Wa,-compress-debug-sections
+CODEGENOPT(CompressDebugSections, 1, 0) ///< -Wa,-compress-debug-sections
 CODEGENOPT(Autolink          , 1, 1) ///< -fno-autolink
 CODEGENOPT(AsmVerbose        , 1, 0) ///< -dA, -fverbose-asm.
 CODEGENOPT(ObjCAutoRefCountExceptions , 1, 0) ///< Whether ARC should be EH-safe.
