@@ -16,6 +16,7 @@
 
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/SwapByteOrder.h"
+#include <cassert>
 #include <cstring>
 #include <type_traits>
 
@@ -538,6 +539,18 @@ inline uint64_t MinAlign(uint64_t A, uint64_t B) {
   // MSVC warning C4146
   //    return (A | B) & -(A | B);
   return (A | B) & (1 + ~(A | B));
+}
+
+/// \brief Aligns \c Ptr to \c Alignment bytes, rounding up.
+///
+/// Alignment should be a power of two.  This method rounds up, so
+/// AlignPtr(7, 4) == 8 and AlignPtr(8, 4) == 8.
+inline char *alignPtr(char *Ptr, size_t Alignment) {
+  assert(Alignment && isPowerOf2_64((uint64_t)Alignment) &&
+         "Alignment is not a power of two!");
+
+  return (char *)(((uintptr_t)Ptr + Alignment - 1) &
+                  ~(uintptr_t)(Alignment - 1));
 }
 
 /// NextPowerOf2 - Returns the next power of two (in 64-bits)

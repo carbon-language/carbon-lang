@@ -35,18 +35,6 @@ BumpPtrAllocator::~BumpPtrAllocator() {
   DeallocateSlabs(CurSlab);
 }
 
-/// AlignPtr - Align Ptr to Alignment bytes, rounding up.  Alignment should
-/// be a power of two.  This method rounds up, so AlignPtr(7, 4) == 8 and
-/// AlignPtr(8, 4) == 8.
-char *BumpPtrAllocator::AlignPtr(char *Ptr, size_t Alignment) {
-  assert(Alignment && (Alignment & (Alignment - 1)) == 0 &&
-         "Alignment is not a power of two!");
-
-  // Do the alignment.
-  return (char*)(((uintptr_t)Ptr + Alignment - 1) &
-                 ~(uintptr_t)(Alignment - 1));
-}
-
 /// StartNewSlab - Allocate a new slab and move the bump pointers over into
 /// the new slab.  Modifies CurPtr and End.
 void BumpPtrAllocator::StartNewSlab() {
@@ -110,7 +98,7 @@ void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
   if (Alignment == 0) Alignment = 1;
 
   // Allocate the aligned space, going forwards from CurPtr.
-  char *Ptr = AlignPtr(CurPtr, Alignment);
+  char *Ptr = alignPtr(CurPtr, Alignment);
 
   // Check if we can hold it.
   if (Ptr + Size <= End) {
@@ -133,7 +121,7 @@ void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
     NewSlab->NextPtr = CurSlab->NextPtr;
     CurSlab->NextPtr = NewSlab;
 
-    Ptr = AlignPtr((char*)(NewSlab + 1), Alignment);
+    Ptr = alignPtr((char*)(NewSlab + 1), Alignment);
     assert((uintptr_t)Ptr + Size <= (uintptr_t)NewSlab + NewSlab->Size);
     __msan_allocated_memory(Ptr, Size);
     return Ptr;
@@ -141,7 +129,7 @@ void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
 
   // Otherwise, start a new slab and try again.
   StartNewSlab();
-  Ptr = AlignPtr(CurPtr, Alignment);
+  Ptr = alignPtr(CurPtr, Alignment);
   CurPtr = Ptr + Size;
   assert(CurPtr <= End && "Unable to allocate memory!");
   __msan_allocated_memory(Ptr, Size);

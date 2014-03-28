@@ -138,12 +138,6 @@ class BumpPtrAllocator {
   /// for extremely heavy memory use scenarios.
   size_t NumSlabs;
 
-  /// \brief Aligns \c Ptr to \c Alignment bytes, rounding up.
-  ///
-  /// Alignment should be a power of two.  This method rounds up, so
-  /// AlignPtr(7, 4) == 8 and AlignPtr(8, 4) == 8.
-  static char *AlignPtr(char *Ptr, size_t Alignment);
-
   /// \brief Allocate a new slab and move the bump pointers over into the new
   /// slab, modifying CurPtr and End.
   void StartNewSlab();
@@ -219,7 +213,7 @@ public:
       char *End = Slab == Allocator.CurSlab ? Allocator.CurPtr
                                             : (char *)Slab + Slab->Size;
       for (char *Ptr = (char *)(Slab + 1); Ptr < End; Ptr += sizeof(T)) {
-        Ptr = Allocator.AlignPtr(Ptr, alignOf<T>());
+        Ptr = alignPtr(Ptr, alignOf<T>());
         if (Ptr + sizeof(T) <= End)
           reinterpret_cast<T *>(Ptr)->~T();
       }
