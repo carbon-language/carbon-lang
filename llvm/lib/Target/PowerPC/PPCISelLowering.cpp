@@ -2162,9 +2162,11 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
         case MVT::v8i16:
         case MVT::v4i32:
         case MVT::v4f32:
+          RC = &PPC::VRRCRegClass;
+          break;
         case MVT::v2f64:
         case MVT::v2i64:
-          RC = &PPC::VRRCRegClass;
+          RC = &PPC::VSHRCRegClass;
           break;
       }
 
@@ -2381,6 +2383,10 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
+  static const uint16_t VSRH[] = {
+    PPC::VSH2, PPC::VSH3, PPC::VSH4, PPC::VSH5, PPC::VSH6, PPC::VSH7, PPC::VSH8,
+    PPC::VSH9, PPC::VSH10, PPC::VSH11, PPC::VSH12, PPC::VSH13
+  };
 
   const unsigned Num_GPR_Regs = array_lengthof(GPR);
   const unsigned Num_FPR_Regs = 13;
@@ -2573,7 +2579,9 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
       // Note that vector arguments in registers don't reserve stack space,
       // except in varargs functions.
       if (VR_idx != Num_VR_Regs) {
-        unsigned VReg = MF.addLiveIn(VR[VR_idx], &PPC::VRRCRegClass);
+        unsigned VReg = (ObjectVT == MVT::v2f64 || ObjectVT == MVT::v2i64) ?
+                        MF.addLiveIn(VSRH[VR_idx], &PPC::VSHRCRegClass) :
+                        MF.addLiveIn(VR[VR_idx], &PPC::VRRCRegClass);
         ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, ObjectVT);
         if (isVarArg) {
           while ((ArgOffset % 16) != 0) {
@@ -4011,6 +4019,11 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
+  static const uint16_t VSRH[] = {
+    PPC::VSH2, PPC::VSH3, PPC::VSH4, PPC::VSH5, PPC::VSH6, PPC::VSH7, PPC::VSH8,
+    PPC::VSH9, PPC::VSH10, PPC::VSH11, PPC::VSH12, PPC::VSH13
+  };
+
   const unsigned NumGPRs = array_lengthof(GPR);
   const unsigned NumFPRs = 13;
   const unsigned NumVRs  = array_lengthof(VR);
@@ -4242,7 +4255,13 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
                                      MachinePointerInfo(),
                                      false, false, false, 0);
           MemOpChains.push_back(Load.getValue(1));
-          RegsToPass.push_back(std::make_pair(VR[VR_idx++], Load));
+
+          unsigned VReg = (Arg.getSimpleValueType() == MVT::v2f64 ||
+                           Arg.getSimpleValueType() == MVT::v2i64) ?
+                          VSRH[VR_idx] : VR[VR_idx];
+          ++VR_idx;
+
+          RegsToPass.push_back(std::make_pair(VReg, Load));
         }
         ArgOffset += 16;
         for (unsigned i=0; i<16; i+=PtrByteSize) {
@@ -4262,7 +4281,12 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
       // stack space allocated at the end.
       if (VR_idx != NumVRs) {
         // Doesn't have GPR space allocated.
-        RegsToPass.push_back(std::make_pair(VR[VR_idx++], Arg));
+        unsigned VReg = (Arg.getSimpleValueType() == MVT::v2f64 ||
+                         Arg.getSimpleValueType() == MVT::v2i64) ?
+                        VSRH[VR_idx] : VR[VR_idx];
+        ++VR_idx;
+
+        RegsToPass.push_back(std::make_pair(VReg, Arg));
       } else {
         LowerMemOpCallTo(DAG, MF, Chain, Arg, PtrOff, SPDiff, ArgOffset,
                          true, isTailCall, true, MemOpChains,
