@@ -253,7 +253,7 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
 
   SmallString<32> ZDebugName;
   if (MAI->compressDebugSections() && Section.startswith(".debug_") &&
-      Section != ".debug_frame")
+      Section != ".debug_frame" && Section != ".debug_line")
     Section = (".z" + Section.drop_front(1)).toStringRef(ZDebugName);
 
   // Do the lookup, if we have a hit, return it.
