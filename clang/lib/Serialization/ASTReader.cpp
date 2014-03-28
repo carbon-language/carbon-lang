@@ -7743,14 +7743,14 @@ void ASTReader::finishPendingActions() {
     TopLevelDeclsMap TopLevelDecls;
 
     while (!PendingIdentifierInfos.empty()) {
-      // FIXME: std::move
       IdentifierInfo *II = PendingIdentifierInfos.back().first;
-      SmallVector<uint32_t, 4> DeclIDs = PendingIdentifierInfos.back().second;
+      SmallVector<uint32_t, 4> DeclIDs =
+          std::move(PendingIdentifierInfos.back().second);
       PendingIdentifierInfos.pop_back();
 
       SetGloballyVisibleDecls(II, DeclIDs, &TopLevelDecls[II]);
     }
-  
+
     // Load pending declaration chains.
     for (unsigned I = 0; I != PendingDeclChains.size(); ++I) {
       loadPendingDeclChain(PendingDeclChains[I]);
