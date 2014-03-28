@@ -23,7 +23,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Support/EndianStream.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
@@ -79,23 +78,21 @@ public:
   unsigned getKind() const { return (unsigned) Kind; }
 
   void EmitData(raw_ostream& Out) {
-    using namespace llvm::support;
-    endian::Writer<little> LE(Out);
     switch (Kind) {
     case IsFE: {
       // Emit stat information.
       llvm::sys::fs::UniqueID UID = FE->getUniqueID();
-      LE.write<uint64_t>(UID.getFile());
-      LE.write<uint64_t>(UID.getDevice());
-      LE.write<uint64_t>(FE->getModificationTime());
-      LE.write<uint64_t>(FE->getSize());
+      ::Emit64(Out, UID.getFile());
+      ::Emit64(Out, UID.getDevice());
+      ::Emit64(Out, FE->getModificationTime());
+      ::Emit64(Out, FE->getSize());
     } break;
     case IsDE:
       // Emit stat information.
-      LE.write<uint64_t>(Data->UniqueID.getFile());
-      LE.write<uint64_t>(Data->UniqueID.getDevice());
-      LE.write<uint64_t>(Data->ModTime);
-      LE.write<uint64_t>(Data->Size);
+      ::Emit64(Out, Data->UniqueID.getFile());
+      ::Emit64(Out, Data->UniqueID.getDevice());
+      ::Emit64(Out, Data->ModTime);
+      ::Emit64(Out, Data->Size);
       delete Data;
       break;
     default:
@@ -123,36 +120,32 @@ public:
   static std::pair<unsigned,unsigned>
   EmitKeyDataLength(raw_ostream& Out, PTHEntryKeyVariant V,
                     const PTHEntry& E) {
-    using namespace llvm::support;
-    endian::Writer<little> LE(Out);
 
     unsigned n = V.getString().size() + 1 + 1;
-    LE.write<uint16_t>(n);
+    ::Emit16(Out, n);
 
     unsigned m = V.getRepresentationLength() + (V.isFile() ? 4 + 4 : 0);
-    LE.write<uint8_t>(m);
+    ::Emit8(Out, m);
 
     return std::make_pair(n, m);
   }
 
   static void EmitKey(raw_ostream& Out, PTHEntryKeyVariant V, unsigned n){
-    using namespace llvm::support;
     // Emit the entry kind.
-    endian::Writer<little>(Out).write<uint8_t>((unsigned)V.getKind());
+    ::Emit8(Out, (unsigned) V.getKind());
     // Emit the string.
     Out.write(V.getString().data(), n - 1);
   }
 
   static void EmitData(raw_ostream& Out, PTHEntryKeyVariant V,
                        const PTHEntry& E, unsigned) {
-    using namespace llvm::support;
-    endian::Writer<little> LE(Out);
+
 
     // For file entries emit the offsets into the PTH file for token data
     // and the preprocessor blocks table.
     if (V.isFile()) {
-      LE.write<uint32_t>(E.getTokenOffset());
-      LE.write<uint32_t>(E.getPPCondTableOffset());
+      ::Emit32(Out, E.getTokenOffset());
+      ::Emit32(Out, E.getPPCondTableOffset());
     }
 
     // Emit any other data associated with the key (i.e., stat information).
@@ -193,28 +186,18 @@ class PTHWriter {
   /// Emit a token to the PTH file.
   void EmitToken(const Token& T);
 
-  void Emit8(uint32_t V) {
-    using namespace llvm::support;
-    endian::Writer<little>(Out).write<uint8_t>(V);
-  }
+  void Emit8(uint32_t V) { ::Emit8(Out, V); }
 
-  void Emit16(uint32_t V) {
-    using namespace llvm::support;
-    endian::Writer<little>(Out).write<uint16_t>(V);
-  }
+  void Emit16(uint32_t V) { ::Emit16(Out, V); }
 
-  void Emit32(uint32_t V) {
-    using namespace llvm::support;
-    endian::Writer<little>(Out).write<uint32_t>(V);
-  }
+  void Emit32(uint32_t V) { ::Emit32(Out, V); }
 
   void EmitBuf(const char *Ptr, unsigned NumBytes) {
     Out.write(Ptr, NumBytes);
   }
 
   void EmitString(StringRef V) {
-    using namespace llvm::support;
-    endian::Writer<little>(Out).write<uint16_t>(V.size());
+    ::Emit16(Out, V.size());
     EmitBuf(V.data(), V.size());
   }
 
@@ -601,9 +584,8 @@ public:
 
   static std::pair<unsigned,unsigned>
   EmitKeyDataLength(raw_ostream& Out, const PTHIdKey* key, uint32_t) {
-    using namespace llvm::support;
     unsigned n = key->II->getLength() + 1;
-    endian::Writer<little>(Out).write<uint16_t>(n);
+    ::Emit16(Out, n);
     return std::make_pair(n, sizeof(uint32_t));
   }
 
@@ -616,8 +598,7 @@ public:
 
   static void EmitData(raw_ostream& Out, PTHIdKey*, uint32_t pID,
                        unsigned) {
-    using namespace llvm::support;
-    endian::Writer<little>(Out).write<uint32_t>(pID);
+    ::Emit32(Out, pID);
   }
 };
 } // end anonymous namespace
