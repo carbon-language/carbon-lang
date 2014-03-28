@@ -43,7 +43,7 @@ bool LinkingContext::createImplicitFiles(
 }
 
 std::unique_ptr<File> LinkingContext::createEntrySymbolFile() const {
-  return createEntrySymbolFile("command line option -u");
+  return createEntrySymbolFile("command line option -e");
 }
 
 std::unique_ptr<File>
