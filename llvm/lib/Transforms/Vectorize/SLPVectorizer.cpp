@@ -1015,8 +1015,17 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
       return 0;
     }
     case Instruction::ExtractElement: {
-      if (CanReuseExtract(VL))
-        return 0;
+      if (CanReuseExtract(VL)) {
+        int DeadCost = 0;
+        for (unsigned i = 0, e = VL.size(); i < e; ++i) {
+          ExtractElementInst *E = cast<ExtractElementInst>(VL[i]);
+          if (E->hasOneUse())
+            // Take credit for instruction that will become dead.
+            DeadCost +=
+                TTI->getVectorInstrCost(Instruction::ExtractElement, VecTy, i);
+        }
+        return -DeadCost;
+      }
       return getGatherCost(VecTy);
     }
     case Instruction::ZExt:
