@@ -46,6 +46,7 @@
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
+#include "llvm/Support/EndianStream.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
@@ -1465,26 +1466,31 @@ namespace {
     
     std::pair<unsigned,unsigned>
     EmitKeyDataLength(raw_ostream& Out, key_type_ref key, data_type_ref Data) {
+      using namespace llvm::support;
+      endian::Writer<little> Writer(Out);
       unsigned KeyLen = strlen(key.Filename) + 1 + 8 + 8;
-      clang::io::Emit16(Out, KeyLen);
+      Writer.write<uint16_t>(KeyLen);
       unsigned DataLen = 1 + 2 + 4 + 4;
       if (Data.isModuleHeader)
         DataLen += 4;
-      clang::io::Emit8(Out, DataLen);
+      Writer.write<uint16_t>(DataLen);
       return std::make_pair(KeyLen, DataLen);
     }
     
     void EmitKey(raw_ostream& Out, key_type_ref key, unsigned KeyLen) {
-      clang::io::Emit64(Out, key.FE->getSize());
+      using namespace llvm::support;
+      endian::Writer<little> LE(Out);
+      LE.write<uint64_t>(key.FE->getSize());
       KeyLen -= 8;
-      clang::io::Emit64(Out, key.FE->getModificationTime());
+      LE.write<uint64_t>(key.FE->getModificationTime());
       KeyLen -= 8;
       Out.write(key.Filename, KeyLen);
     }
     
     void EmitData(raw_ostream &Out, key_type_ref key,
                   data_type_ref Data, unsigned DataLen) {
-      using namespace clang::io;
+      using namespace llvm::support;
+      endian::Writer<little> LE(Out);
       uint64_t Start = Out.tell(); (void)Start;
       
       unsigned char Flags = (Data.HeaderRole << 6)
@@ -1493,13 +1499,13 @@ namespace {
                           | (Data.DirInfo << 2)
                           | (Data.Resolved << 1)
                           | Data.IndexHeaderMapHeader;
-      Emit8(Out, (uint8_t)Flags);
-      Emit16(Out, (uint16_t) Data.NumIncludes);
+      LE.write<uint8_t>(Flags);
+      LE.write<uint16_t>(Data.NumIncludes);
       
       if (!Data.ControllingMacro)
-        Emit32(Out, (uint32_t)Data.ControllingMacroID);
+        LE.write<uint32_t>(Data.ControllingMacroID);
       else
-        Emit32(Out, (uint32_t)Writer.getIdentifierRef(Data.ControllingMacro));
+        LE.write<uint32_t>(Writer.getIdentifierRef(Data.ControllingMacro));
       
       unsigned Offset = 0;
       if (!Data.Framework.empty()) {
@@ -1516,11 +1522,11 @@ namespace {
         } else
           Offset = Pos->second;
       }
-      Emit32(Out, Offset);
+      LE.write<uint32_t>(Offset);
 
       if (Data.isModuleHeader) {
         Module *Mod = HS.findModuleForHeader(key.FE).getModule();
-        Emit32(Out, Writer.getExistingSubmoduleID(Mod));
+        LE.write<uint32_t>(Writer.getExistingSubmoduleID(Mod));
       }
 
       assert(Out.tell() - Start == DataLen && "Wrong data length");
@@ -1578,9 +1584,10 @@ void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS, StringRef isysroot) {
   SmallString<4096> TableData;
   uint32_t BucketOffset;
   {
+    using namespace llvm::support;
     llvm::raw_svector_ostream Out(TableData);
     // Make sure that no bucket is at offset 0
-    clang::io::Emit32(Out, 0);
+    endian::Writer<little>(Out).write(0);
     BucketOffset = Generator.Emit(Out, GeneratorTrait);
   }
 
@@ -1835,12 +1842,14 @@ public:
   }
 
   static void EmitKey(raw_ostream& Out, key_type_ref Key, unsigned KeyLen) {
-    clang::io::Emit32(Out, Key);
+    using namespace llvm::support;
+    endian::Writer<little>(Out).write<uint32_t>(Key);
   }
 
   static void EmitData(raw_ostream& Out, key_type_ref Key, data_type_ref Data,
                        unsigned) {
-    clang::io::Emit32(Out, Data.MacroDirectivesOffset);
+    using namespace llvm::support;
+    endian::Writer<little>(Out).write<uint32_t>(Data.MacroDirectivesOffset);
   }
 };
 } // end anonymous namespace
@@ -2036,9 +2045,10 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
   SmallString<4096> MacroTable;
   uint32_t BucketOffset;
   {
+    using namespace llvm::support;
     llvm::raw_svector_ostream Out(MacroTable);
     // Make sure that no bucket is at offset 0
-    clang::io::Emit32(Out, 0);
+    endian::Writer<little>(Out).write(0);
     BucketOffset = Generator.Emit(Out);
   }
 
@@ -2709,8 +2719,10 @@ public:
   std::pair<unsigned,unsigned>
     EmitKeyDataLength(raw_ostream& Out, Selector Sel,
                       data_type_ref Methods) {
+    using namespace llvm::support;
+    endian::Writer<little> LE(Out);
     unsigned KeyLen = 2 + (Sel.getNumArgs()? Sel.getNumArgs() * 4 : 4);
-    clang::io::Emit16(Out, KeyLen);
+    LE.write<uint16_t>(KeyLen);
     unsigned DataLen = 4 + 2 + 2; // 2 bytes for each of the method counts
     for (const ObjCMethodList *Method = &Methods.Instance; Method;
          Method = Method->getNext())
@@ -2720,27 +2732,31 @@ public:
          Method = Method->getNext())
       if (Method->Method)
         DataLen += 4;
-    clang::io::Emit16(Out, DataLen);
+    LE.write<uint16_t>(DataLen);
     return std::make_pair(KeyLen, DataLen);
   }
 
   void EmitKey(raw_ostream& Out, Selector Sel, unsigned) {
+    using namespace llvm::support;
+    endian::Writer<little> LE(Out);
     uint64_t Start = Out.tell();
     assert((Start >> 32) == 0 && "Selector key offset too large");
     Writer.SetSelectorOffset(Sel, Start);
     unsigned N = Sel.getNumArgs();
-    clang::io::Emit16(Out, N);
+    LE.write<uint16_t>(N);
     if (N == 0)
       N = 1;
     for (unsigned I = 0; I != N; ++I)
-      clang::io::Emit32(Out,
-                    Writer.getIdentifierRef(Sel.getIdentifierInfoForSlot(I)));
+      LE.write<uint32_t>(
+          Writer.getIdentifierRef(Sel.getIdentifierInfoForSlot(I)));
   }
 
   void EmitData(raw_ostream& Out, key_type_ref,
                 data_type_ref Methods, unsigned DataLen) {
+    using namespace llvm::support;
+    endian::Writer<little> LE(Out);
     uint64_t Start = Out.tell(); (void)Start;
-    clang::io::Emit32(Out, Methods.ID);
+    LE.write<uint32_t>(Methods.ID);
     unsigned NumInstanceMethods = 0;
     for (const ObjCMethodList *Method = &Methods.Instance; Method;
          Method = Method->getNext())
@@ -2760,16 +2776,16 @@ public:
     unsigned FactoryBits = Methods.Factory.getBits();
     assert(FactoryBits < 4);
     unsigned NumFactoryMethodsAndBits = (NumFactoryMethods << 2) | FactoryBits;
-    clang::io::Emit16(Out, NumInstanceMethodsAndBits);
-    clang::io::Emit16(Out, NumFactoryMethodsAndBits);
+    LE.write<uint16_t>(NumInstanceMethodsAndBits);
+    LE.write<uint16_t>(NumFactoryMethodsAndBits);
     for (const ObjCMethodList *Method = &Methods.Instance; Method;
          Method = Method->getNext())
       if (Method->Method)
-        clang::io::Emit32(Out, Writer.getDeclID(Method->Method));
+        LE.write<uint32_t>(Writer.getDeclID(Method->Method));
     for (const ObjCMethodList *Method = &Methods.Factory; Method;
          Method = Method->getNext())
       if (Method->Method)
-        clang::io::Emit32(Out, Writer.getDeclID(Method->Method));
+        LE.write<uint32_t>(Writer.getDeclID(Method->Method));
 
     assert(Out.tell() - Start == DataLen && "Data length is wrong");
   }
@@ -2838,10 +2854,11 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
     SmallString<4096> MethodPool;
     uint32_t BucketOffset;
     {
+      using namespace llvm::support;
       ASTMethodPoolTrait Trait(*this);
       llvm::raw_svector_ostream Out(MethodPool);
       // Make sure that no bucket is at offset 0
-      clang::io::Emit32(Out, 0);
+      endian::Writer<little>(Out).write<uint32_t>(0);
       BucketOffset = Generator.Emit(Out, Trait);
     }
 
@@ -3086,11 +3103,14 @@ public:
            D != DEnd; ++D)
         DataLen += sizeof(DeclID);
     }
-    clang::io::Emit16(Out, DataLen);
+    using namespace llvm::support;
+    endian::Writer<little> LE(Out);
+
+    LE.write<uint16_t>(DataLen);
     // We emit the key length after the data length so that every
     // string is preceded by a 16-bit length. This matches the PTH
     // format for storing identifiers.
-    clang::io::Emit16(Out, KeyLen);
+    LE.write<uint16_t>(KeyLen);
     return std::make_pair(KeyLen, DataLen);
   }
 
@@ -3105,24 +3125,28 @@ public:
   static void emitMacroOverrides(raw_ostream &Out,
                                  llvm::ArrayRef<SubmoduleID> Overridden) {
     if (!Overridden.empty()) {
-      clang::io::Emit32(Out, Overridden.size() | 0x80000000U);
+      using namespace llvm::support;
+      endian::Writer<little> LE(Out);
+      LE.write<uint32_t>(Overridden.size() | 0x80000000U);
       for (unsigned I = 0, N = Overridden.size(); I != N; ++I)
-        clang::io::Emit32(Out, Overridden[I]);
+        LE.write<uint32_t>(Overridden[I]);
     }
   }
 
   void EmitData(raw_ostream& Out, IdentifierInfo* II,
                 IdentID ID, unsigned) {
+    using namespace llvm::support;
+    endian::Writer<little> LE(Out);
     MacroDirective *Macro = 0;
     if (!isInterestingIdentifier(II, Macro)) {
-      clang::io::Emit32(Out, ID << 1);
+      LE.write<uint32_t>(ID << 1);
       return;
     }
 
-    clang::io::Emit32(Out, (ID << 1) | 0x01);
+    LE.write<uint32_t>((ID << 1) | 0x01);
     uint32_t Bits = (uint32_t)II->getObjCOrBuiltinID();
     assert((Bits & 0xffff) == Bits && "ObjCOrBuiltinID too big for ASTReader.");
-    clang::io::Emit16(Out, Bits);
+    LE.write<uint16_t>(Bits);
     Bits = 0;
     bool HadMacroDefinition = hadMacroDefinition(II, Macro);
     Bits = (Bits << 1) | unsigned(HadMacroDefinition);
@@ -3131,10 +3155,10 @@ public:
     Bits = (Bits << 1) | unsigned(II->isPoisoned());
     Bits = (Bits << 1) | unsigned(II->hasRevertedTokenIDToIdentifier());
     Bits = (Bits << 1) | unsigned(II->isCPlusPlusOperatorKeyword());
-    clang::io::Emit16(Out, Bits);
+    LE.write<uint16_t>(Bits);
 
     if (HadMacroDefinition) {
-      clang::io::Emit32(Out, Writer.getMacroDirectivesOffset(II));
+      LE.write<uint32_t>(Writer.getMacroDirectivesOffset(II));
       if (IsModule) {
         // Write the IDs of macros coming from different submodules.
         SubmoduleID ModID;
@@ -3147,14 +3171,14 @@ public:
           if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD)) {
             InfoID = Writer.getMacroID(DefMD->getInfo());
             assert(InfoID);
-            clang::io::Emit32(Out, InfoID << 1);
+            LE.write<uint32_t>(InfoID << 1);
           } else {
             assert(isa<UndefMacroDirective>(MD));
-            clang::io::Emit32(Out, (ModID << 1) | 1);
+            LE.write<uint32_t>((ModID << 1) | 1);
           }
         }
         emitMacroOverrides(Out, Overridden);
-        clang::io::Emit32(Out, 0);
+        LE.write<uint32_t>(0);
       }
     }
 
@@ -3169,7 +3193,7 @@ public:
     for (SmallVectorImpl<Decl *>::reverse_iterator D = Decls.rbegin(),
                                                 DEnd = Decls.rend();
          D != DEnd; ++D)
-      clang::io::Emit32(Out, Writer.getDeclID(getMostRecentLocalDecl(*D)));
+      LE.write<uint32_t>(Writer.getDeclID(getMostRecentLocalDecl(*D)));
   }
 
   /// \brief Returns the most recent local decl or the given decl if there are
@@ -3238,10 +3262,11 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
     SmallString<4096> IdentifierTable;
     uint32_t BucketOffset;
     {
+      using namespace llvm::support;
       ASTIdentifierTableTrait Trait(*this, PP, IdResolver, IsModule);
       llvm::raw_svector_ostream Out(IdentifierTable);
       // Make sure that no bucket is at offset 0
-      clang::io::Emit32(Out, 0);
+      endian::Writer<little>(Out).write<uint32_t>(0);
       BucketOffset = Generator.Emit(Out, Trait);
     }
 
@@ -3330,6 +3355,8 @@ public:
   std::pair<unsigned,unsigned>
     EmitKeyDataLength(raw_ostream& Out, DeclarationName Name,
                       data_type_ref Lookup) {
+    using namespace llvm::support;
+    endian::Writer<little> LE(Out);
     unsigned KeyLen = 1;
     switch (Name.getNameKind()) {
     case DeclarationName::Identifier:
@@ -3348,35 +3375,35 @@ public:
     case DeclarationName::CXXUsingDirective:
       break;
     }
-    clang::io::Emit16(Out, KeyLen);
+    LE.write<uint16_t>(KeyLen);
 
     // 2 bytes for num of decls and 4 for each DeclID.
     unsigned DataLen = 2 + 4 * Lookup.size();
-    clang::io::Emit16(Out, DataLen);
+    LE.write<uint16_t>(DataLen);
 
     return std::make_pair(KeyLen, DataLen);
   }
 
   void EmitKey(raw_ostream& Out, DeclarationName Name, unsigned) {
-    using namespace clang::io;
-
-    Emit8(Out, Name.getNameKind());
+    using namespace llvm::support;
+    endian::Writer<little> LE(Out);
+    LE.write<uint8_t>(Name.getNameKind());
     switch (Name.getNameKind()) {
     case DeclarationName::Identifier:
-      Emit32(Out, Writer.getIdentifierRef(Name.getAsIdentifierInfo()));
+      LE.write<uint32_t>(Writer.getIdentifierRef(Name.getAsIdentifierInfo()));
       return;
     case DeclarationName::ObjCZeroArgSelector:
     case DeclarationName::ObjCOneArgSelector:
     case DeclarationName::ObjCMultiArgSelector:
-      Emit32(Out, Writer.getSelectorRef(Name.getObjCSelector()));
+      LE.write<uint32_t>(Writer.getSelectorRef(Name.getObjCSelector()));
       return;
     case DeclarationName::CXXOperatorName:
       assert(Name.getCXXOverloadedOperator() < NUM_OVERLOADED_OPERATORS &&
              "Invalid operator?");
-      Emit8(Out, Name.getCXXOverloadedOperator());
+      LE.write<uint8_t>(Name.getCXXOverloadedOperator());
       return;
     case DeclarationName::CXXLiteralOperatorName:
-      Emit32(Out, Writer.getIdentifierRef(Name.getCXXLiteralIdentifier()));
+      LE.write<uint32_t>(Writer.getIdentifierRef(Name.getCXXLiteralIdentifier()));
       return;
     case DeclarationName::CXXConstructorName:
     case DeclarationName::CXXDestructorName:
@@ -3390,11 +3417,13 @@ public:
 
   void EmitData(raw_ostream& Out, key_type_ref,
                 data_type Lookup, unsigned DataLen) {
+    using namespace llvm::support;
+    endian::Writer<little> LE(Out);
     uint64_t Start = Out.tell(); (void)Start;
-    clang::io::Emit16(Out, Lookup.size());
+    LE.write<uint16_t>(Lookup.size());
     for (DeclContext::lookup_iterator I = Lookup.begin(), E = Lookup.end();
          I != E; ++I)
-      clang::io::Emit32(Out, Writer.GetDeclRef(*I));
+      LE.write<uint32_t>(Writer.GetDeclRef(*I));
 
     assert(Out.tell() - Start == DataLen && "Data length is wrong");
   }
@@ -3487,7 +3516,8 @@ ASTWriter::GenerateNameLookupTable(const DeclContext *DC,
   // Create the on-disk hash table in a buffer.
   llvm::raw_svector_ostream Out(LookupTable);
   // Make sure that no bucket is at offset 0
-  clang::io::Emit32(Out, 0);
+  using namespace llvm::support;
+  endian::Writer<little>(Out).write<uint32_t>(0);
   return Generator.Emit(Out, Trait);
 }
 
@@ -4187,17 +4217,19 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
       for (ModuleManager::ModuleConstIterator M = Chain->ModuleMgr.begin(),
                                            MEnd = Chain->ModuleMgr.end();
            M != MEnd; ++M) {
+        using namespace llvm::support;
+        endian::Writer<little> LE(Out);
         StringRef FileName = (*M)->FileName;
-        io::Emit16(Out, FileName.size());
+        LE.write<uint16_t>(FileName.size());
         Out.write(FileName.data(), FileName.size());
-        io::Emit32(Out, (*M)->SLocEntryBaseOffset);
-        io::Emit32(Out, (*M)->BaseIdentifierID);
-        io::Emit32(Out, (*M)->BaseMacroID);
-        io::Emit32(Out, (*M)->BasePreprocessedEntityID);
-        io::Emit32(Out, (*M)->BaseSubmoduleID);
-        io::Emit32(Out, (*M)->BaseSelectorID);
-        io::Emit32(Out, (*M)->BaseDeclID);
-        io::Emit32(Out, (*M)->BaseTypeIndex);
+        LE.write<uint32_t>((*M)->SLocEntryBaseOffset);
+        LE.write<uint32_t>((*M)->BaseIdentifierID);
+        LE.write<uint32_t>((*M)->BaseMacroID);
+        LE.write<uint32_t>((*M)->BasePreprocessedEntityID);
+        LE.write<uint32_t>((*M)->BaseSubmoduleID);
+        LE.write<uint32_t>((*M)->BaseSelectorID);
+        LE.write<uint32_t>((*M)->BaseDeclID);
+        LE.write<uint32_t>((*M)->BaseTypeIndex);
       }
     }
     Record.clear();

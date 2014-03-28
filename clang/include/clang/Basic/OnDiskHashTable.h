@@ -17,6 +17,7 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/EndianStream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -29,45 +30,11 @@ namespace io {
 
 typedef uint32_t Offset;
 
-inline void Emit8(raw_ostream& Out, uint32_t V) {
-  Out << (unsigned char)(V);
-}
-
-inline void Emit16(raw_ostream& Out, uint32_t V) {
-  Out << (unsigned char)(V);
-  Out << (unsigned char)(V >>  8);
-  assert((V >> 16) == 0);
-}
-
-inline void Emit24(raw_ostream& Out, uint32_t V) {
-  Out << (unsigned char)(V);
-  Out << (unsigned char)(V >>  8);
-  Out << (unsigned char)(V >> 16);
-  assert((V >> 24) == 0);
-}
-
-inline void Emit32(raw_ostream& Out, uint32_t V) {
-  Out << (unsigned char)(V);
-  Out << (unsigned char)(V >>  8);
-  Out << (unsigned char)(V >> 16);
-  Out << (unsigned char)(V >> 24);
-}
-
-inline void Emit64(raw_ostream& Out, uint64_t V) {
-  Out << (unsigned char)(V);
-  Out << (unsigned char)(V >>  8);
-  Out << (unsigned char)(V >> 16);
-  Out << (unsigned char)(V >> 24);
-  Out << (unsigned char)(V >> 32);
-  Out << (unsigned char)(V >> 40);
-  Out << (unsigned char)(V >> 48);
-  Out << (unsigned char)(V >> 56);
-}
-
 inline void Pad(raw_ostream& Out, unsigned A) {
+  using namespace llvm::support;
   Offset off = (Offset) Out.tell();
   for (uint32_t n = llvm::OffsetToAlignment(off, A); n; --n)
-    Emit8(Out, 0);
+    endian::Writer<little>(Out).write<uint8_t>(0);
 }
 
 inline uint16_t ReadUnalignedLE16(const unsigned char *&Data) {
@@ -188,7 +155,8 @@ public:
   }
 
   io::Offset Emit(raw_ostream &out, Info &InfoObj) {
-    using namespace clang::io;
+    using namespace llvm::support;
+    endian::Writer<little> LE(out);
 
     // Emit the payload of the table.
     for (unsigned i = 0; i < NumBuckets; ++i) {
@@ -200,12 +168,12 @@ public:
       assert(B.off && "Cannot write a bucket at offset 0. Please add padding.");
 
       // Write out the number of items in the bucket.
-      Emit16(out, B.length);
+      LE.write<uint16_t>(B.length);
       assert(B.length != 0  && "Bucket has a head but zero length?");
 
       // Write out the entries in the bucket.
       for (Item *I = B.head; I ; I = I->next) {
-        Emit32(out, I->hash);
+        LE.write<uint32_t>(I->hash);
         const std::pair<unsigned, unsigned>& Len =
           InfoObj.EmitKeyDataLength(out, I->key, I->data);
         InfoObj.EmitKey(out, I->key, Len.first);
@@ -214,11 +182,12 @@ public:
     }
 
     // Emit the hashtable itself.
-    Pad(out, 4);
+    io::Pad(out, 4);
     io::Offset TableOff = out.tell();
-    Emit32(out, NumBuckets);
-    Emit32(out, NumEntries);
-    for (unsigned i = 0; i < NumBuckets; ++i) Emit32(out, Buckets[i].off);
+    LE.write<uint32_t>(NumBuckets);
+    LE.write<uint32_t>(NumEntries);
+    for (unsigned i = 0; i < NumBuckets; ++i)
+      LE.write<uint32_t>(Buckets[i].off);
 
     return TableOff;
   }
