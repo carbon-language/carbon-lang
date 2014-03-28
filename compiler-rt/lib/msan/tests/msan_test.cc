@@ -3125,6 +3125,54 @@ TEST(MemorySanitizer, getgrnam_r) {
   EXPECT_NOT_POISONED(grpres);
 }
 
+TEST(MemorySanitizer, getpwent) {
+  setpwent();
+  struct passwd *p = getpwent();
+  ASSERT_TRUE(p != NULL);
+  EXPECT_NOT_POISONED(p->pw_name);
+  ASSERT_TRUE(p->pw_name != NULL);
+  EXPECT_NOT_POISONED(p->pw_name[0]);
+  EXPECT_NOT_POISONED(p->pw_uid);
+}
+
+TEST(MemorySanitizer, getpwent_r) {
+  struct passwd pwd;
+  struct passwd *pwdres;
+  char buf[10000];
+  setpwent();
+  int res = getpwent_r(&pwd, buf, sizeof(buf), &pwdres);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(pwd.pw_name);
+  ASSERT_TRUE(pwd.pw_name != NULL);
+  EXPECT_NOT_POISONED(pwd.pw_name[0]);
+  EXPECT_NOT_POISONED(pwd.pw_uid);
+  EXPECT_NOT_POISONED(pwdres);
+}
+
+TEST(MemorySanitizer, getgrent) {
+  setgrent();
+  struct group *p = getgrent();
+  ASSERT_TRUE(p != NULL);
+  EXPECT_NOT_POISONED(p->gr_name);
+  ASSERT_TRUE(p->gr_name != NULL);
+  EXPECT_NOT_POISONED(p->gr_name[0]);
+  EXPECT_NOT_POISONED(p->gr_gid);
+}
+
+TEST(MemorySanitizer, getgrent_r) {
+  struct group grp;
+  struct group *grpres;
+  char buf[10000];
+  setgrent();
+  int res = getgrent_r(&grp, buf, sizeof(buf), &grpres);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(grp.gr_name);
+  ASSERT_TRUE(grp.gr_name != NULL);
+  EXPECT_NOT_POISONED(grp.gr_name[0]);
+  EXPECT_NOT_POISONED(grp.gr_gid);
+  EXPECT_NOT_POISONED(grpres);
+}
+
 TEST(MemorySanitizer, getgroups) {
   int n = getgroups(0, 0);
   gid_t *gids = new gid_t[n];
