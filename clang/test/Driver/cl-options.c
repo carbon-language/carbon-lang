@@ -131,8 +131,8 @@
 
 
 // Ignored options. Check that we don't get "unused during compilation" errors.
-// (/Zs is for syntax-only, /WX is for -Werror)
-// RUN: %clang_cl /Zs /WX \
+// (/Zs is for syntax-only)
+// RUN: %clang_cl /Zs \
 // RUN:    /analyze- \
 // RUN:    /errorReport:foo \
 // RUN:    /FS \
@@ -150,7 +150,8 @@
 // RUN:    /wd1234 \
 // RUN:    /Zc:forScope \
 // RUN:    /Zc:wchar_t \
-// RUN:    -- %s
+// RUN:    -### -- %s 2>&1 | FileCheck -check-prefix=IGNORED %s
+// IGNORED-NOT: argument unused during compilation
 
 // Ignored options and compile-only options are ignored for link jobs.
 // RUN: touch %t.obj
@@ -161,7 +162,7 @@
 
 // Support ignoring warnings about unused arguments.
 // RUN: %clang_cl /Abracadabra -Qunused-arguments -### -- %s 2>&1 | FileCheck -check-prefix=UNUSED %s
-// UNUSED-NOT: warning
+// UNUSED-NOT: argument unused during compilation
 
 // Unsupported but parsed options. Check that we don't error on them.
 // (/Zs is for syntax-only)
@@ -256,7 +257,8 @@
 // Xclang: "hellocc1"
 
 // We support -m32 and -m64.
-// RUN: %clang_cl /Zs /WX -m32 -m64 -- %s
+// RUN: %clang_cl /Zs /WX -m32 -m64 -### -- 2>&1 %s | FileCheck -check-prefix=MFLAGS %s
+// MFLAGS-NOT: argument unused during compilation
 
 // Use -fno-rtti by default.
 // RUN: %clang_cl /c -### -- %s 2>&1 | FileCheck -check-prefix=NoRTTI %s
