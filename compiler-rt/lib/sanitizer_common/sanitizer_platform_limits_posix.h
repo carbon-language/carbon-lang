@@ -279,12 +279,12 @@ namespace __sanitizer {
     char *pw_passwd;
     int pw_uid;
     int pw_gid;
-#if !SANITIZER_ANDROID
-    char *pw_gecos;
-#endif
 #if SANITIZER_MAC
     long pw_change;
     char *pw_class;
+#endif
+#if !SANITIZER_ANDROID
+    char *pw_gecos;
 #endif
     char *pw_dir;
     char *pw_shell;
