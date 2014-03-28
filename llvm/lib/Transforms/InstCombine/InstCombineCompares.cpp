@@ -3008,20 +3008,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     // icmp X, X+Cst
     if (match(Op1, m_Add(m_Value(X), m_ConstantInt(Cst))) && Op0 == X)
       return FoldICmpAddOpCst(I, X, Cst, I.getSwappedPredicate());
-
-    ConstantInt *Cst2;
-    if (I.isSigned() &&
-        match(Op1, m_ConstantInt(Cst)) &&
-        match(Op0, m_Add(m_Value(X), m_ConstantInt(Cst2))) &&
-        cast<BinaryOperator>(Op0)->hasNoSignedWrap()) {
-      // icmp X+Cst2, Cst --> icmp X, Cst-Cst2
-      // iff Cst-Cst2 does not overflow
-      bool Overflow;
-      APInt NewCst = Cst->getValue().ssub_ov(Cst2->getValue(), Overflow);
-      if (!Overflow)
-        return new ICmpInst(I.getPredicate(), X,
-                            ConstantInt::get(Cst->getType(), NewCst));
-    }
   }
   return Changed ? &I : 0;
 }

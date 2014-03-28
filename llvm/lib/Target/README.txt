@@ -930,6 +930,18 @@ optimized with "clang -emit-llvm-bc | opt -std-compile-opts".
 
 //===---------------------------------------------------------------------===//
 
+int g(int x) { return (x - 10) < 0; }
+Should combine to "x <= 9" (the sub has nsw).  Currently not
+optimized with "clang -emit-llvm-bc | opt -std-compile-opts".
+
+//===---------------------------------------------------------------------===//
+
+int g(int x) { return (x + 10) < 0; }
+Should combine to "x < -10" (the add has nsw).  Currently not
+optimized with "clang -emit-llvm-bc | opt -std-compile-opts".
+
+//===---------------------------------------------------------------------===//
+
 int f(int i, int j) { return i < j + 1; }
 int g(int i, int j) { return j > i - 1; }
 Should combine to "i <= j" (the add/sub has nsw).  Currently not
