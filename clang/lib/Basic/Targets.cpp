@@ -3707,19 +3707,29 @@ class ARMTargetInfo : public TargetInfo {
         T.getOS() != llvm::Triple::Bitrig)
       return false;
     StringRef ArchName = T.getArchName();
-    if (T.getArch() == llvm::Triple::arm) {
-      if (!ArchName.startswith("armv"))
+    if (T.getArch() == llvm::Triple::arm ||
+        T.getArch() == llvm::Triple::armeb) {
+      StringRef VersionStr;
+      if (ArchName.startswith("armv"))
+        VersionStr = ArchName.substr(4);
+      else if (ArchName.startswith("armebv"))
+        VersionStr = ArchName.substr(6);
+      else
         return false;
-      StringRef VersionStr = ArchName.substr(4);
       unsigned Version;
       if (VersionStr.getAsInteger(10, Version))
         return false;
       return Version >= 6;
     }
-    assert(T.getArch() == llvm::Triple::thumb);
-    if (!ArchName.startswith("thumbv"))
+    assert(T.getArch() == llvm::Triple::thumb ||
+           T.getArch() == llvm::Triple::thumbeb);
+    StringRef VersionStr;
+    if (ArchName.startswith("thumbv"))
+      VersionStr = ArchName.substr(6);
+    else if (ArchName.startswith("thumbebv"))
+      VersionStr = ArchName.substr(8);
+    else
       return false;
-    StringRef VersionStr = ArchName.substr(6);
     unsigned Version;
     if (VersionStr.getAsInteger(10, Version))
       return false;
@@ -3753,17 +3763,27 @@ class ARMTargetInfo : public TargetInfo {
       // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
       // so set preferred for small types to 32.
       if (T.isOSBinFormatMachO())
-        DescriptionString = "e-m:o-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
-                            "v128:64:128-a:0:32-n32-S64";
+        DescriptionString = BigEndian ?
+                              "E-m:o-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
+                              "v128:64:128-a:0:32-n32-S64" :
+                              "e-m:o-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
+                              "v128:64:128-a:0:32-n32-S64";
       else
-        DescriptionString = "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
-                            "v128:64:128-a:0:32-n32-S64";
+        DescriptionString = BigEndian ?
+                              "E-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
+                              "v128:64:128-a:0:32-n32-S64" :
+                              "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
+                              "v128:64:128-a:0:32-n32-S64";
 
     } else {
       if (T.isOSBinFormatMachO())
-        DescriptionString = "e-m:o-p:32:32-i64:64-v128:64:128-n32-S64";
+        DescriptionString = BigEndian ?
+                              "E-m:o-p:32:32-i64:64-v128:64:128-n32-S64" :
+                              "e-m:o-p:32:32-i64:64-v128:64:128-n32-S64";
       else
-        DescriptionString = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64";
+        DescriptionString = BigEndian ?
+                              "E-m:e-p:32:32-i64:64-v128:64:128-n32-S64" :
+                              "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64";
     }
 
     // FIXME: Enumerated types are variable width in straight AAPCS.
@@ -3798,17 +3818,25 @@ class ARMTargetInfo : public TargetInfo {
       // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
       // so set preferred for small types to 32.
       if (T.isOSBinFormatMachO())
-        DescriptionString = "e-m:o-p:32:32-i1:8:32-i8:8:32-i16:16:32-f64:32:64"
-                            "-v64:32:64-v128:32:128-a:0:32-n32-S32";
+        DescriptionString = BigEndian ?
+            "E-m:o-p:32:32-i1:8:32-i8:8:32-i16:16:32-f64:32:64"
+            "-v64:32:64-v128:32:128-a:0:32-n32-S32" :
+            "e-m:o-p:32:32-i1:8:32-i8:8:32-i16:16:32-f64:32:64"
+            "-v64:32:64-v128:32:128-a:0:32-n32-S32";
       else
-        DescriptionString = "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-f64:32:64"
-                            "-v64:32:64-v128:32:128-a:0:32-n32-S32";
+        DescriptionString = BigEndian ?
+            "E-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-f64:32:64"
+            "-v64:32:64-v128:32:128-a:0:32-n32-S32" :
+            "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-f64:32:64"
+            "-v64:32:64-v128:32:128-a:0:32-n32-S32";
     } else {
       if (T.isOSBinFormatMachO())
-        DescriptionString =
+        DescriptionString = BigEndian ?
+            "E-m:o-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32" :
             "e-m:o-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32";
       else
-        DescriptionString =
+        DescriptionString = BigEndian ?
+            "E-m:e-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32" :
             "e-m:e-p:32:32-f64:32:64-v64:32:64-v128:32:128-a:0:32-n32-S32";
     }
 
@@ -3816,10 +3844,11 @@ class ARMTargetInfo : public TargetInfo {
   }
 
 public:
-  ARMTargetInfo(const llvm::Triple &Triple)
+  ARMTargetInfo(const llvm::Triple &Triple, bool IsBigEndian)
       : TargetInfo(Triple), CPU("arm1136j-s"), FPMath(FP_Default),
         IsAAPCS(true) {
-    BigEndian = false;
+    BigEndian = IsBigEndian;
+
     switch (getTriple().getOS()) {
     case llvm::Triple::NetBSD:
       PtrDiffType = SignedLong;
@@ -3906,7 +3935,9 @@ public:
                // Enable the hwdiv extension for all v8a AArch32 cores by
                // default.
                ArchName == "armv8a" || ArchName == "armv8" ||
-               ArchName == "thumbv8a" || ArchName == "thumbv8") {
+               ArchName == "armebv8a" || ArchName == "armebv8" ||
+               ArchName == "thumbv8a" || ArchName == "thumbv8" ||
+               ArchName == "thumbebv8a" || ArchName == "thumbebv8") {
       Features["hwdiv"] = true;
       Features["hwdiv-arm"] = true;
     } else if (CPU == "cortex-m3" || CPU == "cortex-m4") {
@@ -4027,7 +4058,6 @@ public:
     Builder.defineMacro("__arm__");
 
     // Target properties.
-    Builder.defineMacro("__ARMEL__");
     Builder.defineMacro("__REGISTER_PREFIX__", "");
 
     StringRef CPUArch = getCPUDefineSuffix(CPU);
@@ -4299,11 +4329,34 @@ const Builtin::Info ARMTargetInfo::BuiltinInfo[] = {
                                               ALL_LANGUAGES },
 #include "clang/Basic/BuiltinsARM.def"
 };
+
+class ARMleTargetInfo : public ARMTargetInfo {
+public:
+  ARMleTargetInfo(const llvm::Triple &Triple)
+    : ARMTargetInfo(Triple, false) { }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    Builder.defineMacro("__ARMEL__");
+    ARMTargetInfo::getTargetDefines(Opts, Builder);
+  }
+};
+
+class ARMbeTargetInfo : public ARMTargetInfo {
+public:
+  ARMbeTargetInfo(const llvm::Triple &Triple)
+    : ARMTargetInfo(Triple, true) { }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    Builder.defineMacro("__ARMEB__");
+    Builder.defineMacro("__ARM_BIG_ENDIAN");
+    ARMTargetInfo::getTargetDefines(Opts, Builder);
+  }
+};
 } // end anonymous namespace.
 
 namespace {
 class DarwinARMTargetInfo :
-  public DarwinTargetInfo<ARMTargetInfo> {
+  public DarwinTargetInfo<ARMleTargetInfo> {
 protected:
   void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                     MacroBuilder &Builder) const override {
@@ -4312,10 +4365,10 @@ protected:
 
 public:
   DarwinARMTargetInfo(const llvm::Triple &Triple)
-      : DarwinTargetInfo<ARMTargetInfo>(Triple) {
+      : DarwinTargetInfo<ARMleTargetInfo>(Triple) {
     HasAlignMac68kSupport = true;
     // iOS always has 64-bit atomic instructions.
-    // FIXME: This should be based off of the target features in ARMTargetInfo.
+    // FIXME: This should be based off of the target features in ARMleTargetInfo.
     MaxAtomicInlineWidth = 64;
 
     // Darwin on iOS uses a variant of the ARM C++ ABI.
@@ -5677,21 +5730,45 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
 
     switch (os) {
     case llvm::Triple::Linux:
-      return new LinuxTargetInfo<ARMTargetInfo>(Triple);
+      return new LinuxTargetInfo<ARMleTargetInfo>(Triple);
     case llvm::Triple::FreeBSD:
-      return new FreeBSDTargetInfo<ARMTargetInfo>(Triple);
+      return new FreeBSDTargetInfo<ARMleTargetInfo>(Triple);
     case llvm::Triple::NetBSD:
-      return new NetBSDTargetInfo<ARMTargetInfo>(Triple);
+      return new NetBSDTargetInfo<ARMleTargetInfo>(Triple);
     case llvm::Triple::OpenBSD:
-      return new OpenBSDTargetInfo<ARMTargetInfo>(Triple);
+      return new OpenBSDTargetInfo<ARMleTargetInfo>(Triple);
     case llvm::Triple::Bitrig:
-      return new BitrigTargetInfo<ARMTargetInfo>(Triple);
+      return new BitrigTargetInfo<ARMleTargetInfo>(Triple);
     case llvm::Triple::RTEMS:
-      return new RTEMSTargetInfo<ARMTargetInfo>(Triple);
+      return new RTEMSTargetInfo<ARMleTargetInfo>(Triple);
     case llvm::Triple::NaCl:
-      return new NaClTargetInfo<ARMTargetInfo>(Triple);
+      return new NaClTargetInfo<ARMleTargetInfo>(Triple);
     default:
-      return new ARMTargetInfo(Triple);
+      return new ARMleTargetInfo(Triple);
+    }
+
+  case llvm::Triple::armeb:
+  case llvm::Triple::thumbeb:
+    if (Triple.isOSDarwin())
+      return new DarwinARMTargetInfo(Triple);
+
+    switch (os) {
+    case llvm::Triple::Linux:
+      return new LinuxTargetInfo<ARMbeTargetInfo>(Triple);
+    case llvm::Triple::FreeBSD:
+      return new FreeBSDTargetInfo<ARMbeTargetInfo>(Triple);
+    case llvm::Triple::NetBSD:
+      return new NetBSDTargetInfo<ARMbeTargetInfo>(Triple);
+    case llvm::Triple::OpenBSD:
+      return new OpenBSDTargetInfo<ARMbeTargetInfo>(Triple);
+    case llvm::Triple::Bitrig:
+      return new BitrigTargetInfo<ARMbeTargetInfo>(Triple);
+    case llvm::Triple::RTEMS:
+      return new RTEMSTargetInfo<ARMbeTargetInfo>(Triple);
+    case llvm::Triple::NaCl:
+      return new NaClTargetInfo<ARMbeTargetInfo>(Triple);
+    default:
+      return new ARMbeTargetInfo(Triple);
     }
 
   case llvm::Triple::msp430:

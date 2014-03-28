@@ -303,7 +303,9 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   if (BuiltinID >= Builtin::FirstTSBuiltin) {
     switch (Context.getTargetInfo().getTriple().getArch()) {
       case llvm::Triple::arm:
+      case llvm::Triple::armeb:
       case llvm::Triple::thumb:
+      case llvm::Triple::thumbeb:
         if (CheckARMBuiltinFunctionCall(BuiltinID, TheCall))
           return ExprError();
         break;

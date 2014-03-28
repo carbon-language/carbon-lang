@@ -472,6 +472,7 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
   case llvm::Triple::arm:
+  case llvm::Triple::armeb:
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
     if (Triple.isOSDarwin())
@@ -1269,7 +1270,9 @@ static std::string getCPUName(const ArgList &Args, const llvm::Triple &T) {
     return getAArch64TargetCPU(Args, T);
 
   case llvm::Triple::arm:
+  case llvm::Triple::armeb:
   case llvm::Triple::thumb:
+  case llvm::Triple::thumbeb:
     return arm::getARMTargetCPU(Args, T);
 
   case llvm::Triple::mips:
@@ -1478,7 +1481,9 @@ static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     break;
 
   case llvm::Triple::arm:
+  case llvm::Triple::armeb:
   case llvm::Triple::thumb:
+  case llvm::Triple::thumbeb:
     getARMTargetFeatures(D, Triple, Args, Features, ForAS);
     break;
 
@@ -1770,7 +1775,8 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
 
 // Until ARM libraries are build separately, we have them all in one library
 static StringRef getArchNameForCompilerRTLib(const ToolChain &TC) {
-  if (TC.getArch() == llvm::Triple::arm)
+  if (TC.getArch() == llvm::Triple::arm ||
+      TC.getArch() == llvm::Triple::armeb)
     return "arm";
   else
     return TC.getArchName();
@@ -2260,7 +2266,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (getToolChain().getTriple().getEnvironment() == llvm::Triple::Android) {
     switch (getToolChain().getTriple().getArch()) {
     case llvm::Triple::arm:
+    case llvm::Triple::armeb:
     case llvm::Triple::thumb:
+    case llvm::Triple::thumbeb:
     case llvm::Triple::mips:
     case llvm::Triple::mipsel:
     case llvm::Triple::mips64:
@@ -2637,7 +2645,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     break;
 
   case llvm::Triple::arm:
+  case llvm::Triple::armeb:
   case llvm::Triple::thumb:
+  case llvm::Triple::thumbeb:
     AddARMTargetArgs(Args, CmdArgs, KernelOrKext);
     break;
 
@@ -4770,17 +4780,29 @@ const char *arm::getARMCPUForMArch(const ArgList &Args,
     .Cases("armv6m", "armv6-m", "cortex-m0")
     .Case("thumbv6m", "cortex-m0")
     .Cases("armv7", "armv7a", "armv7-a", "cortex-a8")
+    .Cases("armebv7", "armebv7a", "armebv7-a", "cortex-a8")
     .Cases("thumbv7", "thumbv7a", "cortex-a8")
+    .Cases("thumbebv7", "thumbebv7a", "cortex-a8")
     .Cases("armv7l", "armv7-l", "cortex-a8")
+    .Cases("armebv7l", "armebv7-l", "cortex-a8")
     .Cases("armv7s", "armv7-s", "swift")
+    .Cases("armebv7s", "armebv7-s", "swift")
     .Cases("armv7r", "armv7-r", "cortex-r4")
+    .Cases("armebv7r", "armebv7-r", "cortex-r4")
     .Case("thumbv7r", "cortex-r4")
+    .Case("thumbebv7r", "cortex-r4")
     .Cases("armv7m", "armv7-m", "cortex-m3")
+    .Cases("armebv7m", "armebv7-m", "cortex-m3")
     .Case("thumbv7m", "cortex-m3")
+    .Case("thumbebv7m", "cortex-m3")
     .Cases("armv7em", "armv7e-m", "cortex-m4")
+    .Cases("armebv7em", "armebv7e-m", "cortex-m4")
     .Cases("thumbv7em", "thumbv7e-m", "cortex-m4")
+    .Cases("thumbebv7em", "thumbebv7e-m", "cortex-m4")
     .Cases("armv8", "armv8a", "armv8-a", "cortex-a53")
+    .Cases("armebv8", "armebv8a", "armebv8-a", "cortex-a53")
     .Cases("thumbv8", "thumbv8a", "cortex-a53")
+    .Cases("thumbebv8", "thumbebv8a", "cortex-a53")
     .Case("ep9312", "ep9312")
     .Case("iwmmxt", "iwmmxt")
     .Case("xscale", "xscale")
@@ -6027,7 +6049,9 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
     addAssemblerKPIC(Args, CmdArgs);
   } else if (getToolChain().getArch() == llvm::Triple::arm ||
-             getToolChain().getArch() == llvm::Triple::thumb) {
+             getToolChain().getArch() == llvm::Triple::armeb ||
+             getToolChain().getArch() == llvm::Triple::thumb ||
+             getToolChain().getArch() == llvm::Triple::thumbeb) {
     const Driver &D = getToolChain().getDriver();
     const llvm::Triple &Triple = getToolChain().getTriple();
     StringRef FloatABI = arm::getARMFloatABI(D, Args, Triple);
@@ -6273,7 +6297,9 @@ void netbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("--32");
     break;
   case llvm::Triple::arm:
-  case llvm::Triple::thumb: {
+  case llvm::Triple::armeb:
+  case llvm::Triple::thumb:
+  case llvm::Triple::thumbeb: {
     std::string MArch(arm::getARMTargetCPU(Args, getToolChain().getTriple()));
     CmdArgs.push_back(Args.MakeArgString("-mcpu=" + MArch));
     break;
@@ -6367,7 +6393,9 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("elf_i386");
     break;
   case llvm::Triple::arm:
+  case llvm::Triple::armeb:
   case llvm::Triple::thumb:
+  case llvm::Triple::thumbeb:
     CmdArgs.push_back("-m");
     switch (getToolChain().getTriple().getEnvironment()) {
     case llvm::Triple::EABI:
@@ -6542,11 +6570,13 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-64");
     CmdArgs.push_back("-Av9a");
     NeedsKPIC = true;
-  } else if (getToolChain().getArch() == llvm::Triple::arm) {
+  } else if (getToolChain().getArch() == llvm::Triple::arm ||
+             getToolChain().getArch() == llvm::Triple::armeb) {
     StringRef MArch = getToolChain().getArchName();
     if (MArch == "armv7" || MArch == "armv7a" || MArch == "armv7-a")
       CmdArgs.push_back("-mfpu=neon");
-    if (MArch == "armv8" || MArch == "armv8a" || MArch == "armv8-a")
+    if (MArch == "armv8" || MArch == "armv8a" || MArch == "armv8-a" ||
+        MArch == "armebv8" || MArch == "armebv8a" || MArch == "armebv8-a")
       CmdArgs.push_back("-mfpu=crypto-neon-fp-armv8");
 
     StringRef ARMFloatABI = tools::arm::getARMFloatABI(
@@ -6693,6 +6723,12 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
       return "/lib/ld-linux-armhf.so.3";
     else
       return "/lib/ld-linux.so.3";
+  } else if (ToolChain.getArch() == llvm::Triple::armeb ||
+             ToolChain.getArch() == llvm::Triple::thumbeb) {
+    if (ToolChain.getTriple().getEnvironment() == llvm::Triple::GNUEABIHF)
+      return "/lib/ld-linux-armhf.so.3";        /* TODO: check which dynamic linker name.  */
+    else
+      return "/lib/ld-linux.so.3";              /* TODO: check which dynamic linker name.  */
   } else if (ToolChain.getArch() == llvm::Triple::mips ||
              ToolChain.getArch() == llvm::Triple::mipsel)
     return "/lib/ld.so.1";
@@ -6784,6 +6820,9 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   else if (ToolChain.getArch() == llvm::Triple::arm
            ||  ToolChain.getArch() == llvm::Triple::thumb)
     CmdArgs.push_back("armelf_linux_eabi");
+  else if (ToolChain.getArch() == llvm::Triple::armeb
+           ||  ToolChain.getArch() == llvm::Triple::thumbeb)
+    CmdArgs.push_back("armebelf_linux_eabi"); /* TODO: check which NAME.  */
   else if (ToolChain.getArch() == llvm::Triple::ppc)
     CmdArgs.push_back("elf32ppclinux");
   else if (ToolChain.getArch() == llvm::Triple::ppc64)
@@ -6817,7 +6856,9 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (Args.hasArg(options::OPT_static)) {
     if (ToolChain.getArch() == llvm::Triple::arm ||
-        ToolChain.getArch() == llvm::Triple::thumb)
+        ToolChain.getArch() == llvm::Triple::armeb ||
+        ToolChain.getArch() == llvm::Triple::thumb ||
+        ToolChain.getArch() == llvm::Triple::thumbeb)
       CmdArgs.push_back("-Bstatic");
     else
       CmdArgs.push_back("-static");
@@ -6829,7 +6870,9 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   if (ToolChain.getArch() == llvm::Triple::arm ||
+      ToolChain.getArch() == llvm::Triple::armeb ||
       ToolChain.getArch() == llvm::Triple::thumb ||
+      ToolChain.getArch() == llvm::Triple::thumbeb ||
       (!Args.hasArg(options::OPT_static) &&
        !Args.hasArg(options::OPT_shared))) {
     CmdArgs.push_back("-dynamic-linker");

@@ -5806,7 +5806,9 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     return *(TheTargetCodeGenInfo = new AArch64TargetCodeGenInfo(Types));
 
   case llvm::Triple::arm:
+  case llvm::Triple::armeb:
   case llvm::Triple::thumb:
+  case llvm::Triple::thumbeb:
     {
       ARMABIInfo::ABIKind Kind = ARMABIInfo::AAPCS;
       if (strcmp(getTarget().getABI(), "apcs-gnu") == 0)
