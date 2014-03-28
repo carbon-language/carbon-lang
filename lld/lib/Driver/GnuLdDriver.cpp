@@ -32,7 +32,12 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 
+#include <cstring>
+#include <tuple>
+
 using namespace lld;
+
+using llvm::BumpPtrAllocator;
 
 namespace {
 
@@ -68,7 +73,48 @@ public:
   GnuLdOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable)){}
 };
 
+class DriverStringSaver : public llvm::cl::StringSaver {
+public:
+  DriverStringSaver(BumpPtrAllocator &alloc) : _alloc(alloc) {}
+
+  const char *SaveString(const char *s) override {
+    char *p = _alloc.Allocate<char>(strlen(s) + 1);
+    strcpy(p, s);
+    return p;
+  }
+
+private:
+  BumpPtrAllocator &_alloc;
+};
+
 } // anonymous namespace
+
+// If a command line option starts with "@", the driver reads its suffix as a
+// file, parse its contents as a list of command line options, and insert them
+// at the original @file position. If file cannot be read, @file is not expanded
+// and left unmodified. @file can appear in a response file, so it's a recursive
+// process.
+static std::tuple<int, const char **>
+maybeExpandResponseFiles(int argc, const char **argv, BumpPtrAllocator &alloc) {
+  // Expand response files.
+  SmallVector<const char *, 256> smallvec;
+  for (int i = 0; i < argc; ++i)
+    smallvec.push_back(argv[i]);
+  DriverStringSaver saver(alloc);
+  llvm::cl::ExpandResponseFiles(saver, llvm::cl::TokenizeGNUCommandLine, smallvec);
+
+  // Pack the results to a C-array.
+  argc = smallvec.size();
+  std::vector<const char *> result;
+  for (size_t i = 0, e = smallvec.size(); i < e; ++i)
+    result.push_back(smallvec[i]);
+  result.push_back(nullptr);  // terminate ARGV with NULL
+
+  // Allocate memory for the result and return it.
+  const char **copy = alloc.Allocate<const char *>(argc + 1);
+  std::copy(smallvec.begin(), smallvec.end(), copy);
+  return std::make_tuple(argc, copy);
+}
 
 // Get the Input file magic for creating appropriate InputGraph nodes.
 static error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
@@ -118,6 +164,8 @@ std::string ELFFileNode::errStr(error_code errc) {
 
 bool GnuLdDriver::linkELF(int argc, const char *argv[],
                           raw_ostream &diagnostics) {
+  BumpPtrAllocator alloc;
+  std::tie(argc, argv) = maybeExpandResponseFiles(argc, argv, alloc);
   std::unique_ptr<ELFLinkingContext> options;
   if (!parse(argc, argv, options, diagnostics))
     return false;
@@ -133,7 +181,6 @@ bool GnuLdDriver::linkELF(int argc, const char *argv[],
   if (options->allowLinkWithDynamicLibraries())
     options->registry().addSupportELFDynamicSharedObjects(
         options->useShlibUndefines(), options->targetHandler());
-
   return link(*options, diagnostics);
 }
 
