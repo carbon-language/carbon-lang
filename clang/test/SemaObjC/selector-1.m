@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify %s 
+// RUN: %clang_cc1  -Wselector-type-mismatch -verify %s 
 
 @interface I
 - (id) compare: (char) arg1; // expected-note {{method 'compare:' declared here}}
