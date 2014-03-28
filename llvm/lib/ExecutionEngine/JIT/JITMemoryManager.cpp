@@ -285,7 +285,21 @@ namespace {
   /// middle of emitting a function, and we don't know how large the function we
   /// are emitting is.
   class DefaultJITMemoryManager : public JITMemoryManager {
+  public:
+    /// DefaultCodeSlabSize - When we have to go map more memory, we allocate at
+    /// least this much unless more is requested. Currently, in 512k slabs.
+    static const size_t DefaultCodeSlabSize = 512 * 1024;
 
+    /// DefaultSlabSize - Allocate globals and stubs into slabs of 64K (probably
+    /// 16 pages) unless we get an allocation above SizeThreshold.
+    static const size_t DefaultSlabSize = 64 * 1024;
+
+    /// DefaultSizeThreshold - For any allocation larger than 16K (probably
+    /// 4 pages), we should allocate a separate slab to avoid wasted space at
+    /// the end of a normal slab.
+    static const size_t DefaultSizeThreshold = 16 * 1024;
+
+  private:
     // Whether to poison freed memory.
     bool PoisonMemory;
 
@@ -317,18 +331,6 @@ namespace {
     /// allocateNewSlab - Allocates a new MemoryBlock and remembers it as the
     /// last slab it allocated, so that subsequent allocations follow it.
     sys::MemoryBlock allocateNewSlab(size_t size);
-
-    /// DefaultCodeSlabSize - When we have to go map more memory, we allocate at
-    /// least this much unless more is requested.
-    static const size_t DefaultCodeSlabSize;
-
-    /// DefaultSlabSize - Allocate data into slabs of this size unless we get
-    /// an allocation above SizeThreshold.
-    static const size_t DefaultSlabSize;
-
-    /// DefaultSizeThreshold - For any allocation larger than this threshold, we
-    /// should allocate a separate slab.
-    static const size_t DefaultSizeThreshold;
 
     /// getPointerToNamedFunction - This method returns the address of the
     /// specified function by using the dlsym function call.
@@ -902,11 +904,6 @@ JITMemoryManager *JITMemoryManager::CreateDefaultMemManager() {
   return new DefaultJITMemoryManager();
 }
 
-// Allocate memory for code in 512K slabs.
-const size_t DefaultJITMemoryManager::DefaultCodeSlabSize = 512 * 1024;
-
-// Allocate globals and stubs in slabs of 64K.  (probably 16 pages)
-const size_t DefaultJITMemoryManager::DefaultSlabSize = 64 * 1024;
-
-// Waste at most 16K at the end of each bump slab.  (probably 4 pages)
-const size_t DefaultJITMemoryManager::DefaultSizeThreshold = 16 * 1024;
+const size_t DefaultJITMemoryManager::DefaultCodeSlabSize;
+const size_t DefaultJITMemoryManager::DefaultSlabSize;
+const size_t DefaultJITMemoryManager::DefaultSizeThreshold;
