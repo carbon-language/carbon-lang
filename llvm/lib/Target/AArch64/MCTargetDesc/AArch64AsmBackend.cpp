@@ -43,7 +43,7 @@ public:
   virtual void processFixupValue(const MCAssembler &Asm,
                                  const MCAsmLayout &Layout,
                                  const MCFixup &Fixup, const MCFragment *DF,
-                                 MCValue &Target, uint64_t &Value,
+                                 const MCValue &Target, uint64_t &Value,
                                  bool &IsResolved);
 };
 } // end anonymous namespace
@@ -52,8 +52,8 @@ void AArch64AsmBackend::processFixupValue(const MCAssembler &Asm,
                                           const MCAsmLayout &Layout,
                                           const MCFixup &Fixup,
                                           const MCFragment *DF,
-                                          MCValue &Target, uint64_t &Value,
-                                          bool &IsResolved) {
+                                          const MCValue &Target,
+                                          uint64_t &Value, bool &IsResolved) {
   // The ADRP instruction adds some multiple of 0x1000 to the current PC &
   // ~0xfff. This means that the required offset to reach a symbol can vary by
   // up to one step depending on where the ADRP is in memory. For example:

@@ -254,7 +254,7 @@ void MipsAsmBackend::processFixupValue(const MCAssembler &Asm,
                                        const MCAsmLayout &Layout,
                                        const MCFixup &Fixup,
                                        const MCFragment *DF,
-                                       MCValue &Target,
+                                       const MCValue &Target,
                                        uint64_t &Value,
                                        bool &IsResolved) {
   // At this point we'll ignore the value returned by adjustFixupValue as

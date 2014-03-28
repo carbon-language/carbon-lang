@@ -90,7 +90,7 @@ public:
   virtual void processFixupValue(const MCAssembler &Asm,
                                  const MCAsmLayout &Layout,
                                  const MCFixup &Fixup, const MCFragment *DF,
-                                 MCValue &Target, uint64_t &Value,
+                                 const MCValue &Target, uint64_t &Value,
                                  bool &IsResolved) {}
 
   /// applyFixup - Apply the \p Value for given \p Fixup into the provided

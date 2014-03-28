@@ -83,7 +83,8 @@ public:
 
   void processFixupValue(const MCAssembler &Asm, const MCAsmLayout &Layout,
                          const MCFixup &Fixup, const MCFragment *DF,
-                         MCValue &Target, uint64_t &Value, bool &IsResolved);
+                         const MCValue &Target, uint64_t &Value,
+                         bool &IsResolved);
 
 }; // class MipsAsmBackend
 

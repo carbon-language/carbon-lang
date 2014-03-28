@@ -156,7 +156,7 @@ public:
   /// if necessary.
   void processFixupValue(const MCAssembler &Asm, const MCAsmLayout &Layout,
                          const MCFixup &Fixup, const MCFragment *DF,
-                         MCValue &Target, uint64_t &Value,
+                         const MCValue &Target, uint64_t &Value,
                          bool &IsResolved) override;
 
 
@@ -592,7 +592,7 @@ void ARMAsmBackend::processFixupValue(const MCAssembler &Asm,
                                       const MCAsmLayout &Layout,
                                       const MCFixup &Fixup,
                                       const MCFragment *DF,
-                                      MCValue &Target, uint64_t &Value,
+                                      const MCValue &Target, uint64_t &Value,
                                       bool &IsResolved) {
   const MCSymbolRefExpr *A = Target.getSymA();
   // Some fixups to thumb function symbols need the low bit (thumb bit)
