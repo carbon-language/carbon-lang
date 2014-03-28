@@ -212,6 +212,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool parseDataDirective(unsigned Size, SMLoc L);
   bool parseDirectiveGpWord();
+  bool parseDirectiveGpdWord();
 
   MCSymbolRefExpr::VariantKind getVariantKind(StringRef Symbol);
 
@@ -2715,6 +2716,22 @@ bool MipsAsmParser::parseDirectiveGpWord() {
   return false;
 }
 
+/// parseDirectiveGpdWord
+///  ::= .gpdword local_sym
+bool MipsAsmParser::parseDirectiveGpdWord() {
+  const MCExpr *Value;
+  // EmitGPRel64Value requires an expression, so we are using base class
+  // method to evaluate the expression.
+  if (getParser().parseExpression(Value))
+    return true;
+  getParser().getStreamer().EmitGPRel64Value(Value);
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return Error(getLexer().getLoc(), "unexpected token in directive");
+  Parser.Lex(); // Eat EndOfStatement token.
+  return false;
+}
+
 bool MipsAsmParser::parseDirectiveOption() {
   // Get the option token.
   AsmToken Tok = Parser.getTok();
@@ -2798,8 +2815,12 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   }
 
   if (IDVal == ".gpword") {
-    // Ignore this directive for now.
     parseDirectiveGpWord();
+    return false;
+  }
+
+  if (IDVal == ".gpdword") {
+    parseDirectiveGpdWord();
     return false;
   }
 

@@ -73,10 +73,10 @@ $tmp0:
 	.section	.rodata,"a",@progbits
 	.align	3
 $JTI0_0:
-//	.gpdword	($BB0_3)
-//	.gpdword	($BB0_4)
-//	.gpdword	($BB0_5)
-//	.gpdword	($BB0_6)
+	.gpdword	($BB0_3)
+	.gpdword	($BB0_4)
+	.gpdword	($BB0_5)
+	.gpdword	($BB0_6)
 
 
 	.text
