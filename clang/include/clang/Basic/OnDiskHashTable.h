@@ -70,6 +70,45 @@ inline void Pad(raw_ostream& Out, unsigned A) {
     Emit8(Out, 0);
 }
 
+inline uint16_t ReadUnalignedLE16(const unsigned char *&Data) {
+  uint16_t V = ((uint16_t)Data[0]) |
+               ((uint16_t)Data[1] <<  8);
+  Data += 2;
+  return V;
+}
+
+inline uint32_t ReadUnalignedLE32(const unsigned char *&Data) {
+  uint32_t V = ((uint32_t)Data[0])  |
+               ((uint32_t)Data[1] << 8)  |
+               ((uint32_t)Data[2] << 16) |
+               ((uint32_t)Data[3] << 24);
+  Data += 4;
+  return V;
+}
+
+inline uint64_t ReadUnalignedLE64(const unsigned char *&Data) {
+  uint64_t V = ((uint64_t)Data[0])  |
+    ((uint64_t)Data[1] << 8)  |
+    ((uint64_t)Data[2] << 16) |
+    ((uint64_t)Data[3] << 24) |
+    ((uint64_t)Data[4] << 32) |
+    ((uint64_t)Data[5] << 40) |
+    ((uint64_t)Data[6] << 48) |
+    ((uint64_t)Data[7] << 56);
+  Data += 8;
+  return V;
+}
+
+inline uint32_t ReadLE32(const unsigned char *&Data) {
+  // Hosts that directly support little-endian 32-bit loads can just
+  // use them.  Big-endian hosts need a bswap.
+  uint32_t V = *((const uint32_t*)Data);
+  if (llvm::sys::IsBigEndianHost)
+    V = llvm::ByteSwap_32(V);
+  Data += 4;
+  return V;
+}
+
 } // end namespace io
 
 template<typename Info>
@@ -247,7 +286,7 @@ public:
     if (!InfoPtr)
       InfoPtr = &InfoObj;
 
-    using namespace llvm::support;
+    using namespace io;
     const internal_key_type& iKey = InfoObj.GetInternalKey(eKey);
     unsigned key_hash = InfoObj.ComputeHash(iKey);
 
@@ -255,17 +294,17 @@ public:
     unsigned idx = key_hash & (NumBuckets - 1);
     const unsigned char* Bucket = Buckets + sizeof(uint32_t)*idx;
 
-    unsigned offset = endian::readNext<uint32_t, little, aligned>(Bucket);
+    unsigned offset = ReadLE32(Bucket);
     if (offset == 0) return iterator(); // Empty bucket.
     const unsigned char* Items = Base + offset;
 
     // 'Items' starts with a 16-bit unsigned integer representing the
     // number of items in this bucket.
-    unsigned len = endian::readNext<uint16_t, little, unaligned>(Items);
+    unsigned len = ReadUnalignedLE16(Items);
 
     for (unsigned i = 0; i < len; ++i) {
       // Read the hash.
-      uint32_t item_hash = endian::readNext<uint32_t, little, unaligned>(Items);
+      uint32_t item_hash = ReadUnalignedLE32(Items);
 
       // Determine the length of the key and the data.
       const std::pair<unsigned, unsigned>& L = Info::ReadKeyDataLength(Items);
@@ -320,12 +359,10 @@ public:
     }
 
     key_iterator& operator++() {  // Preincrement
-      using namespace llvm::support;
       if (!NumItemsInBucketLeft) {
         // 'Items' starts with a 16-bit unsigned integer representing the
         // number of items in this bucket.
-        NumItemsInBucketLeft =
-            endian::readNext<uint16_t, little, unaligned>(Ptr);
+        NumItemsInBucketLeft = io::ReadUnalignedLE16(Ptr);
       }
       Ptr += 4; // Skip the hash.
       // Determine the length of the key and the data.
@@ -386,12 +423,10 @@ public:
     }
 
     data_iterator& operator++() {  // Preincrement
-      using namespace llvm::support;
       if (!NumItemsInBucketLeft) {
         // 'Items' starts with a 16-bit unsigned integer representing the
         // number of items in this bucket.
-        NumItemsInBucketLeft =
-            endian::readNext<uint16_t, little, unaligned>(Ptr);
+        NumItemsInBucketLeft = io::ReadUnalignedLE16(Ptr);
       }
       Ptr += 4; // Skip the hash.
       // Determine the length of the key and the data.
@@ -433,13 +468,13 @@ public:
   static OnDiskChainedHashTable* Create(const unsigned char* buckets,
                                         const unsigned char* const base,
                                         const Info &InfoObj = Info()) {
-    using namespace llvm::support;
+    using namespace io;
     assert(buckets > base);
     assert((reinterpret_cast<uintptr_t>(buckets) & 0x3) == 0 &&
            "buckets should be 4-byte aligned.");
 
-    unsigned numBuckets = endian::readNext<uint32_t, little, aligned>(buckets);
-    unsigned numEntries = endian::readNext<uint32_t, little, aligned>(buckets);
+    unsigned numBuckets = ReadLE32(buckets);
+    unsigned numEntries = ReadLE32(buckets);
     return new OnDiskChainedHashTable<Info>(numBuckets, numEntries, buckets,
                                             base, InfoObj);
   }
