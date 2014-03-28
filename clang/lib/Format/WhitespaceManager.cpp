@@ -193,6 +193,10 @@ void WhitespaceManager::alignTrailingComments(unsigned Start, unsigned End,
     if (Changes[i].IsTrailingComment) {
       assert(Column >= Changes[i].StartOfTokenColumn);
       Changes[i].Spaces += Column - Changes[i].StartOfTokenColumn;
+      if (i + 1 != End) {
+        Changes[i + 1].PreviousEndOfTokenColumn +=
+            Column - Changes[i].StartOfTokenColumn;
+      }
       Changes[i].StartOfTokenColumn = Column;
     }
   }

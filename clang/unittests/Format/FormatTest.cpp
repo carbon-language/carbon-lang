@@ -946,6 +946,11 @@ TEST_F(FormatTest, UnderstandsBlockComments) {
                "         /* parameter 3 */ aaaaaa,\n"
                "         /* parameter 4 */ aaaaaa);",
                NoBinPacking);
+
+  // Aligning block comments in macros.
+  verifyGoogleFormat("#define A        \\\n"
+                     "  int i;   /*a*/ \\\n"
+                     "  int jjj; /*b*/");
 }
 
 TEST_F(FormatTest, AlignsBlockComments) {
