@@ -242,7 +242,7 @@ a module, one must write a ``module.modulemap`` file for that library. The
 and is written in the module map language described below.
 
 .. note::
-    For compatibility with previous releases, if a module map file named ``module.modulemap`` is not found, Clang will also search for a file named ``module.map``. This behavior is deprecated and we plan to eventually remove it.
+    For compatibility with previous releases, if a module map file named ``module.modulemap`` is not found, Clang will also search for a file named ``module.map``. This behavior is deprecated and we plan to eventually remove it.1
 
 As an example, the module map file for the C standard library might look a bit like this:
 
@@ -729,6 +729,63 @@ Attributes are used in a number of places in the grammar to describe specific be
     '[' *identifier* ']'
 
 Any *identifier* can be used as an attribute, and each declaration specifies what attributes can be applied to it.
+
+Private Module Map Files
+------------------------
+Module map files are typically named ``module.modulemap`` and live
+either alongside the headers they describe or in a parent directory of
+the headers they describe. These module maps typically describe all of
+the API for the library.
+
+However, in some cases, the presence or absence of particular headers
+is used to distinguish between the "public" and "private" APIs of a
+particular library. For example, a library may contain the headers
+``Foo.h`` and ``Foo_Private.h``, providing public and private APIs,
+respectively. Additionally, ``Foo_Private.h`` may only be available on
+some versions of library, and absent in others. One cannot easily
+express this with a single module map file in the library:
+
+.. parsed-literal::
+
+  module Foo {
+    header "Foo.h"
+    
+    explicit module Private {
+      header "Foo_Private.h"
+    }
+  }
+
+
+because the header ``Foo_Private.h`` won't always be available. The
+module map file could be customized based on whether
+``Foo_Private.h``is available or not, but doing so requires custom
+build machinery.
+
+Private module map files, which are named ``module.private.modulemap``
+(or, for backward compatibility, ``module_private.map``), allow one to
+augment the primary module map file with an additional submodule. For
+example, we would split the module map file above into two module map
+files:
+
+.. parsed-literal::
+
+  /* module.modulemap */
+  module Foo {
+    header "Foo.h"
+  }
+  
+  /* module.private.modulemap */
+  explicit module Foo.Private {
+    header "Foo_Private.h"
+  }
+
+
+When a ``module.private.modulemap`` file is found alongside a
+``module.modulemap`` file, it is loaded after the ``module.modulemap``
+file. In our example library, the ``module.private.modulemap`` file
+would be available when ``Foo_Private.h`` is available, making it
+easier to split a library's public and private APIs along header
+boundaries.
 
 Modularizing a Platform
 =======================
