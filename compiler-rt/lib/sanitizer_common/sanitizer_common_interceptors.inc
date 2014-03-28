@@ -567,6 +567,20 @@ INTERCEPTOR(char *, asctime_r, __sanitizer_tm *tm, char *result) {
   }
   return res;
 }
+INTERCEPTOR(long, mktime, __sanitizer_tm *tm) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, mktime, tm);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, &tm->tm_sec, sizeof(tm->tm_sec));
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, &tm->tm_min, sizeof(tm->tm_min));
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, &tm->tm_hour, sizeof(tm->tm_hour));
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, &tm->tm_mday, sizeof(tm->tm_mday));
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, &tm->tm_mon, sizeof(tm->tm_mon));
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, &tm->tm_year, sizeof(tm->tm_year));
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, &tm->tm_isdst, sizeof(tm->tm_isdst));
+  long res = REAL(mktime)(tm);
+  if (res != -1) unpoison_tm(ctx, tm);
+  return res;
+}
 #define INIT_LOCALTIME_AND_FRIENDS        \
   COMMON_INTERCEPT_FUNCTION(localtime);   \
   COMMON_INTERCEPT_FUNCTION(localtime_r); \
@@ -575,7 +589,8 @@ INTERCEPTOR(char *, asctime_r, __sanitizer_tm *tm, char *result) {
   COMMON_INTERCEPT_FUNCTION(ctime);       \
   COMMON_INTERCEPT_FUNCTION(ctime_r);     \
   COMMON_INTERCEPT_FUNCTION(asctime);     \
-  COMMON_INTERCEPT_FUNCTION(asctime_r);
+  COMMON_INTERCEPT_FUNCTION(asctime_r);   \
+  COMMON_INTERCEPT_FUNCTION(mktime);
 #else
 #define INIT_LOCALTIME_AND_FRIENDS
 #endif  // SANITIZER_INTERCEPT_LOCALTIME_AND_FRIENDS
