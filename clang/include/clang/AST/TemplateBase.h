@@ -567,7 +567,8 @@ struct ASTTemplateArgumentListInfo {
 
     /// Force ASTTemplateArgumentListInfo to the right alignment
     /// for the following array of TemplateArgumentLocs.
-    void *Aligner;
+    llvm::AlignedCharArray<
+        llvm::AlignOf<TemplateArgumentLoc>::Alignment, 1> Aligner;
   };
 
   /// \brief Retrieve the template arguments
