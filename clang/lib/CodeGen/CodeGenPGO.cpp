@@ -814,6 +814,35 @@ namespace {
   };
 }
 
+static void emitRuntimeHook(CodeGenModule &CGM) {
+  constexpr const char *RuntimeVarName = "__llvm_profile_runtime";
+  constexpr const char *RuntimeUserName = "__llvm_profile_runtime_user";
+  if (CGM.getModule().getGlobalVariable(RuntimeVarName))
+    return;
+
+  // Declare the runtime hook.
+  llvm::LLVMContext &Ctx = CGM.getLLVMContext();
+  auto *Int32Ty = llvm::Type::getInt32Ty(Ctx);
+  auto *Var = new llvm::GlobalVariable(CGM.getModule(), Int32Ty, false,
+                                       llvm::GlobalValue::ExternalLinkage,
+                                       nullptr, RuntimeVarName);
+
+  // Make a function that uses it.
+  auto *User = llvm::Function::Create(llvm::FunctionType::get(Int32Ty, false),
+                                      llvm::GlobalValue::LinkOnceODRLinkage,
+                                      RuntimeUserName, &CGM.getModule());
+  User->addFnAttr(llvm::Attribute::NoInline);
+  if (CGM.getCodeGenOpts().DisableRedZone)
+    User->addFnAttr(llvm::Attribute::NoRedZone);
+  CGBuilderTy Builder(llvm::BasicBlock::Create(CGM.getLLVMContext(), "", User));
+  auto *Load = Builder.CreateLoad(Var);
+  Builder.CreateRet(Load);
+
+  // Create a use of the function.  Now the definition of the runtime variable
+  // should get pulled in, along with any static initializears.
+  CGM.addUsedGlobal(User);
+}
+
 void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
   bool InstrumentRegions = CGM.getCodeGenOpts().ProfileInstrGenerate;
   PGOProfileData *PGOData = CGM.getPGOData();
@@ -839,8 +868,10 @@ void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
   }
 
   mapRegionCounters(D);
-  if (InstrumentRegions)
+  if (InstrumentRegions) {
+    emitRuntimeHook(CGM);
     emitCounterVariables();
+  }
   if (PGOData) {
     loadRegionCounts(PGOData);
     computeRegionCounts(D);
