@@ -199,7 +199,7 @@ void ELFLinkingContext::createInternalFiles(
     std::vector<std::unique_ptr<File>> &files) const {
   std::unique_ptr<SimpleFile> file(
       new SimpleFile("<internal file for --defsym>"));
-  for (auto i : getAbsoluteSymbols()) {
+  for (auto &i : getAbsoluteSymbols()) {
     StringRef sym = i.first;
     uint64_t val = i.second;
     file->addAtom(*(new (_allocator) CommandLineAbsoluteAtom(*file, sym, val)));
