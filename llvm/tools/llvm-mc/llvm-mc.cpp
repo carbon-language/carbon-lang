@@ -384,8 +384,13 @@ int main(int argc, char **argv) {
   std::unique_ptr<MCAsmInfo> MAI(TheTarget->createMCAsmInfo(*MRI, TripleName));
   assert(MAI && "Unable to create target asm info!");
 
-  if (CompressDebugSections)
+  if (CompressDebugSections) {
+    if (!zlib::isAvailable()) {
+      errs() << ProgName << ": build tools with zlib to enable -compress-debug-sections";
+      return 1;
+    }
     MAI->setCompressDebugSections(true);
+  }
 
   // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
