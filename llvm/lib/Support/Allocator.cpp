@@ -24,11 +24,12 @@ namespace llvm {
 BumpPtrAllocator::BumpPtrAllocator(size_t size, size_t threshold,
                                    SlabAllocator &allocator)
     : SlabSize(size), SizeThreshold(std::min(size, threshold)),
-      Allocator(allocator), CurSlab(0), BytesAllocated(0) { }
+      Allocator(allocator), CurSlab(0), BytesAllocated(0), NumSlabs(0) {}
 
 BumpPtrAllocator::BumpPtrAllocator(size_t size, size_t threshold)
     : SlabSize(size), SizeThreshold(std::min(size, threshold)),
-      Allocator(DefaultSlabAllocator), CurSlab(0), BytesAllocated(0) { }
+      Allocator(DefaultSlabAllocator), CurSlab(0), BytesAllocated(0),
+      NumSlabs(0) {}
 
 BumpPtrAllocator::~BumpPtrAllocator() {
   DeallocateSlabs(CurSlab);
@@ -49,13 +50,18 @@ char *BumpPtrAllocator::AlignPtr(char *Ptr, size_t Alignment) {
 /// StartNewSlab - Allocate a new slab and move the bump pointers over into
 /// the new slab.  Modifies CurPtr and End.
 void BumpPtrAllocator::StartNewSlab() {
-  // If we allocated a big number of slabs already it's likely that we're going
-  // to allocate more. Increase slab size to reduce mallocs and possibly memory
-  // overhead. The factors are chosen conservatively to avoid overallocation.
-  if (BytesAllocated >= SlabSize * 128)
-    SlabSize *= 2;
+  ++NumSlabs;
+  // Scale the actual allocated slab size based on the number of slabs
+  // allocated. Every 128 slabs allocated, we double the allocated size to
+  // reduce allocation frequency, but saturate at multiplying the slab size by
+  // 2^30.
+  // FIXME: Currently, this count includes special slabs for objects above the
+  // size threshold. That will be fixed in a subsequent commit to make the
+  // growth even more predictable.
+  size_t AllocatedSlabSize =
+      SlabSize * (1 << std::min<size_t>(30, NumSlabs / 128));
 
-  MemSlab *NewSlab = Allocator.Allocate(SlabSize);
+  MemSlab *NewSlab = Allocator.Allocate(AllocatedSlabSize);
   NewSlab->NextPtr = CurSlab;
   CurSlab = NewSlab;
   CurPtr = (char*)(CurSlab + 1);
@@ -75,6 +81,7 @@ void BumpPtrAllocator::DeallocateSlabs(MemSlab *Slab) {
 #endif
     Allocator.Deallocate(Slab);
     Slab = NextSlab;
+    --NumSlabs;
   }
 }
 
@@ -118,6 +125,7 @@ void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
   // If Size is really big, allocate a separate slab for it.
   size_t PaddedSize = Size + sizeof(MemSlab) + Alignment - 1;
   if (PaddedSize > SizeThreshold) {
+    ++NumSlabs;
     MemSlab *NewSlab = Allocator.Allocate(PaddedSize);
 
     // Put the new slab after the current slab, since we are not allocating
@@ -138,14 +146,6 @@ void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
   assert(CurPtr <= End && "Unable to allocate memory!");
   __msan_allocated_memory(Ptr, Size);
   return Ptr;
-}
-
-unsigned BumpPtrAllocator::GetNumSlabs() const {
-  unsigned NumSlabs = 0;
-  for (MemSlab *Slab = CurSlab; Slab != 0; Slab = Slab->NextPtr) {
-    ++NumSlabs;
-  }
-  return NumSlabs;
 }
 
 size_t BumpPtrAllocator::getTotalMemory() const {

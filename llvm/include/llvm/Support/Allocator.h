@@ -132,6 +132,12 @@ class BumpPtrAllocator {
   /// Used so that we can compute how much space was wasted.
   size_t BytesAllocated;
 
+  /// \brief How many slabs we've allocated.
+  ///
+  /// Used to scale the size of each slab and reduce the number of allocations
+  /// for extremely heavy memory use scenarios.
+  size_t NumSlabs;
+
   /// \brief Aligns \c Ptr to \c Alignment bytes, rounding up.
   ///
   /// Alignment should be a power of two.  This method rounds up, so
@@ -179,7 +185,7 @@ public:
 
   void Deallocate(const void * /*Ptr*/) {}
 
-  unsigned GetNumSlabs() const;
+  size_t GetNumSlabs() const { return NumSlabs; }
 
   void PrintStats() const;
 
