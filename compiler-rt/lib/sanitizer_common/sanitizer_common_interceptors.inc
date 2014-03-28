@@ -1092,6 +1092,39 @@ INTERCEPTOR(int, fgetgrent_r, void *fp, void *pwbuf, char *buf, SIZE_T buflen,
 #define INIT_GETPWENT_R
 #endif
 
+#if SANITIZER_INTERCEPT_SETPWENT
+// The only thing these interceptors do is disable any nested interceptors.
+// These functions may open nss modules and call uninstrumented functions from
+// them, and we don't want things like strlen() to trigger.
+INTERCEPTOR(void, setpwent, int dummy) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, setpwent, dummy);
+  REAL(setpwent)(dummy);
+}
+INTERCEPTOR(void, endpwent, int dummy) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, endpwent, dummy);
+  REAL(endpwent)(dummy);
+}
+INTERCEPTOR(void, setgrent, int dummy) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, setgrent, dummy);
+  REAL(setgrent)(dummy);
+}
+INTERCEPTOR(void, endgrent, int dummy) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, endgrent, dummy);
+  REAL(endgrent)(dummy);
+}
+#define INIT_SETPWENT                  \
+  COMMON_INTERCEPT_FUNCTION(setpwent); \
+  COMMON_INTERCEPT_FUNCTION(endpwent); \
+  COMMON_INTERCEPT_FUNCTION(setgrent); \
+  COMMON_INTERCEPT_FUNCTION(endgrent);
+#else
+#define INIT_SETPWENT
+#endif
+
 #if SANITIZER_INTERCEPT_CLOCK_GETTIME
 INTERCEPTOR(int, clock_getres, u32 clk_id, void *tp) {
   void *ctx;
@@ -3635,6 +3668,7 @@ INTERCEPTOR(int, ftime, __sanitizer_timeb *tp) {
   INIT_GETPWNAM_R_AND_FRIENDS;             \
   INIT_GETPWENT;                           \
   INIT_GETPWENT_R;                         \
+  INIT_SETPWENT;                           \
   INIT_CLOCK_GETTIME;                      \
   INIT_GETITIMER;                          \
   INIT_TIME;                               \
