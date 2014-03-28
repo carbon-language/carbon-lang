@@ -439,10 +439,10 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
        BI != BE; ++BI) {
 
     MachineBasicBlock &MBB = *BI;
-    for (MachineBasicBlock::iterator I = MBB.begin(), Next = std::next(I);
-         I != MBB.end(); I = Next) {
-
+    MachineBasicBlock::iterator I, Next;
+    for (I = MBB.begin(); I != MBB.end(); I = Next) {
       Next = std::next(I);
+
       MachineInstr &MI = *I;
       if (TII->isDS(MI.getOpcode())) {
         NeedM0 = true;
