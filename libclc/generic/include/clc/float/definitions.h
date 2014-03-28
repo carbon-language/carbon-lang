@@ -9,7 +9,8 @@
 #define FLT_MIN         0x1.0p-126f
 #define FLT_EPSILON     0x1.0p-23f
 
-#define M_PI_F 0x1.921fb6p+1
+#define M_LOG2E_F       0x1.715476p+0
+#define M_PI_F          0x1.921fb6p+1
 
 #ifdef cl_khr_fp64
 
@@ -22,5 +23,7 @@
 #define DBL_MAX         0x1.fffffffffffffp1023
 #define DBL_MIN         0x1.0p-1022
 #define DBL_EPSILON     0x1.0p-52
+
+#define M_LOG2E         0x1.71547652b82fep+0
 
 #endif
