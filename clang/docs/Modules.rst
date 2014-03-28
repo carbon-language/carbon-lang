@@ -242,7 +242,10 @@ a module, one must write a ``module.modulemap`` file for that library. The
 and is written in the module map language described below.
 
 .. note::
-    For compatibility with previous releases, if a module map file named ``module.modulemap`` is not found, Clang will also search for a file named ``module.map``. This behavior is deprecated and we plan to eventually remove it.1
+    For compatibility with previous releases, if a module map file named
+    ``module.modulemap`` is not found, Clang will also search for a file named
+    ``module.map``. This behavior is deprecated and we plan to eventually
+    remove it.
 
 As an example, the module map file for the C standard library might look a bit like this:
 
