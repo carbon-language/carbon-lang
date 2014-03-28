@@ -282,10 +282,6 @@ struct FormatToken {
            (!ColonRequired || (Next && Next->is(tok::colon)));
   }
 
-  bool isLiteral() const {
-    return Tok.isLiteral() || isOneOf(tok::kw_true, tok::kw_false);
-  }
-
   /// \brief Determine whether the token is a simple-type-specifier.
   bool isSimpleTypeSpecifier() const;
 

@@ -862,9 +862,12 @@ private:
         PrevToken->MatchingParen->Previous->is(tok::kw_typeof))
       return TT_PointerOrReference;
 
-    if (PrevToken->isLiteral() ||
-        PrevToken->isOneOf(tok::r_paren, tok::r_square) ||
-        NextToken->isLiteral() || NextToken->isUnaryOperator() ||
+    if (PrevToken->Tok.isLiteral() ||
+        PrevToken->isOneOf(tok::r_paren, tok::r_square, tok::kw_true,
+                           tok::kw_false) ||
+        NextToken->Tok.isLiteral() ||
+        NextToken->isOneOf(tok::kw_true, tok::kw_false) ||
+        NextToken->isUnaryOperator() ||
         // If we know we're in a template argument, there are no named
         // declarations. Thus, having an identifier on the right-hand side
         // indicates a binary operator.
