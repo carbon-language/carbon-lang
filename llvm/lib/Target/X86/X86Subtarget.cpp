@@ -165,7 +165,10 @@ bool X86Subtarget::hasSinCos() const {
 /// IsLegalToCallImmediateAddr - Return true if the subtarget allows calls
 /// to immediate address.
 bool X86Subtarget::IsLegalToCallImmediateAddr(const TargetMachine &TM) const {
-  if (In64BitMode)
+  // FIXME: I386 PE/COFF supports PC relative calls using IMAGE_REL_I386_REL32
+  // but WinCOFFObjectWriter::RecordRelocation cannot emit them.  Once it does,
+  // the following check for Win32 should be removed.
+  if (In64BitMode || isTargetWin32())
     return false;
   return isTargetELF() || TM.getRelocationModel() == Reloc::Static;
 }
