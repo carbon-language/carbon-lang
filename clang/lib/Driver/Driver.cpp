@@ -337,9 +337,8 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   if (IsCLMode()) {
     // clang-cl targets MSVC-style Win32.
     llvm::Triple T(DefaultTargetTriple);
-    T.setOSName(llvm::Triple::getOSTypeName(llvm::Triple::Win32));
-    T.setEnvironmentName(llvm::Triple::getEnvironmentTypeName(
-          llvm::Triple::MSVC));
+    T.setOS(llvm::Triple::Win32);
+    T.setEnvironment(llvm::Triple::MSVC);
     DefaultTargetTriple = T.str();
   }
   if (const Arg *A = Args->getLastArg(options::OPT_target))
