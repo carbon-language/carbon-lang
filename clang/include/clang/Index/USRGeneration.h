@@ -14,7 +14,9 @@
 #include "llvm/ADT/StringRef.h"
 
 namespace clang {
-  class Decl;
+class Decl;
+class MacroDefinition;
+class SourceManager;
 
 namespace index {
 
@@ -22,7 +24,7 @@ static inline StringRef getUSRSpacePrefix() {
   return "c:";
 }
 
-/// \brief Generate a USR for a Decl, including the prefix.
+/// \brief Generate a USR for a Decl, including the USR prefix.
 /// \returns true if the results should be ignored, false otherwise.
 bool generateUSRForDecl(const Decl *D, SmallVectorImpl<char> &Buf);
 
@@ -46,6 +48,12 @@ void generateUSRForObjCProperty(StringRef Prop, raw_ostream &OS);
 
 /// \brief Generate a USR fragment for an Objective-C protocol.
 void generateUSRForObjCProtocol(StringRef Prot, raw_ostream &OS);
+
+/// \brief Generate a USR for a macro, including the USR prefix.
+///
+/// \returns true on error, false on success.
+bool generateUSRForMacro(const MacroDefinition *MD, const SourceManager &SM,
+                         SmallVectorImpl<char> &Buf);
 
 } // namespace index
 } // namespace clang

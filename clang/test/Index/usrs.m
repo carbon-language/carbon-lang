@@ -89,7 +89,24 @@ int test_multi_declaration(void) {
 -(int)methodWithFn:(void (*)(int *p))fn;
 @end
 
-// RUN: c-index-test -test-load-source-usrs all -target x86_64-apple-macosx10.7 %s | FileCheck %s
+#include <usrs-system.h>
+
+#define MACRO1 123
+
+#define MACRO2 123
+#undef MACRO2
+#define MACRO2 789
+
+#define MACRO3(X) 123, X
+#define MACRO3(X) 789, X
+
+// RUN: c-index-test -test-load-source-usrs all -target x86_64-apple-macosx10.7 %s -isystem %S/Inputs | FileCheck %s
+// CHECK: usrs-system.h c:@macro@MACRO_FROM_SYSTEM_HEADER_1 Extent=[1:9 - 1:40]
+// CHECK: usrs.m c:usrs.m@1265@macro@MACRO1 Extent=[94:9 - 94:19]
+// CHECK: usrs.m c:usrs.m@1285@macro@MACRO2 Extent=[96:9 - 96:19]
+// CHECK: usrs.m c:usrs.m@1318@macro@MACRO2 Extent=[98:9 - 98:19]
+// CHECK: usrs.m c:usrs.m@1338@macro@MACRO3 Extent=[100:9 - 100:25]
+// CHECK: usrs.m c:usrs.m@1363@macro@MACRO3 Extent=[101:9 - 101:25]
 // CHECK: usrs.m c:usrs.m@F@my_helper Extent=[3:1 - 3:60]
 // CHECK: usrs.m c:usrs.m@95@F@my_helper@x Extent=[3:29 - 3:34]
 // CHECK: usrs.m c:usrs.m@102@F@my_helper@y Extent=[3:36 - 3:41]
@@ -153,7 +170,13 @@ int test_multi_declaration(void) {
 // CHECK: usrs.m c:objc(cs)CWithExt2(im)pro_ext Extent=[88:23 - 88:30]
 // CHECK: usrs.m c:objc(cs)CWithExt2(im)setPro_ext: Extent=[88:23 - 88:30]
 
-// RUN: c-index-test -test-load-source all %s | FileCheck -check-prefix=CHECK-source %s
+// RUN: c-index-test -test-load-source all %s -isystem %S/Inputs | FileCheck -check-prefix=CHECK-source %s
+// CHECK-source: usrs-system.h:1:9: macro definition=MACRO_FROM_SYSTEM_HEADER_1 Extent=[1:9 - 1:40]
+// CHECK-source: usrs.m:94:9: macro definition=MACRO1 Extent=[94:9 - 94:19]
+// CHECK-source: usrs.m:96:9: macro definition=MACRO2 Extent=[96:9 - 96:19]
+// CHECK-source: usrs.m:98:9: macro definition=MACRO2 Extent=[98:9 - 98:19]
+// CHECK-source: usrs.m:100:9: macro definition=MACRO3 Extent=[100:9 - 100:25]
+// CHECK-source: usrs.m:101:9: macro definition=MACRO3 Extent=[101:9 - 101:25]
 // CHECK-source: usrs.m:3:19: FunctionDecl=my_helper:3:19 (Definition) Extent=[3:1 - 3:60]
 // CHECK-source: usrs.m:3:33: ParmDecl=x:3:33 (Definition) Extent=[3:29 - 3:34]
 // CHECK-source: usrs.m:3:40: ParmDecl=y:3:40 (Definition) Extent=[3:36 - 3:41]

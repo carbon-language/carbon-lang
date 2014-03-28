@@ -14,8 +14,10 @@
 #include "CIndexer.h"
 #include "CXCursor.h"
 #include "CXString.h"
+#include "CXTranslationUnit.h"
 #include "clang/Index/USRGeneration.h"
 #include "clang/Lex/PreprocessingRecord.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -73,10 +75,16 @@ CXString clang_getCursorUSR(CXCursor C) {
     if (!buf)
       return cxstring::createEmpty();
 
-    buf->Data += getUSRSpacePrefix();
-    buf->Data += "macro@";
-    buf->Data +=
-        cxcursor::getCursorMacroDefinition(C)->getName()->getNameStart();
+    bool Ignore = generateUSRForMacro(cxcursor::getCursorMacroDefinition(C),
+                                      cxtu::getASTUnit(TU)->getSourceManager(),
+                                      buf->Data);
+    if (Ignore) {
+      buf->dispose();
+      return cxstring::createEmpty();
+    }
+
+    // Return the C-string, but don't make a copy since it is already in
+    // the string buffer.
     buf->Data.push_back('\0');
     return createCXString(buf);
   }

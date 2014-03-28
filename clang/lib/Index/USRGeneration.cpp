@@ -11,6 +11,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DeclVisitor.h"
+#include "clang/Lex/PreprocessingRecord.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
@@ -21,6 +22,30 @@ using namespace clang::index;
 //===----------------------------------------------------------------------===//
 // USR generation.
 //===----------------------------------------------------------------------===//
+
+/// \returns true on error.
+static bool printLoc(llvm::raw_ostream &OS, SourceLocation Loc,
+                     const SourceManager &SM, bool IncludeOffset) {
+  if (Loc.isInvalid()) {
+    return true;
+  }
+  Loc = SM.getExpansionLoc(Loc);
+  const std::pair<FileID, unsigned> &Decomposed = SM.getDecomposedLoc(Loc);
+  const FileEntry *FE = SM.getFileEntryForID(Decomposed.first);
+  if (FE) {
+    OS << llvm::sys::path::filename(FE->getName());
+  } else {
+    // This case really isn't interesting.
+    return true;
+  }
+  if (IncludeOffset) {
+    // Use the offest into the FileID to represent the location.  Using
+    // a line/column can cause us to look back at the original source file,
+    // which is expensive.
+    OS << '@' << Decomposed.second;
+  }
+  return false;
+}
 
 namespace {
 class USRGenerator : public ConstDeclVisitor<USRGenerator> {
@@ -465,7 +490,7 @@ bool USRGenerator::GenLoc(const Decl *D, bool IncludeOffset) {
   if (generatedLoc)
     return IgnoreResults;
   generatedLoc = true;
-  
+
   // Guard against null declarations in invalid code.
   if (!D) {
     IgnoreResults = true;
@@ -475,29 +500,10 @@ bool USRGenerator::GenLoc(const Decl *D, bool IncludeOffset) {
   // Use the location of canonical decl.
   D = D->getCanonicalDecl();
 
-  const SourceManager &SM = Context->getSourceManager();
-  SourceLocation L = D->getLocStart();
-  if (L.isInvalid()) {
-    IgnoreResults = true;
-    return true;
-  }
-  L = SM.getExpansionLoc(L);
-  const std::pair<FileID, unsigned> &Decomposed = SM.getDecomposedLoc(L);
-  const FileEntry *FE = SM.getFileEntryForID(Decomposed.first);
-  if (FE) {
-    Out << llvm::sys::path::filename(FE->getName());
-  }
-  else {
-    // This case really isn't interesting.
-    IgnoreResults = true;
-    return true;
-  }
-  if (IncludeOffset) {
-    // Use the offest into the FileID to represent the location.  Using
-    // a line/column can cause us to look back at the original source file,
-    // which is expensive.
-    Out << '@' << Decomposed.second;
-  }
+  IgnoreResults =
+      IgnoreResults || printLoc(Out, D->getLocStart(),
+                                Context->getSourceManager(), IncludeOffset);
+
   return IgnoreResults;
 }
 
@@ -799,3 +805,26 @@ bool clang::index::generateUSRForDecl(const Decl *D,
   UG.Visit(D);
   return UG.ignoreResults();
 }
+
+bool clang::index::generateUSRForMacro(const MacroDefinition *MD,
+                                       const SourceManager &SM,
+                                       SmallVectorImpl<char> &Buf) {
+  // Don't generate USRs for things with invalid locations.
+  if (!MD || MD->getLocation().isInvalid())
+    return true;
+
+  llvm::raw_svector_ostream Out(Buf);
+
+  // Assume that system headers are sane.  Don't put source location
+  // information into the USR if the macro comes from a system header.
+  SourceLocation Loc = MD->getLocation();
+  bool ShouldGenerateLocation = !SM.isInSystemHeader(Loc);
+
+  Out << getUSRSpacePrefix();
+  if (ShouldGenerateLocation)
+    printLoc(Out, Loc, SM, /*IncludeOffset=*/true);
+  Out << "@macro@";
+  Out << MD->getName()->getNameStart();
+  return false;
+}
+
