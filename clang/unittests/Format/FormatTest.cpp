@@ -8125,6 +8125,10 @@ TEST_F(FormatTest, FormatsLambdas) {
 TEST_F(FormatTest, FormatsBlocks) {
   verifyFormat("int (^Block)(int, int);");
   verifyFormat("int (^Block1)(int, int) = ^(int i, int j)");
+  verifyFormat("void (^block)(int) = ^(id test) { int i; };");
+  verifyFormat("void (^block)(int) = ^(int test) { int i; };");
+  verifyFormat("void (^block)(int) = ^id(int test) { int i; };");
+  verifyFormat("void (^block)(int) = ^int(int test) { int i; };");
 
   verifyFormat("foo(^{ bar(); });");
   verifyFormat("foo(a, ^{ bar(); });");

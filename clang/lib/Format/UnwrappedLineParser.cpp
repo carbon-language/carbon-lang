@@ -694,9 +694,13 @@ void UnwrappedLineParser::parseStructuralElement() {
       break;
     case tok::caret:
       nextToken();
-      if (FormatTok->is(tok::l_brace)) {
+      if (FormatTok->Tok.isAnyIdentifier() ||
+          FormatTok->isSimpleTypeSpecifier())
+        nextToken();
+      if (FormatTok->is(tok::l_paren))
+        parseParens();
+      if (FormatTok->is(tok::l_brace))
         parseChildBlock();
-      }
       break;
     case tok::l_brace:
       if (!tryToParseBracedList()) {
