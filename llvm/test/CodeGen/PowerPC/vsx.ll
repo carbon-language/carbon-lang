@@ -465,7 +465,7 @@ define <2 x double> @test54(<2 x double> %a, <2 x double> %b) {
   ret <2 x double> %v
 
 ; CHECK-LABEL: @test54
-; CHECK: xxpermdi 34, 34, 35, 1
+; CHECK: xxpermdi 34, 34, 35, 2
 ; CHECK: blr
 }
 

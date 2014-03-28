@@ -1351,7 +1351,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
         else
           DM[i] = 1;
 
-      SDValue DMV = CurDAG->getTargetConstant(DM[0] | (DM[1] << 1), MVT::i32);
+      SDValue DMV = CurDAG->getTargetConstant(DM[1] | (DM[0] << 1), MVT::i32);
 
       if (Op1 == Op2 && DM[0] == 0 && DM[1] == 0 &&
           Op1.getOpcode() == ISD::SCALAR_TO_VECTOR &&
