@@ -22,13 +22,13 @@ namespace llvm {
   class ARMMCAsmInfoDarwin : public MCAsmInfoDarwin {
     void anchor() override;
   public:
-    explicit ARMMCAsmInfoDarwin();
+    explicit ARMMCAsmInfoDarwin(StringRef TT);
   };
 
   class ARMELFMCAsmInfo : public MCAsmInfoELF {
     void anchor() override;
   public:
-    explicit ARMELFMCAsmInfo();
+    explicit ARMELFMCAsmInfo(StringRef TT);
 
     void setUseIntegratedAssembler(bool Value) override;
   };

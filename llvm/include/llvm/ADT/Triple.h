@@ -46,7 +46,8 @@ public:
   enum ArchType {
     UnknownArch,
 
-    arm,        // ARM: arm, armv.*, xscale
+    arm,        // ARM (little endian): arm, armv.*, xscale
+    armeb,      // ARM (big endian): armeb
     aarch64,    // AArch64 (little endian): aarch64
     aarch64_be, // AArch64 (big endian): aarch64_be
     hexagon,    // Hexagon: hexagon
@@ -63,7 +64,8 @@ public:
     sparcv9,    // Sparcv9: Sparcv9
     systemz,    // SystemZ: s390x
     tce,        // TCE (http://tce.cs.tut.fi/): tce
-    thumb,      // Thumb: thumb, thumbv.*
+    thumb,      // Thumb (little endian): thumb, thumbv.*
+    thumbeb,    // Thumb (big endian): thumbeb
     x86,        // X86: i[3-9]86
     x86_64,     // X86-64: amd64, x86_64
     xcore,      // XCore: xcore

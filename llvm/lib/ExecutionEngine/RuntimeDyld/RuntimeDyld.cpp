@@ -508,7 +508,7 @@ uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
     *StubAddr = 0xd61f0200; // br ip0
 
     return Addr;
-  } else if (Arch == Triple::arm) {
+  } else if (Arch == Triple::arm || Arch == Triple::armeb) {
     // TODO: There is only ARM far stub now. We should add the Thumb stub,
     // and stubs for branches Thumb - ARM and ARM - Thumb.
     uint32_t *StubAddr = (uint32_t *)Addr;

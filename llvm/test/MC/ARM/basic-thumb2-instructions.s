@@ -1,4 +1,5 @@
 @ RUN: llvm-mc -triple=thumbv7-apple-darwin -mcpu=cortex-a8 -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -triple=thumbebv7-unknown-unknown -mcpu=cortex-a8 -show-encoding < %s | FileCheck --check-prefix=CHECK-BE %s
   .syntax unified
   .globl _func
 
@@ -227,12 +228,18 @@ _func:
         bmi.w   #-183396
 
 @ CHECK: b.w	_bar                    @ encoding: [A,0xf0'A',A,0x90'A']
-          @   fixup A - offset: 0, value: _bar, kind: fixup_t2_uncondbranch
+@ CHECK:  @   fixup A - offset: 0, value: _bar, kind: fixup_t2_uncondbranch
+@ CHECK-BE: b.w	_bar                    @ encoding: [0xf0'A',A,0x90'A',A]
+@ CHECK-BE:  @   fixup A - offset: 0, value: _bar, kind: fixup_t2_uncondbranch
 @ CHECK: beq.w	_bar                    @ encoding: [A,0xf0'A',A,0x80'A']
-          @   fixup A - offset: 0, value: _bar, kind: fixup_t2_condbranch
+@ CHECK:  @   fixup A - offset: 0, value: _bar, kind: fixup_t2_condbranch
+@ CHECK-BE: beq.w	_bar                    @ encoding: [0xf0'A',A,0x80'A',A]
+@ CHECK-BE:  @   fixup A - offset: 0, value: _bar, kind: fixup_t2_condbranch
 @ CHECK: it	eq                      @ encoding: [0x08,0xbf]
 @ CHECK: beq.w	_bar                    @ encoding: [A,0xf0'A',A,0x90'A']
-          @   fixup A - offset: 0, value: _bar, kind: fixup_t2_uncondbranch
+@ CHECK:  @   fixup A - offset: 0, value: _bar, kind: fixup_t2_uncondbranch
+@ CHECK-BE: beq.w	_bar                    @ encoding: [0xf0'A',A,0x90'A',A]
+@ CHECK-BE:  @   fixup A - offset: 0, value: _bar, kind: fixup_t2_uncondbranch
 @ CHECK: bmi.w   #-183396                @ encoding: [0x13,0xf5,0xce,0xa9]
 
 
@@ -332,9 +339,13 @@ _func:
 @ CHECK: cbnz    r7, #6                  @ encoding: [0x1f,0xb9]
 @ CHECK: cbnz    r7, #12                 @ encoding: [0x37,0xb9]
 @ CHECK: cbz	r6, _bar                @ encoding: [0x06'A',0xb1'A']
-           @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_cb
+@ CHECK:   @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_cb
+@ CHECK-BE: cbz	r6, _bar                @ encoding: [0xb1'A',0x06'A']
+@ CHECK-BE:   @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_cb
 @ CHECK: cbnz	r6, _bar                @ encoding: [0x06'A',0xb9'A']
-           @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_cb
+@ CHECK:   @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_cb
+@ CHECK-BE: cbnz	r6, _bar                @ encoding: [0xb9'A',0x06'A']
+@ CHECK-BE:   @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_cb
 
 
 @------------------------------------------------------------------------------
@@ -804,10 +815,16 @@ _func:
 
 @ CHECK: ldr.w	r5, _foo                @ encoding: [0x5f'A',0xf8'A',A,0x50'A']
 @ CHECK: @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
+@ CHECK-BE: ldr.w	r5, _foo                @ encoding: [0xf8'A',0x5f'A',0x50'A',A]
+@ CHECK-BE: @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
 @ CHECK: ldr.w	lr, _strcmp-4           @ encoding: [0x5f'A',0xf8'A',A,0xe0'A']
 @ CHECK: @   fixup A - offset: 0, value: _strcmp-4, kind: fixup_t2_ldst_pcrel_12
+@ CHECK-BE: ldr.w	lr, _strcmp-4           @ encoding: [0xf8'A',0x5f'A',0xe0'A',A]
+@ CHECK-BE: @   fixup A - offset: 0, value: _strcmp-4, kind: fixup_t2_ldst_pcrel_12
 @ CHECK: ldr.w sp, _foo                 @ encoding: [0x5f'A',0xf8'A',A,0xd0'A']
 @ CHECK: @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
+@ CHECK-BE: ldr.w sp, _foo                 @ encoding: [0xf8'A',0x5f'A',0xd0'A',A]
+@ CHECK-BE: @   fixup A - offset: 0, value: _foo, kind: fixup_t2_ldst_pcrel_12
 
         ldr r7, [pc, #8]
         ldr.n r7, [pc, #8]
@@ -1027,6 +1044,8 @@ _func:
 
 @ CHECK: ldrh.w	r5, _bar                @ encoding: [0x3f'A',0xf8'A',A,0x50'A']
 @ CHECK:     @   fixup A - offset: 0, value: _bar, kind: fixup_t2_ldst_pcrel_12
+@ CHECK-BE: ldrh.w	r5, _bar                @ encoding: [0xf8'A',0x3f'A',0x50'A',A]
+@ CHECK-BE:     @   fixup A - offset: 0, value: _bar, kind: fixup_t2_ldst_pcrel_12
 
 
 @------------------------------------------------------------------------------
@@ -1096,6 +1115,8 @@ _func:
 
 @ CHECK: ldrsb.w r5, _bar               @ encoding: [0x1f'A',0xf9'A',A,0x50'A']
 @ CHECK:      @   fixup A - offset: 0, value: _bar, kind: fixup_t2_ldst_pcrel_12
+@ CHECK-BE: ldrsb.w r5, _bar               @ encoding: [0xf9'A',0x1f'A',0x50'A',A]
+@ CHECK-BE:      @   fixup A - offset: 0, value: _bar, kind: fixup_t2_ldst_pcrel_12
 
 
 @------------------------------------------------------------------------------
@@ -1165,6 +1186,8 @@ _func:
 
 @ CHECK: ldrsh.w r5, _bar               @ encoding: [0x3f'A',0xf9'A',A,0x50'A']
 @ CHECK:      @   fixup A - offset: 0, value: _bar, kind: fixup_t2_ldst_pcrel_12
+@ CHECK-BE: ldrsh.w r5, _bar               @ encoding: [0xf9'A',0x3f'A',0x50'A',A]
+@ CHECK-BE:      @   fixup A - offset: 0, value: _bar, kind: fixup_t2_ldst_pcrel_12
 
 @ TEMPORARILY DISABLED:
 @        ldrsh.w r4, [pc, #1435]

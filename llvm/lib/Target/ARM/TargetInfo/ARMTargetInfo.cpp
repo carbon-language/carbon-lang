@@ -12,12 +12,17 @@
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
-Target llvm::TheARMTarget, llvm::TheThumbTarget;
+Target llvm::TheARMleTarget,   llvm::TheARMbeTarget;
+Target llvm::TheThumbleTarget, llvm::TheThumbbeTarget;
 
 extern "C" void LLVMInitializeARMTargetInfo() { 
   RegisterTarget<Triple::arm, /*HasJIT=*/true>
-    X(TheARMTarget, "arm", "ARM");
+    X(TheARMleTarget, "arm", "ARM");
+  RegisterTarget<Triple::armeb, /*HasJIT=*/true>
+    Y(TheARMbeTarget, "armeb", "ARM (big endian)");
 
   RegisterTarget<Triple::thumb, /*HasJIT=*/true>
-    Y(TheThumbTarget, "thumb", "Thumb");
+    A(TheThumbleTarget, "thumb", "Thumb");
+  RegisterTarget<Triple::thumbeb, /*HasJIT=*/true>
+    B(TheThumbbeTarget, "thumbeb", "Thumb (big endian)");
 }

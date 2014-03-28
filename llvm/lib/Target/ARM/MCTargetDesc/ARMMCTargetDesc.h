@@ -33,7 +33,8 @@ class StringRef;
 class Target;
 class raw_ostream;
 
-extern Target TheARMTarget, TheThumbTarget;
+extern Target TheARMleTarget, TheThumbleTarget;
+extern Target TheARMbeTarget, TheThumbbeTarget;
 
 namespace ARM_MC {
   std::string ParseARMTriple(StringRef TT, StringRef CPU);
@@ -51,17 +52,36 @@ MCStreamer *createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                 MCInstPrinter *InstPrint, MCCodeEmitter *CE,
                                 MCAsmBackend *TAB, bool ShowInst);
 
-MCCodeEmitter *createARMMCCodeEmitter(const MCInstrInfo &MCII,
-                                      const MCRegisterInfo &MRI,
-                                      const MCSubtargetInfo &STI,
-                                      MCContext &Ctx);
+MCCodeEmitter *createARMleMCCodeEmitter(const MCInstrInfo &MCII,
+                                        const MCRegisterInfo &MRI,
+                                        const MCSubtargetInfo &STI,
+                                        MCContext &Ctx);
+
+MCCodeEmitter *createARMbeMCCodeEmitter(const MCInstrInfo &MCII,
+                                        const MCRegisterInfo &MRI,
+                                        const MCSubtargetInfo &STI,
+                                        MCContext &Ctx);
 
 MCAsmBackend *createARMAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+                                  StringRef TT, StringRef CPU,
+                                  bool IsLittleEndian);
+
+MCAsmBackend *createARMleAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                   StringRef TT, StringRef CPU);
+
+MCAsmBackend *createARMbeAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+                                  StringRef TT, StringRef CPU);
+
+MCAsmBackend *createThumbleAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+                                      StringRef TT, StringRef CPU);
+
+MCAsmBackend *createThumbbeAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+                                      StringRef TT, StringRef CPU);
 
 /// createARMELFObjectWriter - Construct an ELF Mach-O object writer.
 MCObjectWriter *createARMELFObjectWriter(raw_ostream &OS,
-                                         uint8_t OSABI);
+                                         uint8_t OSABI,
+                                         bool IsLittleEndian);
 
 /// createARMMachObjectWriter - Construct an ARM Mach-O object writer.
 MCObjectWriter *createARMMachObjectWriter(raw_ostream &OS,

@@ -13,12 +13,18 @@
 
 #include "ARMMCAsmInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/ADT/Triple.h"
 
 using namespace llvm;
 
 void ARMMCAsmInfoDarwin::anchor() { }
 
-ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() {
+ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin(StringRef TT) {
+  Triple TheTriple(TT);
+  if ((TheTriple.getArch() == Triple::armeb) ||
+      (TheTriple.getArch() == Triple::thumbeb))
+    IsLittleEndian = false;
+
   Data64bitsDirective = 0;
   CommentString = "@";
   Code16Directive = ".code\t16";
@@ -35,7 +41,12 @@ ARMMCAsmInfoDarwin::ARMMCAsmInfoDarwin() {
 
 void ARMELFMCAsmInfo::anchor() { }
 
-ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
+ARMELFMCAsmInfo::ARMELFMCAsmInfo(StringRef TT) {
+  Triple TheTriple(TT);
+  if ((TheTriple.getArch() == Triple::armeb) ||
+      (TheTriple.getArch() == Triple::thumbeb))
+    IsLittleEndian = false;
+
   // ".comm align is in bytes but .align is pow-2."
   AlignmentIsInBytes = false;
 

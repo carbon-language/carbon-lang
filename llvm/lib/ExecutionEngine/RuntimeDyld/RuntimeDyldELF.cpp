@@ -848,7 +848,9 @@ void RuntimeDyldELF::resolveRelocation(const SectionEntry &Section,
     resolveAArch64Relocation(Section, Offset, Value, Type, Addend);
     break;
   case Triple::arm: // Fall through.
+  case Triple::armeb:
   case Triple::thumb:
+  case Triple::thumbeb:
     resolveARMRelocation(Section, Offset, (uint32_t)(Value & 0xffffffffL), Type,
                          (uint32_t)(Addend & 0xffffffffL));
     break;

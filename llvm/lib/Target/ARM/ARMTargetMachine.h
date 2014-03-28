@@ -42,7 +42,8 @@ public:
                        StringRef CPU, StringRef FS,
                        const TargetOptions &Options,
                        Reloc::Model RM, CodeModel::Model CM,
-                       CodeGenOpt::Level OL);
+                       CodeGenOpt::Level OL,
+                       bool isLittle);
 
   ARMJITInfo *getJITInfo() override { return &JITInfo; }
   const ARMSubtarget *getSubtargetImpl() const override { return &Subtarget; }
@@ -77,7 +78,8 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
                    StringRef CPU, StringRef FS,
                    const TargetOptions &Options,
                    Reloc::Model RM, CodeModel::Model CM,
-                   CodeGenOpt::Level OL);
+                   CodeGenOpt::Level OL,
+                   bool isLittle);
 
   const ARMRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
@@ -95,6 +97,28 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   }
   const ARMInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const DataLayout *getDataLayout() const override { return &DL; }
+};
+
+/// ARMleTargetMachine - ARM little endian target machine.
+///
+class ARMleTargetMachine : public ARMTargetMachine {
+  virtual void anchor();
+public:
+  ARMleTargetMachine(const Target &T, StringRef TT,
+                     StringRef CPU, StringRef FS, const TargetOptions &Options,
+                     Reloc::Model RM, CodeModel::Model CM,
+                     CodeGenOpt::Level OL);
+};
+
+/// ARMbeTargetMachine - ARM big endian target machine.
+///
+class ARMbeTargetMachine : public ARMTargetMachine {
+  virtual void anchor();
+public:
+  ARMbeTargetMachine(const Target &T, StringRef TT,
+                     StringRef CPU, StringRef FS, const TargetOptions &Options,
+                     Reloc::Model RM, CodeModel::Model CM,
+                     CodeGenOpt::Level OL);
 };
 
 /// ThumbTargetMachine - Thumb target machine.
@@ -115,7 +139,8 @@ public:
                      StringRef CPU, StringRef FS,
                      const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
-                     CodeGenOpt::Level OL);
+                     CodeGenOpt::Level OL,
+                     bool isLittle);
 
   /// returns either Thumb1RegisterInfo or Thumb2RegisterInfo
   const ARMBaseRegisterInfo *getRegisterInfo() const override {
@@ -139,6 +164,28 @@ public:
     return FrameLowering.get();
   }
   const DataLayout *getDataLayout() const override { return &DL; }
+};
+
+/// ThumbleTargetMachine - Thumb little endian target machine.
+///
+class ThumbleTargetMachine : public ThumbTargetMachine {
+  virtual void anchor();
+public:
+  ThumbleTargetMachine(const Target &T, StringRef TT,
+                     StringRef CPU, StringRef FS, const TargetOptions &Options,
+                     Reloc::Model RM, CodeModel::Model CM,
+                     CodeGenOpt::Level OL);
+};
+
+/// ThumbbeTargetMachine - Thumb big endian target machine.
+///
+class ThumbbeTargetMachine : public ThumbTargetMachine {
+  virtual void anchor();
+public:
+  ThumbbeTargetMachine(const Target &T, StringRef TT,
+                       StringRef CPU, StringRef FS, const TargetOptions &Options,
+                       Reloc::Model RM, CodeModel::Model CM,
+                       CodeGenOpt::Level OL);
 };
 
 } // end namespace llvm

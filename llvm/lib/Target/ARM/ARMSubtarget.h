@@ -203,6 +203,9 @@ protected:
   /// CPUString - String name of used CPU.
   std::string CPUString;
 
+  /// IsLittle - The target is Little Endian
+  bool IsLittle;
+
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
 
@@ -226,7 +229,8 @@ protected:
   /// of the specified triple.
   ///
   ARMSubtarget(const std::string &TT, const std::string &CPU,
-               const std::string &FS, const TargetOptions &Options);
+               const std::string &FS, bool IsLittle,
+               const TargetOptions &Options);
 
   /// getMaxInlineSizeThreshold - Returns the maximum memset / memcpy size
   /// that still makes it profitable to inline the call.
@@ -374,6 +378,8 @@ public:
   bool restrictIT() const { return RestrictIT; }
 
   const std::string & getCPUString() const { return CPUString; }
+
+  bool isLittle() const { return IsLittle; }
 
   unsigned getMispredictionPenalty() const;
   

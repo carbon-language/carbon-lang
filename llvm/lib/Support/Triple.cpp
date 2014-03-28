@@ -22,6 +22,7 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case aarch64:     return "aarch64";
   case aarch64_be:  return "aarch64_be";
   case arm:         return "arm";
+  case armeb:       return "armeb";
   case hexagon:     return "hexagon";
   case mips:        return "mips";
   case mipsel:      return "mipsel";
@@ -37,6 +38,7 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case systemz:     return "s390x";
   case tce:         return "tce";
   case thumb:       return "thumb";
+  case thumbeb:     return "thumbeb";
   case x86:         return "i386";
   case x86_64:      return "x86_64";
   case xcore:       return "xcore";
@@ -60,7 +62,9 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
   case aarch64_be:  return "aarch64";
 
   case arm:
-  case thumb:       return "arm";
+  case armeb:
+  case thumb:
+  case thumbeb:     return "arm";
 
   case ppc64:
   case ppc64le:
@@ -168,6 +172,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Case("aarch64", aarch64)
     .Case("aarch64_be", aarch64_be)
     .Case("arm", arm)
+    .Case("armeb", armeb)
     .Case("mips", mips)
     .Case("mipsel", mipsel)
     .Case("mips64", mips64)
@@ -184,6 +189,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Case("systemz", systemz)
     .Case("tce", tce)
     .Case("thumb", thumb)
+    .Case("thumbeb", thumbeb)
     .Case("x86", x86)
     .Case("x86-64", x86_64)
     .Case("xcore", xcore)
@@ -212,6 +218,7 @@ const char *Triple::getArchNameForAssembler() {
     .Cases("armv5", "armv5e", "thumbv5", "thumbv5e", "armv5")
     .Cases("armv6", "thumbv6", "armv6")
     .Cases("armv7", "thumbv7", "armv7")
+    .Case("armeb", "armeb")
     .Case("r600", "r600")
     .Case("nvptx", "nvptx")
     .Case("nvptx64", "nvptx64")
@@ -237,8 +244,12 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     // FIXME: It would be good to replace these with explicit names for all the
     // various suffixes supported.
     .StartsWith("armv", Triple::arm)
+    .Case("armeb", Triple::armeb)
+    .StartsWith("armebv", Triple::armeb)
     .Case("thumb", Triple::thumb)
     .StartsWith("thumbv", Triple::thumb)
+    .Case("thumbeb", Triple::thumbeb)
+    .StartsWith("thumbebv", Triple::thumbeb)
     .Case("msp430", Triple::msp430)
     .Cases("mips", "mipseb", "mipsallegrex", Triple::mips)
     .Cases("mipsel", "mipsallegrexel", Triple::mipsel)
@@ -743,6 +754,7 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
 
   case llvm::Triple::amdil:
   case llvm::Triple::arm:
+  case llvm::Triple::armeb:
   case llvm::Triple::hexagon:
   case llvm::Triple::le32:
   case llvm::Triple::mips:
@@ -753,6 +765,7 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::sparc:
   case llvm::Triple::tce:
   case llvm::Triple::thumb:
+  case llvm::Triple::thumbeb:
   case llvm::Triple::x86:
   case llvm::Triple::xcore:
   case llvm::Triple::spir:
@@ -801,6 +814,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::amdil:
   case Triple::spir:
   case Triple::arm:
+  case Triple::armeb:
   case Triple::hexagon:
   case Triple::le32:
   case Triple::mips:
@@ -811,6 +825,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::sparc:
   case Triple::tce:
   case Triple::thumb:
+  case Triple::thumbeb:
   case Triple::x86:
   case Triple::xcore:
     // Already 32-bit.
@@ -833,12 +848,14 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::UnknownArch:
   case Triple::amdil:
   case Triple::arm:
+  case Triple::armeb:
   case Triple::hexagon:
   case Triple::le32:
   case Triple::msp430:
   case Triple::r600:
   case Triple::tce:
   case Triple::thumb:
+  case Triple::thumbeb:
   case Triple::xcore:
     T.setArch(UnknownArch);
     break;

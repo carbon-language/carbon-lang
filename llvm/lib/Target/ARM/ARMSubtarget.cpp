@@ -75,12 +75,14 @@ IT(cl::desc("IT block support"), cl::Hidden, cl::init(DefaultIT),
               clEnumValEnd));
 
 ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
-                           const std::string &FS, const TargetOptions &Options)
+                           const std::string &FS, bool IsLittle,
+                           const TargetOptions &Options)
   : ARMGenSubtargetInfo(TT, CPU, FS)
   , ARMProcFamily(Others)
   , ARMProcClass(None)
   , stackAlignment(4)
   , CPUString(CPU)
+  , IsLittle(IsLittle)
   , TargetTriple(TT)
   , Options(Options)
   , TargetABI(ARM_ABI_UNKNOWN) {

@@ -40,10 +40,11 @@ class ARMMCCodeEmitter : public MCCodeEmitter {
   void operator=(const ARMMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   const MCInstrInfo &MCII;
   const MCContext &CTX;
+  bool IsLittleEndian;
 
 public:
-  ARMMCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx)
-    : MCII(mcii), CTX(ctx) {
+  ARMMCCodeEmitter(const MCInstrInfo &mcii, MCContext &ctx, bool IsLittle)
+    : MCII(mcii), CTX(ctx), IsLittleEndian(IsLittle) {
   }
 
   ~ARMMCCodeEmitter() {}
@@ -385,8 +386,8 @@ public:
   void EmitConstant(uint64_t Val, unsigned Size, raw_ostream &OS) const {
     // Output the constant in little endian byte order.
     for (unsigned i = 0; i != Size; ++i) {
-      EmitByte(Val & 255, OS);
-      Val >>= 8;
+      unsigned Shift = IsLittleEndian ? i * 8 : (Size - 1 - i) * 8;
+      EmitByte((Val >> Shift) & 0xff, OS);
     }
   }
 
@@ -397,11 +398,18 @@ public:
 
 } // end anonymous namespace
 
-MCCodeEmitter *llvm::createARMMCCodeEmitter(const MCInstrInfo &MCII,
-                                            const MCRegisterInfo &MRI,
-                                            const MCSubtargetInfo &STI,
-                                            MCContext &Ctx) {
-  return new ARMMCCodeEmitter(MCII, Ctx);
+MCCodeEmitter *llvm::createARMleMCCodeEmitter(const MCInstrInfo &MCII,
+                                              const MCRegisterInfo &MRI,
+                                              const MCSubtargetInfo &STI,
+                                              MCContext &Ctx) {
+  return new ARMMCCodeEmitter(MCII, Ctx, true);
+}
+
+MCCodeEmitter *llvm::createARMbeMCCodeEmitter(const MCInstrInfo &MCII,
+                                              const MCRegisterInfo &MRI,
+                                              const MCSubtargetInfo &STI,
+                                              MCContext &Ctx) {
+  return new ARMMCCodeEmitter(MCII, Ctx, false);
 }
 
 /// NEONThumb2DataIPostEncoder - Post-process encoded NEON data-processing

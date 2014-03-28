@@ -30,8 +30,10 @@ DisableA15SDOptimization("disable-a15-sd-optimization", cl::Hidden,
 
 extern "C" void LLVMInitializeARMTarget() {
   // Register the target.
-  RegisterTargetMachine<ARMTargetMachine> X(TheARMTarget);
-  RegisterTargetMachine<ThumbTargetMachine> Y(TheThumbTarget);
+  RegisterTargetMachine<ARMleTargetMachine> X(TheARMleTarget);
+  RegisterTargetMachine<ARMbeTargetMachine> Y(TheARMbeTarget);
+  RegisterTargetMachine<ThumbleTargetMachine> A(TheThumbleTarget);
+  RegisterTargetMachine<ThumbbeTargetMachine> B(TheThumbbeTarget);
 }
 
 
@@ -41,9 +43,10 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
                                            StringRef CPU, StringRef FS,
                                            const TargetOptions &Options,
                                            Reloc::Model RM, CodeModel::Model CM,
-                                           CodeGenOpt::Level OL)
+                                           CodeGenOpt::Level OL,
+                                           bool isLittle)
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, CPU, FS, Options),
+    Subtarget(TT, CPU, FS, isLittle, Options),
     JITInfo(),
     InstrItins(Subtarget.getInstrItineraryData()) {
 
@@ -65,8 +68,14 @@ void ARMBaseTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
 void ARMTargetMachine::anchor() { }
 
 static std::string computeDataLayout(ARMSubtarget &ST) {
-  // Little endian.
-  std::string Ret = "e";
+  std::string Ret = "";
+
+  if (ST.isLittle())
+    // Little endian.
+    Ret += "e";
+  else
+    // Big endian.
+    Ret += "E";
 
   Ret += DataLayout::getManglingComponent(ST.getTargetTriple());
 
@@ -118,8 +127,9 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
                                    StringRef CPU, StringRef FS,
                                    const TargetOptions &Options,
                                    Reloc::Model RM, CodeModel::Model CM,
-                                   CodeGenOpt::Level OL)
-  : ARMBaseTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+                                   CodeGenOpt::Level OL,
+                                   bool isLittle)
+  : ARMBaseTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, isLittle),
     InstrInfo(Subtarget),
     DL(computeDataLayout(Subtarget)),
     TLInfo(*this),
@@ -131,14 +141,33 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
                        "support ARM mode execution!");
 }
 
+void ARMleTargetMachine::anchor() { }
+
+ARMleTargetMachine::
+ARMleTargetMachine(const Target &T, StringRef TT,
+                       StringRef CPU, StringRef FS, const TargetOptions &Options,
+                       Reloc::Model RM, CodeModel::Model CM,
+                       CodeGenOpt::Level OL)
+  : ARMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
+
+void ARMbeTargetMachine::anchor() { }
+
+ARMbeTargetMachine::
+ARMbeTargetMachine(const Target &T, StringRef TT,
+                       StringRef CPU, StringRef FS, const TargetOptions &Options,
+                       Reloc::Model RM, CodeModel::Model CM,
+                       CodeGenOpt::Level OL)
+  : ARMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
+
 void ThumbTargetMachine::anchor() { }
 
 ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
-                                       CodeGenOpt::Level OL)
-  : ARMBaseTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+                                       CodeGenOpt::Level OL,
+                                       bool isLittle)
+  : ARMBaseTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, isLittle),
     InstrInfo(Subtarget.hasThumb2()
               ? ((ARMBaseInstrInfo*)new Thumb2InstrInfo(Subtarget))
               : ((ARMBaseInstrInfo*)new Thumb1InstrInfo(Subtarget))),
@@ -150,6 +179,24 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
               : (ARMFrameLowering*)new Thumb1FrameLowering(Subtarget)) {
   initAsmInfo();
 }
+
+void ThumbleTargetMachine::anchor() { }
+
+ThumbleTargetMachine::
+ThumbleTargetMachine(const Target &T, StringRef TT,
+                       StringRef CPU, StringRef FS, const TargetOptions &Options,
+                       Reloc::Model RM, CodeModel::Model CM,
+                       CodeGenOpt::Level OL)
+  : ThumbTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
+
+void ThumbbeTargetMachine::anchor() { }
+
+ThumbbeTargetMachine::
+ThumbbeTargetMachine(const Target &T, StringRef TT,
+                       StringRef CPU, StringRef FS, const TargetOptions &Options,
+                       Reloc::Model RM, CodeModel::Model CM,
+                       CodeGenOpt::Level OL)
+  : ThumbTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
 
 namespace {
 /// ARM Code Generator Pass Configuration Options.

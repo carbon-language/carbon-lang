@@ -299,7 +299,8 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
 }
 
 MCObjectWriter *llvm::createARMELFObjectWriter(raw_ostream &OS,
-                                               uint8_t OSABI) {
+                                               uint8_t OSABI,
+                                               bool IsLittleEndian) {
   MCELFObjectTargetWriter *MOTW = new ARMELFObjectWriter(OSABI);
-  return createELFObjectWriter(MOTW, OS,  /*IsLittleEndian=*/true);
+  return createELFObjectWriter(MOTW, OS, IsLittleEndian);
 }

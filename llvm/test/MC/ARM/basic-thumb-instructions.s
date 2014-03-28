@@ -4,6 +4,7 @@
 @---
 @ RUN: llvm-mc -triple=thumbv6-apple-darwin -show-encoding < %s | FileCheck %s
 @ RUN: llvm-mc -triple=thumbv7-apple-darwin -show-encoding < %s | FileCheck %s
+@ RUN: llvm-mc -triple=thumbebv7-unknown-unknown -show-encoding < %s | FileCheck --check-prefix=CHECK-BE %s
   .syntax unified
   .globl _func
 
@@ -90,7 +91,9 @@ _func:
         adr r3, #1020
 
 @ CHECK: adr	r2, _baz                @ encoding: [A,0xa2]
-            @   fixup A - offset: 0, value: _baz, kind: fixup_thumb_adr_pcrel_10
+@ CHECK:    @   fixup A - offset: 0, value: _baz, kind: fixup_thumb_adr_pcrel_10
+@ CHECK-BE: adr	r2, _baz                @ encoding: [0xa2,A]
+@ CHECK-BE:    @   fixup A - offset: 0, value: _baz, kind: fixup_thumb_adr_pcrel_10
 @ CHECK: adr	r5, #0                  @ encoding: [0x00,0xa5]
 @ CHECK: adr	r2, #4                  @ encoding: [0x01,0xa2]
 @ CHECK: adr	r3, #1020               @ encoding: [0xff,0xa3]
@@ -132,9 +135,13 @@ _func:
         beq     #160
 
 @ CHECK: b	_baz                    @ encoding: [A,0xe0'A']
-             @   fixup A - offset: 0, value: _baz, kind: fixup_arm_thumb_br
+@ CHECK:     @   fixup A - offset: 0, value: _baz, kind: fixup_arm_thumb_br
+@ CHECK-BE: b	_baz                    @ encoding: [0xe0'A',A]
+@ CHECK-BE:     @   fixup A - offset: 0, value: _baz, kind: fixup_arm_thumb_br
 @ CHECK: beq	_bar                    @ encoding: [A,0xd0]
-             @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_bcc
+@ CHECK:     @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_bcc
+@ CHECK-BE: beq	_bar                    @ encoding: [0xd0,A]
+@ CHECK-BE:     @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_bcc
 @ CHECK: b       #1838                   @ encoding: [0x97,0xe3]
 @ CHECK: b       #-420                   @ encoding: [0x2e,0xe7]
 @ CHECK: beq     #-256                   @ encoding: [0x80,0xd0]
@@ -174,9 +181,13 @@ _func:
         blx _baz
 
 @ CHECK: bl	_bar                    @ encoding: [A,0xf0'A',A,0xd0'A']
-             @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_bl
+@ CHECK:     @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_bl
+@ CHECK-BE: bl	_bar                    @ encoding: [0xf0'A',A,0xd0'A',A]
+@ CHECK-BE:     @   fixup A - offset: 0, value: _bar, kind: fixup_arm_thumb_bl
 @ CHECK: blx	_baz                    @ encoding: [A,0xf0'A',A,0xc0'A']
-             @   fixup A - offset: 0, value: _baz, kind: fixup_arm_thumb_blx
+@ CHECK:     @   fixup A - offset: 0, value: _baz, kind: fixup_arm_thumb_blx
+@ CHECK-BE: blx	_baz                    @ encoding: [0xf0'A',A,0xc0'A',A]
+@ CHECK-BE:     @   fixup A - offset: 0, value: _baz, kind: fixup_arm_thumb_blx
 
 
 @------------------------------------------------------------------------------
@@ -272,7 +283,9 @@ _func:
         ldr     r3, #368
 
 @ CHECK: ldr	r1, _foo                @ encoding: [A,0x49]
-             @   fixup A - offset: 0, value: _foo, kind: fixup_arm_thumb_cp
+@ CHECK:     @   fixup A - offset: 0, value: _foo, kind: fixup_arm_thumb_cp
+@ CHECK-BE: ldr	r1, _foo                @ encoding: [0x49,A]
+@ CHECK-BE:     @   fixup A - offset: 0, value: _foo, kind: fixup_arm_thumb_cp
 @ CHECK: ldr     r3, [pc, #604]         @ encoding: [0x97,0x4b]
 @ CHECK: ldr     r3, [pc, #368]         @ encoding: [0x5c,0x4b]
 

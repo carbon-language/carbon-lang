@@ -9251,8 +9251,10 @@ bool ARMAsmParser::parseDirectiveThumbSet(SMLoc L) {
 
 /// Force static initialization.
 extern "C" void LLVMInitializeARMAsmParser() {
-  RegisterMCAsmParser<ARMAsmParser> X(TheARMTarget);
-  RegisterMCAsmParser<ARMAsmParser> Y(TheThumbTarget);
+  RegisterMCAsmParser<ARMAsmParser> X(TheARMleTarget);
+  RegisterMCAsmParser<ARMAsmParser> Y(TheARMbeTarget);
+  RegisterMCAsmParser<ARMAsmParser> A(TheThumbleTarget);
+  RegisterMCAsmParser<ARMAsmParser> B(TheThumbbeTarget);
 }
 
 #define GET_REGISTER_MATCHER
