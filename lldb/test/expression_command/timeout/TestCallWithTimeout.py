@@ -87,6 +87,16 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
         return_value = interp.HandleCommand ("expr -t 1000000 -u true -- wait_a_while(1000)", result)
         self.assertTrue(return_value == lldb.eReturnStatusSuccessFinishResult)
 
+
+        # Finally set the one thread timeout and make sure that doesn't change things much:
+
+        options.SetTimeoutInMicroSeconds(1000000)
+        options.SetOneThreadTimeoutInMicroSeconds(500000)
+        value = frame.EvaluateExpression ("wait_a_while (1000)", options)
+        self.assertTrue(value.IsValid())
+        self.assertTrue (value.GetError().Success() == True)
+        
+        
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

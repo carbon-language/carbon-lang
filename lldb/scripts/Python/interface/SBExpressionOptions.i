@@ -64,6 +64,13 @@ public:
     void
     SetTimeoutInMicroSeconds (uint32_t timeout = 0);
     
+    uint32_t
+    GetOneThreadTimeoutInMicroSeconds () const;
+    
+    %feature("docstring", "Sets the timeout in microseconds to run the expression on one thread before either timing out or trying all threads.") SetTimeoutInMicroSeconds;
+    void
+    SetOneThreadTimeoutInMicroSeconds (uint32_t timeout = 0);
+    
     bool
     GetTryAllThreads () const;
     

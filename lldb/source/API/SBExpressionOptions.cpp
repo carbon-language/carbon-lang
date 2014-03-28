@@ -101,6 +101,18 @@ SBExpressionOptions::SetTimeoutInMicroSeconds (uint32_t timeout)
     m_opaque_ap->SetTimeoutUsec (timeout);
 }
 
+uint32_t
+SBExpressionOptions::GetOneThreadTimeoutInMicroSeconds () const
+{
+    return m_opaque_ap->GetOneThreadTimeoutUsec ();
+}
+
+void
+SBExpressionOptions::SetOneThreadTimeoutInMicroSeconds (uint32_t timeout)
+{
+    m_opaque_ap->SetOneThreadTimeoutUsec (timeout);
+}
+
 bool
 SBExpressionOptions::GetTryAllThreads () const
 {

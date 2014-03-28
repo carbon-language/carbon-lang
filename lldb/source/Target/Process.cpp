@@ -5168,6 +5168,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         TimeValue final_timeout = one_thread_timeout;
         
         uint32_t timeout_usec = options.GetTimeoutUsec();
+
         if (!options.GetStopOthers())
         {
             before_first_timeout = false;
@@ -5175,16 +5176,37 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         }
         else if (options.GetTryAllThreads())
         {
-            // If we are running all threads then we take half the time to run all threads, bounded by
-            // .25 sec.
-            if (options.GetTimeoutUsec() == 0)
-                one_thread_timeout.OffsetWithMicroSeconds(default_one_thread_timeout_usec);
+            uint64_t option_one_thread_timeout = options.GetOneThreadTimeoutUsec();
+            
+            // If the overall wait is forever, then we only need to set the one thread timeout:
+            if (timeout_usec == 0)
+            {
+                if (option_one_thread_timeout == 0)
+                    one_thread_timeout.OffsetWithMicroSeconds(option_one_thread_timeout);
+                else
+                    one_thread_timeout.OffsetWithMicroSeconds(default_one_thread_timeout_usec);
+            }
             else
             {
-                uint64_t computed_timeout = timeout_usec / 2;
-                if (computed_timeout > default_one_thread_timeout_usec)
-                    computed_timeout = default_one_thread_timeout_usec;
-                one_thread_timeout.OffsetWithMicroSeconds(computed_timeout);
+                // Otherwise, if the one thread timeout is set, make sure it isn't longer than the overall timeout,
+                // and use it, otherwise use half the total timeout, bounded by the default_one_thread_timeout_usec.
+                uint64_t computed_one_thread_timeout;
+                if (option_one_thread_timeout != 0)
+                {
+                    if (timeout_usec < option_one_thread_timeout)
+                    {
+                        errors.Printf("RunThreadPlan called without one thread timeout greater than total timeout");
+                        return eExecutionSetupError;
+                    }
+                    computed_one_thread_timeout = option_one_thread_timeout;
+                }
+                else
+                {
+                    computed_one_thread_timeout = timeout_usec / 2;
+                    if (computed_one_thread_timeout > default_one_thread_timeout_usec)
+                        computed_one_thread_timeout = default_one_thread_timeout_usec;
+                }
+                one_thread_timeout.OffsetWithMicroSeconds(computed_one_thread_timeout);
             }
             final_timeout.OffsetWithMicroSeconds (timeout_usec);
         }
