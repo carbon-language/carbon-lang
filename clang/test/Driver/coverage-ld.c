@@ -16,8 +16,11 @@
 // RUN:   | FileCheck --check-prefix=CHECK-LINUX-X86-64 %s
 //
 // CHECK-LINUX-X86-64: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
-// CHECK-LINUX-X86-64: "{{.*}}/Inputs/resource_dir{{/|\\\\}}lib{{/|\\\\}}linux{{/|\\\\}}libclang_rt.profile-x86_64.a" {{.*}} "-lc"
-//
+// CHECK-LINUX-X86-64: "-whole-archive"
+// CHECK-LINUX-X86-64: "{{.*}}/Inputs/resource_dir{{/|\\\\}}lib{{/|\\\\}}linux{{/|\\\\}}libclang_rt.profile-x86_64.a"
+// CHECK-LINUX-X86-64: "-no-whole-archive"
+// CHECK-LINUX-X86-64: "-lc"
+
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target x86_64-unknown-freebsd --coverage \
 // RUN:     -resource-dir=%S/Inputs/resource_dir \
