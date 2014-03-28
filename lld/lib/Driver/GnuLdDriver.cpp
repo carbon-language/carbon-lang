@@ -408,8 +408,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
                     << "\n";
         return false;
       }
-      if ((!userPath.endswith(".objtxt")) &&
-          (magic == llvm::sys::fs::file_magic::unknown))
+      if (!userPath.endswith(".objtxt") &&
+          magic == llvm::sys::fs::file_magic::unknown)
         isELFFileNode = false;
       FileNode *inputNode = nullptr;
       if (isELFFileNode)
