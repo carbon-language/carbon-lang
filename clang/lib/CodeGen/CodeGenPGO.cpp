@@ -815,8 +815,8 @@ namespace {
 }
 
 static void emitRuntimeHook(CodeGenModule &CGM) {
-  const char *RuntimeVarName = "__llvm_profile_runtime";
-  const char *RuntimeUserName = "__llvm_profile_runtime_user";
+  LLVM_CONSTEXPR const char *RuntimeVarName = "__llvm_profile_runtime";
+  LLVM_CONSTEXPR const char *RuntimeUserName = "__llvm_profile_runtime_user";
   if (CGM.getModule().getGlobalVariable(RuntimeVarName))
     return;
 
