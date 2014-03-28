@@ -106,12 +106,12 @@ class LLVMMatchType<int num>
   int Number = num;
 }
 
-// Match the type of another intrinsic parameter that is expected to be
-// an integral vector type, but change the element size to be twice as wide
-// or half as wide as the other type.  This is only useful when the intrinsic
-// is overloaded, so the matched type should be declared as iAny.
-class LLVMExtendedElementVectorType<int num> : LLVMMatchType<num>;
-class LLVMTruncatedElementVectorType<int num> : LLVMMatchType<num>;
+// Match the type of another intrinsic parameter that is expected to be based on
+// an integral type (i.e. either iN or <N x iM>), but change the scalar size to
+// be twice as wide or half as wide as the other type.  This is only useful when
+// the intrinsic is overloaded, so the matched type should be declared as iAny.
+class LLVMExtendedType<int num> : LLVMMatchType<num>;
+class LLVMTruncatedType<int num> : LLVMMatchType<num>;
 
 def llvm_void_ty       : LLVMType<isVoid>;
 def llvm_anyint_ty     : LLVMType<iAny>;

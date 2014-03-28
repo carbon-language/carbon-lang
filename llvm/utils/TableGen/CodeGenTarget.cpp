@@ -498,8 +498,8 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       // It only makes sense to use the extended and truncated vector element
       // variants with iAny types; otherwise, if the intrinsic is not
       // overloaded, all the types can be specified directly.
-      assert(((!TyEl->isSubClassOf("LLVMExtendedElementVectorType") &&
-               !TyEl->isSubClassOf("LLVMTruncatedElementVectorType")) ||
+      assert(((!TyEl->isSubClassOf("LLVMExtendedType") &&
+               !TyEl->isSubClassOf("LLVMTruncatedType")) ||
               VT == MVT::iAny || VT == MVT::vAny) &&
              "Expected iAny or vAny type");
     } else {
@@ -532,8 +532,8 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       // It only makes sense to use the extended and truncated vector element
       // variants with iAny types; otherwise, if the intrinsic is not
       // overloaded, all the types can be specified directly.
-      assert(((!TyEl->isSubClassOf("LLVMExtendedElementVectorType") &&
-               !TyEl->isSubClassOf("LLVMTruncatedElementVectorType")) ||
+      assert(((!TyEl->isSubClassOf("LLVMExtendedType") &&
+               !TyEl->isSubClassOf("LLVMTruncatedType")) ||
               VT == MVT::iAny || VT == MVT::vAny) &&
              "Expected iAny or vAny type");
     } else

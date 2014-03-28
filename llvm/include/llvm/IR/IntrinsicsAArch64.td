@@ -68,7 +68,7 @@ class Neon_N3V_Intrinsic
               [IntrNoMem]>;
 class Neon_N2V_Narrow_Intrinsic
   : Intrinsic<[llvm_anyvector_ty],
-              [LLVMExtendedElementVectorType<0>, llvm_i32_ty],
+              [LLVMExtendedType<0>, llvm_i32_ty],
               [IntrNoMem]>;
 
 // Vector rounding shift right by immediate (Signed)

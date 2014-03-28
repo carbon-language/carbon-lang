@@ -131,20 +131,15 @@ def int_arm_sevl : Intrinsic<[], []>;
 class Neon_1Arg_Intrinsic
   : Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 class Neon_1Arg_Narrow_Intrinsic
-  : Intrinsic<[llvm_anyvector_ty],
-              [LLVMExtendedElementVectorType<0>], [IntrNoMem]>;
+  : Intrinsic<[llvm_anyvector_ty], [LLVMExtendedType<0>], [IntrNoMem]>;
 class Neon_2Arg_Intrinsic
   : Intrinsic<[llvm_anyvector_ty], [LLVMMatchType<0>, LLVMMatchType<0>],
               [IntrNoMem]>;
 class Neon_2Arg_Narrow_Intrinsic
-  : Intrinsic<[llvm_anyvector_ty],
-              [LLVMExtendedElementVectorType<0>,
-               LLVMExtendedElementVectorType<0>],
+  : Intrinsic<[llvm_anyvector_ty], [LLVMExtendedType<0>, LLVMExtendedType<0>],
               [IntrNoMem]>;
 class Neon_2Arg_Long_Intrinsic
-  : Intrinsic<[llvm_anyvector_ty],
-              [LLVMTruncatedElementVectorType<0>,
-               LLVMTruncatedElementVectorType<0>],
+  : Intrinsic<[llvm_anyvector_ty], [LLVMTruncatedType<0>, LLVMTruncatedType<0>],
               [IntrNoMem]>;
 class Neon_3Arg_Intrinsic
   : Intrinsic<[llvm_anyvector_ty],
@@ -152,9 +147,7 @@ class Neon_3Arg_Intrinsic
               [IntrNoMem]>;
 class Neon_3Arg_Long_Intrinsic
   : Intrinsic<[llvm_anyvector_ty],
-              [LLVMMatchType<0>,
-               LLVMTruncatedElementVectorType<0>,
-               LLVMTruncatedElementVectorType<0>],
+              [LLVMMatchType<0>, LLVMTruncatedType<0>, LLVMTruncatedType<0>],
               [IntrNoMem]>;
 class Neon_CvtFxToFP_Intrinsic
   : Intrinsic<[llvm_anyfloat_ty], [llvm_anyint_ty, llvm_i32_ty], [IntrNoMem]>;

@@ -246,8 +246,8 @@ enum IIT_Info {
   IIT_STRUCT3 = 20,
   IIT_STRUCT4 = 21,
   IIT_STRUCT5 = 22,
-  IIT_EXTEND_VEC_ARG = 23,
-  IIT_TRUNC_VEC_ARG = 24,
+  IIT_EXTEND_ARG = 23,
+  IIT_TRUNC_ARG = 24,
   IIT_ANYPTR = 25,
   IIT_V1   = 26,
   IIT_VARARG = 27
@@ -292,10 +292,10 @@ static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
   if (R->isSubClassOf("LLVMMatchType")) {
     unsigned Number = R->getValueAsInt("Number");
     assert(Number < ArgCodes.size() && "Invalid matching number!");
-    if (R->isSubClassOf("LLVMExtendedElementVectorType"))
-      Sig.push_back(IIT_EXTEND_VEC_ARG);
-    else if (R->isSubClassOf("LLVMTruncatedElementVectorType"))
-      Sig.push_back(IIT_TRUNC_VEC_ARG);
+    if (R->isSubClassOf("LLVMExtendedType"))
+      Sig.push_back(IIT_EXTEND_ARG);
+    else if (R->isSubClassOf("LLVMTruncatedType"))
+      Sig.push_back(IIT_TRUNC_ARG);
     else
       Sig.push_back(IIT_ARG);
     return Sig.push_back((Number << 2) | ArgCodes[Number]);
