@@ -912,35 +912,85 @@ INTERCEPTOR(int, ioctl, int d, unsigned request, void *arg) {
 #define INIT_IOCTL
 #endif
 
+#if SANITIZER_INTERCEPT_GETPWNAM_AND_FRIENDS || \
+    SANITIZER_INTERCEPT_GETPWENT || SANITIZER_INTERCEPT_FGETPWENT
+static void unpoison_passwd(void *ctx, __sanitizer_passwd *pwd) {
+  if (pwd) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwd, sizeof(*pwd));
+    if (pwd->pw_name)
+      COMMON_INTERCEPTOR_INITIALIZE_RANGE(pwd->pw_name,
+                                          REAL(strlen)(pwd->pw_name) + 1);
+    if (pwd->pw_passwd)
+      COMMON_INTERCEPTOR_INITIALIZE_RANGE(pwd->pw_passwd,
+                                          REAL(strlen)(pwd->pw_passwd) + 1);
+#if !SANITIZER_ANDROID
+    if (pwd->pw_gecos)
+      COMMON_INTERCEPTOR_INITIALIZE_RANGE(pwd->pw_gecos,
+                                          REAL(strlen)(pwd->pw_gecos) + 1);
+#endif
+#if SANITIZER_MAC
+    if (pwd->pw_class)
+      COMMON_INTERCEPTOR_INITIALIZE_RANGE(pwd->pw_class,
+                                          REAL(strlen)(pwd->pw_class) + 1);
+#endif
+    if (pwd->pw_dir)
+      COMMON_INTERCEPTOR_INITIALIZE_RANGE(pwd->pw_dir,
+                                          REAL(strlen)(pwd->pw_dir) + 1);
+    if (pwd->pw_shell)
+      COMMON_INTERCEPTOR_INITIALIZE_RANGE(pwd->pw_shell,
+                                          REAL(strlen)(pwd->pw_shell) + 1);
+  }
+}
+
+static void unpoison_group(void *ctx, __sanitizer_group *grp) {
+  if (grp) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, grp, sizeof(*grp));
+    if (grp->gr_name)
+      COMMON_INTERCEPTOR_INITIALIZE_RANGE(grp->gr_name,
+                                          REAL(strlen)(grp->gr_name) + 1);
+    if (grp->gr_passwd)
+      COMMON_INTERCEPTOR_INITIALIZE_RANGE(grp->gr_passwd,
+                                          REAL(strlen)(grp->gr_passwd) + 1);
+    char **p = grp->gr_mem;
+    for (; *p; ++p) {
+      COMMON_INTERCEPTOR_INITIALIZE_RANGE(*p, REAL(strlen)(*p) + 1);
+    }
+    COMMON_INTERCEPTOR_INITIALIZE_RANGE(grp->gr_mem,
+                                        (p - grp->gr_mem + 1) * sizeof(*p));
+  }
+}
+#endif  // SANITIZER_INTERCEPT_GETPWNAM_AND_FRIENDS ||
+        // SANITIZER_INTERCEPT_GETPWENT || SANITIZER_INTERCEPT_FGETPWENT
+
 #if SANITIZER_INTERCEPT_GETPWNAM_AND_FRIENDS
-INTERCEPTOR(void *, getpwnam, const char *name) {
+INTERCEPTOR(__sanitizer_passwd *, getpwnam, const char *name) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getpwnam, name);
   COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
-  void *res = REAL(getpwnam)(name);
-  if (res != 0) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_passwd_sz);
+  __sanitizer_passwd *res = REAL(getpwnam)(name);
+  if (res != 0) unpoison_passwd(ctx, res);
   return res;
 }
-INTERCEPTOR(void *, getpwuid, u32 uid) {
+INTERCEPTOR(__sanitizer_passwd *, getpwuid, u32 uid) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getpwuid, uid);
-  void *res = REAL(getpwuid)(uid);
-  if (res != 0) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_passwd_sz);
+  __sanitizer_passwd *res = REAL(getpwuid)(uid);
+  if (res != 0) unpoison_passwd(ctx, res);
   return res;
 }
-INTERCEPTOR(void *, getgrnam, const char *name) {
+INTERCEPTOR(__sanitizer_group *, getgrnam, const char *name) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getgrnam, name);
   COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
-  void *res = REAL(getgrnam)(name);
-  if (res != 0) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_group_sz);
+  __sanitizer_group *res = REAL(getgrnam)(name);
+  if (res != 0) unpoison_group(ctx, res);
   return res;
 }
-INTERCEPTOR(void *, getgrgid, u32 gid) {
+INTERCEPTOR(__sanitizer_group *, getgrgid, u32 gid) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getgrgid, gid);
-  void *res = REAL(getgrgid)(gid);
-  if (res != 0) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_group_sz);
+  __sanitizer_group *res = REAL(getgrgid)(gid);
+  if (res != 0) unpoison_group(ctx, res);
   return res;
 }
 #define INIT_GETPWNAM_AND_FRIENDS      \
@@ -953,51 +1003,51 @@ INTERCEPTOR(void *, getgrgid, u32 gid) {
 #endif
 
 #if SANITIZER_INTERCEPT_GETPWNAM_R_AND_FRIENDS
-INTERCEPTOR(int, getpwnam_r, const char *name, void *pwd, char *buf,
-            SIZE_T buflen, void **result) {
+INTERCEPTOR(int, getpwnam_r, const char *name, __sanitizer_passwd *pwd,
+            char *buf, SIZE_T buflen, __sanitizer_passwd **result) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getpwnam_r, name, pwd, buf, buflen, result);
   COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
   int res = REAL(getpwnam_r)(name, pwd, buf, buflen, result);
   if (!res) {
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwd, struct_passwd_sz);
+    unpoison_passwd(ctx, pwd);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
   }
   if (result) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
   return res;
 }
-INTERCEPTOR(int, getpwuid_r, u32 uid, void *pwd, char *buf, SIZE_T buflen,
-            void **result) {
+INTERCEPTOR(int, getpwuid_r, u32 uid, __sanitizer_passwd *pwd, char *buf,
+            SIZE_T buflen, __sanitizer_passwd **result) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getpwuid_r, uid, pwd, buf, buflen, result);
   int res = REAL(getpwuid_r)(uid, pwd, buf, buflen, result);
   if (!res) {
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwd, struct_passwd_sz);
+    unpoison_passwd(ctx, pwd);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
   }
   if (result) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
   return res;
 }
-INTERCEPTOR(int, getgrnam_r, const char *name, void *grp, char *buf,
-            SIZE_T buflen, void **result) {
+INTERCEPTOR(int, getgrnam_r, const char *name, __sanitizer_group *grp,
+            char *buf, SIZE_T buflen, __sanitizer_group **result) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getgrnam_r, name, grp, buf, buflen, result);
   COMMON_INTERCEPTOR_READ_RANGE(ctx, name, REAL(strlen)(name) + 1);
   int res = REAL(getgrnam_r)(name, grp, buf, buflen, result);
   if (!res) {
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, grp, struct_group_sz);
+    unpoison_group(ctx, grp);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
   }
   if (result) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
   return res;
 }
-INTERCEPTOR(int, getgrgid_r, u32 gid, void *grp, char *buf, SIZE_T buflen,
-            void **result) {
+INTERCEPTOR(int, getgrgid_r, u32 gid, __sanitizer_group *grp, char *buf,
+            SIZE_T buflen, __sanitizer_group **result) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getgrgid_r, gid, grp, buf, buflen, result);
   int res = REAL(getgrgid_r)(gid, grp, buf, buflen, result);
   if (!res) {
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, grp, struct_group_sz);
+    unpoison_group(ctx, grp);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
   }
   if (result) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, result, sizeof(*result));
@@ -1013,18 +1063,18 @@ INTERCEPTOR(int, getgrgid_r, u32 gid, void *grp, char *buf, SIZE_T buflen,
 #endif
 
 #if SANITIZER_INTERCEPT_GETPWENT
-INTERCEPTOR(void *, getpwent, int dummy) {
+INTERCEPTOR(__sanitizer_passwd *, getpwent, int dummy) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getpwent, dummy);
-  void *res = REAL(getpwent)(dummy);
-  if (res != 0) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_passwd_sz);
+  __sanitizer_passwd *res = REAL(getpwent)(dummy);
+  if (res != 0) unpoison_passwd(ctx, res);
   return res;
 }
-INTERCEPTOR(void *, getgrent, int dummy) {
+INTERCEPTOR(__sanitizer_group *, getgrent, int dummy) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getgrent, dummy);
-  void *res = REAL(getgrent)(dummy);
-  if (res != 0) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, struct_group_sz);
+  __sanitizer_group *res = REAL(getgrent)(dummy);
+  if (res != 0) unpoison_group(ctx, res);;
   return res;
 }
 #define INIT_GETPWENT                  \
@@ -1034,50 +1084,72 @@ INTERCEPTOR(void *, getgrent, int dummy) {
 #define INIT_GETPWENT
 #endif
 
+#if SANITIZER_INTERCEPT_FGETPWENT
+INTERCEPTOR(__sanitizer_passwd *, fgetpwent, void *fp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fgetpwent, fp);
+  __sanitizer_passwd *res = REAL(fgetpwent)(fp);
+  if (res != 0) unpoison_passwd(ctx, res);
+  return res;
+}
+INTERCEPTOR(__sanitizer_group *, fgetgrent, void *fp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fgetgrent, fp);
+  __sanitizer_group *res = REAL(fgetgrent)(fp);
+  if (res != 0) unpoison_group(ctx, res);
+  return res;
+}
+#define INIT_FGETPWENT                  \
+  COMMON_INTERCEPT_FUNCTION(fgetpwent); \
+  COMMON_INTERCEPT_FUNCTION(fgetgrent);
+#else
+#define INIT_FGETPWENT
+#endif
+
 #if SANITIZER_INTERCEPT_GETPWENT_R
-INTERCEPTOR(int, getpwent_r, void *pwbuf, char *buf, SIZE_T buflen,
-            void **pwbufp) {
+INTERCEPTOR(int, getpwent_r, __sanitizer_passwd *pwbuf, char *buf,
+            SIZE_T buflen, __sanitizer_passwd **pwbufp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getpwent_r, pwbuf, buf, buflen, pwbufp);
   int res = REAL(getpwent_r)(pwbuf, buf, buflen, pwbufp);
   if (!res) {
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwbuf, struct_passwd_sz);
+    unpoison_passwd(ctx, pwbuf);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
   }
   if (pwbufp) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwbufp, sizeof(*pwbufp));
   return res;
 }
-INTERCEPTOR(int, fgetpwent_r, void *fp, void *pwbuf, char *buf, SIZE_T buflen,
-            void **pwbufp) {
+INTERCEPTOR(int, fgetpwent_r, void *fp, __sanitizer_passwd *pwbuf, char *buf,
+            SIZE_T buflen, __sanitizer_passwd **pwbufp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, fgetpwent_r, fp, pwbuf, buf, buflen, pwbufp);
   int res = REAL(fgetpwent_r)(fp, pwbuf, buf, buflen, pwbufp);
   if (!res) {
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwbuf, struct_passwd_sz);
+    unpoison_passwd(ctx, pwbuf);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
   }
   if (pwbufp) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwbufp, sizeof(*pwbufp));
   return res;
 }
-INTERCEPTOR(int, getgrent_r, void *pwbuf, char *buf, SIZE_T buflen,
-            void **pwbufp) {
+INTERCEPTOR(int, getgrent_r, __sanitizer_group *pwbuf, char *buf, SIZE_T buflen,
+            __sanitizer_group **pwbufp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, getgrent_r, pwbuf, buf, buflen, pwbufp);
   int res = REAL(getgrent_r)(pwbuf, buf, buflen, pwbufp);
   if (!res) {
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwbuf, struct_group_sz);
+    unpoison_group(ctx, pwbuf);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
   }
   if (pwbufp) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwbufp, sizeof(*pwbufp));
   return res;
 }
-INTERCEPTOR(int, fgetgrent_r, void *fp, void *pwbuf, char *buf, SIZE_T buflen,
-            void **pwbufp) {
+INTERCEPTOR(int, fgetgrent_r, void *fp, __sanitizer_group *pwbuf, char *buf,
+            SIZE_T buflen, __sanitizer_group **pwbufp) {
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, fgetgrent_r, fp, pwbuf, buf, buflen, pwbufp);
   int res = REAL(fgetgrent_r)(fp, pwbuf, buf, buflen, pwbufp);
   if (!res) {
-    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwbuf, struct_group_sz);
+    unpoison_group(ctx, pwbuf);
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, buf, buflen);
   }
   if (pwbufp) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, pwbufp, sizeof(*pwbufp));
@@ -3667,6 +3739,7 @@ INTERCEPTOR(int, ftime, __sanitizer_timeb *tp) {
   INIT_GETPWNAM_AND_FRIENDS;               \
   INIT_GETPWNAM_R_AND_FRIENDS;             \
   INIT_GETPWENT;                           \
+  INIT_FGETPWENT;                          \
   INIT_GETPWENT_R;                         \
   INIT_SETPWENT;                           \
   INIT_CLOCK_GETTIME;                      \
