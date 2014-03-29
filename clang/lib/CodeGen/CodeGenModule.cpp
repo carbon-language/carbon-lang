@@ -1177,12 +1177,14 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
       if (!FD->doesDeclarationForceExternallyVisibleDefinition())
         return;
 
-      const FunctionDecl *InlineDefinition = 0;
-      FD->getBody(InlineDefinition);
-
       StringRef MangledName = getMangledName(GD);
-      DeferredDecls.erase(MangledName);
-      EmitGlobalDefinition(InlineDefinition);
+
+      // Compute the function info and LLVM type.
+      const CGFunctionInfo &FI = getTypes().arrangeGlobalDeclaration(GD);
+      llvm::Type *Ty = getTypes().GetFunctionType(FI);
+
+      GetOrCreateLLVMFunction(MangledName, Ty, GD, /*ForVTable=*/false,
+                              /*DontDefer=*/false);
       return;
     }
   } else {

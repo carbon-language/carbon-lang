@@ -39,6 +39,9 @@ extern int f7(void) { return 0; }
 // CHECK-GNU89-LABEL: define i32 @fA()
 inline int fA(void) { return 0; }
 
+// CHECK-GNU89-LABEL: define i32 @fB()
+inline int fB() { return 0; }
+
 // CHECK-GNU89-LABEL: define available_externally i32 @f4()
 // CHECK-C99-LABEL: define i32 @f4()
 int f4(void);
@@ -56,7 +59,11 @@ extern inline int f9(void) { return 0; }
 
 // CHECK-C99-LABEL: define available_externally i32 @fA()
 
+// CHECK-C99-LABEL: define i32 @fB()
+
 int test_all() { 
   return f0() + f1() + f2() + f3() + f4() + f5() + f6() + f7() + f8() + f9() 
-    + fA();
+    + fA() + fB();
 }
+
+int fB(void);
