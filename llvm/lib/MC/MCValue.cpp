@@ -20,6 +20,11 @@ void MCValue::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
     return;
   }
 
+  // FIXME: prints as a number, which isn't ideal. But the meaning will be
+  // target-specific anyway.
+  if (getRefKind())
+    OS << ':' << getRefKind() <<  ':';
+
   getSymA()->print(OS);
 
   if (getSymB()) {
