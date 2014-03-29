@@ -2,7 +2,8 @@
 # RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
 # RUN:     --output-filetype=yaml %S/Inputs/got16.o \
 # RUN:     | FileCheck -check-prefix YAML %s
-# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t2 %t1
+# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t2 \
+# RUN: %S/Inputs/got16.o
 # RUN: llvm-objdump -t -disassemble %t2 | FileCheck -check-prefix RAW %s
 
 # Local GOT entries:
