@@ -4939,8 +4939,8 @@ FailedModImm:
 // Specialized code to quickly find if PotentialBVec is a BuildVector that
 // consists of only the same constant int value, returned in reference arg
 // ConstVal
-bool isAllConstantBuildVector(const SDValue &PotentialBVec,
-                              uint64_t &ConstVal) {
+static bool isAllConstantBuildVector(const SDValue &PotentialBVec,
+                                     uint64_t &ConstVal) {
   BuildVectorSDNode *Bvec = dyn_cast<BuildVectorSDNode>(PotentialBVec);
   if (!Bvec)
     return false;
@@ -6610,45 +6610,6 @@ static SDValue tryCombineFixedPointConvert(SDNode *N,
         DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VecResTy, IID, Vec, Shift);
     return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, ResTy, Convert, Lane);
   }
-  return SDValue();
-}
-
-// Normalise extract_subvectors that extract the high V64 of a V128. If
-// the type of the extract_subvector is anything other than v1i64,
-// create a new exact with type v1i64. This is so that the
-// extract_subvector matches the extract_high PatFrag in tablegen.
-SDValue normalizeExtractHigh(SDNode *N, SelectionDAG &DAG) {
-  // Look through bitcasts.
-  while (N->getOpcode() == ISD::BITCAST)
-    N = N->getOperand(0).getNode();
-
-  if (N->getOpcode() != ISD::EXTRACT_SUBVECTOR)
-    return SDValue();
-
-  uint64_t idx = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
-
-  EVT SrcVT = N->getOperand(0).getValueType();
-  unsigned SrcElts = SrcVT.getVectorNumElements();
-  unsigned DstElts = N->getValueType(0).getVectorNumElements();
-
-  if ((SrcElts == 2 * DstElts) && (idx == DstElts)) {
-
-    // If this is already a v1i64 extract, just return it.
-    if (DstElts == 1)
-      return SDValue(N, 0);
-
-#ifndef NDEBUG
-    unsigned SrcBits = SrcVT.getVectorElementType().getSizeInBits();
-    assert(SrcElts * SrcBits == 128 && "Not an extract from a wide vector");
-#endif
-
-    SDValue Bitcast =
-        DAG.getNode(ISD::BITCAST, SDLoc(N), MVT::v2i64, N->getOperand(0));
-
-    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, SDLoc(N), MVT::v1i64, Bitcast,
-                       DAG.getConstant(1, MVT::i64));
-  }
-
   return SDValue();
 }
 

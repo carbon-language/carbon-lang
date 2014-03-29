@@ -73,9 +73,9 @@ static MCAsmInfo *createARM64MCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-MCCodeGenInfo *createARM64MCCodeGenInfo(StringRef TT, Reloc::Model RM,
-                                        CodeModel::Model CM,
-                                        CodeGenOpt::Level OL) {
+static MCCodeGenInfo *createARM64MCCodeGenInfo(StringRef TT, Reloc::Model RM,
+                                               CodeModel::Model CM,
+                                               CodeGenOpt::Level OL) {
   Triple TheTriple(TT);
   assert((TheTriple.isOSBinFormatELF() || TheTriple.isOSBinFormatMachO()) &&
          "Only expect Darwin and ELF targets");

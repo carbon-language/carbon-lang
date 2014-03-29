@@ -266,7 +266,7 @@ bool SSACCmpConv::isDeadDef(unsigned DstReg) {
 // Parse a condition code returned by AnalyzeBranch, and compute the CondCode
 // corresponding to TBB.
 // Return
-bool parseCond(ArrayRef<MachineOperand> Cond, ARM64CC::CondCode &CC) {
+static bool parseCond(ArrayRef<MachineOperand> Cond, ARM64CC::CondCode &CC) {
   // A normal br.cond simply has the condition code.
   if (Cond[0].getImm() != -1) {
     assert(Cond.size() == 1 && "Unknown Cond array format");
