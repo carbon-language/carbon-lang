@@ -24,11 +24,11 @@ HEADERS := $(notdir $(wildcard $(PROJ_SRC_DIR)/*.h))
 OBJHEADERS := $(addprefix $(HeaderDir)/, $(HEADERS))
 
 
-$(OBJHEADERS): $(HeaderDir)/%.h: $(PROJ_SRC_DIR)/%.h $(HeaderDir)/.dir
+$(OBJHEADERS): $(HeaderDir)/%.h: $(PROJ_SRC_DIR)/%.h $(HeaderDir)/.dir $(HeaderDir)/arm_neon.h
 	$(Verb) cp $< $@
 	$(Echo) Copying $(notdir $<) to build dir
 
-$(HeaderDir)/arm_neon.h: $(HeaderDir)/%: %.inc $(HeaderDir)/.dir
+$(HeaderDir)/arm_neon.h: $(BUILT_SOURCES) $(HeaderDir)/.dir
 	$(Verb) cp $< $@
 	$(Echo) Copying $(notdir $<) to build dir
 
@@ -61,5 +61,4 @@ install-local:: $(INSTHEADERS) $(PROJ_headers)/module.map
 
 $(ObjDir)/arm_neon.h.inc.tmp : $(CLANG_LEVEL)/include/clang/Basic/arm_neon.td $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang arm_neon.h.inc with tblgen"
-	$(Verb) $(ClangTableGen) -gen-arm-neon -o $(call SYSPATH, $@) \
-	  -I $(PROJ_SRC_DIR)/../../include $<
+	$(Verb) $(ClangTableGen) -gen-arm-neon -o $(call SYSPATH, $@) $<
