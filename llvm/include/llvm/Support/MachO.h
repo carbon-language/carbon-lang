@@ -128,7 +128,8 @@ namespace llvm {
       LC_SOURCE_VERSION       = 0x0000002Au,
       LC_DYLIB_CODE_SIGN_DRS  = 0x0000002Bu,
       //                        0x0000002Cu,
-      LC_LINKER_OPTIONS       = 0x0000002Du
+      LC_LINKER_OPTIONS       = 0x0000002Du,
+      LC_LINKER_OPTIMIZATION_HINT = 0x0000002Eu
     };
 
     enum : uint32_t {

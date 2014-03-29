@@ -24,6 +24,7 @@ add_llvm_library(LLVMMC
   MCInstPrinter.cpp
   MCInstrAnalysis.cpp
   MCLabel.cpp
+  MCLinkerOptimizationHint.cpp
   MCMachOStreamer.cpp
   MCMachObjectTargetWriter.cpp
   MCModule.cpp

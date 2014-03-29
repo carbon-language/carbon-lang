@@ -18,6 +18,7 @@
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCLinkerOptimizationHint.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
@@ -932,6 +933,10 @@ private:
   // which flags to be set.
   unsigned ELFHeaderEFlags;
 
+  /// Used to communicate Linker Optimization Hint information between
+  /// the Streamer and the .o writer
+  MCLOHContainer LOHContainer;
+
   VersionMinInfoType VersionMinInfo;
 private:
   /// Evaluate a fixup to a relocatable expression and the value which should be
@@ -1174,6 +1179,19 @@ public:
 
   size_t data_region_size() const { return DataRegions.size(); }
 
+  /// @}
+  /// @name Data Region List Access
+  /// @{
+
+  // FIXME: This is a total hack, this should not be here. Once things are
+  // factored so that the streamer has direct access to the .o writer, it can
+  // disappear.
+  MCLOHContainer & getLOHContainer() {
+    return LOHContainer;
+  }
+  const MCLOHContainer & getLOHContainer() const {
+    return const_cast<MCAssembler *>(this)->getLOHContainer();
+  }
   /// @}
   /// @name Backend Data Access
   /// @{

@@ -126,6 +126,7 @@ public:
   void ChangeSection(const MCSection *Section,
                      const MCExpr *Subsection) override;
 
+  void EmitLOHDirective(MCLOHType Kind, const MCLOHArgs &Args) override;
   void EmitLabel(MCSymbol *Symbol) override;
   void EmitDebugLabel(MCSymbol *Symbol) override;
 
@@ -339,6 +340,27 @@ void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   MCStreamer::EmitLabel(Symbol);
 
   OS << *Symbol << MAI->getLabelSuffix();
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitLOHDirective(MCLOHType Kind, const MCLOHArgs &Args) {
+  StringRef str = MCLOHIdToName(Kind);
+
+#ifndef NDEBUG
+  int NbArgs = MCLOHIdToNbArgs(Kind);
+  assert(NbArgs != -1 && ((size_t)NbArgs) == Args.size() && "Malformed LOH!");
+  assert(str != "" && "Invalid LOH name");
+#endif
+
+  OS << "\t" << MCLOHDirectiveName() << " " << str << "\t";
+  bool IsFirst = true;
+  for (MCLOHArgs::const_iterator It = Args.begin(), EndIt = Args.end();
+       It != EndIt; ++It) {
+    if (!IsFirst)
+      OS << ", ";
+    IsFirst = false;
+    OS << **It;
+  }
   EmitEOL();
 }
 

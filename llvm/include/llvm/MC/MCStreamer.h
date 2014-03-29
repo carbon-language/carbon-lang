@@ -19,6 +19,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCDwarf.h"
+#include "llvm/MC/MCLinkerOptimizationHint.h"
 #include "llvm/MC/MCWin64EH.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
@@ -465,6 +466,10 @@ public:
   ///  .size symbol, expression
   ///
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) = 0;
+
+  /// \brief Emit a Linker Optimization Hint (LOH) directive.
+  /// \param Args - Arguments of the LOH.
+  virtual void EmitLOHDirective(MCLOHType Kind, const MCLOHArgs &Args) {}
 
   /// EmitCommonSymbol - Emit a common symbol.
   ///

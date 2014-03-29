@@ -17,6 +17,7 @@
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCLinkerOptimizationHint.h"
 #include "llvm/MC/MCMachOSymbolFlags.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
@@ -102,6 +103,10 @@ public:
 
   void EmitIdent(StringRef IdentString) override {
     llvm_unreachable("macho doesn't support this directive");
+  }
+
+  void EmitLOHDirective(MCLOHType Kind, const MCLOHArgs &Args) override {
+    getAssembler().getLOHContainer().addDirective(Kind, Args);
   }
 
   void FinishImpl() override;

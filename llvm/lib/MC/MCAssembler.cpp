@@ -355,6 +355,7 @@ void MCAssembler::reset() {
   getBackend().reset();
   getEmitter().reset();
   getWriter().reset();
+  getLOHContainer().reset();
 }
 
 bool MCAssembler::isSymbolLinkerVisible(const MCSymbol &Symbol) const {
