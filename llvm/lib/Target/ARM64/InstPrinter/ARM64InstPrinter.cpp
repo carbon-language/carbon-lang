@@ -1424,5 +1424,5 @@ void ARM64InstPrinter::printSIMDType10Operand(const MCInst *MI, unsigned OpNo,
                                               raw_ostream &O) {
   unsigned RawVal = MI->getOperand(OpNo).getImm();
   uint64_t Val = ARM64_AM::decodeAdvSIMDModImmType10(RawVal);
-  O << format("#%#016lx", Val);
+  O << format("#%#016llx", Val);
 }
