@@ -374,6 +374,12 @@ namespace lldb_private {
         uint32_t
         GetByteSize () const;
 
+        static uint32_t
+        GetMaxByteSize ()
+        {
+            return kMaxRegisterByteSize;
+        }
+
         void
         Clear();
 

@@ -92,6 +92,7 @@ PlatformRemoteiOS::CreateInstance (bool force, const ArchSpec *arch)
         switch (arch->GetMachine())
         {
         case llvm::Triple::arm:
+        case llvm::Triple::arm64:
         case llvm::Triple::thumb:
             {
                 const llvm::Triple &triple = arch->GetTriple();

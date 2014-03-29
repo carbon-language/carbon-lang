@@ -45,6 +45,10 @@ extern "C" const double debugserverVersionNumber;
 
 #define RNB_ARCH    "ppc"
 
+#elif defined (__arm64__)
+
+#define RNB_ARCH    "arm64"
+
 #elif defined (__arm__)
 
 #define RNB_ARCH    "armv7"

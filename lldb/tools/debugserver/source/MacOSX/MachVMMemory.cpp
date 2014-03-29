@@ -311,11 +311,18 @@ static bool InSharedRegion(mach_vm_address_t addr, cpu_type_t type)
     mach_vm_address_t base = 0, size = 0;
     
     switch(type) {
+#if defined (CPU_TYPE_ARM64) && defined (SHARED_REGION_BASE_ARM64)
+        case CPU_TYPE_ARM64:
+            base = SHARED_REGION_BASE_ARM64;
+            size = SHARED_REGION_SIZE_ARM64;
+            break;
+#endif
+
         case CPU_TYPE_ARM:
             base = SHARED_REGION_BASE_ARM;
             size = SHARED_REGION_SIZE_ARM;
             break;
-            
+
         case CPU_TYPE_X86_64:
             base = SHARED_REGION_BASE_X86_64;
             size = SHARED_REGION_SIZE_X86_64;

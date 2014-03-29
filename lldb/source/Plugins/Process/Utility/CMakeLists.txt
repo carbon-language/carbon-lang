@@ -8,6 +8,7 @@ add_lldb_library(lldbPluginProcessUtility
   HistoryUnwind.cpp
   InferiorCallPOSIX.cpp
   RegisterContextDarwin_arm.cpp
+  RegisterContextDarwin_arm64.cpp
   RegisterContextDarwin_i386.cpp
   RegisterContextDarwin_x86_64.cpp
   RegisterContextDummy.cpp

@@ -406,6 +406,102 @@ ClangASTType::IsFunctionType (bool *is_variadic_ptr) const
     return false;
 }
 
+// Used to detect "Homogeneous Floating-point Aggregates"
+uint32_t
+ClangASTType::IsHomogeneousAggregate (ClangASTType* base_type_ptr) const
+{
+    if (!IsValid())
+        return 0;
+    
+    QualType qual_type(GetCanonicalQualType());
+    const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+    switch (type_class)
+    {
+        case clang::Type::Record:
+            if (GetCompleteType ())
+            {
+                const CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
+                if (cxx_record_decl)
+                {
+                    if (cxx_record_decl->getNumBases() ||
+                        cxx_record_decl->isDynamicClass())
+                        return 0;
+                }
+                const RecordType *record_type = cast<RecordType>(qual_type.getTypePtr());
+                if (record_type)
+                {
+                    const RecordDecl *record_decl = record_type->getDecl();
+                    if (record_decl)
+                    {
+                        // We are looking for a structure that contains only floating point types
+                        RecordDecl::field_iterator field_pos, field_end = record_decl->field_end();
+                        uint32_t num_fields = 0;
+                        bool is_hva = false;
+                        bool is_hfa = false;
+                        QualType base_qual_type;
+                        for (field_pos = record_decl->field_begin(); field_pos != field_end; ++field_pos)
+                        {
+                            QualType field_qual_type = field_pos->getType();
+                            if (field_qual_type->isFloatingType())
+                            {
+                                if (field_qual_type->isComplexType())
+                                    return 0;
+                                else
+                                {
+                                    if (num_fields == 0)
+                                        base_qual_type = field_qual_type;
+                                    else
+                                    {
+                                        if (is_hva)
+                                            return 0;
+                                        is_hfa = true;
+                                        if (field_qual_type.getTypePtr() != base_qual_type.getTypePtr())
+                                            return 0;
+                                    }
+                                }
+                            }
+                            else if (field_qual_type->isVectorType() || field_qual_type->isExtVectorType())
+                            {
+                                const VectorType *array = cast<VectorType>(field_qual_type.getTypePtr());
+                                if (array && array->getNumElements() <= 4)
+                                {
+                                    if (num_fields == 0)
+                                        base_qual_type = array->getElementType();
+                                    else
+                                    {
+                                        if (is_hfa)
+                                            return 0;
+                                        is_hva = true;
+                                        if (field_qual_type.getTypePtr() != base_qual_type.getTypePtr())
+                                            return 0;
+                                    }
+                                }
+                                else
+                                    return 0;
+                            }
+                            else
+                                return 0;
+                            ++num_fields;
+                        }
+                        if (base_type_ptr)
+                            *base_type_ptr = ClangASTType (m_ast, base_qual_type);
+                        return num_fields;
+                    }
+                }
+            }
+            break;
+            
+        case clang::Type::Typedef:
+            return ClangASTType(m_ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType()).IsHomogeneousAggregate (base_type_ptr);
+            
+        case clang::Type::Elaborated:
+            return  ClangASTType(m_ast, cast<ElaboratedType>(qual_type)->getNamedType()).IsHomogeneousAggregate (base_type_ptr);
+        default:
+            break;
+    }
+    return 0;
+}
+
 size_t
 ClangASTType::GetNumberOfFunctionArguments () const
 {
@@ -6543,5 +6639,6 @@ lldb_private::operator != (const lldb_private::ClangASTType &lhs, const lldb_pri
 {
     return lhs.GetASTContext() != rhs.GetASTContext() || lhs.GetOpaqueQualType() != rhs.GetOpaqueQualType();
 }
+
 
 

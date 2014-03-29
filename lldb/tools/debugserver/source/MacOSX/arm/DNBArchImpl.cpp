@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if defined (__arm__)
+#if defined (__arm__) || defined (__arm64__)
 
 #include "MacOSX/arm/DNBArchImpl.h"
 #include "MacOSX/MachProcess.h"
@@ -23,6 +23,7 @@
 #include "ARM_GCC_Registers.h"
 #include "ARM_DWARF_Registers.h"
 
+#include <inttypes.h>
 #include <sys/sysctl.h>
 
 // BCR address match type
@@ -64,6 +65,13 @@
 
 static const uint8_t g_arm_breakpoint_opcode[] = { 0xFE, 0xDE, 0xFF, 0xE7 };
 static const uint8_t g_thumb_breakpoint_opcode[] = { 0xFE, 0xDE };
+
+// A watchpoint may need to be implemented using two watchpoint registers.
+// e.g. watching an 8-byte region when the device can only watch 4-bytes.
+//
+// This stores the lo->hi mappings.  It's safe to initialize to all 0's
+// since hi > lo and therefore LoHi[i] cannot be 0.
+static uint32_t LoHi[16] = { 0 };
 
 // ARM constants used during decoding
 #define REG_RD          0
@@ -278,9 +286,15 @@ DNBArchMachARM::GetDBGState(bool force)
         return KERN_SUCCESS;
 
     // Read the registers from our thread
+#if defined (ARM_DEBUG_STATE32) && defined (__arm64__)
+    mach_msg_type_number_t count = ARM_DEBUG_STATE32_COUNT;
+    kern_return_t kret = ::thread_get_state(m_thread->MachPortNumber(), ARM_DEBUG_STATE32, (thread_state_t)&m_state.dbg, &count);
+#else
     mach_msg_type_number_t count = ARM_DEBUG_STATE_COUNT;
     kern_return_t kret = ::thread_get_state(m_thread->MachPortNumber(), ARM_DEBUG_STATE, (thread_state_t)&m_state.dbg, &count);
+#endif
     m_state.SetError(set, Read, kret);
+
     return kret;
 }
 
@@ -318,6 +332,15 @@ kern_return_t
 DNBArchMachARM::SetDBGState(bool also_set_on_task)
 {
     int set = e_regSetDBG;
+#if defined (ARM_DEBUG_STATE32) && defined (__arm64__)
+    kern_return_t kret = ::thread_set_state (m_thread->MachPortNumber(), ARM_DEBUG_STATE32, (thread_state_t)&m_state.dbg, ARM_DEBUG_STATE32_COUNT);
+    if (also_set_on_task)
+    {
+        kern_return_t task_kret = ::task_set_state (m_thread->Process()->Task().TaskPort(), ARM_DEBUG_STATE32, (thread_state_t)&m_state.dbg, ARM_DEBUG_STATE32_COUNT);
+        if (task_kret != KERN_SUCCESS)
+             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::SetDBGState failed to set debug control register state: 0x%8.8x.", kret);
+    }
+#else
     kern_return_t kret = ::thread_set_state (m_thread->MachPortNumber(), ARM_DEBUG_STATE, (thread_state_t)&m_state.dbg, ARM_DEBUG_STATE_COUNT);
     if (also_set_on_task)
     {
@@ -325,6 +348,7 @@ DNBArchMachARM::SetDBGState(bool also_set_on_task)
         if (task_kret != KERN_SUCCESS)
              DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::SetDBGState failed to set debug control register state: 0x%8.8x.", kret);
     }
+#endif
 
     m_state.SetError(set, Write, kret);         // Set the current write error for this register set
     m_state.InvalidateRegisterSetState(set);    // Invalidate the current register state in case registers are read back differently
@@ -362,7 +386,7 @@ DNBArchMachARM::ThreadWillResume()
                 return;
             }
 
-            DisableHardwareWatchpoint0(m_watchpoint_hw_index, true, false);
+            DisableHardwareWatchpoint(m_watchpoint_hw_index, false);
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::ThreadWillResume() DisableHardwareWatchpoint(%d) called",
                              m_watchpoint_hw_index);
 
@@ -399,7 +423,7 @@ DNBArchMachARM::ThreadDidStop()
         {
             if (m_watchpoint_did_occur && m_watchpoint_hw_index >= 0)
             {
-                EnableHardwareWatchpoint0(m_watchpoint_hw_index, true, false);
+                ReenableHardwareWatchpoint(m_watchpoint_hw_index);
                 m_watchpoint_resume_single_step_enabled = false;
                 m_watchpoint_did_occur = false;
                 m_watchpoint_hw_index = -1;
@@ -443,18 +467,24 @@ DNBArchMachARM::NotifyException(MachException::Data& exc)
         case EXC_BREAKPOINT:
             if (exc.exc_data.size() == 2 && exc.exc_data[0] == EXC_ARM_DA_DEBUG)
             {
-                // exc_code = EXC_ARM_DA_DEBUG
-                //
-                // Check whether this corresponds to a watchpoint hit event.
-                // If yes, retrieve the exc_sub_code as the data break address.
-                if (!HasWatchpointOccurred())
-                    break;
-
                 // The data break address is passed as exc_data[1].
                 nub_addr_t addr = exc.exc_data[1];
                 // Find the hardware index with the side effect of possibly massaging the
                 // addr to return the starting address as seen from the debugger side.
                 uint32_t hw_index = GetHardwareWatchpointHit(addr);
+                DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::NotifyException watchpoint %d was hit on address 0x%llx", hw_index, (uint64_t) addr);
+                const int num_watchpoints = NumSupportedHardwareWatchpoints ();
+                for (int i = 0; i < num_watchpoints; i++)
+                {
+                    if (LoHi[i] != 0
+                        && LoHi[i] == hw_index 
+                        && LoHi[i] != i
+                        && GetWatchpointAddressByIndex (i) != INVALID_NUB_ADDRESS)
+                    {
+                        addr = GetWatchpointAddressByIndex (i);
+                        DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::NotifyException It is a linked watchpoint; rewritten to index %d addr 0x%llx", LoHi[i], (uint64_t) addr);
+                    }
+                }
                 if (hw_index != INVALID_NUB_HW_INDEX)
                 {
                     m_watchpoint_did_occur = true;
@@ -492,7 +522,6 @@ DNBArchMachARM::StepNotComplete ()
     return false;
 }
 
-
 // Set the single step bit in the processor status register.
 kern_return_t
 DNBArchMachARM::EnableHardwareSingleStep (bool enable)
@@ -516,6 +545,22 @@ DNBArchMachARM::EnableHardwareSingleStep (bool enable)
         return err.Error();
     }
 
+// The use of __arm64__ here is not ideal.  If debugserver is running on
+// an armv8 device, regardless of whether it was built for arch arm or arch arm64,
+// it needs to use the MDSCR_EL1 SS bit to single instruction step.
+
+#if defined (__arm64__)
+    if (enable)
+    {
+        DNBLogThreadedIf(LOG_STEP, "%s: Setting MDSCR_EL1 Single Step bit at pc 0x%llx", __FUNCTION__, (uint64_t) m_state.context.gpr.__pc);
+        m_state.dbg.__mdscr_el1 |= 1;  // Set bit 0 (single step, SS) in the MDSCR_EL1.
+    }
+    else
+    {
+        DNBLogThreadedIf(LOG_STEP, "%s: Clearing MDSCR_EL1 Single Step bit at pc 0x%llx", __FUNCTION__, (uint64_t) m_state.context.gpr.__pc);
+        m_state.dbg.__mdscr_el1 &= ~(1ULL);  // Clear bit 0 (single step, SS) in the MDSCR_EL1.
+    }
+#else
     const uint32_t i = 0;
     if (enable)
     {
@@ -577,6 +622,7 @@ DNBArchMachARM::EnableHardwareSingleStep (bool enable)
         // Just restore the state we had before we did single stepping
         m_state.dbg = m_dbg_save;
     }
+#endif
 
     return SetDBGState(false);
 }
@@ -677,6 +723,7 @@ DNBArchMachARM::NumSupportedHardwareBreakpoints()
         }
         else
         {
+#if !defined (__arm64__)
             // Read the DBGDIDR to get the number of available hardware breakpoints
             // However, in some of our current armv7 processors, hardware
             // breakpoints/watchpoints were not properly connected. So detect those
@@ -708,6 +755,7 @@ DNBArchMachARM::NumSupportedHardwareBreakpoints()
                         g_num_supported_hw_breakpoints = numBRPs;
                 }
             }
+#endif
         }
     }
     return g_num_supported_hw_breakpoints;
@@ -736,6 +784,7 @@ DNBArchMachARM::NumSupportedHardwareWatchpoints()
         }
         else
         {
+#if !defined (__arm64__)
             // Read the DBGDIDR to get the number of available hardware breakpoints
             // However, in some of our current armv7 processors, hardware
             // breakpoints/watchpoints were not properly connected. So detect those
@@ -766,6 +815,7 @@ DNBArchMachARM::NumSupportedHardwareWatchpoints()
                         g_num_supported_hw_watchpoints = numWRPs;
                 }
             }
+#endif
         }
     }
     return g_num_supported_hw_watchpoints;
@@ -873,9 +923,16 @@ DNBArchMachARM::DisableHardwareBreakpoint (uint32_t hw_index)
     return false;
 }
 
-// This stores the lo->hi mappings.  It's safe to initialize to all 0's
-// since hi > lo and therefore LoHi[i] cannot be 0.
-static uint32_t LoHi[16] = { 0 };
+// ARM v7 watchpoints may be either word-size or double-word-size.
+// It's implementation defined which they can handle.  It looks like on an
+// armv8 device, armv7 processes can watch dwords.  But on a genuine armv7
+// device I tried, only word watchpoints are supported.
+
+#if defined (__arm64__)
+#define WATCHPOINTS_ARE_DWORD 1
+#else
+#undef WATCHPOINTS_ARE_DWORD
+#endif
 
 uint32_t
 DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write, bool also_set_on_task)
@@ -893,16 +950,55 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
     if (read == false && write == false)
         return INVALID_NUB_HW_INDEX;
 
-    // Divide-and-conquer for size == 8.
-    if (size == 8)
+    // Otherwise, can't watch more than 8 bytes per WVR/WCR pair
+    if (size > 8)
+        return INVALID_NUB_HW_INDEX;
+
+    // Treat arm watchpoints as having an 8-byte alignment requirement.  You can put a watchpoint on a 4-byte
+    // offset address but you can only watch 4 bytes with that watchpoint.
+
+    // arm watchpoints on an 8-byte (double word) aligned addr can watch any bytes in that 
+    // 8-byte long region of memory.  They can watch the 1st byte, the 2nd byte, 3rd byte, etc, or any
+    // combination therein by setting the bits in the BAS [12:5] (Byte Address Select) field of
+    // the DBGWCRn_EL1 reg for the watchpoint.
+
+    // If the MASK [28:24] bits in the DBGWCRn_EL1 allow a single watchpoint to monitor a larger region
+    // of memory (16 bytes, 32 bytes, or 2GB) but the Byte Address Select bitfield then selects a larger
+    // range of bytes, instead of individual bytes.  See the ARMv8 Debug Architecture manual for details.
+    // This implementation does not currently use the MASK bits; the largest single region watched by a single
+    // watchpoint right now is 8-bytes.
+
+#if defined (WATCHPOINTS_ARE_DWORD)
+    nub_addr_t aligned_wp_address = addr & ~0x7;
+    uint32_t addr_dword_offset = addr & 0x7;
+    const int max_watchpoint_size = 8;
+#else
+    nub_addr_t aligned_wp_address = addr & ~0x3;
+    uint32_t addr_dword_offset = addr & 0x3;
+    const int max_watchpoint_size = 4;
+#endif
+
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint aligned_wp_address is 0x%llx and addr_dword_offset is 0x%x", (uint64_t)aligned_wp_address, addr_dword_offset);
+
+    // Do we need to split up this logical watchpoint into two hardware watchpoint
+    // registers?
+    // e.g. a watchpoint of length 4 on address 6.  We need do this with
+    //   one watchpoint on address 0 with bytes 6 & 7 being monitored
+    //   one watchpoint on address 8 with bytes 0, 1, 2, 3 being monitored
+
+    if (addr_dword_offset + size > max_watchpoint_size)
     {
-        uint32_t lo = EnableHardwareWatchpoint(addr, 4, read, write, also_set_on_task);
+        DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint(addr = 0x%8.8llx, size = %zu) needs two hardware watchpoints slots to monitor", (uint64_t)addr, size);
+        int low_watchpoint_size = max_watchpoint_size - addr_dword_offset;
+        int high_watchpoint_size = addr_dword_offset + size - max_watchpoint_size;
+
+        uint32_t lo = EnableHardwareWatchpoint(addr, low_watchpoint_size, read, write, also_set_on_task);
         if (lo == INVALID_NUB_HW_INDEX)
             return INVALID_NUB_HW_INDEX;
-        uint32_t hi = EnableHardwareWatchpoint(addr+4, 4, read, write, also_set_on_task);
+        uint32_t hi = EnableHardwareWatchpoint (aligned_wp_address + max_watchpoint_size, high_watchpoint_size, read, write, also_set_on_task);
         if (hi == INVALID_NUB_HW_INDEX)
         {
-            DisableHardwareWatchpoint(lo, also_set_on_task);
+            DisableHardwareWatchpoint (lo, also_set_on_task);
             return INVALID_NUB_HW_INDEX;
         }
         // Tag this lo->hi mapping in our database.
@@ -910,36 +1006,16 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
         return lo;
     }
 
-    // Otherwise, can't watch more than 4 bytes per WVR/WCR pair
-    if (size > 4)
-        return INVALID_NUB_HW_INDEX;
+    // At this point 
+    //  1 aligned_wp_address is the requested address rounded down to 8-byte alignment
+    //  2 addr_dword_offset is the offset into that double word (8-byte) region that we are watching
+    //  3 size is the number of bytes within that 8-byte region that we are watching
 
-    // We can only watch up to four bytes that follow a 4 byte aligned address
-    // per watchpoint register pair. Since we can only watch until the next 4
-    // byte boundary, we need to make sure we can properly encode this.
-
-    // addr_word_offset = addr % 4, i.e, is in set([0, 1, 2, 3])
-    //
-    //     +---+---+---+---+
-    //     | 0 | 1 | 2 | 3 |
-    //     +---+---+---+---+
-    //     ^
-    //     |
-    // word address (4-byte aligned) = addr & 0xFFFFFFFC => goes into WVR
-    //
-    // examples:
-    // 1. addr_word_offset = 1, size = 1 to watch a uint_8 => byte_mask = (0b0001 << 1) = 0b0010
-    // 2. addr_word_offset = 2, size = 2 to watch a uint_16 => byte_mask = (0b0011 << 2) = 0b1100
-    //
-    // where byte_mask goes into WCR[8:5]
-
-    uint32_t addr_word_offset = addr % 4;
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint() - addr_word_offset = 0x%8.8x", addr_word_offset);
-
-    uint32_t byte_mask = ((1u << size) - 1u) << addr_word_offset;
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint() - byte_mask = 0x%8.8x", byte_mask);
-    if (byte_mask > 0xfu)
-        return INVALID_NUB_HW_INDEX;
+    // Set the Byte Address Selects bits DBGWCRn_EL1 bits [12:5] based on the above.
+    // The bit shift and negation operation will give us 0b11 for 2, 0b1111 for 4, etc, up to 0b11111111 for 8.
+    // then we shift those bits left by the offset into this dword that we are interested in.
+    // e.g. if we are watching bytes 4,5,6,7 in a dword we want a BAS of 0b11110000.
+    uint32_t byte_address_select = ((1 << size) - 1) << addr_dword_offset;
 
     // Read the debug state
     kern_return_t kret = GetDBGState(true);
@@ -960,10 +1036,14 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
         {
             //DumpDBGState(m_state.dbg);
 
-            // Make the byte_mask into a valid Byte Address Select mask
-            uint32_t byte_address_select = byte_mask << 5;
+            // Clear any previous LoHi joined-watchpoint that may have been in use
+            LoHi[i] = 0;
+
+            // shift our Byte Address Select bits up to the correct bit range for the DBGWCRn_EL1
+            byte_address_select = byte_address_select << 5;
+    
             // Make sure bits 1:0 are clear in our address
-            m_state.dbg.__wvr[i] = addr & ~((nub_addr_t)3);     // DVA (Data Virtual Address)
+            m_state.dbg.__wvr[i] = aligned_wp_address;          // DVA (Data Virtual Address)
             m_state.dbg.__wcr[i] =  byte_address_select |       // Which bytes that follow the DVA that we will watch
                                     S_USER |                    // Stop only in user mode
                                     (read ? WCR_LOAD : 0) |     // Stop on read access?
@@ -971,6 +1051,8 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
                                     WCR_ENABLE;                 // Enable this watchpoint;
 
             DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint() adding watchpoint on address 0x%llx with control register value 0x%x", (uint64_t) m_state.dbg.__wvr[i], (uint32_t) m_state.dbg.__wcr[i]);
+
+            // The kernel will set the MDE_ENABLE bit in the MDSCR_EL1 for us automatically, don't need to do it here.
 
             kret = SetDBGState(also_set_on_task);
             //DumpDBGState(m_state.dbg);
@@ -989,29 +1071,42 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
 }
 
 bool
-DNBArchMachARM::EnableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate, bool also_set_on_task)
+DNBArchMachARM::ReenableHardwareWatchpoint (uint32_t hw_index)
+{
+    // If this logical watchpoint # is actually implemented using
+    // two hardware watchpoint registers, re-enable both of them.
+
+    if (hw_index < NumSupportedHardwareWatchpoints() && LoHi[hw_index])
+    {
+        return ReenableHardwareWatchpoint_helper (hw_index) && ReenableHardwareWatchpoint_helper (LoHi[hw_index]);
+    }
+    else
+    {
+        return ReenableHardwareWatchpoint_helper (hw_index);
+    }
+}
+
+bool
+DNBArchMachARM::ReenableHardwareWatchpoint_helper (uint32_t hw_index)
 {
     kern_return_t kret = GetDBGState(false);
     if (kret != KERN_SUCCESS)
         return false;
-
     const uint32_t num_hw_points = NumSupportedHardwareWatchpoints();
     if (hw_index >= num_hw_points)
         return false;
 
-    if (Delegate && LoHi[hw_index]) {
-        // Enable lo and hi watchpoint hardware indexes.
-        return EnableHardwareWatchpoint0(hw_index, false, also_set_on_task) &&
-            EnableHardwareWatchpoint0(LoHi[hw_index], false, also_set_on_task);
-    }
+    m_state.dbg.__wvr[hw_index] = m_disabled_watchpoints[hw_index].addr;
+    m_state.dbg.__wcr[hw_index] = m_disabled_watchpoints[hw_index].control;
 
-    m_state.dbg.__wcr[hw_index] |= (nub_addr_t)WCR_ENABLE;
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint( %u ) - WVR%u = 0x%8.8x  WCR%u = 0x%8.8x",
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint( %u ) - WVR%u = 0x%8.8llx  WCR%u = 0x%8.8llx",
                      hw_index,
                      hw_index,
-                     m_state.dbg.__wvr[hw_index],
+                     (uint64_t) m_state.dbg.__wvr[hw_index],
                      hw_index,
-                     m_state.dbg.__wcr[hw_index]);
+                     (uint64_t) m_state.dbg.__wcr[hw_index]);
+
+   // The kernel will set the MDE_ENABLE bit in the MDSCR_EL1 for us automatically, don't need to do it here.
 
     kret = SetDBGState(false);
 
@@ -1021,10 +1116,18 @@ DNBArchMachARM::EnableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate, boo
 bool
 DNBArchMachARM::DisableHardwareWatchpoint (uint32_t hw_index, bool also_set_on_task)
 {
-        return DisableHardwareWatchpoint0(hw_index, true, also_set_on_task);
+    if (hw_index < NumSupportedHardwareWatchpoints() && LoHi[hw_index])
+    {
+        return DisableHardwareWatchpoint_helper (hw_index, also_set_on_task) && DisableHardwareWatchpoint_helper (LoHi[hw_index], also_set_on_task);
+    }
+    else
+    {
+        return DisableHardwareWatchpoint_helper (hw_index, also_set_on_task);
+    }
 }
+
 bool
-DNBArchMachARM::DisableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate, bool also_set_on_task)
+DNBArchMachARM::DisableHardwareWatchpoint_helper (uint32_t hw_index, bool also_set_on_task)
 {
     kern_return_t kret = GetDBGState(false);
     if (kret != KERN_SUCCESS)
@@ -1034,19 +1137,17 @@ DNBArchMachARM::DisableHardwareWatchpoint0 (uint32_t hw_index, bool Delegate, bo
     if (hw_index >= num_hw_points)
         return false;
 
-    if (Delegate && LoHi[hw_index]) {
-        // Disable lo and hi watchpoint hardware indexes.
-        return DisableHardwareWatchpoint0(hw_index, false, also_set_on_task) &&
-            DisableHardwareWatchpoint0(LoHi[hw_index], false, also_set_on_task);
-    }
+    m_disabled_watchpoints[hw_index].addr = m_state.dbg.__wvr[hw_index];
+    m_disabled_watchpoints[hw_index].control = m_state.dbg.__wcr[hw_index];
 
-    m_state.dbg.__wcr[hw_index] &= ~((nub_addr_t)WCR_ENABLE);
-    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::DisableHardwareWatchpoint( %u ) - WVR%u = 0x%8.8x  WCR%u = 0x%8.8x",
+    m_state.dbg.__wvr[hw_index] = 0;
+    m_state.dbg.__wcr[hw_index] = 0;
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::DisableHardwareWatchpoint( %u ) - WVR%u = 0x%8.8llx  WCR%u = 0x%8.8llx",
                      hw_index,
                      hw_index,
-                     m_state.dbg.__wvr[hw_index],
+                     (uint64_t) m_state.dbg.__wvr[hw_index],
                      hw_index,
-                     m_state.dbg.__wcr[hw_index]);
+                     (uint64_t) m_state.dbg.__wcr[hw_index]);
 
     kret = SetDBGState(also_set_on_task);
 
@@ -1079,7 +1180,11 @@ DNBArchMachARM::GetHardwareWatchpointHit(nub_addr_t &addr)
     DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::GetHardwareWatchpointHit() addr = 0x%llx", (uint64_t)addr);
 
     // This is the watchpoint value to match against, i.e., word address.
+#if defined (WATCHPOINTS_ARE_DWORD)
+    nub_addr_t wp_val = addr & ~((nub_addr_t)7); 
+#else
     nub_addr_t wp_val = addr & ~((nub_addr_t)3);
+#endif
     if (kret == KERN_SUCCESS)
     {
         DBG &debug_state = m_state.dbg;
@@ -1091,7 +1196,11 @@ DNBArchMachARM::GetHardwareWatchpointHit(nub_addr_t &addr)
                              "DNBArchMachARM::GetHardwareWatchpointHit() slot: %u (addr = 0x%llx).",
                              i, (uint64_t)wp_addr);
             if (wp_val == wp_addr) {
+#if defined (WATCHPOINTS_ARE_DWORD)
+                uint32_t byte_mask = bits(debug_state.__wcr[i], 12, 5);
+#else
                 uint32_t byte_mask = bits(debug_state.__wcr[i], 8, 5);
+#endif
 
                 // Sanity check the byte_mask, first.
                 if (LowestBitSet(byte_mask) < 0)
@@ -1106,36 +1215,18 @@ DNBArchMachARM::GetHardwareWatchpointHit(nub_addr_t &addr)
     return INVALID_NUB_HW_INDEX;
 }
 
-// ThreadWillResume() calls this to clear bits[5:2] (Method of entry bits) of
-// the Debug Status and Control Register (DSCR).
-// 
-// b0010 = a watchpoint occurred
-// b0000 is the reset value
-void
-DNBArchMachARM::ClearWatchpointOccurred()
+nub_addr_t
+DNBArchMachARM::GetWatchpointAddressByIndex (uint32_t hw_index)
 {
-    uint32_t register_DBGDSCR;
-    asm("mrc p14, 0, %0, c0, c1, 0" : "=r" (register_DBGDSCR));
-    if (bits(register_DBGDSCR, 5, 2) == WATCHPOINT_OCCURRED)
-    {
-        uint32_t mask = ~(0xF << 2);
-        register_DBGDSCR &= mask;
-        asm("mcr p14, 0, %0, c0, c1, 0" : "=r" (register_DBGDSCR));
-    }
-    return;
-}
-
-// NotifyException() calls this to double check that a watchpoint has occurred
-// by inspecting the bits[5:2] field of the Debug Status and Control Register
-// (DSCR).
-// 
-// b0010 = a watchpoint occurred
-bool
-DNBArchMachARM::HasWatchpointOccurred()
-{
-    uint32_t register_DBGDSCR;
-    asm("mrc p14, 0, %0, c0, c1, 0" : "=r" (register_DBGDSCR));
-    return (bits(register_DBGDSCR, 5, 2) == WATCHPOINT_OCCURRED);
+    kern_return_t kret = GetDBGState(true);
+    if (kret != KERN_SUCCESS)
+        return INVALID_NUB_ADDRESS;
+    const uint32_t num = NumSupportedHardwareWatchpoints();
+    if (hw_index >= num)
+        return INVALID_NUB_ADDRESS;
+    if (IsWatchpointEnabled (m_state.dbg, hw_index))
+        return GetWatchAddress (m_state.dbg, hw_index);
+    return INVALID_NUB_ADDRESS;
 }
 
 bool

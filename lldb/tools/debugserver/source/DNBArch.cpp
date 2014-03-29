@@ -21,18 +21,7 @@
 
 typedef std::map<uint32_t, DNBArchPluginInfo> CPUPluginInfoMap;
 
-//#if defined (__i386__)
-//static uint32_t g_current_cpu_type = CPU_TYPE_I386;
-//#elif defined (__x86_64__)
-//static uint32_t g_current_cpu_type = CPU_TYPE_X86_64;
-#if defined (__i386__) || defined (__x86_64__)
 static uint32_t g_current_cpu_type = 0;
-#elif defined (__arm__) 
-static uint32_t g_current_cpu_type = CPU_TYPE_ARM;
-#else
-static uint32_t g_current_cpu_type = 0;
-#endif
-
 CPUPluginInfoMap g_arch_plugins;
 
 

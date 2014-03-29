@@ -68,7 +68,7 @@ PlatformiOSSimulator::CreateInstance (bool force, const ArchSpec *arch)
     {
         switch (arch->GetMachine())
         {
-        // Currently simulator is i386 only...
+        case llvm::Triple::x86_64:
         case llvm::Triple::x86:
             {
                 const llvm::Triple &triple = arch->GetTriple();
@@ -407,9 +407,21 @@ PlatformiOSSimulator::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &a
 {
     if (idx == 0)
     {
-        // All iOS simulator binaries are currently i386
-        arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+        arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
         return arch.IsValid();
+    }
+    else if (idx == 1)
+    {
+        ArchSpec platform_arch (Host::GetArchitecture (Host::eSystemDefaultArchitecture));
+        ArchSpec platform_arch64 (Host::GetArchitecture (Host::eSystemDefaultArchitecture64));
+        if (platform_arch.IsExactMatch(platform_arch64))
+        {
+            // This macosx platform supports both 32 and 64 bit. Since we already
+            // returned the 64 bit arch for idx == 0, return the 32 bit arch 
+            // for idx == 1
+            arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+            return arch.IsValid();
+        }
     }
     return false;
 }

@@ -530,6 +530,17 @@ PlatformDarwin::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite 
         }
         break;
 
+    case llvm::Triple::arm64:
+        {
+            // TODO: fix this with actual darwin breakpoint opcode for arm64.
+            // right now debugging uses the Z packets with GDB remote so this
+            // is not needed, but the size needs to be correct...
+            static const uint8_t g_arm64_breakpoint_opcode[] = { 0xFE, 0xDE, 0xFF, 0xE7 };
+            trap_opcode = g_arm64_breakpoint_opcode;
+            trap_opcode_size = sizeof(g_arm64_breakpoint_opcode);
+        }
+        break;
+
     case llvm::Triple::thumb:
         bp_is_thumb = true; // Fall through...
     case llvm::Triple::arm:
@@ -939,20 +950,51 @@ bool
 PlatformDarwin::ARMGetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
     ArchSpec system_arch (GetSystemArchitecture());
+
     const ArchSpec::Core system_core = system_arch.GetCore();
     switch (system_core)
     {
     default:
         switch (idx)
         {
-            case  0: arch.SetTriple ("armv7-apple-ios");    return true;
-            case  1: arch.SetTriple ("armv7f-apple-ios");   return true;
-            case  2: arch.SetTriple ("armv7k-apple-ios");   return true;
-            case  3: arch.SetTriple ("armv7s-apple-ios");   return true;
-            case  4: arch.SetTriple ("armv7m-apple-ios");   return true;
-            case  5: arch.SetTriple ("armv7em-apple-ios");  return true;
-            case  6: arch.SetTriple ("armv6-apple-ios");    return true;
+            case  0: arch.SetTriple ("arm64-apple-ios");    return true;
+            case  1: arch.SetTriple ("armv7-apple-ios");    return true;
+            case  2: arch.SetTriple ("armv7f-apple-ios");   return true;
+            case  3: arch.SetTriple ("armv7k-apple-ios");   return true;
+            case  4: arch.SetTriple ("armv7s-apple-ios");   return true;
+            case  5: arch.SetTriple ("armv7m-apple-ios");   return true;
+            case  6: arch.SetTriple ("armv7em-apple-ios");  return true;
             case  7: arch.SetTriple ("armv6m-apple-ios");   return true;
+            case  8: arch.SetTriple ("armv6-apple-ios");    return true;
+            case  9: arch.SetTriple ("armv5-apple-ios");    return true;
+            case 10: arch.SetTriple ("armv4-apple-ios");    return true;
+            case 11: arch.SetTriple ("arm-apple-ios");      return true;
+            case 12: arch.SetTriple ("thumbv7-apple-ios");  return true;
+            case 13: arch.SetTriple ("thumbv7f-apple-ios"); return true;
+            case 14: arch.SetTriple ("thumbv7k-apple-ios"); return true;
+            case 15: arch.SetTriple ("thumbv7s-apple-ios"); return true;
+            case 16: arch.SetTriple ("thumbv7m-apple-ios"); return true;
+            case 17: arch.SetTriple ("thumbv7em-apple-ios"); return true;
+            case 18: arch.SetTriple ("thumbv6m-apple-ios"); return true;
+            case 19: arch.SetTriple ("thumbv6-apple-ios");  return true;
+            case 20: arch.SetTriple ("thumbv5-apple-ios");  return true;
+            case 21: arch.SetTriple ("thumbv4t-apple-ios"); return true;
+            case 22: arch.SetTriple ("thumb-apple-ios");    return true;
+            default: break;
+        }
+        break;
+
+    case ArchSpec::eCore_arm_arm64:
+        switch (idx)
+        {
+            case  0: arch.SetTriple ("arm64-apple-ios");   return true;
+            case  1: arch.SetTriple ("armv7s-apple-ios");   return true;
+            case  2: arch.SetTriple ("armv7f-apple-ios");   return true;
+            case  3: arch.SetTriple ("armv7m-apple-ios");   return true;
+            case  4: arch.SetTriple ("armv7em-apple-ios");  return true;
+            case  5: arch.SetTriple ("armv7-apple-ios");    return true;
+            case  6: arch.SetTriple ("armv6m-apple-ios");   return true;
+            case  7: arch.SetTriple ("armv6-apple-ios");    return true;
             case  8: arch.SetTriple ("armv5-apple-ios");    return true;
             case  9: arch.SetTriple ("armv4-apple-ios");    return true;
             case 10: arch.SetTriple ("arm-apple-ios");      return true;
@@ -962,8 +1004,8 @@ PlatformDarwin::ARMGetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
             case 14: arch.SetTriple ("thumbv7s-apple-ios"); return true;
             case 15: arch.SetTriple ("thumbv7m-apple-ios"); return true;
             case 16: arch.SetTriple ("thumbv7em-apple-ios"); return true;
-            case 17: arch.SetTriple ("thumbv6-apple-ios");  return true;
-            case 18: arch.SetTriple ("thumbv6m-apple-ios"); return true;
+            case 17: arch.SetTriple ("thumbv6m-apple-ios"); return true;
+            case 18: arch.SetTriple ("thumbv6-apple-ios");  return true;
             case 19: arch.SetTriple ("thumbv5-apple-ios");  return true;
             case 20: arch.SetTriple ("thumbv4t-apple-ios"); return true;
             case 21: arch.SetTriple ("thumb-apple-ios");    return true;

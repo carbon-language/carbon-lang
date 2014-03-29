@@ -14,7 +14,7 @@
 #ifndef __DebugNubArchMachARM_h__
 #define __DebugNubArchMachARM_h__
 
-#if defined (__arm__)
+#if defined (__arm__) || defined (__arm64__)
 
 #include "DNBArch.h"
 
@@ -30,6 +30,7 @@ public:
     DNBArchMachARM(MachThread *thread) :
         m_thread(thread),
         m_state(),
+        m_disabled_watchpoints(),
         m_hw_single_chained_step_addr(INVALID_NUB_ADDRESS),
         m_last_decode_pc(INVALID_NUB_ADDRESS),
         m_watchpoint_hw_index(-1),
@@ -37,6 +38,7 @@ public:
         m_watchpoint_resume_single_step_enabled(false),
         m_saved_register_states()
     {
+        m_disabled_watchpoints.resize (16);
         memset(&m_dbg_save, 0, sizeof(m_dbg_save));
 #if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
         ThumbStaticsInit(&m_last_decode_thumb);
@@ -76,15 +78,22 @@ public:
     virtual uint32_t        NumSupportedHardwareBreakpoints();
     virtual uint32_t        NumSupportedHardwareWatchpoints();
     virtual uint32_t        EnableHardwareBreakpoint (nub_addr_t addr, nub_size_t size);
-    virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write, bool also_set_on_task);
     virtual bool            DisableHardwareBreakpoint (uint32_t hw_break_index);
+
+    virtual uint32_t        EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool read, bool write, bool also_set_on_task);
     virtual bool            DisableHardwareWatchpoint (uint32_t hw_break_index, bool also_set_on_task);
-    virtual bool            EnableHardwareWatchpoint0 (uint32_t hw_break_index, bool Delegate, bool also_set_on_task);
-    virtual bool            DisableHardwareWatchpoint0 (uint32_t hw_break_index, bool Delegate, bool also_set_on_task);
+    virtual bool            DisableHardwareWatchpoint_helper (uint32_t hw_break_index, bool also_set_on_task);
+    virtual bool            ReenableHardwareWatchpoint (uint32_t hw_break_index);
+    virtual bool            ReenableHardwareWatchpoint_helper (uint32_t hw_break_index);
+
     virtual bool            StepNotComplete ();
     virtual uint32_t        GetHardwareWatchpointHit(nub_addr_t &addr);
 
+#if defined (ARM_DEBUG_STATE32) && defined (__arm64__)
+    typedef arm_debug_state32_t DBG;
+#else
     typedef arm_debug_state_t DBG;
+#endif
 
 protected:
 
@@ -106,7 +115,11 @@ protected:
         e_regSetGPR = ARM_THREAD_STATE,
         e_regSetVFP = ARM_VFP_STATE,
         e_regSetEXC = ARM_EXCEPTION_STATE,
+#if defined (ARM_DEBUG_STATE32) && defined (__arm64__)
+        e_regSetDBG = ARM_DEBUG_STATE32,
+#else
         e_regSetDBG = ARM_DEBUG_STATE,
+#endif
         kNumRegisterSets
     } RegisterSet;
 
@@ -232,16 +245,26 @@ protected:
     kern_return_t SetEXCState ();
     kern_return_t SetDBGState (bool also_set_on_task);
 
-    // Helper functions for watchpoint implementaions.
-    static void ClearWatchpointOccurred();
-    static bool HasWatchpointOccurred();
-    static bool IsWatchpointEnabled(const DBG &debug_state, uint32_t hw_index);
-    static nub_addr_t GetWatchAddress(const DBG &debug_state, uint32_t hw_index);
+    bool IsWatchpointEnabled(const DBG &debug_state, uint32_t hw_index);
+    nub_addr_t GetWatchpointAddressByIndex (uint32_t hw_index);
+    nub_addr_t GetWatchAddress(const DBG &debug_state, uint32_t hw_index);
+
+    class disabled_watchpoint {
+    public:
+        disabled_watchpoint () { addr = 0; control = 0; }
+        nub_addr_t addr;
+        uint32_t   control;
+    };
 
 protected:
     MachThread *    m_thread;
     State           m_state;
     DBG             m_dbg_save;
+
+    // armv8 doesn't keep the disabled watchpoint values in the debug register context like armv7;
+    // we need to save them aside when we disable them temporarily.
+    std::vector<disabled_watchpoint> m_disabled_watchpoints;
+
     nub_addr_t      m_hw_single_chained_step_addr;
     nub_addr_t      m_last_decode_pc;
 

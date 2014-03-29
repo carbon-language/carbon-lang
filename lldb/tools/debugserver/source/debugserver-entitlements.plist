@@ -4,6 +4,10 @@
 <dict>
 	<key>com.apple.springboard.debugapplications</key>
 	<true/>
+	<key>com.apple.backboardd.launchapplications</key>
+	<true/>
+	<key>com.apple.backboardd.debugapplications</key>
+	<true/>
 	<key>run-unsigned-code</key>
 	<true/>
 	<key>seatbelt-profiles</key>

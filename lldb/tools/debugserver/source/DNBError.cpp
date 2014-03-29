@@ -48,6 +48,16 @@ DNBError::AsString() const
             }
             break;
 #endif
+#ifdef WITH_BKS
+        case BackBoard:
+            {
+                // You have to call ObjC routines to get the error string from BackBoardServices.
+                // Not sure I want to make DNBError.cpp an .mm file.  For now just make sure you
+                // pre-populate the error string when you make the DNBError of type BackBoard.
+                m_str.assign("Should have set Backboard error when making the error string.");
+            }
+            break;
+#endif
         default:
             break;
         }

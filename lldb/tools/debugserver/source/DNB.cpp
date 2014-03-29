@@ -26,6 +26,16 @@
 #include <vector>
 #include <libproc.h>
 
+#define TRY_KQUEUE 1
+
+#ifdef TRY_KQUEUE
+    #include <sys/event.h>
+    #include <sys/time.h>
+    #ifdef NOTE_EXIT_DETAIL
+        #define USE_KQUEUE
+    #endif
+#endif
+
 #include "MacOSX/MachProcess.h"
 #include "MacOSX/MachTask.h"
 #include "CFString.h"
@@ -123,6 +133,95 @@ GetProcessSP (nub_process_t pid, MachProcessSP& procSP)
     return false;
 }
 
+#ifdef USE_KQUEUE
+void *
+kqueue_thread (void *arg)
+{
+    int kq_id = (int) (intptr_t) arg;
+    
+    struct kevent death_event;
+    while (1)
+    {        
+        int n_events = kevent (kq_id, NULL, 0, &death_event, 1, NULL);
+        if (n_events == -1)
+        {
+            if (errno == EINTR)
+                continue;
+            else
+            {
+                DNBLogError ("kqueue failed with error: (%d): %s", errno, strerror(errno));
+                return NULL;
+            }
+        }
+        else if (death_event.flags & EV_ERROR)
+        {
+            int error_no = death_event.data;
+            const char *error_str = strerror(death_event.data);
+            if (error_str == NULL)
+                error_str = "Unknown error";
+            DNBLogError ("Failed to initialize kqueue event: (%d): %s", error_no, error_str );
+            return NULL;
+        }
+        else
+        {
+            int status;
+            pid_t child_pid = waitpid ((pid_t) death_event.ident, &status, 0);
+            if (death_event.data & NOTE_EXIT_MEMORY)
+            {
+                if (death_event.data & NOTE_VM_PRESSURE)
+                    DNBProcessSetExitInfo (child_pid, "Terminated due to Memory Pressure");
+                else if (death_event.data & NOTE_VM_ERROR)
+                    DNBProcessSetExitInfo (child_pid, "Terminated due to Memory Error");
+                else
+                    DNBProcessSetExitInfo (child_pid, "Terminated due to unknown Memory condition");
+            }
+            else if (death_event.data & NOTE_EXIT_DECRYPTFAIL)
+                    DNBProcessSetExitInfo (child_pid, "Terminated due to decrypt failure");
+            else if (death_event.data & NOTE_EXIT_CSERROR)
+                    DNBProcessSetExitInfo (child_pid, "Terminated due to code signing error");
+            
+            DNBLogThreadedIf(LOG_PROCESS, "waitpid_process_thread (): setting exit status for pid = %i to %i", child_pid, status);
+            DNBProcessSetExitStatus (child_pid, status);
+            return NULL;
+        }
+    }
+}
+
+static bool
+spawn_kqueue_thread (pid_t pid)
+{
+    pthread_t thread;
+    int kq_id;
+    
+    kq_id = kqueue();
+    if (kq_id == -1)
+    {
+        DNBLogError ("Could not get kqueue for pid = %i.", pid);
+        return false;
+    }
+
+    struct kevent reg_event;
+    
+    EV_SET(&reg_event, pid, EVFILT_PROC, EV_ADD, NOTE_EXIT|NOTE_EXIT_DETAIL, 0, NULL);
+    // Register the event:
+    int result = kevent (kq_id, &reg_event, 1, NULL, 0, NULL);
+    if (result != 0)
+    {
+        DNBLogError ("Failed to register kqueue NOTE_EXIT event for pid %i, error: %d.", pid, result);
+        return false;
+    }
+    
+    int ret = ::pthread_create (&thread, NULL, kqueue_thread, (void *)(intptr_t)kq_id);
+    
+    // pthread_create returns 0 if successful
+    if (ret == 0)
+    {
+        ::pthread_detach (thread);
+        return true;
+    }
+    return false;
+}
+#endif // #if USE_KQUEUE
 
 static void *
 waitpid_thread (void *arg)
@@ -161,10 +260,15 @@ waitpid_thread (void *arg)
     DNBProcessSetExitStatus (pid, -1);
     return NULL;
 }
-
 static bool
 spawn_waitpid_thread (pid_t pid)
 {
+#ifdef USE_KQUEUE
+    bool success = spawn_kqueue_thread (pid);
+    if (success)
+        return true;
+#endif
+
     pthread_t thread;
     int ret = ::pthread_create (&thread, NULL, waitpid_thread, (void *)(intptr_t)pid);
     // pthread_create returns 0 if successful
@@ -187,6 +291,7 @@ DNBProcessLaunch (const char *path,
                   bool no_stdio,
                   nub_launch_flavor_t launch_flavor,
                   int disable_aslr,
+                  const char *event_data,
                   char *err_str,
                   size_t err_len)
 {
@@ -229,7 +334,8 @@ DNBProcessLaunch (const char *path,
                                                stderr_path, 
                                                no_stdio, 
                                                launch_flavor, 
-                                               disable_aslr, 
+                                               disable_aslr,
+                                               event_data,
                                                launch_err);
         if (err_str)
         {
@@ -681,6 +787,19 @@ DNBProcessSignal (nub_process_t pid, int signal)
     return false;
 }
 
+nub_bool_t
+DNBProcessSendEvent (nub_process_t pid, const char *event)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+    {
+        // FIXME: Do something with the error...
+        DNBError send_error;
+        return procSP->SendEvent (event, send_error);
+    }
+    return false;
+}
+
 
 nub_bool_t
 DNBProcessIsAlive (nub_process_t pid)
@@ -733,6 +852,28 @@ DNBProcessSetExitStatus (nub_process_t pid, int status)
     return false;
 }
 
+const char *
+DNBProcessGetExitInfo (nub_process_t pid)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+    {
+        return procSP->GetExitInfo();
+    }
+    return NULL;
+}
+
+nub_bool_t
+DNBProcessSetExitInfo (nub_process_t pid, const char *info)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+    {
+        procSP->SetExitInfo(info);
+        return true;
+    }
+    return false;
+}
 
 const char *
 DNBThreadGetName (nub_process_t pid, nub_thread_t tid)
@@ -2054,8 +2195,9 @@ DNBInitialize()
 #if defined (__i386__) || defined (__x86_64__)
     DNBArchImplI386::Initialize();
     DNBArchImplX86_64::Initialize();
-#elif defined (__arm__)
+#elif defined (__arm__) || defined (__arm64__)
     DNBArchMachARM::Initialize();
+    DNBArchMachARM64::Initialize();
 #endif
 }
 
@@ -2073,6 +2215,8 @@ DNBSetArchitecture (const char *arch)
             return DNBArchProtocol::SetArchitecture (CPU_TYPE_I386);
         else if ((strcasecmp (arch, "x86_64") == 0) || (strcasecmp (arch, "x86_64h") == 0))
             return DNBArchProtocol::SetArchitecture (CPU_TYPE_X86_64);
+        else if (strstr (arch, "arm64") == arch || strstr (arch, "armv8") == arch)
+            return DNBArchProtocol::SetArchitecture (CPU_TYPE_ARM64);
         else if (strstr (arch, "arm") == arch)
             return DNBArchProtocol::SetArchitecture (CPU_TYPE_ARM);
     }

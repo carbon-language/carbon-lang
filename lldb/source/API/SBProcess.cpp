@@ -1306,6 +1306,32 @@ SBProcess::UnloadImage (uint32_t image_token)
     return sb_error;
 }
 
+lldb::SBError
+SBProcess::SendEventData (const char *event_data)
+{
+    lldb::SBError sb_error;
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+    {
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&process_sp->GetRunLock()))
+        {
+            Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+            sb_error.SetError (process_sp->SendEventData (event_data));
+        }
+        else
+        {
+            Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+            if (log)
+                log->Printf ("SBProcess(%p)::SendEventData() => error: process is running", process_sp.get());
+            sb_error.SetErrorString("process is running");
+        }
+    }
+    else
+        sb_error.SetErrorString("invalid process");
+    return sb_error;
+}
+
 uint32_t
 SBProcess::GetNumExtendedBacktraceTypes ()
 {

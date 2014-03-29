@@ -24,6 +24,5 @@
 #define DTSERVICES_APP_PID_KEY          CFSTR("pid")
 
 int ListApplications (std::string &plist, bool opt_runningApps, bool opt_debuggable);
-bool IsSBProcess (nub_process_t pid);
 
 #endif  // __RNBServices_h__

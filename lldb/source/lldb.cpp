@@ -27,10 +27,13 @@
 
 #include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"
 #include "Plugins/ABI/MacOSX-arm/ABIMacOSX_arm.h"
+#include "Plugins/ABI/MacOSX-arm64/ABIMacOSX_arm64.h"
 #include "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h"
 #include "Plugins/Disassembler/llvm/DisassemblerLLVMC.h"
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
 #include "Plugins/Instruction/ARM/EmulateInstructionARM.h"
+#include "Plugins/Instruction/ARM64/EmulateInstructionARM64.h"
+#include "Plugins/SymbolVendor/MacOSX/SymbolVendorMacOSX.h"
 #include "Plugins/JITLoader/GDB/JITLoaderGDB.h"
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
 #include "Plugins/ObjectContainer/BSD-Archive/ObjectContainerBSDArchive.h"
@@ -103,6 +106,7 @@ lldb_private::Initialize ()
         
         ABIMacOSX_i386::Initialize();
         ABIMacOSX_arm::Initialize();
+        ABIMacOSX_arm64::Initialize();
         ABISysV_x86_64::Initialize();
         DisassemblerLLVMC::Initialize();
         ObjectContainerBSDArchive::Initialize();
@@ -113,6 +117,7 @@ lldb_private::Initialize ()
         UnwindAssemblyInstEmulation::Initialize();
         UnwindAssembly_x86::Initialize();
         EmulateInstructionARM::Initialize ();
+        EmulateInstructionARM64::Initialize ();
         ObjectFilePECOFF::Initialize ();
         DynamicLoaderPOSIXDYLD::Initialize ();
         PlatformFreeBSD::Initialize();
@@ -188,6 +193,7 @@ lldb_private::Terminate ()
     PluginManager::Terminate();
     ABIMacOSX_i386::Terminate();
     ABIMacOSX_arm::Terminate();
+    ABIMacOSX_arm64::Terminate();
     ABISysV_x86_64::Terminate();
     DisassemblerLLVMC::Terminate();
     ObjectContainerBSDArchive::Terminate();
@@ -198,6 +204,7 @@ lldb_private::Terminate ()
     UnwindAssembly_x86::Terminate();
     UnwindAssemblyInstEmulation::Terminate();
     EmulateInstructionARM::Terminate ();
+    EmulateInstructionARM64::Terminate ();
     ObjectFilePECOFF::Terminate ();
     DynamicLoaderPOSIXDYLD::Terminate ();
     PlatformFreeBSD::Terminate();

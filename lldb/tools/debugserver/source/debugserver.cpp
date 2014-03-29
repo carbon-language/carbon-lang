@@ -196,7 +196,13 @@ RNBRunLoopLaunchInferior (RNBRemote *remote, const char *stdin_path, const char 
         // Our default launch method is posix spawn
         launch_flavor = eLaunchFlavorPosixSpawn;
 
-#ifdef WITH_SPRINGBOARD
+#if defined WITH_BKS
+        // Check if we have an app bundle, if so launch using BackBoard Services.
+        if (strstr(inferior_argv[0], ".app"))
+        {
+            launch_flavor = eLaunchFlavorBKS;
+        }
+#elif defined WITH_SPRINGBOARD
         // Check if we have an app bundle, if so launch using SpringBoard.
         if (strstr(inferior_argv[0], ".app"))
         {
@@ -217,6 +223,7 @@ RNBRunLoopLaunchInferior (RNBRemote *remote, const char *stdin_path, const char 
     launch_err_str[0] = '\0';
     const char * cwd = (ctx.GetWorkingDirPath() != NULL ? ctx.GetWorkingDirPath()
                                                         : ctx.GetWorkingDirectory());
+    const char *process_event = ctx.GetProcessEvent();
     nub_process_t pid = DNBProcessLaunch (resolved_path,
                                           &inferior_argv[0],
                                           &inferior_envp[0],
@@ -227,6 +234,7 @@ RNBRunLoopLaunchInferior (RNBRemote *remote, const char *stdin_path, const char 
                                           no_stdio,
                                           launch_flavor,
                                           g_disable_aslr,
+                                          process_event,
                                           launch_err_str,
                                           sizeof(launch_err_str));
 
@@ -878,6 +886,14 @@ main (int argc, char *argv[])
     //    signal (SIGINT, signal_handler);
     signal (SIGPIPE, signal_handler);
     signal (SIGHUP, signal_handler);
+    
+    // We're always sitting in waitpid or kevent waiting on our target process' death,
+    // we don't need no stinking SIGCHLD's...
+    
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGCHLD);
+    sigprocmask(SIG_BLOCK, &sigset, NULL);
 
     g_remoteSP.reset (new RNBRemote ());
     
@@ -1051,15 +1067,23 @@ main (int argc, char *argv[])
                     else if (strcasestr(optarg, "spring") == optarg)
                         g_launch_flavor = eLaunchFlavorSpringBoard;
 #endif
+#ifdef WITH_BKS
+                    else if (strcasestr(optarg, "backboard") == optarg)
+                        g_launch_flavor = eLaunchFlavorBKS;
+#endif
+
                     else
                     {
                         RNBLogSTDERR ("error: invalid TYPE for the --launch=TYPE (-x TYPE) option: '%s'\n", optarg);
                         RNBLogSTDERR ("Valid values TYPE are:\n");
-                        RNBLogSTDERR ("  auto    Auto-detect the best launch method to use.\n");
-                        RNBLogSTDERR ("  posix   Launch the executable using posix_spawn.\n");
-                        RNBLogSTDERR ("  fork    Launch the executable using fork and exec.\n");
+                        RNBLogSTDERR ("  auto       Auto-detect the best launch method to use.\n");
+                        RNBLogSTDERR ("  posix      Launch the executable using posix_spawn.\n");
+                        RNBLogSTDERR ("  fork       Launch the executable using fork and exec.\n");
 #ifdef WITH_SPRINGBOARD
-                        RNBLogSTDERR ("  spring  Launch the executable through Springboard.\n");
+                        RNBLogSTDERR ("  spring     Launch the executable through Springboard.\n");
+#endif
+#ifdef WITH_BKS
+                        RNBLogSTDERR ("  backboard  Launch the executable through BackBoard Services.\n");
 #endif
                         exit (5);
                     }
@@ -1422,7 +1446,13 @@ main (int argc, char *argv[])
                         // Our default launch method is posix spawn
                         launch_flavor = eLaunchFlavorPosixSpawn;
 
-#ifdef WITH_SPRINGBOARD
+#if defined WITH_BKS
+                        // Check if we have an app bundle, if so launch using SpringBoard.
+                        if (waitfor_pid_name.find (".app") != std::string::npos)
+                        {
+                            launch_flavor = eLaunchFlavorBKS;
+                        }
+#elif defined WITH_SPRINGBOARD
                         // Check if we have an app bundle, if so launch using SpringBoard.
                         if (waitfor_pid_name.find (".app") != std::string::npos)
                         {

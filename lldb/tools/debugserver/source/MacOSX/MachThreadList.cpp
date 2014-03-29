@@ -271,7 +271,6 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update, MachThreadLi
     DNBLogThreadedIf (LOG_THREAD, "MachThreadList::UpdateThreadList (pid = %4.4x, update = %u) process stop count = %u", process->ProcessID(), update, process->StopCount());
     PTHREAD_MUTEX_LOCKER (locker, m_threads_mutex);
 
-#if defined (__i386__) || defined (__x86_64__)
     if (process->StopCount() == 0)
     {
         int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, process->ProcessID() };
@@ -283,12 +282,18 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update, MachThreadLi
             if (processInfo.kp_proc.p_flag & P_LP64)
                 is_64_bit = true;
         }
+#if defined (__i386__) || defined (__x86_64__)
         if (is_64_bit)
             DNBArchProtocol::SetArchitecture(CPU_TYPE_X86_64);
         else
             DNBArchProtocol::SetArchitecture(CPU_TYPE_I386);
-    }
+#elif defined (__arm__) || defined (__arm64__)
+        if (is_64_bit)
+            DNBArchProtocol::SetArchitecture(CPU_TYPE_ARM64);
+        else
+            DNBArchProtocol::SetArchitecture(CPU_TYPE_ARM);
 #endif
+    }
     
     if (m_threads.empty() || update)
     {

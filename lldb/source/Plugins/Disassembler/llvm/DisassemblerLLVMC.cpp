@@ -735,7 +735,7 @@ void
 DisassemblerLLVMC::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
-                                   "Disassembler that uses LLVM MC to disassemble i386, x86_64 and ARM.",
+                                   "Disassembler that uses LLVM MC to disassemble i386, x86_64, ARM, and ARM64.",
                                    CreateInstance);
     
     llvm::InitializeAllTargetInfos();

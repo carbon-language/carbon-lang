@@ -140,6 +140,8 @@
 		26474CD518D0CB710073DEBA /* RegisterInfos_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CD218D0CB710073DEBA /* RegisterInfos_x86_64.h */; };
 		26491E3B15E1DB8600CBFFC2 /* OptionValueRegex.h in Headers */ = {isa = PBXBuildFile; fileRef = 26491E3A15E1DB8600CBFFC2 /* OptionValueRegex.h */; };
 		26491E3E15E1DB9F00CBFFC2 /* OptionValueRegex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26491E3D15E1DB9F00CBFFC2 /* OptionValueRegex.cpp */; };
+		264A12FC1372522000875C42 /* EmulateInstructionARM64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A12FA1372522000875C42 /* EmulateInstructionARM64.cpp */; };
+		264A1300137252C700875C42 /* ARM64_DWARF_Registers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A12FE137252C700875C42 /* ARM64_DWARF_Registers.cpp */; };
 		264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */; };
 		264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264D8D4F13661BD7003A368F /* UnwindAssembly.cpp */; };
 		265205A813D3E3F700132FE2 /* RegisterContextKDP_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 265205A213D3E3F700132FE2 /* RegisterContextKDP_arm.cpp */; };
@@ -519,6 +521,7 @@
 		26DAED6015D327A200E15819 /* OptionValuePathMappings.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DAED5F15D327A200E15819 /* OptionValuePathMappings.h */; };
 		26DAED6315D327C200E15819 /* OptionValuePathMappings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DAED6215D327C200E15819 /* OptionValuePathMappings.cpp */; };
 		26DB3E161379E7AD0080DC73 /* ABIMacOSX_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E071379E7AD0080DC73 /* ABIMacOSX_arm.cpp */; };
+		26DB3E191379E7AD0080DC73 /* ABIMacOSX_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E0B1379E7AD0080DC73 /* ABIMacOSX_arm64.cpp */; };
 		26DB3E1C1379E7AD0080DC73 /* ABIMacOSX_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E0F1379E7AD0080DC73 /* ABIMacOSX_i386.cpp */; };
 		26DB3E1F1379E7AD0080DC73 /* ABISysV_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E131379E7AD0080DC73 /* ABISysV_x86_64.cpp */; };
 		26DC6A1D1337FECA00FF7998 /* lldb-platform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DC6A1C1337FECA00FF7998 /* lldb-platform.cpp */; };
@@ -661,6 +664,8 @@
 		AF061F88182C97ED00B6A19C /* RegisterContextHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = AF061F86182C97ED00B6A19C /* RegisterContextHistory.h */; };
 		AF061F8B182C980000B6A19C /* HistoryThread.h in Headers */ = {isa = PBXBuildFile; fileRef = AF061F89182C980000B6A19C /* HistoryThread.h */; };
 		AF061F8C182C980000B6A19C /* HistoryUnwind.h in Headers */ = {isa = PBXBuildFile; fileRef = AF061F8A182C980000B6A19C /* HistoryUnwind.h */; };
+		AF0F6E501739A76D009180FE /* RegisterContextKDP_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0F6E4E1739A76D009180FE /* RegisterContextKDP_arm64.cpp */; };
+		AF0F6E511739A76D009180FE /* RegisterContextKDP_arm64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF0F6E4F1739A76D009180FE /* RegisterContextKDP_arm64.h */; };
 		AF0C112818580CD800C4C45B /* QueueItem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0C112718580CD800C4C45B /* QueueItem.cpp */; };
 		AF0E22F018A09FB20009B7D1 /* AppleGetItemInfoHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0E22EE18A09FB20009B7D1 /* AppleGetItemInfoHandler.cpp */; };
 		AF0E22F118A09FB20009B7D1 /* AppleGetItemInfoHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF0E22EF18A09FB20009B7D1 /* AppleGetItemInfoHandler.h */; };
@@ -685,6 +690,8 @@
 		AF45FDE618A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF45FDE418A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h */; };
 		AF81DEFA1828A23F0042CF19 /* SystemRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF81DEF91828A23F0042CF19 /* SystemRuntime.cpp */; };
 		AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF90106315AB7C5700FF120D /* lldb.1 */; };
+		AF9107EE168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF9107EC168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp */; };
+		AF9107EF168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF9107EC168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp */; };
 		AF9B8F33182DB52900DA866F /* SystemRuntimeMacOSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF9B8F31182DB52900DA866F /* SystemRuntimeMacOSX.cpp */; };
 		AF9B8F34182DB52900DA866F /* SystemRuntimeMacOSX.h in Headers */ = {isa = PBXBuildFile; fileRef = AF9B8F32182DB52900DA866F /* SystemRuntimeMacOSX.h */; };
 		AFF87C87150FF669000E1742 /* com.apple.debugserver.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFF87C86150FF669000E1742 /* com.apple.debugserver.plist */; };
@@ -1099,6 +1106,10 @@
 		26474CD218D0CB710073DEBA /* RegisterInfos_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterInfos_x86_64.h; path = Utility/RegisterInfos_x86_64.h; sourceTree = "<group>"; };
 		26491E3A15E1DB8600CBFFC2 /* OptionValueRegex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueRegex.h; path = include/lldb/Interpreter/OptionValueRegex.h; sourceTree = "<group>"; };
 		26491E3D15E1DB9F00CBFFC2 /* OptionValueRegex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueRegex.cpp; path = source/Interpreter/OptionValueRegex.cpp; sourceTree = "<group>"; };
+		264A12FA1372522000875C42 /* EmulateInstructionARM64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EmulateInstructionARM64.cpp; sourceTree = "<group>"; };
+		264A12FB1372522000875C42 /* EmulateInstructionARM64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EmulateInstructionARM64.h; sourceTree = "<group>"; };
+		264A12FE137252C700875C42 /* ARM64_DWARF_Registers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ARM64_DWARF_Registers.cpp; path = source/Utility/ARM64_DWARF_Registers.cpp; sourceTree = "<group>"; };
+		264A12FF137252C700875C42 /* ARM64_DWARF_Registers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARM64_DWARF_Registers.h; path = source/Utility/ARM64_DWARF_Registers.h; sourceTree = "<group>"; };
 		264A43BB1320B3B4005B4096 /* Platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Platform.h; path = include/lldb/Target/Platform.h; sourceTree = "<group>"; };
 		264A43BD1320BCEB005B4096 /* Platform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Platform.cpp; path = source/Target/Platform.cpp; sourceTree = "<group>"; };
 		264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PlatformRemoteGDBServer.cpp; path = "gdb-server/PlatformRemoteGDBServer.cpp"; sourceTree = "<group>"; };
@@ -1143,7 +1154,7 @@
 		2670F8111862B44A006B332C /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = /usr/lib/libncurses.dylib; sourceTree = "<absolute>"; };
 		2671A0CD134825F6003A87BB /* ConnectionMachPort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConnectionMachPort.h; path = include/lldb/Core/ConnectionMachPort.h; sourceTree = "<group>"; };
 		2671A0CF13482601003A87BB /* ConnectionMachPort.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ConnectionMachPort.cpp; path = source/Core/ConnectionMachPort.cpp; sourceTree = "<group>"; };
-		2672D8461189055500FF4019 /* CommandObjectFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = CommandObjectFrame.cpp; path = source/Commands/CommandObjectFrame.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
+		2672D8461189055500FF4019 /* CommandObjectFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectFrame.cpp; path = source/Commands/CommandObjectFrame.cpp; sourceTree = "<group>"; };
 		2672D8471189055500FF4019 /* CommandObjectFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectFrame.h; path = source/Commands/CommandObjectFrame.h; sourceTree = "<group>"; };
 		26744EED1338317700EF765A /* GDBRemoteCommunicationClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GDBRemoteCommunicationClient.cpp; sourceTree = "<group>"; };
 		26744EEE1338317700EF765A /* GDBRemoteCommunicationClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GDBRemoteCommunicationClient.h; sourceTree = "<group>"; };
@@ -1359,7 +1370,7 @@
 		26BC7D7E10F1B77400F91463 /* Timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Timer.h; path = include/lldb/Core/Timer.h; sourceTree = "<group>"; };
 		26BC7D8010F1B77400F91463 /* UserID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UserID.h; path = include/lldb/Core/UserID.h; sourceTree = "<group>"; };
 		26BC7D8110F1B77400F91463 /* Value.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Value.h; path = include/lldb/Core/Value.h; sourceTree = "<group>"; };
-		26BC7D8210F1B77400F91463 /* ValueObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = ValueObject.h; path = include/lldb/Core/ValueObject.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		26BC7D8210F1B77400F91463 /* ValueObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObject.h; path = include/lldb/Core/ValueObject.h; sourceTree = "<group>"; };
 		26BC7D8310F1B77400F91463 /* ValueObjectChild.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectChild.h; path = include/lldb/Core/ValueObjectChild.h; sourceTree = "<group>"; };
 		26BC7D8410F1B77400F91463 /* ValueObjectList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectList.h; path = include/lldb/Core/ValueObjectList.h; sourceTree = "<group>"; };
 		26BC7D8510F1B77400F91463 /* ValueObjectVariable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ValueObjectVariable.h; path = include/lldb/Core/ValueObjectVariable.h; sourceTree = "<group>"; };
@@ -1457,7 +1468,7 @@
 		26BC7E9610F1B85900F91463 /* Timer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Timer.cpp; path = source/Core/Timer.cpp; sourceTree = "<group>"; };
 		26BC7E9810F1B85900F91463 /* UserID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UserID.cpp; path = source/Core/UserID.cpp; sourceTree = "<group>"; };
 		26BC7E9910F1B85900F91463 /* Value.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Value.cpp; path = source/Core/Value.cpp; sourceTree = "<group>"; };
-		26BC7E9A10F1B85900F91463 /* ValueObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = ValueObject.cpp; path = source/Core/ValueObject.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
+		26BC7E9A10F1B85900F91463 /* ValueObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObject.cpp; path = source/Core/ValueObject.cpp; sourceTree = "<group>"; };
 		26BC7E9B10F1B85900F91463 /* ValueObjectChild.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectChild.cpp; path = source/Core/ValueObjectChild.cpp; sourceTree = "<group>"; };
 		26BC7E9C10F1B85900F91463 /* ValueObjectList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectList.cpp; path = source/Core/ValueObjectList.cpp; sourceTree = "<group>"; };
 		26BC7E9D10F1B85900F91463 /* ValueObjectVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectVariable.cpp; path = source/Core/ValueObjectVariable.cpp; sourceTree = "<group>"; };
@@ -1560,6 +1571,8 @@
 		26DAFD9711529BC7005A394E /* ExecutionContextScope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExecutionContextScope.h; path = include/lldb/Target/ExecutionContextScope.h; sourceTree = "<group>"; };
 		26DB3E071379E7AD0080DC73 /* ABIMacOSX_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ABIMacOSX_arm.cpp; sourceTree = "<group>"; };
 		26DB3E081379E7AD0080DC73 /* ABIMacOSX_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ABIMacOSX_arm.h; sourceTree = "<group>"; };
+		26DB3E0B1379E7AD0080DC73 /* ABIMacOSX_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ABIMacOSX_arm64.cpp; sourceTree = "<group>"; };
+		26DB3E0C1379E7AD0080DC73 /* ABIMacOSX_arm64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ABIMacOSX_arm64.h; sourceTree = "<group>"; };
 		26DB3E0F1379E7AD0080DC73 /* ABIMacOSX_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ABIMacOSX_i386.cpp; sourceTree = "<group>"; };
 		26DB3E101379E7AD0080DC73 /* ABIMacOSX_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ABIMacOSX_i386.h; sourceTree = "<group>"; };
 		26DB3E131379E7AD0080DC73 /* ABISysV_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ABISysV_x86_64.cpp; sourceTree = "<group>"; };
@@ -1903,6 +1916,8 @@
 		AF061F86182C97ED00B6A19C /* RegisterContextHistory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextHistory.h; path = Utility/RegisterContextHistory.h; sourceTree = "<group>"; };
 		AF061F89182C980000B6A19C /* HistoryThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HistoryThread.h; path = Utility/HistoryThread.h; sourceTree = "<group>"; };
 		AF061F8A182C980000B6A19C /* HistoryUnwind.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HistoryUnwind.h; path = Utility/HistoryUnwind.h; sourceTree = "<group>"; };
+		AF0F6E4E1739A76D009180FE /* RegisterContextKDP_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextKDP_arm64.cpp; sourceTree = "<group>"; };
+		AF0F6E4F1739A76D009180FE /* RegisterContextKDP_arm64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextKDP_arm64.h; sourceTree = "<group>"; };
 		AF0C112718580CD800C4C45B /* QueueItem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = QueueItem.cpp; path = source/Target/QueueItem.cpp; sourceTree = "<group>"; };
 		AF0E22EE18A09FB20009B7D1 /* AppleGetItemInfoHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleGetItemInfoHandler.cpp; sourceTree = "<group>"; };
 		AF0E22EF18A09FB20009B7D1 /* AppleGetItemInfoHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleGetItemInfoHandler.h; sourceTree = "<group>"; };
@@ -1933,6 +1948,9 @@
 		AF68D3301255A110002FF25B /* UnwindLLDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnwindLLDB.h; path = Utility/UnwindLLDB.h; sourceTree = "<group>"; };
 		AF81DEF91828A23F0042CF19 /* SystemRuntime.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SystemRuntime.cpp; path = source/Target/SystemRuntime.cpp; sourceTree = "<group>"; };
 		AF90106315AB7C5700FF120D /* lldb.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; name = lldb.1; path = docs/lldb.1; sourceTree = "<group>"; };
+		AF9107E91685709A00DBCD3C /* ARM64_GCC_Registers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARM64_GCC_Registers.h; path = source/Utility/ARM64_GCC_Registers.h; sourceTree = "<group>"; };
+		AF9107EC168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextDarwin_arm64.cpp; path = Utility/RegisterContextDarwin_arm64.cpp; sourceTree = "<group>"; };
+		AF9107ED168570D200DBCD3C /* RegisterContextDarwin_arm64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextDarwin_arm64.h; path = Utility/RegisterContextDarwin_arm64.h; sourceTree = "<group>"; };
 		AF94005711C03F6500085DB9 /* SymbolVendor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SymbolVendor.cpp; path = source/Symbol/SymbolVendor.cpp; sourceTree = "<group>"; };
 		AF9B8F31182DB52900DA866F /* SystemRuntimeMacOSX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SystemRuntimeMacOSX.cpp; sourceTree = "<group>"; };
 		AF9B8F32182DB52900DA866F /* SystemRuntimeMacOSX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SystemRuntimeMacOSX.h; sourceTree = "<group>"; };
@@ -2524,6 +2542,8 @@
 		2642FBA713D003B400ED6808 /* MacOSX-Kernel */ = {
 			isa = PBXGroup;
 			children = (
+				AF0F6E4E1739A76D009180FE /* RegisterContextKDP_arm64.cpp */,
+				AF0F6E4F1739A76D009180FE /* RegisterContextKDP_arm64.h */,
 				2642FBA813D003B400ED6808 /* CommunicationKDP.cpp */,
 				2642FBA913D003B400ED6808 /* CommunicationKDP.h */,
 				2642FBAA13D003B400ED6808 /* ProcessKDP.cpp */,
@@ -2540,6 +2560,15 @@
 				2628A4D413D4977900F5487A /* ThreadKDP.h */,
 			);
 			path = "MacOSX-Kernel";
+			sourceTree = "<group>";
+		};
+		264A12F91372522000875C42 /* ARM64 */ = {
+			isa = PBXGroup;
+			children = (
+				264A12FA1372522000875C42 /* EmulateInstructionARM64.cpp */,
+				264A12FB1372522000875C42 /* EmulateInstructionARM64.h */,
+			);
+			path = ARM64;
 			sourceTree = "<group>";
 		};
 		264A97BC133918A30017F0BE /* GDB Server */ = {
@@ -2642,9 +2671,12 @@
 		2682F168115ED9C800CCFF99 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				AF9107E91685709A00DBCD3C /* ARM64_GCC_Registers.h */,
 				26CF992414428766001E4138 /* AnsiTerminal.h */,
 				26F996A7119B79C300412154 /* ARM_DWARF_Registers.h */,
 				26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.cpp */,
+				264A12FF137252C700875C42 /* ARM64_DWARF_Registers.h */,
+				264A12FE137252C700875C42 /* ARM64_DWARF_Registers.cpp */,
 				26F996A8119B79C300412154 /* ARM_GCC_Registers.h */,
 				264723A511FA076E00DE380C /* CleanUp.h */,
 				26D1804416CEE12500EDFB5B /* KQueue.h */,
@@ -2770,6 +2802,8 @@
 				26474C9F18D0CAEC0073DEBA /* RegisterContext_x86.h */,
 				26957D9213D381C900670048 /* RegisterContextDarwin_arm.cpp */,
 				26957D9313D381C900670048 /* RegisterContextDarwin_arm.h */,
+                AF9107EC168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp */,
+                AF9107ED168570D200DBCD3C /* RegisterContextDarwin_arm64.h */,
 				26957D9413D381C900670048 /* RegisterContextDarwin_i386.cpp */,
 				26957D9513D381C900670048 /* RegisterContextDarwin_i386.h */,
 				26957D9613D381C900670048 /* RegisterContextDarwin_x86_64.cpp */,
@@ -3527,6 +3561,7 @@
 			isa = PBXGroup;
 			children = (
 				26D9FDCB12F785270003F2EE /* ARM */,
+				264A12F91372522000875C42 /* ARM64 */,
 			);
 			path = Instruction;
 			sourceTree = "<group>";
@@ -3546,6 +3581,7 @@
 			isa = PBXGroup;
 			children = (
 				26DB3E061379E7AD0080DC73 /* MacOSX-arm */,
+				26DB3E0A1379E7AD0080DC73 /* MacOSX-arm64 */,
 				26DB3E0E1379E7AD0080DC73 /* MacOSX-i386 */,
 				26DB3E121379E7AD0080DC73 /* SysV-x86_64 */,
 			);
@@ -3559,6 +3595,15 @@
 				26DB3E081379E7AD0080DC73 /* ABIMacOSX_arm.h */,
 			);
 			path = "MacOSX-arm";
+			sourceTree = "<group>";
+		};
+		26DB3E0A1379E7AD0080DC73 /* MacOSX-arm64 */ = {
+			isa = PBXGroup;
+			children = (
+				26DB3E0B1379E7AD0080DC73 /* ABIMacOSX_arm64.cpp */,
+				26DB3E0C1379E7AD0080DC73 /* ABIMacOSX_arm64.h */,
+			);
+			path = "MacOSX-arm64";
 			sourceTree = "<group>";
 		};
 		26DB3E0E1379E7AD0080DC73 /* MacOSX-i386 */ = {
@@ -4004,6 +4049,7 @@
 				AF061F8C182C980000B6A19C /* HistoryUnwind.h in Headers */,
 				260CC63815D04377002BF2E0 /* OptionValueString.h in Headers */,
 				260CC63915D04377002BF2E0 /* OptionValueUInt64.h in Headers */,
+				AF0F6E511739A76D009180FE /* RegisterContextKDP_arm64.h in Headers */,
 				260CC63A15D04377002BF2E0 /* OptionValueUUID.h in Headers */,
 				260A248E15D06C50009981B0 /* OptionValues.h in Headers */,
 				AF061F88182C97ED00B6A19C /* RegisterContextHistory.h in Headers */,
@@ -4415,6 +4461,7 @@
 				9475C18E14E5F834001BFC6D /* SBTypeNameSpecifier.cpp in Sources */,
 				9452573A16262D0200325455 /* SBDeclaration.cpp in Sources */,
 				4CE4F675162C973F00F75CB3 /* SBExpressionOptions.cpp in Sources */,
+				AF9107EE168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4740,7 +4787,10 @@
 				260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */,
 				2686536C1370ACB200D186A3 /* OptionGroupBoolean.cpp in Sources */,
 				268653701370AE7200D186A3 /* OptionGroupUInt64.cpp in Sources */,
+				264A12FC1372522000875C42 /* EmulateInstructionARM64.cpp in Sources */,
+				264A1300137252C700875C42 /* ARM64_DWARF_Registers.cpp in Sources */,
 				26DB3E161379E7AD0080DC73 /* ABIMacOSX_arm.cpp in Sources */,
+				26DB3E191379E7AD0080DC73 /* ABIMacOSX_arm64.cpp in Sources */,
 				26DB3E1C1379E7AD0080DC73 /* ABIMacOSX_i386.cpp in Sources */,
 				26DB3E1F1379E7AD0080DC73 /* ABISysV_x86_64.cpp in Sources */,
 				26D1803E16CEBFD300EDFB5B /* KQueue.cpp in Sources */,
@@ -4796,6 +4846,7 @@
 				26B7564E14F89356008D9CB3 /* PlatformiOSSimulator.cpp in Sources */,
 				26FFC19914FC072100087D58 /* AuxVector.cpp in Sources */,
 				26FFC19B14FC072100087D58 /* DYLDRendezvous.cpp in Sources */,
+				AF0F6E501739A76D009180FE /* RegisterContextKDP_arm64.cpp in Sources */,
 				26FFC19D14FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp in Sources */,
 				2694E99D14FC0BB30076DE67 /* PlatformFreeBSD.cpp in Sources */,
 				2694E9A414FC0BBD0076DE67 /* PlatformLinux.cpp in Sources */,
@@ -4834,6 +4885,7 @@
 				947A1D641616476B0017C8D1 /* CommandObjectPlugin.cpp in Sources */,
 				262ED0081631FA3A00879631 /* OptionGroupString.cpp in Sources */,
 				94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */,
+				AF9107EF168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp in Sources */,
 				94CB255B16B069770059775D /* CXXFormatterFunctions.cpp in Sources */,
 				94CB255C16B069770059775D /* DataVisualization.cpp in Sources */,
 				94CD705016F8DF1C00CF1E42 /* LibCxxList.cpp in Sources */,
@@ -4978,7 +5030,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(NATIVE_ARCH)";
-				"ARCHS[sdk=iphoneos*]" = armv7;
+				"ARCHS[sdk=iphoneos*]" = (
+					arm64,
+					armv7,
+				);
 				"ARCHS[sdk=macosx*]" = (
 					x86_64,
 					i386,
@@ -5007,6 +5062,7 @@
 					NO_XPC_SERVICES,
 				);
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				"GCC_WARN_64_TO_32_BIT_CONVERSION[arch=*64]" = NO;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -5033,6 +5089,7 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
+				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 				WARNING_CFLAGS = "-Wreorder";
@@ -5044,7 +5101,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(NATIVE_ARCH)";
-				"ARCHS[sdk=iphoneos*]" = armv7;
+				"ARCHS[sdk=iphoneos*]" = arm64;
 				"ARCHS[sdk=macosx*]" = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -5054,7 +5111,7 @@
 				CLANG_WARN_INT_CONVERSION = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					__STDC_CONSTANT_MACROS,
@@ -5069,6 +5126,7 @@
 					NO_XPC_SERVICES,
 				);
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				"GCC_WARN_64_TO_32_BIT_CONVERSION[arch=*64]" = NO;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -5095,6 +5153,7 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
+				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 				WARNING_CFLAGS = "-Wreorder";
@@ -5434,7 +5493,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(NATIVE_ARCH)";
-				"ARCHS[sdk=iphoneos*]" = armv7;
+				"ARCHS[sdk=iphoneos*]" = arm64;
 				"ARCHS[sdk=macosx*]" = (
 					x86_64,
 					i386,
@@ -5462,6 +5521,7 @@
 					NO_XPC_SERVICES,
 				);
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				"GCC_WARN_64_TO_32_BIT_CONVERSION[arch=*64]" = NO;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -5489,6 +5549,7 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
+				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 				WARNING_CFLAGS = "-Wreorder";
@@ -5522,6 +5583,7 @@
 					__TEXT,
 					__info_plist,
 					"$(PROJECT_DIR)/tools/driver/lldb-Info.plist",
+					"-Wl,-rpath,@loader_path/../../Library/PrivateFrameworks/",
 					"-Wl,-rpath,@loader_path/../../../SharedFrameworks",
 					"-Wl,-rpath,@loader_path/../../System/Library/PrivateFrameworks",
 					"-Wl,-rpath,@loader_path/../../Library/PrivateFrameworks",
@@ -6015,8 +6077,6 @@
 					"-lxml2",
 					"-framework",
 					Foundation,
-					"-framework",
-					UIKit,
 				);
 				PRODUCT_NAME = "lldb-platform";
 				SKIP_INSTALL = YES;
@@ -6085,8 +6145,6 @@
 					"-lxml2",
 					"-framework",
 					Foundation,
-					"-framework",
-					UIKit,
 				);
 				PRODUCT_NAME = "lldb-platform";
 				SKIP_INSTALL = YES;
@@ -6155,8 +6213,6 @@
 					"-lxml2",
 					"-framework",
 					Foundation,
-					"-framework",
-					UIKit,
 				);
 				PRODUCT_NAME = "lldb-platform";
 				SKIP_INSTALL = YES;
@@ -6227,7 +6283,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(NATIVE_ARCH)";
-				"ARCHS[sdk=iphoneos*]" = armv7;
+				"ARCHS[sdk=iphoneos*]" = (
+					armv7,
+					arm64,
+				);
 				"ARCHS[sdk=macosx*]" = (
 					x86_64,
 					i386,
@@ -6256,6 +6315,7 @@
 					NO_XPC_SERVICES,
 				);
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				"GCC_WARN_64_TO_32_BIT_CONVERSION[arch=*64]" = NO;
 				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -6282,6 +6342,7 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
+				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 				WARNING_CFLAGS = "-Wreorder";

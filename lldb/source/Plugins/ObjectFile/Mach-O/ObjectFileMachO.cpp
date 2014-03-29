@@ -37,10 +37,11 @@
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_arm.h"
+#include "Plugins/Process/Utility/RegisterContextDarwin_arm64.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_i386.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_x86_64.h"
 
-#if defined (__APPLE__) && defined (__arm__)
+#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__))
 // GetLLDBSharedCacheUUID() needs to call dlsym()
 #include <dlfcn.h>
 #endif
@@ -391,6 +392,129 @@ protected:
         return 0;
     }
 
+    virtual int
+    DoWriteDBG (lldb::tid_t tid, int flavor, const DBG &dbg)
+    {
+        return -1;
+    }
+};
+
+class RegisterContextDarwin_arm64_Mach : public RegisterContextDarwin_arm64
+{
+public:
+    RegisterContextDarwin_arm64_Mach (lldb_private::Thread &thread, const DataExtractor &data) :
+        RegisterContextDarwin_arm64 (thread, 0)
+    {
+        SetRegisterDataFrom_LC_THREAD (data);
+    }
+    
+    virtual void
+    InvalidateAllRegisters ()
+    {
+        // Do nothing... registers are always valid...
+    }
+    
+    void
+    SetRegisterDataFrom_LC_THREAD (const DataExtractor &data)
+    {
+        lldb::offset_t offset = 0;
+        SetError (GPRRegSet, Read, -1);
+        SetError (FPURegSet, Read, -1);
+        SetError (EXCRegSet, Read, -1);
+        bool done = false;
+        while (!done)
+        {
+            int flavor = data.GetU32 (&offset);
+            uint32_t count = data.GetU32 (&offset);
+            lldb::offset_t next_thread_state = offset + (count * 4);
+            switch (flavor)
+            {
+                case GPRRegSet:
+                    // x0-x29 + fp + lr + sp + pc (== 33 64-bit registers) plus cpsr (1 32-bit register)
+                    if (count >= (33 * 2) + 1)
+                    {
+                        for (uint32_t i=0; i<33; ++i)
+                            gpr.x[i] = data.GetU64(&offset);
+                        gpr.cpsr = data.GetU32(&offset);
+                        SetError (GPRRegSet, Read, 0);
+                    }
+                    offset = next_thread_state;
+                    break;
+                case FPURegSet:
+                    {
+                        uint8_t *fpu_reg_buf = (uint8_t*) &fpu.v[0];
+                        const int fpu_reg_buf_size = sizeof (fpu);
+                        if (fpu_reg_buf_size == count
+                            && data.ExtractBytes (offset, fpu_reg_buf_size, eByteOrderLittle, fpu_reg_buf) == fpu_reg_buf_size)
+                        {
+                            SetError (FPURegSet, Read, 0);
+                        }
+                        else
+                        {
+                            done = true;
+                        }
+                    }
+                    offset = next_thread_state;
+                    break;
+                case EXCRegSet:
+                    if (count == 4)
+                    {
+                        exc.far = data.GetU64(&offset);
+                        exc.esr = data.GetU32(&offset);
+                        exc.exception = data.GetU32(&offset);
+                        SetError (EXCRegSet, Read, 0);
+                    }
+                    offset = next_thread_state;
+                    break;
+                default:
+                    done = true;
+                    break;
+            }
+        }
+    }
+protected:
+    virtual int
+    DoReadGPR (lldb::tid_t tid, int flavor, GPR &gpr)
+    {
+        return -1;
+    }
+    
+    virtual int
+    DoReadFPU (lldb::tid_t tid, int flavor, FPU &fpu)
+    {
+        return -1;
+    }
+    
+    virtual int
+    DoReadEXC (lldb::tid_t tid, int flavor, EXC &exc)
+    {
+        return -1;
+    }
+
+    virtual int
+    DoReadDBG (lldb::tid_t tid, int flavor, DBG &dbg)
+    {
+        return -1;
+    }
+    
+    virtual int
+    DoWriteGPR (lldb::tid_t tid, int flavor, const GPR &gpr)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoWriteFPU (lldb::tid_t tid, int flavor, const FPU &fpu)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoWriteEXC (lldb::tid_t tid, int flavor, const EXC &exc)
+    {
+        return 0;
+    }
+    
     virtual int
     DoWriteDBG (lldb::tid_t tid, int flavor, const DBG &dbg)
     {
@@ -1772,8 +1896,8 @@ ObjectFileMachO::ParseSymtab ()
 
                 bool data_was_read = false;
 
-#if defined (__APPLE__) && defined (__arm__)
-                if (m_header.flags & 0x80000000u)
+#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__))
+                if (m_header.flags & 0x80000000u && process->GetAddressByteSize() == sizeof (void*))
                 {
                     // This mach-o memory file is in the dyld shared cache. If this
                     // program is not remote and this is iOS, then this process will
@@ -2031,7 +2155,7 @@ ObjectFileMachO::ParseSymtab ()
             }
         }
 
-#if defined (__APPLE__) && defined (__arm__)
+#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__))
 
         // Some recent builds of the dyld_shared_cache (hereafter: DSC) have been optimized by moving LOCAL
         // symbols out of the memory mapped portion of the DSC. The symbol information has all been retained,
@@ -4152,6 +4276,14 @@ ObjectFileMachO::GetEntryPointAddress ()
                                done = true;
                             }
                         break;
+                        case llvm::MachO::CPU_TYPE_ARM64:
+                           if (flavor == 6) // ARM_THREAD_STATE64 from mach/arm/thread_status.h
+                           {
+                               offset += 256;  // This is the offset of pc in the GPR thread state data structure.
+                               start_address = m_data.GetU64(&offset);
+                               done = true;
+                            }
+                        break;
                         case llvm::MachO::CPU_TYPE_I386:
                            if (flavor == 1) // x86_THREAD_STATE32 from mach/i386/thread_status.h
                            {
@@ -4304,6 +4436,10 @@ ObjectFileMachO::GetThreadContextAtIndex (uint32_t idx, lldb_private::Thread &th
 
             switch (m_header.cputype)
             {
+                case llvm::MachO::CPU_TYPE_ARM64:
+                    reg_ctx_sp.reset (new RegisterContextDarwin_arm64_Mach (thread, data));
+                    break;
+                    
                 case llvm::MachO::CPU_TYPE_ARM:
                     reg_ctx_sp.reset (new RegisterContextDarwin_arm_Mach (thread, data));
                     break;
@@ -4544,7 +4680,7 @@ UUID
 ObjectFileMachO::GetLLDBSharedCacheUUID ()
 {
     UUID uuid;
-#if defined (__APPLE__) && defined (__arm__)
+#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__))
     uint8_t *(*dyld_get_all_image_infos)(void);
     dyld_get_all_image_infos = (uint8_t*(*)()) dlsym (RTLD_DEFAULT, "_dyld_get_all_image_infos");
     if (dyld_get_all_image_infos)
@@ -4555,7 +4691,16 @@ ObjectFileMachO::GetLLDBSharedCacheUUID ()
             uint32_t *version = (uint32_t*) dyld_all_image_infos_address;              // version <mach-o/dyld_images.h>
             if (*version >= 13)
             {
-                uuid_t *sharedCacheUUID_address = (uuid_t*) ((uint8_t*) dyld_all_image_infos_address + 84);  // sharedCacheUUID <mach-o/dyld_images.h>
+                uuid_t *sharedCacheUUID_address = 0;
+                int wordsize = sizeof (uint8_t *);
+                if (wordsize == 8)
+                {
+                    sharedCacheUUID_address = (uuid_t*) ((uint8_t*) dyld_all_image_infos_address + 160); // sharedCacheUUID <mach-o/dyld_images.h>
+                }
+                else
+                {
+                    sharedCacheUUID_address = (uuid_t*) ((uint8_t*) dyld_all_image_infos_address + 84);  // sharedCacheUUID <mach-o/dyld_images.h>
+                }
                 uuid.SetBytes (sharedCacheUUID_address);
             }
         }

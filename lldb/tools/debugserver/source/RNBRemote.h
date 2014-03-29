@@ -119,6 +119,7 @@ public:
         watchpoint_support_info,        // 'qWatchpointSupportInfo:'
         allocate_memory,                // '_M'
         deallocate_memory,              // '_m'
+        set_process_event,               // 'QSetProcessEvent:'
         save_register_state,            // '_g'
         restore_register_state,         // '_G'
         speed_test,                     // 'qSpeedTest:'
@@ -197,6 +198,7 @@ public:
     rnb_err_t HandlePacket_QListThreadsInStopReply (const char *p);
     rnb_err_t HandlePacket_QSyncThreadState (const char *p);
     rnb_err_t HandlePacket_QPrefixRegisterPacketsWithThreadID (const char *p);
+    rnb_err_t HandlePacket_QSetProcessEvent (const char *p);
     rnb_err_t HandlePacket_last_signal (const char *p);
     rnb_err_t HandlePacket_m (const char *p);
     rnb_err_t HandlePacket_M (const char *p);

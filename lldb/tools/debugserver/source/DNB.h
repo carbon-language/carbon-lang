@@ -18,6 +18,12 @@
 #include <mach/thread_info.h>
 #include <string>
 
+#define DNB_EXPORT __attribute__((visibility("default")))
+
+#ifndef CPU_TYPE_ARM64
+#define CPU_TYPE_ARM64 ((cpu_type_t) 12 | 0x01000000)
+#endif
+
 typedef bool (*DNBShouldCancelCallback) (void *);
 
 void            DNBInitialize ();
@@ -37,7 +43,8 @@ nub_process_t   DNBProcessLaunch        (const char *path,
                                          const char *stderr_path,
                                          bool no_stdio, 
                                          nub_launch_flavor_t launch_flavor, 
-                                         int disable_aslr, 
+                                         int disable_aslr,
+                                         const char *event_data,
                                          char *err_str, 
                                          size_t err_len);
 
@@ -52,43 +59,46 @@ nub_process_t   DNBProcessAttachWait    (const char *wait_name, nub_launch_flavo
 //   explicit thread action can be made by making a thread action with a tid of
 //   INVALID_NUB_THREAD. If there is no default action, those threads will
 //   remain stopped.
-nub_bool_t      DNBProcessResume        (nub_process_t pid, const DNBThreadResumeAction *actions, size_t num_actions);
-nub_bool_t      DNBProcessHalt          (nub_process_t pid);
-nub_bool_t      DNBProcessDetach        (nub_process_t pid);
-nub_bool_t      DNBProcessSignal        (nub_process_t pid, int signal);
-nub_bool_t      DNBProcessKill          (nub_process_t pid);
-nub_size_t      DNBProcessMemoryRead    (nub_process_t pid, nub_addr_t addr, nub_size_t size, void *buf);
-nub_size_t      DNBProcessMemoryWrite   (nub_process_t pid, nub_addr_t addr, nub_size_t size, const void *buf);
-nub_addr_t      DNBProcessMemoryAllocate    (nub_process_t pid, nub_size_t size, uint32_t permissions);
-nub_bool_t      DNBProcessMemoryDeallocate  (nub_process_t pid, nub_addr_t addr);
-int             DNBProcessMemoryRegionInfo  (nub_process_t pid, nub_addr_t addr, DNBRegionInfo *region_info);
-std::string     DNBProcessGetProfileData (nub_process_t pid, DNBProfileDataScanType scanType);
-nub_bool_t      DNBProcessSetEnableAsyncProfiling   (nub_process_t pid, nub_bool_t enable, uint64_t interval_usec, DNBProfileDataScanType scan_type);
+nub_bool_t      DNBProcessResume        (nub_process_t pid, const DNBThreadResumeAction *actions, size_t num_actions) DNB_EXPORT;
+nub_bool_t      DNBProcessHalt          (nub_process_t pid) DNB_EXPORT;
+nub_bool_t      DNBProcessDetach        (nub_process_t pid) DNB_EXPORT;
+nub_bool_t      DNBProcessSignal        (nub_process_t pid, int signal) DNB_EXPORT;
+nub_bool_t      DNBProcessKill          (nub_process_t pid) DNB_EXPORT;
+nub_bool_t      DNBProcessSendEvent     (nub_process_t pid, const char *event) DNB_EXPORT;
+nub_size_t      DNBProcessMemoryRead    (nub_process_t pid, nub_addr_t addr, nub_size_t size, void *buf) DNB_EXPORT;
+nub_size_t      DNBProcessMemoryWrite   (nub_process_t pid, nub_addr_t addr, nub_size_t size, const void *buf) DNB_EXPORT;
+nub_addr_t      DNBProcessMemoryAllocate    (nub_process_t pid, nub_size_t size, uint32_t permissions) DNB_EXPORT;
+nub_bool_t      DNBProcessMemoryDeallocate  (nub_process_t pid, nub_addr_t addr) DNB_EXPORT;
+int             DNBProcessMemoryRegionInfo  (nub_process_t pid, nub_addr_t addr, DNBRegionInfo *region_info) DNB_EXPORT;
+std::string     DNBProcessGetProfileData (nub_process_t pid, DNBProfileDataScanType scanType) DNB_EXPORT;
+nub_bool_t      DNBProcessSetEnableAsyncProfiling   (nub_process_t pid, nub_bool_t enable, uint64_t interval_usec, DNBProfileDataScanType scan_type) DNB_EXPORT;
 
 //----------------------------------------------------------------------
 // Process status
 //----------------------------------------------------------------------
-nub_bool_t      DNBProcessIsAlive                       (nub_process_t pid);
-nub_state_t     DNBProcessGetState                      (nub_process_t pid);
-nub_bool_t      DNBProcessGetExitStatus                 (nub_process_t pid, int *status);
-nub_bool_t      DNBProcessSetExitStatus                 (nub_process_t pid, int status);
-nub_size_t      DNBProcessGetNumThreads                 (nub_process_t pid);
-nub_thread_t    DNBProcessGetCurrentThread              (nub_process_t pid);
-nub_thread_t    DNBProcessGetCurrentThreadMachPort      (nub_process_t pid);
-nub_thread_t    DNBProcessSetCurrentThread              (nub_process_t pid, nub_thread_t tid);
-nub_thread_t    DNBProcessGetThreadAtIndex              (nub_process_t pid, nub_size_t thread_idx);
-nub_bool_t      DNBProcessSyncThreadState               (nub_process_t pid, nub_thread_t tid);
-nub_addr_t      DNBProcessGetSharedLibraryInfoAddress   (nub_process_t pid);
-nub_bool_t      DNBProcessSharedLibrariesUpdated        (nub_process_t pid);
-nub_size_t      DNBProcessGetSharedLibraryInfo          (nub_process_t pid, nub_bool_t only_changed, DNBExecutableImageInfo **image_infos);
-nub_bool_t      DNBProcessSetNameToAddressCallback      (nub_process_t pid, DNBCallbackNameToAddress callback, void *baton);
-nub_bool_t      DNBProcessSetSharedLibraryInfoCallback  (nub_process_t pid, DNBCallbackCopyExecutableImageInfos callback, void *baton);
-nub_addr_t      DNBProcessLookupAddress                 (nub_process_t pid, const char *name, const char *shlib);
-nub_size_t      DNBProcessGetAvailableSTDOUT            (nub_process_t pid, char *buf, nub_size_t buf_size);
-nub_size_t      DNBProcessGetAvailableSTDERR            (nub_process_t pid, char *buf, nub_size_t buf_size);
-nub_size_t      DNBProcessGetAvailableProfileData       (nub_process_t pid, char *buf, nub_size_t buf_size);
-nub_size_t      DNBProcessGetStopCount                  (nub_process_t pid);
-uint32_t        DNBProcessGetCPUType                    (nub_process_t pid); 
+nub_bool_t      DNBProcessIsAlive                       (nub_process_t pid) DNB_EXPORT;
+nub_state_t     DNBProcessGetState                      (nub_process_t pid) DNB_EXPORT;
+nub_bool_t      DNBProcessGetExitStatus                 (nub_process_t pid, int *status) DNB_EXPORT;
+nub_bool_t      DNBProcessSetExitStatus                 (nub_process_t pid, int status) DNB_EXPORT;
+const char *    DNBProcessGetExitInfo                   (nub_process_t pid) DNB_EXPORT;
+nub_bool_t      DNBProcessSetExitInfo                   (nub_process_t pid, const char *info) DNB_EXPORT;
+nub_size_t      DNBProcessGetNumThreads                 (nub_process_t pid) DNB_EXPORT;
+nub_thread_t    DNBProcessGetCurrentThread              (nub_process_t pid) DNB_EXPORT;
+nub_thread_t    DNBProcessGetCurrentThreadMachPort      (nub_process_t pid) DNB_EXPORT;
+nub_thread_t    DNBProcessSetCurrentThread              (nub_process_t pid, nub_thread_t tid) DNB_EXPORT;
+nub_thread_t    DNBProcessGetThreadAtIndex              (nub_process_t pid, nub_size_t thread_idx) DNB_EXPORT;
+nub_bool_t      DNBProcessSyncThreadState               (nub_process_t pid, nub_thread_t tid) DNB_EXPORT;
+nub_addr_t      DNBProcessGetSharedLibraryInfoAddress   (nub_process_t pid) DNB_EXPORT;
+nub_bool_t      DNBProcessSharedLibrariesUpdated        (nub_process_t pid) DNB_EXPORT;
+nub_size_t      DNBProcessGetSharedLibraryInfo          (nub_process_t pid, nub_bool_t only_changed, DNBExecutableImageInfo **image_infos) DNB_EXPORT;
+nub_bool_t      DNBProcessSetNameToAddressCallback      (nub_process_t pid, DNBCallbackNameToAddress callback, void *baton) DNB_EXPORT;
+nub_bool_t      DNBProcessSetSharedLibraryInfoCallback  (nub_process_t pid, DNBCallbackCopyExecutableImageInfos callback, void *baton) DNB_EXPORT;
+nub_addr_t      DNBProcessLookupAddress                 (nub_process_t pid, const char *name, const char *shlib) DNB_EXPORT;
+nub_size_t      DNBProcessGetAvailableSTDOUT            (nub_process_t pid, char *buf, nub_size_t buf_size) DNB_EXPORT;
+nub_size_t      DNBProcessGetAvailableSTDERR            (nub_process_t pid, char *buf, nub_size_t buf_size) DNB_EXPORT;
+nub_size_t      DNBProcessGetAvailableProfileData       (nub_process_t pid, char *buf, nub_size_t buf_size) DNB_EXPORT;
+nub_size_t      DNBProcessGetStopCount                  (nub_process_t pid) DNB_EXPORT;
+uint32_t        DNBProcessGetCPUType                    (nub_process_t pid) DNB_EXPORT; 
 
 //----------------------------------------------------------------------
 // Process executable and arguments

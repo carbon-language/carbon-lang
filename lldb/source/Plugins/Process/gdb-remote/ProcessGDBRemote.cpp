@@ -800,6 +800,10 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
 
             m_gdb_comm.SendLaunchArchPacket (m_target.GetArchitecture().GetArchitectureName());
             
+            const char * launch_event_data = launch_info.GetLaunchEventData();
+            if (launch_event_data != NULL && *launch_event_data != '\0')
+                m_gdb_comm.SendLaunchEventDataPacket (launch_event_data);
+            
             if (working_dir && working_dir[0])
             {
                 m_gdb_comm.SetWorkingDir (working_dir);
@@ -2608,7 +2612,7 @@ ProcessGDBRemote::LaunchAndConnectToDebugserver (const ProcessInfo &process_info
         debugserver_launch_info.SetMonitorProcessCallback (MonitorDebugserverProcess, this, false);
         debugserver_launch_info.SetUserID(process_info.GetUserID());
 
-#if defined (__APPLE__) && defined (__arm__)
+#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__))
         // On iOS, still do a local connection using a random port
         const char *hostname = "127.0.0.1";
         uint16_t port = get_random_port ();
@@ -2924,13 +2928,33 @@ ProcessGDBRemote::AsyncThread (void *arg)
                                         break;
 
                                     case eStateExited:
+                                    {
                                         process->SetLastStopPacket (response);
                                         process->ClearThreadIDList();
                                         response.SetFilePos(1);
-                                        process->SetExitStatus(response.GetHexU8(), NULL);
+                                        
+                                        int exit_status = response.GetHexU8();
+                                        const char *desc_cstr = NULL;
+                                        StringExtractor extractor;
+                                        std::string desc_string;
+                                        if (response.GetBytesLeft() > 0 && response.GetChar('-') == ';')
+                                        {
+                                            std::string desc_token;
+                                            while (response.GetNameColonValue (desc_token, desc_string))
+                                            {
+                                                if (desc_token == "description")
+                                                {
+                                                    extractor.GetStringRef().swap(desc_string);
+                                                    extractor.SetFilePos(0);
+                                                    extractor.GetHexByteString (desc_string);
+                                                    desc_cstr = desc_string.c_str();
+                                                }
+                                            }
+                                        }
+                                        process->SetExitStatus(exit_status, desc_cstr);
                                         done = true;
                                         break;
-
+                                    }
                                     case eStateInvalid:
                                         process->SetExitStatus(-1, "lost connection");
                                         break;
@@ -3066,6 +3090,25 @@ ProcessGDBRemote::GetDynamicLoader ()
     return m_dyld_ap.get();
 }
 
+Error
+ProcessGDBRemote::SendEventData(const char *data)
+{
+    int return_value;
+    bool was_supported;
+    
+    Error error;
+    
+    return_value = m_gdb_comm.SendLaunchEventDataPacket (data, &was_supported);
+    if (return_value != 0)
+    {
+        if (!was_supported)
+            error.SetErrorString("Sending events is not supported for this process.");
+        else
+            error.SetErrorStringWithFormat("Error sending event data: %d.", return_value);
+    }
+    return error;
+}
+
 const DataBufferSP
 ProcessGDBRemote::GetAuxvData()
 {
@@ -3078,7 +3121,6 @@ ProcessGDBRemote::GetAuxvData()
     }
     return buf;
 }
-
 
 class CommandObjectProcessGDBRemotePacketHistory : public CommandObjectParsed
 {

@@ -17,6 +17,8 @@
 namespace lldb_private
 {
 
+class ExecutionContext;
+
 class ExpressionSourceCode
 {
 public:
@@ -53,7 +55,8 @@ public:
     bool GetText (std::string &text, 
                   lldb::LanguageType wrapping_language, 
                   bool const_object,
-                  bool static_method) const;
+                  bool static_method,
+                  ExecutionContext &exe_ctx) const;
     
 private:
     ExpressionSourceCode (const char *name,

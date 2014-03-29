@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		264D5D581293835600ED4C01 /* DNBArch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264D5D571293835600ED4C01 /* DNBArch.cpp */; };
 		2660D9CE1192280900958FBD /* StringExtractor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2660D9CC1192280900958FBD /* StringExtractor.cpp */; };
+		266B5ED11460A68200E43F0A /* DNBArchImplARM64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266B5ECF1460A68200E43F0A /* DNBArchImplARM64.cpp */; };
 		26CE05A7115C360D0022F371 /* DNBError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C637DE0C71334A0024798E /* DNBError.cpp */; };
 		26CE05A8115C36170022F371 /* DNBThreadResumeActions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E7331114BFFE600D1DFB3 /* DNBThreadResumeActions.cpp */; };
 		26CE05A9115C36250022F371 /* debugserver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A02918114AB9240029C479 /* debugserver.cpp */; };
@@ -18,12 +19,12 @@
 		26CE05AD115C36280022F371 /* RNBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A68FD60D10574500665A9E /* RNBRemote.cpp */; };
 		26CE05AE115C36320022F371 /* dbgnub-mig.defs in Sources */ = {isa = PBXBuildFile; fileRef = 26C637E80C71334A0024798E /* dbgnub-mig.defs */; settings = {ATTRIBUTES = (Client, Server, ); }; };
 		26CE05B0115C36340022F371 /* MachException.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C637EE0C71334A0024798E /* MachException.cpp */; };
-		26CE05B1115C36350022F371 /* MachProcess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C637F00C71334A0024798E /* MachProcess.cpp */; };
+		26CE05B1115C36350022F371 /* MachProcess.mm in Sources */ = {isa = PBXBuildFile; fileRef = 26C637F00C71334A0024798E /* MachProcess.mm */; };
 		26CE05B2115C36360022F371 /* MachThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C637F20C71334A0024798E /* MachThread.cpp */; };
 		26CE05B3115C36370022F371 /* MachThreadList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C637F40C71334A0024798E /* MachThreadList.cpp */; };
 		26CE05B4115C36380022F371 /* MachVMMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C637F60C71334A0024798E /* MachVMMemory.cpp */; };
 		26CE05B5115C36380022F371 /* MachVMRegion.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C637F80C71334A0024798E /* MachVMRegion.cpp */; };
-		26CE05B6115C36390022F371 /* MachTask.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B67DE10EE9BC30006C8BC0 /* MachTask.cpp */; };
+		26CE05B6115C36390022F371 /* MachTask.mm in Sources */ = {isa = PBXBuildFile; fileRef = 26B67DE10EE9BC30006C8BC0 /* MachTask.mm */; };
 		26CE05B7115C363B0022F371 /* DNB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C637D60C71334A0024798E /* DNB.cpp */; };
 		26CE05B8115C363C0022F371 /* DNBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C637D90C71334A0024798E /* DNBBreakpoint.cpp */; };
 		26CE05B9115C363D0022F371 /* DNBDataRef.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C637DB0C71334A0024798E /* DNBDataRef.cpp */; };
@@ -56,6 +57,8 @@
 		26593A060D4931CC001C9FE3 /* ChangeLog */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ChangeLog; sourceTree = "<group>"; };
 		2660D9CC1192280900958FBD /* StringExtractor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringExtractor.cpp; path = ../../source/Utility/StringExtractor.cpp; sourceTree = SOURCE_ROOT; };
 		2660D9CD1192280900958FBD /* StringExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StringExtractor.h; path = ../../source/Utility/StringExtractor.h; sourceTree = SOURCE_ROOT; };
+		266B5ECF1460A68200E43F0A /* DNBArchImplARM64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DNBArchImplARM64.cpp; sourceTree = "<group>"; };
+		266B5ED01460A68200E43F0A /* DNBArchImplARM64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DNBArchImplARM64.h; sourceTree = "<group>"; };
 		2672DBEE0EEF446700E92059 /* PThreadMutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PThreadMutex.cpp; sourceTree = "<group>"; };
 		2675D4220CCEB705000F49AF /* DNBArchImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = DNBArchImpl.cpp; path = arm/DNBArchImpl.cpp; sourceTree = "<group>"; };
 		2675D4230CCEB705000F49AF /* DNBArchImpl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = DNBArchImpl.h; path = arm/DNBArchImpl.h; sourceTree = "<group>"; };
@@ -77,7 +80,7 @@
 		26A8FE1E0D11A77B00203048 /* DNBTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DNBTimer.h; sourceTree = "<group>"; };
 		26ACA3340D3E956300A2120B /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		26B67DE00EE9BC30006C8BC0 /* MachTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachTask.h; sourceTree = "<group>"; };
-		26B67DE10EE9BC30006C8BC0 /* MachTask.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachTask.cpp; sourceTree = "<group>"; };
+		26B67DE10EE9BC30006C8BC0 /* MachTask.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MachTask.mm; sourceTree = "<group>"; };
 		26C636AD0C71303A0024798E /* dbgnub-config.pl */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = "dbgnub-config.pl"; sourceTree = "<group>"; };
 		26C637D60C71334A0024798E /* DNB.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DNB.cpp; sourceTree = "<group>"; };
 		26C637D70C71334A0024798E /* DNB.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DNB.h; sourceTree = "<group>"; };
@@ -99,7 +102,7 @@
 		26C637EB0C71334A0024798E /* DNBArchImplI386.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DNBArchImplI386.h; sourceTree = "<group>"; };
 		26C637EE0C71334A0024798E /* MachException.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MachException.cpp; sourceTree = "<group>"; };
 		26C637EF0C71334A0024798E /* MachException.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MachException.h; sourceTree = "<group>"; };
-		26C637F00C71334A0024798E /* MachProcess.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MachProcess.cpp; sourceTree = "<group>"; };
+		26C637F00C71334A0024798E /* MachProcess.mm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.objcpp; path = MachProcess.mm; sourceTree = "<group>"; };
 		26C637F10C71334A0024798E /* MachProcess.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MachProcess.h; sourceTree = "<group>"; };
 		26C637F20C71334A0024798E /* MachThread.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MachThread.cpp; sourceTree = "<group>"; };
 		26C637F30C71334A0024798E /* MachThread.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MachThread.h; sourceTree = "<group>"; };
@@ -165,6 +168,15 @@
 				26CE0594115C31C20022F371 /* debugserver */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		266B5ECE1460A68200E43F0A /* arm64 */ = {
+			isa = PBXGroup;
+			children = (
+				266B5ECF1460A68200E43F0A /* DNBArchImplARM64.cpp */,
+				266B5ED01460A68200E43F0A /* DNBArchImplARM64.h */,
+			);
+			path = arm64;
 			sourceTree = "<group>";
 		};
 		2675D41C0CCEB6CF000F49AF /* arm */ = {
@@ -269,6 +281,7 @@
 				2695DD9B0D3EC160007E4CA2 /* CFString.cpp */,
 				26C637E70C71334A0024798E /* CFUtils.h */,
 				2675D41C0CCEB6CF000F49AF /* arm */,
+				266B5ECE1460A68200E43F0A /* arm64 */,
 				26C637E90C71334A0024798E /* i386 */,
 				26C637FA0C71334A0024798E /* ppc */,
 				26CF99A11142EB7400011AAB /* x86_64 */,
@@ -278,7 +291,7 @@
 				26C637EF0C71334A0024798E /* MachException.h */,
 				26C637EE0C71334A0024798E /* MachException.cpp */,
 				26C637F10C71334A0024798E /* MachProcess.h */,
-				26C637F00C71334A0024798E /* MachProcess.cpp */,
+				26C637F00C71334A0024798E /* MachProcess.mm */,
 				26C637F30C71334A0024798E /* MachThread.h */,
 				26C637F20C71334A0024798E /* MachThread.cpp */,
 				26C637F50C71334A0024798E /* MachThreadList.h */,
@@ -288,7 +301,7 @@
 				26C637F90C71334A0024798E /* MachVMRegion.h */,
 				26C637F80C71334A0024798E /* MachVMRegion.cpp */,
 				26B67DE00EE9BC30006C8BC0 /* MachTask.h */,
-				26B67DE10EE9BC30006C8BC0 /* MachTask.cpp */,
+				26B67DE10EE9BC30006C8BC0 /* MachTask.mm */,
 				9457ECF61419864100DFE7D8 /* stack_logging.h */,
 			);
 			path = MacOSX;
@@ -437,12 +450,12 @@
 				26CE05AD115C36280022F371 /* RNBRemote.cpp in Sources */,
 				26CE05AE115C36320022F371 /* dbgnub-mig.defs in Sources */,
 				26CE05B0115C36340022F371 /* MachException.cpp in Sources */,
-				26CE05B1115C36350022F371 /* MachProcess.cpp in Sources */,
+				26CE05B1115C36350022F371 /* MachProcess.mm in Sources */,
 				26CE05B2115C36360022F371 /* MachThread.cpp in Sources */,
 				26CE05B3115C36370022F371 /* MachThreadList.cpp in Sources */,
 				26CE05B4115C36380022F371 /* MachVMMemory.cpp in Sources */,
 				26CE05B5115C36380022F371 /* MachVMRegion.cpp in Sources */,
-				26CE05B6115C36390022F371 /* MachTask.cpp in Sources */,
+				26CE05B6115C36390022F371 /* MachTask.mm in Sources */,
 				26CE05B7115C363B0022F371 /* DNB.cpp in Sources */,
 				26CE05B8115C363C0022F371 /* DNBBreakpoint.cpp in Sources */,
 				26CE05B9115C363D0022F371 /* DNBDataRef.cpp in Sources */,
@@ -462,6 +475,7 @@
 				2660D9CE1192280900958FBD /* StringExtractor.cpp in Sources */,
 				264D5D581293835600ED4C01 /* DNBArch.cpp in Sources */,
 				4971AE7213D10F4F00649E37 /* HasAVX.s in Sources */,
+				266B5ED11460A68200E43F0A /* DNBArchImplARM64.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -472,8 +486,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				"ARCHS[sdk=iphoneos*]" = (
+					arm64,
 					armv7,
-					armv7s,
 				);
 				"ARCHS[sdk=macosx*]" = (
 					x86_64,
@@ -533,10 +547,7 @@
 		262419A11198A93E00067686 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				"ARCHS[sdk=iphoneos*]" = (
-					armv7,
-					armv7s,
-				);
+				"ARCHS[sdk=iphoneos*]" = arm64;
 				"ARCHS[sdk=macosx*]" = (
 					x86_64,
 					i386,
@@ -588,7 +599,7 @@
 				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
-					"-DWITH_SPRINGBOARD",
+					"-DWITH_BKS",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
@@ -601,6 +612,10 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
+					"-framework",
+					BackBoardServices,
+					"-framework",
+					Foundation,
 					"-llockdown",
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
@@ -640,7 +655,7 @@
 				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
-					"-DWITH_SPRINGBOARD",
+					"-DWITH_BKS",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
@@ -653,6 +668,10 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
+					"-framework",
+					BackBoardServices,
+					"-framework",
+					Foundation,
 					"-llockdown",
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
@@ -692,7 +711,7 @@
 				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
-					"-DWITH_SPRINGBOARD",
+					"-DWITH_BKS",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
@@ -705,7 +724,11 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
+					"-framework",
+					BackBoardServices,
 					"-llockdown",
+					"-framework",
+					Foundation,
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PRODUCT_NAME = debugserver;
@@ -721,8 +744,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				"ARCHS[sdk=iphoneos*]" = (
+					arm64,
 					armv7,
-					armv7s,
 				);
 				"ARCHS[sdk=macosx*]" = (
 					x86_64,
@@ -776,7 +799,7 @@
 				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
-					"-DWITH_SPRINGBOARD",
+					"-DWITH_BKS",
 					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
@@ -789,7 +812,11 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
+					"-framework",
+					BackBoardServices,
 					"-llockdown",
+					"-framework",
+					Foundation,
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PRODUCT_NAME = debugserver;

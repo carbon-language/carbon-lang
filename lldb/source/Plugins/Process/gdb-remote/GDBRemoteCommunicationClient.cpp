@@ -27,6 +27,7 @@
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/TimeValue.h"
+#include "lldb/Target/Target.h"
 
 // Project includes
 #include "Utility/StringExtractorGDBRemote.h"
@@ -57,6 +58,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_vCont_S (eLazyBoolCalculate),
     m_qHostInfo_is_valid (eLazyBoolCalculate),
     m_qProcessInfo_is_valid (eLazyBoolCalculate),
+    m_qGDBServerVersion_is_valid (eLazyBoolCalculate),
     m_supports_alloc_dealloc_memory (eLazyBoolCalculate),
     m_supports_memory_region_info  (eLazyBoolCalculate),
     m_supports_watchpoint_support_info  (eLazyBoolCalculate),
@@ -65,6 +67,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_attach_or_wait_reply(eLazyBoolCalculate),
     m_prepare_for_reg_writing_reply (eLazyBoolCalculate),
     m_supports_p (eLazyBoolCalculate),
+    m_avoid_g_packets (eLazyBoolCalculate),
     m_supports_QSaveRegisterState (eLazyBoolCalculate),
     m_supports_qXfer_auxv_read (eLazyBoolCalculate),
     m_supports_qXfer_libraries_read (eLazyBoolCalculate),
@@ -100,6 +103,8 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_os_build (),
     m_os_kernel (),
     m_hostname (),
+    m_gdb_server_name(),
+    m_gdb_server_version(UINT32_MAX),
     m_default_packet_timeout (0),
     m_max_packet_size (0)
 {
@@ -301,10 +306,12 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_QSaveRegisterState = eLazyBoolCalculate;
     m_qHostInfo_is_valid = eLazyBoolCalculate;
     m_qProcessInfo_is_valid = eLazyBoolCalculate;
+    m_qGDBServerVersion_is_valid = eLazyBoolCalculate;
     m_supports_alloc_dealloc_memory = eLazyBoolCalculate;
     m_supports_memory_region_info = eLazyBoolCalculate;
     m_prepare_for_reg_writing_reply = eLazyBoolCalculate;
     m_attach_or_wait_reply = eLazyBoolCalculate;
+    m_avoid_g_packets = eLazyBoolCalculate;
     m_supports_qXfer_auxv_read = eLazyBoolCalculate;
     m_supports_qXfer_libraries_read = eLazyBoolCalculate;
     m_supports_qXfer_libraries_svr4_read = eLazyBoolCalculate;
@@ -322,8 +329,18 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_z4 = true;
     m_supports_QEnvironment = true;
     m_supports_QEnvironmentHexEncoded = true;
+    
     m_host_arch.Clear();
     m_process_arch.Clear();
+    m_os_version_major = UINT32_MAX;
+    m_os_version_minor = UINT32_MAX;
+    m_os_version_update = UINT32_MAX;
+    m_os_build.clear();
+    m_os_kernel.clear();
+    m_hostname.clear();
+    m_gdb_server_name.clear();
+    m_gdb_server_version = UINT32_MAX;
+    m_default_packet_timeout = 0;
 
     m_max_packet_size = 0;
 }
@@ -1314,6 +1331,41 @@ GDBRemoteCommunicationClient::SendLaunchArchPacket (char const *arch)
     return -1;
 }
 
+int
+GDBRemoteCommunicationClient::SendLaunchEventDataPacket (char const *data, bool *was_supported)
+{
+    if (data && *data != '\0')
+    {
+        StreamString packet;
+        packet.Printf("QSetProcessEvent:%s", data);
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false) == PacketResult::Success)
+        {
+            if (response.IsOKResponse())
+            {
+                if (was_supported)
+                    *was_supported = true;
+                return 0;
+            }
+            else if (response.IsUnsupportedResponse())
+            {
+                if (was_supported)
+                    *was_supported = false;
+                return -1;
+            }
+            else
+            {
+                uint8_t error = response.GetError();
+                if (was_supported)
+                    *was_supported = true;
+                if (error)
+                    return error;
+            }
+        }
+    }
+    return -1;
+}
+
 bool
 GDBRemoteCommunicationClient::GetOSVersion (uint32_t &major, 
                                             uint32_t &minor, 
@@ -1394,6 +1446,69 @@ GDBRemoteCommunicationClient::GetProcessArchitecture ()
     return m_process_arch;
 }
 
+bool
+GDBRemoteCommunicationClient::GetGDBServerVersion()
+{
+    if (m_qGDBServerVersion_is_valid == eLazyBoolCalculate)
+    {
+        m_gdb_server_name.clear();
+        m_gdb_server_version = 0;
+        m_qGDBServerVersion_is_valid = eLazyBoolNo;
+
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse ("qGDBServerVersion", response, false) == PacketResult::Success)
+        {
+            if (response.IsNormalResponse())
+            {
+                std::string name;
+                std::string value;
+                bool success = false;
+                while (response.GetNameColonValue(name, value))
+                {
+                    if (name.compare("name") == 0)
+                    {
+                        success = true;
+                        m_gdb_server_name.swap(value);
+                    }
+                    else if (name.compare("version") == 0)
+                    {
+                        size_t dot_pos = value.find('.');
+                        if (dot_pos != std::string::npos)
+                            value[dot_pos] = '\0';
+                        const uint32_t version = Args::StringToUInt32(value.c_str(), UINT32_MAX, 0);
+                        if (version != UINT32_MAX)
+                        {
+                            success = true;
+                            m_gdb_server_version = version;
+                        }
+                    }
+                }
+                if (success)
+                    m_qGDBServerVersion_is_valid = eLazyBoolYes;
+            }
+        }
+    }
+    return m_qGDBServerVersion_is_valid == eLazyBoolYes;
+}
+
+const char *
+GDBRemoteCommunicationClient::GetGDBServerProgramName()
+{
+    if (GetGDBServerVersion())
+    {
+        if (!m_gdb_server_name.empty())
+            return m_gdb_server_name.c_str();
+    }
+    return NULL;
+}
+
+uint32_t
+GDBRemoteCommunicationClient::GetGDBServerProgramVersion()
+{
+    if (GetGDBServerVersion())
+        return m_gdb_server_version;
+    return 0;
+}
 
 bool
 GDBRemoteCommunicationClient::GetHostInfo (bool force)
@@ -1558,6 +1673,7 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                             {
                                 switch (m_host_arch.GetMachine())
                                 {
+                                case llvm::Triple::arm64:
                                 case llvm::Triple::arm:
                                 case llvm::Triple::thumb:
                                     os_name = "ios";
@@ -1598,6 +1714,7 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                         {
                             switch (m_host_arch.GetMachine())
                             {
+                                case llvm::Triple::arm64:
                                 case llvm::Triple::arm:
                                 case llvm::Triple::thumb:
                                     host_triple.setOS(llvm::Triple::IOS);
@@ -3226,6 +3343,38 @@ GDBRemoteCommunicationClient::CalculateMD5 (const lldb_private::FileSpec& file_s
         return true;
     }
     return false;
+}
+
+bool
+GDBRemoteCommunicationClient::AvoidGPackets (ProcessGDBRemote *process)
+{
+    // Some targets have issues with g/G packets and we need to avoid using them
+    if (m_avoid_g_packets == eLazyBoolCalculate)
+    {
+        if (process)
+        {
+            m_avoid_g_packets = eLazyBoolNo;
+            const ArchSpec &arch = process->GetTarget().GetArchitecture();
+            if (arch.IsValid()
+                && arch.GetTriple().getVendor() == llvm::Triple::Apple
+                && arch.GetTriple().getOS() == llvm::Triple::IOS
+                && arch.GetTriple().getArch() == llvm::Triple::arm64)
+            {
+                m_avoid_g_packets = eLazyBoolYes;
+                uint32_t gdb_server_version = GetGDBServerProgramVersion();
+                if (gdb_server_version != 0)
+                {
+                    const char *gdb_server_name = GetGDBServerProgramName();
+                    if (gdb_server_name && strcmp(gdb_server_name, "debugserver") == 0)
+                    {
+                        if (gdb_server_version >= 310)
+                            m_avoid_g_packets = eLazyBoolNo;
+                    }
+                }
+            }
+        }
+    }
+    return m_avoid_g_packets == eLazyBoolYes;
 }
 
 bool

@@ -133,6 +133,7 @@ PlatformDarwinKernel::CreateInstance (bool force, const ArchSpec *arch)
             is_ios_debug_session = eLazyBoolNo;
             break;
         case llvm::Triple::arm:
+        case llvm::Triple::arm64:
         case llvm::Triple::thumb:
             is_ios_debug_session = eLazyBoolYes;
             break;
@@ -649,7 +650,7 @@ PlatformDarwinKernel::ExamineKextForMatchingUUID (const FileSpec &kext_bundle_pa
 bool
 PlatformDarwinKernel::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
-#if defined (__arm__)
+#if defined (__arm__) || defined (__arm64__)
     return ARMGetSupportedArchitectureAtIndex (idx, arch);
 #else
     return x86GetSupportedArchitectureAtIndex (idx, arch);

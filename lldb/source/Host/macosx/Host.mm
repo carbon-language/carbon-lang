@@ -57,12 +57,13 @@
 #include "cfcpp/CFCReleaser.h"
 #include "cfcpp/CFCString.h"
 
+
 #include <objc/objc-auto.h>
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <Foundation/Foundation.h>
 
-#if !defined(__arm__)
+#if !defined(__arm__) && !defined(__arm64__)
 #include <Carbon/Carbon.h>
 #endif
 
@@ -231,7 +232,7 @@ Host::ResolveExecutableInBundle (FileSpec &file)
 lldb::pid_t
 Host::LaunchApplication (const FileSpec &app_file_spec)
 {
-#if defined (__arm__)
+#if defined (__arm__) || defined(__arm64__)
     return LLDB_INVALID_PROCESS_ID;
 #else
     char app_path[PATH_MAX];
@@ -324,7 +325,7 @@ WaitForProcessToSIGSTOP (const lldb::pid_t pid, const int timeout_in_seconds)
     }
     return false;
 }
-#if !defined(__arm__)
+#if !defined(__arm__) && !defined(__arm64__)
 
 //static lldb::pid_t
 //LaunchInNewTerminalWithCommandFile 
@@ -731,7 +732,7 @@ Host::SetCrashDescription (const char *cstr)
 bool
 Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
 {
-#if defined(__arm__)
+#if defined(__arm__) || defined(__arm64__)
     return false;
 #else
     // We attach this to an 'odoc' event to specify a particular selection
@@ -1081,7 +1082,7 @@ GetMacOSXProcessCPUType (ProcessInstanceInfo &process_info)
     
         mib[mib_len] = process_info.GetProcessID();
         mib_len++;
-    
+
         cpu_type_t cpu, sub = 0;
         size_t len = sizeof(cpu);
         if (::sysctl (mib, mib_len, &cpu, &len, 0, 0) == 0)
@@ -1090,12 +1091,35 @@ GetMacOSXProcessCPUType (ProcessInstanceInfo &process_info)
             {
                 case CPU_TYPE_I386:      sub = CPU_SUBTYPE_I386_ALL;     break;
                 case CPU_TYPE_X86_64:    sub = CPU_SUBTYPE_X86_64_ALL;   break;
+
+#if defined (CPU_TYPE_ARM64) && defined (CPU_SUBTYPE_ARM64_ALL)
+                case CPU_TYPE_ARM64:     sub = CPU_SUBTYPE_ARM64_ALL;      break;
+#endif
+
                 case CPU_TYPE_ARM:
                     {
+                        // Note that we fetched the cpu type from the PROCESS but we can't get a cpusubtype of the 
+                        // process -- we can only get the host's cpu subtype.
                         uint32_t cpusubtype = 0;
                         len = sizeof(cpusubtype);
                         if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &len, NULL, 0) == 0)
                             sub = cpusubtype;
+
+                        bool host_cpu_is_64bit;
+                        uint32_t is64bit_capable;
+                        size_t is64bit_capable_len = sizeof (is64bit_capable);
+                        if (sysctlbyname("hw.cpu64bit_capable", &is64bit_capable, &is64bit_capable_len, NULL, 0) == 0)
+                            host_cpu_is_64bit = true;
+                        else
+                            host_cpu_is_64bit = false;
+
+                        // if the host is an armv8 device, its cpusubtype will be in CPU_SUBTYPE_ARM64 numbering
+                        // and we need to rewrite it to a reasonable CPU_SUBTYPE_ARM value instead.
+
+                        if (host_cpu_is_64bit)
+                        {
+                            sub = CPU_SUBTYPE_ARM_V7;
+                        }
                     }
                     break;
 
@@ -1591,7 +1615,7 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     
     if (launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY))
     {
-#if !defined(__arm__)
+#if !defined(__arm__) && !defined(__arm64__)
         return LaunchInNewTerminalWithAppleScript (exe_path, launch_info);
 #else
         error.SetErrorString ("launching a processs in a new terminal is not supported on iOS devices");

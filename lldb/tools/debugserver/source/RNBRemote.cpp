@@ -197,6 +197,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (get_profile_data,              &RNBRemote::HandlePacket_GetProfileData, NULL, "qGetProfileData", "Return profiling data of the current target."));
     t.push_back (Packet (set_enable_profiling,          &RNBRemote::HandlePacket_SetEnableAsyncProfiling, NULL, "QSetEnableAsyncProfiling", "Enable or disable the profiling of current target."));
     t.push_back (Packet (watchpoint_support_info,       &RNBRemote::HandlePacket_WatchpointSupportInfo, NULL, "qWatchpointSupportInfo", "Return the number of supported hardware watchpoints"));
+    t.push_back (Packet (set_process_event,             &RNBRemote::HandlePacket_QSetProcessEvent, NULL, "QSetProcessEvent:", "Set a process event, to be passed to the process, can be set before the process is started, or after."));
     t.push_back (Packet (speed_test,                    &RNBRemote::HandlePacket_qSpeedTest, NULL, "qSpeedTest:", "Test the maximum speed at which packet can be sent/received."));
 }
 
@@ -791,8 +792,15 @@ RNBRemote::ThreadFunctionReadRemoteData(void *arg)
 static cpu_type_t
 best_guess_cpu_type ()
 {
-#if defined (__arm__)
-    return CPU_TYPE_ARM;
+#if defined (__arm__) || defined (__arm64__)
+    if (sizeof (char *) == 8)
+    {
+        return CPU_TYPE_ARM64;
+    }   
+    else
+    {
+        return CPU_TYPE_ARM;
+    }   
 #elif defined (__i386__) || defined (__x86_64__)
     if (sizeof (char*) == 8)
     {
@@ -2085,6 +2093,26 @@ RNBRemote::HandlePacket_QLaunchArch (const char *p)
     return SendPacket ("E63");
 }
 
+rnb_err_t
+RNBRemote::HandlePacket_QSetProcessEvent (const char *p)
+{
+    p += sizeof ("QSetProcessEvent:") - 1;
+    // If the process is running, then send the event to the process, otherwise
+    // store it in the context.
+    if (Context().HasValidProcessID())
+    {
+        if (DNBProcessSendEvent (Context().ProcessID(), p))
+            return SendPacket("OK");
+        else
+            return SendPacket ("E80");
+    }
+    else
+    {
+        Context().PushProcessEvent(p);
+    }
+    return SendPacket ("OK");
+}
+
 void
 append_hex_value (std::ostream& ostrm, const uint8_t* buf, size_t buf_size, bool swap)
 {
@@ -2354,8 +2382,22 @@ RNBRemote::HandlePacket_last_signal (const char *unused)
                     strncpy (pid_exited_packet, "W00", sizeof(pid_exited_packet)-1);
                     pid_exited_packet[sizeof(pid_exited_packet)-1] = '\0';
                 }
-
-                return SendPacket (pid_exited_packet);
+                
+                const char *exit_info = DNBProcessGetExitInfo (pid);
+                if (exit_info != NULL && *exit_info != '\0')
+                {
+                    std::ostringstream exit_packet;
+                    exit_packet << pid_exited_packet;
+                    exit_packet << ';';
+                    exit_packet << RAW_HEXBASE << "description";
+                    exit_packet << ':';
+                    for (size_t i = 0; exit_info[i] != '\0'; i++)
+                        exit_packet << RAWHEX8(exit_info[i]);
+                    exit_packet << ';';
+                    return SendPacket (exit_packet.str());
+                }
+                else
+                    return SendPacket (pid_exited_packet);
             }
             break;
     }
@@ -3767,7 +3809,7 @@ RNBRemote::HandlePacket_qHostInfo (const char *p)
     // The OS in the triple should be "ios" or "macosx" which doesn't match our
     // "Darwin" which gets returned from "kern.ostype", so we need to hardcode
     // this for now.
-    if (cputype == CPU_TYPE_ARM)
+    if (cputype == CPU_TYPE_ARM || cputype == CPU_TYPE_ARM64)
     {
         strm << "ostype:ios;";
         // On armv7 we use "synchronous" watchpoints which means the exception is delivered before the instruction executes.
@@ -3868,6 +3910,14 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
         rep << "cputype:" << std::hex << cputype << ";";
     }
 
+    bool host_cpu_is_64bit;
+    uint32_t is64bit_capable;
+    size_t is64bit_capable_len = sizeof (is64bit_capable);
+    if (sysctlbyname("hw.cpu64bit_capable", &is64bit_capable, &is64bit_capable_len, NULL, 0) == 0)
+        host_cpu_is_64bit = true;
+    else
+        host_cpu_is_64bit = false;
+
     uint32_t cpusubtype;
     size_t cpusubtype_len = sizeof(cpusubtype);
     if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &cpusubtype_len, NULL, 0) == 0)
@@ -3877,13 +3927,22 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
             cpusubtype = CPU_SUBTYPE_X86_64_ALL;
         }
 
+        // We can query a process' cputype but we cannot query a process' cpusubtype.
+        // If the process has cputype CPU_TYPE_ARM, then it is an armv7 (32-bit process) and we 
+        // need to override the host cpusubtype (which is in the CPU_SUBTYPE_ARM64 subtype namespace)
+        // with a reasonable CPU_SUBTYPE_ARMV7 subtype.
+        if (host_cpu_is_64bit && cputype == CPU_TYPE_ARM)
+        {
+            cpusubtype = 11; //CPU_SUBTYPE_ARM_V7S;
+        }
+
         rep << "cpusubtype:" << std::hex << cpusubtype << ';';
     }
 
     // The OS in the triple should be "ios" or "macosx" which doesn't match our
     // "Darwin" which gets returned from "kern.ostype", so we need to hardcode
     // this for now.
-    if (cputype == CPU_TYPE_ARM)
+    if (cputype == CPU_TYPE_ARM || cputype == CPU_TYPE_ARM64)
         rep << "ostype:ios;";
     else
         rep << "ostype:macosx;";
@@ -3914,6 +3973,20 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
     }
 #elif defined (__arm__)
     rep << "ptrsize:4;";
+#elif defined (__arm64__) && defined (ARM_UNIFIED_THREAD_STATE)
+    nub_thread_t thread = DNBProcessGetCurrentThreadMachPort (pid);
+    kern_return_t kr;
+    arm_unified_thread_state_t gp_regs;
+    mach_msg_type_number_t gp_count = ARM_UNIFIED_THREAD_STATE_COUNT;
+    kr = thread_get_state (thread, ARM_UNIFIED_THREAD_STATE,
+                           (thread_state_t) &gp_regs, &gp_count);
+    if (kr == KERN_SUCCESS)
+    {
+        if (gp_regs.ash.flavor == ARM_THREAD_STATE64)
+            rep << "ptrsize:8;";
+        else
+            rep << "ptrsize:4;";
+    }
 #endif
 
     return SendPacket (rep.str());

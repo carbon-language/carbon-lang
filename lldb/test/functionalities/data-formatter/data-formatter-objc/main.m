@@ -10,7 +10,7 @@
 #import <Foundation/Foundation.h>
 
 #if defined(__APPLE__)
-#if defined(__arm__)
+#if defined(__arm__) || defined(__arm64__)
 #define IOS
 #endif
 #endif

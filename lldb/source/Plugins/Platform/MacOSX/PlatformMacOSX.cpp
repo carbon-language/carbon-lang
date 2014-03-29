@@ -312,7 +312,7 @@ PlatformMacOSX::GetFileWithUUID (const lldb_private::FileSpec &platform_file,
 bool
 PlatformMacOSX::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
-#if defined (__arm__)
+#if defined (__arm__) || defined (__arm64__)
     return ARMGetSupportedArchitectureAtIndex (idx, arch);
 #else
     return x86GetSupportedArchitectureAtIndex (idx, arch);

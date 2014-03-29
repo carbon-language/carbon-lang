@@ -856,6 +856,18 @@ public:
     }
 
 
+    void
+    SetLaunchEventData (const char *data)
+    {
+        m_event_data.assign (data);
+    }
+    
+    const char *
+    GetLaunchEventData () const
+    {
+        return m_event_data.c_str();
+    }
+    
 protected:
     std::string m_working_dir;
     std::string m_plugin_name;
@@ -867,6 +879,7 @@ protected:
     Host::MonitorChildProcessCallback m_monitor_callback;
     void *m_monitor_callback_baton;
     bool m_monitor_signals;
+    std::string m_event_data; // A string passed to the plugin launch, having no meaning to the upper levels of lldb.
     lldb::ListenerSP m_hijack_listener_sp;
 };
 
@@ -3638,8 +3651,17 @@ public:
         else
             return m_public_run_lock;
     }
-    
+
+public:
+    virtual Error
+    SendEventData(const char *data)
+    {
+        Error return_error ("Sending an event is not supported for this process.");
+        return return_error;
+    }
+
 protected:
+
     //------------------------------------------------------------------
     // NextEventAction provides a way to register an action on the next
     // event that is delivered to this process.  There is currently only

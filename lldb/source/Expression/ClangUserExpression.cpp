@@ -465,7 +465,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     else
         lang_type = lldb::eLanguageTypeC;
     
-    if (!source_code->GetText(m_transformed_text, lang_type, m_const_object, m_static_method))
+    if (!source_code->GetText(m_transformed_text, lang_type, m_const_object, m_static_method, exe_ctx))
     {
         error_stream.PutCString ("error: couldn't construct expression body");
         return false;

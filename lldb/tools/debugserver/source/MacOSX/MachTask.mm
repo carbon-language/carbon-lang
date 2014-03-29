@@ -45,6 +45,15 @@
 
 #endif
 
+#ifdef WITH_BKS
+extern "C"
+{
+    #import <Foundation/Foundation.h>
+    #import <BackBoardServices/BackBoardServices.h> 
+    #import <BackBoardServices/BKSWatchdogAssertion.h>
+}
+#endif
+
 //----------------------------------------------------------------------
 // MachTask constructor
 //----------------------------------------------------------------------
@@ -693,7 +702,7 @@ MachTask::ExceptionThread (void *arg)
     task_t task = mach_task->TaskPort();
     mach_msg_timeout_t periodic_timeout = 0;
 
-#ifdef WITH_SPRINGBOARD
+#if defined (WITH_SPRINGBOARD) && !defined (WITH_BKS)
     mach_msg_timeout_t watchdog_elapsed = 0;
     mach_msg_timeout_t watchdog_timeout = 60 * 1000;
     pid_t pid = mach_proc->ProcessID();
@@ -723,7 +732,17 @@ MachTask::ExceptionThread (void *arg)
         if (periodic_timeout == 0 || periodic_timeout > watchdog_timeout)
             periodic_timeout = watchdog_timeout;
     }
-#endif  // #ifdef WITH_SPRINGBOARD
+#endif  // #if defined (WITH_SPRINGBOARD) && !defined (WITH_BKS)
+
+#ifdef WITH_BKS
+    CFReleaser<BKSWatchdogAssertionRef> watchdog;
+    if (mach_proc->ProcessUsingBackBoard())
+    {
+        pid_t pid = mach_proc->ProcessID();
+        CFAllocatorRef alloc = kCFAllocatorDefault;
+        watchdog.reset(::BKSWatchdogAssertionCreateForPID(alloc, pid));
+    }
+#endif // #ifdef WITH_BKS
 
     while (mach_task->ExceptionPortIsValid())
     {
@@ -804,7 +823,7 @@ MachTask::ExceptionThread (void *arg)
                 continue;
             }
 
-#ifdef WITH_SPRINGBOARD
+#if defined (WITH_SPRINGBOARD) && !defined (WITH_BKS)
             if (watchdog.get())
             {
                 watchdog_elapsed += periodic_timeout;
@@ -832,7 +851,7 @@ MachTask::ExceptionThread (void *arg)
         }
     }
 
-#ifdef WITH_SPRINGBOARD
+#if defined (WITH_SPRINGBOARD) && !defined (WITH_BKS)
     if (watchdog.get())
     {
         // TODO: change SBSWatchdogAssertionRelease to SBSWatchdogAssertionCancel when we
@@ -842,7 +861,7 @@ MachTask::ExceptionThread (void *arg)
         DNBLogThreadedIf(LOG_TASK, "::SBSWatchdogAssertionRelease(%p)", watchdog.get());
         ::SBSWatchdogAssertionRelease (watchdog.get());
     }
-#endif  // #ifdef WITH_SPRINGBOARD
+#endif  // #if defined (WITH_SPRINGBOARD) && !defined (WITH_BKS)
 
     DNBLogThreadedIf(LOG_EXCEPTIONS, "MachTask::%s (%p): thread exiting...", __FUNCTION__, arg);
     return NULL;

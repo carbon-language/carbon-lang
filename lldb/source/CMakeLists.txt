@@ -74,9 +74,11 @@ set( LLDB_USED_LIBS
   lldbPluginAppleObjCRuntime
   lldbPluginCXXItaniumABI
   lldbPluginABIMacOSX_arm
+  lldbPluginABIMacOSX_arm64
   lldbPluginABIMacOSX_i386
   lldbPluginABISysV_x86_64
   lldbPluginInstructionARM
+  lldbPluginInstructionARM64
   lldbPluginObjectFilePECOFF
   lldbPluginOSPython
   )

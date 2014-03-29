@@ -110,6 +110,12 @@ public:
     bool
     AddSuppressFileAction (int fd, bool read, bool write);
     
+    void
+    SetLaunchEventData (const char *data);
+    
+    const char *
+    GetLaunchEventData () const;
+    
 protected:
     friend class SBTarget;
     

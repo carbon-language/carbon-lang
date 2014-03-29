@@ -221,12 +221,14 @@ public:
         return m_gdb_comm;
     }
     
+    virtual lldb_private::Error
+    SendEventData(const char *data);
+
     //----------------------------------------------------------------------
     // Override SetExitStatus so we can disconnect from the remote GDB server
     //----------------------------------------------------------------------
     virtual bool
     SetExitStatus (int exit_status, const char *cstr);
-
 
 protected:
     friend class ThreadGDBRemote;

@@ -82,7 +82,7 @@ public:
         }
         bool IsBreakpoint() const
         {
-            return (exc_type == EXC_BREAKPOINT) || ((exc_type == EXC_SOFTWARE) && exc_data[0] == 1);
+            return (exc_type == EXC_BREAKPOINT || ((exc_type == EXC_SOFTWARE) && exc_data[0] == 1));
         }
         void Dump() const;
         void DumpStopReason() const;
