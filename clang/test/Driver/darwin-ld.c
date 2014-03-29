@@ -142,10 +142,23 @@
 // RUN: FileCheck -check-prefix=LINK_NO_IOS_CRT1 %s < %t.log
 // LINK_NO_IOS_CRT1-NOT: crt
 
+// RUN: %clang -target arm64-apple-ios5.0 -miphoneos-version-min=5.0 -### %t.o 2> %t.log
+// RUN: FileCheck -check-prefix=LINK_NO_IOS_ARM64_CRT1 %s < %t.log
+// LINK_NO_IOS_ARM64_CRT1-NOT: crt
+
 // RUN: %clang -target i386-apple-darwin12 -pg -### %t.o 2> %t.log
 // RUN: FileCheck -check-prefix=LINK_PG %s < %t.log
 // LINK_PG: -lgcrt1.o
 // LINK_PG: -no_new_main
+
+// Check that clang links with libgcc_s.1 for iOS 4 and earlier, but not arm64.
+// RUN: %clang -target armv7-apple-ios4.0 -miphoneos-version-min=4.0 -### %t.o 2> %t.log
+// RUN: FileCheck -check-prefix=LINK_IOS_LIBGCC_S %s < %t.log
+// LINK_IOS_LIBGCC_S: lgcc_s.1
+
+// RUN: %clang -target arm64-apple-ios4.0 -miphoneos-version-min=4.0 -### %t.o 2> %t.log
+// RUN: FileCheck -check-prefix=LINK_NO_IOS_ARM64_LIBGCC_S %s < %t.log
+// LINK_NO_IOS_ARM64_LIBGCC_S-NOT: lgcc_s.1
 
 // RUN: %clang -target x86_64-apple-darwin12 -rdynamic -### %t.o \
 // RUN:   -mlinker-version=100 2> %t.log

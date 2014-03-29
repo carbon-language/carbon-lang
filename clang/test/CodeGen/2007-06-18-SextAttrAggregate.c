@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 %s -o - -emit-llvm | FileCheck %s
-// XFAIL: aarch64
+// XFAIL: aarch64, arm64
 
 // PR1513
 

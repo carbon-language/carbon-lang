@@ -1,0 +1,34 @@
+//===--- BuiltinsARM64.def - ARM64 Builtin function database ----*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the ARM64-specific builtin function database.  Users of
+// this file must define the BUILTIN macro to make use of this information.
+//
+//===----------------------------------------------------------------------===//
+
+// The format of this database matches clang/Basic/Builtins.def.
+
+// In libgcc
+BUILTIN(__clear_cache, "vv*v*", "")
+
+BUILTIN(__builtin_arm_ldrex, "v.", "t")
+BUILTIN(__builtin_arm_strex, "i.", "t")
+BUILTIN(__builtin_arm_clrex, "v", "")
+
+// CRC32
+BUILTIN(__builtin_arm_crc32b, "UiUiUc", "nc")
+BUILTIN(__builtin_arm_crc32cb, "UiUiUc", "nc")
+BUILTIN(__builtin_arm_crc32h, "UiUiUs", "nc")
+BUILTIN(__builtin_arm_crc32ch, "UiUiUs", "nc")
+BUILTIN(__builtin_arm_crc32w, "UiUiUi", "nc")
+BUILTIN(__builtin_arm_crc32cw, "UiUiUi", "nc")
+BUILTIN(__builtin_arm_crc32d, "UiUiLUi", "nc")
+BUILTIN(__builtin_arm_crc32cd, "UiUiLUi", "nc")
+
+#undef BUILTIN

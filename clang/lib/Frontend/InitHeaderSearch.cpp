@@ -378,6 +378,11 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
       AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2.1",
                                   "arm-apple-darwin10", "v6", "", triple);
       break;
+
+    case llvm::Triple::arm64:
+      AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.2.1",
+                                  "arm64-apple-darwin10", "", "", triple);
+      break;
     }
     return;
   }

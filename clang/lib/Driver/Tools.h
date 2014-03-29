@@ -54,6 +54,8 @@ using llvm::opt::ArgStringList;
     void AddARMTargetArgs(const llvm::opt::ArgList &Args,
                           llvm::opt::ArgStringList &CmdArgs,
                           bool KernelOrKext) const;
+    void AddARM64TargetArgs(const llvm::opt::ArgList &Args,
+                            llvm::opt::ArgStringList &CmdArgs) const;
     void AddMIPSTargetArgs(const llvm::opt::ArgList &Args,
                            llvm::opt::ArgStringList &CmdArgs) const;
     void AddR600TargetArgs(const llvm::opt::ArgList &Args,

@@ -368,7 +368,8 @@ public:
                          llvm::opt::ArgStringList &CmdArgs) const override;
 
   bool isKernelStatic() const override {
-    return !isTargetIPhoneOS() || isIPhoneOSVersionLT(6, 0);
+    return !isTargetIPhoneOS() || isIPhoneOSVersionLT(6, 0) ||
+           getTriple().getArch() == llvm::Triple::arm64;
   }
 
 protected:

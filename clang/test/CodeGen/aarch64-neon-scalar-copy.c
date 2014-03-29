@@ -1,5 +1,8 @@
 // REQUIRES: aarch64-registered-target
+// REQUIRES: arm64-registered-target
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon \
+// RUN:   -ffp-contract=fast -S -O3 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple arm64-none-linux-gnu \
 // RUN:   -ffp-contract=fast -S -O3 -o - %s | FileCheck %s
 
 
@@ -40,14 +43,14 @@ float64_t test_vdupd_laneq_f64(float64x2_t a) {
 // CHECK-LABEL: test_vdupb_lane_s8
 int8_t test_vdupb_lane_s8(int8x8_t a) {
   return vdupb_lane_s8(a, 7);
-// CHECK: umov {{w[0-9]+}}, {{v[0-9]+}}.b[7]
+// CHECK: {{umov|smov}} {{w[0-9]+}}, {{v[0-9]+}}.b[7]
 }
 
 
 // CHECK-LABEL: test_vduph_lane_s16
 int16_t test_vduph_lane_s16(int16x4_t a) {
   return vduph_lane_s16(a, 3);
-// CHECK: umov {{w[0-9]+}}, {{v[0-9]+}}.h[3]
+// CHECK: {{umov|smov}} {{w[0-9]+}}, {{v[0-9]+}}.h[3]
 }
 
 
@@ -95,14 +98,14 @@ uint64_t test_vdupd_lane_u64(uint64x1_t a) {
 // CHECK-LABEL: test_vdupb_laneq_s8
 int8_t test_vdupb_laneq_s8(int8x16_t a) {
   return vdupb_laneq_s8(a, 15);
-// CHECK: umov {{w[0-9]+}}, {{v[0-9]+}}.b[15]
+// CHECK: {{umov|smov}} {{w[0-9]+}}, {{v[0-9]+}}.b[15]
 }
 
 
 // CHECK-LABEL: test_vduph_laneq_s16
 int16_t test_vduph_laneq_s16(int16x8_t a) {
   return vduph_laneq_s16(a, 7);
-// CHECK: umov {{w[0-9]+}}, {{v[0-9]+}}.h[7]
+// CHECK: {{umov|smov}} {{w[0-9]+}}, {{v[0-9]+}}.h[7]
 }
 
 

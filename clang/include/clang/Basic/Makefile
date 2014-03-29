@@ -50,7 +50,8 @@ $(ObjDir)/AttrList.inc.tmp : Attr.td $(CLANG_TBLGEN) $(ObjDir)/.dir
 
 $(ObjDir)/arm_neon.inc.tmp : arm_neon.td $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang arm_neon.inc with tblgen"
-	$(Verb) $(ClangTableGen) -gen-arm-neon-sema -o $(call SYSPATH, $@) $<
+	$(Verb) $(ClangTableGen) -gen-arm-neon-sema -o $(call SYSPATH, $@) \
+	  -I $(PROJ_SRC_DIR)/../.. $<
 
 $(ObjDir)/Version.inc.tmp : Version.inc.in Makefile $(LLVM_OBJ_ROOT)/Makefile.config $(ObjDir)/.dir
 	$(Echo) "Updating Clang version info."

@@ -63,6 +63,14 @@ public:
     ///   - constructor/destructor signatures.
     iOS,
 
+    /// The iOS 64-bit ABI is follows ARM's published 64-bit ABI more
+    /// closely, but we don't guarantee to follow it perfectly.
+    ///
+    /// It is documented here:
+    ///    http://infocenter.arm.com
+    ///                  /help/topic/com.arm.doc.ihi0059a/IHI0059A_cppabi64.pdf
+    iOS64,
+
     /// The generic AArch64 ABI is also a modified version of the Itanium ABI,
     /// but it has fewer divergences than the 32-bit ARM ABI.
     ///
@@ -105,6 +113,7 @@ public:
     case GenericItanium:
     case GenericARM:
     case iOS:
+    case iOS64:
       return true;
 
     case Microsoft:
@@ -120,6 +129,7 @@ public:
     case GenericItanium:
     case GenericARM:
     case iOS:
+    case iOS64:
       return false;
 
     case Microsoft:
@@ -195,6 +205,7 @@ public:
   bool canKeyFunctionBeInline() const {
     switch (getKind()) {
     case GenericARM:
+    case iOS64:
       return false;
 
     case GenericAArch64:
@@ -247,6 +258,11 @@ public:
     case GenericARM:
     case iOS:
       return UseTailPaddingUnlessPOD03;
+
+    // iOS on ARM64 uses the C++11 POD rules.  It does not honor the
+    // Itanium exception about classes with over-large bitfields.
+    case iOS64:
+      return UseTailPaddingUnlessPOD11;
 
     // MSVC always allocates fields in the tail-padding of a base class
     // subobject, even if they're POD.

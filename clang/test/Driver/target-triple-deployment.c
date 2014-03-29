@@ -6,7 +6,9 @@
 // RUN: %clang -target armv7-apple-ios -### %t.o 2>> %t.log
 // RUN: %clang -target armv7-apple-ios0.0 -### %t.o 2>> %t.log
 // RUN: %clang -target armv7-apple-ios1.2.3 -### %t.o 2>> %t.log
+// RUN: %clang -target armv7-apple-ios5.0 -### %t.o 2>> %t.log
 // RUN: %clang -target armv7-apple-ios7.0 -### %t.o 2>> %t.log
+// RUN: %clang -target arm64-apple-ios -### %t.o 2>> %t.log
 //
 // RUN: FileCheck %s < %t.log
 
@@ -28,6 +30,12 @@
 // CHECK: {{ld(.exe)?"}}
 // CHECK: -iphoneos_version_min
 // CHECK: 1.2.3
+// CHECK: {{ld(.exe)?"}}
+// CHECK: -iphoneos_version_min
+// CHECK: 5.0.0
+// CHECK: {{ld(.exe)?"}}
+// CHECK: -iphoneos_version_min
+// CHECK: 7.0.0
 // CHECK: {{ld(.exe)?"}}
 // CHECK: -iphoneos_version_min
 // CHECK: 7.0.0

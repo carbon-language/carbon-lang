@@ -3340,6 +3340,10 @@ public:
       : DarwinTargetInfo<X86_64TargetInfo>(Triple) {
     Int64Type = SignedLongLong;
     MaxVectorAlign = 256;
+    // The 64-bit iOS simulator uses the builtin bool type for Objective-C.
+    llvm::Triple T = llvm::Triple(Triple);
+    if (T.getOS() == llvm::Triple::IOS)
+      UseSignedCharForObjCBool = false;
     DescriptionString = "e-m:o-i64:64-f80:128-n8:16:32:64-S128";
   }
 };
@@ -3602,9 +3606,7 @@ const Builtin::Info AArch64TargetInfo::BuiltinInfo[] = {
 #define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
 #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER,\
                                               ALL_LANGUAGES },
-#define GET_NEON_BUILTINS
-#include "clang/Basic/arm_neon.inc"
-#undef GET_NEON_BUILTINS
+#include "clang/Basic/BuiltinsNEON.def"
 
 #define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
 #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER,\
@@ -3924,6 +3926,11 @@ public:
       Features["neon"] = true;
       Features["hwdiv"] = true;
       Features["hwdiv-arm"] = true;
+    } else if (CPU == "cyclone") {
+      Features["v8fp"] = true;
+      Features["neon"] = true;
+      Features["hwdiv"] = true;
+      Features["hwdiv-arm"] = true;
     } else if (CPU == "cortex-a53" || CPU == "cortex-a57") {
       Features["fp-armv8"] = true;
       Features["neon"] = true;
@@ -4029,6 +4036,7 @@ public:
       .Cases("cortex-a9", "cortex-a12", "cortex-a15", "krait", "7A")
       .Cases("cortex-r4", "cortex-r5", "7R")
       .Case("swift", "7S")
+      .Case("cyclone", "8A")
       .Cases("cortex-m3", "cortex-m4", "7M")
       .Case("cortex-m0", "6M")
       .Cases("cortex-a53", "cortex-a57", "8A")
@@ -4320,9 +4328,7 @@ const Builtin::Info ARMTargetInfo::BuiltinInfo[] = {
 #define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
 #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER,\
                                               ALL_LANGUAGES },
-#define GET_NEON_BUILTINS
-#include "clang/Basic/arm_neon.inc"
-#undef GET_NEON_BUILTINS
+#include "clang/Basic/BuiltinsNEON.def"
 
 #define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
 #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER,\
@@ -4377,6 +4383,294 @@ public:
 };
 } // end anonymous namespace.
 
+
+namespace {
+class ARM64TargetInfo : public TargetInfo {
+  static const TargetInfo::GCCRegAlias GCCRegAliases[];
+  static const char *const GCCRegNames[];
+
+  static const Builtin::Info BuiltinInfo[];
+
+  std::string ABI;
+
+public:
+  ARM64TargetInfo(const llvm::Triple &Triple)
+      : TargetInfo(Triple), ABI("aapcs") {
+    BigEndian = false;
+    LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
+    IntMaxType = SignedLong;
+    UIntMaxType = UnsignedLong;
+    Int64Type = SignedLong;
+    WCharType = UnsignedInt;
+    MaxVectorAlign = 128;
+    RegParmMax = 8;
+    MaxAtomicInlineWidth = 128;
+    MaxAtomicPromoteWidth = 128;
+
+    LongDoubleWidth = LongDoubleAlign = 128;
+    LongDoubleFormat = &llvm::APFloat::IEEEquad;
+
+    if (Triple.isOSBinFormatMachO())
+      DescriptionString = "e-m:o-i64:64-i128:128-n32:64-S128";
+    else
+      DescriptionString = "e-m:e-i64:64-i128:128-n32:64-S128";
+
+    // {} in inline assembly are neon specifiers, not assembly variant
+    // specifiers.
+    NoAsmVariants = true;
+
+    // ARM64 targets default to using the ARM C++ ABI.
+    TheCXXABI.set(TargetCXXABI::GenericAArch64);
+  }
+
+  virtual const char *getABI() const { return ABI.c_str(); }
+  virtual bool setABI(const std::string &Name) {
+    if (Name != "aapcs" && Name != "darwinpcs")
+      return false;
+
+    ABI = Name;
+    return true;
+  }
+
+  virtual bool setCPU(const std::string &Name) {
+    bool CPUKnown = llvm::StringSwitch<bool>(Name)
+                        .Case("arm64-generic", true)
+                        .Case("cyclone", true)
+                        .Default(false);
+    return CPUKnown;
+  }
+
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    // Target identification.
+    Builder.defineMacro("__arm64");
+    Builder.defineMacro("__arm64__");
+    Builder.defineMacro("__aarch64__");
+    Builder.defineMacro("__ARM64_ARCH_8__");
+    Builder.defineMacro("__AARCH64_SIMD__");
+    Builder.defineMacro("__ARM_NEON__");
+
+    // Target properties.
+    Builder.defineMacro("_LP64");
+    Builder.defineMacro("__LP64__");
+    Builder.defineMacro("__LITTLE_ENDIAN__");
+
+    // Subtarget options.
+    Builder.defineMacro("__REGISTER_PREFIX__", "");
+
+    Builder.defineMacro("__aarch64__");
+    Builder.defineMacro("__AARCH64EL__");
+
+    // ACLE predefines. Many can only have one possible value on v8 AArch64.
+    Builder.defineMacro("__ARM_ACLE", "200");
+    Builder.defineMacro("__ARM_ARCH", "8");
+    Builder.defineMacro("__ARM_ARCH_PROFILE", "'A'");
+
+    Builder.defineMacro("__ARM_64BIT_STATE");
+    Builder.defineMacro("__ARM_PCS_AAPCS64");
+    Builder.defineMacro("__ARM_ARCH_ISA_A64");
+
+    Builder.defineMacro("__ARM_FEATURE_UNALIGNED");
+    Builder.defineMacro("__ARM_FEATURE_CLZ");
+    Builder.defineMacro("__ARM_FEATURE_FMA");
+    Builder.defineMacro("__ARM_FEATURE_DIV");
+
+    Builder.defineMacro("__ARM_ALIGN_MAX_STACK_PWR", "4");
+
+    // 0xe implies support for half, single and double precision operations.
+    Builder.defineMacro("__ARM_FP", "0xe");
+
+    // PCS specifies this for SysV variants, which is all we support. Other ABIs
+    // may choose __ARM_FP16_FORMAT_ALTERNATIVE.
+    Builder.defineMacro("__ARM_FP16_FORMAT_IEEE");
+
+    if (Opts.FastMath || Opts.FiniteMathOnly)
+      Builder.defineMacro("__ARM_FP_FAST");
+
+    if ((Opts.C99 || Opts.C11) && !Opts.Freestanding)
+      Builder.defineMacro("__ARM_FP_FENV_ROUNDING");
+
+    Builder.defineMacro("__ARM_SIZEOF_WCHAR_T", Opts.ShortWChar ? "2" : "4");
+
+    Builder.defineMacro("__ARM_SIZEOF_MINIMAL_ENUM",
+                        Opts.ShortEnums ? "1" : "4");
+
+    if (BigEndian)
+      Builder.defineMacro("__ARM_BIG_ENDIAN");
+
+    // FIXME: the target should support NEON as an optional extension, like
+    // the OSS AArch64.
+    Builder.defineMacro("__ARM_NEON");
+    // 64-bit NEON supports half, single and double precision operations.
+    Builder.defineMacro("__ARM_NEON_FP", "7");
+
+    // FIXME: the target should support crypto as an optional extension, like
+    // the OSS AArch64
+    Builder.defineMacro("__ARM_FEATURE_CRYPTO");
+  }
+
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+    Records = BuiltinInfo;
+    NumRecords = clang::ARM64::LastTSBuiltin - Builtin::FirstTSBuiltin;
+  }
+
+  virtual bool hasFeature(StringRef Feature) const {
+    return llvm::StringSwitch<bool>(Feature)
+        .Case("arm64", true)
+        .Case("neon", true)
+        .Default(false);
+  }
+
+  virtual bool isCLZForZeroUndef() const { return false; }
+
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::AArch64ABIBuiltinVaList;
+  }
+
+  virtual void getGCCRegNames(const char *const *&Names,
+                              unsigned &NumNames) const;
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                unsigned &NumAliases) const;
+
+  virtual bool validateAsmConstraint(const char *&Name,
+                                     TargetInfo::ConstraintInfo &Info) const {
+    switch (*Name) {
+    default:
+      return false;
+    case 'w': // Floating point and SIMD registers (V0-V31)
+      Info.setAllowsRegister();
+      return true;
+    case 'z': // Zero register, wzr or xzr
+      Info.setAllowsRegister();
+      return true;
+    case 'x': // Floating point and SIMD registers (V0-V15)
+      Info.setAllowsRegister();
+      return true;
+    case 'Q': // A memory address that is a single base register.
+      Info.setAllowsMemory();
+      return true;
+    }
+    return false;
+  }
+
+  virtual bool validateConstraintModifier(StringRef Constraint,
+                                          const char Modifier,
+                                          unsigned Size) const {
+    // Strip off constraint modifiers.
+    while (Constraint[0] == '=' || Constraint[0] == '+' || Constraint[0] == '&')
+      Constraint = Constraint.substr(1);
+
+    switch (Constraint[0]) {
+    default:
+      return true;
+    case 'z':
+    case 'r': {
+      switch (Modifier) {
+      case 'x':
+      case 'w':
+        // For now assume that the person knows what they're
+        // doing with the modifier.
+        return true;
+      default:
+        // By default an 'r' constraint will be in the 'x'
+        // registers.
+        return (Size == 64);
+      }
+    }
+    }
+  }
+
+  virtual const char *getClobbers() const { return ""; }
+
+  int getEHDataRegisterNumber(unsigned RegNo) const {
+    if (RegNo == 0)
+      return 0;
+    if (RegNo == 1)
+      return 1;
+    return -1;
+  }
+};
+
+const char *const ARM64TargetInfo::GCCRegNames[] = {
+  // 32-bit Integer registers
+  "w0",  "w1",  "w2",  "w3",  "w4",  "w5",  "w6",  "w7",  "w8",  "w9",  "w10",
+  "w11", "w12", "w13", "w14", "w15", "w16", "w17", "w18", "w19", "w20", "w21",
+  "w22", "w23", "w24", "w25", "w26", "w27", "w28", "w29", "w30", "wsp",
+
+  // 64-bit Integer registers
+  "x0",  "x1",  "x2",  "x3",  "x4",  "x5",  "x6",  "x7",  "x8",  "x9",  "x10",
+  "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x18", "x19", "x20", "x21",
+  "x22", "x23", "x24", "x25", "x26", "x27", "x28", "fp",  "lr",  "sp",
+
+  // 32-bit floating point regsisters
+  "s0",  "s1",  "s2",  "s3",  "s4",  "s5",  "s6",  "s7",  "s8",  "s9",  "s10",
+  "s11", "s12", "s13", "s14", "s15", "s16", "s17", "s18", "s19", "s20", "s21",
+  "s22", "s23", "s24", "s25", "s26", "s27", "s28", "s29", "s30", "s31",
+
+  // 64-bit floating point regsisters
+  "d0",  "d1",  "d2",  "d3",  "d4",  "d5",  "d6",  "d7",  "d8",  "d9",  "d10",
+  "d11", "d12", "d13", "d14", "d15", "d16", "d17", "d18", "d19", "d20", "d21",
+  "d22", "d23", "d24", "d25", "d26", "d27", "d28", "d29", "d30", "d31",
+
+  // Vector registers
+  "v0",  "v1",  "v2",  "v3",  "v4",  "v5",  "v6",  "v7",  "v8",  "v9",  "v10",
+  "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20", "v21",
+  "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31"
+};
+
+void ARM64TargetInfo::getGCCRegNames(const char *const *&Names,
+                                     unsigned &NumNames) const {
+  Names = GCCRegNames;
+  NumNames = llvm::array_lengthof(GCCRegNames);
+}
+
+const TargetInfo::GCCRegAlias ARM64TargetInfo::GCCRegAliases[] = {
+  { { "w31" }, "wsp" },
+  { { "x29" }, "fp" },
+  { { "x30" }, "lr" },
+  { { "x31" }, "sp" },
+  // The S/D/Q and W/X registers overlap, but aren't really aliases; we
+  // don't want to substitute one of these for a different-sized one.
+};
+
+void ARM64TargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                       unsigned &NumAliases) const {
+  Aliases = GCCRegAliases;
+  NumAliases = llvm::array_lengthof(GCCRegAliases);
+}
+
+const Builtin::Info ARM64TargetInfo::BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS)                                               \
+  { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
+#include "clang/Basic/BuiltinsNEON.def"
+
+#define BUILTIN(ID, TYPE, ATTRS)                                               \
+  { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
+#include "clang/Basic/BuiltinsARM64.def"
+};
+} // end anonymous namespace.
+
+namespace {
+class DarwinARM64TargetInfo : public DarwinTargetInfo<ARM64TargetInfo> {
+public:
+  DarwinARM64TargetInfo(const llvm::Triple &Triple)
+      : DarwinTargetInfo<ARM64TargetInfo>(Triple) {
+    Int64Type = SignedLongLong;
+    WCharType = SignedInt;
+    UseSignedCharForObjCBool = false;
+
+    LongDoubleWidth = LongDoubleAlign = 64;
+    LongDoubleFormat = &llvm::APFloat::IEEEdouble;
+
+    TheCXXABI.set(TargetCXXABI::iOS64);
+  }
+
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::CharPtrBuiltinVaList;
+  }
+};
+} // end anonymous namespace
 
 namespace {
 // Hexagon abstract base class
@@ -5696,6 +5990,17 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
   switch (Triple.getArch()) {
   default:
     return NULL;
+
+  case llvm::Triple::arm64:
+    if (Triple.isOSDarwin())
+      return new DarwinARM64TargetInfo(Triple);
+
+    switch (os) {
+    case llvm::Triple::Linux:
+      return new LinuxTargetInfo<ARM64TargetInfo>(Triple);
+    default:
+      return new ARM64TargetInfo(Triple);
+    }
 
   case llvm::Triple::xcore:
     return new XCoreTargetInfo(Triple);

@@ -1,8 +1,10 @@
 // REQUIRES: aarch64-registered-target
+// REQUIRES: arm64-registered-target
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon \
 // RUN:   -ffp-contract=fast -S -O3 -o - %s | FileCheck -check-prefix=CHECK-FMA %s
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon \
 // RUN:   -S -O3 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple arm64-none-linux-gnu -S -O3 -o - %s | FileCheck %s
 
 // Test new aarch64 intrinsics and types
 
@@ -192,11 +194,11 @@ float32x4_t test_vmlsq_laneq_f32(float32x4_t a, float32x4_t b, float32x4_t v) {
 float64x2_t test_vfmaq_n_f64(float64x2_t a, float64x2_t b, float64_t c) {
   // CHECK-LABEL: test_vfmaq_n_f64:
   return vfmaq_n_f64(a, b, c);
-  // CHECK: fmla {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
+  // CHECK: fmla {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+\.2d|v[0-9]+\.d\[0\]}}
 }
 
 float64x2_t test_vfmsq_n_f64(float64x2_t a, float64x2_t b, float64_t c) {
   // CHECK-LABEL: test_vfmsq_n_f64:
   return vfmsq_n_f64(a, b, c);
-  // CHECK: fmls {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+}}.2d
+  // CHECK: fmls {{v[0-9]+}}.2d, {{v[0-9]+}}.2d, {{v[0-9]+\.2d|v[0-9]+\.d\[0\]}}
 }

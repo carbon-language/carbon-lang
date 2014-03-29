@@ -471,6 +471,7 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
 
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
+  case llvm::Triple::arm64:
   case llvm::Triple::arm:
   case llvm::Triple::armeb:
   case llvm::Triple::ppc:
@@ -844,6 +845,59 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
       CmdArgs.push_back("-backend-option");
       CmdArgs.push_back("-arm-reserve-r9");
     }
+}
+
+/// getARM64TargetCPU - Get the (LLVM) name of the ARM64 cpu we are targeting.
+static std::string getARM64TargetCPU(const ArgList &Args) {
+  // If we have -mcpu=, use that.
+  if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
+    StringRef MCPU = A->getValue();
+    // Handle -mcpu=native.
+    if (MCPU == "native")
+      return llvm::sys::getHostCPUName();
+    else
+      return MCPU;
+  }
+
+  // At some point, we may need to check -march here, but for now we only
+  // one arm64 architecture.
+
+  // Default to "cyclone" CPU.
+  return "cyclone";
+}
+
+void Clang::AddARM64TargetArgs(const ArgList &Args,
+                               ArgStringList &CmdArgs) const {
+  std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
+  llvm::Triple Triple(TripleStr);
+
+  if (!Args.hasFlag(options::OPT_mred_zone, options::OPT_mno_red_zone, true) ||
+      Args.hasArg(options::OPT_mkernel) ||
+      Args.hasArg(options::OPT_fapple_kext))
+    CmdArgs.push_back("-disable-red-zone");
+
+  if (!Args.hasFlag(options::OPT_mimplicit_float,
+                    options::OPT_mno_implicit_float, true))
+    CmdArgs.push_back("-no-implicit-float");
+
+  const char *ABIName = 0;
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
+    ABIName = A->getValue();
+  else if (Triple.isOSDarwin())
+    ABIName = "darwinpcs";
+  else
+    ABIName = "aapcs";
+
+  CmdArgs.push_back("-target-abi");
+  CmdArgs.push_back(ABIName);
+
+  CmdArgs.push_back("-target-cpu");
+  CmdArgs.push_back(Args.MakeArgString(getARM64TargetCPU(Args)));
+
+  if (Args.hasArg(options::OPT_mstrict_align)) {
+    CmdArgs.push_back("-backend-option");
+    CmdArgs.push_back("-arm64-strict-align");
+  }
 }
 
 // Get CPU and ABI names. They are not independent
@@ -2325,8 +2379,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Note that these flags are trump-cards. Regardless of the order w.r.t. the
   // PIC or PIE options above, if these show up, PIC is disabled.
   llvm::Triple Triple(TripleStr);
-  if (KernelOrKext &&
-      (!Triple.isiOS() || Triple.isOSVersionLT(6)))
+  if (KernelOrKext && (!Triple.isiOS() || Triple.isOSVersionLT(6) ||
+                       Triple.getArch() == llvm::Triple::arm64))
     PIC = PIE = false;
   if (Args.hasArg(options::OPT_static))
     PIC = PIE = false;
@@ -2647,6 +2701,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::thumb:
   case llvm::Triple::thumbeb:
     AddARMTargetArgs(Args, CmdArgs, KernelOrKext);
+    break;
+
+  case llvm::Triple::arm64:
+    AddARM64TargetArgs(Args, CmdArgs);
     break;
 
   case llvm::Triple::mips:
@@ -4876,6 +4934,7 @@ const char *arm::getLLVMArchSuffixForARM(StringRef CPU) {
     .Case("cortex-m3", "v7m")
     .Case("cortex-m4", "v7em")
     .Case("swift", "v7s")
+    .Case("cyclone", "v8")
     .Cases("cortex-a53", "cortex-a57", "v8")
     .Default("");
 }
@@ -4910,6 +4969,7 @@ llvm::Triple::ArchType darwin::getArchTypeForMachOArchName(StringRef Str) {
     .Cases("arm", "armv4t", "armv5", "armv6", "armv6m", llvm::Triple::arm)
     .Cases("armv7", "armv7em", "armv7k", "armv7m", llvm::Triple::arm)
     .Cases("armv7s", "xscale", llvm::Triple::arm)
+    .Case("arm64", llvm::Triple::arm64)
     .Case("r600", llvm::Triple::r600)
     .Case("nvptx", llvm::Triple::nvptx)
     .Case("nvptx64", llvm::Triple::nvptx64)
@@ -6711,7 +6771,8 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
   } else if (ToolChain.getArch() == llvm::Triple::x86 ||
              ToolChain.getArch() == llvm::Triple::sparc)
     return "/lib/ld-linux.so.2";
-  else if (ToolChain.getArch() == llvm::Triple::aarch64)
+  else if (ToolChain.getArch() == llvm::Triple::aarch64 ||
+           ToolChain.getArch() == llvm::Triple::arm64)
     return "/lib/ld-linux-aarch64.so.1";
   else if (ToolChain.getArch() == llvm::Triple::aarch64_be)
     return "/lib/ld-linux-aarch64_be.so.1";
@@ -6811,7 +6872,8 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-m");
   if (ToolChain.getArch() == llvm::Triple::x86)
     CmdArgs.push_back("elf_i386");
-  else if (ToolChain.getArch() == llvm::Triple::aarch64)
+  else if (ToolChain.getArch() == llvm::Triple::aarch64 ||
+           ToolChain.getArch() == llvm::Triple::arm64)
     CmdArgs.push_back("aarch64linux");
   else if (ToolChain.getArch() == llvm::Triple::aarch64_be)
     CmdArgs.push_back("aarch64_be_linux");

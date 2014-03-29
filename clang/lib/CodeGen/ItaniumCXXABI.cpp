@@ -244,6 +244,11 @@ public:
   llvm::Value *readArrayCookieImpl(CodeGenFunction &CGF, llvm::Value *allocPtr,
                                    CharUnits cookieSize) override;
 };
+
+class iOS64CXXABI : public ARMCXXABI {
+public:
+  iOS64CXXABI(CodeGen::CodeGenModule &CGM) : ARMCXXABI(CGM) {}
+};
 }
 
 CodeGen::CGCXXABI *CodeGen::CreateItaniumCXXABI(CodeGenModule &CGM) {
@@ -253,6 +258,9 @@ CodeGen::CGCXXABI *CodeGen::CreateItaniumCXXABI(CodeGenModule &CGM) {
   case TargetCXXABI::GenericARM:
   case TargetCXXABI::iOS:
     return new ARMCXXABI(CGM);
+
+  case TargetCXXABI::iOS64:
+    return new iOS64CXXABI(CGM);
 
   // Note that AArch64 uses the generic ItaniumCXXABI class since it doesn't
   // include the other 32-bit ARM oddities: constructor/destructor return values
@@ -1415,6 +1423,13 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   //         __cxa_guard_release (&obj_guard);
   //       }
   //     }
+
+    // ARM64 C++ ABI 3.2.2:
+    // This ABI instead only specifies the value bit 0 of the static guard
+    // variable; all other bits are platform defined. Bit 0 shall be 0 when the
+    // variable is not initialized and 1 when it is.
+    // FIXME: Reading one bit is no more efficient than reading one byte so
+    // the codegen is same as generic Itanium ABI.
   } else {
     // Load the first byte of the guard variable.
     llvm::LoadInst *LI = 

@@ -1,8 +1,10 @@
 // REQUIRES: aarch64-registered-target
+// REQUIRES: arm64-registered-target
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon \
 // RUN:   -ffp-contract=fast -S -O3 -o - %s | FileCheck %s
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon \
 // RUN:   -S -O3 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple arm64-none-linux-gnu -S -O3 -o - %s | FileCheck %s
 
 // Test new aarch64 intrinsics and types
 
@@ -281,7 +283,7 @@ float32_t test_vfmas_laneq_f32(float32_t a, float32_t b, float32x4_t v) {
 float64_t test_vfmsd_lane_f64(float64_t a, float64_t b, float64x1_t v) {
   // CHECK-LABEL: test_vfmsd_lane_f64
   return vfmsd_lane_f64(a, b, v, 0);
-  // CHECK: fmls {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[0]
+  // CHECK: {{fmls d[0-9]+, d[0-9]+, v[0-9]+\.d\[0\]|fmsub d[0-9]+, d[0-9]+, d[0-9]+}}
 }
 
 float32_t test_vfmss_laneq_f32(float32_t a, float32_t b, float32x4_t v) {
@@ -738,7 +740,7 @@ float32x2_t test_vmul_lane_f32(float32x2_t a, float32x2_t v) {
 float64x1_t test_vmul_lane_f64(float64x1_t a, float64x1_t v) {
   // CHECK-LABEL: test_vmul_lane_f64
   return vmul_lane_f64(a, v, 0);
-  // CHECK: fmul {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[0]
+  // CHECK: fmul {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+\.d\[0\]|d[0-9]+}}
 }
 
 
@@ -1574,109 +1576,109 @@ float64x2_t test_vmulxq_laneq_f64_0(float64x2_t a, float64x2_t v) {
 int32x4_t test_vmull_high_n_s16(int16x8_t a, int16_t b) {
   // CHECK-LABEL: test_vmull_high_n_s16
   return vmull_high_n_s16(a, b);
-  // CHECK: smull2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.h[0]
+  // CHECK: smull2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+\.h\[0\]|v[0-9]+\.8h}}
 }
 
 int64x2_t test_vmull_high_n_s32(int32x4_t a, int32_t b) {
   // CHECK-LABEL: test_vmull_high_n_s32
   return vmull_high_n_s32(a, b);
-  // CHECK: smull2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.s[0]
+  // CHECK: smull2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+\.s\[0\]|v[0-9]+\.4s}}
 }
 
 uint32x4_t test_vmull_high_n_u16(uint16x8_t a, uint16_t b) {
   // CHECK-LABEL: test_vmull_high_n_u16
   return vmull_high_n_u16(a, b);
-  // CHECK: umull2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.h[0]
+  // CHECK: umull2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+\.h\[0\]|v[0-9]+\.8h}}
 }
 
 uint64x2_t test_vmull_high_n_u32(uint32x4_t a, uint32_t b) {
   // CHECK-LABEL: test_vmull_high_n_u32
   return vmull_high_n_u32(a, b);
-  // CHECK: umull2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.s[0]
+  // CHECK: umull2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+\.s\[0\]|v[0-9]+\.4s}}
 }
 
 int32x4_t test_vqdmull_high_n_s16(int16x8_t a, int16_t b) {
   // CHECK-LABEL: test_vqdmull_high_n_s16
   return vqdmull_high_n_s16(a, b);
-  // CHECK: sqdmull2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.h[0]
+  // CHECK: sqdmull2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+\.h\[0\]|v[0-9]+\.8h}}
 }
 
 int64x2_t test_vqdmull_high_n_s32(int32x4_t a, int32_t b) {
   // CHECK-LABEL: test_vqdmull_high_n_s32
   return vqdmull_high_n_s32(a, b);
-  // CHECK: sqdmull2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.s[0]
+  // CHECK: sqdmull2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+\.s\[0\]|v[0-9]+\.4s}}
 }
 
 int32x4_t test_vmlal_high_n_s16(int32x4_t a, int16x8_t b, int16_t c) {
   // CHECK-LABEL: test_vmlal_high_n_s16
   return vmlal_high_n_s16(a, b, c);
-  // CHECK: smlal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.h[0]
+  // CHECK: smlal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+\.h\[0\]|v[0-9]+\.8h}}
 }
 
 int64x2_t test_vmlal_high_n_s32(int64x2_t a, int32x4_t b, int32_t c) {
   // CHECK-LABEL: test_vmlal_high_n_s32
   return vmlal_high_n_s32(a, b, c);
-  // CHECK: smlal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.s[0]
+  // CHECK: smlal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+\.s\[0\]|v[0-9]+\.4s}}
 }
 
 uint32x4_t test_vmlal_high_n_u16(uint32x4_t a, uint16x8_t b, uint16_t c) {
   // CHECK-LABEL: test_vmlal_high_n_u16
   return vmlal_high_n_u16(a, b, c);
-  // CHECK: umlal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.h[0]
+  // CHECK: umlal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+\.h\[0\]|v[0-9]+\.8h}}
 }
 
 uint64x2_t test_vmlal_high_n_u32(uint64x2_t a, uint32x4_t b, uint32_t c) {
   // CHECK-LABEL: test_vmlal_high_n_u32
   return vmlal_high_n_u32(a, b, c);
-  // CHECK: umlal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.s[0]
+  // CHECK: umlal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+\.s\[0\]|v[0-9]+\.4s}}
 }
 
 int32x4_t test_vqdmlal_high_n_s16(int32x4_t a, int16x8_t b, int16_t c) {
   // CHECK-LABEL: test_vqdmlal_high_n_s16
   return vqdmlal_high_n_s16(a, b, c);
-  // CHECK: sqdmlal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.h[0]
+  // CHECK: sqdmlal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+\.h\[0\]|v[0-9]+\.8h}}
 }
 
 int64x2_t test_vqdmlal_high_n_s32(int64x2_t a, int32x4_t b, int32_t c) {
   // CHECK-LABEL: test_vqdmlal_high_n_s32
   return vqdmlal_high_n_s32(a, b, c);
-  // CHECK: sqdmlal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.s[0]
+  // CHECK: sqdmlal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+\.s\[0\]|v[0-9]+\.4s}}
 }
 
 int32x4_t test_vmlsl_high_n_s16(int32x4_t a, int16x8_t b, int16_t c) {
   // CHECK-LABEL: test_vmlsl_high_n_s16
   return vmlsl_high_n_s16(a, b, c);
-  // CHECK: smlsl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.h[0]
+  // CHECK: smlsl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+\.h\[0\]|v[0-9]+\.8h}}
 }
 
 int64x2_t test_vmlsl_high_n_s32(int64x2_t a, int32x4_t b, int32_t c) {
   // CHECK-LABEL: test_vmlsl_high_n_s32
   return vmlsl_high_n_s32(a, b, c);
-  // CHECK: smlsl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.s[0]
+  // CHECK: smlsl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+\.s\[0\]|v[0-9]+\.4s}}
 }
 
 uint32x4_t test_vmlsl_high_n_u16(uint32x4_t a, uint16x8_t b, uint16_t c) {
   // CHECK-LABEL: test_vmlsl_high_n_u16
   return vmlsl_high_n_u16(a, b, c);
-  // CHECK: umlsl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.h[0]
+  // CHECK: umlsl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+\.h\[0\]|v[0-9]+\.8h}}
 }
 
 uint64x2_t test_vmlsl_high_n_u32(uint64x2_t a, uint32x4_t b, uint32_t c) {
   // CHECK-LABEL: test_vmlsl_high_n_u32
   return vmlsl_high_n_u32(a, b, c);
-  // CHECK: umlsl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.s[0]
+  // CHECK: umlsl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+\.s\[0\]|v[0-9]+\.4s}}
 }
 
 int32x4_t test_vqdmlsl_high_n_s16(int32x4_t a, int16x8_t b, int16_t c) {
   // CHECK-LABEL: test_vqdmlsl_high_n_s16
   return vqdmlsl_high_n_s16(a, b, c);
-  // CHECK: sqdmlsl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+}}.h[0]
+  // CHECK: sqdmlsl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, {{v[0-9]+\.h\[0\]|v[0-9]+\.8h}}
 }
 
 int64x2_t test_vqdmlsl_high_n_s32(int64x2_t a, int32x4_t b, int32_t c) {
   // CHECK-LABEL: test_vqdmlsl_high_n_s32
   return vqdmlsl_high_n_s32(a, b, c);
-  // CHECK: sqdmlsl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+}}.s[0]
+  // CHECK: sqdmlsl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, {{v[0-9]+\.s\[0\]|v[0-9]+\.4s}}
 }
 
 float32x2_t test_vmul_n_f32(float32x2_t a, float32_t b) {

@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple armv7-apple-ios -x c++ -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple arm64-apple-ios -x c++ -emit-llvm -o - %s | FileCheck %s
 
 // According to the Itanium ABI (3.1.1), types with non-trivial copy
 // constructors passed by value should be passed indirectly, with the caller
