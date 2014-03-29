@@ -1,8 +1,7 @@
 # Check handling of global/local GOT16 relocations.
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t1 %s
 # RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
-# RUN:     --output-filetype=yaml %t1 | FileCheck -check-prefix YAML %s
-
+# RUN:     --output-filetype=yaml %S/Inputs/got16.o \
+# RUN:     | FileCheck -check-prefix YAML %s
 # RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t2 %t1
 # RUN: llvm-objdump -t -disassemble %t2 | FileCheck -check-prefix RAW %s
 
@@ -117,34 +116,3 @@
 # RAW: 00012200 l     .data  00000005 str2
 # RAW: 0000012c g   F .text  0000001c glob
 # RAW: 00012205 g     .data  00000004 hidden
-
-    .global glob
-    .ent    glob
-glob:
-    lw      $4,%got(str1)($28)       # G(str1)
-    addiu   $4,$4,%lo(str1)          # str1
-    lw      $4,%got(str2)($28)       # G(str2)
-    addiu   $4,$4,%lo(str2)          # str2
-    lw      $4,%got(hidden)($28)     # G(hidden)
-    lw      $4,%call16(glob)($28)    # G(glob)
-    lw      $4,%call16(extern)($28)  # G(extern)
-    .end    glob
-
-    .data
-    .type   str1, %object
-    .size   str1, 0x10200
-str1:
-    .ascii  "str1\000"
-    .space  0x101fb
-
-    .type str2, @object
-    .size str2, 5
-str2:
-    .ascii  "str2\000"
-
-    .globl  hidden
-    .hidden hidden
-    .type   hidden,%object
-    .size   hidden,4
-hidden:
-    .word   0

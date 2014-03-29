@@ -1,14 +1,13 @@
 # Check sorting of .dynsym content accordingly to .got section.
 
 # Build shared library
-# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic -o=%t-obj %s
-# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t-so %t-obj
+# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t-so \
+# RUN: %S/Inputs/dynlib-dynsym.o
 # RUN: llvm-readobj -dyn-symbols %t-so | FileCheck -check-prefix=CHECK-DYN %s
 
 # Build shared library (yaml format)
-# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic -o=%t-obj %s
 # RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
-# RUN:     --output-filetype=yaml -o %t-yaml %t-obj
+# RUN:     --output-filetype=yaml -o %t-yaml %S/Inputs/dynlib-dynsym.o
 # RUN: FileCheck -check-prefix=CHECK-GOT %s < %t-yaml
 
 # CHECK-DYN: Format: ELF32-mips
@@ -130,29 +129,3 @@
 # CHECK-GOT:       - kind:            LLD_R_MIPS_GLOBAL_GOT
 # CHECK-GOT:         offset:          0
 # CHECK-GOT:         target:          ext2
-
-    .abicalls
-    .global foo
-    .ent    foo
-foo:
-    lw      $gp, %got($.str1)($t0)
-    addiu   $4, $gp, %lo($.str1)
-    lw      $4, %got($.str2)($t0)
-    addiu   $4, $4, %lo($.str2)
-    lw      $25, %call16(foo)($t0)
-    lw      $25, %call16(ext1)($t0)
-    .end    foo
-
-    .global bar
-    .ent    bar
-bar:
-    lw      $25, %call16(ext2)($t0)
-    .end    bar
-
-    .section  .rodata.str1
-$.str1:
-    .asciz  "str1"
-
-    .section  .rodata.str2
-$.str2:
-    .asciz  "str2"
