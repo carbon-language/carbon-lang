@@ -744,6 +744,8 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     // copies are generated, they are close enough to some use that the
     // lower-latency form is preferable.
     Opc = PPC::XXLOR;
+  else if (PPC::VSFRCRegClass.contains(DestReg, SrcReg))
+    Opc = PPC::XXLORf;
   else if (PPC::CRBITRCRegClass.contains(DestReg, SrcReg))
     Opc = PPC::CROR;
   else
@@ -811,6 +813,12 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
     NonRI = true;
   } else if (PPC::VSRCRegClass.hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STXVD2X))
+                                       .addReg(SrcReg,
+                                               getKillRegState(isKill)),
+                                       FrameIdx));
+    NonRI = true;
+  } else if (PPC::VSFRCRegClass.hasSubClassEq(RC)) {
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STXSDX))
                                        .addReg(SrcReg,
                                                getKillRegState(isKill)),
                                        FrameIdx));
@@ -904,6 +912,10 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
     NonRI = true;
   } else if (PPC::VSRCRegClass.hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LXVD2X), DestReg),
+                                       FrameIdx));
+    NonRI = true;
+  } else if (PPC::VSFRCRegClass.hasSubClassEq(RC)) {
+    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LXSDX), DestReg),
                                        FrameIdx));
     NonRI = true;
   } else if (PPC::VRSAVERCRegClass.hasSubClassEq(RC)) {
@@ -1638,7 +1650,7 @@ protected:
 
         // The addend and this instruction must be in the same block.
 
-        if (AddendMI->getParent() != MI->getParent())
+        if (!AddendMI || AddendMI->getParent() != MI->getParent())
           continue;
 
         // The addend must be a full copy within the same register class.
@@ -1646,9 +1658,18 @@ protected:
         if (!AddendMI->isFullCopy())
           continue;
 
-        if (MRI.getRegClass(AddendMI->getOperand(0).getReg()) !=
-            MRI.getRegClass(AddendMI->getOperand(1).getReg()))
-          continue;
+        unsigned AddendSrcReg = AddendMI->getOperand(1).getReg();
+        if (TargetRegisterInfo::isVirtualRegister(AddendSrcReg)) {
+          if (MRI.getRegClass(AddendMI->getOperand(0).getReg()) !=
+              MRI.getRegClass(AddendSrcReg))
+            continue;
+        } else {
+          // If AddendSrcReg is a physical register, make sure the destination
+          // register class contains it.
+          if (!MRI.getRegClass(AddendMI->getOperand(0).getReg())
+                ->contains(AddendSrcReg))
+            continue;
+        }
 
         // In theory, there could be other uses of the addend copy before this
         // fma.  We could deal with this, but that would require additional
@@ -1678,8 +1699,8 @@ protected:
           OtherProdOp  = 2;
         }
 
-	// If there are no killed product operands, then this transformation is
-	// likely not profitable.
+        // If there are no killed product operands, then this transformation is
+        // likely not profitable.
         if (!KilledProdOp)
           continue;
 

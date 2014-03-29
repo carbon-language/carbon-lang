@@ -18,6 +18,13 @@ def vsrc : RegisterOperand<VSRC> {
   let ParserMatchClass = PPCRegVSRCAsmOperand;
 }
 
+def PPCRegVSFRCAsmOperand : AsmOperandClass {
+  let Name = "RegVSFRC"; let PredicateMethod = "isVSRegNumber";
+}
+def vsfrc : RegisterOperand<VSFRC> {
+  let ParserMatchClass = PPCRegVSFRCAsmOperand;
+}
+
 multiclass XX3Form_Rcr<bits<6> opcode, bits<7> xo, dag OOL, dag IOL,
                     string asmbase, string asmstr, InstrItinClass itin,
                     list<dag> pattern> {
@@ -41,7 +48,7 @@ let Uses = [RM] in {
   // Load indexed instructions
   let mayLoad = 1, canFoldAsLoad = 1 in {
     def LXSDX : XForm_1<31, 588,
-                        (outs vsrc:$XT), (ins memrr:$src),
+                        (outs vsfrc:$XT), (ins memrr:$src),
                         "lxsdx $XT, $src", IIC_LdStLFD,
                         [(set f64:$XT, (load xoaddr:$src))]>;
 
@@ -62,7 +69,7 @@ let Uses = [RM] in {
   // Store indexed instructions
   let mayStore = 1 in {
     def STXSDX : XX1Form<31, 716,
-                        (outs), (ins vsrc:$XT, memrr:$dst),
+                        (outs), (ins vsfrc:$XT, memrr:$dst),
                         "stxsdx $XT, $dst", IIC_LdStSTFD,
                         [(store f64:$XT, xoaddr:$dst)]>;
 
@@ -79,11 +86,11 @@ let Uses = [RM] in {
   // Add/Mul Instructions
   let isCommutable = 1 in {
     def XSADDDP : XX3Form<60, 32,
-                          (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
+                          (outs vsfrc:$XT), (ins vsfrc:$XA, vsfrc:$XB),
                           "xsadddp $XT, $XA, $XB", IIC_VecFP,
                           [(set f64:$XT, (fadd f64:$XA, f64:$XB))]>;
     def XSMULDP : XX3Form<60, 48,
-                          (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
+                          (outs vsfrc:$XT), (ins vsfrc:$XA, vsfrc:$XB),
                           "xsmuldp $XT, $XA, $XB", IIC_VecFP,
                           [(set f64:$XT, (fmul f64:$XA, f64:$XB))]>;
 
@@ -110,7 +117,7 @@ let Uses = [RM] in {
 
   // Subtract Instructions
   def XSSUBDP : XX3Form<60, 40,
-                        (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
+                        (outs vsfrc:$XT), (ins vsfrc:$XA, vsfrc:$XB),
                         "xssubdp $XT, $XA, $XB", IIC_VecFP,
                         [(set f64:$XT, (fsub f64:$XA, f64:$XB))]>;
 
@@ -127,14 +134,14 @@ let Uses = [RM] in {
   let BaseName = "XSMADDADP" in {
   let isCommutable = 1 in
   def XSMADDADP : XX3Form<60, 33,
-                          (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
+                          (outs vsfrc:$XT), (ins vsfrc:$XTi, vsfrc:$XA, vsfrc:$XB),
                           "xsmaddadp $XT, $XA, $XB", IIC_VecFP,
                           [(set f64:$XT, (fma f64:$XA, f64:$XB, f64:$XTi))]>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
                           AltVSXFMARel;
   let IsVSXFMAAlt = 1 in
   def XSMADDMDP : XX3Form<60, 41,
-                          (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
+                          (outs vsfrc:$XT), (ins vsfrc:$XTi, vsfrc:$XA, vsfrc:$XB),
                           "xsmaddmdp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
                           AltVSXFMARel;
@@ -143,14 +150,14 @@ let Uses = [RM] in {
   let BaseName = "XSMSUBADP" in {
   let isCommutable = 1 in
   def XSMSUBADP : XX3Form<60, 49,
-                          (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
+                          (outs vsfrc:$XT), (ins vsfrc:$XTi, vsfrc:$XA, vsfrc:$XB),
                           "xsmsubadp $XT, $XA, $XB", IIC_VecFP,
                           [(set f64:$XT, (fma f64:$XA, f64:$XB, (fneg f64:$XTi)))]>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
                           AltVSXFMARel;
   let IsVSXFMAAlt = 1 in
   def XSMSUBMDP : XX3Form<60, 57,
-                          (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
+                          (outs vsfrc:$XT), (ins vsfrc:$XTi, vsfrc:$XA, vsfrc:$XB),
                           "xsmsubmdp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
                           AltVSXFMARel;
@@ -159,14 +166,14 @@ let Uses = [RM] in {
   let BaseName = "XSNMADDADP" in {
   let isCommutable = 1 in
   def XSNMADDADP : XX3Form<60, 161,
-                          (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
+                          (outs vsfrc:$XT), (ins vsfrc:$XTi, vsfrc:$XA, vsfrc:$XB),
                           "xsnmaddadp $XT, $XA, $XB", IIC_VecFP,
                           [(set f64:$XT, (fneg (fma f64:$XA, f64:$XB, f64:$XTi)))]>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
                           AltVSXFMARel;
   let IsVSXFMAAlt = 1 in
   def XSNMADDMDP : XX3Form<60, 169,
-                          (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
+                          (outs vsfrc:$XT), (ins vsfrc:$XTi, vsfrc:$XA, vsfrc:$XB),
                           "xsnmaddmdp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
                           AltVSXFMARel;
@@ -175,14 +182,14 @@ let Uses = [RM] in {
   let BaseName = "XSNMSUBADP" in {
   let isCommutable = 1 in
   def XSNMSUBADP : XX3Form<60, 177,
-                          (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
+                          (outs vsfrc:$XT), (ins vsfrc:$XTi, vsfrc:$XA, vsfrc:$XB),
                           "xsnmsubadp $XT, $XA, $XB", IIC_VecFP,
                           [(set f64:$XT, (fneg (fma f64:$XA, f64:$XB, (fneg f64:$XTi))))]>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
                           AltVSXFMARel;
   let IsVSXFMAAlt = 1 in
   def XSNMSUBMDP : XX3Form<60, 185,
-                          (outs vsrc:$XT), (ins vsrc:$XTi, vsrc:$XA, vsrc:$XB),
+                          (outs vsfrc:$XT), (ins vsfrc:$XTi, vsfrc:$XA, vsfrc:$XB),
                           "xsnmsubmdp $XT, $XA, $XB", IIC_VecFP, []>,
                           RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
                           AltVSXFMARel;
@@ -318,28 +325,28 @@ let Uses = [RM] in {
 
   // Division Instructions
   def XSDIVDP : XX3Form<60, 56,
-                        (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
+                        (outs vsfrc:$XT), (ins vsfrc:$XA, vsfrc:$XB),
                         "xsdivdp $XT, $XA, $XB", IIC_VecFP,
                         [(set f64:$XT, (fdiv f64:$XA, f64:$XB))]>;
   def XSSQRTDP : XX2Form<60, 75,
-                        (outs vsrc:$XT), (ins vsrc:$XB),
+                        (outs vsfrc:$XT), (ins vsfrc:$XB),
                         "xssqrtdp $XT, $XB", IIC_VecFP,
                         [(set f64:$XT, (fsqrt f64:$XB))]>;
 
   def XSREDP : XX2Form<60, 90,
-                        (outs vsrc:$XT), (ins vsrc:$XB),
+                        (outs vsfrc:$XT), (ins vsfrc:$XB),
                         "xsredp $XT, $XB", IIC_VecFP,
                         [(set f64:$XT, (PPCfre f64:$XB))]>;
   def XSRSQRTEDP : XX2Form<60, 74,
-                           (outs vsrc:$XT), (ins vsrc:$XB),
+                           (outs vsfrc:$XT), (ins vsfrc:$XB),
                            "xsrsqrtedp $XT, $XB", IIC_VecFP,
                            [(set f64:$XT, (PPCfrsqrte f64:$XB))]>;
 
   def XSTDIVDP : XX3Form_1<60, 61,
-                         (outs crrc:$crD), (ins vsrc:$XA, vsrc:$XB),
+                         (outs crrc:$crD), (ins vsfrc:$XA, vsfrc:$XB),
                          "xstdivdp $crD, $XA, $XB", IIC_VecFP, []>;
   def XSTSQRTDP : XX2Form_1<60, 106,
-                          (outs crrc:$crD), (ins vsrc:$XB),
+                          (outs crrc:$crD), (ins vsfrc:$XB),
                           "xstsqrtdp $crD, $XB", IIC_VecFP, []>;
 
   def XVDIVDP : XX3Form<60, 120,
@@ -394,10 +401,10 @@ let Uses = [RM] in {
 
   // Compare Instructions
   def XSCMPODP : XX3Form_1<60, 43,
-                           (outs crrc:$crD), (ins vsrc:$XA, vsrc:$XB),
+                           (outs crrc:$crD), (ins vsfrc:$XA, vsfrc:$XB),
                            "xscmpodp $crD, $XA, $XB", IIC_VecFPCompare, []>;
   def XSCMPUDP : XX3Form_1<60, 35,
-                           (outs crrc:$crD), (ins vsrc:$XA, vsrc:$XB),
+                           (outs crrc:$crD), (ins vsfrc:$XA, vsfrc:$XB),
                            "xscmpudp $crD, $XA, $XB", IIC_VecFPCompare, []>;
 
   defm XVCMPEQDP : XX3Form_Rcr<60, 99,
@@ -421,19 +428,19 @@ let Uses = [RM] in {
 
   // Move Instructions
   def XSABSDP : XX2Form<60, 345,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xsabsdp $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (fabs f64:$XB))]>;
   def XSNABSDP : XX2Form<60, 361,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xsnabsdp $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (fneg (fabs f64:$XB)))]>;
   def XSNEGDP : XX2Form<60, 377,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xsnegdp $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (fneg f64:$XB))]>;
   def XSCPSGNDP : XX3Form<60, 176,
-                      (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XA, vsfrc:$XB),
                       "xscpsgndp $XT, $XA, $XB", IIC_VecFP,
                       [(set f64:$XT, (fcopysign f64:$XB, f64:$XA))]>;
 
@@ -476,33 +483,33 @@ let Uses = [RM] in {
 
   // Conversion Instructions
   def XSCVDPSP : XX2Form<60, 265,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xscvdpsp $XT, $XB", IIC_VecFP, []>;
   def XSCVDPSXDS : XX2Form<60, 344,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xscvdpsxds $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (PPCfctidz f64:$XB))]>;
   def XSCVDPSXWS : XX2Form<60, 88,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xscvdpsxws $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (PPCfctiwz f64:$XB))]>;
   def XSCVDPUXDS : XX2Form<60, 328,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xscvdpuxds $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (PPCfctiduz f64:$XB))]>;
   def XSCVDPUXWS : XX2Form<60, 72,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xscvdpuxws $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (PPCfctiwuz f64:$XB))]>;
   def XSCVSPDP : XX2Form<60, 329,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xscvspdp $XT, $XB", IIC_VecFP, []>;
   def XSCVSXDDP : XX2Form<60, 376,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xscvsxddp $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (PPCfcfid f64:$XB))]>;
   def XSCVUXDDP : XX2Form<60, 360,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xscvuxddp $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (PPCfcfidu f64:$XB))]>;
 
@@ -568,23 +575,23 @@ let Uses = [RM] in {
 
   // Rounding Instructions
   def XSRDPI : XX2Form<60, 73,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xsrdpi $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (frnd f64:$XB))]>;
   def XSRDPIC : XX2Form<60, 107,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xsrdpic $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (fnearbyint f64:$XB))]>;
   def XSRDPIM : XX2Form<60, 121,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xsrdpim $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (ffloor f64:$XB))]>;
   def XSRDPIP : XX2Form<60, 105,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xsrdpip $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (fceil f64:$XB))]>;
   def XSRDPIZ : XX2Form<60, 89,
-                      (outs vsrc:$XT), (ins vsrc:$XB),
+                      (outs vsfrc:$XT), (ins vsfrc:$XB),
                       "xsrdpiz $XT, $XB", IIC_VecFP,
                       [(set f64:$XT, (ftrunc f64:$XB))]>;
 
@@ -633,10 +640,10 @@ let Uses = [RM] in {
   // Max/Min Instructions
   let isCommutable = 1 in {
   def XSMAXDP : XX3Form<60, 160,
-                        (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
+                        (outs vsfrc:$XT), (ins vsfrc:$XA, vsfrc:$XB),
                         "xsmaxdp $XT, $XA, $XB", IIC_VecFP, []>;
   def XSMINDP : XX3Form<60, 168,
-                        (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
+                        (outs vsfrc:$XT), (ins vsfrc:$XA, vsfrc:$XB),
                         "xsmindp $XT, $XA, $XB", IIC_VecFP, []>;
 
   def XVMAXDP : XX3Form<60, 224,
@@ -676,6 +683,10 @@ let Uses = [RM] in {
                       (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                       "xxlor $XT, $XA, $XB", IIC_VecGeneral,
                       [(set v4i32:$XT, (or v4i32:$XA, v4i32:$XB))]>;
+  let isCodeGenOnly = 1 in
+  def XXLORf: XX3Form<60, 146,
+                      (outs vsfrc:$XT), (ins vsfrc:$XA, vsfrc:$XB),
+                      "xxlor $XT, $XA, $XB", IIC_VecGeneral, []>;
   def XXLXOR : XX3Form<60, 154,
                        (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
                        "xxlxor $XT, $XA, $XB", IIC_VecGeneral,
@@ -724,12 +735,12 @@ def : InstAlias<"xxswapd $XT, $XB",
 
 let AddedComplexity = 400 in { // Prefer VSX patterns over non-VSX patterns.
 def : Pat<(v2f64 (scalar_to_vector f64:$A)),
-          (v2f64 (COPY_TO_REGCLASS $A, VSRC))>;
+          (v2f64 (SUBREG_TO_REG (i64 1), $A, sub_64))>;
 
 def : Pat<(f64 (vector_extract v2f64:$S, 0)),
-          (f64 (COPY_TO_REGCLASS $S, VSRC))>;
+          (f64 (EXTRACT_SUBREG $S, sub_64))>;
 def : Pat<(f64 (vector_extract v2f64:$S, 1)),
-          (f64 (COPY_TO_REGCLASS (XXPERMDI $S, $S, 2), VSRC))>;
+          (f64 (EXTRACT_SUBREG (XXPERMDI $S, $S, 2), sub_64))>;
 
 // Additional fnmsub patterns: -a*c + b == -(a*c - b)
 def : Pat<(fma (fneg f64:$A), f64:$C, f64:$B),

@@ -229,14 +229,31 @@ PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   case PPC::F8RCRegClassID:
   case PPC::F4RCRegClassID:
   case PPC::VRRCRegClassID:
+  case PPC::VFRCRegClassID:
   case PPC::VSLRCRegClassID:
   case PPC::VSHRCRegClassID:
     return 32 - DefaultSafety;
   case PPC::VSRCRegClassID:
+  case PPC::VSFRCRegClassID:
     return 64 - DefaultSafety;
   case PPC::CRRCRegClassID:
     return 8 - DefaultSafety;
   }
+}
+
+const TargetRegisterClass*
+PPCRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC)const {
+  if (Subtarget.hasVSX()) {
+    // With VSX, we can inflate various sub-register classes to the full VSX
+    // register set.
+
+    if (RC == &PPC::F8RCRegClass)
+      return &PPC::VSFRCRegClass;
+    else if (RC == &PPC::VRRCRegClass)
+      return &PPC::VSRCRegClass;
+  }
+
+  return TargetRegisterInfo::getLargestLegalSuperClass(RC);
 }
 
 //===----------------------------------------------------------------------===//

@@ -573,7 +573,7 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
 
       setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v2f64, Legal);
 
-      addRegisterClass(MVT::f64, &PPC::VSRCRegClass);
+      addRegisterClass(MVT::f64, &PPC::VSFRCRegClass);
 
       addRegisterClass(MVT::v4f32, &PPC::VSRCRegClass);
       addRegisterClass(MVT::v2f64, &PPC::VSRCRegClass);
@@ -2156,7 +2156,10 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
           RC = &PPC::F4RCRegClass;
           break;
         case MVT::f64:
-          RC = &PPC::F8RCRegClass;
+          if (PPCSubTarget.hasVSX())
+            RC = &PPC::VSFRCRegClass;
+          else
+            RC = &PPC::F8RCRegClass;
           break;
         case MVT::v16i8:
         case MVT::v8i16:
@@ -2559,7 +2562,9 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
         if (ObjectVT == MVT::f32)
           VReg = MF.addLiveIn(FPR[FPR_idx], &PPC::F4RCRegClass);
         else
-          VReg = MF.addLiveIn(FPR[FPR_idx], &PPC::F8RCRegClass);
+          VReg = MF.addLiveIn(FPR[FPR_idx], PPCSubTarget.hasVSX() ?
+                                            &PPC::VSFRCRegClass :
+                                            &PPC::F8RCRegClass);
 
         ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, ObjectVT);
         ++FPR_idx;
@@ -8506,8 +8511,10 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
   } else if (Constraint == "wc") { // an individual CR bit.
     return std::make_pair(0U, &PPC::CRBITRCRegClass);
   } else if (Constraint == "wa" || Constraint == "wd" ||
-             Constraint == "wf" || Constraint == "ws") {
+             Constraint == "wf") {
     return std::make_pair(0U, &PPC::VSRCRegClass);
+  } else if (Constraint == "ws") {
+    return std::make_pair(0U, &PPC::VSFRCRegClass);
   }
 
   std::pair<unsigned, const TargetRegisterClass*> R =

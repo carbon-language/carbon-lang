@@ -112,6 +112,26 @@ static const unsigned VSRegs[] = {
   PPC::VSH28, PPC::VSH29, PPC::VSH30, PPC::VSH31
 };
 
+static const unsigned VSFRegs[] = {
+  PPC::F0, PPC::F1, PPC::F2, PPC::F3,
+  PPC::F4, PPC::F5, PPC::F6, PPC::F7,
+  PPC::F8, PPC::F9, PPC::F10, PPC::F11,
+  PPC::F12, PPC::F13, PPC::F14, PPC::F15,
+  PPC::F16, PPC::F17, PPC::F18, PPC::F19,
+  PPC::F20, PPC::F21, PPC::F22, PPC::F23,
+  PPC::F24, PPC::F25, PPC::F26, PPC::F27,
+  PPC::F28, PPC::F29, PPC::F30, PPC::F31,
+
+  PPC::VF0, PPC::VF1, PPC::VF2, PPC::VF3,
+  PPC::VF4, PPC::VF5, PPC::VF6, PPC::VF7,
+  PPC::VF8, PPC::VF9, PPC::VF10, PPC::VF11,
+  PPC::VF12, PPC::VF13, PPC::VF14, PPC::VF15,
+  PPC::VF16, PPC::VF17, PPC::VF18, PPC::VF19,
+  PPC::VF20, PPC::VF21, PPC::VF22, PPC::VF23,
+  PPC::VF24, PPC::VF25, PPC::VF26, PPC::VF27,
+  PPC::VF28, PPC::VF29, PPC::VF30, PPC::VF31
+};
+
 static const unsigned GPRegs[] = {
   PPC::R0, PPC::R1, PPC::R2, PPC::R3,
   PPC::R4, PPC::R5, PPC::R6, PPC::R7,
@@ -187,6 +207,12 @@ static DecodeStatus DecodeVSRCRegisterClass(MCInst &Inst, uint64_t RegNo,
                                             uint64_t Address,
                                             const void *Decoder) {
   return decodeRegisterClass(Inst, RegNo, VSRegs);
+}
+
+static DecodeStatus DecodeVSFRCRegisterClass(MCInst &Inst, uint64_t RegNo,
+                                            uint64_t Address,
+                                            const void *Decoder) {
+  return decodeRegisterClass(Inst, RegNo, VSFRegs);
 }
 
 static DecodeStatus DecodeGPRCRegisterClass(MCInst &Inst, uint64_t RegNo,
