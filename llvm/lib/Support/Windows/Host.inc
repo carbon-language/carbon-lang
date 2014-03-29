@@ -18,5 +18,5 @@
 using namespace llvm;
 
 std::string sys::getDefaultTargetTriple() {
-  return LLVM_DEFAULT_TARGET_TRIPLE;
+  return Triple::normalize(LLVM_DEFAULT_TARGET_TRIPLE);
 }

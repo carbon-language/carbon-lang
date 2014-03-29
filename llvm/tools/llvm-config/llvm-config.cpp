@@ -20,6 +20,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
 #include "llvm/Config/llvm-config.h"
@@ -311,7 +312,7 @@ int main(int argc, char **argv) {
       } else if (Arg == "--targets-built") {
         OS << LLVM_TARGETS_BUILT << '\n';
       } else if (Arg == "--host-target") {
-        OS << LLVM_DEFAULT_TARGET_TRIPLE << '\n';
+        OS << Triple::normalize(LLVM_DEFAULT_TARGET_TRIPLE) << '\n';
       } else if (Arg == "--build-mode") {
         OS << build_mode << '\n';
       } else if (Arg == "--assertion-mode") {
