@@ -16,6 +16,7 @@
 #include "MCTargetDesc/ARM64AddressingModes.h"
 #include "MCTargetDesc/ARM64BaseInfo.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -1329,14 +1330,13 @@ void ARM64InstPrinter::printImplicitlyTypedVectorList(const MCInst *MI,
 template <unsigned NumLanes, char LaneKind>
 void ARM64InstPrinter::printTypedVectorList(const MCInst *MI, unsigned OpNum,
                                             raw_ostream &O) {
-  Twine Suffix;
+  std::string Suffix(".");
   if (NumLanes)
-    Suffix = Twine('.') + Twine(NumLanes) + Twine(LaneKind);
+    Suffix += itostr(NumLanes) + LaneKind;
   else
-    Suffix = Twine('.') + Twine(LaneKind);
+    Suffix += LaneKind;
 
-  SmallString<8> Buf;
-  printVectorList(MI, OpNum, O, Suffix.toStringRef(Buf));
+  printVectorList(MI, OpNum, O, Suffix);
 }
 
 void ARM64InstPrinter::printVectorIndex(const MCInst *MI, unsigned OpNum,
