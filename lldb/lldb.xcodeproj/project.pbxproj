@@ -636,6 +636,10 @@
 		94EA1D5C15E6C9B400D4171A /* PythonDataObjects.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94EA1D5B15E6C9B400D4171A /* PythonDataObjects.cpp */; };
 		94EA27CE17DE91750070F505 /* LibCxxUnorderedMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94EA27CD17DE91750070F505 /* LibCxxUnorderedMap.cpp */; };
 		94FA3DE01405D50400833217 /* ValueObjectConstResultChild.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94FA3DDF1405D50300833217 /* ValueObjectConstResultChild.cpp */; };
+		966C6B7918E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
+		966C6B7A18E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
+		966C6B7B18E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
+		966C6B7C18E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
 		9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A22A15D135E30370024DDC3 /* EmulateInstructionARM.cpp */; };
@@ -1831,6 +1835,7 @@
 		961FABB81235DE1600F93A47 /* FuncUnwinders.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FuncUnwinders.cpp; path = source/Symbol/FuncUnwinders.cpp; sourceTree = "<group>"; };
 		961FABB91235DE1600F93A47 /* UnwindPlan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindPlan.cpp; path = source/Symbol/UnwindPlan.cpp; sourceTree = "<group>"; };
 		961FABBA1235DE1600F93A47 /* UnwindTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindTable.cpp; path = source/Symbol/UnwindTable.cpp; sourceTree = "<group>"; };
+		966C6B7818E6A56A0093F5EC /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = /usr/lib/libz.dylib; sourceTree = "<absolute>"; };
 		9A19A6A51163BB7E00E0D453 /* SBValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBValue.h; path = include/lldb/API/SBValue.h; sourceTree = "<group>"; };
 		9A19A6AD1163BB9800E0D453 /* SBValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBValue.cpp; path = source/API/SBValue.cpp; sourceTree = "<group>"; };
 		9A22A15D135E30370024DDC3 /* EmulateInstructionARM.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EmulateInstructionARM.cpp; sourceTree = "<group>"; };
@@ -1988,6 +1993,7 @@
 				26CEB5EF18761CB2008F575A /* libedit.dylib in Frameworks */,
 				26D55235159A7DB100708D8D /* libxml2.dylib in Frameworks */,
 				268901161335BBC300698AC0 /* liblldb-core.a in Frameworks */,
+				966C6B7A18E6A56A0093F5EC /* libz.dylib in Frameworks */,
 				2668022F115FD19D008E1FE4 /* CoreFoundation.framework in Frameworks */,
 				26680233115FD1A7008E1FE4 /* libobjc.dylib in Frameworks */,
 				4CF3D80C15AF4DC800845BF3 /* Security.framework in Frameworks */,
@@ -2010,6 +2016,7 @@
 				26CFDCA71861646C000E63E5 /* libedit.dylib in Frameworks */,
 				26D6F3FA183E888800194858 /* liblldb-core.a in Frameworks */,
 				2606EDDE184E68940034641B /* Foundation.framework in Frameworks */,
+				966C6B7B18E6A56A0093F5EC /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2018,6 +2025,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				260157C61885F51C00F875CF /* libpanel.dylib in Frameworks */,
+				966C6B7C18E6A56A0093F5EC /* libz.dylib in Frameworks */,
 				26780C611867C33D00234593 /* libncurses.dylib in Frameworks */,
 				26CFDCA818616473000E63E5 /* libedit.dylib in Frameworks */,
 				2606EDDF184E68A10034641B /* liblldb-core.a in Frameworks */,
@@ -2030,6 +2038,7 @@
 			files = (
 				26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */,
 				2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */,
+				966C6B7918E6A56A0093F5EC /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3634,6 +3643,7 @@
 				26F5C32410F3DF23009D5894 /* libpython.dylib */,
 				26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */,
 				26D55234159A7DB100708D8D /* libxml2.dylib */,
+				966C6B7818E6A56A0093F5EC /* libz.dylib */,
 				4C74CB6212288704006A8171 /* Carbon.framework */,
 				EDB919B414F6F10D008FF64B /* Security.framework */,
 			);
