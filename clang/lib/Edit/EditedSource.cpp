@@ -72,13 +72,11 @@ bool EditedSource::commitInsert(SourceLocation OrigLoc,
     return true;
   }
 
-  Twine concat;
   if (beforePreviousInsertions)
-    concat = Twine(text) + FA.Text;
+    FA.Text = copyString(Twine(text) + FA.Text);
   else
-    concat = Twine(FA.Text) +  text;
+    FA.Text = copyString(Twine(FA.Text) + text);
 
-  FA.Text = copyString(concat);
   return true;
 }
 
