@@ -700,7 +700,7 @@ const FileEntry *HeaderSearch::LookupFile(
     // Otherwise, this is the first query, or the previous query didn't match
     // our search start.  We will fill in our found location below, so prime the
     // start point value.
-    CacheLookup.StartIdx = i+1;
+    CacheLookup.reset(/*StartIdx=*/i+1);
   }
 
   SmallString<64> MappedName;

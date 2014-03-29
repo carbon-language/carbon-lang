@@ -203,6 +203,11 @@ class HeaderSearch {
 
     /// Default constructor -- Initialize all members with zero.
     LookupFileCacheInfo(): StartIdx(0), HitIdx(0), MappedName(nullptr) {}
+
+    void reset(unsigned StartIdx) {
+      this->StartIdx = StartIdx;
+      this->MappedName = nullptr;
+    }
   };
   llvm::StringMap<LookupFileCacheInfo, llvm::BumpPtrAllocator> LookupFileCache;
 
