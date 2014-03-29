@@ -2116,6 +2116,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
   CmdArgs.push_back(Args.MakeArgString(TripleStr));
 
+  // Push all default warning arguments that are specific to
+  // the given target.  These come before user provided warning options
+  // are provided.
+  getToolChain().addClangWarningOptions(CmdArgs);
+
   // Select the appropriate action.
   RewriteKind rewriteKind = RK_None;
   

@@ -488,6 +488,8 @@ public:
   AddCCKextLibArgs(const llvm::opt::ArgList &Args,
                    llvm::opt::ArgStringList &CmdArgs) const override;
 
+  virtual void addClangWarningOptions(llvm::opt::ArgStringList &CC1Args) const;
+
   void
   AddLinkARCArgs(const llvm::opt::ArgList &Args,
                  llvm::opt::ArgStringList &CmdArgs) const override;

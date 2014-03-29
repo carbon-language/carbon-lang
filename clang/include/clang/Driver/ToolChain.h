@@ -283,6 +283,9 @@ public:
   virtual void addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
                                      llvm::opt::ArgStringList &CC1Args) const;
 
+  /// \brief Add warning options that need to be passed to cc1 for this target.
+  virtual void addClangWarningOptions(llvm::opt::ArgStringList &CC1Args) const;
+
   // GetRuntimeLibType - Determine the runtime library type to use with the
   // given compilation arguments.
   virtual RuntimeLibType
