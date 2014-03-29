@@ -294,3 +294,36 @@ void test_unreachable_forrange_increment() {
   }
 }
 
+void calledFun() {}
+
+// Test "silencing" with parentheses.
+void test_with_paren_silencing(int x) {
+  if (false) calledFun(); // expected-warning {{will never be executed}} expected-note {{silence by adding parentheses to mark code as explicitly dead}}
+  if ((false)) calledFun(); // no-warning
+
+  if (true) // expected-note {{silence by adding parentheses to mark code as explicitly dead}}
+    calledFun();
+  else
+    calledFun(); // expected-warning {{will never be executed}}
+
+  if ((true))
+    calledFun();
+  else
+    calledFun(); // no-warning
+  
+  if (!true) // expected-note {{silence by adding parentheses to mark code as explicitly dead}}
+    calledFun(); // expected-warning {{code will never be executed}}
+  else
+    calledFun();
+  
+  if ((!true))
+    calledFun(); // no-warning
+  else
+    calledFun();
+  
+  if (!(true))
+    calledFun(); // no-warning
+  else
+    calledFun();
+}
+

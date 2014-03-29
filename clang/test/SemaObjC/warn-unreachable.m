@@ -49,3 +49,36 @@ void test_loop_increment(id container) {
   }
 }
 
+void calledFun() {}
+
+// Test "silencing" with parentheses.
+void test_with_paren_silencing(int x) {
+  if (NO) calledFun(); // expected-warning {{will never be executed}} expected-note {{silence by adding parentheses to mark code as explicitly dead}}
+  if ((NO)) calledFun(); // no-warning
+
+  if (YES) // expected-note {{silence by adding parentheses to mark code as explicitly dead}}
+    calledFun();
+  else
+    calledFun(); // expected-warning {{will never be executed}}
+
+  if ((YES))
+    calledFun();
+  else
+    calledFun(); // no-warning
+  
+  if (!YES) // expected-note {{silence by adding parentheses to mark code as explicitly dead}}
+    calledFun(); // expected-warning {{code will never be executed}}
+  else
+    calledFun();
+  
+  if ((!YES))
+    calledFun(); // no-warning
+  else
+    calledFun();
+  
+  if (!(YES))
+    calledFun(); // no-warning
+  else
+    calledFun();
+}
+

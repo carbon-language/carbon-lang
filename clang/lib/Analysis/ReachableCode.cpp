@@ -141,11 +141,14 @@ static bool isConfigurationValue(const Stmt *S,
 
   // Special case looking for the sigil '()' around an integer literal.
   if (const ParenExpr *PE = dyn_cast<ParenExpr>(S))
-    return isConfigurationValue(PE->getSubExpr(), PP, SilenceableCondVal, 
-                                IncludeIntegers, true);
+    if (!PE->getLocStart().isMacroID())
+      return isConfigurationValue(PE->getSubExpr(), PP, SilenceableCondVal, 
+                                  IncludeIntegers, true);
 
   if (const Expr *Ex = dyn_cast<Expr>(S))
     S = Ex->IgnoreParenCasts();
+
+  bool IgnoreYES_NO = false;
 
   switch (S->getStmtClass()) {
     case Stmt::CallExprClass: {
@@ -155,19 +158,21 @@ static bool isConfigurationValue(const Stmt *S,
     }
     case Stmt::DeclRefExprClass:
       return isConfigurationValue(cast<DeclRefExpr>(S)->getDecl(), PP);
+    case Stmt::ObjCBoolLiteralExprClass:
+      IgnoreYES_NO = true;
+      // Fallthrough.
+    case Stmt::CXXBoolLiteralExprClass:
     case Stmt::IntegerLiteralClass: {
-      const IntegerLiteral *E = cast<IntegerLiteral>(S);
+      const Expr *E = cast<Expr>(S);
       if (IncludeIntegers) {
         if (SilenceableCondVal && !SilenceableCondVal->getBegin().isValid())
           *SilenceableCondVal = E->getSourceRange();
-        return WrappedInParens || isExpandedFromConfigurationMacro(E, PP);
+        return WrappedInParens || isExpandedFromConfigurationMacro(E, PP, IgnoreYES_NO);
       }
       return false;
     }
     case Stmt::MemberExprClass:
       return isConfigurationValue(cast<MemberExpr>(S)->getMemberDecl(), PP);
-    case Stmt::ObjCBoolLiteralExprClass:
-      return isExpandedFromConfigurationMacro(S, PP, /* IgnoreYES_NO */ true);
     case Stmt::UnaryExprOrTypeTraitExprClass:
       return true;
     case Stmt::BinaryOperatorClass: {
