@@ -9,7 +9,7 @@
 
 CLANG_LEVEL := ../..
 
-BUILT_SOURCES = arm_neon.h.inc aarch64_simd.h.inc
+BUILT_SOURCES = arm_neon.h.inc
 TABLEGEN_INC_FILES_COMMON = 1
 
 include $(CLANG_LEVEL)/Makefile
@@ -24,7 +24,7 @@ HEADERS := $(notdir $(wildcard $(PROJ_SRC_DIR)/*.h))
 OBJHEADERS := $(addprefix $(HeaderDir)/, $(HEADERS))
 
 
-$(OBJHEADERS): $(HeaderDir)/%.h: $(PROJ_SRC_DIR)/%.h $(HeaderDir)/.dir $(HeaderDir)/arm_neon.h $(HeaderDir)/aarch64_simd.h
+$(OBJHEADERS): $(HeaderDir)/%.h: $(PROJ_SRC_DIR)/%.h $(HeaderDir)/.dir
 	$(Verb) cp $< $@
 	$(Echo) Copying $(notdir $<) to build dir
 
