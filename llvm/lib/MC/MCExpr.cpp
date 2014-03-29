@@ -179,6 +179,12 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_TPOFF: return "TPOFF";
   case VK_DTPOFF: return "DTPOFF";
   case VK_TLVP: return "TLVP";
+  case VK_TLVPPAGE: return "TLVPPAGE";
+  case VK_TLVPPAGEOFF: return "TLVPPAGEOFF";
+  case VK_PAGE: return "PAGE";
+  case VK_PAGEOFF: return "PAGEOFF";
+  case VK_GOTPAGE: return "GOTPAGE";
+  case VK_GOTPAGEOFF: return "GOTPAGEOFF";
   case VK_SECREL: return "SECREL32";
   case VK_WEAKREF: return "WEAKREF";
   case VK_ARM_NONE: return "none";
@@ -300,6 +306,18 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("dtpoff", VK_DTPOFF)
     .Case("TLVP", VK_TLVP)
     .Case("tlvp", VK_TLVP)
+    .Case("TLVPPAGE", VK_TLVPPAGE)
+    .Case("tlvppage", VK_TLVPPAGE)
+    .Case("TLVPPAGEOFF", VK_TLVPPAGEOFF)
+    .Case("tlvppageoff", VK_TLVPPAGEOFF)
+    .Case("PAGE", VK_PAGE)
+    .Case("page", VK_PAGE)
+    .Case("PAGEOFF", VK_PAGEOFF)
+    .Case("pageoff", VK_PAGEOFF)
+    .Case("GOTPAGE", VK_GOTPAGE)
+    .Case("gotpage", VK_GOTPAGE)
+    .Case("GOTPAGEOFF", VK_GOTPAGEOFF)
+    .Case("gotpageoff", VK_GOTPAGEOFF)
     .Case("IMGREL", VK_COFF_IMGREL32)
     .Case("imgrel", VK_COFF_IMGREL32)
     .Case("SECREL32", VK_SECREL)

@@ -128,6 +128,7 @@ set(LLVM_LIBDIR_SUFFIX "" CACHE STRING "Define suffix of library directory name 
 
 set(LLVM_ALL_TARGETS
   AArch64
+  ARM64
   ARM
   CppBackend
   Hexagon
@@ -143,7 +144,7 @@ set(LLVM_ALL_TARGETS
   )
 
 # List of targets with JIT support:
-set(LLVM_TARGETS_WITH_JIT X86 PowerPC AArch64 ARM Mips SystemZ)
+set(LLVM_TARGETS_WITH_JIT X86 PowerPC AArch64 ARM64 ARM Mips SystemZ)
 
 set(LLVM_TARGETS_TO_BUILD "all"
     CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")

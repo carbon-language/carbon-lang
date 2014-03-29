@@ -205,7 +205,7 @@ Memory::AllocateRWX(size_t NumBytes, const MemoryBlock* NearBlock,
   void* start = NearBlock ? (unsigned char*)NearBlock->base() +
                             NearBlock->size() : 0;
 
-#if defined(__APPLE__) && defined(__arm__)
+#if defined(__APPLE__) && (defined(__arm__) || defined(__arm64__))
   void *pa = ::mmap(start, PageSize*NumPages, PROT_READ|PROT_EXEC,
                     flags, fd, 0);
 #else
@@ -220,7 +220,7 @@ Memory::AllocateRWX(size_t NumBytes, const MemoryBlock* NearBlock,
     return MemoryBlock();
   }
 
-#if defined(__APPLE__) && defined(__arm__)
+#if defined(__APPLE__) && (defined(__arm__) || defined(__arm64__))
   kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)pa,
                                 (vm_size_t)(PageSize*NumPages), 0,
                                 VM_PROT_READ | VM_PROT_EXECUTE | VM_PROT_COPY);
@@ -253,7 +253,7 @@ bool Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
 }
 
 bool Memory::setWritable (MemoryBlock &M, std::string *ErrMsg) {
-#if defined(__APPLE__) && defined(__arm__)
+#if defined(__APPLE__) && (defined(__arm__) || defined(__arm64__))
   if (M.Address == 0 || M.Size == 0) return false;
   Memory::InvalidateInstructionCache(M.Address, M.Size);
   kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)M.Address,
@@ -265,7 +265,7 @@ bool Memory::setWritable (MemoryBlock &M, std::string *ErrMsg) {
 }
 
 bool Memory::setExecutable (MemoryBlock &M, std::string *ErrMsg) {
-#if defined(__APPLE__) && defined(__arm__)
+#if defined(__APPLE__) && (defined(__arm__) || defined(__arm64__))
   if (M.Address == 0 || M.Size == 0) return false;
   Memory::InvalidateInstructionCache(M.Address, M.Size);
   kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)M.Address,
@@ -280,7 +280,7 @@ bool Memory::setExecutable (MemoryBlock &M, std::string *ErrMsg) {
 }
 
 bool Memory::setRangeWritable(const void *Addr, size_t Size) {
-#if defined(__APPLE__) && defined(__arm__)
+#if defined(__APPLE__) && (defined(__arm__) || defined(__arm64__))
   kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)Addr,
                                 (vm_size_t)Size, 0,
                                 VM_PROT_READ | VM_PROT_WRITE);
@@ -291,7 +291,7 @@ bool Memory::setRangeWritable(const void *Addr, size_t Size) {
 }
 
 bool Memory::setRangeExecutable(const void *Addr, size_t Size) {
-#if defined(__APPLE__) && defined(__arm__)
+#if defined(__APPLE__) && (defined(__arm__) || defined(__arm64__))
   kern_return_t kr = vm_protect(mach_task_self(), (vm_address_t)Addr,
                                 (vm_size_t)Size, 0,
                                 VM_PROT_READ | VM_PROT_EXECUTE | VM_PROT_COPY);
@@ -311,7 +311,8 @@ void Memory::InvalidateInstructionCache(const void *Addr,
 #if defined(__APPLE__)
 
 #  if (defined(__POWERPC__) || defined (__ppc__) || \
-     defined(_POWER) || defined(_ARCH_PPC)) || defined(__arm__)
+       defined(_POWER) || defined(_ARCH_PPC) || defined(__arm__) || \
+       defined(__arm64__))
   sys_icache_invalidate(const_cast<void *>(Addr), Len);
 #  endif
 

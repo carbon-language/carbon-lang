@@ -151,7 +151,7 @@ if [ "$ARM_HOSTED_BUILD" = yes ]; then
 
   unset SDKROOT && \
   $SRC_DIR/configure $COMMON_CONFIGURE_OPTS \
-    --enable-targets=arm \
+    --enable-targets=arm,arm64 \
     --host=arm-apple-darwin10 \
     --target=arm-apple-darwin10 \
     --build=i686-apple-darwin10 \
@@ -188,7 +188,7 @@ else
     export CC=`xcrun -sdk macosx -find clang`
     export CXX=`xcrun -sdk macosx -find clang++`
 
-    configure_opts="--enable-targets=arm,x86"
+    configure_opts="--enable-targets=arm,arm64,x86"
     if [ -n "$MACOSX_DEPLOYMENT_TARGET" ]; then
       COMMON_MAKEFLAGS="$COMMON_MAKEFLAGS \
         DEPLOYMENT_TARGET=-mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"

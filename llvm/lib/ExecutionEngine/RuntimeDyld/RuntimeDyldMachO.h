@@ -34,6 +34,9 @@ class RuntimeDyldMachO : public RuntimeDyldImpl {
   bool resolveARMRelocation(uint8_t *LocalAddress, uint64_t FinalAddress,
                             uint64_t Value, bool isPCRel, unsigned Type,
                             unsigned Size, int64_t Addend);
+  bool resolveARM64Relocation(uint8_t *LocalAddress, uint64_t FinalAddress,
+                              uint64_t Value, bool IsPCRel, unsigned Type,
+                              unsigned Size, int64_t Addend);
 
   void resolveRelocation(const SectionEntry &Section, uint64_t Offset,
                          uint64_t Value, uint32_t Type, int64_t Addend,

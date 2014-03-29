@@ -1,5 +1,6 @@
 ; RUN: opt -instcombine -S < %s -mtriple=x86_64-apple-macosx10.9 | FileCheck %s --check-prefix=CHECK-FLOAT-IN-VEC
 ; RUN: opt -instcombine -S < %s -mtriple=arm-apple-ios7.0 | FileCheck %s
+; RUN: opt -instcombine -S < %s -mtriple=arm64-apple-ios7.0 | FileCheck %s
 ; RUN: opt -instcombine -S < %s -mtriple=x86_64-apple-macosx10.8 | FileCheck %s --check-prefix=CHECK-NO-SINCOS
 ; RUN: opt -instcombine -S < %s -mtriple=arm-apple-ios6.0 | FileCheck %s --check-prefix=CHECK-NO-SINCOS
 ; RUN: opt -instcombine -S < %s -mtriple=x86_64-none-linux-gnu | FileCheck %s --check-prefix=CHECK-NO-SINCOS

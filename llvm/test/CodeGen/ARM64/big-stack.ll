@@ -1,0 +1,21 @@
+; RUN: llc < %s | FileCheck %s
+target triple = "arm64-apple-macosx10"
+
+; Check that big stacks are generated correctly.
+; Currently, this is done by a sequence of sub instructions,
+; which can encode immediate with a 12 bits mask an optionally
+; shift left (up to 12). I.e., 16773120 is the biggest value.
+; <rdar://12513931>
+; CHECK-LABEL: foo:
+; CHECK: sub sp, sp, #16773120
+; CHECK: sub sp, sp, #16773120
+; CHECK: sub sp, sp, #8192
+define void @foo() nounwind ssp {
+entry:
+  %buffer = alloca [33554432 x i8], align 1
+  %arraydecay = getelementptr inbounds [33554432 x i8]* %buffer, i64 0, i64 0
+  call void @doit(i8* %arraydecay) nounwind
+  ret void
+}
+
+declare void @doit(i8*)

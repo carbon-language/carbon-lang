@@ -167,6 +167,10 @@ void RuntimeDyldMachO::resolveRelocation(const SectionEntry &Section,
     resolveARMRelocation(LocalAddress, FinalAddress, (uintptr_t)Value, isPCRel,
                          MachoType, Size, Addend);
     break;
+  case Triple::arm64:
+    resolveARM64Relocation(LocalAddress, FinalAddress, (uintptr_t)Value,
+                           isPCRel, MachoType, Size, Addend);
+    break;
   }
 }
 
@@ -288,6 +292,55 @@ bool RuntimeDyldMachO::resolveARMRelocation(uint8_t *LocalAddress,
   case MachO::ARM_RELOC_SECTDIFF:
   case MachO::ARM_RELOC_LOCAL_SECTDIFF:
   case MachO::ARM_RELOC_PB_LA_PTR:
+    return Error("Relocation type not implemented yet!");
+  }
+  return false;
+}
+
+bool RuntimeDyldMachO::resolveARM64Relocation(uint8_t *LocalAddress,
+                                              uint64_t FinalAddress,
+                                              uint64_t Value, bool isPCRel,
+                                              unsigned Type, unsigned Size,
+                                              int64_t Addend) {
+  // If the relocation is PC-relative, the value to be encoded is the
+  // pointer difference.
+  if (isPCRel)
+    Value -= FinalAddress;
+
+  switch (Type) {
+  default:
+    llvm_unreachable("Invalid relocation type!");
+  case MachO::ARM64_RELOC_UNSIGNED: {
+    // Mask in the target value a byte at a time (we don't have an alignment
+    // guarantee for the target address, so this is safest).
+    uint8_t *p = (uint8_t *)LocalAddress;
+    for (unsigned i = 0; i < Size; ++i) {
+      *p++ = (uint8_t)Value;
+      Value >>= 8;
+    }
+    break;
+  }
+  case MachO::ARM64_RELOC_BRANCH26: {
+    // Mask the value into the target address. We know instructions are
+    // 32-bit aligned, so we can do it all at once.
+    uint32_t *p = (uint32_t *)LocalAddress;
+    // The low two bits of the value are not encoded.
+    Value >>= 2;
+    // Mask the value to 26 bits.
+    Value &= 0x3ffffff;
+    // Insert the value into the instruction.
+    *p = (*p & ~0x3ffffff) | Value;
+    break;
+  }
+  case MachO::ARM64_RELOC_SUBTRACTOR:
+  case MachO::ARM64_RELOC_PAGE21:
+  case MachO::ARM64_RELOC_PAGEOFF12:
+  case MachO::ARM64_RELOC_GOT_LOAD_PAGE21:
+  case MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12:
+  case MachO::ARM64_RELOC_POINTER_TO_GOT:
+  case MachO::ARM64_RELOC_TLVP_LOAD_PAGE21:
+  case MachO::ARM64_RELOC_TLVP_LOAD_PAGEOFF12:
+  case MachO::ARM64_RELOC_ADDEND:
     return Error("Relocation type not implemented yet!");
   }
   return false;

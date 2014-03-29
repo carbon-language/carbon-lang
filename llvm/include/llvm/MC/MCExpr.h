@@ -158,7 +158,13 @@ public:
     VK_TLSLDM,
     VK_TPOFF,
     VK_DTPOFF,
-    VK_TLVP,      // Mach-O thread local variable relocation
+    VK_TLVP,      // Mach-O thread local variable relocations
+    VK_TLVPPAGE,
+    VK_TLVPPAGEOFF,
+    VK_PAGE,
+    VK_PAGEOFF,
+    VK_GOTPAGE,
+    VK_GOTPAGEOFF,
     VK_SECREL,
     VK_WEAKREF,   // The link between the symbols in .weakref foo, bar
 

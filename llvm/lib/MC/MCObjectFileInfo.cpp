@@ -22,6 +22,9 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   IsFunctionEHFrameSymbolPrivate = false;
   SupportsWeakOmittedEHFrame = false;
 
+  if (T.isOSDarwin() && T.getArch() == Triple::arm64)
+    SupportsCompactUnwindWithoutEHFrame = true;
+
   PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel
     | dwarf::DW_EH_PE_sdata4;
   LSDAEncoding = FDEEncoding = FDECFIEncoding = dwarf::DW_EH_PE_pcrel;
@@ -146,7 +149,8 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
 
   COFFDebugSymbolsSection = 0;
 
-  if (T.isMacOSX() && !T.isMacOSXVersionLT(10, 6)) {
+  if ((T.isMacOSX() && !T.isMacOSXVersionLT(10, 6)) ||
+      (T.isOSDarwin() && T.getArch() == Triple::arm64)) {
     CompactUnwindSection =
       Ctx->getMachOSection("__LD", "__compact_unwind",
                            MachO::S_ATTR_DEBUG,
@@ -154,6 +158,8 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
 
     if (T.getArch() == Triple::x86_64 || T.getArch() == Triple::x86)
       CompactUnwindDwarfEHFrameOnly = 0x04000000;
+    else if (T.getArch() == Triple::arm64)
+      CompactUnwindDwarfEHFrameOnly = 0x03000000;
   }
 
   // Debug Information.
@@ -763,6 +769,7 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
   // cellspu-apple-darwin. Perhaps we should fix in Triple?
   if ((Arch == Triple::x86 || Arch == Triple::x86_64 ||
        Arch == Triple::arm || Arch == Triple::thumb ||
+       Arch == Triple::arm64 ||
        Arch == Triple::ppc || Arch == Triple::ppc64 ||
        Arch == Triple::UnknownArch) &&
       (T.isOSDarwin() || T.isOSBinFormatMachO())) {
