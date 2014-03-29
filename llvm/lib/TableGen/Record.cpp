@@ -1786,7 +1786,7 @@ Init *Record::getValueInit(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     PrintFatalError(getLoc(), "Record `" + getName() +
-      "' does not have a field named `" + FieldName.str() + "'!\n");
+      "' does not have a field named `" + FieldName + "'!\n");
   return R->getValue();
 }
 
@@ -1799,12 +1799,12 @@ std::string Record::getValueAsString(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     PrintFatalError(getLoc(), "Record `" + getName() +
-      "' does not have a field named `" + FieldName.str() + "'!\n");
+      "' does not have a field named `" + FieldName + "'!\n");
 
   if (StringInit *SI = dyn_cast<StringInit>(R->getValue()))
     return SI->getValue();
   PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-    FieldName.str() + "' does not have a string initializer!");
+    FieldName + "' does not have a string initializer!");
 }
 
 /// getValueAsBitsInit - This method looks up the specified field and returns
@@ -1815,12 +1815,12 @@ BitsInit *Record::getValueAsBitsInit(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     PrintFatalError(getLoc(), "Record `" + getName() +
-      "' does not have a field named `" + FieldName.str() + "'!\n");
+      "' does not have a field named `" + FieldName + "'!\n");
 
   if (BitsInit *BI = dyn_cast<BitsInit>(R->getValue()))
     return BI;
   PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-    FieldName.str() + "' does not have a BitsInit initializer!");
+    FieldName + "' does not have a BitsInit initializer!");
 }
 
 /// getValueAsListInit - This method looks up the specified field and returns
@@ -1831,12 +1831,12 @@ ListInit *Record::getValueAsListInit(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     PrintFatalError(getLoc(), "Record `" + getName() +
-      "' does not have a field named `" + FieldName.str() + "'!\n");
+      "' does not have a field named `" + FieldName + "'!\n");
 
   if (ListInit *LI = dyn_cast<ListInit>(R->getValue()))
     return LI;
   PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-    FieldName.str() + "' does not have a list initializer!");
+    FieldName + "' does not have a list initializer!");
 }
 
 /// getValueAsListOfDefs - This method looks up the specified field and returns
@@ -1852,7 +1852,7 @@ Record::getValueAsListOfDefs(StringRef FieldName) const {
       Defs.push_back(DI->getDef());
     } else {
       PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-        FieldName.str() + "' list is not entirely DefInit!");
+        FieldName + "' list is not entirely DefInit!");
     }
   }
   return Defs;
@@ -1866,12 +1866,12 @@ int64_t Record::getValueAsInt(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     PrintFatalError(getLoc(), "Record `" + getName() +
-      "' does not have a field named `" + FieldName.str() + "'!\n");
+      "' does not have a field named `" + FieldName + "'!\n");
 
   if (IntInit *II = dyn_cast<IntInit>(R->getValue()))
     return II->getValue();
   PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-    FieldName.str() + "' does not have an int initializer!");
+    FieldName + "' does not have an int initializer!");
 }
 
 /// getValueAsListOfInts - This method looks up the specified field and returns
@@ -1887,7 +1887,7 @@ Record::getValueAsListOfInts(StringRef FieldName) const {
       Ints.push_back(II->getValue());
     } else {
       PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-        FieldName.str() + "' does not have a list of ints initializer!");
+        FieldName + "' does not have a list of ints initializer!");
     }
   }
   return Ints;
@@ -1906,7 +1906,7 @@ Record::getValueAsListOfStrings(StringRef FieldName) const {
       Strings.push_back(II->getValue());
     } else {
       PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-        FieldName.str() + "' does not have a list of strings initializer!");
+        FieldName + "' does not have a list of strings initializer!");
     }
   }
   return Strings;
@@ -1920,12 +1920,12 @@ Record *Record::getValueAsDef(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     PrintFatalError(getLoc(), "Record `" + getName() +
-      "' does not have a field named `" + FieldName.str() + "'!\n");
+      "' does not have a field named `" + FieldName + "'!\n");
 
   if (DefInit *DI = dyn_cast<DefInit>(R->getValue()))
     return DI->getDef();
   PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-    FieldName.str() + "' does not have a def initializer!");
+    FieldName + "' does not have a def initializer!");
 }
 
 /// getValueAsBit - This method looks up the specified field and returns its
@@ -1936,12 +1936,12 @@ bool Record::getValueAsBit(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     PrintFatalError(getLoc(), "Record `" + getName() +
-      "' does not have a field named `" + FieldName.str() + "'!\n");
+      "' does not have a field named `" + FieldName + "'!\n");
 
   if (BitInit *BI = dyn_cast<BitInit>(R->getValue()))
     return BI->getValue();
   PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-    FieldName.str() + "' does not have a bit initializer!");
+    FieldName + "' does not have a bit initializer!");
 }
 
 bool Record::getValueAsBitOrUnset(StringRef FieldName, bool &Unset) const {
@@ -1958,7 +1958,7 @@ bool Record::getValueAsBitOrUnset(StringRef FieldName, bool &Unset) const {
   if (BitInit *BI = dyn_cast<BitInit>(R->getValue()))
     return BI->getValue();
   PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-    FieldName.str() + "' does not have a bit initializer!");
+    FieldName + "' does not have a bit initializer!");
 }
 
 /// getValueAsDag - This method looks up the specified field and returns its
@@ -1969,12 +1969,12 @@ DagInit *Record::getValueAsDag(StringRef FieldName) const {
   const RecordVal *R = getValue(FieldName);
   if (R == 0 || R->getValue() == 0)
     PrintFatalError(getLoc(), "Record `" + getName() +
-      "' does not have a field named `" + FieldName.str() + "'!\n");
+      "' does not have a field named `" + FieldName + "'!\n");
 
   if (DagInit *DI = dyn_cast<DagInit>(R->getValue()))
     return DI;
   PrintFatalError(getLoc(), "Record `" + getName() + "', field `" +
-    FieldName.str() + "' does not have a dag initializer!");
+    FieldName + "' does not have a dag initializer!");
 }
 
 

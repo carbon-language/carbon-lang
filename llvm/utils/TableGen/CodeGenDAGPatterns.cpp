@@ -2327,8 +2327,9 @@ void CodeGenDAGPatterns::ParseDefaultOperands() {
         /* Resolve all types */;
 
       if (TPN->ContainsUnresolvedType()) {
-        PrintFatalError("Value #" + utostr(i) + " of OperandWithDefaultOps '" +
-          DefaultOps[i]->getName() +"' doesn't have a concrete type!");
+        PrintFatalError("Value #" + Twine(i) + " of OperandWithDefaultOps '" +
+                        DefaultOps[i]->getName() +
+                        "' doesn't have a concrete type!");
       }
       DefaultOpInfo.DefaultOps.push_back(TPN);
     }

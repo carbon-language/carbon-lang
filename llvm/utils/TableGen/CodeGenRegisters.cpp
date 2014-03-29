@@ -993,7 +993,7 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
   // Read in register class definitions.
   std::vector<Record*> RCs = Records.getAllDerivedDefinitions("RegisterClass");
   if (RCs.empty())
-    PrintFatalError(std::string("No 'RegisterClass' subclasses defined!"));
+    PrintFatalError("No 'RegisterClass' subclasses defined!");
 
   // Allocate user-defined register classes.
   RegClasses.reserve(RCs.size());

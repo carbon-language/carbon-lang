@@ -547,8 +547,8 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
           Reg.TheDef->getValueAsListOfStrings("AltNames");
         if (AltNames.size() <= Idx)
           PrintFatalError(Reg.TheDef->getLoc(),
-            (Twine("Register definition missing alt name for '") +
-             AltName + "'.").str());
+                          "Register definition missing alt name for '" +
+                          AltName + "'.");
         AsmName = AltNames[Idx];
       }
     }

@@ -719,12 +719,12 @@ void MatchableInfo::formTwoOperandAlias(StringRef Constraint) {
   int DstAsmOperand = findAsmOperandNamed(Ops.second);
   if (SrcAsmOperand == -1)
     PrintFatalError(TheDef->getLoc(),
-                  "unknown source two-operand alias operand '" +
-                  Ops.first.str() + "'.");
+                    "unknown source two-operand alias operand '" + Ops.first +
+                    "'.");
   if (DstAsmOperand == -1)
     PrintFatalError(TheDef->getLoc(),
-                  "unknown destination two-operand alias operand '" +
-                  Ops.second.str() + "'.");
+                    "unknown destination two-operand alias operand '" +
+                    Ops.second + "'.");
 
   // Find the ResOperand that refers to the operand we're aliasing away
   // and update it to refer to the combined operand instead.
@@ -872,7 +872,7 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
   // FIXME : Check and raise an error if it is a register.
   if (Mnemonic[0] == '$')
     PrintFatalError(TheDef->getLoc(),
-                  "Invalid instruction mnemonic '" + Mnemonic.str() + "'!");
+                    "Invalid instruction mnemonic '" + Mnemonic + "'!");
 
   // Remove the first operand, it is tracked in the mnemonic field.
   AsmOperands.erase(AsmOperands.begin());
@@ -909,22 +909,22 @@ bool MatchableInfo::validate(StringRef CommentDelimiter, bool Hack) const {
     StringRef Tok = AsmOperands[i].Token;
     if (Tok[0] == '$' && Tok.find(':') != StringRef::npos)
       PrintFatalError(TheDef->getLoc(),
-                    "matchable with operand modifier '" + Tok.str() +
-                    "' not supported by asm matcher.  Mark isCodeGenOnly!");
+                      "matchable with operand modifier '" + Tok +
+                      "' not supported by asm matcher.  Mark isCodeGenOnly!");
 
     // Verify that any operand is only mentioned once.
     // We reject aliases and ignore instructions for now.
     if (Tok[0] == '$' && !OperandNames.insert(Tok).second) {
       if (!Hack)
         PrintFatalError(TheDef->getLoc(),
-                      "ERROR: matchable with tied operand '" + Tok.str() +
-                      "' can never be matched!");
+                        "ERROR: matchable with tied operand '" + Tok +
+                        "' can never be matched!");
       // FIXME: Should reject these.  The ARM backend hits this with $lane in a
       // bunch of instructions.  It is unclear what the right answer is.
       DEBUG({
         errs() << "warning: '" << TheDef->getName() << "': "
                << "ignoring instruction with tied operand '"
-               << Tok.str() << "'\n";
+               << Tok << "'\n";
       });
       return false;
     }
@@ -1500,8 +1500,8 @@ buildInstructionOperandReference(MatchableInfo *II,
   // Map this token to an operand.
   unsigned Idx;
   if (!Operands.hasOperandNamed(OperandName, Idx))
-    PrintFatalError(II->TheDef->getLoc(), "error: unable to find operand: '" +
-                  OperandName.str() + "'");
+    PrintFatalError(II->TheDef->getLoc(),
+                    "error: unable to find operand: '" + OperandName + "'");
 
   // If the instruction operand has multiple suboperands, but the parser
   // match class for the asm operand is still the default "ImmAsmOperand",
@@ -1573,8 +1573,8 @@ void AsmMatcherInfo::buildAliasOperandReference(MatchableInfo *II,
       return;
     }
 
-  PrintFatalError(II->TheDef->getLoc(), "error: unable to find operand: '" +
-                OperandName.str() + "'");
+  PrintFatalError(II->TheDef->getLoc(),
+                  "error: unable to find operand: '" + OperandName + "'");
 }
 
 void MatchableInfo::buildInstructionResultOperands() {

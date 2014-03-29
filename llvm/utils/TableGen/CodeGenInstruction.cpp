@@ -106,11 +106,11 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
 
     // Check that the operand has a name and that it's unique.
     if (ArgName.empty())
-      PrintFatalError("In instruction '" + R->getName() + "', operand #" + utostr(i) +
-        " has no name!");
+      PrintFatalError("In instruction '" + R->getName() + "', operand #" +
+                      Twine(i) + " has no name!");
     if (!OperandNames.insert(ArgName).second)
-      PrintFatalError("In instruction '" + R->getName() + "', operand #" + utostr(i) +
-        " has the same name as a previous operand!");
+      PrintFatalError("In instruction '" + R->getName() + "', operand #" +
+                      Twine(i) + " has the same name as a previous operand!");
 
     OperandList.push_back(OperandInfo(Rec, ArgName, PrintMethod, EncoderMethod,
                                       OperandType, MIOperandNo, NumOps,
@@ -133,8 +133,8 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
 unsigned CGIOperandList::getOperandNamed(StringRef Name) const {
   unsigned OpIdx;
   if (hasOperandNamed(Name, OpIdx)) return OpIdx;
-  PrintFatalError("'" + TheDef->getName() + "' does not have an operand named '$" +
-    Name.str() + "'!");
+  PrintFatalError("'" + TheDef->getName() +
+                  "' does not have an operand named '$" + Name + "'!");
 }
 
 /// hasOperandNamed - Query whether the instruction has an operand of the
@@ -442,8 +442,8 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
     // If the operand is a record, it must have a name, and the record type
     // must match up with the instruction's argument type.
     if (Result->getArgName(AliasOpNo).empty())
-      PrintFatalError(Loc, "result argument #" + utostr(AliasOpNo) +
-                    " must have a name!");
+      PrintFatalError(Loc, "result argument #" + Twine(AliasOpNo) +
+                           " must have a name!");
     ResOp = ResultOperand(Result->getArgName(AliasOpNo), ResultRecord);
     return true;
   }
@@ -514,7 +514,7 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
       return false;
     // Integer arguments can't have names.
     if (!Result->getArgName(AliasOpNo).empty())
-      PrintFatalError(Loc, "result argument #" + utostr(AliasOpNo) +
+      PrintFatalError(Loc, "result argument #" + Twine(AliasOpNo) +
                       " must not have a name!");
     ResOp = ResultOperand(II->getValue());
     return true;
@@ -627,14 +627,14 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
           ResultInstOperandIndex.push_back(std::make_pair(i, SubOp));
           ++AliasOpNo;
         } else {
-          PrintFatalError(R->getLoc(), "result argument #" + utostr(AliasOpNo) +
+          PrintFatalError(R->getLoc(), "result argument #" + Twine(AliasOpNo) +
                         " does not match instruction operand class " +
                         (SubOp == 0 ? InstOpRec->getName() :SubRec->getName()));
         }
       }
       continue;
     }
-    PrintFatalError(R->getLoc(), "result argument #" + utostr(AliasOpNo) +
+    PrintFatalError(R->getLoc(), "result argument #" + Twine(AliasOpNo) +
                     " does not match instruction operand class " +
                     InstOpRec->getName());
   }

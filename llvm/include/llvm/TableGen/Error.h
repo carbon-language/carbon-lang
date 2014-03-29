@@ -27,9 +27,9 @@ void PrintError(ArrayRef<SMLoc> ErrorLoc, const Twine &Msg);
 void PrintError(const char *Loc, const Twine &Msg);
 void PrintError(const Twine &Msg);
 
-LLVM_ATTRIBUTE_NORETURN void PrintFatalError(const std::string &Msg);
+LLVM_ATTRIBUTE_NORETURN void PrintFatalError(const Twine &Msg);
 LLVM_ATTRIBUTE_NORETURN void PrintFatalError(ArrayRef<SMLoc> ErrorLoc,
-                                             const std::string &Msg);
+                                             const Twine &Msg);
 
 extern SourceMgr SrcMgr;
 extern unsigned ErrorsPrinted;
