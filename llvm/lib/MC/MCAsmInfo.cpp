@@ -41,6 +41,7 @@ MCAsmInfo::MCAsmInfo() {
   LabelSuffix = ":";
   DebugLabelSuffix = ":";
   PrivateGlobalPrefix = "L";
+  LinkerPrivateGlobalPrefix = "";
   InlineAsmStart = "APP";
   InlineAsmEnd = "NO_APP";
   Code16Directive = ".code16";
