@@ -1880,7 +1880,7 @@ SDNode *ARM64DAGToDAGISel::Select(SDNode *Node) {
                 .getVectorElementType()
                 .getSizeInBits()) {
     default:
-      assert("Unexpected vector element type!");
+      assert(0 && "Unexpected vector element type!");
     case 64:
       SubReg = ARM64::dsub;
       break;

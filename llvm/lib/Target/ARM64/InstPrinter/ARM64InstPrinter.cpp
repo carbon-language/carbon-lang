@@ -936,7 +936,7 @@ void ARM64InstPrinter::printPostIncOperand(const MCInst *MI, unsigned OpNo,
     else
       O << getRegisterName(Reg);
   } else
-    assert("unknown operand kind in printPostIncOperand64");
+    assert(0 && "unknown operand kind in printPostIncOperand64");
 }
 
 void ARM64InstPrinter::printPostIncOperand1(const MCInst *MI, unsigned OpNo,
