@@ -286,6 +286,9 @@ namespace llvm {
       llvm_unreachable("EmitInstruction not implemented");
     }
 
+    /// GetCPISymbol - Return the symbol for the specified constant pool entry.
+    virtual MCSymbol *GetCPISymbol(unsigned CPID) const;
+
     virtual void EmitFunctionEntryLabel();
 
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
@@ -328,9 +331,6 @@ namespace llvm {
     /// GetExternalSymbolSymbol - Return the MCSymbol for the specified
     /// ExternalSymbol.
     MCSymbol *GetExternalSymbolSymbol(StringRef Sym) const;
-
-    /// GetCPISymbol - Return the symbol for the specified constant pool entry.
-    MCSymbol *GetCPISymbol(unsigned CPID) const;
 
     /// GetJTISymbol - Return the symbol for the specified jump table entry.
     MCSymbol *GetJTISymbol(unsigned JTID, bool isLinkerPrivate = false) const;
