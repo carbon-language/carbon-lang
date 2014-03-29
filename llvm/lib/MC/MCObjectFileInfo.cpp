@@ -743,6 +743,7 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
   CommDirectiveSupportsAlignment = true;
   SupportsWeakOmittedEHFrame = true;
   IsFunctionEHFrameSymbolPrivate = true;
+  SupportsCompactUnwindWithoutEHFrame = false;
 
   PersonalityEncoding = LSDAEncoding = FDEEncoding = FDECFIEncoding =
     TTypeEncoding = dwarf::DW_EH_PE_absptr;

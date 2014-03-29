@@ -1502,6 +1502,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer, MCAsmBackend *MAB,
   ArrayRef<MCDwarfFrameInfo> FrameArray = Streamer.getFrameInfos();
 
   // Emit the compact unwind info if available.
+  bool NeedsEHFrameSection = !MOFI->getSupportsCompactUnwindWithoutEHFrame();
   if (IsEH && MOFI->getCompactUnwindSection()) {
     bool SectionEmitted = false;
     for (unsigned i = 0, n = FrameArray.size(); i < n; ++i) {
@@ -1512,13 +1513,19 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer, MCAsmBackend *MAB,
         Streamer.EmitValueToAlignment(Context.getAsmInfo()->getPointerSize());
         SectionEmitted = true;
       }
+      NeedsEHFrameSection |=
+        Frame.CompactUnwindEncoding ==
+          MOFI->getCompactUnwindDwarfEHFrameOnly();
       Emitter.EmitCompactUnwind(Streamer, Frame);
     }
   }
 
+  if (!NeedsEHFrameSection) return;
+
   const MCSection &Section =
     IsEH ? *const_cast<MCObjectFileInfo*>(MOFI)->getEHFrameSection() :
            *MOFI->getDwarfFrameSection();
+
   Streamer.SwitchSection(&Section);
   MCSymbol *SectionStart = Context.CreateTempSymbol();
   Streamer.EmitLabel(SectionStart);
@@ -1528,8 +1535,22 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer, MCAsmBackend *MAB,
   DenseMap<CIEKey, const MCSymbol*> CIEStarts;
 
   const MCSymbol *DummyDebugKey = NULL;
+  NeedsEHFrameSection = !MOFI->getSupportsCompactUnwindWithoutEHFrame();
   for (unsigned i = 0, n = FrameArray.size(); i < n; ++i) {
     const MCDwarfFrameInfo &Frame = FrameArray[i];
+
+    // Emit the label from the previous iteration
+    if (FDEEnd) {
+      Streamer.EmitLabel(FDEEnd);
+      FDEEnd = NULL;
+    }
+
+    if (!NeedsEHFrameSection && Frame.CompactUnwindEncoding !=
+          MOFI->getCompactUnwindDwarfEHFrameOnly())
+      // Don't generate an EH frame if we don't need one. I.e., it's taken care
+      // of by the compact unwind encoding.
+      continue;
+
     CIEKey Key(Frame.Personality, Frame.PersonalityEncoding,
                Frame.LsdaEncoding, Frame.IsSignalFrame, Frame.IsSimple);
     const MCSymbol *&CIEStart = IsEH ? CIEStarts[Key] : DummyDebugKey;
@@ -1541,9 +1562,6 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer, MCAsmBackend *MAB,
                                   Frame.IsSimple);
 
     FDEEnd = Emitter.EmitFDE(Streamer, *CIEStart, Frame);
-
-    if (i != n - 1)
-      Streamer.EmitLabel(FDEEnd);
   }
 
   Streamer.EmitValueToAlignment(Context.getAsmInfo()->getPointerSize());
