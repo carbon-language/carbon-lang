@@ -4112,7 +4112,7 @@ void CFGBlock::printTerminator(raw_ostream &OS,
   TPrinter.print(getTerminator());
 }
 
-Stmt *CFGBlock::getTerminatorCondition() {
+Stmt *CFGBlock::getTerminatorCondition(bool StripParens) {
   Stmt *Terminator = this->Terminator;
   if (!Terminator)
     return NULL;
@@ -4170,6 +4170,9 @@ Stmt *CFGBlock::getTerminatorCondition() {
     case Stmt::ObjCForCollectionStmtClass:
       return Terminator;
   }
+
+  if (!StripParens)
+    return E;
 
   return E ? E->IgnoreParens() : NULL;
 }

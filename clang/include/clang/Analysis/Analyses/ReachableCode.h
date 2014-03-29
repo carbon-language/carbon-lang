@@ -50,7 +50,9 @@ class Callback {
 public:
   virtual ~Callback() {}
   virtual void HandleUnreachable(UnreachableKind UK,
-                                 SourceLocation L, SourceRange R1,
+                                 SourceLocation L,
+                                 SourceRange ConditionVal,
+                                 SourceRange R1,
                                  SourceRange R2) = 0;
 };
 

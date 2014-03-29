@@ -623,10 +623,10 @@ public:
   CFGTerminator getTerminator() { return Terminator; }
   const CFGTerminator getTerminator() const { return Terminator; }
 
-  Stmt *getTerminatorCondition();
+  Stmt *getTerminatorCondition(bool StripParens = true);
 
-  const Stmt *getTerminatorCondition() const {
-    return const_cast<CFGBlock*>(this)->getTerminatorCondition();
+  const Stmt *getTerminatorCondition(bool StripParens = true) const {
+    return const_cast<CFGBlock*>(this)->getTerminatorCondition(StripParens);
   }
 
   const Stmt *getLoopTarget() const { return LoopTarget; }

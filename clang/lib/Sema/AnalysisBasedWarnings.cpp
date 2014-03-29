@@ -66,7 +66,9 @@ namespace {
     UnreachableCodeHandler(Sema &s) : S(s) {}
 
     void HandleUnreachable(reachable_code::UnreachableKind UK,
-                           SourceLocation L, SourceRange R1,
+                           SourceLocation L,
+                           SourceRange SilenceableCondVal,
+                           SourceRange R1,
                            SourceRange R2) override {
       unsigned diag = diag::warn_unreachable;
       switch (UK) {
@@ -84,6 +86,17 @@ namespace {
       }
 
       S.Diag(L, diag) << R1 << R2;
+      
+      SourceLocation Open = SilenceableCondVal.getBegin();
+      if (Open.isValid()) {
+        SourceLocation Close = SilenceableCondVal.getEnd();        
+        Close = S.PP.getLocForEndOfToken(Close);
+        if (Close.isValid()) {
+          S.Diag(Open, diag::note_unreachable_silence)
+            << FixItHint::CreateInsertion(Open, "/* DISABLES CODE */ (")
+            << FixItHint::CreateInsertion(Close, ")");
+        }
+      }
     }
   };
 }

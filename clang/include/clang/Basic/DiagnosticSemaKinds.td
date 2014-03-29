@@ -373,6 +373,8 @@ def warn_unreachable_return : Warning<
 def warn_unreachable_loop_increment : Warning<
   "loop will run at most once (loop increment never executed)">,
   InGroup<UnreachableCodeLoopIncrement>, DefaultIgnore;
+def note_unreachable_silence : Note<
+  "silence by adding parentheses to mark code as explicitly dead">;
 
 /// Built-in functions.
 def ext_implicit_lib_function_decl : ExtWarn<

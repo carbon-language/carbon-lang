@@ -257,7 +257,7 @@ int test_config_constant(int x) {
     calledFun(); // no-warning
     return 1;
   }
-  if (!1) {
+  if (!1) { // expected-note {{silence by adding parentheses to mark code as explicitly dead}}
     calledFun(); // expected-warning {{will never be executed}}
     return 1;
   }
@@ -268,7 +268,7 @@ int test_config_constant(int x) {
   if (x > 10)
     return CONFIG_CONSTANT ? calledFun() : calledFun(); // no-warning
   else
-    return 1 ?
+    return 1 ? // expected-note {{silence by adding parentheses to mark code as explicitly dead}}
       calledFun() :
       calledFun(); // expected-warning {{will never be executed}}
 }
@@ -365,3 +365,34 @@ int test_break_preceded_by_noreturn_SUPPRESSED(int i) {
 }
 
 #pragma clang diagnostic pop
+
+// Test "silencing" with parentheses.
+void test_with_paren_silencing(int x) {
+  if (0) calledFun(); // expected-warning {{will never be executed}} expected-note {{silence by adding parentheses to mark code as explicitly dead}}
+  if ((0)) calledFun(); // no-warning
+
+  if (1) // expected-note {{silence by adding parentheses to mark code as explicitly dead}}
+    calledFun();
+  else
+    calledFun(); // expected-warning {{will never be executed}}
+
+  if ((1))
+    calledFun();
+  else
+    calledFun(); // no-warning
+  
+  if (!1) // expected-note {{silence by adding parentheses to mark code as explicitly dead}}
+    calledFun(); // expected-warning {{code will never be executed}}
+  else
+    calledFun();
+  
+  if ((!1))
+    calledFun(); // no-warning
+  else
+    calledFun();
+  
+  if (!(1))
+    calledFun(); // no-warning
+  else
+    calledFun();
+}
