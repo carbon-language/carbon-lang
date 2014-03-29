@@ -779,20 +779,22 @@ void MCAssembler::writeSectionData(const MCSectionData *SD,
          Layout.getSectionAddressSize(SD));
 }
 
-
-uint64_t MCAssembler::handleFixup(const MCAsmLayout &Layout,
-                                  MCFragment &F,
-                                  const MCFixup &Fixup) {
+std::pair<uint64_t, bool> MCAssembler::handleFixup(const MCAsmLayout &Layout,
+                                                   MCFragment &F,
+                                                   const MCFixup &Fixup) {
   // Evaluate the fixup.
   MCValue Target;
   uint64_t FixedValue;
+  bool IsPCRel = Backend.getFixupKindInfo(Fixup.getKind()).Flags &
+                 MCFixupKindInfo::FKF_IsPCRel;
   if (!evaluateFixup(Layout, Fixup, &F, Target, FixedValue)) {
     // The fixup was unresolved, we need a relocation. Inform the object
     // writer of the relocation, and give it an opportunity to adjust the
     // fixup value if need be.
-    getWriter().RecordRelocation(*this, Layout, &F, Fixup, Target, FixedValue);
+    getWriter().RecordRelocation(*this, Layout, &F, Fixup, Target, IsPCRel,
+                                 FixedValue);
   }
-  return FixedValue;
+  return std::make_pair(FixedValue, IsPCRel);
 }
 
 void MCAssembler::Finish() {
@@ -856,9 +858,11 @@ void MCAssembler::Finish() {
         for (MCEncodedFragmentWithFixups::fixup_iterator it3 = F->fixup_begin(),
              ie3 = F->fixup_end(); it3 != ie3; ++it3) {
           MCFixup &Fixup = *it3;
-          uint64_t FixedValue = handleFixup(Layout, *F, Fixup);
+          uint64_t FixedValue;
+          bool IsPCRel;
+          std::tie(FixedValue, IsPCRel) = handleFixup(Layout, *F, Fixup);
           getBackend().applyFixup(Fixup, F->getContents().data(),
-                                  F->getContents().size(), FixedValue);
+                                  F->getContents().size(), FixedValue, IsPCRel);
         }
       }
     }

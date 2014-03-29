@@ -20,29 +20,9 @@ class MCAssembler;
 class MCFixup;
 class MCFragment;
 class MCObjectWriter;
+class MCSectionData;
 class MCSymbol;
 class MCValue;
-
-/// @name Relocation Data
-/// @{
-
-struct ELFRelocationEntry {
-  // Make these big enough for both 32-bit and 64-bit
-  uint64_t r_offset;
-  int Index;
-  unsigned Type;
-  const MCSymbol *Symbol;
-  uint64_t r_addend;
-  const MCFixup *Fixup;
-
-  ELFRelocationEntry()
-    : r_offset(0), Index(0), Type(0), Symbol(0), r_addend(0), Fixup(0) {}
-
-  ELFRelocationEntry(uint64_t RelocOffset, int Idx, unsigned RelType,
-                     const MCSymbol *Sym, uint64_t Addend, const MCFixup &Fixup)
-    : r_offset(RelocOffset), Index(Idx), Type(RelType), Symbol(Sym),
-      r_addend(Addend), Fixup(&Fixup) {}
-};
 
 class MCELFObjectTargetWriter {
   const uint8_t OSABI;
@@ -73,17 +53,8 @@ public:
 
   virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                 bool IsPCRel) const = 0;
-  virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
-                                         const MCValue &Target,
-                                         const MCFragment &F,
-                                         const MCFixup &Fixup,
-                                         bool IsPCRel) const;
-  virtual const MCSymbol *undefinedExplicitRelSym(const MCValue &Target,
-                                                  const MCFixup &Fixup,
-                                                  bool IsPCRel) const;
 
-  virtual void sortRelocs(const MCAssembler &Asm,
-                          std::vector<ELFRelocationEntry> &Relocs);
+  virtual bool needsRelocateWithSymbol(unsigned Type) const;
 
   /// @name Accessors
   /// @{

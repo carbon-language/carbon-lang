@@ -27,11 +27,10 @@ public:
                                         const MCAsmLayout &Layout) {
     //XXX: Implement if necessary.
   }
-  virtual void RecordRelocation(const MCAssembler &Asm,
-                                const MCAsmLayout &Layout,
-                                const MCFragment *Fragment,
-                                const MCFixup &Fixup,
-                                MCValue Target, uint64_t &FixedValue) {
+  void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
+                        const MCFragment *Fragment, const MCFixup &Fixup,
+                        MCValue Target, bool &IsPCRel,
+                        uint64_t &FixedValue) override {
     assert(!"Not implemented");
   }
 
@@ -46,7 +45,7 @@ public:
 
   virtual unsigned getNumFixupKinds() const { return 0; };
   virtual void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                          uint64_t Value) const;
+                          uint64_t Value, bool IsPCRel) const;
   virtual bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                                     const MCRelaxableFragment *DF,
                                     const MCAsmLayout &Layout) const {
@@ -71,7 +70,8 @@ void AMDGPUMCObjectWriter::WriteObject(MCAssembler &Asm,
 }
 
 void AMDGPUAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
-                                  unsigned DataSize, uint64_t Value) const {
+                                  unsigned DataSize, uint64_t Value,
+                                  bool IsPCRel) const {
 
   uint16_t *Dst = (uint16_t*)(Data + Fixup.getOffset());
   assert(Fixup.getKind() == FK_PCRel_4);

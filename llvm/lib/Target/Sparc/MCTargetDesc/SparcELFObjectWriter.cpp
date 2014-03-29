@@ -30,12 +30,6 @@ namespace {
   protected:
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel) const override;
-
-    virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
-                                           const MCValue &Target,
-                                           const MCFragment &F,
-                                           const MCFixup &Fixup,
-                                           bool IsPCRel) const;
   };
 }
 
@@ -108,23 +102,6 @@ unsigned SparcELFObjectWriter::GetRelocType(const MCValue &Target,
   }
 
   return ELF::R_SPARC_NONE;
-}
-
-const MCSymbol *SparcELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
-                                                     const MCValue &Target,
-                                                     const MCFragment &F,
-                                                     const MCFixup &Fixup,
-                                                     bool IsPCRel) const {
-
-  if (!Target.getSymA())
-    return NULL;
-  switch((unsigned)Fixup.getKind()) {
-  default: break;
-  case Sparc::fixup_sparc_got22:
-  case Sparc::fixup_sparc_got10:
-    return &Target.getSymA()->getSymbol().AliasedSymbol();
-  }
-  return NULL;
 }
 
 MCObjectWriter *llvm::createSparcELFObjectWriter(raw_ostream &OS,

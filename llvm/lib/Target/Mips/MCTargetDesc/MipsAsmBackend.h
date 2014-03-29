@@ -40,7 +40,7 @@ public:
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const;
 
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                  uint64_t Value) const;
+                  uint64_t Value, bool IsPCRel) const;
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const;
 

@@ -123,23 +123,19 @@ static bool getARMFixupKindMachOInfo(unsigned Kind, unsigned &RelocType,
   //      0 - arm instructions
   //      1 - thumb instructions
   case ARM::fixup_arm_movt_hi16:
-  case ARM::fixup_arm_movt_hi16_pcrel:
     RelocType = unsigned(MachO::ARM_RELOC_HALF);
     Log2Size = 1;
     return true;
   case ARM::fixup_t2_movt_hi16:
-  case ARM::fixup_t2_movt_hi16_pcrel:
     RelocType = unsigned(MachO::ARM_RELOC_HALF);
     Log2Size = 3;
     return true;
 
   case ARM::fixup_arm_movw_lo16:
-  case ARM::fixup_arm_movw_lo16_pcrel:
     RelocType = unsigned(MachO::ARM_RELOC_HALF);
     Log2Size = 0;
     return true;
   case ARM::fixup_t2_movw_lo16:
-  case ARM::fixup_t2_movw_lo16_pcrel:
     RelocType = unsigned(MachO::ARM_RELOC_HALF);
     Log2Size = 2;
     return true;
@@ -206,7 +202,6 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
   switch ((unsigned)Fixup.getKind()) {
   default: break;
   case ARM::fixup_arm_movt_hi16:
-  case ARM::fixup_arm_movt_hi16_pcrel:
     MovtBit = 1;
     // The thumb bit shouldn't be set in the 'other-half' bit of the
     // relocation, but it will be set in FixedValue if the base symbol
@@ -215,13 +210,11 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
       FixedValue &= 0xfffffffe;
     break;
   case ARM::fixup_t2_movt_hi16:
-  case ARM::fixup_t2_movt_hi16_pcrel:
     if (A_SD->getFlags() & SF_ThumbFunc)
       FixedValue &= 0xfffffffe;
     MovtBit = 1;
     // Fallthrough
   case ARM::fixup_t2_movw_lo16:
-  case ARM::fixup_t2_movw_lo16_pcrel:
     ThumbBit = 1;
     break;
   }
@@ -465,15 +458,11 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
     switch ((unsigned)Fixup.getKind()) {
     default: break;
     case ARM::fixup_arm_movw_lo16:
-    case ARM::fixup_arm_movw_lo16_pcrel:
     case ARM::fixup_t2_movw_lo16:
-    case ARM::fixup_t2_movw_lo16_pcrel:
       Value = (FixedValue >> 16) & 0xffff;
       break;
     case ARM::fixup_arm_movt_hi16:
-    case ARM::fixup_arm_movt_hi16_pcrel:
     case ARM::fixup_t2_movt_hi16:
-    case ARM::fixup_t2_movt_hi16_pcrel:
       Value = FixedValue & 0xffff;
       break;
     }

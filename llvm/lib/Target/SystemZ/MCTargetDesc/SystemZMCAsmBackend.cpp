@@ -48,7 +48,7 @@ public:
   }
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override;
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                  uint64_t Value) const override;
+                  uint64_t Value, bool IsPCRel) const override;
   bool mayNeedRelaxation(const MCInst &Inst) const override {
     return false;
   }
@@ -85,7 +85,8 @@ SystemZMCAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
 }
 
 void SystemZMCAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
-                                     unsigned DataSize, uint64_t Value) const {
+                                     unsigned DataSize, uint64_t Value,
+                                     bool IsPCRel) const {
   MCFixupKind Kind = Fixup.getKind();
   unsigned Offset = Fixup.getOffset();
   unsigned Size = (getFixupKindInfo(Kind).TargetSize + 7) / 8;

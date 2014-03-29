@@ -229,7 +229,7 @@ namespace {
       SparcAsmBackend(T), OSType(OSType) { }
 
     void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                    uint64_t Value) const {
+                    uint64_t Value, bool IsPCRel) const {
 
       Value = adjustFixupValue(Fixup.getKind(), Value);
       if (!Value) return;           // Doesn't change encoding.

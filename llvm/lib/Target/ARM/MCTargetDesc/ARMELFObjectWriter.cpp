@@ -36,10 +36,8 @@ namespace {
 
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel) const override;
-    const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
-                                   const MCValue &Target, const MCFragment &F,
-                                   const MCFixup &Fixup,
-                                   bool IsPCRel) const override;
+
+    bool needsRelocateWithSymbol(unsigned Type) const override;
   };
 }
 
@@ -50,90 +48,18 @@ ARMELFObjectWriter::ARMELFObjectWriter(uint8_t OSABI)
 
 ARMELFObjectWriter::~ARMELFObjectWriter() {}
 
-// In ARM, _MergedGlobals and other most symbols get emitted directly.
-// I.e. not as an offset to a section symbol.
-// This code is an approximation of what ARM/gcc does.
+bool ARMELFObjectWriter::needsRelocateWithSymbol(unsigned Type) const {
+  // FIXME: This is extremelly conservative. This really needs to use a
+  // whitelist with a clear explanation for why each realocation needs to
+  // point to the symbol, not to the section.
+  switch (Type) {
+  default:
+    return true;
 
-STATISTIC(PCRelCount, "Total number of PIC Relocations");
-STATISTIC(NonPCRelCount, "Total number of non-PIC relocations");
-
-const MCSymbol *ARMELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
-                                                   const MCValue &Target,
-                                                   const MCFragment &F,
-                                                   const MCFixup &Fixup,
-                                                   bool IsPCRel) const {
-  const MCSymbol &Symbol = Target.getSymA()->getSymbol().AliasedSymbol();
-  bool EmitThisSym = false;
-
-  const MCSectionELF &Section =
-    static_cast<const MCSectionELF&>(Symbol.getSection());
-  bool InNormalSection = true;
-  unsigned RelocType = 0;
-  RelocType = GetRelocTypeInner(Target, Fixup, IsPCRel);
-  assert(!Target.getSymB() ||
-         Target.getSymB()->getKind() == MCSymbolRefExpr::VK_None);
-
-  DEBUG(
-      MCSymbolRefExpr::VariantKind Kind = Fixup.getAccessVariant();
-      dbgs() << "considering symbol "
-        << Section.getSectionName() << "/"
-        << Symbol.getName() << "/"
-        << " Rel:" << (unsigned)RelocType
-        << " Kind: " << (int)Kind
-        << " Tmp:"
-        << Symbol.isAbsolute() << "/" << Symbol.isDefined() << "/"
-        << Symbol.isVariable() << "/" << Symbol.isTemporary()
-        << " Counts:" << PCRelCount << "/" << NonPCRelCount << "\n");
-
-  if (IsPCRel) { ++PCRelCount;
-    switch (RelocType) {
-    default:
-      // Most relocation types are emitted as explicit symbols
-      InNormalSection =
-        StringSwitch<bool>(Section.getSectionName())
-        .Case(".data.rel.ro.local", false)
-        .Case(".data.rel", false)
-        .Case(".bss", false)
-        .Default(true);
-      EmitThisSym = true;
-      break;
-    case ELF::R_ARM_ABS32:
-      // But things get strange with R_ARM_ABS32
-      // In this case, most things that go in .rodata show up
-      // as section relative relocations
-      InNormalSection =
-        StringSwitch<bool>(Section.getSectionName())
-        .Case(".data.rel.ro.local", false)
-        .Case(".data.rel", false)
-        .Case(".rodata", false)
-        .Case(".bss", false)
-        .Default(true);
-      EmitThisSym = false;
-      break;
-    }
-  } else {
-    NonPCRelCount++;
-    InNormalSection =
-      StringSwitch<bool>(Section.getSectionName())
-      .Case(".data.rel.ro.local", false)
-      .Case(".rodata", false)
-      .Case(".data.rel", false)
-      .Case(".bss", false)
-      .Default(true);
-
-    switch (RelocType) {
-    default: EmitThisSym = true; break;
-    case ELF::R_ARM_ABS32: EmitThisSym = false; break;
-    case ELF::R_ARM_PREL31: EmitThisSym = false; break;
-    }
+  case ELF::R_ARM_PREL31:
+  case ELF::R_ARM_ABS32:
+    return false;
   }
-
-  if (EmitThisSym)
-    return &Symbol;
-  if (! Symbol.isTemporary() && InNormalSection) {
-    return &Symbol;
-  }
-  return NULL;
 }
 
 // Need to examine the Fixup when determining whether to 
@@ -191,19 +117,15 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
       Type = ELF::R_ARM_THM_JUMP24;
       break;
     case ARM::fixup_arm_movt_hi16:
-    case ARM::fixup_arm_movt_hi16_pcrel:
       Type = ELF::R_ARM_MOVT_PREL;
       break;
     case ARM::fixup_arm_movw_lo16:
-    case ARM::fixup_arm_movw_lo16_pcrel:
       Type = ELF::R_ARM_MOVW_PREL_NC;
       break;
     case ARM::fixup_t2_movt_hi16:
-    case ARM::fixup_t2_movt_hi16_pcrel:
       Type = ELF::R_ARM_THM_MOVT_PREL;
       break;
     case ARM::fixup_t2_movw_lo16:
-    case ARM::fixup_t2_movw_lo16_pcrel:
       Type = ELF::R_ARM_THM_MOVW_PREL_NC;
       break;
     case ARM::fixup_arm_thumb_bl:

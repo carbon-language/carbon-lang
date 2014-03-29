@@ -30,14 +30,6 @@ namespace {
                                        bool IsPCRel) const;
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel) const override;
-    virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
-                                           const MCValue &Target,
-                                           const MCFragment &F,
-                                           const MCFixup &Fixup,
-                                           bool IsPCRel) const;
-    virtual const MCSymbol *undefinedExplicitRelSym(const MCValue &Target,
-                                                    const MCFixup &Fixup,
-                                                    bool IsPCRel) const;
   };
 }
 
@@ -384,54 +376,6 @@ unsigned PPCELFObjectWriter::GetRelocType(const MCValue &Target,
                                           const MCFixup &Fixup,
                                           bool IsPCRel) const {
   return getRelocTypeInner(Target, Fixup, IsPCRel);
-}
-
-const MCSymbol *PPCELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
-                                                   const MCValue &Target,
-                                                   const MCFragment &F,
-                                                   const MCFixup &Fixup,
-                                                   bool IsPCRel) const {
-  assert(Target.getSymA() && "SymA cannot be 0");
-  MCSymbolRefExpr::VariantKind Modifier = Fixup.getAccessVariant();
-
-  bool EmitThisSym;
-  switch (Modifier) {
-  // GOT references always need a relocation, even if the
-  // target symbol is local.
-  case MCSymbolRefExpr::VK_GOT:
-  case MCSymbolRefExpr::VK_PPC_GOT_LO:
-  case MCSymbolRefExpr::VK_PPC_GOT_HI:
-  case MCSymbolRefExpr::VK_PPC_GOT_HA:
-    EmitThisSym = true;
-    break;
-  default:
-    EmitThisSym = false;
-    break;
-  } 
-
-  if (EmitThisSym)
-    return &Target.getSymA()->getSymbol().AliasedSymbol();
-  return NULL;
-}
-
-const MCSymbol *PPCELFObjectWriter::undefinedExplicitRelSym(const MCValue &Target,
-                                                            const MCFixup &Fixup,
-                                                            bool IsPCRel) const {
-  assert(Target.getSymA() && "SymA cannot be 0");
-  const MCSymbol &Symbol = Target.getSymA()->getSymbol().AliasedSymbol();
-
-  unsigned RelocType = getRelocTypeInner(Target, Fixup, IsPCRel);
-
-  // The .odp creation emits a relocation against the symbol ".TOC." which
-  // create a R_PPC64_TOC relocation. However the relocation symbol name
-  // in final object creation should be NULL, since the symbol does not
-  // really exist, it is just the reference to TOC base for the current
-  // object file.
-  bool EmitThisSym = RelocType != ELF::R_PPC64_TOC;
-
-  if (EmitThisSym && !Symbol.isTemporary())
-    return &Symbol;
-  return NULL;
 }
 
 MCObjectWriter *llvm::createPPCELFObjectWriter(raw_ostream &OS,

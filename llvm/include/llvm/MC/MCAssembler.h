@@ -979,8 +979,8 @@ private:
   /// finishLayout - Finalize a layout, including fragment lowering.
   void finishLayout(MCAsmLayout &Layout);
 
-  uint64_t handleFixup(const MCAsmLayout &Layout,
-                       MCFragment &F, const MCFixup &Fixup);
+  std::pair<uint64_t, bool> handleFixup(const MCAsmLayout &Layout,
+                                        MCFragment &F, const MCFixup &Fixup);
 
 public:
   /// Compute the effective fragment size assuming it is laid out at the given

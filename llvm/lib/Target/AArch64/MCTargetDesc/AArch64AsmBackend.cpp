@@ -177,7 +177,7 @@ public:
   }
 
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                  uint64_t Value) const {
+                  uint64_t Value, bool IsPCRel) const {
     unsigned NumBytes = getFixupKindInfo(Fixup.getKind()).TargetSize / 8;
     Value = adjustFixupValue(Fixup.getKind(), Value);
     if (!Value) return;           // Doesn't change encoding.

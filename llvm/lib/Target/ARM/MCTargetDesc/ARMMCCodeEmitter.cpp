@@ -975,19 +975,6 @@ getT2AddrModeImm0_1020s4OpValue(const MCInst &MI, unsigned OpIdx,
   return (Reg << 8) | Imm8;
 }
 
-// FIXME: This routine assumes that a binary
-// expression will always result in a PCRel expression
-// In reality, its only true if one or more subexpressions
-// is itself a PCRel (i.e. "." in asm or some other pcrel construct)
-// but this is good enough for now.
-static bool EvaluateAsPCRel(const MCExpr *Expr) {
-  switch (Expr->getKind()) {
-  default: llvm_unreachable("Unexpected expression type");
-  case MCExpr::SymbolRef: return false;
-  case MCExpr::Binary: return true;
-  }
-}
-
 uint32_t
 ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
                                       SmallVectorImpl<MCFixup> &Fixups,
@@ -1023,24 +1010,12 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
     switch (ARM16Expr->getKind()) {
     default: llvm_unreachable("Unsupported ARMFixup");
     case ARMMCExpr::VK_ARM_HI16:
-      if (!isTargetMachO(STI) && EvaluateAsPCRel(E))
-        Kind = MCFixupKind(isThumb2(STI)
-                           ? ARM::fixup_t2_movt_hi16_pcrel
-                           : ARM::fixup_arm_movt_hi16_pcrel);
-      else
-        Kind = MCFixupKind(isThumb2(STI)
-                           ? ARM::fixup_t2_movt_hi16
-                           : ARM::fixup_arm_movt_hi16);
+      Kind = MCFixupKind(isThumb2(STI) ? ARM::fixup_t2_movt_hi16
+                                       : ARM::fixup_arm_movt_hi16);
       break;
     case ARMMCExpr::VK_ARM_LO16:
-      if (!isTargetMachO(STI) && EvaluateAsPCRel(E))
-        Kind = MCFixupKind(isThumb2(STI)
-                           ? ARM::fixup_t2_movw_lo16_pcrel
-                           : ARM::fixup_arm_movw_lo16_pcrel);
-      else
-        Kind = MCFixupKind(isThumb2(STI)
-                           ? ARM::fixup_t2_movw_lo16
-                           : ARM::fixup_arm_movw_lo16);
+      Kind = MCFixupKind(isThumb2(STI) ? ARM::fixup_t2_movw_lo16
+                                       : ARM::fixup_arm_movw_lo16);
       break;
     }
     Fixups.push_back(MCFixup::Create(0, E, Kind, MI.getLoc()));
@@ -1050,14 +1025,8 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
   // it's just a plain immediate expression, and those evaluate to
   // the lower 16 bits of the expression regardless of whether
   // we have a movt or a movw.
-  if (!isTargetMachO(STI) && EvaluateAsPCRel(E))
-    Kind = MCFixupKind(isThumb2(STI)
-                       ? ARM::fixup_t2_movw_lo16_pcrel
-                       : ARM::fixup_arm_movw_lo16_pcrel);
-  else
-    Kind = MCFixupKind(isThumb2(STI)
-                       ? ARM::fixup_t2_movw_lo16
-                       : ARM::fixup_arm_movw_lo16);
+  Kind = MCFixupKind(isThumb2(STI) ? ARM::fixup_t2_movw_lo16
+                                   : ARM::fixup_arm_movw_lo16);
   Fixups.push_back(MCFixup::Create(0, E, Kind, MI.getLoc()));
   return 0;
 }

@@ -97,10 +97,6 @@ public:
 { "fixup_arm_movw_lo16",     0,            20,  0 },
 { "fixup_t2_movt_hi16",      0,            20,  0 },
 { "fixup_t2_movw_lo16",      0,            20,  0 },
-{ "fixup_arm_movt_hi16_pcrel", 0,          20,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_arm_movw_lo16_pcrel", 0,          20,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_t2_movt_hi16_pcrel", 0,           20,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_t2_movw_lo16_pcrel", 0,           20,  MCFixupKindInfo::FKF_IsPCRel },
     };
     const static MCFixupKindInfo InfosBE[ARM::NumTargetFixupKinds] = {
 // This table *must* be in the order that the fixup_* kinds are defined in
@@ -138,10 +134,6 @@ public:
 { "fixup_arm_movw_lo16",     12,           20,  0 },
 { "fixup_t2_movt_hi16",      12,           20,  0 },
 { "fixup_t2_movw_lo16",      12,           20,  0 },
-{ "fixup_arm_movt_hi16_pcrel", 12,         20,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_arm_movw_lo16_pcrel", 12,         20,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_t2_movt_hi16_pcrel", 12,          20,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_t2_movw_lo16_pcrel", 12,          20,  MCFixupKindInfo::FKF_IsPCRel },
     };
 
     if (Kind < FirstTargetFixupKind)
@@ -161,7 +153,7 @@ public:
 
 
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                  uint64_t Value) const override;
+                  uint64_t Value, bool IsPCRel) const override;
 
   bool mayNeedRelaxation(const MCInst &Inst) const override;
 
@@ -315,7 +307,7 @@ bool ARMAsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
 }
 
 static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
-                                 MCContext *Ctx = NULL) {
+                                 bool IsPCRel, MCContext *Ctx) {
   unsigned Kind = Fixup.getKind();
   switch (Kind) {
   default:
@@ -325,11 +317,10 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   case FK_Data_4:
     return Value;
   case ARM::fixup_arm_movt_hi16:
-    Value >>= 16;
+    if (!IsPCRel)
+      Value >>= 16;
     // Fallthrough
-  case ARM::fixup_arm_movw_lo16:
-  case ARM::fixup_arm_movt_hi16_pcrel:
-  case ARM::fixup_arm_movw_lo16_pcrel: {
+  case ARM::fixup_arm_movw_lo16: {
     unsigned Hi4 = (Value & 0xF000) >> 12;
     unsigned Lo12 = Value & 0x0FFF;
     // inst{19-16} = Hi4;
@@ -338,12 +329,10 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
     return Value;
   }
   case ARM::fixup_t2_movt_hi16:
-    Value >>= 16;
+    if (!IsPCRel)
+      Value >>= 16;
     // Fallthrough
-  case ARM::fixup_t2_movw_lo16:
-  case ARM::fixup_t2_movt_hi16_pcrel:  //FIXME: Shouldn't this be shifted like
-                                       // the other hi16 fixup?
-  case ARM::fixup_t2_movw_lo16_pcrel: {
+  case ARM::fixup_t2_movw_lo16: {
     unsigned Hi4 = (Value & 0xF000) >> 12;
     unsigned i = (Value & 0x800) >> 11;
     unsigned Mid3 = (Value & 0x700) >> 8;
@@ -629,7 +618,7 @@ void ARMAsmBackend::processFixupValue(const MCAssembler &Asm,
   // Try to get the encoded value for the fixup as-if we're mapping it into
   // the instruction. This allows adjustFixupValue() to issue a diagnostic
   // if the value aren't invalid.
-  (void)adjustFixupValue(Fixup, Value, &Asm.getContext());
+  (void)adjustFixupValue(Fixup, Value, false, &Asm.getContext());
 }
 
 /// getFixupKindNumBytes - The number of bytes the fixup may change.
@@ -670,12 +659,8 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case ARM::fixup_arm_thumb_blx:
   case ARM::fixup_arm_movt_hi16:
   case ARM::fixup_arm_movw_lo16:
-  case ARM::fixup_arm_movt_hi16_pcrel:
-  case ARM::fixup_arm_movw_lo16_pcrel:
   case ARM::fixup_t2_movt_hi16:
   case ARM::fixup_t2_movw_lo16:
-  case ARM::fixup_t2_movt_hi16_pcrel:
-  case ARM::fixup_t2_movw_lo16_pcrel:
     return 4;
   }
 }
@@ -720,21 +705,18 @@ static unsigned getFixupKindContainerSizeBytes(unsigned Kind) {
   case ARM::fixup_arm_thumb_blx:
   case ARM::fixup_arm_movt_hi16:
   case ARM::fixup_arm_movw_lo16:
-  case ARM::fixup_arm_movt_hi16_pcrel:
-  case ARM::fixup_arm_movw_lo16_pcrel:
   case ARM::fixup_t2_movt_hi16:
   case ARM::fixup_t2_movw_lo16:
-  case ARM::fixup_t2_movt_hi16_pcrel:
-  case ARM::fixup_t2_movw_lo16_pcrel:
     // Instruction size is 4 bytes.
     return 4;
   }
 }
 
 void ARMAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
-                               unsigned DataSize, uint64_t Value) const {
+                               unsigned DataSize, uint64_t Value,
+                               bool IsPCRel) const {
   unsigned NumBytes = getFixupKindNumBytes(Fixup.getKind());
-  Value = adjustFixupValue(Fixup, Value);
+  Value = adjustFixupValue(Fixup, Value, IsPCRel, nullptr);
   if (!Value) return;           // Doesn't change encoding.
 
   unsigned Offset = Fixup.getOffset();

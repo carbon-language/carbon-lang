@@ -26,7 +26,7 @@
 // CHECK-NEXT:     AddressAlignment: 8
 // CHECK-NEXT:     EntrySize: 24
 // CHECK-NEXT:     Relocations [
-// CHECK-NEXT:       0x1 R_X86_64_PC8 - 0x0
-// CHECK-NEXT:       0x3 R_X86_64_PC32 - 0x0
+// CHECK-NEXT:       0x1 R_X86_64_PC8 - 0xFFFFFFFFFFFFFFFF
+// CHECK-NEXT:       0x3 R_X86_64_PC32 - 0xFFFFFFFFFFFFFEFC
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }

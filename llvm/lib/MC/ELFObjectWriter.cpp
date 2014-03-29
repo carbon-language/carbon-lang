@@ -76,6 +76,27 @@ public:
                    uint8_t other, uint32_t shndx, bool Reserved);
 };
 
+struct ELFRelocationEntry {
+  uint64_t Offset; // Where is the relocation.
+  bool UseSymbol;  // Relocate with a symbol, not the section.
+  union {
+    const MCSymbol *Symbol;       // The symbol to relocate with.
+    const MCSectionData *Section; // The section to relocate with.
+  };
+  unsigned Type;   // The type of the relocation.
+  uint64_t Addend; // The addend to use.
+
+  ELFRelocationEntry(uint64_t Offset, const MCSymbol *Symbol, unsigned Type,
+                     uint64_t Addend)
+      : Offset(Offset), UseSymbol(true), Symbol(Symbol), Type(Type),
+        Addend(Addend) {}
+
+  ELFRelocationEntry(uint64_t Offset, const MCSectionData *Section,
+                     unsigned Type, uint64_t Addend)
+      : Offset(Offset), UseSymbol(false), Section(Section), Type(Type),
+        Addend(Addend) {}
+};
+
 class ELFObjectWriter : public MCObjectWriter {
   FragmentWriter FWriter;
 
@@ -125,8 +146,8 @@ class ELFObjectWriter : public MCObjectWriter {
     SmallPtrSet<const MCSymbol *, 16> WeakrefUsedInReloc;
     DenseMap<const MCSymbol *, const MCSymbol *> Renames;
 
-    llvm::DenseMap<const MCSectionData*,
-                   std::vector<ELFRelocationEntry> > Relocations;
+    llvm::DenseMap<const MCSectionData *, std::vector<ELFRelocationEntry>>
+    Relocations;
     DenseMap<const MCSection*, uint64_t> SectionStringTableIndex;
 
     /// @}
@@ -153,27 +174,7 @@ class ELFObjectWriter : public MCObjectWriter {
     unsigned ShstrtabIndex;
 
 
-    const MCSymbol *SymbolToReloc(const MCAssembler &Asm,
-                                  const MCValue &Target,
-                                  const MCFragment &F,
-                                  const MCFixup &Fixup,
-                                  bool IsPCRel) const;
-
     // TargetObjectWriter wrappers.
-    const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
-                                   const MCValue &Target,
-                                   const MCFragment &F,
-                                   const MCFixup &Fixup,
-                                   bool IsPCRel) const {
-      return TargetObjectWriter->ExplicitRelSym(Asm, Target, F, Fixup, IsPCRel);
-    }
-    const MCSymbol *undefinedExplicitRelSym(const MCValue &Target,
-                                            const MCFixup &Fixup,
-                                            bool IsPCRel) const {
-      return TargetObjectWriter->undefinedExplicitRelSym(Target, Fixup,
-                                                         IsPCRel);
-    }
-
     bool is64Bit() const { return TargetObjectWriter->is64Bit(); }
     bool hasRelocationAddend() const {
       return TargetObjectWriter->hasRelocationAddend();
@@ -213,9 +214,14 @@ class ELFObjectWriter : public MCObjectWriter {
                           const MCAsmLayout &Layout,
                           SectionIndexMapTy &SectionIndexMap);
 
+    bool shouldRelocateWithSymbol(const MCSymbolRefExpr *RefA,
+                                  const MCSymbolData *SD, uint64_t C,
+                                  unsigned Type) const;
+
     void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
                           const MCFragment *Fragment, const MCFixup &Fixup,
-                          MCValue Target, uint64_t &FixedValue) override;
+                          MCValue Target, bool &IsPCRel,
+                          uint64_t &FixedValue) override;
 
     uint64_t getSymbolIndexInSymbolTable(const MCAssembler &Asm,
                                          const MCSymbol *S);
@@ -716,146 +722,186 @@ void ELFObjectWriter::WriteSymbolTable(MCDataFragment *SymtabF,
   }
 }
 
-const MCSymbol *ELFObjectWriter::SymbolToReloc(const MCAssembler &Asm,
-                                               const MCValue &Target,
-                                               const MCFragment &F,
-                                               const MCFixup &Fixup,
-                                               bool IsPCRel) const {
-  const MCSymbol &Symbol = Target.getSymA()->getSymbol();
-  const MCSymbol &ASymbol = Symbol.AliasedSymbol();
-  const MCSymbol *Renamed = Renames.lookup(&Symbol);
-  const MCSymbolData &SD = Asm.getSymbolData(Symbol);
+// It is always valid to create a relocation with a symbol. It is preferable
+// to use a relocation with a section if that is possible. Using the section
+// allows us to omit some local symbols from the symbol table.
+bool ELFObjectWriter::shouldRelocateWithSymbol(const MCSymbolRefExpr *RefA,
+                                               const MCSymbolData *SD,
+                                               uint64_t C,
+                                               unsigned Type) const {
+  // A PCRel relocation to an absolute value has no symbol (or section). We
+  // represent that with a relocation to a null section.
+  if (!RefA)
+    return false;
 
-  if (ASymbol.isUndefined()) {
-    if (Renamed)
-      return Renamed;
-    return undefinedExplicitRelSym(Target, Fixup, IsPCRel);
+  MCSymbolRefExpr::VariantKind Kind = RefA->getKind();
+  switch (Kind) {
+  default:
+    break;
+  // The .odp creation emits a relocation against the symbol ".TOC." which
+  // create a R_PPC64_TOC relocation. However the relocation symbol name
+  // in final object creation should be NULL, since the symbol does not
+  // really exist, it is just the reference to TOC base for the current
+  // object file. Since the symbol is undefined, returning false results
+  // in a relocation with a null section which is the desired result.
+  case MCSymbolRefExpr::VK_PPC_TOCBASE:
+    return false;
+
+  // These VariantKind cause the relocation to refer to something other than
+  // the symbol itself, like a linker generated table. Since the address of
+  // symbol is not relevant, we cannot replace the symbol with the
+  // section and patch the difference in the addend.
+  case MCSymbolRefExpr::VK_GOT:
+  case MCSymbolRefExpr::VK_PLT:
+  case MCSymbolRefExpr::VK_GOTPCREL:
+  case MCSymbolRefExpr::VK_Mips_GOT:
+  case MCSymbolRefExpr::VK_PPC_GOT_LO:
+  case MCSymbolRefExpr::VK_PPC_GOT_HI:
+  case MCSymbolRefExpr::VK_PPC_GOT_HA:
+    return true;
   }
 
-  if (SD.isExternal()) {
-    if (Renamed)
-      return Renamed;
-    return &Symbol;
+  // An undefined symbol is not in any section, so the relocation has to point
+  // to the symbol itself.
+  const MCSymbol &Sym = SD->getSymbol();
+  if (Sym.isUndefined())
+    return true;
+
+  unsigned Binding = MCELF::GetBinding(*SD);
+  switch(Binding) {
+  default:
+    llvm_unreachable("Invalid Binding");
+  case ELF::STB_LOCAL:
+    break;
+  case ELF::STB_WEAK:
+    // If the symbol is weak, it might be overridden by a symbol in another
+    // file. The relocation has to point to the symbol so that the linker
+    // can update it.
+    return true;
+  case ELF::STB_GLOBAL:
+    // Global ELF symbols can be preempted by the dynamic linker. The relocation
+    // has to point to the symbol for a reason analogous to the STB_WEAK case.
+    return true;
   }
 
-  const MCSectionELF &Section =
-    static_cast<const MCSectionELF&>(ASymbol.getSection());
-  const SectionKind secKind = Section.getKind();
-
-  if (secKind.isBSS())
-    return ExplicitRelSym(Asm, Target, F, Fixup, IsPCRel);
-
-  if (secKind.isThreadLocal()) {
-    if (Renamed)
-      return Renamed;
-    return &Symbol;
+  // If a relocation points to a mergeable section, we have to be careful.
+  // If the offset is zero, a relocation with the section will encode the
+  // same information. With a non-zero offset, the situation is different.
+  // For example, a relocation can point 42 bytes past the end of a string.
+  // If we change such a relocation to use the section, the linker would think
+  // that it pointed to another string and subtracting 42 at runtime will
+  // produce the wrong value.
+  auto &Sec = cast<MCSectionELF>(Sym.getSection());
+  unsigned Flags = Sec.getFlags();
+  if (Flags & ELF::SHF_MERGE) {
+    if (C != 0)
+      return true;
   }
 
-  MCSymbolRefExpr::VariantKind Kind = Target.getSymA()->getKind();
-  const MCSectionELF &Sec2 =
-    static_cast<const MCSectionELF&>(F.getParent()->getSection());
+  // Most TLS relocations use a got, so they need the symbol. Even those that
+  // are just an offset (@tpoff), require a symbol in some linkers (gold,
+  // but not bfd ld).
+  if (Flags & ELF::SHF_TLS)
+    return true;
 
-  if (&Sec2 != &Section &&
-      (Kind == MCSymbolRefExpr::VK_PLT ||
-       Kind == MCSymbolRefExpr::VK_GOTPCREL ||
-       Kind == MCSymbolRefExpr::VK_GOTOFF)) {
-    if (Renamed)
-      return Renamed;
-    return &Symbol;
-  }
-
-  if (Section.getFlags() & ELF::SHF_MERGE) {
-    if (Target.getConstant() == 0)
-      return ExplicitRelSym(Asm, Target, F, Fixup, IsPCRel);
-    if (Renamed)
-      return Renamed;
-    return &Symbol;
-  }
-
-  return ExplicitRelSym(Asm, Target, F, Fixup, IsPCRel);
-
+  if (TargetObjectWriter->needsRelocateWithSymbol(Type))
+    return true;
+  return false;
 }
-
 
 void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
                                        const MCAsmLayout &Layout,
                                        const MCFragment *Fragment,
                                        const MCFixup &Fixup,
                                        MCValue Target,
+                                       bool &IsPCRel,
                                        uint64_t &FixedValue) {
-  int64_t Addend = 0;
-  int Index = 0;
-  int64_t Value = Target.getConstant();
-  const MCSymbol *RelocSymbol = NULL;
+  const MCSectionData *FixupSection = Fragment->getParent();
+  uint64_t C = Target.getConstant();
+  uint64_t FixupOffset = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
 
-  bool IsPCRel = isFixupKindPCRel(Asm, Fixup.getKind());
-  if (!Target.isAbsolute()) {
-    const MCSymbol &Symbol = Target.getSymA()->getSymbol();
-    const MCSymbol &ASymbol = Symbol.AliasedSymbol();
-    RelocSymbol = SymbolToReloc(Asm, Target, *Fragment, Fixup, IsPCRel);
+  if (const MCSymbolRefExpr *RefB = Target.getSymB()) {
+    assert(RefB->getKind() == MCSymbolRefExpr::VK_None &&
+           "Should not have constructed this");
 
-    if (const MCSymbolRefExpr *RefB = Target.getSymB()) {
-      const MCSymbol &SymbolB = RefB->getSymbol();
-      MCSymbolData &SDB = Asm.getSymbolData(SymbolB);
-      IsPCRel = true;
+    // Let A, B and C being the components of Target and R be the location of
+    // the fixup. If the fixup is not pcrel, we want to compute (A - B + C).
+    // If it is pcrel, we want to compute (A - B + C - R).
 
-      if (!SDB.getFragment())
-        Asm.getContext().FatalError(
-            Fixup.getLoc(),
-            Twine("symbol '") + SymbolB.getName() +
-                "' can not be undefined in a subtraction expression");
+    // In general, ELF has no relocations for -B. It can only represent (A + C)
+    // or (A + C - R). If B = R + K and the relocation is not pcrel, we can
+    // replace B to implement it: (A - R - K + C)
+    if (IsPCRel)
+      Asm.getContext().FatalError(
+          Fixup.getLoc(),
+          "No relocation available to represent this relative expression");
 
-      // Offset of the symbol in the section
-      int64_t a = Layout.getSymbolOffset(&SDB);
+    const MCSymbol &SymB = RefB->getSymbol();
 
-      // Offset of the relocation in the section
-      int64_t b = Layout.getFragmentOffset(Fragment) + Fixup.getOffset();
-      Value += b - a;
-    }
+    if (SymB.isUndefined())
+      Asm.getContext().FatalError(
+          Fixup.getLoc(),
+          Twine("symbol '") + SymB.getName() +
+              "' can not be undefined in a subtraction expression");
 
-    if (!RelocSymbol) {
-      MCSymbolData &SD = Asm.getSymbolData(ASymbol);
-      MCFragment *F = SD.getFragment();
+    assert(!SymB.isAbsolute() && "Should have been folded");
+    const MCSection &SecB = SymB.getSection();
+    if (&SecB != &FixupSection->getSection())
+      Asm.getContext().FatalError(
+          Fixup.getLoc(), "Cannot represent a difference across sections");
 
-      if (F) {
-        Index = F->getParent()->getOrdinal() + 1;
-        // Offset of the symbol in the section
-        Value += Layout.getSymbolOffset(&SD);
-      } else {
-        Index = 0;
-      }
-    } else {
-      if (Target.getSymA()->getKind() == MCSymbolRefExpr::VK_WEAKREF)
-        WeakrefUsedInReloc.insert(RelocSymbol);
-      else
-        UsedInReloc.insert(RelocSymbol);
-      Index = -1;
-    }
-    Addend = Value;
-    if (hasRelocationAddend())
-      Value = 0;
+    const MCSymbolData &SymBD = Asm.getSymbolData(SymB);
+    uint64_t SymBOffset = Layout.getSymbolOffset(&SymBD);
+    uint64_t K = SymBOffset - FixupOffset;
+    IsPCRel = true;
+    C -= K;
   }
 
-  FixedValue = Value;
+  // We either rejected the fixup or folded B into C at this point.
+  const MCSymbolRefExpr *RefA = Target.getSymA();
+  const MCSymbol *SymA = RefA ? &RefA->getSymbol() : nullptr;
+  const MCSymbolData *SymAD = SymA ? &Asm.getSymbolData(*SymA) : nullptr;
+
   unsigned Type = GetRelocType(Target, Fixup, IsPCRel);
-  MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
-    MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
+  bool RelocateWithSymbol = shouldRelocateWithSymbol(RefA, SymAD, C, Type);
+  if (!RelocateWithSymbol && SymA && !SymA->isUndefined())
+    C += Layout.getSymbolOffset(SymAD);
+
+  uint64_t Addend = 0;
+  if (hasRelocationAddend()) {
+    Addend = C;
+    C = 0;
+  }
+
+  FixedValue = C;
+
+  // FIXME: What is this!?!?
+  MCSymbolRefExpr::VariantKind Modifier =
+      RefA ? RefA->getKind() : MCSymbolRefExpr::VK_None;
   if (RelocNeedsGOT(Modifier))
     NeedsGOT = true;
 
-  uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) +
-    Fixup.getOffset();
+  if (!RelocateWithSymbol) {
+    const MCSection *SecA =
+        (SymA && !SymA->isUndefined()) ? &SymA->getSection() : nullptr;
+    const MCSectionData *SecAD = SecA ? &Asm.getSectionData(*SecA) : nullptr;
+    ELFRelocationEntry Rec(FixupOffset, SecAD, Type, Addend);
+    Relocations[FixupSection].push_back(Rec);
+    return;
+  }
 
-  if (!hasRelocationAddend())
-    Addend = 0;
+  if (SymA) {
+    if (const MCSymbol *R = Renames.lookup(SymA))
+      SymA = R;
 
-  if (is64Bit())
-    assert(isInt<64>(Addend));
-  else
-    assert(isInt<32>(Addend));
-
-  ELFRelocationEntry ERE(RelocOffset, Index, Type, RelocSymbol, Addend, Fixup);
-  Relocations[Fragment->getParent()].push_back(ERE);
+    if (RefA->getKind() == MCSymbolRefExpr::VK_WEAKREF)
+      WeakrefUsedInReloc.insert(SymA);
+    else
+      UsedInReloc.insert(SymA);
+  }
+  ELFRelocationEntry Rec(FixupOffset, SymA, Type, Addend);
+  Relocations[FixupSection].push_back(Rec);
+  return;
 }
 
 
@@ -1154,51 +1200,71 @@ void ELFObjectWriter::WriteSecHdrEntry(uint32_t Name, uint32_t Type,
   WriteWord(EntrySize); // sh_entsize
 }
 
+// ELF doesn't require relocations to be in any order. We sort by the r_offset,
+// just to match gnu as for easier comparison. The use type is an arbitrary way
+// of making the sort deterministic.
+static int cmpRel(const ELFRelocationEntry *AP, const ELFRelocationEntry *BP) {
+  const ELFRelocationEntry &A = *AP;
+  const ELFRelocationEntry &B = *BP;
+  if (A.Offset != B.Offset)
+    return B.Offset - A.Offset;
+  if (B.Type != A.Type)
+    return A.Type - B.Type;
+  llvm_unreachable("ELFRelocs might be unstable!");
+}
+
+static void sortRelocs(const MCAssembler &Asm,
+                       std::vector<ELFRelocationEntry> &Relocs) {
+  array_pod_sort(Relocs.begin(), Relocs.end(), cmpRel);
+}
+
 void ELFObjectWriter::WriteRelocationsFragment(const MCAssembler &Asm,
                                                MCDataFragment *F,
                                                const MCSectionData *SD) {
   std::vector<ELFRelocationEntry> &Relocs = Relocations[SD];
 
-  // Sort the relocation entries. Most targets just sort by r_offset, but some
-  // (e.g., MIPS) have additional constraints.
-  TargetObjectWriter->sortRelocs(Asm, Relocs);
+  sortRelocs(Asm, Relocs);
 
   for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
-    ELFRelocationEntry entry = Relocs[e - i - 1];
+    const ELFRelocationEntry &Entry = Relocs[e - i - 1];
 
-    if (!entry.Index)
-      ;
-    // FIXME: this is most likely a bug if index overflows.
-    else if (entry.Index < 0)
-      entry.Index = getSymbolIndexInSymbolTable(Asm, entry.Symbol);
-    else
-      entry.Index += FileSymbolData.size() + LocalSymbolData.size();
+    unsigned Index;
+    if (Entry.UseSymbol) {
+      Index = getSymbolIndexInSymbolTable(Asm, Entry.Symbol);
+    } else {
+      const MCSectionData *Sec = Entry.Section;
+      if (Sec)
+        Index = Sec->getOrdinal() + FileSymbolData.size() +
+                LocalSymbolData.size() + 1;
+      else
+        Index = 0;
+    }
+
     if (is64Bit()) {
-      write(*F, entry.r_offset);
+      write(*F, Entry.Offset);
       if (TargetObjectWriter->isN64()) {
-        write(*F, uint32_t(entry.Index));
+        write(*F, uint32_t(Index));
 
-        write(*F, TargetObjectWriter->getRSsym(entry.Type));
-        write(*F, TargetObjectWriter->getRType3(entry.Type));
-        write(*F, TargetObjectWriter->getRType2(entry.Type));
-        write(*F, TargetObjectWriter->getRType(entry.Type));
-      }
-      else {
+        write(*F, TargetObjectWriter->getRSsym(Entry.Type));
+        write(*F, TargetObjectWriter->getRType3(Entry.Type));
+        write(*F, TargetObjectWriter->getRType2(Entry.Type));
+        write(*F, TargetObjectWriter->getRType(Entry.Type));
+      } else {
         struct ELF::Elf64_Rela ERE64;
-        ERE64.setSymbolAndType(entry.Index, entry.Type);
+        ERE64.setSymbolAndType(Index, Entry.Type);
         write(*F, ERE64.r_info);
       }
       if (hasRelocationAddend())
-        write(*F, entry.r_addend);
+        write(*F, Entry.Addend);
     } else {
-      write(*F, uint32_t(entry.r_offset));
+      write(*F, uint32_t(Entry.Offset));
 
       struct ELF::Elf32_Rela ERE32;
-      ERE32.setSymbolAndType(entry.Index, entry.Type);
+      ERE32.setSymbolAndType(Index, Entry.Type);
       write(*F, ERE32.r_info);
 
       if (hasRelocationAddend())
-        write(*F, uint32_t(entry.r_addend));
+        write(*F, uint32_t(Entry.Addend));
     }
   }
 }
