@@ -5158,7 +5158,7 @@ SDValue ARM64TargetLowering::LowerBUILD_VECTOR(SDValue Op,
       // and NEG) are passed through unmodified.  This allows codegen patterns
       // for these operations to match.  Special-purpose patterns will lower
       // these immediates to MOVIs if it proves necessary.
-      if (VT.isInteger() && (CnstVal == 0 || CnstVal == ~0UL))
+      if (VT.isInteger() && (CnstVal == 0 || CnstVal == ~0ULL))
         return Op;
 
       // The many faces of MOVI...
