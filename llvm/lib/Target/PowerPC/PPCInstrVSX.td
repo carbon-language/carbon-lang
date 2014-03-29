@@ -326,11 +326,11 @@ let Uses = [RM] in {
   // Division Instructions
   def XSDIVDP : XX3Form<60, 56,
                         (outs vsfrc:$XT), (ins vsfrc:$XA, vsfrc:$XB),
-                        "xsdivdp $XT, $XA, $XB", IIC_VecFP,
+                        "xsdivdp $XT, $XA, $XB", IIC_FPDivD,
                         [(set f64:$XT, (fdiv f64:$XA, f64:$XB))]>;
   def XSSQRTDP : XX2Form<60, 75,
                         (outs vsfrc:$XT), (ins vsfrc:$XB),
-                        "xssqrtdp $XT, $XB", IIC_VecFP,
+                        "xssqrtdp $XT, $XB", IIC_FPSqrtD,
                         [(set f64:$XT, (fsqrt f64:$XB))]>;
 
   def XSREDP : XX2Form<60, 90,
@@ -344,42 +344,42 @@ let Uses = [RM] in {
 
   def XSTDIVDP : XX3Form_1<60, 61,
                          (outs crrc:$crD), (ins vsfrc:$XA, vsfrc:$XB),
-                         "xstdivdp $crD, $XA, $XB", IIC_VecFP, []>;
+                         "xstdivdp $crD, $XA, $XB", IIC_FPCompare, []>;
   def XSTSQRTDP : XX2Form_1<60, 106,
                           (outs crrc:$crD), (ins vsfrc:$XB),
-                          "xstsqrtdp $crD, $XB", IIC_VecFP, []>;
+                          "xstsqrtdp $crD, $XB", IIC_FPCompare, []>;
 
   def XVDIVDP : XX3Form<60, 120,
                         (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
-                        "xvdivdp $XT, $XA, $XB", IIC_VecFP,
+                        "xvdivdp $XT, $XA, $XB", IIC_FPDivD,
                         [(set v2f64:$XT, (fdiv v2f64:$XA, v2f64:$XB))]>;
   def XVDIVSP : XX3Form<60, 88,
                         (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
-                        "xvdivsp $XT, $XA, $XB", IIC_VecFP,
+                        "xvdivsp $XT, $XA, $XB", IIC_FPDivS,
                         [(set v4f32:$XT, (fdiv v4f32:$XA, v4f32:$XB))]>;
 
   def XVSQRTDP : XX2Form<60, 203,
                         (outs vsrc:$XT), (ins vsrc:$XB),
-                        "xvsqrtdp $XT, $XB", IIC_VecFP,
+                        "xvsqrtdp $XT, $XB", IIC_FPSqrtD,
                         [(set v2f64:$XT, (fsqrt v2f64:$XB))]>;
   def XVSQRTSP : XX2Form<60, 139,
                         (outs vsrc:$XT), (ins vsrc:$XB),
-                        "xvsqrtsp $XT, $XB", IIC_VecFP,
+                        "xvsqrtsp $XT, $XB", IIC_FPSqrtS,
                         [(set v4f32:$XT, (fsqrt v4f32:$XB))]>;
 
   def XVTDIVDP : XX3Form_1<60, 125,
                          (outs crrc:$crD), (ins vsrc:$XA, vsrc:$XB),
-                         "xvtdivdp $crD, $XA, $XB", IIC_VecFP, []>;
+                         "xvtdivdp $crD, $XA, $XB", IIC_FPCompare, []>;
   def XVTDIVSP : XX3Form_1<60, 93,
                          (outs crrc:$crD), (ins vsrc:$XA, vsrc:$XB),
-                         "xvtdivsp $crD, $XA, $XB", IIC_VecFP, []>;
+                         "xvtdivsp $crD, $XA, $XB", IIC_FPCompare, []>;
 
   def XVTSQRTDP : XX2Form_1<60, 234,
                           (outs crrc:$crD), (ins vsrc:$XB),
-                          "xvtsqrtdp $crD, $XB", IIC_VecFP, []>;
+                          "xvtsqrtdp $crD, $XB", IIC_FPCompare, []>;
   def XVTSQRTSP : XX2Form_1<60, 170,
                           (outs crrc:$crD), (ins vsrc:$XB),
-                          "xvtsqrtsp $crD, $XB", IIC_VecFP, []>;
+                          "xvtsqrtsp $crD, $XB", IIC_FPCompare, []>;
 
   def XVREDP : XX2Form<60, 218,
                         (outs vsrc:$XT), (ins vsrc:$XB),
@@ -402,10 +402,10 @@ let Uses = [RM] in {
   // Compare Instructions
   def XSCMPODP : XX3Form_1<60, 43,
                            (outs crrc:$crD), (ins vsfrc:$XA, vsfrc:$XB),
-                           "xscmpodp $crD, $XA, $XB", IIC_VecFPCompare, []>;
+                           "xscmpodp $crD, $XA, $XB", IIC_FPCompare, []>;
   def XSCMPUDP : XX3Form_1<60, 35,
                            (outs crrc:$crD), (ins vsfrc:$XA, vsfrc:$XB),
-                           "xscmpudp $crD, $XA, $XB", IIC_VecFPCompare, []>;
+                           "xscmpudp $crD, $XA, $XB", IIC_FPCompare, []>;
 
   defm XVCMPEQDP : XX3Form_Rcr<60, 99,
                              (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),

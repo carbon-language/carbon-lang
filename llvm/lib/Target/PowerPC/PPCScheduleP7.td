@@ -370,7 +370,7 @@ def P7Itineraries : ProcessorItineraries<
   InstrItinData<IIC_VecPerm     , [InstrStage<1, [P7_DU1, P7_DU2,
                                                   P7_DU3, P7_DU4], 0>,
                                    InstrStage<1, [P7_VS2]>],
-                                  [2, 1, 1]>
+                                  [3, 1, 1]>
 ]>;
 
 // ===---------------------------------------------------------------------===//
