@@ -106,7 +106,6 @@ class MCLOHDirective {
   /// Emit this directive in @p OutStream using the information available
   /// in the given @p ObjWriter and @p Layout to get the address of the
   /// arguments within the object file.
-  /// This function is currently specialized for T = MCSymbol.
   void Emit_impl(raw_ostream &OutStream, const MachObjectWriter &ObjWriter,
                  const MCAsmLayout &Layout) const;
 
