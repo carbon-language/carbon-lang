@@ -132,8 +132,8 @@ private:
   /// \param UseIt the use to be added into the list of dominated uses
   /// \param InsertPts existing insertion points
   /// \pre NewPt and all instruction in InsertPts belong to the same function
-  /// \retun true if one of the insertion point in InsertPts dominates NewPt,
-  ///        false otherwise
+  /// \return true if one of the insertion point in InsertPts dominates NewPt,
+  ///         false otherwise
   bool isDominated(Instruction *NewPt, Value::user_iterator &UseIt,
                    InsertionPoints &InsertPts);
 
@@ -146,9 +146,9 @@ private:
   /// \param InsertPts existing insertion points
   /// \pre NewPt and all instruction in InsertPts belong to the same function
   /// \pre isDominated returns false for the exact same parameters.
-  /// \retun true if it exists an insertion point in InsertPts that could
-  ///        have been merged with NewPt in a common dominator,
-  ///        false otherwise
+  /// \return true if it exists an insertion point in InsertPts that could
+  ///         have been merged with NewPt in a common dominator,
+  ///         false otherwise
   bool tryAndMerge(Instruction *NewPt, Value::user_iterator &UseIt,
                    InsertionPoints &InsertPts);
 
@@ -157,7 +157,7 @@ private:
   /// Insertion points are group per function and each insertion point
   /// contains a list of all the uses it dominates within the related function
   /// \param Val constant to be examined
-  /// \param InsPtsPerFunc[out] output storage of the analysis
+  /// \param[out] InsPtsPerFunc output storage of the analysis
   void computeInsertionPoints(Constant *Val,
                               InsertionPointsPerFunc &InsPtsPerFunc);
 

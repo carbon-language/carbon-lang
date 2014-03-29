@@ -42,7 +42,7 @@ public:
   typedef SmallVectorImpl<MCParsedAsmOperand *> OperandVector;
 
 private:
-  StringRef Mnemonic; //< Instruction mnemonic.
+  StringRef Mnemonic; ///< Instruction mnemonic.
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
 

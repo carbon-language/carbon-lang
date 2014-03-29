@@ -222,7 +222,7 @@ static const SetOfMachineInstr *getUses(const InstrToInstrs *sets, unsigned reg,
 /// - its kill set.
 /// - its reachable uses (uses that are exposed to BB's predecessors).
 /// - its the generated definitions.
-/// \param DummyOp, if not NULL, specifies a Dummy Operation to be added to
+/// \param DummyOp if not NULL, specifies a Dummy Operation to be added to
 /// the list of uses of exposed defintions.
 /// \param ADRPMode specifies to only consider ADRP instructions for generated
 /// definition. It also consider definitions of ADRP instructions as uses and
@@ -417,11 +417,11 @@ static void finitReachingDef(BlockToSetOfInstrsPerColor &In,
 
 /// Reaching definiton algorithm.
 /// \param MF function on which the algorithm will operate.
-/// \param ColorOpToReachedUses[out] will contain the result of the reaching
+/// \param[out] ColorOpToReachedUses will contain the result of the reaching
 /// def algorithm.
 /// \param ADRPMode specify whether the reaching def algorithm should be tuned
 /// for ADRP optimization. \see initReachingDef for more details.
-/// \param DummyOp, if not NULL, the algorithm will work at
+/// \param DummyOp if not NULL, the algorithm will work at
 /// basic block scope and will set for every exposed defintion a use to
 /// @p DummyOp.
 /// \pre ColorOpToReachedUses is an array of at least number of registers of
