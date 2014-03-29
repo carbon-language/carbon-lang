@@ -1121,7 +1121,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   const CGFunctionInfo &fnInfo = CGM.getTypes().arrangeFreeFunctionDeclaration(
       fnType->getReturnType(), args, fnType->getExtInfo(),
       fnType->isVariadic());
-  if (CGM.ReturnTypeUsesSRet(fnInfo))
+  if (CGM.ReturnSlotInterferesWithArgs(fnInfo))
     blockInfo.UsesStret = true;
 
   llvm::FunctionType *fnLLVMType = CGM.getTypes().GetFunctionType(fnInfo);

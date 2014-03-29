@@ -878,6 +878,11 @@ bool CodeGenModule::ReturnTypeUsesSRet(const CGFunctionInfo &FI) {
   return FI.getReturnInfo().isIndirect();
 }
 
+bool CodeGenModule::ReturnSlotInterferesWithArgs(const CGFunctionInfo &FI) {
+  return ReturnTypeUsesSRet(FI) &&
+         getTargetCodeGenInfo().doesReturnSlotInterfereWithArgs();
+}
+
 bool CodeGenModule::ReturnTypeUsesFPRet(QualType ResultType) {
   if (const BuiltinType *BT = ResultType->getAs<BuiltinType>()) {
     switch (BT->getKind()) {

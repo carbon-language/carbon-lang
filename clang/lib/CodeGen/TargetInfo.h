@@ -123,6 +123,10 @@ namespace clang {
       return Ty;
     }
 
+    /// doesReturnSlotInterfereWithArgs - Return true if the target uses an
+    /// argument slot for an 'sret' type.
+    virtual bool doesReturnSlotInterfereWithArgs() const { return true; }
+
     /// Retrieve the address of a function to call immediately before
     /// calling objc_retainAutoreleasedReturnValue.  The
     /// implementation of objc_autoreleaseReturnValue sniffs the

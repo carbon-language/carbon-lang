@@ -1881,7 +1881,7 @@ CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
   NullReturnState nullReturn;
 
   llvm::Constant *Fn = NULL;
-  if (CGM.ReturnTypeUsesSRet(MSI.CallInfo)) {
+  if (CGM.ReturnSlotInterferesWithArgs(MSI.CallInfo)) {
     if (!IsSuper) nullReturn.init(CGF, Arg0);
     Fn = (ObjCABI == 2) ?  ObjCTypes.getSendStretFn2(IsSuper)
       : ObjCTypes.getSendStretFn(IsSuper);
@@ -1892,6 +1892,10 @@ CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
     Fn = (ObjCABI == 2) ? ObjCTypes.getSendFp2RetFn2(IsSuper)
       : ObjCTypes.getSendFp2retFn(IsSuper);
   } else {
+    // arm64 uses objc_msgSend for stret methods and yet null receiver check
+    // must be made for it.
+    if (!IsSuper && CGM.ReturnTypeUsesSRet(MSI.CallInfo))
+      nullReturn.init(CGF, Arg0);
     Fn = (ObjCABI == 2) ? ObjCTypes.getSendFn2(IsSuper)
       : ObjCTypes.getSendFn(IsSuper);
   }
@@ -6517,7 +6521,7 @@ CGObjCNonFragileABIMac::EmitVTableMessageSend(CodeGenFunction &CGF,
   // FIXME: don't use this for that.
   llvm::Constant *fn = 0;
   std::string messageRefName("\01l_");
-  if (CGM.ReturnTypeUsesSRet(MSI.CallInfo)) {
+  if (CGM.ReturnSlotInterferesWithArgs(MSI.CallInfo)) {
     if (isSuper) {
       fn = ObjCTypes.getMessageSendSuper2StretFixupFn();
       messageRefName += "objc_msgSendSuper2_stret_fixup";

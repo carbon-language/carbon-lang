@@ -908,6 +908,10 @@ public:
   /// as a return type.
   bool ReturnTypeUsesSRet(const CGFunctionInfo &FI);
 
+  /// ReturnSlotInterferesWithArgs - Return true iff the given type uses an
+  /// argument slot when 'sret' is used as a return type.
+  bool ReturnSlotInterferesWithArgs(const CGFunctionInfo &FI);
+
   /// ReturnTypeUsesFPRet - Return true iff the given type uses 'fpret' when
   /// used as a return type.
   bool ReturnTypeUsesFPRet(QualType ResultType);
