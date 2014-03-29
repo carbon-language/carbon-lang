@@ -586,6 +586,8 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::SRA, MVT::v2i64, Expand);
       setOperationAction(ISD::SRL, MVT::v2i64, Expand);
 
+      setOperationAction(ISD::SETCC, MVT::v2i64, Custom);
+
       setOperationAction(ISD::LOAD, MVT::v2i64, Promote);
       AddPromotedToType (ISD::LOAD, MVT::v2i64, MVT::v2f64);
       setOperationAction(ISD::STORE, MVT::v2i64, Promote);
@@ -1661,6 +1663,27 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
 SDValue PPCTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
   SDLoc dl(Op);
+
+  if (Op.getValueType() == MVT::v2i64) {
+    // When the operands themselves are v2i64 values, we need to do something
+    // special because VSX has no underlying comparison operations for these.
+    if (Op.getOperand(0).getValueType() == MVT::v2i64) {
+      // Equality can be handled by casting to the legal type for Altivec
+      // comparisons, everything else needs to be expanded.
+      if (CC == ISD::SETEQ || CC == ISD::SETNE) {
+        return DAG.getNode(ISD::BITCAST, dl, MVT::v2i64,
+                 DAG.getSetCC(dl, MVT::v4i32,
+                   DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, Op.getOperand(0)),
+                   DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, Op.getOperand(1)),
+                   CC));
+      }
+
+      return SDValue();
+    }
+
+    // We handle most of these in the usual way.
+    return Op;
+  }
 
   // If we're comparing for equality to zero, expose the fact that this is
   // implented as a ctlz/srl pair on ppc, so that the dag combiner can

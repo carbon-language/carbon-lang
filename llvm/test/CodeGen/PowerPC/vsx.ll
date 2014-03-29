@@ -547,3 +547,36 @@ define double @test64(<2 x double> %a) {
 ; CHECK: blr
 }
 
+define <2 x i1> @test65(<2 x i64> %a, <2 x i64> %b) {
+  %w = icmp eq <2 x i64> %a, %b
+  ret <2 x i1> %w
+
+; CHECK-LABEL: @test65
+; CHECK: vcmpequw 2, 2, 3
+; CHECK: blr
+}
+
+define <2 x i1> @test66(<2 x i64> %a, <2 x i64> %b) {
+  %w = icmp ne <2 x i64> %a, %b
+  ret <2 x i1> %w
+
+; CHECK-LABEL: @test66
+; CHECK: vcmpequw {{[0-9]+}}, 2, 3
+; CHECK: xxlnor 34, {{[0-9]+}}, {{[0-9]+}}
+; CHECK: blr
+}
+
+define <2 x i1> @test67(<2 x i64> %a, <2 x i64> %b) {
+  %w = icmp ult <2 x i64> %a, %b
+  ret <2 x i1> %w
+
+; CHECK-LABEL: @test67
+; This should scalarize, and the current code quality is not good.
+; CHECK: stxvd2x
+; CHECK: stxvd2x
+; CHECK: cmpld
+; CHECK: cmpld
+; CHECK: lxvd2x
+; CHECK: blr
+}
+
