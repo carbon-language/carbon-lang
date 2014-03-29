@@ -100,20 +100,33 @@ public:
   const SetOfInstructions &getLOHRelated() const { return LOHRelated; }
 
   // Shortcuts for LOH related types.
-  typedef LOHDirective<const MachineInstr> MILOHDirective;
-  typedef MILOHDirective::LOHArgs MILOHArgs;
+  class MILOHDirective {
+    MCLOHType Kind;
 
-  typedef LOHContainer<const MachineInstr> MILOHContainer;
-  typedef MILOHContainer::LOHDirectives MILOHDirectives;
+    /// Arguments of this directive. Order matters.
+    SmallVector<const MachineInstr *, 3> Args;
+
+  public:
+    typedef SmallVectorImpl<const MachineInstr *> LOHArgs;
+
+    MILOHDirective(MCLOHType Kind, const LOHArgs &Args)
+        : Kind(Kind), Args(Args.begin(), Args.end()) {
+      assert(isValidMCLOHType(Kind) && "Invalid LOH directive type!");
+    }
+
+    MCLOHType getKind() const { return Kind; }
+    const LOHArgs &getArgs() const { return Args; }
+  };
+
+  typedef MILOHDirective::LOHArgs MILOHArgs;
+  typedef SmallVector<MILOHDirective, 32> MILOHContainer;
 
   const MILOHContainer &getLOHContainer() const { return LOHContainerSet; }
 
   /// Add a LOH directive of this @p Kind and this @p Args.
   void addLOHDirective(MCLOHType Kind, const MILOHArgs &Args) {
-    LOHContainerSet.addDirective(Kind, Args);
-    for (MILOHArgs::const_iterator It = Args.begin(), EndIt = Args.end();
-         It != EndIt; ++It)
-      LOHRelated.insert(*It);
+    LOHContainerSet.push_back(MILOHDirective(Kind, Args));
+    LOHRelated.insert(Args.begin(), Args.end());
   }
 
 private:

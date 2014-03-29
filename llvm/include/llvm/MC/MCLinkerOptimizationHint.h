@@ -97,30 +97,30 @@ static inline int MCLOHIdToNbArgs(MCLOHType Kind) {
 }
 
 /// Store Linker Optimization Hint information (LOH).
-template<typename T>
-class LOHDirective {
-private:
+class MCLOHDirective {
   MCLOHType Kind;
 
   /// Arguments of this directive. Order matters.
-  SmallVector<T *, 3> Args;
+  SmallVector<MCSymbol *, 3> Args;
 
   /// Emit this directive in @p OutStream using the information available
   /// in the given @p ObjWriter and @p Layout to get the address of the
   /// arguments within the object file.
   /// This function is currently specialized for T = MCSymbol.
   void Emit_impl(raw_ostream &OutStream, const MachObjectWriter &ObjWriter,
-                 const MCAsmLayout &Layout) const {  }
+                 const MCAsmLayout &Layout) const;
 
 public:
-  typedef SmallVectorImpl<T *> LOHArgs;
+  typedef SmallVectorImpl<MCSymbol *> LOHArgs;
 
-  LOHDirective(MCLOHType Kind, const LOHArgs &Args)
-  : Kind(Kind), Args(Args.begin(), Args.end()) {};
+  MCLOHDirective(MCLOHType Kind, const LOHArgs &Args)
+      : Kind(Kind), Args(Args.begin(), Args.end()) {
+    assert(isValidMCLOHType(Kind) && "Invalid LOH directive type!");
+  }
 
   MCLOHType getKind() const { return Kind; }
 
-  const LOHArgs & getArgs() const { return Args; }
+  const LOHArgs &getArgs() const { return Args; }
 
   /// Emit this directive as:
   /// <kind, numArgs, addr1, ..., addrN>
@@ -140,44 +140,35 @@ public:
   }
 };
 
-template<typename T>
-class LOHContainer {
-public:
-  typedef SmallVectorImpl<LOHDirective<T> > LOHDirectives;
-
-private:
+class MCLOHContainer {
   /// Keep track of the emit size of all the LOHs.
   mutable uint64_t EmitSize;
 
   /// Keep track of all LOH directives.
-  SmallVector<LOHDirective<T>, 32> Directives;
-
-  /// Accessor to the directives.
-  LOHDirectives &getDirectives() { return Directives; }
+  SmallVector<MCLOHDirective, 32> Directives;
 
 public:
-  LOHContainer() : EmitSize(0) {};
+  typedef SmallVectorImpl<MCLOHDirective> LOHDirectives;
+
+  MCLOHContainer() : EmitSize(0) {};
 
   /// Const accessor to the directives.
   const LOHDirectives &getDirectives() const {
-    return const_cast<LOHContainer *>(this)->getDirectives();
+    return Directives;
   }
 
   /// Add the directive of the given kind @p Kind with the given arguments
   /// @p Args to the container.
-  void addDirective(MCLOHType Kind,
-                    const typename LOHDirective<T>::LOHArgs &Args) {
-    assert(isValidMCLOHType(Kind) && "Invalid LOH directive type!");
-    getDirectives().push_back(LOHDirective<T>(Kind, Args));
+  void addDirective(MCLOHType Kind, const MCLOHDirective::LOHArgs &Args) {
+    Directives.push_back(MCLOHDirective(Kind, Args));
   }
 
   /// Get the size of the directives if emitted.
   uint64_t getEmitSize(const MachObjectWriter &ObjWriter,
                        const MCAsmLayout &Layout) const {
     if (!EmitSize) {
-      for (typename LOHDirectives::const_iterator It = getDirectives().begin(),
-             EndIt = getDirectives().end(); It != EndIt; ++It)
-        EmitSize += It->getEmitSize(ObjWriter, Layout);
+      for (const MCLOHDirective &D : Directives)
+        EmitSize += D.getEmitSize(ObjWriter, Layout);
     }
     return EmitSize;
   }
@@ -185,30 +176,20 @@ public:
   /// Emit all Linker Optimization Hint in one big table.
   /// Each line of the table is emitted by LOHDirective::Emit.
   void Emit(MachObjectWriter &ObjWriter, const MCAsmLayout &Layout) const {
-    for (typename LOHDirectives::const_iterator It = getDirectives().begin(),
-           EndIt = getDirectives().end(); It != EndIt; ++It)
-      It->Emit(ObjWriter, Layout);
+    for (const MCLOHDirective &D : Directives)
+      D.Emit(ObjWriter, Layout);
   }
 
   void reset() {
-    getDirectives().clear();
+    Directives.clear();
     EmitSize = 0;
   }
 };
 
 // Add types for specialized template using MCSymbol.
-typedef LOHDirective<MCSymbol> MCLOHDirective;
-typedef LOHDirective<MCSymbol>::LOHArgs MCLOHArgs;
+typedef MCLOHDirective::LOHArgs MCLOHArgs;
+typedef MCLOHContainer::LOHDirectives MCLOHDirectives;
 
-typedef LOHContainer<MCLOHDirective>::LOHDirectives MCLOHDirectives;
-
-typedef LOHContainer<MCSymbol> MCLOHContainer;
-
-// Declare the specialization for MCSymbol.
-template<>
-void MCLOHDirective::Emit_impl(raw_ostream &OutStream,
-                               const MachObjectWriter &ObjWriter,
-                               const MCAsmLayout &Layout) const;
 } // end namespace llvm
 
 #endif

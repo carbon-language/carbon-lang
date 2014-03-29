@@ -14,8 +14,6 @@
 
 using namespace llvm;
 
-namespace llvm {
-template<>
 void MCLOHDirective::Emit_impl(raw_ostream &OutStream,
                                const MachObjectWriter &ObjWriter,
                                const MCAsmLayout &Layout) const {
@@ -27,4 +25,3 @@ void MCLOHDirective::Emit_impl(raw_ostream &OutStream,
     encodeULEB128(ObjWriter.getSymbolAddress(&Asm.getSymbolData(**It), Layout),
                   OutStream);
 }
-} // end namespace llvm

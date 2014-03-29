@@ -135,26 +135,16 @@ ARM64AsmPrinter::getDebugValueLocation(const MachineInstr *MI) const {
 }
 
 void ARM64AsmPrinter::EmitLOHs() {
-  const ARM64FunctionInfo::MILOHDirectives &LOHs =
-      const_cast<const ARM64FunctionInfo *>(ARM64FI)
-          ->getLOHContainer()
-          .getDirectives();
   SmallVector<MCSymbol *, 3> MCArgs;
 
-  for (ARM64FunctionInfo::MILOHDirectives::const_iterator It = LOHs.begin(),
-                                                          EndIt = LOHs.end();
-       It != EndIt; ++It) {
-    const ARM64FunctionInfo::MILOHArgs &MIArgs = It->getArgs();
-    for (ARM64FunctionInfo::MILOHArgs::const_iterator
-             MIArgsIt = MIArgs.begin(),
-             EndMIArgsIt = MIArgs.end();
-         MIArgsIt != EndMIArgsIt; ++MIArgsIt) {
-      MInstToMCSymbol::iterator LabelIt = LOHInstToLabel.find(*MIArgsIt);
+  for (const auto &D : ARM64FI->getLOHContainer()) {
+    for (const MachineInstr *MI : D.getArgs()) {
+      MInstToMCSymbol::iterator LabelIt = LOHInstToLabel.find(MI);
       assert(LabelIt != LOHInstToLabel.end() &&
              "Label hasn't been inserted for LOH related instruction");
       MCArgs.push_back(LabelIt->second);
     }
-    OutStreamer.EmitLOHDirective(It->getKind(), MCArgs);
+    OutStreamer.EmitLOHDirective(D.getKind(), MCArgs);
     MCArgs.clear();
   }
 }
