@@ -60,6 +60,7 @@ STATISTIC(NumExtUses,    "Number of uses of [s|z]ext instructions optimized");
 STATISTIC(NumRetsDup,    "Number of return instructions duplicated");
 STATISTIC(NumDbgValueMoved, "Number of debug value instructions moved");
 STATISTIC(NumSelectsExpanded, "Number of selects turned into branches");
+STATISTIC(NumAndCmpsMoved, "Number of and/cmp's pushed into branches");
 
 static cl::opt<bool> DisableBranchOpts(
   "disable-cgp-branch-opts", cl::Hidden, cl::init(false),
@@ -68,6 +69,10 @@ static cl::opt<bool> DisableBranchOpts(
 static cl::opt<bool> DisableSelectToBranch(
   "disable-cgp-select2branch", cl::Hidden, cl::init(false),
   cl::desc("Disable select to branch conversion."));
+
+static cl::opt<bool> EnableAndCmpSinking(
+   "enable-andcmp-sinking", cl::Hidden, cl::init(true),
+   cl::desc("Enable sinkinig and/cmp into branches."));
 
 namespace {
 typedef SmallPtrSet<Instruction *, 16> SetOfInstrs;
@@ -135,6 +140,7 @@ typedef DenseMap<Instruction *, Type *> InstrToOrigTy;
     bool OptimizeShuffleVectorInst(ShuffleVectorInst *SI);
     bool DupRetToEnableTailCallOpts(BasicBlock *BB);
     bool PlaceDbgValues(Function &F);
+    bool sinkAndCmp(Function &F);
   };
 }
 
@@ -189,6 +195,13 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   // handle it properly. iSel will drop llvm.dbg.value if it can not
   // find a node corresponding to the value.
   EverMadeChange |= PlaceDbgValues(F);
+
+  // If there is a mask, compare against zero, and branch that can be combined
+  // into a single target instruction, push the mask and compare into branch
+  // users. Do this before OptimizeBlock -> OptimizeInst ->
+  // OptimizeCmpExpression, which perturbs the pattern being searched for.
+  if (!DisableBranchOpts)
+    EverMadeChange |= sinkAndCmp(F);
 
   bool MadeChange = true;
   while (MadeChange) {
@@ -2922,6 +2935,73 @@ bool CodeGenPrepare::PlaceDbgValues(Function &F) {
         MadeChange = true;
         ++NumDbgValueMoved;
       }
+    }
+  }
+  return MadeChange;
+}
+
+// If there is a sequence that branches based on comparing a single bit
+// against zero that can be combined into a single instruction, and the
+// target supports folding these into a single instruction, sink the
+// mask and compare into the branch uses. Do this before OptimizeBlock ->
+// OptimizeInst -> OptimizeCmpExpression, which perturbs the pattern being
+// searched for.
+bool CodeGenPrepare::sinkAndCmp(Function &F) {
+  if (!EnableAndCmpSinking)
+    return false;
+  if (!TLI || !TLI->isMaskAndBranchFoldingLegal())
+    return false;
+  bool MadeChange = false;
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ) {
+    BasicBlock *BB = I++;
+
+    // Does this BB end with the following?
+    //   %andVal = and %val, #single-bit-set
+    //   %icmpVal = icmp %andResult, 0
+    //   br i1 %cmpVal label %dest1, label %dest2"
+    BranchInst *Brcc = dyn_cast<BranchInst>(BB->getTerminator());
+    if (!Brcc || !Brcc->isConditional())
+      continue;
+    ICmpInst *Cmp = dyn_cast<ICmpInst>(Brcc->getOperand(0));
+    if (!Cmp || Cmp->getParent() != BB)
+      continue;
+    ConstantInt *Zero = dyn_cast<ConstantInt>(Cmp->getOperand(1));
+    if (!Zero || !Zero->isZero())
+      continue;
+    Instruction *And = dyn_cast<Instruction>(Cmp->getOperand(0));
+    if (!And || And->getOpcode() != Instruction::And || And->getParent() != BB)
+      continue;
+    ConstantInt* Mask = dyn_cast<ConstantInt>(And->getOperand(1));
+    if (!Mask || !Mask->getUniqueInteger().isPowerOf2())
+      continue;
+    DEBUG(dbgs() << "found and; icmp ?,0; brcc\n"); DEBUG(BB->dump());
+
+    // Push the "and; icmp" for any users that are conditional branches.
+    // Since there can only be one branch use per BB, we don't need to keep
+    // track of which BBs we insert into.
+    for (Value::use_iterator UI = Cmp->use_begin(), E = Cmp->use_end();
+         UI != E; ) {
+      Use &TheUse = *UI;
+      // Find brcc use.
+      BranchInst *BrccUser = dyn_cast<BranchInst>(*UI);
+      ++UI;
+      if (!BrccUser || !BrccUser->isConditional())
+        continue;
+      BasicBlock *UserBB = BrccUser->getParent();
+      if (UserBB == BB) continue;
+      DEBUG(dbgs() << "found Brcc use\n");
+
+      // Sink the "and; icmp" to use.
+      MadeChange = true;
+      BinaryOperator *NewAnd =
+        BinaryOperator::CreateAnd(And->getOperand(0), And->getOperand(1), "",
+                                  BrccUser);
+      CmpInst *NewCmp =
+        CmpInst::Create(Cmp->getOpcode(), Cmp->getPredicate(), NewAnd, Zero,
+                        "", BrccUser);
+      TheUse = NewCmp;
+      ++NumAndCmpsMoved;
+      DEBUG(BrccUser->getParent()->dump());
     }
   }
   return MadeChange;

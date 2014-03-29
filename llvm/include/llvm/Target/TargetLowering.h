@@ -222,6 +222,21 @@ public:
     return true;
   }
 
+  /// \brief Return if the target supports combining a
+  /// chain like:
+  /// \code
+  ///   %andResult = and %val1, #imm-with-one-bit-set;
+  ///   %icmpResult = icmp %andResult, 0
+  ///   br i1 %icmpResult, label %dest1, label %dest2
+  /// \endcode
+  /// into a single machine instruction of a form like:
+  /// \code
+  ///   brOnBitSet %register, #bitNumber, dest
+  /// \endcode
+  bool isMaskAndBranchFoldingLegal() const {
+    return MaskAndBranchFoldingIsLegal;
+  }
+
   /// Return the ValueType of the result of SETCC operations.  Also used to
   /// obtain the target's preferred type for the condition operand of SELECT and
   /// BRCOND nodes.  In the case of BRCOND the argument passed is MVT::Other
@@ -1723,6 +1738,10 @@ protected:
   /// Tells the code generator that select is more expensive than a branch if
   /// the branch is usually predicted right.
   bool PredictableSelectIsExpensive;
+
+  /// MaskAndBranchFoldingIsLegal - Indicates if the target supports folding
+  /// a mask of a single bit, a compare, and a branch into a single instruction.
+  bool MaskAndBranchFoldingIsLegal;
 
 protected:
   /// Return true if the value types that can be represented by the specified
