@@ -2206,6 +2206,12 @@ bool Verifier::VerifyIntrinsicType(Type *Ty,
 
     return Ty != NewTy;
   }
+  case IITDescriptor::HalfVecArgument:
+    // This may only be used when referring to a previous vector argument.
+    return D.getArgumentNumber() >= ArgTys.size() ||
+           !isa<VectorType>(ArgTys[D.getArgumentNumber()]) ||
+           VectorType::getHalfElementsVectorType(
+                         cast<VectorType>(ArgTys[D.getArgumentNumber()])) != Ty;
   }
   llvm_unreachable("unhandled");
 }

@@ -113,6 +113,10 @@ class LLVMMatchType<int num>
 class LLVMExtendedType<int num> : LLVMMatchType<num>;
 class LLVMTruncatedType<int num> : LLVMMatchType<num>;
 
+// Match the type of another intrinsic parameter that is expected to be a
+// vector type, but change the element count to be half as many
+class LLVMHalfElementsVectorType<int num> : LLVMMatchType<num>;
+
 def llvm_void_ty       : LLVMType<isVoid>;
 def llvm_anyint_ty     : LLVMType<iAny>;
 def llvm_anyfloat_ty   : LLVMType<fAny>;

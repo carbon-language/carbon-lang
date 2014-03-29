@@ -79,7 +79,7 @@ namespace Intrinsic {
     enum IITDescriptorKind {
       Void, VarArg, MMX, Metadata, Half, Float, Double,
       Integer, Vector, Pointer, Struct,
-      Argument, ExtendArgument, TruncArgument,
+      Argument, ExtendArgument, TruncArgument, HalfVecArgument
     } Kind;
     
     union {
@@ -99,12 +99,12 @@ namespace Intrinsic {
     };
     unsigned getArgumentNumber() const {
       assert(Kind == Argument || Kind == ExtendArgument ||
-             Kind == TruncArgument);
+             Kind == TruncArgument || Kind == HalfVecArgument);
       return Argument_Info >> 2;
     }
     ArgKind getArgumentKind() const {
       assert(Kind == Argument || Kind == ExtendArgument ||
-             Kind == TruncArgument);
+             Kind == TruncArgument || Kind == HalfVecArgument);
       return (ArgKind)(Argument_Info&3);
     }
     

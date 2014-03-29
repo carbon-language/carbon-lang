@@ -470,7 +470,8 @@ enum IIT_Info {
   IIT_TRUNC_ARG = 24,
   IIT_ANYPTR = 25,
   IIT_V1   = 26,
-  IIT_VARARG = 27
+  IIT_VARARG = 27,
+  IIT_HALF_VEC_ARG = 28
 };
 
 
@@ -565,6 +566,12 @@ static void DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   case IIT_TRUNC_ARG: {
     unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::TruncArgument,
+                                             ArgInfo));
+    return;
+  }
+  case IIT_HALF_VEC_ARG: {
+    unsigned ArgInfo = (NextElt == Infos.size() ? 0 : Infos[NextElt++]);
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::HalfVecArgument,
                                              ArgInfo));
     return;
   }
@@ -672,6 +679,9 @@ static Type *DecodeFixedType(ArrayRef<Intrinsic::IITDescriptor> &Infos,
     assert(ITy->getBitWidth() % 2 == 0);
     return IntegerType::get(Context, ITy->getBitWidth() / 2);
   }
+  case IITDescriptor::HalfVecArgument:
+    return VectorType::getHalfElementsVectorType(cast<VectorType>(
+                                                  Tys[D.getArgumentNumber()]));
   }
   llvm_unreachable("unhandled");
 }

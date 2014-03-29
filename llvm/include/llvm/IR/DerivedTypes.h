@@ -400,6 +400,26 @@ public:
     return VectorType::get(EltTy, VTy->getNumElements());
   }
 
+  /// VectorType::getHalfElementsVectorType - This static method returns
+  /// a VectorType with half as many elements as the input type and the
+  /// same element type.
+  ///
+  static VectorType *getHalfElementsVectorType(VectorType *VTy) {
+    unsigned NumElts = VTy->getNumElements();
+    assert ((NumElts & 1) == 0 &&
+            "Cannot halve vector with odd number of elements.");
+    return VectorType::get(VTy->getElementType(), NumElts/2);
+  }
+
+  /// VectorType::getDoubleElementsVectorType - This static method returns
+  /// a VectorType with twice  as many elements as the input type and the
+  /// same element type.
+  ///
+  static VectorType *getDoubleElementsVectorType(VectorType *VTy) {
+    unsigned NumElts = VTy->getNumElements();
+    return VectorType::get(VTy->getElementType(), NumElts*2);
+  }
+
   /// isValidElementType - Return true if the specified type is valid as a
   /// element type.
   static bool isValidElementType(Type *ElemTy);

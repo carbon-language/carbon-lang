@@ -250,7 +250,8 @@ enum IIT_Info {
   IIT_TRUNC_ARG = 24,
   IIT_ANYPTR = 25,
   IIT_V1   = 26,
-  IIT_VARARG = 27
+  IIT_VARARG = 27,
+  IIT_HALF_VEC_ARG = 28
 };
 
 
@@ -296,6 +297,8 @@ static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
       Sig.push_back(IIT_EXTEND_ARG);
     else if (R->isSubClassOf("LLVMTruncatedType"))
       Sig.push_back(IIT_TRUNC_ARG);
+    else if (R->isSubClassOf("LLVMHalfElementsVectorType"))
+      Sig.push_back(IIT_HALF_VEC_ARG);
     else
       Sig.push_back(IIT_ARG);
     return Sig.push_back((Number << 2) | ArgCodes[Number]);
