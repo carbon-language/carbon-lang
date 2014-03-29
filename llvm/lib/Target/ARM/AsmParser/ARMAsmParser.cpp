@@ -9359,7 +9359,7 @@ unsigned ARMAsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
       const MCExpr *SOExpr = Op->getImm();
       int64_t Value;
       if (!SOExpr->EvaluateAsAbsolute(Value))
-        return Match_InvalidOperand;
+        return Match_Success;
       assert((Value >= INT32_MIN && Value <= INT32_MAX) &&
              "expression value must be representiable in 32 bits");
     }
