@@ -42,17 +42,17 @@ public:
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).
-  virtual const ARM64RegisterInfo &getRegisterInfo() const { return RI; }
+  const ARM64RegisterInfo &getRegisterInfo() const { return RI; }
 
   unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
 
-  virtual bool isCoalescableExtInstr(const MachineInstr &MI, unsigned &SrcReg,
-                                     unsigned &DstReg, unsigned &SubIdx) const;
+  bool isCoalescableExtInstr(const MachineInstr &MI, unsigned &SrcReg,
+                             unsigned &DstReg, unsigned &SubIdx) const override;
 
-  virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
-                                       int &FrameIndex) const;
-  virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
-                                      int &FrameIndex) const;
+  unsigned isLoadFromStackSlot(const MachineInstr *MI,
+                               int &FrameIndex) const override;
+  unsigned isStoreToStackSlot(const MachineInstr *MI,
+                              int &FrameIndex) const override;
 
   /// \brief Does this instruction set its full destination register to zero?
   bool isGPRZero(const MachineInstr *MI) const;
@@ -75,18 +75,17 @@ public:
   /// Hint that pairing the given load or store is unprofitable.
   void suppressLdStPair(MachineInstr *MI) const;
 
-  virtual bool getLdStBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
-                                    unsigned &Offset,
-                                    const TargetRegisterInfo *TRI) const;
+  bool getLdStBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
+                            unsigned &Offset,
+                            const TargetRegisterInfo *TRI) const override;
 
-  virtual bool enableClusterLoads() const { return true; }
+  bool enableClusterLoads() const override { return true; }
 
-  virtual bool shouldClusterLoads(MachineInstr *FirstLdSt,
-                                  MachineInstr *SecondLdSt,
-                                  unsigned NumLoads) const;
+  bool shouldClusterLoads(MachineInstr *FirstLdSt, MachineInstr *SecondLdSt,
+                          unsigned NumLoads) const override;
 
-  virtual bool shouldScheduleAdjacent(MachineInstr *First,
-                                      MachineInstr *Second) const;
+  bool shouldScheduleAdjacent(MachineInstr *First,
+                              MachineInstr *Second) const override;
 
   MachineInstr *emitFrameIndexDebugValue(MachineFunction &MF, int FrameIx,
                                          uint64_t Offset, const MDNode *MDPtr,
@@ -95,60 +94,57 @@ public:
                         DebugLoc DL, unsigned DestReg, unsigned SrcReg,
                         bool KillSrc, unsigned Opcode,
                         llvm::ArrayRef<unsigned> Indices) const;
-  virtual void copyPhysReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator I, DebugLoc DL,
-                           unsigned DestReg, unsigned SrcReg,
-                           bool KillSrc) const;
+  void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                   DebugLoc DL, unsigned DestReg, unsigned SrcReg,
+                   bool KillSrc) const override;
 
-  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MBBI,
-                                   unsigned SrcReg, bool isKill, int FrameIndex,
-                                   const TargetRegisterClass *RC,
-                                   const TargetRegisterInfo *TRI) const;
+  void storeRegToStackSlot(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator MBBI, unsigned SrcReg,
+                           bool isKill, int FrameIndex,
+                           const TargetRegisterClass *RC,
+                           const TargetRegisterInfo *TRI) const override;
 
-  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator MBBI,
-                                    unsigned DestReg, int FrameIndex,
-                                    const TargetRegisterClass *RC,
-                                    const TargetRegisterInfo *TRI) const;
+  void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MBBI, unsigned DestReg,
+                            int FrameIndex, const TargetRegisterClass *RC,
+                            const TargetRegisterInfo *TRI) const override;
 
-  virtual MachineInstr *
+  MachineInstr *
   foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                         const SmallVectorImpl<unsigned> &Ops,
-                        int FrameIndex) const;
+                        int FrameIndex) const override;
 
-  virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
-                             MachineBasicBlock *&FBB,
-                             SmallVectorImpl<MachineOperand> &Cond,
-                             bool AllowModify = false) const;
-  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
-  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                                MachineBasicBlock *FBB,
-                                const SmallVectorImpl<MachineOperand> &Cond,
-                                DebugLoc DL) const;
-  virtual bool
-  ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
-  virtual bool canInsertSelect(const MachineBasicBlock &,
-                               const SmallVectorImpl<MachineOperand> &Cond,
-                               unsigned, unsigned, int &, int &, int &) const;
-  virtual void insertSelect(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator MI, DebugLoc DL,
-                            unsigned DstReg,
-                            const SmallVectorImpl<MachineOperand> &Cond,
-                            unsigned TrueReg, unsigned FalseReg) const;
-  virtual void getNoopForMachoTarget(MCInst &NopInst) const;
+  bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                     MachineBasicBlock *&FBB,
+                     SmallVectorImpl<MachineOperand> &Cond,
+                     bool AllowModify = false) const override;
+  unsigned RemoveBranch(MachineBasicBlock &MBB) const override;
+  unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                        MachineBasicBlock *FBB,
+                        const SmallVectorImpl<MachineOperand> &Cond,
+                        DebugLoc DL) const override;
+  bool
+  ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
+  bool canInsertSelect(const MachineBasicBlock &,
+                       const SmallVectorImpl<MachineOperand> &Cond, unsigned,
+                       unsigned, int &, int &, int &) const override;
+  void insertSelect(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+                    DebugLoc DL, unsigned DstReg,
+                    const SmallVectorImpl<MachineOperand> &Cond,
+                    unsigned TrueReg, unsigned FalseReg) const override;
+  void getNoopForMachoTarget(MCInst &NopInst) const override;
 
   /// analyzeCompare - For a comparison instruction, return the source registers
   /// in SrcReg and SrcReg2, and the value it compares against in CmpValue.
   /// Return true if the comparison instruction can be analyzed.
-  virtual bool analyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
-                              unsigned &SrcReg2, int &CmpMask,
-                              int &CmpValue) const;
+  bool analyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
+                      unsigned &SrcReg2, int &CmpMask,
+                      int &CmpValue) const override;
   /// optimizeCompareInstr - Convert the instruction supplying the argument to
   /// the comparison into one that sets the zero bit in the flags register.
-  virtual bool optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
-                                    unsigned SrcReg2, int CmpMask, int CmpValue,
-                                    const MachineRegisterInfo *MRI) const;
+  bool optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg,
+                            unsigned SrcReg2, int CmpMask, int CmpValue,
+                            const MachineRegisterInfo *MRI) const override;
 
 private:
   void instantiateCondBranch(MachineBasicBlock &MBB, DebugLoc DL,

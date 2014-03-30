@@ -41,27 +41,27 @@ public:
                      const TargetOptions &Options, Reloc::Model RM,
                      CodeModel::Model CM, CodeGenOpt::Level OL);
 
-  virtual const ARM64Subtarget *getSubtargetImpl() const { return &Subtarget; }
-  virtual const ARM64TargetLowering *getTargetLowering() const {
+  const ARM64Subtarget *getSubtargetImpl() const override { return &Subtarget; }
+  const ARM64TargetLowering *getTargetLowering() const override {
     return &TLInfo;
   }
-  virtual const DataLayout *getDataLayout() const { return &DL; }
-  virtual const ARM64FrameLowering *getFrameLowering() const {
+  const DataLayout *getDataLayout() const override { return &DL; }
+  const ARM64FrameLowering *getFrameLowering() const override {
     return &FrameLowering;
   }
-  virtual const ARM64InstrInfo *getInstrInfo() const { return &InstrInfo; }
-  virtual const ARM64RegisterInfo *getRegisterInfo() const {
+  const ARM64InstrInfo *getInstrInfo() const override { return &InstrInfo; }
+  const ARM64RegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
-  virtual const ARM64SelectionDAGInfo *getSelectionDAGInfo() const {
+  const ARM64SelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
 
   // Pass Pipeline Configuration
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
   /// \brief Register ARM64 analysis passes with a pass manager.
-  virtual void addAnalysisPasses(PassManagerBase &PM);
+  void addAnalysisPasses(PassManagerBase &PM) override;
 };
 
 } // end namespace llvm

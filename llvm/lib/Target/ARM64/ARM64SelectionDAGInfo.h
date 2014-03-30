@@ -27,11 +27,10 @@ public:
   explicit ARM64SelectionDAGInfo(const TargetMachine &TM);
   ~ARM64SelectionDAGInfo();
 
-  virtual SDValue EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
-                                          SDValue Chain, SDValue Dst,
-                                          SDValue Src, SDValue Size,
-                                          unsigned Align, bool isVolatile,
-                                          MachinePointerInfo DstPtrInfo) const;
+  SDValue EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
+                                  SDValue Dst, SDValue Src, SDValue Size,
+                                  unsigned Align, bool isVolatile,
+                                  MachinePointerInfo DstPtrInfo) const override;
 };
 }
 

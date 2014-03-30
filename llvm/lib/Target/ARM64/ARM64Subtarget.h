@@ -45,7 +45,7 @@ public:
   ARM64Subtarget(const std::string &TT, const std::string &CPU,
                  const std::string &FS);
 
-  virtual bool enableMachineScheduler() const { return true; }
+  bool enableMachineScheduler() const override { return true; }
 
   bool hasZeroCycleRegMove() const { return HasZeroCycleRegMove; }
 

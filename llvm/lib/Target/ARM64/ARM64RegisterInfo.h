@@ -33,10 +33,12 @@ private:
 public:
   ARM64RegisterInfo(const ARM64InstrInfo *tii, const ARM64Subtarget *sti);
 
-  /// Code Generation virtual methods...
   bool isReservedReg(const MachineFunction &MF, unsigned Reg) const;
-  const uint16_t *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
-  const uint32_t *getCallPreservedMask(CallingConv::ID) const;
+
+  /// Code Generation virtual methods...
+  const uint16_t *
+  getCalleeSavedRegs(const MachineFunction *MF = 0) const override;
+  const uint32_t *getCallPreservedMask(CallingConv::ID) const override;
 
   // Calls involved in thread-local variable lookup save more registers than
   // normal calls, so they need a different mask to represent this.
@@ -52,36 +54,39 @@ public:
   /// this property
   const uint32_t *getThisReturnPreservedMask(CallingConv::ID) const;
 
-  BitVector getReservedRegs(const MachineFunction &MF) const;
-  const TargetRegisterClass *getPointerRegClass(const MachineFunction &MF,
-                                                unsigned Kind = 0) const;
+  BitVector getReservedRegs(const MachineFunction &MF) const override;
   const TargetRegisterClass *
-  getCrossCopyRegClass(const TargetRegisterClass *RC) const;
+  getPointerRegClass(const MachineFunction &MF,
+                     unsigned Kind = 0) const override;
+  const TargetRegisterClass *
+  getCrossCopyRegClass(const TargetRegisterClass *RC) const override;
 
-  bool requiresRegisterScavenging(const MachineFunction &MF) const;
-  bool useFPForScavengingIndex(const MachineFunction &MF) const;
-  bool requiresFrameIndexScavenging(const MachineFunction &MF) const;
+  bool requiresRegisterScavenging(const MachineFunction &MF) const override;
+  bool useFPForScavengingIndex(const MachineFunction &MF) const override;
+  bool requiresFrameIndexScavenging(const MachineFunction &MF) const override;
 
-  bool needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const;
-  bool isFrameOffsetLegal(const MachineInstr *MI, int64_t Offset) const;
+  bool needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const override;
+  bool isFrameOffsetLegal(const MachineInstr *MI,
+                          int64_t Offset) const override;
   void materializeFrameBaseRegister(MachineBasicBlock *MBB, unsigned BaseReg,
-                                    int FrameIdx, int64_t Offset) const;
+                                    int FrameIdx,
+                                    int64_t Offset) const override;
   void resolveFrameIndex(MachineBasicBlock::iterator I, unsigned BaseReg,
-                         int64_t Offset) const;
+                         int64_t Offset) const override;
   void eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
                            unsigned FIOperandNum,
-                           RegScavenger *RS = NULL) const;
-
+                           RegScavenger *RS = NULL) const override;
   bool cannotEliminateFrame(const MachineFunction &MF) const;
-  bool requiresVirtualBaseRegisters(const MachineFunction &MF) const;
+
+  bool requiresVirtualBaseRegisters(const MachineFunction &MF) const override;
   bool hasBasePointer(const MachineFunction &MF) const;
   unsigned getBaseRegister() const;
 
   // Debug information queries.
-  unsigned getFrameRegister(const MachineFunction &MF) const;
+  unsigned getFrameRegister(const MachineFunction &MF) const override;
 
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
-                               MachineFunction &MF) const;
+                               MachineFunction &MF) const override;
 };
 
 } // end namespace llvm

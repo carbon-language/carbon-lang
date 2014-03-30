@@ -18,7 +18,7 @@ class ARM64TargetMachine;
 
 /// This implementation is used for AArch64 ELF targets (Linux in particular).
 class ARM64_ELFTargetObjectFile : public TargetLoweringObjectFileELF {
-  virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+  void Initialize(MCContext &Ctx, const TargetMachine &TM) override;
 };
 
 /// ARM64_MachoTargetObjectFile - This TLOF implementation is used for Darwin.
