@@ -568,6 +568,10 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_EXTERN_TEMPLATE2(...) extern template __VA_ARGS__;
 #endif
 
+#if __APPLE__ && defined(__LP64__) && !defined(__x86_64__)
+#define _LIBCPP_NONUNIQUE_RTTI_BIT (1ULL << 63)
+#endif
+
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(_WIN32) || defined(__sun__) || defined(__NetBSD__)
 #define _LIBCPP_LOCALE__L_EXTENSIONS 1
 #endif
