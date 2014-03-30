@@ -18,10 +18,10 @@
 #ifndef LLVM_CLANG_GR_PROGRAMSTATETRAIT_H
 #define LLVM_CLANG_GR_PROGRAMSTATETRAIT_H
 
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
-  class BumpPtrAllocator;
   template <typename K, typename D, typename I> class ImmutableMap;
   template <typename K, typename I> class ImmutableSet;
   template <typename T> class ImmutableList;

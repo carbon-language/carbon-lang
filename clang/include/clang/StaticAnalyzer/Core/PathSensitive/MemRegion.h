@@ -23,12 +23,9 @@
 #include "clang/Basic/LLVM.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <string>
-
-namespace llvm {
-class BumpPtrAllocator;
-}
 
 namespace clang {
 

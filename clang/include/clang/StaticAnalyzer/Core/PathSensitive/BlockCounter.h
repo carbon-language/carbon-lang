@@ -16,9 +16,7 @@
 #ifndef LLVM_CLANG_GR_BLOCKCOUNTER
 #define LLVM_CLANG_GR_BLOCKCOUNTER
 
-namespace llvm {
-  class BumpPtrAllocator;
-}
+#include "llvm/Support/Allocator.h"
 
 namespace clang {
 

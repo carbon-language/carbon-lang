@@ -23,11 +23,8 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
-
-namespace llvm {
-class BumpPtrAllocator;
-}
 
 namespace clang {
   class ASTContext;

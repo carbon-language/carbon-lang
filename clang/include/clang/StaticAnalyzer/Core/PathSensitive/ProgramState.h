@@ -25,10 +25,10 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/Support/Allocator.h"
 
 namespace llvm {
 class APSInt;
-class BumpPtrAllocator;
 }
 
 namespace clang {
