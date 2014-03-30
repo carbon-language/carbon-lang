@@ -1649,6 +1649,7 @@ bool FunctionAttrs::inferPrototypeAttributes(Function &F) {
     setDoesNotThrow(F);
     setDoesNotCapture(F, 1);
     setDoesNotCapture(F, 2);
+    break;
   default:
     // Didn't mark any attributes.
     return false;
