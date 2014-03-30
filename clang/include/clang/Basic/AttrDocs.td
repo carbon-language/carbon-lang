@@ -577,6 +577,15 @@ The semantics are as follows:
   }];
 }
 
+def PcsDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+On ARM targets, this can attribute can be used to select calling conventions,
+similar to ``stdcall`` on x86. Valid parameter values are "aapcs" and
+"aapcs-vfp".
+  }];
+}
+
 def DocCatConsumed : DocumentationCategory<"Consumed Annotation Checking"> {
   let Content = [{
 Clang supports additional attributes for checking basic resource management
