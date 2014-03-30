@@ -203,7 +203,8 @@
 
 #if defined(__clang__)
 
-#if __APPLE__ && !defined(__i386__) && !defined(__x86_64__) && !defined(__arm__)
+#if defined(__APPLE__) && !defined(__i386__) && !defined(__x86_64__) &&        \
+    !defined(__arm__)
 #define _LIBCPP_ALTERNATE_STRING_LAYOUT
 #endif
 
@@ -568,7 +569,7 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_EXTERN_TEMPLATE2(...) extern template __VA_ARGS__;
 #endif
 
-#if __APPLE__ && defined(__LP64__) && !defined(__x86_64__)
+#if defined(__APPLE__) && defined(__LP64__) && !defined(__x86_64__)
 #define _LIBCPP_NONUNIQUE_RTTI_BIT (1ULL << 63)
 #endif
 
