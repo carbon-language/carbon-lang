@@ -1394,10 +1394,39 @@ SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
   SDValue Vec = Op.getOperand(0);
   SDValue Idx = Op.getOperand(1);
   SDLoc dl(Op);
-  // Store the value to a temporary stack slot, then LOAD the returned part.
-  SDValue StackPtr = DAG.CreateStackTemporary(Vec.getValueType());
-  SDValue Ch = DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr,
-                            MachinePointerInfo(), false, false, 0);
+
+  // Before we generate a new store to a temporary stack slot, see if there is
+  // already one that we can use. There often is because when we scalarize
+  // vector operations (using SelectionDAG::UnrollVectorOp for example) a whole
+  // series of EXTRACT_VECTOR_ELT nodes are generated, one for each element in
+  // the vector. If all are expanded here, we don't want one store per vector
+  // element.
+  SDValue StackPtr, Ch;
+  for (SDNode::use_iterator UI = Vec.getNode()->use_begin(),
+       UE = Vec.getNode()->use_end(); UI != UE; ++UI) {
+    SDNode *User = *UI;
+    if (StoreSDNode *ST = dyn_cast<StoreSDNode>(User)) {
+      if (ST->isIndexed() || ST->isTruncatingStore() ||
+          ST->getValue() != Vec)
+        continue;
+
+      // Make sure that nothing else could have stored into the destination of
+      // this store.
+      if (!ST->getChain().reachesChainWithoutSideEffects(DAG.getEntryNode()))
+        continue;
+
+      StackPtr = ST->getBasePtr();
+      Ch = SDValue(ST, 0);
+      break;
+    }
+  }
+
+  if (!Ch.getNode()) {
+    // Store the value to a temporary stack slot, then LOAD the returned part.
+    StackPtr = DAG.CreateStackTemporary(Vec.getValueType());
+    Ch = DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr,
+                      MachinePointerInfo(), false, false, 0);
+  }
 
   // Add the offset to the index.
   unsigned EltSize =

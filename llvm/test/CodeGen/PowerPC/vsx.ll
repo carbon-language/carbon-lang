@@ -281,6 +281,12 @@ define <2 x i64> @test26(<2 x i64> %a, <2 x i64> %b) {
   ret <2 x i64> %v
 
 ; CHECK-LABEL: @test26
+
+; Make sure we use only two stores (one for each operand).
+; CHECK: stxvd2x 35,
+; CHECK: stxvd2x 34,
+; CHECK-NOT: stxvd2x
+
 ; FIXME: The code quality here is not good; just make sure we do something for now.
 ; CHECK: add
 ; CHECK: add
