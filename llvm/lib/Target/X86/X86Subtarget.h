@@ -344,8 +344,7 @@ public:
   bool isTargetNaCl32() const { return isTargetNaCl() && !is64Bit(); }
   bool isTargetNaCl64() const { return isTargetNaCl() && is64Bit(); }
   bool isTargetWindows() const {
-    return TargetTriple.isOSWindows() &&
-           !TargetTriple.isWindowsGNUEnvironment();
+    return TargetTriple.isKnownWindowsMSVCEnvironment();
   }
   bool isTargetMingw() const { return TargetTriple.isWindowsGNUEnvironment(); }
   bool isTargetCygwin() const {
