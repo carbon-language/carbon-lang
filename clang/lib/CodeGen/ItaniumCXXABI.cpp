@@ -248,6 +248,9 @@ public:
 class iOS64CXXABI : public ARMCXXABI {
 public:
   iOS64CXXABI(CodeGen::CodeGenModule &CGM) : ARMCXXABI(CGM) {}
+
+  // ARM64 libraries are prepared for non-unique RTTI.
+  bool shouldRTTIBeUnique() override { return false; }
 };
 }
 

@@ -290,3 +290,31 @@ LValue CGCXXABI::EmitThreadLocalVarDeclLValue(CodeGenFunction &CGF,
 bool CGCXXABI::NeedsVTTParameter(GlobalDecl GD) {
   return false;
 }
+
+/// What sort of uniqueness rules should we use for the RTTI for the
+/// given type?
+CGCXXABI::RTTIUniquenessKind
+CGCXXABI::classifyRTTIUniqueness(QualType CanTy,
+                                 llvm::GlobalValue::LinkageTypes Linkage) {
+  if (shouldRTTIBeUnique())
+    return RUK_Unique;
+
+  // It's only necessary for linkonce_odr or weak_odr linkage.
+  if (Linkage != llvm::GlobalValue::LinkOnceODRLinkage &&
+      Linkage != llvm::GlobalValue::WeakODRLinkage)
+    return RUK_Unique;
+
+  // It's only necessary with default visibility.
+  if (CanTy->getVisibility() != DefaultVisibility)
+    return RUK_Unique;
+
+  // If we're not required to publish this symbol, hide it.
+  if (Linkage == llvm::GlobalValue::LinkOnceODRLinkage)
+    return RUK_NonUniqueHidden;
+
+  // If we're required to publish this symbol, as we might be under an
+  // explicit instantiation, leave it with default visibility but
+  // enable string-comparisons.
+  assert(Linkage == llvm::GlobalValue::WeakODRLinkage);
+  return RUK_NonUniqueVisible;
+}
