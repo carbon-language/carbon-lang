@@ -522,6 +522,12 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
 
     { ISD::FP_TO_SINT,  MVT::v8i8,  MVT::v8f32, 7 },
     { ISD::FP_TO_SINT,  MVT::v4i8,  MVT::v4f32, 1 },
+    // This node is expanded into scalarized operations but BasicTTI is overly
+    // optimistic estimating its cost.  It computes 3 per element (one
+    // vector-extract, one scalar conversion and one vector-insert).  The
+    // problem is that the inserts form a read-modify-write chain so latency
+    // should be factored in too.  Inflating the cost per element by 1.
+    { ISD::FP_TO_UINT,  MVT::v8i32, MVT::v8f32, 8*4 },
   };
 
   if (ST->hasAVX2()) {
