@@ -1481,12 +1481,14 @@ AArch64AsmParser::ParseRelocPrefix(AArch64MCExpr::VariantKind &RefKind) {
 AArch64AsmParser::OperandMatchResultTy
 AArch64AsmParser::ParseImmWithLSLOperand(
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // FIXME?: I want to live in a world where immediates must start with
-  // #. Please don't dash my hopes (well, do if you have a good reason).
-  if (Parser.getTok().isNot(AsmToken::Hash)) return MatchOperand_NoMatch;
 
   SMLoc S = Parser.getTok().getLoc();
-  Parser.Lex(); // Eat '#'
+
+  if (Parser.getTok().is(AsmToken::Hash))
+    Parser.Lex(); // Eat '#'
+  else if (Parser.getTok().isNot(AsmToken::Integer))
+    // Operand should start from # or should be integer, emit error otherwise.
+    return MatchOperand_NoMatch;
 
   const MCExpr *Imm;
   if (ParseImmediate(Imm) != MatchOperand_Success)
@@ -1585,12 +1587,13 @@ AArch64AsmParser::OperandMatchResultTy
 AArch64AsmParser::ParseFPImmOperand(
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
-  // FIXME?: I want to live in a world where immediates must start with
-  // #. Please don't dash my hopes (well, do if you have a good reason).
-  if (Parser.getTok().isNot(AsmToken::Hash)) return MatchOperand_NoMatch;
-
   SMLoc S = Parser.getTok().getLoc();
-  Parser.Lex(); // Eat '#'
+
+  bool Hash = false;
+  if (Parser.getTok().is(AsmToken::Hash)) {
+    Parser.Lex(); // Eat '#'
+    Hash = true;
+  }
 
   bool Negative = false;
   if (Parser.getTok().is(AsmToken::Minus)) {
@@ -1601,6 +1604,8 @@ AArch64AsmParser::ParseFPImmOperand(
   }
 
   if (Parser.getTok().isNot(AsmToken::Real)) {
+    if (!Hash)
+      return MatchOperand_NoMatch;
     Error(S, "Expected floating-point immediate");
     return MatchOperand_ParseFail;
   }
@@ -1619,15 +1624,14 @@ AArch64AsmParser::ParseFPImmOperand(
 AArch64AsmParser::OperandMatchResultTy
 AArch64AsmParser::ParseFPImm0AndImm0Operand(
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-  // FIXME?: I want to live in a world where immediates must start with
-  // #. Please don't dash my hopes (well, do if you have a good reason).
-
-  //This function is only used in floating compare with zero instructions to get
-  //those instructions accept both #0.0 and #0.
-  if (Parser.getTok().isNot(AsmToken::Hash)) return MatchOperand_NoMatch;
 
   SMLoc S = Parser.getTok().getLoc();
-  Parser.Lex(); // Eat '#'
+
+  bool Hash = false;
+  if (Parser.getTok().is(AsmToken::Hash)) {
+    Parser.Lex(); // Eat '#'
+    Hash = true;
+  }
 
   APFloat RealVal(0.0);
   if (Parser.getTok().is(AsmToken::Real)) {
@@ -1643,6 +1647,8 @@ AArch64AsmParser::ParseFPImm0AndImm0Operand(
     }
   }
   else {
+    if (!Hash)
+      return MatchOperand_NoMatch;
     Error(S, "only #0.0 is acceptable as immediate");
     return MatchOperand_ParseFail;
   }
