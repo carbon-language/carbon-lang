@@ -2421,9 +2421,8 @@ void MicrosoftMangleContextImpl::mangleStringLiteral(const StringLiteral *SL,
     if ((Byte >= 'a' && Byte <= 'z') || (Byte >= 'A' && Byte <= 'Z') ||
         (Byte >= '0' && Byte <= '9') || Byte == '_' || Byte == '$') {
       Mangler.getStream() << Byte;
-    } else if (Byte >= '\xe1' && Byte <= '\xfa') {
-      Mangler.getStream() << '?' << static_cast<char>('a' + (Byte - '\xe1'));
-    } else if (Byte >= '\xc1' && Byte <= '\xda') {
+    } else if ((Byte >= '\xe1' && Byte <= '\xfa') ||
+               (Byte >= '\xc1' && Byte <= '\xda')) {
       Mangler.getStream() << '?' << static_cast<char>('A' + (Byte - '\xc1'));
     } else {
       switch (Byte) {
