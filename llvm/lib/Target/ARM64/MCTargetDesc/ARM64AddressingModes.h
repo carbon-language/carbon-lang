@@ -149,7 +149,7 @@ static inline ARM64_AM::ExtendType getMemExtendType(unsigned Imm) {
 }
 
 /// getExtendImm - Encode the extend type and amount for a load/store inst:
-///   imm:     3-bit extend amount
+///   doshift:     should the offset be scaled by the access size
 ///   shifter: 000 ==> uxtb
 ///            001 ==> uxth
 ///            010 ==> uxtw
@@ -159,10 +159,9 @@ static inline ARM64_AM::ExtendType getMemExtendType(unsigned Imm) {
 ///            110 ==> sxtw
 ///            111 ==> sxtx
 ///   {3-1}  = shifter
-///   {0}  = imm3
-static inline unsigned getMemExtendImm(ARM64_AM::ExtendType ET, bool Imm) {
-  assert((Imm & 0x7) == Imm && "Illegal shifted immedate value!");
-  return (unsigned(ET) << 1) | (Imm & 0x7);
+///   {0}  = doshift
+static inline unsigned getMemExtendImm(ARM64_AM::ExtendType ET, bool DoShift) {
+  return (unsigned(ET) << 1) | unsigned(DoShift);
 }
 
 //===----------------------------------------------------------------------===//
