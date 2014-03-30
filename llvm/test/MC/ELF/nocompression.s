@@ -2,4 +2,4 @@
 
 // REQUIRES: nozlib
 
-// CHECK: llvm-mc: build tools with zlib to enable -compress-debug-sections
+// CHECK: llvm-mc{{[^:]*}}: build tools with zlib to enable -compress-debug-sections
