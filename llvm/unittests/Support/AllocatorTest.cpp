@@ -33,7 +33,7 @@ TEST(AllocatorTest, Basics) {
 
 // Allocate enough bytes to create three slabs.
 TEST(AllocatorTest, ThreeSlabs) {
-  BumpPtrAllocator Alloc(4096, 4096);
+  BumpPtrAllocator Alloc;
   Alloc.Allocate(3000, 0);
   EXPECT_EQ(1U, Alloc.GetNumSlabs());
   Alloc.Allocate(3000, 0);
@@ -45,7 +45,7 @@ TEST(AllocatorTest, ThreeSlabs) {
 // Allocate enough bytes to create two slabs, reset the allocator, and do it
 // again.
 TEST(AllocatorTest, TestReset) {
-  BumpPtrAllocator Alloc(4096, 4096);
+  BumpPtrAllocator Alloc;
   Alloc.Allocate(3000, 0);
   EXPECT_EQ(1U, Alloc.GetNumSlabs());
   Alloc.Allocate(3000, 0);
@@ -81,7 +81,7 @@ TEST(AllocatorTest, TestAlignment) {
 // Test allocating just over the slab size.  This tests a bug where before the
 // allocator incorrectly calculated the buffer end pointer.
 TEST(AllocatorTest, TestOverflow) {
-  BumpPtrAllocator Alloc(4096, 4096);
+  BumpPtrAllocator Alloc;
 
   // Fill the slab right up until the end pointer.
   Alloc.Allocate(4096 - sizeof(MemSlab), 0);
@@ -94,9 +94,9 @@ TEST(AllocatorTest, TestOverflow) {
 
 // Test allocating with a size larger than the initial slab size.
 TEST(AllocatorTest, TestSmallSlabSize) {
-  BumpPtrAllocator Alloc(128);
+  BumpPtrAllocator Alloc;
 
-  Alloc.Allocate(200, 0);
+  Alloc.Allocate(8000, 0);
   EXPECT_EQ(2U, Alloc.GetNumSlabs());
 }
 
