@@ -1,4 +1,4 @@
-; RUN: llc < %s -O3 -march=arm64 -mcpu=cyclone -pre-RA-sched=list-hybrid | FileCheck %s
+; RUN: llc < %s -O3 -mtriple=arm64-unknown-unknown -mcpu=cyclone -pre-RA-sched=list-hybrid | FileCheck %s
 ; <rdar://problem/11635990> [arm64] [lsr] Inefficient EA/loop-exit calc in bzero_phys
 ;
 ; LSR on loop %while.cond should reassociate non-address mode
