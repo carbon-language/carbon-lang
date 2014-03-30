@@ -1,4 +1,4 @@
-// RUN: %clang -O1 -target arm64-apple-ios7 -ffreestanding -S -o - -emit-llvm %s | FileCheck %s
+// RUN: %clang_cc1 -O1 -triple arm64-apple-ios7 -ffreestanding -S -o - -emit-llvm %s | FileCheck %s
 // Test ARM64 SIMD add intrinsics
 
 #include <arm_neon.h>
