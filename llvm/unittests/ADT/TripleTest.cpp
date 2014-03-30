@@ -352,10 +352,6 @@ TEST(TripleTest, BitWidthArchVariants) {
   EXPECT_EQ(Triple::UnknownArch, T.get32BitArchVariant().getArch());
   EXPECT_EQ(Triple::UnknownArch, T.get64BitArchVariant().getArch());
 
-  T.setArch(Triple::arm);
-  EXPECT_EQ(Triple::arm, T.get32BitArchVariant().getArch());
-  EXPECT_EQ(Triple::arm64, T.get64BitArchVariant().getArch());
-
   T.setArch(Triple::mips);
   EXPECT_EQ(Triple::mips, T.get32BitArchVariant().getArch());
   EXPECT_EQ(Triple::mips64, T.get64BitArchVariant().getArch());

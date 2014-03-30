@@ -823,6 +823,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::UnknownArch:
   case Triple::aarch64:
   case Triple::aarch64_be:
+  case Triple::arm64:
   case Triple::msp430:
   case Triple::systemz:
   case Triple::ppc64le:
@@ -856,7 +857,6 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::sparcv9:   T.setArch(Triple::sparc);   break;
   case Triple::x86_64:    T.setArch(Triple::x86);     break;
   case Triple::spir64:    T.setArch(Triple::spir);    break;
-  case Triple::arm64:     T.setArch(Triple::arm);     break;
   }
   return T;
 }
@@ -866,6 +866,7 @@ Triple Triple::get64BitArchVariant() const {
   switch (getArch()) {
   case Triple::UnknownArch:
   case Triple::amdil:
+  case Triple::arm:
   case Triple::armeb:
   case Triple::hexagon:
   case Triple::le32:
@@ -900,7 +901,6 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::sparc:   T.setArch(Triple::sparcv9);   break;
   case Triple::x86:     T.setArch(Triple::x86_64);    break;
   case Triple::spir:    T.setArch(Triple::spir64);    break;
-  case Triple::arm:     T.setArch(Triple::arm64);     break;
   }
   return T;
 }
