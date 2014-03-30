@@ -5,6 +5,8 @@
 // FIXME: __SIZE_TYPE__ expands to 'long long' on some targets.
 __extension__ typedef __SIZE_TYPE__ size_t;
 
+namespace std { struct type_info; }
+
 namespace dr400 { // dr400: yes
   struct A { int a; struct a {}; }; // expected-note 2{{conflicting}} expected-note {{ambiguous}}
   struct B { int a; struct a {}; }; // expected-note 2{{target}} expected-note {{ambiguous}}
@@ -207,6 +209,15 @@ namespace dr413 { // dr413: yes
     int b;
   };
   S s = { 1, 2, 3 }; // expected-error {{excess elements}}
+
+  struct E {};
+  struct T { // expected-note {{here}}
+    int a;
+    E e;
+    int b;
+  };
+  T t1 = { 1, {}, 2 };
+  T t2 = { 1, 2 }; // expected-error {{aggregate with no elements requires explicit braces}}
 }
 
 namespace dr414 { // dr414: dup 305
@@ -833,6 +844,118 @@ namespace dr474 { // dr474: yes
 
 // dr475 FIXME write a codegen test
 
+namespace dr477 { // dr477: no
+  struct A {
+    explicit A();
+    virtual void f();
+  };
+  struct B {
+    friend explicit A::A(); // FIXME: reject this
+    friend virtual void A::f(); // FIXME: reject this
+  };
+  explicit A::A() {} // expected-error {{can only be specified inside the class definition}}
+  virtual void A::f() {} // expected-error {{can only be specified inside the class definition}}
+}
+
+namespace dr478 { // dr478: yes
+  struct A { virtual void f() = 0; }; // expected-note {{unimplemented}}
+  void f(A *a);
+  void f(A a[10]); // expected-error {{array of abstract class type}}
+}
+
+namespace dr479 { // dr479: yes
+  struct S {
+    S();
+  private:
+    S(const S&); // expected-note +{{here}}
+    ~S(); // expected-note +{{here}}
+  };
+  void f() {
+    throw S();
+    // expected-error@-1 {{temporary of type 'dr479::S' has private destructor}}
+    // expected-error@-2 {{calling a private constructor}}
+    // expected-error@-3 {{exception object of type 'dr479::S' has private destructor}}
+#if __cplusplus < 201103L
+    // expected-error@-5 {{C++98 requires an accessible copy constructor}}
+#endif
+  }
+  void g() {
+    S s; // expected-error {{private destructor}}}
+    throw s;
+    // expected-error@-1 {{calling a private constructor}}
+    // expected-error@-2 {{exception object of type 'dr479::S' has private destructor}}
+  }
+  void h() {
+    try {
+      f();
+      g();
+    } catch (S s) {
+      // expected-error@-1 {{calling a private constructor}}
+      // expected-error@-2 {{variable of type 'dr479::S' has private destructor}}
+    }
+  }
+}
+
+namespace dr480 { // dr480: yes
+  struct A { int n; };
+  struct B : A {};
+  struct C : virtual B {};
+  struct D : C {};
+
+  int A::*a = &A::n;
+  int D::*b = a; // expected-error {{virtual base}}
+
+  extern int D::*c;
+  int A::*d = static_cast<int A::*>(c); // expected-error {{virtual base}}
+
+  D *e;
+  A *f = e;
+  D *g = static_cast<D*>(f); // expected-error {{virtual base}}
+
+  extern D &i;
+  A &j = i;
+  D &k = static_cast<D&>(j); // expected-error {{virtual base}}
+}
+
+namespace dr481 { // dr481: yes
+  template<class T, T U> class A { T *x; };
+  T *x; // expected-error {{unknown type}}
+
+  template<class T *U> class B { T *x; };
+  T *y; // ok
+
+  struct C {
+    template<class T> void f(class D *p);
+  };
+  D *z; // ok
+
+  template<typename A = C, typename C = A> struct E {
+    void f() {
+      typedef ::dr481::C c; // expected-note {{previous}}
+      typedef C c; // expected-error {{different type}}
+    }
+  };
+  template struct E<>; // ok
+  template struct E<int>; // expected-note {{instantiation of}}
+
+  template<template<typename U_no_typo_correction> class A,
+           A<int> *B,
+           U_no_typo_correction *C> // expected-error {{unknown type}}
+  struct F {
+    U_no_typo_correction *x; // expected-error {{unknown type}}
+  };
+
+  template<template<class H *> class> struct G {
+    H *x;
+  };
+  H *q;
+
+  typedef int N;
+  template<N X, typename N, template<N Y> class T> struct I;
+  template<char*> struct J;
+  I<123, char*, J> *j;
+}
+
 namespace dr482 { // dr482: 3.5
   extern int a;
   void f();
@@ -865,4 +988,228 @@ namespace dr482 { // dr482: 3.5
     enum class A::C {}; // expected-error {{extra qualification}}
 #endif
   };
+}
+
+namespace dr483 { // dr483: yes
+  namespace climits {
+    int check1[__SCHAR_MAX__ >= 127 ? 1 : -1];
+    int check2[__SHRT_MAX__ >= 32767 ? 1 : -1];
+    int check3[__INT_MAX__ >= 32767 ? 1 : -1];
+    int check4[__LONG_MAX__ >= 2147483647 ? 1 : -1];
+    int check5[__LONG_LONG_MAX__ >= 9223372036854775807 ? 1 : -1];
+#if __cplusplus < 201103L
+    // expected-error@-2 {{extension}}
+#endif
+  }
+  namespace cstdint {
+    int check1[__PTRDIFF_WIDTH__ >= 16 ? 1 : -1];
+    int check2[__SIG_ATOMIC_WIDTH__ >= 8 ? 1 : -1];
+    int check3[__SIZE_WIDTH__ >= 16 ? 1 : -1];
+    int check4[__WCHAR_WIDTH__ >= 8 ? 1 : -1];
+    int check5[__WINT_WIDTH__ >= 16 ? 1 : -1];
+  }
+}
+
+namespace dr484 { // dr484: yes
+  struct A {
+    A();
+    void f();
+  };
+  typedef const A CA;
+  void CA::f() {
+    this->~CA();
+    this->CA::~A();
+    this->CA::A::~A();
+  }
+  CA::A() {}
+
+  struct B : CA {
+    B() : CA() {}
+    void f() { return CA::f(); }
+  };
+
+  struct C;
+  typedef C CT; // expected-note {{here}}
+  struct CT {}; // expected-error {{conflicts with typedef}}
+
+  namespace N {
+    struct D;
+    typedef D DT; // expected-note {{here}}
+  }
+  struct N::DT {}; // expected-error {{conflicts with typedef}}
+
+  typedef struct {
+    S(); // expected-error {{requires a type}}
+  } S;
+}
+
+namespace dr485 { // dr485: yes
+  namespace N {
+    struct S {};
+    int operator+(S, S);
+    template<typename T> int f(S);
+  }
+  template<typename T> int f();
+
+  N::S s;
+  int a = operator+(s, s);
+  int b = f<int>(s);
+}
+
+namespace dr486 { // dr486: yes
+  template<typename T> T f(T *); // expected-note 2{{substitution failure}}
+  int &f(...);
+
+  void g();
+  int n[10];
+
+  void h() {
+    int &a = f(&g);
+    int &b = f(&n);
+    f<void()>(&g); // expected-error {{no match}}
+    f<int[10]>(&n); // expected-error {{no match}}
+  }
+}
+
+namespace dr487 { // dr487: yes
+  enum E { e };
+  int operator+(int, E);
+  int i[4 + e]; // expected-error 2{{variable length array}}
+}
+
+namespace dr488 { // dr488: yes c++11
+  template <typename T> void f(T);
+  void f(int);
+  void g() {
+    // FIXME: It seems CWG thought this should be a SFINAE failure prior to
+    // allowing local types as template arguments. In C++98, we should either
+    // allow local types as template arguments or treat this as a SFINAE
+    // failure.
+    enum E { e };
+    f(e);
+#if __cplusplus < 201103L
+    // expected-error@-2 {{local type}}
+#endif
+  }
+}
+
+// dr489: na
+
+namespace dr490 { // dr490: yes
+  template<typename T> struct X {};
+
+  struct A {
+    typedef int T;
+    struct K {}; // expected-note {{declared}}
+
+    int f(T);
+    int g(T);
+    int h(X<T>);
+    int X<T>::*i(); // expected-note {{previous}}
+    int K::*j();
+
+    template<typename T> T k();
+
+    operator X<T>();
+  };
+
+  struct B {
+    typedef char T;
+    typedef int U;
+    friend int A::f(T);
+    friend int A::g(U);
+    friend int A::h(X<T>);
+
+    // FIXME: Per this DR, these two are valid! That is another defect
+    // (no number yet...) which will eventually supersede this one.
+    friend int X<T>::*A::i(); // expected-error {{return type}}
+    friend int K::*A::j(); // expected-error {{undeclared identifier 'K'; did you mean 'A::K'?}}
+
+    // ok, lookup finds B::T, not A::T, so return type matches
+    friend char A::k<T>();
+    friend int A::k<U>();
+
+    // A conversion-type-id in a conversion-function-id is always looked up in
+    // the class of the conversion function first.
+    friend A::operator X<T>();
+  };
+}
+
+namespace dr491 { // dr491: dup 413
+  struct A {} a, b[3] = { a, {} };
+  A c[2] = { a, {}, b[1] }; // expected-error {{excess elements}}
+}
+
+// dr492 FIXME write a codegen test
+
+namespace dr493 { // dr493: dup 976
+  struct X {
+    template <class T> operator const T &() const;
+  };
+  void f() {
+    if (X()) {
+    }
+  }
+}
+
+namespace dr494 { // dr494: dup 372
+  class A {
+    class B {};
+    friend class C;
+  };
+  class C : A::B {
+    A::B x;
+    class D : A::B {
+      A::B y;
+    };
+  };
+}
+
+namespace dr495 { // dr495: yes
+  template<typename T>
+  struct S {
+    operator int() { return T::error; }
+    template<typename U> operator U();
+  };
+  S<int> s;
+  long n = s;
+}
+
+namespace dr496 { // dr496: no
+  struct A { int n; };
+  struct B { volatile int n; };
+  int check1[ __is_trivially_copyable(const int) ? 1 : -1];
+  int check2[!__is_trivially_copyable(volatile int) ? 1 : -1];
+  int check3[ __is_trivially_constructible(A, const A&) ? 1 : -1];
+  // FIXME: This is wrong.
+  int check4[ __is_trivially_constructible(B, const B&) ? 1 : -1];
+  int check5[ __is_trivially_assignable(A, const A&) ? 1 : -1];
+  // FIXME: This is wrong.
+  int check6[ __is_trivially_assignable(B, const B&) ? 1 : -1];
+}
+
+namespace dr497 { // dr497: yes
+  void before() {
+    struct S {
+      mutable int i;
+    };
+    const S cs; // expected-error {{default initialization}}
+    int S::*pm = &S::i;
+    cs.*pm = 88;
+  }
+
+  void after() {
+    struct S {
+      S() : i(0) {}
+      mutable int i;
+    };
+    const S cs;
+    int S::*pm = &S::i;
+    cs.*pm = 88; // expected-error {{not assignable}}
+  }
+}
+
+namespace dr499 { // dr499: yes
+  extern char str[];
+  void f() { throw str; }
 }
