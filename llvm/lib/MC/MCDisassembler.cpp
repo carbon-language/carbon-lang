@@ -30,14 +30,6 @@ void MCDisassembler::setupForSymbolicDisassembly(
                                               DisInfo));
 }
 
-void MCDisassembler::setupForSymbolicDisassembly(
-    LLVMOpInfoCallback GetOpInfo, LLVMSymbolLookupCallback SymbolLookUp,
-    void *DisInfo, MCContext *Ctx, OwningPtr<MCRelocationInfo> &RelInfo) {
-  std::unique_ptr<MCRelocationInfo> MCRI;
-  setupForSymbolicDisassembly(GetOpInfo, SymbolLookUp, DisInfo, Ctx, MCRI);
-  RelInfo = std::move(MCRI);
-}
-
 bool MCDisassembler::tryAddingSymbolicOperand(MCInst &Inst, int64_t Value,
                                               uint64_t Address, bool IsBranch,
                                               uint64_t Offset,

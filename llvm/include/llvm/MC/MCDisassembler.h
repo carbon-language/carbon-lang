@@ -121,11 +121,6 @@ public:
                                    LLVMSymbolLookupCallback SymbolLookUp,
                                    void *DisInfo,
                                    MCContext *Ctx,
-                                   OwningPtr<MCRelocationInfo> &RelInfo);
-  void setupForSymbolicDisassembly(LLVMOpInfoCallback GetOpInfo,
-                                   LLVMSymbolLookupCallback SymbolLookUp,
-                                   void *DisInfo,
-                                   MCContext *Ctx,
                                    std::unique_ptr<MCRelocationInfo> &RelInfo);
 
   LLVMOpInfoCallback getLLVMOpInfoCallback() const { return GetOpInfo; }
