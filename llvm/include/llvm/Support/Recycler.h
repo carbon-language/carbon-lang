@@ -17,12 +17,11 @@
 
 #include "llvm/ADT/ilist.h"
 #include "llvm/Support/AlignOf.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 
 namespace llvm {
-
-class BumpPtrAllocator;
 
 /// PrintRecyclingAllocatorStats - Helper for RecyclingAllocator for
 /// printing statistics.

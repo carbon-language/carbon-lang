@@ -16,11 +16,10 @@
 #define LLVM_SUPPORT_ARRAYRECYCLER_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/MathExtras.h"
 
 namespace llvm {
-
-class BumpPtrAllocator;
 
 /// Recycle small arrays allocated from a BumpPtrAllocator.
 ///

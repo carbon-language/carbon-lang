@@ -14,6 +14,7 @@
 #ifndef LLVM_CODEGEN_MACHINESSAUPDATER_H
 #define LLVM_CODEGEN_MACHINESSAUPDATER_H
 
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
@@ -26,7 +27,6 @@ namespace llvm {
   class TargetRegisterClass;
   template<typename T> class SmallVectorImpl;
   template<typename T> class SSAUpdaterTraits;
-  class BumpPtrAllocator;
 
 /// MachineSSAUpdater - This class updates SSA form for a set of virtual
 /// registers defined in multiple blocks.  This is used when code duplication
