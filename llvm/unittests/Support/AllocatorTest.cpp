@@ -141,7 +141,7 @@ public:
 // will not.
 TEST(AllocatorTest, TestBigAlignment) {
   MockSlabAllocator SlabAlloc;
-  BumpPtrAllocator Alloc(4096, 4096, SlabAlloc);
+  BumpPtrAllocator Alloc(SlabAlloc);
   uintptr_t Ptr = (uintptr_t)Alloc.Allocate(3000, 2048);
   MemSlab *Slab = SlabAlloc.GetLastSlab();
   EXPECT_LE(Ptr + 3000, ((uintptr_t)Slab) + Slab->Size);

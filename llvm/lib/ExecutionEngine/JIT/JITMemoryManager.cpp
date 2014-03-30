@@ -314,8 +314,8 @@ namespace {
     // confuse them with the blocks of memory described above.
     std::vector<sys::MemoryBlock> CodeSlabs;
     JITSlabAllocator BumpSlabAllocator;
-    BumpPtrAllocator StubAllocator;
-    BumpPtrAllocator DataAllocator;
+    BumpPtrAllocatorImpl<DefaultSlabSize, DefaultSizeThreshold> StubAllocator;
+    BumpPtrAllocatorImpl<DefaultSlabSize, DefaultSizeThreshold> DataAllocator;
 
     // Circular list of free blocks.
     FreeRangeHeader *FreeMemoryList;
@@ -590,8 +590,8 @@ DefaultJITMemoryManager::DefaultJITMemoryManager()
 #endif
     LastSlab(0, 0),
     BumpSlabAllocator(*this),
-    StubAllocator(DefaultSlabSize, DefaultSizeThreshold, BumpSlabAllocator),
-    DataAllocator(DefaultSlabSize, DefaultSizeThreshold, BumpSlabAllocator) {
+    StubAllocator(BumpSlabAllocator),
+    DataAllocator(BumpSlabAllocator) {
 
   // Allocate space for code.
   sys::MemoryBlock MemBlock = allocateNewSlab(DefaultCodeSlabSize);
