@@ -59,5 +59,5 @@ std::string sys::getDefaultTargetTriple() {
     Triple += getOSVersion();
   }
 
-  return Triple;
+  return Triple::normalize(Triple);
 }
