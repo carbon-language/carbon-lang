@@ -24,12 +24,10 @@
 // tsan (Thread Sanitizer) is a valgrind-based tool that detects these exact
 // functions by name.
 extern "C" {
-LLVM_ATTRIBUTE_WEAK void AnnotateHappensAfter(const char *file, int line,
-                                              const volatile void *cv);
-LLVM_ATTRIBUTE_WEAK void AnnotateHappensBefore(const char *file, int line,
-                                               const volatile void *cv);
-LLVM_ATTRIBUTE_WEAK void AnnotateIgnoreWritesBegin(const char *file, int line);
-LLVM_ATTRIBUTE_WEAK void AnnotateIgnoreWritesEnd(const char *file, int line);
+void AnnotateHappensAfter(const char *file, int line, const volatile void *cv);
+void AnnotateHappensBefore(const char *file, int line, const volatile void *cv);
+void AnnotateIgnoreWritesBegin(const char *file, int line);
+void AnnotateIgnoreWritesEnd(const char *file, int line);
 }
 #endif
 
