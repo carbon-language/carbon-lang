@@ -2403,7 +2403,7 @@ void MicrosoftMangleContextImpl::mangleStringLiteral(const StringLiteral *SL,
   // scheme.
   Mangler.mangleNumber(CRC);
 
-  // <encoded-crc>: The mangled name also contains the first 32 _characters_
+  // <encoded-string>: The mangled name also contains the first 32 _characters_
   // (including null-terminator bytes) of the StringLiteral.
   // Each character is encoded by splitting them into bytes and then encoding
   // the constituent bytes.
