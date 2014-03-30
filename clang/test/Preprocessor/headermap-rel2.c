@@ -6,8 +6,8 @@
 // RUN: FileCheck %s -input-file %t.out
 
 // CHECK: Product/someheader.h
-// CHECK: system/usr/include/someheader.h
-// CHECK: system/usr/include/someheader.h
+// CHECK: system/usr/include{{[/\\]+}}someheader.h
+// CHECK: system/usr/include{{[/\\]+}}someheader.h
 
 #include "someheader.h"
 #include <someheader.h>
