@@ -28,6 +28,16 @@ namespace PBQP {
   public:
     typedef unsigned NodeId;
     typedef unsigned EdgeId;
+
+    /// \brief Returns a value representing an invalid (non-existant) node.
+    static NodeId invalidNodeId() {
+      return std::numeric_limits<NodeId>::max();
+    }
+
+    /// \brief Returns a value representing an invalid (non-existant) edge.
+    static EdgeId invalidEdgeId() {
+      return std::numeric_limits<EdgeId>::max();
+    }
   };
 
   /// PBQP Graph class.
@@ -464,16 +474,6 @@ namespace PBQP {
         return E.getN2Id();
       } // else
       return E.getN1Id();
-    }
-
-    /// \brief Returns a value representing an invalid (non-existant) node.
-    static NodeId invalidNodeId() {
-      return std::numeric_limits<NodeId>::max();
-    }
-
-    /// \brief Returns a value representing an invalid (non-existant) edge.
-    static EdgeId invalidEdgeId() {
-      return std::numeric_limits<EdgeId>::max();
     }
 
     /// \brief Get the edge connecting two nodes.
