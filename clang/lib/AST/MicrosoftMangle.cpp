@@ -1101,15 +1101,11 @@ MicrosoftCXXNameMangler::mangleExpression(const Expr *E) {
     << E->getStmtClassName() << E->getSourceRange();
 }
 
-void
-MicrosoftCXXNameMangler::mangleTemplateArgs(const TemplateDecl *TD,
-                                     const TemplateArgumentList &TemplateArgs) {
+void MicrosoftCXXNameMangler::mangleTemplateArgs(
+    const TemplateDecl *TD, const TemplateArgumentList &TemplateArgs) {
   // <template-args> ::= <template-arg>+ @
-  unsigned NumTemplateArgs = TemplateArgs.size();
-  for (unsigned i = 0; i < NumTemplateArgs; ++i) {
-    const TemplateArgument &TA = TemplateArgs[i];
+  for (const TemplateArgument &TA : TemplateArgs.asArray())
     mangleTemplateArg(TD, TA);
-  }
   Out << '@';
 }
 
