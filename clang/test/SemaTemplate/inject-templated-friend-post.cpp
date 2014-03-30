@@ -24,7 +24,7 @@ struct Streamer;
 
 typedef struct Foo {} Foo;
 
-std_ostream& operator << (std_ostream&, const Streamer<Foo>&);
+inline std_ostream& operator << (std_ostream&, const Streamer<Foo>&);
 
 void test(const Streamer<Foo>& foo)
 {

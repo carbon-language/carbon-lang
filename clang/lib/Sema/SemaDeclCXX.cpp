@@ -584,6 +584,7 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old,
     }
   }
 
+  const FunctionDecl *Def;
   // C++11 [dcl.constexpr]p1: If any declaration of a function or function
   // template has a constexpr specifier then all its declarations shall
   // contain the constexpr specifier.
@@ -591,6 +592,13 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old,
     Diag(New->getLocation(), diag::err_constexpr_redecl_mismatch)
       << New << New->isConstexpr();
     Diag(Old->getLocation(), diag::note_previous_declaration);
+    Invalid = true;
+  } else if (!Old->isInlined() && New->isInlined() && Old->isDefined(Def)) {
+    // C++11 [dcl.fcn.spec]p4:
+    //   If the definition of a function appears in a translation unit before its
+    //   first declaration as inline, the program is ill-formed.
+    Diag(New->getLocation(), diag::err_inline_decl_follows_def) << New;
+    Diag(Def->getLocation(), diag::note_previous_definition);
     Invalid = true;
   }
 

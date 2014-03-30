@@ -3714,6 +3714,8 @@ def warn_redefinition_of_typedef : ExtWarn<
 def err_redefinition_variably_modified_typedef : Error<
   "redefinition of %select{typedef|type alias}0 for variably-modified type %1">;
 
+def err_inline_decl_follows_def : Error<
+  "inline declaration of %0 follows non-inline definition">;
 def err_inline_declaration_block_scope : Error<
   "inline declaration of %0 not allowed in block scope">;
 def err_static_non_static : Error<

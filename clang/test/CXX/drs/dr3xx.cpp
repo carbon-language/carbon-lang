@@ -192,9 +192,9 @@ namespace dr314 { // dr314: dup 1710
 // dr315: na
 // dr316: sup 1004
 
-namespace dr317 { // dr317: no
-  void f() {}
-  inline void f(); // FIXME: ill-formed
+namespace dr317 { // dr317: 3.5
+  void f() {} // expected-note {{previous}}
+  inline void f(); // expected-error {{inline declaration of 'f' follows non-inline definition}}
 
   int g();
   int n = g();
@@ -202,8 +202,8 @@ namespace dr317 { // dr317: no
 
   int h();
   int m = h();
-  int h() { return 0; }
-  inline int h(); // FIXME: ill-formed
+  int h() { return 0; } // expected-note {{previous}}
+  inline int h(); // expected-error {{inline declaration of 'h' follows non-inline definition}}
 }
 
 namespace dr318 { // dr318: sup 1310
