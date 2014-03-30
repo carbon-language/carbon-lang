@@ -434,6 +434,8 @@ std::string Triple::normalize(StringRef Str) {
   if (Components.size() > 3)
     Environment = parseEnvironment(Components[3]);
   ObjectFormatType ObjectFormat = UnknownObjectFormat;
+  if (Components.size() > 4)
+    ObjectFormat = parseFormat(Components[4]);
 
   // Note which components are already in their final position.  These will not
   // be moved.
@@ -544,8 +546,16 @@ std::string Triple::normalize(StringRef Str) {
   if (OS == Triple::Win32) {
     Components.resize(4);
     Components[2] = "windows";
-    if (Environment == UnknownEnvironment && ObjectFormat == UnknownObjectFormat)
-      Components[3] = "msvc";
+    if (Environment == UnknownEnvironment) {
+      if (ObjectFormat == UnknownObjectFormat)
+        Components[3] = "msvc";
+      else
+        Components[3] = getObjectFormatTypeName(ObjectFormat);
+    } else if (ObjectFormat != UnknownObjectFormat &&
+               ObjectFormat != Triple::COFF) {
+      Components.resize(5);
+      Components[4] = getObjectFormatTypeName(ObjectFormat);
+    }
   } else if (OS == Triple::MinGW32) {
     Components.resize(4);
     Components[2] = "windows";

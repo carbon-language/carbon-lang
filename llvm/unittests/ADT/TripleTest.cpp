@@ -513,6 +513,13 @@ TEST(TripleTest, FileFormat) {
 
   EXPECT_EQ(Triple::COFF, Triple("i686--win32").getObjectFormat());
 
+  EXPECT_EQ(Triple::ELF, Triple("i686-pc-windows-msvc-elf").getObjectFormat());
+
+  {
+    Triple Normalized(Triple::normalize("i686-pc-windows-msvc-elf"));
+    EXPECT_EQ(Triple::ELF, Normalized.getObjectFormat());
+  }
+
   Triple T = Triple("");
   T.setObjectFormat(Triple::ELF);
   EXPECT_EQ(Triple::ELF, T.getObjectFormat());
@@ -546,5 +553,7 @@ TEST(TripleTest, NormalizeWindows) {
   EXPECT_EQ("x86_64--windows-macho", Triple::normalize("x86_64-win32-macho"));
 
   EXPECT_EQ("i686-pc-windows-itanium", Triple::normalize("i686-pc-windows-itanium"));
+
+  EXPECT_EQ("i686-pc-windows-msvc", Triple::normalize("i686-pc-windows-msvc"));
 }
 }
