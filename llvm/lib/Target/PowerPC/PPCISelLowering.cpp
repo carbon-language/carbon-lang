@@ -600,6 +600,13 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::FP_TO_SINT, MVT::v2i64, Legal);
       setOperationAction(ISD::FP_TO_UINT, MVT::v2i64, Legal);
 
+      // Vector operation legalization checks the result type of
+      // SIGN_EXTEND_INREG, overall legalization checks the inner type.
+      setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i64, Legal);
+      setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i32, Legal);
+      setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i16, Custom);
+      setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i8, Custom);
+
       addRegisterClass(MVT::v2i64, &PPC::VSRCRegClass);
     }
   }
@@ -5947,6 +5954,30 @@ SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   return Flags;
 }
 
+SDValue PPCTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
+                                                  SelectionDAG &DAG) const {
+  SDLoc dl(Op);
+  // For v2i64 (VSX), we can pattern patch the v2i32 case (using fp <-> int
+  // instructions), but for smaller types, we need to first extend up to v2i32
+  // before doing going farther.
+  if (Op.getValueType() == MVT::v2i64) {
+    EVT ExtVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
+    if (ExtVT != MVT::v2i32) {
+      Op = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, Op.getOperand(0));
+      Op = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, MVT::v4i32, Op,
+                       DAG.getValueType(EVT::getVectorVT(*DAG.getContext(),
+                                        ExtVT.getVectorElementType(), 4)));
+      Op = DAG.getNode(ISD::BITCAST, dl, MVT::v2i64, Op);
+      Op = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, MVT::v2i64, Op,
+                       DAG.getValueType(MVT::v2i32));
+    }
+
+    return Op;
+  }
+
+  return SDValue();
+}
+
 SDValue PPCTargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op,
                                                    SelectionDAG &DAG) const {
   SDLoc dl(Op);
@@ -6074,6 +6105,7 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::VECTOR_SHUFFLE:     return LowerVECTOR_SHUFFLE(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::SCALAR_TO_VECTOR:   return LowerSCALAR_TO_VECTOR(Op, DAG);
+  case ISD::SIGN_EXTEND_INREG:  return LowerSIGN_EXTEND_INREG(Op, DAG);
   case ISD::MUL:                return LowerMUL(Op, DAG);
 
   // For counter-based loop handling.

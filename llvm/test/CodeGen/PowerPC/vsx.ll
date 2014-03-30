@@ -580,3 +580,41 @@ define <2 x i1> @test67(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK: blr
 }
 
+define <2 x double> @test68(<2 x i32> %a) {
+  %w = sitofp <2 x i32> %a to <2 x double>
+  ret <2 x double> %w
+
+; CHECK-LABEL: @test68
+; CHECK: xxsldwi [[V1:[0-9]+]], 34, 34, 1
+; CHECK: xvcvsxwdp 34, [[V1]]
+; CHECK: blr
+}
+
+define <2 x double> @test69(<2 x i16> %a) {
+  %w = sitofp <2 x i16> %a to <2 x double>
+  ret <2 x double> %w
+
+; CHECK-LABEL: @test69
+; CHECK: vspltisw [[V1:[0-9]+]], 8
+; CHECK: vadduwm [[V2:[0-9]+]], [[V1]], [[V1]]
+; CHECK: vslw [[V3:[0-9]+]], 2, [[V2]]
+; CHECK: vsraw {{[0-9]+}}, [[V3]], [[V2]]
+; CHECK: xxsldwi [[V4:[0-9]+]], {{[0-9]+}}, {{[0-9]+}}, 1
+; CHECK: xvcvsxwdp 34, [[V4]]
+; CHECK: blr
+}
+
+define <2 x double> @test70(<2 x i8> %a) {
+  %w = sitofp <2 x i8> %a to <2 x double>
+  ret <2 x double> %w
+
+; CHECK-LABEL: @test70
+; CHECK: vspltisw [[V1:[0-9]+]], 12
+; CHECK: vadduwm [[V2:[0-9]+]], [[V1]], [[V1]]
+; CHECK: vslw [[V3:[0-9]+]], 2, [[V2]]
+; CHECK: vsraw {{[0-9]+}}, [[V3]], [[V2]]
+; CHECK: xxsldwi [[V4:[0-9]+]], {{[0-9]+}}, {{[0-9]+}}, 1
+; CHECK: xvcvsxwdp 34, [[V4]]
+; CHECK: blr
+}
+
