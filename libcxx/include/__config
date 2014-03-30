@@ -203,6 +203,10 @@
 
 #if defined(__clang__)
 
+#if __APPLE__ && !defined(__i386__) && !defined(__x86_64__) && !defined(__arm__)
+#define _LIBCPP_ALTERNATE_STRING_LAYOUT
+#endif
+
 #if __has_feature(cxx_alignas)
 #  define _ALIGNAS_TYPE(x) alignas(x)
 #  define _ALIGNAS(x) alignas(x)
