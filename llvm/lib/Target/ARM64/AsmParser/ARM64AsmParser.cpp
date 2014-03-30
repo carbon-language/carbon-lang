@@ -2653,7 +2653,7 @@ ARM64AsmParser::tryParseSystemRegister(OperandVector &Operands) {
   if (Tok.isNot(AsmToken::Identifier))
     return MatchOperand_NoMatch;
 
-  StringRef ID = Tok.getString().lower();
+  auto ID = Tok.getString().lower();
   ARM64SYS::SystemRegister Reg =
       StringSwitch<ARM64SYS::SystemRegister>(ID)
           .Case("spsr_el1", ARM64SYS::SPSR_svc)
