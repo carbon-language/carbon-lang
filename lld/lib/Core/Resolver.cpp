@@ -184,11 +184,22 @@ void Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
 }
 
 /// \brief Add the section group and the group-child reference members.
-void Resolver::maybeAddSectionGroup(const DefinedAtom &atom) {
+bool Resolver::maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom) {
   // First time adding a group ?
   bool isFirstTime = _symbolTable.addGroup(atom);
-  if (!isFirstTime)
-    return;
+
+  if (!isFirstTime) {
+    // If duplicate symbols are allowed, select the first group.
+    if (_context.getAllowDuplicates())
+      return true;
+    const DefinedAtom *prevGroup = llvm::dyn_cast<DefinedAtom>(_symbolTable.findGroup(atom.name()));
+    assert(prevGroup && "Internal Error: The group atom could only be a defined atom");
+    // The atoms should be of the same content type, reject invalid group
+    // resolution behaviors.
+    if (atom.contentType() != prevGroup->contentType())
+      return false;
+    return true;
+  }
 
   for (const Reference *r : atom) {
     if ((r->kindNamespace() == lld::Reference::KindNamespace::all) &&
@@ -200,6 +211,7 @@ void Resolver::maybeAddSectionGroup(const DefinedAtom &atom) {
       _symbolTable.add(*target);
     }
   }
+  return true;
 }
 
 // called on each atom when a file is added
@@ -229,8 +241,14 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   // add to list of known atoms
   _atoms.push_back(&atom);
 
-  if (atom.contentType() == DefinedAtom::typeGroupComdat)
-    maybeAddSectionGroup(atom);
+  if ((atom.contentType() == DefinedAtom::typeGroupComdat) ||
+      (atom.contentType() == DefinedAtom::typeGnuLinkOnce)) {
+    // Raise error if there exists a similar gnu linkonce section.
+    if (!maybeAddSectionGroupOrGnuLinkOnce(atom)) {
+      llvm::errs() << "SymbolTable: error while merging " << atom.name() << "\n";
+      llvm::report_fatal_error("duplicate symbol error");
+    }
+  }
   else
     _symbolTable.add(atom);
 
