@@ -172,8 +172,8 @@ endfunction()
 # platform. We use the results of these tests to build only the various target
 # runtime libraries supported by our current compilers cross-compiling
 # abilities.
-set(SIMPLE_SOURCE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/simple.c)
-file(WRITE ${SIMPLE_SOURCE} "#include <stdlib.h>\nint main() {}\n")
+set(SIMPLE_SOURCE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/simple.cc)
+file(WRITE ${SIMPLE_SOURCE} "#include <stdlib.h>\n#include <limits>\nint main() {}\n")
 
 # test_target_arch(<arch> <target flags...>)
 # Sets the target flags for a given architecture and determines if this
