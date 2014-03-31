@@ -2277,7 +2277,15 @@ MCSymbolRefExpr::VariantKind MipsAsmParser::getVariantKind(StringRef Symbol) {
           .Case("got_ofst", MCSymbolRefExpr::VK_Mips_GOT_OFST)
           .Case("hi(%neg(%gp_rel", MCSymbolRefExpr::VK_Mips_GPOFF_HI)
           .Case("lo(%neg(%gp_rel", MCSymbolRefExpr::VK_Mips_GPOFF_LO)
+          .Case("got_hi", MCSymbolRefExpr::VK_Mips_GOT_HI16)
+          .Case("got_lo", MCSymbolRefExpr::VK_Mips_GOT_LO16)
+          .Case("call_hi", MCSymbolRefExpr::VK_Mips_CALL_HI16)
+          .Case("call_lo", MCSymbolRefExpr::VK_Mips_CALL_LO16)
+          .Case("higher", MCSymbolRefExpr::VK_Mips_HIGHER)
+          .Case("highest", MCSymbolRefExpr::VK_Mips_HIGHEST)
           .Default(MCSymbolRefExpr::VK_None);
+
+  assert (VK != MCSymbolRefExpr::VK_None);
 
   return VK;
 }

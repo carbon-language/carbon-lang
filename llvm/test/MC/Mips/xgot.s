@@ -1,8 +1,5 @@
 // RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux  %s -o - | llvm-readobj -r | FileCheck %s
 
-// Expected failure since the mips backend can't handle this yet.
-// XFAIL: *
-
 // Check that the appropriate relocations were created.
 // For the xgot case we want to see R_MIPS_[GOT|CALL]_[HI|LO]16.
 
@@ -12,8 +9,8 @@
 // CHECK:     0x{{[0-9,A-F]+}} R_MIPS_GOT_HI16
 // CHECK:     0x{{[0-9,A-F]+}} R_MIPS_GOT_LO16
 // CHECK:     0x{{[0-9,A-F]+}} R_MIPS_CALL_HI16
-// CHECK:     0x{{[0-9,A-F]+}} R_MIPS_CALL_LO16
 // CHECK:     0x{{[0-9,A-F]+}} R_MIPS_GOT16
+// CHECK:     0x{{[0-9,A-F]+}} R_MIPS_CALL_LO16
 // CHECK:     0x{{[0-9,A-F]+}} R_MIPS_LO16
 // CHECK: ]
 
