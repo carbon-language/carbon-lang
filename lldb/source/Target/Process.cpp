@@ -5181,7 +5181,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             // If the overall wait is forever, then we only need to set the one thread timeout:
             if (timeout_usec == 0)
             {
-                if (option_one_thread_timeout == 0)
+                if (option_one_thread_timeout != 0)
                     one_thread_timeout.OffsetWithMicroSeconds(option_one_thread_timeout);
                 else
                     one_thread_timeout.OffsetWithMicroSeconds(default_one_thread_timeout_usec);
