@@ -34,9 +34,9 @@ int main() {
   fprintf(stderr, "OK\n");
 }
 
-// CHECK-DIE: ThreadSanitizer: starting new threads after muti-threaded fork is not supported
+// CHECK-DIE: ThreadSanitizer: starting new threads after multi-threaded fork is not supported
 // CHECK-DIE: OK
 
-// CHECK-NODIE-NOT: ThreadSanitizer: starting new threads after muti-threaded fork is not supported
+// CHECK-NODIE-NOT: ThreadSanitizer: starting new threads after multi-threaded fork is not supported
 // CHECK-NODIE: OK
 
