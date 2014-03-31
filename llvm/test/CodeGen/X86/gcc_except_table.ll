@@ -1,12 +1,35 @@
-; RUN: llc -mtriple x86_64-apple-darwin %s -o - | FileCheck %s
+; RUN: llc -mtriple x86_64-apple-darwin %s -o -   | FileCheck %s   --check-prefix=APPLE
+; RUN: llc -mtriple x86_64-pc-windows-gnu %s -o - | FileCheck %s   --check-prefix=MINGW64
+; RUN: llc -mtriple i686-pc-windows-gnu %s -o -   | FileCheck %s   --check-prefix=MINGW32
 @_ZTIi = external constant i8*
 
 define i32 @main() uwtable optsize ssp {
-; CHECK: .cfi_startproc
-; CHECK: .cfi_personality 155, ___gxx_personality_v0
-; CHECK: .cfi_lsda 16, Lexception0
-; CHECK: .cfi_def_cfa_offset 16
-; CHECK: .cfi_endproc
+; APPLE: .cfi_startproc
+; APPLE: .cfi_personality 155, ___gxx_personality_v0
+; APPLE: .cfi_lsda 16, Lexception0
+; APPLE: .cfi_def_cfa_offset 16
+; APPLE: callq __Unwind_Resume
+; APPLE: .cfi_endproc
+; APPLE: GCC_except_table0:
+; APPLE: Lexception0:
+
+; MINGW64: .cfi_startproc
+; MINGW64: .cfi_personality 0, __gxx_personality_v0
+; MINGW64: .cfi_lsda 0, .Lexception0
+; MINGW64: .cfi_def_cfa_offset 16
+; MINGW64: callq _Unwind_Resume
+; MINGW64: .cfi_endproc
+; MINGW64: GCC_except_table0:
+; MINGW64: Lexception0:
+
+; MINGW32: .cfi_startproc
+; MINGW32: .cfi_personality 0, ___gxx_personality_v0
+; MINGW32: .cfi_lsda 0, Lexception0
+; MINGW32: .cfi_def_cfa_offset 8
+; MINGW32: calll __Unwind_Resume
+; MINGW32: .cfi_endproc
+; MINGW32: GCC_except_table0:
+; MINGW32: Lexception0:
 
 entry:
   invoke void @_Z1fv() optsize

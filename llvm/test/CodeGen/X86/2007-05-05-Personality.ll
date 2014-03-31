@@ -1,7 +1,12 @@
-; RUN: llc < %s -mtriple=i686-pc-linux-gnu -o - | FileCheck %s
+; RUN: llc < %s -mtriple=i686-pc-linux-gnu -o -     | FileCheck %s  --check-prefix=LIN
+; RUN: llc < %s -mtriple=x86_64-pc-windows-gnu -o - | FileCheck %s  --check-prefix=LIN
+; RUN: llc < %s -mtriple=i386-pc-mingw32 -o -       | FileCheck %s  --check-prefix=WIN
+; RUN: llc < %s -mtriple=i686-pc-windows-gnu -o -   | FileCheck %s  --check-prefix=WIN
 
-; CHECK: .cfi_personality 0, __gnat_eh_personality
-; CHECK: .cfi_lsda 0, .Lexception0
+; LIN: .cfi_personality 0, __gnat_eh_personality
+; LIN: .cfi_lsda 0, .Lexception0
+; WIN: .cfi_personality 0, ___gnat_eh_personality
+; WIN: .cfi_lsda 0, Lexception0
 
 @error = external global i8
 
