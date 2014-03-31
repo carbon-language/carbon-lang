@@ -360,20 +360,10 @@ bool SIInstrInfo::isSALUInstr(const MachineInstr &MI) const {
   return get(MI.getOpcode()).TSFlags & SIInstrFlags::SALU;
 }
 
-bool SIInstrInfo::isInlineConstant(const MachineOperand &MO) const {
-
-  union {
-    int32_t I;
-    float F;
-  } Imm;
-
-  if (MO.isImm()) {
-    Imm.I = MO.getImm();
-  } else if (MO.isFPImm()) {
-    Imm.F = MO.getFPImm()->getValueAPF().convertToFloat();
-  } else {
-    return false;
-  }
+bool SIInstrInfo::isInlineConstant(const APInt &Imm) const {
+  int32_t Val = Imm.getSExtValue();
+  if (Val >= -16 && Val <= 64)
+    return true;
 
   // The actual type of the operand does not seem to matter as long
   // as the bits match one of the inline immediate values.  For example:
@@ -383,10 +373,28 @@ bool SIInstrInfo::isInlineConstant(const MachineOperand &MO) const {
   //
   // 1065353216 has the hexadecimal encoding 0x3f800000 which is 1.0f in
   // floating-point, so it is a legal inline immediate.
-  return (Imm.I >= -16 && Imm.I <= 64) ||
-          Imm.F == 0.0f || Imm.F == 0.5f || Imm.F == -0.5f || Imm.F == 1.0f ||
-          Imm.F == -1.0f || Imm.F == 2.0f || Imm.F == -2.0f || Imm.F == 4.0f ||
-          Imm.F == -4.0f;
+
+  return (APInt::floatToBits(0.0f) == Imm) ||
+         (APInt::floatToBits(1.0f) == Imm) ||
+         (APInt::floatToBits(-1.0f) == Imm) ||
+         (APInt::floatToBits(0.5f) == Imm) ||
+         (APInt::floatToBits(-0.5f) == Imm) ||
+         (APInt::floatToBits(2.0f) == Imm) ||
+         (APInt::floatToBits(-2.0f) == Imm) ||
+         (APInt::floatToBits(4.0f) == Imm) ||
+         (APInt::floatToBits(-4.0f) == Imm);
+}
+
+bool SIInstrInfo::isInlineConstant(const MachineOperand &MO) const {
+  if (MO.isImm())
+    return isInlineConstant(APInt(32, MO.getImm(), true));
+
+  if (MO.isFPImm()) {
+    APFloat FpImm = MO.getFPImm()->getValueAPF();
+    return isInlineConstant(FpImm.bitcastToAPInt());
+  }
+
+  return false;
 }
 
 bool SIInstrInfo::isLiteralConstant(const MachineOperand &MO) const {

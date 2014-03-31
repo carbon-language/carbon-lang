@@ -52,6 +52,9 @@ public:
   bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS, bool *IsFast) const;
   virtual bool shouldSplitVectorElementType(EVT VT) const;
 
+  virtual bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
+                                                 Type *Ty) const override;
+
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
                                bool isVarArg,
                                const SmallVectorImpl<ISD::InputArg> &Ins,

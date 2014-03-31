@@ -215,6 +215,13 @@ bool SITargetLowering::shouldSplitVectorElementType(EVT VT) const {
   return VT.bitsLE(MVT::i16);
 }
 
+bool SITargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,
+                                                         Type *Ty) const {
+  const SIInstrInfo *TII =
+    static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
+  return TII->isInlineConstant(Imm);
+}
+
 SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
                                          SDLoc DL, SDValue Chain,
                                          unsigned Offset) const {
