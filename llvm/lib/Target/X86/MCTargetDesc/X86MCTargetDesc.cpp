@@ -205,8 +205,7 @@ unsigned X86_MC::getDwarfRegFlavour(StringRef TT, bool isEH) {
 
   if (TheTriple.isOSDarwin())
     return isEH ? DWARFFlavour::X86_32_DarwinEH : DWARFFlavour::X86_32_Generic;
-  if (TheTriple.getOS() == Triple::MinGW32 ||
-      TheTriple.getOS() == Triple::Cygwin)
+  if (TheTriple.isOSCygMing())
     // Unsupported by now, just quick fallback
     return DWARFFlavour::X86_32_Generic;
   return DWARFFlavour::X86_32_Generic;
@@ -279,10 +278,9 @@ static MCAsmInfo *createX86MCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
   } else if (TheTriple.isOSBinFormatELF()) {
     // Force the use of an ELF container.
     MAI = new X86ELFMCAsmInfo(TheTriple);
-  } else if (TheTriple.getOS() == Triple::Win32) {
+  } else if (TheTriple.isWindowsMSVCEnvironment()) {
     MAI = new X86MCAsmInfoMicrosoft(TheTriple);
-  } else if (TheTriple.getOS() == Triple::MinGW32 ||
-             TheTriple.getOS() == Triple::Cygwin) {
+  } else if (TheTriple.isOSCygMing()) {
     MAI = new X86MCAsmInfoGNUCOFF(TheTriple);
   } else {
     // The default is ELF.
