@@ -37,6 +37,8 @@ LLVM_YAML_STRONG_TYPEDEF(uint32_t, ELF_EM)
 LLVM_YAML_STRONG_TYPEDEF(uint8_t, ELF_ELFCLASS)
 LLVM_YAML_STRONG_TYPEDEF(uint8_t, ELF_ELFDATA)
 LLVM_YAML_STRONG_TYPEDEF(uint8_t, ELF_ELFOSABI)
+// Just use 64, since it can hold 32-bit values too.
+LLVM_YAML_STRONG_TYPEDEF(uint64_t, ELF_EF)
 LLVM_YAML_STRONG_TYPEDEF(uint32_t, ELF_SHT)
 // Just use 64, since it can hold 32-bit values too.
 LLVM_YAML_STRONG_TYPEDEF(uint64_t, ELF_SHF)
@@ -50,6 +52,7 @@ struct FileHeader {
   ELF_ELFOSABI OSABI;
   ELF_ET Type;
   ELF_EM Machine;
+  ELF_EF Flags;
   llvm::yaml::Hex64 Entry;
 };
 struct Symbol {
@@ -115,6 +118,11 @@ struct ScalarEnumerationTraits<ELFYAML::ELF_ELFDATA> {
 template <>
 struct ScalarEnumerationTraits<ELFYAML::ELF_ELFOSABI> {
   static void enumeration(IO &IO, ELFYAML::ELF_ELFOSABI &Value);
+};
+
+template <>
+struct ScalarBitSetTraits<ELFYAML::ELF_EF> {
+  static void bitset(IO &IO, ELFYAML::ELF_EF &Value);
 };
 
 template <>

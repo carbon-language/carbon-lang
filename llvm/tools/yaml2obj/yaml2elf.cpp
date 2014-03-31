@@ -261,6 +261,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   Header.e_machine = Hdr.Machine;
   Header.e_version = EV_CURRENT;
   Header.e_entry = Hdr.Entry;
+  Header.e_flags = Hdr.Flags;
   Header.e_ehsize = sizeof(Elf_Ehdr);
 
   // TODO: Flesh out section header support.

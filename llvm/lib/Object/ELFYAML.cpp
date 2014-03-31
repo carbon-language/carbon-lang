@@ -237,6 +237,48 @@ void ScalarEnumerationTraits<ELFYAML::ELF_ELFOSABI>::enumeration(
 #undef ECase
 }
 
+void ScalarBitSetTraits<ELFYAML::ELF_EF>::bitset(IO &IO,
+                                                 ELFYAML::ELF_EF &Value) {
+#define BCase(X) IO.bitSetCase(Value, #X, ELF::X);
+  BCase(EF_ARM_SOFT_FLOAT)
+  BCase(EF_ARM_VFP_FLOAT)
+  BCase(EF_ARM_EABI_UNKNOWN)
+  BCase(EF_ARM_EABI_VER1)
+  BCase(EF_ARM_EABI_VER2)
+  BCase(EF_ARM_EABI_VER3)
+  BCase(EF_ARM_EABI_VER4)
+  BCase(EF_ARM_EABI_VER5)
+  BCase(EF_ARM_EABIMASK)
+  BCase(EF_MIPS_NOREORDER)
+  BCase(EF_MIPS_PIC)
+  BCase(EF_MIPS_CPIC)
+  BCase(EF_MIPS_ABI2)
+  BCase(EF_MIPS_32BITMODE)
+  BCase(EF_MIPS_ABI_O32)
+  BCase(EF_MIPS_MICROMIPS)
+  BCase(EF_MIPS_ARCH_ASE_M16)
+  BCase(EF_MIPS_ARCH_1)
+  BCase(EF_MIPS_ARCH_2)
+  BCase(EF_MIPS_ARCH_3)
+  BCase(EF_MIPS_ARCH_4)
+  BCase(EF_MIPS_ARCH_5)
+  BCase(EF_MIPS_ARCH_32)
+  BCase(EF_MIPS_ARCH_64)
+  BCase(EF_MIPS_ARCH_32R2)
+  BCase(EF_MIPS_ARCH_64R2)
+  BCase(EF_MIPS_ARCH)
+  BCase(EF_HEXAGON_MACH_V2)
+  BCase(EF_HEXAGON_MACH_V3)
+  BCase(EF_HEXAGON_MACH_V4)
+  BCase(EF_HEXAGON_MACH_V5)
+  BCase(EF_HEXAGON_ISA_MACH)
+  BCase(EF_HEXAGON_ISA_V2)
+  BCase(EF_HEXAGON_ISA_V3)
+  BCase(EF_HEXAGON_ISA_V4)
+  BCase(EF_HEXAGON_ISA_V5)
+#undef BCase
+}
+
 void ScalarEnumerationTraits<ELFYAML::ELF_SHT>::enumeration(
     IO &IO, ELFYAML::ELF_SHT &Value) {
 #define ECase(X) IO.enumCase(Value, #X, ELF::X);
@@ -299,6 +341,7 @@ void MappingTraits<ELFYAML::FileHeader>::mapping(IO &IO,
   IO.mapOptional("OSABI", FileHdr.OSABI, ELFYAML::ELF_ELFOSABI(0));
   IO.mapRequired("Type", FileHdr.Type);
   IO.mapRequired("Machine", FileHdr.Machine);
+  IO.mapOptional("Flags", FileHdr.Flags, ELFYAML::ELF_EF(0));
   IO.mapOptional("Entry", FileHdr.Entry, Hex64(0));
 }
 

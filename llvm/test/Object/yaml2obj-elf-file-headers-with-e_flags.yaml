@@ -1,0 +1,16 @@
+# RUN: yaml2obj -format=elf %s | llvm-readobj -file-headers - | FileCheck %s
+!ELF
+FileHeader:
+  Class: ELFCLASS32
+  Data: ELFDATA2LSB
+  Type: ET_REL
+  Machine: EM_MIPS
+  Flags: [ EF_MIPS_NOREORDER, EF_MIPS_ABI_O32 ]
+
+# CHECK: Format: ELF32-mips
+# CHECK: Arch: mipsel
+# CHECK: Machine: EM_MIPS
+# CHECK: Flags [ (0x1001)
+# CHECK-NEXT: 0x1
+# CHECK-NEXT: 0x1000
+# CHECK-NEXT: ]
