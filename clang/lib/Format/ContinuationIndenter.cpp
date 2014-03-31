@@ -230,7 +230,7 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
                            SourceMgr.getSpellingColumnNumber(
                                State.NextToken->WhitespaceRange.getBegin());
     State.Column += WhitespaceLength;
-    moveStateToNextToken(State, DryRun, /*NewLine=*/false);
+    moveStateToNextToken(State, DryRun, /*Newline=*/false);
     return 0;
   }
 

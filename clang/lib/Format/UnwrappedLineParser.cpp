@@ -1219,7 +1219,7 @@ void UnwrappedLineParser::parseRecord() {
         Style.BreakBeforeBraces == FormatStyle::BS_GNU)
       addUnwrappedLine();
 
-    parseBlock(/*MustBeDeclaration=*/true, /*Addlevel=*/true,
+    parseBlock(/*MustBeDeclaration=*/true, /*AddLevel=*/true,
                /*MunchSemi=*/false);
   }
   // We fall through to parsing a structural element afterwards, so
