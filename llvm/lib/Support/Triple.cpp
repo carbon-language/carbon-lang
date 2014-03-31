@@ -547,23 +547,26 @@ std::string Triple::normalize(StringRef Str) {
     Components.resize(4);
     Components[2] = "windows";
     if (Environment == UnknownEnvironment) {
-      if (ObjectFormat == UnknownObjectFormat)
+      if (ObjectFormat == UnknownObjectFormat || ObjectFormat == Triple::COFF)
         Components[3] = "msvc";
       else
         Components[3] = getObjectFormatTypeName(ObjectFormat);
-    } else if (ObjectFormat != UnknownObjectFormat &&
-               ObjectFormat != Triple::COFF) {
-      Components.resize(5);
-      Components[4] = getObjectFormatTypeName(ObjectFormat);
     }
   } else if (OS == Triple::MinGW32) {
     Components.resize(4);
     Components[2] = "windows";
-    Components[3] = (ObjectFormat == Triple::ELF) ? "gnuelf" : "gnu";
+    Components[3] = "gnu";
   } else if (OS == Triple::Cygwin) {
     Components.resize(4);
     Components[2] = "windows";
     Components[3] = "cygnus";
+  }
+  if (OS == Triple::MinGW32 || OS == Triple::Cygwin ||
+      (OS == Triple::Win32 && Environment != UnknownEnvironment)) {
+    if (ObjectFormat != UnknownObjectFormat && ObjectFormat != Triple::COFF) {
+      Components.resize(5);
+      Components[4] = getObjectFormatTypeName(ObjectFormat);
+    }
   }
 
   // Stick the corrected components back together to form the normalized string.
@@ -726,7 +729,12 @@ void Triple::setEnvironment(EnvironmentType Kind) {
 }
 
 void Triple::setObjectFormat(ObjectFormatType Kind) {
-  setEnvironmentName(getObjectFormatTypeName(Kind));
+  if (Environment == UnknownEnvironment)
+    return setEnvironmentName(getObjectFormatTypeName(Kind));
+
+  Twine Env = getEnvironmentTypeName(Environment) + Twine("-") +
+              getObjectFormatTypeName(Kind);
+  setEnvironmentName(Env.str());
 }
 
 void Triple::setArchName(StringRef Str) {

@@ -510,11 +510,19 @@ TEST(TripleTest, FileFormat) {
   EXPECT_EQ(Triple::COFF, Triple("i686--win32").getObjectFormat());
 
   EXPECT_EQ(Triple::ELF, Triple("i686-pc-windows-msvc-elf").getObjectFormat());
+  EXPECT_EQ(Triple::ELF, Triple("i686-pc-cygwin-elf").getObjectFormat());
 
-  {
-    Triple Normalized(Triple::normalize("i686-pc-windows-msvc-elf"));
-    EXPECT_EQ(Triple::ELF, Normalized.getObjectFormat());
-  }
+  Triple MSVCNormalized(Triple::normalize("i686-pc-windows-msvc-elf"));
+  EXPECT_EQ(Triple::ELF, MSVCNormalized.getObjectFormat());
+
+  Triple GNUWindowsNormalized(Triple::normalize("i686-pc-windows-gnu-elf"));
+  EXPECT_EQ(Triple::ELF, GNUWindowsNormalized.getObjectFormat());
+
+  Triple CygnusNormalised(Triple::normalize("i686-pc-windows-cygnus-elf"));
+  EXPECT_EQ(Triple::ELF, CygnusNormalised.getObjectFormat());
+
+  Triple CygwinNormalized(Triple::normalize("i686-pc-cygwin-elf"));
+  EXPECT_EQ(Triple::ELF, CygwinNormalized.getObjectFormat());
 
   Triple T = Triple("");
   T.setObjectFormat(Triple::ELF);
@@ -548,8 +556,12 @@ TEST(TripleTest, NormalizeWindows) {
   EXPECT_EQ("x86_64-pc-windows-macho", Triple::normalize("x86_64-pc-win32-macho"));
   EXPECT_EQ("x86_64--windows-macho", Triple::normalize("x86_64-win32-macho"));
 
+  EXPECT_EQ("i686-pc-windows-cygnus",
+            Triple::normalize("i686-pc-windows-cygnus"));
+  EXPECT_EQ("i686-pc-windows-gnu", Triple::normalize("i686-pc-windows-gnu"));
   EXPECT_EQ("i686-pc-windows-itanium", Triple::normalize("i686-pc-windows-itanium"));
-
   EXPECT_EQ("i686-pc-windows-msvc", Triple::normalize("i686-pc-windows-msvc"));
+
+  EXPECT_EQ("i686-pc-windows-elf", Triple::normalize("i686-pc-windows-elf-elf"));
 }
 }
