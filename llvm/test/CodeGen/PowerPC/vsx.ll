@@ -631,12 +631,13 @@ define <2 x i32> @test80(i32 %v) {
   ret <2 x i32> %i
 
 ; CHECK-LABEL: @test80
-; CHECK: addi
-; CHECK: addi
-; CHECK: lxvd2x
+; CHECK-DAG: addi [[R1:[0-9]+]], 3, 3
+; CHECK-DAG: addi [[R2:[0-9]+]], 1, -16
+; CHECK-DAG: addi [[R3:[0-9]+]], 3, 2
+; CHECK: std [[R1]], 8([[R2]])
+; CHECK: std [[R3]], -16(1)
+; CHECK: lxvd2x 34, 0, [[R2]]
 ; CHECK-NOT: stxvd2x
-; FIXME: We still make one vector for each vector element and this shuffle them
-; together instead of just composing one vector on the stack.
 ; CHECK: blr
 }
 

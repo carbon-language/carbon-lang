@@ -8845,6 +8845,15 @@ bool PPCTargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
   return false;
 }
 
+bool
+PPCTargetLowering::shouldExpandBuildVectorWithShuffles(
+                     EVT VT , unsigned DefinedValues) const {
+  if (VT == MVT::v2i64)
+    return false;
+
+  return TargetLowering::shouldExpandBuildVectorWithShuffles(VT, DefinedValues);
+}
+
 Sched::Preference PPCTargetLowering::getSchedulingPreference(SDNode *N) const {
   if (DisableILPPref || PPCSubTarget.enableMachineScheduler())
     return TargetLowering::getSchedulingPreference(N);
