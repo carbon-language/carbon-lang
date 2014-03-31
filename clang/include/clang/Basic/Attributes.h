@@ -30,7 +30,7 @@ enum class AttrSyntax {
 
 /// \brief Return true if we recognize and implement the attribute specified by
 /// the given information.
-bool HasAttribute(AttrSyntax Syntax, const IdentifierInfo *Scope,
+bool hasAttribute(AttrSyntax Syntax, const IdentifierInfo *Scope,
                   const IdentifierInfo *Attr, const llvm::Triple &T,
                   const LangOptions &LangOpts);
 

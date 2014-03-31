@@ -1386,7 +1386,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       // Check for a builtin is trivial.
       Value = FeatureII->getBuiltinID() != 0;
     } else if (II == Ident__has_attribute)
-      Value = HasAttribute(AttrSyntax::Generic, nullptr, FeatureII,
+      Value = hasAttribute(AttrSyntax::Generic, nullptr, FeatureII,
                            getTargetInfo().getTriple(), getLangOpts());
     else if (II == Ident__has_extension)
       Value = HasExtension(*this, FeatureII);
