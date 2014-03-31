@@ -204,7 +204,7 @@ ScopedInterceptor::~ScopedInterceptor() {
 #define SCOPED_TSAN_INTERCEPTOR(func, ...) \
     SCOPED_INTERCEPTOR_RAW(func, __VA_ARGS__); \
     if (REAL(func) == 0) { \
-      Printf("FATAL: ThreadSanitizer: failed to intercept %s\n", #func); \
+      Report("FATAL: ThreadSanitizer: failed to intercept %s\n", #func); \
       Die(); \
     } \
     if (thr->ignore_interceptors || thr->in_ignored_lib) \
@@ -851,13 +851,13 @@ TSAN_INTERCEPTOR(int, pthread_create,
   SCOPED_INTERCEPTOR_RAW(pthread_create, th, attr, callback, param);
   if (ctx->after_multithreaded_fork) {
     if (flags()->die_after_fork) {
-      Printf("ThreadSanitizer: starting new threads after muti-threaded"
-          " fork is not supported. Dying (set die_after_fork=0 to override)\n");
+      Report("ThreadSanitizer: starting new threads after multi-threaded "
+          "fork is not supported. Dying (set die_after_fork=0 to override)\n");
       Die();
     } else {
-      VPrintf(1, "ThreadSanitizer: starting new threads after muti-threaded"
-          " fork is not supported. Continuing because die_after_fork=0,"
-          " but you are on your own\n");
+      VPrintf(1, "ThreadSanitizer: starting new threads after multi-threaded "
+          "fork is not supported (pid %d). Continuing because of "
+          "die_after_fork=0, but you are on your own\n", internal_getpid());
     }
   }
   __sanitizer_pthread_attr_t myattr;
@@ -1906,6 +1906,7 @@ TSAN_INTERCEPTOR(int, fork, int fake) {
   if (cur_thread()->in_symbolizer)
     return REAL(fork)(fake);
   SCOPED_INTERCEPTOR_RAW(fork, fake);
+  Report("Thread %d is about to fork\n", GetTid());
   ForkBefore(thr, pc);
   int pid = REAL(fork)(fake);
   if (pid == 0) {
@@ -2151,7 +2152,7 @@ static void finalize(void *arg) {
 }
 
 static void unreachable() {
-  Printf("FATAL: ThreadSanitizer: unreachable called\n");
+  Report("FATAL: ThreadSanitizer: unreachable called\n");
   Die();
 }
 
