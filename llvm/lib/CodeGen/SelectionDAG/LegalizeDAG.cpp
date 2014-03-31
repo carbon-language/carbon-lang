@@ -1816,6 +1816,98 @@ SDValue SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
                      false, false, false, 0);
 }
 
+static bool
+ExpandBVWithShuffles(SDNode *Node, SelectionDAG &DAG,
+                     const TargetLowering &TLI, SDValue &Res) {
+  unsigned NumElems = Node->getNumOperands();
+  SDLoc dl(Node);
+  EVT VT = Node->getValueType(0);
+
+  // Try to group the scalars into pairs, shuffle the pairs together, then
+  // shuffle the pairs of pairs together, etc. until the vector has
+  // been built. This will work only if all of the necessary shuffle masks
+  // are legal.
+
+  // We do this in two phases; first to check the legality of the shuffles,
+  // and next, assuming that all shuffles are legal, to create the new nodes.
+  for (int Phase = 0; Phase < 2; ++Phase) {
+    SmallVector<std::pair<SDValue, SmallVector<int, 16> >, 16> IntermedVals,
+                                                               NewIntermedVals;
+    for (unsigned i = 0; i < NumElems; ++i) {
+      SDValue V = Node->getOperand(i);
+      if (V.getOpcode() == ISD::UNDEF)
+        continue;
+
+      SDValue Vec;
+      if (Phase)
+        Vec = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, V);
+      IntermedVals.push_back(std::make_pair(Vec, SmallVector<int, 16>(1, i)));
+    }
+
+    while (IntermedVals.size() > 2) {
+      NewIntermedVals.clear();
+      for (unsigned i = 0, e = (IntermedVals.size() & ~1u); i < e; i += 2) {
+        // This vector and the next vector are shuffled together (simply to
+        // append the one to the other).
+        SmallVector<int, 16> ShuffleVec(NumElems, -1);
+
+        SmallVector<int, 16> FinalIndices;
+        FinalIndices.reserve(IntermedVals[i].second.size() +
+                             IntermedVals[i+1].second.size());
+        
+        int k = 0;
+        for (unsigned j = 0, f = IntermedVals[i].second.size(); j != f;
+             ++j, ++k) {
+          ShuffleVec[k] = j;
+          FinalIndices.push_back(IntermedVals[i].second[j]);
+        }
+        for (unsigned j = 0, f = IntermedVals[i+1].second.size(); j != f;
+             ++j, ++k) {
+          ShuffleVec[k] = NumElems + j;
+          FinalIndices.push_back(IntermedVals[i+1].second[j]);
+        }
+
+        SDValue Shuffle;
+        if (Phase)
+          Shuffle = DAG.getVectorShuffle(VT, dl, IntermedVals[i].first,
+                                         IntermedVals[i+1].first,
+                                         ShuffleVec.data());
+        else if (!TLI.isShuffleMaskLegal(ShuffleVec, VT))
+          return false;
+        NewIntermedVals.push_back(std::make_pair(Shuffle, FinalIndices));
+      }
+
+      // If we had an odd number of defined values, then append the last
+      // element to the array of new vectors.
+      if ((IntermedVals.size() & 1) != 0)
+        NewIntermedVals.push_back(IntermedVals.back());
+
+      IntermedVals.swap(NewIntermedVals);
+    }
+
+    assert(IntermedVals.size() <= 2 && IntermedVals.size() > 0 &&
+           "Invalid number of intermediate vectors");
+    SDValue Vec1 = IntermedVals[0].first;
+    SDValue Vec2;
+    if (IntermedVals.size() > 1)
+      Vec2 = IntermedVals[1].first;
+    else if (Phase)
+      Vec2 = DAG.getUNDEF(VT);
+
+    SmallVector<int, 16> ShuffleVec(NumElems, -1);
+    for (unsigned i = 0, e = IntermedVals[0].second.size(); i != e; ++i)
+      ShuffleVec[IntermedVals[0].second[i]] = i;
+    for (unsigned i = 0, e = IntermedVals[1].second.size(); i != e; ++i)
+      ShuffleVec[IntermedVals[1].second[i]] = NumElems + i;
+
+    if (Phase)
+      Res = DAG.getVectorShuffle(VT, dl, Vec1, Vec2, ShuffleVec.data());
+    else if (!TLI.isShuffleMaskLegal(ShuffleVec, VT))
+      return false;
+  }
+
+  return true;
+}
 
 /// ExpandBUILD_VECTOR - Expand a BUILD_VECTOR node on targets that don't
 /// support the operation, but do support the resultant vector type.
@@ -1897,26 +1989,31 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
     DefinedValues.insert(Node->getOperand(i));
   }
 
-  if (!MoreThanTwoValues &&
-    TLI.shouldExpandBuildVectorWithShuffles(VT, DefinedValues.size())) {
-    SmallVector<int, 8> ShuffleVec(NumElems, -1);
-    for (unsigned i = 0; i < NumElems; ++i) {
-      SDValue V = Node->getOperand(i);
-      if (V.getOpcode() == ISD::UNDEF)
-        continue;
-      ShuffleVec[i] = V == Value1 ? 0 : NumElems;
-    }
-    if (TLI.isShuffleMaskLegal(ShuffleVec, Node->getValueType(0))) {
-      // Get the splatted value into the low element of a vector register.
-      SDValue Vec1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Value1);
-      SDValue Vec2;
-      if (Value2.getNode())
-        Vec2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Value2);
-      else
-        Vec2 = DAG.getUNDEF(VT);
+  if (TLI.shouldExpandBuildVectorWithShuffles(VT, DefinedValues.size())) {
+    if (!MoreThanTwoValues) {
+      SmallVector<int, 8> ShuffleVec(NumElems, -1);
+      for (unsigned i = 0; i < NumElems; ++i) {
+        SDValue V = Node->getOperand(i);
+        if (V.getOpcode() == ISD::UNDEF)
+          continue;
+        ShuffleVec[i] = V == Value1 ? 0 : NumElems;
+      }
+      if (TLI.isShuffleMaskLegal(ShuffleVec, Node->getValueType(0))) {
+        // Get the splatted value into the low element of a vector register.
+        SDValue Vec1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Value1);
+        SDValue Vec2;
+        if (Value2.getNode())
+          Vec2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Value2);
+        else
+          Vec2 = DAG.getUNDEF(VT);
 
-      // Return shuffle(LowValVec, undef, <0,0,0,0>)
-      return DAG.getVectorShuffle(VT, dl, Vec1, Vec2, ShuffleVec.data());
+        // Return shuffle(LowValVec, undef, <0,0,0,0>)
+        return DAG.getVectorShuffle(VT, dl, Vec1, Vec2, ShuffleVec.data());
+      }
+    } else {
+      SDValue Res;
+      if (ExpandBVWithShuffles(Node, DAG, TLI, Res))
+        return Res;
     }
   }
 
