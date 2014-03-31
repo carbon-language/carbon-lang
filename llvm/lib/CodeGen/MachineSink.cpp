@@ -207,6 +207,9 @@ MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
 }
 
 bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
+  if (skipOptnoneFunction(*MF.getFunction()))
+    return false;
+
   DEBUG(dbgs() << "******** Machine Sinking ********\n");
 
   const TargetMachine &TM = MF.getTarget();

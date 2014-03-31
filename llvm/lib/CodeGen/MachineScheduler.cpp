@@ -330,6 +330,9 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
 }
 
 bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
+  if (skipOptnoneFunction(*mf.getFunction()))
+    return false;
+
   DEBUG(dbgs() << "Before post-MI-sched:\n"; mf.print(dbgs()));
 
   // Initialize the context of the pass.

@@ -164,6 +164,9 @@ FunctionPass *llvm::createCodeGenPreparePass(const TargetMachine *TM) {
 }
 
 bool CodeGenPrepare::runOnFunction(Function &F) {
+  if (skipOptnoneFunction(F))
+    return false;
+
   bool EverMadeChange = false;
   // Clear per function information.
   InsertedTruncsSet.clear();

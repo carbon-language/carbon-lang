@@ -554,6 +554,9 @@ bool PeepholeOptimizer::foldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
 }
 
 bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
+  if (skipOptnoneFunction(*MF.getFunction()))
+    return false;
+
   DEBUG(dbgs() << "********** PEEPHOLE OPTIMIZER **********\n");
   DEBUG(dbgs() << "********** Function: " << MF.getName() << '\n');
 

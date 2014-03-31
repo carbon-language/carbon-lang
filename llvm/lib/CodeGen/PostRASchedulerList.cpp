@@ -245,6 +245,9 @@ void SchedulePostRATDList::dumpSchedule() const {
 #endif
 
 bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
+  if (skipOptnoneFunction(*Fn.getFunction()))
+    return false;
+
   TII = Fn.getTarget().getInstrInfo();
   MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
