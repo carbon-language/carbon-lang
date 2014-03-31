@@ -263,3 +263,23 @@ void bar() {
 // WIN32: }
 
 }
+
+// We would crash here because the later definition of ForwardDeclare1 results
+// in a different IR type for the value we want to store.  However, the alloca's
+// type will use the argument type selected by fn1.
+struct ForwardDeclare1;
+
+typedef void (*FnPtr1)(ForwardDeclare1);
+void fn1(FnPtr1, SmallWithDtor) {}
+
+struct ForwardDeclare1 {};
+
+void fn2() { fn1(0, SmallWithDtor()); };
+// WIN32-LABEL: define void @"\01?fn2@@YAXXZ"
+// WIN32:   %[[argmem:[^ ]*]] = alloca inalloca [[argmem_ty:<{ {}\*, %struct.SmallWithDtor }>]]
+// WIN32:   getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 1
+// WIN32:   call x86_thiscallcc %struct.SmallWithDtor* @"\01??0SmallWithDtor@@QAE@XZ"(%struct.SmallWithDtor* %0)
+// WIN32:   getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 0
+// WIN32:   %[[addr:[^ ]*]] = bitcast {}** %1 to void [[dst_ty:\(%struct.ForwardDeclare1\*\)\*]]*
+// WIN32:   store void [[dst_ty]] null, void [[dst_ty]]* %[[addr]], align 4
+// WIN32:   call void @"\01?fn1@@YAXP6AXUForwardDeclare1@@@ZUSmallWithDtor@@@Z"([[argmem_ty]]* inalloca %[[argmem]])

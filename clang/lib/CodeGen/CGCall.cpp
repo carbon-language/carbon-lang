@@ -2603,6 +2603,13 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         // Store the RValue into the argument struct.
         llvm::Value *Addr =
             Builder.CreateStructGEP(ArgMemory, ArgInfo.getInAllocaFieldIndex());
+        unsigned AS = Addr->getType()->getPointerAddressSpace();
+        llvm::Type *MemType = ConvertTypeForMem(I->Ty)->getPointerTo(AS);
+        // There are some cases where a trivial bitcast is not avoidable.  The
+        // definition of a type later in a translation unit may change it's type
+        // from {}* to (%struct.foo*)*.
+        if (Addr->getType() != MemType)
+          Addr = Builder.CreateBitCast(Addr, MemType);
         LValue argLV = MakeAddrLValue(Addr, I->Ty, TypeAlign);
         EmitInitStoreOfNonAggregate(*this, RV, argLV);
       }
