@@ -152,6 +152,8 @@ def warn_drv_pch_not_first_include : Warning<
   "precompiled header '%0' was ignored because '%1' is not first '-include'">;
 def warn_missing_sysroot : Warning<"no such sysroot directory: '%0'">,
   InGroup<DiagGroup<"missing-sysroot">>;
+def warn_debug_compression_unavailable : Warning<"cannot compress debug sections (zlib not installed)">,
+  InGroup<DiagGroup<"debug-compression-unavailable">>;
 
 def note_drv_command_failed_diag_msg : Note<
   "diagnostic msg: %0">;
