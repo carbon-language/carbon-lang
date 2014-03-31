@@ -15,14 +15,14 @@ set(arch "x86_64")
 if(CAN_TARGET_${arch})
   set(DFSAN_CFLAGS ${DFSAN_COMMON_CFLAGS})
   append_if(COMPILER_RT_HAS_FPIE_FLAG -fPIE DFSAN_CFLAGS)
-  add_compiler_rt_static_runtime(clang_rt.dfsan-${arch} ${arch}
+  add_compiler_rt_runtime(clang_rt.dfsan-${arch} ${arch} STATIC
     SOURCES ${DFSAN_RTL_SOURCES}
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
     CFLAGS ${DFSAN_CFLAGS})
   set(DFSAN_NOLIBC_CFLAGS ${DFSAN_COMMON_CFLAGS} -DDFSAN_NOLIBC)
-  add_compiler_rt_static_runtime(clang_rt.dfsan-libc-${arch} ${arch}
+  add_compiler_rt_runtime(clang_rt.dfsan-libc-${arch} ${arch} STATIC
     SOURCES ${DFSAN_RTL_SOURCES}
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             CFLAGS ${DFSAN_NOLIBC_CFLAGS})

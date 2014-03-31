@@ -129,7 +129,7 @@ else()
       DEFS ${SANITIZER_COMMON_DEFINITIONS})
     list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.${arch}
                                             RTSanitizerCommonLibc.${arch})
-    add_compiler_rt_static_runtime(clang_rt.san-${arch} ${arch}
+    add_compiler_rt_runtime(clang_rt.san-${arch} ${arch} STATIC
       SOURCES $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
       CFLAGS ${SANITIZER_CFLAGS}

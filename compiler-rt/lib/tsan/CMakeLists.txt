@@ -83,7 +83,7 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE)
   set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
     LANGUAGE C)
   set(arch "x86_64")
-  add_compiler_rt_static_runtime(clang_rt.tsan-${arch} ${arch}
+  add_compiler_rt_runtime(clang_rt.tsan-${arch} ${arch} STATIC
     SOURCES ${TSAN_SOURCES} ${TSAN_ASM_SOURCES}
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>

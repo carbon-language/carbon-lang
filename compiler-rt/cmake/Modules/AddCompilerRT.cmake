@@ -37,33 +37,37 @@ macro(add_compiler_rt_darwin_object_library name os)
     COMPILE_DEFINITIONS ${LIB_DEFS})
 endmacro()
 
-# Adds static runtime for a given architecture and puts it in the proper
-# directory in the build and install trees.
-# add_compiler_rt_static_runtime(<name> <arch>
-#                                SOURCES <source files>
-#                                CFLAGS <compile flags>
-#                                DEFS <compile definitions>)
-macro(add_compiler_rt_static_runtime name arch)
+# Adds static or shared runtime for a given architecture and puts it in the
+# proper directory in the build and install trees.
+# add_compiler_rt_runtime(<name> <arch> {STATIC,SHARED}
+#                         SOURCES <source files>
+#                         CFLAGS <compile flags>
+#                         DEFS <compile definitions>)
+macro(add_compiler_rt_runtime name arch type)
   if(CAN_TARGET_${arch})
     parse_arguments(LIB "SOURCES;CFLAGS;DEFS" "" ${ARGN})
-    add_library(${name} STATIC ${LIB_SOURCES})
+    add_library(${name} ${type} ${LIB_SOURCES})
     # Setup compile flags and definitions.
     set_target_compile_flags(${name}
+      ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
+    set_target_link_flags(${name}
       ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
     set_property(TARGET ${name} APPEND PROPERTY
       COMPILE_DEFINITIONS ${LIB_DEFS})
     # Setup correct output directory in the build tree.
     set_target_properties(${name} PROPERTIES
-      ARCHIVE_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
+      ARCHIVE_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR}
+      LIBRARY_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
     # Add installation command.
     install(TARGETS ${name}
-      ARCHIVE DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
+      ARCHIVE DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR}
+      LIBRARY DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
   else()
     message(FATAL_ERROR "Archtecture ${arch} can't be targeted")
   endif()
 endmacro()
 
-# Same as add_compiler_rt_static_runtime, but creates a universal library
+# Same as add_compiler_rt_runtime(... STATIC), but creates a universal library
 # for several architectures.
 # add_compiler_rt_osx_static_runtime(<name> ARCH <architectures>
 #                                    SOURCES <source files>

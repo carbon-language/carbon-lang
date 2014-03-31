@@ -113,7 +113,7 @@ else()
       list(APPEND ASAN_RUNTIME_OBJECTS $<TARGET_OBJECTS:RTLSanCommon.${arch}>)
     endif()
 
-    add_compiler_rt_static_runtime(clang_rt.asan-${arch} ${arch}
+    add_compiler_rt_runtime(clang_rt.asan-${arch} ${arch} STATIC
       SOURCES ${ASAN_RUNTIME_OBJECTS}
       CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS})
@@ -124,10 +124,10 @@ else()
     endif()
 
     if (WIN32)
-      add_compiler_rt_static_runtime(clang_rt.asan_dll_thunk-${arch} ${arch}
-      SOURCES asan_dll_thunk.cc
-      CFLAGS ${ASAN_CFLAGS} -DASAN_DLL_THUNK
-      DEFS ${ASAN_COMMON_DEFINITIONS})
+      add_compiler_rt_runtime(clang_rt.asan_dll_thunk-${arch} ${arch} STATIC
+        SOURCES asan_dll_thunk.cc
+        CFLAGS ${ASAN_CFLAGS} -DASAN_DLL_THUNK
+        DEFS ${ASAN_COMMON_DEFINITIONS})
       add_dependencies(asan clang_rt.asan_dll_thunk-${arch})
     endif()
   endforeach()

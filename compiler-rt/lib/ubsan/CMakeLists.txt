@@ -29,11 +29,11 @@ else()
   # Build separate libraries for each target.
   foreach(arch ${UBSAN_SUPPORTED_ARCH})
     # Main UBSan runtime.
-    add_compiler_rt_static_runtime(clang_rt.ubsan-${arch} ${arch}
+    add_compiler_rt_runtime(clang_rt.ubsan-${arch} ${arch} STATIC
       SOURCES ${UBSAN_SOURCES}
       CFLAGS ${UBSAN_CFLAGS})
     # C++-specific parts of UBSan runtime. Requires a C++ ABI library.
-    add_compiler_rt_static_runtime(clang_rt.ubsan_cxx-${arch} ${arch}
+    add_compiler_rt_runtime(clang_rt.ubsan_cxx-${arch} ${arch} STATIC
       SOURCES ${UBSAN_CXX_SOURCES}
       CFLAGS ${UBSAN_CFLAGS})
     add_dependencies(ubsan

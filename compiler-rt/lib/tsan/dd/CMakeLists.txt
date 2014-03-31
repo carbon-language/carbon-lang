@@ -26,7 +26,7 @@ add_custom_target(dd)
 # Deadlock detector is currently supported on 64-bit Linux only.
 if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE AND NOT ANDROID)
   set(arch "x86_64")
-  add_compiler_rt_static_runtime(clang_rt.dd-${arch} ${arch}
+  add_compiler_rt_runtime(clang_rt.dd-${arch} ${arch} STATIC
     SOURCES ${DD_SOURCES}
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>

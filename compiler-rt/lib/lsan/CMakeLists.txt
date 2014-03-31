@@ -38,7 +38,7 @@ elseif(NOT ANDROID)
   endforeach()
 
   foreach(arch ${LSAN_SUPPORTED_ARCH})
-    add_compiler_rt_static_runtime(clang_rt.lsan-${arch} ${arch}
+    add_compiler_rt_runtime(clang_rt.lsan-${arch} ${arch} STATIC
       SOURCES ${LSAN_SOURCES}
               $<TARGET_OBJECTS:RTInterception.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
