@@ -2575,8 +2575,23 @@ def : Pat<(v1i64 (int_arm64_neon_fcvtps (v1f64 FPR64:$Rn))),
           (FCVTPSv1i64 FPR64:$Rn)>;
 def : Pat<(v1i64 (int_arm64_neon_fcvtpu (v1f64 FPR64:$Rn))),
           (FCVTPUv1i64 FPR64:$Rn)>;
+
+def : Pat<(f32 (int_arm64_neon_frecpe (f32 FPR32:$Rn))),
+          (FRECPEv1i32 FPR32:$Rn)>;
+def : Pat<(f64 (int_arm64_neon_frecpe (f64 FPR64:$Rn))),
+          (FRECPEv1i64 FPR64:$Rn)>;
 def : Pat<(v1f64 (int_arm64_neon_frecpe (v1f64 FPR64:$Rn))),
           (FRECPEv1i64 FPR64:$Rn)>;
+
+def : Pat<(f32 (int_arm64_neon_frecpx (f32 FPR32:$Rn))),
+          (FRECPXv1i32 FPR32:$Rn)>;
+def : Pat<(f64 (int_arm64_neon_frecpx (f64 FPR64:$Rn))),
+          (FRECPXv1i64 FPR64:$Rn)>;
+
+def : Pat<(f32 (int_arm64_neon_frsqrte (f32 FPR32:$Rn))),
+          (FRSQRTEv1i32 FPR32:$Rn)>;
+def : Pat<(f64 (int_arm64_neon_frsqrte (f64 FPR64:$Rn))),
+          (FRSQRTEv1i64 FPR64:$Rn)>;
 def : Pat<(v1f64 (int_arm64_neon_frsqrte (v1f64 FPR64:$Rn))),
           (FRSQRTEv1i64 FPR64:$Rn)>;
 

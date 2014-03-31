@@ -87,9 +87,46 @@ define <2 x double> @frecpe_2d(<2 x double>* %A) nounwind {
 	ret <2 x double> %tmp3
 }
 
+define float @frecpe_s(float* %A) nounwind {
+;CHECK-LABEL: frecpe_s:
+;CHECK: frecpe s0, {{s[0-9]+}}
+  %tmp1 = load float* %A
+  %tmp3 = call float @llvm.arm64.neon.frecpe.f32(float %tmp1)
+  ret float %tmp3
+}
+
+define double @frecpe_d(double* %A) nounwind {
+;CHECK-LABEL: frecpe_d:
+;CHECK: frecpe d0, {{d[0-9]+}}
+  %tmp1 = load double* %A
+  %tmp3 = call double @llvm.arm64.neon.frecpe.f64(double %tmp1)
+  ret double %tmp3
+}
+
 declare <2 x float> @llvm.arm64.neon.frecpe.v2f32(<2 x float>) nounwind readnone
 declare <4 x float> @llvm.arm64.neon.frecpe.v4f32(<4 x float>) nounwind readnone
 declare <2 x double> @llvm.arm64.neon.frecpe.v2f64(<2 x double>) nounwind readnone
+declare float @llvm.arm64.neon.frecpe.f32(float) nounwind readnone
+declare double @llvm.arm64.neon.frecpe.f64(double) nounwind readnone
+
+define float @frecpx_s(float* %A) nounwind {
+;CHECK-LABEL: frecpx_s:
+;CHECK: frecpx s0, {{s[0-9]+}}
+  %tmp1 = load float* %A
+  %tmp3 = call float @llvm.arm64.neon.frecpx.f32(float %tmp1)
+  ret float %tmp3
+}
+
+define double @frecpx_d(double* %A) nounwind {
+;CHECK-LABEL: frecpx_d:
+;CHECK: frecpx d0, {{d[0-9]+}}
+  %tmp1 = load double* %A
+  %tmp3 = call double @llvm.arm64.neon.frecpx.f64(double %tmp1)
+  ret double %tmp3
+}
+
+declare float @llvm.arm64.neon.frecpx.f32(float) nounwind readnone
+declare double @llvm.arm64.neon.frecpx.f64(double) nounwind readnone
 
 define <2 x float> @frsqrte_2s(<2 x float>* %A) nounwind {
 ;CHECK-LABEL: frsqrte_2s:
@@ -115,9 +152,27 @@ define <2 x double> @frsqrte_2d(<2 x double>* %A) nounwind {
 	ret <2 x double> %tmp3
 }
 
+define float @frsqrte_s(float* %A) nounwind {
+;CHECK-LABEL: frsqrte_s:
+;CHECK: frsqrte s0, {{s[0-9]+}}
+  %tmp1 = load float* %A
+  %tmp3 = call float @llvm.arm64.neon.frsqrte.f32(float %tmp1)
+  ret float %tmp3
+}
+
+define double @frsqrte_d(double* %A) nounwind {
+;CHECK-LABEL: frsqrte_d:
+;CHECK: frsqrte d0, {{d[0-9]+}}
+  %tmp1 = load double* %A
+  %tmp3 = call double @llvm.arm64.neon.frsqrte.f64(double %tmp1)
+  ret double %tmp3
+}
+
 declare <2 x float> @llvm.arm64.neon.frsqrte.v2f32(<2 x float>) nounwind readnone
 declare <4 x float> @llvm.arm64.neon.frsqrte.v4f32(<4 x float>) nounwind readnone
 declare <2 x double> @llvm.arm64.neon.frsqrte.v2f64(<2 x double>) nounwind readnone
+declare float @llvm.arm64.neon.frsqrte.f32(float) nounwind readnone
+declare double @llvm.arm64.neon.frsqrte.f64(double) nounwind readnone
 
 define <2 x i32> @urecpe_2s(<2 x i32>* %A) nounwind {
 ;CHECK-LABEL: urecpe_2s:

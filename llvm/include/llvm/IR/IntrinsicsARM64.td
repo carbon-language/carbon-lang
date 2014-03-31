@@ -268,6 +268,9 @@ let Properties = [IntrNoMem] in {
   def int_arm64_neon_frecps : AdvSIMD_2FloatArg_Intrinsic;
   def int_arm64_neon_frsqrts : AdvSIMD_2FloatArg_Intrinsic;
 
+  // Reciprocal Exponent
+  def int_arm64_neon_frecpx : AdvSIMD_1FloatArg_Intrinsic;
+
   // Vector Saturating Shift Left
   def int_arm64_neon_sqshl : AdvSIMD_2IntArg_Intrinsic;
   def int_arm64_neon_uqshl : AdvSIMD_2IntArg_Intrinsic;
@@ -339,11 +342,11 @@ let Properties = [IntrNoMem] in {
 
   // Vector Reciprocal Estimate
   def int_arm64_neon_urecpe : AdvSIMD_1VectorArg_Intrinsic;
-  def int_arm64_neon_frecpe : AdvSIMD_1VectorArg_Intrinsic;
+  def int_arm64_neon_frecpe : AdvSIMD_1FloatArg_Intrinsic;
 
   // Vector Square Root Estimate
   def int_arm64_neon_ursqrte : AdvSIMD_1VectorArg_Intrinsic;
-  def int_arm64_neon_frsqrte : AdvSIMD_1VectorArg_Intrinsic;
+  def int_arm64_neon_frsqrte : AdvSIMD_1FloatArg_Intrinsic;
 
   // Vector Bitwise Reverse
   def int_arm64_neon_rbit : AdvSIMD_1VectorArg_Intrinsic;
