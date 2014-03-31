@@ -7,30 +7,37 @@
 ; CHECK-LABEL:  .section __LLVM_STACKMAPS,__llvm_stackmaps
 ; CHECK-NEXT:   __LLVM_StackMaps:
 ; Header
-; CHECK-NEXT:   .long 0
+; CHECK-NEXT:   .byte 1
+; CHECK-NEXT:   .byte 0
+; CHECK-NEXT:   .short 0
 ; Num Functions
 ; CHECK-NEXT:   .long 8
-; CHECK-NEXT:   .long _test
-; CHECK-NEXT:   .long 8
-; CHECK-NEXT:   .long _property_access1
-; CHECK-NEXT:   .long 8
-; CHECK-NEXT:   .long _property_access2
-; CHECK-NEXT:   .long 24
-; CHECK-NEXT:   .long _property_access3
-; CHECK-NEXT:   .long 24
-; CHECK-NEXT:   .long _anyreg_test1
-; CHECK-NEXT:   .long 56
-; CHECK-NEXT:   .long _anyreg_test2
-; CHECK-NEXT:   .long 56
-; CHECK-NEXT:   .long _patchpoint_spilldef
-; CHECK-NEXT:   .long 56
-; CHECK-NEXT:   .long _patchpoint_spillargs
-; CHECK-NEXT:   .long 88
 ; Num Constants
-; CHECK-NEXT:   .long   0
+; CHECK-NEXT:   .long 0
 ; Num Callsites
-; CHECK-NEXT:   .long   8
+; CHECK-NEXT:   .long 8
 
+; Functions and stack size
+; CHECK-NEXT:   .quad _test
+; CHECK-NEXT:   .quad 8
+; CHECK-NEXT:   .quad _property_access1
+; CHECK-NEXT:   .quad 8
+; CHECK-NEXT:   .quad _property_access2
+; CHECK-NEXT:   .quad 24
+; CHECK-NEXT:   .quad _property_access3
+; CHECK-NEXT:   .quad 24
+; CHECK-NEXT:   .quad _anyreg_test1
+; CHECK-NEXT:   .quad 56
+; CHECK-NEXT:   .quad _anyreg_test2
+; CHECK-NEXT:   .quad 56
+; CHECK-NEXT:   .quad _patchpoint_spilldef
+; CHECK-NEXT:   .quad 56
+; CHECK-NEXT:   .quad _patchpoint_spillargs
+; CHECK-NEXT:   .quad 88
+
+; No constants
+
+; Callsites
 ; test
 ; CHECK-LABEL:  .long   L{{.*}}-_test
 ; CHECK-NEXT:   .short  0

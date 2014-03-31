@@ -8,37 +8,44 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 
 ; CHECK-LABEL:  .section  __LLVM_STACKMAPS,__llvm_stackmaps
 ; CHECK-NEXT:  __LLVM_StackMaps:
-; CHECK-NEXT:   .long   0
+; Header
+; CHECK-NEXT:   .byte 1
+; CHECK-NEXT:   .byte 0
+; CHECK-NEXT:   .short 0
 ; Num Functions
 ; CHECK-NEXT:   .long 11
-; CHECK-NEXT:   .long _constantargs
-; CHECK-NEXT:   .long 16
-; CHECK-NEXT:   .long _osrinline
-; CHECK-NEXT:   .long 32
-; CHECK-NEXT:   .long _osrcold
-; CHECK-NEXT:   .long 16
-; CHECK-NEXT:   .long _propertyRead
-; CHECK-NEXT:   .long 16
-; CHECK-NEXT:   .long _propertyWrite
-; CHECK-NEXT:   .long 16
-; CHECK-NEXT:   .long _jsVoidCall
-; CHECK-NEXT:   .long 16
-; CHECK-NEXT:   .long _jsIntCall
-; CHECK-NEXT:   .long 16
-; CHECK-NEXT:   .long _spilledValue
-; CHECK-NEXT:   .long 160
-; CHECK-NEXT:   .long _spilledStackMapValue
-; CHECK-NEXT:   .long 128
-; CHECK-NEXT:   .long _liveConstant
-; CHECK-NEXT:   .long 16
-; CHECK-NEXT:   .long _clobberLR
-; CHECK-NEXT:   .long 112
 ; Num LargeConstants
-; CHECK-NEXT:   .long   2
+; CHECK-NEXT:   .long 2
+; Num Callsites
+; CHECK-NEXT:   .long 11
+
+; Functions and stack size
+; CHECK-NEXT:   .quad _constantargs
+; CHECK-NEXT:   .quad 16
+; CHECK-NEXT:   .quad _osrinline
+; CHECK-NEXT:   .quad 32
+; CHECK-NEXT:   .quad _osrcold
+; CHECK-NEXT:   .quad 16
+; CHECK-NEXT:   .quad _propertyRead
+; CHECK-NEXT:   .quad 16
+; CHECK-NEXT:   .quad _propertyWrite
+; CHECK-NEXT:   .quad 16
+; CHECK-NEXT:   .quad _jsVoidCall
+; CHECK-NEXT:   .quad 16
+; CHECK-NEXT:   .quad _jsIntCall
+; CHECK-NEXT:   .quad 16
+; CHECK-NEXT:   .quad _spilledValue
+; CHECK-NEXT:   .quad 160
+; CHECK-NEXT:   .quad _spilledStackMapValue
+; CHECK-NEXT:   .quad 128
+; CHECK-NEXT:   .quad _liveConstant
+; CHECK-NEXT:   .quad 16
+; CHECK-NEXT:   .quad _clobberLR
+; CHECK-NEXT:   .quad 112
+
+; Num LargeConstants
 ; CHECK-NEXT:   .quad   4294967295
 ; CHECK-NEXT:   .quad   4294967296
-; Num Callsites
-; CHECK-NEXT:   .long   11
 
 ; Constant arguments
 ;

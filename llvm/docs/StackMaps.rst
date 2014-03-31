@@ -313,17 +313,21 @@ format of this section follows:
 
 .. code-block:: none
 
-  uint32 : Reserved (header)
-  uint32 : NumFunctions
-  StkSizeRecord[NumFunctions] {
-    uint32 : Function Offset
-    uint32 : Stack Size
+  Header {
+    uint8  : Stack Map Version (current version is 1)
+    uint8  : Reserved (expected to be 0)
+    uint16 : Reserved (expected to be 0)
   }
+  uint32 : NumFunctions
   uint32 : NumConstants
+  uint32 : NumRecords
+  StkSizeRecord[NumFunctions] {
+    uint64 : Function Address
+    uint64 : Stack Size
+  }
   Constants[NumConstants] {
     uint64 : LargeConstant
   }
-  uint32 : NumRecords
   StkMapRecord[NumRecords] {
     uint64 : PatchPoint ID
     uint32 : Instruction Offset
@@ -335,12 +339,14 @@ format of this section follows:
       uint16 : Dwarf RegNum
       int32  : Offset or SmallConstant
     }
+    uint16 : Padding
     uint16 : NumLiveOuts
     LiveOuts[NumLiveOuts]
       uint16 : Dwarf RegNum
       uint8  : Reserved
       uint8  : Size in Bytes
     }
+    uint32 : Padding (only if required to align to 8 byte)
   }
 
 The first byte of each location encodes a type that indicates how to
