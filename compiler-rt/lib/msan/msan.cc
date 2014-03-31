@@ -484,7 +484,9 @@ void __msan_set_alloca_origin4(void *a, uptr size, const char *descr, uptr pc) {
 }
 
 u32 __msan_chain_origin(u32 id) {
-  GET_STORE_STACK_TRACE;
+  GET_CALLER_PC_BP_SP;
+  (void)sp;
+  GET_STORE_STACK_TRACE_PC_BP(pc, bp);
   return ChainOrigin(id, &stack);
 }
 
