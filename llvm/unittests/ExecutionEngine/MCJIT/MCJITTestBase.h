@@ -304,6 +304,8 @@ protected:
     // should be kept in sync.
     UnsupportedOSs.push_back(Triple::Cygwin);
     UnsupportedOSs.push_back(Triple::Darwin);
+
+    UnsupportedEnvironments.push_back(Triple::Cygnus);
   }
 
   void createJIT(Module *M) {
