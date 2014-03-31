@@ -50,7 +50,7 @@ ifeq ($(ENABLE_CLANG_REWRITER),1)
 USEDLIBS += clangRewriteFrontend.a clangRewriteCore.a
 endif
 
-USEDLIBS += clangAnalysis.a clangEdit.a clangAST.a clangBasic.a clangLex.a
+USEDLIBS += clangAnalysis.a clangEdit.a clangAST.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
 
