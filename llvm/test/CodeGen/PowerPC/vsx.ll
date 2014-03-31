@@ -624,3 +624,19 @@ define <2 x double> @test70(<2 x i8> %a) {
 ; CHECK: blr
 }
 
+define <2 x i32> @test80(i32 %v) {
+  %b1 = insertelement <2 x i32> undef, i32 %v, i32 0
+  %b2 = shufflevector <2 x i32> %b1, <2 x i32> undef, <2 x i32> zeroinitializer
+  %i = add <2 x i32> %b2, <i32 2, i32 3>
+  ret <2 x i32> %i
+
+; CHECK-LABEL: @test80
+; CHECK: addi
+; CHECK: addi
+; CHECK: lxvd2x
+; CHECK-NOT: stxvd2x
+; FIXME: We still make one vector for each vector element and this shuffle them
+; together instead of just composing one vector on the stack.
+; CHECK: blr
+}
+

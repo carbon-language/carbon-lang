@@ -9745,9 +9745,10 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   // We only perform this optimization before the op legalization phase because
   // we may introduce new vector instructions which are not backed by TD
   // patterns. For example on AVX, extracting elements from a wide vector
-  // without using extract_subvector.
+  // without using extract_subvector. However, if we can find an underlying
+  // scalar value, then we can always use that.
   if (InVec.getOpcode() == ISD::VECTOR_SHUFFLE
-      && ConstEltNo && !LegalOperations) {
+      && ConstEltNo) {
     int Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
     int NumElem = VT.getVectorNumElements();
     ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(InVec);
@@ -9759,16 +9760,32 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       return DAG.getUNDEF(NVT);
 
     // Select the right vector half to extract from.
+    SDValue SVInVec;
     if (OrigElt < NumElem) {
-      InVec = InVec->getOperand(0);
+      SVInVec = InVec->getOperand(0);
     } else {
-      InVec = InVec->getOperand(1);
+      SVInVec = InVec->getOperand(1);
       OrigElt -= NumElem;
     }
 
-    EVT IndexTy = TLI.getVectorIdxTy();
-    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(N), NVT,
-                       InVec, DAG.getConstant(OrigElt, IndexTy));
+    if (SVInVec.getOpcode() == ISD::BUILD_VECTOR) {
+      SDValue InOp = SVInVec.getOperand(OrigElt);
+      if (InOp.getValueType() != NVT) {
+        assert(InOp.getValueType().isInteger() && NVT.isInteger());
+        InOp = DAG.getSExtOrTrunc(InOp, SDLoc(SVInVec), NVT);
+      }
+
+      return InOp;
+    }
+
+    // FIXME: We should handle recursing on other vector shuffles and
+    // scalar_to_vector here as well.
+
+    if (!LegalOperations) {
+      EVT IndexTy = TLI.getVectorIdxTy();
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(N), NVT,
+                         SVInVec, DAG.getConstant(OrigElt, IndexTy));
+    }
   }
 
   // Perform only after legalization to ensure build_vector / vector_shuffle
