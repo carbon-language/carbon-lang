@@ -771,6 +771,7 @@ enum Constants {
   DW_EH_PE_indirect = 0x80
 };
 
+// Constants for debug_loc.dwo in the DWARF5 Split Debug Info Proposal
 enum LocationListEntry : unsigned char {
   DW_LLE_end_of_list_entry,
   DW_LLE_base_address_selection_entry,
