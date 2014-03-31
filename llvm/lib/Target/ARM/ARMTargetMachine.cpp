@@ -87,7 +87,7 @@ static std::string computeDataLayout(ARMSubtarget &ST) {
   if (ST.isThumb())
     Ret += "-i1:8:32-i8:8:32-i16:16:32";
 
-  // ABIs other than APC have 64 bit integers with natural alignment.
+  // ABIs other than APCS have 64 bit integers with natural alignment.
   if (!ST.isAPCS_ABI())
     Ret += "-i64:64";
 
