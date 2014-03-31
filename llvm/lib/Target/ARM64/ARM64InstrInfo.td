@@ -1997,6 +1997,14 @@ defm FNMADD : ThreeOperandFPData<1, 0, "fnmadd",
 defm FNMSUB : ThreeOperandFPData<1, 1, "fnmsub",
      TriOpFrag<(fma node:$LHS, node:$MHS, (fneg node:$RHS))> >;
 
+// The following def pats catch the case where the LHS of an FMA is negated.
+// The TriOpFrag above catches the case where the middle operand is negated.
+def : Pat<(f32 (fma (fneg FPR32:$Rn), FPR32:$Rm, FPR32:$Rd)),
+          (FMSUBSrrr FPR32:$Rd, FPR32:$Rn, FPR32:$Rm)>;
+
+def : Pat<(f64 (fma (fneg FPR64:$Rn), FPR64:$Rm, FPR64:$Rd)),
+          (FMSUBDrrr FPR64:$Rd, FPR64:$Rn, FPR64:$Rm)>;
+
 //===----------------------------------------------------------------------===//
 // Floating point comparison instructions.
 //===----------------------------------------------------------------------===//
