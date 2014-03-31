@@ -7,12 +7,12 @@
     .text
 foo:
 # CHECK:   jr    $1                      # encoding: [0x08,0x00,0x20,0x00]
-# WARNINGS: :[[@LINE+2]]:12: warning: Used $at without ".set noat"
+# WARNINGS: :[[@LINE+2]]:11: warning: Used $at without ".set noat"
     .set    at=$1
     jr    $at
 
 # CHECK:   jr    $1                      # encoding: [0x08,0x00,0x20,0x00]
-# WARNINGS: :[[@LINE+2]]:12: warning: Used $at without ".set noat"
+# WARNINGS: :[[@LINE+2]]:11: warning: Used $at without ".set noat"
     .set    at=$1
     jr    $1
 # WARNINGS-NOT: warning: Used $at without ".set noat"
@@ -31,12 +31,12 @@ foo:
     jr    $at
 
 # CHECK:   jr    $16                     # encoding: [0x08,0x00,0x00,0x02]
-# WARNINGS: :[[@LINE+2]]:12: warning: Used $16 with ".set at=$16"
+# WARNINGS: :[[@LINE+2]]:11: warning: Used $16 with ".set at=$16"
     .set    at=$16
     jr    $s0
 
 # CHECK:   jr    $16                     # encoding: [0x08,0x00,0x00,0x02]
-# WARNINGS: :[[@LINE+2]]:12: warning: Used $16 with ".set at=$16"
+# WARNINGS: :[[@LINE+2]]:11: warning: Used $16 with ".set at=$16"
     .set    at=$16
     jr    $16
 # WARNINGS-NOT: warning

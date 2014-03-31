@@ -39,8 +39,12 @@
 	dclo	$s2,$a2
 	dclz	$s0,$t9
 	deret
+	ddiv	$zero,$k0,$s3
+	ddivu	$zero,$s0,$s1
+	div	$zero,$t9,$t3
 	div.d	$f29,$f20,$f27
 	div.s	$f4,$f5,$f15
+	divu	$zero,$t9,$t7
 	dmfc1	$t4,$f13
 	dmtc1	$s0,$f14
 	dmult	$s7,$t1

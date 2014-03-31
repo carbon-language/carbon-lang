@@ -60,10 +60,6 @@
 	cvt.ps.s	$f3,$f18,$f19
 	cvt.s.pl	$f30,$f1
 	cvt.s.pu	$f14,$f25
-	ddiv	$zero,$k0,$s3
-	ddivu	$zero,$s0,$s1
-	div	$zero,$t9,$t3
-	divu	$zero,$t9,$t7
 	dmfc0	$t2,c0_watchhi,2
 	dmtc0	$t7,c0_datalo
 	ehb

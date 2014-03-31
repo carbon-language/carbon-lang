@@ -2,7 +2,7 @@
 # they aren't implemented yet).
 # This test is set up to XPASS if any instruction generates an encoding.
 #
-# RUN: llvm-mc %s -triple=mips-unknown-linux -show-encoding -mcpu=mips32r2 | FileCheck %s
+# RUN: not llvm-mc %s -triple=mips-unknown-linux -show-encoding -mcpu=mips32r2 | not FileCheck %s
 # CHECK-NOT: encoding
 # XFAIL: *
 
@@ -48,7 +48,6 @@
 	c.nge.d	$fcc5,$f21,$f16
 	c.nge.ps	$f1,$f26
 	c.nge.s	$fcc3,$f11,$f8
-	c.ngl.d	$f29,$f29
 	c.ngl.ps	$f21,$f30
 	c.ngl.s	$fcc2,$f31,$f23
 	c.ngle.ps	$fcc7,$f12,$f20
@@ -66,7 +65,6 @@
 	c.seq.ps	$fcc6,$f31,$f14
 	c.seq.s	$fcc7,$f1,$f25
 	c.sf.ps	$fcc6,$f4,$f6
-	c.sf.s	$f14,$f22
 	c.ueq.d	$fcc4,$f13,$f25
 	c.ueq.ps	$fcc1,$f5,$f29
 	c.ueq.s	$fcc6,$f3,$f30
@@ -96,14 +94,10 @@
 	cmpu.lt.qb	$at,$a3
 	ctcmsa	$31,$s7
 	cvt.d.l	$f4,$f16
-	cvt.l.d	$f24,$f15
-	cvt.l.s	$f11,$f29
 	cvt.ps.s	$f3,$f18,$f19
 	cvt.s.l	$f15,$f30
 	cvt.s.pl	$f30,$f1
 	cvt.s.pu	$f14,$f25
-	div	$zero,$t9,$t3
-	divu	$zero,$t9,$t7
 	dmt	$k0
 	dpa.w.ph	$ac1,$s7,$k0
 	dpaq_s.w.ph	$ac2,$a0,$t5
@@ -152,8 +146,6 @@
 	flog2.w	$w19,$w23
 	floor.l.d	$f26,$f7
 	floor.l.s	$f12,$f5
-	floor.w.d	$f14,$f11
-	floor.w.s	$f8,$f9
 	fork	$s2,$t0,$a0
 	frcp.d	$w12,$w4
 	frcp.w	$w30,$w8
@@ -228,12 +220,8 @@
 	nlzc.d	$w14,$w14
 	nlzc.h	$w24,$w24
 	nlzc.w	$w10,$w4
-	nmadd.d	$f18,$f9,$f14,$f19
 	nmadd.ps	$f27,$f4,$f9,$f25
-	nmadd.s	$f0,$f5,$f25,$f12
-	nmsub.d	$f30,$f8,$f16,$f30
 	nmsub.ps	$f6,$f12,$f14,$f17
-	nmsub.s	$f1,$f24,$f19,$f4
 	nor.v	$w20,$w20,$w15
 	or.v	$w13,$w23,$w12
 	packrl.ph	$ra,$t8,$t6
@@ -264,7 +252,6 @@
 	pul.ps	$f9,$f30,$f26
 	puu.ps	$f24,$f9,$f2
 	raddu.w.qb	$t9,$s3
-	rdhwr	$sp,$11
 	rdpgpr	$s3,$t1
 	recip.d	$f19,$f6
 	recip.s	$f3,$f30
@@ -311,7 +298,6 @@
 	swe	$t8,94($k0)
 	swle	$v1,-209($gp)
 	swre	$k0,-202($s2)
-	swxc1	$f19,$t4($k0)
 	synci	20023($s0)
 	tlbginv
 	tlbginvf

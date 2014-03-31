@@ -58,10 +58,6 @@
 	cvt.ps.s	$f3,$f18,$f19
 	cvt.s.pl	$f30,$f1
 	cvt.s.pu	$f14,$f25
-	ddiv	$zero,$k0,$s3
-	ddivu	$zero,$s0,$s1
-	div	$zero,$t9,$t3
-	divu	$zero,$t9,$t7
 	ehb
 	madd.d	$f18,$f19,$f26,$f20
 	madd.ps	$f22,$f3,$f14,$f3

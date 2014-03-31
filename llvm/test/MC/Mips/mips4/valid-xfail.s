@@ -36,10 +36,6 @@
 	c.ult.s	$fcc7,$f24,$f10
 	c.un.d	$fcc6,$f23,$f24
 	c.un.s	$fcc1,$f30,$f4
-	ddiv	$zero,$k0,$s3
-	ddivu	$zero,$s0,$s1
-	div	$zero,$t9,$t3
-	divu	$zero,$t9,$t7
 	ehb
 	madd.d	$f18,$f19,$f26,$f20
 	madd.s	$f1,$f31,$f19,$f25

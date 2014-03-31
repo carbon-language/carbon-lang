@@ -11,8 +11,10 @@
 	addi	$t5,$t1,26322
 	addu	$t1,$a0,$a2
 	and	$s7,$v0,$t4
+	c.ngl.d	$f29,$f29
 	c.ngle.d	$f0,$f16
 	c.sf.d	$f30,$f0
+	c.sf.s	$f14,$f22
 	ceil.w.d	$f11,$f25
 	ceil.w.s	$f6,$f20
 	cfc1	$s1,$21
@@ -21,16 +23,22 @@
 	ctc1	$a2,$26
 	cvt.d.s	$f22,$f28
 	cvt.d.w	$f26,$f11
+	cvt.l.d	$f24,$f15
+	cvt.l.s	$f11,$f29
 	cvt.s.d	$f26,$f8
 	cvt.s.w	$f22,$f15
 	cvt.w.d	$f20,$f14
 	cvt.w.s	$f20,$f24
 	deret
 	di	$s8
+	div	$zero,$t9,$t3
 	div.d	$f29,$f20,$f27
 	div.s	$f4,$f5,$f15
+	divu	$zero,$t9,$t7
 	ei	$t6
 	eret
+	floor.w.d	$f14,$f11
+	floor.w.s	$f8,$f9
 	lb	$t8,-14515($t2)
 	lbu	$t0,30195($v1)
 	ldc1	$f11,16391($s0)
@@ -94,9 +102,14 @@
 	multu	$t1,$s2
 	neg.d	$f27,$f18
 	neg.s	$f1,$f15
+	nmadd.d	$f18,$f9,$f14,$f19
+	nmadd.s	$f0,$f5,$f25,$f12
+	nmsub.d	$f30,$f8,$f16,$f30
+	nmsub.s	$f1,$f24,$f19,$f4
 	nop
 	nor	$a3,$zero,$a3
 	or	$t4,$s0,$sp
+	rdhwr	$sp,$11
 	round.w.d	$f6,$f4
 	round.w.s	$f27,$f28
 	sb	$s6,-19857($t6)
@@ -126,6 +139,7 @@
 	swc2	$25,24880($s0)
 	swl	$t7,13694($s3)
 	swr	$s1,-26590($t6)
+	swxc1	$f19,$t4($k0)
 	teqi	$s5,-17504
 	tgei	$s1,5025
 	tgeiu	$sp,-28621

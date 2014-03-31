@@ -8,10 +8,6 @@
 # XFAIL: *
 
 	.set noat
-	ddiv	$zero,$k0,$s3
-	ddivu	$zero,$s0,$s1
-	div	$zero,$t9,$t3
-	divu	$zero,$t9,$t7
 	ehb
 	lwc3	$10,-32265($k0)
 	ssnop
