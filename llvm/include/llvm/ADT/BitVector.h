@@ -58,14 +58,14 @@ public:
 
     reference& operator=(bool t) {
       if (t)
-        *WordRef |= 1L << BitPos;
+        *WordRef |= BitWord(1) << BitPos;
       else
-        *WordRef &= ~(1L << BitPos);
+        *WordRef &= ~(BitWord(1) << BitPos);
       return *this;
     }
 
     operator bool() const {
-      return ((*WordRef) & (1L << BitPos)) ? true : false;
+      return ((*WordRef) & (BitWord(1) << BitPos)) ? true : false;
     }
   };
 
@@ -238,7 +238,7 @@ public:
   }
 
   BitVector &set(unsigned Idx) {
-    Bits[Idx / BITWORD_SIZE] |= 1L << (Idx % BITWORD_SIZE);
+    Bits[Idx / BITWORD_SIZE] |= BitWord(1) << (Idx % BITWORD_SIZE);
     return *this;
   }
 
@@ -277,7 +277,7 @@ public:
   }
 
   BitVector &reset(unsigned Idx) {
-    Bits[Idx / BITWORD_SIZE] &= ~(1L << (Idx % BITWORD_SIZE));
+    Bits[Idx / BITWORD_SIZE] &= ~(BitWord(1) << (Idx % BITWORD_SIZE));
     return *this;
   }
 
@@ -318,7 +318,7 @@ public:
   }
 
   BitVector &flip(unsigned Idx) {
-    Bits[Idx / BITWORD_SIZE] ^= 1L << (Idx % BITWORD_SIZE);
+    Bits[Idx / BITWORD_SIZE] ^= BitWord(1) << (Idx % BITWORD_SIZE);
     return *this;
   }
 
@@ -330,7 +330,7 @@ public:
 
   bool operator[](unsigned Idx) const {
     assert (Idx < Size && "Out-of-bounds Bit access.");
-    BitWord Mask = 1L << (Idx % BITWORD_SIZE);
+    BitWord Mask = BitWord(1) << (Idx % BITWORD_SIZE);
     return (Bits[Idx / BITWORD_SIZE] & Mask) != 0;
   }
 
