@@ -158,8 +158,8 @@ class OMPParallelDirective : public OMPExecutableDirective {
   ///
   explicit OMPParallelDirective(unsigned NumClauses)
       : OMPExecutableDirective(this, OMPParallelDirectiveClass, OMPD_parallel,
-                               SourceLocation(), SourceLocation(),
-                               NumClauses, 1) {}
+                               SourceLocation(), SourceLocation(), NumClauses,
+                               1) {}
 
 public:
   /// \brief Creates directive with a list of \a Clauses.
@@ -180,8 +180,7 @@ public:
   /// \param NumClauses Number of clauses.
   ///
   static OMPParallelDirective *CreateEmpty(const ASTContext &C,
-                                           unsigned NumClauses,
-                                           EmptyShell);
+                                           unsigned NumClauses, EmptyShell);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPParallelDirectiveClass;
@@ -209,10 +208,10 @@ class OMPSimdDirective : public OMPExecutableDirective {
   /// \param NumClauses Number of clauses.
   ///
   OMPSimdDirective(SourceLocation StartLoc, SourceLocation EndLoc,
-                  unsigned CollapsedNum, unsigned NumClauses)
-    : OMPExecutableDirective(this, OMPSimdDirectiveClass, OMPD_simd,
-                             StartLoc, EndLoc, NumClauses, 1),
-      CollapsedNum(CollapsedNum) { }
+                   unsigned CollapsedNum, unsigned NumClauses)
+      : OMPExecutableDirective(this, OMPSimdDirectiveClass, OMPD_simd, StartLoc,
+                               EndLoc, NumClauses, 1),
+        CollapsedNum(CollapsedNum) {}
 
   /// \brief Build an empty directive.
   ///
@@ -220,10 +219,11 @@ class OMPSimdDirective : public OMPExecutableDirective {
   /// \param NumClauses Number of clauses.
   ///
   explicit OMPSimdDirective(unsigned CollapsedNum, unsigned NumClauses)
-    : OMPExecutableDirective(this, OMPSimdDirectiveClass, OMPD_simd,
-                             SourceLocation(), SourceLocation(),
-                             NumClauses, 1),
-                             CollapsedNum(CollapsedNum) { }
+      : OMPExecutableDirective(this, OMPSimdDirectiveClass, OMPD_simd,
+                               SourceLocation(), SourceLocation(), NumClauses,
+                               1),
+        CollapsedNum(CollapsedNum) {}
+
 public:
   /// \brief Creates directive with a list of \a Clauses.
   ///
@@ -233,8 +233,7 @@ public:
   /// \param Clauses List of clauses.
   /// \param AssociatedStmt Statement, associated with the directive.
   ///
-  static OMPSimdDirective *Create(const ASTContext &C,
-                                  SourceLocation StartLoc,
+  static OMPSimdDirective *Create(const ASTContext &C, SourceLocation StartLoc,
                                   SourceLocation EndLoc,
                                   ArrayRef<OMPClause *> Clauses,
                                   Stmt *AssociatedStmt);
@@ -246,10 +245,8 @@ public:
   /// \param CollapsedNum Number of collapsed nested loops.
   /// \param NumClauses Number of clauses.
   ///
-  static OMPSimdDirective *CreateEmpty(const ASTContext &C,
-                                       unsigned NumClauses,
-                                       unsigned CollapsedNum,
-                                       EmptyShell);
+  static OMPSimdDirective *CreateEmpty(const ASTContext &C, unsigned NumClauses,
+                                       unsigned CollapsedNum, EmptyShell);
 
   unsigned getCollapsedNumber() const { return CollapsedNum; }
 
