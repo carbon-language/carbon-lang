@@ -125,6 +125,10 @@ Pass *llvm::createLoopUnrollPass(int Threshold, int Count, int AllowPartial,
   return new LoopUnroll(Threshold, Count, AllowPartial, Runtime);
 }
 
+Pass *llvm::createSimpleLoopUnrollPass() {
+  return llvm::createLoopUnrollPass(-1, -1, 0, 0);
+}
+
 /// ApproximateLoopSize - Approximate the size of the loop.
 static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
                                     bool &NotDuplicatable,
