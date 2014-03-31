@@ -147,7 +147,6 @@ public:
     typeRWNote,             // Identifies readwrite note sections [ELF]
     typeNoAlloc,            // Identifies non allocatable sections [ELF]
     typeGroupComdat,        // Identifies a section group [ELF, COFF]
-    typeGnuLinkOnce,        // Identifies a gnu.linkonce section [ELF]
   };
 
   // Permission bits for atoms and segments. The order of these values are

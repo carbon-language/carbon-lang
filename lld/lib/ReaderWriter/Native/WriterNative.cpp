@@ -41,8 +41,7 @@ public:
       // We are trying to process all atoms, but the defined() iterator does not
       // return group children. So, when a group parent is found, we need to
       // handle each child atom.
-      if (defAtom->contentType() == DefinedAtom::typeGroupComdat ||
-          defAtom->contentType() == DefinedAtom::typeGnuLinkOnce) {
+      if (defAtom->contentType() == DefinedAtom::typeGroupComdat) {
         for (const Reference *r : *defAtom) {
           if (r->kindNamespace() != lld::Reference::KindNamespace::all)
             continue;
