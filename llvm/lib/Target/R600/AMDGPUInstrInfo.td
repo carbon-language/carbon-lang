@@ -89,4 +89,6 @@ def AMDGPUround : SDNode<"ISD::FROUND",
 
 def AMDGPUbfe_u32 : SDNode<"AMDGPUISD::BFE_U32", AMDGPUDTIntTernaryOp>;
 def AMDGPUbfe_i32 : SDNode<"AMDGPUISD::BFE_I32", AMDGPUDTIntTernaryOp>;
+def AMDGPUbfi : SDNode<"AMDGPUISD::BFI", AMDGPUDTIntTernaryOp>;
+def AMDGPUbfm : SDNode<"AMDGPUISD::BFM", SDTIntBinOp>;
 

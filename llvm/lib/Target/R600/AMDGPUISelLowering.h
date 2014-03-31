@@ -186,6 +186,8 @@ enum {
   DOT4,
   BFE_U32, // Extract range of bits with zero extension to 32-bits.
   BFE_I32, // Extract range of bits with sign extension to 32-bits.
+  BFI, // (src0 & src1) | (~src0 & src2)
+  BFM, // Insert a range of bits into a 32-bit word.
   TEXTURE_FETCH,
   EXPORT,
   CONST_ADDRESS,

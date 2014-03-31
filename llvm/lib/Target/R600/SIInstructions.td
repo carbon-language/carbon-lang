@@ -989,7 +989,8 @@ defm V_XOR_B32 : VOP2_32 <0x0000001d, "V_XOR_B32", []>;
 
 } // End isCommutable = 1
 
-defm V_BFM_B32 : VOP2_32 <0x0000001e, "V_BFM_B32", []>;
+defm V_BFM_B32 : VOP2_32 <0x0000001e, "V_BFM_B32",
+  [(set i32:$dst, (AMDGPUbfm i32:$src0, i32:$src1))]>;
 defm V_MAC_F32 : VOP2_32 <0x0000001f, "V_MAC_F32", []>;
 defm V_MADMK_F32 : VOP2_32 <0x00000020, "V_MADMK_F32", []>;
 defm V_MADAK_F32 : VOP2_32 <0x00000021, "V_MADAK_F32", []>;
@@ -1064,7 +1065,8 @@ def V_BFE_I32 : VOP3_32 <0x00000149, "V_BFE_I32",
   [(set i32:$dst, (AMDGPUbfe_i32 i32:$src0, i32:$src1, i32:$src2))]>;
 }
 
-def V_BFI_B32 : VOP3_32 <0x0000014a, "V_BFI_B32", []>;
+def V_BFI_B32 : VOP3_32 <0x0000014a, "V_BFI_B32",
+  [(set i32:$dst, (AMDGPUbfi i32:$src0, i32:$src1, i32:$src2))]>;
 defm : BFIPatterns <V_BFI_B32>;
 def V_FMA_F32 : VOP3_32 <0x0000014b, "V_FMA_F32",
   [(set f32:$dst, (fma f32:$src0, f32:$src1, f32:$src2))]
