@@ -77,6 +77,9 @@ public:
   virtual MachineInstr *commuteInstruction(MachineInstr *MI,
                                            bool NewMI=false) const;
 
+  bool isTriviallyReMaterializable(const MachineInstr *MI,
+                                   AliasAnalysis *AA = 0) const;
+
   virtual unsigned getIEQOpcode() const {
     llvm_unreachable("Unimplemented");
   }
