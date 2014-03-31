@@ -34,6 +34,11 @@ if os.path.exists(lld_obj_root):
     builtin_parameters['lld_site_config'] = \
         os.path.join(lld_obj_root, 'test', 'lit.site.cfg')
 
+compilerrt_obj_root = os.path.join(llvm_obj_root, 'projects', 'compiler-rt')
+if os.path.exists(compilerrt_obj_root):
+    builtin_parameters['compilerrt_site_basedir'] = \
+            os.path.join(compilerrt_obj_root, 'test')
+
 if __name__=='__main__':
     import lit
     lit.main(builtin_parameters)
