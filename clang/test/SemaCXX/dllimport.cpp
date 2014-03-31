@@ -43,17 +43,17 @@ __declspec(dllimport) int GlobalInit1 = 1; // expected-error{{definition of dlli
 int __declspec(dllimport) GlobalInit2 = 1; // expected-error{{definition of dllimport data}}
 
 // Declare, then reject definition.
-__declspec(dllimport) extern int ExternGlobalDeclInit;
-int ExternGlobalDeclInit = 1; // expected-error{{definition of dllimport data}}
+__declspec(dllimport) extern int ExternGlobalDeclInit; // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+int ExternGlobalDeclInit = 1; // expected-warning{{'ExternGlobalDeclInit' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
 
-__declspec(dllimport) int GlobalDeclInit;
-int GlobalDeclInit = 1; // expected-error{{definition of dllimport data}}
+__declspec(dllimport) int GlobalDeclInit; // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+int GlobalDeclInit = 1; // expected-warning{{'GlobalDeclInit' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
 
-int *__attribute__((dllimport)) GlobalDeclChunkAttrInit;
-int *GlobalDeclChunkAttrInit = 0; // expected-error{{definition of dllimport data}}
+int *__attribute__((dllimport)) GlobalDeclChunkAttrInit; // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+int *GlobalDeclChunkAttrInit = 0; // expected-warning{{'GlobalDeclChunkAttrInit' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
 
-int GlobalDeclAttrInit __attribute__((dllimport));
-int GlobalDeclAttrInit = 1; // expected-error{{definition of dllimport data}}
+int GlobalDeclAttrInit __attribute__((dllimport)); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+int GlobalDeclAttrInit = 1; // expected-warning{{'GlobalDeclAttrInit' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
 
 // Redeclarations
 __declspec(dllimport) extern int GlobalRedecl1;
@@ -67,6 +67,14 @@ int *__attribute__((dllimport)) GlobalRedecl2b;
 
 int GlobalRedecl2c __attribute__((dllimport));
 int GlobalRedecl2c __attribute__((dllimport));
+
+// NB: MSVC issues a warning and makes GlobalRedecl3 dllexport. We follow GCC
+// and drop the dllimport with a warning.
+__declspec(dllimport) extern int GlobalRedecl3; // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+                      extern int GlobalRedecl3; // expected-warning{{'GlobalRedecl3' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+
+                      extern int GlobalRedecl4; // expected-note{{previous declaration is here}}
+__declspec(dllimport) extern int GlobalRedecl4; // expected-error{{redeclaration of 'GlobalRedecl4' cannot add 'dllimport' attribute}}
 
 // Import in local scope.
 __declspec(dllimport) float LocalRedecl1; // expected-note{{previous definition is here}}
@@ -110,8 +118,31 @@ inline void __attribute__((dllimport)) inlineFunc2() {} // expected-warning{{'dl
 __declspec(dllimport) void redecl1();
 __declspec(dllimport) void redecl1();
 
-__declspec(dllimport) void redecl3();
+// NB: MSVC issues a warning and makes redecl2/redecl3 dllexport. We follow GCC
+// and drop the dllimport with a warning.
+__declspec(dllimport) void redecl2(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+                      void redecl2(); // expected-warning{{'redecl2' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+
+__declspec(dllimport) void redecl3(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
                       void redecl3() {} // expected-warning{{'redecl3' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+
+                      void redecl4(); // expected-note{{previous declaration is here}}
+__declspec(dllimport) void redecl4(); // expected-error{{redeclaration of 'redecl4' cannot add 'dllimport' attribute}}
+
+// Friend functions
+struct FuncFriend {
+  friend __declspec(dllimport) void friend1();
+  friend __declspec(dllimport) void friend2(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+  friend __declspec(dllimport) void friend3(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+  friend                       void friend4(); // expected-note{{previous declaration is here}}
+};
+__declspec(dllimport) void friend1();
+                      void friend2(); // expected-warning{{'friend2' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+                      void friend3() {} // expected-warning{{'friend3' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+__declspec(dllimport) void friend4(); // expected-error{{redeclaration of 'friend4' cannot add 'dllimport' attribute}}
+
+// Implicit declarations can be redeclared with dllimport.
+__declspec(dllimport) void* operator new(__SIZE_TYPE__ n);
 
 
 
@@ -127,11 +158,26 @@ template<typename T> void __declspec(dllimport) funcTmplDecl2();
 template<typename T> __declspec(dllimport) void funcTmplRedecl1();
 template<typename T> __declspec(dllimport) void funcTmplRedecl1();
 
-template<typename T> __declspec(dllimport) void funcTmplRedecl2();
-template<typename T>                       void funcTmplRedecl2();
+template<typename T> __declspec(dllimport) void funcTmplRedecl2(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+template<typename T>                       void funcTmplRedecl2(); // expected-warning{{'funcTmplRedecl2' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
 
-template<typename T> __declspec(dllimport) void funcTmplRedecl3();
+template<typename T> __declspec(dllimport) void funcTmplRedecl3(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
 template<typename T>                       void funcTmplRedecl3() {} // expected-warning{{'funcTmplRedecl3' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+
+template<typename T>                       void funcTmplRedecl4(); // expected-note{{previous declaration is here}}
+template<typename T> __declspec(dllimport) void funcTmplRedecl4(); // expected-error{{redeclaration of 'funcTmplRedecl4' cannot add 'dllimport' attribute}}
+
+// Function template friends
+struct FuncTmplFriend {
+  template<typename T> friend __declspec(dllimport) void funcTmplFriend1();
+  template<typename T> friend __declspec(dllimport) void funcTmplFriend2(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+  template<typename T> friend __declspec(dllimport) void funcTmplFriend3(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+  template<typename T> friend                       void funcTmplFriend4(); // expected-note{{previous declaration is here}}
+};
+template<typename T> __declspec(dllimport) void funcTmplFriend1();
+template<typename T>                       void funcTmplFriend2(); // expected-warning{{'funcTmplFriend2' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+template<typename T>                       void funcTmplFriend3() {} // expected-warning{{'funcTmplFriend3' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+template<typename T> __declspec(dllimport) void funcTmplFriend4(); // expected-error{{redeclaration of 'funcTmplFriend4' cannot add 'dllimport' attribute}}
 
 
 template<typename T> void funcTmpl() {}
