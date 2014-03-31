@@ -185,6 +185,21 @@ public:
   /// legalization.
   virtual bool shouldSplitVectorElementType(EVT /*VT*/) const { return false; }
 
+  // There are two general methods for expanding a BUILD_VECTOR node:
+  //  1. Use SCALAR_TO_VECTOR on the defined scalar values and then shuffle
+  //     them together.
+  //  2. Build the vector on the stack and then load it.
+  // If this function returns true, then method (1) will be used, subject to
+  // the constraint that all of the necessary shuffles are legal (as determined
+  // by isShuffleMaskLegal). If this function returns false, then method (2) is
+  // always used. The vector type, and the number of defined values, are
+  // provided.
+  virtual bool
+  shouldExpandBuildVectorWithShuffles(EVT /* VT */,
+                                      unsigned DefinedValues) const {
+    return DefinedValues < 3;
+  }
+
   /// Return true if integer divide is usually cheaper than a sequence of
   /// several shifts, adds, and multiplies for this target.
   bool isIntDivCheap() const { return IntDivIsCheap; }

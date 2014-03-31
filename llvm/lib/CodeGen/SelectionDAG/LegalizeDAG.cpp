@@ -13,6 +13,7 @@
 
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/CodeGen/Analysis.h"
@@ -1889,7 +1890,15 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
                        false, false, false, Alignment);
   }
 
-  if (!MoreThanTwoValues) {
+  SmallSet<SDValue, 16> DefinedValues;
+  for (unsigned i = 0; i < NumElems; ++i) {
+    if (Node->getOperand(i).getOpcode() == ISD::UNDEF)
+      continue;
+    DefinedValues.insert(Node->getOperand(i));
+  }
+
+  if (!MoreThanTwoValues &&
+    TLI.shouldExpandBuildVectorWithShuffles(VT, DefinedValues.size())) {
     SmallVector<int, 8> ShuffleVec(NumElems, -1);
     for (unsigned i = 0; i < NumElems; ++i) {
       SDValue V = Node->getOperand(i);
