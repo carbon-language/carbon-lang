@@ -56,7 +56,7 @@ const TargetRegisterClass * SIRegisterInfo::getCFGStructurizerRegClass(
 }
 
 unsigned SIRegisterInfo::getHWRegIndex(unsigned Reg) const {
-  return getEncodingValue(Reg);
+  return getEncodingValue(Reg) & 0xff;
 }
 
 const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {
