@@ -209,8 +209,7 @@ let Namespace = "Mips" in {
   def PC : Register<"pc">;
 
   // Hardware register $29
-  foreach I = 0-31 in
-  def HWR#I : MipsReg<#I, ""#I>;
+  def HWR29 : MipsReg<29, "29">;
 
   // Accum registers
   foreach I = 0-3 in
@@ -365,8 +364,7 @@ def LO64 : RegisterClass<"Mips", [i64], 64, (add LO0_64)>;
 def HI64 : RegisterClass<"Mips", [i64], 64, (add HI0_64)>;
 
 // Hardware registers
-def HWRegs : RegisterClass<"Mips", [i32], 32, (sequence "HWR%u", 0, 31)>,
-             Unallocatable;
+def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>, Unallocatable;
 
 // Accumulator Registers
 def ACC64 : RegisterClass<"Mips", [untyped], 64, (add AC0)> {
@@ -396,68 +394,86 @@ def OCTEON_P : RegisterClass<"Mips", [i64], 64, (add P0, P1, P2)>,
 // Register Operands.
 
 class MipsAsmRegOperand : AsmOperandClass {
-  let ParserMethod = "ParseAnyRegister";
+  let RenderMethod = "addRegAsmOperands";
+}
+def GPR32AsmOperand : MipsAsmRegOperand {
+  let Name = "GPR32Asm";
+  let ParserMethod = "parseGPR32";
 }
 
 def GPR64AsmOperand : MipsAsmRegOperand {
-  let Name = "GPR64AsmReg";
-  let PredicateMethod = "isGPRAsmReg";
-}
-
-def GPR32AsmOperand : MipsAsmRegOperand {
-  let Name = "GPR32AsmReg";
-  let PredicateMethod = "isGPRAsmReg";
+  let Name = "GPR64Asm";
+  let ParserMethod = "parseGPR64";
 }
 
 def ACC64DSPAsmOperand : MipsAsmRegOperand {
-  let Name = "ACC64DSPAsmReg";
-  let PredicateMethod = "isACCAsmReg";
-}
-
-def HI32DSPAsmOperand : MipsAsmRegOperand {
-  let Name = "HI32DSPAsmReg";
-  let PredicateMethod = "isACCAsmReg";
+  let Name = "ACC64DSPAsm";
+  let ParserMethod = "parseACC64DSP";
 }
 
 def LO32DSPAsmOperand : MipsAsmRegOperand {
-  let Name = "LO32DSPAsmReg";
-  let PredicateMethod = "isACCAsmReg";
+  let Name = "LO32DSPAsm";
+  let ParserMethod = "parseLO32DSP";
+}
+
+def HI32DSPAsmOperand : MipsAsmRegOperand {
+  let Name = "HI32DSPAsm";
+  let ParserMethod = "parseHI32DSP";
 }
 
 def CCRAsmOperand : MipsAsmRegOperand {
-  let Name = "CCRAsmReg";
+  let Name = "CCRAsm";
+  let ParserMethod = "parseCCRRegs";
 }
 
 def AFGR64AsmOperand : MipsAsmRegOperand {
-  let Name = "AFGR64AsmReg";
-  let PredicateMethod = "isFGRAsmReg";
+  let Name = "AFGR64Asm";
+  let ParserMethod = "parseAFGR64Regs";
 }
 
 def FGR64AsmOperand : MipsAsmRegOperand {
-  let Name = "FGR64AsmReg";
-  let PredicateMethod = "isFGRAsmReg";
+  let Name = "FGR64Asm";
+  let ParserMethod = "parseFGR64Regs";
 }
 
 def FGR32AsmOperand : MipsAsmRegOperand {
-  let Name = "FGR32AsmReg";
-  let PredicateMethod = "isFGRAsmReg";
+  let Name = "FGR32Asm";
+  let ParserMethod = "parseFGR32Regs";
 }
 
 def FGRH32AsmOperand : MipsAsmRegOperand {
-  let Name = "FGRH32AsmReg";
-  let PredicateMethod = "isFGRAsmReg";
+  let Name = "FGRH32Asm";
+  let ParserMethod = "parseFGRH32Regs";
 }
 
 def FCCRegsAsmOperand : MipsAsmRegOperand {
-  let Name = "FCCAsmReg";
+  let Name = "FCCRegsAsm";
+  let ParserMethod = "parseFCCRegs";
 }
 
-def MSA128AsmOperand : MipsAsmRegOperand {
-  let Name = "MSA128AsmReg";
+def MSA128BAsmOperand : MipsAsmRegOperand {
+  let Name = "MSA128BAsm";
+  let ParserMethod = "parseMSA128BRegs";
 }
 
-def MSACtrlAsmOperand : MipsAsmRegOperand {
-  let Name = "MSACtrlAsmReg";
+def MSA128HAsmOperand : MipsAsmRegOperand {
+  let Name = "MSA128HAsm";
+  let ParserMethod = "parseMSA128HRegs";
+}
+
+def MSA128WAsmOperand : MipsAsmRegOperand {
+  let Name = "MSA128WAsm";
+  let ParserMethod = "parseMSA128WRegs";
+}
+
+def MSA128DAsmOperand : MipsAsmRegOperand {
+  let Name = "MSA128DAsm";
+  let ParserMethod = "parseMSA128DRegs";
+}
+
+def MSA128CRAsmOperand : MipsAsmRegOperand {
+  let Name = "MSA128CRAsm";
+  let ParserMethod = "parseMSA128CtrlRegs";
 }
 
 def GPR32Opnd : RegisterOperand<GPR32> {
@@ -477,11 +493,13 @@ def CCROpnd : RegisterOperand<CCR> {
 }
 
 def HWRegsAsmOperand : MipsAsmRegOperand {
-  let Name = "HWRegsAsmReg";
+  let Name = "HWRegsAsm";
+  let ParserMethod = "parseHWRegs";
 }
 
 def COP2AsmOperand : MipsAsmRegOperand {
-  let Name = "COP2AsmReg";
+  let Name = "COP2Asm";
+  let ParserMethod = "parseCOP2";
 }
 
 def HWRegsOpnd : RegisterOperand<HWRegs> {
@@ -525,22 +543,22 @@ def COP2Opnd : RegisterOperand<COP2> {
 }
 
 def MSA128BOpnd : RegisterOperand<MSA128B> {
-  let ParserMatchClass = MSA128AsmOperand;
+  let ParserMatchClass = MSA128BAsmOperand;
 }
 
 def MSA128HOpnd : RegisterOperand<MSA128H> {
-  let ParserMatchClass = MSA128AsmOperand;
+  let ParserMatchClass = MSA128HAsmOperand;
 }
 
 def MSA128WOpnd : RegisterOperand<MSA128W> {
-  let ParserMatchClass = MSA128AsmOperand;
+  let ParserMatchClass = MSA128WAsmOperand;
 }
 
 def MSA128DOpnd : RegisterOperand<MSA128D> {
-  let ParserMatchClass = MSA128AsmOperand;
+  let ParserMatchClass = MSA128DAsmOperand;
 }
 
 def MSA128CROpnd : RegisterOperand<MSACtrl> {
-  let ParserMatchClass = MSACtrlAsmOperand;
+  let ParserMatchClass = MSA128CRAsmOperand;
 }
 

@@ -236,27 +236,17 @@ include "MipsInstrFormats.td"
 // Mips Operand, Complex Patterns and Transformations Definitions.
 //===----------------------------------------------------------------------===//
 
-def MipsJumpTargetAsmOperand : AsmOperandClass {
-  let Name = "JumpTarget";
-  let ParserMethod = "ParseJumpTarget";
-  let PredicateMethod = "isImm";
-  let RenderMethod = "addImmOperands";
-}
-
 // Instruction operand types
 def jmptarget   : Operand<OtherVT> {
   let EncoderMethod = "getJumpTargetOpValue";
-  let ParserMatchClass = MipsJumpTargetAsmOperand;
 }
 def brtarget    : Operand<OtherVT> {
   let EncoderMethod = "getBranchTargetOpValue";
   let OperandType = "OPERAND_PCREL";
   let DecoderMethod = "DecodeBranchTarget";
-  let ParserMatchClass = MipsJumpTargetAsmOperand;
 }
 def calltarget  : Operand<iPTR> {
   let EncoderMethod = "getJumpTargetOpValue";
-  let ParserMatchClass = MipsJumpTargetAsmOperand;
 }
 
 def simm10 : Operand<i32>;
@@ -276,11 +266,6 @@ def uimm10      : Operand<i32> {
 
 def simm16_64   : Operand<i64> {
   let DecoderMethod = "DecodeSimm16";
-}
-
-// Zero
-def uimmz       : Operand<i32> {
-  let PrintMethod = "printUnsignedImm";
 }
 
 // Unsigned Operand
@@ -309,6 +294,12 @@ def MipsInvertedImmoperand : AsmOperandClass {
   let RenderMethod = "addImmOperands";
   let ParserMethod = "parseInvNum";
 }
+
+def PtrRegAsmOperand : AsmOperandClass {
+  let Name = "PtrReg";
+  let ParserMethod = "parsePtrReg";
+}
+
 
 def InvertedImOperand : Operand<i32> {
   let ParserMatchClass = MipsInvertedImmoperand;
@@ -341,7 +332,7 @@ def mem_ea : Operand<iPTR> {
 def PtrRC : Operand<iPTR> {
   let MIOperandInfo = (ops ptr_rc);
   let DecoderMethod = "DecodePtrRegisterClass";
-  let ParserMatchClass = GPR32AsmOperand;
+  let ParserMatchClass = PtrRegAsmOperand;
 }
 
 // size operand of ext instruction
@@ -368,9 +359,6 @@ def HI16 : SDNodeXForm<imm, [{
 
 // Plus 1.
 def Plus1 : SDNodeXForm<imm, [{ return getImm(N, N->getSExtValue() + 1); }]>;
-
-// Node immediate is zero (e.g. insve.d)
-def immz : PatLeaf<(imm), [{ return N->getSExtValue() == 0; }]>;
 
 // Node immediate fits as 16-bit sign extended on target immediate.
 // e.g. addi, andi

@@ -35,12 +35,8 @@
 	dadd	$s3,$at,$ra
 	daddi	$sp,$s4,-27705
 	daddiu	$k0,$s6,-4586
-	ddiv	$zero,$k0,$s3
-	ddivu	$zero,$s0,$s1
-	div	$zero,$t9,$t3
 	div.d	$f29,$f20,$f27
 	div.s	$f4,$f5,$f15
-	divu	$zero,$t9,$t7
 	dmfc1	$t4,$f13
 	dmtc1	$s0,$f14
 	dmult	$s7,$t1

@@ -1810,13 +1810,6 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_insert_d:
     return DAG.getNode(ISD::INSERT_VECTOR_ELT, SDLoc(Op), Op->getValueType(0),
                        Op->getOperand(1), Op->getOperand(3), Op->getOperand(2));
-  case Intrinsic::mips_insve_b:
-  case Intrinsic::mips_insve_h:
-  case Intrinsic::mips_insve_w:
-  case Intrinsic::mips_insve_d:
-    return DAG.getNode(MipsISD::INSVE, DL, Op->getValueType(0),
-                       Op->getOperand(1), Op->getOperand(2), Op->getOperand(3),
-                       DAG.getConstant(0, MVT::i32));
   case Intrinsic::mips_ldi_b:
   case Intrinsic::mips_ldi_h:
   case Intrinsic::mips_ldi_w:
@@ -2844,8 +2837,7 @@ MipsSETargetLowering::emitINSERT_FW(MachineInstr *MI,
   BuildMI(*BB, MI, DL, TII->get(Mips::INSVE_W), Wd)
       .addReg(Wd_in)
       .addImm(Lane)
-      .addReg(Wt)
-      .addImm(0);
+      .addReg(Wt);
 
   MI->eraseFromParent(); // The pseudo instruction is gone now.
   return BB;
@@ -2878,8 +2870,7 @@ MipsSETargetLowering::emitINSERT_FD(MachineInstr *MI,
   BuildMI(*BB, MI, DL, TII->get(Mips::INSVE_D), Wd)
       .addReg(Wd_in)
       .addImm(Lane)
-      .addReg(Wt)
-      .addImm(0);
+      .addReg(Wt);
 
   MI->eraseFromParent(); // The pseudo instruction is gone now.
   return BB;
