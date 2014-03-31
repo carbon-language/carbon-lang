@@ -209,10 +209,26 @@ define <2 x i64> @usqadd2d(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 	ret <2 x i64> %tmp3
 }
 
+define i64 @usqadd_d(i64 %l, i64 %r) nounwind {
+; CHECK-LABEL: usqadd_d:
+; CHECK: usqadd {{d[0-9]+}}, {{d[0-9]+}}
+  %sum = call i64 @llvm.arm64.neon.usqadd.i64(i64 %l, i64 %r)
+  ret i64 %sum
+}
+
+define i32 @usqadd_s(i32 %l, i32 %r) nounwind {
+; CHECK-LABEL: usqadd_s:
+; CHECK: usqadd {{s[0-9]+}}, {{s[0-9]+}}
+  %sum = call i32 @llvm.arm64.neon.usqadd.i32(i32 %l, i32 %r)
+  ret i32 %sum
+}
+
 declare <8 x i8>  @llvm.arm64.neon.usqadd.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
 declare <4 x i16> @llvm.arm64.neon.usqadd.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
 declare <2 x i32> @llvm.arm64.neon.usqadd.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
 declare <1 x i64> @llvm.arm64.neon.usqadd.v1i64(<1 x i64>, <1 x i64>) nounwind readnone
+declare i64 @llvm.arm64.neon.usqadd.i64(i64, i64) nounwind readnone
+declare i32 @llvm.arm64.neon.usqadd.i32(i32, i32) nounwind readnone
 
 declare <16 x i8> @llvm.arm64.neon.usqadd.v16i8(<16 x i8>, <16 x i8>) nounwind readnone
 declare <8 x i16> @llvm.arm64.neon.usqadd.v8i16(<8 x i16>, <8 x i16>) nounwind readnone
@@ -282,17 +298,33 @@ define <2 x i64> @suqadd2d(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 	ret <2 x i64> %tmp3
 }
 
-define <1 x i64> @suqadd_d(<1 x i64> %l, <1 x i64> %r) nounwind {
-; CHECK-LABEL: suqadd_d:
+define <1 x i64> @suqadd_1d(<1 x i64> %l, <1 x i64> %r) nounwind {
+; CHECK-LABEL: suqadd_1d:
 ; CHECK: suqadd {{d[0-9]+}}, {{d[0-9]+}}
   %sum = call <1 x i64> @llvm.arm64.neon.suqadd.v1i64(<1 x i64> %l, <1 x i64> %r)
   ret <1 x i64> %sum
+}
+
+define i64 @suqadd_d(i64 %l, i64 %r) nounwind {
+; CHECK-LABEL: suqadd_d:
+; CHECK: suqadd {{d[0-9]+}}, {{d[0-9]+}}
+  %sum = call i64 @llvm.arm64.neon.suqadd.i64(i64 %l, i64 %r)
+  ret i64 %sum
+}
+
+define i32 @suqadd_s(i32 %l, i32 %r) nounwind {
+; CHECK-LABEL: suqadd_s:
+; CHECK: suqadd {{s[0-9]+}}, {{s[0-9]+}}
+  %sum = call i32 @llvm.arm64.neon.suqadd.i32(i32 %l, i32 %r)
+  ret i32 %sum
 }
 
 declare <8 x i8>  @llvm.arm64.neon.suqadd.v8i8(<8 x i8>, <8 x i8>) nounwind readnone
 declare <4 x i16> @llvm.arm64.neon.suqadd.v4i16(<4 x i16>, <4 x i16>) nounwind readnone
 declare <2 x i32> @llvm.arm64.neon.suqadd.v2i32(<2 x i32>, <2 x i32>) nounwind readnone
 declare <1 x i64> @llvm.arm64.neon.suqadd.v1i64(<1 x i64>, <1 x i64>) nounwind readnone
+declare i64 @llvm.arm64.neon.suqadd.i64(i64, i64) nounwind readnone
+declare i32 @llvm.arm64.neon.suqadd.i32(i32, i32) nounwind readnone
 
 declare <16 x i8> @llvm.arm64.neon.suqadd.v16i8(<16 x i8>, <16 x i8>) nounwind readnone
 declare <8 x i16> @llvm.arm64.neon.suqadd.v8i16(<8 x i16>, <8 x i16>) nounwind readnone
