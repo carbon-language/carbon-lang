@@ -4,14 +4,14 @@
 // For the xgot case we want to see R_MIPS_[GOT|CALL]_[HI|LO]16.
 
 // CHECK: Relocations [
-// CHECK:     0x{{[0-9,A-F]+}} R_MIPS_HI16
-// CHECK:     0x{{[0-9,A-F]+}} R_MIPS_LO16
-// CHECK:     0x{{[0-9,A-F]+}} R_MIPS_GOT_HI16
-// CHECK:     0x{{[0-9,A-F]+}} R_MIPS_GOT_LO16
-// CHECK:     0x{{[0-9,A-F]+}} R_MIPS_CALL_HI16
-// CHECK:     0x{{[0-9,A-F]+}} R_MIPS_GOT16
-// CHECK:     0x{{[0-9,A-F]+}} R_MIPS_CALL_LO16
-// CHECK:     0x{{[0-9,A-F]+}} R_MIPS_LO16
+// CHECK:   0x0 R_MIPS_HI16 _gp_disp
+// CHECK:   0x4 R_MIPS_LO16 _gp_disp
+// CHECK:   0x14 R_MIPS_GOT_HI16 ext_1
+// CHECK:   0x1C R_MIPS_GOT_LO16 ext_1
+// CHECK:   0x24 R_MIPS_CALL_HI16 printf
+// CHECK:   0x2C R_MIPS_GOT16 $.str
+// CHECK:   0x30 R_MIPS_CALL_LO16 printf
+// CHECK:   0x38 R_MIPS_LO16 .rodata.str1.1
 // CHECK: ]
 
 	.text
