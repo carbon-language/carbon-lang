@@ -59,5 +59,5 @@ void *pv2;
 
 static int arr[sizeof(PackOddity) == 40 ? 1 : -1];
 
-__declspec(ms_struct) struct bad { // expected-warning {{unknown __declspec attribute 'ms_struct' ignored}}
+struct __declspec(ms_struct) bad { // expected-warning {{__declspec attribute 'ms_struct' is not supported}}
 };

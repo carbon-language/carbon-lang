@@ -16,8 +16,8 @@ __declspec(noreturn) void f6( void ) {
 }
 
 __declspec(align(32768)) struct S1 { int a; } s;	/* expected-error {{requested alignment must be 8192 bytes or smaller}} */
-struct __declspec(aligned) S2 {}; /* expected-warning {{unknown __declspec attribute 'aligned' ignored}} */
+struct __declspec(aligned) S2 {}; /* expected-warning {{__declspec attribute 'aligned' is not supported}} */
 
 struct __declspec(appdomain) S3 {}; /* expected-warning {{__declspec attribute 'appdomain' is not supported}} */
 
-__declspec(__noreturn__) void f7(void); /* expected-warning {{unknown __declspec attribute '__noreturn__' ignored}} */
+__declspec(__noreturn__) void f7(void); /* expected-warning {{__declspec attribute '__noreturn__' is not supported}} */

@@ -98,7 +98,7 @@ void ms_intrinsics(int a)
   __debugbreak();
 }
 
-struct __declspec(frobble) S1 {};	/* expected-warning {{unknown __declspec attribute 'frobble' ignored}} */
+struct __declspec(frobble) S1 {};	/* expected-warning {{__declspec attribute 'frobble' is not supported}} */
 struct __declspec(12) S2 {};	/* expected-error {{__declspec attributes must be an identifier or string literal}} */
 struct __declspec("testing") S3 {}; /* expected-warning {{__declspec attribute '"testing"' is not supported}} */
 
@@ -106,8 +106,8 @@ struct __declspec("testing") S3 {}; /* expected-warning {{__declspec attribute '
 struct __declspec(align(8) deprecated) S4 {};
 
 /* But multiple declspecs must still be legal */
-struct __declspec(deprecated frobble "testing") S5 {};  /* expected-warning {{unknown __declspec attribute 'frobble' ignored}} expected-warning {{__declspec attribute '"testing"' is not supported}} */
-struct __declspec(unknown(12) deprecated) S6 {};	/* expected-warning {{unknown __declspec attribute 'unknown' ignored}}*/
+struct __declspec(deprecated frobble "testing") S5 {};  /* expected-warning {{__declspec attribute 'frobble' is not supported}} expected-warning {{__declspec attribute '"testing"' is not supported}} */
+struct __declspec(unknown(12) deprecated) S6 {};	/* expected-warning {{__declspec attribute 'unknown' is not supported}}*/
 
 struct S7 {
 	int foo() { return 12; }
