@@ -467,6 +467,7 @@ public:
   static MipsOperand *CreateReg(unsigned RegNum, SMLoc S, SMLoc E) {
     MipsOperand *Op = new MipsOperand(k_Register);
     Op->Reg.RegNum = RegNum;
+    Op->Reg.Kind = Kind_None;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -475,6 +476,7 @@ public:
   static MipsOperand *CreatePtrReg(unsigned RegNum, SMLoc S, SMLoc E) {
     MipsOperand *Op = new MipsOperand(k_PtrReg);
     Op->Reg.RegNum = RegNum;
+    Op->Reg.Kind = Kind_None;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
