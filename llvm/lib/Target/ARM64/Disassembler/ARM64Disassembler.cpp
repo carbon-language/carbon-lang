@@ -195,9 +195,11 @@ DecodeStatus ARM64Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
 
   uint8_t bytes[4];
 
+  Size = 0;
   // We want to read exactly 4 bytes of data.
   if (Region.readBytes(Address, 4, (uint8_t *)bytes) == -1)
     return Fail;
+  Size = 4;
 
   // Encoded as a small-endian 32-bit word in the stream.
   uint32_t insn =
@@ -208,8 +210,6 @@ DecodeStatus ARM64Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
       decodeInstruction(DecoderTable32, MI, insn, Address, this, STI);
   if (!result)
     return Fail;
-
-  Size = 4;
 
   return Success;
 }
