@@ -3215,13 +3215,13 @@ void MicrosoftVTableContext::computeVTablePaths(bool ForVBTables,
       Paths.push_back(P);
     }
 
+    if (B.isVirtual())
+      VBasesSeen.insert(Base);
+
     // After visiting any direct base, we've transitively visited all of its
     // morally virtual bases.
     for (const auto &VB : Base->vbases())
       VBasesSeen.insert(VB.getType()->getAsCXXRecordDecl());
-
-    if (B.isVirtual())
-      VBasesSeen.insert(Base);
   }
 
   // Sort the paths into buckets, and if any of them are ambiguous, extend all
