@@ -1996,6 +1996,16 @@ private:
   /// locations where attributes are not allowed.
   void DiagnoseAndSkipCXX11Attributes();
 
+  /// \brief Parses syntax-generic attribute arguments for attributes which are
+  /// known to the implementation, and adds them to the given ParsedAttributes
+  /// list with the given attribute syntax.
+  void ParseAttributeArgsCommon(IdentifierInfo *AttrName,
+                                SourceLocation AttrNameLoc,
+                                ParsedAttributes &Attrs, SourceLocation *EndLoc,
+                                IdentifierInfo *ScopeName,
+                                SourceLocation ScopeLoc,
+                                AttributeList::Syntax Syntax);
+
   void MaybeParseGNUAttributes(Declarator &D,
                                LateParsedAttrList *LateAttrs = 0) {
     if (Tok.is(tok::kw___attribute)) {
@@ -2053,6 +2063,13 @@ private:
                                     SourceLocation *EndLoc = 0);
   void ParseCXX11Attributes(ParsedAttributesWithRange &attrs,
                             SourceLocation *EndLoc = 0);
+  /// \brief Parses a C++-style attribute argument list. Returns true if this
+  /// results in adding an attribute to the ParsedAttributes list.
+  bool ParseCXX11AttributeArgs(IdentifierInfo *AttrName,
+                               SourceLocation AttrNameLoc,
+                               ParsedAttributes &Attrs, SourceLocation *EndLoc,
+                               IdentifierInfo *ScopeName,
+                               SourceLocation ScopeLoc);
 
   IdentifierInfo *TryParseCXX11AttributeIdentifier(SourceLocation &Loc);
 

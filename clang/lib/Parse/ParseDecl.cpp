@@ -259,6 +259,65 @@ void Parser::ParseAttributeWithTypeArg(IdentifierInfo &AttrName,
                  0, AttrNameLoc, 0, 0, AttributeList::AS_GNU);
 }
 
+void Parser::ParseAttributeArgsCommon(
+    IdentifierInfo *AttrName, SourceLocation AttrNameLoc,
+    ParsedAttributes &Attrs, SourceLocation *EndLoc, IdentifierInfo *ScopeName,
+    SourceLocation ScopeLoc, AttributeList::Syntax Syntax) {
+  // Ignore the left paren location for now.
+  ConsumeParen();
+
+  ArgsVector ArgExprs;
+  if (Tok.is(tok::identifier)) {
+    // If this attribute wants an 'identifier' argument, make it so.
+    bool IsIdentifierArg = attributeHasIdentifierArg(*AttrName);
+    AttributeList::Kind AttrKind =
+        AttributeList::getKind(AttrName, ScopeName, Syntax);
+
+    // If we don't know how to parse this attribute, but this is the only
+    // token in this argument, assume it's meant to be an identifier.
+    if (AttrKind == AttributeList::UnknownAttribute ||
+        AttrKind == AttributeList::IgnoredAttribute) {
+      const Token &Next = NextToken();
+      IsIdentifierArg = Next.is(tok::r_paren) || Next.is(tok::comma);
+    }
+
+    if (IsIdentifierArg)
+      ArgExprs.push_back(ParseIdentifierLoc());
+  }
+
+  if (!ArgExprs.empty() ? Tok.is(tok::comma) : Tok.isNot(tok::r_paren)) {
+    // Eat the comma.
+    if (!ArgExprs.empty())
+      ConsumeToken();
+
+    // Parse the non-empty comma-separated list of expressions.
+    do {
+      std::unique_ptr<EnterExpressionEvaluationContext> Unevaluated;
+      if (attributeParsedArgsUnevaluated(*AttrName))
+        Unevaluated.reset(
+            new EnterExpressionEvaluationContext(Actions, Sema::Unevaluated));
+
+      ExprResult ArgExpr(ParseAssignmentExpression());
+      if (ArgExpr.isInvalid()) {
+        SkipUntil(tok::r_paren, StopAtSemi);
+        return;
+      }
+      ArgExprs.push_back(ArgExpr.release());
+      // Eat the comma, move to the next argument
+    } while (TryConsumeToken(tok::comma));
+  }
+
+  SourceLocation RParen = Tok.getLocation();
+  if (!ExpectAndConsume(tok::r_paren)) {
+    SourceLocation AttrLoc = ScopeLoc.isValid() ? ScopeLoc : AttrNameLoc;
+    Attrs.addNew(AttrName, SourceRange(AttrLoc, RParen), ScopeName, ScopeLoc,
+                 ArgExprs.data(), ArgExprs.size(), Syntax);
+  }
+
+  if (EndLoc)
+    *EndLoc = RParen;
+}
+
 /// Parse the arguments to a parameterized GNU attribute or
 /// a C++11 attribute in "gnu" namespace.
 void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
@@ -314,58 +373,8 @@ void Parser::ParseGNUAttributeArgs(IdentifierInfo *AttrName,
     }
   }
 
-  // Ignore the left paren location for now.
-  ConsumeParen();
-
-  ArgsVector ArgExprs;
-
-  if (Tok.is(tok::identifier)) {
-    // If this attribute wants an 'identifier' argument, make it so.
-    bool IsIdentifierArg = attributeHasIdentifierArg(*AttrName);
-
-    // If we don't know how to parse this attribute, but this is the only
-    // token in this argument, assume it's meant to be an identifier.
-    if (AttrKind == AttributeList::UnknownAttribute ||
-        AttrKind == AttributeList::IgnoredAttribute) {
-      const Token &Next = NextToken();
-      IsIdentifierArg = Next.is(tok::r_paren) || Next.is(tok::comma);
-    }
-
-    if (IsIdentifierArg)
-      ArgExprs.push_back(ParseIdentifierLoc());
-  }
-
-  if (!ArgExprs.empty() ? Tok.is(tok::comma) : Tok.isNot(tok::r_paren)) {
-    // Eat the comma.
-    if (!ArgExprs.empty())
-      ConsumeToken();
-
-    // Parse the non-empty comma-separated list of expressions.
-    do {
-      std::unique_ptr<EnterExpressionEvaluationContext> Unevaluated;
-      if (attributeParsedArgsUnevaluated(*AttrName))
-        Unevaluated.reset(new EnterExpressionEvaluationContext(Actions,
-        Sema::Unevaluated));
-
-      ExprResult ArgExpr(ParseAssignmentExpression());
-      if (ArgExpr.isInvalid()) {
-        SkipUntil(tok::r_paren, StopAtSemi);
-        return;
-      }
-      ArgExprs.push_back(ArgExpr.release());
-      // Eat the comma, move to the next argument
-    } while (TryConsumeToken(tok::comma));
-  }
-
-  SourceLocation RParen = Tok.getLocation();
-  if (!ExpectAndConsume(tok::r_paren)) {
-    SourceLocation AttrLoc = ScopeLoc.isValid() ? ScopeLoc : AttrNameLoc;
-    Attrs.addNew(AttrName, SourceRange(AttrLoc, RParen), ScopeName, ScopeLoc,
-                 ArgExprs.data(), ArgExprs.size(), Syntax);
-  }
-
-  if (EndLoc)
-    *EndLoc = RParen;
+  ParseAttributeArgsCommon(AttrName, AttrNameLoc, Attrs, EndLoc, ScopeName,
+                           ScopeLoc, Syntax);
 }
 
 /// \brief Parses a single argument for a declspec, including the
