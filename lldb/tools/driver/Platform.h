@@ -38,6 +38,17 @@
     // ioctls.h
     #define TIOCGWINSZ 0x5413
 
+
+    // signal handler function pointer type
+    typedef void(*sighandler_t)(int);
+
+    // signal.h
+    #define SIGINT 2
+    // default handler
+    #define SIG_DFL ( (sighandler_t) -1 )
+    // ignored
+    #define SIG_IGN ( (sighandler_t) -2 )
+
     // signal.h
     #define SIGPIPE  13
     #define SIGCONT  18
@@ -60,22 +71,7 @@
         speed_t c_ospeed;  // output speed
     };
 
-    #define STDIN_FILENO 0
 
-    extern int  ioctl( int d, int request, ... );
-    extern int  kill ( pid_t pid, int sig      );
-    extern int  tcsetattr( int fd, int optional_actions, const struct termios *termios_p );
-    extern int  tcgetattr( int fildes, struct termios *termios_p );
-
-    // signal handler function pointer type
-    typedef void (*sighandler_t)(int);
-
-    // signal.h
-    #define SIGINT 2
-    // default handler
-    #define SIG_DFL ( (sighandler_t) -1 )
-    // ignored
-    #define SIG_IGN ( (sighandler_t) -2 )
 
 #ifdef _MSC_VER
     struct timeval
@@ -88,6 +84,13 @@
     extern sighandler_t signal( int sig, sighandler_t );
     #define PATH_MAX MAX_PATH
 #endif
+
+    #define STDIN_FILENO 0
+
+    extern int  ioctl( int d, int request, ... );
+    extern int  kill ( pid_t pid, int sig      );
+    extern int  tcsetattr( int fd, int optional_actions, const struct termios *termios_p );
+    extern int  tcgetattr( int fildes, struct termios *termios_p );
 
 #else
 
