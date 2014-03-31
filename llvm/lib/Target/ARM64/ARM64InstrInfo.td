@@ -2857,12 +2857,20 @@ def : Pat<(f32 (int_arm64_neon_faddv (v4f32 V128:$Rn))),
           (FADDPv2i32p (EXTRACT_SUBREG (FADDPv4f32 V128:$Rn, V128:$Rn), dsub))>;
 def : Pat<(f64 (int_arm64_neon_faddv (v2f64 V128:$Rn))),
           (FADDPv2i64p V128:$Rn)>;
+def : Pat<(f32 (int_arm64_neon_fmaxnmv (v2f32 V64:$Rn))),
+          (FMAXNMPv2i32p V64:$Rn)>;
 def : Pat<(f64 (int_arm64_neon_fmaxnmv (v2f64 V128:$Rn))),
           (FMAXNMPv2i64p V128:$Rn)>;
+def : Pat<(f32 (int_arm64_neon_fmaxv (v2f32 V64:$Rn))),
+          (FMAXPv2i32p V64:$Rn)>;
 def : Pat<(f64 (int_arm64_neon_fmaxv (v2f64 V128:$Rn))),
           (FMAXPv2i64p V128:$Rn)>;
+def : Pat<(f32 (int_arm64_neon_fminnmv (v2f32 V64:$Rn))),
+          (FMINNMPv2i32p V64:$Rn)>;
 def : Pat<(f64 (int_arm64_neon_fminnmv (v2f64 V128:$Rn))),
           (FMINNMPv2i64p V128:$Rn)>;
+def : Pat<(f32 (int_arm64_neon_fminv (v2f32 V64:$Rn))),
+          (FMINPv2i32p V64:$Rn)>;
 def : Pat<(f64 (int_arm64_neon_fminv (v2f64 V128:$Rn))),
           (FMINPv2i64p V128:$Rn)>;
 
@@ -3072,17 +3080,9 @@ defm UMINV   : SIMDAcrossLanesBHS<1, 0b11010, "uminv">;
 defm SADDLV  : SIMDAcrossLanesHSD<0, 0b00011, "saddlv">;
 defm UADDLV  : SIMDAcrossLanesHSD<1, 0b00011, "uaddlv">;
 defm FMAXNMV : SIMDAcrossLanesS<0b01100, 0, "fmaxnmv", int_arm64_neon_fmaxnmv>;
-def : Pat<(f32 (int_arm64_neon_fmaxnmv (v2f32 V64:$Rn))),
-          (EXTRACT_SUBREG (FMAXNMPv2f32 V64:$Rn, V64:$Rn), ssub)>;
 defm FMAXV   : SIMDAcrossLanesS<0b01111, 0, "fmaxv", int_arm64_neon_fmaxv>;
-def : Pat<(f32 (int_arm64_neon_fmaxv (v2f32 V64:$Rn))),
-          (EXTRACT_SUBREG (FMAXPv2f32 V64:$Rn, V64:$Rn), ssub)>;
 defm FMINNMV : SIMDAcrossLanesS<0b01100, 1, "fminnmv", int_arm64_neon_fminnmv>;
-def : Pat<(f32 (int_arm64_neon_fminnmv (v2f32 V64:$Rn))),
-          (EXTRACT_SUBREG (FMINNMPv2f32 V64:$Rn, V64:$Rn), ssub)>;
 defm FMINV   : SIMDAcrossLanesS<0b01111, 1, "fminv", int_arm64_neon_fminv>;
-def : Pat<(f32 (int_arm64_neon_fminv (v2f32 V64:$Rn))),
-          (EXTRACT_SUBREG (FMINPv2f32 V64:$Rn, V64:$Rn), ssub)>;
 
 multiclass SIMDAcrossLanesSignedIntrinsic<string baseOpc, Intrinsic intOp> {
 // If there is a sign extension after this intrinsic, consume it as smov already
