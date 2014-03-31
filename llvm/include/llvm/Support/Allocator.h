@@ -255,7 +255,7 @@ private:
     // size threshold. That will be fixed in a subsequent commit to make the
     // growth even more predictable.
     size_t AllocatedSlabSize =
-        SlabSize * (1 << std::min<size_t>(30, NumSlabs / 128));
+        SlabSize * ((size_t)1 << std::min<size_t>(30, NumSlabs / 128));
 
     MemSlab *NewSlab = Allocator.Allocate(AllocatedSlabSize);
     NewSlab->NextPtr = CurSlab;
