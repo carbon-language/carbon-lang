@@ -2788,10 +2788,6 @@ static Value *EmitCommonNeonSISDBuiltinExpr(CodeGenFunction &CGF,
   unsigned Modifier = SISDInfo.TypeModifier;
   const char *s = SISDInfo.NameHint;
 
-  switch (BuiltinID) {
-  default: break;
-  }
-
   assert(Int && "Generic code assumes a valid intrinsic");
 
   // Determine the type(s) of this overloaded AArch64 intrinsic.
