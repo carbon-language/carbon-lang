@@ -2388,31 +2388,15 @@ void MicrosoftMangleContextImpl::mangleStringLiteral(const StringLiteral *SL,
   auto GetLittleEndianByte = [&Mangler, &SL](unsigned Index) {
     unsigned CharByteWidth = SL->getCharByteWidth();
     uint32_t CodeUnit = SL->getCodeUnit(Index / CharByteWidth);
-    if (CharByteWidth == 1) {
-      return static_cast<char>(CodeUnit);
-    } else if (CharByteWidth == 2) {
-      if (Index % 2)
-        return static_cast<char>((CodeUnit >> 8) & 0xff);
-      else
-        return static_cast<char>(CodeUnit & 0xff);
-    } else {
-      llvm_unreachable("unsupported CharByteWidth");
-    }
+    unsigned OffsetInCodeUnit = Index % CharByteWidth;
+    return static_cast<char>((CodeUnit >> (8 * OffsetInCodeUnit)) & 0xff);
   };
 
   auto GetBigEndianByte = [&Mangler, &SL](unsigned Index) {
     unsigned CharByteWidth = SL->getCharByteWidth();
     uint32_t CodeUnit = SL->getCodeUnit(Index / CharByteWidth);
-    if (CharByteWidth == 1) {
-      return static_cast<char>(CodeUnit);
-    } else if (CharByteWidth == 2) {
-      if (Index % 2)
-        return static_cast<char>(CodeUnit & 0xff);
-      else
-        return static_cast<char>((CodeUnit >> 8) & 0xff);
-    } else {
-      llvm_unreachable("unsupported CharByteWidth");
-    }
+    unsigned OffsetInCodeUnit = (CharByteWidth - 1) - (Index % CharByteWidth);
+    return static_cast<char>((CodeUnit >> (8 * OffsetInCodeUnit)) & 0xff);
   };
 
   // CRC all the bytes of the StringLiteral.
