@@ -8,6 +8,7 @@
 -(void) m0 __attribute__((noreturn));
 -(void) m1 __attribute__((unused));
 -(void) m2 __attribute__((stdcall));
+-(void) m3 __attribute__((optnone));
 @end
 
 

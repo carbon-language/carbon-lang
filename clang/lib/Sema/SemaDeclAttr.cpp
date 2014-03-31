@@ -2972,6 +2972,26 @@ static void handleNoDebugAttr(Sema &S, Decl *D, const AttributeList &Attr) {
                          Attr.getAttributeSpellingListIndex()));
 }
 
+static void handleAlwaysInlineAttr(Sema &S, Decl *D,
+                                   const AttributeList &Attr) {
+  if (checkAttrMutualExclusion<OptimizeNoneAttr>(S, D, Attr))
+    return;
+
+  D->addAttr(::new (S.Context)
+             AlwaysInlineAttr(Attr.getRange(), S.Context,
+                              Attr.getAttributeSpellingListIndex()));
+}
+
+static void handleOptimizeNoneAttr(Sema &S, Decl *D,
+                                   const AttributeList &Attr) {
+  if (checkAttrMutualExclusion<AlwaysInlineAttr>(S, D, Attr))
+    return;
+
+  D->addAttr(::new (S.Context)
+             OptimizeNoneAttr(Attr.getRange(), S.Context,
+                              Attr.getAttributeSpellingListIndex()));
+}
+
 static void handleGlobalAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   FunctionDecl *FD = cast<FunctionDecl>(D);
   if (!FD->getReturnType()->isVoidType()) {
@@ -4042,7 +4062,7 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     handleAlignedAttr(S, D, Attr);
     break;
   case AttributeList::AT_AlwaysInline:
-    handleSimpleAttribute<AlwaysInlineAttr>(S, D, Attr);
+    handleAlwaysInlineAttr(S, D, Attr);
     break;
   case AttributeList::AT_AnalyzerNoReturn:
     handleAnalyzerNoReturnAttr(S, D, Attr);
@@ -4085,6 +4105,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_MinSize:
     handleSimpleAttribute<MinSizeAttr>(S, D, Attr);
+    break;
+  case AttributeList::AT_OptimizeNone:
+    handleOptimizeNoneAttr(S, D, Attr);
     break;
   case AttributeList::AT_Format:
     handleFormatAttr(S, D, Attr);

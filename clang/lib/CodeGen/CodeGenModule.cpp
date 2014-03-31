@@ -660,6 +660,10 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
     // Naked implies noinline: we should not be inlining such functions.
     B.addAttribute(llvm::Attribute::Naked);
     B.addAttribute(llvm::Attribute::NoInline);
+  } else if (D->hasAttr<OptimizeNoneAttr>()) {
+    // OptimizeNone implies noinline; we should not be inlining such functions.
+    B.addAttribute(llvm::Attribute::OptimizeNone);
+    B.addAttribute(llvm::Attribute::NoInline);
   } else if (D->hasAttr<NoDuplicateAttr>()) {
     B.addAttribute(llvm::Attribute::NoDuplicate);
   } else if (D->hasAttr<NoInlineAttr>()) {
@@ -678,6 +682,12 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 
   if (D->hasAttr<MinSizeAttr>())
     B.addAttribute(llvm::Attribute::MinSize);
+
+  if (D->hasAttr<OptimizeNoneAttr>()) {
+    // OptimizeNone wins over OptimizeForSize and MinSize.
+    B.removeAttribute(llvm::Attribute::OptimizeForSize);
+    B.removeAttribute(llvm::Attribute::MinSize);
+  }
 
   if (LangOpts.getStackProtector() == LangOptions::SSPOn)
     B.addAttribute(llvm::Attribute::StackProtect);

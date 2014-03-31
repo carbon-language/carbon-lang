@@ -952,3 +952,19 @@ an error:
   struct S {};
 }];
 }
+
+def OptnoneDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+The ``optnone`` attribute suppresses essentially all optimizations
+on a function or method, regardless of the optimization level applied to
+the compilation unit as a whole.  This is particularly useful when you
+need to debug a particular function, but it is infeasible to build the
+entire application without optimization.  Avoiding optimization on the
+specified function can improve the quality of the debugging information
+for that function.
+
+This attribute is incompatible with the ``always_inline`` attribute.
+  }];
+}
+
