@@ -23,6 +23,7 @@ set(NVPTXCodeGen_sources
   NVPTXUtilities.cpp
   NVVMReflect.cpp
   NVPTXGenericToNVVM.cpp
+  NVPTXAssignValidGlobalNames.cpp
   NVPTXPrologEpilogPass.cpp
   NVPTXMCExpr.cpp
   )

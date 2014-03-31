@@ -49,6 +49,7 @@ using namespace llvm;
 namespace llvm {
 void initializeNVVMReflectPass(PassRegistry&);
 void initializeGenericToNVVMPass(PassRegistry&);
+void initializeNVPTXAssignValidGlobalNamesPass(PassRegistry&);
 }
 
 extern "C" void LLVMInitializeNVPTXTarget() {
@@ -60,6 +61,7 @@ extern "C" void LLVMInitializeNVPTXTarget() {
   // but it's very NVPTX-specific.
   initializeNVVMReflectPass(*PassRegistry::getPassRegistry());
   initializeGenericToNVVMPass(*PassRegistry::getPassRegistry());
+  initializeNVPTXAssignValidGlobalNamesPass(*PassRegistry::getPassRegistry());
 }
 
 static std::string computeDataLayout(const NVPTXSubtarget &ST) {
@@ -139,6 +141,7 @@ void NVPTXPassConfig::addIRPasses() {
   disablePass(&TailDuplicateID);
 
   TargetPassConfig::addIRPasses();
+  addPass(createNVPTXAssignValidGlobalNamesPass());
   addPass(createGenericToNVVMPass());
 }
 
