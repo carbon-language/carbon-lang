@@ -559,6 +559,30 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     case AMDGPUIntrinsic::AMDGPU_umin:
       return DAG.getNode(AMDGPUISD::UMIN, DL, VT, Op.getOperand(1),
                                                   Op.getOperand(2));
+
+    case AMDGPUIntrinsic::AMDGPU_bfe_i32:
+      return DAG.getNode(AMDGPUISD::BFE_I32, DL, VT,
+                         Op.getOperand(1),
+                         Op.getOperand(2),
+                         Op.getOperand(3));
+
+    case AMDGPUIntrinsic::AMDGPU_bfe_u32:
+      return DAG.getNode(AMDGPUISD::BFE_U32, DL, VT,
+                         Op.getOperand(1),
+                         Op.getOperand(2),
+                         Op.getOperand(3));
+
+    case AMDGPUIntrinsic::AMDGPU_bfi:
+      return DAG.getNode(AMDGPUISD::BFI, DL, VT,
+                         Op.getOperand(1),
+                         Op.getOperand(2),
+                         Op.getOperand(3));
+
+    case AMDGPUIntrinsic::AMDGPU_bfm:
+      return DAG.getNode(AMDGPUISD::BFM, DL, VT,
+                         Op.getOperand(1),
+                         Op.getOperand(2));
+
     case AMDGPUIntrinsic::AMDIL_round_nearest:
       return DAG.getNode(ISD::FRINT, DL, VT, Op.getOperand(1));
   }
