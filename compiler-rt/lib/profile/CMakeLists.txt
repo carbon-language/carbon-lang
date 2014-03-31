@@ -1,5 +1,3 @@
-filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 arm)
-
 add_custom_target(profile)
 
 if(APPLE)
