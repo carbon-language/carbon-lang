@@ -744,8 +744,8 @@ class ELFARMAsmBackend : public ARMAsmBackend {
 public:
   uint8_t OSABI;
   ELFARMAsmBackend(const Target &T, const StringRef TT,
-                   uint8_t _OSABI, bool _IsLittle)
-    : ARMAsmBackend(T, TT, _IsLittle), OSABI(_OSABI) { }
+                   uint8_t OSABI, bool IsLittle)
+    : ARMAsmBackend(T, TT, IsLittle), OSABI(OSABI) { }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
     return createARMELFObjectWriter(OS, OSABI, isLittle());
