@@ -2541,6 +2541,7 @@ static NeonIntrinsicInfo ARM64SIMDIntrinsicMap[] = {
 static NeonIntrinsicInfo ARM64SISDIntrinsicMap[] = {
   NEONMAP1(vabdd_f64, arm64_sisd_fabd, Add1ArgType),
   NEONMAP1(vabds_f32, arm64_sisd_fabd, Add1ArgType),
+  NEONMAP1(vabsd_s64, arm64_neon_abs, Add1ArgType),
   NEONMAP1(vaddlv_s32, arm64_neon_saddlv, AddRetType | Add1ArgType),
   NEONMAP1(vaddlv_u32, arm64_neon_uaddlv, AddRetType | Add1ArgType),
   NEONMAP1(vaddlvq_s32, arm64_neon_saddlv, AddRetType | Add1ArgType),
@@ -2609,6 +2610,16 @@ static NeonIntrinsicInfo ARM64SISDIntrinsicMap[] = {
   NEONMAP1(vminvq_u32, arm64_neon_uminv, AddRetType | Add1ArgType),
   NEONMAP1(vmulxd_f64, arm64_neon_fmulx, Add1ArgType),
   NEONMAP1(vmulxs_f32, arm64_neon_fmulx, Add1ArgType),
+  NEONMAP1(vpaddd_s64, arm64_neon_uaddv, AddRetType | Add1ArgType),
+  NEONMAP1(vpaddd_u64, arm64_neon_uaddv, AddRetType | Add1ArgType),
+  NEONMAP1(vpmaxnmqd_f64, arm64_neon_fmaxnmv, AddRetType | Add1ArgType),
+  NEONMAP1(vpmaxnms_f32, arm64_neon_fmaxnmv, AddRetType | Add1ArgType),
+  NEONMAP1(vpmaxqd_f64, arm64_neon_fmaxv, AddRetType | Add1ArgType),
+  NEONMAP1(vpmaxs_f32, arm64_neon_fmaxv, AddRetType | Add1ArgType),
+  NEONMAP1(vpminnmqd_f64, arm64_neon_fminnmv, AddRetType | Add1ArgType),
+  NEONMAP1(vpminnms_f32, arm64_neon_fminnmv, AddRetType | Add1ArgType),
+  NEONMAP1(vpminqd_f64, arm64_neon_fminv, AddRetType | Add1ArgType),
+  NEONMAP1(vpmins_f32, arm64_neon_fminv, AddRetType | Add1ArgType),
   NEONMAP1(vqabsb_s8, arm64_neon_sqabs, Vectorize1ArgType | Use64BitVectors),
   NEONMAP1(vqabsd_s64, arm64_neon_sqabs, Add1ArgType),
   NEONMAP1(vqabsh_s16, arm64_neon_sqabs, Vectorize1ArgType | Use64BitVectors),
@@ -2691,8 +2702,14 @@ static NeonIntrinsicInfo ARM64SISDIntrinsicMap[] = {
   NEONMAP1(vqsubh_u16, arm64_neon_uqsub, Vectorize1ArgType | Use64BitVectors),
   NEONMAP1(vqsubs_s32, arm64_neon_sqsub, Add1ArgType),
   NEONMAP1(vqsubs_u32, arm64_neon_uqsub, Add1ArgType),
+  NEONMAP1(vrecped_f64, arm64_neon_frecpe, Add1ArgType),
+  NEONMAP1(vrecpes_f32, arm64_neon_frecpe, Add1ArgType),
+  NEONMAP1(vrecpxd_f64, arm64_neon_frecpx, Add1ArgType),
+  NEONMAP1(vrecpxs_f32, arm64_neon_frecpx, Add1ArgType),
   NEONMAP1(vrshld_s64, arm64_neon_srshl, Add1ArgType),
   NEONMAP1(vrshld_u64, arm64_neon_urshl, Add1ArgType),
+  NEONMAP1(vrsqrted_f64, arm64_neon_frsqrte, Add1ArgType),
+  NEONMAP1(vrsqrtes_f32, arm64_neon_frsqrte, Add1ArgType),
   NEONMAP1(vrsqrtsd_f64, arm64_neon_frsqrts, Add1ArgType),
   NEONMAP1(vrsqrtss_f32, arm64_neon_frsqrts, Add1ArgType),
   NEONMAP1(vsha1cq_u32, arm64_crypto_sha1c, 0),
@@ -2703,8 +2720,16 @@ static NeonIntrinsicInfo ARM64SISDIntrinsicMap[] = {
   NEONMAP1(vshld_u64, arm64_neon_ushl, Add1ArgType),
   NEONMAP1(vslid_n_s64, arm64_neon_vsli, Vectorize1ArgType),
   NEONMAP1(vslid_n_u64, arm64_neon_vsli, Vectorize1ArgType),
+  NEONMAP1(vsqaddb_u8, arm64_neon_usqadd, Vectorize1ArgType | Use64BitVectors),
+  NEONMAP1(vsqaddd_u64, arm64_neon_usqadd, Add1ArgType),
+  NEONMAP1(vsqaddh_u16, arm64_neon_usqadd, Vectorize1ArgType | Use64BitVectors),
+  NEONMAP1(vsqadds_u32, arm64_neon_usqadd, Add1ArgType),
   NEONMAP1(vsrid_n_s64, arm64_neon_vsri, Vectorize1ArgType),
   NEONMAP1(vsrid_n_u64, arm64_neon_vsri, Vectorize1ArgType),
+  NEONMAP1(vuqaddb_s8, arm64_neon_suqadd, Vectorize1ArgType | Use64BitVectors),
+  NEONMAP1(vuqaddd_s64, arm64_neon_suqadd, Add1ArgType),
+  NEONMAP1(vuqaddh_s16, arm64_neon_suqadd, Vectorize1ArgType | Use64BitVectors),
+  NEONMAP1(vuqadds_s32, arm64_neon_suqadd, Add1ArgType),
 };
 
 #undef NEONMAP0
@@ -2783,9 +2808,30 @@ static Value *EmitCommonNeonSISDBuiltinExpr(CodeGenFunction &CGF,
                                             const NeonIntrinsicInfo &SISDInfo,
                                             SmallVectorImpl<Value *> &Ops,
                                             const CallExpr *E) {
+  unsigned BuiltinID = SISDInfo.BuiltinID;
   unsigned int Int = SISDInfo.LLVMIntrinsic;
   unsigned Modifier = SISDInfo.TypeModifier;
   const char *s = SISDInfo.NameHint;
+
+  switch (BuiltinID) {
+  case NEON::BI__builtin_neon_vcled_s64:
+  case NEON::BI__builtin_neon_vcled_u64:
+  case NEON::BI__builtin_neon_vcles_f32:
+  case NEON::BI__builtin_neon_vcled_f64:
+  case NEON::BI__builtin_neon_vcltd_s64:
+  case NEON::BI__builtin_neon_vcltd_u64:
+  case NEON::BI__builtin_neon_vclts_f32:
+  case NEON::BI__builtin_neon_vcltd_f64:
+  case NEON::BI__builtin_neon_vcales_f32:
+  case NEON::BI__builtin_neon_vcaled_f64:
+  case NEON::BI__builtin_neon_vcalts_f32:
+  case NEON::BI__builtin_neon_vcaltd_f64:
+    // Only one direction of comparisons actually exist, cmle is actually a cmge
+    // with swapped operands. The table gives us the right intrinsic but we
+    // still need to do the swap.
+    std::swap(Ops[0], Ops[1]);
+    break;
+  }
 
   assert(Int && "Generic code assumes a valid intrinsic");
 
@@ -2955,23 +3001,6 @@ static Value *EmitAArch64ScalarBuiltinExpr(CodeGenFunction &CGF,
   case NEON::BI__builtin_neon_vsetq_lane_f64:
     return CGF.EmitARMBuiltinExpr(NEON::BI__builtin_neon_vset_lane_i8, E);
 
-  case NEON::BI__builtin_neon_vcled_s64:
-  case NEON::BI__builtin_neon_vcled_u64:
-  case NEON::BI__builtin_neon_vcles_f32:
-  case NEON::BI__builtin_neon_vcled_f64:
-  case NEON::BI__builtin_neon_vcltd_s64:
-  case NEON::BI__builtin_neon_vcltd_u64:
-  case NEON::BI__builtin_neon_vclts_f32:
-  case NEON::BI__builtin_neon_vcltd_f64:
-  case NEON::BI__builtin_neon_vcales_f32:
-  case NEON::BI__builtin_neon_vcaled_f64:
-  case NEON::BI__builtin_neon_vcalts_f32:
-  case NEON::BI__builtin_neon_vcaltd_f64:
-    // Only one direction of comparisons actually exist, cmle is actually a cmge
-    // with swapped operands. The table gives us the right intrinsic but we
-    // still need to do the swap.
-    std::swap(Ops[0], Ops[1]);
-    break;
   case NEON::BI__builtin_neon_vceqzd_s64:
   case NEON::BI__builtin_neon_vceqzd_u64:
   case NEON::BI__builtin_neon_vcgezd_s64:
@@ -5338,12 +5367,11 @@ Value *CodeGenFunction::EmitARM64BuiltinExpr(unsigned BuiltinID,
     case NEON::BI__builtin_neon_vcled_u64:P = llvm::ICmpInst::ICMP_ULE;break;
     case NEON::BI__builtin_neon_vcled_s64:P = llvm::ICmpInst::ICMP_SLE;break;
     }
-    llvm::Type *Ty = llvm::Type::getInt64Ty(getLLVMContext());
     Ops.push_back(EmitScalarExpr(E->getArg(1)));
-    Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
+    Ops[0] = Builder.CreateBitCast(Ops[0], Int64Ty);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Int64Ty);
     Ops[0] = Builder.CreateICmp(P, Ops[0], Ops[1]);
-    return Builder.CreateSExt(Ops[0], Ty, "vceqd");
+    return Builder.CreateSExt(Ops[0], Int64Ty, "vceqd");
   }
   case NEON::BI__builtin_neon_vtstd_s64:
   case NEON::BI__builtin_neon_vtstd_u64: {
@@ -5518,13 +5546,11 @@ Value *CodeGenFunction::EmitARM64BuiltinExpr(unsigned BuiltinID,
     unsigned Int = BuiltinID == NEON::BI__builtin_neon_vrsrad_n_u64
                                    ? Intrinsic::arm64_neon_urshl
                                    : Intrinsic::arm64_neon_srshl;
-    llvm::Type *VTy = llvm::VectorType::get(Int64Ty, 1);
-    SmallVector<Value *, 2> ShiftOps;
-    ShiftOps.push_back(Ops[1]);
-    ShiftOps.push_back(EmitScalarExpr(E->getArg(2)));
-    Ops[1] =
-        EmitNeonCall(CGM.getIntrinsic(Int, VTy), ShiftOps, "vrshr_n", 1, true);
-    return Builder.CreateAdd(Ops[0], Builder.CreateBitCast(Ops[0], Int64Ty));
+    Ops[1] = Builder.CreateBitCast(Ops[1], Int64Ty);
+    Ops.push_back(Builder.CreateNeg(EmitScalarExpr(E->getArg(2))));
+    Ops[1] = Builder.CreateCall2(CGM.getIntrinsic(Int, Int64Ty), Ops[1],
+                                 Builder.CreateSExt(Ops[2], Int64Ty));
+    return Builder.CreateAdd(Ops[0], Builder.CreateBitCast(Ops[1], Int64Ty));
   }
   case NEON::BI__builtin_neon_vshld_n_s64:
   case NEON::BI__builtin_neon_vshld_n_u64: {
@@ -6033,6 +6059,8 @@ Value *CodeGenFunction::EmitARM64BuiltinExpr(unsigned BuiltinID,
     Value *Result = Builder.CreateFMul(Ops[0], Ops[1]);
     return Builder.CreateBitCast(Result, Ty);
   }
+  case NEON::BI__builtin_neon_vnegd_s64:
+    return Builder.CreateNeg(EmitScalarExpr(E->getArg(0)), "vnegd");
   case NEON::BI__builtin_neon_vpmaxnm_v:
   case NEON::BI__builtin_neon_vpmaxnmq_v: {
     Int = Intrinsic::arm64_neon_fmaxnmp;
