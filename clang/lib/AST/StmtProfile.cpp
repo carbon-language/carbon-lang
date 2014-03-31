@@ -297,6 +297,9 @@ void OMPClauseProfiler::VisitOMPFirstprivateClause(
 void OMPClauseProfiler::VisitOMPSharedClause(const OMPSharedClause *C) {
   VisitOMPClauseList(C);
 }
+void OMPClauseProfiler::VisitOMPCopyinClause(const OMPCopyinClause *C) {
+  VisitOMPClauseList(C);
+}
 }
 
 void

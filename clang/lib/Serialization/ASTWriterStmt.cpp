@@ -1716,6 +1716,15 @@ void OMPClauseWriter::VisitOMPSharedClause(OMPSharedClause *C) {
     Writer->Writer.AddStmt(I);
 }
 
+void OMPClauseWriter::VisitOMPCopyinClause(OMPCopyinClause *C) {
+  Record.push_back(C->varlist_size());
+  Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
+  for (OMPCopyinClause::varlist_iterator I = C->varlist_begin(),
+                                         E = C->varlist_end();
+       I != E; ++I)
+    Writer->Writer.AddStmt(*I);
+}
+
 //===----------------------------------------------------------------------===//
 // OpenMP Directives.
 //===----------------------------------------------------------------------===//

@@ -42,6 +42,7 @@ OPENMP_CLAUSE(default, OMPDefaultClause)
 OPENMP_CLAUSE(private, OMPPrivateClause)
 OPENMP_CLAUSE(firstprivate, OMPFirstprivateClause)
 OPENMP_CLAUSE(shared,  OMPSharedClause)
+OPENMP_CLAUSE(copyin,  OMPCopyinClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
@@ -50,6 +51,7 @@ OPENMP_PARALLEL_CLAUSE(default)
 OPENMP_PARALLEL_CLAUSE(private)
 OPENMP_PARALLEL_CLAUSE(firstprivate)
 OPENMP_PARALLEL_CLAUSE(shared)
+OPENMP_PARALLEL_CLAUSE(copyin)
 
 // FIXME: more clauses allowed for directive 'omp simd'.
 OPENMP_SIMD_CLAUSE(private)

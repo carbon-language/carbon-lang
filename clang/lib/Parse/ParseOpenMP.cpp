@@ -301,6 +301,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
   case OMPC_private:
   case OMPC_firstprivate:
   case OMPC_shared:
+  case OMPC_copyin:
     Clause = ParseOpenMPVarListClause(CKind);
     break;
   case OMPC_unknown:

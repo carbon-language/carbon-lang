@@ -1954,6 +1954,9 @@ void OMPClauseEnqueue::VisitOMPFirstprivateClause(
 void OMPClauseEnqueue::VisitOMPSharedClause(const OMPSharedClause *C) {
   VisitOMPClauseList(C);
 }
+void OMPClauseEnqueue::VisitOMPCopyinClause(const OMPCopyinClause *C) {
+  VisitOMPClauseList(C);
+}
 }
 
 void EnqueueVisitor::EnqueueChildren(const OMPClause *S) {

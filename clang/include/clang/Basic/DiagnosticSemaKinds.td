@@ -6915,6 +6915,8 @@ def note_omp_conversion_here : Note<
 def err_omp_ambiguous_conversion : Error<
   "ambiguous conversion from type %0 to an integral or unscoped "
   "enumeration type">;
+def err_omp_required_access : Error<
+  "%0 variable must be %1">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {
