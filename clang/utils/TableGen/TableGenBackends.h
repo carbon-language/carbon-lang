@@ -35,7 +35,7 @@ void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrList(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrPCHRead(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrPCHWrite(RecordKeeper &Records, raw_ostream &OS);
-void EmitClangAttrSpellingList(RecordKeeper &Records, raw_ostream &OS);
+void EmitClangAttrHasAttrImpl(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrSpellingListIndex(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrASTVisitor(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrTemplateInstantiate(RecordKeeper &Records, raw_ostream &OS);
