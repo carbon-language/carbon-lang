@@ -1219,11 +1219,55 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
+static void computeMaskedBitsForMinMax(const SDValue Op0,
+                                       const SDValue Op1,
+                                       APInt &KnownZero,
+                                       APInt &KnownOne,
+                                       const SelectionDAG &DAG,
+                                       unsigned Depth) {
+  APInt Op0Zero, Op0One;
+  APInt Op1Zero, Op1One;
+  DAG.ComputeMaskedBits(Op0, Op0Zero, Op0One, Depth);
+  DAG.ComputeMaskedBits(Op1, Op1Zero, Op1One, Depth);
+
+  KnownZero = Op0Zero & Op1Zero;
+  KnownOne = Op0One & Op1One;
+}
+
 void AMDGPUTargetLowering::computeMaskedBitsForTargetNode(
   const SDValue Op,
   APInt &KnownZero,
   APInt &KnownOne,
   const SelectionDAG &DAG,
   unsigned Depth) const {
+
   KnownZero = KnownOne = APInt(KnownOne.getBitWidth(), 0); // Don't know anything.
+  unsigned Opc = Op.getOpcode();
+  switch (Opc) {
+  case ISD::INTRINSIC_WO_CHAIN: {
+    // FIXME: The intrinsic should just use the node.
+    switch (cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue()) {
+    case AMDGPUIntrinsic::AMDGPU_imax:
+    case AMDGPUIntrinsic::AMDGPU_umax:
+    case AMDGPUIntrinsic::AMDGPU_imin:
+    case AMDGPUIntrinsic::AMDGPU_umin:
+      computeMaskedBitsForMinMax(Op.getOperand(1), Op.getOperand(2),
+                                 KnownZero, KnownOne, DAG, Depth);
+      break;
+    default:
+      break;
+    }
+
+    break;
+  }
+  case AMDGPUISD::SMAX:
+  case AMDGPUISD::UMAX:
+  case AMDGPUISD::SMIN:
+  case AMDGPUISD::UMIN:
+    computeMaskedBitsForMinMax(Op.getOperand(0), Op.getOperand(1),
+                               KnownZero, KnownOne, DAG, Depth);
+    break;
+  default:
+    break;
+  }
 }
