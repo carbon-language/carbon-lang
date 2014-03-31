@@ -11,7 +11,7 @@
 // CHECK:   0x24 R_MIPS_CALL_HI16 printf
 // CHECK:   0x2C R_MIPS_GOT16 $.str
 // CHECK:   0x30 R_MIPS_CALL_LO16 printf
-// CHECK:   0x38 R_MIPS_LO16 .rodata.str1.1
+// CHECK:   0x38 R_MIPS_LO16 $.str
 // CHECK: ]
 
 	.text

@@ -206,9 +206,25 @@ MipsELFObjectWriter::needsRelocateWithSymbol(unsigned Type) const {
   default:
     return true;
 
-  case ELF::R_MIPS_26:
-  case ELF::R_MIPS_LO16:
+  case ELF::R_MIPS_GOT16:
+  case ELF::R_MIPS16_GOT16:
+  case ELF::R_MICROMIPS_GOT16:
+    llvm_unreachable("Should have been handled already");
+
+  // These relocations might be paired with another relocation. The pairing is
+  // done by the static linker by matching the symbol. Since we only see one
+  // relocation at a time, we have to force them to relocate with a symbol to
+  // avoid ending up with a pair where one points to a section and another
+  // points to a symbol.
   case ELF::R_MIPS_HI16:
+  case ELF::R_MIPS16_HI16:
+  case ELF::R_MICROMIPS_HI16:
+  case ELF::R_MIPS_LO16:
+  case ELF::R_MIPS16_LO16:
+  case ELF::R_MICROMIPS_LO16:
+    return true;
+
+  case ELF::R_MIPS_26:
   case ELF::R_MIPS_32:
   case ELF::R_MIPS_64:
   case ELF::R_MIPS_GPREL16:
