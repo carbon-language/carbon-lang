@@ -365,13 +365,13 @@ public:
   /// A negative number means that this is profitable.
   int getTreeCost();
 
-  /// Construct a vectorizable tree that starts at \p Roots, ignoring users for
-  /// the purpose of scheduling and extraction in the \p UserIgnoreLst.
-  void buildTree(ArrayRef<Value *> Roots,
-                 ArrayRef<Value *> UserIgnoreLst = None);
+  /// Construct a vectorizable tree that starts at \p Roots and is possibly
+  /// used by a reduction of \p RdxOps.
+  void buildTree(ArrayRef<Value *> Roots, ValueSet *RdxOps = 0);
 
   /// Clear the internal data structures that are created by 'buildTree'.
   void deleteTree() {
+    RdxOps = 0;
     VectorizableTree.clear();
     ScalarToTreeEntry.clear();
     MustGather.clear();
@@ -527,8 +527,8 @@ private:
   /// Numbers instructions in different blocks.
   DenseMap<BasicBlock *, BlockNumbering> BlocksNumbers;
 
-  /// List of users to ignore during scheduling and that don't need extracting.
-  ArrayRef<Value *> UserIgnoreList;
+  /// Reduction operators.
+  ValueSet *RdxOps;
 
   // Analysis and block reference.
   Function *F;
@@ -542,10 +542,9 @@ private:
   IRBuilder<> Builder;
 };
 
-void BoUpSLP::buildTree(ArrayRef<Value *> Roots,
-                        ArrayRef<Value *> UserIgnoreLst) {
+void BoUpSLP::buildTree(ArrayRef<Value *> Roots, ValueSet *Rdx) {
   deleteTree();
-  UserIgnoreList = UserIgnoreLst;
+  RdxOps = Rdx;
   if (!getSameType(Roots))
     return;
   buildTree_rec(Roots, 0);
@@ -577,9 +576,8 @@ void BoUpSLP::buildTree(ArrayRef<Value *> Roots,
         if (!UserInst)
           continue;
 
-        // Ignore users in the user ignore list.
-        if (std::find(UserIgnoreList.begin(), UserIgnoreList.end(), UserInst) !=
-            UserIgnoreList.end())
+        // Ignore uses that are part of the reduction.
+        if (Rdx && std::find(Rdx->begin(), Rdx->end(), UserInst) != Rdx->end())
           continue;
 
         DEBUG(dbgs() << "SLP: Need to extract:" << *U << " from lane " <<
@@ -710,9 +708,8 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
         continue;
       }
 
-      // Ignore users in the user ignore list.
-      if (std::find(UserIgnoreList.begin(), UserIgnoreList.end(), UI) !=
-          UserIgnoreList.end())
+      // This user is part of the reduction.
+      if (RdxOps && RdxOps->count(UI))
         continue;
 
       // Make sure that we can schedule this unknown user.
@@ -1749,9 +1746,8 @@ Value *BoUpSLP::vectorizeTree() {
           DEBUG(dbgs() << "SLP: \tvalidating user:" << *U << ".\n");
 
           assert((ScalarToTreeEntry.count(U) ||
-                  // It is legal to replace users in the ignorelist by undef.
-                  (std::find(UserIgnoreList.begin(), UserIgnoreList.end(), U) !=
-                   UserIgnoreList.end())) &&
+                  // It is legal to replace the reduction users by undef.
+                  (RdxOps && RdxOps->count(U))) &&
                  "Replacing out-of-tree value with undef");
         }
 #endif
@@ -1955,11 +1951,8 @@ private:
   bool tryToVectorizePair(Value *A, Value *B, BoUpSLP &R);
 
   /// \brief Try to vectorize a list of operands.
-  /// \@param BuildVector A list of users to ignore for the purpose of
-  ///                     scheduling and that don't need extracting.
   /// \returns true if a value was vectorized.
-  bool tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
-                          ArrayRef<Value *> BuildVector = None);
+  bool tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R);
 
   /// \brief Try to vectorize a chain that may start at the operands of \V;
   bool tryToVectorize(BinaryOperator *V, BoUpSLP &R);
@@ -2132,8 +2125,7 @@ bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B, BoUpSLP &R) {
   return tryToVectorizeList(VL, R);
 }
 
-bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
-                                       ArrayRef<Value *> BuildVector) {
+bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R) {
   if (VL.size() < 2)
     return false;
 
@@ -2183,33 +2175,13 @@ bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
                  << "\n");
     ArrayRef<Value *> Ops = VL.slice(i, OpsWidth);
 
-    ArrayRef<Value *> BuildVectorSlice;
-    if (!BuildVector.empty())
-      BuildVectorSlice = BuildVector.slice(i, OpsWidth);
-
-    R.buildTree(Ops, BuildVectorSlice);
+    R.buildTree(Ops);
     int Cost = R.getTreeCost();
 
     if (Cost < -SLPCostThreshold) {
       DEBUG(dbgs() << "SLP: Vectorizing list at cost:" << Cost << ".\n");
-      Value *VectorizedRoot = R.vectorizeTree();
+      R.vectorizeTree();
 
-      // Reconstruct the build vector by extracting the vectorized root. This
-      // way we handle the case where some elements of the vector are undefined.
-      //  (return (inserelt <4 xi32> (insertelt undef (opd0) 0) (opd1) 2))
-      if (!BuildVectorSlice.empty()) {
-        Instruction *InsertAfter = cast<Instruction>(VectorizedRoot);
-        for (auto &V : BuildVectorSlice) {
-          InsertElementInst *IE = cast<InsertElementInst>(V);
-          IRBuilder<> Builder(++BasicBlock::iterator(InsertAfter));
-          Instruction *Extract = cast<Instruction>(
-              Builder.CreateExtractElement(VectorizedRoot, IE->getOperand(2)));
-          IE->setOperand(1, Extract);
-          IE->removeFromParent();
-          IE->insertAfter(Extract);
-          InsertAfter = IE;
-        }
-      }
       // Move to the next bundle.
       i += VF - 1;
       Changed = true;
@@ -2318,7 +2290,7 @@ static Value *createRdxShuffleMask(unsigned VecLen, unsigned NumEltsToRdx,
 ///   *p =
 ///
 class HorizontalReduction {
-  SmallVector<Value *, 16> ReductionOps;
+  SmallPtrSet<Value *, 16> ReductionOps;
   SmallVector<Value *, 32> ReducedVals;
 
   BinaryOperator *ReductionRoot;
@@ -2412,7 +2384,7 @@ public:
           // We need to be able to reassociate the adds.
           if (!TreeN->isAssociative())
             return false;
-          ReductionOps.push_back(TreeN);
+          ReductionOps.insert(TreeN);
         }
         // Retract.
         Stack.pop_back();
@@ -2449,7 +2421,7 @@ public:
 
     for (; i < NumReducedVals - ReduxWidth + 1; i += ReduxWidth) {
       ArrayRef<Value *> ValsToReduce(&ReducedVals[i], ReduxWidth);
-      V.buildTree(ValsToReduce, ReductionOps);
+      V.buildTree(ValsToReduce, &ReductionOps);
 
       // Estimate cost.
       int Cost = V.getTreeCost() + getReductionCost(TTI, ReducedVals[i]);
@@ -2568,16 +2540,13 @@ private:
 ///
 /// Returns true if it matches
 ///
-static bool findBuildVector(InsertElementInst *FirstInsertElem,
-                            SmallVectorImpl<Value *> &BuildVector,
-                            SmallVectorImpl<Value *> &BuildVectorOpds) {
-  if (!isa<UndefValue>(FirstInsertElem->getOperand(0)))
+static bool findBuildVector(InsertElementInst *IE,
+                            SmallVectorImpl<Value *> &Ops) {
+  if (!isa<UndefValue>(IE->getOperand(0)))
     return false;
 
-  InsertElementInst *IE = FirstInsertElem;
   while (true) {
-    BuildVector.push_back(IE);
-    BuildVectorOpds.push_back(IE->getOperand(1));
+    Ops.push_back(IE->getOperand(1));
 
     if (IE->use_empty())
       return false;
@@ -2747,16 +2716,12 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
     }
 
     // Try to vectorize trees that start at insertelement instructions.
-    if (InsertElementInst *FirstInsertElem = dyn_cast<InsertElementInst>(it)) {
-      SmallVector<Value *, 16> BuildVector;
-      SmallVector<Value *, 16> BuildVectorOpds;
-      if (!findBuildVector(FirstInsertElem, BuildVector, BuildVectorOpds))
+    if (InsertElementInst *IE = dyn_cast<InsertElementInst>(it)) {
+      SmallVector<Value *, 8> Ops;
+      if (!findBuildVector(IE, Ops))
         continue;
 
-      // Vectorize starting with the build vector operands ignoring the
-      // BuildVector instructions for the purpose of scheduling and user
-      // extraction.
-      if (tryToVectorizeList(BuildVectorOpds, R, BuildVector)) {
+      if (tryToVectorizeList(Ops, R)) {
         Changed = true;
         it = BB->begin();
         e = BB->end();
