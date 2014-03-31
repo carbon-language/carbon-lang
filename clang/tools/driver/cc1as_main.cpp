@@ -304,6 +304,10 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   // FIXME: This is not pretty. MCContext has a ptr to MCObjectFileInfo and
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
   std::unique_ptr<MCObjectFileInfo> MOFI(new MCObjectFileInfo());
+
+  if (Opts.CompressDebugSections)
+    MAI->setCompressDebugSections(true);
+
   MCContext Ctx(MAI.get(), MRI.get(), MOFI.get(), &SrcMgr);
   // FIXME: Assembler behavior can change with -static.
   MOFI->InitMCObjectFileInfo(Opts.Triple,
@@ -320,8 +324,6 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     Ctx.setCompilationDir(Opts.DebugCompilationDir);
   if (!Opts.MainFileName.empty())
     Ctx.setMainFileName(StringRef(Opts.MainFileName));
-  if (Opts.CompressDebugSections)
-    MAI->setCompressDebugSections(true);
 
   // Build up the feature string from the target feature list.
   std::string FS;
