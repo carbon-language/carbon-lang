@@ -3882,7 +3882,7 @@ ValueObject::CreateValueObjectFromAddress (const char* name,
 
 lldb::ValueObjectSP
 ValueObject::CreateValueObjectFromData (const char* name,
-                                        DataExtractor& data,
+                                        const DataExtractor& data,
                                         const ExecutionContext& exe_ctx,
                                         ClangASTType type)
 {
