@@ -64,6 +64,9 @@ __declspec(dllimport) extern int GlobalRedecl3; // expected-note{{previous decla
                       extern int GlobalRedecl4; // expected-note{{previous declaration is here}}
 __declspec(dllimport) extern int GlobalRedecl4; // expected-error{{redeclaration of 'GlobalRedecl4' cannot add 'dllimport' attribute}}
 
+// External linkage is required.
+__declspec(dllimport) static int StaticGlobal; // expected-error{{'StaticGlobal' must have external linkage when declared 'dllimport'}}
+
 // Import in local scope.
 __declspec(dllimport) float LocalRedecl1; // expected-note{{previous definition is here}}
 __declspec(dllimport) float LocalRedecl2; // expected-note{{previous definition is here}}
@@ -77,6 +80,7 @@ void functionScope() {
   __declspec(dllimport)        int LocalVarDef = 1; // expected-error{{definition of dllimport data}}
   __declspec(dllimport) extern int ExternLocalVarDecl;
   __declspec(dllimport) extern int ExternLocalVarDef = 1; // expected-error{{definition of dllimport data}}
+  __declspec(dllimport) static int StaticLocalVar; // expected-error{{'StaticLocalVar' must have external linkage when declared 'dllimport'}}
 }
 
 
@@ -113,3 +117,6 @@ __declspec(dllimport) void redecl3(); // expected-note{{previous declaration is 
 
                       void redecl4(); // expected-note{{previous declaration is here}}
 __declspec(dllimport) void redecl4(); // expected-error{{redeclaration of 'redecl4' cannot add 'dllimport' attribute}}
+
+// External linkage is required.
+__declspec(dllimport) static int staticFunc(); // expected-error{{'staticFunc' must have external linkage when declared 'dllimport'}}

@@ -11,6 +11,7 @@ struct ExplicitSpec_Imported {};
 struct ExplicitSpec_Def_Imported {};
 struct ExplicitSpec_InlineDef_Imported {};
 struct ExplicitSpec_NotImported {};
+namespace { struct Internal {}; }
 
 
 // Invalid usage.
@@ -76,6 +77,15 @@ __declspec(dllimport) extern int GlobalRedecl3; // expected-note{{previous decla
                       extern int GlobalRedecl4; // expected-note{{previous declaration is here}}
 __declspec(dllimport) extern int GlobalRedecl4; // expected-error{{redeclaration of 'GlobalRedecl4' cannot add 'dllimport' attribute}}
 
+// External linkage is required.
+__declspec(dllimport) static int StaticGlobal; // expected-error{{'StaticGlobal' must have external linkage when declared 'dllimport'}}
+__declspec(dllimport) Internal InternalTypeGlobal; // expected-error{{'InternalTypeGlobal' must have external linkage when declared 'dllimport'}}
+namespace    { __declspec(dllimport) int InternalGlobal; } // expected-error{{'<anonymous namespace>::InternalGlobal' must have external linkage when declared 'dllimport'}}
+namespace ns { __declspec(dllimport) int ExternalGlobal; }
+
+__declspec(dllimport) auto InternalAutoTypeGlobal = Internal(); // expected-error{{'InternalAutoTypeGlobal' must have external linkage when declared 'dllimport'}}
+                                                                // expected-error@-1{{definition of dllimport data}}
+
 // Import in local scope.
 __declspec(dllimport) float LocalRedecl1; // expected-note{{previous definition is here}}
 __declspec(dllimport) float LocalRedecl2; // expected-note{{previous definition is here}}
@@ -89,6 +99,7 @@ void functionScope() {
   __declspec(dllimport)        int LocalVarDef = 1; // expected-error{{definition of dllimport data}}
   __declspec(dllimport) extern int ExternLocalVarDecl;
   __declspec(dllimport) extern int ExternLocalVarDef = 1; // expected-error{{definition of dllimport data}}
+  __declspec(dllimport) static int StaticLocalVar; // expected-error{{'StaticLocalVar' must have external linkage when declared 'dllimport'}}
 }
 
 
@@ -144,6 +155,12 @@ __declspec(dllimport) void friend4(); // expected-error{{redeclaration of 'frien
 // Implicit declarations can be redeclared with dllimport.
 __declspec(dllimport) void* operator new(__SIZE_TYPE__ n);
 
+// External linkage is required.
+__declspec(dllimport) static int staticFunc(); // expected-error{{'staticFunc' must have external linkage when declared 'dllimport'}}
+__declspec(dllimport) Internal internalRetFunc(); // expected-error{{'internalRetFunc' must have external linkage when declared 'dllimport'}}
+namespace    { __declspec(dllimport) void internalFunc(); } // expected-error{{'<anonymous namespace>::internalFunc' must have external linkage when declared 'dllimport'}}
+namespace ns { __declspec(dllimport) void externalFunc(); }
+
 
 
 //===----------------------------------------------------------------------===//
@@ -178,6 +195,12 @@ template<typename T> __declspec(dllimport) void funcTmplFriend1();
 template<typename T>                       void funcTmplFriend2(); // expected-warning{{'funcTmplFriend2' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
 template<typename T>                       void funcTmplFriend3() {} // expected-warning{{'funcTmplFriend3' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
 template<typename T> __declspec(dllimport) void funcTmplFriend4(); // expected-error{{redeclaration of 'funcTmplFriend4' cannot add 'dllimport' attribute}}
+
+// External linkage is required.
+template<typename T> __declspec(dllimport) static int staticFuncTmpl(); // expected-error{{'staticFuncTmpl' must have external linkage when declared 'dllimport'}}
+template<typename T> __declspec(dllimport) Internal internalRetFuncTmpl(); // expected-error{{'internalRetFuncTmpl' must have external linkage when declared 'dllimport'}}
+namespace    { template<typename T> __declspec(dllimport) void internalFuncTmpl(); } // expected-error{{'<anonymous namespace>::internalFuncTmpl' must have external linkage when declared 'dllimport'}}
+namespace ns { template<typename T> __declspec(dllimport) void externalFuncTmpl(); }
 
 
 template<typename T> void funcTmpl() {}
