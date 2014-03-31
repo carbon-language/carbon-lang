@@ -422,7 +422,7 @@ void ARM64FrameLowering::emitEpilogue(MachineFunction &MF,
       static_cast<const ARM64RegisterInfo *>(MF.getTarget().getRegisterInfo());
   DebugLoc DL = MBBI->getDebugLoc();
 
-  unsigned NumBytes = MFI->getStackSize();
+  int NumBytes = MFI->getStackSize();
   unsigned NumRestores = 0;
   // Move past the restores of the callee-saved registers.
   MachineBasicBlock::iterator LastPopI = MBBI;

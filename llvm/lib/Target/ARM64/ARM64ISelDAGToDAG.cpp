@@ -1308,8 +1308,7 @@ static bool isBitfieldExtractOpFromShr(SDNode *N, unsigned &Opc, SDValue &Opd0,
   } else
     return false;
 
-  assert(Shl_imm >= 0 && Shl_imm < VT.getSizeInBits() &&
-         "bad amount in shift node!");
+  assert(Shl_imm < VT.getSizeInBits() && "bad amount in shift node!");
   uint64_t Srl_imm = 0;
   if (!isIntImmediate(N->getOperand(1), Srl_imm))
     return false;
