@@ -140,3 +140,11 @@ define <2 x i64> @vsraQu64(<2 x i64>* %A, <2 x i64>* %B) nounwind {
         %tmp4 = add <2 x i64> %tmp1, %tmp3
 	ret <2 x i64> %tmp4
 }
+
+define <1 x i64> @vsra_v1i64(<1 x i64> %A, <1 x i64> %B) nounwind {
+; CHECK-LABEL: vsra_v1i64:
+; CHECK: ssra d0, d1, #63
+  %tmp3 = ashr <1 x i64> %B, < i64 63 >
+  %tmp4 = add <1 x i64> %A, %tmp3
+  ret <1 x i64> %tmp4
+}

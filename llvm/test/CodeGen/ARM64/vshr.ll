@@ -46,4 +46,18 @@ entry:
   ret <8 x i16> %shr
 }
 
+define <1 x i64> @sshr_v1i64(<1 x i64> %A) nounwind {
+; CHECK-LABEL: sshr_v1i64:
+; CHECK: sshr d0, d0, #63
+  %tmp3 = ashr <1 x i64> %A, < i64 63 >
+  ret <1 x i64> %tmp3
+}
+
+define <1 x i64> @ushr_v1i64(<1 x i64> %A) nounwind {
+; CHECK-LABEL: ushr_v1i64:
+; CHECK: ushr d0, d0, #63
+  %tmp3 = lshr <1 x i64> %A, < i64 63 >
+  ret <1 x i64> %tmp3
+}
+
 attributes #0 = { nounwind }
