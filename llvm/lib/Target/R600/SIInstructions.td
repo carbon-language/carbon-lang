@@ -2275,14 +2275,6 @@ def : Pat <
   (S_ADD_I32 $src0, $src1)
 >;
 
-def : Pat <
-  (or i64:$a, i64:$b),
-  (INSERT_SUBREG
-    (INSERT_SUBREG (IMPLICIT_DEF),
-      (V_OR_B32_e32 (EXTRACT_SUBREG $a, sub0), (EXTRACT_SUBREG $b, sub0)), sub0),
-    (V_OR_B32_e32 (EXTRACT_SUBREG $a, sub1), (EXTRACT_SUBREG $b, sub1)), sub1)
->;
-
 //============================================================================//
 // Miscellaneous Optimization Patterns
 //============================================================================//
