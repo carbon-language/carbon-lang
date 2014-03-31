@@ -3879,8 +3879,9 @@ ARM64TargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
 }
 
 bool ARM64TargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
-  // We can materialize #0.0 as fmov $Rd, XZR.
-  if (Imm.isPosZero())
+  // We can materialize #0.0 as fmov $Rd, XZR for 64-bit and 32-bit cases.
+  // FIXME: We should be able to handle f128 as well with a clever lowering.
+  if (Imm.isPosZero() && (VT == MVT::f64 || VT == MVT::f32))
     return true;
 
   if (VT == MVT::f64)

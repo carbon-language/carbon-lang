@@ -19,3 +19,14 @@ define float @bar() {
 ; CHECK-NEXT:  ret
   ret float 0x400921FB60000000
 }
+
+; CHECK: literal16
+; CHECK: .quad 0
+; CHECK: .quad 0
+define fp128 @baz() {
+; CHECK: _baz:
+; CHECK:  adrp x[[REG:[0-9]+]], lCPI2_0@PAGE
+; CHECK:  ldr  q0, [x[[REG]], lCPI2_0@PAGEOFF]
+; CHECK-NEXT:  ret
+  ret fp128 0xL00000000000000000000000000000000
+}
