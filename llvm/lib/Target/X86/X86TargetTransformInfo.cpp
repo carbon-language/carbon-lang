@@ -528,6 +528,7 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
     // problem is that the inserts form a read-modify-write chain so latency
     // should be factored in too.  Inflating the cost per element by 1.
     { ISD::FP_TO_UINT,  MVT::v8i32, MVT::v8f32, 8*4 },
+    { ISD::FP_TO_UINT,  MVT::v4i32, MVT::v4f64, 4*4 },
   };
 
   if (ST->hasAVX2()) {
