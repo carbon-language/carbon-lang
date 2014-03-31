@@ -183,7 +183,7 @@ public:
   /// Return true if a vector of the given type should be split
   /// (TypeSplitVector) instead of promoted (TypePromoteInteger) during type
   /// legalization.
-  virtual bool shouldSplitVectorElementType(EVT /*VT*/) const { return false; }
+  virtual bool shouldSplitVectorType(EVT /*VT*/) const { return false; }
 
   // There are two general methods for expanding a BUILD_VECTOR node:
   //  1. Use SCALAR_TO_VECTOR on the defined scalar values and then shuffle

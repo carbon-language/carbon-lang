@@ -1087,7 +1087,7 @@ void TargetLoweringBase::computeRegisterProperties() {
     // that wider vector type.
     MVT EltVT = VT.getVectorElementType();
     unsigned NElts = VT.getVectorNumElements();
-    if (NElts != 1 && !shouldSplitVectorElementType(EltVT)) {
+    if (NElts != 1 && !shouldSplitVectorType(VT)) {
       bool IsLegalWiderType = false;
       // First try to promote the elements of integer vectors. If no legal
       // promotion was found, fallback to the widen-vector method.

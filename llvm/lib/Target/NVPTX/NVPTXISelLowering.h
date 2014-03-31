@@ -141,7 +141,7 @@ public:
   // PTX always uses 32-bit shift amounts
   virtual MVT getScalarShiftAmountTy(EVT LHSTy) const { return MVT::i32; }
 
-  virtual bool shouldSplitVectorElementType(EVT VT) const;
+  virtual bool shouldSplitVectorType(EVT VT) const override;
 
 private:
   const NVPTXSubtarget &nvptxSubtarget; // cache the subtarget here

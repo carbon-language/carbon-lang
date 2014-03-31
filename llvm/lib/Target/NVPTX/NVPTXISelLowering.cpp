@@ -331,8 +331,8 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-bool NVPTXTargetLowering::shouldSplitVectorElementType(EVT VT) const {
-  return VT == MVT::i1;
+bool NVPTXTargetLowering::shouldSplitVectorType(EVT VT) const {
+  return VT.getScalarType() == MVT::i1;
 }
 
 SDValue
