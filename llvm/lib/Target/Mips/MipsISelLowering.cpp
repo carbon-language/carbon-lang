@@ -115,7 +115,6 @@ SDValue MipsTargetLowering::getTargetNode(ConstantPoolSDNode *N, EVT Ty,
 const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   case MipsISD::JmpLink:           return "MipsISD::JmpLink";
-  case MipsISD::JmpLinkMM:         return "MipsISD::JmpLinkMM";
   case MipsISD::TailCall:          return "MipsISD::TailCall";
   case MipsISD::Hi:                return "MipsISD::Hi";
   case MipsISD::Lo:                return "MipsISD::Lo";
@@ -2546,9 +2545,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (IsTailCall)
     return DAG.getNode(MipsISD::TailCall, DL, MVT::Other, &Ops[0], Ops.size());
 
-  MipsISD::NodeType JmpLink = isMicroMips ? MipsISD::JmpLinkMM
-                                          : MipsISD::JmpLink;
-  Chain = DAG.getNode(JmpLink, DL, NodeTys, &Ops[0], Ops.size());
+  Chain = DAG.getNode(MipsISD::JmpLink, DL, NodeTys, &Ops[0], Ops.size());
   SDValue InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.

@@ -78,15 +78,10 @@ class MoveMM16<string opstr, RegisterOperand RO, bit isComm = 0,
   let isReMaterializable = 1;
 }
 
-// MicroMIPS Call
-def MicroMipsJmpLink : SDNode<"MipsISD::JmpLinkMM",SDT_MipsJmpLink,
-                              [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
-                              SDNPVariadic]>;
-
 // 16-bit Jump and Link (Call)
 class JumpLinkRegMM16<string opstr, RegisterOperand RO> :
   MicroMipsInst16<(outs), (ins RO:$rs), !strconcat(opstr, "\t$rs"),
-           [(MicroMipsJmpLink RO:$rs)], IIBranch, FrmR> {
+           [(MipsJmpLink RO:$rs)], IIBranch, FrmR> {
   let isCall = 1;
   let hasDelaySlot = 1;
   let Defs = [RA];

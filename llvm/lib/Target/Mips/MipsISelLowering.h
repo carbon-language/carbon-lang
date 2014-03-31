@@ -34,9 +34,6 @@ namespace llvm {
       // Jump and link (call)
       JmpLink,
 
-      // MicroMIPS Jump and link (call)
-      JmpLinkMM,
-
       // Tail call
       TailCall,
 

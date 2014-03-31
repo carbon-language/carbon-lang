@@ -1044,11 +1044,11 @@ def BLTZ    : MMRel, CBranchZero<"bltz", brtarget, setlt, GPR32Opnd>,
 def B       : UncondBranch<BEQ>;
 
 def JAL  : MMRel, JumpLink<"jal", calltarget>, FJ<3>;
-let Predicates = [NotInMicroMips] in {
+let Predicates = [NotInMicroMips, HasStdEnc] in {
 def JALR : JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM;
+def JALRPseudo : JumpLinkRegPseudo<GPR32Opnd, JALR, RA>;
 }
 def JALX  : JumpLink<"jalx", calltarget>, FJ<0x1D>;
-def JALRPseudo : JumpLinkRegPseudo<GPR32Opnd, JALR, RA>;
 def BGEZAL : MMRel, BGEZAL_FT<"bgezal", brtarget, GPR32Opnd>, BGEZAL_FM<0x11>;
 def BLTZAL : MMRel, BGEZAL_FT<"bltzal", brtarget, GPR32Opnd>, BGEZAL_FM<0x10>;
 def BAL_BR : BAL_BR_Pseudo<BGEZAL>;
