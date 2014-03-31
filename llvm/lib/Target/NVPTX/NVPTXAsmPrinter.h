@@ -276,11 +276,6 @@ private:
 
   LineReader *reader;
   LineReader *getReader(std::string);
-
-  // Get the symbol name of the given global symbol.
-  //
-  // Cleans up the name so it's a valid in PTX assembly.
-  std::string getSymbolName(const GlobalValue *GV) const;
 public:
   NVPTXAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
       : AsmPrinter(TM, Streamer),
