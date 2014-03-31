@@ -2563,7 +2563,8 @@ defm FCVTZU : SIMDTwoScalarSD<   1, 1, 0b11011, "fcvtzu">;
 defm FRECPE : SIMDTwoScalarSD<   0, 1, 0b11101, "frecpe">;
 defm FRECPX : SIMDTwoScalarSD<   0, 1, 0b11111, "frecpx">;
 defm FRSQRTE : SIMDTwoScalarSD<  1, 1, 0b11101, "frsqrte">;
-defm NEG    : SIMDTwoScalarD<    1, 0b01011, "neg">;
+defm NEG    : SIMDTwoScalarD<    1, 0b01011, "neg",
+                                 UnOpFrag<(sub immAllZerosV, node:$LHS)> >;
 defm SCVTF  : SIMDTwoScalarCVTSD<   0, 0, 0b11101, "scvtf", ARM64sitof>;
 defm SQABS  : SIMDTwoScalarBHSD< 0, 0b00111, "sqabs", int_arm64_neon_sqabs>;
 defm SQNEG  : SIMDTwoScalarBHSD< 1, 0b00111, "sqneg", int_arm64_neon_sqneg>;
