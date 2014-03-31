@@ -24,7 +24,7 @@ namespace llvm {
   class TargetInstrInfo;
   class X86TargetMachine;
 
-class X86RegisterInfo : public X86GenRegisterInfo {
+class X86RegisterInfo final : public X86GenRegisterInfo {
 public:
   X86TargetMachine &TM;
 

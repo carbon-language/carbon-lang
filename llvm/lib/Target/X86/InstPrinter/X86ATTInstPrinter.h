@@ -19,8 +19,8 @@
 namespace llvm {
 
 class MCOperand;
-  
-class X86ATTInstPrinter : public MCInstPrinter {
+
+class X86ATTInstPrinter final : public MCInstPrinter {
 public:
   X86ATTInstPrinter(const MCAsmInfo &MAI, const MCInstrInfo &MII,
                     const MCRegisterInfo &MRI)

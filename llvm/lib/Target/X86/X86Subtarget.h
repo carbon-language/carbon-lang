@@ -39,7 +39,7 @@ enum Style {
 };
 }
 
-class X86Subtarget : public X86GenSubtargetInfo {
+class X86Subtarget final : public X86GenSubtargetInfo {
 protected:
   enum X86SSEEnum {
     NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, AVX, AVX2, AVX512F

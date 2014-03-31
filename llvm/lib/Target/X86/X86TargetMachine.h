@@ -27,7 +27,7 @@ namespace llvm {
 
 class StringRef;
 
-class X86TargetMachine : public LLVMTargetMachine {
+class X86TargetMachine final : public LLVMTargetMachine {
   virtual void anchor();
   X86Subtarget       Subtarget;
   X86FrameLowering   FrameLowering;
