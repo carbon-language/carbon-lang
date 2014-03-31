@@ -212,7 +212,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool parseDataDirective(unsigned Size, SMLoc L);
   bool parseDirectiveGpWord();
-  bool parseDirectiveGpdWord();
+  bool parseDirectiveGpDWord();
 
   MCSymbolRefExpr::VariantKind getVariantKind(StringRef Symbol);
 
@@ -2716,9 +2716,9 @@ bool MipsAsmParser::parseDirectiveGpWord() {
   return false;
 }
 
-/// parseDirectiveGpdWord
+/// parseDirectiveGpDWord
 ///  ::= .gpdword local_sym
-bool MipsAsmParser::parseDirectiveGpdWord() {
+bool MipsAsmParser::parseDirectiveGpDWord() {
   const MCExpr *Value;
   // EmitGPRel64Value requires an expression, so we are using base class
   // method to evaluate the expression.
@@ -2820,7 +2820,7 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   }
 
   if (IDVal == ".gpdword") {
-    parseDirectiveGpdWord();
+    parseDirectiveGpDWord();
     return false;
   }
 
