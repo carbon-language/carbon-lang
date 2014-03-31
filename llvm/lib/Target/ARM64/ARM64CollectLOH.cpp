@@ -545,7 +545,7 @@ static bool isCandidateStore(const MachineInstr *Instr) {
 /// In ADRPMode, non-LOH candidates are "uses" with non-ADRP definitions.
 /// In non-ADRPMode, non-LOH candidates are "uses" with several definition,
 /// i.e., no simple chain.
-/// \param ADRPMode \see initReachingDef.
+/// \param ADRPMode -- \see initReachingDef.
 static void reachedUsesToDefs(InstrToInstrs &UseToReachingDefs,
                               const InstrToInstrs *ColorOpToReachedUses,
                               const MapRegToId &RegToId,
