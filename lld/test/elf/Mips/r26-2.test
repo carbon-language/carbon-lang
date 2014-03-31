@@ -1,7 +1,6 @@
 # Check reading addendum for R_MIPS_26 relocation.
 #
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s
-# RUN: lld -flavor gnu -target mipsel -o %t-exe %t-obj
+# RUN: lld -flavor gnu -target mipsel -o %t-exe %S/Inputs/r26-2.o
 # RUN: llvm-objdump -t -disassemble %t-exe | FileCheck %s
 
 # CHECK: Disassembly of section .text:
