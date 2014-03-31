@@ -163,12 +163,12 @@ def : Pat<(vinsert128_insert:$ins (v8i64  VR512:$src1), (v2i64 VR128X:$src2),
 def : Pat<(vinsert128_insert:$ins (v16i32 VR512:$src1), (v4i32 VR128X:$src2),
            (iPTR imm)), (VINSERTI32x4rr VR512:$src1, VR128X:$src2,
                         (INSERT_get_vinsert128_imm VR512:$ins))>;
-			
+
 def : Pat<(vinsert128_insert:$ins (v16f32 VR512:$src1), (loadv4f32 addr:$src2),
            (iPTR imm)), (VINSERTF32x4rm VR512:$src1, addr:$src2,
                         (INSERT_get_vinsert128_imm VR512:$ins))>;
 def : Pat<(vinsert128_insert:$ins (v16i32 VR512:$src1),
-	                (bc_v4i32 (loadv2i64 addr:$src2)),
+                  (bc_v4i32 (loadv2i64 addr:$src2)),
            (iPTR imm)), (VINSERTI32x4rm VR512:$src1, addr:$src2,
                         (INSERT_get_vinsert128_imm VR512:$ins))>;
 def : Pat<(vinsert128_insert:$ins (v8f64  VR512:$src1), (loadv2f64 addr:$src2),
