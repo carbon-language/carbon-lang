@@ -64,12 +64,10 @@ class DeadlockDetectorTLS {
       recursive_locks[n_recursive_locks++] = lock_id;
       return false;
     }
-    if (stk) {
-      CHECK_LT(n_all_locks_, ARRAY_SIZE(all_locks_with_contexts_));
-      // lock_id < BV::kSize, can cast to a smaller int.
-      u32 lock_id_short = static_cast<u32>(lock_id);
-      all_locks_with_contexts_[n_all_locks_++] = {lock_id_short, stk};
-    }
+    CHECK_LT(n_all_locks_, ARRAY_SIZE(all_locks_with_contexts_));
+    // lock_id < BV::kSize, can cast to a smaller int.
+    u32 lock_id_short = static_cast<u32>(lock_id);
+    all_locks_with_contexts_[n_all_locks_++] = {lock_id_short, stk};
     return true;
   }
 
@@ -108,6 +106,9 @@ class DeadlockDetectorTLS {
     CHECK_EQ(epoch_, current_epoch);
     return bv_;
   }
+
+  uptr getNumLocks() const { return n_all_locks_; }
+  uptr getLock(uptr idx) const { return all_locks_with_contexts_[idx].lock; }
 
  private:
   BV bv_;
@@ -222,7 +223,11 @@ class DeadlockDetector {
     if (cur_node && local_epoch == current_epoch_ &&
         local_epoch == nodeToEpoch(cur_node)) {
       uptr cur_idx = nodeToIndexUnchecked(cur_node);
-      return g_.hasAllEdges(dtls->getLocks(local_epoch), cur_idx);
+      for (uptr i = 0, n = dtls->getNumLocks(); i < n; i++) {
+        if (!g_.hasEdge(dtls->getLock(i), cur_idx))
+          return false;
+      }
+      return true;
     }
     return false;
   }
