@@ -326,7 +326,7 @@ let Properties = [IntrNoMem] in {
   def int_arm64_neon_sqxtun : AdvSIMD_1VectorArg_Narrow_Intrinsic;
 
   // Vector Absolute Value
-  def int_arm64_neon_abs : AdvSIMD_1VectorArg_Intrinsic;
+  def int_arm64_neon_abs : AdvSIMD_1IntArg_Intrinsic;
 
   // Vector Saturating Absolute Value
   def int_arm64_neon_sqabs : AdvSIMD_1IntArg_Intrinsic;

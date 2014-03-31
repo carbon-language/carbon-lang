@@ -2052,13 +2052,6 @@ defm CMLE   : SIMDCmpTwoVector<1, 0b01001, "cmle", ARM64cmlez>;
 defm CMLT   : SIMDCmpTwoVector<0, 0b01010, "cmlt", ARM64cmltz>;
 defm CNT    : SIMDTwoVectorB<0, 0b00, 0b00101, "cnt", ctpop>;
 defm FABS   : SIMDTwoVectorFP<0, 1, 0b01111, "fabs", fabs>;
-def : Pat<(v2f32 (int_arm64_neon_abs (v2f32 V64:$Rn))),
-          (FABSv2f32 V64:$Rn)>;
-def : Pat<(v4f32 (int_arm64_neon_abs (v4f32 V128:$Rn))),
-          (FABSv4f32 V128:$Rn)>;
-def : Pat<(v2f64 (int_arm64_neon_abs (v2f64 V128:$Rn))),
-          (FABSv2f64 V128:$Rn)>;
-
 
 defm FCMEQ  : SIMDFPCmpTwoVector<0, 1, 0b01101, "fcmeq", ARM64fcmeqz>;
 defm FCMGE  : SIMDFPCmpTwoVector<1, 1, 0b01100, "fcmge", ARM64fcmgez>;

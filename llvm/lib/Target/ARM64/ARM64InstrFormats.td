@@ -5102,6 +5102,9 @@ multiclass SIMDTwoScalarD<bit U, bits<5> opc, string asm,
                           SDPatternOperator OpNode = null_frag> {
   def v1i64       : BaseSIMDTwoScalar<U, 0b11, opc, FPR64, FPR64, asm,
     [(set (v1i64 FPR64:$Rd), (OpNode (v1i64 FPR64:$Rn)))]>;
+
+  def : Pat<(i64 (OpNode (i64 FPR64:$Rn))),
+            (!cast<Instruction>(NAME # "v1i64") FPR64:$Rn)>;
 }
 
 multiclass SIMDTwoScalarSD<bit U, bit S, bits<5> opc, string asm> {

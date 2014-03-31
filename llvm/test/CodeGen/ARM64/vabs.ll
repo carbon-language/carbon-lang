@@ -452,6 +452,13 @@ define <1 x i64> @abs_1d(<1 x i64> %A) nounwind {
   ret <1 x i64> %abs
 }
 
+define i64 @abs_1d_honestly(i64 %A) nounwind {
+; CHECK-LABEL: abs_1d_honestly:
+; CHECK: abs d0, d0
+  %abs = call i64 @llvm.arm64.neon.abs.i64(i64 %A)
+  ret i64 %abs
+}
+
 declare <8 x i8> @llvm.arm64.neon.abs.v8i8(<8 x i8>) nounwind readnone
 declare <16 x i8> @llvm.arm64.neon.abs.v16i8(<16 x i8>) nounwind readnone
 declare <4 x i16> @llvm.arm64.neon.abs.v4i16(<4 x i16>) nounwind readnone
@@ -459,6 +466,7 @@ declare <8 x i16> @llvm.arm64.neon.abs.v8i16(<8 x i16>) nounwind readnone
 declare <2 x i32> @llvm.arm64.neon.abs.v2i32(<2 x i32>) nounwind readnone
 declare <4 x i32> @llvm.arm64.neon.abs.v4i32(<4 x i32>) nounwind readnone
 declare <1 x i64> @llvm.arm64.neon.abs.v1i64(<1 x i64>) nounwind readnone
+declare i64 @llvm.arm64.neon.abs.i64(i64) nounwind readnone
 
 define <8 x i16> @sabal8h(<8 x i8>* %A, <8 x i8>* %B,  <8 x i16>* %C) nounwind {
 ;CHECK-LABEL: sabal8h:
