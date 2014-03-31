@@ -660,6 +660,7 @@ namespace {
     void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) override {
       // FIXME: should we handle aliases?
       markDefined(*Symbol);
+      AddValueSymbols(Value);
     }
     bool EmitSymbolAttribute(MCSymbol *Symbol,
                              MCSymbolAttr Attribute) override {
