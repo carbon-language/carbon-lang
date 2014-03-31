@@ -2525,6 +2525,15 @@ defm SQDMULL  : SIMDThreeScalarMixedHS<0, 0b11010, "sqdmull",
 defm SQDMLAL  : SIMDThreeScalarMixedTiedHS<0, 0b10010, "sqdmlal">;
 defm SQDMLSL  : SIMDThreeScalarMixedTiedHS<0, 0b10110, "sqdmlsl">;
 
+def : Pat<(i64 (int_arm64_neon_sqadd (i64 FPR64:$Rd),
+                   (i64 (int_arm64_neon_sqdmulls_scalar (i32 FPR32:$Rn),
+                                                        (i32 FPR32:$Rm))))),
+          (SQDMLALi32 FPR64:$Rd, FPR32:$Rn, FPR32:$Rm)>;
+def : Pat<(i64 (int_arm64_neon_sqsub (i64 FPR64:$Rd),
+                   (i64 (int_arm64_neon_sqdmulls_scalar (i32 FPR32:$Rn),
+                                                        (i32 FPR32:$Rm))))),
+          (SQDMLSLi32 FPR64:$Rd, FPR32:$Rn, FPR32:$Rm)>;
+
 //===----------------------------------------------------------------------===//
 // Advanced SIMD two scalar instructions.
 //===----------------------------------------------------------------------===//

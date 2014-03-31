@@ -1967,3 +1967,19 @@ define <1 x double> @test_fdiv_v1f64(<1 x double> %L, <1 x double> %R) nounwind 
   %prod = fdiv <1 x double> %L, %R
   ret <1 x double> %prod
 }
+
+define i64 @sqdmlal_d(i32 %A, i32 %B, i64 %C) nounwind {
+;CHECK-LABEL: sqdmlal_d:
+;CHECK: sqdmlal
+  %tmp4 = call i64 @llvm.arm64.neon.sqdmulls.scalar(i32 %A, i32 %B)
+  %tmp5 = call i64 @llvm.arm64.neon.sqadd.i64(i64 %C, i64 %tmp4)
+  ret i64 %tmp5
+}
+
+define i64 @sqdmlsl_d(i32 %A, i32 %B, i64 %C) nounwind {
+;CHECK-LABEL: sqdmlsl_d:
+;CHECK: sqdmlsl
+  %tmp4 = call i64 @llvm.arm64.neon.sqdmulls.scalar(i32 %A, i32 %B)
+  %tmp5 = call i64 @llvm.arm64.neon.sqsub.i64(i64 %C, i64 %tmp4)
+  ret i64 %tmp5
+}
