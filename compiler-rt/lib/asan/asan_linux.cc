@@ -76,6 +76,7 @@ void *AsanDoesNotSupportStaticLinkage() {
   return &_DYNAMIC;  // defined in link.h
 }
 
+#if !SANITIZER_ANDROID
 static int FindFirstDSOCallback(struct dl_phdr_info *info, size_t size,
                                 void *data) {
   // Continue until the first dynamic library is found
@@ -85,6 +86,7 @@ static int FindFirstDSOCallback(struct dl_phdr_info *info, size_t size,
   *(const char **)data = info->dlpi_name;
   return 1;
 }
+#endif
 
 static bool IsDynamicRTName(const char *libname) {
   return internal_strstr(libname, "libclang_rt.asan") ||
