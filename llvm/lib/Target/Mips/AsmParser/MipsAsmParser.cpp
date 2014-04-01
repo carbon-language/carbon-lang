@@ -1781,22 +1781,19 @@ MipsAsmParser::MatchAnyRegisterNameWithoutDollar(
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::ParseAnyRegisterWithoutDollar(
     SmallVectorImpl<MCParsedAsmOperand *> &Operands, SMLoc S) {
-  auto Token = Parser.getTok();
+  auto Token = Parser.getLexer().peekTok(false);
 
   if (Token.is(AsmToken::Identifier)) {
     DEBUG(dbgs() << ".. identifier\n");
     StringRef Identifier = Token.getIdentifier();
     OperandMatchResultTy ResTy =
         MatchAnyRegisterNameWithoutDollar(Operands, Identifier, S);
-    if (ResTy == MatchOperand_Success)
-      Parser.Lex();
     return ResTy;
   } else if (Token.is(AsmToken::Integer)) {
     DEBUG(dbgs() << ".. integer\n");
     Operands.push_back(MipsOperand::CreateNumericReg(
         Token.getIntVal(), getContext().getRegisterInfo(), S, Token.getLoc(),
         *this));
-    Parser.Lex();
     return MatchOperand_Success;
   }
 
@@ -1823,12 +1820,12 @@ MipsAsmParser::OperandMatchResultTy MipsAsmParser::ParseAnyRegister(
     return MatchOperand_NoMatch;
   }
   DEBUG(dbgs() << ".. $\n");
-  Parser.Lex();
-  Token = Parser.getTok();
 
   OperandMatchResultTy ResTy = ParseAnyRegisterWithoutDollar(Operands, S);
-  if (ResTy == MatchOperand_NoMatch)
-    return MatchOperand_ParseFail; // We ate the $ so NoMatch isn't valid
+  if (ResTy == MatchOperand_Success) {
+    Parser.Lex(); // $
+    Parser.Lex(); // identifier
+  }
   return ResTy;
 }
 
@@ -1866,18 +1863,16 @@ MipsAsmParser::OperandMatchResultTy MipsAsmParser::ParseJumpTarget(
   if (ResTy != MatchOperand_NoMatch)
     return ResTy;
 
+  // Registers are a valid target and have priority over symbols.
+  ResTy = ParseAnyRegister(Operands);
+  if (ResTy != MatchOperand_NoMatch)
+    return ResTy;
+
   // Consume the $ if there is one. We'll add it to the symbol below.
   bool hasConsumedDollar = false;
   if (getLexer().is(AsmToken::Dollar)) {
     Parser.Lex();
     hasConsumedDollar = true;
-
-    // We have an unfortunate conflict between '$sym' and '$reg' so give
-    // registers a chance before we try symbols.
-    // The conflict is between 'bc1t $offset', and 'bc1t $fcc, $offset'.
-    OperandMatchResultTy ResTy = ParseAnyRegisterWithoutDollar(Operands, S);
-    if (ResTy != MatchOperand_NoMatch)
-      return ResTy;
   }
 
   StringRef Identifier;
