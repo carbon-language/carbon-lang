@@ -184,7 +184,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = DwarfStrSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = DwarfLineSectionSym = 0;
-  DwarfAddrSectionSym = DwarfDebugLocDWOSectionSym = 0;
+  DwarfAddrSectionSym = 0;
   DwarfAbbrevDWOSectionSym = DwarfStrDWOSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
   CurFn = 0;
