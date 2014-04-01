@@ -339,11 +339,7 @@ ProcessPOSIX::DoDestroy()
     {
         assert(m_monitor);
         m_exit_now = true;
-#ifdef __linux__
-        if ((m_monitor == NULL || kill(m_monitor->GetPID(), SIGKILL)) && error.Success())
-#else
         if (!m_monitor->Kill())
-#endif
         {
             error.SetErrorToErrno();
             return error;

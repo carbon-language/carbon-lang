@@ -172,11 +172,9 @@ public:
     bool
     SingleStep(lldb::tid_t tid, uint32_t signo);
 
-    /// Sends the inferior process a PTRACE_KILL signal.  The inferior will
-    /// still exists and can be interrogated.  Once resumed it will exit as
-    /// though it received a SIGKILL.
+    /// Terminate the traced process.
     bool
-    BringProcessIntoLimbo();
+    Kill();
 
     lldb_private::Error
     Detach(lldb::tid_t tid);

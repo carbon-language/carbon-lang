@@ -904,31 +904,6 @@ EventMessageOperation::Execute(ProcessMonitor *monitor)
 }
 
 //------------------------------------------------------------------------------
-/// @class KillOperation
-/// @brief Implements ProcessMonitor::BringProcessIntoLimbo.
-class KillOperation : public Operation
-{
-public:
-    KillOperation(bool &result) : m_result(result) { }
-
-    void Execute(ProcessMonitor *monitor);
-
-private:
-    bool &m_result;
-};
-
-void
-KillOperation::Execute(ProcessMonitor *monitor)
-{
-    lldb::pid_t pid = monitor->GetPID();
-
-    if (PTRACE(PTRACE_KILL, pid, NULL, NULL, 0))
-        m_result = false;
-    else
-        m_result = true;
-}
-
-//------------------------------------------------------------------------------
 /// @class DetachOperation
 /// @brief Implements ProcessMonitor::Detach.
 class DetachOperation : public Operation
@@ -2229,12 +2204,9 @@ ProcessMonitor::SingleStep(lldb::tid_t tid, uint32_t signo)
 }
 
 bool
-ProcessMonitor::BringProcessIntoLimbo()
+ProcessMonitor::Kill()
 {
-    bool result;
-    KillOperation op(result);
-    DoOperation(&op);
-    return result;
+    return kill(GetPID(), SIGKILL) == 0;
 }
 
 bool
