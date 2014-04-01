@@ -4,7 +4,7 @@
 
 namespace dr1 { // dr1: no
   namespace X { extern "C" void dr1_f(int a = 1); }
-  namespace Y { extern "C" void dr1_f(int a = 2); }
+  namespace Y { extern "C" void dr1_f(int a = 1); }
   using X::dr1_f; using Y::dr1_f;
   void g() {
     dr1_f(0);
@@ -25,7 +25,23 @@ namespace dr1 { // dr1: no
   }
   void X::z(int = 1) {} // expected-note {{previous}}
   namespace X {
-    void z(int = 2); // expected-error {{redefinition of default argument}}
+    void z(int = 1); // expected-error {{redefinition of default argument}}
+  }
+
+  void i(int = 1);
+  void j() {
+    void i(int = 1);
+    using dr1::i;
+    i(0);
+    // FIXME: This should be rejected, due to the ambiguous default argument.
+    i();
+  }
+  void k() {
+    using dr1::i;
+    void i(int = 1);
+    i(0);
+    // FIXME: This should be rejected, due to the ambiguous default argument.
+    i();
   }
 }
 
