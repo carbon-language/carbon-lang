@@ -30,7 +30,7 @@ extern bool isCOFFLibraryFileExtension(StringRef path);
 class PECOFFFileNode : public FileNode {
 public:
   PECOFFFileNode(PECOFFLinkingContext &ctx, StringRef path)
-      : FileNode(path), _ctx(ctx) {}
+      : FileNode(path), _ctx(ctx), _parsed(false) {}
 
   ErrorOr<StringRef> getPath(const LinkingContext &ctx) const override;
 
@@ -47,6 +47,9 @@ public:
 
 protected:
   const PECOFFLinkingContext &_ctx;
+
+private:
+  bool _parsed;
 };
 
 /// \brief Represents a PECOFF Library File
