@@ -23,6 +23,7 @@ for available options.
 import atexit
 import commands
 import os
+import errno
 import platform
 import progress
 import signal
