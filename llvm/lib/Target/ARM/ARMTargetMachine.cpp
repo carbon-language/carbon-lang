@@ -30,10 +30,10 @@ DisableA15SDOptimization("disable-a15-sd-optimization", cl::Hidden,
 
 extern "C" void LLVMInitializeARMTarget() {
   // Register the target.
-  RegisterTargetMachine<ARMleTargetMachine> X(TheARMleTarget);
-  RegisterTargetMachine<ARMbeTargetMachine> Y(TheARMbeTarget);
-  RegisterTargetMachine<ThumbleTargetMachine> A(TheThumbleTarget);
-  RegisterTargetMachine<ThumbbeTargetMachine> B(TheThumbbeTarget);
+  RegisterTargetMachine<ARMLETargetMachine> X(TheARMLETarget);
+  RegisterTargetMachine<ARMBETargetMachine> Y(TheARMBETarget);
+  RegisterTargetMachine<ThumbLETargetMachine> A(TheThumbLETarget);
+  RegisterTargetMachine<ThumbBETargetMachine> B(TheThumbBETarget);
 }
 
 
@@ -141,19 +141,19 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
                        "support ARM mode execution!");
 }
 
-void ARMleTargetMachine::anchor() { }
+void ARMLETargetMachine::anchor() { }
 
-ARMleTargetMachine::
-ARMleTargetMachine(const Target &T, StringRef TT,
+ARMLETargetMachine::
+ARMLETargetMachine(const Target &T, StringRef TT,
                        StringRef CPU, StringRef FS, const TargetOptions &Options,
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL)
   : ARMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
 
-void ARMbeTargetMachine::anchor() { }
+void ARMBETargetMachine::anchor() { }
 
-ARMbeTargetMachine::
-ARMbeTargetMachine(const Target &T, StringRef TT,
+ARMBETargetMachine::
+ARMBETargetMachine(const Target &T, StringRef TT,
                        StringRef CPU, StringRef FS, const TargetOptions &Options,
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL)
@@ -180,19 +180,19 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
   initAsmInfo();
 }
 
-void ThumbleTargetMachine::anchor() { }
+void ThumbLETargetMachine::anchor() { }
 
-ThumbleTargetMachine::
-ThumbleTargetMachine(const Target &T, StringRef TT,
+ThumbLETargetMachine::
+ThumbLETargetMachine(const Target &T, StringRef TT,
                        StringRef CPU, StringRef FS, const TargetOptions &Options,
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL)
   : ThumbTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
 
-void ThumbbeTargetMachine::anchor() { }
+void ThumbBETargetMachine::anchor() { }
 
-ThumbbeTargetMachine::
-ThumbbeTargetMachine(const Target &T, StringRef TT,
+ThumbBETargetMachine::
+ThumbBETargetMachine(const Target &T, StringRef TT,
                        StringRef CPU, StringRef FS, const TargetOptions &Options,
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL)

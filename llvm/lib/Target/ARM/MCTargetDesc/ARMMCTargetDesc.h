@@ -33,8 +33,8 @@ class StringRef;
 class Target;
 class raw_ostream;
 
-extern Target TheARMleTarget, TheThumbleTarget;
-extern Target TheARMbeTarget, TheThumbbeTarget;
+extern Target TheARMLETarget, TheThumbLETarget;
+extern Target TheARMBETarget, TheThumbBETarget;
 
 namespace ARM_MC {
   std::string ParseARMTriple(StringRef TT, StringRef CPU);
@@ -52,12 +52,12 @@ MCStreamer *createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                 MCInstPrinter *InstPrint, MCCodeEmitter *CE,
                                 MCAsmBackend *TAB, bool ShowInst);
 
-MCCodeEmitter *createARMleMCCodeEmitter(const MCInstrInfo &MCII,
+MCCodeEmitter *createARMLEMCCodeEmitter(const MCInstrInfo &MCII,
                                         const MCRegisterInfo &MRI,
                                         const MCSubtargetInfo &STI,
                                         MCContext &Ctx);
 
-MCCodeEmitter *createARMbeMCCodeEmitter(const MCInstrInfo &MCII,
+MCCodeEmitter *createARMBEMCCodeEmitter(const MCInstrInfo &MCII,
                                         const MCRegisterInfo &MRI,
                                         const MCSubtargetInfo &STI,
                                         MCContext &Ctx);
@@ -66,16 +66,16 @@ MCAsmBackend *createARMAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                   StringRef TT, StringRef CPU,
                                   bool IsLittleEndian);
 
-MCAsmBackend *createARMleAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+MCAsmBackend *createARMLEAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                   StringRef TT, StringRef CPU);
 
-MCAsmBackend *createARMbeAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+MCAsmBackend *createARMBEAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                   StringRef TT, StringRef CPU);
 
-MCAsmBackend *createThumbleAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+MCAsmBackend *createThumbLEAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                       StringRef TT, StringRef CPU);
 
-MCAsmBackend *createThumbbeAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+MCAsmBackend *createThumbBEAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                       StringRef TT, StringRef CPU);
 
 /// createARMELFObjectWriter - Construct an ELF Mach-O object writer.

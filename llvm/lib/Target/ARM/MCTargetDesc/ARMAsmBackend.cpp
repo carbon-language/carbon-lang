@@ -803,25 +803,25 @@ MCAsmBackend *llvm::createARMAsmBackend(const Target &T,
   return new ELFARMAsmBackend(T, TT, OSABI, isLittle);
 }
 
-MCAsmBackend *llvm::createARMleAsmBackend(const Target &T,
+MCAsmBackend *llvm::createARMLEAsmBackend(const Target &T,
                                           const MCRegisterInfo &MRI,
                                           StringRef TT, StringRef CPU) {
   return createARMAsmBackend(T, MRI, TT, CPU, true);
 }
 
-MCAsmBackend *llvm::createARMbeAsmBackend(const Target &T,
+MCAsmBackend *llvm::createARMBEAsmBackend(const Target &T,
                                           const MCRegisterInfo &MRI,
                                           StringRef TT, StringRef CPU) {
   return createARMAsmBackend(T, MRI, TT, CPU, false);
 }
 
-MCAsmBackend *llvm::createThumbleAsmBackend(const Target &T,
+MCAsmBackend *llvm::createThumbLEAsmBackend(const Target &T,
                                           const MCRegisterInfo &MRI,
                                           StringRef TT, StringRef CPU) {
   return createARMAsmBackend(T, MRI, TT, CPU, true);
 }
 
-MCAsmBackend *llvm::createThumbbeAsmBackend(const Target &T,
+MCAsmBackend *llvm::createThumbBEAsmBackend(const Target &T,
                                           const MCRegisterInfo &MRI,
                                           StringRef TT, StringRef CPU) {
   return createARMAsmBackend(T, MRI, TT, CPU, false);

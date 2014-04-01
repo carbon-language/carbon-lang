@@ -99,23 +99,23 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   const DataLayout *getDataLayout() const override { return &DL; }
 };
 
-/// ARMleTargetMachine - ARM little endian target machine.
+/// ARMLETargetMachine - ARM little endian target machine.
 ///
-class ARMleTargetMachine : public ARMTargetMachine {
+class ARMLETargetMachine : public ARMTargetMachine {
   virtual void anchor();
 public:
-  ARMleTargetMachine(const Target &T, StringRef TT,
+  ARMLETargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
 };
 
-/// ARMbeTargetMachine - ARM big endian target machine.
+/// ARMBETargetMachine - ARM big endian target machine.
 ///
-class ARMbeTargetMachine : public ARMTargetMachine {
+class ARMBETargetMachine : public ARMTargetMachine {
   virtual void anchor();
 public:
-  ARMbeTargetMachine(const Target &T, StringRef TT,
+  ARMBETargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
@@ -166,23 +166,23 @@ public:
   const DataLayout *getDataLayout() const override { return &DL; }
 };
 
-/// ThumbleTargetMachine - Thumb little endian target machine.
+/// ThumbLETargetMachine - Thumb little endian target machine.
 ///
-class ThumbleTargetMachine : public ThumbTargetMachine {
+class ThumbLETargetMachine : public ThumbTargetMachine {
   virtual void anchor();
 public:
-  ThumbleTargetMachine(const Target &T, StringRef TT,
+  ThumbLETargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
 };
 
-/// ThumbbeTargetMachine - Thumb big endian target machine.
+/// ThumbBETargetMachine - Thumb big endian target machine.
 ///
-class ThumbbeTargetMachine : public ThumbTargetMachine {
+class ThumbBETargetMachine : public ThumbTargetMachine {
   virtual void anchor();
 public:
-  ThumbbeTargetMachine(const Target &T, StringRef TT,
+  ThumbBETargetMachine(const Target &T, StringRef TT,
                        StringRef CPU, StringRef FS, const TargetOptions &Options,
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);

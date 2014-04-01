@@ -416,14 +416,14 @@ public:
 
 } // end anonymous namespace
 
-MCCodeEmitter *llvm::createARMleMCCodeEmitter(const MCInstrInfo &MCII,
+MCCodeEmitter *llvm::createARMLEMCCodeEmitter(const MCInstrInfo &MCII,
                                               const MCRegisterInfo &MRI,
                                               const MCSubtargetInfo &STI,
                                               MCContext &Ctx) {
   return new ARMMCCodeEmitter(MCII, Ctx, true);
 }
 
-MCCodeEmitter *llvm::createARMbeMCCodeEmitter(const MCInstrInfo &MCII,
+MCCodeEmitter *llvm::createARMBEMCCodeEmitter(const MCInstrInfo &MCII,
                                               const MCRegisterInfo &MRI,
                                               const MCSubtargetInfo &STI,
                                               MCContext &Ctx) {
