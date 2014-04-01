@@ -73,6 +73,11 @@ public:
   void dump();
 #endif
 };
+
+inline bool operator!=(const MachineLocation &LHS, const MachineLocation &RHS) {
+  return !(LHS == RHS);
+}
+
 } // End llvm namespace
 
 #endif
