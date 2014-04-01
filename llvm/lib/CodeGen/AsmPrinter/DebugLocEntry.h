@@ -42,6 +42,24 @@ class DebugLocEntry {
   // The compile unit to which this location entry is referenced by.
   const DwarfCompileUnit *Unit;
 
+  bool hasSameValueOrLocation(const DebugLocEntry &Next) {
+    if (EntryKind != Next.EntryKind)
+      return false;
+
+    switch (EntryKind) {
+    case E_Location:
+      if (Loc != Next.Loc) return false;
+    case E_Integer:
+      if (Constants.Int != Next.Constants.Int) return false;
+    case E_ConstantFP:
+      if (Constants.CFP != Next.Constants.CFP) return false;
+    case E_ConstantInt:
+      if (Constants.CIP != Next.Constants.CIP) return false;
+    }
+
+    return true;
+  }
+
 public:
   DebugLocEntry() : Begin(0), End(0), Variable(0), Unit(0) {
     Constants.Int = 0;
@@ -75,24 +93,7 @@ public:
   /// labels are referenced is used to find debug_loc offset for a given DIE.
   bool isEmpty() const { return Begin == 0 && End == 0; }
   bool Merge(const DebugLocEntry &Next) {
-    if (End != Next.Begin)
-      return false;
-
-    if (EntryKind != Next.EntryKind)
-      return false;
-
-    switch (EntryKind) {
-    case E_Location:
-      if (Loc != Next.Loc) return false;
-    case E_Integer:
-      if (Constants.Int != Next.Constants.Int) return false;
-    case E_ConstantFP:
-      if (Constants.CFP != Next.Constants.CFP) return false;
-    case E_ConstantInt:
-      if (Constants.CIP != Next.Constants.CIP) return false;
-    }
-
-    return true;
+    return End == Next.Begin && hasSameValueOrLocation(Next);
   }
   bool isLocation() const { return EntryKind == E_Location; }
   bool isInt() const { return EntryKind == E_Integer; }
