@@ -1222,7 +1222,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // constructed by replacing an extension of the first input file
   // with ".exe".
   if (ctx.outputPath().empty()) {
-    StringRef path = *dyn_cast<FileNode>(&*files[0])->getPath(ctx);
+    StringRef path = *cast<FileNode>(&*files[0])->getPath(ctx);
     ctx.setOutputPath(replaceExtension(ctx, path, ".exe"));
   }
 
