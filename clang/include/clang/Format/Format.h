@@ -302,6 +302,18 @@ struct FormatStyle {
   /// which should not be split into lines or otherwise changed.
   std::string CommentPragmas;
 
+  /// \brief A vector of macros that should be interpreted as foreach loops
+  /// instead of as function calls.
+  ///
+  /// These are expected to be macros of the form:
+  /// \code
+  /// FOREACH(<variable-declaration>, ...)
+  ///   <loop-body>
+  /// \endcode
+  ///
+  /// For example: BOOST_FOREACH.
+  std::vector<std::string> ForEachMacros;
+
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            ConstructorInitializerIndentWidth ==
@@ -358,7 +370,8 @@ struct FormatStyle {
            SpaceBeforeParens == R.SpaceBeforeParens &&
            SpaceBeforeAssignmentOperators == R.SpaceBeforeAssignmentOperators &&
            ContinuationIndentWidth == R.ContinuationIndentWidth &&
-           CommentPragmas == R.CommentPragmas;
+           CommentPragmas == R.CommentPragmas &&
+           ForEachMacros == R.ForEachMacros;
   }
 };
 

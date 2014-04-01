@@ -120,6 +120,10 @@ private:
       Contexts.back().IsExpression = false;
     } else if (Left->Previous && Left->Previous->is(tok::kw___attribute)) {
       Left->Type = TT_AttributeParen;
+    } else if (Left->Previous && Left->Previous->IsForEachMacro) {
+      // The first argument to a foreach macro is a declaration.
+      Contexts.back().IsForEachMacro = true;
+      Contexts.back().IsExpression = false;
     }
 
     if (StartsObjCMethodExpr) {
@@ -464,6 +468,8 @@ private:
         Contexts.back().FirstStartOfName->PartOfMultiVariableDeclStmt = true;
       if (Contexts.back().InCtorInitializer)
         Tok->Type = TT_CtorInitializerComma;
+      if (Contexts.back().IsForEachMacro)
+        Contexts.back().IsExpression = true;
       break;
     default:
       break;
@@ -625,7 +631,7 @@ private:
           ColonIsObjCMethodExpr(false), FirstObjCSelectorName(NULL),
           FirstStartOfName(NULL), IsExpression(IsExpression),
           CanBeExpression(true), InTemplateArgument(false),
-          InCtorInitializer(false), CaretFound(false) {}
+          InCtorInitializer(false), CaretFound(false), IsForEachMacro(false) {}
 
     tok::TokenKind ContextKind;
     unsigned BindingStrength;
@@ -641,6 +647,7 @@ private:
     bool InTemplateArgument;
     bool InCtorInitializer;
     bool CaretFound;
+    bool IsForEachMacro;
   };
 
   /// \brief Puts a new \c Context onto the stack \c Contexts for the lifetime
@@ -1408,8 +1415,9 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
            Left.isOneOf(tok::kw_return, tok::kw_new, tok::kw_delete,
                         tok::semi) ||
            (Style.SpaceBeforeParens != FormatStyle::SBPO_Never &&
-            Left.isOneOf(tok::kw_if, tok::kw_for, tok::kw_while, tok::kw_switch,
-                         tok::kw_catch)) ||
+            (Left.isOneOf(tok::kw_if, tok::kw_for, tok::kw_while,
+                          tok::kw_switch, tok::kw_catch) ||
+             Left.IsForEachMacro)) ||
            (Style.SpaceBeforeParens == FormatStyle::SBPO_Always &&
             Left.isOneOf(tok::identifier, tok::kw___attribute) &&
             Line.Type != LT_PreprocessorDirective);

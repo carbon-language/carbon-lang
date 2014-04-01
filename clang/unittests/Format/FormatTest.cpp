@@ -465,6 +465,15 @@ TEST_F(FormatTest, RangeBasedForLoops) {
                "     aaaaaaaaaaaa.aaaaaaaaaaaa().aaaaaaaaa().a()) {\n}");
 }
 
+TEST_F(FormatTest, ForEachLoops) {
+  verifyFormat("void f() {\n"
+               "  foreach (Item *item, itemlist) {}\n"
+               "  Q_FOREACH (Item *item, itemlist) {}\n"
+               "  BOOST_FOREACH (Item *item, itemlist) {}\n"
+               "  UNKNOWN_FORACH(Item * item, itemlist) {}\n"
+               "}");
+}
+
 TEST_F(FormatTest, FormatsWhileLoop) {
   verifyFormat("while (true) {\n}");
   verifyFormat("while (true)\n"
@@ -7607,6 +7616,13 @@ TEST_F(FormatTest, ParsesConfiguration) {
               FormatStyle::NI_Inner);
   CHECK_PARSE("NamespaceIndentation: All", NamespaceIndentation,
               FormatStyle::NI_All);
+
+  Style.ForEachMacros.clear();
+  std::vector<std::string> BoostForeach = { "BOOST_FOREACH" };
+  CHECK_PARSE("ForEachMacros: [BOOST_FOREACH]", ForEachMacros, BoostForeach);
+  std::vector<std::string> BoostAndQForeach = { "BOOST_FOREACH", "Q_FOREACH" };
+  CHECK_PARSE("ForEachMacros: [BOOST_FOREACH, Q_FOREACH]", ForEachMacros,
+              BoostAndQForeach);
 }
 
 TEST_F(FormatTest, ParsesConfigurationWithLanguages) {

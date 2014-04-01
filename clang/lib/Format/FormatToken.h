@@ -104,7 +104,7 @@ struct FormatToken {
         SplitPenalty(0), LongestObjCSelectorName(0), FakeRParens(0),
         StartsBinaryExpression(false), EndsBinaryExpression(false),
         LastInChainOfCalls(false), PartOfMultiVariableDeclStmt(false),
-        MatchingParen(NULL), Previous(NULL), Next(NULL),
+        IsForEachMacro(false), MatchingParen(NULL), Previous(NULL), Next(NULL),
         Decision(FD_Unformatted), Finalized(false) {}
 
   /// \brief The \c Token.
@@ -246,6 +246,9 @@ struct FormatToken {
   ///
   /// Only set if \c Type == \c TT_StartOfName.
   bool PartOfMultiVariableDeclStmt;
+
+  /// \brief Is this a foreach macro?
+  bool IsForEachMacro;
 
   bool is(tok::TokenKind Kind) const { return Tok.is(Kind); }
 

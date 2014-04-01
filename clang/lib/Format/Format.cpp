@@ -33,6 +33,8 @@
 
 using clang::format::FormatStyle;
 
+LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(std::string)
+
 namespace llvm {
 namespace yaml {
 template <> struct ScalarEnumerationTraits<FormatStyle::LanguageKind> {
@@ -200,6 +202,7 @@ template <> struct MappingTraits<FormatStyle> {
                    Style.SpaceBeforeAssignmentOperators);
     IO.mapOptional("ContinuationIndentWidth", Style.ContinuationIndentWidth);
     IO.mapOptional("CommentPragmas", Style.CommentPragmas);
+    IO.mapOptional("ForEachMacros", Style.ForEachMacros); 
 
     // For backward compatibility.
     if (!IO.outputting()) {
@@ -259,11 +262,16 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.BreakBeforeBraces = FormatStyle::BS_Attach;
   LLVMStyle.BreakConstructorInitializersBeforeComma = false;
   LLVMStyle.ColumnLimit = 80;
+  LLVMStyle.CommentPragmas = "^ IWYU pragma:";
   LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
   LLVMStyle.ConstructorInitializerIndentWidth = 4;
+  LLVMStyle.ContinuationIndentWidth = 4;
   LLVMStyle.Cpp11BracedListStyle = true;
   LLVMStyle.DerivePointerBinding = false;
   LLVMStyle.ExperimentalAutoDetectBinPacking = false;
+  LLVMStyle.ForEachMacros.push_back("foreach");
+  LLVMStyle.ForEachMacros.push_back("Q_FOREACH");
+  LLVMStyle.ForEachMacros.push_back("BOOST_FOREACH");
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.IndentFunctionDeclarationAfterType = false;
   LLVMStyle.IndentWidth = 2;
@@ -283,9 +291,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.SpacesInCStyleCastParentheses = false;
   LLVMStyle.SpaceBeforeParens = FormatStyle::SBPO_ControlStatements;
   LLVMStyle.SpaceBeforeAssignmentOperators = true;
-  LLVMStyle.ContinuationIndentWidth = 4;
   LLVMStyle.SpacesInAngles = false;
-  LLVMStyle.CommentPragmas = "^ IWYU pragma:";
 
   LLVMStyle.PenaltyBreakComment = 300;
   LLVMStyle.PenaltyBreakFirstLessLess = 120;
@@ -1131,6 +1137,10 @@ public:
         TrailingWhitespace(0), Lex(Lex), SourceMgr(SourceMgr), Style(Style),
         IdentTable(getFormattingLangOpts()), Encoding(Encoding) {
     Lex.SetKeepWhitespaceMode(true);
+
+    for (const std::string& ForEachMacro : Style.ForEachMacros)
+      ForEachMacros.push_back(&IdentTable.get(ForEachMacro));
+    std::sort(ForEachMacros.begin(), ForEachMacros.end());
   }
 
   ArrayRef<FormatToken *> lex() {
@@ -1351,6 +1361,10 @@ private:
       Column = FormatTok->LastLineColumnWidth;
     }
 
+    FormatTok->IsForEachMacro =
+        std::binary_search(ForEachMacros.begin(), ForEachMacros.end(),
+                           FormatTok->Tok.getIdentifierInfo());
+
     return FormatTok;
   }
 
@@ -1366,6 +1380,7 @@ private:
   encoding::Encoding Encoding;
   llvm::SpecificBumpPtrAllocator<FormatToken> Allocator;
   SmallVector<FormatToken *, 16> Tokens;
+  SmallVector<IdentifierInfo*, 8> ForEachMacros;
 
   void readRawToken(FormatToken &Tok) {
     Lex.LexFromRawLexer(Tok.Tok);

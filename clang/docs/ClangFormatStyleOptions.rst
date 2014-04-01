@@ -212,6 +212,14 @@ the configuration (without a prefix: ``Auto``).
   NOTE: This is an experimental flag, that might go away or be renamed. Do
   not use this in config files, etc. Use at your own risk.
 
+**ForEachMacros** (``std::vector<std::string>``)
+  A list of macros that should be interpreted as foreach loops instead of as
+  function calls.
+
+  For example, ``ForEachMacros: [BOOST_FOREACH, Q_FOREACH]`` tells
+  clang-format to treat ``BOOST_FOREACH`` and ``Q_FOREACH`` as loop control
+  statements.
+
 **IndentCaseLabels** (``bool``)
   Indent case labels one level from the switch statement.
 
