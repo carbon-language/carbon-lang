@@ -44,12 +44,13 @@ bool InputGraph::dump(raw_ostream &diagnostics) {
 
 /// \brief Insert element at position
 void InputGraph::insertElementAt(std::unique_ptr<InputElement> element,
-                                 Position position, size_t pos) {
-  if (position == InputGraph::Position::BEGIN)
-    pos = 0;
-  else if (position == InputGraph::Position::END)
-    pos = _inputArgs.size();
-  _inputArgs.insert(_inputArgs.begin() + pos, std::move(element));
+                                 Position position) {
+  if (position == InputGraph::Position::BEGIN) {
+    _inputArgs.insert(_inputArgs.begin(), std::move(element));
+    return;
+  }
+  assert(position == InputGraph::Position::END);
+  _inputArgs.push_back(std::move(element));
 }
 
 /// \brief Helper functions for the resolver
