@@ -8,8 +8,8 @@ namespace Cxx11BraceInit {
     ~Foo() {}
   };
 
-  /* FIXME: Don't crash here.
   void testInitializerList() {
     for (Foo foo : {Foo(), Foo()}) {}
-  } */
+  }
 }
+

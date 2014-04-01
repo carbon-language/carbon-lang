@@ -91,12 +91,6 @@ void ExprEngine::performTrivialCopy(NodeBuilder &Bldr, ExplodedNode *Pred,
 /// If the type is not an array type at all, the original value is returned.
 static SVal makeZeroElementRegion(ProgramStateRef State, SVal LValue,
                                   QualType &Ty) {
-  // FIXME: This check is just a temporary workaround, because
-  // ProcessTemporaryDtor sends us NULL regions. It will not be necessary once
-  // we can properly process temporary destructors.
-  if (!LValue.getAsRegion())
-    return LValue;
-
   SValBuilder &SVB = State->getStateManager().getSValBuilder();
   ASTContext &Ctx = SVB.getContext();
 
