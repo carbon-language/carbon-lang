@@ -7618,9 +7618,12 @@ TEST_F(FormatTest, ParsesConfiguration) {
               FormatStyle::NI_All);
 
   Style.ForEachMacros.clear();
-  std::vector<std::string> BoostForeach = { "BOOST_FOREACH" };
+  std::vector<std::string> BoostForeach;
+  BoostForeach.push_back("BOOST_FOREACH");
   CHECK_PARSE("ForEachMacros: [BOOST_FOREACH]", ForEachMacros, BoostForeach);
-  std::vector<std::string> BoostAndQForeach = { "BOOST_FOREACH", "Q_FOREACH" };
+  std::vector<std::string> BoostAndQForeach;
+  BoostAndQForeach.push_back("BOOST_FOREACH");
+  BoostAndQForeach.push_back("Q_FOREACH");
   CHECK_PARSE("ForEachMacros: [BOOST_FOREACH, Q_FOREACH]", ForEachMacros,
               BoostAndQForeach);
 }
