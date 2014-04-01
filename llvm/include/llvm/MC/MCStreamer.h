@@ -658,6 +658,8 @@ public:
   virtual void EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
                                          const MCSymbol *Label) {}
 
+  virtual MCSymbol *getDwarfLineTableSymbol(unsigned CUID);
+
   void EmitDwarfSetLineAddr(int64_t LineDelta, const MCSymbol *Label,
                             int PointerSize);
 

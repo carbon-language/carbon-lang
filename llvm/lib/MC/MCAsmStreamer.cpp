@@ -207,6 +207,7 @@ public:
                              unsigned Column, unsigned Flags,
                              unsigned Isa, unsigned Discriminator,
                              StringRef FileName) override;
+  MCSymbol *getDwarfLineTableSymbol(unsigned CUID) override;
 
   void EmitIdent(StringRef IdentString) override;
   void EmitCFISections(bool EH, bool Debug) override;
@@ -957,6 +958,12 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
   EmitEOL();
 }
 
+MCSymbol *MCAsmStreamer::getDwarfLineTableSymbol(unsigned CUID) {
+  // Always use the zeroth line table, since asm syntax only supports one line
+  // table for now.
+  return MCStreamer::getDwarfLineTableSymbol(0);
+}
+
 void MCAsmStreamer::EmitIdent(StringRef IdentString) {
   assert(MAI->hasIdentDirective() && ".ident directive not supported");
   OS << "\t.ident\t";
@@ -1442,8 +1449,7 @@ void MCAsmStreamer::FinishImpl() {
   // directly, the label is the only work required here.
   auto &Tables = getContext().getMCDwarfLineTables();
   if (!Tables.empty()) {
-    // FIXME: assert Tables.size() == 1 here, except that's not currently true
-    // due to DwarfUnit.cpp:2074.
+    assert(Tables.size() == 1 && "asm output only supports one line table");
     if (auto *Label = Tables.begin()->second.getLabel()) {
       SwitchSection(getContext().getObjectFileInfo()->getDwarfLineSection());
       EmitLabel(Label);

@@ -3,7 +3,7 @@
 ; CHECK:      .section        .debug_line,"",@progbits
 ; CHECK-NEXT: .Lsection_line:
 
-; CHECK:      .long   .Lsection_line          # DW_AT_stmt_list
+; CHECK:      .long   .Lline_table_start0          # DW_AT_stmt_list
 
 define void @f() {
 entry:

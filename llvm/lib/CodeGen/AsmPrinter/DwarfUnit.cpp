@@ -2070,13 +2070,7 @@ void DwarfUnit::addRange(RangeSpan Range) {
 void DwarfCompileUnit::initStmtList(MCSymbol *DwarfLineSectionSym) {
   // Define start line table label for each Compile Unit.
   MCSymbol *LineTableStartSym =
-      Asm->GetTempSymbol("line_table_start", getUniqueID());
-  Asm->OutStreamer.getContext().setMCLineTableSymbol(LineTableStartSym,
-                                                     getUniqueID());
-
-  // Use a single line table if we are generating assembly.
-  bool UseTheFirstCU =
-      Asm->OutStreamer.hasRawTextSupport() || (getUniqueID() == 0);
+      Asm->OutStreamer.getDwarfLineTableSymbol(getUniqueID());
 
   stmtListIndex = UnitDie->getValues().size();
 
@@ -2086,10 +2080,7 @@ void DwarfCompileUnit::initStmtList(MCSymbol *DwarfLineSectionSym) {
   // The line table entries are not always emitted in assembly, so it
   // is not okay to use line_table_start here.
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    addSectionLabel(UnitDie.get(), dwarf::DW_AT_stmt_list,
-                    UseTheFirstCU ? DwarfLineSectionSym : LineTableStartSym);
-  else if (UseTheFirstCU)
-    addSectionOffset(UnitDie.get(), dwarf::DW_AT_stmt_list, 0);
+    addSectionLabel(UnitDie.get(), dwarf::DW_AT_stmt_list, LineTableStartSym);
   else
     addSectionDelta(UnitDie.get(), dwarf::DW_AT_stmt_list, LineTableStartSym,
                     DwarfLineSectionSym);

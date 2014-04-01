@@ -39,7 +39,7 @@ foo:
 // ASM-NEXT: .long [[ABBREV_LABEL]]
 // First .byte 1 is the abbreviation number for the compile_unit abbrev
 // ASM: .byte 1
-// ASM-NEXT: .long [[LINE_LABEL:.Ltmp[0-9]+]]
+// ASM-NEXT: .long [[LINE_LABEL:.L[a-z0-9]+]]
 
 // ASM: .section .debug_line
 // ASM-NEXT: [[LINE_LABEL]]

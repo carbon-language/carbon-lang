@@ -788,10 +788,8 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
   bool CreateDwarfSectionSymbols =
       AsmInfo->doesDwarfUseRelocationsAcrossSections();
   MCSymbol *LineSectionSymbol = nullptr;
-  if (CreateDwarfSectionSymbols) {
-    LineSectionSymbol = context.CreateTempSymbol();
-    context.setMCLineTableSymbol(LineSectionSymbol, 0);
-  }
+  if (CreateDwarfSectionSymbols)
+    LineSectionSymbol = MCOS->getDwarfLineTableSymbol(0);
   MCSymbol *AbbrevSectionSymbol = NULL;
   MCSymbol *InfoSectionSymbol = NULL;
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfInfoSection());
