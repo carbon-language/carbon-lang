@@ -758,6 +758,8 @@ def : Pat<(fma (fneg v4f32:$A), v4f32:$C, v4f32:$B),
 def : Pat<(fma v4f32:$A, (fneg v4f32:$C), v4f32:$B),
           (XVNMSUBASP $B, $C, $A)>;
 
+def : Pat<(v2f64 (bitconvert v4f32:$A)),
+          (COPY_TO_REGCLASS $A, VSRC)>;
 def : Pat<(v2f64 (bitconvert v4i32:$A)),
           (COPY_TO_REGCLASS $A, VSRC)>;
 def : Pat<(v2f64 (bitconvert v8i16:$A)),
@@ -765,6 +767,8 @@ def : Pat<(v2f64 (bitconvert v8i16:$A)),
 def : Pat<(v2f64 (bitconvert v16i8:$A)),
           (COPY_TO_REGCLASS $A, VSRC)>;
 
+def : Pat<(v4f32 (bitconvert v2f64:$A)),
+          (COPY_TO_REGCLASS $A, VRRC)>;
 def : Pat<(v4i32 (bitconvert v2f64:$A)),
           (COPY_TO_REGCLASS $A, VRRC)>;
 def : Pat<(v8i16 (bitconvert v2f64:$A)),
@@ -772,6 +776,8 @@ def : Pat<(v8i16 (bitconvert v2f64:$A)),
 def : Pat<(v16i8 (bitconvert v2f64:$A)),
           (COPY_TO_REGCLASS $A, VRRC)>;
 
+def : Pat<(v2i64 (bitconvert v4f32:$A)),
+          (COPY_TO_REGCLASS $A, VSRC)>;
 def : Pat<(v2i64 (bitconvert v4i32:$A)),
           (COPY_TO_REGCLASS $A, VSRC)>;
 def : Pat<(v2i64 (bitconvert v8i16:$A)),
@@ -779,6 +785,8 @@ def : Pat<(v2i64 (bitconvert v8i16:$A)),
 def : Pat<(v2i64 (bitconvert v16i8:$A)),
           (COPY_TO_REGCLASS $A, VSRC)>;
 
+def : Pat<(v4f32 (bitconvert v2i64:$A)),
+          (COPY_TO_REGCLASS $A, VRRC)>;
 def : Pat<(v4i32 (bitconvert v2i64:$A)),
           (COPY_TO_REGCLASS $A, VRRC)>;
 def : Pat<(v8i16 (bitconvert v2i64:$A)),

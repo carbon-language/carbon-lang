@@ -641,3 +641,11 @@ define <2 x i32> @test80(i32 %v) {
 ; CHECK: blr
 }
 
+define <2 x double> @test81(<4 x float> %b) {
+  %w = bitcast <4 x float> %b to <2 x double>
+  ret <2 x double> %w
+
+; CHECK-LABEL: @test81
+; CHECK: blr
+}
+
