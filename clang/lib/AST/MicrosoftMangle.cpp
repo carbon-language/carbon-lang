@@ -1545,9 +1545,18 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
     Out << '@';
   } else {
     QualType ResultType = Proto->getReturnType();
-    if (ResultType->isVoidType())
-      ResultType = ResultType.getUnqualifiedType();
-    mangleType(ResultType, Range, QMM_Result);
+    if (const auto *AT =
+            dyn_cast_or_null<AutoType>(ResultType->getContainedAutoType())) {
+      Out << '?';
+      mangleQualifiers(ResultType.getLocalQualifiers(), /*IsMember=*/false);
+      Out << '?';
+      mangleSourceName(AT->isDecltypeAuto() ? "<decltype-auto>" : "<auto>");
+      Out << '@';
+    } else {
+      if (ResultType->isVoidType())
+        ResultType = ResultType.getUnqualifiedType();
+      mangleType(ResultType, Range, QMM_Result);
+    }
   }
 
   // <argument-list> ::= X # void
