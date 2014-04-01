@@ -48,7 +48,7 @@ public:
   typedef FileVectorT::iterator FileIterT;
 
   /// Where do we want to insert the input element when calling the
-  /// insertElementAt, insertOneElementAt API's.
+  /// insertElementAt.
   enum Position : uint8_t {
     ANY,
     BEGIN,
@@ -91,8 +91,8 @@ public:
   }
 
   /// \brief Insert an element into the input graph at position.
-  void insertOneElementAt(std::unique_ptr<InputElement>,
-                          Position position, size_t pos = 0);
+  void insertElementAt(std::unique_ptr<InputElement>, Position position,
+                       size_t pos = 0);
 
   /// \brief Helper functions for the resolver
   ErrorOr<InputElement *> getNextInputElement();

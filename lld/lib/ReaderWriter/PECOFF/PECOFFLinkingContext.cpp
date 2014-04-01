@@ -108,8 +108,7 @@ bool PECOFFLinkingContext::createImplicitFiles(
   std::unique_ptr<File> linkerGeneratedSymFile(
       new pecoff::LinkerGeneratedSymbolFile(*this));
   fileNode->appendInputFile(std::move(linkerGeneratedSymFile));
-  inputGraph().insertOneElementAt(std::move(fileNode),
-                                  InputGraph::Position::END);
+  inputGraph().insertElementAt(std::move(fileNode), InputGraph::Position::END);
   return true;
 }
 

@@ -43,8 +43,8 @@ bool InputGraph::dump(raw_ostream &diagnostics) {
 }
 
 /// \brief Insert element at position
-void InputGraph::insertOneElementAt(std::unique_ptr<InputElement> element,
-                                    Position position, size_t pos) {
+void InputGraph::insertElementAt(std::unique_ptr<InputElement> element,
+                                 Position position, size_t pos) {
   if (position == InputGraph::Position::BEGIN)
     pos = 0;
   else if (position == InputGraph::Position::END)

@@ -96,8 +96,8 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   if (implicitFiles.size())
     fileNode->addFiles(std::move(implicitFiles));
 
-  context.inputGraph().insertOneElementAt(std::move(fileNode),
-                                          InputGraph::Position::BEGIN);
+  context.inputGraph().insertElementAt(std::move(fileNode),
+                                       InputGraph::Position::BEGIN);
 
   context.inputGraph().assignOrdinals();
 
