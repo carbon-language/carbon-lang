@@ -489,6 +489,17 @@ class WAIT_FM : StdArch {
   let Inst{5-0}   = 0x20;
 }
 
+class MTMR_FM<bits<6> funct> : StdArch {
+  bits<5> rs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x1c;
+  let Inst{25-21} = rs;
+  let Inst{20-6}  = 0;
+  let Inst{5-0}   = funct;
+}
+
 class POP_FM<bits<6> funct> : StdArch {
   bits<5> rd;
   bits<5> rs;

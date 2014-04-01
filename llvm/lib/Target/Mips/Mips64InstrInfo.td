@@ -257,6 +257,14 @@ let Defs = [HI0, LO0, P0, P1, P2] in
 def DMUL  : ArithLogicR<"dmul", GPR64Opnd, 1, II_DMUL, mul>,
                               ADD_FM<0x1c, 0x03>;
 
+// Move to multiplier/product register
+def MTM0   : MoveToLOHI<"mtm0", GPR64Opnd, [MPL0, P0, P1, P2]>, MTMR_FM<0x08>;
+def MTM1   : MoveToLOHI<"mtm1", GPR64Opnd, [MPL1, P0, P1, P2]>, MTMR_FM<0x0c>;
+def MTM2   : MoveToLOHI<"mtm2", GPR64Opnd, [MPL2, P0, P1, P2]>, MTMR_FM<0x0d>;
+def MTP0   : MoveToLOHI<"mtp0", GPR64Opnd, [P0]>, MTMR_FM<0x09>;
+def MTP1   : MoveToLOHI<"mtp1", GPR64Opnd, [P1]>, MTMR_FM<0x0a>;
+def MTP2   : MoveToLOHI<"mtp2", GPR64Opnd, [P2]>, MTMR_FM<0x0b>;
+
 // Count Ones in a Word/Doubleword
 def POP   : Count1s<"pop", GPR32Opnd>, POP_FM<0x2c>;
 def DPOP  : Count1s<"dpop", GPR64Opnd>, POP_FM<0x2d>;
