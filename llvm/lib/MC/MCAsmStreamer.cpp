@@ -1435,7 +1435,20 @@ void MCAsmStreamer::EmitRawTextImpl(StringRef String) {
 void MCAsmStreamer::FinishImpl() {
   // If we are generating dwarf for assembly source files dump out the sections.
   if (getContext().getGenDwarfForAssembly())
-    MCGenDwarfInfo::Emit(this, NULL);
+    MCGenDwarfInfo::Emit(this);
+
+  // Emit the label for the line table, if requested - since the rest of the
+  // line table will be defined by .loc/.file directives, and not emitted
+  // directly, the label is the only work required here.
+  auto &Tables = getContext().getMCDwarfLineTables();
+  if (!Tables.empty()) {
+    // FIXME: assert Tables.size() == 1 here, except that's not currently true
+    // due to DwarfUnit.cpp:2074.
+    if (auto *Label = Tables.begin()->second.getLabel()) {
+      SwitchSection(getContext().getObjectFileInfo()->getDwarfLineSection());
+      EmitLabel(Label);
+    }
+  }
 
   if (!UseCFI)
     EmitFrames(AsmBackend.get(), false);

@@ -204,24 +204,22 @@ EmitDwarfLineTable(MCStreamer *MCOS, const MCSection *Section,
 //
 // This emits the Dwarf file and the line tables.
 //
-const MCSymbol *MCDwarfLineTable::Emit(MCStreamer *MCOS) {
+void MCDwarfLineTable::Emit(MCStreamer *MCOS) {
   MCContext &context = MCOS->getContext();
 
-  // CUID and MCLineTableSymbols are set in DwarfDebug, when DwarfDebug does
-  // not exist, CUID will be 0 and MCLineTableSymbols will be empty.
-  // Handle Compile Unit 0, the line table start symbol is the section symbol.
-  auto I = MCOS->getContext().getMCDwarfLineTables().begin(),
-       E = MCOS->getContext().getMCDwarfLineTables().end();
+  auto &LineTables = context.getMCDwarfLineTables();
+
+  // Bail out early so we don't switch to the debug_line section needlessly and
+  // in doing so create an unnecessary (if empty) section.
+  if (LineTables.empty())
+    return;
 
   // Switch to the section where the table will be emitted into.
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfLineSection());
 
-  const MCSymbol *LineStartSym = I->second.EmitCU(MCOS);
   // Handle the rest of the Compile Units.
-  for (++I; I != E; ++I)
-    I->second.EmitCU(MCOS);
-
-  return LineStartSym;
+  for (const auto &CUIDTablePair : LineTables)
+    CUIDTablePair.second.EmitCU(MCOS);
 }
 
 void MCDwarfDwoLineTable::Emit(MCStreamer &MCOS) const {
@@ -320,10 +318,8 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS,
   return std::make_pair(LineStartSym, LineEndSym);
 }
 
-const MCSymbol *MCDwarfLineTable::EmitCU(MCStreamer *MCOS) const {
-  MCSymbol *LineStartSym;
-  MCSymbol *LineEndSym;
-  std::tie(LineStartSym, LineEndSym) = Header.Emit(MCOS);
+void MCDwarfLineTable::EmitCU(MCStreamer *MCOS) const {
+  MCSymbol *LineEndSym = Header.Emit(MCOS).second;
 
   // Put out the line tables.
   for (const auto &LineSec : MCLineSections.getMCLineEntries())
@@ -344,8 +340,6 @@ const MCSymbol *MCDwarfLineTable::EmitCU(MCStreamer *MCOS) const {
   // This is the end of the section, so set the value of the symbol at the end
   // of this section (that was used in a previous expression).
   MCOS->EmitLabel(LineEndSym);
-
-  return LineStartSym;
 }
 
 unsigned MCDwarfLineTable::getFile(StringRef &Directory, StringRef &FileName,
@@ -787,14 +781,17 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
 // When generating dwarf for assembly source files this emits the Dwarf
 // sections.
 //
-void MCGenDwarfInfo::Emit(MCStreamer *MCOS, const MCSymbol *LineSectionSymbol) {
+void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
   // Create the dwarf sections in this order (.debug_line already created).
   MCContext &context = MCOS->getContext();
   const MCAsmInfo *AsmInfo = context.getAsmInfo();
   bool CreateDwarfSectionSymbols =
       AsmInfo->doesDwarfUseRelocationsAcrossSections();
-  if (!CreateDwarfSectionSymbols)
-    LineSectionSymbol = NULL;
+  MCSymbol *LineSectionSymbol = nullptr;
+  if (CreateDwarfSectionSymbols) {
+    LineSectionSymbol = context.CreateTempSymbol();
+    context.setMCLineTableSymbol(LineSectionSymbol, 0);
+  }
   MCSymbol *AbbrevSectionSymbol = NULL;
   MCSymbol *InfoSectionSymbol = NULL;
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfInfoSection());

@@ -661,11 +661,15 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
     return TokError("unmatched .ifs or .elses");
 
   // Check to see there are no empty DwarfFile slots.
-  const SmallVectorImpl<MCDwarfFile> &MCDwarfFiles =
-      getContext().getMCDwarfFiles();
-  for (unsigned i = 1; i < MCDwarfFiles.size(); i++) {
-    if (MCDwarfFiles[i].Name.empty())
-      TokError("unassigned file number: " + Twine(i) + " for .file directives");
+  const auto &LineTables = getContext().getMCDwarfLineTables();
+  if (!LineTables.empty()) {
+    unsigned Index = 0;
+    for (const auto &File : LineTables.begin()->second.getMCDwarfFiles()) {
+      if (File.Name.empty() && Index != 0)
+        TokError("unassigned file number: " + Twine(Index) +
+                 " for .file directives");
+      ++Index;
+    }
   }
 
   // Check to see that all assembler local symbols were actually defined.

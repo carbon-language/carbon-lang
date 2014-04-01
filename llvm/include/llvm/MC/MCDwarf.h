@@ -210,10 +210,10 @@ class MCDwarfLineTable {
 
 public:
   // This emits the Dwarf file and the line tables for all Compile Units.
-  static const MCSymbol *Emit(MCStreamer *MCOS);
+  static void Emit(MCStreamer *MCOS);
 
   // This emits the Dwarf file and the line tables for a given Compile Unit.
-  const MCSymbol *EmitCU(MCStreamer *MCOS) const;
+  void EmitCU(MCStreamer *MCOS) const;
 
   unsigned getFile(StringRef &Directory, StringRef &FileName,
                    unsigned FileNumber = 0);
@@ -270,7 +270,7 @@ public:
   // When generating dwarf for assembly source files this emits the Dwarf
   // sections.
   //
-  static void Emit(MCStreamer *MCOS, const MCSymbol *LineSectionSymbol);
+  static void Emit(MCStreamer *MCOS);
 };
 
 // When generating dwarf for assembly source files this is the info that is

@@ -1,4 +1,5 @@
 // RUN: llvm-mc -g -triple  i686-pc-linux-gnu %s -filetype=obj -o - | llvm-readobj -r | FileCheck %s
+// RUN: llvm-mc -g -triple  i686-pc-linux-gnu %s -filetype=asm -o - | FileCheck --check-prefix=ASM %s
 
 
 // Test that on ELF:
@@ -23,4 +24,23 @@ foo:
 // CHECK-NEXT:     0x6 R_386_32 .debug_info 0x0
 // CHECK-NEXT:     0x10 R_386_32 .text 0x0
 // CHECK-NEXT:   }
-// CHECK-NEXT: ]
+// CHECK:      ]
+
+// First instance of the section is just to give it a label for debug_aranges to refer to
+// ASM: .section .debug_info
+
+// ASM: .section .debug_abbrev
+// ASM-NEXT: [[ABBREV_LABEL:.Ltmp[0-9]+]]
+
+// Second instance of the section has the CU
+// ASM: .section .debug_info
+// Dwarf version
+// ASM: .short 2
+// ASM-NEXT: .long [[ABBREV_LABEL]]
+// First .byte 1 is the abbreviation number for the compile_unit abbrev
+// ASM: .byte 1
+// ASM-NEXT: .long [[LINE_LABEL:.Ltmp[0-9]+]]
+
+// ASM: .section .debug_line
+// ASM-NEXT: [[LINE_LABEL]]
+
