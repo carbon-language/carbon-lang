@@ -89,9 +89,6 @@ public:
     EntryKind = E_ConstantInt;
   }
 
-  /// \brief Empty entries are also used as a trigger to emit temp label. Such
-  /// labels are referenced is used to find debug_loc offset for a given DIE.
-  bool isEmpty() const { return Begin == 0 && End == 0; }
   bool Merge(const DebugLocEntry &Next) {
     return End == Next.Begin && hasSameValueOrLocation(Next);
   }
