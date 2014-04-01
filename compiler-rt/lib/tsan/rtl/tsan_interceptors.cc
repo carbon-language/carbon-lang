@@ -1906,7 +1906,6 @@ TSAN_INTERCEPTOR(int, fork, int fake) {
   if (cur_thread()->in_symbolizer)
     return REAL(fork)(fake);
   SCOPED_INTERCEPTOR_RAW(fork, fake);
-  Report("Thread %d is about to fork\n", GetTid());
   ForkBefore(thr, pc);
   int pid = REAL(fork)(fake);
   if (pid == 0) {
