@@ -1868,35 +1868,14 @@ MipsAsmParser::OperandMatchResultTy MipsAsmParser::ParseJumpTarget(
   if (ResTy != MatchOperand_NoMatch)
     return ResTy;
 
-  // Consume the $ if there is one. We'll add it to the symbol below.
-  bool hasConsumedDollar = false;
-  if (getLexer().is(AsmToken::Dollar)) {
-    Parser.Lex();
-    hasConsumedDollar = true;
+  const MCExpr *Expr = nullptr;
+  if (Parser.parseExpression(Expr)) {
+    // We have no way of knowing if a symbol was consumed so we must ParseFail
+    return MatchOperand_ParseFail;
   }
-
-  StringRef Identifier;
-  if (Parser.parseIdentifier(Identifier))
-    return hasConsumedDollar ? MatchOperand_ParseFail : MatchOperand_NoMatch;
-
-  if (hasConsumedDollar)
-    Identifier = StringRef("$" + Identifier.str());
-
-  SMLoc E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-  MCSymbol *Sym = getContext().GetOrCreateSymbol(Identifier);
-
-  // Create a symbol reference.
-  const MCExpr *Res =
-      MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None, getContext());
-
-  Operands.push_back(MipsOperand::CreateImm(Res, S, E, *this));
+  Operands.push_back(
+      MipsOperand::CreateImm(Expr, S, getLexer().getLoc(), *this));
   return MatchOperand_Success;
-  //  // Look for the existing symbol, we should check if
-  //  // we need to assign the proper RegisterKind.
-  //  if (searchSymbolAlias(Operands))
-  //    return false;
-
-  return MatchOperand_NoMatch;
 }
 
 MipsAsmParser::OperandMatchResultTy
