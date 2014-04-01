@@ -117,10 +117,17 @@ public:
   /// labels are referenced is used to find debug_loc offset for a given DIE.
   bool isEmpty() const { return Begin == 0 && End == 0; }
   bool Merge(const DebugLocEntry &Next) {
-    if (!(Begin && Loc == Next.Loc && End == Next.Begin))
-      return false;
+    if (Begin &&
+	Loc == Next.Loc &&
+	EntryKind == Next.EntryKind &&
+	(!isInt() || getInt() == Next.getInt()) &&
+	(!isConstantInt() || getConstantInt() == Next.getConstantInt()) &&
+	(!isConstantFP() || getConstantFP() == Next.getConstantFP()) &&
+	End == Next.Begin) {
     End = Next.End;
     return true;
+  }
+  return false;
   }
   bool isLocation() const { return EntryKind == E_Location; }
   bool isInt() const { return EntryKind == E_Integer; }
