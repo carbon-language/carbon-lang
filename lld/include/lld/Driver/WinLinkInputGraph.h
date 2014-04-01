@@ -37,12 +37,6 @@ public:
   /// \brief Parse the input file to lld::File.
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override;
 
-  /// \brief validates the Input Element
-  bool validate() override { return true; }
-
-  /// \brief Dump the Input Element
-  bool dump(raw_ostream &) override { return true; }
-
   ErrorOr<File &> getNextFile() override;
 
 protected:
@@ -65,9 +59,6 @@ public:
 class PECOFFGroup : public Group {
 public:
   PECOFFGroup(PECOFFLinkingContext &ctx) : Group(0), _ctx(ctx) {}
-
-  bool validate() override { return true; }
-  bool dump(raw_ostream &) override { return true; }
 
   /// \brief Parse the group members.
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override {

@@ -26,17 +26,10 @@
 
 namespace lld {
 
-/// \brief Represents a CORE File
-class COREFileNode : public FileNode {
+/// \brief Represents a Core File
+class CoreFileNode : public FileNode {
 public:
-  COREFileNode(CoreLinkingContext &ctx, StringRef path)
-      : FileNode(path), _ctx(ctx) {}
-
-  /// \brief validates the Input Element
-  bool validate() override {
-    (void)_ctx;
-    return true;
-  }
+  CoreFileNode(CoreLinkingContext &, StringRef path) : FileNode(path) {}
 
   /// \brief Parse the input file to lld::File.
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override {
@@ -62,12 +55,6 @@ public:
       return make_error_code(InputGraphError::no_more_files);
     return *_files[_nextFileIndex++];
   }
-
-  /// \brief Dump the Input Element
-  bool dump(raw_ostream &) override { return true; }
-
-private:
-  CoreLinkingContext &_ctx;
 };
 
 } // namespace lld

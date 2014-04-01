@@ -37,24 +37,21 @@ public:
 
   ErrorOr<StringRef> getPath(const LinkingContext &ctx) const override;
 
-  /// \brief validates the Input Element
-  bool validate() override { return true; }
-
   /// \brief create an error string for printing purposes
   std::string errStr(error_code) override;
 
   /// \brief Dump the Input Element
   bool dump(raw_ostream &diagnostics) override {
-    diagnostics << "Name    : " << *getPath(_elfLinkingContext) << "\n";
-    diagnostics << "Type    : "
+    diagnostics << "Name    : " << *getPath(_elfLinkingContext) << "\n"
+                << "Type    : "
                 << "ELF File"
-                << "\n";
-    diagnostics << "Ordinal : " << getOrdinal() << "\n";
-    diagnostics << "Attributes : "
-                << "\n";
-    diagnostics << "  - wholeArchive : "
-                << ((_isWholeArchive) ? "true" : "false") << "\n";
-    diagnostics << "  - asNeeded : " << ((_asNeeded) ? "true" : "false")
+                << "\n"
+                << "Ordinal : " << getOrdinal() << "\n"
+                << "Attributes : "
+                << "\n"
+                << "  - wholeArchive : "
+                << ((_isWholeArchive) ? "true" : "false") << "\n"
+                << "  - asNeeded : " << ((_asNeeded) ? "true" : "false")
                 << "\n";
     return true;
   }
@@ -70,8 +67,9 @@ public:
   /// a shared library
   void resetNextIndex() override {
     if ((!_isWholeArchive && (_files[0]->kind() == File::kindArchiveLibrary)) ||
-        (_files[0]->kind() == File::kindSharedLibrary))
+        (_files[0]->kind() == File::kindSharedLibrary)) {
       _nextFileIndex = 0;
+    }
     setResolveState(Resolver::StateNoChange);
   }
 
@@ -97,17 +95,8 @@ private:
 /// \brief Represents a ELF control node
 class ELFGroup : public Group {
 public:
-  ELFGroup(const ELFLinkingContext &ctx, int64_t ordinal)
-      : Group(ordinal), _elfLinkingContext(ctx) {}
-
-  /// \brief Validate the options
-  bool validate() override {
-    (void)_elfLinkingContext;
-    return true;
-  }
-
-  /// \brief Dump the ELFGroup
-  bool dump(raw_ostream &) override { return true; }
+  ELFGroup(const ELFLinkingContext &, int64_t ordinal)
+      : Group(ordinal) {}
 
   /// \brief Parse the group members.
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override {
@@ -116,9 +105,6 @@ public:
         return ec;
     return error_code::success();
   }
-
-private:
-  const ELFLinkingContext &_elfLinkingContext;
 };
 
 /// \brief Parse GNU Linker scripts.
@@ -126,20 +112,7 @@ class GNULdScript : public FileNode {
 public:
   GNULdScript(ELFLinkingContext &ctx, StringRef userPath, int64_t ordinal)
       : FileNode(userPath, ordinal), _elfLinkingContext(ctx),
-        _linkerScript(nullptr)
-  {}
-
-  /// \brief Is this node part of resolution ?
-  bool isHidden() const override { return true; }
-
-  /// \brief Validate the options
-  bool validate() override {
-    (void)_elfLinkingContext;
-    return true;
-  }
-
-  /// \brief Dump the Linker script.
-  bool dump(raw_ostream &) override { return true; }
+        _linkerScript(nullptr) {}
 
   /// \brief Parse the linker script.
   error_code parse(const LinkingContext &, raw_ostream &) override;
@@ -159,9 +132,7 @@ public:
 
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override;
 
-  ExpandType expandType() const override {
-    return InputElement::ExpandType::ExpandOnly;
-  }
+  bool shouldExpand() const override { return true; }
 
   /// Unused functions for ELFGNULdScript Nodes.
   ErrorOr<File &> getNextFile() override {

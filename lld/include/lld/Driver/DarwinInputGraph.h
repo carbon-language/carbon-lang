@@ -28,14 +28,8 @@ namespace lld {
 /// \brief Represents a MachO File
 class MachOFileNode : public FileNode {
 public:
-  MachOFileNode(MachOLinkingContext &ctx, StringRef path, bool isWholeArchive)
-      : FileNode(path), _ctx(ctx), _isWholeArchive(isWholeArchive) {}
-
-  /// \brief validates the Input Element
-  bool validate() override {
-    (void)_ctx;
-    return true;
-  }
+  MachOFileNode(MachOLinkingContext &, StringRef path, bool isWholeArchive)
+      : FileNode(path), _isWholeArchive(isWholeArchive) {}
 
   /// \brief Parse the input file to lld::File.
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override {
@@ -80,11 +74,7 @@ public:
     return *_files[_nextFileIndex++];
   }
 
-  /// \brief Dump the Input Element
-  bool dump(raw_ostream &) override { return true; }
-
 private:
-  const MachOLinkingContext &_ctx;
   bool _isWholeArchive;
 };
 

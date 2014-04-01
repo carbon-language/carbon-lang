@@ -35,13 +35,6 @@ void InputGraph::doPostProcess() {
   std::stable_sort(_inputArgs.begin(), _inputArgs.end(), sortInputElements);
 }
 
-bool InputGraph::validate() {
-  for (auto &ie : _inputArgs)
-    if (!ie->validate())
-      return false;
-  return true;
-}
-
 bool InputGraph::dump(raw_ostream &diagnostics) {
   for (auto &ie : _inputArgs)
     if (!ie->dump(diagnostics))
@@ -50,18 +43,6 @@ bool InputGraph::dump(raw_ostream &diagnostics) {
 }
 
 /// \brief Insert element at position
-void InputGraph::insertElementsAt(
-    std::vector<std::unique_ptr<InputElement> > inputElements,
-    Position position, size_t pos) {
-  if (position == InputGraph::Position::BEGIN)
-    pos = 0;
-  else if (position == InputGraph::Position::END)
-    pos = _inputArgs.size();
-  _inputArgs.insert(_inputArgs.begin() + pos,
-                    std::make_move_iterator(inputElements.begin()),
-                    std::make_move_iterator(inputElements.end()));
-}
-
 void InputGraph::insertOneElementAt(std::unique_ptr<InputElement> element,
                                     Position position, size_t pos) {
   if (position == InputGraph::Position::BEGIN)
@@ -75,49 +56,26 @@ void InputGraph::insertOneElementAt(std::unique_ptr<InputElement> element,
 ErrorOr<InputElement *> InputGraph::getNextInputElement() {
   if (_nextElementIndex >= _inputArgs.size())
     return make_error_code(InputGraphError::no_more_elements);
-  auto elem = _inputArgs[_nextElementIndex++].get();
-  // Do not return Hidden elements.
-  if (!elem->isHidden())
-    return elem;
-  return getNextInputElement();
+  return _inputArgs[_nextElementIndex++].get();
 }
 
-/// \brief Set the index on what inputElement has to be returned
-error_code InputGraph::setNextElementIndex(uint32_t index) {
-  if (index > _inputArgs.size())
-    return make_error_code(llvm::errc::invalid_argument);
-  _nextElementIndex = index;
-  return error_code::success();
-}
-
-// Normalize the InputGraph.
 void InputGraph::normalize() {
   auto iterb = _inputArgs.begin();
   auto itere = _inputArgs.end();
   auto currentIter = _inputArgs.begin();
-  bool replaceCurrentNode = false;
-  bool expand = false;
 
   std::vector<std::unique_ptr<InputElement> > _workInputArgs;
   while (iterb != itere) {
-    replaceCurrentNode = false;
-    expand = false;
-    InputElement::ExpandType expandType = (*iterb)->expandType();
-    if (expandType == InputElement::ExpandType::ReplaceAndExpand) {
-      replaceCurrentNode = true;
-      expand = true;
-    } else if (expandType == InputElement::ExpandType::ExpandOnly) {
-      replaceCurrentNode = false;
-      expand = true;
-    }
+    bool expand = (*iterb)->shouldExpand();
     currentIter = iterb++;
-    if (expand)
+    if (expand) {
       _workInputArgs.insert(
           _workInputArgs.end(),
           std::make_move_iterator((*currentIter)->expandElements().begin()),
           std::make_move_iterator((*currentIter)->expandElements().end()));
-    if (!replaceCurrentNode)
+    } else {
       _workInputArgs.push_back(std::move(*currentIter));
+    }
   }
   _inputArgs = std::move(_workInputArgs);
 }
@@ -128,7 +86,7 @@ void InputGraph::normalize() {
 /// is initially set to -1, if the user wants to override its ordinal,
 /// let the user do it
 InputElement::InputElement(Kind type, int64_t ordinal)
-    : _kind(type), _ordinal(ordinal), _weight(0) {}
+    : _kind(type), _ordinal(ordinal) {}
 
 /// FileNode
 FileNode::FileNode(StringRef path, int64_t ordinal)
@@ -139,12 +97,9 @@ FileNode::FileNode(StringRef path, int64_t ordinal)
 error_code FileNode::getBuffer(StringRef filePath) {
   // Create a memory buffer
   std::unique_ptr<MemoryBuffer> mb;
-
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(filePath, mb))
     return ec;
-
   _buffer = std::move(mb);
-
   return error_code::success();
 }
 
@@ -160,7 +115,7 @@ void FileNode::resetNextIndex() {
 /// \brief Get the resolver State. The return value of the resolve
 /// state for a control node is the or'ed value of the resolve states
 /// contained in it.
-uint32_t ControlNode::getResolveState() const {
+uint32_t Group::getResolveState() const {
   uint32_t resolveState = Resolver::StateNoChange;
   for (auto &elem : _elements)
     resolveState |= elem->getResolveState();
@@ -169,7 +124,7 @@ uint32_t ControlNode::getResolveState() const {
 
 /// \brief Set the resolve state for the current element
 /// thats processed by the resolver.
-void ControlNode::setResolveState(uint32_t resolveState) {
+void Group::setResolveState(uint32_t resolveState) {
   if (_elements.empty())
     return;
   _elements[_currentElementIndex]->setResolveState(resolveState);

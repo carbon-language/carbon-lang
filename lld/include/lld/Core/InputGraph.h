@@ -40,8 +40,6 @@ class LinkingContext;
 /// Each InputElement that is part of the Graph has an Ordinal value
 /// associated with it. The ordinal value is needed for the Writer to figure out
 /// the relative position of the arguments that appeared in the Command Line.
-/// InputElements have a weight function that can be used to determine the
-/// weight of the file, for statistical purposes.
 class InputGraph {
 public:
   typedef std::vector<std::unique_ptr<InputElement> > InputElementVectorT;
@@ -66,10 +64,10 @@ public:
   /// \brief Set Ordinals for all the InputElements that form the InputGraph
   virtual bool assignOrdinals();
 
-  /// Normalize the InputGraph.
+  /// Normalize the InputGraph. It visits all nodes in the tree to replace a
+  /// node with its children if it's shouldExpand() returnst true.
   virtual void normalize();
 
-  /// Destructor
   virtual ~InputGraph() {}
 
   /// \brief Do postprocessing of the InputGraph if there is a need for the
@@ -82,36 +80,26 @@ public:
     return make_range(_inputArgs.begin(), _inputArgs.end());
   }
 
-  /// \brief Validate the input graph
-  virtual bool validate();
-
   // \brief Does the inputGraph contain any elements
   size_t size() const { return _inputArgs.size(); }
 
   /// \brief Dump the input Graph
-  virtual bool dump(raw_ostream &diagnostics = llvm::errs());
+  bool dump(raw_ostream &diagnostics = llvm::errs());
 
   InputElement &operator[](size_t index) const {
     return (*_inputArgs[index]);
   }
 
-  /// \brief Insert a vector of elements into the input graph at position.
-  virtual void insertElementsAt(std::vector<std::unique_ptr<InputElement> >,
-                                Position position, size_t pos = 0);
-
   /// \brief Insert an element into the input graph at position.
-  virtual void insertOneElementAt(std::unique_ptr<InputElement>,
-                                  Position position, size_t pos = 0);
+  void insertOneElementAt(std::unique_ptr<InputElement>,
+                          Position position, size_t pos = 0);
 
   /// \brief Helper functions for the resolver
-  virtual ErrorOr<InputElement *> getNextInputElement();
-
-  /// \brief Set the index on what inputElement has to be returned
-  virtual error_code setNextElementIndex(uint32_t index = 0);
+  ErrorOr<InputElement *> getNextInputElement();
 
   /// \brief Reset the inputGraph for the inputGraph to start processing
   /// files from the beginning
-  virtual error_code reset() { return setNextElementIndex(0); }
+  void reset() { _nextElementIndex = 0; }
 
 protected:
   // Input arguments
@@ -128,15 +116,8 @@ class InputElement {
 public:
   /// Each input element in the graph can be a File or a control
   enum class Kind : uint8_t {
-    Control,    // Represents a type associated with ControlNodes
+    Group,      // Represents a type associated with Group
     File        // Represents a type associated with File Nodes
-  };
-
-  /// How does the inputGraph expand the InputElement
-  enum class ExpandType : uint8_t {
-    None,             // Do nothing(Default)
-    ReplaceAndExpand, // Replace current node and expand
-    ExpandOnly        // Expand the current node
   };
 
   /// \brief Initialize the Input Element, The ordinal value of an input Element
@@ -156,15 +137,8 @@ public:
 
   virtual int64_t getOrdinal() const { return _ordinal; }
 
-  virtual int64_t weight() const { return _weight; }
-
-  virtual void setWeight(int64_t weight) { _weight = weight; }
-
-  /// \brief validates the Input Element
-  virtual bool validate() = 0;
-
   /// \brief Dump the Input Element
-  virtual bool dump(raw_ostream &diagnostics) = 0;
+  virtual bool dump(raw_ostream &diagnostics) { return true; }
 
   /// \brief parse the input element
   virtual error_code parse(const LinkingContext &, raw_ostream &) = 0;
@@ -183,14 +157,10 @@ public:
   /// \brief Reset the next index
   virtual void resetNextIndex() = 0;
 
-  /// \brief Is this a hidden node, hidden nodes are not part of
-  /// of the resolver.
-  virtual bool isHidden() const { return false; }
-
   /// Normalize functions
 
-  /// \brief How do we want to expand the current node ?
-  virtual ExpandType expandType() const { return ExpandType::None; }
+  /// Returns true if we want to replace this node with children.
+  virtual bool shouldExpand() const { return false; }
 
   /// \brief Get the elements that we want to expand with.
   virtual range<InputGraph::InputElementIterT> expandElements() {
@@ -200,43 +170,26 @@ public:
 protected:
   Kind _kind;              // The type of the Element
   int64_t _ordinal;        // The ordinal value
-  int64_t _weight;         // Weight of the file
 };
 
-/// \brief The Control class represents a control node in the InputGraph
-class ControlNode : public InputElement {
+/// \brief A Control node which contains a group of InputElements
+/// This affects the resolver so that it resolves undefined symbols
+/// in the group completely before looking at other input files that
+/// follow the group
+class Group : public InputElement {
 public:
-  /// A control node could be of several types supported by InputGraph
-  /// Future kinds of Control node could be added
-  enum class ControlKind : uint8_t {
-    Simple, // Represents a simple control node
-    Group   // Represents a type associated with ControlNodes
-  };
+  Group(int64_t ordinal)
+      : InputElement(InputElement::Kind::Group, ordinal),
+        _currentElementIndex(0), _nextElementIndex(0) {}
 
-  ControlNode(ControlNode::ControlKind controlKind =
-                  ControlNode::ControlKind::Simple,
-              int64_t _ordinal = -1)
-      : InputElement(InputElement::Kind::Control, _ordinal),
-        _controlKind(controlKind), _currentElementIndex(0),
-        _nextElementIndex(0) {}
-
-  virtual ~ControlNode() {}
-
-  /// \brief Return the kind of control node
-  virtual ControlKind controlKind() { return _controlKind; }
-
-  /// \brief Process control start/exit
-  virtual bool processControlEnter() { return true; }
-
-  /// \brief Process control start/exit
-  virtual bool processControlExit() { return true; }
-
-  /// Process the input Elemenet
-  virtual bool processInputElement(std::unique_ptr<InputElement> element) = 0;
-
-  /// \brief Casting support
   static inline bool classof(const InputElement *a) {
-    return a->kind() == InputElement::Kind::Control;
+    return a->kind() == InputElement::Kind::Group;
+  }
+
+  /// \brief Process input element and add it to the group
+  bool addFile(std::unique_ptr<InputElement> element) {
+    _elements.push_back(std::move(element));
+    return true;
   }
 
   range<InputGraph::InputElementIterT> elements() {
@@ -250,11 +203,10 @@ public:
   }
 
   uint32_t getResolveState() const override;
-
   void setResolveState(uint32_t) override;
+  ErrorOr<File &> getNextFile() override;
 
 protected:
-  ControlKind _controlKind;
   InputGraph::InputElementVectorT _elements;
   uint32_t _currentElementIndex;
   uint32_t _nextElementIndex;
@@ -330,28 +282,6 @@ protected:
                            // resolver
 };
 
-/// \brief A Control node which contains a group of InputElements
-/// This affects the resolver so that it resolves undefined symbols
-/// in the group completely before looking at other input files that
-/// follow the group
-class Group : public ControlNode {
-public:
-  Group(int64_t ordinal)
-      : ControlNode(ControlNode::ControlKind::Group, ordinal) {}
-
-  static inline bool classof(const InputElement *a) {
-    return a->kind() == InputElement::Kind::Control;
-  }
-
-  /// \brief Process input element and add it to the group
-  bool processInputElement(std::unique_ptr<InputElement> element) override {
-    _elements.push_back(std::move(element));
-    return true;
-  }
-
-  ErrorOr<File &> getNextFile() override;
-};
-
 /// \brief Represents Internal Input files
 class SimpleFileNode : public FileNode {
 public:
@@ -363,12 +293,6 @@ public:
   virtual void appendInputFile(std::unique_ptr<File> f) {
     _files.push_back(std::move(f));
   }
-
-  /// \brief validates the Input Element
-  bool validate() override { return true; }
-
-  /// \brief Dump the Input Element
-  bool dump(raw_ostream &) override { return true; }
 
   /// \brief parse the input element
   error_code parse(const LinkingContext &, raw_ostream &) override {

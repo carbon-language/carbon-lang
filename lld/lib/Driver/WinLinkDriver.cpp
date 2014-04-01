@@ -1257,7 +1257,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       if (isReadingDirectiveSection)
         if (lib->parse(ctx, diag))
           return false;
-      ctx.getLibraryGroup()->processInputElement(std::move(lib));
+      ctx.getLibraryGroup()->addFile(std::move(lib));
     }
   }
 

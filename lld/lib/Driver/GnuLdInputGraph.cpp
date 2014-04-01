@@ -79,7 +79,7 @@ error_code ELFGNULdScript::parse(const LinkingContext &ctx,
     return ec;
   for (const auto &c : _linkerScript->_commands) {
     if (auto group = dyn_cast<script::Group>(c)) {
-      std::unique_ptr<InputElement> controlStart(
+      std::unique_ptr<Group> groupStart(
           new ELFGroup(_elfLinkingContext, index++));
       for (auto &path : group->getPaths()) {
         // TODO : Propagate Set WholeArchive/dashlPrefix
@@ -87,10 +87,10 @@ error_code ELFGNULdScript::parse(const LinkingContext &ctx,
             _elfLinkingContext, _elfLinkingContext.allocateString(path._path),
             index++, false, path._asNeeded, false);
         std::unique_ptr<InputElement> inputFile(inputNode);
-        dyn_cast<ControlNode>(controlStart.get())
-            ->processInputElement(std::move(inputFile));
+        cast<Group>(groupStart.get())->addFile(
+            std::move(inputFile));
       }
-      _expandElements.push_back(std::move(controlStart));
+      _expandElements.push_back(std::move(groupStart));
     }
   }
   return error_code::success();

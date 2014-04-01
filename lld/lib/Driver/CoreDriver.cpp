@@ -154,7 +154,7 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
 
     case OPT_INPUT:
       inputGraph->addInputElement(std::unique_ptr<InputElement>(
-          new COREFileNode(ctx, inputArg->getValue())));
+          new CoreFileNode(ctx, inputArg->getValue())));
       break;
 
     default:
