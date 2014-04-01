@@ -10,6 +10,7 @@
 #ifndef liblldb_RegisterContextCorePOSIX_mips64_H_
 #define liblldb_RegisterContextCorePOSIX_mips64_H_
 
+#include "lldb/Core/DataBufferHeap.h"
 #include "Plugins/Process/Utility/RegisterContextPOSIX_mips64.h"
 
 class RegisterContextCorePOSIX_mips64 :
@@ -52,7 +53,8 @@ protected:
     WriteFPR();
 
 private:
-    uint64_t m_reg[40];
+    lldb::DataBufferSP m_gpr_buffer;
+    lldb_private::DataExtractor m_gpr;
 };
 
 #endif // #ifndef liblldb_RegisterContextCorePOSIX_mips64_H_
