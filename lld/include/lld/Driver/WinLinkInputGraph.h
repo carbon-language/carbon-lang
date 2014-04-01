@@ -61,12 +61,9 @@ public:
   PECOFFGroup(PECOFFLinkingContext &ctx) : Group(0), _ctx(ctx) {}
 
   /// \brief Parse the group members.
-  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override {
+  error_code parse(const LinkingContext &ctx, raw_ostream &diag) override {
     std::lock_guard<std::recursive_mutex> lock(_ctx.getMutex());
-    for (auto &elem : _elements)
-      if (error_code ec = elem->parse(ctx, diagnostics))
-        return ec;
-    return error_code::success();
+    return Group::parse(ctx, diag);
   }
 
 private:

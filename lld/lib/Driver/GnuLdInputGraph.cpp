@@ -79,8 +79,7 @@ error_code ELFGNULdScript::parse(const LinkingContext &ctx,
     return ec;
   for (const auto &c : _linkerScript->_commands) {
     if (auto group = dyn_cast<script::Group>(c)) {
-      std::unique_ptr<Group> groupStart(
-          new ELFGroup(_elfLinkingContext, index++));
+      std::unique_ptr<Group> groupStart(new Group(index++));
       for (auto &path : group->getPaths()) {
         // TODO : Propagate Set WholeArchive/dashlPrefix
         auto inputNode = new ELFFileNode(

@@ -202,6 +202,14 @@ public:
       elem->resetNextIndex();
   }
 
+  /// \brief Parse the group members.
+  error_code parse(const LinkingContext &ctx, raw_ostream &diag) override {
+    for (auto &ei : _elements)
+      if (error_code ec = ei->parse(ctx, diag))
+        return ec;
+    return error_code::success();
+  }
+
   uint32_t getResolveState() const override;
   void setResolveState(uint32_t) override;
   ErrorOr<File &> getNextFile() override;

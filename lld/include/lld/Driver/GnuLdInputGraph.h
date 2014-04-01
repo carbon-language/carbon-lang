@@ -92,21 +92,6 @@ private:
   std::unique_ptr<const ArchiveLibraryFile> _archiveFile;
 };
 
-/// \brief Represents a ELF control node
-class ELFGroup : public Group {
-public:
-  ELFGroup(const ELFLinkingContext &, int64_t ordinal)
-      : Group(ordinal) {}
-
-  /// \brief Parse the group members.
-  error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override {
-    for (auto &ei : _elements)
-      if (error_code ec = ei->parse(ctx, diagnostics))
-        return ec;
-    return error_code::success();
-  }
-};
-
 /// \brief Parse GNU Linker scripts.
 class GNULdScript : public FileNode {
 public:

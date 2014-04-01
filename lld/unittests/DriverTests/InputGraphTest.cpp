@@ -38,15 +38,6 @@ public:
   void resetNextIndex() override { FileNode::resetNextIndex(); }
 };
 
-class MyGroupNode : public Group {
-public:
-  MyGroupNode(int64_t ordinal) : Group(ordinal) {}
-
-  error_code parse(const LinkingContext &, raw_ostream &) override {
-    return error_code::success();
-  }
-};
-
 class MyExpandFileNode : public SimpleFileNode {
 public:
   MyExpandFileNode(StringRef path, int64_t ordinal)
@@ -164,7 +155,7 @@ TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
   // Create a group node with two elements
   // an file node which looks like an archive and
   // two file nodes
-  std::unique_ptr<MyGroupNode> mygroup(new MyGroupNode(1));
+  std::unique_ptr<Group> mygroup(new Group(1));
   std::unique_ptr<MyFileNode> myarchive(new MyFileNode("archive_file", 2));
   std::vector<std::unique_ptr<File> > objfiles_group;
   std::unique_ptr<SimpleFile> obj_1(new SimpleFile("objfile_1"));
@@ -253,7 +244,7 @@ TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
   // Create a group node with two elements
   // an file node which looks like an archive and
   // two file nodes
-  std::unique_ptr<MyGroupNode> mygroup(new MyGroupNode(1));
+  std::unique_ptr<Group> mygroup(new Group(1));
   std::unique_ptr<MyFileNode> myarchive(new MyFileNode("archive_file", 2));
   std::vector<std::unique_ptr<File> > objfiles_group;
   std::unique_ptr<SimpleFile> obj_1(new SimpleFile("objfile_1"));

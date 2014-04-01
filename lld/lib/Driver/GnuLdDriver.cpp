@@ -430,7 +430,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     }
 
     case OPT_start_group: {
-      std::unique_ptr<Group> group(new ELFGroup(*ctx, index++));
+      std::unique_ptr<Group> group(new Group(index++));
       groupStack.push(group.get());
       inputGraph->addInputElement(std::move(group));
       break;
