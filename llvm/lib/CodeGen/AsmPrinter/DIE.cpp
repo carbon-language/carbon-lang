@@ -562,9 +562,7 @@ void DIELocList::EmitValue(AsmPrinter *AP, dwarf::Form Form) const {
   DwarfDebug *DD = AP->getDwarfDebug();
   MCSymbol *Label = AP->GetTempSymbol("debug_loc", Index);
 
-  if (DD->useSplitDwarf())
-    AP->EmitLabelDifference(Label, DD->getDebugLocDWOSym(), 4);
-  else if (AP->MAI->doesDwarfUseRelocationsAcrossSections())
+  if (AP->MAI->doesDwarfUseRelocationsAcrossSections() && !DD->useSplitDwarf())
     AP->EmitSectionOffset(Label, DD->getDebugLocSym());
   else
     AP->EmitLabelDifference(Label, DD->getDebugLocSym(), 4);

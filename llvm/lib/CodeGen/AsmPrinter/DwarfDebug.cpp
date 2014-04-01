@@ -1893,7 +1893,7 @@ void DwarfDebug::emitSectionLabels() {
         emitSectionSym(Asm, TLOF.getDwarfStrDWOSection(), "skel_string");
     DwarfAddrSectionSym =
         emitSectionSym(Asm, TLOF.getDwarfAddrSection(), "addr_sec");
-    DwarfDebugLocDWOSectionSym =
+    DwarfDebugLocSectionSym =
         emitSectionSym(Asm, TLOF.getDwarfLocDWOSection(), "skel_loc");
   } else
     DwarfDebugLocSectionSym =
