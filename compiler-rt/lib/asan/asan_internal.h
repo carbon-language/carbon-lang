@@ -49,6 +49,10 @@
 # define ASAN_USE_PREINIT_ARRAY (SANITIZER_LINUX && !SANITIZER_ANDROID)
 #endif
 
+#ifndef ASAN_DYNAMIC
+# define ASAN_DYNAMIC 0
+#endif
+
 // All internal functions in asan reside inside the __asan namespace
 // to avoid namespace collisions with the user programs.
 // Seperate namespace also makes it simpler to distinguish the asan run-time
@@ -69,6 +73,8 @@ void ReplaceSystemMalloc();
 
 // asan_linux.cc / asan_mac.cc / asan_win.cc
 void *AsanDoesNotSupportStaticLinkage();
+void AsanCheckDynamicRTPrereqs();
+void AsanCheckIncompatibleRT();
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp);
 void AsanOnSIGSEGV(int, void *siginfo, void *context);

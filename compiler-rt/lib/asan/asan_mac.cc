@@ -199,6 +199,12 @@ void *AsanDoesNotSupportStaticLinkage() {
   return 0;
 }
 
+// No-op. Mac does not support static linkage anyway.
+void AsanCheckDynamicRTPrereqs() {}
+
+// No-op. Mac does not support static linkage anyway.
+void AsanCheckIncompatibleRT() {}
+
 bool AsanInterceptsSignal(int signum) {
   return (signum == SIGSEGV || signum == SIGBUS) &&
          common_flags()->handle_segv;

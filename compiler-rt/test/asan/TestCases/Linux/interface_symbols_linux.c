@@ -31,6 +31,6 @@
 
 // FIXME: nm -D on powerpc somewhy shows ASan interface symbols residing
 // in "initialized data section".
-// REQUIRES: x86_64-supported-target,i386-supported-target
+// REQUIRES: x86_64-supported-target,i386-supported-target,asan-static-runtime
 
 int main() { return 0; }

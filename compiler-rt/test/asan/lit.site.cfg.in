@@ -9,6 +9,8 @@ config.clang = "@ASAN_TEST_TARGET_CC@"
 config.llvm_tools_dir = "@ASAN_TEST_LLVM_TOOLS_DIR@"
 config.bits = "@ASAN_TEST_BITS@"
 config.android = "@CAN_TARGET_arm_android@"
+config.asan_dynamic = @ASAN_TEST_DYNAMIC@
+config.target_arch = "@ASAN_TEST_TARGET_ARCH@"
 
 # Load common config for all compiler-rt lit tests.
 lit_config.load_config(config, "@COMPILER_RT_BINARY_DIR@/test/lit.common.configured")

@@ -45,7 +45,7 @@ endmacro()
 #                         DEFS <compile definitions>)
 macro(add_compiler_rt_runtime name arch type)
   if(CAN_TARGET_${arch})
-    parse_arguments(LIB "SOURCES;CFLAGS;DEFS" "" ${ARGN})
+    parse_arguments(LIB "SOURCES;CFLAGS;DEFS;OUTPUT_NAME" "" ${ARGN})
     add_library(${name} ${type} ${LIB_SOURCES})
     # Setup compile flags and definitions.
     set_target_compile_flags(${name}
@@ -58,6 +58,10 @@ macro(add_compiler_rt_runtime name arch type)
     set_target_properties(${name} PROPERTIES
       ARCHIVE_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR}
       LIBRARY_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
+    if (LIB_OUTPUT_NAME)
+      set_target_properties(${name} PROPERTIES
+        OUTPUT_NAME ${LIB_OUTPUT_NAME})
+    endif()
     # Add installation command.
     install(TARGETS ${name}
       ARCHIVE DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR}

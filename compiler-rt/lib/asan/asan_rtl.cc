@@ -637,6 +637,23 @@ void AsanInitFromRtl() {
   AsanInitInternal();
 }
 
+#if ASAN_DYNAMIC
+// Initialize runtime in case it's LD_PRELOAD-ed into unsanitized executable
+// (and thus normal initializer from .preinit_array haven't run).
+
+class AsanInitializer {
+public:  // NOLINT
+  AsanInitializer() {
+    AsanCheckIncompatibleRT();
+    AsanCheckDynamicRTPrereqs();
+    if (!asan_inited)
+      __asan_init();
+  }
+};
+
+static AsanInitializer asan_initializer;
+#endif  // ASAN_DYNAMIC
+
 }  // namespace __asan
 
 // ---------------------- Interface ---------------- {{{1
@@ -688,6 +705,7 @@ void NOINLINE __asan_set_death_callback(void (*callback)(void)) {
 // Initialize as requested from instrumented application code.
 // We use this call as a trigger to wake up ASan from deactivated state.
 void __asan_init() {
+  AsanCheckIncompatibleRT();
   AsanActivate();
   AsanInitInternal();
 }
