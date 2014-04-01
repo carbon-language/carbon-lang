@@ -285,7 +285,8 @@ protected:
 /// \brief Represents Internal Input files
 class SimpleFileNode : public FileNode {
 public:
-  SimpleFileNode(StringRef path, int64_t ordinal = -1);
+  SimpleFileNode(StringRef path, int64_t ordinal = -1)
+      : FileNode(path, ordinal) {}
 
   virtual ~SimpleFileNode() {}
 

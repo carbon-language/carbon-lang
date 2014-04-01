@@ -130,11 +130,6 @@ void Group::setResolveState(uint32_t resolveState) {
   _elements[_currentElementIndex]->setResolveState(resolveState);
 }
 
-/// SimpleFileNode
-
-SimpleFileNode::SimpleFileNode(StringRef path, int64_t ordinal)
-    : FileNode(path, ordinal) {}
-
 /// Group
 
 /// \brief Return the next file that need to be processed by the resolver.
