@@ -4087,18 +4087,32 @@ def : Pat<(v2f64 (ARM64dup (f64 (load am_simdnoindex:$vaddr)))),
 def : Pat<(v1f64 (ARM64dup (f64 (load am_simdnoindex:$vaddr)))),
           (LD1Rv1d am_simdnoindex:$vaddr)>;
 
-def : Pat<(vector_insert (v16i8 VecListOne128:$Rd),
-            (i32 (extloadi8 am_simdnoindex:$vaddr)), VectorIndexB:$idx),
-          (LD1i8 VecListOne128:$Rd, VectorIndexB:$idx, am_simdnoindex:$vaddr)>;
-def : Pat<(vector_insert (v8i16 VecListOne128:$Rd),
-            (i32 (extloadi16 am_simdnoindex:$vaddr)), VectorIndexH:$idx),
-          (LD1i16 VecListOne128:$Rd, VectorIndexH:$idx, am_simdnoindex:$vaddr)>;
-def : Pat<(vector_insert (v4i32 VecListOne128:$Rd),
-            (i32 (load am_simdnoindex:$vaddr)), VectorIndexS:$idx),
-          (LD1i32 VecListOne128:$Rd, VectorIndexS:$idx, am_simdnoindex:$vaddr)>;
-def : Pat<(vector_insert (v2i64 VecListOne128:$Rd),
-            (i64 (load am_simdnoindex:$vaddr)), VectorIndexD:$idx),
-          (LD1i64 VecListOne128:$Rd, VectorIndexD:$idx, am_simdnoindex:$vaddr)>;
+class Ld1Lane128Pat<SDPatternOperator scalar_load, Operand VecIndex,
+                    ValueType VTy, ValueType STy, Instruction LD1>
+  : Pat<(vector_insert (VTy VecListOne128:$Rd),
+           (STy (scalar_load am_simdnoindex:$vaddr)), VecIndex:$idx),
+        (LD1 VecListOne128:$Rd, VecIndex:$idx, am_simdnoindex:$vaddr)>;
+
+def : Ld1Lane128Pat<extloadi8,  VectorIndexB, v16i8, i32, LD1i8>;
+def : Ld1Lane128Pat<extloadi16, VectorIndexH, v8i16, i32, LD1i16>;
+def : Ld1Lane128Pat<load,       VectorIndexS, v4i32, i32, LD1i32>;
+def : Ld1Lane128Pat<load,       VectorIndexS, v4f32, f32, LD1i32>;
+def : Ld1Lane128Pat<load,       VectorIndexD, v2i64, i64, LD1i64>;
+def : Ld1Lane128Pat<load,       VectorIndexD, v2f64, f64, LD1i64>;
+
+class Ld1Lane64Pat<SDPatternOperator scalar_load, Operand VecIndex,
+                   ValueType VTy, ValueType STy, Instruction LD1>
+  : Pat<(vector_insert (VTy VecListOne64:$Rd),
+           (STy (scalar_load am_simdnoindex:$vaddr)), VecIndex:$idx),
+        (EXTRACT_SUBREG
+            (LD1 (SUBREG_TO_REG (i32 0), VecListOne64:$Rd, dsub),
+                          VecIndex:$idx, am_simdnoindex:$vaddr),
+            dsub)>;
+
+def : Ld1Lane64Pat<extloadi8,  VectorIndexB, v8i8,  i32, LD1i8>;
+def : Ld1Lane64Pat<extloadi16, VectorIndexH, v4i16, i32, LD1i16>;
+def : Ld1Lane64Pat<load,       VectorIndexS, v2i32, i32, LD1i32>;
+def : Ld1Lane64Pat<load,       VectorIndexS, v2f32, f32, LD1i32>;
 
 
 defm LD1 : SIMDLdSt1SingleAliases<"ld1">;
@@ -4107,38 +4121,53 @@ defm LD3 : SIMDLdSt3SingleAliases<"ld3">;
 defm LD4 : SIMDLdSt4SingleAliases<"ld4">;
 
 // Stores
-let AddedComplexity = 8 in {
-defm ST1 : SIMDStSingleB<0, 0b000,       "st1", VecListOneb,
-  [(truncstorei8
-      (i32 (vector_extract (v16i8 VecListOneb:$Vt), VectorIndexB:$idx)),
-      am_simdnoindex:$vaddr)], GPR64pi1>;
-defm ST1 : SIMDStSingleH<0, 0b010, 0,    "st1", VecListOneh,
-  [(truncstorei16
-      (i32 (vector_extract (v8i16 VecListOneh:$Vt), VectorIndexH:$idx)),
-      am_simdnoindex:$vaddr)], GPR64pi2>;
-defm ST1 : SIMDStSingleS<0, 0b100, 0b00, "st1", VecListOnes,
-  [(store
-      (i32 (vector_extract (v4i32 VecListOnes:$Vt), VectorIndexS:$idx)),
-      am_simdnoindex:$vaddr)], GPR64pi4>;
-defm ST1 : SIMDStSingleD<0, 0b100, 0b01, "st1", VecListOned,
-  [(store
-      (i64 (vector_extract (v2i64 VecListOned:$Vt), VectorIndexD:$idx)),
-      am_simdnoindex:$vaddr)], GPR64pi8>;
-}
+defm ST1 : SIMDStSingleB<0, 0b000,       "st1", VecListOneb, GPR64pi1>;
+defm ST1 : SIMDStSingleH<0, 0b010, 0,    "st1", VecListOneh, GPR64pi2>;
+defm ST1 : SIMDStSingleS<0, 0b100, 0b00, "st1", VecListOnes, GPR64pi4>;
+defm ST1 : SIMDStSingleD<0, 0b100, 0b01, "st1", VecListOned, GPR64pi8>;
+
+let AddedComplexity = 8 in
+class St1Lane128Pat<SDPatternOperator scalar_store, Operand VecIndex,
+                    ValueType VTy, ValueType STy, Instruction ST1>
+  : Pat<(scalar_store
+             (STy (vector_extract (VTy VecListOne128:$Vt), VecIndex:$idx)),
+             am_simdnoindex:$vaddr),
+        (ST1 VecListOne128:$Vt, VecIndex:$idx, am_simdnoindex:$vaddr)>;
+
+def : St1Lane128Pat<truncstorei8,  VectorIndexB, v16i8, i32, ST1i8>;
+def : St1Lane128Pat<truncstorei16, VectorIndexH, v8i16, i32, ST1i16>;
+def : St1Lane128Pat<store,         VectorIndexS, v4i32, i32, ST1i32>;
+def : St1Lane128Pat<store,         VectorIndexS, v4f32, f32, ST1i32>;
+def : St1Lane128Pat<store,         VectorIndexD, v2i64, i64, ST1i64>;
+def : St1Lane128Pat<store,         VectorIndexD, v2f64, f64, ST1i64>;
+
+let AddedComplexity = 8 in
+class St1Lane64Pat<SDPatternOperator scalar_store, Operand VecIndex,
+                   ValueType VTy, ValueType STy, Instruction ST1>
+  : Pat<(scalar_store
+             (STy (vector_extract (VTy VecListOne64:$Vt), VecIndex:$idx)),
+             am_simdnoindex:$vaddr),
+        (ST1 (SUBREG_TO_REG (i32 0), VecListOne64:$Vt, dsub),
+             VecIndex:$idx, am_simdnoindex:$vaddr)>;
+
+def : St1Lane64Pat<truncstorei8,  VectorIndexB, v8i8, i32, ST1i8>;
+def : St1Lane64Pat<truncstorei16, VectorIndexH, v4i16, i32, ST1i16>;
+def : St1Lane64Pat<store,         VectorIndexS, v2i32, i32, ST1i32>;
+def : St1Lane64Pat<store,         VectorIndexS, v2f32, f32, ST1i32>;
 
 let mayStore = 1, neverHasSideEffects = 1 in {
-defm ST2 : SIMDStSingleB<1, 0b000,       "st2", VecListTwob,   [], GPR64pi2>;
-defm ST2 : SIMDStSingleH<1, 0b010, 0,    "st2", VecListTwoh,   [], GPR64pi4>;
-defm ST2 : SIMDStSingleS<1, 0b100, 0b00, "st2", VecListTwos,   [], GPR64pi8>;
-defm ST2 : SIMDStSingleD<1, 0b100, 0b01, "st2", VecListTwod,   [], GPR64pi16>;
-defm ST3 : SIMDStSingleB<0, 0b001,       "st3", VecListThreeb, [], GPR64pi3>;
-defm ST3 : SIMDStSingleH<0, 0b011, 0,    "st3", VecListThreeh, [], GPR64pi6>;
-defm ST3 : SIMDStSingleS<0, 0b101, 0b00, "st3", VecListThrees, [], GPR64pi12>;
-defm ST3 : SIMDStSingleD<0, 0b101, 0b01, "st3", VecListThreed, [], GPR64pi24>;
-defm ST4 : SIMDStSingleB<1, 0b001,       "st4", VecListFourb,  [], GPR64pi4>;
-defm ST4 : SIMDStSingleH<1, 0b011, 0,    "st4", VecListFourh,  [], GPR64pi8>;
-defm ST4 : SIMDStSingleS<1, 0b101, 0b00, "st4", VecListFours,  [], GPR64pi16>;
-defm ST4 : SIMDStSingleD<1, 0b101, 0b01, "st4", VecListFourd,  [], GPR64pi32>;
+defm ST2 : SIMDStSingleB<1, 0b000,       "st2", VecListTwob,   GPR64pi2>;
+defm ST2 : SIMDStSingleH<1, 0b010, 0,    "st2", VecListTwoh,   GPR64pi4>;
+defm ST2 : SIMDStSingleS<1, 0b100, 0b00, "st2", VecListTwos,   GPR64pi8>;
+defm ST2 : SIMDStSingleD<1, 0b100, 0b01, "st2", VecListTwod,   GPR64pi16>;
+defm ST3 : SIMDStSingleB<0, 0b001,       "st3", VecListThreeb, GPR64pi3>;
+defm ST3 : SIMDStSingleH<0, 0b011, 0,    "st3", VecListThreeh, GPR64pi6>;
+defm ST3 : SIMDStSingleS<0, 0b101, 0b00, "st3", VecListThrees, GPR64pi12>;
+defm ST3 : SIMDStSingleD<0, 0b101, 0b01, "st3", VecListThreed, GPR64pi24>;
+defm ST4 : SIMDStSingleB<1, 0b001,       "st4", VecListFourb,  GPR64pi4>;
+defm ST4 : SIMDStSingleH<1, 0b011, 0,    "st4", VecListFourh,  GPR64pi8>;
+defm ST4 : SIMDStSingleS<1, 0b101, 0b00, "st4", VecListFours,  GPR64pi16>;
+defm ST4 : SIMDStSingleD<1, 0b101, 0b01, "st4", VecListFourd,  GPR64pi32>;
 }
 
 defm ST1 : SIMDLdSt1SingleAliases<"st1">;

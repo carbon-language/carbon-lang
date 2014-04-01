@@ -7971,8 +7971,7 @@ multiclass SIMDLdSingleSTied<bit R, bits<3> opcode, bits<2> size,string asm,
 }
 let mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
 multiclass SIMDLdSingleDTied<bit R, bits<3> opcode, bits<2> size, string asm,
-                         RegisterOperand listtype,
-                         RegisterOperand GPR64pi> {
+                         RegisterOperand listtype, RegisterOperand GPR64pi> {
   def i64 : SIMDLdStSingleDTied<1, R, opcode, size, asm,
                             (outs listtype:$dst),
                             (ins listtype:$Vt, VectorIndexD:$idx,
@@ -7985,12 +7984,10 @@ multiclass SIMDLdSingleDTied<bit R, bits<3> opcode, bits<2> size, string asm,
 }
 let mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
 multiclass SIMDStSingleB<bit R, bits<3> opcode, string asm,
-                         RegisterOperand listtype, list<dag> pattern,
-                         RegisterOperand GPR64pi> {
+                         RegisterOperand listtype, RegisterOperand GPR64pi> {
   def i8 : SIMDLdStSingleB<0, R, opcode, asm,
                            (outs), (ins listtype:$Vt, VectorIndexB:$idx,
-                                        am_simdnoindex:$vaddr),
-                           pattern>;
+                                        am_simdnoindex:$vaddr), []>;
 
   def i8_POST : SIMDLdStSingleBPost<0, R, opcode, asm,
                             (outs), (ins listtype:$Vt, VectorIndexB:$idx,
@@ -7998,12 +7995,10 @@ multiclass SIMDStSingleB<bit R, bits<3> opcode, string asm,
 }
 let mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
 multiclass SIMDStSingleH<bit R, bits<3> opcode, bit size, string asm,
-                         RegisterOperand listtype, list<dag> pattern,
-                         RegisterOperand GPR64pi> {
+                         RegisterOperand listtype, RegisterOperand GPR64pi> {
   def i16 : SIMDLdStSingleH<0, R, opcode, size, asm,
                             (outs), (ins listtype:$Vt, VectorIndexH:$idx,
-                                         am_simdnoindex:$vaddr),
-                        pattern>;
+                                         am_simdnoindex:$vaddr), []>;
 
   def i16_POST : SIMDLdStSingleHPost<0, R, opcode, size, asm,
                             (outs), (ins listtype:$Vt, VectorIndexH:$idx,
@@ -8011,12 +8006,10 @@ multiclass SIMDStSingleH<bit R, bits<3> opcode, bit size, string asm,
 }
 let mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
 multiclass SIMDStSingleS<bit R, bits<3> opcode, bits<2> size,string asm,
-                         RegisterOperand listtype, list<dag> pattern,
-                         RegisterOperand GPR64pi> {
+                         RegisterOperand listtype, RegisterOperand GPR64pi> {
   def i32 : SIMDLdStSingleS<0, R, opcode, size, asm,
                             (outs), (ins listtype:$Vt, VectorIndexS:$idx,
-                                         am_simdnoindex:$vaddr),
-                            pattern>;
+                                         am_simdnoindex:$vaddr), []>;
 
   def i32_POST : SIMDLdStSingleSPost<0, R, opcode, size, asm,
                             (outs), (ins listtype:$Vt, VectorIndexS:$idx,
@@ -8024,11 +8017,10 @@ multiclass SIMDStSingleS<bit R, bits<3> opcode, bits<2> size,string asm,
 }
 let mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
 multiclass SIMDStSingleD<bit R, bits<3> opcode, bits<2> size, string asm,
-                         RegisterOperand listtype, list<dag> pattern,
-                         RegisterOperand GPR64pi> {
+                         RegisterOperand listtype, RegisterOperand GPR64pi> {
   def i64 : SIMDLdStSingleD<0, R, opcode, size, asm,
                             (outs), (ins listtype:$Vt, VectorIndexD:$idx,
-                                         am_simdnoindex:$vaddr), pattern>;
+                                         am_simdnoindex:$vaddr), []>;
 
   def i64_POST : SIMDLdStSingleDPost<0, R, opcode, size, asm,
                             (outs), (ins listtype:$Vt, VectorIndexD:$idx,

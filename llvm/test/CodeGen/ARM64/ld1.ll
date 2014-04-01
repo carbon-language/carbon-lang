@@ -5,7 +5,7 @@
 %struct.__neon_int8x8x4_t = type { <8 x i8>,  <8 x i8>, <8 x i8>,  <8 x i8> }
 
 define %struct.__neon_int8x8x2_t @ld2_8b(i8* %A) nounwind {
-; CHECK: ld2_8b
+; CHECK-LABEL: ld2_8b
 ; Make sure we are loading into the results defined by the ABI (i.e., v0, v1)
 ; and from the argument of the function also defined by ABI (i.e., x0)
 ; CHECK ld2.8b { v0, v1 }, [x0]
@@ -15,7 +15,7 @@ define %struct.__neon_int8x8x2_t @ld2_8b(i8* %A) nounwind {
 }
 
 define %struct.__neon_int8x8x3_t @ld3_8b(i8* %A) nounwind {
-; CHECK: ld3_8b
+; CHECK-LABEL: ld3_8b
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld3.8b { v0, v1, v2 }, [x0]
 ; CHECK-NEXT ret
@@ -24,7 +24,7 @@ define %struct.__neon_int8x8x3_t @ld3_8b(i8* %A) nounwind {
 }
 
 define %struct.__neon_int8x8x4_t @ld4_8b(i8* %A) nounwind {
-; CHECK: ld4_8b
+; CHECK-LABEL: ld4_8b
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld4.8b { v0, v1, v2, v3 }, [x0]
 ; CHECK-NEXT ret
@@ -41,7 +41,7 @@ declare %struct.__neon_int8x8x4_t @llvm.arm64.neon.ld4.v8i8.p0i8(i8*) nounwind r
 %struct.__neon_int8x16x4_t = type { <16 x i8>,  <16 x i8>, <16 x i8>,  <16 x i8> }
 
 define %struct.__neon_int8x16x2_t @ld2_16b(i8* %A) nounwind {
-; CHECK: ld2_16b
+; CHECK-LABEL: ld2_16b
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld2.16b { v0, v1 }, [x0]
 ; CHECK-NEXT ret
@@ -50,7 +50,7 @@ define %struct.__neon_int8x16x2_t @ld2_16b(i8* %A) nounwind {
 }
 
 define %struct.__neon_int8x16x3_t @ld3_16b(i8* %A) nounwind {
-; CHECK: ld3_16b
+; CHECK-LABEL: ld3_16b
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld3.16b { v0, v1, v2 }, [x0]
 ; CHECK-NEXT ret
@@ -59,7 +59,7 @@ define %struct.__neon_int8x16x3_t @ld3_16b(i8* %A) nounwind {
 }
 
 define %struct.__neon_int8x16x4_t @ld4_16b(i8* %A) nounwind {
-; CHECK: ld4_16b
+; CHECK-LABEL: ld4_16b
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld4.16b { v0, v1, v2, v3 }, [x0]
 ; CHECK-NEXT ret
@@ -76,7 +76,7 @@ declare %struct.__neon_int8x16x4_t @llvm.arm64.neon.ld4.v16i8.p0i8(i8*) nounwind
 %struct.__neon_int16x4x4_t = type { <4 x i16>,  <4 x i16>, <4 x i16>,  <4 x i16> }
 
 define %struct.__neon_int16x4x2_t @ld2_4h(i16* %A) nounwind {
-; CHECK: ld2_4h
+; CHECK-LABEL: ld2_4h
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld2.4h { v0, v1 }, [x0]
 ; CHECK-NEXT ret
@@ -85,7 +85,7 @@ define %struct.__neon_int16x4x2_t @ld2_4h(i16* %A) nounwind {
 }
 
 define %struct.__neon_int16x4x3_t @ld3_4h(i16* %A) nounwind {
-; CHECK: ld3_4h
+; CHECK-LABEL: ld3_4h
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld3.4h { v0, v1, v2 }, [x0]
 ; CHECK-NEXT ret
@@ -94,7 +94,7 @@ define %struct.__neon_int16x4x3_t @ld3_4h(i16* %A) nounwind {
 }
 
 define %struct.__neon_int16x4x4_t @ld4_4h(i16* %A) nounwind {
-; CHECK: ld4_4h
+; CHECK-LABEL: ld4_4h
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld4.4h { v0, v1, v2, v3 }, [x0]
 ; CHECK-NEXT ret
@@ -111,7 +111,7 @@ declare %struct.__neon_int16x4x4_t @llvm.arm64.neon.ld4.v4i16.p0i16(i16*) nounwi
 %struct.__neon_int16x8x4_t = type { <8 x i16>,  <8 x i16>, <8 x i16>,  <8 x i16> }
 
 define %struct.__neon_int16x8x2_t @ld2_8h(i16* %A) nounwind {
-; CHECK: ld2_8h
+; CHECK-LABEL: ld2_8h
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld2.8h { v0, v1 }, [x0]
 ; CHECK-NEXT ret
@@ -120,7 +120,7 @@ define %struct.__neon_int16x8x2_t @ld2_8h(i16* %A) nounwind {
 }
 
 define %struct.__neon_int16x8x3_t @ld3_8h(i16* %A) nounwind {
-; CHECK: ld3_8h
+; CHECK-LABEL: ld3_8h
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld3.8h { v0, v1, v2 }, [x0]
 ; CHECK-NEXT ret
@@ -129,7 +129,7 @@ define %struct.__neon_int16x8x3_t @ld3_8h(i16* %A) nounwind {
 }
 
 define %struct.__neon_int16x8x4_t @ld4_8h(i16* %A) nounwind {
-; CHECK: ld4_8h
+; CHECK-LABEL: ld4_8h
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld4.8h { v0, v1, v2, v3 }, [x0]
 ; CHECK-NEXT ret
@@ -146,7 +146,7 @@ declare %struct.__neon_int16x8x4_t @llvm.arm64.neon.ld4.v8i16.p0i16(i16*) nounwi
 %struct.__neon_int32x2x4_t = type { <2 x i32>,  <2 x i32>, <2 x i32>,  <2 x i32> }
 
 define %struct.__neon_int32x2x2_t @ld2_2s(i32* %A) nounwind {
-; CHECK: ld2_2s
+; CHECK-LABEL: ld2_2s
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld2.2s { v0, v1 }, [x0]
 ; CHECK-NEXT ret
@@ -155,7 +155,7 @@ define %struct.__neon_int32x2x2_t @ld2_2s(i32* %A) nounwind {
 }
 
 define %struct.__neon_int32x2x3_t @ld3_2s(i32* %A) nounwind {
-; CHECK: ld3_2s
+; CHECK-LABEL: ld3_2s
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld3.2s { v0, v1, v2 }, [x0]
 ; CHECK-NEXT ret
@@ -164,7 +164,7 @@ define %struct.__neon_int32x2x3_t @ld3_2s(i32* %A) nounwind {
 }
 
 define %struct.__neon_int32x2x4_t @ld4_2s(i32* %A) nounwind {
-; CHECK: ld4_2s
+; CHECK-LABEL: ld4_2s
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld4.2s { v0, v1, v2, v3 }, [x0]
 ; CHECK-NEXT ret
@@ -181,7 +181,7 @@ declare %struct.__neon_int32x2x4_t @llvm.arm64.neon.ld4.v2i32.p0i32(i32*) nounwi
 %struct.__neon_int32x4x4_t = type { <4 x i32>,  <4 x i32>, <4 x i32>,  <4 x i32> }
 
 define %struct.__neon_int32x4x2_t @ld2_4s(i32* %A) nounwind {
-; CHECK: ld2_4s
+; CHECK-LABEL: ld2_4s
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld2.4s { v0, v1 }, [x0]
 ; CHECK-NEXT ret
@@ -190,7 +190,7 @@ define %struct.__neon_int32x4x2_t @ld2_4s(i32* %A) nounwind {
 }
 
 define %struct.__neon_int32x4x3_t @ld3_4s(i32* %A) nounwind {
-; CHECK: ld3_4s
+; CHECK-LABEL: ld3_4s
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld3.4s { v0, v1, v2 }, [x0]
 ; CHECK-NEXT ret
@@ -199,7 +199,7 @@ define %struct.__neon_int32x4x3_t @ld3_4s(i32* %A) nounwind {
 }
 
 define %struct.__neon_int32x4x4_t @ld4_4s(i32* %A) nounwind {
-; CHECK: ld4_4s
+; CHECK-LABEL: ld4_4s
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld4.4s { v0, v1, v2, v3 }, [x0]
 ; CHECK-NEXT ret
@@ -216,7 +216,7 @@ declare %struct.__neon_int32x4x4_t @llvm.arm64.neon.ld4.v4i32.p0i32(i32*) nounwi
 %struct.__neon_int64x2x4_t = type { <2 x i64>,  <2 x i64>, <2 x i64>,  <2 x i64> }
 
 define %struct.__neon_int64x2x2_t @ld2_2d(i64* %A) nounwind {
-; CHECK: ld2_2d
+; CHECK-LABEL: ld2_2d
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld2.2d { v0, v1 }, [x0]
 ; CHECK-NEXT ret
@@ -225,7 +225,7 @@ define %struct.__neon_int64x2x2_t @ld2_2d(i64* %A) nounwind {
 }
 
 define %struct.__neon_int64x2x3_t @ld3_2d(i64* %A) nounwind {
-; CHECK: ld3_2d
+; CHECK-LABEL: ld3_2d
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld3.2d { v0, v1, v2 }, [x0]
 ; CHECK-NEXT ret
@@ -234,7 +234,7 @@ define %struct.__neon_int64x2x3_t @ld3_2d(i64* %A) nounwind {
 }
 
 define %struct.__neon_int64x2x4_t @ld4_2d(i64* %A) nounwind {
-; CHECK: ld4_2d
+; CHECK-LABEL: ld4_2d
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld4.2d { v0, v1, v2, v3 }, [x0]
 ; CHECK-NEXT ret
@@ -252,7 +252,7 @@ declare %struct.__neon_int64x2x4_t @llvm.arm64.neon.ld4.v2i64.p0i64(i64*) nounwi
 
 
 define %struct.__neon_int64x1x2_t @ld2_1di64(i64* %A) nounwind {
-; CHECK: ld2_1di64
+; CHECK-LABEL: ld2_1di64
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld1.1d { v0, v1 }, [x0]
 ; CHECK-NEXT ret
@@ -261,7 +261,7 @@ define %struct.__neon_int64x1x2_t @ld2_1di64(i64* %A) nounwind {
 }
 
 define %struct.__neon_int64x1x3_t @ld3_1di64(i64* %A) nounwind {
-; CHECK: ld3_1di64
+; CHECK-LABEL: ld3_1di64
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld1.1d { v0, v1, v2 }, [x0]
 ; CHECK-NEXT ret
@@ -270,7 +270,7 @@ define %struct.__neon_int64x1x3_t @ld3_1di64(i64* %A) nounwind {
 }
 
 define %struct.__neon_int64x1x4_t @ld4_1di64(i64* %A) nounwind {
-; CHECK: ld4_1di64
+; CHECK-LABEL: ld4_1di64
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld1.1d { v0, v1, v2, v3 }, [x0]
 ; CHECK-NEXT ret
@@ -289,7 +289,7 @@ declare %struct.__neon_int64x1x4_t @llvm.arm64.neon.ld4.v1i64.p0i64(i64*) nounwi
 
 
 define %struct.__neon_float64x1x2_t @ld2_1df64(double* %A) nounwind {
-; CHECK: ld2_1df64
+; CHECK-LABEL: ld2_1df64
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld1.1d { v0, v1 }, [x0]
 ; CHECK-NEXT ret
@@ -298,7 +298,7 @@ define %struct.__neon_float64x1x2_t @ld2_1df64(double* %A) nounwind {
 }
 
 define %struct.__neon_float64x1x3_t @ld3_1df64(double* %A) nounwind {
-; CHECK: ld3_1df64
+; CHECK-LABEL: ld3_1df64
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld1.1d { v0, v1, v2 }, [x0]
 ; CHECK-NEXT ret
@@ -307,7 +307,7 @@ define %struct.__neon_float64x1x3_t @ld3_1df64(double* %A) nounwind {
 }
 
 define %struct.__neon_float64x1x4_t @ld4_1df64(double* %A) nounwind {
-; CHECK: ld4_1df64
+; CHECK-LABEL: ld4_1df64
 ; Make sure we are using the operands defined by the ABI
 ; CHECK ld1.1d { v0, v1, v2, v3 }, [x0]
 ; CHECK-NEXT ret
@@ -800,7 +800,7 @@ declare %struct.__neon_int64x2x3_t @llvm.arm64.neon.ld3r.v2i64.p0i64(i64*) nounw
 declare %struct.__neon_int64x2x4_t @llvm.arm64.neon.ld4r.v2i64.p0i64(i64*) nounwind readonly
 
 define <16 x i8> @ld1_16b(<16 x i8> %V, i8* %bar) {
-; CHECK: ld1_16b
+; CHECK-LABEL: ld1_16b
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.b { v0 }[0], [x0]
 ; CHECK-NEXT ret
@@ -810,7 +810,7 @@ define <16 x i8> @ld1_16b(<16 x i8> %V, i8* %bar) {
 }
 
 define <8 x i16> @ld1_8h(<8 x i16> %V, i16* %bar) {
-; CHECK: ld1_8h
+; CHECK-LABEL: ld1_8h
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.h { v0 }[0], [x0]
 ; CHECK-NEXT ret
@@ -820,7 +820,7 @@ define <8 x i16> @ld1_8h(<8 x i16> %V, i16* %bar) {
 }
 
 define <4 x i32> @ld1_4s(<4 x i32> %V, i32* %bar) {
-; CHECK: ld1_4s
+; CHECK-LABEL: ld1_4s
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.s { v0 }[0], [x0]
 ; CHECK-NEXT ret
@@ -829,8 +829,18 @@ define <4 x i32> @ld1_4s(<4 x i32> %V, i32* %bar) {
   ret <4 x i32> %tmp2
 }
 
+define <4 x float> @ld1_4s_float(<4 x float> %V, float* %bar) {
+; CHECK-LABEL: ld1_4s_float:
+; Make sure we are using the operands defined by the ABI
+; CHECK: ld1.s { v0 }[0], [x0]
+; CHECK-NEXT ret
+  %tmp1 = load float* %bar
+  %tmp2 = insertelement <4 x float> %V, float %tmp1, i32 0
+  ret <4 x float> %tmp2
+}
+
 define <2 x i64> @ld1_2d(<2 x i64> %V, i64* %bar) {
-; CHECK: ld1_2d
+; CHECK-LABEL: ld1_2d
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.d { v0 }[0], [x0]
 ; CHECK-NEXT ret
@@ -839,13 +849,63 @@ define <2 x i64> @ld1_2d(<2 x i64> %V, i64* %bar) {
   ret <2 x i64> %tmp2
 }
 
+define <2 x double> @ld1_2d_double(<2 x double> %V, double* %bar) {
+; CHECK-LABEL: ld1_2d_double:
+; Make sure we are using the operands defined by the ABI
+; CHECK: ld1.d { v0 }[0], [x0]
+; CHECK-NEXT ret
+  %tmp1 = load double* %bar
+  %tmp2 = insertelement <2 x double> %V, double %tmp1, i32 0
+  ret <2 x double> %tmp2
+}
+
 define <1 x i64> @ld1_1d(<1 x i64>* %p) {
-; CHECK: ld1_1d
+; CHECK-LABEL: ld1_1d
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ldr [[REG:d[0-9]+]], [x0]
 ; CHECK-NEXT: ret
   %tmp = load <1 x i64>* %p, align 8
   ret <1 x i64> %tmp
+}
+
+define <8 x i8> @ld1_8b(<8 x i8> %V, i8* %bar) {
+; CHECK-LABEL: ld1_8b
+; Make sure we are using the operands defined by the ABI
+; CHECK: ld1.b { v0 }[0], [x0]
+; CHECK-NEXT ret
+  %tmp1 = load i8* %bar
+  %tmp2 = insertelement <8 x i8> %V, i8 %tmp1, i32 0
+  ret <8 x i8> %tmp2
+}
+
+define <4 x i16> @ld1_4h(<4 x i16> %V, i16* %bar) {
+; CHECK-LABEL: ld1_4h
+; Make sure we are using the operands defined by the ABI
+; CHECK: ld1.h { v0 }[0], [x0]
+; CHECK-NEXT ret
+  %tmp1 = load i16* %bar
+  %tmp2 = insertelement <4 x i16> %V, i16 %tmp1, i32 0
+  ret <4 x i16> %tmp2
+}
+
+define <2 x i32> @ld1_2s(<2 x i32> %V, i32* %bar) {
+; CHECK-LABEL: ld1_2s:
+; Make sure we are using the operands defined by the ABI
+; CHECK: ld1.s { v0 }[0], [x0]
+; CHECK-NEXT ret
+  %tmp1 = load i32* %bar
+  %tmp2 = insertelement <2 x i32> %V, i32 %tmp1, i32 0
+  ret <2 x i32> %tmp2
+}
+
+define <2 x float> @ld1_2s_float(<2 x float> %V, float* %bar) {
+; CHECK-LABEL: ld1_2s_float:
+; Make sure we are using the operands defined by the ABI
+; CHECK: ld1.s { v0 }[0], [x0]
+; CHECK-NEXT ret
+  %tmp1 = load float* %bar
+  %tmp2 = insertelement <2 x float> %V, float %tmp1, i32 0
+  ret <2 x float> %tmp2
 }
 
 
@@ -882,7 +942,7 @@ entry:
 ; Tests for rdar://11947069: vld1_dup_* and vld1q_dup_* code gen is suboptimal
 define <4 x float> @ld1r_4s_float(float* nocapture %x) {
 entry:
-; CHECK: ld1r_4s_float
+; CHECK-LABEL: ld1r_4s_float
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.4s { v0 }, [x0]
 ; CHECK-NEXT ret
@@ -896,7 +956,7 @@ entry:
 
 define <2 x float> @ld1r_2s_float(float* nocapture %x) {
 entry:
-; CHECK: ld1r_2s_float
+; CHECK-LABEL: ld1r_2s_float
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.2s { v0 }, [x0]
 ; CHECK-NEXT ret
@@ -908,7 +968,7 @@ entry:
 
 define <2 x double> @ld1r_2d_double(double* nocapture %x) {
 entry:
-; CHECK: ld1r_2d_double
+; CHECK-LABEL: ld1r_2d_double
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.2d { v0 }, [x0]
 ; CHECK-NEXT ret
@@ -920,7 +980,7 @@ entry:
 
 define <1 x double> @ld1r_1d_double(double* nocapture %x) {
 entry:
-; CHECK: ld1r_1d_double
+; CHECK-LABEL: ld1r_1d_double
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ldr d0, [x0]
 ; CHECK-NEXT ret
@@ -931,7 +991,7 @@ entry:
 
 define <4 x float> @ld1r_4s_float_shuff(float* nocapture %x) {
 entry:
-; CHECK: ld1r_4s_float_shuff
+; CHECK-LABEL: ld1r_4s_float_shuff
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.4s { v0 }, [x0]
 ; CHECK-NEXT ret
@@ -943,7 +1003,7 @@ entry:
 
 define <2 x float> @ld1r_2s_float_shuff(float* nocapture %x) {
 entry:
-; CHECK: ld1r_2s_float_shuff
+; CHECK-LABEL: ld1r_2s_float_shuff
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.2s { v0 }, [x0]
 ; CHECK-NEXT ret
@@ -955,7 +1015,7 @@ entry:
 
 define <2 x double> @ld1r_2d_double_shuff(double* nocapture %x) {
 entry:
-; CHECK: ld1r_2d_double_shuff
+; CHECK-LABEL: ld1r_2d_double_shuff
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.2d { v0 }, [x0]
 ; CHECK-NEXT ret
@@ -967,7 +1027,7 @@ entry:
 
 define <1 x double> @ld1r_1d_double_shuff(double* nocapture %x) {
 entry:
-; CHECK: ld1r_1d_double_shuff
+; CHECK-LABEL: ld1r_1d_double_shuff
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ldr d0, [x0]
 ; CHECK-NEXT ret
