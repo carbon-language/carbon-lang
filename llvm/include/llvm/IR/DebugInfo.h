@@ -783,7 +783,7 @@ class DIImportedEntity : public DIDescriptor {
 public:
   explicit DIImportedEntity(const MDNode *N) : DIDescriptor(N) {}
   DIScope getContext() const { return getFieldAs<DIScope>(1); }
-  DIDescriptor getEntity() const { return getFieldAs<DIDescriptor>(2); }
+  DIScopeRef getEntity() const { return getFieldAs<DIScopeRef>(2); }
   unsigned getLineNumber() const { return getUnsignedField(3); }
   StringRef getName() const { return getStringField(4); }
   bool Verify() const;

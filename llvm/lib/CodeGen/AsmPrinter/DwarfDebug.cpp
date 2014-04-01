@@ -794,7 +794,7 @@ void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit *TheCU,
   DIE *IMDie = new DIE(Module.getTag());
   TheCU->insertDIE(Module, IMDie);
   DIE *EntityDie;
-  DIDescriptor Entity = Module.getEntity();
+  DIDescriptor Entity = resolve(Module.getEntity());
   if (Entity.isNameSpace())
     EntityDie = TheCU->getOrCreateNameSpace(DINameSpace(Entity));
   else if (Entity.isSubprogram())

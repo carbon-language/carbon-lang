@@ -430,7 +430,7 @@ static bool fieldIsTypeRef(const MDNode *DbgNode, unsigned Elt) {
 static bool isScopeRef(const Value *Val) {
   return !Val ||
          (isa<MDString>(Val) && !cast<MDString>(Val)->getString().empty()) ||
-         (isa<MDNode>(Val) && DIScope(cast<MDNode>(Val)).isScope());
+         isa<MDNode>(Val);
 }
 
 /// Check if a field at position Elt of a MDNode can be a ScopeRef.
@@ -1016,7 +1016,7 @@ void DebugInfoFinder::processModule(const Module &M) {
       DIArray Imports = CU.getImportedEntities();
       for (unsigned i = 0, e = Imports.getNumElements(); i != e; ++i) {
         DIImportedEntity Import = DIImportedEntity(Imports.getElement(i));
-        DIDescriptor Entity = Import.getEntity();
+        DIDescriptor Entity = Import.getEntity().resolve(TypeIdentifierMap);
         if (Entity.isType())
           processType(DIType(Entity));
         else if (Entity.isSubprogram())

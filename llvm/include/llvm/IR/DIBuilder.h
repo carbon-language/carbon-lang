@@ -663,7 +663,7 @@ namespace llvm {
     ///             variable
     /// @param Line Line number
     DIImportedEntity createImportedDeclaration(DIScope Context,
-                                               DIDescriptor Decl,
+                                               DIScope Decl,
                                                unsigned Line);
 
     /// insertDeclare - Insert a new llvm.dbg.declare intrinsic call.

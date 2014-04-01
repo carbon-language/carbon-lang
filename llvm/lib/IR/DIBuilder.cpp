@@ -190,12 +190,12 @@ DIImportedEntity DIBuilder::createImportedModule(DIScope Context,
 }
 
 DIImportedEntity DIBuilder::createImportedDeclaration(DIScope Context,
-                                                      DIDescriptor Decl,
+                                                      DIScope Decl,
                                                       unsigned Line) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_imported_declaration),
     Context,
-    Decl,
+    Decl.getRef(),
     ConstantInt::get(Type::getInt32Ty(VMContext), Line),
   };
   DIImportedEntity M(MDNode::get(VMContext, Elts));
