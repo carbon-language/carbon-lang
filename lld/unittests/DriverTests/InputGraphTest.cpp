@@ -31,19 +31,11 @@ public:
   bool validateImpl(raw_ostream &) override { return true; }
 };
 
-class MyFileNode : public FileNode {
+class MyFileNode : public SimpleFileNode {
 public:
-  MyFileNode(StringRef path, int64_t ordinal) : FileNode(path, ordinal) {}
+  MyFileNode(StringRef path, int64_t ordinal) : SimpleFileNode(path, ordinal) {}
 
-  error_code parse(const LinkingContext &, raw_ostream &) override {
-    return error_code::success();
-  }
-
-  ErrorOr<File &> getNextFile() override {
-    if (_nextFileIndex == _files.size())
-      return make_error_code(InputGraphError::no_more_files);
-    return *_files[_nextFileIndex++];
-  }
+  void resetNextIndex() override { FileNode::resetNextIndex(); }
 };
 
 class MyGroupNode : public Group {
@@ -55,20 +47,10 @@ public:
   }
 };
 
-class MyExpandFileNode : public FileNode {
+class MyExpandFileNode : public SimpleFileNode {
 public:
   MyExpandFileNode(StringRef path, int64_t ordinal)
-      : FileNode(path, ordinal) {}
-
-  error_code parse(const LinkingContext &, raw_ostream &) override {
-    return error_code::success();
-  }
-
-  ErrorOr<File &> getNextFile() override {
-    if (_nextFileIndex == _files.size())
-      return make_error_code(InputGraphError::no_more_files);
-    return *_files[_nextFileIndex++];
-  }
+      : SimpleFileNode(path, ordinal) {}
 
   /// \brief How do we want to expand the current node ?
   bool shouldExpand() const override { return true; }
