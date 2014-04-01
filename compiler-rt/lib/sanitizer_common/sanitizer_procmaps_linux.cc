@@ -16,16 +16,43 @@
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
 
+#if SANITIZER_FREEBSD
+#include <unistd.h>
+#include <sys/sysctl.h>
+#include <sys/user.h>
+#endif
+
 namespace __sanitizer {
 
 // Linker initialized.
 ProcSelfMapsBuff MemoryMappingLayout::cached_proc_self_maps_;
 StaticSpinMutex MemoryMappingLayout::cache_lock_;  // Linker initialized.
 
+static void ReadProcMaps(ProcSelfMapsBuff *proc_maps) {
+#if SANITIZER_FREEBSD
+  const int Mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_VMMAP, getpid() };
+  size_t Size = 0;
+  int Err = sysctl(Mib, 4, NULL, &Size, NULL, 0);
+  CHECK_EQ(Err, 0);
+  CHECK_GT(Size, 0);
+
+  size_t MmapedSize = Size * 4 / 3;
+  void *VmMap = MmapOrDie(MmapedSize, "ReadProcMaps()");
+  Size = MmapedSize;
+  Err = sysctl(Mib, 4, VmMap, &Size, NULL, 0);
+  CHECK_EQ(Err, 0);
+
+  proc_maps->data = (char*)VmMap;
+  proc_maps->mmaped_size = MmapedSize;
+  proc_maps->len = Size;
+#else
+  proc_maps->len = ReadFileToBuffer("/proc/self/maps", &proc_maps->data,
+                                    &proc_maps->mmaped_size, 1 << 26);
+#endif
+}
+
 MemoryMappingLayout::MemoryMappingLayout(bool cache_enabled) {
-  proc_self_maps_.len =
-      ReadFileToBuffer("/proc/self/maps", &proc_self_maps_.data,
-                       &proc_self_maps_.mmaped_size, 1 << 26);
+  ReadProcMaps(&proc_self_maps_);
   if (cache_enabled) {
     if (proc_self_maps_.mmaped_size == 0) {
       LoadFromCache();
@@ -58,9 +85,7 @@ void MemoryMappingLayout::CacheMemoryMappings() {
   // Don't invalidate the cache if the mappings are unavailable.
   ProcSelfMapsBuff old_proc_self_maps;
   old_proc_self_maps = cached_proc_self_maps_;
-  cached_proc_self_maps_.len =
-      ReadFileToBuffer("/proc/self/maps", &cached_proc_self_maps_.data,
-                       &cached_proc_self_maps_.mmaped_size, 1 << 26);
+  ReadProcMaps(&cached_proc_self_maps_);
   if (cached_proc_self_maps_.mmaped_size == 0) {
     cached_proc_self_maps_ = old_proc_self_maps;
   } else {
@@ -78,6 +103,7 @@ void MemoryMappingLayout::LoadFromCache() {
   }
 }
 
+#if !SANITIZER_FREEBSD
 // Parse a hex value in str and update str.
 static uptr ParseHex(char **str) {
   uptr x = 0;
@@ -102,6 +128,7 @@ static uptr ParseHex(char **str) {
 static bool IsOneOf(char c, char c1, char c2) {
   return c == c1 || c == c2;
 }
+#endif
 
 static bool IsDecimal(char c) {
   return c >= '0' && c <= '9';
@@ -139,6 +166,30 @@ bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
   if (!start) start = &dummy;
   if (!end) end = &dummy;
   if (!offset) offset = &dummy;
+  if (!protection) protection = &dummy;
+#if SANITIZER_FREEBSD
+  struct kinfo_vmentry *VmEntry = (struct kinfo_vmentry*)current_;
+
+  *start = (uptr)VmEntry->kve_start;
+  *end = (uptr)VmEntry->kve_end;
+  *offset = (uptr)VmEntry->kve_offset;
+
+  *protection = 0;
+  if ((VmEntry->kve_protection & KVME_PROT_READ) != 0)
+    *protection |= kProtectionRead;
+  if ((VmEntry->kve_protection & KVME_PROT_WRITE) != 0)
+    *protection |= kProtectionWrite;
+  if ((VmEntry->kve_protection & KVME_PROT_EXEC) != 0)
+    *protection |= kProtectionExecute;
+
+  if (filename != NULL && filename_size > 0) {
+    internal_snprintf(filename,
+                      Min(filename_size, (uptr)PATH_MAX),
+                      "%s", VmEntry->kve_path);
+  }
+
+  current_ += VmEntry->kve_structsize;
+#else  // !SANITIZER_FREEBSD
   char *next_line = (char*)internal_memchr(current_, '\n', last - current_);
   if (next_line == 0)
     next_line = last;
@@ -147,22 +198,19 @@ bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
   CHECK_EQ(*current_++, '-');
   *end = ParseHex(&current_);
   CHECK_EQ(*current_++, ' ');
-  uptr local_protection = 0;
   CHECK(IsOneOf(*current_, '-', 'r'));
+  *protection = 0;
   if (*current_++ == 'r')
-    local_protection |= kProtectionRead;
+    *protection |= kProtectionRead;
   CHECK(IsOneOf(*current_, '-', 'w'));
   if (*current_++ == 'w')
-    local_protection |= kProtectionWrite;
+    *protection |= kProtectionWrite;
   CHECK(IsOneOf(*current_, '-', 'x'));
   if (*current_++ == 'x')
-    local_protection |= kProtectionExecute;
+    *protection |= kProtectionExecute;
   CHECK(IsOneOf(*current_, 's', 'p'));
   if (*current_++ == 's')
-    local_protection |= kProtectionShared;
-  if (protection) {
-    *protection = local_protection;
-  }
+    *protection |= kProtectionShared;
   CHECK_EQ(*current_++, ' ');
   *offset = ParseHex(&current_);
   CHECK_EQ(*current_++, ' ');
@@ -188,6 +236,7 @@ bool MemoryMappingLayout::Next(uptr *start, uptr *end, uptr *offset,
   if (filename && i < filename_size)
     filename[i] = 0;
   current_ = next_line + 1;
+#endif  // !SANITIZER_FREEBSD
   return true;
 }
 
