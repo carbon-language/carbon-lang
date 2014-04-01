@@ -256,7 +256,7 @@ class DynamicValueTestCase(TestBase):
 #        self.runCmd("frame variable")
         b = self.frame().FindVariable("b").GetDynamicValue(lldb.eDynamicCanRunTarget)
         self.assertTrue(b.GetNumChildren() == 0, "b has 0 children")
-        self.runCmd("next")
+        self.runCmd("continue")
 #        self.runCmd("frame select 0")
 #        self.runCmd("frame variable")
         self.assertTrue(b.GetNumChildren() == 0, "b still has 0 children")
