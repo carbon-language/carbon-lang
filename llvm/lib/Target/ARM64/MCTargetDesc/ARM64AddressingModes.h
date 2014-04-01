@@ -612,16 +612,16 @@ static inline bool isAdvSIMDModImmType10(uint64_t Imm) {
 }
 
 static inline uint8_t encodeAdvSIMDModImmType10(uint64_t Imm) {
-  bool BitA = Imm & 0xff00000000000000ULL;
-  bool BitB = Imm & 0x00ff000000000000ULL;
-  bool BitC = Imm & 0x0000ff0000000000ULL;
-  bool BitD = Imm & 0x000000ff00000000ULL;
-  bool BitE = Imm & 0x00000000ff000000ULL;
-  bool BitF = Imm & 0x0000000000ff0000ULL;
-  bool BitG = Imm & 0x000000000000ff00ULL;
-  bool BitH = Imm & 0x00000000000000ffULL;
+  uint8_t BitA = (Imm & 0xff00000000000000ULL) != 0;
+  uint8_t BitB = (Imm & 0x00ff000000000000ULL) != 0;
+  uint8_t BitC = (Imm & 0x0000ff0000000000ULL) != 0;
+  uint8_t BitD = (Imm & 0x000000ff00000000ULL) != 0;
+  uint8_t BitE = (Imm & 0x00000000ff000000ULL) != 0;
+  uint8_t BitF = (Imm & 0x0000000000ff0000ULL) != 0;
+  uint8_t BitG = (Imm & 0x000000000000ff00ULL) != 0;
+  uint8_t BitH = (Imm & 0x00000000000000ffULL) != 0;
 
-  unsigned EncVal = BitA;
+  uint8_t EncVal = BitA;
   EncVal <<= 1;
   EncVal |= BitB;
   EncVal <<= 1;
@@ -661,16 +661,16 @@ static inline bool isAdvSIMDModImmType11(uint64_t Imm) {
 }
 
 static inline uint8_t encodeAdvSIMDModImmType11(uint64_t Imm) {
-  bool BitA = (Imm & 0x80000000ULL);
-  bool BitB = (Imm & 0x20000000ULL);
-  bool BitC = (Imm & 0x01000000ULL);
-  bool BitD = (Imm & 0x00800000ULL);
-  bool BitE = (Imm & 0x00400000ULL);
-  bool BitF = (Imm & 0x00200000ULL);
-  bool BitG = (Imm & 0x00100000ULL);
-  bool BitH = (Imm & 0x00080000ULL);
+  uint8_t BitA = (Imm & 0x80000000ULL) != 0;
+  uint8_t BitB = (Imm & 0x20000000ULL) != 0;
+  uint8_t BitC = (Imm & 0x01000000ULL) != 0;
+  uint8_t BitD = (Imm & 0x00800000ULL) != 0;
+  uint8_t BitE = (Imm & 0x00400000ULL) != 0;
+  uint8_t BitF = (Imm & 0x00200000ULL) != 0;
+  uint8_t BitG = (Imm & 0x00100000ULL) != 0;
+  uint8_t BitH = (Imm & 0x00080000ULL) != 0;
 
-  unsigned EncVal = BitA;
+  uint8_t EncVal = BitA;
   EncVal <<= 1;
   EncVal |= BitB;
   EncVal <<= 1;
@@ -710,16 +710,16 @@ static inline bool isAdvSIMDModImmType12(uint64_t Imm) {
 }
 
 static inline uint8_t encodeAdvSIMDModImmType12(uint64_t Imm) {
-  bool BitA = (Imm & 0x8000000000000000ULL);
-  bool BitB = (Imm & 0x0040000000000000ULL);
-  bool BitC = (Imm & 0x0020000000000000ULL);
-  bool BitD = (Imm & 0x0010000000000000ULL);
-  bool BitE = (Imm & 0x0008000000000000ULL);
-  bool BitF = (Imm & 0x0004000000000000ULL);
-  bool BitG = (Imm & 0x0002000000000000ULL);
-  bool BitH = (Imm & 0x0001000000000000ULL);
+  uint8_t BitA = (Imm & 0x8000000000000000ULL) != 0;
+  uint8_t BitB = (Imm & 0x0040000000000000ULL) != 0;
+  uint8_t BitC = (Imm & 0x0020000000000000ULL) != 0;
+  uint8_t BitD = (Imm & 0x0010000000000000ULL) != 0;
+  uint8_t BitE = (Imm & 0x0008000000000000ULL) != 0;
+  uint8_t BitF = (Imm & 0x0004000000000000ULL) != 0;
+  uint8_t BitG = (Imm & 0x0002000000000000ULL) != 0;
+  uint8_t BitH = (Imm & 0x0001000000000000ULL) != 0;
 
-  unsigned EncVal = BitA;
+  uint8_t EncVal = BitA;
   EncVal <<= 1;
   EncVal |= BitB;
   EncVal <<= 1;

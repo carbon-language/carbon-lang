@@ -1740,9 +1740,9 @@ static SDValue LowerPREFETCH(SDValue Op, SelectionDAG &DAG) {
   }
 
   // built the mask value encoding the expected behavior.
-  unsigned PrfOp = (IsWrite << 4) |  // Load/Store bit
-                   (Locality << 1) | // Cache level bits
-                   IsStream;         // Stream bit
+  unsigned PrfOp = (IsWrite << 4) |     // Load/Store bit
+                   (Locality << 1) |    // Cache level bits
+                   (unsigned)IsStream;  // Stream bit
   return DAG.getNode(ARM64ISD::PREFETCH, DL, MVT::Other, Op.getOperand(0),
                      DAG.getConstant(PrfOp, MVT::i32), Op.getOperand(1));
 }

@@ -3021,17 +3021,17 @@ bool ARM64AsmParser::tryParseVectorRegister(OperandVector &Operands) {
 
     const MCExpr *ImmVal;
     if (getParser().parseExpression(ImmVal))
-      return MatchOperand_ParseFail;
+      return false;
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
     if (!MCE) {
       TokError("immediate value expected for vector index");
-      return MatchOperand_ParseFail;
+      return false;
     }
 
     SMLoc E = getLoc();
     if (Parser.getTok().isNot(AsmToken::RBrac)) {
       Error(E, "']' expected");
-      return MatchOperand_ParseFail;
+      return false;
     }
 
     Parser.Lex(); // Eat right bracket token.
@@ -3401,17 +3401,17 @@ bool ARM64AsmParser::parseVectorList(OperandVector &Operands) {
 
     const MCExpr *ImmVal;
     if (getParser().parseExpression(ImmVal))
-      return MatchOperand_ParseFail;
+      return false;
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
     if (!MCE) {
       TokError("immediate value expected for vector index");
-      return MatchOperand_ParseFail;
+      return false;
     }
 
     SMLoc E = getLoc();
     if (Parser.getTok().isNot(AsmToken::RBrac)) {
       Error(E, "']' expected");
-      return MatchOperand_ParseFail;
+      return false;
     }
 
     Parser.Lex(); // Eat right bracket token.

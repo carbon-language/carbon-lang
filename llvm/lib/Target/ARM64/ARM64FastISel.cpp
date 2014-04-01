@@ -1918,7 +1918,7 @@ bool ARM64FastISel::TargetSelectInstruction(const Instruction *I) {
   }
   return false;
   // Silence warnings.
-  (void)CC_ARM64_DarwinPCS_VarArg;
+  (void)&CC_ARM64_DarwinPCS_VarArg;
 }
 
 namespace llvm {

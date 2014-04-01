@@ -1537,7 +1537,7 @@ static DecodeStatus DecodeUnconditionalBranch(llvm::MCInst &Inst, uint32_t insn,
   if (imm & (1 << (26 - 1)))
     imm |= ~((1LL << 26) - 1);
 
-  if (!Dis->tryAddingSymbolicOperand(Addr, imm << 2, Success, 4, Inst))
+  if (!Dis->tryAddingSymbolicOperand(Addr, imm << 2, true, 4, Inst))
     Inst.addOperand(MCOperand::CreateImm(imm));
 
   return Success;
@@ -1571,7 +1571,7 @@ static DecodeStatus DecodeTestAndBranch(llvm::MCInst &Inst, uint32_t insn,
 
   DecodeGPR64RegisterClass(Inst, Rt, Addr, Decoder);
   Inst.addOperand(MCOperand::CreateImm(bit));
-  if (!Dis->tryAddingSymbolicOperand(Addr, dst << 2, Success, 4, Inst))
+  if (!Dis->tryAddingSymbolicOperand(Addr, dst << 2, true, 4, Inst))
     Inst.addOperand(MCOperand::CreateImm(dst));
 
   return Success;
