@@ -27,6 +27,9 @@ def SDT_SHF : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisVec<0>,
                                    SDTCisVT<1, i32>, SDTCisSameAs<0, 2>]>;
 def SDT_ILV : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisVec<0>,
                                    SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>]>;
+def SDT_INSVE : SDTypeProfile<1, 4, [SDTCisVec<0>, SDTCisSameAs<0, 1>,
+                                     SDTCisVT<2, i32>, SDTCisSameAs<0, 3>,
+                                     SDTCisVT<4, i32>]>;
 
 def MipsVAllNonZero : SDNode<"MipsISD::VALL_NONZERO", SDT_MipsVecCond>;
 def MipsVAnyNonZero : SDNode<"MipsISD::VANY_NONZERO", SDT_MipsVecCond>;
@@ -50,6 +53,7 @@ def MipsILVL  : SDNode<"MipsISD::ILVL",  SDT_ILV>;
 def MipsILVR  : SDNode<"MipsISD::ILVR",  SDT_ILV>;
 def MipsPCKEV : SDNode<"MipsISD::PCKEV", SDT_ILV>;
 def MipsPCKOD : SDNode<"MipsISD::PCKOD", SDT_ILV>;
+def MipsINSVE : SDNode<"MipsISD::INSVE", SDT_INSVE>;
 
 def vsetcc : SDNode<"ISD::SETCC", SDT_VSetCC>;
 def vfsetcc : SDNode<"ISD::SETCC", SDT_VFSetCC>;
@@ -69,7 +73,7 @@ def uimm2 : Operand<i32> {
 // as the encoded value should be subtracted by one.
 def uimm2LSAAsmOperand : AsmOperandClass {
   let Name = "LSAImm";
-  let ParserMethod = "parseLSAImm";
+  let ParserMethod = "ParseLSAImm";
   let RenderMethod = "addImmOperands";
 }
 
@@ -155,6 +159,15 @@ def vinsert_v4i32 : PatFrag<(ops node:$vec, node:$val, node:$idx),
     (v4i32 (vector_insert node:$vec, node:$val, node:$idx))>;
 def vinsert_v2i64 : PatFrag<(ops node:$vec, node:$val, node:$idx),
     (v2i64 (vector_insert node:$vec, node:$val, node:$idx))>;
+
+def insve_v16i8 : PatFrag<(ops node:$v1, node:$i1, node:$v2, node:$i2),
+    (v16i8 (MipsINSVE node:$v1, node:$i1, node:$v2, node:$i2))>;
+def insve_v8i16 : PatFrag<(ops node:$v1, node:$i1, node:$v2, node:$i2),
+    (v8i16 (MipsINSVE node:$v1, node:$i1, node:$v2, node:$i2))>;
+def insve_v4i32 : PatFrag<(ops node:$v1, node:$i1, node:$v2, node:$i2),
+    (v4i32 (MipsINSVE node:$v1, node:$i1, node:$v2, node:$i2))>;
+def insve_v2i64 : PatFrag<(ops node:$v1, node:$i1, node:$v2, node:$i2),
+    (v2i64 (MipsINSVE node:$v1, node:$i1, node:$v2, node:$i2))>;
 
 class vfsetcc_type<ValueType ResTy, ValueType OpTy, CondCode CC> :
   PatFrag<(ops node:$lhs, node:$rhs),
@@ -1402,9 +1415,9 @@ class MSA_3R_SPLAT_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                              RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
                              InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
-  dag InOperandList = (ins ROWS:$ws, GPR32:$rt);
+  dag InOperandList = (ins ROWS:$ws, GPR32Opnd:$rt);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws[$rt]");
-  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, GPR32:$rt))];
+  list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWS:$ws, GPR32Opnd:$rt))];
   InstrItinClass Itinerary = itin;
 }
 
@@ -1425,10 +1438,10 @@ class MSA_3R_SLD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                            RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
                            InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
-  dag InOperandList = (ins ROWD:$wd_in, ROWS:$ws, GPR32:$rt);
+  dag InOperandList = (ins ROWD:$wd_in, ROWS:$ws, GPR32Opnd:$rt);
   string AsmString = !strconcat(instr_asm, "\t$wd, $ws[$rt]");
   list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWD:$wd_in, ROWS:$ws,
-                                              GPR32:$rt))];
+                                              GPR32Opnd:$rt))];
   InstrItinClass Itinerary = itin;
   string Constraints = "$wd = $wd_in";
 }
@@ -1496,11 +1509,12 @@ class MSA_INSVE_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
                           RegisterOperand ROWD, RegisterOperand ROWS = ROWD,
                           InstrItinClass itin = NoItinerary> {
   dag OutOperandList = (outs ROWD:$wd);
-  dag InOperandList = (ins ROWD:$wd_in, uimm6:$n, ROWS:$ws);
-  string AsmString = !strconcat(instr_asm, "\t$wd[$n], $ws[0]");
+  dag InOperandList = (ins ROWD:$wd_in, uimm6:$n, ROWS:$ws, uimmz:$n2);
+  string AsmString = !strconcat(instr_asm, "\t$wd[$n], $ws[$n2]");
   list<dag> Pattern = [(set ROWD:$wd, (OpNode ROWD:$wd_in,
                                               immZExt6:$n,
-                                              ROWS:$ws))];
+                                              ROWS:$ws,
+                                              immz:$n2))];
   InstrItinClass Itinerary = itin;
   string Constraints = "$wd = $wd_in";
 }
@@ -2291,13 +2305,13 @@ class INSERT_FW_PSEUDO_DESC : MSA_INSERT_PSEUDO_BASE<vector_insert, v4f32,
 class INSERT_FD_PSEUDO_DESC : MSA_INSERT_PSEUDO_BASE<vector_insert, v2f64,
                                                      MSA128DOpnd, FGR64Opnd>;
 
-class INSVE_B_DESC : MSA_INSVE_DESC_BASE<"insve.b", int_mips_insve_b,
+class INSVE_B_DESC : MSA_INSVE_DESC_BASE<"insve.b", insve_v16i8,
                                          MSA128BOpnd>;
-class INSVE_H_DESC : MSA_INSVE_DESC_BASE<"insve.h", int_mips_insve_h,
+class INSVE_H_DESC : MSA_INSVE_DESC_BASE<"insve.h", insve_v8i16,
                                          MSA128HOpnd>;
-class INSVE_W_DESC : MSA_INSVE_DESC_BASE<"insve.w", int_mips_insve_w,
+class INSVE_W_DESC : MSA_INSVE_DESC_BASE<"insve.w", insve_v4i32,
                                          MSA128WOpnd>;
-class INSVE_D_DESC : MSA_INSVE_DESC_BASE<"insve.d", int_mips_insve_d,
+class INSVE_D_DESC : MSA_INSVE_DESC_BASE<"insve.d", insve_v2i64,
                                          MSA128DOpnd>;
 
 class LD_DESC_BASE<string instr_asm, SDPatternOperator OpNode,
@@ -3188,10 +3202,14 @@ def INSERT_D : INSERT_D_ENC, INSERT_D_DESC;
 // INSERT_FW_PSEUDO defined after INSVE_W
 // INSERT_FD_PSEUDO defined after INSVE_D
 
-def INSVE_B : INSVE_B_ENC, INSVE_B_DESC;
-def INSVE_H : INSVE_H_ENC, INSVE_H_DESC;
-def INSVE_W : INSVE_W_ENC, INSVE_W_DESC;
-def INSVE_D : INSVE_D_ENC, INSVE_D_DESC;
+// There is a fourth operand that is not present in the encoding. Use a
+// custom decoder to get a chance to add it.
+let DecoderMethod = "DecodeINSVE_DF" in {
+  def INSVE_B : INSVE_B_ENC, INSVE_B_DESC;
+  def INSVE_H : INSVE_H_ENC, INSVE_H_DESC;
+  def INSVE_W : INSVE_W_ENC, INSVE_W_DESC;
+  def INSVE_D : INSVE_D_ENC, INSVE_D_DESC;
+}
 
 def INSERT_FW_PSEUDO : INSERT_FW_PSEUDO_DESC;
 def INSERT_FD_PSEUDO : INSERT_FD_PSEUDO_DESC;

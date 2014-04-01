@@ -184,6 +184,9 @@ namespace llvm {
       PCKEV, // Pack even elements
       PCKOD, // Pack odd elements
 
+      // Vector Lane Copy
+      INSVE, // Copy element from one vector to another
+
       // Combined (XOR (OR $a, $b), -1)
       VNOR,
 

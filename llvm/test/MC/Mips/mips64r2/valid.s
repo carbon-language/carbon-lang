@@ -11,8 +11,10 @@
 	addi	$t5,$t1,26322
 	addu	$t1,$a0,$a2
 	and	$s7,$v0,$t4
+	c.ngl.d	$f29,$f29
 	c.ngle.d	$f0,$f16
 	c.sf.d	$f30,$f0
+	c.sf.s	$f14,$f22
 	ceil.l.d	$f1,$f3
 	ceil.l.s	$f18,$f13
 	ceil.w.d	$f11,$f25
@@ -38,12 +40,18 @@
 	dclz	$s0,$t9
 	deret
 	di	$s8
+	ddiv	$zero,$k0,$s3
+	ddivu	$zero,$s0,$s1
+	div	$zero,$t9,$t3
 	div.d	$f29,$f20,$f27
 	div.s	$f4,$f5,$f15
+	divu	$zero,$t9,$t7
 	dmfc1	$t4,$f13
 	dmtc1	$s0,$f14
 	dmult	$s7,$t1
 	dmultu	$a1,$a2
+	dsbh	$v1,$t6
+	dshd	$v0,$sp
 	dsllv	$zero,$s4,$t4
 	dsrav	$gp,$s2,$s3
 	dsrlv	$s3,$t6,$s4
@@ -79,6 +87,7 @@
 	lwxc1	$f12,$s1($s8)
 	madd	$s6,$t5
 	madd	$zero,$t1
+	madd.s	$f1,$f31,$f19,$f25
 	maddu	$s3,$gp
 	maddu	$t8,$s2
 	mfc0	$a2,$14,1
@@ -106,6 +115,7 @@
 	movz.d	$f12,$f29,$t1
 	movz.s	$f25,$f7,$v1
 	msub	$s7,$k1
+	msub.s	$f12,$f19,$f10,$f16
 	msubu	$t7,$a1
 	mtc1	$s8,$f9
 	mthc1	$zero,$f16
@@ -121,9 +131,12 @@
 	multu	$t1,$s2
 	neg.d	$f27,$f18
 	neg.s	$f1,$f15
+	nmadd.s	$f0,$f5,$f25,$f12
+	nmsub.s	$f1,$f24,$f19,$f4
 	nop
 	nor	$a3,$zero,$a3
 	or	$t4,$s0,$sp
+	rdhwr	$sp,$11
 	round.l.d	$f12,$f1
 	round.l.s	$f25,$f5
 	round.w.d	$f6,$f4
@@ -137,6 +150,8 @@
 	sdl	$a3,-20961($s8)
 	sdr	$t3,-20423($t4)
 	sdxc1	$f11,$t2($t6)
+	seb	$t9,$t7
+	seh	$v1,$t4
 	sh	$t6,-6704($t7)
 	sllv	$a3,$zero,$t1
 	slt	$s7,$t3,$k1
@@ -169,3 +184,4 @@
 	trunc.w.d	$f22,$f15
 	trunc.w.s	$f28,$f30
 	xor	$s2,$a0,$s8
+	wsbh	$k1,$t1
