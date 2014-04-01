@@ -2386,6 +2386,19 @@ void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
   // FIXME: ^
 }
 
+void DwarfDebug::emitDebugLocEntryLocation(const DebugLocEntry &Entry) {
+  Asm->OutStreamer.AddComment("Loc expr size");
+  MCSymbol *begin = Asm->OutStreamer.getContext().CreateTempSymbol();
+  MCSymbol *end = Asm->OutStreamer.getContext().CreateTempSymbol();
+  Asm->EmitLabelDifference(end, begin, 2);
+  Asm->OutStreamer.EmitLabel(begin);
+  // Emit the entry.
+  APByteStreamer Streamer(*Asm);
+  emitDebugLocEntry(Streamer, Entry);
+  // Close the range.
+  Asm->OutStreamer.EmitLabel(end);
+}
+
 // Emit locations into the debug loc section.
 void DwarfDebug::emitDebugLoc() {
   // Start the dwarf loc section.
@@ -2419,16 +2432,7 @@ void DwarfDebug::emitDebugLoc() {
         Asm->OutStreamer.EmitSymbolValue(Entry.getBeginSym(), Size);
         Asm->OutStreamer.EmitSymbolValue(Entry.getEndSym(), Size);
       }
-      Asm->OutStreamer.AddComment("Loc expr size");
-      MCSymbol *begin = Asm->OutStreamer.getContext().CreateTempSymbol();
-      MCSymbol *end = Asm->OutStreamer.getContext().CreateTempSymbol();
-      Asm->EmitLabelDifference(end, begin, 2);
-      Asm->OutStreamer.EmitLabel(begin);
-      // Emit the entry.
-      APByteStreamer Streamer(*Asm);
-      emitDebugLocEntry(Streamer, Entry);
-      // Close the range.
-      Asm->OutStreamer.EmitLabel(end);
+      emitDebugLocEntryLocation(Entry);
     }
     if (useSplitDwarf())
       Asm->EmitInt8(dwarf::DW_LLE_end_of_list_entry);
