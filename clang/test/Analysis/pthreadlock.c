@@ -69,6 +69,31 @@ ok7(void)
 }
 
 void
+ok8(void)
+{
+	pthread_mutex_lock(&mtx1);	// no-warning
+	pthread_mutex_lock(&mtx2);	// no-warning
+	pthread_mutex_unlock(&mtx2);	// no-warning
+	pthread_mutex_unlock(&mtx1);	// no-warning
+}
+
+void
+ok9(void)
+{
+	pthread_mutex_unlock(&mtx1);		// no-warning
+	if (pthread_mutex_trylock(&mtx1) == 0)	// no-warning
+		pthread_mutex_unlock(&mtx1);	// no-warning
+}
+
+void
+ok10(void)
+{
+	if (pthread_mutex_trylock(&mtx1) != 0)	// no-warning
+		pthread_mutex_lock(&mtx1);	// no-warning
+	pthread_mutex_unlock(&mtx1);		// no-warning
+}
+
+void
 bad1(void)
 {
 	pthread_mutex_lock(&mtx1);	// no-warning
@@ -134,4 +159,75 @@ bad8(void)
 		return;
 	lck_mtx_lock(&lck2);		// no-warning
 	lck_mtx_unlock(&lck1);		// expected-warning{{This was not the most recently acquired lock}}
+}
+
+void
+bad9(void)
+{
+	lck_mtx_unlock(&lck1);		// no-warning
+	lck_mtx_unlock(&lck1);		// expected-warning{{This lock has already been unlocked}}
+}
+
+void
+bad10(void)
+{
+	lck_mtx_lock(&lck1);		// no-warning
+	lck_mtx_unlock(&lck1);		// no-warning
+	lck_mtx_unlock(&lck1);		// expected-warning{{This lock has already been unlocked}}
+}
+
+static void
+bad11_sub(pthread_mutex_t *lock)
+{
+	lck_mtx_unlock(lock);		// expected-warning{{This lock has already been unlocked}}
+}
+
+void
+bad11(int i)
+{
+	lck_mtx_lock(&lck1);		// no-warning
+	lck_mtx_unlock(&lck1);		// no-warning
+	if (i < 5)
+		bad11_sub(&lck1);
+}
+
+void
+bad12(void)
+{
+	pthread_mutex_lock(&mtx1);	// no-warning
+	pthread_mutex_unlock(&mtx1);	// no-warning
+	pthread_mutex_lock(&mtx1);	// no-warning
+	pthread_mutex_unlock(&mtx1);	// no-warning
+	pthread_mutex_unlock(&mtx1);	// expected-warning{{This lock has already been unlocked}}
+}
+
+void
+bad13(void)
+{
+	pthread_mutex_lock(&mtx1);	// no-warning
+	pthread_mutex_unlock(&mtx1);	// no-warning
+	pthread_mutex_lock(&mtx2);	// no-warning
+	pthread_mutex_unlock(&mtx2);	// no-warning
+	pthread_mutex_unlock(&mtx1);	// expected-warning{{This lock has already been unlocked}}
+}
+
+void
+bad14(void)
+{
+	pthread_mutex_lock(&mtx1);	// no-warning
+	pthread_mutex_lock(&mtx2);	// no-warning
+	pthread_mutex_unlock(&mtx2);	// no-warning
+	pthread_mutex_unlock(&mtx1);	// no-warning
+	pthread_mutex_unlock(&mtx2);	// expected-warning{{This lock has already been unlocked}}
+}
+
+void
+bad15(void)
+{
+	pthread_mutex_lock(&mtx1);	// no-warning
+	pthread_mutex_lock(&mtx2);	// no-warning
+	pthread_mutex_unlock(&mtx2);	// no-warning
+	pthread_mutex_unlock(&mtx1);	// no-warning
+	pthread_mutex_lock(&mtx1);	// no-warning
+	pthread_mutex_unlock(&mtx2);	// expected-warning{{This lock has already been unlocked}}
 }

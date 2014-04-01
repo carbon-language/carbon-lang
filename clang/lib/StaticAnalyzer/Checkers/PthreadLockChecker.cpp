@@ -26,6 +26,7 @@ using namespace ento;
 namespace {
 class PthreadLockChecker : public Checker< check::PostStmt<CallExpr> > {
   mutable std::unique_ptr<BugType> BT_doublelock;
+  mutable std::unique_ptr<BugType> BT_doubleunlock;
   mutable std::unique_ptr<BugType> BT_lor;
   enum LockingSemantics {
     NotApplicable = 0,
@@ -45,6 +46,7 @@ public:
 // GDM Entry for tracking lock state.
 REGISTER_LIST_WITH_PROGRAMSTATE(LockSet, const MemRegion *)
 
+REGISTER_SET_WITH_PROGRAMSTATE(UnlockSet, const MemRegion *)
 
 void PthreadLockChecker::checkPostStmt(const CallExpr *CE,
                                        CheckerContext &C) const {
@@ -144,6 +146,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
   
   // Record that the lock was acquired.  
   lockSucc = lockSucc->add<LockSet>(lockR);
+  lockSucc = lockSucc->remove<UnlockSet>(lockR);
   C.addTransition(lockSucc);
 }
 
@@ -155,32 +158,48 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
     return;
   
   ProgramStateRef state = C.getState();
-  LockSetTy LS = state->get<LockSet>();
 
-  // FIXME: Better analysis requires IPA for wrappers.
-  // FIXME: check for double unlocks
-  if (LS.isEmpty())
-    return;
-  
-  const MemRegion *firstLockR = LS.getHead();
-  if (firstLockR != lockR) {
-    if (!BT_lor)
-      BT_lor.reset(new BugType(this, "Lock order reversal", "Lock checker"));
+  if (state->contains<UnlockSet>(lockR)) {
+    if (!BT_doubleunlock)
+      BT_doubleunlock.reset(new BugType(this, "Double unlocking",
+                                              "Lock checker"));
     ExplodedNode *N = C.generateSink();
     if (!N)
       return;
-    BugReport *report = new BugReport(*BT_lor,
-                                               "This was not the most "
-                                               "recently acquired lock. "
-                                               "Possible lock order "
-                                               "reversal", N);
-    report->addRange(CE->getArg(0)->getSourceRange());
-    C.emitReport(report);
+    BugReport *Report = new BugReport(*BT_doubleunlock,
+                                      "This lock has already been unlocked",
+                                      N);
+    Report->addRange(CE->getArg(0)->getSourceRange());
+    C.emitReport(Report);
     return;
+  }
+
+  LockSetTy LS = state->get<LockSet>();
+
+  // FIXME: Better analysis requires IPA for wrappers.
+
+  if (!LS.isEmpty()) {
+    const MemRegion *firstLockR = LS.getHead();
+    if (firstLockR != lockR) {
+      if (!BT_lor)
+        BT_lor.reset(new BugType(this, "Lock order reversal", "Lock checker"));
+      ExplodedNode *N = C.generateSink();
+      if (!N)
+        return;
+      BugReport *report = new BugReport(*BT_lor,
+                                        "This was not the most recently "
+                                        "acquired lock. Possible lock order "
+                                        "reversal",
+                                        N);
+      report->addRange(CE->getArg(0)->getSourceRange());
+      C.emitReport(report);
+      return;
+    }
   }
 
   // Record that the lock was released. 
   state = state->set<LockSet>(LS.getTail());
+  state = state->add<UnlockSet>(lockR);
   C.addTransition(state);
 }
 
