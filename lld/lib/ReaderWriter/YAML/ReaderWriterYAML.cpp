@@ -71,7 +71,7 @@ public:
       if (!atom->name().empty())
         buildDuplicateNameMap(*atom);
 
-      if (atom->contentType() == DefinedAtom::typeGroupComdat) {
+      if (atom->isGroupParent()) {
         for (const lld::Reference *ref : *atom) {
           if (ref->kindNamespace() != lld::Reference::KindNamespace::all)
             continue;
@@ -229,7 +229,7 @@ private:
     }
 
     if (const lld::DefinedAtom *da = dyn_cast<DefinedAtom>(atom)) {
-      if (da->contentType() == DefinedAtom::typeGroupComdat) {
+      if (da->isGroupParent()) {
         if (_groupMap.count(name)) {
           _io.setError(Twine("duplicate group name: ") + name);
         } else {
@@ -477,6 +477,7 @@ template <> struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
     io.enumCase(value, "rw-note",         DefinedAtom::typeRWNote);
     io.enumCase(value, "no-alloc",        DefinedAtom::typeNoAlloc);
     io.enumCase(value, "group-comdat", DefinedAtom::typeGroupComdat);
+    io.enumCase(value, "gnu-linkonce", DefinedAtom::typeGnuLinkOnce);
   }
 };
 

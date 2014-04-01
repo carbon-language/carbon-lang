@@ -147,6 +147,7 @@ public:
     typeRWNote,             // Identifies readwrite note sections [ELF]
     typeNoAlloc,            // Identifies non allocatable sections [ELF]
     typeGroupComdat,        // Identifies a section group [ELF, COFF]
+    typeGnuLinkOnce,        // Identifies a gnu.linkonce section [ELF]
   };
 
   // Permission bits for atoms and segments. The order of these values are
@@ -328,6 +329,14 @@ public:
              atomContentType == DefinedAtom::typeZeroFillFast ||
              atomContentType == DefinedAtom::typeTLVInitialZeroFill ||
              atomContentType == DefinedAtom::typeThreadZeroFill);
+  }
+
+  /// Utility function to check if the atom belongs to a group section
+  /// that represents section groups or .gnu.linkonce sections.
+  bool isGroupParent() const {
+    ContentType atomContentType = contentType();
+    return (atomContentType == DefinedAtom::typeGroupComdat ||
+            atomContentType == DefinedAtom::typeGnuLinkOnce);
   }
 
 protected:

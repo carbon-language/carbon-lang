@@ -1,0 +1,133 @@
+# RUN: lld -core %s | FileCheck %s
+
+#
+# Test that gnu linkonce sections are parsed and the first section selected for symbol
+# resolution
+#
+
+---
+defined-atoms:
+  - name:            f1
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            f2
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            g1
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            d1
+    scope:           global
+    type:            data
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            g1
+    scope:           global
+    type:            gnu-linkonce
+    references:
+      - kind:            group-child
+        target:          f1
+      - kind:            group-child
+        target:          f2
+      - kind:            group-child
+        target:          g1
+      - kind:            group-child
+        target:          d1
+---
+defined-atoms:
+  - name:            f1
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            f2
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            g1
+    scope:           global
+    type:            code
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            d1
+    scope:           global
+    type:            data
+    references:
+      - kind:            group-parent
+        target:          g1
+  - name:            g1
+    scope:           global
+    type:            gnu-linkonce
+    references:
+      - kind:            group-child
+        target:          f1
+      - kind:            group-child
+        target:          f2
+      - kind:            group-child
+        target:          g1
+      - kind:            group-child
+        target:          d1
+...
+
+#CHECK: defined-atoms:
+#CHECK:   - name:            g1
+#CHECK:     ref-name:        [[PARENT:[a-zA-Z\.0-9_]+]]
+#CHECK:     scope:           global
+#CHECK:     type:            gnu-linkonce
+#CHECK:     references:
+#CHECK:       - kind:            group-child
+#CHECK:         offset:          0
+#CHECK:         target:          [[GCHILDONE:[a-zA-Z\.0-9_]+]]
+#CHECK:       - kind:            group-child
+#CHECK:         offset:          0
+#CHECK:         target:          [[GCHILDTWO:[a-zA-Z\.0-9_]+]]
+#CHECK:       - kind:            group-child
+#CHECK:         offset:          0
+#CHECK:         target:          [[GCHILDTHREE:[a-zA-Z\.0-9_]+]]
+#CHECK:       - kind:            group-child
+#CHECK:         offset:          0
+#CHECK:         target:          [[GCHILDFOUR:[a-zA-Z\.0-9_]+]]
+#CHECK:   - name:            f1
+#CHECK:     ref-name:        [[GCHILDONE]]
+#CHECK:     scope:           global
+#CHECK:     references:
+#CHECK:       - kind:            group-parent
+#CHECK:         offset:          0
+#CHECK:         target:          [[PARENT]]
+#CHECK:   - name:            f2
+#CHECK:     ref-name:        [[GCHILDTWO]]
+#CHECK:     scope:           global
+#CHECK:     references:
+#CHECK:       - kind:            group-parent
+#CHECK:         offset:          0
+#CHECK:         target:          [[PARENT]]
+#CHECK:   - name:            g1
+#CHECK:     ref-name:        [[GCHILDTHREE]]
+#CHECK:     scope:           global
+#CHECK:     references:
+#CHECK:       - kind:            group-parent
+#CHECK:         offset:          0
+#CHECK:         target:          [[PARENT]]
+#CHECK:   - name:            d1
+#CHECK:     ref-name:        [[GCHILDFOUR]]
+#CHECK:     scope:           global
+#CHECK:     type:            data
+#CHECK:     references:
+#CHECK:       - kind:            group-parent
+#CHECK:         offset:          0
+#CHECK:         target:          [[PARENT]]
+#CHECK: ...
