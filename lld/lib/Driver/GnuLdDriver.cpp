@@ -266,7 +266,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   }
 
   std::unique_ptr<InputGraph> inputGraph(new InputGraph());
-  std::stack<InputElement *> controlNodeStack;
+  std::stack<ControlNode *> controlNodeStack;
 
   // Positional options for an Input File
   bool isWholeArchive = false;
@@ -430,15 +430,15 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     }
 
     case OPT_start_group: {
-      std::unique_ptr<InputElement> controlStart(new ELFGroup(*ctx, index++));
+      std::unique_ptr<ELFGroup> controlStart(new ELFGroup(*ctx, index++));
       controlNodeStack.push(controlStart.get());
-      cast<ControlNode>(controlNodeStack.top())->processControlEnter();
+      controlNodeStack.top()->processControlEnter();
       inputGraph->addInputElement(std::move(controlStart));
       break;
     }
 
     case OPT_end_group:
-      cast<ControlNode>(controlNodeStack.top())->processControlExit();
+      controlNodeStack.top()->processControlExit();
       controlNodeStack.pop();
       break;
 
@@ -488,8 +488,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       if (controlNodeStack.empty()) {
         inputGraph->addInputElement(std::move(inputFile));
       } else {
-        cast<ControlNode>(controlNodeStack.top())
-            ->processInputElement(std::move(inputFile));
+        controlNodeStack.top()->processInputElement(std::move(inputFile));
       }
       break;
     }
