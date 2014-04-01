@@ -702,7 +702,7 @@ EventMessageOperation::Execute(ProcessMonitor *monitor)
 
 //------------------------------------------------------------------------------
 /// @class KillOperation
-/// @brief Implements ProcessMonitor::BringProcessIntoLimbo.
+/// @brief Implements ProcessMonitor::Kill.
 class KillOperation : public Operation
 {
 public:
@@ -1648,7 +1648,7 @@ ProcessMonitor::SingleStep(lldb::tid_t unused, uint32_t signo)
 }
 
 bool
-ProcessMonitor::BringProcessIntoLimbo()
+ProcessMonitor::Kill()
 {
     bool result;
     KillOperation op(result);
