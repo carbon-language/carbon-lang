@@ -2497,13 +2497,24 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   FnBeginRegionCount.push_back(LexicalBlockStack.size());
 
   const Decl *D = GD.getDecl();
-  // Function may lack declaration in source code if it is created by Clang
-  // CodeGen (examples: _GLOBAL__I_a, __cxx_global_array_dtor, thunk).
+
+  // Use the location of the start of the function to determine where
+  // the function definition is located. By default use the location
+  // of the declaration as the location for the subprogram. A function
+  // may lack a declaration in the source code if it is created by code
+  // gen. (examples: _GLOBAL__I_a, __cxx_global_array_dtor, thunk).
   bool HasDecl = (D != 0);
-  // Use the location of the declaration.
   SourceLocation Loc;
-  if (HasDecl)
+  if (HasDecl) {
     Loc = D->getLocation();
+
+    // If this is a function specialization then use the pattern body
+    // as the location for the function.
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+      if (const FunctionDecl *SpecDecl = FD->getTemplateInstantiationPattern())
+        if (SpecDecl->hasBody(SpecDecl))
+          Loc = SpecDecl->getLocation();
+  }
 
   unsigned Flags = 0;
   llvm::DIFile Unit = getOrCreateFile(Loc);
@@ -2585,8 +2596,6 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   // Push the function onto the lexical block stack.
   llvm::MDNode *SPN = SP;
   LexicalBlockStack.push_back(SPN);
-  // Initialize PrevLoc to the location of the function header.
-  PrevLoc = Loc;
 
   if (HasDecl)
     RegionMap[D] = llvm::WeakVH(SP);
