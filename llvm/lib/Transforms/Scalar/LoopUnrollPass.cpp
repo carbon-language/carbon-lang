@@ -166,7 +166,10 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   TargetTransformInfo::UnrollingPreferences UP;
   UP.Threshold = CurrentThreshold;
   UP.OptSizeThreshold = OptSizeUnrollThreshold;
+  UP.PartialThreshold = CurrentThreshold;
+  UP.PartialOptSizeThreshold = OptSizeUnrollThreshold;
   UP.Count = CurrentCount;
+  UP.MaxCount = UINT_MAX;
   UP.Partial = CurrentAllowPartial;
   UP.Runtime = CurrentRuntime;
   TTI.getUnrollingPreferences(L, UP);
@@ -176,11 +179,15 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   // function is marked as optimize-for-size, and the unroll threshold was
   // not user specified.
   unsigned Threshold = UserThreshold ? CurrentThreshold : UP.Threshold;
+  unsigned PartialThreshold =
+    UserThreshold ? CurrentThreshold : UP.PartialThreshold;
   if (!UserThreshold &&
       Header->getParent()->getAttributes().
         hasAttribute(AttributeSet::FunctionIndex,
-                     Attribute::OptimizeForSize))
+                     Attribute::OptimizeForSize)) {
     Threshold = UP.OptSizeThreshold;
+    PartialThreshold = UP.PartialOptSizeThreshold;
+  }
 
   // Find trip count and trip multiple if count is not available
   unsigned TripCount = 0;
@@ -214,7 +221,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   // Enforce the threshold.
-  if (Threshold != NoThreshold) {
+  if (Threshold != NoThreshold && PartialThreshold != NoThreshold) {
     unsigned NumInlineCandidates;
     bool notDuplicatable;
     unsigned LoopSize = ApproximateLoopSize(L, NumInlineCandidates,
@@ -241,17 +248,19 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
       }
       if (TripCount) {
         // Reduce unroll count to be modulo of TripCount for partial unrolling
-        Count = Threshold / LoopSize;
+        Count = PartialThreshold / LoopSize;
         while (Count != 0 && TripCount%Count != 0)
           Count--;
       }
       else if (Runtime) {
         // Reduce unroll count to be a lower power-of-two value
-        while (Count != 0 && Size > Threshold) {
+        while (Count != 0 && Size > PartialThreshold) {
           Count >>= 1;
           Size = LoopSize*Count;
         }
       }
+      if (Count > UP.MaxCount)
+        Count = UP.MaxCount;
       if (Count < 2) {
         DEBUG(dbgs() << "  could not unroll partially\n");
         return false;
