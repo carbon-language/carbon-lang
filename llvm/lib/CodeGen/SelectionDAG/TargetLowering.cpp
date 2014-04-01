@@ -1117,6 +1117,54 @@ static bool ValueHasExactlyOneBitSet(SDValue Val, const SelectionDAG &DAG) {
          (KnownOne.countPopulation() == 1);
 }
 
+bool TargetLowering::isConstTrueVal(const SDNode *N) const {
+  if (!N)
+    return false;
+
+  bool IsVec = false;
+  const ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N);
+  if (!CN) {
+    const BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(N);
+    if (!BV)
+      return false;
+
+    IsVec = true;
+    CN = BV->getConstantSplatValue();
+  }
+
+  switch (getBooleanContents(IsVec)) {
+  case UndefinedBooleanContent:
+    return CN->getAPIntValue()[0];
+  case ZeroOrOneBooleanContent:
+    return CN->isOne();
+  case ZeroOrNegativeOneBooleanContent:
+    return CN->isAllOnesValue();
+  }
+
+  llvm_unreachable("Invalid boolean contents");
+}
+
+bool TargetLowering::isConstFalseVal(const SDNode *N) const {
+  if (!N)
+    return false;
+
+  bool IsVec = false;
+  const ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N);
+  if (!CN) {
+    const BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(N);
+    if (!BV)
+      return false;
+
+    IsVec = true;
+    CN = BV->getConstantSplatValue();
+  }
+
+  if (getBooleanContents(IsVec) == UndefinedBooleanContent)
+    return !CN->getAPIntValue()[0];
+
+  return CN->isNullValue();
+}
+
 /// SimplifySetCC - Try to simplify a setcc built with the specified operands
 /// and cc. If it is unable to simplify it, return a null SDValue.
 SDValue

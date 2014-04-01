@@ -1934,6 +1934,14 @@ public:
     void CommitTargetLoweringOpt(const TargetLoweringOpt &TLO);
   };
 
+  /// Return if the N is a constant or constant vector equal to the true value
+  /// from getBooleanContents().
+  bool isConstTrueVal(const SDNode *N) const;
+
+  /// Return if the N is a constant or constant vector equal to the false value
+  /// from getBooleanContents().
+  bool isConstFalseVal(const SDNode *N) const;
+
   /// Try to simplify a setcc built with the specified operands and cc. If it is
   /// unable to simplify it, return a null SDValue.
   SDValue SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
