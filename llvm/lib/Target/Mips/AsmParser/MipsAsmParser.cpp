@@ -98,7 +98,7 @@ class MipsAsmParser : public MCTargetAsmParser {
       SMLoc S);
 
   MipsAsmParser::OperandMatchResultTy
-  ParseAnyRegisterWithoutDollar(SmallVectorImpl<MCParsedAsmOperand *> &Operands,
+  MatchAnyRegisterWithoutDollar(SmallVectorImpl<MCParsedAsmOperand *> &Operands,
                                 SMLoc S);
 
   MipsAsmParser::OperandMatchResultTy
@@ -275,11 +275,11 @@ public:
 
 private:
   enum KindTy {
-    k_Immediate,
-    k_Memory,
-    k_PhysRegister,
-    k_RegisterIndex,
-    k_Token
+    k_Immediate,     /// An immediate (possibly involving symbol references)
+    k_Memory,        /// Base + Offset Memory Address
+    k_PhysRegister,  /// A physical register from the Mips namespace
+    k_RegisterIndex, /// A register index in one or more RegKind.
+    k_Token          /// A simple token
   } Kind;
 
   MipsOperand(KindTy K, MipsAsmParser &Parser)
@@ -477,11 +477,17 @@ public:
     llvm_unreachable("Use a custom parser instead");
   }
 
+  /// Render the operand to an MCInst as a GPR32
+  /// Asserts if the wrong number of operands are requested, or the operand
+  /// is not a k_RegisterIndex compatible with RegKind_GPR
   void addGPR32AsmRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(getGPR32Reg()));
   }
 
+  /// Render the operand to an MCInst as a GPR64
+  /// Asserts if the wrong number of operands are requested, or the operand
+  /// is not a k_RegisterIndex compatible with RegKind_GPR
   void addGPR64AsmRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(getGPR64Reg()));
@@ -1779,7 +1785,7 @@ MipsAsmParser::MatchAnyRegisterNameWithoutDollar(
 }
 
 MipsAsmParser::OperandMatchResultTy
-MipsAsmParser::ParseAnyRegisterWithoutDollar(
+MipsAsmParser::MatchAnyRegisterWithoutDollar(
     SmallVectorImpl<MCParsedAsmOperand *> &Operands, SMLoc S) {
   auto Token = Parser.getLexer().peekTok(false);
 
@@ -1821,7 +1827,7 @@ MipsAsmParser::OperandMatchResultTy MipsAsmParser::ParseAnyRegister(
   }
   DEBUG(dbgs() << ".. $\n");
 
-  OperandMatchResultTy ResTy = ParseAnyRegisterWithoutDollar(Operands, S);
+  OperandMatchResultTy ResTy = MatchAnyRegisterWithoutDollar(Operands, S);
   if (ResTy == MatchOperand_Success) {
     Parser.Lex(); // $
     Parser.Lex(); // identifier
