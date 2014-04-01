@@ -1252,7 +1252,7 @@ CollectTemplateParams(const TemplateParameterList *TPList,
         V = CGM.GetAddrOfFunction(FD);
       // Member data pointers have special handling too to compute the fixed
       // offset within the object.
-      if (isa<FieldDecl>(D)) {
+      if (isa<FieldDecl>(D) || isa<IndirectFieldDecl>(D)) {
         // These five lines (& possibly the above member function pointer
         // handling) might be able to be refactored to use similar code in
         // CodeGenModule::getMemberPointerConstant
