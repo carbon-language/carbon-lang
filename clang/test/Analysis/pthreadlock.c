@@ -8,6 +8,10 @@ typedef struct {
 
 typedef struct {
 	void	*foo;
+} pthread_mutexattr_t;
+
+typedef struct {
+	void	*foo;
 } lck_grp_t;
 
 typedef pthread_mutex_t lck_mtx_t;
@@ -16,6 +20,7 @@ extern int pthread_mutex_lock(pthread_mutex_t *);
 extern int pthread_mutex_unlock(pthread_mutex_t *);
 extern int pthread_mutex_trylock(pthread_mutex_t *);
 extern int pthread_mutex_destroy(pthread_mutex_t *);
+extern int pthread_mutex_init(pthread_mutex_t  *mutex, const pthread_mutexattr_t *mutexattr);
 extern int lck_mtx_lock(lck_mtx_t *);
 extern int lck_mtx_unlock(lck_mtx_t *);
 extern int lck_mtx_try_lock(lck_mtx_t *);
@@ -24,6 +29,8 @@ extern void lck_mtx_destroy(lck_mtx_t *lck, lck_grp_t *grp);
 pthread_mutex_t mtx1, mtx2;
 lck_mtx_t lck1, lck2;
 lck_grp_t grp1;
+
+#define NULL 0
 
 void
 ok1(void)
@@ -135,6 +142,45 @@ ok15(void)
 	pthread_mutex_lock(&mtx1);	// no-warning
 	pthread_mutex_unlock(&mtx1);	// no-warning
 	pthread_mutex_destroy(&mtx1);	// no-warning
+}
+
+void
+ok16(void)
+{
+	pthread_mutex_init(&mtx1, NULL);	// no-warning
+}
+
+void
+ok17(void)
+{
+	pthread_mutex_init(&mtx1, NULL);	// no-warning
+	pthread_mutex_init(&mtx2, NULL);	// no-warning
+}
+
+void
+ok18(void)
+{
+	pthread_mutex_destroy(&mtx1);		// no-warning
+	pthread_mutex_init(&mtx1, NULL);	// no-warning
+}
+
+void
+ok19(void)
+{
+	pthread_mutex_destroy(&mtx1);		// no-warning
+	pthread_mutex_init(&mtx1, NULL);	// no-warning
+	pthread_mutex_destroy(&mtx2);		// no-warning
+	pthread_mutex_init(&mtx2, NULL);	// no-warning
+}
+
+void
+ok20(void)
+{
+	pthread_mutex_unlock(&mtx1);		// no-warning
+	pthread_mutex_destroy(&mtx1);		// no-warning
+	pthread_mutex_init(&mtx1, NULL);	// no-warning
+	pthread_mutex_destroy(&mtx1);		// no-warning
+	pthread_mutex_init(&mtx1, NULL);	// no-warning
 }
 
 void
@@ -330,4 +376,25 @@ bad23(void)
 {
 	lck_mtx_lock(&mtx1);		// no-warning
 	lck_mtx_destroy(&mtx1, &grp1);	// expected-warning{{This lock is still locked}}
+}
+
+void
+bad24(void)
+{
+	pthread_mutex_init(&mtx1, NULL);	// no-warning
+	pthread_mutex_init(&mtx1, NULL);	// expected-warning{{This lock has already been initialized}}
+}
+
+void
+bad25(void)
+{
+	pthread_mutex_lock(&mtx1);		// no-warning
+	pthread_mutex_init(&mtx1, NULL);	// expected-warning{{This lock is still being held}}
+}
+
+void
+bad26(void)
+{
+	pthread_mutex_unlock(&mtx1);		// no-warning
+	pthread_mutex_init(&mtx1, NULL);	// expected-warning{{This lock has already been initialized}}
 }

@@ -53,6 +53,7 @@ class PthreadLockChecker : public Checker< check::PostStmt<CallExpr> > {
   mutable std::unique_ptr<BugType> BT_doublelock;
   mutable std::unique_ptr<BugType> BT_doubleunlock;
   mutable std::unique_ptr<BugType> BT_destroylock;
+  mutable std::unique_ptr<BugType> BT_initlock;
   mutable std::unique_ptr<BugType> BT_lor;
   enum LockingSemantics {
     NotApplicable = 0,
@@ -67,6 +68,7 @@ public:
     
   void ReleaseLock(CheckerContext &C, const CallExpr *CE, SVal lock) const;
   void DestroyLock(CheckerContext &C, const CallExpr *CE, SVal Lock) const;
+  void InitLock(CheckerContext &C, const CallExpr *CE, SVal Lock) const;
   void reportUseDestroyedBug(CheckerContext &C, const CallExpr *CE) const;
 };
 } // end anonymous namespace
@@ -115,6 +117,8 @@ void PthreadLockChecker::checkPostStmt(const CallExpr *CE,
   else if (FName == "pthread_mutex_destroy" ||
            FName == "lck_mtx_destroy")
     DestroyLock(C, CE, state->getSVal(CE->getArg(0), LCtx));
+  else if (FName == "pthread_mutex_init")
+    InitLock(C, CE, state->getSVal(CE->getArg(0), LCtx));
 }
 
 void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
@@ -276,6 +280,41 @@ void PthreadLockChecker::DestroyLock(CheckerContext &C, const CallExpr *CE,
   if (!N)
     return;
   BugReport *Report = new BugReport(*BT_destroylock, Message, N);
+  Report->addRange(CE->getArg(0)->getSourceRange());
+  C.emitReport(Report);
+}
+
+void PthreadLockChecker::InitLock(CheckerContext &C, const CallExpr *CE,
+                                  SVal Lock) const {
+
+  const MemRegion *LockR = Lock.getAsRegion();
+  if (!LockR)
+    return;
+
+  ProgramStateRef State = C.getState();
+
+  const struct LockState *LState = State->get<LockMap>(LockR);
+  if (!LState || LState->isDestroyed()) {
+    State = State->set<LockMap>(LockR, LockState::getUnlocked());
+    C.addTransition(State);
+    return;
+  }
+
+  StringRef Message;
+
+  if (LState->isLocked()) {
+    Message = "This lock is still being held";
+  } else {
+    Message = "This lock has already been initialized";
+  }
+
+  if (!BT_initlock)
+    BT_initlock.reset(new BugType(this, "Init invalid lock",
+                                  "Lock checker"));
+  ExplodedNode *N = C.generateSink();
+  if (!N)
+    return;
+  BugReport *Report = new BugReport(*BT_initlock, Message, N);
   Report->addRange(CE->getArg(0)->getSourceRange());
   C.emitReport(Report);
 }
