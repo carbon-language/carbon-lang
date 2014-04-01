@@ -134,6 +134,7 @@ void ARMSubtarget::initializeEnvironment() {
   HasTrustZone = false;
   HasCrypto = false;
   HasCRC = false;
+  HasZeroCycleZeroing = false;
   AllowsUnalignedMem = false;
   Thumb2DSP = false;
   UseNaClTrap = false;

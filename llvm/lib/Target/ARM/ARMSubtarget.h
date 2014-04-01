@@ -177,6 +177,10 @@ protected:
   /// HasCRC - if true, processor supports CRC instructions
   bool HasCRC;
 
+  /// If true, the instructions "vmov.i32 d0, #0" and "vmov.i32 q0, #0" are
+  /// particularly effective at zeroing a VFP register.
+  bool HasZeroCycleZeroing;
+
   /// AllowsUnalignedMem - If true, the subtarget allows unaligned memory
   /// accesses for some types.  For details, see
   /// ARMTargetLowering::allowsUnalignedMemoryAccesses().
@@ -298,6 +302,7 @@ public:
   bool isFPOnlySP() const { return FPOnlySP; }
   bool hasPerfMon() const { return HasPerfMon; }
   bool hasTrustZone() const { return HasTrustZone; }
+  bool hasZeroCycleZeroing() const { return HasZeroCycleZeroing; }
   bool prefers32BitThumb() const { return Pref32BitThumb; }
   bool avoidCPSRPartialUpdate() const { return AvoidCPSRPartialUpdate; }
   bool avoidMOVsShifterOperand() const { return AvoidMOVsShifterOperand; }

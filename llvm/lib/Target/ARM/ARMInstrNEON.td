@@ -5245,6 +5245,26 @@ def VMOVv4f32 : N1ModImm<1, 0b000, 0b1111, 0, 1, 0, 1, (outs QPR:$Vd),
                          [(set QPR:$Vd, (v4f32 (NEONvmovFPImm timm:$SIMM)))]>;
 } // isReMaterializable
 
+
+// On some CPUs the two instructions "vmov.i32 dD, #0" and "vmov.i32 qD, #0"
+// require zero cycles to execute so they should be used wherever possible for
+// setting a register to zero.
+
+// Even without these pseudo-insts we would probably end up with the correct
+// instruction, but we could not mark the general ones with "isAsCheapAsAMove"
+// since they are sometimes rather expensive (in general).
+
+let AddedComplexity = 50, isAsCheapAsAMove = 1, isReMaterializable = 1 in {
+  def VMOVD0 : ARMPseudoExpand<(outs DPR:$Vd), (ins), 4, IIC_VMOVImm,
+                               [(set DPR:$Vd, (v2i32 NEONimmAllZerosV))],
+                               (VMOVv2i32 DPR:$Vd, 0, (ops 14, zero_reg))>,
+               Requires<[HasZCZ]>;
+  def VMOVQ0 : ARMPseudoExpand<(outs QPR:$Vd), (ins), 4, IIC_VMOVImm,
+                               [(set QPR:$Vd, (v4i32 NEONimmAllZerosV))],
+                               (VMOVv4i32 QPR:$Vd, 0, (ops 14, zero_reg))>,
+               Requires<[HasZCZ]>;
+}
+
 //   VMOV     : Vector Get Lane (move scalar to ARM core register)
 
 def VGETLNs8  : NVGetLane<{1,1,1,0,0,1,?,1}, 0b1011, {?,?},

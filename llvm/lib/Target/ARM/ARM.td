@@ -73,6 +73,11 @@ def FeatureCrypto : SubtargetFeature<"crypto", "HasCrypto", "true",
 def FeatureCRC : SubtargetFeature<"crc", "HasCRC", "true",
                           "Enable support for CRC instructions">;
 
+// Cyclone has preferred instructions for zeroing VFP registers, which can
+// execute in 0 cycles.
+def FeatureZCZeroing : SubtargetFeature<"zcz", "HasZeroCycleZeroing", "true",
+                                        "Has zero-cycle zeroing instructions">;
+
 // Some processors have FP multiply-accumulate instructions that don't
 // play nicely with other VFP / NEON instructions, and it's generally better
 // to just not use them.
@@ -361,6 +366,13 @@ def : ProcessorModel<"cortex-a15",   CortexA9Model,
                                      FeatureDSPThumb2, FeatureHasRAS,
                                      FeatureAClass]>;
 
+// FIXME: krait has currently the same Schedule model as A9
+def : ProcessorModel<"krait",       CortexA9Model,
+                                    [ProcKrait, HasV7Ops,
+                                     FeatureNEON, FeatureDB,
+                                     FeatureDSPThumb2, FeatureHasRAS,
+                                     FeatureAClass]>;
+
 // FIXME: R5 has currently the same ProcessorModel as A8.
 def : ProcessorModel<"cortex-r5",   CortexA8Model,
                                     [ProcR5, HasV7Ops, FeatureDB,
@@ -395,12 +407,12 @@ def : ProcNoItin<"cortex-a57",      [ProcA57, HasV8Ops, FeatureAClass,
                                     FeatureDB, FeatureFPARMv8,
                                     FeatureNEON, FeatureDSPThumb2]>;
 
-// FIXME: krait has currently the same Schedule model as A9
-def : ProcessorModel<"krait",       CortexA9Model,
-                                    [ProcKrait, HasV7Ops,
-                                     FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2, FeatureHasRAS,
-                                     FeatureAClass]>;
+// Cyclone is very similar to swift
+def : ProcessorModel<"cyclone",     SwiftModel,
+                                    [ProcSwift, HasV8Ops, HasV7Ops,
+                                     FeatureCrypto, FeatureFPARMv8,
+                                     FeatureDB,FeatureDSPThumb2,
+                                     FeatureHasRAS, FeatureZCZeroing]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
