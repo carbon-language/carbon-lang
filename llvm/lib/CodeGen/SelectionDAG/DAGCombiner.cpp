@@ -290,6 +290,11 @@ namespace {
                              bool NotExtCompare = false);
     SDValue SimplifySetCC(EVT VT, SDValue N0, SDValue N1, ISD::CondCode Cond,
                           SDLoc DL, bool foldBooleans = true);
+
+    bool isSetCCEquivalent(SDValue N, SDValue &LHS, SDValue &RHS,
+                           SDValue &CC) const;
+    bool isOneUseSetCC(SDValue N) const;
+
     SDValue SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp,
                                          unsigned HiOp);
     SDValue CombineConsecutiveLoads(SDNode *N, EVT VT);
@@ -597,37 +602,35 @@ static SDValue GetNegatedExpression(SDValue Op, SelectionDAG &DAG,
   }
 }
 
-
 // isSetCCEquivalent - Return true if this node is a setcc, or is a select_cc
-// that selects between the values 1 and 0, making it equivalent to a setcc.
-// Also, set the incoming LHS, RHS, and CC references to the appropriate
-// nodes based on the type of node we are checking.  This simplifies life a
-// bit for the callers.
-static bool isSetCCEquivalent(SDValue N, SDValue &LHS, SDValue &RHS,
-                              SDValue &CC) {
+// that selects between the target values used for true and false, making it
+// equivalent to a setcc. Also, set the incoming LHS, RHS, and CC references to
+// the appropriate nodes based on the type of node we are checking. This
+// simplifies life a bit for the callers.
+bool DAGCombiner::isSetCCEquivalent(SDValue N, SDValue &LHS, SDValue &RHS,
+                                    SDValue &CC) const {
   if (N.getOpcode() == ISD::SETCC) {
     LHS = N.getOperand(0);
     RHS = N.getOperand(1);
     CC  = N.getOperand(2);
     return true;
   }
-  if (N.getOpcode() == ISD::SELECT_CC &&
-      N.getOperand(2).getOpcode() == ISD::Constant &&
-      N.getOperand(3).getOpcode() == ISD::Constant &&
-      cast<ConstantSDNode>(N.getOperand(2))->getAPIntValue() == 1 &&
-      cast<ConstantSDNode>(N.getOperand(3))->isNullValue()) {
-    LHS = N.getOperand(0);
-    RHS = N.getOperand(1);
-    CC  = N.getOperand(4);
-    return true;
-  }
-  return false;
+
+  if (N.getOpcode() != ISD::SELECT_CC ||
+      !TLI.isConstTrueVal(N.getOperand(2).getNode()) ||
+      !TLI.isConstFalseVal(N.getOperand(3).getNode()))
+    return false;
+
+  LHS = N.getOperand(0);
+  RHS = N.getOperand(1);
+  CC  = N.getOperand(4);
+  return true;
 }
 
 // isOneUseSetCC - Return true if this is a SetCC-equivalent operation with only
 // one use.  If this is true, it allows the users to invert the operation for
 // free when it is profitable to do so.
-static bool isOneUseSetCC(SDValue N) {
+bool DAGCombiner::isOneUseSetCC(SDValue N) const {
   SDValue N0, N1, N2;
   if (isSetCCEquivalent(N, N0, N1, N2) && N.getNode()->hasOneUse())
     return true;
