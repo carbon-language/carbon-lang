@@ -2104,7 +2104,7 @@ SDNode *ARM64DAGToDAGISel::Select(SDNode *Node) {
       else if (VT == MVT::v4i32 || VT == MVT::v4f32)
         return SelectLoad(Node, 3, ARM64::LD3Rv4s, ARM64::qsub0);
       else if (VT == MVT::v1i64 || VT == MVT::v1f64)
-        return SelectLoad(Node, 3, ARM64::LD4Rv1d, ARM64::dsub0);
+        return SelectLoad(Node, 3, ARM64::LD3Rv1d, ARM64::dsub0);
       else if (VT == MVT::v2i64 || VT == MVT::v2f64)
         return SelectLoad(Node, 3, ARM64::LD3Rv2d, ARM64::qsub0);
       break;

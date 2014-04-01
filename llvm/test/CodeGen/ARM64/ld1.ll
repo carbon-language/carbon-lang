@@ -737,6 +737,37 @@ declare %struct.__neon_int32x4x2_t @llvm.arm64.neon.ld2r.v4i32.p0i32(i32*) nounw
 declare %struct.__neon_int32x4x3_t @llvm.arm64.neon.ld3r.v4i32.p0i32(i32*) nounwind readonly
 declare %struct.__neon_int32x4x4_t @llvm.arm64.neon.ld4r.v4i32.p0i32(i32*) nounwind readonly
 
+define %struct.__neon_int64x1x2_t @ld2r_1d(i64* %A) nounwind {
+; CHECK: ld2r_1d
+; Make sure we are using the operands defined by the ABI
+; CHECK ld2r.1d { v0, v1 }, [x0]
+; CHECK-NEXT ret
+	%tmp2 = call %struct.__neon_int64x1x2_t @llvm.arm64.neon.ld2r.v1i64.p0i64(i64* %A)
+	ret %struct.__neon_int64x1x2_t  %tmp2
+}
+
+define %struct.__neon_int64x1x3_t @ld3r_1d(i64* %A) nounwind {
+; CHECK: ld3r_1d
+; Make sure we are using the operands defined by the ABI
+; CHECK ld3r.1d { v0, v1, v2 }, [x0]
+; CHECK-NEXT ret
+	%tmp2 = call %struct.__neon_int64x1x3_t @llvm.arm64.neon.ld3r.v1i64.p0i64(i64* %A)
+	ret %struct.__neon_int64x1x3_t  %tmp2
+}
+
+define %struct.__neon_int64x1x4_t @ld4r_1d(i64* %A) nounwind {
+; CHECK: ld4r_1d
+; Make sure we are using the operands defined by the ABI
+; CHECK ld4r.1d { v0, v1, v2, v3 }, [x0]
+; CHECK-NEXT ret
+	%tmp2 = call %struct.__neon_int64x1x4_t @llvm.arm64.neon.ld4r.v1i64.p0i64(i64* %A)
+	ret %struct.__neon_int64x1x4_t  %tmp2
+}
+
+declare %struct.__neon_int64x1x2_t @llvm.arm64.neon.ld2r.v1i64.p0i64(i64*) nounwind readonly
+declare %struct.__neon_int64x1x3_t @llvm.arm64.neon.ld3r.v1i64.p0i64(i64*) nounwind readonly
+declare %struct.__neon_int64x1x4_t @llvm.arm64.neon.ld4r.v1i64.p0i64(i64*) nounwind readonly
+
 define %struct.__neon_int64x2x2_t @ld2r_2d(i64* %A) nounwind {
 ; CHECK: ld2r_2d
 ; Make sure we are using the operands defined by the ABI
