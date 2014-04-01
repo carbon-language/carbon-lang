@@ -16,6 +16,40 @@
 // CHECK-ASAN-LINUX: "--dynamic-list={{.*}}libclang_rt.asan-i386.a.syms"
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target i386-unknown-linux -fsanitize=address -shared-libasan \
+// RUN:     -resource-dir=%S/Inputs/resource_dir \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-SHARED-ASAN-LINUX %s
+//
+// CHECK-SHARED-ASAN-LINUX: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
+// CHECK-SHARED-ASAN-LINUX-NOT: "-lc"
+// CHECK-SHARED-ASAN-LINUX-NOT: libclang_rt.asan-i386.a"
+// CHECK-SHARED-ASAN-LINUX: "-whole-archive" "{{.*}}libclang_rt.asan-preinit-i386.a" "-no-whole-archive"
+// CHECK-SHARED-ASAN-LINUX: libclang_rt.asan-i386.so"
+// CHECK-SHARED-ASAN-LINUX-NOT: "-lpthread"
+// CHECK-SHARED-ASAN-LINUX-NOT: "-lrt"
+// CHECK-SHARED-ASAN-LINUX-NOT: "-ldl"
+// CHECK-SHARED-ASAN-LINUX-NOT: "-export-dynamic"
+// CHECK-SHARED-ASAN-LINUX-NOT: "--dynamic-list"
+
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.so -shared 2>&1 \
+// RUN:     -target i386-unknown-linux -fsanitize=address -shared-libasan \
+// RUN:     -resource-dir=%S/Inputs/resource_dir \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-DSO-SHARED-ASAN-LINUX %s
+//
+// CHECK-DSO-SHARED-ASAN-LINUX: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
+// CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-lc"
+// CHECK-DSO-SHARED-ASAN-LINUX-NOT: libclang_rt.asan-i386.a"
+// CHECK-DSO-SHARED-ASAN-LINUX-NOT: "libclang_rt.asan-preinit-i386.a"
+// CHECK-DSO-SHARED-ASAN-LINUX: libclang_rt.asan-i386.so"
+// CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-lpthread"
+// CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-lrt"
+// CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-ldl"
+// CHECK-DSO-SHARED-ASAN-LINUX-NOT: "-export-dynamic"
+// CHECK-DSO-SHARED-ASAN-LINUX-NOT: "--dynamic-list"
+
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target i386-unknown-freebsd -fsanitize=address \
 // RUN:     -resource-dir=%S/Inputs/resource_dir \
 // RUN:     --sysroot=%S/Inputs/basic_freebsd_tree \
@@ -81,7 +115,6 @@
 // CHECK-ASAN-ARMv7: "{{(.*[^.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-ASAN-ARMv7-NOT: "-lc"
 // CHECK-ASAN-ARMv7: libclang_rt.asan-arm.a"
-//
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target arm-linux-androideabi -fsanitize=address \

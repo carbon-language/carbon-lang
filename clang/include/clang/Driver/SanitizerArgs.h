@@ -51,6 +51,7 @@ class SanitizerArgs {
   int MsanTrackOrigins;
   bool AsanZeroBaseShadow;
   bool UbsanTrapOnError;
+  bool AsanSharedRuntime;
 
  public:
   SanitizerArgs();
@@ -58,6 +59,7 @@ class SanitizerArgs {
   SanitizerArgs(const ToolChain &TC, const llvm::opt::ArgList &Args);
 
   bool needsAsanRt() const { return Kind & NeedsAsanRt; }
+  bool needsSharedAsanRt() const { return AsanSharedRuntime; }
   bool needsTsanRt() const { return Kind & NeedsTsanRt; }
   bool needsMsanRt() const { return Kind & NeedsMsanRt; }
   bool needsLeakDetection() const { return Kind & NeedsLeakDetection; }

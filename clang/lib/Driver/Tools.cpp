@@ -1883,15 +1883,29 @@ static void addProfileRT(
   CmdArgs.push_back(Args.MakeArgString(LibProfile));
 }
 
-static void addSanitizerRTLinkFlags(
-    const ToolChain &TC, const ArgList &Args, ArgStringList &CmdArgs,
-    const StringRef Sanitizer, bool BeforeLibStdCXX,
-    bool ExportSymbols = true) {
-  // Sanitizer runtime has name "libclang_rt.<Sanitizer>-<ArchName>.a".
+static SmallString<128> getSanitizerRTLibName(const ToolChain &TC,
+                                              const StringRef Sanitizer,
+                                              bool Shared) {
+  // Sanitizer runtime has name "libclang_rt.<Sanitizer>-<ArchName>.{a,so}"
+  // (or "libclang_rt.<Sanitizer>-<ArchName>-android.so for Android)
+  const char *EnvSuffix =
+    TC.getTriple().getEnvironment() == llvm::Triple::Android ?  "-android" : "";
   SmallString<128> LibSanitizer = getCompilerRTLibDir(TC);
   llvm::sys::path::append(LibSanitizer,
-                          (Twine("libclang_rt.") + Sanitizer + "-" +
-                           getArchNameForCompilerRTLib(TC) + ".a"));
+                          Twine("libclang_rt.") + Sanitizer + "-" +
+                              getArchNameForCompilerRTLib(TC) + EnvSuffix +
+                              (Shared ? ".so" : ".a"));
+  return LibSanitizer;
+}
+
+static void addSanitizerRTLinkFlags(const ToolChain &TC, const ArgList &Args,
+                                    ArgStringList &CmdArgs,
+                                    const StringRef Sanitizer,
+                                    bool BeforeLibStdCXX,
+                                    bool ExportSymbols = true,
+                                    bool LinkDeps = true) {
+  SmallString<128> LibSanitizer =
+      getSanitizerRTLibName(TC, Sanitizer, /*Shared*/ false);
 
   // Sanitizer runtime may need to come before -lstdc++ (or -lc++, libstdc++.a,
   // etc.) so that the linker picks custom versions of the global 'operator
@@ -1907,12 +1921,15 @@ static void addSanitizerRTLinkFlags(
   CmdArgs.insert(BeforeLibStdCXX ? CmdArgs.begin() : CmdArgs.end(),
                  LibSanitizerArgs.begin(), LibSanitizerArgs.end());
 
-  CmdArgs.push_back("-lpthread");
-  CmdArgs.push_back("-lrt");
-  CmdArgs.push_back("-lm");
-  // There's no libdl on FreeBSD.
-  if (TC.getTriple().getOS() != llvm::Triple::FreeBSD)
-    CmdArgs.push_back("-ldl");
+  if (LinkDeps) {
+    // Link sanitizer dependencies explicitly
+    CmdArgs.push_back("-lpthread");
+    CmdArgs.push_back("-lrt");
+    CmdArgs.push_back("-lm");
+    // There's no libdl on FreeBSD.
+    if (TC.getTriple().getOS() != llvm::Triple::FreeBSD)
+      CmdArgs.push_back("-ldl");
+  }
 
   // If possible, use a dynamic symbols file to export the symbols from the
   // runtime library. If we can't do so, use -export-dynamic instead to export
@@ -1929,17 +1946,23 @@ static void addSanitizerRTLinkFlags(
 /// If AddressSanitizer is enabled, add appropriate linker flags (Linux).
 /// This needs to be called before we add the C run-time (malloc, etc).
 static void addAsanRT(const ToolChain &TC, const ArgList &Args,
-                      ArgStringList &CmdArgs) {
-  if (TC.getTriple().getEnvironment() == llvm::Triple::Android) {
-    SmallString<128> LibAsan = getCompilerRTLibDir(TC);
-    llvm::sys::path::append(LibAsan,
-                            (Twine("libclang_rt.asan-") +
-                             getArchNameForCompilerRTLib(TC) + "-android.so"));
-    CmdArgs.insert(CmdArgs.begin(), Args.MakeArgString(LibAsan));
-  } else {
-    if (!Args.hasArg(options::OPT_shared))
-      addSanitizerRTLinkFlags(TC, Args, CmdArgs, "asan", true);
+                      ArgStringList &CmdArgs, bool Shared) {
+  if (Shared) {
+    // Link dynamic runtime if necessary.
+    SmallString<128> LibSanitizer =
+        getSanitizerRTLibName(TC, "asan", Shared);
+    CmdArgs.insert(CmdArgs.begin(), Args.MakeArgString(LibSanitizer));
   }
+
+  // Do not link static runtime to DSOs or if compiling for Android.
+  if (Args.hasArg(options::OPT_shared) ||
+      (TC.getTriple().getEnvironment() == llvm::Triple::Android))
+    return;
+
+  const char *LibAsanStaticPart = Shared ? "asan-preinit" : "asan";
+  addSanitizerRTLinkFlags(TC, Args, CmdArgs, LibAsanStaticPart,
+                          /*BeforeLibStdCXX*/ true, /*ExportSymbols*/ !Shared,
+                          /*LinkDeps*/ !Shared);
 }
 
 /// If ThreadSanitizer is enabled, add appropriate linker flags (Linux).
@@ -2000,7 +2023,7 @@ static void addSanitizerRuntimes(const ToolChain &TC, const ArgList &Args,
                     Sanitize.needsAsanRt() || Sanitize.needsTsanRt() ||
                     Sanitize.needsMsanRt() || Sanitize.needsLsanRt());
   if (Sanitize.needsAsanRt())
-    addAsanRT(TC, Args, CmdArgs);
+    addAsanRT(TC, Args, CmdArgs, Sanitize.needsSharedAsanRt());
   if (Sanitize.needsTsanRt())
     addTsanRT(TC, Args, CmdArgs);
   if (Sanitize.needsMsanRt())

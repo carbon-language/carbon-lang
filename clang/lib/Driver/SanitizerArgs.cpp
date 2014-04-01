@@ -27,6 +27,7 @@ void SanitizerArgs::clear() {
   MsanTrackOrigins = 0;
   AsanZeroBaseShadow = false;
   UbsanTrapOnError = false;
+  AsanSharedRuntime = false;
 }
 
 SanitizerArgs::SanitizerArgs() {
@@ -168,9 +169,13 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
     }
   }
 
-  if (NeedsAsan)
+  if (NeedsAsan) {
+    AsanSharedRuntime =
+      (TC.getTriple().getEnvironment() == llvm::Triple::Android) ||
+      Args.hasArg(options::OPT_shared_libasan);
     AsanZeroBaseShadow =
         (TC.getTriple().getEnvironment() == llvm::Triple::Android);
+  }
 }
 
 void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
