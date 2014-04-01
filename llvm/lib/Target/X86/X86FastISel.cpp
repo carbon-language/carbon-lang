@@ -876,7 +876,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
   // a virtual register in the entry block, so now we copy the value out
   // and into %rax. We also do the same with %eax for Win32.
   if (F.hasStructRetAttr() &&
-      (Subtarget->is64Bit() || Subtarget->isTargetWindows())) {
+      (Subtarget->is64Bit() || Subtarget->isTargetKnownWindowsMSVC())) {
     unsigned Reg = X86MFInfo->getSRetReturnReg();
     assert(Reg &&
            "SRetReturnReg should have been set in LowerFormalArguments()!");

@@ -39,7 +39,7 @@ static std::string computeDataLayout(const X86Subtarget &ST) {
     Ret += "-p:32:32";
 
   // Some ABIs align 64 bit integers and doubles to 64 bits, others to 32.
-  if (ST.is64Bit() || ST.isTargetCygMing() || ST.isTargetWindows() ||
+  if (ST.is64Bit() || ST.isTargetCygMing() || ST.isTargetKnownWindowsMSVC() ||
       ST.isTargetNaCl())
     Ret += "-i64:64";
   else
@@ -60,7 +60,7 @@ static std::string computeDataLayout(const X86Subtarget &ST) {
     Ret += "-n8:16:32";
 
   // The stack is aligned to 32 bits on some ABIs and 128 bits on others.
-  if (!ST.is64Bit() && (ST.isTargetCygMing() || ST.isTargetWindows()))
+  if (!ST.is64Bit() && (ST.isTargetCygMing() || ST.isTargetKnownWindowsMSVC()))
     Ret += "-S32";
   else
     Ret += "-S128";

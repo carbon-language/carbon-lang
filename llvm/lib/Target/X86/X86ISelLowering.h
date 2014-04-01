@@ -756,7 +756,7 @@ namespace llvm {
     /// isTargetFTOL - Return true if the target uses the MSVC _ftol2 routine
     /// for fptoui.
     bool isTargetFTOL() const {
-      return Subtarget->isTargetWindows() && !Subtarget->is64Bit();
+      return Subtarget->isTargetKnownWindowsMSVC() && !Subtarget->is64Bit();
     }
 
     /// isIntegerTypeFTOL - Return true if the MSVC _ftol2 routine should be

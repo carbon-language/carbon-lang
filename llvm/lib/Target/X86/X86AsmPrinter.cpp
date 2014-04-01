@@ -623,7 +623,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
   }
 
-  if (Subtarget->isTargetWindows() && !Subtarget->isTargetCygMing() &&
+  if (Subtarget->isTargetKnownWindowsMSVC() && !Subtarget->isTargetCygMing() &&
       MMI->usesVAFloatArgument()) {
     StringRef SymbolName = Subtarget->is64Bit() ? "_fltused" : "__fltused";
     MCSymbol *S = MMI->getContext().GetOrCreateSymbol(SymbolName);
@@ -681,12 +681,12 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       OutStreamer.SwitchSection(TLOFCOFF.getDrectveSection());
       SmallString<128> name;
       for (unsigned i = 0, e = DLLExportedGlobals.size(); i != e; ++i) {
-        if (Subtarget->isTargetWindows())
+        if (Subtarget->isTargetKnownWindowsMSVC())
           name = " /EXPORT:";
         else
           name = " -export:";
         name += DLLExportedGlobals[i]->getName();
-        if (Subtarget->isTargetWindows())
+        if (Subtarget->isTargetKnownWindowsMSVC())
           name += ",DATA";
         else
         name += ",data";
@@ -694,7 +694,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       }
 
       for (unsigned i = 0, e = DLLExportedFns.size(); i != e; ++i) {
-        if (Subtarget->isTargetWindows())
+        if (Subtarget->isTargetKnownWindowsMSVC())
           name = " /EXPORT:";
         else
           name = " -export:";

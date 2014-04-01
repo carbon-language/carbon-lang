@@ -343,7 +343,7 @@ public:
   bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
   bool isTargetNaCl32() const { return isTargetNaCl() && !is64Bit(); }
   bool isTargetNaCl64() const { return isTargetNaCl() && is64Bit(); }
-  bool isTargetWindows() const {
+  bool isTargetKnownWindowsMSVC() const {
     return TargetTriple.isKnownWindowsMSVCEnvironment();
   }
   bool isTargetMingw() const { return TargetTriple.isWindowsGNUEnvironment(); }
@@ -359,7 +359,7 @@ public:
   }
 
   bool isTargetWin32() const {
-    return !In64BitMode && (isTargetCygMing() || isTargetWindows());
+    return !In64BitMode && (isTargetCygMing() || isTargetKnownWindowsMSVC());
   }
 
   bool isPICStyleSet() const { return PICStyle != PICStyles::None; }

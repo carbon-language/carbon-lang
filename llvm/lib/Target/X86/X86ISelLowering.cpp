@@ -189,7 +189,7 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
     return new X86LinuxTargetObjectFile();
   if (Subtarget->isTargetELF())
     return new TargetLoweringObjectFileELF();
-  if (Subtarget->isTargetWindows())
+  if (Subtarget->isTargetKnownWindowsMSVC())
     return new X86WindowsTargetObjectFile();
   if (Subtarget->isTargetCOFF())
     return new TargetLoweringObjectFileCOFF();
@@ -250,7 +250,7 @@ void X86TargetLowering::resetOperationActions() {
       addBypassSlowDiv(64, 16);
   }
 
-  if (Subtarget->isTargetWindows() && !Subtarget->isTargetCygMing()) {
+  if (Subtarget->isTargetKnownWindowsMSVC() && !Subtarget->isTargetCygMing()) {
     // Setup Windows compiler runtime calls.
     setLibcallName(RTLIB::SDIV_I64, "_alldiv");
     setLibcallName(RTLIB::UDIV_I64, "_aulldiv");
@@ -1906,7 +1906,7 @@ X86TargetLowering::LowerReturn(SDValue Chain,
   // We saved the argument into a virtual register in the entry block,
   // so now we copy the value out and into %rax/%eax.
   if (DAG.getMachineFunction().getFunction()->hasStructRetAttr() &&
-      (Subtarget->is64Bit() || Subtarget->isTargetWindows())) {
+      (Subtarget->is64Bit() || Subtarget->isTargetKnownWindowsMSVC())) {
     MachineFunction &MF = DAG.getMachineFunction();
     X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
     unsigned Reg = FuncInfo->getSRetReturnReg();
@@ -2291,7 +2291,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   // Save the argument into a virtual register so that we can access it
   // from the return points.
   if (MF.getFunction()->hasStructRetAttr() &&
-      (Subtarget->is64Bit() || Subtarget->isTargetWindows())) {
+      (Subtarget->is64Bit() || Subtarget->isTargetKnownWindowsMSVC())) {
     X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
     unsigned Reg = FuncInfo->getSRetReturnReg();
     if (!Reg) {
@@ -8494,7 +8494,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
                               Chain.getValue(1));
   }
 
-  if (Subtarget->isTargetWindows() || Subtarget->isTargetMingw()) {
+  if (Subtarget->isTargetKnownWindowsMSVC() || Subtarget->isTargetMingw()) {
     // Just use the implicit TLS architecture
     // Need to generate someting similar to:
     //   mov     rdx, qword [gs:abs 58H]; Load pointer to ThreadLocalStorage
@@ -15882,7 +15882,7 @@ X86TargetLowering::EmitLoweredWinAlloca(MachineInstr *MI,
     }
   } else {
     const char *StackProbeSymbol =
-      Subtarget->isTargetWindows() ? "_chkstk" : "_alloca";
+      Subtarget->isTargetKnownWindowsMSVC() ? "_chkstk" : "_alloca";
 
     BuildMI(*BB, MI, DL, TII->get(X86::CALLpcrel32))
       .addExternalSymbol(StackProbeSymbol)
