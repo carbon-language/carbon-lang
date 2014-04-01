@@ -767,6 +767,8 @@ public:
     return (getUnsignedField(6) & dwarf::DW_APPLE_PROPERTY_nonatomic) != 0;
   }
 
+  /// Objective-C doesn't have an ODR, so there is no benefit in storing
+  /// the type as a DITypeRef here.
   DIType getType() const { return getFieldAs<DIType>(7); }
 
   /// Verify - Verify that a derived type descriptor is well formed.
