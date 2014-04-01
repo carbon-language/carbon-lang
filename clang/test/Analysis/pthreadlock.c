@@ -6,17 +6,24 @@ typedef struct {
 	void	*foo;
 } pthread_mutex_t;
 
+typedef struct {
+	void	*foo;
+} lck_grp_t;
+
 typedef pthread_mutex_t lck_mtx_t;
 
 extern int pthread_mutex_lock(pthread_mutex_t *);
 extern int pthread_mutex_unlock(pthread_mutex_t *);
 extern int pthread_mutex_trylock(pthread_mutex_t *);
+extern int pthread_mutex_destroy(pthread_mutex_t *);
 extern int lck_mtx_lock(lck_mtx_t *);
 extern int lck_mtx_unlock(lck_mtx_t *);
 extern int lck_mtx_try_lock(lck_mtx_t *);
+extern void lck_mtx_destroy(lck_mtx_t *lck, lck_grp_t *grp);
 
 pthread_mutex_t mtx1, mtx2;
 lck_mtx_t lck1, lck2;
+lck_grp_t grp1;
 
 void
 ok1(void)
@@ -91,6 +98,43 @@ ok10(void)
 	if (pthread_mutex_trylock(&mtx1) != 0)	// no-warning
 		pthread_mutex_lock(&mtx1);	// no-warning
 	pthread_mutex_unlock(&mtx1);		// no-warning
+}
+
+void
+ok11(void)
+{
+	pthread_mutex_destroy(&mtx1);	// no-warning
+}
+
+void
+ok12(void)
+{
+	pthread_mutex_destroy(&mtx1);	// no-warning
+	pthread_mutex_destroy(&mtx2);	// no-warning
+}
+
+void
+ok13(void)
+{
+	pthread_mutex_unlock(&mtx1);	// no-warning
+	pthread_mutex_destroy(&mtx1);	// no-warning
+}
+
+void
+ok14(void)
+{
+	pthread_mutex_unlock(&mtx1);	// no-warning
+	pthread_mutex_destroy(&mtx1);	// no-warning
+	pthread_mutex_unlock(&mtx2);	// no-warning
+	pthread_mutex_destroy(&mtx2);	// no-warning
+}
+
+void
+ok15(void)
+{
+	pthread_mutex_lock(&mtx1);	// no-warning
+	pthread_mutex_unlock(&mtx1);	// no-warning
+	pthread_mutex_destroy(&mtx1);	// no-warning
 }
 
 void
@@ -230,4 +274,60 @@ bad15(void)
 	pthread_mutex_unlock(&mtx1);	// no-warning
 	pthread_mutex_lock(&mtx1);	// no-warning
 	pthread_mutex_unlock(&mtx2);	// expected-warning{{This lock has already been unlocked}}
+}
+
+void
+bad16(void)
+{
+	pthread_mutex_destroy(&mtx1);	// no-warning
+	pthread_mutex_lock(&mtx1);	// expected-warning{{This lock has already been destroyed}}
+}
+
+void
+bad17(void)
+{
+	pthread_mutex_destroy(&mtx1);	// no-warning
+	pthread_mutex_unlock(&mtx1);	// expected-warning{{This lock has already been destroyed}}
+}
+
+void
+bad18(void)
+{
+	pthread_mutex_destroy(&mtx1);	// no-warning
+	pthread_mutex_destroy(&mtx1);	// expected-warning{{This lock has already been destroyed}}
+}
+
+void
+bad19(void)
+{
+	pthread_mutex_lock(&mtx1);	// no-warning
+	pthread_mutex_destroy(&mtx1);	// expected-warning{{This lock is still locked}}
+}
+
+void
+bad20(void)
+{
+	lck_mtx_destroy(&mtx1, &grp1);	// no-warning
+	lck_mtx_lock(&mtx1);		// expected-warning{{This lock has already been destroyed}}
+}
+
+void
+bad21(void)
+{
+	lck_mtx_destroy(&mtx1, &grp1);	// no-warning
+	lck_mtx_unlock(&mtx1);		// expected-warning{{This lock has already been destroyed}}
+}
+
+void
+bad22(void)
+{
+	lck_mtx_destroy(&mtx1, &grp1);	// no-warning
+	lck_mtx_destroy(&mtx1, &grp1);	// expected-warning{{This lock has already been destroyed}}
+}
+
+void
+bad23(void)
+{
+	lck_mtx_lock(&mtx1);		// no-warning
+	lck_mtx_destroy(&mtx1, &grp1);	// expected-warning{{This lock is still locked}}
 }
