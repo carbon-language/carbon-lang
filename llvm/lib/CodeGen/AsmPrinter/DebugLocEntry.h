@@ -95,7 +95,11 @@ public:
   }
 
   bool Merge(const DebugLocEntry &Next) {
-    return End == Next.Begin && hasSameValueOrLocation(Next);
+    if (End == Next.Begin && hasSameValueOrLocation(Next)) {
+      End = Next.End;
+      return true;
+    }
+    return false;
   }
   bool isLocation() const { return EntryKind == E_Location; }
   bool isInt() const { return EntryKind == E_Integer; }

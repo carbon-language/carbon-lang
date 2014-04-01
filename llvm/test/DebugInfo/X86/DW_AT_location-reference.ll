@@ -1,5 +1,12 @@
-; RUN: llc -O1 -mtriple=x86_64-apple-darwin < %s | FileCheck -check-prefix=DARWIN %s
-; RUN: llc -O1 -mtriple=x86_64-pc-linux-gnu < %s | FileCheck -check-prefix=LINUX %s
+; RUN: llc -O1 -filetype=obj -mtriple=x86_64-apple-darwin < %s > %t
+; RUN: llvm-dwarfdump %t  | FileCheck %s
+; FIXME: llvm-objdump is failing with an error when parsing some relocations
+; here, though it doesn't seem to adversely affect the test
+; RUN: not llvm-objdump -r %t | FileCheck -check-prefix=DARWIN %s
+; RUN: llc -O1 -filetype=obj -mtriple=x86_64-pc-linux-gnu < %s > %t
+; RUN: llvm-dwarfdump %t  | FileCheck %s
+; RUN: llvm-objdump -r %t | FileCheck -check-prefix=LINUX %s
+
 ; PR9493
 ; Adapted from the original test case in r127757.
 ; We use 'llc -O1' to induce variable 'x' to live in different locations.
@@ -24,22 +31,31 @@
 ; }
 
 ; // The 'x' variable and its symbol reference location
-; DARWIN:      DW_TAG_variable
-; DARWIN-NEXT: ## DW_AT_name
-; DARWIN-NEXT: .long Lset{{[0-9]+}}
-; DARWIN-NEXT: ## DW_AT_decl_file
-; DARWIN-NEXT: ## DW_AT_decl_line
-; DARWIN-NEXT: ## DW_AT_type
-; DARWIN-NEXT: Lset{{[0-9]+}} = Ldebug_loc{{[0-9]+}}-Lsection_debug_loc ## DW_AT_location
-; DARWIN-NEXT: .long Lset{{[0-9]+}}
+; CHECK: .debug_info contents:
+; CHECK:      DW_TAG_variable
+; CHECK-NEXT:   DW_AT_name {{.*}} "x"
+; CHECK-NEXT:   DW_AT_decl_file
+; CHECK-NEXT:   DW_AT_decl_line
+; CHECK-NEXT:   DW_AT_type
+; CHECK-NEXT:   DW_AT_location [DW_FORM_sec_offset] (0x00000000)
 
-; LINUX:      DW_TAG_variable
-; LINUX-NEXT: # DW_AT_name
-; LINUX-NEXT: # DW_AT_decl_file
-; LINUX-NEXT: # DW_AT_decl_line
-; LINUX-NEXT: # DW_AT_type
-; LINUX-NEXT: .long .Ldebug_loc{{[0-9]+}} # DW_AT_location
+; Check that the location contains only 4 ranges - this verifies that the 4th
+; and 5th ranges were successfully merged into a single range.
+; CHECK: .debug_loc contents:
+; CHECK: 0x00000000:
+; CHECK: Beginning address offset:
+; CHECK: Beginning address offset:
+; CHECK: Beginning address offset:
+; CHECK: Beginning address offset:
+; CHECK-NOT: Beginning address offset:
 
+; Check that we have no relocations in Darwin's output.
+; DARWIN-NOT: X86_64_RELOC{{.*}} __debug_loc
+
+; Check we have a relocation for the debug_loc entry in Linux output.
+; LINUX: RELOCATION RECORDS FOR [.rela.debug_info]
+; LINUX-NOT: RELOCATION RECORDS
+; LINUX: R_X86_64{{.*}} .debug_loc+0
 
 ; ModuleID = 'simple.c'
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-n32"
