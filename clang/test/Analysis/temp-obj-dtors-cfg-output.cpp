@@ -51,6 +51,37 @@ void test_cond() {
   int b;
 }
 
+struct C {
+  C():b_(true) {}
+  ~C() {}
+
+  operator bool() { return b_; }
+  bool b_;
+};
+
+struct D {
+  D():b_(true) {}
+
+  operator bool() { return b_; }
+  bool b_;
+};
+
+int test_cond_unnamed_custom_destructor() {
+  if (C()) { return 1; } else { return 0; }
+}
+
+int test_cond_named_custom_destructor() {
+  if (C c = C()) { return 1; } else { return 0; }
+}
+
+int test_cond_unnamed_auto_destructor() {
+  if (D()) { return 1; } else { return 0; }
+}
+
+int test_cond_named_auto_destructor() {
+  if (D d = D()) { return 1; } else { return 0; }
+}
+
 void test_cond_cref() {
   const A& a = B() ? A() : A(B());
   foo(B() ? A() : A(B()));
@@ -123,6 +154,38 @@ void test_noreturn2() {
   int a;
   NoReturn(), 47;
   int b;
+}
+
+extern bool check(const NoReturn&);
+
+// PR16664 and PR18159
+int testConsistencyNestedSimple(bool value) {
+  if (value) {
+    if (!value || check(NoReturn())) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+// PR16664 and PR18159
+int testConsistencyNestedComplex(bool value) {
+  if (value) {
+    if (!value || !value || check(NoReturn())) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+// PR16664 and PR18159
+int testConsistencyNestedNormalReturn(bool value) {
+  if (value) {
+    if (!value || value || check(NoReturn())) {
+      return 1;
+    }
+  }
+  return 0;
 }
 
 // CHECK:   [B1 (ENTRY)]
@@ -470,6 +533,166 @@ void test_noreturn2() {
 // CHECK:     Succs (2): B8 B9
 // CHECK:   [B0 (EXIT)]
 // CHECK:     Preds (1): B1
+// CHECK:  C() : b_(true)
+// CHECK:   [B2 (ENTRY)]
+// CHECK:     Succs (1): B1
+// CHECK:   [B1]
+// CHECK:     1: true
+// CHECK:     2: b_([B1.1]) (Member initializer)
+// CHECK:     Preds (1): B2
+// CHECK:     Succs (1): B0
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (1): B1
+// CHECK:  ~C()
+// CHECK:   [B1 (ENTRY)]
+// CHECK:     Succs (1): B0
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (1): B1
+// CHECK:  operator bool()
+// CHECK:   [B2 (ENTRY)]
+// CHECK:     Succs (1): B1
+// CHECK:   [B1]
+// CHECK:     1: this
+// CHECK:     2: [B1.1]->b_
+// CHECK:     3: [B1.2] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:     4: return [B1.3];
+// CHECK:     Preds (1): B2
+// CHECK:     Succs (1): B0
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (1): B1
+// CHECK:  D() : b_(true)
+// CHECK:   [B2 (ENTRY)]
+// CHECK:     Succs (1): B1
+// CHECK:   [B1]
+// CHECK:     1: true
+// CHECK:     2: b_([B1.1]) (Member initializer)
+// CHECK:     Preds (1): B2
+// CHECK:     Succs (1): B0
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (1): B1
+// CHECK:  operator bool()
+// CHECK:   [B2 (ENTRY)]
+// CHECK:     Succs (1): B1
+// CHECK:   [B1]
+// CHECK:     1: this
+// CHECK:     2: [B1.1]->b_
+// CHECK:     3: [B1.2] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:     4: return [B1.3];
+// CHECK:     Preds (1): B2
+// CHECK:     Succs (1): B0
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (1): B1
+// CHECK:  int test_cond_unnamed_custom_destructor()
+// CHECK:   [B4 (ENTRY)]
+// CHECK:     Succs (1): B3
+// CHECK:   [B1]
+// CHECK:     1: 0
+// CHECK:     2: return [B1.1];
+// CHECK:     Preds (1): B3
+// CHECK:     Succs (1): B0
+// CHECK:   [B2]
+// CHECK:     1: 1
+// CHECK:     2: return [B2.1];
+// CHECK:     Preds (1): B3
+// CHECK:     Succs (1): B0
+// CHECK:   [B3]
+// CHECK:     1: C() (CXXConstructExpr, struct C)
+// CHECK:     2: [B3.1] (BindTemporary)
+// CHECK:     3: [B3.2].operator bool
+// CHECK:     4: [B3.2]
+// CHECK:     5: [B3.4] (ImplicitCastExpr, UserDefinedConversion, _Bool)
+// CHECK:     6: ~C() (Temporary object destructor)
+// CHECK:     T: if [B3.5]
+// CHECK:     Preds (1): B4
+// CHECK:     Succs (2): B2 B1
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (2): B1 B2
+// CHECK:  int test_cond_named_custom_destructor()
+// CHECK:   [B5 (ENTRY)]
+// CHECK:     Succs (1): B4
+// CHECK:   [B1]
+// CHECK:     1: [B4.7].~C() (Implicit destructor)
+// CHECK:     Succs (1): B0
+// CHECK:   [B2]
+// CHECK:     1: 0
+// CHECK:     2: return [B2.1];
+// CHECK:     3: [B4.7].~C() (Implicit destructor)
+// CHECK:     Preds (1): B4
+// CHECK:     Succs (1): B0
+// CHECK:   [B3]
+// CHECK:     1: 1
+// CHECK:     2: return [B3.1];
+// CHECK:     3: [B4.7].~C() (Implicit destructor)
+// CHECK:     Preds (1): B4
+// CHECK:     Succs (1): B0
+// CHECK:   [B4]
+// CHECK:     1: C() (CXXConstructExpr, struct C)
+// CHECK:     2: [B4.1] (BindTemporary)
+// CHECK:     3: [B4.2] (ImplicitCastExpr, NoOp, const struct C)
+// CHECK:     4: [B4.3]
+// CHECK:     5: [B4.4] (CXXConstructExpr, struct C)
+// CHECK:     6: ~C() (Temporary object destructor)
+// CHECK:     7: C c = C();
+// CHECK:     8: c
+// CHECK:     9: [B4.8].operator bool
+// CHECK:    10: [B4.8]
+// CHECK:    11: [B4.10] (ImplicitCastExpr, UserDefinedConversion, _Bool)
+// CHECK:     T: if [B4.11]
+// CHECK:     Preds (1): B5
+// CHECK:     Succs (2): B3 B2
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (3): B1 B2 B3
+// CHECK:  int test_cond_unnamed_auto_destructor()
+// CHECK:   [B4 (ENTRY)]
+// CHECK:     Succs (1): B3
+// CHECK:   [B1]
+// CHECK:     1: 0
+// CHECK:     2: return [B1.1];
+// CHECK:     Preds (1): B3
+// CHECK:     Succs (1): B0
+// CHECK:   [B2]
+// CHECK:     1: 1
+// CHECK:     2: return [B2.1];
+// CHECK:     Preds (1): B3
+// CHECK:     Succs (1): B0
+// CHECK:   [B3]
+// CHECK:     1: D() (CXXConstructExpr, struct D)
+// CHECK:     2: [B3.1].operator bool
+// CHECK:     3: [B3.1]
+// CHECK:     4: [B3.3] (ImplicitCastExpr, UserDefinedConversion, _Bool)
+// CHECK:     T: if [B3.4]
+// CHECK:     Preds (1): B4
+// CHECK:     Succs (2): B2 B1
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (2): B1 B2
+// CHECK:  int test_cond_named_auto_destructor()
+// CHECK:   [B4 (ENTRY)]
+// CHECK:     Succs (1): B3
+// CHECK:   [B1]
+// CHECK:     1: 0
+// CHECK:     2: return [B1.1];
+// CHECK:     Preds (1): B3
+// CHECK:     Succs (1): B0
+// CHECK:   [B2]
+// CHECK:     1: 1
+// CHECK:     2: return [B2.1];
+// CHECK:     Preds (1): B3
+// CHECK:     Succs (1): B0
+// CHECK:   [B3]
+// CHECK:     1: D() (CXXConstructExpr, struct D)
+// CHECK:     2: [B3.1] (ImplicitCastExpr, NoOp, const struct D)
+// CHECK:     3: [B3.2]
+// CHECK:     4: [B3.3] (CXXConstructExpr, struct D)
+// CHECK:     5: D d = D();
+// CHECK:     6: d
+// CHECK:     7: [B3.6].operator bool
+// CHECK:     8: [B3.6]
+// CHECK:     9: [B3.8] (ImplicitCastExpr, UserDefinedConversion, _Bool)
+// CHECK:     T: if [B3.9]
+// CHECK:     Preds (1): B4
+// CHECK:     Succs (2): B2 B1
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (2): B1 B2
 // CHECK:   [B14 (ENTRY)]
 // CHECK:     Succs (1): B13
 // CHECK:   [B1]
@@ -867,7 +1090,7 @@ void test_noreturn2() {
 // CHECK:   [B1]
 // CHECK:     1: int b;
 // CHECK:     Succs (1): B0
-// CHECK:   [B2]
+// CHECK:   [B2 (NORETURN)]
 // CHECK:     1: int a;
 // CHECK:     2: NoReturn() (CXXConstructExpr, class NoReturn)
 // CHECK:     3: [B2.2] (BindTemporary)
@@ -883,7 +1106,7 @@ void test_noreturn2() {
 // CHECK:   [B1]
 // CHECK:     1: int b;
 // CHECK:     Succs (1): B0
-// CHECK:   [B2]
+// CHECK:   [B2 (NORETURN)]
 // CHECK:     1: int a;
 // CHECK:     2: NoReturn() (CXXConstructExpr, class NoReturn)
 // CHECK:     3: [B2.2] (BindTemporary)
@@ -894,3 +1117,169 @@ void test_noreturn2() {
 // CHECK:     Succs (1): B0
 // CHECK:   [B0 (EXIT)]
 // CHECK:     Preds (2): B1 B2
+// CHECK:  int testConsistencyNestedSimple(bool value)
+// CHECK:   [B9 (ENTRY)]
+// CHECK:     Succs (1): B8
+// CHECK:   [B1]
+// CHECK:     1: 0
+// CHECK:     2: return [B1.1];
+// CHECK:     Preds (2): B3 B8
+// CHECK:     Succs (1): B0
+// CHECK:   [B2]
+// CHECK:     1: 1
+// CHECK:     2: return [B2.1];
+// CHECK:     Preds (1): B3
+// CHECK:     Succs (1): B0
+// CHECK:   [B3]
+// CHECK:     T: if [B5.1]
+// CHECK:     Preds (1): B5
+// CHECK:     Succs (2): B2 B1
+// CHECK:   [B4 (NORETURN)]
+// CHECK:     1: ~NoReturn() (Temporary object destructor)
+// CHECK:     Preds (1): B5
+// CHECK:     Succs (1): B0
+// CHECK:   [B5]
+// CHECK:     1: [B7.3] || [B6.7]
+// CHECK:     T: (Temp Dtor) [B7.3] || ...
+// CHECK:     Preds (2): B6 B7
+// CHECK:     Succs (2): B3 B4
+// CHECK:   [B6]
+// CHECK:     1: check
+// CHECK:     2: [B6.1] (ImplicitCastExpr, FunctionToPointerDecay, _Bool (*)(const class NoReturn &))
+// CHECK:     3: NoReturn() (CXXConstructExpr, class NoReturn)
+// CHECK:     4: [B6.3] (BindTemporary)
+// CHECK:     5: [B6.4] (ImplicitCastExpr, NoOp, const class NoReturn)
+// CHECK:     6: [B6.5]
+// CHECK:     7: [B6.2]([B6.6])
+// CHECK:     Preds (1): B7
+// CHECK:     Succs (1): B5
+// CHECK:   [B7]
+// CHECK:     1: value
+// CHECK:     2: [B7.1] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:     3: ![B7.2]
+// CHECK:     T: [B7.3] || ...
+// CHECK:     Preds (1): B8
+// CHECK:     Succs (2): B5 B6
+// CHECK:   [B8]
+// CHECK:     1: value
+// CHECK:     2: [B8.1] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:     T: if [B8.2]
+// CHECK:     Preds (1): B9
+// CHECK:     Succs (2): B7 B1
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (3): B1 B2 B4
+// CHECK:  int testConsistencyNestedComplex(bool value)
+// CHECK:   [B10 (ENTRY)]
+// CHECK:     Succs (1): B9
+// CHECK:   [B1]
+// CHECK:     1: 0
+// CHECK:     2: return [B1.1];
+// CHECK:     Preds (2): B3 B9
+// CHECK:     Succs (1): B0
+// CHECK:   [B2]
+// CHECK:     1: 1
+// CHECK:     2: return [B2.1];
+// CHECK:     Preds (1): B3
+// CHECK:     Succs (1): B0
+// CHECK:   [B3]
+// CHECK:     T: if [B5.1]
+// CHECK:     Preds (1): B5
+// CHECK:     Succs (2): B2 B1
+// CHECK:   [B4 (NORETURN)]
+// CHECK:     1: ~NoReturn() (Temporary object destructor)
+// CHECK:     Preds (1): B5
+// CHECK:     Succs (1): B0
+// CHECK:   [B5]
+// CHECK:     1: [B8.3] || [B7.3] || [B6.7]
+// CHECK:     T: (Temp Dtor) [B8.3] || [B7.3] || ...
+// CHECK:     Preds (3): B6 B7 B8
+// CHECK:     Succs (2): B3 B4
+// CHECK:   [B6]
+// CHECK:     1: check
+// CHECK:     2: [B6.1] (ImplicitCastExpr, FunctionToPointerDecay, _Bool (*)(const class NoReturn &))
+// CHECK:     3: NoReturn() (CXXConstructExpr, class NoReturn)
+// CHECK:     4: [B6.3] (BindTemporary)
+// CHECK:     5: [B6.4] (ImplicitCastExpr, NoOp, const class NoReturn)
+// CHECK:     6: [B6.5]
+// CHECK:     7: [B6.2]([B6.6])
+// CHECK:     Preds (1): B7
+// CHECK:     Succs (1): B5
+// CHECK:   [B7]
+// CHECK:     1: value
+// CHECK:     2: [B7.1] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:     3: ![B7.2]
+// CHECK:     T: [B8.3] || [B7.3] || ...
+// CHECK:     Preds (1): B8
+// CHECK:     Succs (2): B5 B6
+// CHECK:   [B8]
+// CHECK:     1: value
+// CHECK:     2: [B8.1] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:     3: ![B8.2]
+// CHECK:     T: [B8.3] || ...
+// CHECK:     Preds (1): B9
+// CHECK:     Succs (2): B5 B7
+// CHECK:   [B9]
+// CHECK:     1: value
+// CHECK:     2: [B9.1] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:     T: if [B9.2]
+// CHECK:     Preds (1): B10
+// CHECK:     Succs (2): B8 B1
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (3): B1 B2 B4
+// CHECK:  int testConsistencyNestedNormalReturn(bool value)
+// CHECK:   [B10 (ENTRY)]
+// CHECK:     Succs (1): B9
+// CHECK:   [B1]
+// CHECK:     1: 0
+// CHECK:     2: return [B1.1];
+// CHECK:     Preds (2): B3 B9
+// CHECK:     Succs (1): B0
+// CHECK:   [B2]
+// CHECK:     1: 1
+// CHECK:     2: return [B2.1];
+// CHECK:     Preds (1): B3
+// CHECK:     Succs (1): B0
+// CHECK:   [B3]
+// CHECK:     T: if [B5.1]
+// CHECK:     Preds (1): B5
+// CHECK:     Succs (2): B2 B1
+// CHECK:   [B4 (NORETURN)]
+// CHECK:     1: ~NoReturn() (Temporary object destructor)
+// CHECK:     Preds (1): B5
+// CHECK:     Succs (1): B0
+// CHECK:   [B5]
+// CHECK:     1: [B8.3] || [B7.2] || [B6.7]
+// CHECK:     T: (Temp Dtor) [B8.3] || [B7.2] || ...
+// CHECK:     Preds (3): B6 B7 B8
+// CHECK:     Succs (2): B3 B4
+// CHECK:   [B6]
+// CHECK:     1: check
+// CHECK:     2: [B6.1] (ImplicitCastExpr, FunctionToPointerDecay, _Bool (*)(const class NoReturn &))
+// CHECK:     3: NoReturn() (CXXConstructExpr, class NoReturn)
+// CHECK:     4: [B6.3] (BindTemporary)
+// CHECK:     5: [B6.4] (ImplicitCastExpr, NoOp, const class NoReturn)
+// CHECK:     6: [B6.5]
+// CHECK:     7: [B6.2]([B6.6])
+// CHECK:     Preds (1): B7
+// CHECK:     Succs (1): B5
+// CHECK:   [B7]
+// CHECK:     1: value
+// CHECK:     2: [B7.1] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:     T: [B8.3] || [B7.2] || ...
+// CHECK:     Preds (1): B8
+// CHECK:     Succs (2): B5 B6
+// CHECK:   [B8]
+// CHECK:     1: value
+// CHECK:     2: [B8.1] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:     3: ![B8.2]
+// CHECK:     T: [B8.3] || ...
+// CHECK:     Preds (1): B9
+// CHECK:     Succs (2): B5 B7
+// CHECK:   [B9]
+// CHECK:     1: value
+// CHECK:     2: [B9.1] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:     T: if [B9.2]
+// CHECK:     Preds (1): B10
+// CHECK:     Succs (2): B8 B1
+// CHECK:   [B0 (EXIT)]
+// CHECK:     Preds (3): B1 B2 B4

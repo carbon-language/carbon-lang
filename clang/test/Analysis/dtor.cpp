@@ -374,6 +374,64 @@ namespace LifetimeExtension {
     clang_analyzer_eval(SaveOnDestruct::lastOutput == 42); // expected-warning{{TRUE}}
   }
 
+  struct NRCheck {
+    bool bool_;
+    NRCheck():bool_(true) {}
+    ~NRCheck() __attribute__((noreturn));
+    operator bool() const { return bool_; }
+  };
+
+  struct CheckAutoDestructor {
+    bool bool_;
+    CheckAutoDestructor():bool_(true) {}
+    operator bool() const { return bool_; }
+  };
+
+  struct CheckCustomDestructor {
+    bool bool_;
+    CheckCustomDestructor():bool_(true) {}
+    ~CheckCustomDestructor();
+    operator bool() const { return bool_; }
+  };
+
+  bool testUnnamedNR() {
+    if (NRCheck())
+      return true;
+    return false;
+  }
+
+  bool testNamedNR() {
+    if (NRCheck c = NRCheck())
+      return true;
+    return false;
+  }
+
+  bool testUnnamedAutoDestructor() {
+    if (CheckAutoDestructor())
+      return true;
+    return false;
+  }
+
+  bool testNamedAutoDestructor() {
+    if (CheckAutoDestructor c = CheckAutoDestructor())
+      return true;
+    return false;
+  }
+
+  bool testUnnamedCustomDestructor() {
+    if (CheckCustomDestructor())
+      return true;
+    return false;
+  }
+
+  // This case used to cause an unexpected "Undefined or garbage value returned
+  // to caller" warning
+  bool testNamedCustomDestructor() {
+    if (CheckCustomDestructor c = CheckCustomDestructor())
+      return true;
+    return false;
+  }
+
   class VirtualDtorBase {
   public:
     int value;
@@ -415,6 +473,12 @@ namespace NoReturn {
     int *x;
     f(&x);
     *x = 47; // no warning
+  }
+
+  void g2(int *x) {
+    if (! x) NR();
+    // FIXME: this shouldn't cause a warning.
+    *x = 47; // expected-warning{{Dereference of null pointer}}
   }
 }
 

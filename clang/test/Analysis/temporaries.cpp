@@ -119,8 +119,8 @@ namespace destructors {
     extern bool check(const Dtor &);
 
 #ifndef TEMPORARY_DTORS
-    // FIXME: Don't crash here when tmp dtros are enabled.
-    // PR16664 and PR18159 
+    // FIXME: Don't assert here when tmp dtors are enabled.
+    // PR16664 and PR18159
     if (coin() && (coin() || coin() || check(Dtor()))) {
       Dtor();
     }
@@ -170,10 +170,9 @@ namespace destructors {
     clang_analyzer_eval(true); // no warning, unreachable code
   }
 
-
 /*
-  // PR16664 and PR18159 
-  FIXME: Don't crash here.
+  // PR16664 and PR18159
+  FIXME: Don't assert here.
   void testConsistencyNested(int i) {
     extern bool compute(bool);
   
@@ -193,6 +192,7 @@ namespace destructors {
       clang_analyzer_eval(true); // expected TRUE
     }
 
+    FIXME: This shouldn't cause a warning.
     if (compute(i == 5 &&
                 (i == 4 || i == 4 ||
                  compute(i == 5 && (i == 4 || check(NoReturnDtor()))))) ||
@@ -200,7 +200,35 @@ namespace destructors {
       clang_analyzer_eval(true); // no warning, unreachable code
     }
   }*/
-  
+
+  // PR16664 and PR18159
+  void testConsistencyNestedSimple(bool value) {
+    if (value) {
+      if (!value || check(NoReturnDtor())) {
+        clang_analyzer_eval(true); // no warning, unreachable code
+      }
+    }
+  }
+
+  // PR16664 and PR18159
+  void testConsistencyNestedComplex(bool value) {
+    if (value) {
+      if (!value || !value || check(NoReturnDtor())) {
+        // FIXME: This shouldn't cause a warning.
+        clang_analyzer_eval(true); // expected-warning{{TRUE}}
+      }
+    }
+  }
+
+  // PR16664 and PR18159
+  void testConsistencyNestedWarning(bool value) {
+    if (value) {
+      if (!value || value || check(NoReturnDtor())) {
+        clang_analyzer_eval(true); // expected-warning{{TRUE}}
+      }
+    }
+  }
+
 #endif // TEMPORARY_DTORS
 }
 

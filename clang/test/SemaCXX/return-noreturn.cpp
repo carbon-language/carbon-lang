@@ -40,6 +40,14 @@ namespace abort_struct_complex_cfgs {
     switch (x) default: L1: L2: case 4: { pr6884_abort_struct(); }
   }
 
+  // FIXME: detect noreturn destructors triggered by calls to delete.
+  int f7(int x) {
+    switch (x) default: L1: L2: case 4: {
+      pr6884_abort_struct *p = new pr6884_abort_struct();
+      delete p;
+    }
+  } // expected-warning {{control reaches end of non-void function}}
+
   // Test that these constructs work even when extraneous blocks are created
   // before and after the switch due to implicit destructors.
   int g1(int x) {
