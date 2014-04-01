@@ -415,10 +415,10 @@ struct NoTTI final : ImmutablePass, TargetTransformInfo {
     if (isa<PHINode>(U))
       return TCC_Free; // Model all PHI nodes as free.
 
-    if (const GEPOperator *GEP = dyn_cast<GEPOperator>(U))
-      // In the basic model we just assume that all-constant GEPs will be
-      // folded into their uses via addressing modes.
-      return GEP->hasAllConstantIndices() ? TCC_Free : TCC_Basic;
+    if (const GEPOperator *GEP = dyn_cast<GEPOperator>(U)) {
+      SmallVector<const Value *, 4> Indices(GEP->idx_begin(), GEP->idx_end());
+      return TopTTI->getGEPCost(GEP->getPointerOperand(), Indices);
+    }
 
     if (ImmutableCallSite CS = U) {
       const Function *F = CS.getCalledFunction();
