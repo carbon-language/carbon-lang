@@ -4,6 +4,7 @@
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-darwin -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X64-Darwin
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-mingw32 -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X32-MinGW
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-freebsd -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X64-FreeBSD
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-mingw32 -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X64-MinGW
 
 ; We used to crash with filetype=obj
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-linux -segmented-stacks -filetype=obj
@@ -12,16 +13,14 @@
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-darwin -segmented-stacks -filetype=obj
 ; RUN: llc < %s -mcpu=generic -mtriple=i686-mingw32 -segmented-stacks -filetype=obj
 ; RUN: llc < %s -mcpu=generic -mtriple=x86_64-freebsd -segmented-stacks -filetype=obj
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-mingw32 -segmented-stacks -filetype=obj
 
 ; RUN: not llc < %s -mcpu=generic -mtriple=x86_64-solaris -segmented-stacks 2> %t.log
 ; RUN: FileCheck %s -input-file=%t.log -check-prefix=X64-Solaris
-; RUN: not llc < %s -mcpu=generic -mtriple=x86_64-mingw32 -segmented-stacks 2> %t.log
-; RUN: FileCheck %s -input-file=%t.log -check-prefix=X64-MinGW
 ; RUN: not llc < %s -mcpu=generic -mtriple=i686-freebsd -segmented-stacks 2> %t.log
 ; RUN: FileCheck %s -input-file=%t.log -check-prefix=X32-FreeBSD
 
 ; X64-Solaris: Segmented stacks not supported on this platform
-; X64-MinGW: Segmented stacks not supported on this platform
 ; X32-FreeBSD: Segmented stacks not supported on FreeBSD i386
 
 ; Just to prevent the alloca from being optimized away
@@ -82,6 +81,16 @@ define void @test_basic() {
 ; X32-MinGW-NEXT:  pushl $48
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
+
+; X64-MinGW-LABEL:       test_basic:
+
+; X64-MinGW:       cmpq %gs:40, %rsp
+; X64-MinGW-NEXT:  ja      .LBB0_2
+
+; X64-MinGW:       movabsq $72, %r10
+; X64-MinGW-NEXT:  movabsq $32, %r11
+; X64-MinGW-NEXT:  callq __morestack
+; X64-MinGW-NEXT:  retq
 
 ; X64-FreeBSD-LABEL:       test_basic:
 
@@ -145,6 +154,17 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) {
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
 
+; X64-MinGW-LABEL: test_nested:
+; X64-MinGW:       cmpq %gs:40, %rsp
+; X64-MinGW-NEXT:  ja      .LBB1_2
+
+; X64-MinGW:       movq %r10, %rax
+; X64-MinGW-NEXT:  movabsq $0, %r10
+; X64-MinGW-NEXT:  movabsq $32, %r11
+; X64-MinGW-NEXT:  callq __morestack
+; X64-MinGW-NEXT:  retq
+; X64-MinGW-NEXT:  movq %rax, %r10
+
 ; X64-FreeBSD:       cmpq %fs:24, %rsp
 ; X64-FreeBSD-NEXT:  ja      .LBB1_2
 
@@ -207,6 +227,16 @@ define void @test_large() {
 ; X32-MinGW-NEXT:  pushl $40008
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
+
+; X64-MinGW-LABEL: test_large:
+; X64-MinGW:       leaq -40040(%rsp), %r11
+; X64-MinGW-NEXT:  cmpq %gs:40, %r11
+; X64-MinGW-NEXT:  ja      .LBB2_2
+
+; X64-MinGW:       movabsq $40040, %r10
+; X64-MinGW-NEXT:  movabsq $32, %r11
+; X64-MinGW-NEXT:  callq __morestack
+; X64-MinGW-NEXT:  retq
 
 ; X64-FreeBSD:       leaq -40008(%rsp), %r11
 ; X64-FreeBSD-NEXT:  cmpq %fs:24, %r11
@@ -274,6 +304,16 @@ define fastcc void @test_fastcc() {
 ; X32-MinGW-NEXT:  pushl $48
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
+
+; X64-MinGW-LABEL:       test_fastcc:
+
+; X64-MinGW:       cmpq %gs:40, %rsp
+; X64-MinGW-NEXT:  ja      .LBB3_2
+
+; X64-MinGW:       movabsq $72, %r10
+; X64-MinGW-NEXT:  movabsq $32, %r11
+; X64-MinGW-NEXT:  callq __morestack
+; X64-MinGW-NEXT:  retq
 
 ; X64-FreeBSD-LABEL:       test_fastcc:
 
@@ -347,6 +387,17 @@ define fastcc void @test_fastcc_large() {
 ; X32-MinGW-NEXT:  pushl $40008
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
+
+; X64-MinGW-LABEL:       test_fastcc_large:
+
+; X64-MinGW:       leaq -40040(%rsp), %r11
+; X64-MinGW-NEXT:  cmpq %gs:40, %r11
+; X64-MinGW-NEXT:  ja      .LBB4_2
+
+; X64-MinGW:       movabsq $40040, %r10
+; X64-MinGW-NEXT:  movabsq $32, %r11
+; X64-MinGW-NEXT:  callq __morestack
+; X64-MinGW-NEXT:  retq
 
 ; X64-FreeBSD-LABEL:       test_fastcc_large:
 
