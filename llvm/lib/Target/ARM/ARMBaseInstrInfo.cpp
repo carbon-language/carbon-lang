@@ -2967,7 +2967,7 @@ ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
         break;
       }
       return UOps;
-    } else if (Subtarget.isCortexA8()) {
+    } else if (Subtarget.isCortexA8() || Subtarget.isCortexA7()) {
       if (NumRegs < 4)
         return 2;
       // 4 registers would be issued: 2, 2.
@@ -3004,7 +3004,7 @@ ARMBaseInstrInfo::getVLDMDefCycle(const InstrItineraryData *ItinData,
     return ItinData->getOperandCycle(DefClass, DefIdx);
 
   int DefCycle;
-  if (Subtarget.isCortexA8()) {
+  if (Subtarget.isCortexA8() || Subtarget.isCortexA7()) {
     // (regno / 2) + (regno % 2) + 1
     DefCycle = RegNo / 2 + 1;
     if (RegNo % 2)
@@ -3045,7 +3045,7 @@ ARMBaseInstrInfo::getLDMDefCycle(const InstrItineraryData *ItinData,
     return ItinData->getOperandCycle(DefClass, DefIdx);
 
   int DefCycle;
-  if (Subtarget.isCortexA8()) {
+  if (Subtarget.isCortexA8() || Subtarget.isCortexA7()) {
     // 4 registers would be issued: 1, 2, 1.
     // 5 registers would be issued: 1, 2, 2.
     DefCycle = RegNo / 2;
@@ -3079,7 +3079,7 @@ ARMBaseInstrInfo::getVSTMUseCycle(const InstrItineraryData *ItinData,
     return ItinData->getOperandCycle(UseClass, UseIdx);
 
   int UseCycle;
-  if (Subtarget.isCortexA8()) {
+  if (Subtarget.isCortexA8() || Subtarget.isCortexA7()) {
     // (regno / 2) + (regno % 2) + 1
     UseCycle = RegNo / 2 + 1;
     if (RegNo % 2)
@@ -3119,7 +3119,7 @@ ARMBaseInstrInfo::getSTMUseCycle(const InstrItineraryData *ItinData,
     return ItinData->getOperandCycle(UseClass, UseIdx);
 
   int UseCycle;
-  if (Subtarget.isCortexA8()) {
+  if (Subtarget.isCortexA8() || Subtarget.isCortexA7()) {
     UseCycle = RegNo / 2;
     if (UseCycle < 2)
       UseCycle = 2;
@@ -3309,7 +3309,7 @@ static int adjustDefLatency(const ARMSubtarget &Subtarget,
                             const MachineInstr *DefMI,
                             const MCInstrDesc *DefMCID, unsigned DefAlign) {
   int Adjust = 0;
-  if (Subtarget.isCortexA8() || Subtarget.isLikeA9()) {
+  if (Subtarget.isCortexA8() || Subtarget.isLikeA9() || Subtarget.isCortexA7()) {
     // FIXME: Shifter op hack: no shift (i.e. [r +/- r]) or [r + r << 2]
     // variants are one cycle cheaper.
     switch (DefMCID->getOpcode()) {
@@ -3610,7 +3610,8 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
                                   UseMCID, UseIdx, UseAlign);
 
   if (Latency > 1 &&
-      (Subtarget.isCortexA8() || Subtarget.isLikeA9())) {
+      (Subtarget.isCortexA8() || Subtarget.isLikeA9() ||
+       Subtarget.isCortexA7())) {
     // FIXME: Shifter op hack: no shift (i.e. [r +/- r]) or [r + r << 2]
     // variants are one cycle cheaper.
     switch (DefMCID.getOpcode()) {

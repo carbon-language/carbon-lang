@@ -265,6 +265,7 @@ public:
   bool hasV8Ops()   const { return HasV8Ops;  }
 
   bool isCortexA5() const { return ARMProcFamily == CortexA5; }
+  bool isCortexA7() const { return ARMProcFamily == CortexA7; }
   bool isCortexA8() const { return ARMProcFamily == CortexA8; }
   bool isCortexA9() const { return ARMProcFamily == CortexA9; }
   bool isCortexA15() const { return ARMProcFamily == CortexA15; }

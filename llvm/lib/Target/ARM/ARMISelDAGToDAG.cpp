@@ -412,8 +412,8 @@ bool ARMDAGToDAGISel::hasNoVMLxHazardUse(SDNode *N) const {
   if (!CheckVMLxHazard)
     return true;
 
-  if (!Subtarget->isCortexA8() && !Subtarget->isCortexA9() &&
-      !Subtarget->isSwift())
+  if (!Subtarget->isCortexA7() && !Subtarget->isCortexA8() &&
+      !Subtarget->isCortexA9() && !Subtarget->isSwift())
     return true;
 
   if (!N->hasOneUse())
