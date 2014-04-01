@@ -46,18 +46,23 @@ class DebugLocEntry {
     if (EntryKind != Next.EntryKind)
       return false;
 
+    bool EqualValues;
     switch (EntryKind) {
     case E_Location:
-      if (Loc != Next.Loc) return false;
+      EqualValues = Loc == Next.Loc;
+      break;
     case E_Integer:
-      if (Constants.Int != Next.Constants.Int) return false;
+      EqualValues = Constants.Int == Next.Constants.Int;
+      break;
     case E_ConstantFP:
-      if (Constants.CFP != Next.Constants.CFP) return false;
+      EqualValues = Constants.CFP == Next.Constants.CFP;
+      break;
     case E_ConstantInt:
-      if (Constants.CIP != Next.Constants.CIP) return false;
+      EqualValues = Constants.CIP == Next.Constants.CIP;
+      break;
     }
 
-    return true;
+    return EqualValues;
   }
 
 public:
