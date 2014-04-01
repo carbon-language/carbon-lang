@@ -2,6 +2,8 @@
 TableGen Language Reference
 ===========================
 
+.. sectionauthor:: Sean Silva <silvas@purdue.edu>
+
 .. contents::
    :local:
 
@@ -16,587 +18,369 @@ This document is meant to be a normative spec about the TableGen language
 in and of itself (i.e. how to understand a given construct in terms of how
 it affects the final set of records represented by the TableGen file). If
 you are unsure if this document is really what you are looking for, please
-read :doc:`the introduction <index>` first.
+read :doc:`/TableGenFundamentals` first.
 
-TableGen syntax
-===============
+Notation
+========
 
-TableGen doesn't care about the meaning of data (that is up to the backend to
-define), but it does care about syntax, and it enforces a simple type system.
-This section describes the syntax and the constructs allowed in a TableGen file.
+The lexical and syntax notation used here is intended to imitate
+`Python's`_. In particular, for lexical definitions, the productions
+operate at the character level and there is no implied whitespace between
+elements. The syntax definitions operate at the token level, so there is
+implied whitespace between tokens.
 
-TableGen primitives
--------------------
+.. _`Python's`: http://docs.python.org/py3k/reference/introduction.html#notation
 
-TableGen comments
-^^^^^^^^^^^^^^^^^
+Lexical Analysis
+================
 
-TableGen supports C++ style "``//``" comments, which run to the end of the
-line, and it also supports **nestable** "``/* */``" comments.
+TableGen supports BCPL (``// ...``) and nestable C-style (``/* ... */``)
+comments.
 
-.. _TableGen type:
+The following is a listing of the basic punctuation tokens::
 
-The TableGen type system
-^^^^^^^^^^^^^^^^^^^^^^^^
+   - + [ ] { } ( ) < > : ; .  = ? #
 
-TableGen files are strongly typed, in a simple (but complete) type-system.
-These types are used to perform automatic conversions, check for errors, and to
-help interface designers constrain the input that they allow.  Every `value
-definition`_ is required to have an associated type.
+Numeric literals take one of the following forms:
 
-TableGen supports a mixture of very low-level types (such as ``bit``) and very
-high-level types (such as ``dag``).  This flexibility is what allows it to
-describe a wide range of information conveniently and compactly.  The TableGen
-types are:
+.. TableGen actually will lex some pretty strange sequences an interpret
+   them as numbers. What is shown here is an attempt to approximate what it
+   "should" accept.
 
-``bit``
-    A 'bit' is a boolean value that can hold either 0 or 1.
+.. productionlist::
+   TokInteger: `DecimalInteger` | `HexInteger` | `BinInteger`
+   DecimalInteger: ["+" | "-"] ("0"..."9")+
+   HexInteger: "0x" ("0"..."9" | "a"..."f" | "A"..."F")+
+   BinInteger: "0b" ("0" | "1")+
 
-``int``
-    The 'int' type represents a simple 32-bit integer value, such as 5.
+One aspect to note is that the :token:`DecimalInteger` token *includes* the
+``+`` or ``-``, as opposed to having ``+`` and ``-`` be unary operators as
+most languages do.
 
-``string``
-    The 'string' type represents an ordered sequence of characters of arbitrary
-    length.
+TableGen has identifier-like tokens:
 
-``bits<n>``
-    A 'bits' type is an arbitrary, but fixed, size integer that is broken up
-    into individual bits.  This type is useful because it can handle some bits
-    being defined while others are undefined.
+.. productionlist::
+   ualpha: "a"..."z" | "A"..."Z" | "_"
+   TokIdentifier: ("0"..."9")* `ualpha` (`ualpha` | "0"..."9")*
+   TokVarName: "$" `ualpha` (`ualpha` |  "0"..."9")*
 
-``list<ty>``
-    This type represents a list whose elements are some other type.  The
-    contained type is arbitrary: it can even be another list type.
+Note that unlike most languages, TableGen allows :token:`TokIdentifier` to
+begin with a number. In case of ambiguity, a token will be interpreted as a
+numeric literal rather than an identifier.
 
-Class type
-    Specifying a class name in a type context means that the defined value must
-    be a subclass of the specified class.  This is useful in conjunction with
-    the ``list`` type, for example, to constrain the elements of the list to a
-    common base class (e.g., a ``list<Register>`` can only contain definitions
-    derived from the "``Register``" class).
+TableGen also has two string-like literals:
 
-``dag``
-    This type represents a nestable directed graph of elements.
+.. productionlist::
+   TokString: '"' <non-'"' characters and C-like escapes> '"'
+   TokCodeFragment: "[{" <shortest text not containing "}]"> "}]"
 
-To date, these types have been sufficient for describing things that TableGen
-has been used for, but it is straight-forward to extend this list if needed.
+:token:`TokCodeFragment` is essentially a multiline string literal
+delimited by ``[{`` and ``}]``.
 
-.. _TableGen expressions:
+.. note::
+   The current implementation accepts the following C-like escapes::
 
-TableGen values and expressions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      \\ \' \" \t \n
 
-TableGen allows for a pretty reasonable number of different expression forms
-when building up values.  These forms allow the TableGen file to be written in a
-natural syntax and flavor for the application.  The current expression forms
-supported include:
+TableGen also has the following keywords::
 
-``?``
-    uninitialized field
+   bit   bits      class   code         dag
+   def   foreach   defm    field        in
+   int   let       list    multiclass   string
 
-``0b1001011``
-    binary integer value
+TableGen also has "bang operators" which have a
+wide variety of meanings:
 
-``07654321``
-    octal integer value (indicated by a leading 0)
+.. productionlist::
+   BangOperator: one of
+               :!eq     !if      !head    !tail      !con
+               :!add    !shl     !sra     !srl
+               :!cast   !empty   !subst   !foreach   !strconcat
 
-``7``
-    decimal integer value
+Syntax
+======
 
-``0x7F``
-    hexadecimal integer value
+TableGen has an ``include`` mechanism. It does not play a role in the
+syntax per se, since it is lexically replaced with the contents of the
+included file.
 
-``"foo"``
-    string value
+.. productionlist::
+   IncludeDirective: "include" `TokString`
 
-``[{ ... }]``
-    usually called a "code fragment", but is just a multiline string literal
+TableGen's top-level production consists of "objects".
 
-``[ X, Y, Z ]<type>``
-    list value.  <type> is the type of the list element and is usually optional.
-    In rare cases, TableGen is unable to deduce the element type in which case
-    the user must specify it explicitly.
+.. productionlist::
+   TableGenFile: `Object`*
+   Object: `Class` | `Def` | `Defm` | `Let` | `MultiClass` | `Foreach`
 
-``{ a, b, c }``
-    initializer for a "bits<3>" value
+``class``\es
+------------
 
-``value``
-    value reference
+.. productionlist::
+   Class: "class" `TokIdentifier` [`TemplateArgList`] `ObjectBody`
 
-``value{17}``
-    access to one bit of a value
+A ``class`` declaration creates a record which other records can inherit
+from. A class can be parametrized by a list of "template arguments", whose
+values can be used in the class body.
 
-``value{15-17}``
-    access to multiple bits of a value
+A given class can only be defined once. A ``class`` declaration is
+considered to define the class if any of the following is true:
 
-``DEF``
-    reference to a record definition
+.. break ObjectBody into its consituents so that they are present here?
 
-``CLASS<val list>``
-    reference to a new anonymous definition of CLASS with the specified template
-    arguments.
+#. The :token:`TemplateArgList` is present.
+#. The :token:`Body` in the :token:`ObjectBody` is present and is not empty.
+#. The :token:`BaseClassList` in the :token:`ObjectBody` is present.
 
-``X.Y``
-    reference to the subfield of a value
+You can declare an empty class by giving and empty :token:`TemplateArgList`
+and an empty :token:`ObjectBody`. This can serve as a restricted form of
+forward declaration: note that records deriving from the forward-declared
+class will inherit no fields from it since the record expansion is done
+when the record is parsed.
 
-``list[4-7,17,2-3]``
-    A slice of the 'list' list, including elements 4,5,6,7,17,2, and 3 from it.
-    Elements may be included multiple times.
+.. productionlist::
+   TemplateArgList: "<" `Declaration` ("," `Declaration`)* ">"
 
-``foreach <var> = [ <list> ] in { <body> }``
+Declarations
+------------
 
-``foreach <var> = [ <list> ] in <def>``
-    Replicate <body> or <def>, replacing instances of <var> with each value
-    in <list>.  <var> is scoped at the level of the ``foreach`` loop and must
-    not conflict with any other object introduced in <body> or <def>.  Currently
-    only ``def``\s are expanded within <body>.
+.. Omitting mention of arcane "field" prefix to discourage its use.
 
-``foreach <var> = 0-15 in ...``
+The declaration syntax is pretty much what you would expect as a C++
+programmer.
 
-``foreach <var> = {0-15,32-47} in ...``
-    Loop over ranges of integers. The braces are required for multiple ranges.
+.. productionlist::
+   Declaration: `Type` `TokIdentifier` ["=" `Value`]
 
-``(DEF a, b)``
-    a dag value.  The first element is required to be a record definition, the
-    remaining elements in the list may be arbitrary other values, including
-    nested ```dag``' values.
+It assigns the value to the identifer.
 
-``!strconcat(a, b)``
-    A string value that is the result of concatenating the 'a' and 'b' strings.
+Types
+-----
 
-``str1#str2``
-    "#" (paste) is a shorthand for !strconcat.  It may concatenate things that
-    are not quoted strings, in which case an implicit !cast<string> is done on
-    the operand of the paste.
+.. productionlist::
+   Type: "string" | "code" | "bit" | "int" | "dag"
+       :| "bits" "<" `TokInteger` ">"
+       :| "list" "<" `Type` ">"
+       :| `ClassID`
+   ClassID: `TokIdentifier`
 
-``!cast<type>(a)``
-    A symbol of type *type* obtained by looking up the string 'a' in the symbol
-    table.  If the type of 'a' does not match *type*, TableGen aborts with an
-    error. !cast<string> is a special case in that the argument must be an
-    object defined by a 'def' construct.
+Both ``string`` and ``code`` correspond to the string type; the difference
+is purely to indicate programmer intention.
 
-``!subst(a, b, c)``
-    If 'a' and 'b' are of string type or are symbol references, substitute 'b'
-    for 'a' in 'c.'  This operation is analogous to $(subst) in GNU make.
+The :token:`ClassID` must identify a class that has been previously
+declared or defined.
 
-``!foreach(a, b, c)``
-    For each member 'b' of dag or list 'a' apply operator 'c.'  'b' is a dummy
-    variable that should be declared as a member variable of an instantiated
-    class.  This operation is analogous to $(foreach) in GNU make.
+Values
+------
 
-``!head(a)``
-    The first element of list 'a.'
+.. productionlist::
+   Value: `SimpleValue` `ValueSuffix`*
+   ValueSuffix: "{" `RangeList` "}"
+              :| "[" `RangeList` "]"
+              :| "." `TokIdentifier`
+   RangeList: `RangePiece` ("," `RangePiece`)*
+   RangePiece: `TokInteger`
+             :| `TokInteger` "-" `TokInteger`
+             :| `TokInteger` `TokInteger`
 
-``!tail(a)``
-    The 2nd-N elements of list 'a.'
+The peculiar last form of :token:`RangePiece` is due to the fact that the
+"``-``" is included in the :token:`TokInteger`, hence ``1-5`` gets lexed as
+two consecutive :token:`TokInteger`'s, with values ``1`` and ``-5``,
+instead of "1", "-", and "5".
+The :token:`RangeList` can be thought of as specifying "list slice" in some
+contexts.
 
-``!empty(a)``
-    An integer {0,1} indicating whether list 'a' is empty.
 
-``!if(a,b,c)``
-  'b' if the result of 'int' or 'bit' operator 'a' is nonzero, 'c' otherwise.
+:token:`SimpleValue` has a number of forms:
 
-``!eq(a,b)``
-    'bit 1' if string a is equal to string b, 0 otherwise.  This only operates
-    on string, int and bit objects.  Use !cast<string> to compare other types of
-    objects.
 
-Note that all of the values have rules specifying how they convert to values
-for different types.  These rules allow you to assign a value like "``7``"
-to a "``bits<4>``" value, for example.
+.. productionlist::
+   SimpleValue: `TokIdentifier`
 
-Classes and definitions
------------------------
+The value will be the variable referenced by the identifier. It can be one
+of:
 
-As mentioned in the :doc:`introduction <index>`, classes and definitions (collectively known as
-'records') in TableGen are the main high-level unit of information that TableGen
-collects.  Records are defined with a ``def`` or ``class`` keyword, the record
-name, and an optional list of "`template arguments`_".  If the record has
-superclasses, they are specified as a comma separated list that starts with a
-colon character ("``:``").  If `value definitions`_ or `let expressions`_ are
-needed for the class, they are enclosed in curly braces ("``{}``"); otherwise,
-the record ends with a semicolon.
+.. The code for this is exceptionally abstruse. These examples are a
+   best-effort attempt.
 
-Here is a simple TableGen file:
+* name of a ``def``, such as the use of ``Bar`` in::
 
-.. code-block:: llvm
+     def Bar : SomeClass {
+       int X = 5;
+     }
 
-  class C { bit V = 1; }
-  def X : C;
-  def Y : C {
-    string Greeting = "hello";
-  }
+     def Foo {
+       SomeClass Baz = Bar;
+     }
 
-This example defines two definitions, ``X`` and ``Y``, both of which derive from
-the ``C`` class.  Because of this, they both get the ``V`` bit value.  The ``Y``
-definition also gets the Greeting member as well.
+* value local to a ``def``, such as the use of ``Bar`` in::
 
-In general, classes are useful for collecting together the commonality between a
-group of records and isolating it in a single place.  Also, classes permit the
-specification of default values for their subclasses, allowing the subclasses to
-override them as they wish.
+     def Foo {
+       int Bar = 5;
+       int Baz = Bar;
+     }
 
-.. _value definition:
-.. _value definitions:
+* a template arg of a ``class``, such as the use of ``Bar`` in::
 
-Value definitions
-^^^^^^^^^^^^^^^^^
-
-Value definitions define named entries in records.  A value must be defined
-before it can be referred to as the operand for another value definition or
-before the value is reset with a `let expression`_.  A value is defined by
-specifying a `TableGen type`_ and a name.  If an initial value is available, it
-may be specified after the type with an equal sign.  Value definitions require
-terminating semicolons.
-
-.. _let expression:
-.. _let expressions:
-.. _"let" expressions within a record:
-
-'let' expressions
-^^^^^^^^^^^^^^^^^
-
-A record-level let expression is used to change the value of a value definition
-in a record.  This is primarily useful when a superclass defines a value that a
-derived class or definition wants to override.  Let expressions consist of the
-'``let``' keyword followed by a value name, an equal sign ("``=``"), and a new
-value.  For example, a new class could be added to the example above, redefining
-the ``V`` field for all of its subclasses:
-
-.. code-block:: llvm
-
-  class D : C { let V = 0; }
-  def Z : D;
-
-In this case, the ``Z`` definition will have a zero value for its ``V`` value,
-despite the fact that it derives (indirectly) from the ``C`` class, because the
-``D`` class overrode its value.
-
-.. _template arguments:
-
-Class template arguments
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-TableGen permits the definition of parameterized classes as well as normal
-concrete classes.  Parameterized TableGen classes specify a list of variable
-bindings (which may optionally have defaults) that are bound when used.  Here is
-a simple example:
-
-.. code-block:: llvm
-
-  class FPFormat<bits<3> val> {
-    bits<3> Value = val;
-  }
-  def NotFP      : FPFormat<0>;
-  def ZeroArgFP  : FPFormat<1>;
-  def OneArgFP   : FPFormat<2>;
-  def OneArgFPRW : FPFormat<3>;
-  def TwoArgFP   : FPFormat<4>;
-  def CompareFP  : FPFormat<5>;
-  def CondMovFP  : FPFormat<6>;
-  def SpecialFP  : FPFormat<7>;
-
-In this case, template arguments are used as a space efficient way to specify a
-list of "enumeration values", each with a "``Value``" field set to the specified
-integer.
-
-The more esoteric forms of `TableGen expressions`_ are useful in conjunction
-with template arguments.  As an example:
-
-.. code-block:: llvm
-
-  class ModRefVal<bits<2> val> {
-    bits<2> Value = val;
-  }
-
-  def None   : ModRefVal<0>;
-  def Mod    : ModRefVal<1>;
-  def Ref    : ModRefVal<2>;
-  def ModRef : ModRefVal<3>;
-
-  class Value<ModRefVal MR> {
-    // Decode some information into a more convenient format, while providing
-    // a nice interface to the user of the "Value" class.
-    bit isMod = MR.Value{0};
-    bit isRef = MR.Value{1};
-
-    // other stuff...
-  }
-
-  // Example uses
-  def bork : Value<Mod>;
-  def zork : Value<Ref>;
-  def hork : Value<ModRef>;
-
-This is obviously a contrived example, but it shows how template arguments can
-be used to decouple the interface provided to the user of the class from the
-actual internal data representation expected by the class.  In this case,
-running ``llvm-tblgen`` on the example prints the following definitions:
-
-.. code-block:: llvm
-
-  def bork {      // Value
-    bit isMod = 1;
-    bit isRef = 0;
-  }
-  def hork {      // Value
-    bit isMod = 1;
-    bit isRef = 1;
-  }
-  def zork {      // Value
-    bit isMod = 0;
-    bit isRef = 1;
-  }
-
-This shows that TableGen was able to dig into the argument and extract a piece
-of information that was requested by the designer of the "Value" class.  For
-more realistic examples, please see existing users of TableGen, such as the X86
-backend.
-
-Multiclass definitions and instances
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-While classes with template arguments are a good way to factor commonality
-between two instances of a definition, multiclasses allow a convenient notation
-for defining multiple definitions at once (instances of implicitly constructed
-classes).  For example, consider an 3-address instruction set whose instructions
-come in two forms: "``reg = reg op reg``" and "``reg = reg op imm``"
-(e.g. SPARC). In this case, you'd like to specify in one place that this
-commonality exists, then in a separate place indicate what all the ops are.
-
-Here is an example TableGen fragment that shows this idea:
-
-.. code-block:: llvm
-
-  def ops;
-  def GPR;
-  def Imm;
-  class inst<int opc, string asmstr, dag operandlist>;
-
-  multiclass ri_inst<int opc, string asmstr> {
-    def _rr : inst<opc, !strconcat(asmstr, " $dst, $src1, $src2"),
-                   (ops GPR:$dst, GPR:$src1, GPR:$src2)>;
-    def _ri : inst<opc, !strconcat(asmstr, " $dst, $src1, $src2"),
-                   (ops GPR:$dst, GPR:$src1, Imm:$src2)>;
-  }
-
-  // Instantiations of the ri_inst multiclass.
-  defm ADD : ri_inst<0b111, "add">;
-  defm SUB : ri_inst<0b101, "sub">;
-  defm MUL : ri_inst<0b100, "mul">;
-  ...
-
-The name of the resultant definitions has the multidef fragment names appended
-to them, so this defines ``ADD_rr``, ``ADD_ri``, ``SUB_rr``, etc.  A defm may
-inherit from multiple multiclasses, instantiating definitions from each
-multiclass.  Using a multiclass this way is exactly equivalent to instantiating
-the classes multiple times yourself, e.g. by writing:
-
-.. code-block:: llvm
-
-  def ops;
-  def GPR;
-  def Imm;
-  class inst<int opc, string asmstr, dag operandlist>;
-
-  class rrinst<int opc, string asmstr>
-    : inst<opc, !strconcat(asmstr, " $dst, $src1, $src2"),
-           (ops GPR:$dst, GPR:$src1, GPR:$src2)>;
-
-  class riinst<int opc, string asmstr>
-    : inst<opc, !strconcat(asmstr, " $dst, $src1, $src2"),
-           (ops GPR:$dst, GPR:$src1, Imm:$src2)>;
-
-  // Instantiations of the ri_inst multiclass.
-  def ADD_rr : rrinst<0b111, "add">;
-  def ADD_ri : riinst<0b111, "add">;
-  def SUB_rr : rrinst<0b101, "sub">;
-  def SUB_ri : riinst<0b101, "sub">;
-  def MUL_rr : rrinst<0b100, "mul">;
-  def MUL_ri : riinst<0b100, "mul">;
-  ...
-
-A ``defm`` can also be used inside a multiclass providing several levels of
-multiclass instantiations.
-
-.. code-block:: llvm
-
-  class Instruction<bits<4> opc, string Name> {
-    bits<4> opcode = opc;
-    string name = Name;
-  }
-
-  multiclass basic_r<bits<4> opc> {
-    def rr : Instruction<opc, "rr">;
-    def rm : Instruction<opc, "rm">;
-  }
-
-  multiclass basic_s<bits<4> opc> {
-    defm SS : basic_r<opc>;
-    defm SD : basic_r<opc>;
-    def X : Instruction<opc, "x">;
-  }
-
-  multiclass basic_p<bits<4> opc> {
-    defm PS : basic_r<opc>;
-    defm PD : basic_r<opc>;
-    def Y : Instruction<opc, "y">;
-  }
-
-  defm ADD : basic_s<0xf>, basic_p<0xf>;
-  ...
-
-  // Results
-  def ADDPDrm { ...
-  def ADDPDrr { ...
-  def ADDPSrm { ...
-  def ADDPSrr { ...
-  def ADDSDrm { ...
-  def ADDSDrr { ...
-  def ADDY { ...
-  def ADDX { ...
-
-``defm`` declarations can inherit from classes too, the rule to follow is that
-the class list must start after the last multiclass, and there must be at least
-one multiclass before them.
-
-.. code-block:: llvm
-
-  class XD { bits<4> Prefix = 11; }
-  class XS { bits<4> Prefix = 12; }
-
-  class I<bits<4> op> {
-    bits<4> opcode = op;
-  }
-
-  multiclass R {
-    def rr : I<4>;
-    def rm : I<2>;
-  }
-
-  multiclass Y {
-    defm SS : R, XD;
-    defm SD : R, XS;
-  }
-
-  defm Instr : Y;
-
-  // Results
-  def InstrSDrm {
-    bits<4> opcode = { 0, 0, 1, 0 };
-    bits<4> Prefix = { 1, 1, 0, 0 };
-  }
-  ...
-  def InstrSSrr {
-    bits<4> opcode = { 0, 1, 0, 0 };
-    bits<4> Prefix = { 1, 0, 1, 1 };
-  }
-
-File scope entities
--------------------
-
-File inclusion
-^^^^^^^^^^^^^^
-
-TableGen supports the '``include``' token, which textually substitutes the
-specified file in place of the include directive.  The filename should be
-specified as a double quoted string immediately after the '``include``' keyword.
-Example:
-
-.. code-block:: llvm
-
-  include "foo.td"
-
-'let' expressions
-^^^^^^^^^^^^^^^^^
-
-"Let" expressions at file scope are similar to `"let" expressions within a
-record`_, except they can specify a value binding for multiple records at a
-time, and may be useful in certain other cases.  File-scope let expressions are
-really just another way that TableGen allows the end-user to factor out
-commonality from the records.
-
-File-scope "let" expressions take a comma-separated list of bindings to apply,
-and one or more records to bind the values in.  Here are some examples:
-
-.. code-block:: llvm
-
-  let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in
-    def RET : I<0xC3, RawFrm, (outs), (ins), "ret", [(X86retflag 0)]>;
-
-  let isCall = 1 in
-    // All calls clobber the non-callee saved registers...
-    let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
-                MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
-                XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, EFLAGS] in {
-      def CALLpcrel32 : Ii32<0xE8, RawFrm, (outs), (ins i32imm:$dst,variable_ops),
-                             "call\t${dst:call}", []>;
-      def CALL32r     : I<0xFF, MRM2r, (outs), (ins GR32:$dst, variable_ops),
-                          "call\t{*}$dst", [(X86call GR32:$dst)]>;
-      def CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst, variable_ops),
-                          "call\t{*}$dst", []>;
-    }
-
-File-scope "let" expressions are often useful when a couple of definitions need
-to be added to several records, and the records do not otherwise need to be
-opened, as in the case with the ``CALL*`` instructions above.
-
-It's also possible to use "let" expressions inside multiclasses, providing more
-ways to factor out commonality from the records, specially if using several
-levels of multiclass instantiations. This also avoids the need of using "let"
-expressions within subsequent records inside a multiclass.
-
-.. code-block:: llvm
-
-  multiclass basic_r<bits<4> opc> {
-    let Predicates = [HasSSE2] in {
-      def rr : Instruction<opc, "rr">;
-      def rm : Instruction<opc, "rm">;
-    }
-    let Predicates = [HasSSE3] in
-      def rx : Instruction<opc, "rx">;
-  }
-
-  multiclass basic_ss<bits<4> opc> {
-    let IsDouble = 0 in
-      defm SS : basic_r<opc>;
-
-    let IsDouble = 1 in
-      defm SD : basic_r<opc>;
-  }
-
-  defm ADD : basic_ss<0xf>;
-
-Looping
-^^^^^^^
-
-TableGen supports the '``foreach``' block, which textually replicates the loop
-body, substituting iterator values for iterator references in the body.
-Example:
-
-.. code-block:: llvm
-
-  foreach i = [0, 1, 2, 3] in {
-    def R#i : Register<...>;
-    def F#i : Register<...>;
-  }
-
-This will create objects ``R0``, ``R1``, ``R2`` and ``R3``.  ``foreach`` blocks
-may be nested. If there is only one item in the body the braces may be
-elided:
-
-.. code-block:: llvm
-
-  foreach i = [0, 1, 2, 3] in
-    def R#i : Register<...>;
-
-Code Generator backend info
-===========================
-
-Expressions used by code generator to describe instructions and isel patterns:
-
-``(implicit a)``
-    an implicitly defined physical register.  This tells the dag instruction
-    selection emitter the input pattern's extra definitions matches implicit
-    physical register definitions.
+     class Foo<int Bar> {
+       int Baz = Bar;
+     }
 
+* value local to a ``multiclass``, such as the use of ``Bar`` in::
+
+     multiclass Foo {
+       int Bar = 5;
+       int Baz = Bar;
+     }
+
+* a template arg to a ``multiclass``, such as the use of ``Bar`` in::
+
+     multiclass Foo<int Bar> {
+       int Baz = Bar;
+     }
+
+.. productionlist::
+   SimpleValue: `TokInteger`
+
+This represents the numeric value of the integer.
+
+.. productionlist::
+   SimpleValue: `TokString`+
+
+Multiple adjacent string literals are concatenated like in C/C++. The value
+is the concatenation of the strings.
+
+.. productionlist::
+   SimpleValue: `TokCodeFragment`
+
+The value is the string value of the code fragment.
+
+.. productionlist::
+   SimpleValue: "?"
+
+``?`` represents an "unset" initializer.
+
+.. productionlist::
+   SimpleValue: "{" `ValueList` "}"
+   ValueList: [`ValueListNE`]
+   ValueListNE: `Value` ("," `Value`)*
+
+This represents a sequence of bits, as would be used to initialize a
+``bits<n>`` field (where ``n`` is the number of bits).
+
+.. productionlist::
+   SimpleValue: `ClassID` "<" `ValueListNE` ">"
+
+This generates a new anonymous record definition (as would be created by an
+unnamed ``def`` inheriting from the given class with the given template
+arguments) and the value is the value of that record definition.
+
+.. productionlist::
+   SimpleValue: "[" `ValueList` "]" ["<" `Type` ">"]
+
+A list initializer. The optional :token:`Type` can be used to indicate a
+specific element type, otherwise the element type will be deduced from the
+given values.
+
+.. The initial `DagArg` of the dag must start with an identifier or
+   !cast, but this is more of an implementation detail and so for now just
+   leave it out.
+
+.. productionlist::
+   SimpleValue: "(" `DagArg` `DagArgList` ")"
+   DagArgList: `DagArg` ("," `DagArg`)*
+   DagArg: `Value` [":" `TokVarName`] | `TokVarName`
+
+The initial :token:`DagArg` is called the "operator" of the dag.
+
+.. productionlist::
+   SimpleValue: `BangOperator` ["<" `Type` ">"] "(" `ValueListNE` ")"
+
+Bodies
+------
+
+.. productionlist::
+   ObjectBody: `BaseClassList` `Body`
+   BaseClassList: [":" `BaseClassListNE`]
+   BaseClassListNE: `SubClassRef` ("," `SubClassRef`)*
+   SubClassRef: (`ClassID` | `MultiClassID`) ["<" `ValueList` ">"]
+   DefmID: `TokIdentifier`
+
+The version with the :token:`MultiClassID` is only valid in the
+:token:`BaseClassList` of a ``defm``.
+The :token:`MultiClassID` should be the name of a ``multiclass``.
+
+.. put this somewhere else
+
+It is after parsing the base class list that the "let stack" is applied.
+
+.. productionlist::
+   Body: ";" | "{" BodyList "}"
+   BodyList: BodyItem*
+   BodyItem: `Declaration` ";"
+           :| "let" `TokIdentifier` [`RangeList`] "=" `Value` ";"
+
+The ``let`` form allows overriding the value of an inherited field.
+
+``def``
+-------
+
+.. TODO::
+   There can be pastes in the names here, like ``#NAME#``. Look into that
+   and document it (it boils down to ParseIDValue with IDParseMode ==
+   ParseNameMode). ParseObjectName calls into the general ParseValue, with
+   the only different from "arbitrary expression parsing" being IDParseMode
+   == Mode.
+
+.. productionlist::
+   Def: "def" `TokIdentifier` `ObjectBody`
+
+Defines a record whose name is given by the :token:`TokIdentifier`. The
+fields of the record are inherited from the base classes and defined in the
+body.
+
+Special handling occurs if this ``def`` appears inside a ``multiclass`` or
+a ``foreach``.
+
+``defm``
+--------
+
+.. productionlist::
+   Defm: "defm" `TokIdentifier` ":" `BaseClassListNE` ";"
+
+Note that in the :token:`BaseClassList`, all of the ``multiclass``'s must
+precede any ``class``'s that appear.
+
+``foreach``
+-----------
+
+.. productionlist::
+   Foreach: "foreach" `Declaration` "in" "{" `Object`* "}"
+          :| "foreach" `Declaration` "in" `Object`
+
+The value assigned to the variable in the declaration is iterated over and
+the object or object list is reevaluated with the variable set at each
+iterated value.
+
+Top-Level ``let``
+-----------------
+
+.. productionlist::
+   Let:  "let" `LetList` "in" "{" `Object`* "}"
+      :| "let" `LetList` "in" `Object`
+   LetList: `LetItem` ("," `LetItem`)*
+   LetItem: `TokIdentifier` [`RangeList`] "=" `Value`
+
+This is effectively equivalent to ``let`` inside the body of a record
+except that it applies to multiple records at a time. The bindings are
+applied at the end of parsing the base classes of a record.
+
+``multiclass``
+--------------
+
+.. productionlist::
+   MultiClass: "multiclass" `TokIdentifier` [`TemplateArgList`]
+             : [":" `BaseMultiClassList`] "{" `MultiClassObject`+ "}"
+   BaseMultiClassList: `MultiClassID` ("," `MultiClassID`)*
+   MultiClassID: `TokIdentifier`
+   MultiClassObject: `Def` | `Defm` | `Let` | `Foreach`

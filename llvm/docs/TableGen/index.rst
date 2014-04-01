@@ -10,6 +10,7 @@ TableGen
 
    BackEnds
    LangRef
+   LangIntro
    Deficiencies
 
 Introduction
@@ -255,7 +256,10 @@ in the current multiclass.
 
 
 
-See the `TableGen Language Reference <LangRef.html>`_ for more information.
+See the :doc:`TableGen Language Introduction <LangIntro>` for more generic
+information on the usage of the language, and the
+:doc:`TableGen Language Reference <LangRef>` for more in-depth description
+of the formal language specification.
 
 .. _backend:
 .. _backends:
