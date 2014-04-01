@@ -6108,7 +6108,11 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "  int *isa;\n";
   Preamble += "  int flags;\n";
   Preamble += "  char *str;\n";
+  Preamble += "#if __LLP64__\n";
+  Preamble += "  long long length;\n";
+  Preamble += "#else\n";
   Preamble += "  long length;\n";
+  Preamble += "#endif\n";
   Preamble += "};\n";
   Preamble += "#ifdef CF_EXPORT_CONSTANT_STRING\n";
   Preamble += "extern \"C\" __declspec(dllexport) int __CFConstantStringClassReference[];\n";
