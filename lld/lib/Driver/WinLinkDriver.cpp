@@ -1172,7 +1172,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // Prepare objects to add them to input graph.
   for (StringRef path : inputFiles) {
     path = ctx.allocate(path);
-    if (path.endswith_lower(".lib")) {
+    if (isCOFFLibraryFileExtension(path)) {
       libraries.push_back(std::unique_ptr<FileNode>(new PECOFFLibraryNode(ctx, path)));
     } else {
       files.push_back(std::unique_ptr<FileNode>(new PECOFFFileNode(ctx, path)));
