@@ -334,7 +334,7 @@ void ARM64MachObjectWriter::RecordRelocation(
 
       if (IsPCRel)
         Value -= Writer->getFragmentAddress(Fragment, Layout) +
-                 Fixup.getOffset() + (1 << Log2Size);
+                 Fixup.getOffset() + (1ULL << Log2Size);
     } else {
       // Resolve constant variables.
       if (SD.getSymbol().isVariable()) {
